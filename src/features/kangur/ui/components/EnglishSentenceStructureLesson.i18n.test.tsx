@@ -44,6 +44,12 @@ describe('EnglishSentenceStructureLesson i18n', () => {
     );
 
     const sections = (capturedProps?.sections as Array<Record<string, unknown>>) ?? [];
+    const games =
+      (capturedProps?.games as Array<{
+        sectionId: string;
+        stage: Record<string, unknown>;
+        runtime?: { runtimeId?: string; rendererId?: string };
+      }>) ?? [];
 
     expect(sections.find((section) => section.id === 'blueprint')).toMatchObject({
       title: 'Bauplan',
@@ -53,9 +59,18 @@ describe('EnglishSentenceStructureLesson i18n', () => {
       title: 'Fragen',
       description: 'Do/Does in der Praxis',
     });
+    expect(sections.find((section) => section.id === 'game')).toMatchObject({
+      title: 'Satzbau-Spiel',
+      description: 'Baue und korrigiere englische Sätze',
+      isGame: true,
+    });
     expect(sections.find((section) => section.id === 'summary')).toMatchObject({
       title: 'Zusammenfassung',
       description: 'Die wichtigsten Regeln',
+    });
+    expect(games.find((game) => game.sectionId === 'game')?.runtime).toMatchObject({
+      runtimeId: 'english_sentence_builder_lesson_stage',
+      rendererId: 'english_sentence_structure_game',
     });
 
     const slides = (capturedProps?.slides as Record<string, CapturedSlide[]>) ?? {};

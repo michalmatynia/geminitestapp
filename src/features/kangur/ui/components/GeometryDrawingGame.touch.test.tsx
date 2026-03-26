@@ -11,6 +11,19 @@ vi.mock('use-intl', async () => await vi.importActual<typeof import('use-intl')>
 vi.mock('@/features/kangur/ui/hooks/useKangurCoarsePointer', () => ({
   useKangurCoarsePointer: () => true,
 }));
+const { downloadKangurDataUrl } = vi.hoisted(() => ({
+  downloadKangurDataUrl: vi.fn(),
+}));
+vi.mock('@/features/kangur/ui/components/drawing-engine/canvas-export', async () => {
+  const actual = await vi.importActual<
+    typeof import('@/features/kangur/ui/components/drawing-engine/canvas-export')
+  >('@/features/kangur/ui/components/drawing-engine/canvas-export');
+
+  return {
+    ...actual,
+    downloadKangurDataUrl,
+  };
+});
 
 import GeometryDrawingGame from '@/features/kangur/ui/components/GeometryDrawingGame';
 import enMessages from '@/i18n/messages/en.json';
@@ -36,8 +49,13 @@ describe('GeometryDrawingGame touch interactions', () => {
   const originalGetBoundingClientRect = HTMLCanvasElement.prototype.getBoundingClientRect;
 
   beforeEach(() => {
+    window.sessionStorage.clear();
+    downloadKangurDataUrl.mockReset();
     vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockReturnValue(
       canvasContextStub as unknown as CanvasRenderingContext2D
+    );
+    vi.spyOn(HTMLCanvasElement.prototype, 'toDataURL').mockReturnValue(
+      'data:image/png;base64,GEOMETRY'
     );
     HTMLCanvasElement.prototype.getBoundingClientRect = vi.fn(() => ({
       width: 320,
@@ -62,6 +80,7 @@ describe('GeometryDrawingGame touch interactions', () => {
 
   afterEach(() => {
     vi.restoreAllMocks();
+    window.sessionStorage.clear();
     HTMLCanvasElement.prototype.getBoundingClientRect = originalGetBoundingClientRect;
   });
 
@@ -95,5 +114,81 @@ describe('GeometryDrawingGame touch interactions', () => {
     });
 
     expect(canvas).toHaveAttribute('data-drawing-active', 'false');
+  });
+
+  it('exports the current geometry drawing through the shared snapshot action', () => {
+    render(
+      <NextIntlClientProvider locale='en' messages={enMessages}>
+        <GeometryDrawingGame onFinish={() => undefined} />
+      </NextIntlClientProvider>
+    );
+
+    const exportButton = screen.getByRole('button', { name: /export png/i });
+    const canvas = screen.getByTestId('geometry-drawing-canvas');
+
+    expect(exportButton).toBeDisabled();
+
+    fireEvent.pointerDown(canvas, {
+      pointerId: 6,
+      clientX: 80,
+      clientY: 90,
+    });
+    fireEvent.pointerMove(canvas, {
+      pointerId: 6,
+      clientX: 132,
+      clientY: 132,
+    });
+    fireEvent.pointerUp(canvas, {
+      pointerId: 6,
+      clientX: 132,
+      clientY: 132,
+    });
+
+    expect(exportButton).not.toBeDisabled();
+
+    fireEvent.click(exportButton);
+
+    expect(downloadKangurDataUrl).toHaveBeenCalledWith(
+      'data:image/png;base64,GEOMETRY',
+      'training-geometry-starter-circle.png'
+    );
+  });
+
+  it('restores the saved drawing draft when the geometry board remounts on the same round', () => {
+    const { unmount } = render(
+      <NextIntlClientProvider locale='en' messages={enMessages}>
+        <GeometryDrawingGame onFinish={() => undefined} />
+      </NextIntlClientProvider>
+    );
+
+    const canvas = screen.getByTestId('geometry-drawing-canvas');
+
+    fireEvent.pointerDown(canvas, {
+      pointerId: 8,
+      clientX: 80,
+      clientY: 90,
+    });
+    fireEvent.pointerMove(canvas, {
+      pointerId: 8,
+      clientX: 132,
+      clientY: 132,
+    });
+    fireEvent.pointerUp(canvas, {
+      pointerId: 8,
+      clientX: 132,
+      clientY: 132,
+    });
+
+    expect(screen.getByRole('button', { name: /clear/i })).not.toBeDisabled();
+
+    unmount();
+
+    render(
+      <NextIntlClientProvider locale='en' messages={enMessages}>
+        <GeometryDrawingGame onFinish={() => undefined} />
+      </NextIntlClientProvider>
+    );
+
+    expect(screen.getByRole('button', { name: /clear/i })).not.toBeDisabled();
   });
 });

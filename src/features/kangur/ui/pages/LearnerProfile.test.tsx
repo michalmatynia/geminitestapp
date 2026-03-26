@@ -7,12 +7,14 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { describe, expect, it, vi, beforeEach } from 'vitest';
 
 const {
+  aiTutorSessionSyncMock,
   useKangurLearnerProfileRuntimeMock,
   useKangurAuthMock,
   pushMock,
   openLoginModalMock,
   logoutMock,
 } = vi.hoisted(() => ({
+  aiTutorSessionSyncMock: vi.fn(),
   useKangurLearnerProfileRuntimeMock: vi.fn(),
   useKangurAuthMock: vi.fn(),
   pushMock: vi.fn(),
@@ -74,7 +76,7 @@ vi.mock('@/features/kangur/ui/components/KangurTopNavigationController', () => (
 }));
 
 vi.mock('@/features/kangur/ui/context/KangurAiTutorContext', () => ({
-  useKangurAiTutorSessionSync: () => undefined,
+  useKangurAiTutorSessionSync: (props: unknown) => aiTutorSessionSyncMock(props),
 }));
 
 vi.mock('@/features/kangur/ui/context/KangurAuthContext', () => ({
@@ -143,6 +145,7 @@ import LearnerProfilePage from '@/features/kangur/ui/pages/LearnerProfile';
 
 describe('LearnerProfile page', () => {
   beforeEach(() => {
+    aiTutorSessionSyncMock.mockReset();
     pushMock.mockReset();
     openLoginModalMock.mockReset();
     logoutMock.mockReset();
@@ -170,8 +173,31 @@ describe('LearnerProfile page', () => {
     expect(screen.getByText('Profil ucznia')).toBeInTheDocument();
     expect(screen.getByText('Relacja z AI Tutorem')).toBeInTheDocument();
     expect(screen.getByTestId('results-widget')).toBeInTheDocument();
+    expect(screen.queryByTestId('ai-mood-widget')).not.toBeInTheDocument();
+    expect(aiTutorSessionSyncMock).toHaveBeenLastCalledWith({
+      learnerId: null,
+      sessionContext: null,
+    });
     expect(document.getElementById('learner-profile-root')).toHaveClass('w-full');
     expect(document.getElementById('learner-profile-root')).not.toHaveClass('max-w-[900px]');
+  });
+
+  it('keeps the learner profile shell visible while score history is still loading', () => {
+    useKangurLearnerProfileRuntimeMock.mockReturnValue({
+      isLoadingScores: true,
+      user: {
+        activeLearner: { id: 'learner-1' },
+      },
+    });
+
+    render(<LearnerProfilePage />);
+
+    expect(screen.getByText('Statystyki ucznia')).toBeInTheDocument();
+    expect(screen.getByRole('tablist', { name: 'Profil ucznia' })).toBeInTheDocument();
+    expect(screen.getByTestId('results-widget')).toBeInTheDocument();
+    expect(
+      screen.queryByRole('progressbar', { hidden: true })
+    ).not.toBeInTheDocument();
   });
 
   it('supports keyboard tab navigation and tabpanel relationships', async () => {
@@ -200,6 +226,10 @@ describe('LearnerProfile page', () => {
       expect(aiMoodTab).toHaveFocus();
     });
     expect(aiMoodTab).toHaveAttribute('aria-selected', 'true');
+    expect(aiTutorSessionSyncMock).toHaveBeenLastCalledWith({
+      learnerId: 'learner-1',
+      sessionContext: { surface: 'profile' },
+    });
     expect(screen.getByRole('tabpanel')).toHaveAttribute(
       'id',
       'kangur-learner-profile-panel-ai-mood'

@@ -19,16 +19,19 @@ import {
   KangurPracticeGameSummaryXP,
 } from '@/features/kangur/ui/components/KangurPracticeGameChrome';
 import { KangurDrawingActionRow } from '@/features/kangur/ui/components/drawing-engine/KangurDrawingActionRow';
-import { KangurDrawingHistoryActions } from '@/features/kangur/ui/components/drawing-engine/KangurDrawingHistoryActions';
 import {
   KangurDrawingEmptyStateOverlay,
   KangurDrawingKeyboardCursorOverlay,
 } from '@/features/kangur/ui/components/drawing-engine/KangurDrawingOverlays';
 import { KangurDrawingPracticeBoard } from '@/features/kangur/ui/components/drawing-engine/KangurDrawingPracticeBoard';
 import { KangurDrawingStatusRegions } from '@/features/kangur/ui/components/drawing-engine/KangurDrawingStatusRegions';
+import { KANGUR_DRAWING_HISTORY_ARIA_SHORTCUTS } from '@/features/kangur/ui/components/drawing-engine/keyboard-shortcuts';
 import { flattenKangurStrokePoints } from '@/features/kangur/ui/components/drawing-engine/stroke-metrics';
+import { useKangurDrawingDraftStorage } from '@/features/kangur/ui/components/drawing-engine/useKangurDrawingDraftStorage';
 import { useKangurKeyboardPointDrawing } from '@/features/kangur/ui/components/drawing-engine/useKangurKeyboardPointDrawing';
+import { useKangurManagedDrawingActions } from '@/features/kangur/ui/components/drawing-engine/useKangurManagedDrawingActions';
 import { useKangurPointCanvasDrawing } from '@/features/kangur/ui/components/drawing-engine/useKangurPointCanvasDrawing';
+import { KangurDrawingUtilityActions } from '@/features/kangur/ui/components/drawing-engine/KangurDrawingUtilityActions';
 import {
   KangurDisplayEmoji,
   KangurGlassPanel,
@@ -210,6 +213,13 @@ export default function GeometryPerimeterDrawingGame({
   const sessionStartedAtRef = useRef(Date.now());
 
   const currentRound = ROUNDS[roundIndex] ?? null;
+  const {
+    clearDraftSnapshot,
+    draftSnapshot,
+    setDraftSnapshot,
+  } = useKangurDrawingDraftStorage(
+    currentRound ? `geometry-perimeter:${currentRound.id}` : null
+  );
   const perimeter = currentRound
     ? currentRound.shape === 'square'
       ? currentRound.a * 4
@@ -236,9 +246,11 @@ export default function GeometryPerimeterDrawingGame({
     canRedo,
     canUndo,
     clearStrokes,
+    exportDataUrl,
     handlePointerDown,
     handlePointerMove,
     handlePointerUp,
+    hasDrawableContent,
     isPointerDrawing,
     redoLastStroke,
     setStrokes,
@@ -248,9 +260,11 @@ export default function GeometryPerimeterDrawingGame({
     canvasRef,
     baseLayerCacheKey: 'geometry-perimeter:grid:v1',
     enabled: !done && !isLocked && !drawingValidated,
+    initialSerializedSnapshot: draftSnapshot,
     logicalHeight: CANVAS_HEIGHT,
     logicalWidth: CANVAS_WIDTH,
     minPointDistance,
+    onSerializedSnapshotChange: setDraftSnapshot,
     onPointerStart: () => {
       if (feedback?.kind === 'info') {
         setFeedback(null);
@@ -298,13 +312,14 @@ export default function GeometryPerimeterDrawingGame({
   const keyboardRestartedStatus = translations('geometryPerimeter.inRound.keyboard.restarted');
 
   const clearBoardState = useCallback((): void => {
+    clearDraftSnapshot();
     clearStrokes();
     setSelected(null);
     setDrawingValidated(false);
-  }, [clearStrokes]);
+  }, [clearDraftSnapshot, clearStrokes]);
 
   const {
-    handleCanvasKeyDown,
+    handleCanvasKeyDown: handleKeyboardCanvasKeyDown,
     keyboardCursor,
     keyboardDrawing,
     keyboardStatus,
@@ -328,24 +343,44 @@ export default function GeometryPerimeterDrawingGame({
     width: CANVAS_WIDTH,
   });
 
-  const clearDrawing = useCallback((): void => {
-    clearBoardState();
-    resetKeyboard(keyboardBoardClearedStatus);
-  }, [clearBoardState, keyboardBoardClearedStatus, resetKeyboard]);
+  const exportFileName = useMemo(
+    () => `geometry-perimeter-${currentRound?.id ?? 'drawing'}.png`,
+    [currentRound?.id]
+  );
 
-  const undoDrawing = useCallback((): void => {
-    undoLastStroke();
-    setFeedback(null);
-    setSelected(null);
-    setDrawingValidated(false);
-  }, [undoLastStroke]);
-
-  const redoDrawing = useCallback((): void => {
-    redoLastStroke();
-    setFeedback(null);
-    setSelected(null);
-    setDrawingValidated(false);
-  }, [redoLastStroke]);
+  const {
+    clearDrawing,
+    exportDrawing,
+    handleCanvasKeyDown,
+    redoDrawing,
+    undoDrawing,
+  } = useKangurManagedDrawingActions<HTMLCanvasElement>({
+    canExport: hasDrawableContent,
+    canRedo,
+    canUndo,
+    clearDraftSnapshot,
+    clearStrokes,
+    exportDataUrl,
+    exportFilename: exportFileName,
+    onAfterClear: () => {
+      setSelected(null);
+      setDrawingValidated(false);
+      resetKeyboard(keyboardBoardClearedStatus);
+    },
+    onAfterRedo: () => {
+      setFeedback(null);
+      setSelected(null);
+      setDrawingValidated(false);
+    },
+    onAfterUndo: () => {
+      setFeedback(null);
+      setSelected(null);
+      setDrawingValidated(false);
+    },
+    onUnhandledKeyDown: handleKeyboardCanvasKeyDown,
+    redoLastStroke,
+    undoLastStroke,
+  });
 
   const finishGame = useCallback(
     (finalScore: number): void => {
@@ -666,10 +701,17 @@ export default function GeometryPerimeterDrawingGame({
               clearDisabled={feedback !== null || points.length === 0}
               clearLabel={translations('geometryPerimeter.inRound.clear')}
               feedback={feedback}
-              historyActions={
-                <KangurDrawingHistoryActions
-                  buttonClassName='w-full sm:flex-1'
+              utilityActions={
+                <KangurDrawingUtilityActions
+                  exportButtonClassName='w-full'
+                  exportClassName='w-full sm:flex-1'
+                  exportDisabled={!hasDrawableContent}
+                  exportLabel={translations('geometryPerimeter.inRound.export')}
+                  exportTestId='geometry-perimeter-export'
+                  historyButtonClassName='w-full sm:flex-1'
+                  historyClassName='w-full sm:flex-1'
                   isCoarsePointer={isCoarsePointer}
+                  onExport={exportDrawing}
                   onRedo={redoDrawing}
                   onUndo={undoDrawing}
                   redoDisabled={feedback !== null || !canRedo}
@@ -711,7 +753,7 @@ export default function GeometryPerimeterDrawingGame({
             </>
           }
           ariaDescribedBy='geometry-perimeter-input-help'
-          ariaKeyShortcuts='Enter Space ArrowUp ArrowDown ArrowLeft ArrowRight Escape'
+          ariaKeyShortcuts={`Enter Space ArrowUp ArrowDown ArrowLeft ArrowRight Escape ${KANGUR_DRAWING_HISTORY_ARIA_SHORTCUTS}`}
           ariaLabel={
             currentRound
               ? translations('geometryPerimeter.inRound.canvasAria', {

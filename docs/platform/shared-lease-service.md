@@ -1,6 +1,6 @@
 ---
 owner: 'Platform Team'
-last_reviewed: '2026-03-09'
+last_reviewed: '2026-03-26'
 status: 'active'
 doc_type: 'reference'
 scope: 'platform'
@@ -24,6 +24,8 @@ It gives agents a common way to:
 ### `GET /api/agent/leases`
 
 Returns the current lease state for lease-aware resources.
+
+Responses are auth-gated and include the current lease state plus the shared mixed-mode limitation note for broker-backed resources.
 
 Supported query parameters:
 
@@ -51,6 +53,13 @@ Supported actions:
 - `release`
 
 For partitioned resources, include `scopeId`.
+
+Current status behavior:
+
+- `200` for `claimed`, `renewed`, and `released`
+- `409` for ownership conflicts
+- `404` when a scoped lease does not exist for a renewal or release
+- `400` for unsupported resources or invalid mutation requests
 
 Example bodies:
 
@@ -99,8 +108,16 @@ Example bodies:
 - discovered through the shared lease API from the broker's real lease files
 - scoped by broker `leaseKey`
 - still acquired and released through `runtime-broker.mjs`
+- `POST /api/agent/leases` returns `unsupported` for broker mutations on purpose
 
 This is intentional for the current stage. It gives agents a single discovery and ownership contract now, while preserving the existing broker startup path.
+
+### AI Paths run execution
+
+- managed directly by the shared lease service
+- scoped by AI Paths `runId`
+- used by queue workers before processing a run
+- exposed in operator UIs through `blocked_on_lease` and `handoff_ready`
 
 ## Usage rules
 

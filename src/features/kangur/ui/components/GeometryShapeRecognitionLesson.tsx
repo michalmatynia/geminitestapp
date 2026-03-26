@@ -4,7 +4,7 @@ import type * as React from 'react';
 import { useId, useMemo, useState } from 'react';
 import { useTranslations } from 'next-intl';
 
-import GeometryDrawingGame from '@/features/kangur/ui/components/GeometryDrawingGame';
+import { getKangurLessonStageGameRuntimeSpec } from '@/features/kangur/games/lesson-stage-runtime-specs';
 import type { LessonSlide } from '@/features/kangur/ui/components/LessonSlideSection';
 import {
   KangurLessonCallout,
@@ -39,6 +39,10 @@ type ShapeRound = {
   correct: ShapeId;
   options: readonly ShapeId[];
 };
+
+const GEOMETRY_SHAPE_DRAWING_RUNTIME = getKangurLessonStageGameRuntimeSpec(
+  'geometry_shape_drawing_lesson_stage'
+);
 
 const SHAPE_META: Array<{ id: ShapeId; color: string }> = [
   {
@@ -524,17 +528,7 @@ export default function GeometryShapeRecognitionLesson(): React.JSX.Element {
             maxWidthClassName: 'max-w-3xl',
             shellTestId: 'geometry-shape-recognition-draw-shell',
           },
-          render: ({ onFinish }) => (
-            <GeometryDrawingGame
-              activityKey='training:geometry_shape_recognition:draw'
-              difficultyLabelOverride={translate('draw.difficultyLabel')}
-              finishLabel={translate('draw.finishLabel')}
-              lessonKey='geometry_shape_recognition'
-              onFinish={onFinish}
-              shapeIds={['circle', 'oval', 'triangle', 'diamond', 'square', 'rectangle']}
-              showDifficultySelector={false}
-            />
-          ),
+          runtime: GEOMETRY_SHAPE_DRAWING_RUNTIME,
         },
       ]}
     />

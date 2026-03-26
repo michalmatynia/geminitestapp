@@ -1,7 +1,7 @@
 import { startTransition, useEffect, useState } from 'react';
 import { InteractionManager } from 'react-native';
 
-const HOME_SCREEN_DEFERRED_PANELS_FALLBACK_TIMEOUT_MS = 320;
+const HOME_SCREEN_DEFERRED_PANELS_FALLBACK_TIMEOUT_MS = 240;
 const deferredHomePanelCallbacks = new Set<() => void>();
 
 let deferredHomePanelsInteractionTask:

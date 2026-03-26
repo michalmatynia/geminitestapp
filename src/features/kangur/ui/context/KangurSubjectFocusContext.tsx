@@ -12,6 +12,7 @@ import {
 
 import { useKangurAuth } from '@/features/kangur/ui/context/KangurAuthContext';
 import {
+  hasPersistedSubjectFocus,
   loadPersistedSubjectFocus,
   loadRemoteSubjectFocus,
   normalizeKangurSubjectFocusSubject,
@@ -75,7 +76,7 @@ export function KangurSubjectFocusProvider({
   useEffect(() => subscribeToSubjectFocusChanges(storageKey, setSubjectState), [storageKey]);
 
   useEffect(() => {
-    if (!canSyncRemote) {
+    if (!canSyncRemote || hasPersistedSubjectFocus(storageKey)) {
       return;
     }
 

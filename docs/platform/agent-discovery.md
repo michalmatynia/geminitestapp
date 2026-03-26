@@ -1,6 +1,6 @@
 ---
 owner: 'Platform Team'
-last_reviewed: '2026-03-09'
+last_reviewed: '2026-03-26'
 status: 'active'
 doc_type: 'reference'
 scope: 'platform'
@@ -10,6 +10,8 @@ canonical: true
 # Agent Discovery
 
 Agents should discover platform capabilities from HTTP endpoints before selecting a tool path or mutating a shared resource.
+
+All of the endpoints below are authenticated repo-internal APIs. They are intended for operator tooling, runtime workers, and agent surfaces that already have platform access.
 
 ## Endpoints
 
@@ -43,6 +45,8 @@ Examples:
 - `/api/agent/resources?mode=partitioned`
 - `/api/agent/resources?resourceId=testing.playwright.runtime-broker`
 
+Single-resource responses also include the capabilities that depend on that resource plus the shared execution summary.
+
 ### `GET /api/agent/approval-gates`
 
 Returns approval gate descriptors and the shared execution guidance.
@@ -57,6 +61,8 @@ Examples:
 - `/api/agent/approval-gates`
 - `/api/agent/approval-gates?gateId=destructive-mutation`
 - `/api/agent/approval-gates?requiredFor=production`
+
+Single-gate responses also include the shared execution summary used by the other discovery endpoints.
 
 ### `GET /api/agent/leases`
 
@@ -73,6 +79,7 @@ Use `scopeId` for partitioned resources such as:
 
 - Playwright broker `leaseKey`
 - base import `runId`
+- AI Paths `runId`
 
 Examples:
 
@@ -80,6 +87,7 @@ Examples:
 - `/api/agent/leases?resourceId=testing.playwright.runtime-broker`
 - `/api/agent/leases?resourceId=testing.playwright.runtime-broker&scopeId=web-dev-agent-a-1234`
 - `/api/agent/leases?resourceId=integrations.base-import.run&scopeId=run-123`
+- `/api/agent/leases?resourceId=ai-paths.run.execution&scopeId=run-123`
 
 ## Usage guidance
 
@@ -94,6 +102,7 @@ Examples:
 The lease API is mixed-mode today:
 
 - base import run scopes are mutated directly through the shared lease service
+- AI Paths execution scopes are mutated directly through the shared lease service
 - Playwright runtime broker scopes are discovered from the broker's real lease files
 - Playwright lease mutation still flows through `runtime-broker.mjs`, not through `POST /api/agent/leases`
 

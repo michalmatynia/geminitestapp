@@ -154,4 +154,104 @@ describe('useKangurAssignments', () => {
     });
     expect(result.current.assignments.find((assignment) => assignment.id === 'assignment-1')).toBeUndefined();
   });
+
+  it('reuses fresh cached assignments across remounts', async () => {
+    const wrapper = createWrapper();
+    const firstMount = renderHook(
+      () =>
+        useKangurAssignments({
+          enabled: true,
+          query: {
+            includeArchived: false,
+          },
+        }),
+      { wrapper }
+    );
+
+    await waitFor(() => {
+      expect(firstMount.result.current.assignments).toHaveLength(1);
+    });
+
+    firstMount.unmount();
+
+    const secondMount = renderHook(
+      () =>
+        useKangurAssignments({
+          enabled: true,
+          query: {
+            includeArchived: false,
+          },
+        }),
+      { wrapper }
+    );
+
+    await waitFor(() => {
+      expect(secondMount.result.current.assignments).toHaveLength(1);
+      expect(secondMount.result.current.isLoading).toBe(false);
+    });
+
+    expect(listAssignmentsMock).toHaveBeenCalledTimes(1);
+  });
+
+  it('does not revalidate assignments on focus while the cache is still fresh', async () => {
+    let now = Date.now();
+    const dateNowSpy = vi.spyOn(Date, 'now').mockImplementation(() => now);
+    try {
+      const { result } = renderHook(
+        () =>
+          useKangurAssignments({
+            enabled: true,
+            query: {
+              includeArchived: false,
+            },
+          }),
+        { wrapper: createWrapper() }
+      );
+
+      await waitFor(() => {
+        expect(result.current.assignments).toHaveLength(1);
+      });
+
+      await act(async () => {
+        window.dispatchEvent(new Event('focus'));
+      });
+
+      expect(listAssignmentsMock).toHaveBeenCalledTimes(1);
+    } finally {
+      dateNowSpy.mockRestore();
+    }
+  });
+
+  it('revalidates assignments on focus once the cache turns stale', async () => {
+    let now = Date.now();
+    const dateNowSpy = vi.spyOn(Date, 'now').mockImplementation(() => now);
+    try {
+      const { result } = renderHook(
+        () =>
+          useKangurAssignments({
+            enabled: true,
+            query: {
+              includeArchived: false,
+            },
+          }),
+        { wrapper: createWrapper() }
+      );
+
+      await waitFor(() => {
+        expect(result.current.assignments).toHaveLength(1);
+      });
+
+      now += 1000 * 60 * 2 + 1;
+
+      await act(async () => {
+        window.dispatchEvent(new Event('focus'));
+      });
+
+      await waitFor(() => {
+        expect(listAssignmentsMock).toHaveBeenCalledTimes(2);
+      });
+    } finally {
+      dateNowSpy.mockRestore();
+    }
+  });
 });

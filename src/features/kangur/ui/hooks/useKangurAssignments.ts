@@ -39,6 +39,8 @@ type UseKangurAssignmentsResult = {
   reassignAssignment: (id: string) => Promise<KangurAssignmentSnapshot>;
 };
 
+const ASSIGNMENTS_STALE_TIME_MS = 1000 * 60 * 2;
+
 const fetchAssignments = async (
   query?: KangurAssignmentListQuery
 ): Promise<KangurAssignmentSnapshot[]> => {
@@ -72,9 +74,9 @@ export const useKangurAssignments = (
     queryKey,
     queryFn: () => fetchAssignments(query),
     enabled,
-    staleTime: 1000 * 60 * 2,
-    refetchOnMount: true,
-    refetchOnWindowFocus: 'always',
+    staleTime: ASSIGNMENTS_STALE_TIME_MS,
+    refetchOnMount: false,
+    refetchOnWindowFocus: false,
     refetchOnReconnect: true,
     retry: (failureCount, error) => {
       if (isKangurAuthStatusError(error)) return false;
@@ -101,16 +103,35 @@ export const useKangurAssignments = (
       return;
     }
 
-    const handleRevalidate = (): void => {
+    const revalidateAssignments = (): void => {
       void queryClient.invalidateQueries({ queryKey });
     };
 
-    window.addEventListener(KANGUR_PROGRESS_EVENT_NAME, handleRevalidate);
-    window.addEventListener('focus', handleRevalidate);
+    const handleProgressRevalidate = (): void => {
+      revalidateAssignments();
+    };
+
+    const handleFocusRevalidate = (): void => {
+      const queryState = queryClient.getQueryState<KangurAssignmentSnapshot[]>(queryKey);
+      const dataUpdatedAt = queryState?.dataUpdatedAt ?? 0;
+      if (dataUpdatedAt <= 0) {
+        revalidateAssignments();
+        return;
+      }
+
+      if (Date.now() - dataUpdatedAt < ASSIGNMENTS_STALE_TIME_MS) {
+        return;
+      }
+
+      revalidateAssignments();
+    };
+
+    window.addEventListener(KANGUR_PROGRESS_EVENT_NAME, handleProgressRevalidate);
+    window.addEventListener('focus', handleFocusRevalidate);
 
     return () => {
-      window.removeEventListener(KANGUR_PROGRESS_EVENT_NAME, handleRevalidate);
-      window.removeEventListener('focus', handleRevalidate);
+      window.removeEventListener(KANGUR_PROGRESS_EVENT_NAME, handleProgressRevalidate);
+      window.removeEventListener('focus', handleFocusRevalidate);
     };
   }, [enabled, queryClient, queryKey]);
 

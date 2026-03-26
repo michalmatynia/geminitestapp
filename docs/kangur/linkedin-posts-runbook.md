@@ -1,6 +1,6 @@
 ---
 owner: 'Kangur Team'
-last_reviewed: '2026-03-17'
+last_reviewed: '2026-03-26'
 status: 'active'
 doc_type: 'runbook'
 scope: 'feature:kangur'
@@ -14,6 +14,9 @@ canonical: true
 This runbook is the canonical workflow for creating, scheduling, and publishing
 LinkedIn posts via the Kangur Social admin feature.
 
+This doc owns the social-post workflow. Other Kangur docs should link here rather
+than duplicating scheduling, publishing, or doc-update operator steps.
+
 ## Preconditions
 
 - Admin access to `/admin/kangur/social`.
@@ -23,6 +26,13 @@ LinkedIn posts via the Kangur Social admin feature.
   `kangur_social.visual_analysis`.
 - Optional: Playwright node runner available for batch capture presets.
 - Optional: CMS Media Library access for manual image selection.
+
+Scope note:
+
+- This workflow is separate from the SVG-only lesson-media rule in
+  [`svg-and-media-rules.md`](./svg-and-media-rules.md).
+- Social-post visuals may use screenshots, media-library assets, and generated
+  add-ons; they are not restricted to lesson-illustration SVGs.
 
 ## Primary workflow (manual)
 

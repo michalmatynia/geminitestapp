@@ -112,7 +112,7 @@ describe('useHomeScreenDeferredPanels', () => {
     expect(result.current).toBe(false);
 
     act(() => {
-      vi.advanceTimersByTime(320);
+      vi.advanceTimersByTime(240);
       vi.runAllTimers();
     });
 

@@ -56,10 +56,18 @@ describe('EnglishAdjectivesLesson i18n', () => {
       description: 'Belebe die Szene mit Adjektivkarten',
     });
 
-    const games = (capturedProps?.games as Array<Record<string, unknown>>) ?? [];
+    const games =
+      (capturedProps?.games as Array<{
+        sectionId: string;
+        runtime?: { runtimeId?: string; rendererId?: string };
+      }>) ?? [];
     expect(games).toHaveLength(1);
     expect(games[0]).toMatchObject({
       sectionId: 'game_adjective_studio',
+      runtime: {
+        runtimeId: 'english_adjectives_scene_lesson_stage',
+        rendererId: 'english_adjectives_scene_game',
+      },
     });
 
     const slides = (capturedProps?.slides as Record<string, CapturedSlide[]>) ?? {};

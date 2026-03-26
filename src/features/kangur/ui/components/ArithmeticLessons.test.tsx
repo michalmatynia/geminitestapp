@@ -228,6 +228,10 @@ describe('Arithmetic lessons shared surfaces', () => {
       'kangur-cta-pill',
       'surface-cta'
     );
+    expect(screen.getByText('Zobacz grupy')).toBeInTheDocument();
+    expect(
+      screen.getByText('Łącz równe grupy kropek, aby zobaczyć mnożenie.')
+    ).toBeInTheDocument();
     expect(screen.getByText('Mock Multiplication Array Game')).toBeInTheDocument();
     expect(
       within(screen.getByTestId('multiplication-lesson-game-array-shell')).getByText(

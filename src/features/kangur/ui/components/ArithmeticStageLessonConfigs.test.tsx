@@ -1,0 +1,122 @@
+/**
+ * @vitest-environment jsdom
+ */
+
+import React from 'react';
+import { render, screen } from '@testing-library/react';
+import { NextIntlClientProvider } from 'next-intl';
+import { afterEach, describe, expect, it, vi } from 'vitest';
+
+import plMessages from '@/i18n/messages/pl.json';
+
+let capturedProps: Record<string, unknown> | null = null;
+
+vi.mock('@/features/kangur/ui/lessons/lesson-components', () => ({
+  KangurUnifiedLesson: (props: Record<string, unknown>) => {
+    capturedProps = props;
+    return <div data-testid='kangur-unified-lesson'>{String(props.lessonTitle ?? '')}</div>;
+  },
+}));
+
+import AddingLesson from '@/features/kangur/ui/components/AddingLesson';
+import DivisionLesson from '@/features/kangur/ui/components/DivisionLesson';
+import MultiplicationLesson from '@/features/kangur/ui/components/MultiplicationLesson';
+import SubtractingLesson from '@/features/kangur/ui/components/SubtractingLesson';
+
+describe('arithmetic stage lesson configs', () => {
+  afterEach(() => {
+    capturedProps = null;
+  });
+
+  it.each([
+    {
+      lessonTitle: 'Dodawanie',
+      Component: AddingLesson,
+      sectionId: 'game',
+      runtimeId: 'adding_ball_lesson_stage',
+      rendererId: 'adding_ball_game',
+      engineId: 'quantity-drag-engine',
+      rendererProps: { finishLabelVariant: 'topics' },
+      shellTestId: 'adding-lesson-game-shell',
+    },
+    {
+      lessonTitle: 'Dodawanie',
+      Component: AddingLesson,
+      sectionId: 'synthesis',
+      runtimeId: 'adding_synthesis_lesson_stage',
+      rendererId: 'adding_synthesis_game',
+      engineId: 'rhythm-answer-engine',
+      shellTestId: 'adding-lesson-synthesis-shell',
+    },
+    {
+      lessonTitle: 'Odejmowanie',
+      Component: SubtractingLesson,
+      sectionId: 'game',
+      runtimeId: 'subtracting_garden_lesson_stage',
+      rendererId: 'subtracting_garden_game',
+      engineId: 'quantity-drag-engine',
+      rendererProps: { finishLabelVariant: 'topics' },
+      shellTestId: 'subtracting-lesson-game-shell',
+    },
+    {
+      lessonTitle: 'Dzielenie',
+      Component: DivisionLesson,
+      sectionId: 'game',
+      runtimeId: 'division_groups_lesson_stage',
+      rendererId: 'division_groups_game',
+      engineId: 'choice-quiz-engine',
+      rendererProps: { finishLabelVariant: 'topics' },
+      shellTestId: 'division-lesson-game-shell',
+    },
+    {
+      lessonTitle: 'Mnożenie',
+      Component: MultiplicationLesson,
+      sectionId: 'game_array',
+      runtimeId: 'multiplication_array_lesson_stage',
+      rendererId: 'multiplication_array_game',
+      engineId: 'array-builder-engine',
+      rendererProps: { finishLabelVariant: 'topics' },
+      shellTestId: 'multiplication-lesson-game-array-shell',
+      hasBodyPrelude: true,
+    },
+  ])(
+    'passes a shared lesson-stage runtime into KangurUnifiedLesson for $sectionId',
+    ({ Component, lessonTitle, sectionId, runtimeId, rendererId, engineId, rendererProps, shellTestId, hasBodyPrelude }) => {
+      render(
+        <NextIntlClientProvider locale='pl' messages={plMessages}>
+          <Component />
+        </NextIntlClientProvider>
+      );
+
+      expect(screen.getByTestId('kangur-unified-lesson')).toHaveTextContent(lessonTitle);
+
+      const games =
+        (capturedProps?.games as Array<{
+          sectionId: string;
+          stage: Record<string, unknown>;
+          runtime?: {
+            runtimeId?: string;
+            rendererId?: string;
+            engineId?: string;
+            rendererProps?: Record<string, unknown>;
+          };
+          render?: unknown;
+        }>) ?? [];
+      const game = games.find((candidate) => candidate.sectionId === sectionId);
+
+      expect(game?.stage).toMatchObject({
+        shellTestId,
+      });
+      expect(game?.runtime).toMatchObject({
+        runtimeId,
+        rendererId,
+        engineId,
+        ...(rendererProps ? { rendererProps } : {}),
+      });
+      if (hasBodyPrelude) {
+        expect(game?.stage).toHaveProperty('bodyPrelude');
+      }
+      expect(game).not.toHaveProperty('render');
+    }
+  );
+});

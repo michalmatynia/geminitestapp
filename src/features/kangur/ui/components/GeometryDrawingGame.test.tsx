@@ -151,6 +151,26 @@ describe('GeometryDrawingGame', () => {
     );
   });
 
+  it('supports shared undo and redo keyboard shortcuts on the geometry board', () => {
+    render(<GeometryDrawingGame onFinish={() => undefined} />);
+
+    const canvas = screen.getByTestId('geometry-drawing-canvas');
+    const clearButton = screen.getByRole('button', { name: /wyczyść/i });
+
+    canvas.focus();
+    fireEvent.keyDown(canvas, { key: 'Enter' });
+    fireEvent.keyDown(canvas, { key: 'ArrowRight' });
+    fireEvent.keyDown(canvas, { key: 'Enter' });
+
+    expect(clearButton).toBeEnabled();
+
+    fireEvent.keyDown(canvas, { ctrlKey: true, key: 'z' });
+    expect(clearButton).toBeDisabled();
+
+    fireEvent.keyDown(canvas, { ctrlKey: true, key: 'Z', shiftKey: true });
+    expect(clearButton).toBeEnabled();
+  });
+
   it('lets the learner start drawing after the too-short warning', () => {
     render(<GeometryDrawingGame onFinish={() => undefined} />);
 

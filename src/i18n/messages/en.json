@@ -3227,6 +3227,7 @@
         "clear": "Clear",
         "undo": "Undo",
         "redo": "Redo",
+        "export": "Export PNG",
         "check": "Check",
         "tooShort": "Draw the shape a little longer so it can be checked.",
         "keyboard": {
@@ -3376,6 +3377,7 @@
         "clear": "Clear",
         "undo": "Undo",
         "redo": "Redo",
+        "export": "Export PNG",
         "checkDrawing": "Check drawing",
         "checkPerimeter": "Check perimeter",
         "rounds": {
@@ -3460,6 +3462,7 @@
         "clear": "Clear",
         "undo": "Undo",
         "redo": "Redo",
+        "export": "Export PNG",
         "check": "Check",
         "rounds": {
           "axis-butterfly": {
@@ -6233,6 +6236,10 @@
           "title": "Practice",
           "description": "Quick warm-up"
         },
+        "game": {
+          "title": "Sentence Builder Game",
+          "description": "Build and fix English sentences"
+        },
         "summary": {
           "title": "Summary",
           "description": "Most important rules"
@@ -7989,6 +7996,7 @@
         "clear": "Clear",
         "undo": "Undo",
         "redo": "Redo",
+        "export": "Export PNG",
         "check": "Check",
         "next": "Next",
         "restart": "Start again"
@@ -8037,6 +8045,7 @@
         "clear": "Clear",
         "undo": "Undo",
         "redo": "Redo",
+        "export": "Export PNG",
         "check": "Check",
         "next": "Next",
         "restart": "Start again"

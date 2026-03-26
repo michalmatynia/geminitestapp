@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useRef, type RefObject } from 'react';
+import { useRef, type RefObject } from 'react';
 
 import {
   redrawKangurCanvasStrokes,
@@ -14,6 +14,7 @@ import {
   type KangurPointDrawingSnapshot,
 } from '@/features/kangur/ui/components/drawing-engine/point-snapshots';
 import type { KangurDrawingStrokeRenderStyle } from '@/features/kangur/ui/components/drawing-engine/types';
+import { useKangurCanvasSnapshotState } from '@/features/kangur/ui/components/drawing-engine/useKangurCanvasSnapshotState';
 import {
   useKangurPointDrawingEngine,
   type UseKangurPointDrawingEngineResult,
@@ -57,6 +58,7 @@ type UseKangurPointCanvasDrawingOptions = {
 };
 
 export type UseKangurPointCanvasDrawingResult = UseKangurPointDrawingEngineResult & {
+  exportDataUrl: (options?: { mimeType?: string; quality?: number }) => string | null;
   hasDrawableContent: boolean;
   restoreSerializedSnapshot: (raw: string) => boolean;
   restoreSnapshot: (snapshot: KangurPointDrawingSnapshot) => void;
@@ -86,8 +88,6 @@ export const useKangurPointCanvasDrawing = ({
   touchLockEnabled = true,
 }: UseKangurPointCanvasDrawingOptions): UseKangurPointCanvasDrawingResult => {
   const baseLayerCacheRef = useRef<KangurDrawingCanvasBaseLayerCache | null>(null);
-  const previousIncomingSnapshotRef = useRef<string | null | undefined>(undefined);
-  const skipSnapshotEmissionRef = useRef(Boolean(initialSerializedSnapshot));
 
   const engine = useKangurPointDrawingEngine({
     canvasRef,
@@ -118,97 +118,32 @@ export const useKangurPointCanvasDrawing = ({
     touchLockEnabled,
   });
 
-  const snapshot = useMemo(
-    () =>
-      createKangurPointDrawingSnapshot({
-        logicalHeight,
-        logicalWidth,
-        strokes: engine.strokes,
-      }),
-    [engine.strokes, logicalHeight, logicalWidth]
-  );
-
-  const serializedSnapshot = useMemo(
-    () =>
-      engine.strokes.length > 0
-        ? serializeKangurPointDrawingSnapshot(snapshot)
-        : null,
-    [engine.strokes.length, snapshot]
-  );
-
-  const serializeSnapshot = useCallback(
-    (): string => serializeKangurPointDrawingSnapshot(snapshot),
-    [snapshot]
-  );
-
-  const restoreSnapshot = useCallback(
-    (nextSnapshot: KangurPointDrawingSnapshot): void => {
-      engine.setStrokes(
-        rescaleKangurPointDrawingSnapshot(nextSnapshot, logicalWidth, logicalHeight)
-      );
-    },
-    [engine, logicalHeight, logicalWidth]
-  );
-
-  const restoreSerializedSnapshot = useCallback(
-    (raw: string): boolean => {
-      const parsed = parseKangurPointDrawingSnapshot(raw);
-      if (!parsed) {
-        return false;
-      }
-
-      restoreSnapshot(parsed);
-      return true;
-    },
-    [restoreSnapshot]
-  );
-
-  useEffect(() => {
-    if (initialSerializedSnapshot === previousIncomingSnapshotRef.current) {
-      return;
-    }
-
-    previousIncomingSnapshotRef.current = initialSerializedSnapshot;
-
-    if (initialSerializedSnapshot === serializedSnapshot) {
-      skipSnapshotEmissionRef.current = false;
-      return;
-    }
-
-    if (!initialSerializedSnapshot) {
-      skipSnapshotEmissionRef.current = true;
-      if (engine.strokes.length > 0) {
-        engine.clearStrokes();
-      }
-      return;
-    }
-
-    skipSnapshotEmissionRef.current = restoreSerializedSnapshot(initialSerializedSnapshot);
-  }, [
-    engine,
-    initialSerializedSnapshot,
+  const {
+    exportDataUrl,
     restoreSerializedSnapshot,
+    restoreSnapshot,
     serializedSnapshot,
-  ]);
-
-  useEffect(() => {
-    if (!onSerializedSnapshotChange) {
-      return;
-    }
-
-    if (
-      skipSnapshotEmissionRef.current &&
-      serializedSnapshot !== initialSerializedSnapshot
-    ) {
-      return;
-    }
-
-    skipSnapshotEmissionRef.current = false;
-    onSerializedSnapshotChange(serializedSnapshot);
-  }, [initialSerializedSnapshot, onSerializedSnapshotChange, serializedSnapshot]);
+    serializeSnapshot,
+    snapshot,
+  } = useKangurCanvasSnapshotState<KangurPointDrawingSnapshot, Point2d[][]>({
+    canvasRef,
+    clearSnapshot: engine.clearStrokes,
+    createSnapshot: createKangurPointDrawingSnapshot,
+    hasDrawableContent: engine.strokes.length > 0,
+    initialSerializedSnapshot,
+    logicalHeight,
+    logicalWidth,
+    onSerializedSnapshotChange,
+    parseSnapshot: parseKangurPointDrawingSnapshot,
+    rescaleSnapshot: rescaleKangurPointDrawingSnapshot,
+    serializeSnapshotData: serializeKangurPointDrawingSnapshot,
+    setStrokes: engine.setStrokes,
+    strokes: engine.strokes,
+  });
 
   return {
     ...engine,
+    exportDataUrl,
     hasDrawableContent: engine.strokes.length > 0,
     restoreSerializedSnapshot,
     restoreSnapshot,

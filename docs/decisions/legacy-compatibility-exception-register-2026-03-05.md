@@ -1,6 +1,6 @@
 ---
 owner: 'Platform Team'
-last_reviewed: '2026-03-09'
+last_reviewed: '2026-03-26'
 status: 'active'
 doc_type: 'decision'
 scope: 'repo'
@@ -8,6 +8,10 @@ canonical: true
 ---
 
 # Legacy Compatibility Exception Register (2026-03-05)
+
+This register remains the canonical policy surface for temporary compatibility
+allowances. The active migration closeout trackers in `docs/plans/` and
+`docs/migrations/` should reference this file instead of restating exception policy.
 
 Machine-readable register:
 

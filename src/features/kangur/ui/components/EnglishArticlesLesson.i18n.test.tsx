@@ -60,10 +60,18 @@ describe('EnglishArticlesLesson i18n', () => {
       description: 'Kurzfassung der Regeln',
     });
 
-    const games = (capturedProps?.games as Array<Record<string, unknown>>) ?? [];
+    const games =
+      (capturedProps?.games as Array<{
+        sectionId: string;
+        runtime?: { runtimeId?: string; rendererId?: string };
+      }>) ?? [];
     expect(games).toHaveLength(1);
     expect(games[0]).toMatchObject({
       sectionId: 'game_articles_drag',
+      runtime: {
+        runtimeId: 'english_articles_drag_lesson_stage',
+        rendererId: 'english_articles_drag_drop_game',
+      },
     });
 
     const slides = (capturedProps?.slides as Record<string, CapturedSlide[]>) ?? {};

@@ -1,11 +1,13 @@
-import { describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { KangurScorePort, KangurScoreRecord } from '@kangur/platform';
 
 import {
   LEARNER_PROFILE_SCORE_FETCH_LIMIT,
+  clearKangurScopedScoresCache,
   loadLearnerProfileScores,
   loadScopedKangurScores,
+  peekCachedScopedKangurScores,
 } from './learner-profile-scores';
 
 const createScore = (overrides: Partial<KangurScoreRecord> = {}): KangurScoreRecord => ({
@@ -29,6 +31,10 @@ const createScorePort = (): KangurScorePort => ({
 });
 
 describe('loadLearnerProfileScores', () => {
+  beforeEach(() => {
+    clearKangurScopedScoresCache();
+  });
+
   it('returns no scores and skips API calls when both identity fields are empty', async () => {
     const scorePort = createScorePort();
 
@@ -109,9 +115,33 @@ describe('loadLearnerProfileScores', () => {
     );
     expect(result.map((score) => score.id)).toEqual(['score-email-only']);
   });
+
+  it('reuses cached scoped scores across repeated profile reads for the same identity', async () => {
+    const scorePort = createScorePort();
+    const filterMock = vi.mocked(scorePort.filter);
+    filterMock.mockResolvedValue([createScore({ id: 'score-email-only' })]);
+
+    const firstResult = await loadLearnerProfileScores(scorePort, {
+      userName: '',
+      userEmail: 'anna@example.com',
+      limit: 20,
+    });
+    const secondResult = await loadLearnerProfileScores(scorePort, {
+      userName: '',
+      userEmail: 'anna@example.com',
+      limit: 20,
+    });
+
+    expect(filterMock).toHaveBeenCalledTimes(1);
+    expect(secondResult).toEqual(firstResult);
+  });
 });
 
 describe('loadScopedKangurScores', () => {
+  beforeEach(() => {
+    clearKangurScopedScoresCache();
+  });
+
   it('returns recent global scores when fallback mode is enabled and no learner identity is provided', async () => {
     const scorePort = createScorePort();
     const filterMock = vi.mocked(scorePort.filter);
@@ -128,5 +158,47 @@ describe('loadScopedKangurScores', () => {
     expect(scorePort.filter).toHaveBeenCalledTimes(1);
     expect(scorePort.filter).toHaveBeenCalledWith({}, '-created_date', 20);
     expect(result.map((score) => score.id)).toEqual(['score-newer', 'score-older']);
+  });
+
+  it('reuses cached fallback score lists across repeated reads for the same query', async () => {
+    const scorePort = createScorePort();
+    const filterMock = vi.mocked(scorePort.filter);
+    filterMock.mockResolvedValue([
+      createScore({ id: 'score-older', created_date: '2026-03-04T10:00:00.000Z' }),
+      createScore({ id: 'score-newer', created_date: '2026-03-06T15:00:00.000Z' }),
+    ]);
+
+    await loadScopedKangurScores(scorePort, {
+      fallbackToAll: true,
+      limit: 20,
+    });
+    await loadScopedKangurScores(scorePort, {
+      fallbackToAll: true,
+      limit: 20,
+    });
+
+    expect(filterMock).toHaveBeenCalledTimes(1);
+  });
+
+  it('returns a cloned cached score list synchronously when the query is still hot', async () => {
+    const scorePort = createScorePort();
+    const filterMock = vi.mocked(scorePort.filter);
+    filterMock.mockResolvedValue([
+      createScore({ id: 'score-older', created_date: '2026-03-04T10:00:00.000Z' }),
+      createScore({ id: 'score-newer', created_date: '2026-03-06T15:00:00.000Z' }),
+    ]);
+
+    const firstResult = await loadScopedKangurScores(scorePort, {
+      fallbackToAll: true,
+      limit: 20,
+    });
+    const cachedResult = peekCachedScopedKangurScores(scorePort, {
+      fallbackToAll: true,
+      limit: 20,
+    });
+
+    expect(cachedResult).toEqual(firstResult);
+    expect(cachedResult).not.toBe(firstResult);
+    expect(filterMock).toHaveBeenCalledTimes(1);
   });
 });

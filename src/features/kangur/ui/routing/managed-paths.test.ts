@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 import {
   canonicalizeKangurPublicAliasHref,
   canonicalizeKangurPublicAliasPathname,
+  resolveRouteAwareManagedKangurHref,
 } from '@/features/kangur/ui/routing/managed-paths';
 
 describe('managed-paths canonical Kangur alias helpers', () => {
@@ -30,5 +31,35 @@ describe('managed-paths canonical Kangur alias helpers', () => {
       '/en/lessons?focus=clock'
     );
     expect(canonicalizeKangurPublicAliasPathname('/games')).toBe('/games');
+  });
+
+  it('resolves same-origin absolute alias hrefs against the active public route locale', () => {
+    expect(
+      resolveRouteAwareManagedKangurHref({
+        href: 'https://kangur.local/en/kangur/profile?tab=stats#summary',
+        pathname: '/en/login',
+        currentOrigin: 'https://kangur.local',
+        canonicalizePublicAlias: true,
+      })
+    ).toBe('/en/profile?tab=stats#summary');
+  });
+
+  it('leaves external absolute hrefs unchanged while still localizing managed hrefs', () => {
+    expect(
+      resolveRouteAwareManagedKangurHref({
+        href: 'https://external.example/kangur/profile',
+        pathname: '/en/login',
+        currentOrigin: 'https://kangur.local',
+        canonicalizePublicAlias: true,
+      })
+    ).toBe('https://external.example/kangur/profile');
+    expect(
+      resolveRouteAwareManagedKangurHref({
+        href: '/profile?tab=stats',
+        pathname: '/en/login',
+        currentOrigin: 'https://kangur.local',
+        canonicalizePublicAlias: false,
+      })
+    ).toBe('/en/profile?tab=stats');
   });
 });

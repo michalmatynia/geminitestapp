@@ -3,8 +3,8 @@
 import { useTranslations } from 'next-intl';
 
 import plMessages from '@/i18n/messages/pl.json';
+import { getKangurLessonStageGameRuntimeSpec } from '@/features/kangur/games/lesson-stage-runtime-specs';
 import type { LessonSlide } from '@/features/kangur/ui/components/LessonSlideSection';
-import LogicalClassificationGame from '@/features/kangur/ui/components/LogicalClassificationGame';
 import {
   ClassificationCategoryBinsAnimation,
   ClassificationCriteriaAxesAnimation,
@@ -46,6 +46,10 @@ const createStaticTranslator =
 
     return typeof resolved === 'string' ? resolved : key;
   };
+
+const LOGICAL_CLASSIFICATION_RUNTIME = getKangurLessonStageGameRuntimeSpec(
+  'logical_classification_lab_lesson_stage'
+);
 
 const buildLogicalClassificationSlides = (
   translate: LessonTranslate
@@ -638,7 +642,7 @@ export default function LogicalClassificationLesson(): React.JSX.Element {
             shellTestId: 'logical-classification-game-shell',
             title: translate('game.stageTitle'),
           },
-          render: ({ onFinish }) => <LogicalClassificationGame onFinish={onFinish} />,
+          runtime: LOGICAL_CLASSIFICATION_RUNTIME,
         },
       ]}
     />

@@ -62,6 +62,7 @@ function ParentDashboardResolvedContent({
   const [reservedTabPanelHeight, setReservedTabPanelHeight] = useState<number | null>(null);
   const activeLearnerId = activeLearner?.id?.trim() || null;
   const hasActiveLearner = Boolean(activeLearnerId);
+  const isAiTutorTabActive = canAccessDashboard && hasActiveLearner && activeTab === 'ai-tutor';
   const progressTabIds = getParentDashboardTabIds('progress');
   const assignmentsTabIds = getParentDashboardTabIds('assign');
   const monitoringTabIds = getParentDashboardTabIds('monitoring');
@@ -99,15 +100,17 @@ function ParentDashboardResolvedContent({
     ) : null;
 
   useKangurAiTutorSessionSync({
-    learnerId: activeLearnerId,
-    sessionContext: {
-      surface: 'parent_dashboard',
-      contentId: dashboardContentId,
-      title: dashboardTitle,
-      description: canAccessDashboard
-        ? translations('page.sessionDescriptionAuthenticated')
-        : translations('page.sessionDescriptionRestricted'),
-    },
+    learnerId: isAiTutorTabActive ? activeLearnerId : null,
+    sessionContext: isAiTutorTabActive
+      ? {
+          surface: 'parent_dashboard',
+          contentId: dashboardContentId,
+          title: dashboardTitle,
+          description: canAccessDashboard
+            ? translations('page.sessionDescriptionAuthenticated')
+            : translations('page.sessionDescriptionRestricted'),
+        }
+      : null,
   });
   useKangurTutorAnchor({
     id: 'kangur-parent-dashboard-guest-hero',

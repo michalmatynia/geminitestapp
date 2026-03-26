@@ -174,6 +174,7 @@ type KangurParentDashboardRuntimeContextValue = KangurParentDashboardRuntimeStat
 const kangurPlatform = getKangurPlatform();
 const ACTION_TIMEOUT_MS = 12_000;
 const REFRESH_TIMEOUT_MS = 8_000;
+const PRIMARY_DATA_LOAD_DEFER_MS = 0;
 const SCORES_LOAD_DEFER_MS = 200;
 
 async function withTimeout<T>(
@@ -250,19 +251,36 @@ export function KangurParentDashboardRuntimeProvider({
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [feedback, setFeedback] = useState<string | null>(null);
+  const [isPrimaryQueriesReady, setIsPrimaryQueriesReady] = useState(false);
 
   const canManageLearners = Boolean(user?.canManageLearners);
   const canAccessDashboard = isAuthenticated && canManageLearners;
   const learners = user?.learners ?? [];
   const activeLearner = user?.activeLearner ?? null;
   const activeLearnerId = activeLearner?.id ?? null;
+  useEffect(() => {
+    if (!canAccessDashboard || !activeLearnerId) {
+      setIsPrimaryQueriesReady(false);
+      return;
+    }
+
+    setIsPrimaryQueriesReady(false);
+    const timeoutId = setTimeout(() => {
+      setIsPrimaryQueriesReady(true);
+    }, PRIMARY_DATA_LOAD_DEFER_MS);
+
+    return () => {
+      clearTimeout(timeoutId);
+    };
+  }, [activeLearnerId, canAccessDashboard]);
+
   const lessonsQuery = useKangurLessons({
     ageGroup,
-    enabled: canAccessDashboard && Boolean(activeLearnerId),
+    enabled: canAccessDashboard && Boolean(activeLearnerId) && isPrimaryQueriesReady,
     enabledOnly: true,
   });
   const assignmentsQuery = useKangurAssignments({
-    enabled: canAccessDashboard && Boolean(activeLearnerId),
+    enabled: canAccessDashboard && Boolean(activeLearnerId) && isPrimaryQueriesReady,
     query: {
       includeArchived: false,
     },
@@ -283,9 +301,10 @@ export function KangurParentDashboardRuntimeProvider({
   const scoreViewerName = activeLearner?.displayName?.trim() || user?.full_name?.trim() || null;
   const scoreViewerEmail = user?.email?.trim() || null;
   const [isScoresQueryReady, setIsScoresQueryReady] = useState(false);
+  const shouldLoadScores = canAccessDashboard && Boolean(activeLearnerId) && activeTab === 'progress';
 
   useEffect(() => {
-    if (!canAccessDashboard || !activeLearnerId) {
+    if (!shouldLoadScores) {
       setIsScoresQueryReady(false);
       return;
     }
@@ -298,25 +317,18 @@ export function KangurParentDashboardRuntimeProvider({
     return () => {
       clearTimeout(timeoutId);
     };
-  }, [activeLearnerId, canAccessDashboard]);
+  }, [shouldLoadScores]);
 
   const scoresQuery = useKangurParentDashboardScores({
     createdBy: scoreViewerEmail,
-    enabled: canAccessDashboard && Boolean(activeLearnerId) && isScoresQueryReady,
+    enabled: shouldLoadScores && isScoresQueryReady,
     learnerId: activeLearnerId,
     playerName: scoreViewerName,
     subject,
   });
-  const scores =
-    canAccessDashboard && activeLearnerId && isScoresQueryReady ? scoresQuery.scores : [];
-  const scoresError =
-    canAccessDashboard && activeLearnerId && isScoresQueryReady
-      ? scoresQuery.scoresError
-      : null;
-  const isLoadingScores =
-    canAccessDashboard && activeLearnerId
-      ? !isScoresQueryReady || scoresQuery.isLoadingScores
-      : false;
+  const scores = shouldLoadScores && isScoresQueryReady ? scoresQuery.scores : [];
+  const scoresError = shouldLoadScores && isScoresQueryReady ? scoresQuery.scoresError : null;
+  const isLoadingScores = shouldLoadScores ? !isScoresQueryReady || scoresQuery.isLoadingScores : false;
   const viewerRoleLabel =
     user?.role === 'admin'
       ? translations('viewerRole.teacher')

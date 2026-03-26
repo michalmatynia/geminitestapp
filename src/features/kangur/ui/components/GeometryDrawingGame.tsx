@@ -22,16 +22,19 @@ import {
   type KangurMiniGameTranslate,
 } from '@/features/kangur/ui/constants/mini-game-i18n';
 import { KangurDrawingActionRow } from '@/features/kangur/ui/components/drawing-engine/KangurDrawingActionRow';
-import { KangurDrawingHistoryActions } from '@/features/kangur/ui/components/drawing-engine/KangurDrawingHistoryActions';
 import {
   KangurDrawingEmptyStateOverlay,
   KangurDrawingKeyboardCursorOverlay,
 } from '@/features/kangur/ui/components/drawing-engine/KangurDrawingOverlays';
 import { KangurDrawingPracticeBoard } from '@/features/kangur/ui/components/drawing-engine/KangurDrawingPracticeBoard';
 import { KangurDrawingStatusRegions } from '@/features/kangur/ui/components/drawing-engine/KangurDrawingStatusRegions';
+import { KANGUR_DRAWING_HISTORY_ARIA_SHORTCUTS } from '@/features/kangur/ui/components/drawing-engine/keyboard-shortcuts';
 import { flattenKangurStrokePoints } from '@/features/kangur/ui/components/drawing-engine/stroke-metrics';
+import { useKangurDrawingDraftStorage } from '@/features/kangur/ui/components/drawing-engine/useKangurDrawingDraftStorage';
 import { useKangurKeyboardPointDrawing } from '@/features/kangur/ui/components/drawing-engine/useKangurKeyboardPointDrawing';
+import { useKangurManagedDrawingActions } from '@/features/kangur/ui/components/drawing-engine/useKangurManagedDrawingActions';
 import { useKangurPointCanvasDrawing } from '@/features/kangur/ui/components/drawing-engine/useKangurPointCanvasDrawing';
+import { KangurDrawingUtilityActions } from '@/features/kangur/ui/components/drawing-engine/KangurDrawingUtilityActions';
 import {
   KangurButton,
   KangurDisplayEmoji,
@@ -347,6 +350,13 @@ export default function GeometryDrawingGame({
   const currentRound = rounds[roundIndex];
   const totalRounds = rounds.length;
   const resolvedActivityKey = activityKey ?? `training:${operation}:${difficulty}`;
+  const {
+    clearDraftSnapshot,
+    draftSnapshot,
+    setDraftSnapshot,
+  } = useKangurDrawingDraftStorage(
+    currentRound ? `geometry-drawing:${resolvedActivityKey}:${currentRound.id}` : null
+  );
   const shouldShowDifficultySelector =
     showDifficultySelector ?? (customRounds.length === 0);
   const resolvedDifficultyLabel = shouldShowDifficultySelector
@@ -365,9 +375,11 @@ export default function GeometryDrawingGame({
     canRedo,
     canUndo,
     clearStrokes,
+    exportDataUrl,
     handlePointerDown,
     handlePointerMove,
     handlePointerUp,
+    hasDrawableContent,
     isPointerDrawing,
     redoLastStroke,
     setStrokes,
@@ -377,9 +389,11 @@ export default function GeometryDrawingGame({
     canvasRef,
     baseLayerCacheKey: 'geometry-drawing:grid:v1',
     enabled: !done && feedback?.kind !== 'success' && feedback?.kind !== 'error',
+    initialSerializedSnapshot: draftSnapshot,
     logicalHeight: CANVAS_HEIGHT,
     logicalWidth: CANVAS_WIDTH,
     minPointDistance,
+    onSerializedSnapshotChange: setDraftSnapshot,
     onPointerStart: () => {
       if (feedback?.kind === 'info') {
         setFeedback(null);
@@ -435,12 +449,13 @@ export default function GeometryDrawingGame({
   );
 
   const clearBoardState = useCallback((): void => {
+    clearDraftSnapshot();
     clearStrokes();
     setFeedback(null);
-  }, [clearStrokes]);
+  }, [clearDraftSnapshot, clearStrokes]);
 
   const {
-    handleCanvasKeyDown,
+    handleCanvasKeyDown: handleKeyboardCanvasKeyDown,
     keyboardCursor,
     keyboardDrawing,
     keyboardStatus,
@@ -464,20 +479,44 @@ export default function GeometryDrawingGame({
     width: CANVAS_WIDTH,
   });
 
-  const clearDrawing = useCallback((): void => {
-    clearBoardState();
-    resetKeyboard(keyboardBoardClearedStatus);
-  }, [clearBoardState, keyboardBoardClearedStatus, resetKeyboard]);
+  const exportFileName = useMemo(() => {
+    const resolvedRoundId = currentRound?.id ?? 'drawing';
+    const normalizedActivityKey = resolvedActivityKey
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-+|-+$/g, '');
 
-  const undoDrawing = useCallback((): void => {
-    undoLastStroke();
-    setFeedback(null);
-  }, [undoLastStroke]);
+    return `${normalizedActivityKey || 'geometry-drawing'}-${resolvedRoundId}.png`;
+  }, [currentRound?.id, resolvedActivityKey]);
 
-  const redoDrawing = useCallback((): void => {
-    redoLastStroke();
-    setFeedback(null);
-  }, [redoLastStroke]);
+  const {
+    clearDrawing,
+    exportDrawing,
+    handleCanvasKeyDown,
+    redoDrawing,
+    undoDrawing,
+  } = useKangurManagedDrawingActions<HTMLCanvasElement>({
+    canExport: hasDrawableContent,
+    canRedo,
+    canUndo,
+    clearDraftSnapshot,
+    clearStrokes,
+    exportDataUrl,
+    exportFilename: exportFileName,
+    onAfterClear: () => {
+      setFeedback(null);
+      resetKeyboard(keyboardBoardClearedStatus);
+    },
+    onAfterRedo: () => {
+      setFeedback(null);
+    },
+    onAfterUndo: () => {
+      setFeedback(null);
+    },
+    onUnhandledKeyDown: handleKeyboardCanvasKeyDown,
+    redoLastStroke,
+    undoLastStroke,
+  });
 
   const finishGame = useCallback(
     (finalScore: number): void => {
@@ -780,10 +819,20 @@ export default function GeometryDrawingGame({
                       fallbackCopy.clear
                     )}
                     feedback={feedback}
-                    historyActions={
-                      <KangurDrawingHistoryActions
-                        buttonClassName='w-full sm:flex-1'
+                    utilityActions={
+                      <KangurDrawingUtilityActions
+                        exportButtonClassName='w-full'
+                        exportClassName='w-full sm:flex-1'
+                        exportDisabled={!hasDrawableContent}
+                        exportLabel={translateWithFallback(
+                          'geometryDrawing.inRound.export',
+                          'Export PNG'
+                        )}
+                        exportTestId='geometry-drawing-export'
+                        historyButtonClassName='w-full sm:flex-1'
+                        historyClassName='w-full sm:flex-1'
                         isCoarsePointer={isCoarsePointer}
+                        onExport={exportDrawing}
                         onRedo={redoDrawing}
                         onUndo={undoDrawing}
                         redoDisabled={isResultLocked || !canRedo}
@@ -829,7 +878,7 @@ export default function GeometryDrawingGame({
                   </>
                 }
                 ariaDescribedBy='geometry-drawing-hint geometry-drawing-input-help'
-                ariaKeyShortcuts='Enter Space ArrowUp ArrowDown ArrowLeft ArrowRight Escape'
+                ariaKeyShortcuts={`Enter Space ArrowUp ArrowDown ArrowLeft ArrowRight Escape ${KANGUR_DRAWING_HISTORY_ARIA_SHORTCUTS}`}
                 ariaLabel={translateWithFallback(
                   'geometryDrawing.inRound.canvasAria',
                   fallbackCopy.canvasAria,

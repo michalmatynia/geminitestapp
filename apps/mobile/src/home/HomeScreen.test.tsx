@@ -375,25 +375,21 @@ describe('HomeScreen', () => {
     expect(useKangurMobileHomeDuelsInvitesMock).not.toHaveBeenCalled();
   });
 
-  it('shows the combined lower-home placeholder until deferred home panels are ready', () => {
+  it('shows the combined startup placeholder until deferred top and lower home panels are ready', () => {
     useHomeScreenDeferredPanelsMock.mockReturnValue(false);
 
     renderHomeScreen();
 
-    expect(screen.getByText('Szybki dostęp')).toBeTruthy();
+    expect(screen.getByText('Start w Kangurze')).toBeTruthy();
     expect(
       screen.getByText(
-        'Przygotowujemy status konta, logowanie i kolejne ścieżki nawigacji na następny etap ekranu startowego.',
-      ),
-    ).toBeTruthy();
-    expect(screen.getByText('Kolejne sekcje startowe')).toBeTruthy();
-    expect(
-      screen.getByText(
-        'Przygotowujemy pojedynki, fokus treningowy i kolejne zapisane sekcje na następne etapy ekranu startowego.',
+        'Przygotowujemy wyniki, lekcje, status konta, nawigację, pojedynki i kolejne zapisane sekcje na następne etapy ekranu startowego.',
       ),
     ).toBeTruthy();
     expect(screen.queryByText('Konto i połączenie')).toBeNull();
     expect(screen.queryByText('Nawigacja')).toBeNull();
+    expect(screen.queryByText('Szybki dostęp')).toBeNull();
+    expect(screen.queryByText('Kolejne sekcje startowe')).toBeNull();
     expect(
       screen.queryByText(
         'Po zalogowaniu zobaczysz tutaj prywatne zaproszenia do pojedynków od innych uczniów.',
@@ -401,6 +397,16 @@ describe('HomeScreen', () => {
     ).toBeNull();
     expect(screen.queryByText('Fokus treningowy')).toBeNull();
     expect(screen.queryByText('Więcej danych startowych')).toBeNull();
+    expect(
+      screen.queryByText(
+        'Przygotowujemy wyniki, lekcje i szybkie skróty na następny etap ekranu startowego.',
+      ),
+    ).toBeNull();
+    expect(
+      screen.queryByText(
+        'Przygotowujemy status konta, nawigację, pojedynki, fokus treningowy i kolejne zapisane sekcje na następne etapy ekranu startowego.',
+      ),
+    ).toBeNull();
     expect(useKangurMobileHomeDuelsInvitesMock).not.toHaveBeenCalled();
     expect(useKangurMobileHomeDuelsPresenceMock).not.toHaveBeenCalled();
     expect(useKangurMobileHomeDuelsRematchesMock).not.toHaveBeenCalled();

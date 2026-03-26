@@ -65,7 +65,7 @@ export type KangurGameMechanic = z.infer<typeof kangurGameMechanicSchema>;
 export const kangurGameInteractionModeSchema = z.enum(['drag', 'tap', 'draw', 'mixed']);
 export type KangurGameInteractionMode = z.infer<typeof kangurGameInteractionModeSchema>;
 
-export const kangurLaunchableGameScreenSchema = z.enum([
+export const KANGUR_LAUNCHABLE_GAME_SCREENS = [
   'calendar_quiz',
   'geometry_quiz',
   'clock_quiz',
@@ -78,8 +78,266 @@ export const kangurLaunchableGameScreenSchema = z.enum([
   'logical_analogies_quiz',
   'english_sentence_quiz',
   'english_parts_of_speech_quiz',
-]);
+ ] as const;
+
+export const kangurLaunchableGameScreenSchema = z.enum(KANGUR_LAUNCHABLE_GAME_SCREENS);
 export type KangurLaunchableGameScreen = z.infer<typeof kangurLaunchableGameScreenSchema>;
+
+export const KANGUR_LAUNCHABLE_GAME_STAGE_ACCENTS = [
+  'amber',
+  'emerald',
+  'indigo',
+  'rose',
+  'sky',
+  'teal',
+  'violet',
+] as const;
+
+export const kangurLaunchableGameStageAccentSchema = z.enum(
+  KANGUR_LAUNCHABLE_GAME_STAGE_ACCENTS
+);
+export type KangurLaunchableGameStageAccent = z.infer<
+  typeof kangurLaunchableGameStageAccentSchema
+>;
+
+export const KANGUR_LAUNCHABLE_GAME_RUNTIME_RENDERER_IDS = [
+  'adding_ball_game',
+  'calendar_training_game',
+  'clock_training_game',
+  'division_game',
+  'english_parts_of_speech_game',
+  'english_sentence_structure_game',
+  'geometry_drawing_game',
+  'logical_analogies_relation_game',
+  'logical_classification_game',
+  'logical_patterns_workshop_game',
+  'multiplication_game',
+  'subtracting_game',
+] as const;
+
+export const kangurLaunchableGameRuntimeRendererIdSchema = z.enum(
+  KANGUR_LAUNCHABLE_GAME_RUNTIME_RENDERER_IDS
+);
+export type KangurLaunchableGameRuntimeRendererId = z.infer<
+  typeof kangurLaunchableGameRuntimeRendererIdSchema
+>;
+
+export const KANGUR_LAUNCHABLE_GAME_RUNTIME_FINISH_MODES = [
+  'default',
+  'play_variant',
+  'return_to_game_home',
+] as const;
+
+export const kangurLaunchableGameRuntimeFinishModeSchema = z.enum(
+  KANGUR_LAUNCHABLE_GAME_RUNTIME_FINISH_MODES
+);
+export type KangurLaunchableGameRuntimeFinishMode = z.infer<
+  typeof kangurLaunchableGameRuntimeFinishModeSchema
+>;
+
+export const KANGUR_LAUNCHABLE_GAME_RUNTIME_FINISH_LABEL_PROPS = [
+  'none',
+  'finishLabelVariant',
+  'finishLabel',
+  'completionPrimaryActionLabel',
+] as const;
+
+export const kangurLaunchableGameRuntimeFinishLabelPropSchema = z.enum(
+  KANGUR_LAUNCHABLE_GAME_RUNTIME_FINISH_LABEL_PROPS
+);
+export type KangurLaunchableGameRuntimeFinishLabelProp = z.infer<
+  typeof kangurLaunchableGameRuntimeFinishLabelPropSchema
+>;
+
+export const kangurLaunchableGameStageConfigSchema = z.object({
+  accent: kangurLaunchableGameStageAccentSchema,
+  backScreen: nonEmptyTrimmedString.max(120).optional(),
+  description: z.string().trim().min(1).max(320).optional(),
+  icon: z.string().trim().min(1).max(12),
+  shellTestId: nonEmptyTrimmedString.max(160),
+  title: nonEmptyTrimmedString.max(160).optional(),
+});
+export type KangurLaunchableGameStageConfig = z.infer<
+  typeof kangurLaunchableGameStageConfigSchema
+>;
+
+export const kangurLaunchableGameRuntimeSpecSchema = z.object({
+  kind: z.literal('launchable_game_screen'),
+  screen: kangurLaunchableGameScreenSchema,
+  engineId: kangurGameEngineIdSchema.optional(),
+  rendererId: kangurLaunchableGameRuntimeRendererIdSchema,
+  finishMode: kangurLaunchableGameRuntimeFinishModeSchema.default('default'),
+  finishLabelProp: kangurLaunchableGameRuntimeFinishLabelPropSchema.default('none'),
+  className: z
+    .string()
+    .trim()
+    .min(1)
+    .max(160)
+    .default('w-full flex flex-col items-center'),
+  stage: kangurLaunchableGameStageConfigSchema,
+});
+export type KangurLaunchableGameRuntimeSpec = z.infer<
+  typeof kangurLaunchableGameRuntimeSpecSchema
+>;
+
+export const KANGUR_LESSON_ACTIVITY_RUNTIME_RENDERER_IDS = [
+  'adding_ball_game',
+  'adding_synthesis_game',
+  'calendar_interactive_game',
+  'clock_training_game',
+  'division_game',
+  'geometry_drawing_game',
+  'multiplication_array_game',
+  'multiplication_game',
+  'subtracting_garden_game',
+] as const;
+
+export const kangurLessonActivityRuntimeRendererIdSchema = z.enum(
+  KANGUR_LESSON_ACTIVITY_RUNTIME_RENDERER_IDS
+);
+export type KangurLessonActivityRuntimeRendererId = z.infer<
+  typeof kangurLessonActivityRuntimeRendererIdSchema
+>;
+
+export const kangurLessonActivityRuntimeSpecSchema = z.object({
+  kind: z.literal('lesson_activity'),
+  activityId: kangurLessonActivityIdSchema,
+  engineId: kangurGameEngineIdSchema.optional(),
+  rendererId: kangurLessonActivityRuntimeRendererIdSchema,
+});
+export type KangurLessonActivityRuntimeSpec = z.infer<
+  typeof kangurLessonActivityRuntimeSpecSchema
+>;
+
+export const KANGUR_LESSON_STAGE_GAME_RUNTIME_IDS = [
+  'adding_ball_lesson_stage',
+  'adding_synthesis_lesson_stage',
+  'agentic_approval_gate_lesson_stage',
+  'agentic_prompt_trim_lesson_stage',
+  'agentic_reasoning_router_lesson_stage',
+  'art_shape_rotation_puzzle_lesson_stage',
+  'division_groups_lesson_stage',
+  'english_subject_verb_agreement_lesson_stage',
+  'english_adjectives_scene_lesson_stage',
+  'english_adverbs_frequency_routine_lesson_stage',
+  'english_articles_drag_lesson_stage',
+  'english_prepositions_lesson_stage',
+  'english_prepositions_order_lesson_stage',
+  'english_prepositions_sort_lesson_stage',
+  'english_sentence_builder_lesson_stage',
+  'geometry_perimeter_trainer_lesson_stage',
+  'geometry_basics_workshop_lesson_stage',
+  'geometry_shape_drawing_lesson_stage',
+  'geometry_symmetry_studio_lesson_stage',
+  'english_parts_of_speech_sort_lesson_stage',
+  'english_pronouns_warmup_lesson_stage',
+  'logical_analogies_relations_lesson_stage',
+  'logical_classification_lab_lesson_stage',
+  'logical_patterns_workshop_lesson_stage',
+  'multiplication_array_lesson_stage',
+  'music_melody_repeat_lesson_stage',
+  'music_piano_roll_free_play_lesson_stage',
+  'subtracting_garden_lesson_stage',
+] as const;
+
+export const kangurLessonStageGameRuntimeIdSchema = z.enum(
+  KANGUR_LESSON_STAGE_GAME_RUNTIME_IDS
+);
+export type KangurLessonStageGameRuntimeId = z.infer<
+  typeof kangurLessonStageGameRuntimeIdSchema
+>;
+
+export const KANGUR_LESSON_STAGE_GAME_RUNTIME_RENDERER_IDS = [
+  'adding_ball_game',
+  'adding_synthesis_game',
+  'agentic_approval_gate_game',
+  'agentic_prompt_trim_game',
+  'agentic_reasoning_router_game',
+  'art_shapes_rotation_gap_game',
+  'division_groups_game',
+  'english_subject_verb_agreement_game',
+  'english_adjectives_scene_game',
+  'english_adverbs_frequency_routine_game',
+  'english_articles_drag_drop_game',
+  'english_parts_of_speech_game',
+  'english_prepositions_game',
+  'english_prepositions_order_game',
+  'english_prepositions_sort_game',
+  'english_sentence_structure_game',
+  'english_pronouns_warmup_game',
+  'geometry_perimeter_drawing_game',
+  'geometry_basics_workshop_game',
+  'geometry_drawing_game',
+  'geometry_symmetry_game',
+  'logical_analogies_relation_game',
+  'logical_classification_game',
+  'logical_patterns_workshop_game',
+  'multiplication_array_game',
+  'music_melody_repeat_game',
+  'music_piano_roll_free_play_game',
+  'subtracting_garden_game',
+] as const;
+
+export const kangurLessonStageGameRuntimeRendererIdSchema = z.enum(
+  KANGUR_LESSON_STAGE_GAME_RUNTIME_RENDERER_IDS
+);
+export type KangurLessonStageGameRuntimeRendererId = z.infer<
+  typeof kangurLessonStageGameRuntimeRendererIdSchema
+>;
+
+const KANGUR_GEOMETRY_DRAWING_SHAPE_IDS = [
+  'circle',
+  'oval',
+  'triangle',
+  'diamond',
+  'square',
+  'rectangle',
+  'pentagon',
+  'hexagon',
+] as const;
+
+const kangurGeometryDrawingShapeIdSchema = z.enum(KANGUR_GEOMETRY_DRAWING_SHAPE_IDS);
+export type KangurGeometryDrawingShapeId = z.infer<
+  typeof kangurGeometryDrawingShapeIdSchema
+>;
+
+const KANGUR_LESSON_STAGE_GAME_FINISH_LABEL_VARIANTS = [
+  'lesson',
+  'topics',
+  'play',
+  'done',
+] as const;
+
+const kangurLessonStageGameFinishLabelVariantSchema = z.enum(
+  KANGUR_LESSON_STAGE_GAME_FINISH_LABEL_VARIANTS
+);
+
+export const kangurLessonStageGameRuntimeRendererPropsSchema = z
+  .object({
+    activityKey: nonEmptyTrimmedString.max(120).optional(),
+    difficultyLabelOverride: nonEmptyTrimmedString.max(120).optional(),
+    finishLabel: nonEmptyTrimmedString.max(120).optional(),
+    finishLabelVariant: kangurLessonStageGameFinishLabelVariantSchema.optional(),
+    lessonKey: nonEmptyTrimmedString.max(120).optional(),
+    operation: nonEmptyTrimmedString.max(80).optional(),
+    shapeIds: z.array(kangurGeometryDrawingShapeIdSchema).min(1).max(12).optional(),
+    showDifficultySelector: z.boolean().optional(),
+  })
+  .strict();
+export type KangurLessonStageGameRuntimeRendererProps = z.infer<
+  typeof kangurLessonStageGameRuntimeRendererPropsSchema
+>;
+
+export const kangurLessonStageGameRuntimeSpecSchema = z.object({
+  kind: z.literal('lesson_stage_game'),
+  runtimeId: kangurLessonStageGameRuntimeIdSchema,
+  engineId: kangurGameEngineIdSchema.optional(),
+  rendererId: kangurLessonStageGameRuntimeRendererIdSchema,
+  rendererProps: kangurLessonStageGameRuntimeRendererPropsSchema.optional(),
+});
+export type KangurLessonStageGameRuntimeSpec = z.infer<
+  typeof kangurLessonStageGameRuntimeSpecSchema
+>;
 
 export const KANGUR_GAME_VARIANT_SURFACES = [
   'lesson_inline',
@@ -99,6 +357,9 @@ export const kangurGameVariantSchema = z.object({
   surface: kangurGameVariantSurfaceSchema,
   status: kangurGameStatusSchema.default('active'),
   legacyActivityId: kangurLessonActivityIdSchema.optional(),
+  lessonActivityRuntimeId: kangurLessonActivityIdSchema.optional(),
+  lessonStageRuntimeId: kangurLessonStageGameRuntimeIdSchema.optional(),
+  launchableRuntimeId: kangurLaunchableGameScreenSchema.optional(),
   legacyScreenId: z.string().trim().min(1).max(120).optional(),
   sortOrder: z.number().int().min(0).max(1_000_000).default(0),
 });
@@ -171,9 +432,12 @@ export const kangurGameCatalogEntrySchema = z.object({
   engine: kangurGameEngineDefinitionSchema.nullable(),
   defaultVariant: kangurGameVariantSchema.nullable(),
   lessonVariant: kangurGameVariantSchema.nullable(),
+  lessonActivityRuntime: kangurLessonActivityRuntimeSpecSchema.nullable(),
+  lessonStageRuntime: kangurLessonStageGameRuntimeSpecSchema.nullable(),
   libraryPreviewVariant: kangurGameVariantSchema.nullable(),
   gameScreenVariant: kangurGameVariantSchema.nullable(),
   launchableScreen: optionalLegacyScreenSchema,
+  launchableRuntime: kangurLaunchableGameRuntimeSpecSchema.nullable(),
 });
 export type KangurGameCatalogEntryDto = z.infer<typeof kangurGameCatalogEntrySchema>;
 
@@ -200,7 +464,10 @@ export const kangurGameVariantCatalogEntrySchema = z.object({
   game: kangurGameDefinitionSchema,
   engine: kangurGameEngineDefinitionSchema.nullable(),
   variant: kangurGameVariantSchema,
+  lessonActivityRuntime: kangurLessonActivityRuntimeSpecSchema.nullable(),
+  lessonStageRuntime: kangurLessonStageGameRuntimeSpecSchema.nullable(),
   launchableScreen: optionalLegacyScreenSchema,
+  launchableRuntime: kangurLaunchableGameRuntimeSpecSchema.nullable(),
   isDefaultVariant: z.boolean(),
   isLessonVariant: z.boolean(),
   isLibraryPreviewVariant: z.boolean(),

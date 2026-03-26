@@ -26,6 +26,7 @@ export type SeedGameInput = Pick<
   activityIds?: KangurGameDefinition['activityIds'];
   description?: string;
   legacyScreenIds?: KangurGameDefinition['legacyScreenIds'];
+  lessonStageRuntimeId?: KangurGameVariant['lessonStageRuntimeId'];
   lessonVariantSurface?: SeedLessonVariantSurface;
   status?: KangurGameDefinition['status'];
   surfaces?: KangurGameDefinition['surfaces'];
@@ -43,6 +44,7 @@ export const createVariant = (
 export const createSharedLibraryGame = ({
   activityIds = [],
   legacyScreenIds = [],
+  lessonStageRuntimeId,
   surfaces = ['lesson', 'library'],
   lessonVariantSurface = 'lesson_inline',
   status = 'active',
@@ -70,6 +72,7 @@ export const createSharedLibraryGame = ({
           ? `Stage variant for ${input.title}, shared between lesson flows and the games library.`
           : `Inline lesson variant for ${input.title}, exposed through the shared games library.`,
         surface: lessonVariantSurface,
+        ...(isLessonStage && lessonStageRuntimeId ? { lessonStageRuntimeId } : {}),
       }),
       createVariant({
         id: `${input.id}.library-preview`,

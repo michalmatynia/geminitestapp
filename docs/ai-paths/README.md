@@ -1,6 +1,6 @@
 ---
 owner: 'AI Paths Team'
-last_reviewed: '2026-03-09'
+last_reviewed: '2026-03-26'
 status: 'active'
 doc_type: 'index'
 scope: 'feature:ai-paths'
@@ -9,14 +9,16 @@ canonical: true
 
 # AI Paths Folder Index
 
-This directory holds AI Paths feature-specific deep references, generated
-artifacts, semantic grammar docs, manifests, catalogs, and dated plans.
+This directory holds the maintained AI Paths documentation hub plus deeper
+feature references, generated artifacts, semantic grammar docs, manifests,
+catalogs, and dated plans.
 
 ## Canonical Entry Points
 
 - High-level overview: [`./overview.md`](./overview.md)
 - Extended reference: [`./reference.md`](./reference.md)
 - Semantic grammar hub: [`./semantic-grammar/README.md`](./semantic-grammar/README.md)
+- Resume vs handoff operator policy: [`../platform/ai-paths-resume-vs-handoff.md`](../platform/ai-paths-resume-vs-handoff.md)
 
 ## Curated Deep Entry Points
 
@@ -36,10 +38,17 @@ artifacts, semantic grammar docs, manifests, catalogs, and dated plans.
 - Playwright node reference: [`./playwright-node.md`](./playwright-node.md)
 - Tooltip schema: [`./tooltip-schema-v1.md`](./tooltip-schema-v1.md)
 
+## Active Validation And Generation Entry Points
+
+- Canonical validation lane: `npm run ai-paths:check:canonical`
+- Node docs verify lane: `npm run docs:ai-paths:node-docs:verify`
+- Tooltip coverage check: `npm run docs:ai-paths:tooltip:check`
+- Semantic grammar check: `npm run docs:ai-paths:semantic:check`
+
 ## Structural Rule
 
-- Root-level AI Paths docs now act only as compatibility stubs and should not
-  be treated as canonical entrypoints.
+- `README.md`, `overview.md`, and `reference.md` are the maintained canonical
+  hub docs for AI Paths.
 - Put feature-specific deep docs, plans, generated artifacts, and references in
   this folder rather than creating new root-level AI Paths docs.
 - This hub is intentionally curated, not a full listing of every dated artifact

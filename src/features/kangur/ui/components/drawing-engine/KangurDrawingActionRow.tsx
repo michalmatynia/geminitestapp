@@ -15,13 +15,13 @@ type KangurDrawingActionRowProps = {
   clearLabel: string;
   clearTestId?: string;
   feedback: KangurMiniGameInformationalFeedback | null;
-  historyActions?: ReactNode;
   isCoarsePointer?: boolean;
   onClear: () => void;
   onPrimary: () => void;
   primaryDisabled?: boolean;
   primaryLabel: string;
   primaryTestId?: string;
+  utilityActions?: ReactNode;
 };
 
 const getPrimaryFeedbackClassName = (
@@ -40,17 +40,17 @@ export function KangurDrawingActionRow({
   clearLabel,
   clearTestId,
   feedback,
-  historyActions,
   isCoarsePointer = false,
   onClear,
   onPrimary,
   primaryDisabled = false,
   primaryLabel,
   primaryTestId,
+  utilityActions,
 }: KangurDrawingActionRowProps): React.JSX.Element {
   return (
     <KangurPanelRow className='w-full'>
-      {historyActions}
+      {utilityActions}
       <KangurButton
         className={cn('w-full sm:flex-1', isCoarsePointer && 'min-h-11')}
         data-testid={clearTestId}

@@ -3,8 +3,8 @@
 import { useMemo } from 'react';
 import { useTranslations } from 'next-intl';
 
+import { getKangurLessonStageGameRuntimeSpec } from '@/features/kangur/games/lesson-stage-runtime-specs';
 import { KangurUnifiedLesson } from '@/features/kangur/ui/lessons/lesson-components';
-import { ArtShapesRotationGapGame } from '@/features/kangur/ui/components/ArtShapesRotationGapGame';
 
 import {
   ART_SHAPES_ROTATION_PUZZLE_SECTION_ID,
@@ -12,6 +12,10 @@ import {
   buildArtShapesBasicSlides,
   type ArtShapesBasicLessonTranslate,
 } from './ArtShapesBasicLesson.data';
+
+const ART_SHAPES_ROTATION_RUNTIME = getKangurLessonStageGameRuntimeSpec(
+  'art_shape_rotation_puzzle_lesson_stage'
+);
 
 export default function ArtShapesBasicLesson(): JSX.Element {
   const translations = useTranslations('KangurStaticLessons.artShapesBasic');
@@ -46,7 +50,7 @@ export default function ArtShapesBasicLesson(): JSX.Element {
             maxWidthClassName: 'max-w-4xl',
             shellTestId: 'art-shapes-rotation-gap-game-shell',
           },
-          render: ({ onFinish }) => <ArtShapesRotationGapGame onFinish={onFinish} />,
+          runtime: ART_SHAPES_ROTATION_RUNTIME,
         },
       ]}
     />

@@ -278,6 +278,17 @@ describe('KangurFeaturePage', () => {
     });
   });
 
+  it('localizes the footer social updates link on root-mounted Kangur pages', () => {
+    window.history.replaceState({}, '', '/en');
+
+    renderWithIntl(<KangurFeaturePage basePath='/' />);
+
+    expect(screen.getByRole('link', { name: 'Aktualnosci spolecznosciowe' })).toHaveAttribute(
+      'href',
+      '/en/social-updates'
+    );
+  });
+
   it('supports direct competition route mounts', () => {
     renderWithIntl(<KangurFeaturePage slug={['competition']} basePath='/kangur' />);
 

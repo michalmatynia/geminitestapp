@@ -49,6 +49,7 @@ import {
   formatKangurAiTutorTemplate,
 } from '@/features/kangur/shared/contracts/kangur-ai-tutor-content';
 import {
+  clearKangurAiTutorContentClientCache,
   KangurAiTutorContentProvider,
   useActivateKangurAiTutorContent,
   useKangurAiTutorContent,
@@ -80,6 +81,7 @@ function ActivatorHarness(): React.JSX.Element {
 describe('KangurAiTutorContentContext', () => {
   beforeEach(() => {
     vi.resetAllMocks();
+    clearKangurAiTutorContentClientCache();
     authStateMock.mockReturnValue({ isAuthenticated: false });
   });
 
@@ -157,5 +159,39 @@ describe('KangurAiTutorContentContext', () => {
     );
     const options = withKangurClientErrorMock.mock.calls.at(-1)?.[2];
     expect(options?.shouldReport?.(new Error('database down'))).toBe(false);
+  });
+
+  it('reuses cached AI Tutor content across repeated provider mounts for the same locale', async () => {
+    apiGetMock.mockResolvedValue({
+      ...DEFAULT_KANGUR_AI_TUTOR_CONTENT,
+      navigation: {
+        ...DEFAULT_KANGUR_AI_TUTOR_CONTENT.navigation,
+        restoreTutorLabel: 'Cached Tutor Label',
+      },
+    });
+    authStateMock.mockReturnValue({ isAuthenticated: true });
+
+    const firstRender = render(
+      <KangurAiTutorContentProvider>
+        <ActivatorHarness />
+      </KangurAiTutorContentProvider>
+    );
+
+    await waitFor(() => {
+      expect(screen.getByTestId('restore-label')).toHaveTextContent('Cached Tutor Label');
+    });
+    firstRender.unmount();
+
+    render(
+      <KangurAiTutorContentProvider>
+        <ActivatorHarness />
+      </KangurAiTutorContentProvider>
+    );
+
+    await waitFor(() => {
+      expect(screen.getByTestId('restore-label')).toHaveTextContent('Cached Tutor Label');
+    });
+
+    expect(apiGetMock).toHaveBeenCalledTimes(1);
   });
 });

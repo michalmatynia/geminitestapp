@@ -1,6 +1,6 @@
 ---
 owner: 'Platform Team'
-last_reviewed: '2026-03-11'
+last_reviewed: '2026-03-26'
 status: 'active'
 doc_type: 'index'
 scope: 'cross-feature'
@@ -11,6 +11,10 @@ canonical: true
 
 This directory holds cross-feature documentation for build orchestration and
 shared toolchain surfaces.
+
+For repo-wide entrypoints, start with [`README.md`](../../README.md),
+[`docs/README.md`](../README.md), and [`GEMINI.md`](../../GEMINI.md). This hub
+is specifically for shared build, CI, and package-manager workflow guidance.
 
 ## Placement Rule
 

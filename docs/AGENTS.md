@@ -1,6 +1,6 @@
 ---
 owner: 'Platform Team'
-last_reviewed: '2026-03-17'
+last_reviewed: '2026-03-26'
 status: 'active'
 doc_type: 'agent-guide'
 scope: 'repo'
@@ -43,7 +43,10 @@ The following files are locked and must NOT be modified by AI agents without exp
 - `tsconfig.json` — TypeScript compiler config
 - `vercel.json` — Vercel deployment settings (if present)
 
-Key constraints: `--max-old-space-size=3584`, `experimental.cpus: 2`, conditional `output: 'standalone'` (disabled on Vercel), `typescript.ignoreBuildErrors: true`.
+Key constraints: `NODE_OPTIONS='--max-old-space-size=8192'` in the build
+script, conditional `output: 'standalone'` (disabled on Vercel and Turbopack
+builds), and `typescript.ignoreBuildErrors: true`. There is currently no
+explicit `experimental.cpus` override in `next.config.mjs`.
 
 If you need to change any of these files, stop and ask the user for permission first.
 
@@ -198,7 +201,6 @@ Top-level features live under `src/features/`, including:
 - `app-embeds`
 - `auth`
 - `case-resolver`
-- `case-resolver-capture`
 - `cms`
 - `data-import-export`
 - `database`
@@ -223,6 +225,14 @@ Top-level features live under `src/features/`, including:
 - `viewer3d`
 
 AI subsystems are primarily under `src/features/ai/`.
+
+### Active workspaces outside `src/`
+
+- `apps/mobile` is the active Expo Router native Kangur app
+- `apps/mobile-web` is reserved for a future dedicated React Native Web target
+- `packages/kangur-contracts`, `packages/kangur-core`,
+  `packages/kangur-api-client`, and `packages/kangur-platform` are active
+  shared workspaces
 
 ### Shared platform code
 
@@ -430,4 +440,4 @@ bun run check:bun:compat
 
 ## Last Updated
 
-Aligned to the scanned repo structure and documentation taxonomy on `2026-03-16`.
+Aligned to the scanned repo structure and documentation taxonomy on `2026-03-26`.

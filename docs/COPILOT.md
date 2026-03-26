@@ -1,6 +1,6 @@
 ---
 owner: 'Platform Team'
-last_reviewed: '2026-03-16'
+last_reviewed: '2026-03-26'
 status: 'active'
 doc_type: 'agent-guide'
 scope: 'repo'
@@ -39,6 +39,8 @@ the canonical repo references.
 - API routes live in `src/app/api/`.
 - Feature modules live in `src/features/`.
 - Shared platform code lives in `src/shared/`.
+- Native Kangur lives in `apps/mobile`.
+- Shared Kangur packages live in `packages/kangur-*`.
 - AI subsystems live primarily in `src/features/ai/` and `src/shared/lib/ai-*`.
 - Database routing lives in `src/shared/lib/db/`.
 - Queue infrastructure lives in `src/shared/lib/queue/` with startup in
@@ -113,4 +115,4 @@ prefer `fetchQueryV2`, `prefetchQueryV2`, and `ensureQueryDataV2` over raw
 
 ## Last Updated
 
-Aligned to the scanned repo structure on `2026-03-16`.
+Aligned to the scanned repo structure on `2026-03-26`.

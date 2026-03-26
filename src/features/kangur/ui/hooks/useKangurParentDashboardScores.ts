@@ -1,11 +1,14 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 
 import { withKangurClientError } from '@/features/kangur/observability/client';
 import { getKangurPlatform } from '@/features/kangur/services/kangur-platform';
 import { isKangurAuthStatusError } from '@/features/kangur/services/status-errors';
-import { loadScopedKangurScores } from '@/features/kangur/ui/services/learner-profile-scores';
+import {
+  loadScopedKangurScores,
+  peekCachedScopedKangurScores,
+} from '@/features/kangur/ui/services/learner-profile-scores';
 import type { KangurScoreRecord } from '@kangur/platform';
 import type { KangurLessonSubject } from '@/shared/contracts/kangur';
 
@@ -29,8 +32,21 @@ export function useKangurParentDashboardScores({
   scores: KangurScoreRecord[];
   scoresError: string | null;
 } {
-  const [scores, setScores] = useState<KangurScoreRecord[]>([]);
-  const [isLoadingScores, setIsLoadingScores] = useState(enabled);
+  const cachedScores = useMemo(
+    () =>
+      enabled
+        ? peekCachedScopedKangurScores(kangurPlatform.score, {
+            learnerId,
+            playerName,
+            createdBy,
+            limit: PARENT_DASHBOARD_SCORE_FETCH_LIMIT,
+            subject,
+          })
+        : null,
+    [createdBy, enabled, learnerId, playerName, subject]
+  );
+  const [scores, setScores] = useState<KangurScoreRecord[]>(() => cachedScores ?? []);
+  const [isLoadingScores, setIsLoadingScores] = useState(enabled && cachedScores === null);
   const [scoresError, setScoresError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -38,6 +54,15 @@ export function useKangurParentDashboardScores({
 
     if (!enabled) {
       setScores([]);
+      setScoresError(null);
+      setIsLoadingScores(false);
+      return () => {
+        isActive = false;
+      };
+    }
+
+    if (cachedScores !== null) {
+      setScores(cachedScores);
       setScoresError(null);
       setIsLoadingScores(false);
       return () => {
@@ -107,7 +132,7 @@ export function useKangurParentDashboardScores({
     return () => {
       isActive = false;
     };
-  }, [createdBy, enabled, learnerId, playerName, subject]);
+  }, [cachedScores, createdBy, enabled, learnerId, playerName, subject]);
 
   return {
     isLoadingScores,

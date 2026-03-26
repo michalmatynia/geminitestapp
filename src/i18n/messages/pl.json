@@ -3227,6 +3227,7 @@
         "clear": "Wyczyść",
         "undo": "Cofnij",
         "redo": "Ponów",
+        "export": "Eksportuj PNG",
         "check": "Sprawdź",
         "tooShort": "Narysuj figurę trochę dłużej, żeby można było ją ocenić.",
         "keyboard": {
@@ -3376,6 +3377,7 @@
         "clear": "Wyczyść",
         "undo": "Cofnij",
         "redo": "Ponów",
+        "export": "Eksportuj PNG",
         "checkDrawing": "Sprawdź rysunek",
         "checkPerimeter": "Sprawdź obwód",
         "rounds": {
@@ -3460,6 +3462,7 @@
         "clear": "Wyczyść",
         "undo": "Cofnij",
         "redo": "Ponów",
+        "export": "Eksportuj PNG",
         "check": "Sprawdź",
         "rounds": {
           "axis-butterfly": {
@@ -6370,6 +6373,10 @@
           "title": "Practice",
           "description": "Szybka rozgrzewka"
         },
+        "game": {
+          "title": "Gra: budowanie zdań",
+          "description": "Układaj i poprawiaj angielskie zdania"
+        },
         "summary": {
           "title": "Summary",
           "description": "Najważniejsze reguły"
@@ -8126,6 +8133,7 @@
         "clear": "Wyczysc",
         "undo": "Cofnij",
         "redo": "Ponow",
+        "export": "Eksportuj PNG",
         "check": "Sprawdz",
         "next": "Dalej",
         "restart": "Zacznij od nowa"
@@ -8174,6 +8182,7 @@
         "clear": "Wyczysc",
         "undo": "Cofnij",
         "redo": "Ponow",
+        "export": "Eksportuj PNG",
         "check": "Sprawdz",
         "next": "Dalej",
         "restart": "Zacznij od nowa"

@@ -48,8 +48,15 @@ describe('GeometryShapeRecognitionLesson i18n', () => {
     const sections = (capturedProps?.sections as Array<Record<string, unknown>>) ?? [];
     const slides = (capturedProps?.slides as Record<string, CapturedSlide[]>) ?? {};
     const games =
-      (capturedProps?.games as Array<{ sectionId: string; stage: Record<string, unknown> }>) ??
-      [];
+      (capturedProps?.games as Array<{
+        sectionId: string;
+        stage: Record<string, unknown>;
+        runtime?: {
+          runtimeId?: string;
+          rendererId?: string;
+          rendererProps?: Record<string, unknown>;
+        };
+      }>) ?? [];
 
     expect(sections.find((section) => section.id === 'intro')).toMatchObject({
       title: 'Formen kennenlernen',
@@ -63,6 +70,17 @@ describe('GeometryShapeRecognitionLesson i18n', () => {
 
     expect(games.find((game) => game.sectionId === 'draw')?.stage).toMatchObject({
       title: 'Spiel: Formen zeichnen',
+    });
+    expect(games.find((game) => game.sectionId === 'draw')?.runtime).toMatchObject({
+      runtimeId: 'geometry_shape_drawing_lesson_stage',
+      rendererId: 'geometry_drawing_game',
+      rendererProps: {
+        activityKey: 'training:geometry_shape_recognition:draw',
+        lessonKey: 'geometry_shape_recognition',
+        operation: 'geometry',
+        shapeIds: ['circle', 'oval', 'triangle', 'diamond', 'square', 'rectangle'],
+        showDifficultySelector: false,
+      },
     });
 
     expect(slides.intro?.[0]?.title).toBe('Formen kennenlernen');

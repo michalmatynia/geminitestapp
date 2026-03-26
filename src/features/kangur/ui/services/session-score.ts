@@ -6,6 +6,7 @@ import { createGuestKangurScore } from '@/features/kangur/services/guest-kangur-
 import { getKangurPlatform } from '@/features/kangur/services/kangur-platform';
 import type { KangurUser } from '@kangur/platform';
 import { isKangurAuthStatusError } from '@/features/kangur/services/status-errors';
+import { clearKangurScopedScoresCache } from '@/features/kangur/ui/services/learner-profile-scores';
 import { resolveKangurScoreSubject, type KangurLessonSubject } from '@/shared/contracts/kangur';
 
 const KANGUR_GUEST_PLAYER_STORAGE_KEY = 'kangur.guest-player-name';
@@ -136,6 +137,9 @@ export async function persistKangurSessionScore({
       shouldReport: (error) => !isKangurAnonymousSessionError(error),
     }
   );
+  if (!shouldStoreGuestScore) {
+    clearKangurScopedScoresCache();
+  }
 
   if (shouldStoreGuestScore) {
     createGuestKangurScore(payload);

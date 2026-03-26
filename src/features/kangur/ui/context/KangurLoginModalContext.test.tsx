@@ -211,7 +211,7 @@ describe('KangurLoginModalProvider', () => {
 
     expect(screen.getByTestId('kangur-login-modal-open')).toHaveTextContent('true');
     expect(screen.getByTestId('kangur-login-modal-callback')).toHaveTextContent(
-      window.location.href
+      '/kangur/lessons?focus=division'
     );
   });
 
@@ -242,6 +242,7 @@ describe('KangurLoginModalProvider', () => {
     expect(screen.getByTestId('kangur-login-modal-open')).toHaveTextContent('true');
     expect(screen.getByTestId('kangur-login-modal-route-driven')).toHaveTextContent('true');
     expect(screen.getByTestId('kangur-login-modal-home')).toHaveTextContent('/');
+    expect(screen.getByTestId('kangur-login-modal-callback')).toHaveTextContent('/profile');
 
     fireEvent.click(screen.getByRole('button', { name: 'Close modal' }));
 
@@ -260,5 +261,25 @@ describe('KangurLoginModalProvider', () => {
     expect(screen.getByTestId('kangur-login-modal-open')).toHaveTextContent('true');
     expect(screen.getByTestId('kangur-login-modal-route-driven')).toHaveTextContent('true');
     expect(screen.getByTestId('kangur-login-modal-home')).toHaveTextContent('/');
+    expect(screen.getByTestId('kangur-login-modal-callback')).toHaveTextContent('/en/profile');
+  });
+
+  it('canonicalizes the current-page callback when opening an inline modal in root-owned mode', async () => {
+    window.history.replaceState({}, '', '/en/kangur/profile?tab=stats#summary');
+
+    await renderHarness({
+      basePath: '/',
+      pageKey: 'LearnerProfile',
+      pathname: '/en/profile',
+      requestedPath: '/profile',
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: 'Open current page modal' }));
+
+    expect(screen.getByTestId('kangur-login-modal-open')).toHaveTextContent('true');
+    expect(screen.getByTestId('kangur-login-modal-route-driven')).toHaveTextContent('false');
+    expect(screen.getByTestId('kangur-login-modal-callback')).toHaveTextContent(
+      '/en/profile?tab=stats#summary'
+    );
   });
 });

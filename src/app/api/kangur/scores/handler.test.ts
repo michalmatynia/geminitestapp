@@ -36,7 +36,11 @@ vi.mock('@/shared/utils/observability/error-system', () => ({
   },
 }));
 
-import { getKangurScoresHandler, postKangurScoresHandler } from './handler';
+import {
+  clearKangurScoresCache,
+  getKangurScoresHandler,
+  postKangurScoresHandler,
+} from './handler';
 
 const createRequestContext = (): ApiHandlerContext =>
   ({
@@ -76,6 +80,7 @@ describe('kangur scores handler', () => {
     createScoreMock.mockReset();
     resolveKangurActorMock.mockReset();
     captureExceptionMock.mockReset();
+    clearKangurScoresCache();
 
     getKangurScoreRepositoryMock.mockResolvedValue({
       listScores: listScoresMock,
@@ -127,6 +132,22 @@ describe('kangur scores handler', () => {
     });
     expect(response.status).toBe(200);
     await expect(response.json()).resolves.toEqual([row]);
+  });
+
+  it('reuses cached score lists across repeated reads for the same query', async () => {
+    const row = createScoreRow();
+    listScoresMock.mockResolvedValue([row]);
+
+    await getKangurScoresHandler(
+      new NextRequest('http://localhost/api/kangur/scores?player_name=Ada&limit=10'),
+      createRequestContext()
+    );
+    await getKangurScoresHandler(
+      new NextRequest('http://localhost/api/kangur/scores?player_name=Ada&limit=10'),
+      createRequestContext()
+    );
+
+    expect(listScoresMock).toHaveBeenCalledTimes(1);
   });
 
   it('does not capture expected anonymous auth failures for public score reads', async () => {

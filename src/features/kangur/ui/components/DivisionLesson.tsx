@@ -1,6 +1,5 @@
 'use client';
 
-import DivisionGroupsGame from '@/features/kangur/ui/components/DivisionGroupsGame';
 import type { LessonSlide } from '@/features/kangur/ui/components/LessonSlideSection';
 import {
   DivisionEqualGroupsAnimation,
@@ -18,9 +17,14 @@ import {
   KangurEquationDisplay,
 } from '@/features/kangur/ui/design/primitives';
 import { KANGUR_STACK_TIGHT_CLASSNAME } from '@/features/kangur/ui/design/tokens';
+import { getKangurLessonStageGameRuntimeSpec } from '@/features/kangur/games/lesson-stage-runtime-specs';
 import { KangurUnifiedLesson } from '@/features/kangur/ui/lessons/lesson-components';
 
 type SectionId = 'intro' | 'odwrotnosc' | 'reszta' | 'zapamietaj' | 'game';
+
+const DIVISION_GROUPS_LESSON_STAGE_RUNTIME = getKangurLessonStageGameRuntimeSpec(
+  'division_groups_lesson_stage'
+);
 
 export const SLIDES: Record<Exclude<SectionId, 'game'>, LessonSlide[]> = {
   intro: [
@@ -286,12 +290,7 @@ export default function DivisionLesson(): React.JSX.Element {
             headerTestId: 'division-lesson-game-header',
             shellTestId: 'division-lesson-game-shell',
           },
-          render: ({ onFinish }) => (
-            <DivisionGroupsGame
-              finishLabelVariant='topics'
-              onFinish={onFinish}
-            />
-          ),
+          runtime: DIVISION_GROUPS_LESSON_STAGE_RUNTIME,
         },
       ]}
     />

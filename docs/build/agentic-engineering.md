@@ -1,6 +1,6 @@
 ---
 owner: 'Platform Team'
-last_reviewed: '2026-03-22'
+last_reviewed: '2026-03-26'
 status: 'active'
 doc_type: 'policy'
 scope: 'repository'
@@ -34,6 +34,13 @@ Use these commands instead of inventing per-run heuristics:
 - `npm run agentic:preflight -- <changed files...>`
 - `npm run agentic:execute`
 - `npm run agentic:collect-artifacts`
+- `npm run agentic:bundle-plan`
+- `npm run agentic:select-bundles`
+- `npm run agentic:bundle-selection:summary -- --input <selection.json>`
+- `npm run agentic:run-bundle -- --bundle <bundle>`
+- `npm run agentic:history`
+- `npm run agentic:history:diff -- --current <path> --previous <path> --output <path>`
+- `npm run agentic:history:summary -- --input <diff.json>`
 - `npm run agentic:finalize`
 - `npm run agentic:finalize:force`
 - `npm run bazel:smoke`
@@ -59,6 +66,15 @@ Use these commands instead of inventing per-run heuristics:
 - required validation targets
 
 `agentic:preflight` writes `artifacts/agent-work-order.json` with the same routing data collapsed into an execution work order.
+
+Additional repo-owned artifacts in the active agentic flow:
+
+- `npm run agentic:bundle-plan`
+  - writes `artifacts/agent-bundle-plan.json`
+- `npm run agentic:select-bundles`
+  - writes `artifacts/agent-bundle-selection.json`
+- `npm run agentic:history`
+  - writes `artifacts/agent-history/latest.json`
 
 ## Manifest coverage
 
@@ -136,3 +152,16 @@ Use `npm run agentic:finalize` when the work order should also execute its valid
 - writes `artifacts/agent-final-report.json`
 
 Use `npm run agentic:finalize:force` to override the low-risk policy gate and force validation execution for low-risk work orders.
+
+## CI surfaces
+
+The repo-owned workflows are:
+
+- `.github/workflows/agentic-preflight.yml`
+  - pull-request oriented diff routing, bundle selection, and per-bundle fanout
+- `.github/workflows/agentic-finalize.yml`
+  - post-merge or controlled finalize lane with optional `force_validation`
+    dispatch input
+
+Both workflows build or consume the same repo-owned artifact contract instead of
+embedding bundle-selection logic directly in YAML.

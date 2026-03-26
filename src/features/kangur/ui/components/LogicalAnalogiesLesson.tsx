@@ -3,8 +3,8 @@
 import { useMemo } from 'react';
 import { useTranslations } from 'next-intl';
 
+import { getKangurLessonStageGameRuntimeSpec } from '@/features/kangur/games/lesson-stage-runtime-specs';
 import type { LessonSlide } from '@/features/kangur/ui/components/LessonSlideSection';
-import LogicalAnalogiesRelationGame from '@/features/kangur/ui/components/LogicalAnalogiesRelationGame';
 import {
   AnalogyBridgeAnimation,
   CauseEffectAnimation,
@@ -234,6 +234,9 @@ const LOGICAL_ANALOGIES_LESSON_COPY_PL = {
 } as const;
 
 type LogicalAnalogiesLessonCopy = WidenLessonCopy<typeof LOGICAL_ANALOGIES_LESSON_COPY_PL>;
+const LOGICAL_ANALOGIES_RUNTIME = getKangurLessonStageGameRuntimeSpec(
+  'logical_analogies_relations_lesson_stage'
+);
 
 const translateLogicalAnalogiesLesson = (
   translate: LessonTranslate,
@@ -603,7 +606,7 @@ export default function LogicalAnalogiesLesson(): React.JSX.Element {
             shellTestId: 'logical-analogies-game-shell',
             title: copy.game.stageTitle,
           },
-          render: ({ onFinish }) => <LogicalAnalogiesRelationGame onFinish={onFinish} />,
+          runtime: LOGICAL_ANALOGIES_RUNTIME,
         },
       ]}
     />

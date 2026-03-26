@@ -12,6 +12,7 @@ import { ErrorSystem } from '@/features/kangur/shared/utils/observability/error-
 
 
 import {
+  invalidateKangurAssignmentSnapshotsCache,
   readKangurJsonBody,
   resolveAssignmentActor,
   listAssignmentSnapshotsForLearner,
@@ -47,6 +48,12 @@ export async function patchKangurAssignmentHandler(
       }
       return repository.updateAssignment(actor.legacyLearnerKey, id, payload);
     });
+  invalidateKangurAssignmentSnapshotsCache({
+    learnerKey: actor.learnerKey,
+    learnerName: actor.learnerName,
+    learnerEmail: actor.learnerEmail,
+    legacyLearnerKey: actor.legacyLearnerKey,
+  });
   const snapshots = await listAssignmentSnapshotsForLearner({
     learnerKey: actor.learnerKey,
     learnerName: actor.learnerName,

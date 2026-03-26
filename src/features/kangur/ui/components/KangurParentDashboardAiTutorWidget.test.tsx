@@ -22,6 +22,7 @@ const {
   queryClientMock,
   usageQueryState,
   useKangurPageContentEntryMock,
+  useQueryMock,
 } = vi.hoisted(() => ({
   settingsStoreMock: {
     get: vi.fn<(key: string) => string | undefined>(),
@@ -64,10 +65,11 @@ const {
     },
   },
   useKangurPageContentEntryMock: vi.fn(),
+  useQueryMock: vi.fn(),
 }));
 
 vi.mock('@tanstack/react-query', () => ({
-  useQuery: () => usageQueryState.value,
+  useQuery: useQueryMock,
   useQueryClient: () => queryClientMock,
 }));
 
@@ -122,6 +124,7 @@ describe('KangurParentDashboardAiTutorWidget', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     window.sessionStorage.clear();
+    useQueryMock.mockImplementation(() => usageQueryState.value);
     useKangurPageContentEntryMock.mockReturnValue({
       data: undefined,
       entry: null,
@@ -191,6 +194,25 @@ describe('KangurParentDashboardAiTutorWidget', () => {
     apiPostMock.mockResolvedValue({});
     invalidateAllSettingsMock.mockResolvedValue(undefined);
     vi.mocked(queryClientMock.invalidateQueries).mockResolvedValue(undefined);
+  });
+
+  it('disables focus refetch for usage because polling already keeps it fresh', async () => {
+    vi.useFakeTimers();
+
+    try {
+      render(<KangurParentDashboardAiTutorWidget />);
+      await flushDeferredUsageLoad();
+
+      expect(useQueryMock).toHaveBeenCalled();
+      const lastCall = useQueryMock.mock.calls.at(-1);
+      expect(lastCall?.[0]).toMatchObject({
+        refetchOnWindowFocus: false,
+        refetchInterval: 30_000,
+        staleTime: 10_000,
+      });
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   it('shows the AI Tutor tab helper state when no learner is active', () => {

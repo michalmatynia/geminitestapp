@@ -23,6 +23,15 @@ import { ErrorSystem } from '@/shared/utils/observability/error-system';
 const KANGUR_PROGRESS_SOURCE_HEADER = 'x-kangur-progress-source';
 const KANGUR_PROGRESS_CTA_HEADER = 'x-kangur-progress-cta';
 const KANGUR_PROGRESS_CTA_SOURCE = 'lesson_panel_navigation';
+const KANGUR_PROGRESS_CACHE_TTL_MS = 30_000;
+
+type KangurProgressCacheEntry = {
+  data: KangurProgressState;
+  fetchedAt: number;
+};
+
+const kangurProgressCache = new Map<string, KangurProgressCacheEntry>();
+const kangurProgressInflight = new Map<string, Promise<KangurProgressState>>();
 
 const readBodyJson = async (request: NextRequest): Promise<unknown> => {
   const rawBody = await request.text();
@@ -55,6 +64,82 @@ const resolveProgressSubject = (req: NextRequest): KangurLessonSubject => {
 
 const buildSubjectProgressKey = (userKey: string, subject: KangurLessonSubject): string =>
   `${userKey}::${subject}`;
+
+const buildKangurProgressCacheKey = (input: {
+  learnerId: string;
+  legacyUserKey: string | null;
+  subject: KangurLessonSubject;
+}): string =>
+  JSON.stringify({
+    learnerId: input.learnerId,
+    legacyUserKey: input.legacyUserKey ?? null,
+    subject: input.subject,
+  });
+
+const cloneKangurProgress = (progress: KangurProgressState): KangurProgressState =>
+  structuredClone(progress);
+
+const primeKangurProgressCache = (
+  input: {
+    learnerId: string;
+    legacyUserKey: string | null;
+    subject: KangurLessonSubject;
+  },
+  progress: KangurProgressState
+): void => {
+  kangurProgressCache.set(buildKangurProgressCacheKey(input), {
+    data: cloneKangurProgress(progress),
+    fetchedAt: Date.now(),
+  });
+};
+
+const isRelatedKangurProgressCacheKey = (
+  cacheKey: string,
+  input: {
+    learnerId: string;
+    legacyUserKey: string | null;
+    subject: KangurLessonSubject;
+  }
+): boolean => {
+  try {
+    const parsed = JSON.parse(cacheKey) as {
+      learnerId?: string | null;
+      legacyUserKey?: string | null;
+      subject?: string | null;
+    };
+
+    if (parsed.subject !== input.subject) {
+      return false;
+    }
+
+    return parsed.learnerId === input.learnerId || parsed.legacyUserKey === input.legacyUserKey;
+  } catch {
+    return false;
+  }
+};
+
+export const clearKangurProgressCache = (): void => {
+  kangurProgressCache.clear();
+  kangurProgressInflight.clear();
+};
+
+export const invalidateKangurProgressCache = (input: {
+  learnerId: string;
+  legacyUserKey: string | null;
+  subject: KangurLessonSubject;
+}): void => {
+  for (const key of kangurProgressCache.keys()) {
+    if (isRelatedKangurProgressCacheKey(key, input)) {
+      kangurProgressCache.delete(key);
+    }
+  }
+
+  for (const key of kangurProgressInflight.keys()) {
+    if (isRelatedKangurProgressCacheKey(key, input)) {
+      kangurProgressInflight.delete(key);
+    }
+  }
+};
 
 const resolveProgressKeys = (input: {
   learnerId: string;
@@ -219,25 +304,46 @@ const loadProgressForLearner = async (input: {
   legacyUserKey: string | null;
   subject: KangurLessonSubject;
 }) => {
-  const repository = await getKangurProgressRepository();
-  const { primaryKey, keys } = resolveProgressKeys(input);
-  const progressEntries = await Promise.all(
-    keys.map((key) => repository.getProgress(key))
-  );
-  const [primary] = progressEntries;
-  const defaultProgress = createDefaultKangurProgressState();
-  const primaryEmpty =
-    JSON.stringify(primary ?? defaultProgress) === JSON.stringify(defaultProgress);
-  if (primaryEmpty) {
-    const fallback = progressEntries.find(
-      (entry) => JSON.stringify(entry) !== JSON.stringify(defaultProgress)
-    );
-    if (fallback) {
-      await repository.saveProgress(primaryKey, fallback);
-      return fallback;
-    }
+  const cacheKey = buildKangurProgressCacheKey(input);
+  const cached = kangurProgressCache.get(cacheKey);
+  const now = Date.now();
+  if (cached && now - cached.fetchedAt < KANGUR_PROGRESS_CACHE_TTL_MS) {
+    return cloneKangurProgress(cached.data);
   }
-  return primary ?? defaultProgress;
+
+  const inflight = kangurProgressInflight.get(cacheKey);
+  if (inflight) {
+    return cloneKangurProgress(await inflight);
+  }
+
+  const repository = await getKangurProgressRepository();
+  const inflightPromise = (async (): Promise<KangurProgressState> => {
+    const { primaryKey, keys } = resolveProgressKeys(input);
+    const progressEntries = await Promise.all(keys.map((key) => repository.getProgress(key)));
+    const [primary] = progressEntries;
+    const defaultProgress = createDefaultKangurProgressState();
+    const primaryEmpty =
+      JSON.stringify(primary ?? defaultProgress) === JSON.stringify(defaultProgress);
+
+    let resolvedProgress = primary ?? defaultProgress;
+    if (primaryEmpty) {
+      const fallback = progressEntries.find(
+        (entry) => JSON.stringify(entry) !== JSON.stringify(defaultProgress)
+      );
+      if (fallback) {
+        await repository.saveProgress(primaryKey, fallback);
+        resolvedProgress = fallback;
+      }
+    }
+
+    primeKangurProgressCache(input, resolvedProgress);
+    return resolvedProgress;
+  })().finally(() => {
+    kangurProgressInflight.delete(cacheKey);
+  });
+
+  kangurProgressInflight.set(cacheKey, inflightPromise);
+  return cloneKangurProgress(await inflightPromise);
 };
 
 export async function getKangurProgressHandler(
@@ -274,6 +380,19 @@ export async function patchKangurProgressHandler(
   });
   const progressKey = buildSubjectProgressKey(activeLearner.id, subject);
   const progress = await repository.saveProgress(progressKey, payload);
+  invalidateKangurProgressCache({
+    learnerId: activeLearner.id,
+    legacyUserKey: activeLearner.legacyUserKey,
+    subject,
+  });
+  primeKangurProgressCache(
+    {
+      learnerId: activeLearner.id,
+      legacyUserKey: activeLearner.legacyUserKey,
+      subject,
+    },
+    progress
+  );
 
   void logKangurServerEvent({
     source: 'kangur.progress.update',

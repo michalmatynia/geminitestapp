@@ -1,6 +1,6 @@
 ---
 owner: 'Platform Team'
-last_reviewed: '2026-03-09'
+last_reviewed: '2026-03-26'
 status: 'draft'
 doc_type: 'reference'
 scope: 'cross-feature'
@@ -13,6 +13,14 @@ Draft generated on: 2026-03-05
 Target effective date: 2026-04-17  
 Status: Draft (pending owner sign-off)  
 Owner: Platform Architecture + Domain Maintainers
+
+This is the active lifecycle reclassification draft for the closeout window.
+Use it together with
+[`wave-execution-status-2026-04-17.md`](./wave-execution-status-2026-04-17.md),
+[`stabilization-window-2026-04-17.md`](./stabilization-window-2026-04-17.md),
+and [`docs/plans/canonical-closeout-2026-04-17.md`](../plans/canonical-closeout-2026-04-17.md).
+Keep [`script-lifecycle-register-2026-03-05.md`](./script-lifecycle-register-2026-03-05.md)
+as the frozen March baseline.
 
 ## Status Legend
 

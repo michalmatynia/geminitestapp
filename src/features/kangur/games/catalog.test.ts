@@ -7,6 +7,12 @@ import {
   getKangurGameCatalogEntriesForEngine,
   getKangurGameCatalogEntryForLessonActivity,
   getKangurGameCatalogFacets,
+  getKangurLessonActivityRuntimeSpecForGame,
+  getKangurLessonActivityRuntimeSpecForVariant,
+  getKangurLessonStageGameRuntimeSpecForGame,
+  getKangurLessonStageGameRuntimeSpecForVariant,
+  getKangurLaunchableGameRuntimeSpecForGame,
+  getKangurLaunchableGameRuntimeSpecForVariant,
 } from './catalog';
 
 describe('kangur game catalog', () => {
@@ -17,8 +23,64 @@ describe('kangur game catalog', () => {
 
     expect(entry?.engine?.id).toBe('clock-dial-engine');
     expect(entry?.lessonVariant?.id).toBe('clock_training.lesson-inline');
+    expect(entry?.lessonVariant?.lessonActivityRuntimeId).toBe('clock-training');
+    expect(entry?.lessonActivityRuntime?.activityId).toBe('clock-training');
     expect(entry?.gameScreenVariant?.id).toBe('clock_training.game-screen');
     expect(entry?.launchableScreen).toBe('clock_quiz');
+    expect(entry?.launchableRuntime?.screen).toBe('clock_quiz');
+    expect(entry?.gameScreenVariant?.launchableRuntimeId).toBe('clock_quiz');
+  });
+
+  it('resolves lesson activity runtime specs from serialized lesson variants', () => {
+    const entry = createKangurGameCatalogEntries().find(
+      (candidate) => candidate.game.id === 'division_groups'
+    );
+
+    expect(entry).toBeTruthy();
+    expect(entry?.lessonVariant?.lessonActivityRuntimeId).toBe('division-game');
+    expect(
+      entry?.lessonVariant
+        ? getKangurLessonActivityRuntimeSpecForVariant(entry.lessonVariant)?.rendererId
+        : null
+    ).toBe('division_game');
+    expect(entry ? getKangurLessonActivityRuntimeSpecForGame(entry.game)?.engineId : null).toBe(
+      'choice-quiz-engine'
+    );
+  });
+
+  it('resolves lesson-stage runtime specs from serialized lesson-stage variants', () => {
+    const entry = createKangurGameCatalogEntries().find(
+      (candidate) => candidate.game.id === 'logical_patterns_workshop'
+    );
+
+    expect(entry).toBeTruthy();
+    expect(entry?.lessonVariant?.lessonStageRuntimeId).toBe('logical_patterns_workshop_lesson_stage');
+    expect(
+      entry?.lessonVariant
+        ? getKangurLessonStageGameRuntimeSpecForVariant(entry.lessonVariant)?.rendererId
+        : null
+    ).toBe('logical_patterns_workshop_game');
+    expect(entry?.lessonStageRuntime?.runtimeId).toBe('logical_patterns_workshop_lesson_stage');
+    expect(entry ? getKangurLessonStageGameRuntimeSpecForGame(entry.game)?.engineId : null).toBe(
+      'pattern-sequence-engine'
+    );
+  });
+
+  it('resolves launchable runtime specs from the serialized game-screen variant config', () => {
+    const entry = createKangurGameCatalogEntries().find(
+      (candidate) => candidate.game.id === 'english_sentence_builder'
+    );
+
+    expect(entry).toBeTruthy();
+    expect(entry?.gameScreenVariant?.launchableRuntimeId).toBe('english_sentence_quiz');
+    expect(
+      entry?.gameScreenVariant
+        ? getKangurLaunchableGameRuntimeSpecForVariant(entry.gameScreenVariant)?.rendererId
+        : null
+    ).toBe('english_sentence_structure_game');
+    expect(entry ? getKangurLaunchableGameRuntimeSpecForGame(entry.game)?.engineId : null).toBe(
+      'sentence-builder-engine'
+    );
   });
 
   it('resolves lesson activities and engine families through the catalog', () => {

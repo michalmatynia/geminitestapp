@@ -13,6 +13,7 @@ import {
 import { getKangurHomeHref, getKangurLoginHref } from '@/features/kangur/config/routing';
 import { useKangurRouteNavigator } from '@/features/kangur/ui/hooks/useKangurRouteNavigator';
 import { useKangurRouting } from '@/features/kangur/ui/context/KangurRoutingContext';
+import { resolveRouteAwareManagedKangurHref } from '@/features/kangur/ui/routing/managed-paths';
 import { type KangurAuthMode, parseKangurAuthMode } from '@/features/kangur/shared/contracts/kangur-auth';
 import { internalError } from '@/features/kangur/shared/errors/app-error';
 import { withKangurClientErrorSync } from '@/features/kangur/observability/client';
@@ -106,12 +107,24 @@ export const KangurLoginModalProvider = ({
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const { basePath, requestedPath } = useKangurRouting();
+  const currentOrigin = typeof window === 'undefined' ? null : window.location.origin;
+  const canonicalizePublicAlias = basePath === '/';
   const homeHref = useMemo(() => getKangurHomeHref(basePath), [basePath]);
   const loginPathname = useMemo(() => getPathnameFromHref(getKangurLoginHref(basePath)), [basePath]);
   const normalizedPathname = useMemo(() => stripSiteLocalePrefix(pathname), [pathname]);
+  const resolveLoginModalCallbackHref = useCallback(
+    (href: string | null | undefined): string | undefined =>
+      resolveRouteAwareManagedKangurHref({
+        href,
+        pathname,
+        currentOrigin,
+        canonicalizePublicAlias,
+      }),
+    [canonicalizePublicAlias, currentOrigin, pathname]
+  );
   const requestedCallbackUrl = useMemo(
-    () => toNonEmptyString(searchParams.get('callbackUrl'), homeHref),
-    [homeHref, searchParams]
+    () => toNonEmptyString(resolveLoginModalCallbackHref(searchParams.get('callbackUrl')), homeHref),
+    [homeHref, resolveLoginModalCallbackHref, searchParams]
   );
   const requestedAuthMode = useMemo(
     () => parseKangurAuthMode(searchParams.get('authMode')),
@@ -124,7 +137,7 @@ export const KangurLoginModalProvider = ({
     showParentAuthModeTabs: true,
   });
   const isRouteDriven = normalizedPathname === loginPathname;
-  const fallbackCallbackUrl = requestedPath || homeHref;
+  const fallbackCallbackUrl = resolveLoginModalCallbackHref(requestedPath) ?? requestedPath ?? homeHref;
   const authMode = isRouteDriven ? requestedAuthMode : inlineState.authMode;
   const showParentAuthModeTabs = isRouteDriven ? true : inlineState.showParentAuthModeTabs;
   const callbackUrl = isRouteDriven
@@ -137,12 +150,15 @@ export const KangurLoginModalProvider = ({
         typeof window === 'undefined' ? fallbackCallbackUrl : window.location.href;
       setInlineState({
         authMode: options?.authMode ?? 'sign-in',
-        callbackUrl: toNonEmptyString(nextCallbackUrl, currentHref),
+        callbackUrl: toNonEmptyString(
+          resolveLoginModalCallbackHref(nextCallbackUrl ?? currentHref),
+          fallbackCallbackUrl
+        ),
         isOpen: true,
         showParentAuthModeTabs: options?.showParentAuthModeTabs ?? true,
       });
     },
-    [fallbackCallbackUrl]
+    [fallbackCallbackUrl, resolveLoginModalCallbackHref]
   );
 
   const dismissLoginModal = useCallback((): void => {

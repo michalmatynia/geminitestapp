@@ -1,5 +1,7 @@
 'use client';
 
+export { exportKangurCanvasDataUrl } from '@/features/kangur/ui/components/drawing-engine/canvas-export';
+
 import type { KangurDrawingStroke, KangurFreeformDrawingStrokeMeta } from './types';
 
 export type KangurFreeformDrawingSnapshot = {
@@ -7,11 +9,6 @@ export type KangurFreeformDrawingSnapshot = {
   logicalWidth: number;
   strokes: KangurDrawingStroke<KangurFreeformDrawingStrokeMeta>[];
   version: 1;
-};
-
-type KangurDrawingExportOptions = {
-  mimeType?: string;
-  quality?: number;
 };
 
 const SNAPSHOT_VERSION = 1 as const;
@@ -112,18 +109,4 @@ export const rescaleKangurFreeformDrawingSnapshot = (
       y: point.y * scaleY,
     })),
   }));
-};
-
-export const exportKangurCanvasDataUrl = (
-  canvas: HTMLCanvasElement | null,
-  options: KangurDrawingExportOptions = {}
-): string | null => {
-  if (!canvas) {
-    return null;
-  }
-
-  const { mimeType = 'image/png', quality } = options;
-  return typeof quality === 'number'
-    ? canvas.toDataURL(mimeType, quality)
-    : canvas.toDataURL(mimeType);
 };

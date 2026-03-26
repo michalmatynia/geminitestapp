@@ -69,7 +69,7 @@ const getLearnerProfileTabIds = (
 });
 
 function LearnerProfileContent(): React.JSX.Element {
-  const { user, isLoadingScores } = useKangurLearnerProfileRuntime();
+  const { user } = useKangurLearnerProfileRuntime();
   const auth = useKangurAuth();
   const isAuthenticated = auth.isAuthenticated ?? Boolean(auth.user);
   const { push: navigateTo } = useKangurRouteNavigator();
@@ -80,6 +80,7 @@ function LearnerProfileContent(): React.JSX.Element {
   const [activeTab, setActiveTab] = useState<LearnerProfileTabId>('overview');
   const tutorAnchorRef = useRef<HTMLDivElement>(null);
   const tabRefs = useRef<Array<HTMLButtonElement | null>>([]);
+  const isAiMoodTabActive = activeTab === 'ai-mood';
 
   useKangurTutorAnchor({
     id: 'learner-profile-root',
@@ -90,8 +91,8 @@ function LearnerProfileContent(): React.JSX.Element {
   });
 
   useKangurAiTutorSessionSync({
-    learnerId: user?.activeLearner?.id ?? null,
-    sessionContext: { surface: 'profile' },
+    learnerId: isAiMoodTabActive ? (user?.activeLearner?.id ?? null) : null,
+    sessionContext: isAiMoodTabActive ? { surface: 'profile' } : null,
   });
 
   useKangurRoutePageReady({
@@ -147,14 +148,6 @@ function LearnerProfileContent(): React.JSX.Element {
     },
     []
   );
-
-  if (isLoadingScores) {
-    return (
-      <div className='flex h-[60vh] items-center justify-center'>
-        <div className='h-8 w-8 animate-spin rounded-full border-4 border-orange-400 border-t-transparent' />
-      </div>
-    );
-  }
 
   if (isAuthenticated && !user) {
     return (
@@ -227,33 +220,35 @@ function LearnerProfileContent(): React.JSX.Element {
           className={`grid w-full items-start ${KANGUR_PANEL_GAP_CLASSNAME} xl:grid-cols-[minmax(0,1.35fr)_minmax(22rem,28rem)]`}
         >
           <div className={`flex min-w-0 flex-col ${KANGUR_PANEL_GAP_CLASSNAME}`}>
-            <div
-              id={getLearnerProfileTabIds('overview').panelId}
-              role='tabpanel'
-              aria-labelledby={getLearnerProfileTabIds('overview').tabId}
-              hidden={activeTab !== 'overview'}
-              tabIndex={activeTab === 'overview' ? 0 : -1}
-              className={`flex min-w-0 flex-col ${KANGUR_PANEL_GAP_CLASSNAME}`}
-            >
-              <div className='grid gap-6 sm:grid-cols-2'>
-                <KangurLearnerProfileLevelProgressWidget />
-                <KangurLearnerProfileQuestSummaryWidget />
+            {activeTab === 'overview' ? (
+              <div
+                id={getLearnerProfileTabIds('overview').panelId}
+                role='tabpanel'
+                aria-labelledby={getLearnerProfileTabIds('overview').tabId}
+                tabIndex={0}
+                className={`flex min-w-0 flex-col ${KANGUR_PANEL_GAP_CLASSNAME}`}
+              >
+                <div className='grid gap-6 sm:grid-cols-2'>
+                  <KangurLearnerProfileLevelProgressWidget />
+                  <KangurLearnerProfileQuestSummaryWidget />
+                </div>
+                <KangurLearnerProfileOverviewWidget />
+                <KangurLearnerProfileResultsWidget />
+                <KangurLearnerProfileRecommendationsWidget />
+                <KangurLearnerProfileMasteryWidget />
               </div>
-              <KangurLearnerProfileOverviewWidget />
-              <KangurLearnerProfileResultsWidget />
-              <KangurLearnerProfileRecommendationsWidget />
-              <KangurLearnerProfileMasteryWidget />
-            </div>
-            <div
-              id={getLearnerProfileTabIds('ai-mood').panelId}
-              role='tabpanel'
-              aria-labelledby={getLearnerProfileTabIds('ai-mood').tabId}
-              hidden={activeTab !== 'ai-mood'}
-              tabIndex={activeTab === 'ai-mood' ? 0 : -1}
-              className={`flex min-w-0 flex-col ${KANGUR_PANEL_GAP_CLASSNAME}`}
-            >
-              <KangurLearnerProfileAiTutorMoodWidget />
-            </div>
+            ) : null}
+            {activeTab === 'ai-mood' ? (
+              <div
+                id={getLearnerProfileTabIds('ai-mood').panelId}
+                role='tabpanel'
+                aria-labelledby={getLearnerProfileTabIds('ai-mood').tabId}
+                tabIndex={0}
+                className={`flex min-w-0 flex-col ${KANGUR_PANEL_GAP_CLASSNAME}`}
+              >
+                <KangurLearnerProfileAiTutorMoodWidget />
+              </div>
+            ) : null}
           </div>
 
           <div className={`flex min-w-0 flex-col ${KANGUR_PANEL_GAP_CLASSNAME}`}>

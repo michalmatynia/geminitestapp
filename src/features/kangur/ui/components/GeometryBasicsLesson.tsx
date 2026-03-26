@@ -3,7 +3,7 @@
 import { useTranslations } from 'next-intl';
 
 import plMessages from '@/i18n/messages/pl.json';
-import GeometryBasicsWorkshopGame from '@/features/kangur/ui/components/GeometryBasicsWorkshopGame';
+import { getKangurLessonStageGameRuntimeSpec } from '@/features/kangur/games/lesson-stage-runtime-specs';
 import type { LessonSlide } from '@/features/kangur/ui/components/LessonSlideSection';
 import {
   GeometryAngleAnimation,
@@ -25,6 +25,9 @@ import type { LessonTranslate } from '@/features/kangur/ui/components/lesson-cop
 import { KangurUnifiedLesson } from '@/features/kangur/ui/lessons/lesson-components';
 
 type SectionId = 'punkt' | 'bok' | 'kat' | 'podsumowanie' | 'game';
+const GEOMETRY_BASICS_WORKSHOP_RUNTIME = getKangurLessonStageGameRuntimeSpec(
+  'geometry_basics_workshop_lesson_stage'
+);
 
 const createStaticTranslator = (messages: Record<string, unknown>): LessonTranslate => (key) => {
   const resolved = key.split('.').reduce<unknown>(
@@ -350,7 +353,7 @@ export default function GeometryBasicsLesson(): React.JSX.Element {
             maxWidthClassName: 'max-w-3xl',
             shellTestId: 'geometry-basics-game-shell',
           },
-          render: ({ onFinish }) => <GeometryBasicsWorkshopGame onFinish={onFinish} />,
+          runtime: GEOMETRY_BASICS_WORKSHOP_RUNTIME,
         },
       ]}
     />

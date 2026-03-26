@@ -293,6 +293,7 @@ describe('KangurParentDashboardRuntimeContext', () => {
   });
 
   it('loads shared lessons once for an accessible dashboard with an active learner', () => {
+    vi.useFakeTimers();
     lessonsState.value = [
       {
         componentId: 'clock',
@@ -313,24 +314,44 @@ describe('KangurParentDashboardRuntimeContext', () => {
       },
     };
 
-    render(
-      <KangurParentDashboardRuntimeProvider>
-        <RuntimeProbe />
-      </KangurParentDashboardRuntimeProvider>
-    );
+    try {
+      render(
+        <KangurParentDashboardRuntimeProvider>
+          <RuntimeProbe />
+        </KangurParentDashboardRuntimeProvider>
+      );
 
-    expect(screen.getByTestId('lessons-count')).toHaveTextContent('1');
-    expect(useKangurLessonsMock).toHaveBeenCalledWith({
-      ageGroup: '7-8',
-      enabled: true,
-      enabledOnly: true,
-    });
-    expect(useKangurAssignmentsMock).toHaveBeenCalledWith({
-      enabled: true,
-      query: {
-        includeArchived: false,
-      },
-    });
+      expect(useKangurLessonsMock).toHaveBeenCalledWith({
+        ageGroup: '7-8',
+        enabled: false,
+        enabledOnly: true,
+      });
+      expect(useKangurAssignmentsMock).toHaveBeenCalledWith({
+        enabled: false,
+        query: {
+          includeArchived: false,
+        },
+      });
+
+      act(() => {
+        vi.runOnlyPendingTimers();
+      });
+
+      expect(screen.getByTestId('lessons-count')).toHaveTextContent('1');
+      expect(useKangurLessonsMock).toHaveBeenLastCalledWith({
+        ageGroup: '7-8',
+        enabled: true,
+        enabledOnly: true,
+      });
+      expect(useKangurAssignmentsMock).toHaveBeenLastCalledWith({
+        enabled: true,
+        query: {
+          includeArchived: false,
+        },
+      });
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   it('defers shared score loading until the dashboard settles', () => {
@@ -440,6 +461,52 @@ describe('KangurParentDashboardRuntimeContext', () => {
     expect(screen.getByTestId('runtime-overview-probe')).toHaveTextContent('learner-1');
     expect(shellRenderProbeSpy.mock.calls.length).toBeGreaterThan(shellRenderCountBeforeTabChange);
     expect(overviewRenderProbeSpy).toHaveBeenCalledTimes(overviewRenderCountBeforeTabChange);
+  });
+
+  it('disables score analytics when the dashboard leaves the progress tab', () => {
+    vi.useFakeTimers();
+    authState.value = {
+      ...authState.value,
+      user: {
+        ...authState.value.user,
+        activeLearner: authState.value.user.learners[0],
+      },
+    };
+
+    try {
+      render(
+        <KangurParentDashboardRuntimeProvider>
+          <RuntimeFullRenderProbe />
+          <RuntimeTabChangeControl />
+        </KangurParentDashboardRuntimeProvider>
+      );
+
+      act(() => {
+        vi.advanceTimersByTime(900);
+      });
+
+      expect(useKangurParentDashboardScoresMock).toHaveBeenLastCalledWith({
+        createdBy: 'ada@example.com',
+        enabled: true,
+        learnerId: 'learner-1',
+        playerName: 'Ada',
+        subject: 'maths',
+      });
+      expect(screen.getByTestId('runtime-full-probe')).toHaveTextContent('ready');
+
+      fireEvent.click(screen.getByRole('button', { name: 'switch-tab' }));
+
+      expect(useKangurParentDashboardScoresMock).toHaveBeenLastCalledWith({
+        createdBy: 'ada@example.com',
+        enabled: false,
+        learnerId: 'learner-1',
+        playerName: 'Ada',
+        subject: 'maths',
+      });
+      expect(screen.getByTestId('runtime-full-probe')).toHaveTextContent('ready');
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   it('keeps hero runtime consumers stable while create-form state changes', () => {

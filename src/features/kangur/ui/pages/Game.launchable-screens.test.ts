@@ -17,6 +17,8 @@ describe('Game launchable screen registry', () => {
 
       expect(config.className).toContain('w-full');
       expect(config.Component).toBeTruthy();
+      expect(config.runtime.screen).toBe(screen);
+      expect(config.runtime.rendererId).toBeTruthy();
     }
   });
 });

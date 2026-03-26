@@ -3,7 +3,7 @@
 import { useTranslations } from 'next-intl';
 import { useMemo } from 'react';
 
-import EnglishAdverbsFrequencyRoutineGame from '@/features/kangur/ui/components/EnglishAdverbsFrequencyRoutineGame';
+import { getKangurLessonStageGameRuntimeSpec } from '@/features/kangur/games/lesson-stage-runtime-specs';
 import type { LessonSlide } from '@/features/kangur/ui/components/LessonSlideSection';
 import {
   EnglishAdverbFrequencyScaleAnimation,
@@ -30,6 +30,9 @@ import { KangurUnifiedLesson } from '@/features/kangur/ui/lessons/lesson-compone
 import type { KangurIntlTranslate } from '@/features/kangur/ui/types';
 
 const LESSON_KEY = 'english_adverbs_frequency';
+const ENGLISH_ADVERBS_FREQUENCY_RUNTIME = getKangurLessonStageGameRuntimeSpec(
+  'english_adverbs_frequency_routine_lesson_stage'
+);
 
 type SectionId =
   | 'intro'
@@ -444,7 +447,7 @@ export default function EnglishAdverbsFrequencyLesson(): React.JSX.Element {
             maxWidthClassName: 'max-w-4xl',
             shellTestId: 'english-adverbs-frequency-game-shell',
           },
-          render: ({ onFinish }) => <EnglishAdverbsFrequencyRoutineGame onFinish={onFinish} />,
+          runtime: ENGLISH_ADVERBS_FREQUENCY_RUNTIME,
         },
       ]}
     />

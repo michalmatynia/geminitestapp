@@ -53,13 +53,12 @@ describe('KangurTracingLessonFooter', () => {
     expect(onNext).toHaveBeenCalledTimes(1);
   });
 
-  it('renders shared history actions inside the footer controls', () => {
+  it('renders shared utility actions inside the footer controls', () => {
     render(
       <KangurTracingLessonFooter
         checkLabel='Check'
         clearLabel='Clear'
         feedback={null}
-        historyActions={<button type='button'>Undo</button>}
         idlePrompt='Idle'
         isCoarsePointer={false}
         isLastRound={false}
@@ -68,10 +67,17 @@ describe('KangurTracingLessonFooter', () => {
         onClear={() => {}}
         onNext={() => {}}
         restartLabel='Restart'
+        utilityActions={
+          <>
+            <button type='button'>Undo</button>
+            <button type='button'>Export PNG</button>
+          </>
+        }
       />
     );
 
     expect(screen.getByRole('button', { name: 'Undo' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Export PNG' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Clear' })).toBeInTheDocument();
   });
 });

@@ -21,6 +21,88 @@ import type {
 import { badRequestError, conflictError } from '@/shared/errors/app-error';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
+const ASSIGNMENT_SNAPSHOTS_CACHE_TTL_MS = 30_000;
+
+type AssignmentSnapshotsCacheEntry = {
+  data: KangurAssignmentSnapshot[];
+  fetchedAt: number;
+};
+
+const assignmentSnapshotsCache = new Map<string, AssignmentSnapshotsCacheEntry>();
+const assignmentSnapshotsInflight = new Map<string, Promise<KangurAssignmentSnapshot[]>>();
+
+const cloneAssignmentSnapshots = (
+  snapshots: KangurAssignmentSnapshot[]
+): KangurAssignmentSnapshot[] => structuredClone(snapshots);
+
+const buildAssignmentSnapshotsCacheKey = (input: {
+  learnerKey: string;
+  learnerName: string | null;
+  learnerEmail: string | null;
+  legacyLearnerKey?: string | null;
+  includeArchived?: boolean;
+}): string =>
+  JSON.stringify({
+    learnerKey: input.learnerKey,
+    learnerName: input.learnerName ?? null,
+    learnerEmail: input.learnerEmail ?? null,
+    legacyLearnerKey: input.legacyLearnerKey ?? null,
+    includeArchived: input.includeArchived === true,
+  });
+
+const isRelatedAssignmentSnapshotsCacheKey = (
+  cacheKey: string,
+  relatedValues: ReadonlySet<string>
+): boolean => {
+  try {
+    const parsed = JSON.parse(cacheKey) as {
+      learnerKey?: string | null;
+      learnerName?: string | null;
+      learnerEmail?: string | null;
+      legacyLearnerKey?: string | null;
+    };
+
+    return [parsed.learnerKey, parsed.learnerName, parsed.learnerEmail, parsed.legacyLearnerKey]
+      .filter((value): value is string => typeof value === 'string' && value.trim().length > 0)
+      .some((value) => relatedValues.has(value));
+  } catch {
+    return false;
+  }
+};
+
+export const clearKangurAssignmentSnapshotsCache = (): void => {
+  assignmentSnapshotsCache.clear();
+  assignmentSnapshotsInflight.clear();
+};
+
+export const invalidateKangurAssignmentSnapshotsCache = (input: {
+  learnerKey: string;
+  learnerName: string | null;
+  learnerEmail: string | null;
+  legacyLearnerKey?: string | null;
+}): void => {
+  const relatedKeys = new Set(
+    [
+      input.learnerKey,
+      input.legacyLearnerKey ?? null,
+      input.learnerName ?? null,
+      input.learnerEmail ?? null,
+    ].filter((value): value is string => typeof value === 'string' && value.trim().length > 0)
+  );
+
+  for (const key of assignmentSnapshotsCache.keys()) {
+    if (isRelatedAssignmentSnapshotsCacheKey(key, relatedKeys)) {
+      assignmentSnapshotsCache.delete(key);
+    }
+  }
+
+  for (const key of assignmentSnapshotsInflight.keys()) {
+    if (isRelatedAssignmentSnapshotsCacheKey(key, relatedKeys)) {
+      assignmentSnapshotsInflight.delete(key);
+    }
+  }
+};
+
 
 export const resolveAssignmentActor = async (
   request: NextRequest
@@ -70,36 +152,60 @@ export const listAssignmentSnapshotsForLearner = async (input: {
   legacyLearnerKey?: string | null;
   includeArchived?: boolean;
 }): Promise<KangurAssignmentSnapshot[]> => {
-  const [assignmentRepository, progressRepository, scores] = await Promise.all([
-    getKangurAssignmentRepository(),
-    getKangurProgressRepository(),
-    loadKangurScoresForLearner({
-      learnerName: input.learnerName,
-      learnerEmail: input.learnerEmail,
-    }),
-  ]);
-  const [assignments, progress, legacyAssignments] = await Promise.all([
-    assignmentRepository.listAssignments({
-      learnerKey: input.learnerKey,
-      includeArchived: input.includeArchived,
-    }),
-    progressRepository.getProgress(input.learnerKey),
-    input.legacyLearnerKey
-      ? assignmentRepository.listAssignments({
-        learnerKey: input.legacyLearnerKey,
-        includeArchived: input.includeArchived,
-      })
-      : Promise.resolve([]),
-  ]);
-  const scopedAssignments = assignments.length > 0 ? assignments : legacyAssignments;
+  const cacheKey = buildAssignmentSnapshotsCacheKey(input);
+  const now = Date.now();
+  const cached = assignmentSnapshotsCache.get(cacheKey);
+  if (cached && now - cached.fetchedAt < ASSIGNMENT_SNAPSHOTS_CACHE_TTL_MS) {
+    return cloneAssignmentSnapshots(cached.data);
+  }
 
-  return scopedAssignments.map((assignment) =>
-    evaluateKangurAssignment({
-      assignment,
-      progress,
-      scores,
-    })
-  );
+  const inflight = assignmentSnapshotsInflight.get(cacheKey);
+  if (inflight) {
+    return cloneAssignmentSnapshots(await inflight);
+  }
+
+  const inflightPromise = (async (): Promise<KangurAssignmentSnapshot[]> => {
+    const [assignmentRepository, progressRepository, scores] = await Promise.all([
+      getKangurAssignmentRepository(),
+      getKangurProgressRepository(),
+      loadKangurScoresForLearner({
+        learnerName: input.learnerName,
+        learnerEmail: input.learnerEmail,
+      }),
+    ]);
+    const [assignments, progress, legacyAssignments] = await Promise.all([
+      assignmentRepository.listAssignments({
+        learnerKey: input.learnerKey,
+        includeArchived: input.includeArchived,
+      }),
+      progressRepository.getProgress(input.learnerKey),
+      input.legacyLearnerKey
+        ? assignmentRepository.listAssignments({
+            learnerKey: input.legacyLearnerKey,
+            includeArchived: input.includeArchived,
+          })
+        : Promise.resolve([]),
+    ]);
+    const scopedAssignments = assignments.length > 0 ? assignments : legacyAssignments;
+
+    const snapshots = scopedAssignments.map((assignment) =>
+      evaluateKangurAssignment({
+        assignment,
+        progress,
+        scores,
+      })
+    );
+    assignmentSnapshotsCache.set(cacheKey, {
+      data: cloneAssignmentSnapshots(snapshots),
+      fetchedAt: Date.now(),
+    });
+    return snapshots;
+  })().finally(() => {
+    assignmentSnapshotsInflight.delete(cacheKey);
+  });
+
+  assignmentSnapshotsInflight.set(cacheKey, inflightPromise);
+  return cloneAssignmentSnapshots(await inflightPromise);
 };
 
 export const ensureAssignmentTargetIsUnique = async (input: {

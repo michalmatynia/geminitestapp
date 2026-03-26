@@ -83,6 +83,45 @@ function QueryProviderAdvancedRuntime({ shouldWarmup }: { shouldWarmup: boolean 
 const PERSISTED_PREFERENCES_KEYS = [[...QUERY_KEYS.userPreferences.all]];
 const PERSISTED_SETTINGS_KEYS = [[...QUERY_KEYS.settings.scope('lite')]];
 
+// Deferred persistence — mounts useQueryPersistence after the initial render
+// to keep localStorage reads off the critical hydration path.
+function DeferredQueryPersistence(): null {
+  const [ready, setReady] = useState(false);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined' && typeof window.requestIdleCallback === 'function') {
+      const id = window.requestIdleCallback(() => setReady(true));
+      return () => window.cancelIdleCallback(id);
+    }
+    const timeoutId = window.setTimeout(() => setReady(true), 1);
+    return () => window.clearTimeout(timeoutId);
+  }, []);
+
+  useQueryPersistence(
+    ready
+      ? {
+          key: 'app-queries',
+          queryKeys: PERSISTED_PREFERENCES_KEYS,
+          ttl: 1000 * 60 * 60,
+          maxItemBytes: 16 * 1024,
+        }
+      : { key: 'app-queries', queryKeys: [], ttl: 0, maxItemBytes: 0 }
+  );
+
+  useQueryPersistence(
+    ready
+      ? {
+          key: 'app-queries',
+          queryKeys: PERSISTED_SETTINGS_KEYS,
+          ttl: 1000 * 60 * 60,
+          maxItemBytes: 16 * 1024,
+        }
+      : { key: 'app-queries', queryKeys: [], ttl: 0, maxItemBytes: 0 }
+  );
+
+  return null;
+}
+
 function QueryProviderInner({ children }: QueryProviderProps): React.JSX.Element {
   useGlobalQueryErrorHandler({
     showToast: true,
@@ -91,23 +130,9 @@ function QueryProviderInner({ children }: QueryProviderProps): React.JSX.Element
     toastDedupeWindowMs: 20000,
   });
 
-  useQueryPersistence({
-    key: 'app-queries',
-    queryKeys: PERSISTED_PREFERENCES_KEYS,
-    ttl: 1000 * 60 * 60,
-    maxItemBytes: 16 * 1024,
-  });
-
-  useQueryPersistence({
-    key: 'app-queries',
-    queryKeys: PERSISTED_SETTINGS_KEYS,
-    ttl: 1000 * 60 * 60,
-    maxItemBytes: 16 * 1024,
-    revalidateOnLoad: true,
-  });
-
   return (
     <>
+      <DeferredQueryPersistence />
       {enableAdvancedRuntime ? <QueryProviderAdvancedRuntime shouldWarmup={enableWarmup} /> : null}
       {children}
     </>

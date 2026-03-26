@@ -1,6 +1,6 @@
 ---
 owner: 'Platform Team'
-last_reviewed: '2026-03-09'
+last_reviewed: '2026-03-26'
 status: 'active'
 doc_type: 'policy'
 scope: 'platform'
@@ -52,11 +52,29 @@ copying a single default everywhere.
 
 ## Implementation Notes
 
+- Route segment config such as `runtime`, `dynamic`, and `revalidate` must be
+  declared directly in `route.ts`. Do not re-export those fields from
+  `handler.ts` or `route-handler.ts`.
+- App API route files should export HTTP methods through `apiHandler` or
+  `apiHandlerWithParams`; keep the heavy implementation in sibling
+  `handler.ts` / `route-handler.ts` files.
 - Route handlers can opt out of static optimization with
   `export const dynamic = 'force-dynamic'`.
 - `Cache-Control: no-store` should be set on responses when downstream caches
   must not retain them.
+- Some routes intentionally combine route-level segment config with explicit
+  `cacheControl` wrapper options or response headers. Inspect both the route
+  file and the handler implementation before changing policy.
 - Prefer explicit cache policy over relying on framework defaults.
+
+Examples in the current tree:
+
+- Dynamic authenticated route:
+  [`src/app/api/system/logs/route.ts`](/Users/michalmatynia/Desktop/NPM/2026/Gemini%20new%20Pull/geminitestapp/src/app/api/system/logs/route.ts)
+- Dynamic authenticated file listing route with explicit revalidation:
+  [`src/app/api/files/route.ts`](/Users/michalmatynia/Desktop/NPM/2026/Gemini%20new%20Pull/geminitestapp/src/app/api/files/route.ts)
+- Long-lived metadata route with explicit cache-control:
+  [`src/app/api/v2/metadata/[type]/route.ts`](/Users/michalmatynia/Desktop/NPM/2026/Gemini%20new%20Pull/geminitestapp/src/app/api/v2/metadata/[type]/route.ts)
 
 Example:
 
@@ -75,9 +93,14 @@ export async function GET() {
 
 ## Verification
 
-- inspect the route handler under `src/app/api/...`
+- inspect `route.ts` under `src/app/api/...` for `runtime`, `dynamic`, and
+  `revalidate`
+- inspect sibling `handler.ts` / `route-handler.ts` and wrapper options for
+  response headers or explicit `cacheControl`
 - confirm headers in the response
 - check related client query stale time and invalidation behavior
+- run `npm run check:route-policies`
+- run `npm run check:next-route-config-reexports`
 
 Use this document as policy. For exact current route behavior, inspect the
 actual handler files rather than relying on old manual route tables.

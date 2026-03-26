@@ -4,6 +4,9 @@ import type {
   KangurGameStatus,
   KangurGameVariant,
   KangurGameVariantSurface,
+  KangurLessonActivityRuntimeSpec,
+  KangurLessonStageGameRuntimeSpec,
+  KangurLaunchableGameRuntimeSpec,
   KangurLaunchableGameScreen,
   KangurGameEngineId,
   KangurGameEngineDefinition,
@@ -27,7 +30,10 @@ export type KangurGameVariantCatalogEntry = {
   game: KangurGameDefinition;
   engine: KangurGameEngineDefinition | null;
   variant: KangurGameVariant;
+  lessonActivityRuntime: KangurLessonActivityRuntimeSpec | null;
+  lessonStageRuntime: KangurLessonStageGameRuntimeSpec | null;
   launchableScreen: KangurLaunchableGameScreen | null;
+  launchableRuntime: KangurLaunchableGameRuntimeSpec | null;
   isDefaultVariant: boolean;
   isLessonVariant: boolean;
   isLibraryPreviewVariant: boolean;
@@ -59,8 +65,14 @@ const createVariantCatalogEntry = (
   game: entry.game,
   engine: entry.engine,
   variant,
+  lessonActivityRuntime:
+    entry.lessonVariant?.id === variant.id ? entry.lessonActivityRuntime : null,
+  lessonStageRuntime:
+    variant.surface === 'lesson_stage' ? entry.lessonStageRuntime : null,
   launchableScreen:
     entry.gameScreenVariant?.id === variant.id ? entry.launchableScreen : null,
+  launchableRuntime:
+    entry.gameScreenVariant?.id === variant.id ? entry.launchableRuntime : null,
   isDefaultVariant: entry.defaultVariant?.id === variant.id,
   isLessonVariant: entry.lessonVariant?.id === variant.id,
   isLibraryPreviewVariant: entry.libraryPreviewVariant?.id === variant.id,

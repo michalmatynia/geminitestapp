@@ -1,6 +1,6 @@
 ---
 owner: 'Platform Team'
-last_reviewed: '2026-03-09'
+last_reviewed: '2026-03-26'
 status: 'active'
 doc_type: 'plan'
 scope: 'cross-feature'
@@ -17,6 +17,9 @@ Status: In progress
 
 Track the required 14-day main-branch stabilization window with canonical guardrail evidence for final closeout publication.
 
+This is the active tracker for the closeout wave. Older migration records in this
+folder should feed into it, not compete with it.
+
 ## Required Daily Checks
 
 1. `npm run canonical:stabilization:check`
@@ -24,6 +27,9 @@ Track the required 14-day main-branch stabilization window with canonical guardr
    - `npm run canonical:check:sitewide`
    - `npm run ai-paths:check:canonical`
    - `npm run observability:check`
+
+The consolidated stabilization command already runs the underlying gates. Only log
+the granular commands separately when one of them was run for diagnosis or evidence.
 
 ## Evidence Log
 

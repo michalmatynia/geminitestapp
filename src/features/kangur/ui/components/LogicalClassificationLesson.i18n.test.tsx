@@ -43,7 +43,11 @@ describe('LogicalClassificationLesson i18n', () => {
 
     const sections = (capturedProps?.sections as Array<Record<string, unknown>>) ?? [];
     const games =
-      (capturedProps?.games as Array<{ sectionId: string; stage: Record<string, unknown> }>) ?? [];
+      (capturedProps?.games as Array<{
+        sectionId: string;
+        stage: Record<string, unknown>;
+        runtime?: { runtimeId?: string; rendererId?: string };
+      }>) ?? [];
 
     expect(sections.find((section) => section.id === 'intro')).toMatchObject({
       title: 'Klassifikation - Einstieg',
@@ -55,6 +59,10 @@ describe('LogicalClassificationLesson i18n', () => {
     });
     expect(games.find((game) => game.sectionId === 'game')?.stage).toMatchObject({
       title: 'Klassifikationslabor',
+    });
+    expect(games.find((game) => game.sectionId === 'game')?.runtime).toMatchObject({
+      runtimeId: 'logical_classification_lab_lesson_stage',
+      rendererId: 'logical_classification_game',
     });
 
     const slides = (capturedProps?.slides as Record<string, CapturedSlide[]>) ?? {};

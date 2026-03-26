@@ -1,12 +1,18 @@
 'use client';
 
-import MusicMelodyRepeatGame from '@/features/kangur/ui/components/music/MusicMelodyRepeatGame';
-import MusicPianoRollFreePlayGame from '@/features/kangur/ui/components/music/MusicPianoRollFreePlayGame';
+import { getKangurLessonStageGameRuntimeSpec } from '@/features/kangur/games/lesson-stage-runtime-specs';
 import { KangurUnifiedLesson } from '../lessons/lesson-components';
 
 import { HUB_SECTIONS, SLIDES } from './MusicDiatonicScaleLesson.data';
 
 export { HUB_SECTIONS, SLIDES };
+
+const MUSIC_MELODY_REPEAT_RUNTIME = getKangurLessonStageGameRuntimeSpec(
+  'music_melody_repeat_lesson_stage'
+);
+const MUSIC_PIANO_ROLL_FREE_PLAY_RUNTIME = getKangurLessonStageGameRuntimeSpec(
+  'music_piano_roll_free_play_lesson_stage'
+);
 
 export default function MusicDiatonicScaleLesson(): JSX.Element {
   return (
@@ -36,7 +42,7 @@ export default function MusicDiatonicScaleLesson(): JSX.Element {
             shellVariant: 'plain',
             title: 'Powtorz melodie',
           },
-          render: ({ onFinish }) => <MusicMelodyRepeatGame onFinish={onFinish} />,
+          runtime: MUSIC_MELODY_REPEAT_RUNTIME,
         },
         {
           sectionId: 'game_freeplay',
@@ -48,7 +54,7 @@ export default function MusicDiatonicScaleLesson(): JSX.Element {
             shellVariant: 'plain',
             title: 'Swobodna gra',
           },
-          render: ({ onFinish }) => <MusicPianoRollFreePlayGame onFinish={onFinish} />,
+          runtime: MUSIC_PIANO_ROLL_FREE_PLAY_RUNTIME,
         },
       ]}
     />

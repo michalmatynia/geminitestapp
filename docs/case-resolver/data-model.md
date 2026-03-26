@@ -1,11 +1,12 @@
 ---
 owner: 'Case Resolver Team'
-last_reviewed: '2026-02-20'
+last_reviewed: '2026-03-26'
 status: 'active'
 related_components:
   - 'src/features/case-resolver/settings.ts'
   - 'src/shared/contracts/case-resolver.ts'
   - 'src/features/case-resolver/server/ocr-runtime-job-store.ts'
+  - 'src/features/case-resolver/utils/workspace-settings-persistence-helpers.ts'
 ---
 
 # Case Resolver Data Model
@@ -22,6 +23,10 @@ Defined in `src/features/case-resolver/settings.constants.ts` and `src/features/
 - `case_resolver_categories_v1`
 - `case_resolver_settings_v1`
 - `case_resolver_default_document_format_v1`
+
+The main workspace record is persisted separately from detached document and history payloads.
+The active save/fetch path uses `/api/settings` with light/heavy scopes for the primary
+workspace record plus dedicated keys for documents/history hydration.
 
 ## Workspace Shape
 
@@ -40,6 +45,13 @@ Primary workspace entity (`CaseResolverWorkspace`) includes:
 - `activeFileId`
 
 Default workspace constructor: `createDefaultCaseResolverWorkspace()` in `settings.ts`.
+
+Persistence notes:
+
+- primary workspace record: `case_resolver_workspace_v2`
+- detached document payloads: `case_resolver_workspace_v2_documents`
+- detached history payloads: `case_resolver_workspace_v2_history`
+- save path compacts and strips detached content before persisting the primary workspace record
 
 ## File Entity (Case/Document/Scan)
 
@@ -72,9 +84,9 @@ Defined in `ocr-runtime-job-store.ts`:
 
 - identity: `id`, `filepath`
 - execution state: `status`, `dispatchMode`, `startedAt`, `finishedAt`
-- request lineage: `model`, `prompt`, `retryOfJobId`
+- request lineage: `model`, `prompt`, `retryOfJobId`, `correlationId`
 - retry metadata: `attemptsMade`, `maxAttempts`
-- result surface: `resultText`, `errorMessage`
+- result surface: `resultText`, `errorMessage`, `errorCategory`, `retryableError`
 - timeline: `createdAt`, `updatedAt`
 
 ## Normalization Rules
@@ -83,3 +95,4 @@ Defined in `ocr-runtime-job-store.ts`:
 2. Folder paths are sanitized and normalized to stable slash-separated form.
 3. Invalid or duplicate IDs are removed during normalization.
 4. OCR job records are parsed defensively and defaulted when fields are missing.
+5. Inline node-file snapshot text is not allowed inside persisted workspace assets.

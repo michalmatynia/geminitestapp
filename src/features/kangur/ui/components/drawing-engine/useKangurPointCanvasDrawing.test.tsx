@@ -30,10 +30,12 @@ function CanvasDrawingHarness({
   onSerializedSnapshotChange?: (raw: string | null) => void;
 }): React.JSX.Element {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
+  const [exportedDataUrl, setExportedDataUrl] = useState('');
   const [savedSerializedSnapshot, setSavedSerializedSnapshot] = useState('');
   const {
     canRedo,
     canUndo,
+    exportDataUrl,
     handlePointerDown,
     handlePointerMove,
     handlePointerUp,
@@ -90,11 +92,20 @@ function CanvasDrawingHarness({
       <button
         type='button'
         onClick={() => {
+          setExportedDataUrl(exportDataUrl() ?? '');
+        }}
+      >
+        Export
+      </button>
+      <button
+        type='button'
+        onClick={() => {
           restoreSerializedSnapshot(savedSerializedSnapshot);
         }}
       >
         Restore
       </button>
+      <div data-testid='exported-data-url'>{exportedDataUrl}</div>
       <div data-testid='serialized-snapshot'>{savedSerializedSnapshot}</div>
     </>
   );
@@ -125,6 +136,9 @@ describe('useKangurPointCanvasDrawing', () => {
     } as unknown as CanvasRenderingContext2D;
 
     vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockReturnValue(ctx);
+    vi.spyOn(HTMLCanvasElement.prototype, 'toDataURL').mockReturnValue(
+      'data:image/png;base64,POINT'
+    );
     HTMLCanvasElement.prototype.getBoundingClientRect = vi.fn(() =>
       createRect({ left: 0, top: 0, width: 320, height: 220 })
     ) as typeof HTMLCanvasElement.prototype.getBoundingClientRect;
@@ -241,6 +255,35 @@ describe('useKangurPointCanvasDrawing', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Restore' }));
     expect(canvas).toHaveAttribute('data-stroke-count', '1');
     expect(canvas).toHaveAttribute('data-has-drawable-content', 'true');
+  });
+
+  it('exports raster snapshots through the shared point engine api', () => {
+    render(<CanvasDrawingHarness />);
+
+    const canvas = screen.getByLabelText('Shared canvas drawing surface');
+
+    fireEvent.pointerDown(canvas, {
+      pointerId: 18,
+      clientX: 28,
+      clientY: 42,
+    });
+    fireEvent.pointerMove(canvas, {
+      pointerId: 18,
+      clientX: 84,
+      clientY: 118,
+    });
+    fireEvent.pointerUp(canvas, {
+      pointerId: 18,
+      clientX: 84,
+      clientY: 118,
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: 'Export' }));
+
+    expect(screen.getByTestId('exported-data-url')).toHaveTextContent(
+      'data:image/png;base64,POINT'
+    );
+    expect(HTMLCanvasElement.prototype.toDataURL).toHaveBeenCalledWith('image/png');
   });
 
   it('restores initial serialized point snapshots and emits snapshot updates', async () => {

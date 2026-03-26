@@ -51,6 +51,8 @@ type ScoreHistoryProps = {
   playerName?: string | null;
   createdBy?: string | null;
   basePath?: string | null;
+  prefetchedScores?: KangurScoreRecord[] | null;
+  prefetchedLoading?: boolean;
 };
 
 const OP_ACCENTS: Record<string, KangurAccent> = {
@@ -217,6 +219,8 @@ export default function ScoreHistory({
   playerName = null,
   createdBy = null,
   basePath = null,
+  prefetchedScores,
+  prefetchedLoading,
 }: ScoreHistoryProps): React.JSX.Element {
   const locale = useLocale();
   const translations = useTranslations('KangurScoreHistory');
@@ -224,12 +228,20 @@ export default function ScoreHistory({
   const isCoarsePointer = useKangurCoarsePointer();
   const { subject } = useKangurSubjectFocus();
   const [scores, setScores] = useState<KangurScoreRecord[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [isInternalLoading, setIsInternalLoading] = useState(true);
+  const usesPrefetchedScores =
+    prefetchedScores !== undefined || prefetchedLoading !== undefined;
+  const resolvedScores = prefetchedScores ?? scores;
+  const loading = prefetchedLoading ?? isInternalLoading;
   const weakestLessonActionClassName = isCoarsePointer
     ? 'mt-3 w-full min-h-11 px-4 touch-manipulation select-none active:scale-[0.97] sm:w-auto'
     : 'mt-3 w-full sm:w-auto';
 
   useEffect(() => {
+    if (usesPrefetchedScores) {
+      return;
+    }
+
     let isActive = true;
 
     const loadScores = async (): Promise<void> => {
@@ -237,7 +249,7 @@ export default function ScoreHistory({
       const normalizedPlayerName = playerName?.trim() || '';
       const normalizedCreatedBy = createdBy?.trim() || '';
       if (isActive) {
-        setLoading(true);
+        setIsInternalLoading(true);
       }
 
       try {
@@ -278,7 +290,7 @@ export default function ScoreHistory({
         setScores(loadedScores);
       } finally {
         if (isActive) {
-          setLoading(false);
+          setIsInternalLoading(false);
         }
       }
     };
@@ -288,11 +300,11 @@ export default function ScoreHistory({
     return () => {
       isActive = false;
     };
-  }, [createdBy, learnerId, playerName, subject]);
+  }, [createdBy, learnerId, playerName, subject, usesPrefetchedScores]);
 
   const subjectScores = useMemo(
-    () => scores.filter((score) => resolveKangurScoreSubject(score) === subject),
-    [scores, subject]
+    () => resolvedScores.filter((score) => resolveKangurScoreSubject(score) === subject),
+    [resolvedScores, subject]
   );
   const scoreInsightsLocalizer = useMemo(
     () => ({

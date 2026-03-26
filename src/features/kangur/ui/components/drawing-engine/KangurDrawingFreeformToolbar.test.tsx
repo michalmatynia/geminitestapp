@@ -13,16 +13,20 @@ describe('KangurDrawingFreeformToolbar', () => {
     const onSelectEraser = vi.fn();
     const onUndo = vi.fn();
     const onRedo = vi.fn();
+    const onExport = vi.fn();
     const onClear = vi.fn();
 
     render(
       <KangurDrawingFreeformToolbar
+        canExport
         canRedo={false}
         canUndo
         clearLabel='Clear'
         eraserLabel='Eraser'
+        exportLabel='Export PNG'
         isCoarsePointer={false}
         onClear={onClear}
+        onExport={onExport}
         onRedo={onRedo}
         onUndo={onUndo}
         penLabel='Pen'
@@ -49,6 +53,7 @@ describe('KangurDrawingFreeformToolbar', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Pen' }));
     fireEvent.click(screen.getByRole('button', { name: 'Eraser' }));
     fireEvent.click(screen.getByRole('button', { name: 'Undo' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Export PNG' }));
     fireEvent.click(screen.getByRole('button', { name: 'Clear' }));
 
     expect(onSelectColor).toHaveBeenCalledWith('#2563eb');
@@ -56,6 +61,7 @@ describe('KangurDrawingFreeformToolbar', () => {
     expect(onSelectPen).toHaveBeenCalledTimes(1);
     expect(onSelectEraser).toHaveBeenCalledTimes(1);
     expect(onUndo).toHaveBeenCalledTimes(1);
+    expect(onExport).toHaveBeenCalledTimes(1);
     expect(onClear).toHaveBeenCalledTimes(1);
     expect(screen.getByRole('button', { name: 'Redo' })).toBeDisabled();
   });
@@ -63,12 +69,15 @@ describe('KangurDrawingFreeformToolbar', () => {
   it('keeps coarse-pointer sizing on shared toolbar controls', () => {
     render(
       <KangurDrawingFreeformToolbar
+        canExport={false}
         canRedo
         canUndo
         clearLabel='Clear'
         eraserLabel='Eraser'
+        exportLabel='Export PNG'
         isCoarsePointer
         onClear={() => {}}
+        onExport={() => {}}
         onRedo={() => {}}
         onUndo={() => {}}
         penLabel='Pen'
@@ -93,5 +102,7 @@ describe('KangurDrawingFreeformToolbar', () => {
     expect(screen.getByRole('button', { name: 'Kolor #2563eb' })).toHaveClass('h-11', 'w-11');
     expect(screen.getByRole('button', { name: 'Pen' })).toHaveClass('h-11', 'w-11');
     expect(screen.getByRole('button', { name: 'Undo' })).toHaveClass('h-11', 'w-11');
+    expect(screen.getByRole('button', { name: 'Export PNG' })).toHaveClass('h-11', 'w-11');
+    expect(screen.getByRole('button', { name: 'Export PNG' })).toBeDisabled();
   });
 });

@@ -1,6 +1,6 @@
 ---
 owner: 'Platform Team'
-last_reviewed: '2026-03-09'
+last_reviewed: '2026-03-26'
 status: 'active'
 doc_type: 'plan'
 scope: 'repo'
@@ -12,6 +12,13 @@ canonical: true
 Date: 2026-03-05  
 Owner: Platform Architecture + Domain Maintainers  
 Re-baselined: 2026-03-05 (post Wave E execution)
+
+This remains the umbrella migration plan, but the active execution and closeout
+state now lives in:
+
+- [`docs/plans/canonical-closeout-2026-04-17.md`](./canonical-closeout-2026-04-17.md)
+- [`docs/migrations/stabilization-window-2026-04-17.md`](../migrations/stabilization-window-2026-04-17.md)
+- [`docs/migrations/wave-execution-status-2026-04-17.md`](../migrations/wave-execution-status-2026-04-17.md)
 
 ## Objective
 

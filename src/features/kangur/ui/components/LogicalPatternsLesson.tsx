@@ -16,7 +16,7 @@ import {
   RuleChecklistAnimation,
   RuleCheckAnimation,
 } from './LogicalPatternsAnimations';
-import LogicalPatternsWorkshopGame from '@/features/kangur/ui/components/LogicalPatternsWorkshopGame';
+import { getKangurLessonStageGameRuntimeSpec } from '@/features/kangur/games/lesson-stage-runtime-specs';
 import {
   KangurLessonCallout,
   KangurLessonCaption,
@@ -611,6 +611,9 @@ const buildLogicalPatternsSections = (copy: LogicalPatternsLessonCopy) => [
 
 export const SLIDES = buildLogicalPatternsSlides(LOGICAL_PATTERNS_LESSON_COPY_PL);
 export const HUB_SECTIONS = buildLogicalPatternsSections(LOGICAL_PATTERNS_LESSON_COPY_PL);
+const LOGICAL_PATTERNS_WORKSHOP_RUNTIME = getKangurLessonStageGameRuntimeSpec(
+  'logical_patterns_workshop_lesson_stage'
+);
 
 export default function LogicalPatternsLesson(): React.JSX.Element {
   const translations = useTranslations('KangurStaticLessons.logicalPatterns');
@@ -644,7 +647,7 @@ export default function LogicalPatternsLesson(): React.JSX.Element {
             shellTestId: 'logical-patterns-game-shell',
             title: copy.game.stageTitle,
           },
-          render: ({ onFinish }) => <LogicalPatternsWorkshopGame onFinish={onFinish} />,
+          runtime: LOGICAL_PATTERNS_WORKSHOP_RUNTIME,
         },
       ]}
     />

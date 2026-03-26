@@ -3,8 +3,6 @@
 import { useMemo } from 'react';
 import { useTranslations } from 'next-intl';
 
-import AddingBallGame from '@/features/kangur/ui/components/AddingBallGame';
-import AddingSynthesisGame from '@/features/kangur/ui/components/AddingSynthesisGame';
 import type { LessonSlide } from '@/features/kangur/ui/components/LessonSlideSection';
 import {
   AddingAbacusAnimation,
@@ -39,11 +37,19 @@ import {
   KANGUR_CENTER_ROW_CLASSNAME,
   KANGUR_START_ROW_CLASSNAME,
 } from '@/features/kangur/ui/design/tokens';
+import { getKangurLessonStageGameRuntimeSpec } from '@/features/kangur/games/lesson-stage-runtime-specs';
 import { KangurUnifiedLesson } from '@/features/kangur/ui/lessons/lesson-components';
 import type { LessonTranslate, WidenLessonCopy } from './lesson-copy';
 
 type SectionId = 'podstawy' | 'przekroczenie' | 'dwucyfrowe' | 'zapamietaj' | 'synthesis' | 'game';
 type AddingSlideSectionId = Exclude<SectionId, 'game' | 'synthesis'>;
+
+const ADDING_BALL_LESSON_STAGE_RUNTIME = getKangurLessonStageGameRuntimeSpec(
+  'adding_ball_lesson_stage'
+);
+const ADDING_SYNTHESIS_LESSON_STAGE_RUNTIME = getKangurLessonStageGameRuntimeSpec(
+  'adding_synthesis_lesson_stage'
+);
 
 const ADDING_LESSON_COPY_PL = {
   lessonTitle: 'Dodawanie',
@@ -1657,9 +1663,7 @@ export default function AddingLesson(): React.JSX.Element {
             shellTestId: 'adding-lesson-game-shell',
             title: copy.game.stageTitle,
           },
-          render: ({ onFinish }) => (
-            <AddingBallGame finishLabelVariant='topics' onFinish={onFinish} />
-          ),
+          runtime: ADDING_BALL_LESSON_STAGE_RUNTIME,
         },
         {
           sectionId: 'synthesis',
@@ -1672,7 +1676,7 @@ export default function AddingLesson(): React.JSX.Element {
             shellTestId: 'adding-lesson-synthesis-shell',
             title: copy.synthesis.stageTitle,
           },
-          render: ({ onFinish }) => <AddingSynthesisGame onFinish={onFinish} />,
+          runtime: ADDING_SYNTHESIS_LESSON_STAGE_RUNTIME,
         },
       ]}
     />

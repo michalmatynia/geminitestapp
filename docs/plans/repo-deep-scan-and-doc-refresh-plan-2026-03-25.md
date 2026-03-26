@@ -1,6 +1,6 @@
 ---
 owner: 'Platform Team'
-last_reviewed: '2026-03-25'
+last_reviewed: '2026-03-26'
 status: 'active'
 doc_type: 'plan'
 scope: 'cross-feature'
@@ -18,6 +18,9 @@ so the findings are discoverable from the main docs hubs.
 This plan is the execution baseline for the 2026-03-25 scan wave. The findings
 from the executed wave live in
 [`../platform/repo-deep-scan-2026-03-25.md`](../platform/repo-deep-scan-2026-03-25.md).
+
+Treat this file as the retained execution baseline and the platform report as the
+authoritative findings output for the completed wave.
 
 ## Scope
 

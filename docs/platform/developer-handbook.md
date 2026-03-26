@@ -1,17 +1,25 @@
 ---
 owner: 'Platform Team'
-last_reviewed: '2026-03-09'
+last_reviewed: '2026-03-26'
 status: 'active'
 doc_type: 'reference'
 scope: 'platform'
 canonical: true
 ---
 
-# Developer Handbook: UI Consolidation Patterns
+# Developer Handbook: Shared UI Consolidation Patterns
 
-**Last Updated:** March 3, 2026
-**Project Status:** Production-Ready ✅
+**Scope:** Shared UI consolidation patterns used across admin, platform, and
+feature surfaces
+**Audience:** Engineers touching reusable UI templates, list/filter surfaces,
+and consolidation refactors
+**Last Updated:** March 26, 2026
 **Framework:** Next.js 16.1.1 + React 19.2.3 + TypeScript 5.9.3
+
+Use [`README.md`](../../README.md), [`docs/README.md`](../README.md), and
+[`GEMINI.md`](../../GEMINI.md) for repo-wide onboarding. This handbook is
+specifically about the shared UI consolidation patterns documented under
+`docs/platform/`.
 
 ---
 
@@ -29,7 +37,8 @@ canonical: true
 
 ## Core Patterns Overview
 
-The consolidation project identified and standardized three core patterns used across 450+ components:
+This handbook documents three recurring pattern families used across shared
+admin and platform UI surfaces:
 
 ### 1. FilterPanel Pattern
 
@@ -888,6 +897,6 @@ const filterConfig = useMemo(() => {
 
 ---
 
-**Last Updated:** March 3, 2026
-**Version:** 1.0 (Production-Ready)
-**Maintained By:** UI Consolidation Project
+**Last Updated:** March 26, 2026
+**Status:** Maintained reference
+**Maintained By:** Platform Team

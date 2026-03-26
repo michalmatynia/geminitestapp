@@ -1,7 +1,7 @@
 'use client';
 
 import { Eye, EyeOff } from 'lucide-react';
-import { useSearchParams } from 'next/navigation';
+import { usePathname, useSearchParams } from 'next/navigation';
 import { signIn, signOut } from 'next-auth/react';
 import { useTranslations } from 'next-intl';
 import React, {
@@ -16,10 +16,15 @@ import React, {
 
 import { getKangurHomeHref } from '@/features/kangur/config/routing';
 import { KANGUR_PARENT_VERIFICATION_DEFAULT_RESEND_COOLDOWN_MS } from '@/features/kangur/settings';
+import { useOptionalFrontendPublicOwner } from '@/features/kangur/ui/FrontendPublicOwnerContext';
 import { useKangurAiTutorSessionSync } from '@/features/kangur/ui/context/KangurAiTutorContext';
 import { useOptionalKangurAuth } from '@/features/kangur/ui/context/KangurAuthContext';
+import { useOptionalKangurRouting } from '@/features/kangur/ui/context/KangurRoutingContext';
 import { useKangurPageContentEntry } from '@/features/kangur/ui/hooks/useKangurPageContent';
 import { useKangurTutorAnchor } from '@/features/kangur/ui/hooks/useKangurTutorAnchor';
+import {
+  resolveRouteAwareManagedKangurHref,
+} from '@/features/kangur/ui/routing/managed-paths';
 import {
   KangurButton,
   KangurGlassPanel,
@@ -233,7 +238,9 @@ function ParentVerificationCard({
 
 export function KangurLoginPageContent(): React.JSX.Element {
   const translations = useTranslations('KangurLogin');
+  const pathname = usePathname();
   const searchParams = useSearchParams();
+  const frontendPublicOwner = useOptionalFrontendPublicOwner();
   const {
     callbackUrl,
     defaultCallbackUrl,
@@ -434,7 +441,19 @@ export function KangurLoginPageContent(): React.JSX.Element {
     },
   });
 
-  const callbackValue = callbackUrl ?? defaultCallbackUrl;
+  const currentOrigin = typeof window === 'undefined' ? null : window.location.origin;
+  const normalizeLoginCallbackHref = useCallback(
+    (href: string | null | undefined): string | undefined =>
+      resolveRouteAwareManagedKangurHref({
+        href,
+        pathname,
+        currentOrigin,
+        canonicalizePublicAlias: frontendPublicOwner?.publicOwner === 'kangur',
+      }),
+    [currentOrigin, frontendPublicOwner?.publicOwner, pathname]
+  );
+  const callbackValue =
+    normalizeLoginCallbackHref(callbackUrl ?? defaultCallbackUrl) ?? defaultCallbackUrl;
   const verifyEmailToken = searchParams?.get('verifyEmailToken') ?? null;
   const magicLinkToken = searchParams?.get('magicLinkToken') ?? null;
 
@@ -956,7 +975,10 @@ export function KangurLoginPageContent(): React.JSX.Element {
 
       await handleLoginSuccess({
         kind: 'parent',
-        callbackUrl: typeof signInResult.url === 'string' ? signInResult.url : callbackValue,
+        callbackUrl:
+          normalizeLoginCallbackHref(
+            typeof signInResult.url === 'string' ? signInResult.url : callbackValue
+          ) ?? callbackValue,
         onStageChange: (stage: KangurLoginSuccessStage) => setSubmitStage(stage),
       });
     } catch {
@@ -1307,11 +1329,36 @@ type KangurLoginPagePropsInput = Omit<KangurLoginPageProps, 'defaultCallbackUrl'
 
 export function KangurLoginPage(props: KangurLoginPagePropsInput): React.JSX.Element {
   const translations = useTranslations('KangurLogin');
+  const pathname = usePathname();
   const searchParams = useSearchParams();
+  const routing = useOptionalKangurRouting();
+  const frontendPublicOwner = useOptionalFrontendPublicOwner();
   const callbackParam = searchParams?.get('callbackUrl') ?? undefined;
   const authModeParam = searchParams?.get(KANGUR_PARENT_AUTH_MODE_PARAM);
-  const resolvedDefaultCallbackUrl = props.defaultCallbackUrl ?? getKangurHomeHref();
-  const resolvedCallbackUrl = props.callbackUrl ?? callbackParam;
+  const currentOrigin = typeof window === 'undefined' ? null : window.location.origin;
+  const routeAwareDefaultCallbackUrl = useMemo(
+    () =>
+      resolveRouteAwareManagedKangurHref({
+        href: getKangurHomeHref(routing?.basePath),
+        pathname,
+        currentOrigin,
+        canonicalizePublicAlias: frontendPublicOwner?.publicOwner === 'kangur',
+      }) ?? getKangurHomeHref(routing?.basePath),
+    [currentOrigin, frontendPublicOwner?.publicOwner, pathname, routing?.basePath]
+  );
+  const resolvedDefaultCallbackUrl =
+    resolveRouteAwareManagedKangurHref({
+      href: props.defaultCallbackUrl ?? routeAwareDefaultCallbackUrl,
+      pathname,
+      currentOrigin,
+      canonicalizePublicAlias: frontendPublicOwner?.publicOwner === 'kangur',
+    }) ?? routeAwareDefaultCallbackUrl;
+  const resolvedCallbackUrl = resolveRouteAwareManagedKangurHref({
+    href: props.callbackUrl ?? callbackParam,
+    pathname,
+    currentOrigin,
+    canonicalizePublicAlias: frontendPublicOwner?.publicOwner === 'kangur',
+  });
   const resolvedParentAuthMode = props.parentAuthMode ??
     parseKangurAuthMode(authModeParam, 'sign-in');
 

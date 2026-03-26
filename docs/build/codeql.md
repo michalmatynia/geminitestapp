@@ -1,6 +1,6 @@
 ---
 owner: 'Platform Team'
-last_reviewed: '2026-03-12'
+last_reviewed: '2026-03-26'
 status: 'active'
 doc_type: 'runbook'
 scope: 'repository'
@@ -15,6 +15,9 @@ canonical: true
 - Language: `javascript-typescript`
 - Query pack: `security-extended`
 - Triggers: `pull_request`, `push` to `main` and `master`, weekly Monday scan, manual dispatch
+- Node setup: `actions/setup-node@v4` with `node-version-file: '.nvmrc'`
+- Workflow concurrency: cancels older in-flight runs for the same ref
+- Job timeout: `45` minutes
 
 ## Scope
 
@@ -53,3 +56,6 @@ Run it with:
 ```bash
 npx vitest run scripts/quality/codeql-workflow-contract.test.ts
 ```
+
+Use this contract test when the workflow, CodeQL config, triggers, or query
+pack settings change so the written doc and CI workflow stay aligned.

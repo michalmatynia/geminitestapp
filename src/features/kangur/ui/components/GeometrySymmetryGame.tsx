@@ -21,13 +21,16 @@ import {
   type KangurMiniGameTranslate,
 } from '@/features/kangur/ui/constants/mini-game-i18n';
 import { KangurDrawingActionRow } from '@/features/kangur/ui/components/drawing-engine/KangurDrawingActionRow';
-import { KangurDrawingHistoryActions } from '@/features/kangur/ui/components/drawing-engine/KangurDrawingHistoryActions';
 import { KangurDrawingKeyboardCursorOverlay } from '@/features/kangur/ui/components/drawing-engine/KangurDrawingOverlays';
 import { KangurDrawingPracticeBoard } from '@/features/kangur/ui/components/drawing-engine/KangurDrawingPracticeBoard';
 import { KangurDrawingStatusRegions } from '@/features/kangur/ui/components/drawing-engine/KangurDrawingStatusRegions';
+import { KANGUR_DRAWING_HISTORY_ARIA_SHORTCUTS } from '@/features/kangur/ui/components/drawing-engine/keyboard-shortcuts';
 import { flattenKangurStrokePoints } from '@/features/kangur/ui/components/drawing-engine/stroke-metrics';
+import { useKangurDrawingDraftStorage } from '@/features/kangur/ui/components/drawing-engine/useKangurDrawingDraftStorage';
 import { useKangurKeyboardPointDrawing } from '@/features/kangur/ui/components/drawing-engine/useKangurKeyboardPointDrawing';
+import { useKangurManagedDrawingActions } from '@/features/kangur/ui/components/drawing-engine/useKangurManagedDrawingActions';
 import { useKangurPointCanvasDrawing } from '@/features/kangur/ui/components/drawing-engine/useKangurPointCanvasDrawing';
+import { KangurDrawingUtilityActions } from '@/features/kangur/ui/components/drawing-engine/KangurDrawingUtilityActions';
 import {
   KangurButton,
   KangurDisplayEmoji,
@@ -137,6 +140,13 @@ export default function GeometrySymmetryGame({
 
   const totalRounds = resolvedRounds.length;
   const currentRound = resolvedRounds[roundIndex];
+  const {
+    clearDraftSnapshot,
+    draftSnapshot,
+    setDraftSnapshot,
+  } = useKangurDrawingDraftStorage(
+    currentRound ? `geometry-symmetry:${currentRound.id}` : null
+  );
   const minPointDistance = isCoarsePointer ? 5 : 2;
   const minDrawingPoints = isCoarsePointer
     ? Math.max(6, Math.round(BASE_MIN_DRAWING_POINTS * 0.7))
@@ -149,9 +159,11 @@ export default function GeometrySymmetryGame({
     canRedo,
     canUndo,
     clearStrokes,
+    exportDataUrl,
     handlePointerDown,
     handlePointerMove,
     handlePointerUp,
+    hasDrawableContent,
     isPointerDrawing,
     redoLastStroke,
     setStrokes,
@@ -161,9 +173,11 @@ export default function GeometrySymmetryGame({
     canvasRef,
     baseLayerCacheKey,
     enabled: !done && feedback?.kind !== 'success' && feedback?.kind !== 'error',
+    initialSerializedSnapshot: draftSnapshot,
     logicalHeight: CANVAS_HEIGHT,
     logicalWidth: CANVAS_WIDTH,
     minPointDistance,
+    onSerializedSnapshotChange: setDraftSnapshot,
     onPointerStart: () => {
       if (feedback?.kind === 'info') {
         setFeedback(null);
@@ -234,12 +248,13 @@ export default function GeometrySymmetryGame({
   );
 
   const clearBoardState = useCallback((): void => {
+    clearDraftSnapshot();
     clearStrokes();
     setFeedback(null);
-  }, [clearStrokes]);
+  }, [clearDraftSnapshot, clearStrokes]);
 
   const {
-    handleCanvasKeyDown,
+    handleCanvasKeyDown: handleKeyboardCanvasKeyDown,
     keyboardCursor,
     keyboardDrawing,
     keyboardStatus,
@@ -263,20 +278,39 @@ export default function GeometrySymmetryGame({
     width: CANVAS_WIDTH,
   });
 
-  const clearDrawing = useCallback((): void => {
-    clearBoardState();
-    resetKeyboard(keyboardBoardClearedStatus);
-  }, [clearBoardState, keyboardBoardClearedStatus, resetKeyboard]);
+  const exportFileName = useMemo(
+    () => `geometry-symmetry-${currentRound?.id ?? 'drawing'}.png`,
+    [currentRound?.id]
+  );
 
-  const undoDrawing = useCallback((): void => {
-    undoLastStroke();
-    setFeedback(null);
-  }, [undoLastStroke]);
-
-  const redoDrawing = useCallback((): void => {
-    redoLastStroke();
-    setFeedback(null);
-  }, [redoLastStroke]);
+  const {
+    clearDrawing,
+    exportDrawing,
+    handleCanvasKeyDown,
+    redoDrawing,
+    undoDrawing,
+  } = useKangurManagedDrawingActions<HTMLCanvasElement>({
+    canExport: hasDrawableContent,
+    canRedo,
+    canUndo,
+    clearDraftSnapshot,
+    clearStrokes,
+    exportDataUrl,
+    exportFilename: exportFileName,
+    onAfterClear: () => {
+      setFeedback(null);
+      resetKeyboard(keyboardBoardClearedStatus);
+    },
+    onAfterRedo: () => {
+      setFeedback(null);
+    },
+    onAfterUndo: () => {
+      setFeedback(null);
+    },
+    onUnhandledKeyDown: handleKeyboardCanvasKeyDown,
+    redoLastStroke,
+    undoLastStroke,
+  });
 
   const moveToNextRound = useCallback(
     (wasCorrect: boolean): void => {
@@ -565,10 +599,20 @@ export default function GeometrySymmetryGame({
                   fallbackCopy.clear
                 )}
                 feedback={feedback}
-                historyActions={
-                  <KangurDrawingHistoryActions
-                    buttonClassName='w-full sm:flex-1'
+                utilityActions={
+                  <KangurDrawingUtilityActions
+                    exportButtonClassName='w-full'
+                    exportClassName='w-full sm:flex-1'
+                    exportDisabled={!hasDrawableContent}
+                    exportLabel={translateWithFallback(
+                      'geometrySymmetry.inRound.export',
+                      'Export PNG'
+                    )}
+                    exportTestId='geometry-symmetry-export'
+                    historyButtonClassName='w-full sm:flex-1'
+                    historyClassName='w-full sm:flex-1'
                     isCoarsePointer={isCoarsePointer}
+                    onExport={exportDrawing}
                     onRedo={redoDrawing}
                     onUndo={undoDrawing}
                     redoDisabled={isResultLocked || !canRedo}
@@ -604,7 +648,7 @@ export default function GeometrySymmetryGame({
               />
             }
             ariaDescribedBy='geometry-symmetry-input-help'
-            ariaKeyShortcuts='Enter Space ArrowUp ArrowDown ArrowLeft ArrowRight Escape'
+            ariaKeyShortcuts={`Enter Space ArrowUp ArrowDown ArrowLeft ArrowRight Escape ${KANGUR_DRAWING_HISTORY_ARIA_SHORTCUTS}`}
             ariaLabel={translateWithFallback(
               'geometrySymmetry.inRound.canvasAria',
               fallbackCopy.canvasAria

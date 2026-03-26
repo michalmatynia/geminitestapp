@@ -12,6 +12,7 @@ import { conflictError, notFoundError, validationError } from '@/shared/errors/a
 
 import {
   createAssignmentSnapshotForLearner,
+  invalidateKangurAssignmentSnapshotsCache,
   loadKangurScoresForLearner,
   resolveAssignmentActor,
 } from '../../shared';
@@ -111,6 +112,12 @@ export async function postKangurAssignmentReassignHandler(
   await assignmentRepository.updateAssignment(assignmentLearnerKey, assignment.id, {
     archived: true,
   });
+  invalidateKangurAssignmentSnapshotsCache({
+    learnerKey: actor.learnerKey,
+    learnerName: actor.learnerName,
+    learnerEmail: actor.learnerEmail,
+    legacyLearnerKey: actor.legacyLearnerKey,
+  });
 
   try {
     const reassignedSnapshot = await createAssignmentSnapshotForLearner({
@@ -143,6 +150,12 @@ export async function postKangurAssignmentReassignHandler(
       .catch((updateError) => {
         void ErrorSystem.captureException(updateError);
       });
+    invalidateKangurAssignmentSnapshotsCache({
+      learnerKey: actor.learnerKey,
+      learnerName: actor.learnerName,
+      learnerEmail: actor.learnerEmail,
+      legacyLearnerKey: actor.legacyLearnerKey,
+    });
     throw error;
   }
 }

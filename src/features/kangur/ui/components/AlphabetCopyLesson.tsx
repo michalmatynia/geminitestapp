@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useId, useMemo, useRef, useState } from 'react';
+import { useId, useMemo, useRef, useState } from 'react';
 import type { CSSProperties } from 'react';
 import { useTranslations } from 'next-intl';
 
@@ -8,14 +8,17 @@ import {
   computeKangurTotalStrokeLength,
   flattenKangurStrokePoints,
 } from '@/features/kangur/ui/components/drawing-engine/stroke-metrics';
-import { KangurDrawingHistoryActions } from '@/features/kangur/ui/components/drawing-engine/KangurDrawingHistoryActions';
+import { KANGUR_DRAWING_HISTORY_ARIA_SHORTCUTS } from '@/features/kangur/ui/components/drawing-engine/keyboard-shortcuts';
 import { KangurTracingLessonFooter } from '@/features/kangur/ui/components/drawing-engine/KangurTracingLessonFooter';
 import { KangurTracingBoard } from '@/features/kangur/ui/components/drawing-engine/KangurTracingBoard';
 import {
   evaluateKangurTracingAttempt,
   getKangurTracingCanvasConfig,
 } from '@/features/kangur/ui/components/drawing-engine/tracing';
+import { useKangurDrawingDraftStorage } from '@/features/kangur/ui/components/drawing-engine/useKangurDrawingDraftStorage';
+import { useKangurManagedDrawingActions } from '@/features/kangur/ui/components/drawing-engine/useKangurManagedDrawingActions';
 import { useKangurPointCanvasDrawing } from '@/features/kangur/ui/components/drawing-engine/useKangurPointCanvasDrawing';
+import { KangurDrawingUtilityActions } from '@/features/kangur/ui/components/drawing-engine/KangurDrawingUtilityActions';
 import {
   KangurGlassPanel,
   KangurHeadline,
@@ -237,12 +240,19 @@ export default function AlphabetCopyLesson(): React.JSX.Element {
     [isCoarsePointer]
   );
   const {
+    clearDraftSnapshot,
+    draftSnapshot,
+    setDraftSnapshot,
+  } = useKangurDrawingDraftStorage(`alphabet-copy:${currentRound.id}`);
+  const {
     canRedo,
     canUndo,
     clearStrokes,
+    exportDataUrl,
     handlePointerDown,
     handlePointerMove,
     handlePointerUp,
+    hasDrawableContent,
     isPointerDrawing,
     redoLastStroke,
     strokes,
@@ -250,9 +260,11 @@ export default function AlphabetCopyLesson(): React.JSX.Element {
   } = useKangurPointCanvasDrawing({
     canvasRef,
     enabled: feedback?.kind !== 'success',
+    initialSerializedSnapshot: draftSnapshot,
     logicalHeight: CANVAS_HEIGHT,
     logicalWidth: CANVAS_WIDTH,
     minPointDistance: tracingCanvasConfig.minPointDistance,
+    onSerializedSnapshotChange: setDraftSnapshot,
     onPointerStart: () => {
       if (feedback?.kind === 'error') {
         setFeedback(null);
@@ -314,20 +326,32 @@ export default function AlphabetCopyLesson(): React.JSX.Element {
     [currentRound.inkColor]
   );
 
-  const clearDrawing = useCallback((): void => {
-    clearStrokes();
-    setFeedback(null);
-  }, [clearStrokes]);
-
-  const undoDrawing = useCallback((): void => {
-    undoLastStroke();
-    setFeedback(null);
-  }, [undoLastStroke]);
-
-  const redoDrawing = useCallback((): void => {
-    redoLastStroke();
-    setFeedback(null);
-  }, [redoLastStroke]);
+  const {
+    clearDrawing,
+    exportDrawing,
+    handleCanvasKeyDown,
+    redoDrawing,
+    undoDrawing,
+  } = useKangurManagedDrawingActions<HTMLCanvasElement>({
+    canExport: hasDrawableContent,
+    canRedo,
+    canUndo,
+    clearDraftSnapshot,
+    clearStrokes,
+    exportDataUrl,
+    exportFilename: `alphabet-copy-${currentRound.id}.png`,
+    onAfterClear: () => {
+      setFeedback(null);
+    },
+    onAfterRedo: () => {
+      setFeedback(null);
+    },
+    onAfterUndo: () => {
+      setFeedback(null);
+    },
+    redoLastStroke,
+    undoLastStroke,
+  });
 
   const evaluateDrawing = (): KangurMiniGameFeedbackState => {
     return evaluateKangurTracingAttempt({
@@ -418,6 +442,7 @@ export default function AlphabetCopyLesson(): React.JSX.Element {
           </div>
 
           <KangurTracingBoard
+            ariaKeyShortcuts={KANGUR_DRAWING_HISTORY_ARIA_SHORTCUTS}
             boardOverlay={<div className='copy-guide pointer-events-none' aria-hidden='true' />}
             canvasAriaLabel={translateAlphabetCopy(
               translations,
@@ -440,6 +465,7 @@ export default function AlphabetCopyLesson(): React.JSX.Element {
             height={CANVAS_HEIGHT}
             isCoarsePointer={isCoarsePointer}
             isPointerDrawing={isPointerDrawing}
+            onKeyDown={handleCanvasKeyDown}
             onPointerCancel={handlePointerUp}
             onPointerDown={handlePointerDown}
             onPointerLeave={handlePointerUp}
@@ -458,10 +484,15 @@ export default function AlphabetCopyLesson(): React.JSX.Element {
         checkLabel={translateAlphabetCopy(translations, 'actions.check', 'Sprawdz')}
         clearLabel={translateAlphabetCopy(translations, 'actions.clear', 'Wyczysc')}
         feedback={feedback}
-        historyActions={
-          <KangurDrawingHistoryActions
-            buttonClassName={isCoarsePointer ? 'px-4' : undefined}
+        utilityActions={
+          <KangurDrawingUtilityActions
+            exportButtonClassName={isCoarsePointer ? 'px-4' : undefined}
+            exportDisabled={!hasDrawableContent}
+            exportLabel={translateAlphabetCopy(translations, 'actions.export', 'Eksportuj PNG')}
+            exportTestId='alphabet-copy-export'
+            historyButtonClassName={isCoarsePointer ? 'px-4' : undefined}
             isCoarsePointer={isCoarsePointer}
+            onExport={exportDrawing}
             onRedo={redoDrawing}
             onUndo={undoDrawing}
             redoDisabled={!canRedo}

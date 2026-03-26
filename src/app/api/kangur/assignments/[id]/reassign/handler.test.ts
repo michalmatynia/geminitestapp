@@ -43,6 +43,7 @@ vi.mock('@/features/kangur/observability/server', () => ({
 }));
 
 import { postKangurAssignmentReassignHandler } from './handler';
+import { clearKangurAssignmentSnapshotsCache } from '../../shared';
 
 const createRequestContext = (): ApiHandlerContext =>
   ({
@@ -76,6 +77,7 @@ const createAssignment = (overrides: Partial<KangurAssignment> = {}): KangurAssi
 describe('kangur assignment reassign handler', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    clearKangurAssignmentSnapshotsCache();
 
     getKangurAssignmentRepositoryMock.mockResolvedValue({
       getAssignment: getAssignmentMock,

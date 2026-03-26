@@ -69,6 +69,7 @@ describe('KangurAiTutorDrawingCanvas touch interactions', () => {
     expect(screen.getByRole('button', { name: 'Kolor #2563eb' })).toHaveClass('h-11', 'w-11');
     expect(screen.getByRole('button', { name: 'Pióro' })).toHaveClass('h-11', 'w-11');
     expect(screen.getByRole('button', { name: 'Ponów' })).toHaveClass('h-11', 'w-11');
+    expect(screen.getByRole('button', { name: 'Eksportuj PNG' })).toHaveClass('h-11', 'w-11');
     expect(screen.getByRole('button', { name: 'Anuluj' })).toHaveClass(
       'min-h-11',
       'px-4',

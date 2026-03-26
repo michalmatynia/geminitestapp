@@ -12,7 +12,6 @@ import {
   MultiplicationSkipCountAnimation,
   MultiplicationTenShiftAnimation,
 } from '@/features/kangur/ui/components/LessonAnimations';
-import MultiplicationArrayGame from '@/features/kangur/ui/components/MultiplicationArrayGame';
 import {
   KangurLessonCallout,
   KangurLessonCaption,
@@ -26,6 +25,7 @@ import {
   KangurEquationDisplay,
   KangurStatusChip,
 } from '@/features/kangur/ui/design/primitives';
+import { getKangurLessonStageGameRuntimeSpec } from '@/features/kangur/games/lesson-stage-runtime-specs';
 import { KangurUnifiedLesson } from '@/features/kangur/ui/lessons/lesson-components';
 
 type SectionId =
@@ -34,6 +34,24 @@ type SectionId =
   | 'tabela45'
   | 'triki'
   | 'game_array';
+
+const MULTIPLICATION_ARRAY_LESSON_STAGE_RUNTIME = getKangurLessonStageGameRuntimeSpec(
+  'multiplication_array_lesson_stage'
+);
+
+const MULTIPLICATION_GAME_ARRAY_PRELUDE = (
+  <KangurLessonCallout accent='violet' className='text-center'>
+    <KangurLessonChip accent='violet' className='mb-2'>
+      Zobacz grupy
+    </KangurLessonChip>
+    <div className='mx-auto w-full max-w-xs'>
+      <MultiplicationGamePreviewAnimation />
+    </div>
+    <KangurLessonCaption className='mt-1'>
+      Łącz równe grupy kropek, aby zobaczyć mnożenie.
+    </KangurLessonCaption>
+  </KangurLessonCallout>
+);
 
 const MULTIPLICATION_GROUPS_SLIDE: LessonSlide = {
   title: 'Mnożenie jako grupy',
@@ -335,28 +353,14 @@ export default function MultiplicationLesson(): React.JSX.Element {
           sectionId: 'game_array',
           stage: {
             accent: 'violet',
+            bodyPrelude: MULTIPLICATION_GAME_ARRAY_PRELUDE,
             icon: '✨',
             maxWidthClassName: 'max-w-sm',
             headerTestId: 'multiplication-lesson-game-array-header',
             shellTestId: 'multiplication-lesson-game-array-shell',
             title: 'Gra z grupami!',
           },
-          render: ({ onFinish }) => (
-            <KangurLessonStack>
-              <KangurLessonCallout accent='violet' className='text-center'>
-                <KangurLessonChip accent='violet' className='mb-2'>
-                  Zobacz grupy
-                </KangurLessonChip>
-                <div className='mx-auto w-full max-w-xs'>
-                  <MultiplicationGamePreviewAnimation />
-                </div>
-                <KangurLessonCaption className='mt-1'>
-                  Łącz równe grupy kropek, aby zobaczyć mnożenie.
-                </KangurLessonCaption>
-              </KangurLessonCallout>
-              <MultiplicationArrayGame finishLabelVariant='topics' onFinish={onFinish} />
-            </KangurLessonStack>
-          ),
+          runtime: MULTIPLICATION_ARRAY_LESSON_STAGE_RUNTIME,
         },
       ]}
     />

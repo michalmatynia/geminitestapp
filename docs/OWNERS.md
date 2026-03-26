@@ -1,6 +1,6 @@
 ---
 owner: 'Platform Team'
-last_reviewed: '2026-03-09'
+last_reviewed: '2026-03-26'
 status: 'active'
 doc_type: 'policy'
 scope: 'repo'
@@ -20,6 +20,21 @@ canonical: true
 | Cross-feature plans / closeouts | Originating Team | Platform Team | At milestone boundaries |
 | Cross-feature decisions / exception registers | Originating Team | Platform Team | When superseded or quarterly |
 | Generated docs / artifacts | Owning generator script team | Platform Team | On generator change |
+
+## Current Governance Roots
+
+The current root docs allowlist is intentionally narrow and matches the
+structure manifest:
+
+- `docs/README.md`
+- `docs/OWNERS.md`
+- `docs/AGENTS.md`
+- `docs/CLAUDE.md`
+- `docs/COPILOT.md`
+
+New governance or entry docs should justify why they belong in that root
+allowlist instead of a typed subfolder such as `docs/platform/`,
+`docs/runbooks/`, or `docs/decisions/`.
 
 ## Feature Areas
 
@@ -128,3 +143,13 @@ When an AI adds or rewrites docs, it should:
     instead of treating it as a permanent archive by default.
 21. When a later dated plan or decision becomes the enforced baseline, delete
     older superseded variants after updating hubs, manifests, and tooling.
+
+## Validation Rhythm
+
+After meaningful ownership or structure edits, run:
+
+- `npm run docs:structure:audit:frontmatter`
+- `npm run docs:structure:check`
+
+If a change touches generated docs owned by scripts, regenerate the docs from
+their source script first and then run the structure checks.

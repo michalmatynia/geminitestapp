@@ -1,6 +1,6 @@
 ---
 owner: 'Kangur Team'
-last_reviewed: '2026-03-16'
+last_reviewed: '2026-03-26'
 status: 'active'
 doc_type: 'reference'
 scope: 'feature:kangur'
@@ -11,14 +11,20 @@ canonical: true
 
 ## Routes
 
-- Custom test suites live under the `Tests` route (`/tests` or `/kangur/tests`).
-- Kangur competition sessions live under the `Competition` route (`/competition` or `/kangur/competition`).
+- Custom test suites live under the `Tests` route (`/tests` or `/kangur/tests`,
+  plus the localized equivalents).
+- Kangur competition sessions live under the `Competition` route (`/competition`
+  or `/kangur/competition`, plus the localized equivalents).
+- Mobile mirrors these learner-facing routes in `apps/mobile/app/tests.tsx` and
+  `apps/mobile/app/competition.tsx`.
 
 ## Test suites
 
-The `Tests` route lists enabled Kangur test suites created with the test engine. Each suite is metadata-driven and assembled from the shared question store.
+The `Tests` route lists enabled Kangur test suites created with the test engine.
+Each suite is metadata-driven and assembled from the shared question store.
 
-The `Competition` route launches the Kangur exam flow using the pre-built competition question sets and session setup flow.
+The `Competition` route launches the Kangur exam flow using the shared game
+runtime, a dedicated setup step, and the pre-built competition question sets.
 
 ## Question model
 
@@ -46,6 +52,12 @@ The suite player is responsible for:
 - collecting answers
 - reporting completion back to the hosting page
 
+Current learner runtime behavior is stricter than an ordinary list of suites:
+
+- only suites that are explicitly live are learner-visible
+- only published questions inside those suites are consumed at runtime
+- authoring states such as `draft` and `ready` remain admin-only workflow states
+
 ## Legacy import and review
 
 The current Kangur legacy bank is imported with structural review metadata.
@@ -69,6 +81,13 @@ Future AI updates should preserve and extend this review model instead of flatte
 
 Admins manage suites, question banks, review status, and enablement centrally. Learner routes should only display enabled suites and valid associated questions.
 
+The main admin surfaces for this workflow are:
+
+- `AdminKangurTestSuitesManagerPage`
+- `KangurQuestionsManagerPanel`
+- `KangurTestQuestionEditor`
+- test-suites manager workspace files under `src/features/kangur/admin/test-suites-manager/*`
+
 The question-bank workspace is also expected to support triage directly:
 
 - search across prompts, answers, and legacy audit flags
@@ -91,7 +110,10 @@ The question-bank workspace is also expected to support triage directly:
 - quick repair actions inside the question review panel for common structural issues such as missing explanation, invalid correct-answer mapping, split layout without illustration, and SVG choices missing descriptive notes
 - presentation presets inside the question editor for common learner-facing layouts such as classic list, answer-card grid, and split illustration scaffolds
 
-Learner-facing runtime should only consume questions from suites that are explicitly `live`, and only the `published` questions inside those suites. `draft` and `ready` questions remain in the bank for authoring and review, but they are not live learner content.
+Learner-facing runtime should only consume questions from suites that are
+explicitly `live`, and only the `published` questions inside those suites.
+`draft` and `ready` questions remain in the bank for authoring and review, but
+they are not live learner content.
 
 Suite health should also distinguish editorial cleanliness from live readiness:
 
@@ -101,4 +123,7 @@ Suite health should also distinguish editorial cleanliness from live readiness:
 
 ## Documentation requirement
 
-The suite list, suite launch controls, back navigation, and the player surface should all be represented in the central Kangur documentation catalog so tooltip text stays synchronized with the stored documentation.
+The suite list, suite launch controls, back navigation, competition setup
+controls, and the player surface should all be represented in the central
+Kangur documentation catalog so tooltip text stays synchronized with the stored
+documentation.

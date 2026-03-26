@@ -43,7 +43,11 @@ describe('LogicalAnalogiesLesson i18n', () => {
 
     const sections = (capturedProps?.sections as Array<Record<string, unknown>>) ?? [];
     const games =
-      (capturedProps?.games as Array<{ sectionId: string; stage: Record<string, unknown> }>) ?? [];
+      (capturedProps?.games as Array<{
+        sectionId: string;
+        stage: Record<string, unknown>;
+        runtime?: { runtimeId?: string; rendererId?: string };
+      }>) ?? [];
 
     expect(sections.find((section) => section.id === 'intro')).toMatchObject({
       title: 'Analogie - Einstieg und Woerter',
@@ -55,6 +59,10 @@ describe('LogicalAnalogiesLesson i18n', () => {
     });
     expect(games.find((game) => game.sectionId === 'game_relacje')?.stage).toMatchObject({
       title: 'Beziehungsbruecke',
+    });
+    expect(games.find((game) => game.sectionId === 'game_relacje')?.runtime).toMatchObject({
+      runtimeId: 'logical_analogies_relations_lesson_stage',
+      rendererId: 'logical_analogies_relation_game',
     });
 
     const slides = (capturedProps?.slides as Record<string, CapturedSlide[]>) ?? {};

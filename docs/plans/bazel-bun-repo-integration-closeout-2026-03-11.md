@@ -1,6 +1,6 @@
 ---
 owner: 'Platform Team'
-last_reviewed: '2026-03-11'
+last_reviewed: '2026-03-26'
 status: 'active'
 doc_type: 'closeout'
 scope: 'cross-feature'
@@ -8,6 +8,13 @@ canonical: true
 ---
 
 # Bazel And Bun Repo Integration Closeout
+
+This is the retained closeout record for the March integration wave. Current public
+build/runtime guidance lives in:
+
+- [`../build/bazel.md`](../build/bazel.md)
+- [`../build/bun.md`](../build/bun.md)
+- [`../build/README.md`](../build/README.md)
 
 ## Outcome
 

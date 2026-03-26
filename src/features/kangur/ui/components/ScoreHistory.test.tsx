@@ -7,6 +7,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { buildKangurEmbeddedBasePath } from '@/features/kangur/config/routing';
 import type { KangurScoreRecord } from '@kangur/platform';
 import { buildKangurScoreInsights } from '@/features/kangur/ui/services/score-insights';
+import { clearKangurScopedScoresCache } from '@/features/kangur/ui/services/learner-profile-scores';
 
 const {
   scoreFilterMock,
@@ -90,6 +91,7 @@ const createScore = (overrides: Partial<KangurScoreRecord>): KangurScoreRecord =
 describe('ScoreHistory', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    clearKangurScopedScoresCache();
     stubSystemDate(FIXED_NOW);
     useKangurSubjectFocusMock.mockReturnValue({
       subject: 'maths',
@@ -114,6 +116,35 @@ describe('ScoreHistory', () => {
       'border'
     );
     expect(screen.getByText('Ładowanie wyników...')).toBeInTheDocument();
+  });
+
+  it('reuses prefetched learner scores without starting another scoped fetch', () => {
+    const prefetchedScores = [
+      createScore({
+        id: 'prefetched-score-1',
+        operation: 'addition',
+        created_date: '2026-03-09T12:00:00.000Z',
+      }),
+      createScore({
+        id: 'prefetched-score-2',
+        operation: 'division',
+        created_date: '2026-03-08T12:00:00.000Z',
+      }),
+    ];
+
+    render(
+      <ScoreHistory
+        learnerId='learner-1'
+        playerName='Jan'
+        createdBy='jan@example.com'
+        prefetchedScores={prefetchedScores}
+        prefetchedLoading={false}
+      />
+    );
+
+    expect(scoreFilterMock).not.toHaveBeenCalled();
+    expect(screen.getByTestId('score-history-total-games')).toHaveTextContent('2');
+    expect(screen.queryByTestId('score-history-loading')).not.toBeInTheDocument();
   });
 
   it('loads learner-scoped results by account and display name without falling back to global history', async () => {

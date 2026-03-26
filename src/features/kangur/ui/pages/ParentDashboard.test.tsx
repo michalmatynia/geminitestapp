@@ -192,7 +192,10 @@ describe('ParentDashboard', () => {
         ready: true,
       })
     );
-    expect(aiTutorSessionSyncMock).toHaveBeenCalled();
+    expect(aiTutorSessionSyncMock).toHaveBeenLastCalledWith({
+      learnerId: null,
+      sessionContext: null,
+    });
     expect(topNavigationPropsMock).toHaveBeenCalled();
   });
 
@@ -206,6 +209,26 @@ describe('ParentDashboard', () => {
 
     expect(screen.getByTestId('parent-dashboard-monitoring-widget')).toBeInTheDocument();
     expect(screen.queryByTestId('parent-dashboard-progress-widget')).toBeNull();
+  });
+
+  it('registers the AI tutor session only when the ai-tutor tab is active', () => {
+    runtimeState.value = {
+      ...runtimeState.value,
+      activeTab: 'ai-tutor',
+    };
+
+    render(<ParentDashboard />);
+
+    expect(screen.getByTestId('parent-dashboard-ai-tutor-widget')).toBeInTheDocument();
+    expect(aiTutorSessionSyncMock).toHaveBeenLastCalledWith({
+      learnerId: 'learner-1',
+      sessionContext: {
+        contentId: 'parent-dashboard:learner-1:ai-tutor',
+        description: 'page.sessionDescriptionAuthenticated',
+        surface: 'parent_dashboard',
+        title: 'page.dashboardTitle:page.tabs.aiTutor',
+      },
+    });
   });
 
   it('renders the restricted guest shell when dashboard access is unavailable', () => {

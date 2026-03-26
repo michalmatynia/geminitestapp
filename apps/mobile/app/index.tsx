@@ -338,6 +338,50 @@ function DeferredHomeActivitySectionsCard(): React.JSX.Element {
   );
 }
 
+function DeferredHomeStartupSectionsCard(): React.JSX.Element {
+  const { copy } = useKangurMobileI18n();
+
+  return (
+    <SectionCard
+      title={copy({
+        de: 'Startbereiche',
+        en: 'Home startup sections',
+        pl: 'Sekcje startowe',
+      })}
+    >
+      <Text style={{ color: '#475569', lineHeight: 20 }}>
+        {copy({
+          de: 'Wir bereiten Kontostatus, Navigation, Duelle, Trainingsfokus und weitere gespeicherte Bereiche fur die nächsten Startschritte vor.',
+          en: 'Preparing account status, navigation, duels, training focus, and more saved sections for the next home steps.',
+          pl: 'Przygotowujemy status konta, nawigację, pojedynki, fokus treningowy i kolejne zapisane sekcje na następne etapy ekranu startowego.',
+        })}
+      </Text>
+    </SectionCard>
+  );
+}
+
+function DeferredHomePrimaryStartupCard(): React.JSX.Element {
+  const { copy } = useKangurMobileI18n();
+
+  return (
+    <SectionCard
+      title={copy({
+        de: 'Start in Kangur',
+        en: 'Kangur startup',
+        pl: 'Start w Kangurze',
+      })}
+    >
+      <Text style={{ color: '#475569', lineHeight: 20 }}>
+        {copy({
+          de: 'Wir bereiten Ergebnisse, Lektionen, Kontostatus, Navigation, Duelle und weitere gespeicherte Bereiche fur die nächsten Startschritte vor.',
+          en: 'Preparing results, lessons, account status, navigation, duels, and more saved sections for the next home steps.',
+          pl: 'Przygotowujemy wyniki, lekcje, status konta, nawigację, pojedynki i kolejne zapisane sekcje na następne etapy ekranu startowego.',
+        })}
+      </Text>
+    </SectionCard>
+  );
+}
+
 function DeferredTrainingFocusDetailsPlaceholder(): React.JSX.Element {
   const { copy } = useKangurMobileI18n();
 
@@ -1124,6 +1168,38 @@ function DeferredHomeHeroDetails(): React.JSX.Element {
         en: 'Preparing the latest lesson, latest score, and more quick links for the next home step.',
         pl: 'Przygotowujemy ostatnią lekcję, ostatni wynik i kolejne szybkie skróty na następny etap ekranu startowego.',
       })}
+    </Text>
+  );
+}
+
+function DeferredHomeHeroOverview({
+  homeHeroLearnerName,
+  isRestoringAuth,
+}: {
+  homeHeroLearnerName: string | null;
+  isRestoringAuth: boolean;
+}): React.JSX.Element {
+  const { copy } = useKangurMobileI18n();
+
+  return (
+    <Text style={{ color: '#475569', fontSize: 16, lineHeight: 24 }}>
+      {isRestoringAuth
+        ? copy({
+            de: 'Wir stellen Anmeldung, letzte Ergebnisse, Lektionen und Schnellzugriffe fur den nächsten Startschritt wieder her.',
+            en: 'Restoring sign-in, recent results, lessons, and quick links for the next home step.',
+            pl: 'Przywracamy logowanie, ostatnie wyniki, lekcje i szybkie skróty na następny etap ekranu startowego.',
+          })
+        : homeHeroLearnerName
+          ? copy({
+              de: `Willkommen zurück, ${homeHeroLearnerName}. Wir bereiten Ergebnisse, Lektionen und Schnellzugriffe fur den nächsten Startschritt vor.`,
+              en: `Welcome back, ${homeHeroLearnerName}. Preparing results, lessons, and quick links for the next home step.`,
+              pl: `Witaj ponownie, ${homeHeroLearnerName}. Przygotowujemy wyniki, lekcje i szybkie skróty na następny etap ekranu startowego.`,
+            })
+          : copy({
+              de: 'Wir bereiten Ergebnisse, Lektionen und Schnellzugriffe fur den nächsten Startschritt vor.',
+              en: 'Preparing results, lessons, and quick links for the next home step.',
+              pl: 'Przygotowujemy wyniki, lekcje i szybkie skróty na następny etap ekranu startowego.',
+            })}
     </Text>
   );
 }
@@ -3838,6 +3914,12 @@ function HomeScreenContent({
   const activeDuelLearnerId = session.user?.activeLearner?.id ?? session.user?.id ?? null;
   const shouldRenderCombinedHomeQuickAccessPlaceholder =
     !areDeferredHomeAccountSummaryReady && !areDeferredHomeNavigationSecondaryReady;
+  const shouldRenderCombinedHomeStartupPlaceholder =
+    shouldRenderCombinedHomeQuickAccessPlaceholder && !areDeferredHomePanelsReady;
+  const shouldRenderCombinedHomeHeroPlaceholder =
+    !areDeferredHomeHeroIntroReady && !areDeferredHomeHeroDetailsReady;
+  const shouldRenderCombinedHomePrimaryStartupPlaceholder =
+    shouldRenderCombinedHomeStartupPlaceholder && shouldRenderCombinedHomeHeroPlaceholder;
 
   const renderHomeScreenContent = ({
     homeDebugProof,
@@ -3873,7 +3955,12 @@ function HomeScreenContent({
               pl: 'Kangur mobilnie',
             })}
           </Text>
-          {!areDeferredHomeHeroIntroReady ? (
+          {shouldRenderCombinedHomePrimaryStartupPlaceholder ? null : shouldRenderCombinedHomeHeroPlaceholder ? (
+            <DeferredHomeHeroOverview
+              homeHeroLearnerName={homeHeroLearnerName}
+              isRestoringAuth={isLoadingAuth && session.status !== 'authenticated'}
+            />
+          ) : !areDeferredHomeHeroIntroReady ? (
             <DeferredHomeHeroIntro
               homeHeroLearnerName={homeHeroLearnerName}
               isRestoringAuth={isLoadingAuth && session.status !== 'authenticated'}
@@ -3900,7 +3987,7 @@ function HomeScreenContent({
             </Text>
           )}
 
-          {!areDeferredHomeHeroDetailsReady ? (
+          {shouldRenderCombinedHomeHeroPlaceholder ? null : !areDeferredHomeHeroDetailsReady ? (
             <DeferredHomeHeroDetails />
           ) : (
             <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
@@ -4072,7 +4159,11 @@ function HomeScreenContent({
           </SectionCard>
         ) : null}
 
-        {shouldRenderCombinedHomeQuickAccessPlaceholder ? (
+        {shouldRenderCombinedHomePrimaryStartupPlaceholder ? (
+          <DeferredHomePrimaryStartupCard />
+        ) : shouldRenderCombinedHomeStartupPlaceholder ? (
+          <DeferredHomeStartupSectionsCard />
+        ) : shouldRenderCombinedHomeQuickAccessPlaceholder ? (
           <DeferredHomeQuickAccessCard />
         ) : (
           <>
@@ -4320,7 +4411,9 @@ function HomeScreenContent({
         )}
 
         {!areDeferredHomePanelsReady ? (
+          shouldRenderCombinedHomeStartupPlaceholder ? null : (
           <DeferredHomeActivitySectionsCard />
+          )
         ) : session.status === 'authenticated' ? (
           <AuthenticatedHomePrivateDuelSectionGroup
             areDeferredHomeDuelAdvancedReady={areDeferredHomeDuelAdvancedReady}

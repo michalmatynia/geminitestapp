@@ -1,6 +1,6 @@
 ---
 owner: 'Platform Team'
-last_reviewed: '2026-03-09'
+last_reviewed: '2026-03-26'
 status: 'active'
 doc_type: 'policy'
 scope: 'repo'
@@ -18,8 +18,9 @@ agents.
 The docs tree has grown large and mixed:
 
 - `5` markdown files directly under `docs/`
-- `1076` total files under `docs/`
-- `759` files under `docs/metrics/` alone
+- `1105` total files under `docs/`
+- `769` files under `docs/metrics/` alone
+- `239` markdown docs across the tree
 
 The main problem is not volume by itself. The problem is mixed document classes
 at the same level: entrypoints, policies, feature docs, dated plans, runbooks,
@@ -262,7 +263,7 @@ All new or substantially rewritten docs should include:
 ```yaml
 ---
 owner: 'Platform Team'
-last_reviewed: '2026-03-09'
+last_reviewed: '2026-03-26'
 status: 'active'
 doc_type: 'architecture'
 scope: 'repo'

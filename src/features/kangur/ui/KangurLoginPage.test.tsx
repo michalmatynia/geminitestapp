@@ -12,11 +12,14 @@ import plMessages from '@/i18n/messages/pl.json';
 const {
   signInMock,
   signOutMock,
+  frontendPublicOwnerMock,
   useKangurAiTutorSessionSyncMock,
   useKangurPageContentEntryMock,
   useKangurRouteNavigatorMock,
   useKangurTutorAnchorMock,
   useOptionalKangurAuthMock,
+  useOptionalKangurRoutingMock,
+  usePathnameMock,
   useRouterMock,
   useSearchParamsMock,
   clearSessionUserCacheMock,
@@ -24,11 +27,14 @@ const {
 } = vi.hoisted(() => ({
   signInMock: vi.fn().mockResolvedValue({ ok: true, url: '/kangur' }),
   signOutMock: vi.fn().mockResolvedValue(undefined),
+  frontendPublicOwnerMock: vi.fn(),
   useKangurAiTutorSessionSyncMock: vi.fn(),
   useKangurPageContentEntryMock: vi.fn(),
   useKangurRouteNavigatorMock: vi.fn(),
   useKangurTutorAnchorMock: vi.fn(),
   useOptionalKangurAuthMock: vi.fn(),
+  useOptionalKangurRoutingMock: vi.fn(),
+  usePathnameMock: vi.fn(),
   useRouterMock: vi.fn(),
   useSearchParamsMock: vi.fn(),
   clearSessionUserCacheMock: vi.fn(),
@@ -36,6 +42,7 @@ const {
 }));
 
 vi.mock('next/navigation', () => ({
+  usePathname: usePathnameMock,
   useRouter: useRouterMock,
   useSearchParams: useSearchParamsMock,
 }));
@@ -65,6 +72,14 @@ vi.mock('@/features/kangur/ui/context/KangurAuthContext', () => ({
   useOptionalKangurAuth: useOptionalKangurAuthMock,
 }));
 
+vi.mock('@/features/kangur/ui/FrontendPublicOwnerContext', () => ({
+  useOptionalFrontendPublicOwner: () => frontendPublicOwnerMock(),
+}));
+
+vi.mock('@/features/kangur/ui/context/KangurRoutingContext', () => ({
+  useOptionalKangurRouting: () => useOptionalKangurRoutingMock(),
+}));
+
 vi.mock('@/features/kangur/services/local-kangur-platform-auth', () => ({
   clearSessionUserCache: clearSessionUserCacheMock,
 }));
@@ -87,6 +102,9 @@ describe('KangurLoginPage', () => {
     vi.useRealTimers();
     vi.clearAllMocks();
     signInMock.mockResolvedValue({ ok: true, url: '/kangur' });
+    frontendPublicOwnerMock.mockReturnValue(null);
+    useOptionalKangurRoutingMock.mockReturnValue(null);
+    usePathnameMock.mockReturnValue('/kangur/login');
     useRouterMock.mockReturnValue({ push: vi.fn(), refresh: vi.fn() });
     useSearchParamsMock.mockReturnValue(new URLSearchParams(''));
     useKangurPageContentEntryMock.mockReturnValue({ entry: null });
@@ -327,6 +345,134 @@ describe('KangurLoginPage', () => {
         })
       );
     });
+  });
+
+  it('uses the canonical localized home callback when Kangur owns the public frontend', async () => {
+    frontendPublicOwnerMock.mockReturnValue({ publicOwner: 'kangur' });
+    usePathnameMock.mockReturnValue('/en/login');
+
+    const fetchMock = vi.fn(async (input: RequestInfo | URL) => {
+      const url = typeof input === 'string' ? input : input.toString();
+      if (url.endsWith('/api/kangur/auth/learner-signout')) {
+        return {
+          ok: true,
+          status: 200,
+          json: async () => ({}),
+        };
+      }
+      if (url.endsWith('/api/auth/verify-credentials')) {
+        return {
+          ok: true,
+          status: 200,
+          json: async () => ({ ok: true, challengeId: 'challenge-1' }),
+        };
+      }
+      return {
+        ok: true,
+        status: 200,
+        json: async () => ({}),
+      };
+    });
+    vi.stubGlobal('fetch', fetchMock);
+
+    renderWithIntl(<KangurLoginPage />);
+
+    const identifierInput = screen.getByTestId('kangur-login-identifier-input');
+    const passwordInput = screen.getByLabelText('Hasło');
+
+    fireEvent.change(identifierInput, { target: { value: 'parent@example.com' } });
+    fireEvent.change(passwordInput, { target: { value: 'sekret123' } });
+    fireEvent.submit(screen.getByTestId('kangur-login-form'));
+
+    await waitFor(() => {
+      expect(signInMock).toHaveBeenCalledWith(
+        'credentials',
+        expect.objectContaining({
+          callbackUrl: '/en',
+          email: 'parent@example.com',
+          password: 'sekret123',
+          redirect: false,
+        })
+      );
+    });
+  });
+
+  it('canonicalizes post-login callback redirects when Kangur owns the public frontend', async () => {
+    const pushMock = vi.fn();
+    const refreshMock = vi.fn();
+    const checkAppStateMock = vi.fn().mockResolvedValue(undefined);
+
+    frontendPublicOwnerMock.mockReturnValue({ publicOwner: 'kangur' });
+    usePathnameMock.mockReturnValue('/en/login');
+    useSearchParamsMock.mockReturnValue(
+      new URLSearchParams('callbackUrl=%2Fen%2Fkangur%2Fprofile%3Ftab%3Dstats%23summary')
+    );
+    useRouterMock.mockReturnValue({ push: pushMock, refresh: refreshMock });
+    useOptionalKangurAuthMock.mockReturnValue({
+      checkAppState: checkAppStateMock,
+    });
+    signInMock.mockResolvedValue({
+      ok: true,
+      url: `${window.location.origin}/en/kangur/profile?tab=stats#summary`,
+    });
+    window.history.replaceState(
+      {},
+      '',
+      '/en/login?callbackUrl=%2Fen%2Fkangur%2Fprofile%3Ftab%3Dstats%23summary'
+    );
+
+    const fetchMock = vi.fn(async (input: RequestInfo | URL) => {
+      const url = typeof input === 'string' ? input : input.toString();
+      if (url.endsWith('/api/kangur/auth/learner-signout')) {
+        return {
+          ok: true,
+          status: 200,
+          json: async () => ({}),
+        };
+      }
+      if (url.endsWith('/api/auth/verify-credentials')) {
+        return {
+          ok: true,
+          status: 200,
+          json: async () => ({ ok: true, challengeId: 'challenge-1' }),
+        };
+      }
+      return {
+        ok: true,
+        status: 200,
+        json: async () => ({}),
+      };
+    });
+    vi.stubGlobal('fetch', fetchMock);
+
+    renderWithIntl(<KangurLoginPage />);
+
+    const identifierInput = await screen.findByTestId('kangur-login-identifier-input');
+    const passwordInput = await screen.findByLabelText('Hasło');
+
+    fireEvent.change(identifierInput, { target: { value: 'parent@example.com' } });
+    fireEvent.change(passwordInput, { target: { value: 'sekret123' } });
+    fireEvent.submit(screen.getByTestId('kangur-login-form'));
+
+    await waitFor(() => {
+      expect(signInMock).toHaveBeenCalledWith(
+        'credentials',
+        expect.objectContaining({
+          callbackUrl: '/en/profile?tab=stats#summary',
+          email: 'parent@example.com',
+          password: 'sekret123',
+          redirect: false,
+        })
+      );
+      expect(checkAppStateMock).toHaveBeenCalledTimes(1);
+    });
+
+    await waitFor(() => {
+      expect(pushMock).toHaveBeenCalledWith('/en/profile?tab=stats#summary', {
+        scroll: false,
+      });
+    });
+    expect(refreshMock).not.toHaveBeenCalled();
   });
 
   it('normalizes parent email casing and switches the identifier field into email mode', async () => {

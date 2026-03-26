@@ -1,8 +1,13 @@
 'use client';
 
-import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import dynamic from 'next/dynamic';
 import { useEffect, useRef, useState } from 'react';
+
+import {
+  LazyAnimatePresence,
+  LazyMotionDiv,
+  usePrefersReducedMotion,
+} from '@/features/kangur/ui/components/LazyAnimatePresence';
 
 import { KangurCmsRuntimeScreen } from '@/features/kangur/cms-builder/KangurCmsRuntimeScreen';
 import { KANGUR_MAIN_PAGE, kangurPages } from '@/features/kangur/config/pages';
@@ -52,7 +57,7 @@ import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
 import type { JSX } from 'react';
 
 const BOOT_SKELETON_MIN_VISIBLE_MS = 120;
-const NAVIGATION_SKELETON_DELAY_MS = 60;
+const NAVIGATION_SKELETON_DELAY_MS = 0;
 const LANGUAGE_SWITCHER_TRANSITION_SOURCE_ID = 'kangur-language-switcher';
 
 type LatchedNavigationSkeletonState = {
@@ -108,7 +113,7 @@ const AuthenticatedApp = (): JSX.Element | null => {
     !isAuthenticated &&
     !authErrorType &&
     resolvedPageKey === 'ParentDashboard';
-  const prefersReducedMotion = useReducedMotion();
+  const prefersReducedMotion = usePrefersReducedMotion();
   const routeContentMotionProps = createKangurPageTransitionMotionProps(prefersReducedMotion);
   const routeTransitionKey = requestedPath || (pageKey ? `page:${pageKey}` : 'page:unknown');
   const currentRequestedHref = requestedHref ?? requestedPath ?? null;
@@ -459,7 +464,7 @@ const AuthenticatedApp = (): JSX.Element | null => {
       />
       {shouldSkipRouteContentPresence ? (
         routeContent ? (
-          <motion.div
+          <LazyMotionDiv
             key={routeTransitionKey}
             {...routeContentMotionProps}
             aria-busy={isNavigationTransitionActive || isPendingRouteSnapshotVisible}
@@ -477,12 +482,12 @@ const AuthenticatedApp = (): JSX.Element | null => {
             data-testid='kangur-route-content'
           >
             {routeContent}
-          </motion.div>
+          </LazyMotionDiv>
         ) : null
       ) : (
-        <AnimatePresence mode='wait'>
+        <LazyAnimatePresence mode='wait'>
           {routeContent ? (
-            <motion.div
+            <LazyMotionDiv
               key={routeTransitionKey}
               {...routeContentMotionProps}
               aria-busy={isNavigationTransitionActive || isPendingRouteSnapshotVisible}
@@ -500,13 +505,13 @@ const AuthenticatedApp = (): JSX.Element | null => {
               data-testid='kangur-route-content'
             >
               {routeContent}
-            </motion.div>
+            </LazyMotionDiv>
           ) : null}
-        </AnimatePresence>
+        </LazyAnimatePresence>
       )}
-      <AnimatePresence>
+      <LazyAnimatePresence>
         {isRouteSkeletonVisible ? (
-          <motion.div
+          <LazyMotionDiv
             key='kangur-page-transition-skeleton:navigation'
             animate={{ opacity: 1 }}
             className={transitionPhase === 'revealing' ? 'pointer-events-none' : undefined}
@@ -522,9 +527,9 @@ const AuthenticatedApp = (): JSX.Element | null => {
               topBarHeightCssValue={visibleTransitionSkeletonTopBarHeightCssValue}
               variant={visibleTransitionSkeletonVariant}
             />
-          </motion.div>
+          </LazyMotionDiv>
         ) : null}
-      </AnimatePresence>
+      </LazyAnimatePresence>
     </>
   );
 };

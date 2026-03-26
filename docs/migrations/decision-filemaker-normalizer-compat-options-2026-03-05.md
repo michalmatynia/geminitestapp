@@ -1,6 +1,6 @@
 ---
 owner: 'Platform Team'
-last_reviewed: '2026-03-09'
+last_reviewed: '2026-03-26'
 status: 'active'
 doc_type: 'decision'
 scope: 'cross-feature'
@@ -14,6 +14,12 @@ Status: Accepted + Implemented (2026-03-05)
 Owner: filemaker  
 Reviewers: case-resolver, platform-architecture  
 Backlog ID: `filemaker-normalizer-compat-options`
+
+This document is the retained hard-cut decision record from the 2026-03-05
+execution wave. For the active stabilization and closeout state, use
+[`wave-execution-status-2026-04-17.md`](./wave-execution-status-2026-04-17.md),
+[`stabilization-window-2026-04-17.md`](./stabilization-window-2026-04-17.md),
+and [`docs/plans/canonical-closeout-2026-04-17.md`](../plans/canonical-closeout-2026-04-17.md).
 
 ## Context
 

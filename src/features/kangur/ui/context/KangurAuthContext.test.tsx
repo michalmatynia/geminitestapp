@@ -110,7 +110,12 @@ vi.mock('@/features/kangur/observability/client', () => ({
 }));
 
 import { getKangurLoginHref } from '@/features/kangur/config/routing';
-import { KangurAuthProvider, useKangurAuth } from '@/features/kangur/ui/context/KangurAuthContext';
+import { KangurRoutingProvider } from '@/features/kangur/ui/context/KangurRoutingContext';
+import {
+  clearKangurAuthBootstrapCache,
+  KangurAuthProvider,
+  useKangurAuth,
+} from '@/features/kangur/ui/context/KangurAuthContext';
 
 const AUTHENTICATED_USER = {
   id: 'parent-1',
@@ -182,6 +187,7 @@ const AuthProbe = (): React.JSX.Element => {
 describe('KangurAuthContext', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    clearKangurAuthBootstrapCache();
     window.history.replaceState({}, '', '/kangur');
     useRouterMock.mockReturnValue({
       push: routerPushMock,
@@ -207,6 +213,34 @@ describe('KangurAuthContext', () => {
     });
   });
 
+  it('reuses the bootstrap auth session across provider remounts', async () => {
+    const firstRender = render(
+      <KangurAuthProvider>
+        <AuthProbe />
+      </KangurAuthProvider>
+    );
+
+    await waitFor(() => {
+      expect(screen.getByTestId('kangur-auth-loading')).toHaveTextContent('false');
+    });
+
+    expect(meMock).toHaveBeenCalledTimes(1);
+    firstRender.unmount();
+
+    render(
+      <KangurAuthProvider>
+        <AuthProbe />
+      </KangurAuthProvider>
+    );
+
+    await waitFor(() => {
+      expect(screen.getByTestId('kangur-auth-loading')).toHaveTextContent('false');
+      expect(screen.getByTestId('kangur-parent-assignment-access')).toHaveTextContent('true');
+    });
+
+    expect(meMock).toHaveBeenCalledTimes(1);
+  });
+
   it('navigates to the Kangur login page using the current location as callback target', async () => {
     const user = userEvent.setup();
 
@@ -224,7 +258,7 @@ describe('KangurAuthContext', () => {
     await user.click(screen.getByRole('button', { name: 'Open login' }));
 
     expect(routerPushMock).toHaveBeenCalledWith(
-      getKangurLoginHref('/kangur', window.location.href)
+      getKangurLoginHref('/kangur', '/kangur')
     );
     expect(prepareLoginHrefMock).not.toHaveBeenCalled();
     expect(redirectToLoginMock).not.toHaveBeenCalled();
@@ -246,7 +280,7 @@ describe('KangurAuthContext', () => {
 
     await user.click(screen.getByRole('button', { name: 'Open create-account' }));
 
-    const loginHref = getKangurLoginHref('/kangur', window.location.href);
+    const loginHref = getKangurLoginHref('/kangur', '/kangur');
     const parsed = new URL(loginHref, 'https://kangur.local');
     parsed.searchParams.set('authMode', 'create-account');
     expect(routerPushMock).toHaveBeenCalledWith(
@@ -254,6 +288,30 @@ describe('KangurAuthContext', () => {
     );
     expect(prepareLoginHrefMock).not.toHaveBeenCalled();
     expect(redirectToLoginMock).not.toHaveBeenCalled();
+  });
+
+  it('canonicalizes the login callback target when Kangur owns the public frontend root', async () => {
+    const user = userEvent.setup();
+    window.history.replaceState({}, '', '/en/kangur/profile?tab=stats#summary');
+
+    render(
+      <KangurRoutingProvider basePath='/' pageKey='LearnerProfile' requestedPath='/profile'>
+        <KangurAuthProvider>
+          <AuthProbe />
+        </KangurAuthProvider>
+      </KangurRoutingProvider>
+    );
+
+    await waitFor(() => {
+      expect(meMock).toHaveBeenCalledTimes(1);
+      expect(screen.getByTestId('kangur-auth-loading')).toHaveTextContent('false');
+    });
+
+    await user.click(screen.getByRole('button', { name: 'Open login' }));
+
+    expect(routerPushMock).toHaveBeenCalledWith(
+      getKangurLoginHref('/', '/en/profile?tab=stats#summary')
+    );
   });
 
   it('drops parent-assignment access in anonymous mode', async () => {

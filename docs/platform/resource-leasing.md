@@ -1,6 +1,6 @@
 ---
 owner: 'Platform Team'
-last_reviewed: '2026-03-09'
+last_reviewed: '2026-03-26'
 status: 'active'
 doc_type: 'policy'
 scope: 'platform'
@@ -55,6 +55,17 @@ Examples:
   - `src/features/integrations/services/imports/base-import-run-repository.ts`
   - `src/features/integrations/services/imports/base-import-service.ts`
 
+### AI Paths run execution
+
+- Resource id: `ai-paths.run.execution`
+- Mode: `partitioned`
+- Scope id: AI Paths `runId`
+- Why it exists: ensure one active execution owner per queued AI Paths run and surface lease contention explicitly
+- Entry points:
+  - `src/features/ai/ai-paths/workers/ai-path-run-queue/queue.ts`
+  - `src/features/ai/ai-paths/services/path-run-management-service.ts`
+  - `src/app/api/agent/leases/route.ts`
+
 ## Recommended lease fields
 
 Lease-aware services should capture at least:
@@ -108,6 +119,12 @@ The canonical live ownership surface is:
 
 - `GET /api/agent/leases`
 - `POST /api/agent/leases`
+
+Current mutation support is intentionally mixed:
+
+- base import run scopes can be claimed, renewed, and released through `POST /api/agent/leases`
+- AI Paths execution scopes can be claimed, renewed, and released through `POST /api/agent/leases`
+- Playwright broker scopes are discovery-only through `GET /api/agent/leases` and still acquire ownership through `runtime-broker.mjs`
 
 See `docs/platform/shared-lease-service.md` for the request and response model.
 

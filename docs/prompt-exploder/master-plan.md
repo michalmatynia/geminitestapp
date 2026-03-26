@@ -1,6 +1,6 @@
 ---
 owner: 'Prompt Exploder Team'
-last_reviewed: '2026-03-09'
+last_reviewed: '2026-03-26'
 status: 'active'
 doc_type: 'plan'
 scope: 'feature:prompt-exploder'
@@ -8,6 +8,10 @@ canonical: true
 ---
 
 # Prompt Exploder Master Plan
+
+This file is retained as the historical consolidation plan. Current runtime and
+operator truth lives in [`overview.md`](./overview.md) and
+[`operations-runbook.md`](./operations-runbook.md).
 
 Related docs:
 
@@ -17,6 +21,9 @@ Related docs:
 ## Scope
 
 Unify Prompt Exploder recognition, learning, governance, and operational quality into a single UI-driven workflow.
+
+Plan state: functionally completed; keep this file for historical sequencing and
+design rationale rather than day-to-day operations.
 
 ## Phases
 

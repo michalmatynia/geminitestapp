@@ -1,7 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import { NextIntlClientProvider } from 'next-intl';
 import type { ReactElement } from 'react';
-import { describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import plMessages from '@/i18n/messages/pl.json';
 
@@ -14,7 +14,36 @@ const renderWithIntl = (element: ReactElement) =>
     </NextIntlClientProvider>
   );
 
+const mutationObserverInstances: Array<{
+  observe: ReturnType<typeof vi.fn>;
+  disconnect: ReturnType<typeof vi.fn>;
+}> = [];
+
 describe('KangurAppLoader', () => {
+  beforeEach(() => {
+    mutationObserverInstances.length = 0;
+
+    class TestMutationObserver {
+      observe = vi.fn();
+      disconnect = vi.fn();
+      takeRecords = vi.fn(() => []);
+
+      constructor(_callback: MutationCallback) {
+        mutationObserverInstances.push(this);
+      }
+    }
+
+    vi.stubGlobal(
+      'MutationObserver',
+      TestMutationObserver as unknown as typeof MutationObserver
+    );
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+    vi.unstubAllGlobals();
+  });
+
   it('renders the larger classic loader card with accessible boot loader markers', () => {
     renderWithIntl(<KangurAppLoader visible />);
 
@@ -48,5 +77,23 @@ describe('KangurAppLoader', () => {
     renderWithIntl(<KangurAppLoader visible={false} />);
 
     expect(screen.queryByTestId('kangur-app-loader')).not.toBeInTheDocument();
+  });
+
+  it('uses mutation observation instead of interval polling when available', () => {
+    const setIntervalSpy = vi.spyOn(globalThis, 'setInterval');
+
+    renderWithIntl(<KangurAppLoader visible />);
+
+    expect(mutationObserverInstances).not.toHaveLength(0);
+    expect(setIntervalSpy).not.toHaveBeenCalled();
+  });
+
+  it('falls back to interval polling when MutationObserver is unavailable', () => {
+    vi.stubGlobal('MutationObserver', undefined);
+    const setIntervalSpy = vi.spyOn(globalThis, 'setInterval');
+
+    renderWithIntl(<KangurAppLoader visible />);
+
+    expect(setIntervalSpy).toHaveBeenCalled();
   });
 });

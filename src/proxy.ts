@@ -37,6 +37,19 @@ const isAdminRequest = (pathname: string): boolean =>
 const isSafePageMethod = (request: NextRequest): boolean =>
   request.method === 'GET' || request.method === 'HEAD';
 
+const isDefaultLocaleBypassPath = (pathname: string): boolean => {
+  return (
+    pathname === '/' ||
+    pathname === '/login' ||
+    pathname === '/kangur' ||
+    pathname.startsWith('/kangur/') ||
+    pathname === '/products' ||
+    pathname.startsWith('/products/') ||
+    pathname === '/preview' ||
+    pathname.startsWith('/preview/')
+  );
+};
+
 const getLocaleCookieName = (): string | null =>
   siteRouting.localeCookie === false
     ? null
@@ -81,7 +94,7 @@ const shouldBypassIntlRewriteForDefaultLocale = (request: NextRequest): boolean 
     acceptLanguage: request.headers.get('accept-language'),
   });
 
-  return resolvedLocale === getDefaultSiteLocaleCode();
+  return resolvedLocale === getDefaultSiteLocaleCode() && isDefaultLocaleBypassPath(pathname);
 };
 
 const resolvePublicLocaleResponse = (request: NextRequest): NextResponse | null => {

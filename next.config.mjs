@@ -58,6 +58,11 @@ const ensureFileCopy = async (sourcePath, targetPath) => {
 const nextConfig = {
   reactStrictMode: true,
   devIndicators: false,
+  ...(isDev
+    ? {
+        allowedDevOrigins: ['127.0.0.1', '::1'],
+      }
+    : {}),
   // Keep dev artifacts separate from production builds to avoid lock/cache races
   // when `next build` and `next dev` are triggered in parallel.
   distDir: process.env.NEXT_DIST_DIR || (isDev ? '.next-dev' : '.next'),

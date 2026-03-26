@@ -1,6 +1,6 @@
 ---
 owner: 'Case Resolver Team'
-last_reviewed: '2026-02-20'
+last_reviewed: '2026-03-26'
 status: 'active'
 doc_type: 'index'
 scope: 'feature:case-resolver'
@@ -13,40 +13,60 @@ related_components:
 
 # Case Resolver Documentation
 
-This section is the centralized source of truth for the Case Resolver feature.
+This folder is the maintained documentation hub for Case Resolver.
 
-## Start Here
+## Canonical entry points
 
-- [Overview](./overview.md)
-- [Architecture](./architecture.md)
-- [Data Model](./data-model.md)
-- [APIs](./apis.md)
-- [Performance](./performance.md)
-- [Security](./security.md)
-- [FAQ](./faq.md)
-- [Changelog](./changelog.md)
+- Overview: [./overview.md](./overview.md)
+- Architecture: [./architecture.md](./architecture.md)
+- API reference: [./apis.md](./apis.md)
+- Data model: [./data-model.md](./data-model.md)
+- Performance: [./performance.md](./performance.md)
+- Security: [./security.md](./security.md)
+- FAQ: [./faq.md](./faq.md)
+- Changelog: [./changelog.md](./changelog.md)
+- Runbooks hub: [./runbooks/README.md](./runbooks/README.md)
+
+## Verified operator route map
+
+Current admin routes:
+
+- `/admin/case-resolver`
+- `/admin/case-resolver/cases`
+- `/admin/case-resolver/capture`
+- `/admin/case-resolver/categories`
+- `/admin/case-resolver/identifiers`
+- `/admin/case-resolver/preferences`
+- `/admin/case-resolver/settings`
+- `/admin/case-resolver/tags`
+
+Use the overview for how those routes divide responsibilities.
+
+## Verified API map
+
+Feature-owned API routes under `/api/case-resolver/*` currently cover:
+
+- assets upload and PDF extraction
+- document export to PDF
+- OCR job creation, retry, model listing, and observability
+
+Important boundary:
+
+- workspace persistence is not a `/api/case-resolver/*` contract
+- the main workspace persists through shared settings-backed storage described in the architecture and data-model docs
 
 ## Runbooks
 
-- [Runbooks Hub](./runbooks/README.md)
-- [Performance and Stability](./runbooks/performance-stability.md)
-- [OCR Failures and Retry](./runbooks/ocr-failures-and-retry.md)
-- [Workspace Conflict Recovery](./runbooks/workspace-conflict-recovery.md)
-- [Case List Degradation](./runbooks/case-list-degradation.md)
-- [Prompt Exploder Capture Handoff](./runbooks/prompt-exploder-capture-handoff.md)
-- [Release and Rollback](./runbooks/release-and-rollback.md)
-- [Data Integrity Checks](./runbooks/data-integrity-checks.md)
+- [./runbooks/performance-stability.md](./runbooks/performance-stability.md)
+- [./runbooks/ocr-failures-and-retry.md](./runbooks/ocr-failures-and-retry.md)
+- [./runbooks/workspace-conflict-recovery.md](./runbooks/workspace-conflict-recovery.md)
+- [./runbooks/case-list-degradation.md](./runbooks/case-list-degradation.md)
+- [./runbooks/prompt-exploder-capture-handoff.md](./runbooks/prompt-exploder-capture-handoff.md)
+- [./runbooks/release-and-rollback.md](./runbooks/release-and-rollback.md)
+- [./runbooks/data-integrity-checks.md](./runbooks/data-integrity-checks.md)
 
-## Related Platform Docs
+## Related docs
 
-- [Developer Handbook](../platform/developer-handbook.md)
-- [API Caching](../platform/api-caching.md)
-- [Architecture Guardrails](../platform/architecture-guardrails.md)
-- [AI Paths Docs](../ai-paths/overview.md)
-
-## Ownership and Review
-
-- Primary owner: Case Resolver Team
-- Secondary owner: Platform/Operations Team
-- Review cadence: monthly, and after every incident with production impact
-- Change policy: all Case Resolver API/schema/queue changes must update docs in this section
+- [../prompt-exploder/README.md](../prompt-exploder/README.md)
+- [../ai-paths/overview.md](../ai-paths/overview.md)
+- [../platform/architecture-guardrails.md](../platform/architecture-guardrails.md)

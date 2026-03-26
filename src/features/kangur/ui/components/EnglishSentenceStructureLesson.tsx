@@ -3,6 +3,7 @@
 import { useTranslations } from 'next-intl';
 import { useMemo } from 'react';
 
+import { getKangurLessonStageGameRuntimeSpec } from '@/features/kangur/games/lesson-stage-runtime-specs';
 import type { LessonSlide } from '@/features/kangur/ui/components/LessonSlideSection';
 import {
   EnglishConnectorBridgeAnimation,
@@ -32,7 +33,11 @@ type SectionId =
   | 'questions'
   | 'connectors'
   | 'practice'
+  | 'game'
   | 'summary';
+const ENGLISH_SENTENCE_STRUCTURE_RUNTIME = getKangurLessonStageGameRuntimeSpec(
+  'english_sentence_builder_lesson_stage'
+);
 
 const buildEnglishSentenceStructureSlides = (
   translations: KangurIntlTranslate
@@ -204,6 +209,7 @@ const buildEnglishSentenceStructureSlides = (
       ),
     },
   ],
+  game: [],
   summary: [
     {
       title: translations('slides.summary.recap.title'),
@@ -233,12 +239,14 @@ const SENTENCE_STRUCTURE_SECTION_META: Array<{
   id: SectionId;
   emoji: string;
   key: string;
+  isGame?: boolean;
 }> = [
   { id: 'blueprint', emoji: '🧩', key: 'blueprint' },
   { id: 'order', emoji: '🧭', key: 'order' },
   { id: 'questions', emoji: '❓', key: 'questions' },
   { id: 'connectors', emoji: '🔗', key: 'connectors' },
   { id: 'practice', emoji: '✅', key: 'practice' },
+  { id: 'game', emoji: '🎮', key: 'game', isGame: true },
   { id: 'summary', emoji: '🧠', key: 'summary' },
 ];
 
@@ -252,6 +260,7 @@ export default function EnglishSentenceStructureLesson(): React.JSX.Element {
         emoji: section.emoji,
         title: shellTranslations(`sections.${section.key}.title`),
         description: shellTranslations(`sections.${section.key}.description`),
+        isGame: section.isGame,
       })),
     [shellTranslations]
   );
@@ -275,6 +284,21 @@ export default function EnglishSentenceStructureLesson(): React.JSX.Element {
       completionSectionId='summary'
       autoRecordComplete
       scorePercent={120}
+      skipMarkFor={['game']}
+      games={[
+        {
+          sectionId: 'game',
+          stage: {
+            accent: 'violet',
+            title: shellTranslations('sections.game.title'),
+            description: shellTranslations('sections.game.description'),
+            icon: '🎮',
+            headerTestId: 'english-sentence-structure-game-header',
+            shellTestId: 'english-sentence-structure-game-shell',
+          },
+          runtime: ENGLISH_SENTENCE_STRUCTURE_RUNTIME,
+        },
+      ]}
     />
   );
 }

@@ -1,6 +1,6 @@
 ---
 owner: 'Case Resolver Team'
-last_reviewed: '2026-02-20'
+last_reviewed: '2026-03-26'
 status: 'active'
 related_components:
   - 'src/features/case-resolver'
@@ -22,7 +22,9 @@ Define the release gate and rollback process for Case Resolver changes.
    - `npx eslint <touched case resolver files>`
 3. API smoke:
    - OCR create/status/retry endpoints
+   - OCR observability endpoint
    - document export and extract endpoints
+   - shared settings refresh/save path for the workspace payload
 4. Manual functional smoke:
    - case create/edit/delete
    - save conflict handling
@@ -33,7 +35,7 @@ Define the release gate and rollback process for Case Resolver changes.
 1. Deploy to staging.
 2. Execute smoke checklist.
 3. Canary production rollout (10% -> 50% -> 100%).
-4. Observe key metrics at each stage before advancing.
+4. Observe workspace persistence signals plus OCR observability at each stage before advancing.
 
 ## Rollback Triggers
 

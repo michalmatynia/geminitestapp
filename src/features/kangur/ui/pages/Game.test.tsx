@@ -184,12 +184,8 @@ vi.mock('@/features/kangur/ui/components/KangurGameKangurSessionWidget', () => (
   KangurGameKangurSessionWidget: () => <div data-testid='kangur-kangur-session-widget' />,
 }));
 
-vi.mock('@/features/kangur/ui/components/KangurGameCalendarTrainingWidget', () => ({
-  KangurGameCalendarTrainingWidget: () => <div data-testid='kangur-calendar-training-widget' />,
-}));
-
-vi.mock('@/features/kangur/ui/components/KangurGameGeometryTrainingWidget', () => ({
-  KangurGameGeometryTrainingWidget: () => <div data-testid='kangur-geometry-training-widget' />,
+vi.mock('@/features/kangur/ui/components/CalendarTrainingGame', () => ({
+  default: () => <div data-testid='calendar-training-game' />,
 }));
 
 vi.mock('@/features/kangur/ui/components/KangurGameOperationSelectorWidget', () => ({
@@ -583,7 +579,9 @@ describe('Game page', () => {
 
     render(<Game />);
 
-    const transitionShell = (await screen.findByTestId('kangur-calendar-training-widget')).parentElement;
+    const transitionShell = (await screen.findByTestId('kangur-calendar-training-top-section')).closest(
+      '[data-motion-initial]'
+    );
 
     expect(transitionShell).not.toBeNull();
     expect(transitionShell).toHaveAttribute(

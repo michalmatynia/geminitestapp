@@ -20,6 +20,7 @@ const authState = vi.hoisted(() => ({
 }));
 
 const subjectFocusServiceMocks = vi.hoisted(() => ({
+  hasPersistedSubjectFocusMock: vi.fn(),
   loadPersistedSubjectFocusMock: vi.fn(),
   loadRemoteSubjectFocusMock: vi.fn(),
   persistSubjectFocusMock: vi.fn(),
@@ -38,6 +39,7 @@ vi.mock('@/features/kangur/ui/services/progress', () => ({
 }));
 
 vi.mock('@/features/kangur/ui/services/subject-focus', () => ({
+  hasPersistedSubjectFocus: subjectFocusServiceMocks.hasPersistedSubjectFocusMock,
   loadPersistedSubjectFocus: subjectFocusServiceMocks.loadPersistedSubjectFocusMock,
   loadRemoteSubjectFocus: subjectFocusServiceMocks.loadRemoteSubjectFocusMock,
   persistSubjectFocus: subjectFocusServiceMocks.persistSubjectFocusMock,
@@ -85,6 +87,7 @@ describe('KangurSubjectFocusContext', () => {
       isAuthenticated: true,
       isLoadingAuth: false,
     };
+    subjectFocusServiceMocks.hasPersistedSubjectFocusMock.mockReturnValue(true);
     subjectFocusServiceMocks.loadPersistedSubjectFocusMock.mockReturnValue('maths');
     subjectFocusServiceMocks.loadRemoteSubjectFocusMock.mockResolvedValue(null);
     subjectFocusServiceMocks.persistSubjectFocusMock.mockImplementation(
@@ -142,6 +145,44 @@ describe('KangurSubjectFocusContext', () => {
       'english'
     );
     expect(subjectFocusServiceMocks.persistRemoteSubjectFocusMock).toHaveBeenCalledWith(
+      'english'
+    );
+  });
+
+  it('skips remote hydration when a persisted subject already exists for the active learner', async () => {
+    render(
+      <KangurSubjectFocusProvider>
+        <Probe />
+      </KangurSubjectFocusProvider>
+    );
+
+    await waitFor(() => {
+      expect(screen.getByTestId('subject-value')).toHaveTextContent('maths');
+    });
+
+    expect(subjectFocusServiceMocks.hasPersistedSubjectFocusMock).toHaveBeenCalledWith(
+      'learner-1'
+    );
+    expect(subjectFocusServiceMocks.loadRemoteSubjectFocusMock).not.toHaveBeenCalled();
+  });
+
+  it('hydrates from the remote subject focus when no persisted value exists', async () => {
+    subjectFocusServiceMocks.hasPersistedSubjectFocusMock.mockReturnValue(false);
+    subjectFocusServiceMocks.loadRemoteSubjectFocusMock.mockResolvedValue('english');
+
+    render(
+      <KangurSubjectFocusProvider>
+        <Probe />
+      </KangurSubjectFocusProvider>
+    );
+
+    await waitFor(() => {
+      expect(screen.getByTestId('subject-value')).toHaveTextContent('english');
+    });
+
+    expect(subjectFocusServiceMocks.loadRemoteSubjectFocusMock).toHaveBeenCalledTimes(1);
+    expect(subjectFocusServiceMocks.persistSubjectFocusMock).toHaveBeenCalledWith(
+      'learner-1',
       'english'
     );
   });

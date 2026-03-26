@@ -44,7 +44,12 @@ describe('GeometryBasicsLesson i18n', () => {
     );
 
     const sections = (capturedProps?.sections as Array<Record<string, unknown>>) ?? [];
-    const games = (capturedProps?.games as Array<{ sectionId: string; stage: Record<string, unknown> }>) ?? [];
+    const games =
+      (capturedProps?.games as Array<{
+        sectionId: string;
+        stage: Record<string, unknown>;
+        runtime?: { runtimeId?: string; rendererId?: string };
+      }>) ?? [];
 
     expect(sections.find((section) => section.id === 'punkt')).toMatchObject({
       title: 'Punkt und Strecke',
@@ -56,6 +61,10 @@ describe('GeometryBasicsLesson i18n', () => {
     });
     expect(games.find((game) => game.sectionId === 'game')?.stage).toMatchObject({
       title: 'Geo-Mission',
+    });
+    expect(games.find((game) => game.sectionId === 'game')?.runtime).toMatchObject({
+      runtimeId: 'geometry_basics_workshop_lesson_stage',
+      rendererId: 'geometry_basics_workshop_game',
     });
 
     const slides = (capturedProps?.slides as Record<string, CapturedSlide[]>) ?? {};

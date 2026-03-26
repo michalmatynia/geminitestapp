@@ -9,6 +9,19 @@ import {
   createKangurFreeformDrawingSnapshot,
   serializeKangurFreeformDrawingSnapshot,
 } from '@/features/kangur/ui/components/drawing-engine/freeform-snapshots';
+const { downloadKangurDataUrl } = vi.hoisted(() => ({
+  downloadKangurDataUrl: vi.fn(),
+}));
+vi.mock('@/features/kangur/ui/components/drawing-engine/canvas-export', async () => {
+  const actual = await vi.importActual<
+    typeof import('@/features/kangur/ui/components/drawing-engine/canvas-export')
+  >('@/features/kangur/ui/components/drawing-engine/canvas-export');
+
+  return {
+    ...actual,
+    downloadKangurDataUrl,
+  };
+});
 import { KangurAiTutorDrawingCanvas } from './KangurAiTutorDrawingCanvas';
 
 const canvasContextStub = {
@@ -35,6 +48,7 @@ describe('KangurAiTutorDrawingCanvas', () => {
   const originalToDataURL = HTMLCanvasElement.prototype.toDataURL;
 
   beforeEach(() => {
+    downloadKangurDataUrl.mockReset();
     vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockReturnValue(canvasContextStub);
     HTMLCanvasElement.prototype.toDataURL = vi
       .fn(() => 'data:image/png;base64,AAA') as typeof HTMLCanvasElement.prototype.toDataURL;
@@ -98,6 +112,7 @@ describe('KangurAiTutorDrawingCanvas', () => {
     );
     expect(screen.getByRole('button', { name: 'Cofnij' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Ponów' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Eksportuj PNG' })).toBeDisabled();
   });
 
   it('keeps cancel wired while the themed shell is open', () => {
@@ -143,6 +158,37 @@ describe('KangurAiTutorDrawingCanvas', () => {
     expect(redoButton).toBeDisabled();
   });
 
+  it('supports shared undo and redo keyboard shortcuts on the tutor canvas', () => {
+    render(<KangurAiTutorDrawingCanvas onCancel={vi.fn()} onComplete={vi.fn()} />);
+
+    const canvas = screen.getByLabelText('Plansza do rysowania');
+    const doneButton = screen.getByRole('button', { name: 'Gotowe' });
+
+    fireEvent.pointerDown(canvas, {
+      pointerId: 8,
+      clientX: 40,
+      clientY: 48,
+    });
+    fireEvent.pointerMove(canvas, {
+      pointerId: 8,
+      clientX: 100,
+      clientY: 120,
+    });
+    fireEvent.pointerUp(canvas, {
+      pointerId: 8,
+      clientX: 100,
+      clientY: 120,
+    });
+
+    expect(doneButton).toBeEnabled();
+
+    fireEvent.keyDown(canvas, { ctrlKey: true, key: 'z' });
+    expect(doneButton).toBeDisabled();
+
+    fireEvent.keyDown(canvas, { ctrlKey: true, key: 'Z', shiftKey: true });
+    expect(doneButton).toBeEnabled();
+  });
+
   it('exports the completed drawing through the shared freeform engine api', () => {
     const onComplete = vi.fn();
 
@@ -170,6 +216,40 @@ describe('KangurAiTutorDrawingCanvas', () => {
 
     expect(onComplete).toHaveBeenCalledWith('data:image/png;base64,AAA');
     expect(HTMLCanvasElement.prototype.toDataURL).toHaveBeenCalledWith('image/png');
+  });
+
+  it('exports the current tutor sketch through the shared snapshot action', () => {
+    render(<KangurAiTutorDrawingCanvas onCancel={vi.fn()} onComplete={vi.fn()} />);
+
+    const canvas = screen.getByLabelText('Plansza do rysowania');
+    const exportButton = screen.getByRole('button', { name: 'Eksportuj PNG' });
+
+    expect(exportButton).toBeDisabled();
+
+    fireEvent.pointerDown(canvas, {
+      pointerId: 12,
+      clientX: 48,
+      clientY: 56,
+    });
+    fireEvent.pointerMove(canvas, {
+      pointerId: 12,
+      clientX: 120,
+      clientY: 132,
+    });
+    fireEvent.pointerUp(canvas, {
+      pointerId: 12,
+      clientX: 120,
+      clientY: 132,
+    });
+
+    expect(exportButton).toBeEnabled();
+
+    fireEvent.click(exportButton);
+
+    expect(downloadKangurDataUrl).toHaveBeenCalledWith(
+      'data:image/png;base64,AAA',
+      'kangur-ai-tutor-drawing.png'
+    );
   });
 
   it('restores an incoming draft snapshot and enables completing it after remount', async () => {

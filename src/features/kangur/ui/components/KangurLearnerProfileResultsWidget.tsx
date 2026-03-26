@@ -13,7 +13,7 @@ import { KangurResultsWidgetContent } from './KangurResultsWidgetContent';
 
 export function KangurLearnerProfileResultsWidget(): React.JSX.Element | null {
   const translations = useTranslations('KangurParentDashboard');
-  const { basePath, progress, user } = useKangurLearnerProfileRuntime();
+  const { basePath, progress, scores, isLoadingScores, user } = useKangurLearnerProfileRuntime();
   const { entry: resultsContent } = useKangurPageContentEntry('learner-profile-results');
   const activeLearnerId = user?.activeLearner?.id?.trim() ?? '';
 
@@ -41,6 +41,8 @@ export function KangurLearnerProfileResultsWidget(): React.JSX.Element | null {
         createdBy={createdBy}
         learnerId={activeLearnerId}
         playerName={playerName}
+        prefetchedScores={scores}
+        prefetchedScoresLoading={isLoadingScores}
         progress={progress}
         showProgressOverview={false}
         summaryDescription={translations('widgets.scores.trackSummary.description')}

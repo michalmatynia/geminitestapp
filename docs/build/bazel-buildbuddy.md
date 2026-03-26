@@ -1,6 +1,6 @@
 ---
 owner: 'Platform Team'
-last_reviewed: '2026-03-22'
+last_reviewed: '2026-03-26'
 status: 'active'
 doc_type: 'runbook'
 scope: 'repository'
@@ -16,6 +16,8 @@ The wrapper reads:
 - `BAZEL_REMOTE_CACHE_URL`
 - `BAZEL_REMOTE_CACHE_HEADER`
 - `BAZEL_REMOTE_CACHE_UPLOAD_LOCAL_RESULTS`
+
+Any workflow or local command that runs Bazel through `npm run bazel -- ...` inherits this wrapper behavior.
 
 ## Recommended BuildBuddy contract
 
@@ -50,9 +52,25 @@ Recommended values:
 `BAZEL_REMOTE_CACHE_UPLOAD_LOCAL_RESULTS` does not need to be stored as a secret. The workflows can set it dynamically:
 
 - pull requests: `0`
-- protected branch pushes: `1`
+- pushes on `main`: `1`
 
 That keeps PR jobs read-only against the remote cache and lets trusted branch builds publish results.
+
+## Current GitHub Actions surfaces
+
+The current repo-owned Bazel lanes that already consume this wrapper contract are:
+
+- `.github/workflows/bazel-toolchain.yml`
+- `.github/workflows/bazel-smoke.yml`
+- `.github/workflows/bazel-quality.yml`
+- `.github/workflows/bazel-regressions.yml`
+
+The docs-focused Bazel workflows also use the same remote-cache env contract:
+
+- `.github/workflows/docs-structure.yml`
+- `.github/workflows/validator-docs.yml`
+
+The dedicated repo-lane workflows set `BAZEL_REMOTE_CACHE_UPLOAD_LOCAL_RESULTS` to `1` only on pushes to `main`. The docs-specific Bazel workflows stay read-only on pull requests and writable on their `main` push runs.
 
 ## Local usage
 
@@ -85,6 +103,12 @@ Use a lightweight target first:
 ```bash
 npm run bazel -- query //:all
 npm run bazel -- run //:api_error_sources
+```
+
+Then verify one canonical repo lane:
+
+```bash
+npm run bazel:toolchain
 ```
 
 If those succeed with the remote cache env enabled, the wrapper wiring is correct.

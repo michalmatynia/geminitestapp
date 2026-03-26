@@ -1,6 +1,6 @@
 ---
 owner: 'Platform Team'
-last_reviewed: '2026-03-16'
+last_reviewed: '2026-03-26'
 status: 'active'
 doc_type: 'agent-guide'
 scope: 'repo'
@@ -39,6 +39,8 @@ to the canonical repo references.
 - Admin UI lives in `src/app/(admin)/admin/`.
 - Public/CMS frontend lives in `src/app/(frontend)/`.
 - API routes live in `src/app/api/`.
+- Native Kangur lives in `apps/mobile`.
+- Shared Kangur packages live in `packages/kangur-*`.
 - AI subsystems live primarily in `src/features/ai/` and `src/shared/lib/ai-*`.
 - Database routing and provider selection live in `src/shared/lib/db/`.
 - Queue infrastructure lives in `src/shared/lib/queue/` with startup in
@@ -88,13 +90,13 @@ The following files contain the production/Vercel build configuration and must
 **NOT** be modified by AI agents without explicit user approval:
 
 - `next.config.mjs` — Next.js build config (standalone output, cpus, memory, optimizePackageImports, serverExternalPackages)
-- `package.json` `"build"` script — heap size (`--max-old-space-size=3584`) tuned for Vercel free-tier 8GB limit
+- `package.json` `"build"` script — heap size and build runtime policy
 - `tsconfig.json` — TypeScript compiler config and `include`/`exclude` paths
 - `vercel.json` — Vercel deployment settings (if present)
 
 **Key build constraints that must be preserved:**
-- `--max-old-space-size=3584` in the build script (Vercel: 1 main + 1 worker × 3.5GB = 7GB, leaves 1GB for OS)
-- `experimental.cpus: 1` — limits worker processes to fit Vercel Standard 8GB machine
+- `NODE_OPTIONS='--max-old-space-size=8192'` in the build script
+- no explicit `experimental.cpus` override is set in `next.config.mjs`
 - Conditional `output: 'standalone'` — enabled only for non-Vercel deploys (Docker/self-hosted); disabled on Vercel to avoid expensive file-tracing
 - `typescript.ignoreBuildErrors: true` — type-checking is enforced in CI, not during `next build`
 
@@ -129,5 +131,6 @@ bun run bun:repo:ci
 
 ## Last Updated
 
+- `2026-03-26` — Refreshed repo topology to include active mobile and shared Kangur workspaces
 - `2026-03-21` — Added comprehensive AI features documentation and accessibility patterns
 - `2026-03-16` — Aligned to the scanned repo structure

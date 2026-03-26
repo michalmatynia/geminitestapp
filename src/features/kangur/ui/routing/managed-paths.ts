@@ -32,6 +32,8 @@ export const normalizeManagedKangurPathname = (
   return localeStrippedPath.replace(/\/+$/, '') || '/';
 };
 
+const ABSOLUTE_URL_SCHEME_PATTERN = /^[a-zA-Z][a-zA-Z\d+\-.]*:/;
+
 const canonicalizeKangurPublicAliasPathnameUnsafe = (pathname: string): string => {
   const normalizedPathname = stripSiteLocalePrefix(pathname);
 
@@ -82,6 +84,71 @@ export const canonicalizeKangurPublicAliasHref = (href: string): string => {
       return `${canonicalPathname}${parsed.search}${parsed.hash}`;
     },
     { fallback: href }
+  );
+};
+
+export const resolveRouteAwareManagedKangurHref = ({
+  href,
+  pathname,
+  currentOrigin,
+  canonicalizePublicAlias = false,
+}: {
+  href: string | null | undefined;
+  pathname: string | null;
+  currentOrigin?: string | null;
+  canonicalizePublicAlias?: boolean;
+}): string | undefined => {
+  const trimmedHref = typeof href === 'string' ? href.trim() : '';
+
+  if (!trimmedHref) {
+    return undefined;
+  }
+
+  return withKangurClientErrorSync(
+    {
+      source: 'kangur.routing',
+      action: 'resolve-route-aware-href',
+      description:
+        'Resolves managed Kangur hrefs against the active locale and public alias mode.',
+      context: {
+        href: trimmedHref,
+        pathname,
+        currentOrigin,
+        canonicalizePublicAlias,
+      },
+    },
+    () => {
+      let managedHref = trimmedHref;
+
+      if (!managedHref.startsWith('/')) {
+        if (!ABSOLUTE_URL_SCHEME_PATTERN.test(managedHref)) {
+          return managedHref;
+        }
+
+        if (!currentOrigin) {
+          return managedHref;
+        }
+
+        const parsed = new URL(managedHref);
+
+        if (parsed.origin !== currentOrigin) {
+          return managedHref;
+        }
+
+        managedHref = `${parsed.pathname}${parsed.search}${parsed.hash}`;
+      }
+
+      const localizedHref = localizeManagedKangurHref({
+        href: managedHref,
+        locale: normalizeSiteLocale(getPathLocale(pathname)),
+        pathname,
+      });
+
+      return canonicalizePublicAlias
+        ? canonicalizeKangurPublicAliasHref(localizedHref)
+        : localizedHref;
+    },
+    { fallback: trimmedHref }
   );
 };
 

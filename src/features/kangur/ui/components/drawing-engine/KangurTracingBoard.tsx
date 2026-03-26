@@ -2,6 +2,7 @@
 
 import type {
   CSSProperties,
+  KeyboardEventHandler,
   PointerEventHandler,
   ReactNode,
   RefObject,
@@ -12,6 +13,7 @@ import { KangurInfoCard } from '@/features/kangur/ui/design/primitives';
 import { cn } from '@/features/kangur/shared/utils';
 
 type KangurTracingBoardProps = {
+  ariaKeyShortcuts?: string;
   boardOverlay?: ReactNode;
   canvasAriaLabel: string;
   canvasRef: RefObject<HTMLCanvasElement | null>;
@@ -21,6 +23,7 @@ type KangurTracingBoardProps = {
   height: number;
   isCoarsePointer: boolean;
   isPointerDrawing: boolean;
+  onKeyDown?: KeyboardEventHandler<HTMLCanvasElement>;
   onPointerCancel?: PointerEventHandler<HTMLCanvasElement>;
   onPointerDown: PointerEventHandler<HTMLCanvasElement>;
   onPointerLeave?: PointerEventHandler<HTMLCanvasElement>;
@@ -34,6 +37,7 @@ type KangurTracingBoardProps = {
 };
 
 export function KangurTracingBoard({
+  ariaKeyShortcuts,
   boardOverlay,
   canvasAriaLabel,
   canvasRef,
@@ -43,6 +47,7 @@ export function KangurTracingBoard({
   height,
   isCoarsePointer,
   isPointerDrawing,
+  onKeyDown,
   onPointerCancel,
   onPointerDown,
   onPointerLeave,
@@ -80,16 +85,19 @@ export function KangurTracingBoard({
         {guideSurface}
         {boardOverlay}
         <KangurDrawingCanvasSurface
+          ariaKeyShortcuts={ariaKeyShortcuts}
           ariaLabel={canvasAriaLabel}
           canvasClassName='relative z-10 h-full w-full'
           canvasRef={canvasRef}
           height={height}
           isPointerDrawing={isPointerDrawing}
+          onKeyDown={onKeyDown}
           onPointerCancel={onPointerCancel}
           onPointerDown={onPointerDown}
           onPointerLeave={onPointerLeave}
           onPointerMove={onPointerMove}
           onPointerUp={onPointerUp}
+          tabIndex={0}
           width={width}
         />
       </div>

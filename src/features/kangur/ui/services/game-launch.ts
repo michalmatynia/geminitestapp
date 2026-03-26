@@ -6,6 +6,7 @@ import {
   KANGUR_LAUNCHABLE_GAME_CONTENT_IDS,
   KANGUR_LAUNCHABLE_GAME_SCREENS,
   getKangurGameCatalogEntriesForLessonComponent,
+  getKangurLaunchableGameRuntimeSpecForGame,
   getKangurLaunchableGameContentId,
   getKangurLaunchableGameScreen,
   getKangurLaunchableGameVariant,
@@ -45,7 +46,9 @@ export const buildKangurGameLaunchHref = (
   basePath: string,
   game: KangurGameDefinition
 ): string | null => {
-  const screen = getKangurLaunchableGameScreen(game);
+  const screen =
+    getKangurLaunchableGameRuntimeSpecForGame(game)?.screen ??
+    getKangurLaunchableGameScreen(game);
   if (!screen) {
     return null;
   }

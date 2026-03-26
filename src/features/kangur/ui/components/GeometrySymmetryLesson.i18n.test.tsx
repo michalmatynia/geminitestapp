@@ -44,8 +44,11 @@ describe('GeometrySymmetryLesson i18n', () => {
     const sections = (capturedProps?.sections as Array<Record<string, unknown>>) ?? [];
     const slides = (capturedProps?.slides as Record<string, CapturedSlide[]>) ?? {};
     const games =
-      (capturedProps?.games as Array<{ sectionId: string; stage: Record<string, unknown> }>) ??
-      [];
+      (capturedProps?.games as Array<{
+        sectionId: string;
+        stage: Record<string, unknown>;
+        runtime?: { runtimeId?: string; rendererId?: string };
+      }>) ?? [];
 
     expect(sections.find((section) => section.id === 'os')).toMatchObject({
       title: 'Symmetrieachse',
@@ -58,6 +61,10 @@ describe('GeometrySymmetryLesson i18n', () => {
     });
     expect(games.find((game) => game.sectionId === 'game')?.stage).toMatchObject({
       title: 'Symmetrie-Spiegel',
+    });
+    expect(games.find((game) => game.sectionId === 'game')?.runtime).toMatchObject({
+      runtimeId: 'geometry_symmetry_studio_lesson_stage',
+      rendererId: 'geometry_symmetry_game',
     });
 
     expect(slides.intro?.[0]?.title).toBe('Was ist Symmetrie?');

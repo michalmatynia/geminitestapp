@@ -124,19 +124,22 @@ function saveLiteSettingsSnapshot(data: SettingRecord[]): void {
   };
 }
 
-// SSR hydration: read lite settings injected by the server layout's <script> tag.
-// This seeds the client cache so the first fetchLiteSettingsCached() call returns
-// instantly without a network round-trip to /api/settings/lite.
-(function hydrateLiteSettingsFromSSR(): void {
-  if (typeof globalThis === 'undefined') return;
+const hydrateLiteSettingsFromSSRIfPresent = (): boolean => {
+  if (typeof globalThis === 'undefined') return false;
   const win = globalThis as typeof globalThis & { __LITE_SETTINGS__?: SettingRecord[] };
   const ssrData = win.__LITE_SETTINGS__;
-  if (!Array.isArray(ssrData) || ssrData.length === 0) return;
+  if (!Array.isArray(ssrData) || ssrData.length === 0) return false;
   const data = cloneSettings(ssrData);
   liteSettingsCache = { data, fetchedAt: Date.now() };
   saveLiteSettingsSnapshot(data);
   delete win.__LITE_SETTINGS__;
-})();
+  return true;
+};
+
+// SSR hydration: read lite settings injected by the server layout's <script> tag.
+// This seeds the client cache so the first fetchLiteSettingsCached() call returns
+// instantly without a network round-trip to /api/settings/lite.
+hydrateLiteSettingsFromSSRIfPresent();
 
 function getScopeSnapshot(scope: SettingsScope): SettingRecord[] | null {
   return settingsSnapshotByScope.get(scope)?.data ?? settingsSnapshotAny?.data ?? null;
@@ -293,6 +296,9 @@ export async function fetchLiteSettingsCached(options?: {
   bypassCache?: boolean;
 }): Promise<SettingRecord[]> {
   const bypassCache = options?.bypassCache === true;
+  if (!bypassCache) {
+    hydrateLiteSettingsFromSSRIfPresent();
+  }
   if (bypassCache) {
     const data = cloneSettings(await fetchLiteSettingsFromApi(true));
     liteSettingsCache = { data, fetchedAt: Date.now() };

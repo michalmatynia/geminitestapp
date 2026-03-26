@@ -1,6 +1,6 @@
 ---
 owner: 'Kangur Team'
-last_reviewed: '2026-03-22'
+last_reviewed: '2026-03-26'
 status: 'active'
 doc_type: 'overview'
 scope: 'feature:kangur'
@@ -12,8 +12,9 @@ canonical: true
 ## Purpose
 
 StudiQ is the public learning application brand. Kangur provides the learner-facing
-experience (games, lessons, tests, profiles, parent tools) and can either own the
-public root route or be embedded inside CMS pages.
+experience across web and native shells: games, lessons, tests, profiles, parent
+tools, AI Tutor flows, and supporting admin or API surfaces. Kangur can either own
+the public root route or be embedded inside CMS pages.
 
 ## Application topology
 
@@ -30,7 +31,7 @@ public root route or be embedded inside CMS pages.
 
 | Surface | Canonical location | Responsibility |
 | --- | --- | --- |
-| Public web shell | repository root Next.js app | Owns the public StudiQ frontend, front-page ownership, CMS embedding, and the canonical `/kangur/*` web routes. |
+| Public web shell | repository root Next.js app | Owns the public StudiQ frontend, front-page ownership, CMS embedding, localized Kangur routes, and the canonical `/kangur/*` web routes. |
 | Kangur admin | `src/app/(admin)/admin/kangur/*` | Owns authoring, content management, settings, observability, social publishing, and test or lesson management. |
 | Kangur backend | `src/app/api/kangur/*` | Owns learner auth, parent auth, progress, lessons, assignments, scores, duels, AI Tutor, and supporting operational endpoints. |
 | Native learner app | `apps/mobile` | Owns Expo routing, native bootstrapping, mobile auth flow, device storage, and mobile learner UI. |
@@ -53,7 +54,9 @@ Front page ownership is controlled through the front-page selection logic:
 - Allowed public owners: `cms` and `kangur`
 
 When the front page owner is `kangur`, `/` redirects into the canonical Kangur
-route for the requested slug + query params.
+route for the requested slug + query params. The web shell also supports
+default-locale bare learner slugs such as `/game`, `/lessons`, and `/tests`
+through the same frontend routing and proxy path.
 
 ### Route map
 
@@ -64,6 +67,7 @@ Kangur page keys map to the following slugs (see `src/features/kangur/config/rou
 - `Tests` -> `/kangur/tests`
 - `Competition` -> `/kangur/competition`
 - `Duels` -> `/kangur/duels`
+- `GamesLibrary` -> `/kangur/games`
 - `LearnerProfile` -> `/kangur/profile`
 - `ParentDashboard` -> `/kangur/parent-dashboard`
 - `SocialUpdates` -> `/kangur/social-updates`
@@ -75,6 +79,8 @@ Canonical learner-facing web entrypoints:
 - `src/app/(frontend)/kangur/layout.tsx`
 - `src/app/(frontend)/kangur/loading.tsx`
 - `src/app/(frontend)/kangur/login/page.tsx`
+- `src/app/[locale]/(frontend)/kangur/[[...slug]]/page.tsx`
+- `src/app/[locale]/(frontend)/kangur/layout.tsx`
 
 ## CMS embedding
 
@@ -156,8 +162,13 @@ and `http://localhost:3000` elsewhere. The auth layer resolves `development` vs
 `learner-session`, refreshes session state on boot, and optionally performs developer
 auto sign-in from Expo `extra` values.
 
-Home and lessons use bounded boot-state gates so the startup skeleton resolves even
-when native interactions stall.
+Current startup behavior is intentionally staged:
+
+- Expo splash hands off to a branded JS bootstrap gate before route content mounts.
+- The auth layer seeds from persisted learner snapshots first, then refreshes in the background.
+- Home restores tiny persisted lesson and score snapshots before mounting heavier query work.
+- Home and lessons use bounded boot-state gates so the startup skeleton resolves even when native interactions stall.
+- Secondary home panels, duel sections, and score refreshes are deferred behind interaction-aware stages to protect first paint.
 
 ## Shared package and API surface
 
@@ -170,6 +181,13 @@ surface includes:
 - Duels create, join, lobby, presence, chat, reactions, search, answer, leave, heartbeat, state, spectate, and leaderboard routes.
 - AI Tutor routes for content, chat, experiments, follow-up, guest intro, knowledge graph, native guide, page content, usage, and admin tooling.
 - Number Balance, observability, social image addons, social pipeline, social posts, knowledge graph, and TTS routes.
+
+Package entry docs now live beside the code:
+
+- `packages/kangur-contracts/README.md`
+- `packages/kangur-core/README.md`
+- `packages/kangur-api-client/README.md`
+- `packages/kangur-platform/README.md`
 
 ## AI Tutor content sources
 

@@ -1,11 +1,11 @@
 'use client';
 
+import { getKangurLessonStageGameRuntimeSpec } from '@/features/kangur/games/lesson-stage-runtime-specs';
 import { useKangurProgressOwnerKey } from '@/features/kangur/ui/hooks/useKangurProgressOwnerKey';
 import { useTranslations } from 'next-intl';
 
 import plMessages from '@/i18n/messages/pl.json';
 import type { LessonSlide } from '@/features/kangur/ui/components/LessonSlideSection';
-import GeometrySymmetryGame from '@/features/kangur/ui/components/GeometrySymmetryGame';
 import {
   GeometrySymmetryAxesAnimation,
   GeometrySymmetryCheckAnimation,
@@ -320,6 +320,9 @@ const translateStaticGeometrySymmetry = createStaticTranslator(
 
 export const SLIDES = buildGeometrySymmetrySlides(translateStaticGeometrySymmetry);
 export const HUB_SECTIONS = buildGeometrySymmetrySections(translateStaticGeometrySymmetry);
+const GEOMETRY_SYMMETRY_RUNTIME = getKangurLessonStageGameRuntimeSpec(
+  'geometry_symmetry_studio_lesson_stage'
+);
 
 export default function GeometrySymmetryLesson(): React.JSX.Element {
   const ownerKey = useKangurProgressOwnerKey();
@@ -359,7 +362,7 @@ export default function GeometrySymmetryLesson(): React.JSX.Element {
             shellTestId: 'geometry-symmetry-game-shell',
             title: translate('game.stageTitle'),
           },
-          render: ({ onFinish }) => <GeometrySymmetryGame onFinish={onFinish} />,
+          runtime: GEOMETRY_SYMMETRY_RUNTIME,
         },
       ]}
     />

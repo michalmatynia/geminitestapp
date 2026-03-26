@@ -18,36 +18,11 @@ import { KANGUR_WRAP_CENTER_ROW_CLASSNAME } from '@/features/kangur/ui/design/to
 import { useOptionalKangurLessonPrint } from '@/features/kangur/ui/context/KangurLessonPrintContext';
 import { useKangurCoarsePointer } from '@/features/kangur/ui/hooks/useKangurCoarsePointer';
 import type { KangurLessonActivityBlock as KangurLessonActivityBlockType } from '@/features/kangur/shared/contracts/kangur';
-import type { KangurMiniGameFinishActionProps } from '@/features/kangur/ui/types';
-
-import AddingBallGame from './AddingBallGame';
-import AddingSynthesisGame from './AddingSynthesisGame';
-import CalendarInteractiveGame from './CalendarInteractiveGame';
-import ClockTrainingGame from './ClockTrainingGame';
-import DivisionGame from './DivisionGame';
-import GeometryDrawingGame from './GeometryDrawingGame';
-import MultiplicationArrayGame from './MultiplicationArrayGame';
-import MultiplicationGame from './MultiplicationGame';
-import SubtractingGardenGame from './SubtractingGardenGame';
+import { KangurLessonActivityRuntime } from './KangurLessonActivityRuntime';
 
 type KangurLessonActivityBlockProps = {
   block: KangurLessonActivityBlockType;
   renderMode?: 'lesson' | 'editor';
-};
-
-const ACTIVITY_COMPONENTS: Record<
-  KangurLessonActivityBlockType['activityId'],
-  React.ComponentType<KangurMiniGameFinishActionProps>
-> = {
-  'adding-ball': AddingBallGame,
-  'adding-synthesis': AddingSynthesisGame,
-  'subtracting-game': SubtractingGardenGame,
-  'multiplication-array': MultiplicationArrayGame,
-  'multiplication-quiz': MultiplicationGame,
-  'division-game': DivisionGame,
-  'geometry-drawing': GeometryDrawingGame,
-  'calendar-interactive': CalendarInteractiveGame,
-  'clock-training': ClockTrainingGame,
 };
 
 const ACTIVITY_CHIP_CLASSNAME = 'text-[10px] uppercase tracking-wide';
@@ -102,7 +77,7 @@ export function KangurLessonActivityBlock(
 
   const title = block.title.trim() || definition.title;
   const description = block.description?.trim() || definition.description;
-  const ActivityComponent = ACTIVITY_COMPONENTS[block.activityId];
+  const activityRuntime = definition.lessonActivityRuntime ?? null;
 
   if (renderMode === 'editor') {
     return (
@@ -213,15 +188,26 @@ export function KangurLessonActivityBlock(
             Restart activity
           </KangurButton>
         </KangurSummaryPanel>
-      ) : (
+      ) : activityRuntime ? (
         <div data-kangur-print-exclude='true'>
-          <ActivityComponent
+          <KangurLessonActivityRuntime
             key={`${block.id}-${instanceKey}`}
+            runtime={activityRuntime}
             onFinish={(): void => {
               setIsCompleted(true);
             }}
           />
         </div>
+      ) : (
+        <KangurEmptyState
+          accent='amber'
+          align='left'
+          className='text-left text-sm'
+          data-kangur-print-exclude='true'
+          description='The lesson activity runtime could not be resolved from the current Kangur game catalog.'
+          padding='lg'
+          title='Activity unavailable'
+        />
       )}
     </KangurSurfacePanel>
   );

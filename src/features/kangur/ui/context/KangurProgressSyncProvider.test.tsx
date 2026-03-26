@@ -58,6 +58,7 @@ vi.mock('@/features/kangur/observability/client', () => ({
 }));
 
 import { KangurProgressSyncProvider } from './KangurProgressSyncProvider';
+import { clearKangurProgressHydrationCache } from './KangurProgressSyncProvider';
 
 const createProgress = (
   overrides: Partial<ReturnType<typeof createDefaultKangurProgressState>> = {}
@@ -114,6 +115,7 @@ describe('KangurProgressSyncProvider', () => {
     localStorage.clear();
     vi.clearAllMocks();
     setProgressPersistenceEnabled(true);
+    clearKangurProgressHydrationCache();
 
     useKangurAuthMock.mockReturnValue(buildAuthState());
     useKangurSubjectFocusMock.mockReturnValue({
@@ -173,6 +175,35 @@ describe('KangurProgressSyncProvider', () => {
     );
     expect(screen.getByTestId('kangur-progress-total-xp')).toHaveTextContent('120');
     expect(localStorage.getItem(KANGUR_PROGRESS_OWNER_STORAGE_KEY)).toBe('learner-1');
+  });
+
+  it('reuses cached remote hydration state across repeated mounts for the same learner and subject', async () => {
+    progressGetMock.mockResolvedValue(
+      createProgress({
+        totalXp: 80,
+        gamesPlayed: 3,
+      })
+    );
+
+    const firstRender = render(
+      <KangurProgressSyncProvider>
+        <ProgressProbe />
+      </KangurProgressSyncProvider>
+    );
+
+    await waitFor(() => expect(progressGetMock).toHaveBeenCalledTimes(1));
+    firstRender.unmount();
+
+    render(
+      <KangurProgressSyncProvider>
+        <ProgressProbe />
+      </KangurProgressSyncProvider>
+    );
+
+    await waitFor(() =>
+      expect(screen.getByTestId('kangur-progress-total-xp')).toHaveTextContent('80')
+    );
+    expect(progressGetMock).toHaveBeenCalledTimes(1);
   });
 
   it('pushes later local progress changes back to the server after hydration', async () => {

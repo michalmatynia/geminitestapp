@@ -251,6 +251,15 @@ export const loadPersistedSubjectFocus = (key: string | null): KangurLessonSubje
   return store.entries[key] ?? DEFAULT_SUBJECT;
 };
 
+export const hasPersistedSubjectFocus = (key: string | null): boolean => {
+  if (!key) {
+    return false;
+  }
+
+  const store = loadSubjectFocusStore();
+  return Object.prototype.hasOwnProperty.call(store.entries, key);
+};
+
 export const loadRemoteSubjectFocus = async (
   signal?: AbortSignal
 ): Promise<KangurLessonSubject | null> =>

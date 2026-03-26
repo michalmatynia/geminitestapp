@@ -8,7 +8,9 @@ import { useKangurCoarsePointer } from '@/features/kangur/ui/hooks/useKangurCoar
 import { KangurDrawingCanvasSurface } from '@/features/kangur/ui/components/drawing-engine/KangurDrawingCanvasSurface';
 import { KangurDrawingFreeformToolbar } from '@/features/kangur/ui/components/drawing-engine/KangurDrawingFreeformToolbar';
 import type { KangurFreeformDrawingToolConfig } from '@/features/kangur/ui/components/drawing-engine/freeform-config';
+import { KANGUR_DRAWING_HISTORY_ARIA_SHORTCUTS } from '@/features/kangur/ui/components/drawing-engine/keyboard-shortcuts';
 import { useKangurFreeformCanvasDrawing } from '@/features/kangur/ui/components/drawing-engine/useKangurFreeformCanvasDrawing';
+import { useKangurManagedDrawingActions } from '@/features/kangur/ui/components/drawing-engine/useKangurManagedDrawingActions';
 import { cn } from '@/features/kangur/shared/utils';
 
 import type { JSX } from 'react';
@@ -26,6 +28,7 @@ type TutorDrawingContent = {
   eraserLabel?: string;
   undoLabel?: string;
   redoLabel?: string;
+  exportLabel?: string;
   clearLabel?: string;
   cancelLabel?: string;
   doneLabel?: string;
@@ -61,9 +64,9 @@ export function KangurAiTutorDrawingCanvas({
     isPointerDrawing,
     canRedo,
     canUndo,
-    redoLastStroke: handleRedo,
-    undoLastStroke: handleUndo,
-    clearStrokes: handleClear,
+    redoLastStroke: rawHandleRedo,
+    undoLastStroke: rawHandleUndo,
+    clearStrokes: rawHandleClear,
   } = useKangurFreeformCanvasDrawing({
     backgroundFill: CANVAS_BG,
     canvasRef,
@@ -83,6 +86,23 @@ export function KangurAiTutorDrawingCanvas({
     if (!dataUrl) return;
     onComplete(dataUrl);
   }, [exportDataUrl, hasDrawableContent, onComplete]);
+
+  const {
+    clearDrawing,
+    exportDrawing: handleExport,
+    handleCanvasKeyDown,
+    redoDrawing: handleRedo,
+    undoDrawing: handleUndo,
+  } = useKangurManagedDrawingActions<HTMLCanvasElement>({
+    canExport: hasDrawableContent,
+    canRedo,
+    canUndo,
+    clearStrokes: rawHandleClear,
+    exportDataUrl,
+    exportFilename: 'kangur-ai-tutor-drawing.png',
+    redoLastStroke: rawHandleRedo,
+    undoLastStroke: rawHandleUndo,
+  });
 
   return (
     <div
@@ -117,6 +137,7 @@ export function KangurAiTutorDrawingCanvas({
         data-testid='kangur-ai-tutor-drawing-board'
       >
         <KangurDrawingCanvasSurface
+          ariaKeyShortcuts={KANGUR_DRAWING_HISTORY_ARIA_SHORTCUTS}
           ariaLabel={drawingContent?.canvasLabel ?? 'Plansza do rysowania'}
           canvasClassName='rounded-none'
           canvasRef={canvasRef}
@@ -127,22 +148,27 @@ export function KangurAiTutorDrawingCanvas({
           }}
           height={CANVAS_HEIGHT}
           isPointerDrawing={isPointerDrawing}
+          onKeyDown={handleCanvasKeyDown}
           onPointerDown={handlePointerDown}
           onPointerMove={handlePointerMove}
           onPointerUp={handlePointerUp}
           onPointerCancel={handlePointerUp}
+          tabIndex={0}
           width={CANVAS_WIDTH}
         />
       </div>
 
       <KangurDrawingFreeformToolbar
+        canExport={hasDrawableContent}
         canRedo={canRedo}
         canUndo={canUndo}
         clearDisabled={!hasDrawableContent}
         clearLabel={drawingContent?.clearLabel ?? 'Wyczyść'}
         eraserLabel={drawingContent?.eraserLabel ?? 'Gumka'}
+        exportLabel={drawingContent?.exportLabel ?? 'Eksportuj PNG'}
         isCoarsePointer={isCoarsePointer}
-        onClear={handleClear}
+        onClear={clearDrawing}
+        onExport={handleExport}
         onRedo={handleRedo}
         onUndo={handleUndo}
         penLabel={drawingContent?.penLabel ?? 'Pióro'}

@@ -12,7 +12,9 @@ import {
   type ReactNode,
 } from 'react';
 
+import type { KangurLessonStageGameRuntimeSpec } from '@/shared/contracts/kangur-games';
 import LessonActivityStage from '@/features/kangur/ui/components/LessonActivityStage';
+import KangurLessonStageGameRuntime from '@/features/kangur/ui/components/KangurLessonStageGameRuntime';
 import LessonHub, { type HubSection } from '@/features/kangur/ui/components/LessonHub';
 import LessonSlideSection, {
   type LessonSlide,
@@ -72,33 +74,45 @@ export type KangurUnifiedLessonSection<SectionId extends string> = {
   slideCount?: number;
 };
 
+type KangurUnifiedLessonGameStageConfig = {
+  accent: LessonActivityAccent;
+  title: string;
+  icon?: string;
+  bodyPrelude?: ReactNode;
+  description?: ReactNode;
+  backButtonLabel?: string;
+  headerTestId?: string;
+  shellTestId?: string;
+  maxWidthClassName?: string;
+  shellClassName?: string;
+  shellVariant?: LessonActivityShellVariant;
+  navigationPills?: ReactNode;
+  footerNavigation?: ReactNode;
+};
+
 export type KangurUnifiedLessonGameConfig<SectionId extends string> = {
   sectionId: SectionId;
-  stage: {
-    accent: LessonActivityAccent;
-    title: string;
-    icon?: string;
-    description?: ReactNode;
-    backButtonLabel?: string;
-    headerTestId?: string;
-    shellTestId?: string;
-    maxWidthClassName?: string;
-    shellClassName?: string;
-    shellVariant?: LessonActivityShellVariant;
-    navigationPills?: ReactNode;
-    footerNavigation?: ReactNode;
-  };
   onStageBack?: (helpers: {
     sectionId: SectionId;
     onFinish: () => void;
     onBack: () => void;
   }) => void;
-  render: (helpers: {
-    sectionId: SectionId;
-    onFinish: () => void;
-    onBack: () => void;
-  }) => ReactNode;
-};
+} & (
+  | {
+      stage: KangurUnifiedLessonGameStageConfig;
+      render: (helpers: {
+        sectionId: SectionId;
+        onFinish: () => void;
+        onBack: () => void;
+      }) => ReactNode;
+      runtime?: never;
+    }
+  | {
+      stage: KangurUnifiedLessonGameStageConfig;
+      runtime: KangurLessonStageGameRuntimeSpec;
+      render?: never;
+    }
+);
 
 type KangurUnifiedLessonBaseProps<SectionId extends string> = {
   lessonId: string;
@@ -123,6 +137,11 @@ type KangurUnifiedLessonBaseProps<SectionId extends string> = {
   recordComplete: () => Promise<void>;
   progressAdapter: LessonProgressAdapter<SectionId>;
 };
+
+const hasLessonStageRuntime = <SectionId extends string>(
+  config: KangurUnifiedLessonGameConfig<SectionId>
+): config is Extract<KangurUnifiedLessonGameConfig<SectionId>, { runtime: KangurLessonStageGameRuntimeSpec }> =>
+  'runtime' in config && typeof config.runtime !== 'undefined';
 
 type KangurUnifiedLessonSubsectionProps<SectionId extends string> = Omit<
   KangurUnifiedLessonBaseProps<SectionId>,
@@ -283,7 +302,15 @@ function KangurUnifiedLessonBase<SectionId extends string>({
           shellVariant={stage.shellVariant}
           title={stage.title}
         >
-          {gameConfig.render(gameHelpers)}
+          {stage.bodyPrelude ? stage.bodyPrelude : null}
+          {hasLessonStageRuntime(gameConfig) ? (
+            <KangurLessonStageGameRuntime
+              runtime={gameConfig.runtime}
+              onFinish={gameHelpers.onFinish}
+            />
+          ) : (
+            gameConfig.render(gameHelpers)
+          )}
         </LessonActivityStage>
       );
     } else {

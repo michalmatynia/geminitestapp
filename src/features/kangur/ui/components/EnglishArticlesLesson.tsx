@@ -3,7 +3,7 @@
 import { useTranslations } from 'next-intl';
 import { useMemo } from 'react';
 
-import EnglishArticlesDragDropGame from '@/features/kangur/ui/components/EnglishArticlesDragDropGame';
+import { getKangurLessonStageGameRuntimeSpec } from '@/features/kangur/games/lesson-stage-runtime-specs';
 import type { LessonSlide } from '@/features/kangur/ui/components/LessonSlideSection';
 import {
   EnglishArticleFocusAnimation,
@@ -28,6 +28,9 @@ import { KangurUnifiedLesson } from '@/features/kangur/ui/lessons/lesson-compone
 import type { KangurIntlTranslate } from '@/features/kangur/ui/types';
 
 const LESSON_KEY = 'english_articles';
+const ENGLISH_ARTICLES_DRAG_RUNTIME = getKangurLessonStageGameRuntimeSpec(
+  'english_articles_drag_lesson_stage'
+);
 
 type SectionId =
   | 'intro'
@@ -474,7 +477,7 @@ export default function EnglishArticlesLesson(): React.JSX.Element {
             maxWidthClassName: 'max-w-3xl',
             shellTestId: 'english-articles-drag-game-shell',
           },
-          render: ({ onFinish }) => <EnglishArticlesDragDropGame onFinish={onFinish} />,
+          runtime: ENGLISH_ARTICLES_DRAG_RUNTIME,
         },
       ]}
     />

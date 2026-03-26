@@ -1,12 +1,10 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useRef } from 'react';
 import type { RefObject } from 'react';
 
 import { redrawKangurCanvasStrokes } from '@/features/kangur/ui/components/drawing-engine/render';
 import {
   createKangurFreeformDrawingSnapshot,
-  exportKangurCanvasDataUrl,
   parseKangurFreeformDrawingSnapshot,
   rescaleKangurFreeformDrawingSnapshot,
   serializeKangurFreeformDrawingSnapshot,
@@ -20,6 +18,7 @@ import type {
   KangurDrawingStroke,
   KangurFreeformDrawingStrokeMeta,
 } from '@/features/kangur/ui/components/drawing-engine/types';
+import { useKangurCanvasSnapshotState } from '@/features/kangur/ui/components/drawing-engine/useKangurCanvasSnapshotState';
 import {
   useKangurDrawingEngine,
   type UseKangurDrawingEngineResult,
@@ -96,8 +95,6 @@ export const useKangurFreeformCanvasDrawing = ({
   touchLockEnabled = true,
 }: UseKangurFreeformCanvasDrawingOptions): UseKangurFreeformCanvasDrawingResult => {
   const resolvedConfig = resolveKangurFreeformDrawingToolConfig(config);
-  const previousIncomingSnapshotRef = useRef<string | null | undefined>(undefined);
-  const skipSnapshotEmissionRef = useRef(Boolean(initialSerializedSnapshot));
   const tools = useKangurFreeformDrawingTools({
     config,
     isCoarsePointer,
@@ -137,98 +134,31 @@ export const useKangurFreeformCanvasDrawing = ({
     touchLockEnabled,
   });
 
-  const snapshot = createKangurFreeformDrawingSnapshot({
+  const {
+    exportDataUrl,
+    restoreSerializedSnapshot,
+    restoreSnapshot,
+    serializedSnapshot,
+    serializeSnapshot,
+    snapshot,
+  } = useKangurCanvasSnapshotState<
+    KangurFreeformDrawingSnapshot,
+    KangurDrawingStroke<KangurFreeformDrawingStrokeMeta>[]
+  >({
+    canvasRef,
+    clearSnapshot: engine.clearStrokes,
+    createSnapshot: createKangurFreeformDrawingSnapshot,
+    hasDrawableContent: engine.strokes.length > 0,
+    initialSerializedSnapshot,
     logicalHeight,
     logicalWidth,
+    onSerializedSnapshotChange,
+    parseSnapshot: parseKangurFreeformDrawingSnapshot,
+    rescaleSnapshot: rescaleKangurFreeformDrawingSnapshot,
+    serializeSnapshotData: serializeKangurFreeformDrawingSnapshot,
+    setStrokes: engine.setStrokes,
     strokes: engine.strokes,
   });
-  const serializedSnapshot = useMemo(
-    () =>
-      engine.strokes.length > 0
-        ? serializeKangurFreeformDrawingSnapshot(snapshot)
-        : null,
-    [engine.strokes.length, snapshot]
-  );
-
-  const serializeSnapshot = useCallback(
-    (): string => serializeKangurFreeformDrawingSnapshot(snapshot),
-    [snapshot]
-  );
-
-  const restoreSnapshot = useCallback(
-    (nextSnapshot: KangurFreeformDrawingSnapshot): void => {
-      engine.setStrokes(
-        rescaleKangurFreeformDrawingSnapshot(
-          nextSnapshot,
-          logicalWidth,
-          logicalHeight
-        )
-      );
-    },
-    [engine, logicalHeight, logicalWidth]
-  );
-
-  const restoreSerializedSnapshot = useCallback(
-    (raw: string): boolean => {
-      const parsed = parseKangurFreeformDrawingSnapshot(raw);
-      if (!parsed) {
-        return false;
-      }
-      restoreSnapshot(parsed);
-      return true;
-    },
-    [restoreSnapshot]
-  );
-
-  useEffect(() => {
-    if (initialSerializedSnapshot === previousIncomingSnapshotRef.current) {
-      return;
-    }
-
-    previousIncomingSnapshotRef.current = initialSerializedSnapshot;
-
-    if (initialSerializedSnapshot === serializedSnapshot) {
-      skipSnapshotEmissionRef.current = false;
-      return;
-    }
-
-    if (!initialSerializedSnapshot) {
-      skipSnapshotEmissionRef.current = true;
-      if (engine.strokes.length > 0) {
-        engine.clearStrokes();
-      }
-      return;
-    }
-
-    skipSnapshotEmissionRef.current = restoreSerializedSnapshot(initialSerializedSnapshot);
-  }, [
-    engine,
-    initialSerializedSnapshot,
-    restoreSerializedSnapshot,
-    serializedSnapshot,
-  ]);
-
-  useEffect(() => {
-    if (!onSerializedSnapshotChange) {
-      return;
-    }
-
-    if (
-      skipSnapshotEmissionRef.current &&
-      serializedSnapshot !== initialSerializedSnapshot
-    ) {
-      return;
-    }
-
-    skipSnapshotEmissionRef.current = false;
-    onSerializedSnapshotChange(serializedSnapshot);
-  }, [initialSerializedSnapshot, onSerializedSnapshotChange, serializedSnapshot]);
-
-  const exportDataUrl = useCallback(
-    (options?: { mimeType?: string; quality?: number }): string | null =>
-      exportKangurCanvasDataUrl(canvasRef.current, options),
-    [canvasRef]
-  );
 
   return {
     ...engine,

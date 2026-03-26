@@ -3,7 +3,7 @@
 import { useMemo } from 'react';
 import { useTranslations } from 'next-intl';
 
-import GeometryPerimeterDrawingGame from '@/features/kangur/ui/components/GeometryPerimeterDrawingGame';
+import { getKangurLessonStageGameRuntimeSpec } from '@/features/kangur/games/lesson-stage-runtime-specs';
 import type { LessonSlide } from '@/features/kangur/ui/components/LessonSlideSection';
 import {
   GeometryPerimeterOppositeSidesAnimation,
@@ -22,6 +22,9 @@ import type { LessonTranslate, WidenLessonCopy } from './lesson-copy';
 
 type SectionId = 'intro' | 'kwadrat' | 'prostokan' | 'podsumowanie' | 'game_draw';
 type SlideSectionId = Exclude<SectionId, 'game_draw'>;
+const GEOMETRY_PERIMETER_RUNTIME = getKangurLessonStageGameRuntimeSpec(
+  'geometry_perimeter_trainer_lesson_stage'
+);
 
 const GEOMETRY_PERIMETER_LESSON_COPY_PL = {
   lessonTitle: 'Obwód figur',
@@ -551,7 +554,7 @@ export default function GeometryPerimeterLesson(): React.JSX.Element {
             headerTestId: 'geometry-perimeter-game-header',
             shellTestId: 'geometry-perimeter-game-shell',
           },
-          render: ({ onFinish }) => <GeometryPerimeterDrawingGame onFinish={onFinish} />,
+          runtime: GEOMETRY_PERIMETER_RUNTIME,
         },
       ]}
     />

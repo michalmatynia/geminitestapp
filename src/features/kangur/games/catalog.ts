@@ -5,15 +5,22 @@ import type {
   KangurGameEngineId,
   KangurGameEngineImplementationOwnership,
   KangurGameId,
+  KangurLessonActivityRuntimeSpec,
   KangurGameMechanic,
   KangurGameStatus,
   KangurGameSurface,
   KangurGameVariant,
   KangurGameVariantSurface,
+  KangurLaunchableGameRuntimeSpec,
+  KangurLaunchableGameScreen,
+  KangurLessonStageGameRuntimeId,
+  KangurLessonStageGameRuntimeSpec,
 } from '@/shared/contracts/kangur-games';
 import {
+  KANGUR_LAUNCHABLE_GAME_SCREENS,
   KANGUR_GAME_ENGINE_CATEGORIES,
   KANGUR_GAME_ENGINE_IMPLEMENTATION_OWNERSHIPS,
+  KANGUR_LESSON_STAGE_GAME_RUNTIME_IDS,
 } from '@/shared/contracts/kangur-games';
 import type {
   KangurLessonAgeGroup,
@@ -21,27 +28,17 @@ import type {
   KangurLessonComponentId,
   KangurLessonSubject,
 } from '@/features/kangur/shared/contracts/kangur';
+import { KANGUR_LESSON_ACTIVITY_IDS } from '@/features/kangur/shared/contracts/kangur';
 
 import { createDefaultKangurGameEngines } from './engines';
 import { getOptionalKangurGameEngineImplementation } from './engine-implementations';
 import { createDefaultKangurGames } from './defaults';
+import { getKangurLaunchableGameRuntimeSpec } from './launchable-runtime-specs';
+import { getKangurLessonActivityRuntimeSpec } from './lesson-activity-runtime-specs';
+import { getKangurLessonStageGameRuntimeSpec } from './lesson-stage-runtime-specs';
 
-export const KANGUR_LAUNCHABLE_GAME_SCREENS = [
-  'calendar_quiz',
-  'geometry_quiz',
-  'clock_quiz',
-  'addition_quiz',
-  'subtraction_quiz',
-  'multiplication_quiz',
-  'division_quiz',
-  'logical_patterns_quiz',
-  'logical_classification_quiz',
-  'logical_analogies_quiz',
-  'english_sentence_quiz',
-  'english_parts_of_speech_quiz',
-] as const;
-
-export type KangurLaunchableGameScreen = (typeof KANGUR_LAUNCHABLE_GAME_SCREENS)[number];
+export { KANGUR_LAUNCHABLE_GAME_SCREENS };
+export type { KangurLaunchableGameScreen };
 
 export const isKangurLaunchableGameScreen = (
   value: string | null | undefined
@@ -72,9 +69,12 @@ export type KangurGameCatalogEntry = {
   engine: KangurGameEngineDefinition | null;
   defaultVariant: KangurGameVariant | null;
   lessonVariant: KangurGameVariant | null;
+  lessonActivityRuntime: KangurLessonActivityRuntimeSpec | null;
+  lessonStageRuntime: KangurLessonStageGameRuntimeSpec | null;
   libraryPreviewVariant: KangurGameVariant | null;
   gameScreenVariant: KangurGameVariant | null;
   launchableScreen: KangurLaunchableGameScreen | null;
+  launchableRuntime: KangurLaunchableGameRuntimeSpec | null;
 };
 
 export type KangurGameCatalogFilter = {
@@ -158,6 +158,56 @@ const getGameVariantBySurface = (
 ): KangurGameVariant | null =>
   getSortedVariants(game).find((variant) => variant.surface === surface) ?? null;
 
+const isKangurLessonActivityId = (
+  value: string | null | undefined
+): value is KangurLessonActivityId =>
+  Boolean(value && KANGUR_LESSON_ACTIVITY_IDS.includes(value as KangurLessonActivityId));
+
+const isKangurLessonStageGameRuntimeId = (
+  value: string | null | undefined
+): value is KangurLessonStageGameRuntimeId =>
+  Boolean(
+    value &&
+      KANGUR_LESSON_STAGE_GAME_RUNTIME_IDS.includes(
+        value as KangurLessonStageGameRuntimeId
+      )
+  );
+
+const getKangurLessonActivityRuntimeIdFromVariant = (
+  variant: Pick<KangurGameVariant, 'lessonActivityRuntimeId' | 'legacyActivityId'> | null | undefined
+): KangurLessonActivityId | null => {
+  if (variant?.lessonActivityRuntimeId && isKangurLessonActivityId(variant.lessonActivityRuntimeId)) {
+    return variant.lessonActivityRuntimeId;
+  }
+
+  if (variant?.legacyActivityId && isKangurLessonActivityId(variant.legacyActivityId)) {
+    return variant.legacyActivityId;
+  }
+
+  return null;
+};
+
+const getKangurLessonStageRuntimeIdFromVariant = (
+  variant: Pick<KangurGameVariant, 'lessonStageRuntimeId'> | null | undefined
+): KangurLessonStageGameRuntimeId | null =>
+  variant?.lessonStageRuntimeId && isKangurLessonStageGameRuntimeId(variant.lessonStageRuntimeId)
+    ? variant.lessonStageRuntimeId
+    : null;
+
+const getKangurLaunchableRuntimeIdFromVariant = (
+  variant: Pick<KangurGameVariant, 'launchableRuntimeId' | 'legacyScreenId'> | null | undefined
+): KangurLaunchableGameScreen | null => {
+  if (variant?.launchableRuntimeId && isKangurLaunchableGameScreen(variant.launchableRuntimeId)) {
+    return variant.launchableRuntimeId;
+  }
+
+  if (variant?.legacyScreenId && isKangurLaunchableGameScreen(variant.legacyScreenId)) {
+    return variant.legacyScreenId;
+  }
+
+  return null;
+};
+
 export const getKangurLaunchableGameVariant = (
   game: KangurGameDefinition
 ): KangurGameVariant | null =>
@@ -165,34 +215,100 @@ export const getKangurLaunchableGameVariant = (
     (variant) =>
       variant.surface === 'game_screen' &&
       variant.status === 'active' &&
-      isKangurLaunchableGameScreen(variant.legacyScreenId)
+      Boolean(getKangurLaunchableRuntimeIdFromVariant(variant))
   ) ?? null;
+
+export const getKangurLaunchableGameRuntimeSpecForVariant = (
+  variant: KangurGameVariant
+): KangurLaunchableGameRuntimeSpec | null => {
+  const runtimeId = getKangurLaunchableRuntimeIdFromVariant(variant);
+
+  return runtimeId ? getKangurLaunchableGameRuntimeSpec(runtimeId) : null;
+};
+
+export const getKangurLessonActivityRuntimeSpecForVariant = (
+  variant: KangurGameVariant
+): KangurLessonActivityRuntimeSpec | null => {
+  const runtimeId = getKangurLessonActivityRuntimeIdFromVariant(variant);
+
+  return runtimeId ? getKangurLessonActivityRuntimeSpec(runtimeId) : null;
+};
+
+export const getKangurLessonStageGameRuntimeSpecForVariant = (
+  variant: KangurGameVariant
+): KangurLessonStageGameRuntimeSpec | null => {
+  const runtimeId = getKangurLessonStageRuntimeIdFromVariant(variant);
+
+  return runtimeId ? getKangurLessonStageGameRuntimeSpec(runtimeId) : null;
+};
+
+export const getKangurLessonActivityRuntimeSpecForGame = (
+  game: KangurGameDefinition
+): KangurLessonActivityRuntimeSpec | null => {
+  const lessonVariant =
+    getGameVariantBySurface(game, 'lesson_inline') ?? getGameVariantBySurface(game, 'lesson_stage');
+
+  if (lessonVariant) {
+    return getKangurLessonActivityRuntimeSpecForVariant(lessonVariant);
+  }
+
+  const fallbackRuntimeId = game.activityIds.find(isKangurLessonActivityId) ?? null;
+
+  return fallbackRuntimeId ? getKangurLessonActivityRuntimeSpec(fallbackRuntimeId) : null;
+};
+
+export const getKangurLessonStageGameRuntimeSpecForGame = (
+  game: KangurGameDefinition
+): KangurLessonStageGameRuntimeSpec | null => {
+  const lessonStageVariant = getGameVariantBySurface(game, 'lesson_stage');
+
+  return lessonStageVariant ? getKangurLessonStageGameRuntimeSpecForVariant(lessonStageVariant) : null;
+};
+
+export const getKangurLaunchableGameRuntimeSpecForGame = (
+  game: KangurGameDefinition
+): KangurLaunchableGameRuntimeSpec | null => {
+  const variantRuntime = getKangurLaunchableGameVariant(game);
+
+  if (variantRuntime) {
+    return getKangurLaunchableGameRuntimeSpecForVariant(variantRuntime);
+  }
+
+  const fallbackRuntimeId = game.legacyScreenIds.find(isKangurLaunchableGameScreen) ?? null;
+
+  return fallbackRuntimeId ? getKangurLaunchableGameRuntimeSpec(fallbackRuntimeId) : null;
+};
 
 export const getKangurLaunchableGameScreen = (
   game: KangurGameDefinition
-): KangurLaunchableGameScreen | null => {
-  const variant = getKangurLaunchableGameVariant(game);
-
-  if (variant?.legacyScreenId && isKangurLaunchableGameScreen(variant.legacyScreenId)) {
-    return variant.legacyScreenId;
-  }
-
-  return game.legacyScreenIds.find(isKangurLaunchableGameScreen) ?? null;
-};
+): KangurLaunchableGameScreen | null => getKangurLaunchableGameRuntimeSpecForGame(game)?.screen ?? null;
 
 const createKangurGameCatalogEntry = (
   game: KangurGameDefinition,
   engine: KangurGameEngineDefinition | null
-): KangurGameCatalogEntry => ({
-  game,
-  engine,
-  defaultVariant: getSortedVariants(game)[0] ?? null,
-  lessonVariant:
-    getGameVariantBySurface(game, 'lesson_inline') ?? getGameVariantBySurface(game, 'lesson_stage'),
-  libraryPreviewVariant: getGameVariantBySurface(game, 'library_preview'),
-  gameScreenVariant: getGameVariantBySurface(game, 'game_screen'),
-  launchableScreen: getKangurLaunchableGameScreen(game),
-});
+): KangurGameCatalogEntry => {
+  const defaultVariant = getSortedVariants(game)[0] ?? null;
+  const lessonVariant =
+    getGameVariantBySurface(game, 'lesson_inline') ?? getGameVariantBySurface(game, 'lesson_stage');
+  const lessonActivityRuntime = getKangurLessonActivityRuntimeSpecForGame(game);
+  const lessonStageRuntime = getKangurLessonStageGameRuntimeSpecForGame(game);
+  const libraryPreviewVariant = getGameVariantBySurface(game, 'library_preview');
+  const gameScreenVariant = getGameVariantBySurface(game, 'game_screen');
+  const launchableRuntime = getKangurLaunchableGameRuntimeSpecForGame(game);
+
+  return {
+    game,
+    engine,
+    defaultVariant,
+    lessonVariant,
+    lessonActivityRuntime,
+    lessonStageRuntime,
+    libraryPreviewVariant,
+    gameScreenVariant,
+    launchableScreen: launchableRuntime?.screen ?? null,
+    launchableRuntime,
+  };
+};
 
 export const createKangurGameCatalogEntries = (
   input?: CreateKangurGameCatalogInput
@@ -306,68 +422,148 @@ export const getKangurGameCatalogFacets = (
   engines: getUniqueEngines(entries),
 });
 
-export const KANGUR_GAME_CATALOG = Object.freeze(
-  createKangurGameCatalogEntries().reduce<Record<KangurGameId, KangurGameCatalogEntry>>(
-    (acc, entry) => {
-      acc[entry.game.id] = entry;
-      return acc;
-    },
-    {} as Record<KangurGameId, KangurGameCatalogEntry>
-  )
-);
+// ---------------------------------------------------------------------------
+// Lazy-initialized catalog singletons — deferred to first access so pages
+// that never use the game catalog avoid the indexing cost at module init.
+// ---------------------------------------------------------------------------
 
-export const KANGUR_GAME_CATALOG_LIST = Object.freeze(
-  Object.values(KANGUR_GAME_CATALOG)
-    .slice()
-    .sort(
-      (left, right) =>
-        left.game.sortOrder - right.game.sortOrder || left.game.title.localeCompare(right.game.title)
-    )
-);
+let _gameCatalogMap: Readonly<Record<KangurGameId, KangurGameCatalogEntry>> | null = null;
+let _gameCatalogList: readonly KangurGameCatalogEntry[] | null = null;
+let _gameCatalogByLessonActivityId: Readonly<Partial<Record<KangurLessonActivityId, KangurGameId>>> | null = null;
+let _gameCatalogIdsByEngineId: Readonly<Partial<Record<KangurGameEngineId, KangurGameId[]>>> | null = null;
+let _gameCatalogIdsByLessonComponentId: Readonly<Partial<Record<KangurLessonComponentId, KangurGameId[]>>> | null = null;
 
-export const KANGUR_GAME_CATALOG_BY_LESSON_ACTIVITY_ID = Object.freeze(
-  KANGUR_GAME_CATALOG_LIST.reduce<Partial<Record<KangurLessonActivityId, KangurGameId>>>(
-    (acc, entry) => {
-      entry.game.activityIds.forEach((activityId) => {
-        acc[activityId] = entry.game.id;
-      });
-      return acc;
-    },
-    {}
-  )
-);
+const getGameCatalogMap = (): Readonly<Record<KangurGameId, KangurGameCatalogEntry>> => {
+  if (!_gameCatalogMap) {
+    _gameCatalogMap = Object.freeze(
+      createKangurGameCatalogEntries().reduce<Record<KangurGameId, KangurGameCatalogEntry>>(
+        (acc, entry) => {
+          acc[entry.game.id] = entry;
+          return acc;
+        },
+        {} as Record<KangurGameId, KangurGameCatalogEntry>
+      )
+    );
+  }
+  return _gameCatalogMap;
+};
 
-export const KANGUR_GAME_CATALOG_IDS_BY_ENGINE_ID = Object.freeze(
-  KANGUR_GAME_CATALOG_LIST.reduce<Partial<Record<KangurGameEngineId, KangurGameId[]>>>(
-    (acc, entry) => {
-      const existing = acc[entry.game.engineId] ?? [];
-      acc[entry.game.engineId] = [...existing, entry.game.id];
-      return acc;
-    },
-    {}
-  )
-);
+const getGameCatalogList = (): readonly KangurGameCatalogEntry[] => {
+  if (!_gameCatalogList) {
+    _gameCatalogList = Object.freeze(
+      Object.values(getGameCatalogMap())
+        .slice()
+        .sort(
+          (left, right) =>
+            left.game.sortOrder - right.game.sortOrder || left.game.title.localeCompare(right.game.title)
+        )
+    );
+  }
+  return _gameCatalogList;
+};
 
-export const KANGUR_GAME_CATALOG_IDS_BY_LESSON_COMPONENT_ID = Object.freeze(
-  KANGUR_GAME_CATALOG_LIST.reduce<Partial<Record<KangurLessonComponentId, KangurGameId[]>>>(
-    (acc, entry) => {
-      entry.game.lessonComponentIds.forEach((componentId) => {
-        const existing = acc[componentId] ?? [];
-        acc[componentId] = [...existing, entry.game.id];
-      });
-      return acc;
-    },
-    {}
-  )
-);
+const getGameCatalogByLessonActivityId = (): Readonly<Partial<Record<KangurLessonActivityId, KangurGameId>>> => {
+  if (!_gameCatalogByLessonActivityId) {
+    _gameCatalogByLessonActivityId = Object.freeze(
+      getGameCatalogList().reduce<Partial<Record<KangurLessonActivityId, KangurGameId>>>(
+        (acc, entry) => {
+          entry.game.activityIds.forEach((activityId) => {
+            acc[activityId] = entry.game.id;
+          });
+          return acc;
+        },
+        {}
+      )
+    );
+  }
+  return _gameCatalogByLessonActivityId;
+};
 
-const createDefaultKangurGameCatalogSnapshot = (): KangurGameCatalogEntry[] =>
-  createKangurGameCatalogEntries();
+const getGameCatalogIdsByEngineId = (): Readonly<Partial<Record<KangurGameEngineId, KangurGameId[]>>> => {
+  if (!_gameCatalogIdsByEngineId) {
+    _gameCatalogIdsByEngineId = Object.freeze(
+      getGameCatalogList().reduce<Partial<Record<KangurGameEngineId, KangurGameId[]>>>(
+        (acc, entry) => {
+          const existing = acc[entry.game.engineId] ?? [];
+          acc[entry.game.engineId] = [...existing, entry.game.id];
+          return acc;
+        },
+        {}
+      )
+    );
+  }
+  return _gameCatalogIdsByEngineId;
+};
+
+const getGameCatalogIdsByLessonComponentId = (): Readonly<Partial<Record<KangurLessonComponentId, KangurGameId[]>>> => {
+  if (!_gameCatalogIdsByLessonComponentId) {
+    _gameCatalogIdsByLessonComponentId = Object.freeze(
+      getGameCatalogList().reduce<Partial<Record<KangurLessonComponentId, KangurGameId[]>>>(
+        (acc, entry) => {
+          entry.game.lessonComponentIds.forEach((componentId) => {
+            const existing = acc[componentId] ?? [];
+            acc[componentId] = [...existing, entry.game.id];
+          });
+          return acc;
+        },
+        {}
+      )
+    );
+  }
+  return _gameCatalogIdsByLessonComponentId;
+};
+
+/**
+ * Thin aliases preserving the original export names.
+ * Each call delegates to the lazy singleton getter — zero cost until first access.
+ */
+export const KANGUR_GAME_CATALOG: Readonly<Record<KangurGameId, KangurGameCatalogEntry>> =
+  new Proxy({} as Record<KangurGameId, KangurGameCatalogEntry>, {
+    get: (_target, prop, receiver) => Reflect.get(getGameCatalogMap(), prop, receiver),
+    has: (_target, prop) => Reflect.has(getGameCatalogMap(), prop),
+    ownKeys: () => Reflect.ownKeys(getGameCatalogMap()),
+    getOwnPropertyDescriptor: (_target, prop) =>
+      Reflect.getOwnPropertyDescriptor(getGameCatalogMap(), prop),
+  });
+
+export const KANGUR_GAME_CATALOG_LIST: readonly KangurGameCatalogEntry[] =
+  new Proxy([] as KangurGameCatalogEntry[], {
+    get: (_target, prop, receiver) => Reflect.get(getGameCatalogList(), prop, receiver),
+    has: (_target, prop) => Reflect.has(getGameCatalogList(), prop),
+    ownKeys: () => Reflect.ownKeys(getGameCatalogList()),
+    getOwnPropertyDescriptor: (_target, prop) =>
+      Reflect.getOwnPropertyDescriptor(getGameCatalogList(), prop),
+  });
+
+export const KANGUR_GAME_CATALOG_BY_LESSON_ACTIVITY_ID: Readonly<Partial<Record<KangurLessonActivityId, KangurGameId>>> =
+  new Proxy({} as Partial<Record<KangurLessonActivityId, KangurGameId>>, {
+    get: (_target, prop, receiver) => Reflect.get(getGameCatalogByLessonActivityId(), prop, receiver),
+    has: (_target, prop) => Reflect.has(getGameCatalogByLessonActivityId(), prop),
+    ownKeys: () => Reflect.ownKeys(getGameCatalogByLessonActivityId()),
+    getOwnPropertyDescriptor: (_target, prop) =>
+      Reflect.getOwnPropertyDescriptor(getGameCatalogByLessonActivityId(), prop),
+  });
+
+export const KANGUR_GAME_CATALOG_IDS_BY_ENGINE_ID: Readonly<Partial<Record<KangurGameEngineId, KangurGameId[]>>> =
+  new Proxy({} as Partial<Record<KangurGameEngineId, KangurGameId[]>>, {
+    get: (_target, prop, receiver) => Reflect.get(getGameCatalogIdsByEngineId(), prop, receiver),
+    has: (_target, prop) => Reflect.has(getGameCatalogIdsByEngineId(), prop),
+    ownKeys: () => Reflect.ownKeys(getGameCatalogIdsByEngineId()),
+    getOwnPropertyDescriptor: (_target, prop) =>
+      Reflect.getOwnPropertyDescriptor(getGameCatalogIdsByEngineId(), prop),
+  });
+
+export const KANGUR_GAME_CATALOG_IDS_BY_LESSON_COMPONENT_ID: Readonly<Partial<Record<KangurLessonComponentId, KangurGameId[]>>> =
+  new Proxy({} as Partial<Record<KangurLessonComponentId, KangurGameId[]>>, {
+    get: (_target, prop, receiver) => Reflect.get(getGameCatalogIdsByLessonComponentId(), prop, receiver),
+    has: (_target, prop) => Reflect.has(getGameCatalogIdsByLessonComponentId(), prop),
+    ownKeys: () => Reflect.ownKeys(getGameCatalogIdsByLessonComponentId()),
+    getOwnPropertyDescriptor: (_target, prop) =>
+      Reflect.getOwnPropertyDescriptor(getGameCatalogIdsByLessonComponentId(), prop),
+  });
 
 export const getKangurGameCatalogEntry = (gameId: KangurGameId): KangurGameCatalogEntry => {
-  const entry = createDefaultKangurGameCatalogSnapshot().find(
-    (candidate) => candidate.game.id === gameId
-  );
+  const entry = getGameCatalogMap()[gameId];
 
   if (!entry) {
     throw new Error(`Missing Kangur game catalog entry for "${gameId}".`);
@@ -379,18 +575,18 @@ export const getKangurGameCatalogEntry = (gameId: KangurGameId): KangurGameCatal
 export const getKangurGameCatalogEntryForLessonActivity = (
   activityId: KangurLessonActivityId
 ): KangurGameCatalogEntry | null =>
-  createDefaultKangurGameCatalogSnapshot().find((entry) =>
+  getGameCatalogList().find((entry) =>
     entry.game.activityIds.includes(activityId)
   ) ?? null;
 
 export const getKangurGameCatalogEntriesForEngine = (
   engineId: KangurGameEngineId
 ): KangurGameCatalogEntry[] =>
-  createDefaultKangurGameCatalogSnapshot().filter((entry) => entry.game.engineId === engineId);
+  getGameCatalogList().filter((entry) => entry.game.engineId === engineId);
 
 export const getKangurGameCatalogEntriesForLessonComponent = (
   componentId: KangurLessonComponentId
 ): KangurGameCatalogEntry[] =>
-  createDefaultKangurGameCatalogSnapshot().filter((entry) =>
+  getGameCatalogList().filter((entry) =>
     entry.game.lessonComponentIds.includes(componentId)
   );

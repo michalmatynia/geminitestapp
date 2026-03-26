@@ -85,7 +85,7 @@ describe('kangur game engine catalog', () => {
       implementationGroups.find((group) => group.ownership === 'shared_runtime')?.runtimeIds
     ).toEqual(
       expect.arrayContaining([
-        'GeometryDrawingGame',
+        'geometry_drawing_game',
         'GeometrySymmetryGame',
         'GeometryPerimeterDrawingGame',
       ])

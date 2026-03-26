@@ -27,6 +27,10 @@ const { ageGroupState } = vi.hoisted(() => ({
   },
 }));
 
+const { lessonsQueryRefetchMock } = vi.hoisted(() => ({
+  lessonsQueryRefetchMock: vi.fn(),
+}));
+
 const { localeState } = vi.hoisted(() => ({
   localeState: {
     value: 'pl' as 'de' | 'en' | 'pl' | 'uk',
@@ -119,7 +123,7 @@ vi.mock('@/features/kangur/ui/hooks/useKangurLessons', () => ({
       data,
       isLoading: false,
       isFetching: false,
-      refetch: vi.fn(),
+      refetch: lessonsQueryRefetchMock,
       error: null,
     };
   },
@@ -221,6 +225,7 @@ const buildRuntime = (progress: KangurProgressState, overrides: Record<string, u
 describe('KangurGameOperationSelectorWidget', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    lessonsQueryRefetchMock.mockReset();
     ageGroupState.value = 'ten_year_old';
     localeState.value = 'pl';
     translationState.missing = false;
@@ -268,6 +273,15 @@ describe('KangurGameOperationSelectorWidget', () => {
         subject: 'maths',
       },
     ];
+  });
+
+  it('does not refetch lessons again when the current subject has no active lessons', () => {
+    lessonsState.value = [];
+    useKangurGameRuntimeMock.mockReturnValue(buildRuntime(buildProgress()));
+
+    render(<KangurGameOperationSelectorWidget />);
+
+    expect(lessonsQueryRefetchMock).not.toHaveBeenCalled();
   });
 
   it('recommends the quest-mapped operation and forwards it to the selector cards', () => {

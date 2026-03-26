@@ -42,7 +42,12 @@ describe('EnglishPartsOfSpeechLesson i18n', () => {
     expect(screen.getByTestId('kangur-unified-lesson')).toHaveTextContent('Englisch: Pronomen');
 
     const sections = (capturedProps?.sections as Array<Record<string, unknown>>) ?? [];
-    const games = (capturedProps?.games as Array<{ sectionId: string; stage: Record<string, unknown> }>) ?? [];
+    const games =
+      (capturedProps?.games as Array<{
+        sectionId: string;
+        stage: Record<string, unknown>;
+        runtime?: { runtimeId?: string; rendererId?: string };
+      }>) ?? [];
 
     expect(
       sections.find((section) => section.id === 'subject_pronouns')
@@ -64,10 +69,22 @@ describe('EnglishPartsOfSpeechLesson i18n', () => {
       description: 'Schnelles Warm-up mit Pronomen in Mathe-Sätzen',
     });
     expect(
+      games.find((game) => game.sectionId === 'game_pronouns_warmup')?.runtime
+    ).toMatchObject({
+      runtimeId: 'english_pronouns_warmup_lesson_stage',
+      rendererId: 'english_pronouns_warmup_game',
+    });
+    expect(
       games.find((game) => game.sectionId === 'game_parts_of_speech')?.stage
     ).toMatchObject({
       title: 'Wortarten-Spiel',
       description: 'Ziehe die Wörter in die richtigen Kategorien',
+    });
+    expect(
+      games.find((game) => game.sectionId === 'game_parts_of_speech')?.runtime
+    ).toMatchObject({
+      runtimeId: 'english_parts_of_speech_sort_lesson_stage',
+      rendererId: 'english_parts_of_speech_game',
     });
 
     const slides = (capturedProps?.slides as Record<string, CapturedSlide[]>) ?? {};

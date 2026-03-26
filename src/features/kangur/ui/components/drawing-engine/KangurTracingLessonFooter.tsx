@@ -14,7 +14,6 @@ type KangurTracingLessonFooterProps = {
   checkLabel: string;
   clearLabel: string;
   feedback: KangurMiniGameFeedbackState;
-  historyActions?: ReactNode;
   idlePrompt: string;
   isCoarsePointer: boolean;
   isLastRound: boolean;
@@ -23,13 +22,13 @@ type KangurTracingLessonFooterProps = {
   onClear: () => void;
   onNext: () => void;
   restartLabel: string;
+  utilityActions?: ReactNode;
 };
 
 export function KangurTracingLessonFooter({
   checkLabel,
   clearLabel,
   feedback,
-  historyActions,
   idlePrompt,
   isCoarsePointer,
   isLastRound,
@@ -38,6 +37,7 @@ export function KangurTracingLessonFooter({
   onClear,
   onNext,
   restartLabel,
+  utilityActions,
 }: KangurTracingLessonFooterProps): React.JSX.Element {
   const buttonClassName = isCoarsePointer ? 'min-h-11 px-4' : undefined;
 
@@ -60,7 +60,7 @@ export function KangurTracingLessonFooter({
           )}
         </div>
         <div className={KANGUR_WRAP_ROW_CLASSNAME}>
-          {historyActions}
+          {utilityActions}
           <KangurButton
             className={buttonClassName}
             size='sm'

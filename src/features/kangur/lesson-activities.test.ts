@@ -31,4 +31,12 @@ describe('kangur lesson activities', () => {
       expect(typeSet.has(definition.type)).toBe(true);
     });
   });
+
+  it('resolves a serialized lesson runtime for every activity definition', () => {
+    Object.values(KANGUR_LESSON_ACTIVITY_DEFINITIONS).forEach((definition) => {
+      expect(definition.lessonActivityRuntimeId).toBe(definition.id);
+      expect(definition.lessonActivityRuntime?.activityId).toBe(definition.id);
+      expect(definition.lessonActivityRuntime?.rendererId).toBeTruthy();
+    });
+  });
 });

@@ -2,7 +2,6 @@
  * @vitest-environment jsdom
  */
 
-import { QueryClientContext } from '@tanstack/react-query';
 import React from 'react';
 import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterAll, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -37,10 +36,6 @@ const { frontendPublicOwnerMock } = vi.hoisted(() => ({
 
 const { useKangurCoarsePointerMock } = vi.hoisted(() => ({
   useKangurCoarsePointerMock: vi.fn(),
-}));
-
-const { prefetchKangurPageContentStoreMock } = vi.hoisted(() => ({
-  prefetchKangurPageContentStoreMock: vi.fn(),
 }));
 
 const { locationAssignSpy } = vi.hoisted(() => ({
@@ -147,10 +142,6 @@ vi.mock('@/features/kangur/ui/hooks/useKangurCoarsePointer', () => ({
   useKangurCoarsePointer: () => useKangurCoarsePointerMock(),
 }));
 
-vi.mock('@/features/kangur/ui/hooks/useKangurPageContent', () => ({
-  prefetchKangurPageContentStore: prefetchKangurPageContentStoreMock,
-}));
-
 vi.mock('@/features/kangur/ui/useKangurStorefrontAppearance', () => ({
   useKangurStorefrontAppearance: () => ({
     theme: {
@@ -230,8 +221,6 @@ describe('KangurLanguageSwitcher', () => {
     frontendPublicOwnerMock.mockReturnValue(null);
     prefetchMock.mockReset();
     replaceMock.mockReset();
-    prefetchKangurPageContentStoreMock.mockReset();
-    prefetchKangurPageContentStoreMock.mockResolvedValue(undefined);
     setClientCookieMock.mockReset();
     locationAssignSpy.mockReset();
     setMockWindowLocation('/kangur/lessons');
@@ -582,70 +571,47 @@ describe('KangurLanguageSwitcher', () => {
     expect(screen.getByTestId('kangur-language-switcher-trigger')).toHaveTextContent('Polski');
   });
 
-  // ─── Prefetch warming ───────────────────────────────────────────────
+  // ─── Prefetch behavior ──────────────────────────────────────────────
 
-  it('warms the default locale target when opening the menu from a non-default locale', async () => {
+  it('does not prefetch locale targets when opening the menu from a non-default locale', async () => {
     localeMock.mockReturnValue('en');
     pathnameMock.mockReturnValue('/en/kangur/lessons');
-    const queryClient = { prefetchQuery: vi.fn() };
-
-    render(
-      <QueryClientContext.Provider value={queryClient as never}>
-        <KangurLanguageSwitcher basePath='/en/kangur' currentPage='Lessons' />
-      </QueryClientContext.Provider>
-    );
+    render(<KangurLanguageSwitcher basePath='/en/kangur' currentPage='Lessons' />);
 
     prefetchMock.mockClear();
-    prefetchKangurPageContentStoreMock.mockClear();
-
-    openLanguageMenu();
-    await screen.findByRole('menu');
-
-    await waitFor(() => {
-      expect(prefetchMock).toHaveBeenCalledTimes(1);
-      expect(prefetchMock).toHaveBeenCalledWith('/kangur/lessons');
-    });
-
-    expect(prefetchKangurPageContentStoreMock).toHaveBeenCalledTimes(1);
-    expect(prefetchKangurPageContentStoreMock).toHaveBeenCalledWith(queryClient, 'pl');
-  });
-
-  it('does not warm the default locale when already on the default locale', async () => {
-    localeMock.mockReturnValue('pl');
-    pathnameMock.mockReturnValue('/kangur/lessons');
-
-    render(<KangurLanguageSwitcher basePath='/kangur' currentPage='Lessons' />);
-
-    prefetchMock.mockClear();
-    prefetchKangurPageContentStoreMock.mockClear();
 
     openLanguageMenu();
     await screen.findByRole('menu');
 
     expect(prefetchMock).not.toHaveBeenCalled();
-    expect(prefetchKangurPageContentStoreMock).not.toHaveBeenCalled();
   });
 
-  it('does not warm locale targets on coarse-pointer devices', async () => {
+  it('does not prefetch locale targets on coarse-pointer devices', async () => {
     localeMock.mockReturnValue('en');
     pathnameMock.mockReturnValue('/en/kangur/lessons');
     useKangurCoarsePointerMock.mockReturnValue(true);
-    const queryClient = { prefetchQuery: vi.fn() };
-
-    render(
-      <QueryClientContext.Provider value={queryClient as never}>
-        <KangurLanguageSwitcher basePath='/en/kangur' currentPage='Lessons' />
-      </QueryClientContext.Provider>
-    );
+    render(<KangurLanguageSwitcher basePath='/en/kangur' currentPage='Lessons' />);
 
     prefetchMock.mockClear();
-    prefetchKangurPageContentStoreMock.mockClear();
 
     openLanguageMenu();
     await screen.findByRole('menu');
 
     expect(prefetchMock).not.toHaveBeenCalled();
-    expect(prefetchKangurPageContentStoreMock).not.toHaveBeenCalled();
+  });
+
+  it('does not trigger extra prefetch work when selecting a locale', async () => {
+    render(<KangurLanguageSwitcher basePath='/kangur' currentPage='Lessons' />);
+
+    openLanguageMenu();
+    const englishOption = await screen.findByTestId('kangur-language-switcher-option-en');
+
+    prefetchMock.mockClear();
+
+    fireEvent.click(englishOption);
+
+    expect(prefetchMock).not.toHaveBeenCalled();
+    expect(locationAssignSpy).toHaveBeenCalledWith('/en/kangur/lessons');
   });
 
   // ─── Page-specific href building ───────────────────────────────────

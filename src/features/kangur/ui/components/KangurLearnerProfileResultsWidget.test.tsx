@@ -72,6 +72,23 @@ const runtimeValue = {
     activityStats: {},
     lessonMastery: {},
   },
+  scores: [
+    {
+      id: 'score-1',
+      created_date: '2026-03-26T10:00:00.000Z',
+      player_name: 'Ada',
+      created_by: 'ada@example.com',
+      learner_id: 'learner-1',
+      operation: 'addition',
+      subject: 'maths',
+      score: 8,
+      total_questions: 10,
+      correct_answers: 8,
+      time_taken: 42,
+      xp_earned: 24,
+    },
+  ],
+  isLoadingScores: false,
   user: {
     full_name: 'Ada Parent',
     email: 'ada@example.com',
@@ -119,6 +136,8 @@ describe('KangurLearnerProfileResultsWidget', () => {
         createdBy: 'ada@example.com',
         learnerId: 'learner-1',
         playerName: 'Ada',
+        prefetchedLoading: false,
+        prefetchedScores: runtimeValue.scores,
       })
     );
     expect(progressOverviewMock).not.toHaveBeenCalled();

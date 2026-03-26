@@ -1,6 +1,6 @@
 ---
 owner: 'Kangur Team'
-last_reviewed: '2026-03-09'
+last_reviewed: '2026-03-26'
 status: 'active'
 doc_type: 'runbook'
 scope: 'feature:kangur'
@@ -17,6 +17,9 @@ related_components:
 ## Purpose
 
 Use this runbook when Kangur shows elevated sign-in failures, progress sync issues, narration/TTS degradation, or feature-level regressions that need a fast operational read.
+
+This runbook now covers both the canonical web shell and the native mobile app,
+because they share the same `/api/kangur/*` backend and observability sources.
 
 ## Primary Surfaces
 
@@ -36,6 +39,8 @@ Use this runbook when Kangur shows elevated sign-in failures, progress sync issu
 - Performance artifact:
   - `docs/metrics/kangur-performance-latest.json`
   - `docs/metrics/kangur-performance-latest.md`
+- Startup behavior:
+  - mobile startup and home-shell regressions should be correlated with the Kangur performance artifact before treating them as isolated client bugs
 
 ## Alert Thresholds
 
@@ -107,6 +112,10 @@ Use this runbook when Kangur shows elevated sign-in failures, progress sync issu
 - Route metrics:
   - `kangur.progress.PATCH`
 
+Mobile startup also depends on this surface indirectly because persisted lesson
+and progress-derived snapshots are refreshed after the deferred home progress
+stage opens.
+
 ### Scores, Learners, Assignments
 
 - Server sources:
@@ -158,6 +167,16 @@ Use this runbook when Kangur shows elevated sign-in failures, progress sync issu
   - `AI Tutor Bridge Snapshot` on `/admin/kangur/observability`
   - `kangur-ai-tutor-bridge-completion-rate` alert when bridge suggestions stop converting into completed cross-surface follow-ups
 
+### Social updates and publishing
+
+- Server sources:
+  - `kangur.social-posts.*`
+  - `kangur.social-pipeline.*`
+- Operational surfaces:
+  - `/admin/kangur/social`
+  - `/api/kangur/social-pipeline/status`
+  - `/api/kangur/social-posts/*`
+
 ## Mitigation Paths
 
 ### Learner sign-in failures spike
@@ -199,7 +218,8 @@ Use this runbook when Kangur shows elevated sign-in failures, progress sync issu
 
 1. Re-run `npm run metrics:kangur:baseline:strict`.
 2. Distinguish real test failures from infra failures such as a missing local server on `http://localhost:3000`.
-3. If unit status regresses after a release, treat it as a feature stability incident rather than a telemetry-only issue.
+3. If the regression is mobile-startup-specific, compare the change against the staged home/bootstrap path before blaming the backend.
+4. If unit status regresses after a release, treat it as a feature stability incident rather than a telemetry-only issue.
 
 ## Escalation
 

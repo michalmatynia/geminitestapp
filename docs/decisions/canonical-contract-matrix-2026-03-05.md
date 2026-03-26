@@ -1,6 +1,6 @@
 ---
 owner: 'Platform Team'
-last_reviewed: '2026-03-09'
+last_reviewed: '2026-03-26'
 status: 'active'
 doc_type: 'decision'
 scope: 'cross-feature'
@@ -16,6 +16,9 @@ Owner: Platform architecture owners + feature maintainers
 
 Current single source of truth for canonical runtime contracts and allowed migration surfaces.
 
+This decision stays authoritative for contract shape, while the April closeout and
+stabilization docs track whether the migration program remains fully closed.
+
 ## Matrix
 
 | Domain | Canonical Runtime Contract | Canonical Persistence / Keys | Canonical API Surface | Canonical Migration Entry Points | Guardrail |
@@ -24,7 +27,7 @@ Current single source of truth for canonical runtime contracts and allowed migra
 | Products | v2-only product contracts and canonical repository shapes | canonical product document fields only | `/api/v2/products/*` | `products:normalize:v2` | canonical route tests + shape guards |
 | Integrations (Base/Tradera) | canonical token/user-id/credential contracts | `baseApiToken`, `traderaApiAppKey`, `traderaApiToken`, `traderaApiUserId`, canonical scoped preferences | `/api/v2/integrations/*` | `migrate:base-*:v2`, `migrate:tradera-api-*:v2`, `migrate:base-import-run-connection-ids:v2` | route parity + runtime prune tests |
 | Prompt Exploder | canonical runtime scope/stack/bridge contracts | canonical prompt-engine payloads | prompt-exploder runtime only | migration wave completed; no runtime adapters | runtime prune tests |
-| Case Resolver | detached sidecar schema v2 + canonical workspace payloads | `case_resolver_workspace_detached_*_v2` | `/api/case-resolver/*` | `migrate:case-resolver:workspace-detached-contract:v2` | workspace + parser regressions |
+| Case Resolver | detached sidecar schema v2 + canonical workspace payloads | `case_resolver_workspace_v2`, `case_resolver_workspace_v2_history`, `case_resolver_workspace_v2_documents` | `/api/case-resolver/*` plus shared settings persistence for workspace records | `migrate:case-resolver:workspace-detached-contract:v2` | workspace + parser regressions |
 | AI Brain | canonical provider catalog `entries` envelope | `ai_brain_provider_catalog` | `/api/brain/*` and dependent runtime readers | `migrate:brain:provider-catalog:v2` | `npm run canonical:check:sitewide` |
 | CMS + Folder Tree | canonical template/profile runtime contracts | `folder_tree_profile::{instance}`, `cms_section_templates.v2`, `cms_grid_templates.v2` | `/api/cms/*` | `migrate:master-folder-tree:profiles:v2`, `migrate:cms:page-builder-template-settings:v2` | runtime prune tests + sitewide checks |
 | Observability | shared observability core contracts only | canonical event/store structures | `/api/system/*`, instrumentation paths | n/a | `npm run observability:check` |

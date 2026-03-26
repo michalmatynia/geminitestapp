@@ -43,6 +43,7 @@ vi.mock('@/features/kangur/ui/services/progress', async (importOriginal) => {
 
 import GeometryBasicsLesson from '@/features/kangur/ui/components/GeometryBasicsLesson';
 import GeometryPerimeterLesson from '@/features/kangur/ui/components/GeometryPerimeterLesson';
+import GeometryShapeRecognitionLesson from '@/features/kangur/ui/components/GeometryShapeRecognitionLesson';
 import GeometryShapesLesson from '@/features/kangur/ui/components/GeometryShapesLesson';
 import GeometrySymmetryLesson from '@/features/kangur/ui/components/GeometrySymmetryLesson';
 import { KangurLessonNavigationProvider } from '@/features/kangur/ui/context/KangurLessonNavigationContext';
@@ -115,5 +116,18 @@ describe('Geometry lessons shared surfaces', () => {
       'kangur-cta-pill',
       'surface-cta'
     );
+  });
+
+  it('routes the shape recognition draw section through the shared stage runtime', () => {
+    renderLesson(<GeometryShapeRecognitionLesson />);
+
+    fireEvent.click(screen.getByTestId('lesson-hub-section-draw'));
+
+    expect(screen.getByTestId('geometry-shape-recognition-draw-shell')).toHaveClass(
+      'glass-panel',
+      'kangur-panel-soft',
+      'kangur-glass-surface-solid'
+    );
+    expect(screen.getByRole('button', { name: 'Mock Geometry Drawing Game' })).toBeInTheDocument();
   });
 });

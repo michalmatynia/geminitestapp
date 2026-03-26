@@ -9,6 +9,7 @@ import {
   KangurSummaryPanel,
 } from '@/features/kangur/ui/design/primitives';
 import { getCurrentKangurDailyQuest } from '@/features/kangur/ui/services/daily-quests';
+import type { KangurScoreRecord } from '@kangur/platform';
 import type { KangurProgressState } from '@/features/kangur/ui/types';
 
 type KangurResultsWidgetContentProps = {
@@ -17,6 +18,8 @@ type KangurResultsWidgetContentProps = {
   learnerId: string;
   playerName?: string | null;
   createdBy?: string | null;
+  prefetchedScores?: KangurScoreRecord[] | null;
+  prefetchedScoresLoading?: boolean;
   badgeTrackDataTestPrefix: string;
   summaryTestId: string;
   summaryDescription: string;
@@ -30,6 +33,8 @@ export function KangurResultsWidgetContent({
   learnerId,
   playerName = null,
   createdBy = null,
+  prefetchedScores = null,
+  prefetchedScoresLoading = false,
   badgeTrackDataTestPrefix,
   summaryTestId,
   summaryDescription,
@@ -70,6 +75,8 @@ export function KangurResultsWidgetContent({
         createdBy={createdBy}
         learnerId={learnerId}
         playerName={playerName}
+        prefetchedScores={prefetchedScores}
+        prefetchedLoading={prefetchedScoresLoading}
       />
     </KangurPanelStack>
   );

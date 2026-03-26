@@ -60,4 +60,39 @@ describe('ai tutor content repository', () => {
     expect(collection.findOne).toHaveBeenCalledWith({ locale: 'en' });
     expect(captureExceptionMock).toHaveBeenCalledTimes(1);
   });
+
+  it('reuses cached tutor content across repeated reads for the same locale', async () => {
+    const collection = {
+      createIndex: vi.fn().mockResolvedValue('ok'),
+      findOne: vi.fn().mockResolvedValue({
+        locale: 'pl',
+        content: {
+          ...DEFAULT_KANGUR_AI_TUTOR_CONTENT,
+          locale: 'pl',
+        },
+        createdAt: new Date('2026-03-01T10:00:00.000Z'),
+        updatedAt: new Date('2026-03-01T10:00:00.000Z'),
+      }),
+      updateOne: vi.fn().mockResolvedValue({}),
+    };
+    const db = {
+      collection: vi.fn(() => collection),
+    };
+    getMongoDbMock.mockResolvedValue(db);
+
+    const { clearKangurAiTutorContentCache, getKangurAiTutorContent } = await import(
+      './ai-tutor-content-repository'
+    );
+    clearKangurAiTutorContentCache();
+
+    const firstResult = await getKangurAiTutorContent('pl');
+    const secondResult = await getKangurAiTutorContent('pl');
+
+    expect(firstResult).toEqual({
+      ...DEFAULT_KANGUR_AI_TUTOR_CONTENT,
+      locale: 'pl',
+    });
+    expect(secondResult).toEqual(firstResult);
+    expect(collection.findOne).toHaveBeenCalledTimes(1);
+  });
 });

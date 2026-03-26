@@ -21,12 +21,22 @@ import {
   setProgressPersistenceEnabled,
 } from '@/features/kangur/ui/services/progress';
 import {
+  type KangurLessonSubject,
   type KangurProgressState,
 } from '@/features/kangur/shared/contracts/kangur';
 import { useKangurSubjectFocus } from '@/features/kangur/ui/context/KangurSubjectFocusContext';
 
 
 const kangurPlatform = getKangurPlatform();
+const KANGUR_PROGRESS_HYDRATION_CACHE_TTL_MS = 30_000;
+
+type KangurProgressHydrationCacheEntry = {
+  progress: KangurProgressState;
+  fetchedAt: number;
+};
+
+const kangurProgressHydrationCache = new Map<string, KangurProgressHydrationCacheEntry>();
+const kangurProgressHydrationInflight = new Map<string, Promise<KangurProgressState>>();
 
 const resolveUserProgressKey = (user: KangurUser | null): string | null => {
   const activeLearnerId = user?.activeLearner?.id?.trim();
@@ -47,6 +57,61 @@ const resolveUserProgressKey = (user: KangurUser | null): string | null => {
 };
 
 const serializeProgress = (progress: KangurProgressState): string => JSON.stringify(progress);
+
+const buildKangurProgressHydrationCacheKey = (
+  userKey: string,
+  subject: KangurLessonSubject
+): string => `${userKey}::${subject}`;
+
+const cloneKangurProgressHydrationState = (
+  progress: KangurProgressState
+): KangurProgressState => structuredClone(progress);
+
+const primeKangurProgressHydrationCache = (
+  userKey: string,
+  subject: KangurLessonSubject,
+  progress: KangurProgressState
+): void => {
+  kangurProgressHydrationCache.set(buildKangurProgressHydrationCacheKey(userKey, subject), {
+    progress: cloneKangurProgressHydrationState(progress),
+    fetchedAt: Date.now(),
+  });
+};
+
+export const clearKangurProgressHydrationCache = (): void => {
+  kangurProgressHydrationCache.clear();
+  kangurProgressHydrationInflight.clear();
+};
+
+const loadRemoteHydrationProgress = async (
+  userKey: string,
+  subject: KangurLessonSubject
+): Promise<KangurProgressState> => {
+  const cacheKey = buildKangurProgressHydrationCacheKey(userKey, subject);
+  const cached = kangurProgressHydrationCache.get(cacheKey);
+  const now = Date.now();
+  if (cached && now - cached.fetchedAt < KANGUR_PROGRESS_HYDRATION_CACHE_TTL_MS) {
+    return cloneKangurProgressHydrationState(cached.progress);
+  }
+
+  const inflight = kangurProgressHydrationInflight.get(cacheKey);
+  if (inflight) {
+    return cloneKangurProgressHydrationState(await inflight);
+  }
+
+  const inflightPromise = kangurPlatform.progress
+    .get({ subject })
+    .then((progress) => {
+      primeKangurProgressHydrationCache(userKey, subject, progress);
+      return progress;
+    })
+    .finally(() => {
+      kangurProgressHydrationInflight.delete(cacheKey);
+    });
+
+  kangurProgressHydrationInflight.set(cacheKey, inflightPromise);
+  return cloneKangurProgressHydrationState(await inflightPromise);
+};
 
 const scheduleDeferredCallback = (callback: () => void): (() => void) => {
   if (typeof globalThis.requestIdleCallback === 'function') {
@@ -125,7 +190,7 @@ export function KangurProgressSyncProvider({
             context: { userKey, subject },
           },
           async () => {
-            const remoteProgress = await kangurPlatform.progress.get({ subject });
+            const remoteProgress = await loadRemoteHydrationProgress(userKey, subject);
             if (cancelled) {
               return null;
             }
@@ -196,6 +261,7 @@ export function KangurProgressSyncProvider({
             if (cancelled) {
               return;
             }
+            primeKangurProgressHydrationCache(userKey, subject, result.mergedProgress);
             void kangurPlatform.progress.update(result.mergedProgress, { subject });
           });
         }
@@ -268,6 +334,7 @@ export function KangurProgressSyncProvider({
           return;
         }
 
+        primeKangurProgressHydrationCache(userKey, subject, savedProgress);
         const savedSerialized = serializeProgress(savedProgress);
         lastSyncedProgressRef.current = savedSerialized;
         if (!areProgressStatesEqual(progress, savedProgress)) {

@@ -278,7 +278,7 @@ function AiTutorConfigPanel(): React.JSX.Element | null {
     enabled: shouldLoadUsage && isUsageQueryReady,
     staleTime: 10_000,
     refetchInterval: shouldLoadUsage && isUsageQueryReady ? 30_000 : false,
-    refetchOnWindowFocus: true,
+    refetchOnWindowFocus: false,
     meta: {
       source: 'kangur.ui.KangurParentDashboardAiTutorWidget.usage',
       operation: 'detail',

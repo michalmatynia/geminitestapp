@@ -358,7 +358,7 @@ describe('KangurFeatureApp', () => {
     expect(screen.queryByTestId('kangur-page-transition-skeleton')).toBeNull();
 
     await act(async () => {
-      vi.advanceTimersByTime(140);
+      vi.advanceTimersByTime(1);
     });
 
     expect(screen.getByTestId('kangur-page-transition-skeleton')).toHaveAttribute(
@@ -419,7 +419,7 @@ describe('KangurFeatureApp', () => {
     render(<KangurFeatureApp />);
 
     await act(async () => {
-      vi.advanceTimersByTime(140);
+      vi.advanceTimersByTime(1);
     });
 
     expect(screen.queryByTestId('kangur-top-navigation-skeleton')).toBeNull();
@@ -474,7 +474,7 @@ describe('KangurFeatureApp', () => {
     const { rerender } = render(<KangurFeatureApp />);
 
     await act(async () => {
-      vi.advanceTimersByTime(140);
+      vi.advanceTimersByTime(1);
     });
 
     expect(screen.getByTestId('kangur-page-transition-skeleton')).toHaveTextContent(

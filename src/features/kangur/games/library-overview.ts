@@ -18,9 +18,18 @@ export type KangurGamesLibraryMetrics = {
   visibleGameCount: number;
 };
 
+export type KangurGamesLibrarySubjectDefinition = {
+  ageGroups: KangurLessonAgeGroup[];
+  default?: boolean;
+  id: KangurLessonSubject;
+  label: string;
+  shortLabel: string;
+  sortOrder: number;
+};
+
 export type KangurGamesLibrarySubjectGroup = {
   entries: KangurGameCatalogEntry[];
-  subject: (typeof KANGUR_SUBJECTS)[number];
+  subject: KangurGamesLibrarySubjectDefinition;
 };
 
 export type KangurGamesLibraryVariantGroup = {
@@ -76,7 +85,14 @@ export const createKangurGamesLibrarySubjectGroups = (
   catalogEntries: KangurGameCatalogEntry[]
 ): KangurGamesLibrarySubjectGroup[] =>
   KANGUR_SUBJECTS.map((subject) => ({
-    subject,
+    subject: {
+      id: subject.id,
+      label: subject.label,
+      shortLabel: subject.shortLabel,
+      sortOrder: subject.sortOrder,
+      ...(typeof subject.default === 'boolean' ? { default: subject.default } : {}),
+      ageGroups: [...(subject.ageGroups ?? [])],
+    },
     entries: catalogEntries
       .filter((entry) => entry.game.subject === subject.id)
       .slice()

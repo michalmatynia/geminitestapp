@@ -44,7 +44,12 @@ describe('EnglishPrepositionsLesson i18n', () => {
     );
 
     const sections = (capturedProps?.sections as Array<Record<string, unknown>>) ?? [];
-    const games = (capturedProps?.games as Array<{ sectionId: string; stage: Record<string, unknown> }>) ?? [];
+    const games =
+      (capturedProps?.games as Array<{
+        sectionId: string;
+        stage: Record<string, unknown>;
+        runtime?: { runtimeId?: string; rendererId?: string };
+      }>) ?? [];
 
     expect(
       sections.find((section) => section.id === 'intro')
@@ -63,11 +68,27 @@ describe('EnglishPrepositionsLesson i18n', () => {
       title: 'Präpositionen-Sprint',
       description: 'Kurzes Auswahlspiel',
     });
+    expect(games.find((game) => game.sectionId === 'game_prepositions')?.runtime).toMatchObject({
+      runtimeId: 'english_prepositions_lesson_stage',
+      rendererId: 'english_prepositions_game',
+    });
     expect(
       games.find((game) => game.sectionId === 'game_prepositions_order')?.stage
     ).toMatchObject({
       title: 'Wortstellung Warm-up',
       description: 'Ordne Sätze mit Präpositionen',
+    });
+    expect(
+      games.find((game) => game.sectionId === 'game_prepositions_sort')?.runtime
+    ).toMatchObject({
+      runtimeId: 'english_prepositions_sort_lesson_stage',
+      rendererId: 'english_prepositions_sort_game',
+    });
+    expect(
+      games.find((game) => game.sectionId === 'game_prepositions_order')?.runtime
+    ).toMatchObject({
+      runtimeId: 'english_prepositions_order_lesson_stage',
+      rendererId: 'english_prepositions_order_game',
     });
 
     const slides = (capturedProps?.slides as Record<string, CapturedSlide[]>) ?? {};

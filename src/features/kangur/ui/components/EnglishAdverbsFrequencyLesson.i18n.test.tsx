@@ -58,10 +58,18 @@ describe('EnglishAdverbsFrequencyLesson i18n', () => {
       description: 'Baue einen animierten Wochenplan',
     });
 
-    const games = (capturedProps?.games as Array<Record<string, unknown>>) ?? [];
+    const games =
+      (capturedProps?.games as Array<{
+        sectionId: string;
+        runtime?: { runtimeId?: string; rendererId?: string };
+      }>) ?? [];
     expect(games).toHaveLength(1);
     expect(games[0]).toMatchObject({
       sectionId: 'game_frequency_studio',
+      runtime: {
+        runtimeId: 'english_adverbs_frequency_routine_lesson_stage',
+        rendererId: 'english_adverbs_frequency_routine_game',
+      },
     });
 
     const slides = (capturedProps?.slides as Record<string, CapturedSlide[]>) ?? {};

@@ -30,6 +30,7 @@ import { useKangurProgressState } from '@/features/kangur/ui/hooks/useKangurProg
 import {
   LEARNER_PROFILE_SCORE_FETCH_LIMIT,
   loadLearnerProfileScores,
+  peekCachedScopedKangurScores,
 } from '@/features/kangur/ui/services/learner-profile-scores';
 import {
   buildKangurLearnerProfileSnapshot,
@@ -48,6 +49,7 @@ import { normalizeSiteLocale } from '@/shared/lib/i18n/site-locale';
 
 
 export const KANGUR_LEARNER_PROFILE_DAILY_GOAL_GAMES = 3;
+const LEARNER_PROFILE_SCORES_LOAD_DEFER_MS = 0;
 
 const getScopedMessageValue = (
   messages: Record<string, unknown> | undefined,
@@ -215,8 +217,35 @@ export function KangurLearnerProfileRuntimeProvider({
   const { subject } = useKangurSubjectFocus();
   const progress = useKangurProgressState();
   const hasUser = Boolean(user);
-  const [scores, setScores] = useState<KangurScoreRecord[]>([]);
-  const [isLoadingScores, setIsLoadingScores] = useState(true);
+  const scoreIdentity = useMemo(
+    () => ({
+      learnerId: user?.activeLearner?.id?.trim() ?? '',
+      userName: user?.full_name?.trim() ?? '',
+      userEmail: user?.email?.trim() ?? '',
+    }),
+    [user?.activeLearner?.id, user?.email, user?.full_name]
+  );
+  const hasScoreIdentity =
+    scoreIdentity.learnerId.length > 0 ||
+    scoreIdentity.userName.length > 0 ||
+    scoreIdentity.userEmail.length > 0;
+  const cachedScores = useMemo(() => {
+    if (!hasScoreIdentity) {
+      return null;
+    }
+
+    return peekCachedScopedKangurScores(kangurPlatform.score, {
+      learnerId: scoreIdentity.learnerId,
+      playerName: scoreIdentity.userName,
+      createdBy: scoreIdentity.userEmail,
+      subject,
+      limit: LEARNER_PROFILE_SCORE_FETCH_LIMIT,
+    });
+  }, [hasScoreIdentity, scoreIdentity.learnerId, scoreIdentity.userEmail, scoreIdentity.userName, subject]);
+  const [scores, setScores] = useState<KangurScoreRecord[]>(() => cachedScores ?? []);
+  const [isLoadingScores, setIsLoadingScores] = useState(
+    () => hasScoreIdentity && cachedScores === null
+  );
   const [scoresError, setScoresError] = useState<string | null>(null);
   const translateRuntime = useCallback(
     (key: string, values?: Record<string, string | number>) => {
@@ -240,11 +269,12 @@ export function KangurLearnerProfileRuntimeProvider({
 
   useEffect(() => {
     let isActive = true;
+    let timeoutId: ReturnType<typeof setTimeout> | null = null;
 
     const loadScores = async (): Promise<void> => {
-      const learnerId = user?.activeLearner?.id?.trim() ?? '';
-      const userName = user?.full_name?.trim() ?? '';
-      const userEmail = user?.email?.trim() ?? '';
+      const learnerId = scoreIdentity.learnerId;
+      const userName = scoreIdentity.userName;
+      const userEmail = scoreIdentity.userEmail;
       if (!learnerId && !userName && !userEmail) {
         if (isActive) {
           setScores([]);
@@ -253,9 +283,6 @@ export function KangurLearnerProfileRuntimeProvider({
         }
         return;
       }
-
-      setIsLoadingScores(true);
-      setScoresError(null);
 
       try {
         const loadedScores = await withKangurClientError(
@@ -310,18 +337,45 @@ export function KangurLearnerProfileRuntimeProvider({
       }
     };
 
-    void loadScores();
+    const learnerId = scoreIdentity.learnerId;
+    const userName = scoreIdentity.userName;
+    const userEmail = scoreIdentity.userEmail;
+    if (!learnerId && !userName && !userEmail) {
+      void loadScores();
+      return () => {
+        isActive = false;
+      };
+    }
+
+    if (cachedScores !== null) {
+      setScores(cachedScores);
+      setIsLoadingScores(false);
+      setScoresError(null);
+      return () => {
+        isActive = false;
+      };
+    }
+
+    setIsLoadingScores(true);
+    setScoresError(null);
+    timeoutId = globalThis.setTimeout(() => {
+      void loadScores();
+    }, LEARNER_PROFILE_SCORES_LOAD_DEFER_MS);
 
     return () => {
       isActive = false;
+      if (timeoutId !== null) {
+        globalThis.clearTimeout(timeoutId);
+      }
     };
   }, [
     hasUser,
+    cachedScores,
     loadScoresErrorLabel,
+    scoreIdentity.learnerId,
+    scoreIdentity.userEmail,
+    scoreIdentity.userName,
     subject,
-    user?.activeLearner?.id,
-    user?.email,
-    user?.full_name,
   ]);
 
   const snapshot = useMemo(

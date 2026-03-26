@@ -19,6 +19,7 @@ import {
   useKangurRoutingState,
 } from '@/features/kangur/ui/context/KangurRoutingContext';
 import { KangurFeatureApp } from '@/features/kangur/ui/KangurFeatureApp';
+import { localizeManagedKangurHref } from '@/features/kangur/ui/routing/managed-paths';
 import { KANGUR_MAIN_CONTENT_ID } from '@/features/kangur/ui/design/primitives/KangurPageContainer';
 import { useKangurMobileViewportVars } from '@/features/kangur/ui/hooks/useKangurMobileViewportVars';
 import { useKangurStorefrontAppearance } from '@/features/kangur/ui/useKangurStorefrontAppearance';
@@ -45,7 +46,7 @@ const KANGUR_CUSTOM_CSS_SCOPE_SELECTOR = '[data-kangur-custom-css-scope="true"]'
 export function KangurFeaturePageShell({
   forceBodyScrollLock = false,
 }: KangurFeaturePageShellProps): JSX.Element {
-  const locale = useLocale();
+  const locale = useLocale() ?? 'en';
   const commonTranslations = useTranslations('Common');
   const shellTranslations = useTranslations('KangurShell');
   const appearance = useOptionalCmsStorefrontAppearance();
@@ -54,6 +55,16 @@ export function KangurFeaturePageShell({
   const showFooter = !embedded && pageKey === KANGUR_MAIN_PAGE_KEY;
   const kangurAppearance = useKangurStorefrontAppearance();
   const debugRef = useRef<string | null>(null);
+  const browserPathname = typeof window === 'undefined' ? null : window.location.pathname?.trim() || null;
+  const socialUpdatesHref = useMemo(
+    () =>
+      localizeManagedKangurHref({
+        href: getKangurPageHref('SocialUpdates', basePath),
+        locale,
+        pathname: browserPathname ?? requestedPath ?? null,
+      }),
+    [basePath, browserPathname, locale, requestedPath]
+  );
   const focusSkipTarget = useCallback((event: { preventDefault: () => void }): void => {
     if (typeof document === 'undefined') return;
     const target = document.getElementById(KANGUR_MAIN_CONTENT_ID);
@@ -162,7 +173,7 @@ export function KangurFeaturePageShell({
           </span>
           <a
             className='font-semibold [color:var(--kangur-page-text)] hover:underline'
-            href={getKangurPageHref('SocialUpdates', basePath)}
+            href={socialUpdatesHref}
           >
             {shellTranslations('socialUpdates')}
           </a>

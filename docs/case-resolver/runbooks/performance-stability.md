@@ -1,10 +1,11 @@
 ---
 owner: 'Case Resolver Team'
-last_reviewed: '2026-02-20'
+last_reviewed: '2026-03-26'
 status: 'active'
 related_components:
   - 'src/features/case-resolver/workspace-persistence.ts'
   - 'src/features/case-resolver/components/CaseResolverWorkspaceDebugPanel.tsx'
+  - 'src/app/api/case-resolver/ocr/observability/handler.ts'
 ---
 
 # Runbook: Case Resolver Performance and Stability
@@ -27,7 +28,9 @@ Use this runbook when Case Resolver is slow, unstable, or has elevated save/OCR 
 3. Check OCR queue failure/retry patterns and `attemptsMade/maxAttempts`.
 4. Validate whether issue is global or tied to large workspaces only.
 5. Verify whether payload guardrails are rejecting oversized saves.
-6. Decide mitigation path:
+6. Check whether shared-settings refreshes are failing before treating the issue as
+   frontend-only workspace instability.
+7. Decide mitigation path:
    - revert release
    - reduce load
    - apply feature-level workaround
@@ -47,11 +50,16 @@ Use this runbook when Case Resolver is slow, unstable, or has elevated save/OCR 
   - revision deltas for conflict cases
   - conflict retry delay (`manual_save_conflict_retry`)
   - summary rates (`save success`, `conflict`) in workspace debug panel
+- Shared persistence lane:
+  - `/api/settings` light vs heavy refresh behavior
+  - `refresh_attempt_failed` and `refresh_fallback_to_heavy`
 - OCR logs:
   - transient retries
   - final failures
   - model failover attempts
   - `errorCategory`, `retryableError`, `correlationId`
+- OCR API snapshot:
+  - `GET /api/case-resolver/ocr/observability?limit=50`
 
 ## Mitigation Steps
 
@@ -61,6 +69,7 @@ Use this runbook when Case Resolver is slow, unstable, or has elevated save/OCR 
 2. If conflicts spike:
    - force fresh sync by reloading settings snapshot path.
    - validate auto-retry delay behavior (backoff + jitter) is present.
+   - check whether detached document/history payload refreshes are the real failure point.
 3. If OCR provider instability is detected:
    - switch to alternate model chain ordering.
    - use `errorCategory` and `retryableError` to separate transient from hard failures.

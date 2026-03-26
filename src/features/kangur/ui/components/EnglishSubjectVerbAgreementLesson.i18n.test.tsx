@@ -44,7 +44,12 @@ describe('EnglishSubjectVerbAgreementLesson i18n', () => {
     );
 
     const sections = (capturedProps?.sections as Array<Record<string, unknown>>) ?? [];
-    const games = (capturedProps?.games as Array<{ sectionId: string; stage: Record<string, unknown> }>) ?? [];
+    const games =
+      (capturedProps?.games as Array<{
+        sectionId: string;
+        stage: Record<string, unknown>;
+        runtime?: { runtimeId?: string; rendererId?: string };
+      }>) ?? [];
 
     expect(sections.find((section) => section.id === 'core')).toMatchObject({
       title: 'Grundlagen der Ubereinstimmung',
@@ -58,6 +63,10 @@ describe('EnglishSubjectVerbAgreementLesson i18n', () => {
     expect(games.find((game) => game.sectionId === 'game_agreement')?.stage).toMatchObject({
       title: 'Spiel: Subjekt-Verb-Ubereinstimmung',
       description: 'Klicke in jedem Satz die richtige Verbform an.',
+    });
+    expect(games.find((game) => game.sectionId === 'game_agreement')?.runtime).toMatchObject({
+      runtimeId: 'english_subject_verb_agreement_lesson_stage',
+      rendererId: 'english_subject_verb_agreement_game',
     });
 
     const slides = (capturedProps?.slides as Record<string, CapturedSlide[]>) ?? {};

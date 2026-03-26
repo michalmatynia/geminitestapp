@@ -1,12 +1,9 @@
 'use client';
-
-import { QueryClientContext } from '@tanstack/react-query';
 import { ChevronDown } from 'lucide-react';
 import { useLocale, useTranslations } from 'next-intl';
 import { usePathname, useSearchParams } from 'next/navigation';
 import {
   useCallback,
-  useContext,
   useEffect,
   useMemo,
   useRef,
@@ -38,7 +35,6 @@ import { useOptionalFrontendPublicOwner } from '@/features/kangur/ui/FrontendPub
 import { useOptionalKangurRouteTransitionState } from '@/features/kangur/ui/context/KangurRouteTransitionContext';
 import { KangurButton } from '@/features/kangur/ui/design/primitives';
 import { useKangurCoarsePointer } from '@/features/kangur/ui/hooks/useKangurCoarsePointer';
-import { prefetchKangurPageContentStore } from '@/features/kangur/ui/hooks/useKangurPageContent';
 import { useKangurRouteNavigator } from '@/features/kangur/ui/hooks/useKangurRouteNavigator';
 import { canonicalizeKangurPublicAliasPathname } from '@/features/kangur/ui/routing/managed-paths';
 import { useKangurStorefrontAppearance } from '@/features/kangur/ui/useKangurStorefrontAppearance';
@@ -249,11 +245,9 @@ export function KangurLanguageSwitcher({
   const routeNavigator = useKangurRouteNavigator();
   const frontendPublicOwner = useOptionalFrontendPublicOwner();
   const routeTransitionState = useOptionalKangurRouteTransitionState();
-  const queryClient = useContext(QueryClientContext);
   const [open, setOpen] = useState(false);
   const [announcement, setAnnouncement] = useState<string | null>(null);
   const [hardNavigationPendingLocale, setHardNavigationPendingLocale] = useState<string | null>(null);
-  const warmedLocaleCodesRef = useRef<Set<string>>(new Set());
   const hardNavigationRecoveryTimeoutRef = useRef<number | null>(null);
   const hardNavigationCommittedRef = useRef(false);
 
@@ -318,10 +312,6 @@ export function KangurLanguageSwitcher({
   const selectedLocale = pendingLocale ?? currentLocale;
 
   useEffect(() => {
-    warmedLocaleCodesRef.current.clear();
-  }, [currentHash, currentPage, currentPathname, search]);
-
-  useEffect(() => {
     if (!hardNavigationPendingLocale || hardNavigationPendingLocale !== currentLocale) {
       return;
     }
@@ -350,40 +340,6 @@ export function KangurLanguageSwitcher({
       window.removeEventListener('beforeunload', onBeforeUnload);
     };
   }, [hardNavigationPendingLocale]);
-
-  const warmLocaleTarget = useCallback(
-    (targetLocaleCode: string): void => {
-      if (isCoarsePointer) {
-        return;
-      }
-
-      if (targetLocaleCode === selectedLocale) {
-        return;
-      }
-
-      if (warmedLocaleCodesRef.current.has(targetLocaleCode)) {
-        return;
-      }
-
-      const target = localeOptions.find((option) => option.code === targetLocaleCode);
-      if (!target) {
-        return;
-      }
-
-      warmedLocaleCodesRef.current.add(targetLocaleCode);
-      routeNavigator.prefetch(target.href);
-      void prefetchKangurPageContentStore(queryClient, targetLocaleCode);
-    },
-    [isCoarsePointer, localeOptions, queryClient, routeNavigator, selectedLocale]
-  );
-
-  useEffect(() => {
-    if (!open || currentLocale === DEFAULT_SITE_LOCALE) {
-      return;
-    }
-
-    warmLocaleTarget(DEFAULT_SITE_LOCALE);
-  }, [currentLocale, open, warmLocaleTarget]);
 
   if (ENABLED_LOCALES.length < 2 || isKangurEmbeddedBasePath(basePath)) {
     return null;
@@ -498,7 +454,6 @@ export function KangurLanguageSwitcher({
 
               setOpen(false);
               setAnnouncement(`${target.nativeLabel}…`);
-              warmLocaleTarget(target.code);
               setClientCookie(DEFAULT_SITE_I18N_CONFIG.cookieName, target.code, {
                 maxAgeSeconds: LANGUAGE_COOKIE_MAX_AGE_SECONDS,
                 path: '/',
@@ -549,8 +504,6 @@ export function KangurLanguageSwitcher({
                   data-testid={`kangur-language-switcher-option-${option.code}`}
                   disabled={isPending}
                   key={option.code}
-                  onFocus={() => warmLocaleTarget(option.code)}
-                  onMouseEnter={() => warmLocaleTarget(option.code)}
                   value={option.code}
                 >
                   <div className='flex min-w-0 items-center gap-3'>

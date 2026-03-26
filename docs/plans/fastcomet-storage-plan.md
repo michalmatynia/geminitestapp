@@ -1,6 +1,6 @@
 ---
 owner: 'Platform Team'
-last_reviewed: '2026-03-09'
+last_reviewed: '2026-03-26'
 status: 'active'
 doc_type: 'plan'
 scope: 'cross-feature'
@@ -8,6 +8,13 @@ canonical: true
 ---
 
 # FastComet File Storage Plan
+
+This file is the retained implementation scaffold for the storage-source switch.
+Current runtime truth lives in the storage service and admin settings UI:
+
+- `src/shared/lib/files/services/storage/file-storage-service.ts`
+- `src/features/files/pages/AdminFileStorageSettingsPage.tsx`
+- `src/app/(admin)/admin/settings/storage/page.tsx`
 
 ## Goal
 

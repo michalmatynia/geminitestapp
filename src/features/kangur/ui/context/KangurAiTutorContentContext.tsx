@@ -32,6 +32,16 @@ type Props = {
 };
 
 const KangurAiTutorContentContext = createContext<KangurAiTutorContentContextValue | null>(null);
+const kangurAiTutorContentCache = new Map<string, KangurAiTutorContent>();
+const kangurAiTutorContentInflight = new Map<string, Promise<KangurAiTutorContent>>();
+
+const cloneKangurAiTutorContent = (content: KangurAiTutorContent): KangurAiTutorContent =>
+  structuredClone(content);
+
+export const clearKangurAiTutorContentClientCache = (): void => {
+  kangurAiTutorContentCache.clear();
+  kangurAiTutorContentInflight.clear();
+};
 
 /**
  * Activation context — the AI tutor content API call is deferred until a
@@ -45,9 +55,15 @@ export function KangurAiTutorContentProvider({
   locale = 'pl',
 }: Props): JSX.Element {
   const { isAuthenticated } = useKangurAuthState();
+  const defaultContent = useMemo<KangurAiTutorContent>(
+    () => ({
+      ...DEFAULT_KANGUR_AI_TUTOR_CONTENT,
+      locale,
+    }),
+    [locale]
+  );
   const [content, setContent] = useState<KangurAiTutorContent>({
-    ...DEFAULT_KANGUR_AI_TUTOR_CONTENT,
-    locale,
+    ...defaultContent,
   });
   const [isLoading, setIsLoading] = useState(false);
   const [isActivated, setIsActivated] = useState(false);
@@ -64,8 +80,17 @@ export function KangurAiTutorContentProvider({
     let cancelled = false;
 
     const load = async (): Promise<void> => {
+      const cached = kangurAiTutorContentCache.get(locale);
+      if (cached) {
+        setContent(cloneKangurAiTutorContent(cached));
+        setIsLoading(false);
+        return;
+      }
+
       setIsLoading(true);
-      await withKangurClientError(
+      const inflight =
+        kangurAiTutorContentInflight.get(locale) ??
+        withKangurClientError(
         {
           source: 'kangur-ai-tutor-content',
           action: 'load',
@@ -81,27 +106,30 @@ export function KangurAiTutorContentProvider({
               cache: 'no-store',
             }
           );
-          if (cancelled) {
-            return;
-          }
-          setContent(parseKangurAiTutorContent(response));
+          const parsed = parseKangurAiTutorContent(response);
+          kangurAiTutorContentCache.set(locale, cloneKangurAiTutorContent(parsed));
+          return parsed;
         },
         {
-          fallback: undefined,
+          fallback: defaultContent,
           onError: () => {
-            if (!cancelled) {
-              setContent({
-                ...DEFAULT_KANGUR_AI_TUTOR_CONTENT,
-                locale,
-              });
-            }
+            kangurAiTutorContentCache.set(locale, cloneKangurAiTutorContent(defaultContent));
           },
           // Optional tutor copy should quietly fall back to defaults instead of
           // surfacing noisy client errors for users when the backing store is unavailable.
           shouldReport: () => false,
         }
-      );
+      ).finally(() => {
+        kangurAiTutorContentInflight.delete(locale);
+      });
+
+      if (!kangurAiTutorContentInflight.has(locale)) {
+        kangurAiTutorContentInflight.set(locale, inflight);
+      }
+
+      const nextContent = await inflight;
       if (!cancelled) {
+        setContent(cloneKangurAiTutorContent(nextContent));
         setIsLoading(false);
       }
     };
@@ -111,7 +139,7 @@ export function KangurAiTutorContentProvider({
     return () => {
       cancelled = true;
     };
-  }, [isAuthenticated, isActivated, locale]);
+  }, [defaultContent, isAuthenticated, isActivated, locale]);
 
   const value = useMemo(
     () => ({

@@ -50,7 +50,6 @@ import { useKangurCoarsePointer } from '@/features/kangur/ui/hooks/useKangurCoar
 import type {
   KangurLessonComponentId,
   KangurLesson,
-  KangurLessonSubject,
 } from '@/features/kangur/shared/contracts/kangur';
 import { createDefaultKangurProgressState } from '@/shared/contracts/kangur';
 import { normalizeSiteLocale } from '@/shared/lib/i18n/site-locale';
@@ -152,7 +151,6 @@ export function KangurGameOperationSelectorWidget(): React.JSX.Element | null {
     fallbackCopy.trainingSetupWordmarkLabel
   );
   const lessonsQuery = useKangurLessons({ subject, ageGroup, enabledOnly: true });
-  const emptyLessonsRefetchedForSubject = useRef<KangurLessonSubject | null>(null);
   const lessonQuizOptions = useMemo<LessonQuizOption[]>(() => {
     const enabledLessons = lessonsQuery.data ?? [];
     const lessonsByComponentId = new Map(
@@ -317,25 +315,6 @@ export function KangurGameOperationSelectorWidget(): React.JSX.Element | null {
   ) : (
     gameIntroDescriptionLabel
   );
-
-  useEffect(() => {
-    if (!lessonsQuery.data) {
-      return;
-    }
-    if (lessonsQuery.data.length > 0) {
-      emptyLessonsRefetchedForSubject.current = null;
-      return;
-    }
-    if (lessonsQuery.isFetching) {
-      return;
-    }
-    if (emptyLessonsRefetchedForSubject.current === subject) {
-      return;
-    }
-
-    emptyLessonsRefetchedForSubject.current = subject;
-    void lessonsQuery.refetch();
-  }, [lessonsQuery.data, lessonsQuery.isFetching, lessonsQuery.refetch, subject]);
 
   useEffect(() => {
     if (subject === 'maths') {

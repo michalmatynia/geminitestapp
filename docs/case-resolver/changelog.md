@@ -1,6 +1,6 @@
 ---
 owner: 'Case Resolver Team'
-last_reviewed: '2026-02-20'
+last_reviewed: '2026-03-26'
 status: 'active'
 related_components:
   - 'src/features/case-resolver'
@@ -8,6 +8,16 @@ related_components:
 ---
 
 # Case Resolver Changelog
+
+## 2026-03-26
+
+- Refreshed the Case Resolver docs to match the current shared-settings persistence model,
+  including the split between the primary workspace record and detached documents/history payloads.
+- Updated OCR operational documentation to reflect the live create/status/retry route family,
+  returned `dispatchMode` and `correlationId` fields, and the `/api/case-resolver/ocr/observability`
+  snapshot endpoint.
+- Updated runbooks, security notes, performance guidance, and FAQ entries so they align with the
+  active runtime and operator workflow.
 
 ## 2026-02-20
 

@@ -1,6 +1,6 @@
 ---
 owner: 'Kangur Team'
-last_reviewed: '2026-03-19'
+last_reviewed: '2026-03-26'
 status: 'active'
 doc_type: 'overview'
 scope: 'feature:kangur'
@@ -17,7 +17,7 @@ creation, release summaries, and AI agent prompts.
 
 ## Window
 
-This summary covers changes merged between 2026-03-06 and 2026-03-19 (inclusive).
+This summary covers changes merged between 2026-03-13 and 2026-03-26 (inclusive).
 Update this section whenever the reporting window changes.
 
 ## Refresh cadence
@@ -28,10 +28,16 @@ Run the refresh script weekly or before publishing release notes:
 npm run docs:kangur:recent-features:refresh
 ```
 
-Then review and update the narrative sections above using the auto inventory
+Then review and update the narrative sections below using the auto inventory
 output as input.
 
-## Most recent feature addition: multilingual navigation polish (2026-03-19)
+## Selected narrative highlights from the current window
+
+The narrative sections below are curated highlights, not an exhaustive changelog.
+The authoritative activity inventory for the window lives in the auto-generated
+section at the end of this document.
+
+## Highlight: multilingual navigation polish (2026-03-19)
 
 Kangur navigation now has a real language dropdown, cleaner locale switching,
 and more stable cross-locale transitions across desktop and mobile shells.
@@ -255,30 +261,30 @@ into AI prompts.
 ## Change inventory (auto)
 
 <!-- AUTO-GENERATED:RECENT_FEATURES_START -->
-Generated at 2026-03-19T20:12:35.523Z UTC.
+Generated at 2026-03-26T10:43:50.233Z UTC.
 
-Window (UTC): 2026-03-06 to 2026-03-19.
-Commits scanned: 151.
-Files touched: 1531.
+Window (UTC): 2026-03-13 to 2026-03-26.
+Commits scanned: 252.
+Files touched: 1999.
 
 Top paths:
-- Top path: `src/features/kangur/ui` (836 files)
-- Top path: `src/features/kangur/admin` (174 files)
-- Top path: `src/features/kangur/server` (80 files)
-- Top path: `src/features/kangur/services` (66 files)
-- Top path: `src/features/kangur/shared` (35 files)
-- Top path: `src/app/api/kangur/ai-tutor` (33 files)
+- Top path: `src/features/kangur/ui` (1181 files)
+- Top path: `src/features/kangur/admin` (189 files)
+- Top path: `src/features/kangur/services` (99 files)
+- Top path: `src/features/kangur/server` (85 files)
+- Top path: `src/app/api/kangur/ai-tutor` (43 files)
+- Top path: `src/features/kangur/shared` (36 files)
 - Top path: `src/app/api/kangur/auth` (32 files)
-- Top path: `src/features/kangur/cms-builder` (24 files)
+- Top path: `src/features/kangur/cms-builder` (31 files)
 
 Latest commits:
-- Commit: `c9ccdd15f` (2026-03-19) DS
-- Commit: `a5ec75e36` (2026-03-19) S
-- Commit: `295c8eb41` (2026-03-19) FSD
-- Commit: `1927e0ddc` (2026-03-19) SD
-- Commit: `f25c8627f` (2026-03-18) SD
-- Commit: `63ef41b70` (2026-03-18) SDDS
-- Commit: `b5e3f22bf` (2026-03-18) SDDS
-- Commit: `e9db9ad08` (2026-03-18) SD
+- Commit: `d8d8d8390` (2026-03-26) SD
+- Commit: `92313d67e` (2026-03-26) SDS
+- Commit: `776b655c5` (2026-03-26) ibui
+- Commit: `599b770ca` (2026-03-26) SD
+- Commit: `88ca0038b` (2026-03-26) SD
+- Commit: `c164e5b9c` (2026-03-25) Add single-touch pointer drag engine for mobile AddingBallGame
+- Commit: `bc34fcd6d` (2026-03-25) Warm domain-zoning cache, add game catalog facets, fix e2e selectors
+- Commit: `54b17c1ee` (2026-03-25) S
 
 <!-- AUTO-GENERATED:RECENT_FEATURES_END -->

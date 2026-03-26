@@ -21,6 +21,7 @@ import {
   type KangurAiTutorSessionRegistration,
 } from './kangur-ai-tutor-runtime.helpers';
 import type {
+  KangurAiTutorSessionSyncInput,
   KangurAiTutorSessionRegistryContextValue,
   KangurAiTutorSessionSyncProps,
 } from './KangurAiTutorRuntime.types';
@@ -139,13 +140,11 @@ export const useKangurAiTutorSessionSync = ({
 };
 
 export function KangurAiTutorSessionSyncInner({
-  learnerId,
-  sessionContext,
-}: KangurAiTutorSessionSyncProps): JSX.Element | null {
-  useKangurAiTutorSessionSync({
-    learnerId,
-    sessionContext,
-  });
+  sync,
+}: {
+  sync: KangurAiTutorSessionSyncInput;
+}): JSX.Element | null {
+  useKangurAiTutorSessionSync(sync);
 
   return null;
 }

@@ -142,7 +142,7 @@ export default async function FrontendLayout({
   // up to 600ms for the client-side KangurSurfaceClassSync useEffect.
   const kangurSurfaceHintScript =
     publicOwner === 'kangur'
-      ? `document.documentElement.classList.add('kangur-surface-active');document.body.classList.add('kangur-surface-active');`
+      ? 'document.documentElement.classList.add(\'kangur-surface-active\');document.body.classList.add(\'kangur-surface-active\');'
       : null;
 
   return (

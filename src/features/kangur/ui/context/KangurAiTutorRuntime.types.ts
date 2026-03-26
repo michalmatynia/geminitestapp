@@ -75,6 +75,11 @@ export type KangurAiTutorSessionSyncProps = {
   sessionContext?: KangurAiTutorConversationContext | null;
 };
 
+export type KangurAiTutorSessionSyncInput = {
+  learnerId: string | null;
+  sessionContext: KangurAiTutorConversationContext | null;
+};
+
 export type KangurAiTutorSessionRegistryContextValue = {
   setRegistration: (registration: KangurAiTutorSessionRegistrationSetter) => void;
 };

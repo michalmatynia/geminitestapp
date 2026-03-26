@@ -21,6 +21,13 @@ export interface DocumentWysiwygEditorProps {
   toolbarClassName?: string | undefined;
   surfaceClassName?: string | undefined;
   editorContentClassName?: string | undefined;
+  surfaceOptions?:
+    | {
+        className?: string | undefined;
+        editorContentClassName?: string | undefined;
+        style?: React.CSSProperties | undefined;
+      }
+    | undefined;
 }
 
 export function DocumentWysiwygEditor(props: DocumentWysiwygEditorProps): React.JSX.Element {
@@ -37,6 +44,7 @@ export function DocumentWysiwygEditor(props: DocumentWysiwygEditorProps): React.
     toolbarClassName,
     surfaceClassName,
     editorContentClassName,
+    surfaceOptions,
   } = props;
 
   const isDocumentPreview = appearance === 'document-preview';
@@ -57,18 +65,24 @@ export function DocumentWysiwygEditor(props: DocumentWysiwygEditorProps): React.
       enableAdvancedTools={enableAdvancedTools}
       loadingLabel={loadingLabel}
       toolbarClassName={cn('border-slate-300 bg-slate-50', toolbarClassName)}
-      surfaceClassName={cn(
-        isDocumentPreview
-          ? 'w-full min-h-[300px] rounded-lg border border-slate-300 bg-white shadow-sm'
-          : 'w-full min-h-[250px] rounded-lg border border-slate-300 bg-white',
-        surfaceClassName
-      )}
-      editorContentClassName={cn(
-        isDocumentPreview
-          ? '[&_.ProseMirror]:!bg-white [&_.ProseMirror]:!text-slate-900 [&_.ProseMirror]:text-[12pt] [&_.ProseMirror]:leading-[1.5] [&_.ProseMirror]:[font-family:"Times_New_Roman",Georgia,serif] [&_.ProseMirror]:p-8 [&_.ProseMirror]:min-h-[620px] [&_.ProseMirror_blockquote]:!border-l-slate-400 [&_.ProseMirror_code]:!bg-slate-100 [&_.ProseMirror_pre]:!bg-slate-100 [&_.ProseMirror_th]:!bg-slate-100 [&_.ProseMirror_a]:!text-blue-700'
-          : '[&_.ProseMirror]:!bg-white [&_.ProseMirror]:!text-slate-900 [&_.ProseMirror_blockquote]:!border-l-slate-300 [&_.ProseMirror_code]:!bg-slate-100 [&_.ProseMirror_pre]:!bg-slate-100 [&_.ProseMirror_th]:!bg-slate-100 [&_.ProseMirror_a]:!text-blue-700',
-        editorContentClassName
-      )}
+      surfaceOptions={{
+        ...surfaceOptions,
+        className: cn(
+          isDocumentPreview
+            ? 'w-full min-h-[300px] rounded-lg border border-slate-300 bg-white shadow-sm'
+            : 'w-full min-h-[250px] rounded-lg border border-slate-300 bg-white',
+          surfaceOptions?.className,
+          surfaceClassName
+        ),
+        editorContentClassName: cn(
+          isDocumentPreview
+            ? '[&_.ProseMirror]:!bg-white [&_.ProseMirror]:!text-slate-900 [&_.ProseMirror]:text-[12pt] [&_.ProseMirror]:leading-[1.5] [&_.ProseMirror]:[font-family:"Times_New_Roman",Georgia,serif] [&_.ProseMirror]:p-8 [&_.ProseMirror]:min-h-[620px] [&_.ProseMirror_blockquote]:!border-l-slate-400 [&_.ProseMirror_code]:!bg-slate-100 [&_.ProseMirror_pre]:!bg-slate-100 [&_.ProseMirror_th]:!bg-slate-100 [&_.ProseMirror_a]:!text-blue-700'
+            : '[&_.ProseMirror]:!bg-white [&_.ProseMirror]:!text-slate-900 [&_.ProseMirror_blockquote]:!border-l-slate-300 [&_.ProseMirror_code]:!bg-slate-100 [&_.ProseMirror_pre]:!bg-slate-100 [&_.ProseMirror_th]:!bg-slate-100 [&_.ProseMirror_a]:!text-blue-700',
+          surfaceOptions?.editorContentClassName,
+          editorContentClassName
+        ),
+        style: surfaceOptions?.style,
+      }}
     />
   );
 }

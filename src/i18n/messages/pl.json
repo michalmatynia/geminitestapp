@@ -1356,6 +1356,7 @@
       "draftListTitle": "Zapisane sekcje huba",
       "draftListSearchLabel": "Szukaj zapisanych sekcji huba",
       "draftListSearchPlaceholder": "Szukaj zapisanych sekcji huba",
+      "draftListClearFiltersButton": "Wyczysc filtry listy",
       "draftListStatusFilterLabel": "Filtruj zapisane sekcje po statusie",
       "draftListStatusFilterAll": "Wszystkie",
       "draftListStatusFilterEnabled": "Aktywne",

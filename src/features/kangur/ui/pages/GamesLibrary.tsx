@@ -830,7 +830,7 @@ function GamesLibraryContent(): React.JSX.Element {
                 <KangurSelectField
                   value={filters.gameId}
                   onChange={(event) =>
-                    updateFilter('gameId', event.target.value as GamesLibraryFilterState['gameId'])
+                    updateFilter('gameId', event.target.value)
                   }
                   aria-label={translations('filters.game.aria')}
                   size='sm'

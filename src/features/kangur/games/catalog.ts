@@ -547,7 +547,7 @@ const getGameCatalogIdsByLessonComponentId = (): Readonly<Partial<Record<KangurL
  */
 export const KANGUR_GAME_CATALOG: Readonly<Record<KangurGameId, KangurGameCatalogEntry>> =
   new Proxy({} as Record<KangurGameId, KangurGameCatalogEntry>, {
-    get: (_target, prop, receiver) => Reflect.get(getGameCatalogMap(), prop, receiver),
+    get: (_target, prop, receiver) => Reflect.get(getGameCatalogMap(), prop, receiver) as unknown,
     has: (_target, prop) => Reflect.has(getGameCatalogMap(), prop),
     ownKeys: () => Reflect.ownKeys(getGameCatalogMap()),
     getOwnPropertyDescriptor: (_target, prop) =>
@@ -556,7 +556,7 @@ export const KANGUR_GAME_CATALOG: Readonly<Record<KangurGameId, KangurGameCatalo
 
 export const KANGUR_GAME_CATALOG_LIST: readonly KangurGameCatalogEntry[] =
   new Proxy([] as KangurGameCatalogEntry[], {
-    get: (_target, prop, receiver) => Reflect.get(getGameCatalogList(), prop, receiver),
+    get: (_target, prop, receiver) => Reflect.get(getGameCatalogList(), prop, receiver) as unknown,
     has: (_target, prop) => Reflect.has(getGameCatalogList(), prop),
     ownKeys: () => Reflect.ownKeys(getGameCatalogList()),
     getOwnPropertyDescriptor: (_target, prop) =>
@@ -565,7 +565,7 @@ export const KANGUR_GAME_CATALOG_LIST: readonly KangurGameCatalogEntry[] =
 
 export const KANGUR_GAME_CATALOG_BY_LESSON_ACTIVITY_ID: Readonly<Partial<Record<KangurLessonActivityId, KangurGameId>>> =
   new Proxy({} as Partial<Record<KangurLessonActivityId, KangurGameId>>, {
-    get: (_target, prop, receiver) => Reflect.get(getGameCatalogByLessonActivityId(), prop, receiver),
+    get: (_target, prop, receiver) => Reflect.get(getGameCatalogByLessonActivityId(), prop, receiver) as unknown,
     has: (_target, prop) => Reflect.has(getGameCatalogByLessonActivityId(), prop),
     ownKeys: () => Reflect.ownKeys(getGameCatalogByLessonActivityId()),
     getOwnPropertyDescriptor: (_target, prop) =>
@@ -574,7 +574,7 @@ export const KANGUR_GAME_CATALOG_BY_LESSON_ACTIVITY_ID: Readonly<Partial<Record<
 
 export const KANGUR_GAME_CATALOG_IDS_BY_ENGINE_ID: Readonly<Partial<Record<KangurGameEngineId, KangurGameId[]>>> =
   new Proxy({} as Partial<Record<KangurGameEngineId, KangurGameId[]>>, {
-    get: (_target, prop, receiver) => Reflect.get(getGameCatalogIdsByEngineId(), prop, receiver),
+    get: (_target, prop, receiver) => Reflect.get(getGameCatalogIdsByEngineId(), prop, receiver) as unknown,
     has: (_target, prop) => Reflect.has(getGameCatalogIdsByEngineId(), prop),
     ownKeys: () => Reflect.ownKeys(getGameCatalogIdsByEngineId()),
     getOwnPropertyDescriptor: (_target, prop) =>
@@ -583,7 +583,7 @@ export const KANGUR_GAME_CATALOG_IDS_BY_ENGINE_ID: Readonly<Partial<Record<Kangu
 
 export const KANGUR_GAME_CATALOG_IDS_BY_LESSON_COMPONENT_ID: Readonly<Partial<Record<KangurLessonComponentId, KangurGameId[]>>> =
   new Proxy({} as Partial<Record<KangurLessonComponentId, KangurGameId[]>>, {
-    get: (_target, prop, receiver) => Reflect.get(getGameCatalogIdsByLessonComponentId(), prop, receiver),
+    get: (_target, prop, receiver) => Reflect.get(getGameCatalogIdsByLessonComponentId(), prop, receiver) as unknown,
     has: (_target, prop) => Reflect.has(getGameCatalogIdsByLessonComponentId(), prop),
     ownKeys: () => Reflect.ownKeys(getGameCatalogIdsByLessonComponentId()),
     getOwnPropertyDescriptor: (_target, prop) =>

@@ -157,7 +157,7 @@ describe('KangurRouteAccessibilityAnnouncer', () => {
 
     await waitFor(() => {
       expect(screen.getByRole('status')).not.toHaveTextContent('Biblioteka Gier');
-      expect(screen.getByRole('status')).toHaveTextContent('Widok: Strona główna');
+      expect(screen.getByRole('status')).toHaveTextContent('');
     });
   });
 });

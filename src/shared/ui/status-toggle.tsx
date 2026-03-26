@@ -10,37 +10,6 @@ import { badgeVariants } from './badge';
 
 export type { StatusToggleProps };
 
-type StatusToggleBadgeProps = {
-  variant: VariantProps<typeof badgeVariants>['variant'];
-  onClick: (() => void) | undefined;
-  className: string;
-  label: string;
-  disabled: boolean;
-  pressed: boolean;
-};
-
-function StatusToggleBadge({
-  variant,
-  onClick,
-  className,
-  label,
-  disabled,
-  pressed,
-}: StatusToggleBadgeProps): React.JSX.Element {
-  return (
-    <button
-      type='button'
-      className={cn(badgeVariants({ variant }), className)}
-      onClick={onClick}
-      disabled={disabled}
-      aria-pressed={pressed}
-      aria-label={label}
-    >
-      {label}
-    </button>
-  );
-}
-
 /**
  * StatusToggle - A button that toggles between two states (ON/OFF).
  * Refactored to leverage the shared Badge component for consistent semantic styling.
@@ -80,18 +49,21 @@ export function StatusToggle({
   };
 
   return (
-    <StatusToggleBadge
-      variant={getBadgeVariant()}
-      onClick={disabled ? undefined : () => onToggle(!enabled)}
+    <button
+      type='button'
       className={cn(
+        badgeVariants({ variant: getBadgeVariant() }),
         'cursor-pointer select-none font-bold transition-all border',
         size === 'sm' ? 'h-6 px-2 text-[9px]' : 'h-7 px-2.5 text-[10px]',
         disabled && 'cursor-not-allowed opacity-50',
         className
       )}
-      label={enabled ? enabledLabel : disabledLabel}
+      onClick={disabled ? undefined : () => onToggle(!enabled)}
       disabled={Boolean(disabled)}
-      pressed={enabled}
-    />
+      aria-pressed={enabled}
+      aria-label={enabled ? enabledLabel : disabledLabel}
+    >
+      {enabled ? enabledLabel : disabledLabel}
+    </button>
   );
 }

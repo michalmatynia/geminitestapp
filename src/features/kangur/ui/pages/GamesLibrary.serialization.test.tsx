@@ -84,6 +84,7 @@ const {
   }),
   useKangurGameLibraryPageMock: vi.fn(),
 }));
+const ALL_TEST_GAMES = createDefaultKangurGames();
 
 const messageMap = {
   'KangurGamesLibraryPage.title': 'Games library',
@@ -214,6 +215,7 @@ const messageMap = {
   'KangurGamesLibraryPage.modal.draftListTitle': 'Saved hub sections',
   'KangurGamesLibraryPage.modal.draftListSearchLabel': 'Search saved hub sections',
   'KangurGamesLibraryPage.modal.draftListSearchPlaceholder': 'Search saved hub sections',
+  'KangurGamesLibraryPage.modal.draftListClearFiltersButton': 'Clear list filters',
   'KangurGamesLibraryPage.modal.draftListStatusFilterLabel':
     'Filter saved hub sections by status',
   'KangurGamesLibraryPage.modal.draftListStatusFilterAll': 'All',
@@ -629,6 +631,15 @@ vi.mock('@/features/kangur/ui/design/primitives', () => ({
 
 import GamesLibrary from '@/features/kangur/ui/pages/GamesLibrary';
 
+const buildPageDataForGameIds = (...gameIds: string[]) =>
+  createKangurGameLibraryPageDataFromGames({
+    games: structuredClone(
+      gameIds.length === 0
+        ? ALL_TEST_GAMES
+        : ALL_TEST_GAMES.filter((game) => gameIds.includes(game.id))
+    ),
+  });
+
 const openRuntimeTab = (): void => {
   fireEvent.click(screen.getByRole('tab', { name: 'Runtime' }));
 };
@@ -654,9 +665,7 @@ describe('GamesLibrary serialization audit', () => {
       },
       status: 'authenticated',
     };
-    pageDataState.value = createKangurGameLibraryPageDataFromGames({
-      games: createDefaultKangurGames(),
-    });
+    pageDataState.value = buildPageDataForGameIds();
   });
 
   const enableCompatibilityCleanupAudit = (): void => {
@@ -1244,6 +1253,7 @@ describe('GamesLibrary serialization audit', () => {
   });
 
   it('opens the game modal from a catalog card and scaffolds hub-section controls for the clock game', () => {
+    pageDataState.value = buildPageDataForGameIds('clock_training');
     render(<GamesLibrary />);
 
     const clockCard = document.getElementById('kangur-game-card-clock_training');
@@ -1292,6 +1302,7 @@ describe('GamesLibrary serialization audit', () => {
   });
 
   it('shows the current unsaved attached lesson in the linked lesson chip list', () => {
+    pageDataState.value = buildPageDataForGameIds('clock_training');
     render(<GamesLibrary />);
 
     const clockCard = document.getElementById('kangur-game-card-clock_training');
@@ -1318,6 +1329,7 @@ describe('GamesLibrary serialization audit', () => {
   });
 
   it('opens the game modal from the game card keyboard trigger', () => {
+    pageDataState.value = buildPageDataForGameIds('clock_training');
     render(<GamesLibrary />);
 
     const clockCard = document.getElementById('kangur-game-card-clock_training');
@@ -1339,6 +1351,7 @@ describe('GamesLibrary serialization audit', () => {
   });
 
   it('blocks hub mutations while saved sections are still loading', () => {
+    pageDataState.value = buildPageDataForGameIds('clock_training');
     lessonGameSectionsPendingState.value = true;
 
     render(<GamesLibrary />);
@@ -1361,6 +1374,7 @@ describe('GamesLibrary serialization audit', () => {
   });
 
   it('blocks editor interactions while a hub mutation is pending', () => {
+    pageDataState.value = buildPageDataForGameIds('clock_training');
     lessonGameSectionsState.value = [
       {
         id: 'clock_saved_section',
@@ -1448,6 +1462,7 @@ describe('GamesLibrary serialization audit', () => {
   });
 
   it('loads a saved hub section into the editor and persists updates on the same record', () => {
+    pageDataState.value = buildPageDataForGameIds('clock_training');
     lessonGameSectionsState.value = [
       {
         id: 'clock_saved_section',
@@ -1524,6 +1539,7 @@ describe('GamesLibrary serialization audit', () => {
   });
 
   it('updates clock focus independently from clock hand visibility', () => {
+    pageDataState.value = buildPageDataForGameIds('clock_training');
     lessonGameSectionsState.value = [
       {
         id: 'clock_saved_section',
@@ -1608,6 +1624,7 @@ describe('GamesLibrary serialization audit', () => {
   });
 
   it('shows a validation message when both clock hands are hidden', () => {
+    pageDataState.value = buildPageDataForGameIds('clock_training');
     render(<GamesLibrary />);
 
     const clockCard = document.getElementById('kangur-game-card-clock_training');
@@ -1639,6 +1656,7 @@ describe('GamesLibrary serialization audit', () => {
   });
 
   it('shows required-field validation when lesson, name, and icon are missing', () => {
+    pageDataState.value = buildPageDataForGameIds('clock_training');
     render(<GamesLibrary />);
 
     const clockCard = document.getElementById('kangur-game-card-clock_training');
@@ -1668,6 +1686,7 @@ describe('GamesLibrary serialization audit', () => {
   });
 
   it('resets clock preview settings back to the default scaffold state', () => {
+    pageDataState.value = buildPageDataForGameIds('clock_training');
     render(<GamesLibrary />);
 
     const clockCard = document.getElementById('kangur-game-card-clock_training');
@@ -1720,6 +1739,7 @@ describe('GamesLibrary serialization audit', () => {
   });
 
   it('discards unsaved editor changes for the selected saved section', () => {
+    pageDataState.value = buildPageDataForGameIds('clock_training');
     lessonGameSectionsState.value = [
       {
         id: 'clock_saved_section',
@@ -1791,6 +1811,7 @@ describe('GamesLibrary serialization audit', () => {
   });
 
   it('lets the editor save a section as disabled before persisting', () => {
+    pageDataState.value = buildPageDataForGameIds('clock_training');
     lessonGameSectionsState.value = [
       {
         id: 'clock_saved_section',
@@ -1842,6 +1863,7 @@ describe('GamesLibrary serialization audit', () => {
   });
 
   it('lets the editor save a custom icon for a hub section', () => {
+    pageDataState.value = buildPageDataForGameIds('clock_training');
     render(<GamesLibrary />);
 
     const clockCard = document.getElementById('kangur-game-card-clock_training');
@@ -1876,6 +1898,7 @@ describe('GamesLibrary serialization audit', () => {
   });
 
   it('filters saved hub sections by search query', () => {
+    pageDataState.value = buildPageDataForGameIds('clock_training');
     lessonGameSectionsState.value = [
       {
         id: 'clock_saved_section',
@@ -2017,6 +2040,88 @@ describe('GamesLibrary serialization audit', () => {
     );
 
     expect(screen.queryByTestId('games-library-saved-section-clock_saved_section')).toBeNull();
+    expect(screen.getByTestId('games-library-saved-section-clock_secondary_section')).toBeInTheDocument();
+  });
+
+  it('clears saved hub section list filters in one action', () => {
+    lessonGameSectionsState.value = [
+      {
+        id: 'clock_saved_section',
+        lessonComponentId: 'clock',
+        gameId: 'clock_training',
+        title: 'Saved clock deck',
+        description: 'Saved section from the lesson hub.',
+        emoji: '🧩',
+        sortOrder: 1,
+        enabled: true,
+        settings: {
+          clock: {
+            clockSection: 'minutes',
+            initialMode: 'challenge',
+            showHourHand: false,
+            showMinuteHand: true,
+            showModeSwitch: true,
+            showTaskTitle: true,
+            showTimeDisplay: false,
+          },
+        },
+      },
+      {
+        id: 'clock_secondary_section',
+        lessonComponentId: 'calendar',
+        gameId: 'clock_training',
+        title: 'Fallback clock deck',
+        description: 'Fallback section from the lesson hub.',
+        emoji: '⏰',
+        sortOrder: 2,
+        enabled: false,
+        settings: {
+          clock: {
+            clockSection: 'hours',
+            initialMode: 'practice',
+            showHourHand: true,
+            showMinuteHand: true,
+            showModeSwitch: true,
+            showTaskTitle: true,
+            showTimeDisplay: true,
+          },
+        },
+      },
+    ];
+
+    render(<GamesLibrary />);
+
+    const clockCard = document.getElementById('kangur-game-card-clock_training');
+    if (!clockCard) {
+      throw new Error('Clock Training card container not found.');
+    }
+
+    fireEvent.click(within(clockCard).getByRole('button', { name: 'Preview & map' }));
+
+    const savedSectionsSearch = screen.getByRole('searchbox', {
+      name: 'Search saved hub sections',
+    });
+    const savedSectionsStatusFilter = within(
+      screen.getByRole('radiogroup', { name: 'Filter saved hub sections by status' })
+    );
+
+    fireEvent.change(savedSectionsSearch, {
+      target: { value: 'saved' },
+    });
+    fireEvent.click(savedSectionsStatusFilter.getByRole('radio', { name: 'Disabled' }));
+
+    expect(screen.getByTestId('games-library-saved-section-search-empty')).toHaveTextContent(
+      'No saved hub sections match the current filters.'
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: 'Clear list filters' }));
+
+    expect(savedSectionsSearch).toHaveValue('');
+    expect(savedSectionsStatusFilter.getByRole('radio', { name: 'All' })).toHaveAttribute(
+      'aria-checked',
+      'true'
+    );
+    expect(screen.getByTestId('games-library-saved-section-clock_saved_section')).toBeInTheDocument();
     expect(screen.getByTestId('games-library-saved-section-clock_secondary_section')).toBeInTheDocument();
   });
 
@@ -2341,6 +2446,7 @@ describe('GamesLibrary serialization audit', () => {
   });
 
   it('toggles a saved hub section between enabled and disabled states', async () => {
+    pageDataState.value = buildPageDataForGameIds('clock_training');
     lessonGameSectionsState.value = [
       {
         id: 'clock_saved_section',
@@ -2402,6 +2508,7 @@ describe('GamesLibrary serialization audit', () => {
   });
 
   it('preserves a disabled section when saving edits to the same record', async () => {
+    pageDataState.value = buildPageDataForGameIds('clock_training');
     lessonGameSectionsState.value = [
       {
         id: 'clock_saved_section',
@@ -2464,6 +2571,7 @@ describe('GamesLibrary serialization audit', () => {
   });
 
   it('keeps unsaved editor changes while reordering a different saved section', () => {
+    pageDataState.value = buildPageDataForGameIds('clock_training');
     lessonGameSectionsState.value = [
       {
         id: 'clock_saved_section',
@@ -2539,6 +2647,7 @@ describe('GamesLibrary serialization audit', () => {
   });
 
   it('keeps unsaved editor changes while deleting a different saved section', async () => {
+    pageDataState.value = buildPageDataForGameIds('clock_training');
     lessonGameSectionsState.value = [
       {
         id: 'clock_saved_section',
@@ -2629,6 +2738,7 @@ describe('GamesLibrary serialization audit', () => {
   });
 
   it('resets unsaved editor state when the modal is closed and reopened for the same game', () => {
+    pageDataState.value = buildPageDataForGameIds('clock_training');
     lessonGameSectionsState.value = [
       {
         id: 'clock_saved_section',
@@ -2686,6 +2796,7 @@ describe('GamesLibrary serialization audit', () => {
   });
 
   it('switches the open modal to the newly selected game without leaking the previous editor state', () => {
+    pageDataState.value = buildPageDataForGameIds('clock_training', 'division_groups');
     lessonGameSectionsByGameIdState.value = {
       clock_training: [
         {
@@ -2768,6 +2879,7 @@ describe('GamesLibrary serialization audit', () => {
   });
 
   it('keeps a new hub section draft in the editor when saving fails', async () => {
+    pageDataState.value = buildPageDataForGameIds('clock_training');
     replaceLessonGameSectionsMutateAsyncMock.mockImplementationOnce(async () => {
       throw new Error('save failed');
     });
@@ -2817,6 +2929,7 @@ describe('GamesLibrary serialization audit', () => {
   });
 
   it('clears stale sync errors when switching editor context inside the modal', async () => {
+    pageDataState.value = buildPageDataForGameIds('clock_training');
     lessonGameSectionsState.value = [
       {
         id: 'clock_saved_section',
@@ -2903,6 +3016,7 @@ describe('GamesLibrary serialization audit', () => {
   });
 
   it('restores the edited saved section when deleting it fails', async () => {
+    pageDataState.value = buildPageDataForGameIds('clock_training');
     lessonGameSectionsState.value = [
       {
         id: 'clock_saved_section',

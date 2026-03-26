@@ -8,12 +8,7 @@ import { useEffect } from 'react';
 import { FrontendPublicOwnerKangurShell } from '@/features/kangur/ui/FrontendPublicOwnerKangurShell';
 import { stripSiteLocalePrefix } from '@/shared/lib/i18n/site-locale';
 
-import type {
-  KangurStorefrontAppearanceMode,
-  KangurStorefrontThemeSettingsSnapshot,
-} from '@/features/kangur/storefront-appearance-settings';
-
-import type { JSX, ReactNode } from 'react';
+import type { JSX } from 'react';
 
 const KANGUR_COARSE_POINTER_QUERY = '(pointer: coarse)';
 const KANGUR_HOVER_NONE_QUERY = '(hover: none)';
@@ -67,16 +62,12 @@ const scheduleKangurWarmupTask = (callback: () => void): (() => void) => {
 
 export type FrontendPublicOwnerShellProps = {
   publicOwner: 'cms' | 'kangur';
-  children: ReactNode;
-  kangurInitialMode?: KangurStorefrontAppearanceMode;
-  kangurInitialThemeSettings?: Partial<KangurStorefrontThemeSettingsSnapshot>;
+  children: JSX.Element;
 };
 
 export default function FrontendPublicOwnerShellClient({
   publicOwner,
   children,
-  kangurInitialMode,
-  kangurInitialThemeSettings,
 }: FrontendPublicOwnerShellProps): JSX.Element {
   const pathname = usePathname();
   const browserPathname =
@@ -111,15 +102,8 @@ export default function FrontendPublicOwnerShellClient({
   }, [publicOwner]);
 
   if (publicOwner === 'kangur' && !isKangurAliasRoute && !isCanonicalPublicLoginRoute) {
-    return (
-      <FrontendPublicOwnerKangurShell
-        initialAppearance={{
-          mode: kangurInitialMode,
-          themeSettings: kangurInitialThemeSettings,
-        }}
-      />
-    );
+    return <FrontendPublicOwnerKangurShell />;
   }
 
-  return <>{children}</>;
+  return children;
 }

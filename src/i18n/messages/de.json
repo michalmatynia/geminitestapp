@@ -1356,6 +1356,7 @@
       "draftListTitle": "Gespeicherte Hub-Sektionen",
       "draftListSearchLabel": "Gespeicherte Hub-Sektionen durchsuchen",
       "draftListSearchPlaceholder": "Gespeicherte Hub-Sektionen durchsuchen",
+      "draftListClearFiltersButton": "Listenfilter zurucksetzen",
       "draftListStatusFilterLabel": "Gespeicherte Hub-Sektionen nach Status filtern",
       "draftListStatusFilterAll": "Alle",
       "draftListStatusFilterEnabled": "Aktiv",

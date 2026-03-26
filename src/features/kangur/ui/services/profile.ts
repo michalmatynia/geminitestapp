@@ -227,7 +227,7 @@ const getKangurLearnerProfileFallbackCopy = (
             `The game goal is already done, but today you earned only +${todayXpEarned} XP. One stronger training session should bring more than ${xpMomentumTarget} XP.`,
           descriptionWithOperation: (todayXpEarned, operation, averageXpPerSession) =>
             `The game goal is already done, but today you earned only +${todayXpEarned} XP. One stronger ${operation} session usually gives about ${averageXpPerSession} XP per attempt.`,
-          title: "Boost today's XP",
+          title: 'Boost today\'s XP',
         },
         dailyGoal: {
           descriptionMultiple: (remainingGames, todayXpEarned) =>

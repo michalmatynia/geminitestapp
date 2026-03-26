@@ -556,6 +556,7 @@
       "draftListTitle": "Збережені секції хаба",
       "draftListSearchLabel": "Пошук збережених секцій хаба",
       "draftListSearchPlaceholder": "Пошук збережених секцій хаба",
+      "draftListClearFiltersButton": "Очистити фільтри списку",
       "draftListStatusFilterLabel": "Фільтрувати збережені секції за статусом",
       "draftListStatusFilterAll": "Усі",
       "draftListStatusFilterEnabled": "Активні",

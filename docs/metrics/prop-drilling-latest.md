@@ -8,32 +8,32 @@ canonical: true
 ---
 # Prop Drilling Scan
 
-Generated at: 2026-03-26T20:15:03.497Z
+Generated at: 2026-03-26T20:30:52.748Z
 
 ## Snapshot
 
 - Scanned source files: 5867
 - JSX files scanned: 2139
-- Components detected: 3588
+- Components detected: 3580
 - Components forwarding parent props (hotspot threshold): 120
-- Components forwarding parent props (any): 216
-- Resolved forwarded transitions: 985
-- Candidate chains (depth >= 2): 985
-- Candidate chains (depth >= 3): 120
+- Components forwarding parent props (any): 205
+- Resolved forwarded transitions: 933
+- Candidate chains (depth >= 2): 933
+- Candidate chains (depth >= 3): 109
 - High-priority chains (depth >= 4): 0
-- Unknown spread forwarding edges: 19
+- Unknown spread forwarding edges: 11
 - Hotspot forwarding components backlog size: 120
 
 ## Hot Features
 
 | Feature Scope | Forwarding Components |
 | --- | ---: |
-| `feature:kangur` | 116 |
-| `shared-ui` | 38 |
-| `feature:ai` | 28 |
-| `feature:database` | 9 |
+| `feature:kangur` | 115 |
+| `shared-ui` | 35 |
+| `feature:ai` | 25 |
+| `feature:database` | 7 |
 | `feature:cms` | 6 |
-| `feature:products` | 6 |
+| `feature:products` | 5 |
 | `feature:foldertree` | 2 |
 | `feature:integrations` | 2 |
 | `feature:observability` | 2 |
@@ -41,7 +41,6 @@ Generated at: 2026-03-26T20:15:03.497Z
 | `feature:filemaker` | 1 |
 | `feature:viewer3d` | 1 |
 | `app` | 1 |
-| `feature:document-editor` | 1 |
 | `feature:notesapp` | 1 |
 | `feature:admin` | 1 |
 
@@ -67,108 +66,108 @@ Generated at: 2026-03-26T20:15:03.497Z
 | 16 | `KangurDrawingHistoryActions` | `src/features/kangur/ui/components/drawing-engine/KangurDrawingHistoryActions.tsx` | 10 | 10 | no | yes |
 | 17 | `ConfirmDialog` | `src/shared/ui/confirm-dialog.tsx` | 10 | 10 | no | yes |
 | 18 | `SettingsFormModal` | `src/shared/ui/templates/SettingsFormModal.tsx` | 9 | 10 | no | yes |
-| 19 | `AiPathsPillButton` | `src/features/ai/ai-paths/components/AiPathsPillButton.tsx` | 9 | 9 | no | yes |
-| 20 | `FormModalHeaderContent` | `src/shared/ui/FormModal.tsx` | 9 | 9 | no | yes |
-| 21 | `AppModal` | `src/shared/ui/app-modal.tsx` | 9 | 9 | no | yes |
-| 22 | `PanelPagination` | `src/shared/ui/templates/panels/PanelPagination.tsx` | 9 | 9 | no | yes |
-| 23 | `ClockTrainingStageGame` | `src/features/kangur/ui/components/ClockTrainingStageGame.tsx` | 8 | 12 | no | yes |
-| 24 | `AnalyticsEventsTable` | `src/shared/lib/analytics/components/AnalyticsEventsTable.tsx` | 8 | 11 | no | yes |
-| 25 | `KangurAssignmentManagerTimeLimitModal` | `src/features/kangur/ui/components/KangurAssignmentManagerTimeLimitModal.tsx` | 8 | 10 | no | yes |
-| 26 | `KangurDrawingSnapshotActions` | `src/features/kangur/ui/components/drawing-engine/KangurDrawingSnapshotActions.tsx` | 8 | 9 | no | yes |
-| 27 | `DetailModal` | `src/shared/ui/templates/modals/DetailModal.tsx` | 8 | 9 | no | yes |
-| 28 | `KangurGameSetupStage` | `src/features/kangur/ui/components/KangurGameSetupStage.tsx` | 8 | 8 | no | yes |
-| 29 | `KangurDrawingActionRow` | `src/features/kangur/ui/components/drawing-engine/KangurDrawingActionRow.tsx` | 8 | 8 | no | yes |
-| 30 | `SearchableSelect` | `src/shared/ui/searchable-select.tsx` | 8 | 8 | no | yes |
-| 31 | `VectorToolbarActionButtons` | `src/shared/ui/vector-canvas.rendering.tsx` | 8 | 8 | no | yes |
-| 32 | `StatusToggle` | `src/shared/ui/status-toggle.tsx` | 7 | 11 | no | yes |
-| 33 | `ActionMenu` | `src/shared/ui/ActionMenu.tsx` | 7 | 9 | no | yes |
-| 34 | `EditableCellInput` | `src/features/products/components/EditableCell.tsx` | 7 | 8 | no | yes |
-| 35 | `SelectModal` | `src/shared/ui/templates/modals/SelectModal.tsx` | 7 | 8 | no | yes |
-| 36 | `Tag` | `src/shared/ui/tag.tsx` | 6 | 8 | no | yes |
-| 37 | `ConfirmModal` | `src/shared/ui/templates/modals/ConfirmModal.tsx` | 6 | 8 | no | yes |
-| 38 | `KangurUnifiedLessonBase` | `src/features/kangur/ui/components/KangurUnifiedLesson.tsx` | 6 | 7 | no | yes |
-| 39 | `ValidationActionButton` | `src/features/ai/ai-paths/components/validation/ValidationActionButton.tsx` | 6 | 6 | no | yes |
-| 40 | `RuntimeEventEntry` | `src/features/ai/ai-paths/components/runtime-event-entry.tsx` | 5 | 9 | no | yes |
-| 41 | `KangurChoiceDialog` | `src/features/kangur/ui/components/KangurChoiceDialog.tsx` | 5 | 7 | no | yes |
-| 42 | `AttachSlugFormModal` | `src/features/cms/components/slugs/AttachSlugModal.tsx` | 5 | 6 | no | yes |
-| 43 | `KangurNarratorSettingsPanel` | `src/features/kangur/admin/components/KangurNarratorSettingsPanel.tsx` | 5 | 6 | no | yes |
-| 44 | `PromptGenerationOutputPromptPanel` | `src/shared/ui/PromptGenerationSection.tsx` | 5 | 6 | no | yes |
-| 45 | `JobQueueJsonField` | `src/features/ai/ai-paths/components/job-queue-run-card.tsx` | 5 | 5 | no | yes |
-| 46 | `KangurAdminWorkspaceIntroCard` | `src/features/kangur/admin/components/KangurAdminWorkspaceIntroCard.tsx` | 5 | 5 | no | yes |
-| 47 | `KangurAdminWorkspaceSectionCard` | `src/features/kangur/admin/components/KangurAdminWorkspaceSectionCard.tsx` | 5 | 5 | no | yes |
-| 48 | `KangurGameQuizStage` | `src/features/kangur/ui/components/KangurGameQuizStage.tsx` | 5 | 5 | no | yes |
-| 49 | `SkeletonGlassPanel` | `src/features/kangur/ui/components/KangurPageTransitionSkeleton.tsx` | 5 | 5 | no | yes |
-| 50 | `RefreshButton` | `src/shared/ui/RefreshButton.tsx` | 5 | 5 | no | yes |
-| 51 | `SearchInput` | `src/shared/ui/search-input.tsx` | 5 | 5 | no | yes |
-| 52 | `ProductListMobileCard` | `src/features/products/components/list/ProductListMobileCards.tsx` | 4 | 20 | no | yes |
-| 53 | `TreeSectionPicker` | `src/features/cms/components/page-builder/tree/TreeSectionPicker.tsx` | 4 | 6 | no | yes |
-| 54 | `AdminKangurSocialSettingsModal` | `src/features/kangur/admin/admin-kangur-social/AdminKangurSocialSettingsModal.tsx` | 4 | 6 | no | yes |
-| 55 | `JobQueueJsonTextarea` | `src/features/ai/ai-paths/components/job-queue-run-card.tsx` | 4 | 5 | no | yes |
-| 56 | `CentralDocsSyncCandidateCard` | `src/features/ai/ai-paths/components/validation/CentralDocsSyncPanel.tsx` | 4 | 5 | no | yes |
-| 57 | `SocialPostImagesPanel` | `src/features/kangur/admin/admin-kangur-social/SocialPost.ImagesPanel.tsx` | 4 | 5 | no | yes |
-| 58 | `PromptGenerationInputPanel` | `src/shared/ui/PromptGenerationSection.tsx` | 4 | 5 | no | yes |
-| 59 | `PromptGenerationModelPanel` | `src/shared/ui/PromptGenerationSection.tsx` | 4 | 5 | no | yes |
-| 60 | `PromptGenerationOutputToggle` | `src/shared/ui/PromptGenerationSection.tsx` | 4 | 5 | no | yes |
-| 61 | `FolderTreeSearchViewportTree` | `src/features/foldertree/v2/search/FolderTreeSearchViewport.tsx` | 4 | 4 | no | yes |
-| 62 | `ParentVerificationCard` | `src/features/kangur/ui/KangurLoginPage.tsx` | 4 | 4 | no | yes |
-| 63 | `KangurDialogHeader` | `src/features/kangur/ui/components/KangurDialogHeader.tsx` | 4 | 4 | no | yes |
-| 64 | `SkeletonInfoSurface` | `src/features/kangur/ui/components/KangurPageTransitionSkeleton.tsx` | 4 | 4 | no | yes |
-| 65 | `KangurTracingLessonFooter` | `src/features/kangur/ui/components/drawing-engine/KangurTracingLessonFooter.tsx` | 4 | 4 | no | yes |
-| 66 | `ProductMetadataMultiSelectField` | `src/features/products/components/form/ProductMetadataMultiSelectField.tsx` | 4 | 4 | no | yes |
-| 67 | `TableDetailCard` | `src/features/database/pages/DatabasePreviewPage.tsx` | 3 | 11 | no | yes |
-| 68 | `GamesLibraryGameModal` | `src/features/kangur/ui/pages/GamesLibraryGameModal.tsx` | 3 | 6 | no | yes |
-| 69 | `RunComparisonRowSummary` | `src/features/ai/ai-paths/components/RunComparisonTool.tsx` | 3 | 5 | no | yes |
-| 70 | `FilemakerEntityTableFilters` | `src/features/filemaker/components/shared/FilemakerEntityTablePage.tsx` | 3 | 5 | no | yes |
-| 71 | `DatabaseActionsRestoreItem` | `src/features/database/components/DatabaseColumns.tsx` | 3 | 4 | no | yes |
-| 72 | `DatabaseActionsDeleteItem` | `src/features/database/components/DatabaseColumns.tsx` | 3 | 4 | no | yes |
-| 73 | `JobRow` | `src/features/kangur/admin/admin-kangur-social/KangurSocialPipelineQueuePanel.tsx` | 3 | 4 | no | yes |
-| 74 | `KangurStandardPageLayout` | `src/features/kangur/ui/components/KangurStandardPageLayout.tsx` | 3 | 4 | no | yes |
-| 75 | `PointerDropZone` | `src/features/kangur/ui/components/adding-ball-game/AddingBallGame.Shared.tsx` | 3 | 4 | no | yes |
-| 76 | `CanvasSelectedWireEndpointCard` | `src/features/ai/ai-paths/components/canvas-sidebar.tsx` | 3 | 3 | no | yes |
-| 77 | `RuntimeEventLogActionButton` | `src/features/ai/ai-paths/components/runtime-event-log-panel.tsx` | 3 | 3 | no | yes |
-| 78 | `RuntimeEventLogCountBadge` | `src/features/ai/ai-paths/components/runtime-event-log-panel.tsx` | 3 | 3 | no | yes |
-| 79 | `CentralDocsSyncSummaryBadge` | `src/features/ai/ai-paths/components/validation/CentralDocsSyncPanel.tsx` | 3 | 3 | no | yes |
-| 80 | `ValidationMetaBadge` | `src/features/ai/ai-paths/components/validation/ValidationMetaBadge.tsx` | 3 | 3 | no | yes |
-| 81 | `TableDetailCardActions` | `src/features/database/pages/DatabasePreviewPage.tsx` | 3 | 3 | no | yes |
-| 82 | `FolderTreeSearchViewportSearchBar` | `src/features/foldertree/v2/search/FolderTreeSearchViewport.tsx` | 3 | 3 | no | yes |
-| 83 | `KangurAdminCard` | `src/features/kangur/admin/components/KangurAdminCard.tsx` | 3 | 3 | yes | yes |
-| 84 | `KangurAdminInsetCard` | `src/features/kangur/admin/components/KangurAdminCard.tsx` | 3 | 3 | yes | yes |
-| 85 | `KangurCmsBuilderRightPanel` | `src/features/kangur/cms-builder/KangurCmsBuilderRightPanel.tsx` | 3 | 3 | no | yes |
-| 86 | `FrontendPublicOwnerKangurShell` | `src/features/kangur/ui/FrontendPublicOwnerKangurShell.tsx` | 3 | 3 | no | yes |
-| 87 | `KangurPublicApp` | `src/features/kangur/ui/KangurPublicApp.tsx` | 3 | 3 | no | yes |
-| 88 | `KangurPublicAppEntry` | `src/features/kangur/ui/KangurPublicAppEntry.tsx` | 3 | 3 | no | yes |
-| 89 | `KangurElevatedUserMenu` | `src/features/kangur/ui/components/KangurElevatedUserMenu.tsx` | 3 | 3 | no | yes |
-| 90 | `KangurPrimaryNavigation` | `src/features/kangur/ui/components/KangurPrimaryNavigation.tsx` | 3 | 3 | no | yes |
-| 91 | `KangurUnifiedLessonPanel` | `src/features/kangur/ui/components/KangurUnifiedLesson.tsx` | 3 | 3 | yes | yes |
-| 92 | `FocusModeTogglePortal` | `src/shared/ui/FocusModeTogglePortal.tsx` | 3 | 3 | no | yes |
-| 93 | `PromptGenerationInitialResultPanel` | `src/shared/ui/PromptGenerationSection.tsx` | 3 | 3 | no | yes |
-| 94 | `PromptGenerationFinalResultPanel` | `src/shared/ui/PromptGenerationSection.tsx` | 3 | 3 | no | yes |
-| 95 | `Asset3DCard` | `src/features/viewer3d/components/Asset3DCard.tsx` | 2 | 9 | no | yes |
-| 96 | `AgenticAssignmentGame` | `src/features/kangur/ui/components/AgenticAssignmentGame.tsx` | 2 | 8 | no | yes |
-| 97 | `AgenticDrawGame` | `src/features/kangur/ui/components/AgenticCodingMiniGames.draw.tsx` | 2 | 7 | no | yes |
-| 98 | `KangurMusicPianoRoll` | `src/features/kangur/ui/components/music/KangurMusicPianoRoll.tsx` | 2 | 7 | no | yes |
-| 99 | `KangurTrainingSetupPanel` | `src/features/kangur/ui/components/KangurTrainingSetupPanel.tsx` | 2 | 6 | no | yes |
-| 100 | `AgenticSequenceGame` | `src/features/kangur/ui/components/AgenticCodingMiniGames.sequence.tsx` | 2 | 5 | no | yes |
-| 101 | `AgenticSortGame` | `src/features/kangur/ui/components/AgenticCodingMiniGames.sort.tsx` | 2 | 5 | no | yes |
-| 102 | `AgenticTrimGame` | `src/features/kangur/ui/components/AgenticCodingMiniGames.trim.tsx` | 2 | 5 | no | yes |
-| 103 | `CompleteEquation` | `src/features/kangur/ui/components/adding-ball-game/AddingBallGame.CompleteEquation.tsx` | 2 | 4 | no | yes |
-| 104 | `PortableEngineOutlineBadge` | `src/features/ai/ai-paths/components/PortableEngineTrendSnapshotsPanel.tsx` | 2 | 3 | yes | yes |
-| 105 | `HomeFallbackContent` | `src/features/cms/components/frontend/home/home-fallback-content.tsx` | 2 | 3 | no | yes |
-| 106 | `CategoryMapperNameCell` | `src/features/integrations/components/marketplaces/category-mapper/category-table/CategoryMapperNameCell.tsx` | 2 | 3 | no | yes |
-| 107 | `SocialPostEditorModal` | `src/features/kangur/admin/admin-kangur-social/SocialPost.EditorModal.tsx` | 2 | 3 | no | yes |
-| 108 | `CalendarInteractiveStageGame` | `src/features/kangur/ui/components/CalendarInteractiveStageGame.tsx` | 2 | 3 | no | yes |
-| 109 | `BedroomScene` | `src/features/kangur/ui/components/EnglishAdjectivesSceneGame.tsx` | 2 | 3 | no | yes |
-| 110 | `ToyShelfScene` | `src/features/kangur/ui/components/EnglishAdjectivesSceneGame.tsx` | 2 | 3 | no | yes |
-| 111 | `StudyCornerScene` | `src/features/kangur/ui/components/EnglishAdjectivesSceneGame.tsx` | 2 | 3 | no | yes |
-| 112 | `PortraitScene` | `src/features/kangur/ui/components/EnglishAdjectivesSceneGame.tsx` | 2 | 3 | no | yes |
-| 113 | `PlaygroundScene` | `src/features/kangur/ui/components/EnglishAdjectivesSceneGame.tsx` | 2 | 3 | no | yes |
-| 114 | `KangurLessonLibraryCardAside` | `src/features/kangur/ui/components/KangurLessonLibraryCard.tsx` | 2 | 3 | no | yes |
-| 115 | `LessonsLibrarySkeleton` | `src/features/kangur/ui/components/KangurPageTransitionSkeleton.tsx` | 2 | 3 | no | yes |
-| 116 | `SystemLogDetailsContent` | `src/features/observability/pages/system-logs/SystemLogs.Table.tsx` | 2 | 3 | no | yes |
-| 117 | `PasswordInput` | `src/shared/ui/password-input.tsx` | 2 | 3 | yes | yes |
-| 118 | `VectorToolbarToolButtons` | `src/shared/ui/vector-canvas.rendering.tsx` | 2 | 3 | no | yes |
-| 119 | `Error` | `src/app/(frontend)/kangur/error.tsx` | 2 | 2 | no | yes |
-| 120 | `RichTextEditorImpl` | `src/features/document-editor/components/RichTextEditorImpl.tsx` | 2 | 2 | no | yes |
+| 19 | `FormModalHeaderContent` | `src/shared/ui/FormModal.tsx` | 9 | 9 | no | yes |
+| 20 | `AppModal` | `src/shared/ui/app-modal.tsx` | 9 | 9 | no | yes |
+| 21 | `PanelPagination` | `src/shared/ui/templates/panels/PanelPagination.tsx` | 9 | 9 | no | yes |
+| 22 | `ClockTrainingStageGame` | `src/features/kangur/ui/components/ClockTrainingStageGame.tsx` | 8 | 12 | no | yes |
+| 23 | `AnalyticsEventsTable` | `src/shared/lib/analytics/components/AnalyticsEventsTable.tsx` | 8 | 11 | no | yes |
+| 24 | `KangurAssignmentManagerTimeLimitModal` | `src/features/kangur/ui/components/KangurAssignmentManagerTimeLimitModal.tsx` | 8 | 10 | no | yes |
+| 25 | `KangurDrawingSnapshotActions` | `src/features/kangur/ui/components/drawing-engine/KangurDrawingSnapshotActions.tsx` | 8 | 9 | no | yes |
+| 26 | `DetailModal` | `src/shared/ui/templates/modals/DetailModal.tsx` | 8 | 9 | no | yes |
+| 27 | `KangurGameSetupStage` | `src/features/kangur/ui/components/KangurGameSetupStage.tsx` | 8 | 8 | no | yes |
+| 28 | `KangurDrawingActionRow` | `src/features/kangur/ui/components/drawing-engine/KangurDrawingActionRow.tsx` | 8 | 8 | no | yes |
+| 29 | `SearchableSelect` | `src/shared/ui/searchable-select.tsx` | 8 | 8 | no | yes |
+| 30 | `VectorToolbarActionButtons` | `src/shared/ui/vector-canvas.rendering.tsx` | 8 | 8 | no | yes |
+| 31 | `ActionMenu` | `src/shared/ui/ActionMenu.tsx` | 7 | 9 | no | yes |
+| 32 | `SelectModal` | `src/shared/ui/templates/modals/SelectModal.tsx` | 7 | 8 | no | yes |
+| 33 | `Tag` | `src/shared/ui/tag.tsx` | 6 | 8 | no | yes |
+| 34 | `ConfirmModal` | `src/shared/ui/templates/modals/ConfirmModal.tsx` | 6 | 8 | no | yes |
+| 35 | `KangurUnifiedLessonBase` | `src/features/kangur/ui/components/KangurUnifiedLesson.tsx` | 6 | 7 | no | yes |
+| 36 | `RuntimeEventEntry` | `src/features/ai/ai-paths/components/runtime-event-entry.tsx` | 5 | 9 | no | yes |
+| 37 | `KangurChoiceDialog` | `src/features/kangur/ui/components/KangurChoiceDialog.tsx` | 5 | 7 | no | yes |
+| 38 | `AttachSlugFormModal` | `src/features/cms/components/slugs/AttachSlugModal.tsx` | 5 | 6 | no | yes |
+| 39 | `KangurNarratorSettingsPanel` | `src/features/kangur/admin/components/KangurNarratorSettingsPanel.tsx` | 5 | 6 | no | yes |
+| 40 | `PromptGenerationOutputPromptPanel` | `src/shared/ui/PromptGenerationSection.tsx` | 5 | 6 | no | yes |
+| 41 | `JobQueueJsonField` | `src/features/ai/ai-paths/components/job-queue-run-card.tsx` | 5 | 5 | no | yes |
+| 42 | `KangurAdminWorkspaceIntroCard` | `src/features/kangur/admin/components/KangurAdminWorkspaceIntroCard.tsx` | 5 | 5 | no | yes |
+| 43 | `KangurAdminWorkspaceSectionCard` | `src/features/kangur/admin/components/KangurAdminWorkspaceSectionCard.tsx` | 5 | 5 | no | yes |
+| 44 | `KangurGameQuizStage` | `src/features/kangur/ui/components/KangurGameQuizStage.tsx` | 5 | 5 | no | yes |
+| 45 | `SkeletonGlassPanel` | `src/features/kangur/ui/components/KangurPageTransitionSkeleton.tsx` | 5 | 5 | no | yes |
+| 46 | `RefreshButton` | `src/shared/ui/RefreshButton.tsx` | 5 | 5 | no | yes |
+| 47 | `SearchInput` | `src/shared/ui/search-input.tsx` | 5 | 5 | no | yes |
+| 48 | `ProductListMobileCard` | `src/features/products/components/list/ProductListMobileCards.tsx` | 4 | 20 | no | yes |
+| 49 | `TreeSectionPicker` | `src/features/cms/components/page-builder/tree/TreeSectionPicker.tsx` | 4 | 6 | no | yes |
+| 50 | `AdminKangurSocialSettingsModal` | `src/features/kangur/admin/admin-kangur-social/AdminKangurSocialSettingsModal.tsx` | 4 | 6 | no | yes |
+| 51 | `JobQueueJsonTextarea` | `src/features/ai/ai-paths/components/job-queue-run-card.tsx` | 4 | 5 | no | yes |
+| 52 | `CentralDocsSyncCandidateCard` | `src/features/ai/ai-paths/components/validation/CentralDocsSyncPanel.tsx` | 4 | 5 | no | yes |
+| 53 | `SocialPostImagesPanel` | `src/features/kangur/admin/admin-kangur-social/SocialPost.ImagesPanel.tsx` | 4 | 5 | no | yes |
+| 54 | `PromptGenerationInputPanel` | `src/shared/ui/PromptGenerationSection.tsx` | 4 | 5 | no | yes |
+| 55 | `PromptGenerationModelPanel` | `src/shared/ui/PromptGenerationSection.tsx` | 4 | 5 | no | yes |
+| 56 | `PromptGenerationOutputToggle` | `src/shared/ui/PromptGenerationSection.tsx` | 4 | 5 | no | yes |
+| 57 | `FolderTreeSearchViewportTree` | `src/features/foldertree/v2/search/FolderTreeSearchViewport.tsx` | 4 | 4 | no | yes |
+| 58 | `ParentVerificationCard` | `src/features/kangur/ui/KangurLoginPage.tsx` | 4 | 4 | no | yes |
+| 59 | `KangurDialogHeader` | `src/features/kangur/ui/components/KangurDialogHeader.tsx` | 4 | 4 | no | yes |
+| 60 | `SkeletonInfoSurface` | `src/features/kangur/ui/components/KangurPageTransitionSkeleton.tsx` | 4 | 4 | no | yes |
+| 61 | `KangurTracingLessonFooter` | `src/features/kangur/ui/components/drawing-engine/KangurTracingLessonFooter.tsx` | 4 | 4 | no | yes |
+| 62 | `ProductMetadataMultiSelectField` | `src/features/products/components/form/ProductMetadataMultiSelectField.tsx` | 4 | 4 | no | yes |
+| 63 | `TableDetailCard` | `src/features/database/pages/DatabasePreviewPage.tsx` | 3 | 11 | no | yes |
+| 64 | `GamesLibraryGameModal` | `src/features/kangur/ui/pages/GamesLibraryGameModal.tsx` | 3 | 6 | no | yes |
+| 65 | `RunComparisonRowSummary` | `src/features/ai/ai-paths/components/RunComparisonTool.tsx` | 3 | 5 | no | yes |
+| 66 | `FilemakerEntityTableFilters` | `src/features/filemaker/components/shared/FilemakerEntityTablePage.tsx` | 3 | 5 | no | yes |
+| 67 | `JobRow` | `src/features/kangur/admin/admin-kangur-social/KangurSocialPipelineQueuePanel.tsx` | 3 | 4 | no | yes |
+| 68 | `KangurStandardPageLayout` | `src/features/kangur/ui/components/KangurStandardPageLayout.tsx` | 3 | 4 | no | yes |
+| 69 | `PointerDropZone` | `src/features/kangur/ui/components/adding-ball-game/AddingBallGame.Shared.tsx` | 3 | 4 | no | yes |
+| 70 | `CanvasSelectedWireEndpointCard` | `src/features/ai/ai-paths/components/canvas-sidebar.tsx` | 3 | 3 | no | yes |
+| 71 | `RuntimeEventLogActionButton` | `src/features/ai/ai-paths/components/runtime-event-log-panel.tsx` | 3 | 3 | no | yes |
+| 72 | `RuntimeEventLogCountBadge` | `src/features/ai/ai-paths/components/runtime-event-log-panel.tsx` | 3 | 3 | no | yes |
+| 73 | `CentralDocsSyncSummaryBadge` | `src/features/ai/ai-paths/components/validation/CentralDocsSyncPanel.tsx` | 3 | 3 | no | yes |
+| 74 | `ValidationMetaBadge` | `src/features/ai/ai-paths/components/validation/ValidationMetaBadge.tsx` | 3 | 3 | no | yes |
+| 75 | `TableDetailCardActions` | `src/features/database/pages/DatabasePreviewPage.tsx` | 3 | 3 | no | yes |
+| 76 | `FolderTreeSearchViewportSearchBar` | `src/features/foldertree/v2/search/FolderTreeSearchViewport.tsx` | 3 | 3 | no | yes |
+| 77 | `KangurAdminCard` | `src/features/kangur/admin/components/KangurAdminCard.tsx` | 3 | 3 | yes | yes |
+| 78 | `KangurAdminInsetCard` | `src/features/kangur/admin/components/KangurAdminCard.tsx` | 3 | 3 | yes | yes |
+| 79 | `KangurCmsBuilderRightPanel` | `src/features/kangur/cms-builder/KangurCmsBuilderRightPanel.tsx` | 3 | 3 | no | yes |
+| 80 | `FrontendPublicOwnerKangurShell` | `src/features/kangur/ui/FrontendPublicOwnerKangurShell.tsx` | 3 | 3 | no | yes |
+| 81 | `KangurPublicApp` | `src/features/kangur/ui/KangurPublicApp.tsx` | 3 | 3 | no | yes |
+| 82 | `KangurPublicAppEntry` | `src/features/kangur/ui/KangurPublicAppEntry.tsx` | 3 | 3 | no | yes |
+| 83 | `KangurElevatedUserMenu` | `src/features/kangur/ui/components/KangurElevatedUserMenu.tsx` | 3 | 3 | no | yes |
+| 84 | `KangurPrimaryNavigation` | `src/features/kangur/ui/components/KangurPrimaryNavigation.tsx` | 3 | 3 | no | yes |
+| 85 | `KangurUnifiedLessonPanel` | `src/features/kangur/ui/components/KangurUnifiedLesson.tsx` | 3 | 3 | yes | yes |
+| 86 | `FocusModeTogglePortal` | `src/shared/ui/FocusModeTogglePortal.tsx` | 3 | 3 | no | yes |
+| 87 | `PromptGenerationInitialResultPanel` | `src/shared/ui/PromptGenerationSection.tsx` | 3 | 3 | no | yes |
+| 88 | `PromptGenerationFinalResultPanel` | `src/shared/ui/PromptGenerationSection.tsx` | 3 | 3 | no | yes |
+| 89 | `Asset3DCard` | `src/features/viewer3d/components/Asset3DCard.tsx` | 2 | 9 | no | yes |
+| 90 | `AgenticAssignmentGame` | `src/features/kangur/ui/components/AgenticAssignmentGame.tsx` | 2 | 8 | no | yes |
+| 91 | `AgenticDrawGame` | `src/features/kangur/ui/components/AgenticCodingMiniGames.draw.tsx` | 2 | 7 | no | yes |
+| 92 | `KangurMusicPianoRoll` | `src/features/kangur/ui/components/music/KangurMusicPianoRoll.tsx` | 2 | 7 | no | yes |
+| 93 | `KangurTrainingSetupPanel` | `src/features/kangur/ui/components/KangurTrainingSetupPanel.tsx` | 2 | 6 | no | yes |
+| 94 | `AgenticSequenceGame` | `src/features/kangur/ui/components/AgenticCodingMiniGames.sequence.tsx` | 2 | 5 | no | yes |
+| 95 | `AgenticSortGame` | `src/features/kangur/ui/components/AgenticCodingMiniGames.sort.tsx` | 2 | 5 | no | yes |
+| 96 | `AgenticTrimGame` | `src/features/kangur/ui/components/AgenticCodingMiniGames.trim.tsx` | 2 | 5 | no | yes |
+| 97 | `CompleteEquation` | `src/features/kangur/ui/components/adding-ball-game/AddingBallGame.CompleteEquation.tsx` | 2 | 4 | no | yes |
+| 98 | `HomeFallbackContent` | `src/features/cms/components/frontend/home/home-fallback-content.tsx` | 2 | 3 | no | yes |
+| 99 | `CategoryMapperNameCell` | `src/features/integrations/components/marketplaces/category-mapper/category-table/CategoryMapperNameCell.tsx` | 2 | 3 | no | yes |
+| 100 | `SocialPostEditorModal` | `src/features/kangur/admin/admin-kangur-social/SocialPost.EditorModal.tsx` | 2 | 3 | no | yes |
+| 101 | `CalendarInteractiveStageGame` | `src/features/kangur/ui/components/CalendarInteractiveStageGame.tsx` | 2 | 3 | no | yes |
+| 102 | `BedroomScene` | `src/features/kangur/ui/components/EnglishAdjectivesSceneGame.tsx` | 2 | 3 | no | yes |
+| 103 | `ToyShelfScene` | `src/features/kangur/ui/components/EnglishAdjectivesSceneGame.tsx` | 2 | 3 | no | yes |
+| 104 | `StudyCornerScene` | `src/features/kangur/ui/components/EnglishAdjectivesSceneGame.tsx` | 2 | 3 | no | yes |
+| 105 | `PortraitScene` | `src/features/kangur/ui/components/EnglishAdjectivesSceneGame.tsx` | 2 | 3 | no | yes |
+| 106 | `PlaygroundScene` | `src/features/kangur/ui/components/EnglishAdjectivesSceneGame.tsx` | 2 | 3 | no | yes |
+| 107 | `KangurLessonLibraryCardAside` | `src/features/kangur/ui/components/KangurLessonLibraryCard.tsx` | 2 | 3 | no | yes |
+| 108 | `LessonsLibrarySkeleton` | `src/features/kangur/ui/components/KangurPageTransitionSkeleton.tsx` | 2 | 3 | no | yes |
+| 109 | `SystemLogDetailsContent` | `src/features/observability/pages/system-logs/SystemLogs.Table.tsx` | 2 | 3 | no | yes |
+| 110 | `PasswordInput` | `src/shared/ui/password-input.tsx` | 2 | 3 | yes | yes |
+| 111 | `VectorToolbarToolButtons` | `src/shared/ui/vector-canvas.rendering.tsx` | 2 | 3 | no | yes |
+| 112 | `Error` | `src/app/(frontend)/kangur/error.tsx` | 2 | 2 | no | yes |
+| 113 | `FrontendPublicOwnerShellClient` | `src/features/kangur/ui/FrontendPublicOwnerShellClient.tsx` | 2 | 2 | no | yes |
+| 114 | `KangurCheckButton` | `src/features/kangur/ui/components/KangurCheckButton.tsx` | 2 | 2 | yes | yes |
+| 115 | `KangurUnifiedLessonSubsection` | `src/features/kangur/ui/components/KangurUnifiedLesson.tsx` | 2 | 2 | yes | yes |
+| 116 | `KangurWidgetIntro` | `src/features/kangur/ui/design/primitives/KangurWidgetIntro.tsx` | 2 | 2 | yes | yes |
+| 117 | `RuntimeEventLogEventRow` | `src/features/ai/ai-paths/components/runtime-event-log-panel.tsx` | 1 | 6 | no | yes |
+| 118 | `KangurConfigurableLaunchableGameScreen` | `src/features/kangur/ui/pages/Game.launchable-screens.tsx` | 1 | 6 | no | yes |
+| 119 | `AdjectiveStudioScene` | `src/features/kangur/ui/components/EnglishAdjectivesSceneGame.tsx` | 1 | 5 | no | yes |
+| 120 | `ProductListProvider` | `src/features/products/context/ProductListContext.tsx` | 1 | 4 | no | yes |
 
 ## Prioritized Transition Backlog (Depth = 2)
 
@@ -281,64 +280,64 @@ Generated at: 2026-03-26T20:15:03.497Z
 | 20 | 123 | 3 | `AdjectiveStudioScene` | `ObjectSceneBadge` | 5 | 1 | `translate -> translate -> label` |
 | 21 | 123 | 3 | `AdjectiveStudioScene` | `ObjectSceneBadge` | 5 | 1 | `translate -> translate -> value` |
 | 22 | 119 | 3 | `Asset3DCard` | `Badge` | 4 | 2 | `asset -> label -> removeLabel` |
-| 23 | 109 | 3 | `RunComparisonRowSummary` | `Button` | 3 | 2 | `row -> onClick -> onClick` |
-| 24 | 109 | 3 | `DatabaseActionsCell` | `DropdownMenuItem` | 3 | 2 | `backup -> backup -> onClick` |
-| 25 | 109 | 3 | `DatabaseActionsCell` | `DropdownMenuItem` | 3 | 2 | `backup -> backup -> onClick` |
-| 26 | 103 | 3 | `KangurDrawingFreeformToolbar` | `KangurButton` | 3 | 1 | `isCoarsePointer -> isCoarsePointer -> className` |
-| 27 | 99 | 3 | `CentralDocsSyncCandidateCard` | `Button` | 2 | 2 | `rule -> onClick -> onClick` |
-| 28 | 99 | 3 | `TableDetailCard` | `Button` | 2 | 2 | `onQueryTable -> onQueryTable -> onClick` |
-| 29 | 99 | 3 | `TableDetailCard` | `Button` | 2 | 2 | `onManageTable -> onManageTable -> onClick` |
-| 30 | 99 | 3 | `FilemakerEntityTableFilters` | `Button` | 2 | 2 | `onQueryChange -> onClear -> onClick` |
-| 31 | 99 | 3 | `AnalyticsEventsTable` | `ListPanel` | 2 | 2 | `title -> emptyState -> emptyState` |
-| 32 | 99 | 3 | `AnalyticsEventsTable` | `SectionHeader` | 2 | 2 | `title -> title -> title` |
-| 33 | 99 | 3 | `AnalyticsEventsTable` | `ListPanel` | 2 | 2 | `emptyTitle -> emptyState -> emptyState` |
-| 34 | 99 | 3 | `AnalyticsEventsTable` | `ListPanel` | 2 | 2 | `emptyDescription -> emptyState -> emptyState` |
-| 35 | 93 | 3 | `KangurCmsBuilderInner` | `KangurThemePreviewPanel` | 2 | 1 | `themePreviewMode -> themePreviewMode -> mode` |
-| 36 | 93 | 3 | `KangurCmsBuilderInner` | `KangurThemePreviewPanel` | 2 | 1 | `themePreviewMode -> themePreviewTheme -> theme` |
-| 37 | 93 | 3 | `CompleteEquation` | `KangurButton` | 2 | 1 | `onResult -> onResult -> onClick` |
-| 38 | 93 | 3 | `CompleteEquation` | `KangurButton` | 2 | 1 | `onResult -> onResult -> onClick` |
-| 39 | 93 | 3 | `KangurDrawingUtilityActions` | `KangurButton` | 2 | 1 | `isCoarsePointer -> isCoarsePointer -> className` |
-| 40 | 93 | 3 | `KangurDrawingUtilityActions` | `KangurButton` | 2 | 1 | `size -> size -> size` |
-| 41 | 93 | 3 | `KangurDrawingUtilityActions` | `KangurButton` | 2 | 1 | `size -> size -> size` |
-| 42 | 93 | 3 | `KangurDrawingUtilityActions` | `KangurButton` | 2 | 1 | `variant -> variant -> variant` |
-| 43 | 93 | 3 | `KangurDrawingUtilityActions` | `KangurButton` | 2 | 1 | `variant -> variant -> variant` |
-| 44 | 93 | 3 | `PromptGenerationModelPanel` | `SelectTrigger` | 2 | 1 | `modelSelectId -> id -> id` |
-| 45 | 93 | 3 | `FilterPanel` | `PanelFilters` | 2 | 1 | `values -> values -> values` |
-| 46 | 93 | 3 | `FilterPanel` | `PanelFilters` | 2 | 1 | `activeValues -> activeValues -> activeValues` |
-| 47 | 93 | 3 | `FilterPanel` | `PanelFilters` | 2 | 1 | `search -> search -> search` |
-| 48 | 89 | 3 | `RunComparisonRowSummary` | `Button` | 1 | 2 | `onSetCompareInspectorRowKey -> onClick -> onClick` |
-| 49 | 89 | 3 | `RunComparisonRowSummary` | `Button` | 1 | 2 | `compareInspectorRowKey -> onClick -> onClick` |
-| 50 | 89 | 3 | `JobQueueJsonField` | `Textarea` | 1 | 2 | `value -> value -> value` |
-| 51 | 89 | 3 | `JobQueueJsonField` | `Textarea` | 1 | 2 | `minHeightClassName -> minHeightClassName -> className` |
-| 52 | 89 | 3 | `JobQueueJsonField` | `Textarea` | 1 | 2 | `ariaLabel -> ariaLabel -> aria-label` |
-| 53 | 89 | 3 | `JobQueueJsonField` | `Textarea` | 1 | 2 | `ariaLabel -> ariaLabel -> title` |
-| 54 | 89 | 3 | `JobQueueJsonField` | `Textarea` | 1 | 2 | `title -> title -> title` |
-| 55 | 89 | 3 | `CentralDocsSyncCandidateCard` | `Badge` | 1 | 2 | `changeKind -> variant -> variant` |
-| 56 | 89 | 3 | `CentralDocsSyncCandidateCard` | `Button` | 1 | 2 | `onApprove -> onClick -> onClick` |
-| 57 | 89 | 3 | `CentralDocsSyncCandidateCard` | `Button` | 1 | 2 | `onReject -> onClick -> onClick` |
-| 58 | 89 | 3 | `DocsConnectionsCatalogCard` | `Button` | 1 | 2 | `onConnect -> onClick -> onClick` |
-| 59 | 89 | 3 | `CmsDomainSelector` | `SelectTrigger` | 1 | 2 | `triggerClassName -> triggerClassName -> className` |
-| 60 | 89 | 3 | `AttachSlugModal` | `FormModal` | 1 | 2 | `isOpen -> isOpen -> open` |
-| 61 | 89 | 3 | `FilemakerEntityTableFilters` | `Input` | 1 | 2 | `query -> value -> value` |
-| 62 | 89 | 3 | `KangurAdminMetricCard` | `Card` | 1 | 2 | `className -> className -> className` |
-| 63 | 89 | 3 | `KangurAdminWorkspaceIntroCard` | `Card` | 1 | 2 | `className -> className -> className` |
-| 64 | 89 | 3 | `KangurAdminWorkspaceSectionCard` | `Card` | 1 | 2 | `className -> className -> className` |
-| 65 | 89 | 3 | `EventStreamPanel` | `ListPanel` | 1 | 2 | `showFooterPagination -> footer -> footer` |
-| 66 | 89 | 3 | `EditableCell` | `Input` | 1 | 2 | `field -> field -> step` |
-| 67 | 89 | 3 | `EditableCell` | `Input` | 1 | 2 | `field -> field -> aria-label` |
-| 68 | 89 | 3 | `AnalyticsEventsTable` | `ListPanel` | 1 | 2 | `footer -> footer -> footer` |
-| 69 | 89 | 3 | `AnalyticsEventsTable` | `SectionHeader` | 1 | 2 | `showTypeColumn -> title -> title` |
-| 70 | 83 | 3 | `FrontendPublicOwnerShellClient` | `KangurStorefrontAppearanceProvider` | 1 | 1 | `kangurInitialMode -> initialAppearance -> initialAppearance` |
-| 71 | 83 | 3 | `FrontendPublicOwnerShellClient` | `KangurStorefrontAppearanceProvider` | 1 | 1 | `kangurInitialThemeSettings -> initialAppearance -> initialAppearance` |
-| 72 | 83 | 3 | `AgenticApprovalGateGame` | `KangurButton` | 1 | 1 | `onFinish -> onFinish -> onClick` |
-| 73 | 83 | 3 | `AgenticReasoningRouterGame` | `KangurButton` | 1 | 1 | `onFinish -> onFinish -> onClick` |
-| 74 | 83 | 3 | `AgenticSurfaceMatchGame` | `KangurButton` | 1 | 1 | `onFinish -> onFinish -> onClick` |
-| 75 | 83 | 3 | `RotationOptionCard` | `RotationGlyphVisual` | 1 | 1 | `tile -> tile -> glyph` |
-| 76 | 83 | 3 | `KangurDrawingFreeformToolbar` | `KangurButton` | 1 | 1 | `onRedo -> onRedo -> onClick` |
-| 77 | 83 | 3 | `KangurDrawingFreeformToolbar` | `KangurButton` | 1 | 1 | `onUndo -> onUndo -> onClick` |
-| 78 | 83 | 3 | `KangurDrawingFreeformToolbar` | `KangurButton` | 1 | 1 | `canRedo -> redoDisabled -> disabled` |
-| 79 | 83 | 3 | `KangurDrawingFreeformToolbar` | `KangurButton` | 1 | 1 | `redoLabel -> redoLabel -> aria-label` |
-| 80 | 83 | 3 | `KangurDrawingFreeformToolbar` | `KangurButton` | 1 | 1 | `canUndo -> undoDisabled -> disabled` |
+| 23 | 103 | 3 | `KangurDrawingFreeformToolbar` | `KangurButton` | 3 | 1 | `isCoarsePointer -> isCoarsePointer -> className` |
+| 24 | 99 | 3 | `TableDetailCard` | `Button` | 2 | 2 | `onQueryTable -> onQueryTable -> onClick` |
+| 25 | 99 | 3 | `TableDetailCard` | `Button` | 2 | 2 | `onManageTable -> onManageTable -> onClick` |
+| 26 | 99 | 3 | `FilemakerEntityTableFilters` | `Button` | 2 | 2 | `onQueryChange -> onClear -> onClick` |
+| 27 | 99 | 3 | `AnalyticsEventsTable` | `ListPanel` | 2 | 2 | `title -> emptyState -> emptyState` |
+| 28 | 99 | 3 | `AnalyticsEventsTable` | `SectionHeader` | 2 | 2 | `title -> title -> title` |
+| 29 | 99 | 3 | `AnalyticsEventsTable` | `ListPanel` | 2 | 2 | `emptyTitle -> emptyState -> emptyState` |
+| 30 | 99 | 3 | `AnalyticsEventsTable` | `ListPanel` | 2 | 2 | `emptyDescription -> emptyState -> emptyState` |
+| 31 | 93 | 3 | `KangurCmsBuilderInner` | `KangurThemePreviewPanel` | 2 | 1 | `themePreviewMode -> themePreviewMode -> mode` |
+| 32 | 93 | 3 | `KangurCmsBuilderInner` | `KangurThemePreviewPanel` | 2 | 1 | `themePreviewMode -> themePreviewTheme -> theme` |
+| 33 | 93 | 3 | `CompleteEquation` | `KangurButton` | 2 | 1 | `onResult -> onResult -> onClick` |
+| 34 | 93 | 3 | `CompleteEquation` | `KangurButton` | 2 | 1 | `onResult -> onResult -> onClick` |
+| 35 | 93 | 3 | `KangurDrawingUtilityActions` | `KangurButton` | 2 | 1 | `isCoarsePointer -> isCoarsePointer -> className` |
+| 36 | 93 | 3 | `KangurDrawingUtilityActions` | `KangurButton` | 2 | 1 | `size -> size -> size` |
+| 37 | 93 | 3 | `KangurDrawingUtilityActions` | `KangurButton` | 2 | 1 | `size -> size -> size` |
+| 38 | 93 | 3 | `KangurDrawingUtilityActions` | `KangurButton` | 2 | 1 | `variant -> variant -> variant` |
+| 39 | 93 | 3 | `KangurDrawingUtilityActions` | `KangurButton` | 2 | 1 | `variant -> variant -> variant` |
+| 40 | 93 | 3 | `PromptGenerationModelPanel` | `SelectTrigger` | 2 | 1 | `modelSelectId -> id -> id` |
+| 41 | 93 | 3 | `FilterPanel` | `PanelFilters` | 2 | 1 | `values -> values -> values` |
+| 42 | 93 | 3 | `FilterPanel` | `PanelFilters` | 2 | 1 | `activeValues -> activeValues -> activeValues` |
+| 43 | 93 | 3 | `FilterPanel` | `PanelFilters` | 2 | 1 | `search -> search -> search` |
+| 44 | 89 | 3 | `JobQueueJsonField` | `Textarea` | 1 | 2 | `value -> value -> value` |
+| 45 | 89 | 3 | `JobQueueJsonField` | `Textarea` | 1 | 2 | `minHeightClassName -> minHeightClassName -> className` |
+| 46 | 89 | 3 | `JobQueueJsonField` | `Textarea` | 1 | 2 | `ariaLabel -> ariaLabel -> aria-label` |
+| 47 | 89 | 3 | `JobQueueJsonField` | `Textarea` | 1 | 2 | `ariaLabel -> ariaLabel -> title` |
+| 48 | 89 | 3 | `JobQueueJsonField` | `Textarea` | 1 | 2 | `title -> title -> title` |
+| 49 | 89 | 3 | `CentralDocsSyncCandidateCard` | `Badge` | 1 | 2 | `changeKind -> variant -> variant` |
+| 50 | 89 | 3 | `CmsDomainSelector` | `SelectTrigger` | 1 | 2 | `triggerClassName -> triggerClassName -> className` |
+| 51 | 89 | 3 | `AttachSlugModal` | `FormModal` | 1 | 2 | `isOpen -> isOpen -> open` |
+| 52 | 89 | 3 | `FilemakerEntityTableFilters` | `Input` | 1 | 2 | `query -> value -> value` |
+| 53 | 89 | 3 | `KangurAdminMetricCard` | `Card` | 1 | 2 | `className -> className -> className` |
+| 54 | 89 | 3 | `KangurAdminWorkspaceIntroCard` | `Card` | 1 | 2 | `className -> className -> className` |
+| 55 | 89 | 3 | `KangurAdminWorkspaceSectionCard` | `Card` | 1 | 2 | `className -> className -> className` |
+| 56 | 89 | 3 | `EventStreamPanel` | `ListPanel` | 1 | 2 | `showFooterPagination -> footer -> footer` |
+| 57 | 89 | 3 | `AnalyticsEventsTable` | `ListPanel` | 1 | 2 | `footer -> footer -> footer` |
+| 58 | 89 | 3 | `AnalyticsEventsTable` | `SectionHeader` | 1 | 2 | `showTypeColumn -> title -> title` |
+| 59 | 83 | 3 | `FrontendPublicOwnerShellClient` | `KangurStorefrontAppearanceProvider` | 1 | 1 | `kangurInitialMode -> initialAppearance -> initialAppearance` |
+| 60 | 83 | 3 | `FrontendPublicOwnerShellClient` | `KangurStorefrontAppearanceProvider` | 1 | 1 | `kangurInitialThemeSettings -> initialAppearance -> initialAppearance` |
+| 61 | 83 | 3 | `AgenticApprovalGateGame` | `KangurButton` | 1 | 1 | `onFinish -> onFinish -> onClick` |
+| 62 | 83 | 3 | `AgenticReasoningRouterGame` | `KangurButton` | 1 | 1 | `onFinish -> onFinish -> onClick` |
+| 63 | 83 | 3 | `AgenticSurfaceMatchGame` | `KangurButton` | 1 | 1 | `onFinish -> onFinish -> onClick` |
+| 64 | 83 | 3 | `RotationOptionCard` | `RotationGlyphVisual` | 1 | 1 | `tile -> tile -> glyph` |
+| 65 | 83 | 3 | `KangurDrawingFreeformToolbar` | `KangurButton` | 1 | 1 | `onRedo -> onRedo -> onClick` |
+| 66 | 83 | 3 | `KangurDrawingFreeformToolbar` | `KangurButton` | 1 | 1 | `onUndo -> onUndo -> onClick` |
+| 67 | 83 | 3 | `KangurDrawingFreeformToolbar` | `KangurButton` | 1 | 1 | `canRedo -> redoDisabled -> disabled` |
+| 68 | 83 | 3 | `KangurDrawingFreeformToolbar` | `KangurButton` | 1 | 1 | `redoLabel -> redoLabel -> aria-label` |
+| 69 | 83 | 3 | `KangurDrawingFreeformToolbar` | `KangurButton` | 1 | 1 | `canUndo -> undoDisabled -> disabled` |
+| 70 | 83 | 3 | `KangurDrawingFreeformToolbar` | `KangurButton` | 1 | 1 | `undoLabel -> undoLabel -> aria-label` |
+| 71 | 83 | 3 | `KangurDrawingFreeformToolbar` | `KangurButton` | 1 | 1 | `canExport -> exportDisabled -> disabled` |
+| 72 | 83 | 3 | `KangurDrawingFreeformToolbar` | `KangurButton` | 1 | 1 | `exportLabel -> exportLabel -> aria-label` |
+| 73 | 83 | 3 | `KangurDrawingFreeformToolbar` | `KangurButton` | 1 | 1 | `exportLabel -> exportLabel -> title` |
+| 74 | 83 | 3 | `KangurDrawingFreeformToolbar` | `KangurButton` | 1 | 1 | `onExport -> onExport -> onClick` |
+| 75 | 83 | 3 | `KangurDrawingUtilityActions` | `KangurButton` | 1 | 1 | `onRedo -> onRedo -> onClick` |
+| 76 | 83 | 3 | `KangurDrawingUtilityActions` | `KangurButton` | 1 | 1 | `onUndo -> onUndo -> onClick` |
+| 77 | 83 | 3 | `KangurDrawingUtilityActions` | `KangurButton` | 1 | 1 | `redoDisabled -> redoDisabled -> disabled` |
+| 78 | 83 | 3 | `KangurDrawingUtilityActions` | `KangurButton` | 1 | 1 | `redoLabel -> redoLabel -> aria-label` |
+| 79 | 83 | 3 | `KangurDrawingUtilityActions` | `KangurButton` | 1 | 1 | `redoTestId -> redoTestId -> data-testid` |
+| 80 | 83 | 3 | `KangurDrawingUtilityActions` | `KangurButton` | 1 | 1 | `undoDisabled -> undoDisabled -> disabled` |
 
 ## Top Chain Details (Depth >= 3)
 

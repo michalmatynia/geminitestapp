@@ -7,7 +7,6 @@ import {
 } from 'react';
 
 import { internalError } from '@/features/kangur/shared/errors/app-error';
-import { useKangurAccessiblePageKey } from '@/features/kangur/ui/hooks/useKangurAccessiblePageKey';
 
 import { useKangurRouting } from './KangurRoutingContext';
 import {
@@ -72,7 +71,6 @@ export function KangurRouteTransitionProvider({
 }): React.JSX.Element {
   const { basePath, pageKey, requestedHref, requestedPath } = useKangurRouting();
   const currentRequestedHref = normalizeTransitionHref(requestedHref ?? requestedPath);
-  const accessiblePageKey = useKangurAccessiblePageKey(pageKey, 'Game');
 
   const {
     transitionState,
@@ -80,7 +78,7 @@ export function KangurRouteTransitionProvider({
     markRouteTransitionReady,
   } = useKangurRouteTransitionLogic({
     basePath,
-    pageKey: accessiblePageKey,
+    pageKey: pageKey ?? null,
     currentRequestedHref,
   });
 

@@ -250,7 +250,7 @@ export function KangurAppLoader({
 
   return (
     <>
-      <style dangerouslySetInnerHTML={{ __html: `@keyframes kangur-loader-pulse { 0%, 100% { transform: scale(0.985); } 50% { transform: scale(1); } }` }} />
+      <style dangerouslySetInnerHTML={{ __html: '@keyframes kangur-loader-pulse { 0%, 100% { transform: scale(0.985); } 50% { transform: scale(1); } }' }} />
       <div
         aria-busy='true'
         aria-live='polite'

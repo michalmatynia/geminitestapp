@@ -92,11 +92,6 @@ const formatTimestamp = (value: string | null): string => {
 
 const formatPercent = (value: number): string => `${Math.round(value)}%`;
 
-type PortableEngineOutlineBadgeProps = {
-  children: React.ReactNode;
-  className?: string;
-} & Omit<React.ComponentProps<typeof Badge>, 'children'>;
-
 type PortableEngineInfoPanelProps = {
   children: React.ReactNode;
   className?: string;
@@ -132,26 +127,6 @@ type PortableEngineRecordCardProps = {
   stacked?: boolean;
 };
 
-function PortableEngineOutlineBadge({
-  children,
-  className,
-  variant = 'outline',
-  ...props
-}: PortableEngineOutlineBadgeProps): React.JSX.Element {
-  return (
-    <Badge
-      variant={variant}
-      className={cn(
-        variant === 'outline' ? portableEngineOutlineBadgeClassName : '',
-        className
-      )}
-      {...props}
-    >
-      {children}
-    </Badge>
-  );
-}
-
 function PortableEngineInfoPanel({
   children,
   className,
@@ -180,9 +155,13 @@ function PortableEngineReasonBadgeList({
   return (
     <div className='mt-1 flex flex-wrap gap-1.5'>
       {visibleEntries.map((entry) => (
-        <PortableEngineOutlineBadge key={entry.reason}>
+        <Badge
+          key={entry.reason}
+          variant='outline'
+          className={portableEngineOutlineBadgeClassName}
+        >
           {entry.reason} ({entry.count})
-        </PortableEngineOutlineBadge>
+        </Badge>
       ))}
     </div>
   );
@@ -359,14 +338,22 @@ export function PortableEngineTrendSnapshotsPanel(): React.JSX.Element {
         <div className='space-y-3'>
           <div className='flex flex-wrap gap-2'>
             {summaryBadges.map((badge) => (
-              <PortableEngineOutlineBadge key={badge.key}>{badge.label}</PortableEngineOutlineBadge>
+              <Badge
+                key={badge.key}
+                variant='outline'
+                className={portableEngineOutlineBadgeClassName}
+              >
+                {badge.label}
+              </Badge>
             ))}
-            <PortableEngineOutlineBadge
+            <Badge
               variant={data.autoRemediation.enabled ? 'success' : 'outline'}
-              className={data.autoRemediation.enabled ? '' : 'border-white/10 text-gray-300'}
+              className={
+                data.autoRemediation.enabled ? '' : portableEngineOutlineBadgeClassName
+              }
             >
               remediation {data.autoRemediation.enabled ? 'on' : 'off'}
-            </PortableEngineOutlineBadge>
+            </Badge>
           </div>
 
           <PortableEngineInfoPanel>

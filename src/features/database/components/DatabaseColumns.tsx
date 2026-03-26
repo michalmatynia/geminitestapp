@@ -39,54 +39,6 @@ const toSizeNumber = (value: unknown): number => {
   return Number.isFinite(parsed) ? parsed : 0;
 };
 
-type DatabaseActionsRuntimeValue = {
-  backup: DatabaseInfo;
-  backupMaintenanceAllowed: boolean;
-  handlePreview: (backupName: string) => void;
-  handleRestoreRequest: (backup: DatabaseInfo) => void;
-  handleDeleteRequest: (backupName: string) => void;
-};
-
-function DatabaseActionsRestoreItem({
-  backup,
-  backupMaintenanceAllowed,
-  handleRestoreRequest,
-}: Pick<
-  DatabaseActionsRuntimeValue,
-  'backup' | 'backupMaintenanceAllowed' | 'handleRestoreRequest'
->): React.JSX.Element {
-  return (
-    <DropdownMenuItem
-      disabled={!backupMaintenanceAllowed}
-      title={
-        !backupMaintenanceAllowed ? 'Disabled by Database Engine operation controls' : undefined
-      }
-      onClick={() => handleRestoreRequest(backup)}
-    >
-      Restore
-    </DropdownMenuItem>
-  );
-}
-
-function DatabaseActionsDeleteItem({
-  backup,
-  backupMaintenanceAllowed,
-  handleDeleteRequest,
-}: Pick<DatabaseActionsRuntimeValue, 'backup' | 'backupMaintenanceAllowed' | 'handleDeleteRequest'>): React.JSX.Element {
-  return (
-    <DropdownMenuItem
-      className='text-destructive focus:text-destructive'
-      disabled={!backupMaintenanceAllowed}
-      title={
-        !backupMaintenanceAllowed ? 'Disabled by Database Engine operation controls' : undefined
-      }
-      onClick={() => handleDeleteRequest(backup.name)}
-    >
-      Delete
-    </DropdownMenuItem>
-  );
-}
-
 function DatabaseActionsCell({ backup }: { backup: DatabaseInfo }): React.JSX.Element {
   const { backupMaintenanceAllowed } = useDatabaseBackupsStateContext();
   const { handlePreview, handleRestoreRequest, handleDeleteRequest } =
@@ -96,17 +48,30 @@ function DatabaseActionsCell({ backup }: { backup: DatabaseInfo }): React.JSX.El
     <div className='flex justify-end'>
       <ActionMenu>
         <DropdownMenuItem onClick={() => handlePreview(backup.name)}>Preview</DropdownMenuItem>
-        <DatabaseActionsRestoreItem
-          backup={backup}
-          backupMaintenanceAllowed={backupMaintenanceAllowed}
-          handleRestoreRequest={handleRestoreRequest}
-        />
+        <DropdownMenuItem
+          disabled={!backupMaintenanceAllowed}
+          title={
+            !backupMaintenanceAllowed
+              ? 'Disabled by Database Engine operation controls'
+              : undefined
+          }
+          onClick={() => handleRestoreRequest(backup)}
+        >
+          Restore
+        </DropdownMenuItem>
         <DropdownMenuSeparator />
-        <DatabaseActionsDeleteItem
-          backup={backup}
-          backupMaintenanceAllowed={backupMaintenanceAllowed}
-          handleDeleteRequest={handleDeleteRequest}
-        />
+        <DropdownMenuItem
+          className='text-destructive focus:text-destructive'
+          disabled={!backupMaintenanceAllowed}
+          title={
+            !backupMaintenanceAllowed
+              ? 'Disabled by Database Engine operation controls'
+              : undefined
+          }
+          onClick={() => handleDeleteRequest(backup.name)}
+        >
+          Delete
+        </DropdownMenuItem>
       </ActionMenu>
     </div>
   );

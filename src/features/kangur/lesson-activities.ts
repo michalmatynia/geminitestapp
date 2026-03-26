@@ -299,7 +299,7 @@ export const KANGUR_LESSON_ACTIVITY_OPTIONS: { value: KangurLessonActivityId; la
           })
         );
       }
-      return Reflect.get(_lessonActivityOptions, prop, receiver);
+      return Reflect.get(_lessonActivityOptions, prop, receiver) as unknown;
     },
     has: (_target, prop) => {
       if (!_lessonActivityOptions) {

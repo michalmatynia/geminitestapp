@@ -91,9 +91,7 @@ export default function RichTextEditorImpl({
   loadingLabel = 'Loading editor...',
   containerClassName,
   toolbarClassName,
-  surfaceClassName,
-  editorContentClassName,
-  surfaceStyle,
+  surfaceOptions,
 }: RichTextEditorProps): React.JSX.Element {
   const { prompt, PromptInputModal } = usePrompt();
   const lastValueRef = useRef(value);
@@ -333,6 +331,9 @@ export default function RichTextEditorImpl({
     () => [{ value: '__default__', label: 'Font' }, ...normalizedFontFamilyOptions],
     [normalizedFontFamilyOptions]
   );
+  const surfaceClassName = surfaceOptions?.className;
+  const editorContentClassName = surfaceOptions?.editorContentClassName;
+  const surfaceStyle = surfaceOptions?.style;
 
   if (!editor) {
     return (

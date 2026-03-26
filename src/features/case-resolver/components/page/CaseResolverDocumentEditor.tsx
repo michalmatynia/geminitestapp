@@ -22,6 +22,7 @@ import {
   encodeFilemakerPartyReference,
   decodeFilemakerPartyReference,
 } from '@/features/filemaker/public';
+import type { DocumentWysiwygEditorProps } from '@/features/document-editor/public';
 import type { EditorDetailsTab } from '@/shared/contracts/case-resolver';
 import {
   Badge,
@@ -66,7 +67,7 @@ const LazyDocumentWysiwygEditor = React.lazy(() =>
   import('@/features/document-editor/public').then((mod) => ({
     default: mod.DocumentWysiwygEditor,
   }))
-);
+) as React.ComponentType<DocumentWysiwygEditorProps>;
 
 const formatHistoryTimestamp = (value: string): string => {
   const parsed = Date.parse(value);
@@ -456,8 +457,10 @@ export function CaseResolverDocumentEditor(): React.JSX.Element | null {
                   allowFontFamily
                   allowTextAlign
                   enableAdvancedTools
-                  surfaceClassName='min-h-[400px]'
-                  editorContentClassName='[&_.ProseMirror]:!min-h-[400px]'
+                  surfaceOptions={{
+                    className: 'min-h-[400px]',
+                    editorContentClassName: '[&_.ProseMirror]:!min-h-[400px]',
+                  }}
                 />
               </React.Suspense>
 

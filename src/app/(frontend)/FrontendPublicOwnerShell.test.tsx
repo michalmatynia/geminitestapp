@@ -111,10 +111,7 @@ describe('FrontendPublicOwnerShell', () => {
     expect(screen.queryByTestId('frontend-children')).not.toBeInTheDocument();
     await waitFor(() => {
       expect(frontendPublicOwnerKangurShellMock).toHaveBeenCalledWith({
-        initialAppearance: {
-          mode: undefined,
-          themeSettings: undefined,
-        },
+        initialAppearance: undefined,
       });
     });
   });
@@ -129,10 +126,7 @@ describe('FrontendPublicOwnerShell', () => {
     expect(await screen.findByTestId('kangur-feature-route-shell')).toBeInTheDocument();
     await waitFor(() => {
       expect(frontendPublicOwnerKangurShellMock).toHaveBeenCalledWith({
-        initialAppearance: {
-          mode: undefined,
-          themeSettings: undefined,
-        },
+        initialAppearance: undefined,
       });
     });
   });
@@ -179,10 +173,7 @@ describe('FrontendPublicOwnerShell', () => {
     expect(await screen.findByTestId('kangur-feature-route-shell')).toBeInTheDocument();
     await waitFor(() => {
       expect(frontendPublicOwnerKangurShellMock).toHaveBeenCalledWith({
-        initialAppearance: {
-          mode: undefined,
-          themeSettings: undefined,
-        },
+        initialAppearance: undefined,
       });
     });
   });

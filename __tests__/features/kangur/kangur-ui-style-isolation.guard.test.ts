@@ -77,7 +77,7 @@ const KANGUR_VISUAL_CONTRACTS = [
   },
   {
     file: 'src/app/(frontend)/kangur/error.tsx',
-    requiredTokens: ['KangurErrorFallback', "homeHref='/kangur'"],
+    requiredTokens: ['data-testid=\'kangur-error-shell\'', "href='/kangur'"],
   },
   {
     file: 'src/features/kangur/ui/KangurLoginPage.tsx',

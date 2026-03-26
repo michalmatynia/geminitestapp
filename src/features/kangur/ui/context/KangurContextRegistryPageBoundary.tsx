@@ -95,7 +95,7 @@ export function KangurContextRegistryPageBoundary({
     KANGUR_FALLBACK_PAGE_KEY
   );
   const effectivePageKey = resolveAccessibleKangurPageKey(
-    isKangurContextPageKey(resolvedPageKey) ? resolvedPageKey : null,
+    isKangurContextPageKey(resolvedPageKey) ? (resolvedPageKey) : null,
     session,
     KANGUR_FALLBACK_PAGE_KEY
   ) as KangurContextPageKey;

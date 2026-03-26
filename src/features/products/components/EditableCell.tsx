@@ -13,43 +13,6 @@ type EditableCellProps = {
   onUpdate: (nextValue: number) => void;
 };
 
-type EditableCellInputRuntimeValue = {
-  field: 'price' | 'stock';
-  editValue: string;
-  isSaving: boolean;
-  inputRef: React.RefObject<HTMLInputElement | null>;
-  setEditValue: (next: string) => void;
-  handleKeyDown: (e: KeyboardEvent<HTMLInputElement>) => void;
-  handleBlur: () => void;
-};
-
-function EditableCellInput({
-  field,
-  editValue,
-  isSaving,
-  inputRef,
-  setEditValue,
-  handleKeyDown,
-  handleBlur,
-}: EditableCellInputRuntimeValue): React.JSX.Element {
-  return (
-    <Input
-      ref={inputRef}
-      type='number'
-      step={field === 'price' ? '0.01' : '1'}
-      min='0'
-      value={editValue}
-      aria-label={field === 'price' ? 'Price' : 'Stock'}
-      onChange={(e: React.ChangeEvent<HTMLInputElement>) => setEditValue(e.target.value)}
-      onKeyDown={handleKeyDown}
-      onBlur={handleBlur}
-      disabled={isSaving}
-      className='h-8 w-24 text-sm'
-      title='Input field'
-    />
-  );
-}
-
 export const EditableCell = memo(
   function EditableCell({
     value,
@@ -129,14 +92,19 @@ export const EditableCell = memo(
 
     if (isEditing) {
       return (
-        <EditableCellInput
-          field={field}
-          editValue={editValue}
-          isSaving={isSaving}
-          inputRef={inputRef}
-          setEditValue={(next: string): void => setEditValue(next)}
-          handleKeyDown={handleKeyDown}
-          handleBlur={handleBlur}
+        <Input
+          ref={inputRef}
+          type='number'
+          step={field === 'price' ? '0.01' : '1'}
+          min='0'
+          value={editValue}
+          aria-label={field === 'price' ? 'Price' : 'Stock'}
+          onChange={(e: React.ChangeEvent<HTMLInputElement>) => setEditValue(e.target.value)}
+          onKeyDown={handleKeyDown}
+          onBlur={handleBlur}
+          disabled={isSaving}
+          className='h-8 w-24 text-sm'
+          title='Input field'
         />
       );
     }

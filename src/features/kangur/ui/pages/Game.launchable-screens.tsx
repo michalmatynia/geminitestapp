@@ -171,7 +171,7 @@ const KangurConfigurableLaunchableGameScreen = ({
 
 export type KangurLaunchableGameScreenComponentConfig = {
   className: string;
-  Component: ComponentType;
+  Component: ComponentType<any>;
   runtime: KangurLaunchableGameRuntimeSpec;
 };
 

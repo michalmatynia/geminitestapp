@@ -1,6 +1,6 @@
 import React from 'react';
 
-import { Button } from '@/shared/ui';
+import { buttonVariants } from '@/shared/ui/button';
 import { cn } from '@/shared/utils';
 
 type AiPathsPillButtonProps = {
@@ -9,7 +9,24 @@ type AiPathsPillButtonProps = {
   baseClassName?: string;
   activeClassName?: string;
   inactiveClassName?: string;
-} & Pick<React.ComponentProps<typeof Button>, 'onClick' | 'disabled' | 'type' | 'variant' | 'className'>;
+} & Pick<
+  React.ButtonHTMLAttributes<HTMLButtonElement>,
+  'onClick' | 'disabled' | 'type' | 'className'
+> & {
+    variant?:
+      | 'default'
+      | 'primary'
+      | 'solid'
+      | 'solid-destructive'
+      | 'destructive'
+      | 'outline'
+      | 'secondary'
+      | 'success'
+      | 'warning'
+      | 'info'
+      | 'ghost'
+      | 'link';
+  };
 
 export function AiPathsPillButton({
   children,
@@ -24,14 +41,18 @@ export function AiPathsPillButton({
   inactiveClassName = 'text-gray-300 hover:bg-muted/60',
 }: AiPathsPillButtonProps): React.JSX.Element {
   return (
-    <Button
+    <button
       type={type}
-      variant={variant}
-      className={cn(baseClassName, active ? activeClassName : inactiveClassName, className)}
+      className={cn(
+        buttonVariants({ variant, size: 'xs' }),
+        baseClassName,
+        active ? activeClassName : inactiveClassName,
+        className
+      )}
       onClick={onClick}
       disabled={disabled}
     >
       {children}
-    </Button>
+    </button>
   );
 }

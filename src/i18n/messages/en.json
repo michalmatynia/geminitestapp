@@ -1356,6 +1356,7 @@
       "draftListTitle": "Saved hub sections",
       "draftListSearchLabel": "Search saved hub sections",
       "draftListSearchPlaceholder": "Search saved hub sections",
+      "draftListClearFiltersButton": "Clear list filters",
       "draftListStatusFilterLabel": "Filter saved hub sections by status",
       "draftListStatusFilterAll": "All",
       "draftListStatusFilterEnabled": "Enabled",

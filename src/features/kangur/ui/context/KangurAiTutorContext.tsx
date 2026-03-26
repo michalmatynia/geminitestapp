@@ -24,6 +24,7 @@ import {
 import { useKangurAiTutorRuntime } from './KangurAiTutorRuntime.hook';
 import type {
   KangurAiTutorContextValue,
+  KangurAiTutorSessionSyncInput,
   KangurAiTutorSessionRegistryContextValue,
   KangurAiTutorSessionSyncProps,
 } from './KangurAiTutorRuntime.types';
@@ -173,17 +174,19 @@ export function KangurAiTutorProvider({
   sessionContext,
 }: KangurAiTutorProviderProps): JSX.Element {
   const { value, sessionRegistryValue } = useKangurAiTutorRuntime();
+  const sessionSync = useMemo<KangurAiTutorSessionSyncInput>(
+    () => ({
+      learnerId: learnerId ?? null,
+      sessionContext: sessionContext ?? null,
+    }),
+    [learnerId, sessionContext]
+  );
 
   return (
     <KangurAiTutorActivationContext.Provider value={null}>
       <KangurAiTutorSessionRegistryContext.Provider value={sessionRegistryValue}>
         <KangurAiTutorContext.Provider value={value}>
-          {learnerId || sessionContext ? (
-            <KangurAiTutorSessionSyncInner
-              learnerId={learnerId ?? null}
-              sessionContext={sessionContext ?? null}
-            />
-          ) : null}
+          {learnerId || sessionContext ? <KangurAiTutorSessionSyncInner sync={sessionSync} /> : null}
           {children}
         </KangurAiTutorContext.Provider>
       </KangurAiTutorSessionRegistryContext.Provider>

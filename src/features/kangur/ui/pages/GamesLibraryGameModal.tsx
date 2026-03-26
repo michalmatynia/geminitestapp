@@ -480,6 +480,8 @@ export function GamesLibraryGameModal({
         .includes(normalizedQuery);
     });
   }, [activeSections, lessonLabelMap, savedSectionsQuery, savedSectionsStatusFilter]);
+  const hasSavedSectionsFilters =
+    savedSectionsQuery.trim().length > 0 || savedSectionsStatusFilter !== 'all';
 
   const linkedLessonIds = useMemo(
     () =>
@@ -1324,16 +1326,32 @@ export function GamesLibraryGameModal({
             </div>
             {!isInitialSectionsLoading && activeSections.length > 0 ? (
               <div className='space-y-3'>
-                <KangurTextField
-                  aria-label={translations('modal.draftListSearchLabel')}
-                  className='bg-white/80'
-                  disabled={mutationsBlocked}
-                  onChange={(event) => setSavedSectionsQuery(event.target.value)}
-                  placeholder={translations('modal.draftListSearchPlaceholder')}
-                  size='sm'
-                  type='search'
-                  value={savedSectionsQuery}
-                />
+                <div className='flex flex-wrap items-center gap-2'>
+                  <div className='min-w-0 flex-1'>
+                    <KangurTextField
+                      aria-label={translations('modal.draftListSearchLabel')}
+                      className='bg-white/80'
+                      disabled={mutationsBlocked}
+                      onChange={(event) => setSavedSectionsQuery(event.target.value)}
+                      placeholder={translations('modal.draftListSearchPlaceholder')}
+                      size='sm'
+                      type='search'
+                      value={savedSectionsQuery}
+                    />
+                  </div>
+                  <KangurButton
+                    disabled={!hasSavedSectionsFilters || mutationsBlocked}
+                    onClick={() => {
+                      setSavedSectionsQuery('');
+                      setSavedSectionsStatusFilter('all');
+                    }}
+                    size='sm'
+                    type='button'
+                    variant='surface'
+                  >
+                    {translations('modal.draftListClearFiltersButton')}
+                  </KangurButton>
+                </div>
                 <SavedSectionsStatusControl
                   ariaLabel={translations('modal.draftListStatusFilterLabel')}
                   className='w-full bg-white/80'

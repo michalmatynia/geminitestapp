@@ -1,9 +1,9 @@
 {
   "summary": {
-    "generatedAt": "2026-03-26T20:15:03.604Z",
+    "generatedAt": "2026-03-26T20:30:52.499Z",
     "scannedFileCount": 2118,
     "duplicateNameClusterCount": 0,
-    "propSignatureClusterCount": 0,
+    "propSignatureClusterCount": 1,
     "tokenSimilarityClusterCount": 0,
     "thinReExportWrapperCount": 10,
     "totalOpportunities": 0,
@@ -2943,7 +2943,7 @@
       "domain": "app",
       "scope": "app",
       "family": "Unknown",
-      "lines": 15,
+      "lines": 20,
       "useClient": true,
       "imports": [
         "react",
@@ -4305,15 +4305,15 @@
       "domain": "feature",
       "scope": "feature:ai",
       "family": "Unknown",
-      "lines": 38,
+      "lines": 59,
       "useClient": false,
       "imports": [
         "react",
-        "@/shared/ui",
+        "@/shared/ui/button",
         "@/shared/utils"
       ],
       "templateImports": 0,
-      "uiPrimitiveImports": 0,
+      "uiPrimitiveImports": 1,
       "tokenSet": {},
       "propsSignature": "active|activeClassName|baseClassName|children|className|disabled|inactiveClassName|onClick|type|variant",
       "thinReExportWrapper": false
@@ -4621,7 +4621,7 @@
       "domain": "feature",
       "scope": "feature:ai",
       "family": "Panel",
-      "lines": 442,
+      "lines": 429,
       "useClient": true,
       "imports": [
         "lucide-react",
@@ -4633,7 +4633,7 @@
       "templateImports": 0,
       "uiPrimitiveImports": 0,
       "tokenSet": {},
-      "propsSignature": "children|className|props|variant",
+      "propsSignature": "children|className",
       "thinReExportWrapper": false
     },
     {
@@ -7329,15 +7329,16 @@
       "domain": "feature",
       "scope": "feature:ai",
       "family": "Unknown",
-      "lines": 39,
+      "lines": 56,
       "useClient": true,
       "imports": [
+        "lucide-react",
         "react",
-        "@/shared/ui",
+        "@/shared/ui/button",
         "@/shared/utils"
       ],
       "templateImports": 0,
-      "uiPrimitiveImports": 0,
+      "uiPrimitiveImports": 1,
       "tokenSet": {},
       "propsSignature": "children|className|disabled|icon|loading|onClick|variant",
       "thinReExportWrapper": false
@@ -11354,12 +11355,13 @@
       "domain": "feature",
       "scope": "feature:case-resolver",
       "family": "Unknown",
-      "lines": 635,
+      "lines": 638,
       "useClient": true,
       "imports": [
         "lucide-react",
         "react",
         "@/features/filemaker/public",
+        "@/features/document-editor/public",
         "@/shared/contracts/case-resolver",
         "@/shared/ui",
         "@/shared/utils",
@@ -11371,8 +11373,7 @@
         "./CaseResolverPartySelectField",
         "../../hooks/prompt-exploder-transfer-lifecycle",
         "../../relation-search",
-        "../../relation-search/utils/docs",
-        "@/features/document-editor/public"
+        "../../relation-search/utils/docs"
       ],
       "templateImports": 0,
       "uiPrimitiveImports": 0,
@@ -16426,7 +16427,7 @@
       "domain": "feature",
       "scope": "feature:database",
       "family": "Unknown",
-      "lines": 153,
+      "lines": 118,
       "useClient": true,
       "imports": [
         "react",
@@ -16438,7 +16439,7 @@
       "templateImports": 0,
       "uiPrimitiveImports": 0,
       "tokenSet": {},
-      "propsSignature": "backup|backupMaintenanceAllowed|handleRestoreRequest",
+      "propsSignature": null,
       "thinReExportWrapper": false
     },
     {
@@ -16576,7 +16577,7 @@
       "domain": "feature",
       "scope": "feature:document-editor",
       "family": "Unknown",
-      "lines": 75,
+      "lines": 89,
       "useClient": true,
       "imports": [
         "react",
@@ -16638,7 +16639,7 @@
       "domain": "feature",
       "scope": "feature:document-editor",
       "family": "Unknown",
-      "lines": 62,
+      "lines": 58,
       "useClient": true,
       "imports": [
         "next/dynamic",
@@ -16658,7 +16659,7 @@
       "domain": "feature",
       "scope": "feature:document-editor",
       "family": "Unknown",
-      "lines": 613,
+      "lines": 614,
       "useClient": true,
       "imports": [
         "@tiptap/extension-image",
@@ -16683,7 +16684,7 @@
       "templateImports": 0,
       "uiPrimitiveImports": 0,
       "tokenSet": {},
-      "propsSignature": "allowFontFamily|allowImage|allowTable|allowTaskList|allowTextAlign|containerClassName|disabled|editorContentClassName|enableAdvancedTools|fontFamilyOptions|headingLevels|loadingLabel|onChange|placeholder|surfaceClassName|surfaceStyle|toolbarClassName|value|variant",
+      "propsSignature": "allowFontFamily|allowImage|allowTable|allowTaskList|allowTextAlign|containerClassName|disabled|enableAdvancedTools|fontFamilyOptions|headingLevels|loadingLabel|onChange|placeholder|surfaceOptions|toolbarClassName|value|variant",
       "thinReExportWrapper": false
     },
     {
@@ -32608,15 +32609,13 @@
       "domain": "feature",
       "scope": "feature:kangur",
       "family": "Unknown",
-      "lines": 139,
+      "lines": 135,
       "useClient": true,
       "imports": [
         "next-intl",
         "react",
-        "@/features/kangur/config/page-access",
         "@/features/kangur/ui/context/KangurRoutingContext",
         "@/features/kangur/ui/context/KangurRouteTransitionContext",
-        "@/features/kangur/ui/hooks/useOptionalNextAuthSession",
         "@/features/kangur/observability/client"
       ],
       "templateImports": 0,
@@ -38116,7 +38115,7 @@
       "domain": "feature",
       "scope": "feature:kangur",
       "family": "Modal",
-      "lines": 1573,
+      "lines": 1591,
       "useClient": true,
       "imports": [
         "react",
@@ -38946,7 +38945,7 @@
       "domain": "feature",
       "scope": "feature:products",
       "family": "Unknown",
-      "lines": 157,
+      "lines": 125,
       "useClient": true,
       "imports": [
         "react",
@@ -38957,7 +38956,7 @@
       "templateImports": 0,
       "uiPrimitiveImports": 0,
       "tokenSet": {},
-      "propsSignature": "editValue|field|handleBlur|handleKeyDown|inputRef|isSaving|setEditValue",
+      "propsSignature": "field|onUpdate|productId|value",
       "thinReExportWrapper": false
     },
     {
@@ -43286,7 +43285,7 @@
       "domain": "shared-ui",
       "scope": "shared-ui",
       "family": "Section",
-      "lines": 340,
+      "lines": 326,
       "useClient": true,
       "imports": [
         "lucide-react",
@@ -45100,7 +45099,7 @@
       "domain": "shared-ui",
       "scope": "shared-ui",
       "family": "Unknown",
-      "lines": 98,
+      "lines": 70,
       "useClient": true,
       "imports": [
         "class-variance-authority",
@@ -45112,7 +45111,7 @@
       "templateImports": 0,
       "uiPrimitiveImports": 0,
       "tokenSet": {},
-      "propsSignature": "className|disabled|label|onClick|pressed|variant",
+      "propsSignature": "className|disabled|disabledLabel|disabledVariant|enabled|enabledLabel|enabledVariant|onToggle|size",
       "thinReExportWrapper": false
     },
     {
@@ -46230,7 +46229,31 @@
   "opportunities": [],
   "clusterDiagnostics": {
     "duplicateName": [],
-    "propSignature": [],
+    "propSignature": [
+      {
+        "method": "prop_signature",
+        "family": "Panel",
+        "clusterKey": "props:Panel|children|className",
+        "fileCount": 2,
+        "totalLines": 452,
+        "scopes": [
+          "feature:ai"
+        ],
+        "similarity": null,
+        "files": [
+          {
+            "path": "src/features/ai/ai-paths/components/PortableEngineTrendSnapshotsPanel.tsx",
+            "lines": 429,
+            "scope": "feature:ai"
+          },
+          {
+            "path": "src/features/ai/ai-paths/components/validation/ValidationPanel.tsx",
+            "lines": 23,
+            "scope": "feature:ai"
+          }
+        ]
+      }
+    ],
     "tokenSimilarity": []
   }
 }

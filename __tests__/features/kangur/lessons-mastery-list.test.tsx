@@ -345,7 +345,9 @@ describe('Lessons page mastery list', () => {
   });
 
   afterEach(() => {
-    vi.runOnlyPendingTimers();
+    act(() => {
+      vi.runOnlyPendingTimers();
+    });
     vi.useRealTimers();
     vi.restoreAllMocks();
   });

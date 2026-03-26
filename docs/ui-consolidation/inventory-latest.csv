@@ -7,7 +7,7 @@ src/features/kangur/ui/components/KangurPrimaryNavigation.test.tsx,feature,featu
 src/features/kangur/ui/components/SubtractingLesson.tsx,feature,feature:kangur,Unknown,SubtractingLesson.tsx,1846,true,0,0,ariaLabel|children|surfaceHeight|surfaceWidth|testIdPrefix|viewBox
 src/features/kangur/ui/components/EnglishAdverbsFrequencyRoutineGame.tsx,feature,feature:kangur,Unknown,EnglishAdverbsFrequencyRoutineGame.tsx,1701,true,0,0,finishLabel|onFinish
 src/features/kangur/ui/components/AddingLesson.tsx,feature,feature:kangur,Unknown,AddingLesson.tsx,1685,true,0,0,
-src/features/kangur/ui/pages/GamesLibraryGameModal.tsx,feature,feature:kangur,Modal,GamesLibraryGameModal.tsx,1573,true,0,0,ariaLabel|className|onChange|options|value
+src/features/kangur/ui/pages/GamesLibraryGameModal.tsx,feature,feature:kangur,Modal,GamesLibraryGameModal.tsx,1591,true,0,0,ariaLabel|className|onChange|options|value
 src/features/kangur/ui/components/KangurPrimaryNavigation.tsx,feature,feature:kangur,Unknown,KangurPrimaryNavigation.tsx,1479,true,0,0,basePath|canManageLearners|className|contentClassName|currentPage|guestPlayerName|guestPlayerNamePlaceholder|homeActive|isAuthenticated|navLabel|onGuestPlayerNameChange|onHomeClick|onLogin|onLogout|rightAccessory|showParentDashboard
 src/features/kangur/ui/components/KangurPageTransitionSkeleton.tsx,feature,feature:kangur,Unknown,KangurPageTransitionSkeleton.tsx,1266,true,0,0,embeddedOverride|pageKey|reason|renderInlineTopNavigationSkeleton|topBarHeightCssValue|variant
 src/features/kangur/ui/components/GeometryLessonAnimations.tsx,feature,feature:kangur,Unknown,GeometryLessonAnimations.tsx,1248,false,0,0,accentEnd|accentStart|atmosphereA|atmosphereB|height|ids|rx|stroke|testIdPrefix|width|x|y
@@ -115,14 +115,14 @@ src/features/ai/ai-paths/components/ai-paths-settings/useAiPathsPresets.test.tsx
 src/features/admin/components/admin-menu-nav.tsx,feature,feature:admin,Unknown,admin-menu-nav.tsx,647,false,0,0,
 src/features/kangur/admin/KangurQuestionsManagerPanel.tsx,feature,feature:kangur,Panel,KangurQuestionsManagerPanel.tsx,645,true,0,0,
 src/features/kangur/ui/components/EnglishPrepositionsOrderGame.tsx,feature,feature:kangur,Unknown,EnglishPrepositionsOrderGame.tsx,642,true,0,0,finishLabel|onFinish
+src/features/case-resolver/components/page/CaseResolverDocumentEditor.tsx,feature,feature:case-resolver,Unknown,CaseResolverDocumentEditor.tsx,638,true,0,0,
 src/features/case-resolver/components/page/CaseResolverScanFileEditor.tsx,feature,feature:case-resolver,Unknown,CaseResolverScanFileEditor.tsx,638,true,0,0,
-src/features/case-resolver/components/page/CaseResolverDocumentEditor.tsx,feature,feature:case-resolver,Unknown,CaseResolverDocumentEditor.tsx,635,true,0,0,
 src/features/ai/ai-paths/components/RunComparisonTool.tsx,feature,feature:ai,Unknown,RunComparisonTool.tsx,624,false,0,0,children|className
 src/features/kangur/ui/components/CalendarLesson.tsx,feature,feature:kangur,Unknown,CalendarLesson.tsx,624,true,0,0,highlightDay|miniGameTranslations|month|year
 src/features/ai/ai-paths/components/run-detail-dialog.tsx,feature,feature:ai,Unknown,run-detail-dialog.tsx,620,true,1,1,children|label
 src/features/kangur/ui/components/LogicalAnalogiesLesson.tsx,feature,feature:kangur,Unknown,LogicalAnalogiesLesson.tsx,615,true,0,0,
 src/features/kangur/ui/components/LogicalLessonAnimations.tsx,feature,feature:kangur,Unknown,LogicalLessonAnimations.tsx,615,false,0,0,ariaLabel|children|styles|testIdPrefix|viewBox
-src/features/document-editor/components/RichTextEditorImpl.tsx,feature,feature:document-editor,Unknown,RichTextEditorImpl.tsx,613,true,0,0,allowFontFamily|allowImage|allowTable|allowTaskList|allowTextAlign|containerClassName|disabled|editorContentClassName|enableAdvancedTools|fontFamilyOptions|headingLevels|loadingLabel|onChange|placeholder|surfaceClassName|surfaceStyle|toolbarClassName|value|variant
+src/features/document-editor/components/RichTextEditorImpl.tsx,feature,feature:document-editor,Unknown,RichTextEditorImpl.tsx,614,true,0,0,allowFontFamily|allowImage|allowTable|allowTaskList|allowTextAlign|containerClassName|disabled|enableAdvancedTools|fontFamilyOptions|headingLevels|loadingLabel|onChange|placeholder|surfaceOptions|toolbarClassName|value|variant
 src/features/ai/ai-paths/components/node-config/database/DatabaseConstructorTab.tsx,feature,feature:ai,Tab,DatabaseConstructorTab.tsx,612,true,0,0,
 src/features/products/components/list/ProductColumns.tsx,feature,feature:products,Unknown,ProductColumns.tsx,611,true,0,0,
 src/features/ai/image-studio/components/sequencing/SequenceStackCard.tsx,feature,feature:ai,Card,SequenceStackCard.tsx,608,false,0,0,
@@ -221,13 +221,13 @@ src/shared/ui/data-table.tsx,shared-ui,shared-ui,Unknown,data-table.tsx,450,true
 src/features/kangur/admin/components/TestSuiteTreeRow.tsx,feature,feature:kangur,Unknown,TestSuiteTreeRow.tsx,448,false,0,0,
 src/features/kangur/ui/components/KangurLessonStageGameRuntime.test.tsx,feature,feature:kangur,Unknown,KangurLessonStageGameRuntime.test.tsx,447,false,0,0,finishLabel|finishLabelVariant|onFinish
 src/features/case-resolver/components/CaseResolverCanvasWorkspace.tsx,feature,feature:case-resolver,Unknown,CaseResolverCanvasWorkspace.tsx,446,true,0,0,
-src/features/ai/ai-paths/components/PortableEngineTrendSnapshotsPanel.tsx,feature,feature:ai,Panel,PortableEngineTrendSnapshotsPanel.tsx,442,true,0,0,children|className|props|variant
 src/features/products/components/list/ProductListMobileCards.tsx,feature,feature:products,Unknown,ProductListMobileCards.tsx,438,true,0,0,isSelected|prefetchListings|product|toggleSelection
 src/features/cms/components/page-builder/animation/VisualEffectsSection.tsx,feature,feature:cms,Section,VisualEffectsSection.tsx,435,true,0,0,
 src/features/cms/components/page-builder/preview/PreviewSectionBlocks.tsx,feature,feature:cms,Unknown,PreviewSectionBlocks.tsx,435,true,0,0,block|stretch
 src/features/kangur/ui/components/AgenticCodingCodex54LongHorizonLesson.data.tsx,feature,feature:kangur,Unknown,AgenticCodingCodex54LongHorizonLesson.data.tsx,435,false,0,0,
 src/features/ai/image-studio/components/SlotTree.tsx,feature,feature:ai,Unknown,SlotTree.tsx,430,true,0,0,
 src/features/kangur/ui/components/LogicalAnalogiesAnimations.tsx,feature,feature:kangur,Unknown,LogicalAnalogiesAnimations.tsx,430,true,0,0,accentEnd|accentStart|atmosphereA|atmosphereB|height|ids|rx|stroke|testIdPrefix|width|x|y
+src/features/ai/ai-paths/components/PortableEngineTrendSnapshotsPanel.tsx,feature,feature:ai,Panel,PortableEngineTrendSnapshotsPanel.tsx,429,true,0,0,children|className
 src/features/kangur/ui/components/adding-ball-game/PointerDragProvider.tsx,feature,feature:kangur,Unknown,PointerDragProvider.tsx,428,true,0,0,
 src/features/kangur/ui/components/EnglishPrepositionsGame.tsx,feature,feature:kangur,Unknown,EnglishPrepositionsGame.tsx,425,true,0,0,finishLabel|onFinish
 src/shared/ui/playwright/PlaywrightSettingsForm.tsx,shared-ui,shared-ui,Form,PlaywrightSettingsForm.tsx,424,true,0,0,children|setSettings|settings
@@ -324,7 +324,6 @@ src/features/products/components/settings/validator-settings/ValidatorPatternMod
 src/features/ai/image-studio/components/analysis/sections/AnalysisSettingsSection.tsx,feature,feature:ai,Section,AnalysisSettingsSection.tsx,343,true,0,0,
 src/features/products/components/form/ProductFormParameters.test.tsx,feature,feature:products,Unknown,ProductFormParameters.test.tsx,341,false,0,0,
 src/features/kangur/admin/components/KangurAiTutorSettingsPanel.tsx,feature,feature:kangur,Panel,KangurAiTutorSettingsPanel.tsx,340,false,0,0,
-src/shared/ui/PromptGenerationSection.tsx,shared-ui,shared-ui,Section,PromptGenerationSection.tsx,340,true,0,0,inputId|inputLabel|inputValue|onInputChange|pathNumber
 src/shared/ui/vector-canvas/index.tsx,shared-ui,shared-ui,Unknown,index.tsx,340,true,0,0,
 src/features/kangur/ui/components/SubtractingGame.tsx,feature,feature:kangur,Unknown,SubtractingGame.tsx,339,true,0,0,
 src/shared/lib/ai-brain/components/ProvidersTab.tsx,shared,shared-lib,Tab,ProvidersTab.tsx,339,true,1,1,
@@ -349,6 +348,7 @@ src/features/kangur/ui/components/KangurParentDashboardProgressWidget.test.tsx,f
 src/features/kangur/ui/components/KangurTestQuestionRenderer.tsx,feature,feature:kangur,Unknown,KangurTestQuestionRenderer.tsx,327,true,0,0,contentId|onSelect|question|questionIndex|selectedLabel|showAnswer|showReadControl|showSectionIntro|totalQuestions
 src/features/products/components/settings/validator-settings/ValidatorPatternImportModal.tsx,feature,feature:products,Modal,ValidatorPatternImportModal.tsx,327,true,0,0,
 src/features/kangur/ui/components/AgenticCodingMiniGames.sort.tsx,feature,feature:kangur,Unknown,AgenticCodingMiniGames.sort.tsx,326,false,0,0,accent|config
+src/shared/ui/PromptGenerationSection.tsx,shared-ui,shared-ui,Section,PromptGenerationSection.tsx,326,true,0,0,inputId|inputLabel|inputValue|onInputChange|pathNumber
 src/features/cms/components/frontend/blocks/InteractiveRuntimeBlocks.test.tsx,feature,feature:cms,Unknown,InteractiveRuntimeBlocks.test.tsx,325,false,0,0,
 src/features/admin/components/menu/NavTree.tsx,feature,feature:admin,Unknown,NavTree.tsx,323,true,0,0,
 src/features/ai/image-studio/components/center-preview/SplitVariantPreview.tsx,feature,feature:ai,Unknown,SplitVariantPreview.tsx,323,true,0,0,
@@ -767,7 +767,6 @@ src/features/cms/components/frontend/sections/grid/BackgroundImageLayer.tsx,feat
 src/features/cms/components/page-builder/settings/page-settings/PageAiTabContent.tsx,feature,feature:cms,Unknown,PageAiTabContent.tsx,157,true,0,0,
 src/features/kangur/admin/components/QuizEditorCard.tsx,feature,feature:kangur,Card,QuizEditorCard.tsx,157,false,0,0,
 src/features/kangur/ui/components/KangurLearnerProfileSessionsWidget.tsx,feature,feature:kangur,Unknown,KangurLearnerProfileSessionsWidget.tsx,157,false,0,0,
-src/features/products/components/EditableCell.tsx,feature,feature:products,Unknown,EditableCell.tsx,157,true,0,0,editValue|field|handleBlur|handleKeyDown|inputRef|isSaving|setEditValue
 src/features/prompt-engine/components/context/RuleItemContext.tsx,feature,feature:prompt-engine,Unknown,RuleItemContext.tsx,157,true,0,0,children|draft
 src/features/data-import-export/components/imports/sections/ExportBaseConfigSection.tsx,feature,feature:data-import-export,Section,ExportBaseConfigSection.tsx,156,true,0,0,
 src/features/database/components/DatabaseOperationsPanel.tsx,feature,feature:database,Panel,DatabaseOperationsPanel.tsx,156,true,0,0,
@@ -787,7 +786,6 @@ src/features/kangur/ui/components/KangurParentDashboardScoresWidget.test.tsx,fea
 src/features/kangur/ui/components/KangurTopNavigationController.test.tsx,feature,feature:kangur,Unknown,KangurTopNavigationController.test.tsx,154,false,0,0,
 src/shared/lib/ai-brain/components/BrainRoutingTree.tsx,shared,shared-lib,Unknown,BrainRoutingTree.tsx,154,true,0,0,
 src/features/ai/image-studio/components/center-preview/sections/CenterPreviewCanvas.tsx,feature,feature:ai,Unknown,CenterPreviewCanvas.tsx,153,true,0,0,
-src/features/database/components/DatabaseColumns.tsx,feature,feature:database,Unknown,DatabaseColumns.tsx,153,true,0,0,backup|backupMaintenanceAllowed|handleRestoreRequest
 src/features/kangur/ui/components/KangurSessionHistoryRow.tsx,feature,feature:kangur,Unknown,KangurSessionHistoryRow.tsx,153,false,0,0,durationClassName|durationText|scoreAccent|scoreTestId|scoreText|xpTestId|xpText
 src/shared/lib/ai-brain/components/BrainCatalogTree.tsx,shared,shared-lib,Unknown,BrainCatalogTree.tsx,153,true,0,0,entries|isPending|onChange|onEdit|onRemove
 src/features/kangur/ui/components/KangurAiTutorPanelContextSummary.test.tsx,feature,feature:kangur,Unknown,KangurAiTutorPanelContextSummary.test.tsx,152,false,0,0,
@@ -855,7 +853,6 @@ src/features/kangur/ui/components/DifficultySelector.tsx,feature,feature:kangur,
 src/features/ai/ai-paths/components/node-config/database/DatabaseQueryValidatorPanel.tsx,feature,feature:ai,Panel,DatabaseQueryValidatorPanel.tsx,139,true,0,0,
 src/features/ai/image-studio/components/center-preview/CenterPreviewContext.tsx,feature,feature:ai,Unknown,CenterPreviewContext.tsx,139,true,0,0,
 src/features/integrations/components/listings/ListProductModal.tsx,feature,feature:integrations,Modal,ListProductModal.tsx,139,true,0,0,
-src/features/kangur/ui/components/KangurRouteAccessibilityAnnouncer.tsx,feature,feature:kangur,Unknown,KangurRouteAccessibilityAnnouncer.tsx,139,true,0,0,
 src/features/kangur/ui/components/drawing-engine/KangurDrawingPracticeBoard.tsx,feature,feature:kangur,Unknown,KangurDrawingPracticeBoard.tsx,139,true,0,0,accent|actionRow|afterCanvas|ariaDescribedBy|ariaKeyShortcuts|ariaLabel|beforeCanvas|boardClassName|boardDataTestId|canvasClassName|canvasDataTestId|canvasRef|canvasStyle|feedback|feedbackBeforeActions|feedbackTestId|height|helpId|helpTestId|helpText|isCoarsePointer|isPointerDrawing|middleContent|onKeyDown|onPointerCancel|onPointerDown|onPointerLeave|onPointerMove|onPointerUp|role|tabIndex|width
 src/features/notesapp/components/NoteForm.tsx,feature,feature:notesapp,Form,NoteForm.tsx,139,true,0,0,
 src/features/viewer3d/components/Asset3DPreviewModalImpl.tsx,feature,feature:viewer3d,Unknown,Asset3DPreviewModalImpl.tsx,139,true,1,1,
@@ -877,6 +874,7 @@ src/features/ai/ai-paths/components/node-config/dialog/LearnerAgentNodeConfigSec
 src/features/ai/image-studio/components/VersionGraphComparePanel.tsx,feature,feature:ai,Panel,VersionGraphComparePanel.tsx,135,true,0,0,
 src/features/cms/components/frontend/blocks/KangurWidgetBlock.test.tsx,feature,feature:cms,Unknown,KangurWidgetBlock.test.tsx,135,false,0,0,
 src/features/kangur/ui/components/KangurQuestionIllustrationRenderer.test.tsx,feature,feature:kangur,Unknown,KangurQuestionIllustrationRenderer.test.tsx,135,false,0,0,
+src/features/kangur/ui/components/KangurRouteAccessibilityAnnouncer.tsx,feature,feature:kangur,Unknown,KangurRouteAccessibilityAnnouncer.tsx,135,true,0,0,
 src/features/ai/agentcreator/teaching/components/SearchSimulator.tsx,feature,feature:ai,Unknown,SearchSimulator.tsx,134,true,0,0,
 src/features/kangur/ui/components/AgenticCodingCodex54LessonVisuals.test.tsx,feature,feature:kangur,Unknown,AgenticCodingCodex54LessonVisuals.test.tsx,134,false,0,0,
 src/features/kangur/ui/components/KangurLearnerProfileMasteryWidget.test.tsx,feature,feature:kangur,Unknown,KangurLearnerProfileMasteryWidget.test.tsx,134,false,0,0,
@@ -927,6 +925,7 @@ src/features/case-resolver/relation-search/components/sections/DocumentPreviewDi
 src/features/case-resolver/relation-search/components/sections/ScopeBar.tsx,feature,feature:case-resolver,Unknown,ScopeBar.tsx,125,true,0,0,
 src/features/cms/components/page-builder/preview/context/PreviewEditorContext.tsx,feature,feature:cms,Unknown,PreviewEditorContext.tsx,125,true,0,0,children|value
 src/features/kangur/ui/components/drawing-engine/useKangurDrawingDraftStorage.test.tsx,feature,feature:kangur,Unknown,useKangurDrawingDraftStorage.test.tsx,125,false,0,0,
+src/features/products/components/EditableCell.tsx,feature,feature:products,Unknown,EditableCell.tsx,125,true,0,0,field|onUpdate|productId|value
 src/features/cms/components/frontend/sections/FrontendBlockRenderer.tsx,feature,feature:cms,Unknown,FrontendBlockRenderer.tsx,124,true,0,0,
 src/shared/lib/ai-brain/components/BrainStateOverview.tsx,shared,shared-lib,Unknown,BrainStateOverview.tsx,124,true,0,0,
 src/shared/ui/segmented-control.tsx,shared-ui,shared-ui,Unknown,segmented-control.tsx,124,true,0,0,
@@ -955,6 +954,7 @@ src/shared/ui/templates/modals/PromptModal.tsx,shared-ui,shared-ui,Modal,PromptM
 src/features/ai/ai-paths/components/AiPathsSettings.tsx,feature,feature:ai,Settings,AiPathsSettings.tsx,118,true,0,1,
 src/features/ai/ai-paths/components/node-config/dialog/FetcherNodeConfigSection.tsx,feature,feature:ai,Section,FetcherNodeConfigSection.tsx,118,true,0,0,
 src/features/ai/image-studio/components/right-sidebar/RightSidebarQuickActions.tsx,feature,feature:ai,Unknown,RightSidebarQuickActions.tsx,118,false,0,0,
+src/features/database/components/DatabaseColumns.tsx,feature,feature:database,Unknown,DatabaseColumns.tsx,118,true,0,0,
 src/features/kangur/admin/components/KangurLessonPreviewPanel.tsx,feature,feature:kangur,Panel,KangurLessonPreviewPanel.tsx,118,true,0,0,activePageId|document
 src/features/notesapp/components/editor/NotesMarkdownToolbar.tsx,feature,feature:notesapp,Toolbar,NotesMarkdownToolbar.tsx,118,true,0,0,
 src/features/admin/components/AiInsightsNotificationsDrawer.tsx,feature,feature:admin,Drawer,AiInsightsNotificationsDrawer.tsx,117,true,0,0,
@@ -1097,7 +1097,6 @@ src/features/kangur/ui/components/LogicalAnalogiesRelationGame.touch.test.tsx,fe
 src/features/kangur/ui/components/drawing-engine/KangurDrawingActionRow.test.tsx,feature,feature:kangur,Unknown,KangurDrawingActionRow.test.tsx,98,true,0,0,
 src/features/products/components/settings/pricing/PriceGroupsSettings.tsx,feature,feature:products,Settings,PriceGroupsSettings.tsx,98,false,0,0,
 src/shared/lib/jobs/components/job-table/JobActionsCell.test.tsx,shared,shared-lib,Unknown,JobActionsCell.test.tsx,98,false,0,0,
-src/shared/ui/status-toggle.tsx,shared-ui,shared-ui,Unknown,status-toggle.tsx,98,true,0,0,className|disabled|label|onClick|pressed|variant
 src/features/ai/ai-paths/components/runtime-event-entry.tsx,feature,feature:ai,Unknown,runtime-event-entry.tsx,97,true,0,0,className|details|hideKindBadge|hideLevelLabel|inlinePrefix|kind|kindClassName|level|levelClassName|message|messageClassName|metadataClassName|stacked|timeClassName|timestamp|trailingMetadata
 src/features/ai/image-studio/components/OutputImageGrid.tsx,feature,feature:ai,Unknown,OutputImageGrid.tsx,97,true,0,0,
 src/features/cms/components/frontend/CssAnimationWrapper.tsx,feature,feature:cms,Unknown,CssAnimationWrapper.tsx,97,true,0,0,children|className|config
@@ -1189,6 +1188,7 @@ src/app/(admin)/layout.tsx,app,app,Unknown,layout.tsx,89,false,0,0,
 src/features/ai/ai-paths/components/node-config/dialog/RouterNodeConfigSection.tsx,feature,feature:ai,Section,RouterNodeConfigSection.tsx,89,true,0,0,
 src/features/cms/components/frontend/sections/FrontendCarousel.test.tsx,feature,feature:cms,Unknown,FrontendCarousel.test.tsx,89,false,0,0,
 src/features/cms/components/page-builder/tree/ComponentTreeNodeRenderer.tsx,feature,feature:cms,Unknown,ComponentTreeNodeRenderer.tsx,89,true,0,0,
+src/features/document-editor/components/DocumentWysiwygEditor.tsx,feature,feature:document-editor,Unknown,DocumentWysiwygEditor.tsx,89,true,0,0,
 src/features/kangur/ui/components/KangurBadgeTrackPlaceholderCard.tsx,feature,feature:kangur,Card,KangurBadgeTrackPlaceholderCard.tsx,89,false,0,0,cardClassName|dataTestId|description|headerClassName|label|statusChipClassName|title|trackEmoji|trackLabelClassName
 src/features/kangur/ui/components/KangurGame.i18n.test.tsx,feature,feature:kangur,Unknown,KangurGame.i18n.test.tsx,89,false,0,0,
 src/features/kangur/ui/components/LessonMasteryInsights.test.tsx,feature,feature:kangur,Unknown,LessonMasteryInsights.test.tsx,89,false,0,0,
@@ -1316,7 +1316,6 @@ src/features/kangur/ui/design/primitives/KangurPanel.tsx,feature,feature:kangur,
 src/features/products/components/form/studio/StudioAuditHistory.tsx,feature,feature:products,Unknown,StudioAuditHistory.tsx,76,true,0,0,
 src/shared/ui/checkbox.tsx,shared-ui,shared-ui,Unknown,checkbox.tsx,76,true,0,0,
 src/features/ai/ai-paths/components/node-config/dialog/ConstantNodeConfigSection.tsx,feature,feature:ai,Section,ConstantNodeConfigSection.tsx,75,true,0,0,
-src/features/document-editor/components/DocumentWysiwygEditor.tsx,feature,feature:document-editor,Unknown,DocumentWysiwygEditor.tsx,75,true,0,0,
 src/features/kangur/admin/components/KangurAdminMetricCard.tsx,feature,feature:kangur,Card,KangurAdminMetricCard.tsx,75,false,0,0,Icon|className|detail|label|tone|value
 src/features/kangur/ui/components/LogicalIfThenStepsGame.touch.test.tsx,feature,feature:kangur,Unknown,LogicalIfThenStepsGame.touch.test.tsx,75,false,0,0,
 src/features/kangur/ui/components/drawing-engine/KangurDrawingUtilityActions.test.tsx,feature,feature:kangur,Unknown,KangurDrawingUtilityActions.test.tsx,75,true,0,0,
@@ -1359,6 +1358,7 @@ src/features/case-resolver/components/page/CaseResolverCaptureMappingModal.tsx,f
 src/features/cms/components/page-builder/settings/InspectorOptions.tsx,feature,feature:cms,Unknown,InspectorOptions.tsx,70,true,0,0,
 src/features/integrations/components/listings/SelectIntegrationModalImpl.tsx,feature,feature:integrations,Unknown,SelectIntegrationModalImpl.tsx,70,true,0,0,
 src/features/products/components/settings/validator-settings/ValidatorDefaultPanel.tsx,feature,feature:products,Panel,ValidatorDefaultPanel.tsx,70,true,0,0,
+src/shared/ui/status-toggle.tsx,shared-ui,shared-ui,Unknown,status-toggle.tsx,70,true,0,0,className|disabled|disabledLabel|disabledVariant|enabled|enabledLabel|enabledVariant|onToggle|size
 src/shared/ui/tree/TreeRow.tsx,shared-ui,shared-ui,Unknown,TreeRow.tsx,70,true,0,0,asChild|baseIndent|className|depth|disableIndent|dragOver|dragOverClassName|indent|nodeId|props|selected|selectedClassName|style|tone
 src/app/(admin)/admin/kangur/admin-kangur-slug-page.test.tsx,app,app,Unknown,admin-kangur-slug-page.test.tsx,69,false,0,0,
 src/features/ai/ai-paths/components/node-config/dialog/NodeHistoryTab.tsx,feature,feature:ai,Tab,NodeHistoryTab.tsx,69,true,0,0,
@@ -1425,7 +1425,6 @@ src/shared/ui/templates/SettingsFormModal.tsx,shared-ui,shared-ui,Modal,Settings
 src/features/ai/ai-paths/components/node-config/dialog/regex/RegexPreviewSection.tsx,feature,feature:ai,Section,RegexPreviewSection.tsx,62,true,0,0,
 src/features/ai/image-studio/components/VersionNodeMapContext.tsx,feature,feature:ai,Unknown,VersionNodeMapContext.tsx,62,true,0,0,children|value
 src/features/cms/components/page-builder/BlockPicker.tsx,feature,feature:cms,Picker,BlockPicker.tsx,62,true,1,1,onSelect|sectionType
-src/features/document-editor/components/RichTextEditor.tsx,feature,feature:document-editor,Unknown,RichTextEditor.tsx,62,true,0,0,
 src/features/kangur/ui/components/AgenticCodingMiniGames.keyboard.test.tsx,feature,feature:kangur,Unknown,AgenticCodingMiniGames.keyboard.test.tsx,62,false,0,0,
 src/features/kangur/ui/components/AlphabetMatchingLesson.data.tsx,feature,feature:kangur,Unknown,AlphabetMatchingLesson.data.tsx,62,false,0,0,
 src/features/kangur/ui/components/AlphabetWordsLesson.data.tsx,feature,feature:kangur,Unknown,AlphabetWordsLesson.data.tsx,62,false,0,0,
@@ -1456,6 +1455,7 @@ src/features/kangur/admin/components/KangurAdminStatusCard.tsx,feature,feature:k
 src/features/kangur/ui/components/ClockLessonAnimations.test.tsx,feature,feature:kangur,Unknown,ClockLessonAnimations.test.tsx,60,false,0,0,
 src/features/kangur/ui/components/KangurAiTutorSelectionAction.test.tsx,feature,feature:kangur,Unknown,KangurAiTutorSelectionAction.test.tsx,60,false,0,0,
 src/features/kangur/ui/components/KangurTopNavigationController.tsx,feature,feature:kangur,Unknown,KangurTopNavigationController.tsx,60,true,0,0,navigation|visible
+src/features/ai/ai-paths/components/AiPathsPillButton.tsx,feature,feature:ai,Unknown,AiPathsPillButton.tsx,59,false,0,1,active|activeClassName|baseClassName|children|className|disabled|inactiveClassName|onClick|type|variant
 src/features/cms/components/frontend/sections/FrontendTextAtomSection.tsx,feature,feature:cms,Section,FrontendTextAtomSection.tsx,59,false,0,0,
 src/features/files/components/file-manager/FileManagerBulkActions.tsx,feature,feature:files,Unknown,FileManagerBulkActions.tsx,59,true,0,0,
 src/features/integrations/components/listings/list-product-modal/ListProductErrorPanel.tsx,feature,feature:integrations,Panel,ListProductErrorPanel.tsx,59,false,0,0,
@@ -1470,6 +1470,7 @@ src/app/(frontend)/kangur/login/page.tsx,app,app,Page,page.tsx,58,false,0,0,
 src/features/ai/ai-paths/components/node-config/dialog/UnsupportedNodeConfigNotice.tsx,feature,feature:ai,Unknown,UnsupportedNodeConfigNotice.tsx,58,true,0,0,
 src/features/ai/image-studio/components/StudioCard.tsx,feature,feature:ai,Card,StudioCard.tsx,58,true,0,0,
 src/features/cms/components/frontend/sections/FrontendTestimonialsSection.tsx,feature,feature:cms,Section,FrontendTestimonialsSection.tsx,58,true,0,0,
+src/features/document-editor/components/RichTextEditor.tsx,feature,feature:document-editor,Unknown,RichTextEditor.tsx,58,true,0,0,
 src/features/kangur/ui/components/KangurLessonActivityRuntime.tsx,feature,feature:kangur,Unknown,KangurLessonActivityRuntime.tsx,58,true,0,0,onFinish|runtime
 src/features/products/components/form/ProductFormValidationTab.tsx,feature,feature:products,Tab,ProductFormValidationTab.tsx,58,true,0,0,
 src/shared/ui/FocusModeTogglePortal.tsx,shared-ui,shared-ui,Unknown,FocusModeTogglePortal.tsx,58,true,0,0,className|isFocusMode|labelOff|labelOn|onToggleFocusMode
@@ -1484,6 +1485,7 @@ src/features/kangur/admin/components/KangurAiTutorNativeGuideValidationSummary.t
 src/features/kangur/ui/components/SubtractingLesson.visuals.test.tsx,feature,feature:kangur,Unknown,SubtractingLesson.visuals.test.tsx,57,false,0,0,
 src/features/kangur/ui/components/drawing-engine/KangurDrawingSnapshotActions.tsx,feature,feature:kangur,Unknown,KangurDrawingSnapshotActions.tsx,57,true,0,0,buttonClassName|className|display|exportDisabled|exportLabel|exportTestId|iconClassName|isCoarsePointer|onExport|size|variant
 src/shared/ui/ActionMenu.tsx,shared-ui,shared-ui,Unknown,ActionMenu.tsx,57,true,0,2,align|ariaLabel|children|className|disabled|size|trigger|triggerClassName|variant
+src/features/ai/ai-paths/components/validation/ValidationActionButton.tsx,feature,feature:ai,Unknown,ValidationActionButton.tsx,56,true,0,1,children|className|disabled|icon|loading|onClick|variant
 src/features/ai/image-studio/components/modals/StudioActionButtonRow.tsx,feature,feature:ai,Unknown,StudioActionButtonRow.tsx,56,false,0,0,actions|className
 src/features/ai/image-studio/components/studio-modals/StudioImportContext.tsx,feature,feature:ai,Unknown,StudioImportContext.tsx,56,true,0,0,children|value
 src/features/case-resolver/components/CaseResolverLinkedPreviewModal.tsx,feature,feature:case-resolver,Modal,CaseResolverLinkedPreviewModal.tsx,56,false,1,1,
@@ -1669,7 +1671,6 @@ src/features/kangur/ui/components/WebDevelopmentReactComponentsLessonPanels.test
 src/features/viewer3d/components/context/Asset3DPreviewModalViewContext.tsx,feature,feature:viewer3d,Unknown,Asset3DPreviewModalViewContext.tsx,40,true,0,0,children|value
 src/shared/ui/admin-title-breadcrumb-header.tsx,shared-ui,shared-ui,Unknown,admin-title-breadcrumb-header.tsx,40,false,0,0,actions|actionsClassName|breadcrumb|breadcrumbClassName|className|title|titleRowClassName|titleStackClassName
 src/shared/ui/templates/modals/DetailModalSection.tsx,shared-ui,shared-ui,Section,DetailModalSection.tsx,40,false,0,0,children|className|contentClassName|description|title|titleClassName
-src/features/ai/ai-paths/components/validation/ValidationActionButton.tsx,feature,feature:ai,Unknown,ValidationActionButton.tsx,39,true,0,0,children|className|disabled|icon|loading|onClick|variant
 src/features/ai/image-studio/components/generation-toolbar/GenerationToolbarDefaultsSection.tsx,feature,feature:ai,Section,GenerationToolbarDefaultsSection.tsx,39,false,0,0,
 src/features/case-resolver/relation-search/components/DocumentRelationSearchUiContext.tsx,feature,feature:case-resolver,Unknown,DocumentRelationSearchUiContext.tsx,39,true,0,0,children|value
 src/features/integrations/components/connections/DynamicPlaywrightSettingsForm.tsx,feature,feature:integrations,Form,DynamicPlaywrightSettingsForm.tsx,39,false,0,1,
@@ -1678,7 +1679,6 @@ src/features/kangur/ui/components/KangurAnswerChoiceBadge.test.tsx,feature,featu
 src/features/kangur/ui/components/KangurIconSummaryCardContent.test.tsx,feature,feature:kangur,Unknown,KangurIconSummaryCardContent.test.tsx,39,false,0,0,
 src/features/kangur/ui/components/LessonPlaceholder.data.tsx,feature,feature:kangur,Unknown,LessonPlaceholder.data.tsx,39,false,0,0,
 src/shared/lib/jobs/components/context/ProductListingJobsPanelViewContext.tsx,shared,shared-lib,Unknown,ProductListingJobsPanelViewContext.tsx,39,true,0,0,children|value
-src/features/ai/ai-paths/components/AiPathsPillButton.tsx,feature,feature:ai,Unknown,AiPathsPillButton.tsx,38,false,0,0,active|activeClassName|baseClassName|children|className|disabled|inactiveClassName|onClick|type|variant
 src/features/ai/ai-paths/components/node-config/dialog/DelayNodeConfigSection.tsx,feature,feature:ai,Section,DelayNodeConfigSection.tsx,38,true,0,0,
 src/features/cms/components/frontend/blocks/HeadingBlock.tsx,feature,feature:cms,Unknown,HeadingBlock.tsx,38,true,0,0,
 src/features/cms/components/page-builder/animation/ColorPickerField.tsx,feature,feature:cms,Unknown,ColorPickerField.tsx,38,true,0,0,label|onChange|value
@@ -1878,6 +1878,7 @@ src/features/ai/ai-paths/components/validation/ValidationPanelHeader.tsx,feature
 src/features/integrations/components/listings/product-listings-modal/ProductListingItem.tsx,feature,feature:integrations,Unknown,ProductListingItem.tsx,21,false,0,0,
 src/shared/ui/vector-canvas/components/CanvasBackgroundLayer.tsx,shared-ui,shared-ui,Unknown,CanvasBackgroundLayer.tsx,21,false,0,0,
 src/app/(admin)/admin/not-found.tsx,app,app,Unknown,not-found.tsx,20,false,0,1,
+src/app/(frontend)/kangur/error.tsx,app,app,Unknown,error.tsx,20,true,0,0,error|reset
 src/app/[locale]/(frontend)/products/[id]/page.tsx,app,app,Page,page.tsx,20,false,0,0,
 src/features/ai/ai-paths/components/ai-paths-settings/sections/AiPathsDialogs.tsx,feature,feature:ai,Unknown,AiPathsDialogs.tsx,20,true,0,0,
 src/features/cms/components/frontend/sections/FrontendTextElementSection.tsx,feature,feature:cms,Section,FrontendTextElementSection.tsx,20,false,0,0,
@@ -1904,7 +1905,6 @@ src/features/kangur/ui/components/KangurParentDashboardWordmark.tsx,feature,feat
 src/features/kangur/ui/components/KangurTestsWordmark.tsx,feature,feature:kangur,Unknown,KangurTestsWordmark.tsx,16,false,0,0,
 src/shared/ui/HtmlLangSync.tsx,shared-ui,shared-ui,Unknown,HtmlLangSync.tsx,16,true,0,0,
 src/app/(admin)/admin/ai-paths/queue/page.tsx,app,app,Page,page.tsx,15,false,0,0,
-src/app/(frontend)/kangur/error.tsx,app,app,Unknown,error.tsx,15,true,0,0,error|reset
 src/app/(frontend)/products/[id]/page.tsx,app,app,Page,page.tsx,15,false,0,0,
 src/features/ai/ai-paths/components/ai-paths-settings/sections/AiPathsDocsView.tsx,feature,feature:ai,Unknown,AiPathsDocsView.tsx,15,true,0,0,
 src/features/kangur/ui/components/KangurDialogShell.tsx,feature,feature:kangur,Unknown,KangurDialogShell.tsx,15,true,0,0,

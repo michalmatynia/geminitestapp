@@ -1,34 +1,34 @@
 {
   "summary": {
-    "generatedAt": "2026-03-26T20:15:03.497Z",
+    "generatedAt": "2026-03-26T20:30:52.748Z",
     "scannedSourceFiles": 5867,
     "scannedJsxFiles": 2139,
-    "componentCount": 3588,
+    "componentCount": 3580,
     "componentsWithForwarding": 120,
-    "componentsWithAnyForwarding": 216,
-    "resolvedTransitionCount": 985,
-    "depth2CandidateChainCount": 985,
-    "candidateChainCount": 120,
+    "componentsWithAnyForwarding": 205,
+    "resolvedTransitionCount": 933,
+    "depth2CandidateChainCount": 933,
+    "candidateChainCount": 109,
     "highPriorityChainCount": 0,
-    "unknownSpreadForwardingCount": 19,
+    "unknownSpreadForwardingCount": 11,
     "highPropCountComponentCount": 67,
-    "passThroughHotspotCount": 71,
+    "passThroughHotspotCount": 67,
     "topFeatureScopes": [
       {
         "scope": "feature:kangur",
-        "count": 116
+        "count": 115
       },
       {
         "scope": "shared-ui",
-        "count": 38
+        "count": 35
       },
       {
         "scope": "feature:ai",
-        "count": 28
+        "count": 25
       },
       {
         "scope": "feature:database",
-        "count": 9
+        "count": 7
       },
       {
         "scope": "feature:cms",
@@ -36,7 +36,7 @@
       },
       {
         "scope": "feature:products",
-        "count": 6
+        "count": 5
       },
       {
         "scope": "feature:foldertree",
@@ -64,10 +64,6 @@
       },
       {
         "scope": "app",
-        "count": 1
-      },
-      {
-        "scope": "feature:document-editor",
         "count": 1
       },
       {
@@ -874,114 +870,6 @@
       ]
     },
     {
-      "score": 109,
-      "depth": 3,
-      "rootFanout": 3,
-      "distinctFeatureCount": 2,
-      "rootComponentId": "src/features/ai/ai-paths/components/RunComparisonTool.tsx#RunComparisonRowSummary",
-      "sinkComponentId": "src/shared/ui/button.tsx#Button",
-      "componentPath": [
-        "src/features/ai/ai-paths/components/RunComparisonTool.tsx#RunComparisonRowSummary",
-        "src/features/ai/ai-paths/components/AiPathsPillButton.tsx#AiPathsPillButton",
-        "src/shared/ui/button.tsx#Button"
-      ],
-      "propPath": [
-        "row",
-        "onClick",
-        "onClick"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/ai/ai-paths/components/RunComparisonTool.tsx#RunComparisonRowSummary",
-          "toComponentId": "src/features/ai/ai-paths/components/AiPathsPillButton.tsx#AiPathsPillButton",
-          "sourceProp": "row",
-          "targetProp": "onClick",
-          "relativePath": "src/features/ai/ai-paths/components/RunComparisonTool.tsx",
-          "line": 290
-        },
-        {
-          "fromComponentId": "src/features/ai/ai-paths/components/AiPathsPillButton.tsx#AiPathsPillButton",
-          "toComponentId": "src/shared/ui/button.tsx#Button",
-          "sourceProp": "onClick",
-          "targetProp": "onClick",
-          "relativePath": "src/features/ai/ai-paths/components/AiPathsPillButton.tsx",
-          "line": 27
-        }
-      ]
-    },
-    {
-      "score": 109,
-      "depth": 3,
-      "rootFanout": 3,
-      "distinctFeatureCount": 2,
-      "rootComponentId": "src/features/database/components/DatabaseColumns.tsx#DatabaseActionsCell",
-      "sinkComponentId": "src/shared/ui/dropdown-menu.tsx#DropdownMenuItem",
-      "componentPath": [
-        "src/features/database/components/DatabaseColumns.tsx#DatabaseActionsCell",
-        "src/features/database/components/DatabaseColumns.tsx#DatabaseActionsDeleteItem",
-        "src/shared/ui/dropdown-menu.tsx#DropdownMenuItem"
-      ],
-      "propPath": [
-        "backup",
-        "backup",
-        "onClick"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/database/components/DatabaseColumns.tsx#DatabaseActionsCell",
-          "toComponentId": "src/features/database/components/DatabaseColumns.tsx#DatabaseActionsDeleteItem",
-          "sourceProp": "backup",
-          "targetProp": "backup",
-          "relativePath": "src/features/database/components/DatabaseColumns.tsx",
-          "line": 105
-        },
-        {
-          "fromComponentId": "src/features/database/components/DatabaseColumns.tsx#DatabaseActionsDeleteItem",
-          "toComponentId": "src/shared/ui/dropdown-menu.tsx#DropdownMenuItem",
-          "sourceProp": "backup",
-          "targetProp": "onClick",
-          "relativePath": "src/features/database/components/DatabaseColumns.tsx",
-          "line": 77
-        }
-      ]
-    },
-    {
-      "score": 109,
-      "depth": 3,
-      "rootFanout": 3,
-      "distinctFeatureCount": 2,
-      "rootComponentId": "src/features/database/components/DatabaseColumns.tsx#DatabaseActionsCell",
-      "sinkComponentId": "src/shared/ui/dropdown-menu.tsx#DropdownMenuItem",
-      "componentPath": [
-        "src/features/database/components/DatabaseColumns.tsx#DatabaseActionsCell",
-        "src/features/database/components/DatabaseColumns.tsx#DatabaseActionsRestoreItem",
-        "src/shared/ui/dropdown-menu.tsx#DropdownMenuItem"
-      ],
-      "propPath": [
-        "backup",
-        "backup",
-        "onClick"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/database/components/DatabaseColumns.tsx#DatabaseActionsCell",
-          "toComponentId": "src/features/database/components/DatabaseColumns.tsx#DatabaseActionsRestoreItem",
-          "sourceProp": "backup",
-          "targetProp": "backup",
-          "relativePath": "src/features/database/components/DatabaseColumns.tsx",
-          "line": 99
-        },
-        {
-          "fromComponentId": "src/features/database/components/DatabaseColumns.tsx#DatabaseActionsRestoreItem",
-          "toComponentId": "src/shared/ui/dropdown-menu.tsx#DropdownMenuItem",
-          "sourceProp": "backup",
-          "targetProp": "onClick",
-          "relativePath": "src/features/database/components/DatabaseColumns.tsx",
-          "line": 59
-        }
-      ]
-    },
-    {
       "score": 103,
       "depth": 3,
       "rootFanout": 3,
@@ -1014,42 +902,6 @@
           "targetProp": "className",
           "relativePath": "src/features/kangur/ui/components/drawing-engine/KangurDrawingSnapshotActions.tsx",
           "line": 37
-        }
-      ]
-    },
-    {
-      "score": 99,
-      "depth": 3,
-      "rootFanout": 2,
-      "distinctFeatureCount": 2,
-      "rootComponentId": "src/features/ai/ai-paths/components/validation/CentralDocsSyncPanel.tsx#CentralDocsSyncCandidateCard",
-      "sinkComponentId": "src/shared/ui/button.tsx#Button",
-      "componentPath": [
-        "src/features/ai/ai-paths/components/validation/CentralDocsSyncPanel.tsx#CentralDocsSyncCandidateCard",
-        "src/features/ai/ai-paths/components/validation/ValidationActionButton.tsx#ValidationActionButton",
-        "src/shared/ui/button.tsx#Button"
-      ],
-      "propPath": [
-        "rule",
-        "onClick",
-        "onClick"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/ai/ai-paths/components/validation/CentralDocsSyncPanel.tsx#CentralDocsSyncCandidateCard",
-          "toComponentId": "src/features/ai/ai-paths/components/validation/ValidationActionButton.tsx#ValidationActionButton",
-          "sourceProp": "rule",
-          "targetProp": "onClick",
-          "relativePath": "src/features/ai/ai-paths/components/validation/CentralDocsSyncPanel.tsx",
-          "line": 73
-        },
-        {
-          "fromComponentId": "src/features/ai/ai-paths/components/validation/ValidationActionButton.tsx#ValidationActionButton",
-          "toComponentId": "src/shared/ui/button.tsx#Button",
-          "sourceProp": "onClick",
-          "targetProp": "onClick",
-          "relativePath": "src/features/ai/ai-paths/components/validation/ValidationActionButton.tsx",
-          "line": 25
         }
       ]
     },
@@ -1778,78 +1630,6 @@
       "depth": 3,
       "rootFanout": 1,
       "distinctFeatureCount": 2,
-      "rootComponentId": "src/features/ai/ai-paths/components/RunComparisonTool.tsx#RunComparisonRowSummary",
-      "sinkComponentId": "src/shared/ui/button.tsx#Button",
-      "componentPath": [
-        "src/features/ai/ai-paths/components/RunComparisonTool.tsx#RunComparisonRowSummary",
-        "src/features/ai/ai-paths/components/AiPathsPillButton.tsx#AiPathsPillButton",
-        "src/shared/ui/button.tsx#Button"
-      ],
-      "propPath": [
-        "onSetCompareInspectorRowKey",
-        "onClick",
-        "onClick"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/ai/ai-paths/components/RunComparisonTool.tsx#RunComparisonRowSummary",
-          "toComponentId": "src/features/ai/ai-paths/components/AiPathsPillButton.tsx#AiPathsPillButton",
-          "sourceProp": "onSetCompareInspectorRowKey",
-          "targetProp": "onClick",
-          "relativePath": "src/features/ai/ai-paths/components/RunComparisonTool.tsx",
-          "line": 290
-        },
-        {
-          "fromComponentId": "src/features/ai/ai-paths/components/AiPathsPillButton.tsx#AiPathsPillButton",
-          "toComponentId": "src/shared/ui/button.tsx#Button",
-          "sourceProp": "onClick",
-          "targetProp": "onClick",
-          "relativePath": "src/features/ai/ai-paths/components/AiPathsPillButton.tsx",
-          "line": 27
-        }
-      ]
-    },
-    {
-      "score": 89,
-      "depth": 3,
-      "rootFanout": 1,
-      "distinctFeatureCount": 2,
-      "rootComponentId": "src/features/ai/ai-paths/components/RunComparisonTool.tsx#RunComparisonRowSummary",
-      "sinkComponentId": "src/shared/ui/button.tsx#Button",
-      "componentPath": [
-        "src/features/ai/ai-paths/components/RunComparisonTool.tsx#RunComparisonRowSummary",
-        "src/features/ai/ai-paths/components/AiPathsPillButton.tsx#AiPathsPillButton",
-        "src/shared/ui/button.tsx#Button"
-      ],
-      "propPath": [
-        "compareInspectorRowKey",
-        "onClick",
-        "onClick"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/ai/ai-paths/components/RunComparisonTool.tsx#RunComparisonRowSummary",
-          "toComponentId": "src/features/ai/ai-paths/components/AiPathsPillButton.tsx#AiPathsPillButton",
-          "sourceProp": "compareInspectorRowKey",
-          "targetProp": "onClick",
-          "relativePath": "src/features/ai/ai-paths/components/RunComparisonTool.tsx",
-          "line": 290
-        },
-        {
-          "fromComponentId": "src/features/ai/ai-paths/components/AiPathsPillButton.tsx#AiPathsPillButton",
-          "toComponentId": "src/shared/ui/button.tsx#Button",
-          "sourceProp": "onClick",
-          "targetProp": "onClick",
-          "relativePath": "src/features/ai/ai-paths/components/AiPathsPillButton.tsx",
-          "line": 27
-        }
-      ]
-    },
-    {
-      "score": 89,
-      "depth": 3,
-      "rootFanout": 1,
-      "distinctFeatureCount": 2,
       "rootComponentId": "src/features/ai/ai-paths/components/job-queue-run-card.tsx#JobQueueJsonField",
       "sinkComponentId": "src/shared/ui/textarea.tsx#Textarea",
       "componentPath": [
@@ -2058,114 +1838,6 @@
           "targetProp": "variant",
           "relativePath": "src/features/ai/ai-paths/components/validation/ValidationMetaBadge.tsx",
           "line": 22
-        }
-      ]
-    },
-    {
-      "score": 89,
-      "depth": 3,
-      "rootFanout": 1,
-      "distinctFeatureCount": 2,
-      "rootComponentId": "src/features/ai/ai-paths/components/validation/CentralDocsSyncPanel.tsx#CentralDocsSyncCandidateCard",
-      "sinkComponentId": "src/shared/ui/button.tsx#Button",
-      "componentPath": [
-        "src/features/ai/ai-paths/components/validation/CentralDocsSyncPanel.tsx#CentralDocsSyncCandidateCard",
-        "src/features/ai/ai-paths/components/validation/ValidationActionButton.tsx#ValidationActionButton",
-        "src/shared/ui/button.tsx#Button"
-      ],
-      "propPath": [
-        "onApprove",
-        "onClick",
-        "onClick"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/ai/ai-paths/components/validation/CentralDocsSyncPanel.tsx#CentralDocsSyncCandidateCard",
-          "toComponentId": "src/features/ai/ai-paths/components/validation/ValidationActionButton.tsx#ValidationActionButton",
-          "sourceProp": "onApprove",
-          "targetProp": "onClick",
-          "relativePath": "src/features/ai/ai-paths/components/validation/CentralDocsSyncPanel.tsx",
-          "line": 73
-        },
-        {
-          "fromComponentId": "src/features/ai/ai-paths/components/validation/ValidationActionButton.tsx#ValidationActionButton",
-          "toComponentId": "src/shared/ui/button.tsx#Button",
-          "sourceProp": "onClick",
-          "targetProp": "onClick",
-          "relativePath": "src/features/ai/ai-paths/components/validation/ValidationActionButton.tsx",
-          "line": 25
-        }
-      ]
-    },
-    {
-      "score": 89,
-      "depth": 3,
-      "rootFanout": 1,
-      "distinctFeatureCount": 2,
-      "rootComponentId": "src/features/ai/ai-paths/components/validation/CentralDocsSyncPanel.tsx#CentralDocsSyncCandidateCard",
-      "sinkComponentId": "src/shared/ui/button.tsx#Button",
-      "componentPath": [
-        "src/features/ai/ai-paths/components/validation/CentralDocsSyncPanel.tsx#CentralDocsSyncCandidateCard",
-        "src/features/ai/ai-paths/components/validation/ValidationActionButton.tsx#ValidationActionButton",
-        "src/shared/ui/button.tsx#Button"
-      ],
-      "propPath": [
-        "onReject",
-        "onClick",
-        "onClick"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/ai/ai-paths/components/validation/CentralDocsSyncPanel.tsx#CentralDocsSyncCandidateCard",
-          "toComponentId": "src/features/ai/ai-paths/components/validation/ValidationActionButton.tsx#ValidationActionButton",
-          "sourceProp": "onReject",
-          "targetProp": "onClick",
-          "relativePath": "src/features/ai/ai-paths/components/validation/CentralDocsSyncPanel.tsx",
-          "line": 79
-        },
-        {
-          "fromComponentId": "src/features/ai/ai-paths/components/validation/ValidationActionButton.tsx#ValidationActionButton",
-          "toComponentId": "src/shared/ui/button.tsx#Button",
-          "sourceProp": "onClick",
-          "targetProp": "onClick",
-          "relativePath": "src/features/ai/ai-paths/components/validation/ValidationActionButton.tsx",
-          "line": 25
-        }
-      ]
-    },
-    {
-      "score": 89,
-      "depth": 3,
-      "rootFanout": 1,
-      "distinctFeatureCount": 2,
-      "rootComponentId": "src/features/ai/ai-paths/components/validation/DocsConnectionsPanel.tsx#DocsConnectionsCatalogCard",
-      "sinkComponentId": "src/shared/ui/button.tsx#Button",
-      "componentPath": [
-        "src/features/ai/ai-paths/components/validation/DocsConnectionsPanel.tsx#DocsConnectionsCatalogCard",
-        "src/features/ai/ai-paths/components/validation/ValidationActionButton.tsx#ValidationActionButton",
-        "src/shared/ui/button.tsx#Button"
-      ],
-      "propPath": [
-        "onConnect",
-        "onClick",
-        "onClick"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/ai/ai-paths/components/validation/DocsConnectionsPanel.tsx#DocsConnectionsCatalogCard",
-          "toComponentId": "src/features/ai/ai-paths/components/validation/ValidationActionButton.tsx#ValidationActionButton",
-          "sourceProp": "onConnect",
-          "targetProp": "onClick",
-          "relativePath": "src/features/ai/ai-paths/components/validation/DocsConnectionsPanel.tsx",
-          "line": 41
-        },
-        {
-          "fromComponentId": "src/features/ai/ai-paths/components/validation/ValidationActionButton.tsx#ValidationActionButton",
-          "toComponentId": "src/shared/ui/button.tsx#Button",
-          "sourceProp": "onClick",
-          "targetProp": "onClick",
-          "relativePath": "src/features/ai/ai-paths/components/validation/ValidationActionButton.tsx",
-          "line": 25
         }
       ]
     },
@@ -2418,78 +2090,6 @@
           "targetProp": "footer",
           "relativePath": "src/shared/ui/templates/StandardDataTablePanel.tsx",
           "line": 146
-        }
-      ]
-    },
-    {
-      "score": 89,
-      "depth": 3,
-      "rootFanout": 1,
-      "distinctFeatureCount": 2,
-      "rootComponentId": "src/features/products/components/EditableCell.tsx#EditableCell",
-      "sinkComponentId": "src/shared/ui/input.tsx#Input",
-      "componentPath": [
-        "src/features/products/components/EditableCell.tsx#EditableCell",
-        "src/features/products/components/EditableCell.tsx#EditableCellInput",
-        "src/shared/ui/input.tsx#Input"
-      ],
-      "propPath": [
-        "field",
-        "field",
-        "step"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/products/components/EditableCell.tsx#EditableCell",
-          "toComponentId": "src/features/products/components/EditableCell.tsx#EditableCellInput",
-          "sourceProp": "field",
-          "targetProp": "field",
-          "relativePath": "src/features/products/components/EditableCell.tsx",
-          "line": 132
-        },
-        {
-          "fromComponentId": "src/features/products/components/EditableCell.tsx#EditableCellInput",
-          "toComponentId": "src/shared/ui/input.tsx#Input",
-          "sourceProp": "field",
-          "targetProp": "step",
-          "relativePath": "src/features/products/components/EditableCell.tsx",
-          "line": 36
-        }
-      ]
-    },
-    {
-      "score": 89,
-      "depth": 3,
-      "rootFanout": 1,
-      "distinctFeatureCount": 2,
-      "rootComponentId": "src/features/products/components/EditableCell.tsx#EditableCell",
-      "sinkComponentId": "src/shared/ui/input.tsx#Input",
-      "componentPath": [
-        "src/features/products/components/EditableCell.tsx#EditableCell",
-        "src/features/products/components/EditableCell.tsx#EditableCellInput",
-        "src/shared/ui/input.tsx#Input"
-      ],
-      "propPath": [
-        "field",
-        "field",
-        "aria-label"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/products/components/EditableCell.tsx#EditableCell",
-          "toComponentId": "src/features/products/components/EditableCell.tsx#EditableCellInput",
-          "sourceProp": "field",
-          "targetProp": "field",
-          "relativePath": "src/features/products/components/EditableCell.tsx",
-          "line": 132
-        },
-        {
-          "fromComponentId": "src/features/products/components/EditableCell.tsx#EditableCellInput",
-          "toComponentId": "src/shared/ui/input.tsx#Input",
-          "sourceProp": "field",
-          "targetProp": "aria-label",
-          "relativePath": "src/features/products/components/EditableCell.tsx",
-          "line": 36
         }
       ]
     },
@@ -2950,6 +2550,402 @@
           "targetProp": "undoDisabled",
           "relativePath": "src/features/kangur/ui/components/drawing-engine/KangurDrawingFreeformToolbar.tsx",
           "line": 197
+        },
+        {
+          "fromComponentId": "src/features/kangur/ui/components/drawing-engine/KangurDrawingHistoryActions.tsx#KangurDrawingHistoryActions",
+          "toComponentId": "src/features/kangur/ui/design/primitives/KangurButton.tsx#KangurButton",
+          "sourceProp": "undoDisabled",
+          "targetProp": "disabled",
+          "relativePath": "src/features/kangur/ui/components/drawing-engine/KangurDrawingHistoryActions.tsx",
+          "line": 48
+        }
+      ]
+    },
+    {
+      "score": 83,
+      "depth": 3,
+      "rootFanout": 1,
+      "distinctFeatureCount": 1,
+      "rootComponentId": "src/features/kangur/ui/components/drawing-engine/KangurDrawingFreeformToolbar.tsx#KangurDrawingFreeformToolbar",
+      "sinkComponentId": "src/features/kangur/ui/design/primitives/KangurButton.tsx#KangurButton",
+      "componentPath": [
+        "src/features/kangur/ui/components/drawing-engine/KangurDrawingFreeformToolbar.tsx#KangurDrawingFreeformToolbar",
+        "src/features/kangur/ui/components/drawing-engine/KangurDrawingHistoryActions.tsx#KangurDrawingHistoryActions",
+        "src/features/kangur/ui/design/primitives/KangurButton.tsx#KangurButton"
+      ],
+      "propPath": [
+        "undoLabel",
+        "undoLabel",
+        "aria-label"
+      ],
+      "transitions": [
+        {
+          "fromComponentId": "src/features/kangur/ui/components/drawing-engine/KangurDrawingFreeformToolbar.tsx#KangurDrawingFreeformToolbar",
+          "toComponentId": "src/features/kangur/ui/components/drawing-engine/KangurDrawingHistoryActions.tsx#KangurDrawingHistoryActions",
+          "sourceProp": "undoLabel",
+          "targetProp": "undoLabel",
+          "relativePath": "src/features/kangur/ui/components/drawing-engine/KangurDrawingFreeformToolbar.tsx",
+          "line": 197
+        },
+        {
+          "fromComponentId": "src/features/kangur/ui/components/drawing-engine/KangurDrawingHistoryActions.tsx#KangurDrawingHistoryActions",
+          "toComponentId": "src/features/kangur/ui/design/primitives/KangurButton.tsx#KangurButton",
+          "sourceProp": "undoLabel",
+          "targetProp": "aria-label",
+          "relativePath": "src/features/kangur/ui/components/drawing-engine/KangurDrawingHistoryActions.tsx",
+          "line": 48
+        }
+      ]
+    },
+    {
+      "score": 83,
+      "depth": 3,
+      "rootFanout": 1,
+      "distinctFeatureCount": 1,
+      "rootComponentId": "src/features/kangur/ui/components/drawing-engine/KangurDrawingFreeformToolbar.tsx#KangurDrawingFreeformToolbar",
+      "sinkComponentId": "src/features/kangur/ui/design/primitives/KangurButton.tsx#KangurButton",
+      "componentPath": [
+        "src/features/kangur/ui/components/drawing-engine/KangurDrawingFreeformToolbar.tsx#KangurDrawingFreeformToolbar",
+        "src/features/kangur/ui/components/drawing-engine/KangurDrawingSnapshotActions.tsx#KangurDrawingSnapshotActions",
+        "src/features/kangur/ui/design/primitives/KangurButton.tsx#KangurButton"
+      ],
+      "propPath": [
+        "canExport",
+        "exportDisabled",
+        "disabled"
+      ],
+      "transitions": [
+        {
+          "fromComponentId": "src/features/kangur/ui/components/drawing-engine/KangurDrawingFreeformToolbar.tsx#KangurDrawingFreeformToolbar",
+          "toComponentId": "src/features/kangur/ui/components/drawing-engine/KangurDrawingSnapshotActions.tsx#KangurDrawingSnapshotActions",
+          "sourceProp": "canExport",
+          "targetProp": "exportDisabled",
+          "relativePath": "src/features/kangur/ui/components/drawing-engine/KangurDrawingFreeformToolbar.tsx",
+          "line": 212
+        },
+        {
+          "fromComponentId": "src/features/kangur/ui/components/drawing-engine/KangurDrawingSnapshotActions.tsx#KangurDrawingSnapshotActions",
+          "toComponentId": "src/features/kangur/ui/design/primitives/KangurButton.tsx#KangurButton",
+          "sourceProp": "exportDisabled",
+          "targetProp": "disabled",
+          "relativePath": "src/features/kangur/ui/components/drawing-engine/KangurDrawingSnapshotActions.tsx",
+          "line": 37
+        }
+      ]
+    },
+    {
+      "score": 83,
+      "depth": 3,
+      "rootFanout": 1,
+      "distinctFeatureCount": 1,
+      "rootComponentId": "src/features/kangur/ui/components/drawing-engine/KangurDrawingFreeformToolbar.tsx#KangurDrawingFreeformToolbar",
+      "sinkComponentId": "src/features/kangur/ui/design/primitives/KangurButton.tsx#KangurButton",
+      "componentPath": [
+        "src/features/kangur/ui/components/drawing-engine/KangurDrawingFreeformToolbar.tsx#KangurDrawingFreeformToolbar",
+        "src/features/kangur/ui/components/drawing-engine/KangurDrawingSnapshotActions.tsx#KangurDrawingSnapshotActions",
+        "src/features/kangur/ui/design/primitives/KangurButton.tsx#KangurButton"
+      ],
+      "propPath": [
+        "exportLabel",
+        "exportLabel",
+        "aria-label"
+      ],
+      "transitions": [
+        {
+          "fromComponentId": "src/features/kangur/ui/components/drawing-engine/KangurDrawingFreeformToolbar.tsx#KangurDrawingFreeformToolbar",
+          "toComponentId": "src/features/kangur/ui/components/drawing-engine/KangurDrawingSnapshotActions.tsx#KangurDrawingSnapshotActions",
+          "sourceProp": "exportLabel",
+          "targetProp": "exportLabel",
+          "relativePath": "src/features/kangur/ui/components/drawing-engine/KangurDrawingFreeformToolbar.tsx",
+          "line": 212
+        },
+        {
+          "fromComponentId": "src/features/kangur/ui/components/drawing-engine/KangurDrawingSnapshotActions.tsx#KangurDrawingSnapshotActions",
+          "toComponentId": "src/features/kangur/ui/design/primitives/KangurButton.tsx#KangurButton",
+          "sourceProp": "exportLabel",
+          "targetProp": "aria-label",
+          "relativePath": "src/features/kangur/ui/components/drawing-engine/KangurDrawingSnapshotActions.tsx",
+          "line": 37
+        }
+      ]
+    },
+    {
+      "score": 83,
+      "depth": 3,
+      "rootFanout": 1,
+      "distinctFeatureCount": 1,
+      "rootComponentId": "src/features/kangur/ui/components/drawing-engine/KangurDrawingFreeformToolbar.tsx#KangurDrawingFreeformToolbar",
+      "sinkComponentId": "src/features/kangur/ui/design/primitives/KangurButton.tsx#KangurButton",
+      "componentPath": [
+        "src/features/kangur/ui/components/drawing-engine/KangurDrawingFreeformToolbar.tsx#KangurDrawingFreeformToolbar",
+        "src/features/kangur/ui/components/drawing-engine/KangurDrawingSnapshotActions.tsx#KangurDrawingSnapshotActions",
+        "src/features/kangur/ui/design/primitives/KangurButton.tsx#KangurButton"
+      ],
+      "propPath": [
+        "exportLabel",
+        "exportLabel",
+        "title"
+      ],
+      "transitions": [
+        {
+          "fromComponentId": "src/features/kangur/ui/components/drawing-engine/KangurDrawingFreeformToolbar.tsx#KangurDrawingFreeformToolbar",
+          "toComponentId": "src/features/kangur/ui/components/drawing-engine/KangurDrawingSnapshotActions.tsx#KangurDrawingSnapshotActions",
+          "sourceProp": "exportLabel",
+          "targetProp": "exportLabel",
+          "relativePath": "src/features/kangur/ui/components/drawing-engine/KangurDrawingFreeformToolbar.tsx",
+          "line": 212
+        },
+        {
+          "fromComponentId": "src/features/kangur/ui/components/drawing-engine/KangurDrawingSnapshotActions.tsx#KangurDrawingSnapshotActions",
+          "toComponentId": "src/features/kangur/ui/design/primitives/KangurButton.tsx#KangurButton",
+          "sourceProp": "exportLabel",
+          "targetProp": "title",
+          "relativePath": "src/features/kangur/ui/components/drawing-engine/KangurDrawingSnapshotActions.tsx",
+          "line": 37
+        }
+      ]
+    },
+    {
+      "score": 83,
+      "depth": 3,
+      "rootFanout": 1,
+      "distinctFeatureCount": 1,
+      "rootComponentId": "src/features/kangur/ui/components/drawing-engine/KangurDrawingFreeformToolbar.tsx#KangurDrawingFreeformToolbar",
+      "sinkComponentId": "src/features/kangur/ui/design/primitives/KangurButton.tsx#KangurButton",
+      "componentPath": [
+        "src/features/kangur/ui/components/drawing-engine/KangurDrawingFreeformToolbar.tsx#KangurDrawingFreeformToolbar",
+        "src/features/kangur/ui/components/drawing-engine/KangurDrawingSnapshotActions.tsx#KangurDrawingSnapshotActions",
+        "src/features/kangur/ui/design/primitives/KangurButton.tsx#KangurButton"
+      ],
+      "propPath": [
+        "onExport",
+        "onExport",
+        "onClick"
+      ],
+      "transitions": [
+        {
+          "fromComponentId": "src/features/kangur/ui/components/drawing-engine/KangurDrawingFreeformToolbar.tsx#KangurDrawingFreeformToolbar",
+          "toComponentId": "src/features/kangur/ui/components/drawing-engine/KangurDrawingSnapshotActions.tsx#KangurDrawingSnapshotActions",
+          "sourceProp": "onExport",
+          "targetProp": "onExport",
+          "relativePath": "src/features/kangur/ui/components/drawing-engine/KangurDrawingFreeformToolbar.tsx",
+          "line": 212
+        },
+        {
+          "fromComponentId": "src/features/kangur/ui/components/drawing-engine/KangurDrawingSnapshotActions.tsx#KangurDrawingSnapshotActions",
+          "toComponentId": "src/features/kangur/ui/design/primitives/KangurButton.tsx#KangurButton",
+          "sourceProp": "onExport",
+          "targetProp": "onClick",
+          "relativePath": "src/features/kangur/ui/components/drawing-engine/KangurDrawingSnapshotActions.tsx",
+          "line": 37
+        }
+      ]
+    },
+    {
+      "score": 83,
+      "depth": 3,
+      "rootFanout": 1,
+      "distinctFeatureCount": 1,
+      "rootComponentId": "src/features/kangur/ui/components/drawing-engine/KangurDrawingUtilityActions.tsx#KangurDrawingUtilityActions",
+      "sinkComponentId": "src/features/kangur/ui/design/primitives/KangurButton.tsx#KangurButton",
+      "componentPath": [
+        "src/features/kangur/ui/components/drawing-engine/KangurDrawingUtilityActions.tsx#KangurDrawingUtilityActions",
+        "src/features/kangur/ui/components/drawing-engine/KangurDrawingHistoryActions.tsx#KangurDrawingHistoryActions",
+        "src/features/kangur/ui/design/primitives/KangurButton.tsx#KangurButton"
+      ],
+      "propPath": [
+        "onRedo",
+        "onRedo",
+        "onClick"
+      ],
+      "transitions": [
+        {
+          "fromComponentId": "src/features/kangur/ui/components/drawing-engine/KangurDrawingUtilityActions.tsx#KangurDrawingUtilityActions",
+          "toComponentId": "src/features/kangur/ui/components/drawing-engine/KangurDrawingHistoryActions.tsx#KangurDrawingHistoryActions",
+          "sourceProp": "onRedo",
+          "targetProp": "onRedo",
+          "relativePath": "src/features/kangur/ui/components/drawing-engine/KangurDrawingUtilityActions.tsx",
+          "line": 56
+        },
+        {
+          "fromComponentId": "src/features/kangur/ui/components/drawing-engine/KangurDrawingHistoryActions.tsx#KangurDrawingHistoryActions",
+          "toComponentId": "src/features/kangur/ui/design/primitives/KangurButton.tsx#KangurButton",
+          "sourceProp": "onRedo",
+          "targetProp": "onClick",
+          "relativePath": "src/features/kangur/ui/components/drawing-engine/KangurDrawingHistoryActions.tsx",
+          "line": 61
+        }
+      ]
+    },
+    {
+      "score": 83,
+      "depth": 3,
+      "rootFanout": 1,
+      "distinctFeatureCount": 1,
+      "rootComponentId": "src/features/kangur/ui/components/drawing-engine/KangurDrawingUtilityActions.tsx#KangurDrawingUtilityActions",
+      "sinkComponentId": "src/features/kangur/ui/design/primitives/KangurButton.tsx#KangurButton",
+      "componentPath": [
+        "src/features/kangur/ui/components/drawing-engine/KangurDrawingUtilityActions.tsx#KangurDrawingUtilityActions",
+        "src/features/kangur/ui/components/drawing-engine/KangurDrawingHistoryActions.tsx#KangurDrawingHistoryActions",
+        "src/features/kangur/ui/design/primitives/KangurButton.tsx#KangurButton"
+      ],
+      "propPath": [
+        "onUndo",
+        "onUndo",
+        "onClick"
+      ],
+      "transitions": [
+        {
+          "fromComponentId": "src/features/kangur/ui/components/drawing-engine/KangurDrawingUtilityActions.tsx#KangurDrawingUtilityActions",
+          "toComponentId": "src/features/kangur/ui/components/drawing-engine/KangurDrawingHistoryActions.tsx#KangurDrawingHistoryActions",
+          "sourceProp": "onUndo",
+          "targetProp": "onUndo",
+          "relativePath": "src/features/kangur/ui/components/drawing-engine/KangurDrawingUtilityActions.tsx",
+          "line": 56
+        },
+        {
+          "fromComponentId": "src/features/kangur/ui/components/drawing-engine/KangurDrawingHistoryActions.tsx#KangurDrawingHistoryActions",
+          "toComponentId": "src/features/kangur/ui/design/primitives/KangurButton.tsx#KangurButton",
+          "sourceProp": "onUndo",
+          "targetProp": "onClick",
+          "relativePath": "src/features/kangur/ui/components/drawing-engine/KangurDrawingHistoryActions.tsx",
+          "line": 48
+        }
+      ]
+    },
+    {
+      "score": 83,
+      "depth": 3,
+      "rootFanout": 1,
+      "distinctFeatureCount": 1,
+      "rootComponentId": "src/features/kangur/ui/components/drawing-engine/KangurDrawingUtilityActions.tsx#KangurDrawingUtilityActions",
+      "sinkComponentId": "src/features/kangur/ui/design/primitives/KangurButton.tsx#KangurButton",
+      "componentPath": [
+        "src/features/kangur/ui/components/drawing-engine/KangurDrawingUtilityActions.tsx#KangurDrawingUtilityActions",
+        "src/features/kangur/ui/components/drawing-engine/KangurDrawingHistoryActions.tsx#KangurDrawingHistoryActions",
+        "src/features/kangur/ui/design/primitives/KangurButton.tsx#KangurButton"
+      ],
+      "propPath": [
+        "redoDisabled",
+        "redoDisabled",
+        "disabled"
+      ],
+      "transitions": [
+        {
+          "fromComponentId": "src/features/kangur/ui/components/drawing-engine/KangurDrawingUtilityActions.tsx#KangurDrawingUtilityActions",
+          "toComponentId": "src/features/kangur/ui/components/drawing-engine/KangurDrawingHistoryActions.tsx#KangurDrawingHistoryActions",
+          "sourceProp": "redoDisabled",
+          "targetProp": "redoDisabled",
+          "relativePath": "src/features/kangur/ui/components/drawing-engine/KangurDrawingUtilityActions.tsx",
+          "line": 56
+        },
+        {
+          "fromComponentId": "src/features/kangur/ui/components/drawing-engine/KangurDrawingHistoryActions.tsx#KangurDrawingHistoryActions",
+          "toComponentId": "src/features/kangur/ui/design/primitives/KangurButton.tsx#KangurButton",
+          "sourceProp": "redoDisabled",
+          "targetProp": "disabled",
+          "relativePath": "src/features/kangur/ui/components/drawing-engine/KangurDrawingHistoryActions.tsx",
+          "line": 61
+        }
+      ]
+    },
+    {
+      "score": 83,
+      "depth": 3,
+      "rootFanout": 1,
+      "distinctFeatureCount": 1,
+      "rootComponentId": "src/features/kangur/ui/components/drawing-engine/KangurDrawingUtilityActions.tsx#KangurDrawingUtilityActions",
+      "sinkComponentId": "src/features/kangur/ui/design/primitives/KangurButton.tsx#KangurButton",
+      "componentPath": [
+        "src/features/kangur/ui/components/drawing-engine/KangurDrawingUtilityActions.tsx#KangurDrawingUtilityActions",
+        "src/features/kangur/ui/components/drawing-engine/KangurDrawingHistoryActions.tsx#KangurDrawingHistoryActions",
+        "src/features/kangur/ui/design/primitives/KangurButton.tsx#KangurButton"
+      ],
+      "propPath": [
+        "redoLabel",
+        "redoLabel",
+        "aria-label"
+      ],
+      "transitions": [
+        {
+          "fromComponentId": "src/features/kangur/ui/components/drawing-engine/KangurDrawingUtilityActions.tsx#KangurDrawingUtilityActions",
+          "toComponentId": "src/features/kangur/ui/components/drawing-engine/KangurDrawingHistoryActions.tsx#KangurDrawingHistoryActions",
+          "sourceProp": "redoLabel",
+          "targetProp": "redoLabel",
+          "relativePath": "src/features/kangur/ui/components/drawing-engine/KangurDrawingUtilityActions.tsx",
+          "line": 56
+        },
+        {
+          "fromComponentId": "src/features/kangur/ui/components/drawing-engine/KangurDrawingHistoryActions.tsx#KangurDrawingHistoryActions",
+          "toComponentId": "src/features/kangur/ui/design/primitives/KangurButton.tsx#KangurButton",
+          "sourceProp": "redoLabel",
+          "targetProp": "aria-label",
+          "relativePath": "src/features/kangur/ui/components/drawing-engine/KangurDrawingHistoryActions.tsx",
+          "line": 61
+        }
+      ]
+    },
+    {
+      "score": 83,
+      "depth": 3,
+      "rootFanout": 1,
+      "distinctFeatureCount": 1,
+      "rootComponentId": "src/features/kangur/ui/components/drawing-engine/KangurDrawingUtilityActions.tsx#KangurDrawingUtilityActions",
+      "sinkComponentId": "src/features/kangur/ui/design/primitives/KangurButton.tsx#KangurButton",
+      "componentPath": [
+        "src/features/kangur/ui/components/drawing-engine/KangurDrawingUtilityActions.tsx#KangurDrawingUtilityActions",
+        "src/features/kangur/ui/components/drawing-engine/KangurDrawingHistoryActions.tsx#KangurDrawingHistoryActions",
+        "src/features/kangur/ui/design/primitives/KangurButton.tsx#KangurButton"
+      ],
+      "propPath": [
+        "redoTestId",
+        "redoTestId",
+        "data-testid"
+      ],
+      "transitions": [
+        {
+          "fromComponentId": "src/features/kangur/ui/components/drawing-engine/KangurDrawingUtilityActions.tsx#KangurDrawingUtilityActions",
+          "toComponentId": "src/features/kangur/ui/components/drawing-engine/KangurDrawingHistoryActions.tsx#KangurDrawingHistoryActions",
+          "sourceProp": "redoTestId",
+          "targetProp": "redoTestId",
+          "relativePath": "src/features/kangur/ui/components/drawing-engine/KangurDrawingUtilityActions.tsx",
+          "line": 56
+        },
+        {
+          "fromComponentId": "src/features/kangur/ui/components/drawing-engine/KangurDrawingHistoryActions.tsx#KangurDrawingHistoryActions",
+          "toComponentId": "src/features/kangur/ui/design/primitives/KangurButton.tsx#KangurButton",
+          "sourceProp": "redoTestId",
+          "targetProp": "data-testid",
+          "relativePath": "src/features/kangur/ui/components/drawing-engine/KangurDrawingHistoryActions.tsx",
+          "line": 61
+        }
+      ]
+    },
+    {
+      "score": 83,
+      "depth": 3,
+      "rootFanout": 1,
+      "distinctFeatureCount": 1,
+      "rootComponentId": "src/features/kangur/ui/components/drawing-engine/KangurDrawingUtilityActions.tsx#KangurDrawingUtilityActions",
+      "sinkComponentId": "src/features/kangur/ui/design/primitives/KangurButton.tsx#KangurButton",
+      "componentPath": [
+        "src/features/kangur/ui/components/drawing-engine/KangurDrawingUtilityActions.tsx#KangurDrawingUtilityActions",
+        "src/features/kangur/ui/components/drawing-engine/KangurDrawingHistoryActions.tsx#KangurDrawingHistoryActions",
+        "src/features/kangur/ui/design/primitives/KangurButton.tsx#KangurButton"
+      ],
+      "propPath": [
+        "undoDisabled",
+        "undoDisabled",
+        "disabled"
+      ],
+      "transitions": [
+        {
+          "fromComponentId": "src/features/kangur/ui/components/drawing-engine/KangurDrawingUtilityActions.tsx#KangurDrawingUtilityActions",
+          "toComponentId": "src/features/kangur/ui/components/drawing-engine/KangurDrawingHistoryActions.tsx#KangurDrawingHistoryActions",
+          "sourceProp": "undoDisabled",
+          "targetProp": "undoDisabled",
+          "relativePath": "src/features/kangur/ui/components/drawing-engine/KangurDrawingUtilityActions.tsx",
+          "line": 56
         },
         {
           "fromComponentId": "src/features/kangur/ui/components/drawing-engine/KangurDrawingHistoryActions.tsx#KangurDrawingHistoryActions",
@@ -5044,32 +5040,6 @@
       ]
     },
     {
-      "score": 78,
-      "depth": 2,
-      "rootFanout": 3,
-      "distinctFeatureCount": 2,
-      "rootComponentId": "src/features/database/components/DatabaseColumns.tsx#DatabaseActionsCell",
-      "sinkComponentId": "src/shared/ui/dropdown-menu.tsx#DropdownMenuItem",
-      "componentPath": [
-        "src/features/database/components/DatabaseColumns.tsx#DatabaseActionsCell",
-        "src/shared/ui/dropdown-menu.tsx#DropdownMenuItem"
-      ],
-      "propPath": [
-        "backup",
-        "onClick"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/database/components/DatabaseColumns.tsx#DatabaseActionsCell",
-          "toComponentId": "src/shared/ui/dropdown-menu.tsx#DropdownMenuItem",
-          "sourceProp": "backup",
-          "targetProp": "onClick",
-          "relativePath": "src/features/database/components/DatabaseColumns.tsx",
-          "line": 98
-        }
-      ]
-    },
-    {
       "score": 74,
       "depth": 2,
       "rootFanout": 4,
@@ -6001,7 +5971,7 @@
           "sourceProp": "game",
           "targetProp": "key",
           "relativePath": "src/features/kangur/ui/pages/GamesLibraryGameModal.tsx",
-          "line": 883
+          "line": 885
         }
       ]
     },
@@ -6027,7 +5997,7 @@
           "sourceProp": "game",
           "targetProp": "transitionSourceId",
           "relativePath": "src/features/kangur/ui/pages/GamesLibraryGameModal.tsx",
-          "line": 946
+          "line": 948
         }
       ]
     },
@@ -6053,137 +6023,7 @@
           "sourceProp": "game",
           "targetProp": "onClick",
           "relativePath": "src/features/kangur/ui/pages/GamesLibraryGameModal.tsx",
-          "line": 1489
-        }
-      ]
-    },
-    {
-      "score": 72,
-      "depth": 2,
-      "rootFanout": 3,
-      "distinctFeatureCount": 1,
-      "rootComponentId": "src/shared/ui/status-toggle.tsx#StatusToggle",
-      "sinkComponentId": "src/shared/ui/status-toggle.tsx#StatusToggleBadge",
-      "componentPath": [
-        "src/shared/ui/status-toggle.tsx#StatusToggle",
-        "src/shared/ui/status-toggle.tsx#StatusToggleBadge"
-      ],
-      "propPath": [
-        "disabled",
-        "onClick"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/shared/ui/status-toggle.tsx#StatusToggle",
-          "toComponentId": "src/shared/ui/status-toggle.tsx#StatusToggleBadge",
-          "sourceProp": "disabled",
-          "targetProp": "onClick",
-          "relativePath": "src/shared/ui/status-toggle.tsx",
-          "line": 83
-        }
-      ]
-    },
-    {
-      "score": 72,
-      "depth": 2,
-      "rootFanout": 3,
-      "distinctFeatureCount": 1,
-      "rootComponentId": "src/shared/ui/status-toggle.tsx#StatusToggle",
-      "sinkComponentId": "src/shared/ui/status-toggle.tsx#StatusToggleBadge",
-      "componentPath": [
-        "src/shared/ui/status-toggle.tsx#StatusToggle",
-        "src/shared/ui/status-toggle.tsx#StatusToggleBadge"
-      ],
-      "propPath": [
-        "enabled",
-        "onClick"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/shared/ui/status-toggle.tsx#StatusToggle",
-          "toComponentId": "src/shared/ui/status-toggle.tsx#StatusToggleBadge",
-          "sourceProp": "enabled",
-          "targetProp": "onClick",
-          "relativePath": "src/shared/ui/status-toggle.tsx",
-          "line": 83
-        }
-      ]
-    },
-    {
-      "score": 72,
-      "depth": 2,
-      "rootFanout": 3,
-      "distinctFeatureCount": 1,
-      "rootComponentId": "src/shared/ui/status-toggle.tsx#StatusToggle",
-      "sinkComponentId": "src/shared/ui/status-toggle.tsx#StatusToggleBadge",
-      "componentPath": [
-        "src/shared/ui/status-toggle.tsx#StatusToggle",
-        "src/shared/ui/status-toggle.tsx#StatusToggleBadge"
-      ],
-      "propPath": [
-        "disabled",
-        "className"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/shared/ui/status-toggle.tsx#StatusToggle",
-          "toComponentId": "src/shared/ui/status-toggle.tsx#StatusToggleBadge",
-          "sourceProp": "disabled",
-          "targetProp": "className",
-          "relativePath": "src/shared/ui/status-toggle.tsx",
-          "line": 83
-        }
-      ]
-    },
-    {
-      "score": 72,
-      "depth": 2,
-      "rootFanout": 3,
-      "distinctFeatureCount": 1,
-      "rootComponentId": "src/shared/ui/status-toggle.tsx#StatusToggle",
-      "sinkComponentId": "src/shared/ui/status-toggle.tsx#StatusToggleBadge",
-      "componentPath": [
-        "src/shared/ui/status-toggle.tsx#StatusToggle",
-        "src/shared/ui/status-toggle.tsx#StatusToggleBadge"
-      ],
-      "propPath": [
-        "enabled",
-        "label"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/shared/ui/status-toggle.tsx#StatusToggle",
-          "toComponentId": "src/shared/ui/status-toggle.tsx#StatusToggleBadge",
-          "sourceProp": "enabled",
-          "targetProp": "label",
-          "relativePath": "src/shared/ui/status-toggle.tsx",
-          "line": 83
-        }
-      ]
-    },
-    {
-      "score": 72,
-      "depth": 2,
-      "rootFanout": 3,
-      "distinctFeatureCount": 1,
-      "rootComponentId": "src/shared/ui/status-toggle.tsx#StatusToggle",
-      "sinkComponentId": "src/shared/ui/status-toggle.tsx#StatusToggleBadge",
-      "componentPath": [
-        "src/shared/ui/status-toggle.tsx#StatusToggle",
-        "src/shared/ui/status-toggle.tsx#StatusToggleBadge"
-      ],
-      "propPath": [
-        "enabled",
-        "pressed"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/shared/ui/status-toggle.tsx#StatusToggle",
-          "toComponentId": "src/shared/ui/status-toggle.tsx#StatusToggleBadge",
-          "sourceProp": "enabled",
-          "targetProp": "pressed",
-          "relativePath": "src/shared/ui/status-toggle.tsx",
-          "line": 83
+          "line": 1507
         }
       ]
     },
@@ -6288,32 +6128,6 @@
           "targetProp": "variant",
           "relativePath": "src/features/ai/ai-paths/components/ImageStudioRunsQueuePanel.tsx",
           "line": 56
-        }
-      ]
-    },
-    {
-      "score": 68,
-      "depth": 2,
-      "rootFanout": 2,
-      "distinctFeatureCount": 2,
-      "rootComponentId": "src/features/ai/ai-paths/components/PortableEngineTrendSnapshotsPanel.tsx#PortableEngineOutlineBadge",
-      "sinkComponentId": "src/shared/ui/badge.tsx#Badge",
-      "componentPath": [
-        "src/features/ai/ai-paths/components/PortableEngineTrendSnapshotsPanel.tsx#PortableEngineOutlineBadge",
-        "src/shared/ui/badge.tsx#Badge"
-      ],
-      "propPath": [
-        "variant",
-        "className"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/ai/ai-paths/components/PortableEngineTrendSnapshotsPanel.tsx#PortableEngineOutlineBadge",
-          "toComponentId": "src/shared/ui/badge.tsx#Badge",
-          "sourceProp": "variant",
-          "targetProp": "className",
-          "relativePath": "src/features/ai/ai-paths/components/PortableEngineTrendSnapshotsPanel.tsx",
-          "line": 142
         }
       ]
     },
@@ -6548,110 +6362,6 @@
           "targetProp": "isSaveDisabled",
           "relativePath": "src/features/cms/components/slugs/AttachSlugModal.tsx",
           "line": 41
-        }
-      ]
-    },
-    {
-      "score": 68,
-      "depth": 2,
-      "rootFanout": 2,
-      "distinctFeatureCount": 2,
-      "rootComponentId": "src/features/database/components/DatabaseColumns.tsx#DatabaseActionsRestoreItem",
-      "sinkComponentId": "src/shared/ui/dropdown-menu.tsx#DropdownMenuItem",
-      "componentPath": [
-        "src/features/database/components/DatabaseColumns.tsx#DatabaseActionsRestoreItem",
-        "src/shared/ui/dropdown-menu.tsx#DropdownMenuItem"
-      ],
-      "propPath": [
-        "backupMaintenanceAllowed",
-        "disabled"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/database/components/DatabaseColumns.tsx#DatabaseActionsRestoreItem",
-          "toComponentId": "src/shared/ui/dropdown-menu.tsx#DropdownMenuItem",
-          "sourceProp": "backupMaintenanceAllowed",
-          "targetProp": "disabled",
-          "relativePath": "src/features/database/components/DatabaseColumns.tsx",
-          "line": 59
-        }
-      ]
-    },
-    {
-      "score": 68,
-      "depth": 2,
-      "rootFanout": 2,
-      "distinctFeatureCount": 2,
-      "rootComponentId": "src/features/database/components/DatabaseColumns.tsx#DatabaseActionsRestoreItem",
-      "sinkComponentId": "src/shared/ui/dropdown-menu.tsx#DropdownMenuItem",
-      "componentPath": [
-        "src/features/database/components/DatabaseColumns.tsx#DatabaseActionsRestoreItem",
-        "src/shared/ui/dropdown-menu.tsx#DropdownMenuItem"
-      ],
-      "propPath": [
-        "backupMaintenanceAllowed",
-        "title"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/database/components/DatabaseColumns.tsx#DatabaseActionsRestoreItem",
-          "toComponentId": "src/shared/ui/dropdown-menu.tsx#DropdownMenuItem",
-          "sourceProp": "backupMaintenanceAllowed",
-          "targetProp": "title",
-          "relativePath": "src/features/database/components/DatabaseColumns.tsx",
-          "line": 59
-        }
-      ]
-    },
-    {
-      "score": 68,
-      "depth": 2,
-      "rootFanout": 2,
-      "distinctFeatureCount": 2,
-      "rootComponentId": "src/features/database/components/DatabaseColumns.tsx#DatabaseActionsDeleteItem",
-      "sinkComponentId": "src/shared/ui/dropdown-menu.tsx#DropdownMenuItem",
-      "componentPath": [
-        "src/features/database/components/DatabaseColumns.tsx#DatabaseActionsDeleteItem",
-        "src/shared/ui/dropdown-menu.tsx#DropdownMenuItem"
-      ],
-      "propPath": [
-        "backupMaintenanceAllowed",
-        "disabled"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/database/components/DatabaseColumns.tsx#DatabaseActionsDeleteItem",
-          "toComponentId": "src/shared/ui/dropdown-menu.tsx#DropdownMenuItem",
-          "sourceProp": "backupMaintenanceAllowed",
-          "targetProp": "disabled",
-          "relativePath": "src/features/database/components/DatabaseColumns.tsx",
-          "line": 77
-        }
-      ]
-    },
-    {
-      "score": 68,
-      "depth": 2,
-      "rootFanout": 2,
-      "distinctFeatureCount": 2,
-      "rootComponentId": "src/features/database/components/DatabaseColumns.tsx#DatabaseActionsDeleteItem",
-      "sinkComponentId": "src/shared/ui/dropdown-menu.tsx#DropdownMenuItem",
-      "componentPath": [
-        "src/features/database/components/DatabaseColumns.tsx#DatabaseActionsDeleteItem",
-        "src/shared/ui/dropdown-menu.tsx#DropdownMenuItem"
-      ],
-      "propPath": [
-        "backupMaintenanceAllowed",
-        "title"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/database/components/DatabaseColumns.tsx#DatabaseActionsDeleteItem",
-          "toComponentId": "src/shared/ui/dropdown-menu.tsx#DropdownMenuItem",
-          "sourceProp": "backupMaintenanceAllowed",
-          "targetProp": "title",
-          "relativePath": "src/features/database/components/DatabaseColumns.tsx",
-          "line": 77
         }
       ]
     },
@@ -8064,10 +7774,10 @@
       "depth": 2,
       "rootFanout": 2,
       "distinctFeatureCount": 2,
-      "rootComponentId": "src/features/products/components/EditableCell.tsx#EditableCellInput",
+      "rootComponentId": "src/features/products/components/EditableCell.tsx#EditableCell",
       "sinkComponentId": "src/shared/ui/input.tsx#Input",
       "componentPath": [
-        "src/features/products/components/EditableCell.tsx#EditableCellInput",
+        "src/features/products/components/EditableCell.tsx#EditableCell",
         "src/shared/ui/input.tsx#Input"
       ],
       "propPath": [
@@ -8076,12 +7786,12 @@
       ],
       "transitions": [
         {
-          "fromComponentId": "src/features/products/components/EditableCell.tsx#EditableCellInput",
+          "fromComponentId": "src/features/products/components/EditableCell.tsx#EditableCell",
           "toComponentId": "src/shared/ui/input.tsx#Input",
           "sourceProp": "field",
           "targetProp": "step",
           "relativePath": "src/features/products/components/EditableCell.tsx",
-          "line": 36
+          "line": 95
         }
       ]
     },
@@ -8090,10 +7800,10 @@
       "depth": 2,
       "rootFanout": 2,
       "distinctFeatureCount": 2,
-      "rootComponentId": "src/features/products/components/EditableCell.tsx#EditableCellInput",
+      "rootComponentId": "src/features/products/components/EditableCell.tsx#EditableCell",
       "sinkComponentId": "src/shared/ui/input.tsx#Input",
       "componentPath": [
-        "src/features/products/components/EditableCell.tsx#EditableCellInput",
+        "src/features/products/components/EditableCell.tsx#EditableCell",
         "src/shared/ui/input.tsx#Input"
       ],
       "propPath": [
@@ -8102,12 +7812,12 @@
       ],
       "transitions": [
         {
-          "fromComponentId": "src/features/products/components/EditableCell.tsx#EditableCellInput",
+          "fromComponentId": "src/features/products/components/EditableCell.tsx#EditableCell",
           "toComponentId": "src/shared/ui/input.tsx#Input",
           "sourceProp": "field",
           "targetProp": "aria-label",
           "relativePath": "src/features/products/components/EditableCell.tsx",
-          "line": 36
+          "line": 95
         }
       ]
     },
@@ -8264,58 +7974,6 @@
           "targetProp": "theme",
           "relativePath": "src/features/cms/components/frontend/home/HomeContentClient.tsx",
           "line": 63
-        }
-      ]
-    },
-    {
-      "score": 64,
-      "depth": 2,
-      "rootFanout": 3,
-      "distinctFeatureCount": 1,
-      "rootComponentId": "src/features/database/components/DatabaseColumns.tsx#DatabaseActionsCell",
-      "sinkComponentId": "src/features/database/components/DatabaseColumns.tsx#DatabaseActionsRestoreItem",
-      "componentPath": [
-        "src/features/database/components/DatabaseColumns.tsx#DatabaseActionsCell",
-        "src/features/database/components/DatabaseColumns.tsx#DatabaseActionsRestoreItem"
-      ],
-      "propPath": [
-        "backup",
-        "backup"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/database/components/DatabaseColumns.tsx#DatabaseActionsCell",
-          "toComponentId": "src/features/database/components/DatabaseColumns.tsx#DatabaseActionsRestoreItem",
-          "sourceProp": "backup",
-          "targetProp": "backup",
-          "relativePath": "src/features/database/components/DatabaseColumns.tsx",
-          "line": 99
-        }
-      ]
-    },
-    {
-      "score": 64,
-      "depth": 2,
-      "rootFanout": 3,
-      "distinctFeatureCount": 1,
-      "rootComponentId": "src/features/database/components/DatabaseColumns.tsx#DatabaseActionsCell",
-      "sinkComponentId": "src/features/database/components/DatabaseColumns.tsx#DatabaseActionsDeleteItem",
-      "componentPath": [
-        "src/features/database/components/DatabaseColumns.tsx#DatabaseActionsCell",
-        "src/features/database/components/DatabaseColumns.tsx#DatabaseActionsDeleteItem"
-      ],
-      "propPath": [
-        "backup",
-        "backup"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/database/components/DatabaseColumns.tsx#DatabaseActionsCell",
-          "toComponentId": "src/features/database/components/DatabaseColumns.tsx#DatabaseActionsDeleteItem",
-          "sourceProp": "backup",
-          "targetProp": "backup",
-          "relativePath": "src/features/database/components/DatabaseColumns.tsx",
-          "line": 105
         }
       ]
     },
@@ -8498,32 +8156,6 @@
           "targetProp": "note",
           "relativePath": "src/features/notesapp/components/NoteCard.tsx",
           "line": 169
-        }
-      ]
-    },
-    {
-      "score": 64,
-      "depth": 2,
-      "rootFanout": 3,
-      "distinctFeatureCount": 1,
-      "rootComponentId": "src/shared/ui/status-toggle.tsx#StatusToggle",
-      "sinkComponentId": "src/shared/ui/status-toggle.tsx#StatusToggleBadge",
-      "componentPath": [
-        "src/shared/ui/status-toggle.tsx#StatusToggle",
-        "src/shared/ui/status-toggle.tsx#StatusToggleBadge"
-      ],
-      "propPath": [
-        "disabled",
-        "disabled"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/shared/ui/status-toggle.tsx#StatusToggle",
-          "toComponentId": "src/shared/ui/status-toggle.tsx#StatusToggleBadge",
-          "sourceProp": "disabled",
-          "targetProp": "disabled",
-          "relativePath": "src/shared/ui/status-toggle.tsx",
-          "line": 83
         }
       ]
     },
@@ -9771,7 +9403,7 @@
           "sourceProp": "onOpenChange",
           "targetProp": "onClick",
           "relativePath": "src/features/kangur/ui/pages/GamesLibraryGameModal.tsx",
-          "line": 815
+          "line": 817
         }
       ]
     },
@@ -10430,32 +10062,6 @@
       "depth": 2,
       "rootFanout": 2,
       "distinctFeatureCount": 2,
-      "rootComponentId": "src/features/ai/ai-paths/components/PortableEngineTrendSnapshotsPanel.tsx#PortableEngineOutlineBadge",
-      "sinkComponentId": "src/shared/ui/badge.tsx#Badge",
-      "componentPath": [
-        "src/features/ai/ai-paths/components/PortableEngineTrendSnapshotsPanel.tsx#PortableEngineOutlineBadge",
-        "src/shared/ui/badge.tsx#Badge"
-      ],
-      "propPath": [
-        "variant",
-        "variant"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/ai/ai-paths/components/PortableEngineTrendSnapshotsPanel.tsx#PortableEngineOutlineBadge",
-          "toComponentId": "src/shared/ui/badge.tsx#Badge",
-          "sourceProp": "variant",
-          "targetProp": "variant",
-          "relativePath": "src/features/ai/ai-paths/components/PortableEngineTrendSnapshotsPanel.tsx",
-          "line": 142
-        }
-      ]
-    },
-    {
-      "score": 60,
-      "depth": 2,
-      "rootFanout": 2,
-      "distinctFeatureCount": 2,
       "rootComponentId": "src/features/ai/ai-paths/components/canvas-sidebar.tsx#CanvasRunControlNotice",
       "sinkComponentId": "src/shared/ui/card.tsx#Card",
       "componentPath": [
@@ -10612,24 +10218,24 @@
       "depth": 2,
       "rootFanout": 1,
       "distinctFeatureCount": 2,
-      "rootComponentId": "src/features/ai/ai-paths/components/AiPathsPillButton.tsx#AiPathsPillButton",
-      "sinkComponentId": "src/shared/ui/button.tsx#Button",
+      "rootComponentId": "src/app/(frontend)/kangur/error.tsx#Error",
+      "sinkComponentId": "src/features/kangur/ui/KangurErrorFallback.tsx#KangurErrorFallback",
       "componentPath": [
-        "src/features/ai/ai-paths/components/AiPathsPillButton.tsx#AiPathsPillButton",
-        "src/shared/ui/button.tsx#Button"
+        "src/app/(frontend)/kangur/error.tsx#Error",
+        "src/features/kangur/ui/KangurErrorFallback.tsx#KangurErrorFallback"
       ],
       "propPath": [
-        "baseClassName",
-        "className"
+        "error",
+        "boundary"
       ],
       "transitions": [
         {
-          "fromComponentId": "src/features/ai/ai-paths/components/AiPathsPillButton.tsx#AiPathsPillButton",
-          "toComponentId": "src/shared/ui/button.tsx#Button",
-          "sourceProp": "baseClassName",
-          "targetProp": "className",
-          "relativePath": "src/features/ai/ai-paths/components/AiPathsPillButton.tsx",
-          "line": 27
+          "fromComponentId": "src/app/(frontend)/kangur/error.tsx#Error",
+          "toComponentId": "src/features/kangur/ui/KangurErrorFallback.tsx#KangurErrorFallback",
+          "sourceProp": "error",
+          "targetProp": "boundary",
+          "relativePath": "src/app/(frontend)/kangur/error.tsx",
+          "line": 14
         }
       ]
     },
@@ -10638,76 +10244,24 @@
       "depth": 2,
       "rootFanout": 1,
       "distinctFeatureCount": 2,
-      "rootComponentId": "src/features/ai/ai-paths/components/AiPathsPillButton.tsx#AiPathsPillButton",
-      "sinkComponentId": "src/shared/ui/button.tsx#Button",
+      "rootComponentId": "src/app/(frontend)/kangur/error.tsx#Error",
+      "sinkComponentId": "src/features/kangur/ui/KangurErrorFallback.tsx#KangurErrorFallback",
       "componentPath": [
-        "src/features/ai/ai-paths/components/AiPathsPillButton.tsx#AiPathsPillButton",
-        "src/shared/ui/button.tsx#Button"
+        "src/app/(frontend)/kangur/error.tsx#Error",
+        "src/features/kangur/ui/KangurErrorFallback.tsx#KangurErrorFallback"
       ],
       "propPath": [
-        "active",
-        "className"
+        "reset",
+        "boundary"
       ],
       "transitions": [
         {
-          "fromComponentId": "src/features/ai/ai-paths/components/AiPathsPillButton.tsx#AiPathsPillButton",
-          "toComponentId": "src/shared/ui/button.tsx#Button",
-          "sourceProp": "active",
-          "targetProp": "className",
-          "relativePath": "src/features/ai/ai-paths/components/AiPathsPillButton.tsx",
-          "line": 27
-        }
-      ]
-    },
-    {
-      "score": 58,
-      "depth": 2,
-      "rootFanout": 1,
-      "distinctFeatureCount": 2,
-      "rootComponentId": "src/features/ai/ai-paths/components/AiPathsPillButton.tsx#AiPathsPillButton",
-      "sinkComponentId": "src/shared/ui/button.tsx#Button",
-      "componentPath": [
-        "src/features/ai/ai-paths/components/AiPathsPillButton.tsx#AiPathsPillButton",
-        "src/shared/ui/button.tsx#Button"
-      ],
-      "propPath": [
-        "activeClassName",
-        "className"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/ai/ai-paths/components/AiPathsPillButton.tsx#AiPathsPillButton",
-          "toComponentId": "src/shared/ui/button.tsx#Button",
-          "sourceProp": "activeClassName",
-          "targetProp": "className",
-          "relativePath": "src/features/ai/ai-paths/components/AiPathsPillButton.tsx",
-          "line": 27
-        }
-      ]
-    },
-    {
-      "score": 58,
-      "depth": 2,
-      "rootFanout": 1,
-      "distinctFeatureCount": 2,
-      "rootComponentId": "src/features/ai/ai-paths/components/AiPathsPillButton.tsx#AiPathsPillButton",
-      "sinkComponentId": "src/shared/ui/button.tsx#Button",
-      "componentPath": [
-        "src/features/ai/ai-paths/components/AiPathsPillButton.tsx#AiPathsPillButton",
-        "src/shared/ui/button.tsx#Button"
-      ],
-      "propPath": [
-        "inactiveClassName",
-        "className"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/ai/ai-paths/components/AiPathsPillButton.tsx#AiPathsPillButton",
-          "toComponentId": "src/shared/ui/button.tsx#Button",
-          "sourceProp": "inactiveClassName",
-          "targetProp": "className",
-          "relativePath": "src/features/ai/ai-paths/components/AiPathsPillButton.tsx",
-          "line": 27
+          "fromComponentId": "src/app/(frontend)/kangur/error.tsx#Error",
+          "toComponentId": "src/features/kangur/ui/KangurErrorFallback.tsx#KangurErrorFallback",
+          "sourceProp": "reset",
+          "targetProp": "boundary",
+          "relativePath": "src/app/(frontend)/kangur/error.tsx",
+          "line": 14
         }
       ]
     },
@@ -10898,32 +10452,6 @@
       "depth": 2,
       "rootFanout": 1,
       "distinctFeatureCount": 2,
-      "rootComponentId": "src/features/ai/ai-paths/components/validation/ValidationActionButton.tsx#ValidationActionButton",
-      "sinkComponentId": "src/shared/ui/button.tsx#Button",
-      "componentPath": [
-        "src/features/ai/ai-paths/components/validation/ValidationActionButton.tsx#ValidationActionButton",
-        "src/shared/ui/button.tsx#Button"
-      ],
-      "propPath": [
-        "icon",
-        "className"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/ai/ai-paths/components/validation/ValidationActionButton.tsx#ValidationActionButton",
-          "toComponentId": "src/shared/ui/button.tsx#Button",
-          "sourceProp": "icon",
-          "targetProp": "className",
-          "relativePath": "src/features/ai/ai-paths/components/validation/ValidationActionButton.tsx",
-          "line": 25
-        }
-      ]
-    },
-    {
-      "score": 58,
-      "depth": 2,
-      "rootFanout": 1,
-      "distinctFeatureCount": 2,
       "rootComponentId": "src/features/ai/ai-paths/components/validation/ValidationMetaBadge.tsx#ValidationMetaBadge",
       "sinkComponentId": "src/shared/ui/badge.tsx#Badge",
       "componentPath": [
@@ -11054,36 +10582,10 @@
       "depth": 2,
       "rootFanout": 1,
       "distinctFeatureCount": 2,
-      "rootComponentId": "src/features/database/components/DatabaseColumns.tsx#DatabaseActionsRestoreItem",
+      "rootComponentId": "src/features/database/components/DatabaseColumns.tsx#DatabaseActionsCell",
       "sinkComponentId": "src/shared/ui/dropdown-menu.tsx#DropdownMenuItem",
       "componentPath": [
-        "src/features/database/components/DatabaseColumns.tsx#DatabaseActionsRestoreItem",
-        "src/shared/ui/dropdown-menu.tsx#DropdownMenuItem"
-      ],
-      "propPath": [
-        "handleRestoreRequest",
-        "onClick"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/database/components/DatabaseColumns.tsx#DatabaseActionsRestoreItem",
-          "toComponentId": "src/shared/ui/dropdown-menu.tsx#DropdownMenuItem",
-          "sourceProp": "handleRestoreRequest",
-          "targetProp": "onClick",
-          "relativePath": "src/features/database/components/DatabaseColumns.tsx",
-          "line": 59
-        }
-      ]
-    },
-    {
-      "score": 58,
-      "depth": 2,
-      "rootFanout": 1,
-      "distinctFeatureCount": 2,
-      "rootComponentId": "src/features/database/components/DatabaseColumns.tsx#DatabaseActionsRestoreItem",
-      "sinkComponentId": "src/shared/ui/dropdown-menu.tsx#DropdownMenuItem",
-      "componentPath": [
-        "src/features/database/components/DatabaseColumns.tsx#DatabaseActionsRestoreItem",
+        "src/features/database/components/DatabaseColumns.tsx#DatabaseActionsCell",
         "src/shared/ui/dropdown-menu.tsx#DropdownMenuItem"
       ],
       "propPath": [
@@ -11092,64 +10594,12 @@
       ],
       "transitions": [
         {
-          "fromComponentId": "src/features/database/components/DatabaseColumns.tsx#DatabaseActionsRestoreItem",
+          "fromComponentId": "src/features/database/components/DatabaseColumns.tsx#DatabaseActionsCell",
           "toComponentId": "src/shared/ui/dropdown-menu.tsx#DropdownMenuItem",
           "sourceProp": "backup",
           "targetProp": "onClick",
           "relativePath": "src/features/database/components/DatabaseColumns.tsx",
-          "line": 59
-        }
-      ]
-    },
-    {
-      "score": 58,
-      "depth": 2,
-      "rootFanout": 1,
-      "distinctFeatureCount": 2,
-      "rootComponentId": "src/features/database/components/DatabaseColumns.tsx#DatabaseActionsDeleteItem",
-      "sinkComponentId": "src/shared/ui/dropdown-menu.tsx#DropdownMenuItem",
-      "componentPath": [
-        "src/features/database/components/DatabaseColumns.tsx#DatabaseActionsDeleteItem",
-        "src/shared/ui/dropdown-menu.tsx#DropdownMenuItem"
-      ],
-      "propPath": [
-        "handleDeleteRequest",
-        "onClick"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/database/components/DatabaseColumns.tsx#DatabaseActionsDeleteItem",
-          "toComponentId": "src/shared/ui/dropdown-menu.tsx#DropdownMenuItem",
-          "sourceProp": "handleDeleteRequest",
-          "targetProp": "onClick",
-          "relativePath": "src/features/database/components/DatabaseColumns.tsx",
-          "line": 77
-        }
-      ]
-    },
-    {
-      "score": 58,
-      "depth": 2,
-      "rootFanout": 1,
-      "distinctFeatureCount": 2,
-      "rootComponentId": "src/features/database/components/DatabaseColumns.tsx#DatabaseActionsDeleteItem",
-      "sinkComponentId": "src/shared/ui/dropdown-menu.tsx#DropdownMenuItem",
-      "componentPath": [
-        "src/features/database/components/DatabaseColumns.tsx#DatabaseActionsDeleteItem",
-        "src/shared/ui/dropdown-menu.tsx#DropdownMenuItem"
-      ],
-      "propPath": [
-        "backup",
-        "onClick"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/database/components/DatabaseColumns.tsx#DatabaseActionsDeleteItem",
-          "toComponentId": "src/shared/ui/dropdown-menu.tsx#DropdownMenuItem",
-          "sourceProp": "backup",
-          "targetProp": "onClick",
-          "relativePath": "src/features/database/components/DatabaseColumns.tsx",
-          "line": 77
+          "line": 50
         }
       ]
     },
@@ -11332,58 +10782,6 @@
           "targetProp": "data",
           "relativePath": "src/features/database/pages/DatabasePreviewPage.tsx",
           "line": 415
-        }
-      ]
-    },
-    {
-      "score": 58,
-      "depth": 2,
-      "rootFanout": 1,
-      "distinctFeatureCount": 2,
-      "rootComponentId": "src/features/document-editor/components/RichTextEditorImpl.tsx#RichTextEditorImpl",
-      "sinkComponentId": "src/shared/ui/InsetPanel.tsx#InsetPanel",
-      "componentPath": [
-        "src/features/document-editor/components/RichTextEditorImpl.tsx#RichTextEditorImpl",
-        "src/shared/ui/InsetPanel.tsx#InsetPanel"
-      ],
-      "propPath": [
-        "surfaceClassName",
-        "className"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/document-editor/components/RichTextEditorImpl.tsx#RichTextEditorImpl",
-          "toComponentId": "src/shared/ui/InsetPanel.tsx#InsetPanel",
-          "sourceProp": "surfaceClassName",
-          "targetProp": "className",
-          "relativePath": "src/features/document-editor/components/RichTextEditorImpl.tsx",
-          "line": 339
-        }
-      ]
-    },
-    {
-      "score": 58,
-      "depth": 2,
-      "rootFanout": 1,
-      "distinctFeatureCount": 2,
-      "rootComponentId": "src/features/document-editor/components/RichTextEditorImpl.tsx#RichTextEditorImpl",
-      "sinkComponentId": "src/shared/ui/InsetPanel.tsx#InsetPanel",
-      "componentPath": [
-        "src/features/document-editor/components/RichTextEditorImpl.tsx#RichTextEditorImpl",
-        "src/shared/ui/InsetPanel.tsx#InsetPanel"
-      ],
-      "propPath": [
-        "surfaceStyle",
-        "style"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/document-editor/components/RichTextEditorImpl.tsx#RichTextEditorImpl",
-          "toComponentId": "src/shared/ui/InsetPanel.tsx#InsetPanel",
-          "sourceProp": "surfaceStyle",
-          "targetProp": "style",
-          "relativePath": "src/features/document-editor/components/RichTextEditorImpl.tsx",
-          "line": 339
         }
       ]
     },
@@ -11956,162 +11354,6 @@
           "targetProp": "footer",
           "relativePath": "src/features/observability/pages/system-logs/SystemLogs.Table.tsx",
           "line": 676
-        }
-      ]
-    },
-    {
-      "score": 58,
-      "depth": 2,
-      "rootFanout": 1,
-      "distinctFeatureCount": 2,
-      "rootComponentId": "src/features/products/components/EditableCell.tsx#EditableCellInput",
-      "sinkComponentId": "src/shared/ui/input.tsx#Input",
-      "componentPath": [
-        "src/features/products/components/EditableCell.tsx#EditableCellInput",
-        "src/shared/ui/input.tsx#Input"
-      ],
-      "propPath": [
-        "inputRef",
-        "ref"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/products/components/EditableCell.tsx#EditableCellInput",
-          "toComponentId": "src/shared/ui/input.tsx#Input",
-          "sourceProp": "inputRef",
-          "targetProp": "ref",
-          "relativePath": "src/features/products/components/EditableCell.tsx",
-          "line": 36
-        }
-      ]
-    },
-    {
-      "score": 58,
-      "depth": 2,
-      "rootFanout": 1,
-      "distinctFeatureCount": 2,
-      "rootComponentId": "src/features/products/components/EditableCell.tsx#EditableCellInput",
-      "sinkComponentId": "src/shared/ui/input.tsx#Input",
-      "componentPath": [
-        "src/features/products/components/EditableCell.tsx#EditableCellInput",
-        "src/shared/ui/input.tsx#Input"
-      ],
-      "propPath": [
-        "editValue",
-        "value"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/products/components/EditableCell.tsx#EditableCellInput",
-          "toComponentId": "src/shared/ui/input.tsx#Input",
-          "sourceProp": "editValue",
-          "targetProp": "value",
-          "relativePath": "src/features/products/components/EditableCell.tsx",
-          "line": 36
-        }
-      ]
-    },
-    {
-      "score": 58,
-      "depth": 2,
-      "rootFanout": 1,
-      "distinctFeatureCount": 2,
-      "rootComponentId": "src/features/products/components/EditableCell.tsx#EditableCellInput",
-      "sinkComponentId": "src/shared/ui/input.tsx#Input",
-      "componentPath": [
-        "src/features/products/components/EditableCell.tsx#EditableCellInput",
-        "src/shared/ui/input.tsx#Input"
-      ],
-      "propPath": [
-        "setEditValue",
-        "onChange"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/products/components/EditableCell.tsx#EditableCellInput",
-          "toComponentId": "src/shared/ui/input.tsx#Input",
-          "sourceProp": "setEditValue",
-          "targetProp": "onChange",
-          "relativePath": "src/features/products/components/EditableCell.tsx",
-          "line": 36
-        }
-      ]
-    },
-    {
-      "score": 58,
-      "depth": 2,
-      "rootFanout": 1,
-      "distinctFeatureCount": 2,
-      "rootComponentId": "src/features/products/components/EditableCell.tsx#EditableCellInput",
-      "sinkComponentId": "src/shared/ui/input.tsx#Input",
-      "componentPath": [
-        "src/features/products/components/EditableCell.tsx#EditableCellInput",
-        "src/shared/ui/input.tsx#Input"
-      ],
-      "propPath": [
-        "handleKeyDown",
-        "onKeyDown"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/products/components/EditableCell.tsx#EditableCellInput",
-          "toComponentId": "src/shared/ui/input.tsx#Input",
-          "sourceProp": "handleKeyDown",
-          "targetProp": "onKeyDown",
-          "relativePath": "src/features/products/components/EditableCell.tsx",
-          "line": 36
-        }
-      ]
-    },
-    {
-      "score": 58,
-      "depth": 2,
-      "rootFanout": 1,
-      "distinctFeatureCount": 2,
-      "rootComponentId": "src/features/products/components/EditableCell.tsx#EditableCellInput",
-      "sinkComponentId": "src/shared/ui/input.tsx#Input",
-      "componentPath": [
-        "src/features/products/components/EditableCell.tsx#EditableCellInput",
-        "src/shared/ui/input.tsx#Input"
-      ],
-      "propPath": [
-        "handleBlur",
-        "onBlur"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/products/components/EditableCell.tsx#EditableCellInput",
-          "toComponentId": "src/shared/ui/input.tsx#Input",
-          "sourceProp": "handleBlur",
-          "targetProp": "onBlur",
-          "relativePath": "src/features/products/components/EditableCell.tsx",
-          "line": 36
-        }
-      ]
-    },
-    {
-      "score": 58,
-      "depth": 2,
-      "rootFanout": 1,
-      "distinctFeatureCount": 2,
-      "rootComponentId": "src/features/products/components/EditableCell.tsx#EditableCellInput",
-      "sinkComponentId": "src/shared/ui/input.tsx#Input",
-      "componentPath": [
-        "src/features/products/components/EditableCell.tsx#EditableCellInput",
-        "src/shared/ui/input.tsx#Input"
-      ],
-      "propPath": [
-        "isSaving",
-        "disabled"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/products/components/EditableCell.tsx#EditableCellInput",
-          "toComponentId": "src/shared/ui/input.tsx#Input",
-          "sourceProp": "isSaving",
-          "targetProp": "disabled",
-          "relativePath": "src/features/products/components/EditableCell.tsx",
-          "line": 36
         }
       ]
     },
@@ -13307,7 +12549,7 @@
           "sourceProp": "onOpenChange",
           "targetProp": "onOpenChange",
           "relativePath": "src/features/kangur/ui/pages/GamesLibraryGameModal.tsx",
-          "line": 759
+          "line": 761
         }
       ]
     },
@@ -13775,7 +13017,7 @@
           "sourceProp": "descriptionClassName",
           "targetProp": "className",
           "relativePath": "src/features/ai/ai-paths/components/PortableEngineTrendSnapshotsPanel.tsx",
-          "line": 208
+          "line": 187
         }
       ]
     },
@@ -18100,58 +17342,6 @@
       "depth": 2,
       "rootFanout": 1,
       "distinctFeatureCount": 1,
-      "rootComponentId": "src/shared/ui/PromptGenerationSection.tsx#PromptGenerationSectionLayout",
-      "sinkComponentId": "src/shared/ui/badge.tsx#Badge",
-      "componentPath": [
-        "src/shared/ui/PromptGenerationSection.tsx#PromptGenerationSectionLayout",
-        "src/shared/ui/badge.tsx#Badge"
-      ],
-      "propPath": [
-        "badgeVariant",
-        "variant"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/shared/ui/PromptGenerationSection.tsx#PromptGenerationSectionLayout",
-          "toComponentId": "src/shared/ui/badge.tsx#Badge",
-          "sourceProp": "badgeVariant",
-          "targetProp": "variant",
-          "relativePath": "src/shared/ui/PromptGenerationSection.tsx",
-          "line": 299
-        }
-      ]
-    },
-    {
-      "score": 52,
-      "depth": 2,
-      "rootFanout": 1,
-      "distinctFeatureCount": 1,
-      "rootComponentId": "src/shared/ui/PromptGenerationSection.tsx#PromptGenerationSectionLayout",
-      "sinkComponentId": "src/shared/ui/badge.tsx#Badge",
-      "componentPath": [
-        "src/shared/ui/PromptGenerationSection.tsx#PromptGenerationSectionLayout",
-        "src/shared/ui/badge.tsx#Badge"
-      ],
-      "propPath": [
-        "badgeTextColor",
-        "className"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/shared/ui/PromptGenerationSection.tsx#PromptGenerationSectionLayout",
-          "toComponentId": "src/shared/ui/badge.tsx#Badge",
-          "sourceProp": "badgeTextColor",
-          "targetProp": "className",
-          "relativePath": "src/shared/ui/PromptGenerationSection.tsx",
-          "line": 299
-        }
-      ]
-    },
-    {
-      "score": 52,
-      "depth": 2,
-      "rootFanout": 1,
-      "distinctFeatureCount": 1,
       "rootComponentId": "src/shared/ui/RefreshButton.tsx#RefreshButton",
       "sinkComponentId": "src/shared/ui/button.tsx#Button",
       "componentPath": [
@@ -18828,110 +18018,6 @@
       "depth": 2,
       "rootFanout": 1,
       "distinctFeatureCount": 1,
-      "rootComponentId": "src/shared/ui/status-toggle.tsx#StatusToggle",
-      "sinkComponentId": "src/shared/ui/status-toggle.tsx#StatusToggleBadge",
-      "componentPath": [
-        "src/shared/ui/status-toggle.tsx#StatusToggle",
-        "src/shared/ui/status-toggle.tsx#StatusToggleBadge"
-      ],
-      "propPath": [
-        "onToggle",
-        "onClick"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/shared/ui/status-toggle.tsx#StatusToggle",
-          "toComponentId": "src/shared/ui/status-toggle.tsx#StatusToggleBadge",
-          "sourceProp": "onToggle",
-          "targetProp": "onClick",
-          "relativePath": "src/shared/ui/status-toggle.tsx",
-          "line": 83
-        }
-      ]
-    },
-    {
-      "score": 52,
-      "depth": 2,
-      "rootFanout": 1,
-      "distinctFeatureCount": 1,
-      "rootComponentId": "src/shared/ui/status-toggle.tsx#StatusToggle",
-      "sinkComponentId": "src/shared/ui/status-toggle.tsx#StatusToggleBadge",
-      "componentPath": [
-        "src/shared/ui/status-toggle.tsx#StatusToggle",
-        "src/shared/ui/status-toggle.tsx#StatusToggleBadge"
-      ],
-      "propPath": [
-        "size",
-        "className"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/shared/ui/status-toggle.tsx#StatusToggle",
-          "toComponentId": "src/shared/ui/status-toggle.tsx#StatusToggleBadge",
-          "sourceProp": "size",
-          "targetProp": "className",
-          "relativePath": "src/shared/ui/status-toggle.tsx",
-          "line": 83
-        }
-      ]
-    },
-    {
-      "score": 52,
-      "depth": 2,
-      "rootFanout": 1,
-      "distinctFeatureCount": 1,
-      "rootComponentId": "src/shared/ui/status-toggle.tsx#StatusToggle",
-      "sinkComponentId": "src/shared/ui/status-toggle.tsx#StatusToggleBadge",
-      "componentPath": [
-        "src/shared/ui/status-toggle.tsx#StatusToggle",
-        "src/shared/ui/status-toggle.tsx#StatusToggleBadge"
-      ],
-      "propPath": [
-        "enabledLabel",
-        "label"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/shared/ui/status-toggle.tsx#StatusToggle",
-          "toComponentId": "src/shared/ui/status-toggle.tsx#StatusToggleBadge",
-          "sourceProp": "enabledLabel",
-          "targetProp": "label",
-          "relativePath": "src/shared/ui/status-toggle.tsx",
-          "line": 83
-        }
-      ]
-    },
-    {
-      "score": 52,
-      "depth": 2,
-      "rootFanout": 1,
-      "distinctFeatureCount": 1,
-      "rootComponentId": "src/shared/ui/status-toggle.tsx#StatusToggle",
-      "sinkComponentId": "src/shared/ui/status-toggle.tsx#StatusToggleBadge",
-      "componentPath": [
-        "src/shared/ui/status-toggle.tsx#StatusToggle",
-        "src/shared/ui/status-toggle.tsx#StatusToggleBadge"
-      ],
-      "propPath": [
-        "disabledLabel",
-        "label"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/shared/ui/status-toggle.tsx#StatusToggle",
-          "toComponentId": "src/shared/ui/status-toggle.tsx#StatusToggleBadge",
-          "sourceProp": "disabledLabel",
-          "targetProp": "label",
-          "relativePath": "src/shared/ui/status-toggle.tsx",
-          "line": 83
-        }
-      ]
-    },
-    {
-      "score": 52,
-      "depth": 2,
-      "rootFanout": 1,
-      "distinctFeatureCount": 1,
       "rootComponentId": "src/shared/ui/tag.tsx#Tag",
       "sinkComponentId": "src/shared/ui/badge.tsx#Badge",
       "componentPath": [
@@ -19582,58 +18668,6 @@
       "depth": 2,
       "rootFanout": 1,
       "distinctFeatureCount": 2,
-      "rootComponentId": "src/app/(frontend)/kangur/error.tsx#Error",
-      "sinkComponentId": "src/features/kangur/ui/KangurErrorFallback.tsx#KangurErrorFallback",
-      "componentPath": [
-        "src/app/(frontend)/kangur/error.tsx#Error",
-        "src/features/kangur/ui/KangurErrorFallback.tsx#KangurErrorFallback"
-      ],
-      "propPath": [
-        "error",
-        "error"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/app/(frontend)/kangur/error.tsx#Error",
-          "toComponentId": "src/features/kangur/ui/KangurErrorFallback.tsx#KangurErrorFallback",
-          "sourceProp": "error",
-          "targetProp": "error",
-          "relativePath": "src/app/(frontend)/kangur/error.tsx",
-          "line": 13
-        }
-      ]
-    },
-    {
-      "score": 50,
-      "depth": 2,
-      "rootFanout": 1,
-      "distinctFeatureCount": 2,
-      "rootComponentId": "src/app/(frontend)/kangur/error.tsx#Error",
-      "sinkComponentId": "src/features/kangur/ui/KangurErrorFallback.tsx#KangurErrorFallback",
-      "componentPath": [
-        "src/app/(frontend)/kangur/error.tsx#Error",
-        "src/features/kangur/ui/KangurErrorFallback.tsx#KangurErrorFallback"
-      ],
-      "propPath": [
-        "reset",
-        "reset"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/app/(frontend)/kangur/error.tsx#Error",
-          "toComponentId": "src/features/kangur/ui/KangurErrorFallback.tsx#KangurErrorFallback",
-          "sourceProp": "reset",
-          "targetProp": "reset",
-          "relativePath": "src/app/(frontend)/kangur/error.tsx",
-          "line": 13
-        }
-      ]
-    },
-    {
-      "score": 50,
-      "depth": 2,
-      "rootFanout": 1,
-      "distinctFeatureCount": 2,
       "rootComponentId": "src/features/admin/layout/AdminLayout.tsx#AdminLayout",
       "sinkComponentId": "src/shared/providers/SettingsStoreProvider.tsx#SettingsStoreProvider",
       "componentPath": [
@@ -19652,162 +18686,6 @@
           "targetProp": "canReadAdminSettings",
           "relativePath": "src/features/admin/layout/AdminLayout.tsx",
           "line": 309
-        }
-      ]
-    },
-    {
-      "score": 50,
-      "depth": 2,
-      "rootFanout": 1,
-      "distinctFeatureCount": 2,
-      "rootComponentId": "src/features/ai/ai-paths/components/AiPathsPillButton.tsx#AiPathsPillButton",
-      "sinkComponentId": "src/shared/ui/button.tsx#Button",
-      "componentPath": [
-        "src/features/ai/ai-paths/components/AiPathsPillButton.tsx#AiPathsPillButton",
-        "src/shared/ui/button.tsx#Button"
-      ],
-      "propPath": [
-        "type",
-        "type"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/ai/ai-paths/components/AiPathsPillButton.tsx#AiPathsPillButton",
-          "toComponentId": "src/shared/ui/button.tsx#Button",
-          "sourceProp": "type",
-          "targetProp": "type",
-          "relativePath": "src/features/ai/ai-paths/components/AiPathsPillButton.tsx",
-          "line": 27
-        }
-      ]
-    },
-    {
-      "score": 50,
-      "depth": 2,
-      "rootFanout": 1,
-      "distinctFeatureCount": 2,
-      "rootComponentId": "src/features/ai/ai-paths/components/AiPathsPillButton.tsx#AiPathsPillButton",
-      "sinkComponentId": "src/shared/ui/button.tsx#Button",
-      "componentPath": [
-        "src/features/ai/ai-paths/components/AiPathsPillButton.tsx#AiPathsPillButton",
-        "src/shared/ui/button.tsx#Button"
-      ],
-      "propPath": [
-        "variant",
-        "variant"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/ai/ai-paths/components/AiPathsPillButton.tsx#AiPathsPillButton",
-          "toComponentId": "src/shared/ui/button.tsx#Button",
-          "sourceProp": "variant",
-          "targetProp": "variant",
-          "relativePath": "src/features/ai/ai-paths/components/AiPathsPillButton.tsx",
-          "line": 27
-        }
-      ]
-    },
-    {
-      "score": 50,
-      "depth": 2,
-      "rootFanout": 1,
-      "distinctFeatureCount": 2,
-      "rootComponentId": "src/features/ai/ai-paths/components/AiPathsPillButton.tsx#AiPathsPillButton",
-      "sinkComponentId": "src/shared/ui/button.tsx#Button",
-      "componentPath": [
-        "src/features/ai/ai-paths/components/AiPathsPillButton.tsx#AiPathsPillButton",
-        "src/shared/ui/button.tsx#Button"
-      ],
-      "propPath": [
-        "className",
-        "className"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/ai/ai-paths/components/AiPathsPillButton.tsx#AiPathsPillButton",
-          "toComponentId": "src/shared/ui/button.tsx#Button",
-          "sourceProp": "className",
-          "targetProp": "className",
-          "relativePath": "src/features/ai/ai-paths/components/AiPathsPillButton.tsx",
-          "line": 27
-        }
-      ]
-    },
-    {
-      "score": 50,
-      "depth": 2,
-      "rootFanout": 1,
-      "distinctFeatureCount": 2,
-      "rootComponentId": "src/features/ai/ai-paths/components/AiPathsPillButton.tsx#AiPathsPillButton",
-      "sinkComponentId": "src/shared/ui/button.tsx#Button",
-      "componentPath": [
-        "src/features/ai/ai-paths/components/AiPathsPillButton.tsx#AiPathsPillButton",
-        "src/shared/ui/button.tsx#Button"
-      ],
-      "propPath": [
-        "onClick",
-        "onClick"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/ai/ai-paths/components/AiPathsPillButton.tsx#AiPathsPillButton",
-          "toComponentId": "src/shared/ui/button.tsx#Button",
-          "sourceProp": "onClick",
-          "targetProp": "onClick",
-          "relativePath": "src/features/ai/ai-paths/components/AiPathsPillButton.tsx",
-          "line": 27
-        }
-      ]
-    },
-    {
-      "score": 50,
-      "depth": 2,
-      "rootFanout": 1,
-      "distinctFeatureCount": 2,
-      "rootComponentId": "src/features/ai/ai-paths/components/AiPathsPillButton.tsx#AiPathsPillButton",
-      "sinkComponentId": "src/shared/ui/button.tsx#Button",
-      "componentPath": [
-        "src/features/ai/ai-paths/components/AiPathsPillButton.tsx#AiPathsPillButton",
-        "src/shared/ui/button.tsx#Button"
-      ],
-      "propPath": [
-        "disabled",
-        "disabled"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/ai/ai-paths/components/AiPathsPillButton.tsx#AiPathsPillButton",
-          "toComponentId": "src/shared/ui/button.tsx#Button",
-          "sourceProp": "disabled",
-          "targetProp": "disabled",
-          "relativePath": "src/features/ai/ai-paths/components/AiPathsPillButton.tsx",
-          "line": 27
-        }
-      ]
-    },
-    {
-      "score": 50,
-      "depth": 2,
-      "rootFanout": 1,
-      "distinctFeatureCount": 2,
-      "rootComponentId": "src/features/ai/ai-paths/components/PortableEngineTrendSnapshotsPanel.tsx#PortableEngineOutlineBadge",
-      "sinkComponentId": "src/shared/ui/badge.tsx#Badge",
-      "componentPath": [
-        "src/features/ai/ai-paths/components/PortableEngineTrendSnapshotsPanel.tsx#PortableEngineOutlineBadge",
-        "src/shared/ui/badge.tsx#Badge"
-      ],
-      "propPath": [
-        "className",
-        "className"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/ai/ai-paths/components/PortableEngineTrendSnapshotsPanel.tsx#PortableEngineOutlineBadge",
-          "toComponentId": "src/shared/ui/badge.tsx#Badge",
-          "sourceProp": "className",
-          "targetProp": "className",
-          "relativePath": "src/features/ai/ai-paths/components/PortableEngineTrendSnapshotsPanel.tsx",
-          "line": 142
         }
       ]
     },
@@ -20120,136 +18998,6 @@
           "targetProp": "variant",
           "relativePath": "src/features/ai/ai-paths/components/validation/CentralDocsSyncPanel.tsx",
           "line": 40
-        }
-      ]
-    },
-    {
-      "score": 50,
-      "depth": 2,
-      "rootFanout": 1,
-      "distinctFeatureCount": 2,
-      "rootComponentId": "src/features/ai/ai-paths/components/validation/ValidationActionButton.tsx#ValidationActionButton",
-      "sinkComponentId": "src/shared/ui/button.tsx#Button",
-      "componentPath": [
-        "src/features/ai/ai-paths/components/validation/ValidationActionButton.tsx#ValidationActionButton",
-        "src/shared/ui/button.tsx#Button"
-      ],
-      "propPath": [
-        "variant",
-        "variant"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/ai/ai-paths/components/validation/ValidationActionButton.tsx#ValidationActionButton",
-          "toComponentId": "src/shared/ui/button.tsx#Button",
-          "sourceProp": "variant",
-          "targetProp": "variant",
-          "relativePath": "src/features/ai/ai-paths/components/validation/ValidationActionButton.tsx",
-          "line": 25
-        }
-      ]
-    },
-    {
-      "score": 50,
-      "depth": 2,
-      "rootFanout": 1,
-      "distinctFeatureCount": 2,
-      "rootComponentId": "src/features/ai/ai-paths/components/validation/ValidationActionButton.tsx#ValidationActionButton",
-      "sinkComponentId": "src/shared/ui/button.tsx#Button",
-      "componentPath": [
-        "src/features/ai/ai-paths/components/validation/ValidationActionButton.tsx#ValidationActionButton",
-        "src/shared/ui/button.tsx#Button"
-      ],
-      "propPath": [
-        "className",
-        "className"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/ai/ai-paths/components/validation/ValidationActionButton.tsx#ValidationActionButton",
-          "toComponentId": "src/shared/ui/button.tsx#Button",
-          "sourceProp": "className",
-          "targetProp": "className",
-          "relativePath": "src/features/ai/ai-paths/components/validation/ValidationActionButton.tsx",
-          "line": 25
-        }
-      ]
-    },
-    {
-      "score": 50,
-      "depth": 2,
-      "rootFanout": 1,
-      "distinctFeatureCount": 2,
-      "rootComponentId": "src/features/ai/ai-paths/components/validation/ValidationActionButton.tsx#ValidationActionButton",
-      "sinkComponentId": "src/shared/ui/button.tsx#Button",
-      "componentPath": [
-        "src/features/ai/ai-paths/components/validation/ValidationActionButton.tsx#ValidationActionButton",
-        "src/shared/ui/button.tsx#Button"
-      ],
-      "propPath": [
-        "disabled",
-        "disabled"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/ai/ai-paths/components/validation/ValidationActionButton.tsx#ValidationActionButton",
-          "toComponentId": "src/shared/ui/button.tsx#Button",
-          "sourceProp": "disabled",
-          "targetProp": "disabled",
-          "relativePath": "src/features/ai/ai-paths/components/validation/ValidationActionButton.tsx",
-          "line": 25
-        }
-      ]
-    },
-    {
-      "score": 50,
-      "depth": 2,
-      "rootFanout": 1,
-      "distinctFeatureCount": 2,
-      "rootComponentId": "src/features/ai/ai-paths/components/validation/ValidationActionButton.tsx#ValidationActionButton",
-      "sinkComponentId": "src/shared/ui/button.tsx#Button",
-      "componentPath": [
-        "src/features/ai/ai-paths/components/validation/ValidationActionButton.tsx#ValidationActionButton",
-        "src/shared/ui/button.tsx#Button"
-      ],
-      "propPath": [
-        "loading",
-        "loading"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/ai/ai-paths/components/validation/ValidationActionButton.tsx#ValidationActionButton",
-          "toComponentId": "src/shared/ui/button.tsx#Button",
-          "sourceProp": "loading",
-          "targetProp": "loading",
-          "relativePath": "src/features/ai/ai-paths/components/validation/ValidationActionButton.tsx",
-          "line": 25
-        }
-      ]
-    },
-    {
-      "score": 50,
-      "depth": 2,
-      "rootFanout": 1,
-      "distinctFeatureCount": 2,
-      "rootComponentId": "src/features/ai/ai-paths/components/validation/ValidationActionButton.tsx#ValidationActionButton",
-      "sinkComponentId": "src/shared/ui/button.tsx#Button",
-      "componentPath": [
-        "src/features/ai/ai-paths/components/validation/ValidationActionButton.tsx#ValidationActionButton",
-        "src/shared/ui/button.tsx#Button"
-      ],
-      "propPath": [
-        "onClick",
-        "onClick"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/ai/ai-paths/components/validation/ValidationActionButton.tsx#ValidationActionButton",
-          "toComponentId": "src/shared/ui/button.tsx#Button",
-          "sourceProp": "onClick",
-          "targetProp": "onClick",
-          "relativePath": "src/features/ai/ai-paths/components/validation/ValidationActionButton.tsx",
-          "line": 25
         }
       ]
     },
@@ -25198,58 +23946,6 @@
       "depth": 2,
       "rootFanout": 1,
       "distinctFeatureCount": 1,
-      "rootComponentId": "src/features/kangur/ui/context/KangurAiTutorContext.tsx#KangurAiTutorProvider",
-      "sinkComponentId": "src/features/kangur/ui/context/KangurAiTutorRuntime.session.tsx#KangurAiTutorSessionSyncInner",
-      "componentPath": [
-        "src/features/kangur/ui/context/KangurAiTutorContext.tsx#KangurAiTutorProvider",
-        "src/features/kangur/ui/context/KangurAiTutorRuntime.session.tsx#KangurAiTutorSessionSyncInner"
-      ],
-      "propPath": [
-        "learnerId",
-        "learnerId"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/kangur/ui/context/KangurAiTutorContext.tsx#KangurAiTutorProvider",
-          "toComponentId": "src/features/kangur/ui/context/KangurAiTutorRuntime.session.tsx#KangurAiTutorSessionSyncInner",
-          "sourceProp": "learnerId",
-          "targetProp": "learnerId",
-          "relativePath": "src/features/kangur/ui/context/KangurAiTutorContext.tsx",
-          "line": 182
-        }
-      ]
-    },
-    {
-      "score": 44,
-      "depth": 2,
-      "rootFanout": 1,
-      "distinctFeatureCount": 1,
-      "rootComponentId": "src/features/kangur/ui/context/KangurAiTutorContext.tsx#KangurAiTutorProvider",
-      "sinkComponentId": "src/features/kangur/ui/context/KangurAiTutorRuntime.session.tsx#KangurAiTutorSessionSyncInner",
-      "componentPath": [
-        "src/features/kangur/ui/context/KangurAiTutorContext.tsx#KangurAiTutorProvider",
-        "src/features/kangur/ui/context/KangurAiTutorRuntime.session.tsx#KangurAiTutorSessionSyncInner"
-      ],
-      "propPath": [
-        "sessionContext",
-        "sessionContext"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/kangur/ui/context/KangurAiTutorContext.tsx#KangurAiTutorProvider",
-          "toComponentId": "src/features/kangur/ui/context/KangurAiTutorRuntime.session.tsx#KangurAiTutorSessionSyncInner",
-          "sourceProp": "sessionContext",
-          "targetProp": "sessionContext",
-          "relativePath": "src/features/kangur/ui/context/KangurAiTutorContext.tsx",
-          "line": 182
-        }
-      ]
-    },
-    {
-      "score": 44,
-      "depth": 2,
-      "rootFanout": 1,
-      "distinctFeatureCount": 1,
       "rootComponentId": "src/features/kangur/ui/design/primitives/KangurWidgetIntro.tsx#KangurWidgetIntro",
       "sinkComponentId": "src/features/kangur/ui/design/primitives/KangurPanelIntro.tsx#KangurPanelIntro",
       "componentPath": [
@@ -25319,7 +24015,7 @@
           "sourceProp": "open",
           "targetProp": "open",
           "relativePath": "src/features/kangur/ui/pages/GamesLibraryGameModal.tsx",
-          "line": 759
+          "line": 761
         }
       ]
     },
@@ -25372,32 +24068,6 @@
           "targetProp": "docsTooltipsEnabled",
           "relativePath": "src/features/kangur/ui/pages/ParentDashboard.tsx",
           "line": 476
-        }
-      ]
-    },
-    {
-      "score": 44,
-      "depth": 2,
-      "rootFanout": 1,
-      "distinctFeatureCount": 1,
-      "rootComponentId": "src/features/products/components/EditableCell.tsx#EditableCell",
-      "sinkComponentId": "src/features/products/components/EditableCell.tsx#EditableCellInput",
-      "componentPath": [
-        "src/features/products/components/EditableCell.tsx#EditableCell",
-        "src/features/products/components/EditableCell.tsx#EditableCellInput"
-      ],
-      "propPath": [
-        "field",
-        "field"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/products/components/EditableCell.tsx#EditableCell",
-          "toComponentId": "src/features/products/components/EditableCell.tsx#EditableCellInput",
-          "sourceProp": "field",
-          "targetProp": "field",
-          "relativePath": "src/features/products/components/EditableCell.tsx",
-          "line": 132
         }
       ]
     },
@@ -26646,32 +25316,6 @@
           "targetProp": "placeholder",
           "relativePath": "src/shared/ui/select-simple.tsx",
           "line": 157
-        }
-      ]
-    },
-    {
-      "score": 44,
-      "depth": 2,
-      "rootFanout": 1,
-      "distinctFeatureCount": 1,
-      "rootComponentId": "src/shared/ui/status-toggle.tsx#StatusToggle",
-      "sinkComponentId": "src/shared/ui/status-toggle.tsx#StatusToggleBadge",
-      "componentPath": [
-        "src/shared/ui/status-toggle.tsx#StatusToggle",
-        "src/shared/ui/status-toggle.tsx#StatusToggleBadge"
-      ],
-      "propPath": [
-        "className",
-        "className"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/shared/ui/status-toggle.tsx#StatusToggle",
-          "toComponentId": "src/shared/ui/status-toggle.tsx#StatusToggleBadge",
-          "sourceProp": "className",
-          "targetProp": "className",
-          "relativePath": "src/shared/ui/status-toggle.tsx",
-          "line": 83
         }
       ]
     },
@@ -28738,15 +27382,6 @@
       "hasUnknownSpreadForwarding": false
     },
     {
-      "componentId": "src/features/ai/ai-paths/components/AiPathsPillButton.tsx#AiPathsPillButton",
-      "name": "AiPathsPillButton",
-      "relativePath": "src/features/ai/ai-paths/components/AiPathsPillButton.tsx",
-      "feature": "feature:ai",
-      "forwardedPropCount": 9,
-      "outgoingTransitionCount": 9,
-      "hasUnknownSpreadForwarding": false
-    },
-    {
       "componentId": "src/shared/ui/FormModal.tsx#FormModalHeaderContent",
       "name": "FormModalHeaderContent",
       "relativePath": "src/shared/ui/FormModal.tsx",
@@ -28855,30 +27490,12 @@
       "hasUnknownSpreadForwarding": false
     },
     {
-      "componentId": "src/shared/ui/status-toggle.tsx#StatusToggle",
-      "name": "StatusToggle",
-      "relativePath": "src/shared/ui/status-toggle.tsx",
-      "feature": "shared-ui",
-      "forwardedPropCount": 7,
-      "outgoingTransitionCount": 11,
-      "hasUnknownSpreadForwarding": false
-    },
-    {
       "componentId": "src/shared/ui/ActionMenu.tsx#ActionMenu",
       "name": "ActionMenu",
       "relativePath": "src/shared/ui/ActionMenu.tsx",
       "feature": "shared-ui",
       "forwardedPropCount": 7,
       "outgoingTransitionCount": 9,
-      "hasUnknownSpreadForwarding": false
-    },
-    {
-      "componentId": "src/features/products/components/EditableCell.tsx#EditableCellInput",
-      "name": "EditableCellInput",
-      "relativePath": "src/features/products/components/EditableCell.tsx",
-      "feature": "feature:products",
-      "forwardedPropCount": 7,
-      "outgoingTransitionCount": 8,
       "hasUnknownSpreadForwarding": false
     },
     {
@@ -28915,15 +27532,6 @@
       "feature": "feature:kangur",
       "forwardedPropCount": 6,
       "outgoingTransitionCount": 7,
-      "hasUnknownSpreadForwarding": false
-    },
-    {
-      "componentId": "src/features/ai/ai-paths/components/validation/ValidationActionButton.tsx#ValidationActionButton",
-      "name": "ValidationActionButton",
-      "relativePath": "src/features/ai/ai-paths/components/validation/ValidationActionButton.tsx",
-      "feature": "feature:ai",
-      "forwardedPropCount": 6,
-      "outgoingTransitionCount": 6,
       "hasUnknownSpreadForwarding": false
     },
     {
@@ -29206,24 +27814,6 @@
       "hasUnknownSpreadForwarding": false
     },
     {
-      "componentId": "src/features/database/components/DatabaseColumns.tsx#DatabaseActionsRestoreItem",
-      "name": "DatabaseActionsRestoreItem",
-      "relativePath": "src/features/database/components/DatabaseColumns.tsx",
-      "feature": "feature:database",
-      "forwardedPropCount": 3,
-      "outgoingTransitionCount": 4,
-      "hasUnknownSpreadForwarding": false
-    },
-    {
-      "componentId": "src/features/database/components/DatabaseColumns.tsx#DatabaseActionsDeleteItem",
-      "name": "DatabaseActionsDeleteItem",
-      "relativePath": "src/features/database/components/DatabaseColumns.tsx",
-      "feature": "feature:database",
-      "forwardedPropCount": 3,
-      "outgoingTransitionCount": 4,
-      "hasUnknownSpreadForwarding": false
-    },
-    {
       "componentId": "src/features/kangur/admin/admin-kangur-social/KangurSocialPipelineQueuePanel.tsx#JobRow",
       "name": "JobRow",
       "relativePath": "src/features/kangur/admin/admin-kangur-social/KangurSocialPipelineQueuePanel.tsx",
@@ -29503,15 +28093,6 @@
       "hasUnknownSpreadForwarding": false
     },
     {
-      "componentId": "src/features/ai/ai-paths/components/PortableEngineTrendSnapshotsPanel.tsx#PortableEngineOutlineBadge",
-      "name": "PortableEngineOutlineBadge",
-      "relativePath": "src/features/ai/ai-paths/components/PortableEngineTrendSnapshotsPanel.tsx",
-      "feature": "feature:ai",
-      "forwardedPropCount": 2,
-      "outgoingTransitionCount": 3,
-      "hasUnknownSpreadForwarding": true
-    },
-    {
       "componentId": "src/features/cms/components/frontend/home/home-fallback-content.tsx#HomeFallbackContent",
       "name": "HomeFallbackContent",
       "relativePath": "src/features/cms/components/frontend/home/home-fallback-content.tsx",
@@ -29647,12 +28228,75 @@
       "hasUnknownSpreadForwarding": false
     },
     {
-      "componentId": "src/features/document-editor/components/RichTextEditorImpl.tsx#RichTextEditorImpl",
-      "name": "RichTextEditorImpl",
-      "relativePath": "src/features/document-editor/components/RichTextEditorImpl.tsx",
-      "feature": "feature:document-editor",
+      "componentId": "src/features/kangur/ui/FrontendPublicOwnerShellClient.tsx#FrontendPublicOwnerShellClient",
+      "name": "FrontendPublicOwnerShellClient",
+      "relativePath": "src/features/kangur/ui/FrontendPublicOwnerShellClient.tsx",
+      "feature": "feature:kangur",
       "forwardedPropCount": 2,
       "outgoingTransitionCount": 2,
+      "hasUnknownSpreadForwarding": false
+    },
+    {
+      "componentId": "src/features/kangur/ui/components/KangurCheckButton.tsx#KangurCheckButton",
+      "name": "KangurCheckButton",
+      "relativePath": "src/features/kangur/ui/components/KangurCheckButton.tsx",
+      "feature": "feature:kangur",
+      "forwardedPropCount": 2,
+      "outgoingTransitionCount": 2,
+      "hasUnknownSpreadForwarding": true
+    },
+    {
+      "componentId": "src/features/kangur/ui/components/KangurUnifiedLesson.tsx#KangurUnifiedLessonSubsection",
+      "name": "KangurUnifiedLessonSubsection",
+      "relativePath": "src/features/kangur/ui/components/KangurUnifiedLesson.tsx",
+      "feature": "feature:kangur",
+      "forwardedPropCount": 2,
+      "outgoingTransitionCount": 2,
+      "hasUnknownSpreadForwarding": true
+    },
+    {
+      "componentId": "src/features/kangur/ui/design/primitives/KangurWidgetIntro.tsx#KangurWidgetIntro",
+      "name": "KangurWidgetIntro",
+      "relativePath": "src/features/kangur/ui/design/primitives/KangurWidgetIntro.tsx",
+      "feature": "feature:kangur",
+      "forwardedPropCount": 2,
+      "outgoingTransitionCount": 2,
+      "hasUnknownSpreadForwarding": true
+    },
+    {
+      "componentId": "src/features/ai/ai-paths/components/runtime-event-log-panel.tsx#RuntimeEventLogEventRow",
+      "name": "RuntimeEventLogEventRow",
+      "relativePath": "src/features/ai/ai-paths/components/runtime-event-log-panel.tsx",
+      "feature": "feature:ai",
+      "forwardedPropCount": 1,
+      "outgoingTransitionCount": 6,
+      "hasUnknownSpreadForwarding": false
+    },
+    {
+      "componentId": "src/features/kangur/ui/pages/Game.launchable-screens.tsx#KangurConfigurableLaunchableGameScreen",
+      "name": "KangurConfigurableLaunchableGameScreen",
+      "relativePath": "src/features/kangur/ui/pages/Game.launchable-screens.tsx",
+      "feature": "feature:kangur",
+      "forwardedPropCount": 1,
+      "outgoingTransitionCount": 6,
+      "hasUnknownSpreadForwarding": false
+    },
+    {
+      "componentId": "src/features/kangur/ui/components/EnglishAdjectivesSceneGame.tsx#AdjectiveStudioScene",
+      "name": "AdjectiveStudioScene",
+      "relativePath": "src/features/kangur/ui/components/EnglishAdjectivesSceneGame.tsx",
+      "feature": "feature:kangur",
+      "forwardedPropCount": 1,
+      "outgoingTransitionCount": 5,
+      "hasUnknownSpreadForwarding": false
+    },
+    {
+      "componentId": "src/features/products/context/ProductListContext.tsx#ProductListProvider",
+      "name": "ProductListProvider",
+      "relativePath": "src/features/products/context/ProductListContext.tsx",
+      "feature": "feature:products",
+      "forwardedPropCount": 1,
+      "outgoingTransitionCount": 4,
       "hasUnknownSpreadForwarding": false
     }
   ],
@@ -29820,15 +28464,6 @@
       "hasUnknownSpreadForwarding": false
     },
     {
-      "componentId": "src/features/ai/ai-paths/components/AiPathsPillButton.tsx#AiPathsPillButton",
-      "name": "AiPathsPillButton",
-      "relativePath": "src/features/ai/ai-paths/components/AiPathsPillButton.tsx",
-      "feature": "feature:ai",
-      "forwardedPropCount": 9,
-      "outgoingTransitionCount": 9,
-      "hasUnknownSpreadForwarding": false
-    },
-    {
       "componentId": "src/shared/ui/FormModal.tsx#FormModalHeaderContent",
       "name": "FormModalHeaderContent",
       "relativePath": "src/shared/ui/FormModal.tsx",
@@ -29937,30 +28572,12 @@
       "hasUnknownSpreadForwarding": false
     },
     {
-      "componentId": "src/shared/ui/status-toggle.tsx#StatusToggle",
-      "name": "StatusToggle",
-      "relativePath": "src/shared/ui/status-toggle.tsx",
-      "feature": "shared-ui",
-      "forwardedPropCount": 7,
-      "outgoingTransitionCount": 11,
-      "hasUnknownSpreadForwarding": false
-    },
-    {
       "componentId": "src/shared/ui/ActionMenu.tsx#ActionMenu",
       "name": "ActionMenu",
       "relativePath": "src/shared/ui/ActionMenu.tsx",
       "feature": "shared-ui",
       "forwardedPropCount": 7,
       "outgoingTransitionCount": 9,
-      "hasUnknownSpreadForwarding": false
-    },
-    {
-      "componentId": "src/features/products/components/EditableCell.tsx#EditableCellInput",
-      "name": "EditableCellInput",
-      "relativePath": "src/features/products/components/EditableCell.tsx",
-      "feature": "feature:products",
-      "forwardedPropCount": 7,
-      "outgoingTransitionCount": 8,
       "hasUnknownSpreadForwarding": false
     },
     {
@@ -29997,15 +28614,6 @@
       "feature": "feature:kangur",
       "forwardedPropCount": 6,
       "outgoingTransitionCount": 7,
-      "hasUnknownSpreadForwarding": false
-    },
-    {
-      "componentId": "src/features/ai/ai-paths/components/validation/ValidationActionButton.tsx#ValidationActionButton",
-      "name": "ValidationActionButton",
-      "relativePath": "src/features/ai/ai-paths/components/validation/ValidationActionButton.tsx",
-      "feature": "feature:ai",
-      "forwardedPropCount": 6,
-      "outgoingTransitionCount": 6,
       "hasUnknownSpreadForwarding": false
     },
     {
@@ -30288,24 +28896,6 @@
       "hasUnknownSpreadForwarding": false
     },
     {
-      "componentId": "src/features/database/components/DatabaseColumns.tsx#DatabaseActionsRestoreItem",
-      "name": "DatabaseActionsRestoreItem",
-      "relativePath": "src/features/database/components/DatabaseColumns.tsx",
-      "feature": "feature:database",
-      "forwardedPropCount": 3,
-      "outgoingTransitionCount": 4,
-      "hasUnknownSpreadForwarding": false
-    },
-    {
-      "componentId": "src/features/database/components/DatabaseColumns.tsx#DatabaseActionsDeleteItem",
-      "name": "DatabaseActionsDeleteItem",
-      "relativePath": "src/features/database/components/DatabaseColumns.tsx",
-      "feature": "feature:database",
-      "forwardedPropCount": 3,
-      "outgoingTransitionCount": 4,
-      "hasUnknownSpreadForwarding": false
-    },
-    {
       "componentId": "src/features/kangur/admin/admin-kangur-social/KangurSocialPipelineQueuePanel.tsx#JobRow",
       "name": "JobRow",
       "relativePath": "src/features/kangur/admin/admin-kangur-social/KangurSocialPipelineQueuePanel.tsx",
@@ -30585,15 +29175,6 @@
       "hasUnknownSpreadForwarding": false
     },
     {
-      "componentId": "src/features/ai/ai-paths/components/PortableEngineTrendSnapshotsPanel.tsx#PortableEngineOutlineBadge",
-      "name": "PortableEngineOutlineBadge",
-      "relativePath": "src/features/ai/ai-paths/components/PortableEngineTrendSnapshotsPanel.tsx",
-      "feature": "feature:ai",
-      "forwardedPropCount": 2,
-      "outgoingTransitionCount": 3,
-      "hasUnknownSpreadForwarding": true
-    },
-    {
       "componentId": "src/features/cms/components/frontend/home/home-fallback-content.tsx#HomeFallbackContent",
       "name": "HomeFallbackContent",
       "relativePath": "src/features/cms/components/frontend/home/home-fallback-content.tsx",
@@ -30729,15 +29310,6 @@
       "hasUnknownSpreadForwarding": false
     },
     {
-      "componentId": "src/features/document-editor/components/RichTextEditorImpl.tsx#RichTextEditorImpl",
-      "name": "RichTextEditorImpl",
-      "relativePath": "src/features/document-editor/components/RichTextEditorImpl.tsx",
-      "feature": "feature:document-editor",
-      "forwardedPropCount": 2,
-      "outgoingTransitionCount": 2,
-      "hasUnknownSpreadForwarding": false
-    },
-    {
       "componentId": "src/features/kangur/ui/FrontendPublicOwnerShellClient.tsx#FrontendPublicOwnerShellClient",
       "name": "FrontendPublicOwnerShellClient",
       "relativePath": "src/features/kangur/ui/FrontendPublicOwnerShellClient.tsx",
@@ -30765,28 +29337,10 @@
       "hasUnknownSpreadForwarding": true
     },
     {
-      "componentId": "src/features/kangur/ui/context/KangurAiTutorContext.tsx#KangurAiTutorProvider",
-      "name": "KangurAiTutorProvider",
-      "relativePath": "src/features/kangur/ui/context/KangurAiTutorContext.tsx",
-      "feature": "feature:kangur",
-      "forwardedPropCount": 2,
-      "outgoingTransitionCount": 2,
-      "hasUnknownSpreadForwarding": false
-    },
-    {
       "componentId": "src/features/kangur/ui/design/primitives/KangurWidgetIntro.tsx#KangurWidgetIntro",
       "name": "KangurWidgetIntro",
       "relativePath": "src/features/kangur/ui/design/primitives/KangurWidgetIntro.tsx",
       "feature": "feature:kangur",
-      "forwardedPropCount": 2,
-      "outgoingTransitionCount": 2,
-      "hasUnknownSpreadForwarding": true
-    },
-    {
-      "componentId": "src/shared/ui/PromptGenerationSection.tsx#PromptGenerationSectionLayout",
-      "name": "PromptGenerationSectionLayout",
-      "relativePath": "src/shared/ui/PromptGenerationSection.tsx",
-      "feature": "shared-ui",
       "forwardedPropCount": 2,
       "outgoingTransitionCount": 2,
       "hasUnknownSpreadForwarding": true
@@ -30825,15 +29379,6 @@
       "feature": "feature:products",
       "forwardedPropCount": 1,
       "outgoingTransitionCount": 4,
-      "hasUnknownSpreadForwarding": false
-    },
-    {
-      "componentId": "src/features/database/components/DatabaseColumns.tsx#DatabaseActionsCell",
-      "name": "DatabaseActionsCell",
-      "relativePath": "src/features/database/components/DatabaseColumns.tsx",
-      "feature": "feature:database",
-      "forwardedPropCount": 1,
-      "outgoingTransitionCount": 3,
       "hasUnknownSpreadForwarding": false
     },
     {
@@ -30931,6 +29476,15 @@
       "name": "ShapeRecognitionStageGame",
       "relativePath": "src/features/kangur/ui/components/ShapeRecognitionStageGame.tsx",
       "feature": "feature:kangur",
+      "forwardedPropCount": 1,
+      "outgoingTransitionCount": 2,
+      "hasUnknownSpreadForwarding": false
+    },
+    {
+      "componentId": "src/features/products/components/EditableCell.tsx#EditableCell",
+      "name": "EditableCell",
+      "relativePath": "src/features/products/components/EditableCell.tsx",
+      "feature": "feature:products",
       "forwardedPropCount": 1,
       "outgoingTransitionCount": 2,
       "hasUnknownSpreadForwarding": false
@@ -31057,6 +29611,15 @@
       "name": "AttachSlugModal",
       "relativePath": "src/features/cms/components/slugs/AttachSlugModal.tsx",
       "feature": "feature:cms",
+      "forwardedPropCount": 1,
+      "outgoingTransitionCount": 1,
+      "hasUnknownSpreadForwarding": false
+    },
+    {
+      "componentId": "src/features/database/components/DatabaseColumns.tsx#DatabaseActionsCell",
+      "name": "DatabaseActionsCell",
+      "relativePath": "src/features/database/components/DatabaseColumns.tsx",
+      "feature": "feature:database",
       "forwardedPropCount": 1,
       "outgoingTransitionCount": 1,
       "hasUnknownSpreadForwarding": false
@@ -31503,15 +30066,6 @@
       "hasUnknownSpreadForwarding": false
     },
     {
-      "componentId": "src/features/products/components/EditableCell.tsx#EditableCell",
-      "name": "EditableCell",
-      "relativePath": "src/features/products/components/EditableCell.tsx",
-      "feature": "feature:products",
-      "forwardedPropCount": 1,
-      "outgoingTransitionCount": 1,
-      "hasUnknownSpreadForwarding": false
-    },
-    {
       "componentId": "src/features/products/components/settings/validator-settings/ValidatorPatternSemanticHistoryPanel.tsx#ValidatorPatternSemanticHistoryPanel",
       "name": "ValidatorPatternSemanticHistoryPanel",
       "relativePath": "src/features/products/components/settings/validator-settings/ValidatorPatternSemanticHistoryPanel.tsx",
@@ -31588,15 +30142,6 @@
       "name": "KangurUnifiedLesson",
       "relativePath": "src/features/kangur/ui/components/KangurUnifiedLesson.tsx",
       "feature": "feature:kangur",
-      "forwardedPropCount": 0,
-      "outgoingTransitionCount": 0,
-      "hasUnknownSpreadForwarding": true
-    },
-    {
-      "componentId": "src/shared/ui/PromptGenerationSection.tsx#PromptGenerationOutputPanels",
-      "name": "PromptGenerationOutputPanels",
-      "relativePath": "src/shared/ui/PromptGenerationSection.tsx",
-      "feature": "shared-ui",
       "forwardedPropCount": 0,
       "outgoingTransitionCount": 0,
       "hasUnknownSpreadForwarding": true
@@ -32396,114 +30941,6 @@
       ]
     },
     {
-      "score": 109,
-      "depth": 3,
-      "rootFanout": 3,
-      "distinctFeatureCount": 2,
-      "rootComponentId": "src/features/ai/ai-paths/components/RunComparisonTool.tsx#RunComparisonRowSummary",
-      "sinkComponentId": "src/shared/ui/button.tsx#Button",
-      "componentPath": [
-        "src/features/ai/ai-paths/components/RunComparisonTool.tsx#RunComparisonRowSummary",
-        "src/features/ai/ai-paths/components/AiPathsPillButton.tsx#AiPathsPillButton",
-        "src/shared/ui/button.tsx#Button"
-      ],
-      "propPath": [
-        "row",
-        "onClick",
-        "onClick"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/ai/ai-paths/components/RunComparisonTool.tsx#RunComparisonRowSummary",
-          "toComponentId": "src/features/ai/ai-paths/components/AiPathsPillButton.tsx#AiPathsPillButton",
-          "sourceProp": "row",
-          "targetProp": "onClick",
-          "relativePath": "src/features/ai/ai-paths/components/RunComparisonTool.tsx",
-          "line": 290
-        },
-        {
-          "fromComponentId": "src/features/ai/ai-paths/components/AiPathsPillButton.tsx#AiPathsPillButton",
-          "toComponentId": "src/shared/ui/button.tsx#Button",
-          "sourceProp": "onClick",
-          "targetProp": "onClick",
-          "relativePath": "src/features/ai/ai-paths/components/AiPathsPillButton.tsx",
-          "line": 27
-        }
-      ]
-    },
-    {
-      "score": 109,
-      "depth": 3,
-      "rootFanout": 3,
-      "distinctFeatureCount": 2,
-      "rootComponentId": "src/features/database/components/DatabaseColumns.tsx#DatabaseActionsCell",
-      "sinkComponentId": "src/shared/ui/dropdown-menu.tsx#DropdownMenuItem",
-      "componentPath": [
-        "src/features/database/components/DatabaseColumns.tsx#DatabaseActionsCell",
-        "src/features/database/components/DatabaseColumns.tsx#DatabaseActionsDeleteItem",
-        "src/shared/ui/dropdown-menu.tsx#DropdownMenuItem"
-      ],
-      "propPath": [
-        "backup",
-        "backup",
-        "onClick"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/database/components/DatabaseColumns.tsx#DatabaseActionsCell",
-          "toComponentId": "src/features/database/components/DatabaseColumns.tsx#DatabaseActionsDeleteItem",
-          "sourceProp": "backup",
-          "targetProp": "backup",
-          "relativePath": "src/features/database/components/DatabaseColumns.tsx",
-          "line": 105
-        },
-        {
-          "fromComponentId": "src/features/database/components/DatabaseColumns.tsx#DatabaseActionsDeleteItem",
-          "toComponentId": "src/shared/ui/dropdown-menu.tsx#DropdownMenuItem",
-          "sourceProp": "backup",
-          "targetProp": "onClick",
-          "relativePath": "src/features/database/components/DatabaseColumns.tsx",
-          "line": 77
-        }
-      ]
-    },
-    {
-      "score": 109,
-      "depth": 3,
-      "rootFanout": 3,
-      "distinctFeatureCount": 2,
-      "rootComponentId": "src/features/database/components/DatabaseColumns.tsx#DatabaseActionsCell",
-      "sinkComponentId": "src/shared/ui/dropdown-menu.tsx#DropdownMenuItem",
-      "componentPath": [
-        "src/features/database/components/DatabaseColumns.tsx#DatabaseActionsCell",
-        "src/features/database/components/DatabaseColumns.tsx#DatabaseActionsRestoreItem",
-        "src/shared/ui/dropdown-menu.tsx#DropdownMenuItem"
-      ],
-      "propPath": [
-        "backup",
-        "backup",
-        "onClick"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/database/components/DatabaseColumns.tsx#DatabaseActionsCell",
-          "toComponentId": "src/features/database/components/DatabaseColumns.tsx#DatabaseActionsRestoreItem",
-          "sourceProp": "backup",
-          "targetProp": "backup",
-          "relativePath": "src/features/database/components/DatabaseColumns.tsx",
-          "line": 99
-        },
-        {
-          "fromComponentId": "src/features/database/components/DatabaseColumns.tsx#DatabaseActionsRestoreItem",
-          "toComponentId": "src/shared/ui/dropdown-menu.tsx#DropdownMenuItem",
-          "sourceProp": "backup",
-          "targetProp": "onClick",
-          "relativePath": "src/features/database/components/DatabaseColumns.tsx",
-          "line": 59
-        }
-      ]
-    },
-    {
       "score": 103,
       "depth": 3,
       "rootFanout": 3,
@@ -32536,42 +30973,6 @@
           "targetProp": "className",
           "relativePath": "src/features/kangur/ui/components/drawing-engine/KangurDrawingSnapshotActions.tsx",
           "line": 37
-        }
-      ]
-    },
-    {
-      "score": 99,
-      "depth": 3,
-      "rootFanout": 2,
-      "distinctFeatureCount": 2,
-      "rootComponentId": "src/features/ai/ai-paths/components/validation/CentralDocsSyncPanel.tsx#CentralDocsSyncCandidateCard",
-      "sinkComponentId": "src/shared/ui/button.tsx#Button",
-      "componentPath": [
-        "src/features/ai/ai-paths/components/validation/CentralDocsSyncPanel.tsx#CentralDocsSyncCandidateCard",
-        "src/features/ai/ai-paths/components/validation/ValidationActionButton.tsx#ValidationActionButton",
-        "src/shared/ui/button.tsx#Button"
-      ],
-      "propPath": [
-        "rule",
-        "onClick",
-        "onClick"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/ai/ai-paths/components/validation/CentralDocsSyncPanel.tsx#CentralDocsSyncCandidateCard",
-          "toComponentId": "src/features/ai/ai-paths/components/validation/ValidationActionButton.tsx#ValidationActionButton",
-          "sourceProp": "rule",
-          "targetProp": "onClick",
-          "relativePath": "src/features/ai/ai-paths/components/validation/CentralDocsSyncPanel.tsx",
-          "line": 73
-        },
-        {
-          "fromComponentId": "src/features/ai/ai-paths/components/validation/ValidationActionButton.tsx#ValidationActionButton",
-          "toComponentId": "src/shared/ui/button.tsx#Button",
-          "sourceProp": "onClick",
-          "targetProp": "onClick",
-          "relativePath": "src/features/ai/ai-paths/components/validation/ValidationActionButton.tsx",
-          "line": 25
         }
       ]
     },
@@ -33300,78 +31701,6 @@
       "depth": 3,
       "rootFanout": 1,
       "distinctFeatureCount": 2,
-      "rootComponentId": "src/features/ai/ai-paths/components/RunComparisonTool.tsx#RunComparisonRowSummary",
-      "sinkComponentId": "src/shared/ui/button.tsx#Button",
-      "componentPath": [
-        "src/features/ai/ai-paths/components/RunComparisonTool.tsx#RunComparisonRowSummary",
-        "src/features/ai/ai-paths/components/AiPathsPillButton.tsx#AiPathsPillButton",
-        "src/shared/ui/button.tsx#Button"
-      ],
-      "propPath": [
-        "onSetCompareInspectorRowKey",
-        "onClick",
-        "onClick"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/ai/ai-paths/components/RunComparisonTool.tsx#RunComparisonRowSummary",
-          "toComponentId": "src/features/ai/ai-paths/components/AiPathsPillButton.tsx#AiPathsPillButton",
-          "sourceProp": "onSetCompareInspectorRowKey",
-          "targetProp": "onClick",
-          "relativePath": "src/features/ai/ai-paths/components/RunComparisonTool.tsx",
-          "line": 290
-        },
-        {
-          "fromComponentId": "src/features/ai/ai-paths/components/AiPathsPillButton.tsx#AiPathsPillButton",
-          "toComponentId": "src/shared/ui/button.tsx#Button",
-          "sourceProp": "onClick",
-          "targetProp": "onClick",
-          "relativePath": "src/features/ai/ai-paths/components/AiPathsPillButton.tsx",
-          "line": 27
-        }
-      ]
-    },
-    {
-      "score": 89,
-      "depth": 3,
-      "rootFanout": 1,
-      "distinctFeatureCount": 2,
-      "rootComponentId": "src/features/ai/ai-paths/components/RunComparisonTool.tsx#RunComparisonRowSummary",
-      "sinkComponentId": "src/shared/ui/button.tsx#Button",
-      "componentPath": [
-        "src/features/ai/ai-paths/components/RunComparisonTool.tsx#RunComparisonRowSummary",
-        "src/features/ai/ai-paths/components/AiPathsPillButton.tsx#AiPathsPillButton",
-        "src/shared/ui/button.tsx#Button"
-      ],
-      "propPath": [
-        "compareInspectorRowKey",
-        "onClick",
-        "onClick"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/ai/ai-paths/components/RunComparisonTool.tsx#RunComparisonRowSummary",
-          "toComponentId": "src/features/ai/ai-paths/components/AiPathsPillButton.tsx#AiPathsPillButton",
-          "sourceProp": "compareInspectorRowKey",
-          "targetProp": "onClick",
-          "relativePath": "src/features/ai/ai-paths/components/RunComparisonTool.tsx",
-          "line": 290
-        },
-        {
-          "fromComponentId": "src/features/ai/ai-paths/components/AiPathsPillButton.tsx#AiPathsPillButton",
-          "toComponentId": "src/shared/ui/button.tsx#Button",
-          "sourceProp": "onClick",
-          "targetProp": "onClick",
-          "relativePath": "src/features/ai/ai-paths/components/AiPathsPillButton.tsx",
-          "line": 27
-        }
-      ]
-    },
-    {
-      "score": 89,
-      "depth": 3,
-      "rootFanout": 1,
-      "distinctFeatureCount": 2,
       "rootComponentId": "src/features/ai/ai-paths/components/job-queue-run-card.tsx#JobQueueJsonField",
       "sinkComponentId": "src/shared/ui/textarea.tsx#Textarea",
       "componentPath": [
@@ -33580,114 +31909,6 @@
           "targetProp": "variant",
           "relativePath": "src/features/ai/ai-paths/components/validation/ValidationMetaBadge.tsx",
           "line": 22
-        }
-      ]
-    },
-    {
-      "score": 89,
-      "depth": 3,
-      "rootFanout": 1,
-      "distinctFeatureCount": 2,
-      "rootComponentId": "src/features/ai/ai-paths/components/validation/CentralDocsSyncPanel.tsx#CentralDocsSyncCandidateCard",
-      "sinkComponentId": "src/shared/ui/button.tsx#Button",
-      "componentPath": [
-        "src/features/ai/ai-paths/components/validation/CentralDocsSyncPanel.tsx#CentralDocsSyncCandidateCard",
-        "src/features/ai/ai-paths/components/validation/ValidationActionButton.tsx#ValidationActionButton",
-        "src/shared/ui/button.tsx#Button"
-      ],
-      "propPath": [
-        "onApprove",
-        "onClick",
-        "onClick"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/ai/ai-paths/components/validation/CentralDocsSyncPanel.tsx#CentralDocsSyncCandidateCard",
-          "toComponentId": "src/features/ai/ai-paths/components/validation/ValidationActionButton.tsx#ValidationActionButton",
-          "sourceProp": "onApprove",
-          "targetProp": "onClick",
-          "relativePath": "src/features/ai/ai-paths/components/validation/CentralDocsSyncPanel.tsx",
-          "line": 73
-        },
-        {
-          "fromComponentId": "src/features/ai/ai-paths/components/validation/ValidationActionButton.tsx#ValidationActionButton",
-          "toComponentId": "src/shared/ui/button.tsx#Button",
-          "sourceProp": "onClick",
-          "targetProp": "onClick",
-          "relativePath": "src/features/ai/ai-paths/components/validation/ValidationActionButton.tsx",
-          "line": 25
-        }
-      ]
-    },
-    {
-      "score": 89,
-      "depth": 3,
-      "rootFanout": 1,
-      "distinctFeatureCount": 2,
-      "rootComponentId": "src/features/ai/ai-paths/components/validation/CentralDocsSyncPanel.tsx#CentralDocsSyncCandidateCard",
-      "sinkComponentId": "src/shared/ui/button.tsx#Button",
-      "componentPath": [
-        "src/features/ai/ai-paths/components/validation/CentralDocsSyncPanel.tsx#CentralDocsSyncCandidateCard",
-        "src/features/ai/ai-paths/components/validation/ValidationActionButton.tsx#ValidationActionButton",
-        "src/shared/ui/button.tsx#Button"
-      ],
-      "propPath": [
-        "onReject",
-        "onClick",
-        "onClick"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/ai/ai-paths/components/validation/CentralDocsSyncPanel.tsx#CentralDocsSyncCandidateCard",
-          "toComponentId": "src/features/ai/ai-paths/components/validation/ValidationActionButton.tsx#ValidationActionButton",
-          "sourceProp": "onReject",
-          "targetProp": "onClick",
-          "relativePath": "src/features/ai/ai-paths/components/validation/CentralDocsSyncPanel.tsx",
-          "line": 79
-        },
-        {
-          "fromComponentId": "src/features/ai/ai-paths/components/validation/ValidationActionButton.tsx#ValidationActionButton",
-          "toComponentId": "src/shared/ui/button.tsx#Button",
-          "sourceProp": "onClick",
-          "targetProp": "onClick",
-          "relativePath": "src/features/ai/ai-paths/components/validation/ValidationActionButton.tsx",
-          "line": 25
-        }
-      ]
-    },
-    {
-      "score": 89,
-      "depth": 3,
-      "rootFanout": 1,
-      "distinctFeatureCount": 2,
-      "rootComponentId": "src/features/ai/ai-paths/components/validation/DocsConnectionsPanel.tsx#DocsConnectionsCatalogCard",
-      "sinkComponentId": "src/shared/ui/button.tsx#Button",
-      "componentPath": [
-        "src/features/ai/ai-paths/components/validation/DocsConnectionsPanel.tsx#DocsConnectionsCatalogCard",
-        "src/features/ai/ai-paths/components/validation/ValidationActionButton.tsx#ValidationActionButton",
-        "src/shared/ui/button.tsx#Button"
-      ],
-      "propPath": [
-        "onConnect",
-        "onClick",
-        "onClick"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/ai/ai-paths/components/validation/DocsConnectionsPanel.tsx#DocsConnectionsCatalogCard",
-          "toComponentId": "src/features/ai/ai-paths/components/validation/ValidationActionButton.tsx#ValidationActionButton",
-          "sourceProp": "onConnect",
-          "targetProp": "onClick",
-          "relativePath": "src/features/ai/ai-paths/components/validation/DocsConnectionsPanel.tsx",
-          "line": 41
-        },
-        {
-          "fromComponentId": "src/features/ai/ai-paths/components/validation/ValidationActionButton.tsx#ValidationActionButton",
-          "toComponentId": "src/shared/ui/button.tsx#Button",
-          "sourceProp": "onClick",
-          "targetProp": "onClick",
-          "relativePath": "src/features/ai/ai-paths/components/validation/ValidationActionButton.tsx",
-          "line": 25
         }
       ]
     },
@@ -33940,78 +32161,6 @@
           "targetProp": "footer",
           "relativePath": "src/shared/ui/templates/StandardDataTablePanel.tsx",
           "line": 146
-        }
-      ]
-    },
-    {
-      "score": 89,
-      "depth": 3,
-      "rootFanout": 1,
-      "distinctFeatureCount": 2,
-      "rootComponentId": "src/features/products/components/EditableCell.tsx#EditableCell",
-      "sinkComponentId": "src/shared/ui/input.tsx#Input",
-      "componentPath": [
-        "src/features/products/components/EditableCell.tsx#EditableCell",
-        "src/features/products/components/EditableCell.tsx#EditableCellInput",
-        "src/shared/ui/input.tsx#Input"
-      ],
-      "propPath": [
-        "field",
-        "field",
-        "step"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/products/components/EditableCell.tsx#EditableCell",
-          "toComponentId": "src/features/products/components/EditableCell.tsx#EditableCellInput",
-          "sourceProp": "field",
-          "targetProp": "field",
-          "relativePath": "src/features/products/components/EditableCell.tsx",
-          "line": 132
-        },
-        {
-          "fromComponentId": "src/features/products/components/EditableCell.tsx#EditableCellInput",
-          "toComponentId": "src/shared/ui/input.tsx#Input",
-          "sourceProp": "field",
-          "targetProp": "step",
-          "relativePath": "src/features/products/components/EditableCell.tsx",
-          "line": 36
-        }
-      ]
-    },
-    {
-      "score": 89,
-      "depth": 3,
-      "rootFanout": 1,
-      "distinctFeatureCount": 2,
-      "rootComponentId": "src/features/products/components/EditableCell.tsx#EditableCell",
-      "sinkComponentId": "src/shared/ui/input.tsx#Input",
-      "componentPath": [
-        "src/features/products/components/EditableCell.tsx#EditableCell",
-        "src/features/products/components/EditableCell.tsx#EditableCellInput",
-        "src/shared/ui/input.tsx#Input"
-      ],
-      "propPath": [
-        "field",
-        "field",
-        "aria-label"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/products/components/EditableCell.tsx#EditableCell",
-          "toComponentId": "src/features/products/components/EditableCell.tsx#EditableCellInput",
-          "sourceProp": "field",
-          "targetProp": "field",
-          "relativePath": "src/features/products/components/EditableCell.tsx",
-          "line": 132
-        },
-        {
-          "fromComponentId": "src/features/products/components/EditableCell.tsx#EditableCellInput",
-          "toComponentId": "src/shared/ui/input.tsx#Input",
-          "sourceProp": "field",
-          "targetProp": "aria-label",
-          "relativePath": "src/features/products/components/EditableCell.tsx",
-          "line": 36
         }
       ]
     },

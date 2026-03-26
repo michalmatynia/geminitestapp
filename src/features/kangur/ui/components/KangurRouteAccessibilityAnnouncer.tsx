@@ -3,10 +3,8 @@
 import { useTranslations } from 'next-intl';
 import { useEffect, useRef, useState } from 'react';
 
-import { resolveAccessibleKangurPageKey } from '@/features/kangur/config/page-access';
 import { useKangurRouting } from '@/features/kangur/ui/context/KangurRoutingContext';
 import { useOptionalKangurRouteTransitionState } from '@/features/kangur/ui/context/KangurRouteTransitionContext';
-import { useOptionalNextAuthSession } from '@/features/kangur/ui/hooks/useOptionalNextAuthSession';
 import { withKangurClientErrorSync } from '@/features/kangur/observability/client';
 
 type KangurAccessibilityTranslations = (
@@ -77,12 +75,10 @@ const resolveAnnouncementLabel = (
 export function KangurRouteAccessibilityAnnouncer(): React.JSX.Element {
   const translations = useTranslations('KangurPublic');
   const { pageKey, requestedHref, requestedPath } = useKangurRouting();
-  const { data: session } = useOptionalNextAuthSession();
   const routeTransitionState = useOptionalKangurRouteTransitionState();
   const previousRequestedPathRef = useRef<string | undefined>(requestedPath);
   const previousRequestedHrefRef = useRef<string | undefined>(requestedHref);
   const [announcement, setAnnouncement] = useState('');
-  const effectivePageKey = resolveAccessibleKangurPageKey(pageKey, session, 'Game');
 
   useEffect(() => {
     if (!requestedPath && !requestedHref) {
@@ -100,7 +96,7 @@ export function KangurRouteAccessibilityAnnouncer(): React.JSX.Element {
       return;
     }
 
-    const label = resolveAnnouncementLabel(effectivePageKey, translations);
+    const label = resolveAnnouncementLabel(pageKey, translations);
     const isLocaleSwitch =
       routeTransitionState?.activeTransitionKind === 'locale-switch' ||
       (!pathChanged && hrefChanged);
@@ -123,7 +119,7 @@ export function KangurRouteAccessibilityAnnouncer(): React.JSX.Element {
       window.cancelAnimationFrame(frameId);
     };
   }, [
-    effectivePageKey,
+    pageKey,
     requestedHref,
     requestedPath,
     routeTransitionState?.activeTransitionKind,

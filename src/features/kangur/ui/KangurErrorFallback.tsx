@@ -8,10 +8,15 @@ import { logKangurClientError } from '@/features/kangur/observability/client';
 import { KangurStandardPageLayout } from '@/features/kangur/ui/components/KangurStandardPageLayout';
 
 type KangurErrorFallbackProps = {
-  error: unknown;
   homeHref: string;
-  reset: () => void;
   source?: string;
+  error?: unknown;
+  reset?: () => void;
+  boundary?: {
+    error: unknown;
+    reset: () => void;
+    source?: string;
+  };
 };
 
 const getKangurErrorDigest = (error: unknown): string | undefined => {
@@ -29,23 +34,27 @@ const getKangurErrorMessage = (error: unknown, fallbackMessage: string): string 
     : fallbackMessage;
 
 export function KangurErrorFallback({
-  error,
   homeHref,
+  error,
   reset,
+  boundary,
   source = 'kangur-error-boundary',
 }: KangurErrorFallbackProps): JSX.Element {
+  const resolvedError = boundary?.error ?? error;
+  const resolvedReset = boundary?.reset ?? reset;
+  const resolvedSource = boundary?.source ?? source;
   const translations = useTranslations('KangurPublic');
-  const digest = getKangurErrorDigest(error);
-  const errorMessage = getKangurErrorMessage(error, translations('errorDescription'));
+  const digest = getKangurErrorDigest(resolvedError);
+  const errorMessage = getKangurErrorMessage(resolvedError, translations('errorDescription'));
 
   useEffect(() => {
-    logKangurClientError(error, {
-      source,
+    logKangurClientError(resolvedError, {
+      source: resolvedSource,
       action: 'render',
       homeHref,
       ...(digest ? { digest } : {}),
     });
-  }, [digest, error, homeHref, source]);
+  }, [digest, homeHref, resolvedError, resolvedSource]);
 
   return (
     <KangurStandardPageLayout
@@ -79,7 +88,7 @@ export function KangurErrorFallback({
         <div className='mt-6 flex items-center justify-center kangur-panel-gap'>
           <button
             type='button'
-            onClick={reset}
+            onClick={resolvedReset}
             className='rounded-xl bg-indigo-600 px-4 py-2 font-semibold text-white transition hover:bg-indigo-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-300/70 focus-visible:ring-offset-2 ring-offset-white'
           >
             {translations('tryAgain')}

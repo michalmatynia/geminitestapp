@@ -630,6 +630,10 @@
       "contentSetSourceFilterAll": "All",
       "contentSetSourceFilterBuiltIn": "Built-in",
       "contentSetSourceFilterCustom": "Custom",
+      "contentSetUsageFilterLabel": "Filter content sets by usage",
+      "contentSetUsageFilterAll": "All",
+      "contentSetUsageFilterInUse": "In use",
+      "contentSetUsageFilterUnused": "Unused",
       "contentSetClearFiltersButton": "Clear content-set filters",
       "contentSetSelectionOutsideFilters": "The current selection stays available while filters narrow the list.",
       "contentSetListTitle": "Available content sets",
@@ -637,8 +641,15 @@
       "contentSetListEmpty": "No content sets match the current filters.",
       "contentSetSourceBuiltIn": "Built-in",
       "contentSetSourceCustom": "Custom",
+      "contentSetUsageBadgeInUse": "Used by {count}",
+      "contentSetUsageBadgeUnused": "Unused",
       "selectContentSetButton": "Select",
       "selectedContentSetButton": "Selected",
+      "showLinkedInstancesButton": "Show linked instances",
+      "showingLinkedInstancesButton": "Showing linked instances",
+      "contentSetLinkedInstancesLabel": "Linked instances",
+      "contentSetLinkedInstancesMore": "+{count} more",
+      "openLinkedInstanceButton": "Edit linked instance: {title}",
       "contentSourceLabel": "Content source",
       "engineSourceLabel": "Engine source",
       "contentSourceBadge": "Content source",
@@ -904,6 +915,14 @@
       "clock_quiz": {
         "label": "Практика з годинником",
         "description": "Тренуйте читання годин і хвилин."
+      },
+      "music_melody_repeat_quiz": {
+        "label": "Повторення мелодії",
+        "description": "Послухайте мелодію та відтворіть її нота за нотою."
+      },
+      "music_piano_roll_free_play_quiz": {
+        "label": "Вільний piano roll",
+        "description": "Досліджуйте клавіатуру й керування синтезатором у вільній грі."
       },
       "addition_quiz": {
         "label": "Вікторина з додавання",

@@ -55,6 +55,32 @@ export const KANGUR_LAUNCHABLE_GAME_RUNTIME_SPECS = Object.freeze({
       shellTestId: 'kangur-clock-quiz-top-section',
     },
   }),
+  music_melody_repeat_quiz: createLaunchableGameRuntimeSpec({
+    kind: 'launchable_game_screen',
+    screen: 'music_melody_repeat_quiz',
+    engineId: 'melody-repeat-engine',
+    rendererId: 'music_melody_repeat_game',
+    finishMode: 'return_to_game_home',
+    finishLabelProp: 'finishLabel',
+    stage: {
+      accent: 'sky',
+      icon: '🎵',
+      shellTestId: 'kangur-music-melody-repeat-top-section',
+    },
+  }),
+  music_piano_roll_free_play_quiz: createLaunchableGameRuntimeSpec({
+    kind: 'launchable_game_screen',
+    screen: 'music_piano_roll_free_play_quiz',
+    engineId: 'piano-roll-engine',
+    rendererId: 'music_piano_roll_free_play_game',
+    finishMode: 'return_to_game_home',
+    finishLabelProp: 'finishLabel',
+    stage: {
+      accent: 'sky',
+      icon: '🎹',
+      shellTestId: 'kangur-music-piano-roll-free-play-top-section',
+    },
+  }),
   addition_quiz: createLaunchableGameRuntimeSpec({
     kind: 'launchable_game_screen',
     screen: 'addition_quiz',

@@ -37,8 +37,11 @@ vi.mock('@/i18n/navigation', () => ({
   ),
 }));
 
-vi.mock('@/features/kangur/public', () => ({
+vi.mock('@/features/kangur/observability/client', () => ({
   logKangurClientError: logKangurClientErrorMock,
+}));
+
+vi.mock('@/features/kangur/ui/components/KangurStandardPageLayout', () => ({
   KangurStandardPageLayout: ({
     children,
     shellProps,

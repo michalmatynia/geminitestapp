@@ -183,6 +183,25 @@ const STEREO_PAN_DEAD_ZONE = 0.08;
 const MAX_STEREO_PAN = 0.72;
 const SYNTH_NOTE_HYSTERESIS_PX = 8;
 const TOUCH_SYNTH_NOTE_HYSTERESIS_PX = 14;
+export const KANGUR_MUSIC_PIANO_ROLL_MOTION_HOOKS = {
+  engineClassName: 'kangur-piano-roll-engine',
+  keyClassName: 'kangur-piano-roll-key',
+  synthControlButtonClassName: 'kangur-piano-roll-synth-control-button',
+} as const;
+
+export const KANGUR_MUSIC_PIANO_ROLL_MOTION_CSS_VARIABLES = {
+  keyActiveScale: '--kangur-piano-roll-key-active-scale',
+  keyHoverLift: '--kangur-piano-roll-key-hover-lift',
+  keyPressBrightness: '--kangur-piano-roll-key-press-brightness',
+  keyPressSaturation: '--kangur-piano-roll-key-press-saturation',
+  keyVisualLift: '--kangur-piano-roll-key-visual-lift',
+  keyVisualScale: '--kangur-piano-roll-key-visual-scale',
+} as const;
+
+const KANGUR_PIANO_ROLL_ENGINE_CLASSNAME = KANGUR_MUSIC_PIANO_ROLL_MOTION_HOOKS.engineClassName;
+const KANGUR_PIANO_ROLL_KEY_CLASSNAME = KANGUR_MUSIC_PIANO_ROLL_MOTION_HOOKS.keyClassName;
+const KANGUR_PIANO_ROLL_SYNTH_CONTROL_BUTTON_CLASSNAME =
+  KANGUR_MUSIC_PIANO_ROLL_MOTION_HOOKS.synthControlButtonClassName;
 
 const resolveVibratoDepth = (normalizedVerticalPosition: number): number => {
   const distanceFromCenter = Math.abs(normalizedVerticalPosition - 0.5) * 2;
@@ -1310,6 +1329,7 @@ export default function KangurMusicPianoRoll<NoteId extends string>({
   return (
     <div
       className={cn(
+        KANGUR_PIANO_ROLL_ENGINE_CLASSNAME,
         'relative w-full overflow-hidden rounded-[32px] border border-sky-100/90 bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.96),rgba(224,242,254,0.92)_55%,rgba(186,230,253,0.78)_100%)] shadow-[0_30px_80px_-44px_rgba(14,116,144,0.4)]',
         isCompactMobile ? 'p-3.5' : 'p-4 sm:p-5',
         className
@@ -1366,6 +1386,7 @@ export default function KangurMusicPianoRoll<NoteId extends string>({
               >
                 <KangurButton
                   aria-pressed={resolvedKeyboardMode === 'piano'}
+                  className={KANGUR_PIANO_ROLL_SYNTH_CONTROL_BUTTON_CLASSNAME}
                   data-testid={keyboardModePianoTestId}
                   onClick={() => handleKeyboardModeChange('piano')}
                   size='sm'
@@ -1384,6 +1405,7 @@ export default function KangurMusicPianoRoll<NoteId extends string>({
                 </KangurButton>
                 <KangurButton
                   aria-pressed={resolvedKeyboardMode === 'synth'}
+                  className={KANGUR_PIANO_ROLL_SYNTH_CONTROL_BUTTON_CLASSNAME}
                   data-testid={`${stepTestIdPrefix}-keyboard-mode-synth`}
                   onClick={() => handleKeyboardModeChange('synth')}
                   size='sm'
@@ -1417,7 +1439,10 @@ export default function KangurMusicPianoRoll<NoteId extends string>({
                     key={waveform}
                     aria-label={`Brzmienie: ${KANGUR_MUSIC_SYNTH_WAVEFORM_LABELS[waveform]}`}
                     aria-pressed={resolvedSynthWaveform === waveform}
-                    className='min-w-[3rem] px-3'
+                    className={cn(
+                      KANGUR_PIANO_ROLL_SYNTH_CONTROL_BUTTON_CLASSNAME,
+                      'min-w-[3rem] px-3'
+                    )}
                     data-testid={`${stepTestIdPrefix}-synth-waveform-${waveform}`}
                     onClick={() => handleSynthWaveformChange(waveform)}
                     size='sm'
@@ -1447,6 +1472,7 @@ export default function KangurMusicPianoRoll<NoteId extends string>({
                     key={glideMode}
                     aria-label={`Ruch: ${KANGUR_MUSIC_SYNTH_GLIDE_MODE_LABELS[glideMode]}`}
                     aria-pressed={resolvedSynthGlideMode === glideMode}
+                    className={KANGUR_PIANO_ROLL_SYNTH_CONTROL_BUTTON_CLASSNAME}
                     data-testid={`${stepTestIdPrefix}-synth-glide-mode-${glideMode}`}
                     onClick={() => handleSynthGlideModeChange(glideMode)}
                     size='sm'
@@ -1480,7 +1506,7 @@ export default function KangurMusicPianoRoll<NoteId extends string>({
                   aria-label={adsrTranslations('buttonAriaLabel', {
                     summary: synthEnvelopeSummary,
                   })}
-                  className='px-4'
+                  className={cn(KANGUR_PIANO_ROLL_SYNTH_CONTROL_BUTTON_CLASSNAME, 'px-4')}
                   data-testid={`${stepTestIdPrefix}-synth-envelope-button`}
                   onClick={() => setSynthEnvelopeDialogOpen(true)}
                   size='sm'
@@ -1502,7 +1528,11 @@ export default function KangurMusicPianoRoll<NoteId extends string>({
                 <KangurButton
                   aria-expanded={isSynthOscPanelOpen}
                   aria-label='Ustawienia oscylatorow synthu'
-                  className={cn('px-4', isSynthOscPanelOpen && 'ring-2 ring-sky-400')}
+                  className={cn(
+                    KANGUR_PIANO_ROLL_SYNTH_CONTROL_BUTTON_CLASSNAME,
+                    'px-4',
+                    isSynthOscPanelOpen && 'ring-2 ring-sky-400'
+                  )}
                   data-testid={`${stepTestIdPrefix}-synth-osc-settings-button`}
                   onClick={() => setSynthOscPanelOpen((prev) => !prev)}
                   size='sm'
@@ -1530,6 +1560,7 @@ export default function KangurMusicPianoRoll<NoteId extends string>({
             >
               <KangurButton
                 aria-pressed={activeOscTab === 'osc1'}
+                className={KANGUR_PIANO_ROLL_SYNTH_CONTROL_BUTTON_CLASSNAME}
                 data-testid={`${stepTestIdPrefix}-synth-osc-tab-osc1`}
                 onClick={() => setActiveOscTab('osc1')}
                 size='sm'
@@ -1540,6 +1571,7 @@ export default function KangurMusicPianoRoll<NoteId extends string>({
               </KangurButton>
               <KangurButton
                 aria-pressed={activeOscTab === 'osc2'}
+                className={KANGUR_PIANO_ROLL_SYNTH_CONTROL_BUTTON_CLASSNAME}
                 data-testid={`${stepTestIdPrefix}-synth-osc-tab-osc2`}
                 onClick={() => setActiveOscTab('osc2')}
                 size='sm'
@@ -1563,7 +1595,10 @@ export default function KangurMusicPianoRoll<NoteId extends string>({
                       key={waveform}
                       aria-label={`OSC 1 brzmienie: ${KANGUR_MUSIC_SYNTH_WAVEFORM_LABELS[waveform]}`}
                       aria-pressed={resolvedOsc1Config.waveform === waveform}
-                      className='min-w-[3rem] px-3'
+                      className={cn(
+                        KANGUR_PIANO_ROLL_SYNTH_CONTROL_BUTTON_CLASSNAME,
+                        'min-w-[3rem] px-3'
+                      )}
                       data-testid={`${stepTestIdPrefix}-synth-osc1-waveform-${waveform}`}
                       onClick={() =>
                         handleSynthOscSettingsChange(
@@ -1640,7 +1675,10 @@ export default function KangurMusicPianoRoll<NoteId extends string>({
                           key={waveform}
                           aria-label={`OSC 2 brzmienie: ${KANGUR_MUSIC_SYNTH_WAVEFORM_LABELS[waveform]}`}
                           aria-pressed={resolvedOsc2Config.waveform === waveform}
-                          className='min-w-[3rem] px-3'
+                          className={cn(
+                            KANGUR_PIANO_ROLL_SYNTH_CONTROL_BUTTON_CLASSNAME,
+                            'min-w-[3rem] px-3'
+                          )}
                           data-testid={`${stepTestIdPrefix}-synth-osc2-waveform-${waveform}`}
                           onClick={() =>
                             handleSynthOscSettingsChange(resolvedOsc1Config, {
@@ -1781,6 +1819,7 @@ export default function KangurMusicPianoRoll<NoteId extends string>({
 
             <div className='mt-4 flex flex-wrap justify-between gap-2'>
               <KangurButton
+                className={KANGUR_PIANO_ROLL_SYNTH_CONTROL_BUTTON_CLASSNAME}
                 data-testid={`${stepTestIdPrefix}-synth-envelope-reset`}
                 onClick={handleSynthEnvelopeReset}
                 size='sm'
@@ -1790,6 +1829,7 @@ export default function KangurMusicPianoRoll<NoteId extends string>({
                 {adsrTranslations('reset')}
               </KangurButton>
               <KangurButton
+                className={KANGUR_PIANO_ROLL_SYNTH_CONTROL_BUTTON_CLASSNAME}
                 data-testid={`${stepTestIdPrefix}-synth-envelope-close`}
                 onClick={() => setSynthEnvelopeDialogOpen(false)}
                 size='sm'
@@ -2330,12 +2370,18 @@ export default function KangurMusicPianoRoll<NoteId extends string>({
               const velocityStyle = (
                 visualEnergy !== null
                   ? {
-                      filter: `brightness(${(1 + visualEnergy * 0.16).toFixed(2)}) saturate(${(
+                      [KANGUR_MUSIC_PIANO_ROLL_MOTION_CSS_VARIABLES.keyPressBrightness]: (
+                        1 + visualEnergy * 0.16
+                      ).toFixed(2),
+                      [KANGUR_MUSIC_PIANO_ROLL_MOTION_CSS_VARIABLES.keyPressSaturation]: (
                         1 + (visualBrightness ?? visualEnergy) * 0.56
-                      ).toFixed(2)})`,
-                      transform: `translateY(-${(visualEnergy * (isActiveSynthKey ? 4.8 : 3.6)).toFixed(
-                        1
-                      )}px) scale(${(1 + visualEnergy * 0.06).toFixed(3)})`,
+                      ).toFixed(2),
+                      [KANGUR_MUSIC_PIANO_ROLL_MOTION_CSS_VARIABLES.keyVisualLift]: `-${(
+                        visualEnergy * (isActiveSynthKey ? 4.8 : 3.6)
+                      ).toFixed(1)}px`,
+                      [KANGUR_MUSIC_PIANO_ROLL_MOTION_CSS_VARIABLES.keyVisualScale]: (
+                        1 + visualEnergy * 0.06
+                      ).toFixed(3),
                     }
                   : undefined
               ) as CSSProperties | undefined;
@@ -2359,6 +2405,7 @@ export default function KangurMusicPianoRoll<NoteId extends string>({
                     keyButtonRefs.current.delete(note.id);
                   }}
                   className={cn(
+                    KANGUR_PIANO_ROLL_KEY_CLASSNAME,
                     'group relative flex flex-col justify-between overflow-hidden border border-white/75 bg-gradient-to-br text-left shadow-[0_24px_64px_-42px_rgba(15,23,42,0.46)] transition duration-75',
                     note.buttonClassName,
                     isCompactMobile
@@ -2369,7 +2416,7 @@ export default function KangurMusicPianoRoll<NoteId extends string>({
                             (resolvedKeyboardMode === 'synth' ? 'touch-none' : 'touch-manipulation')
                         )
                       : cn(
-                          'w-full min-h-[88px] rounded-[28px] px-3 py-3 hover:-translate-y-0.5',
+                          'w-full min-h-[88px] rounded-[28px] px-3 py-3',
                           isCoarsePointer &&
                             cn(
                               'select-none',
@@ -2383,7 +2430,6 @@ export default function KangurMusicPianoRoll<NoteId extends string>({
                     (isPressed || isExpectedKey || isActiveKey) &&
                       cn('ring-4 shadow-[0_26px_60px_-30px_rgba(15,23,42,0.46)]', note.glowClassName),
                     isExpectedKey && 'outline outline-2 outline-offset-2 outline-white/70',
-                    isActiveKey && 'scale-[1.01]',
                     isActiveSynthKey &&
                       'ring-fuchsia-300/90 shadow-[0_30px_70px_-34px_rgba(192,38,211,0.45)]'
                   )}

@@ -12,7 +12,7 @@ import {
 } from '@/app/(frontend)/[...slug]/slug-page-data';
 import { getFrontPageSetting, shouldApplyFrontPageAppSelection } from '@/app/(frontend)/home-helpers';
 import { getKangurStorefrontInitialState } from '@/features/kangur/server';
-import { FrontendPublicOwnerKangurShell } from '@/features/kangur/public';
+import { FrontendPublicOwnerKangurShell } from '@/features/kangur/ui/FrontendPublicOwnerKangurShell';
 import { getFrontPagePublicOwner } from '@/shared/lib/front-page-app';
 import { normalizeSiteLocale } from '@/shared/lib/i18n/site-locale';
 

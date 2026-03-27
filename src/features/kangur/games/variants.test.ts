@@ -210,6 +210,32 @@ describe('kangur game variants', () => {
     });
   });
 
+  it('attaches launchable runtimes to the seeded music game-screen variants', () => {
+    const entries = createKangurGameVariantCatalogEntries(createKangurGameCatalogEntries());
+    const melodyEntry = entries.find(
+      (candidate) => candidate.variant.id === 'music_melody_repeat.game-screen'
+    );
+    const freePlayEntry = entries.find(
+      (candidate) => candidate.variant.id === 'music_piano_roll_free_play.game-screen'
+    );
+
+    expect(melodyEntry?.isGameScreenVariant).toBe(true);
+    expect(melodyEntry?.launchableScreen).toBe('music_melody_repeat_quiz');
+    expect(melodyEntry?.launchableRuntime).toMatchObject({
+      screen: 'music_melody_repeat_quiz',
+      rendererId: 'music_melody_repeat_game',
+      engineId: 'melody-repeat-engine',
+    });
+
+    expect(freePlayEntry?.isGameScreenVariant).toBe(true);
+    expect(freePlayEntry?.launchableScreen).toBe('music_piano_roll_free_play_quiz');
+    expect(freePlayEntry?.launchableRuntime).toMatchObject({
+      screen: 'music_piano_roll_free_play_quiz',
+      rendererId: 'music_piano_roll_free_play_game',
+      engineId: 'piano-roll-engine',
+    });
+  });
+
   it('attaches shared lesson-stage runtimes to the seeded arithmetic stage variants', () => {
     const entries = createKangurGameVariantCatalogEntries(createKangurGameCatalogEntries());
     const addingBallEntry = entries.find(

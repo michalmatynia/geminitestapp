@@ -49,6 +49,7 @@ describe('KangurMusicPianoRoll', () => {
   const scrollIntoViewMock = vi.fn();
   const setPointerCaptureMock = vi.fn();
   const releasePointerCaptureMock = vi.fn();
+  let pianoRollModule: typeof import('@/features/kangur/ui/components/music/KangurMusicPianoRoll');
   let KangurMusicPianoRoll: typeof import('@/features/kangur/ui/components/music/KangurMusicPianoRoll').default;
 
   const mockKeyRect = (element: HTMLElement, top = 0, height = 160, left = 0, width = 96): void => {
@@ -76,9 +77,8 @@ describe('KangurMusicPianoRoll', () => {
     releasePointerCaptureMock.mockReset();
     useKangurCoarsePointerMock.mockReturnValue(false);
     useKangurMobileBreakpointMock.mockReturnValue(false);
-    KangurMusicPianoRoll = (
-      await import('@/features/kangur/ui/components/music/KangurMusicPianoRoll')
-    ).default;
+    pianoRollModule = await import('@/features/kangur/ui/components/music/KangurMusicPianoRoll');
+    KangurMusicPianoRoll = pianoRollModule.default;
     Object.defineProperty(globalThis, 'requestAnimationFrame', {
       configurable: true,
       value: (callback: FrameRequestCallback) => {
@@ -141,6 +141,9 @@ describe('KangurMusicPianoRoll', () => {
 
     expect(screen.getByTestId('music-roll-shell')).toBeInTheDocument();
     expect(screen.getByTestId('music-roll-shell')).toHaveAttribute('data-layout', 'full');
+    expect(screen.getByTestId('music-roll-shell')).toHaveClass(
+      pianoRollModule.KANGUR_MUSIC_PIANO_ROLL_MOTION_HOOKS.engineClassName
+    );
     expect(screen.getByTestId('music-roll-step-lane-labels')).toBeInTheDocument();
     expect(screen.getByTestId('music-roll-step-keyboard-rail')).not.toHaveClass('overflow-x-auto');
     expect(screen.getByTestId('music-roll-step-0')).toHaveAttribute('data-state', 'played');
@@ -172,6 +175,20 @@ describe('KangurMusicPianoRoll', () => {
     expect(screen.getByTestId('music-roll-key-high_do')).toHaveAttribute('aria-pressed', 'true');
     expect(screen.getByTestId('music-roll-key-do')).toHaveAttribute('aria-pressed', 'true');
     expect(screen.getByTestId('music-roll-key-do')).toHaveAttribute('data-key-state', 'pressed');
+    expect(screen.getByTestId('music-roll-key-do')).toHaveClass(
+      pianoRollModule.KANGUR_MUSIC_PIANO_ROLL_MOTION_HOOKS.keyClassName
+    );
+    expect(
+      screen.getByTestId('music-roll-key-do').style.getPropertyValue(
+        pianoRollModule.KANGUR_MUSIC_PIANO_ROLL_MOTION_CSS_VARIABLES.keyVisualLift
+      )
+    ).toBe('-2.6px');
+    expect(
+      screen.getByTestId('music-roll-key-do').style.getPropertyValue(
+        pianoRollModule.KANGUR_MUSIC_PIANO_ROLL_MOTION_CSS_VARIABLES.keyVisualScale
+      )
+    ).toBe('1.044');
+    expect(screen.getByTestId('music-roll-key-do').style.transform).toBe('');
     expect(screen.getByTestId('music-roll-key-re')).toHaveAttribute('data-key-state', 'active');
     expect(screen.getByTestId('music-roll-key-high_do')).toHaveAttribute('data-key-state', 'expected');
     expect(screen.getByTestId('music-roll-key-do')).toHaveClass('cursor-pointer');
@@ -233,12 +250,19 @@ describe('KangurMusicPianoRoll', () => {
     expect(screen.getByTestId('music-roll-synth-step-keyboard-mode-piano')).toHaveClass(
       'cursor-pointer'
     );
+    expect(screen.getByTestId('music-roll-synth-step-keyboard-mode-piano')).toHaveClass(
+      pianoRollModule.KANGUR_MUSIC_PIANO_ROLL_MOTION_HOOKS.synthControlButtonClassName
+    );
+    expect(screen.getByTestId('music-roll-synth-step-keyboard-mode-synth')).toHaveClass(
+      pianoRollModule.KANGUR_MUSIC_PIANO_ROLL_MOTION_HOOKS.synthControlButtonClassName
+    );
     expect(screen.getByTestId('music-roll-synth-step-synth-waveform-sine')).toHaveAttribute(
       'aria-label',
       'Brzmienie: Sine'
     );
     expect(screen.getByTestId('music-roll-synth-step-synth-waveform-sine')).toHaveClass(
-      'cursor-pointer'
+      'cursor-pointer',
+      pianoRollModule.KANGUR_MUSIC_PIANO_ROLL_MOTION_HOOKS.synthControlButtonClassName
     );
     expect(screen.getByTestId('music-roll-synth-step-synth-waveform-sine')).toHaveTextContent('');
     expect(
@@ -253,6 +277,9 @@ describe('KangurMusicPianoRoll', () => {
     );
     expect(screen.getByTestId('music-roll-synth-step-transport-axis-map')).toHaveTextContent(
       'X: Pitch · Y: Vibrato'
+    );
+    expect(screen.getByTestId('music-roll-synth-step-synth-glide-mode-continuous')).toHaveClass(
+      pianoRollModule.KANGUR_MUSIC_PIANO_ROLL_MOTION_HOOKS.synthControlButtonClassName
     );
     expect(screen.getByTestId('music-roll-synth-step-synth-axis-guide-x')).toHaveTextContent(
       'X = Pitch'
@@ -621,6 +648,9 @@ describe('KangurMusicPianoRoll', () => {
     );
 
     fireEvent.click(screen.getByTestId('music-roll-envelope-step-keyboard-mode-synth'));
+    expect(screen.getByTestId('music-roll-envelope-step-synth-envelope-button')).toHaveClass(
+      pianoRollModule.KANGUR_MUSIC_PIANO_ROLL_MOTION_HOOKS.synthControlButtonClassName
+    );
     fireEvent.click(screen.getByTestId('music-roll-envelope-step-synth-envelope-button'));
 
     const modal = await screen.findByTestId('music-roll-envelope-step-synth-envelope-modal');
@@ -686,6 +716,9 @@ describe('KangurMusicPianoRoll', () => {
       'aria-label',
       'Brzmienie: Sine'
     );
+    expect(screen.getByTestId('music-roll-kid-step-synth-waveform-sine')).toHaveClass(
+      pianoRollModule.KANGUR_MUSIC_PIANO_ROLL_MOTION_HOOKS.synthControlButtonClassName
+    );
     expect(screen.getByTestId('music-roll-kid-step-synth-glide-mode-icon-semitone')).toHaveTextContent(
       '↕'
     );
@@ -701,6 +734,43 @@ describe('KangurMusicPianoRoll', () => {
     );
     expect(screen.getByTestId('music-roll-kid-step-transport-glide-mode-icon')).toHaveTextContent(
       '↕'
+    );
+  });
+
+  it('uses the no-resize synth control styling inside the oscillator settings panel', () => {
+    render(
+      <KangurMusicPianoRoll
+        keyTestIdPrefix='music-roll-osc-key'
+        keys={DIATONIC_PIANO_KEYS}
+        melody={['do', 're']}
+        showKeyboardModeSwitch
+        showSynthOscSettingsPanel
+        stepTestIdPrefix='music-roll-osc-step'
+      />
+    );
+
+    fireEvent.click(screen.getByTestId('music-roll-osc-step-keyboard-mode-synth'));
+
+    expect(screen.getByTestId('music-roll-osc-step-synth-osc-settings-button')).toHaveClass(
+      pianoRollModule.KANGUR_MUSIC_PIANO_ROLL_MOTION_HOOKS.synthControlButtonClassName
+    );
+
+    fireEvent.click(screen.getByTestId('music-roll-osc-step-synth-osc-settings-button'));
+
+    expect(screen.getByTestId('music-roll-osc-step-synth-osc-tab-osc1')).toHaveClass(
+      pianoRollModule.KANGUR_MUSIC_PIANO_ROLL_MOTION_HOOKS.synthControlButtonClassName
+    );
+    expect(screen.getByTestId('music-roll-osc-step-synth-osc-tab-osc2')).toHaveClass(
+      pianoRollModule.KANGUR_MUSIC_PIANO_ROLL_MOTION_HOOKS.synthControlButtonClassName
+    );
+    expect(screen.getByTestId('music-roll-osc-step-synth-osc1-waveform-sine')).toHaveClass(
+      pianoRollModule.KANGUR_MUSIC_PIANO_ROLL_MOTION_HOOKS.synthControlButtonClassName
+    );
+
+    fireEvent.click(screen.getByTestId('music-roll-osc-step-synth-osc-tab-osc2'));
+
+    expect(screen.getByTestId('music-roll-osc-step-synth-osc2-waveform-sine')).toHaveClass(
+      pianoRollModule.KANGUR_MUSIC_PIANO_ROLL_MOTION_HOOKS.synthControlButtonClassName
     );
   });
 

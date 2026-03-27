@@ -1,9 +1,18 @@
 'use client';
 
+import { useMemo } from 'react';
+
 import { getKangurLessonStageGameRuntimeSpec } from '@/features/kangur/games/lesson-stage-runtime-specs';
+import type { LessonProps } from '@/features/kangur/lessons/lesson-ui-registry';
+import { useOptionalKangurLessonTemplate } from '@/features/kangur/ui/context/KangurLessonsRuntimeContext';
 import { KangurUnifiedLesson } from '../lessons/lesson-components';
 
-import { HUB_SECTIONS, SLIDES } from './MusicDiatonicScaleLesson.data';
+import { CONTENT, HUB_SECTIONS, SLIDES } from './MusicDiatonicScaleLesson.data';
+import {
+  buildMusicDiatonicScaleLessonSections,
+  buildMusicDiatonicScaleLessonSlides,
+  resolveMusicDiatonicScaleLessonContent,
+} from './music-diatonic-scale-lesson-content';
 
 export { HUB_SECTIONS, SLIDES };
 
@@ -14,15 +23,31 @@ const MUSIC_PIANO_ROLL_FREE_PLAY_RUNTIME = getKangurLessonStageGameRuntimeSpec(
   'music_piano_roll_free_play_lesson_stage'
 );
 
-export default function MusicDiatonicScaleLesson(): JSX.Element {
+export default function MusicDiatonicScaleLesson({ lessonTemplate }: LessonProps): JSX.Element {
+  const runtimeTemplate = useOptionalKangurLessonTemplate('music_diatonic_scale');
+  const resolvedTemplate = lessonTemplate ?? runtimeTemplate;
+  const resolvedTitle = resolvedTemplate?.title?.trim() || 'Skala diatoniczna';
+  const resolvedContent = useMemo(
+    () => resolveMusicDiatonicScaleLessonContent(resolvedTemplate, CONTENT),
+    [resolvedTemplate],
+  );
+  const resolvedSections = useMemo(
+    () => buildMusicDiatonicScaleLessonSections(resolvedContent),
+    [resolvedContent],
+  );
+  const resolvedSlides = useMemo(
+    () => buildMusicDiatonicScaleLessonSlides(resolvedContent),
+    [resolvedContent],
+  );
+
   return (
     <KangurUnifiedLesson
       progressMode='panel'
       lessonId='music_diatonic_scale'
       lessonEmoji='🎵'
-      lessonTitle='Skala diatoniczna'
-      sections={HUB_SECTIONS}
-      slides={SLIDES}
+      lessonTitle={resolvedTitle}
+      sections={resolvedSections}
+      slides={resolvedSlides}
       gradientClass='kangur-gradient-accent-sky'
       progressDotClassName='bg-sky-300'
       dotActiveClass='bg-sky-400'
@@ -40,7 +65,8 @@ export default function MusicDiatonicScaleLesson(): JSX.Element {
             maxWidthClassName: 'max-w-none',
             shellTestId: 'music-diatonic-scale-game-shell',
             shellVariant: 'plain',
-            title: 'Powtorz melodie',
+            title: resolvedContent.gameRepeatSection.gameStageTitle,
+            description: resolvedContent.gameRepeatSection.gameStageDescription,
           },
           runtime: MUSIC_MELODY_REPEAT_RUNTIME,
         },
@@ -52,7 +78,8 @@ export default function MusicDiatonicScaleLesson(): JSX.Element {
             maxWidthClassName: 'max-w-none',
             shellTestId: 'music-diatonic-scale-freeplay-shell',
             shellVariant: 'plain',
-            title: 'Swobodna gra',
+            title: resolvedContent.gameFreeplaySection.gameStageTitle,
+            description: resolvedContent.gameFreeplaySection.gameStageDescription,
           },
           runtime: MUSIC_PIANO_ROLL_FREE_PLAY_RUNTIME,
         },

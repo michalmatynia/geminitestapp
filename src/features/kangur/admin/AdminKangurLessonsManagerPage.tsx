@@ -90,13 +90,19 @@ import {
   applyLessonTemplateToFormData,
   countLessonsRequiringLegacyImport,
   createInitialLessonFormData,
+  resolveLessonComponentContentJson,
   readPersistedTreeMode,
   sanitizeSvgMarkup,
+  supportsLessonComponentContentAuthoring,
   toLocalizedLessonFormData,
   upsertLesson,
 } from './utils';
 
 import type { LessonFormData, LessonTreeMode } from './types';
+import {
+  parseKangurLessonTemplateComponentContentJson,
+} from '../lessons/lesson-template-component-content';
+import type { KangurLessonTemplateComponentContent } from '@/shared/contracts/kangur-lesson-templates';
 
 function AdminKangurLessonsManagerRegistrySource({
   registrySource,
@@ -161,6 +167,7 @@ export function AdminKangurLessonsManagerPage({
   const [editingContentLesson, setEditingContentLesson] = useState<KangurLesson | null>(null);
   const [lessonToDelete, setLessonToDelete] = useState<KangurLesson | null>(null);
   const [formData, setFormData] = useState<LessonFormData>(() => createInitialLessonFormData());
+  const [componentContentJson, setComponentContentJson] = useState('');
   const [contentDraft, setContentDraft] = useState(createDefaultKangurLessonDocument);
   const [treeMode, setTreeMode] = useState<LessonTreeMode>(() => readPersistedTreeMode());
   const [svgModalLesson, setSvgModalLesson] = useState<KangurLesson | null>(null);
@@ -171,6 +178,7 @@ export function AdminKangurLessonsManagerPage({
   const [ageGroupFilter, setAgeGroupFilter] = useState<'all' | KangurLessonAgeGroup>('all');
   const isCatalogMode = treeMode === 'catalog';
   const isSectionsMode = treeMode === 'sections';
+  const showComponentContentEditor = supportsLessonComponentContentAuthoring(formData.componentId);
   const activeTreeInstance = isCatalogMode ? CATALOG_TREE_INSTANCE : ORDERED_TREE_INSTANCE;
   const treeSearchQuery = isCatalogMode ? catalogTreeSearchQuery : orderedTreeSearchQuery;
   const isSaving =
@@ -244,7 +252,8 @@ export function AdminKangurLessonsManagerPage({
         | 'emoji'
         | 'color'
         | 'activeBg'
-      >
+      >,
+      componentContent?: KangurLessonTemplateComponentContent
     ): Promise<void> => {
       const existingTemplate = lessonTemplateMap.get(source.componentId);
       const nextTemplate = {
@@ -258,6 +267,10 @@ export function AdminKangurLessonsManagerPage({
         color: source.color,
         activeBg: source.activeBg,
         sortOrder: existingTemplate?.sortOrder ?? 0,
+        componentContent:
+          componentContent === undefined
+            ? existingTemplate?.componentContent
+            : componentContent,
       };
       const nextTemplates = [...(templatesQuery.data ?? [])]
         .filter((template) => template.componentId !== source.componentId)
@@ -404,18 +417,24 @@ export function AdminKangurLessonsManagerPage({
   const openCreateModal = (): void => {
     setEditingLesson(null);
     const initialFormData = createInitialLessonFormData();
+    const initialTemplate = lessonTemplateMap.get(initialFormData.componentId) ?? null;
     setFormData(
       applyLessonTemplateToFormData(
         initialFormData,
-        lessonTemplateMap.get(initialFormData.componentId) ?? null
+        initialTemplate
       )
+    );
+    setComponentContentJson(
+      resolveLessonComponentContentJson(initialFormData.componentId, initialTemplate)
     );
     setShowModal(true);
   };
 
   const openEditModal = (lesson: KangurLesson): void => {
     setEditingLesson(lesson);
-    setFormData(toLocalizedLessonFormData(lesson, lessonTemplateMap.get(lesson.componentId)));
+    const localizedTemplate = lessonTemplateMap.get(lesson.componentId) ?? null;
+    setFormData(toLocalizedLessonFormData(lesson, localizedTemplate));
+    setComponentContentJson(resolveLessonComponentContentJson(lesson.componentId, localizedTemplate));
     setShowModal(true);
   };
 
@@ -499,6 +518,7 @@ export function AdminKangurLessonsManagerPage({
 
   const applyTemplateForComponent = useCallback((componentId: KangurLessonComponentId): void => {
     const template = lessonTemplateMap.get(componentId);
+    setComponentContentJson(resolveLessonComponentContentJson(componentId, template));
     setFormData((current) =>
       applyLessonTemplateToFormData(
         {
@@ -512,6 +532,18 @@ export function AdminKangurLessonsManagerPage({
 
   const handleSaveLesson = async (): Promise<void> => {
     const lessonId = editingLesson?.id ?? createKangurLessonId();
+    let nextComponentContent: KangurLessonTemplateComponentContent | undefined;
+
+    try {
+      nextComponentContent = parseKangurLessonTemplateComponentContentJson(
+        formData.componentId,
+        componentContentJson,
+      );
+    } catch {
+      toast('Component content JSON is invalid for this lesson type.', { variant: 'error' });
+      return;
+    }
+
     const nextLesson = buildPersistedLessonRecord(lessonId, {
       ...formData,
     }, editingLesson?.sortOrder ?? lessons.length * KANGUR_LESSON_SORT_ORDER_GAP);
@@ -539,7 +571,7 @@ export function AdminKangurLessonsManagerPage({
           emoji: formData.emoji,
           color: formData.color,
           activeBg: formData.activeBg,
-        });
+        }, nextComponentContent);
         return true;
       },
       {
@@ -970,6 +1002,9 @@ export function AdminKangurLessonsManagerPage({
         <LessonMetadataForm
           formData={formData}
           setFormData={setFormData}
+          componentContentJson={componentContentJson}
+          setComponentContentJson={setComponentContentJson}
+          showComponentContentEditor={showComponentContentEditor}
           onComponentChange={applyTemplateForComponent as (id: string) => void}
         />
       </FormModal>

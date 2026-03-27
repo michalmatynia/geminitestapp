@@ -70,6 +70,8 @@ export const KANGUR_LAUNCHABLE_GAME_SCREENS = [
   'calendar_quiz',
   'geometry_quiz',
   'clock_quiz',
+  'music_melody_repeat_quiz',
+  'music_piano_roll_free_play_quiz',
   'addition_quiz',
   'subtraction_quiz',
   'multiplication_quiz',
@@ -113,6 +115,8 @@ export const KANGUR_LAUNCHABLE_GAME_RUNTIME_RENDERER_IDS = [
   'logical_classification_game',
   'logical_patterns_workshop_game',
   'multiplication_game',
+  'music_melody_repeat_game',
+  'music_piano_roll_free_play_game',
   'subtracting_game',
 ] as const;
 

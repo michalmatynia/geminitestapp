@@ -3220,6 +3220,73 @@ body.kangur-client-shell-active [data-kangur-server-shell] {
     transform: translateY(0) scale(0.995);
   }
 
+  .kangur-piano-roll-engine {
+    --kangur-piano-roll-key-hover-lift: -2px;
+    --kangur-piano-roll-key-active-scale: 1.01;
+    --kangur-piano-roll-control-hover-filter: saturate(1.03) brightness(1.01);
+    --kangur-piano-roll-control-active-filter: saturate(1.06) brightness(0.985);
+    --kangur-piano-roll-control-active-shadow:
+      0 10px 18px -18px rgba(14, 116, 144, 0.32),
+      inset 0 1px 0 rgba(255, 255, 255, 0.58),
+      inset 0 -10px 18px -16px rgba(14, 116, 144, 0.55);
+  }
+
+  .kangur-piano-roll-engine .kangur-piano-roll-key {
+    --kangur-piano-roll-key-interaction-lift: 0px;
+    --kangur-piano-roll-key-interaction-scale: 1;
+    --kangur-piano-roll-key-visual-lift: 0px;
+    --kangur-piano-roll-key-visual-scale: 1;
+    --kangur-piano-roll-key-press-brightness: 1;
+    --kangur-piano-roll-key-press-saturation: 1;
+    filter: brightness(var(--kangur-piano-roll-key-press-brightness))
+      saturate(var(--kangur-piano-roll-key-press-saturation));
+    transform: translateY(
+        calc(
+          var(--kangur-piano-roll-key-visual-lift) +
+            var(--kangur-piano-roll-key-interaction-lift)
+        )
+      )
+      scale(var(--kangur-piano-roll-key-visual-scale))
+      scale(var(--kangur-piano-roll-key-interaction-scale));
+    transition:
+      transform 180ms cubic-bezier(0.22, 1, 0.36, 1),
+      box-shadow 180ms ease,
+      filter 180ms ease,
+      opacity 180ms ease;
+    will-change: transform;
+  }
+
+  .kangur-piano-roll-engine .kangur-piano-roll-key:hover {
+    --kangur-piano-roll-key-interaction-lift: var(--kangur-piano-roll-key-hover-lift);
+  }
+
+  .kangur-piano-roll-engine .kangur-piano-roll-key[data-key-state='active'] {
+    --kangur-piano-roll-key-interaction-scale: var(--kangur-piano-roll-key-active-scale);
+  }
+
+  .kangur-piano-roll-engine .kangur-piano-roll-synth-control-button,
+  .kangur-piano-roll-engine .kangur-piano-roll-synth-control-button:hover,
+  .kangur-piano-roll-engine .kangur-piano-roll-synth-control-button:focus-visible,
+  .kangur-piano-roll-engine .kangur-piano-roll-synth-control-button:active {
+    transform: none !important;
+  }
+
+  .kangur-piano-roll-engine .kangur-piano-roll-synth-control-button {
+    transition-property: box-shadow, filter, background-color, color, border-color, opacity;
+    transition-duration: 180ms;
+    transition-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  .kangur-piano-roll-engine .kangur-piano-roll-synth-control-button:hover,
+  .kangur-piano-roll-engine .kangur-piano-roll-synth-control-button:focus-visible {
+    filter: var(--kangur-piano-roll-control-hover-filter);
+  }
+
+  .kangur-piano-roll-engine .kangur-piano-roll-synth-control-button:active {
+    box-shadow: var(--kangur-piano-roll-control-active-shadow) !important;
+    filter: var(--kangur-piano-roll-control-active-filter);
+  }
+
   .warning-cta {
     --kangur-gradient-angle: 180deg;
     --kangur-gradient-start: var(--kangur-cta-warning-start, rgba(255, 246, 226, 0.98));

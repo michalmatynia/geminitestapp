@@ -20,7 +20,9 @@ vi.mock('@/features/kangur/ui/hooks/useKangurMobileBreakpoint', () => ({
 import enMessages from '@/i18n/messages/en.json';
 import deMessages from '@/i18n/messages/de.json';
 import { DIATONIC_PIANO_KEYS } from '@/features/kangur/ui/components/music/music-theory';
-import KangurMusicPianoRoll from '@/features/kangur/ui/components/music/KangurMusicPianoRoll';
+import KangurMusicPianoRoll, {
+  KANGUR_MUSIC_PIANO_ROLL_MOTION_HOOKS,
+} from '@/features/kangur/ui/components/music/KangurMusicPianoRoll';
 
 const renderWithIntl = (locale: 'en' | 'de') =>
   render(
@@ -54,6 +56,15 @@ describe('KangurMusicPianoRoll i18n', () => {
     renderWithIntl('en');
     openSynthEnvelope();
 
+    expect(screen.getByTestId('music-roll-i18n-shell')).toHaveClass(
+      KANGUR_MUSIC_PIANO_ROLL_MOTION_HOOKS.engineClassName
+    );
+    expect(screen.getByTestId('music-roll-i18n-key-do')).toHaveClass(
+      KANGUR_MUSIC_PIANO_ROLL_MOTION_HOOKS.keyClassName
+    );
+    expect(screen.getByTestId('music-roll-i18n-step-synth-envelope-button')).toHaveClass(
+      KANGUR_MUSIC_PIANO_ROLL_MOTION_HOOKS.synthControlButtonClassName
+    );
     expect(screen.getByRole('heading', { name: 'Synth ADSR' })).toBeInTheDocument();
     expect(
       screen.getByText('Adjust the synth attack, decay, sustain level, and release.')
@@ -72,6 +83,9 @@ describe('KangurMusicPianoRoll i18n', () => {
     renderWithIntl('de');
     openSynthEnvelope();
 
+    expect(screen.getByTestId('music-roll-i18n-shell')).toHaveClass(
+      KANGUR_MUSIC_PIANO_ROLL_MOTION_HOOKS.engineClassName
+    );
     expect(screen.getByRole('heading', { name: 'Synth-ADSR' })).toBeInTheDocument();
     expect(
       screen.getByText('Stelle Attack, Decay, Sustain und Release des Synths ein.')

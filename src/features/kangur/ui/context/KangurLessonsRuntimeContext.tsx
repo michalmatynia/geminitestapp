@@ -31,6 +31,7 @@ import type { KangurLesson, KangurLessonComponentId } from '@/features/kangur/sh
 import { internalError } from '@/features/kangur/shared/errors/app-error';
 import { useKangurLessonTemplates } from '@/features/kangur/ui/hooks/useKangurLessonTemplates';
 import { useKangurLessonsCatalog } from '@/features/kangur/ui/hooks/useKangurLessonsCatalog';
+import type { KangurLessonTemplate } from '@/shared/contracts/kangur-lesson-templates';
 
 import {
   getLessonAssignmentTimestamp,
@@ -444,4 +445,18 @@ export const useOptionalKangurLessonsRuntime = (): KangurLessonsRuntimeContextVa
 
     return { ...state, ...actions };
   }, [actions, state]);
+};
+
+export const useOptionalKangurLessonTemplate = (
+  componentId: KangurLessonComponentId | null | undefined,
+): KangurLessonTemplate | null => {
+  const state = useContext(KangurLessonsRuntimeStateContext);
+
+  return useMemo(() => {
+    if (!componentId || !state) {
+      return null;
+    }
+
+    return state.lessonTemplateMap.get(componentId) ?? null;
+  }, [componentId, state]);
 };

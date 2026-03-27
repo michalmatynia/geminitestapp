@@ -188,6 +188,8 @@ function GameContent(): React.JSX.Element {
   const calendarQuizRef = useRef<HTMLDivElement | null>(null);
   const geometryQuizRef = useRef<HTMLDivElement | null>(null);
   const clockQuizRef = useRef<HTMLDivElement | null>(null);
+  const musicMelodyRepeatQuizRef = useRef<HTMLDivElement | null>(null);
+  const musicPianoRollFreePlayQuizRef = useRef<HTMLDivElement | null>(null);
   const additionQuizRef = useRef<HTMLDivElement | null>(null);
   const subtractionQuizRef = useRef<HTMLDivElement | null>(null);
   const divisionQuizRef = useRef<HTMLDivElement | null>(null);
@@ -207,6 +209,8 @@ function GameContent(): React.JSX.Element {
     calendar_quiz: calendarQuizRef,
     geometry_quiz: geometryQuizRef,
     clock_quiz: clockQuizRef,
+    music_melody_repeat_quiz: musicMelodyRepeatQuizRef,
+    music_piano_roll_free_play_quiz: musicPianoRollFreePlayQuizRef,
     addition_quiz: additionQuizRef,
     subtraction_quiz: subtractionQuizRef,
     multiplication_quiz: multiplicationQuizRef,

@@ -2,7 +2,7 @@ import { getTranslations } from 'next-intl/server';
 import { notFound, redirect } from 'next/navigation';
 import { JSX } from 'react';
 
-import { getKangurPublicAliasHref } from '@/features/kangur/public';
+import { getKangurPublicAliasHref } from '@/features/kangur/config/routing';
 import { getKangurConfiguredLaunchTarget } from '@/features/kangur/server/launch-route';
 import { requireAccessibleKangurSlugRoute } from '@/features/kangur/server/route-access';
 import { getFrontPagePublicOwner } from '@/shared/lib/front-page-app';

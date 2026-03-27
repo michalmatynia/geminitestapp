@@ -27,6 +27,7 @@ export type SeedGameInput = Pick<
   description?: string;
   legacyScreenIds?: KangurGameDefinition['legacyScreenIds'];
   lessonStageRuntimeId?: KangurGameVariant['lessonStageRuntimeId'];
+  launchableRuntimeId?: KangurGameVariant['launchableRuntimeId'];
   lessonVariantSurface?: SeedLessonVariantSurface;
   status?: KangurGameDefinition['status'];
   surfaces?: KangurGameDefinition['surfaces'];
@@ -45,7 +46,8 @@ export const createSharedLibraryGame = ({
   activityIds = [],
   legacyScreenIds = [],
   lessonStageRuntimeId,
-  surfaces = ['lesson', 'library'],
+  launchableRuntimeId,
+  surfaces = launchableRuntimeId ? ['lesson', 'library', 'game'] : ['lesson', 'library'],
   lessonVariantSurface = 'lesson_inline',
   status = 'active',
   description,
@@ -82,6 +84,19 @@ export const createSharedLibraryGame = ({
         surface: 'library_preview',
         sortOrder: 100,
       }),
+      ...(launchableRuntimeId
+        ? [
+            createVariant({
+              id: `${input.id}.game-screen`,
+              label: 'Game screen',
+              title: `${input.title} fullscreen`,
+              description: `Launches ${input.title} through the shared standalone game runtime.`,
+              surface: 'game_screen',
+              launchableRuntimeId,
+              sortOrder: 200,
+            }),
+          ]
+        : []),
     ],
     status,
   };

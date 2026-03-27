@@ -10,8 +10,15 @@ type DynamicCall = {
   loading?: React.ComponentType;
 };
 
-const { dynamicCalls, routeLoadingFallbackMock } = vi.hoisted(() => ({
+const {
+  dynamicCalls,
+  gamePageImportMock,
+  lessonsPageImportMock,
+  routeLoadingFallbackMock,
+} = vi.hoisted(() => ({
   dynamicCalls: [] as DynamicCall[],
+  gamePageImportMock: vi.fn(),
+  lessonsPageImportMock: vi.fn(),
   routeLoadingFallbackMock: vi.fn(),
 }));
 
@@ -29,29 +36,54 @@ vi.mock('@/features/kangur/ui/components/KangurRouteLoadingFallback', () => ({
   },
 }));
 
-vi.mock('@/features/kangur/ui/pages/Game', () => ({
-  default: () => <div data-testid='kangur-game-page-probe' />,
-}));
+vi.mock('@/features/kangur/ui/pages/Game', () => {
+  gamePageImportMock();
+  return {
+    default: () => <div data-testid='kangur-game-page-probe' />,
+  };
+});
 
-vi.mock('@/features/kangur/ui/pages/Lessons', () => ({
-  default: () => <div data-testid='kangur-lessons-page-probe' />,
-}));
+vi.mock('@/features/kangur/ui/pages/Lessons', () => {
+  lessonsPageImportMock();
+  return {
+    default: () => <div data-testid='kangur-lessons-page-probe' />,
+  };
+});
 
 describe('kangur page config', () => {
   let kangurPages: typeof import('@/features/kangur/config/pages').kangurPages;
   let KANGUR_MAIN_PAGE: typeof import('@/features/kangur/config/pages').KANGUR_MAIN_PAGE;
+  let preloadKangurPage: typeof import('@/features/kangur/config/pages').preloadKangurPage;
 
   beforeEach(async () => {
     vi.resetModules();
     cleanup();
     dynamicCalls.length = 0;
+    gamePageImportMock.mockReset();
+    lessonsPageImportMock.mockReset();
     routeLoadingFallbackMock.mockReset();
 
-    ({ kangurPages, KANGUR_MAIN_PAGE } = await import('@/features/kangur/config/pages'));
+    ({ kangurPages, KANGUR_MAIN_PAGE, preloadKangurPage } = await import(
+      '@/features/kangur/config/pages'
+    ));
   });
 
   it('keeps Game as the main Kangur page', () => {
     expect(KANGUR_MAIN_PAGE).toBe('Game');
+  });
+
+  it('preloads Kangur page modules on demand', async () => {
+    preloadKangurPage('Game');
+    await vi.dynamicImportSettled();
+
+    expect(gamePageImportMock).toHaveBeenCalledTimes(1);
+    expect(lessonsPageImportMock).not.toHaveBeenCalled();
+
+    preloadKangurPage('Lessons');
+    await vi.dynamicImportSettled();
+
+    expect(gamePageImportMock).toHaveBeenCalledTimes(1);
+    expect(lessonsPageImportMock).toHaveBeenCalledTimes(1);
   });
 
   it('uses shared lazy route fallbacks for every Kangur page while keeping the main page skeleton lighter', () => {

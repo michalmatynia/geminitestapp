@@ -63,6 +63,14 @@ const LogicalPatternsWorkshopGame = dynamic(
   () => import('@/features/kangur/ui/components/LogicalPatternsWorkshopGame'),
   { ssr: false }
 );
+const MusicMelodyRepeatGame = dynamic(
+  () => import('@/features/kangur/ui/components/music/MusicMelodyRepeatGame'),
+  { ssr: false }
+);
+const MusicPianoRollFreePlayGame = dynamic(
+  () => import('@/features/kangur/ui/components/music/MusicPianoRollFreePlayGame'),
+  { ssr: false }
+);
 const MultiplicationGame = dynamic(
   () => import('@/features/kangur/ui/components/MultiplicationGame'),
   { ssr: false }
@@ -213,6 +221,12 @@ const KANGUR_LAUNCHABLE_GAME_RENDERERS: Record<
         patternSetId={rendererProps?.patternSetId}
       />
     ),
+  },
+  music_melody_repeat_game: {
+    render: ({ onFinish }) => <MusicMelodyRepeatGame onFinish={onFinish} />,
+  },
+  music_piano_roll_free_play_game: {
+    render: ({ onFinish }) => <MusicPianoRollFreePlayGame onFinish={onFinish} />,
   },
   multiplication_game: {
     render: ({ finishLabelVariant, onFinish }) => (

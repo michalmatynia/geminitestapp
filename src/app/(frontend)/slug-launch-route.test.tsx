@@ -50,31 +50,35 @@ vi.mock('@/features/kangur/server/storefront-appearance', () => ({
   getKangurStorefrontInitialState: getKangurStorefrontInitialStateMock,
 }));
 
-vi.mock('@/features/kangur/public', () => ({
-  KangurPublicApp: () => null,
-  getKangurPublicAliasHref: (
-    slugSegments: readonly string[] = [],
-    searchParams?: Record<string, string | string[] | undefined>
-  ) => {
-    const pathname = slugSegments.length > 0 ? `/kangur/${slugSegments.join('/')}` : '/kangur';
-    const query = new URLSearchParams();
+vi.mock('@/features/kangur/config/routing', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@/features/kangur/config/routing')>();
 
-    for (const [key, value] of Object.entries(searchParams ?? {})) {
-      if (Array.isArray(value)) {
-        value.forEach((entry) => {
-          query.append(key, entry);
-        });
-        continue;
-      }
-      if (value != null) {
-        query.set(key, value);
-      }
-    }
+  return {
+    ...actual,
+    getKangurPublicAliasHref: (
+      slugSegments: readonly string[] = [],
+      searchParams?: Record<string, string | string[] | undefined>
+    ) => {
+      const pathname = slugSegments.length > 0 ? `/kangur/${slugSegments.join('/')}` : '/kangur';
+      const query = new URLSearchParams();
 
-    const serialized = query.toString();
-    return serialized ? `${pathname}?${serialized}` : pathname;
-  },
-}));
+      for (const [key, value] of Object.entries(searchParams ?? {})) {
+        if (Array.isArray(value)) {
+          value.forEach((entry) => {
+            query.append(key, entry);
+          });
+          continue;
+        }
+        if (value != null) {
+          query.set(key, value);
+        }
+      }
+
+      const serialized = query.toString();
+      return serialized ? `${pathname}?${serialized}` : pathname;
+    },
+  };
+});
 
 vi.mock('@/app/(frontend)/cms-render', () => ({
   renderCmsPage: vi.fn(),

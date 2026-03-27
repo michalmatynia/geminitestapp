@@ -602,7 +602,10 @@ export function ActiveLessonView({
           />
         </div>
       ) : ActiveLessonComponent ? (
-        <ActiveLessonComponent onReady={() => setIsActiveLessonComponentReady(true)} />
+        <ActiveLessonComponent
+          lessonTemplate={lessonTemplateMap.get(activeLesson.componentId) ?? null}
+          onReady={() => setIsActiveLessonComponentReady(true)}
+        />
       ) : null}
     </div>
   );

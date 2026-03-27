@@ -38,6 +38,13 @@ describe('launchable runtime specs', () => {
     expect(gameScreenVariants.some((variant) => Boolean(variant.legacyScreenId))).toBe(false);
     expect(
       gameScreenVariants.map((variant) => variant.launchableRuntimeId).filter(Boolean)
-    ).toEqual(expect.arrayContaining(['clock_quiz', 'logical_patterns_quiz']));
+    ).toEqual(
+      expect.arrayContaining([
+        'clock_quiz',
+        'logical_patterns_quiz',
+        'music_melody_repeat_quiz',
+        'music_piano_roll_free_play_quiz',
+      ])
+    );
   });
 });

@@ -120,6 +120,7 @@ type ContentSetDraftState = {
 
 type SavedSectionsStatusFilter = 'all' | 'enabled' | 'disabled';
 type ContentSetsSourceFilter = 'all' | 'built_in' | 'custom';
+type ContentSetsUsageFilter = 'all' | 'in_use' | 'unused';
 type SavedInstancesContentSetFilter = KangurGameContentSetId | 'all';
 type SegmentedFilterOption<T extends string = string> = {
   label: string;
@@ -657,6 +658,8 @@ export function GamesLibraryGameModal({
   const [contentSetsQuery, setContentSetsQuery] = useState('');
   const [contentSetsSourceFilter, setContentSetsSourceFilter] =
     useState<ContentSetsSourceFilter>('all');
+  const [contentSetsUsageFilter, setContentSetsUsageFilter] =
+    useState<ContentSetsUsageFilter>('all');
   const [instanceContentSourceInstanceId, setInstanceContentSourceInstanceId] =
     useState<string | null>(null);
   const [instanceEngineSourceInstanceId, setInstanceEngineSourceInstanceId] =
@@ -728,6 +731,14 @@ export function GamesLibraryGameModal({
       ),
     [optimisticInstances, persistedInstances]
   );
+  const contentSetUsageCountById = useMemo(
+    () =>
+      activeInstances.reduce<Record<string, number>>((counts, instance) => {
+        counts[instance.contentSetId] = (counts[instance.contentSetId] ?? 0) + 1;
+        return counts;
+      }, {}),
+    [activeInstances]
+  );
   const selectedInstance =
     selectedInstanceId === null
       ? null
@@ -748,10 +759,17 @@ export function GamesLibraryGameModal({
 
     return contentSets.filter((contentSet) => {
       const isCustom = customContentSetIdSet.has(contentSet.id);
+      const usageCount = contentSetUsageCountById[contentSet.id] ?? 0;
       if (contentSetsSourceFilter === 'built_in' && isCustom) {
         return false;
       }
       if (contentSetsSourceFilter === 'custom' && !isCustom) {
+        return false;
+      }
+      if (contentSetsUsageFilter === 'in_use' && usageCount === 0) {
+        return false;
+      }
+      if (contentSetsUsageFilter === 'unused' && usageCount > 0) {
         return false;
       }
       if (!normalizedQuery) {
@@ -768,7 +786,15 @@ export function GamesLibraryGameModal({
         .toLowerCase()
         .includes(normalizedQuery);
     });
-  }, [contentSets, contentSetsQuery, contentSetsSourceFilter, customContentSetIdSet, translations]);
+  }, [
+    contentSetUsageCountById,
+    contentSets,
+    contentSetsQuery,
+    contentSetsSourceFilter,
+    contentSetsUsageFilter,
+    customContentSetIdSet,
+    translations,
+  ]);
   const selectableContentSets = useMemo(() => {
     if (!selectedContentSet) {
       return filteredContentSets;
@@ -781,7 +807,9 @@ export function GamesLibraryGameModal({
     return [selectedContentSet, ...filteredContentSets];
   }, [filteredContentSets, selectedContentSet]);
   const hasContentSetFilters =
-    contentSetsQuery.trim().length > 0 || contentSetsSourceFilter !== 'all';
+    contentSetsQuery.trim().length > 0 ||
+    contentSetsSourceFilter !== 'all' ||
+    contentSetsUsageFilter !== 'all';
   const selectedContentSetOutsideFilters =
     Boolean(selectedContentSet) &&
     hasContentSetFilters &&
@@ -947,6 +975,7 @@ export function GamesLibraryGameModal({
     setSelectedContentSetId(null);
     setContentSetsQuery('');
     setContentSetsSourceFilter('all');
+    setContentSetsUsageFilter('all');
     setInstanceContentSourceInstanceId(null);
     setInstanceEngineSourceInstanceId(null);
     setInstanceTitle('');
@@ -1436,6 +1465,12 @@ export function GamesLibraryGameModal({
     setInstanceSyncError(null);
     setInstanceContentSourceInstanceId(null);
     setSelectedContentSetId(contentSetId);
+  };
+
+  const handleFocusInstancesForContentSet = (contentSetId: KangurGameContentSetId): void => {
+    setSavedInstancesQuery('');
+    setSavedInstancesStatusFilter('all');
+    setSavedInstancesContentSetFilter(contentSetId);
   };
 
   const handleEditCustomContentSet = (contentSet: KangurGameContentSet): void => {
@@ -2536,6 +2571,7 @@ export function GamesLibraryGameModal({
                           onClick={() => {
                             setContentSetsQuery('');
                             setContentSetsSourceFilter('all');
+                            setContentSetsUsageFilter('all');
                           }}
                           size='sm'
                           type='button'
@@ -2568,6 +2604,26 @@ export function GamesLibraryGameModal({
                           value={contentSetsSourceFilter}
                         />
                       ) : null}
+                      <SegmentedFilterControl
+                        ariaLabel={translations('modal.instances.contentSetUsageFilterLabel')}
+                        className='w-full [background:color-mix(in_srgb,var(--kangur-soft-card-background)_97%,white)]'
+                        onChange={setContentSetsUsageFilter}
+                        options={[
+                          {
+                            label: translations('modal.instances.contentSetUsageFilterAll'),
+                            value: 'all',
+                          },
+                          {
+                            label: translations('modal.instances.contentSetUsageFilterInUse'),
+                            value: 'in_use',
+                          },
+                          {
+                            label: translations('modal.instances.contentSetUsageFilterUnused'),
+                            value: 'unused',
+                          },
+                        ]}
+                        value={contentSetsUsageFilter}
+                      />
                     </div>
                   ) : null}
                   <KangurSelectField
@@ -2623,9 +2679,15 @@ export function GamesLibraryGameModal({
                           const isCustomContentSet = customContentSetIdSet.has(contentSet.id);
                           const isSelectedContentSet = selectedContentSetId === contentSet.id;
                           const feedSummary = buildContentSetFeedSummary(contentSet, translations);
-                          const contentSetUsageCount = activeInstances.filter(
+                          const linkedInstances = activeInstances.filter(
                             (instance) => instance.contentSetId === contentSet.id
-                          ).length;
+                          );
+                          const contentSetUsageCount =
+                            contentSetUsageCountById[contentSet.id] ?? 0;
+                          const isShowingLinkedInstances =
+                            savedInstancesQuery.trim().length === 0 &&
+                            savedInstancesStatusFilter === 'all' &&
+                            savedInstancesContentSetFilter === contentSet.id;
 
                           return (
                             <div
@@ -2660,10 +2722,61 @@ export function GamesLibraryGameModal({
                                         {feedSummary}
                                       </KangurStatusChip>
                                     ) : null}
+                                    <KangurStatusChip
+                                      accent={contentSetUsageCount > 0 ? 'amber' : 'slate'}
+                                      size='sm'
+                                    >
+                                      {contentSetUsageCount > 0
+                                        ? translations('modal.instances.contentSetUsageBadgeInUse', {
+                                            count: contentSetUsageCount,
+                                          })
+                                        : translations(
+                                            'modal.instances.contentSetUsageBadgeUnused'
+                                          )}
+                                    </KangurStatusChip>
                                   </div>
                                   <div className='text-xs leading-5 [color:var(--kangur-page-muted-text)]'>
                                     {contentSet.description}
                                   </div>
+                                  {linkedInstances.length > 0 ? (
+                                    <div className='space-y-2'>
+                                      <div className='text-[11px] font-bold uppercase tracking-wide [color:var(--kangur-page-muted-text)]'>
+                                        {translations('modal.instances.contentSetLinkedInstancesLabel')}
+                                      </div>
+                                      <div className='flex flex-wrap gap-2'>
+                                        {linkedInstances.slice(0, 2).map((instance) => (
+                                          <KangurButton
+                                            key={`linked-instance:${contentSet.id}:${instance.id}`}
+                                            aria-label={translations(
+                                              'modal.instances.openLinkedInstanceButton',
+                                              {
+                                                title: instance.title,
+                                              }
+                                            )}
+                                            disabled={replaceGameInstances.isPending}
+                                            onClick={() => {
+                                              handleEditInstance(instance);
+                                            }}
+                                            size='sm'
+                                            type='button'
+                                            variant='surface'
+                                          >
+                                            {instance.title}
+                                          </KangurButton>
+                                        ))}
+                                        {linkedInstances.length > 2 ? (
+                                          <KangurStatusChip accent='slate' size='sm'>
+                                            {translations(
+                                              'modal.instances.contentSetLinkedInstancesMore',
+                                              {
+                                                count: linkedInstances.length - 2,
+                                              }
+                                            )}
+                                          </KangurStatusChip>
+                                        ) : null}
+                                      </div>
+                                    </div>
+                                  ) : null}
                                 </div>
                                 <div className='flex flex-wrap gap-2'>
                                   <KangurButton
@@ -2680,7 +2793,7 @@ export function GamesLibraryGameModal({
                                       {isSelectedContentSet
                                         ? translations('modal.instances.selectedContentSetButton')
                                         : translations('modal.instances.selectContentSetButton')}
-                                    </KangurButton>
+                                  </KangurButton>
                                   <KangurButton
                                     disabled={replaceGameContentSets.isPending}
                                     onClick={() => {
@@ -2692,6 +2805,27 @@ export function GamesLibraryGameModal({
                                   >
                                     {translations('modal.instances.forkSelectedContentSetButton')}
                                   </KangurButton>
+                                  {contentSetUsageCount > 0 ? (
+                                    <KangurButton
+                                      disabled={
+                                        replaceGameInstances.isPending || isShowingLinkedInstances
+                                      }
+                                      onClick={() => {
+                                        handleFocusInstancesForContentSet(contentSet.id);
+                                      }}
+                                      size='sm'
+                                      type='button'
+                                      variant='surface'
+                                    >
+                                      {isShowingLinkedInstances
+                                        ? translations(
+                                            'modal.instances.showingLinkedInstancesButton'
+                                          )
+                                        : translations(
+                                            'modal.instances.showLinkedInstancesButton'
+                                          )}
+                                    </KangurButton>
+                                  ) : null}
                                   {isCustomContentSet ? (
                                     <KangurButton
                                       disabled={replaceGameContentSets.isPending}
@@ -2749,7 +2883,7 @@ export function GamesLibraryGameModal({
         </div>
 
         {selectedContentSet && selectedContentSet.id !== editingContentSetId ? (
-          <div className='flex flex-wrap gap-2'>
+          <div className='flex flex-wrap gap-2' data-testid='games-library-selected-content-set-actions'>
             <KangurButton
               disabled={replaceGameContentSets.isPending}
               onClick={handleForkSelectedContentSet}

@@ -46,6 +46,7 @@ vi.mock('@/features/kangur/ui/hooks/useKangurMobileBreakpoint', () => ({
 import { DIATONIC_PIANO_KEYS } from '@/features/kangur/ui/components/music/music-theory';
 
 describe('KangurMusicPianoRoll touch mode', () => {
+  let pianoRollModule: typeof import('@/features/kangur/ui/components/music/KangurMusicPianoRoll');
   let KangurMusicPianoRoll: typeof import('@/features/kangur/ui/components/music/KangurMusicPianoRoll').default;
 
   const mockKeyRect = (
@@ -76,9 +77,8 @@ describe('KangurMusicPianoRoll touch mode', () => {
     vi.resetModules();
     useKangurCoarsePointerMock.mockReturnValue(true);
     useKangurMobileBreakpointMock.mockReturnValue(true);
-    KangurMusicPianoRoll = (
-      await import('@/features/kangur/ui/components/music/KangurMusicPianoRoll')
-    ).default;
+    pianoRollModule = await import('@/features/kangur/ui/components/music/KangurMusicPianoRoll');
+    KangurMusicPianoRoll = pianoRollModule.default;
     vi.useFakeTimers();
     Object.defineProperty(globalThis, 'requestAnimationFrame', {
       configurable: true,
@@ -132,6 +132,9 @@ describe('KangurMusicPianoRoll touch mode', () => {
       'data-layout',
       'compact'
     );
+    expect(screen.getByTestId('kangur-music-piano-step-keyboard-rail').closest('[data-layout]')).toHaveClass(
+      pianoRollModule.KANGUR_MUSIC_PIANO_ROLL_MOTION_HOOKS.engineClassName
+    );
     expect(screen.getByTestId('kangur-music-piano-step-keyboard-rail')).toHaveClass('overflow-x-auto');
     expect(screen.getByTestId('kangur-music-piano-step-keyboard-rail').firstElementChild).toHaveClass(
       'flex',
@@ -140,6 +143,7 @@ describe('KangurMusicPianoRoll touch mode', () => {
     expect(screen.queryByTestId('kangur-music-piano-step-lane-labels')).not.toBeInTheDocument();
     expect(screen.queryByTestId('kangur-music-piano-step-measure-1')).not.toBeInTheDocument();
     expect(fastKey).toHaveClass(
+      pianoRollModule.KANGUR_MUSIC_PIANO_ROLL_MOTION_HOOKS.keyClassName,
       'cursor-pointer',
       'min-h-[64px]',
       'min-w-[72px]',

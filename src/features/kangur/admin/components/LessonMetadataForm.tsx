@@ -17,9 +17,19 @@ import type { LessonFormData } from '../types';
 export function LessonMetadataForm(props: {
   formData: LessonFormData;
   setFormData: React.Dispatch<React.SetStateAction<LessonFormData>>;
+  componentContentJson: string;
+  setComponentContentJson: React.Dispatch<React.SetStateAction<string>>;
+  showComponentContentEditor: boolean;
   onComponentChange: (componentId: string) => void;
 }): React.JSX.Element {
-  const { formData, setFormData, onComponentChange } = props;
+  const {
+    formData,
+    setFormData,
+    componentContentJson,
+    setComponentContentJson,
+    showComponentContentEditor,
+    onComponentChange,
+  } = props;
   const isAgeGroup = (value: string): value is LessonFormData['ageGroup'] =>
     KANGUR_AGE_GROUPS.some((group) => group.id === value);
   const selectedComponentLabel =
@@ -149,6 +159,27 @@ export function LessonMetadataForm(props: {
             </FormField>
           </div>
         </div>
+
+        {showComponentContentEditor ? (
+          <div className='rounded-3xl border border-border/50 bg-card/25 p-5'>
+            <FormField label='Localized component content'>
+              <Textarea
+                value={componentContentJson}
+                onChange={(event: React.ChangeEvent<HTMLTextAreaElement>): void => {
+                  setComponentContentJson(event.target.value);
+                }}
+                placeholder='{}'
+                className='min-h-[320px] font-mono text-xs leading-6'
+                aria-label='Localized component content'
+                title='Localized component content'
+              />
+            </FormField>
+            <p className='mt-3 text-xs leading-5 text-muted-foreground'>
+              Edit the locale-scoped lesson copy payload for supported component lessons. Leave it
+              blank to fall back to the static lesson seed for this component family.
+            </p>
+          </div>
+        ) : null}
       </div>
 
       <div className='space-y-4'>

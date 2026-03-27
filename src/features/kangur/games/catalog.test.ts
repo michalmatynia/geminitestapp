@@ -175,6 +175,32 @@ describe('kangur game catalog', () => {
     );
   });
 
+  it('promotes music engines into serialized game-screen variants for launchable reuse', () => {
+    const entries = createKangurGameCatalogEntries();
+    const melodyEntry = entries.find((candidate) => candidate.game.id === 'music_melody_repeat');
+    const freePlayEntry = entries.find(
+      (candidate) => candidate.game.id === 'music_piano_roll_free_play'
+    );
+
+    expect(melodyEntry?.gameScreenVariant?.id).toBe('music_melody_repeat.game-screen');
+    expect(melodyEntry?.launchableScreen).toBe('music_melody_repeat_quiz');
+    expect(melodyEntry?.launchableRuntime?.rendererId).toBe('music_melody_repeat_game');
+    expect(
+      melodyEntry ? getKangurLaunchableGameRuntimeSpecForGame(melodyEntry.game)?.engineId : null
+    ).toBe('melody-repeat-engine');
+
+    expect(freePlayEntry?.gameScreenVariant?.id).toBe('music_piano_roll_free_play.game-screen');
+    expect(freePlayEntry?.launchableScreen).toBe('music_piano_roll_free_play_quiz');
+    expect(freePlayEntry?.launchableRuntime?.rendererId).toBe(
+      'music_piano_roll_free_play_game'
+    );
+    expect(
+      freePlayEntry
+        ? getKangurLaunchableGameRuntimeSpecForGame(freePlayEntry.game)?.engineId
+        : null
+    ).toBe('piano-roll-engine');
+  });
+
   it('keeps the launchable catalog fallback for older legacy-only game-screen variants', () => {
     expect(
       getKangurLaunchableGameRuntimeSpecForVariant({

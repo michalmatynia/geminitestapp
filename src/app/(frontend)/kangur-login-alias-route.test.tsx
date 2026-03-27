@@ -38,12 +38,20 @@ vi.mock('@/shared/lib/front-page-app', () => ({
   getFrontPagePublicOwner: getFrontPagePublicOwnerMock,
 }));
 
-vi.mock('@/features/kangur/public', () => ({
+vi.mock('@/features/kangur/config/routing', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@/features/kangur/config/routing')>();
+
+  return {
+    ...actual,
+    getKangurCanonicalPublicHref: getKangurCanonicalPublicHrefMock,
+    getKangurHomeHref: (pathname = '/') => pathname,
+  };
+});
+
+vi.mock('@/features/kangur/ui/KangurFeatureRouteShell', () => ({
   KangurFeatureRouteShell: () => (
     <div data-testid='kangur-feature-route-shell'>Kangur route shell</div>
   ),
-  getKangurCanonicalPublicHref: getKangurCanonicalPublicHrefMock,
-  getKangurHomeHref: (pathname = '/') => pathname,
 }));
 
 const buildCanonicalHref = (

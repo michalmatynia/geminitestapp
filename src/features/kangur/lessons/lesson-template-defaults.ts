@@ -1,6 +1,7 @@
 import type { KangurLessonTemplate } from '@/shared/contracts/kangur-lesson-templates';
 
 import { KANGUR_LESSON_COMPONENT_ORDER, KANGUR_LESSON_LIBRARY } from './lesson-catalog';
+import { getDefaultKangurLessonTemplateComponentContent } from './lesson-template-component-content';
 import {
   getLocalizedKangurLessonDescription,
   getLocalizedKangurLessonLabel,
@@ -29,5 +30,6 @@ export const createDefaultKangurLessonTemplates = (locale = 'pl'): KangurLessonT
       color: template.color,
       activeBg: template.activeBg,
       sortOrder: (index + 1) * 100,
+      componentContent: getDefaultKangurLessonTemplateComponentContent(componentId) ?? undefined,
     };
   });

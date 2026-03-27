@@ -1,61 +1,13 @@
-import type { LessonSlide } from '@/features/kangur/ui/components/LessonSlideSection';
+import { ALPHABET_WORDS_LESSON_COMPONENT_CONTENT as CONTENT } from '@/features/kangur/lessons/lesson-template-component-content';
+
 import {
-  KangurLessonCaption,
-  KangurLessonLead,
-  KangurLessonStack,
-} from '@/features/kangur/ui/design/lesson-primitives';
+  buildAlphabetUnifiedLessonSections,
+  buildAlphabetUnifiedLessonSlides,
+} from './alphabet-unified-lesson-content';
 
 type SectionId = 'slowa' | 'game_words' | 'summary';
 
-export const SLIDES: Record<Exclude<SectionId, 'game_words'>, LessonSlide[]> = {
-  slowa: [
-    {
-      title: 'Pierwsze słowa',
-      content: (
-        <KangurLessonStack>
-          <KangurLessonLead>Obrazki pomagają szybko zapamiętać nowe słowa.</KangurLessonLead>
-          <KangurLessonCaption>
-            Najpierw popatrz na obrazek, potem nazwij go na głos.
-          </KangurLessonCaption>
-        </KangurLessonStack>
-      ),
-    },
-  ],
-  summary: [
-    {
-      title: 'Podsumowanie',
-      content: (
-        <KangurLessonStack>
-          <KangurLessonLead>Potrafisz połączyć obrazek z właściwym słowem.</KangurLessonLead>
-          <KangurLessonCaption>
-            Ćwicz kilka słów naraz, a szybciej zapamiętasz ich brzmienie.
-          </KangurLessonCaption>
-        </KangurLessonStack>
-      ),
-    },
-  ],
-};
+export { CONTENT };
 
-export const HUB_SECTIONS = [
-  {
-    id: 'slowa',
-    emoji: '📖',
-    title: 'Poznaj słowa',
-    description: 'Nazwij obrazek i zapamiętaj słowo',
-    slideCount: SLIDES.slowa.length,
-  },
-  {
-    id: 'game_words',
-    emoji: '🎮',
-    title: 'Gra słowa',
-    description: 'Dopasuj obrazek do właściwego słowa',
-    isGame: true,
-  },
-  {
-    id: 'summary',
-    emoji: '📋',
-    title: 'Podsumowanie',
-    description: 'Najważniejsze wnioski',
-    slideCount: SLIDES.summary.length,
-  },
-] as const;
+export const SLIDES = buildAlphabetUnifiedLessonSlides<SectionId>(CONTENT);
+export const HUB_SECTIONS = buildAlphabetUnifiedLessonSections<SectionId>(CONTENT);

@@ -285,6 +285,9 @@ describe('MusicMelodyRepeatGame', () => {
   });
 
   it('plays the melody, lets the learner repeat it, and persists a perfect result', async () => {
+    const pianoRollModule = await import(
+      '@/features/kangur/ui/components/music/KangurMusicPianoRoll'
+    );
     MusicMelodyRepeatGame = (
       await import('@/features/kangur/ui/components/music/MusicMelodyRepeatGame')
     ).default;
@@ -324,6 +327,9 @@ describe('MusicMelodyRepeatGame', () => {
       '!px-1.5',
       '!py-2.5',
       '!shadow-none'
+    );
+    expect(screen.getByTestId('music-melody-repeat-key-do')).toHaveClass(
+      pianoRollModule.KANGUR_MUSIC_PIANO_ROLL_MOTION_HOOKS.keyClassName
     );
     expect(screen.getByTestId('music-melody-repeat-stage').firstElementChild).toHaveClass(
       'px-2',
@@ -572,12 +578,18 @@ describe('MusicMelodyRepeatGame', () => {
   });
 
   it('supports synth-mode repetition without breaking melody scoring', async () => {
+    const pianoRollModule = await import(
+      '@/features/kangur/ui/components/music/KangurMusicPianoRoll'
+    );
     MusicMelodyRepeatGame = (
       await import('@/features/kangur/ui/components/music/MusicMelodyRepeatGame')
     ).default;
     render(<MusicMelodyRepeatGame onFinish={() => undefined} />);
 
     fireEvent.click(screen.getByTestId('music-melody-repeat-step-keyboard-mode-synth'));
+    expect(screen.getByTestId('music-melody-repeat-piano-roll')).toHaveClass(
+      pianoRollModule.KANGUR_MUSIC_PIANO_ROLL_MOTION_HOOKS.engineClassName
+    );
     fireEvent.click(screen.getByTestId('music-melody-repeat-step-synth-glide-mode-semitone'));
     fireEvent.click(screen.getByTestId('music-melody-repeat-step-synth-waveform-triangle'));
 
@@ -585,11 +597,23 @@ describe('MusicMelodyRepeatGame', () => {
       'aria-pressed',
       'true'
     );
+    expect(screen.getByTestId('music-melody-repeat-step-keyboard-mode-synth')).toHaveClass(
+      pianoRollModule.KANGUR_MUSIC_PIANO_ROLL_MOTION_HOOKS.synthControlButtonClassName
+    );
+    expect(screen.getByTestId('music-melody-repeat-step-synth-glide-mode-semitone')).toHaveClass(
+      pianoRollModule.KANGUR_MUSIC_PIANO_ROLL_MOTION_HOOKS.synthControlButtonClassName
+    );
+    expect(screen.getByTestId('music-melody-repeat-step-synth-envelope-button')).toHaveClass(
+      pianoRollModule.KANGUR_MUSIC_PIANO_ROLL_MOTION_HOOKS.synthControlButtonClassName
+    );
     expect(screen.getByTestId('music-melody-repeat-step-synth-waveform-sine')).toHaveAttribute(
       'aria-label',
       'Brzmienie: Sine'
     );
     expect(screen.getByTestId('music-melody-repeat-step-synth-waveform-sine')).toHaveTextContent('');
+    expect(screen.getByTestId('music-melody-repeat-step-synth-waveform-triangle')).toHaveClass(
+      pianoRollModule.KANGUR_MUSIC_PIANO_ROLL_MOTION_HOOKS.synthControlButtonClassName
+    );
     expect(
       screen.getByTestId('music-melody-repeat-step-synth-waveform-icon-triangle')
     ).toBeInTheDocument();

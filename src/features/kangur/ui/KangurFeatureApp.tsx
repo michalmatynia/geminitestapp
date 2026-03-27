@@ -11,7 +11,7 @@ import {
 
 import { KANGUR_CMS_PROJECT_SETTING_KEY } from '@/features/kangur/cms-builder/project-contracts';
 import { hasKangurCmsRuntimeScreen } from '@/features/kangur/cms-builder/runtime-screen-presence';
-import { KANGUR_MAIN_PAGE, kangurPages } from '@/features/kangur/config/pages';
+import { KANGUR_MAIN_PAGE, kangurPages, preloadKangurPage } from '@/features/kangur/config/pages';
 import { getKangurHomeHref, resolveKangurPageKey } from '@/features/kangur/config/routing';
 import { KangurAppLoader } from '@/features/kangur/ui/components/KangurAppLoader';
 import { KangurPageTransitionSkeleton } from '@/features/kangur/ui/components/KangurPageTransitionSkeleton';
@@ -70,6 +70,29 @@ import type { JSX } from 'react';
 const BOOT_SKELETON_MIN_VISIBLE_MS = 120;
 const NAVIGATION_SKELETON_DELAY_MS = 0;
 const LANGUAGE_SWITCHER_TRANSITION_SOURCE_ID = 'kangur-language-switcher';
+const HOT_ROUTE_PRELOAD_TIMEOUT_MS = 1_500;
+type KangurPreloadPageKey = Parameters<typeof preloadKangurPage>[0];
+const KANGUR_PRELOAD_PAGE_KEYS: ReadonlyArray<KangurPreloadPageKey> = [
+  'Competition',
+  'Game',
+  'GamesLibrary',
+  'Duels',
+  'LearnerProfile',
+  'Lessons',
+  'ParentDashboard',
+  'SocialUpdates',
+  'Tests',
+];
+
+const HOT_ROUTE_PRELOADS: Readonly<
+  Partial<Record<KangurPreloadPageKey, ReadonlyArray<KangurPreloadPageKey>>>
+> = Object.freeze({
+  Game: ['Lessons'],
+  Lessons: ['Game'],
+});
+
+const isKangurPreloadPageKey = (value: string | null): value is KangurPreloadPageKey =>
+  value !== null && KANGUR_PRELOAD_PAGE_KEYS.includes(value as KangurPreloadPageKey);
 
 type LatchedNavigationSkeletonState = {
   embedded: boolean;
@@ -172,6 +195,7 @@ const AuthenticatedApp = (): JSX.Element | null => {
   const [isNavigationSkeletonVisible, setIsNavigationSkeletonVisible] = useState<boolean>(false);
   const [latchedNavigationTopBarHeightCssValue, setLatchedNavigationTopBarHeightCssValue] =
     useState<string | null>(null);
+  const preloadedHotRoutesRef = useRef<Set<string>>(new Set());
   const bootSkeletonShownAtRef = useRef<number | null>(
     shouldShowBootLoader ? Date.now() : null
   );
@@ -286,6 +310,60 @@ const AuthenticatedApp = (): JSX.Element | null => {
   useEffect(() => {
     setIsRouteInteractionReady(true);
   }, []);
+
+  useEffect(() => {
+    if (
+      typeof window === 'undefined' ||
+      isBootLoading ||
+      isThemeBootLoading ||
+      isNavigationTransitionActive
+    ) {
+      return;
+    }
+
+    if (!isKangurPreloadPageKey(resolvedPageKey)) {
+      return;
+    }
+
+    const preloadTargets: ReadonlyArray<KangurPreloadPageKey> =
+      HOT_ROUTE_PRELOADS[resolvedPageKey] ?? [];
+    if (preloadTargets.length === 0) {
+      return;
+    }
+
+    const nextTargets: KangurPreloadPageKey[] = preloadTargets.filter(
+      (target: KangurPreloadPageKey) => !preloadedHotRoutesRef.current.has(target)
+    );
+    if (nextTargets.length === 0) {
+      return;
+    }
+
+    const preload = (): void => {
+      nextTargets.forEach((target: KangurPreloadPageKey) => {
+        preloadKangurPage(target);
+        preloadedHotRoutesRef.current.add(target);
+      });
+    };
+
+    if (typeof window.requestIdleCallback === 'function') {
+      const idleId = window.requestIdleCallback(preload, {
+        timeout: HOT_ROUTE_PRELOAD_TIMEOUT_MS,
+      });
+      return () => {
+        window.cancelIdleCallback?.(idleId);
+      };
+    }
+
+    const timeoutId = window.setTimeout(preload, 0);
+    return () => {
+      window.clearTimeout(timeoutId);
+    };
+  }, [
+    isBootLoading,
+    isNavigationTransitionActive,
+    isThemeBootLoading,
+    resolvedPageKey,
+  ]);
 
   useEffect(() => {
     if (hasPresentedInteractiveShell) {

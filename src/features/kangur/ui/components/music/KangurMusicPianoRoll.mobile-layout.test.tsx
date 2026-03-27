@@ -46,15 +46,15 @@ vi.mock('@/features/kangur/ui/hooks/useKangurMobileBreakpoint', () => ({
 import { DIATONIC_PIANO_KEYS } from '@/features/kangur/ui/components/music/music-theory';
 
 describe('KangurMusicPianoRoll mobile viewport layout', () => {
+  let pianoRollModule: typeof import('@/features/kangur/ui/components/music/KangurMusicPianoRoll');
   let KangurMusicPianoRoll: typeof import('@/features/kangur/ui/components/music/KangurMusicPianoRoll').default;
 
   beforeEach(async () => {
     vi.resetModules();
     useKangurCoarsePointerMock.mockReturnValue(false);
     useKangurMobileBreakpointMock.mockReturnValue(true);
-    KangurMusicPianoRoll = (
-      await import('@/features/kangur/ui/components/music/KangurMusicPianoRoll')
-    ).default;
+    pianoRollModule = await import('@/features/kangur/ui/components/music/KangurMusicPianoRoll');
+    KangurMusicPianoRoll = pianoRollModule.default;
   });
 
   it('uses the compact layout on narrow viewports even without a coarse pointer', () => {
@@ -70,6 +70,9 @@ describe('KangurMusicPianoRoll mobile viewport layout', () => {
     );
 
     expect(screen.getByTestId('music-roll-mobile-shell')).toHaveAttribute('data-layout', 'compact');
+    expect(screen.getByTestId('music-roll-mobile-shell')).toHaveClass(
+      pianoRollModule.KANGUR_MUSIC_PIANO_ROLL_MOTION_HOOKS.engineClassName
+    );
     expect(screen.getByTestId('music-roll-mobile-shell')).toHaveClass('p-3.5');
     expect(screen.getByTestId('music-roll-mobile-step-controls-rail')).toHaveClass(
       'overflow-x-auto',
@@ -87,6 +90,7 @@ describe('KangurMusicPianoRoll mobile viewport layout', () => {
     expect(screen.queryByTestId('music-roll-mobile-step-lane-labels')).not.toBeInTheDocument();
     expect(screen.queryByTestId('music-roll-mobile-step-measure-1')).not.toBeInTheDocument();
     expect(screen.getByTestId('music-roll-mobile-key-do')).toHaveClass(
+      pianoRollModule.KANGUR_MUSIC_PIANO_ROLL_MOTION_HOOKS.keyClassName,
       'min-h-[64px]',
       'min-w-[72px]'
     );

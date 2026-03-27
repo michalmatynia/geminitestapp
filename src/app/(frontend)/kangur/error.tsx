@@ -4,8 +4,8 @@ import { useTranslations } from 'next-intl';
 import { useEffect, type JSX } from 'react';
 
 import { Link as LocaleLink } from '@/i18n/navigation';
-import { logKangurClientError } from '@/features/kangur/public';
-import { KangurStandardPageLayout } from '@/features/kangur/public';
+import { logKangurClientError } from '@/features/kangur/observability/client';
+import { KangurStandardPageLayout } from '@/features/kangur/ui/components/KangurStandardPageLayout';
 
 type KangurErrorPageProps = {
   error: Error & { digest?: string };

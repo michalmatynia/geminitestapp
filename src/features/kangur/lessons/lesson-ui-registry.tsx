@@ -5,6 +5,7 @@ import { useEffect } from 'react';
 import type { ComponentType, JSX } from 'react';
 
 import type { KangurLessonComponentId } from '@/features/kangur/shared/contracts/kangur';
+import type { KangurLessonTemplate } from '@/shared/contracts/kangur-lesson-templates';
 import { KangurGlassPanel } from '@/features/kangur/ui/design/primitives';
 import { KANGUR_LESSON_PANEL_GAP_CLASSNAME } from '@/features/kangur/ui/design/tokens';
 import { FOCUS_TO_COMPONENT } from './lesson-focus-map';
@@ -12,6 +13,7 @@ import { FOCUS_TO_COMPONENT } from './lesson-focus-map';
 export type LessonProps = {
   onBack?: () => void;
   onReady?: () => void;
+  lessonTemplate?: KangurLessonTemplate | null;
 };
 
 const LessonSkeletonLine = ({ className }: { className?: string }): JSX.Element => (

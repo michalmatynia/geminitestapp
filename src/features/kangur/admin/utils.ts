@@ -7,6 +7,10 @@ import type {
 } from '@/features/kangur/shared/contracts/kangur';
 import type { KangurLessonTemplate } from '@/shared/contracts/kangur-lesson-templates';
 
+import {
+  serializeKangurLessonTemplateComponentContent,
+  supportsKangurLessonTemplateComponentContent,
+} from '../lessons/lesson-template-component-content';
 import { hasKangurLessonDocumentContent } from '../lesson-documents';
 import { createKangurLessonDraft } from '../settings';
 import { TREE_MODE_STORAGE_KEY } from './constants';
@@ -104,6 +108,15 @@ export const applyLessonTemplateToFormData = (
     activeBg: template.activeBg,
   };
 };
+
+export const resolveLessonComponentContentJson = (
+  componentId: KangurLessonComponentId,
+  template?: KangurLessonTemplate | null,
+): string => serializeKangurLessonTemplateComponentContent(componentId, template?.componentContent);
+
+export const supportsLessonComponentContentAuthoring = (
+  componentId: KangurLessonComponentId | null | undefined,
+): boolean => supportsKangurLessonTemplateComponentContent(componentId);
 
 export const createInitialLessonFormData = (): LessonFormData => createKangurLessonDraft('clock');
 

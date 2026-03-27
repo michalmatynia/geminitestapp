@@ -66,6 +66,7 @@ vi.mock('@/features/kangur/ui/components/music/MusicPianoRollFreePlayGame', () =
 }));
 
 import MusicDiatonicScaleLesson from '@/features/kangur/ui/components/MusicDiatonicScaleLesson';
+import { KANGUR_MUSIC_PIANO_ROLL_MOTION_HOOKS } from '@/features/kangur/ui/components/music/KangurMusicPianoRoll';
 import { KangurLessonNavigationProvider } from '@/features/kangur/ui/context/KangurLessonNavigationContext';
 
 const renderWithIntl = (element: ReactElement) =>
@@ -209,6 +210,12 @@ describe('MusicDiatonicScaleLesson', () => {
       expect(screen.getByTestId('music-diatonic-scale-preview-roll')).toBeInTheDocument();
     });
 
+    expect(screen.getByTestId('music-diatonic-scale-preview-roll')).toHaveClass(
+      KANGUR_MUSIC_PIANO_ROLL_MOTION_HOOKS.engineClassName
+    );
+    expect(screen.getByTestId('kangur-music-piano-key-do')).toHaveClass(
+      KANGUR_MUSIC_PIANO_ROLL_MOTION_HOOKS.keyClassName
+    );
     expect(screen.getByTestId('kangur-music-piano-step-measure-3')).toHaveTextContent('Takt 3');
     expect(screen.getByTestId('kangur-music-piano-step-7')).toHaveAttribute('data-span', '3');
   });

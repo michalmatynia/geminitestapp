@@ -2,6 +2,7 @@ import type {
   KangurDifficulty,
   KangurOperation,
 } from '@kangur/core';
+import { KANGUR_LAUNCHABLE_GAME_SCREENS } from '@/shared/contracts/kangur-games';
 import type { KangurProgressState } from '@/features/kangur/shared/contracts/kangur';
 export type { KangurExamQuestion, KangurQuestionChoice } from '@/features/kangur/shared/contracts/kangur';
 export type { KangurLessonMasteryEntry, KangurProgressState } from '@/features/kangur/shared/contracts/kangur';
@@ -18,18 +19,7 @@ export const KANGUR_GAME_SCREENS = [
   'training',
   'kangur_setup',
   'kangur',
-  'calendar_quiz',
-  'geometry_quiz',
-  'clock_quiz',
-  'addition_quiz',
-  'subtraction_quiz',
-  'multiplication_quiz',
-  'division_quiz',
-  'logical_patterns_quiz',
-  'logical_classification_quiz',
-  'logical_analogies_quiz',
-  'english_sentence_quiz',
-  'english_parts_of_speech_quiz',
+  ...KANGUR_LAUNCHABLE_GAME_SCREENS,
   'operation',
   'playing',
   'result',

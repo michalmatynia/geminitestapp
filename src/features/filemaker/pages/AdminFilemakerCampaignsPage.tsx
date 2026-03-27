@@ -196,7 +196,27 @@ export function AdminFilemakerCampaignsPage(): React.JSX.Element {
               Delivery rate: {row.original.analytics.deliveryRatePercent}%
             </div>
             <div className='text-[11px] text-gray-500'>
+              Open rate: {row.original.analytics.openRatePercent}% • unique {row.original.analytics.uniqueOpenRatePercent}%
+            </div>
+            <div className='text-[11px] text-gray-500'>
+              Click rate: {row.original.analytics.clickRatePercent}% • unique {row.original.analytics.uniqueClickRatePercent}%
+            </div>
+            {row.original.analytics.topClickedLinks[0] ? (
+              <div className='text-[11px] text-gray-500 break-all'>
+                Top link: {row.original.analytics.topClickedLinks[0].clickCount} clicks
+              </div>
+            ) : null}
+            <div className='text-[11px] text-gray-500'>
               Bounce rate: {row.original.analytics.bounceRatePercent}%
+            </div>
+            <div className='text-[11px] text-gray-500'>
+              Opt-outs: {row.original.analytics.unsubscribeCount} ({row.original.analytics.unsubscribeRatePercent}%)
+            </div>
+            <div className='text-[11px] text-gray-500'>
+              Restored: {row.original.analytics.resubscribeCount} ({row.original.analytics.resubscribeRatePercent}%)
+            </div>
+            <div className='text-[11px] text-gray-500'>
+              Net opt-outs: {row.original.analytics.netUnsubscribeCount} ({row.original.analytics.netUnsubscribeRatePercent}%)
             </div>
             <div className='text-[11px] text-gray-500'>
               Runs: {row.original.analytics.totalRuns}

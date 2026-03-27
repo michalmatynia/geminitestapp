@@ -190,7 +190,9 @@ export function BaselinkerSettings(): React.JSX.Element {
                   ) : null}
                   <div className='mt-2'>
                     <Link
-                      href='/admin/products/orders-import'
+                      href={`/admin/products/orders-import?connectionId=${encodeURIComponent(
+                        activeConnection.id
+                      )}&autoPreview=1`}
                       className='underline underline-offset-4 hover:opacity-90'
                     >
                       Open detailed importer

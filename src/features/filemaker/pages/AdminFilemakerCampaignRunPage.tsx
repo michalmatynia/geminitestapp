@@ -37,6 +37,7 @@ import {
   parseFilemakerEmailCampaignRunRegistry,
   resolveFilemakerEmailCampaignRunStatusFromDeliveries,
   summarizeFilemakerEmailCampaignRunDeliveries,
+  summarizeUniqueDeliveryEventCount,
   syncFilemakerEmailCampaignRunWithDeliveries,
   toPersistedFilemakerEmailCampaignDeliveryRegistry,
   toPersistedFilemakerEmailCampaignEventRegistry,
@@ -74,6 +75,10 @@ const DELIVERY_STATUS_ACTIONS: FilemakerEmailCampaignDeliveryStatus[] = [
 const CAMPAIGN_EVENT_LABELS: Record<FilemakerEmailCampaignEvent['type'], string> = {
   created: 'Created',
   updated: 'Updated',
+  unsubscribed: 'Unsubscribed',
+  resubscribed: 'Resubscribed',
+  opened: 'Opened',
+  clicked: 'Clicked',
   launched: 'Launched',
   processing_started: 'Processing started',
   delivery_sent: 'Delivery sent',
@@ -188,6 +193,137 @@ export function AdminFilemakerCampaignRunPage(): React.JSX.Element {
         .length,
     [deliveries]
   );
+  const unsubscribeEventCount = useMemo(
+    () =>
+      runEvents.filter((event: FilemakerEmailCampaignEvent): boolean => event.type === 'unsubscribed')
+        .length,
+    [runEvents]
+  );
+  const openedEventCount = useMemo(
+    () => runEvents.filter((event: FilemakerEmailCampaignEvent): boolean => event.type === 'opened').length,
+    [runEvents]
+  );
+  const clickedEventCount = useMemo(
+    () =>
+      runEvents.filter((event: FilemakerEmailCampaignEvent): boolean => event.type === 'clicked')
+        .length,
+    [runEvents]
+  );
+  const resubscribedEventCount = useMemo(
+    () =>
+      runEvents.filter((event: FilemakerEmailCampaignEvent): boolean => event.type === 'resubscribed')
+        .length,
+    [runEvents]
+  );
+  const latestOpenedAt = useMemo(
+    () =>
+      runEvents
+        .filter((event: FilemakerEmailCampaignEvent): boolean => event.type === 'opened')
+        .map((event: FilemakerEmailCampaignEvent) => event.createdAt ?? null)
+        .filter((value: string | null): value is string => Boolean(value))
+        .sort((left: string, right: string): number => Date.parse(right) - Date.parse(left))[0] ??
+      null,
+    [runEvents]
+  );
+  const latestClickedAt = useMemo(
+    () =>
+      runEvents
+        .filter((event: FilemakerEmailCampaignEvent): boolean => event.type === 'clicked')
+        .map((event: FilemakerEmailCampaignEvent) => event.createdAt ?? null)
+        .filter((value: string | null): value is string => Boolean(value))
+        .sort((left: string, right: string): number => Date.parse(right) - Date.parse(left))[0] ??
+      null,
+    [runEvents]
+  );
+  const latestUnsubscribeAt = useMemo(
+    () =>
+      runEvents
+        .filter((event: FilemakerEmailCampaignEvent): boolean => event.type === 'unsubscribed')
+        .map((event: FilemakerEmailCampaignEvent) => event.createdAt ?? null)
+        .filter((value: string | null): value is string => Boolean(value))
+        .sort((left: string, right: string): number => Date.parse(right) - Date.parse(left))[0] ??
+      null,
+    [runEvents]
+  );
+  const latestResubscribedAt = useMemo(
+    () =>
+      runEvents
+        .filter((event: FilemakerEmailCampaignEvent): boolean => event.type === 'resubscribed')
+        .map((event: FilemakerEmailCampaignEvent) => event.createdAt ?? null)
+        .filter((value: string | null): value is string => Boolean(value))
+        .sort((left: string, right: string): number => Date.parse(right) - Date.parse(left))[0] ??
+      null,
+    [runEvents]
+  );
+  const uniqueOpenedDeliveryCount = useMemo(
+    () =>
+      summarizeUniqueDeliveryEventCount(
+        runEvents.filter(
+          (event: FilemakerEmailCampaignEvent): boolean => event.type === 'opened'
+        )
+      ),
+    [runEvents]
+  );
+  const uniqueClickedDeliveryCount = useMemo(
+    () =>
+      summarizeUniqueDeliveryEventCount(
+        runEvents.filter(
+          (event: FilemakerEmailCampaignEvent): boolean => event.type === 'clicked'
+        )
+      ),
+    [runEvents]
+  );
+  const topClickedLinks = useMemo(
+    () =>
+      Array.from(
+        runEvents.reduce<
+          Map<
+            string,
+            {
+              targetUrl: string;
+              clickCount: number;
+              deliveryIds: Set<string>;
+              latestClickAt: string | null;
+            }
+          >
+        >((map, event) => {
+          if (event.type !== 'clicked' || !event.targetUrl) return map;
+          const existing = map.get(event.targetUrl) ?? {
+            targetUrl: event.targetUrl,
+            clickCount: 0,
+            deliveryIds: new Set<string>(),
+            latestClickAt: null,
+          };
+          existing.clickCount += 1;
+          if (event.deliveryId) {
+            existing.deliveryIds.add(event.deliveryId);
+          }
+          const eventAt = event.createdAt ?? null;
+          if (
+            eventAt &&
+            (!existing.latestClickAt || Date.parse(eventAt) > Date.parse(existing.latestClickAt))
+          ) {
+            existing.latestClickAt = eventAt;
+          }
+          map.set(event.targetUrl, existing);
+          return map;
+        }, new Map())
+      )
+        .map(([, entry]) => ({
+          targetUrl: entry.targetUrl,
+          clickCount: entry.clickCount,
+          uniqueDeliveryCount: entry.deliveryIds.size > 0 ? entry.deliveryIds.size : entry.clickCount,
+          latestClickAt: entry.latestClickAt,
+        }))
+        .sort((left, right) => {
+          if (right.clickCount !== left.clickCount) {
+            return right.clickCount - left.clickCount;
+          }
+          return Date.parse(right.latestClickAt ?? '') - Date.parse(left.latestClickAt ?? '');
+        })
+        .slice(0, 5),
+    [runEvents]
+  );
 
   useEffect(() => {
     if (!run) return;
@@ -259,6 +395,10 @@ export function AdminFilemakerCampaignRunPage(): React.JSX.Element {
         return {
           ...delivery,
           status: nextStatus,
+          failureCategory:
+            nextStatus === 'failed' || nextStatus === 'bounced'
+              ? delivery.failureCategory ?? 'unknown'
+              : null,
           sentAt: nextStatus === 'sent' ? delivery.sentAt ?? now : null,
           lastError:
             nextStatus === 'failed' || nextStatus === 'bounced'
@@ -522,6 +662,18 @@ export function AdminFilemakerCampaignRunPage(): React.JSX.Element {
         <Badge variant='outline' className='text-[10px]'>
           Queued: {queuedDeliveryCount}
         </Badge>
+        <Badge variant='outline' className='text-[10px]'>
+          Opened: {openedEventCount} ({uniqueOpenedDeliveryCount} unique)
+        </Badge>
+        <Badge variant='outline' className='text-[10px]'>
+          Clicked: {clickedEventCount} ({uniqueClickedDeliveryCount} unique)
+        </Badge>
+        <Badge variant='outline' className='text-[10px]'>
+          Unsubscribed: {unsubscribeEventCount}
+        </Badge>
+        <Badge variant='outline' className='text-[10px]'>
+          Restored: {resubscribedEventCount}
+        </Badge>
       </div>
 
       <FormSection title='Run Summary' className='space-y-3 p-4'>
@@ -541,6 +693,42 @@ export function AdminFilemakerCampaignRunPage(): React.JSX.Element {
           <div>
             <div className='text-[11px] text-gray-500'>Completed</div>
             <div>{formatTimestamp(run.completedAt)}</div>
+          </div>
+          <div>
+            <div className='text-[11px] text-gray-500'>Opens Recorded</div>
+            <div>
+              {openedEventCount} total • {uniqueOpenedDeliveryCount} unique
+            </div>
+          </div>
+          <div>
+            <div className='text-[11px] text-gray-500'>Latest Open</div>
+            <div>{formatTimestamp(latestOpenedAt)}</div>
+          </div>
+          <div>
+            <div className='text-[11px] text-gray-500'>Clicks Recorded</div>
+            <div>
+              {clickedEventCount} total • {uniqueClickedDeliveryCount} unique
+            </div>
+          </div>
+          <div>
+            <div className='text-[11px] text-gray-500'>Latest Click</div>
+            <div>{formatTimestamp(latestClickedAt)}</div>
+          </div>
+          <div>
+            <div className='text-[11px] text-gray-500'>Unsubscribes Recorded</div>
+            <div>{unsubscribeEventCount}</div>
+          </div>
+          <div>
+            <div className='text-[11px] text-gray-500'>Latest Opt-out</div>
+            <div>{formatTimestamp(latestUnsubscribeAt)}</div>
+          </div>
+          <div>
+            <div className='text-[11px] text-gray-500'>Restores Recorded</div>
+            <div>{resubscribedEventCount}</div>
+          </div>
+          <div>
+            <div className='text-[11px] text-gray-500'>Latest Restore</div>
+            <div>{formatTimestamp(latestResubscribedAt)}</div>
           </div>
         </div>
       </FormSection>
@@ -563,6 +751,9 @@ export function AdminFilemakerCampaignRunPage(): React.JSX.Element {
                     {formatTimestamp(event.createdAt)}
                     {event.actor ? ` • ${event.actor}` : ''}
                   </div>
+                  {event.targetUrl ? (
+                    <div className='text-[11px] text-sky-300 break-all'>{event.targetUrl}</div>
+                  ) : null}
                 </div>
                 <div className='flex flex-wrap gap-2'>
                   <Badge variant='outline' className='text-[10px] capitalize'>
@@ -585,6 +776,29 @@ export function AdminFilemakerCampaignRunPage(): React.JSX.Element {
         )}
       </FormSection>
 
+      <FormSection title='Clicked Links' className='space-y-3 p-4'>
+        {topClickedLinks.length === 0 ? (
+          <div className='text-sm text-gray-500'>
+            No tracked click activity has been recorded for this run yet.
+          </div>
+        ) : (
+          topClickedLinks.map((link) => (
+            <div
+              key={link.targetUrl}
+              className='rounded-md border border-border/60 bg-card/25 p-3 text-sm text-gray-300'
+            >
+              <div className='break-all font-medium text-sky-300'>{link.targetUrl}</div>
+              <div className='mt-1 text-[11px] text-gray-500'>
+                {link.clickCount} clicks • {link.uniqueDeliveryCount} unique deliveries
+              </div>
+              <div className='text-[11px] text-gray-500'>
+                Latest click: {formatTimestamp(link.latestClickAt)}
+              </div>
+            </div>
+          ))
+        )}
+      </FormSection>
+
       <FormSection title='Recipient Deliveries' className='space-y-3 p-4'>
         {deliveries.length === 0 ? (
           <div className='text-sm text-gray-500'>
@@ -592,6 +806,14 @@ export function AdminFilemakerCampaignRunPage(): React.JSX.Element {
           </div>
         ) : (
           deliveries.map((delivery: FilemakerEmailCampaignDelivery) => {
+            const openedForDelivery = runEvents.some(
+              (event: FilemakerEmailCampaignEvent): boolean =>
+                event.type === 'opened' && event.deliveryId === delivery.id
+            );
+            const clickedForDelivery = runEvents.some(
+              (event: FilemakerEmailCampaignEvent): boolean =>
+                event.type === 'clicked' && event.deliveryId === delivery.id
+            );
             const person =
               delivery.partyKind === 'person'
                 ? getFilemakerPersonById(database, delivery.partyId)
@@ -618,13 +840,38 @@ export function AdminFilemakerCampaignRunPage(): React.JSX.Element {
                       {delivery.emailAddress} • {delivery.partyKind}
                     </div>
                   </div>
-                  <Badge variant='outline' className='text-[10px] capitalize'>
-                    {DELIVERY_STATUS_LABELS[delivery.status]}
-                  </Badge>
+                  <div className='flex flex-wrap gap-2'>
+                    <Badge variant='outline' className='text-[10px] capitalize'>
+                      {DELIVERY_STATUS_LABELS[delivery.status]}
+                    </Badge>
+                    {delivery.provider ? (
+                      <Badge variant='outline' className='text-[10px] uppercase'>
+                        {delivery.provider}
+                      </Badge>
+                    ) : null}
+                    {delivery.failureCategory ? (
+                      <Badge variant='outline' className='text-[10px] capitalize'>
+                        {delivery.failureCategory.replaceAll('_', ' ')}
+                      </Badge>
+                    ) : null}
+                    {openedForDelivery ? (
+                      <Badge variant='outline' className='text-[10px] capitalize'>
+                        Opened
+                      </Badge>
+                    ) : null}
+                    {clickedForDelivery ? (
+                      <Badge variant='outline' className='text-[10px] capitalize'>
+                        Clicked
+                      </Badge>
+                    ) : null}
+                  </div>
                 </div>
                 <div className='text-[11px] text-gray-500'>
                   Updated: {formatTimestamp(delivery.updatedAt)}
                 </div>
+                {delivery.providerMessage ? (
+                  <div className='text-[11px] text-sky-300'>{delivery.providerMessage}</div>
+                ) : null}
                 {delivery.lastError && (
                   <div className='text-[11px] text-amber-300'>{delivery.lastError}</div>
                 )}

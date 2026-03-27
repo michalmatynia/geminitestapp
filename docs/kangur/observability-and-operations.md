@@ -39,6 +39,10 @@ because they share the same `/api/kangur/*` backend and observability sources.
 - Performance artifact:
   - `docs/metrics/kangur-performance-latest.json`
   - `docs/metrics/kangur-performance-latest.md`
+- Public web analytics mount:
+  - `src/app/(frontend)/kangur/layout.tsx`
+  - `src/features/kangur/ui/FrontendPublicOwnerKangurShell.tsx`
+  - uses `@vercel/analytics` for pageview coverage on canonical Kangur web routes and root-owned public-owner routes only
 - Startup behavior:
   - mobile startup and home-shell regressions should be correlated with the Kangur performance artifact before treating them as isolated client bugs
 

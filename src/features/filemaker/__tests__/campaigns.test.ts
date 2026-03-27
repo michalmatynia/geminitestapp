@@ -14,6 +14,8 @@ import {
   resolveFilemakerEmailCampaignAudiencePreview,
   resolveFilemakerEmailCampaignRunStatusFromDeliveries,
   summarizeFilemakerEmailCampaignAnalytics,
+  summarizeFilemakerEmailCampaignDeliverabilityOverview,
+  summarizeFilemakerEmailCampaignRecipientActivity,
   summarizeFilemakerEmailCampaignRunDeliveries,
   syncFilemakerEmailCampaignRunWithDeliveries,
   evaluateFilemakerEmailCampaignLaunch,
@@ -681,6 +683,79 @@ describe('filemaker campaign settings', () => {
             createdAt: '2026-03-28T10:06:00.000Z',
             updatedAt: '2026-03-28T10:06:00.000Z',
           },
+          {
+            id: 'event-3',
+            campaignId: 'campaign-analytics',
+            runId: 'run-1',
+            deliveryId: 'delivery-1',
+            type: 'opened',
+            message: 'jan@example.com opened the campaign email.',
+            createdAt: '2026-03-28T12:00:00.000Z',
+            updatedAt: '2026-03-28T12:00:00.000Z',
+          },
+          {
+            id: 'event-3b',
+            campaignId: 'campaign-analytics',
+            runId: 'run-1',
+            deliveryId: 'delivery-1',
+            type: 'opened',
+            message: 'jan@example.com reopened the campaign email.',
+            createdAt: '2026-03-28T12:05:00.000Z',
+            updatedAt: '2026-03-28T12:05:00.000Z',
+          },
+          {
+            id: 'event-4',
+            campaignId: 'campaign-analytics',
+            runId: 'run-1',
+            deliveryId: 'delivery-1',
+            type: 'clicked',
+            targetUrl: 'https://destination.example.com/offer',
+            message: 'jan@example.com clicked https://destination.example.com/offer.',
+            createdAt: '2026-03-28T13:00:00.000Z',
+            updatedAt: '2026-03-28T13:00:00.000Z',
+          },
+          {
+            id: 'event-4b',
+            campaignId: 'campaign-analytics',
+            runId: 'run-1',
+            deliveryId: 'delivery-1',
+            type: 'clicked',
+            targetUrl: 'https://destination.example.com/offer',
+            message: 'jan@example.com clicked https://destination.example.com/offer again.',
+            createdAt: '2026-03-28T13:05:00.000Z',
+            updatedAt: '2026-03-28T13:05:00.000Z',
+          },
+          {
+            id: 'event-4c',
+            campaignId: 'campaign-analytics',
+            runId: 'run-1',
+            deliveryId: 'delivery-2',
+            type: 'clicked',
+            targetUrl: 'https://destination.example.com/secondary',
+            message: 'hello@acme.test clicked https://destination.example.com/secondary.',
+            createdAt: '2026-03-28T13:07:00.000Z',
+            updatedAt: '2026-03-28T13:07:00.000Z',
+          },
+          {
+            id: 'event-5',
+            campaignId: 'campaign-analytics',
+            runId: 'run-1',
+            deliveryId: 'delivery-1',
+            type: 'unsubscribed',
+            message: 'jan@example.com unsubscribed after delivery.',
+            createdAt: '2026-03-29T09:00:00.000Z',
+            updatedAt: '2026-03-29T09:00:00.000Z',
+          },
+          {
+            id: 'event-6',
+            campaignId: 'campaign-analytics',
+            runId: 'run-1',
+            deliveryId: 'delivery-1',
+            type: 'resubscribed',
+            message: 'jan@example.com restored delivery later.',
+            createdAt: '2026-03-30T11:00:00.000Z',
+            updatedAt: '2026-03-30T11:00:00.000Z',
+          },
         ],
       })
     );
@@ -724,11 +799,491 @@ describe('filemaker campaign settings', () => {
         failureRatePercent: 33.3,
         bounceRatePercent: 33.3,
         suppressionImpactCount: 2,
+        openCount: 2,
+        openRatePercent: 200,
+        uniqueOpenCount: 1,
+        uniqueOpenRatePercent: 100,
+        clickCount: 3,
+        clickRatePercent: 300,
+        uniqueClickCount: 2,
+        uniqueClickRatePercent: 200,
+        unsubscribeCount: 1,
+        unsubscribeRatePercent: 100,
+        resubscribeCount: 1,
+        resubscribeRatePercent: 100,
+        netUnsubscribeCount: 0,
+        netUnsubscribeRatePercent: 0,
         latestRunStatus: 'completed',
         latestRunAt: '2026-03-28T10:00:00.000Z',
-        latestActivityAt: '2026-03-28T10:06:00.000Z',
-        eventCount: 2,
+        latestActivityAt: '2026-03-30T11:00:00.000Z',
+        latestOpenAt: '2026-03-28T12:05:00.000Z',
+        latestClickAt: '2026-03-28T13:07:00.000Z',
+        latestUnsubscribeAt: '2026-03-29T09:00:00.000Z',
+        latestResubscribeAt: '2026-03-30T11:00:00.000Z',
+        eventCount: 9,
       })
     );
+    expect(analytics.topClickedLinks).toEqual([
+      expect.objectContaining({
+        targetUrl: 'https://destination.example.com/offer',
+        clickCount: 2,
+        uniqueDeliveryCount: 1,
+        clickRatePercent: 100,
+        latestClickAt: '2026-03-28T13:05:00.000Z',
+      }),
+      expect.objectContaining({
+        targetUrl: 'https://destination.example.com/secondary',
+        clickCount: 1,
+        uniqueDeliveryCount: 1,
+        clickRatePercent: 100,
+        latestClickAt: '2026-03-28T13:07:00.000Z',
+      }),
+    ]);
+  });
+
+  it('summarizes deliverability overview with alerts, domain health, and recent issues', () => {
+    const database = createDatabase();
+    const campaignRegistry = parseFilemakerEmailCampaignRegistry(
+      JSON.stringify({
+        version: 1,
+        campaigns: [
+          createFilemakerEmailCampaign({
+            id: 'campaign-1',
+            name: 'Expo follow-up',
+            status: 'active',
+            subject: 'Follow-up',
+          }),
+          createFilemakerEmailCampaign({
+            id: 'campaign-2',
+            name: 'Dormant leads',
+            status: 'active',
+            subject: 'Re-engage',
+          }),
+        ],
+      })
+    );
+    const runRegistry = parseFilemakerEmailCampaignRunRegistry(
+      JSON.stringify({
+        version: 1,
+        runs: [
+          createFilemakerEmailCampaignRun({
+            id: 'run-1',
+            campaignId: 'campaign-1',
+            mode: 'live',
+            status: 'completed',
+            recipientCount: 2,
+            deliveredCount: 1,
+            failedCount: 1,
+            skippedCount: 0,
+            createdAt: '2026-03-27T10:00:00.000Z',
+            updatedAt: '2026-03-27T10:15:00.000Z',
+          }),
+          createFilemakerEmailCampaignRun({
+            id: 'run-2',
+            campaignId: 'campaign-2',
+            mode: 'live',
+            status: 'running',
+            recipientCount: 2,
+            deliveredCount: 0,
+            failedCount: 1,
+            skippedCount: 0,
+            createdAt: '2026-03-27T09:30:00.000Z',
+            updatedAt: '2026-03-27T10:20:00.000Z',
+          }),
+        ],
+      })
+    );
+    const deliveryRegistry = parseFilemakerEmailCampaignDeliveryRegistry(
+      JSON.stringify({
+        version: 1,
+        deliveries: [
+          {
+            id: 'delivery-1',
+            campaignId: 'campaign-1',
+            runId: 'run-1',
+            emailId: 'email-1',
+            emailAddress: 'jan@example.com',
+            partyKind: 'person',
+            partyId: 'person-1',
+            status: 'sent',
+            sentAt: '2026-03-27T10:05:00.000Z',
+            createdAt: '2026-03-27T10:00:00.000Z',
+            updatedAt: '2026-03-27T10:05:00.000Z',
+          },
+          {
+            id: 'delivery-2',
+            campaignId: 'campaign-1',
+            runId: 'run-1',
+            emailId: 'email-2',
+            emailAddress: 'hello@acme.test',
+            partyKind: 'organization',
+            partyId: 'organization-1',
+            status: 'bounced',
+            lastError: 'Mailbox bounced the message.',
+            createdAt: '2026-03-27T10:00:00.000Z',
+            updatedAt: '2026-03-27T10:10:00.000Z',
+          },
+          {
+            id: 'delivery-3',
+            campaignId: 'campaign-2',
+            runId: 'run-2',
+            emailId: 'email-1',
+            emailAddress: 'sales@example.com',
+            partyKind: 'person',
+            partyId: 'person-1',
+            status: 'failed',
+            lastError: 'Provider rejected the message.',
+            createdAt: '2026-03-27T09:45:00.000Z',
+            updatedAt: '2026-03-27T10:15:00.000Z',
+          },
+          {
+            id: 'delivery-4',
+            campaignId: 'campaign-2',
+            runId: 'run-2',
+            emailId: 'email-2',
+            emailAddress: 'ops@acme.test',
+            partyKind: 'organization',
+            partyId: 'organization-1',
+            status: 'queued',
+            createdAt: '2026-03-27T08:00:00.000Z',
+            updatedAt: '2026-03-27T08:00:00.000Z',
+          },
+        ],
+      })
+    );
+    const suppressionRegistry = parseFilemakerEmailCampaignSuppressionRegistry(
+      JSON.stringify({
+        version: 1,
+        entries: [
+          createFilemakerEmailCampaignSuppressionEntry({
+            emailAddress: 'jan@example.com',
+            reason: 'unsubscribed',
+            actor: 'recipient',
+            createdAt: iso,
+            updatedAt: iso,
+          }),
+          createFilemakerEmailCampaignSuppressionEntry({
+            emailAddress: 'blocked@acme.test',
+            reason: 'bounced',
+            actor: 'system',
+            createdAt: iso,
+            updatedAt: iso,
+          }),
+        ],
+      })
+    );
+
+    const overview = summarizeFilemakerEmailCampaignDeliverabilityOverview({
+      database,
+      campaignRegistry,
+      runRegistry,
+      deliveryRegistry,
+      suppressionRegistry,
+      now: new Date('2026-03-27T12:00:00.000Z'),
+    });
+
+    expect(overview).toEqual(
+      expect.objectContaining({
+        campaignCount: 2,
+        liveRunCount: 2,
+        totalRecipients: 4,
+        processedCount: 3,
+        acceptedCount: 1,
+        failedCount: 1,
+        bouncedCount: 1,
+        queuedCount: 1,
+        skippedCount: 0,
+        deliveryRatePercent: 25,
+        failureRatePercent: 50,
+        bounceRatePercent: 25,
+        suppressionCount: 2,
+        suppressionRatePercent: 66.7,
+        oldestQueuedAt: '2026-03-27T08:00:00.000Z',
+        oldestQueuedAgeMinutes: 240,
+      })
+    );
+    expect(overview.alerts.map((alert) => alert.code)).toEqual(
+      expect.arrayContaining([
+        'global_bounce_rate',
+        'global_failure_rate',
+        'queue_backlog',
+        'suppression_pressure',
+        'campaign_health',
+      ])
+    );
+    expect(overview.domainHealth[0]).toEqual(
+      expect.objectContaining({
+        domain: 'acme.test',
+        totalDeliveries: 2,
+        bouncedCount: 1,
+        queuedCount: 1,
+        suppressionCount: 1,
+      })
+    );
+    expect(overview.domainHealth[1]).toEqual(
+      expect.objectContaining({
+        domain: 'example.com',
+        totalDeliveries: 2,
+        sentCount: 1,
+        failedCount: 1,
+        suppressionCount: 1,
+      })
+    );
+    expect(overview.campaignHealth[0]).toEqual(
+      expect.objectContaining({
+        campaignId: 'campaign-1',
+        alertLevel: 'critical',
+      })
+    );
+    expect(overview.recentDeliveryIssues[0]).toEqual(
+      expect.objectContaining({
+        deliveryId: 'delivery-3',
+        campaignId: 'campaign-2',
+        status: 'failed',
+        domain: 'example.com',
+      })
+    );
+  });
+
+  it('summarizes recipient-level delivery and engagement history for the preferences center', () => {
+    const campaign = createFilemakerEmailCampaign({
+      id: 'campaign-analytics',
+      name: 'Analytics campaign',
+      status: 'active',
+      subject: 'Campaign analytics',
+    });
+    const campaignRegistry = parseFilemakerEmailCampaignRegistry(
+      JSON.stringify({
+        version: 1,
+        campaigns: [campaign],
+      })
+    );
+    const deliveryRegistry = parseFilemakerEmailCampaignDeliveryRegistry(
+      JSON.stringify({
+        version: 1,
+        deliveries: [
+          {
+            id: 'delivery-1',
+            campaignId: 'campaign-analytics',
+            runId: 'run-1',
+            emailId: 'email-1',
+            emailAddress: 'jan@example.com',
+            partyKind: 'person',
+            partyId: 'person-1',
+            status: 'sent',
+            sentAt: '2026-03-27T10:05:00.000Z',
+            createdAt: '2026-03-27T10:00:00.000Z',
+            updatedAt: '2026-03-27T10:05:00.000Z',
+          },
+          {
+            id: 'delivery-3',
+            campaignId: 'campaign-analytics',
+            runId: 'run-2',
+            emailId: 'email-1',
+            emailAddress: 'jan@example.com',
+            partyKind: 'person',
+            partyId: 'person-1',
+            status: 'skipped',
+            createdAt: '2026-03-28T10:00:00.000Z',
+            updatedAt: '2026-03-28T10:01:00.000Z',
+          },
+        ],
+      })
+    );
+    const eventRegistry = parseFilemakerEmailCampaignEventRegistry(
+      JSON.stringify({
+        version: 1,
+        events: [
+          {
+            id: 'event-3',
+            campaignId: 'campaign-analytics',
+            runId: 'run-1',
+            deliveryId: 'delivery-1',
+            type: 'opened',
+            message: 'jan@example.com opened the campaign email.',
+            createdAt: '2026-03-28T12:00:00.000Z',
+            updatedAt: '2026-03-28T12:00:00.000Z',
+          },
+          {
+            id: 'event-4',
+            campaignId: 'campaign-analytics',
+            runId: 'run-1',
+            deliveryId: 'delivery-1',
+            type: 'clicked',
+            targetUrl: 'https://destination.example.com/offer',
+            message: 'jan@example.com clicked https://destination.example.com/offer.',
+            createdAt: '2026-03-28T13:00:00.000Z',
+            updatedAt: '2026-03-28T13:00:00.000Z',
+          },
+          {
+            id: 'event-5',
+            campaignId: 'campaign-analytics',
+            runId: 'run-1',
+            deliveryId: 'delivery-1',
+            type: 'unsubscribed',
+            message: 'jan@example.com unsubscribed after delivery.',
+            createdAt: '2026-03-29T09:00:00.000Z',
+            updatedAt: '2026-03-29T09:00:00.000Z',
+          },
+          {
+            id: 'event-6',
+            campaignId: 'campaign-analytics',
+            runId: 'run-1',
+            deliveryId: 'delivery-1',
+            type: 'resubscribed',
+            message: 'jan@example.com restored delivery later.',
+            createdAt: '2026-03-30T11:00:00.000Z',
+            updatedAt: '2026-03-30T11:00:00.000Z',
+          },
+        ],
+      })
+    );
+
+    const summary = summarizeFilemakerEmailCampaignRecipientActivity({
+      emailAddress: 'Jan@Example.com',
+      campaignId: 'campaign-analytics',
+      campaignRegistry,
+      deliveryRegistry,
+      eventRegistry,
+    });
+
+    expect(summary).toEqual(
+      expect.objectContaining({
+        emailAddress: 'jan@example.com',
+        campaignId: 'campaign-analytics',
+        campaignName: 'Analytics campaign',
+        deliveryCount: 2,
+        sentCount: 1,
+        skippedCount: 1,
+        openCount: 1,
+        clickCount: 1,
+        unsubscribeCount: 1,
+        resubscribeCount: 1,
+        latestSentAt: '2026-03-27T10:05:00.000Z',
+        latestOpenAt: '2026-03-28T12:00:00.000Z',
+        latestClickAt: '2026-03-28T13:00:00.000Z',
+        latestUnsubscribeAt: '2026-03-29T09:00:00.000Z',
+        latestResubscribeAt: '2026-03-30T11:00:00.000Z',
+      })
+    );
+    expect(summary.recentActivity.map((entry) => entry.type)).toEqual([
+      'resubscribed',
+      'unsubscribed',
+      'clicked',
+      'opened',
+      'delivery_sent',
+    ]);
+  });
+
+  it('summarizes recipient activity across all campaigns when no campaign scope is provided', () => {
+    const campaignRegistry = parseFilemakerEmailCampaignRegistry(
+      JSON.stringify({
+        version: 1,
+        campaigns: [
+          createFilemakerEmailCampaign({
+            id: 'campaign-a',
+            name: 'Campaign A',
+            status: 'active',
+            subject: 'Campaign A',
+          }),
+          createFilemakerEmailCampaign({
+            id: 'campaign-b',
+            name: 'Campaign B',
+            status: 'active',
+            subject: 'Campaign B',
+          }),
+        ],
+      })
+    );
+    const deliveryRegistry = parseFilemakerEmailCampaignDeliveryRegistry(
+      JSON.stringify({
+        version: 1,
+        deliveries: [
+          {
+            id: 'delivery-a',
+            campaignId: 'campaign-a',
+            runId: 'run-a',
+            emailId: 'email-1',
+            emailAddress: 'jan@example.com',
+            partyKind: 'person',
+            partyId: 'person-1',
+            status: 'sent',
+            sentAt: '2026-03-27T10:05:00.000Z',
+            createdAt: '2026-03-27T10:00:00.000Z',
+            updatedAt: '2026-03-27T10:05:00.000Z',
+          },
+          {
+            id: 'delivery-b',
+            campaignId: 'campaign-b',
+            runId: 'run-b',
+            emailId: 'email-1',
+            emailAddress: 'jan@example.com',
+            partyKind: 'person',
+            partyId: 'person-1',
+            status: 'bounced',
+            createdAt: '2026-03-28T08:00:00.000Z',
+            updatedAt: '2026-03-28T08:02:00.000Z',
+          },
+        ],
+      })
+    );
+    const eventRegistry = parseFilemakerEmailCampaignEventRegistry(
+      JSON.stringify({
+        version: 1,
+        events: [
+          {
+            id: 'event-open-a',
+            campaignId: 'campaign-a',
+            runId: 'run-a',
+            deliveryId: 'delivery-a',
+            type: 'opened',
+            message: 'jan@example.com opened campaign A.',
+            createdAt: '2026-03-27T12:00:00.000Z',
+            updatedAt: '2026-03-27T12:00:00.000Z',
+          },
+          {
+            id: 'event-click-b',
+            campaignId: 'campaign-b',
+            runId: 'run-b',
+            deliveryId: 'delivery-b',
+            type: 'clicked',
+            targetUrl: 'https://destination.example.com/b',
+            message: 'jan@example.com clicked campaign B.',
+            createdAt: '2026-03-28T09:00:00.000Z',
+            updatedAt: '2026-03-28T09:00:00.000Z',
+          },
+        ],
+      })
+    );
+
+    const summary = summarizeFilemakerEmailCampaignRecipientActivity({
+      emailAddress: 'Jan@Example.com',
+      campaignId: null,
+      campaignRegistry,
+      deliveryRegistry,
+      eventRegistry,
+    });
+
+    expect(summary).toEqual(
+      expect.objectContaining({
+        emailAddress: 'jan@example.com',
+        campaignId: null,
+        campaignName: null,
+        deliveryCount: 2,
+        sentCount: 1,
+        bouncedCount: 1,
+        openCount: 1,
+        clickCount: 1,
+        latestSentAt: '2026-03-27T10:05:00.000Z',
+        latestOpenAt: '2026-03-27T12:00:00.000Z',
+        latestClickAt: '2026-03-28T09:00:00.000Z',
+      })
+    );
+    expect(summary.recentActivity.map((entry) => entry.campaignName)).toEqual([
+      'Campaign B',
+      'Campaign B',
+      'Campaign A',
+      'Campaign A',
+    ]);
   });
 });

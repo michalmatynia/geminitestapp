@@ -2,6 +2,7 @@
 
 import '@/app/(frontend)/kangur/kangur.css';
 
+import { Analytics } from '@vercel/analytics/next';
 import { usePathname } from 'next/navigation';
 
 import { KangurFeatureRouteShell } from '@/features/kangur/ui/KangurFeatureRouteShell';
@@ -39,18 +40,21 @@ export function FrontendPublicOwnerKangurShell({
   const embedded = embeddedOverride ?? normalizedPathname === '/';
 
   return (
-    <KangurStorefrontAppearanceProvider
-      initialAppearance={initialAppearance}
-    >
-      <KangurSurfaceClassSync>
-        <KangurMainRoleProvider suppressMainRole>
-          <KangurFeatureRouteShell
-            basePath='/'
-            embedded={embedded}
-            forceBodyScrollLock={false}
-          />
-        </KangurMainRoleProvider>
-      </KangurSurfaceClassSync>
-    </KangurStorefrontAppearanceProvider>
+    <>
+      <KangurStorefrontAppearanceProvider
+        initialAppearance={initialAppearance}
+      >
+        <KangurSurfaceClassSync>
+          <KangurMainRoleProvider suppressMainRole>
+            <KangurFeatureRouteShell
+              basePath='/'
+              embedded={embedded}
+              forceBodyScrollLock={false}
+            />
+          </KangurMainRoleProvider>
+        </KangurSurfaceClassSync>
+      </KangurStorefrontAppearanceProvider>
+      <Analytics />
+    </>
   );
 }

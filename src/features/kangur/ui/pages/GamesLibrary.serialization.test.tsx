@@ -24,6 +24,9 @@ const {
   lessonGameSectionsPendingState,
   replaceLessonGameSectionsPendingState,
   replaceLessonGameSectionsMutateAsyncMock,
+  gameInstancesByGameIdState,
+  replaceGameInstancesPendingState,
+  replaceGameInstancesMutateAsyncMock,
   useKangurGameLibraryPageMock,
 } = vi.hoisted(() => ({
   pageDataState: {
@@ -82,6 +85,20 @@ const {
     }
     return input.sections;
   }),
+  gameInstancesByGameIdState: {
+    value: {} as Record<string, Array<Record<string, unknown>>>,
+  },
+  replaceGameInstancesPendingState: {
+    value: false,
+  },
+  replaceGameInstancesMutateAsyncMock: vi.fn(
+    async (input: { gameId?: string; instances: Array<Record<string, unknown>> }) => {
+      if ('gameId' in input && typeof input.gameId === 'string') {
+        gameInstancesByGameIdState.value[input.gameId] = input.instances;
+      }
+      return input.instances;
+    }
+  ),
   useKangurGameLibraryPageMock: vi.fn(),
 }));
 const ALL_TEST_GAMES = createDefaultKangurGames();
@@ -273,6 +290,41 @@ const messageMap = {
   'KangurGamesLibraryPage.modal.settingsSummary.modeSwitchHidden': 'Mode switch hidden',
   'KangurGamesLibraryPage.modal.settingsSummary.taskTitleHidden': 'Task title hidden',
   'KangurGamesLibraryPage.modal.settingsSummary.timeDisplayHidden': 'Time display hidden',
+  'KangurGamesLibraryPage.modal.instances.contentSetLabel': 'Content set',
+  'KangurGamesLibraryPage.modal.instances.titleLabel': 'Instance title',
+  'KangurGamesLibraryPage.modal.instances.contentKind.default_content': 'Bundled content',
+  'KangurGamesLibraryPage.modal.instances.contentKind.clock_section': 'Clock section',
+  'KangurGamesLibraryPage.modal.instances.contentKind.logical_pattern_set': 'Pattern set',
+  'KangurGamesLibraryPage.modal.instances.contentKind.geometry_shape_pack': 'Shape pack',
+  'KangurGamesLibraryPage.modal.instances.feedSummary.defaultContent':
+    'Bundled runtime content',
+  'KangurGamesLibraryPage.modal.instances.feedSummary.logicalPatternsWorkshop':
+    'Logical workshop',
+  'KangurGamesLibraryPage.modal.instances.feedSummary.alphabetOrder':
+    'Alphabet order',
+  'KangurGamesLibraryPage.modal.instances.feedSummary.geometryShapeCount':
+    '{count} shapes',
+  'KangurGamesLibraryPage.modal.instances.descriptionLabel': 'Instance description',
+  'KangurGamesLibraryPage.modal.instances.emojiLabel': 'Instance icon',
+  'KangurGamesLibraryPage.modal.instances.enabledLabel': 'Instance visible in the library',
+  'KangurGamesLibraryPage.modal.instances.currentEngineSettingsTitle': 'Current engine settings',
+  'KangurGamesLibraryPage.modal.instances.previewTitle': 'Instance preview',
+  'KangurGamesLibraryPage.modal.instances.previewDescription':
+    'Review the current content payload and engine behavior that will be saved together as one launchable instance.',
+  'KangurGamesLibraryPage.modal.instances.initialModeAriaLabel': 'Instance initial mode',
+  'KangurGamesLibraryPage.modal.instances.showModeSwitchAriaLabel':
+    'Instance show mode switch',
+  'KangurGamesLibraryPage.modal.instances.showTaskTitleAriaLabel':
+    'Instance show task title',
+  'KangurGamesLibraryPage.modal.instances.showTimeDisplayAriaLabel':
+    'Instance show time display',
+  'KangurGamesLibraryPage.modal.instances.showHourHandAriaLabel':
+    'Instance show hour hand',
+  'KangurGamesLibraryPage.modal.instances.showMinuteHandAriaLabel':
+    'Instance show minute hand',
+  'KangurGamesLibraryPage.modal.instances.createButton': 'Create instance',
+  'KangurGamesLibraryPage.modal.instances.openButton': 'Open instance',
+  'KangurGamesLibraryPage.modal.instances.contentSetFallback': 'Default content set',
   'KangurGamesLibraryPage.modal.validation.attachedLessonRequired':
     'Attach this game section to a lesson hub before saving.',
   'KangurGamesLibraryPage.modal.validation.sectionNameRequired':
@@ -541,6 +593,17 @@ vi.mock('@/features/kangur/ui/hooks/useKangurLessonGameSections', () => ({
   }),
 }));
 
+vi.mock('@/features/kangur/ui/hooks/useKangurGameInstances', () => ({
+  useKangurGameInstances: (input?: { gameId?: string }) => ({
+    data: (input?.gameId ? gameInstancesByGameIdState.value[input.gameId] : undefined) ?? [],
+    isPending: false,
+  }),
+  useReplaceKangurGameInstances: () => ({
+    isPending: replaceGameInstancesPendingState.value,
+    mutateAsync: replaceGameInstancesMutateAsyncMock,
+  }),
+}));
+
 vi.mock('@/features/kangur/ui/hooks/useKangurRouteNavigator', () => ({
   useKangurRouteNavigator: () => ({
     replace: replaceMock,
@@ -552,6 +615,7 @@ vi.mock('@/features/kangur/ui/hooks/useKangurRoutePageReady', () => ({
 }));
 
 vi.mock('@/features/kangur/ui/services/game-launch', () => ({
+  buildKangurGameInstanceLaunchHref: () => '/games/open-instance',
   buildKangurGameLaunchHref: () => '/games/open',
   buildKangurGameLessonHref: () => '/lessons/open',
 }));
@@ -640,6 +704,23 @@ const buildPageDataForGameIds = (...gameIds: string[]) =>
     ),
   });
 
+const getHubClockPreview = (): HTMLElement =>
+  within(screen.getByTestId('games-library-hub-clock-preview')).getByTestId(
+    'clock-training-game-preview'
+  );
+
+const getInstanceClockPreview = (): HTMLElement =>
+  within(screen.getByTestId('games-library-instance-clock-preview')).getByTestId(
+    'clock-training-game-preview'
+  );
+
+const queryHubClockPreview = (): HTMLElement | null => {
+  const hubClockPreview = screen.queryByTestId('games-library-hub-clock-preview');
+  return hubClockPreview
+    ? within(hubClockPreview).queryByTestId('clock-training-game-preview')
+    : null;
+};
+
 const openRuntimeTab = (): void => {
   fireEvent.click(screen.getByRole('tab', { name: 'Runtime' }));
 };
@@ -652,6 +733,7 @@ describe('GamesLibrary serialization audit', () => {
     lessonGameSectionsByGameIdState.value = {};
     lessonGameSectionsPendingState.value = false;
     replaceLessonGameSectionsPendingState.value = false;
+    gameInstancesByGameIdState.value = {};
     sessionState.value = {
       data: {
         expires: '2026-12-31T23:59:59.000Z',
@@ -988,7 +1070,7 @@ describe('GamesLibrary serialization audit', () => {
     render(<GamesLibrary />);
     replaceMock.mockClear();
 
-    fireEvent.click(screen.getByRole('button', { name: 'Clear filters' }));
+    fireEvent.click(screen.getAllByRole('button', { name: 'Clear filters' })[0]!);
 
     expect(replaceMock).toHaveBeenCalledWith('/games?tab=runtime', {
       pageKey: 'GamesLibrary',
@@ -1007,7 +1089,7 @@ describe('GamesLibrary serialization audit', () => {
     render(<GamesLibrary />);
     replaceMock.mockClear();
 
-    fireEvent.click(screen.getByRole('button', { name: 'Clear filters' }));
+    fireEvent.click(screen.getAllByRole('button', { name: 'Clear filters' })[0]!);
 
     expect(replaceMock).toHaveBeenCalledWith('/games?view=compact&tab=runtime', {
       pageKey: 'GamesLibrary',
@@ -1265,28 +1347,24 @@ describe('GamesLibrary serialization audit', () => {
 
     expect(screen.getByTestId('games-library-game-modal')).toBeInTheDocument();
     expect(screen.getByLabelText('Attached hub lesson')).toHaveValue('clock');
-    expect(screen.getByTestId('clock-training-game-preview')).toHaveAttribute(
-      'data-show-minute-hand',
-      'true'
-    );
+    expect(getHubClockPreview()).toHaveAttribute('data-show-minute-hand', 'true');
 
     fireEvent.click(screen.getByRole('button', { name: 'Hide settings' }));
     expect(screen.queryByText('Clock preview settings')).toBeNull();
 
     fireEvent.click(screen.getByRole('button', { name: 'Game settings' }));
     fireEvent.click(screen.getByLabelText('Show minute hand'));
-    fireEvent.change(screen.getByLabelText('Initial mode'), {
-      target: { value: 'challenge' },
-    });
+    fireEvent.change(
+      within(screen.getByTestId('games-library-clock-settings-panel')).getByLabelText(
+        'Initial mode'
+      ),
+      {
+        target: { value: 'challenge' },
+      }
+    );
 
-    expect(screen.getByTestId('clock-training-game-preview')).toHaveAttribute(
-      'data-show-minute-hand',
-      'false'
-    );
-    expect(screen.getByTestId('clock-training-game-preview')).toHaveAttribute(
-      'data-initial-mode',
-      'challenge'
-    );
+    expect(getHubClockPreview()).toHaveAttribute('data-show-minute-hand', 'false');
+    expect(getHubClockPreview()).toHaveAttribute('data-initial-mode', 'challenge');
 
     fireEvent.change(screen.getByLabelText('Section name'), {
       target: { value: 'Clock deck' },
@@ -1299,6 +1377,159 @@ describe('GamesLibrary serialization audit', () => {
 
     expect(screen.getByText('Clock deck')).toBeInTheDocument();
     expect(screen.getAllByText('Mixed drills for the lesson hub.').length).toBeGreaterThan(0);
+  });
+
+  it('creates a saved launchable instance from the current engine settings and selected content set', async () => {
+    pageDataState.value = buildPageDataForGameIds('clock_training');
+    render(<GamesLibrary />);
+
+    const clockCard = document.getElementById('kangur-game-card-clock_training');
+    if (!clockCard) {
+      throw new Error('Clock Training card container not found.');
+    }
+
+    fireEvent.click(within(clockCard).getByRole('button', { name: 'Preview & map' }));
+
+    fireEvent.change(screen.getByLabelText('Content set'), {
+      target: { value: 'clock_training:clock-minutes' },
+    });
+    fireEvent.click(screen.getByLabelText('Instance show minute hand'));
+    fireEvent.change(screen.getByLabelText('Instance initial mode'), {
+      target: { value: 'challenge' },
+    });
+    fireEvent.change(screen.getByLabelText('Instance title'), {
+      target: { value: 'Minute challenge instance' },
+    });
+    fireEvent.change(screen.getByLabelText('Instance description'), {
+      target: { value: 'Launch the minute-only deck with the current challenge settings.' },
+    });
+    fireEvent.change(screen.getByLabelText('Instance icon'), {
+      target: { value: '🕒' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Create instance' }));
+
+    await waitFor(() => {
+      expect(replaceGameInstancesMutateAsyncMock).toHaveBeenCalledWith({
+        gameId: 'clock_training',
+        instances: [
+          expect.objectContaining({
+            contentSetId: 'clock_training:clock-minutes',
+            description:
+              'Launch the minute-only deck with the current challenge settings.',
+            emoji: '🕒',
+            enabled: true,
+            engineOverrides: expect.objectContaining({
+              clockInitialMode: 'challenge',
+              showClockMinuteHand: false,
+            }),
+            gameId: 'clock_training',
+            launchableRuntimeId: 'clock_quiz',
+            title: 'Minute challenge instance',
+          }),
+        ],
+      });
+    });
+
+    const instancePreview = screen.getByTestId('games-library-instance-preview');
+    const instanceClockPreview = getInstanceClockPreview();
+    const savedInstanceCard = screen.getByTestId(/games-library-instance-draft-/);
+
+    expect(within(instancePreview).getByText('Minutes only')).toBeInTheDocument();
+    expect(within(instancePreview).getByText('Clock section')).toBeInTheDocument();
+    expect(within(instancePreview).getByText('Challenge')).toBeInTheDocument();
+    expect(instanceClockPreview).toHaveAttribute('data-section', 'minutes');
+    expect(instanceClockPreview).toHaveAttribute('data-initial-mode', 'challenge');
+    expect(within(savedInstanceCard).getByText('Minute challenge instance')).toBeInTheDocument();
+    expect(within(savedInstanceCard).getByText('Minutes only')).toBeInTheDocument();
+    expect(within(savedInstanceCard).getByText('Clock section')).toBeInTheDocument();
+    expect(within(savedInstanceCard).getByText('Challenge')).toBeInTheDocument();
+    expect(within(savedInstanceCard).getByRole('link', { name: 'Open instance' })).toHaveAttribute(
+      'href',
+      '/games/open-instance'
+    );
+  });
+
+  it('lets instance engine settings diverge from the hub preview settings', () => {
+    pageDataState.value = buildPageDataForGameIds('clock_training');
+    render(<GamesLibrary />);
+
+    const clockCard = document.getElementById('kangur-game-card-clock_training');
+    if (!clockCard) {
+      throw new Error('Clock Training card container not found.');
+    }
+
+    fireEvent.click(within(clockCard).getByRole('button', { name: 'Preview & map' }));
+
+    expect(getHubClockPreview()).toHaveAttribute('data-initial-mode', 'practice');
+    expect(getHubClockPreview()).toHaveAttribute('data-show-minute-hand', 'true');
+    expect(getHubClockPreview()).toHaveAttribute('data-section', 'combined');
+
+    fireEvent.change(screen.getByLabelText('Content set'), {
+      target: { value: 'clock_training:clock-minutes' },
+    });
+    fireEvent.click(screen.getByLabelText('Instance show minute hand'));
+    fireEvent.change(screen.getByLabelText('Instance initial mode'), {
+      target: { value: 'challenge' },
+    });
+
+    expect(getInstanceClockPreview()).toHaveAttribute('data-section', 'minutes');
+    expect(getInstanceClockPreview()).toHaveAttribute('data-initial-mode', 'challenge');
+    expect(getInstanceClockPreview()).toHaveAttribute('data-show-minute-hand', 'false');
+
+    expect(getHubClockPreview()).toHaveAttribute('data-section', 'combined');
+    expect(getHubClockPreview()).toHaveAttribute('data-initial-mode', 'practice');
+    expect(getHubClockPreview()).toHaveAttribute('data-show-minute-hand', 'true');
+  });
+
+  it('loads saved instance engine overrides back into the instance composer when editing', async () => {
+    pageDataState.value = buildPageDataForGameIds('clock_training');
+    gameInstancesByGameIdState.value = {
+      clock_training: [
+        {
+          id: 'clock_instance_minutes',
+          gameId: 'clock_training',
+          launchableRuntimeId: 'clock_quiz',
+          contentSetId: 'clock_training:clock-minutes',
+          title: 'Saved minute challenge',
+          description: 'Reuses minute-only content with custom engine settings.',
+          emoji: '🕒',
+          enabled: true,
+          sortOrder: 1,
+          engineOverrides: {
+            clockInitialMode: 'challenge',
+            showClockHourHand: false,
+            showClockMinuteHand: true,
+            showClockModeSwitch: false,
+            showClockTaskTitle: false,
+            showClockTimeDisplay: false,
+          },
+        },
+      ],
+    };
+
+    render(<GamesLibrary />);
+
+    const clockCard = document.getElementById('kangur-game-card-clock_training');
+    if (!clockCard) {
+      throw new Error('Clock Training card container not found.');
+    }
+
+    fireEvent.click(within(clockCard).getByRole('button', { name: 'Preview & map' }));
+
+    await waitFor(() => {
+      expect(screen.getByLabelText('Content set')).toHaveValue('clock_training:clock-minutes');
+      expect(screen.getByLabelText('Instance initial mode')).toHaveValue('challenge');
+      expect(screen.getByLabelText('Instance show hour hand')).not.toBeChecked();
+      expect(screen.getByLabelText('Instance show minute hand')).toBeChecked();
+      expect(screen.getByLabelText('Instance show mode switch')).not.toBeChecked();
+      expect(screen.getByLabelText('Instance show task title')).not.toBeChecked();
+      expect(screen.getByLabelText('Instance show time display')).not.toBeChecked();
+    });
+
+    const restoredInstanceClockPreview = getInstanceClockPreview();
+
+    expect(restoredInstanceClockPreview).toHaveAttribute('data-section', 'minutes');
+    expect(restoredInstanceClockPreview).toHaveAttribute('data-initial-mode', 'challenge');
   });
 
   it('shows the current unsaved attached lesson in the linked lesson chip list', () => {
@@ -1441,7 +1672,11 @@ describe('GamesLibrary serialization audit', () => {
     expect(screen.getByLabelText('Section name')).toBeDisabled();
     expect(screen.getByLabelText('Section subtext')).toBeDisabled();
     expect(screen.getByLabelText('Clock focus')).toBeDisabled();
-    expect(screen.getByLabelText('Initial mode')).toBeDisabled();
+    expect(
+      within(screen.getByTestId('games-library-clock-settings-panel')).getByLabelText(
+        'Initial mode'
+      )
+    ).toBeDisabled();
     expect(
       within(screen.getByTestId('games-library-saved-section-clock_secondary_section')).getByRole(
         'button',
@@ -1499,14 +1734,8 @@ describe('GamesLibrary serialization audit', () => {
     expect(screen.getByRole('button', { name: 'Save hub section' })).toBeInTheDocument();
     expect(screen.getByLabelText('Attached hub lesson')).toHaveValue('clock');
     expect(screen.getByLabelText('Section name')).toHaveValue('Saved clock deck');
-    expect(screen.getByTestId('clock-training-game-preview')).toHaveAttribute(
-      'data-show-hour-hand',
-      'false'
-    );
-    expect(screen.getByTestId('clock-training-game-preview')).toHaveAttribute(
-      'data-initial-mode',
-      'challenge'
-    );
+    expect(getHubClockPreview()).toHaveAttribute('data-show-hour-hand', 'false');
+    expect(getHubClockPreview()).toHaveAttribute('data-initial-mode', 'challenge');
 
     fireEvent.click(screen.getByRole('button', { name: 'New hub section' }));
     expect(screen.getByRole('button', { name: 'Add hub section draft' })).toBeInTheDocument();
@@ -1574,35 +1803,17 @@ describe('GamesLibrary serialization audit', () => {
     fireEvent.click(within(clockCard).getByRole('button', { name: 'Preview & map' }));
 
     expect(screen.getByLabelText('Clock focus')).toHaveValue('hours');
-    expect(screen.getByTestId('clock-training-game-preview')).toHaveAttribute(
-      'data-section',
-      'hours'
-    );
-    expect(screen.getByTestId('clock-training-game-preview')).toHaveAttribute(
-      'data-show-hour-hand',
-      'true'
-    );
-    expect(screen.getByTestId('clock-training-game-preview')).toHaveAttribute(
-      'data-show-minute-hand',
-      'true'
-    );
+    expect(getHubClockPreview()).toHaveAttribute('data-section', 'hours');
+    expect(getHubClockPreview()).toHaveAttribute('data-show-hour-hand', 'true');
+    expect(getHubClockPreview()).toHaveAttribute('data-show-minute-hand', 'true');
 
     fireEvent.change(screen.getByLabelText('Clock focus'), {
       target: { value: 'minutes' },
     });
 
-    expect(screen.getByTestId('clock-training-game-preview')).toHaveAttribute(
-      'data-section',
-      'minutes'
-    );
-    expect(screen.getByTestId('clock-training-game-preview')).toHaveAttribute(
-      'data-show-hour-hand',
-      'true'
-    );
-    expect(screen.getByTestId('clock-training-game-preview')).toHaveAttribute(
-      'data-show-minute-hand',
-      'true'
-    );
+    expect(getHubClockPreview()).toHaveAttribute('data-section', 'minutes');
+    expect(getHubClockPreview()).toHaveAttribute('data-show-hour-hand', 'true');
+    expect(getHubClockPreview()).toHaveAttribute('data-show-minute-hand', 'true');
 
     fireEvent.click(screen.getByRole('button', { name: 'Save hub section' }));
 
@@ -1636,14 +1847,8 @@ describe('GamesLibrary serialization audit', () => {
     fireEvent.click(screen.getByLabelText('Show hour hand'));
     fireEvent.click(screen.getByLabelText('Show minute hand'));
 
-    expect(screen.getByTestId('clock-training-game-preview')).toHaveAttribute(
-      'data-show-hour-hand',
-      'false'
-    );
-    expect(screen.getByTestId('clock-training-game-preview')).toHaveAttribute(
-      'data-show-minute-hand',
-      'false'
-    );
+    expect(getHubClockPreview()).toHaveAttribute('data-show-hour-hand', 'false');
+    expect(getHubClockPreview()).toHaveAttribute('data-show-minute-hand', 'false');
     expect(screen.getByRole('button', { name: 'Add hub section draft' })).toBeDisabled();
     expect(screen.getByTestId('games-library-draft-validation')).toHaveTextContent(
       'Keep at least one clock hand visible to save this hub section.'
@@ -1703,38 +1908,25 @@ describe('GamesLibrary serialization audit', () => {
     fireEvent.change(screen.getByLabelText('Clock focus'), {
       target: { value: 'minutes' },
     });
-    fireEvent.change(screen.getByLabelText('Initial mode'), {
-      target: { value: 'challenge' },
-    });
+    fireEvent.change(
+      within(screen.getByTestId('games-library-clock-settings-panel')).getByLabelText(
+        'Initial mode'
+      ),
+      {
+        target: { value: 'challenge' },
+      }
+    );
 
     expect(resetButton).toBeEnabled();
-    expect(screen.getByTestId('clock-training-game-preview')).toHaveAttribute(
-      'data-show-minute-hand',
-      'false'
-    );
-    expect(screen.getByTestId('clock-training-game-preview')).toHaveAttribute(
-      'data-section',
-      'minutes'
-    );
-    expect(screen.getByTestId('clock-training-game-preview')).toHaveAttribute(
-      'data-initial-mode',
-      'challenge'
-    );
+    expect(getHubClockPreview()).toHaveAttribute('data-show-minute-hand', 'false');
+    expect(getHubClockPreview()).toHaveAttribute('data-section', 'minutes');
+    expect(getHubClockPreview()).toHaveAttribute('data-initial-mode', 'challenge');
 
     fireEvent.click(resetButton);
 
-    expect(screen.getByTestId('clock-training-game-preview')).toHaveAttribute(
-      'data-show-minute-hand',
-      'true'
-    );
-    expect(screen.getByTestId('clock-training-game-preview')).toHaveAttribute(
-      'data-section',
-      'combined'
-    );
-    expect(screen.getByTestId('clock-training-game-preview')).toHaveAttribute(
-      'data-initial-mode',
-      'practice'
-    );
+    expect(getHubClockPreview()).toHaveAttribute('data-show-minute-hand', 'true');
+    expect(getHubClockPreview()).toHaveAttribute('data-section', 'combined');
+    expect(getHubClockPreview()).toHaveAttribute('data-initial-mode', 'practice');
     expect(resetButton).toBeDisabled();
   });
 
@@ -1789,10 +1981,7 @@ describe('GamesLibrary serialization audit', () => {
     expect(screen.getByRole('button', { name: 'Discard changes' })).toBeInTheDocument();
     expect(screen.getByLabelText('Attached hub lesson')).toHaveValue('calendar');
     expect(screen.getByLabelText('Section name')).toHaveValue('Unsaved clock deck');
-    expect(screen.getByTestId('clock-training-game-preview')).toHaveAttribute(
-      'data-section',
-      'hours'
-    );
+    expect(getHubClockPreview()).toHaveAttribute('data-section', 'hours');
 
     fireEvent.click(screen.getByRole('button', { name: 'Discard changes' }));
 
@@ -1800,14 +1989,8 @@ describe('GamesLibrary serialization audit', () => {
     expect(screen.queryByRole('button', { name: 'Discard changes' })).toBeNull();
     expect(screen.getByLabelText('Attached hub lesson')).toHaveValue('clock');
     expect(screen.getByLabelText('Section name')).toHaveValue('Saved clock deck');
-    expect(screen.getByTestId('clock-training-game-preview')).toHaveAttribute(
-      'data-section',
-      'minutes'
-    );
-    expect(screen.getByTestId('clock-training-game-preview')).toHaveAttribute(
-      'data-show-hour-hand',
-      'false'
-    );
+    expect(getHubClockPreview()).toHaveAttribute('data-section', 'minutes');
+    expect(getHubClockPreview()).toHaveAttribute('data-show-hour-hand', 'false');
   });
 
   it('lets the editor save a section as disabled before persisting', () => {
@@ -2168,14 +2351,8 @@ describe('GamesLibrary serialization audit', () => {
     expect(screen.getByRole('button', { name: 'Add hub section draft' })).toBeInTheDocument();
     expect(screen.getByLabelText('Section name')).toHaveValue('Saved clock deck Copy');
     expect(screen.getByLabelText('Attached hub lesson')).toHaveValue('clock');
-    expect(screen.getByTestId('clock-training-game-preview')).toHaveAttribute(
-      'data-section',
-      'minutes'
-    );
-    expect(screen.getByTestId('clock-training-game-preview')).toHaveAttribute(
-      'data-show-hour-hand',
-      'false'
-    );
+    expect(getHubClockPreview()).toHaveAttribute('data-section', 'minutes');
+    expect(getHubClockPreview()).toHaveAttribute('data-show-hour-hand', 'false');
 
     fireEvent.click(screen.getByRole('button', { name: 'Add hub section draft' }));
 
@@ -2870,7 +3047,7 @@ describe('GamesLibrary serialization audit', () => {
       'Division section from the lesson hub.'
     );
     expect(screen.queryByText('Clock preview settings')).toBeNull();
-    expect(screen.queryByTestId('clock-training-game-preview')).toBeNull();
+    expect(queryHubClockPreview()).toBeNull();
     expect(
       within(screen.getByTestId('games-library-game-modal')).getByRole('heading', {
         name: 'Division Groups',
@@ -2915,10 +3092,7 @@ describe('GamesLibrary serialization audit', () => {
       expect(screen.getByTestId('games-library-sync-error')).toHaveTextContent(
         "We couldn't save the last hub change. The editor state was restored."
       );
-      expect(screen.getByTestId('clock-training-game-preview')).toHaveAttribute(
-        'data-show-minute-hand',
-        'false'
-      );
+      expect(getHubClockPreview()).toHaveAttribute('data-show-minute-hand', 'false');
     });
 
     fireEvent.change(screen.getByLabelText('Section name'), {
@@ -3091,10 +3265,7 @@ describe('GamesLibrary serialization audit', () => {
       expect(screen.getByTestId('games-library-sync-error')).toHaveTextContent(
         "We couldn't save the last hub change. The editor state was restored."
       );
-      expect(screen.getByTestId('clock-training-game-preview')).toHaveAttribute(
-        'data-show-hour-hand',
-        'false'
-      );
+      expect(getHubClockPreview()).toHaveAttribute('data-show-hour-hand', 'false');
     });
   });
 

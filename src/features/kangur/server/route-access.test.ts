@@ -137,7 +137,7 @@ describe('kangur server route access', () => {
         fallbackHref: '/',
       })
     ).resolves.toEqual({
-      callbackUrl: '/kangur/lessons',
+      callbackUrl: '/lessons',
     });
     expect(authMock).not.toHaveBeenCalled();
   });

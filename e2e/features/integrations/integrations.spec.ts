@@ -65,6 +65,7 @@ const mockIntegrationsAdminApis = async (
   page: Page,
   options?: {
     onQuickImport?: (payload: Record<string, unknown>) => void;
+    onPreview?: (payload: Record<string, unknown>) => void;
   }
 ): Promise<void> => {
   await page.route('**/api/user/preferences', async (route) => {
@@ -207,6 +208,66 @@ const mockIntegrationsAdminApis = async (
       }),
     });
   });
+
+  await page.route(/\/api\/v2\/products\/orders-import\/statuses(?:\?.*)?$/, async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      headers: { 'Cache-Control': 'no-store' },
+      body: JSON.stringify({
+        statuses: [{ id: 'new', name: 'New' }],
+      }),
+    });
+  });
+
+  await page.route('**/api/v2/products/orders-import/preview', async (route) => {
+    const payload = (route.request().postDataJSON() as Record<string, unknown> | null) ?? {};
+    options?.onPreview?.(payload);
+
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      headers: { 'Cache-Control': 'no-store' },
+      body: JSON.stringify({
+        orders: [
+          {
+            baseOrderId: 'order-2',
+            orderNumber: 'BL-2001',
+            externalStatusId: 'new',
+            externalStatusName: 'New',
+            buyerName: 'Grace Hopper',
+            buyerEmail: 'grace@example.com',
+            currency: 'PLN',
+            totalGross: 89.5,
+            deliveryMethod: 'Courier',
+            paymentMethod: 'Card',
+            source: 'Base.com',
+            orderCreatedAt: TIMESTAMP,
+            orderUpdatedAt: TIMESTAMP,
+            lineItems: [
+              {
+                sku: 'SKU-2',
+                name: 'Geometry cards',
+                quantity: 1,
+                unitPriceGross: 89.5,
+                baseProductId: 'base-product-2',
+              },
+            ],
+            fingerprint: 'fp-order-2',
+            raw: {},
+            importState: 'new',
+            lastImportedAt: null,
+          },
+        ],
+        stats: {
+          total: 1,
+          newCount: 1,
+          importedCount: 0,
+          changedCount: 0,
+        },
+      }),
+    });
+  });
 };
 
 test.describe('Integrations', () => {
@@ -265,8 +326,64 @@ test.describe('Integrations', () => {
         limit: 50,
       });
 
+    await expect(page.getByText('Latest order import')).toBeVisible();
+    await expect(page.getByRole('link', { name: 'Open detailed importer' })).toBeVisible();
+  });
+
+  test('opens the detailed importer with the same connection and auto previews once', async ({
+    page,
+  }) => {
+    test.setTimeout(240_000);
+    let previewPayload: Record<string, unknown> | null = null;
+    await mockIntegrationsAdminApis(page, {
+      onPreview: (payload) => {
+        previewPayload = payload;
+      },
+    });
+
+    await ensureAdminSession(page, '/admin/integrations', {
+      destinationNavigationTimeoutMs: 120_000,
+      transitionTimeoutMs: 30_000,
+    });
+
+    await page.getByRole('button', { name: 'Manage Baselinker settings' }).click();
+    await expect(page.getByRole('dialog')).toBeVisible();
+
+    await page.getByRole('button', { name: 'Edit' }).nth(1).click();
+    await expect(page.getByRole('dialog', { name: /Edit connection/i })).toBeVisible();
+    await page.getByRole('button', { name: 'Cancel' }).click();
+
+    await page.getByRole('tab', { name: 'Settings' }).click();
+    await expect(page.getByText('inventory-2')).toBeVisible();
+
+    await page.getByRole('button', { name: 'Import Latest Orders' }).click();
+    await expect(page.getByText('Latest order import')).toBeVisible();
+
+    const detailedImporterLink = page.getByRole('link', { name: 'Open detailed importer' });
+    const detailedImporterHref =
+      (await detailedImporterLink.getAttribute('href')) ??
+      '/admin/products/orders-import?connectionId=conn-2&autoPreview=1';
+    await expect(detailedImporterLink).toHaveAttribute(
+      'href',
+      '/admin/products/orders-import?connectionId=conn-2&autoPreview=1'
+    );
+
+    await page.goto(detailedImporterHref);
+
+    await expect(page).toHaveURL(
+      /\/admin\/products\/orders-import\?connectionId=conn-2&autoPreview=1$/
+    );
+    await expect(page.getByRole('heading', { name: 'Orders Import' })).toBeVisible();
+    await expect
+      .poll(() => previewPayload, {
+        timeout: 30_000,
+      })
+      .toEqual({
+        connectionId: 'conn-2',
+        limit: 50,
+      });
     await expect(
-      page.getByText('Imported 1 orders from Base.com. Created 1, updated 0.')
+      page.getByText('Loaded 1 orders. 1 new, 0 changed, 0 already imported.')
     ).toBeVisible();
   });
 });

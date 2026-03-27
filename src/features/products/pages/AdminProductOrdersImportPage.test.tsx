@@ -13,6 +13,11 @@ const useBaseOrderImportStatuses = vi.fn();
 const usePreviewBaseOrdersMutation = vi.fn();
 const useImportBaseOrdersMutation = vi.fn();
 const useQuickImportBaseOrdersMutation = vi.fn();
+const useSearchParamsMock = vi.fn();
+
+vi.mock('next/navigation', () => ({
+  useSearchParams: () => useSearchParamsMock(),
+}));
 
 vi.mock('@/shared/hooks/useIntegrationQueries', () => ({
   useIntegrationsWithConnections: () => useIntegrationsWithConnections(),
@@ -224,6 +229,7 @@ import { AdminProductOrdersImportPage } from './AdminProductOrdersImportPage';
 
 describe('AdminProductOrdersImportPage', () => {
   beforeEach(() => {
+    useSearchParamsMock.mockReturnValue(new URLSearchParams());
     useIntegrationsWithConnections.mockReturnValue({
       data: [
         {
@@ -393,6 +399,104 @@ describe('AdminProductOrdersImportPage', () => {
     await waitFor(() => expect(screen.getByTestId('orders-count')).toHaveTextContent('1'));
     expect(screen.getByText(/Imported 1 orders from Base\.com/i)).toBeInTheDocument();
     expect(screen.getByText('1 imported')).toBeInTheDocument();
+  });
+
+  it('prefers the connectionId query param over the default export connection', async () => {
+    useSearchParamsMock.mockReturnValue(new URLSearchParams('connectionId=conn-2'));
+    useIntegrationsWithConnections.mockReturnValue({
+      data: [
+        {
+          id: 'integration-1',
+          slug: 'base-com',
+          name: 'Base.com',
+          connections: [
+            { id: 'conn-1', name: 'Primary Base' },
+            { id: 'conn-2', name: 'Secondary Base' },
+          ],
+        },
+      ],
+      isLoading: false,
+    });
+    useDefaultExportConnection.mockReturnValue({
+      data: { connectionId: 'conn-1' },
+    });
+    usePreviewBaseOrdersMutation.mockReturnValue({
+      isPending: false,
+      mutateAsync: vi.fn(),
+    });
+
+    render(<AdminProductOrdersImportPage />);
+
+    expect(screen.getByLabelText('Base connection')).toHaveValue('conn-2');
+  });
+
+  it('auto previews once when opened with connectionId and autoPreview query params', async () => {
+    const mutateAsync = vi.fn().mockResolvedValue({
+      orders: [
+        {
+          baseOrderId: '1002',
+          orderNumber: 'SO-1002',
+          externalStatusId: 'paid',
+          externalStatusName: 'Paid',
+          buyerName: 'Bob',
+          buyerEmail: 'bob@example.com',
+          currency: 'PLN',
+          totalGross: 200,
+          deliveryMethod: 'Courier',
+          paymentMethod: 'Card',
+          source: 'Base',
+          orderCreatedAt: '2026-03-24T10:00:00.000Z',
+          orderUpdatedAt: null,
+          lineItems: [],
+          fingerprint: 'fp-2',
+          raw: {},
+          importState: 'new',
+          lastImportedAt: null,
+        },
+      ],
+      stats: {
+        total: 1,
+        newCount: 1,
+        importedCount: 0,
+        changedCount: 0,
+      },
+    });
+    useSearchParamsMock.mockReturnValue(
+      new URLSearchParams('connectionId=conn-2&autoPreview=1')
+    );
+    useIntegrationsWithConnections.mockReturnValue({
+      data: [
+        {
+          id: 'integration-1',
+          slug: 'base-com',
+          name: 'Base.com',
+          connections: [
+            { id: 'conn-1', name: 'Primary Base' },
+            { id: 'conn-2', name: 'Secondary Base' },
+          ],
+        },
+      ],
+      isLoading: false,
+    });
+    usePreviewBaseOrdersMutation.mockReturnValue({
+      isPending: false,
+      mutateAsync,
+    });
+
+    render(<AdminProductOrdersImportPage />);
+
+    await waitFor(() =>
+      expect(mutateAsync).toHaveBeenCalledWith({
+        connectionId: 'conn-2',
+        dateFrom: undefined,
+        dateTo: undefined,
+        statusId: undefined,
+        limit: 50,
+      })
+    );
+    expect(mutateAsync).toHaveBeenCalledTimes(1);
+    expect(screen.getByLabelText('Base connection')).toHaveValue('conn-2');
+    await waitFor(() => expect(screen.getByTestId('orders-count')).toHaveTextContent('1'));
   });
 
   it('shows the integration empty state when no Base.com connections exist', () => {

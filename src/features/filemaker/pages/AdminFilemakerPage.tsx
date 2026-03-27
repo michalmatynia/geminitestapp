@@ -1,6 +1,6 @@
 'use client';
 
-import { CalendarDays, Database, Mail, Megaphone } from 'lucide-react';
+import { CalendarDays, Database, Mail, Megaphone, ShieldAlert } from 'lucide-react';
 import React from 'react';
 
 import { PanelHeader } from '@/shared/ui';
@@ -31,6 +31,13 @@ function AdminFilemakerPageInner(): React.JSX.Element {
             icon: <Megaphone className='size-4' />,
             variant: 'outline',
             onClick: () => router.push('/admin/filemaker/campaigns'),
+          },
+          {
+            key: 'control-centre',
+            label: 'Control Centre',
+            icon: <ShieldAlert className='size-4' />,
+            variant: 'outline',
+            onClick: () => router.push('/admin/filemaker/campaigns/control-centre'),
           },
           {
             key: 'events',

@@ -1,10 +1,13 @@
 import { describe, expect, it } from 'vitest';
 
 import {
+  createLaunchableGameScreenComponentConfigFromRuntime,
   getKangurLaunchableGameScreenComponentConfig,
   KANGUR_LAUNCHABLE_GAME_SCREEN_COMPONENTS,
+  mergeKangurLaunchableGameRuntimeSpec,
 } from './Game.launchable-screens';
 import { KANGUR_LAUNCHABLE_GAME_SCREENS } from '@/features/kangur/ui/services/game-launch';
+import { getKangurLaunchableGameRuntimeSpec } from '@/features/kangur/games';
 
 describe('Game launchable screen registry', () => {
   it('covers every launchable fullscreen game screen', () => {
@@ -20,5 +23,26 @@ describe('Game launchable screen registry', () => {
       expect(config.runtime.screen).toBe(screen);
       expect(config.runtime.rendererId).toBeTruthy();
     }
+  });
+
+  it('merges content-set renderer props with instance engine overrides', () => {
+    const runtime = getKangurLaunchableGameRuntimeSpec('clock_quiz');
+    const mergedRuntime = mergeKangurLaunchableGameRuntimeSpec(
+      runtime,
+      { clockSection: 'minutes' },
+      {
+        clockInitialMode: 'challenge',
+        showClockMinuteHand: false,
+      }
+    );
+    const config = createLaunchableGameScreenComponentConfigFromRuntime(mergedRuntime);
+
+    expect(config.runtime.rendererProps).toEqual(
+      expect.objectContaining({
+        clockInitialMode: 'challenge',
+        clockSection: 'minutes',
+        showClockMinuteHand: false,
+      })
+    );
   });
 });

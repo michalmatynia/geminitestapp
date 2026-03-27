@@ -29,6 +29,14 @@ vi.mock('@/features/kangur/ui/components/KangurRouteLoadingFallback', () => ({
   },
 }));
 
+vi.mock('@/features/kangur/ui/pages/Game', () => ({
+  default: () => <div data-testid='kangur-eager-game-page-probe' />,
+}));
+
+vi.mock('@/features/kangur/ui/pages/Lessons', () => ({
+  default: () => <div data-testid='kangur-eager-lessons-page-probe' />,
+}));
+
 describe('kangur page config', () => {
   let kangurPages: typeof import('@/features/kangur/config/pages').kangurPages;
   let KANGUR_MAIN_PAGE: typeof import('@/features/kangur/config/pages').KANGUR_MAIN_PAGE;
@@ -46,7 +54,7 @@ describe('kangur page config', () => {
     expect(KANGUR_MAIN_PAGE).toBe('Game');
   });
 
-  it('uses the inline main-page loader only for Game and the navbar skeleton for the rest', () => {
+  it('keeps Game and Lessons eager while using the shared navbar skeleton for lazy routes', () => {
     expect(Object.keys(kangurPages)).toEqual([
       'Competition',
       'Game',
@@ -58,37 +66,16 @@ describe('kangur page config', () => {
       'SocialUpdates',
       'Tests',
     ]);
-    expect(dynamicCalls).toHaveLength(9);
+    expect(dynamicCalls).toHaveLength(7);
 
     const competitionLoadingFallback = dynamicCalls[0]?.loading;
-    const gameLoadingFallback = dynamicCalls[1]?.loading;
 
     expect(competitionLoadingFallback).toBeTypeOf('function');
-    expect(gameLoadingFallback).toBeTypeOf('function');
-    expect(gameLoadingFallback).not.toBe(competitionLoadingFallback);
 
-    const nonMainPageLoadingFallbacks = dynamicCalls
-      .filter((_call, index) => index !== 1)
-      .map((call) => call.loading);
-    expect(nonMainPageLoadingFallbacks.every((loading) => loading === competitionLoadingFallback)).toBe(
+    const lazyPageLoadingFallbacks = dynamicCalls.map((call) => call.loading);
+    expect(lazyPageLoadingFallbacks.every((loading) => loading === competitionLoadingFallback)).toBe(
       true
     );
-
-    const MainPageLoadingFallback = gameLoadingFallback;
-    if (!MainPageLoadingFallback) {
-      throw new Error('Expected the Game loading fallback component.');
-    }
-
-    render(<MainPageLoadingFallback />);
-
-    expect(screen.getByTestId('kangur-route-loading-fallback-probe')).toBeInTheDocument();
-    expect(routeLoadingFallbackMock).toHaveBeenCalledTimes(1);
-    expect(routeLoadingFallbackMock).toHaveBeenCalledWith({
-      includeTopNavigationSkeleton: false,
-    });
-
-    cleanup();
-    routeLoadingFallbackMock.mockReset();
 
     const NonMainPageLoadingFallback = competitionLoadingFallback;
     if (!NonMainPageLoadingFallback) {
@@ -102,5 +89,8 @@ describe('kangur page config', () => {
     expect(routeLoadingFallbackMock).toHaveBeenCalledWith({
       includeTopNavigationSkeleton: true,
     });
+
+    expect(kangurPages['Game']).toBeTypeOf('function');
+    expect(kangurPages['Lessons']).toBeTypeOf('function');
   });
 });

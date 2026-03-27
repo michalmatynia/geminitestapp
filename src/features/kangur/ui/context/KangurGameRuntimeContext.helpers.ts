@@ -7,6 +7,7 @@ import {
   readKangurUrlParam,
   type KangurInternalQueryParamKey,
 } from '@/features/kangur/config/routing';
+import { kangurGameInstanceIdSchema } from '@/shared/contracts/kangur-game-instances';
 import type { KangurUser } from '@kangur/platform';
 import {
   claimCurrentKangurDailyQuestReward,
@@ -48,6 +49,7 @@ type UseKangurGameQuickStartInput = {
   user: KangurUser | null;
   setPlayerName: (value: string) => void;
   setScreen: (screen: KangurGameScreen) => void;
+  setLaunchableGameInstanceId: (value: string | null) => void;
   handleSelectOperation: (
     operation: KangurOperation,
     difficulty: KangurDifficulty,
@@ -93,6 +95,7 @@ export const useKangurGameQuickStart = ({
   user,
   setPlayerName,
   setScreen,
+  setLaunchableGameInstanceId,
   handleSelectOperation,
   handleStartTraining,
 }: UseKangurGameQuickStartInput): void => {
@@ -115,7 +118,17 @@ export const useKangurGameQuickStart = ({
     }
 
     const clearQuickStartParams = (): void => {
-      (['quickStart', 'screen', 'operation', 'categories', 'count', 'difficulty'] as const).forEach((key) => {
+      (
+        [
+          'quickStart',
+          'screen',
+          'instanceId',
+          'operation',
+          'categories',
+          'count',
+          'difficulty',
+        ] as const
+      ).forEach((key) => {
         url.searchParams.delete(
           getKangurInternalQueryParamName(key as KangurInternalQueryParamKey, basePath)
         );
@@ -131,6 +144,7 @@ export const useKangurGameQuickStart = ({
       }
 
       clearQuickStartParams();
+      setLaunchableGameInstanceId(null);
       setScreen('kangur_setup');
       return;
     }
@@ -144,16 +158,20 @@ export const useKangurGameQuickStart = ({
       const trainingPreset = parseKangurMixedTrainingQuickStartParams(url.searchParams, basePath);
       clearQuickStartParams();
       if (trainingPreset) {
+        setLaunchableGameInstanceId(null);
         handleStartTraining(trainingPreset);
         return;
       }
 
+      setLaunchableGameInstanceId(null);
       setScreen('training');
       return;
     }
 
     if (quickStart === 'screen') {
       const requestedScreen = readKangurUrlParam(url.searchParams, 'screen', basePath);
+      const requestedInstanceId = readKangurUrlParam(url.searchParams, 'instanceId', basePath);
+      const parsedInstanceId = kangurGameInstanceIdSchema.safeParse(requestedInstanceId);
 
       quickStartConsumedRef.current = true;
       if (!user && playerName.trim().length === 0) {
@@ -161,6 +179,7 @@ export const useKangurGameQuickStart = ({
       }
 
       clearQuickStartParams();
+      setLaunchableGameInstanceId(parsedInstanceId.success ? parsedInstanceId.data : null);
       if (isKangurGameScreen(requestedScreen)) {
         setScreen(requestedScreen);
       }
@@ -182,8 +201,10 @@ export const useKangurGameQuickStart = ({
     }
     clearQuickStartParams();
     if (nextOperation) {
+      setLaunchableGameInstanceId(null);
       handleSelectOperation(nextOperation, nextDifficulty);
     } else {
+      setLaunchableGameInstanceId(null);
       setScreen('operation');
     }
   }, [
@@ -193,6 +214,7 @@ export const useKangurGameQuickStart = ({
     isLoadingAuth,
     playerName,
     screen,
+    setLaunchableGameInstanceId,
     setPlayerName,
     setScreen,
     user,

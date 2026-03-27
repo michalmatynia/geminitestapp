@@ -4,7 +4,10 @@
 
 import { fireEvent, render, screen, within } from '@testing-library/react';
 import { NextIntlClientProvider } from 'next-intl';
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
+
+const lockMock = vi.fn();
+const unlockMock = vi.fn();
 
 vi.mock('next-intl', async () => await vi.importActual<typeof import('next-intl')>('next-intl'));
 vi.mock('use-intl', async () => await vi.importActual<typeof import('use-intl')>('use-intl'));
@@ -32,13 +35,15 @@ vi.mock('@hello-pangea/dnd', () => ({
       { isDraggingOver: false }
     ),
   Draggable: ({
+    draggableId,
     children,
   }: {
+    draggableId: string;
     children: (
       provided: {
         innerRef: (element: HTMLElement | null) => void;
         draggableProps: Record<string, never>;
-        dragHandleProps: Record<string, never>;
+        dragHandleProps: Record<string, string>;
       },
       snapshot: { isDragging: boolean }
     ) => React.ReactNode;
@@ -47,7 +52,9 @@ vi.mock('@hello-pangea/dnd', () => ({
       {
         innerRef: () => undefined,
         draggableProps: {},
-        dragHandleProps: {},
+        dragHandleProps: {
+          'data-rfd-drag-handle-draggable-id': draggableId,
+        },
       },
       { isDragging: false }
     ),
@@ -55,6 +62,13 @@ vi.mock('@hello-pangea/dnd', () => ({
 
 vi.mock('@/features/kangur/ui/hooks/useKangurCoarsePointer', () => ({
   useKangurCoarsePointer: () => true,
+}));
+
+vi.mock('@/features/kangur/ui/hooks/useKangurMobileInteractionScrollLock', () => ({
+  useKangurMobileInteractionScrollLock: () => ({
+    lock: lockMock,
+    unlock: unlockMock,
+  }),
 }));
 
 import enMessages from '@/i18n/messages/en.json';
@@ -66,6 +80,11 @@ const renderGame = () =>
       <DivisionGroupsGame onFinish={vi.fn()} />
     </NextIntlClientProvider>
   );
+
+afterEach(() => {
+  lockMock.mockClear();
+  unlockMock.mockClear();
+});
 
 describe('DivisionGroupsGame touch interactions', () => {
   it('supports coarse-pointer tap selection and moving into a destination zone', () => {
@@ -97,5 +116,19 @@ describe('DivisionGroupsGame touch interactions', () => {
       'Tap an item, then tap a group, the pool, or the remainder area. You can still drag too.'
     );
     expect(within(firstGroupZone).getByText(emoji)).toBeInTheDocument();
+  });
+
+  it('locks mobile scroll when touching a real draggable item handle', () => {
+    renderGame();
+
+    const poolZone = screen.getByTestId('division-groups-pool-zone');
+    const token = within(poolZone).getAllByRole('button', { name: 'Move item' })[0];
+    expect(token).toHaveAttribute('data-rfd-drag-handle-draggable-id');
+
+    fireEvent.touchStart(token);
+    expect(lockMock).toHaveBeenCalledTimes(1);
+
+    fireEvent.touchEnd(document);
+    expect(unlockMock).toHaveBeenCalledTimes(1);
   });
 });

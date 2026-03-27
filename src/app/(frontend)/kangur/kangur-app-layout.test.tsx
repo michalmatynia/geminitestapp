@@ -27,4 +27,20 @@ describe('kangur app layout', () => {
     expect(screen.getByTestId('kangur-route-child')).toBeInTheDocument();
     expect(screen.getByTestId('kangur-route-shell-boundary')).toBeInTheDocument();
   });
+
+  it('uses the same shared layout body for localized kangur routes', async () => {
+    const { default: LocalizedKangurAppLayout } = await import(
+      '@/app/[locale]/(frontend)/kangur/(app)/layout'
+    );
+
+    render(
+      <LocalizedKangurAppLayout>
+        <div data-testid='localized-kangur-route-child' />
+      </LocalizedKangurAppLayout>
+    );
+
+    expect(screen.getByTestId('kangur-server-shell')).toBeInTheDocument();
+    expect(screen.getByTestId('localized-kangur-route-child')).toBeInTheDocument();
+    expect(screen.getByTestId('kangur-route-shell-boundary')).toBeInTheDocument();
+  });
 });

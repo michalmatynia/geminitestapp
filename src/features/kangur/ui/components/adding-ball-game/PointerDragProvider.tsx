@@ -15,6 +15,7 @@ import type { JSX, ReactNode } from 'react';
 
 import type { BallItem } from './types';
 import { Ball } from './AddingBallGame.Shared';
+import { useKangurMobileInteractionScrollLock } from '@/features/kangur/ui/hooks/useKangurMobileInteractionScrollLock';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -232,6 +233,8 @@ export function PointerDragProvider({
   onDrop,
   disabled = false,
 }: PointerDragProviderProps): JSX.Element {
+  const { lock: lockMobileInteraction, unlock: unlockMobileInteraction } =
+    useKangurMobileInteractionScrollLock();
   const [dragState, setDragState] = useState<DragState | null>(null);
   const [hoveredZoneId, setHoveredZoneId] = useState<string | null>(null);
   const isDragging = dragState !== null;
@@ -269,6 +272,7 @@ export function PointerDragProvider({
       const previewLeft = rect.left;
       const previewTop = rect.top;
       lastPointerRef.current = { x: pointerX, y: pointerY };
+      lockMobileInteraction();
       setDragState({
         ballId,
         ball,
@@ -287,7 +291,7 @@ export function PointerDragProvider({
         tiltDeg: 0,
       });
     },
-    [disabled],
+    [disabled, lockMobileInteraction],
   );
 
   // Global pointer move & up while dragging
@@ -399,8 +403,9 @@ export function PointerDragProvider({
       window.removeEventListener('pointerup', handleUp);
       window.removeEventListener('pointercancel', handleCancel);
       document.removeEventListener('touchmove', preventScroll);
+      unlockMobileInteraction();
     };
-  }, [isDragging]);
+  }, [isDragging, unlockMobileInteraction]);
 
   useEffect(() => {
     return () => {

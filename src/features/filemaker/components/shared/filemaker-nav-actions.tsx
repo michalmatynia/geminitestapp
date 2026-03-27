@@ -1,4 +1,4 @@
-import { Building2, CalendarDays, Database, Mail, Megaphone, Users } from 'lucide-react';
+import { Building2, CalendarDays, Database, Mail, Megaphone, ShieldAlert, Users } from 'lucide-react';
 
 
 import type { PanelAction } from '@/shared/contracts/ui';
@@ -12,6 +12,7 @@ type FilemakerPageKey =
   | 'emails'
   | 'events'
   | 'campaigns'
+  | 'control-centre'
   | 'manage';
 
 const NAV_ITEMS: Array<{
@@ -54,6 +55,13 @@ const NAV_ITEMS: Array<{
     label: 'Campaigns',
     href: '/admin/filemaker/campaigns',
     icon: <Megaphone className='size-4' />,
+    variant: 'outline',
+  },
+  {
+    key: 'control-centre',
+    label: 'Control Centre',
+    href: '/admin/filemaker/campaigns/control-centre',
+    icon: <ShieldAlert className='size-4' />,
     variant: 'outline',
   },
   {

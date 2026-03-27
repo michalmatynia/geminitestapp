@@ -1,6 +1,8 @@
 import { NextRequest } from 'next/server';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { createFilemakerCampaignUnsubscribeToken } from '@/features/filemaker/server/campaign-unsubscribe-token';
+
 const {
   readFilemakerCampaignSettingValueMock,
   upsertFilemakerCampaignSettingValueMock,
@@ -19,6 +21,7 @@ import { POST_handler } from './handler';
 describe('filemaker campaign unsubscribe handler', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    process.env['FILEMAKER_CAMPAIGN_UNSUBSCRIBE_SECRET'] = 'unsubscribe-secret';
     upsertFilemakerCampaignSettingValueMock.mockResolvedValue(true);
     readFilemakerCampaignSettingValueMock.mockImplementation(async (key: string) => {
       if (key === 'filemaker_email_campaigns_v1') {
@@ -74,6 +77,44 @@ describe('filemaker campaign unsubscribe handler', () => {
     });
   });
 
+  it('accepts a signed unsubscribe token instead of raw email input', async () => {
+    const now = Date.now();
+    const token = createFilemakerCampaignUnsubscribeToken({
+      emailAddress: 'Jan@example.com',
+      campaignId: 'campaign-1',
+      runId: 'run-1',
+      deliveryId: 'delivery-1',
+      now,
+      ttlMs: 1000 * 60 * 60,
+    });
+
+    const response = await POST_handler(
+      new NextRequest('http://localhost/api/filemaker/campaigns/unsubscribe', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({
+          token,
+        }),
+      }),
+      {} as Parameters<typeof POST_handler>[1]
+    );
+
+    const suppressionWrite = upsertFilemakerCampaignSettingValueMock.mock.calls.find(
+      (call) => call[0] === 'filemaker_email_campaign_suppressions_v1'
+    );
+    expect(suppressionWrite?.[1]).toContain('"emailAddress":"jan@example.com"');
+    expect(suppressionWrite?.[1]).toContain('signed-unsubscribe-token');
+    expect(suppressionWrite?.[1]).toContain('"runId":"run-1"');
+    expect(suppressionWrite?.[1]).toContain('"deliveryId":"delivery-1"');
+    await expect(response.json()).resolves.toEqual({
+      ok: true,
+      emailAddress: 'jan@example.com',
+      campaignId: 'campaign-1',
+      alreadySuppressed: false,
+      reason: 'unsubscribed',
+    });
+  });
+
   it('adds an unsubscribed suppression entry and records a campaign event', async () => {
     const response = await POST_handler(
       new NextRequest('http://localhost/api/filemaker/campaigns/unsubscribe', {
@@ -101,6 +142,7 @@ describe('filemaker campaign unsubscribe handler', () => {
     expect(suppressionWrite?.[1]).toContain('"actor":"recipient"');
     expect(suppressionWrite?.[1]).toContain('footer-link');
     expect(eventWrite?.[1]).toContain('"campaignId":"campaign-1"');
+    expect(eventWrite?.[1]).toContain('"type":"unsubscribed"');
     expect(eventWrite?.[1]).toContain('jan@example.com unsubscribed via the public unsubscribe form.');
     await expect(response.json()).resolves.toEqual({
       ok: true,
@@ -109,6 +151,22 @@ describe('filemaker campaign unsubscribe handler', () => {
       alreadySuppressed: false,
       reason: 'unsubscribed',
     });
+  });
+
+  it('rejects invalid signed unsubscribe tokens', async () => {
+    await expect(
+      POST_handler(
+        new NextRequest('http://localhost/api/filemaker/campaigns/unsubscribe', {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({
+            token: 'invalid.token',
+          }),
+        }),
+        {} as Parameters<typeof POST_handler>[1]
+      )
+    ).rejects.toThrow('Invalid or expired unsubscribe token.');
+    expect(upsertFilemakerCampaignSettingValueMock).not.toHaveBeenCalled();
   });
 
   it('keeps the request campaign id but skips event writes when the campaign is missing', async () => {

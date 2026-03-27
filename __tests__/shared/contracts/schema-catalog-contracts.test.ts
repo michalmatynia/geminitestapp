@@ -33,6 +33,8 @@ import {
   filemakerEmailCampaignEventRegistrySchema,
   filemakerEmailCampaignProcessRunRequestSchema,
   filemakerEmailCampaignProcessRunResponseSchema,
+  filemakerEmailCampaignPreferencesRequestSchema,
+  filemakerEmailCampaignPreferencesResponseSchema,
   filemakerEmailCampaignRunRegistrySchema,
   filemakerEmailCampaignRunSchema,
   filemakerEmailCampaignSuppressionRegistrySchema,
@@ -483,8 +485,9 @@ describe('shared contract runtime coverage for schema catalogs', () => {
             campaignId: 'campaign-1',
             runId: 'run-1',
             deliveryId: 'delivery-1',
-            type: 'delivery_sent',
-            message: 'Delivery sent to jan@example.com.',
+            type: 'clicked',
+            targetUrl: 'https://destination.example.com/offer',
+            message: 'jan@example.com clicked https://destination.example.com/offer.',
             actor: 'system',
             runStatus: 'running',
             deliveryStatus: 'sent',
@@ -493,7 +496,12 @@ describe('shared contract runtime coverage for schema catalogs', () => {
       })
     ).toEqual(
       expect.objectContaining({
-        events: [expect.objectContaining({ type: 'delivery_sent' })],
+        events: [
+          expect.objectContaining({
+            type: 'clicked',
+            targetUrl: 'https://destination.example.com/offer',
+          }),
+        ],
       })
     );
 
@@ -568,6 +576,36 @@ describe('shared contract runtime coverage for schema catalogs', () => {
     );
 
     expect(
+      filemakerEmailCampaignPreferencesRequestSchema.parse({
+        token: 'signed-token-value',
+        action: 'unsubscribe',
+        source: 'preferences-center',
+      })
+    ).toEqual(
+      expect.objectContaining({
+        action: 'unsubscribe',
+        source: 'preferences-center',
+      })
+    );
+
+    expect(
+      filemakerEmailCampaignPreferencesResponseSchema.parse({
+        ok: true,
+        emailAddress: 'jan@example.com',
+        campaignId: 'campaign-1',
+        status: 'unsubscribed',
+        reason: 'unsubscribed',
+        canResubscribe: true,
+      })
+    ).toEqual(
+      expect.objectContaining({
+        emailAddress: 'jan@example.com',
+        status: 'unsubscribed',
+        canResubscribe: true,
+      })
+    );
+
+    expect(
       filemakerEmailCampaignUnsubscribeRequestSchema.parse({
         emailAddress: 'jan@example.com',
         campaignId: 'campaign-1',
@@ -577,6 +615,16 @@ describe('shared contract runtime coverage for schema catalogs', () => {
       expect.objectContaining({
         campaignId: 'campaign-1',
         source: 'footer-link',
+      })
+    );
+
+    expect(
+      filemakerEmailCampaignUnsubscribeRequestSchema.parse({
+        token: 'signed-token-value',
+      })
+    ).toEqual(
+      expect.objectContaining({
+        token: 'signed-token-value',
       })
     );
 

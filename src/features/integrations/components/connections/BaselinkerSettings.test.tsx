@@ -182,7 +182,7 @@ describe('BaselinkerSettings', () => {
     ).toBeInTheDocument();
     expect(screen.getByRole('link', { name: /Open detailed importer/i })).toHaveAttribute(
       'href',
-      '/admin/products/orders-import'
+      '/admin/products/orders-import?connectionId=conn-1&autoPreview=1'
     );
   });
 

@@ -288,7 +288,7 @@ describe('runtime utils behavior', () => {
         data: {
           items: [
             { id: 'item-1', status: 'pending', payload: { value: 'draft' } },
-            { id: 'item-2', status: 'ready', payload: { value: 'done' } },
+            { id: 'item-2', status: 'ready', payload: { value: 'done', readyValue: 'done' } },
           ],
           count: 2,
         },
@@ -310,7 +310,7 @@ describe('runtime utils behavior', () => {
           successPath: 'status',
           successOperator: 'equals',
           successValue: 'ready',
-          resultPath: 'payload.value',
+          resultPath: 'payload.readyValue',
         }
       )
     ).resolves.toEqual({
@@ -335,7 +335,7 @@ describe('runtime utils behavior', () => {
         data: {
           items: [
             { id: 'item-a', tags: ['draft'] },
-            { id: 'item-b', tags: ['draft', 'done'] },
+            { id: 'item-b', tags: ['draft', 'done'], readyId: 'item-b' },
           ],
           count: 2,
         },
@@ -361,7 +361,7 @@ describe('runtime utils behavior', () => {
           successPath: 'tags',
           successOperator: 'contains',
           successValue: 'done',
-          resultPath: 'id',
+          resultPath: 'readyId',
         }
       )
     ).resolves.toEqual({

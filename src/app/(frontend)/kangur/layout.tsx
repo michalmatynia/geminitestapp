@@ -2,6 +2,7 @@ import { KangurStorefrontAppearanceProvider } from '@/features/kangur/ui/KangurS
 import { KangurSurfaceClassSync } from '@/features/kangur/ui/KangurSurfaceClassSync';
 import { getKangurStorefrontInitialState } from '@/features/kangur/server/storefront-appearance';
 import { safeHtml } from '@/shared/lib/security/safe-html';
+import { Analytics } from '@vercel/analytics/next';
 
 import type { ReactNode } from 'react';
 
@@ -27,6 +28,7 @@ export default async function Layout({ children }: { children: ReactNode }): Pro
       >
         <KangurSurfaceClassSync>{children}</KangurSurfaceClassSync>
       </KangurStorefrontAppearanceProvider>
+      <Analytics />
     </>
   );
 }

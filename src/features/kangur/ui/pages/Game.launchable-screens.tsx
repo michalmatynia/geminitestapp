@@ -11,6 +11,10 @@ import type {
   KangurLaunchableGameRuntimeSpec,
   KangurLaunchableGameScreen,
 } from '@/shared/contracts/kangur-games';
+import type { KangurGameRuntimeRendererProps } from '@/shared/contracts/kangur-game-runtime-renderer-props';
+import {
+  kangurLaunchableGameRuntimeSpecSchema,
+} from '@/shared/contracts/kangur-games';
 import { getKangurLaunchableGameRuntimeSpec } from '@/features/kangur/games/launchable-runtime-specs';
 import { renderKangurGameQuizStage } from '@/features/kangur/ui/components/KangurGameQuizStage';
 import { KANGUR_LAUNCHABLE_GAME_SCREENS } from '@/features/kangur/ui/services/game-launch';
@@ -72,6 +76,7 @@ type LaunchableGameRendererContext = {
   finishLabelProp: KangurLaunchableGameRuntimeFinishLabelProp;
   finishMode: KangurLaunchableGameRuntimeFinishMode;
   handleHome: () => void;
+  rendererProps?: KangurGameRuntimeRendererProps;
   returnToGameHomeLabel: string;
 };
 
@@ -79,6 +84,7 @@ type LaunchableGameRendererProps = KangurMiniGameFinishActionProps & {
   completionPrimaryActionLabel?: string;
   finishLabel?: KangurMiniGameFinishProps['finishLabel'];
   finishLabelVariant?: KangurMiniGameFinishVariantProps['finishLabelVariant'];
+  rendererProps?: KangurGameRuntimeRendererProps;
 };
 
 type LaunchableGameRendererConfig = {
@@ -113,6 +119,10 @@ const resolveLaunchableGameRendererProps = (
     props['completionPrimaryActionLabel'] = context.returnToGameHomeLabel;
   }
 
+  if (context.rendererProps) {
+    props['rendererProps'] = context.rendererProps;
+  }
+
   return props;
 };
 
@@ -134,10 +144,17 @@ const KANGUR_LAUNCHABLE_GAME_RENDERERS: Record<
     render: ({ onFinish }) => <CalendarTrainingGame onFinish={onFinish} />,
   },
   clock_training_game: {
-    render: ({ completionPrimaryActionLabel, onFinish }) => (
+    render: ({ completionPrimaryActionLabel, onFinish, rendererProps }) => (
       <ClockTrainingGame
         completionPrimaryActionLabel={completionPrimaryActionLabel}
+        hideModeSwitch={rendererProps?.showClockModeSwitch === false}
+        initialMode={rendererProps?.clockInitialMode}
         onFinish={onFinish}
+        section={rendererProps?.clockSection}
+        showHourHand={rendererProps?.showClockHourHand}
+        showMinuteHand={rendererProps?.showClockMinuteHand}
+        showTaskTitle={rendererProps?.showClockTaskTitle}
+        showTimeDisplay={rendererProps?.showClockTimeDisplay}
       />
     ),
   },
@@ -160,8 +177,17 @@ const KANGUR_LAUNCHABLE_GAME_RENDERERS: Record<
     ),
   },
   geometry_drawing_game: {
-    render: ({ finishLabel, onFinish }) => (
-      <GeometryDrawingGame finishLabel={finishLabel} onFinish={onFinish} />
+    render: ({ finishLabel, onFinish, rendererProps }) => (
+      <GeometryDrawingGame
+        activityKey={rendererProps?.activityKey}
+        difficultyLabelOverride={rendererProps?.difficultyLabelOverride}
+        finishLabel={finishLabel ?? rendererProps?.finishLabel}
+        lessonKey={rendererProps?.lessonKey}
+        onFinish={onFinish}
+        operation={rendererProps?.operation}
+        shapeIds={rendererProps?.shapeIds}
+        showDifficultySelector={rendererProps?.showDifficultySelector}
+      />
     ),
   },
   logical_analogies_relation_game: {
@@ -175,8 +201,12 @@ const KANGUR_LAUNCHABLE_GAME_RENDERERS: Record<
     ),
   },
   logical_patterns_workshop_game: {
-    render: ({ finishLabel, onFinish }) => (
-      <LogicalPatternsWorkshopGame finishLabel={finishLabel} onFinish={onFinish} />
+    render: ({ finishLabel, onFinish, rendererProps }) => (
+      <LogicalPatternsWorkshopGame
+        finishLabel={finishLabel ?? rendererProps?.finishLabel}
+        onFinish={onFinish}
+        patternSetId={rendererProps?.patternSetId}
+      />
     ),
   },
   multiplication_game: {
@@ -236,6 +266,7 @@ const KangurConfigurableLaunchableGameScreen = ({
             finishLabelProp: runtime.finishLabelProp,
             finishMode: runtime.finishMode,
             handleHome,
+            rendererProps: runtime.rendererProps,
             returnToGameHomeLabel: translations('returnToGameHome'),
           })
         ),
@@ -249,21 +280,42 @@ export type KangurLaunchableGameScreenComponentConfig = {
   runtime: KangurLaunchableGameRuntimeSpec;
 };
 
-const createLaunchableGameScreenComponentConfig = (
-  screen: KangurLaunchableGameScreen
+export const createLaunchableGameScreenComponentConfigFromRuntime = (
+  runtime: KangurLaunchableGameRuntimeSpec
 ): KangurLaunchableGameScreenComponentConfig => {
-  const runtime = getKangurLaunchableGameRuntimeSpec(screen);
   const Component: ComponentType<Record<string, never>> = (): React.JSX.Element => (
     <KangurConfigurableLaunchableGameScreen runtime={runtime} />
   );
 
-  Component.displayName = `KangurLaunchableGameScreen(${screen})`;
+  Component.displayName = `KangurLaunchableGameScreen(${runtime.screen})`;
 
   return {
     className: runtime.className,
     Component,
     runtime,
   };
+};
+
+const createLaunchableGameScreenComponentConfig = (
+  screen: KangurLaunchableGameScreen
+): KangurLaunchableGameScreenComponentConfig =>
+  createLaunchableGameScreenComponentConfigFromRuntime(
+    getKangurLaunchableGameRuntimeSpec(screen)
+  );
+
+export const mergeKangurLaunchableGameRuntimeSpec = (
+  runtime: KangurLaunchableGameRuntimeSpec,
+  ...rendererPropsLayers: Array<KangurGameRuntimeRendererProps | undefined>
+): KangurLaunchableGameRuntimeSpec => {
+  const mergedRendererProps = rendererPropsLayers.reduce<KangurGameRuntimeRendererProps>(
+    (acc, current) => ({ ...acc, ...(current ?? {}) }),
+    runtime.rendererProps ?? {}
+  );
+
+  return kangurLaunchableGameRuntimeSpecSchema.parse({
+    ...runtime,
+    rendererProps: Object.keys(mergedRendererProps).length > 0 ? mergedRendererProps : undefined,
+  });
 };
 
 export const KANGUR_LAUNCHABLE_GAME_SCREEN_COMPONENTS = Object.freeze(

@@ -19,7 +19,6 @@ export const readSanitizedKangurAliasLoginSearchParams = async (input: {
     return undefined;
   }
 
-  const session = await readOptionalServerAuthSession();
   const rawCallbackUrl = searchParams['callbackUrl'];
   const callbackUrl =
     typeof rawCallbackUrl === 'string'
@@ -51,6 +50,7 @@ export const readSanitizedKangurAliasLoginSearchParams = async (input: {
     };
   }
 
+  const session = await readOptionalServerAuthSession();
   const sanitizedCallbackUrl =
     sanitizeAccessibleManagedKangurHref({
       href: callbackUrl,

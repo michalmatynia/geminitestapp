@@ -12,6 +12,8 @@ const {
   listLessonsMock,
   getKangurLessonSectionRepositoryMock,
   listSectionsMock,
+  getKangurGameInstanceRepositoryMock,
+  listInstancesMock,
 } = vi.hoisted(() => ({
   authMock: vi.fn(),
   getKangurAuthMeHandlerMock: vi.fn(),
@@ -20,6 +22,8 @@ const {
   listLessonsMock: vi.fn(),
   getKangurLessonSectionRepositoryMock: vi.fn(),
   listSectionsMock: vi.fn(),
+  getKangurGameInstanceRepositoryMock: vi.fn(),
+  listInstancesMock: vi.fn(),
 }));
 
 vi.mock('@/features/auth/server', () => ({
@@ -40,6 +44,10 @@ vi.mock('@/features/kangur/services/kangur-lesson-repository', () => ({
 
 vi.mock('@/features/kangur/services/kangur-lesson-section-repository', () => ({
   getKangurLessonSectionRepository: getKangurLessonSectionRepositoryMock,
+}));
+
+vi.mock('@/features/kangur/services/kangur-game-instance-repository', () => ({
+  getKangurGameInstanceRepository: getKangurGameInstanceRepositoryMock,
 }));
 
 import { GET } from './[[...path]]/route';
@@ -65,6 +73,11 @@ describe('kangur route routing', () => {
     });
     getKangurLessonSectionRepositoryMock.mockResolvedValue({
       listSections: listSectionsMock,
+    });
+    listInstancesMock.mockResolvedValue([]);
+    getKangurGameInstanceRepositoryMock.mockResolvedValue({
+      listInstances: listInstancesMock,
+      replaceInstancesForGame: vi.fn(),
     });
   });
 
@@ -135,5 +148,43 @@ describe('kangur route routing', () => {
     });
     expect(Array.isArray(payload.lessons)).toBe(true);
     expect(Array.isArray(payload.sections)).toBe(true);
+  });
+
+  it('routes game-instances through misc routing', async () => {
+    listInstancesMock.mockResolvedValueOnce([
+      {
+        id: 'clock_instance_saved',
+        gameId: 'clock_training',
+        launchableRuntimeId: 'clock_quiz',
+        contentSetId: 'clock_training:clock-hours',
+        title: 'Hours only clock',
+        description: 'Saved clock instance.',
+        emoji: '🕐',
+        enabled: true,
+        sortOrder: 1,
+        engineOverrides: {},
+      },
+    ]);
+
+    const url = 'http://localhost/api/kangur/game-instances?gameId=clock_training';
+    const request = Object.assign(new Request(url), {
+      nextUrl: new URL(url),
+    }) as Request;
+
+    const response = await GET(request as unknown as Parameters<typeof GET>[0], {
+      params: { path: ['game-instances'] },
+    });
+
+    const payload = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(listInstancesMock).toHaveBeenCalledWith({
+      enabledOnly: undefined,
+      gameId: 'clock_training',
+      instanceId: undefined,
+    });
+    expect(payload).toEqual([
+      expect.objectContaining({ id: 'clock_instance_saved' }),
+    ]);
   });
 });

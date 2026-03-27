@@ -8,6 +8,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const {
   useKangurGameRuntimeMock,
+  useKangurGameInstancesMock,
   useKangurMobileBreakpointMock,
   routeNavigatorPrefetchMock,
   routeNavigatorPushMock,
@@ -17,8 +18,10 @@ const {
   homeDuelsInvitesPropsMock,
   tutorSessionSyncPropsMock,
   xpToastPropsMock,
+  clockTrainingGamePropsMock,
 } = vi.hoisted(() => ({
   useKangurGameRuntimeMock: vi.fn(),
+  useKangurGameInstancesMock: vi.fn(),
   useKangurMobileBreakpointMock: vi.fn(),
   routeNavigatorPrefetchMock: vi.fn(),
   routeNavigatorPushMock: vi.fn(),
@@ -28,6 +31,7 @@ const {
   homeDuelsInvitesPropsMock: vi.fn(),
   tutorSessionSyncPropsMock: vi.fn(),
   xpToastPropsMock: vi.fn(),
+  clockTrainingGamePropsMock: vi.fn(),
 }));
 
 vi.mock('framer-motion', () => {
@@ -78,6 +82,10 @@ vi.mock('@/features/kangur/ui/context/KangurGameRuntimeContext', () => ({
 
 vi.mock('@/features/kangur/ui/hooks/useKangurMobileBreakpoint', () => ({
   useKangurMobileBreakpoint: () => useKangurMobileBreakpointMock(),
+}));
+
+vi.mock('@/features/kangur/ui/hooks/useKangurGameInstances', () => ({
+  useKangurGameInstances: (...args: unknown[]) => useKangurGameInstancesMock(...args),
 }));
 
 vi.mock('@/features/kangur/ui/hooks/useKangurRouteNavigator', () => ({
@@ -188,6 +196,13 @@ vi.mock('@/features/kangur/ui/components/CalendarTrainingGame', () => ({
   default: () => <div data-testid='calendar-training-game' />,
 }));
 
+vi.mock('@/features/kangur/ui/components/ClockTrainingGame', () => ({
+  default: (props: unknown) => {
+    clockTrainingGamePropsMock(props);
+    return <div data-testid='clock-training-game' />;
+  },
+}));
+
 vi.mock('@/features/kangur/ui/components/KangurGameOperationSelectorWidget', () => ({
   KangurGameOperationSelectorWidget: () => <div data-testid='kangur-operation-selector-widget' />,
 }));
@@ -216,6 +231,7 @@ describe('Game page', () => {
     currentQuestionIndex: 0,
     difficulty: 'medium',
     kangurMode: null,
+    launchableGameInstanceId: null,
     operation: null,
     progress: {},
     resultPracticeAssignment: null,
@@ -237,6 +253,10 @@ describe('Game page', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     useKangurMobileBreakpointMock.mockReturnValue(false);
+    useKangurGameInstancesMock.mockReturnValue({
+      data: [],
+      isPending: false,
+    });
     Object.defineProperty(window, 'scrollTo', {
       configurable: true,
       value: vi.fn(),
@@ -623,6 +643,48 @@ describe('Game page', () => {
         }),
       })
     );
+  });
+
+  it('merges the selected content set with saved engine overrides for launchable game instances', async () => {
+    useKangurGameRuntimeMock.mockReturnValue({
+      ...buildRuntime('clock_quiz'),
+      launchableGameInstanceId: 'clock-instance-minutes',
+    });
+    useKangurGameInstancesMock.mockReturnValue({
+      data: [
+        {
+          id: 'clock-instance-minutes',
+          gameId: 'clock_training',
+          launchableRuntimeId: 'clock_quiz',
+          contentSetId: 'clock_training:clock-minutes',
+          title: 'Minutes only',
+          description: 'Custom minute-reading run.',
+          emoji: '🕒',
+          enabled: true,
+          sortOrder: 1,
+          engineOverrides: {
+            clockInitialMode: 'challenge',
+            showClockMinuteHand: false,
+            showClockTaskTitle: false,
+          },
+        },
+      ],
+      isPending: false,
+    });
+
+    render(<Game />);
+
+    await waitFor(() => {
+      expect(clockTrainingGamePropsMock).toHaveBeenCalledWith(
+        expect.objectContaining({
+          hideModeSwitch: false,
+          initialMode: 'challenge',
+          section: 'minutes',
+          showMinuteHand: false,
+          showTaskTitle: false,
+        })
+      );
+    });
   });
 
   it('keeps gameplay tutor context stable per practice activity and assignment', () => {

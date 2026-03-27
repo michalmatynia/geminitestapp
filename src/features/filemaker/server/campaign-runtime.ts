@@ -37,9 +37,17 @@ import {
   upsertFilemakerCampaignSettingValue,
 } from './campaign-settings-store';
 import {
+  resolveFilemakerCampaignEmailFailureMetadata,
   sendFilemakerCampaignEmail,
   type FilemakerCampaignEmailSendResult,
 } from './campaign-email-delivery';
+import {
+  buildFilemakerCampaignClickTrackingUrl,
+  buildFilemakerCampaignManageAllPreferencesUrl,
+  buildFilemakerCampaignOpenTrackingUrl,
+  buildFilemakerCampaignPreferencesUrl,
+  buildFilemakerCampaignUnsubscribeUrl,
+} from './campaign-unsubscribe-token';
 
 import type {
   FilemakerDatabase,
@@ -193,8 +201,14 @@ const buildProgressSummary = (
   };
 };
 
-const resolveFailureStatus = (errorMessage: string): FilemakerEmailCampaignDelivery['status'] =>
-  errorMessage.toLowerCase().includes('bounce') ? 'bounced' : 'failed';
+const resolveFailureStatus = (
+  failureCategory: 'soft_bounce' | 'hard_bounce' | 'invalid_recipient' | 'provider_rejected' | 'rate_limited' | 'timeout' | 'unknown'
+): FilemakerEmailCampaignDelivery['status'] =>
+  failureCategory === 'soft_bounce' ||
+  failureCategory === 'hard_bounce' ||
+  failureCategory === 'invalid_recipient'
+    ? 'bounced'
+    : 'failed';
 
 const resolveCampaignBodyText = (campaign: FilemakerEmailCampaign): string => {
   const text = campaign.bodyText?.trim() ?? '';
@@ -202,6 +216,52 @@ const resolveCampaignBodyText = (campaign: FilemakerEmailCampaign): string => {
   const html = campaign.bodyHtml?.trim() ?? '';
   if (html.length > 0) return stripHtml(html);
   return '';
+};
+
+const applyCampaignRecipientTemplateTokens = (
+  value: string | null | undefined,
+  input: {
+    emailAddress: string;
+    unsubscribeUrl: string;
+    preferencesUrl: string;
+    manageAllPreferencesUrl: string;
+    openTrackingUrl: string;
+    campaignId: string;
+    runId: string;
+    deliveryId: string;
+    nowMs: number;
+    htmlMode: boolean;
+  }
+): string | null => {
+  if (!value) return null;
+  const openTrackingPixel = input.htmlMode
+    ? `<img src="${input.openTrackingUrl}" alt="" width="1" height="1" style="display:none" />`
+    : '';
+  return value
+    .split('{{unsubscribe_url}}')
+    .join(input.unsubscribeUrl)
+    .split('{{preferences_url}}')
+    .join(input.preferencesUrl)
+    .split('{{manage_all_preferences_url}}')
+    .join(input.manageAllPreferencesUrl)
+    .split('{{open_tracking_url}}')
+    .join(input.openTrackingUrl)
+    .split('{{open_tracking_pixel}}')
+    .join(openTrackingPixel)
+    .split('{{email}}')
+    .join(input.emailAddress)
+    .replace(/\{\{click_tracking_url:([^}]+)\}\}/g, (_match: string, destination: string): string => {
+      const normalizedDestination = destination.trim();
+      if (!normalizedDestination) return '';
+      return buildFilemakerCampaignClickTrackingUrl({
+        emailAddress: input.emailAddress,
+        campaignId: input.campaignId,
+        runId: input.runId,
+        deliveryId: input.deliveryId,
+        redirectTo: normalizedDestination,
+        now: input.nowMs,
+      });
+    });
 };
 
 const assertCampaignReadyForDelivery = (
@@ -521,11 +581,65 @@ export const createFilemakerCampaignRuntimeService = (
       eventRegistry: currentEventRegistry,
     });
 
-    const campaignBodyText = resolveCampaignBodyText(campaign);
-    const campaignBodyHtml = campaign.bodyHtml?.trim() || null;
+    const campaignBodyTextTemplate = resolveCampaignBodyText(campaign);
+    const campaignBodyHtmlTemplate = campaign.bodyHtml?.trim() || null;
 
     for (const queuedDelivery of queuedDeliveries) {
-      const nowIso = deps.now().toISOString();
+      const now = deps.now();
+      const nowIso = now.toISOString();
+      const unsubscribeUrl = buildFilemakerCampaignUnsubscribeUrl({
+        emailAddress: queuedDelivery.emailAddress,
+        campaignId: campaign.id,
+        runId: run.id,
+        deliveryId: queuedDelivery.id,
+        now: now.getTime(),
+      });
+      const preferencesUrl = buildFilemakerCampaignPreferencesUrl({
+        emailAddress: queuedDelivery.emailAddress,
+        campaignId: campaign.id,
+        runId: run.id,
+        deliveryId: queuedDelivery.id,
+        now: now.getTime(),
+      });
+      const manageAllPreferencesUrl = buildFilemakerCampaignManageAllPreferencesUrl({
+        emailAddress: queuedDelivery.emailAddress,
+        campaignId: campaign.id,
+        runId: run.id,
+        deliveryId: queuedDelivery.id,
+        now: now.getTime(),
+      });
+      const openTrackingUrl = buildFilemakerCampaignOpenTrackingUrl({
+        emailAddress: queuedDelivery.emailAddress,
+        campaignId: campaign.id,
+        runId: run.id,
+        deliveryId: queuedDelivery.id,
+        now: now.getTime(),
+      });
+      const campaignBodyText =
+        applyCampaignRecipientTemplateTokens(campaignBodyTextTemplate, {
+          emailAddress: queuedDelivery.emailAddress,
+          unsubscribeUrl,
+          preferencesUrl,
+          manageAllPreferencesUrl,
+          openTrackingUrl,
+          campaignId: campaign.id,
+          runId: run.id,
+          deliveryId: queuedDelivery.id,
+          nowMs: now.getTime(),
+          htmlMode: false,
+        }) ?? '';
+      const campaignBodyHtml = applyCampaignRecipientTemplateTokens(campaignBodyHtmlTemplate, {
+        emailAddress: queuedDelivery.emailAddress,
+        unsubscribeUrl,
+        preferencesUrl,
+        manageAllPreferencesUrl,
+        openTrackingUrl,
+        campaignId: campaign.id,
+        runId: run.id,
+        deliveryId: queuedDelivery.id,
+        nowMs: now.getTime(),
+        htmlMode: true,
+      });
       try {
         const result = await deps.sendCampaignEmail({
           to: queuedDelivery.emailAddress,
@@ -543,6 +657,8 @@ export const createFilemakerCampaignRuntimeService = (
             ? {
                 ...delivery,
                 status: 'sent',
+                provider: result.provider,
+                failureCategory: null,
                 providerMessage: result.providerMessage,
                 lastError: null,
                 sentAt: result.sentAt,
@@ -564,13 +680,16 @@ export const createFilemakerCampaignRuntimeService = (
           }),
         ]);
       } catch (error) {
-        const message = error instanceof Error ? error.message : 'Campaign email delivery failed.';
-        const failureStatus = resolveFailureStatus(message);
+        const failure = resolveFilemakerCampaignEmailFailureMetadata(error);
+        const message = failure.message;
+        const failureStatus = resolveFailureStatus(failure.failureCategory);
         deliveries = deliveries.map((delivery: FilemakerEmailCampaignDelivery) =>
           delivery.id === queuedDelivery.id
             ? {
                 ...delivery,
                 status: failureStatus,
+                provider: failure.provider,
+                failureCategory: failure.failureCategory,
                 providerMessage: null,
                 lastError: message,
                 sentAt: null,
@@ -586,8 +705,8 @@ export const createFilemakerCampaignRuntimeService = (
             type: failureStatus === 'bounced' ? 'delivery_bounced' : 'delivery_failed',
             message:
               failureStatus === 'bounced'
-                ? `Delivery bounced for ${queuedDelivery.emailAddress}: ${message}`
-                : `Delivery failed for ${queuedDelivery.emailAddress}: ${message}`,
+                ? `Delivery bounced for ${queuedDelivery.emailAddress} (${failure.failureCategory}${failure.provider ? ` via ${failure.provider}` : ''}): ${message}`
+                : `Delivery failed for ${queuedDelivery.emailAddress} (${failure.failureCategory}${failure.provider ? ` via ${failure.provider}` : ''}): ${message}`,
             actor: 'system',
             deliveryStatus: failureStatus,
             createdAt: nowIso,

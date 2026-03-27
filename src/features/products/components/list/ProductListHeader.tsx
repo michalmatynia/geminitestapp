@@ -1,9 +1,8 @@
 'use client';
 
-import { Eye, EyeOff, PlusIcon, Package } from 'lucide-react';
+import { PlusIcon, Package } from 'lucide-react';
 import dynamic from 'next/dynamic';
 import { memo, useEffect, useMemo, type ReactNode } from 'react';
-import { createPortal } from 'react-dom';
 
 import {
   useProductListFiltersContext,
@@ -16,6 +15,7 @@ import type { ProductDraft } from '@/shared/contracts/products';
 import { ICON_LIBRARY_MAP } from '@/shared/lib/icons';
 import { PRODUCT_PAGE_SIZE_OPTIONS } from '@/shared/lib/products/constants';
 import { useAdminLayoutActions, useAdminLayoutState } from '@/shared/providers/AdminLayoutProvider';
+import { FocusModeTogglePortal } from '@/shared/ui/FocusModeTogglePortal';
 import { AdminProductsBreadcrumbs, Button, SelectSimple, Pagination } from '@/shared/ui';
 import { AdminTitleBreadcrumbHeader } from '@/shared/ui/admin-title-breadcrumb-header';
 
@@ -103,24 +103,6 @@ export const ProductListHeader = memo(function ProductListHeader({
       setIsMenuHidden(false);
     };
   }, [setIsMenuHidden]);
-
-  const menuToggleButton =
-    typeof document === 'undefined'
-      ? null
-      : createPortal(
-        <Button
-          size='xs'
-          type='button'
-          variant='outline'
-          onClick={() => setIsMenuHidden(!isMenuHidden)}
-          title={isMenuHidden ? 'Show side panels' : 'Show canvas only'}
-          aria-label={isMenuHidden ? 'Show side panels' : 'Show canvas only'}
-          className='fixed left-1/2 top-0 z-40 h-8 w-10 -translate-x-1/2 rounded-b-lg rounded-t-none border-t-0 bg-background/90 px-0 shadow-md backdrop-blur-sm animate-in fade-in slide-in-from-top-2'
-        >
-          {isMenuHidden ? <EyeOff className='size-4' /> : <Eye className='size-4' />}
-        </Button>,
-        document.body
-      );
 
   const renderHeaderBreadcrumb = (): React.JSX.Element => (
     <AdminProductsBreadcrumbs current='Product List' />
@@ -243,7 +225,12 @@ export const ProductListHeader = memo(function ProductListHeader({
 
   return (
     <div className='space-y-4'>
-      {showHeader ? menuToggleButton : null}
+      {showHeader ? (
+        <FocusModeTogglePortal
+          isFocusMode={!isMenuHidden}
+          onToggleFocusMode={() => setIsMenuHidden(!isMenuHidden)}
+        />
+      ) : null}
       {showHeader && (
         <div className='space-y-3'>
           <div className='space-y-3 lg:hidden'>

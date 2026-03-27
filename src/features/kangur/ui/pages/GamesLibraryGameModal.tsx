@@ -3,7 +3,14 @@
 import React, { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 
 import { KANGUR_LESSON_LIBRARY } from '@/features/kangur/lessons/lesson-catalog';
-import { getLocalizedKangurLessonTitle } from '@/features/kangur/lessons/lesson-catalog-i18n';
+import {
+  getLocalizedKangurAgeGroupLabel,
+  getLocalizedKangurLessonTitle,
+} from '@/features/kangur/lessons/lesson-catalog-i18n';
+import {
+  getKangurLaunchableGameRuntimeSpecForGame,
+} from '@/features/kangur/games';
+import { getKangurGameContentSetsForGame } from '@/features/kangur/games/content-sets';
 import ClockTrainingGame from '@/features/kangur/ui/components/ClockTrainingGame';
 import { KangurDialog } from '@/features/kangur/ui/components/KangurDialog';
 import { KangurTransitionLink as Link } from '@/features/kangur/ui/components/KangurTransitionLink';
@@ -15,9 +22,14 @@ import {
   KangurTextField,
 } from '@/features/kangur/ui/design/primitives';
 import {
+  buildKangurGameInstanceLaunchHref,
   buildKangurGameLaunchHref,
   buildKangurGameLessonHref,
 } from '@/features/kangur/ui/services/game-launch';
+import {
+  useKangurGameInstances,
+  useReplaceKangurGameInstances,
+} from '@/features/kangur/ui/hooks/useKangurGameInstances';
 import type { KangurLessonComponentId } from '@/features/kangur/shared/contracts/kangur';
 import {
   useKangurLessonGameSections,
@@ -27,6 +39,13 @@ import type {
   ClockGameMode,
   ClockTrainingSectionId,
 } from '@/features/kangur/ui/components/clock-training/types';
+import type {
+  KangurGameContentSet,
+  KangurGameContentSetId,
+  KangurGameContentSetKind,
+  KangurGameInstance,
+} from '@/shared/contracts/kangur-game-instances';
+import type { KangurGameRuntimeRendererProps } from '@/shared/contracts/kangur-game-runtime-renderer-props';
 import type { KangurLessonGameSection } from '@/shared/contracts/kangur-lesson-game-sections';
 import type { KangurGameDefinition } from '@/shared/contracts/kangur-games';
 import { cn } from '@/features/kangur/shared/utils';
@@ -67,6 +86,15 @@ type HubSectionEditorState = {
   draftIcon: string;
   draftSubtext: string;
   draftTitle: string;
+};
+
+type GameInstanceEditorState = {
+  clockSettings: ClockPreviewSettings;
+  contentSetId: KangurGameContentSetId | null;
+  instanceDescription: string;
+  instanceEmoji: string;
+  instanceEnabled: boolean;
+  instanceTitle: string;
 };
 
 type SavedSectionsStatusFilter = 'all' | 'enabled' | 'disabled';
@@ -110,7 +138,7 @@ function SavedSectionsStatusControl({
               'min-w-0 flex-1 rounded-[0.95rem] px-3 py-2 text-xs font-semibold transition',
               isActive
                 ? 'bg-[color:var(--kangur-page-text)] text-white shadow-[0_12px_32px_-24px_rgba(15,23,42,0.8)]'
-                : 'text-[color:var(--kangur-page-muted-text)] hover:bg-white/70'
+                : '[background:color-mix(in_srgb,var(--kangur-soft-card-background)_94%,white)] text-[color:var(--kangur-page-muted-text)] hover:[background:color-mix(in_srgb,var(--kangur-soft-card-background)_88%,white)]'
             )}
             onClick={() => onChange(option.value)}
             role='radio'
@@ -136,6 +164,18 @@ const DEFAULT_CLOCK_PREVIEW_SETTINGS: ClockPreviewSettings = {
   showTimeDisplay: true,
 };
 
+const GAMES_LIBRARY_MODAL_SECTION_SURFACE_CLASSNAME =
+  'rounded-[1.5rem] border border-[color:var(--kangur-soft-card-border)] [background:color-mix(in_srgb,var(--kangur-soft-card-background)_94%,var(--kangur-page-background))] shadow-[0_18px_48px_-42px_rgba(15,23,42,0.42)]';
+
+const GAMES_LIBRARY_MODAL_FIELD_SURFACE_CLASSNAME =
+  'rounded-2xl border border-[color:var(--kangur-soft-card-border)] [background:color-mix(in_srgb,var(--kangur-soft-card-background)_97%,white)]';
+
+const GAMES_LIBRARY_MODAL_EMPTY_STATE_CLASSNAME =
+  'rounded-[1.5rem] border border-dashed border-[color:var(--kangur-soft-card-border)] [background:color-mix(in_srgb,var(--kangur-soft-card-background)_82%,var(--kangur-page-background))] px-4 py-8 text-center text-sm [color:var(--kangur-page-muted-text)]';
+
+const GAMES_LIBRARY_MODAL_STAT_CARD_CLASSNAME =
+  'rounded-[1.15rem] border border-[color:var(--kangur-soft-card-border)] [background:color-mix(in_srgb,var(--kangur-soft-card-background)_92%,white)] px-3 py-3';
+
 const createDraftId = (): string =>
   `draft-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
 
@@ -144,6 +184,14 @@ const normalizeSectionSortOrder = (
 ): KangurLessonGameSection[] =>
   sections.map((section, index) => ({
     ...section,
+    sortOrder: index + 1,
+  }));
+
+const normalizeInstanceSortOrder = (
+  instances: readonly KangurGameInstance[]
+): KangurGameInstance[] =>
+  instances.map((instance, index) => ({
+    ...instance,
     sortOrder: index + 1,
   }));
 
@@ -177,6 +225,130 @@ const buildEditorStateFromSection = (
   draftTitle: section?.title ?? nextGame.title,
 });
 
+const buildInstanceEditorStateFromInstance = (
+  instance: KangurGameInstance | null,
+  input: {
+    defaultClockSettings: ClockPreviewSettings;
+    contentSets: readonly KangurGameContentSet[];
+    game: KangurGameDefinition;
+  }
+): GameInstanceEditorState => ({
+  clockSettings:
+    input.game.id === 'clock_training'
+      ? instance
+        ? resolveClockPreviewSettingsFromInstance(instance, input.defaultClockSettings.clockSection)
+        : input.defaultClockSettings
+      : input.defaultClockSettings,
+  contentSetId: instance?.contentSetId ?? input.contentSets[0]?.id ?? null,
+  instanceDescription: instance?.description ?? input.game.description,
+  instanceEmoji: instance?.emoji ?? input.game.emoji ?? '🎮',
+  instanceEnabled: instance?.enabled ?? true,
+  instanceTitle: instance?.title ?? input.game.title,
+});
+
+const resolveClockPreviewSettingsFromInstance = (
+  instance: KangurGameInstance | null,
+  currentClockSection: ClockTrainingSectionId
+): ClockPreviewSettings => ({
+  clockSection: currentClockSection,
+  initialMode:
+    instance?.engineOverrides.clockInitialMode ?? DEFAULT_CLOCK_PREVIEW_SETTINGS.initialMode,
+  showHourHand:
+    instance?.engineOverrides.showClockHourHand ?? DEFAULT_CLOCK_PREVIEW_SETTINGS.showHourHand,
+  showMinuteHand:
+    instance?.engineOverrides.showClockMinuteHand ??
+    DEFAULT_CLOCK_PREVIEW_SETTINGS.showMinuteHand,
+  showModeSwitch:
+    instance?.engineOverrides.showClockModeSwitch ??
+    DEFAULT_CLOCK_PREVIEW_SETTINGS.showModeSwitch,
+  showTaskTitle:
+    instance?.engineOverrides.showClockTaskTitle ?? DEFAULT_CLOCK_PREVIEW_SETTINGS.showTaskTitle,
+  showTimeDisplay:
+    instance?.engineOverrides.showClockTimeDisplay ??
+    DEFAULT_CLOCK_PREVIEW_SETTINGS.showTimeDisplay,
+});
+
+const buildClockEngineSettingsSummary = (
+  input: Pick<
+    ClockPreviewSettings,
+    | 'initialMode'
+    | 'showHourHand'
+    | 'showMinuteHand'
+    | 'showModeSwitch'
+    | 'showTaskTitle'
+    | 'showTimeDisplay'
+  >,
+  translations: (key: string) => string
+): string[] => {
+  const summary = [
+    input.initialMode === 'challenge'
+      ? translations('modal.settings.initialModeChallenge')
+      : translations('modal.settings.initialModePractice'),
+  ];
+
+  if (!input.showHourHand) {
+    summary.push(translations('modal.settingsSummary.hourHandHidden'));
+  }
+  if (!input.showMinuteHand) {
+    summary.push(translations('modal.settingsSummary.minuteHandHidden'));
+  }
+  if (!input.showModeSwitch) {
+    summary.push(translations('modal.settingsSummary.modeSwitchHidden'));
+  }
+  if (!input.showTaskTitle) {
+    summary.push(translations('modal.settingsSummary.taskTitleHidden'));
+  }
+  if (!input.showTimeDisplay) {
+    summary.push(translations('modal.settingsSummary.timeDisplayHidden'));
+  }
+
+  return summary;
+};
+
+const getContentKindLabel = (
+  contentKind: KangurGameContentSetKind,
+  translations: (key: string, values?: Record<string, string | number>) => string
+): string => translations(`modal.instances.contentKind.${contentKind}`);
+
+const buildContentSetFeedSummary = (
+  contentSet: KangurGameContentSet,
+  translations: (key: string, values?: Record<string, string | number>) => string
+): string | null => {
+  if (contentSet.rendererProps.clockSection) {
+    switch (contentSet.rendererProps.clockSection) {
+      case 'hours':
+        return translations('modal.settings.clockSectionHours');
+      case 'minutes':
+        return translations('modal.settings.clockSectionMinutes');
+      case 'combined':
+      default:
+        return translations('modal.settings.clockSectionCombined');
+    }
+  }
+
+  if (contentSet.rendererProps.patternSetId) {
+    switch (contentSet.rendererProps.patternSetId) {
+      case 'alphabet_letter_order':
+        return translations('modal.instances.feedSummary.alphabetOrder');
+      case 'logical_patterns_workshop':
+      default:
+        return translations('modal.instances.feedSummary.logicalPatternsWorkshop');
+    }
+  }
+
+  if (contentSet.rendererProps.shapeIds?.length) {
+    return translations('modal.instances.feedSummary.geometryShapeCount', {
+      count: contentSet.rendererProps.shapeIds.length,
+    });
+  }
+
+  if (contentSet.contentKind === 'default_content') {
+    return translations('modal.instances.feedSummary.defaultContent');
+  }
+
+  return null;
+};
+
 const areClockPreviewSettingsEqual = (
   left: ClockPreviewSettings,
   right: ClockPreviewSettings
@@ -200,7 +372,47 @@ const areEditorStatesEqual = (
   left.draftSubtext === right.draftSubtext &&
   left.draftTitle === right.draftTitle;
 
+const areInstanceEditorStatesEqual = (
+  left: GameInstanceEditorState,
+  right: GameInstanceEditorState
+): boolean =>
+  areClockPreviewSettingsEqual(left.clockSettings, right.clockSettings) &&
+  left.contentSetId === right.contentSetId &&
+  left.instanceDescription === right.instanceDescription &&
+  left.instanceEmoji === right.instanceEmoji &&
+  left.instanceEnabled === right.instanceEnabled &&
+  left.instanceTitle === right.instanceTitle;
+
+const resolveModalStatusAccent = (
+  status: KangurGameDefinition['status']
+): 'amber' | 'emerald' | 'slate' => {
+  switch (status) {
+    case 'draft':
+      return 'amber';
+    case 'legacy':
+      return 'slate';
+    case 'active':
+    default:
+      return 'emerald';
+  }
+};
+
+const resolveModalAgeGroupAccent = (
+  ageGroup: KangurGameDefinition['ageGroup']
+): 'amber' | 'sky' | 'slate' => {
+  switch (ageGroup) {
+    case 'six_year_old':
+      return 'amber';
+    case 'grown_ups':
+      return 'slate';
+    case 'ten_year_old':
+    default:
+      return 'sky';
+  }
+};
+
 type SettingsToggleProps = {
+  ariaLabel?: string;
   checked: boolean;
   description: string;
   disabled?: boolean;
@@ -209,6 +421,7 @@ type SettingsToggleProps = {
 };
 
 function SettingsToggle({
+  ariaLabel,
   checked,
   description,
   disabled = false,
@@ -218,7 +431,7 @@ function SettingsToggle({
   return (
     <label
       className={cn(
-        'flex items-start justify-between gap-4 rounded-3xl border border-[color:var(--kangur-page-border)] bg-white/70 px-4 py-3',
+        'flex items-start justify-between gap-4 rounded-3xl border border-[color:var(--kangur-soft-card-border)] [background:color-mix(in_srgb,var(--kangur-soft-card-background)_96%,white)] px-4 py-3',
         disabled && 'cursor-not-allowed opacity-70'
       )}
     >
@@ -231,7 +444,7 @@ function SettingsToggle({
         </span>
       </span>
       <input
-        aria-label={label}
+        aria-label={ariaLabel ?? label}
         checked={checked}
         className='mt-1 h-4 w-4 accent-indigo-600'
         disabled={disabled}
@@ -259,7 +472,7 @@ function renderGamesLibraryGameDialog({
       contentProps={{
         'data-testid': 'games-library-game-modal',
         className:
-          'w-[min(calc(100vw-2rem),74rem)] rounded-[2rem] border border-[color:var(--kangur-page-border)] bg-[color:var(--kangur-page-background)] p-5 shadow-[0_40px_120px_-52px_rgba(15,23,42,0.5)] sm:p-6',
+          'w-[min(calc(100vw-2rem),74rem)] rounded-[2.25rem] border border-[color:var(--kangur-soft-card-border)] [background:color-mix(in_srgb,var(--kangur-soft-card-background)_96%,var(--kangur-page-background))] p-5 shadow-[0_48px_132px_-56px_rgba(15,23,42,0.56)] sm:p-6',
       }}
     >
       {children}
@@ -275,11 +488,28 @@ export function GamesLibraryGameModal({
 }: GamesLibraryGameModalProps): React.JSX.Element {
   const locale = useLocale();
   const translations = useTranslations('KangurGamesLibraryPage');
+  const gameInstancesQuery = useKangurGameInstances({
+    enabled: open && Boolean(game),
+    gameId: game?.id,
+  });
+  const replaceGameInstances = useReplaceKangurGameInstances();
   const lessonGameSectionsQuery = useKangurLessonGameSections({
     enabled: open && Boolean(game),
     gameId: game?.id,
   });
   const replaceLessonGameSections = useReplaceKangurLessonGameSections();
+  const [selectedInstanceId, setSelectedInstanceId] = useState<string | null>(null);
+  const [preferNewInstanceDraft, setPreferNewInstanceDraft] = useState(false);
+  const [instanceTitle, setInstanceTitle] = useState('');
+  const [instanceDescription, setInstanceDescription] = useState('');
+  const [instanceEmoji, setInstanceEmoji] = useState<string>('🎮');
+  const [instanceEnabled, setInstanceEnabled] = useState(true);
+  const [selectedContentSetId, setSelectedContentSetId] =
+    useState<KangurGameContentSetId | null>(null);
+  const [instanceEditorBaseline, setInstanceEditorBaseline] =
+    useState<GameInstanceEditorState | null>(null);
+  const [optimisticInstances, setOptimisticInstances] = useState<KangurGameInstance[] | null>(null);
+  const [instanceSyncError, setInstanceSyncError] = useState<string | null>(null);
   const [selectedSectionId, setSelectedSectionId] = useState<string | null>(null);
   const [preferNewDraft, setPreferNewDraft] = useState(false);
   const [attachedLessonId, setAttachedLessonId] = useState<KangurLessonComponentId | null>(null);
@@ -299,6 +529,37 @@ export function GamesLibraryGameModal({
   const [clockSettings, setClockSettings] = useState<ClockPreviewSettings>(
     DEFAULT_CLOCK_PREVIEW_SETTINGS
   );
+  const [instanceClockSettings, setInstanceClockSettings] = useState<ClockPreviewSettings>(
+    DEFAULT_CLOCK_PREVIEW_SETTINGS
+  );
+  const launchableRuntime = game ? getKangurLaunchableGameRuntimeSpecForGame(game) : null;
+  const contentSets = useMemo(
+    () => (game ? getKangurGameContentSetsForGame(game) : []),
+    [game]
+  );
+  const persistedInstances = gameInstancesQuery.data ?? [];
+  const activeInstances = useMemo(
+    () =>
+      [...(optimisticInstances ?? persistedInstances)].sort(
+        (left, right) => left.sortOrder - right.sortOrder || left.id.localeCompare(right.id)
+      ),
+    [optimisticInstances, persistedInstances]
+  );
+  const selectedInstance =
+    selectedInstanceId === null
+      ? null
+      : activeInstances.find((instance) => instance.id === selectedInstanceId) ?? null;
+  const selectedContentSet =
+    selectedContentSetId === null
+      ? contentSets[0] ?? null
+      : contentSets.find((contentSet) => contentSet.id === selectedContentSetId) ??
+        contentSets[0] ??
+        null;
+  const selectedContentSetFeedSummary = selectedContentSet
+    ? buildContentSetFeedSummary(selectedContentSet, translations)
+    : null;
+  const instancePreviewClockSection =
+    selectedContentSet?.rendererProps.clockSection ?? instanceClockSettings.clockSection;
   const pendingEditorRestoreRef = useRef<HubSectionEditorState | null>(null);
   const previousGameIdRef = useRef<string | null>(null);
   const persistedSections = lessonGameSectionsQuery.data ?? [];
@@ -332,6 +593,31 @@ export function GamesLibraryGameModal({
     setEditorBaseline(nextEditorState);
   };
 
+  const applyInstanceEditorState = (editorState: GameInstanceEditorState): void => {
+    setInstanceClockSettings({ ...editorState.clockSettings });
+    setSelectedContentSetId(editorState.contentSetId);
+    setInstanceDescription(editorState.instanceDescription);
+    setInstanceEmoji(editorState.instanceEmoji);
+    setInstanceEnabled(editorState.instanceEnabled);
+    setInstanceTitle(editorState.instanceTitle);
+  };
+
+  const syncEditorFromInstance = (
+    instance: KangurGameInstance | null,
+    nextGame: KangurGameDefinition
+  ): void => {
+    setInstanceSyncError(null);
+    const nextEditorState = buildInstanceEditorStateFromInstance(instance, {
+      defaultClockSettings: clockSettings,
+      contentSets,
+      game: nextGame,
+    });
+    setPreferNewInstanceDraft(instance === null);
+    setSelectedInstanceId(instance?.id ?? null);
+    applyInstanceEditorState(nextEditorState);
+    setInstanceEditorBaseline(nextEditorState);
+  };
+
   const applyEditorState = (editorState: HubSectionEditorState): void => {
     setAttachedLessonId(editorState.attachedLessonId);
     setDraftEnabled(editorState.draftEnabled);
@@ -352,6 +638,16 @@ export function GamesLibraryGameModal({
 
   const resetTransientState = (): void => {
     pendingEditorRestoreRef.current = null;
+    setSelectedInstanceId(null);
+    setPreferNewInstanceDraft(false);
+    setSelectedContentSetId(null);
+    setInstanceTitle('');
+    setInstanceDescription('');
+    setInstanceEmoji('🎮');
+    setInstanceEnabled(true);
+    setInstanceEditorBaseline(null);
+    setOptimisticInstances(null);
+    setInstanceSyncError(null);
     setSelectedSectionId(null);
     setPreferNewDraft(false);
     setAttachedLessonId(null);
@@ -366,6 +662,7 @@ export function GamesLibraryGameModal({
     setSyncError(null);
     setSettingsOpen(false);
     setClockSettings(DEFAULT_CLOCK_PREVIEW_SETTINGS);
+    setInstanceClockSettings(DEFAULT_CLOCK_PREVIEW_SETTINGS);
   };
 
   useEffect(() => {
@@ -382,8 +679,38 @@ export function GamesLibraryGameModal({
   }, [game?.id, open]);
 
   useEffect(() => {
+    setOptimisticInstances(null);
+  }, [game?.id, persistedInstances]);
+
+  useEffect(() => {
     setOptimisticSections(null);
   }, [game?.id, persistedSections]);
+
+  useEffect(() => {
+    if (!game || !launchableRuntime) {
+      return;
+    }
+
+    if (preferNewInstanceDraft) {
+      return;
+    }
+
+    if (selectedInstanceId) {
+      const matchingInstance = activeInstances.find((instance) => instance.id === selectedInstanceId);
+      if (matchingInstance) {
+        return;
+      }
+    }
+
+    syncEditorFromInstance(activeInstances[0] ?? null, game);
+  }, [
+    activeInstances,
+    contentSets,
+    game,
+    launchableRuntime,
+    preferNewInstanceDraft,
+    selectedInstanceId,
+  ]);
 
   useEffect(() => {
     if (!game) {
@@ -445,6 +772,9 @@ export function GamesLibraryGameModal({
 
   const gameHref = game ? buildKangurGameLaunchHref(basePath, game) : null;
   const lessonHref = game ? buildKangurGameLessonHref(basePath, game) : null;
+  const selectedInstanceHref = selectedInstance
+    ? buildKangurGameInstanceLaunchHref(basePath, selectedInstance)
+    : null;
 
   const attachedLessonLabel = attachedLessonId
     ? lessonLabelMap[attachedLessonId] ?? attachedLessonId
@@ -519,6 +849,24 @@ export function GamesLibraryGameModal({
       ),
     [activeSections, attachedLessonId, game?.lessonComponentIds]
   );
+  const currentInstanceEditorState = useMemo<GameInstanceEditorState>(
+    () => ({
+      clockSettings: instanceClockSettings,
+      contentSetId: selectedContentSetId,
+      instanceDescription,
+      instanceEmoji,
+      instanceEnabled,
+      instanceTitle,
+    }),
+    [
+      instanceClockSettings,
+      instanceDescription,
+      instanceEmoji,
+      instanceEnabled,
+      instanceTitle,
+      selectedContentSetId,
+    ]
+  );
   const currentEditorState = useMemo<HubSectionEditorState>(
     () => ({
       attachedLessonId,
@@ -530,7 +878,53 @@ export function GamesLibraryGameModal({
     }),
     [attachedLessonId, clockSettings, draftEnabled, draftIcon, draftSubtext, draftTitle]
   );
+  const currentEngineOverrides = useMemo<KangurGameRuntimeRendererProps>(
+    () =>
+      supportsPreviewSettings
+        ? {
+            clockInitialMode: instanceClockSettings.initialMode,
+            showClockHourHand: instanceClockSettings.showHourHand,
+            showClockMinuteHand: instanceClockSettings.showMinuteHand,
+            showClockModeSwitch: instanceClockSettings.showModeSwitch,
+            showClockTaskTitle: instanceClockSettings.showTaskTitle,
+            showClockTimeDisplay: instanceClockSettings.showTimeDisplay,
+          }
+        : {},
+    [instanceClockSettings, supportsPreviewSettings]
+  );
+  const currentEngineSettingsSummary = useMemo(() => {
+    if (!supportsPreviewSettings) {
+      return [translations('modal.instances.currentEngineSettingsDefault')];
+    }
+
+    return buildClockEngineSettingsSummary(
+      {
+        initialMode: instanceClockSettings.initialMode,
+        showHourHand: instanceClockSettings.showHourHand,
+        showMinuteHand: instanceClockSettings.showMinuteHand,
+        showModeSwitch: instanceClockSettings.showModeSwitch,
+        showTaskTitle: instanceClockSettings.showTaskTitle,
+        showTimeDisplay: instanceClockSettings.showTimeDisplay,
+      },
+      translations
+    );
+  }, [instanceClockSettings, supportsPreviewSettings, translations]);
   const hasVisibleClockHand = clockSettings.showHourHand || clockSettings.showMinuteHand;
+  const instanceValidationMessages = useMemo(() => {
+    const messages: string[] = [];
+
+    if (!selectedContentSet) {
+      messages.push(translations('modal.instances.validation.contentSetRequired'));
+    }
+    if (instanceTitle.trim().length === 0) {
+      messages.push(translations('modal.instances.validation.titleRequired'));
+    }
+    if (instanceEmoji.trim().length === 0) {
+      messages.push(translations('modal.instances.validation.emojiRequired'));
+    }
+
+    return messages;
+  }, [instanceEmoji, instanceTitle, selectedContentSet, translations]);
   const draftValidationMessages = useMemo(() => {
     const messages: string[] = [];
 
@@ -556,13 +950,119 @@ export function GamesLibraryGameModal({
     supportsPreviewSettings,
     translations,
   ]);
+  const isInstanceEditorDirty =
+    instanceEditorBaseline !== null &&
+    !areInstanceEditorStatesEqual(currentInstanceEditorState, instanceEditorBaseline);
   const isEditorDirty =
     editorBaseline !== null && !areEditorStatesEqual(currentEditorState, editorBaseline);
   const canResetClockSettings =
     supportsPreviewSettings &&
     !areClockPreviewSettingsEqual(clockSettings, DEFAULT_CLOCK_PREVIEW_SETTINGS);
+  const supportsInstanceEngineSettings = Boolean(launchableRuntime) && supportsPreviewSettings;
 
   const canAddDraft = draftValidationMessages.length === 0;
+  const canSaveInstance = Boolean(launchableRuntime) && instanceValidationMessages.length === 0;
+
+  const handleResetInstanceEditor = (): void => {
+    if (!game) {
+      return;
+    }
+
+    setInstanceSyncError(null);
+    syncEditorFromInstance(null, game);
+  };
+
+  const handleEditInstance = (instance: KangurGameInstance): void => {
+    if (!game) {
+      return;
+    }
+
+    setInstanceSyncError(null);
+    syncEditorFromInstance(instance, game);
+  };
+
+  const handleSaveInstance = async (): Promise<void> => {
+    if (!game || !launchableRuntime || !selectedContentSet) {
+      return;
+    }
+
+    const instanceId = selectedInstanceId ?? createDraftId();
+    const nextInstance: KangurGameInstance = {
+      id: instanceId,
+      gameId: game.id,
+      launchableRuntimeId: launchableRuntime.screen,
+      contentSetId: selectedContentSet.id,
+      title: instanceTitle.trim(),
+      description: instanceDescription.trim(),
+      emoji: instanceEmoji.trim() || '🎮',
+      enabled: instanceEnabled,
+      sortOrder:
+        selectedInstance?.sortOrder ??
+        Math.max(0, ...activeInstances.map((instance) => instance.sortOrder)) + 1,
+      engineOverrides: currentEngineOverrides,
+    };
+
+    const nextInstances = normalizeInstanceSortOrder(
+      selectedInstanceId === null
+        ? [...activeInstances, nextInstance]
+        : activeInstances.map((instance) =>
+            instance.id === selectedInstanceId ? nextInstance : instance
+          )
+    );
+
+    setInstanceSyncError(null);
+    setOptimisticInstances(nextInstances);
+    setPreferNewInstanceDraft(false);
+    setSelectedInstanceId(instanceId);
+    setInstanceEditorBaseline(
+      buildInstanceEditorStateFromInstance(nextInstance, {
+        defaultClockSettings: clockSettings,
+        contentSets,
+        game,
+      })
+    );
+
+    try {
+      await replaceGameInstances.mutateAsync({
+        gameId: game.id,
+        instances: nextInstances,
+      });
+    } catch {
+      setOptimisticInstances(null);
+      setInstanceSyncError(translations('modal.instances.syncError'));
+    }
+  };
+
+  const handleRemoveInstance = (instance: KangurGameInstance): void => {
+    if (!game) {
+      return;
+    }
+
+    const nextInstances = normalizeInstanceSortOrder(
+      activeInstances.filter((entry) => entry.id !== instance.id)
+    );
+
+    setInstanceSyncError(null);
+    setOptimisticInstances(nextInstances);
+    if (instance.id === selectedInstanceId) {
+      const fallbackInstance = nextInstances[0] ?? null;
+      if (fallbackInstance) {
+        syncEditorFromInstance(fallbackInstance, game);
+      } else {
+        handleResetInstanceEditor();
+      }
+    }
+
+    void replaceGameInstances
+      .mutateAsync({
+        gameId: game.id,
+        instances: nextInstances,
+      })
+      .catch(() => {
+        setOptimisticInstances(null);
+        setInstanceSyncError(translations('modal.instances.syncError'));
+      });
+  };
 
   const handleResetEditor = (): void => {
     if (!game) {
@@ -672,6 +1172,17 @@ export function GamesLibraryGameModal({
   ): void => {
     setSyncError(null);
     setClockSettings((current) => ({
+      ...current,
+      [key]: value,
+    }));
+  };
+
+  const updateInstanceClockSettings = <TKey extends keyof ClockPreviewSettings>(
+    key: TKey,
+    value: ClockPreviewSettings[TKey]
+  ): void => {
+    setInstanceSyncError(null);
+    setInstanceClockSettings((current) => ({
       ...current,
       [key]: value,
     }));
@@ -839,8 +1350,12 @@ export function GamesLibraryGameModal({
   const gameChipLabel = game.title;
   const gameTransitionSourceId = `kangur-games-library:${game.id}:modal-game`;
   const lessonTransitionSourceId = `kangur-games-library:${game.id}:modal-lessons`;
+  const resolvedAgeGroupLabel = game.ageGroup
+    ? getLocalizedKangurAgeGroupLabel(game.ageGroup, locale)
+    : translations('labels.allAgeGroups');
+  const linkedLessonCount = game.lessonComponentIds.length;
   const handleDialogOpenChange = (nextOpen: boolean): void => {
-    if (!nextOpen && replaceLessonGameSections.isPending) {
+    if (!nextOpen && (replaceLessonGameSections.isPending || replaceGameInstances.isPending)) {
       return;
     }
 
@@ -852,59 +1367,787 @@ export function GamesLibraryGameModal({
     open,
     children: (
       <div className='space-y-5'>
-        <div className='flex flex-wrap items-start justify-between gap-3'>
-          <div className='min-w-0 flex-1 space-y-2 pr-2'>
-            <div className='flex flex-wrap items-center gap-2'>
-              <div className='text-xs font-semibold uppercase tracking-[0.18em] [color:var(--kangur-page-muted-text)]'>
-                {translations('modal.eyebrow')}
+        <div className='relative overflow-hidden rounded-[1.9rem] border border-[color:var(--kangur-soft-card-border)] [background:linear-gradient(145deg,color-mix(in_srgb,var(--kangur-soft-card-background)_90%,var(--kangur-page-background))_0%,color-mix(in_srgb,var(--kangur-soft-card-background)_84%,var(--kangur-accent-sky-start,#38bdf8))_100%)] px-5 py-5 shadow-[0_32px_90px_-54px_rgba(15,23,42,0.55)] sm:px-6'>
+          <div
+            aria-hidden='true'
+            className='pointer-events-none absolute -right-16 top-0 h-40 w-40 rounded-full [background:radial-gradient(circle,color-mix(in_srgb,var(--kangur-accent-sky-start,#38bdf8)_30%,transparent)_0%,transparent_72%)]'
+          />
+          <div className='relative space-y-5'>
+            <div className='flex flex-wrap items-start justify-between gap-4'>
+              <div className='min-w-0 flex-1 space-y-3 pr-2'>
+                <div className='flex flex-wrap items-center gap-2'>
+                  <div className='text-xs font-semibold uppercase tracking-[0.18em] [color:var(--kangur-page-muted-text)]'>
+                    {translations('modal.eyebrow')}
+                  </div>
+                  <KangurStatusChip accent='amber' size='sm'>
+                    {translations('modal.scaffoldBadge')}
+                  </KangurStatusChip>
+                  <KangurStatusChip accent='sky' size='sm'>
+                    {game.engineId}
+                  </KangurStatusChip>
+                </div>
+                <div className='flex flex-wrap items-center gap-3'>
+                  <div
+                    aria-hidden='true'
+                    className='flex h-14 w-14 items-center justify-center rounded-[1.35rem] border border-[color:var(--kangur-soft-card-border)] [background:color-mix(in_srgb,var(--kangur-soft-card-background)_94%,white)] text-3xl shadow-[0_20px_52px_-34px_rgba(15,23,42,0.65)]'
+                  >
+                    {game.emoji}
+                  </div>
+                  <div className='min-w-0 flex-1'>
+                    <h2 className='text-2xl font-black tracking-[-0.03em] [color:var(--kangur-page-text)] sm:text-[2rem]'>
+                      {game.title}
+                    </h2>
+                    <p className='mt-1 max-w-3xl text-sm leading-6 [color:var(--kangur-page-muted-text)]'>
+                      {translations('modal.description')}
+                    </p>
+                  </div>
+                </div>
               </div>
-              <KangurStatusChip accent='amber' size='sm'>
-                {translations('modal.scaffoldBadge')}
-              </KangurStatusChip>
-            </div>
-            <div className='flex flex-wrap items-center gap-3'>
-              <div className='text-3xl' aria-hidden='true'>
-                {game.emoji}
-              </div>
-              <div>
-                <h2 className='text-2xl font-black [color:var(--kangur-page-text)]'>
-                  {game.title}
-                </h2>
-                <p className='mt-1 text-sm leading-6 [color:var(--kangur-page-muted-text)]'>
-                  {translations('modal.description')}
-                </p>
-              </div>
-            </div>
-          </div>
 
-          <div className='flex flex-wrap items-center gap-2'>
-            {supportsPreviewSettings ? (
-              <KangurButton
-                disabled={replaceLessonGameSections.isPending}
-                onClick={() => setSettingsOpen((current) => !current)}
-                size='sm'
-                type='button'
-                variant='surface'
-              >
-                {settingsOpen
-                  ? translations('modal.hideSettingsButton')
-                  : translations('modal.settingsButton')}
-              </KangurButton>
-            ) : null}
-            <KangurButton
-              disabled={replaceLessonGameSections.isPending}
-              onClick={handleCloseModal}
-              size='sm'
-              type='button'
-              variant='surface'
-            >
-              {translations('modal.closeButton')}
-            </KangurButton>
+              <div className='flex flex-wrap items-center gap-2'>
+                {supportsPreviewSettings ? (
+                  <KangurButton
+                    disabled={replaceLessonGameSections.isPending}
+                    onClick={() => setSettingsOpen((current) => !current)}
+                    size='sm'
+                    type='button'
+                    variant='surface'
+                  >
+                    {settingsOpen
+                      ? translations('modal.hideSettingsButton')
+                      : translations('modal.settingsButton')}
+                  </KangurButton>
+                ) : null}
+                <KangurButton
+                  disabled={
+                    replaceLessonGameSections.isPending || replaceGameInstances.isPending
+                  }
+                  onClick={handleCloseModal}
+                  size='sm'
+                  type='button'
+                  variant='surface'
+                >
+                  {translations('modal.closeButton')}
+                </KangurButton>
+              </div>
+            </div>
+
+            <div className='grid gap-3 sm:grid-cols-2 xl:grid-cols-4'>
+              <div className={GAMES_LIBRARY_MODAL_STAT_CARD_CLASSNAME}>
+                <div className='text-[11px] font-bold uppercase tracking-wide [color:var(--kangur-page-muted-text)]'>
+                  {translations('labels.ageGroup')}
+                </div>
+                <div className='mt-2'>
+                  <KangurStatusChip
+                    accent={resolveModalAgeGroupAccent(game.ageGroup)}
+                    size='sm'
+                  >
+                    {resolvedAgeGroupLabel}
+                  </KangurStatusChip>
+                </div>
+              </div>
+              <div className={GAMES_LIBRARY_MODAL_STAT_CARD_CLASSNAME}>
+                <div className='text-[11px] font-bold uppercase tracking-wide [color:var(--kangur-page-muted-text)]'>
+                  {translations('labels.mechanic')}
+                </div>
+                <div className='mt-2 text-sm font-semibold [color:var(--kangur-page-text)]'>
+                  {translations(`mechanics.${game.mechanic}`)}
+                </div>
+              </div>
+              <div className={GAMES_LIBRARY_MODAL_STAT_CARD_CLASSNAME}>
+                <div className='text-[11px] font-bold uppercase tracking-wide [color:var(--kangur-page-muted-text)]'>
+                  {translations('labels.variants')}
+                </div>
+                <div className='mt-2 text-sm font-semibold [color:var(--kangur-page-text)]'>
+                  {translations('labels.variantCount', { count: game.variants.length })}
+                </div>
+              </div>
+              <div className={GAMES_LIBRARY_MODAL_STAT_CARD_CLASSNAME}>
+                <div className='text-[11px] font-bold uppercase tracking-wide [color:var(--kangur-page-muted-text)]'>
+                  {translations('labels.lessonLinks')}
+                </div>
+                <div className='mt-2 flex flex-wrap items-center gap-2'>
+                  <KangurStatusChip
+                    accent={linkedLessonCount > 0 ? 'emerald' : 'slate'}
+                    size='sm'
+                  >
+                    {linkedLessonCount > 0
+                      ? translations('labels.variantCount', { count: linkedLessonCount })
+                      : translations('labels.none')}
+                  </KangurStatusChip>
+                  <KangurStatusChip
+                    accent={resolveModalStatusAccent(game.status)}
+                    size='sm'
+                  >
+                    {translations(`statuses.${game.status}`)}
+                  </KangurStatusChip>
+                </div>
+              </div>
+            </div>
+
+            <div className='flex flex-wrap gap-2'>
+              {game.surfaces.map((surface) => (
+                <KangurStatusChip
+                  key={`${game.id}:${surface}`}
+                  accent='sky'
+                  size='sm'
+                >
+                  {translations(`surfaces.${surface}`)}
+                </KangurStatusChip>
+              ))}
+            </div>
           </div>
         </div>
 
-        <div className='grid gap-4 xl:grid-cols-[minmax(0,1.2fr)_minmax(19rem,0.9fr)]'>
+        <KangurInfoCard accent='violet' padding='lg' className='space-y-4'>
+          <div className='space-y-1'>
+            <div className='text-xs font-semibold uppercase tracking-[0.18em] [color:var(--kangur-page-muted-text)]'>
+              {translations('modal.instances.eyebrow')}
+            </div>
+            <div className='text-lg font-black [color:var(--kangur-page-text)]'>
+              {translations('modal.instances.title')}
+            </div>
+            <div className='text-sm [color:var(--kangur-page-muted-text)]'>
+              {translations('modal.instances.description')}
+            </div>
+          </div>
+
+          {!launchableRuntime ? (
+            <div className={GAMES_LIBRARY_MODAL_EMPTY_STATE_CLASSNAME}>
+              {translations('modal.instances.unavailable')}
+            </div>
+          ) : (
+            <div className='grid gap-4 xl:grid-cols-[minmax(0,1.15fr)_minmax(20rem,0.85fr)]'>
+              <div className={cn(GAMES_LIBRARY_MODAL_SECTION_SURFACE_CLASSNAME, 'space-y-4 p-4')}>
+                <div className='grid gap-3 md:grid-cols-2'>
+                  <div className={GAMES_LIBRARY_MODAL_STAT_CARD_CLASSNAME}>
+                    <div className='text-[11px] font-bold uppercase tracking-wide [color:var(--kangur-page-muted-text)]'>
+                      {translations('modal.instances.engineLabel')}
+                    </div>
+                    <div className='mt-2 text-sm font-semibold [color:var(--kangur-page-text)]'>
+                      {launchableRuntime.engineId ?? game.engineId}
+                    </div>
+                  </div>
+                  <div className={GAMES_LIBRARY_MODAL_STAT_CARD_CLASSNAME}>
+                    <div className='text-[11px] font-bold uppercase tracking-wide [color:var(--kangur-page-muted-text)]'>
+                      {translations('modal.instances.runtimeLabel')}
+                    </div>
+                    <div className='mt-2 text-sm font-semibold [color:var(--kangur-page-text)]'>
+                      {launchableRuntime.screen}
+                    </div>
+                  </div>
+                </div>
+
+                <div className='space-y-2'>
+                  <label
+                    className='text-[11px] font-bold uppercase tracking-wide [color:var(--kangur-page-muted-text)]'
+                    htmlFor='games-library-instance-content-set'
+                  >
+                    {translations('modal.instances.contentSetLabel')}
+                  </label>
+                  <KangurSelectField
+                    aria-label={translations('modal.instances.contentSetLabel')}
+                    className='w-full'
+                    disabled={replaceGameInstances.isPending}
+                    id='games-library-instance-content-set'
+                    onChange={(event) => {
+                      setInstanceSyncError(null);
+                      setSelectedContentSetId(event.target.value || null);
+                    }}
+                    size='sm'
+                    value={selectedContentSetId ?? ''}
+                  >
+                    <option value=''>{translations('modal.instances.contentSetPlaceholder')}</option>
+                    {contentSets.map((contentSet) => (
+                      <option key={contentSet.id} value={contentSet.id}>
+                        {contentSet.label}
+                      </option>
+                    ))}
+                  </KangurSelectField>
+                  <p className='text-xs leading-5 [color:var(--kangur-page-muted-text)]'>
+                    {selectedContentSet?.description ??
+                      translations('modal.instances.contentSetHint')}
+                  </p>
+                </div>
+
+                <div className='grid gap-3 md:grid-cols-2'>
+                  <KangurTextField
+                    aria-label={translations('modal.instances.titleLabel')}
+                    className='w-full'
+                    disabled={replaceGameInstances.isPending}
+                    onChange={(event) => {
+                      setInstanceSyncError(null);
+                      setInstanceTitle(event.target.value);
+                    }}
+                    placeholder={translations('modal.instances.titlePlaceholder')}
+                    value={instanceTitle}
+                  />
+                  <KangurTextField
+                    aria-label={translations('modal.instances.emojiLabel')}
+                    className='w-full'
+                    disabled={replaceGameInstances.isPending}
+                    onChange={(event) => {
+                      setInstanceSyncError(null);
+                      setInstanceEmoji(event.target.value);
+                    }}
+                    placeholder={translations('modal.instances.emojiPlaceholder')}
+                    value={instanceEmoji}
+                  />
+                </div>
+
+                <KangurTextField
+                  aria-label={translations('modal.instances.descriptionLabel')}
+                  className='w-full'
+                  disabled={replaceGameInstances.isPending}
+                  onChange={(event) => {
+                    setInstanceSyncError(null);
+                    setInstanceDescription(event.target.value);
+                  }}
+                  placeholder={translations('modal.instances.descriptionPlaceholder')}
+                  value={instanceDescription}
+                />
+
+                <SettingsToggle
+                  checked={instanceEnabled}
+                  description={translations('modal.instances.enabledDescription')}
+                  disabled={replaceGameInstances.isPending}
+                  label={translations('modal.instances.enabledLabel')}
+                  onChange={(checked) => {
+                    setInstanceSyncError(null);
+                    setInstanceEnabled(checked);
+                  }}
+                />
+
+                <div className={cn(GAMES_LIBRARY_MODAL_FIELD_SURFACE_CLASSNAME, 'space-y-3 p-4')}>
+                  <div className='space-y-1'>
+                    <div className='text-sm font-semibold [color:var(--kangur-page-text)]'>
+                      {translations('modal.instances.currentEngineSettingsTitle')}
+                    </div>
+                    <div className='text-xs leading-5 [color:var(--kangur-page-muted-text)]'>
+                      {translations('modal.instances.currentEngineSettingsDescription')}
+                    </div>
+                  </div>
+                  {supportsInstanceEngineSettings ? (
+                    <div className='space-y-3'>
+                      <div className='space-y-2'>
+                        <label
+                          className='text-[11px] font-bold uppercase tracking-wide [color:var(--kangur-page-muted-text)]'
+                          htmlFor='games-library-instance-clock-mode'
+                        >
+                          {translations('modal.instances.initialModeAriaLabel')}
+                        </label>
+                        <KangurSelectField
+                          aria-label={translations('modal.instances.initialModeAriaLabel')}
+                          className='w-full'
+                          disabled={replaceGameInstances.isPending}
+                          id='games-library-instance-clock-mode'
+                          onChange={(event) =>
+                            updateInstanceClockSettings(
+                              'initialMode',
+                              event.target.value as ClockPreviewSettings['initialMode']
+                            )
+                          }
+                          size='sm'
+                          value={instanceClockSettings.initialMode}
+                        >
+                          <option value='practice'>
+                            {translations('modal.settings.initialModePractice')}
+                          </option>
+                          <option value='challenge'>
+                            {translations('modal.settings.initialModeChallenge')}
+                          </option>
+                        </KangurSelectField>
+                      </div>
+
+                      <div className='space-y-3'>
+                        <SettingsToggle
+                          ariaLabel={translations('modal.instances.showModeSwitchAriaLabel')}
+                          checked={instanceClockSettings.showModeSwitch}
+                          description={translations('modal.settings.showModeSwitchDescription')}
+                          disabled={replaceGameInstances.isPending}
+                          label={translations('modal.settings.showModeSwitchLabel')}
+                          onChange={(checked) =>
+                            updateInstanceClockSettings('showModeSwitch', checked)
+                          }
+                        />
+                        <SettingsToggle
+                          ariaLabel={translations('modal.instances.showTaskTitleAriaLabel')}
+                          checked={instanceClockSettings.showTaskTitle}
+                          description={translations('modal.settings.showTaskTitleDescription')}
+                          disabled={replaceGameInstances.isPending}
+                          label={translations('modal.settings.showTaskTitleLabel')}
+                          onChange={(checked) =>
+                            updateInstanceClockSettings('showTaskTitle', checked)
+                          }
+                        />
+                        <SettingsToggle
+                          ariaLabel={translations('modal.instances.showTimeDisplayAriaLabel')}
+                          checked={instanceClockSettings.showTimeDisplay}
+                          description={translations('modal.settings.showTimeDisplayDescription')}
+                          disabled={replaceGameInstances.isPending}
+                          label={translations('modal.settings.showTimeDisplayLabel')}
+                          onChange={(checked) =>
+                            updateInstanceClockSettings('showTimeDisplay', checked)
+                          }
+                        />
+                        <SettingsToggle
+                          ariaLabel={translations('modal.instances.showHourHandAriaLabel')}
+                          checked={instanceClockSettings.showHourHand}
+                          description={translations('modal.settings.showHourHandDescription')}
+                          disabled={replaceGameInstances.isPending}
+                          label={translations('modal.settings.showHourHandLabel')}
+                          onChange={(checked) =>
+                            updateInstanceClockSettings('showHourHand', checked)
+                          }
+                        />
+                        <SettingsToggle
+                          ariaLabel={translations('modal.instances.showMinuteHandAriaLabel')}
+                          checked={instanceClockSettings.showMinuteHand}
+                          description={translations('modal.settings.showMinuteHandDescription')}
+                          disabled={replaceGameInstances.isPending}
+                          label={translations('modal.settings.showMinuteHandLabel')}
+                          onChange={(checked) =>
+                            updateInstanceClockSettings('showMinuteHand', checked)
+                          }
+                        />
+                      </div>
+                    </div>
+                  ) : (
+                    <div className='flex flex-wrap gap-2'>
+                      {currentEngineSettingsSummary.map((label) => (
+                        <KangurStatusChip
+                          key={`${game.id}:${selectedContentSet?.id ?? 'default'}:${label}`}
+                          accent='sky'
+                          size='sm'
+                        >
+                          {label}
+                        </KangurStatusChip>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                <div
+                  className={cn(GAMES_LIBRARY_MODAL_FIELD_SURFACE_CLASSNAME, 'space-y-3 p-4')}
+                  data-testid='games-library-instance-preview'
+                >
+                  <div className='space-y-1'>
+                    <div className='text-sm font-semibold [color:var(--kangur-page-text)]'>
+                      {translations('modal.instances.previewTitle')}
+                    </div>
+                    <div className='text-xs leading-5 [color:var(--kangur-page-muted-text)]'>
+                      {translations('modal.instances.previewDescription')}
+                    </div>
+                  </div>
+
+                  <div className='grid gap-3 md:grid-cols-2'>
+                    <div className={GAMES_LIBRARY_MODAL_STAT_CARD_CLASSNAME}>
+                      <div className='text-[11px] font-bold uppercase tracking-wide [color:var(--kangur-page-muted-text)]'>
+                        {translations('modal.instances.contentSetLabel')}
+                      </div>
+                      <div className='mt-2 text-sm font-semibold [color:var(--kangur-page-text)]'>
+                        {selectedContentSet?.label ??
+                          translations('modal.instances.contentSetFallback')}
+                      </div>
+                      <div className='mt-1 text-xs leading-5 [color:var(--kangur-page-muted-text)]'>
+                        {selectedContentSet?.description ??
+                          translations('modal.instances.contentSetHint')}
+                      </div>
+                      {selectedContentSet ? (
+                        <div className='mt-3 flex flex-wrap gap-2'>
+                          <KangurStatusChip accent='violet' size='sm'>
+                            {getContentKindLabel(selectedContentSet.contentKind, translations)}
+                          </KangurStatusChip>
+                          {selectedContentSetFeedSummary ? (
+                            <KangurStatusChip accent='sky' size='sm'>
+                              {selectedContentSetFeedSummary}
+                            </KangurStatusChip>
+                          ) : null}
+                        </div>
+                      ) : null}
+                    </div>
+
+                    <div className={GAMES_LIBRARY_MODAL_STAT_CARD_CLASSNAME}>
+                      <div className='text-[11px] font-bold uppercase tracking-wide [color:var(--kangur-page-muted-text)]'>
+                        {translations('modal.instances.titleLabel')}
+                      </div>
+                      <div className='mt-2 flex items-center gap-2 text-sm font-semibold [color:var(--kangur-page-text)]'>
+                        <span>{(instanceEmoji.trim() || '🎮').slice(0, 12)}</span>
+                        <span>{instanceTitle.trim() || translations('modal.instances.titlePlaceholder')}</span>
+                      </div>
+                      <div className='mt-1 text-xs leading-5 [color:var(--kangur-page-muted-text)]'>
+                        {instanceDescription.trim() ||
+                          translations('modal.instances.descriptionPlaceholder')}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className='space-y-2'>
+                    <div className='text-[11px] font-bold uppercase tracking-wide [color:var(--kangur-page-muted-text)]'>
+                      {translations('modal.instances.engineLabel')}
+                    </div>
+                    <div className='flex flex-wrap gap-2'>
+                      {currentEngineSettingsSummary.map((label) => (
+                        <KangurStatusChip
+                          key={`preview:${game.id}:${selectedContentSet?.id ?? 'default'}:${label}`}
+                          accent='sky'
+                          size='sm'
+                        >
+                          {label}
+                        </KangurStatusChip>
+                      ))}
+                    </div>
+                  </div>
+
+                  {supportsInstanceEngineSettings ? (
+                    <div className='space-y-2'>
+                      <div className='text-[11px] font-bold uppercase tracking-wide [color:var(--kangur-page-muted-text)]'>
+                        {translations('modal.previewTitle')}
+                      </div>
+                      <div
+                        className='rounded-[1.25rem] border border-[color:var(--kangur-soft-card-border)] bg-white/80 p-3'
+                        data-testid='games-library-instance-clock-preview'
+                      >
+                        <ClockTrainingGamePreview
+                          hideModeSwitch={!instanceClockSettings.showModeSwitch}
+                          initialMode={instanceClockSettings.initialMode}
+                          onFinish={() => undefined}
+                          section={instancePreviewClockSection}
+                          showHourHand={instanceClockSettings.showHourHand}
+                          showMinuteHand={instanceClockSettings.showMinuteHand}
+                          showTaskTitle={instanceClockSettings.showTaskTitle}
+                          showTimeDisplay={instanceClockSettings.showTimeDisplay}
+                        />
+                      </div>
+                    </div>
+                  ) : null}
+                </div>
+
+                {instanceValidationMessages.length > 0 ? (
+                  <div className='space-y-1 text-xs [color:var(--kangur-page-muted-text)]'>
+                    {instanceValidationMessages.map((message) => (
+                      <div key={message}>{message}</div>
+                    ))}
+                  </div>
+                ) : null}
+
+                {instanceSyncError ? (
+                  <div
+                    className='rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700'
+                    data-testid='games-library-instance-sync-error'
+                  >
+                    {instanceSyncError}
+                  </div>
+                ) : null}
+
+                <div className='flex flex-wrap gap-2 border-t border-[color:var(--kangur-soft-card-border)] pt-3'>
+                  <KangurButton
+                    disabled={replaceGameInstances.isPending}
+                    onClick={handleResetInstanceEditor}
+                    size='sm'
+                    type='button'
+                    variant='surface'
+                  >
+                    {translations('modal.instances.newButton')}
+                  </KangurButton>
+                  <KangurButton
+                    disabled={!canSaveInstance || replaceGameInstances.isPending}
+                    onClick={() => {
+                      void handleSaveInstance();
+                    }}
+                    size='sm'
+                    type='button'
+                    variant='primary'
+                  >
+                    {selectedInstanceId === null
+                      ? translations('modal.instances.createButton')
+                      : translations('modal.instances.saveButton')}
+                  </KangurButton>
+                  {selectedInstanceHref ? (
+                    <KangurButton asChild disabled={replaceGameInstances.isPending} size='sm' variant='surface'>
+                      <Link
+                        href={selectedInstanceHref}
+                        targetPageKey='Game'
+                        transitionSourceId={`kangur-games-library:${game.id}:instance:${selectedInstance?.id ?? 'selected'}`}
+                      >
+                        {translations('modal.instances.openButton')}
+                      </Link>
+                    </KangurButton>
+                  ) : null}
+                  {isInstanceEditorDirty ? (
+                    <KangurStatusChip accent='amber' size='sm'>
+                      {translations('modal.instances.dirtyBadge')}
+                    </KangurStatusChip>
+                  ) : null}
+                </div>
+              </div>
+
+              <div className={cn(GAMES_LIBRARY_MODAL_SECTION_SURFACE_CLASSNAME, 'space-y-3 p-4')}>
+                <div className='space-y-1'>
+                  <div className='text-sm font-semibold [color:var(--kangur-page-text)]'>
+                    {translations('modal.instances.listTitle')}
+                  </div>
+                  <div className='text-xs leading-5 [color:var(--kangur-page-muted-text)]'>
+                    {translations('modal.instances.listDescription')}
+                  </div>
+                </div>
+
+                {activeInstances.length === 0 ? (
+                  <div className={GAMES_LIBRARY_MODAL_EMPTY_STATE_CLASSNAME}>
+                    {translations('modal.instances.listEmpty')}
+                  </div>
+                ) : (
+                  <div className='space-y-3'>
+                    {activeInstances.map((instance) => {
+                      const contentSet = contentSets.find(
+                        (entry) => entry.id === instance.contentSetId
+                      );
+                      const contentSetFeedSummary = contentSet
+                        ? buildContentSetFeedSummary(contentSet, translations)
+                        : null;
+                      const instanceEngineSettingsSummary = supportsPreviewSettings
+                        ? buildClockEngineSettingsSummary(
+                            {
+                              initialMode:
+                                instance.engineOverrides.clockInitialMode ??
+                                DEFAULT_CLOCK_PREVIEW_SETTINGS.initialMode,
+                              showHourHand:
+                                instance.engineOverrides.showClockHourHand ??
+                                DEFAULT_CLOCK_PREVIEW_SETTINGS.showHourHand,
+                              showMinuteHand:
+                                instance.engineOverrides.showClockMinuteHand ??
+                                DEFAULT_CLOCK_PREVIEW_SETTINGS.showMinuteHand,
+                              showModeSwitch:
+                                instance.engineOverrides.showClockModeSwitch ??
+                                DEFAULT_CLOCK_PREVIEW_SETTINGS.showModeSwitch,
+                              showTaskTitle:
+                                instance.engineOverrides.showClockTaskTitle ??
+                                DEFAULT_CLOCK_PREVIEW_SETTINGS.showTaskTitle,
+                              showTimeDisplay:
+                                instance.engineOverrides.showClockTimeDisplay ??
+                                DEFAULT_CLOCK_PREVIEW_SETTINGS.showTimeDisplay,
+                            },
+                            translations
+                          )
+                        : [translations('modal.instances.currentEngineSettingsDefault')];
+
+                      return (
+                        <div
+                          key={instance.id}
+                          className={cn(
+                            'space-y-3 rounded-[1.25rem] border p-3',
+                            instance.id === selectedInstanceId
+                              ? 'border-[color:var(--kangur-accent-sky-start,#38bdf8)] [background:color-mix(in_srgb,var(--kangur-soft-card-background)_92%,white)] shadow-[0_18px_46px_-36px_rgba(56,189,248,0.45)]'
+                              : 'border-[color:var(--kangur-soft-card-border)] [background:color-mix(in_srgb,var(--kangur-soft-card-background)_97%,white)]'
+                          )}
+                          data-testid={`games-library-instance-${instance.id}`}
+                        >
+                          <div className='flex items-start justify-between gap-3'>
+                            <div className='min-w-0 flex-1'>
+                              <div className='flex flex-wrap items-center gap-2'>
+                                <span className='text-lg'>{instance.emoji}</span>
+                                <div className='text-sm font-semibold [color:var(--kangur-page-text)]'>
+                                  {instance.title}
+                                </div>
+                                <KangurStatusChip
+                                  accent={instance.enabled ? 'emerald' : 'slate'}
+                                  size='sm'
+                                >
+                                  {instance.enabled
+                                    ? translations('modal.instances.enabledBadge')
+                                    : translations('modal.instances.disabledBadge')}
+                                </KangurStatusChip>
+                              </div>
+                              <div className='mt-1 text-xs leading-5 [color:var(--kangur-page-muted-text)]'>
+                                {contentSet?.label ??
+                                  translations('modal.instances.contentSetFallback')}
+                              </div>
+                              {instance.description ? (
+                                <div className='mt-1 text-xs leading-5 [color:var(--kangur-page-muted-text)]'>
+                                  {instance.description}
+                                </div>
+                              ) : null}
+                              {contentSet ? (
+                                <div className='mt-3 flex flex-wrap gap-2'>
+                                  <KangurStatusChip accent='violet' size='sm'>
+                                    {getContentKindLabel(contentSet.contentKind, translations)}
+                                  </KangurStatusChip>
+                                  {contentSetFeedSummary ? (
+                                    <KangurStatusChip accent='sky' size='sm'>
+                                      {contentSetFeedSummary}
+                                    </KangurStatusChip>
+                                  ) : null}
+                                </div>
+                              ) : null}
+                              <div className='mt-3 flex flex-wrap gap-2'>
+                                {instanceEngineSettingsSummary.map((label) => (
+                                  <KangurStatusChip
+                                    key={`${instance.id}:${label}`}
+                                    accent='sky'
+                                    size='sm'
+                                  >
+                                    {label}
+                                  </KangurStatusChip>
+                                ))}
+                              </div>
+                            </div>
+                          </div>
+
+                          <div className='flex flex-wrap gap-2'>
+                            <KangurButton
+                              onClick={() => handleEditInstance(instance)}
+                              size='sm'
+                              type='button'
+                              variant='surface'
+                            >
+                              {translations('modal.instances.editButton')}
+                            </KangurButton>
+                            <KangurButton asChild size='sm' variant='surface'>
+                              <Link
+                                href={buildKangurGameInstanceLaunchHref(basePath, instance)}
+                                targetPageKey='Game'
+                                transitionSourceId={`kangur-games-library:${game.id}:instance:${instance.id}`}
+                              >
+                                {translations('modal.instances.openButton')}
+                              </Link>
+                            </KangurButton>
+                            <KangurButton
+                              disabled={replaceGameInstances.isPending}
+                              onClick={() => handleRemoveInstance(instance)}
+                              size='sm'
+                              type='button'
+                              variant='surface'
+                            >
+                              {translations('modal.instances.removeButton')}
+                            </KangurButton>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+        </KangurInfoCard>
+
+        <div className='grid gap-4 xl:grid-cols-[minmax(0,1.16fr)_minmax(20rem,0.92fr)]'>
           <div className='space-y-4'>
+            <KangurInfoCard accent='amber' padding='lg' className='space-y-4'>
+              <div className='flex flex-wrap items-center justify-between gap-3'>
+                <div className='space-y-1'>
+                  <div className='text-xs font-semibold uppercase tracking-[0.18em] [color:var(--kangur-page-muted-text)]'>
+                    {translations('modal.previewEyebrow')}
+                  </div>
+                  <div className='text-lg font-black [color:var(--kangur-page-text)]'>
+                    {translations('modal.previewTitle')}
+                  </div>
+                </div>
+                <KangurStatusChip accent='amber' size='sm'>
+                  {attachedLessonLabel}
+                </KangurStatusChip>
+              </div>
+
+              {game.id === 'clock_training' ? (
+                <div
+                  className={cn(GAMES_LIBRARY_MODAL_SECTION_SURFACE_CLASSNAME, 'p-4')}
+                  data-testid='games-library-hub-clock-preview'
+                >
+                  <ClockTrainingGamePreview
+                    hideModeSwitch={!clockSettings.showModeSwitch}
+                    initialMode={clockSettings.initialMode}
+                    onFinish={() => undefined}
+                    section={clockSettings.clockSection}
+                    showHourHand={clockSettings.showHourHand}
+                    showMinuteHand={clockSettings.showMinuteHand}
+                    showTaskTitle={clockSettings.showTaskTitle}
+                    showTimeDisplay={clockSettings.showTimeDisplay}
+                  />
+                </div>
+              ) : (
+                <div className={GAMES_LIBRARY_MODAL_EMPTY_STATE_CLASSNAME}>
+                  {translations('modal.previewFallback')}
+                </div>
+              )}
+
+              <div className={cn(GAMES_LIBRARY_MODAL_SECTION_SURFACE_CLASSNAME, 'space-y-3 p-4')}>
+                <div className='space-y-1'>
+                  <div className='text-xs font-semibold uppercase tracking-[0.18em] [color:var(--kangur-page-muted-text)]'>
+                    {translations('modal.lessonEyebrow')}
+                  </div>
+                  <div className='text-base font-black [color:var(--kangur-page-text)]'>
+                    {translations('modal.lessonTitle')}
+                  </div>
+                  <div className='text-sm [color:var(--kangur-page-muted-text)]'>
+                    {translations('modal.scaffoldHint', { lesson: attachedLessonLabel })}
+                  </div>
+                </div>
+
+                <div className='space-y-2'>
+                  <div className='text-[11px] font-bold uppercase tracking-wide [color:var(--kangur-page-muted-text)]'>
+                    {translations('labels.lessonLinks')}
+                  </div>
+                  <div data-testid='games-library-linked-lessons' className='flex flex-wrap gap-2'>
+                    {hasUnassignedAttachedLesson ? (
+                      <KangurStatusChip accent='slate' size='sm'>
+                        {translations('modal.lessonUnassigned')}
+                      </KangurStatusChip>
+                    ) : null}
+                    {linkedLessonIds.length > 0 ? (
+                      linkedLessonIds.map((componentId) => (
+                        <KangurStatusChip
+                          key={`${linkedLessonChipKeyPrefix}:${componentId}`}
+                          accent={componentId === attachedLessonId ? 'emerald' : 'sky'}
+                          size='sm'
+                        >
+                          {lessonLabelMap[componentId] ?? componentId}
+                        </KangurStatusChip>
+                      ))
+                    ) : !hasUnassignedAttachedLesson ? (
+                      <KangurStatusChip accent='slate' size='sm'>
+                        {translations('modal.lessonUnassigned')}
+                      </KangurStatusChip>
+                    ) : null}
+                  </div>
+                </div>
+              </div>
+
+              <div className='flex flex-wrap gap-2 border-t border-[color:var(--kangur-soft-card-border)] pt-3'>
+                {gameHref ? (
+                  <KangurButton
+                    asChild
+                    disabled={replaceLessonGameSections.isPending}
+                    size='sm'
+                    variant='primary'
+                  >
+                    <Link
+                      href={gameHref}
+                      targetPageKey='Game'
+                      transitionSourceId={gameTransitionSourceId}
+                    >
+                      {translations('actions.openGame')}
+                    </Link>
+                  </KangurButton>
+                ) : null}
+                {lessonHref ? (
+                  <KangurButton
+                    asChild
+                    disabled={replaceLessonGameSections.isPending}
+                    size='sm'
+                    variant='surface'
+                  >
+                    <Link
+                      href={lessonHref}
+                      targetPageKey='Lessons'
+                      transitionSourceId={lessonTransitionSourceId}
+                    >
+                      {translations('actions.openLessons')}
+                    </Link>
+                  </KangurButton>
+                ) : null}
+              </div>
+            </KangurInfoCard>
+
             <KangurInfoCard accent='sky' padding='lg' className='space-y-4'>
               <div className='space-y-1'>
                 <div className='text-xs font-semibold uppercase tracking-[0.18em] [color:var(--kangur-page-muted-text)]'>
@@ -945,108 +2188,6 @@ export function GamesLibraryGameModal({
                     </option>
                   ))}
                 </KangurSelectField>
-              </div>
-
-              <div className='space-y-2'>
-                <div className='text-[11px] font-bold uppercase tracking-wide [color:var(--kangur-page-muted-text)]'>
-                  {translations('labels.lessonLinks')}
-                </div>
-                <div data-testid='games-library-linked-lessons' className='flex flex-wrap gap-2'>
-                  {hasUnassignedAttachedLesson ? (
-                    <KangurStatusChip accent='slate' size='sm'>
-                      {translations('modal.lessonUnassigned')}
-                    </KangurStatusChip>
-                  ) : null}
-                  {linkedLessonIds.length > 0 ? (
-                    linkedLessonIds.map((componentId) => (
-                      <KangurStatusChip
-                        key={`${linkedLessonChipKeyPrefix}:${componentId}`}
-                        accent={componentId === attachedLessonId ? 'emerald' : 'sky'}
-                        size='sm'
-                      >
-                        {lessonLabelMap[componentId] ?? componentId}
-                      </KangurStatusChip>
-                    ))
-                  ) : !hasUnassignedAttachedLesson ? (
-                    <KangurStatusChip accent='slate' size='sm'>
-                      {translations('modal.lessonUnassigned')}
-                    </KangurStatusChip>
-                  ) : null}
-                </div>
-              </div>
-
-              <div className='rounded-3xl border border-dashed border-[color:var(--kangur-page-border)] px-4 py-3 text-sm [color:var(--kangur-page-muted-text)]'>
-                {translations('modal.scaffoldHint', { lesson: attachedLessonLabel })}
-              </div>
-            </KangurInfoCard>
-
-            <KangurInfoCard accent='amber' padding='lg' className='space-y-4'>
-              <div className='flex flex-wrap items-center justify-between gap-3'>
-                <div className='space-y-1'>
-                  <div className='text-xs font-semibold uppercase tracking-[0.18em] [color:var(--kangur-page-muted-text)]'>
-                    {translations('modal.previewEyebrow')}
-                  </div>
-                  <div className='text-lg font-black [color:var(--kangur-page-text)]'>
-                    {translations('modal.previewTitle')}
-                  </div>
-                </div>
-                <KangurStatusChip accent='amber' size='sm'>
-                  {attachedLessonLabel}
-                </KangurStatusChip>
-              </div>
-
-              {game.id === 'clock_training' ? (
-                <div className='rounded-[1.75rem] border border-[color:var(--kangur-page-border)] bg-white/80 p-4'>
-                  <ClockTrainingGamePreview
-                    hideModeSwitch={!clockSettings.showModeSwitch}
-                    initialMode={clockSettings.initialMode}
-                    onFinish={() => undefined}
-                    section={clockSettings.clockSection}
-                    showHourHand={clockSettings.showHourHand}
-                    showMinuteHand={clockSettings.showMinuteHand}
-                    showTaskTitle={clockSettings.showTaskTitle}
-                    showTimeDisplay={clockSettings.showTimeDisplay}
-                  />
-                </div>
-              ) : (
-                <div className='rounded-[1.75rem] border border-dashed border-[color:var(--kangur-page-border)] px-4 py-10 text-center text-sm [color:var(--kangur-page-muted-text)]'>
-                  {translations('modal.previewFallback')}
-                </div>
-              )}
-
-              <div className='flex flex-wrap gap-2'>
-                {gameHref ? (
-                  <KangurButton
-                    asChild
-                    disabled={replaceLessonGameSections.isPending}
-                    size='sm'
-                    variant='primary'
-                  >
-                    <Link
-                      href={gameHref}
-                      targetPageKey='Game'
-                      transitionSourceId={gameTransitionSourceId}
-                    >
-                      {translations('actions.openGame')}
-                    </Link>
-                  </KangurButton>
-                ) : null}
-                {lessonHref ? (
-                  <KangurButton
-                    asChild
-                    disabled={replaceLessonGameSections.isPending}
-                    size='sm'
-                    variant='surface'
-                  >
-                    <Link
-                      href={lessonHref}
-                      targetPageKey='Lessons'
-                      transitionSourceId={lessonTransitionSourceId}
-                    >
-                      {translations('actions.openLessons')}
-                    </Link>
-                  </KangurButton>
-                ) : null}
               </div>
             </KangurInfoCard>
           </div>
@@ -1147,7 +2288,10 @@ export function GamesLibraryGameModal({
                 <input
                   aria-label={translations('modal.draftNameLabel')}
                   id='games-library-draft-title'
-                  className='min-h-11 w-full rounded-2xl border border-[color:var(--kangur-page-border)] bg-white/80 px-4 py-2.5 text-sm [color:var(--kangur-page-text)] outline-none transition focus:border-[color:var(--kangur-page-accent)]'
+                  className={cn(
+                    GAMES_LIBRARY_MODAL_FIELD_SURFACE_CLASSNAME,
+                    'min-h-11 w-full px-4 py-2.5 text-sm [color:var(--kangur-page-text)] outline-none transition focus:border-[color:var(--kangur-page-accent)]'
+                  )}
                   disabled={mutationsBlocked}
                   onChange={(event) => {
                     setSyncError(null);
@@ -1168,7 +2312,10 @@ export function GamesLibraryGameModal({
                 <textarea
                   aria-label={translations('modal.draftSubtextLabel')}
                   id='games-library-draft-subtext'
-                  className='min-h-28 w-full rounded-2xl border border-[color:var(--kangur-page-border)] bg-white/80 px-4 py-3 text-sm leading-6 [color:var(--kangur-page-text)] outline-none transition focus:border-[color:var(--kangur-page-accent)]'
+                  className={cn(
+                    GAMES_LIBRARY_MODAL_FIELD_SURFACE_CLASSNAME,
+                    'min-h-28 w-full px-4 py-3 text-sm leading-6 [color:var(--kangur-page-text)] outline-none transition focus:border-[color:var(--kangur-page-accent)]'
+                  )}
                   disabled={mutationsBlocked}
                   onChange={(event) => {
                     setSyncError(null);
@@ -1189,11 +2336,14 @@ export function GamesLibraryGameModal({
                       key={icon}
                       aria-label={translations('modal.draftIconAria', { icon })}
                       className={cn(
-                        'flex min-h-11 items-center justify-center rounded-2xl border text-xl transition',
+                        cn(
+                          GAMES_LIBRARY_MODAL_FIELD_SURFACE_CLASSNAME,
+                          'flex min-h-11 items-center justify-center text-xl transition'
+                        ),
                         mutationsBlocked && 'cursor-not-allowed opacity-70',
                         draftIcon === icon
-                          ? 'border-indigo-500 bg-indigo-50'
-                          : 'border-[color:var(--kangur-page-border)] bg-white/80 hover:border-indigo-300'
+                          ? 'border-indigo-500 [background:color-mix(in_srgb,var(--kangur-soft-card-background)_84%,var(--kangur-accent-indigo-start,#a855f7))]'
+                          : 'hover:border-indigo-300'
                       )}
                       disabled={mutationsBlocked}
                       onClick={() => {
@@ -1209,7 +2359,10 @@ export function GamesLibraryGameModal({
                 <div className='flex items-center gap-3'>
                   <input
                     aria-label={translations('modal.customIconInputLabel')}
-                    className='min-h-11 flex-1 rounded-2xl border border-[color:var(--kangur-page-border)] bg-white/80 px-4 py-2.5 text-sm [color:var(--kangur-page-text)] outline-none transition focus:border-[color:var(--kangur-page-accent)]'
+                    className={cn(
+                      GAMES_LIBRARY_MODAL_FIELD_SURFACE_CLASSNAME,
+                      'min-h-11 flex-1 px-4 py-2.5 text-sm [color:var(--kangur-page-text)] outline-none transition focus:border-[color:var(--kangur-page-accent)]'
+                    )}
                     disabled={mutationsBlocked}
                     maxLength={12}
                     onChange={(event) => {
@@ -1221,7 +2374,10 @@ export function GamesLibraryGameModal({
                   />
                   <div
                     aria-label={translations('modal.customIconPreviewLabel')}
-                    className='flex min-h-11 min-w-11 items-center justify-center rounded-2xl border border-[color:var(--kangur-page-border)] bg-white/80 px-3 text-xl'
+                    className={cn(
+                      GAMES_LIBRARY_MODAL_FIELD_SURFACE_CLASSNAME,
+                      'flex min-h-11 min-w-11 items-center justify-center px-3 text-xl'
+                    )}
                     data-testid='games-library-draft-icon-preview'
                   >
                     {(draftIcon.trim() || '🎮').slice(0, 12)}
@@ -1269,7 +2425,12 @@ export function GamesLibraryGameModal({
             </KangurInfoCard>
 
             {supportsPreviewSettings && settingsOpen ? (
-              <KangurInfoCard accent='slate' padding='lg' className='space-y-4'>
+              <KangurInfoCard
+                accent='slate'
+                className='space-y-4'
+                data-testid='games-library-clock-settings-panel'
+                padding='lg'
+              >
                 <div className='space-y-1'>
                   <div className='text-xs font-semibold uppercase tracking-[0.18em] [color:var(--kangur-page-muted-text)]'>
                     {translations('modal.settingsEyebrow')}
@@ -1409,7 +2570,7 @@ export function GamesLibraryGameModal({
                   <div className='min-w-0 flex-1'>
                     <KangurTextField
                       aria-label={translations('modal.draftListSearchLabel')}
-                      className='bg-white/80'
+                      className='[background:color-mix(in_srgb,var(--kangur-soft-card-background)_97%,white)]'
                       disabled={mutationsBlocked}
                       onChange={(event) => setSavedSectionsQuery(event.target.value)}
                       placeholder={translations('modal.draftListSearchPlaceholder')}
@@ -1433,7 +2594,7 @@ export function GamesLibraryGameModal({
                 </div>
                 <SavedSectionsStatusControl
                   ariaLabel={translations('modal.draftListStatusFilterLabel')}
-                  className='w-full bg-white/80'
+                  className='w-full [background:color-mix(in_srgb,var(--kangur-soft-card-background)_97%,white)]'
                   onChange={setSavedSectionsStatusFilter}
                   options={[
                     {
@@ -1455,7 +2616,7 @@ export function GamesLibraryGameModal({
             ) : null}
 
               {isInitialSectionsLoading ? (
-                <div className='rounded-[1.5rem] border border-dashed border-[color:var(--kangur-page-border)] px-4 py-8 text-center text-sm [color:var(--kangur-page-muted-text)]'>
+                <div className={GAMES_LIBRARY_MODAL_EMPTY_STATE_CLASSNAME}>
                   {translations('modal.sectionsLoading')}
                 </div>
               ) : activeSections.length > 0 ? (
@@ -1466,11 +2627,11 @@ export function GamesLibraryGameModal({
                       key={draft.id}
                       data-testid={`games-library-saved-section-${draft.id}`}
                       className={cn(
-                        'rounded-[1.5rem] border bg-white/80 p-4 transition',
+                        cn(GAMES_LIBRARY_MODAL_SECTION_SURFACE_CLASSNAME, 'p-4 transition'),
                         !draft.enabled && 'opacity-70 saturate-[0.8]',
                         draft.id === selectedSectionId
                           ? 'border-indigo-500 shadow-[0_18px_48px_-32px_rgba(79,70,229,0.7)]'
-                          : 'border-[color:var(--kangur-page-border)]'
+                          : null
                       )}
                     >
                       <div className='flex items-start justify-between gap-3'>
@@ -1615,13 +2776,13 @@ export function GamesLibraryGameModal({
                 ) : (
                   <div
                     data-testid='games-library-saved-section-search-empty'
-                    className='rounded-[1.5rem] border border-dashed border-[color:var(--kangur-page-border)] px-4 py-8 text-center text-sm [color:var(--kangur-page-muted-text)]'
+                    className={GAMES_LIBRARY_MODAL_EMPTY_STATE_CLASSNAME}
                   >
                     {translations('modal.draftListSearchEmpty')}
                   </div>
                 )
               ) : (
-                <div className='rounded-[1.5rem] border border-dashed border-[color:var(--kangur-page-border)] px-4 py-8 text-center text-sm [color:var(--kangur-page-muted-text)]'>
+                <div className={GAMES_LIBRARY_MODAL_EMPTY_STATE_CLASSNAME}>
                   {translations('modal.draftListEmpty')}
                 </div>
               )}

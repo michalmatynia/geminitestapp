@@ -11,6 +11,8 @@ import type { FilemakerEmailCampaignUnsubscribeResponse } from '../types';
 type FilemakerCampaignUnsubscribePageProps = {
   initialEmailAddress?: string | null;
   initialCampaignId?: string | null;
+  initialToken?: string | null;
+  hasValidSignedToken?: boolean;
 };
 
 const normalizeEmailAddress = (value: string): string => value.trim().toLowerCase();
@@ -18,22 +20,29 @@ const normalizeEmailAddress = (value: string): string => value.trim().toLowerCas
 export function FilemakerCampaignUnsubscribePage({
   initialEmailAddress,
   initialCampaignId,
+  initialToken,
+  hasValidSignedToken = false,
 }: FilemakerCampaignUnsubscribePageProps): React.JSX.Element {
   const { toast } = useToast();
   const [emailAddress, setEmailAddress] = useState(initialEmailAddress ?? '');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submittedResult, setSubmittedResult] =
     useState<FilemakerEmailCampaignUnsubscribeResponse | null>(null);
+  const [tokenStatus, setTokenStatus] = useState<'verified' | 'invalid' | 'none'>(
+    initialToken ? (hasValidSignedToken ? 'verified' : 'invalid') : 'none'
+  );
 
   const normalizedCampaignId = useMemo(
     () => initialCampaignId?.trim() || null,
     [initialCampaignId]
   );
+  const normalizedToken = useMemo(() => initialToken?.trim() || null, [initialToken]);
+  const activeToken = tokenStatus === 'verified' ? normalizedToken : null;
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>): Promise<void> => {
     event.preventDefault();
     const normalizedEmail = normalizeEmailAddress(emailAddress);
-    if (!normalizedEmail) {
+    if (!activeToken && !normalizedEmail) {
       toast('Email address is required.', { variant: 'error' });
       return;
     }
@@ -43,8 +52,12 @@ export function FilemakerCampaignUnsubscribePage({
       const response = await api.post<FilemakerEmailCampaignUnsubscribeResponse>(
         '/api/filemaker/campaigns/unsubscribe',
         {
-          emailAddress: normalizedEmail,
-          campaignId: normalizedCampaignId,
+          ...(activeToken
+            ? { token: activeToken }
+            : {
+                emailAddress: normalizedEmail,
+                campaignId: normalizedCampaignId,
+              }),
           source: 'public-unsubscribe-page',
         },
         { logError: false }
@@ -60,12 +73,18 @@ export function FilemakerCampaignUnsubscribePage({
           : 'You have been unsubscribed.',
         { variant: 'success' }
       );
+      if (activeToken) {
+        setTokenStatus('verified');
+      }
     } catch (error) {
       const message =
         error instanceof ApiError || error instanceof Error
           ? error.message
           : 'Failed to submit the unsubscribe request.';
       toast(message, { variant: 'error' });
+      if (activeToken) {
+        setTokenStatus('invalid');
+      }
     } finally {
       setIsSubmitting(false);
     }
@@ -94,6 +113,16 @@ export function FilemakerCampaignUnsubscribePage({
                 Campaign: {normalizedCampaignId}
               </Badge>
             ) : null}
+            {tokenStatus === 'verified' ? (
+              <Badge variant='outline' className='text-[10px]'>
+                Signed link verified
+              </Badge>
+            ) : null}
+            {tokenStatus === 'invalid' ? (
+              <Badge variant='outline' className='text-[10px]'>
+                Signed link invalid
+              </Badge>
+            ) : null}
             {submittedResult ? (
               <Badge variant='outline' className='text-[10px]'>
                 Status: {submittedResult.alreadySuppressed ? 'already suppressed' : 'suppressed'}
@@ -113,7 +142,7 @@ export function FilemakerCampaignUnsubscribePage({
                 autoComplete='email'
                 aria-label='Email address'
                 title='Email address'
-                disabled={isSubmitting}
+                disabled={isSubmitting || tokenStatus === 'verified'}
               />
             </FormField>
 
@@ -126,6 +155,22 @@ export function FilemakerCampaignUnsubscribePage({
                       : 'Your unsubscribe request has been recorded.'}
                   </div>
                   <div className='mt-1 break-all text-gray-300'>{submittedResult.emailAddress}</div>
+                </>
+              ) : tokenStatus === 'verified' ? (
+                <>
+                  <div className='font-medium text-white'>Signed unsubscribe link confirmed</div>
+                  <div className='mt-1'>
+                    This link already identifies the recipient and campaign context. Submitting it
+                    will add the resolved email address to the Filemaker suppression list.
+                  </div>
+                </>
+              ) : tokenStatus === 'invalid' ? (
+                <>
+                  <div className='font-medium text-white'>This unsubscribe link is no longer valid</div>
+                  <div className='mt-1'>
+                    You can still submit a manual unsubscribe request by entering the email address
+                    below.
+                  </div>
                 </>
               ) : (
                 <>
@@ -140,7 +185,11 @@ export function FilemakerCampaignUnsubscribePage({
 
             <div className='flex flex-wrap gap-3'>
               <Button type='submit' disabled={isSubmitting}>
-                {isSubmitting ? 'Submitting...' : 'Unsubscribe'}
+                {isSubmitting
+                  ? 'Submitting...'
+                  : tokenStatus === 'verified'
+                    ? 'Confirm unsubscribe'
+                    : 'Unsubscribe'}
               </Button>
               {submittedResult ? (
                 <Button

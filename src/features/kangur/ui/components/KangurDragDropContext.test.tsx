@@ -2,7 +2,7 @@
  * @vitest-environment jsdom
  */
 
-import { act, render, screen, within } from '@testing-library/react';
+import { act, fireEvent, render, screen, within } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { KangurDragDropContext, renderKangurDragPreview } from './KangurDragDropContext';
@@ -13,12 +13,25 @@ let capturedBeforeDragStart: ((...args: unknown[]) => void) | null = null;
 
 const lockMock = vi.fn();
 const unlockMock = vi.fn();
+let isInteractionLocked = false;
 
 vi.mock('@/features/kangur/ui/hooks/useKangurMobileInteractionScrollLock', () => {
   return {
     useKangurMobileInteractionScrollLock: () => ({
-      lock: lockMock,
-      unlock: unlockMock,
+      lock: () => {
+        if (isInteractionLocked) {
+          return;
+        }
+        isInteractionLocked = true;
+        lockMock();
+      },
+      unlock: () => {
+        if (!isInteractionLocked) {
+          return;
+        }
+        isInteractionLocked = false;
+        unlockMock();
+      },
     }),
   };
 });
@@ -46,9 +59,116 @@ describe('KangurDragDropContext', () => {
   beforeEach(() => {
     lockMock.mockClear();
     unlockMock.mockClear();
+    isInteractionLocked = false;
     capturedBeforeDragStart = null;
     capturedDragStart = null;
     capturedDragEnd = null;
+  });
+
+  it('locks mobile scroll on touch press against a drag handle before drag start fires', () => {
+    render(
+      <KangurDragDropContext>
+        <button data-rfd-drag-handle-draggable-id='token-1' type='button'>
+          Drag handle
+        </button>
+      </KangurDragDropContext>
+    );
+
+    const didDispatch = fireEvent.touchStart(screen.getByRole('button', { name: 'Drag handle' }));
+
+    expect(didDispatch).toBe(false);
+    expect(lockMock).toHaveBeenCalledTimes(1);
+
+    fireEvent.touchEnd(document);
+
+    expect(unlockMock).toHaveBeenCalledTimes(1);
+  });
+
+  it('does not lock mobile scroll for touches outside drag handles', () => {
+    render(
+      <KangurDragDropContext>
+        <button type='button'>Regular button</button>
+      </KangurDragDropContext>
+    );
+
+    const didDispatch = fireEvent.touchStart(screen.getByRole('button', { name: 'Regular button' }));
+    fireEvent.touchEnd(document);
+
+    expect(didDispatch).toBe(true);
+    expect(lockMock).not.toHaveBeenCalled();
+    expect(unlockMock).not.toHaveBeenCalled();
+  });
+
+  it('locks mobile scroll for touch pointer presses on drag handles', () => {
+    render(
+      <KangurDragDropContext>
+        <button data-rfd-drag-handle-draggable-id='token-2' type='button'>
+          Pointer drag handle
+        </button>
+      </KangurDragDropContext>
+    );
+
+    const didDispatch = fireEvent.pointerDown(screen.getByRole('button', { name: 'Pointer drag handle' }), {
+      pointerType: 'touch',
+    });
+
+    expect(didDispatch).toBe(false);
+    expect(lockMock).toHaveBeenCalledTimes(1);
+
+    fireEvent.pointerUp(document, { pointerType: 'touch' });
+
+    expect(unlockMock).toHaveBeenCalledTimes(1);
+  });
+
+  it('unlocks mobile scroll when a touch interaction is cancelled', () => {
+    render(
+      <KangurDragDropContext>
+        <button data-rfd-drag-handle-draggable-id='token-4' type='button'>
+          Cancelled drag handle
+        </button>
+      </KangurDragDropContext>
+    );
+
+    fireEvent.touchStart(screen.getByRole('button', { name: 'Cancelled drag handle' }));
+    expect(lockMock).toHaveBeenCalledTimes(1);
+
+    fireEvent.touchCancel(document);
+    expect(unlockMock).toHaveBeenCalledTimes(1);
+  });
+
+  it('unlocks mobile scroll on unmount after an active touch interaction', () => {
+    const { unmount } = render(
+      <KangurDragDropContext>
+        <button data-rfd-drag-handle-draggable-id='token-5' type='button'>
+          Unmounted drag handle
+        </button>
+      </KangurDragDropContext>
+    );
+
+    fireEvent.touchStart(screen.getByRole('button', { name: 'Unmounted drag handle' }));
+    expect(lockMock).toHaveBeenCalledTimes(1);
+
+    unmount();
+    expect(unlockMock).toHaveBeenCalledTimes(1);
+  });
+
+  it('does not lock mobile scroll for mouse pointer presses on drag handles', () => {
+    render(
+      <KangurDragDropContext>
+        <button data-rfd-drag-handle-draggable-id='token-3' type='button'>
+          Mouse drag handle
+        </button>
+      </KangurDragDropContext>
+    );
+
+    const didDispatch = fireEvent.pointerDown(screen.getByRole('button', { name: 'Mouse drag handle' }), {
+      pointerType: 'mouse',
+    });
+    fireEvent.pointerUp(document, { pointerType: 'mouse' });
+
+    expect(didDispatch).toBe(true);
+    expect(lockMock).not.toHaveBeenCalled();
+    expect(unlockMock).not.toHaveBeenCalled();
   });
 
   it('locks mobile scroll before dragging begins and unlocks after drop', () => {

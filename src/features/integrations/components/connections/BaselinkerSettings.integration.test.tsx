@@ -411,5 +411,9 @@ describe('BaselinkerSettings integration', () => {
     expect(
       screen.getByText('Imported 1 orders from Base.com. Created 1, updated 0.')
     ).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /Open detailed importer/i })).toHaveAttribute(
+      'href',
+      '/admin/products/orders-import?connectionId=conn-2&autoPreview=1'
+    );
   });
 });

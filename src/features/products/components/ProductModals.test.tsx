@@ -4,6 +4,7 @@ import React, { type ReactNode } from 'react';
 
 import { markEditingProductHydrated } from '@/features/products/hooks/editingProductHydration';
 import type { ProductDraft, ProductWithImages } from '@/shared/contracts/products';
+import { PRODUCT_SKU_AUTO_INCREMENT_PLACEHOLDER } from '@/shared/lib/products/constants';
 
 const { useProductListHeaderActionsContextMock, useProductListModalsContextMock } = vi.hoisted(() => ({
   useProductListHeaderActionsContextMock: vi.fn(),
@@ -12,6 +13,7 @@ const { useProductListHeaderActionsContextMock, useProductListModalsContextMock 
 
 const {
   useProductFormCoreMock,
+  productFormProviderPropsMock,
   triggerButtonBarMock,
   getNextProviderInstanceIdMock,
   resetProviderInstanceCounterMock,
@@ -19,8 +21,9 @@ const {
   let providerInstanceCounter = 0;
 
   return {
-  useProductFormCoreMock: vi.fn(),
-  triggerButtonBarMock: vi.fn(),
+    useProductFormCoreMock: vi.fn(),
+    productFormProviderPropsMock: vi.fn(),
+    triggerButtonBarMock: vi.fn(),
     getNextProviderInstanceIdMock: (): number => {
       providerInstanceCounter += 1;
       return providerInstanceCounter;
@@ -37,7 +40,16 @@ vi.mock('@/features/products/context/ProductListContext', () => ({
 }));
 
 vi.mock('@/features/products/context/ProductFormContext', () => ({
-  ProductFormProvider: ({ children }: { children: ReactNode }) => {
+  ProductFormProvider: ({
+    children,
+    ...props
+  }: {
+    children: ReactNode;
+    initialSku?: string;
+    draft?: ProductDraft;
+    product?: ProductWithImages;
+  }) => {
+    productFormProviderPropsMock(props);
     const instanceIdRef = React.useRef<number | null>(null);
     if (instanceIdRef.current === null) {
       instanceIdRef.current = getNextProviderInstanceIdMock();
@@ -447,5 +459,33 @@ describe('ProductModals create flows use unified modal shell', () => {
     expect(screen.getByTestId('loading-form-modal')).toBeInTheDocument();
     expect(screen.getByTestId('product-form-provider')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Create' })).toBeInTheDocument();
+  });
+
+  it('forwards the auto-increment placeholder SKU for draft-backed create flows', () => {
+    const draft = createDraft({ sku: 'DRAFT-OLD-099' } as Partial<ProductDraft>);
+    useProductFormCoreMock.mockReturnValue({
+      handleSubmit: vi.fn(),
+      uploading: false,
+      hasUnsavedChanges: false,
+      product: null,
+      draft,
+      getValues: vi.fn().mockReturnValue({}),
+    });
+    useProductListModalsContextMock.mockReturnValue(
+      buildContext({
+        isCreateOpen: true,
+        createDraft: draft,
+        initialSku: PRODUCT_SKU_AUTO_INCREMENT_PLACEHOLDER,
+      })
+    );
+
+    render(<ProductModals />);
+
+    expect(productFormProviderPropsMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        draft,
+        initialSku: PRODUCT_SKU_AUTO_INCREMENT_PLACEHOLDER,
+      })
+    );
   });
 });

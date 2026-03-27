@@ -16,6 +16,7 @@ import {
   type KangurLaunchableGameScreen,
 } from '@/features/kangur/games';
 import type { KangurLessonComponentId } from '@/features/kangur/shared/contracts/kangur';
+import type { KangurGameInstance } from '@/shared/contracts/kangur-game-instances';
 import type { KangurGameDefinition } from '@/shared/contracts/kangur-games';
 
 export {
@@ -62,6 +63,20 @@ export const buildKangurGameLaunchHref = (
     basePath
   );
 };
+
+export const buildKangurGameInstanceLaunchHref = (
+  basePath: string,
+  instance: Pick<KangurGameInstance, 'id' | 'launchableRuntimeId'>
+): string =>
+  appendKangurUrlParams(
+    createPageUrl('Game', basePath),
+    {
+      quickStart: 'screen',
+      screen: instance.launchableRuntimeId,
+      instanceId: instance.id,
+    },
+    basePath
+  );
 
 export const buildKangurGameLessonHref = (
   basePath: string,

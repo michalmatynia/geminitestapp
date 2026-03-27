@@ -2,6 +2,7 @@
 
 import { ChevronDown, ChevronUp, Download, RefreshCcw, ShoppingBag } from 'lucide-react';
 import Link from 'next/link';
+import { useSearchParams } from 'next/navigation';
 import React from 'react';
 
 import {
@@ -289,11 +290,13 @@ const IMPORT_STATE_SORT_ORDER: Record<BaseOrderImportState, number> = {
 };
 
 export function AdminProductOrdersImportPage(): React.JSX.Element {
+  const searchParams = useSearchParams();
   const integrationsQuery = useIntegrationsWithConnections();
   const defaultConnectionQuery = useDefaultExportConnection();
   const previewMutation = usePreviewBaseOrdersMutation();
   const importMutation = useImportBaseOrdersMutation();
   const quickImportMutation = useQuickImportBaseOrdersMutation();
+  const handledAutoPreviewRequestKeyRef = React.useRef<string | null>(null);
 
   const [selectedConnectionId, setSelectedConnectionId] = React.useState('');
   const [dateFrom, setDateFrom] = React.useState('');
@@ -323,6 +326,20 @@ export function AdminProductOrdersImportPage(): React.JSX.Element {
       );
   }, [integrationsQuery.data]);
 
+  const requestedConnectionId = React.useMemo(
+    () => searchParams.get('connectionId')?.trim() ?? '',
+    [searchParams]
+  );
+  const autoPreviewRequested = React.useMemo(
+    () => searchParams.get('autoPreview') === '1',
+    [searchParams]
+  );
+  const autoPreviewRequestKey = React.useMemo(
+    () =>
+      autoPreviewRequested && requestedConnectionId.trim() ? requestedConnectionId.trim() : null,
+    [autoPreviewRequested, requestedConnectionId]
+  );
+
   React.useEffect(() => {
     if (!baseConnections.length) {
       if (selectedConnectionId) {
@@ -333,18 +350,34 @@ export function AdminProductOrdersImportPage(): React.JSX.Element {
 
     if (selectedConnectionId) return;
 
+    const matchingRequested = requestedConnectionId
+      ? baseConnections.find((connection) => connection.id === requestedConnectionId)
+      : null;
     const preferredId = defaultConnectionQuery.data?.connectionId?.trim();
     const matchingPreferred = preferredId
       ? baseConnections.find((connection) => connection.id === preferredId)
       : null;
-    setSelectedConnectionId(matchingPreferred?.id ?? baseConnections[0]?.id ?? '');
-  }, [baseConnections, defaultConnectionQuery.data?.connectionId, selectedConnectionId]);
+    setSelectedConnectionId(
+      matchingRequested?.id ?? matchingPreferred?.id ?? baseConnections[0]?.id ?? ''
+    );
+  }, [
+    baseConnections,
+    defaultConnectionQuery.data?.connectionId,
+    requestedConnectionId,
+    selectedConnectionId,
+  ]);
 
   const statusesQuery = useBaseOrderImportStatuses(selectedConnectionId);
 
   React.useEffect(() => {
     setStatusId('');
   }, [selectedConnectionId]);
+
+  React.useEffect(() => {
+    if (!autoPreviewRequestKey) {
+      handledAutoPreviewRequestKeyRef.current = null;
+    }
+  }, [autoPreviewRequestKey]);
 
   const connectionOptions = React.useMemo(
     () => [
@@ -832,8 +865,8 @@ export function AdminProductOrdersImportPage(): React.JSX.Element {
     }));
   }, []);
 
-  const handlePreview = async (): Promise<void> => {
-    if (!selectedConnectionId.trim()) {
+  const handlePreview = React.useCallback(async (): Promise<void> => {
+    if (!currentPreviewScope.connectionId.trim()) {
       setFeedback({ variant: 'error', message: 'Select a Base.com connection first.' });
       return;
     }
@@ -841,11 +874,11 @@ export function AdminProductOrdersImportPage(): React.JSX.Element {
     setFeedback(null);
     try {
       const response = await previewMutation.mutateAsync({
-        connectionId: selectedConnectionId,
-        dateFrom: dateFrom || undefined,
-        dateTo: dateTo || undefined,
-        statusId: statusId || undefined,
-        limit: Number(limit),
+        connectionId: currentPreviewScope.connectionId,
+        dateFrom: currentPreviewScope.dateFrom || undefined,
+        dateTo: currentPreviewScope.dateTo || undefined,
+        statusId: currentPreviewScope.statusId || undefined,
+        limit: Number(currentPreviewScope.limit),
       });
       setPreview(response);
       setLastPreviewScopeKey(currentPreviewScopeKey);
@@ -862,7 +895,28 @@ export function AdminProductOrdersImportPage(): React.JSX.Element {
         message: error instanceof Error ? error.message : 'Failed to preview Base.com orders.',
       });
     }
-  };
+  }, [currentPreviewScope, currentPreviewScopeKey, previewMutation]);
+
+  React.useEffect(() => {
+    if (!autoPreviewRequestKey) return;
+    if (!selectedConnectionId.trim()) return;
+    if (selectedConnectionId !== requestedConnectionId) return;
+    if (handledAutoPreviewRequestKeyRef.current === autoPreviewRequestKey) return;
+    if (previewMutation.isPending || quickImportMutation.isPending || importMutation.isPending) {
+      return;
+    }
+
+    handledAutoPreviewRequestKeyRef.current = autoPreviewRequestKey;
+    void handlePreview();
+  }, [
+    autoPreviewRequestKey,
+    handlePreview,
+    importMutation.isPending,
+    previewMutation.isPending,
+    quickImportMutation.isPending,
+    requestedConnectionId,
+    selectedConnectionId,
+  ]);
 
   const handleQuickImport = async (): Promise<void> => {
     if (!selectedConnectionId.trim()) {

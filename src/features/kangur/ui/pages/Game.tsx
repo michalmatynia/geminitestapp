@@ -6,6 +6,8 @@ import { useTranslations } from 'next-intl';
 import { useEffect, useMemo, useRef, type RefObject } from 'react';
 
 import { getKangurPageHref as createPageUrl } from '@/features/kangur/config/routing';
+import { getKangurGameDefinition } from '@/features/kangur/games';
+import { getKangurGameContentSetForGame } from '@/features/kangur/games/content-sets';
 import { useKangurDocsTooltips } from '@/features/kangur/docs/tooltips';
 import { KangurGameHomeActionsWidget } from '@/features/kangur/ui/components/KangurGameHomeActionsWidget';
 import { KangurGameHomeDuelsInvitesWidget } from '@/features/kangur/ui/components/KangurGameHomeDuelsInvitesWidget';
@@ -20,7 +22,11 @@ import {
   GAME_HOME_LAYOUT_CLASSNAME,
   GAME_PAGE_STANDARD_CONTAINER_CLASSNAME,
 } from '@/features/kangur/ui/pages/GameHome.constants';
-import { getKangurLaunchableGameScreenComponentConfig } from '@/features/kangur/ui/pages/Game.launchable-screens';
+import {
+  createLaunchableGameScreenComponentConfigFromRuntime,
+  getKangurLaunchableGameScreenComponentConfig,
+  mergeKangurLaunchableGameRuntimeSpec,
+} from '@/features/kangur/ui/pages/Game.launchable-screens';
 import {
   KangurGameHomeSections,
   resolveKangurGameHomeVisibility,
@@ -92,6 +98,7 @@ import {
   KANGUR_TIGHT_ROW_CLASSNAME,
 } from '@/features/kangur/ui/design/tokens';
 import { useKangurLearnerActivityPing } from '@/features/kangur/ui/hooks/useKangurLearnerActivity';
+import { useKangurGameInstances } from '@/features/kangur/ui/hooks/useKangurGameInstances';
 import { useKangurMobileBreakpoint } from '@/features/kangur/ui/hooks/useKangurMobileBreakpoint';
 import { useKangurRoutePageReady } from '@/features/kangur/ui/hooks/useKangurRoutePageReady';
 import {
@@ -145,7 +152,14 @@ const focusGameScreenHeading = (heading: HTMLHeadingElement | null): void => {
 function GameContent(): React.JSX.Element {
   const translations = useTranslations('KangurGamePage');
   const runtime = useKangurGameRuntime();
-  const { basePath, progress, screen, user, xpToast } = runtime;
+  const {
+    basePath,
+    progress,
+    screen,
+    user,
+    xpToast,
+    launchableGameInstanceId,
+  } = runtime;
   const routeTransitionState = useOptionalKangurRouteTransitionState();
   const canAccessParentAssignments =
     runtime.canAccessParentAssignments ?? Boolean(user?.activeLearner?.id);
@@ -210,6 +224,37 @@ function GameContent(): React.JSX.Element {
     translations(`screens.${screenKey}.description`);
   const currentScreenLabel = getScreenLabel(screen);
   const learnerId = user?.activeLearner?.id ?? null;
+  const launchableGameInstanceQuery = useKangurGameInstances({
+    enabled: isKangurLaunchableGameScreen(screen) && Boolean(launchableGameInstanceId),
+    enabledOnly: true,
+    instanceId: launchableGameInstanceId ?? undefined,
+  });
+  const activeLaunchableGameInstance = launchableGameInstanceQuery.data?.[0] ?? null;
+  const activeLaunchableGameRuntime = useMemo(() => {
+    if (!isKangurLaunchableGameScreen(screen)) {
+      return null;
+    }
+
+    const defaultRuntime = getKangurLaunchableGameScreenComponentConfig(screen).runtime;
+    if (
+      !activeLaunchableGameInstance ||
+      activeLaunchableGameInstance.launchableRuntimeId !== screen
+    ) {
+      return defaultRuntime;
+    }
+
+    const game = getKangurGameDefinition(activeLaunchableGameInstance.gameId);
+    const contentSet = getKangurGameContentSetForGame(
+      game,
+      activeLaunchableGameInstance.contentSetId
+    );
+
+    return mergeKangurLaunchableGameRuntimeSpec(
+      defaultRuntime,
+      contentSet?.rendererProps,
+      activeLaunchableGameInstance.engineOverrides
+    );
+  }, [activeLaunchableGameInstance, screen]);
   const activeGameAssignment = runtime.activePracticeAssignment ?? runtime.resultPracticeAssignment;
   const tutorActivityContentId = useMemo(() => {
     if (activeGameAssignment?.id) {
@@ -414,7 +459,9 @@ function GameContent(): React.JSX.Element {
 
   const renderCurrentScreen = (): React.JSX.Element | null => {
     if (isKangurLaunchableGameScreen(screen)) {
-      const config = getKangurLaunchableGameScreenComponentConfig(screen);
+      const config = activeLaunchableGameRuntime
+        ? createLaunchableGameScreenComponentConfigFromRuntime(activeLaunchableGameRuntime)
+        : getKangurLaunchableGameScreenComponentConfig(screen);
       const ScreenComponent = config.Component;
 
       return renderScreen(

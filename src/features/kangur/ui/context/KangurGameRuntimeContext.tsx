@@ -80,6 +80,8 @@ export function KangurGameRuntimeProvider({
   const {
     screen,
     setScreen,
+    launchableGameInstanceId,
+    setLaunchableGameInstanceId,
     sessionPlayerName,
     setSessionPlayerName,
     operation,
@@ -159,6 +161,7 @@ export function KangurGameRuntimeProvider({
   }: KangurTrainingSelection,
   options?: KangurSessionStartOptions): void => {
     ensureSessionPlayerName();
+    setLaunchableGameInstanceId(null);
     const nextQuestions = generateTrainingQuestions(categories, nextDifficulty, count);
     setOperation('mixed');
     setDifficulty(nextDifficulty);
@@ -177,6 +180,7 @@ export function KangurGameRuntimeProvider({
     options?: KangurSessionStartOptions
   ): void => {
     ensureSessionPlayerName();
+    setLaunchableGameInstanceId(null);
     const nextQuestions = generateQuestions(nextOperation, nextDifficulty, TOTAL_QUESTIONS);
     setOperation(nextOperation);
     setDifficulty(nextDifficulty);
@@ -197,6 +201,7 @@ export function KangurGameRuntimeProvider({
     user,
     setPlayerName,
     setScreen,
+    setLaunchableGameInstanceId,
     handleSelectOperation,
     handleStartTraining,
   });
@@ -295,6 +300,7 @@ export function KangurGameRuntimeProvider({
   const handleStartGame = (): void => {
     ensureSessionPlayerName();
     setActiveSessionRecommendation(null);
+    setLaunchableGameInstanceId(null);
     setScreen('operation');
   };
 
@@ -302,16 +308,19 @@ export function KangurGameRuntimeProvider({
     ensureSessionPlayerName();
     setKangurMode(mode);
     setActiveSessionRecommendation(options?.recommendation ?? null);
+    setLaunchableGameInstanceId(null);
     setScreen('kangur');
   };
 
   const handleRestart = (): void => {
     setActiveSessionRecommendation(null);
+    setLaunchableGameInstanceId(null);
     setScreen('operation');
   };
 
   const handleHome = (): void => {
     setActiveSessionRecommendation(null);
+    setLaunchableGameInstanceId(null);
     setScreen('home');
   };
 
@@ -341,6 +350,7 @@ export function KangurGameRuntimeProvider({
       isLoadingAuth,
       progress,
       screen,
+      launchableGameInstanceId,
       playerName,
       operation,
       difficulty,
@@ -369,6 +379,7 @@ export function KangurGameRuntimeProvider({
       isAuthenticated,
       isLoadingAuth,
       kangurMode,
+      launchableGameInstanceId,
       activeSessionRecommendation,
       operation,
       playerName,

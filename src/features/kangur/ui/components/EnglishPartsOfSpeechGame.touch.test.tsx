@@ -7,6 +7,8 @@ import { NextIntlClientProvider } from 'next-intl';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 let draggableSnapshot = { isDragging: false };
+const lockMock = vi.fn();
+const unlockMock = vi.fn();
 
 vi.mock('next-intl', async () => await vi.importActual<typeof import('next-intl')>('next-intl'));
 vi.mock('use-intl', async () => await vi.importActual<typeof import('use-intl')>('use-intl'));
@@ -34,13 +36,15 @@ vi.mock('@hello-pangea/dnd', () => ({
       { isDraggingOver: false }
     ),
   Draggable: ({
+    draggableId,
     children,
   }: {
+    draggableId: string;
     children: (
       provided: {
         innerRef: (element: HTMLElement | null) => void;
         draggableProps: Record<string, never>;
-        dragHandleProps: Record<string, never>;
+        dragHandleProps: Record<string, string>;
       },
       snapshot: { isDragging: boolean }
     ) => React.ReactNode;
@@ -49,7 +53,9 @@ vi.mock('@hello-pangea/dnd', () => ({
       {
         innerRef: () => undefined,
         draggableProps: {},
-        dragHandleProps: {},
+        dragHandleProps: {
+          'data-rfd-drag-handle-draggable-id': draggableId,
+        },
       },
       draggableSnapshot
     ),
@@ -57,6 +63,13 @@ vi.mock('@hello-pangea/dnd', () => ({
 
 vi.mock('@/features/kangur/ui/hooks/useKangurCoarsePointer', () => ({
   useKangurCoarsePointer: () => true,
+}));
+
+vi.mock('@/features/kangur/ui/hooks/useKangurMobileInteractionScrollLock', () => ({
+  useKangurMobileInteractionScrollLock: () => ({
+    lock: lockMock,
+    unlock: unlockMock,
+  }),
 }));
 
 import enMessages from '@/i18n/messages/en.json';
@@ -71,6 +84,8 @@ const renderGame = () =>
 
 afterEach(() => {
   draggableSnapshot = { isDragging: false };
+  lockMock.mockClear();
+  unlockMock.mockClear();
 });
 
 describe('EnglishPartsOfSpeechGame touch interactions', () => {
@@ -110,5 +125,18 @@ describe('EnglishPartsOfSpeechGame touch interactions', () => {
 
     expect(within(pool).queryByRole('button', { name: 'equation' })).not.toBeInTheDocument();
     expect(within(document.body).getByRole('button', { name: 'equation' })).toBeInTheDocument();
+  });
+
+  it('locks mobile scroll when touching a real draggable word handle', () => {
+    renderGame();
+
+    const token = screen.getByRole('button', { name: 'equation' });
+    expect(token).toHaveAttribute('data-rfd-drag-handle-draggable-id');
+
+    fireEvent.touchStart(token);
+    expect(lockMock).toHaveBeenCalledTimes(1);
+
+    fireEvent.touchEnd(document);
+    expect(unlockMock).toHaveBeenCalledTimes(1);
   });
 });

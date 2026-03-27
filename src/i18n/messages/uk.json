@@ -609,13 +609,74 @@
         "taskTitleHidden": "Назву завдання приховано",
         "timeDisplayHidden": "Цифровий час приховано"
       },
-      "validation": {
-        "attachedLessonRequired": "Прив’яжи цю ігрову секцію до lesson hub перед збереженням.",
-        "sectionNameRequired": "Додай назву секції перед збереженням.",
-        "gameIconRequired": "Вибери або введи іконку гри перед збереженням.",
-        "visibleClockHandRequired": "Залиш щонайменше одну стрілку видимою, щоб зберегти цю секцію хаба."
-      }
+    "validation": {
+      "attachedLessonRequired": "Прив’яжи цю ігрову секцію до lesson hub перед збереженням.",
+      "sectionNameRequired": "Додай назву секції перед збереженням.",
+      "gameIconRequired": "Вибери або введи іконку гри перед збереженням.",
+      "visibleClockHandRequired": "Залиш щонайменше одну стрілку видимою, щоб зберегти цю секцію хаба."
     },
+    "instances": {
+      "eyebrow": "Launchable instances",
+      "title": "Create game instances",
+      "description": "Combine the current engine settings with a reusable content set and save that launchable setup as a reusable game instance.",
+      "unavailable": "This game does not expose a launchable runtime yet, so instance creation is unavailable here.",
+      "engineLabel": "Engine",
+      "runtimeLabel": "Runtime screen",
+      "contentSetLabel": "Content set",
+      "contentSetPlaceholder": "Select a content set",
+      "contentSetHint": "Choose which content payload is fed into the engine for this saved instance.",
+      "contentSetFallback": "Default content set",
+      "contentKind": {
+        "default_content": "Bundled content",
+        "clock_section": "Clock section",
+        "logical_pattern_set": "Pattern set",
+        "geometry_shape_pack": "Shape pack"
+      },
+      "feedSummary": {
+        "defaultContent": "Bundled runtime content",
+        "logicalPatternsWorkshop": "Logical workshop",
+        "alphabetOrder": "Alphabet order",
+        "geometryShapeCount": "{count} shapes"
+      },
+      "titleLabel": "Instance title",
+      "titlePlaceholder": "Hours only clock drill",
+      "descriptionLabel": "Instance description",
+      "descriptionPlaceholder": "Explain what content and engine setup this instance should launch with.",
+      "emojiLabel": "Instance icon",
+      "emojiPlaceholder": "🕐",
+      "enabledLabel": "Instance visible in the library",
+      "enabledDescription": "Disable the instance without deleting its saved engine and content configuration.",
+      "currentEngineSettingsTitle": "Current engine settings",
+      "currentEngineSettingsDescription": "Saving an instance captures the current engine settings from this modal separately from the selected content set.",
+      "currentEngineSettingsDefault": "Default engine settings",
+      "previewTitle": "Instance preview",
+      "previewDescription": "Review the current content payload and engine behavior that will be saved together as one launchable instance.",
+      "initialModeAriaLabel": "Instance initial mode",
+      "showModeSwitchAriaLabel": "Instance show mode switch",
+      "showTaskTitleAriaLabel": "Instance show task title",
+      "showTimeDisplayAriaLabel": "Instance show time display",
+      "showHourHandAriaLabel": "Instance show hour hand",
+      "showMinuteHandAriaLabel": "Instance show minute hand",
+      "createButton": "Create instance",
+      "saveButton": "Save instance",
+      "newButton": "New instance",
+      "openButton": "Open instance",
+      "editButton": "Edit",
+      "removeButton": "Remove",
+      "dirtyBadge": "Unsaved instance changes",
+      "enabledBadge": "Enabled",
+      "disabledBadge": "Disabled",
+      "listTitle": "Saved instances",
+      "listDescription": "Each saved instance combines the chosen content set with the current engine settings.",
+      "listEmpty": "No saved launchable instances yet.",
+      "syncError": "We couldn't save the last game-instance change. Try again.",
+      "validation": {
+        "contentSetRequired": "Choose a content set before saving this instance.",
+        "titleRequired": "Add an instance title before saving.",
+        "emojiRequired": "Choose or enter an instance icon before saving."
+      }
+    }
+  },
     "statuses": {
       "active": "Активна",
       "draft": "Чернетка",

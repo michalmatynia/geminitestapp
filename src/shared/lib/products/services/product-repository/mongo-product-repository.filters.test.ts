@@ -86,6 +86,14 @@ describe('mongo-product-repository.filters', () => {
         { _id: { $in: ['507f1f77bcf86cd799439011'] } },
       ],
     });
+
+    expect(
+      buildMongoBaseExportedCondition(false, {
+        integrationLookupValues: [],
+        exportedProductIds: [],
+        exportedProductLookupValues: [],
+      })
+    ).toBeNull();
   });
 
   it('compiles advanced filters across string, numeric, nested-id, date, boolean, and not branches', () => {
@@ -410,5 +418,292 @@ describe('mongo-product-repository.filters', () => {
     expect(serialized).toContain('"catalogs.catalogId":"catalog-2"');
     expect(serialized).toContain('"baseProductId":{"$exists":true,"$nin":[null,""]}');
     expect(serialized).toContain('"$in":["product-1"]');
+  });
+
+  it('compiles the remaining string, id, and empty-state advanced operators', () => {
+    const payload = JSON.stringify({
+      type: 'group',
+      id: 'root-string-rest',
+      combinator: 'and',
+      not: false,
+      rules: [
+        {
+          type: 'condition',
+          id: 'id-empty',
+          field: 'id',
+          operator: 'isEmpty',
+        },
+        {
+          type: 'condition',
+          id: 'sku-neq',
+          field: 'sku',
+          operator: 'neq',
+          value: 'SKU-2',
+        },
+        {
+          type: 'condition',
+          id: 'name-empty',
+          field: 'name',
+          operator: 'isEmpty',
+        },
+        {
+          type: 'condition',
+          id: 'name-eq',
+          field: 'name',
+          operator: 'eq',
+          value: 'Alpha',
+        },
+        {
+          type: 'condition',
+          id: 'description-neq',
+          field: 'description',
+          operator: 'neq',
+          value: 'desc-x',
+        },
+        {
+          type: 'condition',
+          id: 'base-product-empty',
+          field: 'baseProductId',
+          operator: 'isEmpty',
+        },
+      ],
+    });
+
+    const result = buildAdvancedMongoWhere(payload, baseExportContext);
+
+    expect(result).toMatchObject({
+      $and: [
+        {
+          $or: [{ id: { $exists: false } }, { id: null }, { id: '' }],
+        },
+        {
+          $nor: [{ sku: 'SKU-2' }],
+        },
+        {
+          $and: [
+            { $or: [{ name_en: { $exists: false } }, { name_en: null }, { name_en: '' }] },
+            { $or: [{ name_pl: { $exists: false } }, { name_pl: null }, { name_pl: '' }] },
+            { $or: [{ name_de: { $exists: false } }, { name_de: null }, { name_de: '' }] },
+          ],
+        },
+        {
+          $or: [
+            { name_en: 'Alpha' },
+            { name_pl: 'Alpha' },
+            { name_de: 'Alpha' },
+          ],
+        },
+        {
+          $nor: [
+            {
+              $or: [
+                { description_en: 'desc-x' },
+                { description_pl: 'desc-x' },
+                { description_de: 'desc-x' },
+              ],
+            },
+          ],
+        },
+        {
+          $or: [
+            { baseProductId: { $exists: false } },
+            { baseProductId: null },
+            { baseProductId: '' },
+          ],
+        },
+      ],
+    });
+  });
+
+  it('compiles the remaining nested-id, numeric, date, boolean, and base-export operators', () => {
+    const payload = JSON.stringify({
+      type: 'group',
+      id: 'root-numeric-rest',
+      combinator: 'and',
+      not: false,
+      rules: [
+        {
+          type: 'condition',
+          id: 'catalog-eq',
+          field: 'catalogId',
+          operator: 'eq',
+          value: 'catalog-1',
+        },
+        {
+          type: 'condition',
+          id: 'catalog-neq',
+          field: 'catalogId',
+          operator: 'neq',
+          value: 'catalog-2',
+        },
+        {
+          type: 'condition',
+          id: 'tag-eq',
+          field: 'tagId',
+          operator: 'eq',
+          value: 'tag-1',
+        },
+        {
+          type: 'condition',
+          id: 'producer-not-empty',
+          field: 'producerId',
+          operator: 'isNotEmpty',
+        },
+        {
+          type: 'condition',
+          id: 'price-gt',
+          field: 'price',
+          operator: 'gt',
+          value: 5,
+        },
+        {
+          type: 'condition',
+          id: 'price-lte',
+          field: 'price',
+          operator: 'lte',
+          value: 12,
+        },
+        {
+          type: 'condition',
+          id: 'stock-neq',
+          field: 'stock',
+          operator: 'neq',
+          value: 0,
+        },
+        {
+          type: 'condition',
+          id: 'stock-not-empty',
+          field: 'stock',
+          operator: 'isNotEmpty',
+        },
+        {
+          type: 'condition',
+          id: 'created-eq',
+          field: 'createdAt',
+          operator: 'eq',
+          value: '2026-03-01T00:00:00.000Z',
+        },
+        {
+          type: 'condition',
+          id: 'created-neq',
+          field: 'createdAt',
+          operator: 'neq',
+          value: '2026-03-02T00:00:00.000Z',
+        },
+        {
+          type: 'condition',
+          id: 'created-lt',
+          field: 'createdAt',
+          operator: 'lt',
+          value: '2026-03-03T00:00:00.000Z',
+        },
+        {
+          type: 'condition',
+          id: 'created-lte',
+          field: 'createdAt',
+          operator: 'lte',
+          value: '2026-03-04T00:00:00.000Z',
+        },
+        {
+          type: 'condition',
+          id: 'created-empty',
+          field: 'createdAt',
+          operator: 'isEmpty',
+        },
+        {
+          type: 'condition',
+          id: 'published-false',
+          field: 'published',
+          operator: 'eq',
+          value: false,
+        },
+        {
+          type: 'condition',
+          id: 'base-exported-false',
+          field: 'baseExported',
+          operator: 'eq',
+          value: false,
+        },
+      ],
+    });
+
+    const result = buildAdvancedMongoWhere(payload, baseExportContext);
+
+    expect(result).toMatchObject({
+      $and: [
+        { 'catalogs.catalogId': 'catalog-1' },
+        { 'catalogs.catalogId': { $ne: 'catalog-2' } },
+        { 'tags.tagId': 'tag-1' },
+        {
+          $or: [
+            { 'producers.producerId': { $exists: true, $nin: [null, ''] } },
+            { 'producers.0': { $exists: true } },
+          ],
+        },
+        { price: { $gt: 5 } },
+        { price: { $lte: 12 } },
+        { stock: { $ne: 0 } },
+        { stock: { $exists: true, $ne: null } },
+        { createdAt: new Date('2026-03-01T00:00:00.000Z') },
+        { createdAt: { $ne: new Date('2026-03-02T00:00:00.000Z') } },
+        { createdAt: { $lt: new Date('2026-03-03T00:00:00.000Z') } },
+        { createdAt: { $lte: new Date('2026-03-04T00:00:00.000Z') } },
+        { id: '__invalid_createdAt_empty__' },
+        { published: false },
+        {
+          $and: [
+            {
+              $or: [
+                { baseProductId: { $exists: false } },
+                { baseProductId: null },
+                { baseProductId: '' },
+              ],
+            },
+            { id: { $nin: ['product-1'] } },
+            { _id: { $nin: ['507f1f77bcf86cd799439011'] } },
+          ],
+        },
+      ],
+    });
+  });
+
+  it('returns null when advanced rules collapse to nothing and skips export lookup for classic-only filters', async () => {
+    const advancedNull = buildAdvancedMongoWhere(
+      JSON.stringify({
+        type: 'group',
+        id: 'null-root',
+        combinator: 'and',
+        not: false,
+        rules: [
+          {
+            type: 'condition',
+            id: 'created-not-empty',
+            field: 'createdAt',
+            operator: 'isNotEmpty',
+          },
+        ],
+      }),
+      baseExportContext
+    );
+
+    expect(advancedNull).toBeNull();
+
+    const filter = await buildMongoWhere({
+      sku: 'SKU',
+      search: 'needle',
+      description: 'details',
+      minPrice: 1,
+      stockValue: 2,
+      stockOperator: 'lt',
+      endDate: '2026-02-01T00:00:00.000Z',
+      categoryId: 'category-9',
+    });
+
+    expect(loadMongoBaseExportLookupContextMock).not.toHaveBeenCalled();
+    const serialized = JSON.stringify(filter);
+    expect(serialized).toContain('"sku":{"$regex":"SKU","$options":"i"}');
+    expect(serialized).toContain('"stock":{"$lt":2}');
+    expect(serialized).toContain('"createdAt":{"$lte":"2026-02-01T00:00:00.000Z"}');
+    expect(serialized).toContain('"categoryId":"category-9"');
   });
 });

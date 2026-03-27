@@ -1,4 +1,4 @@
-import KangurAppLayout from '@/app/(frontend)/kangur/(app)/layout';
+import { KangurAliasAppLayout } from '@/features/kangur/server/KangurAliasAppLayout';
 
 type LocalizedKangurAppLayoutProps = {
   children: React.ReactNode;
@@ -7,5 +7,5 @@ type LocalizedKangurAppLayoutProps = {
 export default function LocalizedKangurAppLayout({
   children,
 }: LocalizedKangurAppLayoutProps): React.JSX.Element {
-  return <KangurAppLayout>{children}</KangurAppLayout>;
+  return <KangurAliasAppLayout>{children}</KangurAliasAppLayout>;
 }

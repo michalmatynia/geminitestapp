@@ -13,6 +13,10 @@ const forcedBundler =
 const distDir = path.resolve(process.cwd(), process.env.NEXT_DIST_DIR || '.next');
 const turbopackManifestWriteRacePattern =
   /ENOENT: no such file or directory, open '.*\/\.next\/static\/.*\/_(?:build|ssg)Manifest\.js\.tmp\.[^']+'/;
+const turbopackTransientPanicPattern =
+  /FATAL:\s+An unexpected Turbopack error occurred[\s\S]*?(?:failed to create symlink|File exists \(os error 17\))/i;
+const webpackServerManifestRacePattern =
+  /(?:Cannot find module|ENOENT: no such file or directory, open) ['"].*\/\.next\/server\/[^'"]*manifest(?:\.[^'"]+)?['"]/i;
 
 const buildEnv = {
   ...process.env,
@@ -29,9 +33,17 @@ const resolveBundlerArgs = (bundler) => {
 const runBuild = (bundler) =>
   new Promise((resolve, reject) => {
     const args = resolveBundlerArgs(bundler);
+    const env = {
+      ...buildEnv,
+    };
+    if (bundler === 'turbopack') {
+      env.TURBOPACK = '1';
+    } else {
+      delete env.TURBOPACK;
+    }
     const child = spawn(process.execPath, [nextBin, ...args], {
       stdio: ['inherit', 'pipe', 'pipe'],
-      env: buildEnv,
+      env,
     });
 
     let output = '';
@@ -69,42 +81,64 @@ const shouldRetryWithWebpack = (result) =>
   result.bundler !== 'webpack' &&
   result.code !== 0 &&
   !result.signal &&
-  turbopackManifestWriteRacePattern.test(result.output);
+  (turbopackManifestWriteRacePattern.test(result.output) ||
+    turbopackTransientPanicPattern.test(result.output));
+
+const shouldRetryWebpackServerManifestRace = (result) =>
+  result.bundler === 'webpack' &&
+  result.code !== 0 &&
+  !result.signal &&
+  webpackServerManifestRacePattern.test(result.output);
 
 const main = async () => {
   const preferredBundler =
     forcedBundler === 'webpack' || forcedBundler === 'turbopack'
       ? forcedBundler
-      : 'turbopack';
+      : process.env.VERCEL
+        ? 'turbopack'
+        : 'webpack';
 
-  const initialResult = await runBuild(preferredBundler);
+  let result = await runBuild(preferredBundler);
 
-  if (initialResult.signal) {
-    process.kill(process.pid, initialResult.signal);
+  if (result.signal) {
+    process.kill(process.pid, result.signal);
     return;
   }
 
-  if (initialResult.code === 0) {
+  if (result.code === 0) {
     process.exit(0);
   }
 
-  if (!shouldRetryWithWebpack(initialResult)) {
-    process.exit(initialResult.code);
+  if (shouldRetryWithWebpack(result)) {
+    console.warn(
+      '[run-next-build] Turbopack hit a transient build failure. Cleaning the dist dir and retrying with webpack.'
+    );
+    removeDistDir();
+    result = await runBuild('webpack');
+
+    if (result.signal) {
+      process.kill(process.pid, result.signal);
+      return;
+    }
+
+    if (result.code === 0) {
+      process.exit(0);
+    }
   }
 
-  console.warn(
-    '[run-next-build] Turbopack hit a manifest write race. Cleaning the dist dir and retrying with webpack.'
-  );
-  removeDistDir();
+  if (shouldRetryWebpackServerManifestRace(result)) {
+    console.warn(
+      '[run-next-build] Webpack hit a transient server manifest race. Retrying webpack once.'
+    );
+    result = await runBuild('webpack');
 
-  const retryResult = await runBuild('webpack');
-
-  if (retryResult.signal) {
-    process.kill(process.pid, retryResult.signal);
-    return;
+    if (result.signal) {
+      process.kill(process.pid, result.signal);
+      return;
+    }
   }
 
-  process.exit(retryResult.code);
+  process.exit(result.code);
 };
 
 main().catch((error) => {

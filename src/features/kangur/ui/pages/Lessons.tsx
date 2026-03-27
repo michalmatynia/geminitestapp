@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useMemo } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { AnimatePresence } from 'framer-motion';
 import { useTranslations } from 'next-intl';
 import { useKangurDocsTooltips } from '@/features/kangur/docs/tooltips';
@@ -31,6 +31,9 @@ function LessonsContent() {
     setGuestPlayerName,
   } = useLessons();
   const { openLoginModal } = useKangurLoginModal();
+  const [isCatalogResolvedContentReady, setIsCatalogResolvedContentReady] = useState(
+    Boolean(activeLesson)
+  );
 
   const { user, logout } = auth;
   const { enabled: docsTooltipsEnabled } = useKangurDocsTooltips('lessons');
@@ -102,6 +105,41 @@ function LessonsContent() {
     ]
   );
 
+  useEffect(() => {
+    if (activeLesson || isCatalogResolvedContentReady) {
+      return;
+    }
+
+    if (typeof window === 'undefined') {
+      setIsCatalogResolvedContentReady(true);
+      return;
+    }
+
+    let timeoutId: number | null = null;
+    const frameId =
+      typeof window.requestAnimationFrame === 'function'
+        ? window.requestAnimationFrame(() => {
+            setIsCatalogResolvedContentReady(true);
+          })
+        : window.setTimeout(() => {
+            timeoutId = null;
+            setIsCatalogResolvedContentReady(true);
+          }, 0);
+
+    return () => {
+      if (timeoutId !== null) {
+        window.clearTimeout(timeoutId);
+        return;
+      }
+
+      if (typeof window.cancelAnimationFrame === 'function') {
+        window.cancelAnimationFrame(frameId);
+      } else {
+        window.clearTimeout(frameId);
+      }
+    };
+  }, [activeLesson, isCatalogResolvedContentReady]);
+
   return (
     <>
       <KangurAiTutorSessionSync 
@@ -129,7 +167,10 @@ function LessonsContent() {
               snapshot={activeLessonRenderSnapshot}
             />
           ) : (
-            <LessonsCatalog key='catalog' />
+            <LessonsCatalog
+              key='catalog'
+              renderResolvedContent={isCatalogResolvedContentReady}
+            />
           )}
         </AnimatePresence>
       </KangurStandardPageLayout>

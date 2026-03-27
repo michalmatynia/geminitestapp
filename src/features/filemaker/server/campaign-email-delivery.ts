@@ -6,6 +6,11 @@ import { AUTH_SECRET_SETTINGS_KEYS } from '@/shared/lib/auth/auth-secret-setting
 import { readSecretSettingValues } from '@/shared/lib/settings/secret-settings';
 import { logSystemEvent } from '@/shared/lib/observability/system-logger';
 
+import type {
+  FilemakerEmailCampaignDeliveryFailureCategory,
+  FilemakerEmailCampaignDeliveryProvider,
+} from '../types';
+
 export const FILEMAKER_CAMPAIGN_EMAIL_SECRET_SETTINGS_KEYS = {
   webhookUrl: 'filemaker_campaign_email_webhook_url',
   webhookSecret: 'filemaker_campaign_email_webhook_secret',
@@ -45,9 +50,104 @@ export type FilemakerCampaignEmailDeliveryRecord = {
 };
 
 export type FilemakerCampaignEmailSendResult = {
-  provider: 'webhook' | 'smtp';
+  provider: FilemakerEmailCampaignDeliveryProvider;
   providerMessage: string;
   sentAt: string;
+};
+
+export class FilemakerCampaignEmailDeliveryError extends Error {
+  readonly provider: FilemakerEmailCampaignDeliveryProvider | null;
+  readonly failureCategory: FilemakerEmailCampaignDeliveryFailureCategory;
+
+  constructor(input: {
+    message: string;
+    provider?: FilemakerEmailCampaignDeliveryProvider | null;
+    failureCategory: FilemakerEmailCampaignDeliveryFailureCategory;
+  }) {
+    super(input.message);
+    this.name = 'FilemakerCampaignEmailDeliveryError';
+    this.provider = input.provider ?? null;
+    this.failureCategory = input.failureCategory;
+  }
+}
+
+const classifyFilemakerCampaignFailureFromMessage = (
+  message: string
+): FilemakerEmailCampaignDeliveryFailureCategory => {
+  const normalized = message.trim().toLowerCase();
+  if (!normalized) return 'unknown';
+  if (
+    normalized.includes('mailbox full') ||
+    normalized.includes('temporarily unavailable') ||
+    normalized.includes('temporary failure') ||
+    normalized.includes('soft bounce') ||
+    normalized.includes('deferred') ||
+    normalized.includes('greylist') ||
+    normalized.includes('try again later')
+  ) {
+    return 'soft_bounce';
+  }
+  if (
+    normalized.includes('user unknown') ||
+    normalized.includes('no such user') ||
+    normalized.includes('invalid recipient') ||
+    normalized.includes('recipient address rejected') ||
+    normalized.includes('hard bounce')
+  ) {
+    return 'invalid_recipient';
+  }
+  if (
+    normalized.includes('mailbox unavailable') ||
+    normalized.includes('domain not found') ||
+    normalized.includes('550') ||
+    normalized.includes('554') ||
+    normalized.includes('bounce')
+  ) {
+    return 'hard_bounce';
+  }
+  if (
+    normalized.includes('rate limit') ||
+    normalized.includes('too many requests') ||
+    normalized.includes('throttle')
+  ) {
+    return 'rate_limited';
+  }
+  if (
+    normalized.includes('timeout') ||
+    normalized.includes('timed out') ||
+    normalized.includes('econnreset') ||
+    normalized.includes('econnrefused') ||
+    normalized.includes('etimedout')
+  ) {
+    return 'timeout';
+  }
+  if (normalized.includes('rejected') || normalized.includes('not accepted')) {
+    return 'provider_rejected';
+  }
+  return 'unknown';
+};
+
+export const resolveFilemakerCampaignEmailFailureMetadata = (
+  error: unknown
+): {
+  provider: FilemakerEmailCampaignDeliveryProvider | null;
+  failureCategory: FilemakerEmailCampaignDeliveryFailureCategory;
+  message: string;
+} => {
+  if (error instanceof FilemakerCampaignEmailDeliveryError) {
+    return {
+      provider: error.provider,
+      failureCategory: error.failureCategory,
+      message: error.message,
+    };
+  }
+  const message =
+    error instanceof Error ? error.message : 'Campaign email delivery failed.';
+  return {
+    provider: null,
+    failureCategory: classifyFilemakerCampaignFailureFromMessage(message),
+    message,
+  };
 };
 
 const deliveredCampaignEmails: FilemakerCampaignEmailDeliveryRecord[] = [];
@@ -206,7 +306,16 @@ export const sendFilemakerCampaignEmail = async (input: {
       body: JSON.stringify(record),
     });
     if (!response.ok) {
-      throw new Error(`Filemaker campaign webhook failed with status ${response.status}.`);
+      throw new FilemakerCampaignEmailDeliveryError({
+        message: `Filemaker campaign webhook failed with status ${response.status}.`,
+        provider: 'webhook',
+        failureCategory:
+          response.status === 429
+            ? 'rate_limited'
+            : response.status >= 500
+              ? 'provider_rejected'
+              : 'provider_rejected',
+      });
     }
     return {
       provider: 'webhook',
@@ -220,14 +329,24 @@ export const sendFilemakerCampaignEmail = async (input: {
 
   const transport = getSmtpTransport(secrets.smtp);
   if (transport && secrets.smtp) {
-    await transport.sendMail({
-      from: formatFromHeader(record.fromName, secrets.smtp.from),
-      to: record.to,
-      subject: record.subject,
-      text: record.text,
-      ...(record.html ? { html: record.html } : {}),
-      ...(record.replyToEmail ? { replyTo: record.replyToEmail } : {}),
-    });
+    try {
+      await transport.sendMail({
+        from: formatFromHeader(record.fromName, secrets.smtp.from),
+        to: record.to,
+        subject: record.subject,
+        text: record.text,
+        ...(record.html ? { html: record.html } : {}),
+        ...(record.replyToEmail ? { replyTo: record.replyToEmail } : {}),
+      });
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : 'Filemaker campaign SMTP delivery failed.';
+      throw new FilemakerCampaignEmailDeliveryError({
+        message,
+        provider: 'smtp',
+        failureCategory: classifyFilemakerCampaignFailureFromMessage(message),
+      });
+    }
     return {
       provider: 'smtp',
       providerMessage:
@@ -251,9 +370,12 @@ export const sendFilemakerCampaignEmail = async (input: {
       to: record.to,
     },
   });
-  throw new Error(
-    'No campaign email delivery provider is configured. Set filemaker_campaign_email_webhook_url or filemaker_campaign_smtp_host.'
-  );
+  throw new FilemakerCampaignEmailDeliveryError({
+    message:
+      'No campaign email delivery provider is configured. Set filemaker_campaign_email_webhook_url or filemaker_campaign_smtp_host.',
+    provider: null,
+    failureCategory: 'unknown',
+  });
 };
 
 export const __resetDeliveredFilemakerCampaignEmails = (): void => {

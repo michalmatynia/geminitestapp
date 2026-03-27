@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 
+import { badRequestError } from '@/shared/errors/app-error';
 import {
   FILEMAKER_EMAIL_CAMPAIGNS_KEY,
   FILEMAKER_EMAIL_CAMPAIGN_EVENTS_KEY,
@@ -19,6 +20,7 @@ import {
   readFilemakerCampaignSettingValue,
   upsertFilemakerCampaignSettingValue,
 } from '@/features/filemaker/server/campaign-settings-store';
+import { parseFilemakerCampaignUnsubscribeToken } from '@/features/filemaker/server/campaign-unsubscribe-token';
 import type {
   FilemakerEmailCampaignUnsubscribeRequest,
   FilemakerEmailCampaignUnsubscribeResponse,
@@ -42,8 +44,20 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): P
     return result.response;
   }
 
-  const normalizedEmailAddress = result.data.emailAddress.trim().toLowerCase();
-  const normalizedCampaignId = result.data.campaignId?.trim() || null;
+  const tokenPayload = result.data.token
+    ? parseFilemakerCampaignUnsubscribeToken(result.data.token)
+    : null;
+  if (result.data.token && !tokenPayload) {
+    throw badRequestError('Invalid or expired unsubscribe token.');
+  }
+
+  const normalizedEmailAddress = (
+    tokenPayload?.emailAddress ??
+    result.data.emailAddress?.trim().toLowerCase() ??
+    ''
+  ).trim();
+  const normalizedCampaignId =
+    tokenPayload?.campaignId ?? result.data.campaignId?.trim() ?? null;
   const [campaignsRaw, suppressionsRaw, eventsRaw] = await Promise.all([
     readFilemakerCampaignSettingValue(FILEMAKER_EMAIL_CAMPAIGNS_KEY),
     readFilemakerCampaignSettingValue(FILEMAKER_EMAIL_CAMPAIGN_SUPPRESSIONS_KEY),
@@ -58,6 +72,8 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): P
     normalizedEmailAddress
   );
   const alreadySuppressed = Boolean(existingEntry);
+  const normalizedRunId = tokenPayload?.runId ?? existingEntry?.runId ?? null;
+  const normalizedDeliveryId = tokenPayload?.deliveryId ?? existingEntry?.deliveryId ?? null;
 
   const nextSuppressionRegistry = upsertFilemakerEmailCampaignSuppressionEntry({
     registry: suppressionRegistry,
@@ -69,9 +85,11 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): P
       reason: 'unsubscribed',
       actor: 'recipient',
       campaignId: normalizedCampaignId ?? existingEntry?.campaignId ?? null,
-      runId: existingEntry?.runId,
-      deliveryId: existingEntry?.deliveryId,
-      notes: buildUnsubscribeNotes(result.data.source),
+      runId: normalizedRunId,
+      deliveryId: normalizedDeliveryId,
+      notes: buildUnsubscribeNotes(
+        tokenPayload ? result.data.source ?? 'signed-unsubscribe-token' : result.data.source
+      ),
     }),
   });
 
@@ -84,7 +102,9 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): P
         events: eventRegistry.events.concat(
           createFilemakerEmailCampaignEvent({
             campaignId: campaign.id,
-            type: 'updated',
+            runId: normalizedRunId,
+            deliveryId: normalizedDeliveryId,
+            type: 'unsubscribed',
             actor: 'recipient',
             message: `${normalizedEmailAddress} unsubscribed via the public unsubscribe form.`,
           })

@@ -5,6 +5,7 @@ export * from './pages/AdminFilemakerOrganizationsPage';
 export * from './pages/AdminFilemakerEventsPage';
 export * from './pages/AdminFilemakerEmailsPage';
 export * from './pages/AdminFilemakerCampaignsPage';
+export * from './pages/AdminFilemakerCampaignControlCentrePage';
 export * from './pages/AdminFilemakerPersonEditPage';
 export * from './pages/AdminFilemakerOrganizationEditPage';
 export * from './pages/AdminFilemakerEventEditPage';

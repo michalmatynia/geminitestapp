@@ -634,7 +634,7 @@ describe('Lessons page subject filtering', () => {
     );
   });
 
-  it('keeps the lessons library transition waiting until the catalog loading state settles', () => {
+  it('reveals the lessons library route once the shell is mounted even while catalog data is loading', () => {
     routeTransitionStateState.value = {
       transitionPhase: 'waiting_for_ready',
       activeTransitionKind: 'navigation',
@@ -652,9 +652,6 @@ describe('Lessons page subject filtering', () => {
       })
     );
 
-    lessonsLoadingState.value = false;
-    lessonSectionsLoadingState.value = false;
-
     act(() => {
       vi.runAllTimers();
     });
@@ -665,6 +662,7 @@ describe('Lessons page subject filtering', () => {
         ready: true,
       })
     );
+    expect(screen.getByTestId('lessons-catalog-skeleton')).toBeInTheDocument();
 
     view.unmount();
   });
@@ -696,7 +694,7 @@ describe('Lessons page subject filtering', () => {
     expect(screen.getByTestId('lesson-card-lesson-english')).toBeInTheDocument();
   });
 
-  it('keeps the lessons library transition waiting while placeholder catalog data is still active', () => {
+  it('reveals the lessons library route while placeholder catalog data is still active', () => {
     routeTransitionStateState.value = {
       transitionPhase: 'waiting_for_ready',
       activeTransitionKind: 'navigation',
@@ -714,7 +712,7 @@ describe('Lessons page subject filtering', () => {
     expect(useKangurRoutePageReadyMock).toHaveBeenLastCalledWith(
       expect.objectContaining({
         pageKey: 'Lessons',
-        ready: false,
+        ready: true,
       })
     );
     expect(screen.getByTestId('lessons-catalog-skeleton')).toBeInTheDocument();

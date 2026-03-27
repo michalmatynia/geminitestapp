@@ -361,28 +361,25 @@ export function useLessonsLogic() {
       (!ActiveLessonComponent || isActiveLessonComponentReady));
   const isLocaleSwitchTransition =
     routeTransitionState?.activeTransitionKind === 'locale-switch';
-  const shouldHoldLessonsLibraryTransition =
-    routeTransitionState?.transitionPhase === 'waiting_for_ready' &&
-    routeTransitionState.activeTransitionSkeletonVariant === 'lessons-library';
-
   const expectsFocusedLesson =
     routeTransitionState?.transitionPhase === 'waiting_for_ready' &&
     routeTransitionState.activeTransitionSkeletonVariant === 'lessons-focus';
   const isLessonsShellReady = expectsFocusedLesson
     ? Boolean(activeLesson) && isActiveLessonSurfaceReady
     : isActiveLessonSurfaceReady;
-  const isLessonsCatalogTransitionReady =
+  const isLessonsLibraryRouteReady =
     !expectsFocusedLesson &&
     activeLesson === null &&
     !isSecretLessonActive &&
-    (!shouldHoldLessonsLibraryTransition || !shouldShowLessonsCatalogSkeleton);
+    isDeferredContentReady &&
+    isLessonsShellReady;
 
   const isLessonsPageReady =
     isLocaleSwitchTransition
       ? isLessonsShellReady
-      : shouldHoldLessonsLibraryTransition
-        ? isLessonsCatalogTransitionReady && isLessonsShellReady
-        : (isDeferredContentReady || isLessonsCatalogTransitionReady) && isLessonsShellReady;
+      : expectsFocusedLesson
+        ? isLessonsShellReady
+        : isLessonsLibraryRouteReady;
 
   useKangurRoutePageReady({
     pageKey: 'Lessons',

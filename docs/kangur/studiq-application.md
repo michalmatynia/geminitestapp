@@ -82,6 +82,14 @@ Canonical learner-facing web entrypoints:
 - `src/app/[locale]/(frontend)/kangur/[[...slug]]/page.tsx`
 - `src/app/[locale]/(frontend)/kangur/layout.tsx`
 
+Public web analytics for Kangur now mounts in two places:
+
+- `src/app/(frontend)/kangur/layout.tsx` for the canonical `/kangur/*` subtree
+- `src/features/kangur/ui/FrontendPublicOwnerKangurShell.tsx` for root-owned `/`, `/login`, and localized public-owner Kangur routes
+
+Embedded Kangur surfaces do not mount Vercel Analytics directly, so CMS embeds
+and internal reusable shells do not double-count page views.
+
 ## CMS embedding
 
 StudiQ can be embedded inside CMS pages via the App Embed block:

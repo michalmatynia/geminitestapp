@@ -10,6 +10,7 @@ import {
   optionalBooleanQuerySchema,
   optionalTrimmedQueryString,
 } from '@/shared/lib/api/query-schema';
+import { kangurGameRuntimeRendererPropsSchema } from './kangur-game-runtime-renderer-props';
 
 const nonEmptyTrimmedString = z.string().trim().min(1);
 
@@ -166,6 +167,7 @@ export const kangurLaunchableGameRuntimeSpecSchema = z.object({
   screen: kangurLaunchableGameScreenSchema,
   engineId: kangurGameEngineIdSchema.optional(),
   rendererId: kangurLaunchableGameRuntimeRendererIdSchema,
+  rendererProps: kangurGameRuntimeRendererPropsSchema.optional(),
   finishMode: kangurLaunchableGameRuntimeFinishModeSchema.default('default'),
   finishLabelProp: kangurLaunchableGameRuntimeFinishLabelPropSchema.default('none'),
   className: z

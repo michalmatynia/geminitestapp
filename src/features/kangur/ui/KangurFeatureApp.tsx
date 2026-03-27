@@ -1,7 +1,7 @@
 'use client';
 
 import dynamic from 'next/dynamic';
-import { Suspense, useEffect, useRef, useState } from 'react';
+import { Suspense, useEffect, useMemo, useRef, useState } from 'react';
 
 import {
   LazyAnimatePresence,
@@ -145,25 +145,26 @@ const AuthenticatedApp = (): JSX.Element | null => {
   const shouldSkipNavigationSkeletonDelay = activeTransitionSourceId !== null;
   const shouldBlockRouteContent = shouldRedirectToHome;
   const shouldUseCmsRuntimeScreen = hasKangurCmsRuntimeScreen(rawCmsProject, resolvedPageKey);
-  let routeContent: JSX.Element | null = null;
-  if (authErrorType !== 'auth_required') {
-    if (shouldBlockRouteContent) {
-      routeContent = null;
-    } else if (!resolvedPageKey) {
-      routeContent = <PageNotFound />;
-    } else {
-      const ResolvedPage = kangurPages[resolvedPageKey];
-      routeContent = ResolvedPage ? (
-        shouldUseCmsRuntimeScreen ? (
-          <KangurCmsRuntimeScreen pageKey={resolvedPageKey} fallback={<ResolvedPage />} />
-        ) : (
-          <ResolvedPage />
-        )
-      ) : (
-        <PageNotFound />
-      );
+  const routeContent = useMemo<JSX.Element | null>(() => {
+    if (authErrorType === 'auth_required' || shouldBlockRouteContent) {
+      return null;
     }
-  }
+
+    if (!resolvedPageKey) {
+      return <PageNotFound />;
+    }
+
+    const ResolvedPage = kangurPages[resolvedPageKey];
+    if (!ResolvedPage) {
+      return <PageNotFound />;
+    }
+
+    return shouldUseCmsRuntimeScreen ? (
+      <KangurCmsRuntimeScreen pageKey={resolvedPageKey} fallback={<ResolvedPage />} />
+    ) : (
+      <ResolvedPage />
+    );
+  }, [authErrorType, resolvedPageKey, shouldBlockRouteContent, shouldUseCmsRuntimeScreen]);
   const [hasPresentedInteractiveShell, setHasPresentedInteractiveShell] = useState(false);
   const [isRouteInteractionReady, setIsRouteInteractionReady] = useState(false);
   const shouldShowBootLoader = isThemeBootLoading && !hasPresentedInteractiveShell;
@@ -260,6 +261,27 @@ const AuthenticatedApp = (): JSX.Element | null => {
     !shouldHideTopNavigationDuringBoot && isRouteSkeletonVisible;
   const shouldSkipRouteContentPresence =
     isNavigationTransitionActive || isPendingRouteSnapshotVisible;
+  const renderedRouteContent = routeContent ? (
+    <LazyMotionDiv
+      key={routeTransitionKey}
+      {...routeContentMotionProps}
+      aria-busy={isNavigationTransitionActive || isPendingRouteSnapshotVisible}
+      aria-hidden={isRouteContentVisuallyHidden ? 'true' : undefined}
+      className={cn(
+        'w-full min-w-0 kangur-shell-viewport-height',
+        embedded ? 'min-h-full' : null,
+        isRouteContentInteractionBlocked ? 'pointer-events-none' : null,
+        isRouteContentVisuallyHidden ? 'pointer-events-none opacity-0' : null
+      )}
+      data-route-transition-phase={transitionPhase}
+      data-route-interactive-ready={isRouteInteractionReady ? 'true' : 'false'}
+      data-route-transition-key={routeTransitionKey}
+      data-route-transition-source-id={activeTransitionSourceId ?? undefined}
+      data-testid='kangur-route-content'
+    >
+      {routeContent}
+    </LazyMotionDiv>
+  ) : null;
 
   useEffect(() => {
     setIsRouteInteractionReady(true);
@@ -492,53 +514,9 @@ const AuthenticatedApp = (): JSX.Element | null => {
           renderInlineTopNavigationSkeleton={false}
         />
       }>
-        {shouldSkipRouteContentPresence ? (
-          routeContent ? (
-            <LazyMotionDiv
-              key={routeTransitionKey}
-              {...routeContentMotionProps}
-              aria-busy={isNavigationTransitionActive || isPendingRouteSnapshotVisible}
-              aria-hidden={isRouteContentVisuallyHidden ? 'true' : undefined}
-              className={cn(
-                'w-full min-w-0 kangur-shell-viewport-height',
-                embedded ? 'min-h-full' : null,
-                isRouteContentInteractionBlocked ? 'pointer-events-none' : null,
-                isRouteContentVisuallyHidden ? 'pointer-events-none opacity-0' : null
-              )}
-              data-route-transition-phase={transitionPhase}
-              data-route-interactive-ready={isRouteInteractionReady ? 'true' : 'false'}
-              data-route-transition-key={routeTransitionKey}
-              data-route-transition-source-id={activeTransitionSourceId ?? undefined}
-              data-testid='kangur-route-content'
-            >
-              {routeContent}
-            </LazyMotionDiv>
-          ) : null
-        ) : (
-          <LazyAnimatePresence mode='wait'>
-            {routeContent ? (
-              <LazyMotionDiv
-                key={routeTransitionKey}
-                {...routeContentMotionProps}
-                aria-busy={isNavigationTransitionActive || isPendingRouteSnapshotVisible}
-                aria-hidden={isRouteContentVisuallyHidden ? 'true' : undefined}
-                className={cn(
-                  'w-full min-w-0 kangur-shell-viewport-height',
-                  embedded ? 'min-h-full' : null,
-                  isRouteContentInteractionBlocked ? 'pointer-events-none' : null,
-                  isRouteContentVisuallyHidden ? 'pointer-events-none opacity-0' : null
-                )}
-                data-route-transition-phase={transitionPhase}
-                data-route-interactive-ready={isRouteInteractionReady ? 'true' : 'false'}
-                data-route-transition-key={routeTransitionKey}
-                data-route-transition-source-id={activeTransitionSourceId ?? undefined}
-                data-testid='kangur-route-content'
-              >
-                {routeContent}
-              </LazyMotionDiv>
-            ) : null}
-          </LazyAnimatePresence>
-        )}
+        <LazyAnimatePresence mode={shouldSkipRouteContentPresence ? 'sync' : 'wait'}>
+          {renderedRouteContent}
+        </LazyAnimatePresence>
       </Suspense>
       <LazyAnimatePresence>
         {isRouteSkeletonVisible ? (

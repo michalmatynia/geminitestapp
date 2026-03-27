@@ -1,6 +1,7 @@
 import 'server-only';
 
 import { FilemakerCampaignUnsubscribePage } from '@/features/filemaker/pages/FilemakerCampaignUnsubscribePage';
+import { parseFilemakerCampaignUnsubscribeToken } from '@/features/filemaker/server/campaign-unsubscribe-token';
 
 import type { Metadata } from 'next';
 import type { JSX } from 'react';
@@ -32,9 +33,16 @@ export const generateFilemakerUnsubscribeMetadata = async (): Promise<Metadata> 
 
 export const renderFilemakerUnsubscribeRoute = async ({
   searchParams,
-}: FilemakerUnsubscribeRouteOptions = {}): Promise<JSX.Element> => (
-  <FilemakerCampaignUnsubscribePage
-    initialEmailAddress={readSearchParamValue(searchParams, 'email')}
-    initialCampaignId={readSearchParamValue(searchParams, 'campaignId')}
-  />
-);
+}: FilemakerUnsubscribeRouteOptions = {}): Promise<JSX.Element> => {
+  const token = readSearchParamValue(searchParams, 'token');
+  const tokenPayload = parseFilemakerCampaignUnsubscribeToken(token);
+
+  return (
+    <FilemakerCampaignUnsubscribePage
+      initialEmailAddress={tokenPayload?.emailAddress ?? readSearchParamValue(searchParams, 'email')}
+      initialCampaignId={tokenPayload?.campaignId ?? readSearchParamValue(searchParams, 'campaignId')}
+      initialToken={token}
+      hasValidSignedToken={Boolean(tokenPayload)}
+    />
+  );
+};

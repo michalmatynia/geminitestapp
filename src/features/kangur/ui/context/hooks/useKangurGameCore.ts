@@ -1,4 +1,5 @@
 import { useRef, useState, useEffect } from 'react';
+import type { KangurGameInstanceId } from '@/shared/contracts/kangur-game-instances';
 import type {
   KangurDifficulty,
   KangurGameScreen,
@@ -13,6 +14,8 @@ export function useKangurGameCore() {
   const xpToastTimeoutRef = useRef<number | null>(null);
   const gameLoopTimeoutRef = useRef<number | null>(null);
   const [screen, setScreen] = useState<KangurGameScreen>('home');
+  const [launchableGameInstanceId, setLaunchableGameInstanceId] =
+    useState<KangurGameInstanceId | null>(null);
   const [sessionPlayerName, setSessionPlayerName] = useState('');
   const [operation, setOperation] = useState<KangurOperation | null>(null);
   const [difficulty, setDifficulty] = useState<KangurDifficulty>('medium');
@@ -87,6 +90,8 @@ export function useKangurGameCore() {
   return {
     screen,
     setScreen,
+    launchableGameInstanceId,
+    setLaunchableGameInstanceId,
     sessionPlayerName,
     setSessionPlayerName,
     operation,

@@ -1,4 +1,5 @@
 import type { KangurAssignmentSnapshot, KangurUser } from '@kangur/platform';
+import type { KangurGameInstanceId } from '@/shared/contracts/kangur-game-instances';
 import { KANGUR_GAME_SCREENS } from '@/features/kangur/ui/types';
 import type {
   KangurDifficulty,
@@ -24,6 +25,7 @@ export type KangurGameRuntimeStateContextValue = {
   isLoadingAuth: boolean;
   progress: KangurProgressState;
   screen: KangurGameScreen;
+  launchableGameInstanceId: KangurGameInstanceId | null;
   playerName: string;
   operation: KangurOperation | null;
   difficulty: KangurDifficulty;

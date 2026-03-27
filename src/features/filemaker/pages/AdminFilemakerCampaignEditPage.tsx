@@ -339,11 +339,14 @@ export function AdminFilemakerCampaignEditPage(): React.JSX.Element {
     [database, deliveryRegistry, draft, eventRegistry, runRegistry, suppressionRegistry]
   );
   const unsubscribeLinkTemplate = useMemo(() => {
-    const campaignIdToken = draft.id.trim() || '[campaign-id]';
-    return `/filemaker/unsubscribe?campaignId=${encodeURIComponent(
-      campaignIdToken
-    )}&email={{email}}`;
-  }, [draft.id]);
+    return '{{unsubscribe_url}}';
+  }, []);
+  const preferencesLinkTemplate = useMemo(() => {
+    return '{{preferences_url}}';
+  }, []);
+  const manageAllPreferencesLinkTemplate = useMemo(() => {
+    return '{{manage_all_preferences_url}}';
+  }, []);
 
   const persistCampaignRegistry = useCallback(
     async (nextCampaigns: FilemakerEmailCampaign[]): Promise<void> => {
@@ -1421,20 +1424,42 @@ export function AdminFilemakerCampaignEditPage(): React.JSX.Element {
             Auto-bounce Blocking: Enabled
           </Badge>
         </div>
-        <FormField label='Public unsubscribe link template'>
-          <div className='space-y-2'>
+        <div className='grid gap-4 md:grid-cols-3'>
+          <FormField label='Public unsubscribe link template'>
             <Input
               readOnly
               value={unsubscribeLinkTemplate}
               aria-label='Public unsubscribe link template'
               title='Public unsubscribe link template'
             />
-            <div className='text-xs leading-5 text-gray-400'>
-              Use <code>{'{{email}}'}</code> in your campaign body when generating recipient
-              links. This route adds the address to the Filemaker campaign suppression list.
-            </div>
-          </div>
-        </FormField>
+          </FormField>
+          <FormField label='Public preferences link template'>
+            <Input
+              readOnly
+              value={preferencesLinkTemplate}
+              aria-label='Public preferences link template'
+              title='Public preferences link template'
+            />
+          </FormField>
+          <FormField label='Public all-campaign preferences link template'>
+            <Input
+              readOnly
+              value={manageAllPreferencesLinkTemplate}
+              aria-label='Public all-campaign preferences link template'
+              title='Public all-campaign preferences link template'
+            />
+          </FormField>
+        </div>
+        <div className='text-xs leading-5 text-gray-400'>
+          Use <code>{'{{unsubscribe_url}}'}</code> in your campaign body for a signed recipient
+          unsubscribe link, <code>{'{{preferences_url}}'}</code> for the signed
+          campaign-scoped preferences center, and <code>{'{{manage_all_preferences_url}}'}</code>{' '}
+          for a signed address-wide preferences center across all Filemaker campaigns. Use{' '}
+          <code>{'{{open_tracking_pixel}}'}</code> in HTML content for a hidden signed open
+          tracking pixel, <code>{'{{open_tracking_url}}'}</code> if you need the raw tracking URL,
+          <code>{'{{click_tracking_url:https://example.com}}'}</code> for signed click redirects,
+          and <code>{'{{email}}'}</code> for plain-text personalization.
+        </div>
         <div className='grid gap-4 md:grid-cols-2'>
           <FormField label='Suppressed email address'>
             <Input
@@ -1648,6 +1673,39 @@ export function AdminFilemakerCampaignEditPage(): React.JSX.Element {
             </div>
             <div className='text-[11px] text-gray-500'>Addresses currently filtered from preview</div>
           </div>
+          <div className='rounded-md border border-border/60 bg-card/25 p-3'>
+            <div className='text-[11px] text-gray-500'>Opens</div>
+            <div className='mt-1 text-lg font-semibold text-white'>{analytics.openCount}</div>
+            <div className='text-[11px] text-gray-500'>
+              Open rate: {analytics.openRatePercent}% • Unique opens: {analytics.uniqueOpenCount} ({analytics.uniqueOpenRatePercent}%)
+            </div>
+          </div>
+          <div className='rounded-md border border-border/60 bg-card/25 p-3'>
+            <div className='text-[11px] text-gray-500'>Clicks</div>
+            <div className='mt-1 text-lg font-semibold text-white'>{analytics.clickCount}</div>
+            <div className='text-[11px] text-gray-500'>
+              Click rate: {analytics.clickRatePercent}% • Unique clicks: {analytics.uniqueClickCount} ({analytics.uniqueClickRatePercent}%)
+            </div>
+          </div>
+          <div className='rounded-md border border-border/60 bg-card/25 p-3'>
+            <div className='text-[11px] text-gray-500'>Opt-outs</div>
+            <div className='mt-1 text-lg font-semibold text-white'>
+              {analytics.unsubscribeCount}
+            </div>
+            <div className='text-[11px] text-gray-500'>
+              Unsubscribe rate: {analytics.unsubscribeRatePercent}%
+            </div>
+          </div>
+          <div className='rounded-md border border-border/60 bg-card/25 p-3'>
+            <div className='text-[11px] text-gray-500'>Restored</div>
+            <div className='mt-1 text-lg font-semibold text-white'>
+              {analytics.resubscribeCount}
+            </div>
+            <div className='text-[11px] text-gray-500'>
+              Restore rate: {analytics.resubscribeRatePercent}% • Net opt-outs:{' '}
+              {analytics.netUnsubscribeCount} ({analytics.netUnsubscribeRatePercent}%)
+            </div>
+          </div>
         </div>
         <div className='grid gap-3 text-[11px] text-gray-500 md:grid-cols-3'>
           <div>
@@ -1660,6 +1718,56 @@ export function AdminFilemakerCampaignEditPage(): React.JSX.Element {
             Latest activity:{' '}
             {analytics.latestActivityAt ? formatTimestamp(analytics.latestActivityAt) : 'No campaign activity yet'}
           </div>
+          <div>
+            Latest open:{' '}
+            {analytics.latestOpenAt
+              ? formatTimestamp(analytics.latestOpenAt)
+              : 'No open tracking yet'}
+          </div>
+          <div>
+            Latest click:{' '}
+            {analytics.latestClickAt
+              ? formatTimestamp(analytics.latestClickAt)
+              : 'No click tracking yet'}
+          </div>
+          <div>
+            Latest opt-out:{' '}
+            {analytics.latestUnsubscribeAt
+              ? formatTimestamp(analytics.latestUnsubscribeAt)
+              : 'No unsubscribe activity yet'}
+          </div>
+          <div>
+            Latest restore:{' '}
+            {analytics.latestResubscribeAt
+              ? formatTimestamp(analytics.latestResubscribeAt)
+              : 'No restore activity yet'}
+          </div>
+        </div>
+        <div className='space-y-3'>
+          <div className='text-[11px] uppercase tracking-[0.22em] text-gray-500'>
+            Top clicked links
+          </div>
+          {analytics.topClickedLinks.length === 0 ? (
+            <div className='text-sm text-gray-500'>
+              No tracked click activity has been recorded for this campaign yet.
+            </div>
+          ) : (
+            analytics.topClickedLinks.map((link) => (
+              <div
+                key={link.targetUrl}
+                className='rounded-md border border-border/60 bg-card/25 p-3 text-sm text-gray-300'
+              >
+                <div className='break-all font-medium text-sky-300'>{link.targetUrl}</div>
+                <div className='mt-1 text-[11px] text-gray-500'>
+                  {link.clickCount} clicks • {link.uniqueDeliveryCount} unique deliveries • rate{' '}
+                  {link.clickRatePercent}%
+                </div>
+                <div className='text-[11px] text-gray-500'>
+                  Latest click: {formatTimestamp(link.latestClickAt)}
+                </div>
+              </div>
+            ))
+          )}
         </div>
       </FormSection>
 

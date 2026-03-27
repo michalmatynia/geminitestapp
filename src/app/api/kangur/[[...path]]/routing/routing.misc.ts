@@ -39,6 +39,11 @@ import {
   querySchema as lessonGameSectionsQuerySchema,
 } from '../../lesson-game-sections/handler';
 import {
+  getKangurGameInstancesHandler,
+  postKangurGameInstancesHandler,
+  querySchema as gameInstancesQuerySchema,
+} from '../../game-instances/handler';
+import {
   getKangurLessonTemplatesHandler,
   postKangurLessonTemplatesHandler,
   querySchema as lessonTemplatesQuerySchema,
@@ -185,6 +190,24 @@ export const lessonGameSectionsPostHandler: SimpleRouteHandler = apiHandler(
   postKangurLessonGameSectionsHandler,
   {
     source: 'kangur.lesson-game-sections.POST',
+    service: 'kangur.api',
+    parseJsonBody: true,
+  }
+);
+
+export const gameInstancesGetHandler: SimpleRouteHandler = apiHandler(
+  getKangurGameInstancesHandler,
+  {
+    source: 'kangur.game-instances.GET',
+    service: 'kangur.api',
+    querySchema: gameInstancesQuerySchema,
+  }
+);
+
+export const gameInstancesPostHandler: SimpleRouteHandler = apiHandler(
+  postKangurGameInstancesHandler,
+  {
+    source: 'kangur.game-instances.POST',
     service: 'kangur.api',
     parseJsonBody: true,
   }
@@ -508,6 +531,9 @@ export const handleMiscRouting = (request: NextRequest, segments: string[]): Pro
   }
   if (segments[0] === 'lesson-game-sections' && segments.length === 1) {
     return handleGetPost(request, lessonGameSectionsGetHandler, lessonGameSectionsPostHandler);
+  }
+  if (segments[0] === 'game-instances' && segments.length === 1) {
+    return handleGetPost(request, gameInstancesGetHandler, gameInstancesPostHandler);
   }
   if (segments[0] === 'lesson-templates' && segments.length === 1) {
     return handleGetPost(request, lessonTemplatesGetHandler, lessonTemplatesPostHandler);

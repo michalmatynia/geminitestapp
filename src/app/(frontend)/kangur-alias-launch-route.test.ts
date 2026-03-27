@@ -50,19 +50,36 @@ describe('kangur alias route', () => {
     authMock.mockResolvedValue(null);
   });
 
-  it('renders the explicit kangur alias route on the server shell without resolving launch redirects', async () => {
-    const { default: KangurAliasPage } = await import('@/app/(frontend)/kangur/(app)/[[...slug]]/page');
-    const { KangurServerShell } = await import('@/features/kangur/ui/components/KangurServerShell');
+  it('resolves the explicit kangur alias route without resolving launch redirects', async () => {
+    const { default: KangurAliasPage } = await import('@/app/(frontend)/kangur/(app)/[...slug]/page');
 
     const result = await KangurAliasPage({
       params: Promise.resolve({ slug: ['lessons'] }),
       searchParams: Promise.resolve({ focus: 'division' }),
     } as never);
 
-    expect(result).toMatchObject({
-      type: KangurServerShell,
-      props: {},
-    });
+    expect(result).toBeNull();
+
+    expect(redirectMock).not.toHaveBeenCalled();
+  });
+
+  it('resolves the explicit hot kangur alias pages without per-route shell markup', async () => {
+    const [
+      { default: KangurAliasHomePage },
+      { default: KangurAliasLessonsPage },
+      { default: KangurAliasDuelsPage },
+      { default: KangurAliasTestsPage },
+    ] = await Promise.all([
+      import('@/app/(frontend)/kangur/(app)/page'),
+      import('@/app/(frontend)/kangur/(app)/lessons/page'),
+      import('@/app/(frontend)/kangur/(app)/duels/page'),
+      import('@/app/(frontend)/kangur/(app)/tests/page'),
+    ]);
+
+    await expect(KangurAliasHomePage()).resolves.toBeNull();
+    await expect(KangurAliasLessonsPage()).resolves.toBeNull();
+    await expect(KangurAliasDuelsPage()).resolves.toBeNull();
+    await expect(KangurAliasTestsPage()).resolves.toBeNull();
 
     expect(redirectMock).not.toHaveBeenCalled();
   });
@@ -72,7 +89,7 @@ describe('kangur alias route', () => {
     getFrontPageSettingMock.mockResolvedValue({ publicOwner: 'kangur' });
     getFrontPagePublicOwnerMock.mockReturnValue('kangur');
 
-    const { default: KangurAliasPage } = await import('@/app/(frontend)/kangur/(app)/[[...slug]]/page');
+    const { default: KangurAliasPage } = await import('@/app/(frontend)/kangur/(app)/[...slug]/page');
 
     await expect(
       KangurAliasPage({
@@ -85,7 +102,7 @@ describe('kangur alias route', () => {
     expect(notFoundMock).toHaveBeenCalledTimes(1);
   });
 
-  it('renders games aliases for exact super admins when Kangur owns home', async () => {
+  it('resolves games aliases for exact super admins when Kangur owns home', async () => {
     shouldApplyFrontPageAppSelectionMock.mockReturnValue(true);
     getFrontPageSettingMock.mockResolvedValue({ publicOwner: 'kangur' });
     getFrontPagePublicOwnerMock.mockReturnValue('kangur');
@@ -95,35 +112,48 @@ describe('kangur alias route', () => {
       },
     });
 
-    const { default: KangurAliasPage } = await import('@/app/(frontend)/kangur/(app)/[[...slug]]/page');
-    const { KangurServerShell } = await import('@/features/kangur/ui/components/KangurServerShell');
+    const { default: KangurAliasPage } = await import('@/app/(frontend)/kangur/(app)/[...slug]/page');
 
     const result = await KangurAliasPage({
       params: Promise.resolve({ slug: ['games'] }),
     } as never);
 
-    expect(result).toMatchObject({
-      type: KangurServerShell,
-      props: {},
-    });
+    expect(result).toBeNull();
     expect(redirectMock).not.toHaveBeenCalled();
   });
 
-  it('renders the localized explicit kangur alias route on the server shell without redirecting', async () => {
+  it('resolves the localized explicit kangur alias route without redirecting', async () => {
     const { default: LocalizedKangurAliasPage } = await import(
-      '@/app/[locale]/(frontend)/kangur/(app)/[[...slug]]/page'
+      '@/app/[locale]/(frontend)/kangur/(app)/[...slug]/page'
     );
-    const { KangurServerShell } = await import('@/features/kangur/ui/components/KangurServerShell');
 
     const result = await LocalizedKangurAliasPage({
       params: Promise.resolve({ locale: 'pl', slug: ['lessons'] }),
       searchParams: Promise.resolve({ focus: 'division' }),
     } as never);
 
-    expect(result).toMatchObject({
-      type: KangurServerShell,
-      props: {},
-    });
+    expect(result).toBeNull();
+
+    expect(redirectMock).not.toHaveBeenCalled();
+  });
+
+  it('resolves the localized explicit hot kangur alias pages without per-route shell markup', async () => {
+    const [
+      { default: LocalizedKangurAliasHomePage },
+      { default: LocalizedKangurAliasLessonsPage },
+      { default: LocalizedKangurAliasDuelsPage },
+      { default: LocalizedKangurAliasTestsPage },
+    ] = await Promise.all([
+      import('@/app/[locale]/(frontend)/kangur/(app)/page'),
+      import('@/app/[locale]/(frontend)/kangur/(app)/lessons/page'),
+      import('@/app/[locale]/(frontend)/kangur/(app)/duels/page'),
+      import('@/app/[locale]/(frontend)/kangur/(app)/tests/page'),
+    ]);
+
+    await expect(LocalizedKangurAliasHomePage()).resolves.toBeNull();
+    await expect(LocalizedKangurAliasLessonsPage()).resolves.toBeNull();
+    await expect(LocalizedKangurAliasDuelsPage()).resolves.toBeNull();
+    await expect(LocalizedKangurAliasTestsPage()).resolves.toBeNull();
 
     expect(redirectMock).not.toHaveBeenCalled();
   });
@@ -136,7 +166,7 @@ describe('kangur alias route', () => {
     });
 
     const { default: LocalizedKangurAliasPage } = await import(
-      '@/app/[locale]/(frontend)/kangur/(app)/[[...slug]]/page'
+      '@/app/[locale]/(frontend)/kangur/(app)/[...slug]/page'
     );
 
     await expect(

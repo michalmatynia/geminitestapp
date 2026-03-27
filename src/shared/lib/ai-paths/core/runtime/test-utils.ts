@@ -9,16 +9,15 @@ export const createMockContext = (
   ({
     node: {
       id: 'test-node',
-      type: 'constant',
+      type: 'constant' as AiNode['type'],
       title: 'Test Node',
       description: '',
       inputs: [],
       outputs: [],
       position: { x: 0, y: 0 },
-      config: {},
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
-    } as unknown as AiNode,
+    } satisfies AiNode as AiNode,
     nodeId: 'test-node',
     nodeTitle: 'Test Node',
     nodeInputs: {},

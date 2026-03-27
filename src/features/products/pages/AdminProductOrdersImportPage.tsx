@@ -7,8 +7,10 @@ import React from 'react';
 import {
   useImportBaseOrdersMutation,
   usePreviewBaseOrdersMutation,
+  useQuickImportBaseOrdersMutation,
   useBaseOrderImportStatuses,
 } from '@/features/products/hooks/useProductOrdersImport';
+import { buildBaseOrderQuickImportFeedback } from '@/features/products/utils/base-order-quick-import-feedback';
 import {
   useDefaultExportConnection,
   useIntegrationsWithConnections,
@@ -291,6 +293,7 @@ export function AdminProductOrdersImportPage(): React.JSX.Element {
   const defaultConnectionQuery = useDefaultExportConnection();
   const previewMutation = usePreviewBaseOrdersMutation();
   const importMutation = useImportBaseOrdersMutation();
+  const quickImportMutation = useQuickImportBaseOrdersMutation();
 
   const [selectedConnectionId, setSelectedConnectionId] = React.useState('');
   const [dateFrom, setDateFrom] = React.useState('');
@@ -861,6 +864,35 @@ export function AdminProductOrdersImportPage(): React.JSX.Element {
     }
   };
 
+  const handleQuickImport = async (): Promise<void> => {
+    if (!selectedConnectionId.trim()) {
+      setFeedback({ variant: 'error', message: 'Select a Base.com connection first.' });
+      return;
+    }
+
+    setFeedback(null);
+    try {
+      const response = await quickImportMutation.mutateAsync({
+        connectionId: selectedConnectionId,
+        dateFrom: dateFrom || undefined,
+        dateTo: dateTo || undefined,
+        statusId: statusId || undefined,
+        limit: Number(limit),
+      });
+      setPreview(response.preview);
+      setLastPreviewScopeKey(currentPreviewScopeKey);
+      setLastPreviewScope(currentPreviewScope);
+      setRowSelection({});
+      setExpanded({});
+      setFeedback(buildBaseOrderQuickImportFeedback(response));
+    } catch (error) {
+      setFeedback({
+        variant: 'error',
+        message: error instanceof Error ? error.message : 'Failed to import Base.com orders.',
+      });
+    }
+  };
+
   const patchPreviewAfterImport = React.useCallback(
     (response: { syncedAt: string; results: Array<{ baseOrderId: string }> }) => {
       setPreview((current) => {
@@ -1201,11 +1233,32 @@ export function AdminProductOrdersImportPage(): React.JSX.Element {
       <Button
         type='button'
         size='sm'
+        variant='default'
+        onClick={() => {
+          void handleQuickImport();
+        }}
+        disabled={
+          !selectedConnectionId ||
+          quickImportMutation.isPending ||
+          previewMutation.isPending ||
+          importMutation.isPending
+        }
+      >
+        <Download className='size-4 mr-1' />
+        {quickImportMutation.isPending ? 'Importing latest...' : 'Import latest from Base.com'}
+      </Button>
+      <Button
+        type='button'
+        size='sm'
         variant='outline'
         onClick={() => {
           void handlePreview();
         }}
-        disabled={!selectedConnectionId || previewMutation.isPending}
+        disabled={
+          !selectedConnectionId ||
+          previewMutation.isPending ||
+          quickImportMutation.isPending
+        }
       >
         <RefreshCcw className='size-4 mr-1' />
         {previewMutation.isPending ? 'Previewing...' : 'Preview orders'}
@@ -1215,7 +1268,11 @@ export function AdminProductOrdersImportPage(): React.JSX.Element {
         size='sm'
         variant='ghost'
         onClick={handleResetPreviewScope}
-        disabled={!hasActivePreviewScopeFilters || previewMutation.isPending}
+        disabled={
+          !hasActivePreviewScopeFilters ||
+          previewMutation.isPending ||
+          quickImportMutation.isPending
+        }
       >
         Reset preview scope
       </Button>
@@ -1229,6 +1286,7 @@ export function AdminProductOrdersImportPage(): React.JSX.Element {
         disabled={
           selectedVisibleImportableOrders.length === 0 ||
           importMutation.isPending ||
+          quickImportMutation.isPending ||
           isPreviewStale
         }
       >
@@ -1247,6 +1305,7 @@ export function AdminProductOrdersImportPage(): React.JSX.Element {
         disabled={
           selectedVisibleImportedOrders.length === 0 ||
           importMutation.isPending ||
+          quickImportMutation.isPending ||
           isPreviewStale
         }
       >
@@ -1259,7 +1318,12 @@ export function AdminProductOrdersImportPage(): React.JSX.Element {
         onClick={() => {
           void handleImport(importableVisibleOrders);
         }}
-        disabled={!importableVisibleOrders.length || importMutation.isPending || isPreviewStale}
+        disabled={
+          !importableVisibleOrders.length ||
+          importMutation.isPending ||
+          quickImportMutation.isPending ||
+          isPreviewStale
+        }
       >
         Import visible new + changed ({importableVisibleOrders.length})
       </Button>
@@ -1364,7 +1428,7 @@ export function AdminProductOrdersImportPage(): React.JSX.Element {
                 onClick={() => {
                   void handleImport([order]);
                 }}
-                disabled={importMutation.isPending || isPreviewStale}
+                disabled={importMutation.isPending || quickImportMutation.isPending || isPreviewStale}
               >
                 {order.importState === 'imported' ? 'Reimport this order' : 'Import this order'}
               </Button>
@@ -1499,7 +1563,7 @@ export function AdminProductOrdersImportPage(): React.JSX.Element {
         </div>
       );
     },
-    [handleImport, importMutation.isPending, isPreviewStale]
+    [handleImport, importMutation.isPending, isPreviewStale, quickImportMutation.isPending]
   );
 
   const panelRowActions = preview ? (

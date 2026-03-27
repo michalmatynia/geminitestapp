@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { z } from 'zod';
 
+import { CSRF_HEADER_NAME } from '@/shared/lib/security/csrf';
+
 const getSessionUserMock = vi.fn(async () => null);
 const enforceRateLimitMock = vi.fn(async () => ({
   headers: {
@@ -72,6 +74,43 @@ const loadApiHandler = async () => {
   vi.doMock('@/shared/utils/observability/report-error', () => ({
     reportError: (...args: unknown[]) => reportErrorMock(...args),
   }));
+  return import('@/shared/lib/api/api-handler');
+};
+
+const loadApiHandlerWithSameOriginCsrf = async () => {
+  vi.resetModules();
+  vi.unmock('@/shared/lib/api/api-handler');
+  vi.doMock('@/shared/lib/api/session-registry', () => ({
+    getSessionUser: getSessionUserMock,
+  }));
+  vi.doMock('@/shared/lib/api/rate-limit', () => ({
+    enforceRateLimit: (...args: unknown[]) => enforceRateLimitMock(...args),
+  }));
+  vi.doMock('@/shared/lib/observability/otel-context', () => ({
+    getActiveOtelContextAttributes: getActiveOtelContextAttributesMock,
+  }));
+  vi.doMock('@/shared/lib/observability/system-logger', () => ({
+    logSystemEvent: (...args: unknown[]) => logSystemEventMock(...args),
+    getErrorFingerprint: vi.fn(() => 'fp-1'),
+  }));
+  vi.doMock('@/shared/utils/observability/error-system', () => ({
+    ErrorSystem: {
+      captureException: (...args: unknown[]) => captureExceptionMock(...args),
+    },
+  }));
+  vi.doMock('@/shared/utils/observability/report-error', () => ({
+    reportError: (...args: unknown[]) => reportErrorMock(...args),
+  }));
+  vi.doMock('@/shared/lib/security/csrf', async () => {
+    const actual = await vi.importActual<typeof import('@/shared/lib/security/csrf')>(
+      '@/shared/lib/security/csrf'
+    );
+    return {
+      ...actual,
+      isSameOriginRequest: vi.fn(() => true),
+      isTrustedOriginRequest: vi.fn(() => false),
+    };
+  });
   return import('@/shared/lib/api/api-handler');
 };
 
@@ -290,5 +329,155 @@ describe('api-handler behavior', () => {
     expect(() => getRequiredParam(searchParams, 'missing')).toThrow(
       'Missing required parameter: missing'
     );
+  });
+
+  it('preserves existing tracking headers and skips dev rate limits unless enabled', async () => {
+    process.env['NODE_ENV'] = 'development';
+    delete process.env['ENABLE_RATE_LIMITS'];
+
+    const { apiHandler } = await loadApiHandler();
+    const handler = apiHandler(
+      async () =>
+        NextResponse.json(
+          { ok: true },
+          {
+            headers: {
+              'x-request-id': 'existing-request',
+              'x-trace-id': 'existing-trace',
+              'x-correlation-id': 'existing-correlation',
+              'Cache-Control': 'public, max-age=5',
+            },
+          }
+        ),
+      {
+        source: 'api.handler.dev-skip.GET',
+        successLogging: 'off',
+      }
+    );
+
+    const response = await handler(
+      new NextRequest('http://localhost/api/test', {
+        method: 'GET',
+      })
+    );
+
+    expect(enforceRateLimitMock).not.toHaveBeenCalled();
+    expect(response.headers.get('x-request-id')).toBe('existing-request');
+    expect(response.headers.get('x-trace-id')).toBe('existing-trace');
+    expect(response.headers.get('x-correlation-id')).toBe('existing-correlation');
+    expect(response.headers.get('Cache-Control')).toBe('public, max-age=5');
+  });
+
+  it('rejects invalid csrf origins and mismatched csrf cookies when enforcement is enabled', async () => {
+    process.env['ENFORCE_TEST_CSRF'] = 'true';
+    const { apiHandler } = await loadApiHandler();
+
+    const handler = apiHandler(
+      async () => NextResponse.json({ ok: true }),
+      {
+        source: 'api.handler.csrf.POST',
+        parseJsonBody: true,
+        successLogging: 'off',
+        corsOrigins: ['https://app.example.com'],
+      }
+    );
+
+    const invalidOriginResponse = await handler(
+      new NextRequest('https://api.example.com/test', {
+        method: 'POST',
+        headers: new Headers({
+          origin: 'https://evil.example.com',
+          'content-type': 'application/json',
+          [CSRF_HEADER_NAME]: 'token-a',
+        }),
+        body: JSON.stringify({ ok: true }),
+      })
+    );
+
+    expect(invalidOriginResponse.status).toBe(403);
+    expect(await invalidOriginResponse.json()).toMatchObject({
+      code: 'FORBIDDEN',
+      error: 'Invalid request origin.',
+    });
+
+    const { apiHandler: sameOriginApiHandler } = await loadApiHandlerWithSameOriginCsrf();
+    const sameOriginHandler = sameOriginApiHandler(
+      async () => NextResponse.json({ ok: true }),
+      {
+        source: 'api.handler.csrf-same-origin.POST',
+        parseJsonBody: true,
+        successLogging: 'off',
+      }
+    );
+
+    const missingTokenResponse = await sameOriginHandler(
+      new NextRequest('http://localhost/test', {
+        method: 'POST',
+        headers: new Headers({
+          origin: 'http://localhost',
+          'content-type': 'application/json',
+        }),
+        body: JSON.stringify({ ok: true }),
+      })
+    );
+
+    expect(missingTokenResponse.status).toBe(403);
+    expect(await missingTokenResponse.json()).toMatchObject({
+      code: 'FORBIDDEN',
+      error: 'Invalid CSRF token.',
+    });
+  });
+
+  it('includes expected and opt-in details in error payloads and supports retryable errors without retry-after', async () => {
+    const { apiHandler } = await loadApiHandler();
+
+    const expectedErrorHandler = apiHandler(
+      async () => {
+        throw Object.assign(new Error('Expected failure'), {
+          code: 'EXPECTED_FAILURE',
+          httpStatus: 400,
+          expected: true,
+          meta: { field: 'name' },
+        });
+      },
+      {
+        source: 'api.handler.expected-error.GET',
+        successLogging: 'off',
+      }
+    );
+    const expectedResponse = await expectedErrorHandler(
+      new NextRequest('http://localhost/api/test', { method: 'GET' })
+    );
+    expect(expectedResponse.status).toBe(400);
+    expect(await expectedResponse.json()).toMatchObject({
+      code: 'EXPECTED_FAILURE',
+      details: { field: 'name' },
+    });
+
+    const detailedErrorHandler = apiHandler(
+      async () => {
+        throw Object.assign(new Error('Detailed failure'), {
+          code: 'DETAILED_FAILURE',
+          httpStatus: 500,
+          meta: { debug: true },
+          retryable: true,
+        });
+      },
+      {
+        source: 'api.handler.detailed-error.GET',
+        includeDetails: true,
+        successLogging: 'off',
+      }
+    );
+    const detailedResponse = await detailedErrorHandler(
+      new NextRequest('http://localhost/api/test', { method: 'GET' })
+    );
+    expect(detailedResponse.status).toBe(500);
+    expect(detailedResponse.headers.get('Retry-After')).toBeNull();
+    expect(await detailedResponse.json()).toMatchObject({
+      code: 'DETAILED_FAILURE',
+      retryable: true,
+      details: { debug: true },
+    });
   });
 });

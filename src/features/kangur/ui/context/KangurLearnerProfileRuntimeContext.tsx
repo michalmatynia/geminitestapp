@@ -47,7 +47,6 @@ import type { KangurAuthMode } from '@/features/kangur/shared/contracts/kangur-a
 import { internalError } from '@/features/kangur/shared/errors/app-error';
 import { normalizeSiteLocale } from '@/shared/lib/i18n/site-locale';
 
-
 export const KANGUR_LEARNER_PROFILE_DAILY_GOAL_GAMES = 3;
 const LEARNER_PROFILE_SCORES_LOAD_DEFER_MS = 0;
 

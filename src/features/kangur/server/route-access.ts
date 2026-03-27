@@ -1,7 +1,11 @@
 import { NextResponse } from 'next/server';
 import { notFound } from 'next/navigation';
 
-import { canAccessKangurPage, canAccessKangurSlugSegments } from '@/features/kangur/config/page-access';
+import {
+  canAccessKangurPage,
+  isSuperAdminOnlyKangurPage,
+} from '@/features/kangur/config/page-access';
+import { resolveKangurPageKeyFromSlug } from '@/features/kangur/config/routing';
 import { readOptionalServerAuthSession } from '@/shared/lib/auth/optional-server-auth';
 
 export { readSanitizedKangurAliasLoginSearchParams } from './login-alias-search-params';
@@ -13,6 +17,10 @@ const KANGUR_DENIED_API_HEADERS = Object.freeze({
 export const readCanAccessKangurPage = async (
   pageKey: string | null | undefined
 ): Promise<boolean> => {
+  if (!isSuperAdminOnlyKangurPage(pageKey)) {
+    return true;
+  }
+
   const session = await readOptionalServerAuthSession();
   return canAccessKangurPage(pageKey, session);
 };
@@ -31,9 +39,15 @@ export const createKangurDeniedApiResponse = (): Response =>
 export const requireAccessibleKangurSlugRoute = async (
   slugSegments: readonly string[]
 ): Promise<void> => {
+  const pageKey = resolveKangurPageKeyFromSlug(slugSegments[0] ?? null);
+
+  if (!isSuperAdminOnlyKangurPage(pageKey)) {
+    return;
+  }
+
   const session = await readOptionalServerAuthSession();
 
-  if (!canAccessKangurSlugSegments(slugSegments, session)) {
+  if (!canAccessKangurPage(pageKey, session)) {
     notFound();
   }
 };

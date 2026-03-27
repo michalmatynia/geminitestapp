@@ -9,6 +9,7 @@ const {
   withKangurClientError,
   withKangurClientErrorSync,
   usePathnameMock,
+  useSelectedLayoutSegmentsMock,
   useSearchParamsMock,
   sessionMock,
 } = vi.hoisted(() => {
@@ -19,6 +20,7 @@ const {
     withKangurClientError: mocks.withKangurClientError,
     withKangurClientErrorSync: mocks.withKangurClientErrorSync,
     usePathnameMock: vi.fn<() => string | null>(),
+    useSelectedLayoutSegmentsMock: vi.fn<() => string[]>(),
     useSearchParamsMock: vi.fn<() => URLSearchParams>(),
     sessionMock: vi.fn(),
   };
@@ -35,6 +37,7 @@ const mockKangurRoutingState = {
 
 vi.mock('next/navigation', () => ({
   usePathname: () => usePathnameMock(),
+  useSelectedLayoutSegments: () => useSelectedLayoutSegmentsMock(),
   useSearchParams: () => useSearchParamsMock(),
   redirect: vi.fn(),
   permanentRedirect: vi.fn(),
@@ -117,6 +120,7 @@ describe('KangurFeatureRouteShell', () => {
     document.documentElement.classList.remove('kangur-client-shell-active');
     document.body.classList.remove('kangur-client-shell-active');
     usePathnameMock.mockReturnValue('/kangur');
+    useSelectedLayoutSegmentsMock.mockReturnValue([]);
     useSearchParamsMock.mockReturnValue(new URLSearchParams());
   });
 
@@ -141,6 +145,7 @@ describe('KangurFeatureRouteShell', () => {
 
   it('maps lesson routes into Kangur routing and observability context', () => {
     usePathnameMock.mockReturnValue('/kangur/lessons');
+    useSelectedLayoutSegmentsMock.mockReturnValue(['lessons']);
 
     render(<KangurFeatureRouteShell />);
 
@@ -168,6 +173,7 @@ describe('KangurFeatureRouteShell', () => {
 
   it('maps learner profile routes into Kangur routing and observability context', () => {
     usePathnameMock.mockReturnValue('/kangur/profile');
+    useSelectedLayoutSegmentsMock.mockReturnValue(['profile']);
 
     render(<KangurFeatureRouteShell />);
 
@@ -186,6 +192,7 @@ describe('KangurFeatureRouteShell', () => {
 
   it('maps the tests slug while normalizing trailing slashes', () => {
     usePathnameMock.mockReturnValue('/kangur/tests/');
+    useSelectedLayoutSegmentsMock.mockReturnValue(['tests']);
 
     render(<KangurFeatureRouteShell />);
 
@@ -204,6 +211,7 @@ describe('KangurFeatureRouteShell', () => {
 
   it('maps competition routes into Kangur routing', () => {
     usePathnameMock.mockReturnValue('/kangur/competition');
+    useSelectedLayoutSegmentsMock.mockReturnValue(['competition']);
 
     render(<KangurFeatureRouteShell />);
 
@@ -222,6 +230,7 @@ describe('KangurFeatureRouteShell', () => {
 
   it('maps localized public routes into canonical Kangur routing while preserving the localized href', () => {
     usePathnameMock.mockReturnValue('/en/lessons');
+    useSelectedLayoutSegmentsMock.mockReturnValue([]);
 
     render(<KangurFeatureRouteShell basePath='/' />);
 
@@ -241,6 +250,7 @@ describe('KangurFeatureRouteShell', () => {
   it('falls back to the real browser pathname when the router pathname is transiently unavailable', () => {
     window.history.replaceState({}, '', '/en/lessons?focus=division');
     usePathnameMock.mockReturnValue(null);
+    useSelectedLayoutSegmentsMock.mockReturnValue([]);
     useSearchParamsMock.mockReturnValue(new URLSearchParams());
 
     render(<KangurFeatureRouteShell basePath='/' />);
@@ -255,6 +265,8 @@ describe('KangurFeatureRouteShell', () => {
   });
 
   it('falls back to the main page for the base Kangur path', () => {
+    useSelectedLayoutSegmentsMock.mockReturnValue([]);
+
     render(<KangurFeatureRouteShell />);
 
     expect(kangurRoutingProviderMock).toHaveBeenCalledWith({
@@ -272,6 +284,7 @@ describe('KangurFeatureRouteShell', () => {
 
   it('passes blocked GamesLibrary routes through to shared routing for provider-level sanitization', () => {
     usePathnameMock.mockReturnValue('/kangur/games');
+    useSelectedLayoutSegmentsMock.mockReturnValue(['games']);
     sessionMock.mockReturnValue({
       data: {
         user: {
@@ -299,6 +312,7 @@ describe('KangurFeatureRouteShell', () => {
 
   it('uses the main page behind the compatibility login route so the shell can show the modal', () => {
     usePathnameMock.mockReturnValue('/kangur/login');
+    useSelectedLayoutSegmentsMock.mockReturnValue([]);
 
     render(<KangurFeatureRouteShell />);
 
@@ -317,6 +331,7 @@ describe('KangurFeatureRouteShell', () => {
 
   it('uses the main page behind the root-owned canonical login route so the shell can show the modal', () => {
     usePathnameMock.mockReturnValue('/login');
+    useSelectedLayoutSegmentsMock.mockReturnValue([]);
 
     render(<KangurFeatureRouteShell basePath='/' />);
 
@@ -339,5 +354,24 @@ describe('KangurFeatureRouteShell', () => {
     unmount();
 
     expect(clearKangurClientObservabilityContextMock).toHaveBeenCalledTimes(1);
+  });
+
+  it('prefers the explicit selected layout segments over pathname parsing for hot alias routes', () => {
+    usePathnameMock.mockReturnValue('/kangur');
+    useSelectedLayoutSegmentsMock.mockReturnValue(['lessons']);
+
+    render(<KangurFeatureRouteShell />);
+
+    expect(kangurRoutingProviderMock).toHaveBeenCalledWith({
+      pageKey: 'Lessons',
+      requestedPath: '/kangur/lessons',
+      requestedHref: '/kangur',
+      basePath: '/kangur',
+      embedded: false,
+    });
+    expect(setKangurClientObservabilityContextMock).toHaveBeenCalledWith({
+      pageKey: 'Lessons',
+      requestedPath: '/kangur/lessons',
+    });
   });
 });

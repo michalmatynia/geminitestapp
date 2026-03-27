@@ -26,6 +26,7 @@ export const filemakerEntityKindSchema = z.enum([
   'email_campaign_run',
   'email_campaign_delivery',
   'email_campaign_event',
+  'email_campaign_suppression',
 ]);
 export type FilemakerEntityKindDto = z.infer<typeof filemakerEntityKindSchema>;
 export type FilemakerEntityKind = FilemakerEntityKindDto;
@@ -214,10 +215,25 @@ export type FilemakerEmailCampaignDeliveryStatusDto = z.infer<
 export type FilemakerEmailCampaignDeliveryStatus =
   FilemakerEmailCampaignDeliveryStatusDto;
 
+export const filemakerEmailCampaignSuppressionReasonSchema = z.enum([
+  'manual_block',
+  'unsubscribed',
+  'bounced',
+]);
+export type FilemakerEmailCampaignSuppressionReasonDto = z.infer<
+  typeof filemakerEmailCampaignSuppressionReasonSchema
+>;
+export type FilemakerEmailCampaignSuppressionReason =
+  FilemakerEmailCampaignSuppressionReasonDto;
+
 export const filemakerEmailCampaignEventTypeSchema = z.enum([
   'created',
   'updated',
   'launched',
+  'processing_started',
+  'delivery_sent',
+  'delivery_failed',
+  'delivery_bounced',
   'status_changed',
   'paused',
   'completed',
@@ -331,14 +347,51 @@ export type FilemakerEmailCampaignDelivery = FilemakerEmailCampaignDeliveryDto;
 export const filemakerEmailCampaignEventSchema = dtoBaseSchema.extend({
   campaignId: z.string(),
   runId: z.string().nullable().optional(),
+  deliveryId: z.string().nullable().optional(),
   type: filemakerEmailCampaignEventTypeSchema,
   message: z.string(),
   actor: z.string().nullable().optional(),
+  runStatus: filemakerEmailCampaignRunStatusSchema.nullable().optional(),
+  deliveryStatus: filemakerEmailCampaignDeliveryStatusSchema.nullable().optional(),
 });
 export type FilemakerEmailCampaignEventDto = z.infer<
   typeof filemakerEmailCampaignEventSchema
 >;
 export type FilemakerEmailCampaignEvent = FilemakerEmailCampaignEventDto;
+
+export const filemakerEmailCampaignEventRegistrySchema = z.object({
+  version: z.number().int().nonnegative(),
+  events: z.array(filemakerEmailCampaignEventSchema),
+});
+export type FilemakerEmailCampaignEventRegistryDto = z.infer<
+  typeof filemakerEmailCampaignEventRegistrySchema
+>;
+export type FilemakerEmailCampaignEventRegistry = FilemakerEmailCampaignEventRegistryDto;
+
+export const filemakerEmailCampaignSuppressionEntrySchema = dtoBaseSchema.extend({
+  emailAddress: z.string(),
+  reason: filemakerEmailCampaignSuppressionReasonSchema,
+  actor: z.string().nullable().optional(),
+  notes: z.string().nullable().optional(),
+  campaignId: z.string().nullable().optional(),
+  runId: z.string().nullable().optional(),
+  deliveryId: z.string().nullable().optional(),
+});
+export type FilemakerEmailCampaignSuppressionEntryDto = z.infer<
+  typeof filemakerEmailCampaignSuppressionEntrySchema
+>;
+export type FilemakerEmailCampaignSuppressionEntry =
+  FilemakerEmailCampaignSuppressionEntryDto;
+
+export const filemakerEmailCampaignSuppressionRegistrySchema = z.object({
+  version: z.number().int().nonnegative(),
+  entries: z.array(filemakerEmailCampaignSuppressionEntrySchema),
+});
+export type FilemakerEmailCampaignSuppressionRegistryDto = z.infer<
+  typeof filemakerEmailCampaignSuppressionRegistrySchema
+>;
+export type FilemakerEmailCampaignSuppressionRegistry =
+  FilemakerEmailCampaignSuppressionRegistryDto;
 
 export const filemakerEmailCampaignRegistrySchema = z.object({
   version: z.number().int().nonnegative(),
@@ -426,6 +479,30 @@ export type FilemakerEmailCampaignProcessRunResponseDto = z.infer<
 >;
 export type FilemakerEmailCampaignProcessRunResponse =
   FilemakerEmailCampaignProcessRunResponseDto;
+
+export const filemakerEmailCampaignUnsubscribeRequestSchema = z.object({
+  emailAddress: z.string().trim().min(3).email(),
+  campaignId: z.string().trim().min(1).nullable().optional(),
+  source: z.string().trim().min(1).nullable().optional(),
+});
+export type FilemakerEmailCampaignUnsubscribeRequestDto = z.infer<
+  typeof filemakerEmailCampaignUnsubscribeRequestSchema
+>;
+export type FilemakerEmailCampaignUnsubscribeRequest =
+  FilemakerEmailCampaignUnsubscribeRequestDto;
+
+export const filemakerEmailCampaignUnsubscribeResponseSchema = z.object({
+  ok: z.literal(true),
+  emailAddress: z.string(),
+  campaignId: z.string().nullable().optional(),
+  alreadySuppressed: z.boolean(),
+  reason: filemakerEmailCampaignSuppressionReasonSchema,
+});
+export type FilemakerEmailCampaignUnsubscribeResponseDto = z.infer<
+  typeof filemakerEmailCampaignUnsubscribeResponseSchema
+>;
+export type FilemakerEmailCampaignUnsubscribeResponse =
+  FilemakerEmailCampaignUnsubscribeResponseDto;
 
 export const filemakerDatabaseSchema = z.object({
   version: z.number().int().nonnegative(),

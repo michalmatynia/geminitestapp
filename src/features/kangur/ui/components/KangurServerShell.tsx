@@ -1,3 +1,5 @@
+import { safeHtml } from '@/shared/lib/security/safe-html';
+
 /**
  * Static server-rendered loading shell that matches the visual appearance of
  * `KangurAppLoader`. Provides an instant first paint while client JS downloads
@@ -40,8 +42,9 @@ export function KangurServerShell(): React.JSX.Element {
           >
             <style
               dangerouslySetInnerHTML={{
-                __html:
-                  '@keyframes kangur-loader-pulse { 0%, 100% { transform: scale(0.985); } 50% { transform: scale(1); } }',
+                __html: safeHtml(
+                  '@keyframes kangur-loader-pulse { 0%, 100% { transform: scale(0.985); } 50% { transform: scale(1); } }'
+                ),
               }}
             />
             <div

@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-03-27T02:51:49.688Z",
+  "generatedAt": "2026-03-27T13:45:23.570Z",
   "status": "passed",
   "summary": {
     "total": 32,
@@ -12,7 +12,7 @@
     "featuresWithoutTestCount": 0,
     "featuresWithoutFastTestCount": 0,
     "featuresWithoutNegativeTestCount": 0,
-    "totalTestFiles": 2485,
+    "totalTestFiles": 2536,
     "onlyCount": 0,
     "skipCount": 32,
     "todoCount": 0
@@ -28,22 +28,22 @@
   "featuresWithTests": [
     {
       "feature": "kangur",
-      "testCount": 669,
-      "fastTestCount": 651,
+      "testCount": 681,
+      "fastTestCount": 663,
       "e2eTestCount": 18,
-      "negativePathTestCount": 114
+      "negativePathTestCount": 118
     },
     {
       "feature": "ai",
-      "testCount": 296,
-      "fastTestCount": 296,
+      "testCount": 290,
+      "fastTestCount": 290,
       "e2eTestCount": 0,
-      "negativePathTestCount": 108
+      "negativePathTestCount": 103
     },
     {
       "feature": "products",
-      "testCount": 111,
-      "fastTestCount": 104,
+      "testCount": 110,
+      "fastTestCount": 103,
       "e2eTestCount": 7,
       "negativePathTestCount": 33
     },
@@ -70,17 +70,10 @@
     },
     {
       "feature": "prompt-exploder",
-      "testCount": 47,
-      "fastTestCount": 47,
+      "testCount": 46,
+      "fastTestCount": 46,
       "e2eTestCount": 0,
-      "negativePathTestCount": 24
-    },
-    {
-      "feature": "observability",
-      "testCount": 29,
-      "fastTestCount": 28,
-      "e2eTestCount": 1,
-      "negativePathTestCount": 5
+      "negativePathTestCount": 23
     },
     {
       "feature": "foldertree",
@@ -88,6 +81,13 @@
       "fastTestCount": 26,
       "e2eTestCount": 2,
       "negativePathTestCount": 7
+    },
+    {
+      "feature": "observability",
+      "testCount": 27,
+      "fastTestCount": 26,
+      "e2eTestCount": 1,
+      "negativePathTestCount": 4
     },
     {
       "feature": "admin",
@@ -104,6 +104,13 @@
       "negativePathTestCount": 8
     },
     {
+      "feature": "auth",
+      "testCount": 12,
+      "fastTestCount": 12,
+      "e2eTestCount": 0,
+      "negativePathTestCount": 7
+    },
+    {
       "feature": "notesapp",
       "testCount": 12,
       "fastTestCount": 10,
@@ -111,24 +118,17 @@
       "negativePathTestCount": 3
     },
     {
-      "feature": "auth",
-      "testCount": 11,
-      "fastTestCount": 11,
+      "feature": "filemaker",
+      "testCount": 8,
+      "fastTestCount": 8,
       "e2eTestCount": 0,
-      "negativePathTestCount": 6
+      "negativePathTestCount": 3
     },
     {
       "feature": "viewer3d",
       "testCount": 8,
       "fastTestCount": 7,
       "e2eTestCount": 1,
-      "negativePathTestCount": 3
-    },
-    {
-      "feature": "filemaker",
-      "testCount": 7,
-      "fastTestCount": 7,
-      "e2eTestCount": 0,
       "negativePathTestCount": 3
     },
     {
@@ -549,5 +549,5 @@
       "infoCount": 32
     }
   ],
-  "durationMs": 535
+  "durationMs": 423
 }

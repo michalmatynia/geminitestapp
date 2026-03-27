@@ -14,9 +14,7 @@ import {
 
 import {
   withKangurClientError,
-  withKangurClientErrorSync,
 } from '@/features/kangur/observability/client';
-import { getKangurPlatform } from '@/features/kangur/services/kangur-platform';
 import type { KangurUser } from '@kangur/platform';
 import { isKangurAuthStatusError } from '@/features/kangur/services/status-errors';
 import { getKangurLoginHref, KANGUR_BASE_PATH } from '@/features/kangur/config/routing';
@@ -25,14 +23,18 @@ import { useOptionalKangurRouting } from '@/features/kangur/ui/context/KangurRou
 import { useKangurRouteAccess } from '@/features/kangur/ui/routing/useKangurRouteAccess';
 import type { KangurAuthMode } from '@/features/kangur/shared/contracts/kangur-auth';
 import { internalError } from '@/features/kangur/shared/errors/app-error';
+import {
+  appendAuthModeParam,
+  clearKangurAuthBootstrapCache,
+  kangurPlatform,
+  loadKangurAuthBootstrapSession,
+  primeKangurAuthBootstrapCache,
+  readKangurAuthBootstrapCache,
+  resolveCanAccessParentAssignments,
+  resolveErrorMessage,
+} from '@/features/kangur/ui/context/kangur-auth-bootstrap-cache';
 
 const AUTH_CHECK_TIMEOUT_MS = 1_500;
-const AUTH_BOOTSTRAP_CACHE_TTL_MS = 30_000;
-
-type KangurAuthBootstrapCacheEntry = {
-  expiresAt: number;
-  user: KangurUser | null;
-};
 
 type KangurAuthCheckAppStateOptions = {
   timeoutMs?: number | null;
@@ -79,123 +81,8 @@ type KangurAuthActionsContextValue = Pick<
 
 const KangurAuthStateContext = createContext<KangurAuthStateContextValue | null>(null);
 const KangurAuthActionsContext = createContext<KangurAuthActionsContextValue | null>(null);
-const kangurPlatform = getKangurPlatform();
 
-const resolveCanAccessParentAssignments = (
-  user: KangurUser | null,
-  isAuthenticated: boolean
-): boolean =>
-  isAuthenticated &&
-  user?.actorType === 'learner' &&
-  Boolean(user?.activeLearner?.id);
-
-const resolveErrorMessage = (value: unknown): string => {
-  if (value instanceof Error && value.message.trim().length > 0) {
-    return value.message;
-  }
-  return 'Authentication check failed';
-};
-
-const appendAuthModeParam = (href: string, authMode?: KangurAuthMode): string => {
-  if (!authMode) {
-    return href;
-  }
-  return withKangurClientErrorSync(
-    {
-      source: 'kangur.auth',
-      action: 'append-auth-mode',
-      description: 'Adds auth mode to the Kangur login href.',
-      context: { authMode },
-    },
-    () => {
-      const parsed = new URL(href, 'https://kangur.local');
-      parsed.searchParams.set('authMode', authMode);
-      return `${parsed.pathname}${parsed.search}${parsed.hash}`;
-    },
-    {
-      fallback: `${href}${href.includes('?') ? '&' : '?'}authMode=${encodeURIComponent(authMode)}`,
-    }
-  );
-};
-
-let kangurAuthBootstrapCache: KangurAuthBootstrapCacheEntry | null = null;
-let kangurAuthBootstrapInflight: Promise<KangurUser | null> | null = null;
-let kangurAuthSsrBootstrapConsumed = false;
-
-// Hydrate from SSR-injected bootstrap data if available — eliminates the
-// client-side /auth/me round-trip on first load.
-const hydrateKangurAuthFromSsrBootstrap = (): void => {
-  if (kangurAuthSsrBootstrapConsumed) return;
-  kangurAuthSsrBootstrapConsumed = true;
-
-  if (typeof window === 'undefined') return;
-  const win = window as typeof window & { __KANGUR_AUTH_BOOTSTRAP__?: KangurUser | null };
-  const ssrUser = win.__KANGUR_AUTH_BOOTSTRAP__;
-
-  if (typeof ssrUser === 'undefined') return;
-
-  kangurAuthBootstrapCache = {
-    user: ssrUser,
-    expiresAt: Date.now() + AUTH_BOOTSTRAP_CACHE_TTL_MS,
-  };
-
-  delete win.__KANGUR_AUTH_BOOTSTRAP__;
-};
-
-// Auto-hydrate on module load (before any component mounts)
-hydrateKangurAuthFromSsrBootstrap();
-
-const primeKangurAuthBootstrapCache = (user: KangurUser | null): void => {
-  kangurAuthBootstrapCache = {
-    user,
-    expiresAt: Date.now() + AUTH_BOOTSTRAP_CACHE_TTL_MS,
-  };
-};
-
-const readKangurAuthBootstrapCache = (): KangurUser | null | undefined => {
-  if (!kangurAuthBootstrapCache) {
-    return undefined;
-  }
-
-  if (kangurAuthBootstrapCache.expiresAt <= Date.now()) {
-    kangurAuthBootstrapCache = null;
-    return undefined;
-  }
-
-  return kangurAuthBootstrapCache.user;
-};
-
-const clearKangurAuthBootstrapCacheState = (): void => {
-  kangurAuthBootstrapCache = null;
-  kangurAuthBootstrapInflight = null;
-};
-
-const loadKangurAuthBootstrapSession = async (): Promise<KangurUser | null> => {
-  const cachedUser = readKangurAuthBootstrapCache();
-  if (typeof cachedUser !== 'undefined') {
-    return cachedUser;
-  }
-
-  if (kangurAuthBootstrapInflight) {
-    return await kangurAuthBootstrapInflight;
-  }
-
-  kangurAuthBootstrapInflight = kangurPlatform.auth
-    .me()
-    .then((nextUser) => {
-      primeKangurAuthBootstrapCache(nextUser);
-      return nextUser;
-    })
-    .finally(() => {
-      kangurAuthBootstrapInflight = null;
-    });
-
-  return await kangurAuthBootstrapInflight;
-};
-
-export const clearKangurAuthBootstrapCache = (): void => {
-  clearKangurAuthBootstrapCacheState();
-};
+export { clearKangurAuthBootstrapCache };
 
 export const KangurAuthProvider = ({ children }: { children: ReactNode }): React.JSX.Element => {
   const router = useRouter();

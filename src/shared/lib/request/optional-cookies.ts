@@ -1,6 +1,6 @@
 import { cookies } from 'next/headers';
 
-import { isMissingRequestScopeError } from '@/shared/lib/auth/optional-server-auth';
+import { isMissingRequestScopeError } from '@/shared/lib/auth/request-scope-error';
 
 type RequestCookieStore = Awaited<ReturnType<typeof cookies>>;
 

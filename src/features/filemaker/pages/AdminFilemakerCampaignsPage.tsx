@@ -14,13 +14,18 @@ import {
   FILEMAKER_DATABASE_KEY,
   FILEMAKER_EMAIL_CAMPAIGNS_KEY,
   FILEMAKER_EMAIL_CAMPAIGN_DELIVERIES_KEY,
+  FILEMAKER_EMAIL_CAMPAIGN_EVENTS_KEY,
   FILEMAKER_EMAIL_CAMPAIGN_RUNS_KEY,
+  FILEMAKER_EMAIL_CAMPAIGN_SUPPRESSIONS_KEY,
   getFilemakerEmailCampaignDeliveriesForRun,
   parseFilemakerDatabase,
   parseFilemakerEmailCampaignDeliveryRegistry,
+  parseFilemakerEmailCampaignEventRegistry,
   parseFilemakerEmailCampaignRegistry,
   parseFilemakerEmailCampaignRunRegistry,
+  parseFilemakerEmailCampaignSuppressionRegistry,
   resolveFilemakerEmailCampaignAudiencePreview,
+  summarizeFilemakerEmailCampaignAnalytics,
   summarizeFilemakerEmailCampaignRunDeliveries,
 } from '../settings';
 import { formatTimestamp, includeQuery } from './filemaker-page-utils';
@@ -33,6 +38,7 @@ type CampaignRow = {
   previewCount: number;
   isLaunchReady: boolean;
   latestRun: FilemakerEmailCampaignRun | null;
+  analytics: ReturnType<typeof summarizeFilemakerEmailCampaignAnalytics>;
 };
 
 export function AdminFilemakerCampaignsPage(): React.JSX.Element {
@@ -45,6 +51,8 @@ export function AdminFilemakerCampaignsPage(): React.JSX.Element {
   const rawCampaigns = settingsStore.get(FILEMAKER_EMAIL_CAMPAIGNS_KEY);
   const rawRuns = settingsStore.get(FILEMAKER_EMAIL_CAMPAIGN_RUNS_KEY);
   const rawDeliveries = settingsStore.get(FILEMAKER_EMAIL_CAMPAIGN_DELIVERIES_KEY);
+  const rawEvents = settingsStore.get(FILEMAKER_EMAIL_CAMPAIGN_EVENTS_KEY);
+  const rawSuppressions = settingsStore.get(FILEMAKER_EMAIL_CAMPAIGN_SUPPRESSIONS_KEY);
 
   const database = useMemo(() => parseFilemakerDatabase(rawDatabase), [rawDatabase]);
   const campaignRegistry = useMemo(
@@ -58,6 +66,14 @@ export function AdminFilemakerCampaignsPage(): React.JSX.Element {
   const deliveryRegistry = useMemo(
     () => parseFilemakerEmailCampaignDeliveryRegistry(rawDeliveries),
     [rawDeliveries]
+  );
+  const eventRegistry = useMemo(
+    () => parseFilemakerEmailCampaignEventRegistry(rawEvents),
+    [rawEvents]
+  );
+  const suppressionRegistry = useMemo(
+    () => parseFilemakerEmailCampaignSuppressionRegistry(rawSuppressions),
+    [rawSuppressions]
   );
 
   const latestRunByCampaignId = useMemo(() => {
@@ -81,13 +97,25 @@ export function AdminFilemakerCampaignsPage(): React.JSX.Element {
     () =>
       campaignRegistry.campaigns
         .map((campaign: FilemakerEmailCampaign): CampaignRow => {
-          const preview = resolveFilemakerEmailCampaignAudiencePreview(database, campaign.audience);
+          const preview = resolveFilemakerEmailCampaignAudiencePreview(
+            database,
+            campaign.audience,
+            suppressionRegistry
+          );
           const launch = evaluateFilemakerEmailCampaignLaunch(campaign, preview);
           return {
             campaign,
             previewCount: preview.recipients.length,
             isLaunchReady: launch.isEligible,
             latestRun: latestRunByCampaignId.get(campaign.id) ?? null,
+            analytics: summarizeFilemakerEmailCampaignAnalytics({
+              campaign,
+              database,
+              runRegistry,
+              deliveryRegistry,
+              eventRegistry,
+              suppressionRegistry,
+            }),
           };
         })
         .filter((row: CampaignRow): boolean =>
@@ -104,7 +132,16 @@ export function AdminFilemakerCampaignsPage(): React.JSX.Element {
         .sort((left: CampaignRow, right: CampaignRow) =>
           left.campaign.name.localeCompare(right.campaign.name)
         ),
-    [campaignRegistry.campaigns, database, deferredQuery, latestRunByCampaignId]
+    [
+      campaignRegistry.campaigns,
+      database,
+      deferredQuery,
+      deliveryRegistry,
+      eventRegistry,
+      latestRunByCampaignId,
+      runRegistry,
+      suppressionRegistry,
+    ]
   );
 
   const columns = useMemo<ColumnDef<CampaignRow>[]>(
@@ -143,6 +180,26 @@ export function AdminFilemakerCampaignsPage(): React.JSX.Element {
             </div>
             <div className='text-[11px] text-gray-500'>
               Min audience: {row.original.campaign.launch.minAudienceSize}
+            </div>
+            <div className='text-[11px] text-gray-500'>
+              Suppressed in preview: {row.original.analytics.suppressionImpactCount}
+            </div>
+          </div>
+        ),
+      },
+      {
+        id: 'performance',
+        header: 'Performance',
+        cell: ({ row }) => (
+          <div className='space-y-0.5'>
+            <div className='text-[11px] text-gray-300'>
+              Delivery rate: {row.original.analytics.deliveryRatePercent}%
+            </div>
+            <div className='text-[11px] text-gray-500'>
+              Bounce rate: {row.original.analytics.bounceRatePercent}%
+            </div>
+            <div className='text-[11px] text-gray-500'>
+              Runs: {row.original.analytics.totalRuns}
             </div>
           </div>
         ),

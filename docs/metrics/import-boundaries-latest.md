@@ -8,17 +8,21 @@ canonical: true
 ---
 # Import Boundaries Check
 
-Generated at: 2026-03-27T02:51:47.794Z
+Generated at: 2026-03-27T13:59:54.358Z
 
 ## Summary
 
-- Status: PASSED
-- Files scanned: 5891
+- Status: FAILED
+- Files scanned: 5929
 - Features tracked: 10
-- Circular dependencies: 0
-- Errors: 0
+- Circular dependencies: 1
+- Errors: 2
 - Warnings: 0
 - Info: 0
+
+## Circular Dependencies
+
+- products -> integrations -> products
 
 ## Feature Dependency Graph
 
@@ -30,7 +34,7 @@ Generated at: 2026-03-27T02:51:47.794Z
 | admin | ai, foldertree, products, prompt-engine | 4 |
 | case-resolver | ai, document-editor, filemaker, foldertree | 4 |
 | ai | files, foldertree, viewer3d | 3 |
-| integrations | auth, data-import-export | 2 |
+| integrations | data-import-export, products | 2 |
 | notesapp | document-editor, foldertree | 2 |
 | drafter | products | 1 |
 | prompt-exploder | foldertree | 1 |
@@ -39,10 +43,15 @@ Generated at: 2026-03-27T02:51:47.794Z
 
 | Rule | Errors | Warnings | Info |
 | --- | ---: | ---: | ---: |
+| circular-feature-dep | 1 | 0 | 0 |
+| cross-feature-internal-import | 1 | 0 | 0 |
 
 ## Issues
 
-No import boundary issues detected.
+| Severity | Rule | Location | Message |
+| --- | --- | --- | --- |
+| ERROR | circular-feature-dep | - | Circular dependency between features: products -> integrations -> products |
+| ERROR | cross-feature-internal-import | src/features/integrations/components/connections/BaselinkerSettings.tsx:6 | Imports internal path from feature "products": @/features/products/hooks/useProductOrdersImport. Use the barrel export instead. |
 
 ## Notes
 

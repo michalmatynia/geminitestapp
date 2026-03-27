@@ -436,4 +436,167 @@ describe('AI Paths validation evaluator behavior', () => {
     expect(report.failedRules).toBe(0);
     expect(report.appliedRuleIds).toEqual(['rule.database.wired-from-simulation-absent']);
   });
+
+  it('covers remaining graph integrity operators and the report-only warning branch', () => {
+    const duplicateTrigger = {
+      ...buildNode({
+        id: 'duplicate-node',
+        type: 'trigger',
+        inputs: ['in'],
+        outputs: ['out'],
+      }),
+      position: { x: Number.NaN, y: 1 },
+    } as AiNode;
+    const unknownDuplicate = {
+      ...buildNode({
+        id: 'duplicate-node',
+        type: 'mystery-node',
+        inputs: ['input-a'],
+        outputs: ['output-a'],
+      }),
+      position: { x: 10, y: 20 },
+    } as AiNode;
+    const targetNode = buildNode({
+      id: 'target-node',
+      type: 'database',
+      inputs: ['declared-input'],
+      outputs: ['declared-output'],
+    });
+    const edges: Edge[] = [
+      {
+        id: 'edge-duplicate',
+        from: 'duplicate-node',
+        to: 'missing-target',
+        fromPort: 'wrong-output',
+        toPort: 'wrong-input',
+      },
+      {
+        id: 'edge-duplicate',
+        from: 'duplicate-node',
+        to: 'target-node',
+        fromPort: 'out',
+        toPort: 'declared-input',
+      },
+    ];
+
+    const report = evaluateAiPathsValidationPreflight({
+      nodes: [duplicateTrigger, unknownDuplicate, targetNode],
+      edges,
+      config: {
+        enabled: true,
+        policy: 'report_only',
+        rules: [
+          {
+            id: 'rule.graph.jsonpath-exists',
+            title: 'Graph stats exist',
+            enabled: true,
+            severity: 'info',
+            module: 'graph',
+            conditions: [{ id: 'graph.jsonpath.exists', operator: 'jsonpath_exists', valuePath: 'counts.byType' }],
+          },
+          {
+            id: 'rule.graph.edge-endpoints',
+            title: 'Edge endpoints resolve',
+            enabled: true,
+            severity: 'warning',
+            module: 'graph',
+            conditions: [{ id: 'graph.edge-endpoints', operator: 'edge_endpoints_resolve' }],
+          },
+          {
+            id: 'rule.graph.edge-ports',
+            title: 'Edge ports are declared',
+            enabled: true,
+            severity: 'warning',
+            module: 'graph',
+            conditions: [{ id: 'graph.edge-ports', operator: 'edge_ports_declared' }],
+          },
+          {
+            id: 'rule.graph.node-types-known',
+            title: 'Node types are known',
+            enabled: true,
+            severity: 'warning',
+            module: 'graph',
+            conditions: [
+              { id: 'graph.node-types-known', operator: 'node_types_known', list: ['trigger', 'database'] },
+            ],
+          },
+          {
+            id: 'rule.graph.node-ids-unique',
+            title: 'Node ids are unique',
+            enabled: true,
+            severity: 'warning',
+            module: 'graph',
+            conditions: [{ id: 'graph.node-ids-unique', operator: 'node_ids_unique' }],
+          },
+          {
+            id: 'rule.graph.edge-ids-unique',
+            title: 'Edge ids are unique',
+            enabled: true,
+            severity: 'warning',
+            module: 'graph',
+            conditions: [{ id: 'graph.edge-ids-unique', operator: 'edge_ids_unique' }],
+          },
+          {
+            id: 'rule.graph.node-positions-finite',
+            title: 'Node positions are finite',
+            enabled: true,
+            severity: 'warning',
+            module: 'graph',
+            conditions: [{ id: 'graph.node-positions-finite', operator: 'node_positions_finite' }],
+          },
+          {
+            id: 'rule.database.has-incoming-port',
+            title: 'Database has incoming port',
+            enabled: true,
+            severity: 'info',
+            module: 'custom',
+            appliesToNodeTypes: ['database'],
+            conditions: [{ id: 'database.has-incoming-port', operator: 'has_incoming_port', port: 'declared-input' }],
+          },
+          {
+            id: 'rule.database.has-outgoing-port-negated',
+            title: 'Database lacks outgoing execution port',
+            enabled: true,
+            severity: 'info',
+            module: 'custom',
+            appliesToNodeTypes: ['database'],
+            conditions: [
+              {
+                id: 'database.has-outgoing-port-negated',
+                operator: 'has_outgoing_port',
+                port: 'missing-output',
+                negate: true,
+              },
+            ],
+          },
+        ],
+      } as AiPathsValidationConfig,
+    });
+
+    expect(report.rulesEvaluated).toBe(9);
+    expect(report.failedRules).toBe(6);
+    expect(report.blocked).toBe(false);
+    expect(report.shouldWarn).toBe(true);
+    expect(report.appliedRuleIds).toEqual(
+      expect.arrayContaining([
+        'rule.graph.jsonpath-exists',
+        'rule.graph.edge-endpoints',
+        'rule.graph.edge-ports',
+        'rule.graph.node-types-known',
+        'rule.graph.node-ids-unique',
+        'rule.graph.edge-ids-unique',
+        'rule.graph.node-positions-finite',
+        'rule.database.has-incoming-port',
+        'rule.database.has-outgoing-port-negated',
+      ])
+    );
+    expect(report.findings.map((finding) => finding.ruleId)).toEqual([
+      'rule.graph.edge-endpoints',
+      'rule.graph.edge-ports',
+      'rule.graph.node-types-known',
+      'rule.graph.node-ids-unique',
+      'rule.graph.edge-ids-unique',
+      'rule.graph.node-positions-finite',
+    ]);
+  });
 });

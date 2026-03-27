@@ -12,6 +12,7 @@ const useDefaultExportConnection = vi.fn();
 const useBaseOrderImportStatuses = vi.fn();
 const usePreviewBaseOrdersMutation = vi.fn();
 const useImportBaseOrdersMutation = vi.fn();
+const useQuickImportBaseOrdersMutation = vi.fn();
 
 vi.mock('@/shared/hooks/useIntegrationQueries', () => ({
   useIntegrationsWithConnections: () => useIntegrationsWithConnections(),
@@ -22,6 +23,7 @@ vi.mock('@/features/products/hooks/useProductOrdersImport', () => ({
   useBaseOrderImportStatuses: () => useBaseOrderImportStatuses(),
   usePreviewBaseOrdersMutation: () => usePreviewBaseOrdersMutation(),
   useImportBaseOrdersMutation: () => useImportBaseOrdersMutation(),
+  useQuickImportBaseOrdersMutation: () => useQuickImportBaseOrdersMutation(),
 }));
 
 vi.mock('@/shared/ui', () => ({
@@ -244,6 +246,10 @@ describe('AdminProductOrdersImportPage', () => {
       isPending: false,
       mutateAsync: vi.fn(),
     });
+    useQuickImportBaseOrdersMutation.mockReturnValue({
+      isPending: false,
+      mutateAsync: vi.fn(),
+    });
   });
 
   it('previews Base.com orders with the selected filters', async () => {
@@ -301,6 +307,92 @@ describe('AdminProductOrdersImportPage', () => {
     );
     await waitFor(() => expect(screen.getByTestId('orders-count')).toHaveTextContent('1'));
     expect(screen.getByText(/Loaded 1 orders/i)).toBeInTheDocument();
+  });
+
+  it('imports latest Base.com orders in one click and refreshes the preview table', async () => {
+    const mutateAsync = vi.fn().mockResolvedValue({
+      preview: {
+        orders: [
+          {
+            baseOrderId: '1001',
+            orderNumber: 'SO-1001',
+            externalStatusId: 'paid',
+            externalStatusName: 'Paid',
+            buyerName: 'Alice',
+            buyerEmail: 'alice@example.com',
+            currency: 'PLN',
+            totalGross: 100,
+            deliveryMethod: 'Courier',
+            paymentMethod: 'Card',
+            source: 'Base',
+            orderCreatedAt: '2026-03-25T10:00:00.000Z',
+            orderUpdatedAt: null,
+            lineItems: [],
+            fingerprint: 'fp-1',
+            raw: {},
+            importState: 'imported',
+            lastImportedAt: '2026-03-26T10:00:00.000Z',
+            previousImport: {
+              orderNumber: 'SO-1001',
+              externalStatusId: 'paid',
+              externalStatusName: 'Paid',
+              buyerName: 'Alice',
+              buyerEmail: 'alice@example.com',
+              currency: 'PLN',
+              totalGross: 100,
+              deliveryMethod: 'Courier',
+              paymentMethod: 'Card',
+              source: 'Base',
+              orderCreatedAt: '2026-03-25T10:00:00.000Z',
+              orderUpdatedAt: null,
+              lineItems: [],
+              lastImportedAt: '2026-03-26T10:00:00.000Z',
+            },
+          },
+        ],
+        stats: {
+          total: 1,
+          newCount: 0,
+          importedCount: 1,
+          changedCount: 0,
+        },
+      },
+      importableCount: 1,
+      skippedImportedCount: 0,
+      importedCount: 1,
+      createdCount: 1,
+      updatedCount: 0,
+      syncedAt: '2026-03-26T10:00:00.000Z',
+      results: [{ baseOrderId: '1001', result: 'created' }],
+    });
+    usePreviewBaseOrdersMutation.mockReturnValue({
+      isPending: false,
+      mutateAsync: vi.fn(),
+    });
+    useQuickImportBaseOrdersMutation.mockReturnValue({
+      isPending: false,
+      mutateAsync,
+    });
+
+    render(<AdminProductOrdersImportPage />);
+
+    fireEvent.change(screen.getByLabelText('Order status'), {
+      target: { value: 'paid' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: /Import latest from Base\.com/i }));
+
+    await waitFor(() =>
+      expect(mutateAsync).toHaveBeenCalledWith({
+        connectionId: 'conn-1',
+        dateFrom: undefined,
+        dateTo: undefined,
+        statusId: 'paid',
+        limit: 50,
+      })
+    );
+    await waitFor(() => expect(screen.getByTestId('orders-count')).toHaveTextContent('1'));
+    expect(screen.getByText(/Imported 1 orders from Base\.com/i)).toBeInTheDocument();
+    expect(screen.getByText('1 imported')).toBeInTheDocument();
   });
 
   it('shows the integration empty state when no Base.com connections exist', () => {

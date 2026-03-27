@@ -3,12 +3,17 @@ import { describe, expect, it } from 'vitest';
 import {
   buildFilemakerEmailCampaignDeliveriesForPreview,
   createFilemakerEmailCampaign,
+  createFilemakerEmailCampaignEvent,
+  createFilemakerEmailCampaignSuppressionEntry,
   createFilemakerEmailCampaignRun,
   parseFilemakerEmailCampaignRegistry,
   parseFilemakerEmailCampaignDeliveryRegistry,
+  parseFilemakerEmailCampaignEventRegistry,
+  parseFilemakerEmailCampaignSuppressionRegistry,
   parseFilemakerEmailCampaignRunRegistry,
   resolveFilemakerEmailCampaignAudiencePreview,
   resolveFilemakerEmailCampaignRunStatusFromDeliveries,
+  summarizeFilemakerEmailCampaignAnalytics,
   summarizeFilemakerEmailCampaignRunDeliveries,
   syncFilemakerEmailCampaignRunWithDeliveries,
   evaluateFilemakerEmailCampaignLaunch,
@@ -210,6 +215,7 @@ describe('filemaker campaign settings', () => {
 
     expect(preview.totalLinkedEmailCount).toBe(3);
     expect(preview.recipients).toHaveLength(1);
+    expect(preview.suppressedCount).toBe(0);
     expect(preview.dedupedCount).toBe(1);
     expect(preview.recipients[0]).toEqual(
       expect.objectContaining({
@@ -272,6 +278,88 @@ describe('filemaker campaign settings', () => {
     expect(evaluation.blockers).toContain('Campaign is outside of the allowed launch hours.');
     expect(evaluation.blockers).toContain('Campaign is scheduled for a future time.');
     expect(evaluation.nextEligibleAt).toBe('2026-04-01T09:00:00.000Z');
+  });
+
+  it('excludes suppressed email addresses from the audience preview', () => {
+    const database = createDatabase();
+    const campaign = createFilemakerEmailCampaign({
+      id: 'campaign-suppressed',
+      name: 'Suppression aware',
+      status: 'active',
+      subject: 'Hello',
+      audience: {
+        partyKinds: ['person', 'organization'],
+        emailStatuses: ['active'],
+        includePartyReferences: [],
+        excludePartyReferences: [],
+        organizationIds: [],
+        eventIds: [],
+        countries: [],
+        cities: [],
+        dedupeByEmail: true,
+        limit: null,
+      },
+    });
+
+    const suppressionRegistry = parseFilemakerEmailCampaignSuppressionRegistry(
+      JSON.stringify({
+        version: 1,
+        entries: [
+          createFilemakerEmailCampaignSuppressionEntry({
+            emailAddress: 'hello@acme.test',
+            reason: 'unsubscribed',
+            actor: 'admin',
+            createdAt: iso,
+            updatedAt: iso,
+          }),
+        ],
+      })
+    );
+
+    const preview = resolveFilemakerEmailCampaignAudiencePreview(
+      database,
+      campaign.audience,
+      suppressionRegistry
+    );
+
+    expect(preview.totalLinkedEmailCount).toBe(3);
+    expect(preview.recipients).toHaveLength(1);
+    expect(preview.recipients[0]?.email).toBe('jan@example.com');
+    expect(preview.suppressedCount).toBe(2);
+    expect(preview.excludedCount).toBe(2);
+  });
+
+  it('keeps nullable launch and recurring hour controls as null instead of coercing them to zero', () => {
+    const campaign = createFilemakerEmailCampaign({
+      id: 'campaign-3',
+      name: 'Null window campaign',
+      status: 'active',
+      subject: 'Window test',
+      launch: {
+        mode: 'manual',
+        scheduledAt: null,
+        recurring: {
+          frequency: 'weekly',
+          interval: 1,
+          weekdays: [1, 2, 3, 4, 5],
+          hourStart: null,
+          hourEnd: null,
+        },
+        minAudienceSize: 1,
+        requireApproval: false,
+        onlyWeekdays: false,
+        allowedHourStart: null,
+        allowedHourEnd: null,
+        pauseOnBounceRatePercent: null,
+        timezone: 'UTC',
+      },
+    });
+
+    expect(campaign.launch.allowedHourStart).toBeNull();
+    expect(campaign.launch.allowedHourEnd).toBeNull();
+    expect(campaign.launch.pauseOnBounceRatePercent).toBeNull();
+    expect(campaign.launch.recurring?.hourStart).toBeNull();
+    expect(campaign.launch.recurring?.hourEnd).toBeNull();
   });
 
   it('normalizes and sorts run registries', () => {
@@ -398,6 +486,248 @@ describe('filemaker campaign settings', () => {
         deliveredCount: 1,
         failedCount: 1,
         skippedCount: 0,
+      })
+    );
+  });
+
+  it('normalizes campaign event registries and keeps the newest events first', () => {
+    const registry = parseFilemakerEmailCampaignEventRegistry(
+      JSON.stringify({
+        version: 7,
+        events: [
+          createFilemakerEmailCampaignEvent({
+            id: 'event-older',
+            campaignId: 'campaign-1',
+            runId: 'run-1',
+            type: 'launched',
+            message: 'Campaign launched.',
+            createdAt: '2026-03-26T09:00:00.000Z',
+            updatedAt: '2026-03-26T09:00:00.000Z',
+          }),
+          {
+            id: 'event-newer',
+            campaignId: 'campaign-1',
+            runId: 'run-1',
+            deliveryId: 'delivery-1',
+            type: 'DELIVERY_SENT',
+            message: ' Delivery sent to jan@example.com. ',
+            deliveryStatus: 'sent',
+            createdAt: '2026-03-27T09:00:00.000Z',
+            updatedAt: '2026-03-27T09:00:00.000Z',
+          },
+        ],
+      })
+    );
+
+    expect(registry.version).toBe(1);
+    expect(registry.events.map((event) => event.id)).toEqual(['event-newer', 'event-older']);
+    expect(registry.events[0]).toEqual(
+      expect.objectContaining({
+        type: 'delivery_sent',
+        message: 'Delivery sent to jan@example.com.',
+        deliveryStatus: 'sent',
+      })
+    );
+  });
+
+  it('normalizes suppression registries and keeps one entry per address', () => {
+    const registry = parseFilemakerEmailCampaignSuppressionRegistry(
+      JSON.stringify({
+        version: 9,
+        entries: [
+          {
+            id: 'suppression-older',
+            emailAddress: 'blocked@example.com',
+            reason: 'manual_block',
+            actor: 'admin',
+            createdAt: '2026-03-26T09:00:00.000Z',
+            updatedAt: '2026-03-26T09:00:00.000Z',
+          },
+          {
+            id: 'suppression-newer',
+            emailAddress: 'BLOCKED@example.com',
+            reason: 'unsubscribed',
+            actor: 'admin',
+            createdAt: '2026-03-27T09:00:00.000Z',
+            updatedAt: '2026-03-27T09:00:00.000Z',
+          },
+        ],
+      })
+    );
+
+    expect(registry.version).toBe(1);
+    expect(registry.entries).toHaveLength(1);
+    expect(registry.entries[0]).toEqual(
+      expect.objectContaining({
+        emailAddress: 'blocked@example.com',
+        reason: 'unsubscribed',
+      })
+    );
+  });
+
+  it('summarizes campaign analytics from runs, deliveries, events, and suppression impact', () => {
+    const campaign = createFilemakerEmailCampaign({
+      id: 'campaign-analytics',
+      name: 'Analytics campaign',
+      status: 'active',
+      subject: 'Campaign analytics',
+      audience: {
+        partyKinds: ['person', 'organization'],
+        emailStatuses: ['active'],
+        includePartyReferences: [],
+        excludePartyReferences: [],
+        organizationIds: [],
+        eventIds: [],
+        countries: [],
+        cities: [],
+        dedupeByEmail: true,
+        limit: null,
+      },
+    });
+    const database = createDatabase();
+    const runRegistry = parseFilemakerEmailCampaignRunRegistry(
+      JSON.stringify({
+        version: 1,
+        runs: [
+          {
+            id: 'run-1',
+            campaignId: 'campaign-analytics',
+            mode: 'live',
+            status: 'completed',
+            recipientCount: 2,
+            deliveredCount: 1,
+            failedCount: 1,
+            skippedCount: 0,
+            createdAt: '2026-03-27T10:00:00.000Z',
+            updatedAt: '2026-03-27T10:30:00.000Z',
+          },
+          {
+            id: 'run-2',
+            campaignId: 'campaign-analytics',
+            mode: 'dry_run',
+            status: 'completed',
+            recipientCount: 1,
+            deliveredCount: 0,
+            failedCount: 0,
+            skippedCount: 1,
+            createdAt: '2026-03-28T10:00:00.000Z',
+            updatedAt: '2026-03-28T10:05:00.000Z',
+          },
+        ],
+      })
+    );
+    const deliveryRegistry = parseFilemakerEmailCampaignDeliveryRegistry(
+      JSON.stringify({
+        version: 1,
+        deliveries: [
+          {
+            id: 'delivery-1',
+            campaignId: 'campaign-analytics',
+            runId: 'run-1',
+            emailId: 'email-1',
+            emailAddress: 'jan@example.com',
+            partyKind: 'person',
+            partyId: 'person-1',
+            status: 'sent',
+            createdAt: '2026-03-27T10:00:00.000Z',
+            updatedAt: '2026-03-27T10:10:00.000Z',
+          },
+          {
+            id: 'delivery-2',
+            campaignId: 'campaign-analytics',
+            runId: 'run-1',
+            emailId: 'email-2',
+            emailAddress: 'hello@acme.test',
+            partyKind: 'organization',
+            partyId: 'organization-1',
+            status: 'bounced',
+            createdAt: '2026-03-27T10:00:00.000Z',
+            updatedAt: '2026-03-27T10:20:00.000Z',
+          },
+          {
+            id: 'delivery-3',
+            campaignId: 'campaign-analytics',
+            runId: 'run-2',
+            emailId: 'email-1',
+            emailAddress: 'jan@example.com',
+            partyKind: 'person',
+            partyId: 'person-1',
+            status: 'skipped',
+            createdAt: '2026-03-28T10:00:00.000Z',
+            updatedAt: '2026-03-28T10:01:00.000Z',
+          },
+        ],
+      })
+    );
+    const eventRegistry = parseFilemakerEmailCampaignEventRegistry(
+      JSON.stringify({
+        version: 1,
+        events: [
+          {
+            id: 'event-1',
+            campaignId: 'campaign-analytics',
+            runId: 'run-1',
+            type: 'launched',
+            message: 'Live launch',
+            createdAt: '2026-03-27T10:00:00.000Z',
+            updatedAt: '2026-03-27T10:00:00.000Z',
+          },
+          {
+            id: 'event-2',
+            campaignId: 'campaign-analytics',
+            runId: 'run-2',
+            type: 'completed',
+            message: 'Dry run completed',
+            createdAt: '2026-03-28T10:06:00.000Z',
+            updatedAt: '2026-03-28T10:06:00.000Z',
+          },
+        ],
+      })
+    );
+    const suppressionRegistry = parseFilemakerEmailCampaignSuppressionRegistry(
+      JSON.stringify({
+        version: 1,
+        entries: [
+          createFilemakerEmailCampaignSuppressionEntry({
+            emailAddress: 'hello@acme.test',
+            reason: 'bounced',
+            actor: 'system',
+            createdAt: '2026-03-27T10:20:00.000Z',
+            updatedAt: '2026-03-27T10:20:00.000Z',
+          }),
+        ],
+      })
+    );
+
+    const analytics = summarizeFilemakerEmailCampaignAnalytics({
+      campaign,
+      database,
+      runRegistry,
+      deliveryRegistry,
+      eventRegistry,
+      suppressionRegistry,
+    });
+
+    expect(analytics).toEqual(
+      expect.objectContaining({
+        totalRuns: 2,
+        liveRunCount: 1,
+        dryRunCount: 1,
+        totalRecipients: 3,
+        processedCount: 3,
+        sentCount: 1,
+        failedCount: 0,
+        bouncedCount: 1,
+        skippedCount: 1,
+        completionRatePercent: 100,
+        deliveryRatePercent: 33.3,
+        failureRatePercent: 33.3,
+        bounceRatePercent: 33.3,
+        suppressionImpactCount: 2,
+        latestRunStatus: 'completed',
+        latestRunAt: '2026-03-28T10:00:00.000Z',
+        latestActivityAt: '2026-03-28T10:06:00.000Z',
+        eventCount: 2,
       })
     );
   });

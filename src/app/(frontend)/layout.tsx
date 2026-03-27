@@ -16,6 +16,7 @@ import { KangurServerShell } from '@/features/kangur/ui/components/KangurServerS
 import { readOptionalRequestHeaders } from '@/shared/lib/request/optional-headers';
 import { getFrontPagePublicOwner } from '@/shared/lib/front-page-app';
 import { stripSiteLocalePrefix } from '@/shared/lib/i18n/site-locale';
+import { safeHtml } from '@/shared/lib/security/safe-html';
 import { QueryErrorBoundary } from '@/shared/ui/QueryErrorBoundary';
 
 import type { JSX } from 'react';
@@ -185,15 +186,15 @@ export default async function FrontendLayout({
           id='__FRONTEND_LAYOUT_TIMING__'
           type='application/json'
           dangerouslySetInnerHTML={{
-            __html: serializeInlineTimingPayload(inlineFrontendLoadTimingPayload),
+            __html: safeHtml(serializeInlineTimingPayload(inlineFrontendLoadTimingPayload)),
           }}
         />
       ) : null}
       {kangurSurfaceHintScript ? (
-        <script dangerouslySetInnerHTML={{ __html: kangurSurfaceHintScript }} />
+        <script dangerouslySetInnerHTML={{ __html: safeHtml(kangurSurfaceHintScript) }} />
       ) : null}
       {kangurAuthBootstrapScript ? (
-        <script dangerouslySetInnerHTML={{ __html: kangurAuthBootstrapScript }} />
+        <script dangerouslySetInnerHTML={{ __html: safeHtml(kangurAuthBootstrapScript) }} />
       ) : null}
       <FrontendPublicOwnerProvider publicOwner={publicOwner}>
         <QueryErrorBoundary>

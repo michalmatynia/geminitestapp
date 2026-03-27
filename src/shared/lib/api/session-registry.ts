@@ -1,3 +1,4 @@
+import { isMissingRequestScopeError } from '@/shared/lib/auth/request-scope-error';
 import { logger } from '@/shared/utils/logger';
 
 export type SessionUser = { id?: string | null } | null;
@@ -19,7 +20,9 @@ export async function getSessionUser(): Promise<SessionUser | null> {
   try {
     return await currentResolver();
   } catch (error) {
-    logger.error('[SessionRegistry] Session resolution failed', error);
+    if (!isMissingRequestScopeError(error)) {
+      logger.error('[SessionRegistry] Session resolution failed', error);
+    }
     return null;
   }
 }

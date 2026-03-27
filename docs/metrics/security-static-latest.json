@@ -1,13 +1,13 @@
 {
-  "generatedAt": "2026-03-26T16:58:50.566Z",
-  "status": "warn",
+  "generatedAt": "2026-03-27T13:59:50.781Z",
+  "status": "passed",
   "summary": {
-    "total": 4,
+    "total": 0,
     "errorCount": 0,
-    "warningCount": 4,
+    "warningCount": 0,
     "infoCount": 0,
-    "status": "warn",
-    "fileCount": 5869
+    "status": "passed",
+    "fileCount": 5929
   },
   "scope": {
     "root": "src",
@@ -20,55 +20,7 @@
       "src/shared/lib/security/csrf-client.ts"
     ]
   },
-  "issues": [
-    {
-      "severity": "warn",
-      "ruleId": "dangerouslysetinnerhtml-review",
-      "message": "dangerouslySetInnerHTML is used without an obvious sanitize/safe marker in the inline expression.",
-      "file": "src/app/(frontend)/layout.tsx",
-      "line": 133,
-      "column": 17,
-      "snippet": "{{ __html: kangurSurfaceHintScript }}",
-      "context": null
-    },
-    {
-      "severity": "warn",
-      "ruleId": "dangerouslysetinnerhtml-review",
-      "message": "dangerouslySetInnerHTML is used without an obvious sanitize/safe marker in the inline expression.",
-      "file": "src/app/(frontend)/layout.tsx",
-      "line": 136,
-      "column": 17,
-      "snippet": "{{ __html: kangurAuthBootstrapScript }}",
-      "context": null
-    },
-    {
-      "severity": "warn",
-      "ruleId": "dangerouslysetinnerhtml-review",
-      "message": "dangerouslySetInnerHTML is used without an obvious sanitize/safe marker in the inline expression.",
-      "file": "src/features/kangur/ui/components/KangurAppLoader.tsx",
-      "line": 253,
-      "column": 14,
-      "snippet": "{{ __html: `@keyframes kangur-loader-pulse { 0%, 100% { transform: scale(0.985); } 50% { transform: scale(1); } }` }}",
-      "context": null
-    },
-    {
-      "severity": "warn",
-      "ruleId": "dangerouslysetinnerhtml-review",
-      "message": "dangerouslySetInnerHTML is used without an obvious sanitize/safe marker in the inline expression.",
-      "file": "src/features/kangur/ui/KangurSSRSkeleton.tsx",
-      "line": 112,
-      "column": 9,
-      "snippet": "{{\n          __html: `\n@keyframes kangur-ssr-pulse {\n  0%, 100% { transform: scale(0.985); }\n  50% { transform: scale(1); }\n}\n@keyframes kangur-ssr-shimmer {\n  0% { opacity: 0.4; }\n  50% { opacity: 0.7; }\n  100% { opacity: 0.4; }\n}\n.kangur-ssr-skeleton-card {\n  animation: kangur-ssr-pulse 1.8s ease-in-out infinite;\n}\n.kangur-ssr-skeleton-shimmer {\n  background: color-mix(in srgb, var(--kangur-soft-card-border, #e2e8f0) 60%, transparent);\n  animation: kangur-ssr-shimmer 1.4s ease-in-out infinite;\n}\n@media (prefers-reduced-motion: reduce) {\n  .kangur-ssr-skeleton-card { animation: none; }\n  .kangur-ssr-skeleton-shimmer { animation: none; opacity: 0.5; }\n}`,\n        }}",
-      "context": null
-    }
-  ],
-  "rules": [
-    {
-      "ruleId": "dangerouslysetinnerhtml-review",
-      "errorCount": 0,
-      "warningCount": 4,
-      "infoCount": 0
-    }
-  ],
-  "durationMs": 3752
+  "issues": [],
+  "rules": [],
+  "durationMs": 5725
 }

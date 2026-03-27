@@ -153,6 +153,7 @@ export const initializeQueues = (): void => {
       import('@/server/queues/case-resolver-ocr'),
       import('@/shared/lib/observability/workers/systemLogAlertsQueue'),
       import('@/server/queues/kangur'),
+      import('@/server/queues/filemaker'),
     ]);
 
     // Call specialized startup functions if they exist (to enqueue repeat jobs, etc.)

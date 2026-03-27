@@ -22,6 +22,7 @@ import {
 
 import { ProductFormData, ProductWithImages, ProductDraft } from '@/shared/contracts/products';
 import { internalError } from '@/shared/errors/app-error';
+import { PRODUCT_SKU_AUTO_INCREMENT_PLACEHOLDER } from '@/shared/lib/products/constants';
 import {
   productCreateSchema,
   productUpdateSchema,
@@ -64,6 +65,21 @@ export const ProductFormCoreActionsContext = createContext<ProductFormCoreAction
   null
 );
 
+export const resolveProductFormDefaultSku = ({
+  product,
+  draft,
+  initialSku,
+}: {
+  product?: ProductWithImages;
+  draft?: ProductDraft | null;
+  initialSku?: string;
+}): string => {
+  if (product?.sku) return product.sku;
+  if (initialSku) return initialSku;
+  if (draft) return PRODUCT_SKU_AUTO_INCREMENT_PLACEHOLDER;
+  return '';
+};
+
 export function ProductFormCoreProvider({
   children,
   product,
@@ -85,7 +101,7 @@ export function ProductFormCoreProvider({
       name_pl: product?.name_pl || draft?.name_pl || '',
       name_de: product?.name_de || draft?.name_de || '',
       price: product?.price ?? draft?.price ?? 0,
-      sku: product?.sku || initialSku || draft?.sku || '',
+      sku: resolveProductFormDefaultSku({ product, draft, initialSku }),
       defaultPriceGroupId: product?.defaultPriceGroupId ?? draft?.defaultPriceGroupId ?? undefined,
       baseProductId: product?.baseProductId ?? draft?.baseProductId ?? undefined,
       ean: product?.ean || draft?.ean || '',

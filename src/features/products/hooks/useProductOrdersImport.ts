@@ -5,6 +5,8 @@ import type {
   BaseOrderImportPersistResponse,
   BaseOrderImportPreviewPayload,
   BaseOrderImportPreviewResponse,
+  BaseOrderImportQuickImportPayload,
+  BaseOrderImportQuickImportResponse,
   BaseOrderImportStatusOption,
 } from '@/shared/contracts/products';
 import type { ListQuery, MutationResult } from '@/shared/contracts/ui';
@@ -18,6 +20,7 @@ const productOrdersImportKeys = {
     [...productOrdersImportKeys.all, 'statuses', connectionId ?? 'none'] as const,
   preview: () => [...productOrdersImportKeys.all, 'preview'] as const,
   import: () => [...productOrdersImportKeys.all, 'import'] as const,
+  quickImport: () => [...productOrdersImportKeys.all, 'quick-import'] as const,
 };
 
 export function useBaseOrderImportStatuses(connectionId: string): ListQuery<BaseOrderImportStatusOption> {
@@ -84,6 +87,30 @@ export function useImportBaseOrdersMutation(): MutationResult<
       mutationKey,
       tags: ['products', 'orders-import', 'import'],
       description: 'Persists selected Base.com orders in local admin storage.',
+    },
+  });
+}
+
+export function useQuickImportBaseOrdersMutation(): MutationResult<
+  BaseOrderImportQuickImportResponse,
+  BaseOrderImportQuickImportPayload
+> {
+  const mutationKey = productOrdersImportKeys.quickImport();
+  return createMutationV2({
+    mutationFn: (payload) =>
+      api.post<BaseOrderImportQuickImportResponse>(
+        '/api/v2/products/orders-import/quick-import',
+        payload
+      ),
+    mutationKey,
+    meta: {
+      source: 'products.hooks.useQuickImportBaseOrdersMutation',
+      operation: 'action',
+      resource: 'products.orders-import.quick-import',
+      domain: 'products',
+      mutationKey,
+      tags: ['products', 'orders-import', 'quick-import'],
+      description: 'Fetches and imports new or changed Base.com orders in one server action.',
     },
   });
 }

@@ -1,6 +1,6 @@
 import { JSX, Suspense } from 'react';
 
-import { SystemLogsPage } from '@/features/observability/public';
+import SystemLogsPage from '@/features/observability/pages/SystemLogsPage';
 
 export const dynamic = 'force-dynamic';
 

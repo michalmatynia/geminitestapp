@@ -114,7 +114,9 @@ export function useProductImages(
       mutationKey: QUERY_KEYS.products.all,
       tags: ['products', 'images', 'disconnect'],
       description: 'Deletes products images.'},
-    invalidate: (queryClient) => invalidateProducts(queryClient),
+    invalidate: async (queryClient) => {
+      await invalidateProducts(queryClient);
+    },
   });
 
   // Effect to clean up object URLs when imageSlots change

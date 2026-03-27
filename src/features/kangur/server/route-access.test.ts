@@ -40,6 +40,11 @@ describe('kangur server route access', () => {
     await expect(readCanAccessKangurPage('GamesLibrary')).resolves.toBe(true);
   });
 
+  it('allows unrestricted pages without reading auth', async () => {
+    await expect(readCanAccessKangurPage('Lessons')).resolves.toBe(true);
+    expect(authMock).not.toHaveBeenCalled();
+  });
+
   it('blocks GamesLibrary for non-super-admin sessions', async () => {
     authMock.mockResolvedValue({
       expires: '2099-01-01T00:00:00.000Z',
@@ -63,6 +68,11 @@ describe('kangur server route access', () => {
 
     await expect(requireAccessibleKangurSlugRoute(['games'])).rejects.toThrow('notFound');
     expect(notFoundMock).toHaveBeenCalledTimes(1);
+  });
+
+  it('allows unrestricted slug routes without reading auth', async () => {
+    await expect(requireAccessibleKangurSlugRoute(['lessons'])).resolves.toBeUndefined();
+    expect(authMock).not.toHaveBeenCalled();
   });
 
   it('returns a private not-found api response', async () => {
@@ -115,5 +125,20 @@ describe('kangur server route access', () => {
     ).resolves.toEqual({
       callbackUrl: '/games',
     });
+  });
+
+  it('preserves unrestricted alias login callbacks without reading auth', async () => {
+    await expect(
+      readSanitizedKangurAliasLoginSearchParams({
+        searchParams: {
+          callbackUrl: '/kangur/lessons',
+        },
+        pathname: '/kangur/login',
+        fallbackHref: '/',
+      })
+    ).resolves.toEqual({
+      callbackUrl: '/kangur/lessons',
+    });
+    expect(authMock).not.toHaveBeenCalled();
   });
 });

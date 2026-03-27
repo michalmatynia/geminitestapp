@@ -5,6 +5,7 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import type { LabeledOptionWithDescriptionDto } from '@/shared/contracts/base';
 import { useUpdateSetting } from '@/shared/hooks/use-settings';
+import { api } from '@/shared/lib/api-client';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
 import {
   AdminFilemakerBreadcrumbs,
@@ -26,28 +27,34 @@ import { logClientError } from '@/shared/utils/observability/client-error-logger
 import {
   applyFilemakerEmailCampaignRunStatusToDeliveries,
   buildFilemakerPartyOptions,
-  createDefaultFilemakerEmailCampaignRunRegistry,
-  createDefaultFilemakerEmailCampaignDeliveryRegistry,
+  createFilemakerEmailCampaignSuppressionEntry,
   createFilemakerEmailCampaign,
-  createFilemakerEmailCampaignRun,
   decodeFilemakerPartyReference,
   evaluateFilemakerEmailCampaignLaunch,
   FILEMAKER_DATABASE_KEY,
   FILEMAKER_EMAIL_CAMPAIGNS_KEY,
   FILEMAKER_EMAIL_CAMPAIGN_DELIVERIES_KEY,
+  FILEMAKER_EMAIL_CAMPAIGN_EVENTS_KEY,
+  FILEMAKER_EMAIL_CAMPAIGN_SUPPRESSIONS_KEY,
   FILEMAKER_EMAIL_CAMPAIGN_RUNS_KEY,
-  buildFilemakerEmailCampaignDeliveriesForPreview,
   getFilemakerEmailCampaignDeliveriesForRun,
+  normalizeFilemakerEmailCampaignSuppressionRegistry,
   parseFilemakerDatabase,
   parseFilemakerEmailCampaignDeliveryRegistry,
+  parseFilemakerEmailCampaignEventRegistry,
   parseFilemakerEmailCampaignRegistry,
   parseFilemakerEmailCampaignRunRegistry,
+  parseFilemakerEmailCampaignSuppressionRegistry,
+  removeFilemakerEmailCampaignSuppressionEntryByAddress,
   resolveFilemakerEmailCampaignAudiencePreview,
+  summarizeFilemakerEmailCampaignAnalytics,
   summarizeFilemakerEmailCampaignRunDeliveries,
   syncFilemakerEmailCampaignRunWithDeliveries,
   toPersistedFilemakerEmailCampaignDeliveryRegistry,
   toPersistedFilemakerEmailCampaignRegistry,
   toPersistedFilemakerEmailCampaignRunRegistry,
+  toPersistedFilemakerEmailCampaignSuppressionRegistry,
+  upsertFilemakerEmailCampaignSuppressionEntry,
 } from '../settings';
 import { decodeRouteParam, formatTimestamp } from './filemaker-page-utils';
 
@@ -55,8 +62,11 @@ import type {
   FilemakerEmailCampaign,
   FilemakerEmailCampaignLifecycleStatus,
   FilemakerEmailCampaignLaunchMode,
+  FilemakerEmailCampaignLaunchRunResponse,
   FilemakerEmailCampaignRun,
   FilemakerEmailCampaignDeliveryRegistry,
+  FilemakerEmailCampaignSuppressionReason,
+  FilemakerEmailCampaignSuppressionRegistry,
   FilemakerEmailCampaignRunMode,
   FilemakerEmailCampaignRunRegistry,
   FilemakerEmailCampaignRunStatus,
@@ -110,6 +120,26 @@ const WEEKDAY_OPTIONS = [
   { value: '5', label: 'Friday' },
   { value: '6', label: 'Saturday' },
   { value: '0', label: 'Sunday' },
+];
+
+const SUPPRESSION_REASON_OPTIONS: Array<
+  LabeledOptionWithDescriptionDto<FilemakerEmailCampaignSuppressionReason>
+> = [
+  {
+    value: 'manual_block',
+    label: 'Manual block',
+    description: 'Prevent delivery until the address is explicitly removed.',
+  },
+  {
+    value: 'unsubscribed',
+    label: 'Unsubscribed',
+    description: 'Use when the recipient opted out from future mailings.',
+  },
+  {
+    value: 'bounced',
+    label: 'Bounced',
+    description: 'Use when the address is no longer deliverable.',
+  },
 ];
 
 const buildCampaignIdFromName = (name: string): string => {
@@ -203,6 +233,8 @@ export function AdminFilemakerCampaignEditPage(): React.JSX.Element {
   const rawCampaigns = settingsStore.get(FILEMAKER_EMAIL_CAMPAIGNS_KEY);
   const rawRuns = settingsStore.get(FILEMAKER_EMAIL_CAMPAIGN_RUNS_KEY);
   const rawDeliveries = settingsStore.get(FILEMAKER_EMAIL_CAMPAIGN_DELIVERIES_KEY);
+  const rawEvents = settingsStore.get(FILEMAKER_EMAIL_CAMPAIGN_EVENTS_KEY);
+  const rawSuppressions = settingsStore.get(FILEMAKER_EMAIL_CAMPAIGN_SUPPRESSIONS_KEY);
 
   const database = useMemo(() => parseFilemakerDatabase(rawDatabase), [rawDatabase]);
   const campaignRegistry = useMemo(
@@ -216,6 +248,14 @@ export function AdminFilemakerCampaignEditPage(): React.JSX.Element {
   const deliveryRegistry = useMemo(
     () => parseFilemakerEmailCampaignDeliveryRegistry(rawDeliveries),
     [rawDeliveries]
+  );
+  const eventRegistry = useMemo(
+    () => parseFilemakerEmailCampaignEventRegistry(rawEvents),
+    [rawEvents]
+  );
+  const suppressionRegistry = useMemo(
+    () => parseFilemakerEmailCampaignSuppressionRegistry(rawSuppressions),
+    [rawSuppressions]
   );
 
   const existingCampaign = useMemo(
@@ -231,6 +271,11 @@ export function AdminFilemakerCampaignEditPage(): React.JSX.Element {
     [existingCampaign]
   );
   const [draft, setDraft] = useState<FilemakerEmailCampaign>(initialDraft);
+  const [launchingMode, setLaunchingMode] = useState<FilemakerEmailCampaignRunMode | null>(null);
+  const [suppressionEmailDraft, setSuppressionEmailDraft] = useState('');
+  const [suppressionReasonDraft, setSuppressionReasonDraft] =
+    useState<FilemakerEmailCampaignSuppressionReason>('manual_block');
+  const [suppressionNotesDraft, setSuppressionNotesDraft] = useState('');
 
   useEffect(() => {
     setDraft(initialDraft);
@@ -266,8 +311,8 @@ export function AdminFilemakerCampaignEditPage(): React.JSX.Element {
   );
 
   const preview = useMemo(
-    () => resolveFilemakerEmailCampaignAudiencePreview(database, draft.audience),
-    [database, draft.audience]
+    () => resolveFilemakerEmailCampaignAudiencePreview(database, draft.audience, suppressionRegistry),
+    [database, draft.audience, suppressionRegistry]
   );
   const launchEvaluation = useMemo(
     () => evaluateFilemakerEmailCampaignLaunch(draft, preview),
@@ -277,6 +322,28 @@ export function AdminFilemakerCampaignEditPage(): React.JSX.Element {
     () => runRegistry.runs.filter((run: FilemakerEmailCampaignRun) => run.campaignId === existingCampaign?.id),
     [existingCampaign?.id, runRegistry.runs]
   );
+  const suppressionEntries = useMemo(
+    () => suppressionRegistry.entries,
+    [suppressionRegistry.entries]
+  );
+  const analytics = useMemo(
+    () =>
+      summarizeFilemakerEmailCampaignAnalytics({
+        campaign: draft,
+        database,
+        runRegistry,
+        deliveryRegistry,
+        eventRegistry,
+        suppressionRegistry,
+      }),
+    [database, deliveryRegistry, draft, eventRegistry, runRegistry, suppressionRegistry]
+  );
+  const unsubscribeLinkTemplate = useMemo(() => {
+    const campaignIdToken = draft.id.trim() || '[campaign-id]';
+    return `/filemaker/unsubscribe?campaignId=${encodeURIComponent(
+      campaignIdToken
+    )}&email={{email}}`;
+  }, [draft.id]);
 
   const persistCampaignRegistry = useCallback(
     async (nextCampaigns: FilemakerEmailCampaign[]): Promise<void> => {
@@ -309,6 +376,18 @@ export function AdminFilemakerCampaignEditPage(): React.JSX.Element {
         key: FILEMAKER_EMAIL_CAMPAIGN_DELIVERIES_KEY,
         value: JSON.stringify(
           toPersistedFilemakerEmailCampaignDeliveryRegistry(nextDeliveryRegistry)
+        ),
+      });
+    },
+    [updateSetting]
+  );
+
+  const persistSuppressionRegistry = useCallback(
+    async (nextSuppressionRegistry: FilemakerEmailCampaignSuppressionRegistry): Promise<void> => {
+      await updateSetting.mutateAsync({
+        key: FILEMAKER_EMAIL_CAMPAIGN_SUPPRESSIONS_KEY,
+        value: JSON.stringify(
+          toPersistedFilemakerEmailCampaignSuppressionRegistry(nextSuppressionRegistry)
         ),
       });
     },
@@ -391,90 +470,54 @@ export function AdminFilemakerCampaignEditPage(): React.JSX.Element {
     async (mode: FilemakerEmailCampaignRunMode): Promise<void> => {
       const savedCampaign = await saveCampaign('');
       if (!savedCampaign) return;
-
-      const previewForRun = resolveFilemakerEmailCampaignAudiencePreview(
-        database,
-        savedCampaign.audience
-      );
-      const evaluation = evaluateFilemakerEmailCampaignLaunch(savedCampaign, previewForRun);
-      if (mode === 'live' && !evaluation.isEligible) {
-        toast(evaluation.blockers[0] ?? 'Campaign is not eligible to launch.', {
-          variant: 'error',
-        });
-        return;
-      }
-
-      const now = new Date().toISOString();
-      const nextRun = createFilemakerEmailCampaignRun({
-        campaignId: savedCampaign.id,
-        mode,
-        status: mode === 'dry_run' ? 'completed' : 'queued',
-        launchReason:
-          mode === 'dry_run'
-            ? 'Dry run created from the Filemaker campaign editor.'
-            : 'Manual launch created from the Filemaker campaign editor.',
-        recipientCount: previewForRun.recipients.length,
-        deliveredCount: 0,
-        failedCount: 0,
-        skippedCount: mode === 'dry_run' ? previewForRun.recipients.length : 0,
-        startedAt: mode === 'dry_run' ? now : null,
-        completedAt: mode === 'dry_run' ? now : null,
-        createdAt: now,
-        updatedAt: now,
-      });
-      const nextDeliveries = buildFilemakerEmailCampaignDeliveriesForPreview({
-        campaignId: savedCampaign.id,
-        runId: nextRun.id,
-        preview: previewForRun,
-        mode,
-      });
-      const syncedRun = syncFilemakerEmailCampaignRunWithDeliveries({
-        run: nextRun,
-        deliveries: nextDeliveries,
-      });
+      setLaunchingMode(mode);
 
       try {
-        await persistDeliveryRegistry({
-          version: createDefaultFilemakerEmailCampaignDeliveryRegistry().version,
-          deliveries: [...nextDeliveries, ...deliveryRegistry.deliveries],
-        });
-        await persistRunRegistry({
-          version: createDefaultFilemakerEmailCampaignRunRegistry().version,
-          runs: [syncedRun, ...runRegistry.runs],
-        });
+        const response = await api.post<FilemakerEmailCampaignLaunchRunResponse>(
+          '/api/filemaker/campaigns/runs',
+          {
+            campaignId: savedCampaign.id,
+            mode,
+            launchReason:
+              mode === 'dry_run'
+                ? 'Dry run created from the Filemaker campaign editor.'
+                : 'Manual launch created from the Filemaker campaign editor.',
+          }
+        );
         if (mode === 'live') {
+          const now = new Date().toISOString();
           const launchedCampaign = buildPersistedCampaign({
             id: savedCampaign.id,
             lastLaunchedAt: now,
             lastEvaluatedAt: now,
+            updatedAt: now,
           });
-          const nextCampaigns = campaignRegistry.campaigns
-            .filter((campaign) => campaign.id !== launchedCampaign.id)
-            .concat(launchedCampaign)
-            .sort((left, right) => left.name.localeCompare(right.name));
-          await persistCampaignRegistry(nextCampaigns);
           setDraft(launchedCampaign);
         }
-        toast(mode === 'dry_run' ? 'Dry run created.' : 'Campaign queued for launch.', {
-          variant: 'success',
-        });
+        settingsStore.refetch();
+        router.refresh();
+        toast(
+          mode === 'dry_run'
+            ? 'Dry run created.'
+            : response.dispatchMode === 'inline'
+              ? 'Campaign started in inline processing mode.'
+              : 'Campaign queued for delivery.',
+          { variant: 'success' }
+        );
       } catch (error: unknown) {
         logClientError(error);
         toast(error instanceof Error ? error.message : 'Failed to create campaign run.', {
           variant: 'error',
         });
+      } finally {
+        setLaunchingMode(null);
       }
     },
     [
       buildPersistedCampaign,
-      campaignRegistry.campaigns,
-      database,
-      deliveryRegistry.deliveries,
-      persistDeliveryRegistry,
-      persistCampaignRegistry,
-      persistRunRegistry,
-      runRegistry.runs,
+      router,
       saveCampaign,
+      settingsStore,
       toast,
     ]
   );
@@ -531,6 +574,66 @@ export function AdminFilemakerCampaignEditPage(): React.JSX.Element {
     ]
   );
 
+  const handleAddSuppressionEntry = useCallback(async (): Promise<void> => {
+    const normalizedEmail = suppressionEmailDraft.trim().toLowerCase();
+    if (!normalizedEmail) {
+      toast('Suppression email is required.', { variant: 'error' });
+      return;
+    }
+
+    const nextSuppressionRegistry = upsertFilemakerEmailCampaignSuppressionEntry({
+      registry: normalizeFilemakerEmailCampaignSuppressionRegistry(suppressionRegistry),
+      entry: createFilemakerEmailCampaignSuppressionEntry({
+        emailAddress: normalizedEmail,
+        reason: suppressionReasonDraft,
+        actor: 'admin',
+        notes: suppressionNotesDraft.trim() || null,
+        campaignId: (existingCampaign?.id ?? draft.id) || null,
+      }),
+    });
+
+    try {
+      await persistSuppressionRegistry(nextSuppressionRegistry);
+      setSuppressionEmailDraft('');
+      setSuppressionReasonDraft('manual_block');
+      setSuppressionNotesDraft('');
+      toast('Suppression entry saved.', { variant: 'success' });
+    } catch (error: unknown) {
+      logClientError(error);
+      toast(error instanceof Error ? error.message : 'Failed to save suppression entry.', {
+        variant: 'error',
+      });
+    }
+  }, [
+    draft.id,
+    existingCampaign?.id,
+    persistSuppressionRegistry,
+    suppressionEmailDraft,
+    suppressionNotesDraft,
+    suppressionReasonDraft,
+    suppressionRegistry,
+    toast,
+  ]);
+
+  const handleRemoveSuppressionEntry = useCallback(
+    async (emailAddress: string): Promise<void> => {
+      const nextSuppressionRegistry = removeFilemakerEmailCampaignSuppressionEntryByAddress({
+        registry: suppressionRegistry,
+        emailAddress,
+      });
+      try {
+        await persistSuppressionRegistry(nextSuppressionRegistry);
+        toast('Suppression entry removed.', { variant: 'success' });
+      } catch (error: unknown) {
+        logClientError(error);
+        toast(error instanceof Error ? error.message : 'Failed to remove suppression entry.', {
+          variant: 'error',
+        });
+      }
+    },
+    [persistSuppressionRegistry, suppressionRegistry, toast]
+  );
+
   if (!isCreateMode && !existingCampaign) {
     return (
       <div className='page-section-compact space-y-6'>
@@ -579,13 +682,13 @@ export function AdminFilemakerCampaignEditPage(): React.JSX.Element {
               void saveCampaign();
             }}
             saveText='Save Campaign'
-            isSaving={updateSetting.isPending}
+            isSaving={updateSetting.isPending || launchingMode !== null}
           >
             <Button
               type='button'
               variant='outline'
               size='sm'
-              disabled={updateSetting.isPending}
+              disabled={updateSetting.isPending || launchingMode !== null}
               onClick={(): void => {
                 void handleLaunch('dry_run');
               }}
@@ -595,7 +698,7 @@ export function AdminFilemakerCampaignEditPage(): React.JSX.Element {
             <Button
               type='button'
               size='sm'
-              disabled={updateSetting.isPending}
+              disabled={updateSetting.isPending || launchingMode !== null}
               onClick={(): void => {
                 void handleLaunch('live');
               }}
@@ -1309,6 +1412,126 @@ export function AdminFilemakerCampaignEditPage(): React.JSX.Element {
         </div>
       </FormSection>
 
+      <FormSection title='Delivery Governance' className='space-y-4 p-4'>
+        <div className='flex flex-wrap gap-2'>
+          <Badge variant='outline' className='text-[10px]'>
+            Suppressed Addresses: {suppressionEntries.length}
+          </Badge>
+          <Badge variant='outline' className='text-[10px]'>
+            Auto-bounce Blocking: Enabled
+          </Badge>
+        </div>
+        <FormField label='Public unsubscribe link template'>
+          <div className='space-y-2'>
+            <Input
+              readOnly
+              value={unsubscribeLinkTemplate}
+              aria-label='Public unsubscribe link template'
+              title='Public unsubscribe link template'
+            />
+            <div className='text-xs leading-5 text-gray-400'>
+              Use <code>{'{{email}}'}</code> in your campaign body when generating recipient
+              links. This route adds the address to the Filemaker campaign suppression list.
+            </div>
+          </div>
+        </FormField>
+        <div className='grid gap-4 md:grid-cols-2'>
+          <FormField label='Suppressed email address'>
+            <Input
+              value={suppressionEmailDraft}
+              onChange={(event: React.ChangeEvent<HTMLInputElement>): void => {
+                setSuppressionEmailDraft(event.target.value);
+              }}
+              placeholder='blocked@example.com'
+              aria-label='Suppressed email address'
+              title='Suppressed email address'
+            />
+          </FormField>
+          <FormField label='Suppression reason'>
+            <SelectSimple
+              value={suppressionReasonDraft}
+              onValueChange={(value: string): void => {
+                setSuppressionReasonDraft(value as FilemakerEmailCampaignSuppressionReason);
+              }}
+              options={SUPPRESSION_REASON_OPTIONS}
+              placeholder='Select suppression reason'
+              size='sm'
+              ariaLabel='Suppression reason'
+              title='Suppression reason'
+            />
+          </FormField>
+          <FormField label='Notes' className='md:col-span-2'>
+            <Textarea
+              value={suppressionNotesDraft}
+              onChange={(event: React.ChangeEvent<HTMLTextAreaElement>): void => {
+                setSuppressionNotesDraft(event.target.value);
+              }}
+              rows={2}
+              placeholder='Optional reason or unsubscribe source'
+              aria-label='Suppression notes'
+            />
+          </FormField>
+        </div>
+        <div className='flex justify-end'>
+          <Button
+            type='button'
+            size='sm'
+            variant='outline'
+            disabled={updateSetting.isPending || !suppressionEmailDraft.trim()}
+            onClick={(): void => {
+              void handleAddSuppressionEntry();
+            }}
+          >
+            Add Suppression
+          </Button>
+        </div>
+        <div className='space-y-2'>
+          {suppressionEntries.length === 0 ? (
+            <div className='text-sm text-gray-500'>
+              No suppressed addresses yet. Bounced addresses will be added automatically.
+            </div>
+          ) : (
+            suppressionEntries.slice(0, 12).map((entry) => (
+              <div
+                key={entry.id}
+                className='flex flex-wrap items-start justify-between gap-3 rounded-md border border-border/60 bg-card/25 p-3'
+              >
+                <div className='space-y-1'>
+                  <div className='text-sm font-medium text-white'>{entry.emailAddress}</div>
+                  <div className='flex flex-wrap gap-2'>
+                    <Badge variant='outline' className='text-[10px] capitalize'>
+                      {entry.reason.replace('_', ' ')}
+                    </Badge>
+                    {entry.actor ? (
+                      <Badge variant='outline' className='text-[10px]'>
+                        {entry.actor}
+                      </Badge>
+                    ) : null}
+                  </div>
+                  <div className='text-[11px] text-gray-500'>
+                    Added: {formatTimestamp(entry.createdAt)}
+                  </div>
+                  {entry.notes ? (
+                    <div className='text-[11px] text-gray-400'>{entry.notes}</div>
+                  ) : null}
+                </div>
+                <Button
+                  type='button'
+                  size='sm'
+                  variant='outline'
+                  disabled={updateSetting.isPending}
+                  onClick={(): void => {
+                    void handleRemoveSuppressionEntry(entry.emailAddress);
+                  }}
+                >
+                  Remove
+                </Button>
+              </div>
+            ))
+          )}
+        </div>
+      </FormSection>
+
       <FormSection title='Audience Preview' className='space-y-4 p-4'>
         <div className='flex flex-wrap gap-2'>
           <Badge variant='outline' className='text-[10px]'>
@@ -1319,6 +1542,9 @@ export function AdminFilemakerCampaignEditPage(): React.JSX.Element {
           </Badge>
           <Badge variant='outline' className='text-[10px]'>
             Excluded: {preview.excludedCount}
+          </Badge>
+          <Badge variant='outline' className='text-[10px]'>
+            Suppressed: {preview.suppressedCount}
           </Badge>
           <Badge variant='outline' className='text-[10px]'>
             Deduped Away: {preview.dedupedCount}
@@ -1369,6 +1595,71 @@ export function AdminFilemakerCampaignEditPage(): React.JSX.Element {
               </div>
             ))
           )}
+        </div>
+      </FormSection>
+
+      <FormSection title='Campaign Analytics' className='space-y-4 p-4'>
+        <div className='flex flex-wrap gap-2'>
+          <Badge variant='outline' className='text-[10px]'>
+            Total Runs: {analytics.totalRuns}
+          </Badge>
+          <Badge variant='outline' className='text-[10px]'>
+            Live Runs: {analytics.liveRunCount}
+          </Badge>
+          <Badge variant='outline' className='text-[10px]'>
+            Dry Runs: {analytics.dryRunCount}
+          </Badge>
+          <Badge variant='outline' className='text-[10px]'>
+            Event Count: {analytics.eventCount}
+          </Badge>
+        </div>
+        <div className='grid gap-3 text-sm text-gray-300 md:grid-cols-2 xl:grid-cols-4'>
+          <div className='rounded-md border border-border/60 bg-card/25 p-3'>
+            <div className='text-[11px] text-gray-500'>Recipients Processed</div>
+            <div className='mt-1 text-lg font-semibold text-white'>
+              {analytics.processedCount}/{analytics.totalRecipients}
+            </div>
+            <div className='text-[11px] text-gray-500'>
+              Completion rate: {analytics.completionRatePercent}%
+            </div>
+          </div>
+          <div className='rounded-md border border-border/60 bg-card/25 p-3'>
+            <div className='text-[11px] text-gray-500'>Delivery Outcome</div>
+            <div className='mt-1 text-lg font-semibold text-white'>
+              {analytics.sentCount} sent
+            </div>
+            <div className='text-[11px] text-gray-500'>
+              Delivery rate: {analytics.deliveryRatePercent}%
+            </div>
+          </div>
+          <div className='rounded-md border border-border/60 bg-card/25 p-3'>
+            <div className='text-[11px] text-gray-500'>Failures</div>
+            <div className='mt-1 text-lg font-semibold text-white'>
+              {analytics.failedCount + analytics.bouncedCount}
+            </div>
+            <div className='text-[11px] text-gray-500'>
+              Bounce rate: {analytics.bounceRatePercent}% • Failure rate: {analytics.failureRatePercent}%
+            </div>
+          </div>
+          <div className='rounded-md border border-border/60 bg-card/25 p-3'>
+            <div className='text-[11px] text-gray-500'>Suppression Impact</div>
+            <div className='mt-1 text-lg font-semibold text-white'>
+              {analytics.suppressionImpactCount}
+            </div>
+            <div className='text-[11px] text-gray-500'>Addresses currently filtered from preview</div>
+          </div>
+        </div>
+        <div className='grid gap-3 text-[11px] text-gray-500 md:grid-cols-3'>
+          <div>
+            Latest run: {analytics.latestRunAt ? formatTimestamp(analytics.latestRunAt) : 'No runs yet'}
+          </div>
+          <div>
+            Latest run status: {analytics.latestRunStatus ?? 'No runs yet'}
+          </div>
+          <div>
+            Latest activity:{' '}
+            {analytics.latestActivityAt ? formatTimestamp(analytics.latestActivityAt) : 'No campaign activity yet'}
+          </div>
         </div>
       </FormSection>
 

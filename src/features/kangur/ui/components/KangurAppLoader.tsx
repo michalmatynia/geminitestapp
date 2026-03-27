@@ -5,6 +5,8 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import type { CSSProperties } from 'react';
 
 import { KangurHomeLogo } from '@/features/kangur/ui/components/KangurHomeLogo';
+import { safeHtml } from '@/shared/lib/security/safe-html';
+import { safeClearInterval, safeSetInterval } from '@/shared/lib/timers';
 
 type KangurAppLoaderProps = {
   offsetTopBar?: boolean;
@@ -134,7 +136,7 @@ export function KangurAppLoader({
       if (cancelled) return;
       cancelled = true;
       if (maxWaitTimeoutId !== null) globalThis.clearTimeout(maxWaitTimeoutId);
-      if (pollIntervalId !== null) globalThis.clearInterval(pollIntervalId);
+      if (pollIntervalId !== null) safeClearInterval(pollIntervalId);
       if (observer) observer.disconnect();
       setColorPhase((prev) => (prev === 'color' ? prev : 'paint'));
       paintTimeoutId = globalThis.setTimeout(() => {
@@ -159,7 +161,7 @@ export function KangurAppLoader({
         }, maxWaitMs);
       } else {
         // Fallback: throttled poll for CSS variables when observers are unavailable.
-        pollIntervalId = globalThis.setInterval(() => {
+        pollIntervalId = safeSetInterval(() => {
           const now =
             typeof performance !== 'undefined' && typeof performance.now === 'function'
               ? performance.now()
@@ -174,7 +176,7 @@ export function KangurAppLoader({
     return () => {
       cancelled = true;
       if (maxWaitTimeoutId !== null) globalThis.clearTimeout(maxWaitTimeoutId);
-      if (pollIntervalId !== null) globalThis.clearInterval(pollIntervalId);
+      if (pollIntervalId !== null) safeClearInterval(pollIntervalId);
       if (observer) observer.disconnect();
       if (paintTimeoutId !== null) globalThis.clearTimeout(paintTimeoutId);
     };
@@ -250,7 +252,7 @@ export function KangurAppLoader({
 
   return (
     <>
-      <style dangerouslySetInnerHTML={{ __html: '@keyframes kangur-loader-pulse { 0%, 100% { transform: scale(0.985); } 50% { transform: scale(1); } }' }} />
+      <style dangerouslySetInnerHTML={{ __html: safeHtml('@keyframes kangur-loader-pulse { 0%, 100% { transform: scale(0.985); } 50% { transform: scale(1); } }') }} />
       <div
         aria-busy='true'
         aria-live='polite'

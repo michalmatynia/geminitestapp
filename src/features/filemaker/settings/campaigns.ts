@@ -15,6 +15,9 @@ import type {
   FilemakerEmailCampaignDelivery,
   FilemakerEmailCampaignDeliveryRegistry,
   FilemakerEmailCampaignDeliveryStatus,
+  FilemakerEmailCampaignEvent,
+  FilemakerEmailCampaignEventRegistry,
+  FilemakerEmailCampaignEventType,
   FilemakerEmailCampaignLifecycleStatus,
   FilemakerEmailCampaignLaunchMode,
   FilemakerEmailCampaignLaunchRule,
@@ -23,6 +26,9 @@ import type {
   FilemakerEmailCampaignRun,
   FilemakerEmailCampaignRunRegistry,
   FilemakerEmailCampaignRunStatus,
+  FilemakerEmailCampaignSuppressionEntry,
+  FilemakerEmailCampaignSuppressionReason,
+  FilemakerEmailCampaignSuppressionRegistry,
   FilemakerPartyKind,
   FilemakerPartyReference,
 } from '../types';
@@ -42,6 +48,7 @@ export type FilemakerEmailCampaignAudienceRecipient = {
 export type FilemakerEmailCampaignAudiencePreview = {
   recipients: FilemakerEmailCampaignAudienceRecipient[];
   excludedCount: number;
+  suppressedCount: number;
   dedupedCount: number;
   totalLinkedEmailCount: number;
   sampleRecipients: FilemakerEmailCampaignAudienceRecipient[];
@@ -60,9 +67,33 @@ export type FilemakerEmailCampaignRunMetrics = {
   skippedCount: number;
 };
 
+export type FilemakerEmailCampaignAnalytics = {
+  totalRuns: number;
+  liveRunCount: number;
+  dryRunCount: number;
+  totalRecipients: number;
+  processedCount: number;
+  queuedCount: number;
+  sentCount: number;
+  failedCount: number;
+  bouncedCount: number;
+  skippedCount: number;
+  completionRatePercent: number;
+  deliveryRatePercent: number;
+  failureRatePercent: number;
+  bounceRatePercent: number;
+  suppressionImpactCount: number;
+  latestRunStatus: FilemakerEmailCampaignRunStatus | null;
+  latestRunAt: string | null;
+  latestActivityAt: string | null;
+  eventCount: number;
+};
+
 const FILEMAKER_CAMPAIGN_VERSION = 1;
 const FILEMAKER_CAMPAIGN_RUN_VERSION = 1;
 const FILEMAKER_CAMPAIGN_DELIVERY_VERSION = 1;
+const FILEMAKER_CAMPAIGN_EVENT_VERSION = 1;
+const FILEMAKER_CAMPAIGN_SUPPRESSION_VERSION = 1;
 const DEFAULT_TIMEZONE = 'UTC';
 const FILEMAKER_ALLOWED_EMAIL_STATUSES: ReadonlyArray<FilemakerEmail['status']> = [
   'active',
@@ -136,6 +167,32 @@ const normalizeStringList = (value: unknown): string[] => {
   return Array.from(unique);
 };
 
+const parseOptionalBoundedInteger = (
+  value: unknown,
+  minimum: number,
+  maximum: number
+): number | null => {
+  if (value == null || value === '') return null;
+  const parsed = Number(value);
+  if (!Number.isFinite(parsed) || parsed < minimum || parsed > maximum) {
+    return null;
+  }
+  return Math.trunc(parsed);
+};
+
+const parseOptionalBoundedNumber = (
+  value: unknown,
+  minimum: number,
+  maximum: number
+): number | null => {
+  if (value == null || value === '') return null;
+  const parsed = Number(value);
+  if (!Number.isFinite(parsed) || parsed < minimum || parsed > maximum) {
+    return null;
+  }
+  return parsed;
+};
+
 const normalizePartyKinds = (value: unknown): FilemakerPartyKind[] => {
   const resolved = normalizeStringList(value).filter(
     (entry): entry is FilemakerPartyKind => entry === 'person' || entry === 'organization'
@@ -197,8 +254,6 @@ const normalizeCampaignRecurringRule = (
   const weekdays = normalizeStringList(record['weekdays'])
     .map((entry: string): number => Number(entry))
     .filter((entry: number): boolean => Number.isInteger(entry) && entry >= 0 && entry <= 6);
-  const hourStartRaw = Number(record['hourStart']);
-  const hourEndRaw = Number(record['hourEnd']);
 
   return {
     frequency:
@@ -207,14 +262,8 @@ const normalizeCampaignRecurringRule = (
         : defaults.frequency,
     interval: Number.isFinite(rawInterval) && rawInterval > 0 ? Math.trunc(rawInterval) : 1,
     weekdays: weekdays.length > 0 ? weekdays : defaults.weekdays,
-    hourStart:
-      Number.isFinite(hourStartRaw) && hourStartRaw >= 0 && hourStartRaw <= 23
-        ? Math.trunc(hourStartRaw)
-        : null,
-    hourEnd:
-      Number.isFinite(hourEndRaw) && hourEndRaw >= 0 && hourEndRaw <= 23
-        ? Math.trunc(hourEndRaw)
-        : null,
+    hourStart: parseOptionalBoundedInteger(record['hourStart'], 0, 23),
+    hourEnd: parseOptionalBoundedInteger(record['hourEnd'], 0, 23),
   };
 };
 
@@ -224,9 +273,6 @@ const normalizeCampaignLaunchRule = (value: unknown): FilemakerEmailCampaignLaun
   const record = value as Record<string, unknown>;
   const mode = normalizeString(record['mode']).toLowerCase();
   const minAudienceSizeRaw = Number(record['minAudienceSize']);
-  const allowedHourStartRaw = Number(record['allowedHourStart']);
-  const allowedHourEndRaw = Number(record['allowedHourEnd']);
-  const pauseOnBounceRatePercentRaw = Number(record['pauseOnBounceRatePercent']);
 
   return {
     mode:
@@ -241,22 +287,13 @@ const normalizeCampaignLaunchRule = (value: unknown): FilemakerEmailCampaignLaun
         : defaults.minAudienceSize,
     requireApproval: Boolean(record['requireApproval']),
     onlyWeekdays: Boolean(record['onlyWeekdays']),
-    allowedHourStart:
-      Number.isFinite(allowedHourStartRaw) &&
-      allowedHourStartRaw >= 0 &&
-      allowedHourStartRaw <= 23
-        ? Math.trunc(allowedHourStartRaw)
-        : null,
-    allowedHourEnd:
-      Number.isFinite(allowedHourEndRaw) && allowedHourEndRaw >= 0 && allowedHourEndRaw <= 23
-        ? Math.trunc(allowedHourEndRaw)
-        : null,
-    pauseOnBounceRatePercent:
-      Number.isFinite(pauseOnBounceRatePercentRaw) &&
-      pauseOnBounceRatePercentRaw >= 0 &&
-      pauseOnBounceRatePercentRaw <= 100
-        ? pauseOnBounceRatePercentRaw
-        : null,
+    allowedHourStart: parseOptionalBoundedInteger(record['allowedHourStart'], 0, 23),
+    allowedHourEnd: parseOptionalBoundedInteger(record['allowedHourEnd'], 0, 23),
+    pauseOnBounceRatePercent: parseOptionalBoundedNumber(
+      record['pauseOnBounceRatePercent'],
+      0,
+      100
+    ),
     timezone: normalizeString(record['timezone']) || DEFAULT_TIMEZONE,
   };
 };
@@ -449,6 +486,106 @@ export const createDefaultFilemakerEmailCampaignDeliveryRegistry =
     deliveries: [],
   });
 
+export const createFilemakerEmailCampaignEvent = (
+  input: Partial<FilemakerEmailCampaignEvent> &
+    Pick<FilemakerEmailCampaignEvent, 'campaignId' | 'type' | 'message'>
+): FilemakerEmailCampaignEvent => {
+  const now = new Date().toISOString();
+  const normalizedType = normalizeString(input.type).toLowerCase();
+  return {
+    id:
+      normalizeString(input.id) ||
+      `filemaker-email-campaign-event-${toIdToken(
+        `${input.campaignId}-${input.runId || 'campaign'}-${input.deliveryId || 'timeline'}-${
+          input.type
+        }-${now}`
+      ) || 'entry'}`,
+    campaignId: normalizeString(input.campaignId),
+    runId: normalizeString(input.runId) || null,
+    deliveryId: normalizeString(input.deliveryId) || null,
+    type:
+      normalizedType === 'created' ||
+      normalizedType === 'updated' ||
+      normalizedType === 'launched' ||
+      normalizedType === 'processing_started' ||
+      normalizedType === 'delivery_sent' ||
+      normalizedType === 'delivery_failed' ||
+      normalizedType === 'delivery_bounced' ||
+      normalizedType === 'status_changed' ||
+      normalizedType === 'paused' ||
+      normalizedType === 'completed' ||
+      normalizedType === 'failed' ||
+      normalizedType === 'cancelled'
+        ? (normalizedType as FilemakerEmailCampaignEventType)
+        : 'status_changed',
+    message: normalizeString(input.message),
+    actor: normalizeString(input.actor) || null,
+    runStatus:
+      normalizeString(input.runStatus).toLowerCase() === 'pending' ||
+      normalizeString(input.runStatus).toLowerCase() === 'queued' ||
+      normalizeString(input.runStatus).toLowerCase() === 'running' ||
+      normalizeString(input.runStatus).toLowerCase() === 'completed' ||
+      normalizeString(input.runStatus).toLowerCase() === 'failed' ||
+      normalizeString(input.runStatus).toLowerCase() === 'cancelled'
+        ? (normalizeString(input.runStatus).toLowerCase() as FilemakerEmailCampaignRunStatus)
+        : null,
+    deliveryStatus:
+      normalizeString(input.deliveryStatus).toLowerCase() === 'queued' ||
+      normalizeString(input.deliveryStatus).toLowerCase() === 'sent' ||
+      normalizeString(input.deliveryStatus).toLowerCase() === 'failed' ||
+      normalizeString(input.deliveryStatus).toLowerCase() === 'skipped' ||
+      normalizeString(input.deliveryStatus).toLowerCase() === 'bounced'
+        ? (
+            normalizeString(input.deliveryStatus).toLowerCase() as FilemakerEmailCampaignDeliveryStatus
+          )
+        : null,
+    createdAt: input.createdAt ?? now,
+    updatedAt: input.updatedAt ?? now,
+  };
+};
+
+export const createDefaultFilemakerEmailCampaignEventRegistry =
+  (): FilemakerEmailCampaignEventRegistry => ({
+    version: FILEMAKER_CAMPAIGN_EVENT_VERSION,
+    events: [],
+  });
+
+export const createFilemakerEmailCampaignSuppressionEntry = (
+  input: Partial<FilemakerEmailCampaignSuppressionEntry> &
+    Pick<FilemakerEmailCampaignSuppressionEntry, 'emailAddress' | 'reason'>
+): FilemakerEmailCampaignSuppressionEntry => {
+  const now = new Date().toISOString();
+  const normalizedReason = normalizeString(input.reason).toLowerCase();
+  const normalizedEmailAddress = normalizeString(input.emailAddress).toLowerCase();
+  return {
+    id:
+      normalizeString(input.id) ||
+      `filemaker-email-campaign-suppression-${toIdToken(
+        `${normalizedEmailAddress}-${normalizedReason || 'manual'}`
+      ) || 'entry'}`,
+    emailAddress: normalizedEmailAddress,
+    reason:
+      normalizedReason === 'manual_block' ||
+      normalizedReason === 'unsubscribed' ||
+      normalizedReason === 'bounced'
+        ? (normalizedReason as FilemakerEmailCampaignSuppressionReason)
+        : 'manual_block',
+    actor: normalizeString(input.actor) || null,
+    notes: normalizeString(input.notes) || null,
+    campaignId: normalizeString(input.campaignId) || null,
+    runId: normalizeString(input.runId) || null,
+    deliveryId: normalizeString(input.deliveryId) || null,
+    createdAt: input.createdAt ?? now,
+    updatedAt: input.updatedAt ?? now,
+  };
+};
+
+export const createDefaultFilemakerEmailCampaignSuppressionRegistry =
+  (): FilemakerEmailCampaignSuppressionRegistry => ({
+    version: FILEMAKER_CAMPAIGN_SUPPRESSION_VERSION,
+    entries: [],
+  });
+
 export const normalizeFilemakerEmailCampaignDeliveryRegistry = (
   value: FilemakerEmailCampaignDeliveryRegistry | null | undefined
 ): FilemakerEmailCampaignDeliveryRegistry => {
@@ -511,6 +648,106 @@ export const normalizeFilemakerEmailCampaignDeliveryRegistry = (
   return {
     version: FILEMAKER_CAMPAIGN_DELIVERY_VERSION,
     deliveries: deliveries.sort((left, right) => {
+      const leftTime = Date.parse(left.createdAt ?? '');
+      const rightTime = Date.parse(right.createdAt ?? '');
+      return (Number.isNaN(rightTime) ? 0 : rightTime) - (Number.isNaN(leftTime) ? 0 : leftTime);
+    }),
+  };
+};
+
+export const normalizeFilemakerEmailCampaignEventRegistry = (
+  value: FilemakerEmailCampaignEventRegistry | null | undefined
+): FilemakerEmailCampaignEventRegistry => {
+  if (!value || typeof value !== 'object') {
+    return createDefaultFilemakerEmailCampaignEventRegistry();
+  }
+  const record = value as Record<string, unknown>;
+  const rawEvents = Array.isArray(record['events']) ? record['events'] : [];
+  const usedIds = new Set<string>();
+  const events = rawEvents.map((entry: unknown, index: number): FilemakerEmailCampaignEvent => {
+    const event = createFilemakerEmailCampaignEvent(
+      entry && typeof entry === 'object'
+        ? ({
+            ...(entry as Partial<FilemakerEmailCampaignEvent>),
+            campaignId:
+              normalizeString((entry as Record<string, unknown>)['campaignId']) ||
+              `campaign-${index + 1}`,
+            type:
+              (normalizeString((entry as Record<string, unknown>)['type']).toLowerCase() as
+                | FilemakerEmailCampaignEventType
+                | '') || 'status_changed',
+            message:
+              normalizeString((entry as Record<string, unknown>)['message']) ||
+              `Campaign event ${index + 1}`,
+          } as Partial<FilemakerEmailCampaignEvent> &
+            Pick<FilemakerEmailCampaignEvent, 'campaignId' | 'type' | 'message'>)
+        : {
+            campaignId: `campaign-${index + 1}`,
+            type: 'status_changed',
+            message: `Campaign event ${index + 1}`,
+          }
+    );
+    const baseId = event.id;
+    let resolvedId = baseId;
+    if (usedIds.has(resolvedId)) {
+      let suffix = 2;
+      while (usedIds.has(`${baseId}-${suffix}`)) {
+        suffix += 1;
+      }
+      resolvedId = `${baseId}-${suffix}`;
+    }
+    usedIds.add(resolvedId);
+    return {
+      ...event,
+      id: resolvedId,
+    };
+  });
+
+  return {
+    version: FILEMAKER_CAMPAIGN_EVENT_VERSION,
+    events: events.sort((left, right) => {
+      const leftTime = Date.parse(left.createdAt ?? '');
+      const rightTime = Date.parse(right.createdAt ?? '');
+      return (Number.isNaN(rightTime) ? 0 : rightTime) - (Number.isNaN(leftTime) ? 0 : leftTime);
+    }),
+  };
+};
+
+export const normalizeFilemakerEmailCampaignSuppressionRegistry = (
+  value: FilemakerEmailCampaignSuppressionRegistry | null | undefined
+): FilemakerEmailCampaignSuppressionRegistry => {
+  if (!value || typeof value !== 'object') {
+    return createDefaultFilemakerEmailCampaignSuppressionRegistry();
+  }
+  const record = value as Record<string, unknown>;
+  const rawEntries = Array.isArray(record['entries']) ? record['entries'] : [];
+  const entriesByEmail = new Map<string, FilemakerEmailCampaignSuppressionEntry>();
+
+  rawEntries.forEach((entry: unknown, index: number): void => {
+    const suppression = createFilemakerEmailCampaignSuppressionEntry(
+      entry && typeof entry === 'object'
+        ? ({
+            ...(entry as Partial<FilemakerEmailCampaignSuppressionEntry>),
+            emailAddress:
+              normalizeString((entry as Record<string, unknown>)['emailAddress']) ||
+              `recipient-${index + 1}@example.com`,
+            reason:
+              (normalizeString((entry as Record<string, unknown>)['reason']).toLowerCase() as
+                | FilemakerEmailCampaignSuppressionReason
+                | '') || 'manual_block',
+          } as Partial<FilemakerEmailCampaignSuppressionEntry> &
+            Pick<FilemakerEmailCampaignSuppressionEntry, 'emailAddress' | 'reason'>)
+        : {
+            emailAddress: `recipient-${index + 1}@example.com`,
+            reason: 'manual_block',
+          }
+    );
+    entriesByEmail.set(suppression.emailAddress, suppression);
+  });
+
+  return {
+    version: FILEMAKER_CAMPAIGN_SUPPRESSION_VERSION,
+    entries: Array.from(entriesByEmail.values()).sort((left, right) => {
       const leftTime = Date.parse(left.createdAt ?? '');
       const rightTime = Date.parse(right.createdAt ?? '');
       return (Number.isNaN(rightTime) ? 0 : rightTime) - (Number.isNaN(leftTime) ? 0 : leftTime);
@@ -589,6 +826,36 @@ export const toPersistedFilemakerEmailCampaignDeliveryRegistry = (
   value: FilemakerEmailCampaignDeliveryRegistry
 ): FilemakerEmailCampaignDeliveryRegistry => normalizeFilemakerEmailCampaignDeliveryRegistry(value);
 
+export const parseFilemakerEmailCampaignEventRegistry = (
+  raw: string | null | undefined
+): FilemakerEmailCampaignEventRegistry => {
+  const parsed = parseJsonRecord(raw, 'Invalid Filemaker email campaign event JSON payload.');
+  return normalizeFilemakerEmailCampaignEventRegistry(
+    parsed as FilemakerEmailCampaignEventRegistry | null | undefined
+  );
+};
+
+export const toPersistedFilemakerEmailCampaignEventRegistry = (
+  value: FilemakerEmailCampaignEventRegistry
+): FilemakerEmailCampaignEventRegistry => normalizeFilemakerEmailCampaignEventRegistry(value);
+
+export const parseFilemakerEmailCampaignSuppressionRegistry = (
+  raw: string | null | undefined
+): FilemakerEmailCampaignSuppressionRegistry => {
+  const parsed = parseJsonRecord(
+    raw,
+    'Invalid Filemaker email campaign suppression JSON payload.'
+  );
+  return normalizeFilemakerEmailCampaignSuppressionRegistry(
+    parsed as FilemakerEmailCampaignSuppressionRegistry | null | undefined
+  );
+};
+
+export const toPersistedFilemakerEmailCampaignSuppressionRegistry = (
+  value: FilemakerEmailCampaignSuppressionRegistry
+): FilemakerEmailCampaignSuppressionRegistry =>
+  normalizeFilemakerEmailCampaignSuppressionRegistry(value);
+
 export const getFilemakerEmailCampaignDeliveriesForRun = (
   registry: FilemakerEmailCampaignDeliveryRegistry,
   runId: string
@@ -598,6 +865,59 @@ export const getFilemakerEmailCampaignDeliveriesForRun = (
   return registry.deliveries.filter(
     (delivery: FilemakerEmailCampaignDelivery): boolean => delivery.runId === normalizedRunId
   );
+};
+
+export const getFilemakerEmailCampaignEventsForRun = (
+  registry: FilemakerEmailCampaignEventRegistry,
+  runId: string
+): FilemakerEmailCampaignEvent[] => {
+  const normalizedRunId = normalizeString(runId);
+  if (!normalizedRunId) return [];
+  return registry.events.filter(
+    (event: FilemakerEmailCampaignEvent): boolean => event.runId === normalizedRunId
+  );
+};
+
+export const getFilemakerEmailCampaignSuppressionByAddress = (
+  registry: FilemakerEmailCampaignSuppressionRegistry,
+  emailAddress: string
+): FilemakerEmailCampaignSuppressionEntry | null => {
+  const normalizedEmailAddress = normalizeString(emailAddress).toLowerCase();
+  if (!normalizedEmailAddress) return null;
+  return (
+    registry.entries.find(
+      (entry: FilemakerEmailCampaignSuppressionEntry): boolean =>
+        entry.emailAddress === normalizedEmailAddress
+    ) ?? null
+  );
+};
+
+export const upsertFilemakerEmailCampaignSuppressionEntry = (input: {
+  registry: FilemakerEmailCampaignSuppressionRegistry;
+  entry: FilemakerEmailCampaignSuppressionEntry;
+}): FilemakerEmailCampaignSuppressionRegistry =>
+  normalizeFilemakerEmailCampaignSuppressionRegistry({
+    version: input.registry.version,
+    entries: input.registry.entries
+      .filter(
+        (existing: FilemakerEmailCampaignSuppressionEntry): boolean =>
+          existing.emailAddress !== input.entry.emailAddress
+      )
+      .concat(input.entry),
+  });
+
+export const removeFilemakerEmailCampaignSuppressionEntryByAddress = (input: {
+  registry: FilemakerEmailCampaignSuppressionRegistry;
+  emailAddress: string;
+}): FilemakerEmailCampaignSuppressionRegistry => {
+  const normalizedEmailAddress = normalizeString(input.emailAddress).toLowerCase();
+  return normalizeFilemakerEmailCampaignSuppressionRegistry({
+    version: input.registry.version,
+    entries: input.registry.entries.filter(
+      (entry: FilemakerEmailCampaignSuppressionEntry): boolean =>
+        entry.emailAddress !== normalizedEmailAddress
+    ),
+  });
 };
 
 export const summarizeFilemakerEmailCampaignRunDeliveries = (
@@ -757,11 +1077,16 @@ const matchesLocationFilter = (
 
 export const resolveFilemakerEmailCampaignAudiencePreview = (
   database: FilemakerDatabase,
-  audience: FilemakerEmailCampaignAudienceRule
+  audience: FilemakerEmailCampaignAudienceRule,
+  suppressionRegistry?: FilemakerEmailCampaignSuppressionRegistry | null
 ): FilemakerEmailCampaignAudiencePreview => {
   const normalizedAudience = normalizeCampaignAudienceRule(audience);
+  const normalizedSuppressionRegistry = normalizeFilemakerEmailCampaignSuppressionRegistry(
+    suppressionRegistry
+  );
   const recipients: FilemakerEmailCampaignAudienceRecipient[] = [];
   let excludedCount = 0;
+  let suppressedCount = 0;
   let totalLinkedEmailCount = 0;
   const organizationsByEventId = new Map<string, Set<string>>();
 
@@ -785,6 +1110,11 @@ export const resolveFilemakerEmailCampaignAudiencePreview = (
     }
     if (!normalizedAudience.emailStatuses.includes(email.status)) {
       excludedCount += 1;
+      return;
+    }
+    if (getFilemakerEmailCampaignSuppressionByAddress(normalizedSuppressionRegistry, email.email)) {
+      excludedCount += 1;
+      suppressedCount += 1;
       return;
     }
     if (
@@ -887,9 +1217,147 @@ export const resolveFilemakerEmailCampaignAudiencePreview = (
   return {
     recipients: limitedRecipients,
     excludedCount,
+    suppressedCount,
     dedupedCount: recipients.length - dedupedRecipients.length,
     totalLinkedEmailCount,
     sampleRecipients: limitedRecipients.slice(0, 8),
+  };
+};
+
+const roundPercentage = (numerator: number, denominator: number): number => {
+  if (!Number.isFinite(numerator) || !Number.isFinite(denominator) || denominator <= 0) {
+    return 0;
+  }
+  return Math.round((numerator / denominator) * 1000) / 10;
+};
+
+export const summarizeFilemakerEmailCampaignAnalytics = (input: {
+  campaign: FilemakerEmailCampaign;
+  database: FilemakerDatabase;
+  runRegistry: FilemakerEmailCampaignRunRegistry;
+  deliveryRegistry: FilemakerEmailCampaignDeliveryRegistry;
+  eventRegistry?: FilemakerEmailCampaignEventRegistry | null;
+  suppressionRegistry?: FilemakerEmailCampaignSuppressionRegistry | null;
+}): FilemakerEmailCampaignAnalytics => {
+  const runs = input.runRegistry.runs.filter(
+    (run: FilemakerEmailCampaignRun): boolean => run.campaignId === input.campaign.id
+  );
+  const campaignEvents = normalizeFilemakerEmailCampaignEventRegistry(
+    input.eventRegistry
+  ).events.filter((event: FilemakerEmailCampaignEvent): boolean => event.campaignId === input.campaign.id);
+  const preview = resolveFilemakerEmailCampaignAudiencePreview(
+    input.database,
+    input.campaign.audience,
+    input.suppressionRegistry
+  );
+
+  const deliveryTotals = runs.reduce(
+    (
+      totals: {
+        totalRecipients: number;
+        sentCount: number;
+        failedCount: number;
+        bouncedCount: number;
+        skippedCount: number;
+        queuedCount: number;
+      },
+      run: FilemakerEmailCampaignRun
+    ) => {
+      const deliveries = getFilemakerEmailCampaignDeliveriesForRun(input.deliveryRegistry, run.id);
+      if (deliveries.length === 0) {
+        const queuedCount = Math.max(
+          0,
+          run.recipientCount - run.deliveredCount - run.failedCount - run.skippedCount
+        );
+        totals.totalRecipients += run.recipientCount;
+        totals.sentCount += run.deliveredCount;
+        totals.failedCount += run.failedCount;
+        totals.skippedCount += run.skippedCount;
+        totals.queuedCount += queuedCount;
+        return totals;
+      }
+
+      totals.totalRecipients += deliveries.length;
+      deliveries.forEach((delivery: FilemakerEmailCampaignDelivery): void => {
+        if (delivery.status === 'sent') {
+          totals.sentCount += 1;
+          return;
+        }
+        if (delivery.status === 'failed') {
+          totals.failedCount += 1;
+          return;
+        }
+        if (delivery.status === 'bounced') {
+          totals.bouncedCount += 1;
+          return;
+        }
+        if (delivery.status === 'skipped') {
+          totals.skippedCount += 1;
+          return;
+        }
+        if (delivery.status === 'queued') {
+          totals.queuedCount += 1;
+        }
+      });
+      return totals;
+    },
+    {
+      totalRecipients: 0,
+      sentCount: 0,
+      failedCount: 0,
+      bouncedCount: 0,
+      skippedCount: 0,
+      queuedCount: 0,
+    }
+  );
+
+  const processedCount =
+    deliveryTotals.sentCount +
+    deliveryTotals.failedCount +
+    deliveryTotals.bouncedCount +
+    deliveryTotals.skippedCount;
+
+  const latestRun =
+    [...runs].sort(
+      (left: FilemakerEmailCampaignRun, right: FilemakerEmailCampaignRun): number =>
+        Date.parse(right.createdAt ?? '') - Date.parse(left.createdAt ?? '')
+    )[0] ?? null;
+
+  const latestActivitySource = [
+    latestRun?.updatedAt ?? latestRun?.createdAt ?? null,
+    ...campaignEvents.map((event: FilemakerEmailCampaignEvent) => event.createdAt ?? null),
+  ]
+    .filter((value: string | null): value is string => Boolean(value))
+    .sort((left: string, right: string): number => Date.parse(right) - Date.parse(left));
+
+  return {
+    totalRuns: runs.length,
+    liveRunCount: runs.filter((run: FilemakerEmailCampaignRun): boolean => run.mode === 'live')
+      .length,
+    dryRunCount: runs.filter((run: FilemakerEmailCampaignRun): boolean => run.mode === 'dry_run')
+      .length,
+    totalRecipients: deliveryTotals.totalRecipients,
+    processedCount,
+    queuedCount: deliveryTotals.queuedCount,
+    sentCount: deliveryTotals.sentCount,
+    failedCount: deliveryTotals.failedCount,
+    bouncedCount: deliveryTotals.bouncedCount,
+    skippedCount: deliveryTotals.skippedCount,
+    completionRatePercent: roundPercentage(processedCount, deliveryTotals.totalRecipients),
+    deliveryRatePercent: roundPercentage(deliveryTotals.sentCount, deliveryTotals.totalRecipients),
+    failureRatePercent: roundPercentage(
+      deliveryTotals.failedCount + deliveryTotals.bouncedCount,
+      deliveryTotals.totalRecipients
+    ),
+    bounceRatePercent: roundPercentage(
+      deliveryTotals.bouncedCount,
+      deliveryTotals.totalRecipients
+    ),
+    suppressionImpactCount: preview.suppressedCount,
+    latestRunStatus: latestRun?.status ?? null,
+    latestRunAt: latestRun?.createdAt ?? null,
+    latestActivityAt: latestActivitySource[0] ?? null,
+    eventCount: campaignEvents.length,
   };
 };
 

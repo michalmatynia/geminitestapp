@@ -1,14 +1,18 @@
 'use client';
 
 import React, { useMemo } from 'react';
+import Link from 'next/link';
 
 import { useBaselinkerSettingsState } from '@/features/integrations/hooks/useBaselinkerSettingsState';
+import { useQuickImportBaseOrdersMutation } from '@/features/products/hooks/useProductOrdersImport';
+import { buildBaseOrderQuickImportFeedback } from '@/features/products/utils/base-order-quick-import-feedback';
 import type { LabeledOptionWithDescriptionDto } from '@/shared/contracts/base';
 import {
   Button,
   Input,
   SelectSimple,
   StatusBadge,
+  Alert,
   FormSection,
   FormField,
   CompactEmptyState,
@@ -21,9 +25,18 @@ import {
 } from '@/shared/ui';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
+type QuickImportResultState =
+  | {
+      variant: 'success' | 'error' | 'info';
+      message: string;
+      syncedAt: string | null;
+    }
+  | null;
 
 export function BaselinkerSettings(): React.JSX.Element {
   const { toast } = useToast();
+  const quickImportMutation = useQuickImportBaseOrdersMutation();
+  const [quickImportResult, setQuickImportResult] = React.useState<QuickImportResultState>(null);
   const {
     connections,
     activeConnection,
@@ -52,6 +65,10 @@ export function BaselinkerSettings(): React.JSX.Element {
     [connections]
   );
 
+  React.useEffect(() => {
+    setQuickImportResult(null);
+  }, [activeConnection?.id]);
+
   const onSave = async (): Promise<void> => {
     try {
       await handleSaveAll();
@@ -61,6 +78,43 @@ export function BaselinkerSettings(): React.JSX.Element {
       toast(error instanceof Error ? error.message : 'Failed to save settings.', {
         variant: 'error',
       });
+    }
+  };
+
+  const handleQuickImport = async (): Promise<void> => {
+    if (!activeConnection) {
+      const message = 'Add a Base.com connection first.';
+      setQuickImportResult({
+        variant: 'error',
+        message,
+        syncedAt: null,
+      });
+      toast(message, { variant: 'error' });
+      return;
+    }
+
+    try {
+      const response = await quickImportMutation.mutateAsync({
+        connectionId: activeConnection.id,
+        limit: 50,
+      });
+      const feedback = buildBaseOrderQuickImportFeedback(response);
+      setQuickImportResult({
+        variant: feedback.variant,
+        message: feedback.message,
+        syncedAt: response.syncedAt,
+      });
+      toast(feedback.message, { variant: feedback.variant });
+    } catch (error) {
+      logClientError(error);
+      const message =
+        error instanceof Error ? error.message : 'Failed to import Base.com orders.';
+      setQuickImportResult({
+        variant: 'error',
+        message,
+        syncedAt: null,
+      });
+      toast(message, { variant: 'error' });
     }
   };
 
@@ -94,19 +148,56 @@ export function BaselinkerSettings(): React.JSX.Element {
                 />
               )}
               <div className='pt-2'>
-                <Button
-                  type='button'
-                  onClick={() => {
-                    void handleBaselinkerTest(activeConnection);
-                  }}
-                  loading={isTesting}
-                  variant='outline'
-                  size='xs'
-                  className='w-full'
-                >
-                  {baselinkerConnected ? 'Re-test Connection' : 'Test Connection'}
-                </Button>
+                <div className='grid gap-2 sm:grid-cols-2'>
+                  <Button
+                    type='button'
+                    onClick={() => {
+                      void handleBaselinkerTest(activeConnection);
+                    }}
+                    loading={isTesting}
+                    variant='outline'
+                    size='xs'
+                    className='w-full'
+                  >
+                    {baselinkerConnected ? 'Re-test Connection' : 'Test Connection'}
+                  </Button>
+                  <Button
+                    type='button'
+                    onClick={() => {
+                      void handleQuickImport();
+                    }}
+                    loading={quickImportMutation.isPending}
+                    variant='default'
+                    size='xs'
+                    className='w-full'
+                    disabled={!activeConnection?.hasBaseApiToken}
+                  >
+                    Import Latest Orders
+                  </Button>
+                </div>
               </div>
+              {quickImportResult ? (
+                <Alert
+                  variant={quickImportResult.variant}
+                  title='Latest order import'
+                  className='mt-2 p-3 text-xs'
+                >
+                  <div>{quickImportResult.message}</div>
+                  {quickImportResult.syncedAt ? (
+                    <div className='mt-2 opacity-80'>
+                      Synced at {new Date(quickImportResult.syncedAt).toLocaleString()}.
+                    </div>
+                  ) : null}
+                  <div className='mt-2'>
+                    <Link
+                      href='/admin/products/orders-import'
+                      className='underline underline-offset-4 hover:opacity-90'
+                    >
+                      Open detailed importer
+                    </Link>
+                  </div>
+                </Alert>
+              ) : null}
             </Card>
 
             <div className='space-y-4'>

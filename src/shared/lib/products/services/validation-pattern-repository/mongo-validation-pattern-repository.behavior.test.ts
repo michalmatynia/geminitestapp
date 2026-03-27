@@ -271,6 +271,273 @@ describe('mongoValidationPatternRepository behavior', () => {
     });
   });
 
+  it('lists patterns, resolves valid ids, and ignores invalid ids', async () => {
+    patternToArrayMock.mockResolvedValueOnce([
+      createDoc({
+        locale: '',
+        replacementFields: ['sku', 'name', 'sku'],
+        runtimeType: 'unknown',
+        runtimeConfig: '   ',
+        launchFlags: ' gi ',
+        semanticAuditHistory: [{ source: 'manual_save', trigger: 'create', changedAt: 'bad-date' }],
+      }),
+    ]);
+    patternFindOneMock.mockResolvedValueOnce(createDoc());
+
+    const listed = await mongoValidationPatternRepository.listPatterns();
+    expect(patternFindMock).toHaveBeenCalledWith({});
+    expect(listed[0]).toEqual(
+      expect.objectContaining({
+        id: patternId,
+        locale: '',
+        replacementFields: ['sku'],
+        runtimeType: 'none',
+        runtimeConfig: null,
+        launchFlags: 'gi',
+      })
+    );
+
+    await expect(mongoValidationPatternRepository.getPatternById('bad-id')).resolves.toBeNull();
+    await expect(mongoValidationPatternRepository.getPatternById(patternId)).resolves.toEqual(
+      expect.objectContaining({ id: patternId, label: 'Price from latest product' })
+    );
+  });
+
+  it('throws when updating missing patterns and normalizes successful updates with semantic audit history', async () => {
+    patternFindOneMock.mockResolvedValueOnce(null);
+    await expect(
+      mongoValidationPatternRepository.updatePattern(patternId, {
+        label: 'Missing pattern',
+      })
+    ).rejects.toMatchObject({
+      code: 'NOT_FOUND',
+      meta: expect.objectContaining({ patternId }),
+    });
+    patternUpdateOneMock.mockClear();
+
+    const currentRow = createDoc({
+      semanticState: {
+        version: 2,
+        operation: 'mirror_latest_field',
+        sourceField: 'name',
+        targetField: 'price',
+      },
+      semanticAuditHistory: [],
+      updatedAt: new Date('2026-03-19T12:00:00.000Z'),
+    });
+    const updatedRow = createDoc({
+      label: 'Updated label',
+      locale: 'pl',
+      replacementValue: 'replacement',
+      replacementFields: ['name'],
+      replacementAppliesToScopes: ['product_edit'],
+      runtimeEnabled: true,
+      runtimeType: 'database_query',
+      runtimeConfig: 'select *',
+      postAcceptBehavior: 'stop_after_accept',
+      denyBehaviorOverride: 'ask_again',
+      validationDebounceMs: 30_000,
+      sequenceGroupId: 'group-a',
+      sequenceGroupLabel: 'Group A',
+      sequenceGroupDebounceMs: 30_000,
+      sequence: 5,
+      chainMode: 'stop_on_replace',
+      maxExecutions: 20,
+      passOutputToNext: false,
+      launchEnabled: true,
+      launchAppliesToScopes: ['product_create'],
+      launchScopeBehavior: 'condition_only',
+      launchSourceMode: 'form_field',
+      launchSourceField: 'launchField',
+      launchOperator: 'regex',
+      launchValue: 'needle',
+      launchFlags: 'gi',
+      appliesToScopes: ['draft_template'],
+      semanticState: {
+        version: 2,
+        operation: 'mirror_latest_field',
+        sourceField: 'description',
+        targetField: 'price',
+      },
+      semanticAudit: {
+        source: 'import',
+        trigger: 'update',
+        transition: 'updated',
+        previous: {
+          version: 2,
+          operation: 'mirror_latest_field',
+          sourceField: 'name',
+          targetField: 'price',
+        },
+        current: {
+          version: 2,
+          operation: 'mirror_latest_field',
+          sourceField: 'description',
+          targetField: 'price',
+        },
+        recordedAt: new Date('2026-03-19T12:01:00.000Z').toISOString(),
+      },
+      semanticAuditHistory: [
+        {
+          source: 'manual_save',
+          trigger: 'create',
+          transition: 'recognized',
+          previous: null,
+          current: {
+            version: 2,
+            operation: 'mirror_latest_field',
+            sourceField: 'name',
+            targetField: 'price',
+          },
+          recordedAt: new Date('2026-03-19T12:00:00.000Z').toISOString(),
+        },
+        {
+          source: 'import',
+          trigger: 'update',
+          transition: 'updated',
+          previous: {
+            version: 2,
+            operation: 'mirror_latest_field',
+            sourceField: 'name',
+            targetField: 'price',
+          },
+          current: {
+            version: 2,
+            operation: 'mirror_latest_field',
+            sourceField: 'description',
+            targetField: 'price',
+          },
+          recordedAt: new Date('2026-03-19T12:01:00.000Z').toISOString(),
+        },
+      ],
+      updatedAt: new Date('2026-03-19T12:01:00.000Z'),
+    });
+
+    patternFindOneMock.mockResolvedValueOnce(currentRow).mockResolvedValueOnce(updatedRow);
+    patternUpdateOneMock.mockResolvedValueOnce({ matchedCount: 1 });
+
+    const updated = await mongoValidationPatternRepository.updatePattern(
+      patternId,
+      {
+        label: 'Updated label',
+        locale: ' pl ',
+        replacementValue: ' replacement ',
+        replacementFields: ['name', 'bad-field'],
+        replacementAppliesToScopes: ['product_edit', 'bad'],
+        runtimeEnabled: true,
+        runtimeType: 'database_query',
+        runtimeConfig: '  select *  ',
+        postAcceptBehavior: 'stop_after_accept',
+        denyBehaviorOverride: 'ask_again',
+        validationDebounceMs: 35_000,
+        sequenceGroupId: ' group-a ',
+        sequenceGroupLabel: ' Group A ',
+        sequenceGroupDebounceMs: 45_000,
+        sequence: 5.9,
+        chainMode: 'stop_on_replace',
+        maxExecutions: 999,
+        passOutputToNext: false,
+        launchEnabled: true,
+        launchAppliesToScopes: ['product_create', 'bad'],
+        launchScopeBehavior: 'condition_only',
+        launchSourceMode: 'form_field',
+        launchSourceField: ' launchField ',
+        launchOperator: 'regex',
+        launchValue: 'needle',
+        launchFlags: ' gi ',
+        appliesToScopes: ['draft_template', 'bad'],
+        semanticState: {
+          version: 2,
+          operation: 'mirror_latest_field',
+          sourceField: 'description',
+          targetField: 'price',
+        },
+      },
+      { semanticAuditSource: 'import' }
+    );
+
+    expect(patternUpdateOneMock).toHaveBeenCalledWith({ _id: new ObjectId(patternId) }, expect.any(Object));
+    const updateArg = patternUpdateOneMock.mock.calls[0]?.[1] as Record<string, unknown>;
+    expect(updateArg).toMatchObject({
+      $set: {
+        label: 'Updated label',
+        locale: 'pl',
+        replacementValue: 'replacement',
+        replacementFields: [],
+        replacementAppliesToScopes: ['product_edit'],
+        runtimeEnabled: true,
+        runtimeType: 'database_query',
+        runtimeConfig: 'select *',
+        postAcceptBehavior: 'stop_after_accept',
+        denyBehaviorOverride: 'ask_again',
+        validationDebounceMs: 30_000,
+        sequenceGroupId: 'group-a',
+        sequenceGroupLabel: 'Group A',
+        sequenceGroupDebounceMs: 30_000,
+        sequence: 5,
+        chainMode: 'stop_on_replace',
+        maxExecutions: 20,
+        passOutputToNext: false,
+        launchEnabled: true,
+        launchAppliesToScopes: ['product_create'],
+        launchScopeBehavior: 'condition_only',
+        launchSourceMode: 'form_field',
+        launchSourceField: 'launchField',
+        launchOperator: 'regex',
+        launchValue: 'needle',
+        launchFlags: 'gi',
+        appliesToScopes: ['draft_template'],
+        semanticState: {
+          version: 2,
+          operation: 'mirror_latest_field',
+          sourceField: 'description',
+          targetField: 'price',
+          presetId: null,
+        },
+        semanticAudit: expect.objectContaining({
+          source: 'import',
+          trigger: 'update',
+          previous: expect.objectContaining({
+            operation: 'mirror_latest_field',
+            sourceField: 'name',
+          }),
+          current: expect.objectContaining({
+            operation: 'mirror_latest_field',
+            sourceField: 'description',
+          }),
+        }),
+      },
+      $push: {
+        semanticAuditHistory: {
+          $each: [
+            expect.objectContaining({
+              source: 'import',
+              trigger: 'update',
+              previous: expect.objectContaining({
+                operation: 'mirror_latest_field',
+                sourceField: 'name',
+              }),
+              current: expect.objectContaining({
+                operation: 'mirror_latest_field',
+                sourceField: 'description',
+              }),
+            }),
+          ],
+        },
+      },
+    });
+    expect(updated).toEqual(
+      expect.objectContaining({
+        id: patternId,
+        label: 'Updated label',
+        semanticState: expect.objectContaining({
+          operation: 'mirror_latest_field',
+          sourceField: 'description',
+        }),
+      })
+    );
+  });
+
   it('reads and writes validator settings with normalization and error fallback', async () => {
     settingsFindOneMock.mockResolvedValueOnce({ value: 'false' });
     await expect(mongoValidationPatternRepository.getEnabledByDefault()).resolves.toBe(false);

@@ -90,6 +90,30 @@ export interface UseProductFormValidatorResult {
   setValidatorManuallyChanged: (changed: boolean) => void;
 }
 
+export const resolveLatestProductValidatorSourceValues = ({
+  products,
+  currentProductId,
+  isFetching,
+}: {
+  products: ProductWithImages[] | undefined;
+  currentProductId?: string | null;
+  isFetching: boolean;
+}): Record<string, unknown> | null => {
+  if (isFetching) return null;
+
+  const list = products ?? [];
+  if (list.length === 0) return null;
+
+  const normalizedCurrentProductId =
+    typeof currentProductId === 'string' ? currentProductId.trim() : '';
+
+  const preferred = normalizedCurrentProductId
+    ? (list.find((item: ProductWithImages) => item.id !== normalizedCurrentProductId) ?? null)
+    : (list[0] ?? null);
+
+  return preferred ? { ...preferred } : null;
+};
+
 // --- Main Hook Implementation ---
 
 export function useProductFormValidator(scopeOverride?: string): UseProductFormValidatorResult {
@@ -410,12 +434,12 @@ export function useProductFormValidator(scopeOverride?: string): UseProductFormV
     queryFn: () =>
       productsApi.getProducts({
         page: 1,
-        pageSize: 4,
+        pageSize: 2,
         advancedFilter: undefined,
         baseExported: undefined,
-      }),
+      }, undefined, { fresh: true }),
     enabled: validatorEnabled && needsLatestProductSource,
-    staleTime: 60_000,
+    staleTime: 0,
     meta: {
       source: 'products.hooks.useProductFormValidator.latestProducts',
       operation: 'list',
@@ -426,13 +450,15 @@ export function useProductFormValidator(scopeOverride?: string): UseProductFormV
       description: 'Loads products validator latest product source.'},
   });
 
-  const latestProductValues = useMemo((): Record<string, unknown> | null => {
-    const list = latestProductsQuery.data ?? [];
-    if (list.length === 0) return null;
-    const preferred =
-      list.find((item: ProductWithImages) => item.id !== product?.id) ?? list[0] ?? null;
-    return preferred ? { ...preferred } : null;
-  }, [latestProductsQuery.data, product?.id]);
+  const latestProductValues = useMemo(
+    (): Record<string, unknown> | null =>
+      resolveLatestProductValidatorSourceValues({
+        products: latestProductsQuery.data,
+        currentProductId: product?.id ?? null,
+        isFetching: latestProductsQuery.isFetching,
+      }),
+    [latestProductsQuery.data, latestProductsQuery.isFetching, product?.id]
+  );
 
   useEffect(() => {
     if (lastEntityIdentityRef.current === entityIdentity) return;

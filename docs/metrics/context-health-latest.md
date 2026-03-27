@@ -8,29 +8,26 @@ canonical: true
 ---
 # Context Health Check
 
-Generated at: 2026-03-27T02:51:48.690Z
+Generated at: 2026-03-27T13:59:53.224Z
 
 ## Summary
 
-- Status: WARN
+- Status: PASSED
 - Context files scanned: 244
 - Errors: 0
-- Warnings: 2
+- Warnings: 0
 - Info: 2
 
 ## Rule Breakdown
 
 | Rule | Errors | Warnings | Info |
 | --- | ---: | ---: | ---: |
-| context-oversized | 0 | 2 | 0 |
 | context-missing-split | 0 | 0 | 2 |
 
 ## Issues
 
 | Severity | Rule | Location | Message |
 | --- | --- | --- | --- |
-| WARN | context-oversized | src/features/kangur/ui/context/KangurAuthContext.tsx | Context file is 560 lines (threshold: 500). Consider extracting logic into hooks or splitting the context. |
-| WARN | context-oversized | src/features/kangur/ui/context/KangurLearnerProfileRuntimeContext.tsx | Context file is 501 lines (threshold: 500). Consider extracting logic into hooks or splitting the context. |
 | INFO | context-missing-split | src/features/cms/components/page-builder/PageBuilderPolicyContext.tsx | Context has no companion useXxxState/useXxxActions hooks. Consider the state/actions split pattern for re-render optimization. |
 | INFO | context-missing-split | src/features/kangur/admin/admin-kangur-social/SocialPostContext.tsx | Context has no companion useXxxState/useXxxActions hooks. Consider the state/actions split pattern for re-render optimization. |
 

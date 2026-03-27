@@ -1,6 +1,6 @@
 'use client';
 
-import { usePathname, useSearchParams } from 'next/navigation';
+import { usePathname, useSearchParams, useSelectedLayoutSegments } from 'next/navigation';
 import { useEffect, useMemo } from 'react';
 
 import { useOptionalCmsStorefrontAppearance } from '@/features/cms/public';
@@ -24,6 +24,12 @@ import type { CSSProperties, JSX } from 'react';
 
 const KANGUR_CLIENT_SHELL_ACTIVE_CLASSNAME = 'kangur-client-shell-active';
 
+const normalizeSelectedKangurSegments = (segments: readonly string[]): string[] =>
+  segments
+    .map((segment) => segment.trim())
+    .filter(Boolean)
+    .filter((segment) => !segment.startsWith('(') && !segment.startsWith('@'));
+
 export function KangurFeatureRouteShell({
   basePath = KANGUR_BASE_PATH,
   embedded = false,
@@ -36,6 +42,7 @@ export function KangurFeatureRouteShell({
   const appearance = useOptionalCmsStorefrontAppearance();
   const pathname = usePathname();
   const searchParams = useSearchParams();
+  const selectedLayoutSegments = useSelectedLayoutSegments();
   const normalizedBasePath = normalizeKangurBasePath(basePath);
   const appearanceMode = appearance?.mode ?? 'default';
   const kangurAppearance = useKangurStorefrontAppearance();
@@ -43,10 +50,14 @@ export function KangurFeatureRouteShell({
     typeof window === 'undefined' ? null : window.location.pathname?.trim() || null;
   const browserSearch = typeof window === 'undefined' ? '' : window.location.search || '';
   const resolvedPathname = pathname?.trim() || browserPathname || normalizedBasePath;
-  const slug = useMemo(
-    () => getKangurSlugFromPathname(resolvedPathname, normalizedBasePath),
-    [normalizedBasePath, resolvedPathname]
-  );
+  const slug = useMemo(() => {
+    const selectedSlug = normalizeSelectedKangurSegments(selectedLayoutSegments);
+    if (selectedSlug.length > 0) {
+      return selectedSlug;
+    }
+
+    return getKangurSlugFromPathname(resolvedPathname, normalizedBasePath);
+  }, [normalizedBasePath, resolvedPathname, selectedLayoutSegments]);
   const activeSlug = slug[0] ?? null;
   const effectiveSlug = activeSlug?.trim().toLowerCase() === 'login' ? [] : slug;
   const pageKey = resolveKangurPageKeyFromSlug(activeSlug);

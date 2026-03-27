@@ -40,6 +40,11 @@ export {
   enqueueBaseExportJob,
 } from '@/server/queues/integrations';
 export { startKangurSocialSchedulerQueue } from '@/server/queues/kangur';
+export {
+  startFilemakerEmailCampaignQueue,
+  stopFilemakerEmailCampaignQueue,
+  enqueueFilemakerEmailCampaignRunJob,
+} from '@/server/queues/filemaker';
 
 export {
   getQueueHealth as getGenericQueueStatus,

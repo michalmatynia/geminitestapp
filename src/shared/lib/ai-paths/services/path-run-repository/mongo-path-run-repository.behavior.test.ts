@@ -403,4 +403,271 @@ describe('mongo-path-run-repository behavior', () => {
       runId: 'run_1',
     });
   });
+
+  it('finds runs, claims the next queued run, marks stale runs, and deletes legacy-id runs', async () => {
+    const mocks = createDbMocks();
+    const { mongoPathRunRepository } = await loadModule(mocks.db);
+
+    mocks.runCollection.findOne.mockResolvedValueOnce({
+      _id: 'run_legacy',
+      pathId: 'path_legacy',
+      status: 'queued',
+      createdAt: '2026-03-27T07:00:00.000Z',
+    });
+    await expect(mongoPathRunRepository.findRunById('run_legacy')).resolves.toEqual(
+      expect.objectContaining({ id: 'run_legacy', pathId: 'path_legacy' })
+    );
+
+    mocks.runCollection.findOne.mockResolvedValueOnce({
+      _id: 'request_run',
+      id: 'request_run',
+      pathId: 'path_1',
+      status: 'completed',
+      meta: { requestId: 'req_1' },
+      createdAt: '2026-03-27T07:00:00.000Z',
+    });
+    await expect(mongoPathRunRepository.getRunByRequestId('path_1', 'req_1')).resolves.toEqual(
+      expect.objectContaining({ id: 'request_run', pathId: 'path_1' })
+    );
+
+    mocks.runCollection.findOne.mockResolvedValueOnce(null);
+    await expect(mongoPathRunRepository.claimNextQueuedRun()).resolves.toBeNull();
+
+    const claimSpy = vi
+      .spyOn(mongoPathRunRepository, 'claimRunForProcessing')
+      .mockResolvedValue({ id: 'queued_1', status: 'running' } as any);
+    mocks.runCollection.findOne.mockResolvedValueOnce({ _id: 'queued_1' });
+    await expect(mongoPathRunRepository.claimNextQueuedRun()).resolves.toEqual(
+      expect.objectContaining({ id: 'queued_1', status: 'running' })
+    );
+    expect(mocks.runCollection.findOne).toHaveBeenLastCalledWith(
+      {
+        status: 'queued',
+        $or: [{ nextRetryAt: null }, { nextRetryAt: { $lte: expect.any(Date) } }],
+      },
+      {
+        projection: { _id: 1, id: 1 },
+        sort: { createdAt: 1 },
+      }
+    );
+    expect(claimSpy).toHaveBeenLastCalledWith('queued_1');
+    claimSpy.mockRestore();
+
+    mocks.runCollection.updateMany.mockResolvedValueOnce({ modifiedCount: 3 });
+    await expect(mongoPathRunRepository.markStaleRunningRuns(60_000)).resolves.toEqual({
+      count: 3,
+    });
+    expect(mocks.runCollection.updateMany).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        status: 'running',
+        $or: expect.any(Array),
+      }),
+      {
+        $set: expect.objectContaining({
+          status: 'failed',
+          finishedAt: expect.any(Date),
+          errorMessage: 'Run marked failed due to stale running state.',
+        }),
+      }
+    );
+
+    mocks.runCollection.findOneAndDelete.mockResolvedValueOnce({ _id: 'legacy_only' });
+    await expect(mongoPathRunRepository.deleteRun('legacy_only')).resolves.toBe(true);
+    expect(mocks.nodeCollection.deleteMany).toHaveBeenLastCalledWith({ runId: 'legacy_only' });
+    expect(mocks.eventCollection.deleteMany).toHaveBeenLastCalledWith({ runId: 'legacy_only' });
+
+    mocks.runCollection.findOneAndDelete.mockResolvedValueOnce(null);
+    await expect(mongoPathRunRepository.deleteRun('missing')).resolves.toBe(false);
+  });
+
+  it('creates, upserts, and pages run nodes plus deletes filtered run batches', async () => {
+    const mocks = createDbMocks();
+    const { mongoPathRunRepository } = await loadModule(mocks.db, ['node_a', 'node_b']);
+
+    await expect(mongoPathRunRepository.createRunNodes('run_1', [])).resolves.toBeUndefined();
+    expect(mocks.nodeCollection.insertMany).not.toHaveBeenCalled();
+
+    await mongoPathRunRepository.createRunNodes('run_1', [
+      { id: 'node_1', type: 'prompt', title: 'Prompt node' },
+      { id: 'node_2', type: 'agent' },
+    ] as any);
+    expect(mocks.nodeCollection.insertMany).toHaveBeenCalledWith([
+      expect.objectContaining({
+        _id: 'node_a',
+        runId: 'run_1',
+        nodeId: 'node_1',
+        nodeType: 'prompt',
+        nodeTitle: 'Prompt node',
+      }),
+      expect.objectContaining({
+        _id: 'node_b',
+        runId: 'run_1',
+        nodeId: 'node_2',
+        nodeType: 'agent',
+        nodeTitle: null,
+      }),
+    ]);
+
+    mocks.nodeCollection.findOneAndUpdate.mockResolvedValueOnce({
+      _id: 'node_a',
+      runId: 'run_1',
+      nodeId: 'node_1',
+      nodeType: 'prompt',
+      nodeTitle: 'Prompt node',
+      status: 'running',
+      attempt: 2,
+      createdAt: '2026-03-27T07:00:00.000Z',
+      updatedAt: '2026-03-27T07:05:00.000Z',
+      startedAt: '2026-03-27T07:01:00.000Z',
+      finishedAt: '2026-03-27T07:05:00.000Z',
+    });
+    await expect(
+      mongoPathRunRepository.upsertRunNode('run_1', 'node_1', {
+        nodeType: 'prompt',
+        nodeTitle: 'Prompt node',
+        status: 'running',
+        attempt: 2,
+        startedAt: '2026-03-27T07:01:00.000Z',
+        finishedAt: '2026-03-27T07:05:00.000Z',
+      } as any)
+    ).resolves.toEqual(expect.objectContaining({ id: 'node_a', status: 'running' }));
+    expect(mocks.nodeCollection.findOneAndUpdate).toHaveBeenLastCalledWith(
+      { runId: 'run_1', nodeId: 'node_1' },
+      {
+        $set: expect.objectContaining({
+          status: 'running',
+          startedAt: new Date('2026-03-27T07:01:00.000Z'),
+          finishedAt: new Date('2026-03-27T07:05:00.000Z'),
+          updatedAt: expect.any(Date),
+        }),
+        $setOnInsert: { runId: 'run_1', nodeId: 'node_1', createdAt: expect.any(Date) },
+      },
+      { returnDocument: 'after', upsert: true }
+    );
+
+    mocks.nodeCollection.findOneAndUpdate.mockResolvedValueOnce(null);
+    await expect(
+      mongoPathRunRepository.upsertRunNode('run_1', 'missing', {
+        nodeType: 'agent',
+        status: 'failed',
+      } as any)
+    ).rejects.toThrow('Run node not found');
+
+    mocks.nodeCursor.toArray.mockResolvedValueOnce([
+      {
+        _id: 'node_record',
+        runId: 'run_1',
+        nodeId: 'node_1',
+        nodeType: 'prompt',
+        status: 'pending',
+        attempt: 0,
+        createdAt: '2026-03-27T07:00:00.000Z',
+      },
+    ]);
+    await expect(mongoPathRunRepository.listRunNodes('run_1')).resolves.toEqual([
+      expect.objectContaining({ id: 'node_record', nodeId: 'node_1' }),
+    ]);
+    expect(mocks.nodeCursor.sort).toHaveBeenLastCalledWith({ createdAt: 1 });
+
+    await expect(
+      mongoPathRunRepository.listRunNodesSince(
+        'run_1',
+        { updatedAt: 'not-a-date', nodeId: 'node_1' },
+        { limit: 900 }
+      )
+    ).resolves.toEqual([]);
+
+    mocks.nodeCursor.toArray.mockResolvedValueOnce([
+      {
+        _id: 'node_record_2',
+        runId: 'run_1',
+        nodeId: 'node_2',
+        nodeType: 'agent',
+        status: 'completed',
+        attempt: 1,
+        createdAt: '2026-03-27T07:00:00.000Z',
+        updatedAt: '2026-03-27T07:06:00.000Z',
+      },
+    ]);
+    await expect(
+      mongoPathRunRepository.listRunNodesSince(
+        'run_1',
+        { updatedAt: '2026-03-27T07:05:00.000Z', nodeId: ' node_1 ' },
+        { limit: 900 }
+      )
+    ).resolves.toEqual([expect.objectContaining({ id: 'node_record_2', nodeId: 'node_2' })]);
+    expect(mocks.nodeCollection.find).toHaveBeenLastCalledWith({
+      runId: 'run_1',
+      $or: [
+        { updatedAt: { $gt: new Date('2026-03-27T07:05:00.000Z') } },
+        {
+          updatedAt: new Date('2026-03-27T07:05:00.000Z'),
+          nodeId: { $gt: 'node_1' },
+        },
+      ],
+    });
+    expect(mocks.nodeCursor.sort).toHaveBeenLastCalledWith({ updatedAt: 1, nodeId: 1 });
+    expect(mocks.nodeCursor.limit).toHaveBeenLastCalledWith(500);
+
+    mocks.nodeCollection.distinct.mockResolvedValueOnce([]);
+    await expect(mongoPathRunRepository.deleteRuns({ nodeId: ' node_1 ' } as any)).resolves.toEqual(
+      { count: 0 }
+    );
+
+    mocks.runCursor.toArray.mockResolvedValueOnce([]);
+    await expect(mongoPathRunRepository.deleteRuns({ status: 'queued' } as any)).resolves.toEqual({
+      count: 0,
+    });
+
+    mocks.runCursor.toArray.mockResolvedValueOnce([{ _id: null, id: undefined }]);
+    await expect(mongoPathRunRepository.deleteRuns({ status: 'failed' } as any)).resolves.toEqual({
+      count: 0,
+    });
+
+    mocks.nodeCollection.distinct.mockResolvedValueOnce(['run_1', 'run_2']);
+    mocks.runCursor.toArray.mockResolvedValueOnce([
+      { _id: 'run_1', id: 'run_1' },
+      { _id: 'run_2' },
+    ]);
+    mocks.runCollection.deleteMany.mockResolvedValueOnce({ deletedCount: 2 });
+    await expect(
+      mongoPathRunRepository.deleteRuns({ pathId: 'path_1', nodeId: 'node_2' } as any)
+    ).resolves.toEqual({ count: 2 });
+    expect(mocks.runCollection.deleteMany).toHaveBeenLastCalledWith({
+      $or: [{ _id: { $in: ['run_1', 'run_2'] } }, { id: { $in: ['run_1', 'run_2'] } }],
+    });
+  });
+
+  it('lists events with since filters and ignores invalid cursors', async () => {
+    const mocks = createDbMocks();
+    const { mongoPathRunRepository } = await loadModule(mocks.db);
+
+    mocks.eventCursor.toArray.mockResolvedValueOnce([
+      {
+        _id: 'event_3',
+        runId: 'run_1',
+        level: 'info',
+        message: 'Resumed',
+        createdAt: '2026-03-27T07:10:00.000Z',
+      },
+    ]);
+    await expect(
+      mongoPathRunRepository.listRunEvents('run_1', {
+        since: '2026-03-27T07:09:00.000Z',
+      } as any)
+    ).resolves.toEqual([expect.objectContaining({ id: 'event_3' })]);
+    expect(mocks.eventCollection.find).toHaveBeenLastCalledWith({
+      runId: 'run_1',
+      createdAt: { $gt: new Date('2026-03-27T07:09:00.000Z') },
+    });
+
+    mocks.eventCursor.toArray.mockResolvedValueOnce([]);
+    await expect(
+      mongoPathRunRepository.listRunEvents('run_1', {
+        since: 'not-a-date',
+        after: { createdAt: '2026-03-27T07:10:00.000Z', id: '   ' },
+      } as any)
+    ).resolves.toEqual([]);
+    expect(mocks.eventCollection.find).toHaveBeenLastCalledWith({ runId: 'run_1' });
+  });
 });

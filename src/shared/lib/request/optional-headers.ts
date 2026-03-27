@@ -1,6 +1,6 @@
 import { headers } from 'next/headers';
 
-import { isMissingRequestScopeError } from '@/shared/lib/auth/optional-server-auth';
+import { isMissingRequestScopeError } from '@/shared/lib/auth/request-scope-error';
 
 export async function readOptionalRequestHeaders(): Promise<Headers | null> {
   try {

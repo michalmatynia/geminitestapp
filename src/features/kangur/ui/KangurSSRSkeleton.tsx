@@ -10,6 +10,31 @@
  */
 import type { JSX } from 'react';
 
+import { safeHtml } from '@/shared/lib/security/safe-html';
+
+const KANGUR_SSR_SKELETON_ANIMATION_CSS = safeHtml(`
+@keyframes kangur-ssr-pulse {
+  0%, 100% { transform: scale(0.985); }
+  50% { transform: scale(1); }
+}
+@keyframes kangur-ssr-shimmer {
+  0% { opacity: 0.4; }
+  50% { opacity: 0.7; }
+  100% { opacity: 0.4; }
+}
+.kangur-ssr-skeleton-card {
+  animation: kangur-ssr-pulse 1.8s ease-in-out infinite;
+}
+.kangur-ssr-skeleton-shimmer {
+  background: color-mix(in srgb, var(--kangur-soft-card-border, #e2e8f0) 60%, transparent);
+  animation: kangur-ssr-shimmer 1.4s ease-in-out infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .kangur-ssr-skeleton-card { animation: none; }
+  .kangur-ssr-skeleton-shimmer { animation: none; opacity: 0.5; }
+}
+`);
+
 export function KangurSSRSkeleton(): JSX.Element {
   return (
     <div
@@ -110,27 +135,7 @@ export function KangurSSRSkeleton(): JSX.Element {
       {/* CSS-only animations — no JS needed */}
       <style
         dangerouslySetInnerHTML={{
-          __html: `
-@keyframes kangur-ssr-pulse {
-  0%, 100% { transform: scale(0.985); }
-  50% { transform: scale(1); }
-}
-@keyframes kangur-ssr-shimmer {
-  0% { opacity: 0.4; }
-  50% { opacity: 0.7; }
-  100% { opacity: 0.4; }
-}
-.kangur-ssr-skeleton-card {
-  animation: kangur-ssr-pulse 1.8s ease-in-out infinite;
-}
-.kangur-ssr-skeleton-shimmer {
-  background: color-mix(in srgb, var(--kangur-soft-card-border, #e2e8f0) 60%, transparent);
-  animation: kangur-ssr-shimmer 1.4s ease-in-out infinite;
-}
-@media (prefers-reduced-motion: reduce) {
-  .kangur-ssr-skeleton-card { animation: none; }
-  .kangur-ssr-skeleton-shimmer { animation: none; opacity: 0.5; }
-}`,
+          __html: safeHtml(KANGUR_SSR_SKELETON_ANIMATION_CSS),
         }}
       />
       <span className='sr-only'>Loading application...</span>

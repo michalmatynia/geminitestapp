@@ -1,8 +1,10 @@
 'use client';
 
 import { useParams, useRouter } from 'next/navigation';
-import React, { useCallback, useMemo } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
+import { api } from '@/shared/lib/api-client';
+import { safeClearInterval, safeSetInterval } from '@/shared/lib/timers';
 import { useUpdateSetting } from '@/shared/hooks/use-settings';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
 import {
@@ -17,22 +19,27 @@ import {
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
 import {
+  createFilemakerEmailCampaignEvent,
   createDefaultFilemakerEmailCampaignDeliveryRegistry,
   FILEMAKER_DATABASE_KEY,
   FILEMAKER_EMAIL_CAMPAIGNS_KEY,
   FILEMAKER_EMAIL_CAMPAIGN_DELIVERIES_KEY,
+  FILEMAKER_EMAIL_CAMPAIGN_EVENTS_KEY,
   FILEMAKER_EMAIL_CAMPAIGN_RUNS_KEY,
   getFilemakerEmailCampaignDeliveriesForRun,
+  getFilemakerEmailCampaignEventsForRun,
   getFilemakerOrganizationById,
   getFilemakerPersonById,
   parseFilemakerDatabase,
   parseFilemakerEmailCampaignDeliveryRegistry,
+  parseFilemakerEmailCampaignEventRegistry,
   parseFilemakerEmailCampaignRegistry,
   parseFilemakerEmailCampaignRunRegistry,
   resolveFilemakerEmailCampaignRunStatusFromDeliveries,
   summarizeFilemakerEmailCampaignRunDeliveries,
   syncFilemakerEmailCampaignRunWithDeliveries,
   toPersistedFilemakerEmailCampaignDeliveryRegistry,
+  toPersistedFilemakerEmailCampaignEventRegistry,
   toPersistedFilemakerEmailCampaignRunRegistry,
 } from '../settings';
 import { decodeRouteParam, formatTimestamp } from './filemaker-page-utils';
@@ -40,6 +47,9 @@ import { decodeRouteParam, formatTimestamp } from './filemaker-page-utils';
 import type {
   FilemakerEmailCampaignDelivery,
   FilemakerEmailCampaignDeliveryRegistry,
+  FilemakerEmailCampaignEvent,
+  FilemakerEmailCampaignEventRegistry,
+  FilemakerEmailCampaignProcessRunResponse,
   FilemakerEmailCampaignDeliveryStatus,
   FilemakerEmailCampaignRun,
   FilemakerEmailCampaignRunStatus,
@@ -60,6 +70,34 @@ const DELIVERY_STATUS_ACTIONS: FilemakerEmailCampaignDeliveryStatus[] = [
   'skipped',
   'bounced',
 ];
+
+const CAMPAIGN_EVENT_LABELS: Record<FilemakerEmailCampaignEvent['type'], string> = {
+  created: 'Created',
+  updated: 'Updated',
+  launched: 'Launched',
+  processing_started: 'Processing started',
+  delivery_sent: 'Delivery sent',
+  delivery_failed: 'Delivery failed',
+  delivery_bounced: 'Delivery bounced',
+  status_changed: 'Status changed',
+  paused: 'Paused',
+  completed: 'Completed',
+  failed: 'Failed',
+  cancelled: 'Cancelled',
+};
+
+const appendEventsToRegistry = (
+  registry: FilemakerEmailCampaignEventRegistry,
+  events: FilemakerEmailCampaignEvent[]
+): FilemakerEmailCampaignEventRegistry => ({
+  version: registry.version,
+  events: registry.events
+    .concat(events)
+    .sort(
+      (left: FilemakerEmailCampaignEvent, right: FilemakerEmailCampaignEvent): number =>
+        Date.parse(right.createdAt ?? '') - Date.parse(left.createdAt ?? '')
+    ),
+});
 
 const resolveRunActionOptions = (
   status: FilemakerEmailCampaignRunStatus
@@ -83,6 +121,7 @@ export function AdminFilemakerCampaignRunPage(): React.JSX.Element {
   const settingsStore = useSettingsStore();
   const updateSetting = useUpdateSetting();
   const { toast } = useToast();
+  const [isProcessingQueuedDeliveries, setIsProcessingQueuedDeliveries] = useState(false);
 
   const runId = useMemo(() => decodeRouteParam(params['runId']), [params]);
 
@@ -90,6 +129,7 @@ export function AdminFilemakerCampaignRunPage(): React.JSX.Element {
   const rawCampaigns = settingsStore.get(FILEMAKER_EMAIL_CAMPAIGNS_KEY);
   const rawRuns = settingsStore.get(FILEMAKER_EMAIL_CAMPAIGN_RUNS_KEY);
   const rawDeliveries = settingsStore.get(FILEMAKER_EMAIL_CAMPAIGN_DELIVERIES_KEY);
+  const rawEvents = settingsStore.get(FILEMAKER_EMAIL_CAMPAIGN_EVENTS_KEY);
 
   const database = useMemo(() => parseFilemakerDatabase(rawDatabase), [rawDatabase]);
   const campaignRegistry = useMemo(
@@ -103,6 +143,10 @@ export function AdminFilemakerCampaignRunPage(): React.JSX.Element {
   const deliveryRegistry = useMemo(
     () => parseFilemakerEmailCampaignDeliveryRegistry(rawDeliveries),
     [rawDeliveries]
+  );
+  const eventRegistry = useMemo(
+    () => parseFilemakerEmailCampaignEventRegistry(rawEvents),
+    [rawEvents]
   );
 
   const run = useMemo(
@@ -120,6 +164,10 @@ export function AdminFilemakerCampaignRunPage(): React.JSX.Element {
     () => getFilemakerEmailCampaignDeliveriesForRun(deliveryRegistry, runId),
     [deliveryRegistry, runId]
   );
+  const runEvents = useMemo(
+    () => getFilemakerEmailCampaignEventsForRun(eventRegistry, runId),
+    [eventRegistry, runId]
+  );
   const metrics = useMemo(
     () => summarizeFilemakerEmailCampaignRunDeliveries(deliveries),
     [deliveries]
@@ -134,6 +182,30 @@ export function AdminFilemakerCampaignRunPage(): React.JSX.Element {
         : null,
     [deliveries, run]
   );
+  const queuedDeliveryCount = useMemo(
+    () =>
+      deliveries.filter((delivery: FilemakerEmailCampaignDelivery) => delivery.status === 'queued')
+        .length,
+    [deliveries]
+  );
+
+  useEffect(() => {
+    if (!run) return;
+    if (run.mode !== 'live') return;
+    if (
+      resolvedRunStatus !== 'pending' &&
+      resolvedRunStatus !== 'queued' &&
+      resolvedRunStatus !== 'running'
+    ) {
+      return;
+    }
+    const timer = safeSetInterval((): void => {
+      settingsStore.refetch();
+    }, 5_000);
+    return () => {
+      safeClearInterval(timer);
+    };
+  }, [resolvedRunStatus, run, settingsStore]);
 
   const persistDeliveryRegistry = useCallback(
     async (nextDeliveryRegistry: FilemakerEmailCampaignDeliveryRegistry): Promise<void> => {
@@ -162,6 +234,16 @@ export function AdminFilemakerCampaignRunPage(): React.JSX.Element {
     [runRegistry.version, updateSetting]
   );
 
+  const persistEventRegistry = useCallback(
+    async (nextEventRegistry: FilemakerEmailCampaignEventRegistry): Promise<void> => {
+      await updateSetting.mutateAsync({
+        key: FILEMAKER_EMAIL_CAMPAIGN_EVENTS_KEY,
+        value: JSON.stringify(toPersistedFilemakerEmailCampaignEventRegistry(nextEventRegistry)),
+      });
+    },
+    [updateSetting]
+  );
+
   const handleDeliveryStatusChange = useCallback(
     async (
       deliveryId: string,
@@ -169,6 +251,9 @@ export function AdminFilemakerCampaignRunPage(): React.JSX.Element {
     ): Promise<void> => {
       if (!run) return;
       const now = new Date().toISOString();
+      const targetDelivery =
+        deliveries.find((delivery: FilemakerEmailCampaignDelivery): boolean => delivery.id === deliveryId) ??
+        null;
       const nextDeliveriesForRun = deliveries.map((delivery): FilemakerEmailCampaignDelivery => {
         if (delivery.id !== deliveryId) return delivery;
         return {
@@ -195,10 +280,40 @@ export function AdminFilemakerCampaignRunPage(): React.JSX.Element {
         deliveries: nextDeliveriesForRun,
       });
       const nextRuns = runRegistry.runs.map((entry) => (entry.id === run.id ? nextRun : entry));
+      const nextEvent = createFilemakerEmailCampaignEvent({
+        campaignId: run.campaignId,
+        runId: run.id,
+        deliveryId,
+        type:
+          nextStatus === 'sent'
+            ? 'delivery_sent'
+            : nextStatus === 'failed'
+              ? 'delivery_failed'
+              : nextStatus === 'bounced'
+                ? 'delivery_bounced'
+                : 'status_changed',
+        message:
+          nextStatus === 'queued'
+            ? `Admin reset ${
+                targetDelivery?.emailAddress || deliveryId
+              } to queued.`
+            : `Admin changed delivery ${
+                targetDelivery?.emailAddress || deliveryId
+              } to ${DELIVERY_STATUS_LABELS[nextStatus].toLowerCase()}.`,
+        actor: 'admin',
+        deliveryStatus: nextStatus,
+        runStatus: nextRun.status,
+        createdAt: now,
+        updatedAt: now,
+      });
+      const nextEventRegistry = appendEventsToRegistry(eventRegistry, [nextEvent]);
 
       try {
-        await persistDeliveryRegistry(nextDeliveryRegistry);
-        await persistRuns(nextRuns);
+        await Promise.all([
+          persistDeliveryRegistry(nextDeliveryRegistry),
+          persistRuns(nextRuns),
+          persistEventRegistry(nextEventRegistry),
+        ]);
         toast('Delivery status updated.', { variant: 'success' });
       } catch (error: unknown) {
         logClientError(error);
@@ -207,7 +322,17 @@ export function AdminFilemakerCampaignRunPage(): React.JSX.Element {
         });
       }
     },
-    [deliveries, deliveryRegistry.deliveries, persistDeliveryRegistry, persistRuns, run, runRegistry.runs, toast]
+    [
+      deliveries,
+      deliveryRegistry.deliveries,
+      eventRegistry,
+      persistDeliveryRegistry,
+      persistEventRegistry,
+      persistRuns,
+      run,
+      runRegistry.runs,
+      toast,
+    ]
   );
 
   const handleRunStatusChange = useCallback(
@@ -219,8 +344,28 @@ export function AdminFilemakerCampaignRunPage(): React.JSX.Element {
         status: nextStatus,
       });
       const nextRuns = runRegistry.runs.map((entry) => (entry.id === run.id ? nextRun : entry));
+      const now = new Date().toISOString();
+      const nextEventRegistry = appendEventsToRegistry(eventRegistry, [
+        createFilemakerEmailCampaignEvent({
+          campaignId: run.campaignId,
+          runId: run.id,
+          type:
+            nextStatus === 'completed'
+              ? 'completed'
+              : nextStatus === 'failed'
+                ? 'failed'
+                : nextStatus === 'cancelled'
+                  ? 'cancelled'
+                  : 'status_changed',
+          message: `Admin changed run status to ${nextStatus}.`,
+          actor: 'admin',
+          runStatus: nextStatus,
+          createdAt: now,
+          updatedAt: now,
+        }),
+      ]);
       try {
-        await persistRuns(nextRuns);
+        await Promise.all([persistRuns(nextRuns), persistEventRegistry(nextEventRegistry)]);
         toast('Run status updated.', { variant: 'success' });
       } catch (error: unknown) {
         logClientError(error);
@@ -229,8 +374,34 @@ export function AdminFilemakerCampaignRunPage(): React.JSX.Element {
         });
       }
     },
-    [deliveries, persistRuns, run, runRegistry.runs, toast]
+    [deliveries, eventRegistry, persistEventRegistry, persistRuns, run, runRegistry.runs, toast]
   );
+
+  const handleQueueProcessing = useCallback(async (): Promise<void> => {
+    if (!run) return;
+    setIsProcessingQueuedDeliveries(true);
+    try {
+      const response = await api.post<FilemakerEmailCampaignProcessRunResponse>(
+        `/api/filemaker/campaigns/runs/${encodeURIComponent(run.id)}/process`,
+        { reason: 'manual' }
+      );
+      settingsStore.refetch();
+      router.refresh();
+      toast(
+        response.dispatchMode === 'inline'
+          ? 'Queued deliveries started in inline processing mode.'
+          : 'Queued deliveries were added to the campaign worker.',
+        { variant: 'success' }
+      );
+    } catch (error: unknown) {
+      logClientError(error);
+      toast(error instanceof Error ? error.message : 'Failed to process queued deliveries.', {
+        variant: 'error',
+      });
+    } finally {
+      setIsProcessingQueuedDeliveries(false);
+    }
+  }, [router, run, settingsStore, toast]);
 
   if (!run) {
     return (
@@ -262,7 +433,7 @@ export function AdminFilemakerCampaignRunPage(): React.JSX.Element {
     <div className='page-section-compact space-y-6'>
       <SectionHeader
         title='Campaign Run Monitor'
-        description='Inspect recipient-level delivery state and update progress manually while the delivery engine is still simulated.'
+        description='Inspect recipient-level delivery state, trigger queued delivery processing, and manually correct statuses when needed.'
         eyebrow={
           <AdminFilemakerBreadcrumbs
             parent={{
@@ -286,13 +457,38 @@ export function AdminFilemakerCampaignRunPage(): React.JSX.Element {
             }}
             cancelText='Back to Campaign'
           >
+            <Button
+              type='button'
+              size='sm'
+              variant='outline'
+              disabled={updateSetting.isPending || isProcessingQueuedDeliveries}
+              onClick={(): void => {
+                settingsStore.refetch();
+                router.refresh();
+              }}
+            >
+              Refresh
+            </Button>
+            {run.mode === 'live' && queuedDeliveryCount > 0 ? (
+              <Button
+                type='button'
+                size='sm'
+                variant='outline'
+                disabled={updateSetting.isPending || isProcessingQueuedDeliveries}
+                onClick={(): void => {
+                  void handleQueueProcessing();
+                }}
+              >
+                {isProcessingQueuedDeliveries ? 'Starting Delivery Worker…' : 'Process Queued Deliveries'}
+              </Button>
+            ) : null}
             {resolveRunActionOptions(run.status).map((action) => (
               <Button
                 key={action.nextStatus}
                 type='button'
                 size='sm'
                 variant='outline'
-                disabled={updateSetting.isPending}
+                disabled={updateSetting.isPending || isProcessingQueuedDeliveries}
                 onClick={(): void => {
                   void handleRunStatusChange(action.nextStatus);
                 }}
@@ -323,6 +519,9 @@ export function AdminFilemakerCampaignRunPage(): React.JSX.Element {
         <Badge variant='outline' className='text-[10px]'>
           Skipped: {metrics.skippedCount}
         </Badge>
+        <Badge variant='outline' className='text-[10px]'>
+          Queued: {queuedDeliveryCount}
+        </Badge>
       </div>
 
       <FormSection title='Run Summary' className='space-y-3 p-4'>
@@ -344,6 +543,46 @@ export function AdminFilemakerCampaignRunPage(): React.JSX.Element {
             <div>{formatTimestamp(run.completedAt)}</div>
           </div>
         </div>
+      </FormSection>
+
+      <FormSection title='Event Timeline' className='space-y-3 p-4'>
+        {runEvents.length === 0 ? (
+          <div className='text-sm text-gray-500'>
+            No campaign events have been recorded for this run yet.
+          </div>
+        ) : (
+          runEvents.map((event: FilemakerEmailCampaignEvent) => (
+            <div
+              key={event.id}
+              className='space-y-2 rounded-md border border-border/60 bg-card/25 p-3'
+            >
+              <div className='flex flex-wrap items-start justify-between gap-3'>
+                <div className='space-y-1'>
+                  <div className='text-sm font-medium text-white'>{event.message}</div>
+                  <div className='text-[11px] text-gray-500'>
+                    {formatTimestamp(event.createdAt)}
+                    {event.actor ? ` • ${event.actor}` : ''}
+                  </div>
+                </div>
+                <div className='flex flex-wrap gap-2'>
+                  <Badge variant='outline' className='text-[10px] capitalize'>
+                    {CAMPAIGN_EVENT_LABELS[event.type]}
+                  </Badge>
+                  {event.runStatus ? (
+                    <Badge variant='outline' className='text-[10px] capitalize'>
+                      Run: {event.runStatus}
+                    </Badge>
+                  ) : null}
+                  {event.deliveryStatus ? (
+                    <Badge variant='outline' className='text-[10px] capitalize'>
+                      Delivery: {event.deliveryStatus}
+                    </Badge>
+                  ) : null}
+                </div>
+              </div>
+            </div>
+          ))
+        )}
       </FormSection>
 
       <FormSection title='Recipient Deliveries' className='space-y-3 p-4'>
@@ -396,7 +635,11 @@ export function AdminFilemakerCampaignRunPage(): React.JSX.Element {
                       type='button'
                       size='sm'
                       variant={delivery.status === status ? 'default' : 'outline'}
-                      disabled={updateSetting.isPending || delivery.status === status}
+                      disabled={
+                        updateSetting.isPending ||
+                        isProcessingQueuedDeliveries ||
+                        delivery.status === status
+                      }
                       onClick={(): void => {
                         void handleDeliveryStatusChange(delivery.id, status);
                       }}

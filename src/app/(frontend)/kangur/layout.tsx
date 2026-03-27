@@ -1,6 +1,7 @@
 import { KangurStorefrontAppearanceProvider } from '@/features/kangur/ui/KangurStorefrontAppearanceProvider';
 import { KangurSurfaceClassSync } from '@/features/kangur/ui/KangurSurfaceClassSync';
 import { getKangurStorefrontInitialState } from '@/features/kangur/server/storefront-appearance';
+import { safeHtml } from '@/shared/lib/security/safe-html';
 
 import type { ReactNode } from 'react';
 
@@ -17,7 +18,7 @@ export default async function Layout({ children }: { children: ReactNode }): Pro
 
   return (
     <>
-      <script dangerouslySetInnerHTML={{ __html: SURFACE_HINT_SCRIPT }} />
+      <script dangerouslySetInnerHTML={{ __html: safeHtml(SURFACE_HINT_SCRIPT) }} />
       <KangurStorefrontAppearanceProvider
         initialAppearance={{
           mode: initialState?.initialMode,

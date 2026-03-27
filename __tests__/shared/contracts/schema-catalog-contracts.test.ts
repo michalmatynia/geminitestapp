@@ -27,9 +27,17 @@ import {
 } from '@/shared/contracts/kangur-tests';
 import {
   filemakerEmailCampaignRegistrySchema,
+  filemakerEmailCampaignLaunchRunRequestSchema,
+  filemakerEmailCampaignLaunchRunResponseSchema,
   filemakerEmailCampaignDeliveryRegistrySchema,
+  filemakerEmailCampaignEventRegistrySchema,
+  filemakerEmailCampaignProcessRunRequestSchema,
+  filemakerEmailCampaignProcessRunResponseSchema,
   filemakerEmailCampaignRunRegistrySchema,
   filemakerEmailCampaignRunSchema,
+  filemakerEmailCampaignSuppressionRegistrySchema,
+  filemakerEmailCampaignUnsubscribeRequestSchema,
+  filemakerEmailCampaignUnsubscribeResponseSchema,
   filemakerEmailCampaignSchema,
   filemakerDatabaseSchema,
   filemakerPartyOptionSchema,
@@ -463,6 +471,127 @@ describe('shared contract runtime coverage for schema catalogs', () => {
     ).toEqual(
       expect.objectContaining({
         deliveries: [expect.objectContaining({ runId: 'run-1' })],
+      })
+    );
+
+    expect(
+      filemakerEmailCampaignEventRegistrySchema.parse({
+        version: 1,
+        events: [
+          {
+            id: 'event-1',
+            campaignId: 'campaign-1',
+            runId: 'run-1',
+            deliveryId: 'delivery-1',
+            type: 'delivery_sent',
+            message: 'Delivery sent to jan@example.com.',
+            actor: 'system',
+            runStatus: 'running',
+            deliveryStatus: 'sent',
+          },
+        ],
+      })
+    ).toEqual(
+      expect.objectContaining({
+        events: [expect.objectContaining({ type: 'delivery_sent' })],
+      })
+    );
+
+    expect(
+      filemakerEmailCampaignSuppressionRegistrySchema.parse({
+        version: 1,
+        entries: [
+          {
+            id: 'suppression-1',
+            emailAddress: 'blocked@example.com',
+            reason: 'unsubscribed',
+            actor: 'admin',
+            notes: 'Manual opt-out',
+            campaignId: 'campaign-1',
+            runId: 'run-1',
+            deliveryId: 'delivery-1',
+          },
+        ],
+      })
+    ).toEqual(
+      expect.objectContaining({
+        entries: [expect.objectContaining({ reason: 'unsubscribed' })],
+      })
+    );
+
+    expect(
+      filemakerEmailCampaignLaunchRunRequestSchema.parse({
+        campaignId: 'campaign-1',
+        mode: 'live',
+      })
+    ).toEqual(
+      expect.objectContaining({
+        campaignId: 'campaign-1',
+        mode: 'live',
+      })
+    );
+
+    expect(
+      filemakerEmailCampaignLaunchRunResponseSchema.parse({
+        campaignId: 'campaign-1',
+        runId: 'run-1',
+        status: 'queued',
+        dispatchMode: 'queued',
+        queueJobId: 'job-1',
+        queuedDeliveryCount: 2,
+      })
+    ).toEqual(
+      expect.objectContaining({
+        dispatchMode: 'queued',
+        queuedDeliveryCount: 2,
+      })
+    );
+
+    expect(filemakerEmailCampaignProcessRunRequestSchema.parse({})).toEqual({
+      reason: 'manual',
+    });
+
+    expect(
+      filemakerEmailCampaignProcessRunResponseSchema.parse({
+        campaignId: 'campaign-1',
+        runId: 'run-1',
+        status: 'running',
+        dispatchMode: 'inline',
+        queueJobId: null,
+        queuedDeliveryCount: 1,
+      })
+    ).toEqual(
+      expect.objectContaining({
+        dispatchMode: 'inline',
+        queuedDeliveryCount: 1,
+      })
+    );
+
+    expect(
+      filemakerEmailCampaignUnsubscribeRequestSchema.parse({
+        emailAddress: 'jan@example.com',
+        campaignId: 'campaign-1',
+        source: 'footer-link',
+      })
+    ).toEqual(
+      expect.objectContaining({
+        campaignId: 'campaign-1',
+        source: 'footer-link',
+      })
+    );
+
+    expect(
+      filemakerEmailCampaignUnsubscribeResponseSchema.parse({
+        ok: true,
+        emailAddress: 'jan@example.com',
+        campaignId: 'campaign-1',
+        alreadySuppressed: false,
+        reason: 'unsubscribed',
+      })
+    ).toEqual(
+      expect.objectContaining({
+        emailAddress: 'jan@example.com',
+        reason: 'unsubscribed',
       })
     );
   });

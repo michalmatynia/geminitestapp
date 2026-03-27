@@ -104,6 +104,12 @@ export const baseOrderImportPreviewResponseSchema = z.object({
 
 export type BaseOrderImportPreviewResponse = z.infer<typeof baseOrderImportPreviewResponseSchema>;
 
+export const baseOrderImportQuickImportPayloadSchema = baseOrderImportPreviewPayloadSchema;
+
+export type BaseOrderImportQuickImportPayload = z.infer<
+  typeof baseOrderImportQuickImportPayloadSchema
+>;
+
 export const importedBaseOrderRecordSchema = dtoBaseSchema.extend({
   connectionId: z.string(),
   baseOrderId: z.string(),
@@ -151,3 +157,18 @@ export const baseOrderImportPersistResponseSchema = z.object({
 });
 
 export type BaseOrderImportPersistResponse = z.infer<typeof baseOrderImportPersistResponseSchema>;
+
+export const baseOrderImportQuickImportResponseSchema = z.object({
+  preview: baseOrderImportPreviewResponseSchema,
+  importableCount: z.number().int().nonnegative(),
+  skippedImportedCount: z.number().int().nonnegative(),
+  importedCount: z.number().int().nonnegative(),
+  createdCount: z.number().int().nonnegative(),
+  updatedCount: z.number().int().nonnegative(),
+  syncedAt: z.string().nullable(),
+  results: z.array(baseOrderImportPersistResultSchema),
+});
+
+export type BaseOrderImportQuickImportResponse = z.infer<
+  typeof baseOrderImportQuickImportResponseSchema
+>;

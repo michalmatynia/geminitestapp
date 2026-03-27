@@ -102,6 +102,24 @@ describe('frontend slug launch route', () => {
     expect(redirectMock).toHaveBeenCalledWith('kangur://lessons?focus=division');
   });
 
+  it('redirects supported public Kangur slug routes to the /kangur alias on the web path', async () => {
+    getKangurConfiguredLaunchTargetMock.mockResolvedValue({
+      route: 'web_mobile_view',
+      href: '/lessons?focus=division',
+      fallbackHref: '/lessons?focus=division',
+    });
+
+    const { default: CmsSlugPage } = await import('@/app/(frontend)/[...slug]/page');
+
+    await expect(
+      CmsSlugPage({
+        params: Promise.resolve({ slug: ['lessons'] }),
+        searchParams: Promise.resolve({ focus: 'division' }),
+      })
+    ).rejects.toThrow('redirect:/kangur/lessons?focus=division');
+    expect(redirectMock).toHaveBeenCalledWith('/kangur/lessons?focus=division');
+  });
+
   it('keeps unsupported slug routes on the shared Kangur shell path without redirecting', async () => {
     getKangurConfiguredLaunchTargetMock.mockResolvedValue({
       route: 'dedicated_app',
@@ -214,5 +232,23 @@ describe('frontend slug launch route', () => {
       })
     ).rejects.toThrow('redirect:kangur://duels?join=invite-1');
     expect(redirectMock).toHaveBeenCalledWith('kangur://duels?join=invite-1');
+  });
+
+  it('redirects localized Kangur slug routes to the localized /kangur alias on the web path', async () => {
+    getKangurConfiguredLaunchTargetMock.mockResolvedValue({
+      route: 'web_mobile_view',
+      href: '/duels?join=invite-1',
+      fallbackHref: '/duels?join=invite-1',
+    });
+
+    const { default: LocalizedCmsSlugPage } = await import('@/app/[locale]/(frontend)/[...slug]/page');
+
+    await expect(
+      LocalizedCmsSlugPage({
+        params: Promise.resolve({ locale: 'en', slug: ['duels'] }),
+        searchParams: Promise.resolve({ join: 'invite-1' }),
+      })
+    ).rejects.toThrow('redirect:/en/kangur/duels?join=invite-1');
+    expect(redirectMock).toHaveBeenCalledWith('/en/kangur/duels?join=invite-1');
   });
 });

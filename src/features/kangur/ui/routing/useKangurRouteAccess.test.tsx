@@ -18,6 +18,7 @@ import { useKangurRouteAccess } from '@/features/kangur/ui/routing/useKangurRout
 
 function RouteAccessProbe(): React.JSX.Element {
   const {
+    resolveRouteState,
     sanitizeManagedHref,
     resolveManagedTargetPageKey,
     resolveTransitionSkeletonVariant,
@@ -46,10 +47,17 @@ function RouteAccessProbe(): React.JSX.Element {
       basePath: '/kangur',
       fallbackHref: '/kangur',
     }) ?? 'missing';
+  const blockedRouteState = resolveRouteState({
+    normalizedBasePath: '/kangur',
+    pageKey: 'GamesLibrary',
+    requestedPath: '/kangur/games',
+  });
 
   return (
     <div
       data-blocked-href={blockedHref}
+      data-blocked-route-page={blockedRouteState.pageKey}
+      data-blocked-route-path={blockedRouteState.requestedPath}
       data-blocked-skeleton={blockedSkeleton}
       data-blocked-target={blockedTarget}
       data-blocked-transition-page={blockedTransition.pageKey}
@@ -95,6 +103,14 @@ describe('useKangurRouteAccess', () => {
       'data-blocked-href',
       '/kangur'
     );
+    expect(screen.getByTestId('kangur-route-access-probe')).toHaveAttribute(
+      'data-blocked-route-page',
+      'Game'
+    );
+    expect(screen.getByTestId('kangur-route-access-probe')).toHaveAttribute(
+      'data-blocked-route-path',
+      '/kangur'
+    );
   });
 
   it('preserves GamesLibrary targets for exact super admins', () => {
@@ -127,6 +143,14 @@ describe('useKangurRouteAccess', () => {
     );
     expect(screen.getByTestId('kangur-route-access-probe')).toHaveAttribute(
       'data-blocked-href',
+      '/kangur/games'
+    );
+    expect(screen.getByTestId('kangur-route-access-probe')).toHaveAttribute(
+      'data-blocked-route-page',
+      'GamesLibrary'
+    );
+    expect(screen.getByTestId('kangur-route-access-probe')).toHaveAttribute(
+      'data-blocked-route-path',
       '/kangur/games'
     );
   });

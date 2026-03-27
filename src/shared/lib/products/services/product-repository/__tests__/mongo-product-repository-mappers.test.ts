@@ -1,7 +1,11 @@
 import { describe, expect, it } from 'vitest';
 import type { WithId } from 'mongodb';
 
-import { toProductResponse, type ProductDocument } from '../mongo-product-repository-mappers';
+import {
+  toProductBase,
+  toProductResponse,
+  type ProductDocument,
+} from '../mongo-product-repository-mappers';
 
 const asProductDocument = (doc: Record<string, unknown>): WithId<ProductDocument> =>
   doc as WithId<ProductDocument>;
@@ -289,5 +293,135 @@ describe('mongo product repository mappers', () => {
         ],
       }))
     ).toThrowError(/Invalid product producer relation payload/);
+  });
+
+  it('maps canonical tags, producers, and note ids through toProductBase', () => {
+    const result = toProductBase({
+      _id: 'product-base-1',
+      id: 'product-base-1',
+      createdAt: new Date('2026-01-01T00:00:00.000Z'),
+      updatedAt: new Date('2026-01-02T00:00:00.000Z'),
+      catalogId: 'catalog-1',
+      published: true,
+      noteIds: ['note-1', 'note-2'],
+      tags: [
+        {
+          tagId: 'tag-1',
+          productId: 'product-base-1',
+          assignedAt: '2026-01-02T00:00:00.000Z',
+          tag: { id: 'tag-1', name: 'Featured' },
+        },
+        {
+          tagId: 'tag-1',
+          productId: 'product-base-1',
+          assignedAt: '2026-01-02T00:00:00.000Z',
+        },
+      ],
+      producers: [
+        {
+          producerId: 'producer-1',
+          productId: 'product-base-1',
+          assignedAt: '2026-01-02T00:00:00.000Z',
+          producer: { id: 'producer-1', name: 'Acme' },
+        },
+      ],
+    } as ProductDocument);
+
+    expect(result.noteIds).toEqual(['note-1', 'note-2']);
+    expect(result.images).toEqual([]);
+    expect(result.tags).toEqual([
+      {
+        tagId: 'tag-1',
+        productId: 'product-base-1',
+        assignedAt: '2026-01-02T00:00:00.000Z',
+        tag: { id: 'tag-1', name: 'Featured' },
+      },
+    ]);
+    expect(result.producers).toEqual([
+      {
+        producerId: 'producer-1',
+        productId: 'product-base-1',
+        assignedAt: '2026-01-02T00:00:00.000Z',
+        producer: { id: 'producer-1', name: 'Acme' },
+      },
+    ]);
+  });
+
+  it('reconstructs legacy top-level producer references in toProductBase', () => {
+    const result = toProductBase({
+      _id: 'product-base-legacy',
+      id: 'product-base-legacy',
+      createdAt: new Date('2026-01-01T00:00:00.000Z'),
+      updatedAt: new Date('2026-01-03T00:00:00.000Z'),
+      catalogId: 'catalog-1',
+      published: false,
+      manufacturerId: 42,
+    } as ProductDocument);
+
+    expect(result.producers).toEqual([
+      {
+        productId: 'product-base-legacy',
+        producerId: '42',
+        assignedAt: '2026-01-03T00:00:00.000Z',
+      },
+    ]);
+  });
+
+  it('rejects non-array producer payloads in toProductBase', () => {
+    expect(() =>
+      toProductBase({
+        _id: 'product-base-invalid-producers',
+        id: 'product-base-invalid-producers',
+        createdAt: new Date('2026-01-01T00:00:00.000Z'),
+        updatedAt: new Date('2026-01-01T00:00:00.000Z'),
+        catalogId: 'catalog-1',
+        published: false,
+        producers: 'producer-1',
+      } as ProductDocument)
+    ).toThrowError(/Invalid product producer relations payload\./);
+  });
+
+  it('rejects non-array tag payloads and non-object tag entries', () => {
+    expect(() =>
+      toProductResponse(asProductDocument({
+        _id: 'product-tag-invalid-array',
+        id: 'product-tag-invalid-array',
+        createdAt: new Date('2026-01-01T00:00:00.000Z'),
+        updatedAt: new Date('2026-01-01T00:00:00.000Z'),
+        catalogId: 'catalog-1',
+        published: false,
+        tags: 'tag-1',
+      }))
+    ).toThrowError(/Invalid product tag relations payload\./);
+
+    expect(() =>
+      toProductResponse(asProductDocument({
+        _id: 'product-tag-invalid-entry',
+        id: 'product-tag-invalid-entry',
+        createdAt: new Date('2026-01-01T00:00:00.000Z'),
+        updatedAt: new Date('2026-01-01T00:00:00.000Z'),
+        catalogId: 'catalog-1',
+        published: false,
+        tags: [null],
+      }))
+    ).toThrowError(/Invalid product tag relation entry payload\./);
+  });
+
+  it('rejects canonical tag payloads missing required fields', () => {
+    expect(() =>
+      toProductResponse(asProductDocument({
+        _id: 'product-tag-missing-fields',
+        id: 'product-tag-missing-fields',
+        createdAt: new Date('2026-01-01T00:00:00.000Z'),
+        updatedAt: new Date('2026-01-01T00:00:00.000Z'),
+        catalogId: 'catalog-1',
+        published: false,
+        tags: [
+          {
+            tagId: 'tag-1',
+          },
+        ],
+      }))
+    ).toThrowError(/Invalid product tag relation payload\./);
   });
 });

@@ -129,15 +129,17 @@ describe('kangur public-owner frontend routes', () => {
     kangurFeatureRouteShellMock.mockReturnValue(null);
   });
 
-  it('keeps root-owned public frontend slugs on the Kangur shell path without CMS lookup', async () => {
+  it('redirects root-owned public frontend slugs to the Kangur alias path without CMS lookup', async () => {
     const { default: CmsSlugPage } = await import('@/app/(frontend)/[...slug]/page');
+    const { KANGUR_BASE_PATH } = await import('@/features/kangur/config/routing');
 
-    const result = await CmsSlugPage({
-      params: Promise.resolve({ slug: ['tests'] }),
-    });
+    await expect(
+      CmsSlugPage({
+        params: Promise.resolve({ slug: ['tests'] }),
+      })
+    ).rejects.toThrow(`redirect:${KANGUR_BASE_PATH}/tests`);
 
-    expect(result).toBeNull();
-    expect(redirectMock).not.toHaveBeenCalled();
+    expect(redirectMock).toHaveBeenCalledWith(`${KANGUR_BASE_PATH}/tests`);
     expect(kangurPublicAppMock).not.toHaveBeenCalled();
     expect(kangurFeatureRouteShellMock).not.toHaveBeenCalled();
     expect(resolveSlugToPageMock).not.toHaveBeenCalled();
@@ -159,19 +161,22 @@ describe('kangur public-owner frontend routes', () => {
     expect(buildSlugMetadataMock).not.toHaveBeenCalled();
   });
 
-  it('redirects legacy /kangur child routes to root-owned public routes when Kangur owns the frontend', async () => {
+  it('keeps legacy /kangur child routes on the server shell when Kangur owns the frontend', async () => {
     const { default: KangurAliasPage } = await import(
       '@/app/(frontend)/kangur/(app)/[[...slug]]/page'
     );
+    const { KangurServerShell } = await import('@/features/kangur/ui/components/KangurServerShell');
 
-    await expect(
-      KangurAliasPage({
-        params: Promise.resolve({ slug: ['tests'] }),
-        searchParams: Promise.resolve({ focus: 'division' }),
-      })
-    ).rejects.toThrow('redirect:/tests?focus=division');
+    const result = await KangurAliasPage({
+      params: Promise.resolve({ slug: ['tests'] }),
+      searchParams: Promise.resolve({ focus: 'division' }),
+    });
 
-    expect(redirectMock).toHaveBeenCalledWith('/tests?focus=division');
+    expect(result).toMatchObject({
+      type: KangurServerShell,
+      props: {},
+    });
+    expect(redirectMock).not.toHaveBeenCalled();
   });
 
   it('keeps legacy /kangur child routes on the server shell when CMS owns the frontend', async () => {

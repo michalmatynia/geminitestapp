@@ -22,6 +22,8 @@ import { withKangurClientErrorSync } from '@/features/kangur/observability/clien
 
 import type { CSSProperties, JSX } from 'react';
 
+const KANGUR_CLIENT_SHELL_ACTIVE_CLASSNAME = 'kangur-client-shell-active';
+
 export function KangurFeatureRouteShell({
   basePath = KANGUR_BASE_PATH,
   embedded = false,
@@ -72,10 +74,18 @@ export function KangurFeatureRouteShell({
       { fallback: search ? `${fallbackHref}?${search}` : fallbackHref }
     );
   }, [browserSearch, requestedPath, resolvedPathname, searchParams]);
-  // Remove the SSR loading shell once the client shell mounts.
   useEffect(() => {
-    const el = document.querySelector('[data-kangur-server-shell]');
-    el?.remove();
+    if (typeof document === 'undefined') {
+      return;
+    }
+
+    document.documentElement.classList.add(KANGUR_CLIENT_SHELL_ACTIVE_CLASSNAME);
+    document.body.classList.add(KANGUR_CLIENT_SHELL_ACTIVE_CLASSNAME);
+
+    return () => {
+      document.documentElement.classList.remove(KANGUR_CLIENT_SHELL_ACTIVE_CLASSNAME);
+      document.body.classList.remove(KANGUR_CLIENT_SHELL_ACTIVE_CLASSNAME);
+    };
   }, []);
 
   const isEmbedded = embedded;

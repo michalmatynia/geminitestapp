@@ -84,6 +84,18 @@ const port = process.env.PORT ? Number(process.env.PORT) : 3000;
 const host = process.env.HOST || '::';
 const hasExplicitHost = typeof process.env.HOST === 'string' && process.env.HOST.length > 0;
 const nextHostname = host === '::' ? undefined : host;
+const startupPrewarmEnabled =
+  process.env['SERVER_STARTUP_PREWARM'] !== 'false' && process.env.NODE_ENV === 'production';
+const startupPrewarmTimeoutMs = parseEnvNumber('SERVER_STARTUP_PREWARM_TIMEOUT_MS', 20_000);
+const startupPrewarmDelayMs = parseEnvNumber('SERVER_STARTUP_PREWARM_DELAY_MS', 250);
+const startupPrewarmPaths = (() => {
+  const configured = parseEnvList('SERVER_STARTUP_PREWARM_PATHS');
+  if (configured.length > 0) {
+    return configured;
+  }
+
+  return ['/api/health', '/api/auth/session', '/en/kangur', '/en/lessons'];
+})();
 const requestedDevBundler =
   typeof process.env['NEXT_DEV_BUNDLER'] === 'string'
     ? process.env['NEXT_DEV_BUNDLER'].trim().toLowerCase()
@@ -126,6 +138,67 @@ const SCRAPER_GUARD = createScraperGuard({
     ? process.env.SCRAPER_GUARD_LOG_BLOCKED !== 'false'
     : true,
 });
+
+async function runStartupPrewarm({ logSystemEvent, host, port }) {
+  if (!startupPrewarmEnabled || startupPrewarmPaths.length === 0) {
+    return;
+  }
+
+  const prewarmHost =
+    host && host !== '::' && host !== '0.0.0.0' ? host : '127.0.0.1';
+  const baseUrl = `http://${prewarmHost}:${port}`;
+
+  await new Promise((resolve) => setTimeout(resolve, startupPrewarmDelayMs));
+
+  for (const rawPath of startupPrewarmPaths) {
+    const path = typeof rawPath === 'string' ? rawPath.trim() : '';
+    if (!path) {
+      continue;
+    }
+
+    const pathname = path.startsWith('/') ? path : `/${path}`;
+    const startedAt = Date.now();
+    const controller = new AbortController();
+    const timeout = setTimeout(() => {
+      controller.abort();
+    }, startupPrewarmTimeoutMs);
+
+    try {
+      const response = await fetch(`${baseUrl}${pathname}`, {
+        method: 'GET',
+        headers: {
+          'x-startup-prewarm': '1',
+        },
+        signal: controller.signal,
+      });
+
+      logSystemEvent({
+        level: 'info',
+        message: '[startup-prewarm] completed',
+        source: 'server',
+        context: {
+          path: pathname,
+          status: response.status,
+          durationMs: Date.now() - startedAt,
+        },
+      });
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      logSystemEvent({
+        level: 'warn',
+        message: '[startup-prewarm] failed',
+        source: 'server',
+        context: {
+          path: pathname,
+          durationMs: Date.now() - startedAt,
+          error: message,
+        },
+      });
+    } finally {
+      clearTimeout(timeout);
+    }
+  }
+}
 
 app.prepare().then(async () => {
   const { ErrorSystem, logSystemEvent } = await getLoggingTools();
@@ -292,6 +365,8 @@ app.prepare().then(async () => {
       search: url.search,
       hash: url.hash,
     };
+    req.headers['x-app-request-pathname'] = url.pathname;
+    req.headers['x-app-request-url'] = normalizedUrl;
     const remoteAddress = req.socket?.remoteAddress;
     if (remoteAddress) {
       if (!req.headers['x-forwarded-for']) {
@@ -580,6 +655,12 @@ app.prepare().then(async () => {
       message: `Ready on http://localhost:${port}`,
       source: 'server',
       context: { port, host },
+    });
+
+    void runStartupPrewarm({
+      logSystemEvent,
+      host,
+      port,
     });
   };
 

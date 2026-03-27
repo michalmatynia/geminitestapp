@@ -1,6 +1,6 @@
 'use client';
 
-import { CalendarDays, Database, Mail } from 'lucide-react';
+import { CalendarDays, Database, Mail, Megaphone } from 'lucide-react';
 import React from 'react';
 
 import { PanelHeader } from '@/shared/ui';
@@ -25,6 +25,13 @@ function AdminFilemakerPageInner(): React.JSX.Element {
         description='Manage persons, organizations, events, and emails used in Case Resolver document addressing.'
         icon={<Database className='size-4' />}
         actions={[
+          {
+            key: 'campaigns',
+            label: 'Campaigns Page',
+            icon: <Megaphone className='size-4' />,
+            variant: 'outline',
+            onClick: () => router.push('/admin/filemaker/campaigns'),
+          },
           {
             key: 'events',
             label: 'Events Page',

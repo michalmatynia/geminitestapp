@@ -43,8 +43,11 @@ vi.mock('@/i18n/navigation', () => ({
   Link: ({
     href,
     children,
+    prefetch: _prefetch,
     ...props
-  }: PropsWithChildren<{ href: string } & AnchorHTMLAttributes<HTMLAnchorElement>>) => (
+  }: PropsWithChildren<
+    { href: string; prefetch?: boolean } & AnchorHTMLAttributes<HTMLAnchorElement>
+  >) => (
     <a href={href} {...props}>
       {children}
     </a>

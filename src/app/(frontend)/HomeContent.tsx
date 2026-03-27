@@ -1,11 +1,11 @@
 import { getTranslations } from 'next-intl/server';
 
-import { auth } from '@/features/auth/server';
 import { getCmsMenuSettings } from '@/features/cms/server';
 import { getCmsRepository } from '@/features/cms/server';
 import { getCmsThemeSettings } from '@/features/cms/server';
 import { productService } from '@/shared/lib/products/services/productService';
 import type { Slug } from '@/shared/contracts/cms';
+import { readOptionalServerAuthSession } from '@/shared/lib/auth/optional-server-auth';
 import { buildColorSchemeMap } from '@/shared/contracts/cms-theme';
 import { normalizeSiteLocale } from '@/shared/lib/i18n/site-locale';
 
@@ -42,7 +42,7 @@ export async function HomeContent({
       withTiming('cmsPageBySlug', () =>
         cmsRepository.getPageBySlug(defaultSlug.slug, { locale: resolvedLocale })
       ),
-      withTiming('auth', () => auth()),
+      withTiming('auth', readOptionalServerAuthSession),
     ]);
     let allowDrafts = false;
     if (cmsPage && cmsPage.status !== 'published') {

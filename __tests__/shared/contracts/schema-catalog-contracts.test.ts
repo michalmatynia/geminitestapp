@@ -26,6 +26,11 @@ import {
   kangurTestSuiteSchema,
 } from '@/shared/contracts/kangur-tests';
 import {
+  filemakerEmailCampaignRegistrySchema,
+  filemakerEmailCampaignDeliveryRegistrySchema,
+  filemakerEmailCampaignRunRegistrySchema,
+  filemakerEmailCampaignRunSchema,
+  filemakerEmailCampaignSchema,
   filemakerDatabaseSchema,
   filemakerPartyOptionSchema,
   filemakerPartyReferenceSchema,
@@ -308,6 +313,156 @@ describe('shared contract runtime coverage for schema catalogs', () => {
       expect.objectContaining({
         version: 1,
         organizations: [expect.objectContaining({ id: 'organization-1' })],
+      })
+    );
+
+    expect(
+      filemakerEmailCampaignSchema.parse({
+        id: 'campaign-1',
+        name: 'Expo Outreach',
+        status: 'active',
+        subject: 'Join our event',
+        audience: {
+          partyKinds: ['person', 'organization'],
+          emailStatuses: ['active'],
+          includePartyReferences: [],
+          excludePartyReferences: [],
+          organizationIds: ['organization-1'],
+          eventIds: ['event-1'],
+          countries: ['Poland'],
+          cities: ['Warsaw'],
+          dedupeByEmail: true,
+          limit: 50,
+        },
+        launch: {
+          mode: 'scheduled',
+          scheduledAt: iso,
+          recurring: null,
+          minAudienceSize: 10,
+          requireApproval: true,
+          onlyWeekdays: true,
+          allowedHourStart: 9,
+          allowedHourEnd: 17,
+          pauseOnBounceRatePercent: 5,
+          timezone: 'UTC',
+        },
+        createdAt: iso,
+        updatedAt: iso,
+      })
+    ).toEqual(
+      expect.objectContaining({
+        audience: expect.objectContaining({
+          eventIds: ['event-1'],
+        }),
+        launch: expect.objectContaining({
+          mode: 'scheduled',
+        }),
+      })
+    );
+
+    expect(
+      filemakerEmailCampaignRunSchema.parse({
+        id: 'run-1',
+        campaignId: 'campaign-1',
+        mode: 'dry_run',
+        status: 'completed',
+        recipientCount: 12,
+        deliveredCount: 0,
+        failedCount: 0,
+        skippedCount: 12,
+        createdAt: iso,
+        updatedAt: iso,
+      })
+    ).toEqual(
+      expect.objectContaining({
+        mode: 'dry_run',
+        skippedCount: 12,
+      })
+    );
+
+    expect(
+      filemakerEmailCampaignRegistrySchema.parse({
+        version: 1,
+        campaigns: [
+          {
+            id: 'campaign-1',
+            name: 'Expo Outreach',
+            status: 'draft',
+            subject: 'Join our event',
+            audience: {
+              partyKinds: ['person'],
+              emailStatuses: ['active'],
+              includePartyReferences: [],
+              excludePartyReferences: [],
+              organizationIds: [],
+              eventIds: [],
+              countries: [],
+              cities: [],
+              dedupeByEmail: true,
+              limit: null,
+            },
+            launch: {
+              mode: 'manual',
+              scheduledAt: null,
+              recurring: null,
+              minAudienceSize: 1,
+              requireApproval: false,
+              onlyWeekdays: false,
+              allowedHourStart: null,
+              allowedHourEnd: null,
+              pauseOnBounceRatePercent: null,
+              timezone: 'UTC',
+            },
+          },
+        ],
+      })
+    ).toEqual(
+      expect.objectContaining({
+        campaigns: [expect.objectContaining({ id: 'campaign-1' })],
+      })
+    );
+
+    expect(
+      filemakerEmailCampaignRunRegistrySchema.parse({
+        version: 1,
+        runs: [
+          {
+            id: 'run-1',
+            campaignId: 'campaign-1',
+            mode: 'live',
+            status: 'queued',
+            recipientCount: 42,
+            deliveredCount: 0,
+            failedCount: 0,
+            skippedCount: 0,
+          },
+        ],
+      })
+    ).toEqual(
+      expect.objectContaining({
+        runs: [expect.objectContaining({ campaignId: 'campaign-1' })],
+      })
+    );
+
+    expect(
+      filemakerEmailCampaignDeliveryRegistrySchema.parse({
+        version: 1,
+        deliveries: [
+          {
+            id: 'delivery-1',
+            campaignId: 'campaign-1',
+            runId: 'run-1',
+            emailId: 'email-1',
+            emailAddress: 'jan@example.com',
+            partyKind: 'person',
+            partyId: 'person-1',
+            status: 'queued',
+          },
+        ],
+      })
+    ).toEqual(
+      expect.objectContaining({
+        deliveries: [expect.objectContaining({ runId: 'run-1' })],
       })
     );
   });

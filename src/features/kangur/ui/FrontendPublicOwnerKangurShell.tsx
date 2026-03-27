@@ -24,6 +24,9 @@ type FrontendPublicOwnerKangurShellProps = {
   };
 };
 
+export type FrontendPublicOwnerKangurShellInitialAppearance =
+  FrontendPublicOwnerKangurShellProps['initialAppearance'];
+
 export function FrontendPublicOwnerKangurShell({
   embeddedOverride,
   initialAppearance,

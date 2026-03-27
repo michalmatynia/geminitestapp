@@ -229,9 +229,14 @@ vi.mock('next/link', () => ({
   default: ({
     href,
     children,
+    prefetch: _prefetch,
     scroll: _scroll,
     ...props
-  }: AnchorHTMLAttributes<HTMLAnchorElement> & { href: string; scroll?: boolean }) => (
+  }: AnchorHTMLAttributes<HTMLAnchorElement> & {
+    href: string;
+    scroll?: boolean;
+    prefetch?: boolean;
+  }) => (
     <a href={href} {...props}>
       {children}
     </a>

@@ -3,10 +3,8 @@
 import { createContext, useContext, useMemo, type ReactNode } from 'react';
 
 import { KANGUR_BASE_PATH, normalizeKangurBasePath } from '@/features/kangur/config/routing';
-import { resolveAccessibleKangurRouteState } from '@/features/kangur/config/page-access';
 import { internalError } from '@/features/kangur/shared/errors/app-error';
-import { useOptionalNextAuthSession } from '@/features/kangur/ui/hooks/useOptionalNextAuthSession';
-import { getKangurSlugFromPathname } from '@/features/kangur/ui/routing/managed-paths';
+import { useKangurRouteAccess } from '@/features/kangur/ui/routing/useKangurRouteAccess';
 
 type KangurRoutingContextValue = {
   pageKey?: string | null;
@@ -40,15 +38,13 @@ export const KangurRoutingProvider = ({
   embedded = false,
   children,
 }: KangurRoutingProviderProps): React.JSX.Element => {
-  const { data: session } = useOptionalNextAuthSession();
+  const { resolveRouteState } = useKangurRouteAccess();
   const resolvedBasePath = normalizeKangurBasePath(basePath);
   const normalizedRequestedPath = requestedPath?.trim() || resolvedBasePath;
-  const accessibleRouteState = resolveAccessibleKangurRouteState({
+  const accessibleRouteState = resolveRouteState({
     normalizedBasePath: resolvedBasePath,
     pageKey,
     requestedPath: normalizedRequestedPath,
-    session,
-    slugSegments: getKangurSlugFromPathname(normalizedRequestedPath, resolvedBasePath),
   });
   const normalizedRequestedHref = requestedHref?.trim() || normalizedRequestedPath;
   const accessibleRequestedHref =

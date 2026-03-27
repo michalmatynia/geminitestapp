@@ -56,12 +56,14 @@ vi.mock('@/features/kangur/ui/components/KangurTransitionLink', () => ({
   KangurTransitionLink: ({
     children,
     href,
+    prefetch: _prefetch,
     targetPageKey: _targetPageKey,
     transitionAcknowledgeMs: _transitionAcknowledgeMs,
     transitionSourceId: _transitionSourceId,
     ...rest
   }: React.AnchorHTMLAttributes<HTMLAnchorElement> & {
     href: string;
+    prefetch?: boolean;
     targetPageKey?: string;
     transitionAcknowledgeMs?: number;
     transitionSourceId?: string;

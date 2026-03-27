@@ -25,7 +25,7 @@ import {
 import { buildContextRegistryConsumerEnvelope } from '@/shared/lib/ai-context-registry/page-context-shared';
 import { useSettingsStore } from '@/features/kangur/shared/providers/SettingsStoreProvider';
 import { cn } from '@/features/kangur/shared/utils';
-import { useOptionalNextAuthSession } from '@/features/kangur/ui/hooks/useOptionalNextAuthSession';
+import { useKangurElevatedSession } from '@/features/kangur/ui/hooks/useKangurElevatedSession';
 
 import { extractNarrationTextFromElement } from './kangur-narrator-utils';
 import { KangurNarratorControl } from './KangurNarratorControl';
@@ -64,7 +64,7 @@ export function KangurLessonNarrator(props: KangurLessonNarratorProps): React.JS
     showFeedback,
   } = props;
   const locale = useLocale();
-  const { data: session } = useOptionalNextAuthSession();
+  const { isSuperAdmin } = useKangurElevatedSession();
   const settingsStore = useSettingsStore();
   const rawNarratorSettings = settingsStore.get(KANGUR_NARRATOR_SETTINGS_KEY);
   const narratorSettings = useMemo(
@@ -72,7 +72,7 @@ export function KangurLessonNarrator(props: KangurLessonNarratorProps): React.JS
     [rawNarratorSettings]
   );
   const defaultVoice = narratorSettings.voice ?? KANGUR_TTS_DEFAULT_VOICE;
-  const isNarratorDiagnosticsVisible = session?.user?.role === 'super_admin';
+  const isNarratorDiagnosticsVisible = isSuperAdmin;
   const voice =
     lesson.contentMode === 'document'
       ? (lessonDocument?.narration?.voice ?? defaultVoice)

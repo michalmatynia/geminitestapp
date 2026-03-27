@@ -5,12 +5,13 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { validationError } from '@/shared/errors/app-error';
 
-const { loadTriggerSettingsDataMock, logClientErrorMock, logClientCatchMock, toastMock } = vi.hoisted(() => ({
-  loadTriggerSettingsDataMock: vi.fn(),
-  logClientErrorMock: vi.fn(),
-  logClientCatchMock: vi.fn(),
-  toastMock: vi.fn(),
-}));
+const { loadTriggerSettingsDataMock, logClientErrorMock, logClientCatchMock, toastMock } =
+  vi.hoisted(() => ({
+    loadTriggerSettingsDataMock: vi.fn(),
+    logClientErrorMock: vi.fn(),
+    logClientCatchMock: vi.fn(),
+    toastMock: vi.fn(),
+  }));
 
 vi.mock('@/shared/lib/ai-paths/hooks/trigger-event-settings', async () => {
   const actual = await vi.importActual<
@@ -66,7 +67,7 @@ const createWrapper = (): ((props: PropsWithChildren) => ReactElement) => {
   };
 };
 
-describe('useAiPathTriggerEvent settings-load failures', () => {
+describe('useAiPathTriggerEvent settings-load failures shared-lib coverage', () => {
   beforeEach(() => {
     loadTriggerSettingsDataMock.mockReset();
     logClientErrorMock.mockReset();

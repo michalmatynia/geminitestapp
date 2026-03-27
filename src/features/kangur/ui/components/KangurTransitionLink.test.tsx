@@ -279,6 +279,40 @@ describe('KangurTransitionLink', () => {
     );
   });
 
+  it('keeps the canonical public href when Kangur owns the root public frontend', () => {
+    frontendPublicOwnerMock.mockReturnValue({ publicOwner: 'kangur' });
+    useLocaleMock.mockReturnValue('en');
+    usePathnameMock.mockReturnValue('/en');
+    useOptionalKangurRoutingMock.mockReturnValue({
+      basePath: '/',
+      embedded: false,
+      pageKey: 'Game',
+      requestedHref: '/en',
+      requestedPath: '/',
+    });
+
+    render(
+      <KangurTransitionLink href='/lessons?focus=division' targetPageKey='Lessons'>
+        Lessons
+      </KangurTransitionLink>
+    );
+
+    expect(screen.getByRole('link', { name: 'Lessons' })).toHaveAttribute(
+      'href',
+      '/en/lessons?focus=division'
+    );
+
+    fireEvent.click(screen.getByRole('link', { name: 'Lessons' }));
+
+    expect(startRouteTransitionMock).toHaveBeenCalledWith({
+      href: '/en/lessons?focus=division',
+      pageKey: 'Lessons',
+    });
+    expect(routerPushMock).toHaveBeenCalledWith('/en/lessons?focus=division', {
+      scroll: false,
+    });
+  });
+
   it('disables Next auto-prefetch for managed local Kangur links by default', () => {
     render(
       <KangurTransitionLink href='/kangur/lessons' targetPageKey='Lessons'>

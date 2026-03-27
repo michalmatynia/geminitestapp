@@ -35,8 +35,13 @@ vi.mock('next/link', () => ({
   default: ({
     children,
     href,
+    prefetch: _prefetch,
     ...rest
-  }: AnchorHTMLAttributes<HTMLAnchorElement> & { href: string; children?: ReactNode }) => (
+  }: AnchorHTMLAttributes<HTMLAnchorElement> & {
+    href: string;
+    children?: ReactNode;
+    prefetch?: boolean;
+  }) => (
     <a href={href} {...rest}>
       {children}
     </a>

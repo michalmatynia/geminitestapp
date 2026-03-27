@@ -19,6 +19,7 @@ import {
   isManagedLocalHref,
   localizeManagedKangurHref,
   normalizeManagedKangurPathname,
+  resolveManagedKangurBasePath,
 } from '@/features/kangur/ui/routing/managed-paths';
 import { useKangurRouteAccess } from '@/features/kangur/ui/routing/useKangurRouteAccess';
 import { withKangurClientErrorSync } from '@/features/kangur/observability/client';
@@ -119,7 +120,6 @@ export function useKangurRouteNavigator(): {
   const frontendPublicOwner = useOptionalFrontendPublicOwner();
   const basePath = routing?.basePath ?? KANGUR_BASE_PATH;
   const currentAccessiblePageKey = routing?.pageKey ?? 'Game';
-  const effectivePageKeyBasePath = frontendPublicOwner?.publicOwner === 'kangur' ? '/' : basePath;
   const requestedHref = routing?.requestedHref ?? routing?.requestedPath;
   const resolveManagedHref = useCallback(
     (href: string, transitionKind?: KangurRouteTransitionKind | null): string => {
@@ -193,8 +193,11 @@ export function useKangurRouteNavigator(): {
       }
 
       const resolvedHref = href ? resolveManagedHref(href, transitionKind) : null;
+      const targetBasePath = resolvedHref
+        ? resolveManagedKangurBasePath(resolvedHref)
+        : basePath;
       const accessibleResolvedPageKey = resolveManagedTargetPageKey({
-        basePath: effectivePageKeyBasePath,
+        basePath: targetBasePath,
         fallbackPageKey: currentAccessiblePageKey,
         href: resolvedHref,
         pageKey,
@@ -222,7 +225,7 @@ export function useKangurRouteNavigator(): {
       };
     },
     [
-      effectivePageKeyBasePath,
+      basePath,
       currentAccessiblePageKey,
       pathname,
       requestedHref,

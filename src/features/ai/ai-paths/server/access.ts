@@ -1,10 +1,10 @@
 import 'server-only';
 
 import { resolveAiPathsStaleRunningMaxAgeMs } from '@/features/ai/ai-paths/services/path-run-recovery-service';
-import { auth } from '@/server/auth';
 import type { AiPathRunRecord, AiPathRunStatus } from '@/shared/contracts/ai-paths';
 import { forbiddenError, authError, rateLimitedError } from '@/shared/errors/app-error';
 import { getPathRunRepository } from '@/shared/lib/ai-paths/services/path-run-repository';
+import { readOptionalServerAuthSession } from '@/shared/lib/auth/optional-server-auth';
 import { logSystemEvent } from '@/shared/lib/observability/system-logger';
 import { getRedisConnection } from '@/shared/lib/queue';
 
@@ -118,7 +118,7 @@ const countFreshActiveRuns = (runs: AiPathRunRecord[], nowMs: number): number =>
 };
 
 export const requireAiPathsAccess = async (): Promise<AiPathsAccessContext> => {
-  const session = await auth();
+  const session = await readOptionalServerAuthSession();
   if (!session?.user?.id) {
     throw authError('Unauthorized.');
   }
@@ -136,7 +136,7 @@ export const requireAiPathsAccess = async (): Promise<AiPathsAccessContext> => {
 };
 
 export const requireAiPathsRunAccess = async (): Promise<AiPathsAccessContext> => {
-  const session = await auth();
+  const session = await readOptionalServerAuthSession();
   if (!session?.user?.id) {
     throw authError('Unauthorized.');
   }

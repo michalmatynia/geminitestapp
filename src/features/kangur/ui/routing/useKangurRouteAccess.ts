@@ -1,5 +1,6 @@
 import { useCallback } from 'react';
 
+import { resolveAccessibleKangurRouteState } from '@/features/kangur/config/page-access';
 import { useOptionalNextAuthSession } from '@/features/kangur/ui/hooks/useOptionalNextAuthSession';
 import {
   resolveAccessibleKangurPendingRouteLoadingSnapshot,
@@ -13,9 +14,19 @@ import {
 import {
   resolveAccessibleManagedKangurTargetPageKey,
   sanitizeAccessibleManagedKangurHref,
+  getKangurSlugFromPathname,
 } from '@/features/kangur/ui/routing/managed-paths';
 
 export const useKangurRouteAccess = (): {
+  resolveRouteState: <TPageKey extends string>(input: {
+    normalizedBasePath: string;
+    pageKey: TPageKey | null | undefined;
+    requestedPath: string;
+    fallbackPageKey?: TPageKey;
+  }) => {
+    pageKey: TPageKey;
+    requestedPath: string;
+  };
   sanitizeManagedHref: (input: {
     href: string | null | undefined;
     pathname: string | null;
@@ -52,6 +63,24 @@ export const useKangurRouteAccess = (): {
   }) => KangurRouteTransitionSkeletonVariant;
 } => {
   const { data: session } = useOptionalNextAuthSession();
+
+  const resolveRouteState = useCallback(
+    <TPageKey extends string>(input: {
+      normalizedBasePath: string;
+      pageKey: TPageKey | null | undefined;
+      requestedPath: string;
+      fallbackPageKey?: TPageKey;
+    }): {
+      pageKey: TPageKey;
+      requestedPath: string;
+    } =>
+      resolveAccessibleKangurRouteState({
+        ...input,
+        session,
+        slugSegments: getKangurSlugFromPathname(input.requestedPath, input.normalizedBasePath),
+      }),
+    [session]
+  );
 
   const sanitizeManagedHref = useCallback(
     (input: {
@@ -128,6 +157,7 @@ export const useKangurRouteAccess = (): {
   );
 
   return {
+    resolveRouteState,
     sanitizeManagedHref,
     resolveManagedTargetPageKey,
     resolvePendingSnapshot,

@@ -472,6 +472,16 @@ export const getKangurCanonicalPublicHref = (
   return query ? `${pathname}?${query}` : pathname;
 };
 
+export const getKangurPublicAliasHref = (
+  slugSegments: readonly string[] = [],
+  searchParams?: KangurPublicSearchParams
+): string => {
+  const pathname = normalizeKangurRequestedPath(slugSegments, KANGUR_BASE_PATH);
+  const query = toKangurSearchParams(searchParams).toString();
+
+  return query ? `${pathname}?${query}` : pathname;
+};
+
 export type KangurLaunchTarget = {
   fallbackHref: string;
   href: string;

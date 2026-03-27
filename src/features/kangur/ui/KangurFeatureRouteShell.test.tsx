@@ -114,8 +114,29 @@ describe('KangurFeatureRouteShell', () => {
     clearLatchedKangurTopBarHeightCssValue();
     window.history.replaceState({}, '', '/kangur');
     document.documentElement.style.removeProperty('--kangur-top-bar-height');
+    document.documentElement.classList.remove('kangur-client-shell-active');
+    document.body.classList.remove('kangur-client-shell-active');
     usePathnameMock.mockReturnValue('/kangur');
     useSearchParamsMock.mockReturnValue(new URLSearchParams());
+  });
+
+  it('marks the client shell active instead of removing the server shell overlay directly', () => {
+    const serverShell = document.createElement('div');
+    serverShell.setAttribute('data-kangur-server-shell', '');
+    document.body.appendChild(serverShell);
+
+    const { unmount } = render(<KangurFeatureRouteShell />);
+
+    expect(document.documentElement.classList.contains('kangur-client-shell-active')).toBe(true);
+    expect(document.body.classList.contains('kangur-client-shell-active')).toBe(true);
+    expect(document.body.contains(serverShell)).toBe(true);
+
+    unmount();
+
+    expect(document.documentElement.classList.contains('kangur-client-shell-active')).toBe(false);
+    expect(document.body.classList.contains('kangur-client-shell-active')).toBe(false);
+
+    serverShell.remove();
   });
 
   it('maps lesson routes into Kangur routing and observability context', () => {

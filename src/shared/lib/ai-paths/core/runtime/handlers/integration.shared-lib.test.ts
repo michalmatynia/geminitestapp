@@ -10,7 +10,7 @@ import {
   handleDbSchema,
 } from '@/shared/lib/ai-paths/core/runtime/handlers/integration';
 
-import { createMockContext } from '../../test-utils';
+import { createMockContext } from '../test-utils';
 
 vi.mock('@/shared/lib/ai-paths/api', () => ({
   dbApi: {

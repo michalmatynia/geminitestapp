@@ -3,6 +3,8 @@ import { describe, expect, it } from 'vitest';
 import {
   canonicalizeKangurPublicAliasHref,
   canonicalizeKangurPublicAliasPathname,
+  preferKangurPublicAliasHref,
+  preferKangurPublicAliasPathname,
   resolveManagedKangurBasePath,
   resolveAccessibleManagedKangurTargetPageKey,
   resolveRouteAwareManagedKangurHref,
@@ -34,6 +36,18 @@ describe('managed-paths canonical Kangur alias helpers', () => {
       '/en/lessons?focus=clock'
     );
     expect(canonicalizeKangurPublicAliasPathname('/games')).toBe('/games');
+  });
+
+  it('prefers the explicit /kangur alias pathname for root-owned Kangur routes', () => {
+    expect(preferKangurPublicAliasPathname('/en/lessons')).toBe('/en/kangur/lessons');
+    expect(preferKangurPublicAliasPathname('/de')).toBe('/de/kangur');
+    expect(preferKangurPublicAliasPathname('/kangur/lessons')).toBe('/kangur/lessons');
+  });
+
+  it('preserves search params and hashes while preferring alias hrefs', () => {
+    expect(preferKangurPublicAliasHref('/en/lessons?focus=clock#mission')).toBe(
+      '/en/kangur/lessons?focus=clock#mission'
+    );
   });
 
   it('resolves the managed Kangur base path from public and alias hrefs', () => {

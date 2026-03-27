@@ -1,4 +1,5 @@
 import { auth } from '@/features/auth/server';
+import { isMissingRequestScopeError } from '@/shared/lib/auth/request-scope-error';
 
 import type { Session } from 'next-auth';
 
@@ -8,8 +9,7 @@ type TolerantServerAuthSessionOptions = {
   onError?: (error: unknown) => unknown;
 };
 
-export const isMissingRequestScopeError = (error: unknown): boolean =>
-  error instanceof Error && error.message.includes('outside a request scope');
+export { isMissingRequestScopeError } from '@/shared/lib/auth/request-scope-error';
 
 export async function readOptionalServerAuthSession(): Promise<ServerAuthSession | null> {
   try {

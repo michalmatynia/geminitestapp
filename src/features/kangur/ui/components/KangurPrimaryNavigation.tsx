@@ -32,7 +32,6 @@ import {
   persistTutorVisibilityHidden,
   subscribeToTutorVisibilityChanges,
 } from '@/features/kangur/ui/components/KangurAiTutorWidget.storage';
-import { useOptionalNextAuthSession } from '@/features/kangur/ui/hooks/useOptionalNextAuthSession';
 import { useKangurSubjectFocus } from '@/features/kangur/ui/context/KangurSubjectFocusContext';
 import { useKangurAgeGroupFocus } from '@/features/kangur/ui/context/KangurAgeGroupFocusContext';
 import { getKangurAvatarById } from '@/features/kangur/ui/avatars/catalog';
@@ -90,10 +89,11 @@ import { useKangurMobileBreakpoint } from '@/features/kangur/ui/hooks/useKangurM
 import { useKangurPageContentEntry } from '@/features/kangur/ui/hooks/useKangurPageContent';
 import { useKangurCoarsePointer } from '@/features/kangur/ui/hooks/useKangurCoarsePointer';
 import { useKangurPageAccess } from '@/features/kangur/ui/hooks/useKangurPageAccess';
+import { useKangurElevatedSession } from '@/features/kangur/ui/hooks/useKangurElevatedSession';
 import { useKangurTutorAnchor } from '@/features/kangur/ui/hooks/useKangurTutorAnchor';
 import { useKangurStorefrontAppearance } from '@/features/kangur/ui/useKangurStorefrontAppearance';
 import { DEFAULT_SITE_I18N_CONFIG } from '@/shared/contracts/site-i18n';
-import { getElevatedSessionUserSnapshot } from '@/shared/lib/auth/elevated-session-user';
+import type { ElevatedSessionUserSnapshot } from '@/shared/lib/auth/elevated-session-user';
 import { normalizeSiteLocale } from '@/shared/lib/i18n/site-locale';
 
 type KangurPrimaryNavigationPage =
@@ -340,7 +340,7 @@ const renderKangurPrimaryNavigationElevatedUserMenu = ({
   } | null;
   triggerAriaLabel: string;
   triggerClassName?: string;
-  user: NonNullable<ReturnType<typeof getElevatedSessionUserSnapshot>>;
+  user: ElevatedSessionUserSnapshot;
 }): React.JSX.Element => (
   <KangurElevatedUserMenu
     adminLabel={adminLabel}
@@ -429,7 +429,7 @@ export function KangurPrimaryNavigation({
   const tutorContent = useKangurAiTutorContent();
   const tutor = useOptionalKangurAiTutor();
   const auth = useOptionalKangurAuth();
-  const { data: session } = useOptionalNextAuthSession();
+  const { elevatedUser: elevatedSessionSnapshot } = useKangurElevatedSession();
   const storefrontAppearance = useOptionalCmsStorefrontAppearance();
   const kangurAppearance = useKangurStorefrontAppearance();
   const routeTransitionState = useOptionalKangurRouteTransitionState();
@@ -459,18 +459,16 @@ export function KangurPrimaryNavigation({
   const activeLearnerName =
     activeLearner?.displayName?.trim() || activeLearner?.loginName?.trim() || null;
   const elevatedSessionUser = useMemo(() => {
-    const snapshot = getElevatedSessionUserSnapshot(session);
-
-    if (!snapshot) {
+    if (!elevatedSessionSnapshot) {
       return null;
     }
 
     return {
-      ...snapshot,
-      email: snapshot.email ?? authUser?.email?.trim() ?? null,
-      name: snapshot.name ?? authUser?.full_name?.trim() ?? null,
+      ...elevatedSessionSnapshot,
+      email: elevatedSessionSnapshot.email ?? authUser?.email?.trim() ?? null,
+      name: elevatedSessionSnapshot.name ?? authUser?.full_name?.trim() ?? null,
     };
-  }, [authUser?.email, authUser?.full_name, session]);
+  }, [authUser?.email, authUser?.full_name, elevatedSessionSnapshot]);
   const profileDisplayName = activeLearnerName || authUser?.full_name?.trim() || null;
   const profileLabel = profileDisplayName
     ? fallbackCopy.profileLabelWithName(profileDisplayName)
@@ -782,10 +780,6 @@ export function KangurPrimaryNavigation({
   };
 
   const renderAuthActions = (onActionClick?: () => void): React.ReactNode => {
-    if (shouldRenderElevatedUserMenu) {
-      return null;
-    }
-
     if (effectiveIsAuthenticated) {
       return renderNavAction(buildActionWithClose(logoutAction, onActionClick));
     }

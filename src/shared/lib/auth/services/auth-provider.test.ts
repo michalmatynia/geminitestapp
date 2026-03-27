@@ -64,6 +64,8 @@ describe('auth provider env override', () => {
 
     await expect(getAuthDataProvider()).resolves.toBe('mongodb');
 
+    expect(getAppDbProviderMock).not.toHaveBeenCalled();
+    expect(getDatabaseEnginePolicyMock).not.toHaveBeenCalled();
     expect(getMongoDbMock).not.toHaveBeenCalled();
     expect(getDatabaseEngineServiceProviderMock).not.toHaveBeenCalled();
   });

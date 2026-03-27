@@ -258,6 +258,31 @@ describe('useKangurRouteNavigator', () => {
     });
   });
 
+  it('keeps the canonical public route when navigating from root-owned public Kangur routes', () => {
+    frontendPublicOwnerMock.mockReturnValue({ publicOwner: 'kangur' });
+    useLocaleMock.mockReturnValue('en');
+    usePathnameMock.mockReturnValue('/en');
+    useOptionalKangurRoutingMock.mockReturnValue({
+      basePath: '/',
+      embedded: false,
+      pageKey: 'Game',
+      requestedHref: '/en',
+      requestedPath: '/',
+    });
+
+    render(<NavigatorProbe href='/lessons?focus=division' />);
+
+    fireEvent.click(screen.getByTestId('navigator-replace'));
+
+    expect(startRouteTransitionMock).toHaveBeenCalledWith({
+      href: '/en/lessons?focus=division',
+      pageKey: 'Lessons',
+    });
+    expect(routerReplaceMock).toHaveBeenCalledWith('/en/lessons?focus=division', {
+      scroll: false,
+    });
+  });
+
   it('preserves the active locale prefix when navigating between root-owned public Kangur routes', () => {
     useLocaleMock.mockReturnValue('en');
     usePathnameMock.mockReturnValue('/en/lessons');

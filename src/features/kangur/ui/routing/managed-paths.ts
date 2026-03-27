@@ -3,6 +3,7 @@ import type { Session } from 'next-auth';
 import {
   KANGUR_BASE_PATH,
   getKangurCanonicalPublicHref,
+  getKangurPublicAliasHref,
   normalizeKangurBasePath,
   resolveKangurPageKeyFromSlug,
 } from '@/features/kangur/config/routing';
@@ -88,6 +89,58 @@ export const canonicalizeKangurPublicAliasHref = (href: string): string => {
       const parsed = new URL(href, 'https://kangur.local');
       const canonicalPathname = canonicalizeKangurPublicAliasPathnameUnsafe(parsed.pathname);
       return `${canonicalPathname}${parsed.search}${parsed.hash}`;
+    },
+    { fallback: href }
+  );
+};
+
+const preferKangurPublicAliasPathnameUnsafe = (pathname: string): string => {
+  const normalizedPathname = stripSiteLocalePrefix(pathname);
+
+  if (normalizedPathname === '/kangur' || normalizedPathname.startsWith('/kangur/')) {
+    return pathname;
+  }
+
+  const slugSegments = normalizedPathname
+    .split('/')
+    .map((segment) => segment.trim())
+    .filter(Boolean);
+  const localizedAliasLocale = getPathLocale(pathname);
+  const aliasPathname = getKangurPublicAliasHref(slugSegments);
+
+  return localizedAliasLocale
+    ? buildLocalizedPathname(aliasPathname, localizedAliasLocale)
+    : aliasPathname;
+};
+
+export const preferKangurPublicAliasPathname = (pathname: string): string =>
+  withKangurClientErrorSync(
+    {
+      source: 'kangur.routing',
+      action: 'prefer-public-alias-pathname',
+      description: 'Normalizes public Kangur pathnames into the /kangur alias route space.',
+      context: { pathname },
+    },
+    () => preferKangurPublicAliasPathnameUnsafe(pathname),
+    { fallback: pathname }
+  );
+
+export const preferKangurPublicAliasHref = (href: string): string => {
+  if (!isManagedLocalHref(href)) {
+    return href;
+  }
+
+  return withKangurClientErrorSync(
+    {
+      source: 'kangur.routing',
+      action: 'prefer-public-alias-href',
+      description: 'Normalizes public Kangur hrefs into the /kangur alias route space.',
+      context: { href },
+    },
+    () => {
+      const parsed = new URL(href, 'https://kangur.local');
+      const aliasPathname = preferKangurPublicAliasPathnameUnsafe(parsed.pathname);
+      return `${aliasPathname}${parsed.search}${parsed.hash}`;
     },
     { fallback: href }
   );

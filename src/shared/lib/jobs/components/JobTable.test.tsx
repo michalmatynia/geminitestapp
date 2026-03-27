@@ -16,8 +16,9 @@ vi.mock('next/link', () => ({
   default: ({
     children,
     href,
+    prefetch: _prefetch,
     ...props
-  }: React.PropsWithChildren<{ href: string } & Record<string, unknown>>) => (
+  }: React.PropsWithChildren<{ href: string; prefetch?: boolean } & Record<string, unknown>>) => (
     <a href={href} {...props}>
       {children}
     </a>

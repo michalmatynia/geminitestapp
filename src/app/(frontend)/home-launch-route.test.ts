@@ -6,7 +6,6 @@ const {
   getFrontPageRedirectPathMock,
   getFrontPageSettingMock,
   getKangurConfiguredLaunchTargetMock,
-  kangurSsrSkeletonMock,
   getSlugsForDomainMock,
   redirectMock,
   resolveCmsDomainFromHeadersMock,
@@ -17,7 +16,6 @@ const {
   getFrontPageRedirectPathMock: vi.fn(),
   getFrontPageSettingMock: vi.fn(),
   getKangurConfiguredLaunchTargetMock: vi.fn(),
-  kangurSsrSkeletonMock: vi.fn(),
   getSlugsForDomainMock: vi.fn(),
   redirectMock: vi.fn(),
   resolveCmsDomainFromHeadersMock: vi.fn(),
@@ -52,10 +50,6 @@ vi.mock('@/features/kangur/server/launch-route', () => ({
   getKangurConfiguredLaunchTarget: getKangurConfiguredLaunchTargetMock,
 }));
 
-vi.mock('@/features/kangur/ui/KangurSSRSkeleton', () => ({
-  KangurSSRSkeleton: kangurSsrSkeletonMock,
-}));
-
 describe('frontend home launch route', () => {
   beforeEach(() => {
     vi.resetModules();
@@ -83,7 +77,7 @@ describe('frontend home launch route', () => {
     expect(getCmsRepositoryMock).not.toHaveBeenCalled();
   });
 
-  it('renders the Kangur SSR skeleton on the web mount when the mobile web route is configured', async () => {
+  it('redirects the web mount to the /kangur alias route when Kangur owns home', async () => {
     getKangurConfiguredLaunchTargetMock.mockResolvedValue({
       route: 'web_mobile_view',
       href: '/',
@@ -91,10 +85,8 @@ describe('frontend home launch route', () => {
     });
 
     const { default: Home } = await import('@/app/(frontend)/page');
-    const page = await Home();
-
-    expect(page).toMatchObject({ type: kangurSsrSkeletonMock });
-    expect(redirectMock).not.toHaveBeenCalled();
+    await expect(Home()).rejects.toThrow('redirect:/kangur');
+    expect(redirectMock).toHaveBeenCalledWith('/kangur');
     expect(getCmsRepositoryMock).not.toHaveBeenCalled();
   });
 
@@ -116,7 +108,7 @@ describe('frontend home launch route', () => {
     expect(getCmsRepositoryMock).not.toHaveBeenCalled();
   });
 
-  it('renders the Kangur SSR skeleton on localized home routes when the mobile web route is configured', async () => {
+  it('redirects localized home routes to the localized /kangur alias when Kangur owns home', async () => {
     getKangurConfiguredLaunchTargetMock.mockResolvedValue({
       route: 'web_mobile_view',
       href: '/',
@@ -124,12 +116,12 @@ describe('frontend home launch route', () => {
     });
 
     const { default: LocalizedHome } = await import('@/app/[locale]/(frontend)/page');
-    const page = await LocalizedHome({
-      params: Promise.resolve({ locale: 'pl' }),
-    });
-
-    expect(page).toMatchObject({ type: kangurSsrSkeletonMock });
-    expect(redirectMock).not.toHaveBeenCalled();
+    await expect(
+      LocalizedHome({
+        params: Promise.resolve({ locale: 'en' }),
+      })
+    ).rejects.toThrow('redirect:/en/kangur');
+    expect(redirectMock).toHaveBeenCalledWith('/en/kangur');
     expect(getCmsRepositoryMock).not.toHaveBeenCalled();
   });
 });

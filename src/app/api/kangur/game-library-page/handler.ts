@@ -1,10 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-import { canAccessKangurPage } from '@/features/kangur/config/page-access';
 import {
   createKangurGameLibraryPageDataFromGames,
 } from '@/features/kangur/games';
 import { ErrorSystem } from '@/features/kangur/shared/utils/observability/error-system';
+import {
+  createKangurDeniedApiResponse,
+  readCanAccessKangurPage,
+} from '@/features/kangur/server/route-access';
 import { listKangurGames } from '@/features/kangur/services/kangur-game-repository/mongo-kangur-game-repository';
 import {
   kangurGameEngineCategorySchema,
@@ -24,30 +27,17 @@ import {
   kangurLessonSubjectSchema,
 } from '@/shared/contracts/kangur-lesson-constants';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
-import { readOptionalServerAuthSession } from '@/shared/lib/auth/optional-server-auth';
 
 export { kangurGameLibraryPageQuerySchema as querySchema };
 
 const SERVICE = 'kangur.game-library-page-handler';
-const GAMES_LIBRARY_DENIED_HEADERS = Object.freeze({
-  'Cache-Control': 'private, no-store',
-});
 
 export async function getKangurGameLibraryPageHandler(
   _req: NextRequest,
   ctx: ApiHandlerContext
 ): Promise<Response> {
-  const session = await readOptionalServerAuthSession();
-  if (!canAccessKangurPage('GamesLibrary', session)) {
-    return NextResponse.json(
-      {
-        error: 'Not Found',
-      },
-      {
-        headers: GAMES_LIBRARY_DENIED_HEADERS,
-        status: 404,
-      }
-    );
+  if (!(await readCanAccessKangurPage('GamesLibrary'))) {
+    return createKangurDeniedApiResponse();
   }
 
   const query = kangurGameLibraryPageQuerySchema.parse(ctx.query ?? {});

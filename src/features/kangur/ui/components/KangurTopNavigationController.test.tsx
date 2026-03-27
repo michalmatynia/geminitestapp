@@ -3,6 +3,7 @@
  */
 
 import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import {
@@ -115,6 +116,91 @@ describe('KangurTopNavigationController', () => {
 
     expect(screen.getByTestId('kangur-primary-nav-home')).toHaveAttribute('aria-current', 'page');
     expect(screen.queryByTestId('kangur-primary-nav-games-library')).toBeNull();
+  });
+
+  it('keeps the visible logout button when an elevated authenticated session is rendered locally', async () => {
+    const onLogout = vi.fn();
+    const user = userEvent.setup();
+
+    sessionMock.mockReturnValue({
+      data: {
+        expires: '2026-12-31T23:59:59.000Z',
+        user: {
+          email: 'admin@example.com',
+          id: 'admin-1',
+          image: null,
+          name: 'Super Admin',
+          role: 'super_admin',
+        },
+      },
+      status: 'authenticated',
+    });
+
+    render(
+      <KangurTopNavigationController
+        navigation={{
+          ...LESSONS_NAVIGATION,
+          isAuthenticated: true,
+          onLogout,
+        }}
+      />
+    );
+
+    expect(
+      await screen.findByTestId('kangur-elevated-user-menu-trigger')
+    ).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Wyloguj' })).toHaveAttribute(
+      'data-testid',
+      'kangur-primary-nav-logout'
+    );
+
+    await user.click(screen.getByRole('button', { name: 'Wyloguj' }));
+
+    expect(onLogout).toHaveBeenCalledTimes(1);
+  });
+
+  it('keeps the visible logout button when an elevated authenticated session is rendered through the shared host', async () => {
+    const onLogout = vi.fn();
+    const user = userEvent.setup();
+
+    sessionMock.mockReturnValue({
+      data: {
+        expires: '2026-12-31T23:59:59.000Z',
+        user: {
+          email: 'admin@example.com',
+          id: 'admin-1',
+          image: null,
+          name: 'Super Admin',
+          role: 'super_admin',
+        },
+      },
+      status: 'authenticated',
+    });
+
+    render(
+      <KangurTopNavigationProvider>
+        <KangurTopNavigationHost />
+        <KangurTopNavigationController
+          navigation={{
+            ...LESSONS_NAVIGATION,
+            isAuthenticated: true,
+            onLogout,
+          }}
+        />
+      </KangurTopNavigationProvider>
+    );
+
+    expect(
+      await screen.findByTestId('kangur-elevated-user-menu-trigger')
+    ).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Wyloguj' })).toHaveAttribute(
+      'data-testid',
+      'kangur-primary-nav-logout'
+    );
+
+    await user.click(screen.getByRole('button', { name: 'Wyloguj' }));
+
+    expect(onLogout).toHaveBeenCalledTimes(1);
   });
 
   it('renders through the shared host and updates in place when the page changes', () => {

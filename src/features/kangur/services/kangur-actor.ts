@@ -2,9 +2,10 @@ import 'server-only';
 
 import { z } from 'zod';
 
-import { auth, findAuthUserById, normalizeAuthEmail } from '@/server/auth';
+import { findAuthUserById, normalizeAuthEmail } from '@/server/auth';
 import type { KangurAuthUser, KangurLearnerProfile } from '@kangur/contracts';
 import { authError, notFoundError } from '@/features/kangur/shared/errors/app-error';
+import { readOptionalServerAuthSession } from '@/shared/lib/auth/optional-server-auth';
 
 import { getKangurLearnerById, listKangurLearnersByOwner } from './kangur-learner-repository';
 import { readKangurLearnerSession } from './kangur-learner-session';
@@ -109,7 +110,7 @@ export const requireActiveLearner = (actor: KangurActor): KangurLearnerProfile =
 };
 
 export const resolveKangurActor = async (request?: NextRequest): Promise<KangurActor> => {
-  const session = await auth();
+  const session = await readOptionalServerAuthSession();
   const requestedLearnerId = resolveRequestedLearnerId(request);
 
   if (session?.user?.id) {

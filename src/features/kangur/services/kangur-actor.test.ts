@@ -1,9 +1,12 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 vi.mock('@/server/auth', () => ({
-  auth: vi.fn(),
   findAuthUserById: vi.fn(),
   normalizeAuthEmail: (value: string) => value.trim().toLowerCase(),
+}));
+
+vi.mock('@/shared/lib/auth/optional-server-auth', () => ({
+  readOptionalServerAuthSession: vi.fn(),
 }));
 
 vi.mock('./kangur-learner-repository', () => ({
@@ -17,7 +20,8 @@ vi.mock('./kangur-learner-session', () => ({
 
 import { createDefaultKangurAiTutorLearnerMood } from '@/features/kangur/shared/contracts/kangur-ai-tutor-mood';
 import { kangurAuthUserSchema } from '@kangur/contracts';
-import { auth, findAuthUserById } from '@/server/auth';
+import { findAuthUserById } from '@/server/auth';
+import { readOptionalServerAuthSession } from '@/shared/lib/auth/optional-server-auth';
 
 import { listKangurLearnersByOwner } from './kangur-learner-repository';
 import { resolveKangurActor, toKangurAuthUser, type KangurParentActor } from './kangur-actor';
@@ -70,14 +74,14 @@ describe('resolveKangurActor', () => {
   });
 
   it('maps super_admin to admin role', async () => {
-    vi.mocked(auth).mockResolvedValue({
+    vi.mocked(readOptionalServerAuthSession).mockResolvedValue({
       user: {
         id: 'owner-1',
         email: 'parent@example.com',
         name: 'Parent Example',
         role: 'super_admin',
       },
-    } as Awaited<ReturnType<typeof auth>>);
+    });
     vi.mocked(findAuthUserById).mockResolvedValue({
       email: 'parent@example.com',
       emailVerified: true,
@@ -91,14 +95,14 @@ describe('resolveKangurActor', () => {
   });
 
   it('maps superuser to admin role', async () => {
-    vi.mocked(auth).mockResolvedValue({
+    vi.mocked(readOptionalServerAuthSession).mockResolvedValue({
       user: {
         id: 'owner-1',
         email: 'parent@example.com',
         name: 'Parent Example',
         role: 'superuser',
       },
-    } as Awaited<ReturnType<typeof auth>>);
+    });
     vi.mocked(findAuthUserById).mockResolvedValue({
       email: 'parent@example.com',
       emailVerified: true,
@@ -109,5 +113,11 @@ describe('resolveKangurActor', () => {
 
     expect(actor.actorType).toBe('parent');
     expect(actor.role).toBe('admin');
+  });
+
+  it('treats missing request scope as unauthenticated when no request is provided', async () => {
+    vi.mocked(readOptionalServerAuthSession).mockResolvedValue(null);
+
+    await expect(resolveKangurActor()).rejects.toThrow(/Authentication required/);
   });
 });

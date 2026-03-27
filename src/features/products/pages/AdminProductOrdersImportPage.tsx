@@ -56,6 +56,19 @@ type PreviewSortOption =
   | 'customer-asc'
   | 'total-desc'
   | 'import-priority';
+type PreviewScopeState = {
+  connectionId: string;
+  dateFrom: string;
+  dateTo: string;
+  statusId: string;
+  limit: string;
+};
+type PreviewScopeChangeItem = {
+  key: string;
+  label: string;
+  loaded: string;
+  current: string;
+};
 
 type OrderChangeSummaryItem = {
   key: string;
@@ -90,6 +103,47 @@ const formatOrderTotal = (amount: number | null, currency: string | null): strin
 const formatItemsTotal = (order: Pick<BaseOrderImportPreviewItem, 'lineItems'>): number =>
   order.lineItems.reduce((total, item) => total + item.quantity, 0);
 
+const summarizeOrderAggregate = (
+  orders: Array<Pick<BaseOrderImportPreviewItem, 'currency' | 'totalGross' | 'lineItems'>>
+): {
+  itemsTotal: number;
+  grossLabel: string;
+} => {
+  const itemsTotal = orders.reduce((total, order) => total + formatItemsTotal(order), 0);
+  const normalizedCurrencies = new Set(
+    orders
+      .map((order) => order.currency?.trim())
+      .filter((currency): currency is string => Boolean(currency))
+  );
+
+  if (orders.length === 0) {
+    return {
+      itemsTotal,
+      grossLabel: formatOrderTotal(0, null),
+    };
+  }
+
+  if (normalizedCurrencies.size > 1) {
+    return {
+      itemsTotal,
+      grossLabel: 'Mixed currencies',
+    };
+  }
+
+  const [currency] = [...normalizedCurrencies];
+  const grossTotal = orders.reduce((total, order) => {
+    if (typeof order.totalGross !== 'number' || !Number.isFinite(order.totalGross)) {
+      return total;
+    }
+    return total + order.totalGross;
+  }, 0);
+
+  return {
+    itemsTotal,
+    grossLabel: formatOrderTotal(grossTotal, currency ?? null),
+  };
+};
+
 const formatTextValue = (value: string | null): string => {
   const normalized = value?.trim();
   return normalized ? normalized : '—';
@@ -102,6 +156,29 @@ const getOrderTimestamp = (value: string | null): number => {
 };
 
 const normalizeSortText = (value: string | null): string => value?.trim().toLowerCase() ?? '';
+
+const formatPreviewScopeDateRange = (scope: PreviewScopeState): string => {
+  const from = scope.dateFrom.trim();
+  const to = scope.dateTo.trim();
+  if (!from && !to) return 'Any date';
+  return `${from || 'Any'} -> ${to || 'Any'}`;
+};
+
+const formatPreviewScopeStatus = (
+  statusId: string,
+  statusOptions: Array<{ value: string; label: string }>
+): string => {
+  if (!statusId.trim()) return 'All statuses';
+  return statusOptions.find((option) => option.value === statusId)?.label ?? statusId;
+};
+
+const formatPreviewScopeConnection = (
+  connectionId: string,
+  connectionOptions: Array<{ value: string; label: string }>
+): string => {
+  if (!connectionId.trim()) return 'No connection';
+  return connectionOptions.find((option) => option.value === connectionId)?.label ?? connectionId;
+};
 
 const buildPreviousImportSnapshot = (
   order: BaseOrderImportPreviewItem,
@@ -227,6 +304,7 @@ export function AdminProductOrdersImportPage(): React.JSX.Element {
   const [expanded, setExpanded] = React.useState<Record<string, boolean>>({});
   const [preview, setPreview] = React.useState<BaseOrderImportPreviewResponse | null>(null);
   const [lastPreviewScopeKey, setLastPreviewScopeKey] = React.useState<string | null>(null);
+  const [lastPreviewScope, setLastPreviewScope] = React.useState<PreviewScopeState | null>(null);
   const [feedback, setFeedback] = React.useState<FeedbackState>(null);
 
   const baseConnections = React.useMemo(() => {
@@ -314,6 +392,17 @@ export function AdminProductOrdersImportPage(): React.JSX.Element {
     [selectedConnectionId, dateFrom, dateTo, statusId, limit]
   );
 
+  const currentPreviewScope = React.useMemo<PreviewScopeState>(
+    () => ({
+      connectionId: selectedConnectionId,
+      dateFrom,
+      dateTo,
+      statusId,
+      limit,
+    }),
+    [selectedConnectionId, dateFrom, dateTo, statusId, limit]
+  );
+
   const filteredOrders = React.useMemo(() => {
     const orders = preview?.orders ?? [];
     const normalizedQuery = search.trim().toLowerCase();
@@ -384,12 +473,27 @@ export function AdminProductOrdersImportPage(): React.JSX.Element {
     [preview?.orders, rowSelection]
   );
 
+  const expandedOrderIds = React.useMemo(
+    () =>
+      new Set(
+        Object.entries(expanded)
+          .filter(([, isExpanded]) => Boolean(isExpanded))
+          .map(([orderId]) => orderId)
+      ),
+    [expanded]
+  );
+
   const selectedVisibleOrders = React.useMemo(
     () => filteredOrders.filter((order) => Boolean(rowSelection[order.baseOrderId])),
     [filteredOrders, rowSelection]
   );
 
   const selectedHiddenCount = Math.max(selectedOrders.length - selectedVisibleOrders.length, 0);
+  const visibleExpandedCount = filteredOrders.filter((order) => Boolean(expanded[order.baseOrderId])).length;
+  const hiddenExpandedCount = Math.max(expandedOrderIds.size - visibleExpandedCount, 0);
+  const selectedVisibleExpandedCount = selectedVisibleOrders.filter(
+    (order) => Boolean(expanded[order.baseOrderId])
+  ).length;
   const hasActiveViewFilters =
     importStateFilter !== 'all' || search.trim().length > 0 || sortBy !== 'created-desc';
   const hasActivePreviewScopeFilters =
@@ -420,8 +524,23 @@ export function AdminProductOrdersImportPage(): React.JSX.Element {
     [filteredOrders]
   );
 
+  const importableVisibleExpandedCount = React.useMemo(
+    () => importableVisibleOrders.filter((order) => Boolean(expanded[order.baseOrderId])).length,
+    [expanded, importableVisibleOrders]
+  );
+
   const importedVisibleOrders = React.useMemo(
     () => filteredOrders.filter((order) => order.importState === 'imported'),
+    [filteredOrders]
+  );
+
+  const changedVisibleOrders = React.useMemo(
+    () => filteredOrders.filter((order) => order.importState === 'changed'),
+    [filteredOrders]
+  );
+
+  const newVisibleOrders = React.useMemo(
+    () => filteredOrders.filter((order) => order.importState === 'new'),
     [filteredOrders]
   );
 
@@ -433,6 +552,64 @@ export function AdminProductOrdersImportPage(): React.JSX.Element {
     }),
     [filteredOrders]
   );
+
+  const visibleAggregate = React.useMemo(
+    () => summarizeOrderAggregate(filteredOrders),
+    [filteredOrders]
+  );
+
+  const selectedVisibleAggregate = React.useMemo(
+    () => summarizeOrderAggregate(selectedVisibleOrders),
+    [selectedVisibleOrders]
+  );
+
+  const selectedVisibleImportableAggregate = React.useMemo(
+    () => summarizeOrderAggregate(selectedVisibleImportableOrders),
+    [selectedVisibleImportableOrders]
+  );
+
+  const selectedVisibleImportedAggregate = React.useMemo(
+    () => summarizeOrderAggregate(selectedVisibleImportedOrders),
+    [selectedVisibleImportedOrders]
+  );
+
+  const previewScopeChanges = React.useMemo<PreviewScopeChangeItem[]>(() => {
+    if (!isPreviewStale || !lastPreviewScope) return [];
+
+    const changes: PreviewScopeChangeItem[] = [];
+    const pushChange = (key: string, label: string, loaded: string, current: string): void => {
+      if (loaded === current) return;
+      changes.push({ key, label, loaded, current });
+    };
+
+    pushChange(
+      'connection',
+      'Connection',
+      formatPreviewScopeConnection(lastPreviewScope.connectionId, connectionOptions),
+      formatPreviewScopeConnection(currentPreviewScope.connectionId, connectionOptions)
+    );
+    pushChange(
+      'date-range',
+      'Date range',
+      formatPreviewScopeDateRange(lastPreviewScope),
+      formatPreviewScopeDateRange(currentPreviewScope)
+    );
+    pushChange(
+      'status',
+      'Status',
+      formatPreviewScopeStatus(lastPreviewScope.statusId, statusOptions),
+      formatPreviewScopeStatus(currentPreviewScope.statusId, statusOptions)
+    );
+    pushChange('limit', 'Limit', lastPreviewScope.limit, currentPreviewScope.limit);
+
+    return changes;
+  }, [
+    connectionOptions,
+    currentPreviewScope,
+    isPreviewStale,
+    lastPreviewScope,
+    statusOptions,
+  ]);
 
   const handleSelectVisibleImportable = React.useCallback(() => {
     setRowSelection((currentSelection) => {
@@ -453,6 +630,26 @@ export function AdminProductOrdersImportPage(): React.JSX.Element {
       return nextSelection;
     });
   }, [importedVisibleOrders]);
+
+  const handleSelectVisibleChanged = React.useCallback(() => {
+    setRowSelection((currentSelection) => {
+      const nextSelection = { ...currentSelection };
+      for (const order of changedVisibleOrders) {
+        nextSelection[order.baseOrderId] = true;
+      }
+      return nextSelection;
+    });
+  }, [changedVisibleOrders]);
+
+  const handleSelectVisibleNew = React.useCallback(() => {
+    setRowSelection((currentSelection) => {
+      const nextSelection = { ...currentSelection };
+      for (const order of newVisibleOrders) {
+        nextSelection[order.baseOrderId] = true;
+      }
+      return nextSelection;
+    });
+  }, [newVisibleOrders]);
 
   const handleClearSelection = React.useCallback(() => {
     setRowSelection({});
@@ -484,6 +681,125 @@ export function AdminProductOrdersImportPage(): React.JSX.Element {
     });
   }, [filteredOrders]);
 
+  const handleExpandVisibleDetails = React.useCallback(() => {
+    if (filteredOrders.length === 0) return;
+    setExpanded((currentExpanded) => {
+      const nextExpanded = { ...currentExpanded };
+      for (const order of filteredOrders) {
+        nextExpanded[order.baseOrderId] = true;
+      }
+      return nextExpanded;
+    });
+  }, [filteredOrders]);
+
+  const handleExpandVisibleImportableDetails = React.useCallback(() => {
+    if (importableVisibleOrders.length === 0) return;
+    setExpanded((currentExpanded) => {
+      const nextExpanded = { ...currentExpanded };
+      for (const order of importableVisibleOrders) {
+        nextExpanded[order.baseOrderId] = true;
+      }
+      return nextExpanded;
+    });
+  }, [importableVisibleOrders]);
+
+  const handleCollapseVisibleImportableDetails = React.useCallback(() => {
+    if (importableVisibleExpandedCount === 0) return;
+    const importableVisibleIds = new Set(importableVisibleOrders.map((order) => order.baseOrderId));
+    setExpanded((currentExpanded) => {
+      const nextExpanded = { ...currentExpanded };
+      for (const orderId of importableVisibleIds) {
+        delete nextExpanded[orderId];
+      }
+      return nextExpanded;
+    });
+  }, [importableVisibleExpandedCount, importableVisibleOrders]);
+
+  const handleExpandVisibleImportedDetails = React.useCallback(() => {
+    if (importedVisibleOrders.length === 0) return;
+    setExpanded((currentExpanded) => {
+      const nextExpanded = { ...currentExpanded };
+      for (const order of importedVisibleOrders) {
+        nextExpanded[order.baseOrderId] = true;
+      }
+      return nextExpanded;
+    });
+  }, [importedVisibleOrders]);
+
+  const handleExpandVisibleChangedDetails = React.useCallback(() => {
+    if (changedVisibleOrders.length === 0) return;
+    setExpanded((currentExpanded) => {
+      const nextExpanded = { ...currentExpanded };
+      for (const order of changedVisibleOrders) {
+        nextExpanded[order.baseOrderId] = true;
+      }
+      return nextExpanded;
+    });
+  }, [changedVisibleOrders]);
+
+  const handleExpandVisibleNewDetails = React.useCallback(() => {
+    if (newVisibleOrders.length === 0) return;
+    setExpanded((currentExpanded) => {
+      const nextExpanded = { ...currentExpanded };
+      for (const order of newVisibleOrders) {
+        nextExpanded[order.baseOrderId] = true;
+      }
+      return nextExpanded;
+    });
+  }, [newVisibleOrders]);
+
+  const handleCollapseVisibleDetails = React.useCallback(() => {
+    if (filteredOrders.length === 0) return;
+    const visibleIds = new Set(filteredOrders.map((order) => order.baseOrderId));
+    setExpanded((currentExpanded) => {
+      const nextExpanded = { ...currentExpanded };
+      for (const orderId of visibleIds) {
+        delete nextExpanded[orderId];
+      }
+      return nextExpanded;
+    });
+  }, [filteredOrders]);
+
+  const handleCollapseHiddenDetails = React.useCallback(() => {
+    const visibleIds = new Set(filteredOrders.map((order) => order.baseOrderId));
+    setExpanded((currentExpanded) => {
+      const nextExpanded = { ...currentExpanded };
+      for (const [orderId, isExpanded] of Object.entries(currentExpanded)) {
+        if (isExpanded && !visibleIds.has(orderId)) {
+          delete nextExpanded[orderId];
+        }
+      }
+      return nextExpanded;
+    });
+  }, [filteredOrders]);
+
+  const handleExpandSelectedVisibleDetails = React.useCallback(() => {
+    if (selectedVisibleOrders.length === 0) return;
+    setExpanded((currentExpanded) => {
+      const nextExpanded = { ...currentExpanded };
+      for (const order of selectedVisibleOrders) {
+        nextExpanded[order.baseOrderId] = true;
+      }
+      return nextExpanded;
+    });
+  }, [selectedVisibleOrders]);
+
+  const handleCollapseSelectedVisibleDetails = React.useCallback(() => {
+    if (selectedVisibleOrders.length === 0) return;
+    const selectedVisibleIds = new Set(selectedVisibleOrders.map((order) => order.baseOrderId));
+    setExpanded((currentExpanded) => {
+      const nextExpanded = { ...currentExpanded };
+      for (const orderId of selectedVisibleIds) {
+        delete nextExpanded[orderId];
+      }
+      return nextExpanded;
+    });
+  }, [selectedVisibleOrders]);
+
+  const handleCollapseAllDetails = React.useCallback(() => {
+    setExpanded({});
+  }, []);
+
   const handleResetViewFilters = React.useCallback(() => {
     setImportStateFilter('all');
     setSearch('');
@@ -496,6 +812,15 @@ export function AdminProductOrdersImportPage(): React.JSX.Element {
     setStatusId('');
     setLimit('50');
   }, []);
+
+  const handleRestoreLoadedPreviewScope = React.useCallback(() => {
+    if (!lastPreviewScope) return;
+    setSelectedConnectionId(lastPreviewScope.connectionId);
+    setDateFrom(lastPreviewScope.dateFrom);
+    setDateTo(lastPreviewScope.dateTo);
+    setStatusId(lastPreviewScope.statusId);
+    setLimit(lastPreviewScope.limit);
+  }, [lastPreviewScope]);
 
   const handleToggleExpanded = React.useCallback((orderId: string) => {
     setExpanded((currentExpanded) => ({
@@ -521,6 +846,7 @@ export function AdminProductOrdersImportPage(): React.JSX.Element {
       });
       setPreview(response);
       setLastPreviewScopeKey(currentPreviewScopeKey);
+      setLastPreviewScope(currentPreviewScope);
       setRowSelection({});
       setExpanded({});
       setFeedback({
@@ -727,25 +1053,54 @@ export function AdminProductOrdersImportPage(): React.JSX.Element {
       ) : null}
       {isPreviewStale ? (
         <Alert variant='warning' title='Preview out of date'>
-          <div className='flex flex-wrap items-center gap-3'>
-            <span>
-              Preview scope changed. Run Preview orders again before importing or selecting orders.
-            </span>
-            <Button
-              type='button'
-              size='xs'
-              variant='outline'
-              onClick={() => {
-                void handlePreview();
-              }}
-              disabled={previewMutation.isPending || !selectedConnectionId}
-            >
-              Refresh preview now
-            </Button>
+          <div className='space-y-3'>
+            <div className='flex flex-wrap items-center gap-3'>
+              <span>
+                Preview scope changed. Run Preview orders again before importing or selecting orders.
+              </span>
+              <Button
+                type='button'
+                size='xs'
+                variant='outline'
+                onClick={() => {
+                  void handlePreview();
+                }}
+                disabled={previewMutation.isPending || !selectedConnectionId}
+              >
+                Refresh preview now
+              </Button>
+              <Button
+                type='button'
+                size='xs'
+                variant='ghost'
+                onClick={handleRestoreLoadedPreviewScope}
+                disabled={!lastPreviewScope}
+              >
+                Restore loaded scope
+              </Button>
+            </div>
+            {previewScopeChanges.length > 0 ? (
+              <div className='space-y-2 rounded-lg border border-amber-500/25 bg-amber-500/5 px-3 py-3 text-xs text-amber-100/90'>
+                <div className='text-xs uppercase tracking-[0.18em] text-amber-200/80'>
+                  Loaded scope vs current scope
+                </div>
+                {previewScopeChanges.map((change) => (
+                  <div
+                    key={change.key}
+                    className='flex items-start justify-between gap-3 rounded-md border border-amber-400/20 bg-amber-500/5 px-2 py-2'
+                  >
+                    <span className='text-amber-200/80'>{change.label}</span>
+                    <span className='text-right text-amber-50'>
+                      {change.loaded} {'->'} {change.current}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            ) : null}
           </div>
         </Alert>
       ) : null}
-      {feedback ? (
+      {feedback && !(isPreviewStale && feedback.variant === 'info') ? (
         <Alert
           variant={feedback.variant}
           title={
@@ -772,6 +1127,7 @@ export function AdminProductOrdersImportPage(): React.JSX.Element {
           setSelectedConnectionId(nextValue);
           setPreview(null);
           setLastPreviewScopeKey(null);
+          setLastPreviewScope(null);
           setRowSelection({});
           setFeedback(null);
         }}
@@ -917,15 +1273,31 @@ export function AdminProductOrdersImportPage(): React.JSX.Element {
       <Badge variant='warning'>{preview.stats.changedCount} changed</Badge>
       <Badge variant='neutral'>{preview.stats.importedCount} imported</Badge>
       <Badge variant='outline'>{filteredOrders.length} visible</Badge>
+      <Badge variant='outline'>{visibleAggregate.itemsTotal} visible items</Badge>
+      <Badge variant='outline'>{visibleAggregate.grossLabel} visible gross</Badge>
       <Badge variant='active'>{visibleStateCounts.newCount} visible new</Badge>
       <Badge variant='warning'>{visibleStateCounts.changedCount} visible changed</Badge>
       <Badge variant='neutral'>{visibleStateCounts.importedCount} visible imported</Badge>
       <Badge variant='outline'>{selectedVisibleOrders.length} selected visible</Badge>
+      <Badge variant='outline'>{selectedVisibleAggregate.itemsTotal} selected visible items</Badge>
+      <Badge variant='outline'>{selectedVisibleAggregate.grossLabel} selected visible gross</Badge>
       {selectedHiddenCount > 0 ? (
         <Badge variant='warning'>{selectedHiddenCount} hidden by filters</Badge>
       ) : null}
       <Badge variant='active'>{selectedVisibleImportableOrders.length} selected to import</Badge>
+      <Badge variant='active'>
+        {selectedVisibleImportableAggregate.itemsTotal} selected import items
+      </Badge>
+      <Badge variant='active'>
+        {selectedVisibleImportableAggregate.grossLabel} selected import gross
+      </Badge>
       <Badge variant='neutral'>{selectedVisibleImportedOrders.length} selected to reimport</Badge>
+      <Badge variant='neutral'>
+        {selectedVisibleImportedAggregate.itemsTotal} selected reimport items
+      </Badge>
+      <Badge variant='neutral'>
+        {selectedVisibleImportedAggregate.grossLabel} selected reimport gross
+      </Badge>
     </div>
   ) : null;
 
@@ -1153,6 +1525,123 @@ export function AdminProductOrdersImportPage(): React.JSX.Element {
       <Button
         type='button'
         size='xs'
+        variant='outline'
+        onClick={handleSelectVisibleChanged}
+        disabled={changedVisibleOrders.length === 0 || isPreviewStale}
+      >
+        Select visible changed ({changedVisibleOrders.length})
+      </Button>
+      <Button
+        type='button'
+        size='xs'
+        variant='outline'
+        onClick={handleSelectVisibleNew}
+        disabled={newVisibleOrders.length === 0 || isPreviewStale}
+      >
+        Select visible new ({newVisibleOrders.length})
+      </Button>
+      <Button
+        type='button'
+        size='xs'
+        variant='ghost'
+        onClick={handleExpandVisibleImportableDetails}
+        disabled={importableVisibleOrders.length === 0}
+      >
+        Expand visible import details ({importableVisibleOrders.length})
+      </Button>
+      <Button
+        type='button'
+        size='xs'
+        variant='ghost'
+        onClick={handleCollapseVisibleImportableDetails}
+        disabled={importableVisibleExpandedCount === 0}
+      >
+        Collapse visible import details ({importableVisibleExpandedCount})
+      </Button>
+      <Button
+        type='button'
+        size='xs'
+        variant='ghost'
+        onClick={handleExpandVisibleNewDetails}
+        disabled={newVisibleOrders.length === 0}
+      >
+        Expand visible new details ({newVisibleOrders.length})
+      </Button>
+      <Button
+        type='button'
+        size='xs'
+        variant='ghost'
+        onClick={handleExpandVisibleChangedDetails}
+        disabled={changedVisibleOrders.length === 0}
+      >
+        Expand visible changed details ({changedVisibleOrders.length})
+      </Button>
+      <Button
+        type='button'
+        size='xs'
+        variant='ghost'
+        onClick={handleExpandVisibleImportedDetails}
+        disabled={importedVisibleOrders.length === 0}
+      >
+        Expand visible reimport details ({importedVisibleOrders.length})
+      </Button>
+      <Button
+        type='button'
+        size='xs'
+        variant='ghost'
+        onClick={handleExpandSelectedVisibleDetails}
+        disabled={selectedVisibleOrders.length === 0}
+      >
+        Expand selected visible details ({selectedVisibleOrders.length})
+      </Button>
+      <Button
+        type='button'
+        size='xs'
+        variant='ghost'
+        onClick={handleCollapseSelectedVisibleDetails}
+        disabled={selectedVisibleExpandedCount === 0}
+      >
+        Collapse selected visible details ({selectedVisibleExpandedCount})
+      </Button>
+      <Button
+        type='button'
+        size='xs'
+        variant='ghost'
+        onClick={handleCollapseHiddenDetails}
+        disabled={hiddenExpandedCount === 0}
+      >
+        Collapse hidden details ({hiddenExpandedCount})
+      </Button>
+      <Button
+        type='button'
+        size='xs'
+        variant='ghost'
+        onClick={handleCollapseAllDetails}
+        disabled={expandedOrderIds.size === 0}
+      >
+        Collapse all details ({expandedOrderIds.size})
+      </Button>
+      <Button
+        type='button'
+        size='xs'
+        variant='ghost'
+        onClick={handleExpandVisibleDetails}
+        disabled={filteredOrders.length === 0}
+      >
+        Expand visible details ({filteredOrders.length})
+      </Button>
+      <Button
+        type='button'
+        size='xs'
+        variant='ghost'
+        onClick={handleCollapseVisibleDetails}
+        disabled={visibleExpandedCount === 0}
+      >
+        Collapse visible details ({visibleExpandedCount})
+      </Button>
+      <Button
+        type='button'
+        size='xs'
         variant='ghost'
         onClick={handleClearHiddenSelection}
         disabled={selectedHiddenCount === 0}
@@ -1200,10 +1689,28 @@ export function AdminProductOrdersImportPage(): React.JSX.Element {
       }
     />
   ) : preview ? (
-    <EmptyState
-      title='No orders matched'
-      description='Try widening the date range, changing the status filter, or increasing the preview limit.'
-    />
+    preview.stats.total > 0 ? (
+      <EmptyState
+        title='No orders in the current view'
+        description={`Loaded ${preview.stats.total} orders, but the current search or import-state filters hide them.`}
+        action={
+          <Button
+            type='button'
+            variant='outline'
+            size='sm'
+            onClick={handleResetViewFilters}
+            disabled={!hasActiveViewFilters}
+          >
+            Show loaded orders
+          </Button>
+        }
+      />
+    ) : (
+      <EmptyState
+        title='No orders matched'
+        description='Try widening the date range, changing the status filter, or increasing the preview limit.'
+      />
+    )
   ) : (
     <EmptyState
       title='Preview Base.com orders'

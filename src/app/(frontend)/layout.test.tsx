@@ -16,6 +16,8 @@ const {
   getFrontPageSettingMock,
   getKangurStorefrontInitialStateMock,
   headersMock,
+  kangurServerShellMock,
+  kangurSSRSkeletonMock,
   queryErrorBoundaryMock,
   shouldApplyFrontPageAppSelectionMock,
 } = vi.hoisted(() => ({
@@ -29,6 +31,8 @@ const {
   getFrontPageSettingMock: vi.fn(),
   getKangurStorefrontInitialStateMock: vi.fn(),
   headersMock: vi.fn(),
+  kangurServerShellMock: vi.fn(() => <div data-testid='kangur-server-shell' />),
+  kangurSSRSkeletonMock: vi.fn(() => <div data-testid='kangur-ssr-skeleton' />),
   queryErrorBoundaryMock: vi.fn(({ children }: { children: ReactNode }) => <>{children}</>),
   shouldApplyFrontPageAppSelectionMock: vi.fn(),
 }));
@@ -78,6 +82,14 @@ vi.mock('@/features/kangur/ui/FrontendPublicOwnerShellClient', () => ({
   default: frontendPublicOwnerShellClientMock,
 }));
 
+vi.mock('@/features/kangur/ui/KangurSSRSkeleton', () => ({
+  KangurSSRSkeleton: kangurSSRSkeletonMock,
+}));
+
+vi.mock('@/features/kangur/ui/components/KangurServerShell', () => ({
+  KangurServerShell: kangurServerShellMock,
+}));
+
 describe('frontend layout bootstrap', () => {
   beforeEach(() => {
     vi.resetModules();
@@ -111,7 +123,13 @@ describe('frontend layout bootstrap', () => {
     expect(getKangurStorefrontInitialStateMock).not.toHaveBeenCalled();
     expect(getKangurAuthBootstrapScriptMock).not.toHaveBeenCalled();
     expect(frontendPublicOwnerKangurShellMock).not.toHaveBeenCalled();
-    expect(frontendPublicOwnerShellClientMock).not.toHaveBeenCalled();
+    expect(frontendPublicOwnerShellClientMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        publicOwner: 'cms',
+        initialAppearance: undefined,
+      }),
+      undefined
+    );
   });
 
   it('loads Kangur storefront bootstrap only when the frontend public owner is kangur', async () => {
@@ -135,10 +153,9 @@ describe('frontend layout bootstrap', () => {
     expect(getKangurStorefrontInitialStateMock).toHaveBeenCalledTimes(1);
     expect(getKangurAuthBootstrapScriptMock).toHaveBeenCalledTimes(1);
     expect(document.body.innerHTML).toContain('window.__KANGUR_AUTH_BOOTSTRAP__=null;');
-    expect(frontendPublicOwnerShellClientMock).not.toHaveBeenCalled();
-    expect(frontendPublicOwnerKangurShellMock).toHaveBeenCalledWith(
+    expect(frontendPublicOwnerShellClientMock).toHaveBeenCalledWith(
       expect.objectContaining({
-        embeddedOverride: true,
+        publicOwner: 'kangur',
         initialAppearance: {
           mode: 'default',
           themeSettings: {
@@ -151,12 +168,14 @@ describe('frontend layout bootstrap', () => {
       }),
       undefined
     );
+    expect(frontendPublicOwnerKangurShellMock).not.toHaveBeenCalled();
+    expect(kangurSSRSkeletonMock).toHaveBeenCalledTimes(1);
   });
 
   it('skips Kangur storefront bootstrap on explicit Kangur app routes like lessons', async () => {
     headersMock.mockResolvedValue(
       new Headers({
-        'next-url': '/en/lessons',
+        'x-app-request-pathname': '/en/lessons',
       })
     );
     getFrontPageSettingMock.mockResolvedValue('kangur');
@@ -172,10 +191,9 @@ describe('frontend layout bootstrap', () => {
     expect(getFrontPageSettingMock).toHaveBeenCalledTimes(1);
     expect(getKangurStorefrontInitialStateMock).not.toHaveBeenCalled();
     expect(getKangurAuthBootstrapScriptMock).toHaveBeenCalledTimes(1);
-    expect(frontendPublicOwnerShellClientMock).not.toHaveBeenCalled();
-    expect(frontendPublicOwnerKangurShellMock).toHaveBeenCalledWith(
+    expect(frontendPublicOwnerShellClientMock).toHaveBeenCalledWith(
       expect.objectContaining({
-        embeddedOverride: false,
+        publicOwner: 'kangur',
         initialAppearance: {
           mode: undefined,
           themeSettings: undefined,
@@ -183,12 +201,43 @@ describe('frontend layout bootstrap', () => {
       }),
       undefined
     );
+    expect(frontendPublicOwnerKangurShellMock).not.toHaveBeenCalled();
+    expect(kangurServerShellMock).toHaveBeenCalledTimes(1);
+  });
+
+  it('renders a frontend timing payload only for debug timing requests', async () => {
+    headersMock.mockResolvedValue(
+      new Headers({
+        'next-url': '/en',
+        'x-debug-frontend-timing': '1',
+      })
+    );
+    getFrontPageSettingMock.mockResolvedValue('kangur');
+    getFrontPagePublicOwnerMock.mockReturnValue('kangur');
+    getKangurAuthBootstrapScriptMock.mockResolvedValue(
+      'window.__KANGUR_AUTH_BOOTSTRAP__=null;'
+    );
+
+    const { default: FrontendLayout } = await import('@/app/(frontend)/layout');
+
+    const layout = await FrontendLayout({
+      children: <div>kangur-home</div>,
+    });
+    render(layout);
+
+    const timingScript = document.querySelector('#__FRONTEND_LAYOUT_TIMING__');
+    expect(timingScript).not.toBeNull();
+    expect(timingScript?.textContent).toContain('"source":"frontend-layout"');
+    expect(timingScript?.textContent).toContain('"publicOwner":"kangur"');
+    expect(timingScript?.textContent).toContain('"frontPageSetting"');
+    expect(timingScript?.textContent).toContain('"kangurStorefrontInitialState"');
+    expect(timingScript?.textContent).toContain('"kangurAuthBootstrapScript"');
   });
 
   it('skips front-page selection and cms theme reads for explicit Kangur alias routes', async () => {
     headersMock.mockResolvedValue(
       new Headers({
-        'next-url': '/en/kangur/library',
+        'x-app-request-pathname': '/en/kangur/library',
       })
     );
 
@@ -205,6 +254,43 @@ describe('frontend layout bootstrap', () => {
     expect(getKangurStorefrontInitialStateMock).not.toHaveBeenCalled();
     expect(getKangurAuthBootstrapScriptMock).toHaveBeenCalledTimes(1);
     expect(frontendPublicOwnerKangurShellMock).not.toHaveBeenCalled();
-    expect(frontendPublicOwnerShellClientMock).not.toHaveBeenCalled();
+    expect(frontendPublicOwnerShellClientMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        publicOwner: 'cms',
+        initialAppearance: undefined,
+      }),
+      undefined
+    );
+  });
+
+  it('prefers the custom server pathname header over missing next-url metadata', async () => {
+    headersMock.mockResolvedValue(
+      new Headers({
+        'x-app-request-pathname': '/en/lessons',
+      })
+    );
+    getFrontPageSettingMock.mockResolvedValue('kangur');
+    getFrontPagePublicOwnerMock.mockReturnValue('kangur');
+
+    const { default: FrontendLayout } = await import('@/app/(frontend)/layout');
+
+    const layout = await FrontendLayout({
+      children: <div>kangur-lessons</div>,
+    });
+    render(layout);
+
+    expect(getKangurStorefrontInitialStateMock).not.toHaveBeenCalled();
+    expect(frontendPublicOwnerShellClientMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        publicOwner: 'kangur',
+        initialAppearance: {
+          mode: undefined,
+          themeSettings: undefined,
+        },
+      }),
+      undefined
+    );
+    expect(frontendPublicOwnerKangurShellMock).not.toHaveBeenCalled();
+    expect(kangurServerShellMock).toHaveBeenCalledTimes(1);
   });
 });

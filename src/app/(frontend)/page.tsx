@@ -3,8 +3,8 @@ import { JSX } from 'react';
 
 import { getCmsRepository, isDomainZoningEnabled } from '@/features/cms/server';
 import { getSlugsForDomain, resolveCmsDomainFromHeaders } from '@/features/cms/server';
+import { getKangurPublicAliasHref } from '@/features/kangur/config/routing';
 import { getKangurConfiguredLaunchTarget } from '@/features/kangur/server/launch-route';
-import { KangurSSRSkeleton } from '@/features/kangur/ui/KangurSSRSkeleton';
 import { getFrontPagePublicOwner, getFrontPageRedirectPath } from '@/shared/lib/front-page-app';
 import { readOptionalRequestHeaders } from '@/shared/lib/request/optional-headers';
 
@@ -46,7 +46,7 @@ export default async function Home(): Promise<JSX.Element | null> {
 
   if (shouldApplyFrontPageSelection && publicOwner === 'kangur') {
     await flush();
-    return <KangurSSRSkeleton />;
+    redirect(getKangurPublicAliasHref());
   }
 
   const [cmsRepository, hdrs] = await Promise.all([

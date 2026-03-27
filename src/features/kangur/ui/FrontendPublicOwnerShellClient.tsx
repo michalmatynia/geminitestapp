@@ -3,10 +3,10 @@
 import '@/app/(frontend)/kangur/kangur.css';
 
 import { usePathname } from 'next/navigation';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 
-import { FrontendPublicOwnerKangurShell } from '@/features/kangur/ui/FrontendPublicOwnerKangurShell';
 import { stripSiteLocalePrefix } from '@/shared/lib/i18n/site-locale';
+import type { FrontendPublicOwnerKangurShellInitialAppearance } from '@/features/kangur/ui/FrontendPublicOwnerKangurShell';
 
 import type { JSX } from 'react';
 
@@ -60,15 +60,37 @@ const scheduleKangurWarmupTask = (callback: () => void): (() => void) => {
   };
 };
 
+type FrontendPublicOwnerKangurShellComponent = (
+  typeof import('@/features/kangur/ui/FrontendPublicOwnerKangurShell')
+)['FrontendPublicOwnerKangurShell'];
+
+let frontendPublicOwnerKangurShellPromise:
+  | Promise<FrontendPublicOwnerKangurShellComponent>
+  | null = null;
+
+const loadFrontendPublicOwnerKangurShell = async (): Promise<FrontendPublicOwnerKangurShellComponent> => {
+  if (!frontendPublicOwnerKangurShellPromise) {
+    frontendPublicOwnerKangurShellPromise = import(
+      '@/features/kangur/ui/FrontendPublicOwnerKangurShell'
+    ).then((module) => module.FrontendPublicOwnerKangurShell);
+  }
+
+  return frontendPublicOwnerKangurShellPromise;
+};
+
 export type FrontendPublicOwnerShellProps = {
   publicOwner: 'cms' | 'kangur';
+  initialAppearance?: FrontendPublicOwnerKangurShellInitialAppearance;
   children: JSX.Element;
 };
 
 export default function FrontendPublicOwnerShellClient({
   publicOwner,
+  initialAppearance,
   children,
 }: FrontendPublicOwnerShellProps): JSX.Element {
+  const [kangurShellComponent, setKangurShellComponent] =
+    useState<FrontendPublicOwnerKangurShellComponent | null>(null);
   const pathname = usePathname();
   const browserPathname =
     typeof window === 'undefined' ? null : window.location.pathname?.trim() || null;
@@ -77,6 +99,8 @@ export default function FrontendPublicOwnerShellClient({
   const isCanonicalPublicLoginRoute = normalizedPathname === '/login';
   const isKangurAliasRoute =
     normalizedPathname === '/kangur' || normalizedPathname.startsWith('/kangur/');
+  const shouldRenderStandaloneKangurShell =
+    publicOwner === 'kangur' && !isKangurAliasRoute && !isCanonicalPublicLoginRoute;
 
   useEffect(() => {
     if (process.env['NODE_ENV'] === 'test') {
@@ -101,8 +125,33 @@ export default function FrontendPublicOwnerShellClient({
     return undefined;
   }, [publicOwner]);
 
-  if (publicOwner === 'kangur' && !isKangurAliasRoute && !isCanonicalPublicLoginRoute) {
-    return <FrontendPublicOwnerKangurShell />;
+  useEffect(() => {
+    if (!shouldRenderStandaloneKangurShell || kangurShellComponent) {
+      return;
+    }
+
+    let cancelled = false;
+
+    void loadFrontendPublicOwnerKangurShell()
+      .then((component) => {
+        if (!cancelled) {
+          setKangurShellComponent(() => component);
+        }
+      })
+      .catch(() => {});
+
+    return () => {
+      cancelled = true;
+    };
+  }, [kangurShellComponent, shouldRenderStandaloneKangurShell]);
+
+  if (shouldRenderStandaloneKangurShell) {
+    if (!kangurShellComponent) {
+      return children;
+    }
+
+    const KangurShellComponent = kangurShellComponent;
+    return <KangurShellComponent initialAppearance={initialAppearance} />;
   }
 
   return children;

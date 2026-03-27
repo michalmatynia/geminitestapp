@@ -57,11 +57,18 @@ body[data-kangur-shell='true'] {
     min-height: var(--kangur-shell-viewport-height, 100dvh);
   }
 
-  html.kangur-surface-active,
-  body.kangur-surface-active,
-  #app-content.kangur-surface-active {
-    overflow-x: hidden;
-  }
+html.kangur-surface-active,
+body.kangur-surface-active,
+#app-content.kangur-surface-active {
+  overflow-x: hidden;
+}
+
+html.kangur-client-shell-active [data-kangur-server-shell],
+body.kangur-client-shell-active [data-kangur-server-shell] {
+  opacity: 0;
+  pointer-events: none;
+  visibility: hidden;
+}
 
   .kangur-page-container {
     max-width: var(--kangur-page-max-width, 1440px);

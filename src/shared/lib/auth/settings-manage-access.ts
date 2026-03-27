@@ -1,10 +1,10 @@
 import 'server-only';
 
 import { authError } from '@/shared/errors/app-error';
+import { readOptionalServerAuthSession } from '@/shared/lib/auth/optional-server-auth';
 
 export async function assertSettingsManageAccess(): Promise<void> {
-  const { auth } = await import('@/features/auth/server');
-  const session = await auth();
+  const session = await readOptionalServerAuthSession();
   const hasAccess =
     session?.user?.isElevated || session?.user?.permissions?.includes('settings.manage');
   if (!hasAccess) {

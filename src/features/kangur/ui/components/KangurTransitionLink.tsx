@@ -5,13 +5,13 @@ import { useLocale } from 'next-intl';
 import { usePathname } from 'next/navigation';
 import { useCallback } from 'react';
 
-import { KANGUR_BASE_PATH } from '@/features/kangur/config/routing';
 import { useOptionalFrontendPublicOwner } from '@/features/kangur/ui/FrontendPublicOwnerContext';
 import { useKangurRouteNavigator } from '@/features/kangur/ui/hooks/useKangurRouteNavigator';
 import { useOptionalKangurRouting } from '@/features/kangur/ui/context/KangurRoutingContext';
 import {
   canonicalizeKangurPublicAliasHref,
   localizeManagedKangurHref,
+  resolveManagedKangurBasePath,
 } from '@/features/kangur/ui/routing/managed-paths';
 import { useKangurRouteAccess } from '@/features/kangur/ui/routing/useKangurRouteAccess';
 import {
@@ -74,9 +74,7 @@ export function KangurTransitionLink({
   const frontendPublicOwner = useOptionalFrontendPublicOwner();
   const locale = useLocale();
   const pathname = usePathname();
-  const basePath = routing?.basePath ?? KANGUR_BASE_PATH;
   const currentAccessiblePageKey = routing?.pageKey ?? 'Game';
-  const effectivePageKeyBasePath = frontendPublicOwner?.publicOwner === 'kangur' ? '/' : basePath;
   const managedLocalHref =
     typeof href === 'string' && href.startsWith('/') && target !== '_blank' ? href : null;
   const isManagedLocalHref = managedLocalHref !== null;
@@ -104,8 +102,9 @@ export function KangurTransitionLink({
       return;
     }
 
+    const targetBasePath = resolveManagedKangurBasePath(renderedHref);
     const accessibleResolvedPageKey = resolveManagedTargetPageKey({
-      basePath: effectivePageKeyBasePath,
+      basePath: targetBasePath,
       fallbackPageKey: currentAccessiblePageKey,
       href: renderedHref,
       pageKey: targetPageKey,
@@ -116,7 +115,7 @@ export function KangurTransitionLink({
       href: renderedHref,
       pageKey: accessibleResolvedPageKey ?? null,
       skeletonVariant: resolveTransitionSkeletonVariant({
-        basePath: effectivePageKeyBasePath,
+        basePath: targetBasePath,
         href: renderedHref,
         pageKey: accessibleResolvedPageKey ?? null,
       }),
@@ -125,7 +124,6 @@ export function KangurTransitionLink({
     });
   }, [
     currentAccessiblePageKey,
-    effectivePageKeyBasePath,
     managedLocalHref,
     pathname,
     renderedHref,

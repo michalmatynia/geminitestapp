@@ -3,8 +3,8 @@ import { JSX } from 'react';
 
 import { getCmsRepository } from '@/features/cms/server';
 import { getSlugsForDomain, resolveCmsDomainFromHeaders } from '@/features/cms/server';
+import { getKangurPublicAliasHref } from '@/features/kangur/config/routing';
 import { getKangurConfiguredLaunchTarget } from '@/features/kangur/server/launch-route';
-import { KangurSSRSkeleton } from '@/features/kangur/ui/KangurSSRSkeleton';
 import {
   buildLocalizedPathname,
   normalizeSiteLocale,
@@ -62,7 +62,7 @@ export default async function LocalizedHome({
 
   if (shouldApplyFrontPageSelection && publicOwner === 'kangur') {
     await flush();
-    return <KangurSSRSkeleton />;
+    redirect(buildLocalizedPathname(getKangurPublicAliasHref(), resolvedLocale));
   }
 
   const cmsRepository = await withTiming('cmsRepository', getCmsRepository);

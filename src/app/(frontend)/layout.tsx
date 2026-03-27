@@ -1,9 +1,18 @@
 import { getFrontPageSetting, shouldApplyFrontPageAppSelection } from '@/app/(frontend)/home-helpers';
+import {
+  createFrontendLoadTimingRecorder,
+  serializeInlineTimingPayload,
+  shouldEnableFrontendLoadTiming,
+  type FrontendLoadTimingPayload,
+} from '@/app/(frontend)/frontend-load-timing';
 import { CmsStorefrontAppearanceProvider } from '@/features/cms/components/frontend/CmsStorefrontAppearance';
 import { getCmsThemeSettings } from '@/features/cms/server';
 import { getKangurAuthBootstrapScript } from '@/features/kangur/server/auth-bootstrap';
 import { getKangurStorefrontInitialState } from '@/features/kangur/server/storefront-appearance';
 import { FrontendPublicOwnerProvider } from '@/features/kangur/ui/FrontendPublicOwnerContext';
+import FrontendPublicOwnerShellClient from '@/features/kangur/ui/FrontendPublicOwnerShellClient';
+import { KangurSSRSkeleton } from '@/features/kangur/ui/KangurSSRSkeleton';
+import { KangurServerShell } from '@/features/kangur/ui/components/KangurServerShell';
 import { readOptionalRequestHeaders } from '@/shared/lib/request/optional-headers';
 import { getFrontPagePublicOwner } from '@/shared/lib/front-page-app';
 import { stripSiteLocalePrefix } from '@/shared/lib/i18n/site-locale';
@@ -69,8 +78,15 @@ export default async function FrontendLayout({
 }: {
   children: React.ReactNode;
 }): Promise<JSX.Element> {
+  const requestHeadersStartedAt = performance.now();
   const requestHeaders = await readOptionalRequestHeaders();
+  const layoutTiming = createFrontendLoadTimingRecorder(
+    shouldEnableFrontendLoadTiming(requestHeaders)
+  );
+  const readRequestHeadersMs = performance.now() - requestHeadersStartedAt;
   const requestPathname =
+    resolveFrontendRequestPathname(requestHeaders?.get('x-app-request-pathname')) ??
+    resolveFrontendRequestPathname(requestHeaders?.get('x-app-request-url')) ??
     resolveFrontendRequestPathname(requestHeaders?.get('next-url')) ??
     resolveFrontendRequestPathname(requestHeaders?.get('x-matched-path'));
   const isExplicitKangurAlias = isExplicitKangurAliasRequest(requestPathname);
@@ -79,10 +95,8 @@ export default async function FrontendLayout({
   const shouldUseFrontPageAppSelection = shouldApplyFrontPageAppSelection();
   const shouldResolveFrontPageSelection =
     shouldUseFrontPageAppSelection && !isExplicitKangurAlias;
-  // Start all fetches speculatively in parallel — each has its own cache + inflight
-  // dedup, so unused results just warm the cache for the next request.
   const frontPageSettingPromise = shouldResolveFrontPageSelection
-    ? getFrontPageSetting()
+    ? layoutTiming.withTiming('frontPageSetting', getFrontPageSetting)
     : Promise.resolve(null);
   const themePromise = getCmsThemeSettings();
 
@@ -97,28 +111,47 @@ export default async function FrontendLayout({
   const shouldLoadKangurStorefrontBootstrap =
     publicOwner === 'kangur' && shouldRenderStandaloneKangurShell && isRootPublicRoute;
   const kangurStatePromise = shouldLoadKangurStorefrontBootstrap
-    ? getKangurStorefrontInitialState()
+    ? layoutTiming.withTiming(
+      'kangurStorefrontInitialState',
+      getKangurStorefrontInitialState
+    )
     : Promise.resolve(null);
   const kangurAuthBootstrapScriptPromise = shouldInjectKangurAuthBootstrap
     ? requestHeaders
-      ? getKangurAuthBootstrapScript(requestHeaders)
+      ? layoutTiming.withTiming('kangurAuthBootstrapScript', () =>
+        getKangurAuthBootstrapScript(requestHeaders)
+      )
       : Promise.resolve(null)
     : Promise.resolve(null);
   const [themeSettings, kangurInitialState] = await Promise.all([
     publicOwner === 'cms' && !isExplicitKangurAlias
-      ? themePromise
+      ? layoutTiming.withTiming('cmsThemeSettings', () => themePromise)
       : Promise.resolve(DEFAULT_CMS_THEME_SETTINGS),
     kangurStatePromise,
   ]);
   const kangurAuthBootstrapScript = await kangurAuthBootstrapScriptPromise;
   const storefrontAppearanceMode = themeSettings.darkMode ? 'dark' : 'default';
-  const FrontendPublicOwnerKangurShell = shouldRenderStandaloneKangurShell
-    ? (await import('@/features/kangur/ui/FrontendPublicOwnerKangurShell'))
-        .FrontendPublicOwnerKangurShell
-    : null;
-  const KangurAuthWarmupClient =
-    publicOwner === 'kangur' && !shouldRenderStandaloneKangurShell
-      ? (await import('@/features/kangur/ui/KangurAuthWarmupClient')).KangurAuthWarmupClient
+  const frontendLoadTimingPayload = layoutTiming.buildPayload({
+    pathname: requestPathname,
+    publicOwner,
+    flags: {
+      explicitKangurAlias: isExplicitKangurAlias,
+      canonicalPublicLogin: isCanonicalPublicLogin,
+      rootPublicRoute: isRootPublicRoute,
+      renderStandaloneKangurShell: shouldRenderStandaloneKangurShell,
+      injectKangurAuthBootstrap: shouldInjectKangurAuthBootstrap,
+      loadKangurStorefrontBootstrap: shouldLoadKangurStorefrontBootstrap,
+    },
+  });
+  const inlineFrontendLoadTimingPayload: FrontendLoadTimingPayload | null =
+    frontendLoadTimingPayload
+      ? {
+          ...frontendLoadTimingPayload,
+          timingsMs: {
+            readRequestHeaders: Math.round(readRequestHeadersMs * 10) / 10,
+            ...frontendLoadTimingPayload.timingsMs,
+          },
+        }
       : null;
 
   // When Kangur is the public owner, inject a tiny blocking script that pre-applies
@@ -129,6 +162,17 @@ export default async function FrontendLayout({
     publicOwner === 'kangur'
       ? 'document.documentElement.classList.add(\'kangur-surface-active\');document.body.classList.add(\'kangur-surface-active\');'
       : null;
+  const frontendShellChildren = shouldRenderStandaloneKangurShell ? (
+    isRootPublicRoute ? (
+      <KangurSSRSkeleton />
+    ) : (
+      <KangurServerShell />
+    )
+  ) : (
+    <CmsStorefrontAppearanceProvider initialMode={storefrontAppearanceMode}>
+      <>{children}</>
+    </CmsStorefrontAppearanceProvider>
+  );
 
   return (
     <main
@@ -136,6 +180,15 @@ export default async function FrontendLayout({
       tabIndex={-1}
       className='min-h-screen bg-background focus:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 focus-visible:ring-offset-2 focus-visible:ring-offset-background'
     >
+      {inlineFrontendLoadTimingPayload ? (
+        <script
+          id='__FRONTEND_LAYOUT_TIMING__'
+          type='application/json'
+          dangerouslySetInnerHTML={{
+            __html: serializeInlineTimingPayload(inlineFrontendLoadTimingPayload),
+          }}
+        />
+      ) : null}
       {kangurSurfaceHintScript ? (
         <script dangerouslySetInnerHTML={{ __html: kangurSurfaceHintScript }} />
       ) : null}
@@ -144,22 +197,19 @@ export default async function FrontendLayout({
       ) : null}
       <FrontendPublicOwnerProvider publicOwner={publicOwner}>
         <QueryErrorBoundary>
-          {shouldRenderStandaloneKangurShell && FrontendPublicOwnerKangurShell ? (
-            <FrontendPublicOwnerKangurShell
-              embeddedOverride={isRootPublicRoute}
-              initialAppearance={{
-                mode: kangurInitialState?.initialMode,
-                themeSettings: kangurInitialState?.initialThemeSettings,
-              }}
-            />
-          ) : (
-            <CmsStorefrontAppearanceProvider initialMode={storefrontAppearanceMode}>
-              <>
-                {KangurAuthWarmupClient ? <KangurAuthWarmupClient /> : null}
-                {children}
-              </>
-            </CmsStorefrontAppearanceProvider>
-          )}
+          <FrontendPublicOwnerShellClient
+            publicOwner={publicOwner}
+            initialAppearance={
+              shouldRenderStandaloneKangurShell
+                ? {
+                    mode: kangurInitialState?.initialMode,
+                    themeSettings: kangurInitialState?.initialThemeSettings,
+                  }
+                : undefined
+            }
+          >
+            {frontendShellChildren}
+          </FrontendPublicOwnerShellClient>
         </QueryErrorBoundary>
       </FrontendPublicOwnerProvider>
     </main>

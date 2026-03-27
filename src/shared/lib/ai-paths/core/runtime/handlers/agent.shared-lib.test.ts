@@ -3,7 +3,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import * as api from '@/shared/lib/ai-paths/api';
 import { handleAgent, handleLearnerAgent } from '@/shared/lib/ai-paths/core/runtime/handlers/agent';
 
-import { createMockContext } from '../../test-utils';
+import { createMockContext } from '../test-utils';
 
 vi.mock('@/shared/lib/ai-paths/api', () => ({
   agentApi: {

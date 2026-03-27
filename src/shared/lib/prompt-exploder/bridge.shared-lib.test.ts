@@ -1,32 +1,11 @@
-/**
- * @vitest-environment node
- */
-
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-
-const mocks = vi.hoisted(() => ({
-  logClientCatch: vi.fn(),
-}));
-
-vi.mock('@/shared/utils/observability/client-error-logger', () => ({
-  logClientCatch: mocks.logClientCatch,
-}));
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import {
-  clearPromptExploderApplyPayload,
-  computePromptExploderBridgeChecksum,
   consumePromptExploderApplyPayload,
-  consumePromptExploderDraftPayload,
+  consumePromptExploderApplyPromptForCaseResolver,
   PROMPT_EXPLODER_APPLY_TO_STUDIO_KEY,
-  PROMPT_EXPLODER_BRIDGE_STORAGE_EVENT,
-  PROMPT_EXPLODER_DRAFT_PROMPT_KEY,
-  readPromptExploderApplyPayload,
-  readPromptExploderApplyPayloadSnapshot,
-  readPromptExploderDraftPayloadSnapshot,
-  readPromptExploderDraftPrompt,
-  savePromptExploderApplyPrompt,
-  savePromptExploderDraftPromptFromCaseResolver,
-} from './bridge';
+  savePromptExploderApplyPromptForCaseResolver,
+} from '@/shared/lib/prompt-exploder/bridge';
 
 type StorageMock = {
   getItem: (key: string) => string | null;
@@ -34,7 +13,7 @@ type StorageMock = {
   removeItem: (key: string) => void;
 };
 
-const createStorageMock = (): StorageMock => {
+const createLocalStorageMock = (): StorageMock => {
   const map = new Map<string, string>();
   return {
     getItem: (key: string): string | null => map.get(key) ?? null,
@@ -47,139 +26,360 @@ const createStorageMock = (): StorageMock => {
   };
 };
 
-describe('prompt-exploder bridge shared-lib', () => {
+describe('prompt exploder bridge parties', () => {
   beforeEach(() => {
-    mocks.logClientCatch.mockReset();
-    vi.useFakeTimers();
-    vi.setSystemTime(new Date('2026-03-25T18:15:00.000Z'));
-
-    const localStorage = createStorageMock();
-    const sessionStorage = createStorageMock();
-    const dispatchEvent = vi.fn();
-
+    const localStorage = createLocalStorageMock();
     Object.defineProperty(globalThis, 'window', {
       configurable: true,
       writable: true,
       value: {
         localStorage,
-        sessionStorage,
-        dispatchEvent,
       },
     });
   });
 
   afterEach(() => {
     Reflect.deleteProperty(globalThis, 'window');
-    vi.useRealTimers();
   });
 
-  it('computes deterministic checksums and saves draft payloads for case resolver context', () => {
-    const checksum = computePromptExploderBridgeChecksum('Prompt body', {
-      fileId: 'file-1',
-      fileName: 'Notice',
-      sessionId: 'session-1',
-      documentVersionAtStart: 3,
-    });
-
-    expect(checksum).toBe(
-      computePromptExploderBridgeChecksum('Prompt body', {
+  it('persists and consumes case resolver parties with context', () => {
+    savePromptExploderApplyPromptForCaseResolver(
+      'Reassembled text',
+      {
         fileId: 'file-1',
         fileName: 'Notice',
         sessionId: 'session-1',
-        documentVersionAtStart: 3,
-      })
+        documentVersionAtStart: 12,
+      },
+      {
+        addresser: {
+          role: 'addresser',
+          displayName: 'Michał Matynia',
+          rawText: 'Michał Matynia\nFioletowa 71/2\n70-781 Szczecin\nPolska',
+          kind: 'person',
+          firstName: 'Michał',
+          lastName: 'Matynia',
+          city: 'Szczecin',
+          country: 'Polska',
+          sourcePatternLabels: ['Case Resolver Role: Addresser'],
+          sourceSequenceLabels: ['Case Resolver Parties'],
+        },
+        addressee: {
+          role: 'addressee',
+          displayName: 'Inspektorat ZUS w Gryficach',
+          rawText: 'Inspektorat ZUS w Gryficach\nDąbskiego 5\n72-300 Gryfice',
+          kind: 'organization',
+          organizationName: 'Inspektorat ZUS w Gryficach',
+          city: 'Gryfice',
+          sourcePatternLabels: ['Case Resolver Role: Addressee'],
+          sourceSequenceLabels: ['Case Resolver Parties'],
+        },
+      },
+      {
+        placeDate: {
+          city: 'Szczecin',
+          day: '25',
+          month: '01',
+          year: '2026',
+          sourceSegmentId: 'segment-1',
+          sourceSegmentTitle: 'Place + Date',
+          sourcePatternLabels: ['Case Resolver Heading: Place + Date'],
+          sourceSequenceLabels: ['Case Resolver Structure'],
+        },
+      }
     );
-    expect(checksum.startsWith('pe-')).toBe(true);
 
-    savePromptExploderDraftPromptFromCaseResolver('Draft prompt', {
+    const payload = consumePromptExploderApplyPromptForCaseResolver();
+    expect(payload?.prompt).toBe('Reassembled text');
+    expect(payload?.payloadVersion).toBe(2);
+    expect(payload?.status).toBe('pending');
+    expect(typeof payload?.transferId).toBe('string');
+    expect((payload?.transferId ?? '').length).toBeGreaterThan(0);
+    expect(typeof payload?.checksum).toBe('string');
+    expect((payload?.checksum ?? '').startsWith('pe-')).toBe(true);
+    expect(typeof payload?.expiresAt).toBe('string');
+    expect(payload?.caseResolverContext).toEqual({
       fileId: 'file-1',
       fileName: 'Notice',
       sessionId: 'session-1',
-      documentVersionAtStart: 3,
+      documentVersionAtStart: 12,
+    });
+    expect(payload?.caseResolverParties?.addresser?.displayName).toBe('Michał Matynia');
+    expect(payload?.caseResolverParties?.addresser?.kind).toBe('person');
+    expect(payload?.caseResolverParties?.addressee?.organizationName).toBe(
+      'Inspektorat ZUS w Gryficach'
+    );
+    expect(payload?.caseResolverParties?.addressee?.kind).toBe('organization');
+    expect(payload?.caseResolverParties?.addresser?.sourcePatternLabels).toEqual([
+      'Case Resolver Role: Addresser',
+    ]);
+    expect(payload?.caseResolverParties?.addressee?.sourceSequenceLabels).toEqual([
+      'Case Resolver Parties',
+    ]);
+    expect(payload?.caseResolverMetadata?.placeDate).toEqual({
+      city: 'Szczecin',
+      day: '25',
+      month: '01',
+      year: '2026',
+      sourceSegmentId: 'segment-1',
+      sourceSegmentTitle: 'Place + Date',
+      sourcePatternLabels: ['Case Resolver Heading: Place + Date'],
+      sourceSequenceLabels: ['Case Resolver Structure'],
     });
 
-    const snapshot = readPromptExploderDraftPayloadSnapshot();
-    expect(snapshot.isExpired).toBe(false);
-    expect(snapshot.payload).toEqual(
-      expect.objectContaining({
-        prompt: 'Draft prompt',
-        source: 'case-resolver',
-        target: 'prompt-exploder',
-        payloadVersion: 2,
+    const secondRead = consumePromptExploderApplyPromptForCaseResolver();
+    expect(secondRead).toBeNull();
+  });
+
+  it('keeps provided transfer metadata when writing explicit options', () => {
+    const createdAt = new Date().toISOString();
+    const expiresAt = new Date(Date.now() + 5 * 60 * 1000).toISOString();
+    savePromptExploderApplyPromptForCaseResolver(
+      'Reassembled text',
+      {
+        fileId: 'file-1',
+        fileName: 'Notice',
+      },
+      undefined,
+      undefined,
+      {
+        transferId: 'transfer-fixed',
+        payloadVersion: 7,
         status: 'pending',
-        caseResolverContext: {
-          fileId: 'file-1',
-          fileName: 'Notice',
-          sessionId: 'session-1',
-          documentVersionAtStart: 3,
-        },
-      })
-    );
-    expect(readPromptExploderDraftPrompt()).toBe('Draft prompt');
-    expect(window.dispatchEvent).toHaveBeenCalledTimes(1);
-    const dispatchedEvent = vi.mocked(window.dispatchEvent).mock.calls[0]?.[0];
-    expect(dispatchedEvent?.type).toBe(PROMPT_EXPLODER_BRIDGE_STORAGE_EVENT);
-  });
-
-  it('consumes draft/apply payloads only for matching targets and clears persisted apply payloads', () => {
-    savePromptExploderDraftPromptFromCaseResolver('Draft prompt', {
-      fileId: 'file-2',
-      fileName: 'Draft file',
-    });
-
-    expect(consumePromptExploderDraftPayload('case-resolver')).toBeNull();
-    expect(readPromptExploderDraftPrompt()).toBe('Draft prompt');
-
-    const consumedDraft = consumePromptExploderDraftPayload();
-    expect(consumedDraft?.prompt).toBe('Draft prompt');
-    expect(readPromptExploderDraftPrompt()).toBeNull();
-
-    savePromptExploderApplyPrompt('Apply prompt', {
-      transferId: 'apply-1',
-      status: 'applied',
-      appliedAt: '2026-03-25T18:16:00.000Z',
-    });
-
-    expect(consumePromptExploderApplyPayload('case-resolver')).toBeNull();
-    expect(readPromptExploderApplyPayload()).toEqual(
-      expect.objectContaining({
-        prompt: 'Apply prompt',
-        target: 'image-studio',
-        transferId: 'apply-1',
-        status: 'applied',
-        appliedAt: '2026-03-25T18:16:00.000Z',
-      })
+        createdAt,
+        expiresAt,
+        checksum: 'pe-fixed-checksum',
+      }
     );
 
-    clearPromptExploderApplyPayload();
-    expect(readPromptExploderApplyPayload()).toBeNull();
+    const payload = consumePromptExploderApplyPromptForCaseResolver();
+    expect(payload?.transferId).toBe('transfer-fixed');
+    expect(payload?.payloadVersion).toBe(7);
+    expect(payload?.createdAt).toBe(createdAt);
+    expect(payload?.expiresAt).toBe(expiresAt);
+    expect(payload?.checksum).toBe('pe-fixed-checksum');
+    expect(payload?.status).toBe('pending');
   });
 
-  it('marks expired payload snapshots and drops invalid apply payloads while logging parse failures', () => {
+  it('sanitizes malformed party payloads', () => {
+    const freshCreatedAt = new Date().toISOString();
     window.localStorage.setItem(
       PROMPT_EXPLODER_APPLY_TO_STUDIO_KEY,
       JSON.stringify({
-        prompt: 'Old apply prompt',
+        prompt: 'Bad payload',
         source: 'prompt-exploder',
-        target: 'image-studio',
-        createdAt: '2026-03-25T17:00:00.000Z',
+        target: 'case-resolver',
+        caseResolverParties: {
+          addresser: {
+            role: 'addresser',
+            displayName: '',
+            rawText: '',
+          },
+          addressee: {
+            role: 'addressee',
+            displayName: '  Inspektorat  ',
+            rawText: '  ',
+            kind: 'invalid-kind',
+          },
+        },
+        createdAt: freshCreatedAt,
         payloadVersion: 2,
       })
     );
 
-    const expiredSnapshot = readPromptExploderApplyPayloadSnapshot();
-    expect(expiredSnapshot.isExpired).toBe(true);
-    expect(expiredSnapshot.payload?.prompt).toBe('Old apply prompt');
+    const payload = consumePromptExploderApplyPromptForCaseResolver();
+    expect(payload?.caseResolverParties?.addresser).toBeUndefined();
+    expect(payload?.caseResolverParties?.addressee?.displayName).toBe('Inspektorat');
+    expect(payload?.caseResolverParties?.addressee?.kind).toBeUndefined();
+  });
 
-    expect(readPromptExploderApplyPayload()).toBeNull();
-    expect(window.localStorage.getItem(PROMPT_EXPLODER_APPLY_TO_STUDIO_KEY)).toBeNull();
+  it('expires malformed payloads missing createdAt metadata', () => {
+    window.localStorage.setItem(
+      PROMPT_EXPLODER_APPLY_TO_STUDIO_KEY,
+      JSON.stringify({
+        prompt: 'Fallback timestamp payload',
+        source: 'prompt-exploder',
+        target: 'case-resolver',
+        payloadVersion: 2,
+      })
+    );
 
-    window.localStorage.setItem(PROMPT_EXPLODER_DRAFT_PROMPT_KEY, '{not-json');
-    expect(readPromptExploderDraftPayloadSnapshot()).toEqual({
-      payload: null,
-      isExpired: false,
-      expiresAt: null,
+    const payload = consumePromptExploderApplyPromptForCaseResolver();
+    expect(payload).toBeNull();
+  });
+
+  it('falls back to sessionStorage when localStorage quota is exceeded', () => {
+    const sessionStorage = createLocalStorageMock();
+    const localStorage = createLocalStorageMock();
+    const quotaError = new Error('Quota exceeded');
+    (quotaError as Error & { name: string }).name = 'QuotaExceededError';
+    const failingLocalStorage: StorageMock = {
+      getItem: localStorage.getItem,
+      setItem: (_key: string, _value: string): void => {
+        throw quotaError;
+      },
+      removeItem: localStorage.removeItem,
+    };
+
+    Object.defineProperty(globalThis, 'window', {
+      configurable: true,
+      writable: true,
+      value: {
+        localStorage: failingLocalStorage,
+        sessionStorage,
+      },
     });
-    expect(mocks.logClientCatch).toHaveBeenCalledTimes(1);
+
+    savePromptExploderApplyPromptForCaseResolver('Stored in session fallback', {
+      fileId: 'file-s',
+      fileName: 'Session',
+    });
+
+    const payload = consumePromptExploderApplyPromptForCaseResolver();
+    expect(payload?.prompt).toBe('Stored in session fallback');
+    expect(payload?.caseResolverContext?.fileId).toBe('file-s');
+  });
+
+  it('clears stale apply payload when storage write fails in all storages', () => {
+    const sessionStorage = createLocalStorageMock();
+    const localStorage = createLocalStorageMock();
+    const quotaError = new Error('Quota exceeded');
+    (quotaError as Error & { name: string }).name = 'QuotaExceededError';
+    const freshCreatedAt = new Date().toISOString();
+
+    localStorage.setItem(
+      PROMPT_EXPLODER_APPLY_TO_STUDIO_KEY,
+      JSON.stringify({
+        prompt: 'stale-local-payload',
+        source: 'prompt-exploder',
+        target: 'case-resolver',
+        caseResolverContext: {
+          fileId: 'stale-local-file',
+          fileName: 'Stale Local',
+          sessionId: 'stale-local-session',
+        },
+        createdAt: freshCreatedAt,
+        payloadVersion: 2,
+      })
+    );
+    sessionStorage.setItem(
+      PROMPT_EXPLODER_APPLY_TO_STUDIO_KEY,
+      JSON.stringify({
+        prompt: 'stale-session-payload',
+        source: 'prompt-exploder',
+        target: 'case-resolver',
+        caseResolverContext: {
+          fileId: 'stale-session-file',
+          fileName: 'Stale Session',
+          sessionId: 'stale-session',
+        },
+        createdAt: freshCreatedAt,
+        payloadVersion: 2,
+      })
+    );
+
+    const failingLocalStorage: StorageMock = {
+      getItem: localStorage.getItem,
+      setItem: (_key: string, _value: string): void => {
+        throw quotaError;
+      },
+      removeItem: localStorage.removeItem,
+    };
+    const failingSessionStorage: StorageMock = {
+      getItem: sessionStorage.getItem,
+      setItem: (_key: string, _value: string): void => {
+        throw quotaError;
+      },
+      removeItem: sessionStorage.removeItem,
+    };
+
+    Object.defineProperty(globalThis, 'window', {
+      configurable: true,
+      writable: true,
+      value: {
+        localStorage: failingLocalStorage,
+        sessionStorage: failingSessionStorage,
+      },
+    });
+
+    savePromptExploderApplyPromptForCaseResolver('New payload', {
+      fileId: 'fresh-file',
+      fileName: 'Fresh',
+    });
+
+    const payload = consumePromptExploderApplyPromptForCaseResolver();
+    expect(payload).toBeNull();
+  });
+
+  it('keeps case resolver context when fileName is missing', () => {
+    const freshCreatedAt = new Date().toISOString();
+    window.localStorage.setItem(
+      PROMPT_EXPLODER_APPLY_TO_STUDIO_KEY,
+      JSON.stringify({
+        prompt: 'Context without file name',
+        source: 'prompt-exploder',
+        target: 'case-resolver',
+        caseResolverContext: {
+          fileId: 'file-ctx-1',
+          sessionId: 'ctx-session',
+          documentVersionAtStart: 5,
+        },
+        createdAt: freshCreatedAt,
+        payloadVersion: 2,
+      })
+    );
+
+    const payload = consumePromptExploderApplyPromptForCaseResolver();
+    expect(payload?.caseResolverContext).toEqual({
+      fileId: 'file-ctx-1',
+      fileName: 'file-ctx-1',
+      sessionId: 'ctx-session',
+      documentVersionAtStart: 5,
+    });
+  });
+
+  it('sanitizes malformed case resolver context metadata', () => {
+    const freshCreatedAt = new Date().toISOString();
+    window.localStorage.setItem(
+      PROMPT_EXPLODER_APPLY_TO_STUDIO_KEY,
+      JSON.stringify({
+        prompt: 'Context sanitization',
+        source: 'prompt-exploder',
+        target: 'case-resolver',
+        caseResolverContext: {
+          fileId: ' file-ctx-2 ',
+          fileName: '  ',
+          sessionId: '   ',
+          documentVersionAtStart: -3,
+        },
+        createdAt: freshCreatedAt,
+        payloadVersion: 2,
+      })
+    );
+
+    const payload = consumePromptExploderApplyPromptForCaseResolver();
+    expect(payload?.caseResolverContext).toEqual({
+      fileId: 'file-ctx-2',
+      fileName: 'file-ctx-2',
+      sessionId: undefined,
+      documentVersionAtStart: undefined,
+    });
+  });
+
+  it('rejects non-canonical bridge aliases', () => {
+    const freshCreatedAt = new Date().toISOString();
+    window.localStorage.setItem(
+      PROMPT_EXPLODER_APPLY_TO_STUDIO_KEY,
+      JSON.stringify({
+        prompt: 'Legacy bridge aliases',
+        source: 'prompt_exploder',
+        target: 'studio',
+        createdAt: freshCreatedAt,
+        payloadVersion: 2,
+      })
+    );
+
+    const payload = consumePromptExploderApplyPayload('image-studio');
+    expect(payload).toBeNull();
   });
 });

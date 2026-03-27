@@ -140,15 +140,13 @@ describe('front page app selection', () => {
     expect(flushMock).toHaveBeenCalledTimes(1);
   });
 
-  it('lets the frontend layout own the Kangur shell when Front Manage assigns Kangur as the public owner', async () => {
-    const { Home } = await loadHomeModule();
+  it('redirects HOME to the Kangur public alias when Front Manage assigns Kangur as the public owner', async () => {
+    const { Home, KANGUR_BASE_PATH } = await loadHomeModule();
 
     getFrontPageSettingMock.mockResolvedValue('kangur');
 
-    const result = await Home();
-
-    expect(result).toMatchObject({ type: kangurSsrSkeletonMock });
-    expect(redirectMock).not.toHaveBeenCalled();
+    await expect(Home()).rejects.toThrow(`redirect:${KANGUR_BASE_PATH}`);
+    expect(redirectMock).toHaveBeenCalledWith(KANGUR_BASE_PATH);
     expect(getCmsRepositoryMock).not.toHaveBeenCalled();
     expect(headersMock).not.toHaveBeenCalled();
     expect(homeContentMock).not.toHaveBeenCalled();

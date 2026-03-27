@@ -2,14 +2,12 @@ import { getTranslations } from 'next-intl/server';
 import { notFound, redirect } from 'next/navigation';
 import { JSX } from 'react';
 
-import { canAccessKangurSlugSegments } from '@/features/kangur/config/page-access';
+import { getKangurPublicAliasHref } from '@/features/kangur/config/routing';
 import { getKangurConfiguredLaunchTarget } from '@/features/kangur/server/launch-route';
-import { readOptionalServerAuthSession } from '@/shared/lib/auth/optional-server-auth';
+import { requireAccessibleKangurSlugRoute } from '@/features/kangur/server/route-access';
 import { getFrontPagePublicOwner } from '@/shared/lib/front-page-app';
 
-import { renderCmsPage } from '../cms-render';
 import { getFrontPageSetting, shouldApplyFrontPageAppSelection } from '../home-helpers';
-import { buildSlugMetadata, loadSlugRenderData, resolveSlugToPage } from './slug-page-data';
 
 import type { Metadata } from 'next';
 
@@ -28,6 +26,18 @@ const isKangurFrontPageSelected = async (): Promise<boolean> => {
   return getFrontPagePublicOwner(frontPageSetting) === 'kangur';
 };
 
+const loadCmsSlugPageModules = async () => {
+  const [{ renderCmsPage }, slugPageData] = await Promise.all([
+    import('../cms-render'),
+    import('./slug-page-data'),
+  ]);
+
+  return {
+    renderCmsPage,
+    ...slugPageData,
+  };
+};
+
 export async function generateMetadata({ params }: SlugPageProps): Promise<Metadata> {
   const { slug } = await params;
   const routeTranslations = await getTranslations('Routes');
@@ -39,6 +49,7 @@ export async function generateMetadata({ params }: SlugPageProps): Promise<Metad
           : routeTranslations('siteTitle'),
     };
   }
+  const { buildSlugMetadata, resolveSlugToPage } = await loadCmsSlugPageModules();
   const page = await resolveSlugToPage(slug);
 
   if (!page) {
@@ -54,10 +65,7 @@ export default async function CmsSlugPage({
 }: SlugPageProps): Promise<JSX.Element | null> {
   const { slug } = await params;
   if (await isKangurFrontPageSelected()) {
-    const session = await readOptionalServerAuthSession();
-    if (!canAccessKangurSlugSegments(slug, session)) {
-      notFound();
-    }
+    await requireAccessibleKangurSlugRoute(slug);
 
     const resolvedSearchParams = searchParams ? await searchParams : undefined;
     const launchTarget = await getKangurConfiguredLaunchTarget(slug, resolvedSearchParams);
@@ -65,8 +73,13 @@ export default async function CmsSlugPage({
       redirect(launchTarget.href);
     }
 
-    return null;
+    if (slug[0]?.trim().toLowerCase() === 'login') {
+      return null;
+    }
+
+    redirect(getKangurPublicAliasHref(slug, resolvedSearchParams));
   }
+  const { loadSlugRenderData, renderCmsPage, resolveSlugToPage } = await loadCmsSlugPageModules();
   const page = await resolveSlugToPage(slug);
 
   if (!page) {

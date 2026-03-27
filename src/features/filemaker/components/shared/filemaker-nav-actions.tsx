@@ -1,4 +1,4 @@
-import { Building2, CalendarDays, Database, Mail, Users } from 'lucide-react';
+import { Building2, CalendarDays, Database, Mail, Megaphone, Users } from 'lucide-react';
 
 
 import type { PanelAction } from '@/shared/contracts/ui';
@@ -6,7 +6,13 @@ import type { PanelAction } from '@/shared/contracts/ui';
 import type { AppRouterInstance } from 'next/dist/shared/lib/app-router-context.shared-runtime';
 import type { ReactNode } from 'react';
 
-type FilemakerPageKey = 'persons' | 'organizations' | 'emails' | 'events' | 'manage';
+type FilemakerPageKey =
+  | 'persons'
+  | 'organizations'
+  | 'emails'
+  | 'events'
+  | 'campaigns'
+  | 'manage';
 
 const NAV_ITEMS: Array<{
   key: FilemakerPageKey;
@@ -41,6 +47,13 @@ const NAV_ITEMS: Array<{
     label: 'Events',
     href: '/admin/filemaker/events',
     icon: <CalendarDays className='size-4' />,
+    variant: 'outline',
+  },
+  {
+    key: 'campaigns',
+    label: 'Campaigns',
+    href: '/admin/filemaker/campaigns',
+    icon: <Megaphone className='size-4' />,
     variant: 'outline',
   },
   {

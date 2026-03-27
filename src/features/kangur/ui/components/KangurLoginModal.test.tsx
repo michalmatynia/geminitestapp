@@ -106,7 +106,7 @@ describe('KangurLoginModal', () => {
     expect(kangurLoginPagePropsMock).toHaveBeenLastCalledWith(
       expect.objectContaining({
         callbackUrl: '/kangur',
-        onClose: expect.any(Function),
+        onClose: undefined,
         parentAuthMode: 'sign-in',
         showParentAuthModeTabs: true,
       })

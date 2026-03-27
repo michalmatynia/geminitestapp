@@ -1,4 +1,3 @@
-import { auth } from '@/features/auth/server';
 import { getUserPreferences } from '@/features/auth/server';
 import {
   getMediaInlineStyles,
@@ -9,6 +8,7 @@ import { getCmsMenuSettings } from '@/features/cms/server';
 import { getCmsRepository } from '@/features/cms/server';
 import { getCmsThemeSettings } from '@/features/cms/server';
 import type { CmsTheme, Page, PageComponent } from '@/shared/contracts/cms';
+import { readOptionalServerAuthSession } from '@/shared/lib/auth/optional-server-auth';
 import { buildColorSchemeMap } from '@/shared/contracts/cms-theme';
 import { isElevatedSession } from '@/shared/lib/auth/elevated-session-user';
 import { readOptionalRequestHeaders } from '@/shared/lib/request/optional-headers';
@@ -84,7 +84,7 @@ export async function resolveSlugToPage(
     const page = await cmsRepository.getPageBySlug(slugValue, { locale: options?.locale });
     if (!page) return null;
     if (page.status === 'published') return page;
-    const session = await auth();
+    const session = await readOptionalServerAuthSession();
     const allowDrafts = await canPreviewDrafts(session);
     if (!allowDrafts) return null;
     return page;

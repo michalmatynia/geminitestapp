@@ -1,11 +1,20 @@
 import { auth } from './auth';
 import { registerSessionResolver } from '@/shared/lib/api/session-registry';
+import { isMissingRequestScopeError } from '@/shared/lib/auth/request-scope-error';
 
 // Register auth function to shared API handler registry
 if (typeof auth === 'function') {
   registerSessionResolver(async () => {
-    const session = await auth();
-    return session?.user ?? null;
+    try {
+      const session = await auth();
+      return session?.user ?? null;
+    } catch (error) {
+      if (isMissingRequestScopeError(error)) {
+        return null;
+      }
+
+      throw error;
+    }
   });
 }
 

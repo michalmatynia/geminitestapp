@@ -2,7 +2,7 @@ import { notFound } from 'next/navigation';
 import { getTranslations } from 'next-intl/server';
 import { JSX } from 'react';
 
-import { auth } from '@/features/auth/server';
+import { readOptionalServerAuthSession } from '@/shared/lib/auth/optional-server-auth';
 
 import { renderCmsPage } from '../../cms-render';
 import { isAdminSession, loadPreviewRenderData } from './preview-page-data';
@@ -25,7 +25,7 @@ export async function generateMetadata({ params }: PreviewPageProps): Promise<Me
 }
 
 export default async function CmsPreviewPage({ params }: PreviewPageProps): Promise<JSX.Element> {
-  const session = await auth();
+  const session = await readOptionalServerAuthSession();
   if (!isAdminSession(session)) {
     notFound();
   }

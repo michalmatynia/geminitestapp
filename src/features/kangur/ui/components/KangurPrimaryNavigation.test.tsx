@@ -950,18 +950,21 @@ describe('KangurPrimaryNavigation', () => {
     expect(
       await screen.findByTestId('kangur-elevated-user-menu-trigger')
     ).toBeInTheDocument();
-    expect(screen.queryByTestId('kangur-primary-nav-logout')).toBeNull();
+    expect(screen.getByRole('button', { name: 'Wyloguj' })).toHaveAttribute(
+      'data-testid',
+      'kangur-primary-nav-logout'
+    );
     expect(screen.queryByRole('link', { name: /profil super admin/i })).toBeNull();
+
+    await user.click(screen.getByRole('button', { name: 'Wyloguj' }));
+
+    expect(onLogout).toHaveBeenCalledTimes(1);
 
     await user.click(screen.getByTestId('kangur-elevated-user-menu-trigger'));
 
     expect(screen.getByText('Super Admin')).toBeInTheDocument();
     expect(screen.getByText('admin@example.com')).toBeInTheDocument();
     expect(screen.getByRole('menuitem', { name: 'Admin' })).toHaveAttribute('href', '/admin');
-
-    await user.click(screen.getByRole('menuitem', { name: 'Wyloguj' }));
-
-    expect(onLogout).toHaveBeenCalledTimes(1);
   });
 
   it('keeps the learner profile entry inside the elevated avatar menu when an elevated admin has an active learner', async () => {

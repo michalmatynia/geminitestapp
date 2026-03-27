@@ -10,7 +10,7 @@ import {
   handleIterator,
 } from '@/shared/lib/ai-paths/core/runtime/handlers/transform';
 
-import { createMockContext } from '../../test-utils';
+import { createMockContext } from '../test-utils';
 
 describe('Transform Handlers', () => {
   describe('handleContext', () => {

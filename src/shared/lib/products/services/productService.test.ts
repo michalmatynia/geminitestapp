@@ -1,20 +1,41 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { ProductWithImages } from '@/shared/contracts/products';
+import { ActivityTypes } from '@/shared/constants/observability';
 
 const {
   repositoryMock,
+  imageRepositoryMock,
   getProductRepositoryMock,
   getProductDataProviderMock,
+  uploadFileMock,
+  deleteFileFromStorageMock,
+  getImageFileRepositoryMock,
   validateProductCreateMock,
   validateProductUpdateMock,
   logActivityMock,
   logWarningMock,
+  logInfoMock,
+  captureExceptionMock,
+  withRetryMock,
 } = vi.hoisted(() => ({
   repositoryMock: {
+    getProducts: vi.fn(),
+    countProducts: vi.fn(),
+    getProductsWithCount: vi.fn(),
     createProduct: vi.fn(),
+    bulkCreateProducts: vi.fn(),
     updateProduct: vi.fn(),
     getProductById: vi.fn(),
+    getProductBySku: vi.fn(),
+    getProductsBySkus: vi.fn(),
+    findProductsByBaseIds: vi.fn(),
+    duplicateProduct: vi.fn(),
+    deleteProduct: vi.fn(),
+    addProductImages: vi.fn(),
+    getProductImages: vi.fn(),
+    removeProductImage: vi.fn(),
+    countProductsByImageFileId: vi.fn(),
     replaceProductImages: vi.fn(),
     replaceProductCatalogs: vi.fn(),
     replaceProductCategory: vi.fn(),
@@ -22,12 +43,22 @@ const {
     replaceProductProducers: vi.fn(),
     replaceProductNotes: vi.fn(),
   },
+  imageRepositoryMock: {
+    getImageFileById: vi.fn(),
+    deleteImageFile: vi.fn(),
+  },
   getProductRepositoryMock: vi.fn(),
   getProductDataProviderMock: vi.fn(),
+  uploadFileMock: vi.fn(),
+  deleteFileFromStorageMock: vi.fn(),
+  getImageFileRepositoryMock: vi.fn(),
   validateProductCreateMock: vi.fn(),
   validateProductUpdateMock: vi.fn(),
   logActivityMock: vi.fn(),
   logWarningMock: vi.fn(),
+  logInfoMock: vi.fn(),
+  captureExceptionMock: vi.fn(),
+  withRetryMock: vi.fn(async (callback: () => Promise<unknown>) => await callback()),
 }));
 
 vi.mock('@/shared/lib/products/services/product-repository', () => ({
@@ -50,13 +81,19 @@ vi.mock('@/shared/utils/observability/activity-service', () => ({
 vi.mock('@/shared/utils/observability/error-system', () => ({
   ErrorSystem: {
     logWarning: logWarningMock,
+    logInfo: logInfoMock,
+    captureException: captureExceptionMock,
   },
 }));
 
 vi.mock('@/shared/lib/files/services/image-file-service', () => ({
-  deleteFileFromStorage: vi.fn(),
-  uploadFile: vi.fn(),
-  getImageFileRepository: vi.fn(),
+  deleteFileFromStorage: deleteFileFromStorageMock,
+  uploadFile: uploadFileMock,
+  getImageFileRepository: getImageFileRepositoryMock,
+}));
+
+vi.mock('@/shared/utils/retry', () => ({
+  withRetry: withRetryMock,
 }));
 
 import { productService } from './productService';
@@ -109,18 +146,54 @@ describe('productService parameter normalization', () => {
 
     getProductDataProviderMock.mockResolvedValue('mongodb');
     getProductRepositoryMock.mockResolvedValue(repositoryMock);
+    getImageFileRepositoryMock.mockResolvedValue(imageRepositoryMock);
     logActivityMock.mockResolvedValue(undefined);
 
+    repositoryMock.getProducts.mockResolvedValue([createProductRecord()]);
+    repositoryMock.countProducts.mockResolvedValue(1);
+    repositoryMock.getProductsWithCount.mockResolvedValue({
+      products: [createProductRecord()],
+      total: 1,
+    });
     repositoryMock.createProduct.mockResolvedValue(createProductRecord());
+    repositoryMock.bulkCreateProducts.mockResolvedValue(1);
     repositoryMock.updateProduct.mockResolvedValue(createProductRecord());
     repositoryMock.getProductById.mockResolvedValue(createProductRecord());
+    repositoryMock.getProductBySku.mockResolvedValue(createProductRecord());
+    repositoryMock.getProductsBySkus.mockResolvedValue([createProductRecord()]);
+    repositoryMock.findProductsByBaseIds.mockResolvedValue([createProductRecord()]);
+    repositoryMock.duplicateProduct.mockResolvedValue({ id: 'product-2' });
+    repositoryMock.deleteProduct.mockResolvedValue(createProductRecord());
+    repositoryMock.addProductImages.mockResolvedValue(undefined);
+    repositoryMock.getProductImages.mockResolvedValue([
+      {
+        id: 'product-image-1',
+        productId: 'product-1',
+        imageFileId: 'image-file-1',
+        order: 0,
+        createdAt: '2026-01-01T00:00:00.000Z',
+      },
+    ]);
+    repositoryMock.removeProductImage.mockResolvedValue(undefined);
+    repositoryMock.countProductsByImageFileId.mockResolvedValue(0);
     repositoryMock.replaceProductImages.mockResolvedValue(undefined);
     repositoryMock.replaceProductCatalogs.mockResolvedValue(undefined);
     repositoryMock.replaceProductCategory.mockResolvedValue(undefined);
     repositoryMock.replaceProductTags.mockResolvedValue(undefined);
     repositoryMock.replaceProductProducers.mockResolvedValue(undefined);
     repositoryMock.replaceProductNotes.mockResolvedValue(undefined);
+    imageRepositoryMock.getImageFileById.mockResolvedValue({
+      id: 'image-file-1',
+      filepath: '/uploads/product-1.png',
+    });
+    imageRepositoryMock.deleteImageFile.mockResolvedValue(undefined);
+    uploadFileMock.mockResolvedValue({
+      id: 'image-file-1',
+    });
+    deleteFileFromStorageMock.mockResolvedValue(undefined);
     logWarningMock.mockResolvedValue(undefined);
+    logInfoMock.mockResolvedValue(undefined);
+    captureExceptionMock.mockResolvedValue(undefined);
   });
 
   it('preserves parameters when update payload omits parameters', async () => {
@@ -255,5 +328,166 @@ describe('productService parameter normalization', () => {
     const [createPayload] = repositoryMock.createProduct.mock.calls[0] as [Record<string, unknown>];
 
     expect(createPayload).toEqual(expect.objectContaining({ sku: 'SKU-NEW', parameters: [] }));
+  });
+
+  it('filters invalid entries during bulk create and normalizes payloads', async () => {
+    validateProductCreateMock
+      .mockResolvedValueOnce({
+        success: true,
+        data: {
+          sku: 'SKU-1',
+        },
+      })
+      .mockResolvedValueOnce({
+        success: false,
+        errors: [{ field: 'sku', message: 'missing' }],
+      })
+      .mockResolvedValueOnce({
+        success: true,
+        data: {
+          sku: 'SKU-2',
+          parameters: null,
+          imageFileIds: ['img-1'],
+        },
+      });
+    repositoryMock.bulkCreateProducts.mockResolvedValue(2);
+
+    const created = await productService.bulkCreateProducts([
+      { sku: 'SKU-1' } as any,
+      { sku: '' } as any,
+      { sku: 'SKU-2' } as any,
+    ]);
+
+    expect(created).toBe(2);
+    expect(repositoryMock.bulkCreateProducts).toHaveBeenCalledWith([
+      { sku: 'SKU-1', parameters: [], imageFileIds: undefined },
+      { sku: 'SKU-2', parameters: [], imageFileIds: ['img-1'] },
+    ]);
+  });
+
+  it('delegates read helpers to the repository layer', async () => {
+    expect(await productService.getProducts({ published: true }, { provider: 'mongodb' as any })).toEqual([
+      createProductRecord(),
+    ]);
+    expect(await productService.countProducts({ published: true }, { provider: 'mongodb' as any })).toBe(1);
+    expect(
+      await productService.getProductsWithCount({ published: true }, { provider: 'mongodb' as any })
+    ).toEqual({
+      products: [createProductRecord()],
+      total: 1,
+    });
+    expect(await productService.getProductBySku('SKU-1', { provider: 'mongodb' as any })).toEqual(
+      createProductRecord()
+    );
+    expect(await productService.getProductsBySkus(['SKU-1'], { provider: 'mongodb' as any })).toEqual([
+      createProductRecord(),
+    ]);
+    expect(await productService.findProductsByBaseIds(['base-1'], { provider: 'mongodb' as any })).toEqual([
+      createProductRecord(),
+    ]);
+    expect(await productService.findProductsByBaseIds([], { provider: 'mongodb' as any })).toEqual([]);
+  });
+
+  it('captures repository errors from getProducts', async () => {
+    const failure = new Error('repo failed');
+    repositoryMock.getProducts.mockRejectedValueOnce(failure);
+
+    await expect(productService.getProducts({ published: true })).rejects.toThrow('repo failed');
+    expect(captureExceptionMock).toHaveBeenCalledTimes(2);
+    expect(captureExceptionMock).toHaveBeenLastCalledWith(
+      failure,
+      expect.objectContaining({
+        service: 'product-service',
+        action: 'getProducts',
+        filters: { published: true },
+      })
+    );
+  });
+
+  it('duplicates products and reloads the duplicated record', async () => {
+    repositoryMock.getProductById.mockResolvedValueOnce(createProductRecord({ id: 'product-2' }));
+
+    const duplicated = await productService.duplicateProduct('product-1', 'SKU-2', {
+      userId: 'user-1',
+    });
+
+    expect(repositoryMock.duplicateProduct).toHaveBeenCalledWith('product-1', 'SKU-2');
+    expect(duplicated).toEqual(createProductRecord({ id: 'product-2' }));
+    expect(logActivityMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        type: ActivityTypes.PRODUCT.DUPLICATED,
+        userId: 'user-1',
+      })
+    );
+  });
+
+  it('rejects duplicateProduct without a usable sku', async () => {
+    await expect(productService.duplicateProduct('product-1', '   ')).rejects.toMatchObject({
+      code: 'BAD_REQUEST',
+    });
+  });
+
+  it('deletes products and logs activity when the repository returns a record', async () => {
+    const deleted = await productService.deleteProduct('product-1', { userId: 'user-1' });
+
+    expect(deleted).toEqual(createProductRecord());
+    expect(repositoryMock.deleteProduct).toHaveBeenCalledWith('product-1');
+    expect(logActivityMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        type: ActivityTypes.PRODUCT.DELETED,
+        userId: 'user-1',
+      })
+    );
+  });
+
+  it('uploads a product image and verifies the created relation', async () => {
+    const file = new File(['binary'], 'image.png', { type: 'image/png' });
+
+    const image = await productService.uploadProductImage('product-1', file);
+
+    expect(uploadFileMock).toHaveBeenCalledWith(
+      file,
+      expect.objectContaining({
+        category: 'products',
+        provider: 'mongodb',
+        sku: 'SKU-1',
+        filenameOverride: 'image.png',
+      })
+    );
+    expect(repositoryMock.addProductImages).toHaveBeenCalledWith('product-1', ['image-file-1']);
+    expect(image).toEqual({
+      id: 'product-image-1',
+      productId: 'product-1',
+      imageFileId: 'image-file-1',
+      order: 0,
+      createdAt: '2026-01-01T00:00:00.000Z',
+    });
+  });
+
+  it('throws when uploaded image verification fails', async () => {
+    const file = new File(['binary'], 'image.png', { type: 'image/png' });
+    repositoryMock.getProductImages.mockResolvedValueOnce([]);
+
+    await expect(productService.uploadProductImage('product-1', file)).rejects.toMatchObject({
+      code: 'BAD_REQUEST',
+    });
+  });
+
+  it('removes orphaned image files only when no product links remain', async () => {
+    await productService.deleteProductImage('product-1', 'image-file-1');
+
+    expect(repositoryMock.removeProductImage).toHaveBeenCalledWith('product-1', 'image-file-1');
+    expect(repositoryMock.countProductsByImageFileId).toHaveBeenCalledWith('image-file-1');
+    expect(deleteFileFromStorageMock).toHaveBeenCalledWith('/uploads/product-1.png');
+    expect(imageRepositoryMock.deleteImageFile).toHaveBeenCalledWith('image-file-1');
+  });
+
+  it('leaves shared image files in storage when other products still reference them', async () => {
+    repositoryMock.countProductsByImageFileId.mockResolvedValueOnce(2);
+
+    await productService.deleteProductImage('product-1', 'image-file-1');
+
+    expect(deleteFileFromStorageMock).not.toHaveBeenCalled();
+    expect(imageRepositoryMock.deleteImageFile).not.toHaveBeenCalled();
   });
 });

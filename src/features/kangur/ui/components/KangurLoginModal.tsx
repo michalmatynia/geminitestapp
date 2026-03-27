@@ -71,7 +71,7 @@ export const KangurLoginModal = memo(function KangurLoginModal(): JSX.Element {
 
       <KangurLoginPage
         callbackUrl={callbackUrl}
-        onClose={dismissLoginModal}
+        onClose={isRouteDriven ? undefined : dismissLoginModal}
         parentAuthMode={authMode}
         showParentAuthModeTabs={showParentAuthModeTabs}
       />

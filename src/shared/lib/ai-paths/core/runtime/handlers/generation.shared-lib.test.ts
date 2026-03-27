@@ -7,7 +7,7 @@ import {
   handleModel,
 } from '@/shared/lib/ai-paths/core/runtime/handlers/generation';
 
-import { createMockContext } from '../../test-utils';
+import { createMockContext } from '../test-utils';
 
 vi.mock('@/shared/lib/ai-paths/api', () => ({
   aiJobsApi: {

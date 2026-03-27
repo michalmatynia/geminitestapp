@@ -57,6 +57,7 @@ vi.mock('@/shared/ui', () => ({
     children,
     onClick,
     disabled,
+    asChild: _asChild,
     ...props
   }: React.ButtonHTMLAttributes<HTMLButtonElement> & { children?: React.ReactNode; asChild?: boolean }) => (
     <button type='button' onClick={onClick} disabled={disabled} {...props}>
@@ -81,13 +82,16 @@ vi.mock('@/shared/ui', () => ({
   EmptyState: ({
     title,
     description,
+    action,
   }: {
     title: string;
     description?: string;
+    action?: React.ReactNode;
   }) => (
     <div>
       <span>{title}</span>
       <span>{description}</span>
+      {action}
     </div>
   ),
   Input: (props: React.InputHTMLAttributes<HTMLInputElement>) => <input {...props} />,
@@ -334,7 +338,15 @@ describe('AdminProductOrdersImportPage', () => {
           source: 'Base',
           orderCreatedAt: '2026-03-25T10:00:00.000Z',
           orderUpdatedAt: null,
-          lineItems: [],
+          lineItems: [
+            {
+              sku: 'CLOCK-1',
+              name: 'Clock game license',
+              quantity: 2,
+              unitPriceGross: 50,
+              baseProductId: 'base-1',
+            },
+          ],
           fingerprint: 'fp-1',
           raw: {},
           importState: 'new',
@@ -354,7 +366,15 @@ describe('AdminProductOrdersImportPage', () => {
           source: 'Base',
           orderCreatedAt: '2026-03-24T10:00:00.000Z',
           orderUpdatedAt: null,
-          lineItems: [],
+          lineItems: [
+            {
+              sku: 'BOOK-1',
+              name: 'Math workbook',
+              quantity: 3,
+              unitPriceGross: 66.67,
+              baseProductId: 'base-2',
+            },
+          ],
           fingerprint: 'fp-2',
           raw: {},
           importState: 'imported',
@@ -397,6 +417,9 @@ describe('AdminProductOrdersImportPage', () => {
     expect(
       screen.getByRole('button', { name: /Select visible new \+ changed \(1\)/i })
     ).toBeInTheDocument();
+    expect(screen.getByText('5 visible items')).toBeInTheDocument();
+    expect(screen.getByText('PLN 300.00 visible gross')).toBeInTheDocument();
+    expect(screen.getByText('0 selected visible items')).toBeInTheDocument();
 
     fireEvent.change(screen.getByLabelText('Import state'), {
       target: { value: 'imported' },
@@ -406,9 +429,138 @@ describe('AdminProductOrdersImportPage', () => {
     expect(
       screen.getByRole('button', { name: /Select visible new \+ changed \(0\)/i })
     ).toBeDisabled();
+    expect(screen.getByText('3 visible items')).toBeInTheDocument();
+    expect(screen.getByText('PLN 200.00 visible gross')).toBeInTheDocument();
     expect(screen.getByText('0 visible new')).toBeInTheDocument();
     expect(screen.getByText('0 visible changed')).toBeInTheDocument();
     expect(screen.getByText('1 visible imported')).toBeInTheDocument();
+  });
+
+  it('updates selected visible aggregate totals with row selection', async () => {
+    const previewResponse: BaseOrderImportPreviewResponse = {
+      orders: [
+        {
+          baseOrderId: '1001',
+          orderNumber: 'SO-1001',
+          externalStatusId: 'paid',
+          externalStatusName: 'Paid',
+          buyerName: 'Alice',
+          buyerEmail: 'alice@example.com',
+          currency: 'PLN',
+          totalGross: 100,
+          deliveryMethod: 'Courier',
+          paymentMethod: 'Card',
+          source: 'Base',
+          orderCreatedAt: '2026-03-25T10:00:00.000Z',
+          orderUpdatedAt: null,
+          lineItems: [
+            {
+              sku: 'CLOCK-1',
+              name: 'Clock game license',
+              quantity: 2,
+              unitPriceGross: 50,
+              baseProductId: 'base-1',
+            },
+          ],
+          fingerprint: 'fp-1',
+          raw: {},
+          importState: 'new',
+          lastImportedAt: null,
+        },
+        {
+          baseOrderId: '1002',
+          orderNumber: 'SO-1002',
+          externalStatusId: 'paid',
+          externalStatusName: 'Paid',
+          buyerName: 'Bob',
+          buyerEmail: 'bob@example.com',
+          currency: 'PLN',
+          totalGross: 200,
+          deliveryMethod: 'Courier',
+          paymentMethod: 'Card',
+          source: 'Base',
+          orderCreatedAt: '2026-03-24T10:00:00.000Z',
+          orderUpdatedAt: null,
+          lineItems: [
+            {
+              sku: 'BOOK-1',
+              name: 'Math workbook',
+              quantity: 3,
+              unitPriceGross: 66.67,
+              baseProductId: 'base-2',
+            },
+          ],
+          fingerprint: 'fp-2',
+          raw: {},
+          importState: 'imported',
+          lastImportedAt: '2026-03-26T10:00:00.000Z',
+          previousImport: {
+            orderNumber: 'SO-1002',
+            externalStatusId: 'paid',
+            externalStatusName: 'Paid',
+            buyerName: 'Bob',
+            buyerEmail: 'bob@example.com',
+            currency: 'PLN',
+            totalGross: 200,
+            deliveryMethod: 'Courier',
+            paymentMethod: 'Card',
+            source: 'Base',
+            orderCreatedAt: '2026-03-24T10:00:00.000Z',
+            orderUpdatedAt: '2026-03-24T10:00:00.000Z',
+            lineItems: [
+              {
+                sku: 'BOOK-1',
+                name: 'Math workbook',
+                quantity: 3,
+                unitPriceGross: 66.67,
+                baseProductId: 'base-2',
+              },
+            ],
+            lastImportedAt: '2026-03-26T10:00:00.000Z',
+          },
+        },
+      ],
+      stats: {
+        total: 2,
+        newCount: 1,
+        importedCount: 1,
+        changedCount: 0,
+      },
+    };
+    usePreviewBaseOrdersMutation.mockReturnValue({
+      isPending: false,
+      mutateAsync: vi.fn().mockResolvedValue(previewResponse),
+    });
+
+    render(<AdminProductOrdersImportPage />);
+
+    fireEvent.click(screen.getByRole('button', { name: /Preview orders/i }));
+    await waitFor(() => expect(screen.getByTestId('orders-count')).toHaveTextContent('2'));
+
+    expect(screen.getByText('0 selected visible items')).toBeInTheDocument();
+    expect(screen.getByText('0.00 selected visible gross')).toBeInTheDocument();
+    expect(screen.getByText('0 selected import items')).toBeInTheDocument();
+    expect(screen.getByText('0.00 selected import gross')).toBeInTheDocument();
+    expect(screen.getByText('0 selected reimport items')).toBeInTheDocument();
+    expect(screen.getByText('0.00 selected reimport gross')).toBeInTheDocument();
+
+    fireEvent.click(screen.getByLabelText('Select order 1001'));
+
+    expect(screen.getByText('2 selected visible items')).toBeInTheDocument();
+    expect(screen.getByText('PLN 100.00 selected visible gross')).toBeInTheDocument();
+    expect(screen.getByText('2 selected import items')).toBeInTheDocument();
+    expect(screen.getByText('PLN 100.00 selected import gross')).toBeInTheDocument();
+    expect(screen.getByText('0 selected reimport items')).toBeInTheDocument();
+    expect(screen.getByText('0.00 selected reimport gross')).toBeInTheDocument();
+
+    fireEvent.click(screen.getByLabelText('Select order 1002'));
+
+    expect(screen.getByText('5 selected visible items')).toBeInTheDocument();
+    expect(screen.getByText('PLN 300.00 selected visible gross')).toBeInTheDocument();
+    expect(screen.getByText('2 selected import items')).toBeInTheDocument();
+    expect(screen.getByText('PLN 100.00 selected import gross')).toBeInTheDocument();
+    expect(screen.getByText('3 selected reimport items')).toBeInTheDocument();
+    expect(screen.getByText('PLN 200.00 selected reimport gross')).toBeInTheDocument();
   });
 
   it('marks preview as stale after changing preview scope controls and blocks import actions', async () => {
@@ -464,11 +616,14 @@ describe('AdminProductOrdersImportPage', () => {
     await waitFor(() =>
       expect(screen.getByText(/Preview out of date/i)).toBeInTheDocument()
     );
+    expect(screen.queryByText('Preview ready')).not.toBeInTheDocument();
     expect(
       screen.getByText(
         /Preview scope changed\. Run Preview orders again before importing or selecting orders\./i
       )
     ).toBeInTheDocument();
+    expect(screen.getByText('Loaded scope vs current scope')).toBeInTheDocument();
+    expect(screen.getByText('50 -> 100')).toBeInTheDocument();
     expect(
       screen.getByRole('button', { name: /Import selected visible new \+ changed \(1\)/i })
     ).toBeDisabled();
@@ -549,6 +704,74 @@ describe('AdminProductOrdersImportPage', () => {
     expect(
       screen.getByRole('button', { name: /Import visible new \+ changed \(1\)/i })
     ).toBeEnabled();
+  });
+
+  it('restores the loaded preview scope from the stale warning', async () => {
+    const mutateAsync = vi.fn().mockResolvedValue({
+      orders: [
+        {
+          baseOrderId: '1001',
+          orderNumber: 'SO-1001',
+          externalStatusId: 'paid',
+          externalStatusName: 'Paid',
+          buyerName: 'Alice',
+          buyerEmail: 'alice@example.com',
+          currency: 'PLN',
+          totalGross: 100,
+          deliveryMethod: 'Courier',
+          paymentMethod: 'Card',
+          source: 'Base',
+          orderCreatedAt: '2026-03-25T10:00:00.000Z',
+          orderUpdatedAt: null,
+          lineItems: [],
+          fingerprint: 'fp-1',
+          raw: {},
+          importState: 'new',
+          lastImportedAt: null,
+        },
+      ],
+      stats: {
+        total: 1,
+        newCount: 1,
+        importedCount: 0,
+        changedCount: 0,
+      },
+    });
+    usePreviewBaseOrdersMutation.mockReturnValue({
+      isPending: false,
+      mutateAsync,
+    });
+
+    render(<AdminProductOrdersImportPage />);
+
+    fireEvent.change(screen.getByLabelText('Order status'), {
+      target: { value: 'paid' },
+    });
+    fireEvent.change(screen.getByLabelText('Preview limit'), {
+      target: { value: '100' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: /Preview orders/i }));
+    await waitFor(() => expect(screen.getByTestId('orders-count')).toHaveTextContent('1'));
+
+    fireEvent.change(screen.getByLabelText('Order status'), {
+      target: { value: '__all__' },
+    });
+    fireEvent.change(screen.getByLabelText('Preview limit'), {
+      target: { value: '150' },
+    });
+
+    await waitFor(() =>
+      expect(screen.getByText(/Preview out of date/i)).toBeInTheDocument()
+    );
+    expect(screen.getByText('Paid -> All statuses')).toBeInTheDocument();
+    expect(screen.getByText('100 -> 150')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: /Restore loaded scope/i }));
+
+    await waitFor(() =>
+      expect(screen.queryByText(/Preview out of date/i)).not.toBeInTheDocument()
+    );
+    expect(screen.getByLabelText('Order status')).toHaveValue('paid');
+    expect(screen.getByLabelText('Preview limit')).toHaveValue('100');
   });
 
   it('resets preview scope controls back to defaults', async () => {
@@ -902,6 +1125,105 @@ describe('AdminProductOrdersImportPage', () => {
     expect(screen.getByPlaceholderText('Search previewed orders...')).toHaveValue('');
   });
 
+  it('shows a local empty state when view filters hide loaded orders and restores them', async () => {
+    const previewResponse: BaseOrderImportPreviewResponse = {
+      orders: [
+        {
+          baseOrderId: '1001',
+          orderNumber: 'SO-1001',
+          externalStatusId: 'paid',
+          externalStatusName: 'Paid',
+          buyerName: 'Alice',
+          buyerEmail: 'alice@example.com',
+          currency: 'PLN',
+          totalGross: 100,
+          deliveryMethod: 'Courier',
+          paymentMethod: 'Card',
+          source: 'Base',
+          orderCreatedAt: '2026-03-25T10:00:00.000Z',
+          orderUpdatedAt: null,
+          lineItems: [],
+          fingerprint: 'fp-1',
+          raw: {},
+          importState: 'new',
+          lastImportedAt: null,
+        },
+        {
+          baseOrderId: '1002',
+          orderNumber: 'SO-1002',
+          externalStatusId: 'paid',
+          externalStatusName: 'Paid',
+          buyerName: 'Charlie',
+          buyerEmail: 'charlie@example.com',
+          currency: 'PLN',
+          totalGross: 200,
+          deliveryMethod: 'Courier',
+          paymentMethod: 'Card',
+          source: 'Base',
+          orderCreatedAt: '2026-03-26T10:00:00.000Z',
+          orderUpdatedAt: null,
+          lineItems: [],
+          fingerprint: 'fp-2',
+          raw: {},
+          importState: 'imported',
+          lastImportedAt: '2026-03-26T11:00:00.000Z',
+          previousImport: {
+            orderNumber: 'SO-1002',
+            externalStatusId: 'paid',
+            externalStatusName: 'Paid',
+            buyerName: 'Charlie',
+            buyerEmail: 'charlie@example.com',
+            currency: 'PLN',
+            totalGross: 200,
+            deliveryMethod: 'Courier',
+            paymentMethod: 'Card',
+            source: 'Base',
+            orderCreatedAt: '2026-03-26T10:00:00.000Z',
+            orderUpdatedAt: '2026-03-26T10:00:00.000Z',
+            lineItems: [],
+            lastImportedAt: '2026-03-26T11:00:00.000Z',
+          },
+        },
+      ],
+      stats: {
+        total: 2,
+        newCount: 1,
+        importedCount: 1,
+        changedCount: 0,
+      },
+    };
+    usePreviewBaseOrdersMutation.mockReturnValue({
+      isPending: false,
+      mutateAsync: vi.fn().mockResolvedValue(previewResponse),
+    });
+
+    render(<AdminProductOrdersImportPage />);
+
+    fireEvent.click(screen.getByRole('button', { name: /Preview orders/i }));
+    await waitFor(() => expect(screen.getByTestId('orders-count')).toHaveTextContent('2'));
+
+    fireEvent.change(screen.getByLabelText('Import state'), {
+      target: { value: 'changed' },
+    });
+    fireEvent.change(screen.getByPlaceholderText('Search previewed orders...'), {
+      target: { value: 'missing-order' },
+    });
+
+    await waitFor(() => expect(screen.getByTestId('orders-count')).toHaveTextContent('0'));
+    expect(screen.getByText('No orders in the current view')).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        'Loaded 2 orders, but the current search or import-state filters hide them.'
+      )
+    ).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: /Show loaded orders/i }));
+
+    await waitFor(() => expect(screen.getByTestId('orders-count')).toHaveTextContent('2'));
+    expect(screen.getByLabelText('Import state')).toHaveValue('all');
+    expect(screen.getByPlaceholderText('Search previewed orders...')).toHaveValue('');
+  });
+
   it('renders expandable order details with line items after preview', async () => {
     const importMutateAsync = vi.fn().mockResolvedValue({
       importedCount: 1,
@@ -1016,6 +1338,1162 @@ describe('AdminProductOrdersImportPage', () => {
     );
     expect(screen.queryByText('Change Summary')).not.toBeInTheDocument();
     expect(screen.queryByText('Draft')).not.toBeInTheDocument();
+  });
+
+  it('expands and collapses visible order details in bulk', async () => {
+    const previewResponse: BaseOrderImportPreviewResponse = {
+      orders: [
+        {
+          baseOrderId: '1001',
+          orderNumber: 'SO-1001',
+          externalStatusId: 'paid',
+          externalStatusName: 'Paid',
+          buyerName: 'Alice',
+          buyerEmail: 'alice@example.com',
+          currency: 'PLN',
+          totalGross: 100,
+          deliveryMethod: 'Courier',
+          paymentMethod: 'Card',
+          source: 'Base',
+          orderCreatedAt: '2026-03-25T10:00:00.000Z',
+          orderUpdatedAt: null,
+          lineItems: [
+            {
+              sku: 'CLOCK-1',
+              name: 'Clock game license',
+              quantity: 1,
+              unitPriceGross: 100,
+              baseProductId: 'base-1',
+            },
+          ],
+          fingerprint: 'fp-1',
+          raw: {},
+          importState: 'new',
+          lastImportedAt: null,
+        },
+        {
+          baseOrderId: '1002',
+          orderNumber: 'SO-1002',
+          externalStatusId: 'paid',
+          externalStatusName: 'Paid',
+          buyerName: 'Bob',
+          buyerEmail: 'bob@example.com',
+          currency: 'PLN',
+          totalGross: 200,
+          deliveryMethod: 'Courier',
+          paymentMethod: 'Card',
+          source: 'Base',
+          orderCreatedAt: '2026-03-24T10:00:00.000Z',
+          orderUpdatedAt: null,
+          lineItems: [
+            {
+              sku: 'BOOK-1',
+              name: 'Math workbook',
+              quantity: 2,
+              unitPriceGross: 100,
+              baseProductId: 'base-2',
+            },
+          ],
+          fingerprint: 'fp-2',
+          raw: {},
+          importState: 'imported',
+          lastImportedAt: '2026-03-26T10:00:00.000Z',
+          previousImport: {
+            orderNumber: 'SO-1002',
+            externalStatusId: 'paid',
+            externalStatusName: 'Paid',
+            buyerName: 'Bob',
+            buyerEmail: 'bob@example.com',
+            currency: 'PLN',
+            totalGross: 200,
+            deliveryMethod: 'Courier',
+            paymentMethod: 'Card',
+            source: 'Base',
+            orderCreatedAt: '2026-03-24T10:00:00.000Z',
+            orderUpdatedAt: '2026-03-24T10:00:00.000Z',
+            lineItems: [
+              {
+                sku: 'BOOK-1',
+                name: 'Math workbook',
+                quantity: 2,
+                unitPriceGross: 100,
+                baseProductId: 'base-2',
+              },
+            ],
+            lastImportedAt: '2026-03-26T10:00:00.000Z',
+          },
+        },
+      ],
+      stats: {
+        total: 2,
+        newCount: 1,
+        importedCount: 1,
+        changedCount: 0,
+      },
+    };
+    usePreviewBaseOrdersMutation.mockReturnValue({
+      isPending: false,
+      mutateAsync: vi.fn().mockResolvedValue(previewResponse),
+    });
+
+    render(<AdminProductOrdersImportPage />);
+
+    fireEvent.click(screen.getByRole('button', { name: /Preview orders/i }));
+    await waitFor(() => expect(screen.getByTestId('orders-count')).toHaveTextContent('2'));
+
+    fireEvent.click(screen.getByRole('button', { name: /Expand visible details \(2\)/i }));
+
+    expect(screen.getAllByText('Line Items')).toHaveLength(2);
+    expect(
+      screen.getByRole('button', { name: /Collapse visible details \(2\)/i })
+    ).toBeEnabled();
+
+    fireEvent.click(screen.getByRole('button', { name: /Collapse visible details \(2\)/i }));
+
+    await waitFor(() => expect(screen.queryAllByText('Line Items')).toHaveLength(0));
+    expect(
+      screen.getByRole('button', { name: /Collapse visible details \(0\)/i })
+    ).toBeDisabled();
+  });
+
+  it('expands and collapses only visible new and changed order details', async () => {
+    const previewResponse: BaseOrderImportPreviewResponse = {
+      orders: [
+        {
+          baseOrderId: '1001',
+          orderNumber: 'SO-1001',
+          externalStatusId: 'paid',
+          externalStatusName: 'Paid',
+          buyerName: 'Alice',
+          buyerEmail: 'alice@example.com',
+          currency: 'PLN',
+          totalGross: 100,
+          deliveryMethod: 'Courier',
+          paymentMethod: 'Card',
+          source: 'Base',
+          orderCreatedAt: '2026-03-25T10:00:00.000Z',
+          orderUpdatedAt: null,
+          lineItems: [
+            {
+              sku: 'CLOCK-1',
+              name: 'Clock game license',
+              quantity: 1,
+              unitPriceGross: 100,
+              baseProductId: 'base-1',
+            },
+          ],
+          fingerprint: 'fp-1',
+          raw: {},
+          importState: 'new',
+          lastImportedAt: null,
+        },
+        {
+          baseOrderId: '1002',
+          orderNumber: 'SO-1002',
+          externalStatusId: 'paid',
+          externalStatusName: 'Paid',
+          buyerName: 'Beata',
+          buyerEmail: 'beata@example.com',
+          currency: 'PLN',
+          totalGross: 140,
+          deliveryMethod: 'Courier',
+          paymentMethod: 'Card',
+          source: 'Base',
+          orderCreatedAt: '2026-03-24T10:00:00.000Z',
+          orderUpdatedAt: null,
+          lineItems: [
+            {
+              sku: 'CLOCK-2',
+              name: 'Clock challenge pack',
+              quantity: 1,
+              unitPriceGross: 140,
+              baseProductId: 'base-2',
+            },
+          ],
+          fingerprint: 'fp-2',
+          raw: {},
+          importState: 'changed',
+          lastImportedAt: '2026-03-26T10:00:00.000Z',
+          previousImport: {
+            orderNumber: 'SO-1002',
+            externalStatusId: 'draft',
+            externalStatusName: 'Draft',
+            buyerName: 'Beata',
+            buyerEmail: 'beata@example.com',
+            currency: 'PLN',
+            totalGross: 120,
+            deliveryMethod: 'Courier',
+            paymentMethod: 'Card',
+            source: 'Base',
+            orderCreatedAt: '2026-03-24T10:00:00.000Z',
+            orderUpdatedAt: '2026-03-24T10:00:00.000Z',
+            lineItems: [
+              {
+                sku: 'CLOCK-2',
+                name: 'Clock challenge pack',
+                quantity: 1,
+                unitPriceGross: 120,
+                baseProductId: 'base-2',
+              },
+            ],
+            lastImportedAt: '2026-03-26T10:00:00.000Z',
+          },
+        },
+        {
+          baseOrderId: '1003',
+          orderNumber: 'SO-1003',
+          externalStatusId: 'paid',
+          externalStatusName: 'Paid',
+          buyerName: 'Bob',
+          buyerEmail: 'bob@example.com',
+          currency: 'PLN',
+          totalGross: 200,
+          deliveryMethod: 'Courier',
+          paymentMethod: 'Card',
+          source: 'Base',
+          orderCreatedAt: '2026-03-23T10:00:00.000Z',
+          orderUpdatedAt: null,
+          lineItems: [
+            {
+              sku: 'BOOK-1',
+              name: 'Math workbook',
+              quantity: 2,
+              unitPriceGross: 100,
+              baseProductId: 'base-3',
+            },
+          ],
+          fingerprint: 'fp-3',
+          raw: {},
+          importState: 'imported',
+          lastImportedAt: '2026-03-26T09:00:00.000Z',
+          previousImport: {
+            orderNumber: 'SO-1003',
+            externalStatusId: 'paid',
+            externalStatusName: 'Paid',
+            buyerName: 'Bob',
+            buyerEmail: 'bob@example.com',
+            currency: 'PLN',
+            totalGross: 200,
+            deliveryMethod: 'Courier',
+            paymentMethod: 'Card',
+            source: 'Base',
+            orderCreatedAt: '2026-03-23T10:00:00.000Z',
+            orderUpdatedAt: '2026-03-23T10:00:00.000Z',
+            lineItems: [
+              {
+                sku: 'BOOK-1',
+                name: 'Math workbook',
+                quantity: 2,
+                unitPriceGross: 100,
+                baseProductId: 'base-3',
+              },
+            ],
+            lastImportedAt: '2026-03-26T09:00:00.000Z',
+          },
+        },
+      ],
+      stats: {
+        total: 3,
+        newCount: 1,
+        importedCount: 1,
+        changedCount: 1,
+      },
+    };
+    usePreviewBaseOrdersMutation.mockReturnValue({
+      isPending: false,
+      mutateAsync: vi.fn().mockResolvedValue(previewResponse),
+    });
+
+    render(<AdminProductOrdersImportPage />);
+
+    fireEvent.click(screen.getByRole('button', { name: /Preview orders/i }));
+    await waitFor(() => expect(screen.getByTestId('orders-count')).toHaveTextContent('3'));
+
+    fireEvent.click(screen.getByRole('button', { name: /Expand visible import details \(2\)/i }));
+
+    expect(screen.getAllByText('Line Items')).toHaveLength(2);
+    expect(screen.getByText('Clock game license')).toBeInTheDocument();
+    expect(screen.getByText('Clock challenge pack')).toBeInTheDocument();
+    expect(screen.queryByText('Math workbook')).not.toBeInTheDocument();
+
+    expect(
+      screen.getByRole('button', { name: /Collapse visible import details \(2\)/i })
+    ).toBeEnabled();
+
+    fireEvent.click(screen.getByRole('button', { name: /Collapse visible import details \(2\)/i }));
+
+    await waitFor(() =>
+      expect(
+        screen.getByRole('button', { name: /Collapse visible import details \(0\)/i })
+      ).toBeDisabled()
+    );
+
+    expect(screen.queryByText('Clock game license')).not.toBeInTheDocument();
+    expect(screen.queryByText('Clock challenge pack')).not.toBeInTheDocument();
+    expect(screen.queryAllByText('Line Items')).toHaveLength(0);
+  });
+
+  it('expands only visible new order details', async () => {
+    const previewResponse: BaseOrderImportPreviewResponse = {
+      orders: [
+        {
+          baseOrderId: '1001',
+          orderNumber: 'SO-1001',
+          externalStatusId: 'paid',
+          externalStatusName: 'Paid',
+          buyerName: 'Alice',
+          buyerEmail: 'alice@example.com',
+          currency: 'PLN',
+          totalGross: 100,
+          deliveryMethod: 'Courier',
+          paymentMethod: 'Card',
+          source: 'Base',
+          orderCreatedAt: '2026-03-25T10:00:00.000Z',
+          orderUpdatedAt: null,
+          lineItems: [
+            {
+              sku: 'CLOCK-1',
+              name: 'Clock game license',
+              quantity: 1,
+              unitPriceGross: 100,
+              baseProductId: 'base-1',
+            },
+          ],
+          fingerprint: 'fp-1',
+          raw: {},
+          importState: 'new',
+          lastImportedAt: null,
+        },
+        {
+          baseOrderId: '1002',
+          orderNumber: 'SO-1002',
+          externalStatusId: 'paid',
+          externalStatusName: 'Paid',
+          buyerName: 'Beata',
+          buyerEmail: 'beata@example.com',
+          currency: 'PLN',
+          totalGross: 140,
+          deliveryMethod: 'Courier',
+          paymentMethod: 'Card',
+          source: 'Base',
+          orderCreatedAt: '2026-03-24T10:00:00.000Z',
+          orderUpdatedAt: null,
+          lineItems: [
+            {
+              sku: 'CLOCK-2',
+              name: 'Clock challenge pack',
+              quantity: 1,
+              unitPriceGross: 140,
+              baseProductId: 'base-2',
+            },
+          ],
+          fingerprint: 'fp-2',
+          raw: {},
+          importState: 'changed',
+          lastImportedAt: '2026-03-26T10:00:00.000Z',
+          previousImport: {
+            orderNumber: 'SO-1002',
+            externalStatusId: 'draft',
+            externalStatusName: 'Draft',
+            buyerName: 'Beata',
+            buyerEmail: 'beata@example.com',
+            currency: 'PLN',
+            totalGross: 120,
+            deliveryMethod: 'Courier',
+            paymentMethod: 'Card',
+            source: 'Base',
+            orderCreatedAt: '2026-03-24T10:00:00.000Z',
+            orderUpdatedAt: '2026-03-24T10:00:00.000Z',
+            lineItems: [
+              {
+                sku: 'CLOCK-2',
+                name: 'Clock challenge pack',
+                quantity: 1,
+                unitPriceGross: 120,
+                baseProductId: 'base-2',
+              },
+            ],
+            lastImportedAt: '2026-03-26T10:00:00.000Z',
+          },
+        },
+        {
+          baseOrderId: '1003',
+          orderNumber: 'SO-1003',
+          externalStatusId: 'paid',
+          externalStatusName: 'Paid',
+          buyerName: 'Bob',
+          buyerEmail: 'bob@example.com',
+          currency: 'PLN',
+          totalGross: 200,
+          deliveryMethod: 'Courier',
+          paymentMethod: 'Card',
+          source: 'Base',
+          orderCreatedAt: '2026-03-23T10:00:00.000Z',
+          orderUpdatedAt: null,
+          lineItems: [
+            {
+              sku: 'BOOK-1',
+              name: 'Math workbook',
+              quantity: 2,
+              unitPriceGross: 100,
+              baseProductId: 'base-3',
+            },
+          ],
+          fingerprint: 'fp-3',
+          raw: {},
+          importState: 'imported',
+          lastImportedAt: '2026-03-26T09:00:00.000Z',
+          previousImport: {
+            orderNumber: 'SO-1003',
+            externalStatusId: 'paid',
+            externalStatusName: 'Paid',
+            buyerName: 'Bob',
+            buyerEmail: 'bob@example.com',
+            currency: 'PLN',
+            totalGross: 200,
+            deliveryMethod: 'Courier',
+            paymentMethod: 'Card',
+            source: 'Base',
+            orderCreatedAt: '2026-03-23T10:00:00.000Z',
+            orderUpdatedAt: '2026-03-23T10:00:00.000Z',
+            lineItems: [
+              {
+                sku: 'BOOK-1',
+                name: 'Math workbook',
+                quantity: 2,
+                unitPriceGross: 100,
+                baseProductId: 'base-3',
+              },
+            ],
+            lastImportedAt: '2026-03-26T09:00:00.000Z',
+          },
+        },
+      ],
+      stats: {
+        total: 3,
+        newCount: 1,
+        importedCount: 1,
+        changedCount: 1,
+      },
+    };
+    usePreviewBaseOrdersMutation.mockReturnValue({
+      isPending: false,
+      mutateAsync: vi.fn().mockResolvedValue(previewResponse),
+    });
+
+    render(<AdminProductOrdersImportPage />);
+
+    fireEvent.click(screen.getByRole('button', { name: /Preview orders/i }));
+    await waitFor(() => expect(screen.getByTestId('orders-count')).toHaveTextContent('3'));
+
+    fireEvent.click(screen.getByRole('button', { name: /Expand visible new details \(1\)/i }));
+
+    expect(screen.getAllByText('Line Items')).toHaveLength(1);
+    expect(screen.getByText('Clock game license')).toBeInTheDocument();
+    expect(screen.queryByText('Clock challenge pack')).not.toBeInTheDocument();
+    expect(screen.queryByText('Math workbook')).not.toBeInTheDocument();
+  });
+
+  it('expands only visible changed order details', async () => {
+    const previewResponse: BaseOrderImportPreviewResponse = {
+      orders: [
+        {
+          baseOrderId: '1001',
+          orderNumber: 'SO-1001',
+          externalStatusId: 'paid',
+          externalStatusName: 'Paid',
+          buyerName: 'Alice',
+          buyerEmail: 'alice@example.com',
+          currency: 'PLN',
+          totalGross: 100,
+          deliveryMethod: 'Courier',
+          paymentMethod: 'Card',
+          source: 'Base',
+          orderCreatedAt: '2026-03-25T10:00:00.000Z',
+          orderUpdatedAt: null,
+          lineItems: [
+            {
+              sku: 'CLOCK-1',
+              name: 'Clock game license',
+              quantity: 1,
+              unitPriceGross: 100,
+              baseProductId: 'base-1',
+            },
+          ],
+          fingerprint: 'fp-1',
+          raw: {},
+          importState: 'new',
+          lastImportedAt: null,
+        },
+        {
+          baseOrderId: '1002',
+          orderNumber: 'SO-1002',
+          externalStatusId: 'paid',
+          externalStatusName: 'Paid',
+          buyerName: 'Beata',
+          buyerEmail: 'beata@example.com',
+          currency: 'PLN',
+          totalGross: 140,
+          deliveryMethod: 'Courier',
+          paymentMethod: 'Card',
+          source: 'Base',
+          orderCreatedAt: '2026-03-24T10:00:00.000Z',
+          orderUpdatedAt: null,
+          lineItems: [
+            {
+              sku: 'CLOCK-2',
+              name: 'Clock challenge pack',
+              quantity: 1,
+              unitPriceGross: 140,
+              baseProductId: 'base-2',
+            },
+          ],
+          fingerprint: 'fp-2',
+          raw: {},
+          importState: 'changed',
+          lastImportedAt: '2026-03-26T10:00:00.000Z',
+          previousImport: {
+            orderNumber: 'SO-1002',
+            externalStatusId: 'draft',
+            externalStatusName: 'Draft',
+            buyerName: 'Beata',
+            buyerEmail: 'beata@example.com',
+            currency: 'PLN',
+            totalGross: 120,
+            deliveryMethod: 'Courier',
+            paymentMethod: 'Card',
+            source: 'Base',
+            orderCreatedAt: '2026-03-24T10:00:00.000Z',
+            orderUpdatedAt: '2026-03-24T10:00:00.000Z',
+            lineItems: [
+              {
+                sku: 'CLOCK-2',
+                name: 'Clock challenge pack',
+                quantity: 1,
+                unitPriceGross: 120,
+                baseProductId: 'base-2',
+              },
+            ],
+            lastImportedAt: '2026-03-26T10:00:00.000Z',
+          },
+        },
+        {
+          baseOrderId: '1003',
+          orderNumber: 'SO-1003',
+          externalStatusId: 'paid',
+          externalStatusName: 'Paid',
+          buyerName: 'Bob',
+          buyerEmail: 'bob@example.com',
+          currency: 'PLN',
+          totalGross: 200,
+          deliveryMethod: 'Courier',
+          paymentMethod: 'Card',
+          source: 'Base',
+          orderCreatedAt: '2026-03-23T10:00:00.000Z',
+          orderUpdatedAt: null,
+          lineItems: [
+            {
+              sku: 'BOOK-1',
+              name: 'Math workbook',
+              quantity: 2,
+              unitPriceGross: 100,
+              baseProductId: 'base-3',
+            },
+          ],
+          fingerprint: 'fp-3',
+          raw: {},
+          importState: 'imported',
+          lastImportedAt: '2026-03-26T09:00:00.000Z',
+          previousImport: {
+            orderNumber: 'SO-1003',
+            externalStatusId: 'paid',
+            externalStatusName: 'Paid',
+            buyerName: 'Bob',
+            buyerEmail: 'bob@example.com',
+            currency: 'PLN',
+            totalGross: 200,
+            deliveryMethod: 'Courier',
+            paymentMethod: 'Card',
+            source: 'Base',
+            orderCreatedAt: '2026-03-23T10:00:00.000Z',
+            orderUpdatedAt: '2026-03-23T10:00:00.000Z',
+            lineItems: [
+              {
+                sku: 'BOOK-1',
+                name: 'Math workbook',
+                quantity: 2,
+                unitPriceGross: 100,
+                baseProductId: 'base-3',
+              },
+            ],
+            lastImportedAt: '2026-03-26T09:00:00.000Z',
+          },
+        },
+      ],
+      stats: {
+        total: 3,
+        newCount: 1,
+        importedCount: 1,
+        changedCount: 1,
+      },
+    };
+    usePreviewBaseOrdersMutation.mockReturnValue({
+      isPending: false,
+      mutateAsync: vi.fn().mockResolvedValue(previewResponse),
+    });
+
+    render(<AdminProductOrdersImportPage />);
+
+    fireEvent.click(screen.getByRole('button', { name: /Preview orders/i }));
+    await waitFor(() => expect(screen.getByTestId('orders-count')).toHaveTextContent('3'));
+
+    fireEvent.click(screen.getByRole('button', { name: /Expand visible changed details \(1\)/i }));
+
+    expect(screen.getAllByText('Line Items')).toHaveLength(1);
+    expect(screen.getByText('Clock challenge pack')).toBeInTheDocument();
+    expect(screen.queryByText('Clock game license')).not.toBeInTheDocument();
+    expect(screen.queryByText('Math workbook')).not.toBeInTheDocument();
+  });
+
+  it('expands only visible imported order details', async () => {
+    const previewResponse: BaseOrderImportPreviewResponse = {
+      orders: [
+        {
+          baseOrderId: '1001',
+          orderNumber: 'SO-1001',
+          externalStatusId: 'paid',
+          externalStatusName: 'Paid',
+          buyerName: 'Alice',
+          buyerEmail: 'alice@example.com',
+          currency: 'PLN',
+          totalGross: 100,
+          deliveryMethod: 'Courier',
+          paymentMethod: 'Card',
+          source: 'Base',
+          orderCreatedAt: '2026-03-25T10:00:00.000Z',
+          orderUpdatedAt: null,
+          lineItems: [
+            {
+              sku: 'CLOCK-1',
+              name: 'Clock game license',
+              quantity: 1,
+              unitPriceGross: 100,
+              baseProductId: 'base-1',
+            },
+          ],
+          fingerprint: 'fp-1',
+          raw: {},
+          importState: 'new',
+          lastImportedAt: null,
+        },
+        {
+          baseOrderId: '1002',
+          orderNumber: 'SO-1002',
+          externalStatusId: 'paid',
+          externalStatusName: 'Paid',
+          buyerName: 'Beata',
+          buyerEmail: 'beata@example.com',
+          currency: 'PLN',
+          totalGross: 140,
+          deliveryMethod: 'Courier',
+          paymentMethod: 'Card',
+          source: 'Base',
+          orderCreatedAt: '2026-03-24T10:00:00.000Z',
+          orderUpdatedAt: null,
+          lineItems: [
+            {
+              sku: 'CLOCK-2',
+              name: 'Clock challenge pack',
+              quantity: 1,
+              unitPriceGross: 140,
+              baseProductId: 'base-2',
+            },
+          ],
+          fingerprint: 'fp-2',
+          raw: {},
+          importState: 'changed',
+          lastImportedAt: '2026-03-26T10:00:00.000Z',
+          previousImport: {
+            orderNumber: 'SO-1002',
+            externalStatusId: 'draft',
+            externalStatusName: 'Draft',
+            buyerName: 'Beata',
+            buyerEmail: 'beata@example.com',
+            currency: 'PLN',
+            totalGross: 120,
+            deliveryMethod: 'Courier',
+            paymentMethod: 'Card',
+            source: 'Base',
+            orderCreatedAt: '2026-03-24T10:00:00.000Z',
+            orderUpdatedAt: '2026-03-24T10:00:00.000Z',
+            lineItems: [
+              {
+                sku: 'CLOCK-2',
+                name: 'Clock challenge pack',
+                quantity: 1,
+                unitPriceGross: 120,
+                baseProductId: 'base-2',
+              },
+            ],
+            lastImportedAt: '2026-03-26T10:00:00.000Z',
+          },
+        },
+        {
+          baseOrderId: '1003',
+          orderNumber: 'SO-1003',
+          externalStatusId: 'paid',
+          externalStatusName: 'Paid',
+          buyerName: 'Bob',
+          buyerEmail: 'bob@example.com',
+          currency: 'PLN',
+          totalGross: 200,
+          deliveryMethod: 'Courier',
+          paymentMethod: 'Card',
+          source: 'Base',
+          orderCreatedAt: '2026-03-23T10:00:00.000Z',
+          orderUpdatedAt: null,
+          lineItems: [
+            {
+              sku: 'BOOK-1',
+              name: 'Math workbook',
+              quantity: 2,
+              unitPriceGross: 100,
+              baseProductId: 'base-3',
+            },
+          ],
+          fingerprint: 'fp-3',
+          raw: {},
+          importState: 'imported',
+          lastImportedAt: '2026-03-26T09:00:00.000Z',
+          previousImport: {
+            orderNumber: 'SO-1003',
+            externalStatusId: 'paid',
+            externalStatusName: 'Paid',
+            buyerName: 'Bob',
+            buyerEmail: 'bob@example.com',
+            currency: 'PLN',
+            totalGross: 200,
+            deliveryMethod: 'Courier',
+            paymentMethod: 'Card',
+            source: 'Base',
+            orderCreatedAt: '2026-03-23T10:00:00.000Z',
+            orderUpdatedAt: '2026-03-23T10:00:00.000Z',
+            lineItems: [
+              {
+                sku: 'BOOK-1',
+                name: 'Math workbook',
+                quantity: 2,
+                unitPriceGross: 100,
+                baseProductId: 'base-3',
+              },
+            ],
+            lastImportedAt: '2026-03-26T09:00:00.000Z',
+          },
+        },
+      ],
+      stats: {
+        total: 3,
+        newCount: 1,
+        importedCount: 1,
+        changedCount: 1,
+      },
+    };
+    usePreviewBaseOrdersMutation.mockReturnValue({
+      isPending: false,
+      mutateAsync: vi.fn().mockResolvedValue(previewResponse),
+    });
+
+    render(<AdminProductOrdersImportPage />);
+
+    fireEvent.click(screen.getByRole('button', { name: /Preview orders/i }));
+    await waitFor(() => expect(screen.getByTestId('orders-count')).toHaveTextContent('3'));
+
+    fireEvent.click(screen.getByRole('button', { name: /Expand visible reimport details \(1\)/i }));
+
+    expect(screen.getAllByText('Line Items')).toHaveLength(1);
+    expect(screen.getByText('Math workbook')).toBeInTheDocument();
+    expect(screen.queryByText('Clock game license')).not.toBeInTheDocument();
+    expect(screen.queryByText('Clock challenge pack')).not.toBeInTheDocument();
+  });
+
+  it('expands and collapses only selected visible order details', async () => {
+    const previewResponse: BaseOrderImportPreviewResponse = {
+      orders: [
+        {
+          baseOrderId: '1001',
+          orderNumber: 'SO-1001',
+          externalStatusId: 'paid',
+          externalStatusName: 'Paid',
+          buyerName: 'Alice',
+          buyerEmail: 'alice@example.com',
+          currency: 'PLN',
+          totalGross: 100,
+          deliveryMethod: 'Courier',
+          paymentMethod: 'Card',
+          source: 'Base',
+          orderCreatedAt: '2026-03-25T10:00:00.000Z',
+          orderUpdatedAt: null,
+          lineItems: [
+            {
+              sku: 'CLOCK-1',
+              name: 'Clock game license',
+              quantity: 1,
+              unitPriceGross: 100,
+              baseProductId: 'base-1',
+            },
+          ],
+          fingerprint: 'fp-1',
+          raw: {},
+          importState: 'new',
+          lastImportedAt: null,
+        },
+        {
+          baseOrderId: '1002',
+          orderNumber: 'SO-1002',
+          externalStatusId: 'paid',
+          externalStatusName: 'Paid',
+          buyerName: 'Bob',
+          buyerEmail: 'bob@example.com',
+          currency: 'PLN',
+          totalGross: 200,
+          deliveryMethod: 'Courier',
+          paymentMethod: 'Card',
+          source: 'Base',
+          orderCreatedAt: '2026-03-24T10:00:00.000Z',
+          orderUpdatedAt: null,
+          lineItems: [
+            {
+              sku: 'BOOK-1',
+              name: 'Math workbook',
+              quantity: 2,
+              unitPriceGross: 100,
+              baseProductId: 'base-2',
+            },
+          ],
+          fingerprint: 'fp-2',
+          raw: {},
+          importState: 'imported',
+          lastImportedAt: '2026-03-26T10:00:00.000Z',
+          previousImport: {
+            orderNumber: 'SO-1002',
+            externalStatusId: 'paid',
+            externalStatusName: 'Paid',
+            buyerName: 'Bob',
+            buyerEmail: 'bob@example.com',
+            currency: 'PLN',
+            totalGross: 200,
+            deliveryMethod: 'Courier',
+            paymentMethod: 'Card',
+            source: 'Base',
+            orderCreatedAt: '2026-03-24T10:00:00.000Z',
+            orderUpdatedAt: '2026-03-24T10:00:00.000Z',
+            lineItems: [
+              {
+                sku: 'BOOK-1',
+                name: 'Math workbook',
+                quantity: 2,
+                unitPriceGross: 100,
+                baseProductId: 'base-2',
+              },
+            ],
+            lastImportedAt: '2026-03-26T10:00:00.000Z',
+          },
+        },
+      ],
+      stats: {
+        total: 2,
+        newCount: 1,
+        importedCount: 1,
+        changedCount: 0,
+      },
+    };
+    usePreviewBaseOrdersMutation.mockReturnValue({
+      isPending: false,
+      mutateAsync: vi.fn().mockResolvedValue(previewResponse),
+    });
+
+    render(<AdminProductOrdersImportPage />);
+
+    fireEvent.click(screen.getByRole('button', { name: /Preview orders/i }));
+    await waitFor(() => expect(screen.getByTestId('orders-count')).toHaveTextContent('2'));
+
+    fireEvent.click(screen.getByLabelText('Select order 1002'));
+    fireEvent.click(
+      screen.getByRole('button', { name: /Expand selected visible details \(1\)/i })
+    );
+
+    expect(screen.getAllByText('Line Items')).toHaveLength(1);
+    expect(screen.getByText('Math workbook')).toBeInTheDocument();
+    expect(screen.queryByText('Clock game license')).not.toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: /Collapse selected visible details \(1\)/i })
+    ).toBeEnabled();
+
+    fireEvent.click(
+      screen.getByRole('button', { name: /Collapse selected visible details \(1\)/i })
+    );
+
+    await waitFor(() => expect(screen.queryAllByText('Line Items')).toHaveLength(0));
+    expect(
+      screen.getByRole('button', { name: /Collapse selected visible details \(0\)/i })
+    ).toBeDisabled();
+  });
+
+  it('collapses only hidden expanded order details after filter changes', async () => {
+    const previewResponse: BaseOrderImportPreviewResponse = {
+      orders: [
+        {
+          baseOrderId: '1001',
+          orderNumber: 'SO-1001',
+          externalStatusId: 'paid',
+          externalStatusName: 'Paid',
+          buyerName: 'Alice',
+          buyerEmail: 'alice@example.com',
+          currency: 'PLN',
+          totalGross: 100,
+          deliveryMethod: 'Courier',
+          paymentMethod: 'Card',
+          source: 'Base',
+          orderCreatedAt: '2026-03-25T10:00:00.000Z',
+          orderUpdatedAt: null,
+          lineItems: [
+            {
+              sku: 'CLOCK-1',
+              name: 'Clock game license',
+              quantity: 1,
+              unitPriceGross: 100,
+              baseProductId: 'base-1',
+            },
+          ],
+          fingerprint: 'fp-1',
+          raw: {},
+          importState: 'new',
+          lastImportedAt: null,
+        },
+        {
+          baseOrderId: '1002',
+          orderNumber: 'SO-1002',
+          externalStatusId: 'paid',
+          externalStatusName: 'Paid',
+          buyerName: 'Bob',
+          buyerEmail: 'bob@example.com',
+          currency: 'PLN',
+          totalGross: 200,
+          deliveryMethod: 'Courier',
+          paymentMethod: 'Card',
+          source: 'Base',
+          orderCreatedAt: '2026-03-24T10:00:00.000Z',
+          orderUpdatedAt: null,
+          lineItems: [
+            {
+              sku: 'BOOK-1',
+              name: 'Math workbook',
+              quantity: 2,
+              unitPriceGross: 100,
+              baseProductId: 'base-2',
+            },
+          ],
+          fingerprint: 'fp-2',
+          raw: {},
+          importState: 'imported',
+          lastImportedAt: '2026-03-26T10:00:00.000Z',
+          previousImport: {
+            orderNumber: 'SO-1002',
+            externalStatusId: 'paid',
+            externalStatusName: 'Paid',
+            buyerName: 'Bob',
+            buyerEmail: 'bob@example.com',
+            currency: 'PLN',
+            totalGross: 200,
+            deliveryMethod: 'Courier',
+            paymentMethod: 'Card',
+            source: 'Base',
+            orderCreatedAt: '2026-03-24T10:00:00.000Z',
+            orderUpdatedAt: '2026-03-24T10:00:00.000Z',
+            lineItems: [
+              {
+                sku: 'BOOK-1',
+                name: 'Math workbook',
+                quantity: 2,
+                unitPriceGross: 100,
+                baseProductId: 'base-2',
+              },
+            ],
+            lastImportedAt: '2026-03-26T10:00:00.000Z',
+          },
+        },
+      ],
+      stats: {
+        total: 2,
+        newCount: 1,
+        importedCount: 1,
+        changedCount: 0,
+      },
+    };
+    usePreviewBaseOrdersMutation.mockReturnValue({
+      isPending: false,
+      mutateAsync: vi.fn().mockResolvedValue(previewResponse),
+    });
+
+    render(<AdminProductOrdersImportPage />);
+
+    fireEvent.click(screen.getByRole('button', { name: /Preview orders/i }));
+    await waitFor(() => expect(screen.getByTestId('orders-count')).toHaveTextContent('2'));
+
+    fireEvent.click(screen.getByRole('button', { name: /Expand visible details \(2\)/i }));
+    expect(screen.getAllByText('Line Items')).toHaveLength(2);
+
+    fireEvent.change(screen.getByLabelText('Import state'), {
+      target: { value: 'imported' },
+    });
+
+    await waitFor(() => expect(screen.getByTestId('orders-count')).toHaveTextContent('1'));
+    expect(screen.getAllByText('Line Items')).toHaveLength(1);
+    expect(
+      screen.getByRole('button', { name: /Collapse hidden details \(1\)/i })
+    ).toBeEnabled();
+
+    fireEvent.click(screen.getByRole('button', { name: /Collapse hidden details \(1\)/i }));
+
+    expect(
+      screen.getByRole('button', { name: /Collapse hidden details \(0\)/i })
+    ).toBeDisabled();
+
+    fireEvent.change(screen.getByLabelText('Import state'), {
+      target: { value: 'all' },
+    });
+
+    await waitFor(() => expect(screen.getByTestId('orders-count')).toHaveTextContent('2'));
+    expect(screen.getAllByText('Line Items')).toHaveLength(1);
+    expect(screen.getByText('Math workbook')).toBeInTheDocument();
+    expect(screen.queryByText('Clock game license')).not.toBeInTheDocument();
+  });
+
+  it('collapses all order details across visible and hidden states', async () => {
+    const previewResponse: BaseOrderImportPreviewResponse = {
+      orders: [
+        {
+          baseOrderId: '1001',
+          orderNumber: 'SO-1001',
+          externalStatusId: 'paid',
+          externalStatusName: 'Paid',
+          buyerName: 'Alice',
+          buyerEmail: 'alice@example.com',
+          currency: 'PLN',
+          totalGross: 100,
+          deliveryMethod: 'Courier',
+          paymentMethod: 'Card',
+          source: 'Base',
+          orderCreatedAt: '2026-03-25T10:00:00.000Z',
+          orderUpdatedAt: null,
+          lineItems: [
+            {
+              sku: 'CLOCK-1',
+              name: 'Clock game license',
+              quantity: 1,
+              unitPriceGross: 100,
+              baseProductId: 'base-1',
+            },
+          ],
+          fingerprint: 'fp-1',
+          raw: {},
+          importState: 'new',
+          lastImportedAt: null,
+        },
+        {
+          baseOrderId: '1002',
+          orderNumber: 'SO-1002',
+          externalStatusId: 'paid',
+          externalStatusName: 'Paid',
+          buyerName: 'Bob',
+          buyerEmail: 'bob@example.com',
+          currency: 'PLN',
+          totalGross: 200,
+          deliveryMethod: 'Courier',
+          paymentMethod: 'Card',
+          source: 'Base',
+          orderCreatedAt: '2026-03-24T10:00:00.000Z',
+          orderUpdatedAt: null,
+          lineItems: [
+            {
+              sku: 'BOOK-1',
+              name: 'Math workbook',
+              quantity: 2,
+              unitPriceGross: 100,
+              baseProductId: 'base-2',
+            },
+          ],
+          fingerprint: 'fp-2',
+          raw: {},
+          importState: 'imported',
+          lastImportedAt: '2026-03-26T10:00:00.000Z',
+          previousImport: {
+            orderNumber: 'SO-1002',
+            externalStatusId: 'paid',
+            externalStatusName: 'Paid',
+            buyerName: 'Bob',
+            buyerEmail: 'bob@example.com',
+            currency: 'PLN',
+            totalGross: 200,
+            deliveryMethod: 'Courier',
+            paymentMethod: 'Card',
+            source: 'Base',
+            orderCreatedAt: '2026-03-24T10:00:00.000Z',
+            orderUpdatedAt: '2026-03-24T10:00:00.000Z',
+            lineItems: [
+              {
+                sku: 'BOOK-1',
+                name: 'Math workbook',
+                quantity: 2,
+                unitPriceGross: 100,
+                baseProductId: 'base-2',
+              },
+            ],
+            lastImportedAt: '2026-03-26T10:00:00.000Z',
+          },
+        },
+      ],
+      stats: {
+        total: 2,
+        newCount: 1,
+        importedCount: 1,
+        changedCount: 0,
+      },
+    };
+    usePreviewBaseOrdersMutation.mockReturnValue({
+      isPending: false,
+      mutateAsync: vi.fn().mockResolvedValue(previewResponse),
+    });
+
+    render(<AdminProductOrdersImportPage />);
+
+    fireEvent.click(screen.getByRole('button', { name: /Preview orders/i }));
+    await waitFor(() => expect(screen.getByTestId('orders-count')).toHaveTextContent('2'));
+
+    fireEvent.click(screen.getByRole('button', { name: /Expand visible details \(2\)/i }));
+    expect(screen.getAllByText('Line Items')).toHaveLength(2);
+
+    fireEvent.change(screen.getByLabelText('Import state'), {
+      target: { value: 'imported' },
+    });
+    await waitFor(() => expect(screen.getByTestId('orders-count')).toHaveTextContent('1'));
+
+    expect(
+      screen.getByRole('button', { name: /Collapse all details \(2\)/i })
+    ).toBeEnabled();
+
+    fireEvent.click(screen.getByRole('button', { name: /Collapse all details \(2\)/i }));
+
+    await waitFor(() => expect(screen.queryAllByText('Line Items')).toHaveLength(0));
+    expect(
+      screen.getByRole('button', { name: /Collapse all details \(0\)/i })
+    ).toBeDisabled();
+
+    fireEvent.change(screen.getByLabelText('Import state'), {
+      target: { value: 'all' },
+    });
+    await waitFor(() => expect(screen.getByTestId('orders-count')).toHaveTextContent('2'));
+    expect(screen.queryAllByText('Line Items')).toHaveLength(0);
   });
 
   it('imports only visible new and changed orders from the main bulk action', async () => {
@@ -1280,6 +2758,294 @@ describe('AdminProductOrdersImportPage', () => {
     expect(
       screen.getByRole('button', { name: /Reimport selected visible imported \(1\)/i })
     ).toBeEnabled();
+
+    fireEvent.click(
+      screen.getByRole('button', { name: /Import selected visible new \+ changed \(1\)/i })
+    );
+
+    await waitFor(() =>
+      expect(importMutateAsync).toHaveBeenCalledWith({
+        connectionId: 'conn-1',
+        orders: [previewResponse.orders[0]],
+      })
+    );
+  });
+
+  it('selects only visible changed orders for targeted import', async () => {
+    const importMutateAsync = vi.fn().mockResolvedValue({
+      importedCount: 1,
+      createdCount: 0,
+      updatedCount: 1,
+      syncedAt: '2026-03-26T11:00:00.000Z',
+      results: [{ baseOrderId: '1002', result: 'updated' }],
+    });
+    useImportBaseOrdersMutation.mockReturnValue({
+      isPending: false,
+      mutateAsync: importMutateAsync,
+    });
+    const previewResponse: BaseOrderImportPreviewResponse = {
+      orders: [
+        {
+          baseOrderId: '1001',
+          orderNumber: 'SO-1001',
+          externalStatusId: 'paid',
+          externalStatusName: 'Paid',
+          buyerName: 'Alice',
+          buyerEmail: 'alice@example.com',
+          currency: 'PLN',
+          totalGross: 100,
+          deliveryMethod: 'Courier',
+          paymentMethod: 'Card',
+          source: 'Base',
+          orderCreatedAt: '2026-03-25T10:00:00.000Z',
+          orderUpdatedAt: null,
+          lineItems: [],
+          fingerprint: 'fp-1',
+          raw: {},
+          importState: 'new',
+          lastImportedAt: null,
+        },
+        {
+          baseOrderId: '1002',
+          orderNumber: 'SO-1002',
+          externalStatusId: 'paid',
+          externalStatusName: 'Paid',
+          buyerName: 'Beata',
+          buyerEmail: 'beata@example.com',
+          currency: 'PLN',
+          totalGross: 140,
+          deliveryMethod: 'Courier',
+          paymentMethod: 'Card',
+          source: 'Base',
+          orderCreatedAt: '2026-03-24T10:00:00.000Z',
+          orderUpdatedAt: null,
+          lineItems: [],
+          fingerprint: 'fp-2',
+          raw: {},
+          importState: 'changed',
+          lastImportedAt: '2026-03-26T10:00:00.000Z',
+          previousImport: {
+            orderNumber: 'SO-1002',
+            externalStatusId: 'draft',
+            externalStatusName: 'Draft',
+            buyerName: 'Beata',
+            buyerEmail: 'beata@example.com',
+            currency: 'PLN',
+            totalGross: 120,
+            deliveryMethod: 'Courier',
+            paymentMethod: 'Card',
+            source: 'Base',
+            orderCreatedAt: '2026-03-24T10:00:00.000Z',
+            orderUpdatedAt: '2026-03-24T10:00:00.000Z',
+            lineItems: [],
+            lastImportedAt: '2026-03-26T10:00:00.000Z',
+          },
+        },
+        {
+          baseOrderId: '1003',
+          orderNumber: 'SO-1003',
+          externalStatusId: 'paid',
+          externalStatusName: 'Paid',
+          buyerName: 'Bob',
+          buyerEmail: 'bob@example.com',
+          currency: 'PLN',
+          totalGross: 200,
+          deliveryMethod: 'Courier',
+          paymentMethod: 'Card',
+          source: 'Base',
+          orderCreatedAt: '2026-03-23T10:00:00.000Z',
+          orderUpdatedAt: null,
+          lineItems: [],
+          fingerprint: 'fp-3',
+          raw: {},
+          importState: 'imported',
+          lastImportedAt: '2026-03-26T09:00:00.000Z',
+          previousImport: {
+            orderNumber: 'SO-1003',
+            externalStatusId: 'paid',
+            externalStatusName: 'Paid',
+            buyerName: 'Bob',
+            buyerEmail: 'bob@example.com',
+            currency: 'PLN',
+            totalGross: 200,
+            deliveryMethod: 'Courier',
+            paymentMethod: 'Card',
+            source: 'Base',
+            orderCreatedAt: '2026-03-23T10:00:00.000Z',
+            orderUpdatedAt: '2026-03-23T10:00:00.000Z',
+            lineItems: [],
+            lastImportedAt: '2026-03-26T09:00:00.000Z',
+          },
+        },
+      ],
+      stats: {
+        total: 3,
+        newCount: 1,
+        importedCount: 1,
+        changedCount: 1,
+      },
+    };
+    usePreviewBaseOrdersMutation.mockReturnValue({
+      isPending: false,
+      mutateAsync: vi.fn().mockResolvedValue(previewResponse),
+    });
+
+    render(<AdminProductOrdersImportPage />);
+
+    fireEvent.click(screen.getByRole('button', { name: /Preview orders/i }));
+    await waitFor(() => expect(screen.getByTestId('orders-count')).toHaveTextContent('3'));
+
+    fireEvent.click(screen.getByRole('button', { name: /Select visible changed \(1\)/i }));
+
+    expect(
+      screen.getByRole('button', { name: /Import selected visible new \+ changed \(1\)/i })
+    ).toBeEnabled();
+    expect(screen.getByText('1 selected to import')).toBeInTheDocument();
+    expect(screen.getByText('0 selected to reimport')).toBeInTheDocument();
+
+    fireEvent.click(
+      screen.getByRole('button', { name: /Import selected visible new \+ changed \(1\)/i })
+    );
+
+    await waitFor(() =>
+      expect(importMutateAsync).toHaveBeenCalledWith({
+        connectionId: 'conn-1',
+        orders: [previewResponse.orders[1]],
+      })
+    );
+  });
+
+  it('selects only visible new orders for targeted import', async () => {
+    const importMutateAsync = vi.fn().mockResolvedValue({
+      importedCount: 1,
+      createdCount: 1,
+      updatedCount: 0,
+      syncedAt: '2026-03-26T11:00:00.000Z',
+      results: [{ baseOrderId: '1001', result: 'created' }],
+    });
+    useImportBaseOrdersMutation.mockReturnValue({
+      isPending: false,
+      mutateAsync: importMutateAsync,
+    });
+    const previewResponse: BaseOrderImportPreviewResponse = {
+      orders: [
+        {
+          baseOrderId: '1001',
+          orderNumber: 'SO-1001',
+          externalStatusId: 'paid',
+          externalStatusName: 'Paid',
+          buyerName: 'Alice',
+          buyerEmail: 'alice@example.com',
+          currency: 'PLN',
+          totalGross: 100,
+          deliveryMethod: 'Courier',
+          paymentMethod: 'Card',
+          source: 'Base',
+          orderCreatedAt: '2026-03-25T10:00:00.000Z',
+          orderUpdatedAt: null,
+          lineItems: [],
+          fingerprint: 'fp-1',
+          raw: {},
+          importState: 'new',
+          lastImportedAt: null,
+        },
+        {
+          baseOrderId: '1002',
+          orderNumber: 'SO-1002',
+          externalStatusId: 'paid',
+          externalStatusName: 'Paid',
+          buyerName: 'Beata',
+          buyerEmail: 'beata@example.com',
+          currency: 'PLN',
+          totalGross: 140,
+          deliveryMethod: 'Courier',
+          paymentMethod: 'Card',
+          source: 'Base',
+          orderCreatedAt: '2026-03-24T10:00:00.000Z',
+          orderUpdatedAt: null,
+          lineItems: [],
+          fingerprint: 'fp-2',
+          raw: {},
+          importState: 'changed',
+          lastImportedAt: '2026-03-26T10:00:00.000Z',
+          previousImport: {
+            orderNumber: 'SO-1002',
+            externalStatusId: 'draft',
+            externalStatusName: 'Draft',
+            buyerName: 'Beata',
+            buyerEmail: 'beata@example.com',
+            currency: 'PLN',
+            totalGross: 120,
+            deliveryMethod: 'Courier',
+            paymentMethod: 'Card',
+            source: 'Base',
+            orderCreatedAt: '2026-03-24T10:00:00.000Z',
+            orderUpdatedAt: '2026-03-24T10:00:00.000Z',
+            lineItems: [],
+            lastImportedAt: '2026-03-26T10:00:00.000Z',
+          },
+        },
+        {
+          baseOrderId: '1003',
+          orderNumber: 'SO-1003',
+          externalStatusId: 'paid',
+          externalStatusName: 'Paid',
+          buyerName: 'Bob',
+          buyerEmail: 'bob@example.com',
+          currency: 'PLN',
+          totalGross: 200,
+          deliveryMethod: 'Courier',
+          paymentMethod: 'Card',
+          source: 'Base',
+          orderCreatedAt: '2026-03-23T10:00:00.000Z',
+          orderUpdatedAt: null,
+          lineItems: [],
+          fingerprint: 'fp-3',
+          raw: {},
+          importState: 'imported',
+          lastImportedAt: '2026-03-26T09:00:00.000Z',
+          previousImport: {
+            orderNumber: 'SO-1003',
+            externalStatusId: 'paid',
+            externalStatusName: 'Paid',
+            buyerName: 'Bob',
+            buyerEmail: 'bob@example.com',
+            currency: 'PLN',
+            totalGross: 200,
+            deliveryMethod: 'Courier',
+            paymentMethod: 'Card',
+            source: 'Base',
+            orderCreatedAt: '2026-03-23T10:00:00.000Z',
+            orderUpdatedAt: '2026-03-23T10:00:00.000Z',
+            lineItems: [],
+            lastImportedAt: '2026-03-26T09:00:00.000Z',
+          },
+        },
+      ],
+      stats: {
+        total: 3,
+        newCount: 1,
+        importedCount: 1,
+        changedCount: 1,
+      },
+    };
+    usePreviewBaseOrdersMutation.mockReturnValue({
+      isPending: false,
+      mutateAsync: vi.fn().mockResolvedValue(previewResponse),
+    });
+
+    render(<AdminProductOrdersImportPage />);
+
+    fireEvent.click(screen.getByRole('button', { name: /Preview orders/i }));
+    await waitFor(() => expect(screen.getByTestId('orders-count')).toHaveTextContent('3'));
+
+    fireEvent.click(screen.getByRole('button', { name: /Select visible new \(1\)/i }));
+
+    expect(
+      screen.getByRole('button', { name: /Import selected visible new \+ changed \(1\)/i })
+    ).toBeEnabled();
+    expect(screen.getByText('1 selected to import')).toBeInTheDocument();
+    expect(screen.getByText('0 selected to reimport')).toBeInTheDocument();
 
     fireEvent.click(
       screen.getByRole('button', { name: /Import selected visible new \+ changed \(1\)/i })

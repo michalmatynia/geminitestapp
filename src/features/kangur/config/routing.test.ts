@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 import {
   appendKangurUrlParams,
   buildKangurEmbeddedBasePath,
+  getKangurPublicAliasHref,
   getKangurCanonicalPublicHref,
   getKangurDedicatedAppHref,
   getKangurHomeHref,
@@ -74,6 +75,16 @@ describe('kangur routing config', () => {
     expect(getKangurCanonicalPublicHref(['login'], 'callbackUrl=%2Fkangur%2Flessons')).toBe(
       '/login?callbackUrl=%2Fkangur%2Flessons'
     );
+  });
+
+  it('builds explicit /kangur alias hrefs for mounted app routes', () => {
+    expect(
+      getKangurPublicAliasHref(['lessons'], {
+        focus: 'division',
+        categories: ['warmup', 'speed'],
+      })
+    ).toBe('/kangur/lessons?focus=division&categories=warmup&categories=speed');
+    expect(getKangurPublicAliasHref()).toBe('/kangur');
   });
 
   it('maps supported public routes to dedicated app deep links', () => {

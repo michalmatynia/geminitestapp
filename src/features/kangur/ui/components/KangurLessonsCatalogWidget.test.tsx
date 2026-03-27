@@ -39,6 +39,7 @@ const { runtimeState, selectLessonMock, useKangurPageContentEntryMock } = vi.hoi
         },
       ],
       lessonDocuments: {},
+      lessonTemplateMap: new Map(),
       progress: {},
       activeLessonId: null,
       lessonAssignmentsByComponent: new Map(),
@@ -94,16 +95,18 @@ vi.mock('@/features/kangur/lessons/lesson-catalog-i18n', () => ({
     fallback,
 }));
 
-vi.mock('@/features/kangur/ui/components/KangurLessonLibraryCard', () => ({
-  KangurLessonLibraryCard: ({
+vi.mock('@/features/kangur/ui/components/KangurResolvedLessonLibraryCard', () => ({
+  KangurResolvedLessonLibraryCard: ({
     lesson,
+    localizedTitle,
     onSelect,
   }: {
     lesson: { id: string; title: string };
+    localizedTitle?: string;
     onSelect: () => void;
   }) => (
     <button data-testid={`lesson-card-${lesson.id}`} type='button' onClick={onSelect}>
-      {lesson.title}
+      {localizedTitle ?? lesson.title}
     </button>
   ),
 }));
@@ -206,6 +209,7 @@ describe('KangurLessonsCatalogWidget', () => {
         },
       ],
       lessonDocuments: {},
+      lessonTemplateMap: new Map(),
       progress: {},
       activeLessonId: null,
       lessonAssignmentsByComponent: new Map(),
@@ -281,6 +285,7 @@ describe('KangurLessonsCatalogWidget', () => {
         },
       ],
       lessonDocuments: {},
+      lessonTemplateMap: new Map(),
       progress: {},
       activeLessonId: null,
       lessonAssignmentsByComponent: new Map(),
@@ -314,6 +319,7 @@ describe('KangurLessonsCatalogWidget', () => {
       orderedLessons: [],
       lessonSections: [],
       lessonDocuments: {},
+      lessonTemplateMap: new Map(),
       progress: {},
       activeLessonId: null,
       lessonAssignmentsByComponent: new Map(),
@@ -326,5 +332,47 @@ describe('KangurLessonsCatalogWidget', () => {
     expect(useKangurPageContentEntryMock).toHaveBeenCalledTimes(1);
     expect(useKangurPageContentEntryMock).toHaveBeenCalledWith('lessons-list-empty-state');
     expect(screen.getByText('No lessons')).toBeInTheDocument();
+  });
+
+  it('prefers lesson copy from the runtime template map', () => {
+    runtimeState.value = {
+      orderedLessons: [
+        {
+          id: 'lesson-english',
+          componentId: 'english_basics',
+          subject: 'english',
+          title: 'English Basics',
+          description: 'Fallback description',
+        },
+      ],
+      lessonSections: [],
+      lessonDocuments: {},
+      lessonTemplateMap: new Map([
+        [
+          'english_basics',
+          {
+            componentId: 'english_basics',
+            subject: 'english',
+            label: 'English label from Mongo',
+            title: 'English title from Mongo',
+            description: 'English description from Mongo',
+            emoji: '📘',
+            color: 'from-sky-500 to-cyan-400',
+            activeBg: 'bg-sky-100',
+            sortOrder: 1,
+          },
+        ],
+      ]),
+      progress: {},
+      activeLessonId: null,
+      lessonAssignmentsByComponent: new Map(),
+      completedLessonAssignmentsByComponent: new Map(),
+    };
+
+    render(<KangurLessonsCatalogWidget />);
+
+    expect(screen.getByTestId('lesson-card-lesson-english')).toHaveTextContent(
+      'English title from Mongo'
+    );
   });
 });

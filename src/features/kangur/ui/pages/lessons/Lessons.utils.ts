@@ -1,20 +1,5 @@
-import { FOCUS_TO_COMPONENT } from '@/features/kangur/lessons/lesson-ui-registry';
 import type { KangurLesson } from '@/features/kangur/shared/contracts/kangur';
 import type { useKangurProgressState } from '@/features/kangur/ui/hooks/useKangurProgressState';
-
-export const resolveFocusedLessonId = (focusToken: string, lessons: KangurLesson[]): string | null => {
-  const mappedComponent = FOCUS_TO_COMPONENT[focusToken];
-  if (mappedComponent) {
-    const byComponent = lessons.find((lesson) => lesson.componentId === mappedComponent);
-    if (byComponent) return byComponent.id;
-  }
-
-  const byId = lessons.find((lesson) => lesson.id.toLowerCase() === focusToken);
-  if (byId) return byId.id;
-
-  const byTitle = lessons.find((lesson) => lesson.title.toLowerCase().includes(focusToken));
-  return byTitle?.id ?? null;
-};
 
 export const getLessonMasteryPresentation = (
   lesson: KangurLesson,

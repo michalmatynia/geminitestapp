@@ -6,9 +6,9 @@ import {
   hasKangurLessonDocumentContent,
 } from '@/features/kangur/lesson-documents';
 import {
-  getLocalizedKangurLessonDescription,
-  getLocalizedKangurLessonTitle,
-} from '@/features/kangur/lessons/lesson-catalog-i18n';
+  getResolvedKangurLessonDescription,
+  getResolvedKangurLessonTitle,
+} from '@/features/kangur/lessons/lesson-template-copy';
 import { KangurActiveLessonHeader } from '@/features/kangur/ui/components/KangurActiveLessonHeader';
 import { KangurLessonDocumentRenderer } from '@/features/kangur/ui/components/KangurLessonDocumentRenderer';
 import { renderKangurLessonNavigationIconButton } from '@/features/kangur/ui/components/KangurLessonNavigationIconButton';
@@ -155,6 +155,7 @@ export function ActiveLessonView({
     activeLessonHeaderRef,
     activeLessonNavigationRef,
     activeLessonContentRef,
+    lessonTemplateMap,
   } = lessons;
   const activeLesson = snapshot?.activeLesson ?? lessons.activeLesson;
   const lessonAssignmentsByComponent =
@@ -220,7 +221,7 @@ export function ActiveLessonView({
       ? (completedLessonAssignmentsByComponent.get(activeLesson.componentId) ?? null)
       : null;
   const printableLessonTitle = activeLesson
-    ? getLocalizedKangurLessonTitle(activeLesson.componentId, locale, activeLesson.title)
+    ? getResolvedKangurLessonTitle(activeLesson, locale, lessonTemplateMap)
     : '';
   const activeLessonAssignmentRef = useRef<HTMLDivElement | null>(null);
 
@@ -416,7 +417,7 @@ export function ActiveLessonView({
   }, [activeLessonContentRef, printableLessonTitle]);
 
   useEffect(() => {
-    if (!activeLesson || activeLesson.contentMode !== 'document') {
+    if (activeLesson?.contentMode !== 'document') {
       return;
     }
 
@@ -437,15 +438,15 @@ export function ActiveLessonView({
     activeIdx >= 0 && activeIdx < orderedLessons.length - 1 ? orderedLessons[activeIdx + 1] : null;
 
   const ActiveLessonComponent = LESSON_COMPONENTS[activeLesson.componentId];
-  const localizedLessonTitle = getLocalizedKangurLessonTitle(
-    activeLesson.componentId,
+  const localizedLessonTitle = getResolvedKangurLessonTitle(
+    activeLesson,
     locale,
-    activeLesson.title
+    lessonTemplateMap
   );
-  const localizedLessonDescription = getLocalizedKangurLessonDescription(
-    activeLesson.componentId,
+  const localizedLessonDescription = getResolvedKangurLessonDescription(
+    activeLesson,
     locale,
-    activeLesson.description
+    lessonTemplateMap
   );
   const isPrintAvailable =
     isSecretLessonHostActive ||
@@ -468,13 +469,13 @@ export function ActiveLessonView({
         completedActiveLessonAssignment={completedActiveLessonAssignment}
         assignmentRef={activeLessonAssignmentRef}
         onBack={handleReturnToLessonList}
-        titleOverride={activeLessonHeaderContent?.title ?? fallbackCopy.activeLessonTitle}
+        titleOverride={localizedLessonTitle || fallbackCopy.activeLessonTitle}
         headerTestId='active-lesson-header'
         headerActionsTestId='active-lesson-header-icon-actions'
         iconTestId={`active-lesson-icon-${activeLesson.id}`}
         priorityChipTestId='active-lesson-parent-priority-chip'
         completedChipTestId='active-lesson-parent-completed-chip'
-        descriptionOverride={activeLessonHeaderContent?.summary ?? undefined}
+        descriptionOverride={localizedLessonDescription}
         assignmentSectionTitle={activeLessonAssignmentContent?.title ?? undefined}
         assignmentSectionSummary={activeLessonAssignmentContent?.summary ?? undefined}
       />

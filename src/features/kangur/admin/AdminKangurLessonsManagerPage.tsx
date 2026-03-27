@@ -1,5 +1,6 @@
 'use client';
 
+import { useLocale } from 'next-intl';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import {
@@ -19,7 +20,7 @@ import {
   useRegisterContextRegistryPageSource,
 } from '@/shared/lib/ai-context-registry/page-context';
 import { AdminFavoriteBreadcrumbRow } from '@/shared/ui/admin-favorite-breadcrumb-row';
-import { Badge, Breadcrumbs, FormModal, useToast } from '@/features/kangur/shared/ui';
+import { Badge, Breadcrumbs, FormModal, SelectSimple, useToast } from '@/features/kangur/shared/ui';
 import { ConfirmModal } from '@/features/kangur/shared/ui/templates/modals';
 import { cn } from '@/features/kangur/shared/utils';
 import {
@@ -62,6 +63,7 @@ import {
   createKangurLessonId,
 } from '../settings';
 import { useKangurLessonTemplates } from '../ui/hooks/useKangurLessonTemplates';
+import { useUpdateKangurLessonTemplates } from '../ui/hooks/useKangurLessonTemplates';
 import { KangurAdminContentShell } from './components/KangurAdminContentShell';
 import { KangurAdminStatusCard } from './components/KangurAdminStatusCard';
 import { AdminKangurLessonsManagerTreePanel } from './components/AdminKangurLessonsManagerTreePanel';
@@ -78,17 +80,19 @@ import {
   type KangurLessonAuthoringFilter,
 } from './content-creator-insights';
 import { LessonSvgQuickAddRuntimeProvider } from './context/LessonSvgQuickAddRuntimeContext';
+import { KANGUR_ADMIN_LOCALES, resolveKangurAdminLocale } from './kangur-admin-locale';
 import {
   buildKangurAdminLessonsManagerContextBundle,
   KANGUR_ADMIN_LESSONS_MANAGER_CONTEXT_ROOT_IDS,
 } from './context-registry/lessons-manager';
 import { clearLessonContentEditorDraft } from './lesson-content-editor-drafts';
 import {
+  applyLessonTemplateToFormData,
   countLessonsRequiringLegacyImport,
   createInitialLessonFormData,
   readPersistedTreeMode,
   sanitizeSvgMarkup,
-  toLessonFormData,
+  toLocalizedLessonFormData,
   upsertLesson,
 } from './utils';
 
@@ -113,18 +117,33 @@ export function AdminKangurLessonsManagerPage({
 }: {
   standalone?: boolean;
 } = {}): React.JSX.Element {
+  const routeLocale = useLocale();
+  const [contentLocale, setContentLocale] = useState(() => resolveKangurAdminLocale(routeLocale));
   const lessonsQuery = useKangurLessons();
-  const lessonDocumentsQuery = useKangurLessonDocuments();
+  const lessonDocumentsQuery = useKangurLessonDocuments({ locale: contentLocale });
   const updateLessons = useUpdateKangurLessons();
-  const updateLessonDocuments = useUpdateKangurLessonDocuments();
+  const updateLessonDocuments = useUpdateKangurLessonDocuments(contentLocale);
+  const updateTemplates = useUpdateKangurLessonTemplates(contentLocale);
   const { toast } = useToast();
-  const isLoading = lessonsQuery.isLoading || lessonDocumentsQuery.isLoading;
+  const templatesQuery = useKangurLessonTemplates({ locale: contentLocale });
+  const isLoading = lessonsQuery.isLoading || lessonDocumentsQuery.isLoading || templatesQuery.isLoading;
 
-  const templatesQuery = useKangurLessonTemplates();
   const lessonTemplateMap = useMemo(
     () => new Map((templatesQuery.data ?? []).map((t) => [t.componentId, t])),
     [templatesQuery.data],
   );
+  const contentLocaleOptions = useMemo(
+    () =>
+      KANGUR_ADMIN_LOCALES.map((locale) => ({
+        value: locale,
+        label:
+          locale === 'pl' ? 'Polish' : locale === 'uk' ? 'Ukrainian' : 'English',
+      })),
+    []
+  );
+  const contentLocaleLabel =
+    contentLocaleOptions.find((option) => option.value === contentLocale)?.label ?? contentLocale;
+  const isPrimaryContentLocale = contentLocale === 'pl';
 
   const lessons = useMemo((): KangurLesson[] => lessonsQuery.data ?? [], [lessonsQuery.data]);
   const lessonDocuments = useMemo(
@@ -154,7 +173,8 @@ export function AdminKangurLessonsManagerPage({
   const isSectionsMode = treeMode === 'sections';
   const activeTreeInstance = isCatalogMode ? CATALOG_TREE_INSTANCE : ORDERED_TREE_INSTANCE;
   const treeSearchQuery = isCatalogMode ? catalogTreeSearchQuery : orderedTreeSearchQuery;
-  const isSaving = updateLessons.isPending || updateLessonDocuments.isPending;
+  const isSaving =
+    updateLessons.isPending || updateLessonDocuments.isPending || updateTemplates.isPending;
   const registrySource = useMemo(
     () => ({
       label: 'Kangur admin lessons manager workspace',
@@ -167,6 +187,89 @@ export function AdminKangurLessonsManagerPage({
       }),
     }),
     [contentDraft, editingContentLesson, isSaving, lessons.length, showContentModal]
+  );
+  const buildPersistedLessonRecord = useCallback(
+    (
+      lessonId: string,
+      source: Pick<
+        KangurLesson,
+        | 'componentId'
+        | 'contentMode'
+        | 'subject'
+        | 'ageGroup'
+        | 'title'
+        | 'description'
+        | 'emoji'
+        | 'color'
+        | 'activeBg'
+        | 'enabled'
+      >,
+      sortOrder: number,
+    ): KangurLesson => {
+      const existingLesson = lessonById.get(lessonId);
+      const shouldPersistLocalizedFields = isPrimaryContentLocale || !existingLesson;
+
+      return {
+        id: lessonId,
+        componentId: source.componentId,
+        contentMode: source.contentMode,
+        subject: source.subject,
+        ageGroup: source.ageGroup,
+        title: shouldPersistLocalizedFields ? source.title : existingLesson?.title ?? source.title,
+        description: shouldPersistLocalizedFields
+          ? source.description
+          : existingLesson?.description ?? source.description,
+        emoji: shouldPersistLocalizedFields ? source.emoji : existingLesson?.emoji ?? source.emoji,
+        color: shouldPersistLocalizedFields ? source.color : existingLesson?.color ?? source.color,
+        activeBg: shouldPersistLocalizedFields
+          ? source.activeBg
+          : existingLesson?.activeBg ?? source.activeBg,
+        sortOrder,
+        enabled: source.enabled,
+        sectionId: existingLesson?.sectionId,
+        subsectionId: existingLesson?.subsectionId,
+      };
+    },
+    [isPrimaryContentLocale, lessonById]
+  );
+  const saveLocalizedLessonTemplate = useCallback(
+    async (
+      source: Pick<
+        KangurLesson,
+        | 'componentId'
+        | 'subject'
+        | 'ageGroup'
+        | 'title'
+        | 'description'
+        | 'emoji'
+        | 'color'
+        | 'activeBg'
+      >
+    ): Promise<void> => {
+      const existingTemplate = lessonTemplateMap.get(source.componentId);
+      const nextTemplate = {
+        componentId: source.componentId,
+        subject: source.subject,
+        ageGroup: source.ageGroup,
+        label: existingTemplate?.label ?? source.title,
+        title: source.title,
+        description: source.description,
+        emoji: source.emoji,
+        color: source.color,
+        activeBg: source.activeBg,
+        sortOrder: existingTemplate?.sortOrder ?? 0,
+      };
+      const nextTemplates = [...(templatesQuery.data ?? [])]
+        .filter((template) => template.componentId !== source.componentId)
+        .concat(nextTemplate)
+        .sort((left, right) =>
+          left.sortOrder === right.sortOrder
+            ? left.componentId.localeCompare(right.componentId)
+            : left.sortOrder - right.sortOrder
+        );
+      await updateTemplates.mutateAsync(nextTemplates);
+    },
+    [lessonTemplateMap, templatesQuery.data, updateTemplates]
   );
   const handleTreeSearchChange = useCallback(
     (nextQuery: string): void => {
@@ -300,18 +403,27 @@ export function AdminKangurLessonsManagerPage({
 
   const openCreateModal = (): void => {
     setEditingLesson(null);
-    setFormData(createInitialLessonFormData());
+    const initialFormData = createInitialLessonFormData();
+    setFormData(
+      applyLessonTemplateToFormData(
+        initialFormData,
+        lessonTemplateMap.get(initialFormData.componentId) ?? null
+      )
+    );
     setShowModal(true);
   };
 
   const openEditModal = (lesson: KangurLesson): void => {
     setEditingLesson(lesson);
-    setFormData(toLessonFormData(lesson));
+    setFormData(toLocalizedLessonFormData(lesson, lessonTemplateMap.get(lesson.componentId)));
     setShowModal(true);
   };
 
   const openContentModal = (lesson: KangurLesson): void => {
-    setEditingContentLesson(lesson);
+    setEditingContentLesson({
+      ...lesson,
+      ...toLocalizedLessonFormData(lesson, lessonTemplateMap.get(lesson.componentId)),
+    });
     const existing = lessonDocuments[lesson.id];
     const starter = createStarterKangurLessonDocument(lesson.componentId);
     setContentDraft(existing ?? starter);
@@ -387,35 +499,22 @@ export function AdminKangurLessonsManagerPage({
 
   const applyTemplateForComponent = useCallback((componentId: KangurLessonComponentId): void => {
     const template = lessonTemplateMap.get(componentId);
-    setFormData((current) => {
-      if (!template) {
-        return {
+    setFormData((current) =>
+      applyLessonTemplateToFormData(
+        {
           ...current,
           componentId,
-        };
-      }
-
-      return {
-        ...current,
-        componentId,
-        subject: template.subject ?? 'maths',
-        ageGroup: template.ageGroup ?? DEFAULT_KANGUR_AGE_GROUP,
-        title: template.title,
-        description: template.description,
-        emoji: template.emoji,
-        color: template.color,
-        activeBg: template.activeBg,
-      };
-    });
+        },
+        template
+      )
+    );
   }, [lessonTemplateMap]);
 
   const handleSaveLesson = async (): Promise<void> => {
     const lessonId = editingLesson?.id ?? createKangurLessonId();
-    const nextLesson: KangurLesson = {
+    const nextLesson = buildPersistedLessonRecord(lessonId, {
       ...formData,
-      id: lessonId,
-      sortOrder: editingLesson?.sortOrder ?? lessons.length * KANGUR_LESSON_SORT_ORDER_GAP,
-    };
+    }, editingLesson?.sortOrder ?? lessons.length * KANGUR_LESSON_SORT_ORDER_GAP);
 
     const didSave = await withKangurClientError(
       {
@@ -431,6 +530,16 @@ export function AdminKangurLessonsManagerPage({
       async () => {
         const nextLessons = canonicalizeKangurLessons(upsertLesson(lessons, nextLesson));
         await updateLessons.mutateAsync(nextLessons);
+        await saveLocalizedLessonTemplate({
+          componentId: formData.componentId,
+          subject: formData.subject,
+          ageGroup: formData.ageGroup,
+          title: formData.title,
+          description: formData.description,
+          emoji: formData.emoji,
+          color: formData.color,
+          activeBg: formData.activeBg,
+        });
         return true;
       },
       {
@@ -446,7 +555,10 @@ export function AdminKangurLessonsManagerPage({
       setShowModal(false);
 
       if (!editingLesson && nextLesson.contentMode === 'document') {
-        openContentModal(nextLesson);
+        openContentModal({
+          ...nextLesson,
+          ...formData,
+        });
       }
 
       setEditingLesson(null);
@@ -508,9 +620,23 @@ export function AdminKangurLessonsManagerPage({
         };
         await updateLessonDocuments.mutateAsync(nextStore);
 
-        const nextLesson: KangurLesson = { ...editingContentLesson, contentMode: 'document' };
+        const nextLesson = buildPersistedLessonRecord(
+          lessonId,
+          { ...editingContentLesson, contentMode: 'document' },
+          lessonById.get(lessonId)?.sortOrder ?? editingContentLesson.sortOrder
+        );
         const nextLessons = canonicalizeKangurLessons(upsertLesson(lessons, nextLesson));
         await updateLessons.mutateAsync(nextLessons);
+        await saveLocalizedLessonTemplate({
+          componentId: editingContentLesson.componentId,
+          subject: editingContentLesson.subject,
+          ageGroup: editingContentLesson.ageGroup,
+          title: editingContentLesson.title,
+          description: editingContentLesson.description,
+          emoji: editingContentLesson.emoji,
+          color: editingContentLesson.color,
+          activeBg: editingContentLesson.activeBg,
+        });
         clearLessonContentEditorDraft(lessonId);
         return true;
       },
@@ -540,9 +666,15 @@ export function AdminKangurLessonsManagerPage({
         context: { lessonId },
       },
       async () => {
-        const nextLesson: KangurLesson = { ...editingContentLesson, contentMode: 'component' };
-        const nextLessons = canonicalizeKangurLessons(upsertLesson(lessons, nextLesson));
-        await updateLessons.mutateAsync(nextLessons);
+        if (isPrimaryContentLocale) {
+          const nextLesson = buildPersistedLessonRecord(
+            lessonId,
+            { ...editingContentLesson, contentMode: 'component' },
+            lessonById.get(lessonId)?.sortOrder ?? editingContentLesson.sortOrder
+          );
+          const nextLessons = canonicalizeKangurLessons(upsertLesson(lessons, nextLesson));
+          await updateLessons.mutateAsync(nextLessons);
+        }
 
         const nextStore = { ...lessonDocuments };
         delete nextStore[lessonId];
@@ -727,6 +859,29 @@ export function AdminKangurLessonsManagerPage({
 
   const mainWorkspace = (
     <div className={cn(KANGUR_STACK_ROOMY_CLASSNAME, 'h-full overflow-hidden')}>
+      <div className='flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-border/60 bg-card/30 px-4 py-3'>
+        <div className='min-w-0'>
+          <div className='text-[11px] font-semibold uppercase tracking-[0.22em] text-muted-foreground'>
+            Lesson content locale
+          </div>
+          <div className='mt-1 text-sm text-foreground'>
+            Edit Mongo-backed lesson copy and document content for {contentLocaleLabel}.
+          </div>
+        </div>
+        <div className='w-full sm:w-[220px]'>
+          <SelectSimple
+            id='kangur-lessons-content-locale'
+            value={contentLocale}
+            onValueChange={(value): void => setContentLocale(resolveKangurAdminLocale(value))}
+            options={contentLocaleOptions}
+            size='sm'
+            ariaLabel='Content locale'
+            title='Content locale'
+            disabled={isSaving || showModal || showContentModal || Boolean(svgModalLesson)}
+            triggerClassName='h-10'
+          />
+        </div>
+      </div>
       {isSectionsMode ? (
         <AdminKangurLessonSectionsPanel standalone={standalone} />
       ) : (
@@ -860,6 +1015,10 @@ export function AdminKangurLessonsManagerPage({
           {
             label: 'View mode',
             value: <Badge variant='outline'>{isSectionsMode ? 'Sections' : isCatalogMode ? 'Catalog' : 'Ordered'}</Badge>,
+          },
+          {
+            label: 'Content locale',
+            value: <Badge variant='outline'>{contentLocaleLabel}</Badge>,
           },
           {
             label: 'Filter',

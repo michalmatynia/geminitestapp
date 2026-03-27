@@ -1,18 +1,22 @@
 import { useLocale, useTranslations } from 'next-intl';
 import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import {
-  getLocalizedKangurLessonDescription,
-  getLocalizedKangurLessonTitle,
   getLocalizedKangurAgeGroupLabel,
   getLocalizedKangurLessonSectionLabel,
   getLocalizedKangurLessonSectionTypeLabel,
 } from '@/features/kangur/lessons/lesson-catalog-i18n';
 import { hasKangurLessonDocumentContent } from '@/features/kangur/lesson-documents';
-import { KangurLessonLibraryCard } from '@/features/kangur/ui/components/KangurLessonLibraryCard';
-import type { KangurLessonLibraryCardCopy } from '@/features/kangur/ui/components/KangurLessonLibraryCard';
-import { KangurLessonGroupAccordion } from '@/features/kangur/ui/components/KangurLessonGroupAccordion';
+import {
+  getResolvedKangurLessonDescription,
+  getResolvedKangurLessonTitle,
+} from '@/features/kangur/lessons/lesson-template-copy';
+import {
+  KangurResolvedLessonLibraryCard,
+  type KangurLessonLibraryCardCopy,
+} from '@/features/kangur/ui/components/KangurResolvedLessonLibraryCard';
+import { KangurResolvedLessonGroupAccordion } from '@/features/kangur/ui/components/KangurResolvedLessonGroupAccordion';
 import { LazyKangurLessonsWordmark } from '@/features/kangur/ui/components/LazyKangurLessonsWordmark';
-import { KangurPageIntroCard } from '@/features/kangur/ui/components/KangurPageIntroCard';
+import { KangurResolvedPageIntroCard } from '@/features/kangur/ui/components/KangurResolvedPageIntroCard';
 import KangurVisualCueContent from '@/features/kangur/ui/components/KangurVisualCueContent';
 import {
   getKangurSixYearOldLessonGroupIcon,
@@ -59,6 +63,7 @@ type LessonsCatalogResolvedContentProps = Pick<
   | 'lessonAssignmentsByComponent'
   | 'lessonDocuments'
   | 'lessonSections'
+  | 'lessonTemplateMap'
   | 'orderedLessons'
   | 'progress'
   | 'subject'
@@ -176,7 +181,7 @@ function LessonsCatalogIntroCardWithPageContent({
     lessonListIntroContent?.summary ?? translations('introDescription');
 
   return (
-    <KangurPageIntroCard
+    <KangurResolvedPageIntroCard
       description={renderLessonsCatalogIntroDescription({
         isSixYearOld,
         label: descriptionLabel,
@@ -197,7 +202,7 @@ function LessonsCatalogIntroCardWithPageContent({
       ) : undefined}
     >
       {children}
-    </KangurPageIntroCard>
+    </KangurResolvedPageIntroCard>
   );
 }
 
@@ -232,6 +237,7 @@ function LessonsCatalogResolvedContent({
   isSixYearOld,
   lessonAssignmentsByComponent,
   lessonDocuments,
+  lessonTemplateMap,
   libraryCardTranslations,
   lessonSections,
   locale,
@@ -319,21 +325,17 @@ function LessonsCatalogResolvedContent({
           const completedLessonAssignment = !lessonAssignment
             ? (completedLessonAssignmentsByComponent.get(lesson.componentId) ?? null)
             : null;
-          const localizedTitle = getLocalizedKangurLessonTitle(
-            lesson.componentId,
-            locale,
-            lesson.title
-          );
+          const localizedTitle = getResolvedKangurLessonTitle(lesson, locale, lessonTemplateMap);
           return [
             lesson.id,
             {
               completedLessonAssignment,
               hasDocumentContent: hasKangurLessonDocumentContent(lessonDocuments[lesson.id]),
               lessonAssignment,
-              localizedDescription: getLocalizedKangurLessonDescription(
-                lesson.componentId,
+              localizedDescription: getResolvedKangurLessonDescription(
+                lesson,
                 locale,
-                lesson.description
+                lessonTemplateMap
               ),
               localizedTitle,
               resolvedCopy: {
@@ -358,6 +360,7 @@ function LessonsCatalogResolvedContent({
       completedLessonAssignmentsByComponent,
       lessonAssignmentsByComponent,
       lessonDocuments,
+      lessonTemplateMap,
       emptyMasteryPresentation,
       isCardStatusReady,
       libraryCardCopyTemplate,
@@ -423,7 +426,7 @@ function LessonsCatalogResolvedContent({
         key={lesson.id}
         data-testid={`lesson-library-motion-${lesson.id}`}
       >
-      <KangurLessonLibraryCard
+      <KangurResolvedLessonLibraryCard
         lesson={lesson}
         dataDocId='lessons_library_entry'
         iconTestId={`lesson-library-icon-${lesson.id}`}
@@ -455,7 +458,7 @@ function LessonsCatalogResolvedContent({
           let groupLessonIndex = 0;
 
           return (
-            <KangurLessonGroupAccordion
+            <KangurResolvedLessonGroupAccordion
               accordionId={entry.group.id}
               fallbackTypeLabel={
                 isSixYearOld ? (
@@ -532,7 +535,7 @@ function LessonsCatalogResolvedContent({
                   return renderLessonCard(lesson, index);
                 })
               )}
-            </KangurLessonGroupAccordion>
+            </KangurResolvedLessonGroupAccordion>
           );
         }
 
@@ -559,6 +562,7 @@ export function LessonsCatalog() {
     lessonAssignmentsByComponent,
     completedLessonAssignmentsByComponent,
     lessonDocuments,
+    lessonTemplateMap,
     activeLessonId,
     isLessonsCatalogLoading,
     isLessonSectionsLoading,
@@ -663,7 +667,7 @@ export function LessonsCatalog() {
             ) : null}
           </LessonsCatalogIntroCardWithPageContent>
         ) : (
-          <KangurPageIntroCard
+          <KangurResolvedPageIntroCard
             description={renderLessonsCatalogIntroDescription({
               isSixYearOld,
               label: translations('introDescription'),
@@ -722,7 +726,7 @@ export function LessonsCatalog() {
                 </KangurInfoCard>
               </div>
             ) : null}
-          </KangurPageIntroCard>
+          </KangurResolvedPageIntroCard>
         )}
       </div>
       <div
@@ -756,6 +760,7 @@ export function LessonsCatalog() {
             lessonDocuments={lessonDocuments}
             libraryCardTranslations={libraryCardTranslations}
             lessonSections={lessonSections}
+            lessonTemplateMap={lessonTemplateMap}
             locale={locale}
             masteryTranslations={masteryTranslations}
             orderedLessons={orderedLessons}

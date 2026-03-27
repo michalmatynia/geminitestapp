@@ -47,6 +47,37 @@ export const getKangurGameContentSetsForGame = (
   }
 
   switch (runtime.rendererId) {
+    case 'calendar_training_game':
+      return [
+        createDefaultContentSet(game, runtime, {
+          label: 'Mixed calendar drills',
+          description: 'Uses a mixed calendar quiz with days, months, and date-focused prompts.',
+        }),
+        createContentSet(game, runtime, {
+          id: `${game.id}:calendar-days`,
+          label: 'Days of week',
+          description: 'Feeds weekday-order and week-length prompts into the calendar engine.',
+          contentKind: 'calendar_section',
+          rendererProps: { calendarSection: 'dni' },
+          sortOrder: 2,
+        }),
+        createContentSet(game, runtime, {
+          id: `${game.id}:calendar-months`,
+          label: 'Months',
+          description: 'Feeds month-order and year-length prompts into the calendar engine.',
+          contentKind: 'calendar_section',
+          rendererProps: { calendarSection: 'miesiace' },
+          sortOrder: 3,
+        }),
+        createContentSet(game, runtime, {
+          id: `${game.id}:calendar-dates`,
+          label: 'Dates',
+          description: 'Feeds month-length prompts into the calendar engine.',
+          contentKind: 'calendar_section',
+          rendererProps: { calendarSection: 'data' },
+          sortOrder: 4,
+        }),
+      ];
     case 'clock_training_game':
       return [
         createDefaultContentSet(game, runtime, {

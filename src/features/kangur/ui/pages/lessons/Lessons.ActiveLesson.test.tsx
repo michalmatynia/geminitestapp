@@ -208,6 +208,7 @@ describe('ActiveLessonView mobile controls', () => {
       activeLesson,
       handleSelectLesson,
       lessonDocuments: {},
+      lessonTemplateMap: new Map(),
       lessonAssignmentsByComponent: new Map(),
       completedLessonAssignmentsByComponent: new Map(),
       setIsActiveLessonComponentReady: vi.fn(),
@@ -280,6 +281,49 @@ describe('ActiveLessonView mobile controls', () => {
 
     expect(document.documentElement.style.overflow).toBe('');
     expect(document.body.style.overflow).toBe('');
+  });
+
+  it('prefers lesson template copy from Mongo in the printable heading', async () => {
+    useLessonsMock.mockReturnValue({
+      activeLesson,
+      handleSelectLesson,
+      lessonDocuments: {},
+      lessonTemplateMap: new Map([
+        [
+          'adding',
+          {
+            componentId: 'adding',
+            subject: 'maths',
+            label: 'Dodawanie z bazy',
+            title: 'Dodawanie z bazy',
+            description: 'Opis lekcji z bazy',
+            emoji: '➕',
+            color: 'from-sky-500 to-cyan-400',
+            activeBg: 'bg-sky-100',
+            sortOrder: 1,
+          },
+        ],
+      ]),
+      lessonAssignmentsByComponent: new Map(),
+      completedLessonAssignmentsByComponent: new Map(),
+      setIsActiveLessonComponentReady: vi.fn(),
+      activeLessonHeaderRef: React.createRef<HTMLDivElement>(),
+      activeLessonNavigationRef: React.createRef<HTMLDivElement>(),
+      activeLessonContentRef,
+      activeLessonScrollRef: React.createRef<HTMLDivElement>(),
+      orderedLessons: [activeLesson, nextLesson],
+      isSecretLessonActive: false,
+      progress: { lessonMastery: {} },
+    });
+
+    render(<ActiveLessonView />);
+
+    await act(async () => {});
+
+    expect(
+      screen.getByRole('heading', { level: 1, name: 'Dodawanie z bazy' })
+    ).toBeInTheDocument();
+    expect(screen.getByText('Opis lekcji z bazy')).toBeInTheDocument();
   });
 
   it('renders the loading document fallback title in English on the English route', async () => {

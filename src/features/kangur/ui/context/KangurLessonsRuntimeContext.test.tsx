@@ -138,7 +138,7 @@ describe('KangurLessonsRuntimeProvider', () => {
     vi.useRealTimers();
   });
 
-  it('keeps lesson templates disabled when there is no focus token', async () => {
+  it('loads lesson templates without waiting for a focus token', async () => {
     render(
       <KangurLessonsRuntimeProvider>
         <div>runtime-ready</div>
@@ -148,12 +148,10 @@ describe('KangurLessonsRuntimeProvider', () => {
     expect(screen.getByText('runtime-ready')).toBeInTheDocument();
 
     expect(lessonTemplatesHookCallsMock).toHaveBeenCalled();
-    expect(
-      lessonTemplatesHookCallsMock.mock.calls.every(([options]) => options?.enabled === false)
-    ).toBe(true);
+    expect(lessonTemplatesHookCallsMock.mock.calls[0]?.[0]).toEqual({});
   });
 
-  it('enables lesson templates after a focus token is detected', async () => {
+  it('keeps lesson template loading stable when a focus token is present', async () => {
     focusTokenState.value = 'english_basics';
 
     render(
@@ -162,11 +160,8 @@ describe('KangurLessonsRuntimeProvider', () => {
       </KangurLessonsRuntimeProvider>
     );
 
-    await waitFor(() => {
-      expect(lessonTemplatesHookCallsMock).toHaveBeenCalledWith(
-        expect.objectContaining({ enabled: true })
-      );
-    });
+    await waitFor(() => expect(lessonTemplatesHookCallsMock).toHaveBeenCalled());
+    expect(lessonTemplatesHookCallsMock.mock.calls[0]?.[0]).toEqual({});
   });
 
   it('defers lesson assignments hydration until after the first render turn', async () => {

@@ -17,7 +17,9 @@ export async function getKangurLessonDocumentsHandler(
   _req: NextRequest,
   ctx: ApiHandlerContext
 ): Promise<Response> {
-  const locale = normalizeSiteLocale(String(ctx.query?.['locale'] ?? '').trim() || undefined);
+  const query = (ctx.query ?? {}) as Record<string, unknown>;
+  const localeParam = typeof query['locale'] === 'string' ? query['locale'].trim() : '';
+  const locale = normalizeSiteLocale(localeParam || undefined);
   const repository = await getKangurLessonDocumentRepository();
   const documents = await repository.listLessonDocuments(locale);
 
@@ -33,7 +35,9 @@ export async function getKangurLessonDocumentHandler(
   ctx: ApiHandlerContext
 ): Promise<Response> {
   const lessonId = String(ctx.params?.['lessonId'] ?? '').trim();
-  const locale = normalizeSiteLocale(String(ctx.query?.['locale'] ?? '').trim() || undefined);
+  const query = (ctx.query ?? {}) as Record<string, unknown>;
+  const localeParam = typeof query['locale'] === 'string' ? query['locale'].trim() : '';
+  const locale = normalizeSiteLocale(localeParam || undefined);
   const repository = await getKangurLessonDocumentRepository();
   const document = lessonId ? await repository.getLessonDocument(lessonId, locale) : null;
 

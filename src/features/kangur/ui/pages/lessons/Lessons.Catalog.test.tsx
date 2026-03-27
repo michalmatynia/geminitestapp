@@ -89,15 +89,15 @@ vi.mock('@/features/kangur/ui/hooks/useKangurCoarsePointer', () => ({
   useKangurCoarsePointer: () => useKangurCoarsePointerMock(),
 }));
 
-vi.mock('@/features/kangur/ui/components/KangurLessonLibraryCard', () => ({
-  KangurLessonLibraryCard: (props: { lesson: { id: string; title: string } }) => {
+vi.mock('@/features/kangur/ui/components/KangurResolvedLessonLibraryCard', () => ({
+  KangurResolvedLessonLibraryCard: (props: { lesson: { id: string; title: string } }) => {
     lessonCardPropsMock(props);
     return <div data-testid={`mock-lesson-card-${props.lesson.id}`}>{props.lesson.title}</div>;
   },
 }));
 
-vi.mock('@/features/kangur/ui/components/KangurLessonGroupAccordion', () => ({
-  KangurLessonGroupAccordion: ({
+vi.mock('@/features/kangur/ui/components/KangurResolvedLessonGroupAccordion', () => ({
+  KangurResolvedLessonGroupAccordion: ({
     label,
     typeLabel,
     fallbackTypeLabel,
@@ -122,8 +122,8 @@ vi.mock('@/features/kangur/ui/components/KangurLessonGroupAccordion', () => ({
   ),
 }));
 
-vi.mock('@/features/kangur/ui/components/KangurPageIntroCard', () => ({
-  KangurPageIntroCard: ({
+vi.mock('@/features/kangur/ui/components/KangurResolvedPageIntroCard', () => ({
+  KangurResolvedPageIntroCard: ({
     title,
     description,
     visualTitle,

@@ -3,14 +3,18 @@
 import { useLocale, useTranslations } from 'next-intl';
 import { hasKangurLessonDocumentContent } from '@/features/kangur/lesson-documents';
 import {
-  getLocalizedKangurLessonDescription,
-  getLocalizedKangurLessonTitle,
   getLocalizedKangurLessonSectionLabel,
   getLocalizedKangurLessonSectionTypeLabel,
 } from '@/features/kangur/lessons/lesson-catalog-i18n';
-import { KangurLessonGroupAccordion } from '@/features/kangur/ui/components/KangurLessonGroupAccordion';
-import { KangurLessonLibraryCard } from '@/features/kangur/ui/components/KangurLessonLibraryCard';
-import type { KangurLessonLibraryCardCopy } from '@/features/kangur/ui/components/KangurLessonLibraryCard';
+import {
+  getResolvedKangurLessonDescription,
+  getResolvedKangurLessonTitle,
+} from '@/features/kangur/lessons/lesson-template-copy';
+import { KangurResolvedLessonGroupAccordion } from '@/features/kangur/ui/components/KangurResolvedLessonGroupAccordion';
+import {
+  KangurResolvedLessonLibraryCard,
+  type KangurLessonLibraryCardCopy,
+} from '@/features/kangur/ui/components/KangurResolvedLessonLibraryCard';
 import KangurVisualCueContent from '@/features/kangur/ui/components/KangurVisualCueContent';
 import {
   useKangurLessonsRuntimeActions,
@@ -138,6 +142,7 @@ export function KangurLessonsCatalogWidget(): JSX.Element {
   const {
     orderedLessons,
     lessonSections,
+    lessonTemplateMap,
     lessonDocuments,
     progress,
     activeLessonId,
@@ -167,21 +172,17 @@ export function KangurLessonsCatalogWidget(): JSX.Element {
           const completedLessonAssignment = !lessonAssignment
             ? (completedLessonAssignmentsByComponent.get(lesson.componentId) ?? null)
             : null;
-          const localizedTitle = getLocalizedKangurLessonTitle(
-            lesson.componentId,
-            locale,
-            lesson.title
-          );
+          const localizedTitle = getResolvedKangurLessonTitle(lesson, locale, lessonTemplateMap);
           return [
             lesson.id,
             {
               completedLessonAssignment,
               hasDocumentContent: hasKangurLessonDocumentContent(lessonDocuments[lesson.id]),
               lessonAssignment,
-              localizedDescription: getLocalizedKangurLessonDescription(
-                lesson.componentId,
+              localizedDescription: getResolvedKangurLessonDescription(
+                lesson,
                 locale,
-                lesson.description
+                lessonTemplateMap
               ),
               localizedTitle,
               resolvedCopy: {
@@ -207,6 +208,7 @@ export function KangurLessonsCatalogWidget(): JSX.Element {
       libraryCardTranslations,
       lessonAssignmentsByComponent,
       lessonDocuments,
+      lessonTemplateMap,
       masteryTranslations,
       orderedLessons,
       progress,
@@ -224,7 +226,7 @@ export function KangurLessonsCatalogWidget(): JSX.Element {
 
     return (
       <div key={lesson.id} role='listitem' className='w-full'>
-        <KangurLessonLibraryCard
+        <KangurResolvedLessonLibraryCard
           ariaCurrent={isActive ? 'page' : undefined}
           buttonClassName={`kangur-lessons-panel ${KANGUR_PANEL_ROW_CLASSNAME} items-start rounded-[26px] p-4 sm:rounded-[30px] sm:p-5`}
           completedLessonAssignment={lessonCardState.completedLessonAssignment}
@@ -363,7 +365,7 @@ export function KangurLessonsCatalogWidget(): JSX.Element {
 
                   return (
                     <div key={groupKey} role='listitem' className='w-full'>
-                      <KangurLessonGroupAccordion
+                      <KangurResolvedLessonGroupAccordion
                         accordionId={groupKey}
                         fallbackTypeLabel={
                           isSixYearOld ? (
@@ -433,7 +435,7 @@ export function KangurLessonsCatalogWidget(): JSX.Element {
                         ) : (
                           entry.group.lessons.map((lesson) => renderLessonCard(lesson))
                         )}
-                      </KangurLessonGroupAccordion>
+                      </KangurResolvedLessonGroupAccordion>
                     </div>
                   );
                 }

@@ -63,16 +63,17 @@ const buildFilter = (
   input?: KangurLessonTemplateListInput,
 ): Filter<MongoKangurLessonTemplateDocument> => {
   const normalizedLocale = normalizeTemplateLocale(input?.locale);
+  const subject = input?.subject;
   const filter =
     normalizedLocale === 'pl'
       ? {
           $or: [{ locale: normalizedLocale }, { locale: { $exists: false } }],
         }
       : { locale: normalizedLocale };
-  if (input.subject) {
+  if (subject) {
     return {
       ...filter,
-      subject: input.subject,
+      subject,
     };
   }
   return filter;

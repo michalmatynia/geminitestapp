@@ -141,7 +141,12 @@ const KANGUR_LAUNCHABLE_GAME_RENDERERS: Record<
     ),
   },
   calendar_training_game: {
-    render: ({ onFinish }) => <CalendarTrainingGame onFinish={onFinish} />,
+    render: ({ onFinish, rendererProps }) => (
+      <CalendarTrainingGame
+        onFinish={onFinish}
+        section={rendererProps?.calendarSection}
+      />
+    ),
   },
   clock_training_game: {
     render: ({ completionPrimaryActionLabel, onFinish, rendererProps }) => (

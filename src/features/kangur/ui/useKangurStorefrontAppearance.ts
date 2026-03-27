@@ -4,8 +4,8 @@ import { useMemo } from 'react';
 
 import {
   resolveKangurStorefrontAppearance,
-  useOptionalCmsStorefrontAppearance,
-} from '@/features/cms/public';
+} from '@/features/cms/components/frontend/CmsStorefrontAppearance.logic';
+import { useOptionalCmsStorefrontAppearance } from '@/features/cms/components/frontend/CmsStorefrontAppearance.context';
 import {
   getKangurThemeSettingsKeyForAppearanceMode,
   resolveKangurThemeSettingsRawForMode,

@@ -389,7 +389,7 @@ export const sanitizeAccessibleManagedKangurHref = ({
   const effectiveBasePath = normalizeKangurBasePath(basePath ?? KANGUR_BASE_PATH);
   const resolvedPageKey = resolveManagedKangurPageKeyFromHref(resolvedHref, effectiveBasePath);
   const fallbackPageKey =
-    (resolveManagedKangurPageKeyFromHref(fallbackHref, effectiveBasePath) ?? 'Game') as string;
+    resolveManagedKangurPageKeyFromHref(fallbackHref, effectiveBasePath) ?? 'Game';
   const accessibleResolvedPageKey = resolveAccessibleManagedKangurTargetPageKey({
     basePath: effectiveBasePath,
     fallbackPageKey,

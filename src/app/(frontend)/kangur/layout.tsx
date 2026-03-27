@@ -1,6 +1,6 @@
-import { KangurStorefrontAppearanceProvider } from '@/features/kangur/public';
-import { KangurSurfaceClassSync } from '@/features/kangur/public';
 import { getKangurStorefrontInitialState } from '@/features/kangur/server';
+import { KangurStorefrontAppearanceProvider } from '@/features/kangur/ui/KangurStorefrontAppearanceProvider';
+import { KangurSurfaceClassSync } from '@/features/kangur/ui/KangurSurfaceClassSync';
 import { safeHtml } from '@/shared/lib/security/safe-html';
 import { Analytics } from '@vercel/analytics/next';
 

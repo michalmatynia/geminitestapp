@@ -241,10 +241,7 @@ function GameContent(): React.JSX.Element {
     }
 
     const defaultRuntime = getKangurLaunchableGameScreenComponentConfig(screen).runtime;
-    if (
-      !activeLaunchableGameInstance ||
-      activeLaunchableGameInstance.launchableRuntimeId !== screen
-    ) {
+    if (activeLaunchableGameInstance?.launchableRuntimeId !== screen) {
       return defaultRuntime;
     }
 

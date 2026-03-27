@@ -19,7 +19,9 @@ const {
   homeDuelsInvitesPropsMock,
   tutorSessionSyncPropsMock,
   xpToastPropsMock,
+  calendarTrainingGamePropsMock,
   clockTrainingGamePropsMock,
+  logicalPatternsWorkshopGamePropsMock,
 } = vi.hoisted(() => ({
   useKangurGameRuntimeMock: vi.fn(),
   useKangurGameContentSetsMock: vi.fn(),
@@ -33,7 +35,9 @@ const {
   homeDuelsInvitesPropsMock: vi.fn(),
   tutorSessionSyncPropsMock: vi.fn(),
   xpToastPropsMock: vi.fn(),
+  calendarTrainingGamePropsMock: vi.fn(),
   clockTrainingGamePropsMock: vi.fn(),
+  logicalPatternsWorkshopGamePropsMock: vi.fn(),
 }));
 
 vi.mock('framer-motion', () => {
@@ -199,13 +203,23 @@ vi.mock('@/features/kangur/ui/components/KangurGameKangurSessionWidget', () => (
 }));
 
 vi.mock('@/features/kangur/ui/components/CalendarTrainingGame', () => ({
-  default: () => <div data-testid='calendar-training-game' />,
+  default: (props: unknown) => {
+    calendarTrainingGamePropsMock(props);
+    return <div data-testid='calendar-training-game' />;
+  },
 }));
 
 vi.mock('@/features/kangur/ui/components/ClockTrainingGame', () => ({
   default: (props: unknown) => {
     clockTrainingGamePropsMock(props);
     return <div data-testid='clock-training-game' />;
+  },
+}));
+
+vi.mock('@/features/kangur/ui/components/LogicalPatternsWorkshopGame', () => ({
+  default: (props: unknown) => {
+    logicalPatternsWorkshopGamePropsMock(props);
+    return <div data-testid='logical-patterns-workshop-game' />;
   },
 }));
 
@@ -749,6 +763,110 @@ describe('Game page', () => {
           initialMode: 'challenge',
           section: 'hours',
           showTaskTitle: false,
+        })
+      );
+    });
+  });
+
+  it('resolves persisted logical-pattern content sets for launchable game instances', async () => {
+    useKangurGameRuntimeMock.mockReturnValue({
+      ...buildRuntime('logical_patterns_quiz'),
+      launchableGameInstanceId: 'logical-pattern-instance-custom',
+    });
+    useKangurGameInstancesMock.mockReturnValue({
+      data: [
+        {
+          id: 'logical-pattern-instance-custom',
+          gameId: 'logical_patterns_workshop',
+          launchableRuntimeId: 'logical_patterns_quiz',
+          contentSetId: 'logical_patterns_workshop:custom:alphabet-warmup',
+          title: 'Alphabet warmup',
+          description: 'Custom alphabet-order session.',
+          emoji: '🔢',
+          enabled: true,
+          sortOrder: 1,
+          engineOverrides: {},
+        },
+      ],
+      isPending: false,
+    });
+    useKangurGameContentSetsMock.mockReturnValue({
+      data: [
+        {
+          id: 'logical_patterns_workshop:custom:alphabet-warmup',
+          gameId: 'logical_patterns_workshop',
+          engineId: 'pattern-sequence-engine',
+          launchableRuntimeId: 'logical_patterns_quiz',
+          label: 'Alphabet warmup',
+          description: 'Custom persisted alphabet-order content set.',
+          contentKind: 'logical_pattern_set',
+          rendererProps: {
+            patternSetId: 'alphabet_letter_order',
+          },
+          sortOrder: 10,
+        },
+      ],
+      isPending: false,
+    });
+
+    render(<Game />);
+
+    await waitFor(() => {
+      expect(logicalPatternsWorkshopGamePropsMock).toHaveBeenCalledWith(
+        expect.objectContaining({
+          patternSetId: 'alphabet_letter_order',
+        })
+      );
+    });
+  });
+
+  it('resolves persisted calendar content sets for launchable game instances', async () => {
+    useKangurGameRuntimeMock.mockReturnValue({
+      ...buildRuntime('calendar_quiz'),
+      launchableGameInstanceId: 'calendar-instance-months',
+    });
+    useKangurGameInstancesMock.mockReturnValue({
+      data: [
+        {
+          id: 'calendar-instance-months',
+          gameId: 'calendar_interactive',
+          launchableRuntimeId: 'calendar_quiz',
+          contentSetId: 'calendar_interactive:custom:months-focus',
+          title: 'Months focus',
+          description: 'Custom calendar months session.',
+          emoji: '📅',
+          enabled: true,
+          sortOrder: 1,
+          engineOverrides: {},
+        },
+      ],
+      isPending: false,
+    });
+    useKangurGameContentSetsMock.mockReturnValue({
+      data: [
+        {
+          id: 'calendar_interactive:custom:months-focus',
+          gameId: 'calendar_interactive',
+          engineId: 'calendar-grid-engine',
+          launchableRuntimeId: 'calendar_quiz',
+          label: 'Months focus',
+          description: 'Custom persisted months-focused content set.',
+          contentKind: 'calendar_section',
+          rendererProps: {
+            calendarSection: 'miesiace',
+          },
+          sortOrder: 10,
+        },
+      ],
+      isPending: false,
+    });
+
+    render(<Game />);
+
+    await waitFor(() => {
+      expect(calendarTrainingGamePropsMock).toHaveBeenCalledWith(
+        expect.objectContaining({
+          section: 'miesiace',
         })
       );
     });

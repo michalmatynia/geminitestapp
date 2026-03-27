@@ -50,7 +50,12 @@ import type {
   KangurGameContentSetKind,
   KangurGameInstance,
 } from '@/shared/contracts/kangur-game-instances';
-import type { KangurGameRuntimeRendererProps } from '@/shared/contracts/kangur-game-runtime-renderer-props';
+import type {
+  KangurCalendarInteractiveStageSection,
+  KangurGameRuntimeRendererProps,
+  KangurGeometryDrawingShapeId,
+  KangurLogicalPatternSetId,
+} from '@/shared/contracts/kangur-game-runtime-renderer-props';
 import type { KangurLessonGameSection } from '@/shared/contracts/kangur-lesson-game-sections';
 import type { KangurGameDefinition } from '@/shared/contracts/kangur-games';
 import { cn } from '@/features/kangur/shared/utils';
@@ -105,16 +110,20 @@ type GameInstanceEditorState = {
 };
 
 type ContentSetDraftState = {
+  calendarSection: KangurCalendarInteractiveStageSection;
   clockSection: ClockTrainingSectionId;
   description: string;
   label: string;
+  patternSetId: KangurLogicalPatternSetId;
+  shapeIds: KangurGeometryDrawingShapeId[];
 };
 
 type SavedSectionsStatusFilter = 'all' | 'enabled' | 'disabled';
+type ContentSetsSourceFilter = 'all' | 'built_in' | 'custom';
 type SavedInstancesContentSetFilter = KangurGameContentSetId | 'all';
-type SavedSectionsStatusFilterOption = {
+type SegmentedFilterOption<T extends string = string> = {
   label: string;
-  value: SavedSectionsStatusFilter;
+  value: T;
 };
 
 type PendingInstanceEditorRestoreState = {
@@ -128,7 +137,7 @@ type PendingInstanceEditorRestoreState = {
 
 const ClockTrainingGamePreview = ClockTrainingGame as React.ComponentType<ClockTrainingGamePreviewProps>;
 
-function SavedSectionsStatusControl({
+function SegmentedFilterControl<T extends string>({
   ariaLabel,
   className,
   onChange,
@@ -137,9 +146,9 @@ function SavedSectionsStatusControl({
 }: {
   ariaLabel: string;
   className?: string;
-  onChange: (value: SavedSectionsStatusFilter) => void;
-  options: SavedSectionsStatusFilterOption[];
-  value: SavedSectionsStatusFilter;
+  onChange: (value: T) => void;
+  options: SegmentedFilterOption<T>[];
+  value: T;
 }): React.JSX.Element {
   return (
     <div
@@ -187,6 +196,26 @@ const DEFAULT_CLOCK_PREVIEW_SETTINGS: ClockPreviewSettings = {
   showTimeDisplay: true,
 };
 
+const GEOMETRY_CONTENT_SET_SHAPE_OPTIONS = [
+  'circle',
+  'oval',
+  'triangle',
+  'diamond',
+  'square',
+  'rectangle',
+  'pentagon',
+  'hexagon',
+] as const satisfies readonly KangurGeometryDrawingShapeId[];
+
+const DEFAULT_GEOMETRY_CONTENT_SET_SHAPE_IDS: KangurGeometryDrawingShapeId[] = [
+  'circle',
+  'triangle',
+  'square',
+];
+
+const DEFAULT_CALENDAR_CONTENT_SET_SECTION: KangurCalendarInteractiveStageSection = 'data';
+const DEFAULT_LOGICAL_PATTERN_SET_ID: KangurLogicalPatternSetId = 'logical_patterns_workshop';
+
 const GAMES_LIBRARY_MODAL_SECTION_SURFACE_CLASSNAME =
   'rounded-[1.5rem] border border-[color:var(--kangur-soft-card-border)] [background:color-mix(in_srgb,var(--kangur-soft-card-background)_94%,var(--kangur-page-background))] shadow-[0_18px_48px_-42px_rgba(15,23,42,0.42)]';
 
@@ -198,6 +227,9 @@ const GAMES_LIBRARY_MODAL_EMPTY_STATE_CLASSNAME =
 
 const GAMES_LIBRARY_MODAL_STAT_CARD_CLASSNAME =
   'rounded-[1.15rem] border border-[color:var(--kangur-soft-card-border)] [background:color-mix(in_srgb,var(--kangur-soft-card-background)_92%,white)] px-3 py-3';
+
+const getGamesLibraryContentSetCardTestId = (contentSetId: KangurGameContentSetId): string =>
+  `games-library-content-set-${contentSetId.replaceAll(':', '_')}`;
 
 const createDraftId = (): string =>
   `draft-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
@@ -300,30 +332,62 @@ const buildClockInstanceEngineSettingsFromPreview = (
   showTimeDisplay: previewSettings.showTimeDisplay,
 });
 
-const buildClockContentSetDraftState = (
-  clockSection: ClockTrainingSectionId = DEFAULT_CLOCK_PREVIEW_SETTINGS.clockSection
+const normalizeGeometryContentSetShapeIds = (
+  shapeIds: readonly KangurGeometryDrawingShapeId[]
+): KangurGeometryDrawingShapeId[] =>
+  GEOMETRY_CONTENT_SET_SHAPE_OPTIONS.filter((shapeId, index, options) =>
+    shapeIds.includes(shapeId) && options.indexOf(shapeId) === index
+  );
+
+const buildContentSetDraftState = (
+  input?: Partial<ContentSetDraftState>
 ): ContentSetDraftState => ({
-  clockSection,
-  description: '',
-  label: '',
+  calendarSection: input?.calendarSection ?? DEFAULT_CALENDAR_CONTENT_SET_SECTION,
+  clockSection: input?.clockSection ?? DEFAULT_CLOCK_PREVIEW_SETTINGS.clockSection,
+  description: input?.description ?? '',
+  label: input?.label ?? '',
+  patternSetId: input?.patternSetId ?? DEFAULT_LOGICAL_PATTERN_SET_ID,
+  shapeIds: normalizeGeometryContentSetShapeIds(
+    input?.shapeIds ?? DEFAULT_GEOMETRY_CONTENT_SET_SHAPE_IDS
+  ),
 });
 
 const buildContentSetDraftStateFromContentSet = (
   contentSet: KangurGameContentSet
-): ContentSetDraftState => ({
-  clockSection:
-    contentSet.rendererProps.clockSection ?? DEFAULT_CLOCK_PREVIEW_SETTINGS.clockSection,
-  description: contentSet.description,
-  label: contentSet.label,
-});
+): ContentSetDraftState =>
+  buildContentSetDraftState({
+    calendarSection:
+      contentSet.rendererProps.calendarSection ?? DEFAULT_CALENDAR_CONTENT_SET_SECTION,
+    clockSection:
+      contentSet.rendererProps.clockSection ?? DEFAULT_CLOCK_PREVIEW_SETTINGS.clockSection,
+    description: contentSet.description,
+    label: contentSet.label,
+    patternSetId:
+      contentSet.rendererProps.patternSetId ?? DEFAULT_LOGICAL_PATTERN_SET_ID,
+    shapeIds: contentSet.rendererProps.shapeIds ?? DEFAULT_GEOMETRY_CONTENT_SET_SHAPE_IDS,
+  });
 
 const areContentSetDraftStatesEqual = (
   left: ContentSetDraftState,
   right: ContentSetDraftState
 ): boolean =>
+  left.calendarSection === right.calendarSection &&
   left.clockSection === right.clockSection &&
   left.description === right.description &&
-  left.label === right.label;
+  left.label === right.label &&
+  left.patternSetId === right.patternSetId &&
+  left.shapeIds.length === right.shapeIds.length &&
+  left.shapeIds.every((shapeId, index) => shapeId === right.shapeIds[index]);
+
+const getGeometryShapeLabel = (
+  shapeId: KangurGeometryDrawingShapeId,
+  translations: (key: string, values?: Record<string, string | number>) => string
+): string => translations(`modal.instances.geometryShape.${shapeId}`);
+
+const getLogicalPatternSetLabel = (
+  patternSetId: KangurLogicalPatternSetId,
+  translations: (key: string, values?: Record<string, string | number>) => string
+): string => translations(`modal.instances.logicalPatternSet.${patternSetId}`);
 
 const resolveContentSetRendererProps = (
   contentSet: KangurGameContentSet | null | undefined
@@ -378,6 +442,18 @@ const buildContentSetFeedSummary = (
       case 'combined':
       default:
         return translations('modal.settings.clockSectionCombined');
+    }
+  }
+
+  if (rendererProps.calendarSection) {
+    switch (rendererProps.calendarSection) {
+      case 'dni':
+        return translations('modal.instances.feedSummary.calendarDays');
+      case 'miesiace':
+        return translations('modal.instances.feedSummary.calendarMonths');
+      case 'data':
+      default:
+        return translations('modal.instances.feedSummary.calendarDates');
     }
   }
 
@@ -578,6 +654,9 @@ export function GamesLibraryGameModal({
   const [instanceEnabled, setInstanceEnabled] = useState(true);
   const [selectedContentSetId, setSelectedContentSetId] =
     useState<KangurGameContentSetId | null>(null);
+  const [contentSetsQuery, setContentSetsQuery] = useState('');
+  const [contentSetsSourceFilter, setContentSetsSourceFilter] =
+    useState<ContentSetsSourceFilter>('all');
   const [instanceContentSourceInstanceId, setInstanceContentSourceInstanceId] =
     useState<string | null>(null);
   const [instanceEngineSourceInstanceId, setInstanceEngineSourceInstanceId] =
@@ -587,10 +666,10 @@ export function GamesLibraryGameModal({
   const [optimisticInstances, setOptimisticInstances] = useState<KangurGameInstance[] | null>(null);
   const [instanceSyncError, setInstanceSyncError] = useState<string | null>(null);
   const [contentSetDraft, setContentSetDraft] = useState<ContentSetDraftState>(
-    buildClockContentSetDraftState()
+    buildContentSetDraftState()
   );
   const [contentSetDraftBaseline, setContentSetDraftBaseline] =
-    useState<ContentSetDraftState | null>(buildClockContentSetDraftState());
+    useState<ContentSetDraftState | null>(buildContentSetDraftState());
   const [editingContentSetId, setEditingContentSetId] =
     useState<KangurGameContentSetId | null>(null);
   const [contentSetSyncError, setContentSetSyncError] = useState<string | null>(null);
@@ -633,6 +712,10 @@ export function GamesLibraryGameModal({
       ),
     [optimisticCustomContentSets, persistedCustomContentSets]
   );
+  const customContentSetIdSet = useMemo(
+    () => new Set(activeCustomContentSets.map((contentSet) => contentSet.id)),
+    [activeCustomContentSets]
+  );
   const contentSets = useMemo(
     () => (game ? mergeKangurGameContentSetsForGame(game, activeCustomContentSets) : []),
     [activeCustomContentSets, game]
@@ -660,6 +743,49 @@ export function GamesLibraryGameModal({
       ? null
       : activeCustomContentSets.find((contentSet) => contentSet.id === selectedContentSetId) ??
         null;
+  const filteredContentSets = useMemo(() => {
+    const normalizedQuery = contentSetsQuery.trim().toLowerCase();
+
+    return contentSets.filter((contentSet) => {
+      const isCustom = customContentSetIdSet.has(contentSet.id);
+      if (contentSetsSourceFilter === 'built_in' && isCustom) {
+        return false;
+      }
+      if (contentSetsSourceFilter === 'custom' && !isCustom) {
+        return false;
+      }
+      if (!normalizedQuery) {
+        return true;
+      }
+
+      return [
+        contentSet.label,
+        contentSet.description,
+        getContentKindLabel(contentSet.contentKind, translations),
+        buildContentSetFeedSummary(contentSet, translations),
+      ]
+        .join(' ')
+        .toLowerCase()
+        .includes(normalizedQuery);
+    });
+  }, [contentSets, contentSetsQuery, contentSetsSourceFilter, customContentSetIdSet, translations]);
+  const selectableContentSets = useMemo(() => {
+    if (!selectedContentSet) {
+      return filteredContentSets;
+    }
+
+    if (filteredContentSets.some((contentSet) => contentSet.id === selectedContentSet.id)) {
+      return filteredContentSets;
+    }
+
+    return [selectedContentSet, ...filteredContentSets];
+  }, [filteredContentSets, selectedContentSet]);
+  const hasContentSetFilters =
+    contentSetsQuery.trim().length > 0 || contentSetsSourceFilter !== 'all';
+  const selectedContentSetOutsideFilters =
+    Boolean(selectedContentSet) &&
+    hasContentSetFilters &&
+    !filteredContentSets.some((contentSet) => contentSet.id === selectedContentSet?.id);
   const editingCustomContentSet =
     editingContentSetId === null
       ? null
@@ -679,17 +805,31 @@ export function GamesLibraryGameModal({
     : null;
   const supportsPreviewSettings = game?.id === 'clock_training';
   const supportsInstanceEngineSettings =
-    Boolean(launchableRuntime) && game?.id === 'clock_training';
+    launchableRuntime?.rendererId === 'clock_training_game';
   const supportsCustomClockContentSets =
-    Boolean(launchableRuntime) && game?.id === 'clock_training';
+    launchableRuntime?.rendererId === 'clock_training_game';
+  const supportsCustomCalendarContentSets =
+    launchableRuntime?.rendererId === 'calendar_training_game';
+  const supportsCustomGeometryContentSets =
+    launchableRuntime?.rendererId === 'geometry_drawing_game';
+  const supportsCustomLogicalPatternContentSets =
+    launchableRuntime?.rendererId === 'logical_patterns_workshop_game';
+  const supportsCustomContentSets =
+    supportsCustomCalendarContentSets ||
+    supportsCustomClockContentSets ||
+    supportsCustomGeometryContentSets ||
+    supportsCustomLogicalPatternContentSets;
+  const shouldShowContentSetBrowser =
+    contentSets.length > 1 || activeCustomContentSets.length > 0;
   const selectedCustomContentSetUsageCount = selectedCustomContentSet
     ? activeInstances.filter((instance) => instance.contentSetId === selectedCustomContentSet.id)
         .length
     : 0;
   const canSaveCustomContentSet =
-    supportsCustomClockContentSets &&
+    supportsCustomContentSets &&
     contentSetDraft.label.trim().length > 0 &&
-    contentSetDraft.description.trim().length > 0;
+    contentSetDraft.description.trim().length > 0 &&
+    (!supportsCustomGeometryContentSets || contentSetDraft.shapeIds.length > 0);
   const isContentSetDraftDirty =
     contentSetDraftBaseline !== null &&
     !areContentSetDraftStatesEqual(contentSetDraft, contentSetDraftBaseline);
@@ -805,6 +945,8 @@ export function GamesLibraryGameModal({
     setSelectedInstanceId(null);
     setPreferNewInstanceDraft(false);
     setSelectedContentSetId(null);
+    setContentSetsQuery('');
+    setContentSetsSourceFilter('all');
     setInstanceContentSourceInstanceId(null);
     setInstanceEngineSourceInstanceId(null);
     setInstanceTitle('');
@@ -812,8 +954,8 @@ export function GamesLibraryGameModal({
     setInstanceEmoji('🎮');
     setInstanceEnabled(true);
     setInstanceEditorBaseline(null);
-    setContentSetDraft(buildClockContentSetDraftState());
-    setContentSetDraftBaseline(buildClockContentSetDraftState());
+    setContentSetDraft(buildContentSetDraftState());
+    setContentSetDraftBaseline(buildContentSetDraftState());
     setEditingContentSetId(null);
     setContentSetSyncError(null);
     setOptimisticCustomContentSets(null);
@@ -1238,6 +1380,41 @@ export function GamesLibraryGameModal({
   const canAddDraft = draftValidationMessages.length === 0;
   const canSaveInstance = Boolean(launchableRuntime) && instanceValidationMessages.length === 0;
 
+  const buildResetContentSetDraftState = (): ContentSetDraftState => {
+    if (supportsCustomClockContentSets) {
+      return buildContentSetDraftState({
+        clockSection:
+          selectedContentSetRendererProps.clockSection ?? clockSettings.clockSection,
+      });
+    }
+
+    if (supportsCustomCalendarContentSets) {
+      return buildContentSetDraftState({
+        calendarSection:
+          selectedContentSetRendererProps.calendarSection ??
+          DEFAULT_CALENDAR_CONTENT_SET_SECTION,
+      });
+    }
+
+    if (supportsCustomGeometryContentSets) {
+      return buildContentSetDraftState({
+        shapeIds:
+          selectedContentSetRendererProps.shapeIds?.length
+            ? selectedContentSetRendererProps.shapeIds
+            : DEFAULT_GEOMETRY_CONTENT_SET_SHAPE_IDS,
+      });
+    }
+
+    if (supportsCustomLogicalPatternContentSets) {
+      return buildContentSetDraftState({
+        patternSetId:
+          selectedContentSetRendererProps.patternSetId ?? DEFAULT_LOGICAL_PATTERN_SET_ID,
+      });
+    }
+
+    return buildContentSetDraftState();
+  };
+
   const handleResetInstanceEditor = (): void => {
     if (!game) {
       return;
@@ -1248,11 +1425,38 @@ export function GamesLibraryGameModal({
   };
 
   const handleResetContentSetDraft = (): void => {
-    const nextDraft = buildClockContentSetDraftState(
-      selectedContentSetRendererProps.clockSection ?? clockSettings.clockSection
-    );
+    const nextDraft = buildResetContentSetDraftState();
     setContentSetSyncError(null);
     setEditingContentSetId(null);
+    setContentSetDraft(nextDraft);
+    setContentSetDraftBaseline(nextDraft);
+  };
+
+  const handleSelectContentSet = (contentSetId: KangurGameContentSetId | null): void => {
+    setInstanceSyncError(null);
+    setInstanceContentSourceInstanceId(null);
+    setSelectedContentSetId(contentSetId);
+  };
+
+  const handleEditCustomContentSet = (contentSet: KangurGameContentSet): void => {
+    setContentSetSyncError(null);
+    setSelectedContentSetId(contentSet.id);
+    setEditingContentSetId(contentSet.id);
+    const nextDraft = buildContentSetDraftStateFromContentSet(contentSet);
+    setContentSetDraft(nextDraft);
+    setContentSetDraftBaseline(nextDraft);
+  };
+
+  const handleForkContentSet = (contentSet: KangurGameContentSet): void => {
+    setContentSetSyncError(null);
+    setSelectedContentSetId(contentSet.id);
+    setEditingContentSetId(null);
+    const nextDraft = {
+      ...buildContentSetDraftStateFromContentSet(contentSet),
+      label: `${contentSet.label} ${translations(
+        'modal.instances.contentSetDuplicateSuffix'
+      )}`.trim(),
+    };
     setContentSetDraft(nextDraft);
     setContentSetDraftBaseline(nextDraft);
   };
@@ -1262,11 +1466,7 @@ export function GamesLibraryGameModal({
       return;
     }
 
-    setContentSetSyncError(null);
-    setEditingContentSetId(selectedCustomContentSet.id);
-    const nextDraft = buildContentSetDraftStateFromContentSet(selectedCustomContentSet);
-    setContentSetDraft(nextDraft);
-    setContentSetDraftBaseline(nextDraft);
+    handleEditCustomContentSet(selectedCustomContentSet);
   };
 
   const handleForkSelectedContentSet = (): void => {
@@ -1274,16 +1474,7 @@ export function GamesLibraryGameModal({
       return;
     }
 
-    setContentSetSyncError(null);
-    setEditingContentSetId(null);
-    const nextDraft = {
-      ...buildContentSetDraftStateFromContentSet(selectedContentSet),
-      label: `${selectedContentSet.label} ${translations(
-        'modal.instances.contentSetDuplicateSuffix'
-      )}`.trim(),
-    };
-    setContentSetDraft(nextDraft);
-    setContentSetDraftBaseline(nextDraft);
+    handleForkContentSet(selectedContentSet);
   };
 
   const handleForkEditingContentSet = (): void => {
@@ -1297,12 +1488,15 @@ export function GamesLibraryGameModal({
     setContentSetDraftBaseline(contentSetDraft);
   };
 
-  const handleRemoveSelectedCustomContentSet = async (): Promise<void> => {
-    if (!game || !selectedCustomContentSet) {
+  const handleRemoveCustomContentSet = async (
+    contentSet: KangurGameContentSet
+  ): Promise<void> => {
+    if (!game) {
       return;
     }
 
-    if (selectedCustomContentSetUsageCount > 0) {
+    const usageCount = activeInstances.filter((instance) => instance.contentSetId === contentSet.id).length;
+    if (usageCount > 0) {
       setContentSetSyncError(translations('modal.instances.contentSetInUseError'));
       return;
     }
@@ -1312,16 +1506,20 @@ export function GamesLibraryGameModal({
     const previousEditingContentSetId = editingContentSetId;
     const previousOptimisticCustomContentSets = optimisticCustomContentSets;
     const nextCustomContentSets = activeCustomContentSets.filter(
-      (contentSet) => contentSet.id !== selectedCustomContentSet.id
+      (entry) => entry.id !== contentSet.id
     );
     const nextMergedContentSets = mergeKangurGameContentSetsForGame(game, nextCustomContentSets);
 
     setContentSetSyncError(null);
     setOptimisticCustomContentSets(nextCustomContentSets);
     setEditingContentSetId(null);
-    setSelectedContentSetId(nextMergedContentSets[0]?.id ?? null);
+    setSelectedContentSetId(
+      previousSelectedContentSetId === contentSet.id
+        ? nextMergedContentSets[0]?.id ?? null
+        : previousSelectedContentSetId
+    );
     setInstanceContentSourceInstanceId(null);
-    const nextDraft = buildClockContentSetDraftState();
+    const nextDraft = buildContentSetDraftState();
     setContentSetDraft(nextDraft);
     setContentSetDraftBaseline(nextDraft);
 
@@ -1338,6 +1536,14 @@ export function GamesLibraryGameModal({
       setContentSetDraftBaseline(previousContentSetDraft);
       setContentSetSyncError(translations('modal.instances.contentSetSyncError'));
     }
+  };
+
+  const handleRemoveSelectedCustomContentSet = async (): Promise<void> => {
+    if (!selectedCustomContentSet) {
+      return;
+    }
+
+    await handleRemoveCustomContentSet(selectedCustomContentSet);
   };
 
   const handleEditInstance = (instance: KangurGameInstance): void => {
@@ -1384,7 +1590,7 @@ export function GamesLibraryGameModal({
   };
 
   const handleSaveCustomContentSet = async (): Promise<void> => {
-    if (!game || !launchableRuntime || !supportsCustomClockContentSets) {
+    if (!game || !launchableRuntime || !supportsCustomContentSets) {
       return;
     }
 
@@ -1393,6 +1599,40 @@ export function GamesLibraryGameModal({
     const previousContentSetDraftBaseline = contentSetDraftBaseline;
     const previousEditingContentSetId = editingContentSetId;
     const previousOptimisticCustomContentSets = optimisticCustomContentSets;
+    const contentSetPayload = supportsCustomClockContentSets
+      ? ({
+          contentKind: 'clock_section',
+          rendererProps: {
+            clockSection: contentSetDraft.clockSection,
+          },
+        } satisfies Pick<KangurGameContentSet, 'contentKind' | 'rendererProps'>)
+      : supportsCustomCalendarContentSets
+        ? ({
+            contentKind: 'calendar_section',
+            rendererProps: {
+              calendarSection: contentSetDraft.calendarSection,
+            },
+          } satisfies Pick<KangurGameContentSet, 'contentKind' | 'rendererProps'>)
+      : supportsCustomGeometryContentSets
+        ? ({
+            contentKind: 'geometry_shape_pack',
+            rendererProps: {
+              shapeIds: normalizeGeometryContentSetShapeIds(contentSetDraft.shapeIds),
+            },
+          } satisfies Pick<KangurGameContentSet, 'contentKind' | 'rendererProps'>)
+        : supportsCustomLogicalPatternContentSets
+          ? ({
+              contentKind: 'logical_pattern_set',
+              rendererProps: {
+                patternSetId: contentSetDraft.patternSetId,
+              },
+            } satisfies Pick<KangurGameContentSet, 'contentKind' | 'rendererProps'>)
+        : null;
+
+    if (!contentSetPayload) {
+      return;
+    }
+
     const nextContentSet: KangurGameContentSet = {
       id:
         editingCustomContentSet?.id ??
@@ -1404,10 +1644,7 @@ export function GamesLibraryGameModal({
       launchableRuntimeId: launchableRuntime.screen,
       label: contentSetDraft.label.trim(),
       description: contentSetDraft.description.trim(),
-      contentKind: 'clock_section',
-      rendererProps: {
-        clockSection: contentSetDraft.clockSection,
-      },
+      ...contentSetPayload,
       sortOrder:
         editingCustomContentSet?.sortOrder ??
         Math.max(0, ...contentSets.map((entry) => entry.sortOrder)) + 1,
@@ -1892,6 +2129,16 @@ export function GamesLibraryGameModal({
     }));
   };
 
+  const toggleContentSetDraftShape = (shapeId: KangurGeometryDrawingShapeId): void => {
+    setContentSetSyncError(null);
+    setContentSetDraft((current) => ({
+      ...current,
+      shapeIds: current.shapeIds.includes(shapeId)
+        ? current.shapeIds.filter((entry) => entry !== shapeId)
+        : normalizeGeometryContentSetShapeIds([...current.shapeIds, shapeId]),
+    }));
+  };
+
   const updateInstanceClockSettings = <TKey extends keyof ClockInstanceEngineSettings>(
     key: TKey,
     value: ClockInstanceEngineSettings[TKey]
@@ -2267,33 +2514,225 @@ export function GamesLibraryGameModal({
                   >
                     {translations('modal.instances.contentSetLabel')}
                   </label>
+                  {shouldShowContentSetBrowser ? (
+                    <div className='space-y-3 rounded-[1.25rem] border border-[color:var(--kangur-soft-card-border)] [background:color-mix(in_srgb,var(--kangur-soft-card-background)_97%,white)] p-3'>
+                      <div className='flex flex-wrap items-center justify-between gap-2'>
+                        <div className='min-w-[16rem] flex-1'>
+                          <KangurTextField
+                            aria-label={translations('modal.instances.contentSetSearchLabel')}
+                            className='[background:color-mix(in_srgb,var(--kangur-soft-card-background)_97%,white)]'
+                            disabled={replaceGameInstances.isPending}
+                            onChange={(event) => setContentSetsQuery(event.target.value)}
+                            placeholder={translations(
+                              'modal.instances.contentSetSearchPlaceholder'
+                            )}
+                            size='sm'
+                            type='search'
+                            value={contentSetsQuery}
+                          />
+                        </div>
+                        <KangurButton
+                          disabled={!hasContentSetFilters || replaceGameInstances.isPending}
+                          onClick={() => {
+                            setContentSetsQuery('');
+                            setContentSetsSourceFilter('all');
+                          }}
+                          size='sm'
+                          type='button'
+                          variant='surface'
+                        >
+                          {translations('modal.instances.contentSetClearFiltersButton')}
+                        </KangurButton>
+                      </div>
+                      {activeCustomContentSets.length > 0 ? (
+                        <SegmentedFilterControl
+                          ariaLabel={translations('modal.instances.contentSetSourceFilterLabel')}
+                          className='w-full [background:color-mix(in_srgb,var(--kangur-soft-card-background)_97%,white)]'
+                          onChange={setContentSetsSourceFilter}
+                          options={[
+                            {
+                              label: translations('modal.instances.contentSetSourceFilterAll'),
+                              value: 'all',
+                            },
+                            {
+                              label: translations(
+                                'modal.instances.contentSetSourceFilterBuiltIn'
+                              ),
+                              value: 'built_in',
+                            },
+                            {
+                              label: translations('modal.instances.contentSetSourceFilterCustom'),
+                              value: 'custom',
+                            },
+                          ]}
+                          value={contentSetsSourceFilter}
+                        />
+                      ) : null}
+                    </div>
+                  ) : null}
                   <KangurSelectField
                     aria-label={translations('modal.instances.contentSetLabel')}
                     className='w-full'
                     disabled={replaceGameInstances.isPending}
                     id='games-library-instance-content-set'
                     onChange={(event) => {
-                      setInstanceSyncError(null);
-                      setInstanceContentSourceInstanceId(null);
-                      setSelectedContentSetId(event.target.value || null);
+                      handleSelectContentSet(event.target.value || null);
                     }}
                     size='sm'
                     value={selectedContentSetId ?? ''}
                   >
                     <option value=''>{translations('modal.instances.contentSetPlaceholder')}</option>
-                    {contentSets.map((contentSet) => (
+                    {selectableContentSets.map((contentSet) => (
                       <option key={contentSet.id} value={contentSet.id}>
                         {contentSet.label}
                       </option>
                     ))}
                   </KangurSelectField>
+                  {selectedContentSetOutsideFilters ? (
+                    <p className='text-xs leading-5 [color:var(--kangur-page-muted-text)]'>
+                      {translations('modal.instances.contentSetSelectionOutsideFilters')}
+                    </p>
+                  ) : null}
                   <p className='text-xs leading-5 [color:var(--kangur-page-muted-text)]'>
                     {selectedContentSet?.description ??
                       translations('modal.instances.contentSetHint')}
                   </p>
                 </div>
 
-                {supportsCustomClockContentSets ? (
+                {shouldShowContentSetBrowser ? (
+                  <div className={cn(GAMES_LIBRARY_MODAL_FIELD_SURFACE_CLASSNAME, 'space-y-3 p-4')}>
+                    <div className='space-y-1'>
+                      <div className='text-sm font-semibold [color:var(--kangur-page-text)]'>
+                        {translations('modal.instances.contentSetListTitle')}
+                      </div>
+                      <div className='text-xs leading-5 [color:var(--kangur-page-muted-text)]'>
+                        {translations('modal.instances.contentSetListDescription')}
+                      </div>
+                    </div>
+
+                    {filteredContentSets.length === 0 ? (
+                      <div
+                        className={GAMES_LIBRARY_MODAL_EMPTY_STATE_CLASSNAME}
+                        data-testid='games-library-content-set-search-empty'
+                      >
+                        {translations('modal.instances.contentSetListEmpty')}
+                      </div>
+                    ) : (
+                      <div data-testid='games-library-content-set-list' className='space-y-3'>
+                        {filteredContentSets.map((contentSet) => {
+                          const isCustomContentSet = customContentSetIdSet.has(contentSet.id);
+                          const isSelectedContentSet = selectedContentSetId === contentSet.id;
+                          const feedSummary = buildContentSetFeedSummary(contentSet, translations);
+                          const contentSetUsageCount = activeInstances.filter(
+                            (instance) => instance.contentSetId === contentSet.id
+                          ).length;
+
+                          return (
+                            <div
+                              key={contentSet.id}
+                              className={cn(
+                                'rounded-[1.25rem] border p-4 transition',
+                                isSelectedContentSet
+                                  ? 'border-[color:var(--kangur-page-text)] [background:color-mix(in_srgb,var(--kangur-soft-card-background)_94%,white)] shadow-[0_18px_40px_-36px_rgba(15,23,42,0.7)]'
+                                  : 'border-[color:var(--kangur-soft-card-border)] [background:color-mix(in_srgb,var(--kangur-soft-card-background)_97%,white)]'
+                              )}
+                              data-testid={getGamesLibraryContentSetCardTestId(contentSet.id)}
+                            >
+                              <div className='flex flex-wrap items-start justify-between gap-3'>
+                                <div className='min-w-0 flex-1 space-y-2'>
+                                  <div className='flex flex-wrap items-center gap-2'>
+                                    <div className='text-sm font-semibold [color:var(--kangur-page-text)]'>
+                                      {contentSet.label}
+                                    </div>
+                                    <KangurStatusChip
+                                      accent={isCustomContentSet ? 'violet' : 'sky'}
+                                      size='sm'
+                                    >
+                                      {isCustomContentSet
+                                        ? translations('modal.instances.contentSetSourceCustom')
+                                        : translations('modal.instances.contentSetSourceBuiltIn')}
+                                    </KangurStatusChip>
+                                    <KangurStatusChip accent='slate' size='sm'>
+                                      {getContentKindLabel(contentSet.contentKind, translations)}
+                                    </KangurStatusChip>
+                                    {feedSummary ? (
+                                      <KangurStatusChip accent='emerald' size='sm'>
+                                        {feedSummary}
+                                      </KangurStatusChip>
+                                    ) : null}
+                                  </div>
+                                  <div className='text-xs leading-5 [color:var(--kangur-page-muted-text)]'>
+                                    {contentSet.description}
+                                  </div>
+                                </div>
+                                <div className='flex flex-wrap gap-2'>
+                                  <KangurButton
+                                    disabled={
+                                      replaceGameInstances.isPending || isSelectedContentSet
+                                    }
+                                    onClick={() => {
+                                      handleSelectContentSet(contentSet.id);
+                                    }}
+                                    size='sm'
+                                    type='button'
+                                    variant={isSelectedContentSet ? 'surface' : 'primary'}
+                                    >
+                                      {isSelectedContentSet
+                                        ? translations('modal.instances.selectedContentSetButton')
+                                        : translations('modal.instances.selectContentSetButton')}
+                                    </KangurButton>
+                                  <KangurButton
+                                    disabled={replaceGameContentSets.isPending}
+                                    onClick={() => {
+                                      handleForkContentSet(contentSet);
+                                    }}
+                                    size='sm'
+                                    type='button'
+                                    variant='surface'
+                                  >
+                                    {translations('modal.instances.forkSelectedContentSetButton')}
+                                  </KangurButton>
+                                  {isCustomContentSet ? (
+                                    <KangurButton
+                                      disabled={replaceGameContentSets.isPending}
+                                      onClick={() => {
+                                        handleEditCustomContentSet(contentSet);
+                                      }}
+                                      size='sm'
+                                      type='button'
+                                      variant='surface'
+                                    >
+                                      {translations('modal.instances.editSelectedContentSetButton')}
+                                    </KangurButton>
+                                  ) : null}
+                                  {isCustomContentSet ? (
+                                    <KangurButton
+                                      disabled={
+                                        replaceGameContentSets.isPending || contentSetUsageCount > 0
+                                      }
+                                      onClick={() => {
+                                        void handleRemoveCustomContentSet(contentSet);
+                                      }}
+                                      size='sm'
+                                      type='button'
+                                      variant='surface'
+                                    >
+                                      {translations(
+                                        'modal.instances.removeSelectedContentSetButton'
+                                      )}
+                                    </KangurButton>
+                                  ) : null}
+                                </div>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
+                ) : null}
+
+                {supportsCustomContentSets ? (
       <div
         className={cn(GAMES_LIBRARY_MODAL_FIELD_SURFACE_CLASSNAME, 'space-y-3 p-4')}
         data-testid='games-library-content-set-composer'
@@ -2359,52 +2798,172 @@ export function GamesLibraryGameModal({
           </div>
         ) : null}
 
-                    <div className='grid gap-3 md:grid-cols-2'>
-                      <KangurTextField
-                        aria-label={translations('modal.instances.contentSetDraftLabel')}
-                        className='w-full'
-                        disabled={replaceGameContentSets.isPending}
-                        onChange={(event) =>
-                          updateContentSetDraft('label', event.target.value)
-                        }
-                        placeholder={translations(
-                          'modal.instances.contentSetDraftLabelPlaceholder'
-                        )}
-                        value={contentSetDraft.label}
-                      />
+                    <div
+                      className={cn(
+                        'grid gap-3',
+                        supportsCustomClockContentSets || supportsCustomCalendarContentSets
+                          ? 'md:grid-cols-2'
+                          : undefined
+                      )}
+                    >
                       <div className='space-y-2'>
                         <label
                           className='text-[11px] font-bold uppercase tracking-wide [color:var(--kangur-page-muted-text)]'
-                          htmlFor='games-library-content-set-clock-section'
+                          htmlFor='games-library-content-set-draft-label'
                         >
-                          {translations('modal.instances.contentSetDraftFeedLabel')}
+                          {translations('modal.instances.contentSetDraftLabel')}
                         </label>
-                        <KangurSelectField
-                          aria-label={translations('modal.instances.contentSetDraftFeedLabel')}
+                        <KangurTextField
+                          aria-label={translations('modal.instances.contentSetDraftLabel')}
                           className='w-full'
                           disabled={replaceGameContentSets.isPending}
-                          id='games-library-content-set-clock-section'
+                          id='games-library-content-set-draft-label'
+                          onChange={(event) =>
+                            updateContentSetDraft('label', event.target.value)
+                          }
+                          placeholder={translations(
+                            'modal.instances.contentSetDraftLabelPlaceholder'
+                          )}
+                          value={contentSetDraft.label}
+                        />
+                      </div>
+                      {supportsCustomClockContentSets ? (
+                        <div className='space-y-2'>
+                          <label
+                            className='text-[11px] font-bold uppercase tracking-wide [color:var(--kangur-page-muted-text)]'
+                            htmlFor='games-library-content-set-clock-section'
+                          >
+                            {translations('modal.instances.contentSetDraftFeedLabel')}
+                          </label>
+                          <KangurSelectField
+                            aria-label={translations('modal.instances.contentSetDraftFeedLabel')}
+                            className='w-full'
+                            disabled={replaceGameContentSets.isPending}
+                            id='games-library-content-set-clock-section'
+                            onChange={(event) =>
+                              updateContentSetDraft(
+                                'clockSection',
+                                event.target.value as ClockTrainingSectionId
+                              )
+                            }
+                            size='sm'
+                            value={contentSetDraft.clockSection}
+                          >
+                            <option value='hours'>
+                              {translations('modal.settings.clockSectionHours')}
+                            </option>
+                            <option value='minutes'>
+                              {translations('modal.settings.clockSectionMinutes')}
+                            </option>
+                            <option value='combined'>
+                              {translations('modal.settings.clockSectionCombined')}
+                            </option>
+                          </KangurSelectField>
+                        </div>
+                      ) : null}
+                      {supportsCustomCalendarContentSets ? (
+                        <div className='space-y-2'>
+                          <label
+                            className='text-[11px] font-bold uppercase tracking-wide [color:var(--kangur-page-muted-text)]'
+                            htmlFor='games-library-content-set-calendar-section'
+                          >
+                            {translations('modal.instances.contentSetDraftCalendarSectionLabel')}
+                          </label>
+                          <KangurSelectField
+                            aria-label={translations(
+                              'modal.instances.contentSetDraftCalendarSectionLabel'
+                            )}
+                            className='w-full'
+                            disabled={replaceGameContentSets.isPending}
+                            id='games-library-content-set-calendar-section'
+                            onChange={(event) =>
+                              updateContentSetDraft(
+                                'calendarSection',
+                                event.target.value as KangurCalendarInteractiveStageSection
+                              )
+                            }
+                            size='sm'
+                            value={contentSetDraft.calendarSection}
+                          >
+                            <option value='dni'>
+                              {translations('modal.instances.calendarSection.dni')}
+                            </option>
+                            <option value='miesiace'>
+                              {translations('modal.instances.calendarSection.miesiace')}
+                            </option>
+                            <option value='data'>
+                              {translations('modal.instances.calendarSection.data')}
+                            </option>
+                          </KangurSelectField>
+                        </div>
+                      ) : null}
+                    </div>
+
+                    {supportsCustomGeometryContentSets ? (
+                      <div className='space-y-2'>
+                        <div className='text-[11px] font-bold uppercase tracking-wide [color:var(--kangur-page-muted-text)]'>
+                          {translations('modal.instances.contentSetDraftShapesLabel')}
+                        </div>
+                        <div className='grid gap-2 sm:grid-cols-2'>
+                          {GEOMETRY_CONTENT_SET_SHAPE_OPTIONS.map((shapeId) => {
+                            const isSelected = contentSetDraft.shapeIds.includes(shapeId);
+
+                            return (
+                              <label
+                                key={shapeId}
+                                className='flex items-center gap-2 rounded-2xl border border-[color:var(--kangur-soft-card-border)] bg-white/80 px-3 py-2 text-sm [color:var(--kangur-page-text)]'
+                              >
+                                <input
+                                  aria-label={getGeometryShapeLabel(shapeId, translations)}
+                                  checked={isSelected}
+                                  disabled={replaceGameContentSets.isPending}
+                                  onChange={() => toggleContentSetDraftShape(shapeId)}
+                                  type='checkbox'
+                                />
+                                <span>{getGeometryShapeLabel(shapeId, translations)}</span>
+                              </label>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    ) : null}
+
+                    {supportsCustomLogicalPatternContentSets ? (
+                      <div className='space-y-2'>
+                        <label
+                          className='text-[11px] font-bold uppercase tracking-wide [color:var(--kangur-page-muted-text)]'
+                          htmlFor='games-library-content-set-pattern-set'
+                        >
+                          {translations('modal.instances.contentSetDraftPatternSetLabel')}
+                        </label>
+                        <KangurSelectField
+                          aria-label={translations(
+                            'modal.instances.contentSetDraftPatternSetLabel'
+                          )}
+                          className='w-full'
+                          disabled={replaceGameContentSets.isPending}
+                          id='games-library-content-set-pattern-set'
                           onChange={(event) =>
                             updateContentSetDraft(
-                              'clockSection',
-                              event.target.value as ClockTrainingSectionId
+                              'patternSetId',
+                              event.target.value as KangurLogicalPatternSetId
                             )
                           }
                           size='sm'
-                          value={contentSetDraft.clockSection}
+                          value={contentSetDraft.patternSetId}
                         >
-                          <option value='hours'>
-                            {translations('modal.settings.clockSectionHours')}
+                          <option value='logical_patterns_workshop'>
+                            {getLogicalPatternSetLabel(
+                              'logical_patterns_workshop',
+                              translations
+                            )}
                           </option>
-                          <option value='minutes'>
-                            {translations('modal.settings.clockSectionMinutes')}
-                          </option>
-                          <option value='combined'>
-                            {translations('modal.settings.clockSectionCombined')}
+                          <option value='alphabet_letter_order'>
+                            {getLogicalPatternSetLabel('alphabet_letter_order', translations)}
                           </option>
                         </KangurSelectField>
                       </div>
-                    </div>
+                    ) : null}
 
                     <div className='space-y-2'>
                       <label
@@ -2948,7 +3507,7 @@ export function GamesLibraryGameModal({
                         {translations('modal.instances.listClearFiltersButton')}
                       </KangurButton>
                     </div>
-                    <SavedSectionsStatusControl
+                    <SegmentedFilterControl
                       ariaLabel={translations('modal.instances.listStatusFilterLabel')}
                       className='w-full [background:color-mix(in_srgb,var(--kangur-soft-card-background)_97%,white)]'
                       onChange={setSavedInstancesStatusFilter}
@@ -3796,7 +4355,7 @@ export function GamesLibraryGameModal({
                     {translations('modal.draftListClearFiltersButton')}
                   </KangurButton>
                 </div>
-                <SavedSectionsStatusControl
+                <SegmentedFilterControl
                   ariaLabel={translations('modal.draftListStatusFilterLabel')}
                   className='w-full [background:color-mix(in_srgb,var(--kangur-soft-card-background)_97%,white)]'
                   onChange={setSavedSectionsStatusFilter}

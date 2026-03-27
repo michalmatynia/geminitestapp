@@ -8,6 +8,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 const { withKangurClientError, withKangurClientErrorSync } = globalThis.__kangurClientErrorMocks();
 const mutateAsyncMock = vi.fn();
 const updateLessonDocumentsMock = vi.fn();
+const updateLessonTemplatesMock = vi.fn();
 const toastMock = vi.fn();
 const lessonsState = {
   value: [] as Array<Record<string, unknown>>,
@@ -64,6 +65,10 @@ vi.mock('@/features/kangur/ui/hooks/useKangurLessons', () => ({
 
 vi.mock('@/features/kangur/ui/hooks/useKangurLessonTemplates', () => ({
   useKangurLessonTemplates: () => ({ data: [] }),
+  useUpdateKangurLessonTemplates: () => ({
+    mutateAsync: updateLessonTemplatesMock,
+    isPending: false,
+  }),
 }));
 
 vi.mock('@/features/kangur/shared/ui', async (importOriginal) => {
@@ -185,6 +190,7 @@ describe('AdminKangurLessonsManagerPage geometry pack action', () => {
   beforeEach(() => {
     mutateAsyncMock.mockReset();
     updateLessonDocumentsMock.mockReset();
+    updateLessonTemplatesMock.mockReset();
     toastMock.mockReset();
     useMasterFolderTreeShellMock.mockReset();
     folderTreeViewportMock.mockReset();

@@ -17,10 +17,8 @@ import dynamic from 'next/dynamic';
 import { useLocale, useTranslations } from 'next-intl';
 import { useCallback, useEffect, useMemo, useRef, useState, type AriaAttributes } from 'react';
 
-import {
-  CmsStorefrontAppearanceButtons,
-  useOptionalCmsStorefrontAppearance,
-} from '@/features/cms/public';
+import { CmsStorefrontAppearanceButtons } from '@/features/cms/components/frontend/CmsStorefrontAppearance';
+import { useOptionalCmsStorefrontAppearance } from '@/features/cms/components/frontend/CmsStorefrontAppearance.context';
 import { KANGUR_TIGHT_ROW_CLASSNAME } from '@/features/kangur/ui/design/tokens';
 import {
   getKangurHomeHref,

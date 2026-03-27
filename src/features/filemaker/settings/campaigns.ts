@@ -24,7 +24,6 @@ import type {
   FilemakerEmailCampaignEventRegistry,
   FilemakerEmailCampaignEventType,
   FilemakerEmailCampaignLifecycleStatus,
-  FilemakerEmailCampaignLaunchMode,
   FilemakerEmailCampaignLaunchRule,
   FilemakerEmailCampaignRecurringRule,
   FilemakerEmailCampaignRegistry,
@@ -519,7 +518,7 @@ const normalizeCampaignLaunchRule = (value: unknown): FilemakerEmailCampaignLaun
   return {
     mode:
       mode === 'manual' || mode === 'scheduled' || mode === 'recurring'
-        ? (mode as FilemakerEmailCampaignLaunchMode)
+        ? mode
         : defaults.mode,
     scheduledAt: normalizeString(record['scheduledAt']) || null,
     recurring: normalizeCampaignRecurringRule(record['recurring']),
@@ -551,7 +550,7 @@ export const createFilemakerEmailCampaign = (input?: Partial<FilemakerEmailCampa
     description: normalizeString(input?.description) || null,
     status:
       status === 'draft' || status === 'active' || status === 'paused' || status === 'archived'
-        ? (status as FilemakerEmailCampaignLifecycleStatus)
+        ? status
         : 'draft',
     subject: normalizeString(input?.subject),
     previewText: normalizeString(input?.previewText) || null,
@@ -665,7 +664,7 @@ export const createFilemakerEmailCampaignRun = (
       status === 'failed' ||
       status === 'cancelled' ||
       status === 'pending'
-        ? (status as FilemakerEmailCampaignRunStatus)
+        ? status
         : 'pending',
     launchReason: normalizeString(input.launchReason) || null,
     startedAt: normalizeString(input.startedAt) || null,
@@ -714,11 +713,11 @@ export const createFilemakerEmailCampaignDelivery = (
       normalizedStatus === 'failed' ||
       normalizedStatus === 'skipped' ||
       normalizedStatus === 'bounced'
-        ? (normalizedStatus as FilemakerEmailCampaignDeliveryStatus)
+        ? normalizedStatus
         : 'queued',
     provider:
       normalizedProvider === 'webhook' || normalizedProvider === 'smtp'
-        ? (normalizedProvider as FilemakerEmailCampaignDeliveryProvider)
+        ? normalizedProvider
         : null,
     failureCategory:
       normalizedFailureCategory === 'soft_bounce' ||
@@ -728,7 +727,7 @@ export const createFilemakerEmailCampaignDelivery = (
       normalizedFailureCategory === 'timeout' ||
       normalizedFailureCategory === 'invalid_recipient' ||
       normalizedFailureCategory === 'unknown'
-        ? (normalizedFailureCategory as FilemakerEmailCampaignDeliveryFailureCategory)
+        ? normalizedFailureCategory
         : null,
     providerMessage: normalizeString(input.providerMessage) || null,
     lastError: normalizeString(input.lastError) || null,
@@ -780,11 +779,11 @@ export const createFilemakerEmailCampaignDeliveryAttempt = (
       normalizedStatus === 'sent' ||
       normalizedStatus === 'failed' ||
       normalizedStatus === 'bounced'
-        ? (normalizedStatus as FilemakerEmailCampaignDeliveryAttemptStatus)
+        ? normalizedStatus
         : 'failed',
     provider:
       normalizedProvider === 'webhook' || normalizedProvider === 'smtp'
-        ? (normalizedProvider as FilemakerEmailCampaignDeliveryProvider)
+        ? normalizedProvider
         : null,
     failureCategory:
       normalizedFailureCategory === 'soft_bounce' ||
@@ -794,7 +793,7 @@ export const createFilemakerEmailCampaignDeliveryAttempt = (
       normalizedFailureCategory === 'timeout' ||
       normalizedFailureCategory === 'invalid_recipient' ||
       normalizedFailureCategory === 'unknown'
-        ? (normalizedFailureCategory as FilemakerEmailCampaignDeliveryFailureCategory)
+        ? normalizedFailureCategory
         : null,
     providerMessage: normalizeString(input.providerMessage) || null,
     errorMessage: normalizeString(input.errorMessage) || null,
@@ -844,7 +843,7 @@ export const createFilemakerEmailCampaignEvent = (
       normalizedType === 'completed' ||
       normalizedType === 'failed' ||
       normalizedType === 'cancelled'
-        ? (normalizedType as FilemakerEmailCampaignEventType)
+        ? normalizedType
         : 'status_changed',
     message: normalizeString(input.message),
     actor: normalizeString(input.actor) || null,
@@ -897,7 +896,7 @@ export const createFilemakerEmailCampaignSuppressionEntry = (
       normalizedReason === 'manual_block' ||
       normalizedReason === 'unsubscribed' ||
       normalizedReason === 'bounced'
-        ? (normalizedReason as FilemakerEmailCampaignSuppressionReason)
+        ? normalizedReason
         : 'manual_block',
     actor: normalizeString(input.actor) || null,
     notes: normalizeString(input.notes) || null,

@@ -107,4 +107,33 @@ describe('KangurActiveLessonHeader', () => {
     expect(screen.queryByText('Pronouns')).not.toBeInTheDocument();
     expect(screen.queryByText(/subsection/i)).not.toBeInTheDocument();
   });
+
+  it('prefers explicit title and description overrides', () => {
+    render(
+      <KangurActiveLessonHeader
+        lesson={{
+          id: 'lesson-english-pronouns',
+          componentId: 'lesson-english-pronouns',
+          title: 'English: Parts of Speech',
+          description: 'Fallback lesson description.',
+          emoji: '📘',
+          color: 'from-sky-500 to-cyan-400',
+        } as never}
+        lessonDocument={null}
+        lessonContentRef={React.createRef()}
+        titleOverride='Mongo title'
+        descriptionOverride='Mongo description'
+        headerTestId='active-header'
+        headerActionsTestId='active-header-actions'
+        iconTestId='active-header-icon'
+        priorityChipTestId='active-header-priority'
+        completedChipTestId='active-header-completed'
+      />
+    );
+
+    expect(screen.getByRole('heading', { name: 'Mongo title' })).toBeInTheDocument();
+    expect(screen.getByText('Mongo description')).toBeInTheDocument();
+    expect(screen.queryByText('English: Parts of Speech')).not.toBeInTheDocument();
+    expect(screen.queryByText('Fallback lesson description.')).not.toBeInTheDocument();
+  });
 });

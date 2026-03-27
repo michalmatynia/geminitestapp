@@ -42,12 +42,14 @@ type KangurLessonNarratorProps = {
   lessonDocument: KangurLessonDocument | null;
   lessonContentRef?: React.RefObject<HTMLElement | null> | null;
   className?: string | undefined;
+  descriptionOverride?: string | undefined;
   displayMode?: 'button' | 'icon';
   readLabel?: string | undefined;
   pauseLabel?: string | undefined;
   resumeLabel?: string | undefined;
   loadingLabel?: string | undefined;
   showFeedback?: boolean | undefined;
+  titleOverride?: string | undefined;
 };
 
 export function KangurLessonNarrator(props: KangurLessonNarratorProps): React.JSX.Element | null {
@@ -56,12 +58,14 @@ export function KangurLessonNarrator(props: KangurLessonNarratorProps): React.JS
     lessonDocument,
     lessonContentRef,
     className,
+    descriptionOverride,
     displayMode = 'button',
     readLabel = 'Read',
     pauseLabel = 'Pause',
     resumeLabel = 'Resume',
     loadingLabel,
     showFeedback,
+    titleOverride,
   } = props;
   const locale = useLocale();
   const { isSuperAdmin } = useKangurElevatedSession();
@@ -104,13 +108,15 @@ export function KangurLessonNarrator(props: KangurLessonNarratorProps): React.JS
 
   const shouldObserveText = lesson.contentMode !== 'document' || !lessonDocument;
   const localizedLessonTitle =
-    typeof lesson.componentId === 'string'
+    titleOverride?.trim() ||
+    (typeof lesson.componentId === 'string'
       ? getLocalizedKangurLessonTitle(lesson.componentId, locale, lesson.title)
-      : lesson.title;
+      : lesson.title);
   const localizedLessonDescription =
-    typeof lesson.componentId === 'string'
+    descriptionOverride?.trim() ||
+    (typeof lesson.componentId === 'string'
       ? getLocalizedKangurLessonDescription(lesson.componentId, locale, lesson.description)
-      : lesson.description;
+      : lesson.description);
 
   useEffect(() => {
     if (!shouldObserveText) {

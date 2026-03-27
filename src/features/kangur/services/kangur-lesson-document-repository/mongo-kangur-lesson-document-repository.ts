@@ -1,6 +1,6 @@
 import 'server-only';
 
-import type { Db, Document } from 'mongodb';
+import type { Db, Document, Filter } from 'mongodb';
 
 import type {
   KangurLessonDocument,
@@ -32,11 +32,17 @@ const buildLocalizedLessonDocumentId = (lessonId: string, locale?: string | null
   return normalizedLocale === 'pl' ? lessonId : `${normalizedLocale}:${lessonId}`;
 };
 
-const buildLessonDocumentFilter = (locale?: string | null) => {
+const buildLessonDocumentFilter = (
+  locale?: string | null
+): Filter<MongoKangurLessonDocument> => {
   const normalizedLocale = normalizeLessonDocumentLocale(locale);
-  return normalizedLocale === 'pl'
-    ? ({ $or: [{ locale: normalizedLocale }, { locale: { $exists: false } }] } as const)
-    : ({ locale: normalizedLocale } as const);
+  if (normalizedLocale === 'pl') {
+    return {
+      $or: [{ locale: normalizedLocale }, { locale: { $exists: false } }],
+    };
+  }
+
+  return { locale: normalizedLocale };
 };
 
 let indexesInitialized = false;

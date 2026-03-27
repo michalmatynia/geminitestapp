@@ -16,11 +16,15 @@ import { useKangurProgressState } from '@/features/kangur/ui/hooks/useKangurProg
 import { useKangurMobileBreakpoint } from '@/features/kangur/ui/hooks/useKangurMobileBreakpoint';
 import { useKangurRouteNavigator } from '@/features/kangur/ui/hooks/useKangurRouteNavigator';
 import { useKangurRoutePageReady } from '@/features/kangur/ui/hooks/useKangurRoutePageReady';
+import {
+  resolveFocusedLessonId,
+  resolveFocusedLessonScope,
+} from '@/features/kangur/lessons/lesson-focus-utils';
 import type {
   KangurLesson,
   KangurLessonComponentId,
+  KangurLessonDocumentStore,
 } from '@/features/kangur/shared/contracts/kangur';
-import { resolveFocusedLessonScope } from '@/features/kangur/ui/context/KangurLessonsRuntimeContext.shared';
 import {
   KANGUR_TOP_BAR_DEFAULT_HEIGHT_PX,
   KANGUR_TOP_BAR_HEIGHT_VAR_NAME,
@@ -33,13 +37,13 @@ import {
 import {
   getLessonAssignmentTimestamp,
   LESSON_ASSIGNMENT_PRIORITY_ORDER,
-  resolveFocusedLessonId,
 } from './Lessons.utils';
 
 const EMPTY_LESSON_ASSIGNMENTS_BY_COMPONENT = new Map<
   KangurLessonComponentId,
   KangurAssignmentSnapshot
 >();
+const EMPTY_LESSON_DOCUMENTS = {} as KangurLessonDocumentStore;
 
 export function useLessonsLogic() {
   const routeNavigator = useKangurRouteNavigator();
@@ -63,7 +67,7 @@ export function useLessonsLogic() {
     enabled: isDeferredContentReady && focusToken !== null,
   });
   const lessonTemplateMap = useMemo(
-    () => new Map(lessonTemplates.map((t) => [t.componentId, t])),
+    () => new Map(lessonTemplates.map((t) => [t.componentId, t] as const)),
     [lessonTemplates],
   );
   const progress = useKangurProgressState();
@@ -338,6 +342,7 @@ export function useLessonsLogic() {
       ? -1
       : orderedLessons.findIndex((lesson) => lesson.id === activeLessonId);
   const activeLesson = activeIdx >= 0 ? orderedLessons[activeIdx] : null;
+  const lessonDocuments = EMPTY_LESSON_DOCUMENTS;
   const isActiveLessonSurfaceReady =
     !activeLesson ||
     isSecretLessonActive ||
@@ -421,7 +426,9 @@ export function useLessonsLogic() {
     setAgeGroup,
     lessons,
     lessonSections,
+    lessonTemplateMap,
     orderedLessons,
+    lessonDocuments,
     isLessonsCatalogLoading,
     isLessonSectionsLoading,
     shouldShowLessonsCatalogSkeleton,

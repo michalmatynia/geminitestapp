@@ -17,6 +17,7 @@ export type KangurGameInstanceId = z.infer<typeof kangurGameInstanceIdSchema>;
 
 export const KANGUR_GAME_CONTENT_SET_KINDS = [
   'default_content',
+  'calendar_section',
   'clock_section',
   'logical_pattern_set',
   'geometry_shape_pack',

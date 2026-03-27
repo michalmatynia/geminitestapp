@@ -347,6 +347,27 @@ const messageMap = {
   'KangurGamesLibraryPage.modal.settingsSummary.taskTitleHidden': 'Task title hidden',
   'KangurGamesLibraryPage.modal.settingsSummary.timeDisplayHidden': 'Time display hidden',
   'KangurGamesLibraryPage.modal.instances.contentSetLabel': 'Content set',
+  'KangurGamesLibraryPage.modal.instances.contentSetSearchLabel': 'Search content sets',
+  'KangurGamesLibraryPage.modal.instances.contentSetSearchPlaceholder':
+    'Search content sets',
+  'KangurGamesLibraryPage.modal.instances.contentSetSourceFilterLabel':
+    'Filter content sets by source',
+  'KangurGamesLibraryPage.modal.instances.contentSetSourceFilterAll': 'All',
+  'KangurGamesLibraryPage.modal.instances.contentSetSourceFilterBuiltIn': 'Built-in',
+  'KangurGamesLibraryPage.modal.instances.contentSetSourceFilterCustom': 'Custom',
+  'KangurGamesLibraryPage.modal.instances.contentSetClearFiltersButton':
+    'Clear content-set filters',
+  'KangurGamesLibraryPage.modal.instances.contentSetSelectionOutsideFilters':
+    'The current selection stays available while filters narrow the list.',
+  'KangurGamesLibraryPage.modal.instances.contentSetListTitle': 'Available content sets',
+  'KangurGamesLibraryPage.modal.instances.contentSetListDescription':
+    'Browse built-in and custom feeds, then select the one you want to mix into the current instance.',
+  'KangurGamesLibraryPage.modal.instances.contentSetListEmpty':
+    'No content sets match the current filters.',
+  'KangurGamesLibraryPage.modal.instances.contentSetSourceBuiltIn': 'Built-in',
+  'KangurGamesLibraryPage.modal.instances.contentSetSourceCustom': 'Custom',
+  'KangurGamesLibraryPage.modal.instances.selectContentSetButton': 'Select',
+  'KangurGamesLibraryPage.modal.instances.selectedContentSetButton': 'Selected',
   'KangurGamesLibraryPage.modal.instances.contentSourceLabel': 'Content source',
   'KangurGamesLibraryPage.modal.instances.engineSourceLabel': 'Engine source',
   'KangurGamesLibraryPage.modal.instances.contentSourceBadge': 'Content source',
@@ -366,19 +387,42 @@ const messageMap = {
   'KangurGamesLibraryPage.modal.instances.contentSetDraftDescriptionPlaceholder':
     'Explain what content this reusable set feeds into the engine.',
   'KangurGamesLibraryPage.modal.instances.contentSetDraftFeedLabel': 'Content feed',
+  'KangurGamesLibraryPage.modal.instances.contentSetDraftShapesLabel': 'Included shapes',
+  'KangurGamesLibraryPage.modal.instances.contentSetDraftPatternSetLabel': 'Pattern set',
+  'KangurGamesLibraryPage.modal.instances.geometryShape.circle': 'Circle',
+  'KangurGamesLibraryPage.modal.instances.geometryShape.oval': 'Oval',
+  'KangurGamesLibraryPage.modal.instances.geometryShape.triangle': 'Triangle',
+  'KangurGamesLibraryPage.modal.instances.geometryShape.diamond': 'Diamond',
+  'KangurGamesLibraryPage.modal.instances.geometryShape.square': 'Square',
+  'KangurGamesLibraryPage.modal.instances.geometryShape.rectangle': 'Rectangle',
+  'KangurGamesLibraryPage.modal.instances.geometryShape.pentagon': 'Pentagon',
+  'KangurGamesLibraryPage.modal.instances.geometryShape.hexagon': 'Hexagon',
+  'KangurGamesLibraryPage.modal.instances.logicalPatternSet.logical_patterns_workshop':
+    'Logical workshop',
+  'KangurGamesLibraryPage.modal.instances.logicalPatternSet.alphabet_letter_order':
+    'Alphabet order',
   'KangurGamesLibraryPage.modal.instances.titleLabel': 'Instance title',
   'KangurGamesLibraryPage.modal.instances.contentKind.default_content': 'Bundled content',
+  'KangurGamesLibraryPage.modal.instances.contentKind.calendar_section': 'Calendar section',
   'KangurGamesLibraryPage.modal.instances.contentKind.clock_section': 'Clock section',
   'KangurGamesLibraryPage.modal.instances.contentKind.logical_pattern_set': 'Pattern set',
   'KangurGamesLibraryPage.modal.instances.contentKind.geometry_shape_pack': 'Shape pack',
   'KangurGamesLibraryPage.modal.instances.feedSummary.defaultContent':
     'Bundled runtime content',
+  'KangurGamesLibraryPage.modal.instances.feedSummary.calendarDays': 'Days of week',
+  'KangurGamesLibraryPage.modal.instances.feedSummary.calendarMonths': 'Months',
+  'KangurGamesLibraryPage.modal.instances.feedSummary.calendarDates': 'Dates',
   'KangurGamesLibraryPage.modal.instances.feedSummary.logicalPatternsWorkshop':
     'Logical workshop',
   'KangurGamesLibraryPage.modal.instances.feedSummary.alphabetOrder':
     'Alphabet order',
   'KangurGamesLibraryPage.modal.instances.feedSummary.geometryShapeCount':
     '{count} shapes',
+  'KangurGamesLibraryPage.modal.instances.contentSetDraftCalendarSectionLabel':
+    'Calendar section',
+  'KangurGamesLibraryPage.modal.instances.calendarSection.dni': 'Days of week',
+  'KangurGamesLibraryPage.modal.instances.calendarSection.miesiace': 'Months',
+  'KangurGamesLibraryPage.modal.instances.calendarSection.data': 'Dates',
   'KangurGamesLibraryPage.modal.instances.descriptionLabel': 'Instance description',
   'KangurGamesLibraryPage.modal.instances.emojiLabel': 'Instance icon',
   'KangurGamesLibraryPage.modal.instances.enabledLabel': 'Instance visible in the library',
@@ -2152,6 +2196,195 @@ describe('GamesLibrary serialization audit', () => {
     expect(replaceGameContentSetsMutateAsyncMock).not.toHaveBeenCalled();
   });
 
+  it('creates a custom geometry shape-pack content set and uses it for a saved instance', async () => {
+    pageDataState.value = buildPageDataForGameIds('geometry_perimeter_trainer');
+    render(<GamesLibrary />);
+
+    const geometryCard = document.getElementById('kangur-game-card-geometry_perimeter_trainer');
+    if (!geometryCard) {
+      throw new Error('Geometry perimeter trainer card container not found.');
+    }
+
+    fireEvent.click(within(geometryCard).getByRole('button', { name: 'Preview & map' }));
+
+    expect(screen.getByText('Create custom content set')).toBeInTheDocument();
+    expect(screen.getByLabelText('Content set')).toHaveValue(
+      'geometry_perimeter_trainer:default'
+    );
+
+    fireEvent.change(screen.getByLabelText('Content-set name'), {
+      target: { value: 'Polygon challenge pack' },
+    });
+    fireEvent.change(screen.getByLabelText('Content-set description'), {
+      target: { value: 'Feeds polygon-heavy tracing rounds into the drawing engine.' },
+    });
+
+    fireEvent.click(screen.getByLabelText('Triangle'));
+    fireEvent.click(screen.getByLabelText('Square'));
+    fireEvent.click(screen.getByLabelText('Hexagon'));
+
+    fireEvent.click(screen.getByRole('button', { name: 'Save content set' }));
+
+    await waitFor(() => {
+      expect(replaceGameContentSetsMutateAsyncMock).toHaveBeenCalledTimes(1);
+    });
+
+    const savedContentSet = replaceGameContentSetsMutateAsyncMock.mock.calls[0]?.[0]
+      ?.contentSets?.[0] as
+      | {
+          id: string;
+          label: string;
+          contentKind?: string;
+          rendererProps?: { shapeIds?: string[] };
+        }
+      | undefined;
+
+    expect(savedContentSet?.label).toBe('Polygon challenge pack');
+    expect(savedContentSet?.contentKind).toBe('geometry_shape_pack');
+    expect(savedContentSet?.rendererProps?.shapeIds).toEqual(['circle', 'hexagon']);
+    expect(screen.getByLabelText('Content set')).toHaveValue(savedContentSet?.id ?? '');
+    expect(screen.getByTestId('games-library-instance-preview')).toHaveTextContent('2 shapes');
+
+    fireEvent.change(screen.getByLabelText('Instance title'), {
+      target: { value: 'Polygon challenge instance' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Create instance' }));
+
+    await waitFor(() => {
+      expect(replaceGameInstancesMutateAsyncMock).toHaveBeenCalledTimes(1);
+    });
+
+    const savedInstance = replaceGameInstancesMutateAsyncMock.mock.calls[0]?.[0]
+      ?.instances?.[0] as { contentSetId?: string } | undefined;
+    expect(savedInstance?.contentSetId).toBe(savedContentSet?.id);
+  });
+
+  it('creates a custom logical-pattern content set and uses it for a saved instance', async () => {
+    pageDataState.value = buildPageDataForGameIds('logical_patterns_workshop');
+    render(<GamesLibrary />);
+
+    const logicalPatternsCard = document.getElementById(
+      'kangur-game-card-logical_patterns_workshop'
+    );
+    if (!logicalPatternsCard) {
+      throw new Error('Logical Patterns Workshop card container not found.');
+    }
+
+    fireEvent.click(
+      within(logicalPatternsCard).getByRole('button', { name: 'Preview & map' })
+    );
+
+    expect(screen.getByText('Create custom content set')).toBeInTheDocument();
+    expect(screen.getByLabelText('Content set')).toHaveValue('logical_patterns_workshop:default');
+
+    fireEvent.change(screen.getByLabelText('Content-set name'), {
+      target: { value: 'Alphabet warmup pack' },
+    });
+    fireEvent.change(screen.getByLabelText('Content-set description'), {
+      target: { value: 'Feeds alphabet-order rounds into the logical pattern engine.' },
+    });
+    fireEvent.change(screen.getByLabelText('Pattern set'), {
+      target: { value: 'alphabet_letter_order' },
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: 'Save content set' }));
+
+    await waitFor(() => {
+      expect(replaceGameContentSetsMutateAsyncMock).toHaveBeenCalledTimes(1);
+    });
+
+    const savedContentSet = replaceGameContentSetsMutateAsyncMock.mock.calls[0]?.[0]
+      ?.contentSets?.[0] as
+      | {
+          id: string;
+          label: string;
+          contentKind?: string;
+          rendererProps?: { patternSetId?: string };
+        }
+      | undefined;
+
+    expect(savedContentSet?.label).toBe('Alphabet warmup pack');
+    expect(savedContentSet?.contentKind).toBe('logical_pattern_set');
+    expect(savedContentSet?.rendererProps?.patternSetId).toBe('alphabet_letter_order');
+    expect(screen.getByLabelText('Content set')).toHaveValue(savedContentSet?.id ?? '');
+    expect(screen.getByTestId('games-library-instance-preview')).toHaveTextContent(
+      'Alphabet order'
+    );
+
+    fireEvent.change(screen.getByLabelText('Instance title'), {
+      target: { value: 'Alphabet warmup instance' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Create instance' }));
+
+    await waitFor(() => {
+      expect(replaceGameInstancesMutateAsyncMock).toHaveBeenCalledTimes(1);
+    });
+
+    const savedInstance = replaceGameInstancesMutateAsyncMock.mock.calls[0]?.[0]
+      ?.instances?.[0] as { contentSetId?: string } | undefined;
+    expect(savedInstance?.contentSetId).toBe(savedContentSet?.id);
+  });
+
+  it('creates a custom calendar-section content set and uses it for a saved instance', async () => {
+    pageDataState.value = buildPageDataForGameIds('calendar_interactive');
+    render(<GamesLibrary />);
+
+    const calendarCard = document.getElementById('kangur-game-card-calendar_interactive');
+    if (!calendarCard) {
+      throw new Error('Calendar Interactive card container not found.');
+    }
+
+    fireEvent.click(within(calendarCard).getByRole('button', { name: 'Preview & map' }));
+
+    expect(screen.getByText('Create custom content set')).toBeInTheDocument();
+    expect(screen.getByLabelText('Content set')).toHaveValue('calendar_interactive:default');
+
+    fireEvent.change(screen.getByLabelText('Content-set name'), {
+      target: { value: 'Months focus pack' },
+    });
+    fireEvent.change(screen.getByLabelText('Content-set description'), {
+      target: { value: 'Feeds month-order prompts into the calendar engine.' },
+    });
+    fireEvent.change(screen.getByLabelText('Calendar section'), {
+      target: { value: 'miesiace' },
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: 'Save content set' }));
+
+    await waitFor(() => {
+      expect(replaceGameContentSetsMutateAsyncMock).toHaveBeenCalledTimes(1);
+    });
+
+    const savedContentSet = replaceGameContentSetsMutateAsyncMock.mock.calls[0]?.[0]
+      ?.contentSets?.[0] as
+      | {
+          id: string;
+          label: string;
+          contentKind?: string;
+          rendererProps?: { calendarSection?: string };
+        }
+      | undefined;
+
+    expect(savedContentSet?.label).toBe('Months focus pack');
+    expect(savedContentSet?.contentKind).toBe('calendar_section');
+    expect(savedContentSet?.rendererProps?.calendarSection).toBe('miesiace');
+    expect(screen.getByLabelText('Content set')).toHaveValue(savedContentSet?.id ?? '');
+    expect(screen.getByTestId('games-library-instance-preview')).toHaveTextContent('Months');
+
+    fireEvent.change(screen.getByLabelText('Instance title'), {
+      target: { value: 'Months focus instance' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Create instance' }));
+
+    await waitFor(() => {
+      expect(replaceGameInstancesMutateAsyncMock).toHaveBeenCalledTimes(1);
+    });
+
+    const savedInstance = replaceGameInstancesMutateAsyncMock.mock.calls[0]?.[0]
+      ?.instances?.[0] as { contentSetId?: string } | undefined;
+    expect(savedInstance?.contentSetId).toBe(savedContentSet?.id);
+  });
+
   it('lets instance engine settings diverge from the hub preview settings', () => {
     pageDataState.value = buildPageDataForGameIds('clock_training');
     render(<GamesLibrary />);
@@ -3181,6 +3414,252 @@ describe('GamesLibrary serialization audit', () => {
 
     expect(screen.getByTestId('games-library-instance-clock_instance_minutes')).toBeInTheDocument();
     expect(screen.queryByTestId('games-library-instance-clock_instance_hours')).toBeNull();
+  });
+
+  it('filters selectable content sets by search and source while keeping the current selection available', () => {
+    pageDataState.value = buildPageDataForGameIds('clock_training');
+    gameContentSetsByGameIdState.value = {
+      clock_training: [
+        {
+          id: 'clock_training:custom:hours-review',
+          gameId: 'clock_training',
+          engineId: 'clock_engine',
+          launchableRuntimeId: 'clock_quiz',
+          label: 'Hours review pack',
+          description: 'Reusable hours-only review prompts.',
+          contentKind: 'clock_section',
+          rendererProps: {
+            clockSection: 'hours',
+          },
+          sortOrder: 10,
+        },
+      ],
+    };
+
+    render(<GamesLibrary />);
+
+    const clockCard = document.getElementById('kangur-game-card-clock_training');
+    if (!clockCard) {
+      throw new Error('Clock Training card container not found.');
+    }
+
+    fireEvent.click(within(clockCard).getByRole('button', { name: 'Preview & map' }));
+
+    const contentSetSelect = screen.getByLabelText('Content set');
+    const contentSetSourceFilter = within(
+      screen.getByRole('radiogroup', { name: 'Filter content sets by source' })
+    );
+    const contentSetSearch = screen.getByRole('searchbox', {
+      name: 'Search content sets',
+    });
+
+    expect(
+      within(contentSetSelect).getByRole('option', { name: 'Combined clock drills' })
+    ).toBeInTheDocument();
+    expect(
+      within(contentSetSelect).getByRole('option', { name: 'Hours review pack' })
+    ).toBeInTheDocument();
+
+    fireEvent.click(contentSetSourceFilter.getByRole('radio', { name: 'Custom' }));
+
+    expect(
+      within(contentSetSelect).getByRole('option', { name: 'Combined clock drills' })
+    ).toBeInTheDocument();
+    expect(
+      within(contentSetSelect).getByRole('option', { name: 'Hours review pack' })
+    ).toBeInTheDocument();
+    expect(
+      within(contentSetSelect).queryByRole('option', { name: 'Hours only' })
+    ).toBeNull();
+    expect(
+      within(contentSetSelect).queryByRole('option', { name: 'Minutes only' })
+    ).toBeNull();
+    expect(
+      screen.getByText('The current selection stays available while filters narrow the list.')
+    ).toBeInTheDocument();
+
+    fireEvent.change(contentSetSearch, {
+      target: { value: 'review' },
+    });
+
+    expect(
+      within(contentSetSelect).getByRole('option', { name: 'Combined clock drills' })
+    ).toBeInTheDocument();
+    expect(
+      within(contentSetSelect).getByRole('option', { name: 'Hours review pack' })
+    ).toBeInTheDocument();
+    expect(
+      screen.getByTestId('games-library-content-set-clock_training_custom_hours-review')
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByTestId('games-library-content-set-clock_training_clock-hours')
+    ).toBeNull();
+    expect(
+      screen.queryByTestId('games-library-content-set-clock_training_clock-minutes')
+    ).toBeNull();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Clear content-set filters' }));
+
+    expect(screen.getByRole('searchbox', { name: 'Search content sets' })).toHaveValue('');
+    expect(
+      within(
+        screen.getByRole('radiogroup', { name: 'Filter content sets by source' })
+      ).getByRole('radio', { name: 'All' })
+    ).toHaveAttribute('aria-checked', 'true');
+    expect(within(contentSetSelect).getByRole('option', { name: 'Hours only' })).toBeInTheDocument();
+    expect(
+      within(contentSetSelect).getByRole('option', { name: 'Minutes only' })
+    ).toBeInTheDocument();
+    expect(screen.getByTestId('games-library-content-set-clock_training_clock-hours')).toBeInTheDocument();
+    expect(
+      screen.getByTestId('games-library-content-set-clock_training_clock-minutes')
+    ).toBeInTheDocument();
+  });
+
+  it('selects a content set directly from the browsable content-set list', () => {
+    pageDataState.value = buildPageDataForGameIds('clock_training');
+    gameContentSetsByGameIdState.value = {
+      clock_training: [
+        {
+          id: 'clock_training:custom:hours-review',
+          gameId: 'clock_training',
+          engineId: 'clock_engine',
+          launchableRuntimeId: 'clock_quiz',
+          label: 'Hours review pack',
+          description: 'Reusable hours-only review prompts.',
+          contentKind: 'clock_section',
+          rendererProps: {
+            clockSection: 'hours',
+          },
+          sortOrder: 10,
+        },
+      ],
+    };
+
+    render(<GamesLibrary />);
+
+    const clockCard = document.getElementById('kangur-game-card-clock_training');
+    if (!clockCard) {
+      throw new Error('Clock Training card container not found.');
+    }
+
+    fireEvent.click(within(clockCard).getByRole('button', { name: 'Preview & map' }));
+
+    expect(screen.getByTestId('games-library-content-set-list')).toBeInTheDocument();
+    expect(
+      screen.getByTestId('games-library-content-set-clock_training_clock-hours')
+    ).toHaveTextContent('Built-in');
+    expect(
+      screen.getByTestId('games-library-content-set-clock_training_custom_hours-review')
+    ).toHaveTextContent('Custom');
+
+    fireEvent.click(
+      within(
+        screen.getByTestId('games-library-content-set-clock_training_custom_hours-review')
+      ).getByRole('button', { name: 'Select' })
+    );
+
+    expect(screen.getByLabelText('Content set')).toHaveValue('clock_training:custom:hours-review');
+    expect(
+      within(
+        screen.getByTestId('games-library-content-set-clock_training_custom_hours-review')
+      ).getByText('Reusable hours-only review prompts.')
+    ).toBeInTheDocument();
+    expect(
+      within(
+        screen.getByTestId('games-library-content-set-clock_training_custom_hours-review')
+      ).getByRole('button', { name: 'Selected' })
+    ).toBeDisabled();
+  });
+
+  it('edits a custom content set directly from the browsable content-set list', () => {
+    pageDataState.value = buildPageDataForGameIds('clock_training');
+    gameContentSetsByGameIdState.value = {
+      clock_training: [
+        {
+          id: 'clock_training:custom:hours-review',
+          gameId: 'clock_training',
+          engineId: 'clock_engine',
+          launchableRuntimeId: 'clock_quiz',
+          label: 'Hours review pack',
+          description: 'Reusable hours-only review prompts.',
+          contentKind: 'clock_section',
+          rendererProps: {
+            clockSection: 'hours',
+          },
+          sortOrder: 10,
+        },
+      ],
+    };
+
+    render(<GamesLibrary />);
+
+    const clockCard = document.getElementById('kangur-game-card-clock_training');
+    if (!clockCard) {
+      throw new Error('Clock Training card container not found.');
+    }
+
+    fireEvent.click(within(clockCard).getByRole('button', { name: 'Preview & map' }));
+    fireEvent.click(
+      within(
+        screen.getByTestId('games-library-content-set-clock_training_custom_hours-review')
+      ).getByRole('button', { name: 'Edit selected content set' })
+    );
+
+    expect(screen.getByText('Edit custom content set')).toBeInTheDocument();
+    expect(screen.getByLabelText('Content set')).toHaveValue('clock_training:custom:hours-review');
+    expect(screen.getByLabelText('Content-set name')).toHaveValue('Hours review pack');
+    expect(screen.getByLabelText('Content feed')).toHaveValue('hours');
+  });
+
+  it('removes an unused custom content set directly from the browsable content-set list without disturbing the current built-in selection', async () => {
+    pageDataState.value = buildPageDataForGameIds('clock_training');
+    gameContentSetsByGameIdState.value = {
+      clock_training: [
+        {
+          id: 'clock_training:custom:hours-review',
+          gameId: 'clock_training',
+          engineId: 'clock_engine',
+          launchableRuntimeId: 'clock_quiz',
+          label: 'Hours review pack',
+          description: 'Reusable hours-only review prompts.',
+          contentKind: 'clock_section',
+          rendererProps: {
+            clockSection: 'hours',
+          },
+          sortOrder: 10,
+        },
+      ],
+    };
+
+    render(<GamesLibrary />);
+
+    const clockCard = document.getElementById('kangur-game-card-clock_training');
+    if (!clockCard) {
+      throw new Error('Clock Training card container not found.');
+    }
+
+    fireEvent.click(within(clockCard).getByRole('button', { name: 'Preview & map' }));
+
+    expect(screen.getByLabelText('Content set')).toHaveValue('clock_training:default');
+
+    fireEvent.click(
+      within(
+        screen.getByTestId('games-library-content-set-clock_training_custom_hours-review')
+      ).getByRole('button', { name: 'Remove selected content set' })
+    );
+
+    await waitFor(() => {
+      expect(
+        screen.queryByTestId('games-library-content-set-clock_training_custom_hours-review')
+      ).toBeNull();
+    });
+
+    expect(screen.getByLabelText('Content set')).toHaveValue('clock_training:default');
+    expect(replaceGameContentSetsMutateAsyncMock).toHaveBeenLastCalledWith({
+      gameId: 'clock_training',
+      contentSets: [],
+    });
   });
 
   it('clears saved instance list filters in one action', () => {
@@ -5218,6 +5697,72 @@ describe('GamesLibrary serialization audit', () => {
     expect(screen.getByTestId('games-library-instance-clock_instance_hours')).toBeInTheDocument();
   });
 
+  it('resets content-set filters when the modal is closed and reopened for the same game', () => {
+    pageDataState.value = buildPageDataForGameIds('clock_training');
+    gameContentSetsByGameIdState.value = {
+      clock_training: [
+        {
+          id: 'clock_training:custom:hours-review',
+          gameId: 'clock_training',
+          engineId: 'clock_engine',
+          launchableRuntimeId: 'clock_quiz',
+          label: 'Hours review pack',
+          description: 'Reusable hours-only review prompts.',
+          contentKind: 'clock_section',
+          rendererProps: {
+            clockSection: 'hours',
+          },
+          sortOrder: 10,
+        },
+      ],
+    };
+
+    render(<GamesLibrary />);
+
+    const clockCard = document.getElementById('kangur-game-card-clock_training');
+    if (!clockCard) {
+      throw new Error('Clock Training card container not found.');
+    }
+
+    fireEvent.click(within(clockCard).getByRole('button', { name: 'Preview & map' }));
+
+    fireEvent.change(screen.getByRole('searchbox', { name: 'Search content sets' }), {
+      target: { value: 'review' },
+    });
+    fireEvent.click(
+      within(screen.getByRole('radiogroup', { name: 'Filter content sets by source' })).getByRole(
+        'radio',
+        { name: 'Custom' }
+      )
+    );
+
+    expect(
+      screen.getByText('The current selection stays available while filters narrow the list.')
+    ).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Close' }));
+
+    expect(screen.queryByTestId('games-library-game-modal')).toBeNull();
+
+    fireEvent.click(within(clockCard).getByRole('button', { name: 'Preview & map' }));
+
+    const contentSetSelect = screen.getByLabelText('Content set');
+
+    expect(screen.getByRole('searchbox', { name: 'Search content sets' })).toHaveValue('');
+    expect(
+      within(
+        screen.getByRole('radiogroup', { name: 'Filter content sets by source' })
+      ).getByRole('radio', { name: 'All' })
+    ).toHaveAttribute('aria-checked', 'true');
+    expect(within(contentSetSelect).getByRole('option', { name: 'Hours only' })).toBeInTheDocument();
+    expect(
+      within(contentSetSelect).getByRole('option', { name: 'Minutes only' })
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByText('The current selection stays available while filters narrow the list.')
+    ).toBeNull();
+  });
+
   it('switches the open modal to the newly selected game without leaking the previous editor state', () => {
     pageDataState.value = buildPageDataForGameIds('clock_training', 'division_groups');
     lessonGameSectionsByGameIdState.value = {
@@ -5391,7 +5936,7 @@ describe('GamesLibrary serialization audit', () => {
         screen.getByRole('radiogroup', { name: 'Filter saved instances by status' })
       ).getByRole('radio', { name: 'All' })
     ).toHaveAttribute('aria-checked', 'true');
-    expect(screen.queryByLabelText('Filter saved instances by content set')).toBeNull();
+    expect(screen.getByLabelText('Filter saved instances by content set')).toHaveValue('all');
     expect(
       screen.getByTestId('games-library-instance-calendar_instance_weekdays')
     ).toBeInTheDocument();

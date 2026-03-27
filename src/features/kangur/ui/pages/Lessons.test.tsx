@@ -165,8 +165,8 @@ vi.mock('@/features/kangur/ui/components/KangurActiveLessonHeader', () => ({
   KangurActiveLessonHeader: () => <div data-testid='mock-active-lesson-header' />,
 }));
 
-vi.mock('@/features/kangur/ui/components/KangurLessonLibraryCard', () => ({
-  KangurLessonLibraryCard: ({
+vi.mock('@/features/kangur/ui/components/KangurResolvedLessonLibraryCard', () => ({
+  KangurResolvedLessonLibraryCard: ({
     lesson,
     onSelect,
   }: {
@@ -182,8 +182,8 @@ vi.mock('@/features/kangur/ui/components/KangurLessonLibraryCard', () => ({
   },
 }));
 
-vi.mock('@/features/kangur/ui/components/KangurLessonGroupAccordion', () => ({
-  KangurLessonGroupAccordion: ({
+vi.mock('@/features/kangur/ui/components/KangurResolvedLessonGroupAccordion', () => ({
+  KangurResolvedLessonGroupAccordion: ({
     label,
     isExpanded,
     onToggle,
@@ -222,8 +222,8 @@ vi.mock('@/features/kangur/ui/components/LazyKangurLessonsWordmark', () => ({
   },
 }));
 
-vi.mock('@/features/kangur/ui/components/KangurPageIntroCard', () => ({
-  KangurPageIntroCard: ({
+vi.mock('@/features/kangur/ui/components/KangurResolvedPageIntroCard', () => ({
+  KangurResolvedPageIntroCard: ({
     title,
     description,
     onBack,

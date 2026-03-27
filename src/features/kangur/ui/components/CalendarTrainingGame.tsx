@@ -44,11 +44,16 @@ import type {
   KangurRewardBreakdownEntry,
 } from '@/features/kangur/ui/types';
 import { cn } from '@/features/kangur/shared/utils';
+import type { KangurCalendarInteractiveStageSection } from '@/shared/contracts/kangur-game-runtime-renderer-props';
 
 type CalendarQuestion = {
   question: string;
   answer: string;
   choices: string[];
+};
+
+type CalendarTrainingGameProps = KangurMiniGameFinishActionProps & {
+  section?: KangurCalendarInteractiveStageSection;
 };
 
 const MONTHS = [
@@ -76,62 +81,55 @@ function randInt(min: number, max: number): number {
   return Math.floor(Math.random() * (max - min + 1)) + min;
 }
 
-function generateQuestion(): CalendarQuestion {
-  const type = randInt(0, 4);
+function createMonthOrdinalQuestion(): CalendarQuestion {
+  const idx = randInt(0, 11);
+  const answer = MONTHS[idx] ?? MONTHS[0];
+  const wrongs = shuffle(MONTHS.filter((_, i) => i !== idx)).slice(0, 3);
+  return {
+    question: `Który miesiąc jest ${idx + 1}. w roku?`,
+    answer,
+    choices: shuffle([answer, ...wrongs]),
+  };
+}
 
-  if (type === 0) {
-    // Which month is number X?
-    const idx = randInt(0, 11);
-    const answer = MONTHS[idx] ?? MONTHS[0];
-    const wrongs = shuffle(MONTHS.filter((_, i) => i !== idx)).slice(0, 3);
-    return {
-      question: `Który miesiąc jest ${idx + 1}. w roku?`,
-      answer,
-      choices: shuffle([answer, ...wrongs]),
-    };
-  }
+function createMonthNumberQuestion(): CalendarQuestion {
+  const idx = randInt(0, 11);
+  const answer = String(idx + 1);
+  const wrongs = shuffle(
+    Array.from({ length: 12 }, (_, i) => String(i + 1)).filter((n) => n !== answer)
+  ).slice(0, 3);
+  return {
+    question: `Który numer kolejny ma miesiąc ${MONTHS[idx] ?? MONTHS[0]}?`,
+    answer,
+    choices: shuffle([answer, ...wrongs]),
+  };
+}
 
-  if (type === 1) {
-    // What number is month X?
-    const idx = randInt(0, 11);
-    const answer = String(idx + 1);
-    const wrongs = shuffle(
-      Array.from({ length: 12 }, (_, i) => String(i + 1)).filter((n) => n !== answer)
-    ).slice(0, 3);
-    return {
-      question: `Który numer kolejny ma miesiąc ${MONTHS[idx] ?? MONTHS[0]}?`,
-      answer,
-      choices: shuffle([answer, ...wrongs]),
-    };
-  }
+function createMonthDaysQuestion(): CalendarQuestion {
+  const idx = randInt(0, 11);
+  const answer = String(MONTHS_DAYS[idx] ?? MONTHS_DAYS[0]);
+  const allCounts = ['28', '29', '30', '31'];
+  const wrongs = shuffle(allCounts.filter((d) => d !== answer)).slice(0, 3);
+  return {
+    question: `Ile dni ma miesiąc ${MONTHS[idx] ?? MONTHS[0]}?`,
+    answer,
+    choices: shuffle([answer, ...wrongs]),
+  };
+}
 
-  if (type === 2) {
-    // How many days in month X?
-    const idx = randInt(0, 11);
-    const answer = String(MONTHS_DAYS[idx] ?? MONTHS_DAYS[0]);
-    const allCounts = ['28', '29', '30', '31'];
-    const wrongs = shuffle(allCounts.filter((d) => d !== answer)).slice(0, 3);
-    return {
-      question: `Ile dni ma miesiąc ${MONTHS[idx] ?? MONTHS[0]}?`,
-      answer,
-      choices: shuffle([answer, ...wrongs]),
-    };
-  }
+function createNextDayQuestion(): CalendarQuestion {
+  const idx = randInt(0, 5);
+  const answer = DAYS[idx + 1] ?? DAYS[0]!;
+  const wrongs = shuffle(DAYS.filter((d) => d !== answer)).slice(0, 3);
+  return {
+    question: `Jaki dzień tygodnia następuje po ${DAYS[idx] ?? DAYS[0]}?`,
+    answer,
+    choices: shuffle([answer, ...wrongs]),
+  };
+}
 
-  if (type === 3) {
-    // Which day comes after day X?
-    const idx = randInt(0, 5);
-    const answer = DAYS[idx + 1] ?? DAYS[0]!;
-    const wrongs = shuffle(DAYS.filter((d) => d !== answer)).slice(0, 3);
-    return {
-      question: `Jaki dzień tygodnia następuje po ${DAYS[idx] ?? DAYS[0]}?`,
-      answer,
-      choices: shuffle([answer, ...wrongs]),
-    };
-  }
-
-  // type === 4: How many days in a week / months in a year?
-  const isWeek = Math.random() > 0.5;
+function createTimeUnitCountQuestion(kind: 'week' | 'year'): CalendarQuestion {
+  const isWeek = kind === 'week';
   const answer = isWeek ? '7' : '12';
   const wrong1 = isWeek ? ['5', '6', '8'] : ['10', '11', '13'];
   return {
@@ -141,15 +139,61 @@ function generateQuestion(): CalendarQuestion {
   };
 }
 
+function generateQuestion(
+  section?: KangurCalendarInteractiveStageSection
+): CalendarQuestion {
+  if (section === 'dni') {
+    return Math.random() > 0.5
+      ? createNextDayQuestion()
+      : createTimeUnitCountQuestion('week');
+  }
+
+  if (section === 'miesiace') {
+    const type = randInt(0, 2);
+    if (type === 0) {
+      return createMonthOrdinalQuestion();
+    }
+    if (type === 1) {
+      return createMonthNumberQuestion();
+    }
+    return createTimeUnitCountQuestion('year');
+  }
+
+  if (section === 'data') {
+    return createMonthDaysQuestion();
+  }
+
+  const type = randInt(0, 4);
+
+  if (type === 0) {
+    return createMonthOrdinalQuestion();
+  }
+
+  if (type === 1) {
+    return createMonthNumberQuestion();
+  }
+
+  if (type === 2) {
+    return createMonthDaysQuestion();
+  }
+
+  if (type === 3) {
+    return createNextDayQuestion();
+  }
+
+  return createTimeUnitCountQuestion(Math.random() > 0.5 ? 'week' : 'year');
+}
+
 const TOTAL = 6;
 
 export default function CalendarTrainingGame({
   onFinish,
-}: KangurMiniGameFinishActionProps): React.JSX.Element {
+  section,
+}: CalendarTrainingGameProps): React.JSX.Element {
   const ownerKey = useKangurProgressOwnerKey();
   const translations = useTranslations('KangurMiniGames');
   const isCoarsePointer = useKangurCoarsePointer();
-  const [questions] = useState(() => Array.from({ length: TOTAL }, generateQuestion));
+  const [questions] = useState(() => Array.from({ length: TOTAL }, () => generateQuestion(section)));
   const [current, setCurrent] = useState(0);
   const [score, setScore] = useState(0);
   const [selected, setSelected] = useState<string | null>(null);

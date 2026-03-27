@@ -28,6 +28,106 @@ const {
   useRouterMock: vi.fn(),
 }));
 
+vi.mock('react-native', () => {
+  const createPrimitive = (tagName: keyof React.JSX.IntrinsicElements) => {
+    return ({
+      accessibilityHint: _accessibilityHint,
+      accessibilityLabel,
+      accessibilityLiveRegion,
+      accessibilityRole,
+      children,
+      contentContainerStyle: _contentContainerStyle,
+      editable: _editable,
+      keyboardShouldPersistTaps: _keyboardShouldPersistTaps,
+      multiline: _multiline,
+      onChangeText,
+      onPress,
+      secureTextEntry,
+      testID,
+      textContentType: _textContentType,
+      ...props
+    }: React.PropsWithChildren<
+      Record<string, unknown> & {
+        accessibilityHint?: string;
+        accessibilityLabel?: string;
+        accessibilityLiveRegion?: 'off' | 'none' | 'polite' | 'assertive';
+        accessibilityRole?: string;
+        contentContainerStyle?: unknown;
+        editable?: boolean;
+        keyboardShouldPersistTaps?: string;
+        multiline?: boolean;
+        onChangeText?: (value: string) => void;
+        onPress?: () => void;
+        secureTextEntry?: boolean;
+        testID?: string;
+        textContentType?: string;
+      }
+    >) =>
+      React.createElement(
+        tagName,
+        {
+          ...props,
+          ...(testID ? { 'data-testid': testID } : {}),
+          ...(accessibilityLabel ? { 'aria-label': accessibilityLabel } : {}),
+          ...(accessibilityRole ? { role: accessibilityRole } : {}),
+          ...(accessibilityLiveRegion ? { 'aria-live': accessibilityLiveRegion } : {}),
+          ...(onPress ? { onClick: onPress } : {}),
+          ...(onChangeText
+            ? {
+                onChange: (event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
+                  onChangeText(event.target.value),
+              }
+            : {}),
+          ...(secureTextEntry ? { type: 'password' } : {}),
+        },
+        children,
+      );
+  };
+
+  return {
+    Pressable: createPrimitive('button'),
+    ScrollView: createPrimitive('div'),
+    Text: createPrimitive('span'),
+    TextInput: createPrimitive('input'),
+    View: createPrimitive('div'),
+  };
+});
+
+vi.mock('react-native-safe-area-context', () => {
+  const createPrimitive = (tagName: keyof React.JSX.IntrinsicElements) => {
+    return ({
+      accessibilityLabel,
+      accessibilityLiveRegion,
+      accessibilityRole,
+      children,
+      testID,
+      ...props
+    }: React.PropsWithChildren<
+      Record<string, unknown> & {
+        accessibilityLabel?: string;
+        accessibilityLiveRegion?: 'off' | 'none' | 'polite' | 'assertive';
+        accessibilityRole?: string;
+        testID?: string;
+      }
+    >) =>
+      React.createElement(
+        tagName,
+        {
+          ...props,
+          ...(testID ? { 'data-testid': testID } : {}),
+          ...(accessibilityLabel ? { 'aria-label': accessibilityLabel } : {}),
+          ...(accessibilityRole ? { role: accessibilityRole } : {}),
+          ...(accessibilityLiveRegion ? { 'aria-live': accessibilityLiveRegion } : {}),
+        },
+        children,
+      );
+  };
+
+  return {
+    SafeAreaView: createPrimitive('div'),
+  };
+});
+
 vi.mock('expo-router', () => ({
   Link: ({ children }: React.PropsWithChildren) => children,
   useLocalSearchParams: useLocalSearchParamsMock,

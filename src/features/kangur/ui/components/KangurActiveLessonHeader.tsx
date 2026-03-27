@@ -75,8 +75,16 @@ const resolveHeaderCopy = (value: string | null | undefined): string | null => {
 
 function KangurActiveLessonHeaderActions(): React.JSX.Element {
   const translations = useTranslations('KangurLessonsWidgets.activeHeader');
-  const { onBack, backButtonLabel, lesson, lessonDocument, lessonContentRef, headerActionsTestId } =
-    useKangurActiveLessonHeaderContext();
+  const {
+    onBack,
+    backButtonLabel,
+    displayDescription,
+    displayTitle,
+    lesson,
+    lessonDocument,
+    lessonContentRef,
+    headerActionsTestId,
+  } = useKangurActiveLessonHeaderContext();
 
   return (
     <KangurPanelRow
@@ -96,6 +104,7 @@ function KangurActiveLessonHeaderActions(): React.JSX.Element {
       ) : null}
       <KangurLessonNarrator
         className='shrink-0'
+        descriptionOverride={displayDescription}
         lesson={lesson}
         lessonDocument={lessonDocument}
         lessonContentRef={lessonContentRef}
@@ -105,6 +114,7 @@ function KangurActiveLessonHeaderActions(): React.JSX.Element {
         readLabel={translations('narrator.read')}
         resumeLabel={translations('narrator.resume')}
         showFeedback
+        titleOverride={displayTitle}
       />
       <KangurActiveLessonHeaderBody />
       <KangurActiveLessonHeaderIcon />
@@ -220,12 +230,12 @@ export function KangurActiveLessonHeader({
   const lessonHeaderTestId = headerTestId;
   const resolvedBackButtonLabel = backButtonLabel ?? translations('backToLessons');
   const displayTitle =
-    resolveHeaderCopy(localizedLessonTitle) ??
     resolveHeaderCopy(titleOverride) ??
+    resolveHeaderCopy(localizedLessonTitle) ??
     translations('fallbackTitle');
   const displayDescription =
-    resolveHeaderCopy(localizedLessonDescription) ??
     resolveHeaderCopy(descriptionOverride) ??
+    resolveHeaderCopy(localizedLessonDescription) ??
     '';
   const contextValue: KangurActiveLessonHeaderContextValue = {
     lesson,

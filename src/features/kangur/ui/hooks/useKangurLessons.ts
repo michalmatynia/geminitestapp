@@ -158,13 +158,16 @@ export const useKangurLessons = (
     },
   });
 
-export const useKangurLessonDocuments = (options?: { enabled?: boolean }): ListQuery<
+export const useKangurLessonDocuments = (options?: {
+  enabled?: boolean;
+  locale?: string | null;
+}): ListQuery<
   KangurLessonDocumentStore,
   KangurLessonDocumentStore
 > =>
   {
     const routeLocale = useLocale();
-    const resolvedLocale = normalizeSiteLocale(routeLocale);
+    const resolvedLocale = normalizeSiteLocale(options?.locale ?? routeLocale);
 
     return createListQueryV2<KangurLessonDocumentStore, KangurLessonDocumentStore>({
     queryKey: [...QUERY_KEYS.kangur.lessonDocuments(), { locale: resolvedLocale }],
@@ -189,11 +192,11 @@ export const useKangurLessonDocuments = (options?: { enabled?: boolean }): ListQ
 
 export const useKangurLessonDocument = (
   lessonId: string | null,
-  options?: { enabled?: boolean }
+  options?: { enabled?: boolean; locale?: string | null }
 ): SingleQuery<KangurLessonDocument | null> =>
   {
     const routeLocale = useLocale();
-    const resolvedLocale = normalizeSiteLocale(routeLocale);
+    const resolvedLocale = normalizeSiteLocale(options?.locale ?? routeLocale);
 
     return createSingleQueryV2<KangurLessonDocument | null>({
     queryKey: QUERY_KEYS.kangur.lessonDocument(lessonId, resolvedLocale),
@@ -236,13 +239,15 @@ export const useUpdateKangurLessons = (): MutationResult<KangurLesson[], KangurL
     },
   });
 
-export const useUpdateKangurLessonDocuments = (): MutationResult<
+export const useUpdateKangurLessonDocuments = (
+  locale?: string | null
+): MutationResult<
   KangurLessonDocumentStore,
   KangurLessonDocumentStore
 > =>
   {
     const routeLocale = useLocale();
-    const resolvedLocale = normalizeSiteLocale(routeLocale);
+    const resolvedLocale = normalizeSiteLocale(locale ?? routeLocale);
 
     return createUpdateMutationV2<KangurLessonDocumentStore, KangurLessonDocumentStore>({
     mutationKey: [...QUERY_KEYS.kangur.lessonDocuments(), { locale: resolvedLocale }, 'update'],

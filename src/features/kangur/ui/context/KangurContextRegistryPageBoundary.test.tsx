@@ -11,7 +11,6 @@ import { KangurContextRegistryPageBoundary } from './KangurContextRegistryPageBo
 const {
   contextRegistryPageProviderMock,
   routingState,
-  sessionState,
 } = vi.hoisted(() => ({
   contextRegistryPageProviderMock: vi.fn(),
   routingState: {
@@ -19,16 +18,6 @@ const {
       pageKey: 'Game',
     },
   },
-  sessionState: {
-    value: {
-      data: null,
-      status: 'unauthenticated' as const,
-    },
-  },
-}));
-
-vi.mock('next-auth/react', () => ({
-  useSession: () => sessionState.value,
 }));
 
 vi.mock('@/features/kangur/ui/context/KangurRoutingContext', () => ({
@@ -51,21 +40,9 @@ vi.mock('@/shared/lib/ai-context-registry/page-context', () => ({
 }));
 
 describe('KangurContextRegistryPageBoundary', () => {
-  it('downgrades unauthorized GamesLibrary routes to the fallback page context', () => {
+  it('falls back to the main page context for unsupported route keys', () => {
     routingState.value = {
-      pageKey: 'GamesLibrary',
-    };
-    sessionState.value = {
-      data: {
-        expires: '2026-12-31T23:59:59.000Z',
-        user: {
-          id: 'user-1',
-          name: 'Parent User',
-          email: 'parent@example.com',
-          role: 'user',
-        },
-      },
-      status: 'authenticated',
+      pageKey: 'Duels',
     };
 
     render(
@@ -82,28 +59,11 @@ describe('KangurContextRegistryPageBoundary', () => {
         rootNodeIds: expect.arrayContaining(['page:kangur-game']),
       })
     );
-    expect(contextRegistryPageProviderMock).not.toHaveBeenCalledWith(
-      expect.objectContaining({
-        pageId: 'kangur:GamesLibrary',
-      })
-    );
   });
 
-  it('keeps the GamesLibrary page context for super admins', () => {
+  it('keeps the GamesLibrary page context when routing state already resolved it', () => {
     routingState.value = {
       pageKey: 'GamesLibrary',
-    };
-    sessionState.value = {
-      data: {
-        expires: '2026-12-31T23:59:59.000Z',
-        user: {
-          id: 'user-2',
-          name: 'Super Admin',
-          email: 'super-admin@example.com',
-          role: 'super_admin',
-        },
-      },
-      status: 'authenticated',
     };
 
     render(

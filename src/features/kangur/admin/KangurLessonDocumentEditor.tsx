@@ -37,7 +37,7 @@ import { ActivityEditorCard } from './components/ActivityEditorCard';
 import { CalloutEditorCard } from './components/CalloutEditorCard';
 import { GridItemEditor } from './components/GridItemEditor';
 import { InlineEditorCard } from './components/InlineEditorCard';
-import { KangurAdminWorkspaceSectionCard } from './components/KangurAdminWorkspaceSectionCard';
+import { renderKangurAdminWorkspaceSectionCard } from './components/KangurAdminWorkspaceSectionCard';
 import { KangurLessonEmptyState } from './components/KangurLessonEmptyState';
 import { KangurLessonPreviewPanel } from './components/KangurLessonPreviewPanel';
 import { KangurLessonQuickInsert } from './components/KangurLessonQuickInsert';
@@ -130,11 +130,13 @@ export function KangurLessonDocumentEditor(): React.JSX.Element {
       )}
     >
       <div className='space-y-4'>
-        <KangurAdminWorkspaceSectionCard
-          title='Document workspace'
-          description='Structure lesson pages, guide authors with starter recipes, and manage the active page without leaving the main Kangur admin layout.'
-          badge='Authoring surface'
-        >
+        {renderKangurAdminWorkspaceSectionCard({
+          title: 'Document workspace',
+          description:
+            'Structure lesson pages, guide authors with starter recipes, and manage the active page without leaving the main Kangur admin layout.',
+          badge: 'Authoring surface',
+          children: (
+          <>
           <div className='mb-3 flex flex-wrap items-center gap-2'>
             {DOCUMENT_TEMPLATE_OPTIONS.map((template) => (
               <Button
@@ -492,7 +494,9 @@ export function KangurLessonDocumentEditor(): React.JSX.Element {
             Build lesson pages from typed blocks. Mix explanation, SVG references, interactive
             activities, and responsive layouts without switching tools.
           </div>
-        </KangurAdminWorkspaceSectionCard>
+          </>
+          ),
+        })}
         <KangurLessonEmptyState activePage={activePage} updateDocument={updateDocument} />
         {activePage?.blocks.map((block, index) => {
           const handlers = getHandlers(block.id);

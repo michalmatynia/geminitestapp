@@ -10,7 +10,7 @@ import { Badge, Card, CompactEmptyState, ListPanel, PanelStats, SearchInput } fr
 import { cn } from '@/features/kangur/shared/utils';
 import { KANGUR_GRID_RELAXED_CLASSNAME } from '@/features/kangur/ui/design/tokens';
 
-import { KANGUR_ADMIN_CARD_CLASS_NAME, KangurAdminCard } from './KangurAdminCard';
+import { KANGUR_ADMIN_CARD_CLASS_NAME } from './KangurAdminCard';
 
 type GroupedTooltipDocs = {
   section: string;
@@ -120,8 +120,10 @@ export function KangurDocumentationCenter(): React.JSX.Element {
         {resultSummary}
       </div>
 
-      <KangurAdminCard
+      <Card
+        variant='subtle'
         padding='lg'
+        className={KANGUR_ADMIN_CARD_CLASS_NAME}
         aria-labelledby={indexHeadingId}
         aria-describedby={indexDescriptionId}
       >
@@ -154,7 +156,7 @@ export function KangurDocumentationCenter(): React.JSX.Element {
           </div>
           <PanelStats stats={stats} className='grid-cols-1 sm:grid-cols-3 lg:grid-cols-3' />
         </div>
-      </KangurAdminCard>
+      </Card>
 
       <div
         className={cn(

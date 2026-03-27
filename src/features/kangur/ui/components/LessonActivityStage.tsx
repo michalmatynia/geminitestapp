@@ -4,7 +4,7 @@ import { ChevronsLeft, Printer } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { createContext, useContext, useEffect, useId } from 'react';
 
-import { KangurLessonNavigationIconButton } from '@/features/kangur/ui/components/KangurLessonNavigationIconButton';
+import { renderKangurLessonNavigationIconButton } from '@/features/kangur/ui/components/KangurLessonNavigationIconButton';
 import {
   type KangurLessonSubsectionSummary,
   useKangurLessonSecretPill,
@@ -103,15 +103,14 @@ function LessonActivityStageTopBar(): React.JSX.Element {
       return null;
     }
 
-    return (
-      <KangurLessonNavigationIconButton
-        onClick={() => lessonPrint.onPrintPanel?.(printPanelId)}
-        data-testid='lesson-activity-print-button'
-        aria-label={printPanelLabel}
-        icon={Printer}
-        title={printPanelLabel}
-      />
-    );
+    return renderKangurLessonNavigationIconButton({
+      onClick: () => lessonPrint.onPrintPanel?.(printPanelId),
+      'data-testid': 'lesson-activity-print-button',
+      'aria-label': printPanelLabel,
+      icon: Printer,
+      isCoarsePointer,
+      title: printPanelLabel,
+    });
   };
 
   return (
@@ -125,15 +124,16 @@ function LessonActivityStageTopBar(): React.JSX.Element {
         role='group'
         aria-label={navigationLabel}
       >
-        <KangurLessonNavigationIconButton
-          onClick={onBack}
-          data-testid='lesson-activity-back-button'
-          data-kangur-lesson-back='true'
-          data-kangur-lesson-back-label={backButtonLabel}
-          aria-label={backButtonLabel}
-          icon={ChevronsLeft}
-          title={backButtonLabel}
-        />
+        {renderKangurLessonNavigationIconButton({
+          onClick: onBack,
+          'data-testid': 'lesson-activity-back-button',
+          'data-kangur-lesson-back': 'true',
+          'data-kangur-lesson-back-label': backButtonLabel,
+          'aria-label': backButtonLabel,
+          icon: ChevronsLeft,
+          isCoarsePointer,
+          title: backButtonLabel,
+        })}
         {renderPrintButton()}
       </div>
       {lessonPrint?.onPrintPanel ? (

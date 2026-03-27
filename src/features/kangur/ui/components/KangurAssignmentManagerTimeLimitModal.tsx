@@ -1,3 +1,5 @@
+import type { ChangeEvent } from 'react';
+
 import { useTranslations } from 'next-intl';
 
 import {
@@ -12,7 +14,8 @@ import {
   KANGUR_TIGHT_ROW_CLASSNAME,
 } from '@/features/kangur/ui/design/tokens';
 import { KangurDialog } from '@/features/kangur/ui/components/KangurDialog';
-import { KangurDialogHeader } from '@/features/kangur/ui/components/KangurDialogHeader';
+import { KangurDialogCloseButton } from '@/features/kangur/ui/components/KangurDialogCloseButton';
+import { KangurDialogMeta } from '@/features/kangur/ui/components/KangurDialogMeta';
 import { useKangurCoarsePointer } from '@/features/kangur/ui/hooks/useKangurCoarsePointer';
 
 export type KangurAssignmentManagerTimeLimitModalTarget = {
@@ -35,7 +38,7 @@ type KangurAssignmentManagerTimeLimitModalProps = {
   maxMinutes: number;
 };
 
-export function KangurAssignmentManagerTimeLimitModal({
+export function renderKangurAssignmentManagerTimeLimitModal({
   isOpen,
   onClose,
   onSave,
@@ -54,29 +57,41 @@ export function KangurAssignmentManagerTimeLimitModal({
   const actionClassName = isCoarsePointer
     ? 'w-full min-h-11 px-4 touch-manipulation select-none active:scale-[0.97] sm:w-auto'
     : 'w-full sm:w-auto';
+  const closeModal = (): void => {
+    onClose();
+  };
+  const handleDialogOpenChange = (open: boolean): void => {
+    if (!open) {
+      closeModal();
+    }
+  };
+  const dialogContentProps = {
+    'data-testid': 'assignment-time-limit-modal',
+    onEscapeKeyDown: closeModal,
+    onInteractOutside: closeModal,
+    onPointerDownOutside: closeModal,
+  } as const;
+  const handleTimeLimitDraftChange = (event: ChangeEvent<HTMLInputElement>): void => {
+    onTimeLimitDraftChange(event.target.value);
+  };
 
   return (
     <KangurDialog
       open={isOpen}
-      onOpenChange={(open) => {
-        if (!open) {
-          onClose();
-        }
-      }}
+      onOpenChange={handleDialogOpenChange}
       overlayVariant='standard'
       contentSize='sm'
-      contentProps={{
-        'data-testid': 'assignment-time-limit-modal',
-        onEscapeKeyDown: onClose,
-        onInteractOutside: onClose,
-        onPointerDownOutside: onClose,
-      }}
+      contentProps={dialogContentProps}
     >
-      <KangurDialogHeader
-        title={translations('timeLimitModal.title')}
-        description={translations('timeLimitModal.description')}
-        closeAriaLabel={translations('timeLimitModal.closeAriaLabel')}
-      />
+      <>
+        <KangurDialogMeta
+          title={translations('timeLimitModal.title')}
+          description={translations('timeLimitModal.description')}
+        />
+        <KangurDialogCloseButton
+          aria-label={translations('timeLimitModal.closeAriaLabel')}
+        />
+      </>
 
       <KangurGlassPanel
         className={`flex flex-col ${KANGUR_PANEL_GAP_CLASSNAME}`}
@@ -122,7 +137,7 @@ export function KangurAssignmentManagerTimeLimitModal({
             placeholder={translations('timeLimitModal.placeholder')}
             type='number'
             value={timeLimitDraft}
-            onChange={(event) => onTimeLimitDraftChange(event.target.value)}
+            onChange={handleTimeLimitDraftChange}
           />
           <div className='text-xs text-slate-500'>
             {translations('timeLimitModal.helper', { minMinutes, maxMinutes })}
@@ -138,7 +153,7 @@ export function KangurAssignmentManagerTimeLimitModal({
             size='sm'
             type='button'
             variant='ghost'
-            onClick={onClose}
+            onClick={closeModal}
           >
             {translations('actions.cancel')}
           </KangurButton>

@@ -4,7 +4,7 @@ import React, { useMemo } from 'react';
 
 import {
   FilterPanel,
-  PanelPagination,
+  Pagination,
   RefreshButton,
   StandardDataTablePanel,
   UI_CENTER_ROW_SPACED_CLASSNAME,
@@ -98,7 +98,8 @@ export function FileUploadEventsTable(): React.JSX.Element {
 
   const footer = (
     <div className='px-4 pb-2'>
-      <PanelPagination
+      <Pagination
+        variant='panel'
         page={page}
         pageSize={pageSize}
         totalCount={total}

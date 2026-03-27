@@ -33,6 +33,21 @@ vi.mock('@/features/products/context/ProductListContext', () => ({
   useProductListTableContext: () => useProductListTableContextMock(),
 }));
 
+vi.mock('@/features/products/components/list/ProductFilters', () => ({
+  ProductFilters: () => <div data-testid='product-filters' />,
+  ProductSelectionActions: () => <div data-testid='product-selection-actions' />,
+}));
+
+vi.mock('@/features/products/components/list/ProductListHeader', () => ({
+  ProductListHeader: ({ filtersContent }: { filtersContent?: React.ReactNode }) => (
+    <div data-testid='product-list-header'>{filtersContent}</div>
+  ),
+}));
+
+vi.mock('@/features/products/components/list/ProductListMobileCards', () => ({
+  ProductListMobileCards: () => <div data-testid='product-list-mobile-cards' />,
+}));
+
 vi.mock('@/features/products/hooks/useProductsTableProps', () => ({
   useProductsTableProps: () => useProductsTablePropsMock(),
 }));

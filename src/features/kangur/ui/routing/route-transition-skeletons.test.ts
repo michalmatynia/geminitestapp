@@ -1,6 +1,31 @@
 import { describe, expect, it } from 'vitest';
 
-import { resolveKangurRouteTransitionSkeletonVariant } from '@/features/kangur/ui/routing/route-transition-skeletons';
+import {
+  resolveAccessibleKangurRouteTransitionTarget,
+  resolveKangurRouteTransitionSkeletonVariant,
+} from '@/features/kangur/ui/routing/route-transition-skeletons';
+
+describe('resolveAccessibleKangurRouteTransitionTarget', () => {
+  it('returns the downgraded page key and fallback skeleton together for blocked GamesLibrary hrefs', () => {
+    expect(
+      resolveAccessibleKangurRouteTransitionTarget({
+        basePath: '/kangur',
+        fallbackPageKey: 'Game',
+        href: '/en/kangur/games',
+        session: {
+          user: {
+            email: 'admin@example.com',
+            role: 'admin',
+          },
+          expires: '2099-01-01T00:00:00.000Z',
+        },
+      })
+    ).toEqual({
+      pageKey: 'Game',
+      skeletonVariant: 'game-home',
+    });
+  });
+});
 
 describe('resolveKangurRouteTransitionSkeletonVariant', () => {
   it('resolves localized lessons routes against the public Kangur base path', () => {

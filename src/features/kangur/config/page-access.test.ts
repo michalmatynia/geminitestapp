@@ -4,7 +4,6 @@ import {
   canAccessKangurPage,
   canAccessKangurSlugSegments,
   isSuperAdminOnlyKangurPage,
-  resolveAccessibleKangurFeaturePageRoute,
   resolveAccessibleKangurPageKey,
   resolveAccessibleKangurRouteState,
 } from '@/features/kangur/config/page-access';
@@ -107,28 +106,6 @@ describe('kangur page access', () => {
     ).toEqual({
       pageKey: 'Game',
       requestedPath: '/kangur',
-    });
-  });
-
-  it('keeps exact super-admin GamesLibrary feature routes intact', () => {
-    expect(
-      resolveAccessibleKangurFeaturePageRoute({
-        slug: ['games'],
-        basePath: '/kangur',
-        session: {
-          expires: '2026-12-31T23:59:59.000Z',
-          user: {
-            email: 'super@example.com',
-            id: 'user-1',
-            name: 'Super Admin',
-            role: 'super_admin',
-          },
-        },
-      })
-    ).toEqual({
-      normalizedBasePath: '/kangur',
-      pageKey: 'GamesLibrary',
-      requestedPath: '/kangur/games',
     });
   });
 });

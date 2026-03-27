@@ -28,6 +28,63 @@ export type KangurDrawingUtilityActionsProps = {
   variant?: KangurButtonProps['variant'];
 };
 
+const renderKangurDrawingUtilityActions = ({
+  display,
+  exportButtonClassName,
+  exportClassName,
+  exportDisabled,
+  exportLabel,
+  exportTestId,
+  historyButtonClassName,
+  historyClassName,
+  iconClassName,
+  isCoarsePointer,
+  onExport,
+  onRedo,
+  onUndo,
+  redoDisabled,
+  redoLabel,
+  redoTestId,
+  size,
+  undoDisabled,
+  undoLabel,
+  undoTestId,
+  variant,
+}: KangurDrawingUtilityActionsProps): React.JSX.Element => (
+  <>
+    <KangurDrawingHistoryActions
+      buttonClassName={historyButtonClassName}
+      className={historyClassName}
+      display={display}
+      iconClassName={iconClassName}
+      isCoarsePointer={isCoarsePointer}
+      onRedo={onRedo}
+      onUndo={onUndo}
+      redoDisabled={redoDisabled}
+      redoLabel={redoLabel}
+      redoTestId={redoTestId}
+      size={size}
+      undoDisabled={undoDisabled}
+      undoLabel={undoLabel}
+      undoTestId={undoTestId}
+      variant={variant}
+    />
+    <KangurDrawingSnapshotActions
+      buttonClassName={exportButtonClassName}
+      className={exportClassName}
+      display={display}
+      exportDisabled={exportDisabled}
+      exportLabel={exportLabel}
+      exportTestId={exportTestId}
+      iconClassName={iconClassName}
+      isCoarsePointer={isCoarsePointer}
+      onExport={onExport}
+      size={size}
+      variant={variant}
+    />
+  </>
+);
+
 export function KangurDrawingUtilityActions({
   display = 'label',
   exportButtonClassName,
@@ -51,38 +108,27 @@ export function KangurDrawingUtilityActions({
   undoTestId,
   variant = 'surface',
 }: KangurDrawingUtilityActionsProps): React.JSX.Element {
-  return (
-    <>
-      <KangurDrawingHistoryActions
-        buttonClassName={historyButtonClassName}
-        className={historyClassName}
-        display={display}
-        iconClassName={iconClassName}
-        isCoarsePointer={isCoarsePointer}
-        onRedo={onRedo}
-        onUndo={onUndo}
-        redoDisabled={redoDisabled}
-        redoLabel={redoLabel}
-        redoTestId={redoTestId}
-        size={size}
-        undoDisabled={undoDisabled}
-        undoLabel={undoLabel}
-        undoTestId={undoTestId}
-        variant={variant}
-      />
-      <KangurDrawingSnapshotActions
-        buttonClassName={exportButtonClassName}
-        className={exportClassName}
-        display={display}
-        exportDisabled={exportDisabled}
-        exportLabel={exportLabel}
-        exportTestId={exportTestId}
-        iconClassName={iconClassName}
-        isCoarsePointer={isCoarsePointer}
-        onExport={onExport}
-        size={size}
-        variant={variant}
-      />
-    </>
-  );
+  return renderKangurDrawingUtilityActions({
+    display,
+    exportButtonClassName,
+    exportClassName,
+    exportDisabled,
+    exportLabel,
+    exportTestId,
+    historyButtonClassName,
+    historyClassName,
+    iconClassName,
+    isCoarsePointer,
+    onExport,
+    onRedo,
+    onUndo,
+    redoDisabled,
+    redoLabel,
+    redoTestId,
+    size,
+    undoDisabled,
+    undoLabel,
+    undoTestId,
+    variant,
+  });
 }

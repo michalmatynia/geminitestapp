@@ -17,7 +17,7 @@ import {
   StandardDataTablePanel,
   Card,
   CompactEmptyState,
-  PanelPagination,
+  Pagination,
   Button,
 } from '@/shared/ui';
 import { ConfirmModal } from '@/shared/ui/templates/modals';
@@ -262,7 +262,8 @@ export function CrudPanel(props: {
   const footer =
     selectedTable && !isLoadingRows && rows.length > 0 ? (
       <div className='px-4 pb-2'>
-        <PanelPagination
+        <Pagination
+          variant='panel'
           page={page}
           pageSize={pageSize}
           totalCount={totalRows}

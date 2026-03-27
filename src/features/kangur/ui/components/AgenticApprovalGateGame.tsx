@@ -3,7 +3,7 @@
 import { useId } from 'react';
 
 import {
-  AgenticAssignmentGame,
+  createAgenticAssignmentGameComponent,
   type AgenticAssignmentGameItem,
   type AgenticAssignmentGameOption,
 } from '@/features/kangur/ui/components/AgenticAssignmentGame';
@@ -11,7 +11,6 @@ import {
   renderSoftAtmosphereGradients,
   renderSoftAtmosphereOvals,
 } from '@/features/kangur/ui/components/animations/svgAtmosphere';
-import type { KangurMiniGameFinishActionProps } from '@/features/kangur/ui/types';
 
 type ApprovalDecision = 'safe' | 'approval';
 
@@ -189,74 +188,68 @@ export const ApprovalGateVisual = (): JSX.Element => {
   );
 };
 
-export default function AgenticApprovalGateGame({
-  onFinish,
-}: KangurMiniGameFinishActionProps): JSX.Element {
-  return (
-    <AgenticAssignmentGame
-      copy={{
-        statusLabel: 'Approval Gate',
-        heading: 'Decide What Needs Approval',
-        lead:
-          'Each action must go through the gate. Select an action and decide if it needs user approval or is safe to run.',
-        instructions: [
-          'Pick an action card to focus it.',
-          'Choose whether it needs approval or not.',
-          'Check to see if you kept the scope safe.',
-        ],
-        leftPanelTitle: 'Actions',
-        leftPanelCaption: {
-          coarsePointer: 'Tap a card to focus it.',
-          finePointer: 'Route through the gate.',
-        },
-        leftPanelCountLabel: (assignedCount, total) => `${assignedCount}/${total} decided`,
-        leftPanelGroupLabel: 'Select an action to review',
-        leftPanelTouchHint: {
-          idle: 'Tap an action card, then tap a gate choice.',
-          selected: (itemText) => `Selected action: ${itemText} Tap a gate choice.`,
-          testId: 'agentic-approval-touch-hint',
-        },
-        rightPanelTitle: 'Gate Choices',
-        rightPanelCaption: {
-          coarsePointer: 'Tap to route the selected action.',
-          finePointer: 'Click to route.',
-        },
-        rightPanelGroupLabel: 'Choose an approval decision',
-        successMessage: 'Great job. You kept the gate tight and safe.',
-        failureMessage: (score, total) =>
-          `You classified ${score}/${total}. Recheck what triggers approval.`,
-      }}
-      items={APPROVAL_ACTIONS}
-      onFinish={onFinish}
-      options={APPROVAL_OPTIONS}
-      theme={{
-        accent: 'slate',
-        heroClassName:
-          'border border-slate-200/80 bg-gradient-to-br from-slate-50 via-white to-slate-100',
-        heroTopGlowClassName: '-right-14 top-4 bg-slate-200/40',
-        heroBottomGlowClassName: '-left-10 bottom-4 bg-slate-200/40',
-        headingGradientClass: 'from-slate-500 via-slate-700 to-orange-500',
-        instructionListClassName: 'space-y-2 text-sm text-slate-950',
-        leftPanelGlowClassName:
-          '[background:radial-gradient(circle_at_top,_rgba(148,163,184,0.3),_transparent_55%)]',
-        leftPanelTitleClassName: 'text-slate-950',
-        leftPanelCaptionClassName: 'text-slate-800',
-        leftTouchHintClassName: 'border-slate-200/80 text-slate-900',
-        leftItemFocusRingClassName: 'focus-visible:ring-indigo-400/70',
-        leftItemActiveClassName: 'border-slate-400 bg-slate-50',
-        leftItemInactiveClassName: 'border-slate-100/80',
-        leftItemCorrectClassName: 'border-emerald-300 bg-emerald-50',
-        leftItemWrongClassName: 'border-amber-300 bg-amber-50',
-        leftAssignedBadgeClassName:
-          'border-slate-200/70 bg-slate-100 text-slate-700',
-        rightPanelGlowClassName:
-          '[background:radial-gradient(circle_at_top,_rgba(71,85,105,0.25),_transparent_60%)]',
-        rightPanelTitleClassName: 'text-slate-950',
-        rightPanelCaptionClassName: 'text-slate-800',
-        rightOptionFocusRingClassName: 'focus-visible:ring-indigo-400/70',
-        rightOptionDescriptionClassName: 'text-slate-900',
-      }}
-      visual={<ApprovalGateVisual />}
-    />
-  );
-}
+export default createAgenticAssignmentGameComponent({
+  copy: {
+    statusLabel: 'Approval Gate',
+    heading: 'Decide What Needs Approval',
+    lead:
+      'Each action must go through the gate. Select an action and decide if it needs user approval or is safe to run.',
+    instructions: [
+      'Pick an action card to focus it.',
+      'Choose whether it needs approval or not.',
+      'Check to see if you kept the scope safe.',
+    ],
+    leftPanelTitle: 'Actions',
+    leftPanelCaption: {
+      coarsePointer: 'Tap a card to focus it.',
+      finePointer: 'Route through the gate.',
+    },
+    leftPanelCountLabel: (assignedCount, total) => `${assignedCount}/${total} decided`,
+    leftPanelGroupLabel: 'Select an action to review',
+    leftPanelTouchHint: {
+      idle: 'Tap an action card, then tap a gate choice.',
+      selected: (itemText) => `Selected action: ${itemText} Tap a gate choice.`,
+      testId: 'agentic-approval-touch-hint',
+    },
+    rightPanelTitle: 'Gate Choices',
+    rightPanelCaption: {
+      coarsePointer: 'Tap to route the selected action.',
+      finePointer: 'Click to route.',
+    },
+    rightPanelGroupLabel: 'Choose an approval decision',
+    successMessage: 'Great job. You kept the gate tight and safe.',
+    failureMessage: (score, total) =>
+      `You classified ${score}/${total}. Recheck what triggers approval.`,
+  },
+  items: APPROVAL_ACTIONS,
+  options: APPROVAL_OPTIONS,
+  theme: {
+    accent: 'slate',
+    heroClassName:
+      'border border-slate-200/80 bg-gradient-to-br from-slate-50 via-white to-slate-100',
+    heroTopGlowClassName: '-right-14 top-4 bg-slate-200/40',
+    heroBottomGlowClassName: '-left-10 bottom-4 bg-slate-200/40',
+    headingGradientClass: 'from-slate-500 via-slate-700 to-orange-500',
+    instructionListClassName: 'space-y-2 text-sm text-slate-950',
+    leftPanelGlowClassName:
+      '[background:radial-gradient(circle_at_top,_rgba(148,163,184,0.3),_transparent_55%)]',
+    leftPanelTitleClassName: 'text-slate-950',
+    leftPanelCaptionClassName: 'text-slate-800',
+    leftTouchHintClassName: 'border-slate-200/80 text-slate-900',
+    leftItemFocusRingClassName: 'focus-visible:ring-indigo-400/70',
+    leftItemActiveClassName: 'border-slate-400 bg-slate-50',
+    leftItemInactiveClassName: 'border-slate-100/80',
+    leftItemCorrectClassName: 'border-emerald-300 bg-emerald-50',
+    leftItemWrongClassName: 'border-amber-300 bg-amber-50',
+    leftAssignedBadgeClassName:
+      'border-slate-200/70 bg-slate-100 text-slate-700',
+    rightPanelGlowClassName:
+      '[background:radial-gradient(circle_at_top,_rgba(71,85,105,0.25),_transparent_60%)]',
+    rightPanelTitleClassName: 'text-slate-950',
+    rightPanelCaptionClassName: 'text-slate-800',
+    rightOptionFocusRingClassName: 'focus-visible:ring-indigo-400/70',
+    rightOptionDescriptionClassName: 'text-slate-900',
+  },
+  visual: <ApprovalGateVisual />,
+  displayName: 'AgenticApprovalGateGame',
+});

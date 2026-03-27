@@ -7,7 +7,7 @@ import {
   KangurDragDropContext,
   getKangurMobileDragHandleStyle,
 } from '@/features/kangur/ui/components/KangurDragDropContext';
-import { KangurCheckButton } from '@/features/kangur/ui/components/KangurCheckButton';
+import { getKangurCheckButtonClassName } from '@/features/kangur/ui/components/KangurCheckButton';
 
 import { KangurButton, KangurStatusChip } from '@/features/kangur/ui/design/primitives';
 import {
@@ -245,15 +245,18 @@ export default function AgenticDocsHierarchyGame({
         </Droppable>
       </KangurDragDropContext>
       <div className={cn(KANGUR_CENTER_ROW_CLASSNAME, 'mt-3 flex-wrap justify-start gap-2')}>
-        <KangurCheckButton
+        <KangurButton
           size='sm'
           variant='primary'
           onClick={handleCheck}
           disabled={isComplete}
-          feedbackTone={checked ? (isComplete ? 'success' : 'error') : null}
+          className={getKangurCheckButtonClassName(
+            undefined,
+            checked ? (isComplete ? 'success' : 'error') : null
+          )}
         >
           Sprawdź
-        </KangurCheckButton>
+        </KangurButton>
         <KangurButton size='sm' variant='ghost' onClick={handleReset}>
           Reset
         </KangurButton>

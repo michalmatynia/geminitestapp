@@ -22,7 +22,7 @@ type KangurChoiceDialogOption = {
   onSelect: () => void;
 };
 
-type KangurChoiceDialogProps = {
+export type KangurChoiceDialogProps = {
   contentId?: string;
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -37,7 +37,7 @@ type KangurChoiceDialogProps = {
   doneLabel?: ReactNode;
 };
 
-export function KangurChoiceDialog({
+export function renderKangurChoiceDialog({
   contentId,
   open,
   onOpenChange,

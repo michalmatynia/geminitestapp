@@ -70,34 +70,41 @@ export function SocialPostEditorModal({
     }
   }, [isOpen, activePost?.id]);
 
+  const modalProps = {
+    open: isOpen,
+    onOpenChange: (open: boolean): void => {
+      if (!open) onClose();
+    },
+    onClose,
+    title: resolvePostTitle(activePost),
+    subtitle: resolvePostSubtitle(activePost),
+    size: 'xl' as const,
+    className: 'md:min-w-[63rem] max-w-[66rem]',
+    bodyClassName: 'h-[80vh] overflow-y-auto',
+    headerActions: activePost ? (
+      <>
+        <Badge variant={activePost.status === 'published' ? 'secondary' : 'outline'}>
+          {statusLabel[activePost.status]}
+        </Badge>
+        {activePost.imageAssets.length > 0 ? (
+          <Badge variant='outline'>
+            {activePost.imageAssets.length} image
+            {activePost.imageAssets.length === 1 ? '' : 's'}
+          </Badge>
+        ) : null}
+      </>
+    ) : null,
+  };
+  const imagePanelProps = {
+    imageAssets,
+    handleRemoveImage,
+    setShowMediaLibrary,
+    showMediaLibrary,
+    handleAddImages,
+  };
+
   return (
-    <AppModal
-      open={isOpen}
-      onOpenChange={(open) => {
-        if (!open) onClose();
-      }}
-      onClose={onClose}
-      title={resolvePostTitle(activePost)}
-      subtitle={resolvePostSubtitle(activePost)}
-      size='xl'
-      className='md:min-w-[63rem] max-w-[66rem]'
-      bodyClassName='h-[80vh] overflow-y-auto'
-      headerActions={
-        activePost ? (
-          <>
-            <Badge variant={activePost.status === 'published' ? 'secondary' : 'outline'}>
-              {statusLabel[activePost.status]}
-            </Badge>
-            {activePost.imageAssets.length > 0 ? (
-              <Badge variant='outline'>
-                {activePost.imageAssets.length} image
-                {activePost.imageAssets.length === 1 ? '' : 's'}
-              </Badge>
-            ) : null}
-          </>
-        ) : null
-      }
-    >
+    <AppModal {...modalProps}>
       <Tabs
         value={activeTab}
         onValueChange={(value) => setActiveTab(value as 'edit' | 'schedule' | 'images')}
@@ -161,13 +168,7 @@ export function SocialPostEditorModal({
 
         <TabsContent value='images' className='mt-4 data-[state=inactive]:hidden' forceMount>
           {activePost ? (
-            <SocialPostImagesPanel
-              imageAssets={imageAssets}
-              handleRemoveImage={handleRemoveImage}
-              setShowMediaLibrary={setShowMediaLibrary}
-              showMediaLibrary={showMediaLibrary}
-              handleAddImages={handleAddImages}
-            />
+            <SocialPostImagesPanel {...imagePanelProps} />
           ) : (
             <div className='rounded-xl border border-border/60 bg-background/40 p-4 text-sm text-muted-foreground'>
               Select a social post to review its images.

@@ -8,7 +8,7 @@ import type {
 import { type CaseResolverCaptureAction } from '@/features/case-resolver/capture/public';
 import { encodeFilemakerPartyReference } from '@/features/filemaker/public';
 import { Badge, Button, FormField, SelectSimple } from '@/shared/ui';
-import { ConfirmDialog } from '@/shared/ui/confirm-dialog';
+import { ConfirmModal } from '@/shared/ui/templates/modals';
 import { DetailModal } from '@/shared/ui/templates/modals/DetailModal';
 
 import {
@@ -310,21 +310,19 @@ export function PromptExploderCaptureMappingModal(
           </div>
         ) : null}
       </DetailModal>
-      <ConfirmDialog
-        open={closeConfirmOpen}
-        onOpenChange={setCloseConfirmOpen}
+      <ConfirmModal
+        isOpen={closeConfirmOpen}
+        onClose={(): void => {
+          setCloseConfirmOpen(false);
+        }}
         title='Apply capture mapping?'
-        description='Apply the capture mapping to the document, or cancel to return to the mapping review.'
+        message='Apply the capture mapping to the document, or cancel to return to the mapping review.'
         confirmText='Apply Mapping'
         cancelText='Cancel'
-        variant='success'
         loading={applying}
         onConfirm={(): void => {
           setCloseConfirmOpen(false);
           onApply();
-        }}
-        onCancel={(): void => {
-          setCloseConfirmOpen(false);
         }}
       />
     </>

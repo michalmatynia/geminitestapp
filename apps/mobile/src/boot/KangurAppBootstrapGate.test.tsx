@@ -22,14 +22,70 @@ const {
 
 vi.mock('react-native', async () => {
   const reactNative = await vi.importActual<typeof import('react-native')>('react-native');
+  const createPrimitive = (tagName: keyof React.JSX.IntrinsicElements) => {
+    return ({
+      accessibilityLabel,
+      accessibilityRole,
+      ariaHidden,
+      children,
+      onPress,
+      testID,
+      ...props
+    }: React.PropsWithChildren<
+      Record<string, unknown> & {
+        accessibilityLabel?: string;
+        accessibilityRole?: string;
+        ariaHidden?: boolean;
+        onPress?: () => void;
+        testID?: string;
+      }
+    >) =>
+      React.createElement(
+        tagName,
+        {
+          ...props,
+          ...(testID ? { 'data-testid': testID } : {}),
+          ...(accessibilityLabel ? { 'aria-label': accessibilityLabel } : {}),
+          ...(accessibilityRole ? { role: accessibilityRole } : {}),
+          ...(ariaHidden ? { 'aria-hidden': true } : {}),
+          ...(onPress ? { onClick: onPress } : {}),
+        },
+        children,
+      );
+  };
 
   return {
     ...reactNative,
     InteractionManager: {
       runAfterInteractions: runAfterInteractionsMock,
     },
+    Text: createPrimitive('span'),
+    View: createPrimitive('div'),
   };
 });
+
+vi.mock('react-native-safe-area-context', () => ({
+  SafeAreaView: ({
+    accessibilityLabel,
+    children,
+    testID,
+    ...props
+  }: React.PropsWithChildren<
+    Record<string, unknown> & {
+      accessibilityLabel?: string;
+      testID?: string;
+    }
+  >) =>
+    React.createElement(
+      'div',
+      {
+        ...props,
+        ...(testID ? { 'data-testid': testID } : {}),
+        ...(accessibilityLabel ? { 'aria-label': accessibilityLabel } : {}),
+      },
+      children,
+    ),
+}));
 
 vi.mock('./useKangurAppStartup', () => ({
   useKangurAppStartup: useKangurAppStartupMock,

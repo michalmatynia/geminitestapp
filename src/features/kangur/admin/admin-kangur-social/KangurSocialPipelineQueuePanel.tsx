@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { PauseIcon, PlayIcon, RefreshCwIcon } from 'lucide-react';
 
 import { Badge, Button, Card, ListPanel, LoadingState } from '@/features/kangur/shared/ui';
@@ -381,12 +381,13 @@ export function KangurSocialPipelineQueuePanel({
               </thead>
               <tbody>
                 {jobs.slice(0, 20).map((job) => (
-                  <JobRow
-                    key={job.id}
-                    job={job}
-                    deleting={deletingJobId === job.id}
-                    onDeleteJob={handleDeleteJob}
-                  />
+                  <Fragment key={job.id}>
+                    {renderJobRow({
+                      job,
+                      deleting: deletingJobId === job.id,
+                      onDeleteJob: handleDeleteJob,
+                    })}
+                  </Fragment>
                 ))}
               </tbody>
             </table>
@@ -412,7 +413,7 @@ function StatusCard({ label, value }: { label: string; value: number }): React.J
   );
 }
 
-function JobRow({
+function renderJobRow({
   job,
   deleting,
   onDeleteJob,

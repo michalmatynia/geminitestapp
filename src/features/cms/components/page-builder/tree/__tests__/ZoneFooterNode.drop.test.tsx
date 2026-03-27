@@ -51,7 +51,7 @@ vi.mock('@/features/cms/hooks/useTreeActionsContext', () => ({
 }));
 
 vi.mock('@/features/cms/components/page-builder/tree/TreeSectionPicker', () => ({
-  TreeSectionPicker: () => <div data-testid='section-picker' />,
+  renderTreeSectionPicker: () => <div data-testid='section-picker' />,
 }));
 
 const createTestQueryClient = () =>

@@ -13,6 +13,7 @@ import { KangurButton } from '@/features/kangur/ui/design/primitives';
 import { KANGUR_PANEL_GAP_CLASSNAME, type KangurAccent } from '@/features/kangur/ui/design/tokens';
 import { useKangurCoarsePointer } from '@/features/kangur/ui/hooks/useKangurCoarsePointer';
 
+import { createAgenticCodingMiniGameComponent } from './AgenticCodingMiniGames.factory';
 import type { TrimGameConfig, TrimGameToken } from './AgenticCodingMiniGames.types';
 
 const buildTrimState = (tokens: TrimGameToken[]): Record<string, boolean> => {
@@ -23,13 +24,12 @@ const buildTrimState = (tokens: TrimGameToken[]): Record<string, boolean> => {
   return base;
 };
 
-export function AgenticTrimGame({
-  accent,
-  config,
-}: {
+type AgenticTrimGameProps = {
   accent: KangurAccent;
   config: TrimGameConfig;
-}): React.JSX.Element {
+};
+
+function useAgenticTrimGameModel(config: TrimGameConfig) {
   const isCoarsePointer = useKangurCoarsePointer();
   const [removed, setRemoved] = useState<Record<string, boolean>>(() => buildTrimState(config.tokens));
   const [checked, setChecked] = useState(false);
@@ -57,6 +57,37 @@ export function AgenticTrimGame({
     setChecked(false);
   };
 
+  return {
+    allCorrect,
+    checked,
+    isRemoved,
+    isCoarsePointer,
+    preview,
+    progress,
+    removableCount,
+    removedCount,
+    reset,
+    setChecked,
+    toggleToken,
+  };
+}
+
+function renderAgenticTrimGame(
+  { accent, config }: AgenticTrimGameProps,
+  {
+    allCorrect,
+    checked,
+    isRemoved,
+    isCoarsePointer,
+    preview,
+    progress,
+    removableCount,
+    removedCount,
+    reset,
+    setChecked,
+    toggleToken,
+  }: ReturnType<typeof useAgenticTrimGameModel>
+): React.JSX.Element {
   return (
     <KangurLessonStack align='start' className='w-full'>
       <KangurLessonVisual
@@ -145,6 +176,12 @@ export function AgenticTrimGame({
     </KangurLessonStack>
   );
 }
+
+export const AgenticTrimGame = createAgenticCodingMiniGameComponent({
+  displayName: 'AgenticTrimGame',
+  render: renderAgenticTrimGame,
+  useModel: useAgenticTrimGameModel,
+});
 
 function TrimTokenButton({
   checked,

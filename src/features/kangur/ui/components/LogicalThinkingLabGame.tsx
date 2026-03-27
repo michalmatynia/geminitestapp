@@ -8,7 +8,7 @@ import {
   KangurDragDropContext,
   getKangurMobileDragHandleStyle,
 } from '@/features/kangur/ui/components/KangurDragDropContext';
-import { KangurCheckButton } from '@/features/kangur/ui/components/KangurCheckButton';
+import { getKangurCheckButtonClassName } from '@/features/kangur/ui/components/KangurCheckButton';
 import { KangurButton, KangurInfoCard, KangurStatusChip } from '@/features/kangur/ui/design/primitives';
 import {
   KANGUR_GRID_TIGHT_CLASSNAME,
@@ -982,15 +982,18 @@ export default function LogicalThinkingLabGame({
       ) : null}
 
       <div className={KANGUR_WRAP_ROW_CLASSNAME}>
-        <KangurCheckButton
+        <KangurButton
           onClick={handleCheck}
           size='sm'
           type='button'
           variant='primary'
-          feedbackTone={feedback === 'success' ? 'success' : feedback === 'error' ? 'error' : null}
+          className={getKangurCheckButtonClassName(
+            undefined,
+            feedback === 'success' ? 'success' : feedback === 'error' ? 'error' : null
+          )}
         >
           {copy.actions.check}
-        </KangurCheckButton>
+        </KangurButton>
         {stage === 'pattern' && patternChecked ? (
           <>
             <KangurButton onClick={resetPattern} size='sm' type='button' variant='surface'>

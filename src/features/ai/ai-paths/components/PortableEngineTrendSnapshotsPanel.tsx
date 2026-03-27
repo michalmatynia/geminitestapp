@@ -1,7 +1,7 @@
 'use client';
 
 import { RefreshCcwIcon } from 'lucide-react';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { Fragment, useCallback, useEffect, useMemo, useState } from 'react';
 
 import { Badge, Button, Card, Skeleton } from '@/shared/ui';
 import { cn } from '@/shared/utils';
@@ -163,7 +163,7 @@ function PortableEngineReasonBadgeList({
   );
 }
 
-function PortableEngineRecordCard({
+function renderPortableEngineRecordCard({
   title,
   description,
   className,
@@ -393,11 +393,12 @@ export function PortableEngineTrendSnapshotsPanel(): React.JSX.Element {
             {runExecution.recentFailures.length > 0 ? (
               <div className='mt-2 space-y-1'>
                 {runExecution.recentFailures.slice(0, 3).map((entry) => (
-                  <PortableEngineRecordCard
-                    key={`${entry.at}-${entry.runner}-${entry.stage}-${entry.error}`}
-                    title={`${entry.runner}/${entry.surface}/${entry.stage}`}
-                    description={`· ${entry.error} · ${entry.durationMs}ms · ${formatTimestamp(entry.at)}`}
-                  />
+                  <Fragment key={`${entry.at}-${entry.runner}-${entry.stage}-${entry.error}`}>
+                    {renderPortableEngineRecordCard({
+                      title: `${entry.runner}/${entry.surface}/${entry.stage}`,
+                      description: `· ${entry.error} · ${entry.durationMs}ms · ${formatTimestamp(entry.at)}`,
+                    })}
+                  </Fragment>
                 ))}
               </div>
             ) : null}
@@ -408,12 +409,13 @@ export function PortableEngineTrendSnapshotsPanel(): React.JSX.Element {
           ) : (
             <div className='space-y-2'>
               {latestSnapshots.map((snapshot) => (
-                <PortableEngineRecordCard
-                  key={`${snapshot.at}-${snapshot.trigger}`}
-                  title={formatTimestamp(snapshot.at)}
-                  description={`trigger=${snapshot.trigger} uses=${snapshot.usageTotals.uses} driftAlerts=${snapshot.driftAlerts.length} sinkFailed=${snapshot.sinkTotals.writesFailed}/${snapshot.sinkTotals.writesAttempted}`}
-                  stacked
-                />
+                <Fragment key={`${snapshot.at}-${snapshot.trigger}`}>
+                  {renderPortableEngineRecordCard({
+                    title: formatTimestamp(snapshot.at),
+                    description: `trigger=${snapshot.trigger} uses=${snapshot.usageTotals.uses} driftAlerts=${snapshot.driftAlerts.length} sinkFailed=${snapshot.sinkTotals.writesFailed}/${snapshot.sinkTotals.writesAttempted}`,
+                    stacked: true,
+                  })}
+                </Fragment>
               ))}
             </div>
           )}

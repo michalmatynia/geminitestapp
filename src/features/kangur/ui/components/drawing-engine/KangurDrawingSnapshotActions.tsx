@@ -19,6 +19,40 @@ type KangurDrawingSnapshotActionsProps = {
   variant?: KangurButtonProps['variant'];
 };
 
+const renderKangurDrawingSnapshotActions = ({
+  buttonClassName,
+  className,
+  display,
+  exportDisabled,
+  exportLabel,
+  exportTestId,
+  iconClassName,
+  isCoarsePointer,
+  onExport,
+  size,
+  variant,
+}: KangurDrawingSnapshotActionsProps): React.JSX.Element => (
+  <div className={cn('flex flex-wrap gap-2', className)}>
+    <KangurButton
+      aria-label={exportLabel}
+      className={cn(buttonClassName, isCoarsePointer && 'min-h-11')}
+      data-testid={exportTestId}
+      disabled={exportDisabled}
+      onClick={onExport}
+      size={size}
+      title={exportLabel}
+      type='button'
+      variant={variant}
+    >
+      <Download
+        aria-hidden='true'
+        className={cn(display === 'icon' ? 'h-3 w-3' : 'h-4 w-4', iconClassName)}
+      />
+      {display === 'label' ? exportLabel : null}
+    </KangurButton>
+  </div>
+);
+
 export function KangurDrawingSnapshotActions({
   buttonClassName,
   className,
@@ -32,25 +66,17 @@ export function KangurDrawingSnapshotActions({
   size = 'lg',
   variant = 'surface',
 }: KangurDrawingSnapshotActionsProps): React.JSX.Element {
-  return (
-    <div className={cn('flex flex-wrap gap-2', className)}>
-      <KangurButton
-        aria-label={exportLabel}
-        className={cn(buttonClassName, isCoarsePointer && 'min-h-11')}
-        data-testid={exportTestId}
-        disabled={exportDisabled}
-        onClick={onExport}
-        size={size}
-        title={exportLabel}
-        type='button'
-        variant={variant}
-      >
-        <Download
-          aria-hidden='true'
-          className={cn(display === 'icon' ? 'h-3 w-3' : 'h-4 w-4', iconClassName)}
-        />
-        {display === 'label' ? exportLabel : null}
-      </KangurButton>
-    </div>
-  );
+  return renderKangurDrawingSnapshotActions({
+    buttonClassName,
+    className,
+    display,
+    exportDisabled,
+    exportLabel,
+    exportTestId,
+    iconClassName,
+    isCoarsePointer,
+    onExport,
+    size,
+    variant,
+  });
 }

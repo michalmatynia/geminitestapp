@@ -43,7 +43,7 @@ import { resolveRunHistoryEntryAction } from './run-history-entry-actions';
 import { buildHistoryNodeOptions } from './run-history-utils';
 import { AiPathsPillButton } from './AiPathsPillButton';
 import { RunHistoryEntries } from './RunHistoryEntries';
-import { RuntimeEventEntry } from './runtime-event-entry';
+import { renderRuntimeEventEntry } from './runtime-event-entry';
 
 type HistoryOption = {
   id: string;
@@ -141,55 +141,49 @@ const resolveRunCoordinationNotice = (
   return null;
 };
 
-function JobQueueDetailField({
+const renderJobQueueDetailField = ({
   label,
   value,
   className,
   valueClassName,
-}: JobQueueDetailFieldProps): React.JSX.Element {
-  return (
-    <div className={className}>
-      <span className='uppercase text-gray-500'>{label}</span>
-      <div className={valueClassName ?? 'text-white'}>{value}</div>
-    </div>
-  );
-}
+}: JobQueueDetailFieldProps): React.JSX.Element => (
+  <div className={className}>
+    <span className='uppercase text-gray-500'>{label}</span>
+    <div className={valueClassName ?? 'text-white'}>{value}</div>
+  </div>
+);
 
-function JobQueueJsonTextarea({
+const renderJobQueueJsonTextarea = ({
   value,
   minHeightClassName = 'min-h-[120px]',
   ariaLabel,
   title,
-}: JobQueueJsonTextareaProps): React.JSX.Element {
-  return (
-    <Textarea
-      className={[jobQueueJsonTextareaClassName, minHeightClassName].join(' ')}
-      readOnly
-      value={safePrettyJson(value)}
-      aria-label={ariaLabel}
-      title={title ?? ariaLabel}
-    />
-  );
-}
+}: JobQueueJsonTextareaProps): React.JSX.Element => (
+  <Textarea
+    className={[jobQueueJsonTextareaClassName, minHeightClassName].join(' ')}
+    readOnly
+    value={safePrettyJson(value)}
+    aria-label={ariaLabel}
+    title={title ?? ariaLabel}
+  />
+);
 
-function JobQueueJsonField({
+const renderJobQueueJsonField = ({
   label,
   value,
   minHeightClassName,
   ariaLabel,
   title,
-}: JobQueueJsonFieldProps): React.JSX.Element {
-  return (
-    <FormField label={label}>
-      <JobQueueJsonTextarea
-        value={value}
-        minHeightClassName={minHeightClassName}
-        ariaLabel={ariaLabel}
-        title={title}
-      />
-    </FormField>
-  );
-}
+}: JobQueueJsonFieldProps): React.JSX.Element => (
+  <FormField label={label}>
+    {renderJobQueueJsonTextarea({
+      value,
+      minHeightClassName,
+      ariaLabel,
+      title,
+    })}
+  </FormField>
+);
 
 export function JobQueueRunCard({ runId, run }: JobQueueRunCardProps): React.JSX.Element {
   const {
@@ -434,45 +428,57 @@ export function JobQueueRunCard({ runId, run }: JobQueueRunCardProps): React.JSX
           {detail ? (
             <>
               <div className='grid gap-3 text-[11px] text-gray-400 sm:grid-cols-2 lg:grid-cols-3'>
-                <JobQueueDetailField label='Path ID' value={detailRun.pathId ?? '-'} />
-                <JobQueueDetailField label='Status' value={detailRun.status} />
-                <JobQueueDetailField label='Trigger' value={detailRun.triggerEvent ?? '-'} />
-                <JobQueueDetailField label='Origin' value={getOriginLabel(runOrigin)} />
-                <JobQueueDetailField
-                  label='Run type'
-                  value={getExecutionLabel(runExecution)}
-                />
-                <JobQueueDetailField label='Source' value={runSource} />
-                <JobQueueDetailField
-                  label='Source debug'
-                  value={runSourceDebug}
-                  className='sm:col-span-2 lg:col-span-3'
-                  valueClassName='font-mono text-sky-200'
-                />
-                <JobQueueDetailField
-                  label='Runtime fingerprint'
-                  value={runtimeFingerprint ?? 'n/a'}
-                  className='sm:col-span-2 lg:col-span-3'
-                  valueClassName='font-mono text-sky-200'
-                />
-                <JobQueueDetailField label='Started' value={formatDate(detailRun.startedAt)} />
-                <JobQueueDetailField label='Finished' value={formatDate(detailRun.finishedAt)} />
-                <JobQueueDetailField
-                  label='Dead-lettered'
-                  value={formatDate(detailRun.deadLetteredAt)}
-                />
-                <JobQueueDetailField
-                  label='Retry'
-                  value={`${detailRun.retryCount ?? 0}/${detailRun.maxAttempts ?? '-'}`}
-                />
-                <JobQueueDetailField
-                  label='Next retry'
-                  value={formatDate(detailRun.nextRetryAt)}
-                />
-                <JobQueueDetailField
-                  label='Trigger node'
-                  value={detailRun.triggerNodeId ?? '-'}
-                />
+                {renderJobQueueDetailField({ label: 'Path ID', value: detailRun.pathId ?? '-' })}
+                {renderJobQueueDetailField({ label: 'Status', value: detailRun.status })}
+                {renderJobQueueDetailField({
+                  label: 'Trigger',
+                  value: detailRun.triggerEvent ?? '-',
+                })}
+                {renderJobQueueDetailField({
+                  label: 'Origin',
+                  value: getOriginLabel(runOrigin),
+                })}
+                {renderJobQueueDetailField({
+                  label: 'Run type',
+                  value: getExecutionLabel(runExecution),
+                })}
+                {renderJobQueueDetailField({ label: 'Source', value: runSource })}
+                {renderJobQueueDetailField({
+                  label: 'Source debug',
+                  value: runSourceDebug,
+                  className: 'sm:col-span-2 lg:col-span-3',
+                  valueClassName: 'font-mono text-sky-200',
+                })}
+                {renderJobQueueDetailField({
+                  label: 'Runtime fingerprint',
+                  value: runtimeFingerprint ?? 'n/a',
+                  className: 'sm:col-span-2 lg:col-span-3',
+                  valueClassName: 'font-mono text-sky-200',
+                })}
+                {renderJobQueueDetailField({
+                  label: 'Started',
+                  value: formatDate(detailRun.startedAt),
+                })}
+                {renderJobQueueDetailField({
+                  label: 'Finished',
+                  value: formatDate(detailRun.finishedAt),
+                })}
+                {renderJobQueueDetailField({
+                  label: 'Dead-lettered',
+                  value: formatDate(detailRun.deadLetteredAt),
+                })}
+                {renderJobQueueDetailField({
+                  label: 'Retry',
+                  value: `${detailRun.retryCount ?? 0}/${detailRun.maxAttempts ?? '-'}`,
+                })}
+                {renderJobQueueDetailField({
+                  label: 'Next retry',
+                  value: formatDate(detailRun.nextRetryAt),
+                })}
+                {renderJobQueueDetailField({
+                  label: 'Trigger node',
+                  value: detailRun.triggerNodeId ?? '-',
+                })}
               </div>
 
               <CollapsibleSection
@@ -550,15 +556,18 @@ export function JobQueueRunCard({ runId, run }: JobQueueRunCardProps): React.JSX
                           variant='subtle'
                         >
                           <div className='mt-1 grid gap-2 text-[11px] text-gray-400 sm:grid-cols-2 lg:grid-cols-3'>
-                            <JobQueueDetailField
-                              label='Started'
-                              value={formatDate(node.startedAt)}
-                            />
-                            <JobQueueDetailField
-                              label='Finished'
-                              value={formatDate(node.finishedAt)}
-                            />
-                            <JobQueueDetailField label='Attempt' value={node.attempt} />
+                            {renderJobQueueDetailField({
+                              label: 'Started',
+                              value: formatDate(node.startedAt),
+                            })}
+                            {renderJobQueueDetailField({
+                              label: 'Finished',
+                              value: formatDate(node.finishedAt),
+                            })}
+                            {renderJobQueueDetailField({
+                              label: 'Attempt',
+                              value: node.attempt,
+                            })}
                           </div>
                           {node.errorMessage ? (
                             <div className='mt-2 rounded-md border border-rose-500/30 bg-rose-500/10 p-2 text-[11px] text-rose-200'>
@@ -566,16 +575,16 @@ export function JobQueueRunCard({ runId, run }: JobQueueRunCardProps): React.JSX
                             </div>
                           ) : null}
                           <div className='mt-3 grid gap-3 lg:grid-cols-2'>
-                            <JobQueueJsonField
-                              label='Inputs'
-                              value={node.inputs}
-                              ariaLabel='Inputs'
-                            />
-                            <JobQueueJsonField
-                              label='Outputs'
-                              value={node.outputs}
-                              ariaLabel='Outputs'
-                            />
+                            {renderJobQueueJsonField({
+                              label: 'Inputs',
+                              value: node.inputs,
+                              ariaLabel: 'Inputs',
+                            })}
+                            {renderJobQueueJsonField({
+                              label: 'Outputs',
+                              value: node.outputs,
+                              ariaLabel: 'Outputs',
+                            })}
                           </div>
                           {artifactLinks.length > 0 ? (
                             <div className='mt-3 rounded-md border border-sky-500/30 bg-sky-500/5 p-2'>
@@ -624,26 +633,25 @@ export function JobQueueRunCard({ runId, run }: JobQueueRunCardProps): React.JSX
                 ) : (
                   <div className='mt-1 divide-y divide-border/70'>
                     {events.map((event: AiPathRunEventRecord) => (
-                      <RuntimeEventEntry
-                        key={event.id}
-                        timestamp={formatDate(event.createdAt)}
-                        level={event.level}
-                        kind={null}
-                        message={event.message}
-                        className='py-2'
-                        timeClassName='text-gray-400'
-                        levelClassName='text-gray-300'
-                        messageClassName='text-sm text-white'
-                        stacked
-                        hideKindBadge
-                        details={
-                          event.metadata ? (
+                      <React.Fragment key={event.id}>
+                        {renderRuntimeEventEntry({
+                          timestamp: formatDate(event.createdAt),
+                          level: event.level,
+                          kind: null,
+                          message: event.message,
+                          className: 'py-2',
+                          timeClassName: 'text-gray-400',
+                          levelClassName: 'text-gray-300',
+                          messageClassName: 'text-sm text-white',
+                          stacked: true,
+                          hideKindBadge: true,
+                          details: event.metadata ? (
                             <pre className='mt-2 max-h-40 overflow-auto rounded-md border border-border bg-black/30 p-2 text-[11px] text-gray-200'>
                               {safePrettyJson(event.metadata)}
                             </pre>
-                          ) : null
-                        }
-                      />
+                          ) : null,
+                        })}
+                      </React.Fragment>
                     ))}
                   </div>
                 )}
@@ -655,24 +663,24 @@ export function JobQueueRunCard({ runId, run }: JobQueueRunCardProps): React.JSX
                 className='border-border/70 bg-black/20'
               >
                 <div className='mt-1 grid gap-3 lg:grid-cols-2'>
-                  <JobQueueJsonField
-                    label='Inputs'
-                    value={(detailRun.runtimeState as Record<string, unknown>)?.['inputs']}
-                    ariaLabel='Inputs'
-                  />
-                  <JobQueueJsonField
-                    label='Outputs'
-                    value={(detailRun.runtimeState as Record<string, unknown>)?.['outputs']}
-                    ariaLabel='Outputs'
-                  />
+                  {renderJobQueueJsonField({
+                    label: 'Inputs',
+                    value: (detailRun.runtimeState as Record<string, unknown>)?.['inputs'],
+                    ariaLabel: 'Inputs',
+                  })}
+                  {renderJobQueueJsonField({
+                    label: 'Outputs',
+                    value: (detailRun.runtimeState as Record<string, unknown>)?.['outputs'],
+                    ariaLabel: 'Outputs',
+                  })}
                 </div>
                 <div className='mt-3'>
-                  <JobQueueJsonField
-                    label='Hashes'
-                    value={(detailRun.runtimeState as Record<string, unknown>)?.['hashes']}
-                    minHeightClassName='min-h-[80px]'
-                    ariaLabel='Hashes'
-                  />
+                  {renderJobQueueJsonField({
+                    label: 'Hashes',
+                    value: (detailRun.runtimeState as Record<string, unknown>)?.['hashes'],
+                    minHeightClassName: 'min-h-[80px]',
+                    ariaLabel: 'Hashes',
+                  })}
                 </div>
               </CollapsibleSection>
 
@@ -681,11 +689,11 @@ export function JobQueueRunCard({ runId, run }: JobQueueRunCardProps): React.JSX
                 variant='subtle'
                 className='border-border/70 bg-black/20'
               >
-                <JobQueueJsonTextarea
-                  value={detailRun.graph}
-                  minHeightClassName='min-h-[160px]'
-                  ariaLabel='Graph snapshot'
-                />
+                {renderJobQueueJsonTextarea({
+                  value: detailRun.graph,
+                  minHeightClassName: 'min-h-[160px]',
+                  ariaLabel: 'Graph snapshot',
+                })}
               </CollapsibleSection>
 
               <CollapsibleSection
@@ -694,23 +702,23 @@ export function JobQueueRunCard({ runId, run }: JobQueueRunCardProps): React.JSX
                 className='border-border/70 bg-black/20'
               >
                 <div className='mt-1 space-y-3'>
-                  <JobQueueJsonField
-                    label='Run'
-                    value={detailRun}
-                    minHeightClassName='min-h-[140px]'
-                    ariaLabel='Run'
-                  />
-                  <JobQueueJsonField
-                    label='Nodes'
-                    value={nodes}
-                    minHeightClassName='min-h-[140px]'
-                    ariaLabel='Nodes'
-                  />
-                  <JobQueueJsonField
-                    label='Events'
-                    value={events}
-                    ariaLabel='Events'
-                  />
+                  {renderJobQueueJsonField({
+                    label: 'Run',
+                    value: detailRun,
+                    minHeightClassName: 'min-h-[140px]',
+                    ariaLabel: 'Run',
+                  })}
+                  {renderJobQueueJsonField({
+                    label: 'Nodes',
+                    value: nodes,
+                    minHeightClassName: 'min-h-[140px]',
+                    ariaLabel: 'Nodes',
+                  })}
+                  {renderJobQueueJsonField({
+                    label: 'Events',
+                    value: events,
+                    ariaLabel: 'Events',
+                  })}
                 </div>
               </CollapsibleSection>
             </>

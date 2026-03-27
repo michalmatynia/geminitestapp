@@ -1,6 +1,6 @@
 import React from 'react';
 
-import { KANGUR_AGE_GROUPS } from '@/features/kangur/lessons/lesson-catalog';
+import { KANGUR_AGE_GROUPS } from '@/features/kangur/lessons/lesson-catalog-metadata';
 import { KANGUR_LESSON_COMPONENT_OPTIONS } from '@/features/kangur/settings';
 import { FormField, Input, SelectSimple, Switch, Textarea } from '@/features/kangur/shared/ui';
 import {

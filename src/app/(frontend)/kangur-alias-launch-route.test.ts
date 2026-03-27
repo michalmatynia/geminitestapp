@@ -82,15 +82,19 @@ describe('kangur alias route', () => {
     );
   });
 
-  it('renders the explicit kangur alias route without resolving launch redirects', async () => {
+  it('renders the explicit kangur alias route on the server shell without resolving launch redirects', async () => {
     const { default: KangurAliasPage } = await import('@/app/(frontend)/kangur/(app)/[[...slug]]/page');
+    const { KangurServerShell } = await import('@/features/kangur/ui/components/KangurServerShell');
 
-    await expect(
-      KangurAliasPage({
-        params: Promise.resolve({ slug: ['lessons'] }),
-        searchParams: Promise.resolve({ focus: 'division' }),
-      } as never)
-    ).resolves.toBeNull();
+    const result = await KangurAliasPage({
+      params: Promise.resolve({ slug: ['lessons'] }),
+      searchParams: Promise.resolve({ focus: 'division' }),
+    } as never);
+
+    expect(result).toMatchObject({
+      type: KangurServerShell,
+      props: {},
+    });
 
     expect(redirectMock).not.toHaveBeenCalled();
   });
@@ -136,17 +140,21 @@ describe('kangur alias route', () => {
     expect(redirectMock).toHaveBeenCalledWith('/games?tab=runtime');
   });
 
-  it('renders the localized explicit kangur alias route without redirecting', async () => {
+  it('renders the localized explicit kangur alias route on the server shell without redirecting', async () => {
     const { default: LocalizedKangurAliasPage } = await import(
       '@/app/[locale]/(frontend)/kangur/(app)/[[...slug]]/page'
     );
+    const { KangurServerShell } = await import('@/features/kangur/ui/components/KangurServerShell');
 
-    await expect(
-      LocalizedKangurAliasPage({
-        params: Promise.resolve({ locale: 'pl', slug: ['lessons'] }),
-        searchParams: Promise.resolve({ focus: 'division' }),
-      } as never)
-    ).resolves.toBeNull();
+    const result = await LocalizedKangurAliasPage({
+      params: Promise.resolve({ locale: 'pl', slug: ['lessons'] }),
+      searchParams: Promise.resolve({ focus: 'division' }),
+    } as never);
+
+    expect(result).toMatchObject({
+      type: KangurServerShell,
+      props: {},
+    });
 
     expect(redirectMock).not.toHaveBeenCalled();
   });

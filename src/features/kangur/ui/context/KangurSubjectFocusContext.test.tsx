@@ -5,7 +5,7 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { renderToString } from 'react-dom/server';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { DEFAULT_KANGUR_SUBJECT } from '@/features/kangur/lessons/lesson-catalog';
+import { DEFAULT_KANGUR_SUBJECT } from '@/features/kangur/lessons/lesson-catalog-metadata';
 
 const authState = vi.hoisted(() => ({
   value: {

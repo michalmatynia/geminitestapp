@@ -3,13 +3,9 @@
 import React from 'react';
 
 import {
-  KANGUR_MAIN_PAGE_KEY,
+  resolveKangurFeaturePageRoute,
 } from '@/features/kangur/config/routing';
-import {
-  resolveAccessibleKangurFeaturePageRoute,
-} from '@/features/kangur/config/page-access';
 import { KangurRoutingProvider } from '@/features/kangur/ui/context/KangurRoutingContext';
-import { useOptionalNextAuthSession } from '@/features/kangur/ui/hooks/useOptionalNextAuthSession';
 import { LoadingPanel } from '@/shared/ui/LoadingPanel';
 
 import { KangurAdminMenuToggle } from './KangurAdminMenuToggle';
@@ -22,25 +18,19 @@ const LazyKangurFeaturePageShell = React.lazy(() =>
 );
 
 export function AdminKangurPageShell({ slug = [] }: { slug?: string[] }): React.JSX.Element {
-  const { data: session } = useOptionalNextAuthSession();
   const {
     normalizedBasePath,
-    pageKey: accessiblePageKey,
-    requestedPath: accessibleRequestedPath,
-  } = resolveAccessibleKangurFeaturePageRoute({
-    slug,
-    basePath: KANGUR_ADMIN_BASE_PATH,
-    session,
-    fallbackPageKey: KANGUR_MAIN_PAGE_KEY,
-  });
+    pageKey,
+    requestedPath,
+  } = resolveKangurFeaturePageRoute(slug, KANGUR_ADMIN_BASE_PATH);
 
   return (
     <>
       <KangurAdminMenuToggle />
       <KangurRoutingProvider
-        pageKey={accessiblePageKey}
-        requestedPath={accessibleRequestedPath}
-        requestedHref={accessibleRequestedPath}
+        pageKey={pageKey}
+        requestedPath={requestedPath}
+        requestedHref={requestedPath}
         basePath={normalizedBasePath}
         embedded
       >

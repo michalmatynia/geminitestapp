@@ -6,6 +6,10 @@ import React from 'react';
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
+const { captureExceptionMock } = vi.hoisted(() => ({
+  captureExceptionMock: vi.fn(),
+}));
+
 const { trackKangurClientEventMock, logKangurClientErrorMock, withKangurClientError, withKangurClientErrorSync } =
   globalThis.__kangurClientErrorMocks();
 const settingsStoreMock = {
@@ -55,6 +59,12 @@ vi.mock('@/features/kangur/observability/client', () => {
     withKangurClientErrorSync,
   };
 });
+
+vi.mock('@/features/kangur/shared/utils/observability/error-system-client', () => ({
+  ErrorSystem: {
+    captureException: captureExceptionMock,
+  },
+}));
 
 import {
   KANGUR_AI_TUTOR_APP_SETTINGS_KEY,

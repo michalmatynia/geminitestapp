@@ -177,6 +177,49 @@ describe('KangurProgressSyncProvider', () => {
     expect(localStorage.getItem(KANGUR_PROGRESS_OWNER_STORAGE_KEY)).toBe('learner-1');
   });
 
+  it('catches deferred hydration sync failures instead of leaking an unhandled rejection', async () => {
+    act(() => {
+      saveProgress(
+        createProgress({
+          totalXp: 120,
+          gamesPlayed: 5,
+          badges: ['first_game'],
+        }),
+        { ownerKey: 'learner-1' }
+      );
+    });
+    progressGetMock.mockResolvedValue(
+      createProgress({
+        totalXp: 80,
+        gamesPlayed: 3,
+      })
+    );
+    progressUpdateMock.mockRejectedValue(
+      new Error('Kangur API request failed: 405 Method Not Allowed (/api/kangur/progress)')
+    );
+
+    render(
+      <KangurProgressSyncProvider>
+        <ProgressProbe />
+      </KangurProgressSyncProvider>
+    );
+
+    await waitFor(() => expect(progressGetMock).toHaveBeenCalledTimes(1));
+    await waitFor(() =>
+      expect(trackKangurClientEventMock).toHaveBeenCalledWith(
+        'kangur_progress_hydration_remote_sync_failed',
+        expect.objectContaining({
+          userKey: 'learner-1',
+          totalXp: 120,
+          gamesPlayed: 5,
+          errorMessage: 'Kangur API request failed: 405 Method Not Allowed (/api/kangur/progress)',
+          subject: 'maths',
+        })
+      )
+    );
+    expect(screen.getByTestId('kangur-progress-total-xp')).toHaveTextContent('120');
+  });
+
   it('reuses cached remote hydration state across repeated mounts for the same learner and subject', async () => {
     progressGetMock.mockResolvedValue(
       createProgress({

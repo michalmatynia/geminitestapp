@@ -36,6 +36,78 @@ type KangurTracingBoardProps = {
   width: number;
 };
 
+const renderKangurTracingBoard = ({
+  ariaKeyShortcuts,
+  boardOverlay,
+  canvasAriaLabel,
+  canvasRef,
+  footerHint,
+  footerPointsLabel,
+  guideSurface,
+  height,
+  isCoarsePointer,
+  isPointerDrawing,
+  onKeyDown,
+  onPointerCancel,
+  onPointerDown,
+  onPointerLeave,
+  onPointerMove,
+  onPointerUp,
+  shellDataTestId,
+  shellStyle,
+  touchHint,
+  touchHintTestId,
+  width,
+}: KangurTracingBoardProps): React.JSX.Element => (
+  <>
+    {isCoarsePointer ? (
+      <KangurInfoCard accent='sky' className='w-full rounded-[20px] text-sm' padding='sm' tone='neutral'>
+        <p
+          aria-live='polite'
+          className='font-semibold text-slate-600'
+          data-testid={touchHintTestId}
+          role='status'
+        >
+          {touchHint}
+        </p>
+      </KangurInfoCard>
+    ) : null}
+
+    <div
+      className={cn(
+        'relative w-full overflow-hidden rounded-[28px] border border-slate-200/70 bg-white/80 shadow-[0_16px_40px_-32px_rgba(15,23,42,0.45)]',
+        isPointerDrawing && 'ring-2 ring-sky-300/70 ring-offset-2 ring-offset-white'
+      )}
+      data-testid={shellDataTestId}
+      style={shellStyle}
+    >
+      {guideSurface}
+      {boardOverlay}
+      <KangurDrawingCanvasSurface
+        ariaKeyShortcuts={ariaKeyShortcuts}
+        ariaLabel={canvasAriaLabel}
+        canvasClassName='relative z-10 h-full w-full'
+        canvasRef={canvasRef}
+        height={height}
+        isPointerDrawing={isPointerDrawing}
+        onKeyDown={onKeyDown}
+        onPointerCancel={onPointerCancel}
+        onPointerDown={onPointerDown}
+        onPointerLeave={onPointerLeave}
+        onPointerMove={onPointerMove}
+        onPointerUp={onPointerUp}
+        tabIndex={0}
+        width={width}
+      />
+    </div>
+
+    <div className='flex flex-wrap items-center justify-between gap-3 text-sm text-slate-600'>
+      <span>{footerHint}</span>
+      <span>{footerPointsLabel}</span>
+    </div>
+  </>
+);
+
 export function KangurTracingBoard({
   ariaKeyShortcuts,
   boardOverlay,
@@ -59,53 +131,27 @@ export function KangurTracingBoard({
   touchHintTestId,
   width,
 }: KangurTracingBoardProps): React.JSX.Element {
-  return (
-    <>
-      {isCoarsePointer ? (
-        <KangurInfoCard accent='sky' className='w-full rounded-[20px] text-sm' padding='sm' tone='neutral'>
-          <p
-            aria-live='polite'
-            className='font-semibold text-slate-600'
-            data-testid={touchHintTestId}
-            role='status'
-          >
-            {touchHint}
-          </p>
-        </KangurInfoCard>
-      ) : null}
-
-      <div
-        className={cn(
-          'relative w-full overflow-hidden rounded-[28px] border border-slate-200/70 bg-white/80 shadow-[0_16px_40px_-32px_rgba(15,23,42,0.45)]',
-          isPointerDrawing && 'ring-2 ring-sky-300/70 ring-offset-2 ring-offset-white'
-        )}
-        data-testid={shellDataTestId}
-        style={shellStyle}
-      >
-        {guideSurface}
-        {boardOverlay}
-        <KangurDrawingCanvasSurface
-          ariaKeyShortcuts={ariaKeyShortcuts}
-          ariaLabel={canvasAriaLabel}
-          canvasClassName='relative z-10 h-full w-full'
-          canvasRef={canvasRef}
-          height={height}
-          isPointerDrawing={isPointerDrawing}
-          onKeyDown={onKeyDown}
-          onPointerCancel={onPointerCancel}
-          onPointerDown={onPointerDown}
-          onPointerLeave={onPointerLeave}
-          onPointerMove={onPointerMove}
-          onPointerUp={onPointerUp}
-          tabIndex={0}
-          width={width}
-        />
-      </div>
-
-      <div className='flex flex-wrap items-center justify-between gap-3 text-sm text-slate-600'>
-        <span>{footerHint}</span>
-        <span>{footerPointsLabel}</span>
-      </div>
-    </>
-  );
+  return renderKangurTracingBoard({
+    ariaKeyShortcuts,
+    boardOverlay,
+    canvasAriaLabel,
+    canvasRef,
+    footerHint,
+    footerPointsLabel,
+    guideSurface,
+    height,
+    isCoarsePointer,
+    isPointerDrawing,
+    onKeyDown,
+    onPointerCancel,
+    onPointerDown,
+    onPointerLeave,
+    onPointerMove,
+    onPointerUp,
+    shellDataTestId,
+    shellStyle,
+    touchHint,
+    touchHintTestId,
+    width,
+  });
 }

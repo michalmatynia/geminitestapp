@@ -242,6 +242,31 @@ function SettingsToggle({
   );
 }
 
+function renderGamesLibraryGameDialog({
+  children,
+  onOpenChange,
+  open,
+}: {
+  children: React.ReactNode;
+  onOpenChange: (open: boolean) => void;
+  open: boolean;
+}): React.JSX.Element {
+  return (
+    <KangurDialog
+      open={open}
+      onOpenChange={onOpenChange}
+      overlayVariant='standard'
+      contentProps={{
+        'data-testid': 'games-library-game-modal',
+        className:
+          'w-[min(calc(100vw-2rem),74rem)] rounded-[2rem] border border-[color:var(--kangur-page-border)] bg-[color:var(--kangur-page-background)] p-5 shadow-[0_40px_120px_-52px_rgba(15,23,42,0.5)] sm:p-6',
+      }}
+    >
+      {children}
+    </KangurDialog>
+  );
+}
+
 export function GamesLibraryGameModal({
   open,
   onOpenChange,
@@ -657,6 +682,59 @@ export function GamesLibraryGameModal({
     setClockSettings(DEFAULT_CLOCK_PREVIEW_SETTINGS);
   };
 
+  const handleCloseModal = (): void => {
+    onOpenChange(false);
+  };
+
+  const handleEditDraft = (draft: KangurLessonGameSection): void => {
+    if (!game) {
+      return;
+    }
+    setSyncError(null);
+    syncEditorFromSection(draft, game);
+  };
+
+  const handleRemoveDraft = (draft: KangurLessonGameSection): void => {
+    if (!game) {
+      return;
+    }
+
+    const nextSections = normalizeSectionSortOrder(
+      activeSections.filter((entry) => entry.id !== draft.id)
+    );
+    const removingSelectedSection = draft.id === selectedSectionId;
+    const previousEditorState = !removingSelectedSection ? captureEditorState() : null;
+
+    if (previousEditorState) {
+      pendingEditorRestoreRef.current = previousEditorState;
+    }
+    setSyncError(null);
+    setOptimisticSections(nextSections);
+    if (removingSelectedSection) {
+      const fallbackSection = nextSections[0] ?? null;
+      if (fallbackSection) {
+        syncEditorFromSection(fallbackSection, game);
+      } else {
+        handleResetEditor();
+      }
+    }
+    void replaceLessonGameSections
+      .mutateAsync({
+        gameId: game.id,
+        sections: nextSections,
+      })
+      .catch(() => {
+        if (previousEditorState) {
+          pendingEditorRestoreRef.current = previousEditorState;
+        }
+        setOptimisticSections(null);
+        if (removingSelectedSection) {
+          syncEditorFromSection(draft, game);
+        }
+        setSyncError(translations('modal.syncError'));
+      });
+  };
+
   const handleMoveSection = (sectionId: string, direction: 'up' | 'down'): void => {
     if (!game) {
       return;
@@ -757,23 +835,22 @@ export function GamesLibraryGameModal({
     return <></>;
   }
 
-  return (
-    <KangurDialog
-      open={open}
-      onOpenChange={(nextOpen) => {
-        if (!nextOpen && replaceLessonGameSections.isPending) {
-          return;
-        }
+  const linkedLessonChipKeyPrefix = game.id;
+  const gameChipLabel = game.title;
+  const gameTransitionSourceId = `kangur-games-library:${game.id}:modal-game`;
+  const lessonTransitionSourceId = `kangur-games-library:${game.id}:modal-lessons`;
+  const handleDialogOpenChange = (nextOpen: boolean): void => {
+    if (!nextOpen && replaceLessonGameSections.isPending) {
+      return;
+    }
 
-        onOpenChange(nextOpen);
-      }}
-      overlayVariant='standard'
-      contentProps={{
-        'data-testid': 'games-library-game-modal',
-        className:
-          'w-[min(calc(100vw-2rem),74rem)] rounded-[2rem] border border-[color:var(--kangur-page-border)] bg-[color:var(--kangur-page-background)] p-5 shadow-[0_40px_120px_-52px_rgba(15,23,42,0.5)] sm:p-6',
-      }}
-    >
+    onOpenChange(nextOpen);
+  };
+
+  return renderGamesLibraryGameDialog({
+    onOpenChange: handleDialogOpenChange,
+    open,
+    children: (
       <div className='space-y-5'>
         <div className='flex flex-wrap items-start justify-between gap-3'>
           <div className='min-w-0 flex-1 space-y-2 pr-2'>
@@ -816,7 +893,7 @@ export function GamesLibraryGameModal({
             ) : null}
             <KangurButton
               disabled={replaceLessonGameSections.isPending}
-              onClick={() => onOpenChange(false)}
+              onClick={handleCloseModal}
               size='sm'
               type='button'
               variant='surface'
@@ -883,7 +960,7 @@ export function GamesLibraryGameModal({
                   {linkedLessonIds.length > 0 ? (
                     linkedLessonIds.map((componentId) => (
                       <KangurStatusChip
-                        key={`${game.id}:${componentId}`}
+                        key={`${linkedLessonChipKeyPrefix}:${componentId}`}
                         accent={componentId === attachedLessonId ? 'emerald' : 'sky'}
                         size='sm'
                       >
@@ -948,7 +1025,7 @@ export function GamesLibraryGameModal({
                     <Link
                       href={gameHref}
                       targetPageKey='Game'
-                      transitionSourceId={`kangur-games-library:${game.id}:modal-game`}
+                      transitionSourceId={gameTransitionSourceId}
                     >
                       {translations('actions.openGame')}
                     </Link>
@@ -964,7 +1041,7 @@ export function GamesLibraryGameModal({
                     <Link
                       href={lessonHref}
                       targetPageKey='Lessons'
-                      transitionSourceId={`kangur-games-library:${game.id}:modal-lessons`}
+                      transitionSourceId={lessonTransitionSourceId}
                     >
                       {translations('actions.openLessons')}
                     </Link>
@@ -1068,6 +1145,7 @@ export function GamesLibraryGameModal({
                   {translations('modal.draftNameLabel')}
                 </label>
                 <input
+                  aria-label={translations('modal.draftNameLabel')}
                   id='games-library-draft-title'
                   className='min-h-11 w-full rounded-2xl border border-[color:var(--kangur-page-border)] bg-white/80 px-4 py-2.5 text-sm [color:var(--kangur-page-text)] outline-none transition focus:border-[color:var(--kangur-page-accent)]'
                   disabled={mutationsBlocked}
@@ -1088,6 +1166,7 @@ export function GamesLibraryGameModal({
                   {translations('modal.draftSubtextLabel')}
                 </label>
                 <textarea
+                  aria-label={translations('modal.draftSubtextLabel')}
                   id='games-library-draft-subtext'
                   className='min-h-28 w-full rounded-2xl border border-[color:var(--kangur-page-border)] bg-white/80 px-4 py-3 text-sm leading-6 [color:var(--kangur-page-text)] outline-none transition focus:border-[color:var(--kangur-page-accent)]'
                   disabled={mutationsBlocked}
@@ -1427,7 +1506,7 @@ export function GamesLibraryGameModal({
                               {lessonLabelMap[draft.lessonComponentId] ?? draft.lessonComponentId}
                             </KangurStatusChip>
                             <KangurStatusChip accent='amber' size='sm'>
-                              {game.title}
+                              {gameChipLabel}
                             </KangurStatusChip>
                           </div>
                           {supportsPreviewSettings ? (
@@ -1508,8 +1587,7 @@ export function GamesLibraryGameModal({
                             aria-label={`${translations('modal.editDraftButton')}: ${draft.title}`}
                             disabled={mutationsBlocked}
                             onClick={() => {
-                              setSyncError(null);
-                              syncEditorFromSection(draft, game);
+                              handleEditDraft(draft);
                             }}
                             size='sm'
                             type='button'
@@ -1521,41 +1599,7 @@ export function GamesLibraryGameModal({
                             aria-label={`${translations('modal.removeDraftButton')}: ${draft.title}`}
                             disabled={mutationsBlocked}
                             onClick={() => {
-                              const nextSections = normalizeSectionSortOrder(
-                                activeSections.filter((entry) => entry.id !== draft.id)
-                              );
-                              const removingSelectedSection = draft.id === selectedSectionId;
-                              const previousEditorState =
-                                !removingSelectedSection ? captureEditorState() : null;
-
-                              if (previousEditorState) {
-                                pendingEditorRestoreRef.current = previousEditorState;
-                              }
-                              setSyncError(null);
-                              setOptimisticSections(nextSections);
-                              if (removingSelectedSection) {
-                                const fallbackSection = nextSections[0] ?? null;
-                                if (fallbackSection) {
-                                  syncEditorFromSection(fallbackSection, game);
-                                } else {
-                                  handleResetEditor();
-                                }
-                              }
-                              void replaceLessonGameSections
-                                .mutateAsync({
-                                  gameId: game.id,
-                                  sections: nextSections,
-                                })
-                                .catch(() => {
-                                  if (previousEditorState) {
-                                    pendingEditorRestoreRef.current = previousEditorState;
-                                  }
-                                  setOptimisticSections(null);
-                                  if (removingSelectedSection) {
-                                    syncEditorFromSection(draft, game);
-                                  }
-                                  setSyncError(translations('modal.syncError'));
-                                });
+                              handleRemoveDraft(draft);
                             }}
                             size='sm'
                             type='button'
@@ -1585,6 +1629,6 @@ export function GamesLibraryGameModal({
           </div>
         </div>
       </div>
-    </KangurDialog>
-  );
+    ),
+  });
 }

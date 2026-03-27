@@ -4,7 +4,7 @@ import { useLocale, useTranslations } from 'next-intl';
 import { useMemo } from 'react';
 
 import { KangurKangurWordmark } from '@/features/kangur/ui/components/KangurKangurWordmark';
-import { KangurGameSetupStage } from '@/features/kangur/ui/components/KangurGameSetupStage';
+import { renderKangurGameSetupStage } from '@/features/kangur/ui/components/KangurGameSetupStage';
 import KangurSetup from '@/features/kangur/ui/components/KangurSetup';
 import { useKangurGameRuntime } from '@/features/kangur/ui/context/KangurGameRuntimeContext';
 import { getRecommendedKangurMode } from '@/features/kangur/ui/services/game-setup-recommendations';
@@ -73,39 +73,19 @@ export function KangurGameKangurSetupWidget({
     return null;
   }
 
-  return (
-    <KangurGameSetupStage
-      description={translateRecommendationWithFallback(
-        gamePageTranslations,
-        'screens.kangur_setup.description',
-        kangurSetupFallbackDescription
-      )}
-      momentumMode='kangur'
-      onBack={resolvedOnBack}
-      progress={progress}
-      testId='kangur-game-kangur-setup-top-section'
-      title={kangurSetupTitle}
-      visualTitle={
-        <KangurKangurWordmark
-          className='mx-auto'
-          data-testid='kangur-kangur-heading-art'
-          idPrefix='kangur-game-kangur-heading'
-          label={kangurWordmarkLabel}
-          locale={locale}
-        />
-      }
-    >
+  return renderKangurGameSetupStage({
+    children: (
       <KangurSetup
         onStart={(mode) =>
           handleStartKangur(mode, {
             recommendation:
               mode === recommendedMode.mode
                 ? {
-                  description: recommendedMode.description,
-                  label: recommendedMode.label,
-                  source: 'kangur_setup',
-                  title: recommendedMode.title,
-                }
+                    description: recommendedMode.description,
+                    label: recommendedMode.label,
+                    source: 'kangur_setup',
+                    title: recommendedMode.title,
+                  }
                 : null,
           })
         }
@@ -114,6 +94,25 @@ export function KangurGameKangurSetupWidget({
         recommendedMode={recommendedMode.mode}
         recommendedTitle={recommendedMode.title}
       />
-    </KangurGameSetupStage>
-  );
+    ),
+    description: translateRecommendationWithFallback(
+      gamePageTranslations,
+      'screens.kangur_setup.description',
+      kangurSetupFallbackDescription
+    ),
+    momentumMode: 'kangur',
+    onBack: resolvedOnBack,
+    progress,
+    testId: 'kangur-game-kangur-setup-top-section',
+    title: kangurSetupTitle,
+    visualTitle: (
+      <KangurKangurWordmark
+        className='mx-auto'
+        data-testid='kangur-kangur-heading-art'
+        idPrefix='kangur-game-kangur-heading'
+        label={kangurWordmarkLabel}
+        locale={locale}
+      />
+    ),
+  });
 }

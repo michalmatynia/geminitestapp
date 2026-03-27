@@ -1,6 +1,5 @@
 export { PanelHeader } from './PanelHeader';
 export { PanelFilters } from './PanelFilters';
-export { PanelPagination } from './PanelPagination';
 export { PanelStats } from './PanelStats';
 export { PanelAlerts } from './PanelAlerts';
 export { usePanelState } from './usePanelState';

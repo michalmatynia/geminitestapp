@@ -4,7 +4,6 @@ import type { LucideIcon } from 'lucide-react';
 import type { ComponentProps } from 'react';
 
 import { KangurButton } from '@/features/kangur/ui/design/primitives';
-import { useKangurCoarsePointer } from '@/features/kangur/ui/hooks/useKangurCoarsePointer';
 import {
   LESSONS_SELECTOR_NAV_ICON_BUTTON_CLASSNAME,
   LESSONS_SELECTOR_NAV_TOUCH_ICON_BUTTON_CLASSNAME,
@@ -13,22 +12,26 @@ import { cn } from '@/features/kangur/shared/utils';
 
 type KangurButtonProps = ComponentProps<typeof KangurButton>;
 
-type KangurLessonNavigationIconButtonProps = Omit<
+export type KangurLessonNavigationIconButtonProps = Omit<
   KangurButtonProps,
   'children' | 'size' | 'type' | 'variant'
 > & {
+  [key: `data-${string}`]: string | number | boolean | undefined;
   icon: LucideIcon;
   iconClassName?: string;
+  isCoarsePointer?: boolean;
 };
 
-export function KangurLessonNavigationIconButton({
+const RESPONSIVE_TOUCH_CLASSNAME =
+  '[@media(pointer:coarse)]:min-h-11 [@media(pointer:coarse)]:min-w-11 [@media(pointer:coarse)]:px-5';
+
+export function renderKangurLessonNavigationIconButton({
   className,
   icon: Icon,
   iconClassName,
+  isCoarsePointer = false,
   ...props
 }: KangurLessonNavigationIconButtonProps): React.JSX.Element {
-  const isCoarsePointer = useKangurCoarsePointer();
-
   return (
     <KangurButton
       {...props}
@@ -36,6 +39,7 @@ export function KangurLessonNavigationIconButton({
         LESSONS_SELECTOR_NAV_ICON_BUTTON_CLASSNAME,
         'disabled:opacity-20',
         isCoarsePointer && LESSONS_SELECTOR_NAV_TOUCH_ICON_BUTTON_CLASSNAME,
+        isCoarsePointer && RESPONSIVE_TOUCH_CLASSNAME,
         className
       )}
       size='sm'

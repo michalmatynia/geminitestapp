@@ -5,7 +5,8 @@ import { Eye, EyeOff, Settings } from 'lucide-react';
 import { memo, useEffect, useId, useMemo, useState } from 'react';
 
 import { KangurDialog } from '@/features/kangur/ui/components/KangurDialog';
-import { KangurDialogHeader } from '@/features/kangur/ui/components/KangurDialogHeader';
+import { KangurDialogCloseButton } from '@/features/kangur/ui/components/KangurDialogCloseButton';
+import { KangurDialogMeta } from '@/features/kangur/ui/components/KangurDialogMeta';
 import { KangurIconSummaryOptionCard } from '@/features/kangur/ui/components/KangurIconSummaryOptionCard';
 import { KangurIconSummaryCardContent } from '@/features/kangur/ui/components/KangurIconSummaryCardContent';
 import { getKangurPlatform } from '@/features/kangur/services/kangur-platform';
@@ -660,11 +661,13 @@ function KangurParentDashboardLearnerManagementWidget(): React.JSX.Element | nul
           'data-testid': 'parent-create-learner-modal',
         }}
         >
-          <KangurDialogHeader
-            title={copy.createModalTitle}
-            description={copy.createModalDescription}
-            closeAriaLabel={copy.createModalClose}
-          />
+          <>
+            <KangurDialogMeta
+              title={copy.createModalTitle}
+              description={copy.createModalDescription}
+            />
+            <KangurDialogCloseButton aria-label={copy.createModalClose} />
+          </>
 
           <KangurGlassPanel className='w-full' padding='lg' surface='mistStrong' variant='soft'>
             <KangurPanelStack>
@@ -800,11 +803,13 @@ function KangurParentDashboardLearnerManagementWidget(): React.JSX.Element | nul
           onPointerDownOutside: () => handleProfileModalOpenChange(false),
         }}
       >
-        <KangurDialogHeader
-          title={profileModalTitle}
-          description={profileModalDescription}
-          closeAriaLabel={profileModalCloseLabel}
-        />
+        <>
+          <KangurDialogMeta
+            title={profileModalTitle}
+            description={profileModalDescription}
+          />
+          <KangurDialogCloseButton aria-label={profileModalCloseLabel} />
+        </>
 
         {activeLearner ? (
           <KangurGlassPanel className='w-full' padding='lg' surface='mistSoft' variant='soft'>

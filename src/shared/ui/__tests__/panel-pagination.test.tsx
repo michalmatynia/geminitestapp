@@ -46,21 +46,23 @@ vi.mock('@/shared/ui/pagination', () => ({
   ),
 }));
 
-import { PanelPagination } from '@/shared/ui/templates/panels/PanelPagination';
+import { Pagination } from '@/shared/ui/pagination';
 
-describe('PanelPagination', () => {
-  it('passes the panel pagination contract directly into Pagination', () => {
+describe('Pagination', () => {
+  it('passes the panel pagination contract directly into the shared Pagination component', () => {
     const onPageChange = vi.fn();
     const onPageSizeChange = vi.fn();
 
     render(
-      <PanelPagination
+      <Pagination
+        variant='panel'
         page={2}
         pageSize={20}
         totalCount={125}
         pageSizeOptions={[10, 20, 50]}
         onPageChange={onPageChange}
         onPageSizeChange={onPageSizeChange}
+        showInfo={true}
         className='panel-pagination'
       />
     );

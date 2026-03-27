@@ -20,6 +20,8 @@ export const PasswordInput = React.forwardRef<HTMLInputElement, PasswordInputPro
       className,
       defaultVisible = false,
       disabled,
+      size,
+      variant,
       ...props
     },
     ref
@@ -35,7 +37,11 @@ export const PasswordInput = React.forwardRef<HTMLInputElement, PasswordInputPro
           ref={ref}
           type={isVisible ? 'text' : 'password'}
           disabled={disabled}
-          className={cn(inputVariants({ className: 'pr-10' }), className)}
+          className={inputVariants({
+            variant,
+            size,
+            className: cn('pr-10', className),
+          })}
         />
         <button
           type='button'

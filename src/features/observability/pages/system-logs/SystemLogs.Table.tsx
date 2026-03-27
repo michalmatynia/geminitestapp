@@ -151,7 +151,7 @@ export function ContextRegistryNodesCard({
   );
 }
 
-function SystemLogDetailsContent({
+function renderSystemLogDetailsContent({
   log,
   interpretation,
   isInterpreting,
@@ -700,12 +700,12 @@ export function EventStreamPanel({
         size='xl'
       >
         {selectedLog ? (
-          <SystemLogDetailsContent
-            log={selectedLog}
-            interpretation={selectedInterpretation}
-            isInterpreting={interpretLogMutation.isPending && !selectedInterpretation}
-            onFilterChange={handleFilterChange}
-          />
+          renderSystemLogDetailsContent({
+            log: selectedLog,
+            interpretation: selectedInterpretation,
+            isInterpreting: interpretLogMutation.isPending && !selectedInterpretation,
+            onFilterChange: handleFilterChange,
+          })
         ) : null}
       </DetailModal>
     </>

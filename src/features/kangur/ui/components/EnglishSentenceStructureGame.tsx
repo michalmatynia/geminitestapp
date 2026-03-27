@@ -30,7 +30,7 @@ import {
   KangurStatusChip,
   KangurTextField,
 } from '@/features/kangur/ui/design/primitives';
-import { KangurCheckButton } from '@/features/kangur/ui/components/KangurCheckButton';
+import { getKangurCheckButtonClassName } from '@/features/kangur/ui/components/KangurCheckButton';
 import {
   KANGUR_ACCENT_STYLES,
   KANGUR_CENTER_ROW_SPACED_CLASSNAME,
@@ -672,18 +672,19 @@ export default function EnglishSentenceStructureGame({
           </KangurInfoCard>
         )}
         <div className={KANGUR_WRAP_ROW_CLASSNAME}>
-          <KangurCheckButton
+          <KangurButton
             onClick={() => handleCheck()}
             disabled={!isReady || isChecking}
             aria-busy={isChecking}
-            feedbackTone={
+            className={getKangurCheckButtonClassName(
+              undefined,
               feedback?.kind === 'success' ? 'success' : feedback?.kind === 'error' ? 'error' : null
-            }
+            )}
           >
             {isChecking
               ? translations('englishSentenceStructure.inRound.checking')
               : translations('englishSentenceStructure.inRound.check')}
-          </KangurCheckButton>
+          </KangurButton>
           <KangurButton onClick={handleRestart} variant='ghost'>
             {translations('shared.restart')}
           </KangurButton>

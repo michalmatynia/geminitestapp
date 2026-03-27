@@ -10,7 +10,7 @@ import {
 import type { FileUploadHelpers } from '@/shared/contracts/ui';
 import { ConfirmModal } from '@/shared/ui/templates/modals';
 
-import { getDatabaseColumns } from '../components/DatabaseColumns';
+import { useDatabaseColumns } from '../components/DatabaseColumns';
 import { LogModal } from '../components/LogModal';
 import { RestoreModal } from '../components/RestoreModal';
 import {
@@ -42,6 +42,7 @@ function DatabasesContentInner(): React.JSX.Element {
     handleConfirmDelete,
     handlePreviewCurrent,
   } = useDatabaseBackupsActionsContext();
+  const columns = useDatabaseColumns();
 
   return (
     <AdminDatabasePageLayout
@@ -125,7 +126,7 @@ function DatabasesContentInner(): React.JSX.Element {
       )}
 
       <StandardDataTablePanel
-        columns={getDatabaseColumns()}
+        columns={columns}
         data={data}
         isLoading={isLoading}
         initialSorting={[{ id: 'lastModifiedAt', desc: true }]}

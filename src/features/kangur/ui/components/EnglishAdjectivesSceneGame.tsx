@@ -895,11 +895,11 @@ export default function EnglishAdjectivesSceneGame({
                   {translations('englishAdjectives.inRound.scene.watchLabel')}
                 </KangurStatusChip>
               </div>
-              <AdjectiveStudioScene
-                round={round}
-                slots={roundState.slots}
-                translate={translations}
-              />
+              {renderAdjectiveStudioScene({
+                round,
+                slots: roundState.slots,
+                translate: translations,
+              })}
             </div>
           </KangurInfoCard>
 
@@ -1303,7 +1303,7 @@ function DraggableAdjectiveToken({
   );
 }
 
-function AdjectiveStudioScene({
+function renderAdjectiveStudioScene({
   round,
   slots,
   translate,
@@ -1317,21 +1317,21 @@ function AdjectiveStudioScene({
   ) as Record<EnglishAdjectiveSceneObjectId, EnglishAdjectivePhraseId | null>;
 
   if (round.scene === 'toy_shelf') {
-    return <ToyShelfScene assignedByObject={assignedByObject} translate={translate} />;
+    return renderToyShelfScene({ assignedByObject, translate });
   }
   if (round.scene === 'study_corner') {
-    return <StudyCornerScene assignedByObject={assignedByObject} translate={translate} />;
+    return renderStudyCornerScene({ assignedByObject, translate });
   }
   if (round.scene === 'portrait') {
-    return <PortraitScene assignedByObject={assignedByObject} translate={translate} />;
+    return renderPortraitScene({ assignedByObject, translate });
   }
   if (round.scene === 'playground') {
-    return <PlaygroundScene assignedByObject={assignedByObject} translate={translate} />;
+    return renderPlaygroundScene({ assignedByObject, translate });
   }
-  return <BedroomScene assignedByObject={assignedByObject} translate={translate} />;
+  return renderBedroomScene({ assignedByObject, translate });
 }
 
-function BedroomScene({
+function renderBedroomScene({
   assignedByObject,
   translate,
 }: {
@@ -1562,7 +1562,7 @@ function BedroomScene({
   );
 }
 
-function ToyShelfScene({
+function renderToyShelfScene({
   assignedByObject,
   translate,
 }: {
@@ -1754,7 +1754,7 @@ function ToyShelfScene({
   );
 }
 
-function StudyCornerScene({
+function renderStudyCornerScene({
   assignedByObject,
   translate,
 }: {
@@ -1942,7 +1942,7 @@ function StudyCornerScene({
   );
 }
 
-function PortraitScene({
+function renderPortraitScene({
   assignedByObject,
   translate,
 }: {
@@ -2112,7 +2112,7 @@ function PortraitScene({
   );
 }
 
-function PlaygroundScene({
+function renderPlaygroundScene({
   assignedByObject,
   translate,
 }: {

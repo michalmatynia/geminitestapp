@@ -3,7 +3,6 @@ import type { Session } from 'next-auth';
 import {
   KANGUR_MAIN_PAGE_KEY,
   normalizeKangurRequestedPath,
-  resolveKangurFeaturePageRoute,
   resolveKangurPageKeyFromSlug,
 } from '@/features/kangur/config/routing';
 import { isSuperAdminSession } from '@/shared/lib/auth/elevated-session-user';
@@ -74,34 +73,5 @@ export const resolveAccessibleKangurRouteState = <TPageKey extends string>(input
   return {
     pageKey: accessiblePageKey,
     requestedPath: accessibleRequestedPath,
-  };
-};
-
-export const resolveAccessibleKangurFeaturePageRoute = <TPageKey extends string = string>(input: {
-  slug?: string[];
-  basePath?: string;
-  session: Session | null | undefined;
-  fallbackPageKey?: TPageKey;
-}): {
-  normalizedBasePath: string;
-  pageKey: TPageKey;
-  requestedPath: string;
-} => {
-  const { slug = [], basePath, session, fallbackPageKey = KANGUR_MAIN_PAGE_KEY as TPageKey } =
-    input;
-  const resolvedRoute = resolveKangurFeaturePageRoute(slug, basePath);
-  const accessibleRoute = resolveAccessibleKangurRouteState({
-    normalizedBasePath: resolvedRoute.normalizedBasePath,
-    pageKey: resolvedRoute.pageKey as TPageKey,
-    requestedPath: resolvedRoute.requestedPath,
-    session,
-    slugSegments: slug,
-    fallbackPageKey,
-  });
-
-  return {
-    normalizedBasePath: resolvedRoute.normalizedBasePath,
-    pageKey: accessibleRoute.pageKey,
-    requestedPath: accessibleRoute.requestedPath,
   };
 };

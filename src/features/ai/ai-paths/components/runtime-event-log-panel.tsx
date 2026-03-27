@@ -8,7 +8,7 @@ import { Button, StatusBadge, SelectSimple, Card } from '@/shared/ui';
 
 import { useRuntimeState, useRuntimeActions } from '../context';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
-import { RuntimeEventEntry } from './runtime-event-entry';
+import { renderRuntimeEventEntry } from './runtime-event-entry';
 
 
 // ---------------------------------------------------------------------------
@@ -38,76 +38,22 @@ function formatTime(iso: string): string {
   }
 }
 
-type RuntimeEventLogActionButtonProps = Pick<
-  React.ComponentProps<typeof Button>,
-  'children' | 'disabled' | 'onClick' | 'title'
->;
-
 type RuntimeEventLogCountBadgeProps = {
   count: number;
   label: string;
   variant: React.ComponentProps<typeof StatusBadge>['variant'];
 };
 
-type RuntimeEventLogEventRowProps = {
-  event: AiPathRuntimeEvent;
-};
-
-function RuntimeEventLogActionButton({
-  children,
-  disabled,
-  onClick,
-  title,
-}: RuntimeEventLogActionButtonProps): React.JSX.Element {
-  return (
-    <Button
-      type='button'
-      className='rounded border border-border/40 px-1.5 py-0.5 text-[10px] text-gray-300 hover:bg-card/70'
-      onClick={onClick}
-      disabled={disabled}
-      title={title}
-    >
-      {children}
-    </Button>
-  );
-}
-
-function RuntimeEventLogCountBadge({
+const renderRuntimeEventLogCountBadge = ({
   count,
   label,
   variant,
-}: RuntimeEventLogCountBadgeProps): React.JSX.Element | null {
+}: RuntimeEventLogCountBadgeProps): React.JSX.Element | null => {
   if (count <= 0) return null;
   return (
     <StatusBadge status={`${count} ${label}`} variant={variant} size='sm' className='font-bold h-4' />
   );
-}
-
-function RuntimeEventLogEventRow({
-  event,
-}: RuntimeEventLogEventRowProps): React.JSX.Element {
-  return (
-    <RuntimeEventEntry
-      timestamp={formatTime(event.timestamp)}
-      level={event.level}
-      kind={event.kind}
-      message={event.message}
-      className='flex items-start gap-2 rounded px-2 py-1 text-[11px] hover:bg-card/70'
-      timeClassName='shrink-0 text-gray-500'
-      levelClassName='mt-[5px] size-1.5 min-w-0 rounded-full p-0'
-      kindClassName='h-4 px-1 font-mono'
-      hideLevelLabel
-      trailingMetadata={
-        event.source === 'server' ? (
-          <StatusBadge status='server' variant='processing' size='sm' className='h-4 px-1' />
-        ) : null
-      }
-      inlinePrefix={
-        event.nodeTitle ? <span className='shrink-0 text-gray-300'>[{event.nodeTitle}]</span> : null
-      }
-    />
-  );
-}
+};
 
 // ---------------------------------------------------------------------------
 // Component
@@ -192,12 +138,13 @@ export function RuntimeEventLogPanel(): React.JSX.Element {
             {runtimeEvents.length}
           </span>
           {summaryBadges.map((badge) => (
-            <RuntimeEventLogCountBadge
-              key={badge.label}
-              count={badge.count}
-              label={badge.label}
-              variant={badge.variant}
-            />
+            <React.Fragment key={badge.label}>
+              {renderRuntimeEventLogCountBadge({
+                count: badge.count,
+                label: badge.label,
+                variant: badge.variant,
+              })}
+            </React.Fragment>
           ))}
         </div>
         <div className='flex items-center gap-1.5'>
@@ -211,21 +158,25 @@ export function RuntimeEventLogPanel(): React.JSX.Element {
             triggerClassName='h-6 min-w-[70px] px-2 bg-transparent border-border/40 text-[10px]'
            title='Select option'/>
           {/* Export */}
-          <RuntimeEventLogActionButton
+          <Button
+            type='button'
+            className='rounded border border-border/40 px-1.5 py-0.5 text-[10px] text-gray-300 hover:bg-card/70'
             onClick={handleExport}
             disabled={runtimeEvents.length === 0}
             title='Export events as JSON'
           >
             Export
-          </RuntimeEventLogActionButton>
+          </Button>
           {/* Clear */}
-          <RuntimeEventLogActionButton
+          <Button
+            type='button'
+            className='rounded border border-border/40 px-1.5 py-0.5 text-[10px] text-gray-300 hover:bg-card/70'
             onClick={clearRuntimeEvents}
             disabled={runtimeEvents.length === 0}
             title='Clear all events'
           >
             Clear
-          </RuntimeEventLogActionButton>
+          </Button>
         </div>
       </div>
 
@@ -241,7 +192,33 @@ export function RuntimeEventLogPanel(): React.JSX.Element {
               No events{levelFilter !== 'all' ? ` matching "${levelFilter}"` : ''}
             </div>
           ) : (
-            filteredEvents.map((event) => <RuntimeEventLogEventRow key={event.id} event={event} />)
+            filteredEvents.map((event) => (
+              <React.Fragment key={event.id}>
+                {renderRuntimeEventEntry({
+                  timestamp: formatTime(event.timestamp),
+                  level: event.level,
+                  kind: event.kind,
+                  message: event.message,
+                  className: 'flex items-start gap-2 rounded px-2 py-1 text-[11px] hover:bg-card/70',
+                  timeClassName: 'shrink-0 text-gray-500',
+                  levelClassName: 'mt-[5px] size-1.5 min-w-0 rounded-full p-0',
+                  kindClassName: 'h-4 px-1 font-mono',
+                  hideLevelLabel: true,
+                  trailingMetadata:
+                    event.source === 'server' ? (
+                      <StatusBadge
+                        status='server'
+                        variant='processing'
+                        size='sm'
+                        className='h-4 px-1'
+                      />
+                    ) : null,
+                  inlinePrefix: event.nodeTitle ? (
+                    <span className='shrink-0 text-gray-300'>[{event.nodeTitle}]</span>
+                  ) : null,
+                })}
+              </React.Fragment>
+            ))
           )}
         </div>
       )}

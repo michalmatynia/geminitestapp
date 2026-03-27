@@ -335,7 +335,7 @@ describe('KangurFeatureApp', () => {
     expect(screen.queryByTestId('kangur-login-modal')).toBeNull();
   });
 
-  it('hides the Games library route behind a 404 for non-super-admin sessions', () => {
+  it('renders the sanitized fallback route content when blocked GamesLibrary routes were downgraded upstream', () => {
     sessionMock.mockReturnValue({
       data: {
         expires: '2026-12-31T23:59:59.000Z',
@@ -349,20 +349,21 @@ describe('KangurFeatureApp', () => {
       status: 'authenticated',
     });
     routingStateMock.mockReturnValue({
-      pageKey: 'GamesLibrary',
+      pageKey: 'Game',
       embedded: false,
-      requestedPath: '/kangur/games',
-      requestedHref: '/kangur/games',
+      requestedPath: '/kangur',
+      requestedHref: '/kangur',
       basePath: '/kangur',
     });
 
     render(<KangurFeatureApp />);
 
-    expect(screen.getByTestId('kangur-page-not-found')).toBeInTheDocument();
+    expect(screen.getByTestId('kangur-page-game')).toBeInTheDocument();
     expect(screen.queryByTestId('kangur-page-games-library')).toBeNull();
+    expect(screen.queryByTestId('kangur-page-not-found')).toBeNull();
   });
 
-  it('renders the Games library route for super-admin sessions', () => {
+  it('renders the Games library route when routing state already resolved it', () => {
     sessionMock.mockReturnValue({
       data: {
         expires: '2026-12-31T23:59:59.000Z',
@@ -476,43 +477,6 @@ describe('KangurFeatureApp', () => {
     );
     expect(screen.getByTestId('kangur-route-content')).toHaveAttribute('aria-hidden', 'true');
     expect(screen.getByTestId('kangur-route-content')).toHaveAttribute('aria-busy', 'true');
-  });
-
-  it('downgrades blocked GamesLibrary pending snapshots to the game-home skeleton for non-super-admin users', () => {
-    sessionMock.mockReturnValue({
-      data: {
-        expires: '2026-12-31T23:59:59.000Z',
-        user: {
-          email: 'admin@example.com',
-          id: 'admin-1',
-          name: 'Admin',
-          role: 'admin',
-        },
-      },
-      status: 'authenticated',
-    });
-    routingStateMock.mockReturnValue({
-      pageKey: 'Game',
-      embedded: false,
-      requestedPath: '/kangur',
-      requestedHref: '/kangur',
-      basePath: '/kangur',
-    });
-    pendingRouteLoadingSnapshotMock.mockReturnValue({
-      fromHref: '/kangur',
-      href: '/kangur/games',
-      pageKey: 'GamesLibrary',
-      skeletonVariant: 'lessons-library',
-      startedAt: Date.now(),
-      topBarHeightCssValue: '136px',
-    });
-
-    render(<KangurFeatureApp />);
-
-    expect(screen.getByTestId('kangur-page-transition-skeleton')).toHaveTextContent(
-      'Game:game-home'
-    );
-    expect(screen.getByTestId('kangur-route-content')).toHaveAttribute('aria-hidden', 'true');
   });
 
   it('moves the navbar skeleton inline into the pending route skeleton while the shared host is unresolved', async () => {

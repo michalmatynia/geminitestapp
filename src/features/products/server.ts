@@ -19,6 +19,7 @@ export {
   invalidateProductDataProviderCache,
 } from '@/shared/lib/products/services/product-provider';
 export { getProductRepository } from '@/shared/lib/products/services/product-repository';
+export { getProductOrdersImportRepository } from '@/shared/lib/products/services/product-orders-import-repository';
 
 // Explicitly export to resolve ambiguity
 export {

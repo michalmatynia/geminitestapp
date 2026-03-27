@@ -19,7 +19,7 @@ import {
   type RuntimeTraceDurationRow,
   type RuntimeTraceTimelineItem,
 } from './run-trace-utils';
-import { RuntimeEventEntry } from './runtime-event-entry';
+import { renderRuntimeEventEntry } from './runtime-event-entry';
 
 type TimelineFilter = 'run' | 'node' | 'event';
 
@@ -626,26 +626,25 @@ export function RunTimeline(props: {
                 {sortedEvents.map((event: AiPathRunEventRecord): React.JSX.Element => {
                   const metadata = formatMetadata(event.metadata);
                   return (
-                    <RuntimeEventEntry
-                      key={event.id}
-                      timestamp={event.createdAt ? new Date(event.createdAt).toLocaleString() : '-'}
-                      level={event.level}
-                      kind={null}
-                      message={event.message}
-                      className='p-3'
-                      timeClassName='text-gray-400'
-                      levelClassName='font-bold'
-                      messageClassName='text-sm text-white'
-                      stacked
-                      hideKindBadge
-                      details={
-                        metadata ? (
+                    <React.Fragment key={event.id}>
+                      {renderRuntimeEventEntry({
+                        timestamp: event.createdAt ? new Date(event.createdAt).toLocaleString() : '-',
+                        level: event.level,
+                        kind: null,
+                        message: event.message,
+                        className: 'p-3',
+                        timeClassName: 'text-gray-400',
+                        levelClassName: 'font-bold',
+                        messageClassName: 'text-sm text-white',
+                        stacked: true,
+                        hideKindBadge: true,
+                        details: metadata ? (
                           <pre className='mt-2 max-h-40 overflow-auto rounded-md border border-border bg-black/30 p-2 text-[11px] text-gray-200'>
                             {metadata}
                           </pre>
-                        ) : null
-                      }
-                    />
+                        ) : null,
+                      })}
+                    </React.Fragment>
                   );
                 })}
               </div>

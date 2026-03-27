@@ -1,6 +1,6 @@
 import type { KangurLessonSubject } from '@/features/kangur/shared/contracts/kangur';
 import type { LabeledOptionDto } from '@/shared/contracts/base';
-import { KANGUR_SUBJECTS } from '@/features/kangur/lessons/lesson-catalog';
+import { KANGUR_SUBJECTS } from '@/features/kangur/lessons/lesson-catalog-metadata';
 import { getLocalizedKangurSubjectLabel } from '@/features/kangur/lessons/lesson-catalog-i18n';
 
 export type KangurSubjectGroup = LabeledOptionDto<KangurLessonSubject>;

@@ -314,7 +314,7 @@ export default function AlphabetBasicsLesson(): React.JSX.Element {
   };
 
   return (
-    <div className={`${KANGUR_STACK_ROOMY_CLASSNAME} w-full items-center`}>
+    <div className={`alphabet-basics-lesson ${KANGUR_STACK_ROOMY_CLASSNAME} w-full items-center`}>
       <KangurGlassPanel
         className='w-full max-w-3xl'
         padding='lg'
@@ -449,15 +449,15 @@ export default function AlphabetBasicsLesson(): React.JSX.Element {
         )}
       />
 
-      <style jsx>{`
-        .letter-guide {
+      <style>{`
+        .alphabet-basics-lesson .letter-guide {
           fill: none;
           stroke-width: var(--guide-width, 14px);
           stroke-linecap: round;
           stroke-linejoin: round;
           opacity: 0.35;
         }
-        .letter-glow {
+        .alphabet-basics-lesson .letter-glow {
           fill: none;
           stroke-width: var(--glow-width, 8px);
           stroke-linecap: round;

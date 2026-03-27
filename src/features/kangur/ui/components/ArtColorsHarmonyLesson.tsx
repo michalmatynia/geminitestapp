@@ -27,7 +27,7 @@ type ColorCardProps = {
   note: string;
 };
 
-const ColorCard = ({
+const renderColorCard = ({
   accent,
   colorClassName,
   label,
@@ -83,24 +83,24 @@ const slides: Partial<Record<SectionId, LessonSlide[]>> = {
             Reds, oranges, and yellows can feel bright, warm, and energetic.
           </KangurLessonLead>
           <div className='grid w-full gap-4 sm:grid-cols-3'>
-            <ColorCard
-              accent='rose'
-              colorClassName='bg-gradient-to-br from-rose-300 via-rose-400 to-orange-400'
-              label='Red'
-              note='Strong and lively'
-            />
-            <ColorCard
-              accent='amber'
-              colorClassName='bg-gradient-to-br from-orange-300 via-orange-400 to-amber-400'
-              label='Orange'
-              note='Playful and cozy'
-            />
-            <ColorCard
-              accent='amber'
-              colorClassName='bg-gradient-to-br from-amber-200 via-yellow-300 to-amber-400'
-              label='Yellow'
-              note='Sunny and cheerful'
-            />
+            {renderColorCard({
+              accent: 'rose',
+              colorClassName: 'bg-gradient-to-br from-rose-300 via-rose-400 to-orange-400',
+              label: 'Red',
+              note: 'Strong and lively',
+            })}
+            {renderColorCard({
+              accent: 'amber',
+              colorClassName: 'bg-gradient-to-br from-orange-300 via-orange-400 to-amber-400',
+              label: 'Orange',
+              note: 'Playful and cozy',
+            })}
+            {renderColorCard({
+              accent: 'amber',
+              colorClassName: 'bg-gradient-to-br from-amber-200 via-yellow-300 to-amber-400',
+              label: 'Yellow',
+              note: 'Sunny and cheerful',
+            })}
           </div>
         </KangurLessonStack>
       ),
@@ -113,24 +113,24 @@ const slides: Partial<Record<SectionId, LessonSlide[]>> = {
             Blues, greens, and violets can feel fresh, quiet, and peaceful.
           </KangurLessonLead>
           <div className='grid w-full gap-4 sm:grid-cols-3'>
-            <ColorCard
-              accent='sky'
-              colorClassName='bg-gradient-to-br from-sky-200 via-sky-400 to-cyan-500'
-              label='Blue'
-              note='Light and airy'
-            />
-            <ColorCard
-              accent='emerald'
-              colorClassName='bg-gradient-to-br from-emerald-200 via-emerald-400 to-lime-400'
-              label='Green'
-              note='Natural and restful'
-            />
-            <ColorCard
-              accent='rose'
-              colorClassName='bg-gradient-to-br from-violet-200 via-violet-400 to-fuchsia-400'
-              label='Violet'
-              note='Dreamy and soft'
-            />
+            {renderColorCard({
+              accent: 'sky',
+              colorClassName: 'bg-gradient-to-br from-sky-200 via-sky-400 to-cyan-500',
+              label: 'Blue',
+              note: 'Light and airy',
+            })}
+            {renderColorCard({
+              accent: 'emerald',
+              colorClassName: 'bg-gradient-to-br from-emerald-200 via-emerald-400 to-lime-400',
+              label: 'Green',
+              note: 'Natural and restful',
+            })}
+            {renderColorCard({
+              accent: 'rose',
+              colorClassName: 'bg-gradient-to-br from-violet-200 via-violet-400 to-fuchsia-400',
+              label: 'Violet',
+              note: 'Dreamy and soft',
+            })}
           </div>
         </KangurLessonStack>
       ),

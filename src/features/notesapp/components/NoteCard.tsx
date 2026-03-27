@@ -6,7 +6,7 @@ import { useNotesAppActions, useNotesAppState } from '@/features/notesapp/hooks/
 import type { ThemeRecord, NoteWithRelations } from '@/shared/contracts/notes';
 import { cn, setNoteDragData } from '@/shared/utils';
 
-import { NoteCardContent } from './list/NoteCardContent';
+import { renderNoteCardContent } from './list/NoteCardContent';
 import { NoteCardFooter } from './list/NoteCardFooter';
 import { NoteCardHeader } from './list/NoteCardHeader';
 
@@ -165,7 +165,7 @@ function NoteCardBase({ note }: NoteCardProps): React.JSX.Element {
           onNoteDragStart={onNoteDragStart}
           onNoteDragEnd={onNoteDragEnd}
         />
-        <NoteCardContent note={note} />
+        {renderNoteCardContent({ note })}
         <NoteCardFooter
           note={note}
           backgroundColor={backgroundColor}

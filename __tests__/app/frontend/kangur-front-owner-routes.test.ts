@@ -174,18 +174,22 @@ describe('kangur public-owner frontend routes', () => {
     expect(redirectMock).toHaveBeenCalledWith('/tests?focus=division');
   });
 
-  it('keeps legacy /kangur child routes inert when CMS owns the frontend', async () => {
+  it('keeps legacy /kangur child routes on the server shell when CMS owns the frontend', async () => {
     getFrontPageSettingMock.mockResolvedValue('cms');
 
     const { default: KangurAliasPage } = await import(
       '@/app/(frontend)/kangur/(app)/[[...slug]]/page'
     );
+    const { KangurServerShell } = await import('@/features/kangur/ui/components/KangurServerShell');
 
-    await expect(
-      KangurAliasPage({
-        params: Promise.resolve({ slug: ['tests'] }),
-      })
-    ).resolves.toBeNull();
+    const result = await KangurAliasPage({
+      params: Promise.resolve({ slug: ['tests'] }),
+    });
+
+    expect(result).toMatchObject({
+      type: KangurServerShell,
+      props: {},
+    });
 
     expect(redirectMock).not.toHaveBeenCalled();
   });

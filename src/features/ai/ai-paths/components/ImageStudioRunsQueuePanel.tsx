@@ -47,7 +47,7 @@ const getDispatchModeBadge = (
     ? { status: 'Inline', variant: 'error' }
     : { status: 'Redis', variant: 'success' };
 
-function ImageStudioRunsStatusCell({
+function renderImageStudioRunsStatusCell({
   run,
 }: {
   run: ImageStudioRunRecord;
@@ -62,7 +62,7 @@ function ImageStudioRunsStatusCell({
   );
 }
 
-function ImageStudioRunsRuntimeCell({
+function renderImageStudioRunsRuntimeCell({
   run,
 }: {
   run: ImageStudioRunRecord;
@@ -107,12 +107,12 @@ export function ImageStudioRunsQueuePanel(): React.JSX.Element {
       {
         accessorKey: 'status',
         header: 'Status',
-        cell: ({ row }) => <ImageStudioRunsStatusCell run={row.original} />,
+        cell: ({ row }) => renderImageStudioRunsStatusCell({ run: row.original }),
       },
       {
         accessorKey: 'dispatchMode',
         header: 'Runtime',
-        cell: ({ row }) => <ImageStudioRunsRuntimeCell run={row.original} />,
+        cell: ({ row }) => renderImageStudioRunsRuntimeCell({ run: row.original }),
       },
       {
         id: 'outputs',

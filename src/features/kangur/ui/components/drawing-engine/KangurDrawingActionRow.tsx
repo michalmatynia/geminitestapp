@@ -35,6 +35,51 @@ const getPrimaryFeedbackClassName = (
         : 'bg-amber-500 border-amber-500 text-white'
     : '[background:var(--kangur-soft-card-background)] [border-color:var(--kangur-soft-card-border)] [color:var(--kangur-page-text)]';
 
+const renderKangurDrawingActionRow = ({
+  clearDisabled,
+  clearLabel,
+  clearTestId,
+  feedback,
+  isCoarsePointer,
+  onClear,
+  onPrimary,
+  primaryDisabled,
+  primaryLabel,
+  primaryTestId,
+  utilityActions,
+}: KangurDrawingActionRowProps): React.JSX.Element => (
+  <KangurPanelRow className='w-full'>
+    {utilityActions}
+    <KangurButton
+      className={cn('w-full sm:flex-1', isCoarsePointer && 'min-h-11')}
+      data-testid={clearTestId}
+      disabled={clearDisabled}
+      onClick={onClear}
+      size='lg'
+      type='button'
+      variant='surface'
+    >
+      <Eraser aria-hidden='true' className='w-4 h-4' />
+      {clearLabel}
+    </KangurButton>
+    <KangurButton
+      className={cn(
+        'w-full sm:flex-1',
+        isCoarsePointer && 'min-h-11',
+        getPrimaryFeedbackClassName(feedback)
+      )}
+      data-testid={primaryTestId}
+      disabled={primaryDisabled}
+      onClick={onPrimary}
+      size='lg'
+      type='button'
+      variant='primary'
+    >
+      {primaryLabel}
+    </KangurButton>
+  </KangurPanelRow>
+);
+
 export function KangurDrawingActionRow({
   clearDisabled = false,
   clearLabel,
@@ -48,36 +93,17 @@ export function KangurDrawingActionRow({
   primaryTestId,
   utilityActions,
 }: KangurDrawingActionRowProps): React.JSX.Element {
-  return (
-    <KangurPanelRow className='w-full'>
-      {utilityActions}
-      <KangurButton
-        className={cn('w-full sm:flex-1', isCoarsePointer && 'min-h-11')}
-        data-testid={clearTestId}
-        disabled={clearDisabled}
-        onClick={onClear}
-        size='lg'
-        type='button'
-        variant='surface'
-      >
-        <Eraser aria-hidden='true' className='w-4 h-4' />
-        {clearLabel}
-      </KangurButton>
-      <KangurButton
-        className={cn(
-          'w-full sm:flex-1',
-          isCoarsePointer && 'min-h-11',
-          getPrimaryFeedbackClassName(feedback)
-        )}
-        data-testid={primaryTestId}
-        disabled={primaryDisabled}
-        onClick={onPrimary}
-        size='lg'
-        type='button'
-        variant='primary'
-      >
-        {primaryLabel}
-      </KangurButton>
-    </KangurPanelRow>
-  );
+  return renderKangurDrawingActionRow({
+    clearDisabled,
+    clearLabel,
+    clearTestId,
+    feedback,
+    isCoarsePointer,
+    onClear,
+    onPrimary,
+    primaryDisabled,
+    primaryLabel,
+    primaryTestId,
+    utilityActions,
+  });
 }

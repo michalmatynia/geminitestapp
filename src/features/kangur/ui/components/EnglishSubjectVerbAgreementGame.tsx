@@ -18,12 +18,13 @@ import {
 } from '@/features/kangur/ui/components/KangurPracticeGameChrome';
 import { EnglishAgreementBalanceAnimation } from '@/features/kangur/ui/components/LessonAnimations';
 import {
+  KangurButton,
   KangurGlassPanel,
   KangurHeadline,
   KangurInfoCard,
   KangurStatusChip,
 } from '@/features/kangur/ui/design/primitives';
-import { KangurCheckButton } from '@/features/kangur/ui/components/KangurCheckButton';
+import { getKangurCheckButtonClassName } from '@/features/kangur/ui/components/KangurCheckButton';
 import {
   KANGUR_ACCENT_STYLES,
   KANGUR_PANEL_GAP_CLASSNAME,
@@ -362,20 +363,20 @@ export default function EnglishSubjectVerbAgreementGame({
           </KangurInfoCard>
         ) : null}
 
-        <KangurCheckButton
+        <KangurButton
           type='button'
           size='lg'
           variant='primary'
-          className='w-full'
-          feedbackTone={
+          className={getKangurCheckButtonClassName(
+            'w-full',
             feedback?.kind === 'success' ? 'success' : feedback?.kind === 'error' ? 'error' : null
-          }
+          )}
           disabled={!isReady || isChecking}
           onClick={handleCheck}
           data-testid='english-agreement-check'
         >
           {translations('englishSubjectVerbAgreement.inRound.check')}
-        </KangurCheckButton>
+        </KangurButton>
       </KangurGlassPanel>
     </KangurPracticeGameStage>
   );

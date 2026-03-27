@@ -3,7 +3,6 @@
 import { usePathname } from 'next/navigation';
 import { useOptionalKangurAuth } from '@/features/kangur/ui/context/KangurAuthContext';
 import { useOptionalKangurRouting } from '@/features/kangur/ui/context/KangurRoutingContext';
-import { useKangurAccessiblePageKey } from '@/features/kangur/ui/hooks/useKangurAccessiblePageKey';
 import {
   KangurButton,
   KangurGlassPanel,
@@ -54,6 +53,7 @@ import {
   resolveKangurRouteTransitionSkeletonVariant,
   type KangurRouteTransitionSkeletonVariant,
 } from '@/features/kangur/ui/routing/route-transition-skeletons';
+import { useOptionalNextAuthSession } from '@/features/kangur/ui/hooks/useOptionalNextAuthSession';
 import { readKangurTopBarHeightCssValue } from '@/features/kangur/ui/utils/readKangurTopBarHeightCssValue';
 import { cn } from '@/features/kangur/shared/utils';
 import { getPathLocale, normalizeSiteLocale } from '@/shared/lib/i18n/site-locale';
@@ -179,49 +179,8 @@ const SkeletonPanel = ({
   </div>
 );
 
-const SkeletonGlassPanel = ({
-  children,
-  className,
-  dataTestId,
-  padding = 'lg',
-  surface = 'mist',
-  variant = 'soft',
-}: {
-  children?: React.ReactNode;
-  className?: string;
-  dataTestId?: string;
-  padding?: React.ComponentProps<typeof KangurGlassPanel>['padding'];
-  surface?: React.ComponentProps<typeof KangurGlassPanel>['surface'];
-  variant?: React.ComponentProps<typeof KangurGlassPanel>['variant'];
-}): React.JSX.Element => (
-  <KangurGlassPanel
-    className={className}
-    data-testid={dataTestId}
-    padding={padding}
-    surface={surface}
-    variant={variant}
-  >
-    {children}
-  </KangurGlassPanel>
-);
-
-const SkeletonInfoSurface = ({
-  children,
-  className,
-  dataTestId,
-  padding = 'md',
-  tone = 'neutral',
-}: {
-  children?: React.ReactNode;
-  className?: string;
-  dataTestId?: string;
-  padding?: React.ComponentProps<typeof KangurInfoCard>['padding'];
-  tone?: React.ComponentProps<typeof KangurInfoCard>['tone'];
-}): React.JSX.Element => (
-  <KangurInfoCard className={className} data-testid={dataTestId} padding={padding} tone={tone}>
-    {children}
-  </KangurInfoCard>
-);
+const SkeletonGlassPanel = KangurGlassPanel;
+const SkeletonInfoSurface = KangurInfoCard;
 
 const SkeletonLine = ({ className }: { className?: string }): React.JSX.Element => {
   const lineClassName = className;
@@ -285,7 +244,7 @@ const GameHomeSkeleton = (): React.JSX.Element => {
         parentSpotlight={(
           <SkeletonGlassPanel
             className={GAME_HOME_ASSIGNMENT_SPOTLIGHT_SHELL_CLASSNAME}
-            dataTestId='kangur-page-transition-skeleton-game-home-parent-spotlight-shell'
+            data-testid='kangur-page-transition-skeleton-game-home-parent-spotlight-shell'
             padding='md'
             surface='mist'
             variant='elevated'
@@ -295,7 +254,7 @@ const GameHomeSkeleton = (): React.JSX.Element => {
             </div>
             <SkeletonGlassPanel
               className={GAME_HOME_ASSIGNMENT_SPOTLIGHT_INNER_SHELL_CLASSNAME}
-              dataTestId='kangur-page-transition-skeleton-game-home-parent-spotlight-inner-shell'
+              data-testid='kangur-page-transition-skeleton-game-home-parent-spotlight-inner-shell'
               padding='lg'
               surface='solid'
               variant='subtle'
@@ -333,7 +292,7 @@ const GameHomeSkeleton = (): React.JSX.Element => {
           <>
             <SkeletonGlassPanel
               className={GAME_HOME_ACTIONS_SHELL_CLASSNAME}
-              dataTestId='kangur-page-transition-skeleton-game-home-actions-shell'
+              data-testid='kangur-page-transition-skeleton-game-home-actions-shell'
               padding='lg'
               surface='mist'
               variant='soft'
@@ -353,7 +312,7 @@ const GameHomeSkeleton = (): React.JSX.Element => {
             </SkeletonGlassPanel>
             <SkeletonGlassPanel
               className={GAME_HOME_DUELS_SHELL_CLASSNAME}
-              dataTestId='kangur-page-transition-skeleton-game-home-duels-shell'
+              data-testid='kangur-page-transition-skeleton-game-home-duels-shell'
               padding='lg'
               surface='solid'
               variant='soft'
@@ -371,7 +330,7 @@ const GameHomeSkeleton = (): React.JSX.Element => {
               <div className={KANGUR_GRID_TIGHT_CLASSNAME}>
                 <SkeletonInfoSurface
                   className='flex flex-col gap-3 p-4'
-                  dataTestId='kangur-page-transition-skeleton-game-home-duels-card-1'
+                  data-testid='kangur-page-transition-skeleton-game-home-duels-card-1'
                 >
                   <div className='flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between'>
                     <div className='space-y-2'>
@@ -387,7 +346,7 @@ const GameHomeSkeleton = (): React.JSX.Element => {
                 </SkeletonInfoSurface>
                 <SkeletonInfoSurface
                   className='flex flex-col gap-3 p-4'
-                  dataTestId='kangur-page-transition-skeleton-game-home-duels-card-2'
+                  data-testid='kangur-page-transition-skeleton-game-home-duels-card-2'
                 >
                   <div className='flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between'>
                     <div className='space-y-2'>
@@ -406,7 +365,7 @@ const GameHomeSkeleton = (): React.JSX.Element => {
             {homeVisibility.hideLearnerWidgetsForParent ? (
               <SkeletonGlassPanel
                 className='w-full'
-                dataTestId='kangur-page-transition-skeleton-game-home-missing-learner-shell'
+                data-testid='kangur-page-transition-skeleton-game-home-missing-learner-shell'
                 padding='md'
                 surface='mist'
                 variant='soft'
@@ -431,7 +390,7 @@ const GameHomeSkeleton = (): React.JSX.Element => {
         quest={(
           <SkeletonGlassPanel
             className={GAME_HOME_QUEST_SHELL_CLASSNAME}
-            dataTestId='kangur-page-transition-skeleton-game-home-quest-shell'
+            data-testid='kangur-page-transition-skeleton-game-home-quest-shell'
             padding='lg'
             surface='mistStrong'
             variant='soft'
@@ -470,7 +429,7 @@ const GameHomeSkeleton = (): React.JSX.Element => {
             </div>
             <SkeletonGlassPanel
               className='mx-auto w-full max-w-3xl'
-              dataTestId='kangur-page-transition-skeleton-game-home-summary-spotlight-shell'
+              data-testid='kangur-page-transition-skeleton-game-home-summary-spotlight-shell'
               padding='md'
               surface='mist'
               variant='elevated'
@@ -480,7 +439,7 @@ const GameHomeSkeleton = (): React.JSX.Element => {
               </div>
               <SkeletonGlassPanel
                 className='relative mt-4'
-                dataTestId='kangur-page-transition-skeleton-game-home-summary-spotlight-inner-shell'
+                data-testid='kangur-page-transition-skeleton-game-home-summary-spotlight-inner-shell'
                 padding='lg'
                 surface='solid'
                 variant='subtle'
@@ -519,7 +478,7 @@ const GameHomeSkeleton = (): React.JSX.Element => {
               <div className='grid kangur-panel-gap min-[420px]:grid-cols-2'>
                 <SkeletonInfoSurface
                   className='space-y-3 p-4'
-                  dataTestId='kangur-page-transition-skeleton-game-home-summary-track-1'
+                  data-testid='kangur-page-transition-skeleton-game-home-summary-track-1'
                 >
                   <SkeletonLine className='h-5 w-28' />
                   <SkeletonLine className='w-full' />
@@ -527,7 +486,7 @@ const GameHomeSkeleton = (): React.JSX.Element => {
                 </SkeletonInfoSurface>
                 <SkeletonInfoSurface
                   className='space-y-3 p-4'
-                  dataTestId='kangur-page-transition-skeleton-game-home-summary-track-2'
+                  data-testid='kangur-page-transition-skeleton-game-home-summary-track-2'
                 >
                   <SkeletonLine className='h-5 w-24' />
                   <SkeletonLine className='w-full' />
@@ -543,7 +502,7 @@ const GameHomeSkeleton = (): React.JSX.Element => {
         assignments={(
           <SkeletonGlassPanel
             className='w-full'
-            dataTestId='kangur-page-transition-skeleton-game-home-assignments-shell'
+            data-testid='kangur-page-transition-skeleton-game-home-assignments-shell'
             padding='lg'
             surface='mist'
             variant='soft'
@@ -558,7 +517,7 @@ const GameHomeSkeleton = (): React.JSX.Element => {
             <div className='space-y-3'>
               <SkeletonInfoSurface
                 className='space-y-4 p-5'
-                dataTestId='kangur-page-transition-skeleton-game-home-assignments-card-1'
+                data-testid='kangur-page-transition-skeleton-game-home-assignments-card-1'
                 padding='lg'
               >
                 <div className={KANGUR_WRAP_ROW_CLASSNAME}>
@@ -576,7 +535,7 @@ const GameHomeSkeleton = (): React.JSX.Element => {
               </SkeletonInfoSurface>
               <SkeletonInfoSurface
                 className='space-y-4 p-5'
-                dataTestId='kangur-page-transition-skeleton-game-home-assignments-card-2'
+                data-testid='kangur-page-transition-skeleton-game-home-assignments-card-2'
                 padding='lg'
               >
                 <div className={KANGUR_WRAP_ROW_CLASSNAME}>
@@ -601,7 +560,7 @@ const GameHomeSkeleton = (): React.JSX.Element => {
         leaderboard={(
           <SkeletonGlassPanel
             className={GAME_HOME_LEADERBOARD_SHELL_CLASSNAME}
-            dataTestId='kangur-page-transition-skeleton-game-home-leaderboard-shell'
+            data-testid='kangur-page-transition-skeleton-game-home-leaderboard-shell'
             padding='lg'
             surface='solid'
             variant='soft'
@@ -624,7 +583,7 @@ const GameHomeSkeleton = (): React.JSX.Element => {
             <div className='space-y-2'>
               <SkeletonInfoSurface
                 className='flex flex-col gap-3 p-3 sm:flex-row sm:items-center'
-                dataTestId='kangur-page-transition-skeleton-game-home-leaderboard-row-1'
+                data-testid='kangur-page-transition-skeleton-game-home-leaderboard-row-1'
                 padding='sm'
               >
                 <SkeletonBlock className='h-7 w-7 rounded-full bg-slate-200/76' />
@@ -639,7 +598,7 @@ const GameHomeSkeleton = (): React.JSX.Element => {
               </SkeletonInfoSurface>
               <SkeletonInfoSurface
                 className='flex flex-col gap-3 p-3 sm:flex-row sm:items-center'
-                dataTestId='kangur-page-transition-skeleton-game-home-leaderboard-row-2'
+                data-testid='kangur-page-transition-skeleton-game-home-leaderboard-row-2'
                 padding='sm'
               >
                 <SkeletonBlock className='h-7 w-7 rounded-full bg-slate-200/76' />
@@ -661,7 +620,7 @@ const GameHomeSkeleton = (): React.JSX.Element => {
         playerProgress={(
           <SkeletonGlassPanel
             className={GAME_HOME_PLAYER_PROGRESS_SHELL_CLASSNAME}
-            dataTestId='kangur-page-transition-skeleton-game-home-player-progress-shell'
+            data-testid='kangur-page-transition-skeleton-game-home-player-progress-shell'
             padding='lg'
             surface='solid'
             variant='soft'
@@ -687,7 +646,7 @@ const GameHomeSkeleton = (): React.JSX.Element => {
             <div className='grid grid-cols-1 kangur-panel-gap min-[420px]:grid-cols-2'>
               <SkeletonInfoSurface
                 className='p-4'
-                dataTestId='kangur-page-transition-skeleton-game-home-player-progress-metric-1'
+                data-testid='kangur-page-transition-skeleton-game-home-player-progress-metric-1'
               >
                 <div className='space-y-2'>
                   <SkeletonLine className='w-16' />
@@ -696,7 +655,7 @@ const GameHomeSkeleton = (): React.JSX.Element => {
               </SkeletonInfoSurface>
               <SkeletonInfoSurface
                 className='p-4'
-                dataTestId='kangur-page-transition-skeleton-game-home-player-progress-metric-2'
+                data-testid='kangur-page-transition-skeleton-game-home-player-progress-metric-2'
               >
                 <div className='space-y-2'>
                   <SkeletonLine className='w-18' />
@@ -705,7 +664,7 @@ const GameHomeSkeleton = (): React.JSX.Element => {
               </SkeletonInfoSurface>
               <SkeletonInfoSurface
                 className='p-4'
-                dataTestId='kangur-page-transition-skeleton-game-home-player-progress-metric-3'
+                data-testid='kangur-page-transition-skeleton-game-home-player-progress-metric-3'
               >
                 <div className='space-y-2'>
                   <SkeletonLine className='w-20' />
@@ -714,7 +673,7 @@ const GameHomeSkeleton = (): React.JSX.Element => {
               </SkeletonInfoSurface>
               <SkeletonInfoSurface
                 className='p-4'
-                dataTestId='kangur-page-transition-skeleton-game-home-player-progress-metric-4'
+                data-testid='kangur-page-transition-skeleton-game-home-player-progress-metric-4'
               >
                 <div className='space-y-2'>
                   <SkeletonLine className='w-18' />
@@ -724,7 +683,7 @@ const GameHomeSkeleton = (): React.JSX.Element => {
             </div>
             <SkeletonInfoSurface
               className='space-y-3 p-4'
-              dataTestId='kangur-page-transition-skeleton-game-home-player-progress-top-activity'
+              data-testid='kangur-page-transition-skeleton-game-home-player-progress-top-activity'
             >
               <SkeletonLine className='w-24' />
               <SkeletonLine className='h-6 w-40' />
@@ -1122,23 +1081,19 @@ export function KangurPageTransitionSkeleton({
   const skeletonLocale = resolveSkeletonLocale(pathname);
   const skeletonCopy = KANGUR_SKELETON_COPY_BY_LOCALE[skeletonLocale];
   const routing = useOptionalKangurRouting();
-  const accessiblePageKey = useKangurAccessiblePageKey(pageKey, 'Game');
+  const { data: session } = useOptionalNextAuthSession();
   const embedded = routing?.embedded ?? false;
   const effectiveEmbedded = embeddedOverride ?? embedded;
   const isLocaleSwitch = reason === 'locale-switch';
   const shouldRenderInlineTopNavigationSkeleton =
     renderInlineTopNavigationSkeleton && !effectiveEmbedded;
   const resolvedVariant =
-    accessiblePageKey !== (pageKey?.trim() || null)
-      ? resolveKangurRouteTransitionSkeletonVariant({
-          basePath: routing?.basePath,
-          pageKey: accessiblePageKey,
-        })
-      : variant ??
-        resolveKangurRouteTransitionSkeletonVariant({
-          basePath: routing?.basePath,
-          pageKey: accessiblePageKey,
-        });
+    variant ??
+    resolveKangurRouteTransitionSkeletonVariant({
+      basePath: routing?.basePath,
+      pageKey,
+      session,
+    });
   const resolvedPageKey = resolveSkeletonPageKey(resolvedVariant);
   const shouldOffsetStandaloneRouteOverlay =
     !effectiveEmbedded && !shouldRenderInlineTopNavigationSkeleton;

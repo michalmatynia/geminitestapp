@@ -1,10 +1,9 @@
 'use client';
 
 import { usePathname, useSearchParams } from 'next/navigation';
+import type { Session } from 'next-auth';
 import React from 'react';
 
-import { canAccessKangurSlugSegments } from '@/features/kangur/config/page-access';
-import { useOptionalNextAuthSession } from '@/features/kangur/ui/hooks/useOptionalNextAuthSession';
 import {
   DEFAULT_APP_EMBED_BASE_PATH,
   DEFAULT_APP_EMBED_ENTRY_PAGE,
@@ -12,6 +11,8 @@ import {
   DEFAULT_APP_EMBED_ID,
   getAppEmbedOption,
 } from '@/shared/lib/app-embeds';
+import { isSuperAdminSession } from '@/shared/lib/auth/elevated-session-user';
+import { useOptionalNextAuthSession } from '@/shared/lib/auth/useOptionalNextAuthSession';
 import {
   buildKangurEmbeddedBasePath,
   getKangurPageSlug,
@@ -21,6 +22,7 @@ import {
   readKangurUrlParam,
   KANGUR_EMBED_QUERY_PARAM,
   KangurFeaturePage,
+  resolveKangurPageKeyFromSlug,
 } from '@/shared/lib/kangur-bridge';
 import { Card } from '@/shared/ui';
 
@@ -65,6 +67,27 @@ const resolveKangurEntrySlug = (entryPage: unknown): string[] => {
   }
 
   return [resolvedSlug];
+};
+
+const SUPER_ADMIN_ONLY_KANGUR_PAGE_KEYS = new Set(['GamesLibrary']);
+
+const canAccessKangurPage = (
+  pageKey: string | null | undefined,
+  session: Session | null | undefined
+): boolean => {
+  const normalizedPageKey = pageKey?.trim();
+  return !normalizedPageKey ||
+    !SUPER_ADMIN_ONLY_KANGUR_PAGE_KEYS.has(normalizedPageKey) ||
+    isSuperAdminSession(session);
+};
+
+const canAccessKangurSlugSegments = (
+  slugSegments: readonly string[] = [],
+  session: Session | null | undefined
+): boolean => {
+  const leadSlug = slugSegments[0]?.trim() || null;
+  const pageKey = resolveKangurPageKeyFromSlug(leadSlug);
+  return canAccessKangurPage(pageKey, session);
 };
 
 const resolveAccessibleKangurEmbedSlug = (input: {

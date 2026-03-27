@@ -29,6 +29,63 @@ export type KangurStandardPageLayoutProps = {
   children: ReactNode;
 };
 
+type KangurStandardPageLayoutResolvedProps = {
+  embeddedOverride?: boolean | null;
+  tone: KangurPageTone;
+  resolvedShellId?: string;
+  resolvedSkipLinkTargetId?: string;
+  skipLinkLabel?: string;
+  resolvedShellClassName?: string;
+  docsRootId?: string;
+  docsTooltipsEnabled: boolean;
+  restShellProps: Omit<
+    KangurPageShellProps,
+    'children' | 'tone' | 'skipLinkTargetId' | 'skipLinkLabel'
+  >;
+  beforeNavigation?: ReactNode;
+  navigation?: ReactNode;
+  afterNavigation?: ReactNode;
+  resolvedContainerProps: Omit<KangurPageContainerProps, 'children'>;
+  children: ReactNode;
+};
+
+const renderKangurStandardPageLayout = ({
+  embeddedOverride,
+  tone,
+  resolvedShellId,
+  resolvedSkipLinkTargetId,
+  skipLinkLabel,
+  resolvedShellClassName,
+  docsRootId,
+  docsTooltipsEnabled,
+  restShellProps,
+  beforeNavigation,
+  navigation,
+  afterNavigation,
+  resolvedContainerProps,
+  children,
+}: KangurStandardPageLayoutResolvedProps): React.JSX.Element => (
+  <KangurPageShell
+    embeddedOverride={embeddedOverride}
+    tone={tone}
+    id={resolvedShellId}
+    skipLinkTargetId={resolvedSkipLinkTargetId}
+    skipLinkLabel={skipLinkLabel}
+    className={resolvedShellClassName}
+    {...restShellProps}
+  >
+    {docsRootId ? (
+      <KangurDocsTooltipEnhancer enabled={docsTooltipsEnabled} rootId={docsRootId} />
+    ) : null}
+    {beforeNavigation}
+    {navigation}
+    {afterNavigation}
+    <KangurPageContainer embeddedOverride={embeddedOverride} {...resolvedContainerProps}>
+      {children}
+    </KangurPageContainer>
+  </KangurPageShell>
+);
+
 export function KangurStandardPageLayout({
   embeddedOverride,
   tone = 'play',
@@ -61,25 +118,20 @@ export function KangurStandardPageLayout({
         : true,
   };
 
-  return (
-    <KangurPageShell
-      embeddedOverride={embeddedOverride}
-      tone={tone}
-      id={resolvedShellId}
-      skipLinkTargetId={resolvedSkipLinkTargetId}
-      skipLinkLabel={skipLinkLabel}
-      className={resolvedShellClassName}
-      {...restShellProps}
-    >
-      {docsRootId ? (
-        <KangurDocsTooltipEnhancer enabled={docsTooltipsEnabled} rootId={docsRootId} />
-      ) : null}
-      {beforeNavigation}
-      {navigation}
-      {afterNavigation}
-      <KangurPageContainer embeddedOverride={embeddedOverride} {...resolvedContainerProps}>
-        {children}
-      </KangurPageContainer>
-    </KangurPageShell>
-  );
+  return renderKangurStandardPageLayout({
+    embeddedOverride,
+    tone,
+    resolvedShellId,
+    resolvedSkipLinkTargetId,
+    skipLinkLabel,
+    resolvedShellClassName,
+    docsRootId,
+    docsTooltipsEnabled,
+    restShellProps,
+    beforeNavigation,
+    navigation,
+    afterNavigation,
+    resolvedContainerProps,
+    children,
+  });
 }

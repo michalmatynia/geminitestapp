@@ -20,39 +20,6 @@ interface AttachSlugModalProps extends EntityModalProps<Slug, Slug> {
   alreadyAssignedIds: Set<string>;
 }
 
-type AttachSlugFormModalProps = {
-  isOpen: boolean;
-  handleClose: () => void;
-  handleAttach: () => Promise<void>;
-  selectedCount: number;
-  isAttaching: boolean;
-  children: React.ReactNode;
-};
-
-function AttachSlugFormModal({
-  isOpen,
-  handleClose,
-  handleAttach,
-  selectedCount,
-  isAttaching,
-  children,
-}: AttachSlugFormModalProps): React.JSX.Element {
-  return (
-    <FormModal
-      open={isOpen}
-      onClose={handleClose}
-      title='Attach Existing Slug'
-      onSave={() => void handleAttach()}
-      isSaving={isAttaching}
-      saveText={`Attach ${selectedCount > 0 ? `(${selectedCount})` : ''}`}
-      isSaveDisabled={selectedCount === 0}
-      size='md'
-    >
-      {children}
-    </FormModal>
-  );
-}
-
 export function AttachSlugModal({
   isOpen,
   onClose,
@@ -110,12 +77,15 @@ export function AttachSlugModal({
   };
 
   return (
-    <AttachSlugFormModal
-      isOpen={isOpen}
-      handleClose={handleClose}
-      handleAttach={handleAttach}
-      selectedCount={selectedIds.length}
-      isAttaching={isAttaching}
+    <FormModal
+      open={isOpen}
+      onClose={handleClose}
+      title='Attach Existing Slug'
+      onSave={() => void handleAttach()}
+      isSaving={isAttaching}
+      saveText={`Attach ${selectedIds.length > 0 ? `(${selectedIds.length})` : ''}`}
+      isSaveDisabled={selectedIds.length === 0}
+      size='md'
     >
       <div className='space-y-4'>
         <FormField
@@ -164,6 +134,6 @@ export function AttachSlugModal({
         </FormField>
         {error && <p className='text-xs text-destructive font-medium px-1'>{error}</p>}
       </div>
-    </AttachSlugFormModal>
+    </FormModal>
   );
 }

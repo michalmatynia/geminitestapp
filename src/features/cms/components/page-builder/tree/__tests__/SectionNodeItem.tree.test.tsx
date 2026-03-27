@@ -159,7 +159,7 @@ vi.mock('@/features/cms/components/page-builder/tree/BlockNodeItem', () => ({
 }));
 
 vi.mock('@/features/cms/components/page-builder/tree/TreeSectionPicker', () => ({
-  TreeSectionPicker: () => <div data-testid='section-picker' />,
+  renderTreeSectionPicker: () => <div data-testid='section-picker' />,
 }));
 
 type DataTransferStub = {

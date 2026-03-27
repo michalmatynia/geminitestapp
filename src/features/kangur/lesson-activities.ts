@@ -278,7 +278,8 @@ export const KANGUR_LESSON_ACTIVITY_DEFINITIONS: Record<
 > = new Proxy(
   {} as Record<KangurLessonActivityId, KangurLessonActivityDefinition>,
   {
-    get: (_target, prop, receiver) => Reflect.get(getLessonActivityDefinitions(), prop, receiver),
+    get: (_target, prop, receiver): unknown =>
+      Reflect.get(getLessonActivityDefinitions(), prop, receiver) as unknown,
     has: (_target, prop) => Reflect.has(getLessonActivityDefinitions(), prop),
     ownKeys: () => Reflect.ownKeys(getLessonActivityDefinitions()),
     getOwnPropertyDescriptor: (_target, prop) =>

@@ -33,6 +33,10 @@ import {
   resolveProductCategoryLabel,
 } from './columns/product-column-utils';
 
+type ProductListRowActionsContextValue = ReturnType<typeof useProductListRowActionsContext>;
+type ProductListRowVisualsContextValue = ReturnType<typeof useProductListRowVisualsContext>;
+type ProductListRowRuntimeValue = ReturnType<typeof useProductListRowRuntime>;
+
 const TriggerButtonBar = dynamic<ProductTriggerButtonBarProps>(
   () =>
     import('@/shared/lib/ai-paths/components/trigger-buttons/TriggerButtonBar').then(
@@ -145,17 +149,51 @@ const CircleIconButton = (props: {
   );
 };
 
-const ProductListMobileCard = memo(function ProductListMobileCard({
-  product,
-  isSelected,
-  toggleSelection,
-  prefetchListings,
-}: {
+type ProductListMobileCardResolvedProps = {
   product: ProductWithImages;
   isSelected: boolean;
   toggleSelection: (productId: string, nextChecked: boolean) => void;
   prefetchListings: (productId: string) => void;
-}) {
+  rowActions: ProductListRowActionsContextValue;
+  rowVisuals: ProductListRowVisualsContextValue;
+  rowRuntime: ProductListRowRuntimeValue;
+  nameValue: string;
+  isImported: boolean;
+  skuLabel: string;
+  categoryLabel: string;
+  thumbnailUrl: string | null;
+  createdAtLabel: string;
+  displayPrice: number | null;
+  actualCurrency: string | null;
+  baseCurrencyCode: string | null;
+  hasConvertedPrice: boolean;
+  showCurrencyIndicator: boolean;
+  currencyCode: string;
+  formattedPrice: string;
+};
+
+const renderProductListMobileCard = ({
+  product,
+  isSelected,
+  toggleSelection,
+  prefetchListings,
+  rowActions,
+  rowVisuals,
+  rowRuntime,
+  nameValue,
+  isImported,
+  skuLabel,
+  categoryLabel,
+  thumbnailUrl,
+  createdAtLabel,
+  displayPrice,
+  actualCurrency: _actualCurrency,
+  baseCurrencyCode,
+  hasConvertedPrice,
+  showCurrencyIndicator,
+  currencyCode,
+  formattedPrice,
+}: ProductListMobileCardResolvedProps): React.JSX.Element => {
   const {
     onProductNameClick,
     onProductEditClick,
@@ -164,50 +202,15 @@ const ProductListMobileCard = memo(function ProductListMobileCard({
     onIntegrationsClick,
     onExportSettingsClick,
     onPrefetchProductDetail,
-  } = useProductListRowActionsContext();
-  const {
-    productNameKey,
-    priceGroups,
-    currencyCode,
-    categoryNameById,
-    thumbnailSource,
-    showTriggerRunFeedback,
-    imageExternalBaseUrl,
-  } = useProductListRowVisualsContext();
+  } = rowActions;
+  const { showTriggerRunFeedback } = rowVisuals;
   const {
     showMarketplaceBadge,
     integrationStatus: status,
     showTraderaBadge,
     traderaStatus,
     productAiRunFeedback,
-  } = useProductListRowRuntime(product.id, product.baseProductId);
-
-  const nameKey = productNameKey ?? 'name_en';
-  const nameValue = getProductListDisplayName(product, nameKey);
-  const isImported: boolean = Boolean(product.baseProductId?.trim());
-  const skuLabel = product.sku?.trim() || 'No SKU';
-  const categoryLabel = resolveProductCategoryLabel(product, categoryNameById, nameKey);
-  const thumbnailUrl = resolveThumbnailUrl(product, thumbnailSource, imageExternalBaseUrl);
-  const createdAtLabel = formatDateLabel(product.createdAt);
-
-  const {
-    price: displayPrice,
-    currencyCode: actualCurrency,
-    baseCurrencyCode,
-  } = calculatePriceForCurrency(product.price, product.defaultPriceGroupId, currencyCode, priceGroups);
-
-  const showCurrencyIndicator: boolean = Boolean(actualCurrency && actualCurrency !== currencyCode);
-  const hasConvertedPrice: boolean =
-    displayPrice !== null &&
-    product.price !== null &&
-    Boolean(baseCurrencyCode) &&
-    normalizeCurrencyCode(baseCurrencyCode) !== normalizeCurrencyCode(currencyCode) &&
-    displayPrice !== product.price;
-  const currencyLabel = actualCurrency || currencyCode;
-  const formattedPrice =
-    displayPrice !== null
-      ? `${displayPrice.toFixed(2)}${currencyLabel ? ` ${currencyLabel}` : ''}`
-      : '—';
+  } = rowRuntime;
 
   return (
     <li
@@ -314,7 +317,7 @@ const ProductListMobileCard = memo(function ProductListMobileCard({
           <div className='text-foreground'>{formattedPrice}</div>
           {hasConvertedPrice && (
             <div className='text-[11px] text-muted-foreground'>
-              Base: {product.price?.toFixed(2)} {baseCurrencyCode}
+              Base: {displayPrice !== null && product.price !== null ? product.price.toFixed(2) : product.price?.toFixed(2)} {baseCurrencyCode}
               {showCurrencyIndicator ? ` (${currencyCode})` : ''}
             </div>
           )}
@@ -377,6 +380,83 @@ const ProductListMobileCard = memo(function ProductListMobileCard({
       <div className='mt-2 text-[11px] text-muted-foreground'>Created {createdAtLabel}</div>
     </li>
   );
+};
+
+const ProductListMobileCard = memo(function ProductListMobileCard({
+  product,
+  isSelected,
+  toggleSelection,
+  prefetchListings,
+}: {
+  product: ProductWithImages;
+  isSelected: boolean;
+  toggleSelection: (productId: string, nextChecked: boolean) => void;
+  prefetchListings: (productId: string) => void;
+}) {
+  const rowActions = useProductListRowActionsContext();
+  const rowVisuals = useProductListRowVisualsContext();
+  const rowRuntime = useProductListRowRuntime(product.id, product.baseProductId);
+
+  const nameKey = rowVisuals.productNameKey ?? 'name_en';
+  const nameValue = getProductListDisplayName(product, nameKey);
+  const isImported: boolean = Boolean(product.baseProductId?.trim());
+  const skuLabel = product.sku?.trim() || 'No SKU';
+  const categoryLabel = resolveProductCategoryLabel(product, rowVisuals.categoryNameById, nameKey);
+  const thumbnailUrl = resolveThumbnailUrl(
+    product,
+    rowVisuals.thumbnailSource,
+    rowVisuals.imageExternalBaseUrl
+  );
+  const createdAtLabel = formatDateLabel(product.createdAt);
+
+  const {
+    price: displayPrice,
+    currencyCode: actualCurrency,
+    baseCurrencyCode,
+  } = calculatePriceForCurrency(
+    product.price,
+    product.defaultPriceGroupId,
+    rowVisuals.currencyCode,
+    rowVisuals.priceGroups
+  );
+
+  const showCurrencyIndicator: boolean = Boolean(
+    actualCurrency && actualCurrency !== rowVisuals.currencyCode
+  );
+  const hasConvertedPrice: boolean =
+    displayPrice !== null &&
+    product.price !== null &&
+    Boolean(baseCurrencyCode) &&
+    normalizeCurrencyCode(baseCurrencyCode) !== normalizeCurrencyCode(rowVisuals.currencyCode) &&
+    displayPrice !== product.price;
+  const currencyLabel = actualCurrency || rowVisuals.currencyCode;
+  const formattedPrice =
+    displayPrice !== null
+      ? `${displayPrice.toFixed(2)}${currencyLabel ? ` ${currencyLabel}` : ''}`
+      : '—';
+
+  return renderProductListMobileCard({
+    product,
+    isSelected,
+    toggleSelection,
+    prefetchListings,
+    rowActions,
+    rowVisuals,
+    rowRuntime,
+    nameValue,
+    isImported,
+    skuLabel,
+    categoryLabel,
+    thumbnailUrl,
+    createdAtLabel,
+    displayPrice,
+    actualCurrency,
+    baseCurrencyCode,
+    hasConvertedPrice,
+    showCurrencyIndicator,
+    currencyCode: rowVisuals.currencyCode,
+    formattedPrice,
+  });
 });
 
 export const ProductListMobileCards = memo(function ProductListMobileCards() {

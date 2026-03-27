@@ -34,7 +34,7 @@ vi.mock('@/features/kangur/ui/hooks/useKangurCoarsePointer', () => ({
   useKangurCoarsePointer: () => true,
 }));
 
-import { KangurAssignmentManagerTimeLimitModal } from './KangurAssignmentManagerTimeLimitModal';
+import { renderKangurAssignmentManagerTimeLimitModal } from './KangurAssignmentManagerTimeLimitModal';
 
 describe('KangurAssignmentManagerTimeLimitModal', () => {
   it('uses touch-friendly cancel and save actions', () => {
@@ -43,23 +43,23 @@ describe('KangurAssignmentManagerTimeLimitModal', () => {
     const onTimeLimitDraftChange = vi.fn();
 
     render(
-      <KangurAssignmentManagerTimeLimitModal
-        isOpen
-        isSaveDisabled={false}
-        maxMinutes={90}
-        minMinutes={5}
-        onClose={onClose}
-        onSave={onSave}
-        onTimeLimitDraftChange={onTimeLimitDraftChange}
-        saveLabel='Zapisz limit'
-        timeLimitDraft='30'
-        timeLimitParsedError={null}
-        timeLimitPreview='30 min'
-        timeLimitTarget={{
+      renderKangurAssignmentManagerTimeLimitModal({
+        isOpen: true,
+        isSaveDisabled: false,
+        maxMinutes: 90,
+        minMinutes: 5,
+        onClose,
+        onSave,
+        onTimeLimitDraftChange,
+        saveLabel: 'Zapisz limit',
+        timeLimitDraft: '30',
+        timeLimitParsedError: null,
+        timeLimitPreview: '30 min',
+        timeLimitTarget: {
           title: 'Powtórka: Dzielenie',
           description: 'Ukończ jedną sesję dzielenia.',
-        }}
-      />
+        },
+      })
     );
 
     expect(screen.getByRole('button', { name: 'Anuluj' })).toHaveClass(

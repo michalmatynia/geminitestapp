@@ -8,10 +8,8 @@ import {
   KANGUR_BASE_PATH,
   KANGUR_MAIN_PAGE_KEY,
   getKangurPageHref,
+  resolveKangurFeaturePageRoute,
 } from '@/features/kangur/config/routing';
-import {
-  resolveAccessibleKangurFeaturePageRoute,
-} from '@/features/kangur/config/page-access';
 import {
   clearKangurClientObservabilityContext,
   setKangurClientObservabilityContext,
@@ -21,7 +19,6 @@ import {
   useKangurRoutingState,
 } from '@/features/kangur/ui/context/KangurRoutingContext';
 import { KangurFeatureApp } from '@/features/kangur/ui/KangurFeatureApp';
-import { useOptionalNextAuthSession } from '@/features/kangur/ui/hooks/useOptionalNextAuthSession';
 import { localizeManagedKangurHref } from '@/features/kangur/ui/routing/managed-paths';
 import { KANGUR_MAIN_CONTENT_ID } from '@/features/kangur/ui/design/primitives/KangurPageContainer';
 import { useKangurMobileViewportVars } from '@/features/kangur/ui/hooks/useKangurMobileViewportVars';
@@ -200,24 +197,18 @@ export function KangurFeaturePage({
   embedded = false,
   forceBodyScrollLock = false,
 }: KangurFeaturePageProps): JSX.Element {
-  const { data: session } = useOptionalNextAuthSession();
   const {
     normalizedBasePath,
-    pageKey: accessiblePageKey,
-    requestedPath: accessibleRequestedPath,
-  } = resolveAccessibleKangurFeaturePageRoute({
-    slug,
-    basePath,
-    session,
-    fallbackPageKey: KANGUR_MAIN_PAGE_KEY,
-  });
+    pageKey,
+    requestedPath,
+  } = resolveKangurFeaturePageRoute(slug, basePath);
   const isEmbedded = embedded;
 
   return (
     <KangurRoutingProvider
-      pageKey={accessiblePageKey}
-      requestedPath={accessibleRequestedPath}
-      requestedHref={accessibleRequestedPath}
+      pageKey={pageKey}
+      requestedPath={requestedPath}
+      requestedHref={requestedPath}
       basePath={normalizedBasePath}
       embedded={isEmbedded}
     >

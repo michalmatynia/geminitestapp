@@ -3,7 +3,7 @@ import {
   normalizeKangurProgressState,
   type KangurLessonSubject,
 } from '@/features/kangur/shared/contracts/kangur';
-import { DEFAULT_KANGUR_SUBJECT } from '@/features/kangur/lessons/lesson-catalog';
+import { DEFAULT_KANGUR_SUBJECT } from '@/features/kangur/lessons/lesson-catalog-metadata';
 import type { KangurProgressState } from '@/features/kangur/ui/types';
 import {
   KANGUR_PROGRESS_STORAGE_KEY,

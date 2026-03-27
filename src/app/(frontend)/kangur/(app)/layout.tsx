@@ -4,12 +4,13 @@ import type { ReactNode } from 'react';
 
 
 export default function Layout({
-  children: _children,
+  children,
 }: {
   children: ReactNode;
 }): ReactNode {
   return (
     <>
+      {children}
       <KangurFeatureRouteShell />
     </>
   );

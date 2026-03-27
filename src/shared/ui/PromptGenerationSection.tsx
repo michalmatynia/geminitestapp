@@ -70,7 +70,7 @@ type PromptGenerationSectionResolvedProps = PromptGenerationSectionProps & {
   finalResultLabelId: string;
 };
 
-function PromptGenerationInputPanel({
+function renderPromptGenerationInputPanel({
   inputId,
   inputLabel,
   inputValue,
@@ -94,7 +94,7 @@ function PromptGenerationInputPanel({
   );
 }
 
-function PromptGenerationInitialResultPanel({
+function renderPromptGenerationInitialResultPanel({
   initialResultId,
   initialResultLabel,
   initialResultLabelId,
@@ -143,7 +143,7 @@ function PromptGenerationInitialResultPanel({
   );
 }
 
-function PromptGenerationModelPanel({
+function renderPromptGenerationModelPanel({
   modelLabel,
   modelOptions,
   modelSelectId,
@@ -167,7 +167,7 @@ function PromptGenerationModelPanel({
   );
 }
 
-function PromptGenerationOutputToggle({
+function renderPromptGenerationOutputToggle({
   badgeTextColor,
   modelValue,
   onOutputEnabledChange,
@@ -195,7 +195,7 @@ function PromptGenerationOutputToggle({
   );
 }
 
-function PromptGenerationOutputPromptPanel({
+function renderPromptGenerationOutputPromptPanel({
   onOutputPromptChange,
   outputPlaceholder,
   outputPromptId,
@@ -226,7 +226,7 @@ function PromptGenerationOutputPromptPanel({
   );
 }
 
-function PromptGenerationFinalResultPanel({
+function renderPromptGenerationFinalResultPanel({
   finalResultId,
   finalResultLabel,
   finalResultLabelId,
@@ -302,20 +302,20 @@ export function PromptGenerationSection(props: PromptGenerationSectionProps): JS
 
       <div className='pl-8 space-y-6'>
         <div className={`${UI_GRID_ROOMY_CLASSNAME} grid-cols-1 lg:grid-cols-2`}>
-          <PromptGenerationInputPanel {...resolvedProps} />
-          <PromptGenerationInitialResultPanel {...resolvedProps} />
+          {renderPromptGenerationInputPanel(resolvedProps)}
+          {renderPromptGenerationInitialResultPanel(resolvedProps)}
         </div>
 
-        <PromptGenerationModelPanel {...resolvedProps} />
+        {renderPromptGenerationModelPanel(resolvedProps)}
 
         <div className='pt-4 border-t border-border/50 space-y-4'>
-          <PromptGenerationOutputToggle {...resolvedProps} />
+          {renderPromptGenerationOutputToggle(resolvedProps)}
           {resolvedProps.outputEnabled ? (
             <div
               className={`${UI_GRID_ROOMY_CLASSNAME} grid-cols-1 lg:grid-cols-2 animate-in fade-in slide-in-from-top-2 duration-300`}
             >
-              <PromptGenerationOutputPromptPanel {...resolvedProps} />
-              <PromptGenerationFinalResultPanel {...resolvedProps} />
+              {renderPromptGenerationOutputPromptPanel(resolvedProps)}
+              {renderPromptGenerationFinalResultPanel(resolvedProps)}
             </div>
           ) : null}
         </div>

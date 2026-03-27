@@ -22,7 +22,7 @@ type DocsConnectionsCatalogCardProps = {
   onConnect: () => void;
 };
 
-function DocsConnectionsCatalogCard({
+function renderDocsConnectionsCatalogCard({
   doc,
   connected,
   onConnect,
@@ -127,12 +127,13 @@ export function DocsConnectionsPanel(): React.JSX.Element {
           const sourceId = `ai-paths:node-docs:${doc.type}`;
           const connected = docsSet.has(sourceId);
           return (
-            <DocsConnectionsCatalogCard
-              key={doc.type}
-              doc={doc}
-              connected={connected}
-              onConnect={() => handleConnectDoc(sourceId, connected)}
-            />
+            <React.Fragment key={doc.type}>
+              {renderDocsConnectionsCatalogCard({
+                doc,
+                connected,
+                onConnect: () => handleConnectDoc(sourceId, connected),
+              })}
+            </React.Fragment>
           );
         })}
       </Card>

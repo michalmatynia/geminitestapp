@@ -21,10 +21,7 @@ import {
   CmsStorefrontAppearanceButtons,
   useOptionalCmsStorefrontAppearance,
 } from '@/features/cms/public';
-import {
-  canAccessKangurPage,
-  resolveAccessibleKangurPageKey,
-} from '@/features/kangur/config/page-access';
+import { canAccessKangurPage } from '@/features/kangur/config/page-access';
 import { KANGUR_TIGHT_ROW_CLASSNAME } from '@/features/kangur/ui/design/tokens';
 import {
   getKangurHomeHref,
@@ -41,9 +38,15 @@ import { useKangurSubjectFocus } from '@/features/kangur/ui/context/KangurSubjec
 import { useKangurAgeGroupFocus } from '@/features/kangur/ui/context/KangurAgeGroupFocusContext';
 import { getKangurAvatarById } from '@/features/kangur/ui/avatars/catalog';
 const KangurChoiceDialog = dynamic(() =>
-  import('@/features/kangur/ui/components/KangurChoiceDialog').then(m => ({ default: m.KangurChoiceDialog }))
+  import('@/features/kangur/ui/components/KangurChoiceDialog').then((m) => ({
+    default: function KangurChoiceDialogEntry(
+      props: import('@/features/kangur/ui/components/KangurChoiceDialog').KangurChoiceDialogProps
+    ) {
+      return m.renderKangurChoiceDialog(props);
+    },
+  }))
 );
-import { KangurDialogHeader } from '@/features/kangur/ui/components/KangurDialogHeader';
+import { KangurDialogMeta } from '@/features/kangur/ui/components/KangurDialogMeta';
 import { KangurHomeLogo } from '@/features/kangur/ui/components/KangurHomeLogo';
 import KangurVisualCueContent from '@/features/kangur/ui/components/KangurVisualCueContent';
 const KangurLanguageSwitcher = dynamic(() =>
@@ -75,7 +78,7 @@ import {
   KANGUR_AGE_GROUPS,
   getKangurDefaultSubjectForAgeGroup,
   getKangurSubjectsForAgeGroup,
-} from '@/features/kangur/lessons/lesson-catalog';
+} from '@/features/kangur/lessons/lesson-catalog-metadata';
 import {
   getLocalizedKangurAgeGroupLabel,
   getLocalizedKangurSubjectLabel,
@@ -134,6 +137,7 @@ type KangurPrimaryNavigationProps = {
   className?: string;
   contentClassName?: string;
   currentPage: KangurPrimaryNavigationPage;
+  forceLanguageSwitcherFallbackPath?: boolean;
   guestPlayerName?: string;
   guestPlayerNamePlaceholder?: string;
   homeActive?: boolean;
@@ -262,6 +266,93 @@ const renderNavAction = (config: KangurNavActionConfig): React.JSX.Element => {
   return <KangurNavAction action={action}>{content}</KangurNavAction>;
 };
 
+const renderLessonsNavActionContent = ({
+  isSixYearOld,
+  label,
+}: {
+  isSixYearOld: boolean;
+  label: string;
+}): React.ReactNode =>
+  isSixYearOld ? (
+    <KangurVisualCueContent
+      icon={<BookOpen aria-hidden='true' className={ICON_CLASSNAME} strokeWidth={2.15} />}
+      iconTestId='kangur-primary-nav-lessons-icon'
+      label={label}
+    />
+  ) : (
+    <>
+      <BookOpen aria-hidden='true' className={ICON_CLASSNAME} strokeWidth={2.15} />
+      <span className='truncate'>{label}</span>
+    </>
+  );
+
+const renderGamesLibraryNavActionContent = ({
+  isSixYearOld,
+  label,
+}: {
+  isSixYearOld: boolean;
+  label: string;
+}): React.ReactNode =>
+  isSixYearOld ? (
+    <KangurVisualCueContent
+      icon={<Gamepad2 aria-hidden='true' className={ICON_CLASSNAME} strokeWidth={2.15} />}
+      iconTestId='kangur-primary-nav-games-library-icon'
+      label={label}
+    />
+  ) : (
+    <>
+      <Gamepad2 aria-hidden='true' className={ICON_CLASSNAME} strokeWidth={2.15} />
+      <span className='truncate'>{label}</span>
+    </>
+  );
+
+type KangurPrimaryNavigationLanguageSwitcherProps = React.ComponentProps<typeof KangurLanguageSwitcher>;
+
+const renderKangurPrimaryNavigationLanguageSwitcher = ({
+  basePath,
+  className,
+  currentPage,
+  forceFallbackPath,
+}: KangurPrimaryNavigationLanguageSwitcherProps): React.JSX.Element => (
+  <KangurLanguageSwitcher
+    basePath={basePath}
+    className={className}
+    currentPage={currentPage}
+    forceFallbackPath={forceFallbackPath}
+  />
+);
+
+const renderKangurPrimaryNavigationElevatedUserMenu = ({
+  adminLabel,
+  logoutLabel,
+  onLogout,
+  profile,
+  triggerAriaLabel,
+  triggerClassName,
+  user,
+}: {
+  adminLabel: string;
+  logoutLabel: string;
+  onLogout: () => void;
+  profile: {
+    href: string;
+    label: string;
+  } | null;
+  triggerAriaLabel: string;
+  triggerClassName?: string;
+  user: NonNullable<ReturnType<typeof getElevatedSessionUserSnapshot>>;
+}): React.JSX.Element => (
+  <KangurElevatedUserMenu
+    adminLabel={adminLabel}
+    logoutLabel={logoutLabel}
+    onLogout={onLogout}
+    profile={profile}
+    triggerAriaLabel={triggerAriaLabel}
+    triggerClassName={triggerClassName}
+    user={user}
+  />
+);
+
 const resolveTutorFallbackCopy = (
   locale: ReturnType<typeof normalizeSiteLocale>,
   value: string | null | undefined,
@@ -322,6 +413,7 @@ export function KangurPrimaryNavigation({
   className,
   contentClassName,
   currentPage,
+  forceLanguageSwitcherFallbackPath = false,
   guestPlayerName,
   guestPlayerNamePlaceholder,
   homeActive,
@@ -388,12 +480,7 @@ export function KangurPrimaryNavigation({
     effectiveIsAuthenticated && Boolean(elevatedSessionUser);
   const canAccessGamesLibrary =
     effectiveIsAuthenticated && canAccessKangurPage('GamesLibrary', session);
-  const accessibleCurrentPage = resolveAccessibleKangurPageKey(
-    currentPage,
-    session,
-    'Game'
-  ) as KangurPrimaryNavigationPage;
-  const forceLanguageSwitcherFallbackPath = accessibleCurrentPage !== currentPage;
+  const accessibleCurrentPage = currentPage;
   const effectiveHomeActive = homeActive ?? accessibleCurrentPage === 'Game';
   const learnerProfileIsActive = accessibleCurrentPage === 'LearnerProfile';
   const shouldRenderProfileMenu =
@@ -842,18 +929,10 @@ export function KangurPrimaryNavigation({
     active: accessibleCurrentPage === 'Lessons',
     ariaLabel: navTranslations('lessons'),
     className: mobileNavItemClassName,
-    content: isSixYearOld ? (
-      <KangurVisualCueContent
-        icon={<BookOpen aria-hidden='true' className={ICON_CLASSNAME} strokeWidth={2.15} />}
-        iconTestId='kangur-primary-nav-lessons-icon'
-        label={navTranslations('lessons')}
-      />
-    ) : (
-      <>
-        <BookOpen aria-hidden='true' className={ICON_CLASSNAME} strokeWidth={2.15} />
-        <span className='truncate'>{navTranslations('lessons')}</span>
-      </>
-    ),
+    content: renderLessonsNavActionContent({
+      isSixYearOld,
+      label: navTranslations('lessons'),
+    }),
     docId: 'top_nav_lessons',
     href: lessonsHref,
     targetPageKey: 'Lessons',
@@ -871,18 +950,10 @@ export function KangurPrimaryNavigation({
     active: accessibleCurrentPage === 'GamesLibrary',
     ariaLabel: navTranslations('gamesLibrary'),
     className: mobileNavItemClassName,
-    content: isSixYearOld ? (
-      <KangurVisualCueContent
-        icon={<Gamepad2 aria-hidden='true' className={ICON_CLASSNAME} strokeWidth={2.15} />}
-        iconTestId='kangur-primary-nav-games-library-icon'
-        label={navTranslations('gamesLibrary')}
-      />
-    ) : (
-      <>
-        <Gamepad2 aria-hidden='true' className={ICON_CLASSNAME} strokeWidth={2.15} />
-        <span className='truncate'>{navTranslations('gamesLibrary')}</span>
-      </>
-    ),
+    content: renderGamesLibraryNavActionContent({
+      isSixYearOld,
+      label: navTranslations('gamesLibrary'),
+    }),
     docId: 'top_nav_games_library',
     href: gamesLibraryHref,
     targetPageKey: 'GamesLibrary',
@@ -1139,12 +1210,12 @@ export function KangurPrimaryNavigation({
         data-testid={testId}
       >
         {resolvedShouldRenderLanguageSwitcher ? (
-          <KangurLanguageSwitcher
-            basePath={basePath}
-            className={mobileNavItemClassName}
-            currentPage={accessibleCurrentPage}
-            forceFallbackPath={forceLanguageSwitcherFallbackPath}
-          />
+          renderKangurPrimaryNavigationLanguageSwitcher({
+            basePath,
+            className: mobileNavItemClassName,
+            currentPage: accessibleCurrentPage,
+            forceFallbackPath: forceLanguageSwitcherFallbackPath,
+          })
         ) : null}
         {resolvedAppearanceControls}
         {rightAccessory}
@@ -1152,22 +1223,21 @@ export function KangurPrimaryNavigation({
           ? renderNavAction(buildActionWithClose(parentDashboardAction, onActionClick))
           : null}
         {shouldRenderElevatedUserMenu && elevatedSessionUser ? (
-          <KangurElevatedUserMenu
-            adminLabel={fallbackCopy.adminLabel}
-            logoutLabel={fallbackCopy.logoutLabel}
-            onLogout={onLogout}
-            profile={
+          renderKangurPrimaryNavigationElevatedUserMenu({
+            adminLabel: fallbackCopy.adminLabel,
+            logoutLabel: fallbackCopy.logoutLabel,
+            onLogout,
+            profile:
               !isParentAccount || hasActiveLearner
                 ? {
                     href: profileHref,
                     label: profileLabel,
                   }
-                : null
-            }
-            triggerAriaLabel={fallbackCopy.avatarLabel}
-            triggerClassName={elevatedUserTriggerClassName}
-            user={elevatedSessionUser}
-          />
+                : null,
+            triggerAriaLabel: fallbackCopy.avatarLabel,
+            triggerClassName: elevatedUserTriggerClassName,
+            user: elevatedSessionUser,
+          })
         ) : null}
         {shouldRenderProfileMenu ? (
           <KangurProfileMenu
@@ -1285,11 +1355,11 @@ export function KangurPrimaryNavigation({
                 data-testid='kangur-primary-nav-mobile-header-actions'
               >
                 {shouldRenderMobileLanguageHeader ? (
-                  <KangurLanguageSwitcher
-                    basePath={basePath}
-                    currentPage={accessibleCurrentPage}
-                    forceFallbackPath={forceLanguageSwitcherFallbackPath}
-                  />
+                  renderKangurPrimaryNavigationLanguageSwitcher({
+                    basePath,
+                    currentPage: accessibleCurrentPage,
+                    forceFallbackPath: forceLanguageSwitcherFallbackPath,
+                  })
                 ) : null}
                 {shouldRenderMobileAppearanceHeader ? (
                   <div className='flex shrink-0 items-center'>{appearanceControlsInline}</div>
@@ -1320,7 +1390,7 @@ export function KangurPrimaryNavigation({
       open={isSubjectModalOpen}
       onOpenChange={setIsSubjectModalOpen}
       header={
-        <KangurDialogHeader
+        <KangurDialogMeta
           title={navTranslations('subject.label')}
           description={navTranslations('subject.dialogDescription')}
         />
@@ -1392,7 +1462,7 @@ export function KangurPrimaryNavigation({
       open={isAgeGroupModalOpen}
       onOpenChange={setIsAgeGroupModalOpen}
       header={
-        <KangurDialogHeader
+        <KangurDialogMeta
           title={navTranslations('ageGroup.label')}
           description={navTranslations('ageGroup.dialogDescription')}
         />

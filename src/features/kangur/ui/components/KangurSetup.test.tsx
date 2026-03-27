@@ -59,9 +59,9 @@ describe('KangurSetup', () => {
     const backToEditionsButton = screen.getByRole('button', { name: 'Wróć do listy edycji' });
 
     expect(backToEditionsButton).toHaveClass(
-      'min-h-11',
-      'px-5',
-      'touch-manipulation'
+      'touch-manipulation',
+      '[@media(pointer:coarse)]:min-h-11',
+      '[@media(pointer:coarse)]:px-5'
     );
     expect(backToEditionsButton).not.toHaveTextContent('Edycje');
 

@@ -3,7 +3,7 @@
 import { useLocale, useTranslations } from 'next-intl';
 import { useMemo } from 'react';
 
-import { KangurGameSetupStage } from '@/features/kangur/ui/components/KangurGameSetupStage';
+import { renderKangurGameSetupStage } from '@/features/kangur/ui/components/KangurGameSetupStage';
 import KangurPracticeAssignmentBanner from '@/features/kangur/ui/components/KangurPracticeAssignmentBanner';
 import { KangurTrainingSetupPanel } from '@/features/kangur/ui/components/KangurTrainingSetupPanel';
 import { KangurTreningWordmark } from '@/features/kangur/ui/components/KangurTreningWordmark';
@@ -60,9 +60,8 @@ export function KangurGameTrainingSetupWidget(): React.JSX.Element | null {
     return null;
   }
 
-  return (
-    <KangurGameSetupStage
-      afterIntro={
+  return renderKangurGameSetupStage({
+    afterIntro:
         activePracticeAssignment ? (
           <div className='flex w-full justify-center px-4'>
             <KangurPracticeAssignmentBanner
@@ -71,32 +70,31 @@ export function KangurGameTrainingSetupWidget(): React.JSX.Element | null {
               mode='active'
             />
           </div>
-        ) : null
-      }
-      description={translateRecommendationWithFallback(
-        gamePageTranslations,
-        'screens.training.description',
-        trainingSetupFallbackDescription
-      )}
-      momentumMode='training'
-      onBack={handleHome}
-      progress={progress}
-      testId='kangur-game-training-top-section'
-      title={trainingSetupTitle}
-      visualTitle={
-        <KangurTreningWordmark
-          className='mx-auto'
-          data-testid='kangur-training-heading-art'
-          idPrefix='kangur-game-training-heading'
-          label={trainingWordmarkLabel}
-          locale={locale}
-        />
-      }
-    >
+        ) : null,
+    children: (
       <KangurTrainingSetupPanel
         onStart={(selection, options) => handleStartTraining(selection, options)}
         suggestedTraining={suggestedTraining}
       />
-    </KangurGameSetupStage>
-  );
+    ),
+    description: translateRecommendationWithFallback(
+      gamePageTranslations,
+      'screens.training.description',
+      trainingSetupFallbackDescription
+    ),
+    momentumMode: 'training',
+    onBack: handleHome,
+    progress,
+    testId: 'kangur-game-training-top-section',
+    title: trainingSetupTitle,
+    visualTitle: (
+      <KangurTreningWordmark
+        className='mx-auto'
+        data-testid='kangur-training-heading-art'
+        idPrefix='kangur-game-training-heading'
+        label={trainingWordmarkLabel}
+        locale={locale}
+      />
+    ),
+  });
 }

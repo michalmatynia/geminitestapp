@@ -6,7 +6,7 @@ import React, { useMemo, useRef, useState } from 'react';
 
 import { resolveKangurTutorSectionKnowledgeReference } from '@/features/kangur/ai-tutor-section-knowledge';
 import { isPublishedKangurTestQuestion } from '@/features/kangur/test-questions';
-import { KangurLessonNavigationIconButton } from '@/features/kangur/ui/components/KangurLessonNavigationIconButton';
+import { renderKangurLessonNavigationIconButton } from '@/features/kangur/ui/components/KangurLessonNavigationIconButton';
 import {
   useKangurAiTutorSessionSync,
   useOptionalKangurAiTutor,
@@ -431,15 +431,15 @@ export function KangurTestSuitePlayer({
               role='group'
               aria-label='Test suite navigation'
             >
-              <KangurLessonNavigationIconButton
-                onClick={handlePrev}
-                disabled={currentIndex === 0}
-                className={compactActionClassName}
-                aria-label='Previous'
-                data-doc-id='tests_suite_player'
-                icon={ChevronLeft}
-                title='Previous'
-              />
+              {renderKangurLessonNavigationIconButton({
+                onClick: handlePrev,
+                disabled: currentIndex === 0,
+                className: compactActionClassName,
+                'aria-label': 'Previous',
+                'data-doc-id': 'tests_suite_player',
+                icon: ChevronLeft,
+                title: 'Previous',
+              })}
 
               {canAskAboutSelectedChoice ? (
                 <KangurButton
@@ -459,14 +459,14 @@ export function KangurTestSuitePlayer({
               ) : null}
 
               {isAnswered && showAnswer && currentIndex < totalQuestions - 1 ? (
-                <KangurLessonNavigationIconButton
-                  onClick={handleNext}
-                  className={compactActionClassName}
-                  aria-label='Next'
-                  data-doc-id='tests_suite_player'
-                  icon={ChevronRight}
-                  title='Next'
-                />
+                renderKangurLessonNavigationIconButton({
+                  onClick: handleNext,
+                  className: compactActionClassName,
+                  'aria-label': 'Next',
+                  'data-doc-id': 'tests_suite_player',
+                  icon: ChevronRight,
+                  title: 'Next',
+                })
               ) : isAnswered ? (
                 <KangurButton
                   type='button'

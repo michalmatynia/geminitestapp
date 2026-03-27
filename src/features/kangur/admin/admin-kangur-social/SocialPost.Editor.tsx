@@ -8,7 +8,13 @@ import {
 import { SocialPostVisuals } from './SocialPost.Visuals';
 import { useSocialPostContext } from './SocialPostContext';
 
-export function SocialPostEditor({ showImagesPanel = true }: { showImagesPanel?: boolean }) {
+export type SocialPostEditorProps = {
+  showImagesPanel?: boolean;
+};
+
+export function SocialPostEditor({
+  showImagesPanel = true,
+}: SocialPostEditorProps): React.JSX.Element {
   const {
     activePost,
     editorState,
@@ -87,3 +93,7 @@ export function SocialPostEditor({ showImagesPanel = true }: { showImagesPanel?:
     </div>
   );
 }
+
+export const renderSocialPostEditor = (props: SocialPostEditorProps): React.JSX.Element => (
+  <SocialPostEditor {...props} />
+);

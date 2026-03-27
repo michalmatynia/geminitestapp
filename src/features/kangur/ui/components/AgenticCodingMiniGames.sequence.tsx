@@ -12,15 +12,15 @@ import {
 import { KANGUR_PANEL_GAP_CLASSNAME, type KangurAccent } from '@/features/kangur/ui/design/tokens';
 import { useKangurCoarsePointer } from '@/features/kangur/ui/hooks/useKangurCoarsePointer';
 
+import { createAgenticCodingMiniGameComponent } from './AgenticCodingMiniGames.factory';
 import type { SequenceGameConfig } from './AgenticCodingMiniGames.types';
 
-export function AgenticSequenceGame({
-  accent,
-  config,
-}: {
+type AgenticSequenceGameProps = {
   accent: KangurAccent;
   config: SequenceGameConfig;
-}): React.JSX.Element {
+};
+
+function useAgenticSequenceGameModel(config: SequenceGameConfig) {
   const isCoarsePointer = useKangurCoarsePointer();
   const [currentIndex, setCurrentIndex] = useState(0);
   const [errorId, setErrorId] = useState<string | null>(null);
@@ -39,6 +39,27 @@ export function AgenticSequenceGame({
     setTimeout(() => setErrorId((current) => (current === id ? null : current)), 600);
   };
 
+  return {
+    completed,
+    currentIndex,
+    errorId,
+    handleStepClick,
+    isCoarsePointer,
+    isComplete,
+  };
+}
+
+function renderAgenticSequenceGame(
+  { accent, config }: AgenticSequenceGameProps,
+  {
+    completed,
+    currentIndex,
+    errorId,
+    handleStepClick,
+    isCoarsePointer,
+    isComplete,
+  }: ReturnType<typeof useAgenticSequenceGameModel>
+): React.JSX.Element {
   return (
     <KangurLessonStack align='start' className='w-full'>
       <KangurLessonVisual
@@ -96,6 +117,12 @@ export function AgenticSequenceGame({
     </KangurLessonStack>
   );
 }
+
+export const AgenticSequenceGame = createAgenticCodingMiniGameComponent({
+  displayName: 'AgenticSequenceGame',
+  render: renderAgenticSequenceGame,
+  useModel: useAgenticSequenceGameModel,
+});
 
 function SequenceGameSvg(): React.JSX.Element {
   return (

@@ -41,7 +41,7 @@ type RuntimeAnalysisTraceActionChipProps = {
   tone: 'sky' | 'rose';
 };
 
-function RuntimeAnalysisCard({
+function renderRuntimeAnalysisCard({
   title,
   children,
   className,
@@ -280,30 +280,35 @@ export function AiPathsRuntimeAnalysis(): React.JSX.Element | null {
       </div>
 
       <div className='grid gap-2 sm:grid-cols-3'>
-        <RuntimeAnalysisCard title='Run Status'>
-          <div className='mt-1 text-sm text-white'>{formatStatusLabel(runtimeRunStatus)}</div>
-        </RuntimeAnalysisCard>
-        <RuntimeAnalysisCard title='Live Nodes'>
-          <div className='mt-1 text-sm text-white'>{runtimeNodeLiveStates.length}</div>
-        </RuntimeAnalysisCard>
-        <RuntimeAnalysisCard title='Storage'>
-          <div className='mt-1 text-sm text-white'>
-            {runtimeAnalyticsEnabled ? (runtimeAnalyticsQuery.data?.storage ?? '—') : 'disabled'}
-          </div>
-        </RuntimeAnalysisCard>
+        {renderRuntimeAnalysisCard({
+          title: 'Run Status',
+          children: <div className='mt-1 text-sm text-white'>{formatStatusLabel(runtimeRunStatus)}</div>,
+        })}
+        {renderRuntimeAnalysisCard({
+          title: 'Live Nodes',
+          children: <div className='mt-1 text-sm text-white'>{runtimeNodeLiveStates.length}</div>,
+        })}
+        {renderRuntimeAnalysisCard({
+          title: 'Storage',
+          children: (
+            <div className='mt-1 text-sm text-white'>
+              {runtimeAnalyticsEnabled ? (runtimeAnalyticsQuery.data?.storage ?? '—') : 'disabled'}
+            </div>
+          ),
+        })}
       </div>
 
       <div className='grid grid-cols-2 gap-2 text-[11px] text-gray-300 sm:grid-cols-4'>
         {(['running', 'queued', 'polling', 'completed', 'failed', 'cached'] as const).map(
           (status) => (
-            <RuntimeAnalysisCard
-              key={status}
-              className='border-border/60 bg-card/60 px-2 py-1'
-              title={formatStatusLabel(status)}
-              titleClassName='text-gray-500'
-            >
-              <div className='text-gray-200'>{runtimeNodeStatusCounts[status] ?? 0}</div>
-            </RuntimeAnalysisCard>
+            <React.Fragment key={status}>
+              {renderRuntimeAnalysisCard({
+                className: 'border-border/60 bg-card/60 px-2 py-1',
+                title: formatStatusLabel(status),
+                titleClassName: 'text-gray-500',
+                children: <div className='text-gray-200'>{runtimeNodeStatusCounts[status] ?? 0}</div>,
+              })}
+            </React.Fragment>
           )
         )}
       </div>
@@ -331,171 +336,195 @@ export function AiPathsRuntimeAnalysis(): React.JSX.Element | null {
       )}
 
       {!runtimeAnalyticsEnabled ? (
-        <RuntimeAnalysisCard
-          title='Runtime Analytics'
-          className='p-3 text-[11px] text-gray-300'
-        >
-          Runtime analytics is disabled in AI Brain. Live runtime state can still appear above, but
-          24h runtime summaries and trace samples are not queried.
-        </RuntimeAnalysisCard>
+        renderRuntimeAnalysisCard({
+          title: 'Runtime Analytics',
+          className: 'p-3 text-[11px] text-gray-300',
+          children: (
+            <>
+              Runtime analytics is disabled in AI Brain. Live runtime state can still appear above,
+              but 24h runtime summaries and trace samples are not queried.
+            </>
+          ),
+        })
       ) : (
         <div className='grid gap-2 sm:grid-cols-4'>
-          <RuntimeAnalysisCard title='Runs (24h)' className='p-2 text-[11px] text-gray-300'>
-            <div className='mt-1 text-sm text-white'>
-              {runtimeAnalyticsQuery.data?.runs.total ?? 0}
-            </div>
-            <RuntimeAnalysisStatLine>
-              Success: {formatPercent(runtimeAnalyticsQuery.data?.runs.successRate ?? 0)}
-            </RuntimeAnalysisStatLine>
-          </RuntimeAnalysisCard>
-          <RuntimeAnalysisCard
-            title='Portable Engine (24h)'
-            className='p-2 text-[11px] text-gray-300'
-          >
-            <div className='mt-1 text-sm text-white'>
-              {portableEngineAnalytics?.source ?? 'unavailable'}
-            </div>
-            <RuntimeAnalysisStatLine className='text-gray-200'>
-              Attempts {portableEngineAnalytics?.totals.attempts ?? 0} · Success{' '}
-              {formatPercent(portableEngineAnalytics?.totals.successRate ?? 0)}
-            </RuntimeAnalysisStatLine>
-            <RuntimeAnalysisStatLine>
-              Failures {portableEngineAnalytics?.totals.failures ?? 0} (R{' '}
-              {portableEngineAnalytics?.failureStageCounts.resolve ?? 0} · V{' '}
-              {portableEngineAnalytics?.failureStageCounts.validation ?? 0} · RT{' '}
-              {portableEngineAnalytics?.failureStageCounts.runtime ?? 0})
-            </RuntimeAnalysisStatLine>
-            {latestPortableEngineFailure ? (
-              <RuntimeAnalysisStatLine className='text-gray-500'>
-                Latest {latestPortableEngineFailure.runner} {latestPortableEngineFailure.stage} ·{' '}
-                {latestPortableEngineFailure.surface}
-              </RuntimeAnalysisStatLine>
-            ) : null}
-          </RuntimeAnalysisCard>
-          <RuntimeAnalysisCard title='Run Runtime (24h)' className='text-[11px] text-gray-300'>
-            <RuntimeAnalysisStatLine className='text-gray-200'>
-              Avg {formatDurationMs(runtimeAnalyticsQuery.data?.runs.avgDurationMs)}
-            </RuntimeAnalysisStatLine>
-            <RuntimeAnalysisStatLine>
-              p95 {formatDurationMs(runtimeAnalyticsQuery.data?.runs.p95DurationMs)}
-            </RuntimeAnalysisStatLine>
-            <div className='mt-2 text-[10px] uppercase text-gray-500'>Node spans</div>
-            <RuntimeAnalysisStatLine className='text-gray-200'>
-              Runs sampled {runtimeAnalyticsQuery.data?.traces.sampledRuns ?? 0} · spans{' '}
-              {runtimeAnalyticsQuery.data?.traces.sampledSpans ?? 0}
-            </RuntimeAnalysisStatLine>
-            <RuntimeAnalysisStatLine>
-              Span avg {formatDurationMs(runtimeAnalyticsQuery.data?.traces.avgDurationMs)} · p95{' '}
-              {formatDurationMs(runtimeAnalyticsQuery.data?.traces.p95DurationMs)}
-            </RuntimeAnalysisStatLine>
-            {runtimeAnalyticsQuery.data?.traces.slowestSpan ? (
-              <RuntimeAnalysisStatLine className='text-gray-500'>
-                Slowest {runtimeAnalyticsQuery.data.traces.slowestSpan.nodeId} (
-                {runtimeAnalyticsQuery.data.traces.slowestSpan.nodeType}) ·{' '}
-                {formatDurationMs(runtimeAnalyticsQuery.data.traces.slowestSpan.durationMs)}
-              </RuntimeAnalysisStatLine>
-            ) : null}
-            {(runtimeAnalyticsQuery.data?.traces.topSlowNodes.length ?? 0) > 0 ? (
-              <RuntimeAnalysisStatLine className='text-gray-500'>
-                <div>Top slow:</div>
-                <div className='mt-1 flex flex-wrap gap-1'>
-                  {runtimeAnalyticsQuery.data?.traces.topSlowNodes
-                    .slice(0, 2)
-                    .map((entry: AiPathRuntimeTraceSlowNode) => (
-                      <RuntimeAnalysisTraceActionChip
-                        key={`slow-${entry.nodeId}-${entry.nodeType}`}
-                        tone='sky'
-                        onClick={() => {
-                          void handleInspectTraceNode(entry.nodeId, 'all');
-                        }}
-                        title='Open latest run detail for this node'
-                      >
-                        {entry.nodeId} ({formatDurationMs(entry.avgDurationMs)} avg)
-                      </RuntimeAnalysisTraceActionChip>
-                    ))}
+          {renderRuntimeAnalysisCard({
+            title: 'Runs (24h)',
+            className: 'p-2 text-[11px] text-gray-300',
+            children: (
+              <>
+                <div className='mt-1 text-sm text-white'>
+                  {runtimeAnalyticsQuery.data?.runs.total ?? 0}
                 </div>
-              </RuntimeAnalysisStatLine>
-            ) : null}
-            {(runtimeAnalyticsQuery.data?.traces.topFailedNodes.length ?? 0) > 0 ? (
-              <RuntimeAnalysisStatLine className='text-gray-500'>
-                <div>Top failed:</div>
-                <div className='mt-1 flex flex-wrap gap-1'>
-                  {runtimeAnalyticsQuery.data?.traces.topFailedNodes
-                    .slice(0, 2)
-                    .map((entry: AiPathRuntimeTraceFailedNode) => (
-                      <RuntimeAnalysisTraceActionChip
-                        key={`failed-${entry.nodeId}-${entry.nodeType}`}
-                        tone='rose'
-                        onClick={() => {
-                          void handleInspectTraceNode(entry.nodeId, 'failed');
-                        }}
-                        title='Open latest failed run detail for this node'
-                      >
-                        {entry.nodeId} ({entry.failedCount}/{entry.spanCount})
-                      </RuntimeAnalysisTraceActionChip>
-                    ))}
+                <RuntimeAnalysisStatLine>
+                  Success: {formatPercent(runtimeAnalyticsQuery.data?.runs.successRate ?? 0)}
+                </RuntimeAnalysisStatLine>
+              </>
+            ),
+          })}
+          {renderRuntimeAnalysisCard({
+            title: 'Portable Engine (24h)',
+            className: 'p-2 text-[11px] text-gray-300',
+            children: (
+              <>
+                <div className='mt-1 text-sm text-white'>
+                  {portableEngineAnalytics?.source ?? 'unavailable'}
                 </div>
-              </RuntimeAnalysisStatLine>
-            ) : null}
-          </RuntimeAnalysisCard>
-          <RuntimeAnalysisCard title='Kernel coverage (24h)' className='text-[11px] text-gray-300'>
-            <RuntimeAnalysisStatLine className='text-gray-200'>
-              Coverage {runtimeKernelRunsWithParity}/{runtimeKernelSampledRuns} (
-              {formatPercent(runtimeKernelRunsCoverageRate)})
-            </RuntimeAnalysisStatLine>
-            <RuntimeAnalysisStatLine>
-              History entries {runtimeKernelSampledHistoryEntries}
-            </RuntimeAnalysisStatLine>
-            <div className='mt-2 text-gray-200'>
-              v3 {formatPercent(runtimeKernelV3Rate)} · compatibility{' '}
-              {formatPercent(runtimeKernelCompatibilityRate)} · unknown{' '}
-              {formatPercent(runtimeKernelUnknownRate)}
-            </div>
-            <div className='mt-1 flex h-2 overflow-hidden rounded bg-card/80 ring-1 ring-border/30'>
-              <div
-                className='bg-emerald-400/70'
-                style={{ width: `${Math.max(0, Math.min(100, runtimeKernelV3Rate))}%` }}
-                aria-hidden
-              />
-              <div
-                className='bg-amber-400/70'
-                style={{ width: `${Math.max(0, Math.min(100, runtimeKernelCompatibilityRate))}%` }}
-                aria-hidden
-              />
-              <div
-                className='bg-slate-500/70'
-                style={{ width: `${Math.max(0, Math.min(100, runtimeKernelUnknownRate))}%` }}
-                aria-hidden
-              />
-            </div>
-            {runtimeKernelCompatibilityEntries > 0 ? (
-              <div className='mt-2 text-[10px] text-amber-200/90'>
-                Compatibility traces are historical rollout evidence only. Live execution is strict
-                native.
-              </div>
-            ) : null}
-            <div className='mt-2 text-gray-400'>
-              Resolution O/R/M/U: {runtimeKernelResolutionOverride}/
-              {runtimeKernelResolutionRegistry}/{runtimeKernelResolutionMissing}/
-              {runtimeKernelResolutionUnknown}
-            </div>
-            {runtimeKernelCodeObjectIds.length > 0 ? (
-              <div className='mt-2 text-gray-500'>
-                <div>Top code objects:</div>
-                <div className='mt-1 flex flex-wrap gap-1'>
-                  {runtimeKernelCodeObjectIds.slice(0, 3).map((codeObjectId: string) => (
-                    <span
-                      key={codeObjectId}
-                      className='rounded border border-emerald-500/40 bg-emerald-500/10 px-1.5 py-0.5 text-[10px] text-emerald-100'
-                      title={codeObjectId}
-                    >
-                      {codeObjectId}
-                    </span>
-                  ))}
+                <RuntimeAnalysisStatLine className='text-gray-200'>
+                  Attempts {portableEngineAnalytics?.totals.attempts ?? 0} · Success{' '}
+                  {formatPercent(portableEngineAnalytics?.totals.successRate ?? 0)}
+                </RuntimeAnalysisStatLine>
+                <RuntimeAnalysisStatLine>
+                  Failures {portableEngineAnalytics?.totals.failures ?? 0} (R{' '}
+                  {portableEngineAnalytics?.failureStageCounts.resolve ?? 0} · V{' '}
+                  {portableEngineAnalytics?.failureStageCounts.validation ?? 0} · RT{' '}
+                  {portableEngineAnalytics?.failureStageCounts.runtime ?? 0})
+                </RuntimeAnalysisStatLine>
+                {latestPortableEngineFailure ? (
+                  <RuntimeAnalysisStatLine className='text-gray-500'>
+                    Latest {latestPortableEngineFailure.runner} {latestPortableEngineFailure.stage}{' '}
+                    · {latestPortableEngineFailure.surface}
+                  </RuntimeAnalysisStatLine>
+                ) : null}
+              </>
+            ),
+          })}
+          {renderRuntimeAnalysisCard({
+            title: 'Run Runtime (24h)',
+            className: 'text-[11px] text-gray-300',
+            children: (
+              <>
+                <RuntimeAnalysisStatLine className='text-gray-200'>
+                  Avg {formatDurationMs(runtimeAnalyticsQuery.data?.runs.avgDurationMs)}
+                </RuntimeAnalysisStatLine>
+                <RuntimeAnalysisStatLine>
+                  p95 {formatDurationMs(runtimeAnalyticsQuery.data?.runs.p95DurationMs)}
+                </RuntimeAnalysisStatLine>
+                <div className='mt-2 text-[10px] uppercase text-gray-500'>Node spans</div>
+                <RuntimeAnalysisStatLine className='text-gray-200'>
+                  Runs sampled {runtimeAnalyticsQuery.data?.traces.sampledRuns ?? 0} · spans{' '}
+                  {runtimeAnalyticsQuery.data?.traces.sampledSpans ?? 0}
+                </RuntimeAnalysisStatLine>
+                <RuntimeAnalysisStatLine>
+                  Span avg {formatDurationMs(runtimeAnalyticsQuery.data?.traces.avgDurationMs)} ·
+                  p95 {formatDurationMs(runtimeAnalyticsQuery.data?.traces.p95DurationMs)}
+                </RuntimeAnalysisStatLine>
+                {runtimeAnalyticsQuery.data?.traces.slowestSpan ? (
+                  <RuntimeAnalysisStatLine className='text-gray-500'>
+                    Slowest {runtimeAnalyticsQuery.data.traces.slowestSpan.nodeId} (
+                    {runtimeAnalyticsQuery.data.traces.slowestSpan.nodeType}) ·{' '}
+                    {formatDurationMs(runtimeAnalyticsQuery.data.traces.slowestSpan.durationMs)}
+                  </RuntimeAnalysisStatLine>
+                ) : null}
+                {(runtimeAnalyticsQuery.data?.traces.topSlowNodes.length ?? 0) > 0 ? (
+                  <RuntimeAnalysisStatLine className='text-gray-500'>
+                    <div>Top slow:</div>
+                    <div className='mt-1 flex flex-wrap gap-1'>
+                      {runtimeAnalyticsQuery.data?.traces.topSlowNodes
+                        .slice(0, 2)
+                        .map((entry: AiPathRuntimeTraceSlowNode) => (
+                          <RuntimeAnalysisTraceActionChip
+                            key={`slow-${entry.nodeId}-${entry.nodeType}`}
+                            tone='sky'
+                            onClick={() => {
+                              void handleInspectTraceNode(entry.nodeId, 'all');
+                            }}
+                            title='Open latest run detail for this node'
+                          >
+                            {entry.nodeId} ({formatDurationMs(entry.avgDurationMs)} avg)
+                          </RuntimeAnalysisTraceActionChip>
+                        ))}
+                    </div>
+                  </RuntimeAnalysisStatLine>
+                ) : null}
+                {(runtimeAnalyticsQuery.data?.traces.topFailedNodes.length ?? 0) > 0 ? (
+                  <RuntimeAnalysisStatLine className='text-gray-500'>
+                    <div>Top failed:</div>
+                    <div className='mt-1 flex flex-wrap gap-1'>
+                      {runtimeAnalyticsQuery.data?.traces.topFailedNodes
+                        .slice(0, 2)
+                        .map((entry: AiPathRuntimeTraceFailedNode) => (
+                          <RuntimeAnalysisTraceActionChip
+                            key={`failed-${entry.nodeId}-${entry.nodeType}`}
+                            tone='rose'
+                            onClick={() => {
+                              void handleInspectTraceNode(entry.nodeId, 'failed');
+                            }}
+                            title='Open latest failed run detail for this node'
+                          >
+                            {entry.nodeId} ({entry.failedCount}/{entry.spanCount})
+                          </RuntimeAnalysisTraceActionChip>
+                        ))}
+                    </div>
+                  </RuntimeAnalysisStatLine>
+                ) : null}
+              </>
+            ),
+          })}
+          {renderRuntimeAnalysisCard({
+            title: 'Kernel coverage (24h)',
+            className: 'text-[11px] text-gray-300',
+            children: (
+              <>
+                <RuntimeAnalysisStatLine className='text-gray-200'>
+                  Coverage {runtimeKernelRunsWithParity}/{runtimeKernelSampledRuns} (
+                  {formatPercent(runtimeKernelRunsCoverageRate)})
+                </RuntimeAnalysisStatLine>
+                <RuntimeAnalysisStatLine>
+                  History entries {runtimeKernelSampledHistoryEntries}
+                </RuntimeAnalysisStatLine>
+                <div className='mt-2 text-gray-200'>
+                  v3 {formatPercent(runtimeKernelV3Rate)} · compatibility{' '}
+                  {formatPercent(runtimeKernelCompatibilityRate)} · unknown{' '}
+                  {formatPercent(runtimeKernelUnknownRate)}
                 </div>
-              </div>
-            ) : null}
-          </RuntimeAnalysisCard>
+                <div className='mt-1 flex h-2 overflow-hidden rounded bg-card/80 ring-1 ring-border/30'>
+                  <div
+                    className='bg-emerald-400/70'
+                    style={{ width: `${Math.max(0, Math.min(100, runtimeKernelV3Rate))}%` }}
+                    aria-hidden
+                  />
+                  <div
+                    className='bg-amber-400/70'
+                    style={{ width: `${Math.max(0, Math.min(100, runtimeKernelCompatibilityRate))}%` }}
+                    aria-hidden
+                  />
+                  <div
+                    className='bg-slate-500/70'
+                    style={{ width: `${Math.max(0, Math.min(100, runtimeKernelUnknownRate))}%` }}
+                    aria-hidden
+                  />
+                </div>
+                {runtimeKernelCompatibilityEntries > 0 ? (
+                  <div className='mt-2 text-[10px] text-amber-200/90'>
+                    Compatibility traces are historical rollout evidence only. Live execution is
+                    strict native.
+                  </div>
+                ) : null}
+                <div className='mt-2 text-gray-400'>
+                  Resolution O/R/M/U: {runtimeKernelResolutionOverride}/
+                  {runtimeKernelResolutionRegistry}/{runtimeKernelResolutionMissing}/
+                  {runtimeKernelResolutionUnknown}
+                </div>
+                {runtimeKernelCodeObjectIds.length > 0 ? (
+                  <div className='mt-2 text-gray-500'>
+                    <div>Top code objects:</div>
+                    <div className='mt-1 flex flex-wrap gap-1'>
+                      {runtimeKernelCodeObjectIds.slice(0, 3).map((codeObjectId: string) => (
+                        <span
+                          key={codeObjectId}
+                          className='rounded border border-emerald-500/40 bg-emerald-500/10 px-1.5 py-0.5 text-[10px] text-emerald-100'
+                          title={codeObjectId}
+                        >
+                          {codeObjectId}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                ) : null}
+              </>
+            ),
+          })}
         </div>
       )}
     </Card>

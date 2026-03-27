@@ -84,7 +84,7 @@ vi.mock('@/features/kangur/ui/components/CalendarInteractiveStageGame', () => ({
   ),
 }));
 vi.mock('@/features/kangur/ui/components/ClockTrainingStageGame', () => ({
-  default: ({
+  renderClockTrainingStageGame: ({
     onFinish,
     clockSection,
   }: {

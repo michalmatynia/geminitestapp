@@ -63,6 +63,23 @@ const { kangurAdapterTestDouble, sessionMock, usePathnameMock, useSearchParamsMo
         }[pageName] ?? pageName
       );
     },
+    resolveKangurPageKeyFromSlug: (slug: string | null | undefined): string | null => {
+      if (!slug) {
+        return 'Game';
+      }
+
+      const normalizedSlug = slug.trim().toLowerCase();
+      const entry = Object.entries({
+        Game: 'game',
+        GamesLibrary: 'games',
+        LearnerProfile: 'profile',
+        Lessons: 'lessons',
+        Tests: 'tests',
+        ParentDashboard: 'parent-dashboard',
+      }).find(([, mappedSlug]) => mappedSlug === normalizedSlug);
+
+      return entry?.[0] ?? null;
+    },
     readKangurUrlParam: (
       searchParams: URLSearchParams,
       key: string,
@@ -89,7 +106,7 @@ vi.mock('next/navigation', () => ({
   useSearchParams: useSearchParamsMock,
 }));
 
-vi.mock('@/features/kangur/ui/hooks/useOptionalNextAuthSession', () => ({
+vi.mock('@/shared/lib/auth/useOptionalNextAuthSession', () => ({
   useOptionalNextAuthSession: () => sessionMock(),
 }));
 

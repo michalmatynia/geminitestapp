@@ -1440,7 +1440,8 @@ describe('KangurPrimaryNavigation', () => {
     render(
       <KangurPrimaryNavigation
         basePath='/kangur'
-        currentPage='GamesLibrary'
+        currentPage='Game'
+        forceLanguageSwitcherFallbackPath
         isAuthenticated
         onLogout={vi.fn()}
       />

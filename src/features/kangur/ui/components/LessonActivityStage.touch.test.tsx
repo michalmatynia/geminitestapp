@@ -31,6 +31,9 @@ describe('LessonActivityStage touch mode', () => {
       'touch-manipulation',
       'select-none'
     );
-    expect(screen.getByTestId('lesson-activity-back-button')).toHaveClass('min-h-11', 'min-w-11');
+    expect(screen.getByTestId('lesson-activity-back-button')).toHaveClass(
+      '[@media(pointer:coarse)]:min-h-11',
+      '[@media(pointer:coarse)]:min-w-11'
+    );
   });
 });

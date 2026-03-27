@@ -93,12 +93,12 @@ describe('KangurLessonNavigationWidget', () => {
       ...splitClasses(LESSONS_SELECTOR_NAV_BUTTON_ROW_CLASSNAME)
     );
     expect(screen.getByRole('button', { name: /Poprzednia lekcja/i })).toHaveClass(
-      'min-h-11',
-      'touch-manipulation'
+      'touch-manipulation',
+      '[@media(pointer:coarse)]:min-h-11'
     );
     expect(screen.getByRole('button', { name: /Następna lekcja/i })).toHaveClass(
-      'min-h-11',
-      'touch-manipulation'
+      'touch-manipulation',
+      '[@media(pointer:coarse)]:min-h-11'
     );
   });
 

@@ -1,6 +1,6 @@
 'use client';
 
-import { startTransition, useCallback, useEffect, useMemo, useState } from 'react';
+import { Fragment, startTransition, useCallback, useEffect, useMemo, useState } from 'react';
 import { useReducedMotion } from 'framer-motion';
 import { useTranslations } from 'next-intl';
 
@@ -21,8 +21,8 @@ import {
 import {
   ART_SHAPES_ROTATION_GAME_STYLES,
   RotationBoard,
-  RotationOptionCard,
   getRotationTileAccent,
+  renderRotationOptionCard,
 } from './ArtShapesRotationGapGame.visuals';
 
 const ROUND_ADVANCE_DELAY_MS = 900;
@@ -287,24 +287,25 @@ export function ArtShapesRotationGapGame({
                         : null;
 
                 return (
-                  <RotationOptionCard
-                    key={option.id}
-                    accent={accent}
-                    ariaLabel={ariaLabel}
-                    animated={shouldAnimateTiles}
-                    choiceLabel={String.fromCharCode(65 + optionIndex)}
-                    emphasis={emphasis}
-                    glyphLabel={glyphLabel}
-                    locked={isSelectionLocked}
-                    onSelectOption={handleSelect}
-                    optionId={option.id}
-                    resultLabel={resultLabel}
-                    resultStatus={resultStatus}
-                    state={state}
-                    tempoLabel={tempoLabel}
-                    tile={option}
-                    tileLabel={tileLabel}
-                  />
+                  <Fragment key={option.id}>
+                    {renderRotationOptionCard({
+                      accent,
+                      ariaLabel,
+                      animated: shouldAnimateTiles,
+                      choiceLabel: String.fromCharCode(65 + optionIndex),
+                      emphasis,
+                      glyphLabel,
+                      locked: isSelectionLocked,
+                      onSelectOption: handleSelect,
+                      optionId: option.id,
+                      resultLabel,
+                      resultStatus,
+                      state,
+                      tempoLabel,
+                      tile: option,
+                      tileLabel,
+                    })}
+                  </Fragment>
                 );
               }
             )}

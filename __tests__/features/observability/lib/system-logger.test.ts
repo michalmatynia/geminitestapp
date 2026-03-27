@@ -3,6 +3,8 @@
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
+const reportObservabilityInternalErrorMock = vi.hoisted(() => vi.fn());
+
 vi.unmock('@/shared/lib/observability/system-logger');
 
 import { isServerLoggingEnabled } from '@/shared/lib/observability/logging-controls-server';
@@ -49,9 +51,14 @@ vi.mock('@/shared/lib/observability/central-log-dead-letter-store', () => ({
   saveCentralLogDeadLetters: vi.fn().mockResolvedValue(true),
 }));
 
+vi.mock('@/shared/utils/observability/internal-observability-fallback', () => ({
+  reportObservabilityInternalError: reportObservabilityInternalErrorMock,
+}));
+
 describe('system-logger', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    reportObservabilityInternalErrorMock.mockReset();
     vi.mocked(isServerLoggingEnabled).mockResolvedValue(true);
     vi.spyOn(console, 'log').mockImplementation(() => {});
     vi.spyOn(console, 'error').mockImplementation(() => {});

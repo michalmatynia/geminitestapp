@@ -3,7 +3,7 @@
 import { useId } from 'react';
 
 import {
-  AgenticAssignmentGame,
+  createAgenticAssignmentGameComponent,
   type AgenticAssignmentGameItem,
   type AgenticAssignmentGameOption,
 } from '@/features/kangur/ui/components/AgenticAssignmentGame';
@@ -11,7 +11,6 @@ import {
   renderSoftAtmosphereGradients,
   renderSoftAtmosphereOvals,
 } from '@/features/kangur/ui/components/animations/svgAtmosphere';
-import type { KangurMiniGameFinishActionProps } from '@/features/kangur/ui/types';
 
 const SURFACE_OPTIONS: AgenticAssignmentGameOption<string>[] = [
   {
@@ -191,74 +190,68 @@ export const SurfaceOrbitVisual = (): JSX.Element => {
   );
 };
 
-export default function AgenticSurfaceMatchGame({
-  onFinish,
-}: KangurMiniGameFinishActionProps): JSX.Element {
-  return (
-    <AgenticAssignmentGame
-      copy={{
-        statusLabel: 'Surface Match',
-        heading: 'Pick the Right Surface',
-        lead:
-          'Each scenario belongs to a specific Codex surface. Select a scenario, then click the surface that fits best.',
-        instructions: [
-          'Click a scenario card to focus it.',
-          'Choose the surface that gives the most context.',
-          'Check your routing when you are done.',
-        ],
-        leftPanelTitle: 'Scenarios',
-        leftPanelCaption: {
-          coarsePointer: 'Tap a scenario to focus it.',
-          finePointer: 'Select, then match.',
-        },
-        leftPanelCountLabel: (assignedCount, total) => `${assignedCount}/${total} matched`,
-        leftPanelGroupLabel: 'Select a scenario to match',
-        leftPanelTouchHint: {
-          idle: 'Tap a scenario card, then tap a surface.',
-          selected: (itemText) => `Selected scenario: ${itemText} Tap a surface.`,
-          testId: 'agentic-surface-touch-hint',
-        },
-        rightPanelTitle: 'Surfaces',
-        rightPanelCaption: {
-          coarsePointer: 'Tap to match the selected scenario.',
-          finePointer: 'Pick the best match.',
-        },
-        rightPanelGroupLabel: 'Choose a surface',
-        successMessage: 'Perfect routing. You matched every scenario.',
-        failureMessage: (score, total) =>
-          `You matched ${score}/${total}. Review the mismatches and try again.`,
-      }}
-      items={SCENARIOS}
-      onFinish={onFinish}
-      options={SURFACE_OPTIONS}
-      theme={{
-        accent: 'emerald',
-        heroClassName:
-          'border border-emerald-200/80 bg-gradient-to-br from-emerald-50 via-white to-sky-50',
-        heroTopGlowClassName: '-right-14 top-2 bg-emerald-200/40',
-        heroBottomGlowClassName: '-left-10 bottom-4 bg-sky-200/40',
-        headingGradientClass: 'from-emerald-500 via-teal-500 to-sky-500',
-        instructionListClassName: 'space-y-2 text-sm text-emerald-950',
-        leftPanelGlowClassName:
-          '[background:radial-gradient(circle_at_top,_rgba(16,185,129,0.25),_transparent_55%)]',
-        leftPanelTitleClassName: 'text-emerald-950',
-        leftPanelCaptionClassName: 'text-emerald-800',
-        leftTouchHintClassName: 'border-emerald-200/80 text-emerald-950',
-        leftItemFocusRingClassName: 'focus-visible:ring-emerald-400/70',
-        leftItemActiveClassName: 'border-emerald-400 bg-emerald-50',
-        leftItemInactiveClassName: 'border-emerald-100/80',
-        leftItemCorrectClassName: 'border-emerald-400 bg-emerald-50',
-        leftItemWrongClassName: 'border-amber-300 bg-amber-50',
-        leftAssignedBadgeClassName:
-          'border-emerald-200/70 bg-emerald-100 text-emerald-700',
-        rightPanelGlowClassName:
-          '[background:radial-gradient(circle_at_top,_rgba(14,165,233,0.25),_transparent_60%)]',
-        rightPanelTitleClassName: 'text-emerald-950',
-        rightPanelCaptionClassName: 'text-emerald-800',
-        rightOptionFocusRingClassName: 'focus-visible:ring-emerald-400/70',
-        rightOptionDescriptionClassName: 'text-emerald-900',
-      }}
-      visual={<SurfaceOrbitVisual />}
-    />
-  );
-}
+export default createAgenticAssignmentGameComponent({
+  copy: {
+    statusLabel: 'Surface Match',
+    heading: 'Pick the Right Surface',
+    lead:
+      'Each scenario belongs to a specific Codex surface. Select a scenario, then click the surface that fits best.',
+    instructions: [
+      'Click a scenario card to focus it.',
+      'Choose the surface that gives the most context.',
+      'Check your routing when you are done.',
+    ],
+    leftPanelTitle: 'Scenarios',
+    leftPanelCaption: {
+      coarsePointer: 'Tap a scenario to focus it.',
+      finePointer: 'Select, then match.',
+    },
+    leftPanelCountLabel: (assignedCount, total) => `${assignedCount}/${total} matched`,
+    leftPanelGroupLabel: 'Select a scenario to match',
+    leftPanelTouchHint: {
+      idle: 'Tap a scenario card, then tap a surface.',
+      selected: (itemText) => `Selected scenario: ${itemText} Tap a surface.`,
+      testId: 'agentic-surface-touch-hint',
+    },
+    rightPanelTitle: 'Surfaces',
+    rightPanelCaption: {
+      coarsePointer: 'Tap to match the selected scenario.',
+      finePointer: 'Pick the best match.',
+    },
+    rightPanelGroupLabel: 'Choose a surface',
+    successMessage: 'Perfect routing. You matched every scenario.',
+    failureMessage: (score, total) =>
+      `You matched ${score}/${total}. Review the mismatches and try again.`,
+  },
+  items: SCENARIOS,
+  options: SURFACE_OPTIONS,
+  theme: {
+    accent: 'emerald',
+    heroClassName:
+      'border border-emerald-200/80 bg-gradient-to-br from-emerald-50 via-white to-sky-50',
+    heroTopGlowClassName: '-right-14 top-2 bg-emerald-200/40',
+    heroBottomGlowClassName: '-left-10 bottom-4 bg-sky-200/40',
+    headingGradientClass: 'from-emerald-500 via-teal-500 to-sky-500',
+    instructionListClassName: 'space-y-2 text-sm text-emerald-950',
+    leftPanelGlowClassName:
+      '[background:radial-gradient(circle_at_top,_rgba(16,185,129,0.25),_transparent_55%)]',
+    leftPanelTitleClassName: 'text-emerald-950',
+    leftPanelCaptionClassName: 'text-emerald-800',
+    leftTouchHintClassName: 'border-emerald-200/80 text-emerald-950',
+    leftItemFocusRingClassName: 'focus-visible:ring-emerald-400/70',
+    leftItemActiveClassName: 'border-emerald-400 bg-emerald-50',
+    leftItemInactiveClassName: 'border-emerald-100/80',
+    leftItemCorrectClassName: 'border-emerald-400 bg-emerald-50',
+    leftItemWrongClassName: 'border-amber-300 bg-amber-50',
+    leftAssignedBadgeClassName:
+      'border-emerald-200/70 bg-emerald-100 text-emerald-700',
+    rightPanelGlowClassName:
+      '[background:radial-gradient(circle_at_top,_rgba(14,165,233,0.25),_transparent_60%)]',
+    rightPanelTitleClassName: 'text-emerald-950',
+    rightPanelCaptionClassName: 'text-emerald-800',
+    rightOptionFocusRingClassName: 'focus-visible:ring-emerald-400/70',
+    rightOptionDescriptionClassName: 'text-emerald-900',
+  },
+  visual: <SurfaceOrbitVisual />,
+  displayName: 'AgenticSurfaceMatchGame',
+});

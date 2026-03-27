@@ -22,7 +22,7 @@ import {
 } from '@/features/kangur/ui/components/KangurIllustrations';
 import { KangurAnswerChoiceBadge } from '@/features/kangur/ui/components/KangurAnswerChoiceBadge';
 import KangurAnswerChoiceCard from '@/features/kangur/ui/components/KangurAnswerChoiceCard';
-import { KangurLessonNavigationIconButton } from '@/features/kangur/ui/components/KangurLessonNavigationIconButton';
+import { renderKangurLessonNavigationIconButton } from '@/features/kangur/ui/components/KangurLessonNavigationIconButton';
 import { KangurLessonNarrator } from '@/features/kangur/ui/components/KangurLessonNarrator';
 import {
   KangurPracticeGameSummary,
@@ -414,13 +414,13 @@ function ExamSummary({ questions, answers }: ExamSummaryProps): React.JSX.Elemen
               role='group'
               aria-label='Nawigacja podglądu pytań'
             >
-              <KangurLessonNavigationIconButton
-                onClick={handleExitReview}
-                className={compactActionClassName}
-                aria-label='Podsumowanie'
-                icon={ChevronLeft}
-                title='Podsumowanie'
-              />
+              {renderKangurLessonNavigationIconButton({
+                onClick: handleExitReview,
+                className: compactActionClassName,
+                'aria-label': 'Podsumowanie',
+                icon: ChevronLeft,
+                title: 'Podsumowanie',
+              })}
             </div>
             <span className='break-words text-center text-xs font-bold [color:var(--kangur-page-muted-text)]'>
               {reviewing + 1}/{reviewQuestionCount}

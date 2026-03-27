@@ -18,7 +18,10 @@ import AlphabetLiteracyStageGame from '@/features/kangur/ui/components/AlphabetL
 import ColorHarmonyStageGame from '@/features/kangur/ui/components/ColorHarmonyStageGame';
 import { ArtShapesRotationGapGame } from '@/features/kangur/ui/components/ArtShapesRotationGapGame';
 import CalendarInteractiveStageGame from '@/features/kangur/ui/components/CalendarInteractiveStageGame';
-import ClockTrainingStageGame from '@/features/kangur/ui/components/ClockTrainingStageGame';
+import {
+  renderClockTrainingStageGame,
+  type ClockTrainingStageGameProps,
+} from '@/features/kangur/ui/components/ClockTrainingStageGame';
 import DivisionGroupsGame from '@/features/kangur/ui/components/DivisionGroupsGame';
 import EnglishSubjectVerbAgreementGame from '@/features/kangur/ui/components/EnglishSubjectVerbAgreementGame';
 import EnglishAdjectivesSceneGame from '@/features/kangur/ui/components/EnglishAdjectivesSceneGame';
@@ -63,7 +66,8 @@ const RUNTIME_COMPONENTS: Record<
   color_harmony_stage_game: ColorHarmonyStageGame,
   art_shapes_rotation_gap_game: ArtShapesRotationGapGame,
   calendar_interactive_stage_game: CalendarInteractiveStageGame,
-  clock_training_stage_game: ClockTrainingStageGame,
+  clock_training_stage_game: ((props) =>
+    renderClockTrainingStageGame(props as ClockTrainingStageGameProps)) as ComponentType<LessonStageRuntimeComponentProps>,
   division_groups_game: DivisionGroupsGame as ComponentType<LessonStageRuntimeComponentProps>,
   english_subject_verb_agreement_game: EnglishSubjectVerbAgreementGame,
   english_adjectives_scene_game: EnglishAdjectivesSceneGame,

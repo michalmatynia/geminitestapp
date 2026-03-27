@@ -21,7 +21,7 @@ type ClusterPresetFieldProps = {
 
 const clusterPresetFieldLabelClassName = 'text-[10px] uppercase text-gray-500';
 
-function ClusterPresetField({
+function renderClusterPresetField({
   htmlFor,
   label,
   children,
@@ -87,7 +87,10 @@ export function ClusterPresetsPanel(): React.JSX.Element {
           </div>
         </div>
         <div className='space-y-3 text-xs text-gray-300'>
-          <ClusterPresetField htmlFor={nameFieldId} label='Name'>
+          {renderClusterPresetField({
+            htmlFor: nameFieldId,
+            label: 'Name',
+            children: (
             <Input
               id={nameFieldId}
               className='mt-2 w-full rounded-md border border-border bg-card/70 px-3 py-2 text-xs text-white'
@@ -95,9 +98,15 @@ export function ClusterPresetsPanel(): React.JSX.Element {
               onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
                 updatePresetDraftField('name', event.target.value)
               }
-             aria-label={nameFieldId} title={nameFieldId}/>
-          </ClusterPresetField>
-          <ClusterPresetField htmlFor={descriptionFieldId} label='Description'>
+              aria-label={nameFieldId}
+              title={nameFieldId}
+            />
+            ),
+          })}
+          {renderClusterPresetField({
+            htmlFor: descriptionFieldId,
+            label: 'Description',
+            children: (
             <Textarea
               id={descriptionFieldId}
               className='mt-2 min-h-[64px] w-full rounded-md border border-border bg-card/70 text-xs text-white'
@@ -105,12 +114,15 @@ export function ClusterPresetsPanel(): React.JSX.Element {
               onChange={(event: React.ChangeEvent<HTMLTextAreaElement>) =>
                 updatePresetDraftField('description', event.target.value)
               }
-             aria-label={descriptionFieldId} title={descriptionFieldId}/>
-          </ClusterPresetField>
-          <ClusterPresetField
-            htmlFor={bundlePortsFieldId}
-            label='Bundle Ports (one per line)'
-          >
+              aria-label={descriptionFieldId}
+              title={descriptionFieldId}
+            />
+            ),
+          })}
+          {renderClusterPresetField({
+            htmlFor: bundlePortsFieldId,
+            label: 'Bundle Ports (one per line)',
+            children: (
             <Textarea
               id={bundlePortsFieldId}
               className='mt-2 min-h-[90px] w-full rounded-md border border-border bg-card/70 text-xs text-white'
@@ -118,9 +130,15 @@ export function ClusterPresetsPanel(): React.JSX.Element {
               onChange={(event: React.ChangeEvent<HTMLTextAreaElement>) =>
                 updatePresetDraftField('bundlePorts', event.target.value)
               }
-             aria-label={bundlePortsFieldId} title={bundlePortsFieldId}/>
-          </ClusterPresetField>
-          <ClusterPresetField htmlFor={templateFieldId} label='Template'>
+              aria-label={bundlePortsFieldId}
+              title={bundlePortsFieldId}
+            />
+            ),
+          })}
+          {renderClusterPresetField({
+            htmlFor: templateFieldId,
+            label: 'Template',
+            children: (
             <Textarea
               id={templateFieldId}
               className='mt-2 min-h-[90px] w-full rounded-md border border-border bg-card/70 text-xs text-white'
@@ -128,8 +146,11 @@ export function ClusterPresetsPanel(): React.JSX.Element {
               onChange={(event: React.ChangeEvent<HTMLTextAreaElement>) =>
                 updatePresetDraftField('template', event.target.value)
               }
-             aria-label={templateFieldId} title={templateFieldId}/>
-          </ClusterPresetField>
+              aria-label={templateFieldId}
+              title={templateFieldId}
+            />
+            ),
+          })}
           <Button
             className='w-full rounded-md border border-emerald-500/40 text-xs text-emerald-200 hover:bg-emerald-500/10'
             type='button'

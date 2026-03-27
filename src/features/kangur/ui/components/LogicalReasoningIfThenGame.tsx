@@ -13,7 +13,7 @@ import {
   KangurInfoCard,
   KangurStatusChip,
 } from '@/features/kangur/ui/design/primitives';
-import { KangurCheckButton } from '@/features/kangur/ui/components/KangurCheckButton';
+import { getKangurCheckButtonClassName } from '@/features/kangur/ui/components/KangurCheckButton';
 import {
   KANGUR_PANEL_GAP_CLASSNAME,
   KANGUR_STACK_TIGHT_CLASSNAME,
@@ -621,15 +621,18 @@ export default function LogicalReasoningIfThenGame({
         </div>
 
         <div className='flex flex-wrap items-center kangur-panel-gap'>
-          <KangurCheckButton
+          <KangurButton
             disabled={!allPlaced || checked}
             onClick={evaluate}
             size='sm'
             variant='primary'
-            feedbackTone={attempted ? (score === total ? 'success' : 'error') : null}
+            className={getKangurCheckButtonClassName(
+              undefined,
+              attempted ? (score === total ? 'success' : 'error') : null
+            )}
           >
             {copy.actions.check}
-          </KangurCheckButton>
+          </KangurButton>
           <KangurButton onClick={reset} size='sm' type='button' variant='surface'>
             {copy.actions.reset}
           </KangurButton>

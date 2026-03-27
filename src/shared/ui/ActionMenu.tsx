@@ -19,6 +19,52 @@ interface ActionMenuProps {
   disabled?: boolean;
 }
 
+type ActionMenuResolvedProps = {
+  children: ReactNode;
+  trigger?: ReactNode;
+  align: 'start' | 'end' | 'center';
+  className?: string;
+  triggerClassName?: string;
+  ariaLabel: string;
+  variant: 'default' | 'destructive' | 'outline' | 'secondary' | 'ghost' | 'link';
+  size: 'default' | 'sm' | 'lg' | 'icon' | 'xs';
+  disabled: boolean;
+};
+
+const renderActionMenu = ({
+  children,
+  trigger,
+  align,
+  className,
+  triggerClassName,
+  ariaLabel,
+  variant,
+  size,
+  disabled,
+}: ActionMenuResolvedProps): React.JSX.Element => (
+  <DropdownMenu>
+    <DropdownMenuTrigger asChild>
+      <Button
+        variant={variant}
+        size={size}
+        disabled={disabled}
+        className={cn(
+          'p-0 text-muted-foreground hover:bg-muted/50 hover:text-white',
+          size === 'icon' && 'h-8 w-8',
+          triggerClassName
+        )}
+        aria-label={ariaLabel}
+        title={ariaLabel}
+      >
+        {trigger ?? <MoreVertical className='h-4 w-4' aria-hidden='true' />}
+      </Button>
+    </DropdownMenuTrigger>
+    <DropdownMenuContent align={align} className={className}>
+      {children}
+    </DropdownMenuContent>
+  </DropdownMenu>
+);
+
 export function ActionMenu({
   children,
   trigger,
@@ -30,27 +76,15 @@ export function ActionMenu({
   size = 'icon',
   disabled = false,
 }: ActionMenuProps): React.JSX.Element {
-  return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button
-          variant={variant}
-          size={size}
-          disabled={disabled}
-          className={cn(
-            'p-0 text-muted-foreground hover:bg-muted/50 hover:text-white',
-            size === 'icon' && 'h-8 w-8',
-            triggerClassName
-          )}
-          aria-label={ariaLabel}
-          title={ariaLabel}
-        >
-          {trigger ?? <MoreVertical className='h-4 w-4' aria-hidden='true' />}
-        </Button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align={align} className={className}>
-        {children}
-      </DropdownMenuContent>
-    </DropdownMenu>
-  );
+  return renderActionMenu({
+    children,
+    trigger,
+    align,
+    className,
+    triggerClassName,
+    ariaLabel,
+    variant,
+    size,
+    disabled,
+  });
 }

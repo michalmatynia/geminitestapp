@@ -13,15 +13,15 @@ import { KangurButton } from '@/features/kangur/ui/design/primitives';
 import { KANGUR_PANEL_GAP_CLASSNAME, type KangurAccent } from '@/features/kangur/ui/design/tokens';
 import { useKangurCoarsePointer } from '@/features/kangur/ui/hooks/useKangurCoarsePointer';
 
+import { createAgenticCodingMiniGameComponent } from './AgenticCodingMiniGames.factory';
 import type { SortGameConfig, SortGameItem } from './AgenticCodingMiniGames.types';
 
-export function AgenticSortGame({
-  accent,
-  config,
-}: {
+type AgenticSortGameProps = {
   accent: KangurAccent;
   config: SortGameConfig;
-}): React.JSX.Element {
+};
+
+function useAgenticSortGameModel(config: SortGameConfig) {
   const isCoarsePointer = useKangurCoarsePointer();
   const [assignments, setAssignments] = useState<Record<string, string | null>>(() => {
     const base: Record<string, string | null> = {};
@@ -73,6 +73,47 @@ export function AgenticSortGame({
     ? `Wybrana karta: ${selectedItem.label}. Przejdź do kategorii i naciśnij Enter albo Spację.`
     : 'Przeciągnij kartę albo wybierz ją klawiaturą i przenieś do kategorii Enterem albo Spacją.';
 
+  return {
+    allCorrect,
+    allPlaced,
+    assignments,
+    binsWithItems,
+    checked,
+    draggingId,
+    handleAssign,
+    handleBinActivate,
+    handleDrop,
+    isCoarsePointer,
+    keyboardHint,
+    poolItems,
+    selectedItemId,
+    setChecked,
+    setDraggingId,
+    setSelectedItemId,
+    touchHint,
+  };
+}
+
+function renderAgenticSortGame(
+  { accent, config }: AgenticSortGameProps,
+  {
+    allCorrect,
+    allPlaced,
+    binsWithItems,
+    checked,
+    draggingId,
+    handleBinActivate,
+    handleDrop,
+    isCoarsePointer,
+    keyboardHint,
+    poolItems,
+    selectedItemId,
+    setChecked,
+    setDraggingId,
+    setSelectedItemId,
+    touchHint,
+  }: ReturnType<typeof useAgenticSortGameModel>
+): React.JSX.Element {
   return (
     <KangurLessonStack align='start' className='w-full'>
       <KangurLessonVisual
@@ -213,6 +254,12 @@ export function AgenticSortGame({
     </KangurLessonStack>
   );
 }
+
+export const AgenticSortGame = createAgenticCodingMiniGameComponent({
+  displayName: 'AgenticSortGame',
+  render: renderAgenticSortGame,
+  useModel: useAgenticSortGameModel,
+});
 
 function DraggableToken({
   draggingId,

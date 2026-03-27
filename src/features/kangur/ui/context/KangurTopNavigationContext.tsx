@@ -14,6 +14,8 @@ import {
   KangurPrimaryNavigation,
   type KangurPrimaryNavigationProps,
 } from '@/features/kangur/ui/components/KangurPrimaryNavigation';
+import { resolveAccessibleKangurPrimaryNavigation } from '@/features/kangur/ui/components/KangurPrimaryNavigation.access';
+import { useOptionalNextAuthSession } from '@/features/kangur/ui/hooks/useOptionalNextAuthSession';
 import { internalError } from '@/features/kangur/shared/errors/app-error';
 
 type KangurTopNavigationRegistration = {
@@ -160,6 +162,7 @@ export function KangurTopNavigationHost({
   fallback?: ReactNode;
 } = {}): React.JSX.Element | null {
   const state = useContext(KangurTopNavigationStateContext);
+  const { data: session } = useOptionalNextAuthSession();
   if (!state) {
     throw internalError(
       'KangurTopNavigationHost must be used within a KangurTopNavigationProvider'
@@ -170,7 +173,12 @@ export function KangurTopNavigationHost({
     return <>{fallback}</>;
   }
 
-  return <KangurPrimaryNavigation {...state.visibleRegistration.navigation} />;
+  const navigation = resolveAccessibleKangurPrimaryNavigation(
+    state.visibleRegistration.navigation,
+    session
+  );
+
+  return <KangurPrimaryNavigation {...navigation} />;
 }
 
 export const useOptionalKangurTopNavigation = (): KangurTopNavigationActionsContextValue | null => {

@@ -21,7 +21,7 @@ import {
 import { ConfirmModal } from '@/shared/ui/templates/modals';
 import { cn } from '@/shared/utils';
 
-import { getDatabaseColumns } from './DatabaseColumns';
+import { useDatabaseColumns } from './DatabaseColumns';
 import { LogModal } from './LogModal';
 import { RestoreModal } from './RestoreModal';
 import {
@@ -87,6 +87,7 @@ function DatabaseBackupsPanelInner(): React.JSX.Element {
     handleActiveTargetTimeLocalChange,
     saveDailySchedule,
   } = useDatabaseBackupsActionsContext();
+  const columns = useDatabaseColumns();
 
   const selectedDatabase =
     BACKUP_DATABASE_OPTIONS.find((option) => option.value === activeTab) ??
@@ -324,7 +325,7 @@ function DatabaseBackupsPanelInner(): React.JSX.Element {
         alerts={alerts}
         filters={filters}
         actions={actions}
-        columns={getDatabaseColumns()}
+        columns={columns}
         data={data}
         isLoading={isLoading}
         maxHeight='60vh'

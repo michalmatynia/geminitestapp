@@ -48,7 +48,7 @@ describe('AdminKangurPageShell', () => {
     });
   });
 
-  it('sanitizes blocked GamesLibrary routes for non-super-admin sessions', () => {
+  it('passes blocked GamesLibrary routes through to shared routing for provider-level sanitization', async () => {
     sessionMock.mockReturnValue({
       data: {
         user: {
@@ -62,16 +62,17 @@ describe('AdminKangurPageShell', () => {
     render(<AdminKangurPageShell slug={['games']} />);
 
     expect(screen.getByTestId('kangur-admin-menu-toggle')).toBeInTheDocument();
+    expect(await screen.findByTestId('admin-kangur-feature-shell')).toBeInTheDocument();
     expect(kangurRoutingProviderMock).toHaveBeenCalledWith({
-      pageKey: 'Game',
-      requestedPath: '/admin/kangur',
-      requestedHref: '/admin/kangur',
+      pageKey: 'GamesLibrary',
+      requestedPath: '/admin/kangur/games',
+      requestedHref: '/admin/kangur/games',
       basePath: '/admin/kangur',
       embedded: true,
     });
   });
 
-  it('keeps GamesLibrary routes for exact super admins', () => {
+  it('keeps GamesLibrary routes for exact super admins', async () => {
     sessionMock.mockReturnValue({
       data: {
         user: {
@@ -84,6 +85,7 @@ describe('AdminKangurPageShell', () => {
 
     render(<AdminKangurPageShell slug={['games']} />);
 
+    expect(await screen.findByTestId('admin-kangur-feature-shell')).toBeInTheDocument();
     expect(kangurRoutingProviderMock).toHaveBeenCalledWith({
       pageKey: 'GamesLibrary',
       requestedPath: '/admin/kangur/games',

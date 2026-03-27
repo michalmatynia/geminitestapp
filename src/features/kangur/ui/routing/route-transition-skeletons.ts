@@ -5,10 +5,9 @@ import {
   normalizeKangurBasePath,
   readKangurUrlParam,
 } from '@/features/kangur/config/routing';
-import { resolveAccessibleKangurPageKey } from '@/features/kangur/config/page-access';
 import {
   isManagedLocalHref,
-  resolveAccessibleManagedKangurPageKeyFromHref,
+  resolveAccessibleManagedKangurTargetPageKey,
 } from '@/features/kangur/ui/routing/managed-paths';
 import { withKangurClientErrorSync } from '@/features/kangur/observability/client';
 export type KangurRouteTransitionSkeletonVariant =
@@ -27,28 +26,25 @@ type ResolveKangurRouteTransitionSkeletonInput = {
   session?: Session | null;
 };
 
-export const resolveKangurRouteTransitionSkeletonVariant = ({
+export const resolveAccessibleKangurRouteTransitionTarget = ({
   basePath,
   fallbackPageKey,
   href,
   pageKey,
   session,
-}: ResolveKangurRouteTransitionSkeletonInput): KangurRouteTransitionSkeletonVariant => {
+}: ResolveKangurRouteTransitionSkeletonInput): {
+  pageKey: string;
+  skeletonVariant: KangurRouteTransitionSkeletonVariant;
+} => {
   const normalizedBasePath = normalizeKangurBasePath(basePath);
   const resolvedFallbackPageKey = fallbackPageKey?.trim() || 'Game';
-  const resolvedPageKey =
-    resolveAccessibleKangurPageKey(
-      pageKey?.trim() || null,
-      session,
-      href
-        ? resolveAccessibleManagedKangurPageKeyFromHref({
-            href,
-            basePath: normalizedBasePath,
-            session,
-            fallbackPageKey: resolvedFallbackPageKey,
-          })
-        : resolvedFallbackPageKey
-    ) || resolvedFallbackPageKey;
+  const resolvedPageKey = resolveAccessibleManagedKangurTargetPageKey({
+    basePath: normalizedBasePath,
+    fallbackPageKey: resolvedFallbackPageKey,
+    href,
+    pageKey: pageKey?.trim() || null,
+    session,
+  });
 
   let searchParams: URLSearchParams | null = null;
   if (href && isManagedLocalHref(href)) {
@@ -67,19 +63,34 @@ export const resolveKangurRouteTransitionSkeletonVariant = ({
   switch (resolvedPageKey) {
     case 'Tests':
     case 'GamesLibrary':
-      return 'lessons-library';
+      return {
+        pageKey: resolvedPageKey,
+        skeletonVariant: 'lessons-library',
+      };
     case 'Lessons': {
       const focusToken = searchParams
         ? readKangurUrlParam(searchParams, 'focus', normalizedBasePath)?.trim() || null
         : null;
-      return focusToken ? 'lessons-focus' : 'lessons-library';
+      return {
+        pageKey: resolvedPageKey,
+        skeletonVariant: focusToken ? 'lessons-focus' : 'lessons-library',
+      };
     }
     case 'Competition':
-      return 'game-session';
+      return {
+        pageKey: resolvedPageKey,
+        skeletonVariant: 'game-session',
+      };
     case 'LearnerProfile':
-      return 'learner-profile';
+      return {
+        pageKey: resolvedPageKey,
+        skeletonVariant: 'learner-profile',
+      };
     case 'ParentDashboard':
-      return 'parent-dashboard';
+      return {
+        pageKey: resolvedPageKey,
+        skeletonVariant: 'parent-dashboard',
+      };
     case 'Game':
     default: {
       const quickStartToken = searchParams
@@ -89,7 +100,15 @@ export const resolveKangurRouteTransitionSkeletonVariant = ({
         ? searchParams.get(getKangurInternalQueryParamName('kangur', normalizedBasePath))?.trim() ||
           null
         : null;
-      return quickStartToken || explicitScreenToken ? 'game-session' : 'game-home';
+      return {
+        pageKey: resolvedPageKey,
+        skeletonVariant: quickStartToken || explicitScreenToken ? 'game-session' : 'game-home',
+      };
     }
   }
 };
+
+export const resolveKangurRouteTransitionSkeletonVariant = (
+  input: ResolveKangurRouteTransitionSkeletonInput
+): KangurRouteTransitionSkeletonVariant =>
+  resolveAccessibleKangurRouteTransitionTarget(input).skeletonVariant;

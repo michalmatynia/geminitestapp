@@ -52,7 +52,17 @@ type KangurDrawingPracticeBoardProps = {
   width: number;
 };
 
-export function KangurDrawingPracticeBoard({
+type KangurDrawingPracticeBoardResolvedProps = Omit<
+  KangurDrawingPracticeBoardProps,
+  'canvasClassName' | 'feedbackBeforeActions' | 'role' | 'tabIndex'
+> & {
+  canvasClassName: string;
+  feedbackBeforeActions: boolean;
+  role: 'img';
+  tabIndex: number;
+};
+
+const renderKangurDrawingPracticeBoard = ({
   accent,
   actionRow,
   afterCanvas,
@@ -62,12 +72,12 @@ export function KangurDrawingPracticeBoard({
   beforeCanvas,
   boardClassName,
   boardDataTestId,
-  canvasClassName = 'w-full rounded-[20px]',
+  canvasClassName,
   canvasDataTestId,
   canvasRef,
   canvasStyle,
   feedback,
-  feedbackBeforeActions = false,
+  feedbackBeforeActions,
   feedbackTestId,
   height,
   helpId,
@@ -82,10 +92,10 @@ export function KangurDrawingPracticeBoard({
   onPointerLeave,
   onPointerMove,
   onPointerUp,
-  role = 'img',
-  tabIndex = 0,
+  role,
+  tabIndex,
   width,
-}: KangurDrawingPracticeBoardProps): React.JSX.Element {
+}: KangurDrawingPracticeBoardResolvedProps): React.JSX.Element => {
   const feedbackNode = feedback ? (
     <KangurDrawingFeedbackMessage feedback={feedback} testId={feedbackTestId} />
   ) : null;
@@ -97,7 +107,7 @@ export function KangurDrawingPracticeBoard({
         className={boardClassName}
         data-testid={boardDataTestId}
         padding='sm'
-        tone={feedback ? 'accent' : 'neutral'}
+        tone={feedbackNode ? 'accent' : 'neutral'}
       >
         <KangurDrawingCanvasSurface
           afterCanvas={afterCanvas}
@@ -135,4 +145,14 @@ export function KangurDrawingPracticeBoard({
       {feedbackBeforeActions ? null : feedbackNode}
     </>
   );
+};
+
+export function KangurDrawingPracticeBoard(props: KangurDrawingPracticeBoardProps): React.JSX.Element {
+  return renderKangurDrawingPracticeBoard({
+    ...props,
+    canvasClassName: props.canvasClassName ?? 'w-full rounded-[20px]',
+    feedbackBeforeActions: props.feedbackBeforeActions ?? false,
+    role: props.role ?? 'img',
+    tabIndex: props.tabIndex ?? 0,
+  });
 }

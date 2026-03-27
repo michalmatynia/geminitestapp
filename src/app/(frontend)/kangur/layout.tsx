@@ -9,7 +9,7 @@ import './kangur.css';
 // before React hydrates. This eliminates the 600ms MutationObserver fallback
 // wait in KangurAppLoader when navigating directly to /kangur routes.
 const SURFACE_HINT_SCRIPT =
-  "document.documentElement.classList.add('kangur-surface-active');document.body.classList.add('kangur-surface-active');";
+  'document.documentElement.classList.add(\'kangur-surface-active\');document.body.classList.add(\'kangur-surface-active\');';
 
 export default function Layout({ children }: { children: ReactNode }): ReactNode {
   return (

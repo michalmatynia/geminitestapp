@@ -5,7 +5,7 @@ import type { ReactNode } from 'react';
 
 import { KangurAdminCard, KangurAdminCardHeader } from './KangurAdminCard';
 
-type KangurAdminWorkspaceSectionCardProps = {
+export type KangurAdminWorkspaceSectionCardProps = {
   title: string;
   description?: string;
   badge?: string;
@@ -15,7 +15,7 @@ type KangurAdminWorkspaceSectionCardProps = {
   bodyClassName?: string;
 };
 
-export function KangurAdminWorkspaceSectionCard({
+export function renderKangurAdminWorkspaceSectionCard({
   title,
   description,
   badge,

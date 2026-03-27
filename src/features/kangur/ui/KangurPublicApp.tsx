@@ -2,15 +2,11 @@
 import '@/app/(frontend)/kangur/kangur.css';
 
 import {
-  KANGUR_MAIN_PAGE_KEY,
   getKangurHomeHref,
+  resolveKangurFeaturePageRoute,
 } from '@/features/kangur/config/routing';
-import {
-  resolveAccessibleKangurFeaturePageRoute,
-} from '@/features/kangur/config/page-access';
 import { KangurRoutingProvider } from '@/features/kangur/ui/context/KangurRoutingContext';
 import { KangurFeaturePageShell } from '@/features/kangur/ui/KangurFeaturePage';
-import { useOptionalNextAuthSession } from '@/features/kangur/ui/hooks/useOptionalNextAuthSession';
 import { KangurPublicErrorBoundary } from '@/features/kangur/ui/KangurPublicErrorBoundary';
 import { KangurStorefrontAppearanceProvider } from '@/features/kangur/ui/KangurStorefrontAppearanceProvider';
 import { KangurSurfaceClassSync } from '@/features/kangur/ui/KangurSurfaceClassSync';
@@ -26,8 +22,6 @@ export function KangurPublicApp({
   basePath = '/',
   embedded = false,
   initialAppearance,
-  initialMode,
-  initialThemeSettings,
 }: {
   slug?: string[];
   basePath?: string;
@@ -36,38 +30,25 @@ export function KangurPublicApp({
     mode?: KangurStorefrontAppearanceMode;
     themeSettings?: Partial<KangurStorefrontThemeSettingsSnapshot>;
   };
-  initialMode?: KangurStorefrontAppearanceMode;
-  initialThemeSettings?: Partial<KangurStorefrontThemeSettingsSnapshot>;
 }): JSX.Element {
-  const { data: session } = useOptionalNextAuthSession();
   const {
     normalizedBasePath,
-    pageKey: accessiblePageKey,
-    requestedPath: accessibleRequestedPath,
-  } = resolveAccessibleKangurFeaturePageRoute({
-    slug,
-    basePath,
-    session,
-    fallbackPageKey: KANGUR_MAIN_PAGE_KEY,
-  });
+    pageKey,
+    requestedPath,
+  } = resolveKangurFeaturePageRoute(slug, basePath);
   const homeHref = getKangurHomeHref(normalizedBasePath);
   const isEmbedded = embedded;
 
   return (
     <KangurStorefrontAppearanceProvider
-      initialAppearance={
-        initialAppearance ?? {
-          mode: initialMode,
-          themeSettings: initialThemeSettings,
-        }
-      }
+      initialAppearance={initialAppearance}
     >
       <KangurSurfaceClassSync>
         <KangurPublicErrorBoundary homeHref={homeHref}>
           <KangurRoutingProvider
-            pageKey={accessiblePageKey}
-            requestedPath={accessibleRequestedPath}
-            requestedHref={accessibleRequestedPath}
+            pageKey={pageKey}
+            requestedPath={requestedPath}
+            requestedHref={requestedPath}
             basePath={normalizedBasePath}
             embedded={isEmbedded}
           >

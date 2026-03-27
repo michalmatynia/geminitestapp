@@ -1,12 +1,10 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { resolveAccessibleKangurPageKey } from '@/features/kangur/config/page-access';
 import { withKangurClientErrorSync } from '@/features/kangur/observability/client';
 import { useOptionalNextAuthSession } from '@/features/kangur/ui/hooks/useOptionalNextAuthSession';
 import {
-  resolveKangurRouteTransitionSkeletonVariant,
+  resolveAccessibleKangurRouteTransitionTarget,
   type KangurRouteTransitionSkeletonVariant,
 } from '../../routing/route-transition-skeletons';
-import { resolveAccessibleManagedKangurPageKeyFromHref } from '../../routing/managed-paths';
 import {
   clearKangurPendingRouteLoadingSnapshot,
   setKangurPendingRouteLoadingSnapshot,
@@ -390,19 +388,14 @@ export function useKangurRouteTransitionLogic({
     (input: KangurRouteTransitionStartInput = {}): KangurRouteTransitionStartResult => {
       const normalizedHref = normalizeTransitionHref(input.href);
       const normalizedRequestedHref = normalizeTransitionHref(currentRequestedHref);
-      const nextPageKey =
-        resolveAccessibleKangurPageKey(
-          input.pageKey?.trim() || null,
-          session,
-          normalizedHref
-            ? resolveAccessibleManagedKangurPageKeyFromHref({
-                href: normalizedHref,
-                basePath,
-                session,
-                fallbackPageKey: currentAccessiblePageKey,
-              })
-            : currentAccessiblePageKey
-        ) || null;
+      const nextTransitionTarget = resolveAccessibleKangurRouteTransitionTarget({
+        basePath,
+        fallbackPageKey: currentAccessiblePageKey,
+        href: normalizedHref,
+        pageKey: input.pageKey?.trim() || null,
+        session,
+      });
+      const nextPageKey = nextTransitionTarget.pageKey;
       const nextSourceId = input.sourceId?.trim() || null;
       const nextTransitionKind = normalizeTransitionKind(input.transitionKind);
       const activeTransition = transitionStateRef.current;
@@ -455,15 +448,7 @@ export function useKangurRouteTransitionLogic({
         sourceId: nextSourceId,
         kind: nextTransitionKind,
         performanceKey: '',
-        skeletonVariant:
-          input.skeletonVariant ??
-          resolveKangurRouteTransitionSkeletonVariant({
-            basePath,
-            fallbackPageKey: currentAccessiblePageKey,
-            href: normalizedHref,
-            pageKey: nextPageKey,
-            session,
-          }),
+        skeletonVariant: input.skeletonVariant ?? nextTransitionTarget.skeletonVariant,
         committedRequestedHref: null,
         startedAt,
         phase: requestedAcknowledgeMs > 0 ? 'acknowledging' : 'pending',

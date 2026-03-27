@@ -43,8 +43,14 @@ vi.mock('@radix-ui/react-dialog', () => ({
   ),
   Content: ({
     children,
+    onEscapeKeyDown: _onEscapeKeyDown,
+    onInteractOutside: _onInteractOutside,
     ...props
-  }: React.HTMLAttributes<HTMLDivElement> & { children: React.ReactNode }) => (
+  }: React.HTMLAttributes<HTMLDivElement> & {
+    children: React.ReactNode;
+    onEscapeKeyDown?: (event: Event) => void;
+    onInteractOutside?: (event: Event) => void;
+  }) => (
     <div data-testid='dialog-content' {...props}>
       {children}
     </div>

@@ -45,6 +45,111 @@ type SelectSimpleGroupedOptions = {
 
 const toOptionArray = <T,>(option: T): T[] => [option];
 
+type SelectSimpleRenderProps = {
+  ariaDescribedBy: string | undefined;
+  ariaErrorMessage: string | undefined;
+  ariaInvalid: boolean | undefined;
+  className: string | undefined;
+  contentClassName: string | undefined;
+  dataDocAlias: string | undefined;
+  dataDocId: string | undefined;
+  disabled: boolean;
+  groupedOptions: SelectSimpleGroupedOptions;
+  id: string | undefined;
+  onValueChange: (value: string) => void;
+  placeholder: string;
+  resolvedTitle: string;
+  resolvedTriggerAriaLabel: string | undefined;
+  safeValue: string;
+  size: 'default' | 'sm' | 'xs';
+  triggerClassName: string | undefined;
+  variant: 'default' | 'subtle';
+};
+
+const renderSelectSimpleOptions = ({
+  groupedOptions,
+}: Pick<SelectSimpleRenderProps, 'groupedOptions'>): React.ReactNode =>
+  groupedOptions.groups.map((group) => (
+    <SelectGroup key={group.key}>
+      {groupedOptions.hasVisibleGroupLabels && group.label ? (
+        <SelectLabel className='px-2 py-1 text-[10px] font-semibold uppercase tracking-wide text-gray-500'>
+          {group.label}
+        </SelectLabel>
+      ) : null}
+      {group.options.map((option) => (
+        <SelectItem
+          key={option.value}
+          value={option.value}
+          {...(option.disabled !== undefined ? { disabled: option.disabled } : {})}
+        >
+          <div className='flex min-w-0 flex-col'>
+            <span className='break-words leading-tight'>{option.label}</span>
+            {option.description && (
+              <span className='mt-0.5 break-words text-[10px] leading-tight text-gray-500'>
+                {option.description}
+              </span>
+            )}
+          </div>
+        </SelectItem>
+      ))}
+    </SelectGroup>
+  ));
+
+const renderSelectSimple = ({
+  ariaDescribedBy,
+  ariaErrorMessage,
+  ariaInvalid,
+  className,
+  contentClassName,
+  dataDocAlias,
+  dataDocId,
+  disabled,
+  groupedOptions,
+  id,
+  onValueChange,
+  placeholder,
+  resolvedTitle,
+  resolvedTriggerAriaLabel,
+  safeValue,
+  size,
+  triggerClassName,
+  variant,
+}: SelectSimpleRenderProps): React.JSX.Element => (
+  <div className={cn('w-full', className)}>
+    <Select value={safeValue} onValueChange={onValueChange} disabled={disabled}>
+      <SelectTrigger
+        id={id}
+        className={cn(
+          'w-full [&>span]:max-w-[calc(100%-1.5rem)] [&>span]:truncate [&>span]:text-left',
+          size === 'sm' && 'h-8 text-xs',
+          size === 'xs' && 'h-7 text-[10px]',
+          variant === 'subtle' &&
+            'border-border/40 bg-card/40 hover:bg-card/60 hover:border-border/60',
+          triggerClassName
+        )}
+        aria-label={resolvedTriggerAriaLabel}
+        aria-describedby={ariaDescribedBy}
+        aria-invalid={ariaInvalid || undefined}
+        aria-errormessage={ariaErrorMessage}
+        title={resolvedTitle}
+        data-doc-id={dataDocId}
+        data-doc-alias={dataDocAlias}
+      >
+        <SelectValue placeholder={placeholder} />
+      </SelectTrigger>
+      <SelectContent
+        position='popper'
+        className={cn(
+          'min-w-[var(--radix-select-trigger-width)] max-w-[min(34rem,calc(100vw-2rem))]',
+          contentClassName
+        )}
+      >
+        {renderSelectSimpleOptions({ groupedOptions })}
+      </SelectContent>
+    </Select>
+  </div>
+);
+
 export function SelectSimple({
   value,
   onValueChange,
@@ -133,63 +238,24 @@ export function SelectSimple({
     warnMissingAccessibleLabel({ componentName: 'SelectSimple', hasAccessibleLabel: hasLabel });
   }
 
-  return (
-    <div className={cn('w-full', className)}>
-      <Select value={safeValue} onValueChange={onValueChange} disabled={disabled}>
-        <SelectTrigger
-          id={id}
-          className={cn(
-            'w-full [&>span]:max-w-[calc(100%-1.5rem)] [&>span]:truncate [&>span]:text-left',
-            size === 'sm' && 'h-8 text-xs',
-            size === 'xs' && 'h-7 text-[10px]',
-            variant === 'subtle' &&
-              'border-border/40 bg-card/40 hover:bg-card/60 hover:border-border/60',
-            triggerClassName
-          )}
-          aria-label={resolvedTriggerAriaLabel}
-          aria-describedby={ariaDescribedBy}
-          aria-invalid={ariaInvalid || undefined}
-          aria-errormessage={ariaErrorMessage}
-          title={resolvedTitle}
-          data-doc-id={dataDocId}
-          data-doc-alias={dataDocAlias}
-        >
-          <SelectValue placeholder={placeholder} />
-        </SelectTrigger>
-        <SelectContent
-          position='popper'
-          className={cn(
-            'min-w-[var(--radix-select-trigger-width)] max-w-[min(34rem,calc(100vw-2rem))]',
-            contentClassName
-          )}
-        >
-          {groupedOptions.groups.map((group) => (
-            <SelectGroup key={group.key}>
-              {groupedOptions.hasVisibleGroupLabels && group.label ? (
-                <SelectLabel className='px-2 py-1 text-[10px] font-semibold uppercase tracking-wide text-gray-500'>
-                  {group.label}
-                </SelectLabel>
-              ) : null}
-              {group.options.map((option) => (
-                <SelectItem
-                  key={option.value}
-                  value={option.value}
-                  {...(option.disabled !== undefined ? { disabled: option.disabled } : {})}
-                >
-                  <div className='flex min-w-0 flex-col'>
-                    <span className='break-words leading-tight'>{option.label}</span>
-                    {option.description && (
-                      <span className='mt-0.5 break-words text-[10px] leading-tight text-gray-500'>
-                        {option.description}
-                      </span>
-                    )}
-                  </div>
-                </SelectItem>
-              ))}
-            </SelectGroup>
-          ))}
-        </SelectContent>
-      </Select>
-    </div>
-  );
+  return renderSelectSimple({
+    ariaDescribedBy,
+    ariaErrorMessage,
+    ariaInvalid,
+    className,
+    contentClassName,
+    dataDocAlias,
+    dataDocId,
+    disabled,
+    groupedOptions,
+    id,
+    onValueChange,
+    placeholder,
+    resolvedTitle,
+    resolvedTriggerAriaLabel,
+    safeValue,
+    size,
+    triggerClassName,
+    variant,
+  });
 }

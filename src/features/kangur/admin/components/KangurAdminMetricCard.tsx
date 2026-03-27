@@ -40,7 +40,7 @@ type KangurAdminMetricCardProps = {
   className?: string;
 };
 
-export function KangurAdminMetricCard({
+export function renderKangurAdminMetricCard({
   label,
   value,
   detail,

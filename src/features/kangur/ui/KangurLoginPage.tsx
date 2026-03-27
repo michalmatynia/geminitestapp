@@ -152,7 +152,7 @@ type VerificationCardProps = VerificationCardState & {
   onResend: () => void;
 };
 
-function ParentVerificationCard({
+const renderParentVerificationCard = ({
   email,
   message,
   error,
@@ -165,7 +165,7 @@ function ParentVerificationCard({
   continueToSignInLabel,
   onContinueToSignIn,
   onResend,
-}: VerificationCardProps): React.JSX.Element {
+}: VerificationCardProps): React.JSX.Element => {
   const translations = useTranslations('KangurLogin');
 
   return (
@@ -236,7 +236,7 @@ function ParentVerificationCard({
       </div>
     </div>
   );
-}
+};
 
 export function KangurLoginPageContent(): React.JSX.Element {
   const translations = useTranslations('KangurLogin');
@@ -1306,29 +1306,27 @@ export function KangurLoginPageContent(): React.JSX.Element {
             ) : null}
 
             {verificationCard ? (
-              <ParentVerificationCard
-                {...verificationCard}
-                resendLabel={resendLabel}
-                resendDisabled={Boolean(resendCooldownLabel) || isLoading}
-                resendHelper={resendHelper}
-                changeEmailLabel={
+              renderParentVerificationCard({
+                ...verificationCard,
+                resendLabel,
+                resendDisabled: Boolean(resendCooldownLabel) || isLoading,
+                resendHelper,
+                changeEmailLabel:
                   authMode === 'create-account'
                     ? translations('changeEmailAction')
-                    : null
-                }
-                onChangeEmail={authMode === 'create-account' ? handleChangeVerificationEmail : null}
-                continueToSignInLabel={
+                    : null,
+                onChangeEmail:
+                  authMode === 'create-account' ? handleChangeVerificationEmail : null,
+                continueToSignInLabel:
                   authMode === 'create-account'
                     ? translations('continueToSignInAction')
-                    : null
-                }
-                onContinueToSignIn={
+                    : null,
+                onContinueToSignIn:
                   authMode === 'create-account'
                     ? () => handleModeSwitch('sign-in')
-                    : null
-                }
-                onResend={() => void handleResendVerification()}
-              />
+                    : null,
+                onResend: () => void handleResendVerification(),
+              })
             ) : null}
           </div>
         </div>

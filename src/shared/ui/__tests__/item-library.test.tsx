@@ -23,24 +23,24 @@ vi.mock('../button', () => ({
   }: React.ButtonHTMLAttributes<HTMLButtonElement>) => <button {...props}>{children}</button>,
 }));
 
-vi.mock('../confirm-dialog', () => ({
-  ConfirmDialog: ({
+vi.mock('../templates/modals', () => ({
+  ConfirmModal: ({
     children,
-    open,
-    onOpenChange,
+    isOpen,
+    onClose,
   }: {
-    open: boolean;
+    isOpen: boolean;
     children?: React.ReactNode;
-    onOpenChange: (open: boolean) => void;
+    onClose: () => void;
     onConfirm?: () => void;
     title?: string;
-    description?: string;
+    message?: string;
     confirmText?: string;
-    variant?: string;
+    isDangerous?: boolean;
   }) => (
     <div data-testid='confirm-dialog'>
-      {open ? children : null}
-      <button type='button' onClick={() => onOpenChange(false)}>
+      {isOpen ? children : null}
+      <button type='button' onClick={onClose}>
         close-confirm
       </button>
     </div>

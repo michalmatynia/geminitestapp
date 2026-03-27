@@ -3,7 +3,7 @@ import type {
   KangurProgressState,
 } from '@/features/kangur/shared/contracts/kangur';
 import { kangurLessonSubjectSchema } from '@/features/kangur/shared/contracts/kangur';
-import { DEFAULT_KANGUR_SUBJECT } from '@/features/kangur/lessons/lesson-catalog';
+import { DEFAULT_KANGUR_SUBJECT } from '@/features/kangur/lessons/lesson-catalog-metadata';
 import { getLocalizedKangurLessonTitle } from '@/features/kangur/lessons/lesson-catalog-i18n';
 import type {
   KangurAssignmentPlan,

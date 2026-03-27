@@ -28,7 +28,7 @@ import {
   KANGUR_GRID_RELAXED_CLASSNAME,
 } from '@/features/kangur/ui/design/tokens';
 
-import { KangurAdminCard, KangurAdminInsetCard } from './KangurAdminCard';
+import { KangurAdminCard } from './KangurAdminCard';
 
 const DEFAULT_AGENT_PERSONA_OPTION = '__default_agent_persona__';
 const DEFAULT_MOTION_PRESET_OPTION = '__default_motion_preset__';

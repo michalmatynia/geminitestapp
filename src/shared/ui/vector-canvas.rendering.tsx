@@ -40,7 +40,7 @@ type VectorToolbarResolvedProps = VectorToolbarProps & {
   hasActions: boolean;
 };
 
-function VectorToolbarToolButtons({
+function renderVectorToolbarToolButtons({
   onSelectTool,
   tool,
 }: Pick<VectorToolbarResolvedProps, 'onSelectTool' | 'tool'>): JSX.Element {
@@ -122,7 +122,7 @@ function VectorToolbarToolButtons({
   );
 }
 
-function VectorToolbarActionButtons({
+const renderVectorToolbarActionButtons = ({
   disableClear,
   disableClose,
   disableDetach,
@@ -141,7 +141,7 @@ function VectorToolbarActionButtons({
   | 'onClose'
   | 'onDetach'
   | 'onUndo'
->): JSX.Element {
+>): JSX.Element => {
   return (
     <>
       {onUndo ? (
@@ -202,13 +202,13 @@ function VectorToolbarActionButtons({
       ) : null}
     </>
   );
-}
+};
 
-function VectorToolbarLayout({
+const renderVectorToolbarLayout = ({
   className,
   hasActions,
   ...props
-}: VectorToolbarResolvedProps): JSX.Element {
+}: VectorToolbarResolvedProps): JSX.Element => {
   return (
     <div
       className={cn(
@@ -216,21 +216,21 @@ function VectorToolbarLayout({
         className
       )}
     >
-      <VectorToolbarToolButtons tool={props.tool} onSelectTool={props.onSelectTool} />
+      {renderVectorToolbarToolButtons({ tool: props.tool, onSelectTool: props.onSelectTool })}
       {hasActions ? <div className='mx-1 h-6 w-px bg-border' /> : null}
-      <VectorToolbarActionButtons
-        onUndo={props.onUndo}
-        onClose={props.onClose}
-        onDetach={props.onDetach}
-        onClear={props.onClear}
-        disableUndo={props.disableUndo}
-        disableClose={props.disableClose}
-        disableDetach={props.disableDetach}
-        disableClear={props.disableClear}
-      />
+      {renderVectorToolbarActionButtons({
+        onUndo: props.onUndo,
+        disableUndo: props.disableUndo,
+        onClose: props.onClose,
+        disableClose: props.disableClose,
+        onDetach: props.onDetach,
+        disableDetach: props.disableDetach,
+        onClear: props.onClear,
+        disableClear: props.disableClear,
+      })}
     </div>
   );
-}
+};
 
 export function VectorToolbar({
   tool,
@@ -245,22 +245,20 @@ export function VectorToolbar({
   disableClear,
   className,
 }: VectorToolbarProps): JSX.Element {
-  return (
-    <VectorToolbarLayout
-      tool={tool}
-      onSelectTool={onSelectTool}
-      onUndo={onUndo}
-      onClose={onClose}
-      onDetach={onDetach}
-      onClear={onClear}
-      disableUndo={disableUndo}
-      disableClose={disableClose}
-      disableDetach={disableDetach}
-      disableClear={disableClear}
-      className={className}
-      hasActions={Boolean(onUndo || onClose || onDetach || onClear)}
-    />
-  );
+  return renderVectorToolbarLayout({
+    tool,
+    onSelectTool,
+    onUndo,
+    onClose,
+    onDetach,
+    onClear,
+    disableUndo,
+    disableClose,
+    disableDetach,
+    disableClear,
+    className,
+    hasActions: Boolean(onUndo || onClose || onDetach || onClear),
+  });
 }
 
 export interface VectorShapeOverlayProps {

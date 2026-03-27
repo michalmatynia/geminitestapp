@@ -6,7 +6,6 @@ import { usePathname } from 'next/navigation';
 import { useCallback } from 'react';
 
 import { KANGUR_BASE_PATH } from '@/features/kangur/config/routing';
-import { resolveAccessibleKangurPageKey } from '@/features/kangur/config/page-access';
 import { useOptionalFrontendPublicOwner } from '@/features/kangur/ui/FrontendPublicOwnerContext';
 import { useOptionalNextAuthSession } from '@/features/kangur/ui/hooks/useOptionalNextAuthSession';
 import { useKangurRouteNavigator } from '@/features/kangur/ui/hooks/useKangurRouteNavigator';
@@ -14,7 +13,7 @@ import { useOptionalKangurRouting } from '@/features/kangur/ui/context/KangurRou
 import {
   canonicalizeKangurPublicAliasHref,
   localizeManagedKangurHref,
-  resolveAccessibleManagedKangurPageKeyFromHref,
+  resolveAccessibleManagedKangurTargetPageKey,
 } from '@/features/kangur/ui/routing/managed-paths';
 import {
   resolveKangurRouteTransitionSkeletonVariant,
@@ -109,14 +108,13 @@ export function KangurTransitionLink({
       return;
     }
 
-    const accessibleResolvedPageKey = targetPageKey
-      ? resolveAccessibleKangurPageKey(targetPageKey, session, currentAccessiblePageKey)
-      : resolveAccessibleManagedKangurPageKeyFromHref({
-          href: renderedHref,
-          basePath: effectivePageKeyBasePath,
-          session,
-          fallbackPageKey: currentAccessiblePageKey,
-        });
+    const accessibleResolvedPageKey = resolveAccessibleManagedKangurTargetPageKey({
+      basePath: effectivePageKeyBasePath,
+      fallbackPageKey: currentAccessiblePageKey,
+      href: renderedHref,
+      pageKey: targetPageKey,
+      session,
+    });
 
     setKangurPendingRouteLoadingSnapshot({
       fromHref: pathname,

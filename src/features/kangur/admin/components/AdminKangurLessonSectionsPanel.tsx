@@ -12,7 +12,7 @@ import {
 } from 'lucide-react';
 import React, { useCallback, useMemo, useState } from 'react';
 
-import { KANGUR_AGE_GROUPS, KANGUR_SUBJECTS } from '@/features/kangur/lessons/lesson-catalog';
+import { KANGUR_AGE_GROUPS, KANGUR_SUBJECTS } from '@/features/kangur/lessons/lesson-catalog-metadata';
 import type {
   KangurLessonAgeGroup,
   KangurLessonComponentId,
@@ -31,7 +31,7 @@ import {
 } from '@/features/kangur/ui/hooks/useKangurLessonSections';
 import { withKangurClientError } from '@/features/kangur/observability/client';
 import { useToast } from '@/features/kangur/shared/ui';
-import { KangurAdminWorkspaceIntroCard } from './KangurAdminWorkspaceIntroCard';
+import { renderKangurAdminWorkspaceIntroCard } from './KangurAdminWorkspaceIntroCard';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -538,13 +538,14 @@ export function AdminKangurLessonSectionsPanel({
 
   return (
     <>
-      {standalone ? (
-        <KangurAdminWorkspaceIntroCard
-          title='Lesson sections'
-          description='Manage section and subsection structure. Sections organise lessons into collapsible groups in the learner catalog.'
-          badge='Sections editor'
-        />
-      ) : null}
+      {standalone
+        ? renderKangurAdminWorkspaceIntroCard({
+            title: 'Lesson sections',
+            description:
+              'Manage section and subsection structure. Sections organise lessons into collapsible groups in the learner catalog.',
+            badge: 'Sections editor',
+          })
+        : null}
 
       <div className='min-h-0 flex-1 overflow-auto rounded-2xl border border-border/60 bg-card/35 p-4 shadow-sm'>
         <div className='mb-4 flex items-center justify-between'>

@@ -2,33 +2,21 @@
 
 import { usePathname, useSearchParams } from 'next/navigation';
 
-import { KANGUR_BASE_PATH } from '@/features/kangur/config/routing';
 import { KangurPageTransitionSkeleton } from '@/features/kangur/ui/components/KangurPageTransitionSkeleton';
 import { useOptionalNextAuthSession } from '@/features/kangur/ui/hooks/useOptionalNextAuthSession';
 import {
   resolveAccessibleKangurPendingRouteLoadingSnapshot,
   useKangurPendingRouteLoadingSnapshot,
 } from '@/features/kangur/ui/routing/pending-route-loading-snapshot';
-import { resolveKangurRouteTransitionSkeletonVariant } from '@/features/kangur/ui/routing/route-transition-skeletons';
 import {
-  normalizeManagedKangurPathname,
-  resolveAccessibleManagedKangurPageKeyFromHref,
+  resolveAccessibleKangurRouteTransitionTarget,
+  resolveKangurRouteTransitionSkeletonVariant,
+} from '@/features/kangur/ui/routing/route-transition-skeletons';
+import {
+  resolveManagedKangurBasePath,
   resolveManagedKangurEmbeddedFromHref,
 } from '@/features/kangur/ui/routing/managed-paths';
 import { readKangurTopBarHeightCssValue } from '@/features/kangur/ui/utils/readKangurTopBarHeightCssValue';
-
-const resolveKangurBasePath = (href: string | null): string => {
-  const normalizedPathname = normalizeManagedKangurPathname(href);
-
-  if (!normalizedPathname) {
-    return '/';
-  }
-
-  return normalizedPathname === KANGUR_BASE_PATH ||
-    normalizedPathname.startsWith(`${KANGUR_BASE_PATH}/`)
-    ? KANGUR_BASE_PATH
-    : '/';
-};
 
 const resolveTransitionEmbeddedOverride = ({
   currentHref,
@@ -42,14 +30,14 @@ const resolveTransitionEmbeddedOverride = ({
       ? null
       : resolveManagedKangurEmbeddedFromHref({
           href: currentHref,
-          basePath: resolveKangurBasePath(currentHref),
+          basePath: resolveManagedKangurBasePath(currentHref),
         });
   const targetEmbedded =
     targetHref === null
       ? null
       : resolveManagedKangurEmbeddedFromHref({
           href: targetHref,
-          basePath: resolveKangurBasePath(targetHref),
+          basePath: resolveManagedKangurBasePath(targetHref),
         });
 
   if (currentEmbedded === null) {
@@ -85,17 +73,21 @@ export function KangurRouteLoadingFallback({
     snapshot: useKangurPendingRouteLoadingSnapshot(),
   });
   const href = pendingRouteLoadingSnapshot?.href ?? currentHref;
-  const basePath = resolveKangurBasePath(href);
+  const basePath = resolveManagedKangurBasePath(href);
+  const transitionTarget =
+    pendingRouteLoadingSnapshot === null
+      ? resolveAccessibleKangurRouteTransitionTarget({
+          basePath,
+          fallbackPageKey: 'Game',
+          href: href ?? '/',
+          session,
+        })
+      : null;
   const accessiblePageKey =
-    pendingRouteLoadingSnapshot?.pageKey ??
-    resolveAccessibleManagedKangurPageKeyFromHref({
-      href: href ?? '/',
-      basePath,
-      session,
-      fallbackPageKey: 'Game',
-    });
+    pendingRouteLoadingSnapshot?.pageKey ?? transitionTarget?.pageKey ?? 'Game';
   const variant =
     pendingRouteLoadingSnapshot?.skeletonVariant ??
+    transitionTarget?.skeletonVariant ??
     resolveKangurRouteTransitionSkeletonVariant({
       basePath,
       fallbackPageKey: 'Game',

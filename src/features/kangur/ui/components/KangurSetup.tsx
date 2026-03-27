@@ -5,7 +5,7 @@ import { useLocale } from 'next-intl';
 import { useId, useState, type ReactNode } from 'react';
 
 import KangurAnswerChoiceCard from '@/features/kangur/ui/components/KangurAnswerChoiceCard';
-import { KangurLessonNavigationIconButton } from '@/features/kangur/ui/components/KangurLessonNavigationIconButton';
+import { renderKangurLessonNavigationIconButton } from '@/features/kangur/ui/components/KangurLessonNavigationIconButton';
 import KangurRecommendationCard from '@/features/kangur/ui/components/KangurRecommendationCard';
 import {
   KangurGlassPanel,
@@ -20,6 +20,7 @@ import {
   KANGUR_WRAP_CENTER_ROW_CLASSNAME,
   KANGUR_CENTER_ROW_CLASSNAME,
 } from '@/features/kangur/ui/design/tokens';
+import { useKangurCoarsePointer } from '@/features/kangur/ui/hooks/useKangurCoarsePointer';
 import type { KangurMode } from '@/features/kangur/ui/types';
 import { normalizeSiteLocale } from '@/shared/lib/i18n/site-locale';
 
@@ -396,6 +397,7 @@ export default function KangurSetup({
   recommendedTitle,
 }: KangurSetupProps): React.JSX.Element {
   const locale = normalizeSiteLocale(useLocale());
+  const isCoarsePointer = useKangurCoarsePointer();
   const copy = getKangurSetupCopy(locale);
   const recommendationDescription = recommendedDescription;
   const recommendationLabel = recommendedLabel ?? copy.recommendationLabel;
@@ -495,14 +497,15 @@ export default function KangurSetup({
 
   return (
     <KangurSetupSection headingId={setsHeadingId}>
-      <KangurLessonNavigationIconButton
-        aria-label={copy.backToEditionsLabel}
-        className='w-full self-stretch sm:w-auto sm:self-start'
-        data-testid='kangur-setup-back-to-editions'
-        icon={ChevronLeft}
-        onClick={() => setSelectedEdition(null)}
-        title={copy.backToEditionsLabel}
-      />
+      {renderKangurLessonNavigationIconButton({
+        'aria-label': copy.backToEditionsLabel,
+        className: 'w-full self-stretch sm:w-auto sm:self-start',
+        'data-testid': 'kangur-setup-back-to-editions',
+        icon: ChevronLeft,
+        isCoarsePointer,
+        onClick: () => setSelectedEdition(null),
+        title: copy.backToEditionsLabel,
+      })}
 
       <KangurSetupShell testId='kangur-setup-selected-edition-shell'>
         <KangurSectionHeading

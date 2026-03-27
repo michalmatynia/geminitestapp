@@ -5,6 +5,7 @@ import { createDefaultKangurLessons } from '@/features/kangur/settings';
 import { createDefaultKangurSections } from '@/features/kangur/lessons/lesson-section-defaults';
 
 const {
+  authMock,
   getKangurAuthMeHandlerMock,
   listKangurGamesMock,
   getKangurLessonRepositoryMock,
@@ -12,6 +13,7 @@ const {
   getKangurLessonSectionRepositoryMock,
   listSectionsMock,
 } = vi.hoisted(() => ({
+  authMock: vi.fn(),
   getKangurAuthMeHandlerMock: vi.fn(),
   listKangurGamesMock: vi.fn(),
   getKangurLessonRepositoryMock: vi.fn(),
@@ -20,8 +22,8 @@ const {
   listSectionsMock: vi.fn(),
 }));
 
-vi.mock('@/features/auth/auth', () => ({
-  auth: vi.fn().mockResolvedValue(null),
+vi.mock('@/features/auth/server', () => ({
+  auth: authMock,
 }));
 
 vi.mock('./auth/me/handler', () => ({
@@ -45,6 +47,16 @@ import { GET } from './[[...path]]/route';
 describe('kangur route routing', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    authMock.mockResolvedValue({
+      expires: '2026-12-31T23:59:59.000Z',
+      user: {
+        email: 'admin@example.com',
+        id: 'admin-1',
+        isElevated: true,
+        name: 'Super Admin',
+        role: 'super_admin',
+      },
+    });
     listKangurGamesMock.mockResolvedValue(createDefaultKangurGames());
     listLessonsMock.mockResolvedValue(createDefaultKangurLessons());
     listSectionsMock.mockResolvedValue(createDefaultKangurSections());

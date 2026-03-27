@@ -1,8 +1,9 @@
 'use client';
 
 import { usePathname } from 'next/navigation';
+import type { Session } from 'next-auth';
 
-import { KANGUR_BASE_PATH, KANGUR_MAIN_PAGE_KEY } from '@/features/kangur/config/routing';
+import { KANGUR_MAIN_PAGE_KEY } from '@/features/kangur/config/routing';
 import { KangurRouteLoadingFallback } from '@/features/kangur/ui/components/KangurRouteLoadingFallback';
 import { useOptionalFrontendPublicOwner } from '@/features/kangur/ui/FrontendPublicOwnerContext';
 import { useOptionalNextAuthSession } from '@/features/kangur/ui/hooks/useOptionalNextAuthSession';
@@ -11,10 +12,10 @@ import {
   useKangurPendingRouteLoadingSnapshot,
 } from '@/features/kangur/ui/routing/pending-route-loading-snapshot';
 import {
-  normalizeManagedKangurPathname,
   resolveManagedKangurEmbeddedFromHref,
-  resolveAccessibleManagedKangurPageKeyFromHref,
+  resolveManagedKangurBasePath,
 } from '@/features/kangur/ui/routing/managed-paths';
+import { resolveAccessibleKangurRouteTransitionTarget } from '@/features/kangur/ui/routing/route-transition-skeletons';
 
 const GenericFrontendLoadingFallback = (): React.JSX.Element => (
   <div
@@ -36,19 +37,6 @@ const GenericFrontendLoadingFallback = (): React.JSX.Element => (
   </div>
 );
 
-const resolveKangurBasePath = (pathname: string | null): string => {
-  const normalizedPathname = normalizeManagedKangurPathname(pathname);
-
-  if (!normalizedPathname) {
-    return '/';
-  }
-
-  return normalizedPathname === KANGUR_BASE_PATH ||
-    normalizedPathname.startsWith(`${KANGUR_BASE_PATH}/`)
-    ? KANGUR_BASE_PATH
-    : '/';
-};
-
 const resolveAutoIncludeTopNavigationSkeleton = ({
   currentHref,
   fallbackPageKey,
@@ -62,22 +50,22 @@ const resolveAutoIncludeTopNavigationSkeleton = ({
   targetHref: string | null;
   hasPendingTransition: boolean;
   pageKey?: string | null;
-  session?: Parameters<typeof resolveAccessibleManagedKangurPageKeyFromHref>[0]['session'];
+  session?: Session | null;
 }): boolean => {
-  const targetBasePath = resolveKangurBasePath(targetHref);
+  const targetBasePath = resolveManagedKangurBasePath(targetHref);
   const resolvedPageKey =
     pageKey ??
-    resolveAccessibleManagedKangurPageKeyFromHref({
-      href: targetHref ?? '/',
+    resolveAccessibleKangurRouteTransitionTarget({
       basePath: targetBasePath,
-      session,
       fallbackPageKey,
-    });
+      href: targetHref ?? '/',
+      session,
+    }).pageKey;
 
   if (hasPendingTransition && currentHref !== null && targetHref !== null) {
     const currentEmbedded = resolveManagedKangurEmbeddedFromHref({
       href: currentHref,
-      basePath: resolveKangurBasePath(currentHref),
+      basePath: resolveManagedKangurBasePath(currentHref),
     });
     const targetEmbedded = resolveManagedKangurEmbeddedFromHref({
       href: targetHref,
@@ -106,14 +94,17 @@ export function FrontendRouteLoadingFallback({
     session,
     snapshot: useKangurPendingRouteLoadingSnapshot(),
   });
+  const currentTransitionTarget =
+    pendingRouteLoadingSnapshot === null
+      ? resolveAccessibleKangurRouteTransitionTarget({
+          basePath: resolveManagedKangurBasePath(pathname ?? null),
+          fallbackPageKey: KANGUR_MAIN_PAGE_KEY,
+          href: pathname ?? '/',
+          session,
+        })
+      : null;
   const accessiblePageKey =
-    pendingRouteLoadingSnapshot?.pageKey ??
-    resolveAccessibleManagedKangurPageKeyFromHref({
-      href: pendingRouteLoadingSnapshot?.href ?? pathname ?? '/',
-      basePath: resolveKangurBasePath(pendingRouteLoadingSnapshot?.href ?? pathname ?? null),
-      session,
-      fallbackPageKey: KANGUR_MAIN_PAGE_KEY,
-    });
+    pendingRouteLoadingSnapshot?.pageKey ?? currentTransitionTarget?.pageKey ?? KANGUR_MAIN_PAGE_KEY;
   const resolvedIncludeTopNavigationSkeleton =
     includeTopNavigationSkeleton ??
     resolveAutoIncludeTopNavigationSkeleton({

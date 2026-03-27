@@ -395,6 +395,22 @@ function CompleteEquationDesktop({
 // Entry point — picks mobile or desktop layout
 // ---------------------------------------------------------------------------
 
+function renderCompleteEquation({
+  isCoarsePointer,
+  round,
+  onResult,
+}: {
+  isCoarsePointer: boolean;
+  round: CompleteEquationRound;
+  onResult: (correct: boolean) => void;
+}): React.JSX.Element {
+  if (isCoarsePointer) {
+    return <CompleteEquationMobile round={round} onResult={onResult} />;
+  }
+
+  return <CompleteEquationDesktop round={round} onResult={onResult} />;
+}
+
 export function CompleteEquation({
   round,
   onResult,
@@ -403,10 +419,5 @@ export function CompleteEquation({
   onResult: (correct: boolean) => void;
 }): React.JSX.Element {
   const isCoarsePointer = useKangurCoarsePointer();
-
-  if (isCoarsePointer) {
-    return <CompleteEquationMobile round={round} onResult={onResult} />;
-  }
-
-  return <CompleteEquationDesktop round={round} onResult={onResult} />;
+  return renderCompleteEquation({ isCoarsePointer, round, onResult });
 }

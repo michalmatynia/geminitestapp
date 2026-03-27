@@ -5,6 +5,7 @@ import React from 'react';
 
 import {
   AdminAiPathsBreadcrumbs,
+  Badge,
   Card,
   Label,
   PanelHeader,
@@ -12,10 +13,10 @@ import {
   StatusBadge,
 } from '@/shared/ui';
 import type { StatusVariant } from '@/shared/contracts/ui';
+import { cn } from '@/shared/utils';
 
 import { useAdminAiPathsValidationContext } from '../../context/AdminAiPathsValidationContext';
 import { ValidationActionButton } from './ValidationActionButton';
-import { ValidationMetaBadge } from './ValidationMetaBadge';
 
 type ValidationStatusIndicator = {
   key: string;
@@ -56,9 +57,9 @@ function ValidationHeaderFocusBadge({
   value,
 }: ValidationHeaderFocusBadgeProps): React.JSX.Element {
   return (
-    <ValidationMetaBadge>
+    <Badge variant='outline' className={cn('text-[10px]')}>
       {label}: {value}
-    </ValidationMetaBadge>
+    </Badge>
   );
 }
 

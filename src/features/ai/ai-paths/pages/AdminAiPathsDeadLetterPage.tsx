@@ -13,7 +13,7 @@ import {
   FormSection,
   StatusBadge,
   Alert,
-  PanelPagination,
+  Pagination,
   EmptyState,
   MetadataItem,
   Badge,
@@ -259,7 +259,8 @@ export function AdminAiPathsDeadLetterPage(): React.JSX.Element {
           />
         }
         footer={
-          <PanelPagination
+          <Pagination
+            variant='panel'
             page={page}
             pageSize={pageSize}
             totalCount={total}

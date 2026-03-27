@@ -39,11 +39,22 @@ const toSizeNumber = (value: unknown): number => {
   return Number.isFinite(parsed) ? parsed : 0;
 };
 
-function DatabaseActionsCell({ backup }: { backup: DatabaseInfo }): React.JSX.Element {
-  const { backupMaintenanceAllowed } = useDatabaseBackupsStateContext();
-  const { handlePreview, handleRestoreRequest, handleDeleteRequest } =
-    useDatabaseBackupsActionsContext();
+type DatabaseColumnsConfig = {
+  backupMaintenanceAllowed: boolean;
+  handlePreview: (backupName: string) => void;
+  handleRestoreRequest: (backup: DatabaseInfo) => void;
+  handleDeleteRequest: (backupName: string) => void;
+};
 
+const renderDatabaseActionsCell = (
+  backup: DatabaseInfo,
+  {
+    backupMaintenanceAllowed,
+    handlePreview,
+    handleRestoreRequest,
+    handleDeleteRequest,
+  }: DatabaseColumnsConfig
+): React.JSX.Element => {
   return (
     <div className='flex justify-end'>
       <ActionMenu>
@@ -75,9 +86,14 @@ function DatabaseActionsCell({ backup }: { backup: DatabaseInfo }): React.JSX.El
       </ActionMenu>
     </div>
   );
-}
+};
 
-export const getDatabaseColumns = (): ColumnDef<DatabaseInfo>[] => [
+export const buildDatabaseColumns = ({
+  backupMaintenanceAllowed,
+  handlePreview,
+  handleRestoreRequest,
+  handleDeleteRequest,
+}: DatabaseColumnsConfig): ColumnDef<DatabaseInfo>[] => [
   {
     accessorKey: 'name',
     header: ({ column }) => <DataTableSortableHeader label='Name' column={column} />,
@@ -110,8 +126,29 @@ export const getDatabaseColumns = (): ColumnDef<DatabaseInfo>[] => [
   },
   {
     id: 'actions',
-    cell: ({ row }: { row: { original: DatabaseInfo } }): React.JSX.Element => (
-      <DatabaseActionsCell backup={row.original} />
-    ),
+    cell: ({ row }: { row: { original: DatabaseInfo } }): React.JSX.Element =>
+      renderDatabaseActionsCell(row.original, {
+        backupMaintenanceAllowed,
+        handlePreview,
+        handleRestoreRequest,
+        handleDeleteRequest,
+      }),
   },
 ];
+
+export const useDatabaseColumns = (): ColumnDef<DatabaseInfo>[] => {
+  const { backupMaintenanceAllowed } = useDatabaseBackupsStateContext();
+  const { handlePreview, handleRestoreRequest, handleDeleteRequest } =
+    useDatabaseBackupsActionsContext();
+
+  return React.useMemo(
+    () =>
+      buildDatabaseColumns({
+        backupMaintenanceAllowed,
+        handlePreview,
+        handleRestoreRequest,
+        handleDeleteRequest,
+      }),
+    [backupMaintenanceAllowed, handleDeleteRequest, handlePreview, handleRestoreRequest]
+  );
+};

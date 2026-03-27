@@ -15,15 +15,15 @@ import type { KangurAccent } from '@/features/kangur/ui/design/tokens';
 import { useKangurCoarsePointer } from '@/features/kangur/ui/hooks/useKangurCoarsePointer';
 import type { Point2d } from '@/shared/contracts/geometry';
 
+import { createAgenticCodingMiniGameComponent } from './AgenticCodingMiniGames.factory';
 import type { DrawCheckpoint, DrawGameConfig } from './AgenticCodingMiniGames.types';
 
-export function AgenticDrawGame({
-  accent,
-  config,
-}: {
+type AgenticDrawGameProps = {
   accent: KangurAccent;
   config: DrawGameConfig;
-}): React.JSX.Element {
+};
+
+function useAgenticDrawGameModel(config: DrawGameConfig) {
   const isCoarsePointer = useKangurCoarsePointer();
   const svgRef = useRef<SVGSVGElement | null>(null);
   const viewBox = { width: 360, height: 140 };
@@ -62,6 +62,38 @@ export function AgenticDrawGame({
     clearStrokes();
   };
 
+  return {
+    completedCount,
+    handlePointerDown,
+    handlePointerMove,
+    handlePointerUp,
+    isCoarsePointer,
+    isComplete,
+    isPointerDrawing,
+    points,
+    reset,
+    svgRef,
+    viewBox,
+    visited,
+  };
+}
+
+function renderAgenticDrawGame(
+  { accent, config }: AgenticDrawGameProps,
+  {
+    completedCount,
+    handlePointerDown,
+    handlePointerMove,
+    handlePointerUp,
+    isCoarsePointer,
+    isComplete,
+    isPointerDrawing,
+    points,
+    reset,
+    svgRef,
+    visited,
+  }: ReturnType<typeof useAgenticDrawGameModel>
+): React.JSX.Element {
   return (
     <KangurLessonStack align='start' className='w-full'>
       <KangurLessonVisual
@@ -117,6 +149,12 @@ export function AgenticDrawGame({
     </KangurLessonStack>
   );
 }
+
+export const AgenticDrawGame = createAgenticCodingMiniGameComponent({
+  displayName: 'AgenticDrawGame',
+  render: renderAgenticDrawGame,
+  useModel: useAgenticDrawGameModel,
+});
 
 const DrawGameSvg = forwardRef<
   SVGSVGElement,

@@ -35,7 +35,7 @@ import {
   KangurInfoCard,
   KangurPanelRow,
 } from '@/features/kangur/ui/design/primitives';
-import { KangurCheckButton } from '@/features/kangur/ui/components/KangurCheckButton';
+import { getKangurCheckButtonClassName } from '@/features/kangur/ui/components/KangurCheckButton';
 import {
   KANGUR_PANEL_GAP_CLASSNAME,
   KANGUR_STACK_TIGHT_CLASSNAME,
@@ -988,19 +988,19 @@ export default function DivisionGroupsGame({
                     </div>
                   </KangurInfoCard>
                   <KangurPanelRow className='items-center sm:justify-between'>
-                    <KangurCheckButton
-                      className='w-full sm:w-auto sm:min-w-[180px]'
+                    <KangurButton
+                      className={getKangurCheckButtonClassName(
+                        'w-full sm:w-auto sm:min-w-[180px]',
+                        status === 'correct' ? 'success' : status === 'wrong' ? 'error' : null
+                      )}
                       onClick={handleCheck}
                       size='md'
                       type='button'
                       variant='surface'
-                      feedbackTone={
-                        status === 'correct' ? 'success' : status === 'wrong' ? 'error' : null
-                      }
                       disabled={isLocked}
                     >
                       Sprawdź
-                    </KangurCheckButton>
+                    </KangurButton>
                     <p
                       className={cn(
                         'text-sm font-semibold sm:text-base sm:text-left sm:max-w-md',

@@ -5,7 +5,7 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 
-import { KangurChoiceDialog } from '@/features/kangur/ui/components/KangurChoiceDialog';
+import { renderKangurChoiceDialog } from '@/features/kangur/ui/components/KangurChoiceDialog';
 
 describe('KangurChoiceDialog', () => {
   it('uses touch-friendly option, close, and done controls', () => {
@@ -14,21 +14,21 @@ describe('KangurChoiceDialog', () => {
     const onSelectAlt = vi.fn();
 
     render(
-      <KangurChoiceDialog
-        open
-        onOpenChange={onOpenChange}
-        header={<div>Header</div>}
-        title='Wybierz tryb'
-        defaultChoiceLabel='Domyślny'
-        currentChoiceLabel='Domyślny'
-        closeAriaLabel='Zamknij dialog'
-        groupAriaLabel='Tryb'
-        options={[
+      renderKangurChoiceDialog({
+        open: true,
+        onOpenChange,
+        header: <div>Header</div>,
+        title: 'Wybierz tryb',
+        defaultChoiceLabel: 'Domyślny',
+        currentChoiceLabel: 'Domyślny',
+        closeAriaLabel: 'Zamknij dialog',
+        groupAriaLabel: 'Tryb',
+        options: [
           { id: 'default', label: 'Domyślny', isActive: true, onSelect: onSelectDefault },
           { id: 'alt', label: 'Alternatywny', isActive: false, onSelect: onSelectAlt },
-        ]}
-        doneLabel='Gotowe'
-      />
+        ],
+        doneLabel: 'Gotowe',
+      })
     );
 
     expect(screen.getByRole('button', { name: 'Domyślny' })).toHaveClass(

@@ -6,7 +6,8 @@ import type { CSSProperties, ReactNode } from 'react';
 
 import { KangurButton } from '@/features/kangur/ui/design/primitives';
 import { KangurDialog } from '@/features/kangur/ui/components/KangurDialog';
-import { KangurDialogHeader } from '@/features/kangur/ui/components/KangurDialogHeader';
+import { KangurDialogCloseButton } from '@/features/kangur/ui/components/KangurDialogCloseButton';
+import { KangurDialogMeta } from '@/features/kangur/ui/components/KangurDialogMeta';
 import {
   KANGUR_SEGMENTED_CONTROL_CLASSNAME,
 } from '@/features/kangur/ui/design/tokens';
@@ -398,6 +399,81 @@ type KangurMusicPianoRollProps<NoteId extends string> = {
   visualCueMode?: 'default' | 'six_year_old';
 };
 
+const renderMusicKeyboardModeCue = ({
+  icon,
+  iconTestId,
+  label,
+}: {
+  icon: string;
+  iconTestId: string;
+  label: string;
+}): React.JSX.Element => (
+  <KangurVisualCueContent
+    icon={icon}
+    iconTestId={iconTestId}
+    label={label}
+  />
+);
+
+const renderMusicWaveformSwitchIcon = ({
+  testId,
+  waveform,
+}: {
+  testId: string;
+  waveform: KangurMusicSynthWaveform;
+}): React.JSX.Element => (
+  <KangurMusicWaveformIcon
+    className='h-4 w-7'
+    data-testid={testId}
+    waveform={waveform}
+  />
+);
+
+const renderMusicGlideModeCue = ({
+  detailTestId,
+  glideMode,
+  iconTestId,
+  label,
+}: {
+  detailTestId: string;
+  glideMode: KangurMusicSynthGlideMode;
+  iconTestId: string;
+  label: string;
+}): React.JSX.Element => (
+  <KangurVisualCueContent
+    detail={glideMode === 'continuous' ? '∿' : '#'}
+    detailTestId={detailTestId}
+    icon='↕'
+    iconTestId={iconTestId}
+    label={label}
+  />
+);
+
+const renderMusicTransportWaveformCue = ({
+  cueTestId,
+  iconTestId,
+  label,
+  waveform,
+}: {
+  cueTestId: string;
+  iconTestId: string;
+  label: string;
+  waveform: KangurMusicSynthWaveform;
+}): React.JSX.Element => (
+  <KangurVisualCueContent
+    detail={
+      <KangurMusicWaveformIcon
+        className='h-3.5 w-6'
+        data-testid={iconTestId}
+        waveform={waveform}
+      />
+    }
+    icon='👂'
+    iconTestId={cueTestId}
+    label={label}
+  />
+);
+
 export default function KangurMusicPianoRoll<NoteId extends string>({
   activeStepIndex = null,
   className,
@@ -458,6 +534,16 @@ export default function KangurMusicPianoRoll<NoteId extends string>({
   const [uncontrolledSynthEnvelope, setUncontrolledSynthEnvelope] =
     useState<KangurMusicSynthEnvelope>(KANGUR_DEFAULT_MUSIC_SYNTH_ENVELOPE);
   const [isSynthEnvelopeDialogOpen, setSynthEnvelopeDialogOpen] = useState(false);
+  const synthEnvelopeDialogContentProps = useMemo(
+    () => ({
+      'data-testid': `${stepTestIdPrefix}-synth-envelope-modal`,
+    }),
+    [stepTestIdPrefix]
+  );
+  const keyboardModePianoTestId = `${stepTestIdPrefix}-keyboard-mode-piano`;
+  const transportModeIconTestId = `${stepTestIdPrefix}-transport-mode-icon`;
+  const transportGlideModeDetailTestId = `${stepTestIdPrefix}-transport-glide-mode-detail`;
+  const transportGlideModeIconTestId = `${stepTestIdPrefix}-transport-glide-mode-icon`;
   const [isSynthOscPanelOpen, setSynthOscPanelOpen] = useState(false);
   const [activeOscTab, setActiveOscTab] = useState<'osc1' | 'osc2'>('osc1');
   const [uncontrolledOsc1Config, setUncontrolledOsc1Config] =
@@ -1280,18 +1366,18 @@ export default function KangurMusicPianoRoll<NoteId extends string>({
               >
                 <KangurButton
                   aria-pressed={resolvedKeyboardMode === 'piano'}
-                  data-testid={`${stepTestIdPrefix}-keyboard-mode-piano`}
+                  data-testid={keyboardModePianoTestId}
                   onClick={() => handleKeyboardModeChange('piano')}
                   size='sm'
                   type='button'
                   variant={resolvedKeyboardMode === 'piano' ? 'segmentActive' : 'segment'}
                 >
                   {isSixYearOldVisualMode ? (
-                    <KangurVisualCueContent
-                      icon='🎹'
-                      iconTestId={`${stepTestIdPrefix}-keyboard-mode-icon-piano`}
-                      label='Piano'
-                    />
+                    renderMusicKeyboardModeCue({
+                      icon: '🎹',
+                      iconTestId: `${stepTestIdPrefix}-keyboard-mode-icon-piano`,
+                      label: 'Piano',
+                    })
                   ) : (
                     'Piano'
                   )}
@@ -1305,11 +1391,11 @@ export default function KangurMusicPianoRoll<NoteId extends string>({
                   variant={resolvedKeyboardMode === 'synth' ? 'segmentActive' : 'segment'}
                 >
                   {isSixYearOldVisualMode ? (
-                    <KangurVisualCueContent
-                      icon='✨'
-                      iconTestId={`${stepTestIdPrefix}-keyboard-mode-icon-synth`}
-                      label='Synth'
-                    />
+                    renderMusicKeyboardModeCue({
+                      icon: '✨',
+                      iconTestId: `${stepTestIdPrefix}-keyboard-mode-icon-synth`,
+                      label: 'Synth',
+                    })
                   ) : (
                     'Synth'
                   )}
@@ -1338,11 +1424,10 @@ export default function KangurMusicPianoRoll<NoteId extends string>({
                     type='button'
                     variant={resolvedSynthWaveform === waveform ? 'segmentActive' : 'segment'}
                   >
-                    <KangurMusicWaveformIcon
-                      className='h-4 w-7'
-                      data-testid={`${stepTestIdPrefix}-synth-waveform-icon-${waveform}`}
-                      waveform={waveform}
-                    />
+                    {renderMusicWaveformSwitchIcon({
+                      testId: `${stepTestIdPrefix}-synth-waveform-icon-${waveform}`,
+                      waveform,
+                    })}
                   </KangurButton>
                 ))}
               </div>
@@ -1369,13 +1454,12 @@ export default function KangurMusicPianoRoll<NoteId extends string>({
                     variant={resolvedSynthGlideMode === glideMode ? 'segmentActive' : 'segment'}
                   >
                     {isSixYearOldVisualMode ? (
-                      <KangurVisualCueContent
-                        detail={glideMode === 'continuous' ? '∿' : '#'}
-                        detailTestId={`${stepTestIdPrefix}-synth-glide-mode-detail-${glideMode}`}
-                        icon='↕'
-                        iconTestId={`${stepTestIdPrefix}-synth-glide-mode-icon-${glideMode}`}
-                        label={`Ruch: ${KANGUR_MUSIC_SYNTH_GLIDE_MODE_LABELS[glideMode]}`}
-                      />
+                      renderMusicGlideModeCue({
+                        detailTestId: `${stepTestIdPrefix}-synth-glide-mode-detail-${glideMode}`,
+                        glideMode,
+                        iconTestId: `${stepTestIdPrefix}-synth-glide-mode-icon-${glideMode}`,
+                        label: `Ruch: ${KANGUR_MUSIC_SYNTH_GLIDE_MODE_LABELS[glideMode]}`,
+                      })
                     ) : (
                       KANGUR_MUSIC_SYNTH_GLIDE_MODE_LABELS[glideMode]
                     )}
@@ -1639,19 +1723,21 @@ export default function KangurMusicPianoRoll<NoteId extends string>({
 
         <KangurDialog
           contentSize='sm'
-          contentProps={{
-            'data-testid': `${stepTestIdPrefix}-synth-envelope-modal`,
-          }}
+          contentProps={synthEnvelopeDialogContentProps}
           onOpenChange={setSynthEnvelopeDialogOpen}
           open={isSynthEnvelopeDialogOpen}
           overlayVariant='standard'
         >
-          <KangurDialogHeader
-            closeAriaLabel={adsrTranslations('closeAriaLabel')}
-            closeLabel={adsrTranslations('close')}
-            description={adsrTranslations('description')}
-            title={adsrTranslations('title')}
-          />
+          <>
+            <KangurDialogMeta
+              title={adsrTranslations('title')}
+              description={adsrTranslations('description')}
+            />
+            <KangurDialogCloseButton
+              aria-label={adsrTranslations('closeAriaLabel')}
+              label={adsrTranslations('close')}
+            />
+          </>
 
           <div className='rounded-[30px] border border-slate-200/80 bg-white/95 p-4 shadow-[0_28px_70px_-42px_rgba(15,23,42,0.28)] sm:p-5'>
             <div className='rounded-[20px] border border-sky-100 bg-sky-50/80 px-4 py-3 text-xs font-semibold text-sky-900'>
@@ -1803,11 +1889,11 @@ export default function KangurMusicPianoRoll<NoteId extends string>({
                       data-testid={`${stepTestIdPrefix}-transport-mode`}
                     >
                       {isSixYearOldVisualMode ? (
-                        <KangurVisualCueContent
-                          icon='✨'
-                          iconTestId={`${stepTestIdPrefix}-transport-mode-icon`}
-                          label={`Tryb: ${resolvedKeyboardMode}`}
-                        />
+                        renderMusicKeyboardModeCue({
+                          icon: '✨',
+                          iconTestId: transportModeIconTestId,
+                          label: `Tryb: ${resolvedKeyboardMode}`,
+                        })
                       ) : (
                         'Synth'
                       )}
@@ -1820,18 +1906,12 @@ export default function KangurMusicPianoRoll<NoteId extends string>({
                       data-testid={`${stepTestIdPrefix}-transport-waveform`}
                     >
                       {isSixYearOldVisualMode ? (
-                        <KangurVisualCueContent
-                          detail={
-                            <KangurMusicWaveformIcon
-                              className='h-3.5 w-6'
-                              data-testid={`${stepTestIdPrefix}-transport-waveform-icon`}
-                              waveform={resolvedSynthWaveform}
-                            />
-                          }
-                          icon='👂'
-                          iconTestId={`${stepTestIdPrefix}-transport-waveform-cue`}
-                          label={`Brzmienie: ${KANGUR_MUSIC_SYNTH_WAVEFORM_LABELS[resolvedSynthWaveform]}`}
-                        />
+                        renderMusicTransportWaveformCue({
+                          cueTestId: `${stepTestIdPrefix}-transport-waveform-cue`,
+                          iconTestId: `${stepTestIdPrefix}-transport-waveform-icon`,
+                          label: `Brzmienie: ${KANGUR_MUSIC_SYNTH_WAVEFORM_LABELS[resolvedSynthWaveform]}`,
+                          waveform: resolvedSynthWaveform,
+                        })
                       ) : (
                         <>Brzmienie: {KANGUR_MUSIC_SYNTH_WAVEFORM_LABELS[resolvedSynthWaveform]}</>
                       )}
@@ -1844,13 +1924,12 @@ export default function KangurMusicPianoRoll<NoteId extends string>({
                       data-testid={`${stepTestIdPrefix}-transport-glide-mode`}
                     >
                       {isSixYearOldVisualMode ? (
-                        <KangurVisualCueContent
-                          detail={resolvedSynthGlideMode === 'continuous' ? '∿' : '#'}
-                          detailTestId={`${stepTestIdPrefix}-transport-glide-mode-detail`}
-                          icon='↕'
-                          iconTestId={`${stepTestIdPrefix}-transport-glide-mode-icon`}
-                          label={`Ruch: ${KANGUR_MUSIC_SYNTH_GLIDE_MODE_LABELS[resolvedSynthGlideMode]}`}
-                        />
+                        renderMusicGlideModeCue({
+                          detailTestId: transportGlideModeDetailTestId,
+                          glideMode: resolvedSynthGlideMode,
+                          iconTestId: transportGlideModeIconTestId,
+                          label: `Ruch: ${KANGUR_MUSIC_SYNTH_GLIDE_MODE_LABELS[resolvedSynthGlideMode]}`,
+                        })
                       ) : (
                         <>Ruch: {KANGUR_MUSIC_SYNTH_GLIDE_MODE_LABELS[resolvedSynthGlideMode]}</>
                       )}

@@ -5,7 +5,7 @@ import type { ReactNode } from 'react';
 
 import { KangurAdminCard, KangurAdminCardHeader } from './KangurAdminCard';
 
-type KangurAdminWorkspaceIntroCardProps = {
+export type KangurAdminWorkspaceIntroCardProps = {
   title: string;
   description: string;
   badge?: string;
@@ -13,7 +13,7 @@ type KangurAdminWorkspaceIntroCardProps = {
   className?: string;
 };
 
-export function KangurAdminWorkspaceIntroCard({
+export function renderKangurAdminWorkspaceIntroCard({
   title,
   description,
   badge,

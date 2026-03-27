@@ -55,6 +55,117 @@ function ConfirmModalDescription({
   );
 }
 
+type ConfirmModalResolvedProps = {
+  isOpen: boolean;
+  onClose: () => void;
+  title: string;
+  resolvedDescription: string;
+  modalSubtitle?: string;
+  message?: React.ReactNode;
+  onConfirmPasswordChange?: (value: string) => void;
+  passwordInputId: string;
+  passwordInputRef: React.RefObject<HTMLInputElement | null>;
+  confirmPassword?: string;
+  loading: boolean;
+  confirmPasswordLabel: string;
+  children?: React.ReactNode;
+  extraAction?: React.ReactNode;
+  cancelText: string;
+  isDangerous: boolean;
+  isConfirmDisabled: boolean;
+  handleConfirm: (event: React.MouseEvent) => Promise<void>;
+  confirmText: string;
+  sizeClasses: string;
+};
+
+const renderConfirmModal = ({
+  isOpen,
+  onClose,
+  title,
+  resolvedDescription,
+  modalSubtitle,
+  message,
+  onConfirmPasswordChange,
+  passwordInputId,
+  passwordInputRef,
+  confirmPassword,
+  loading,
+  confirmPasswordLabel,
+  children,
+  extraAction,
+  cancelText,
+  isDangerous,
+  isConfirmDisabled,
+  handleConfirm,
+  confirmText,
+  sizeClasses,
+}: ConfirmModalResolvedProps): React.JSX.Element => (
+  <AlertDialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
+    <AlertDialogContent className={cn(sizeClasses)}>
+      <AlertDialogHeader>
+        <AlertDialogTitle>{title}</AlertDialogTitle>
+        <ConfirmModalDescription
+          description={resolvedDescription}
+          hasSubtitle={Boolean(modalSubtitle)}
+        />
+      </AlertDialogHeader>
+
+      <div className='space-y-4 py-4'>
+        {message ? (
+          <div className='whitespace-pre-wrap text-sm leading-relaxed text-muted-foreground'>
+            {message}
+          </div>
+        ) : null}
+
+        {onConfirmPasswordChange ? (
+          <div className='space-y-2'>
+            <Label htmlFor={passwordInputId} className='text-xs font-medium text-gray-300'>
+              {confirmPasswordLabel}
+            </Label>
+            <Input
+              id={passwordInputId}
+              ref={passwordInputRef}
+              type='password'
+              value={confirmPassword}
+              onChange={(event) => onConfirmPasswordChange(event.target.value)}
+              placeholder='Enter your password'
+              disabled={loading}
+              aria-label='Enter your password'
+              title='Enter your password'
+            />
+          </div>
+        ) : null}
+
+        {children}
+      </div>
+
+      <AlertDialogFooter>
+        <div className='flex w-full gap-2'>
+          {extraAction}
+          <div className='flex-1' />
+          <AlertDialogCancel asChild>
+            <Button variant='outline' disabled={loading} onClick={onClose}>
+              {cancelText}
+            </Button>
+          </AlertDialogCancel>
+          <AlertDialogAction asChild>
+            <Button
+              onClick={(event) => {
+                void handleConfirm(event);
+              }}
+              variant={isDangerous ? 'destructive' : 'primary'}
+              disabled={isConfirmDisabled}
+              loading={loading}
+            >
+              {confirmText}
+            </Button>
+          </AlertDialogAction>
+        </div>
+      </AlertDialogFooter>
+    </AlertDialogContent>
+  </AlertDialog>
+);
+
 /**
  * Reusable modal template for confirmation dialogs.
  * Refactored to leverage AlertDialog primitive for better accessibility.
@@ -123,70 +234,26 @@ export function ConfirmModal({
     xl: 'sm:max-w-[1000px]',
   }[size];
 
-  return (
-    <AlertDialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <AlertDialogContent className={cn(sizeClasses)}>
-        <AlertDialogHeader>
-          <AlertDialogTitle>{title}</AlertDialogTitle>
-          <ConfirmModalDescription
-            description={resolvedDescription}
-            hasSubtitle={Boolean(modalSubtitle)}
-          />
-        </AlertDialogHeader>
-
-        <div className='space-y-4 py-4'>
-          {message ? (
-            <div className='whitespace-pre-wrap text-sm leading-relaxed text-muted-foreground'>
-              {message}
-            </div>
-          ) : null}
-
-          {onConfirmPasswordChange ? (
-            <div className='space-y-2'>
-              <Label htmlFor={passwordInputId} className='text-xs font-medium text-gray-300'>
-                {confirmPasswordLabel}
-              </Label>
-              <Input
-                id={passwordInputId}
-                ref={passwordInputRef}
-                type='password'
-                value={confirmPassword}
-                onChange={(event) => onConfirmPasswordChange(event.target.value)}
-                placeholder='Enter your password'
-                disabled={loading}
-                aria-label='Enter your password'
-                title='Enter your password'
-              />
-            </div>
-          ) : null}
-
-          {children}
-        </div>
-
-        <AlertDialogFooter>
-          <div className='flex w-full gap-2'>
-            {extraAction}
-            <div className='flex-1' />
-            <AlertDialogCancel asChild>
-              <Button variant='outline' disabled={loading} onClick={onClose}>
-                {cancelText}
-              </Button>
-            </AlertDialogCancel>
-            <AlertDialogAction asChild>
-              <Button
-                onClick={(event) => {
-                  void handleConfirm(event);
-                }}
-                variant={isDangerous ? 'destructive' : 'primary'}
-                disabled={isConfirmDisabled}
-                loading={loading}
-              >
-                {confirmText}
-              </Button>
-            </AlertDialogAction>
-          </div>
-        </AlertDialogFooter>
-      </AlertDialogContent>
-    </AlertDialog>
-  );
+  return renderConfirmModal({
+    isOpen,
+    onClose,
+    title,
+    resolvedDescription,
+    modalSubtitle,
+    message,
+    onConfirmPasswordChange,
+    passwordInputId,
+    passwordInputRef,
+    confirmPassword,
+    loading,
+    confirmPasswordLabel,
+    children,
+    extraAction,
+    cancelText,
+    isDangerous,
+    isConfirmDisabled,
+    handleConfirm,
+    confirmText,
+    sizeClasses,
+  });
 }

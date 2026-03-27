@@ -14,6 +14,9 @@ const useKangurPageContentEntryMock = vi.hoisted(() => vi.fn());
 const { useKangurSubjectFocusMock } = vi.hoisted(() => ({
   useKangurSubjectFocusMock: vi.fn(),
 }));
+const { sessionMock } = vi.hoisted(() => ({
+  sessionMock: vi.fn(),
+}));
 
 vi.mock('@/features/kangur/ui/hooks/useKangurPageContent', () => ({
   useKangurPageContentEntry: useKangurPageContentEntryMock,
@@ -21,6 +24,10 @@ vi.mock('@/features/kangur/ui/hooks/useKangurPageContent', () => ({
 
 vi.mock('@/features/kangur/ui/context/KangurSubjectFocusContext', () => ({
   useKangurSubjectFocus: () => useKangurSubjectFocusMock(),
+}));
+
+vi.mock('@/features/kangur/ui/hooks/useOptionalNextAuthSession', () => ({
+  useOptionalNextAuthSession: () => sessionMock(),
 }));
 
 import { KangurTopNavigationController } from './KangurTopNavigationController';
@@ -49,8 +56,17 @@ const GAME_NAVIGATION = {
   showParentDashboard: false,
 };
 
+const GAMES_LIBRARY_NAVIGATION = {
+  ...LESSONS_NAVIGATION,
+  currentPage: 'GamesLibrary' as const,
+};
+
 describe('KangurTopNavigationController', () => {
   beforeEach(() => {
+    sessionMock.mockReturnValue({
+      data: null,
+      status: 'unauthenticated',
+    });
     useKangurPageContentEntryMock.mockReturnValue({
       data: undefined,
       entry: null,
@@ -78,6 +94,27 @@ describe('KangurTopNavigationController', () => {
       screen.getByRole('navigation', { name: /główna nawigacja kangur/i })
     ).toBeInTheDocument();
     expect(screen.getByTestId('kangur-primary-nav-lessons')).toHaveAttribute('aria-current', 'page');
+  });
+
+  it('sanitizes blocked GamesLibrary navigation when rendering locally without a host', () => {
+    sessionMock.mockReturnValue({
+      data: {
+        expires: '2026-12-31T23:59:59.000Z',
+        user: {
+          email: 'admin@example.com',
+          id: 'admin-1',
+          image: null,
+          name: 'Admin',
+          role: 'admin',
+        },
+      },
+      status: 'authenticated',
+    });
+
+    render(<KangurTopNavigationController navigation={GAMES_LIBRARY_NAVIGATION} />);
+
+    expect(screen.getByTestId('kangur-primary-nav-home')).toHaveAttribute('aria-current', 'page');
+    expect(screen.queryByTestId('kangur-primary-nav-games-library')).toBeNull();
   });
 
   it('renders through the shared host and updates in place when the page changes', () => {

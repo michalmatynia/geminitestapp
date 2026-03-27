@@ -42,7 +42,7 @@ vi.mock('@/shared/providers/BackgroundSyncProvider', () => ({
 }));
 
 vi.mock('@/shared/providers/CsrfProvider', () => {
-  const CsrfProvider = (): null => null;
+  const CsrfProvider = (): React.JSX.Element => <div data-testid='csrf-provider' />;
   return { CsrfProvider, default: CsrfProvider };
 });
 
@@ -69,7 +69,12 @@ vi.mock('@/shared/providers/theme-provider', () => ({
 }));
 
 vi.mock('@/shared/providers/UrlGuardProvider', () => ({
-  UrlGuardProvider: ({ children }: { children: React.ReactNode }) => <>{children}</>,
+  UrlGuardProvider: ({ children }: { children: React.ReactNode }) => (
+    <>
+      <div data-testid='url-guard-provider' />
+      {children}
+    </>
+  ),
 }));
 
 vi.mock('@/shared/ui/AppErrorBoundary', () => ({
@@ -95,6 +100,23 @@ vi.mock('@/shared/ui/toast', () => ({
 
 import { RootProvidersClient } from './RootProvidersClient';
 
+async function renderRootProvidersClient(
+  searchParams?: URLSearchParams,
+): Promise<void> {
+  if (searchParams) {
+    searchParamsRef.current = searchParams;
+  }
+
+  render(
+    <RootProvidersClient>
+      <div data-testid='content'>content</div>
+    </RootProvidersClient>
+  );
+
+  await screen.findByTestId('csrf-provider');
+  await screen.findByTestId('url-guard-provider');
+}
+
 describe('RootProvidersClient', () => {
   beforeEach(() => {
     searchParamsRef.current = new URLSearchParams();
@@ -102,12 +124,8 @@ describe('RootProvidersClient', () => {
     settingsStoreProviderPropsMock.mockClear();
   });
 
-  it('keeps normal settings and session bootstrapping outside synthetic Kangur captures', () => {
-    render(
-      <RootProvidersClient>
-        <div data-testid='content'>content</div>
-      </RootProvidersClient>
-    );
+  it('keeps normal settings and session bootstrapping outside synthetic Kangur captures', async () => {
+    await renderRootProvidersClient();
 
     expect(settingsStoreProviderPropsMock).toHaveBeenCalledWith({
       mode: 'lite',
@@ -122,14 +140,8 @@ describe('RootProvidersClient', () => {
     expect(screen.getByTestId('content')).toBeInTheDocument();
   });
 
-  it('suppresses settings and session bootstrap during synthetic Kangur social captures', () => {
-    searchParamsRef.current = new URLSearchParams('kangurCapture=social-batch');
-
-    render(
-      <RootProvidersClient>
-        <div data-testid='content'>content</div>
-      </RootProvidersClient>
-    );
+  it('suppresses settings and session bootstrap during synthetic Kangur social captures', async () => {
+    await renderRootProvidersClient(new URLSearchParams('kangurCapture=social-batch'));
 
     expect(settingsStoreProviderPropsMock).toHaveBeenCalledWith({
       mode: 'lite',

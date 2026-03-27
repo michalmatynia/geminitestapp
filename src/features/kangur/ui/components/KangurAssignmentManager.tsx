@@ -44,7 +44,7 @@ import {
   KangurAssignmentManagerCardHeader,
   KangurAssignmentManagerItemCard,
 } from './KangurAssignmentManager.cards';
-import { KangurAssignmentManagerTimeLimitModal } from './KangurAssignmentManagerTimeLimitModal';
+import { renderKangurAssignmentManagerTimeLimitModal } from './KangurAssignmentManagerTimeLimitModal';
 import {
   FILTER_OPTION_VALUES,
   TIME_LIMIT_MINUTES_MAX,
@@ -590,20 +590,20 @@ export function KangurAssignmentManager({
 
   return (
     <div className={`flex flex-col ${KANGUR_PANEL_GAP_CLASSNAME}`}>
-      <KangurAssignmentManagerTimeLimitModal
-        isOpen={isTimeLimitModalOpen}
-        onClose={handleCloseTimeLimitModal}
-        onSave={() => void handleSaveTimeLimit()}
-        timeLimitDraft={timeLimitDraft}
-        onTimeLimitDraftChange={setTimeLimitDraft}
-        timeLimitTarget={timeLimitTarget}
-        timeLimitPreview={timeLimitPreview}
-        timeLimitParsedError={timeLimitParsedError}
-        isSaveDisabled={isTimeLimitSaveDisabled}
-        saveLabel={timeLimitSaveLabel}
-        minMinutes={TIME_LIMIT_MINUTES_MIN}
-        maxMinutes={TIME_LIMIT_MINUTES_MAX}
-      />
+      {renderKangurAssignmentManagerTimeLimitModal({
+        isOpen: isTimeLimitModalOpen,
+        onClose: handleCloseTimeLimitModal,
+        onSave: () => void handleSaveTimeLimit(),
+        timeLimitDraft,
+        onTimeLimitDraftChange: setTimeLimitDraft,
+        timeLimitTarget,
+        timeLimitPreview,
+        timeLimitParsedError,
+        isSaveDisabled: isTimeLimitSaveDisabled,
+        saveLabel: timeLimitSaveLabel,
+        minMinutes: TIME_LIMIT_MINUTES_MIN,
+        maxMinutes: TIME_LIMIT_MINUTES_MAX,
+      })}
       {shouldShowCatalog ? (
         <KangurGlassPanel
           data-testid='assignment-manager-create-shell'

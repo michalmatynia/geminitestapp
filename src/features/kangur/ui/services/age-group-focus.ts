@@ -1,4 +1,4 @@
-import { DEFAULT_KANGUR_AGE_GROUP } from '@/features/kangur/lessons/lesson-catalog';
+import { DEFAULT_KANGUR_AGE_GROUP } from '@/features/kangur/lessons/lesson-catalog-metadata';
 import { withKangurClientErrorSync } from '@/features/kangur/observability/client';
 import {
   kangurLessonAgeGroupSchema,

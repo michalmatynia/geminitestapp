@@ -664,14 +664,14 @@ type RotationTilePreviewProps = {
   className?: string;
 };
 
-export const RotationTilePreview = memo(function RotationTilePreview({
+const renderRotationTilePreview = ({
   animated = true,
   tile,
   label,
   placeholder = false,
   testId,
   className,
-}: RotationTilePreviewProps): React.JSX.Element {
+}: RotationTilePreviewProps): React.JSX.Element => {
   const tileStyle = getTileAccentStyle(tile, placeholder);
 
   if (placeholder || !tile) {
@@ -724,7 +724,7 @@ export const RotationTilePreview = memo(function RotationTilePreview({
       </div>
     </div>
   );
-});
+};
 
 export type RotationBoardSlotView = {
   id: string;
@@ -891,7 +891,7 @@ type RotationOptionCardProps = {
   tileLabel: string;
 };
 
-export const RotationOptionCard = memo(function RotationOptionCard({
+export function renderRotationOptionCard({
   accent,
   ariaLabel,
   animated = true,
@@ -929,12 +929,12 @@ export const RotationOptionCard = memo(function RotationOptionCard({
           {choiceLabel}
         </span>
         <div className='art-shapes-rotation-option-card__tile'>
-          <RotationTilePreview
-            animated={animated}
-            className='art-shapes-rotation-option-preview'
-            tile={tile}
-            label={tileLabel}
-          />
+          {renderRotationTilePreview({
+            animated,
+            className: 'art-shapes-rotation-option-preview',
+            tile,
+            label: tileLabel,
+          })}
         </div>
         <div className='min-h-0'>
           <div className='art-shapes-rotation-option-card__label break-words font-semibold'>
@@ -956,7 +956,7 @@ export const RotationOptionCard = memo(function RotationOptionCard({
       ) : null}
     </KangurOptionCardButton>
   );
-});
+}
 
 export const getRotationTileAccent = (glyph: RotationGlyph): KangurAccent =>
   ROTATION_TILE_ACCENTS[glyph];

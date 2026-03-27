@@ -23,6 +23,103 @@ export interface SelectModalProps<T> {
   size?: 'sm' | 'md' | 'lg' | 'xl';
 }
 
+type SelectModalResolvedProps<T> = {
+  open: boolean;
+  onClose: () => void;
+  title: string;
+  subtitle?: string;
+  modalSize: 'sm' | 'md' | 'lg' | 'xl';
+  handleConfirm: () => void;
+  multiple: boolean;
+  selectedSize: number;
+  loading: boolean;
+  searchable: boolean;
+  search: string;
+  setSearch: (value: string) => void;
+  filteredOptions: SelectOption<T>[];
+  handleSelect: (option: SelectOption<T>) => void;
+  selectedIds: Set<string | number>;
+};
+
+const renderSelectModal = <T,>({
+  open,
+  onClose,
+  title,
+  subtitle,
+  modalSize,
+  handleConfirm,
+  multiple,
+  selectedSize,
+  loading,
+  searchable,
+  search,
+  setSearch,
+  filteredOptions,
+  handleSelect,
+  selectedIds,
+}: SelectModalResolvedProps<T>): React.JSX.Element => (
+  <FormModal
+    open={open}
+    onClose={onClose}
+    title={title}
+    subtitle={subtitle}
+    size={modalSize}
+    onSave={handleConfirm}
+    showSaveButton={multiple}
+    saveText={`Select (${selectedSize})`}
+    isSaveDisabled={selectedSize === 0}
+    isSaving={loading}
+  >
+    <div className={UI_STACK_RELAXED_CLASSNAME}>
+      {searchable ? (
+        <SearchInput
+          placeholder='Search options...'
+          value={search}
+          onChange={(event) => setSearch(event.target.value)}
+          onClear={() => setSearch('')}
+          aria-label='Search options'
+          disabled={loading}
+          size='sm'
+        />
+      ) : null}
+
+      {loading ? (
+        <div className='flex items-center justify-center py-12'>
+          <span className='text-sm text-muted-foreground animate-pulse'>Loading options...</span>
+        </div>
+      ) : filteredOptions.length === 0 ? (
+        <div className='flex items-center justify-center py-12'>
+          <span className='text-sm text-muted-foreground italic'>No options available</span>
+        </div>
+      ) : (
+        <div className='space-y-1 max-h-96 overflow-y-auto pr-1'>
+          {filteredOptions.map((option) => (
+            <button
+              key={option.id}
+              type='button'
+              onClick={() => handleSelect(option)}
+              disabled={option.disabled || loading}
+              aria-label={option.label}
+              className={cn(
+                'w-full rounded-md border p-3 text-left transition-all duration-200',
+                selectedIds.has(option.id)
+                  ? 'border-primary bg-primary/10 text-primary'
+                  : 'border-border/60 bg-card/40 text-gray-300 hover:border-border hover:bg-muted/20',
+                option.disabled ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'
+              )}
+            >
+              <div className='text-sm font-medium'>{option.label}</div>
+              {option.description ? (
+                <div className='mt-0.5 text-xs opacity-70'>{option.description}</div>
+              ) : null}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  </FormModal>
+);
+
 /**
  * Reusable modal template for single/multi-select operations.
  * Refactored to leverage FormModal and SearchInput for consistent UX.
@@ -80,66 +177,21 @@ export function SelectModal<T>({
     onClose();
   }, [multiple, onClose, onSelect, options, selectedIds]);
 
-  return (
-    <FormModal
-      open={open}
-      onClose={onClose}
-      title={title}
-      subtitle={subtitle}
-      size={modalSize}
-      onSave={handleConfirm}
-      showSaveButton={multiple}
-      saveText={`Select (${selectedIds.size})`}
-      isSaveDisabled={selectedIds.size === 0}
-      isSaving={loading}
-    >
-      <div className={UI_STACK_RELAXED_CLASSNAME}>
-        {searchable ? (
-          <SearchInput
-            placeholder='Search options...'
-            value={search}
-            onChange={(event) => setSearch(event.target.value)}
-            onClear={() => setSearch('')}
-            aria-label='Search options'
-            disabled={loading}
-            size='sm'
-          />
-        ) : null}
-
-        {loading ? (
-          <div className='flex items-center justify-center py-12'>
-            <span className='text-sm text-muted-foreground animate-pulse'>Loading options...</span>
-          </div>
-        ) : filteredOptions.length === 0 ? (
-          <div className='flex items-center justify-center py-12'>
-            <span className='text-sm text-muted-foreground italic'>No options available</span>
-          </div>
-        ) : (
-          <div className='space-y-1 max-h-96 overflow-y-auto pr-1'>
-            {filteredOptions.map((option) => (
-              <button
-                key={option.id}
-                type='button'
-                onClick={() => handleSelect(option)}
-                disabled={option.disabled || loading}
-                aria-label={option.label}
-                className={cn(
-                  'w-full rounded-md border p-3 text-left transition-all duration-200',
-                  selectedIds.has(option.id)
-                    ? 'border-primary bg-primary/10 text-primary'
-                    : 'border-border/60 bg-card/40 text-gray-300 hover:border-border hover:bg-muted/20',
-                  option.disabled ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'
-                )}
-              >
-                <div className='text-sm font-medium'>{option.label}</div>
-                {option.description ? (
-                  <div className='mt-0.5 text-xs opacity-70'>{option.description}</div>
-                ) : null}
-              </button>
-            ))}
-          </div>
-        )}
-      </div>
-    </FormModal>
-  );
+  return renderSelectModal({
+    open,
+    onClose,
+    title,
+    subtitle,
+    modalSize,
+    handleConfirm,
+    multiple,
+    selectedSize: selectedIds.size,
+    loading,
+    searchable,
+    search,
+    setSearch,
+    filteredOptions,
+    handleSelect,
+    selectedIds,
+  });
 }

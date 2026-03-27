@@ -12,9 +12,14 @@ import type {
   KangurLaunchableGameScreen,
 } from '@/shared/contracts/kangur-games';
 import { getKangurLaunchableGameRuntimeSpec } from '@/features/kangur/games/launchable-runtime-specs';
-import { KangurGameQuizStage } from '@/features/kangur/ui/components/KangurGameQuizStage';
+import { renderKangurGameQuizStage } from '@/features/kangur/ui/components/KangurGameQuizStage';
 import { KANGUR_LAUNCHABLE_GAME_SCREENS } from '@/features/kangur/ui/services/game-launch';
-import type { KangurGameScreen } from '@/features/kangur/ui/types';
+import type {
+  KangurGameScreen,
+  KangurMiniGameFinishActionProps,
+  KangurMiniGameFinishProps,
+  KangurMiniGameFinishVariantProps,
+} from '@/features/kangur/ui/types';
 
 const AddingBallGame = dynamic(() => import('@/features/kangur/ui/components/AddingBallGame'), {
   ssr: false,
@@ -70,14 +75,20 @@ type LaunchableGameRendererContext = {
   returnToGameHomeLabel: string;
 };
 
+type LaunchableGameRendererProps = KangurMiniGameFinishActionProps & {
+  completionPrimaryActionLabel?: string;
+  finishLabel?: KangurMiniGameFinishProps['finishLabel'];
+  finishLabelVariant?: KangurMiniGameFinishVariantProps['finishLabelVariant'];
+};
+
 type LaunchableGameRendererConfig = {
-  Component: ComponentType<any>;
+  render: (props: LaunchableGameRendererProps) => React.JSX.Element;
 };
 
 const resolveLaunchableGameRendererProps = (
   context: LaunchableGameRendererContext
-): Record<string, unknown> => {
-  const props: Record<string, unknown> = {
+): LaunchableGameRendererProps => {
+  const props: LaunchableGameRendererProps = {
     onFinish: context.handleHome,
   };
 
@@ -105,22 +116,85 @@ const resolveLaunchableGameRendererProps = (
   return props;
 };
 
+const toLessonPlayFinishLabelVariant = (
+  finishLabelVariant: LaunchableGameRendererProps['finishLabelVariant']
+): KangurMiniGameFinishVariantProps['finishLabelVariant'] | undefined =>
+  finishLabelVariant === 'play' ? 'play' : finishLabelVariant === 'lesson' ? 'lesson' : undefined;
+
 const KANGUR_LAUNCHABLE_GAME_RENDERERS: Record<
   KangurLaunchableGameRuntimeRendererId,
   LaunchableGameRendererConfig
 > = {
-  adding_ball_game: { Component: AddingBallGame },
-  calendar_training_game: { Component: CalendarTrainingGame },
-  clock_training_game: { Component: ClockTrainingGame },
-  division_game: { Component: DivisionGame },
-  english_parts_of_speech_game: { Component: EnglishPartsOfSpeechGame },
-  english_sentence_structure_game: { Component: EnglishSentenceStructureGame },
-  geometry_drawing_game: { Component: GeometryDrawingGame },
-  logical_analogies_relation_game: { Component: LogicalAnalogiesRelationGame },
-  logical_classification_game: { Component: LogicalClassificationGame },
-  logical_patterns_workshop_game: { Component: LogicalPatternsWorkshopGame },
-  multiplication_game: { Component: MultiplicationGame },
-  subtracting_game: { Component: SubtractingGame },
+  adding_ball_game: {
+    render: ({ finishLabelVariant, onFinish }) => (
+      <AddingBallGame finishLabelVariant={finishLabelVariant} onFinish={onFinish} />
+    ),
+  },
+  calendar_training_game: {
+    render: ({ onFinish }) => <CalendarTrainingGame onFinish={onFinish} />,
+  },
+  clock_training_game: {
+    render: ({ completionPrimaryActionLabel, onFinish }) => (
+      <ClockTrainingGame
+        completionPrimaryActionLabel={completionPrimaryActionLabel}
+        onFinish={onFinish}
+      />
+    ),
+  },
+  division_game: {
+    render: ({ finishLabelVariant, onFinish }) => (
+      <DivisionGame
+        finishLabelVariant={toLessonPlayFinishLabelVariant(finishLabelVariant)}
+        onFinish={onFinish}
+      />
+    ),
+  },
+  english_parts_of_speech_game: {
+    render: ({ finishLabel, onFinish }) => (
+      <EnglishPartsOfSpeechGame finishLabel={finishLabel} onFinish={onFinish} />
+    ),
+  },
+  english_sentence_structure_game: {
+    render: ({ finishLabel, onFinish }) => (
+      <EnglishSentenceStructureGame finishLabel={finishLabel} onFinish={onFinish} />
+    ),
+  },
+  geometry_drawing_game: {
+    render: ({ finishLabel, onFinish }) => (
+      <GeometryDrawingGame finishLabel={finishLabel} onFinish={onFinish} />
+    ),
+  },
+  logical_analogies_relation_game: {
+    render: ({ finishLabel, onFinish }) => (
+      <LogicalAnalogiesRelationGame finishLabel={finishLabel} onFinish={onFinish} />
+    ),
+  },
+  logical_classification_game: {
+    render: ({ finishLabel, onFinish }) => (
+      <LogicalClassificationGame finishLabel={finishLabel} onFinish={onFinish} />
+    ),
+  },
+  logical_patterns_workshop_game: {
+    render: ({ finishLabel, onFinish }) => (
+      <LogicalPatternsWorkshopGame finishLabel={finishLabel} onFinish={onFinish} />
+    ),
+  },
+  multiplication_game: {
+    render: ({ finishLabelVariant, onFinish }) => (
+      <MultiplicationGame
+        finishLabelVariant={toLessonPlayFinishLabelVariant(finishLabelVariant)}
+        onFinish={onFinish}
+      />
+    ),
+  },
+  subtracting_game: {
+    render: ({ finishLabelVariant, onFinish }) => (
+      <SubtractingGame
+        finishLabelVariant={toLessonPlayFinishLabelVariant(finishLabelVariant)}
+        onFinish={onFinish}
+      />
+    ),
+  },
 };
 
 const getKangurLaunchableGameRendererConfig = (
@@ -142,36 +216,36 @@ const KangurConfigurableLaunchableGameScreen = ({
 }): React.JSX.Element => {
   const translations = useTranslations('KangurGameWidgets');
   const renderer = getKangurLaunchableGameRendererConfig(runtime.rendererId);
-  const ScreenComponent = renderer.Component;
   const backScreen = runtime.stage.backScreen as KangurGameScreen | undefined;
+  const stageProps = {
+    accent: runtime.stage.accent,
+    backScreen,
+    description: runtime.stage.description,
+    icon: runtime.stage.icon,
+    screen: runtime.screen,
+    shellTestId: runtime.stage.shellTestId,
+    title: runtime.stage.title,
+  };
 
   return (
-    <KangurGameQuizStage
-      accent={runtime.stage.accent}
-      backScreen={backScreen}
-      description={runtime.stage.description}
-      icon={runtime.stage.icon}
-      screen={runtime.screen}
-      shellTestId={runtime.stage.shellTestId}
-      title={runtime.stage.title}
-    >
-      {({ handleHome }) => (
-        <ScreenComponent
-          {...resolveLaunchableGameRendererProps({
+    renderKangurGameQuizStage({
+      ...stageProps,
+      children: ({ handleHome }) =>
+        renderer.render(
+          resolveLaunchableGameRendererProps({
             finishLabelProp: runtime.finishLabelProp,
             finishMode: runtime.finishMode,
             handleHome,
             returnToGameHomeLabel: translations('returnToGameHome'),
-          })}
-        />
-      )}
-    </KangurGameQuizStage>
+          })
+        ),
+    }) ?? <></>
   );
 };
 
 export type KangurLaunchableGameScreenComponentConfig = {
   className: string;
-  Component: ComponentType<any>;
+  Component: ComponentType<Record<string, never>>;
   runtime: KangurLaunchableGameRuntimeSpec;
 };
 
@@ -179,7 +253,7 @@ const createLaunchableGameScreenComponentConfig = (
   screen: KangurLaunchableGameScreen
 ): KangurLaunchableGameScreenComponentConfig => {
   const runtime = getKangurLaunchableGameRuntimeSpec(screen);
-  const Component: ComponentType = (): React.JSX.Element => (
+  const Component: ComponentType<Record<string, never>> = (): React.JSX.Element => (
     <KangurConfigurableLaunchableGameScreen runtime={runtime} />
   );
 

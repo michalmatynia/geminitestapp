@@ -24,7 +24,9 @@ type KangurGameQuizStageProps = {
   title?: string;
 };
 
-export function KangurGameQuizStage({
+export type { KangurGameQuizStageProps };
+
+export function renderKangurGameQuizStage({
   accent,
   backButtonLabel,
   backScreen = 'operation',

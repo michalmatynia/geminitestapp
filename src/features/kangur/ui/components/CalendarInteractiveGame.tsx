@@ -42,6 +42,7 @@ import type { KangurMiniGameBinaryFeedbackState } from '@/features/kangur/ui/typ
 import { cn } from '@/features/kangur/shared/utils';
 
 type CalendarInteractiveGameProps = {
+  calendarSection?: CalendarInteractiveTaskPoolId;
   onFinish?: () => void;
   section?: CalendarInteractiveTaskPoolId;
   stage?: {
@@ -365,12 +366,13 @@ function generateTask(
 }
 
 export default function CalendarInteractiveGame({
+  calendarSection,
   onFinish,
   section = 'mixed',
   stage,
 }: CalendarInteractiveGameProps): React.JSX.Element {
   const resolvedOnFinish = stage?.onFinish ?? onFinish ?? (() => undefined);
-  const resolvedSection = stage?.section ?? section;
+  const resolvedSection = stage?.section ?? calendarSection ?? section;
   const translations = useTranslations('KangurMiniGames');
   const isCoarsePointer = useKangurCoarsePointer();
   const YEAR = 2025;
@@ -412,7 +414,7 @@ export default function CalendarInteractiveGame({
 
       const nextMonth = Math.floor(Math.random() * 12);
       setMonth(nextMonth);
-      setTask(generateTask(nextMonth, YEAR, translations, section));
+      setTask(generateTask(nextMonth, YEAR, translations, resolvedSection));
       setRound((currentRound) => currentRound + 1);
     }, 1300);
   };
@@ -484,7 +486,7 @@ export default function CalendarInteractiveGame({
     setSelectedSeason(null);
     setSelectedWeekdayIdx(null);
     setMonth(startMonth);
-    setTask(generateTask(startMonth, YEAR, translations, section));
+    setTask(generateTask(startMonth, YEAR, translations, resolvedSection));
   };
 
   const cells = getCalendarCells(month, YEAR);
@@ -513,11 +515,11 @@ export default function CalendarInteractiveGame({
         />
         <KangurPracticeGameSummaryMessage>
           {percent === 100
-            ? translations(`calendarInteractive.summary.${section}.perfect`)
+            ? translations(`calendarInteractive.summary.${resolvedSection}.perfect`)
             : percent >= 60
-              ? translations(`calendarInteractive.summary.${section}.retry`)
+              ? translations(`calendarInteractive.summary.${resolvedSection}.retry`)
               : translations(
-                  section === 'mixed'
+                  resolvedSection === 'mixed'
                     ? 'calendarInteractive.summary.mixed.encouragement'
                     : 'calendarInteractive.summary.sectionEncouragement'
                 )}
@@ -537,7 +539,7 @@ export default function CalendarInteractiveGame({
 
   return (
     <KangurPracticeGameStage className='mx-auto max-w-lg'>
-      {section !== 'mixed' ? (
+      {resolvedSection !== 'mixed' ? (
         <KangurInfoCard
           accent={trainingSectionContent.accent}
           className='w-full rounded-[24px]'
@@ -549,10 +551,10 @@ export default function CalendarInteractiveGame({
             className='text-sm font-semibold [color:var(--kangur-page-text)]'
             data-testid='calendar-interactive-guidance-title'
           >
-            {translations(`calendarInteractive.section.${section}.guidanceTitle`)}
+            {translations(`calendarInteractive.section.${resolvedSection}.guidanceTitle`)}
           </p>
           <p className='mt-2 text-sm font-normal leading-relaxed [color:var(--kangur-page-text)]'>
-            {translations(`calendarInteractive.section.${section}.guidance`)}
+            {translations(`calendarInteractive.section.${resolvedSection}.guidance`)}
           </p>
         </KangurInfoCard>
       ) : null}
@@ -576,9 +578,9 @@ export default function CalendarInteractiveGame({
           padding='sm'
           tone='accent'
         >
-          {section !== 'mixed' ? (
+          {resolvedSection !== 'mixed' ? (
             <p className='text-xs font-extrabold uppercase tracking-[0.12em] text-green-800/75'>
-              {translations(`calendarInteractive.section.${section}.promptLabel`)}
+              {translations(`calendarInteractive.section.${resolvedSection}.promptLabel`)}
             </p>
           ) : null}
           <p className='text-sm font-bold text-green-800'>📅 {task.label}</p>

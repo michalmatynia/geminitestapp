@@ -10,7 +10,6 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 const { authMeMock, sessionMock, useKangurRoutingMock, usePathnameMock, routerPushMock } =
   vi.hoisted(() => ({
     authMeMock: vi.fn(),
-    sessionMock: vi.fn(),
     useKangurRoutingMock: vi.fn(),
     usePathnameMock: vi.fn(),
     routerPushMock: vi.fn(),
@@ -21,10 +20,6 @@ vi.mock('next/navigation', () => ({
   useRouter: () => ({
     push: routerPushMock,
   }),
-}));
-
-vi.mock('next-auth/react', () => ({
-  useSession: () => sessionMock(),
 }));
 
 vi.mock('@/features/kangur/services/kangur-platform', () => ({
@@ -65,10 +60,6 @@ describe('PageNotFound', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     authMeMock.mockResolvedValue({ role: 'student' });
-    sessionMock.mockReturnValue({
-      data: null,
-      status: 'unauthenticated',
-    });
     usePathnameMock.mockReturnValue('/kangur/missing-page');
     useKangurRoutingMock.mockReturnValue({
       basePath: '/kangur',
@@ -121,21 +112,12 @@ describe('PageNotFound', () => {
     );
   });
 
-  it('does not expose the blocked GamesLibrary page name to non-super-admin users', async () => {
-    usePathnameMock.mockReturnValue('/kangur/games');
+  it('uses the sanitized routing state instead of exposing a blocked GamesLibrary path', async () => {
+    usePathnameMock.mockReturnValue('/kangur');
     useKangurRoutingMock.mockReturnValue({
       basePath: '/kangur',
-      pageKey: 'GamesLibrary',
-      requestedPath: '/kangur/games',
-    });
-    sessionMock.mockReturnValue({
-      data: {
-        user: {
-          email: 'admin@example.com',
-          role: 'admin',
-        },
-      },
-      status: 'authenticated',
+      pageKey: 'Game',
+      requestedPath: '/kangur',
     });
 
     render(<PageNotFound />, { wrapper: createWrapper() });

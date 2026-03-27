@@ -66,6 +66,88 @@ vi.mock('@tanstack/react-query', () => ({
   useQueryClient: useQueryClientMock,
 }));
 
+vi.mock('react-native', () => {
+  const createPrimitive = (tagName: keyof React.JSX.IntrinsicElements) => {
+    return ({
+      accessibilityHint: _accessibilityHint,
+      accessibilityLabel,
+      accessibilityLiveRegion,
+      accessibilityRole,
+      children,
+      contentContainerStyle: _contentContainerStyle,
+      keyboardShouldPersistTaps: _keyboardShouldPersistTaps,
+      onPress,
+      testID,
+      ...props
+    }: React.PropsWithChildren<
+      Record<string, unknown> & {
+        accessibilityHint?: string;
+        accessibilityLabel?: string;
+        accessibilityLiveRegion?: 'off' | 'none' | 'polite' | 'assertive';
+        accessibilityRole?: string;
+        contentContainerStyle?: unknown;
+        keyboardShouldPersistTaps?: string;
+        onPress?: () => void;
+        testID?: string;
+      }
+    >) =>
+      React.createElement(
+        tagName,
+        {
+          ...props,
+          ...(testID ? { 'data-testid': testID } : {}),
+          ...(accessibilityLabel ? { 'aria-label': accessibilityLabel } : {}),
+          ...(accessibilityRole ? { role: accessibilityRole } : {}),
+          ...(accessibilityLiveRegion ? { 'aria-live': accessibilityLiveRegion } : {}),
+          ...(onPress ? { onClick: onPress } : {}),
+        },
+        children,
+      );
+  };
+
+  return {
+    Pressable: createPrimitive('button'),
+    ScrollView: createPrimitive('div'),
+    Text: createPrimitive('span'),
+    View: createPrimitive('div'),
+  };
+});
+
+vi.mock('react-native-safe-area-context', () => {
+  const createPrimitive = (tagName: keyof React.JSX.IntrinsicElements) => {
+    return ({
+      accessibilityLabel,
+      accessibilityLiveRegion,
+      accessibilityRole,
+      children,
+      testID,
+      ...props
+    }: React.PropsWithChildren<
+      Record<string, unknown> & {
+        accessibilityLabel?: string;
+        accessibilityLiveRegion?: 'off' | 'none' | 'polite' | 'assertive';
+        accessibilityRole?: string;
+        testID?: string;
+      }
+    >) =>
+      React.createElement(
+        tagName,
+        {
+          ...props,
+          ...(testID ? { 'data-testid': testID } : {}),
+          ...(accessibilityLabel ? { 'aria-label': accessibilityLabel } : {}),
+          ...(accessibilityRole ? { role: accessibilityRole } : {}),
+          ...(accessibilityLiveRegion ? { 'aria-live': accessibilityLiveRegion } : {}),
+        },
+        children,
+      );
+  };
+
+  return {
+    SafeAreaView: createPrimitive('div'),
+  };
+});
+
 vi.mock('expo-router', () => ({
   Link: ({ children }: React.PropsWithChildren) => children,
   useLocalSearchParams: useLocalSearchParamsMock,

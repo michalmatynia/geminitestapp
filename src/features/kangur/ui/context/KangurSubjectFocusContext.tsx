@@ -20,7 +20,7 @@ import {
   persistRemoteSubjectFocus,
   subscribeToSubjectFocusChanges,
 } from '@/features/kangur/ui/services/subject-focus';
-import { DEFAULT_KANGUR_SUBJECT } from '@/features/kangur/lessons/lesson-catalog';
+import { DEFAULT_KANGUR_SUBJECT } from '@/features/kangur/lessons/lesson-catalog-metadata';
 import { setProgressScope } from '@/features/kangur/ui/services/progress';
 import type { KangurLessonSubject } from '@/shared/contracts/kangur';
 import { internalError } from '@/shared/errors/app-error';

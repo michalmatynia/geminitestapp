@@ -34,6 +34,12 @@ const getElevatedUserInitial = (user: ElevatedSessionUserSnapshot): string => {
   return candidate[0]?.toUpperCase() ?? 'A';
 };
 
+type KangurElevatedUserMenuModel = {
+  displayName: string;
+  imageSrc: string;
+  initial: string;
+};
+
 const ElevatedUserAvatar = ({
   imageSrc,
   initial,
@@ -65,10 +71,50 @@ export function KangurElevatedUserMenu({
   triggerClassName,
   user,
 }: KangurElevatedUserMenuProps): React.JSX.Element {
+  const model = resolveKangurElevatedUserMenuModel(user, adminLabel);
+  return renderKangurElevatedUserMenu(
+    {
+      adminHref,
+      adminLabel,
+      logoutLabel,
+      onLogout,
+      profile,
+      triggerAriaLabel,
+      triggerClassName,
+      user,
+    },
+    model
+  );
+}
+
+function resolveKangurElevatedUserMenuModel(
+  user: ElevatedSessionUserSnapshot,
+  adminLabel: string
+): KangurElevatedUserMenuModel {
   const displayName = user.name?.trim() || user.email?.trim() || adminLabel;
   const imageSrc = user.image?.trim() ?? '';
   const initial = getElevatedUserInitial(user);
 
+  return {
+    displayName,
+    imageSrc,
+    initial,
+  };
+}
+
+function renderKangurElevatedUserMenu(
+  {
+    adminHref,
+    adminLabel,
+    logoutLabel,
+    onLogout,
+    profile,
+    triggerAriaLabel,
+    triggerClassName,
+    user,
+  }: KangurElevatedUserMenuProps & { adminHref: string },
+  { displayName, imageSrc, initial }: KangurElevatedUserMenuModel
+): React.JSX.Element {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>

@@ -44,6 +44,7 @@ vi.mock('@/features/kangur/shared/ui', async () => {
 
 vi.mock('./SocialPost.Editor', () => ({
   SocialPostEditor: () => <div data-testid='social-post-editor'>social-post-editor</div>,
+  renderSocialPostEditor: () => <div data-testid='social-post-editor'>social-post-editor</div>,
 }));
 
 vi.mock('./SocialPost.ImagesPanel', () => ({

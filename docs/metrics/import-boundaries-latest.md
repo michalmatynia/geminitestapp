@@ -1,6 +1,6 @@
 ---
 owner: 'Platform Team'
-last_reviewed: '2026-03-26'
+last_reviewed: '2026-03-27'
 status: 'generated'
 doc_type: 'generated'
 scope: 'generated'
@@ -8,16 +8,16 @@ canonical: true
 ---
 # Import Boundaries Check
 
-Generated at: 2026-03-26T17:38:35.671Z
+Generated at: 2026-03-27T02:24:38.712Z
 
 ## Summary
 
-- Status: PASSED
-- Files scanned: 5876
+- Status: WARN
+- Files scanned: 5889
 - Features tracked: 10
 - Circular dependencies: 0
 - Errors: 0
-- Warnings: 0
+- Warnings: 1
 - Info: 0
 
 ## Feature Dependency Graph
@@ -39,10 +39,13 @@ Generated at: 2026-03-26T17:38:35.671Z
 
 | Rule | Errors | Warnings | Info |
 | --- | ---: | ---: | ---: |
+| deep-relative-import | 0 | 1 | 0 |
 
 ## Issues
 
-No import boundary issues detected.
+| Severity | Rule | Location | Message |
+| --- | --- | --- | --- |
+| WARN | deep-relative-import | src/app/(frontend)/kangur/(app)/[[...slug]]/page.tsx:9 | Deep relative import (3 levels up). Consider using path aliases. |
 
 ## Notes
 

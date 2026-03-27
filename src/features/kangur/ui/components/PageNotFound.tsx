@@ -5,7 +5,6 @@ import { Home } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { useMemo } from 'react';
 
-import { canAccessKangurPage } from '@/features/kangur/config/page-access';
 import {
   getKangurHomeHref,
   getKangurEmbeddedHostPath,
@@ -23,7 +22,6 @@ import {
 import { KangurStandardPageLayout } from '@/features/kangur/ui/components/KangurStandardPageLayout';
 import { KANGUR_INLINE_CENTER_ROW_CLASSNAME } from '@/features/kangur/ui/design/tokens';
 import { useKangurCoarsePointer } from '@/features/kangur/ui/hooks/useKangurCoarsePointer';
-import { useOptionalNextAuthSession } from '@/features/kangur/ui/hooks/useOptionalNextAuthSession';
 import { useKangurRouteNavigator } from '@/features/kangur/ui/hooks/useKangurRouteNavigator';
 import {
   withKangurClientError,
@@ -42,15 +40,9 @@ export function PageNotFound(): React.JSX.Element {
   const translations = useTranslations('KangurPageNotFound');
   const isCoarsePointer = useKangurCoarsePointer();
   const routeNavigator = useKangurRouteNavigator();
-  const { requestedPath, basePath, pageKey } = useKangurRouting();
-  const { data: session } = useOptionalNextAuthSession();
-  const shouldHideRequestedPageName = !canAccessKangurPage(pageKey, session);
+  const { requestedPath, basePath } = useKangurRouting();
 
   const pageName = useMemo(() => {
-    if (shouldHideRequestedPageName) {
-      return translations('unknownPage');
-    }
-
     const embeddedHostPath = getKangurEmbeddedHostPath(basePath);
     if (embeddedHostPath) {
       const fallbackName = requestedPath?.replace(/^\/+/, '') || translations('unknownPage');
@@ -84,7 +76,7 @@ export function PageNotFound(): React.JSX.Element {
     }
     const suffix = requestedPath.slice(basePath.length).replace(/^\/+/, '');
     return suffix || translations('unknownPage');
-  }, [basePath, requestedPath, shouldHideRequestedPageName, translations]);
+  }, [basePath, requestedPath, translations]);
 
   const { data: authData, isFetched } = useQuery<PageNotFoundAuthState>({
     queryKey: QUERY_KEYS.auth.user(),

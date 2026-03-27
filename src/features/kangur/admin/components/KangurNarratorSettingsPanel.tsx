@@ -46,7 +46,7 @@ const formatShortTimestamp = (value: string): string => {
   );
 };
 
-interface KangurNarratorSettingsPanelProps {
+export interface KangurNarratorSettingsPanelProps {
   engine: KangurNarratorEngine;
   voice: KangurLessonTtsVoice;
   setEngine: (value: KangurNarratorEngine) => void;
@@ -59,7 +59,7 @@ interface KangurNarratorSettingsPanelProps {
   className?: string;
 }
 
-export function KangurNarratorSettingsPanel({
+export function renderKangurNarratorSettingsPanel({
   engine,
   voice,
   setEngine,

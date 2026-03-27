@@ -7,7 +7,7 @@ import type {
 } from '@/features/kangur/shared/contracts/kangur';
 import type { MasterTreeNode } from '@/features/kangur/shared/utils/master-folder-tree-contract';
 
-import { KANGUR_AGE_GROUPS, KANGUR_SUBJECTS } from '@/features/kangur/lessons/lesson-catalog';
+import { KANGUR_AGE_GROUPS, KANGUR_SUBJECTS } from '@/features/kangur/lessons/lesson-catalog-metadata';
 import { KANGUR_LESSON_COMPONENT_OPTIONS, KANGUR_LESSON_SORT_ORDER_GAP } from '../settings';
 
 const KANGUR_LESSON_NODE_PREFIX = 'kangur-lesson:';

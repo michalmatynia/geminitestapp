@@ -3,6 +3,7 @@ import { notFound, redirect } from 'next/navigation';
 import { auth } from '@/features/auth/server';
 import { canAccessKangurSlugSegments } from '@/features/kangur/config/page-access';
 import { getKangurCanonicalPublicHref } from '@/features/kangur/config/routing';
+import { KangurServerShell } from '@/features/kangur/ui/components/KangurServerShell';
 import { getFrontPagePublicOwner } from '@/shared/lib/front-page-app';
 
 import { getFrontPageSetting, shouldApplyFrontPageAppSelection } from '../../../home-helpers';
@@ -29,7 +30,7 @@ const readOptionalAuthSession = async () => {
 export default async function Page({
   params,
   searchParams,
-}: KangurAliasPageProps): Promise<null> {
+}: KangurAliasPageProps): Promise<React.JSX.Element | null> {
   const { slug = [] } = await params;
   if (shouldApplyFrontPageAppSelection()) {
     const frontPageSetting = await getFrontPageSetting();
@@ -44,5 +45,5 @@ export default async function Page({
     }
   }
 
-  return null;
+  return <KangurServerShell />;
 }

@@ -12,7 +12,7 @@ import {
   getRuntimeEventLevelVariant,
 } from './runtime-event-badges';
 
-type RuntimeEventEntryProps = {
+export type RuntimeEventEntryProps = {
   timestamp: React.ReactNode;
   level: string | null | undefined;
   kind: string | null | undefined;
@@ -31,7 +31,7 @@ type RuntimeEventEntryProps = {
   hideKindBadge?: boolean;
 };
 
-export function RuntimeEventEntry({
+export function renderRuntimeEventEntry({
   timestamp,
   level,
   kind,

@@ -100,14 +100,36 @@ type AgenticAssignmentGameProps<OptionId extends string> =
     visual: ReactNode;
   };
 
-export function AgenticAssignmentGame<OptionId extends string>({
+type AgenticAssignmentGameComponentConfig<OptionId extends string> = Omit<
+  AgenticAssignmentGameProps<OptionId>,
+  'onFinish'
+> & {
+  displayName?: string;
+};
+
+type AgenticAssignmentGameModel<OptionId extends string> = {
+  activeItem: AgenticAssignmentGameItem<OptionId> | null;
+  activeItemId: string | null;
+  assignedCount: number;
+  assignments: Record<string, OptionId>;
+  checkResult: {
+    isPerfect: boolean;
+    score: number;
+  };
+  checked: boolean;
+  handleAssign: (optionId: OptionId) => void;
+  handleCheck: () => void;
+  handleReset: () => void;
+  handleSelectItem: (itemId: string) => void;
+  isCoarsePointer: boolean;
+  progress: number;
+  touchHint: string;
+};
+
+function useAgenticAssignmentGameModel<OptionId extends string>({
   copy,
   items,
-  onFinish,
-  options,
-  theme,
-  visual,
-}: AgenticAssignmentGameProps<OptionId>): React.JSX.Element {
+}: Pick<AgenticAssignmentGameProps<OptionId>, 'copy' | 'items'>): AgenticAssignmentGameModel<OptionId> {
   const isCoarsePointer = useKangurCoarsePointer();
   const [activeItemId, setActiveItemId] = useState<string | null>(null);
   const [assignments, setAssignments] = useState<Record<string, OptionId>>({});
@@ -143,6 +165,56 @@ export function AgenticAssignmentGame<OptionId extends string>({
     setChecked(false);
   };
 
+  const handleCheck = () => {
+    setChecked(true);
+  };
+
+  const handleSelectItem = (itemId: string) => {
+    setActiveItemId(itemId);
+  };
+
+  return {
+    activeItem,
+    activeItemId,
+    assignedCount,
+    assignments,
+    checkResult: {
+      isPerfect,
+      score,
+    },
+    checked,
+    handleAssign,
+    handleCheck,
+    handleReset,
+    handleSelectItem,
+    isCoarsePointer,
+    progress,
+    touchHint,
+  };
+}
+
+function renderAgenticAssignmentGame<OptionId extends string>({
+  copy,
+  items,
+  onFinish,
+  options,
+  theme,
+  visual,
+}: AgenticAssignmentGameProps<OptionId>,
+{
+  activeItemId,
+  assignedCount,
+  assignments,
+  checkResult,
+  checked,
+  handleAssign,
+  handleCheck,
+  handleReset,
+  handleSelectItem,
+  isCoarsePointer,
+  progress,
+  touchHint,
+}: AgenticAssignmentGameModel<OptionId>): React.JSX.Element {
   return (
     <KangurLessonStack align='start' className='w-full'>
       <div className={cn('relative w-full overflow-hidden rounded-[28px] p-6', theme.heroClassName)}>
@@ -248,7 +320,7 @@ export function AgenticAssignmentGame<OptionId extends string>({
                       isCorrect && theme.leftItemCorrectClassName,
                       isWrong && theme.leftItemWrongClassName
                     )}
-                    onClick={() => setActiveItemId(item.id)}
+                    onClick={() => handleSelectItem(item.id)}
                     type='button'
                   >
                     <div className='flex flex-wrap items-center justify-between gap-2'>
@@ -329,14 +401,14 @@ export function AgenticAssignmentGame<OptionId extends string>({
               <div
                 className={cn(
                   'rounded-2xl border px-4 py-3 text-xs font-semibold',
-                  isPerfect
+                  checkResult.isPerfect
                     ? 'border-emerald-200 bg-emerald-50 text-emerald-900'
                     : 'border-amber-200 bg-amber-50 text-amber-900'
                 )}
               >
-                {isPerfect
+                {checkResult.isPerfect
                   ? copy.successMessage
-                  : copy.failureMessage(score, items.length)}
+                  : copy.failureMessage(checkResult.score, items.length)}
               </div>
             ) : null}
 
@@ -350,7 +422,7 @@ export function AgenticAssignmentGame<OptionId extends string>({
                 Reset
               </KangurButton>
               <KangurButton
-                onClick={() => setChecked(true)}
+                onClick={handleCheck}
                 size='sm'
                 type='button'
                 variant='primary'
@@ -367,4 +439,41 @@ export function AgenticAssignmentGame<OptionId extends string>({
       </div>
     </KangurLessonStack>
   );
+}
+
+export function AgenticAssignmentGame<OptionId extends string>(
+  props: AgenticAssignmentGameProps<OptionId>
+): React.JSX.Element {
+  const model = useAgenticAssignmentGameModel(props);
+  return renderAgenticAssignmentGame(props, model);
+}
+
+export function createAgenticAssignmentGameComponent<OptionId extends string>({
+  copy,
+  items,
+  options,
+  theme,
+  visual,
+  displayName,
+}: AgenticAssignmentGameComponentConfig<OptionId>): (
+  props: KangurMiniGameFinishActionProps
+) => React.JSX.Element {
+  const CreatedAssignmentGame = ({
+    onFinish,
+  }: KangurMiniGameFinishActionProps): React.JSX.Element => (
+    <AgenticAssignmentGame
+      copy={copy}
+      items={items}
+      onFinish={onFinish}
+      options={options}
+      theme={theme}
+      visual={visual}
+    />
+  );
+
+  if (displayName) {
+    CreatedAssignmentGame.displayName = displayName;
+  }
+
+  return CreatedAssignmentGame;
 }

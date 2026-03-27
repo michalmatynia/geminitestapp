@@ -33,20 +33,21 @@ import { cn } from '@/features/kangur/utils/cn';
 
 // ── Lesson Library Card Sub-components ───────────────────────────────────────
 
-export function KangurLessonLibraryCardAside({
+function renderKangurLessonLibraryCardAside({
+  translations,
   masteryPresentation,
   lessonAssignment,
   completedLessonAssignment,
   isSixYearOld,
   className,
 }: {
+  translations: (key: 'parentPriority' | 'closedAssignment') => string;
   masteryPresentation: LessonMasteryPresentation;
   lessonAssignment: KangurAssignmentSnapshot | null;
   completedLessonAssignment: KangurAssignmentSnapshot | null;
   isSixYearOld: boolean;
   className?: string;
 }): React.JSX.Element {
-  const translations = useTranslations('KangurLessonsWidgets.libraryCard');
   const masteryAccent = masteryPresentation.badgeAccent;
   const assignmentPriority = lessonAssignment?.priority;
 
@@ -285,13 +286,14 @@ export function KangurLessonLibraryCard(props: KangurLessonLibraryCardProps): Re
     >
       <KangurIconSummaryCardContent
         aside={
-          <KangurLessonLibraryCardAside
-            className={statusGroupClassName}
-            completedLessonAssignment={completedLessonAssignment}
-            isSixYearOld={isSixYearOld}
-            lessonAssignment={lessonAssignment}
-            masteryPresentation={masteryPresentation}
-          />
+          renderKangurLessonLibraryCardAside({
+            className: statusGroupClassName,
+            completedLessonAssignment,
+            isSixYearOld,
+            lessonAssignment,
+            masteryPresentation,
+            translations,
+          })
         }
         asideClassName='w-full self-start sm:ml-auto sm:w-auto'
         className='w-full max-[480px]:flex-col'

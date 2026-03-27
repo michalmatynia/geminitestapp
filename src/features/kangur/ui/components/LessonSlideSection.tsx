@@ -6,7 +6,7 @@ import { useTranslations } from 'next-intl';
 import { useEffect, useId, useRef, useState, type KeyboardEventHandler } from 'react';
 
 import { useInterval } from '@/features/kangur/shared/hooks/use-interval';
-import { KangurLessonNavigationIconButton } from '@/features/kangur/ui/components/KangurLessonNavigationIconButton';
+import { renderKangurLessonNavigationIconButton } from '@/features/kangur/ui/components/KangurLessonNavigationIconButton';
 import {
   useKangurLessonBackAction,
   useKangurLessonSecretPill,
@@ -379,52 +379,53 @@ export default function LessonSlideSection({
   const isPrevDisabled = isFirst;
   const isNextDisabled = isLast;
   const renderBackButton = (className?: string): React.JSX.Element => (
-    <KangurLessonNavigationIconButton
-      onClick={handleBackCta}
-      className={cn(
-        'hidden sm:inline-flex',
-        className
-      )}
-      data-testid='lesson-slide-back-button'
-      data-kangur-lesson-back='true'
-      data-kangur-lesson-back-label={backToTopicsLabel}
-      aria-label={backToTopicsLabel}
-      icon={ChevronsLeft}
-      title={backToTopicsLabel}
-    />
+    renderKangurLessonNavigationIconButton({
+      onClick: handleBackCta,
+      className: cn('hidden sm:inline-flex', className),
+      'data-testid': 'lesson-slide-back-button',
+      'data-kangur-lesson-back': 'true',
+      'data-kangur-lesson-back-label': backToTopicsLabel,
+      'aria-label': backToTopicsLabel,
+      icon: ChevronsLeft,
+      isCoarsePointer,
+      title: backToTopicsLabel,
+    })
   );
   const printButton = lessonPrint?.onPrintPanel ? (
-    <KangurLessonNavigationIconButton
-      onClick={() => lessonPrint.onPrintPanel?.(slidePanelId)}
-      aria-label={printPanelLabel}
-      data-testid='lesson-slide-print-button'
-      icon={Printer}
-      title={printPanelLabel}
-    />
+    renderKangurLessonNavigationIconButton({
+      onClick: () => lessonPrint.onPrintPanel?.(slidePanelId),
+      'aria-label': printPanelLabel,
+      'data-testid': 'lesson-slide-print-button',
+      icon: Printer,
+      isCoarsePointer,
+      title: printPanelLabel,
+    })
   ) : null;
   const previousSlideButton = shouldRenderArrowNavigation ? (
-    <KangurLessonNavigationIconButton
-      onClick={handlePreviousSlideCta}
-      disabled={isPrevDisabled}
-      aria-label={previousPanelLabel}
-      aria-keyshortcuts='ArrowLeft PageUp'
-      aria-controls={slidePanelId}
-      data-testid='lesson-slide-prev-button'
-      icon={ChevronLeft}
-      title={previousPanelLabel}
-    />
+    renderKangurLessonNavigationIconButton({
+      onClick: handlePreviousSlideCta,
+      disabled: isPrevDisabled,
+      'aria-label': previousPanelLabel,
+      'aria-keyshortcuts': 'ArrowLeft PageUp',
+      'aria-controls': slidePanelId,
+      'data-testid': 'lesson-slide-prev-button',
+      icon: ChevronLeft,
+      isCoarsePointer,
+      title: previousPanelLabel,
+    })
   ) : null;
   const nextSlideButton = shouldRenderArrowNavigation ? (
-    <KangurLessonNavigationIconButton
-      onClick={handleNextSlideCta}
-      disabled={isNextDisabled}
-      aria-label={nextPanelLabel}
-      aria-keyshortcuts='ArrowRight PageDown'
-      aria-controls={slidePanelId}
-      data-testid='lesson-slide-next-button'
-      icon={ChevronRight}
-      title={nextPanelLabel}
-    />
+    renderKangurLessonNavigationIconButton({
+      onClick: handleNextSlideCta,
+      disabled: isNextDisabled,
+      'aria-label': nextPanelLabel,
+      'aria-keyshortcuts': 'ArrowRight PageDown',
+      'aria-controls': slidePanelId,
+      'data-testid': 'lesson-slide-next-button',
+      icon: ChevronRight,
+      isCoarsePointer,
+      title: nextPanelLabel,
+    })
   ) : null;
   const navigationActionButtons = (
     <>

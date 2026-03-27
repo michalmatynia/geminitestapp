@@ -67,22 +67,20 @@ const loadProgressMock = vi.fn(() => ({
   lessonMastery: {},
 }));
 
-vi.mock('@/features/kangur/ui/components/CalendarInteractiveGame', () => ({
+vi.mock('@/features/kangur/ui/components/KangurLessonStageGameRuntime', () => ({
   __esModule: true,
   default: ({
+    runtime,
     onFinish,
-    section,
-    stage,
   }: {
+    runtime: { rendererProps?: { calendarSection?: string } };
     onFinish: () => void;
-    section?: string;
-    stage?: { onFinish?: () => void; section?: string };
   }): React.JSX.Element => (
     <div data-testid='mock-calendar-interactive-game'>
       <span data-testid='mock-calendar-interactive-section'>
-        {stage?.section ?? section ?? 'mixed'}
+        {runtime.rendererProps?.calendarSection ?? 'mixed'}
       </span>
-      <button type='button' onClick={stage?.onFinish ?? onFinish}>
+      <button type='button' onClick={onFinish}>
         Finish calendar training
       </button>
     </div>

@@ -134,7 +134,7 @@ const SOUND_PALETTE_GROUPS: PaletteGroup[] = [
   },
 ];
 
-function CanvasRunControlNotice({
+function renderCanvasRunControlNotice({
   variant,
   title,
   description,
@@ -171,7 +171,7 @@ function CanvasSelectedWireMetaLine({
   );
 }
 
-function CanvasSelectedWireEndpointCard({
+function renderCanvasSelectedWireEndpointCard({
   title,
   nodeLabel,
   nodeType,
@@ -738,39 +738,40 @@ export function CanvasSidebar(): React.JSX.Element {
                 className='font-bold'
               />
             </div>
-            {runStatus === 'blocked_on_lease' ? (
-              <CanvasRunControlNotice
-                variant='warning'
-                title='Execution lease blocked'
-                description='This run is waiting on another execution owner. Use the run history or run detail panel to inspect ownership and mark the run handoff-ready if work should change hands.'
-              >
-                {activeRunId ? (
-                  <div className='flex flex-wrap items-center gap-2 pt-1'>
-                    <Button
-                      type='button'
-                      size='sm'
-                      variant='outline'
-                      onClick={handleMarkRunHandoffReady}
-                      disabled={isMarkingHandoff}
-                    >
-                      {isMarkingHandoff ? 'Marking...' : 'Mark handoff-ready'}
-                    </Button>
-                    {handoffRequested ? (
-                      <span className='text-[10px] text-current/80'>
-                        Handoff requested. Refreshing run status...
-                      </span>
-                    ) : null}
-                  </div>
-                ) : null}
-              </CanvasRunControlNotice>
-            ) : null}
-            {runStatus === 'handoff_ready' ? (
-              <CanvasRunControlNotice
-                variant='info'
-                title='Ready for delegated continuation'
-                description='This run has been prepared for another operator or agent to continue. Resume it from the run history once the next owner is ready.'
-              />
-            ) : null}
+            {runStatus === 'blocked_on_lease'
+              ? renderCanvasRunControlNotice({
+                  variant: 'warning',
+                  title: 'Execution lease blocked',
+                  description:
+                    'This run is waiting on another execution owner. Use the run history or run detail panel to inspect ownership and mark the run handoff-ready if work should change hands.',
+                  children: activeRunId ? (
+                    <div className='flex flex-wrap items-center gap-2 pt-1'>
+                      <Button
+                        type='button'
+                        size='sm'
+                        variant='outline'
+                        onClick={handleMarkRunHandoffReady}
+                        disabled={isMarkingHandoff}
+                      >
+                        {isMarkingHandoff ? 'Marking...' : 'Mark handoff-ready'}
+                      </Button>
+                      {handoffRequested ? (
+                        <span className='text-[10px] text-current/80'>
+                          Handoff requested. Refreshing run status...
+                        </span>
+                      ) : null}
+                    </div>
+                  ) : null,
+                })
+              : null}
+            {runStatus === 'handoff_ready'
+              ? renderCanvasRunControlNotice({
+                  variant: 'info',
+                  title: 'Ready for delegated continuation',
+                  description:
+                    'This run has been prepared for another operator or agent to continue. Resume it from the run history once the next owner is ready.',
+                })
+              : null}
             <div className='grid grid-cols-2 gap-2'>
               {isRunControlActive ? (
                 <>
@@ -888,21 +889,21 @@ export function CanvasSidebar(): React.JSX.Element {
                     Selected Wire
                     </Hint>
                     <div className='space-y-2'>
-                      <CanvasSelectedWireEndpointCard
-                        title='From'
-                        nodeLabel={fromNode?.title ?? selectedEdge.from ?? 'unknown-node'}
-                        nodeType={fromNode?.type ?? 'unknown'}
-                        portLabel={selectedEdge.fromPort ?? 'default'}
-                        accentClassName='text-amber-300'
-                      />
+                      {renderCanvasSelectedWireEndpointCard({
+                        title: 'From',
+                        nodeLabel: fromNode?.title ?? selectedEdge.from ?? 'unknown-node',
+                        nodeType: fromNode?.type ?? 'unknown',
+                        portLabel: selectedEdge.fromPort ?? 'default',
+                        accentClassName: 'text-amber-300',
+                      })}
                       <div className='flex justify-center text-gray-500'>↓</div>
-                      <CanvasSelectedWireEndpointCard
-                        title='To'
-                        nodeLabel={toNode?.title ?? selectedEdge.to ?? 'unknown-node'}
-                        nodeType={toNode?.type ?? 'unknown'}
-                        portLabel={selectedEdge.toPort ?? 'default'}
-                        accentClassName='text-sky-300'
-                      />
+                      {renderCanvasSelectedWireEndpointCard({
+                        title: 'To',
+                        nodeLabel: toNode?.title ?? selectedEdge.to ?? 'unknown-node',
+                        nodeType: toNode?.type ?? 'unknown',
+                        portLabel: selectedEdge.toPort ?? 'default',
+                        accentClassName: 'text-sky-300',
+                      })}
                     </div>
                     <Card
                       variant='subtle-compact'

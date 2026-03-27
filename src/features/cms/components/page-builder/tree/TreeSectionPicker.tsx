@@ -25,7 +25,7 @@ type BlockVariantProps = {
   zone?: never;
 };
 
-type TreeSectionPickerProps = SectionVariantProps | BlockVariantProps;
+export type TreeSectionPickerProps = SectionVariantProps | BlockVariantProps;
 
 function TreeBlockPicker(props: {
   disabled?: boolean;
@@ -57,7 +57,7 @@ function TreeZoneSectionPicker(props: {
   return <BaseSectionPicker disabled={disabled} zone={zone} onSelect={handleSelect} />;
 }
 
-export function TreeSectionPicker(props: TreeSectionPickerProps): React.ReactNode {
+export function renderTreeSectionPicker(props: TreeSectionPickerProps): React.ReactNode {
   if (props.variant === 'blocks') {
     return (
       <TreeBlockPicker

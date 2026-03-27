@@ -4,7 +4,7 @@ import {
   type KangurLessonSubject,
 } from '@/shared/contracts/kangur';
 import { createKangurApiClient } from '@kangur/api-client';
-import { DEFAULT_KANGUR_SUBJECT } from '@/features/kangur/lessons/lesson-catalog';
+import { DEFAULT_KANGUR_SUBJECT } from '@/features/kangur/lessons/lesson-catalog-metadata';
 import {
   withKangurClientError,
   withKangurClientErrorSync,

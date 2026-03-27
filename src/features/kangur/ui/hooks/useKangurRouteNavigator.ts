@@ -7,7 +7,6 @@ import { useCallback, useMemo } from 'react';
 import {
   KANGUR_BASE_PATH,
 } from '@/features/kangur/config/routing';
-import { resolveAccessibleKangurPageKey } from '@/features/kangur/config/page-access';
 import { useOptionalFrontendPublicOwner } from '@/features/kangur/ui/FrontendPublicOwnerContext';
 import { useOptionalNextAuthSession } from '@/features/kangur/ui/hooks/useOptionalNextAuthSession';
 import {
@@ -21,7 +20,7 @@ import {
   isManagedLocalHref,
   localizeManagedKangurHref,
   normalizeManagedKangurPathname,
-  resolveAccessibleManagedKangurPageKeyFromHref,
+  resolveAccessibleManagedKangurTargetPageKey,
 } from '@/features/kangur/ui/routing/managed-paths';
 import { withKangurClientErrorSync } from '@/features/kangur/observability/client';
 
@@ -195,16 +194,13 @@ export function useKangurRouteNavigator(): {
       }
 
       const resolvedHref = href ? resolveManagedHref(href, transitionKind) : null;
-      const accessibleResolvedPageKey = pageKey
-        ? resolveAccessibleKangurPageKey(pageKey, session, currentAccessiblePageKey)
-        : resolvedHref
-          ? resolveAccessibleManagedKangurPageKeyFromHref({
-              href: resolvedHref,
-              basePath: effectivePageKeyBasePath,
-              session,
-              fallbackPageKey: currentAccessiblePageKey,
-            })
-          : currentAccessiblePageKey;
+      const accessibleResolvedPageKey = resolveAccessibleManagedKangurTargetPageKey({
+        basePath: effectivePageKeyBasePath,
+        fallbackPageKey: currentAccessiblePageKey,
+        href: resolvedHref,
+        pageKey,
+        session,
+      });
       const transitionResult = routeTransitionActions.startRouteTransition({
         ...(resolvedHref ? { href: resolvedHref } : {}),
         ...(accessibleResolvedPageKey ? { pageKey: accessibleResolvedPageKey } : {}),

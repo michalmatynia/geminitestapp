@@ -22,15 +22,11 @@ type FrontendPublicOwnerKangurShellProps = {
     mode?: KangurStorefrontAppearanceMode;
     themeSettings?: Partial<KangurStorefrontThemeSettingsSnapshot>;
   };
-  initialMode?: KangurStorefrontAppearanceMode;
-  initialThemeSettings?: Partial<KangurStorefrontThemeSettingsSnapshot>;
 };
 
 export function FrontendPublicOwnerKangurShell({
   embeddedOverride,
   initialAppearance,
-  initialMode,
-  initialThemeSettings,
 }: FrontendPublicOwnerKangurShellProps): JSX.Element {
   const pathname = usePathname();
   const browserPathname =
@@ -41,12 +37,7 @@ export function FrontendPublicOwnerKangurShell({
 
   return (
     <KangurStorefrontAppearanceProvider
-      initialAppearance={
-        initialAppearance ?? {
-          mode: initialMode,
-          themeSettings: initialThemeSettings,
-        }
-      }
+      initialAppearance={initialAppearance}
     >
       <KangurSurfaceClassSync>
         <KangurMainRoleProvider suppressMainRole>

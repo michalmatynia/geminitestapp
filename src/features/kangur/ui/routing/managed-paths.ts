@@ -230,16 +230,42 @@ export const resolveManagedKangurPageKeyFromHref = (
   );
 };
 
-export const resolveAccessibleManagedKangurPageKeyFromHref = <TPageKey extends string>(input: {
-  href: string;
-  basePath: string;
-  session?: Session | null;
-  fallbackPageKey: TPageKey;
-}): TPageKey => {
-  const { href, basePath, session, fallbackPageKey } = input;
-  const resolvedPageKey = resolveManagedKangurPageKeyFromHref(href, basePath);
+export const resolveManagedKangurBasePath = (hrefOrPathname: string | null): string => {
+  const normalizedPathname = normalizeManagedKangurPathname(hrefOrPathname);
 
-  return resolveAccessibleKangurPageKey(resolvedPageKey as TPageKey | null, session, fallbackPageKey);
+  if (!normalizedPathname) {
+    return '/';
+  }
+
+  return normalizedPathname === KANGUR_BASE_PATH ||
+    normalizedPathname.startsWith(`${KANGUR_BASE_PATH}/`)
+    ? KANGUR_BASE_PATH
+    : '/';
+};
+
+export const resolveAccessibleManagedKangurTargetPageKey = <TPageKey extends string>(input: {
+  basePath: string;
+  fallbackPageKey: TPageKey;
+  href?: string | null;
+  pageKey?: TPageKey | null;
+  session?: Session | null;
+}): TPageKey => {
+  const { basePath, fallbackPageKey, href, pageKey, session } = input;
+
+  if (pageKey) {
+    return resolveAccessibleKangurPageKey(pageKey, session, fallbackPageKey);
+  }
+
+  if (href) {
+    const resolvedPageKey = resolveManagedKangurPageKeyFromHref(href, basePath);
+    return resolveAccessibleKangurPageKey(
+      resolvedPageKey as TPageKey | null,
+      session,
+      fallbackPageKey
+    );
+  }
+
+  return fallbackPageKey;
 };
 
 export const resolveManagedKangurEmbeddedFromHref = ({

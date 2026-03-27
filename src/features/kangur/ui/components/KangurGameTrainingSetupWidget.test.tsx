@@ -59,7 +59,7 @@ vi.mock('@/features/kangur/ui/services/game-setup-recommendations', () => ({
 }));
 
 vi.mock('@/features/kangur/ui/components/KangurGameSetupStage', () => ({
-  KangurGameSetupStage: ({
+  renderKangurGameSetupStage: ({
     children,
     description,
     testId,

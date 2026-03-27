@@ -1,6 +1,9 @@
 import type { ReactNode } from 'react';
 
-import { KangurAdminCard } from './KangurAdminCard';
+import { Card } from '@/features/kangur/shared/ui';
+import { cn } from '@/features/kangur/utils/cn';
+
+import { KANGUR_ADMIN_CARD_CLASS_NAME } from './KangurAdminCard';
 
 type KangurAdminStatusCardItem = {
   label: string;
@@ -25,10 +28,10 @@ export function KangurAdminStatusCard({
   const cardClassName = `h-fit bg-card/30${sticky ? ' xl:sticky xl:top-24' : ''}`;
 
   return (
-    <KangurAdminCard
+    <Card
       variant='subtle-compact'
       padding='sm'
-      className={cardClassName}
+      className={cn(KANGUR_ADMIN_CARD_CLASS_NAME, cardClassName)}
     >
       <div className='space-y-3'>
         <div className='flex items-center justify-between gap-2'>
@@ -54,6 +57,6 @@ export function KangurAdminStatusCard({
 
         {children ? <div className='space-y-2'>{children}</div> : null}
       </div>
-    </KangurAdminCard>
+    </Card>
   );
 }

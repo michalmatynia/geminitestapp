@@ -178,7 +178,7 @@ describe('KangurPublicApp', () => {
     consoleErrorSpy.mockRestore();
   });
 
-  it('sanitizes blocked GamesLibrary routes before they reach shared routing state', () => {
+  it('passes blocked GamesLibrary routes through to shared routing for provider-level sanitization', () => {
     sessionMock.mockReturnValue({
       data: {
         user: {
@@ -192,9 +192,9 @@ describe('KangurPublicApp', () => {
     render(<KangurPublicApp slug={['games']} basePath='/' />);
 
     expect(kangurRoutingProviderMock).toHaveBeenCalledWith({
-      pageKey: 'Game',
-      requestedPath: '/',
-      requestedHref: '/',
+      pageKey: 'GamesLibrary',
+      requestedPath: '/games',
+      requestedHref: '/games',
       basePath: '/',
       embedded: false,
     });

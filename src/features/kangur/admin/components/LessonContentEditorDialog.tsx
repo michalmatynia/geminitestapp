@@ -26,7 +26,7 @@ import {
   readLessonContentEditorDraft,
   writeLessonContentEditorDraft,
 } from '../lesson-content-editor-drafts';
-import { KangurAdminWorkspaceSectionCard } from './KangurAdminWorkspaceSectionCard';
+import { renderKangurAdminWorkspaceSectionCard } from './KangurAdminWorkspaceSectionCard';
 import { withKangurClientErrorSync } from '@/features/kangur/observability/client';
 
 
@@ -404,32 +404,34 @@ function LessonContentEditorDialogContent({
         <div className='min-h-0 flex-1 overflow-y-auto p-4 scrollbar-thin'>
           {lesson ? (
             <div className='space-y-6'>
-              {restorableDraftSavedAt ? (
-                <KangurAdminWorkspaceSectionCard
-                  title='Recovered local draft'
-                  description={`A newer local draft is available from ${formatDraftTimestamp(restorableDraftSavedAt)}.`}
-                  badge='Local recovery'
-                  actions={
-                    <div className='flex items-center gap-2'>
-                      <Button type='button' size='sm' variant='outline' onClick={handleDiscardStoredDraft}>
-                        Dismiss draft
-                      </Button>
-                      <Button type='button' size='sm' onClick={handleRestoreDraft}>
-                        Restore draft
-                      </Button>
-                    </div>
-                  }
-                />
-              ) : null}
+              {restorableDraftSavedAt
+                ? renderKangurAdminWorkspaceSectionCard({
+                    title: 'Recovered local draft',
+                    description: `A newer local draft is available from ${formatDraftTimestamp(restorableDraftSavedAt)}.`,
+                    badge: 'Local recovery',
+                    actions: (
+                      <div className='flex items-center gap-2'>
+                        <Button type='button' size='sm' variant='outline' onClick={handleDiscardStoredDraft}>
+                          Dismiss draft
+                        </Button>
+                        <Button type='button' size='sm' onClick={handleRestoreDraft}>
+                          Restore draft
+                        </Button>
+                      </div>
+                    ),
+                  })
+                : null}
               <LessonMetadataWorkspacePanel
                 lesson={lesson}
                 onLessonChange={handleLessonMetadataChange}
               />
-              <KangurAdminWorkspaceSectionCard
-                title='Draft review'
-                description='Keep lesson setup, learner content, and narration in one editorial checklist before saving.'
-                badge='Editorial checklist'
-              >
+              {renderKangurAdminWorkspaceSectionCard({
+                title: 'Draft review',
+                description:
+                  'Keep lesson setup, learner content, and narration in one editorial checklist before saving.',
+                badge: 'Editorial checklist',
+                children: (
+                  <>
                 <div className='flex flex-wrap items-start gap-3'>
                   <div
                     className={
@@ -526,7 +528,9 @@ function LessonContentEditorDialogContent({
                     </div>
                   ))}
                 </div>
-              </KangurAdminWorkspaceSectionCard>
+                  </>
+                ),
+              })}
               <KangurLessonNarrationPanel />
               <KangurLessonDocumentEditor />
             </div>
@@ -568,12 +572,13 @@ function LessonMetadataWorkspacePanel({
   const descriptionId = `lesson-setup-description-${lesson.id}`;
   const visibilityId = `lesson-setup-visible-${lesson.id}`;
 
-  return (
-    <KangurAdminWorkspaceSectionCard
-      title='Lesson setup'
-      description='Editing content here also saves the lesson title, description, emoji, visibility, and lesson type.'
-      badge='Document workspace'
-    >
+  return renderKangurAdminWorkspaceSectionCard({
+    title: 'Lesson setup',
+    description:
+      'Editing content here also saves the lesson title, description, emoji, visibility, and lesson type.',
+    badge: 'Document workspace',
+    children: (
+      <>
       <div
         className={`${KANGUR_GRID_RELAXED_CLASSNAME} mt-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_220px]`}
       >
@@ -691,6 +696,7 @@ function LessonMetadataWorkspacePanel({
           </label>
         </div>
       </div>
-    </KangurAdminWorkspaceSectionCard>
-  );
+      </>
+    ),
+  });
 }

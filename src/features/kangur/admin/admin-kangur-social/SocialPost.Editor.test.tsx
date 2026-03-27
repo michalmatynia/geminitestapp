@@ -43,7 +43,7 @@ vi.mock('./SocialPostContext', () => ({
   useSocialPostContext: () => useSocialPostContextMock(),
 }));
 
-import { SocialPostEditor } from './SocialPost.Editor';
+import { renderSocialPostEditor } from './SocialPost.Editor';
 
 const buildPost = () => ({
   id: 'post-1',
@@ -77,7 +77,7 @@ const buildPost = () => ({
   updatedAt: '2026-03-19T10:00:00.000Z',
 });
 
-describe('SocialPostEditor', () => {
+describe('renderSocialPostEditor', () => {
   it('keeps the editor post-specific and no longer renders general LinkedIn settings', () => {
     useSocialPostContextMock.mockReturnValue({
       activePost: buildPost(),
@@ -89,7 +89,7 @@ describe('SocialPostEditor', () => {
       publishMutation: { isPending: false },
     });
 
-    render(<SocialPostEditor />);
+    render(renderSocialPostEditor({}));
 
     expect(screen.getByText('Post editor')).toBeInTheDocument();
     expect(screen.getByTestId('social-post-visuals')).toBeInTheDocument();

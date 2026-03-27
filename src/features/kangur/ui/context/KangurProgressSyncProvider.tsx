@@ -262,7 +262,39 @@ export function KangurProgressSyncProvider({
               return;
             }
             primeKangurProgressHydrationCache(userKey, subject, result.mergedProgress);
-            void kangurPlatform.progress.update(result.mergedProgress, { subject });
+            void kangurPlatform.progress
+              .update(result.mergedProgress, { subject })
+              .then((savedProgress) => {
+                if (cancelled) {
+                  return;
+                }
+
+                primeKangurProgressHydrationCache(userKey, subject, savedProgress);
+                const savedSerialized = serializeProgress(savedProgress);
+                lastSyncedProgressRef.current = savedSerialized;
+
+                if (!areProgressStatesEqual(result.mergedProgress, savedProgress)) {
+                  saveProgress(savedProgress, { ownerKey: userKey });
+                }
+              })
+              .catch((error) => {
+                if (cancelled) {
+                  return;
+                }
+
+                if (isKangurAuthStatusError(error)) {
+                  syncStateRef.current = 'idle';
+                  return;
+                }
+
+                trackKangurClientEvent('kangur_progress_hydration_remote_sync_failed', {
+                  userKey,
+                  totalXp: result.mergedProgress.totalXp,
+                  gamesPlayed: result.mergedProgress.gamesPlayed,
+                  errorMessage: error instanceof Error ? error.message : 'Unknown error',
+                  subject,
+                });
+              });
           });
         }
       } finally {

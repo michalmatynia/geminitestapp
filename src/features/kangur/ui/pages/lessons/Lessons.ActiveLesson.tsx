@@ -11,7 +11,7 @@ import {
 } from '@/features/kangur/lessons/lesson-catalog-i18n';
 import { KangurActiveLessonHeader } from '@/features/kangur/ui/components/KangurActiveLessonHeader';
 import { KangurLessonDocumentRenderer } from '@/features/kangur/ui/components/KangurLessonDocumentRenderer';
-import { KangurLessonNavigationIconButton } from '@/features/kangur/ui/components/KangurLessonNavigationIconButton';
+import { renderKangurLessonNavigationIconButton } from '@/features/kangur/ui/components/KangurLessonNavigationIconButton';
 import { KangurLessonNavigationWidget } from '@/features/kangur/ui/components/KangurLessonNavigationWidget';
 import { KangurHomeLogo } from '@/features/kangur/ui/components/KangurHomeLogo';
 import { KangurLessonNavigationProvider } from '@/features/kangur/ui/context/KangurLessonNavigationContext';
@@ -589,14 +589,14 @@ export function ActiveLessonView({
       data-kangur-print-exclude='true'
       className='flex w-full min-w-0 gap-2'
     >
-      <KangurLessonNavigationIconButton
-        className='shrink-0'
-        data-testid='kangur-lesson-back-to-lessons'
-        onClick={handleLessonBackAction}
-        aria-label={backToLessonsLabel}
-        icon={ChevronsLeft}
-        title={backToLessonsLabel}
-      />
+      {renderKangurLessonNavigationIconButton({
+        className: 'shrink-0',
+        'data-testid': 'kangur-lesson-back-to-lessons',
+        onClick: handleLessonBackAction,
+        'aria-label': backToLessonsLabel,
+        icon: ChevronsLeft,
+        title: backToLessonsLabel,
+      })}
     </div>
   ) : null;
 

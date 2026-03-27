@@ -27,6 +27,52 @@ type KangurResultsWidgetContentProps = {
   showProgressOverview?: boolean;
 };
 
+const renderKangurResultsWidgetContent = ({
+  badgeTrackDataTestPrefix,
+  basePath,
+  createdBy,
+  dailyQuest,
+  learnerId,
+  playerName,
+  prefetchedScores,
+  prefetchedScoresLoading,
+  progress,
+  showProgressOverview,
+  summaryDescription,
+  summaryLabel,
+  summaryTestId,
+}: KangurResultsWidgetContentProps & {
+  dailyQuest: ReturnType<typeof getCurrentKangurDailyQuest> | null;
+}): React.JSX.Element => (
+  <KangurPanelStack>
+    <KangurSummaryPanel
+      accent='indigo'
+      data-testid={summaryTestId}
+      description={summaryDescription}
+      label={summaryLabel}
+    >
+      <div className='mt-3'>
+        <KangurBadgeTrackHighlights
+          dataTestIdPrefix={badgeTrackDataTestPrefix}
+          limit={3}
+          progress={progress}
+        />
+      </div>
+    </KangurSummaryPanel>
+    {showProgressOverview ? (
+      <ProgressOverview dailyQuest={dailyQuest} progress={progress} />
+    ) : null}
+    <ScoreHistory
+      basePath={basePath}
+      createdBy={createdBy}
+      learnerId={learnerId}
+      playerName={playerName}
+      prefetchedScores={prefetchedScores}
+      prefetchedLoading={prefetchedScoresLoading}
+    />
+  </KangurPanelStack>
+);
+
 export function KangurResultsWidgetContent({
   basePath,
   progress,
@@ -51,33 +97,19 @@ export function KangurResultsWidgetContent({
       })
     : null;
 
-  return (
-    <KangurPanelStack>
-      <KangurSummaryPanel
-        accent='indigo'
-        data-testid={summaryTestId}
-        description={summaryDescription}
-        label={summaryLabel}
-      >
-        <div className='mt-3'>
-          <KangurBadgeTrackHighlights
-            dataTestIdPrefix={badgeTrackDataTestPrefix}
-            limit={3}
-            progress={progress}
-          />
-        </div>
-      </KangurSummaryPanel>
-      {showProgressOverview ? (
-        <ProgressOverview dailyQuest={dailyQuest} progress={progress} />
-      ) : null}
-      <ScoreHistory
-        basePath={basePath}
-        createdBy={createdBy}
-        learnerId={learnerId}
-        playerName={playerName}
-        prefetchedScores={prefetchedScores}
-        prefetchedLoading={prefetchedScoresLoading}
-      />
-    </KangurPanelStack>
-  );
+  return renderKangurResultsWidgetContent({
+    badgeTrackDataTestPrefix,
+    basePath,
+    createdBy,
+    dailyQuest,
+    learnerId,
+    playerName,
+    prefetchedScores,
+    prefetchedScoresLoading,
+    progress,
+    showProgressOverview,
+    summaryDescription,
+    summaryLabel,
+    summaryTestId,
+  });
 }

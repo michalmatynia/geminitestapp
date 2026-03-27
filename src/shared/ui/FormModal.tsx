@@ -55,7 +55,7 @@ type FormModalHeaderProps = {
   isCloseLocked: boolean;
 };
 
-function FormModalHeaderContent({
+const renderFormModalHeaderContent = ({
   title,
   titleTestId,
   subtitle,
@@ -71,45 +71,43 @@ function FormModalHeaderContent({
   onClose,
   cancelText,
   isCloseLocked,
-}: FormModalHeaderProps): React.JSX.Element {
-  return (
-    <div className='flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between'>
-      <div className='min-w-0'>
-        <div className='flex min-w-0 items-center gap-2'>
-          {showSaveButton ? (
-            <FormActions
-              onSave={onSave}
-              saveText={saveText}
-              saveVariant={saveVariant}
-              saveIcon={saveIcon}
-              isSaving={isSaving}
-              isDisabled={isSaveButtonDisabled}
-              className='mr-2'
-            />
-          ) : null}
-          <h2
-            data-testid={titleTestId}
-            className='truncate text-2xl font-bold tracking-tight text-white'
-          >
-            {title}
-          </h2>
-        </div>
-        {subtitle ? <p className='mt-1 text-sm text-gray-400'>{subtitle}</p> : null}
-      </div>
-      <div className='flex flex-wrap items-center justify-end gap-2'>
-        {actions}
-        {showCancelButton ? (
+}: FormModalHeaderProps): React.JSX.Element => (
+  <div className='flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between'>
+    <div className='min-w-0'>
+      <div className='flex min-w-0 items-center gap-2'>
+        {showSaveButton ? (
           <FormActions
-            onCancel={onClose}
-            cancelText={cancelText}
+            onSave={onSave}
+            saveText={saveText}
+            saveVariant={saveVariant}
+            saveIcon={saveIcon}
             isSaving={isSaving}
-            isDisabled={isCloseLocked}
+            isDisabled={isSaveButtonDisabled}
+            className='mr-2'
           />
         ) : null}
+        <h2
+          data-testid={titleTestId}
+          className='truncate text-2xl font-bold tracking-tight text-white'
+        >
+          {title}
+        </h2>
       </div>
+      {subtitle ? <p className='mt-1 text-sm text-gray-400'>{subtitle}</p> : null}
     </div>
-  );
-}
+    <div className='flex flex-wrap items-center justify-end gap-2'>
+      {actions}
+      {showCancelButton ? (
+        <FormActions
+          onCancel={onClose}
+          cancelText={cancelText}
+          isSaving={isSaving}
+          isDisabled={isCloseLocked}
+        />
+      ) : null}
+    </div>
+  </div>
+);
 
 export function FormModal(props: FormModalProps): React.JSX.Element | null {
   const {
@@ -175,23 +173,23 @@ export function FormModal(props: FormModalProps): React.JSX.Element | null {
       variant={variant}
       padding={padding}
       header={
-        <FormModalHeaderContent
-          title={title}
-          titleTestId={titleTestId}
-          subtitle={subtitle}
-          showSaveButton={showSaveButton}
-          onSave={handleSave}
-          saveText={saveText}
-          saveVariant={resolvedSaveVariant}
-          saveIcon={saveIcon}
-          isSaving={isSaving}
-          isSaveButtonDisabled={isSaveButtonDisabled}
-          actions={actions}
-          showCancelButton={showCancelButton}
-          onClose={handleRequestClose}
-          cancelText={cancelText}
-          isCloseLocked={isCloseLocked}
-        />
+        renderFormModalHeaderContent({
+          title,
+          titleTestId,
+          subtitle,
+          showSaveButton,
+          onSave: handleSave,
+          saveText,
+          saveVariant: resolvedSaveVariant,
+          saveIcon,
+          isSaving,
+          isSaveButtonDisabled,
+          actions,
+          showCancelButton,
+          onClose: handleRequestClose,
+          cancelText,
+          isCloseLocked,
+        })
       }
       showClose={false}
       lockClose={isCloseLocked}

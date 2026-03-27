@@ -138,7 +138,7 @@ function LearnerProfileContent(): React.JSX.Element {
         return;
       }
       handleTabChange(nextTab.id);
-      requestAnimationFrame(() => focusTabAt(nextIndex));
+      focusTabAt(nextIndex);
     },
     [focusTabAt, handleTabChange]
   );

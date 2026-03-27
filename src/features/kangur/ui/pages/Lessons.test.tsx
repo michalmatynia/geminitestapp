@@ -4,7 +4,7 @@
 
 import { act, fireEvent, render, screen } from '@testing-library/react';
 import { beforeEach, afterEach, describe, expect, it, vi } from 'vitest';
-import { DEFAULT_KANGUR_AGE_GROUP } from '@/features/kangur/lessons/lesson-catalog';
+import { DEFAULT_KANGUR_AGE_GROUP } from '@/features/kangur/lessons/lesson-catalog-metadata';
 import {
   LESSONS_LIBRARY_LAYOUT_CLASSNAME,
   LESSONS_LIBRARY_LIST_CLASSNAME,

@@ -23,7 +23,9 @@ const resolvePracticeTasks = (
   section: KangurClockTrainingStageSection
 ): ClockPracticeTask[] | undefined => TRAINING_PANEL_TASKS[section].pick_one;
 
-export default function ClockTrainingStageGame({
+export type { ClockTrainingStageGameProps };
+
+export function renderClockTrainingStageGame({
   clockInitialMode = 'practice',
   clockSection = 'hours',
   onFinish,

@@ -287,6 +287,48 @@ export type PointerDropZoneProps = {
   small?: boolean;
 };
 
+type PointerDropZoneResolvedProps = PointerDropZoneProps & {
+  surface: ReturnType<typeof getRectDropZoneSurface>;
+  ref: React.RefObject<HTMLDivElement | null>;
+};
+
+const renderPointerDropZone = ({
+  id,
+  items,
+  label,
+  checked,
+  small = false,
+  surface,
+  ref,
+}: PointerDropZoneResolvedProps): React.JSX.Element => (
+  <div>
+    <p className='mb-1 text-center text-xs [color:var(--kangur-page-muted-text)]'>
+      {label}
+    </p>
+    <KangurInfoCard
+      ref={ref}
+      accent={surface.accent}
+      className={cn(
+        surface.className,
+        'min-h-[88px] min-w-[104px] w-full max-w-[160px] touch-none select-none transition',
+      )}
+      data-testid={`adding-ball-${id}`}
+      padding='sm'
+      tone={surface.tone}
+    >
+      {items.map((ball) => (
+        <PointerDraggableBall
+          key={ball.id}
+          ball={ball}
+          zoneId={id}
+          isDragDisabled={checked}
+          small={small}
+        />
+      ))}
+    </KangurInfoCard>
+  </div>
+);
+
 export function PointerDropZone({
   id,
   items,
@@ -312,32 +354,14 @@ export function PointerDropZone({
     correct,
   });
 
-  return (
-    <div>
-      <p className='mb-1 text-center text-xs [color:var(--kangur-page-muted-text)]'>
-        {label}
-      </p>
-      <KangurInfoCard
-        ref={ref}
-        accent={surface.accent}
-        className={cn(
-          surface.className,
-          'min-h-[88px] min-w-[104px] w-full max-w-[160px] touch-none select-none transition',
-        )}
-        data-testid={`adding-ball-${id}`}
-        padding='sm'
-        tone={surface.tone}
-      >
-        {items.map((ball) => (
-          <PointerDraggableBall
-            key={ball.id}
-            ball={ball}
-            zoneId={id}
-            isDragDisabled={checked}
-            small={small}
-          />
-        ))}
-      </KangurInfoCard>
-    </div>
-  );
+  return renderPointerDropZone({
+    id,
+    items,
+    label,
+    checked,
+    correct,
+    small,
+    surface,
+    ref,
+  });
 }

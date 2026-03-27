@@ -24,178 +24,126 @@ import { KangurAdminCard } from '../components/KangurAdminCard';
 import { useSocialPostContext } from './SocialPostContext';
 
 type SocialSettingsTab = 'models' | 'project' | 'documentation' | 'publishing' | 'capture';
+type SocialPostContextValue = ReturnType<typeof useSocialPostContext>;
 
-export function AdminKangurSocialSettingsModal({
-  open,
+function renderAdminKangurSocialSettingsModal({
+  activeTab,
+  batchCaptureLimitSummary,
+  brainModelBadgeLabel,
+  brainModelSelectOptions,
+  context,
+  docUpdatesAppliedAt,
+  docUpdatesAppliedBy,
+  docUpdatesAppliedCount,
+  docUpdatesPlan,
+  docUpdatesResult,
+  docUpdatesSkippedCount,
+  docsUsed,
+  hasUnsavedChanges,
+  hasVisualDocUpdates,
+  isSaving,
+  linkedInDaysRemaining,
+  linkedInExpiryLabel,
+  linkedInExpiryStatus,
+  linkedInOptions,
   onClose,
   onSave,
-  isSaving,
-  hasUnsavedChanges,
+  resolvedContextSummary,
+  selectedLinkedInConnection,
+  selectedPostTitle,
+  setActiveTab,
+  suggestedDocUpdates,
+  visionModelBadgeLabel,
+  visionModelSelectOptions,
 }: {
-  open: boolean;
+  activeTab: SocialSettingsTab;
+  batchCaptureLimitSummary: string;
+  brainModelBadgeLabel: string;
+  brainModelSelectOptions: Array<{
+    value: string;
+    label: string;
+    description?: string;
+  }>;
+  context: SocialPostContextValue;
+  docUpdatesAppliedAt: string | null;
+  docUpdatesAppliedBy: string | null;
+  docUpdatesAppliedCount: number;
+  docUpdatesPlan: NonNullable<SocialPostContextValue['docUpdatesResult']>['plan'] | null;
+  docUpdatesResult: SocialPostContextValue['docUpdatesResult'];
+  docUpdatesSkippedCount: number;
+  docsUsed: string[];
+  hasUnsavedChanges: boolean;
+  hasVisualDocUpdates: boolean;
+  isSaving: boolean;
+  linkedInDaysRemaining: number | null;
+  linkedInExpiryLabel: string | null;
+  linkedInExpiryStatus: 'expired' | 'warning' | 'ok' | null;
+  linkedInOptions: Array<{
+    value: string;
+    label: string;
+    description?: string;
+    disabled?: boolean;
+  }>;
   onClose: () => void;
   onSave: () => void;
-  isSaving: boolean;
-  hasUnsavedChanges: boolean;
-}): React.JSX.Element | null {
+  resolvedContextSummary: string | null;
+  selectedLinkedInConnection: {
+    hasLinkedInAccessToken?: boolean;
+  } | null;
+  selectedPostTitle: string;
+  setActiveTab: React.Dispatch<React.SetStateAction<SocialSettingsTab>>;
+  suggestedDocUpdates: NonNullable<SocialPostContextValue['activePost']>['visualDocUpdates'];
+  visionModelBadgeLabel: string;
+  visionModelSelectOptions: Array<{
+    value: string;
+    label: string;
+    description?: string;
+  }>;
+}): React.JSX.Element {
   const {
     activePost,
-    brainModelId,
-    visionModelId,
-    projectUrl,
-    setProjectUrl,
-    handleBrainModelChange,
-    handleVisionModelChange,
-    brainModelOptions,
-    visionModelOptions,
-    linkedinConnectionId,
-    handleLinkedInConnectionChange,
-    linkedinConnections,
-    linkedinIntegration,
-    docReferenceInput,
-    setDocReferenceInput,
-    generationNotes,
-    setGenerationNotes,
-    contextLoading,
-    handleLoadContext,
-    handleGenerate,
-    canGenerateSocialDraft,
-    socialDraftBlockedReason,
-    socialVisionWarning,
-    resolveDocReferences,
-    previewDocUpdatesMutation,
-    applyDocUpdatesMutation,
-    handlePreviewDocUpdates,
-    handleApplyDocUpdates,
-    docUpdatesResult,
     addonForm,
-    setAddonForm,
-    createAddonMutation,
-    handleCreateAddon,
+    applyDocUpdatesMutation,
     batchCaptureBaseUrl,
-    setBatchCaptureBaseUrl,
+    batchCaptureMutation,
     batchCapturePresetIds,
     batchCapturePresetLimit,
-    setBatchCapturePresetLimit,
-    handleToggleCapturePreset,
-    selectAllCapturePresets,
-    clearCapturePresets,
-    handleBatchCapture,
-    batchCaptureMutation,
     batchCaptureResult,
-    effectiveBatchCapturePresetCount,
-  } = useSocialPostContext();
-
-  const [activeTab, setActiveTab] = React.useState<SocialSettingsTab>('models');
-
-  React.useEffect(() => {
-    if (!open) return;
-    setActiveTab('models');
-  }, [open]);
-
-  const brainModelSelectOptions = React.useMemo(() => {
-    const defaultDescription = brainModelOptions.effectiveModelId
-      ? `Default: ${brainModelOptions.effectiveModelId}`
-      : 'Default model not configured';
-    return [
-      {
-        value: BRAIN_MODEL_DEFAULT_VALUE,
-        label: 'Use Brain routing',
-        description: defaultDescription,
-      },
-      ...brainModelOptions.models.map((modelId) => ({
-        value: modelId,
-        label: modelId,
-        description: modelId === brainModelOptions.effectiveModelId ? 'Routing default' : undefined,
-      })),
-    ];
-  }, [brainModelOptions.effectiveModelId, brainModelOptions.models]);
-
-  const visionModelSelectOptions = React.useMemo(() => {
-    const defaultDescription = visionModelOptions.effectiveModelId
-      ? `Default: ${visionModelOptions.effectiveModelId}`
-      : 'Default model not configured';
-    return [
-      {
-        value: BRAIN_MODEL_DEFAULT_VALUE,
-        label: 'Use Brain routing',
-        description: defaultDescription,
-      },
-      ...visionModelOptions.models.map((modelId) => ({
-        value: modelId,
-        label: modelId,
-        description: modelId === visionModelOptions.effectiveModelId ? 'Routing default' : undefined,
-      })),
-    ];
-  }, [visionModelOptions.effectiveModelId, visionModelOptions.models]);
-
-  const linkedInOptions = React.useMemo(
-    () =>
-      linkedinConnections.map((connection) => ({
-        value: connection.id,
-        label: connection.name || connection.username || 'LinkedIn connection',
-        description: connection.hasLinkedInAccessToken ? 'Connected' : 'Not connected',
-        disabled: connection.hasLinkedInAccessToken === false,
-      })),
-    [linkedinConnections]
-  );
-
-  const selectedLinkedInConnection = React.useMemo(
-    () =>
-      linkedinConnections.find((connection) => connection.id === linkedinConnectionId) ?? null,
-    [linkedinConnections, linkedinConnectionId]
-  );
-
-  const linkedInExpiry = selectedLinkedInConnection?.linkedinExpiresAt
-    ? new Date(selectedLinkedInConnection.linkedinExpiresAt)
-    : null;
-  const linkedInExpiryTime = linkedInExpiry ? linkedInExpiry.getTime() : null;
-  const linkedInDaysRemaining =
-    linkedInExpiryTime !== null
-      ? Math.ceil((linkedInExpiryTime - Date.now()) / (1000 * 60 * 60 * 24))
-      : null;
-  const linkedInExpiryLabel = linkedInExpiry ? linkedInExpiry.toLocaleString() : null;
-  const linkedInExpiryStatus =
-    linkedInDaysRemaining !== null && linkedInExpiryTime !== null
-      ? linkedInExpiryTime <= Date.now()
-        ? 'expired'
-        : linkedInDaysRemaining <= 7
-          ? 'warning'
-          : 'ok'
-      : null;
-
-  const brainModelBadgeLabel =
-    brainModelId ?? brainModelOptions.effectiveModelId ?? 'Not configured';
-  const visionModelBadgeLabel =
-    visionModelId ?? visionModelOptions.effectiveModelId ?? 'Not configured';
-
-  const docsUsed = resolveDocReferences();
-  const contextSummary = activePost?.contextSummary ?? null;
-  const docUpdatesAppliedAt =
-    docUpdatesResult?.post?.docUpdatesAppliedAt ?? activePost?.docUpdatesAppliedAt ?? null;
-  const docUpdatesAppliedBy =
-    docUpdatesResult?.post?.docUpdatesAppliedBy ?? activePost?.docUpdatesAppliedBy ?? null;
-  const docUpdatesPlan = docUpdatesResult?.plan ?? null;
-  const docUpdatesAppliedCount = docUpdatesPlan
-    ? docUpdatesPlan.items.filter((item) => item.applied).length
-    : 0;
-  const docUpdatesSkippedCount = docUpdatesPlan
-    ? docUpdatesPlan.items.length - docUpdatesAppliedCount
-    : 0;
-
-  const resolvedContextSummary = contextSummary;
-  const selectedPostTitle =
-    activePost?.titlePl?.trim() || activePost?.titleEn?.trim() || 'selected post';
-  const suggestedDocUpdates = activePost?.visualDocUpdates ?? [];
-  const hasVisualDocUpdates = docsUsed.length > 0 || suggestedDocUpdates.length > 0;
-  const batchCaptureLimitSummary =
-    batchCapturePresetIds.length === 0
-      ? 'No capture presets selected yet.'
-      : batchCapturePresetLimit == null
-        ? `Playwright will capture all ${batchCapturePresetIds.length} selected presets in each run.`
-        : `Playwright will capture up to ${effectiveBatchCapturePresetCount} of ${batchCapturePresetIds.length} selected presets in each run.`;
-
-  if (!open) return null;
+    brainModelId,
+    brainModelOptions,
+    canGenerateSocialDraft,
+    clearCapturePresets,
+    contextLoading,
+    createAddonMutation,
+    docReferenceInput,
+    effectiveBatchCapturePresetCount: _effectiveBatchCapturePresetCount,
+    generationNotes,
+    handleApplyDocUpdates,
+    handleBatchCapture,
+    handleBrainModelChange,
+    handleCreateAddon,
+    handleGenerate,
+    handleLinkedInConnectionChange,
+    handleLoadContext,
+    handlePreviewDocUpdates,
+    handleToggleCapturePreset,
+    handleVisionModelChange,
+    linkedinConnectionId,
+    linkedinIntegration,
+    previewDocUpdatesMutation,
+    projectUrl,
+    selectAllCapturePresets,
+    setAddonForm,
+    setBatchCaptureBaseUrl,
+    setBatchCapturePresetLimit,
+    setDocReferenceInput,
+    setGenerationNotes,
+    setProjectUrl,
+    socialDraftBlockedReason,
+    socialVisionWarning,
+    visionModelId,
+    visionModelOptions,
+  } = context;
 
   return (
     <FormModal
@@ -842,4 +790,175 @@ export function AdminKangurSocialSettingsModal({
       </Tabs>
     </FormModal>
   );
+}
+
+export function AdminKangurSocialSettingsModal({
+  open,
+  onClose,
+  onSave,
+  isSaving,
+  hasUnsavedChanges,
+}: {
+  open: boolean;
+  onClose: () => void;
+  onSave: () => void;
+  isSaving: boolean;
+  hasUnsavedChanges: boolean;
+}): React.JSX.Element | null {
+  const context = useSocialPostContext();
+  const {
+    activePost,
+    brainModelId,
+    visionModelId,
+    brainModelOptions,
+    visionModelOptions,
+    linkedinConnectionId,
+    linkedinConnections,
+    resolveDocReferences,
+    docUpdatesResult,
+    batchCapturePresetIds,
+    batchCapturePresetLimit,
+    effectiveBatchCapturePresetCount,
+  } = context;
+
+  const [activeTab, setActiveTab] = React.useState<SocialSettingsTab>('models');
+
+  React.useEffect(() => {
+    if (!open) return;
+    setActiveTab('models');
+  }, [open]);
+
+  const brainModelSelectOptions = React.useMemo(() => {
+    const defaultDescription = brainModelOptions.effectiveModelId
+      ? `Default: ${brainModelOptions.effectiveModelId}`
+      : 'Default model not configured';
+    return [
+      {
+        value: BRAIN_MODEL_DEFAULT_VALUE,
+        label: 'Use Brain routing',
+        description: defaultDescription,
+      },
+      ...brainModelOptions.models.map((modelId) => ({
+        value: modelId,
+        label: modelId,
+        description: modelId === brainModelOptions.effectiveModelId ? 'Routing default' : undefined,
+      })),
+    ];
+  }, [brainModelOptions.effectiveModelId, brainModelOptions.models]);
+
+  const visionModelSelectOptions = React.useMemo(() => {
+    const defaultDescription = visionModelOptions.effectiveModelId
+      ? `Default: ${visionModelOptions.effectiveModelId}`
+      : 'Default model not configured';
+    return [
+      {
+        value: BRAIN_MODEL_DEFAULT_VALUE,
+        label: 'Use Brain routing',
+        description: defaultDescription,
+      },
+      ...visionModelOptions.models.map((modelId) => ({
+        value: modelId,
+        label: modelId,
+        description: modelId === visionModelOptions.effectiveModelId ? 'Routing default' : undefined,
+      })),
+    ];
+  }, [visionModelOptions.effectiveModelId, visionModelOptions.models]);
+
+  const linkedInOptions = React.useMemo(
+    () =>
+      linkedinConnections.map((connection) => ({
+        value: connection.id,
+        label: connection.name || connection.username || 'LinkedIn connection',
+        description: connection.hasLinkedInAccessToken ? 'Connected' : 'Not connected',
+        disabled: connection.hasLinkedInAccessToken === false,
+      })),
+    [linkedinConnections]
+  );
+
+  const selectedLinkedInConnection = React.useMemo(
+    () =>
+      linkedinConnections.find((connection) => connection.id === linkedinConnectionId) ?? null,
+    [linkedinConnections, linkedinConnectionId]
+  );
+
+  const linkedInExpiry = selectedLinkedInConnection?.linkedinExpiresAt
+    ? new Date(selectedLinkedInConnection.linkedinExpiresAt)
+    : null;
+  const linkedInExpiryTime = linkedInExpiry ? linkedInExpiry.getTime() : null;
+  const linkedInDaysRemaining =
+    linkedInExpiryTime !== null
+      ? Math.ceil((linkedInExpiryTime - Date.now()) / (1000 * 60 * 60 * 24))
+      : null;
+  const linkedInExpiryLabel = linkedInExpiry ? linkedInExpiry.toLocaleString() : null;
+  const linkedInExpiryStatus =
+    linkedInDaysRemaining !== null && linkedInExpiryTime !== null
+      ? linkedInExpiryTime <= Date.now()
+        ? 'expired'
+        : linkedInDaysRemaining <= 7
+          ? 'warning'
+          : 'ok'
+      : null;
+
+  const brainModelBadgeLabel =
+    brainModelId ?? brainModelOptions.effectiveModelId ?? 'Not configured';
+  const visionModelBadgeLabel =
+    visionModelId ?? visionModelOptions.effectiveModelId ?? 'Not configured';
+
+  const docsUsed = resolveDocReferences();
+  const contextSummary = activePost?.contextSummary ?? null;
+  const docUpdatesAppliedAt =
+    docUpdatesResult?.post?.docUpdatesAppliedAt ?? activePost?.docUpdatesAppliedAt ?? null;
+  const docUpdatesAppliedBy =
+    docUpdatesResult?.post?.docUpdatesAppliedBy ?? activePost?.docUpdatesAppliedBy ?? null;
+  const docUpdatesPlan = docUpdatesResult?.plan ?? null;
+  const docUpdatesAppliedCount = docUpdatesPlan
+    ? docUpdatesPlan.items.filter((item) => item.applied).length
+    : 0;
+  const docUpdatesSkippedCount = docUpdatesPlan
+    ? docUpdatesPlan.items.length - docUpdatesAppliedCount
+    : 0;
+
+  const resolvedContextSummary = contextSummary;
+  const selectedPostTitle =
+    activePost?.titlePl?.trim() || activePost?.titleEn?.trim() || 'selected post';
+  const suggestedDocUpdates = activePost?.visualDocUpdates ?? [];
+  const hasVisualDocUpdates = docsUsed.length > 0 || suggestedDocUpdates.length > 0;
+  const batchCaptureLimitSummary =
+    batchCapturePresetIds.length === 0
+      ? 'No capture presets selected yet.'
+      : batchCapturePresetLimit == null
+        ? `Playwright will capture all ${batchCapturePresetIds.length} selected presets in each run.`
+        : `Playwright will capture up to ${effectiveBatchCapturePresetCount} of ${batchCapturePresetIds.length} selected presets in each run.`;
+
+  if (!open) return null;
+  return renderAdminKangurSocialSettingsModal({
+    activeTab,
+    batchCaptureLimitSummary,
+    brainModelBadgeLabel,
+    brainModelSelectOptions,
+    context,
+    docUpdatesAppliedAt,
+    docUpdatesAppliedBy,
+    docUpdatesAppliedCount,
+    docUpdatesPlan,
+    docUpdatesResult,
+    docUpdatesSkippedCount,
+    docsUsed,
+    hasUnsavedChanges,
+    hasVisualDocUpdates,
+    isSaving,
+    linkedInDaysRemaining,
+    linkedInExpiryLabel,
+    linkedInExpiryStatus,
+    linkedInOptions,
+    onClose,
+    onSave,
+    resolvedContextSummary,
+    selectedLinkedInConnection,
+    selectedPostTitle,
+    setActiveTab,
+    suggestedDocUpdates,
+    visionModelBadgeLabel,
+    visionModelSelectOptions,
+  });
 }

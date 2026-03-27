@@ -66,7 +66,6 @@ export * from './MasterTreeSettingsButton';
 
 export * from './badge';
 export * from './data-table';
-export * from './confirm-dialog';
 export * from './empty-state';
 export * from './section-header';
 export * from './selection-bar';
@@ -116,7 +115,6 @@ export * from './templates/StandardDataTablePanel';
 export {
   PanelHeader,
   PanelFilters,
-  PanelPagination,
   PanelStats,
   PanelAlerts,
   usePanelState,

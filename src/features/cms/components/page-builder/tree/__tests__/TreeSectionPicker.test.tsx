@@ -5,7 +5,7 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { TreeSectionPicker } from '../TreeSectionPicker';
+import { renderTreeSectionPicker } from '../TreeSectionPicker';
 
 type MockBlockPickerProps = {
   sectionType: string;
@@ -68,11 +68,11 @@ describe('TreeSectionPicker', () => {
     const onSelect = vi.fn();
 
     render(
-      <TreeSectionPicker
-        variant='blocks'
-        sectionType='grid'
-        onSelect={onSelect}
-      />
+      renderTreeSectionPicker({
+        variant: 'blocks',
+        sectionType: 'grid',
+        onSelect,
+      })
     );
 
     expect(latestBlockPickerProps).toMatchObject({
@@ -85,7 +85,7 @@ describe('TreeSectionPicker', () => {
   });
 
   it('uses tree section actions when the zone picker has no explicit onSelect handler', () => {
-    render(<TreeSectionPicker zone={'main'} />);
+    render(renderTreeSectionPicker({ zone: 'main' }));
 
     expect(latestSectionPickerProps).toMatchObject({
       disabled: undefined,

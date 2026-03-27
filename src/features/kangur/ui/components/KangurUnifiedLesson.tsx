@@ -154,6 +154,10 @@ type KangurUnifiedLessonPanelProps<SectionId extends string> = Omit<
   sectionLabels?: Partial<Record<SectionId, string>>;
 };
 
+type KangurUnifiedLessonProps<SectionId extends string> =
+  | KangurUnifiedLessonSubsectionProps<SectionId>
+  | KangurUnifiedLessonPanelProps<SectionId>;
+
 const normalizeSections = <SectionId extends string>(
   sections: ReadonlyArray<KangurUnifiedLessonSection<SectionId>>
 ): Array<KangurUnifiedLessonSection<SectionId> & { description: string }> =>
@@ -161,6 +165,149 @@ const normalizeSections = <SectionId extends string>(
     ...section,
     description: section.description ?? DEFAULT_DESCRIPTION,
   }));
+
+const renderKangurUnifiedLessonGameStage = <SectionId extends string>({
+  currentSection,
+  gameConfig,
+  handleReturnToHub,
+  resolvedSections,
+}: {
+  currentSection: SectionId;
+  gameConfig: KangurUnifiedLessonGameConfig<SectionId>;
+  handleReturnToHub: () => void;
+  resolvedSections: ReadonlyArray<KangurUnifiedLessonSection<SectionId> & { description: string }>;
+}): JSX.Element => {
+  const sectionHeader = resolveLessonSectionHeader(resolvedSections, currentSection);
+  const stage = gameConfig.stage;
+  const rawGameHelpers = {
+    sectionId: currentSection,
+    onFinish: handleReturnToHub,
+    onBack: handleReturnToHub,
+  };
+  const runtimeFinishHandler = gameConfig.onStageFinish
+    ? () => gameConfig.onStageFinish?.(rawGameHelpers)
+    : handleReturnToHub;
+  const gameHelpers = {
+    ...rawGameHelpers,
+    onFinish: runtimeFinishHandler,
+  };
+  const stageBackHandler = gameConfig.onStageBack
+    ? () => gameConfig.onStageBack?.(rawGameHelpers)
+    : handleReturnToHub;
+
+  return (
+    <LessonActivityStage
+      accent={stage.accent}
+      backButtonLabel={stage.backButtonLabel}
+      description={stage.description}
+      footerNavigation={stage.footerNavigation}
+      headerTestId={stage.headerTestId}
+      icon={stage.icon ?? '🎮'}
+      maxWidthClassName={stage.maxWidthClassName}
+      navigationPills={stage.navigationPills}
+      onBack={stageBackHandler}
+      sectionHeader={sectionHeader}
+      shellClassName={stage.shellClassName}
+      shellTestId={stage.shellTestId}
+      shellVariant={stage.shellVariant}
+      title={stage.title}
+    >
+      {stage.bodyPrelude ? stage.bodyPrelude : null}
+      <KangurLessonStageGameRuntime
+        runtime={gameConfig.runtime}
+        onFinish={gameHelpers.onFinish}
+      />
+    </LessonActivityStage>
+  );
+};
+
+const renderKangurUnifiedLessonSlideSection = <SectionId extends string>({
+  activeSection,
+  autoRecordComplete,
+  completionSectionId,
+  dotActiveClass,
+  dotDoneClass,
+  gradientClass,
+  handleReturnToHub,
+  markSectionViewedCount,
+  onComplete,
+  recordComplete,
+  recordPanelTime,
+  resolvedSections,
+  slides,
+}: {
+  activeSection: SectionId;
+  autoRecordComplete: boolean;
+  completionSectionId?: SectionId;
+  dotActiveClass: string;
+  dotDoneClass: string;
+  gradientClass: string;
+  handleReturnToHub: () => void;
+  markSectionViewedCount: (sectionId: SectionId, viewedCount: number) => void;
+  onComplete?: () => void;
+  recordComplete: () => Promise<void>;
+  recordPanelTime: (
+    sectionId: SectionId,
+    panelIndex: number,
+    seconds: number,
+    panelTitle?: string | null
+  ) => void;
+  resolvedSections: ReadonlyArray<KangurUnifiedLessonSection<SectionId> & { description: string }>;
+  slides: Partial<Record<SectionId, LessonSlide[]>>;
+}): JSX.Element => {
+  const sectionHeader = resolveLessonSectionHeader(resolvedSections, activeSection);
+  const slidesForSection = slides[activeSection] ?? [];
+  const shouldComplete = completionSectionId === activeSection;
+  const handleComplete = shouldComplete
+    ? () => {
+        if (autoRecordComplete) {
+          void recordComplete();
+        }
+        onComplete?.();
+      }
+    : undefined;
+
+  return (
+    <LessonSlideSection
+      slides={slidesForSection}
+      sectionHeader={sectionHeader}
+      onBack={handleReturnToHub}
+      onComplete={handleComplete}
+      onProgressChange={(viewedCount) => markSectionViewedCount(activeSection, viewedCount)}
+      onPanelTimeUpdate={(panelIndex, panelTitle, seconds) =>
+        recordPanelTime(activeSection, panelIndex, seconds, panelTitle)
+      }
+      dotActiveClass={dotActiveClass}
+      dotDoneClass={dotDoneClass}
+      gradientClass={gradientClass}
+    />
+  );
+};
+
+const renderKangurUnifiedLessonHub = <SectionId extends string>({
+  gradientClass,
+  handleSelect,
+  lessonEmoji,
+  lessonTitle,
+  progressDotClassName,
+  sectionList,
+}: {
+  gradientClass: string;
+  handleSelect: (sectionId: SectionId) => void;
+  lessonEmoji: string;
+  lessonTitle: string;
+  progressDotClassName: string;
+  sectionList: HubSection[];
+}): JSX.Element => (
+  <LessonHub
+    lessonEmoji={lessonEmoji}
+    lessonTitle={lessonTitle}
+    gradientClass={gradientClass}
+    progressDotClassName={progressDotClassName}
+    sections={sectionList}
+    onSelect={(sectionId) => handleSelect(sectionId as SectionId)}
+  />
+);
 
 function KangurUnifiedLessonBase<SectionId extends string>({
   lessonId: _lessonId,
@@ -285,78 +432,31 @@ function KangurUnifiedLessonBase<SectionId extends string>({
 
   if (activeSection) {
     const currentSection = activeSection;
-    const sectionHeader = resolveLessonSectionHeader(resolvedSections, currentSection);
     const gameConfig = gameMap.get(currentSection);
 
     if (gameConfig) {
-      const stage = gameConfig.stage;
-      const rawGameHelpers = {
-        sectionId: currentSection,
-        onFinish: handleReturnToHub,
-        onBack: handleReturnToHub,
-      };
-      const runtimeFinishHandler = gameConfig.onStageFinish
-        ? () => gameConfig.onStageFinish?.(rawGameHelpers)
-        : handleReturnToHub;
-      const gameHelpers = {
-        ...rawGameHelpers,
-        onFinish: runtimeFinishHandler,
-      };
-      const stageBackHandler = gameConfig.onStageBack
-        ? () => gameConfig.onStageBack?.(rawGameHelpers)
-        : handleReturnToHub;
-
-      content = (
-        <LessonActivityStage
-          accent={stage.accent}
-          backButtonLabel={stage.backButtonLabel}
-          description={stage.description}
-          footerNavigation={stage.footerNavigation}
-          headerTestId={stage.headerTestId}
-          icon={stage.icon ?? '🎮'}
-          maxWidthClassName={stage.maxWidthClassName}
-          navigationPills={stage.navigationPills}
-          onBack={stageBackHandler}
-          sectionHeader={sectionHeader}
-          shellClassName={stage.shellClassName}
-          shellTestId={stage.shellTestId}
-          shellVariant={stage.shellVariant}
-          title={stage.title}
-        >
-          {stage.bodyPrelude ? stage.bodyPrelude : null}
-          <KangurLessonStageGameRuntime
-            runtime={gameConfig.runtime}
-            onFinish={gameHelpers.onFinish}
-          />
-        </LessonActivityStage>
-      );
+      content = renderKangurUnifiedLessonGameStage({
+        currentSection,
+        gameConfig,
+        handleReturnToHub,
+        resolvedSections,
+      });
     } else {
-      const slidesForSection = slides[currentSection] ?? [];
-      const shouldComplete = completionSectionId === currentSection;
-      const handleComplete = shouldComplete
-        ? () => {
-            if (autoRecordComplete) {
-              void recordComplete();
-            }
-            onComplete?.();
-          }
-        : undefined;
-
-      content = (
-        <LessonSlideSection
-          slides={slidesForSection}
-          sectionHeader={sectionHeader}
-          onBack={handleReturnToHub}
-          onComplete={handleComplete}
-          onProgressChange={(viewedCount) => markSectionViewedCount(currentSection, viewedCount)}
-          onPanelTimeUpdate={(panelIndex, panelTitle, seconds) =>
-            recordPanelTime(currentSection, panelIndex, seconds, panelTitle)
-          }
-          dotActiveClass={dotActiveClass}
-          dotDoneClass={dotDoneClass}
-          gradientClass={gradientClass}
-        />
-      );
+      content = renderKangurUnifiedLessonSlideSection({
+        activeSection: currentSection,
+        autoRecordComplete,
+        completionSectionId,
+        dotActiveClass,
+        dotDoneClass,
+        gradientClass,
+        handleReturnToHub,
+        markSectionViewedCount,
+        onComplete,
+        recordComplete,
+        recordPanelTime,
+        resolvedSections,
+        slides,
+      });
     }
   } else {
     const handleSelect = createLessonHubSelectHandler<SectionId>({
@@ -365,16 +465,14 @@ function KangurUnifiedLessonBase<SectionId extends string>({
       skipMarkFor,
     });
 
-    content = (
-      <LessonHub
-        lessonEmoji={lessonEmoji}
-        lessonTitle={lessonTitle}
-        gradientClass={gradientClass}
-        progressDotClassName={progressDotClassName}
-        sections={sectionList}
-        onSelect={(sectionId) => handleSelect(sectionId as SectionId)}
-      />
-    );
+    content = renderKangurUnifiedLessonHub({
+      gradientClass,
+      handleSelect,
+      lessonEmoji,
+      lessonTitle,
+      progressDotClassName,
+      sectionList,
+    });
   }
 
   return (
@@ -386,85 +484,89 @@ function KangurUnifiedLessonBase<SectionId extends string>({
   );
 }
 
-function KangurUnifiedLessonSubsection<SectionId extends string>({
-  lessonId,
-  sections,
-  scorePercent,
-  ...rest
-}: KangurUnifiedLessonSubsectionProps<SectionId>): JSX.Element {
-  const { sectionProgress, markSectionOpened, markSectionViewedCount } =
+const useKangurUnifiedLessonBaseProps = <SectionId extends string>(
+  props: KangurUnifiedLessonProps<SectionId>
+): KangurUnifiedLessonBaseProps<SectionId> => {
+  const isPanelMode = props.progressMode === 'panel';
+  const panelProps = isPanelMode ? props : null;
+  const { lessonId, sections, slides, scorePercent } = props;
+  const resolvedLessonKey = panelProps?.lessonKey ?? lessonId;
+  const resolvedSectionLabels = useMemo(
+    () =>
+      panelProps
+        ? panelProps.sectionLabels ?? buildLessonSectionLabels(sections)
+        : undefined,
+    [panelProps, sections]
+  );
+  const {
+    sectionProgress: subsectionProgress,
+    markSectionOpened: markSubsectionOpened,
+    markSectionViewedCount: markSubsectionViewedCount,
+  } =
     useKangurLessonSubsectionProgress<SectionId>({
       lessonId,
       sections,
     });
-
-  const { recordPanelTime, recordComplete } = useLessonTimeTracking({
-    lessonId,
-    scorePercent,
-  });
-
-  return (
-    <KangurUnifiedLessonBase
-      {...rest}
-      lessonId={lessonId}
-      sections={sections}
-      recordComplete={recordComplete}
-      progressAdapter={{
-        sectionProgress,
-        markSectionOpened,
-        markSectionViewedCount,
-        recordPanelTime,
-      }}
-    />
-  );
-}
-
-function KangurUnifiedLessonPanel<SectionId extends string>({
-  lessonId,
-  lessonKey,
-  sectionLabels,
-  sections,
-  slides,
-  scorePercent,
-  ...rest
-}: KangurUnifiedLessonPanelProps<SectionId>): JSX.Element {
-  const resolvedLessonKey = lessonKey ?? lessonId;
-  const resolvedSectionLabels = sectionLabels ?? buildLessonSectionLabels(sections);
-
-  const { sectionProgress, markSectionOpened, markSectionViewedCount, recordPanelTime } =
+  const {
+    sectionProgress: panelProgress,
+    markSectionOpened: markPanelOpened,
+    markSectionViewedCount: markPanelViewedCount,
+    recordPanelTime: recordTrackedPanelTime,
+  } =
     useKangurLessonPanelProgress<SectionId>({
       lessonKey: resolvedLessonKey,
       slideSections: slides,
       sectionLabels: resolvedSectionLabels,
     });
 
-  const { recordComplete } = useLessonTimeTracking({
+  const { recordComplete, recordPanelTime } = useLessonTimeTracking({
     lessonId: resolvedLessonKey,
     scorePercent,
   });
 
-  return (
-    <KangurUnifiedLessonBase
-      {...rest}
-      lessonId={lessonId}
-      sections={sections}
-      slides={slides}
-      recordComplete={recordComplete}
-      progressAdapter={{
-        sectionProgress,
-        markSectionOpened,
-        markSectionViewedCount,
-        recordPanelTime,
-      }}
-    />
-  );
-}
+  if (isPanelMode) {
+    const {
+      lessonKey: _lessonKey,
+      progressMode: _progressMode,
+      scorePercent: _scorePercent,
+      sectionLabels: _sectionLabels,
+      ...baseProps
+    } = props;
+
+    return {
+      ...baseProps,
+      recordComplete,
+      progressAdapter: {
+        sectionProgress: panelProgress,
+        markSectionOpened: markPanelOpened,
+        markSectionViewedCount: markPanelViewedCount,
+        recordPanelTime: recordTrackedPanelTime,
+      },
+    };
+  }
+
+  const {
+    progressMode: _progressMode,
+    scorePercent: _scorePercent,
+    ...baseProps
+  } = props;
+
+  return {
+    ...baseProps,
+    recordComplete,
+    progressAdapter: {
+      sectionProgress: subsectionProgress,
+      markSectionOpened: markSubsectionOpened,
+      markSectionViewedCount: markSubsectionViewedCount,
+      recordPanelTime,
+    },
+  };
+};
 
 export default function KangurUnifiedLesson<SectionId extends string>(
-  props: KangurUnifiedLessonSubsectionProps<SectionId> | KangurUnifiedLessonPanelProps<SectionId>
+  props: KangurUnifiedLessonProps<SectionId>
 ): JSX.Element {
-  if (props.progressMode === 'panel') {
-    return <KangurUnifiedLessonPanel {...props} />;
-  }
-  return <KangurUnifiedLessonSubsection {...props} />;
+  const resolvedBaseProps = useKangurUnifiedLessonBaseProps(props);
+
+  return <KangurUnifiedLessonBase {...resolvedBaseProps} />;
 }

@@ -56,6 +56,16 @@ vi.mock('@/features/kangur/ui/hooks/useKangurPageContent', () => ({
   useKangurPageContentEntry: useKangurPageContentEntryMock,
 }));
 
+vi.mock('@/features/kangur/ui/hooks/useKangurLessons', () => ({
+  useKangurLessons: () => ({
+    data: [],
+    isLoading: false,
+    isFetching: false,
+    refetch: vi.fn(),
+    error: null,
+  }),
+}));
+
 vi.mock('@/features/kangur/docs/tooltips', () => ({
   KangurDocsTooltipEnhancer: () => null,
   useKangurDocsTooltips: () => ({

@@ -3,7 +3,7 @@
 import { useId } from 'react';
 
 import {
-  AgenticAssignmentGame,
+  createAgenticAssignmentGameComponent,
   type AgenticAssignmentGameItem,
   type AgenticAssignmentGameOption,
 } from '@/features/kangur/ui/components/AgenticAssignmentGame';
@@ -11,7 +11,6 @@ import {
   renderSoftAtmosphereGradients,
   renderSoftAtmosphereOvals,
 } from '@/features/kangur/ui/components/animations/svgAtmosphere';
-import type { KangurMiniGameFinishActionProps } from '@/features/kangur/ui/types';
 
 type ReasoningLevelId = 'low' | 'medium' | 'high' | 'xhigh';
 
@@ -187,74 +186,68 @@ export const ReasoningDialVisual = (): JSX.Element => {
   );
 };
 
-export default function AgenticReasoningRouterGame({
-  onFinish,
-}: KangurMiniGameFinishActionProps): JSX.Element {
-  return (
-    <AgenticAssignmentGame
-      copy={{
-        statusLabel: 'Reasoning Router',
-        heading: 'Route Tasks by Reasoning Level',
-        lead:
-          'Pick a task card, then assign the right reasoning level. Aim for the lightest effort that still keeps quality high.',
-        instructions: [
-          'Select a task to focus it.',
-          'Click a reasoning level to route.',
-          'Check your routing once all tasks are set.',
-        ],
-        leftPanelTitle: 'Routing Queue',
-        leftPanelCaption: {
-          coarsePointer: 'Tap a task to focus it.',
-          finePointer: 'Choose the right effort.',
-        },
-        leftPanelCountLabel: (assignedCount, total) => `${assignedCount}/${total} routed`,
-        leftPanelGroupLabel: 'Select a task to route',
-        leftPanelTouchHint: {
-          idle: 'Tap a task card, then tap a reasoning level.',
-          selected: (itemText) => `Selected task: ${itemText} Tap a reasoning level.`,
-          testId: 'agentic-reasoning-touch-hint',
-        },
-        rightPanelTitle: 'Reasoning Levels',
-        rightPanelCaption: {
-          coarsePointer: 'Tap to route the selected task.',
-          finePointer: 'Click to route.',
-        },
-        rightPanelGroupLabel: 'Choose a reasoning level',
-        successMessage: 'Perfect routing. Your effort levels are spot on.',
-        failureMessage: (score, total) =>
-          `You routed ${score}/${total} correctly. Adjust the mismatches and try again.`,
-      }}
-      items={ROUTER_TASKS}
-      onFinish={onFinish}
-      options={REASONING_LEVELS}
-      theme={{
-        accent: 'teal',
-        heroClassName:
-          'border border-teal-200/80 bg-gradient-to-br from-teal-50 via-white to-sky-50',
-        heroTopGlowClassName: '-right-14 top-4 bg-teal-200/40',
-        heroBottomGlowClassName: '-left-10 bottom-4 bg-sky-200/40',
-        headingGradientClass: 'from-teal-500 via-cyan-500 to-sky-500',
-        instructionListClassName: 'space-y-2 text-sm text-teal-950',
-        leftPanelGlowClassName:
-          '[background:radial-gradient(circle_at_top,_rgba(45,212,191,0.3),_transparent_55%)]',
-        leftPanelTitleClassName: 'text-teal-950',
-        leftPanelCaptionClassName: 'text-teal-800',
-        leftTouchHintClassName: 'border-teal-200/80 text-teal-950',
-        leftItemFocusRingClassName: 'focus-visible:ring-teal-400/70',
-        leftItemActiveClassName: 'border-teal-400 bg-teal-50',
-        leftItemInactiveClassName: 'border-teal-100/80',
-        leftItemCorrectClassName: 'border-teal-400 bg-teal-50',
-        leftItemWrongClassName: 'border-amber-300 bg-amber-50',
-        leftAssignedBadgeClassName:
-          'border-teal-200/70 bg-teal-100 text-teal-700',
-        rightPanelGlowClassName:
-          '[background:radial-gradient(circle_at_top,_rgba(14,116,144,0.25),_transparent_60%)]',
-        rightPanelTitleClassName: 'text-teal-950',
-        rightPanelCaptionClassName: 'text-teal-800',
-        rightOptionFocusRingClassName: 'focus-visible:ring-teal-400/70',
-        rightOptionDescriptionClassName: 'text-teal-900',
-      }}
-      visual={<ReasoningDialVisual />}
-    />
-  );
-}
+export default createAgenticAssignmentGameComponent({
+  copy: {
+    statusLabel: 'Reasoning Router',
+    heading: 'Route Tasks by Reasoning Level',
+    lead:
+      'Pick a task card, then assign the right reasoning level. Aim for the lightest effort that still keeps quality high.',
+    instructions: [
+      'Select a task to focus it.',
+      'Click a reasoning level to route.',
+      'Check your routing once all tasks are set.',
+    ],
+    leftPanelTitle: 'Routing Queue',
+    leftPanelCaption: {
+      coarsePointer: 'Tap a task to focus it.',
+      finePointer: 'Choose the right effort.',
+    },
+    leftPanelCountLabel: (assignedCount, total) => `${assignedCount}/${total} routed`,
+    leftPanelGroupLabel: 'Select a task to route',
+    leftPanelTouchHint: {
+      idle: 'Tap a task card, then tap a reasoning level.',
+      selected: (itemText) => `Selected task: ${itemText} Tap a reasoning level.`,
+      testId: 'agentic-reasoning-touch-hint',
+    },
+    rightPanelTitle: 'Reasoning Levels',
+    rightPanelCaption: {
+      coarsePointer: 'Tap to route the selected task.',
+      finePointer: 'Click to route.',
+    },
+    rightPanelGroupLabel: 'Choose a reasoning level',
+    successMessage: 'Perfect routing. Your effort levels are spot on.',
+    failureMessage: (score, total) =>
+      `You routed ${score}/${total} correctly. Adjust the mismatches and try again.`,
+  },
+  items: ROUTER_TASKS,
+  options: REASONING_LEVELS,
+  theme: {
+    accent: 'teal',
+    heroClassName:
+      'border border-teal-200/80 bg-gradient-to-br from-teal-50 via-white to-sky-50',
+    heroTopGlowClassName: '-right-14 top-4 bg-teal-200/40',
+    heroBottomGlowClassName: '-left-10 bottom-4 bg-sky-200/40',
+    headingGradientClass: 'from-teal-500 via-cyan-500 to-sky-500',
+    instructionListClassName: 'space-y-2 text-sm text-teal-950',
+    leftPanelGlowClassName:
+      '[background:radial-gradient(circle_at_top,_rgba(45,212,191,0.3),_transparent_55%)]',
+    leftPanelTitleClassName: 'text-teal-950',
+    leftPanelCaptionClassName: 'text-teal-800',
+    leftTouchHintClassName: 'border-teal-200/80 text-teal-950',
+    leftItemFocusRingClassName: 'focus-visible:ring-teal-400/70',
+    leftItemActiveClassName: 'border-teal-400 bg-teal-50',
+    leftItemInactiveClassName: 'border-teal-100/80',
+    leftItemCorrectClassName: 'border-teal-400 bg-teal-50',
+    leftItemWrongClassName: 'border-amber-300 bg-amber-50',
+    leftAssignedBadgeClassName:
+      'border-teal-200/70 bg-teal-100 text-teal-700',
+    rightPanelGlowClassName:
+      '[background:radial-gradient(circle_at_top,_rgba(14,116,144,0.25),_transparent_60%)]',
+    rightPanelTitleClassName: 'text-teal-950',
+    rightPanelCaptionClassName: 'text-teal-800',
+    rightOptionFocusRingClassName: 'focus-visible:ring-teal-400/70',
+    rightOptionDescriptionClassName: 'text-teal-900',
+  },
+  visual: <ReasoningDialVisual />,
+  displayName: 'AgenticReasoningRouterGame',
+});

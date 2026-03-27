@@ -83,27 +83,51 @@ vi.mock('@/features/kangur/ui/hooks/useOptionalNextAuthSession', () => ({
   useOptionalNextAuthSession: () => sessionMock(),
 }));
 
-vi.mock('@/features/kangur/ui/context/KangurRoutingContext', () => ({
-  KangurRoutingProvider: ({
-    children,
-    ...props
-  }: {
-    pageKey?: string | null;
-    requestedPath?: string;
-    requestedHref?: string;
-    basePath: string;
-    embedded: boolean;
+vi.mock('@/features/kangur/ui/context/KangurRoutingContext', async () => {
+  const routing = await vi.importActual<typeof import('@/features/kangur/config/routing')>(
+    '@/features/kangur/config/routing'
+  );
+  const pageAccess = await vi.importActual<typeof import('@/features/kangur/config/page-access')>(
+    '@/features/kangur/config/page-access'
+  );
+  const managedPaths = await vi.importActual<
+    typeof import('@/features/kangur/ui/routing/managed-paths')
+  >('@/features/kangur/ui/routing/managed-paths');
+
+  return {
+    KangurRoutingProvider: ({
+      children,
+      ...props
+    }: {
+      pageKey?: string | null;
+      requestedPath?: string;
+      requestedHref?: string;
+      basePath: string;
+      embedded: boolean;
       children: ReactNode;
-  }) => {
-    kangurRoutingProviderMock(props);
-    mockKangurRoutingState.pageKey = props.pageKey ?? null;
-    mockKangurRoutingState.requestedPath = props.requestedPath ?? '';
-    mockKangurRoutingState.basePath = props.basePath;
-    mockKangurRoutingState.embedded = props.embedded;
-    return <div data-testid='kangur-routing-provider'>{children}</div>;
-  },
-  useKangurRoutingState: () => ({ ...mockKangurRoutingState }),
-}));
+    }) => {
+      kangurRoutingProviderMock(props);
+      const resolvedBasePath = routing.normalizeKangurBasePath(props.basePath);
+      const normalizedRequestedPath = props.requestedPath?.trim() || resolvedBasePath;
+      const accessibleRouteState = pageAccess.resolveAccessibleKangurRouteState({
+        normalizedBasePath: resolvedBasePath,
+        pageKey: props.pageKey,
+        requestedPath: normalizedRequestedPath,
+        session: sessionMock().data ?? null,
+        slugSegments: managedPaths.getKangurSlugFromPathname(
+          normalizedRequestedPath,
+          resolvedBasePath
+        ),
+      });
+      mockKangurRoutingState.pageKey = accessibleRouteState.pageKey ?? null;
+      mockKangurRoutingState.requestedPath = accessibleRouteState.requestedPath;
+      mockKangurRoutingState.basePath = resolvedBasePath;
+      mockKangurRoutingState.embedded = props.embedded;
+      return <div data-testid='kangur-routing-provider'>{children}</div>;
+    },
+    useKangurRoutingState: () => ({ ...mockKangurRoutingState }),
+  };
+});
 
 vi.mock('@/features/kangur/ui/KangurFeatureApp', () => ({
   KangurFeatureApp: () => <div data-testid='kangur-feature-app'>Kangur feature app</div>,
@@ -400,7 +424,7 @@ describe('KangurFeaturePage', () => {
     expect(clearKangurClientObservabilityContextMock).toHaveBeenCalledTimes(1);
   });
 
-  it('sanitizes blocked GamesLibrary routes before they reach shared Kangur routing state', () => {
+  it('passes blocked GamesLibrary routes through to shared routing for provider-level sanitization', () => {
     sessionMock.mockReturnValue({
       data: {
         user: {
@@ -414,9 +438,9 @@ describe('KangurFeaturePage', () => {
     render(<KangurFeaturePage slug={['games']} basePath='/kangur' />);
 
     expect(kangurRoutingProviderMock).toHaveBeenCalledWith({
-      pageKey: 'Game',
-      requestedPath: '/kangur',
-      requestedHref: '/kangur',
+      pageKey: 'GamesLibrary',
+      requestedPath: '/kangur/games',
+      requestedHref: '/kangur/games',
       basePath: '/kangur',
       embedded: false,
     });

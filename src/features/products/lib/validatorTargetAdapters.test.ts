@@ -19,6 +19,7 @@ describe('validatorTargetAdapters', () => {
     expect(getProductValidationTargetAdapter('price')).toEqual({
       target: 'price',
       valueKind: 'number',
+      numberMode: 'decimal',
       replacementFields: ['price'],
     });
   });
@@ -40,7 +41,9 @@ describe('validatorTargetAdapters', () => {
 
   it('coerces numeric target values through the adapter layer', () => {
     expect(coerceProductValidationNumericValue('7.8')).toBe(7);
-    expect(coerceProductValidationTargetValue({ target: 'weight', value: '12,9' })).toBe(12);
+    expect(coerceProductValidationNumericValue('7.8', 'decimal')).toBe(7.8);
+    expect(coerceProductValidationTargetValue({ target: 'weight', value: '12,9' })).toBe(12.9);
+    expect(coerceProductValidationTargetValue({ target: 'stock', value: '12,9' })).toBe(12);
     expect(coerceProductValidationTargetValue({ target: 'name', value: '  Title  ' })).toBe(
       '  Title  '
     );

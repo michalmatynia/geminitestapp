@@ -13,6 +13,20 @@ import { useLessons, LessonsProvider } from './lessons/LessonsContext';
 import { LessonsCatalog } from './lessons/Lessons.Catalog';
 import { ActiveLessonView } from './lessons/Lessons.ActiveLesson';
 
+function LessonsDeferredDocsTooltips({
+  onResolved,
+}: {
+  onResolved: (enabled: boolean) => void;
+}) {
+  const { enabled } = useKangurDocsTooltips('lessons');
+
+  useEffect(() => {
+    onResolved(enabled);
+  }, [enabled, onResolved]);
+
+  return null;
+}
+
 function LessonsContent() {
   const pageTranslations = useTranslations('KangurLessonsPage');
   const {
@@ -34,12 +48,15 @@ function LessonsContent() {
   const [isDeferredEnhancementsReady, setIsDeferredEnhancementsReady] = useState(
     Boolean(activeLesson)
   );
+  const [docsTooltipsEnabled, setDocsTooltipsEnabled] = useState(false);
 
   const { user, logout } = auth;
-  const { enabled: docsTooltipsEnabled } = useKangurDocsTooltips('lessons');
   const handleLogout = useCallback(() => {
     logout(false);
   }, [logout]);
+  const handleDeferredDocsTooltipsResolved = useCallback((enabled: boolean) => {
+    setDocsTooltipsEnabled((current) => (current === enabled ? current : enabled));
+  }, []);
 
   const activeLessonAssignment = activeLesson
     ? (lessonAssignmentsByComponent.get(activeLesson.componentId) ?? null)
@@ -142,6 +159,9 @@ function LessonsContent() {
 
   return (
     <>
+      {isDeferredEnhancementsReady ? (
+        <LessonsDeferredDocsTooltips onResolved={handleDeferredDocsTooltipsResolved} />
+      ) : null}
       {isDeferredEnhancementsReady ? (
         <KangurAiTutorSessionSync
           learnerId={user?.activeLearner?.id ?? null}

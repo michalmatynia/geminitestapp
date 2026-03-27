@@ -79,14 +79,9 @@ vi.mock('@/shared/ui/QueryErrorBoundary', () => ({
 }));
 
 vi.mock('@/features/kangur/public', () => ({
-  default: frontendPublicOwnerShellClientMock,
-}));
-
-vi.mock('@/features/kangur/ui/KangurSSRSkeleton', () => ({
+  FrontendPublicOwnerProvider: frontendPublicOwnerProviderMock,
+  FrontendPublicOwnerShellClient: frontendPublicOwnerShellClientMock,
   KangurSSRSkeleton: kangurSSRSkeletonMock,
-}));
-
-vi.mock('@/features/kangur/ui/components/KangurServerShell', () => ({
   KangurServerShell: kangurServerShellMock,
 }));
 

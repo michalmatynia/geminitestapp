@@ -332,6 +332,8 @@ const messageMap = {
   'KangurGamesLibraryPage.modal.instances.contentSetLabel': 'Content set',
   'KangurGamesLibraryPage.modal.instances.contentSourceLabel': 'Content source',
   'KangurGamesLibraryPage.modal.instances.engineSourceLabel': 'Engine source',
+  'KangurGamesLibraryPage.modal.instances.contentSourceBadge': 'Content source',
+  'KangurGamesLibraryPage.modal.instances.engineSourceBadge': 'Engine source',
   'KangurGamesLibraryPage.modal.instances.sourceCustomDraft': 'Current draft',
   'KangurGamesLibraryPage.modal.instances.titleLabel': 'Instance title',
   'KangurGamesLibraryPage.modal.instances.contentKind.default_content': 'Bundled content',
@@ -353,6 +355,10 @@ const messageMap = {
   'KangurGamesLibraryPage.modal.instances.previewTitle': 'Instance preview',
   'KangurGamesLibraryPage.modal.instances.previewDescription':
     'Review the current content payload and engine behavior that will be saved together as one launchable instance.',
+  'KangurGamesLibraryPage.modal.instances.mode.editing_saved': 'Editing saved instance',
+  'KangurGamesLibraryPage.modal.instances.mode.draft_from_saved': 'Draft from saved instance',
+  'KangurGamesLibraryPage.modal.instances.mode.mixed_draft': 'Mixed draft',
+  'KangurGamesLibraryPage.modal.instances.mode.custom_draft': 'Custom draft',
   'KangurGamesLibraryPage.modal.instances.usePreviewSettingsButton':
     'Use hub preview settings',
   'KangurGamesLibraryPage.modal.instances.initialModeAriaLabel': 'Instance initial mode',
@@ -367,6 +373,7 @@ const messageMap = {
   'KangurGamesLibraryPage.modal.instances.showMinuteHandAriaLabel':
     'Instance show minute hand',
   'KangurGamesLibraryPage.modal.instances.newButton': 'New instance',
+  'KangurGamesLibraryPage.modal.instances.forkDraftButton': 'Fork to new draft',
   'KangurGamesLibraryPage.modal.instances.createButton': 'Create instance',
   'KangurGamesLibraryPage.modal.instances.saveButton': 'Save instance',
   'KangurGamesLibraryPage.modal.instances.createAndOpenButton': 'Create and open instance',
@@ -375,10 +382,14 @@ const messageMap = {
   'KangurGamesLibraryPage.modal.instances.editButton': 'Edit',
   'KangurGamesLibraryPage.modal.instances.useContentSetButton': 'Use content set',
   'KangurGamesLibraryPage.modal.instances.usingContentSetButton': 'Using content set',
+  'KangurGamesLibraryPage.modal.instances.detachContentSourceButton':
+    'Detach content source',
   'KangurGamesLibraryPage.modal.instances.useEngineSettingsButton':
     'Use engine settings',
   'KangurGamesLibraryPage.modal.instances.usingEngineSettingsButton':
     'Using engine settings',
+  'KangurGamesLibraryPage.modal.instances.detachEngineSourceButton':
+    'Detach engine source',
   'KangurGamesLibraryPage.modal.instances.duplicateButton': 'Duplicate',
   'KangurGamesLibraryPage.modal.instances.duplicateSuffix': 'Copy',
   'KangurGamesLibraryPage.modal.instances.enableButton': 'Enable',
@@ -1755,6 +1766,11 @@ describe('GamesLibrary serialization audit', () => {
     expect(instancePreview).toHaveTextContent('Content source: Hours second');
     expect(instancePreview).toHaveTextContent('Engine source: Current draft');
     expect(
+      within(screen.getByTestId('games-library-instance-clock_instance_hours')).getByText(
+        'Content source'
+      )
+    ).toBeInTheDocument();
+    expect(
       within(screen.getByTestId('games-library-instance-clock_instance_hours')).getByRole(
         'button',
         { name: 'Using content set' }
@@ -1822,6 +1838,7 @@ describe('GamesLibrary serialization audit', () => {
     expect(within(instanceActions).getByRole('button', { name: 'Create instance' })).toBeInTheDocument();
     expect(within(instanceActions).queryByRole('button', { name: 'Save instance' })).toBeNull();
     expect(within(instanceActions).queryByRole('link', { name: 'Open instance' })).toBeNull();
+    expect(screen.getByTestId('games-library-instance-mode-chip')).toHaveTextContent('Mixed draft');
   });
 
   it('applies only the saved instance engine settings to the current composer', () => {
@@ -1887,6 +1904,11 @@ describe('GamesLibrary serialization audit', () => {
     expect(getInstanceClockPreview()).toHaveAttribute('data-initial-mode', 'challenge');
     expect(instancePreview).toHaveTextContent('Content source: Current draft');
     expect(instancePreview).toHaveTextContent('Engine source: Hours second');
+    expect(
+      within(screen.getByTestId('games-library-instance-clock_instance_hours')).getByText(
+        'Engine source'
+      )
+    ).toBeInTheDocument();
     expect(
       within(screen.getByTestId('games-library-instance-clock_instance_hours')).getByRole(
         'button',
@@ -2052,6 +2074,9 @@ describe('GamesLibrary serialization audit', () => {
 
     const restoredInstanceClockPreview = getInstanceClockPreview();
 
+    expect(screen.getByTestId('games-library-instance-mode-chip')).toHaveTextContent(
+      'Editing saved instance'
+    );
     expect(restoredInstanceClockPreview).toHaveAttribute('data-section', 'minutes');
     expect(restoredInstanceClockPreview).toHaveAttribute('data-initial-mode', 'challenge');
   });
@@ -2175,8 +2200,157 @@ describe('GamesLibrary serialization audit', () => {
     expect(screen.getByLabelText('Instance initial mode')).toHaveValue('challenge');
     expect(screen.getByLabelText('Instance show hour hand')).not.toBeChecked();
     expect(screen.getByLabelText('Instance show minute hand')).toBeChecked();
+    expect(screen.getByTestId('games-library-instance-mode-chip')).toHaveTextContent(
+      'Draft from saved instance'
+    );
     expect(getInstanceClockPreview()).toHaveAttribute('data-section', 'minutes');
     expect(getInstanceClockPreview()).toHaveAttribute('data-initial-mode', 'challenge');
+  });
+
+  it('forks the current saved-instance edit session into a new draft without losing current edits', async () => {
+    pageDataState.value = buildPageDataForGameIds('clock_training');
+    gameInstancesByGameIdState.value = {
+      clock_training: [
+        {
+          id: 'clock_instance_minutes',
+          gameId: 'clock_training',
+          launchableRuntimeId: 'clock_quiz',
+          contentSetId: 'clock_training:clock-minutes',
+          title: 'Saved minute challenge',
+          description: 'Reuses minute-only content with custom engine settings.',
+          emoji: '🕒',
+          enabled: true,
+          sortOrder: 1,
+          engineOverrides: {
+            clockInitialMode: 'challenge',
+            showClockHourHand: false,
+            showClockMinuteHand: true,
+            showClockModeSwitch: false,
+            showClockTaskTitle: false,
+            showClockTimeDisplay: false,
+          },
+        },
+      ],
+    };
+
+    render(<GamesLibrary />);
+
+    const clockCard = document.getElementById('kangur-game-card-clock_training');
+    if (!clockCard) {
+      throw new Error('Clock Training card container not found.');
+    }
+
+    fireEvent.click(within(clockCard).getByRole('button', { name: 'Preview & map' }));
+
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: 'Save instance' })).toBeInTheDocument();
+    });
+
+    fireEvent.change(screen.getByLabelText('Instance title'), {
+      target: { value: 'Minute challenge variant' },
+    });
+    fireEvent.change(screen.getByLabelText('Instance initial mode'), {
+      target: { value: 'practice' },
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: 'Fork to new draft' }));
+
+    const instanceActions = screen.getByTestId('games-library-instance-actions');
+    expect(screen.getByLabelText('Instance title')).toHaveValue('Minute challenge variant');
+    expect(screen.getByLabelText('Instance initial mode')).toHaveValue('practice');
+    expect(within(instanceActions).getByRole('button', { name: 'Create instance' })).toBeInTheDocument();
+    expect(within(instanceActions).queryByRole('button', { name: 'Save instance' })).toBeNull();
+    expect(within(instanceActions).queryByRole('link', { name: 'Open instance' })).toBeNull();
+    expect(screen.getByTestId('games-library-instance-mode-chip')).toHaveTextContent('Mixed draft');
+  });
+
+  it('can detach duplicated content and engine sources to turn the draft fully custom', () => {
+    pageDataState.value = buildPageDataForGameIds('clock_training');
+    gameInstancesByGameIdState.value = {
+      clock_training: [
+        {
+          id: 'clock_instance_minutes',
+          gameId: 'clock_training',
+          launchableRuntimeId: 'clock_quiz',
+          contentSetId: 'clock_training:clock-minutes',
+          title: 'Saved minute challenge',
+          description: 'Reuses minute-only content with custom engine settings.',
+          emoji: '🕒',
+          enabled: true,
+          sortOrder: 1,
+          engineOverrides: {
+            clockInitialMode: 'challenge',
+            showClockHourHand: false,
+            showClockMinuteHand: true,
+            showClockModeSwitch: false,
+            showClockTaskTitle: false,
+            showClockTimeDisplay: false,
+          },
+        },
+      ],
+    };
+
+    render(<GamesLibrary />);
+
+    const clockCard = document.getElementById('kangur-game-card-clock_training');
+    if (!clockCard) {
+      throw new Error('Clock Training card container not found.');
+    }
+
+    fireEvent.click(within(clockCard).getByRole('button', { name: 'Preview & map' }));
+    fireEvent.click(
+      within(screen.getByTestId('games-library-instance-clock_instance_minutes')).getByRole(
+        'button',
+        { name: 'Duplicate' }
+      )
+    );
+
+    const instancePreview = screen.getByTestId('games-library-instance-preview');
+    expect(instancePreview).toHaveTextContent('Content source: Saved minute challenge');
+    expect(instancePreview).toHaveTextContent('Engine source: Saved minute challenge');
+    expect(screen.getByTestId('games-library-instance-mode-chip')).toHaveTextContent(
+      'Draft from saved instance'
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: 'Detach content source' }));
+
+    expect(instancePreview).toHaveTextContent('Content source: Current draft');
+    expect(instancePreview).toHaveTextContent('Engine source: Saved minute challenge');
+    expect(screen.getByTestId('games-library-instance-mode-chip')).toHaveTextContent(
+      'Mixed draft'
+    );
+    expect(
+      within(screen.getByTestId('games-library-instance-clock_instance_minutes')).getByRole(
+        'button',
+        { name: 'Use content set' }
+      )
+    ).toBeEnabled();
+    expect(
+      within(screen.getByTestId('games-library-instance-clock_instance_minutes')).getByRole(
+        'button',
+        { name: 'Using engine settings' }
+      )
+    ).toBeDisabled();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Detach engine source' }));
+
+    expect(instancePreview).toHaveTextContent('Content source: Current draft');
+    expect(instancePreview).toHaveTextContent('Engine source: Current draft');
+    expect(screen.getByTestId('games-library-instance-mode-chip')).toHaveTextContent(
+      'Custom draft'
+    );
+    expect(
+      within(screen.getByTestId('games-library-instance-clock_instance_minutes')).getByRole(
+        'button',
+        { name: 'Use content set' }
+      )
+    ).toBeEnabled();
+    expect(
+      within(screen.getByTestId('games-library-instance-clock_instance_minutes')).getByRole(
+        'button',
+        { name: 'Use engine settings' }
+      )
+    ).toBeEnabled();
   });
 
   it('toggles a saved instance between enabled and disabled states', async () => {

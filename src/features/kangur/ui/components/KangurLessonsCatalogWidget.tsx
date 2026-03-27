@@ -3,11 +3,14 @@
 import { useLocale, useTranslations } from 'next-intl';
 import { hasKangurLessonDocumentContent } from '@/features/kangur/lesson-documents';
 import {
+  getLocalizedKangurLessonDescription,
+  getLocalizedKangurLessonTitle,
   getLocalizedKangurLessonSectionLabel,
   getLocalizedKangurLessonSectionTypeLabel,
 } from '@/features/kangur/lessons/lesson-catalog-i18n';
 import { KangurLessonGroupAccordion } from '@/features/kangur/ui/components/KangurLessonGroupAccordion';
 import { KangurLessonLibraryCard } from '@/features/kangur/ui/components/KangurLessonLibraryCard';
+import type { KangurLessonLibraryCardCopy } from '@/features/kangur/ui/components/KangurLessonLibraryCard';
 import KangurVisualCueContent from '@/features/kangur/ui/components/KangurVisualCueContent';
 import {
   useKangurLessonsRuntimeActions,
@@ -41,6 +44,8 @@ type LessonSubsection = {
 };
 
 type LessonGroup = {
+  groupIcon: string;
+  hasSubsections: boolean;
   id: string;
   label: string;
   typeLabel?: string;
@@ -58,6 +63,26 @@ type LessonsCatalogSubjectModel = {
   lessons: KangurLesson[];
   subjectVisual: ReturnType<typeof getKangurSixYearOldSubjectVisual>;
 };
+
+function KangurLessonsCatalogWidgetEmptyState({
+  pageTranslations,
+  widgetTranslations,
+}: {
+  pageTranslations: ReturnType<typeof useTranslations>;
+  widgetTranslations: ReturnType<typeof useTranslations>;
+}): JSX.Element {
+  const { entry: emptyStateContent } = useKangurPageContentEntry('lessons-list-empty-state');
+
+  return (
+    <KangurEmptyState
+      accent='indigo'
+      className='w-full'
+      description={emptyStateContent?.summary ?? widgetTranslations('emptyDescription')}
+      padding='xl'
+      title={emptyStateContent?.title ?? pageTranslations('emptyTitle')}
+    />
+  );
+}
 
 function buildLessonGroups(
   sections: KangurLessonSection[],
@@ -84,14 +109,18 @@ function buildLessonGroups(
             .filter((l): l is KangurLesson => Boolean(l)),
         }))
         .filter((sub) => sub.lessons.length > 0);
+      const hasSubsections = subsections.length > 0;
+
       return {
+        groupIcon: getKangurSixYearOldLessonGroupIcon(hasSubsections),
+        hasSubsections,
         id: section.id,
         label: getLocalizedKangurLessonSectionLabel(section.id, locale, section.label),
         typeLabel: section.typeLabel
           ? getLocalizedKangurLessonSectionTypeLabel(locale, section.typeLabel)
           : undefined,
         lessons: groupLessons,
-        subsections: subsections.length > 0 ? subsections : undefined,
+        subsections: hasSubsections ? subsections : undefined,
       };
     })
     .filter((g) => (g.subsections ? g.subsections.length > 0 : g.lessons.length > 0));
@@ -102,9 +131,9 @@ export function KangurLessonsCatalogWidget(): JSX.Element {
   const pageTranslations = useTranslations('KangurLessonsPage');
   const widgetTranslations = useTranslations('KangurLessonsWidgets');
   const masteryTranslations = useTranslations('KangurLessonsWidgets.mastery');
+  const libraryCardTranslations = useTranslations('KangurLessonsWidgets.libraryCard');
   const { ageGroup } = useKangurAgeGroupFocus();
   const subjectGroups = getKangurSubjectGroups(locale);
-  const { entry: emptyStateContent } = useKangurPageContentEntry('lessons-list-empty-state');
   const isCoarsePointer = useKangurCoarsePointer();
   const {
     orderedLessons,
@@ -120,20 +149,48 @@ export function KangurLessonsCatalogWidget(): JSX.Element {
   } = useKangurLessonsRuntimeActions();
   const [expandedLessonGroupId, setExpandedLessonGroupId] = useState<string | null>(null);
   const isSixYearOld = ageGroup === 'six_year_old';
+  const libraryCardCopyTemplate = useMemo(
+    () => ({
+      closedAssignment: libraryCardTranslations('closedAssignment'),
+      completedForParent: libraryCardTranslations('completedForParent'),
+      customContent: libraryCardTranslations('customContent'),
+      parentPriority: libraryCardTranslations('parentPriority'),
+    }),
+    [libraryCardTranslations]
+  );
 
   const lessonCardStateById = useMemo(
     () =>
       new Map(
         orderedLessons.map((lesson) => {
           const lessonAssignment = lessonAssignmentsByComponent.get(lesson.componentId) ?? null;
+          const completedLessonAssignment = !lessonAssignment
+            ? (completedLessonAssignmentsByComponent.get(lesson.componentId) ?? null)
+            : null;
+          const localizedTitle = getLocalizedKangurLessonTitle(
+            lesson.componentId,
+            locale,
+            lesson.title
+          );
           return [
             lesson.id,
             {
-              completedLessonAssignment: !lessonAssignment
-                ? (completedLessonAssignmentsByComponent.get(lesson.componentId) ?? null)
-                : null,
+              completedLessonAssignment,
               hasDocumentContent: hasKangurLessonDocumentContent(lessonDocuments[lesson.id]),
               lessonAssignment,
+              localizedDescription: getLocalizedKangurLessonDescription(
+                lesson.componentId,
+                locale,
+                lesson.description
+              ),
+              localizedTitle,
+              resolvedCopy: {
+                ...libraryCardCopyTemplate,
+                ariaLabel: libraryCardTranslations('ariaLabel', { title: localizedTitle }),
+                completedAssignmentSummary: libraryCardTranslations('completedAssignmentSummary', {
+                  summary: completedLessonAssignment?.progress.summary ?? '',
+                }),
+              } satisfies KangurLessonLibraryCardCopy,
               masteryPresentation: getLessonMasteryPresentation(
                 lesson,
                 progress,
@@ -145,6 +202,8 @@ export function KangurLessonsCatalogWidget(): JSX.Element {
       ),
     [
       completedLessonAssignmentsByComponent,
+      libraryCardCopyTemplate,
+      libraryCardTranslations,
       lessonAssignmentsByComponent,
       lessonDocuments,
       masteryTranslations,
@@ -177,10 +236,13 @@ export function KangurLessonsCatalogWidget(): JSX.Element {
           lesson={lesson}
           lessonAssignment={lessonCardState.lessonAssignment}
           locale={locale}
+          localizedDescription={lessonCardState.localizedDescription}
+          localizedTitle={lessonCardState.localizedTitle}
           masteryPresentation={lessonCardState.masteryPresentation}
           onSelect={() => selectLesson(lesson.id)}
+          resolvedCopy={lessonCardState.resolvedCopy}
           statusGroupClassName='w-full items-start max-[420px]:flex-col sm:w-auto sm:flex-col sm:items-end'
-          translations={widgetTranslations}
+          translations={libraryCardTranslations}
         />
       </div>
     );
@@ -188,13 +250,10 @@ export function KangurLessonsCatalogWidget(): JSX.Element {
 
   if (orderedLessons.length === 0) {
     return (
-        <KangurEmptyState
-          accent='indigo'
-          className='w-full'
-        description={emptyStateContent?.summary ?? widgetTranslations('emptyDescription')}
-          padding='xl'
-        title={emptyStateContent?.title ?? pageTranslations('emptyTitle')}
-        />
+      <KangurLessonsCatalogWidgetEmptyState
+        pageTranslations={pageTranslations}
+        widgetTranslations={widgetTranslations}
+      />
     );
   }
 
@@ -299,7 +358,6 @@ export function KangurLessonsCatalogWidget(): JSX.Element {
                 if (entry.kind === 'group') {
                   const groupKey = `${group.value}:${entry.group.id}`;
                   const isExpanded = expandedLessonGroupId === groupKey;
-                  const groupHasSubsections = Boolean(entry.group.subsections?.length);
 
                   return (
                     <div key={groupKey} role='listitem' className='w-full'>
@@ -308,7 +366,7 @@ export function KangurLessonsCatalogWidget(): JSX.Element {
                         fallbackTypeLabel={
                           isSixYearOld ? (
                             <KangurVisualCueContent
-                              icon={getKangurSixYearOldLessonGroupIcon(groupHasSubsections)}
+                              icon={entry.group.groupIcon}
                               iconClassName='text-base'
                               iconTestId={`lessons-catalog-group-type-icon-${groupKey}`}
                               label={pageTranslations('groupTypeLabel')}
@@ -330,7 +388,7 @@ export function KangurLessonsCatalogWidget(): JSX.Element {
                                 className='text-lg leading-none'
                                 data-testid={`lessons-catalog-group-icon-${groupKey}`}
                               >
-                                {getKangurSixYearOldLessonGroupIcon(groupHasSubsections)}
+                                {entry.group.groupIcon}
                               </span>
                               <span>{entry.group.label}</span>
                             </span>
@@ -358,7 +416,7 @@ export function KangurLessonsCatalogWidget(): JSX.Element {
                         }
                         contentProps={{ role: 'list' }}
                       >
-                        {groupHasSubsections ? (
+                        {entry.group.hasSubsections ? (
                           entry.group.subsections?.map((subsection) => (
                             <div
                               key={subsection.id}

@@ -1061,6 +1061,34 @@ export function GamesLibraryGameModal({
       translations
     );
   }, [instanceClockSettings, supportsPreviewSettings, translations]);
+  const instanceDraftMode = useMemo<
+    'editing_saved' | 'draft_from_saved' | 'mixed_draft' | 'custom_draft'
+  >(() => {
+    if (
+      selectedInstanceId !== null &&
+      instanceContentSourceInstanceId === selectedInstanceId &&
+      instanceEngineSourceInstanceId === selectedInstanceId
+    ) {
+      return 'editing_saved';
+    }
+    if (instanceContentSourceInstanceId !== instanceEngineSourceInstanceId) {
+      return 'mixed_draft';
+    }
+    if (instanceContentSourceInstanceId !== null) {
+      return 'draft_from_saved';
+    }
+    return 'custom_draft';
+  }, [
+    instanceContentSourceInstanceId,
+    instanceEngineSourceInstanceId,
+    selectedInstanceId,
+  ]);
+  const instanceDraftModeAccent = {
+    custom_draft: 'slate',
+    draft_from_saved: 'violet',
+    editing_saved: 'emerald',
+    mixed_draft: 'amber',
+  }[instanceDraftMode] as 'slate' | 'violet' | 'emerald' | 'amber';
   const hasVisibleClockHand = clockSettings.showHourHand || clockSettings.showMinuteHand;
   const instanceValidationMessages = useMemo(() => {
     const messages: string[] = [];
@@ -1172,6 +1200,14 @@ export function GamesLibraryGameModal({
     });
   };
 
+  const handleForkCurrentInstanceEditorToDraft = (): void => {
+    setInstanceSyncError(null);
+    forkInstanceEditorToDraft(currentInstanceEditorState, {
+      contentSourceInstanceId: instanceContentSourceInstanceId,
+      engineSourceInstanceId: instanceEngineSourceInstanceId,
+    });
+  };
+
   const handleUseInstanceContentSet = (instance: KangurGameInstance): void => {
     setInstanceSyncError(null);
     if (selectedInstanceId && selectedInstanceId !== instance.id) {
@@ -1209,6 +1245,16 @@ export function GamesLibraryGameModal({
 
     setInstanceClockSettings(nextEngineSettings);
     setInstanceEngineSourceInstanceId(instance.id);
+  };
+
+  const handleDetachInstanceContentSource = (): void => {
+    setInstanceSyncError(null);
+    setInstanceContentSourceInstanceId(null);
+  };
+
+  const handleDetachInstanceEngineSource = (): void => {
+    setInstanceSyncError(null);
+    setInstanceEngineSourceInstanceId(null);
   };
 
   const persistCurrentInstance = async (): Promise<KangurGameInstance | null> => {
@@ -2173,8 +2219,17 @@ export function GamesLibraryGameModal({
                   data-testid='games-library-instance-preview'
                 >
                   <div className='space-y-1'>
-                    <div className='text-sm font-semibold [color:var(--kangur-page-text)]'>
-                      {translations('modal.instances.previewTitle')}
+                    <div className='flex flex-wrap items-center gap-2'>
+                      <div className='text-sm font-semibold [color:var(--kangur-page-text)]'>
+                        {translations('modal.instances.previewTitle')}
+                      </div>
+                      <KangurStatusChip
+                        accent={instanceDraftModeAccent}
+                        data-testid='games-library-instance-mode-chip'
+                        size='sm'
+                      >
+                        {translations(`modal.instances.mode.${instanceDraftMode}`)}
+                      </KangurStatusChip>
                     </div>
                     <div className='text-xs leading-5 [color:var(--kangur-page-muted-text)]'>
                       {translations('modal.instances.previewDescription')}
@@ -2199,6 +2254,19 @@ export function GamesLibraryGameModal({
                         {instanceContentSource?.title ??
                           translations('modal.instances.sourceCustomDraft')}
                       </div>
+                      {instanceContentSource ? (
+                        <div className='mt-2'>
+                          <KangurButton
+                            disabled={replaceGameInstances.isPending}
+                            onClick={handleDetachInstanceContentSource}
+                            size='sm'
+                            type='button'
+                            variant='surface'
+                          >
+                            {translations('modal.instances.detachContentSourceButton')}
+                          </KangurButton>
+                        </div>
+                      ) : null}
                       {selectedContentSet ? (
                         <div className='mt-3 flex flex-wrap gap-2'>
                           <KangurStatusChip accent='violet' size='sm'>
@@ -2237,6 +2305,19 @@ export function GamesLibraryGameModal({
                       {instanceEngineSource?.title ??
                         translations('modal.instances.sourceCustomDraft')}
                     </div>
+                    {instanceEngineSource ? (
+                      <div>
+                        <KangurButton
+                          disabled={replaceGameInstances.isPending}
+                          onClick={handleDetachInstanceEngineSource}
+                          size='sm'
+                          type='button'
+                          variant='surface'
+                        >
+                          {translations('modal.instances.detachEngineSourceButton')}
+                        </KangurButton>
+                      </div>
+                    ) : null}
                     <div className='flex flex-wrap gap-2'>
                       {currentEngineSettingsSummary.map((label) => (
                         <KangurStatusChip
@@ -2322,6 +2403,17 @@ export function GamesLibraryGameModal({
                   >
                     {translations('modal.instances.newButton')}
                   </KangurButton>
+                  {selectedInstanceId !== null ? (
+                    <KangurButton
+                      disabled={replaceGameInstances.isPending}
+                      onClick={handleForkCurrentInstanceEditorToDraft}
+                      size='sm'
+                      type='button'
+                      variant='surface'
+                    >
+                      {translations('modal.instances.forkDraftButton')}
+                    </KangurButton>
+                  ) : null}
                   <KangurButton
                     disabled={!canSaveInstance || replaceGameInstances.isPending}
                     onClick={() => {
@@ -2442,9 +2534,7 @@ export function GamesLibraryGameModal({
                           disabled={replaceGameInstances.isPending}
                           id='games-library-instance-list-content-set-filter'
                           onChange={(event) => {
-                            setSavedInstancesContentSetFilter(
-                              (event.target.value || 'all') as SavedInstancesContentSetFilter
-                            );
+                            setSavedInstancesContentSetFilter(event.target.value || 'all');
                           }}
                           size='sm'
                           value={savedInstancesContentSetFilter}
@@ -2542,6 +2632,16 @@ export function GamesLibraryGameModal({
                                     ? translations('modal.instances.enabledBadge')
                                     : translations('modal.instances.disabledBadge')}
                                 </KangurStatusChip>
+                                {isUsingInstanceContentSource ? (
+                                  <KangurStatusChip accent='violet' size='sm'>
+                                    {translations('modal.instances.contentSourceBadge')}
+                                  </KangurStatusChip>
+                                ) : null}
+                                {isUsingInstanceEngineSource ? (
+                                  <KangurStatusChip accent='sky' size='sm'>
+                                    {translations('modal.instances.engineSourceBadge')}
+                                  </KangurStatusChip>
+                                ) : null}
                               </div>
                               <div className='mt-1 text-xs leading-5 [color:var(--kangur-page-muted-text)]'>
                                 {contentSet?.label ??

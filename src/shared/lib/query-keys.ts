@@ -83,6 +83,7 @@ export const QUERY_KEYS = {
     lessons: () => [...QUERY_KEYS.kangur.all, 'lessons'] as const,
     lessonsCatalog: () => [...QUERY_KEYS.kangur.all, 'lessons-catalog'] as const,
     gameLibraryPage: () => [...QUERY_KEYS.kangur.all, 'game-library-page'] as const,
+    gameContentSets: () => [...QUERY_KEYS.kangur.all, 'game-content-sets'] as const,
     gameInstances: () => [...QUERY_KEYS.kangur.all, 'game-instances'] as const,
     lessonGameSections: () => [...QUERY_KEYS.kangur.all, 'lesson-game-sections'] as const,
     lessonDocuments: () => [...QUERY_KEYS.kangur.all, 'lesson-documents'] as const,

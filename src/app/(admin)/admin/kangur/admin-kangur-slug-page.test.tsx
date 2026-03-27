@@ -17,11 +17,11 @@ vi.mock('next/navigation', () => ({
   permanentRedirect: permanentRedirectMock,
 }));
 
-vi.mock('@/features/auth/server', () => ({
-  auth: authMock,
+vi.mock('@/shared/lib/auth/optional-server-auth', () => ({
+  readOptionalServerAuthSession: authMock,
 }));
 
-vi.mock('@/features/kangur/admin/AdminKangurPageShell', () => ({
+vi.mock('@/features/kangur/public', () => ({
   AdminKangurPageShell: ({ slug }: { slug?: string[] }) => <div data-testid='admin-kangur-shell'>{JSON.stringify(slug ?? [])}</div>,
 }));
 

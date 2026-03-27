@@ -2,6 +2,7 @@ import type { ProductCategory } from '@/shared/contracts/products';
 
 import {
   coerceProductValidationNumericValue,
+  getProductValidationFieldNumberMode,
   getProductValidationFieldValueKind,
 } from './validatorTargetAdapters';
 import { resolveValidatorCategoryReplacementId } from './resolveValidatorCategoryReplacement';
@@ -98,7 +99,10 @@ export const resolveValidatorFieldReplacement = (
   }
 
   if (getProductValidationFieldValueKind(input.fieldName) === 'number') {
-    const normalizedNumericValue = coerceProductValidationNumericValue(normalizedReplacement);
+    const normalizedNumericValue = coerceProductValidationNumericValue(
+      normalizedReplacement,
+      getProductValidationFieldNumberMode(input.fieldName)
+    );
     if (normalizedNumericValue === null || !Number.isFinite(normalizedNumericValue)) return null;
     return {
       kind: 'number',

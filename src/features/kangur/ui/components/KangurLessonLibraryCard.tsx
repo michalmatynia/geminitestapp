@@ -44,17 +44,26 @@ type KangurLessonLibraryCardTranslations = (
   values?: Record<string, string | number>
 ) => string;
 
+export type KangurLessonLibraryCardCopy = {
+  ariaLabel: string;
+  closedAssignment: string;
+  completedAssignmentSummary: string;
+  completedForParent: string;
+  customContent: string;
+  parentPriority: string;
+};
+
 // ── Lesson Library Card Sub-components ───────────────────────────────────────
 
 function renderKangurLessonLibraryCardAside({
-  translations,
+  copy,
   masteryPresentation,
   lessonAssignment,
   completedLessonAssignment,
   isSixYearOld,
   className,
 }: {
-  translations: (key: 'parentPriority' | 'closedAssignment') => string;
+  copy: Pick<KangurLessonLibraryCardCopy, 'closedAssignment' | 'parentPriority'>;
   masteryPresentation: LessonMasteryPresentation;
   lessonAssignment: KangurAssignmentSnapshot | null;
   completedLessonAssignment: KangurAssignmentSnapshot | null;
@@ -93,7 +102,7 @@ function renderKangurLessonLibraryCardAside({
       {lessonAssignment ? (
         <KangurAssignmentPriorityChip
           accent='rose'
-          aria-label={assignmentPriority ? translations('parentPriority') : undefined}
+          aria-label={assignmentPriority ? copy.parentPriority : undefined}
           className='uppercase tracking-[0.14em]'
           data-testid='lesson-library-assignment-chip'
           labelOverride={
@@ -102,7 +111,7 @@ function renderKangurLessonLibraryCardAside({
                 icon={KANGUR_SIX_YEAR_OLD_ASSIGNMENT_ICON}
                 iconClassName='text-base'
                 iconTestId='lesson-library-assignment-chip-icon'
-                label={translations('parentPriority')}
+                label={copy.parentPriority}
               />
             ) : undefined
           }
@@ -112,20 +121,20 @@ function renderKangurLessonLibraryCardAside({
       ) : completedLessonAssignment ? (
         <KangurStatusChip
           accent='emerald'
-          aria-label={translations('closedAssignment')}
+          aria-label={copy.closedAssignment}
           className='uppercase tracking-[0.14em]'
           data-testid='lesson-library-completed-chip'
           size='sm'
         >
           {isSixYearOld ? (
-            <KangurVisualCueContent
-              icon={KANGUR_SIX_YEAR_OLD_COMPLETED_ASSIGNMENT_ICON}
-              iconClassName='text-base'
-              iconTestId='lesson-library-completed-chip-icon'
-              label={translations('closedAssignment')}
-            />
-          ) : (
-            translations('closedAssignment')
+              <KangurVisualCueContent
+                icon={KANGUR_SIX_YEAR_OLD_COMPLETED_ASSIGNMENT_ICON}
+                iconClassName='text-base'
+                iconTestId='lesson-library-completed-chip-icon'
+                label={copy.closedAssignment}
+              />
+            ) : (
+            copy.closedAssignment
           )}
         </KangurStatusChip>
       ) : null}
@@ -140,7 +149,7 @@ export function KangurLessonLibraryCardFooter({
   completedLessonAssignment,
   masteryPresentation,
   isSixYearOld,
-  translations,
+  copy,
 }: {
   lesson: KangurLesson;
   hasDocumentContent: boolean;
@@ -148,14 +157,20 @@ export function KangurLessonLibraryCardFooter({
   completedLessonAssignment: KangurAssignmentSnapshot | null;
   masteryPresentation: LessonMasteryPresentation;
   isSixYearOld: boolean;
-  translations: KangurLessonLibraryCardTranslations;
+  copy: Pick<
+    KangurLessonLibraryCardCopy,
+    | 'completedAssignmentSummary'
+    | 'completedForParent'
+    | 'customContent'
+    | 'parentPriority'
+  >;
 }): React.JSX.Element {
   const footerChips = [
     lesson.contentMode === 'document' && hasDocumentContent ? (
       <KangurStatusChip
         key='document-content'
         accent='sky'
-        aria-label={translations('customContent')}
+        aria-label={copy.customContent}
         className='uppercase tracking-[0.14em]'
         data-testid='lesson-library-custom-content-chip'
         size='sm'
@@ -165,10 +180,10 @@ export function KangurLessonLibraryCardFooter({
             icon={KANGUR_SIX_YEAR_OLD_CUSTOM_CONTENT_ICON}
             iconClassName='text-base'
             iconTestId='lesson-library-custom-content-chip-icon'
-            label={translations('customContent')}
+            label={copy.customContent}
           />
         ) : (
-          translations('customContent')
+          copy.customContent
         )}
       </KangurStatusChip>
     ) : null,
@@ -176,7 +191,7 @@ export function KangurLessonLibraryCardFooter({
       <KangurStatusChip
         key='lesson-assignment'
         accent='rose'
-        aria-label={translations('parentPriority')}
+        aria-label={copy.parentPriority}
         className='uppercase tracking-[0.14em]'
         data-testid='lesson-library-footer-assignment-chip'
         size='sm'
@@ -186,17 +201,17 @@ export function KangurLessonLibraryCardFooter({
             icon={KANGUR_SIX_YEAR_OLD_ASSIGNMENT_ICON}
             iconClassName='text-base'
             iconTestId='lesson-library-footer-assignment-chip-icon'
-            label={translations('parentPriority')}
+            label={copy.parentPriority}
           />
         ) : (
-          translations('parentPriority')
+          copy.parentPriority
         )}
       </KangurStatusChip>
     ) : completedLessonAssignment ? (
       <KangurStatusChip
         key='completed-assignment'
         accent='emerald'
-        aria-label={translations('completedForParent')}
+        aria-label={copy.completedForParent}
         className='uppercase tracking-[0.14em]'
         data-testid='lesson-library-footer-completed-chip'
         size='sm'
@@ -206,10 +221,10 @@ export function KangurLessonLibraryCardFooter({
             icon={KANGUR_SIX_YEAR_OLD_COMPLETED_ASSIGNMENT_ICON}
             iconClassName='text-base'
             iconTestId='lesson-library-footer-completed-chip-icon'
-            label={translations('completedForParent')}
+            label={copy.completedForParent}
           />
         ) : (
-          translations('completedForParent')
+          copy.completedForParent
         )}
       </KangurStatusChip>
     ) : null,
@@ -227,9 +242,7 @@ export function KangurLessonLibraryCardFooter({
         </div>
       ) : completedLessonAssignment ? (
         <div className='mt-2 break-words text-xs font-semibold text-emerald-600'>
-          {translations('completedAssignmentSummary', {
-            summary: completedLessonAssignment.progress.summary,
-          })}
+          {copy.completedAssignmentSummary}
         </div>
       ) : null}
     </>
@@ -250,8 +263,11 @@ type KangurLessonLibraryCardProps = {
   lesson: KangurLesson;
   lessonAssignment: KangurAssignmentSnapshot | null;
   locale?: string;
+  localizedDescription?: string;
+  localizedTitle?: string;
   masteryPresentation: LessonMasteryPresentation;
   onSelect: () => void;
+  resolvedCopy?: KangurLessonLibraryCardCopy;
   statusGroupClassName?: string;
   translations?: KangurLessonLibraryCardTranslations;
   isCoarsePointer?: boolean;
@@ -286,17 +302,31 @@ function KangurLessonLibraryCardResolved(
     lesson,
     lessonAssignment,
     locale,
+    localizedDescription: localizedDescriptionOverride,
+    localizedTitle: localizedTitleOverride,
     masteryPresentation,
     onSelect,
+    resolvedCopy: resolvedCopyOverride,
     statusGroupClassName,
     translations,
   } = props;
-  const localizedTitle = getLocalizedKangurLessonTitle(lesson.componentId, locale, lesson.title);
-  const localizedDescription = getLocalizedKangurLessonDescription(
-    lesson.componentId,
-    locale,
-    lesson.description
-  );
+  const localizedTitle =
+    localizedTitleOverride ??
+    getLocalizedKangurLessonTitle(lesson.componentId, locale, lesson.title);
+  const localizedDescription =
+    localizedDescriptionOverride ??
+    getLocalizedKangurLessonDescription(lesson.componentId, locale, lesson.description);
+  const resolvedCopy =
+    resolvedCopyOverride ?? {
+      ariaLabel: translations('ariaLabel', { title: localizedTitle }),
+      closedAssignment: translations('closedAssignment'),
+      completedAssignmentSummary: translations('completedAssignmentSummary', {
+        summary: completedLessonAssignment?.progress.summary ?? '',
+      }),
+      completedForParent: translations('completedForParent'),
+      customContent: translations('customContent'),
+      parentPriority: translations('parentPriority'),
+    };
 
   return (
     <KangurIconSummaryOptionCard
@@ -306,7 +336,7 @@ function KangurLessonLibraryCardResolved(
         isCoarsePointer && 'min-h-12 px-4 touch-manipulation select-none active:scale-[0.985]',
         buttonClassName
       )}
-      aria-label={translations('ariaLabel', { title: localizedTitle })}
+      aria-label={resolvedCopy.ariaLabel}
       aria-current={ariaCurrent}
       data-doc-id={dataDocId}
       data-testid={itemTestId}
@@ -317,11 +347,11 @@ function KangurLessonLibraryCardResolved(
         aside={
           renderKangurLessonLibraryCardAside({
             className: statusGroupClassName,
+            copy: resolvedCopy,
             completedLessonAssignment,
             isSixYearOld,
             lessonAssignment,
             masteryPresentation,
-            translations,
           })
         }
         asideClassName='w-full self-start sm:ml-auto sm:w-auto'
@@ -331,12 +361,12 @@ function KangurLessonLibraryCardResolved(
         footer={
           <KangurLessonLibraryCardFooter
             completedLessonAssignment={completedLessonAssignment}
+            copy={resolvedCopy}
             hasDocumentContent={hasDocumentContent}
             isSixYearOld={isSixYearOld}
             lesson={lesson}
             lessonAssignment={lessonAssignment}
             masteryPresentation={masteryPresentation}
-            translations={translations}
           />
         }
         headerClassName={cn(KANGUR_PANEL_ROW_CLASSNAME, 'sm:items-start sm:justify-between')}

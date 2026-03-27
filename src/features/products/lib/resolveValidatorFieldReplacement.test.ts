@@ -47,7 +47,7 @@ describe('resolveValidatorFieldReplacement', () => {
     });
   });
 
-  it('resolves numeric replacements as non-negative integers', () => {
+  it('resolves integer numeric replacements for stock fields', () => {
     expect(
       resolveValidatorFieldReplacement({
         fieldName: 'stock',
@@ -59,6 +59,21 @@ describe('resolveValidatorFieldReplacement', () => {
       value: 7,
       comparableValue: '7',
       displayValue: '7',
+    });
+  });
+
+  it('preserves decimals for dimension fields', () => {
+    expect(
+      resolveValidatorFieldReplacement({
+        fieldName: 'sizeLength',
+        replacementValue: '7.8',
+      })
+    ).toEqual({
+      kind: 'number',
+      fieldName: 'sizeLength',
+      value: 7.8,
+      comparableValue: '7.8',
+      displayValue: '7.8',
     });
   });
 

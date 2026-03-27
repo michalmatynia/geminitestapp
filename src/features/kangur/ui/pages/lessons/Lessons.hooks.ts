@@ -30,6 +30,7 @@ import {
   KANGUR_TOP_BAR_HEIGHT_VAR_NAME,
 } from '@/features/kangur/ui/design/tokens';
 import { useKangurLessonTemplates } from '@/features/kangur/ui/hooks/useKangurLessonTemplates';
+import type { KangurAssignmentSnapshot } from '@kangur/platform';
 import {
   ACTIVE_LESSON_HEADER_SCROLL_MAX_FRAMES,
 } from './Lessons.constants';
@@ -38,6 +39,11 @@ import {
   LESSON_ASSIGNMENT_PRIORITY_ORDER,
   resolveFocusedLessonId,
 } from './Lessons.utils';
+
+const EMPTY_LESSON_ASSIGNMENTS_BY_COMPONENT = new Map<
+  KangurLessonComponentId,
+  KangurAssignmentSnapshot
+>();
 
 export function useLessonsLogic() {
   const routeNavigator = useKangurRouteNavigator();
@@ -184,17 +190,12 @@ export function useLessonsLogic() {
   const lessons = useMemo(
     (): KangurLesson[] =>
       isDeferredContentReady && !isLessonsCatalogPlaceholderData
-        ? (lessonsCatalogQuery.data?.lessons ?? []).filter(
-            (lesson: KangurLesson) =>
-              lesson.subject === subject && lesson.ageGroup === ageGroup
-          )
+        ? lessonsCatalogQuery.data?.lessons ?? []
         : [],
     [
-      ageGroup,
       isDeferredContentReady,
       isLessonsCatalogPlaceholderData,
       lessonsCatalogQuery.data?.lessons,
-      subject,
     ]
   );
   const lessonSections = useMemo(
@@ -217,6 +218,10 @@ export function useLessonsLogic() {
   );
 
   const lessonAssignmentsByComponent = useMemo(() => {
+    if (!isAssignmentsReady || assignments.length === 0 || lessons.length === 0) {
+      return EMPTY_LESSON_ASSIGNMENTS_BY_COMPONENT;
+    }
+
     const nextMap = new Map<KangurLessonComponentId, (typeof assignments)[number]>();
     assignments
       .filter((assignment) => !assignment.archived)
@@ -233,9 +238,13 @@ export function useLessonsLogic() {
         }
       });
     return nextMap;
-  }, [assignments]);
+  }, [assignments, isAssignmentsReady, lessons.length]);
 
   const completedLessonAssignmentsByComponent = useMemo(() => {
+    if (!isAssignmentsReady || assignments.length === 0 || lessons.length === 0) {
+      return EMPTY_LESSON_ASSIGNMENTS_BY_COMPONENT;
+    }
+
     const nextMap = new Map<KangurLessonComponentId, (typeof assignments)[number]>();
     assignments
       .filter((assignment) => !assignment.archived)
@@ -258,9 +267,13 @@ export function useLessonsLogic() {
         }
       });
     return nextMap;
-  }, [assignments]);
+  }, [assignments, isAssignmentsReady, lessons.length]);
 
   const orderedLessons = useMemo(() => {
+    if (lessons.length <= 1 || lessonAssignmentsByComponent.size === 0) {
+      return lessons;
+    }
+
     return [...lessons].sort((left, right) => {
       const leftAssignment = lessonAssignmentsByComponent.get(left.componentId);
       const rightAssignment = lessonAssignmentsByComponent.get(right.componentId);
@@ -340,7 +353,10 @@ export function useLessonsLogic() {
     subject,
   ]);
 
-  const activeIdx = orderedLessons.findIndex((lesson) => lesson.id === activeLessonId);
+  const activeIdx =
+    activeLessonId === null
+      ? -1
+      : orderedLessons.findIndex((lesson) => lesson.id === activeLessonId);
   const activeLesson = activeIdx >= 0 ? orderedLessons[activeIdx] : null;
   const ActiveLessonComponent = activeLesson ? LESSON_COMPONENTS[activeLesson.componentId] : null;
   const isActiveLessonDocumentLoading =

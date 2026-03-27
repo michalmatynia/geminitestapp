@@ -1,10 +1,12 @@
 import type { ProductValidationTarget } from '@/shared/contracts/products';
 
 export type ProductValidationValueKind = 'text' | 'number' | 'category';
+export type ProductValidationNumberMode = 'integer' | 'decimal';
 
 export type ProductValidationTargetAdapter = {
   target: ProductValidationTarget;
   valueKind: ProductValidationValueKind;
+  numberMode?: ProductValidationNumberMode;
   replacementFields: ReadonlyArray<string>;
 };
 
@@ -27,11 +29,13 @@ const TARGET_ADAPTERS: Record<ProductValidationTarget, ProductValidationTargetAd
   price: {
     target: 'price',
     valueKind: 'number',
+    numberMode: 'decimal',
     replacementFields: ['price'],
   },
   stock: {
     target: 'stock',
     valueKind: 'number',
+    numberMode: 'integer',
     replacementFields: ['stock'],
   },
   category: {
@@ -42,21 +46,25 @@ const TARGET_ADAPTERS: Record<ProductValidationTarget, ProductValidationTargetAd
   weight: {
     target: 'weight',
     valueKind: 'number',
+    numberMode: 'decimal',
     replacementFields: ['weight'],
   },
   size_length: {
     target: 'size_length',
     valueKind: 'number',
+    numberMode: 'decimal',
     replacementFields: ['sizeLength'],
   },
   size_width: {
     target: 'size_width',
     valueKind: 'number',
+    numberMode: 'decimal',
     replacementFields: ['sizeWidth'],
   },
   length: {
     target: 'length',
     valueKind: 'number',
+    numberMode: 'decimal',
     replacementFields: ['length'],
   },
 };
@@ -80,6 +88,17 @@ const FIELD_VALUE_KIND_BY_FIELD_NAME: Record<string, ProductValidationValueKind>
   length: 'number',
 };
 
+const FIELD_NUMBER_MODE_BY_FIELD_NAME: Partial<
+  Record<keyof typeof FIELD_VALUE_KIND_BY_FIELD_NAME, ProductValidationNumberMode>
+> = {
+  price: 'decimal',
+  stock: 'integer',
+  weight: 'decimal',
+  sizeLength: 'decimal',
+  sizeWidth: 'decimal',
+  length: 'decimal',
+};
+
 const CATEGORY_FIELD_CHANGED_AT_DEPENDENCIES = ['categoryId', 'name_en'] as const;
 
 export const getProductValidationTargetAdapter = (
@@ -95,18 +114,23 @@ export const getProductValidationFieldValueKind = (
   fieldName: string
 ): ProductValidationValueKind | null => FIELD_VALUE_KIND_BY_FIELD_NAME[fieldName] ?? null;
 
+export const getProductValidationFieldNumberMode = (
+  fieldName: string
+): ProductValidationNumberMode => FIELD_NUMBER_MODE_BY_FIELD_NAME[fieldName] ?? 'integer';
+
 export const getProductValidationFieldChangedAtDependencies = (
   fieldName: string
 ): ReadonlyArray<string> =>
   fieldName === 'categoryId' ? CATEGORY_FIELD_CHANGED_AT_DEPENDENCIES : [fieldName];
 
 export const coerceProductValidationNumericValue = (
-  value: string | null | undefined
+  value: string | null | undefined,
+  mode: ProductValidationNumberMode = 'integer'
 ): number | null => {
   if (typeof value !== 'string') return null;
   const numericValue = Number(value.replace(',', '.'));
   if (!Number.isFinite(numericValue)) return null;
-  return Math.max(0, Math.floor(numericValue));
+  return Math.max(0, mode === 'decimal' ? numericValue : Math.floor(numericValue));
 };
 
 export const coerceProductValidationTargetValue = ({
@@ -118,7 +142,7 @@ export const coerceProductValidationTargetValue = ({
 }): string | number | null => {
   const adapter = getProductValidationTargetAdapter(target);
   if (adapter.valueKind === 'number') {
-    return coerceProductValidationNumericValue(value);
+    return coerceProductValidationNumericValue(value, adapter.numberMode ?? 'integer');
   }
   return value;
 };

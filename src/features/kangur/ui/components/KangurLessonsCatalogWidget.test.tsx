@@ -6,8 +6,47 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import { LESSONS_LIBRARY_LIST_CLASSNAME } from '@/features/kangur/ui/pages/lessons/Lessons.constants';
 
-const { selectLessonMock } = vi.hoisted(() => ({
+const { runtimeState, selectLessonMock, useKangurPageContentEntryMock } = vi.hoisted(() => ({
+  runtimeState: {
+    value: {
+      orderedLessons: [
+        {
+          id: 'lesson-english',
+          componentId: 'english_basics',
+          subject: 'english',
+          title: 'English Basics',
+        },
+      ],
+      lessonSections: [
+        {
+          id: 'opening-section',
+          subject: 'english',
+          enabled: true,
+          sortOrder: 1,
+          label: 'Opening Section',
+          typeLabel: 'Featured',
+          componentIds: [],
+          subsections: [
+            {
+              id: 'opening-subsection',
+              enabled: true,
+              sortOrder: 1,
+              label: 'Sentence structure',
+              typeLabel: 'Subsection',
+              componentIds: ['english_basics'],
+            },
+          ],
+        },
+      ],
+      lessonDocuments: {},
+      progress: {},
+      activeLessonId: null,
+      lessonAssignmentsByComponent: new Map(),
+      completedLessonAssignmentsByComponent: new Map(),
+    },
+  },
   selectLessonMock: vi.fn(),
+  useKangurPageContentEntryMock: vi.fn(() => ({ entry: null })),
 }));
 
 const { ageGroupState } = vi.hoisted(() => ({
@@ -44,8 +83,15 @@ vi.mock('@/features/kangur/ui/context/KangurAgeGroupFocusContext', () => ({
 }));
 
 vi.mock('@/features/kangur/lessons/lesson-catalog-i18n', () => ({
+  getLocalizedKangurLessonDescription: (
+    _componentId: string,
+    _locale: string,
+    fallback: string
+  ) => fallback,
   getLocalizedKangurLessonSectionLabel: (_id: string, _locale: string, fallback: string) => fallback,
   getLocalizedKangurLessonSectionTypeLabel: (_locale: string, fallback: string) => fallback,
+  getLocalizedKangurLessonTitle: (_componentId: string, _locale: string, fallback: string) =>
+    fallback,
 }));
 
 vi.mock('@/features/kangur/ui/components/KangurLessonLibraryCard', () => ({
@@ -78,42 +124,7 @@ vi.mock('@/features/kangur/ui/components/KangurSubjectGroupSection', () => ({
 }));
 
 vi.mock('@/features/kangur/ui/context/KangurLessonsRuntimeContext', () => ({
-  useKangurLessonsRuntimeState: () => ({
-    orderedLessons: [
-      {
-        id: 'lesson-english',
-        componentId: 'english_basics',
-        subject: 'english',
-        title: 'English Basics',
-      },
-    ],
-    lessonSections: [
-      {
-        id: 'opening-section',
-        subject: 'english',
-        enabled: true,
-        sortOrder: 1,
-        label: 'Opening Section',
-        typeLabel: 'Featured',
-        componentIds: [],
-        subsections: [
-          {
-            id: 'opening-subsection',
-            enabled: true,
-            sortOrder: 1,
-            label: 'Sentence structure',
-            typeLabel: 'Subsection',
-            componentIds: ['english_basics'],
-          },
-        ],
-      },
-    ],
-    lessonDocuments: {},
-    progress: {},
-    activeLessonId: null,
-    lessonAssignmentsByComponent: new Map(),
-    completedLessonAssignmentsByComponent: new Map(),
-  }),
+  useKangurLessonsRuntimeState: () => runtimeState.value,
   useKangurLessonsRuntimeActions: () => ({
     selectLesson: selectLessonMock,
   }),
@@ -124,7 +135,7 @@ vi.mock('@/features/kangur/ui/context/KangurLessonsRuntimeContext.shared', () =>
 }));
 
 vi.mock('@/features/kangur/ui/hooks/useKangurPageContent', () => ({
-  useKangurPageContentEntry: () => ({ entry: null }),
+  useKangurPageContentEntry: (...args: unknown[]) => useKangurPageContentEntryMock(...args),
 }));
 
 vi.mock('@/features/kangur/ui/design/primitives', () => ({
@@ -164,8 +175,47 @@ const splitClasses = (className: string): string[] => className.trim().split(/\s
 
 describe('KangurLessonsCatalogWidget', () => {
   it('opens grouped sections on the first click', async () => {
+    runtimeState.value = {
+      orderedLessons: [
+        {
+          id: 'lesson-english',
+          componentId: 'english_basics',
+          subject: 'english',
+          title: 'English Basics',
+        },
+      ],
+      lessonSections: [
+        {
+          id: 'opening-section',
+          subject: 'english',
+          enabled: true,
+          sortOrder: 1,
+          label: 'Opening Section',
+          typeLabel: 'Featured',
+          componentIds: [],
+          subsections: [
+            {
+              id: 'opening-subsection',
+              enabled: true,
+              sortOrder: 1,
+              label: 'Sentence structure',
+              typeLabel: 'Subsection',
+              componentIds: ['english_basics'],
+            },
+          ],
+        },
+      ],
+      lessonDocuments: {},
+      progress: {},
+      activeLessonId: null,
+      lessonAssignmentsByComponent: new Map(),
+      completedLessonAssignmentsByComponent: new Map(),
+    };
+    useKangurPageContentEntryMock.mockClear();
     ageGroupState.value = 'ten_year_old';
     render(<KangurLessonsCatalogWidget />);
+
+    expect(useKangurPageContentEntryMock).not.toHaveBeenCalled();
 
     expect(screen.getByLabelText('Lista lekcji')).toHaveClass(
       ...splitClasses(LESSONS_LIBRARY_LIST_CLASSNAME)
@@ -200,9 +250,48 @@ describe('KangurLessonsCatalogWidget', () => {
   });
 
   it('renders icon-first subject and subsection cues for six-year-old learners', async () => {
+    runtimeState.value = {
+      orderedLessons: [
+        {
+          id: 'lesson-english',
+          componentId: 'english_basics',
+          subject: 'english',
+          title: 'English Basics',
+        },
+      ],
+      lessonSections: [
+        {
+          id: 'opening-section',
+          subject: 'english',
+          enabled: true,
+          sortOrder: 1,
+          label: 'Opening Section',
+          typeLabel: 'Featured',
+          componentIds: [],
+          subsections: [
+            {
+              id: 'opening-subsection',
+              enabled: true,
+              sortOrder: 1,
+              label: 'Sentence structure',
+              typeLabel: 'Subsection',
+              componentIds: ['english_basics'],
+            },
+          ],
+        },
+      ],
+      lessonDocuments: {},
+      progress: {},
+      activeLessonId: null,
+      lessonAssignmentsByComponent: new Map(),
+      completedLessonAssignmentsByComponent: new Map(),
+    };
+    useKangurPageContentEntryMock.mockClear();
     ageGroupState.value = 'six_year_old';
 
     render(<KangurLessonsCatalogWidget />);
+
+    expect(useKangurPageContentEntryMock).not.toHaveBeenCalled();
 
     expect(screen.getByTestId('lessons-catalog-subject-icon-english')).toHaveTextContent('🔤');
 
@@ -218,5 +307,24 @@ describe('KangurLessonsCatalogWidget', () => {
     expect(
       screen.queryByTestId('lessons-catalog-subsection-icon-opening-subsection')
     ).not.toBeInTheDocument();
+  });
+
+  it('mounts empty-state page content only when the widget is actually empty', () => {
+    runtimeState.value = {
+      orderedLessons: [],
+      lessonSections: [],
+      lessonDocuments: {},
+      progress: {},
+      activeLessonId: null,
+      lessonAssignmentsByComponent: new Map(),
+      completedLessonAssignmentsByComponent: new Map(),
+    };
+    useKangurPageContentEntryMock.mockClear();
+
+    render(<KangurLessonsCatalogWidget />);
+
+    expect(useKangurPageContentEntryMock).toHaveBeenCalledTimes(1);
+    expect(useKangurPageContentEntryMock).toHaveBeenCalledWith('lessons-list-empty-state');
+    expect(screen.getByText('No lessons')).toBeInTheDocument();
   });
 });

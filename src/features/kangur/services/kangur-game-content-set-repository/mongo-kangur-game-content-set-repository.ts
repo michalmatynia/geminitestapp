@@ -1,0 +1,142 @@
+import 'server-only';
+
+import type { Db, Document, Filter } from 'mongodb';
+
+import type { KangurGameContentSet } from '@/shared/contracts/kangur-game-instances';
+import { kangurGameContentSetSchema } from '@/shared/contracts/kangur-game-instances';
+import { getMongoDb } from '@/shared/lib/db/mongo-client';
+
+import type {
+  KangurGameContentSetListInput,
+  KangurGameContentSetRepository,
+} from './types';
+
+const COLLECTION = 'kangur_game_content_sets';
+const GAME_SORT_INDEX = 'kangur_game_content_sets_game_sort_idx';
+const ID_UNIQUE_INDEX = 'kangur_game_content_sets_id_unique_idx';
+
+type MongoKangurGameContentSetDocument = Document &
+  KangurGameContentSet & {
+    _id: string;
+    createdAt: Date;
+    updatedAt: Date;
+  };
+
+let indexesInitialized = false;
+let indexesInFlight: Promise<void> | null = null;
+
+const ensureIndexes = async (db: Db): Promise<void> => {
+  if (indexesInitialized) return;
+  if (indexesInFlight) {
+    await indexesInFlight;
+    return;
+  }
+
+  indexesInFlight = (async (): Promise<void> => {
+    const collection = db.collection<MongoKangurGameContentSetDocument>(COLLECTION);
+    await Promise.all([
+      collection.createIndex({ gameId: 1, sortOrder: 1 }, { name: GAME_SORT_INDEX }),
+      collection.createIndex({ id: 1 }, { name: ID_UNIQUE_INDEX, unique: true }),
+    ]);
+    indexesInitialized = true;
+  })();
+
+  try {
+    await indexesInFlight;
+  } finally {
+    indexesInFlight = null;
+  }
+};
+
+const buildFilter = (
+  input?: KangurGameContentSetListInput
+): Filter<MongoKangurGameContentSetDocument> => {
+  if (!input) {
+    return {};
+  }
+
+  const filter: Filter<MongoKangurGameContentSetDocument> = {};
+
+  if (input.gameId) {
+    filter['gameId'] = input.gameId;
+  }
+
+  if (input.contentSetId) {
+    filter['id'] = input.contentSetId;
+  }
+
+  return filter;
+};
+
+const toGameContentSet = (
+  doc: MongoKangurGameContentSetDocument
+): KangurGameContentSet => {
+  const parsed = kangurGameContentSetSchema.safeParse(doc);
+  if (parsed.success) {
+    return parsed.data;
+  }
+
+  return {
+    id: doc.id,
+    gameId: doc.gameId,
+    engineId: doc.engineId,
+    launchableRuntimeId: doc.launchableRuntimeId,
+    label: doc.label,
+    description: doc.description,
+    contentKind: doc.contentKind,
+    rendererProps: doc.rendererProps ?? {},
+    sortOrder: doc.sortOrder ?? 0,
+  };
+};
+
+export const mongoKangurGameContentSetRepository: KangurGameContentSetRepository = {
+  async listContentSets(input?: KangurGameContentSetListInput): Promise<KangurGameContentSet[]> {
+    const db = await getMongoDb();
+    await ensureIndexes(db);
+
+    const collection = db.collection<MongoKangurGameContentSetDocument>(COLLECTION);
+    const docs = await collection
+      .find(buildFilter(input))
+      .sort({ sortOrder: 1, id: 1 })
+      .toArray();
+
+    return docs.map(toGameContentSet);
+  },
+
+  async replaceContentSetsForGame(gameId, contentSets): Promise<KangurGameContentSet[]> {
+    const db = await getMongoDb();
+    await ensureIndexes(db);
+
+    const collection = db.collection<MongoKangurGameContentSetDocument>(COLLECTION);
+    const now = new Date();
+
+    if (contentSets.length === 0) {
+      await collection.deleteMany({ gameId });
+      return [];
+    }
+
+    const ids = contentSets.map((contentSet) => contentSet.id);
+    const operations = contentSets.map((contentSet) => ({
+      updateOne: {
+        filter: { _id: contentSet.id },
+        update: {
+          $set: {
+            ...contentSet,
+            gameId,
+            id: contentSet.id,
+            updatedAt: now,
+          },
+          $setOnInsert: {
+            createdAt: now,
+          },
+        },
+        upsert: true,
+      },
+    }));
+
+    await collection.bulkWrite(operations, { ordered: false });
+    await collection.deleteMany({ gameId, _id: { $nin: ids } });
+
+    return contentSets;
+  },
+};

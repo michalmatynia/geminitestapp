@@ -166,15 +166,22 @@ const createPattern = (
 
 function ValueProbe(): React.JSX.Element {
   const { watch } = useFormContext<ProductFormData>();
-  return <output data-testid='sku-value'>{String(watch('sku') ?? '')}</output>;
+  return (
+    <>
+      <output data-testid='sku-value'>{String(watch('sku') ?? '')}</output>
+      <output data-testid='size-length-value'>{String(watch('sizeLength') ?? '')}</output>
+    </>
+  );
 }
 
 function ValidationHarness({
   patterns,
   defaultSku = 'AUTO',
+  defaultSizeLength = 0,
 }: {
   patterns: ProductValidationPattern[];
   defaultSku?: string;
+  defaultSizeLength?: number;
 }): React.JSX.Element {
   const methods = useForm<ProductFormData>({
     defaultValues: {
@@ -191,7 +198,7 @@ function ValidationHarness({
       price: 0,
       stock: 0,
       weight: 0,
-      sizeLength: 0,
+      sizeLength: defaultSizeLength,
       sizeWidth: 0,
       length: 0,
       supplierName: '',
@@ -281,6 +288,43 @@ describe('Product form validation formatter flow', () => {
     expect(setValueSpy).toHaveBeenCalledWith(
       'sku',
       'SKU-101',
+      expect.objectContaining({
+        shouldDirty: true,
+        shouldTouch: true,
+      })
+    );
+  });
+
+  it('runs decimal Length (cm) formatter replacements when the validation-tab formatter toggle is enabled', async () => {
+    render(
+      <ValidationHarness
+        defaultSizeLength={10}
+        patterns={[
+          createPattern({
+            regex: '^10$',
+            target: 'size_length',
+            replacementAutoApply: true,
+            replacementValue: '12.5',
+            replacementFields: ['sizeLength'],
+          }),
+        ]}
+      />
+    );
+
+    await waitFor(() => {
+      expect(screen.getByTestId('size-length-value')).toHaveTextContent('10');
+    });
+
+    await act(async () => {
+      fireEvent.click(screen.getByRole('button', { name: 'Formatter OFF' }));
+    });
+
+    await waitFor(() => {
+      expect(screen.getByTestId('size-length-value')).toHaveTextContent('12.5');
+    });
+    expect(setValueSpy).toHaveBeenCalledWith(
+      'sizeLength',
+      12.5,
       expect.objectContaining({
         shouldDirty: true,
         shouldTouch: true,

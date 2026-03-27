@@ -135,10 +135,22 @@ const createPattern = (
 function ValueProbe(): React.JSX.Element {
   const { watch } = useFormContext<ProductFormData>();
   const skuValue = watch('sku') ?? '';
-  return <output data-testid='sku-value'>{String(skuValue)}</output>;
+  const sizeLengthValue = watch('sizeLength') ?? '';
+  return (
+    <>
+      <output data-testid='sku-value'>{String(skuValue)}</output>
+      <output data-testid='size-length-value'>{String(sizeLengthValue)}</output>
+    </>
+  );
 }
 
-function renderProductFormGeneral(defaultSku = 'AUTO') {
+function renderProductFormGeneral({
+  defaultSku = 'AUTO',
+  defaultSizeLength = 0,
+}: {
+  defaultSku?: string;
+  defaultSizeLength?: number;
+} = {}) {
   function Wrapper({ children }: { children: React.ReactNode }): React.JSX.Element {
     const methods = useForm<ProductFormData>({
       defaultValues: {
@@ -155,7 +167,7 @@ function renderProductFormGeneral(defaultSku = 'AUTO') {
         price: 0,
         stock: 0,
         weight: 0,
-        sizeLength: 0,
+        sizeLength: defaultSizeLength,
         sizeWidth: 0,
         length: 0,
         supplierName: '',
@@ -229,6 +241,38 @@ describe('ProductFormGeneral formatter auto-apply', () => {
     expect(setValueSpy).toHaveBeenCalledWith(
       'sku',
       'SKU-101',
+      expect.objectContaining({
+        shouldDirty: true,
+        shouldTouch: true,
+      })
+    );
+  });
+
+  it('auto-runs decimal formatter replacements for the Length (cm) field', async () => {
+    useProductValidationStateMock.mockReturnValue({
+      validationInstanceScope: 'product_create',
+      validatorEnabled: true,
+      formatterEnabled: true,
+      validatorPatterns: [
+        createPattern({
+          regex: '^10$',
+          target: 'size_length',
+          replacementAutoApply: true,
+          replacementValue: '12.5',
+          replacementFields: ['sizeLength'],
+        }),
+      ],
+      latestProductValues: null,
+    });
+
+    renderProductFormGeneral({ defaultSizeLength: 10 });
+
+    await waitFor(() => {
+      expect(screen.getByTestId('size-length-value')).toHaveTextContent('12.5');
+    });
+    expect(setValueSpy).toHaveBeenCalledWith(
+      'sizeLength',
+      12.5,
       expect.objectContaining({
         shouldDirty: true,
         shouldTouch: true,
@@ -360,7 +404,7 @@ describe('ProductFormGeneral formatter auto-apply', () => {
     };
     useProductValidationStateMock.mockImplementation(() => validationState);
 
-    const view = renderProductFormGeneral('KEYCHA000');
+    const view = renderProductFormGeneral({ defaultSku: 'KEYCHA000' });
 
     await waitFor(() => {
       expect(screen.getByTestId('sku-value')).toHaveTextContent('KEYCHA000');

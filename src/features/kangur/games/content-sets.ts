@@ -116,11 +116,38 @@ export const getKangurGameContentSetsForGame = (
   }
 };
 
+export const mergeKangurGameContentSetsForGame = (
+  game: KangurGameDefinition,
+  customContentSets?: readonly KangurGameContentSet[] | null
+): KangurGameContentSet[] => {
+  const builtInContentSets = getKangurGameContentSetsForGame(game);
+  const merged = new Map<KangurGameContentSetId, KangurGameContentSet>();
+
+  for (const contentSet of builtInContentSets) {
+    merged.set(contentSet.id, contentSet);
+  }
+
+  for (const contentSet of customContentSets ?? []) {
+    if (contentSet.gameId !== game.id) {
+      continue;
+    }
+    merged.set(contentSet.id, contentSet);
+  }
+
+  return [...merged.values()].sort(
+    (left, right) =>
+      left.sortOrder - right.sortOrder ||
+      left.label.localeCompare(right.label) ||
+      left.id.localeCompare(right.id)
+  );
+};
+
 export const getKangurGameContentSetForGame = (
   game: KangurGameDefinition,
-  contentSetId: KangurGameContentSetId | null | undefined
+  contentSetId: KangurGameContentSetId | null | undefined,
+  customContentSets?: readonly KangurGameContentSet[] | null
 ): KangurGameContentSet | null => {
-  const contentSets = getKangurGameContentSetsForGame(game);
+  const contentSets = mergeKangurGameContentSetsForGame(game, customContentSets);
   if (contentSets.length === 0) {
     return null;
   }

@@ -19,6 +19,7 @@ const {
   lessonAssignmentsHookCallsMock,
   lessonTemplatesHookCallsMock,
   lessonsWordmarkPropsMock,
+  useKangurDocsTooltipsMock,
   openLoginModalMock,
   localeState,
   focusTokenState,
@@ -44,6 +45,7 @@ const {
   lessonAssignmentsHookCallsMock: vi.fn(),
   lessonTemplatesHookCallsMock: vi.fn(),
   lessonsWordmarkPropsMock: vi.fn(),
+  useKangurDocsTooltipsMock: vi.fn(() => ({ enabled: false })),
   openLoginModalMock: vi.fn(),
   localeState: {
     value: 'pl' as 'de' | 'en' | 'pl',
@@ -133,6 +135,11 @@ vi.mock('next-intl', () => ({
             en: 'No active lessons',
             pl: 'Brak aktywnych lekcji',
           },
+          'KangurLessonsWidgets.mastery.noSavedPractice': {
+            de: 'Kein gespeichertes Training',
+            en: 'No saved practice',
+            pl: 'Brak zapisanego treningu',
+          },
         } as const
       )[`${namespace}.${key}`]?.[localeState.value] ?? key,
 }));
@@ -146,7 +153,7 @@ vi.mock('@/features/kangur/config/routing', () => ({
 }));
 
 vi.mock('@/features/kangur/docs/tooltips', () => ({
-  useKangurDocsTooltips: () => ({ enabled: false }),
+  useKangurDocsTooltips: (...args: unknown[]) => useKangurDocsTooltipsMock(...args),
 }));
 
 vi.mock('@/features/kangur/lesson-documents', () => ({
@@ -541,6 +548,7 @@ describe('Lessons page subject filtering', () => {
     topNavigationPropsMock.mockClear();
     standardPageLayoutPropsMock.mockClear();
     tutorSessionSyncPropsMock.mockClear();
+    useKangurDocsTooltipsMock.mockClear();
     useKangurRoutePageReadyMock.mockClear();
     lessonDocumentsHookCallsMock.mockClear();
     lessonAssignmentsHookCallsMock.mockClear();
@@ -909,6 +917,7 @@ describe('Lessons page subject filtering', () => {
   it('defers docs tooltip mounting until after the first deferred render turn', () => {
     render(<Lessons />);
 
+    expect(useKangurDocsTooltipsMock).not.toHaveBeenCalled();
     expect(standardPageLayoutPropsMock).toHaveBeenCalledWith(
       expect.objectContaining({
         docsRootId: undefined,
@@ -920,6 +929,7 @@ describe('Lessons page subject filtering', () => {
       vi.runAllTimers();
     });
 
+    expect(useKangurDocsTooltipsMock).toHaveBeenCalledWith('lessons');
     expect(standardPageLayoutPropsMock).toHaveBeenLastCalledWith(
       expect.objectContaining({
         docsRootId: 'kangur-lessons-page',

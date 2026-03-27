@@ -39,6 +39,8 @@ describe('kangur server barrel', () => {
     expect(module.requireAccessibleKangurSlugRoute).toBeTypeOf('function');
     expect(module.getKangurConfiguredLaunchTarget).toBeTypeOf('function');
     expect(module.KangurAliasAppLayout).toBeTypeOf('function');
+    expect(module.getKangurStorefrontInitialState).toBeTypeOf('function');
+    expect(module.getKangurAuthBootstrapScript).toBeTypeOf('function');
   });
 
   it('registers the shared Kangur settings and context providers on import', async () => {

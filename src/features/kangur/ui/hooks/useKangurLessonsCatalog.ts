@@ -121,7 +121,6 @@ export const useKangurLessonsCatalog = (
       },
     ],
     queryFn: async (): Promise<KangurLessonsCatalog> => await fetchLessonsCatalog(options),
-    placeholderData: () => buildLessonsCatalogFallback(options),
     enabled: options?.enabled ?? true,
     staleTime: 1000 * 60 * 5,
     refetchOnMount: false,

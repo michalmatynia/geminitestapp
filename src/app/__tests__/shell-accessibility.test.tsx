@@ -15,7 +15,10 @@ vi.mock('next-intl', () => ({
 }));
 
 vi.mock('@/features/kangur/public', () => ({
-  default: ({ children }: { children: React.ReactNode }) => <>{children}</>,
+  FrontendPublicOwnerProvider: ({ children }: { children: React.ReactNode }) => <>{children}</>,
+  FrontendPublicOwnerShellClient: ({ children }: { children: React.ReactNode }) => <>{children}</>,
+  KangurSSRSkeleton: () => <div data-testid='kangur-ssr-skeleton' />,
+  KangurServerShell: () => <div data-testid='kangur-server-shell' />,
 }));
 
 vi.mock('@/app/(frontend)/home-helpers', () => ({

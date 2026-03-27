@@ -98,6 +98,7 @@ import {
   KANGUR_TIGHT_ROW_CLASSNAME,
 } from '@/features/kangur/ui/design/tokens';
 import { useKangurLearnerActivityPing } from '@/features/kangur/ui/hooks/useKangurLearnerActivity';
+import { useKangurGameContentSets } from '@/features/kangur/ui/hooks/useKangurGameContentSets';
 import { useKangurGameInstances } from '@/features/kangur/ui/hooks/useKangurGameInstances';
 import { useKangurMobileBreakpoint } from '@/features/kangur/ui/hooks/useKangurMobileBreakpoint';
 import { useKangurRoutePageReady } from '@/features/kangur/ui/hooks/useKangurRoutePageReady';
@@ -230,6 +231,10 @@ function GameContent(): React.JSX.Element {
     instanceId: launchableGameInstanceId ?? undefined,
   });
   const activeLaunchableGameInstance = launchableGameInstanceQuery.data?.[0] ?? null;
+  const launchableGameContentSetsQuery = useKangurGameContentSets({
+    enabled: isKangurLaunchableGameScreen(screen) && Boolean(activeLaunchableGameInstance?.gameId),
+    gameId: activeLaunchableGameInstance?.gameId,
+  });
   const activeLaunchableGameRuntime = useMemo(() => {
     if (!isKangurLaunchableGameScreen(screen)) {
       return null;
@@ -246,7 +251,8 @@ function GameContent(): React.JSX.Element {
     const game = getKangurGameDefinition(activeLaunchableGameInstance.gameId);
     const contentSet = getKangurGameContentSetForGame(
       game,
-      activeLaunchableGameInstance.contentSetId
+      activeLaunchableGameInstance.contentSetId,
+      launchableGameContentSetsQuery.data
     );
 
     return mergeKangurLaunchableGameRuntimeSpec(
@@ -254,7 +260,7 @@ function GameContent(): React.JSX.Element {
       contentSet?.rendererProps,
       activeLaunchableGameInstance.engineOverrides
     );
-  }, [activeLaunchableGameInstance, screen]);
+  }, [activeLaunchableGameInstance, launchableGameContentSetsQuery.data, screen]);
   const activeGameAssignment = runtime.activePracticeAssignment ?? runtime.resultPracticeAssignment;
   const tutorActivityContentId = useMemo(() => {
     if (activeGameAssignment?.id) {

@@ -86,6 +86,21 @@ describe('applyValidatorFieldReplacement', () => {
     expect(applyApi.setCategoryId).not.toHaveBeenCalled();
   });
 
+  it('preserves decimal replacements for dimension fields', () => {
+    const applyApi = createApplyApi({ sizeLength: 10 });
+
+    expect(
+      applyValidatorFieldReplacement({
+        fieldName: 'sizeLength',
+        replacementValue: '12.5',
+        ...applyApi,
+      })
+    ).toBe(true);
+
+    expect(applyApi.setFormFieldValue).toHaveBeenCalledWith('sizeLength', 12.5);
+    expect(applyApi.setCategoryId).not.toHaveBeenCalled();
+  });
+
   it('applies trimmed text replacements through setFormFieldValue', () => {
     const applyApi = createApplyApi({ name_en: 'Current title' });
 

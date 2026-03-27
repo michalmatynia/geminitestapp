@@ -46,6 +46,11 @@ import type {
   KangurLessonsRuntimeStateContextValue,
 } from './KangurLessonsRuntimeContext.shared';
 
+const EMPTY_LESSON_ASSIGNMENTS_BY_COMPONENT = new Map<
+  KangurLessonComponentId,
+  KangurAssignmentSnapshot
+>();
+
 const KangurLessonsRuntimeStateContext =
   createContext<KangurLessonsRuntimeStateContextValue | null>(null);
 const KangurLessonsRuntimeActionsContext =
@@ -93,6 +98,10 @@ export function KangurLessonsRuntimeProvider({
     [lessons]
   );
   const lessonAssignmentsByComponent = useMemo(() => {
+    if (!isAssignmentsReady || assignments.length === 0 || lessonComponentIds.size === 0) {
+      return EMPTY_LESSON_ASSIGNMENTS_BY_COMPONENT;
+    }
+
     const nextMap = new Map<KangurLessonComponentId, KangurAssignmentSnapshot>();
 
     assignments
@@ -120,8 +129,12 @@ export function KangurLessonsRuntimeProvider({
       });
 
     return nextMap;
-  }, [assignments, lessonComponentIds]);
+  }, [assignments, isAssignmentsReady, lessonComponentIds]);
   const completedLessonAssignmentsByComponent = useMemo(() => {
+    if (!isAssignmentsReady || assignments.length === 0 || lessonComponentIds.size === 0) {
+      return EMPTY_LESSON_ASSIGNMENTS_BY_COMPONENT;
+    }
+
     const nextMap = new Map<KangurLessonComponentId, KangurAssignmentSnapshot>();
 
     assignments
@@ -155,8 +168,12 @@ export function KangurLessonsRuntimeProvider({
       });
 
     return nextMap;
-  }, [assignments, lessonComponentIds]);
+  }, [assignments, isAssignmentsReady, lessonComponentIds]);
   const orderedLessons = useMemo(() => {
+    if (lessons.length <= 1 || lessonAssignmentsByComponent.size === 0) {
+      return lessons;
+    }
+
     return [...lessons].sort((left, right) => {
       const leftAssignment = lessonAssignmentsByComponent.get(left.componentId);
       const rightAssignment = lessonAssignmentsByComponent.get(right.componentId);

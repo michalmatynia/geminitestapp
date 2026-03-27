@@ -46,3 +46,6 @@ export * from './hooks/useCmsQueries';
 export { isCmsSectionHidden } from './utils/page-builder-normalization';
 export { default as CmsEditorLayout } from './components/CmsEditorLayout';
 export { CmsDomainSelector } from './components/CmsDomainSelector';
+export { default as PagesPage } from './pages/pages/PagesPage';
+export { default as SlugsPage } from './pages/slugs/SlugsPage';
+export { default as ThemesPage } from './pages/themes/ThemesPage';

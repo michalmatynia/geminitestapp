@@ -78,7 +78,7 @@ vi.mock('@/shared/ui/QueryErrorBoundary', () => ({
   QueryErrorBoundary: queryErrorBoundaryMock,
 }));
 
-vi.mock('@/features/kangur/ui/FrontendPublicOwnerShellClient', () => ({
+vi.mock('@/features/kangur/public', () => ({
   default: frontendPublicOwnerShellClientMock,
 }));
 

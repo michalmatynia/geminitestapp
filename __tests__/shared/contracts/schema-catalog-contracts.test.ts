@@ -29,6 +29,7 @@ import {
   filemakerEmailCampaignRegistrySchema,
   filemakerEmailCampaignLaunchRunRequestSchema,
   filemakerEmailCampaignLaunchRunResponseSchema,
+  filemakerEmailCampaignDeliveryAttemptRegistrySchema,
   filemakerEmailCampaignDeliveryRegistrySchema,
   filemakerEmailCampaignEventRegistrySchema,
   filemakerEmailCampaignProcessRunRequestSchema,
@@ -451,6 +452,33 @@ describe('shared contract runtime coverage for schema catalogs', () => {
     ).toEqual(
       expect.objectContaining({
         runs: [expect.objectContaining({ campaignId: 'campaign-1' })],
+      })
+    );
+
+    expect(
+      filemakerEmailCampaignDeliveryAttemptRegistrySchema.parse({
+        version: 1,
+        attempts: [
+          {
+            id: 'attempt-1',
+            campaignId: 'campaign-1',
+            runId: 'run-1',
+            deliveryId: 'delivery-1',
+            emailAddress: 'jan@example.com',
+            partyKind: 'person',
+            partyId: 'person-1',
+            attemptNumber: 1,
+            status: 'sent',
+            provider: 'smtp',
+            attemptedAt: iso,
+            createdAt: iso,
+            updatedAt: iso,
+          },
+        ],
+      })
+    ).toEqual(
+      expect.objectContaining({
+        attempts: [expect.objectContaining({ status: 'sent' })],
       })
     );
 

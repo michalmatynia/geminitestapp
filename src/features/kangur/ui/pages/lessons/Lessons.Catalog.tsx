@@ -1,4 +1,3 @@
-import { motion } from 'framer-motion';
 import { useLocale, useTranslations } from 'next-intl';
 import { useEffect, useMemo, useState } from 'react';
 import {
@@ -25,12 +24,7 @@ import { KANGUR_LESSON_PANEL_GAP_CLASSNAME } from '@/features/kangur/ui/design/t
 import { useKangurPageContentEntry } from '@/features/kangur/ui/hooks/useKangurPageContent';
 import type { KangurLesson } from '@/features/kangur/shared/contracts/kangur';
 import type { KangurLessonSection } from '@/shared/contracts/kangur-lesson-sections';
-import {
-  LESSONS_CARD_STAGGER_DELAY,
-  LESSONS_CARD_TRANSITION,
-  LESSONS_LIBRARY_LAYOUT_CLASSNAME,
-  LESSONS_LIBRARY_LIST_CLASSNAME,
-} from './Lessons.constants';
+import { LESSONS_LIBRARY_LAYOUT_CLASSNAME, LESSONS_LIBRARY_LIST_CLASSNAME } from './Lessons.constants';
 import { useLessons } from './LessonsContext';
 import { getLessonMasteryPresentation } from './Lessons.utils';
 
@@ -219,14 +213,11 @@ function LessonsCatalogResolvedContent({
     lessonEntries.push({ kind: 'lesson', lesson });
   });
 
-  const renderLessonCard = (lesson: KangurLesson, index: number) => (
-    <motion.div
+  const renderLessonCard = (lesson: KangurLesson, _index: number) => (
+    <div
       className='w-full'
       key={lesson.id}
       data-testid={`lesson-library-motion-${lesson.id}`}
-      initial={{ opacity: 0, y: 16 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ ...LESSONS_CARD_TRANSITION, delay: index * LESSONS_CARD_STAGGER_DELAY }}
     >
       <KangurLessonLibraryCard
         lesson={lesson}
@@ -241,7 +232,7 @@ function LessonsCatalogResolvedContent({
         hasDocumentContent={hasKangurLessonDocumentContent(lessonDocuments[lesson.id])}
         ariaCurrent={activeLessonId === lesson.id ? 'page' : undefined}
       />
-    </motion.div>
+    </div>
   );
 
   let lessonIndex = 0;
@@ -343,7 +334,7 @@ function LessonsCatalogResolvedContent({
   );
 }
 
-export function LessonsCatalog({ renderResolvedContent = true }: { renderResolvedContent?: boolean }) {
+export function LessonsCatalog() {
   const locale = useLocale();
   const translations = useTranslations('KangurLessonsPage');
   const masteryTranslations = useTranslations('KangurLessonsWidgets.mastery');
@@ -396,14 +387,10 @@ export function LessonsCatalog({ renderResolvedContent = true }: { renderResolve
   const loadingStatusDescription = isLessonSectionsLoading
     ? translations('loadingSectionsDetails')
     : translations('loadingLessonsDetails');
-  const isResolvedContentDeferred = !renderResolvedContent;
   const shouldShowIntroLoadingState =
-    isResolvedContentDeferred ||
     shouldShowLessonsCatalogSkeleton ||
     isLessonsCatalogLoading ||
     isLessonSectionsLoading;
-  const shouldShowCatalogSkeleton =
-    isResolvedContentDeferred || shouldShowLessonsCatalogSkeleton;
 
   return (
     <div className={LESSONS_LIBRARY_LAYOUT_CLASSNAME} data-testid='lessons-shell-transition'>
@@ -466,11 +453,11 @@ export function LessonsCatalog({ renderResolvedContent = true }: { renderResolve
         </KangurPageIntroCard>
       </div>
       <div
-        aria-busy={shouldShowCatalogSkeleton}
+        aria-busy={shouldShowLessonsCatalogSkeleton}
         className={LESSONS_LIBRARY_LIST_CLASSNAME}
         data-testid='lessons-list-transition'
       >
-        {shouldShowCatalogSkeleton ? (
+        {shouldShowLessonsCatalogSkeleton ? (
           <LessonsCatalogSkeleton />
         ) : orderedLessons.length === 0 ? (
           <KangurEmptyState

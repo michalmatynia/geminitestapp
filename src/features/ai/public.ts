@@ -28,4 +28,5 @@ export {
 } from './image-studio/components/center-preview/CenterPreviewContext';
 
 export { AgentPersonaMoodAvatar } from './agentcreator/components/AgentPersonaMoodAvatar';
+export { AdminAiContextRegistryPage } from './ai-context-registry/pages/AdminAiContextRegistryPage';
 export { AdminAiInsightsPage } from './insights';

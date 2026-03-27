@@ -2,6 +2,8 @@ export const FILEMAKER_DATABASE_KEY = 'filemaker_database_v1';
 export const FILEMAKER_EMAIL_CAMPAIGNS_KEY = 'filemaker_email_campaigns_v1';
 export const FILEMAKER_EMAIL_CAMPAIGN_RUNS_KEY = 'filemaker_email_campaign_runs_v1';
 export const FILEMAKER_EMAIL_CAMPAIGN_DELIVERIES_KEY = 'filemaker_email_campaign_deliveries_v1';
+export const FILEMAKER_EMAIL_CAMPAIGN_DELIVERY_ATTEMPTS_KEY =
+  'filemaker_email_campaign_delivery_attempts_v1';
 export const FILEMAKER_EMAIL_CAMPAIGN_EVENTS_KEY = 'filemaker_email_campaign_events_v1';
 export const FILEMAKER_EMAIL_CAMPAIGN_SUPPRESSIONS_KEY =
   'filemaker_email_campaign_suppressions_v1';

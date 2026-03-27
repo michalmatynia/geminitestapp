@@ -19,10 +19,12 @@ import {
   FILEMAKER_DATABASE_KEY,
   FILEMAKER_EMAIL_CAMPAIGNS_KEY,
   FILEMAKER_EMAIL_CAMPAIGN_DELIVERIES_KEY,
+  FILEMAKER_EMAIL_CAMPAIGN_DELIVERY_ATTEMPTS_KEY,
   FILEMAKER_EMAIL_CAMPAIGN_EVENTS_KEY,
   FILEMAKER_EMAIL_CAMPAIGN_RUNS_KEY,
   FILEMAKER_EMAIL_CAMPAIGN_SUPPRESSIONS_KEY,
   parseFilemakerDatabase,
+  parseFilemakerEmailCampaignDeliveryAttemptRegistry,
   parseFilemakerEmailCampaignDeliveryRegistry,
   parseFilemakerEmailCampaignEventRegistry,
   parseFilemakerEmailCampaignRegistry,
@@ -42,6 +44,7 @@ export function AdminFilemakerCampaignControlCentrePage(): React.JSX.Element {
   const rawCampaigns = settingsStore.get(FILEMAKER_EMAIL_CAMPAIGNS_KEY);
   const rawRuns = settingsStore.get(FILEMAKER_EMAIL_CAMPAIGN_RUNS_KEY);
   const rawDeliveries = settingsStore.get(FILEMAKER_EMAIL_CAMPAIGN_DELIVERIES_KEY);
+  const rawAttempts = settingsStore.get(FILEMAKER_EMAIL_CAMPAIGN_DELIVERY_ATTEMPTS_KEY);
   const rawEvents = settingsStore.get(FILEMAKER_EMAIL_CAMPAIGN_EVENTS_KEY);
   const rawSuppressions = settingsStore.get(FILEMAKER_EMAIL_CAMPAIGN_SUPPRESSIONS_KEY);
 
@@ -57,6 +60,10 @@ export function AdminFilemakerCampaignControlCentrePage(): React.JSX.Element {
   const deliveryRegistry = useMemo(
     () => parseFilemakerEmailCampaignDeliveryRegistry(rawDeliveries),
     [rawDeliveries]
+  );
+  const attemptRegistry = useMemo(
+    () => parseFilemakerEmailCampaignDeliveryAttemptRegistry(rawAttempts),
+    [rawAttempts]
   );
   const eventRegistry = useMemo(
     () => parseFilemakerEmailCampaignEventRegistry(rawEvents),
@@ -74,10 +81,12 @@ export function AdminFilemakerCampaignControlCentrePage(): React.JSX.Element {
         campaignRegistry,
         runRegistry,
         deliveryRegistry,
+        attemptRegistry,
         eventRegistry,
         suppressionRegistry,
       }),
     [
+      attemptRegistry,
       campaignRegistry,
       database,
       deliveryRegistry,
@@ -138,12 +147,50 @@ export function AdminFilemakerCampaignControlCentrePage(): React.JSX.Element {
             issue.emailAddress,
             issue.domain,
             issue.status,
+            issue.provider ?? '',
+            issue.failureCategory ?? '',
             issue.message,
           ],
           deferredQuery
         )
       ),
     [deferredQuery, overview.recentDeliveryIssues]
+  );
+
+  const filteredRecentAttempts = useMemo(
+    () =>
+      overview.recentAttempts.filter((attempt) =>
+        includeQuery(
+          [
+            attempt.campaignName ?? '',
+            attempt.emailAddress,
+            attempt.domain,
+            attempt.status,
+            attempt.provider ?? '',
+            attempt.failureCategory ?? '',
+            attempt.message,
+          ],
+          deferredQuery
+        )
+      ),
+    [deferredQuery, overview.recentAttempts]
+  );
+  const filteredScheduledRetries = useMemo(
+    () =>
+      overview.scheduledRetries.filter((retry) =>
+        includeQuery(
+          [
+            retry.campaignName ?? '',
+            retry.emailAddress,
+            retry.domain,
+            retry.failureCategory ?? '',
+            retry.status,
+            retry.runId,
+          ],
+          deferredQuery
+        )
+      ),
+    [deferredQuery, overview.scheduledRetries]
   );
 
   const atRiskCampaignCount = useMemo(
@@ -190,7 +237,7 @@ export function AdminFilemakerCampaignControlCentrePage(): React.JSX.Element {
         </div>
       </div>
 
-      <div className='grid gap-4 md:grid-cols-2 xl:grid-cols-4'>
+      <div className='grid gap-4 md:grid-cols-2 xl:grid-cols-5'>
         <InsetPanel padding='md' className='space-y-2'>
           <div className='text-[11px] uppercase tracking-[0.24em] text-gray-500'>
             Accepted delivery
@@ -229,6 +276,22 @@ export function AdminFilemakerCampaignControlCentrePage(): React.JSX.Element {
 
         <InsetPanel padding='md' className='space-y-2'>
           <div className='text-[11px] uppercase tracking-[0.24em] text-gray-500'>
+            Attempts and retries
+          </div>
+          <div className='text-2xl font-semibold text-white'>{overview.totalAttempts}</div>
+          <div className='text-sm text-gray-400'>
+            {overview.retriedDeliveryCount} retried deliveries, {overview.recoveredAfterRetryCount} recovered after retry.
+            {' '}
+            {overview.retryEligibleCount} retryable now, {overview.retryExhaustedCount} exhausted.
+            {' '}
+            {overview.nextScheduledRetryAt
+              ? `Next retry ${formatTimestamp(overview.nextScheduledRetryAt)}.`
+              : 'No retry window is currently scheduled.'}
+          </div>
+        </InsetPanel>
+
+        <InsetPanel padding='md' className='space-y-2'>
+          <div className='text-[11px] uppercase tracking-[0.24em] text-gray-500'>
             Suppression pressure
           </div>
           <div className='text-2xl font-semibold text-white'>
@@ -259,6 +322,104 @@ export function AdminFilemakerCampaignControlCentrePage(): React.JSX.Element {
                 </div>
                 <div className='text-2xl font-semibold text-white'>{entry.count}</div>
               </InsetPanel>
+            ))}
+          </div>
+        )}
+      </InsetPanel>
+
+      <InsetPanel padding='md' className='space-y-4'>
+        <SectionHeader
+          title='Provider Paths'
+          description='Compare SMTP and webhook attempt volume and see where failures are concentrating.'
+          size='sm'
+        />
+        {overview.providerBreakdown.length === 0 ? (
+          <div className='rounded-xl border border-dashed border-border/40 p-4 text-sm text-gray-500'>
+            No provider-level delivery attempts have been recorded yet.
+          </div>
+        ) : (
+          <div className='grid gap-3 md:grid-cols-2 xl:grid-cols-4'>
+            {overview.providerBreakdown.map((entry) => (
+              <InsetPanel key={entry.provider} padding='md' className='space-y-2'>
+                <div className='text-[11px] uppercase tracking-[0.24em] text-gray-500'>
+                  {entry.provider}
+                </div>
+                <div className='text-2xl font-semibold text-white'>{entry.attemptCount}</div>
+                <div className='text-sm text-gray-400'>
+                  {entry.sentCount} sent • {entry.failedCount} failed • {entry.bouncedCount} bounced
+                </div>
+              </InsetPanel>
+            ))}
+          </div>
+        )}
+      </InsetPanel>
+
+      <InsetPanel padding='md' className='space-y-4'>
+        <SectionHeader
+          title='Scheduled Retries'
+          description='These deliveries are waiting for the next retry window based on the backoff policy.'
+          size='sm'
+        />
+        {filteredScheduledRetries.length === 0 ? (
+          <div className='rounded-xl border border-dashed border-border/40 p-4 text-sm text-gray-500'>
+            No deliveries are currently waiting for a scheduled retry.
+          </div>
+        ) : (
+          <div className='grid gap-3 lg:grid-cols-2'>
+            {filteredScheduledRetries.map((retry) => (
+              <div
+                key={retry.deliveryId}
+                className='rounded-xl border border-border/50 bg-background/30 p-4 space-y-3'
+              >
+                <div className='flex flex-wrap items-center gap-2'>
+                  <Badge variant='outline' className='text-[10px] uppercase'>
+                    {retry.status}
+                  </Badge>
+                  {retry.failureCategory ? (
+                    <Badge variant='outline' className='text-[10px] capitalize'>
+                      {retry.failureCategory.replaceAll('_', ' ')}
+                    </Badge>
+                  ) : null}
+                  <Badge variant='outline' className='text-[10px] uppercase'>
+                    attempt {retry.attemptCount}
+                  </Badge>
+                </div>
+                <div className='space-y-1'>
+                  <div className='text-sm font-medium text-white'>{retry.emailAddress}</div>
+                  <div className='text-[11px] text-gray-500'>
+                    {retry.campaignName ?? retry.campaignId} • {retry.domain}
+                  </div>
+                  <div className='text-[11px] text-gray-500'>
+                    Next retry: {formatTimestamp(retry.nextRetryAt)}
+                  </div>
+                </div>
+                <div className='flex flex-wrap gap-2'>
+                  <Button
+                    type='button'
+                    size='sm'
+                    variant='outline'
+                    onClick={(): void => {
+                      router.push(
+                        `/admin/filemaker/campaigns/${encodeURIComponent(retry.campaignId)}`
+                      );
+                    }}
+                  >
+                    Open Campaign
+                  </Button>
+                  <Button
+                    type='button'
+                    size='sm'
+                    variant='outline'
+                    onClick={(): void => {
+                      router.push(
+                        `/admin/filemaker/campaigns/runs/${encodeURIComponent(retry.runId)}`
+                      );
+                    }}
+                  >
+                    Open Run
+                  </Button>
+                </div>
+              </div>
             ))}
           </div>
         )}
@@ -448,6 +609,58 @@ export function AdminFilemakerCampaignControlCentrePage(): React.JSX.Element {
                 ))}
               </tbody>
             </table>
+          </div>
+        )}
+      </InsetPanel>
+
+      <InsetPanel padding='md' className='space-y-4'>
+        <SectionHeader
+          title='Recent Delivery Attempts'
+          description='Each attempt is logged so retry and recovery patterns are visible, not just the final delivery state.'
+          size='sm'
+        />
+        {filteredRecentAttempts.length === 0 ? (
+          <div className='rounded-xl border border-dashed border-border/40 p-4 text-sm text-gray-500'>
+            No recent delivery attempts match the current filter.
+          </div>
+        ) : (
+          <div className='grid gap-3'>
+            {filteredRecentAttempts.map((attempt) => (
+              <div
+                key={attempt.attemptId}
+                className='rounded-xl border border-border/50 bg-background/30 p-4'
+              >
+                <div className='flex flex-wrap items-center gap-2'>
+                  <Badge variant='outline' className='text-[10px] uppercase'>
+                    attempt {attempt.attemptNumber}
+                  </Badge>
+                  <Badge variant='outline' className='text-[10px] uppercase'>
+                    {attempt.status}
+                  </Badge>
+                  <Badge variant='outline' className='text-[10px]'>
+                    {attempt.domain}
+                  </Badge>
+                  {attempt.provider ? (
+                    <Badge variant='outline' className='text-[10px] uppercase'>
+                      {attempt.provider}
+                    </Badge>
+                  ) : null}
+                  {attempt.failureCategory ? (
+                    <Badge variant='outline' className='text-[10px] capitalize'>
+                      {attempt.failureCategory.replaceAll('_', ' ')}
+                    </Badge>
+                  ) : null}
+                  <div className='text-[11px] text-gray-500'>
+                    {formatTimestamp(attempt.attemptedAt)}
+                  </div>
+                </div>
+                <div className='mt-2 text-sm font-medium text-white'>{attempt.emailAddress}</div>
+                <div className='mt-1 text-[12px] text-gray-400'>
+                  {attempt.campaignName ?? attempt.campaignId}
+                </div>
+                <div className='mt-2 text-sm leading-6 text-gray-300'>{attempt.message}</div>
+              </div>
+            ))}
           </div>
         )}
       </InsetPanel>

@@ -13,6 +13,9 @@ import type {
   FilemakerEmailCampaign,
   FilemakerEmailCampaignAudienceRule,
   FilemakerEmailCampaignDelivery,
+  FilemakerEmailCampaignDeliveryAttempt,
+  FilemakerEmailCampaignDeliveryAttemptRegistry,
+  FilemakerEmailCampaignDeliveryAttemptStatus,
   FilemakerEmailCampaignDeliveryFailureCategory,
   FilemakerEmailCampaignDeliveryProvider,
   FilemakerEmailCampaignDeliveryRegistry,
@@ -149,11 +152,13 @@ export type FilemakerEmailCampaignDomainDeliverability = {
   bouncedCount: number;
   queuedCount: number;
   skippedCount: number;
+  pendingRetryCount: number;
   suppressionCount: number;
   deliveryRatePercent: number;
   failureRatePercent: number;
   bounceRatePercent: number;
   latestDeliveryAt: string | null;
+  nextScheduledRetryAt: string | null;
   alertLevel: FilemakerEmailCampaignDeliverabilityHealthLevel;
 };
 
@@ -169,10 +174,12 @@ export type FilemakerEmailCampaignDeliverabilityCampaignHealth = {
   bouncedCount: number;
   queuedCount: number;
   skippedCount: number;
+  pendingRetryCount: number;
   deliveryRatePercent: number;
   failureRatePercent: number;
   bounceRatePercent: number;
   suppressionImpactCount: number;
+  nextScheduledRetryAt: string | null;
   alertLevel: FilemakerEmailCampaignDeliverabilityHealthLevel;
 };
 
@@ -190,21 +197,64 @@ export type FilemakerEmailCampaignRecentDeliveryIssue = {
   updatedAt: string | null;
 };
 
+export type FilemakerEmailCampaignRecentDeliveryAttempt = {
+  attemptId: string;
+  attemptNumber: number;
+  deliveryId: string;
+  campaignId: string;
+  campaignName: string | null;
+  runId: string;
+  emailAddress: string;
+  domain: string;
+  status: FilemakerEmailCampaignDeliveryAttemptStatus;
+  provider: FilemakerEmailCampaignDeliveryProvider | null;
+  failureCategory: FilemakerEmailCampaignDeliveryFailureCategory | null;
+  message: string;
+  attemptedAt: string | null;
+};
+
 export type FilemakerEmailCampaignDeliveryFailureCategorySummary = {
   category: FilemakerEmailCampaignDeliveryFailureCategory;
   count: number;
+};
+
+export type FilemakerEmailCampaignDeliveryProviderSummary = {
+  provider: FilemakerEmailCampaignDeliveryProvider;
+  attemptCount: number;
+  sentCount: number;
+  failedCount: number;
+  bouncedCount: number;
+};
+
+export type FilemakerEmailCampaignScheduledRetryItem = {
+  deliveryId: string;
+  campaignId: string;
+  campaignName: string | null;
+  runId: string;
+  emailAddress: string;
+  domain: string;
+  status: Extract<FilemakerEmailCampaignDeliveryStatus, 'failed' | 'bounced'>;
+  failureCategory: FilemakerEmailCampaignDeliveryFailureCategory | null;
+  attemptCount: number;
+  nextRetryAt: string;
 };
 
 export type FilemakerEmailCampaignDeliverabilityOverview = {
   campaignCount: number;
   liveRunCount: number;
   totalRecipients: number;
+  totalAttempts: number;
+  retryEligibleCount: number;
+  retryExhaustedCount: number;
+  pendingRetryCount: number;
   processedCount: number;
   acceptedCount: number;
   failedCount: number;
   bouncedCount: number;
   queuedCount: number;
   skippedCount: number;
+  retriedDeliveryCount: number;
+  recoveredAfterRetryCount: number;
   deliveryRatePercent: number;
   failureRatePercent: number;
   bounceRatePercent: number;
@@ -213,11 +263,16 @@ export type FilemakerEmailCampaignDeliverabilityOverview = {
   latestDeliveryAt: string | null;
   oldestQueuedAt: string | null;
   oldestQueuedAgeMinutes: number | null;
+  nextScheduledRetryAt: string | null;
+  nextScheduledRetryInMinutes: number | null;
   failureCategoryBreakdown: FilemakerEmailCampaignDeliveryFailureCategorySummary[];
+  providerBreakdown: FilemakerEmailCampaignDeliveryProviderSummary[];
   alerts: FilemakerEmailCampaignDeliverabilityAlert[];
   domainHealth: FilemakerEmailCampaignDomainDeliverability[];
   campaignHealth: FilemakerEmailCampaignDeliverabilityCampaignHealth[];
   recentDeliveryIssues: FilemakerEmailCampaignRecentDeliveryIssue[];
+  recentAttempts: FilemakerEmailCampaignRecentDeliveryAttempt[];
+  scheduledRetries: FilemakerEmailCampaignScheduledRetryItem[];
 };
 
 export type FilemakerEmailCampaignRecipientActivityType =
@@ -265,8 +320,14 @@ export type FilemakerEmailCampaignRecipientActivitySummary = {
 const FILEMAKER_CAMPAIGN_VERSION = 1;
 const FILEMAKER_CAMPAIGN_RUN_VERSION = 1;
 const FILEMAKER_CAMPAIGN_DELIVERY_VERSION = 1;
+const FILEMAKER_CAMPAIGN_DELIVERY_ATTEMPT_VERSION = 1;
 const FILEMAKER_CAMPAIGN_EVENT_VERSION = 1;
 const FILEMAKER_CAMPAIGN_SUPPRESSION_VERSION = 1;
+export const FILEMAKER_EMAIL_CAMPAIGN_MAX_DELIVERY_ATTEMPTS = 3;
+export const FILEMAKER_EMAIL_CAMPAIGN_RETRY_BACKOFF_DELAYS_MS = [
+  60_000,
+  5 * 60_000,
+] as const;
 const DEFAULT_TIMEZONE = 'UTC';
 const FILEMAKER_ALLOWED_EMAIL_STATUSES: ReadonlyArray<FilemakerEmail['status']> = [
   'active',
@@ -664,6 +725,7 @@ export const createFilemakerEmailCampaignDelivery = (
     providerMessage: normalizeString(input.providerMessage) || null,
     lastError: normalizeString(input.lastError) || null,
     sentAt: normalizeString(input.sentAt) || null,
+    nextRetryAt: normalizeString(input.nextRetryAt) || null,
     createdAt: input.createdAt ?? now,
     updatedAt: input.updatedAt ?? now,
   };
@@ -673,6 +735,71 @@ export const createDefaultFilemakerEmailCampaignDeliveryRegistry =
   (): FilemakerEmailCampaignDeliveryRegistry => ({
     version: FILEMAKER_CAMPAIGN_DELIVERY_VERSION,
     deliveries: [],
+  });
+
+export const createFilemakerEmailCampaignDeliveryAttempt = (
+  input: Partial<FilemakerEmailCampaignDeliveryAttempt> &
+    Pick<
+      FilemakerEmailCampaignDeliveryAttempt,
+      | 'campaignId'
+      | 'runId'
+      | 'deliveryId'
+      | 'emailAddress'
+      | 'partyKind'
+      | 'partyId'
+      | 'attemptNumber'
+      | 'status'
+    >
+): FilemakerEmailCampaignDeliveryAttempt => {
+  const now = new Date().toISOString();
+  const normalizedStatus = normalizeString(input.status).toLowerCase();
+  const normalizedProvider = normalizeString(input.provider).toLowerCase();
+  const normalizedFailureCategory = normalizeString(input.failureCategory).toLowerCase();
+  return {
+    id:
+      normalizeString(input.id) ||
+      `filemaker-email-campaign-delivery-attempt-${toIdToken(
+        `${input.deliveryId}-${input.attemptNumber}-${input.status}-${now}`
+      ) || 'entry'}`,
+    campaignId: normalizeString(input.campaignId),
+    runId: normalizeString(input.runId),
+    deliveryId: normalizeString(input.deliveryId),
+    emailAddress: normalizeString(input.emailAddress).toLowerCase(),
+    partyKind: input.partyKind,
+    partyId: normalizeString(input.partyId),
+    attemptNumber: Math.max(1, Math.trunc(Number(input.attemptNumber) || 1)),
+    status:
+      normalizedStatus === 'sent' ||
+      normalizedStatus === 'failed' ||
+      normalizedStatus === 'bounced'
+        ? (normalizedStatus as FilemakerEmailCampaignDeliveryAttemptStatus)
+        : 'failed',
+    provider:
+      normalizedProvider === 'webhook' || normalizedProvider === 'smtp'
+        ? (normalizedProvider as FilemakerEmailCampaignDeliveryProvider)
+        : null,
+    failureCategory:
+      normalizedFailureCategory === 'soft_bounce' ||
+      normalizedFailureCategory === 'hard_bounce' ||
+      normalizedFailureCategory === 'provider_rejected' ||
+      normalizedFailureCategory === 'rate_limited' ||
+      normalizedFailureCategory === 'timeout' ||
+      normalizedFailureCategory === 'invalid_recipient' ||
+      normalizedFailureCategory === 'unknown'
+        ? (normalizedFailureCategory as FilemakerEmailCampaignDeliveryFailureCategory)
+        : null,
+    providerMessage: normalizeString(input.providerMessage) || null,
+    errorMessage: normalizeString(input.errorMessage) || null,
+    attemptedAt: normalizeString(input.attemptedAt) || null,
+    createdAt: input.createdAt ?? now,
+    updatedAt: input.updatedAt ?? now,
+  };
+};
+
+export const createDefaultFilemakerEmailCampaignDeliveryAttemptRegistry =
+  (): FilemakerEmailCampaignDeliveryAttemptRegistry => ({
+    version: FILEMAKER_CAMPAIGN_DELIVERY_ATTEMPT_VERSION,
+    attempts: [],
   });
 
 export const createFilemakerEmailCampaignEvent = (
@@ -849,6 +976,97 @@ export const normalizeFilemakerEmailCampaignDeliveryRegistry = (
   };
 };
 
+export const normalizeFilemakerEmailCampaignDeliveryAttemptRegistry = (
+  value: FilemakerEmailCampaignDeliveryAttemptRegistry | null | undefined
+): FilemakerEmailCampaignDeliveryAttemptRegistry => {
+  if (!value || typeof value !== 'object') {
+    return createDefaultFilemakerEmailCampaignDeliveryAttemptRegistry();
+  }
+  const record = value as Record<string, unknown>;
+  const rawAttempts = Array.isArray(record['attempts']) ? record['attempts'] : [];
+  const usedIds = new Set<string>();
+  const attempts = rawAttempts.map(
+    (entry: unknown, index: number): FilemakerEmailCampaignDeliveryAttempt => {
+      const attempt = createFilemakerEmailCampaignDeliveryAttempt(
+        entry && typeof entry === 'object'
+          ? ({
+              ...(entry as Partial<FilemakerEmailCampaignDeliveryAttempt>),
+              campaignId:
+                normalizeString((entry as Record<string, unknown>)['campaignId']) ||
+                `campaign-${index + 1}`,
+              runId:
+                normalizeString((entry as Record<string, unknown>)['runId']) || `run-${index + 1}`,
+              deliveryId:
+                normalizeString((entry as Record<string, unknown>)['deliveryId']) ||
+                `delivery-${index + 1}`,
+              emailAddress:
+                normalizeString((entry as Record<string, unknown>)['emailAddress']) ||
+                `recipient-${index + 1}@example.com`,
+              partyKind:
+                normalizeString((entry as Record<string, unknown>)['partyKind']) === 'organization'
+                  ? 'organization'
+                  : 'person',
+              partyId:
+                normalizeString((entry as Record<string, unknown>)['partyId']) ||
+                `party-${index + 1}`,
+              attemptNumber: Math.max(
+                1,
+                Math.trunc(Number((entry as Record<string, unknown>)['attemptNumber']) || 1)
+              ),
+              status:
+                (normalizeString((entry as Record<string, unknown>)['status']).toLowerCase() as
+                  | FilemakerEmailCampaignDeliveryAttemptStatus
+                  | '') || 'failed',
+            } as Partial<FilemakerEmailCampaignDeliveryAttempt> &
+              Pick<
+                FilemakerEmailCampaignDeliveryAttempt,
+                | 'campaignId'
+                | 'runId'
+                | 'deliveryId'
+                | 'emailAddress'
+                | 'partyKind'
+                | 'partyId'
+                | 'attemptNumber'
+                | 'status'
+              >)
+          : {
+              campaignId: `campaign-${index + 1}`,
+              runId: `run-${index + 1}`,
+              deliveryId: `delivery-${index + 1}`,
+              emailAddress: `recipient-${index + 1}@example.com`,
+              partyKind: 'person',
+              partyId: `party-${index + 1}`,
+              attemptNumber: 1,
+              status: 'failed',
+            }
+      );
+      const baseId = attempt.id;
+      let resolvedId = baseId;
+      if (usedIds.has(resolvedId)) {
+        let suffix = 2;
+        while (usedIds.has(`${baseId}-${suffix}`)) {
+          suffix += 1;
+        }
+        resolvedId = `${baseId}-${suffix}`;
+      }
+      usedIds.add(resolvedId);
+      return {
+        ...attempt,
+        id: resolvedId,
+      };
+    }
+  );
+
+  return {
+    version: FILEMAKER_CAMPAIGN_DELIVERY_ATTEMPT_VERSION,
+    attempts: attempts.sort((left, right) => {
+      const leftTime = Date.parse(left.attemptedAt ?? left.createdAt ?? '');
+      const rightTime = Date.parse(right.attemptedAt ?? right.createdAt ?? '');
+      return (Number.isNaN(rightTime) ? 0 : rightTime) - (Number.isNaN(leftTime) ? 0 : leftTime);
+    }),
+  };
+};
+
 export const normalizeFilemakerEmailCampaignEventRegistry = (
   value: FilemakerEmailCampaignEventRegistry | null | undefined
 ): FilemakerEmailCampaignEventRegistry => {
@@ -1020,6 +1238,23 @@ export const toPersistedFilemakerEmailCampaignDeliveryRegistry = (
   value: FilemakerEmailCampaignDeliveryRegistry
 ): FilemakerEmailCampaignDeliveryRegistry => normalizeFilemakerEmailCampaignDeliveryRegistry(value);
 
+export const parseFilemakerEmailCampaignDeliveryAttemptRegistry = (
+  raw: string | null | undefined
+): FilemakerEmailCampaignDeliveryAttemptRegistry => {
+  const parsed = parseJsonRecord(
+    raw,
+    'Invalid Filemaker email campaign delivery attempt JSON payload.'
+  );
+  return normalizeFilemakerEmailCampaignDeliveryAttemptRegistry(
+    parsed as FilemakerEmailCampaignDeliveryAttemptRegistry | null | undefined
+  );
+};
+
+export const toPersistedFilemakerEmailCampaignDeliveryAttemptRegistry = (
+  value: FilemakerEmailCampaignDeliveryAttemptRegistry
+): FilemakerEmailCampaignDeliveryAttemptRegistry =>
+  normalizeFilemakerEmailCampaignDeliveryAttemptRegistry(value);
+
 export const parseFilemakerEmailCampaignEventRegistry = (
   raw: string | null | undefined
 ): FilemakerEmailCampaignEventRegistry => {
@@ -1059,6 +1294,113 @@ export const getFilemakerEmailCampaignDeliveriesForRun = (
   return registry.deliveries.filter(
     (delivery: FilemakerEmailCampaignDelivery): boolean => delivery.runId === normalizedRunId
   );
+};
+
+export const getFilemakerEmailCampaignDeliveryAttemptsForRun = (
+  registry: FilemakerEmailCampaignDeliveryAttemptRegistry,
+  runId: string
+): FilemakerEmailCampaignDeliveryAttempt[] => {
+  const normalizedRunId = normalizeString(runId);
+  if (!normalizedRunId) return [];
+  return registry.attempts.filter(
+    (attempt: FilemakerEmailCampaignDeliveryAttempt): boolean => attempt.runId === normalizedRunId
+  );
+};
+
+export const getFilemakerEmailCampaignDeliveryAttemptsForDelivery = (
+  registry: FilemakerEmailCampaignDeliveryAttemptRegistry,
+  deliveryId: string
+): FilemakerEmailCampaignDeliveryAttempt[] => {
+  const normalizedDeliveryId = normalizeString(deliveryId);
+  if (!normalizedDeliveryId) return [];
+  return registry.attempts.filter(
+    (attempt: FilemakerEmailCampaignDeliveryAttempt): boolean =>
+      attempt.deliveryId === normalizedDeliveryId
+  );
+};
+
+export const isFilemakerEmailCampaignRetryableFailureCategory = (
+  category: FilemakerEmailCampaignDeliveryFailureCategory | null | undefined
+): boolean =>
+  category === 'soft_bounce' ||
+  category === 'rate_limited' ||
+  category === 'timeout' ||
+  category === 'unknown';
+
+export const resolveFilemakerEmailCampaignRetryableDeliveries = (input: {
+  deliveries: FilemakerEmailCampaignDelivery[];
+  attemptRegistry: FilemakerEmailCampaignDeliveryAttemptRegistry;
+  maxAttempts?: number;
+}): {
+  retryableDeliveries: FilemakerEmailCampaignDelivery[];
+  exhaustedDeliveries: FilemakerEmailCampaignDelivery[];
+} => {
+  const maxAttempts =
+    input.maxAttempts && Number.isFinite(input.maxAttempts)
+      ? Math.max(1, Math.trunc(input.maxAttempts))
+      : FILEMAKER_EMAIL_CAMPAIGN_MAX_DELIVERY_ATTEMPTS;
+  const attemptsByDeliveryId = input.attemptRegistry.attempts.reduce<Map<string, number>>(
+    (map, attempt) => {
+      map.set(attempt.deliveryId, (map.get(attempt.deliveryId) ?? 0) + 1);
+      return map;
+    },
+    new Map()
+  );
+
+  const retryableDeliveries: FilemakerEmailCampaignDelivery[] = [];
+  const exhaustedDeliveries: FilemakerEmailCampaignDelivery[] = [];
+
+  input.deliveries.forEach((delivery) => {
+    if (delivery.status !== 'failed' && delivery.status !== 'bounced') return;
+    if (!isFilemakerEmailCampaignRetryableFailureCategory(delivery.failureCategory)) return;
+    const attemptCount = attemptsByDeliveryId.get(delivery.id) ?? 0;
+    if (attemptCount >= maxAttempts) {
+      exhaustedDeliveries.push(delivery);
+      return;
+    }
+    retryableDeliveries.push(delivery);
+  });
+
+  return {
+    retryableDeliveries,
+    exhaustedDeliveries,
+  };
+};
+
+export function resolveFilemakerEmailCampaignRetryDelayForAttemptCount(
+  attemptCount: number
+): number | null {
+  const normalizedAttemptCount = Math.max(0, Math.trunc(Number(attemptCount) || 0));
+  if (normalizedAttemptCount <= 0) return FILEMAKER_EMAIL_CAMPAIGN_RETRY_BACKOFF_DELAYS_MS[0] ?? 60_000;
+  const delayIndex = Math.max(
+    0,
+    Math.min(FILEMAKER_EMAIL_CAMPAIGN_RETRY_BACKOFF_DELAYS_MS.length - 1, normalizedAttemptCount - 1)
+  );
+  return FILEMAKER_EMAIL_CAMPAIGN_RETRY_BACKOFF_DELAYS_MS[delayIndex] ?? 60_000;
+}
+
+export const resolveFilemakerEmailCampaignRetryDelayMs = (input: {
+  deliveries: FilemakerEmailCampaignDelivery[];
+  attemptRegistry: FilemakerEmailCampaignDeliveryAttemptRegistry;
+  maxAttempts?: number;
+}): number | null => {
+  const retrySummary = resolveFilemakerEmailCampaignRetryableDeliveries(input);
+  if (retrySummary.retryableDeliveries.length === 0) return null;
+
+  const attemptsByDeliveryId = input.attemptRegistry.attempts.reduce<Map<string, number>>(
+    (map, attempt) => {
+      map.set(attempt.deliveryId, (map.get(attempt.deliveryId) ?? 0) + 1);
+      return map;
+    },
+    new Map()
+  );
+
+  return retrySummary.retryableDeliveries.reduce<number>((maxDelayMs, delivery) => {
+    const attemptCount = attemptsByDeliveryId.get(delivery.id) ?? 0;
+    const delayMs = resolveFilemakerEmailCampaignRetryDelayForAttemptCount(attemptCount);
+    if (delayMs == null) return maxDelayMs;
+    return Math.max(maxDelayMs, delayMs);
+  }, 0);
 };
 
 export const getFilemakerEmailCampaignEventsForRun = (
@@ -1914,6 +2256,7 @@ export const summarizeFilemakerEmailCampaignDeliverabilityOverview = (input: {
   campaignRegistry: FilemakerEmailCampaignRegistry;
   runRegistry: FilemakerEmailCampaignRunRegistry;
   deliveryRegistry: FilemakerEmailCampaignDeliveryRegistry;
+  attemptRegistry?: FilemakerEmailCampaignDeliveryAttemptRegistry | null;
   eventRegistry?: FilemakerEmailCampaignEventRegistry | null;
   suppressionRegistry?: FilemakerEmailCampaignSuppressionRegistry | null;
   now?: Date;
@@ -1921,10 +2264,13 @@ export const summarizeFilemakerEmailCampaignDeliverabilityOverview = (input: {
   const now = input.now ?? new Date();
   const nowMs = now.getTime();
   const deliveryRegistry = normalizeFilemakerEmailCampaignDeliveryRegistry(input.deliveryRegistry);
+  const attemptRegistry = normalizeFilemakerEmailCampaignDeliveryAttemptRegistry(
+    input.attemptRegistry
+  );
   const suppressionRegistry = normalizeFilemakerEmailCampaignSuppressionRegistry(
     input.suppressionRegistry
   );
-  const campaignHealth = input.campaignRegistry.campaigns
+  const campaignHealthBase = input.campaignRegistry.campaigns
     .map((campaign): FilemakerEmailCampaignDeliverabilityCampaignHealth => {
       const analytics = summarizeFilemakerEmailCampaignAnalytics({
         campaign,
@@ -1946,10 +2292,12 @@ export const summarizeFilemakerEmailCampaignDeliverabilityOverview = (input: {
         bouncedCount: analytics.bouncedCount,
         queuedCount: analytics.queuedCount,
         skippedCount: analytics.skippedCount,
+        pendingRetryCount: 0,
         deliveryRatePercent: analytics.deliveryRatePercent,
         failureRatePercent: analytics.failureRatePercent,
         bounceRatePercent: analytics.bounceRatePercent,
         suppressionImpactCount: analytics.suppressionImpactCount,
+        nextScheduledRetryAt: null,
         alertLevel: resolveDeliverabilityAlertLevel({
           bounceRatePercent: analytics.bounceRatePercent,
           failureRatePercent: analytics.failureRatePercent,
@@ -1980,7 +2328,7 @@ export const summarizeFilemakerEmailCampaignDeliverabilityOverview = (input: {
     new Map()
   );
 
-  const domainHealth = Array.from(
+  const domainHealthBase = Array.from(
     deliveryRegistry.deliveries.reduce<
       Map<
         string,
@@ -2042,11 +2390,13 @@ export const summarizeFilemakerEmailCampaignDeliverabilityOverview = (input: {
         bouncedCount: entry.bouncedCount,
         queuedCount: entry.queuedCount,
         skippedCount: entry.skippedCount,
+        pendingRetryCount: 0,
         suppressionCount: suppressionCountByDomain.get(entry.domain) ?? 0,
         deliveryRatePercent: roundPercentage(entry.sentCount, entry.totalDeliveries),
         failureRatePercent,
         bounceRatePercent,
         latestDeliveryAt: entry.latestDeliveryAt,
+        nextScheduledRetryAt: null,
         alertLevel:
           entry.totalDeliveries >= 3
             ? resolveDeliverabilityAlertLevel({
@@ -2090,6 +2440,7 @@ export const summarizeFilemakerEmailCampaignDeliverabilityOverview = (input: {
     (delivery: FilemakerEmailCampaignDelivery): boolean => delivery.status === 'skipped'
   ).length;
   const processedCount = acceptedCount + failedCount + bouncedCount + skippedCount;
+  const totalAttempts = attemptRegistry.attempts.length;
   const latestDeliveryAt = toSortedLatestTimestamp(
     deliveryRegistry.deliveries.map(
       (delivery: FilemakerEmailCampaignDelivery) =>
@@ -2143,7 +2494,88 @@ export const summarizeFilemakerEmailCampaignDeliverabilityOverview = (input: {
       updatedAt: delivery.updatedAt ?? delivery.createdAt ?? null,
     }));
 
-  const failureCategoryBreakdown = Array.from(
+  const attemptCountsByDeliveryId = attemptRegistry.attempts.reduce<Map<string, number>>(
+    (map, attempt) => {
+      map.set(attempt.deliveryId, (map.get(attempt.deliveryId) ?? 0) + 1);
+      return map;
+    },
+    new Map()
+  );
+  const retrySummary = resolveFilemakerEmailCampaignRetryableDeliveries({
+    deliveries: deliveryRegistry.deliveries,
+    attemptRegistry,
+  });
+  const scheduledRetries = deliveryRegistry.deliveries
+    .filter(
+      (
+        delivery: FilemakerEmailCampaignDelivery
+      ): delivery is FilemakerEmailCampaignDelivery & {
+        status: 'failed' | 'bounced';
+        nextRetryAt: string;
+      } =>
+        (delivery.status === 'failed' || delivery.status === 'bounced') &&
+        typeof delivery.nextRetryAt === 'string' &&
+        delivery.nextRetryAt.trim().length > 0
+    )
+    .sort((left, right) => Date.parse(left.nextRetryAt) - Date.parse(right.nextRetryAt))
+    .map((delivery): FilemakerEmailCampaignScheduledRetryItem => ({
+      deliveryId: delivery.id,
+      campaignId: delivery.campaignId,
+      campaignName: campaignNameById.get(delivery.campaignId) ?? null,
+      runId: delivery.runId,
+      emailAddress: delivery.emailAddress,
+      domain: resolveEmailDomain(delivery.emailAddress),
+      status: delivery.status,
+      failureCategory: delivery.failureCategory ?? null,
+      attemptCount: attemptCountsByDeliveryId.get(delivery.id) ?? 0,
+      nextRetryAt: delivery.nextRetryAt,
+    }));
+  const scheduledRetryCountByCampaign = scheduledRetries.reduce<Map<string, number>>((map, retry) => {
+    map.set(retry.campaignId, (map.get(retry.campaignId) ?? 0) + 1);
+    return map;
+  }, new Map());
+  const scheduledRetryNextAtByCampaign = scheduledRetries.reduce<Map<string, string>>((map, retry) => {
+    const existing = map.get(retry.campaignId);
+    if (!existing || Date.parse(retry.nextRetryAt) < Date.parse(existing)) {
+      map.set(retry.campaignId, retry.nextRetryAt);
+    }
+    return map;
+  }, new Map());
+  const scheduledRetryCountByDomain = scheduledRetries.reduce<Map<string, number>>((map, retry) => {
+    map.set(retry.domain, (map.get(retry.domain) ?? 0) + 1);
+    return map;
+  }, new Map());
+  const scheduledRetryNextAtByDomain = scheduledRetries.reduce<Map<string, string>>((map, retry) => {
+    const existing = map.get(retry.domain);
+    if (!existing || Date.parse(retry.nextRetryAt) < Date.parse(existing)) {
+      map.set(retry.domain, retry.nextRetryAt);
+    }
+    return map;
+  }, new Map());
+  const campaignHealth = campaignHealthBase.map((campaign) => ({
+    ...campaign,
+    pendingRetryCount: scheduledRetryCountByCampaign.get(campaign.campaignId) ?? 0,
+    nextScheduledRetryAt: scheduledRetryNextAtByCampaign.get(campaign.campaignId) ?? null,
+  }));
+  const domainHealth = domainHealthBase.map((domain) => ({
+    ...domain,
+    pendingRetryCount: scheduledRetryCountByDomain.get(domain.domain) ?? 0,
+    nextScheduledRetryAt: scheduledRetryNextAtByDomain.get(domain.domain) ?? null,
+  }));
+  const nextScheduledRetryAt = scheduledRetries[0]?.nextRetryAt ?? null;
+  const nextScheduledRetryInMinutes =
+    nextScheduledRetryAt && Number.isFinite(Date.parse(nextScheduledRetryAt))
+      ? Math.max(0, Math.round((Date.parse(nextScheduledRetryAt) - nowMs) / 60_000))
+      : null;
+  const retriedDeliveryCount = Array.from(attemptCountsByDeliveryId.values()).filter(
+    (count) => count > 1
+  ).length;
+  const recoveredAfterRetryCount = deliveryRegistry.deliveries.filter(
+    (delivery: FilemakerEmailCampaignDelivery): boolean =>
+      delivery.status === 'sent' && (attemptCountsByDeliveryId.get(delivery.id) ?? 0) > 1
+  ).length;
+
+  const fallbackFailureCategoryBreakdown = Array.from(
     deliveryRegistry.deliveries.reduce<
       Map<FilemakerEmailCampaignDeliveryFailureCategory, number>
     >((map, delivery) => {
@@ -2158,6 +2590,82 @@ export const summarizeFilemakerEmailCampaignDeliverabilityOverview = (input: {
       count,
     }))
     .sort((left, right) => right.count - left.count);
+  const failureCategoryBreakdownFromAttempts = Array.from(
+    attemptRegistry.attempts.reduce<Map<FilemakerEmailCampaignDeliveryFailureCategory, number>>(
+      (map, attempt) => {
+        const category = attempt.failureCategory;
+        if (!category) return map;
+        map.set(category, (map.get(category) ?? 0) + 1);
+        return map;
+      },
+      new Map()
+    )
+  )
+    .map(([category, count]): FilemakerEmailCampaignDeliveryFailureCategorySummary => ({
+      category,
+      count,
+    }))
+    .sort((left, right) => right.count - left.count);
+  const failureCategoryBreakdown =
+    failureCategoryBreakdownFromAttempts.length > 0
+      ? failureCategoryBreakdownFromAttempts
+      : fallbackFailureCategoryBreakdown;
+
+  const providerBreakdown = Array.from(
+    attemptRegistry.attempts.reduce<
+      Map<
+        FilemakerEmailCampaignDeliveryProvider,
+        FilemakerEmailCampaignDeliveryProviderSummary
+      >
+    >((map, attempt) => {
+      if (!attempt.provider) return map;
+      const existing = map.get(attempt.provider) ?? {
+        provider: attempt.provider,
+        attemptCount: 0,
+        sentCount: 0,
+        failedCount: 0,
+        bouncedCount: 0,
+      };
+      existing.attemptCount += 1;
+      if (attempt.status === 'sent') existing.sentCount += 1;
+      if (attempt.status === 'failed') existing.failedCount += 1;
+      if (attempt.status === 'bounced') existing.bouncedCount += 1;
+      map.set(attempt.provider, existing);
+      return map;
+    }, new Map())
+  )
+    .map(([, entry]) => entry)
+    .sort((left, right) => right.attemptCount - left.attemptCount);
+
+  const recentAttempts = [...attemptRegistry.attempts]
+    .sort((left, right) => {
+      const leftTime = Date.parse(left.attemptedAt ?? left.createdAt ?? '');
+      const rightTime = Date.parse(right.attemptedAt ?? right.createdAt ?? '');
+      return rightTime - leftTime;
+    })
+    .slice(0, 10)
+    .map((attempt): FilemakerEmailCampaignRecentDeliveryAttempt => ({
+      attemptId: attempt.id,
+      attemptNumber: attempt.attemptNumber,
+      deliveryId: attempt.deliveryId,
+      campaignId: attempt.campaignId,
+      campaignName: campaignNameById.get(attempt.campaignId) ?? null,
+      runId: attempt.runId,
+      emailAddress: attempt.emailAddress,
+      domain: resolveEmailDomain(attempt.emailAddress),
+      status: attempt.status,
+      provider: attempt.provider ?? null,
+      failureCategory: attempt.failureCategory ?? null,
+      message:
+        attempt.errorMessage?.trim() ||
+        attempt.providerMessage?.trim() ||
+        (attempt.status === 'sent'
+          ? `${attempt.emailAddress} accepted by the provider.`
+          : attempt.status === 'bounced'
+            ? `${attempt.emailAddress} bounced during delivery attempt ${attempt.attemptNumber}.`
+            : `${attempt.emailAddress} failed during delivery attempt ${attempt.attemptNumber}.`),
+      attemptedAt: attempt.attemptedAt ?? attempt.createdAt ?? null,
+    }));
 
   const alerts: FilemakerEmailCampaignDeliverabilityAlert[] = [];
   const pushAlert = (
@@ -2268,12 +2776,18 @@ export const summarizeFilemakerEmailCampaignDeliverabilityOverview = (input: {
       (run: FilemakerEmailCampaignRun): boolean => run.mode === 'live'
     ).length,
     totalRecipients,
+    totalAttempts,
+    retryEligibleCount: retrySummary.retryableDeliveries.length,
+    retryExhaustedCount: retrySummary.exhaustedDeliveries.length,
+    pendingRetryCount: scheduledRetries.length,
     processedCount,
     acceptedCount,
     failedCount,
     bouncedCount,
     queuedCount,
     skippedCount,
+    retriedDeliveryCount,
+    recoveredAfterRetryCount,
     deliveryRatePercent: roundPercentage(acceptedCount, totalRecipients),
     failureRatePercent: roundPercentage(failedCount + bouncedCount, totalRecipients),
     bounceRatePercent: globalBounceRatePercent,
@@ -2282,11 +2796,16 @@ export const summarizeFilemakerEmailCampaignDeliverabilityOverview = (input: {
     latestDeliveryAt,
     oldestQueuedAt,
     oldestQueuedAgeMinutes,
+    nextScheduledRetryAt,
+    nextScheduledRetryInMinutes,
     failureCategoryBreakdown,
+    providerBreakdown,
     alerts,
     domainHealth,
     campaignHealth,
     recentDeliveryIssues,
+    recentAttempts,
+    scheduledRetries,
   };
 };
 

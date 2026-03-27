@@ -68,8 +68,14 @@ export interface StandardDataTablePanelProps<TData> {
   loadingVariant?: 'panel' | 'table' | undefined;
 
   /**
-   * Optional custom content to render instead of the default DataTable.
-   * If provided, columns and data props are still accepted but the table won't render.
+   * Whether to render the DataTable. Useful when custom children are provided
+   * that handle their own table/list rendering or when used with responsive wrappers.
+   * Defaults to true.
+   */
+  showTable?: boolean | undefined;
+
+  /**
+   * Optional custom content to render alongside or instead of the DataTable.
    */
   children?: React.ReactNode | undefined;
 }
@@ -120,6 +126,7 @@ interface StandardDataTablePanelRenderProps<TData> {
   children: React.ReactNode | undefined;
   shellProps: StandardDataTablePanelShellProps;
   tableProps: StandardDataTablePanelTableProps<TData>;
+  showTable?: boolean | undefined;
 }
 
 const renderStandardDataTable = <TData,>({
@@ -204,6 +211,7 @@ const renderStandardDataTablePanel = <TData,>({
   children,
   shellProps,
   tableProps,
+  showTable = true,
 }: StandardDataTablePanelRenderProps<TData>): React.JSX.Element => (
   <ListPanel
     {...(shellProps.header !== undefined ? { header: shellProps.header } : {})}
@@ -218,7 +226,8 @@ const renderStandardDataTablePanel = <TData,>({
     {...(shellProps.loadingMessage !== undefined ? { loadingMessage: shellProps.loadingMessage } : {})}
     {...(shellProps.emptyState !== undefined ? { emptyState: shellProps.emptyState } : {})}
   >
-    {children !== undefined ? children : renderStandardDataTable(tableProps)}
+    {children}
+    {showTable && renderStandardDataTable(tableProps)}
   </ListPanel>
 );
 
@@ -260,6 +269,7 @@ export function StandardDataTablePanel<TData>({
   renderRowDetails,
   enableVirtualization,
   loadingVariant = 'panel',
+  showTable = true,
   children,
 }: StandardDataTablePanelProps<TData>): React.JSX.Element {
   const runtime = React.useContext(StandardDataTablePanelRuntimeContext);
@@ -279,6 +289,7 @@ export function StandardDataTablePanel<TData>({
 
   return renderStandardDataTablePanel({
     children,
+    showTable,
     shellProps: {
       actions,
       alerts: resolvedAlerts,

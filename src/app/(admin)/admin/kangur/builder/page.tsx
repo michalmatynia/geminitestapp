@@ -1,4 +1,4 @@
-import { AdminKangurBuilderPage } from '@/features/kangur/admin/AdminKangurBuilderPage';
+import { AdminKangurBuilderPage } from '@/features/kangur/public';
 
 import type { JSX } from 'react';
 

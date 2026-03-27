@@ -14,7 +14,7 @@ vi.mock('next-intl', () => ({
   NextIntlClientProvider: ({ children }: { children: React.ReactNode }) => <>{children}</>,
 }));
 
-vi.mock('@/features/kangur/ui/FrontendPublicOwnerShellClient', () => ({
+vi.mock('@/features/kangur/public', () => ({
   default: ({ children }: { children: React.ReactNode }) => <>{children}</>,
 }));
 

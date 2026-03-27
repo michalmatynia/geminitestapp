@@ -1,6 +1,6 @@
 import 'server-only';
 
-import { FilemakerCampaignUnsubscribePage } from '@/features/filemaker/pages/FilemakerCampaignUnsubscribePage';
+import { FilemakerCampaignUnsubscribePage } from '@/features/filemaker/public';
 import { parseFilemakerCampaignUnsubscribeToken } from '@/features/filemaker/server/campaign-unsubscribe-token';
 
 import type { Metadata } from 'next';

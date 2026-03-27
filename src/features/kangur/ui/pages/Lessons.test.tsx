@@ -873,6 +873,25 @@ describe('Lessons page subject filtering', () => {
     );
   });
 
+  it('defers tutor session sync until after the first deferred render turn', () => {
+    render(<Lessons />);
+
+    expect(tutorSessionSyncPropsMock).not.toHaveBeenCalled();
+
+    act(() => {
+      vi.runAllTimers();
+    });
+
+    expect(tutorSessionSyncPropsMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        sessionContext: expect.objectContaining({
+          contentId: 'lesson:list',
+          title: 'Lekcje',
+        }),
+      })
+    );
+  });
+
   it('passes the localized German lessons label into the lessons wordmark', () => {
     localeState.value = 'de';
 

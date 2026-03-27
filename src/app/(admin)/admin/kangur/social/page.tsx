@@ -1,6 +1,6 @@
 import { JSX } from 'react';
 
-import { AdminKangurSocialPage } from '@/features/kangur/admin/AdminKangurSocialPage';
+import { AdminKangurSocialPage } from '@/features/kangur/public';
 
 export default function Page(): JSX.Element {
   return <AdminKangurSocialPage />;

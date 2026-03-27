@@ -1,6 +1,6 @@
 'use client';
 
-import { useLayoutEffect, useRef } from 'react';
+import { useEffect, useRef } from 'react';
 
 import {
   KangurPrimaryNavigation,
@@ -16,6 +16,15 @@ const createKangurTopNavigationOwnerId = (): string => {
   return `kangur-top-navigation:${kangurTopNavigationControllerId}`;
 };
 
+function KangurLocalTopNavigation({
+  navigation,
+}: {
+  navigation: KangurPrimaryNavigationProps;
+}): React.JSX.Element {
+  const accessibleNavigation = useAccessibleKangurPrimaryNavigation(navigation);
+  return <KangurPrimaryNavigation {...accessibleNavigation} />;
+}
+
 export function KangurTopNavigationController({
   navigation,
   visible = true,
@@ -26,13 +35,12 @@ export function KangurTopNavigationController({
   const topNavigation = useOptionalKangurTopNavigation();
   const ownerIdRef = useRef<string | null>(null);
   const primaryNavigation = navigation;
-  const accessibleNavigation = useAccessibleKangurPrimaryNavigation(primaryNavigation);
 
   if (ownerIdRef.current === null) {
     ownerIdRef.current = createKangurTopNavigationOwnerId();
   }
 
-  useLayoutEffect(() => {
+  useEffect(() => {
     if (!topNavigation || !ownerIdRef.current) {
       return;
     }
@@ -54,7 +62,7 @@ export function KangurTopNavigationController({
   }, [primaryNavigation, topNavigation, visible]);
 
   if (!topNavigation) {
-    return visible ? <KangurPrimaryNavigation {...accessibleNavigation} /> : null;
+    return visible ? <KangurLocalTopNavigation navigation={primaryNavigation} /> : null;
   }
 
   return null;

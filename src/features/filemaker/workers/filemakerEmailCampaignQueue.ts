@@ -16,7 +16,41 @@ type FilemakerEmailCampaignQueueJobData = {
   reason: 'launch' | 'manual' | 'retry';
 };
 
+type FilemakerEmailCampaignQueueJobResult = {
+  ok: true;
+  campaignId: string;
+  runId: string;
+  reason: FilemakerEmailCampaignQueueJobData['reason'];
+  jobId: string;
+  progress: FilemakerCampaignRunProcessProgress;
+  status: string;
+  retryableDeliveryCount: number;
+  retryExhaustedCount: number;
+  suggestedRetryDelayMs: number | null;
+};
+
 const LOG_SOURCE = 'filemaker-email-campaign-queue';
+
+const scheduleAutomaticRetry = async (
+  data: FilemakerEmailCampaignQueueJobData,
+  result: FilemakerEmailCampaignQueueJobResult
+): Promise<void> => {
+  if (!isRedisAvailable()) return;
+  if (result.retryableDeliveryCount <= 0) return;
+  if (!result.suggestedRetryDelayMs || result.suggestedRetryDelayMs <= 0) return;
+
+  await queue.enqueue(
+    {
+      campaignId: data.campaignId,
+      runId: data.runId,
+      reason: 'retry',
+    },
+    {
+      delay: result.suggestedRetryDelayMs,
+      jobId: `retry__${data.runId}__${Date.now()}`,
+    }
+  );
+};
 
 const queue = createManagedQueue<FilemakerEmailCampaignQueueJobData>({
   name: 'filemaker-email-campaign',
@@ -30,6 +64,7 @@ const queue = createManagedQueue<FilemakerEmailCampaignQueueJobData>({
   processor: async (data, jobId, _signal, context) => {
     const result = await processFilemakerEmailCampaignRun({
       runId: data.runId,
+      reason: data.reason,
       onProgress: async (progress: FilemakerCampaignRunProcessProgress) => {
         await context?.updateProgress?.({
           totalCount: progress.totalCount,
@@ -53,6 +88,28 @@ const queue = createManagedQueue<FilemakerEmailCampaignQueueJobData>({
     };
   },
   onCompleted: async (jobId, result, data) => {
+    const typedResult =
+      result &&
+      typeof result === 'object' &&
+      'ok' in result &&
+      'retryableDeliveryCount' in result &&
+      'suggestedRetryDelayMs' in result
+        ? (result as FilemakerEmailCampaignQueueJobResult)
+        : null;
+    if (typedResult) {
+      try {
+        await scheduleAutomaticRetry(data, typedResult);
+      } catch (error) {
+        await ErrorSystem.captureException(error, {
+          service: LOG_SOURCE,
+          campaignId: data.campaignId,
+          runId: data.runId,
+          reason: data.reason,
+          jobId,
+          action: 'schedule-automatic-retry',
+        });
+      }
+    }
     await ErrorSystem.logInfo('Filemaker campaign job completed', {
       service: LOG_SOURCE,
       campaignId: data.campaignId,

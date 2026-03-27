@@ -24,18 +24,22 @@ import {
   FILEMAKER_DATABASE_KEY,
   FILEMAKER_EMAIL_CAMPAIGNS_KEY,
   FILEMAKER_EMAIL_CAMPAIGN_DELIVERIES_KEY,
+  FILEMAKER_EMAIL_CAMPAIGN_DELIVERY_ATTEMPTS_KEY,
   FILEMAKER_EMAIL_CAMPAIGN_EVENTS_KEY,
   FILEMAKER_EMAIL_CAMPAIGN_RUNS_KEY,
+  getFilemakerEmailCampaignDeliveryAttemptsForRun,
   getFilemakerEmailCampaignDeliveriesForRun,
   getFilemakerEmailCampaignEventsForRun,
   getFilemakerOrganizationById,
   getFilemakerPersonById,
   parseFilemakerDatabase,
+  parseFilemakerEmailCampaignDeliveryAttemptRegistry,
   parseFilemakerEmailCampaignDeliveryRegistry,
   parseFilemakerEmailCampaignEventRegistry,
   parseFilemakerEmailCampaignRegistry,
   parseFilemakerEmailCampaignRunRegistry,
   resolveFilemakerEmailCampaignRunStatusFromDeliveries,
+  resolveFilemakerEmailCampaignRetryableDeliveries,
   summarizeFilemakerEmailCampaignRunDeliveries,
   summarizeUniqueDeliveryEventCount,
   syncFilemakerEmailCampaignRunWithDeliveries,
@@ -47,6 +51,7 @@ import { decodeRouteParam, formatTimestamp } from './filemaker-page-utils';
 
 import type {
   FilemakerEmailCampaignDelivery,
+  FilemakerEmailCampaignDeliveryAttempt,
   FilemakerEmailCampaignDeliveryRegistry,
   FilemakerEmailCampaignEvent,
   FilemakerEmailCampaignEventRegistry,
@@ -134,6 +139,7 @@ export function AdminFilemakerCampaignRunPage(): React.JSX.Element {
   const rawCampaigns = settingsStore.get(FILEMAKER_EMAIL_CAMPAIGNS_KEY);
   const rawRuns = settingsStore.get(FILEMAKER_EMAIL_CAMPAIGN_RUNS_KEY);
   const rawDeliveries = settingsStore.get(FILEMAKER_EMAIL_CAMPAIGN_DELIVERIES_KEY);
+  const rawAttempts = settingsStore.get(FILEMAKER_EMAIL_CAMPAIGN_DELIVERY_ATTEMPTS_KEY);
   const rawEvents = settingsStore.get(FILEMAKER_EMAIL_CAMPAIGN_EVENTS_KEY);
 
   const database = useMemo(() => parseFilemakerDatabase(rawDatabase), [rawDatabase]);
@@ -148,6 +154,10 @@ export function AdminFilemakerCampaignRunPage(): React.JSX.Element {
   const deliveryRegistry = useMemo(
     () => parseFilemakerEmailCampaignDeliveryRegistry(rawDeliveries),
     [rawDeliveries]
+  );
+  const attemptRegistry = useMemo(
+    () => parseFilemakerEmailCampaignDeliveryAttemptRegistry(rawAttempts),
+    [rawAttempts]
   );
   const eventRegistry = useMemo(
     () => parseFilemakerEmailCampaignEventRegistry(rawEvents),
@@ -169,10 +179,30 @@ export function AdminFilemakerCampaignRunPage(): React.JSX.Element {
     () => getFilemakerEmailCampaignDeliveriesForRun(deliveryRegistry, runId),
     [deliveryRegistry, runId]
   );
+  const deliveryAttempts = useMemo(
+    () => getFilemakerEmailCampaignDeliveryAttemptsForRun(attemptRegistry, runId),
+    [attemptRegistry, runId]
+  );
   const runEvents = useMemo(
     () => getFilemakerEmailCampaignEventsForRun(eventRegistry, runId),
     [eventRegistry, runId]
   );
+  const attemptsByDeliveryId = useMemo(() => {
+    const map = new Map<string, FilemakerEmailCampaignDeliveryAttempt[]>();
+    deliveryAttempts.forEach((attempt) => {
+      const existing = map.get(attempt.deliveryId) ?? [];
+      existing.push(attempt);
+      map.set(attempt.deliveryId, existing);
+    });
+    Array.from(map.values()).forEach((attempts) => {
+      attempts.sort(
+        (left, right) =>
+          Date.parse(right.attemptedAt ?? right.createdAt ?? '') -
+          Date.parse(left.attemptedAt ?? left.createdAt ?? '')
+      );
+    });
+    return map;
+  }, [deliveryAttempts]);
   const metrics = useMemo(
     () => summarizeFilemakerEmailCampaignRunDeliveries(deliveries),
     [deliveries]
@@ -191,6 +221,53 @@ export function AdminFilemakerCampaignRunPage(): React.JSX.Element {
     () =>
       deliveries.filter((delivery: FilemakerEmailCampaignDelivery) => delivery.status === 'queued')
         .length,
+    [deliveries]
+  );
+  const retrySummary = useMemo(
+    () =>
+      resolveFilemakerEmailCampaignRetryableDeliveries({
+        deliveries,
+        attemptRegistry,
+      }),
+    [attemptRegistry, deliveries]
+  );
+  const retryableDeliveryIds = useMemo(
+    () => new Set(retrySummary.retryableDeliveries.map((delivery) => delivery.id)),
+    [retrySummary]
+  );
+  const exhaustedRetryDeliveryIds = useMemo(
+    () => new Set(retrySummary.exhaustedDeliveries.map((delivery) => delivery.id)),
+    [retrySummary]
+  );
+  const retriedDeliveryCount = useMemo(
+    () =>
+      Array.from(attemptsByDeliveryId.values()).filter((attempts) => attempts.length > 1).length,
+    [attemptsByDeliveryId]
+  );
+  const recoveredAfterRetryCount = useMemo(
+    () =>
+      deliveries.filter(
+        (delivery: FilemakerEmailCampaignDelivery): boolean =>
+          delivery.status === 'sent' && (attemptsByDeliveryId.get(delivery.id)?.length ?? 0) > 1
+      ).length,
+    [attemptsByDeliveryId, deliveries]
+  );
+  const latestAttemptAt = useMemo(
+    () =>
+      deliveryAttempts
+        .map((attempt: FilemakerEmailCampaignDeliveryAttempt) => attempt.attemptedAt ?? attempt.createdAt ?? null)
+        .filter((value: string | null): value is string => Boolean(value))
+        .sort((left: string, right: string): number => Date.parse(right) - Date.parse(left))[0] ??
+      null,
+    [deliveryAttempts]
+  );
+  const nextScheduledRetryAt = useMemo(
+    () =>
+      deliveries
+        .map((delivery: FilemakerEmailCampaignDelivery) => delivery.nextRetryAt ?? null)
+        .filter((value: string | null): value is string => Boolean(value))
+        .sort((left: string, right: string): number => Date.parse(left) - Date.parse(right))[0] ??
+      null,
     [deliveries]
   );
   const unsubscribeEventCount = useMemo(
@@ -517,27 +594,38 @@ export function AdminFilemakerCampaignRunPage(): React.JSX.Element {
     [deliveries, eventRegistry, persistEventRegistry, persistRuns, run, runRegistry.runs, toast]
   );
 
-  const handleQueueProcessing = useCallback(async (): Promise<void> => {
+  const handleProcessDeliveries = useCallback(async (reason: 'manual' | 'retry'): Promise<void> => {
     if (!run) return;
     setIsProcessingQueuedDeliveries(true);
     try {
       const response = await api.post<FilemakerEmailCampaignProcessRunResponse>(
         `/api/filemaker/campaigns/runs/${encodeURIComponent(run.id)}/process`,
-        { reason: 'manual' }
+        { reason }
       );
       settingsStore.refetch();
       router.refresh();
       toast(
-        response.dispatchMode === 'inline'
-          ? 'Queued deliveries started in inline processing mode.'
-          : 'Queued deliveries were added to the campaign worker.',
+        reason === 'retry'
+          ? response.dispatchMode === 'inline'
+            ? 'Retryable deliveries started in inline processing mode.'
+            : 'Retryable deliveries were added to the campaign worker.'
+          : response.dispatchMode === 'inline'
+            ? 'Queued deliveries started in inline processing mode.'
+            : 'Queued deliveries were added to the campaign worker.',
         { variant: 'success' }
       );
     } catch (error: unknown) {
       logClientError(error);
-      toast(error instanceof Error ? error.message : 'Failed to process queued deliveries.', {
-        variant: 'error',
-      });
+      toast(
+        error instanceof Error
+          ? error.message
+          : reason === 'retry'
+            ? 'Failed to retry eligible deliveries.'
+            : 'Failed to process queued deliveries.',
+        {
+          variant: 'error',
+        }
+      );
     } finally {
       setIsProcessingQueuedDeliveries(false);
     }
@@ -616,10 +704,23 @@ export function AdminFilemakerCampaignRunPage(): React.JSX.Element {
                 variant='outline'
                 disabled={updateSetting.isPending || isProcessingQueuedDeliveries}
                 onClick={(): void => {
-                  void handleQueueProcessing();
+                  void handleProcessDeliveries('manual');
                 }}
               >
                 {isProcessingQueuedDeliveries ? 'Starting Delivery Worker…' : 'Process Queued Deliveries'}
+              </Button>
+            ) : null}
+            {run.mode === 'live' && retrySummary.retryableDeliveries.length > 0 ? (
+              <Button
+                type='button'
+                size='sm'
+                variant='outline'
+                disabled={updateSetting.isPending || isProcessingQueuedDeliveries}
+                onClick={(): void => {
+                  void handleProcessDeliveries('retry');
+                }}
+              >
+                {isProcessingQueuedDeliveries ? 'Starting Retry Worker…' : 'Retry Retryable Deliveries'}
               </Button>
             ) : null}
             {resolveRunActionOptions(run.status).map((action) => (
@@ -663,6 +764,16 @@ export function AdminFilemakerCampaignRunPage(): React.JSX.Element {
           Queued: {queuedDeliveryCount}
         </Badge>
         <Badge variant='outline' className='text-[10px]'>
+          Attempts: {deliveryAttempts.length}
+        </Badge>
+        <Badge variant='outline' className='text-[10px]'>
+          Retried / Recovered: {retriedDeliveryCount} / {recoveredAfterRetryCount}
+        </Badge>
+        <Badge variant='outline' className='text-[10px]'>
+          Retryable / Exhausted: {retrySummary.retryableDeliveries.length} /{' '}
+          {retrySummary.exhaustedDeliveries.length}
+        </Badge>
+        <Badge variant='outline' className='text-[10px]'>
           Opened: {openedEventCount} ({uniqueOpenedDeliveryCount} unique)
         </Badge>
         <Badge variant='outline' className='text-[10px]'>
@@ -693,6 +804,27 @@ export function AdminFilemakerCampaignRunPage(): React.JSX.Element {
           <div>
             <div className='text-[11px] text-gray-500'>Completed</div>
             <div>{formatTimestamp(run.completedAt)}</div>
+          </div>
+          <div>
+            <div className='text-[11px] text-gray-500'>Delivery Attempts</div>
+            <div>
+              {deliveryAttempts.length} total • {retriedDeliveryCount} retried • {recoveredAfterRetryCount} recovered
+            </div>
+          </div>
+          <div>
+            <div className='text-[11px] text-gray-500'>Retryable Failures</div>
+            <div>
+              {retrySummary.retryableDeliveries.length} eligible •{' '}
+              {retrySummary.exhaustedDeliveries.length} exhausted
+            </div>
+          </div>
+          <div>
+            <div className='text-[11px] text-gray-500'>Latest Attempt</div>
+            <div>{formatTimestamp(latestAttemptAt)}</div>
+          </div>
+          <div>
+            <div className='text-[11px] text-gray-500'>Next Scheduled Retry</div>
+            <div>{formatTimestamp(nextScheduledRetryAt)}</div>
           </div>
           <div>
             <div className='text-[11px] text-gray-500'>Opens Recorded</div>
@@ -806,6 +938,7 @@ export function AdminFilemakerCampaignRunPage(): React.JSX.Element {
           </div>
         ) : (
           deliveries.map((delivery: FilemakerEmailCampaignDelivery) => {
+            const attemptsForDelivery = attemptsByDeliveryId.get(delivery.id) ?? [];
             const openedForDelivery = runEvents.some(
               (event: FilemakerEmailCampaignEvent): boolean =>
                 event.type === 'opened' && event.deliveryId === delivery.id
@@ -854,6 +987,16 @@ export function AdminFilemakerCampaignRunPage(): React.JSX.Element {
                         {delivery.failureCategory.replaceAll('_', ' ')}
                       </Badge>
                     ) : null}
+                    {retryableDeliveryIds.has(delivery.id) ? (
+                      <Badge variant='outline' className='text-[10px] capitalize'>
+                        Retry eligible
+                      </Badge>
+                    ) : null}
+                    {exhaustedRetryDeliveryIds.has(delivery.id) ? (
+                      <Badge variant='outline' className='text-[10px] capitalize'>
+                        Retry exhausted
+                      </Badge>
+                    ) : null}
                     {openedForDelivery ? (
                       <Badge variant='outline' className='text-[10px] capitalize'>
                         Opened
@@ -867,7 +1010,7 @@ export function AdminFilemakerCampaignRunPage(): React.JSX.Element {
                   </div>
                 </div>
                 <div className='text-[11px] text-gray-500'>
-                  Updated: {formatTimestamp(delivery.updatedAt)}
+                  Updated: {formatTimestamp(delivery.updatedAt)} • Attempts: {attemptsForDelivery.length}
                 </div>
                 {delivery.providerMessage ? (
                   <div className='text-[11px] text-sky-300'>{delivery.providerMessage}</div>
@@ -875,6 +1018,52 @@ export function AdminFilemakerCampaignRunPage(): React.JSX.Element {
                 {delivery.lastError && (
                   <div className='text-[11px] text-amber-300'>{delivery.lastError}</div>
                 )}
+                {delivery.nextRetryAt ? (
+                  <div className='text-[11px] text-cyan-300'>
+                    Next retry: {formatTimestamp(delivery.nextRetryAt)}
+                  </div>
+                ) : null}
+                {attemptsForDelivery.length > 0 ? (
+                  <div className='space-y-2 rounded-md border border-border/50 bg-background/20 p-3'>
+                    <div className='text-[11px] uppercase tracking-[0.2em] text-gray-500'>
+                      Attempt Timeline
+                    </div>
+                    {attemptsForDelivery.map((attempt) => (
+                      <div
+                        key={attempt.id}
+                        className='rounded-md border border-border/40 bg-card/20 p-2 text-[11px] text-gray-300'
+                      >
+                        <div className='flex flex-wrap items-center gap-2'>
+                          <Badge variant='outline' className='text-[10px] uppercase'>
+                            attempt {attempt.attemptNumber}
+                          </Badge>
+                          <Badge variant='outline' className='text-[10px] uppercase'>
+                            {attempt.status}
+                          </Badge>
+                          {attempt.provider ? (
+                            <Badge variant='outline' className='text-[10px] uppercase'>
+                              {attempt.provider}
+                            </Badge>
+                          ) : null}
+                          {attempt.failureCategory ? (
+                            <Badge variant='outline' className='text-[10px] capitalize'>
+                              {attempt.failureCategory.replaceAll('_', ' ')}
+                            </Badge>
+                          ) : null}
+                          <div className='text-gray-500'>
+                            {formatTimestamp(attempt.attemptedAt ?? attempt.createdAt)}
+                          </div>
+                        </div>
+                        {attempt.providerMessage ? (
+                          <div className='mt-1 text-sky-300'>{attempt.providerMessage}</div>
+                        ) : null}
+                        {attempt.errorMessage ? (
+                          <div className='mt-1 text-amber-300'>{attempt.errorMessage}</div>
+                        ) : null}
+                      </div>
+                    ))}
+                  </div>
+                ) : null}
                 <div className='flex flex-wrap gap-2'>
                   {DELIVERY_STATUS_ACTIONS.map((status) => (
                     <Button

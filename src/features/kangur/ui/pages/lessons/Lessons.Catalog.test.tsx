@@ -165,45 +165,6 @@ import { LessonsCatalog } from './Lessons.Catalog';
 const splitClasses = (className: string): string[] => className.trim().split(/\s+/);
 
 describe('LessonsCatalog', () => {
-  it('keeps the lightweight skeleton mounted while resolved lesson cards are deferred', () => {
-    useLessonsMock.mockReturnValue({
-      subject: 'english',
-      ageGroup: 'six_year_old',
-      lessonSections: [],
-      orderedLessons: [
-        {
-          id: 'lesson-english',
-          componentId: 'english_basics',
-          subject: 'english',
-          ageGroup: 'six_year_old',
-          title: 'English Basics',
-          description: 'Learn the basics',
-          emoji: '📘',
-          color: 'sky',
-          activeBg: 'bg-sky-50',
-          sortOrder: 1,
-          enabled: true,
-        },
-      ],
-      handleSelectLesson: vi.fn(),
-      handleGoBack: vi.fn(),
-      progress: { lessonMastery: {} },
-      lessonAssignmentsByComponent: new Map(),
-      completedLessonAssignmentsByComponent: new Map(),
-      lessonDocuments: {},
-      activeLessonId: null,
-      isLessonsCatalogLoading: false,
-      isLessonSectionsLoading: false,
-      shouldShowLessonsCatalogSkeleton: false,
-    });
-
-    render(<LessonsCatalog renderResolvedContent={false} />);
-
-    expect(screen.getByTestId('lessons-catalog-skeleton')).toBeInTheDocument();
-    expect(screen.getByTestId('lessons-intro-loading-state')).toBeInTheDocument();
-    expect(screen.queryByTestId('mock-lesson-card-lesson-english')).not.toBeInTheDocument();
-  });
-
   it('renders six-year-old icon cues in the intro and grouped lesson headers', () => {
     useLessonsMock.mockReturnValue({
       subject: 'music',

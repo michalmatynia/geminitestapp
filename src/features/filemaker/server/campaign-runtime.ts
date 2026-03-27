@@ -7,24 +7,34 @@ import {
   createFilemakerEmailCampaignEvent,
   createFilemakerEmailCampaignRun,
   evaluateFilemakerEmailCampaignLaunch,
+  FILEMAKER_EMAIL_CAMPAIGN_MAX_DELIVERY_ATTEMPTS,
   FILEMAKER_DATABASE_KEY,
   FILEMAKER_EMAIL_CAMPAIGNS_KEY,
   FILEMAKER_EMAIL_CAMPAIGN_DELIVERIES_KEY,
+  FILEMAKER_EMAIL_CAMPAIGN_DELIVERY_ATTEMPTS_KEY,
   FILEMAKER_EMAIL_CAMPAIGN_EVENTS_KEY,
   FILEMAKER_EMAIL_CAMPAIGN_RUNS_KEY,
   FILEMAKER_EMAIL_CAMPAIGN_SUPPRESSIONS_KEY,
+  createFilemakerEmailCampaignDeliveryAttempt,
   createFilemakerEmailCampaignSuppressionEntry,
   getFilemakerEmailCampaignDeliveriesForRun,
+  getFilemakerEmailCampaignDeliveryAttemptsForDelivery,
   getFilemakerEmailCampaignSuppressionByAddress,
   parseFilemakerDatabase,
+  parseFilemakerEmailCampaignDeliveryAttemptRegistry,
   parseFilemakerEmailCampaignDeliveryRegistry,
   parseFilemakerEmailCampaignEventRegistry,
   parseFilemakerEmailCampaignRegistry,
   parseFilemakerEmailCampaignRunRegistry,
   parseFilemakerEmailCampaignSuppressionRegistry,
+  isFilemakerEmailCampaignRetryableFailureCategory,
+  resolveFilemakerEmailCampaignRetryDelayMs,
+  resolveFilemakerEmailCampaignRetryDelayForAttemptCount,
+  resolveFilemakerEmailCampaignRetryableDeliveries,
   resolveFilemakerEmailCampaignAudiencePreview,
   summarizeFilemakerEmailCampaignRunDeliveries,
   syncFilemakerEmailCampaignRunWithDeliveries,
+  toPersistedFilemakerEmailCampaignDeliveryAttemptRegistry,
   toPersistedFilemakerEmailCampaignDeliveryRegistry,
   toPersistedFilemakerEmailCampaignEventRegistry,
   toPersistedFilemakerEmailCampaignRegistry,
@@ -53,6 +63,8 @@ import type {
   FilemakerDatabase,
   FilemakerEmailCampaign,
   FilemakerEmailCampaignDelivery,
+  FilemakerEmailCampaignDeliveryAttempt,
+  FilemakerEmailCampaignDeliveryAttemptRegistry,
   FilemakerEmailCampaignDeliveryRegistry,
   FilemakerEmailCampaignEvent,
   FilemakerEmailCampaignEventRegistry,
@@ -68,6 +80,7 @@ type FilemakerCampaignRuntimeState = {
   campaignRegistry: FilemakerEmailCampaignRegistry;
   runRegistry: FilemakerEmailCampaignRunRegistry;
   deliveryRegistry: FilemakerEmailCampaignDeliveryRegistry;
+  attemptRegistry: FilemakerEmailCampaignDeliveryAttemptRegistry;
   eventRegistry: FilemakerEmailCampaignEventRegistry;
   suppressionRegistry: FilemakerEmailCampaignSuppressionRegistry;
 };
@@ -111,6 +124,9 @@ export type FilemakerCampaignRunProcessResult = {
   run: FilemakerEmailCampaignRun;
   deliveries: FilemakerEmailCampaignDelivery[];
   progress: FilemakerCampaignRunProcessProgress;
+  retryableDeliveryCount: number;
+  retryExhaustedCount: number;
+  suggestedRetryDelayMs: number | null;
 };
 
 const stripHtml = (value: string): string =>
@@ -164,6 +180,20 @@ const replaceRunDeliveriesInRegistry = (
     ),
 });
 
+const appendAttemptsToRegistry = (
+  registry: FilemakerEmailCampaignDeliveryAttemptRegistry,
+  attempts: FilemakerEmailCampaignDeliveryAttempt[]
+): FilemakerEmailCampaignDeliveryAttemptRegistry => ({
+  version: registry.version,
+  attempts: registry.attempts
+    .concat(attempts)
+    .sort(
+      (left: FilemakerEmailCampaignDeliveryAttempt, right: FilemakerEmailCampaignDeliveryAttempt): number =>
+        Date.parse(right.attemptedAt ?? right.createdAt ?? '') -
+        Date.parse(left.attemptedAt ?? left.createdAt ?? '')
+    ),
+});
+
 const appendEventsToRegistry = (
   registry: FilemakerEmailCampaignEventRegistry,
   events: FilemakerEmailCampaignEvent[]
@@ -203,7 +233,7 @@ const buildProgressSummary = (
 
 const resolveFailureStatus = (
   failureCategory: 'soft_bounce' | 'hard_bounce' | 'invalid_recipient' | 'provider_rejected' | 'rate_limited' | 'timeout' | 'unknown'
-): FilemakerEmailCampaignDelivery['status'] =>
+): FilemakerEmailCampaignDeliveryAttempt['status'] =>
   failureCategory === 'soft_bounce' ||
   failureCategory === 'hard_bounce' ||
   failureCategory === 'invalid_recipient'
@@ -316,14 +346,23 @@ export const createFilemakerCampaignRuntimeService = (
   };
 
   const readRuntimeState = async (): Promise<FilemakerCampaignRuntimeState> => {
-    const [eventsRaw, suppressionsRaw, databaseRaw, campaignsRaw, runsRaw, deliveriesRaw] =
+    const [
+      eventsRaw,
+      suppressionsRaw,
+      databaseRaw,
+      campaignsRaw,
+      runsRaw,
+      deliveriesRaw,
+      attemptsRaw,
+    ] =
       await Promise.all([
-      deps.readSettingValue(FILEMAKER_EMAIL_CAMPAIGN_EVENTS_KEY),
-      deps.readSettingValue(FILEMAKER_EMAIL_CAMPAIGN_SUPPRESSIONS_KEY),
-      deps.readSettingValue(FILEMAKER_DATABASE_KEY),
-      deps.readSettingValue(FILEMAKER_EMAIL_CAMPAIGNS_KEY),
-      deps.readSettingValue(FILEMAKER_EMAIL_CAMPAIGN_RUNS_KEY),
-      deps.readSettingValue(FILEMAKER_EMAIL_CAMPAIGN_DELIVERIES_KEY),
+        deps.readSettingValue(FILEMAKER_EMAIL_CAMPAIGN_EVENTS_KEY),
+        deps.readSettingValue(FILEMAKER_EMAIL_CAMPAIGN_SUPPRESSIONS_KEY),
+        deps.readSettingValue(FILEMAKER_DATABASE_KEY),
+        deps.readSettingValue(FILEMAKER_EMAIL_CAMPAIGNS_KEY),
+        deps.readSettingValue(FILEMAKER_EMAIL_CAMPAIGN_RUNS_KEY),
+        deps.readSettingValue(FILEMAKER_EMAIL_CAMPAIGN_DELIVERIES_KEY),
+        deps.readSettingValue(FILEMAKER_EMAIL_CAMPAIGN_DELIVERY_ATTEMPTS_KEY),
       ]);
     return {
       eventRegistry: parseFilemakerEmailCampaignEventRegistry(eventsRaw),
@@ -332,6 +371,7 @@ export const createFilemakerCampaignRuntimeService = (
       campaignRegistry: parseFilemakerEmailCampaignRegistry(campaignsRaw),
       runRegistry: parseFilemakerEmailCampaignRunRegistry(runsRaw),
       deliveryRegistry: parseFilemakerEmailCampaignDeliveryRegistry(deliveriesRaw),
+      attemptRegistry: parseFilemakerEmailCampaignDeliveryAttemptRegistry(attemptsRaw),
     };
   };
 
@@ -339,6 +379,7 @@ export const createFilemakerCampaignRuntimeService = (
     campaignRegistry?: FilemakerEmailCampaignRegistry;
     runRegistry?: FilemakerEmailCampaignRunRegistry;
     deliveryRegistry?: FilemakerEmailCampaignDeliveryRegistry;
+    attemptRegistry?: FilemakerEmailCampaignDeliveryAttemptRegistry;
     eventRegistry?: FilemakerEmailCampaignEventRegistry;
     suppressionRegistry?: FilemakerEmailCampaignSuppressionRegistry;
   }): Promise<void> => {
@@ -383,6 +424,16 @@ export const createFilemakerCampaignRuntimeService = (
           FILEMAKER_EMAIL_CAMPAIGN_DELIVERIES_KEY,
           JSON.stringify(
             toPersistedFilemakerEmailCampaignDeliveryRegistry(input.deliveryRegistry)
+          )
+        )
+      );
+    }
+    if (input.attemptRegistry) {
+      writes.push(
+        deps.upsertSettingValue(
+          FILEMAKER_EMAIL_CAMPAIGN_DELIVERY_ATTEMPTS_KEY,
+          JSON.stringify(
+            toPersistedFilemakerEmailCampaignDeliveryAttemptRegistry(input.attemptRegistry)
           )
         )
       );
@@ -510,6 +561,7 @@ export const createFilemakerCampaignRuntimeService = (
 
   const processRun = async (input: {
     runId: string;
+    reason?: 'manual' | 'retry' | 'launch';
     onProgress?: (progress: FilemakerCampaignRunProcessProgress) => Promise<void> | void;
   }): Promise<FilemakerCampaignRunProcessResult> => {
     const state = await readRuntimeState();
@@ -529,6 +581,7 @@ export const createFilemakerCampaignRuntimeService = (
     }
 
     let deliveries = getFilemakerEmailCampaignDeliveriesForRun(state.deliveryRegistry, run.id);
+    let currentAttemptRegistry = state.attemptRegistry;
     let currentEventRegistry = state.eventRegistry;
     let currentSuppressionRegistry = state.suppressionRegistry;
     if (run.mode === 'dry_run') {
@@ -540,10 +593,59 @@ export const createFilemakerCampaignRuntimeService = (
       const nextRunRegistry = replaceRunInRegistry(state.runRegistry, syncedDryRun);
       await persistRuntimeState({ runRegistry: nextRunRegistry });
       const progress = buildProgressSummary(deliveries);
-      return { campaign, run: syncedDryRun, deliveries, progress };
+      return {
+        campaign,
+        run: syncedDryRun,
+        deliveries,
+        progress,
+        retryableDeliveryCount: 0,
+        retryExhaustedCount: 0,
+        suggestedRetryDelayMs: null,
+      };
     }
 
     assertCampaignReadyForDelivery(campaign, 'live');
+    if (input.reason === 'retry') {
+      const retrySummary = resolveFilemakerEmailCampaignRetryableDeliveries({
+        deliveries,
+        attemptRegistry: currentAttemptRegistry,
+        maxAttempts: FILEMAKER_EMAIL_CAMPAIGN_MAX_DELIVERY_ATTEMPTS,
+      });
+      if (retrySummary.retryableDeliveries.length > 0) {
+        const retryableIds = new Set(
+          retrySummary.retryableDeliveries.map((delivery: FilemakerEmailCampaignDelivery) => delivery.id)
+        );
+        const nowIso = deps.now().toISOString();
+        deliveries = deliveries.map((delivery: FilemakerEmailCampaignDelivery) =>
+          retryableIds.has(delivery.id)
+            ? {
+                ...delivery,
+                status: 'queued',
+                provider: null,
+                failureCategory: null,
+                providerMessage: null,
+                lastError: null,
+                sentAt: null,
+                nextRetryAt: null,
+                updatedAt: nowIso,
+              }
+            : delivery
+        );
+        currentEventRegistry = appendEventsToRegistry(currentEventRegistry, [
+          createFilemakerEmailCampaignEvent({
+            campaignId: campaign.id,
+            runId: run.id,
+            type: 'status_changed',
+            message: `Queued ${retrySummary.retryableDeliveries.length} retryable deliveries for another attempt.`,
+            actor: 'system',
+            runStatus: run.status,
+            createdAt: nowIso,
+            updatedAt: nowIso,
+          }),
+        ]);
+      }
+    }
+
     const queuedDeliveries = deliveries.filter(
       (delivery: FilemakerEmailCampaignDelivery): boolean => delivery.status === 'queued'
     );
@@ -555,7 +657,15 @@ export const createFilemakerCampaignRuntimeService = (
       const nextRunRegistry = replaceRunInRegistry(state.runRegistry, syncedRun);
       await persistRuntimeState({ runRegistry: nextRunRegistry });
       const progress = buildProgressSummary(deliveries);
-      return { campaign, run: syncedRun, deliveries, progress };
+      return {
+        campaign,
+        run: syncedRun,
+        deliveries,
+        progress,
+        retryableDeliveryCount: 0,
+        retryExhaustedCount: 0,
+        suggestedRetryDelayMs: null,
+      };
     }
 
     let currentRun = syncFilemakerEmailCampaignRunWithDeliveries({
@@ -569,7 +679,10 @@ export const createFilemakerCampaignRuntimeService = (
         campaignId: campaign.id,
         runId: run.id,
         type: 'processing_started',
-        message: 'Queued delivery processing started.',
+        message:
+          input.reason === 'retry'
+            ? 'Retry delivery processing started.'
+            : 'Queued delivery processing started.',
         actor: 'system',
         runStatus: currentRun.status,
         createdAt: currentRun.updatedAt ?? undefined,
@@ -640,6 +753,9 @@ export const createFilemakerCampaignRuntimeService = (
         nowMs: now.getTime(),
         htmlMode: true,
       });
+      const attemptNumber =
+        getFilemakerEmailCampaignDeliveryAttemptsForDelivery(currentAttemptRegistry, queuedDelivery.id)
+          .length + 1;
       try {
         const result = await deps.sendCampaignEmail({
           to: queuedDelivery.emailAddress,
@@ -652,6 +768,25 @@ export const createFilemakerCampaignRuntimeService = (
           replyToEmail: campaign.replyToEmail,
           fromName: campaign.fromName,
         });
+        currentAttemptRegistry = appendAttemptsToRegistry(currentAttemptRegistry, [
+          createFilemakerEmailCampaignDeliveryAttempt({
+            campaignId: campaign.id,
+            runId: run.id,
+            deliveryId: queuedDelivery.id,
+            emailAddress: queuedDelivery.emailAddress,
+            partyKind: queuedDelivery.partyKind,
+            partyId: queuedDelivery.partyId,
+            attemptNumber,
+            status: 'sent',
+            provider: result.provider,
+            failureCategory: null,
+            providerMessage: result.providerMessage,
+            errorMessage: null,
+            attemptedAt: result.sentAt ?? nowIso,
+            createdAt: nowIso,
+            updatedAt: nowIso,
+          }),
+        ]);
         deliveries = deliveries.map((delivery: FilemakerEmailCampaignDelivery) =>
           delivery.id === queuedDelivery.id
             ? {
@@ -662,6 +797,7 @@ export const createFilemakerCampaignRuntimeService = (
                 providerMessage: result.providerMessage,
                 lastError: null,
                 sentAt: result.sentAt,
+                nextRetryAt: null,
                 updatedAt: nowIso,
               }
             : delivery
@@ -683,6 +819,34 @@ export const createFilemakerCampaignRuntimeService = (
         const failure = resolveFilemakerCampaignEmailFailureMetadata(error);
         const message = failure.message;
         const failureStatus = resolveFailureStatus(failure.failureCategory);
+        const nextRetryDelayMs =
+          isFilemakerEmailCampaignRetryableFailureCategory(failure.failureCategory) &&
+          attemptNumber < FILEMAKER_EMAIL_CAMPAIGN_MAX_DELIVERY_ATTEMPTS
+            ? resolveFilemakerEmailCampaignRetryDelayForAttemptCount(attemptNumber)
+            : null;
+        const nextRetryAt =
+          nextRetryDelayMs != null
+            ? new Date(Date.parse(nowIso) + nextRetryDelayMs).toISOString()
+            : null;
+        currentAttemptRegistry = appendAttemptsToRegistry(currentAttemptRegistry, [
+          createFilemakerEmailCampaignDeliveryAttempt({
+            campaignId: campaign.id,
+            runId: run.id,
+            deliveryId: queuedDelivery.id,
+            emailAddress: queuedDelivery.emailAddress,
+            partyKind: queuedDelivery.partyKind,
+            partyId: queuedDelivery.partyId,
+            attemptNumber,
+            status: failureStatus,
+            provider: failure.provider,
+            failureCategory: failure.failureCategory,
+            providerMessage: null,
+            errorMessage: message,
+            attemptedAt: nowIso,
+            createdAt: nowIso,
+            updatedAt: nowIso,
+          }),
+        ]);
         deliveries = deliveries.map((delivery: FilemakerEmailCampaignDelivery) =>
           delivery.id === queuedDelivery.id
             ? {
@@ -693,6 +857,7 @@ export const createFilemakerCampaignRuntimeService = (
                 providerMessage: null,
                 lastError: message,
                 sentAt: null,
+                nextRetryAt,
                 updatedAt: nowIso,
               }
             : delivery
@@ -764,6 +929,7 @@ export const createFilemakerCampaignRuntimeService = (
       await persistRuntimeState({
         runRegistry: currentRunRegistry,
         deliveryRegistry: nextDeliveryRegistry,
+        attemptRegistry: currentAttemptRegistry,
         eventRegistry: currentEventRegistry,
         suppressionRegistry: currentSuppressionRegistry,
       });
@@ -778,9 +944,43 @@ export const createFilemakerCampaignRuntimeService = (
       deliveries,
       nowIso,
     });
+    if (nextCampaign.status === 'paused') {
+      deliveries = deliveries.map((delivery: FilemakerEmailCampaignDelivery) =>
+        delivery.nextRetryAt
+          ? {
+              ...delivery,
+              nextRetryAt: null,
+              updatedAt: nowIso,
+            }
+          : delivery
+      );
+    }
+    const finalRetrySummary =
+      nextCampaign.status === 'paused'
+        ? {
+            retryableDeliveries: [],
+            exhaustedDeliveries: [],
+          }
+        : resolveFilemakerEmailCampaignRetryableDeliveries({
+            deliveries,
+            attemptRegistry: currentAttemptRegistry,
+            maxAttempts: FILEMAKER_EMAIL_CAMPAIGN_MAX_DELIVERY_ATTEMPTS,
+          });
+    const suggestedRetryDelayMs =
+      finalRetrySummary.retryableDeliveries.length > 0
+        ? resolveFilemakerEmailCampaignRetryDelayMs({
+            deliveries,
+            attemptRegistry: currentAttemptRegistry,
+            maxAttempts: FILEMAKER_EMAIL_CAMPAIGN_MAX_DELIVERY_ATTEMPTS,
+          })
+        : null;
     currentRun = syncFilemakerEmailCampaignRunWithDeliveries({
       run: currentRun,
       deliveries,
+      status:
+        finalRetrySummary.retryableDeliveries.length > 0 && nextCampaign.status !== 'paused'
+          ? 'queued'
+          : undefined,
     });
     currentRunRegistry = replaceRunInRegistry(currentRunRegistry, currentRun);
     const nextCampaignRegistry = replaceCampaignInRegistry(
@@ -841,12 +1041,27 @@ export const createFilemakerCampaignRuntimeService = (
         })
       );
     }
+    if (finalRetrySummary.retryableDeliveries.length > 0 && nextCampaign.status !== 'paused') {
+      finalEvents.push(
+        createFilemakerEmailCampaignEvent({
+          campaignId: campaign.id,
+          runId: run.id,
+          type: 'status_changed',
+          message: `Run has ${finalRetrySummary.retryableDeliveries.length} retryable deliveries pending another attempt.`,
+          actor: 'system',
+          runStatus: currentRun.status,
+          createdAt: nowIso,
+          updatedAt: nowIso,
+        })
+      );
+    }
     currentEventRegistry = appendEventsToRegistry(currentEventRegistry, finalEvents);
 
     await persistRuntimeState({
       campaignRegistry: nextCampaignRegistry,
       runRegistry: currentRunRegistry,
       deliveryRegistry: nextDeliveryRegistry,
+      attemptRegistry: currentAttemptRegistry,
       eventRegistry: currentEventRegistry,
       suppressionRegistry: currentSuppressionRegistry,
     });
@@ -856,6 +1071,9 @@ export const createFilemakerCampaignRuntimeService = (
       run: currentRun,
       deliveries,
       progress: buildProgressSummary(deliveries),
+      retryableDeliveryCount: finalRetrySummary.retryableDeliveries.length,
+      retryExhaustedCount: finalRetrySummary.exhaustedDeliveries.length,
+      suggestedRetryDelayMs,
     };
   };
 

@@ -249,8 +249,44 @@ describe('useProductFormValidator', () => {
       patterns: [
         {
           id: 'category-pattern',
+          label: 'Auto category',
+          target: 'category',
+          locale: null,
+          regex: '^$',
+          flags: null,
+          message: 'Assign category from inferred value',
+          severity: 'warning',
+          enabled: true,
+          replacementEnabled: true,
           runtimeEnabled: false,
+          runtimeType: 'none',
+          runtimeConfig: null,
           replacementAutoApply: true,
+          skipNoopReplacementProposal: false,
+          replacementValue: 'Portfele',
+          replacementFields: ['categoryId'],
+          replacementAppliesToScopes: ['product_create'],
+          postAcceptBehavior: 'revalidate',
+          denyBehaviorOverride: null,
+          validationDebounceMs: 0,
+          sequenceGroupId: null,
+          sequenceGroupLabel: null,
+          sequenceGroupDebounceMs: 0,
+          sequence: null,
+          chainMode: 'continue',
+          maxExecutions: 1,
+          passOutputToNext: true,
+          launchEnabled: false,
+          launchAppliesToScopes: ['product_create'],
+          launchScopeBehavior: 'gate',
+          launchSourceMode: 'current_field',
+          launchSourceField: null,
+          launchOperator: 'equals',
+          launchValue: null,
+          launchFlags: null,
+          appliesToScopes: ['product_create'],
+          createdAt: '2026-01-01T00:00:00.000Z',
+          updatedAt: '2026-01-01T00:00:00.000Z',
         },
       ],
     };
@@ -280,6 +316,201 @@ describe('useProductFormValidator', () => {
               fieldName: 'categoryId',
               patternId: 'category-pattern',
               replacementValue: 'Portfele',
+            }),
+          ],
+        }),
+        { logError: false }
+      );
+    });
+  });
+
+  it('auto-applies non-runtime SKU replacements when formatter is enabled', async () => {
+    (hookMocks.getValues() as Record<string, unknown>).sku = 'AUTO';
+    hookMocks.validatorConfig = {
+      enabledByDefault: true,
+      formatterEnabledByDefault: true,
+      instanceDenyBehavior: null,
+      patterns: [
+        {
+          id: 'sku-pattern',
+          label: 'Auto SKU',
+          target: 'sku',
+          locale: null,
+          regex: '^AUTO$',
+          flags: null,
+          message: 'Replace SKU automatically',
+          severity: 'warning',
+          enabled: true,
+          replacementEnabled: true,
+          replacementAutoApply: true,
+          skipNoopReplacementProposal: false,
+          replacementValue: 'SKU-101',
+          replacementFields: ['sku'],
+          replacementAppliesToScopes: ['product_create'],
+          runtimeEnabled: false,
+          runtimeType: 'none',
+          runtimeConfig: null,
+          postAcceptBehavior: 'revalidate',
+          denyBehaviorOverride: null,
+          validationDebounceMs: 0,
+          sequenceGroupId: null,
+          sequenceGroupLabel: null,
+          sequenceGroupDebounceMs: 0,
+          sequence: null,
+          chainMode: 'continue',
+          maxExecutions: 1,
+          passOutputToNext: true,
+          launchEnabled: false,
+          launchAppliesToScopes: ['product_create'],
+          launchScopeBehavior: 'gate',
+          launchSourceMode: 'current_field',
+          launchSourceField: null,
+          launchOperator: 'equals',
+          launchValue: null,
+          launchFlags: null,
+          appliesToScopes: ['product_create'],
+          createdAt: '2026-01-01T00:00:00.000Z',
+          updatedAt: '2026-01-01T00:00:00.000Z',
+        },
+      ],
+    };
+    hookMocks.visibleFieldIssues = {
+      sku: [
+        {
+          patternId: 'sku-pattern',
+          postAcceptBehavior: 'revalidate',
+          message: 'Replace SKU automatically',
+          replacementValue: 'SKU-101',
+        },
+      ],
+    };
+
+    renderHook(() => useProductFormValidator());
+
+    await waitFor(() => {
+      expect(hookMocks.setValue).toHaveBeenCalledWith(
+        'sku',
+        'SKU-101',
+        expect.objectContaining({
+          shouldDirty: true,
+          shouldTouch: true,
+        })
+      );
+    });
+    await waitFor(() => {
+      expect(api.post).toHaveBeenCalledWith(
+        '/api/v2/products/validator-decisions/batch',
+        expect.objectContaining({
+          decisions: [
+            expect.objectContaining({
+              action: 'accept',
+              fieldName: 'sku',
+              patternId: 'sku-pattern',
+              replacementValue: 'SKU-101',
+            }),
+          ],
+        }),
+        { logError: false }
+      );
+    });
+  });
+
+  it('applies SKU issue replacements when formatter is turned on during an open session', async () => {
+    (hookMocks.getValues() as Record<string, unknown>).sku = 'AUTO';
+    hookMocks.validatorConfig = {
+      enabledByDefault: true,
+      formatterEnabledByDefault: false,
+      instanceDenyBehavior: null,
+      patterns: [
+        {
+          id: 'sku-pattern',
+          label: 'Auto SKU',
+          target: 'sku',
+          locale: null,
+          regex: '^AUTO$',
+          flags: null,
+          message: 'Replace SKU automatically',
+          severity: 'warning',
+          enabled: true,
+          replacementEnabled: true,
+          replacementAutoApply: true,
+          skipNoopReplacementProposal: false,
+          replacementValue: 'SKU-101',
+          replacementFields: ['sku'],
+          replacementAppliesToScopes: ['product_create'],
+          runtimeEnabled: false,
+          runtimeType: 'none',
+          runtimeConfig: null,
+          postAcceptBehavior: 'revalidate',
+          denyBehaviorOverride: null,
+          validationDebounceMs: 0,
+          sequenceGroupId: null,
+          sequenceGroupLabel: null,
+          sequenceGroupDebounceMs: 0,
+          sequence: null,
+          chainMode: 'continue',
+          maxExecutions: 1,
+          passOutputToNext: true,
+          launchEnabled: false,
+          launchAppliesToScopes: ['product_create'],
+          launchScopeBehavior: 'gate',
+          launchSourceMode: 'current_field',
+          launchSourceField: null,
+          launchOperator: 'equals',
+          launchValue: null,
+          launchFlags: null,
+          appliesToScopes: ['product_create'],
+          createdAt: '2026-01-01T00:00:00.000Z',
+          updatedAt: '2026-01-01T00:00:00.000Z',
+        },
+      ],
+    };
+    hookMocks.visibleFieldIssues = {
+      sku: [
+        {
+          patternId: 'sku-pattern',
+          postAcceptBehavior: 'revalidate',
+          message: 'Replace SKU automatically',
+          replacementValue: 'SKU-101',
+        },
+      ],
+    };
+
+    const { result } = renderHook(() => useProductFormValidator());
+
+    await waitFor(() => {
+      expect(result.current.formatterEnabled).toBe(false);
+    });
+    expect(hookMocks.setValue).not.toHaveBeenCalledWith(
+      'sku',
+      'SKU-101',
+      expect.anything()
+    );
+
+    await act(async () => {
+      result.current.setFormatterEnabled(true);
+    });
+
+    await waitFor(() => {
+      expect(hookMocks.setValue).toHaveBeenCalledWith(
+        'sku',
+        'SKU-101',
+        expect.objectContaining({
+          shouldDirty: true,
+          shouldTouch: true,
+        })
+      );
+    });
+    await waitFor(() => {
+      expect(api.post).toHaveBeenCalledWith(
+        '/api/v2/products/validator-decisions/batch',
+        expect.objectContaining({
+          decisions: [
+            expect.objectContaining({
+              action: 'accept',
+              fieldName: 'sku',
+              patternId: 'sku-pattern',
+              replacementValue: 'SKU-101',
             }),
           ],
         }),

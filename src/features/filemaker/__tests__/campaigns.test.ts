@@ -6,6 +6,7 @@ import {
   createFilemakerEmailCampaignEvent,
   createFilemakerEmailCampaignSuppressionEntry,
   createFilemakerEmailCampaignRun,
+  parseFilemakerEmailCampaignDeliveryAttemptRegistry,
   parseFilemakerEmailCampaignRegistry,
   parseFilemakerEmailCampaignDeliveryRegistry,
   parseFilemakerEmailCampaignEventRegistry,
@@ -919,6 +920,8 @@ describe('filemaker campaign settings', () => {
             partyKind: 'organization',
             partyId: 'organization-1',
             status: 'bounced',
+            provider: 'smtp',
+            failureCategory: 'hard_bounce',
             lastError: 'Mailbox bounced the message.',
             createdAt: '2026-03-27T10:00:00.000Z',
             updatedAt: '2026-03-27T10:10:00.000Z',
@@ -932,6 +935,8 @@ describe('filemaker campaign settings', () => {
             partyKind: 'person',
             partyId: 'person-1',
             status: 'failed',
+            provider: 'webhook',
+            failureCategory: 'provider_rejected',
             lastError: 'Provider rejected the message.',
             createdAt: '2026-03-27T09:45:00.000Z',
             updatedAt: '2026-03-27T10:15:00.000Z',
@@ -947,6 +952,79 @@ describe('filemaker campaign settings', () => {
             status: 'queued',
             createdAt: '2026-03-27T08:00:00.000Z',
             updatedAt: '2026-03-27T08:00:00.000Z',
+          },
+        ],
+      })
+    );
+    const attemptRegistry = parseFilemakerEmailCampaignDeliveryAttemptRegistry(
+      JSON.stringify({
+        version: 1,
+        attempts: [
+          {
+            id: 'attempt-1',
+            campaignId: 'campaign-1',
+            runId: 'run-1',
+            deliveryId: 'delivery-1',
+            emailAddress: 'jan@example.com',
+            partyKind: 'person',
+            partyId: 'person-1',
+            attemptNumber: 1,
+            status: 'sent',
+            provider: 'smtp',
+            providerMessage: 'Accepted by SMTP provider.',
+            attemptedAt: '2026-03-27T10:05:00.000Z',
+            createdAt: '2026-03-27T10:05:00.000Z',
+            updatedAt: '2026-03-27T10:05:00.000Z',
+          },
+          {
+            id: 'attempt-2',
+            campaignId: 'campaign-1',
+            runId: 'run-1',
+            deliveryId: 'delivery-2',
+            emailAddress: 'hello@acme.test',
+            partyKind: 'organization',
+            partyId: 'organization-1',
+            attemptNumber: 1,
+            status: 'bounced',
+            provider: 'smtp',
+            failureCategory: 'hard_bounce',
+            errorMessage: 'Mailbox bounced the message.',
+            attemptedAt: '2026-03-27T10:10:00.000Z',
+            createdAt: '2026-03-27T10:10:00.000Z',
+            updatedAt: '2026-03-27T10:10:00.000Z',
+          },
+          {
+            id: 'attempt-3',
+            campaignId: 'campaign-2',
+            runId: 'run-2',
+            deliveryId: 'delivery-3',
+            emailAddress: 'sales@example.com',
+            partyKind: 'person',
+            partyId: 'person-1',
+            attemptNumber: 1,
+            status: 'failed',
+            provider: 'webhook',
+            failureCategory: 'provider_rejected',
+            errorMessage: 'Provider rejected the message.',
+            attemptedAt: '2026-03-27T10:15:00.000Z',
+            createdAt: '2026-03-27T10:15:00.000Z',
+            updatedAt: '2026-03-27T10:15:00.000Z',
+          },
+          {
+            id: 'attempt-4',
+            campaignId: 'campaign-2',
+            runId: 'run-2',
+            deliveryId: 'delivery-3',
+            emailAddress: 'sales@example.com',
+            partyKind: 'person',
+            partyId: 'person-1',
+            attemptNumber: 2,
+            status: 'sent',
+            provider: 'smtp',
+            providerMessage: 'Accepted after retry.',
+            attemptedAt: '2026-03-27T10:17:00.000Z',
+            createdAt: '2026-03-27T10:17:00.000Z',
+            updatedAt: '2026-03-27T10:17:00.000Z',
           },
         ],
       })
@@ -978,6 +1056,7 @@ describe('filemaker campaign settings', () => {
       campaignRegistry,
       runRegistry,
       deliveryRegistry,
+      attemptRegistry,
       suppressionRegistry,
       now: new Date('2026-03-27T12:00:00.000Z'),
     });
@@ -987,12 +1066,15 @@ describe('filemaker campaign settings', () => {
         campaignCount: 2,
         liveRunCount: 2,
         totalRecipients: 4,
+        totalAttempts: 4,
         processedCount: 3,
         acceptedCount: 1,
         failedCount: 1,
         bouncedCount: 1,
         queuedCount: 1,
         skippedCount: 0,
+        retriedDeliveryCount: 1,
+        recoveredAfterRetryCount: 0,
         deliveryRatePercent: 25,
         failureRatePercent: 50,
         bounceRatePercent: 25,
@@ -1029,6 +1111,31 @@ describe('filemaker campaign settings', () => {
         suppressionCount: 1,
       })
     );
+    expect(overview.failureCategoryBreakdown).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          category: 'hard_bounce',
+          count: 1,
+        }),
+        expect.objectContaining({
+          category: 'provider_rejected',
+          count: 1,
+        }),
+      ])
+    );
+    expect(overview.providerBreakdown).toEqual([
+      expect.objectContaining({
+        provider: 'smtp',
+        attemptCount: 3,
+        sentCount: 2,
+        bouncedCount: 1,
+      }),
+      expect.objectContaining({
+        provider: 'webhook',
+        attemptCount: 1,
+        failedCount: 1,
+      }),
+    ]);
     expect(overview.campaignHealth[0]).toEqual(
       expect.objectContaining({
         campaignId: 'campaign-1',
@@ -1041,8 +1148,134 @@ describe('filemaker campaign settings', () => {
         campaignId: 'campaign-2',
         status: 'failed',
         domain: 'example.com',
+        provider: 'webhook',
+        failureCategory: 'provider_rejected',
       })
     );
+    expect(overview.recentDeliveryIssues[1]).toEqual(
+      expect.objectContaining({
+        deliveryId: 'delivery-2',
+        campaignId: 'campaign-1',
+        status: 'bounced',
+        domain: 'acme.test',
+        provider: 'smtp',
+        failureCategory: 'hard_bounce',
+      })
+    );
+    expect(overview.recentAttempts[0]).toEqual(
+      expect.objectContaining({
+        attemptId: 'attempt-4',
+        attemptNumber: 2,
+        deliveryId: 'delivery-3',
+        status: 'sent',
+        provider: 'smtp',
+      })
+    );
+  });
+
+  it('surfaces scheduled retry timestamps in the deliverability overview', () => {
+    const database = createDatabase();
+    const campaignRegistry = parseFilemakerEmailCampaignRegistry(
+      JSON.stringify({
+        version: 1,
+        campaigns: [
+          createFilemakerEmailCampaign({
+            id: 'campaign-retry',
+            name: 'Retry campaign',
+            status: 'active',
+            subject: 'Retry',
+          }),
+        ],
+      })
+    );
+    const runRegistry = parseFilemakerEmailCampaignRunRegistry(
+      JSON.stringify({
+        version: 1,
+        runs: [
+          createFilemakerEmailCampaignRun({
+            id: 'run-retry',
+            campaignId: 'campaign-retry',
+            mode: 'live',
+            status: 'queued',
+            recipientCount: 1,
+            deliveredCount: 0,
+            failedCount: 1,
+            skippedCount: 0,
+            createdAt: '2026-03-27T10:00:00.000Z',
+            updatedAt: '2026-03-27T10:00:00.000Z',
+          }),
+        ],
+      })
+    );
+    const deliveryRegistry = parseFilemakerEmailCampaignDeliveryRegistry(
+      JSON.stringify({
+        version: 1,
+        deliveries: [
+          {
+            id: 'delivery-retry-1',
+            campaignId: 'campaign-retry',
+            runId: 'run-retry',
+            emailAddress: 'jan@example.com',
+            partyKind: 'person',
+            partyId: 'person-1',
+            status: 'failed',
+            failureCategory: 'timeout',
+            lastError: 'Timed out waiting for SMTP.',
+            nextRetryAt: '2026-03-27T10:05:00.000Z',
+            createdAt: '2026-03-27T10:00:00.000Z',
+            updatedAt: '2026-03-27T10:00:00.000Z',
+          },
+        ],
+      })
+    );
+    const attemptRegistry = parseFilemakerEmailCampaignDeliveryAttemptRegistry(
+      JSON.stringify({
+        version: 1,
+        attempts: [
+          {
+            id: 'attempt-retry-1',
+            campaignId: 'campaign-retry',
+            runId: 'run-retry',
+            deliveryId: 'delivery-retry-1',
+            emailAddress: 'jan@example.com',
+            partyKind: 'person',
+            partyId: 'person-1',
+            attemptNumber: 1,
+            status: 'failed',
+            provider: 'smtp',
+            failureCategory: 'timeout',
+            errorMessage: 'Timed out waiting for SMTP.',
+            attemptedAt: '2026-03-27T10:00:00.000Z',
+            createdAt: '2026-03-27T10:00:00.000Z',
+            updatedAt: '2026-03-27T10:00:00.000Z',
+          },
+        ],
+      })
+    );
+
+    const overview = summarizeFilemakerEmailCampaignDeliverabilityOverview({
+      database,
+      campaignRegistry,
+      runRegistry,
+      deliveryRegistry,
+      attemptRegistry,
+      now: new Date('2026-03-27T10:00:00.000Z'),
+    });
+
+    expect(overview.pendingRetryCount).toBe(1);
+    expect(overview.nextScheduledRetryAt).toBe('2026-03-27T10:05:00.000Z');
+    expect(overview.nextScheduledRetryInMinutes).toBe(5);
+    expect(overview.scheduledRetries).toEqual([
+      expect.objectContaining({
+        deliveryId: 'delivery-retry-1',
+        campaignId: 'campaign-retry',
+        runId: 'run-retry',
+        emailAddress: 'jan@example.com',
+        failureCategory: 'timeout',
+        attemptCount: 1,
+        nextRetryAt: '2026-03-27T10:05:00.000Z',
+      }),
+    ]);
   });
 
   it('summarizes recipient-level delivery and engagement history for the preferences center', () => {

@@ -2,9 +2,9 @@ import { getTranslations } from 'next-intl/server';
 import { redirect } from 'next/navigation';
 import { Suspense, type JSX } from 'react';
 
-import { getKangurCanonicalPublicHref, getKangurHomeHref } from '@/features/kangur/config/routing';
-import { readSanitizedKangurAliasLoginSearchParams } from '@/features/kangur/server/login-alias-search-params';
-import { KangurFeatureRouteShell } from '@/features/kangur/ui/KangurFeatureRouteShell';
+import { getKangurCanonicalPublicHref, getKangurHomeHref } from '@/features/kangur/public';
+import { readSanitizedKangurAliasLoginSearchParams } from '@/features/kangur/server';
+import { KangurFeatureRouteShell } from '@/features/kangur/public';
 import { getFrontPagePublicOwner } from '@/shared/lib/front-page-app';
 
 import { getFrontPageSetting, shouldApplyFrontPageAppSelection } from '../../home-helpers';

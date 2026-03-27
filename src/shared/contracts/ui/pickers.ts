@@ -80,7 +80,7 @@ export interface GenericPickerDropdownProps<T extends PickerOption = PickerOptio
 export interface GenericGridPickerProps<T extends GridPickerItem = GridPickerItem> {
   items: T[];
   selectedId?: string | undefined;
-  onSelect: (item: T) => void;
+  onSelect?: ((item: T) => void) | undefined;
   renderItem: (item: T, selected: boolean) => ReactNode;
   columns?: number | undefined;
   gap?: string | undefined;

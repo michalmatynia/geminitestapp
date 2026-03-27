@@ -11,8 +11,8 @@ import {
   parseFilemakerEmailCampaignRegistry,
   parseFilemakerEmailCampaignSuppressionRegistry,
   summarizeFilemakerEmailCampaignRecipientActivity,
-} from '@/features/filemaker/settings';
-import { FilemakerCampaignPreferencesPage } from '@/features/filemaker/pages/FilemakerCampaignPreferencesPage';
+  FilemakerCampaignPreferencesPage,
+} from '@/features/filemaker/public';
 import { readFilemakerCampaignSettingValue } from '@/features/filemaker/server/campaign-settings-store';
 import { parseFilemakerCampaignUnsubscribeToken } from '@/features/filemaker/server/campaign-unsubscribe-token';
 

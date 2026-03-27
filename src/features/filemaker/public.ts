@@ -12,5 +12,7 @@ export * from './pages/AdminFilemakerEventEditPage';
 export * from './pages/AdminFilemakerEmailEditPage';
 export * from './pages/AdminFilemakerCampaignEditPage';
 export * from './pages/AdminFilemakerCampaignRunPage';
+export { FilemakerCampaignUnsubscribePage } from './pages/FilemakerCampaignUnsubscribePage';
+export { FilemakerCampaignPreferencesPage } from './pages/FilemakerCampaignPreferencesPage';
 export * from './settings';
 export * from './types';

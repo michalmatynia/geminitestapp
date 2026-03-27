@@ -31,9 +31,7 @@ function LessonsContent() {
     setGuestPlayerName,
   } = useLessons();
   const { openLoginModal } = useKangurLoginModal();
-  const [isCatalogResolvedContentReady, setIsCatalogResolvedContentReady] = useState(
-    Boolean(activeLesson)
-  );
+  const [isTutorSessionSyncReady, setIsTutorSessionSyncReady] = useState(Boolean(activeLesson));
 
   const { user, logout } = auth;
   const { enabled: docsTooltipsEnabled } = useKangurDocsTooltips('lessons');
@@ -106,12 +104,12 @@ function LessonsContent() {
   );
 
   useEffect(() => {
-    if (activeLesson || isCatalogResolvedContentReady) {
+    if (activeLesson || isTutorSessionSyncReady) {
       return;
     }
 
     if (typeof window === 'undefined') {
-      setIsCatalogResolvedContentReady(true);
+      setIsTutorSessionSyncReady(true);
       return;
     }
 
@@ -119,11 +117,11 @@ function LessonsContent() {
     const frameId =
       typeof window.requestAnimationFrame === 'function'
         ? window.requestAnimationFrame(() => {
-            setIsCatalogResolvedContentReady(true);
+            setIsTutorSessionSyncReady(true);
           })
         : window.setTimeout(() => {
             timeoutId = null;
-            setIsCatalogResolvedContentReady(true);
+            setIsTutorSessionSyncReady(true);
           }, 0);
 
     return () => {
@@ -138,14 +136,16 @@ function LessonsContent() {
         window.clearTimeout(frameId);
       }
     };
-  }, [activeLesson, isCatalogResolvedContentReady]);
+  }, [activeLesson, isTutorSessionSyncReady]);
 
   return (
     <>
-      <KangurAiTutorSessionSync 
-        learnerId={user?.activeLearner?.id ?? null} 
-        sessionContext={lessonTutorContext} 
-      />
+      {isTutorSessionSyncReady ? (
+        <KangurAiTutorSessionSync
+          learnerId={user?.activeLearner?.id ?? null}
+          sessionContext={lessonTutorContext}
+        />
+      ) : null}
       <KangurStandardPageLayout
         tone='learn'
         id='kangur-lessons-page'
@@ -160,19 +160,16 @@ function LessonsContent() {
           className: 'flex flex-col items-center',
         }}
       >
-        <AnimatePresence mode='wait'>
-          {activeLesson ? (
+        {activeLesson ? (
+          <AnimatePresence mode='wait'>
             <ActiveLessonView
               key={activeLessonId ?? activeLesson.id}
               snapshot={activeLessonRenderSnapshot}
             />
-          ) : (
-            <LessonsCatalog
-              key='catalog'
-              renderResolvedContent={isCatalogResolvedContentReady}
-            />
-          )}
-        </AnimatePresence>
+          </AnimatePresence>
+        ) : (
+          <LessonsCatalog />
+        )}
       </KangurStandardPageLayout>
     </>
   );

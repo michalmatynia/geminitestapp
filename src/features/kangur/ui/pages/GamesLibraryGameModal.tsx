@@ -68,6 +68,8 @@ type ClockPreviewSettings = {
   showTimeDisplay: boolean;
 };
 
+type ClockInstanceEngineSettings = Omit<ClockPreviewSettings, 'clockSection'>;
+
 type ClockTrainingGamePreviewProps = {
   hideModeSwitch?: boolean;
   initialMode?: ClockGameMode;
@@ -89,7 +91,7 @@ type HubSectionEditorState = {
 };
 
 type GameInstanceEditorState = {
-  clockSettings: ClockPreviewSettings;
+  engineSettings: ClockInstanceEngineSettings;
   contentSetId: KangurGameContentSetId | null;
   instanceDescription: string;
   instanceEmoji: string;
@@ -101,6 +103,13 @@ type SavedSectionsStatusFilter = 'all' | 'enabled' | 'disabled';
 type SavedSectionsStatusFilterOption = {
   label: string;
   value: SavedSectionsStatusFilter;
+};
+
+type PendingInstanceEditorRestoreState = {
+  editorBaseline: GameInstanceEditorState | null;
+  editorState: GameInstanceEditorState;
+  preferNewInstanceDraft: boolean;
+  selectedInstanceId: string | null;
 };
 
 const ClockTrainingGamePreview = ClockTrainingGame as React.ComponentType<ClockTrainingGamePreviewProps>;
@@ -225,32 +234,9 @@ const buildEditorStateFromSection = (
   draftTitle: section?.title ?? nextGame.title,
 });
 
-const buildInstanceEditorStateFromInstance = (
-  instance: KangurGameInstance | null,
-  input: {
-    defaultClockSettings: ClockPreviewSettings;
-    contentSets: readonly KangurGameContentSet[];
-    game: KangurGameDefinition;
-  }
-): GameInstanceEditorState => ({
-  clockSettings:
-    input.game.id === 'clock_training'
-      ? instance
-        ? resolveClockPreviewSettingsFromInstance(instance, input.defaultClockSettings.clockSection)
-        : input.defaultClockSettings
-      : input.defaultClockSettings,
-  contentSetId: instance?.contentSetId ?? input.contentSets[0]?.id ?? null,
-  instanceDescription: instance?.description ?? input.game.description,
-  instanceEmoji: instance?.emoji ?? input.game.emoji ?? '🎮',
-  instanceEnabled: instance?.enabled ?? true,
-  instanceTitle: instance?.title ?? input.game.title,
-});
-
-const resolveClockPreviewSettingsFromInstance = (
-  instance: KangurGameInstance | null,
-  currentClockSection: ClockTrainingSectionId
-): ClockPreviewSettings => ({
-  clockSection: currentClockSection,
+const resolveClockInstanceEngineSettingsFromInstance = (
+  instance: KangurGameInstance | null
+): ClockInstanceEngineSettings => ({
   initialMode:
     instance?.engineOverrides.clockInitialMode ?? DEFAULT_CLOCK_PREVIEW_SETTINGS.initialMode,
   showHourHand:
@@ -268,16 +254,44 @@ const resolveClockPreviewSettingsFromInstance = (
     DEFAULT_CLOCK_PREVIEW_SETTINGS.showTimeDisplay,
 });
 
+const buildInstanceEditorStateFromInstance = (
+  instance: KangurGameInstance | null,
+  input: {
+    defaultEngineSettings: ClockInstanceEngineSettings;
+    contentSets: readonly KangurGameContentSet[];
+    game: KangurGameDefinition;
+  }
+): GameInstanceEditorState => ({
+  engineSettings:
+    input.game.id === 'clock_training'
+      ? instance
+        ? resolveClockInstanceEngineSettingsFromInstance(instance)
+        : input.defaultEngineSettings
+      : input.defaultEngineSettings,
+  contentSetId: instance?.contentSetId ?? input.contentSets[0]?.id ?? null,
+  instanceDescription: instance?.description ?? input.game.description,
+  instanceEmoji: instance?.emoji ?? input.game.emoji ?? '🎮',
+  instanceEnabled: instance?.enabled ?? true,
+  instanceTitle: instance?.title ?? input.game.title,
+});
+
+const buildClockInstanceEngineSettingsFromPreview = (
+  previewSettings: ClockPreviewSettings
+): ClockInstanceEngineSettings => ({
+  initialMode: previewSettings.initialMode,
+  showHourHand: previewSettings.showHourHand,
+  showMinuteHand: previewSettings.showMinuteHand,
+  showModeSwitch: previewSettings.showModeSwitch,
+  showTaskTitle: previewSettings.showTaskTitle,
+  showTimeDisplay: previewSettings.showTimeDisplay,
+});
+
+const resolveContentSetRendererProps = (
+  contentSet: KangurGameContentSet | null | undefined
+): KangurGameRuntimeRendererProps => contentSet?.rendererProps ?? {};
+
 const buildClockEngineSettingsSummary = (
-  input: Pick<
-    ClockPreviewSettings,
-    | 'initialMode'
-    | 'showHourHand'
-    | 'showMinuteHand'
-    | 'showModeSwitch'
-    | 'showTaskTitle'
-    | 'showTimeDisplay'
-  >,
+  input: ClockInstanceEngineSettings,
   translations: (key: string) => string
 ): string[] => {
   const summary = [
@@ -314,8 +328,10 @@ const buildContentSetFeedSummary = (
   contentSet: KangurGameContentSet,
   translations: (key: string, values?: Record<string, string | number>) => string
 ): string | null => {
-  if (contentSet.rendererProps.clockSection) {
-    switch (contentSet.rendererProps.clockSection) {
+  const rendererProps = resolveContentSetRendererProps(contentSet);
+
+  if (rendererProps.clockSection) {
+    switch (rendererProps.clockSection) {
       case 'hours':
         return translations('modal.settings.clockSectionHours');
       case 'minutes':
@@ -326,8 +342,8 @@ const buildContentSetFeedSummary = (
     }
   }
 
-  if (contentSet.rendererProps.patternSetId) {
-    switch (contentSet.rendererProps.patternSetId) {
+  if (rendererProps.patternSetId) {
+    switch (rendererProps.patternSetId) {
       case 'alphabet_letter_order':
         return translations('modal.instances.feedSummary.alphabetOrder');
       case 'logical_patterns_workshop':
@@ -336,9 +352,9 @@ const buildContentSetFeedSummary = (
     }
   }
 
-  if (contentSet.rendererProps.shapeIds?.length) {
+  if (rendererProps.shapeIds?.length) {
     return translations('modal.instances.feedSummary.geometryShapeCount', {
-      count: contentSet.rendererProps.shapeIds.length,
+      count: rendererProps.shapeIds.length,
     });
   }
 
@@ -372,11 +388,22 @@ const areEditorStatesEqual = (
   left.draftSubtext === right.draftSubtext &&
   left.draftTitle === right.draftTitle;
 
+const areClockInstanceEngineSettingsEqual = (
+  left: ClockInstanceEngineSettings,
+  right: ClockInstanceEngineSettings
+): boolean =>
+  left.initialMode === right.initialMode &&
+  left.showHourHand === right.showHourHand &&
+  left.showMinuteHand === right.showMinuteHand &&
+  left.showModeSwitch === right.showModeSwitch &&
+  left.showTaskTitle === right.showTaskTitle &&
+  left.showTimeDisplay === right.showTimeDisplay;
+
 const areInstanceEditorStatesEqual = (
   left: GameInstanceEditorState,
   right: GameInstanceEditorState
 ): boolean =>
-  areClockPreviewSettingsEqual(left.clockSettings, right.clockSettings) &&
+  areClockInstanceEngineSettingsEqual(left.engineSettings, right.engineSettings) &&
   left.contentSetId === right.contentSetId &&
   left.instanceDescription === right.instanceDescription &&
   left.instanceEmoji === right.instanceEmoji &&
@@ -521,6 +548,9 @@ export function GamesLibraryGameModal({
   const [savedSectionsQuery, setSavedSectionsQuery] = useState('');
   const [savedSectionsStatusFilter, setSavedSectionsStatusFilter] =
     useState<SavedSectionsStatusFilter>('all');
+  const [savedInstancesQuery, setSavedInstancesQuery] = useState('');
+  const [savedInstancesStatusFilter, setSavedInstancesStatusFilter] =
+    useState<SavedSectionsStatusFilter>('all');
   const [optimisticSections, setOptimisticSections] = useState<KangurLessonGameSection[] | null>(
     null
   );
@@ -529,9 +559,10 @@ export function GamesLibraryGameModal({
   const [clockSettings, setClockSettings] = useState<ClockPreviewSettings>(
     DEFAULT_CLOCK_PREVIEW_SETTINGS
   );
-  const [instanceClockSettings, setInstanceClockSettings] = useState<ClockPreviewSettings>(
-    DEFAULT_CLOCK_PREVIEW_SETTINGS
-  );
+  const [instanceClockSettings, setInstanceClockSettings] =
+    useState<ClockInstanceEngineSettings>(
+      buildClockInstanceEngineSettingsFromPreview(DEFAULT_CLOCK_PREVIEW_SETTINGS)
+    );
   const launchableRuntime = game ? getKangurLaunchableGameRuntimeSpecForGame(game) : null;
   const contentSets = useMemo(
     () => (game ? getKangurGameContentSetsForGame(game) : []),
@@ -555,11 +586,16 @@ export function GamesLibraryGameModal({
       : contentSets.find((contentSet) => contentSet.id === selectedContentSetId) ??
         contentSets[0] ??
         null;
+  const selectedContentSetRendererProps = resolveContentSetRendererProps(selectedContentSet);
   const selectedContentSetFeedSummary = selectedContentSet
     ? buildContentSetFeedSummary(selectedContentSet, translations)
     : null;
+  const supportsPreviewSettings = game?.id === 'clock_training';
+  const supportsInstanceEngineSettings =
+    Boolean(launchableRuntime) && game?.id === 'clock_training';
   const instancePreviewClockSection =
-    selectedContentSet?.rendererProps.clockSection ?? instanceClockSettings.clockSection;
+    selectedContentSetRendererProps.clockSection ?? clockSettings.clockSection;
+  const pendingInstanceEditorRestoreRef = useRef<PendingInstanceEditorRestoreState | null>(null);
   const pendingEditorRestoreRef = useRef<HubSectionEditorState | null>(null);
   const previousGameIdRef = useRef<string | null>(null);
   const persistedSections = lessonGameSectionsQuery.data ?? [];
@@ -579,7 +615,6 @@ export function GamesLibraryGameModal({
     selectedSectionId === null
       ? null
       : activeSections.find((section) => section.id === selectedSectionId) ?? null;
-  const supportsPreviewSettings = game?.id === 'clock_training';
 
   const syncEditorFromSection = (
     section: KangurLessonGameSection | null,
@@ -594,7 +629,7 @@ export function GamesLibraryGameModal({
   };
 
   const applyInstanceEditorState = (editorState: GameInstanceEditorState): void => {
-    setInstanceClockSettings({ ...editorState.clockSettings });
+    setInstanceClockSettings({ ...editorState.engineSettings });
     setSelectedContentSetId(editorState.contentSetId);
     setInstanceDescription(editorState.instanceDescription);
     setInstanceEmoji(editorState.instanceEmoji);
@@ -608,7 +643,7 @@ export function GamesLibraryGameModal({
   ): void => {
     setInstanceSyncError(null);
     const nextEditorState = buildInstanceEditorStateFromInstance(instance, {
-      defaultClockSettings: clockSettings,
+      defaultEngineSettings: buildClockInstanceEngineSettingsFromPreview(clockSettings),
       contentSets,
       game: nextGame,
     });
@@ -637,6 +672,7 @@ export function GamesLibraryGameModal({
   });
 
   const resetTransientState = (): void => {
+    pendingInstanceEditorRestoreRef.current = null;
     pendingEditorRestoreRef.current = null;
     setSelectedInstanceId(null);
     setPreferNewInstanceDraft(false);
@@ -662,7 +698,9 @@ export function GamesLibraryGameModal({
     setSyncError(null);
     setSettingsOpen(false);
     setClockSettings(DEFAULT_CLOCK_PREVIEW_SETTINGS);
-    setInstanceClockSettings(DEFAULT_CLOCK_PREVIEW_SETTINGS);
+    setInstanceClockSettings(
+      buildClockInstanceEngineSettingsFromPreview(DEFAULT_CLOCK_PREVIEW_SETTINGS)
+    );
   };
 
   useEffect(() => {
@@ -688,6 +726,16 @@ export function GamesLibraryGameModal({
 
   useEffect(() => {
     if (!game || !launchableRuntime) {
+      return;
+    }
+
+    const pendingInstanceEditorRestore = pendingInstanceEditorRestoreRef.current;
+    if (pendingInstanceEditorRestore) {
+      pendingInstanceEditorRestoreRef.current = null;
+      setPreferNewInstanceDraft(pendingInstanceEditorRestore.preferNewInstanceDraft);
+      setSelectedInstanceId(pendingInstanceEditorRestore.selectedInstanceId);
+      applyInstanceEditorState(pendingInstanceEditorRestore.editorState);
+      setInstanceEditorBaseline(pendingInstanceEditorRestore.editorBaseline);
       return;
     }
 
@@ -837,6 +885,45 @@ export function GamesLibraryGameModal({
   }, [activeSections, lessonLabelMap, savedSectionsQuery, savedSectionsStatusFilter]);
   const hasSavedSectionsFilters =
     savedSectionsQuery.trim().length > 0 || savedSectionsStatusFilter !== 'all';
+  const filteredActiveInstances = useMemo(() => {
+    const normalizedQuery = savedInstancesQuery.trim().toLowerCase();
+
+    return activeInstances.filter((instance) => {
+      if (savedInstancesStatusFilter === 'enabled' && !instance.enabled) {
+        return false;
+      }
+      if (savedInstancesStatusFilter === 'disabled' && instance.enabled) {
+        return false;
+      }
+      if (!normalizedQuery) {
+        return true;
+      }
+
+      const contentSet = contentSets.find((entry) => entry.id === instance.contentSetId);
+      const contentSetFeedSummary = contentSet
+        ? buildContentSetFeedSummary(contentSet, translations)
+        : null;
+
+      return [
+        instance.title,
+        instance.description,
+        instance.emoji,
+        contentSet?.label ?? instance.contentSetId,
+        contentSetFeedSummary,
+      ]
+        .join(' ')
+        .toLowerCase()
+        .includes(normalizedQuery);
+    });
+  }, [
+    activeInstances,
+    contentSets,
+    savedInstancesQuery,
+    savedInstancesStatusFilter,
+    translations,
+  ]);
+  const hasSavedInstancesFilters =
+    savedInstancesQuery.trim().length > 0 || savedInstancesStatusFilter !== 'all';
 
   const linkedLessonIds = useMemo(
     () =>
@@ -851,7 +938,7 @@ export function GamesLibraryGameModal({
   );
   const currentInstanceEditorState = useMemo<GameInstanceEditorState>(
     () => ({
-      clockSettings: instanceClockSettings,
+      engineSettings: instanceClockSettings,
       contentSetId: selectedContentSetId,
       instanceDescription,
       instanceEmoji,
@@ -958,7 +1045,12 @@ export function GamesLibraryGameModal({
   const canResetClockSettings =
     supportsPreviewSettings &&
     !areClockPreviewSettingsEqual(clockSettings, DEFAULT_CLOCK_PREVIEW_SETTINGS);
-  const supportsInstanceEngineSettings = Boolean(launchableRuntime) && supportsPreviewSettings;
+  const canSyncInstanceEngineSettingsFromPreview =
+    supportsInstanceEngineSettings &&
+    !areClockInstanceEngineSettingsEqual(
+      instanceClockSettings,
+      buildClockInstanceEngineSettingsFromPreview(clockSettings)
+    );
 
   const canAddDraft = draftValidationMessages.length === 0;
   const canSaveInstance = Boolean(launchableRuntime) && instanceValidationMessages.length === 0;
@@ -979,6 +1071,26 @@ export function GamesLibraryGameModal({
 
     setInstanceSyncError(null);
     syncEditorFromInstance(instance, game);
+  };
+
+  const handleDuplicateInstance = (instance: KangurGameInstance): void => {
+    if (!game) {
+      return;
+    }
+
+    setInstanceSyncError(null);
+    const duplicatedEditorState: GameInstanceEditorState = {
+      ...buildInstanceEditorStateFromInstance(instance, {
+        defaultEngineSettings: buildClockInstanceEngineSettingsFromPreview(clockSettings),
+        contentSets,
+        game,
+      }),
+      instanceTitle: `${instance.title} ${translations('modal.instances.duplicateSuffix')}`.trim(),
+    };
+    setPreferNewInstanceDraft(true);
+    setSelectedInstanceId(null);
+    applyInstanceEditorState(duplicatedEditorState);
+    setInstanceEditorBaseline(duplicatedEditorState);
   };
 
   const handleSaveInstance = async (): Promise<void> => {
@@ -1016,7 +1128,7 @@ export function GamesLibraryGameModal({
     setSelectedInstanceId(instanceId);
     setInstanceEditorBaseline(
       buildInstanceEditorStateFromInstance(nextInstance, {
-        defaultClockSettings: clockSettings,
+        defaultEngineSettings: buildClockInstanceEngineSettingsFromPreview(clockSettings),
         contentSets,
         game,
       })
@@ -1038,13 +1150,25 @@ export function GamesLibraryGameModal({
       return;
     }
 
+    const removingSelectedInstance = instance.id === selectedInstanceId;
+    const previousInstanceEditorState: GameInstanceEditorState = currentInstanceEditorState;
+    const previousPreferNewInstanceDraft = preferNewInstanceDraft;
+    const previousSelectedInstanceId = selectedInstanceId;
     const nextInstances = normalizeInstanceSortOrder(
       activeInstances.filter((entry) => entry.id !== instance.id)
     );
 
     setInstanceSyncError(null);
     setOptimisticInstances(nextInstances);
-    if (instance.id === selectedInstanceId) {
+    if (!removingSelectedInstance) {
+      pendingInstanceEditorRestoreRef.current = {
+        editorBaseline: instanceEditorBaseline,
+        editorState: previousInstanceEditorState,
+        preferNewInstanceDraft: previousPreferNewInstanceDraft,
+        selectedInstanceId: previousSelectedInstanceId,
+      };
+    }
+    if (removingSelectedInstance) {
       const fallbackInstance = nextInstances[0] ?? null;
       if (fallbackInstance) {
         syncEditorFromInstance(fallbackInstance, game);
@@ -1059,6 +1183,126 @@ export function GamesLibraryGameModal({
         instances: nextInstances,
       })
       .catch(() => {
+        if (!removingSelectedInstance) {
+          pendingInstanceEditorRestoreRef.current = {
+            editorBaseline: instanceEditorBaseline,
+            editorState: previousInstanceEditorState,
+            preferNewInstanceDraft: previousPreferNewInstanceDraft,
+            selectedInstanceId: previousSelectedInstanceId,
+          };
+        }
+        setOptimisticInstances(null);
+        if (removingSelectedInstance) {
+          syncEditorFromInstance(instance, game);
+        }
+        setInstanceSyncError(translations('modal.instances.syncError'));
+      });
+  };
+
+  const handleToggleInstanceEnabled = (instance: KangurGameInstance): void => {
+    if (!game) {
+      return;
+    }
+
+    const previousEditorState = currentInstanceEditorState;
+    const previousEditorBaseline = instanceEditorBaseline;
+    const previousPreferNewInstanceDraft = preferNewInstanceDraft;
+    const previousSelectedInstanceId = selectedInstanceId;
+    const nextEnabled = !instance.enabled;
+    const nextInstances = activeInstances.map((entry) =>
+      entry.id === instance.id ? { ...entry, enabled: nextEnabled } : entry
+    );
+
+    setInstanceSyncError(null);
+    setOptimisticInstances(nextInstances);
+    if (instance.id === selectedInstanceId) {
+      setInstanceEnabled(nextEnabled);
+      if (previousEditorBaseline) {
+        setInstanceEditorBaseline({
+          ...previousEditorBaseline,
+          instanceEnabled: nextEnabled,
+        });
+      }
+    } else {
+      pendingInstanceEditorRestoreRef.current = {
+        editorBaseline: previousEditorBaseline,
+        editorState: previousEditorState,
+        preferNewInstanceDraft: previousPreferNewInstanceDraft,
+        selectedInstanceId: previousSelectedInstanceId,
+      };
+    }
+
+    void replaceGameInstances
+      .mutateAsync({
+        gameId: game.id,
+        instances: nextInstances,
+      })
+      .catch(() => {
+        if (instance.id !== selectedInstanceId) {
+          pendingInstanceEditorRestoreRef.current = {
+            editorBaseline: previousEditorBaseline,
+            editorState: previousEditorState,
+            preferNewInstanceDraft: previousPreferNewInstanceDraft,
+            selectedInstanceId: previousSelectedInstanceId,
+          };
+        }
+        setOptimisticInstances(null);
+        if (instance.id === selectedInstanceId) {
+          applyInstanceEditorState(previousEditorState);
+          setInstanceEditorBaseline(previousEditorBaseline);
+        }
+        setInstanceSyncError(translations('modal.instances.syncError'));
+      });
+  };
+
+  const handleMoveInstance = (instanceId: string, direction: 'up' | 'down'): void => {
+    if (!game) {
+      return;
+    }
+
+    const previousEditorState = currentInstanceEditorState;
+    const previousEditorBaseline = instanceEditorBaseline;
+    const previousPreferNewInstanceDraft = preferNewInstanceDraft;
+    const previousSelectedInstanceId = selectedInstanceId;
+    const currentIndex = activeInstances.findIndex((instance) => instance.id === instanceId);
+    if (currentIndex < 0) {
+      return;
+    }
+
+    const targetIndex = direction === 'up' ? currentIndex - 1 : currentIndex + 1;
+    if (targetIndex < 0 || targetIndex >= activeInstances.length) {
+      return;
+    }
+
+    const reordered = [...activeInstances];
+    const [movedInstance] = reordered.splice(currentIndex, 1);
+    if (!movedInstance) {
+      return;
+    }
+
+    reordered.splice(targetIndex, 0, movedInstance);
+    const nextInstances = normalizeInstanceSortOrder(reordered);
+
+    setInstanceSyncError(null);
+    setOptimisticInstances(nextInstances);
+    pendingInstanceEditorRestoreRef.current = {
+      editorBaseline: previousEditorBaseline,
+      editorState: previousEditorState,
+      preferNewInstanceDraft: previousPreferNewInstanceDraft,
+      selectedInstanceId: previousSelectedInstanceId,
+    };
+    void replaceGameInstances
+      .mutateAsync({
+        gameId: game.id,
+        instances: nextInstances,
+      })
+      .catch(() => {
+        pendingInstanceEditorRestoreRef.current = {
+          editorBaseline: previousEditorBaseline,
+          editorState: previousEditorState,
+          preferNewInstanceDraft: previousPreferNewInstanceDraft,
+          selectedInstanceId: previousSelectedInstanceId,
+        };
         setOptimisticInstances(null);
         setInstanceSyncError(translations('modal.instances.syncError'));
       });
@@ -1177,15 +1421,20 @@ export function GamesLibraryGameModal({
     }));
   };
 
-  const updateInstanceClockSettings = <TKey extends keyof ClockPreviewSettings>(
+  const updateInstanceClockSettings = <TKey extends keyof ClockInstanceEngineSettings>(
     key: TKey,
-    value: ClockPreviewSettings[TKey]
+    value: ClockInstanceEngineSettings[TKey]
   ): void => {
     setInstanceSyncError(null);
     setInstanceClockSettings((current) => ({
       ...current,
       [key]: value,
     }));
+  };
+
+  const handleSyncInstanceEngineSettingsFromPreview = (): void => {
+    setInstanceSyncError(null);
+    setInstanceClockSettings(buildClockInstanceEngineSettingsFromPreview(clockSettings));
   };
 
   const handleResetClockSettings = (): void => {
@@ -1620,8 +1869,24 @@ export function GamesLibraryGameModal({
 
                 <div className={cn(GAMES_LIBRARY_MODAL_FIELD_SURFACE_CLASSNAME, 'space-y-3 p-4')}>
                   <div className='space-y-1'>
-                    <div className='text-sm font-semibold [color:var(--kangur-page-text)]'>
-                      {translations('modal.instances.currentEngineSettingsTitle')}
+                    <div className='flex flex-wrap items-center justify-between gap-3'>
+                      <div className='text-sm font-semibold [color:var(--kangur-page-text)]'>
+                        {translations('modal.instances.currentEngineSettingsTitle')}
+                      </div>
+                      {supportsInstanceEngineSettings ? (
+                        <KangurButton
+                          disabled={
+                            replaceGameInstances.isPending ||
+                            !canSyncInstanceEngineSettingsFromPreview
+                          }
+                          onClick={handleSyncInstanceEngineSettingsFromPreview}
+                          size='sm'
+                          type='button'
+                          variant='surface'
+                        >
+                          {translations('modal.instances.usePreviewSettingsButton')}
+                        </KangurButton>
+                      ) : null}
                     </div>
                     <div className='text-xs leading-5 [color:var(--kangur-page-muted-text)]'>
                       {translations('modal.instances.currentEngineSettingsDescription')}
@@ -1840,7 +2105,28 @@ export function GamesLibraryGameModal({
                   </div>
                 ) : null}
 
-                <div className='flex flex-wrap gap-2 border-t border-[color:var(--kangur-soft-card-border)] pt-3'>
+                <div
+                  className='flex flex-wrap gap-2 border-t border-[color:var(--kangur-soft-card-border)] pt-3'
+                  data-testid='games-library-instance-actions'
+                >
+                  {isInstanceEditorDirty ? (
+                    <KangurButton
+                      disabled={replaceGameInstances.isPending || instanceEditorBaseline === null}
+                      onClick={() => {
+                        if (!instanceEditorBaseline) {
+                          return;
+                        }
+
+                        setInstanceSyncError(null);
+                        applyInstanceEditorState(instanceEditorBaseline);
+                      }}
+                      size='sm'
+                      type='button'
+                      variant='surface'
+                    >
+                      {translations('modal.instances.discardChangesButton')}
+                    </KangurButton>
+                  ) : null}
                   <KangurButton
                     disabled={replaceGameInstances.isPending}
                     onClick={handleResetInstanceEditor}
@@ -1892,13 +2178,74 @@ export function GamesLibraryGameModal({
                   </div>
                 </div>
 
+                {activeInstances.length > 0 ? (
+                  <div className='space-y-3 rounded-[1.25rem] border border-[color:var(--kangur-soft-card-border)] [background:color-mix(in_srgb,var(--kangur-soft-card-background)_97%,white)] p-3'>
+                    <div className='flex flex-wrap items-center justify-between gap-2'>
+                      <div className='min-w-[16rem] flex-1'>
+                        <KangurTextField
+                          aria-label={translations('modal.instances.listSearchLabel')}
+                          className='[background:color-mix(in_srgb,var(--kangur-soft-card-background)_97%,white)]'
+                          disabled={replaceGameInstances.isPending}
+                          onChange={(event) => setSavedInstancesQuery(event.target.value)}
+                          placeholder={translations('modal.instances.listSearchPlaceholder')}
+                          size='sm'
+                          type='search'
+                          value={savedInstancesQuery}
+                        />
+                      </div>
+                      <KangurButton
+                        disabled={!hasSavedInstancesFilters || replaceGameInstances.isPending}
+                        onClick={() => {
+                          setSavedInstancesQuery('');
+                          setSavedInstancesStatusFilter('all');
+                        }}
+                        size='sm'
+                        type='button'
+                        variant='surface'
+                      >
+                        {translations('modal.instances.listClearFiltersButton')}
+                      </KangurButton>
+                    </div>
+                    <SavedSectionsStatusControl
+                      ariaLabel={translations('modal.instances.listStatusFilterLabel')}
+                      className='w-full [background:color-mix(in_srgb,var(--kangur-soft-card-background)_97%,white)]'
+                      onChange={setSavedInstancesStatusFilter}
+                      options={[
+                        {
+                          label: translations('modal.instances.listStatusFilterAll'),
+                          value: 'all',
+                        },
+                        {
+                          label: translations('modal.instances.listStatusFilterEnabled'),
+                          value: 'enabled',
+                        },
+                        {
+                          label: translations('modal.instances.listStatusFilterDisabled'),
+                          value: 'disabled',
+                        },
+                      ]}
+                      value={savedInstancesStatusFilter}
+                    />
+                  </div>
+                ) : null}
+
                 {activeInstances.length === 0 ? (
                   <div className={GAMES_LIBRARY_MODAL_EMPTY_STATE_CLASSNAME}>
                     {translations('modal.instances.listEmpty')}
                   </div>
+                ) : filteredActiveInstances.length === 0 ? (
+                  <div
+                    className={GAMES_LIBRARY_MODAL_EMPTY_STATE_CLASSNAME}
+                    data-testid='games-library-instance-search-empty'
+                  >
+                    {translations('modal.instances.listSearchEmpty')}
+                  </div>
                 ) : (
-                  <div className='space-y-3'>
-                    {activeInstances.map((instance) => {
+                  <div data-testid='games-library-instance-list' className='space-y-3'>
+                    {filteredActiveInstances.map((instance) => {
+                      const instanceIndex = activeInstances.findIndex(
+                        (entry) => entry.id === instance.id
+                      );
                       const contentSet = contentSets.find(
                         (entry) => entry.id === instance.contentSetId
                       );
@@ -2001,6 +2348,49 @@ export function GamesLibraryGameModal({
                               variant='surface'
                             >
                               {translations('modal.instances.editButton')}
+                            </KangurButton>
+                            <KangurButton
+                              disabled={replaceGameInstances.isPending}
+                              onClick={() => handleDuplicateInstance(instance)}
+                              size='sm'
+                              type='button'
+                              variant='surface'
+                            >
+                              {translations('modal.instances.duplicateButton')}
+                            </KangurButton>
+                            <KangurButton
+                              disabled={replaceGameInstances.isPending}
+                              onClick={() => handleToggleInstanceEnabled(instance)}
+                              size='sm'
+                              type='button'
+                              variant='surface'
+                              >
+                              {instance.enabled
+                                ? translations('modal.instances.disableButton')
+                                : translations('modal.instances.enableButton')}
+                            </KangurButton>
+                            <KangurButton
+                              aria-label={`${translations('modal.instances.moveUpButton')}: ${instance.title}`}
+                              disabled={replaceGameInstances.isPending || instanceIndex === 0}
+                              onClick={() => handleMoveInstance(instance.id, 'up')}
+                              size='sm'
+                              type='button'
+                              variant='surface'
+                            >
+                              {translations('modal.instances.moveUpButton')}
+                            </KangurButton>
+                            <KangurButton
+                              aria-label={`${translations('modal.instances.moveDownButton')}: ${instance.title}`}
+                              disabled={
+                                replaceGameInstances.isPending ||
+                                instanceIndex === activeInstances.length - 1
+                              }
+                              onClick={() => handleMoveInstance(instance.id, 'down')}
+                              size='sm'
+                              type='button'
+                              variant='surface'
+                            >
+                              {translations('modal.instances.moveDownButton')}
                             </KangurButton>
                             <KangurButton asChild size='sm' variant='surface'>
                               <Link

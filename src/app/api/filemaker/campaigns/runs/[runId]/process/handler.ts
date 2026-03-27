@@ -17,11 +17,14 @@ import { assertSettingsManageAccess } from '@/shared/lib/auth/settings-manage-ac
 import { parseJsonBody } from '@/shared/lib/api/parse-json';
 
 import {
+  FILEMAKER_EMAIL_CAMPAIGN_DELIVERY_ATTEMPTS_KEY,
   FILEMAKER_EMAIL_CAMPAIGN_DELIVERIES_KEY,
   FILEMAKER_EMAIL_CAMPAIGN_RUNS_KEY,
   getFilemakerEmailCampaignDeliveriesForRun,
+  parseFilemakerEmailCampaignDeliveryAttemptRegistry,
   parseFilemakerEmailCampaignDeliveryRegistry,
   parseFilemakerEmailCampaignRunRegistry,
+  resolveFilemakerEmailCampaignRetryableDeliveries,
 } from '@/features/filemaker/settings';
 import { readFilemakerCampaignSettingValue } from '@/features/filemaker/server/campaign-settings-store';
 
@@ -44,20 +47,29 @@ export async function POST_handler(
   }
 
   const runId = params.runId;
-  const [runsRaw, deliveriesRaw] = await Promise.all([
+  const [runsRaw, deliveriesRaw, attemptsRaw] = await Promise.all([
     readFilemakerCampaignSettingValue(FILEMAKER_EMAIL_CAMPAIGN_RUNS_KEY),
     readFilemakerCampaignSettingValue(FILEMAKER_EMAIL_CAMPAIGN_DELIVERIES_KEY),
+    readFilemakerCampaignSettingValue(FILEMAKER_EMAIL_CAMPAIGN_DELIVERY_ATTEMPTS_KEY),
   ]);
   const runRegistry = parseFilemakerEmailCampaignRunRegistry(runsRaw);
   const deliveryRegistry = parseFilemakerEmailCampaignDeliveryRegistry(deliveriesRaw);
+  const attemptRegistry = parseFilemakerEmailCampaignDeliveryAttemptRegistry(attemptsRaw);
   const run = runRegistry.runs.find((entry) => entry.id === runId) ?? null;
   if (!run) {
     throw notFoundError('Filemaker campaign run not found.');
   }
-  const queuedDeliveryCount = getFilemakerEmailCampaignDeliveriesForRun(
-    deliveryRegistry,
-    run.id
-  ).filter((delivery) => delivery.status === 'queued').length;
+  const runDeliveries = getFilemakerEmailCampaignDeliveriesForRun(deliveryRegistry, run.id);
+  const retrySummary =
+    result.data.reason === 'retry'
+      ? resolveFilemakerEmailCampaignRetryableDeliveries({
+          deliveries: runDeliveries,
+          attemptRegistry,
+        })
+      : null;
+  const queuedDeliveryCount =
+    runDeliveries.filter((delivery) => delivery.status === 'queued').length +
+    (retrySummary?.retryableDeliveries.length ?? 0);
 
   startFilemakerEmailCampaignQueue();
   const queueResult = await enqueueFilemakerEmailCampaignRunJob({

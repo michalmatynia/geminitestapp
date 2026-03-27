@@ -7,12 +7,12 @@ import {
 } from '@/app/(frontend)/frontend-load-timing';
 import { CmsStorefrontAppearanceProvider } from '@/features/cms/components/frontend/CmsStorefrontAppearance';
 import { getCmsThemeSettings } from '@/features/cms/server';
-import { getKangurAuthBootstrapScript } from '@/features/kangur/server/auth-bootstrap';
-import { getKangurStorefrontInitialState } from '@/features/kangur/server/storefront-appearance';
-import { FrontendPublicOwnerProvider } from '@/features/kangur/ui/FrontendPublicOwnerContext';
-import FrontendPublicOwnerShellClient from '@/features/kangur/ui/FrontendPublicOwnerShellClient';
-import { KangurSSRSkeleton } from '@/features/kangur/ui/KangurSSRSkeleton';
-import { KangurServerShell } from '@/features/kangur/ui/components/KangurServerShell';
+import { getKangurAuthBootstrapScript } from '@/features/kangur/server';
+import { getKangurStorefrontInitialState } from '@/features/kangur/server';
+import { FrontendPublicOwnerProvider } from '@/features/kangur/public';
+import FrontendPublicOwnerShellClient from '@/features/kangur/public';
+import { KangurSSRSkeleton } from '@/features/kangur/public';
+import { KangurServerShell } from '@/features/kangur/public';
 import { readOptionalRequestHeaders } from '@/shared/lib/request/optional-headers';
 import { getFrontPagePublicOwner } from '@/shared/lib/front-page-app';
 import { stripSiteLocalePrefix } from '@/shared/lib/i18n/site-locale';

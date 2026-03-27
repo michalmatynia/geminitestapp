@@ -25,6 +25,7 @@ export const filemakerEntityKindSchema = z.enum([
   'email_campaign',
   'email_campaign_run',
   'email_campaign_delivery',
+  'email_campaign_delivery_attempt',
   'email_campaign_event',
   'email_campaign_suppression',
 ]);
@@ -237,6 +238,17 @@ export type FilemakerEmailCampaignDeliveryFailureCategoryDto = z.infer<
 export type FilemakerEmailCampaignDeliveryFailureCategory =
   FilemakerEmailCampaignDeliveryFailureCategoryDto;
 
+export const filemakerEmailCampaignDeliveryAttemptStatusSchema = z.enum([
+  'sent',
+  'failed',
+  'bounced',
+]);
+export type FilemakerEmailCampaignDeliveryAttemptStatusDto = z.infer<
+  typeof filemakerEmailCampaignDeliveryAttemptStatusSchema
+>;
+export type FilemakerEmailCampaignDeliveryAttemptStatus =
+  FilemakerEmailCampaignDeliveryAttemptStatusDto;
+
 export const filemakerEmailCampaignSuppressionReasonSchema = z.enum([
   'manual_block',
   'unsubscribed',
@@ -366,11 +378,32 @@ export const filemakerEmailCampaignDeliverySchema = dtoBaseSchema.extend({
   providerMessage: z.string().nullable().optional(),
   lastError: z.string().nullable().optional(),
   sentAt: z.string().nullable().optional(),
+  nextRetryAt: z.string().nullable().optional(),
 });
 export type FilemakerEmailCampaignDeliveryDto = z.infer<
   typeof filemakerEmailCampaignDeliverySchema
 >;
 export type FilemakerEmailCampaignDelivery = FilemakerEmailCampaignDeliveryDto;
+
+export const filemakerEmailCampaignDeliveryAttemptSchema = dtoBaseSchema.extend({
+  campaignId: z.string(),
+  runId: z.string(),
+  deliveryId: z.string(),
+  emailAddress: z.string(),
+  partyKind: filemakerPartyKindSchema,
+  partyId: z.string(),
+  attemptNumber: z.number().int().positive(),
+  status: filemakerEmailCampaignDeliveryAttemptStatusSchema,
+  provider: filemakerEmailCampaignDeliveryProviderSchema.nullable().optional(),
+  failureCategory: filemakerEmailCampaignDeliveryFailureCategorySchema.nullable().optional(),
+  providerMessage: z.string().nullable().optional(),
+  errorMessage: z.string().nullable().optional(),
+  attemptedAt: z.string().nullable().optional(),
+});
+export type FilemakerEmailCampaignDeliveryAttemptDto = z.infer<
+  typeof filemakerEmailCampaignDeliveryAttemptSchema
+>;
+export type FilemakerEmailCampaignDeliveryAttempt = FilemakerEmailCampaignDeliveryAttemptDto;
 
 export const filemakerEmailCampaignEventSchema = dtoBaseSchema.extend({
   campaignId: z.string(),
@@ -449,6 +482,16 @@ export type FilemakerEmailCampaignDeliveryRegistryDto = z.infer<
 >;
 export type FilemakerEmailCampaignDeliveryRegistry =
   FilemakerEmailCampaignDeliveryRegistryDto;
+
+export const filemakerEmailCampaignDeliveryAttemptRegistrySchema = z.object({
+  version: z.number().int().nonnegative(),
+  attempts: z.array(filemakerEmailCampaignDeliveryAttemptSchema),
+});
+export type FilemakerEmailCampaignDeliveryAttemptRegistryDto = z.infer<
+  typeof filemakerEmailCampaignDeliveryAttemptRegistrySchema
+>;
+export type FilemakerEmailCampaignDeliveryAttemptRegistry =
+  FilemakerEmailCampaignDeliveryAttemptRegistryDto;
 
 export const filemakerEmailCampaignRunDispatchModeSchema = z.enum([
   'dry_run',

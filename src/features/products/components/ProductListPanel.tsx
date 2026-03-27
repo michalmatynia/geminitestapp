@@ -205,37 +205,37 @@ const ProductListTableSurface = memo(function ProductListTableSurface() {
         skeletonRows={tableProps.skeletonRows}
         stickyHeader={tableProps.stickyHeader}
         enableVirtualization={false}
+        maxHeight={resolvedTableMaxHeight}
+        showTable={false}
       >
-        <div className='space-y-4'>
-          <div className='lg:hidden'>
-            {isEmpty ? (
-              <EmptyState
-                title='No results'
-                description="Try adjusting your filters to find what you're looking for."
-                className='border-none p-0'
-              />
-            ) : (
-              <ProductListMobileCards />
-            )}
-          </div>
-          <div ref={desktopTableRef} className='hidden lg:block'>
-            <DataTable
-              columns={tableProps.columns}
-              data={tableProps.data}
-              isLoading={tableProps.isLoading}
-              getRowId={tableProps.getRowId}
-              getRowClassName={
-                tableProps.getRowClassName as (row: Row<ProductWithImages>) => string | undefined
-              }
-              rowSelection={tableProps.rowSelection}
-              onRowSelectionChange={tableProps.onRowSelectionChange}
-              skeletonRows={tableProps.skeletonRows}
-              maxHeight={resolvedTableMaxHeight}
-              stickyHeader={tableProps.stickyHeader}
-              enableVirtualization={false}
-              tableLayout='fixed'
+        <div className='lg:hidden'>
+          {isEmpty ? (
+            <EmptyState
+              title='No results'
+              description="Try adjusting your filters to find what you're looking for."
+              className='border-none p-0'
             />
-          </div>
+          ) : (
+            <ProductListMobileCards />
+          )}
+        </div>
+        <div ref={desktopTableRef} className='hidden lg:block'>
+          <DataTable
+            columns={tableProps.columns}
+            data={tableProps.data}
+            isLoading={tableProps.isLoading}
+            getRowId={tableProps.getRowId}
+            getRowClassName={
+              tableProps.getRowClassName as (row: Row<ProductWithImages>) => string | undefined
+            }
+            rowSelection={tableProps.rowSelection}
+            onRowSelectionChange={tableProps.onRowSelectionChange}
+            skeletonRows={tableProps.skeletonRows}
+            maxHeight={resolvedTableMaxHeight}
+            stickyHeader={tableProps.stickyHeader}
+            enableVirtualization={false}
+            tableLayout='fixed'
+          />
         </div>
       </StandardDataTablePanel>
     </Profiler>

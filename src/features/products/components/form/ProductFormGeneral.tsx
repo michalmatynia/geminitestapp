@@ -10,9 +10,8 @@ import {
   allowsPatternExecutionWithoutRegexMatch,
   applyResolvedReplacement,
   buildSequenceGroupCounts,
+  isPatternConfiguredForFormatterAutoApply,
   isPatternInSequenceGroup,
-  isPatternLocaleMatch,
-  isReplacementAllowedForField,
   isRuntimePatternEnabled,
   normalizePatternChainMode,
   normalizePatternMaxExecutions,
@@ -24,10 +23,8 @@ import {
 import type { LabeledOptionDto } from '@/shared/contracts/base';
 import { ProductFormData } from '@/shared/contracts/products';
 import type { ProductValidationPattern } from '@/shared/contracts/products';
-import {
-  isPatternEnabledForValidationScope,
-  isPatternReplacementEnabledForValidationScope,
-} from '@/shared/lib/products/utils/validator-instance-behavior';
+import { parseDynamicReplacementRecipe } from '@/shared/lib/products/utils/validator-replacement-recipe';
+import { isPatternReplacementEnabledForValidationScope } from '@/shared/lib/products/utils/validator-instance-behavior';
 import {
   Input,
   Tabs,
@@ -246,18 +243,16 @@ export default function ProductFormGeneral(): React.JSX.Element {
             ? String(rawUnknown)
             : '';
       const fieldName = fieldNameRaw as keyof ProductFormData;
-      const { target, locale } = resolveFieldTargetAndLocale(fieldNameRaw);
+      const { target } = resolveFieldTargetAndLocale(fieldNameRaw);
       if (!target) continue;
 
       const replacementPatterns = orderedPatterns.filter((pattern: ProductValidationPattern) => {
-        if (!pattern.enabled) return false;
-        if (!isPatternEnabledForValidationScope(pattern.appliesToScopes, validationInstanceScope))
-          return false;
         if (isRuntimePatternEnabled(pattern)) return false;
-        if (!pattern.replacementEnabled || !pattern.replacementValue) return false;
-        if (pattern.target !== target) return false;
-        if (!isPatternLocaleMatch(pattern.locale, locale)) return false;
-        return isReplacementAllowedForField(pattern, fieldNameRaw);
+        return isPatternConfiguredForFormatterAutoApply({
+          pattern,
+          fieldName: fieldNameRaw,
+          validationScope: validationInstanceScope,
+        });
       });
 
       if (replacementPatterns.length === 0) continue;
@@ -273,6 +268,13 @@ export default function ProductFormGeneral(): React.JSX.Element {
       let nextValue: string = rawValue;
       const fieldProcessedGroups = new Set<string>();
       for (const pattern of replacementPatterns) {
+        const dynamicRecipe = parseDynamicReplacementRecipe(pattern.replacementValue);
+        const needsLatestProductSource =
+          dynamicRecipe?.sourceMode === 'latest_product_field' ||
+          (pattern.launchEnabled && pattern.launchSourceMode === 'latest_product_field');
+        if (needsLatestProductSource && !latestProductValues) {
+          continue;
+        }
         const inSequenceGroup = isPatternInSequenceGroup(pattern, sequenceGroupCounts);
         let candidateValue: string = inSequenceGroup ? nextValue : rawValue;
         if (inSequenceGroup) {

@@ -4,14 +4,26 @@
 
 import { act, fireEvent, render, screen } from '@testing-library/react';
 import type { JSX } from 'react';
-import { describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { PointerDragProvider, POINTER_DRAG_RETURN_DURATION_MS, POINTER_DRAG_SETTLE_DURATION_MS } from './PointerDragProvider';
 import { PointerDropZone, PointerDraggableBall } from './AddingBallGame.Shared';
 import type { BallItem } from './types';
 
+const { mobileInteractionLockMock, mobileInteractionUnlockMock } = vi.hoisted(() => ({
+  mobileInteractionLockMock: vi.fn(),
+  mobileInteractionUnlockMock: vi.fn(),
+}));
+
 vi.mock('@/features/kangur/ui/hooks/useKangurCoarsePointer', () => ({
   useKangurCoarsePointer: () => true,
+}));
+
+vi.mock('@/features/kangur/ui/hooks/useKangurMobileInteractionScrollLock', () => ({
+  useKangurMobileInteractionScrollLock: () => ({
+    lock: mobileInteractionLockMock,
+    unlock: mobileInteractionUnlockMock,
+  }),
 }));
 
 const TEST_BALL: BallItem = {
@@ -49,6 +61,48 @@ function Harness({
 }
 
 describe('PointerDragProvider physics', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it('locks mobile scroll for the whole pointer-drag lifecycle and unlocks after a valid drop settles', () => {
+    vi.useFakeTimers();
+    const onDrop = vi.fn();
+
+    render(<Harness onDrop={onDrop} />);
+
+    const dragButton = screen.getByRole('button', { name: 'Piłka: 1' });
+    const targetZone = screen.getByTestId('adding-ball-target');
+
+    dragButton.getBoundingClientRect = () => mockRect(10, 10, 64, 64);
+    targetZone.getBoundingClientRect = () => mockRect(200, 100, 160, 88);
+
+    act(() => {
+      fireEvent.pointerDown(dragButton, { clientX: 42, clientY: 42, button: 0 });
+    });
+
+    expect(mobileInteractionLockMock).toHaveBeenCalledTimes(1);
+    expect(mobileInteractionUnlockMock).not.toHaveBeenCalled();
+
+    act(() => {
+      fireEvent(window, new PointerEvent('pointermove', { clientX: 260, clientY: 144 }));
+    });
+    act(() => {
+      fireEvent(window, new PointerEvent('pointerup', { clientX: 260, clientY: 144 }));
+    });
+
+    expect(screen.getByTestId('adding-ball-drag-overlay')).toHaveAttribute('data-phase', 'settling');
+    expect(mobileInteractionUnlockMock).not.toHaveBeenCalled();
+
+    act(() => {
+      vi.advanceTimersByTime(POINTER_DRAG_SETTLE_DURATION_MS);
+    });
+
+    expect(onDrop).toHaveBeenCalledWith('ball-1', 'pool', 'target');
+    expect(mobileInteractionUnlockMock).toHaveBeenCalledTimes(1);
+    vi.useRealTimers();
+  });
+
   it('waits for the settle phase before committing a valid drop', () => {
     vi.useFakeTimers();
     const onDrop = vi.fn();
@@ -111,6 +165,31 @@ describe('PointerDragProvider physics', () => {
 
     expect(onDrop).not.toHaveBeenCalled();
     expect(screen.queryByTestId('adding-ball-drag-overlay')).not.toBeInTheDocument();
+    vi.useRealTimers();
+  });
+
+  it('unlocks mobile scroll when a pointer drag is cancelled', () => {
+    vi.useFakeTimers();
+    const onDrop = vi.fn();
+
+    render(<Harness onDrop={onDrop} />);
+
+    const dragButton = screen.getByRole('button', { name: 'Piłka: 1' });
+    dragButton.getBoundingClientRect = () => mockRect(10, 10, 64, 64);
+
+    act(() => {
+      fireEvent.pointerDown(dragButton, { clientX: 42, clientY: 42, button: 0 });
+    });
+
+    expect(mobileInteractionLockMock).toHaveBeenCalledTimes(1);
+
+    act(() => {
+      fireEvent(window, new PointerEvent('pointercancel', { clientX: 42, clientY: 42 }));
+    });
+
+    expect(onDrop).not.toHaveBeenCalled();
+    expect(screen.queryByTestId('adding-ball-drag-overlay')).not.toBeInTheDocument();
+    expect(mobileInteractionUnlockMock).toHaveBeenCalledTimes(1);
     vi.useRealTimers();
   });
 });

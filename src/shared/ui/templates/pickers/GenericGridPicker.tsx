@@ -63,7 +63,7 @@ export const GenericGridPicker = memo(function GenericGridPicker<
 
   const handleSelect = useCallback(
     (item: T) => {
-      if (!item.disabled && !disabled) {
+      if (onSelect && !item.disabled && !disabled) {
         onSelect(item);
       }
     },
@@ -72,6 +72,7 @@ export const GenericGridPicker = memo(function GenericGridPicker<
 
   const handleKeyDown = useCallback(
     (e: React.KeyboardEvent<HTMLButtonElement>, item: T) => {
+      if (!onSelect) return;
       if (e.key === 'Enter' || e.key === ' ') {
         e.preventDefault();
         handleSelect(item);
@@ -79,7 +80,7 @@ export const GenericGridPicker = memo(function GenericGridPicker<
         clearSearch();
       }
     },
-    [handleSelect, clearSearch]
+    [onSelect, handleSelect, clearSearch]
   );
 
   const hasItems = filtered.length > 0;
@@ -124,13 +125,29 @@ export const GenericGridPicker = memo(function GenericGridPicker<
             gridTemplateColumns: `repeat(${columns}, minmax(0, 1fr))`,
             gap,
           }}
-          role='listbox'
+          role={onSelect ? 'listbox' : 'grid'}
           aria-disabled={disabled}
         >
           {filtered.map((item: T) => {
             const isSelected = selectedId === item.id;
             const isFocused = localFocused === item.id;
             const isDisabledItem = item.disabled || disabled;
+
+            const content = renderItem(item, isSelected);
+
+            if (!onSelect) {
+              return (
+                <div
+                  key={item.id}
+                  className={cn(
+                    'w-full rounded border-0 bg-transparent p-0 text-left transition outline-none',
+                    isDisabledItem && 'opacity-50'
+                  )}
+                >
+                  {content}
+                </div>
+              );
+            }
 
             return (
               <button
@@ -154,7 +171,7 @@ export const GenericGridPicker = memo(function GenericGridPicker<
                   !isDisabledItem && 'hover:ring-1 hover:ring-blue-300'
                 )}
               >
-                {renderItem(item, isSelected)}
+                {content}
               </button>
             );
           })}

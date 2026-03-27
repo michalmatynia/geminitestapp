@@ -11,6 +11,7 @@ import {
   allowsPatternExecutionWithoutRegexMatch,
   areIssueMapsEquivalent,
   buildFieldIssues,
+  isPatternConfiguredForFormatterAutoApply,
   isLatestPriceStockMirrorPattern,
 } from '@/features/products/validation-engine/core';
 
@@ -313,6 +314,46 @@ describe('buildFieldIssues', () => {
       validationScope: SCOPE,
     });
     expect(issues['price']).toHaveLength(1);
+  });
+
+  it('treats matching SKU auto-apply formatter patterns as eligible for automatic replacement', () => {
+    const pattern = makePattern({
+      regex: '^AUTO$',
+      target: 'sku',
+      replacementEnabled: true,
+      replacementAutoApply: true,
+      replacementValue: 'SKU-101',
+      replacementFields: ['sku'],
+      replacementAppliesToScopes: ['product_create'],
+      appliesToScopes: ['product_create'],
+    });
+
+    expect(
+      isPatternConfiguredForFormatterAutoApply({
+        pattern,
+        fieldName: 'sku',
+        validationScope: 'product_create',
+      })
+    ).toBe(true);
+  });
+
+  it('keeps proposal-only formatter patterns out of automatic replacement', () => {
+    const pattern = makePattern({
+      regex: '^AUTO$',
+      target: 'sku',
+      replacementEnabled: true,
+      replacementAutoApply: false,
+      replacementValue: 'SKU-101',
+      replacementFields: ['sku'],
+    });
+
+    expect(
+      isPatternConfiguredForFormatterAutoApply({
+        pattern,
+        fieldName: 'sku',
+        validationScope: 'product_create',
+      })
+    ).toBe(false);
   });
 
   it('supports category inference driven by Name EN segment #4', () => {

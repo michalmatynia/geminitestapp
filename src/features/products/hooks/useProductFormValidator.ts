@@ -14,6 +14,7 @@ import { applyValidatorFieldReplacement } from '@/features/products/lib/applyVal
 import { buildProductValidationSourceValues } from '@/features/products/lib/validatorSourceFields';
 import { getProductValidationFieldChangedAtDependencies } from '@/features/products/lib/validatorTargetAdapters';
 import { useProductValidatorIssues } from '@/features/products/hooks/useProductValidatorIssues';
+import { isPatternConfiguredForFormatterAutoApply } from '@/features/products/validation-engine/core';
 import type {
   ProductValidationDenyBehavior,
   ProductValidationInstanceDenyBehaviorMap,
@@ -839,10 +840,14 @@ export function useProductFormValidator(scopeOverride?: string): UseProductFormV
           if (autoAcceptedIssueKeysRef.current.has(issueKey)) continue;
           const issuePattern = validatorPatternById.get(issue.patternId);
           const shouldAutoApplyReplacement =
-            issuePattern?.replacementAutoApply === true &&
+            issuePattern !== undefined &&
+            isPatternConfiguredForFormatterAutoApply({
+              pattern: issuePattern,
+              fieldName,
+              validationScope: validationInstanceScope,
+            }) &&
             typeof issue.replacementValue === 'string' &&
-            issue.replacementValue.trim().length > 0 &&
-            (issuePattern.runtimeEnabled === true || fieldName === 'categoryId');
+            issue.replacementValue.trim().length > 0;
           if (shouldAutoApplyReplacement) {
             const applied = applyAutoReplacementToField(fieldName, issue.replacementValue ?? '');
             if (!applied) continue;
@@ -927,6 +932,7 @@ export function useProductFormValidator(scopeOverride?: string): UseProductFormV
     formatterEnabled,
     product?.id,
     validationSessionId,
+    validationInstanceScope,
     validatorPatternById,
     validatorEnabled,
     visibleFieldIssues,

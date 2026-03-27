@@ -5,9 +5,11 @@ import {
   FILEMAKER_DATABASE_KEY,
   FILEMAKER_EMAIL_CAMPAIGNS_KEY,
   FILEMAKER_EMAIL_CAMPAIGN_DELIVERIES_KEY,
+  FILEMAKER_EMAIL_CAMPAIGN_DELIVERY_ATTEMPTS_KEY,
   FILEMAKER_EMAIL_CAMPAIGN_EVENTS_KEY,
   FILEMAKER_EMAIL_CAMPAIGN_RUNS_KEY,
   FILEMAKER_EMAIL_CAMPAIGN_SUPPRESSIONS_KEY,
+  parseFilemakerEmailCampaignDeliveryAttemptRegistry,
   parseFilemakerEmailCampaignDeliveryRegistry,
   parseFilemakerEmailCampaignEventRegistry,
   parseFilemakerEmailCampaignRegistry,
@@ -169,6 +171,10 @@ const createRuntimeHarness = (input?: {
       FILEMAKER_EMAIL_CAMPAIGN_DELIVERIES_KEY,
       JSON.stringify({ version: 1, deliveries: [] }),
     ],
+    [
+      FILEMAKER_EMAIL_CAMPAIGN_DELIVERY_ATTEMPTS_KEY,
+      JSON.stringify({ version: 1, attempts: [] }),
+    ],
     [FILEMAKER_EMAIL_CAMPAIGN_EVENTS_KEY, JSON.stringify({ version: 1, events: [] })],
     [
       FILEMAKER_EMAIL_CAMPAIGN_SUPPRESSIONS_KEY,
@@ -279,6 +285,9 @@ describe('filemaker campaign runtime service', () => {
     const storedDeliveries = parseFilemakerEmailCampaignDeliveryRegistry(
       store.get(FILEMAKER_EMAIL_CAMPAIGN_DELIVERIES_KEY)
     );
+    const storedAttempts = parseFilemakerEmailCampaignDeliveryAttemptRegistry(
+      store.get(FILEMAKER_EMAIL_CAMPAIGN_DELIVERY_ATTEMPTS_KEY)
+    );
     const storedEvents = parseFilemakerEmailCampaignEventRegistry(
       store.get(FILEMAKER_EMAIL_CAMPAIGN_EVENTS_KEY)
     );
@@ -287,6 +296,8 @@ describe('filemaker campaign runtime service', () => {
     expect(
       storedDeliveries.deliveries.every((delivery) => delivery.status === 'sent')
     ).toBe(true);
+    expect(storedAttempts.attempts).toHaveLength(2);
+    expect(storedAttempts.attempts.every((attempt) => attempt.status === 'sent')).toBe(true);
     expect(storedEvents.events.some((event) => event.type === 'processing_started')).toBe(true);
     expect(
       storedEvents.events.filter((event) => event.type === 'delivery_sent')
@@ -446,6 +457,125 @@ describe('filemaker campaign runtime service', () => {
     expect(result.deliveries[0]?.emailAddress).toBe('jan@example.com');
   });
 
+  it('requeues retryable failed deliveries and recovers them on a retry processing pass', async () => {
+    const sendCampaignEmail = vi
+      .fn()
+      .mockRejectedValueOnce(
+        new FilemakerCampaignEmailDeliveryError({
+          message: 'Timed out waiting for the SMTP provider.',
+          provider: 'smtp',
+          failureCategory: 'timeout',
+        })
+      )
+      .mockResolvedValueOnce({
+        provider: 'smtp',
+        providerMessage: 'Sent through SMTP.',
+        sentAt: iso,
+      })
+      .mockResolvedValueOnce({
+        provider: 'smtp',
+        providerMessage: 'Sent after retry.',
+        sentAt: iso,
+      });
+    const { service, store } = createRuntimeHarness({
+      sendCampaignEmail,
+    });
+    const launched = await service.launchRun({
+      campaignId: 'campaign-1',
+      mode: 'live',
+    });
+
+    const firstProcessed = await service.processRun({
+      runId: launched.run.id,
+    });
+
+    expect(firstProcessed.run.status).toBe('queued');
+    expect(firstProcessed.progress.sentCount).toBe(1);
+    expect(firstProcessed.progress.failedCount).toBe(1);
+    expect(firstProcessed.retryableDeliveryCount).toBe(1);
+    expect(firstProcessed.suggestedRetryDelayMs).toBe(60_000);
+    const deliveriesAfterFirstPass = parseFilemakerEmailCampaignDeliveryRegistry(
+      store.get(FILEMAKER_EMAIL_CAMPAIGN_DELIVERIES_KEY)
+    );
+    expect(
+      deliveriesAfterFirstPass.deliveries.find(
+        (delivery) => delivery.emailAddress === 'jan@example.com'
+      )?.nextRetryAt
+    ).toBe('2026-03-27T10:01:00.000Z');
+
+    const retriedProcessed = await service.processRun({
+      runId: launched.run.id,
+      reason: 'retry',
+    });
+
+    expect(sendCampaignEmail).toHaveBeenCalledTimes(3);
+    expect(retriedProcessed.run.status).toBe('completed');
+    expect(retriedProcessed.progress.sentCount).toBe(2);
+    expect(retriedProcessed.progress.failedCount).toBe(0);
+
+    const storedDeliveries = parseFilemakerEmailCampaignDeliveryRegistry(
+      store.get(FILEMAKER_EMAIL_CAMPAIGN_DELIVERIES_KEY)
+    );
+    const storedAttempts = parseFilemakerEmailCampaignDeliveryAttemptRegistry(
+      store.get(FILEMAKER_EMAIL_CAMPAIGN_DELIVERY_ATTEMPTS_KEY)
+    );
+    const storedEvents = parseFilemakerEmailCampaignEventRegistry(
+      store.get(FILEMAKER_EMAIL_CAMPAIGN_EVENTS_KEY)
+    );
+
+    expect(
+      storedDeliveries.deliveries.every((delivery) => delivery.status === 'sent')
+    ).toBe(true);
+    expect(storedAttempts.attempts).toHaveLength(3);
+
+    const janAttempts = storedAttempts.attempts
+      .filter((attempt) => attempt.emailAddress === 'jan@example.com')
+      .sort((left, right) => left.attemptNumber - right.attemptNumber);
+    const janDelivery =
+      storedDeliveries.deliveries.find((delivery) => delivery.emailAddress === 'jan@example.com') ??
+      null;
+    expect(janDelivery?.nextRetryAt).toBeNull();
+    expect(janAttempts).toHaveLength(2);
+    expect(janAttempts[0]).toEqual(
+      expect.objectContaining({
+        attemptNumber: 1,
+        status: 'failed',
+        provider: 'smtp',
+        failureCategory: 'timeout',
+      })
+    );
+    expect(janAttempts[1]).toEqual(
+      expect.objectContaining({
+        attemptNumber: 2,
+        status: 'sent',
+        provider: 'smtp',
+        failureCategory: null,
+        providerMessage: 'Sent after retry.',
+      })
+    );
+    expect(
+      storedEvents.events.some(
+        (event) =>
+          event.type === 'status_changed' &&
+          event.message.includes('Queued 1 retryable deliveries for another attempt.')
+      )
+    ).toBe(true);
+    expect(
+      storedEvents.events.some(
+        (event) =>
+          event.type === 'processing_started' &&
+          event.message === 'Retry delivery processing started.'
+      )
+    ).toBe(true);
+    expect(
+      storedEvents.events.some(
+        (event) =>
+          event.type === 'status_changed' &&
+          event.message === 'Run has 1 retryable deliveries pending another attempt.'
+      )
+    ).toBe(true);
+  });
+
   it('pauses the campaign when the configured bounce threshold is exceeded', async () => {
     const sendCampaignEmail = vi
       .fn()
@@ -495,6 +625,9 @@ describe('filemaker campaign runtime service', () => {
     const storedDeliveries = parseFilemakerEmailCampaignDeliveryRegistry(
       store.get(FILEMAKER_EMAIL_CAMPAIGN_DELIVERIES_KEY)
     );
+    const storedAttempts = parseFilemakerEmailCampaignDeliveryAttemptRegistry(
+      store.get(FILEMAKER_EMAIL_CAMPAIGN_DELIVERY_ATTEMPTS_KEY)
+    );
     const storedEvents = parseFilemakerEmailCampaignEventRegistry(
       store.get(FILEMAKER_EMAIL_CAMPAIGN_EVENTS_KEY)
     );
@@ -511,6 +644,15 @@ describe('filemaker campaign runtime service', () => {
         status: 'bounced',
         provider: 'smtp',
         failureCategory: 'hard_bounce',
+      })
+    );
+    expect(storedAttempts.attempts[0]).toEqual(
+      expect.objectContaining({
+        deliveryId: launched.deliveries[0]?.id,
+        status: 'bounced',
+        provider: 'smtp',
+        failureCategory: 'hard_bounce',
+        attemptNumber: 1,
       })
     );
     expect(storedEvents.events.some((event) => event.type === 'delivery_bounced')).toBe(true);

@@ -15,6 +15,7 @@ const {
   pageDataState,
   searchParamsState,
   replaceMock,
+  pushMock,
   openLoginModalMock,
   logoutMock,
   setGuestPlayerNameMock,
@@ -36,6 +37,7 @@ const {
     value: new URLSearchParams(),
   },
   replaceMock: vi.fn(),
+  pushMock: vi.fn(),
   openLoginModalMock: vi.fn(),
   logoutMock: vi.fn(),
   setGuestPlayerNameMock: vi.fn(),
@@ -328,6 +330,9 @@ const messageMap = {
   'KangurGamesLibraryPage.modal.settingsSummary.taskTitleHidden': 'Task title hidden',
   'KangurGamesLibraryPage.modal.settingsSummary.timeDisplayHidden': 'Time display hidden',
   'KangurGamesLibraryPage.modal.instances.contentSetLabel': 'Content set',
+  'KangurGamesLibraryPage.modal.instances.contentSourceLabel': 'Content source',
+  'KangurGamesLibraryPage.modal.instances.engineSourceLabel': 'Engine source',
+  'KangurGamesLibraryPage.modal.instances.sourceCustomDraft': 'Current draft',
   'KangurGamesLibraryPage.modal.instances.titleLabel': 'Instance title',
   'KangurGamesLibraryPage.modal.instances.contentKind.default_content': 'Bundled content',
   'KangurGamesLibraryPage.modal.instances.contentKind.clock_section': 'Clock section',
@@ -361,10 +366,19 @@ const messageMap = {
     'Instance show hour hand',
   'KangurGamesLibraryPage.modal.instances.showMinuteHandAriaLabel':
     'Instance show minute hand',
+  'KangurGamesLibraryPage.modal.instances.newButton': 'New instance',
   'KangurGamesLibraryPage.modal.instances.createButton': 'Create instance',
   'KangurGamesLibraryPage.modal.instances.saveButton': 'Save instance',
+  'KangurGamesLibraryPage.modal.instances.createAndOpenButton': 'Create and open instance',
+  'KangurGamesLibraryPage.modal.instances.saveAndOpenButton': 'Save and open instance',
   'KangurGamesLibraryPage.modal.instances.openButton': 'Open instance',
   'KangurGamesLibraryPage.modal.instances.editButton': 'Edit',
+  'KangurGamesLibraryPage.modal.instances.useContentSetButton': 'Use content set',
+  'KangurGamesLibraryPage.modal.instances.usingContentSetButton': 'Using content set',
+  'KangurGamesLibraryPage.modal.instances.useEngineSettingsButton':
+    'Use engine settings',
+  'KangurGamesLibraryPage.modal.instances.usingEngineSettingsButton':
+    'Using engine settings',
   'KangurGamesLibraryPage.modal.instances.duplicateButton': 'Duplicate',
   'KangurGamesLibraryPage.modal.instances.duplicateSuffix': 'Copy',
   'KangurGamesLibraryPage.modal.instances.enableButton': 'Enable',
@@ -389,9 +403,14 @@ const messageMap = {
   'KangurGamesLibraryPage.modal.instances.listStatusFilterAll': 'All',
   'KangurGamesLibraryPage.modal.instances.listStatusFilterEnabled': 'Enabled',
   'KangurGamesLibraryPage.modal.instances.listStatusFilterDisabled': 'Disabled',
+  'KangurGamesLibraryPage.modal.instances.listContentSetFilterLabel':
+    'Filter saved instances by content set',
+  'KangurGamesLibraryPage.modal.instances.listContentSetFilterAll': 'All content sets',
   'KangurGamesLibraryPage.modal.instances.listSearchEmpty':
     'No saved instances match the current filters.',
   'KangurGamesLibraryPage.modal.instances.listEmpty': 'No saved launchable instances yet.',
+  'KangurGamesLibraryPage.modal.instances.syncError':
+    "We couldn't save the last game-instance change. Try again.",
   'KangurGamesLibraryPage.modal.validation.attachedLessonRequired':
     'Attach this game section to a lesson hub before saving.',
   'KangurGamesLibraryPage.modal.validation.sectionNameRequired':
@@ -425,6 +444,9 @@ vi.mock('next-intl', () => ({
 
 vi.mock('next/navigation', () => ({
   useSearchParams: () => searchParamsState.value,
+  useRouter: () => ({
+    push: pushMock,
+  }),
 }));
 
 vi.mock('next-auth/react', () => ({
@@ -1635,6 +1657,310 @@ describe('GamesLibrary serialization audit', () => {
     expect(getHubClockPreview()).toHaveAttribute('data-show-minute-hand', 'true');
   });
 
+  it('creates and opens a new saved instance directly from the top composer', async () => {
+    pageDataState.value = buildPageDataForGameIds('clock_training');
+    render(<GamesLibrary />);
+
+    const clockCard = document.getElementById('kangur-game-card-clock_training');
+    if (!clockCard) {
+      throw new Error('Clock Training card container not found.');
+    }
+
+    fireEvent.click(within(clockCard).getByRole('button', { name: 'Preview & map' }));
+
+    fireEvent.change(screen.getByLabelText('Content set'), {
+      target: { value: 'clock_training:clock-minutes' },
+    });
+    fireEvent.change(screen.getByLabelText('Instance title'), {
+      target: { value: 'Openable minute challenge' },
+    });
+    fireEvent.change(screen.getByLabelText('Instance initial mode'), {
+      target: { value: 'challenge' },
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: 'Create and open instance' }));
+
+    await waitFor(() => {
+      expect(replaceGameInstancesMutateAsyncMock).toHaveBeenCalledWith({
+        gameId: 'clock_training',
+        instances: [
+          expect.objectContaining({
+            contentSetId: 'clock_training:clock-minutes',
+            engineOverrides: expect.objectContaining({
+              clockInitialMode: 'challenge',
+            }),
+            gameId: 'clock_training',
+            launchableRuntimeId: 'clock_quiz',
+            title: 'Openable minute challenge',
+          }),
+        ],
+      });
+    });
+
+    await waitFor(() => {
+      expect(pushMock).toHaveBeenCalledWith('/games/open-instance');
+    });
+  });
+
+  it('applies only the saved instance content set to the current composer', () => {
+    pageDataState.value = buildPageDataForGameIds('clock_training');
+    gameInstancesByGameIdState.value = {
+      clock_training: [
+        {
+          id: 'clock_instance_hours',
+          gameId: 'clock_training',
+          launchableRuntimeId: 'clock_quiz',
+          contentSetId: 'clock_training:clock-hours',
+          title: 'Hours second',
+          description: 'Hour-focused content set.',
+          emoji: '🕐',
+          enabled: true,
+          sortOrder: 1,
+          engineOverrides: {
+            clockInitialMode: 'challenge',
+            showClockHourHand: false,
+            showClockMinuteHand: false,
+          },
+        },
+      ],
+    };
+
+    render(<GamesLibrary />);
+
+    const clockCard = document.getElementById('kangur-game-card-clock_training');
+    if (!clockCard) {
+      throw new Error('Clock Training card container not found.');
+    }
+
+    fireEvent.click(within(clockCard).getByRole('button', { name: 'Preview & map' }));
+    fireEvent.change(screen.getByLabelText('Content set'), {
+      target: { value: 'clock_training:clock-minutes' },
+    });
+    fireEvent.change(screen.getByLabelText('Instance initial mode'), {
+      target: { value: 'practice' },
+    });
+
+    fireEvent.click(
+      within(screen.getByTestId('games-library-instance-clock_instance_hours')).getByRole(
+        'button',
+        { name: 'Use content set' }
+      )
+    );
+
+    const instancePreview = screen.getByTestId('games-library-instance-preview');
+    expect(screen.getByLabelText('Content set')).toHaveValue('clock_training:clock-hours');
+    expect(screen.getByLabelText('Instance initial mode')).toHaveValue('practice');
+    expect(getInstanceClockPreview()).toHaveAttribute('data-section', 'hours');
+    expect(getInstanceClockPreview()).toHaveAttribute('data-initial-mode', 'practice');
+    expect(instancePreview).toHaveTextContent('Content source: Hours second');
+    expect(instancePreview).toHaveTextContent('Engine source: Current draft');
+    expect(
+      within(screen.getByTestId('games-library-instance-clock_instance_hours')).getByRole(
+        'button',
+        { name: 'Using content set' }
+      )
+    ).toBeDisabled();
+  });
+
+  it('forks cross-instance content-set reuse into a new draft instead of overwriting the selected instance', () => {
+    pageDataState.value = buildPageDataForGameIds('clock_training');
+    gameInstancesByGameIdState.value = {
+      clock_training: [
+        {
+          id: 'clock_instance_minutes',
+          gameId: 'clock_training',
+          launchableRuntimeId: 'clock_quiz',
+          contentSetId: 'clock_training:clock-minutes',
+          title: 'Minutes first',
+          description: 'Minute-focused content set.',
+          emoji: '🕒',
+          enabled: true,
+          sortOrder: 1,
+          engineOverrides: {
+            clockInitialMode: 'practice',
+          },
+        },
+        {
+          id: 'clock_instance_hours',
+          gameId: 'clock_training',
+          launchableRuntimeId: 'clock_quiz',
+          contentSetId: 'clock_training:clock-hours',
+          title: 'Hours second',
+          description: 'Hour-focused content set.',
+          emoji: '🕐',
+          enabled: true,
+          sortOrder: 2,
+          engineOverrides: {
+            clockInitialMode: 'challenge',
+          },
+        },
+      ],
+    };
+
+    render(<GamesLibrary />);
+
+    const clockCard = document.getElementById('kangur-game-card-clock_training');
+    if (!clockCard) {
+      throw new Error('Clock Training card container not found.');
+    }
+
+    fireEvent.click(within(clockCard).getByRole('button', { name: 'Preview & map' }));
+
+    expect(screen.getByLabelText('Instance title')).toHaveValue('Minutes first');
+    expect(screen.getByRole('button', { name: 'Save instance' })).toBeInTheDocument();
+
+    fireEvent.click(
+      within(screen.getByTestId('games-library-instance-clock_instance_hours')).getByRole(
+        'button',
+        { name: 'Use content set' }
+      )
+    );
+
+    const instanceActions = screen.getByTestId('games-library-instance-actions');
+    expect(screen.getByLabelText('Instance title')).toHaveValue('Minutes first');
+    expect(screen.getByLabelText('Content set')).toHaveValue('clock_training:clock-hours');
+    expect(within(instanceActions).getByRole('button', { name: 'Create instance' })).toBeInTheDocument();
+    expect(within(instanceActions).queryByRole('button', { name: 'Save instance' })).toBeNull();
+    expect(within(instanceActions).queryByRole('link', { name: 'Open instance' })).toBeNull();
+  });
+
+  it('applies only the saved instance engine settings to the current composer', () => {
+    pageDataState.value = buildPageDataForGameIds('clock_training');
+    gameInstancesByGameIdState.value = {
+      clock_training: [
+        {
+          id: 'clock_instance_hours',
+          gameId: 'clock_training',
+          launchableRuntimeId: 'clock_quiz',
+          contentSetId: 'clock_training:clock-hours',
+          title: 'Hours second',
+          description: 'Hour-focused content set.',
+          emoji: '🕐',
+          enabled: true,
+          sortOrder: 1,
+          engineOverrides: {
+            clockInitialMode: 'challenge',
+            showClockHourHand: false,
+            showClockMinuteHand: false,
+            showClockModeSwitch: false,
+            showClockTaskTitle: false,
+            showClockTimeDisplay: false,
+          },
+        },
+      ],
+    };
+
+    render(<GamesLibrary />);
+
+    const clockCard = document.getElementById('kangur-game-card-clock_training');
+    if (!clockCard) {
+      throw new Error('Clock Training card container not found.');
+    }
+
+    fireEvent.click(within(clockCard).getByRole('button', { name: 'Preview & map' }));
+    fireEvent.change(screen.getByLabelText('Content set'), {
+      target: { value: 'clock_training:clock-minutes' },
+    });
+    fireEvent.change(screen.getByLabelText('Instance initial mode'), {
+      target: { value: 'practice' },
+    });
+    const instanceShowMinuteHand = screen.getByLabelText(
+      'Instance show minute hand'
+    ) as HTMLInputElement;
+    if (!instanceShowMinuteHand.checked) {
+      fireEvent.click(instanceShowMinuteHand);
+    }
+    expect(instanceShowMinuteHand).toBeChecked();
+
+    fireEvent.click(
+      within(screen.getByTestId('games-library-instance-clock_instance_hours')).getByRole(
+        'button',
+        { name: 'Use engine settings' }
+      )
+    );
+
+    const instancePreview = screen.getByTestId('games-library-instance-preview');
+    expect(screen.getByLabelText('Content set')).toHaveValue('clock_training:clock-minutes');
+    expect(screen.getByLabelText('Instance initial mode')).toHaveValue('challenge');
+    expect(screen.getByLabelText('Instance show minute hand')).not.toBeChecked();
+    expect(getInstanceClockPreview()).toHaveAttribute('data-section', 'minutes');
+    expect(getInstanceClockPreview()).toHaveAttribute('data-initial-mode', 'challenge');
+    expect(instancePreview).toHaveTextContent('Content source: Current draft');
+    expect(instancePreview).toHaveTextContent('Engine source: Hours second');
+    expect(
+      within(screen.getByTestId('games-library-instance-clock_instance_hours')).getByRole(
+        'button',
+        { name: 'Using engine settings' }
+      )
+    ).toBeDisabled();
+  });
+
+  it('forks cross-instance engine reuse into a new draft instead of overwriting the selected instance', () => {
+    pageDataState.value = buildPageDataForGameIds('clock_training');
+    gameInstancesByGameIdState.value = {
+      clock_training: [
+        {
+          id: 'clock_instance_minutes',
+          gameId: 'clock_training',
+          launchableRuntimeId: 'clock_quiz',
+          contentSetId: 'clock_training:clock-minutes',
+          title: 'Minutes first',
+          description: 'Minute-focused content set.',
+          emoji: '🕒',
+          enabled: true,
+          sortOrder: 1,
+          engineOverrides: {
+            clockInitialMode: 'practice',
+            showClockHourHand: true,
+            showClockMinuteHand: true,
+          },
+        },
+        {
+          id: 'clock_instance_hours',
+          gameId: 'clock_training',
+          launchableRuntimeId: 'clock_quiz',
+          contentSetId: 'clock_training:clock-hours',
+          title: 'Hours second',
+          description: 'Hour-focused content set.',
+          emoji: '🕐',
+          enabled: true,
+          sortOrder: 2,
+          engineOverrides: {
+            clockInitialMode: 'challenge',
+            showClockHourHand: false,
+            showClockMinuteHand: false,
+          },
+        },
+      ],
+    };
+
+    render(<GamesLibrary />);
+
+    const clockCard = document.getElementById('kangur-game-card-clock_training');
+    if (!clockCard) {
+      throw new Error('Clock Training card container not found.');
+    }
+
+    fireEvent.click(within(clockCard).getByRole('button', { name: 'Preview & map' }));
+
+    expect(screen.getByLabelText('Content set')).toHaveValue('clock_training:clock-minutes');
+    expect(screen.getByRole('button', { name: 'Save instance' })).toBeInTheDocument();
+
+    fireEvent.click(
+      within(screen.getByTestId('games-library-instance-clock_instance_hours')).getByRole(
+        'button',
+        { name: 'Use engine settings' }
+      )
+    );
+
+    const instanceActions = screen.getByTestId('games-library-instance-actions');
+    expect(screen.getByLabelText('Content set')).toHaveValue('clock_training:clock-minutes');
+    expect(screen.getByLabelText('Instance initial mode')).toHaveValue('challenge');
+    expect(within(instanceActions).getByRole('button', { name: 'Create instance' })).toBeInTheDocument();
+    expect(within(instanceActions).queryByRole('button', { name: 'Save instance' })).toBeNull();
+    expect(within(instanceActions).queryByRole('link', { name: 'Open instance' })).toBeNull();
+  });
+
   it('can sync instance engine settings from the current hub preview without replacing the content feed', () => {
     pageDataState.value = buildPageDataForGameIds('clock_training');
     render(<GamesLibrary />);
@@ -2116,6 +2442,57 @@ describe('GamesLibrary serialization audit', () => {
     expect(screen.getByTestId('games-library-instance-clock_instance_hours')).toBeInTheDocument();
   });
 
+  it('filters saved instances by content set', () => {
+    pageDataState.value = buildPageDataForGameIds('clock_training');
+    gameInstancesByGameIdState.value = {
+      clock_training: [
+        {
+          id: 'clock_instance_minutes',
+          gameId: 'clock_training',
+          launchableRuntimeId: 'clock_quiz',
+          contentSetId: 'clock_training:clock-minutes',
+          title: 'Minutes first',
+          description: 'Minute-focused content set.',
+          emoji: '🕒',
+          enabled: true,
+          sortOrder: 1,
+          engineOverrides: {
+            clockInitialMode: 'challenge',
+          },
+        },
+        {
+          id: 'clock_instance_hours',
+          gameId: 'clock_training',
+          launchableRuntimeId: 'clock_quiz',
+          contentSetId: 'clock_training:clock-hours',
+          title: 'Hours second',
+          description: 'Hour-focused content set.',
+          emoji: '🕐',
+          enabled: false,
+          sortOrder: 2,
+          engineOverrides: {
+            clockInitialMode: 'practice',
+          },
+        },
+      ],
+    };
+
+    render(<GamesLibrary />);
+
+    const clockCard = document.getElementById('kangur-game-card-clock_training');
+    if (!clockCard) {
+      throw new Error('Clock Training card container not found.');
+    }
+
+    fireEvent.click(within(clockCard).getByRole('button', { name: 'Preview & map' }));
+    fireEvent.change(screen.getByLabelText('Filter saved instances by content set'), {
+      target: { value: 'clock_training:clock-minutes' },
+    });
+
+    expect(screen.getByTestId('games-library-instance-clock_instance_minutes')).toBeInTheDocument();
+    expect(screen.queryByTestId('games-library-instance-clock_instance_hours')).toBeNull();
+  });
+
   it('clears saved instance list filters in one action', () => {
     pageDataState.value = buildPageDataForGameIds('clock_training');
     gameInstancesByGameIdState.value = {
@@ -2166,11 +2543,17 @@ describe('GamesLibrary serialization audit', () => {
     const savedInstancesStatusFilter = within(
       screen.getByRole('radiogroup', { name: 'Filter saved instances by status' })
     );
+    const savedInstancesContentSetFilter = screen.getByLabelText(
+      'Filter saved instances by content set'
+    );
 
     fireEvent.change(savedInstancesSearch, {
       target: { value: 'minutes' },
     });
     fireEvent.click(savedInstancesStatusFilter.getByRole('radio', { name: 'Disabled' }));
+    fireEvent.change(savedInstancesContentSetFilter, {
+      target: { value: 'clock_training:clock-hours' },
+    });
 
     expect(screen.getByTestId('games-library-instance-search-empty')).toHaveTextContent(
       'No saved instances match the current filters.'
@@ -2183,8 +2566,212 @@ describe('GamesLibrary serialization audit', () => {
       'aria-checked',
       'true'
     );
+    expect(savedInstancesContentSetFilter).toHaveValue('all');
     expect(screen.getByTestId('games-library-instance-clock_instance_minutes')).toBeInTheDocument();
     expect(screen.getByTestId('games-library-instance-clock_instance_hours')).toBeInTheDocument();
+  });
+
+  it('keeps a new instance draft in the editor when saving fails', async () => {
+    pageDataState.value = buildPageDataForGameIds('clock_training');
+    replaceGameInstancesMutateAsyncMock.mockImplementationOnce(async () => {
+      throw new Error('save failed');
+    });
+
+    render(<GamesLibrary />);
+
+    const clockCard = document.getElementById('kangur-game-card-clock_training');
+    if (!clockCard) {
+      throw new Error('Clock Training card container not found.');
+    }
+
+    fireEvent.click(within(clockCard).getByRole('button', { name: 'Preview & map' }));
+
+    fireEvent.change(screen.getByLabelText('Content set'), {
+      target: { value: 'clock_training:clock-minutes' },
+    });
+    fireEvent.change(screen.getByLabelText('Instance title'), {
+      target: { value: 'Unsaved clock instance' },
+    });
+    fireEvent.change(screen.getByLabelText('Instance description'), {
+      target: { value: 'Keep this new instance draft in the editor.' },
+    });
+    fireEvent.change(screen.getByLabelText('Instance initial mode'), {
+      target: { value: 'challenge' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Create instance' }));
+
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: 'Create instance' })).toBeInTheDocument();
+      expect(screen.getByLabelText('Content set')).toHaveValue(
+        'clock_training:clock-minutes'
+      );
+      expect(screen.getByLabelText('Instance title')).toHaveValue(
+        'Unsaved clock instance'
+      );
+      expect(screen.getByLabelText('Instance description')).toHaveValue(
+        'Keep this new instance draft in the editor.'
+      );
+      expect(screen.getByLabelText('Instance initial mode')).toHaveValue('challenge');
+      expect(screen.getByTestId('games-library-instance-sync-error')).toHaveTextContent(
+        "We couldn't save the last game-instance change. Try again."
+      );
+      expect(getInstanceClockPreview()).toHaveAttribute('data-section', 'minutes');
+      expect(getInstanceClockPreview()).toHaveAttribute('data-initial-mode', 'challenge');
+    });
+
+    fireEvent.change(screen.getByLabelText('Instance title'), {
+      target: { value: 'Unsaved clock instance retry' },
+    });
+
+    expect(screen.queryByTestId('games-library-instance-sync-error')).toBeNull();
+  });
+
+  it('clears stale instance sync errors when switching instance editor context', async () => {
+    pageDataState.value = buildPageDataForGameIds('clock_training');
+    gameInstancesByGameIdState.value = {
+      clock_training: [
+        {
+          id: 'clock_instance_minutes',
+          gameId: 'clock_training',
+          launchableRuntimeId: 'clock_quiz',
+          contentSetId: 'clock_training:clock-minutes',
+          title: 'Minutes first',
+          description: 'Minute-focused content set.',
+          emoji: '🕒',
+          enabled: true,
+          sortOrder: 1,
+          engineOverrides: {
+            clockInitialMode: 'challenge',
+          },
+        },
+        {
+          id: 'clock_instance_hours',
+          gameId: 'clock_training',
+          launchableRuntimeId: 'clock_quiz',
+          contentSetId: 'clock_training:clock-hours',
+          title: 'Hours second',
+          description: 'Hour-focused content set.',
+          emoji: '🕐',
+          enabled: true,
+          sortOrder: 2,
+          engineOverrides: {
+            clockInitialMode: 'practice',
+          },
+        },
+      ],
+    };
+    replaceGameInstancesMutateAsyncMock.mockImplementationOnce(async () => {
+      throw new Error('save failed');
+    });
+
+    render(<GamesLibrary />);
+
+    const clockCard = document.getElementById('kangur-game-card-clock_training');
+    if (!clockCard) {
+      throw new Error('Clock Training card container not found.');
+    }
+
+    fireEvent.click(within(clockCard).getByRole('button', { name: 'Preview & map' }));
+    fireEvent.change(screen.getByLabelText('Instance title'), {
+      target: { value: 'Broken instance save' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Save instance' }));
+
+    await waitFor(() => {
+      expect(screen.getByTestId('games-library-instance-sync-error')).toHaveTextContent(
+        "We couldn't save the last game-instance change. Try again."
+      );
+    });
+
+    fireEvent.click(
+      within(screen.getByTestId('games-library-game-modal')).getByRole('button', {
+        name: 'New instance',
+      })
+    );
+    expect(screen.queryByTestId('games-library-instance-sync-error')).toBeNull();
+    expect(screen.getByRole('button', { name: 'Create instance' })).toBeInTheDocument();
+
+    fireEvent.click(
+      within(screen.getByTestId('games-library-instance-clock_instance_hours')).getByRole(
+        'button',
+        { name: 'Edit' }
+      )
+    );
+    expect(screen.queryByTestId('games-library-instance-sync-error')).toBeNull();
+    expect(screen.getByLabelText('Instance title')).toHaveValue('Hours second');
+  });
+
+  it('restores the edited saved instance when deleting it fails', async () => {
+    pageDataState.value = buildPageDataForGameIds('clock_training');
+    gameInstancesByGameIdState.value = {
+      clock_training: [
+        {
+          id: 'clock_instance_minutes',
+          gameId: 'clock_training',
+          launchableRuntimeId: 'clock_quiz',
+          contentSetId: 'clock_training:clock-minutes',
+          title: 'Minutes first',
+          description: 'Minute-focused content set.',
+          emoji: '🕒',
+          enabled: true,
+          sortOrder: 1,
+          engineOverrides: {
+            clockInitialMode: 'challenge',
+            showClockHourHand: false,
+            showClockMinuteHand: true,
+          },
+        },
+        {
+          id: 'clock_instance_hours',
+          gameId: 'clock_training',
+          launchableRuntimeId: 'clock_quiz',
+          contentSetId: 'clock_training:clock-hours',
+          title: 'Hours second',
+          description: 'Hour-focused content set.',
+          emoji: '🕐',
+          enabled: true,
+          sortOrder: 2,
+          engineOverrides: {
+            clockInitialMode: 'practice',
+          },
+        },
+      ],
+    };
+    replaceGameInstancesMutateAsyncMock.mockImplementationOnce(async () => {
+      throw new Error('delete failed');
+    });
+
+    render(<GamesLibrary />);
+
+    const clockCard = document.getElementById('kangur-game-card-clock_training');
+    if (!clockCard) {
+      throw new Error('Clock Training card container not found.');
+    }
+
+    fireEvent.click(within(clockCard).getByRole('button', { name: 'Preview & map' }));
+
+    expect(screen.getByRole('button', { name: 'Save instance' })).toBeInTheDocument();
+    expect(screen.getByLabelText('Instance title')).toHaveValue('Minutes first');
+
+    fireEvent.click(
+      within(screen.getByTestId('games-library-instance-clock_instance_minutes')).getByRole(
+        'button',
+        { name: 'Remove' }
+      )
+    );
+
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: 'Save instance' })).toBeInTheDocument();
+      expect(screen.getByLabelText('Instance title')).toHaveValue('Minutes first');
+      expect(screen.getByLabelText('Content set')).toHaveValue(
+        'clock_training:clock-minutes'
+      );
+      expect(screen.getByTestId('games-library-instance-sync-error')).toHaveTextContent(
+        "We couldn't save the last game-instance change. Try again."
+      );
+      expect(getInstanceClockPreview()).toHaveAttribute('data-section', 'minutes');
+      expect(getInstanceClockPreview()).toHaveAttribute('data-show-hour-hand', 'false');
+    });
   });
 
   it('keeps unsaved instance edits while reordering a different saved instance', () => {
@@ -3858,6 +4445,89 @@ describe('GamesLibrary serialization audit', () => {
     );
   });
 
+  it('resets saved instance list filters when the modal is closed and reopened for the same game', () => {
+    pageDataState.value = buildPageDataForGameIds('clock_training');
+    gameInstancesByGameIdState.value = {
+      clock_training: [
+        {
+          id: 'clock_instance_minutes',
+          gameId: 'clock_training',
+          launchableRuntimeId: 'clock_quiz',
+          contentSetId: 'clock_training:clock-minutes',
+          title: 'Minutes first',
+          description: 'Minute-focused content set.',
+          emoji: '🕒',
+          enabled: true,
+          sortOrder: 1,
+          engineOverrides: {
+            clockInitialMode: 'challenge',
+          },
+        },
+        {
+          id: 'clock_instance_hours',
+          gameId: 'clock_training',
+          launchableRuntimeId: 'clock_quiz',
+          contentSetId: 'clock_training:clock-hours',
+          title: 'Hours second',
+          description: 'Hour-focused content set.',
+          emoji: '🕐',
+          enabled: false,
+          sortOrder: 2,
+          engineOverrides: {
+            clockInitialMode: 'practice',
+          },
+        },
+      ],
+    };
+
+    render(<GamesLibrary />);
+
+    const clockCard = document.getElementById('kangur-game-card-clock_training');
+    if (!clockCard) {
+      throw new Error('Clock Training card container not found.');
+    }
+
+    fireEvent.click(within(clockCard).getByRole('button', { name: 'Preview & map' }));
+
+    const savedInstancesSearch = screen.getByRole('searchbox', {
+      name: 'Search saved instances',
+    });
+    const savedInstancesStatusFilter = within(
+      screen.getByRole('radiogroup', { name: 'Filter saved instances by status' })
+    );
+    const savedInstancesContentSetFilter = screen.getByLabelText(
+      'Filter saved instances by content set'
+    );
+
+    fireEvent.change(savedInstancesSearch, {
+      target: { value: 'minutes' },
+    });
+    fireEvent.click(savedInstancesStatusFilter.getByRole('radio', { name: 'Disabled' }));
+    fireEvent.change(savedInstancesContentSetFilter, {
+      target: { value: 'clock_training:clock-hours' },
+    });
+
+    expect(screen.getByTestId('games-library-instance-search-empty')).toHaveTextContent(
+      'No saved instances match the current filters.'
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: 'Close' }));
+
+    expect(screen.queryByTestId('games-library-game-modal')).toBeNull();
+
+    fireEvent.click(within(clockCard).getByRole('button', { name: 'Preview & map' }));
+
+    expect(screen.getByRole('searchbox', { name: 'Search saved instances' })).toHaveValue('');
+    expect(
+      within(
+        screen.getByRole('radiogroup', { name: 'Filter saved instances by status' })
+      ).getByRole('radio', { name: 'All' })
+    ).toHaveAttribute('aria-checked', 'true');
+    expect(screen.getByLabelText('Filter saved instances by content set')).toHaveValue('all');
+    expect(screen.getByTestId('games-library-instance-clock_instance_minutes')).toBeInTheDocument();
+    expect(screen.getByTestId('games-library-instance-clock_instance_hours')).toBeInTheDocument();
+  });
+
   it('switches the open modal to the newly selected game without leaking the previous editor state', () => {
     pageDataState.value = buildPageDataForGameIds('clock_training', 'division_groups');
     lessonGameSectionsByGameIdState.value = {
@@ -3938,6 +4608,102 @@ describe('GamesLibrary serialization audit', () => {
       within(screen.getByTestId('games-library-game-modal')).getByRole('heading', {
         name: 'Division Groups',
       })
+    ).toBeInTheDocument();
+  });
+
+  it('switches the open modal to a new game without leaking saved instance list filters', () => {
+    pageDataState.value = buildPageDataForGameIds('clock_training', 'calendar_interactive');
+    gameInstancesByGameIdState.value = {
+      clock_training: [
+        {
+          id: 'clock_instance_minutes',
+          gameId: 'clock_training',
+          launchableRuntimeId: 'clock_quiz',
+          contentSetId: 'clock_training:clock-minutes',
+          title: 'Minutes first',
+          description: 'Minute-focused content set.',
+          emoji: '🕒',
+          enabled: true,
+          sortOrder: 1,
+          engineOverrides: {
+            clockInitialMode: 'challenge',
+          },
+        },
+        {
+          id: 'clock_instance_hours',
+          gameId: 'clock_training',
+          launchableRuntimeId: 'clock_quiz',
+          contentSetId: 'clock_training:clock-hours',
+          title: 'Hours second',
+          description: 'Hour-focused content set.',
+          emoji: '🕐',
+          enabled: false,
+          sortOrder: 2,
+          engineOverrides: {
+            clockInitialMode: 'practice',
+          },
+        },
+      ],
+      calendar_interactive: [
+        {
+          id: 'calendar_instance_weekdays',
+          gameId: 'calendar_interactive',
+          launchableRuntimeId: 'calendar_quiz',
+          contentSetId: 'calendar_interactive:default',
+          title: 'Weekdays practice',
+          description: 'Calendar launch instance for weekdays.',
+          emoji: '📅',
+          enabled: true,
+          sortOrder: 1,
+          engineOverrides: {},
+        },
+      ],
+    };
+
+    render(<GamesLibrary />);
+
+    const clockCard = document.getElementById('kangur-game-card-clock_training');
+    const calendarCard = document.getElementById('kangur-game-card-calendar_interactive');
+
+    if (!clockCard || !calendarCard) {
+      throw new Error('Expected clock and calendar game cards to be rendered.');
+    }
+
+    fireEvent.click(within(clockCard).getByRole('button', { name: 'Preview & map' }));
+
+    fireEvent.change(screen.getByRole('searchbox', { name: 'Search saved instances' }), {
+      target: { value: 'minutes' },
+    });
+    fireEvent.click(
+      within(screen.getByRole('radiogroup', { name: 'Filter saved instances by status' })).getByRole(
+        'radio',
+        { name: 'Disabled' }
+      )
+    );
+    fireEvent.change(screen.getByLabelText('Filter saved instances by content set'), {
+      target: { value: 'clock_training:clock-hours' },
+    });
+
+    expect(screen.getByTestId('games-library-instance-search-empty')).toHaveTextContent(
+      'No saved instances match the current filters.'
+    );
+
+    fireEvent.click(within(calendarCard).getByRole('button', { name: 'Preview & map' }));
+
+    expect(
+      within(screen.getByTestId('games-library-game-modal')).getByRole('heading', {
+        name: 'Calendar Interactive',
+      })
+    ).toBeInTheDocument();
+    expect(screen.getByRole('searchbox', { name: 'Search saved instances' })).toHaveValue('');
+    expect(
+      within(
+        screen.getByRole('radiogroup', { name: 'Filter saved instances by status' })
+      ).getByRole('radio', { name: 'All' })
+    ).toHaveAttribute('aria-checked', 'true');
+    expect(screen.queryByLabelText('Filter saved instances by content set')).toBeNull();
+    expect(
+      screen.getByTestId('games-library-instance-calendar_instance_weekdays')
     ).toBeInTheDocument();
   });
 

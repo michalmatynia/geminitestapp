@@ -88,7 +88,6 @@ import {
 import { useKangurMobileBreakpoint } from '@/features/kangur/ui/hooks/useKangurMobileBreakpoint';
 import { useKangurPageContentEntry } from '@/features/kangur/ui/hooks/useKangurPageContent';
 import { useKangurCoarsePointer } from '@/features/kangur/ui/hooks/useKangurCoarsePointer';
-import { useKangurPageAccess } from '@/features/kangur/ui/hooks/useKangurPageAccess';
 import { useKangurElevatedSession } from '@/features/kangur/ui/hooks/useKangurElevatedSession';
 import { useKangurTutorAnchor } from '@/features/kangur/ui/hooks/useKangurTutorAnchor';
 import { useKangurStorefrontAppearance } from '@/features/kangur/ui/useKangurStorefrontAppearance';
@@ -353,6 +352,40 @@ const renderKangurPrimaryNavigationElevatedUserMenu = ({
   />
 );
 
+function KangurPrimaryNavigationLoginAction({
+  className,
+  fallbackLabel,
+  loginActionRef,
+  onActionClick,
+  onLogin,
+}: {
+  className?: string;
+  fallbackLabel: string;
+  loginActionRef?: React.Ref<HTMLButtonElement>;
+  onActionClick?: () => void;
+  onLogin: () => void;
+}): React.JSX.Element {
+  const { entry: loginActionContent } = useKangurPageContentEntry('shared-nav-login-action');
+
+  return renderNavAction({
+    className,
+    content: (
+      <>
+        <LogIn aria-hidden='true' className={ICON_CLASSNAME} strokeWidth={2.15} />
+        <span className='truncate'>{loginActionContent?.title ?? fallbackLabel}</span>
+      </>
+    ),
+    docId: 'profile_login',
+    elementRef: loginActionRef,
+    onClick: () => {
+      onLogin();
+      onActionClick?.();
+    },
+    testId: 'kangur-primary-nav-login',
+    title: loginActionContent?.summary ?? undefined,
+  });
+}
+
 const resolveTutorFallbackCopy = (
   locale: ReturnType<typeof normalizeSiteLocale>,
   value: string | null | undefined,
@@ -429,7 +462,7 @@ export function KangurPrimaryNavigation({
   const tutorContent = useKangurAiTutorContent();
   const tutor = useOptionalKangurAiTutor();
   const auth = useOptionalKangurAuth();
-  const { elevatedUser: elevatedSessionSnapshot } = useKangurElevatedSession();
+  const { elevatedUser: elevatedSessionSnapshot, isSuperAdmin } = useKangurElevatedSession();
   const storefrontAppearance = useOptionalCmsStorefrontAppearance();
   const kangurAppearance = useKangurStorefrontAppearance();
   const routeTransitionState = useOptionalKangurRouteTransitionState();
@@ -476,8 +509,7 @@ export function KangurPrimaryNavigation({
   const profileAvatar = getKangurAvatarById(activeLearner?.avatarId);
   const shouldRenderElevatedUserMenu =
     effectiveIsAuthenticated && Boolean(elevatedSessionUser);
-  const { canAccess: canAccessGamesLibraryPage } = useKangurPageAccess('GamesLibrary');
-  const canAccessGamesLibrary = effectiveIsAuthenticated && canAccessGamesLibraryPage;
+  const canAccessGamesLibrary = effectiveIsAuthenticated && isSuperAdmin;
   const accessibleCurrentPage = currentPage;
   const effectiveHomeActive = homeActive ?? accessibleCurrentPage === 'Game';
   const learnerProfileIsActive = accessibleCurrentPage === 'LearnerProfile';
@@ -496,7 +528,6 @@ export function KangurPrimaryNavigation({
   const elevatedUserTriggerClassName = isCoarsePointer
     ? 'min-h-12 min-w-12 touch-manipulation select-none active:scale-[0.985]'
     : undefined;
-  const { entry: loginActionContent } = useKangurPageContentEntry('shared-nav-login-action');
   const loginActionRef = useRef<HTMLButtonElement | null>(null);
   const mobileMenuRef = useRef<HTMLDivElement | null>(null);
   const mobileMenuPreviousFocusRef = useRef<HTMLElement | null>(null);
@@ -830,27 +861,13 @@ export function KangurPrimaryNavigation({
           )
         ) : null}
         {onLogin ? (
-          renderNavAction(
-            buildActionWithClose(
-              {
-                className: mobileAuthActionClassName,
-                content: (
-                  <>
-                    <LogIn aria-hidden='true' className={ICON_CLASSNAME} strokeWidth={2.15} />
-                    <span className='truncate'>
-                      {loginActionContent?.title ?? fallbackCopy.loginLabel}
-                    </span>
-                  </>
-                ),
-                docId: 'profile_login',
-                elementRef: loginActionRef,
-                onClick: onLogin,
-                testId: 'kangur-primary-nav-login',
-                title: loginActionContent?.summary ?? undefined,
-              },
-              onActionClick
-            )
-          )
+          <KangurPrimaryNavigationLoginAction
+            className={mobileAuthActionClassName}
+            fallbackLabel={fallbackCopy.loginLabel}
+            loginActionRef={loginActionRef}
+            onActionClick={onActionClick}
+            onLogin={onLogin}
+          />
         ) : null}
       </>
     );

@@ -1,12 +1,12 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { AnimatePresence } from 'framer-motion';
 import { useTranslations } from 'next-intl';
 import { useKangurDocsTooltips } from '@/features/kangur/docs/tooltips';
 import { KangurTopNavigationController } from '@/features/kangur/ui/components/KangurTopNavigationController';
 import type { KangurPrimaryNavigationProps } from '@/features/kangur/ui/components/KangurPrimaryNavigation';
 import { KangurAiTutorSessionSync } from '@/features/kangur/ui/context/KangurAiTutorContext';
+import { LazyAnimatePresence } from '@/features/kangur/ui/components/LazyAnimatePresence';
 import { KangurStandardPageLayout } from '@/features/kangur/ui/components/KangurStandardPageLayout';
 import { useKangurLoginModal } from '@/features/kangur/ui/context/KangurLoginModalContext';
 import { useLessons, LessonsProvider } from './lessons/LessonsContext';
@@ -31,7 +31,9 @@ function LessonsContent() {
     setGuestPlayerName,
   } = useLessons();
   const { openLoginModal } = useKangurLoginModal();
-  const [isTutorSessionSyncReady, setIsTutorSessionSyncReady] = useState(Boolean(activeLesson));
+  const [isDeferredEnhancementsReady, setIsDeferredEnhancementsReady] = useState(
+    Boolean(activeLesson)
+  );
 
   const { user, logout } = auth;
   const { enabled: docsTooltipsEnabled } = useKangurDocsTooltips('lessons');
@@ -104,12 +106,12 @@ function LessonsContent() {
   );
 
   useEffect(() => {
-    if (activeLesson || isTutorSessionSyncReady) {
+    if (activeLesson || isDeferredEnhancementsReady) {
       return;
     }
 
     if (typeof window === 'undefined') {
-      setIsTutorSessionSyncReady(true);
+      setIsDeferredEnhancementsReady(true);
       return;
     }
 
@@ -117,11 +119,11 @@ function LessonsContent() {
     const frameId =
       typeof window.requestAnimationFrame === 'function'
         ? window.requestAnimationFrame(() => {
-            setIsTutorSessionSyncReady(true);
+            setIsDeferredEnhancementsReady(true);
           })
         : window.setTimeout(() => {
             timeoutId = null;
-            setIsTutorSessionSyncReady(true);
+            setIsDeferredEnhancementsReady(true);
           }, 0);
 
     return () => {
@@ -136,11 +138,11 @@ function LessonsContent() {
         window.clearTimeout(frameId);
       }
     };
-  }, [activeLesson, isTutorSessionSyncReady]);
+  }, [activeLesson, isDeferredEnhancementsReady]);
 
   return (
     <>
-      {isTutorSessionSyncReady ? (
+      {isDeferredEnhancementsReady ? (
         <KangurAiTutorSessionSync
           learnerId={user?.activeLearner?.id ?? null}
           sessionContext={lessonTutorContext}
@@ -150,7 +152,7 @@ function LessonsContent() {
         tone='learn'
         id='kangur-lessons-page'
         skipLinkTargetId='kangur-lessons-main'
-        docsRootId='kangur-lessons-page'
+        docsRootId={isDeferredEnhancementsReady ? 'kangur-lessons-page' : undefined}
         docsTooltipsEnabled={docsTooltipsEnabled}
         navigation={<KangurTopNavigationController navigation={navigation} />}
         containerProps={{
@@ -161,12 +163,12 @@ function LessonsContent() {
         }}
       >
         {activeLesson ? (
-          <AnimatePresence mode='wait'>
+          <LazyAnimatePresence mode='wait'>
             <ActiveLessonView
               key={activeLessonId ?? activeLesson.id}
               snapshot={activeLessonRenderSnapshot}
             />
-          </AnimatePresence>
+          </LazyAnimatePresence>
         ) : (
           <LessonsCatalog />
         )}

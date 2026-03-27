@@ -123,6 +123,10 @@ export function AdminFilemakerCampaignControlCentrePage(): React.JSX.Element {
             campaign.alertLevel,
             campaign.status,
             campaign.latestRunStatus ?? '',
+            String(campaign.pendingRetryCount),
+            String(campaign.overdueRetryCount),
+            campaign.nextScheduledRetryAt ?? '',
+            campaign.oldestOverdueRetryAt ?? '',
           ],
           deferredQuery
         )
@@ -133,7 +137,17 @@ export function AdminFilemakerCampaignControlCentrePage(): React.JSX.Element {
   const filteredDomainHealth = useMemo(
     () =>
       overview.domainHealth.filter((domain) =>
-        includeQuery([domain.domain, domain.alertLevel], deferredQuery)
+        includeQuery(
+          [
+            domain.domain,
+            domain.alertLevel,
+            String(domain.pendingRetryCount),
+            String(domain.overdueRetryCount),
+            domain.nextScheduledRetryAt ?? '',
+            domain.oldestOverdueRetryAt ?? '',
+          ],
+          deferredQuery
+        )
       ),
     [deferredQuery, overview.domainHealth]
   );
@@ -284,6 +298,12 @@ export function AdminFilemakerCampaignControlCentrePage(): React.JSX.Element {
             {' '}
             {overview.retryEligibleCount} retryable now, {overview.retryExhaustedCount} exhausted.
             {' '}
+            {overview.overdueRetryCount > 0
+              ? `${overview.overdueRetryCount} overdue. `
+              : ''}
+            {overview.oldestOverdueRetryAgeMinutes != null
+              ? `Oldest overdue retry is ${overview.oldestOverdueRetryAgeMinutes} minutes late. `
+              : ''}
             {overview.nextScheduledRetryAt
               ? `Next retry ${formatTimestamp(overview.nextScheduledRetryAt)}.`
               : 'No retry window is currently scheduled.'}
@@ -378,6 +398,11 @@ export function AdminFilemakerCampaignControlCentrePage(): React.JSX.Element {
                   {retry.failureCategory ? (
                     <Badge variant='outline' className='text-[10px] capitalize'>
                       {retry.failureCategory.replaceAll('_', ' ')}
+                    </Badge>
+                  ) : null}
+                  {Date.parse(retry.nextRetryAt) <= Date.now() ? (
+                    <Badge variant='outline' className='text-[10px] uppercase'>
+                      overdue
                     </Badge>
                   ) : null}
                   <Badge variant='outline' className='text-[10px] uppercase'>
@@ -531,7 +556,7 @@ export function AdminFilemakerCampaignControlCentrePage(): React.JSX.Element {
                     Open Campaign
                   </Button>
                 </div>
-                <div className='mt-4 grid gap-3 md:grid-cols-4'>
+                <div className='mt-4 grid gap-3 md:grid-cols-5'>
                   <div>
                     <div className='text-[11px] text-gray-500'>Accepted</div>
                     <div className='text-sm text-white'>
@@ -552,6 +577,21 @@ export function AdminFilemakerCampaignControlCentrePage(): React.JSX.Element {
                     <div className='text-[11px] text-gray-500'>Queued / Suppressed</div>
                     <div className='text-sm text-white'>
                       {campaign.queuedCount} queued • {campaign.suppressionImpactCount} suppressed
+                    </div>
+                  </div>
+                  <div>
+                    <div className='text-[11px] text-gray-500'>Pending Retries</div>
+                    <div className='text-sm text-white'>
+                      {campaign.pendingRetryCount}
+                      {campaign.overdueRetryCount > 0
+                        ? ` • ${campaign.overdueRetryCount} overdue`
+                        : ''}
+                      {campaign.oldestOverdueRetryAt
+                        ? ` • oldest overdue ${formatTimestamp(campaign.oldestOverdueRetryAt)}`
+                        : ''}
+                      {campaign.nextScheduledRetryAt
+                        ? ` • next ${formatTimestamp(campaign.nextScheduledRetryAt)}`
+                        : ''}
                     </div>
                   </div>
                 </div>
@@ -582,6 +622,7 @@ export function AdminFilemakerCampaignControlCentrePage(): React.JSX.Element {
                   <th className='px-3 py-2'>Accepted</th>
                   <th className='px-3 py-2'>Failure Rate</th>
                   <th className='px-3 py-2'>Bounce Rate</th>
+                  <th className='px-3 py-2'>Pending Retries</th>
                   <th className='px-3 py-2'>Suppressed</th>
                   <th className='px-3 py-2'>Latest</th>
                 </tr>
@@ -601,6 +642,18 @@ export function AdminFilemakerCampaignControlCentrePage(): React.JSX.Element {
                     </td>
                     <td className='px-3 py-3 text-gray-300'>{domain.failureRatePercent}%</td>
                     <td className='px-3 py-3 text-gray-300'>{domain.bounceRatePercent}%</td>
+                    <td className='px-3 py-3 text-gray-300'>
+                      {domain.pendingRetryCount}
+                      {domain.overdueRetryCount > 0
+                        ? ` • ${domain.overdueRetryCount} overdue`
+                        : ''}
+                      {domain.oldestOverdueRetryAt
+                        ? ` • oldest overdue ${formatTimestamp(domain.oldestOverdueRetryAt)}`
+                        : ''}
+                      {domain.nextScheduledRetryAt
+                        ? ` • ${formatTimestamp(domain.nextScheduledRetryAt)}`
+                        : ''}
+                    </td>
                     <td className='px-3 py-3 text-gray-300'>{domain.suppressionCount}</td>
                     <td className='px-3 py-3 text-gray-500'>
                       {formatTimestamp(domain.latestDeliveryAt)}

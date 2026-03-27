@@ -5,21 +5,53 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 
-const { ageGroupState } = vi.hoisted(() => ({
+const {
+  ageGroupState,
+  ageGroupHookMock,
+  coarsePointerMock,
+  localeMock,
+  useTranslationsMock,
+} = vi.hoisted(() => ({
   ageGroupState: {
     value: 'ten_year_old' as 'six_year_old' | 'ten_year_old' | 'grown_ups',
+  },
+  ageGroupHookMock: vi.fn(),
+  coarsePointerMock: vi.fn(() => true),
+  localeMock: vi.fn(() => 'pl'),
+  useTranslationsMock: vi.fn(),
+}));
+
+vi.mock('next-intl', () => ({
+  useLocale: () => localeMock(),
+  useTranslations: (namespace?: string) => {
+    useTranslationsMock(namespace);
+
+    return (key: string, values?: Record<string, string | number>) =>
+      (
+        {
+          'KangurLessonsWidgets.libraryCard.ariaLabel': `Lekcja ${values?.title ?? ''}`.trim(),
+          'KangurLessonsWidgets.libraryCard.closedAssignment': 'Zadanie zamkniete',
+          'KangurLessonsWidgets.libraryCard.completedAssignmentSummary': `Zadanie od rodzica zostalo juz wykonane. ${values?.summary ?? ''}`.trim(),
+          'KangurLessonsWidgets.libraryCard.completedForParent': 'Ukończone dla rodzica',
+          'KangurLessonsWidgets.libraryCard.customContent': 'Wlasna zawartosc',
+          'KangurLessonsWidgets.libraryCard.parentPriority': 'Priorytet rodzica',
+        } as const
+      )[`${namespace}.${key}`] ?? key;
   },
 }));
 
 vi.mock('@/features/kangur/ui/hooks/useKangurCoarsePointer', () => ({
-  useKangurCoarsePointer: () => true,
+  useKangurCoarsePointer: () => coarsePointerMock(),
 }));
 
 vi.mock('@/features/kangur/ui/context/KangurAgeGroupFocusContext', () => ({
-  useKangurAgeGroupFocus: () => ({
-    ageGroup: ageGroupState.value,
-    setAgeGroup: vi.fn(),
-  }),
+  useKangurAgeGroupFocus: () => {
+    ageGroupHookMock();
+    return {
+      ageGroup: ageGroupState.value,
+      setAgeGroup: vi.fn(),
+    };
+  },
 }));
 
 import { KangurLessonLibraryCard } from '@/features/kangur/ui/components/KangurLessonLibraryCard';
@@ -164,5 +196,49 @@ describe('KangurLessonLibraryCard', () => {
     expect(screen.getByTestId('lesson-library-footer-assignment-chip-icon')).toHaveTextContent(
       '📌'
     );
+  });
+
+  it('renders from provided lesson card context without mounting per-card hooks', () => {
+    ageGroupState.value = 'six_year_old';
+    localeMock.mockClear();
+    useTranslationsMock.mockClear();
+    coarsePointerMock.mockClear();
+    ageGroupHookMock.mockClear();
+    const providedTranslationMap = {
+      ariaLabel: 'Lekcja Nauka zegara',
+      closedAssignment: 'Zadanie zamkniete',
+      completedAssignmentSummary: 'Zadanie od rodzica zostalo juz wykonane. Powtórki: 0/1',
+      completedForParent: 'Ukończone dla rodzica',
+      customContent: 'Wlasna zawartosc',
+      parentPriority: 'Priorytet rodzica',
+    } as const;
+    const providedTranslations = vi.fn(
+      (key: string, values?: Record<string, string | number>) =>
+        key === 'ariaLabel'
+          ? `Lekcja ${values?.title ?? ''}`.trim()
+          : key === 'completedAssignmentSummary'
+            ? `Zadanie od rodzica zostalo juz wykonane. ${values?.summary ?? ''}`.trim()
+            : providedTranslationMap[key as keyof typeof providedTranslationMap]
+    );
+
+    render(
+      <KangurLessonLibraryCard
+        completedLessonAssignment={null}
+        hasDocumentContent
+        isCoarsePointer
+        isSixYearOld={false}
+        lesson={lesson}
+        lessonAssignment={lessonAssignment}
+        locale='pl'
+        masteryPresentation={masteryPresentation}
+        onSelect={() => undefined}
+        translations={providedTranslations}
+      />
+    );
+
+    expect(ageGroupHookMock).not.toHaveBeenCalled();
+    expect(providedTranslations).toHaveBeenCalled();
+    expect(screen.getByRole('button')).toHaveClass('min-h-12', 'touch-manipulation');
+    expect(screen.getByText('Priorytet rodzica')).toBeInTheDocument();
   });
 });

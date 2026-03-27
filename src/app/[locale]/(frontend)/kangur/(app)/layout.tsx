@@ -1,4 +1,4 @@
-import { KangurAliasAppLayout } from '@/features/kangur/server';
+import { KangurAliasAppLayout } from '@/features/kangur/server/KangurAliasAppLayout';
 
 type LocalizedKangurAppLayoutProps = {
   children: React.ReactNode;

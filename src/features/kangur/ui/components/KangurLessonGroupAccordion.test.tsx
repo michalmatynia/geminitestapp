@@ -7,8 +7,12 @@ import userEvent from '@testing-library/user-event';
 import { useState } from 'react';
 import { describe, expect, it, vi } from 'vitest';
 
+const { coarsePointerHookMock } = vi.hoisted(() => ({
+  coarsePointerHookMock: vi.fn(() => true),
+}));
+
 vi.mock('@/features/kangur/ui/hooks/useKangurCoarsePointer', () => ({
-  useKangurCoarsePointer: () => true,
+  useKangurCoarsePointer: () => coarsePointerHookMock(),
 }));
 
 import { KangurLessonGroupAccordion } from './KangurLessonGroupAccordion';
@@ -86,5 +90,27 @@ describe('KangurLessonGroupAccordion', () => {
     await waitFor(() => {
       expect(trigger).toHaveAttribute('aria-expanded', 'false');
     });
+  });
+
+  it('uses provided coarse-pointer state without reading the hook', () => {
+    coarsePointerHookMock.mockClear();
+
+    render(
+      <KangurLessonGroupAccordion
+        accordionId='opening-section'
+        fallbackTypeLabel='Grupa'
+        isCoarsePointer={false}
+        isExpanded={false}
+        label='Opening Section'
+        onToggle={() => undefined}
+      >
+        <div>Grouped lesson</div>
+      </KangurLessonGroupAccordion>
+    );
+
+    const trigger = screen.getByRole('button', { name: /opening section/i });
+
+    expect(coarsePointerHookMock).not.toHaveBeenCalled();
+    expect(trigger).not.toHaveClass('min-h-12', 'touch-manipulation');
   });
 });

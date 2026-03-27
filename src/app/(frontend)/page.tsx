@@ -4,7 +4,7 @@ import { JSX } from 'react';
 import { getCmsRepository, isDomainZoningEnabled } from '@/features/cms/server';
 import { getSlugsForDomain, resolveCmsDomainFromHeaders } from '@/features/cms/server';
 import { getKangurPublicAliasHref } from '@/features/kangur/public';
-import { getKangurConfiguredLaunchTarget } from '@/features/kangur/server';
+import { getKangurConfiguredLaunchTarget } from '@/features/kangur/server/launch-route';
 import { getFrontPagePublicOwner, getFrontPageRedirectPath } from '@/shared/lib/front-page-app';
 import { readOptionalRequestHeaders } from '@/shared/lib/request/optional-headers';
 

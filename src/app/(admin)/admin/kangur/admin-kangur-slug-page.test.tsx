@@ -4,13 +4,17 @@
 
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-const { authMock, notFoundMock } = vi.hoisted(() => ({
+const { authMock, notFoundMock, redirectMock, permanentRedirectMock } = vi.hoisted(() => ({
   authMock: vi.fn(),
   notFoundMock: vi.fn(),
+  redirectMock: vi.fn(),
+  permanentRedirectMock: vi.fn(),
 }));
 
 vi.mock('next/navigation', () => ({
   notFound: notFoundMock,
+  redirect: redirectMock,
+  permanentRedirect: permanentRedirectMock,
 }));
 
 vi.mock('@/features/auth/server', () => ({

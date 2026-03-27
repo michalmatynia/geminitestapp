@@ -4,7 +4,7 @@ import { JSX } from 'react';
 import { getCmsRepository } from '@/features/cms/server';
 import { getSlugsForDomain, resolveCmsDomainFromHeaders } from '@/features/cms/server';
 import { getKangurPublicAliasHref } from '@/features/kangur/public';
-import { getKangurConfiguredLaunchTarget } from '@/features/kangur/server';
+import { getKangurConfiguredLaunchTarget } from '@/features/kangur/server/launch-route';
 import {
   buildLocalizedPathname,
   normalizeSiteLocale,

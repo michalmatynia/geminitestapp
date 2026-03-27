@@ -50,6 +50,52 @@ vi.mock('@/shared/lib/front-page-app', () => ({
 
 vi.mock('@/features/kangur/public', () => ({
   KangurPublicApp: kangurPublicAppMock,
+  KangurFeatureRouteShell: kangurFeatureRouteShellMock,
+  getKangurPublicAliasHref: (
+    slugSegments: readonly string[] = [],
+    searchParams?: Record<string, string | string[] | undefined>
+  ) => {
+    const pathname = slugSegments.length > 0 ? `/kangur/${slugSegments.join('/')}` : '/kangur';
+    const query = new URLSearchParams();
+
+    Object.entries(searchParams ?? {}).forEach(([key, value]) => {
+      if (Array.isArray(value)) {
+        value.forEach((entry) => {
+          query.append(key, entry);
+        });
+        return;
+      }
+      if (value != null) {
+        query.set(key, value);
+      }
+    });
+
+    const serialized = query.toString();
+    return serialized ? `${pathname}?${serialized}` : pathname;
+  },
+  getKangurCanonicalPublicHref: (
+    slugSegments: readonly string[] = [],
+    searchParams?: Record<string, string | string[] | undefined>
+  ) => {
+    const pathname = slugSegments.length > 0 ? `/${slugSegments.join('/')}` : '/';
+    const query = new URLSearchParams();
+
+    Object.entries(searchParams ?? {}).forEach(([key, value]) => {
+      if (Array.isArray(value)) {
+        value.forEach((entry) => {
+          query.append(key, entry);
+        });
+        return;
+      }
+      if (value != null) {
+        query.set(key, value);
+      }
+    });
+
+    const serialized = query.toString();
+    return serialized ? `${pathname}?${serialized}` : pathname;
+  },
+  getKangurHomeHref: (pathname = '/') => pathname,
 }));
 
 vi.mock('@/features/kangur/server/launch-route', () => ({
@@ -58,10 +104,6 @@ vi.mock('@/features/kangur/server/launch-route', () => ({
     const resolved = await getKangurConfiguredLaunchTargetMock(slug, searchParams);
     return resolved.href;
   }),
-}));
-
-vi.mock('@/features/kangur/ui/KangurFeatureRouteShell', () => ({
-  KangurFeatureRouteShell: kangurFeatureRouteShellMock,
 }));
 
 vi.mock('@/features/cms/components/frontend/CmsPageRenderer', () => ({
@@ -163,19 +205,15 @@ describe('kangur public-owner frontend routes', () => {
 
   it('keeps legacy /kangur child routes on the server shell when Kangur owns the frontend', async () => {
     const { default: KangurAliasPage } = await import(
-      '@/app/(frontend)/kangur/(app)/[[...slug]]/page'
+      '@/app/(frontend)/kangur/(app)/[...slug]/page'
     );
-    const { KangurServerShell } = await import('@/features/kangur/ui/components/KangurServerShell');
 
     const result = await KangurAliasPage({
       params: Promise.resolve({ slug: ['tests'] }),
       searchParams: Promise.resolve({ focus: 'division' }),
     });
 
-    expect(result).toMatchObject({
-      type: KangurServerShell,
-      props: {},
-    });
+    expect(result).toBeNull();
     expect(redirectMock).not.toHaveBeenCalled();
   });
 
@@ -183,18 +221,14 @@ describe('kangur public-owner frontend routes', () => {
     getFrontPageSettingMock.mockResolvedValue('cms');
 
     const { default: KangurAliasPage } = await import(
-      '@/app/(frontend)/kangur/(app)/[[...slug]]/page'
+      '@/app/(frontend)/kangur/(app)/[...slug]/page'
     );
-    const { KangurServerShell } = await import('@/features/kangur/ui/components/KangurServerShell');
 
     const result = await KangurAliasPage({
       params: Promise.resolve({ slug: ['tests'] }),
     });
 
-    expect(result).toMatchObject({
-      type: KangurServerShell,
-      props: {},
-    });
+    expect(result).toBeNull();
 
     expect(redirectMock).not.toHaveBeenCalled();
   });
@@ -216,23 +250,4 @@ describe('kangur public-owner frontend routes', () => {
     process.env.NODE_ENV = originalNodeEnv;
   });
 
-  it('keeps legacy /kangur/login rendering when CMS owns the frontend', async () => {
-    getFrontPageSettingMock.mockResolvedValue('cms');
-
-    const { default: KangurAliasLoginPage } = await import('@/app/(frontend)/kangur/login/page');
-
-    const result = await KangurAliasLoginPage({});
-
-    expect(result.type).toBe(Symbol.for('react.suspense'));
-    expect(result.props.children).toMatchObject({
-      type: kangurFeatureRouteShellMock,
-    });
-    expect(result.props.fallback).toMatchObject({
-      props: {
-        className: 'sr-only',
-        children: 'routeLoading',
-      },
-    });
-    expect(redirectMock).not.toHaveBeenCalled();
-  });
 });

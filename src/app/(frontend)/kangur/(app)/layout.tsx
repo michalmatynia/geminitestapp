@@ -1,4 +1,4 @@
-import { KangurAliasAppLayout } from '@/features/kangur/server';
+import { KangurAliasAppLayout } from '@/features/kangur/server/KangurAliasAppLayout';
 
 import type { ReactNode } from 'react';
 

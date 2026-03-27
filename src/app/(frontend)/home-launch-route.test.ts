@@ -8,6 +8,7 @@ const {
   getKangurConfiguredLaunchTargetMock,
   getSlugsForDomainMock,
   redirectMock,
+  permanentRedirectMock,
   resolveCmsDomainFromHeadersMock,
   shouldApplyFrontPageAppSelectionMock,
 } = vi.hoisted(() => ({
@@ -18,12 +19,14 @@ const {
   getKangurConfiguredLaunchTargetMock: vi.fn(),
   getSlugsForDomainMock: vi.fn(),
   redirectMock: vi.fn(),
+  permanentRedirectMock: vi.fn(),
   resolveCmsDomainFromHeadersMock: vi.fn(),
   shouldApplyFrontPageAppSelectionMock: vi.fn(),
 }));
 
 vi.mock('next/navigation', () => ({
   redirect: redirectMock,
+  permanentRedirect: permanentRedirectMock,
 }));
 
 vi.mock('next/headers', () => ({
@@ -44,6 +47,10 @@ vi.mock('@/app/(frontend)/home-helpers', () => ({
 vi.mock('@/shared/lib/front-page-app', () => ({
   getFrontPagePublicOwner: getFrontPagePublicOwnerMock,
   getFrontPageRedirectPath: getFrontPageRedirectPathMock,
+}));
+
+vi.mock('@/features/kangur/public', () => ({
+  getKangurPublicAliasHref: () => '/kangur',
 }));
 
 vi.mock('@/features/kangur/server/launch-route', () => ({

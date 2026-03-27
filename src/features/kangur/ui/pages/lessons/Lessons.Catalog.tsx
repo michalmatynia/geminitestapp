@@ -1,5 +1,5 @@
 import { useLocale, useTranslations } from 'next-intl';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import {
   getLocalizedKangurAgeGroupLabel,
   getLocalizedKangurLessonSectionLabel,
@@ -21,6 +21,7 @@ import {
   KangurStatusChip,
 } from '@/features/kangur/ui/design/primitives';
 import { KANGUR_LESSON_PANEL_GAP_CLASSNAME } from '@/features/kangur/ui/design/tokens';
+import { useKangurCoarsePointer } from '@/features/kangur/ui/hooks/useKangurCoarsePointer';
 import { useKangurPageContentEntry } from '@/features/kangur/ui/hooks/useKangurPageContent';
 import type { KangurLesson } from '@/features/kangur/shared/contracts/kangur';
 import type { KangurLessonSection } from '@/shared/contracts/kangur-lesson-sections';
@@ -113,6 +114,109 @@ function LessonsCatalogSkeleton() {
   );
 }
 
+function renderLessonsCatalogIntroDescription({
+  isSixYearOld,
+  label,
+  subject,
+}: {
+  isSixYearOld: boolean;
+  label: string;
+  subject: LessonsViewState['subject'];
+}): ReactNode {
+  if (!isSixYearOld) {
+    return label;
+  }
+
+  const subjectVisual = getKangurSixYearOldSubjectVisual(subject);
+
+  return (
+    <KangurVisualCueContent
+      className='text-lg'
+      detail={
+        <span className='inline-flex items-center gap-1.5 text-lg'>
+          {subjectVisual.introSteps.map((stepIcon, index) => (
+            <span key={`lessons-intro-step-${subject}-${index}`}>{stepIcon}</span>
+          ))}
+        </span>
+      }
+      detailTestId='lessons-intro-description-detail'
+      icon={subjectVisual.icon}
+      iconClassName='text-xl'
+      iconTestId='lessons-intro-description-icon'
+      label={label}
+    />
+  );
+}
+
+function LessonsCatalogIntroCardWithPageContent({
+  children,
+  isSixYearOld,
+  locale,
+  showWordmark,
+  subject,
+  translations,
+}: {
+  children?: ReactNode;
+  isSixYearOld: boolean;
+  locale: string;
+  showWordmark: boolean;
+  subject: LessonsViewState['subject'];
+  translations: LessonsTranslation;
+}): React.JSX.Element {
+  const { entry: lessonListIntroContent } = useKangurPageContentEntry('lessons-list-intro');
+  const title = lessonListIntroContent?.title ?? translations('pageTitle');
+  const descriptionLabel =
+    lessonListIntroContent?.summary ?? translations('introDescription');
+
+  return (
+    <KangurPageIntroCard
+      description={renderLessonsCatalogIntroDescription({
+        isSixYearOld,
+        label: descriptionLabel,
+        subject,
+      })}
+      headingAs='h1'
+      headingTestId='kangur-lessons-list-heading'
+      showBackButton={false}
+      testId='lessons-list-intro-card'
+      title={title}
+      visualTitle={showWordmark ? (
+        <KangurLessonsWordmark
+          className='mx-auto'
+          data-testid='kangur-lessons-heading-art'
+          label={title}
+          locale={locale}
+        />
+      ) : undefined}
+    >
+      {children}
+    </KangurPageIntroCard>
+  );
+}
+
+function LessonsCatalogEmptyStateWithPageContent({
+  ageGroupLabel,
+  translations,
+}: {
+  ageGroupLabel: string;
+  translations: LessonsTranslation;
+}): React.JSX.Element {
+  const { entry: lessonListEmptyStateContent } = useKangurPageContentEntry(
+    'lessons-list-empty-state'
+  );
+
+  return (
+    <KangurEmptyState
+      accent='indigo'
+      description={
+        lessonListEmptyStateContent?.summary ??
+        translations('emptyDescription', { ageGroup: ageGroupLabel })
+      }
+      title={lessonListEmptyStateContent?.title ?? translations('emptyTitle')}
+    />
+  );
+}
+
 function LessonsCatalogResolvedContent({
   activeLessonId,
   completedLessonAssignmentsByComponent,
@@ -134,6 +238,8 @@ function LessonsCatalogResolvedContent({
   useEffect(() => {
     setExpandedLessonGroupId(null);
   }, [subject]);
+
+  const isCoarsePointer = useKangurCoarsePointer();
 
   const displayLessonGroups: LessonGroup[] = useMemo(() => {
     if (lessonSections.length === 0) {
@@ -175,65 +281,110 @@ function LessonsCatalogResolvedContent({
       .filter((group) => (group.subsections ? group.subsections.length > 0 : group.lessons.length > 0));
   }, [lessonSections, locale, orderedLessons]);
 
+  const lessonCardStateById = useMemo(
+    () =>
+      new Map(
+        orderedLessons.map((lesson) => {
+          const lessonAssignment = lessonAssignmentsByComponent.get(lesson.componentId) ?? null;
+          return [
+            lesson.id,
+            {
+              completedLessonAssignment: !lessonAssignment
+                ? (completedLessonAssignmentsByComponent.get(lesson.componentId) ?? null)
+                : null,
+              hasDocumentContent: hasKangurLessonDocumentContent(lessonDocuments[lesson.id]),
+              lessonAssignment,
+              masteryPresentation: getLessonMasteryPresentation(
+                lesson,
+                progress,
+                masteryTranslations
+              ),
+            },
+          ] as const;
+        })
+      ),
+    [
+      completedLessonAssignmentsByComponent,
+      lessonAssignmentsByComponent,
+      lessonDocuments,
+      masteryTranslations,
+      orderedLessons,
+      progress,
+    ]
+  );
+
   type LessonEntry =
     | { kind: 'group'; group: (typeof displayLessonGroups)[number] }
     | { kind: 'lesson'; lesson: KangurLesson };
 
-  const lessonEntries: LessonEntry[] = [];
-  type LessonGroupId = (typeof displayLessonGroups)[number]['id'];
-  const lessonGroupById = new Map<LessonGroupId, (typeof displayLessonGroups)[number]>(
-    displayLessonGroups.map((group) => [group.id, group])
-  );
-  const lessonGroupIdByComponent = new Map<string, LessonGroupId>();
+  const lessonEntries: LessonEntry[] = useMemo(() => {
+    type LessonGroupId = (typeof displayLessonGroups)[number]['id'];
+    const lessonGroupById = new Map<LessonGroupId, (typeof displayLessonGroups)[number]>(
+      displayLessonGroups.map((group) => [group.id, group])
+    );
+    const lessonGroupIdByComponent = new Map<string, LessonGroupId>();
 
-  displayLessonGroups.forEach((group) => {
-    const groupedLessons = group.subsections
-      ? group.subsections.flatMap((subsection) => subsection.lessons)
-      : group.lessons;
+    displayLessonGroups.forEach((group) => {
+      const groupedLessons = group.subsections
+        ? group.subsections.flatMap((subsection) => subsection.lessons)
+        : group.lessons;
 
-    groupedLessons.forEach((lesson) => {
-      lessonGroupIdByComponent.set(lesson.componentId, group.id);
+      groupedLessons.forEach((lesson) => {
+        lessonGroupIdByComponent.set(lesson.componentId, group.id);
+      });
     });
-  });
 
-  const usedGroupIds = new Set<string>();
-  orderedLessons.forEach((lesson) => {
-    const groupId = lessonGroupIdByComponent.get(lesson.componentId);
-    if (groupId) {
-      if (!usedGroupIds.has(groupId)) {
-        const group = lessonGroupById.get(groupId);
-        if (group) {
-          lessonEntries.push({ kind: 'group', group });
+    const resolvedEntries: LessonEntry[] = [];
+    const usedGroupIds = new Set<string>();
+    orderedLessons.forEach((lesson) => {
+      const groupId = lessonGroupIdByComponent.get(lesson.componentId);
+      if (groupId) {
+        if (!usedGroupIds.has(groupId)) {
+          const group = lessonGroupById.get(groupId);
+          if (group) {
+            resolvedEntries.push({ kind: 'group', group });
+          }
+          usedGroupIds.add(groupId);
         }
-        usedGroupIds.add(groupId);
+        return;
       }
-      return;
+
+      resolvedEntries.push({ kind: 'lesson', lesson });
+    });
+
+    return resolvedEntries;
+  }, [displayLessonGroups, orderedLessons]);
+
+  const renderLessonCard = (lesson: KangurLesson, _index: number) => {
+    const lessonCardState = lessonCardStateById.get(lesson.id);
+    if (!lessonCardState) {
+      return null;
     }
 
-    lessonEntries.push({ kind: 'lesson', lesson });
-  });
-
-  const renderLessonCard = (lesson: KangurLesson, _index: number) => (
-    <div
-      className='w-full'
-      key={lesson.id}
-      data-testid={`lesson-library-motion-${lesson.id}`}
-    >
+    return (
+      <div
+        className='w-full'
+        key={lesson.id}
+        data-testid={`lesson-library-motion-${lesson.id}`}
+      >
       <KangurLessonLibraryCard
         lesson={lesson}
         dataDocId='lessons_library_entry'
         iconTestId={`lesson-library-icon-${lesson.id}`}
+        isCoarsePointer={isCoarsePointer}
+        isSixYearOld={isSixYearOld}
+        locale={locale}
         onSelect={() => handleSelectLesson(lesson.id)}
-        masteryPresentation={getLessonMasteryPresentation(lesson, progress, masteryTranslations)}
-        lessonAssignment={lessonAssignmentsByComponent.get(lesson.componentId) ?? null}
-        completedLessonAssignment={
-          completedLessonAssignmentsByComponent.get(lesson.componentId) ?? null
-        }
-        hasDocumentContent={hasKangurLessonDocumentContent(lessonDocuments[lesson.id])}
+        masteryPresentation={lessonCardState.masteryPresentation}
+        lessonAssignment={lessonCardState.lessonAssignment}
+        completedLessonAssignment={lessonCardState.completedLessonAssignment}
+        hasDocumentContent={lessonCardState.hasDocumentContent}
         ariaCurrent={activeLessonId === lesson.id ? 'page' : undefined}
+        translations={translations}
       />
-    </div>
-  );
+      </div>
+    );
+  };
 
   let lessonIndex = 0;
 
@@ -261,6 +412,7 @@ function LessonsCatalogResolvedContent({
                 )
               }
               isExpanded={isExpanded}
+              isCoarsePointer={isCoarsePointer}
               key={entry.group.id}
               label={
                 isSixYearOld ? (
@@ -353,34 +505,42 @@ export function LessonsCatalog() {
     isLessonSectionsLoading,
     shouldShowLessonsCatalogSkeleton,
   } = useLessons();
+  const [isPageContentReady, setIsPageContentReady] = useState(false);
 
-  const { entry: lessonListIntroContent } = useKangurPageContentEntry('lessons-list-intro');
-  const { entry: lessonListEmptyStateContent } = useKangurPageContentEntry('lessons-list-empty-state');
+  useEffect(() => {
+    if (typeof window === 'undefined') {
+      setIsPageContentReady(true);
+      return;
+    }
+
+    let timeoutId: number | null = null;
+    const frameId =
+      typeof window.requestAnimationFrame === 'function'
+        ? window.requestAnimationFrame(() => {
+            setIsPageContentReady(true);
+          })
+        : window.setTimeout(() => {
+            timeoutId = null;
+            setIsPageContentReady(true);
+          }, 0);
+
+    return () => {
+      if (timeoutId !== null) {
+        window.clearTimeout(timeoutId);
+        return;
+      }
+
+      if (typeof window.cancelAnimationFrame === 'function') {
+        window.cancelAnimationFrame(frameId);
+      } else {
+        window.clearTimeout(frameId);
+      }
+    };
+  }, []);
 
   const ageGroupLabel = getLocalizedKangurAgeGroupLabel(ageGroup, locale);
   const isSixYearOld = ageGroup === 'six_year_old';
   const subjectVisual = getKangurSixYearOldSubjectVisual(subject);
-  const lessonListIntroDescriptionLabel =
-    lessonListIntroContent?.summary ?? translations('introDescription');
-  const lessonListIntroDescription = isSixYearOld ? (
-    <KangurVisualCueContent
-      className='text-lg'
-      detail={
-        <span className='inline-flex items-center gap-1.5 text-lg'>
-          {subjectVisual.introSteps.map((stepIcon, index) => (
-            <span key={`lessons-intro-step-${subject}-${index}`}>{stepIcon}</span>
-          ))}
-        </span>
-      }
-      detailTestId='lessons-intro-description-detail'
-      icon={subjectVisual.icon}
-      iconClassName='text-xl'
-      iconTestId='lessons-intro-description-icon'
-      label={lessonListIntroDescriptionLabel}
-    />
-  ) : (
-    lessonListIntroDescriptionLabel
-  );
   const loadingStatusLabel = isLessonSectionsLoading
     ? translations('loadingSectionsStatus')
     : translations('loadingLessonsStatus');
@@ -395,62 +555,116 @@ export function LessonsCatalog() {
   return (
     <div className={LESSONS_LIBRARY_LAYOUT_CLASSNAME} data-testid='lessons-shell-transition'>
       <div id='kangur-lessons-intro' className='w-full'>
-        <KangurPageIntroCard
-          description={lessonListIntroDescription}
-          headingAs='h1'
-          headingTestId='kangur-lessons-list-heading'
-          showBackButton={false}
-          testId='lessons-list-intro-card'
-          title={lessonListIntroContent?.title ?? translations('pageTitle')}
-          visualTitle={
-            <KangurLessonsWordmark
-              className='mx-auto'
-              data-testid='kangur-lessons-heading-art'
-              label={lessonListIntroContent?.title ?? translations('pageTitle')}
-              locale={locale}
-            />
-          }
-        >
-          {shouldShowIntroLoadingState ? (
-            <div className='w-full' data-testid='lessons-intro-loading-state'>
-              <KangurInfoCard
-                accent='indigo'
-                aria-live='polite'
-                className='mx-auto w-full max-w-2xl text-left'
-                data-testid='lessons-intro-loading-card'
-                padding='md'
-                role='status'
-                tone='accent'
-              >
-                <div className='flex items-start gap-3 sm:items-center'>
-                  <div
-                    aria-hidden='true'
-                    className='mt-0.5 flex size-9 shrink-0 items-center justify-center rounded-full bg-white/80 text-indigo-500 sm:mt-0'
-                  >
-                    <span className='size-3 rounded-full bg-current animate-pulse' />
+        {isPageContentReady ? (
+          <LessonsCatalogIntroCardWithPageContent
+            isSixYearOld={isSixYearOld}
+            locale={locale}
+            showWordmark={true}
+            subject={subject}
+            translations={translations}
+          >
+            {shouldShowIntroLoadingState ? (
+              <div className='w-full' data-testid='lessons-intro-loading-state'>
+                <KangurInfoCard
+                  accent='indigo'
+                  aria-live='polite'
+                  className='mx-auto w-full max-w-2xl text-left'
+                  data-testid='lessons-intro-loading-card'
+                  padding='md'
+                  role='status'
+                  tone='accent'
+                >
+                  <div className='flex items-start gap-3 sm:items-center'>
+                    <div
+                      aria-hidden='true'
+                      className='mt-0.5 flex size-9 shrink-0 items-center justify-center rounded-full bg-white/80 text-indigo-500 sm:mt-0'
+                    >
+                      <span className='size-3 rounded-full bg-current animate-pulse' />
+                    </div>
+                    <div className='min-w-0 flex-1'>
+                      <KangurStatusChip accent='indigo' labelStyle='caps' size='sm'>
+                        {isSixYearOld ? (
+                          <KangurVisualCueContent
+                            icon='⏳'
+                            iconClassName='text-base'
+                            iconTestId='lessons-intro-loading-icon'
+                            label={loadingStatusLabel}
+                          />
+                        ) : (
+                          loadingStatusLabel
+                        )}
+                      </KangurStatusChip>
+                      <p className='mt-2 text-sm leading-6 text-current/90'>
+                        {loadingStatusDescription}
+                      </p>
+                    </div>
                   </div>
-                  <div className='min-w-0 flex-1'>
-                    <KangurStatusChip accent='indigo' labelStyle='caps' size='sm'>
-                      {isSixYearOld ? (
-                        <KangurVisualCueContent
-                          icon='⏳'
-                          iconClassName='text-base'
-                          iconTestId='lessons-intro-loading-icon'
-                          label={loadingStatusLabel}
-                        />
-                      ) : (
-                        loadingStatusLabel
-                      )}
-                    </KangurStatusChip>
-                    <p className='mt-2 text-sm leading-6 text-current/90'>
-                      {loadingStatusDescription}
-                    </p>
+                </KangurInfoCard>
+              </div>
+            ) : null}
+          </LessonsCatalogIntroCardWithPageContent>
+        ) : (
+          <KangurPageIntroCard
+            description={renderLessonsCatalogIntroDescription({
+              isSixYearOld,
+              label: translations('introDescription'),
+              subject,
+            })}
+            headingAs='h1'
+            headingTestId='kangur-lessons-list-heading'
+            showBackButton={false}
+            testId='lessons-list-intro-card'
+            title={translations('pageTitle')}
+            visualTitle={isPageContentReady ? (
+              <KangurLessonsWordmark
+                className='mx-auto'
+                data-testid='kangur-lessons-heading-art'
+                label={translations('pageTitle')}
+                locale={locale}
+              />
+            ) : undefined}
+          >
+            {shouldShowIntroLoadingState ? (
+              <div className='w-full' data-testid='lessons-intro-loading-state'>
+                <KangurInfoCard
+                  accent='indigo'
+                  aria-live='polite'
+                  className='mx-auto w-full max-w-2xl text-left'
+                  data-testid='lessons-intro-loading-card'
+                  padding='md'
+                  role='status'
+                  tone='accent'
+                >
+                  <div className='flex items-start gap-3 sm:items-center'>
+                    <div
+                      aria-hidden='true'
+                      className='mt-0.5 flex size-9 shrink-0 items-center justify-center rounded-full bg-white/80 text-indigo-500 sm:mt-0'
+                    >
+                      <span className='size-3 rounded-full bg-current animate-pulse' />
+                    </div>
+                    <div className='min-w-0 flex-1'>
+                      <KangurStatusChip accent='indigo' labelStyle='caps' size='sm'>
+                        {isSixYearOld ? (
+                          <KangurVisualCueContent
+                            icon='⏳'
+                            iconClassName='text-base'
+                            iconTestId='lessons-intro-loading-icon'
+                            label={loadingStatusLabel}
+                          />
+                        ) : (
+                          loadingStatusLabel
+                        )}
+                      </KangurStatusChip>
+                      <p className='mt-2 text-sm leading-6 text-current/90'>
+                        {loadingStatusDescription}
+                      </p>
+                    </div>
                   </div>
-                </div>
-              </KangurInfoCard>
-            </div>
-          ) : null}
-        </KangurPageIntroCard>
+                </KangurInfoCard>
+              </div>
+            ) : null}
+          </KangurPageIntroCard>
+        )}
       </div>
       <div
         aria-busy={shouldShowLessonsCatalogSkeleton}
@@ -460,14 +674,18 @@ export function LessonsCatalog() {
         {shouldShowLessonsCatalogSkeleton ? (
           <LessonsCatalogSkeleton />
         ) : orderedLessons.length === 0 ? (
-          <KangurEmptyState
-            accent='indigo'
-            description={
-              lessonListEmptyStateContent?.summary ??
-              translations('emptyDescription', { ageGroup: ageGroupLabel })
-            }
-            title={lessonListEmptyStateContent?.title ?? translations('emptyTitle')}
-          />
+          isPageContentReady ? (
+            <LessonsCatalogEmptyStateWithPageContent
+              ageGroupLabel={ageGroupLabel}
+              translations={translations}
+            />
+          ) : (
+            <KangurEmptyState
+              accent='indigo'
+              description={translations('emptyDescription', { ageGroup: ageGroupLabel })}
+              title={translations('emptyTitle')}
+            />
+          )
         ) : (
           <LessonsCatalogResolvedContent
             activeLessonId={activeLessonId}

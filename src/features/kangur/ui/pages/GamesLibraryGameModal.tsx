@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { useRouter } from 'next/navigation';
 
 import { KANGUR_LESSON_LIBRARY } from '@/features/kangur/lessons/lesson-catalog';
 import {
@@ -100,14 +101,17 @@ type GameInstanceEditorState = {
 };
 
 type SavedSectionsStatusFilter = 'all' | 'enabled' | 'disabled';
+type SavedInstancesContentSetFilter = KangurGameContentSetId | 'all';
 type SavedSectionsStatusFilterOption = {
   label: string;
   value: SavedSectionsStatusFilter;
 };
 
 type PendingInstanceEditorRestoreState = {
+  contentSourceInstanceId: string | null;
   editorBaseline: GameInstanceEditorState | null;
   editorState: GameInstanceEditorState;
+  engineSourceInstanceId: string | null;
   preferNewInstanceDraft: boolean;
   selectedInstanceId: string | null;
 };
@@ -513,6 +517,7 @@ export function GamesLibraryGameModal({
   game,
   basePath,
 }: GamesLibraryGameModalProps): React.JSX.Element {
+  const router = useRouter();
   const locale = useLocale();
   const translations = useTranslations('KangurGamesLibraryPage');
   const gameInstancesQuery = useKangurGameInstances({
@@ -533,6 +538,10 @@ export function GamesLibraryGameModal({
   const [instanceEnabled, setInstanceEnabled] = useState(true);
   const [selectedContentSetId, setSelectedContentSetId] =
     useState<KangurGameContentSetId | null>(null);
+  const [instanceContentSourceInstanceId, setInstanceContentSourceInstanceId] =
+    useState<string | null>(null);
+  const [instanceEngineSourceInstanceId, setInstanceEngineSourceInstanceId] =
+    useState<string | null>(null);
   const [instanceEditorBaseline, setInstanceEditorBaseline] =
     useState<GameInstanceEditorState | null>(null);
   const [optimisticInstances, setOptimisticInstances] = useState<KangurGameInstance[] | null>(null);
@@ -551,6 +560,8 @@ export function GamesLibraryGameModal({
   const [savedInstancesQuery, setSavedInstancesQuery] = useState('');
   const [savedInstancesStatusFilter, setSavedInstancesStatusFilter] =
     useState<SavedSectionsStatusFilter>('all');
+  const [savedInstancesContentSetFilter, setSavedInstancesContentSetFilter] =
+    useState<SavedInstancesContentSetFilter>('all');
   const [optimisticSections, setOptimisticSections] = useState<KangurLessonGameSection[] | null>(
     null
   );
@@ -586,6 +597,14 @@ export function GamesLibraryGameModal({
       : contentSets.find((contentSet) => contentSet.id === selectedContentSetId) ??
         contentSets[0] ??
         null;
+  const instanceContentSource =
+    instanceContentSourceInstanceId === null
+      ? null
+      : activeInstances.find((instance) => instance.id === instanceContentSourceInstanceId) ?? null;
+  const instanceEngineSource =
+    instanceEngineSourceInstanceId === null
+      ? null
+      : activeInstances.find((instance) => instance.id === instanceEngineSourceInstanceId) ?? null;
   const selectedContentSetRendererProps = resolveContentSetRendererProps(selectedContentSet);
   const selectedContentSetFeedSummary = selectedContentSet
     ? buildContentSetFeedSummary(selectedContentSet, translations)
@@ -637,6 +656,30 @@ export function GamesLibraryGameModal({
     setInstanceTitle(editorState.instanceTitle);
   };
 
+  const applyInstanceSourceState = (input: {
+    contentSourceInstanceId: string | null;
+    engineSourceInstanceId: string | null;
+  }): void => {
+    setInstanceContentSourceInstanceId(input.contentSourceInstanceId);
+    setInstanceEngineSourceInstanceId(input.engineSourceInstanceId);
+  };
+
+  const capturePendingInstanceEditorRestoreState = (input: {
+    contentSourceInstanceId?: string | null;
+    editorBaseline: GameInstanceEditorState | null;
+    editorState: GameInstanceEditorState;
+    engineSourceInstanceId?: string | null;
+    preferNewInstanceDraft: boolean;
+    selectedInstanceId: string | null;
+  }): PendingInstanceEditorRestoreState => ({
+    contentSourceInstanceId: input.contentSourceInstanceId ?? instanceContentSourceInstanceId,
+    editorBaseline: input.editorBaseline,
+    editorState: input.editorState,
+    engineSourceInstanceId: input.engineSourceInstanceId ?? instanceEngineSourceInstanceId,
+    preferNewInstanceDraft: input.preferNewInstanceDraft,
+    selectedInstanceId: input.selectedInstanceId,
+  });
+
   const syncEditorFromInstance = (
     instance: KangurGameInstance | null,
     nextGame: KangurGameDefinition
@@ -650,6 +693,10 @@ export function GamesLibraryGameModal({
     setPreferNewInstanceDraft(instance === null);
     setSelectedInstanceId(instance?.id ?? null);
     applyInstanceEditorState(nextEditorState);
+    applyInstanceSourceState({
+      contentSourceInstanceId: instance?.id ?? null,
+      engineSourceInstanceId: instance?.id ?? null,
+    });
     setInstanceEditorBaseline(nextEditorState);
   };
 
@@ -677,6 +724,8 @@ export function GamesLibraryGameModal({
     setSelectedInstanceId(null);
     setPreferNewInstanceDraft(false);
     setSelectedContentSetId(null);
+    setInstanceContentSourceInstanceId(null);
+    setInstanceEngineSourceInstanceId(null);
     setInstanceTitle('');
     setInstanceDescription('');
     setInstanceEmoji('🎮');
@@ -684,6 +733,9 @@ export function GamesLibraryGameModal({
     setInstanceEditorBaseline(null);
     setOptimisticInstances(null);
     setInstanceSyncError(null);
+    setSavedInstancesQuery('');
+    setSavedInstancesStatusFilter('all');
+    setSavedInstancesContentSetFilter('all');
     setSelectedSectionId(null);
     setPreferNewDraft(false);
     setAttachedLessonId(null);
@@ -735,6 +787,10 @@ export function GamesLibraryGameModal({
       setPreferNewInstanceDraft(pendingInstanceEditorRestore.preferNewInstanceDraft);
       setSelectedInstanceId(pendingInstanceEditorRestore.selectedInstanceId);
       applyInstanceEditorState(pendingInstanceEditorRestore.editorState);
+      applyInstanceSourceState({
+        contentSourceInstanceId: pendingInstanceEditorRestore.contentSourceInstanceId,
+        engineSourceInstanceId: pendingInstanceEditorRestore.engineSourceInstanceId,
+      });
       setInstanceEditorBaseline(pendingInstanceEditorRestore.editorBaseline);
       return;
     }
@@ -895,6 +951,12 @@ export function GamesLibraryGameModal({
       if (savedInstancesStatusFilter === 'disabled' && instance.enabled) {
         return false;
       }
+      if (
+        savedInstancesContentSetFilter !== 'all' &&
+        instance.contentSetId !== savedInstancesContentSetFilter
+      ) {
+        return false;
+      }
       if (!normalizedQuery) {
         return true;
       }
@@ -918,12 +980,15 @@ export function GamesLibraryGameModal({
   }, [
     activeInstances,
     contentSets,
+    savedInstancesContentSetFilter,
     savedInstancesQuery,
     savedInstancesStatusFilter,
     translations,
   ]);
   const hasSavedInstancesFilters =
-    savedInstancesQuery.trim().length > 0 || savedInstancesStatusFilter !== 'all';
+    savedInstancesQuery.trim().length > 0 ||
+    savedInstancesStatusFilter !== 'all' ||
+    savedInstancesContentSetFilter !== 'all';
 
   const linkedLessonIds = useMemo(
     () =>
@@ -1073,6 +1138,20 @@ export function GamesLibraryGameModal({
     syncEditorFromInstance(instance, game);
   };
 
+  const forkInstanceEditorToDraft = (
+    nextEditorState: GameInstanceEditorState,
+    input: {
+      contentSourceInstanceId: string | null;
+      engineSourceInstanceId: string | null;
+    }
+  ): void => {
+    setPreferNewInstanceDraft(true);
+    setSelectedInstanceId(null);
+    applyInstanceEditorState(nextEditorState);
+    applyInstanceSourceState(input);
+    setInstanceEditorBaseline(nextEditorState);
+  };
+
   const handleDuplicateInstance = (instance: KangurGameInstance): void => {
     if (!game) {
       return;
@@ -1087,18 +1166,63 @@ export function GamesLibraryGameModal({
       }),
       instanceTitle: `${instance.title} ${translations('modal.instances.duplicateSuffix')}`.trim(),
     };
-    setPreferNewInstanceDraft(true);
-    setSelectedInstanceId(null);
-    applyInstanceEditorState(duplicatedEditorState);
-    setInstanceEditorBaseline(duplicatedEditorState);
+    forkInstanceEditorToDraft(duplicatedEditorState, {
+      contentSourceInstanceId: instance.id,
+      engineSourceInstanceId: instance.id,
+    });
   };
 
-  const handleSaveInstance = async (): Promise<void> => {
-    if (!game || !launchableRuntime || !selectedContentSet) {
+  const handleUseInstanceContentSet = (instance: KangurGameInstance): void => {
+    setInstanceSyncError(null);
+    if (selectedInstanceId && selectedInstanceId !== instance.id) {
+      forkInstanceEditorToDraft({
+        ...currentInstanceEditorState,
+        contentSetId: instance.contentSetId,
+      }, {
+        contentSourceInstanceId: instance.id,
+        engineSourceInstanceId: instanceEngineSourceInstanceId,
+      });
       return;
     }
 
+    setSelectedContentSetId(instance.contentSetId);
+    setInstanceContentSourceInstanceId(instance.id);
+  };
+
+  const handleUseInstanceEngineSettings = (instance: KangurGameInstance): void => {
+    if (!supportsInstanceEngineSettings) {
+      return;
+    }
+
+    setInstanceSyncError(null);
+    const nextEngineSettings = resolveClockInstanceEngineSettingsFromInstance(instance);
+    if (selectedInstanceId && selectedInstanceId !== instance.id) {
+      forkInstanceEditorToDraft({
+        ...currentInstanceEditorState,
+        engineSettings: nextEngineSettings,
+      }, {
+        contentSourceInstanceId: instanceContentSourceInstanceId,
+        engineSourceInstanceId: instance.id,
+      });
+      return;
+    }
+
+    setInstanceClockSettings(nextEngineSettings);
+    setInstanceEngineSourceInstanceId(instance.id);
+  };
+
+  const persistCurrentInstance = async (): Promise<KangurGameInstance | null> => {
+    if (!game || !launchableRuntime || !selectedContentSet) {
+      return null;
+    }
+
     const instanceId = selectedInstanceId ?? createDraftId();
+    const previousPreferNewInstanceDraft = preferNewInstanceDraft;
+    const previousSelectedInstanceId = selectedInstanceId;
+    const previousEditorState = currentInstanceEditorState;
+    const previousEditorBaseline = instanceEditorBaseline;
+    const previousContentSourceInstanceId = instanceContentSourceInstanceId;
+    const previousEngineSourceInstanceId = instanceEngineSourceInstanceId;
     const nextInstance: KangurGameInstance = {
       id: instanceId,
       gameId: game.id,
@@ -1126,6 +1250,10 @@ export function GamesLibraryGameModal({
     setOptimisticInstances(nextInstances);
     setPreferNewInstanceDraft(false);
     setSelectedInstanceId(instanceId);
+    applyInstanceSourceState({
+      contentSourceInstanceId: instanceId,
+      engineSourceInstanceId: instanceId,
+    });
     setInstanceEditorBaseline(
       buildInstanceEditorStateFromInstance(nextInstance, {
         defaultEngineSettings: buildClockInstanceEngineSettingsFromPreview(clockSettings),
@@ -1139,10 +1267,33 @@ export function GamesLibraryGameModal({
         gameId: game.id,
         instances: nextInstances,
       });
+      return nextInstance;
     } catch {
       setOptimisticInstances(null);
+      setPreferNewInstanceDraft(previousPreferNewInstanceDraft);
+      setSelectedInstanceId(previousSelectedInstanceId);
+      applyInstanceEditorState(previousEditorState);
+      applyInstanceSourceState({
+        contentSourceInstanceId: previousContentSourceInstanceId,
+        engineSourceInstanceId: previousEngineSourceInstanceId,
+      });
+      setInstanceEditorBaseline(previousEditorBaseline);
       setInstanceSyncError(translations('modal.instances.syncError'));
+      return null;
     }
+  };
+
+  const handleSaveInstance = async (): Promise<void> => {
+    await persistCurrentInstance();
+  };
+
+  const handleSaveAndOpenInstance = async (): Promise<void> => {
+    const savedInstance = await persistCurrentInstance();
+    if (!savedInstance) {
+      return;
+    }
+
+    router.push(buildKangurGameInstanceLaunchHref(basePath, savedInstance));
   };
 
   const handleRemoveInstance = (instance: KangurGameInstance): void => {
@@ -1154,6 +1305,8 @@ export function GamesLibraryGameModal({
     const previousInstanceEditorState: GameInstanceEditorState = currentInstanceEditorState;
     const previousPreferNewInstanceDraft = preferNewInstanceDraft;
     const previousSelectedInstanceId = selectedInstanceId;
+    const previousContentSourceInstanceId = instanceContentSourceInstanceId;
+    const previousEngineSourceInstanceId = instanceEngineSourceInstanceId;
     const nextInstances = normalizeInstanceSortOrder(
       activeInstances.filter((entry) => entry.id !== instance.id)
     );
@@ -1161,12 +1314,14 @@ export function GamesLibraryGameModal({
     setInstanceSyncError(null);
     setOptimisticInstances(nextInstances);
     if (!removingSelectedInstance) {
-      pendingInstanceEditorRestoreRef.current = {
+      pendingInstanceEditorRestoreRef.current = capturePendingInstanceEditorRestoreState({
+        contentSourceInstanceId: previousContentSourceInstanceId,
         editorBaseline: instanceEditorBaseline,
         editorState: previousInstanceEditorState,
+        engineSourceInstanceId: previousEngineSourceInstanceId,
         preferNewInstanceDraft: previousPreferNewInstanceDraft,
         selectedInstanceId: previousSelectedInstanceId,
-      };
+      });
     }
     if (removingSelectedInstance) {
       const fallbackInstance = nextInstances[0] ?? null;
@@ -1184,12 +1339,14 @@ export function GamesLibraryGameModal({
       })
       .catch(() => {
         if (!removingSelectedInstance) {
-          pendingInstanceEditorRestoreRef.current = {
+          pendingInstanceEditorRestoreRef.current = capturePendingInstanceEditorRestoreState({
+            contentSourceInstanceId: previousContentSourceInstanceId,
             editorBaseline: instanceEditorBaseline,
             editorState: previousInstanceEditorState,
+            engineSourceInstanceId: previousEngineSourceInstanceId,
             preferNewInstanceDraft: previousPreferNewInstanceDraft,
             selectedInstanceId: previousSelectedInstanceId,
-          };
+          });
         }
         setOptimisticInstances(null);
         if (removingSelectedInstance) {
@@ -1208,6 +1365,8 @@ export function GamesLibraryGameModal({
     const previousEditorBaseline = instanceEditorBaseline;
     const previousPreferNewInstanceDraft = preferNewInstanceDraft;
     const previousSelectedInstanceId = selectedInstanceId;
+    const previousContentSourceInstanceId = instanceContentSourceInstanceId;
+    const previousEngineSourceInstanceId = instanceEngineSourceInstanceId;
     const nextEnabled = !instance.enabled;
     const nextInstances = activeInstances.map((entry) =>
       entry.id === instance.id ? { ...entry, enabled: nextEnabled } : entry
@@ -1224,12 +1383,14 @@ export function GamesLibraryGameModal({
         });
       }
     } else {
-      pendingInstanceEditorRestoreRef.current = {
+      pendingInstanceEditorRestoreRef.current = capturePendingInstanceEditorRestoreState({
+        contentSourceInstanceId: previousContentSourceInstanceId,
         editorBaseline: previousEditorBaseline,
         editorState: previousEditorState,
+        engineSourceInstanceId: previousEngineSourceInstanceId,
         preferNewInstanceDraft: previousPreferNewInstanceDraft,
         selectedInstanceId: previousSelectedInstanceId,
-      };
+      });
     }
 
     void replaceGameInstances
@@ -1239,16 +1400,22 @@ export function GamesLibraryGameModal({
       })
       .catch(() => {
         if (instance.id !== selectedInstanceId) {
-          pendingInstanceEditorRestoreRef.current = {
+          pendingInstanceEditorRestoreRef.current = capturePendingInstanceEditorRestoreState({
+            contentSourceInstanceId: previousContentSourceInstanceId,
             editorBaseline: previousEditorBaseline,
             editorState: previousEditorState,
+            engineSourceInstanceId: previousEngineSourceInstanceId,
             preferNewInstanceDraft: previousPreferNewInstanceDraft,
             selectedInstanceId: previousSelectedInstanceId,
-          };
+          });
         }
         setOptimisticInstances(null);
         if (instance.id === selectedInstanceId) {
           applyInstanceEditorState(previousEditorState);
+          applyInstanceSourceState({
+            contentSourceInstanceId: previousContentSourceInstanceId,
+            engineSourceInstanceId: previousEngineSourceInstanceId,
+          });
           setInstanceEditorBaseline(previousEditorBaseline);
         }
         setInstanceSyncError(translations('modal.instances.syncError'));
@@ -1264,6 +1431,8 @@ export function GamesLibraryGameModal({
     const previousEditorBaseline = instanceEditorBaseline;
     const previousPreferNewInstanceDraft = preferNewInstanceDraft;
     const previousSelectedInstanceId = selectedInstanceId;
+    const previousContentSourceInstanceId = instanceContentSourceInstanceId;
+    const previousEngineSourceInstanceId = instanceEngineSourceInstanceId;
     const currentIndex = activeInstances.findIndex((instance) => instance.id === instanceId);
     if (currentIndex < 0) {
       return;
@@ -1285,24 +1454,28 @@ export function GamesLibraryGameModal({
 
     setInstanceSyncError(null);
     setOptimisticInstances(nextInstances);
-    pendingInstanceEditorRestoreRef.current = {
+    pendingInstanceEditorRestoreRef.current = capturePendingInstanceEditorRestoreState({
+      contentSourceInstanceId: previousContentSourceInstanceId,
       editorBaseline: previousEditorBaseline,
       editorState: previousEditorState,
+      engineSourceInstanceId: previousEngineSourceInstanceId,
       preferNewInstanceDraft: previousPreferNewInstanceDraft,
       selectedInstanceId: previousSelectedInstanceId,
-    };
+    });
     void replaceGameInstances
       .mutateAsync({
         gameId: game.id,
         instances: nextInstances,
       })
       .catch(() => {
-        pendingInstanceEditorRestoreRef.current = {
+        pendingInstanceEditorRestoreRef.current = capturePendingInstanceEditorRestoreState({
+          contentSourceInstanceId: previousContentSourceInstanceId,
           editorBaseline: previousEditorBaseline,
           editorState: previousEditorState,
+          engineSourceInstanceId: previousEngineSourceInstanceId,
           preferNewInstanceDraft: previousPreferNewInstanceDraft,
           selectedInstanceId: previousSelectedInstanceId,
-        };
+        });
         setOptimisticInstances(null);
         setInstanceSyncError(translations('modal.instances.syncError'));
       });
@@ -1426,6 +1599,7 @@ export function GamesLibraryGameModal({
     value: ClockInstanceEngineSettings[TKey]
   ): void => {
     setInstanceSyncError(null);
+    setInstanceEngineSourceInstanceId(null);
     setInstanceClockSettings((current) => ({
       ...current,
       [key]: value,
@@ -1434,6 +1608,7 @@ export function GamesLibraryGameModal({
 
   const handleSyncInstanceEngineSettingsFromPreview = (): void => {
     setInstanceSyncError(null);
+    setInstanceEngineSourceInstanceId(null);
     setInstanceClockSettings(buildClockInstanceEngineSettingsFromPreview(clockSettings));
   };
 
@@ -1801,6 +1976,7 @@ export function GamesLibraryGameModal({
                     id='games-library-instance-content-set'
                     onChange={(event) => {
                       setInstanceSyncError(null);
+                      setInstanceContentSourceInstanceId(null);
                       setSelectedContentSetId(event.target.value || null);
                     }}
                     size='sm'
@@ -2018,6 +2194,11 @@ export function GamesLibraryGameModal({
                         {selectedContentSet?.description ??
                           translations('modal.instances.contentSetHint')}
                       </div>
+                      <div className='mt-2 text-xs leading-5 [color:var(--kangur-page-muted-text)]'>
+                        {translations('modal.instances.contentSourceLabel')}: {' '}
+                        {instanceContentSource?.title ??
+                          translations('modal.instances.sourceCustomDraft')}
+                      </div>
                       {selectedContentSet ? (
                         <div className='mt-3 flex flex-wrap gap-2'>
                           <KangurStatusChip accent='violet' size='sm'>
@@ -2050,6 +2231,11 @@ export function GamesLibraryGameModal({
                   <div className='space-y-2'>
                     <div className='text-[11px] font-bold uppercase tracking-wide [color:var(--kangur-page-muted-text)]'>
                       {translations('modal.instances.engineLabel')}
+                    </div>
+                    <div className='text-xs leading-5 [color:var(--kangur-page-muted-text)]'>
+                      {translations('modal.instances.engineSourceLabel')}: {' '}
+                      {instanceEngineSource?.title ??
+                        translations('modal.instances.sourceCustomDraft')}
                     </div>
                     <div className='flex flex-wrap gap-2'>
                       {currentEngineSettingsSummary.map((label) => (
@@ -2149,7 +2335,22 @@ export function GamesLibraryGameModal({
                       ? translations('modal.instances.createButton')
                       : translations('modal.instances.saveButton')}
                   </KangurButton>
-                  {selectedInstanceHref ? (
+                  {canSaveInstance && (selectedInstanceId === null || isInstanceEditorDirty) ? (
+                    <KangurButton
+                      disabled={replaceGameInstances.isPending}
+                      onClick={() => {
+                        void handleSaveAndOpenInstance();
+                      }}
+                      size='sm'
+                      type='button'
+                      variant='surface'
+                    >
+                      {selectedInstanceId === null
+                        ? translations('modal.instances.createAndOpenButton')
+                        : translations('modal.instances.saveAndOpenButton')}
+                    </KangurButton>
+                  ) : null}
+                  {selectedInstanceHref && !isInstanceEditorDirty ? (
                     <KangurButton asChild disabled={replaceGameInstances.isPending} size='sm' variant='surface'>
                       <Link
                         href={selectedInstanceHref}
@@ -2198,6 +2399,7 @@ export function GamesLibraryGameModal({
                         onClick={() => {
                           setSavedInstancesQuery('');
                           setSavedInstancesStatusFilter('all');
+                          setSavedInstancesContentSetFilter('all');
                         }}
                         size='sm'
                         type='button'
@@ -2226,6 +2428,38 @@ export function GamesLibraryGameModal({
                       ]}
                       value={savedInstancesStatusFilter}
                     />
+                    {contentSets.length > 1 ? (
+                      <div className='space-y-2'>
+                        <label
+                          className='text-[11px] font-bold uppercase tracking-wide [color:var(--kangur-page-muted-text)]'
+                          htmlFor='games-library-instance-list-content-set-filter'
+                        >
+                          {translations('modal.instances.listContentSetFilterLabel')}
+                        </label>
+                        <KangurSelectField
+                          aria-label={translations('modal.instances.listContentSetFilterLabel')}
+                          className='w-full'
+                          disabled={replaceGameInstances.isPending}
+                          id='games-library-instance-list-content-set-filter'
+                          onChange={(event) => {
+                            setSavedInstancesContentSetFilter(
+                              (event.target.value || 'all') as SavedInstancesContentSetFilter
+                            );
+                          }}
+                          size='sm'
+                          value={savedInstancesContentSetFilter}
+                        >
+                          <option value='all'>
+                            {translations('modal.instances.listContentSetFilterAll')}
+                          </option>
+                          {contentSets.map((contentSet) => (
+                            <option key={contentSet.id} value={contentSet.id}>
+                              {contentSet.label}
+                            </option>
+                          ))}
+                        </KangurSelectField>
+                      </div>
+                    ) : null}
                   </div>
                 ) : null}
 
@@ -2246,6 +2480,10 @@ export function GamesLibraryGameModal({
                       const instanceIndex = activeInstances.findIndex(
                         (entry) => entry.id === instance.id
                       );
+                      const isUsingInstanceContentSource =
+                        instanceContentSourceInstanceId === instance.id;
+                      const isUsingInstanceEngineSource =
+                        instanceEngineSourceInstanceId === instance.id;
                       const contentSet = contentSets.find(
                         (entry) => entry.id === instance.contentSetId
                       );
@@ -2341,6 +2579,34 @@ export function GamesLibraryGameModal({
                           </div>
 
                           <div className='flex flex-wrap gap-2'>
+                            <KangurButton
+                              disabled={
+                                replaceGameInstances.isPending || isUsingInstanceContentSource
+                              }
+                              onClick={() => handleUseInstanceContentSet(instance)}
+                              size='sm'
+                              type='button'
+                              variant='surface'
+                            >
+                              {isUsingInstanceContentSource
+                                ? translations('modal.instances.usingContentSetButton')
+                                : translations('modal.instances.useContentSetButton')}
+                            </KangurButton>
+                            {supportsInstanceEngineSettings ? (
+                              <KangurButton
+                                disabled={
+                                  replaceGameInstances.isPending || isUsingInstanceEngineSource
+                                }
+                                onClick={() => handleUseInstanceEngineSettings(instance)}
+                                size='sm'
+                                type='button'
+                                variant='surface'
+                              >
+                                {isUsingInstanceEngineSource
+                                  ? translations('modal.instances.usingEngineSettingsButton')
+                                  : translations('modal.instances.useEngineSettingsButton')}
+                              </KangurButton>
+                            ) : null}
                             <KangurButton
                               onClick={() => handleEditInstance(instance)}
                               size='sm'

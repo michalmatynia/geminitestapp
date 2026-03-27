@@ -14,6 +14,8 @@ const {
   getTranslationsMock,
   loadSlugRenderDataMock,
   notFoundMock,
+  permanentRedirectMock,
+  redirectMock,
   renderCmsPageMock,
   resolveSlugToPageMock,
   shouldApplyFrontPageAppSelectionMock,
@@ -26,6 +28,8 @@ const {
   getTranslationsMock: vi.fn(),
   loadSlugRenderDataMock: vi.fn(),
   notFoundMock: vi.fn(),
+  permanentRedirectMock: vi.fn(),
+  redirectMock: vi.fn(),
   renderCmsPageMock: vi.fn(),
   resolveSlugToPageMock: vi.fn(),
   shouldApplyFrontPageAppSelectionMock: vi.fn(),
@@ -33,6 +37,8 @@ const {
 
 vi.mock('next/navigation', () => ({
   notFound: notFoundMock,
+  redirect: redirectMock,
+  permanentRedirect: permanentRedirectMock,
 }));
 
 vi.mock('next-intl/server', () => ({
@@ -48,11 +54,11 @@ vi.mock('@/shared/lib/front-page-app', () => ({
   getFrontPagePublicOwner: getFrontPagePublicOwnerMock,
 }));
 
-vi.mock('@/features/kangur/server/storefront-appearance', () => ({
+vi.mock('@/features/kangur/server', () => ({
   getKangurStorefrontInitialState: getKangurStorefrontInitialStateMock,
 }));
 
-vi.mock('@/features/kangur/ui/FrontendPublicOwnerKangurShell', () => ({
+vi.mock('@/features/kangur/public', () => ({
   FrontendPublicOwnerKangurShell: ({
     embeddedOverride,
     initialAppearance,

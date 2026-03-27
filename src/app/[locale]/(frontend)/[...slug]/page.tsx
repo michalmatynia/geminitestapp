@@ -3,8 +3,8 @@ import { notFound, redirect } from 'next/navigation';
 import { JSX } from 'react';
 
 import { getKangurPublicAliasHref } from '@/features/kangur/public';
-import { getKangurConfiguredLaunchTarget } from '@/features/kangur/server';
-import { requireAccessibleKangurSlugRoute } from '@/features/kangur/server';
+import { getKangurConfiguredLaunchTarget } from '@/features/kangur/server/launch-route';
+import { requireAccessibleKangurSlugRoute } from '@/features/kangur/server/route-access';
 import { buildLocalizedPathname, normalizeSiteLocale } from '@/shared/lib/i18n/site-locale';
 import { getFrontPagePublicOwner } from '@/shared/lib/front-page-app';
 

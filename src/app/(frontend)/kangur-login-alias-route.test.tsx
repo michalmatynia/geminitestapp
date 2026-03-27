@@ -18,6 +18,7 @@ const {
 
 vi.mock('next/navigation', () => ({
   redirect: redirectMock,
+  permanentRedirect: redirectMock,
 }));
 
 vi.mock('@/features/auth/server', () => ({
@@ -37,16 +38,12 @@ vi.mock('@/shared/lib/front-page-app', () => ({
   getFrontPagePublicOwner: getFrontPagePublicOwnerMock,
 }));
 
-vi.mock('@/features/kangur/config/routing', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('@/features/kangur/config/routing')>();
-  return {
-    ...actual,
-    getKangurCanonicalPublicHref: getKangurCanonicalPublicHrefMock,
-  };
-});
-
-vi.mock('@/features/kangur/ui/KangurFeatureRouteShell', () => ({
-  KangurFeatureRouteShell: () => <div data-testid='kangur-feature-route-shell'>Kangur route shell</div>,
+vi.mock('@/features/kangur/public', () => ({
+  KangurFeatureRouteShell: () => (
+    <div data-testid='kangur-feature-route-shell'>Kangur route shell</div>
+  ),
+  getKangurCanonicalPublicHref: getKangurCanonicalPublicHrefMock,
+  getKangurHomeHref: (pathname = '/') => pathname,
 }));
 
 const buildCanonicalHref = (

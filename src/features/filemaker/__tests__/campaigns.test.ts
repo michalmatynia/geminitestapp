@@ -1263,8 +1263,11 @@ describe('filemaker campaign settings', () => {
     });
 
     expect(overview.pendingRetryCount).toBe(1);
+    expect(overview.overdueRetryCount).toBe(0);
     expect(overview.nextScheduledRetryAt).toBe('2026-03-27T10:05:00.000Z');
     expect(overview.nextScheduledRetryInMinutes).toBe(5);
+    expect(overview.oldestOverdueRetryAt).toBeNull();
+    expect(overview.oldestOverdueRetryAgeMinutes).toBeNull();
     expect(overview.scheduledRetries).toEqual([
       expect.objectContaining({
         deliveryId: 'delivery-retry-1',
@@ -1276,6 +1279,144 @@ describe('filemaker campaign settings', () => {
         nextRetryAt: '2026-03-27T10:05:00.000Z',
       }),
     ]);
+    expect(overview.campaignHealth[0]).toEqual(
+      expect.objectContaining({
+        campaignId: 'campaign-retry',
+        pendingRetryCount: 1,
+        overdueRetryCount: 0,
+        nextScheduledRetryAt: '2026-03-27T10:05:00.000Z',
+        oldestOverdueRetryAt: null,
+      })
+    );
+    expect(overview.domainHealth.find((entry) => entry.domain === 'example.com')).toEqual(
+      expect.objectContaining({
+        domain: 'example.com',
+        pendingRetryCount: 1,
+        overdueRetryCount: 0,
+        nextScheduledRetryAt: '2026-03-27T10:05:00.000Z',
+        oldestOverdueRetryAt: null,
+      })
+    );
+  });
+
+  it('flags overdue scheduled retries in the deliverability overview', () => {
+    const database = createDatabase();
+    const campaignRegistry = parseFilemakerEmailCampaignRegistry(
+      JSON.stringify({
+        version: 1,
+        campaigns: [
+          createFilemakerEmailCampaign({
+            id: 'campaign-overdue',
+            name: 'Overdue retry campaign',
+            status: 'active',
+            subject: 'Retry overdue',
+          }),
+        ],
+      })
+    );
+    const runRegistry = parseFilemakerEmailCampaignRunRegistry(
+      JSON.stringify({
+        version: 1,
+        runs: [
+          createFilemakerEmailCampaignRun({
+            id: 'run-overdue',
+            campaignId: 'campaign-overdue',
+            mode: 'live',
+            status: 'queued',
+            recipientCount: 1,
+            deliveredCount: 0,
+            failedCount: 1,
+            skippedCount: 0,
+            createdAt: '2026-03-27T10:00:00.000Z',
+            updatedAt: '2026-03-27T10:00:00.000Z',
+          }),
+        ],
+      })
+    );
+    const deliveryRegistry = parseFilemakerEmailCampaignDeliveryRegistry(
+      JSON.stringify({
+        version: 1,
+        deliveries: [
+          {
+            id: 'delivery-overdue-1',
+            campaignId: 'campaign-overdue',
+            runId: 'run-overdue',
+            emailAddress: 'hello@acme.test',
+            partyKind: 'organization',
+            partyId: 'organization-1',
+            status: 'failed',
+            failureCategory: 'timeout',
+            lastError: 'Timed out waiting for SMTP.',
+            nextRetryAt: '2026-03-27T10:05:00.000Z',
+            createdAt: '2026-03-27T10:00:00.000Z',
+            updatedAt: '2026-03-27T10:00:00.000Z',
+          },
+        ],
+      })
+    );
+    const attemptRegistry = parseFilemakerEmailCampaignDeliveryAttemptRegistry(
+      JSON.stringify({
+        version: 1,
+        attempts: [
+          {
+            id: 'attempt-overdue-1',
+            campaignId: 'campaign-overdue',
+            runId: 'run-overdue',
+            deliveryId: 'delivery-overdue-1',
+            emailAddress: 'hello@acme.test',
+            partyKind: 'organization',
+            partyId: 'organization-1',
+            attemptNumber: 1,
+            status: 'failed',
+            provider: 'smtp',
+            failureCategory: 'timeout',
+            errorMessage: 'Timed out waiting for SMTP.',
+            attemptedAt: '2026-03-27T10:00:00.000Z',
+            createdAt: '2026-03-27T10:00:00.000Z',
+            updatedAt: '2026-03-27T10:00:00.000Z',
+          },
+        ],
+      })
+    );
+
+    const overview = summarizeFilemakerEmailCampaignDeliverabilityOverview({
+      database,
+      campaignRegistry,
+      runRegistry,
+      deliveryRegistry,
+      attemptRegistry,
+      now: new Date('2026-03-27T10:10:00.000Z'),
+    });
+
+    expect(overview.overdueRetryCount).toBe(1);
+    expect(overview.nextScheduledRetryAt).toBe('2026-03-27T10:05:00.000Z');
+    expect(overview.oldestOverdueRetryAt).toBe('2026-03-27T10:05:00.000Z');
+    expect(overview.oldestOverdueRetryAgeMinutes).toBe(5);
+    expect(overview.alerts).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          code: 'retry_backlog',
+          value: 1,
+          message: '1 scheduled retry is overdue by 5 minutes and has not been processed yet.',
+        }),
+      ])
+    );
+    expect(overview.campaignHealth[0]).toEqual(
+      expect.objectContaining({
+        campaignId: 'campaign-overdue',
+        pendingRetryCount: 1,
+        overdueRetryCount: 1,
+        oldestOverdueRetryAt: '2026-03-27T10:05:00.000Z',
+      })
+    );
+    expect(overview.domainHealth.find((entry) => entry.domain === 'acme.test')).toEqual(
+      expect.objectContaining({
+        domain: 'acme.test',
+        pendingRetryCount: 1,
+        overdueRetryCount: 1,
+        oldestOverdueRetryAt: '2026-03-27T10:05:00.000Z',
+      })
+    );
   });
 
   it('summarizes recipient-level delivery and engagement history for the preferences center', () => {

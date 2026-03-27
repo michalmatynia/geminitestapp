@@ -31,6 +31,19 @@ import { useKangurCoarsePointer } from '@/features/kangur/ui/hooks/useKangurCoar
 import type { KangurLesson } from '@/features/kangur/shared/contracts/kangur';
 import { cn } from '@/features/kangur/utils/cn';
 
+type KangurLessonLibraryCardTranslationKey =
+  | 'ariaLabel'
+  | 'closedAssignment'
+  | 'completedAssignmentSummary'
+  | 'completedForParent'
+  | 'customContent'
+  | 'parentPriority';
+
+type KangurLessonLibraryCardTranslations = (
+  key: KangurLessonLibraryCardTranslationKey,
+  values?: Record<string, string | number>
+) => string;
+
 // ── Lesson Library Card Sub-components ───────────────────────────────────────
 
 function renderKangurLessonLibraryCardAside({
@@ -127,6 +140,7 @@ export function KangurLessonLibraryCardFooter({
   completedLessonAssignment,
   masteryPresentation,
   isSixYearOld,
+  translations,
 }: {
   lesson: KangurLesson;
   hasDocumentContent: boolean;
@@ -134,8 +148,8 @@ export function KangurLessonLibraryCardFooter({
   completedLessonAssignment: KangurAssignmentSnapshot | null;
   masteryPresentation: LessonMasteryPresentation;
   isSixYearOld: boolean;
+  translations: KangurLessonLibraryCardTranslations;
 }): React.JSX.Element {
-  const translations = useTranslations('KangurLessonsWidgets.libraryCard');
   const footerChips = [
     lesson.contentMode === 'document' && hasDocumentContent ? (
       <KangurStatusChip
@@ -235,16 +249,28 @@ type KangurLessonLibraryCardProps = {
   itemTestId?: string;
   lesson: KangurLesson;
   lessonAssignment: KangurAssignmentSnapshot | null;
+  locale?: string;
   masteryPresentation: LessonMasteryPresentation;
   onSelect: () => void;
   statusGroupClassName?: string;
+  translations?: KangurLessonLibraryCardTranslations;
+  isCoarsePointer?: boolean;
+  isSixYearOld?: boolean;
 } & Pick<ComponentProps<typeof KangurIconSummaryOptionCard>, 'emphasis'>;
 
-export function KangurLessonLibraryCard(props: KangurLessonLibraryCardProps): React.JSX.Element {
-  const locale = useLocale();
-  const translations = useTranslations('KangurLessonsWidgets.libraryCard');
-  const isCoarsePointer = useKangurCoarsePointer();
-  const { ageGroup } = useKangurAgeGroupFocus();
+type KangurLessonLibraryCardResolvedProps = Omit<
+  KangurLessonLibraryCardProps,
+  'isCoarsePointer' | 'isSixYearOld' | 'locale' | 'translations'
+> & {
+  isCoarsePointer: boolean;
+  isSixYearOld: boolean;
+  locale: string;
+  translations: KangurLessonLibraryCardTranslations;
+};
+
+function KangurLessonLibraryCardResolved(
+  props: KangurLessonLibraryCardResolvedProps
+): React.JSX.Element {
   const {
     ariaCurrent,
     buttonClassName,
@@ -254,12 +280,16 @@ export function KangurLessonLibraryCard(props: KangurLessonLibraryCardProps): Re
     emphasis = 'neutral',
     hasDocumentContent = false,
     iconTestId,
+    isCoarsePointer,
+    isSixYearOld,
     itemTestId,
     lesson,
     lessonAssignment,
+    locale,
     masteryPresentation,
     onSelect,
     statusGroupClassName,
+    translations,
   } = props;
   const localizedTitle = getLocalizedKangurLessonTitle(lesson.componentId, locale, lesson.title);
   const localizedDescription = getLocalizedKangurLessonDescription(
@@ -267,7 +297,6 @@ export function KangurLessonLibraryCard(props: KangurLessonLibraryCardProps): Re
     locale,
     lesson.description
   );
-  const isSixYearOld = ageGroup === 'six_year_old';
 
   return (
     <KangurIconSummaryOptionCard
@@ -307,6 +336,7 @@ export function KangurLessonLibraryCard(props: KangurLessonLibraryCardProps): Re
             lesson={lesson}
             lessonAssignment={lessonAssignment}
             masteryPresentation={masteryPresentation}
+            translations={translations}
           />
         }
         headerClassName={cn(KANGUR_PANEL_ROW_CLASSNAME, 'sm:items-start sm:justify-between')}
@@ -327,4 +357,50 @@ export function KangurLessonLibraryCard(props: KangurLessonLibraryCardProps): Re
       />
     </KangurIconSummaryOptionCard>
   );
+}
+
+function KangurLessonLibraryCardWithContext(
+  props: KangurLessonLibraryCardProps
+): React.JSX.Element {
+  const locale = useLocale();
+  const translations = useTranslations('KangurLessonsWidgets.libraryCard');
+  const isCoarsePointer = useKangurCoarsePointer();
+  const { ageGroup } = useKangurAgeGroupFocus();
+  return (
+    <KangurLessonLibraryCardResolved
+      {...props}
+      isCoarsePointer={Boolean(isCoarsePointer)}
+      isSixYearOld={ageGroup === 'six_year_old'}
+      locale={locale}
+      translations={translations}
+    />
+  );
+}
+
+export function KangurLessonLibraryCard(props: KangurLessonLibraryCardProps): React.JSX.Element {
+  if (
+    props.locale !== undefined &&
+    props.translations !== undefined &&
+    props.isCoarsePointer !== undefined &&
+    props.isSixYearOld !== undefined
+  ) {
+    const {
+      isCoarsePointer,
+      isSixYearOld,
+      locale,
+      translations,
+      ...resolvedProps
+    } = props;
+    return (
+      <KangurLessonLibraryCardResolved
+        {...resolvedProps}
+        isCoarsePointer={isCoarsePointer}
+        isSixYearOld={isSixYearOld}
+        locale={locale}
+        translations={translations}
+      />
+    );
+  }
+
+  return <KangurLessonLibraryCardWithContext {...props} />;
 }

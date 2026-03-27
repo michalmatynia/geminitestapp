@@ -55,6 +55,7 @@ describe('KangurPageIntroCard', () => {
 
   it('omits the back button when disabled', () => {
     const handleBack = vi.fn();
+    localeMock.mockClear();
 
     render(
       <KangurPageIntroCard
@@ -67,6 +68,7 @@ describe('KangurPageIntroCard', () => {
     expect(
       screen.queryByRole('button', { name: 'Wróć do poprzedniej strony' })
     ).toBeNull();
+    expect(localeMock).not.toHaveBeenCalled();
     expect(handleBack).not.toHaveBeenCalled();
   });
 

@@ -1,5 +1,7 @@
 export { KangurFeaturePage } from '@/features/kangur/ui/KangurFeaturePage';
 export { KangurPublicApp } from '@/features/kangur/ui/KangurPublicApp';
+export { FrontendPublicOwnerProvider } from '@/features/kangur/ui/FrontendPublicOwnerContext';
+export { FrontendPublicOwnerKangurShell } from '@/features/kangur/ui/FrontendPublicOwnerKangurShell';
 export * from '@/features/kangur/config/routing';
 export * from '@/features/kangur/cms-builder/project';
 export * from '@/features/kangur/context-registry/refs';
@@ -57,6 +59,12 @@ export { default as AdminKangurSettingsPage } from '@/features/kangur/admin/Admi
 export { AdminKangurSocialPage } from '@/features/kangur/admin/AdminKangurSocialPage';
 export { AdminKangurTestSuitesManagerPage } from '@/features/kangur/admin/AdminKangurTestSuitesManagerPage';
 export { FrontendRouteLoadingFallback } from '@/features/kangur/ui/FrontendRouteLoadingFallback';
+export { KangurFeatureRouteShell } from '@/features/kangur/ui/KangurFeatureRouteShell';
+export { KangurSSRSkeleton } from '@/features/kangur/ui/KangurSSRSkeleton';
+export { KangurSurfaceClassSync } from '@/features/kangur/ui/KangurSurfaceClassSync';
 export { default as FrontendPublicOwnerShellClient } from '@/features/kangur/ui/FrontendPublicOwnerShellClient';
+export type { FrontendPublicOwnerShellProps } from '@/features/kangur/ui/FrontendPublicOwnerShellClient';
 export { KangurStorefrontAppearanceProvider } from '@/features/kangur/ui/KangurStorefrontAppearanceProvider';
+export { KangurStandardPageLayout } from '@/features/kangur/ui/components/KangurStandardPageLayout';
+export { KangurServerShell } from '@/features/kangur/ui/components/KangurServerShell';
 export { logKangurClientError } from '@/features/kangur/observability/client';

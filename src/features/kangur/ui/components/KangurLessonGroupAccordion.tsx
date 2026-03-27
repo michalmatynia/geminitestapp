@@ -17,6 +17,7 @@ type KangurLessonGroupAccordionProps = {
   label: ReactNode;
   typeLabel?: ReactNode;
   fallbackTypeLabel: ReactNode;
+  isCoarsePointer?: boolean;
   isExpanded: boolean;
   onToggle: () => void;
   children: ReactNode;
@@ -29,13 +30,14 @@ export function KangurLessonGroupAccordion({
   label,
   typeLabel: _typeLabel,
   fallbackTypeLabel: _fallbackTypeLabel,
+  isCoarsePointer: isCoarsePointerOverride,
   isExpanded,
   onToggle,
   children,
   className,
   contentProps,
 }: KangurLessonGroupAccordionProps): React.JSX.Element {
-  const isCoarsePointer = useKangurCoarsePointer();
+  const isCoarsePointer = isCoarsePointerOverride ?? useKangurCoarsePointer();
   const reactId = useId().replace(/:/g, '');
   const triggerId = `kangur-lesson-group-trigger-${accordionId}-${reactId}`;
   const panelId = `kangur-lesson-group-panel-${accordionId}-${reactId}`;
@@ -55,7 +57,7 @@ export function KangurLessonGroupAccordion({
         className
       )}
     >
-      <motion.button
+      <button
         id={triggerId}
         aria-controls={panelId}
         aria-expanded={isExpanded}
@@ -68,7 +70,6 @@ export function KangurLessonGroupAccordion({
         data-pressed={isPressed ? 'true' : 'false'}
         data-state={isExpanded ? 'open' : 'closed'}
         type='button'
-        whileTap={{ scale: 0.992 }}
         onClick={onToggle}
         onPointerCancel={() => setIsPressed(false)}
         onPointerDown={() => setIsPressed(true)}
@@ -76,7 +77,7 @@ export function KangurLessonGroupAccordion({
         onPointerUp={() => setIsPressed(false)}
       >
         <span className='min-w-0 text-lg font-semibold text-current'>{label}</span>
-      </motion.button>
+      </button>
 
       <AnimatePresence initial={false}>
         {isExpanded ? (

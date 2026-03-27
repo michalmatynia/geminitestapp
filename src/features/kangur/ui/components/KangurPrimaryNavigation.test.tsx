@@ -2192,6 +2192,21 @@ describe('KangurPrimaryNavigation', () => {
     );
   });
 
+  it('does not mount the login page-content hook on authenticated routes', () => {
+    useKangurPageContentEntryMock.mockClear();
+
+    render(
+      <KangurPrimaryNavigation
+        basePath='/kangur'
+        currentPage='Lessons'
+        isAuthenticated
+        onLogout={vi.fn()}
+      />
+    );
+
+    expect(useKangurPageContentEntryMock).not.toHaveBeenCalled();
+  });
+
   it('uses English fallback auth copy on the English route when CMS copy is unavailable', () => {
     localeMock.mockReturnValue('en');
 

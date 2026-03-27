@@ -9,10 +9,12 @@ import { CmsStorefrontAppearanceProvider } from '@/features/cms/components/front
 import { getCmsThemeSettings } from '@/features/cms/server';
 import { getKangurAuthBootstrapScript } from '@/features/kangur/server';
 import { getKangurStorefrontInitialState } from '@/features/kangur/server';
-import { FrontendPublicOwnerProvider } from '@/features/kangur/public';
-import FrontendPublicOwnerShellClient from '@/features/kangur/public';
-import { KangurSSRSkeleton } from '@/features/kangur/public';
-import { KangurServerShell } from '@/features/kangur/public';
+import {
+  FrontendPublicOwnerProvider,
+  FrontendPublicOwnerShellClient,
+  KangurSSRSkeleton,
+  KangurServerShell,
+} from '@/features/kangur/public';
 import { readOptionalRequestHeaders } from '@/shared/lib/request/optional-headers';
 import { getFrontPagePublicOwner } from '@/shared/lib/front-page-app';
 import { stripSiteLocalePrefix } from '@/shared/lib/i18n/site-locale';

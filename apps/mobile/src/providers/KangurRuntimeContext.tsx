@@ -11,6 +11,7 @@ import {
   useState,
   type PropsWithChildren,
 } from 'react';
+import Constants from 'expo-constants';
 import { Platform } from 'react-native';
 
 import {
@@ -28,11 +29,11 @@ import {
 } from '../auth/mobileCsrfToken';
 import { resolveKangurMobilePublicConfig } from '../config/mobilePublicConfig';
 import { createMobileDevelopmentKangurStorage } from '../storage/createMobileDevelopmentKangurStorage';
-
-type KangurApiBaseUrlSource =
-  | 'env'
-  | 'android-emulator-default'
-  | 'localhost-default';
+import {
+  extractExpoDevelopmentHost,
+  resolveKangurMobileApiBaseUrl,
+  type KangurApiBaseUrlSource,
+} from './kangurRuntimeApiBaseUrl';
 
 const KANGUR_ACTIVE_LEARNER_HEADER = 'x-kangur-learner-id';
 
@@ -46,15 +47,6 @@ type KangurMobileRuntime = {
 };
 
 const KangurRuntimeContext = createContext<KangurMobileRuntime | null>(null);
-
-const normalizeApiBaseUrl = (value: string | undefined): string | null => {
-  const trimmed = value?.trim();
-  if (!trimmed) {
-    return null;
-  }
-
-  return trimmed.replace(/\/$/, '');
-};
 
 const readWebCookieValue = (name: string): string | null => {
   if (typeof document === 'undefined') {
@@ -74,34 +66,18 @@ const readWebCookieValue = (name: string): string | null => {
   return decodeURIComponent(rawCookie.slice(cookiePrefix.length));
 };
 
-const resolveDefaultApiBaseUrl = (): Pick<
-  KangurMobileRuntime,
-  'apiBaseUrl' | 'apiBaseUrlSource'
-> => {
-  if (Platform.OS === 'android') {
-    return {
-      apiBaseUrl: 'http://10.0.2.2:3000',
-      apiBaseUrlSource: 'android-emulator-default',
-    };
-  }
-
-  return {
-    apiBaseUrl: 'http://localhost:3000',
-    apiBaseUrlSource: 'localhost-default',
-  };
-};
-
 const createKangurMobileRuntime = (): KangurMobileRuntime => {
-  const configuredApiBaseUrl = normalizeApiBaseUrl(
-    resolveKangurMobilePublicConfig().apiUrl ?? undefined,
-  );
-
-  const apiBaseUrlState = configuredApiBaseUrl
-    ? {
-        apiBaseUrl: configuredApiBaseUrl,
-        apiBaseUrlSource: 'env' as const,
-      }
-    : resolveDefaultApiBaseUrl();
+  const apiBaseUrlState = resolveKangurMobileApiBaseUrl({
+    configuredApiBaseUrl: resolveKangurMobilePublicConfig().apiUrl ?? null,
+    developmentHost: extractExpoDevelopmentHost({
+      hostUri:
+        Constants.expoConfig?.hostUri ??
+        Constants.platform?.hostUri ??
+        null,
+      linkingUri: Constants.linkingUri ?? null,
+    }),
+    platformOs: Platform.OS,
+  });
 
   const storage = createMobileDevelopmentKangurStorage();
   const baseProgressStore = createKangurProgressStore({

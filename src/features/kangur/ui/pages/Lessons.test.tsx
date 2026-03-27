@@ -27,6 +27,7 @@ const {
   routeTransitionStateState,
   routeNavigatorBackMock,
   topNavigationPropsMock,
+  standardPageLayoutPropsMock,
   tutorSessionSyncPropsMock,
   lessonsState,
   lessonsLoadingState,
@@ -61,6 +62,7 @@ const {
   },
   routeNavigatorBackMock: vi.fn(),
   topNavigationPropsMock: vi.fn(),
+  standardPageLayoutPropsMock: vi.fn(),
   tutorSessionSyncPropsMock: vi.fn(),
   lessonsState: {
     value: [] as Array<Record<string, unknown>>,
@@ -243,16 +245,26 @@ vi.mock('@/features/kangur/ui/components/KangurPageIntroCard', () => ({
 vi.mock('@/features/kangur/ui/components/KangurStandardPageLayout', () => ({
   KangurStandardPageLayout: ({
     children,
+    docsRootId,
+    docsTooltipsEnabled,
     navigation,
   }: {
     children: React.ReactNode;
+    docsRootId?: string;
+    docsTooltipsEnabled?: boolean;
     navigation?: React.ReactNode;
-  }) => (
-    <div data-testid='mock-lessons-layout'>
-      {navigation}
-      {children}
-    </div>
-  ),
+  }) => {
+    standardPageLayoutPropsMock({
+      docsRootId,
+      docsTooltipsEnabled,
+    });
+    return (
+      <div data-testid='mock-lessons-layout'>
+        {navigation}
+        {children}
+      </div>
+    );
+  },
 }));
 
 vi.mock('@/features/kangur/ui/components/KangurTopNavigationController', () => ({
@@ -523,9 +535,11 @@ describe('Lessons page subject filtering', () => {
       canAccessParentAssignments: false,
     });
     lessonCardPropsMock.mockClear();
+    lessonsWordmarkPropsMock.mockClear();
     openLoginModalMock.mockClear();
     routeNavigatorBackMock.mockClear();
     topNavigationPropsMock.mockClear();
+    standardPageLayoutPropsMock.mockClear();
     tutorSessionSyncPropsMock.mockClear();
     useKangurRoutePageReadyMock.mockClear();
     lessonDocumentsHookCallsMock.mockClear();
@@ -888,6 +902,45 @@ describe('Lessons page subject filtering', () => {
           contentId: 'lesson:list',
           title: 'Lekcje',
         }),
+      })
+    );
+  });
+
+  it('defers docs tooltip mounting until after the first deferred render turn', () => {
+    render(<Lessons />);
+
+    expect(standardPageLayoutPropsMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        docsRootId: undefined,
+        docsTooltipsEnabled: false,
+      })
+    );
+
+    act(() => {
+      vi.runAllTimers();
+    });
+
+    expect(standardPageLayoutPropsMock).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        docsRootId: 'kangur-lessons-page',
+        docsTooltipsEnabled: false,
+      })
+    );
+  });
+
+  it('defers the lessons wordmark until after the first deferred render turn', () => {
+    render(<Lessons />);
+
+    expect(lessonsWordmarkPropsMock).not.toHaveBeenCalled();
+
+    act(() => {
+      vi.runAllTimers();
+    });
+
+    expect(lessonsWordmarkPropsMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        label: 'Lekcje',
+        locale: 'pl',
       })
     );
   });

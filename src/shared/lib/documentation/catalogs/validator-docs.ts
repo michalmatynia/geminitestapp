@@ -154,6 +154,25 @@ export const VALIDATOR_FUNCTION_DOCS: ValidatorFunctionDoc[] = [
     example: 'isReplacementAllowedForField(pattern, \'name_en\')',
   },
   {
+    id: 'core.isPatternConfiguredForFormatterAutoApply',
+    symbol: 'isPatternConfiguredForFormatterAutoApply',
+    file: 'src/features/products/validation-engine/core.ts',
+    purpose:
+      'Determines whether formatter auto-apply should run for the current field and validation scope.',
+    params: [
+      'pattern: pattern with replacement auto-apply configuration.',
+      'fieldName: current form field name.',
+      'validationScope: active validator scope.',
+    ],
+    returns: 'True when auto-apply is enabled and the pattern targets the current field.',
+    errors: ['No throws.'],
+    edgeCases: [
+      'Disabled patterns, missing replacement values, scope mismatches, and non-target fields return false.',
+    ],
+    example:
+      'isPatternConfiguredForFormatterAutoApply({ pattern, fieldName: \'name_en\', validationScope: \'product\' })',
+  },
+  {
     id: 'core.allowsPatternExecutionWithoutRegexMatch',
     symbol: 'allowsPatternExecutionWithoutRegexMatch',
     file: 'src/features/products/validation-engine/core.ts',

@@ -133,6 +133,7 @@ export type FilemakerEmailCampaignDeliverabilityAlert = {
     | 'global_bounce_rate'
     | 'global_failure_rate'
     | 'queue_backlog'
+    | 'retry_backlog'
     | 'suppression_pressure'
     | 'campaign_health'
     | 'domain_health';
@@ -153,12 +154,14 @@ export type FilemakerEmailCampaignDomainDeliverability = {
   queuedCount: number;
   skippedCount: number;
   pendingRetryCount: number;
+  overdueRetryCount: number;
   suppressionCount: number;
   deliveryRatePercent: number;
   failureRatePercent: number;
   bounceRatePercent: number;
   latestDeliveryAt: string | null;
   nextScheduledRetryAt: string | null;
+  oldestOverdueRetryAt: string | null;
   alertLevel: FilemakerEmailCampaignDeliverabilityHealthLevel;
 };
 
@@ -175,11 +178,13 @@ export type FilemakerEmailCampaignDeliverabilityCampaignHealth = {
   queuedCount: number;
   skippedCount: number;
   pendingRetryCount: number;
+  overdueRetryCount: number;
   deliveryRatePercent: number;
   failureRatePercent: number;
   bounceRatePercent: number;
   suppressionImpactCount: number;
   nextScheduledRetryAt: string | null;
+  oldestOverdueRetryAt: string | null;
   alertLevel: FilemakerEmailCampaignDeliverabilityHealthLevel;
 };
 
@@ -247,6 +252,7 @@ export type FilemakerEmailCampaignDeliverabilityOverview = {
   retryEligibleCount: number;
   retryExhaustedCount: number;
   pendingRetryCount: number;
+  overdueRetryCount: number;
   processedCount: number;
   acceptedCount: number;
   failedCount: number;
@@ -265,6 +271,8 @@ export type FilemakerEmailCampaignDeliverabilityOverview = {
   oldestQueuedAgeMinutes: number | null;
   nextScheduledRetryAt: string | null;
   nextScheduledRetryInMinutes: number | null;
+  oldestOverdueRetryAt: string | null;
+  oldestOverdueRetryAgeMinutes: number | null;
   failureCategoryBreakdown: FilemakerEmailCampaignDeliveryFailureCategorySummary[];
   providerBreakdown: FilemakerEmailCampaignDeliveryProviderSummary[];
   alerts: FilemakerEmailCampaignDeliverabilityAlert[];
@@ -2293,11 +2301,13 @@ export const summarizeFilemakerEmailCampaignDeliverabilityOverview = (input: {
         queuedCount: analytics.queuedCount,
         skippedCount: analytics.skippedCount,
         pendingRetryCount: 0,
+        overdueRetryCount: 0,
         deliveryRatePercent: analytics.deliveryRatePercent,
         failureRatePercent: analytics.failureRatePercent,
         bounceRatePercent: analytics.bounceRatePercent,
         suppressionImpactCount: analytics.suppressionImpactCount,
         nextScheduledRetryAt: null,
+        oldestOverdueRetryAt: null,
         alertLevel: resolveDeliverabilityAlertLevel({
           bounceRatePercent: analytics.bounceRatePercent,
           failureRatePercent: analytics.failureRatePercent,
@@ -2312,6 +2322,9 @@ export const summarizeFilemakerEmailCampaignDeliverabilityOverview = (input: {
       if (levelDelta !== 0) return levelDelta;
       if (right.bounceRatePercent !== left.bounceRatePercent) {
         return right.bounceRatePercent - left.bounceRatePercent;
+      }
+      if (right.overdueRetryCount !== left.overdueRetryCount) {
+        return right.overdueRetryCount - left.overdueRetryCount;
       }
       if (right.failureRatePercent !== left.failureRatePercent) {
         return right.failureRatePercent - left.failureRatePercent;
@@ -2391,12 +2404,14 @@ export const summarizeFilemakerEmailCampaignDeliverabilityOverview = (input: {
         queuedCount: entry.queuedCount,
         skippedCount: entry.skippedCount,
         pendingRetryCount: 0,
+        overdueRetryCount: 0,
         suppressionCount: suppressionCountByDomain.get(entry.domain) ?? 0,
         deliveryRatePercent: roundPercentage(entry.sentCount, entry.totalDeliveries),
         failureRatePercent,
         bounceRatePercent,
         latestDeliveryAt: entry.latestDeliveryAt,
         nextScheduledRetryAt: null,
+        oldestOverdueRetryAt: null,
         alertLevel:
           entry.totalDeliveries >= 3
             ? resolveDeliverabilityAlertLevel({
@@ -2415,6 +2430,9 @@ export const summarizeFilemakerEmailCampaignDeliverabilityOverview = (input: {
       if (levelDelta !== 0) return levelDelta;
       if (right.bounceRatePercent !== left.bounceRatePercent) {
         return right.bounceRatePercent - left.bounceRatePercent;
+      }
+      if (right.overdueRetryCount !== left.overdueRetryCount) {
+        return right.overdueRetryCount - left.overdueRetryCount;
       }
       if (right.totalDeliveries !== left.totalDeliveries) {
         return right.totalDeliveries - left.totalDeliveries;
@@ -2534,6 +2552,19 @@ export const summarizeFilemakerEmailCampaignDeliverabilityOverview = (input: {
     map.set(retry.campaignId, (map.get(retry.campaignId) ?? 0) + 1);
     return map;
   }, new Map());
+  const overdueRetryCountByCampaign = scheduledRetries.reduce<Map<string, number>>((map, retry) => {
+    if (Date.parse(retry.nextRetryAt) > nowMs) return map;
+    map.set(retry.campaignId, (map.get(retry.campaignId) ?? 0) + 1);
+    return map;
+  }, new Map());
+  const oldestOverdueRetryAtByCampaign = scheduledRetries.reduce<Map<string, string>>((map, retry) => {
+    if (Date.parse(retry.nextRetryAt) > nowMs) return map;
+    const existing = map.get(retry.campaignId);
+    if (!existing || Date.parse(retry.nextRetryAt) < Date.parse(existing)) {
+      map.set(retry.campaignId, retry.nextRetryAt);
+    }
+    return map;
+  }, new Map());
   const scheduledRetryNextAtByCampaign = scheduledRetries.reduce<Map<string, string>>((map, retry) => {
     const existing = map.get(retry.campaignId);
     if (!existing || Date.parse(retry.nextRetryAt) < Date.parse(existing)) {
@@ -2545,6 +2576,19 @@ export const summarizeFilemakerEmailCampaignDeliverabilityOverview = (input: {
     map.set(retry.domain, (map.get(retry.domain) ?? 0) + 1);
     return map;
   }, new Map());
+  const overdueRetryCountByDomain = scheduledRetries.reduce<Map<string, number>>((map, retry) => {
+    if (Date.parse(retry.nextRetryAt) > nowMs) return map;
+    map.set(retry.domain, (map.get(retry.domain) ?? 0) + 1);
+    return map;
+  }, new Map());
+  const oldestOverdueRetryAtByDomain = scheduledRetries.reduce<Map<string, string>>((map, retry) => {
+    if (Date.parse(retry.nextRetryAt) > nowMs) return map;
+    const existing = map.get(retry.domain);
+    if (!existing || Date.parse(retry.nextRetryAt) < Date.parse(existing)) {
+      map.set(retry.domain, retry.nextRetryAt);
+    }
+    return map;
+  }, new Map());
   const scheduledRetryNextAtByDomain = scheduledRetries.reduce<Map<string, string>>((map, retry) => {
     const existing = map.get(retry.domain);
     if (!existing || Date.parse(retry.nextRetryAt) < Date.parse(existing)) {
@@ -2552,15 +2596,31 @@ export const summarizeFilemakerEmailCampaignDeliverabilityOverview = (input: {
     }
     return map;
   }, new Map());
+  const overdueRetryCount = scheduledRetries.filter(
+    (retry) => Date.parse(retry.nextRetryAt) <= nowMs
+  ).length;
+  const oldestOverdueRetryAt =
+    scheduledRetries
+      .filter((retry) => Date.parse(retry.nextRetryAt) <= nowMs)
+      .sort((left, right) => Date.parse(left.nextRetryAt) - Date.parse(right.nextRetryAt))[0]
+      ?.nextRetryAt ?? null;
+  const oldestOverdueRetryAgeMinutes =
+    oldestOverdueRetryAt && Number.isFinite(Date.parse(oldestOverdueRetryAt))
+      ? Math.max(0, Math.round((nowMs - Date.parse(oldestOverdueRetryAt)) / 60_000))
+      : null;
   const campaignHealth = campaignHealthBase.map((campaign) => ({
     ...campaign,
     pendingRetryCount: scheduledRetryCountByCampaign.get(campaign.campaignId) ?? 0,
+    overdueRetryCount: overdueRetryCountByCampaign.get(campaign.campaignId) ?? 0,
     nextScheduledRetryAt: scheduledRetryNextAtByCampaign.get(campaign.campaignId) ?? null,
+    oldestOverdueRetryAt: oldestOverdueRetryAtByCampaign.get(campaign.campaignId) ?? null,
   }));
   const domainHealth = domainHealthBase.map((domain) => ({
     ...domain,
     pendingRetryCount: scheduledRetryCountByDomain.get(domain.domain) ?? 0,
+    overdueRetryCount: overdueRetryCountByDomain.get(domain.domain) ?? 0,
     nextScheduledRetryAt: scheduledRetryNextAtByDomain.get(domain.domain) ?? null,
+    oldestOverdueRetryAt: oldestOverdueRetryAtByDomain.get(domain.domain) ?? null,
   }));
   const nextScheduledRetryAt = scheduledRetries[0]?.nextRetryAt ?? null;
   const nextScheduledRetryInMinutes =
@@ -2722,6 +2782,23 @@ export const summarizeFilemakerEmailCampaignDeliverabilityOverview = (input: {
     });
   }
 
+  if (overdueRetryCount > 0) {
+    pushAlert({
+      id: 'deliverability-alert-retry-backlog',
+      level: overdueRetryCount >= 5 ? 'critical' : 'warning',
+      code: 'retry_backlog',
+      title: 'Scheduled retries are overdue',
+      message:
+        overdueRetryCount === 1
+          ? `1 scheduled retry is overdue${oldestOverdueRetryAgeMinutes != null ? ` by ${oldestOverdueRetryAgeMinutes} minutes` : ''} and has not been processed yet.`
+          : `${overdueRetryCount} scheduled retries are overdue${oldestOverdueRetryAgeMinutes != null ? `, oldest by ${oldestOverdueRetryAgeMinutes} minutes` : ''}, and have not been processed yet.`,
+      campaignId: null,
+      campaignName: null,
+      domain: null,
+      value: overdueRetryCount,
+    });
+  }
+
   if (suppressionRatePercent >= 10) {
     pushAlert({
       id: 'deliverability-alert-suppression-pressure',
@@ -2780,6 +2857,7 @@ export const summarizeFilemakerEmailCampaignDeliverabilityOverview = (input: {
     retryEligibleCount: retrySummary.retryableDeliveries.length,
     retryExhaustedCount: retrySummary.exhaustedDeliveries.length,
     pendingRetryCount: scheduledRetries.length,
+    overdueRetryCount,
     processedCount,
     acceptedCount,
     failedCount,
@@ -2798,6 +2876,8 @@ export const summarizeFilemakerEmailCampaignDeliverabilityOverview = (input: {
     oldestQueuedAgeMinutes,
     nextScheduledRetryAt,
     nextScheduledRetryInMinutes,
+    oldestOverdueRetryAt,
+    oldestOverdueRetryAgeMinutes,
     failureCategoryBreakdown,
     providerBreakdown,
     alerts,

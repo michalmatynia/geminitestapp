@@ -52,6 +52,28 @@ vi.mock('@/features/kangur/server/storefront-appearance', () => ({
 
 vi.mock('@/features/kangur/public', () => ({
   KangurPublicApp: () => null,
+  getKangurPublicAliasHref: (
+    slugSegments: readonly string[] = [],
+    searchParams?: Record<string, string | string[] | undefined>
+  ) => {
+    const pathname = slugSegments.length > 0 ? `/kangur/${slugSegments.join('/')}` : '/kangur';
+    const query = new URLSearchParams();
+
+    for (const [key, value] of Object.entries(searchParams ?? {})) {
+      if (Array.isArray(value)) {
+        value.forEach((entry) => {
+          query.append(key, entry);
+        });
+        continue;
+      }
+      if (value != null) {
+        query.set(key, value);
+      }
+    }
+
+    const serialized = query.toString();
+    return serialized ? `${pathname}?${serialized}` : pathname;
+  },
 }));
 
 vi.mock('@/app/(frontend)/cms-render', () => ({

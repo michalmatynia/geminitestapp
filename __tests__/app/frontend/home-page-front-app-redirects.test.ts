@@ -36,6 +36,7 @@ const {
 
 vi.mock('next/navigation', () => ({
   redirect: redirectMock,
+  permanentRedirect: redirectMock,
 }));
 
 vi.mock('next/headers', () => ({
@@ -55,6 +56,31 @@ vi.mock('@/app/(frontend)/HomeContent', () => ({
 
 vi.mock('@/features/kangur/server/launch-route', () => ({
   getKangurConfiguredLaunchTarget: getKangurConfiguredLaunchTargetMock,
+}));
+
+vi.mock('@/features/kangur/public', () => ({
+  getKangurPublicAliasHref: (
+    slugSegments: readonly string[] = [],
+    searchParams?: Record<string, string | string[] | undefined>
+  ) => {
+    const pathname = slugSegments.length > 0 ? `/kangur/${slugSegments.join('/')}` : '/kangur';
+    const query = new URLSearchParams();
+
+    Object.entries(searchParams ?? {}).forEach(([key, value]) => {
+      if (Array.isArray(value)) {
+        value.forEach((entry) => {
+          query.append(key, entry);
+        });
+        return;
+      }
+      if (value != null) {
+        query.set(key, value);
+      }
+    });
+
+    const serialized = query.toString();
+    return serialized ? `${pathname}?${serialized}` : pathname;
+  },
 }));
 
 vi.mock('@/features/kangur/ui/KangurSSRSkeleton', () => ({

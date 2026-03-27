@@ -19,6 +19,7 @@ import {
   getKangurSixYearOldLessonGroupIcon,
   getKangurSixYearOldSubjectVisual,
 } from '@/features/kangur/ui/constants/six-year-old-visuals';
+import { useKangurCoarsePointer } from '@/features/kangur/ui/hooks/useKangurCoarsePointer';
 import { useKangurPageContentEntry } from '@/features/kangur/ui/hooks/useKangurPageContent';
 import { KangurEmptyState } from '@/features/kangur/ui/design/primitives';
 import {
@@ -30,7 +31,7 @@ import type { KangurLesson } from '@/features/kangur/shared/contracts/kangur';
 import type { KangurLessonSection } from '@/shared/contracts/kangur-lesson-sections';
 import { LESSONS_LIBRARY_LIST_CLASSNAME } from '@/features/kangur/ui/pages/lessons/Lessons.constants';
 
-import { useState, type JSX } from 'react';
+import { useMemo, useState, type JSX } from 'react';
 
 type LessonSubsection = {
   id: string;
@@ -45,6 +46,17 @@ type LessonGroup = {
   typeLabel?: string;
   lessons: KangurLesson[];
   subsections?: LessonSubsection[];
+};
+
+type LessonEntry =
+  | { kind: 'group'; group: LessonGroup }
+  | { kind: 'lesson'; lesson: KangurLesson };
+
+type LessonsCatalogSubjectModel = {
+  displayLessonGroups: LessonGroup[];
+  lessonEntries: LessonEntry[];
+  lessons: KangurLesson[];
+  subjectVisual: ReturnType<typeof getKangurSixYearOldSubjectVisual>;
 };
 
 function buildLessonGroups(
@@ -93,6 +105,7 @@ export function KangurLessonsCatalogWidget(): JSX.Element {
   const { ageGroup } = useKangurAgeGroupFocus();
   const subjectGroups = getKangurSubjectGroups(locale);
   const { entry: emptyStateContent } = useKangurPageContentEntry('lessons-list-empty-state');
+  const isCoarsePointer = useKangurCoarsePointer();
   const {
     orderedLessons,
     lessonSections,
@@ -108,12 +121,44 @@ export function KangurLessonsCatalogWidget(): JSX.Element {
   const [expandedLessonGroupId, setExpandedLessonGroupId] = useState<string | null>(null);
   const isSixYearOld = ageGroup === 'six_year_old';
 
+  const lessonCardStateById = useMemo(
+    () =>
+      new Map(
+        orderedLessons.map((lesson) => {
+          const lessonAssignment = lessonAssignmentsByComponent.get(lesson.componentId) ?? null;
+          return [
+            lesson.id,
+            {
+              completedLessonAssignment: !lessonAssignment
+                ? (completedLessonAssignmentsByComponent.get(lesson.componentId) ?? null)
+                : null,
+              hasDocumentContent: hasKangurLessonDocumentContent(lessonDocuments[lesson.id]),
+              lessonAssignment,
+              masteryPresentation: getLessonMasteryPresentation(
+                lesson,
+                progress,
+                masteryTranslations
+              ),
+            },
+          ] as const;
+        })
+      ),
+    [
+      completedLessonAssignmentsByComponent,
+      lessonAssignmentsByComponent,
+      lessonDocuments,
+      masteryTranslations,
+      orderedLessons,
+      progress,
+    ]
+  );
+
   const renderLessonCard = (lesson: (typeof orderedLessons)[number]) => {
-    const masteryPresentation = getLessonMasteryPresentation(lesson, progress, masteryTranslations);
-    const lessonAssignment = lessonAssignmentsByComponent.get(lesson.componentId) ?? null;
-    const completedLessonAssignment = !lessonAssignment
-      ? completedLessonAssignmentsByComponent.get(lesson.componentId) ?? null
-      : null;
+    const lessonCardState = lessonCardStateById.get(lesson.id);
+    if (!lessonCardState) {
+      return null;
+    }
+
     const isActive = activeLessonId === lesson.id;
 
     return (
@@ -121,17 +166,21 @@ export function KangurLessonsCatalogWidget(): JSX.Element {
         <KangurLessonLibraryCard
           ariaCurrent={isActive ? 'page' : undefined}
           buttonClassName={`kangur-lessons-panel ${KANGUR_PANEL_ROW_CLASSNAME} items-start rounded-[26px] p-4 sm:rounded-[30px] sm:p-5`}
-          completedLessonAssignment={completedLessonAssignment}
+          completedLessonAssignment={lessonCardState.completedLessonAssignment}
           contentClassName='w-full'
           emphasis={isActive ? 'accent' : 'neutral'}
-          hasDocumentContent={hasKangurLessonDocumentContent(lessonDocuments[lesson.id])}
+          hasDocumentContent={lessonCardState.hasDocumentContent}
           iconTestId={`lessons-catalog-icon-${lesson.id}`}
+          isCoarsePointer={isCoarsePointer}
+          isSixYearOld={isSixYearOld}
           itemTestId={`lessons-catalog-item-${lesson.id}`}
           lesson={lesson}
-          lessonAssignment={lessonAssignment}
-          masteryPresentation={masteryPresentation}
+          lessonAssignment={lessonCardState.lessonAssignment}
+          locale={locale}
+          masteryPresentation={lessonCardState.masteryPresentation}
           onSelect={() => selectLesson(lesson.id)}
           statusGroupClassName='w-full items-start max-[420px]:flex-col sm:w-auto sm:flex-col sm:items-end'
+          translations={widgetTranslations}
         />
       </div>
     );
@@ -149,59 +198,77 @@ export function KangurLessonsCatalogWidget(): JSX.Element {
     );
   }
 
-  const lessonsBySubject = new Map(
-    subjectGroups.map((group) => [
-      group.value,
-      orderedLessons.filter((lesson) => lesson.subject === group.value),
-    ])
+  const lessonsBySubject = useMemo(
+    () =>
+      new Map(
+        subjectGroups.map((group) => [
+          group.value,
+          orderedLessons.filter((lesson) => lesson.subject === group.value),
+        ])
+      ),
+    [orderedLessons, subjectGroups]
+  );
+
+  const subjectModels = useMemo(
+    () =>
+      new Map(
+        subjectGroups.map((group) => {
+          const groupLessons = lessonsBySubject.get(group.value) ?? [];
+          const subjectSections = lessonSections.filter((section) => section.subject === group.value);
+          const displayLessonGroups = buildLessonGroups(subjectSections, groupLessons, locale);
+          const lessonGroupById = new Map(displayLessonGroups.map((lessonGroup) => [
+            lessonGroup.id,
+            lessonGroup,
+          ]));
+          const lessonGroupIdByComponent = new Map<string, string>();
+
+          displayLessonGroups.forEach((lessonGroup) => {
+            const groupedLessons = lessonGroup.subsections
+              ? lessonGroup.subsections.flatMap((subsection) => subsection.lessons)
+              : lessonGroup.lessons;
+            groupedLessons.forEach((lesson) => {
+              lessonGroupIdByComponent.set(lesson.componentId, lessonGroup.id);
+            });
+          });
+
+          const lessonEntries: LessonEntry[] = [];
+          const usedGroupIds = new Set<string>();
+          groupLessons.forEach((lesson) => {
+            const lessonGroupId = lessonGroupIdByComponent.get(lesson.componentId);
+            if (lessonGroupId) {
+              if (!usedGroupIds.has(lessonGroupId)) {
+                const lessonGroup = lessonGroupById.get(lessonGroupId);
+                if (lessonGroup) {
+                  lessonEntries.push({ kind: 'group', group: lessonGroup });
+                }
+                usedGroupIds.add(lessonGroupId);
+              }
+              return;
+            }
+            lessonEntries.push({ kind: 'lesson', lesson });
+          });
+
+          return [
+            group.value,
+            {
+              displayLessonGroups,
+              lessonEntries,
+              lessons: groupLessons,
+              subjectVisual: getKangurSixYearOldSubjectVisual(group.value),
+            } satisfies LessonsCatalogSubjectModel,
+          ] as const;
+        })
+      ),
+    [lessonSections, lessonsBySubject, locale, subjectGroups]
   );
 
   return (
     <div className={LESSONS_LIBRARY_LIST_CLASSNAME} aria-label='Lista lekcji'>
       {subjectGroups.map((group) => {
-        const groupLessons = lessonsBySubject.get(group.value) ?? [];
-        if (groupLessons.length === 0) {
+        const subjectModel = subjectModels.get(group.value);
+        if (!subjectModel || subjectModel.lessons.length === 0) {
           return null;
         }
-
-        const subjectSections = lessonSections.filter((s) => s.subject === group.value);
-        const displayLessonGroups = buildLessonGroups(subjectSections, groupLessons, locale);
-
-        type LessonEntry =
-          | { kind: 'group'; group: (typeof displayLessonGroups)[number] }
-          | { kind: 'lesson'; lesson: (typeof groupLessons)[number] };
-
-        const lessonEntries: LessonEntry[] = [];
-        const lessonGroupById = new Map(displayLessonGroups.map((lessonGroup) => [
-          lessonGroup.id,
-          lessonGroup,
-        ]));
-        const lessonGroupIdByComponent = new Map<string, string>();
-
-        displayLessonGroups.forEach((lessonGroup) => {
-          const groupedLessons = lessonGroup.subsections
-            ? lessonGroup.subsections.flatMap((subsection) => subsection.lessons)
-            : lessonGroup.lessons;
-          groupedLessons.forEach((lesson) => {
-            lessonGroupIdByComponent.set(lesson.componentId, lessonGroup.id);
-          });
-        });
-
-        const usedGroupIds = new Set<string>();
-        groupLessons.forEach((lesson) => {
-          const lessonGroupId = lessonGroupIdByComponent.get(lesson.componentId);
-          if (lessonGroupId) {
-            if (!usedGroupIds.has(lessonGroupId)) {
-              const lessonGroup = lessonGroupById.get(lessonGroupId);
-              if (lessonGroup) {
-                lessonEntries.push({ kind: 'group', group: lessonGroup });
-              }
-              usedGroupIds.add(lessonGroupId);
-            }
-            return;
-          }
-          lessonEntries.push({ kind: 'lesson', lesson });
-        });
 
         return (
           <KangurSubjectGroupSection
@@ -218,7 +285,7 @@ export function KangurLessonsCatalogWidget(): JSX.Element {
                     className='text-lg leading-none'
                     data-testid={`lessons-catalog-subject-icon-${group.value}`}
                   >
-                    {getKangurSixYearOldSubjectVisual(group.value).icon}
+                    {subjectModel.subjectVisual.icon}
                   </span>
                   <span>{group.label}</span>
                 </span>
@@ -228,12 +295,11 @@ export function KangurLessonsCatalogWidget(): JSX.Element {
             }
           >
             <div className={LESSONS_LIBRARY_LIST_CLASSNAME} role='list'>
-              {lessonEntries.map((entry) => {
+              {subjectModel.lessonEntries.map((entry) => {
                 if (entry.kind === 'group') {
                   const groupKey = `${group.value}:${entry.group.id}`;
                   const isExpanded = expandedLessonGroupId === groupKey;
                   const groupHasSubsections = Boolean(entry.group.subsections?.length);
-                  const subjectVisual = getKangurSixYearOldSubjectVisual(group.value);
 
                   return (
                     <div key={groupKey} role='listitem' className='w-full'>
@@ -252,6 +318,7 @@ export function KangurLessonsCatalogWidget(): JSX.Element {
                           )
                         }
                         isExpanded={isExpanded}
+                        isCoarsePointer={isCoarsePointer}
                         label={
                           isSixYearOld ? (
                             <span
@@ -277,10 +344,10 @@ export function KangurLessonsCatalogWidget(): JSX.Element {
                             ? isSixYearOld
                               ? (
                                   <KangurVisualCueContent
-                                    detail={subjectVisual.detail}
+                                    detail={subjectModel.subjectVisual.detail}
                                     detailClassName='text-sm'
                                     detailTestId={`lessons-catalog-group-type-detail-${groupKey}`}
-                                    icon={subjectVisual.icon}
+                                    icon={subjectModel.subjectVisual.icon}
                                     iconClassName='text-base'
                                     iconTestId={`lessons-catalog-group-type-icon-${groupKey}`}
                                     label={entry.group.typeLabel}

@@ -10,6 +10,13 @@ import { getImageStudioSlotImageSrc } from '@/features/ai/public';
 import { Button, FormSection, LoadingState, StatusBadge, GenericGridPicker } from '@/features/products/ui';
 import { cn } from '@/shared/utils';
 import type { GridPickerItem } from '@/shared/contracts/ui';
+import type { ImageStudioSlotDto as ImageStudioSlotRecord } from '@/shared/contracts/image-studio';
+
+type StudioVariantGridItem = GridPickerItem<ImageStudioSlotRecord | null> & {
+  metadata?: {
+    isPending?: boolean;
+  };
+};
 
 export function StudioVariantsGrid(): React.JSX.Element {
   const context = useProductStudioContext();
@@ -27,15 +34,17 @@ export function StudioVariantsGrid(): React.JSX.Element {
 
   const { imageExternalBaseUrl: productImagesExternalBaseUrl } = useProductSettings();
 
-  const gridItems = useMemo((): GridPickerItem[] => {
-    const items: GridPickerItem[] = variants.map((slot) => ({
+  const gridItems = useMemo((): StudioVariantGridItem[] => {
+    const items: StudioVariantGridItem[] = variants.map((slot) => ({
       id: slot.id,
       label: slot.name ?? 'Variant',
       value: slot,
     }));
 
     // Add pending placeholders as items
-    const pendingItems: GridPickerItem[] = Array.from({ length: pendingVariantPlaceholderCount }).map((_, i) => ({
+    const pendingItems: StudioVariantGridItem[] = Array.from({
+      length: pendingVariantPlaceholderCount,
+    }).map((_, i) => ({
       id: `pending-${i}`,
       label: 'Syncing...',
       disabled: true,
@@ -52,18 +61,18 @@ export function StudioVariantsGrid(): React.JSX.Element {
       ) : gridItems.length === 0 ? (
         <p className='text-sm text-gray-400'>No generations yet for the selected product image.</p>
       ) : (
-        <GenericGridPicker
+        <GenericGridPicker<StudioVariantGridItem>
           items={gridItems}
           selectedId={selectedVariant?.id}
           onSelect={(item) => {
-            if (item.id && !item.metadata?.isPending) {
+            if (item.id && !item.metadata?.['isPending']) {
               setSelectedVariantSlotId(item.id);
             }
           }}
           columns={5}
           gap='8px'
           renderItem={(item, isSelected) => {
-            if (item.metadata?.isPending) {
+            if (item.metadata?.['isPending']) {
               return (
                 <div className='space-y-1 rounded border border-border/60 p-1'>
                   <div className='flex h-24 w-full items-center justify-center rounded bg-black/20 text-xs text-gray-500'>
@@ -74,7 +83,10 @@ export function StudioVariantsGrid(): React.JSX.Element {
               );
             }
 
-            const slot = item.value as any;
+            const slot = item.value;
+            if (!slot) {
+              return null;
+            }
             const src = getImageStudioSlotImageSrc(slot, productImagesExternalBaseUrl);
             const isDeleting = deletingVariantId === slot.id;
 

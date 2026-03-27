@@ -24,6 +24,7 @@ Generated from `src/features/products/components/settings/validator-settings/val
 | core.isPatternLocaleMatch | `isPatternLocaleMatch` | `src/features/products/validation-engine/core.ts` | Checks locale compatibility between pattern and field. |
 | core.normalizeReplacementFields | `normalizeReplacementFields` | `src/features/products/validation-engine/core.ts` | Validates, deduplicates, and normalizes replacement field allowlist. |
 | core.isReplacementAllowedForField | `isReplacementAllowedForField` | `src/features/products/validation-engine/core.ts` | Checks whether replacement is permitted for a specific form field. |
+| core.isPatternConfiguredForFormatterAutoApply | `isPatternConfiguredForFormatterAutoApply` | `src/features/products/validation-engine/core.ts` | Determines whether formatter auto-apply should run for the current field and validation scope. |
 | core.allowsPatternExecutionWithoutRegexMatch | `allowsPatternExecutionWithoutRegexMatch` | `src/features/products/validation-engine/core.ts` | Checks whether a pattern can execute its semantic operation without first matching a regex. |
 | core.isLatestPriceStockMirrorPattern | `isLatestPriceStockMirrorPattern` | `src/features/products/validation-engine/core.ts` | Detects dynamic mirror patterns pulling latest price or stock values. |
 | core.isRuntimePatternEnabled | `isRuntimePatternEnabled` | `src/features/products/validation-engine/core.ts` | Identifies patterns delegated to runtime evaluator. |
@@ -203,6 +204,20 @@ Generated from `src/features/products/components/settings/validator-settings/val
 - Errors: No throws.
 - Edge Cases: Empty allowlist means global replacement.
 - Example: `isReplacementAllowedForField(pattern, 'name_en')`
+
+### core.isPatternConfiguredForFormatterAutoApply
+
+- File: `src/features/products/validation-engine/core.ts`
+- Symbol: `isPatternConfiguredForFormatterAutoApply`
+- Purpose: Determines whether formatter auto-apply should run for the current field and validation scope.
+- Parameters:
+  pattern: pattern with replacement auto-apply configuration.
+  fieldName: current form field name.
+  validationScope: active validator scope.
+- Returns: True when auto-apply is enabled and the pattern targets the current field.
+- Errors: No throws.
+- Edge Cases: Disabled patterns, missing replacement values, scope mismatches, and non-target fields return false.
+- Example: `isPatternConfiguredForFormatterAutoApply({ pattern, fieldName: 'name_en', validationScope: 'product' })`
 
 ### core.allowsPatternExecutionWithoutRegexMatch
 

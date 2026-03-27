@@ -3,15 +3,18 @@
  */
 
 import React from 'react';
-import { fireEvent, render, screen } from '@testing-library/react';
+import { act, fireEvent, render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import {
   LESSONS_LIBRARY_LAYOUT_CLASSNAME,
   LESSONS_LIBRARY_LIST_CLASSNAME,
 } from './Lessons.constants';
 
-const { useLessonsMock } = vi.hoisted(() => ({
+const { lessonCardPropsMock, useKangurCoarsePointerMock, useLessonsMock, useKangurPageContentEntryMock } = vi.hoisted(() => ({
+  lessonCardPropsMock: vi.fn(),
+  useKangurCoarsePointerMock: vi.fn(() => false),
   useLessonsMock: vi.fn(),
+  useKangurPageContentEntryMock: vi.fn(() => ({ entry: null })),
 }));
 
 vi.mock('framer-motion', () => ({
@@ -63,10 +66,15 @@ vi.mock('@/features/kangur/lesson-documents', () => ({
   hasKangurLessonDocumentContent: () => false,
 }));
 
+vi.mock('@/features/kangur/ui/hooks/useKangurCoarsePointer', () => ({
+  useKangurCoarsePointer: () => useKangurCoarsePointerMock(),
+}));
+
 vi.mock('@/features/kangur/ui/components/KangurLessonLibraryCard', () => ({
-  KangurLessonLibraryCard: ({ lesson }: { lesson: { id: string; title: string } }) => (
-    <div data-testid={`mock-lesson-card-${lesson.id}`}>{lesson.title}</div>
-  ),
+  KangurLessonLibraryCard: (props: { lesson: { id: string; title: string } }) => {
+    lessonCardPropsMock(props);
+    return <div data-testid={`mock-lesson-card-${props.lesson.id}`}>{props.lesson.title}</div>;
+  },
 }));
 
 vi.mock('@/features/kangur/ui/components/KangurLessonGroupAccordion', () => ({
@@ -145,7 +153,7 @@ vi.mock('@/features/kangur/ui/design/primitives', () => ({
 }));
 
 vi.mock('@/features/kangur/ui/hooks/useKangurPageContent', () => ({
-  useKangurPageContentEntry: () => ({ entry: null }),
+  useKangurPageContentEntry: (...args: unknown[]) => useKangurPageContentEntryMock(...args),
 }));
 
 vi.mock('./Lessons.utils', () => ({
@@ -165,7 +173,56 @@ import { LessonsCatalog } from './Lessons.Catalog';
 const splitClasses = (className: string): string[] => className.trim().split(/\s+/);
 
 describe('LessonsCatalog', () => {
+  it('defers page-content hooks until after the first render turn', () => {
+    vi.useFakeTimers();
+    const requestAnimationFrameSpy = vi
+      .spyOn(window, 'requestAnimationFrame')
+      .mockImplementation((callback: FrameRequestCallback): number =>
+        window.setTimeout(() => callback(0), 0)
+      );
+    vi.spyOn(window, 'cancelAnimationFrame').mockImplementation((handle: number) => {
+      window.clearTimeout(handle);
+    });
+    useKangurPageContentEntryMock.mockClear();
+    useLessonsMock.mockReturnValue({
+      subject: 'music',
+      ageGroup: 'six_year_old',
+      lessonSections: [],
+      orderedLessons: [],
+      handleSelectLesson: vi.fn(),
+      handleGoBack: vi.fn(),
+      progress: { lessonMastery: {} },
+      lessonAssignmentsByComponent: new Map(),
+      completedLessonAssignmentsByComponent: new Map(),
+      lessonDocuments: {},
+      activeLessonId: null,
+      isLessonsCatalogLoading: false,
+      isLessonSectionsLoading: false,
+      shouldShowLessonsCatalogSkeleton: false,
+    });
+
+    render(<LessonsCatalog />);
+
+    expect(useKangurPageContentEntryMock).not.toHaveBeenCalled();
+
+    act(() => {
+      vi.runAllTimers();
+    });
+
+    expect(useKangurPageContentEntryMock).toHaveBeenCalledTimes(2);
+    expect(useKangurPageContentEntryMock).toHaveBeenNthCalledWith(1, 'lessons-list-intro');
+    expect(useKangurPageContentEntryMock).toHaveBeenNthCalledWith(
+      2,
+      'lessons-list-empty-state'
+    );
+
+    requestAnimationFrameSpy.mockRestore();
+    vi.useRealTimers();
+  });
+
   it('renders six-year-old icon cues in the intro and grouped lesson headers', () => {
+    lessonCardPropsMock.mockClear();
+    useKangurPageContentEntryMock.mockClear();
     useLessonsMock.mockReturnValue({
       subject: 'music',
       ageGroup: 'six_year_old',
@@ -245,5 +302,12 @@ describe('LessonsCatalog', () => {
       screen.queryByTestId('lessons-page-subsection-icon-music_diatonic_scale')
     ).not.toBeInTheDocument();
     expect(screen.queryByText('Podgrupa')).not.toBeInTheDocument();
+    expect(lessonCardPropsMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        isCoarsePointer: false,
+        isSixYearOld: true,
+        locale: 'pl',
+      })
+    );
   });
 });

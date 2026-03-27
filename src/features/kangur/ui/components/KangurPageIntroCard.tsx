@@ -39,7 +39,7 @@ type KangurPageIntroCardProps = {
 type KangurPageIntroCardContextValue = {
   accent: KangurAccent;
   backButtonContent?: ReactNode;
-  backButtonLabel: string;
+  backButtonLabel?: string;
   backButtonTestId?: string;
   description?: ReactNode;
   headingAction?: ReactNode;
@@ -146,13 +146,22 @@ function KangurPageIntroDescription(): React.JSX.Element | null {
 }
 
 function KangurPageIntroBackButton(): React.JSX.Element | null {
-  const isCoarsePointer = useKangurCoarsePointer();
-  const { backButtonContent, backButtonLabel, backButtonTestId, onBack, showBackButton } =
-    useKangurPageIntroCardContext();
+  const { showBackButton } = useKangurPageIntroCardContext();
 
   if (!showBackButton) {
     return null;
   }
+
+  return <KangurRenderedPageIntroBackButton />;
+}
+
+function KangurRenderedPageIntroBackButton(): React.JSX.Element | null {
+  const locale = normalizeSiteLocale(useLocale());
+  const isCoarsePointer = useKangurCoarsePointer();
+  const { backButtonContent, backButtonLabel, backButtonTestId, onBack } =
+    useKangurPageIntroCardContext();
+  const resolvedBackButtonLabel =
+    backButtonLabel ?? getKangurPageIntroFallbackLabel(locale);
 
   if (backButtonContent) {
     return <div className='mt-4'>{backButtonContent}</div>;
@@ -172,7 +181,7 @@ function KangurPageIntroBackButton(): React.JSX.Element | null {
       type='button'
       variant='surface'
     >
-      {backButtonLabel}
+      {resolvedBackButtonLabel}
     </KangurButton>
   );
 }
@@ -198,14 +207,12 @@ export function KangurPageIntroCard({
   visualTitle,
   onBack = () => {},
 }: KangurPageIntroCardProps): React.JSX.Element {
-  const locale = normalizeSiteLocale(useLocale());
   const panelClassName = cn('w-full', headingAction ? 'text-left' : 'text-center', className);
   const panelTestId = testId;
-  const resolvedBackButtonLabel = backButtonLabel ?? getKangurPageIntroFallbackLabel(locale);
   const contextValue: KangurPageIntroCardContextValue = {
     accent,
     backButtonContent,
-    backButtonLabel: resolvedBackButtonLabel,
+    backButtonLabel,
     backButtonTestId,
     description,
     headingAction,

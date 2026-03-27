@@ -7,7 +7,6 @@ import {
   resolveKangurPageKeyFromSlug,
 } from '@/features/kangur/config/routing';
 import {
-  canAccessKangurPage,
   resolveAccessibleKangurPageKey,
 } from '@/features/kangur/config/page-access';
 import { withKangurClientErrorSync } from '@/features/kangur/observability/client';
@@ -336,8 +335,16 @@ export const sanitizeAccessibleManagedKangurHref = ({
 
   const effectiveBasePath = normalizeKangurBasePath(basePath ?? KANGUR_BASE_PATH);
   const resolvedPageKey = resolveManagedKangurPageKeyFromHref(resolvedHref, effectiveBasePath);
+  const fallbackPageKey =
+    (resolveManagedKangurPageKeyFromHref(fallbackHref, effectiveBasePath) ?? 'Game') as string;
+  const accessibleResolvedPageKey = resolveAccessibleManagedKangurTargetPageKey({
+    basePath: effectiveBasePath,
+    fallbackPageKey,
+    href: resolvedHref,
+    session,
+  });
 
-  if (!resolvedPageKey || canAccessKangurPage(resolvedPageKey, session)) {
+  if (!resolvedPageKey || accessibleResolvedPageKey === resolvedPageKey) {
     return resolvedHref;
   }
 

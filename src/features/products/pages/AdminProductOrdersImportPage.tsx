@@ -50,6 +50,12 @@ type FeedbackState =
   | null;
 
 type ImportStateFilter = 'all' | BaseOrderImportState;
+type PreviewSortOption =
+  | 'created-desc'
+  | 'created-asc'
+  | 'customer-asc'
+  | 'total-desc'
+  | 'import-priority';
 
 type OrderChangeSummaryItem = {
   key: string;
@@ -88,6 +94,14 @@ const formatTextValue = (value: string | null): string => {
   const normalized = value?.trim();
   return normalized ? normalized : '—';
 };
+
+const getOrderTimestamp = (value: string | null): number => {
+  if (!value) return Number.NEGATIVE_INFINITY;
+  const timestamp = new Date(value).getTime();
+  return Number.isNaN(timestamp) ? Number.NEGATIVE_INFINITY : timestamp;
+};
+
+const normalizeSortText = (value: string | null): string => value?.trim().toLowerCase() ?? '';
 
 const buildPreviousImportSnapshot = (
   order: BaseOrderImportPreviewItem,
@@ -189,6 +203,12 @@ const IMPORT_STATE_VARIANTS: Record<BaseOrderImportState, 'active' | 'neutral' |
   changed: 'warning',
 };
 
+const IMPORT_STATE_SORT_ORDER: Record<BaseOrderImportState, number> = {
+  new: 0,
+  changed: 1,
+  imported: 2,
+};
+
 export function AdminProductOrdersImportPage(): React.JSX.Element {
   const integrationsQuery = useIntegrationsWithConnections();
   const defaultConnectionQuery = useDefaultExportConnection();
@@ -202,9 +222,11 @@ export function AdminProductOrdersImportPage(): React.JSX.Element {
   const [limit, setLimit] = React.useState('50');
   const [search, setSearch] = React.useState('');
   const [importStateFilter, setImportStateFilter] = React.useState<ImportStateFilter>('all');
+  const [sortBy, setSortBy] = React.useState<PreviewSortOption>('created-desc');
   const [rowSelection, setRowSelection] = React.useState<RowSelectionState>({});
   const [expanded, setExpanded] = React.useState<Record<string, boolean>>({});
   const [preview, setPreview] = React.useState<BaseOrderImportPreviewResponse | null>(null);
+  const [lastPreviewScopeKey, setLastPreviewScopeKey] = React.useState<string | null>(null);
   const [feedback, setFeedback] = React.useState<FeedbackState>(null);
 
   const baseConnections = React.useMemo(() => {
@@ -276,10 +298,26 @@ export function AdminProductOrdersImportPage(): React.JSX.Element {
     []
   );
 
+  const sortOptions = React.useMemo(
+    () => [
+      { value: 'created-desc', label: 'Newest created' },
+      { value: 'created-asc', label: 'Oldest created' },
+      { value: 'customer-asc', label: 'Customer A-Z' },
+      { value: 'total-desc', label: 'Highest total' },
+      { value: 'import-priority', label: 'Import priority' },
+    ],
+    []
+  );
+
+  const currentPreviewScopeKey = React.useMemo(
+    () => [selectedConnectionId, dateFrom, dateTo, statusId, limit].join('::'),
+    [selectedConnectionId, dateFrom, dateTo, statusId, limit]
+  );
+
   const filteredOrders = React.useMemo(() => {
     const orders = preview?.orders ?? [];
     const normalizedQuery = search.trim().toLowerCase();
-    return orders.filter((order) => {
+    const nextOrders = orders.filter((order) => {
       if (importStateFilter !== 'all' && order.importState !== importStateFilter) {
         return false;
       }
@@ -306,7 +344,39 @@ export function AdminProductOrdersImportPage(): React.JSX.Element {
 
       return haystack.includes(normalizedQuery);
     });
-  }, [importStateFilter, preview?.orders, search]);
+
+    return [...nextOrders].sort((left, right) => {
+      switch (sortBy) {
+        case 'created-asc':
+          return (
+            getOrderTimestamp(left.orderCreatedAt) - getOrderTimestamp(right.orderCreatedAt) ||
+            left.baseOrderId.localeCompare(right.baseOrderId)
+          );
+        case 'customer-asc':
+          return (
+            normalizeSortText(left.buyerName).localeCompare(normalizeSortText(right.buyerName)) ||
+            getOrderTimestamp(right.orderCreatedAt) - getOrderTimestamp(left.orderCreatedAt)
+          );
+        case 'total-desc':
+          return (
+            (right.totalGross ?? Number.NEGATIVE_INFINITY) -
+              (left.totalGross ?? Number.NEGATIVE_INFINITY) ||
+            getOrderTimestamp(right.orderCreatedAt) - getOrderTimestamp(left.orderCreatedAt)
+          );
+        case 'import-priority':
+          return (
+            IMPORT_STATE_SORT_ORDER[left.importState] - IMPORT_STATE_SORT_ORDER[right.importState] ||
+            getOrderTimestamp(right.orderCreatedAt) - getOrderTimestamp(left.orderCreatedAt)
+          );
+        case 'created-desc':
+        default:
+          return (
+            getOrderTimestamp(right.orderCreatedAt) - getOrderTimestamp(left.orderCreatedAt) ||
+            right.baseOrderId.localeCompare(left.baseOrderId)
+          );
+      }
+    });
+  }, [importStateFilter, preview?.orders, search, sortBy]);
 
   const selectedOrders = React.useMemo(
     () =>
@@ -314,17 +384,32 @@ export function AdminProductOrdersImportPage(): React.JSX.Element {
     [preview?.orders, rowSelection]
   );
 
-  const selectedImportableOrders = React.useMemo(
-    () =>
-      selectedOrders.filter(
-        (order) => order.importState === 'new' || order.importState === 'changed'
-      ),
-    [selectedOrders]
+  const selectedVisibleOrders = React.useMemo(
+    () => filteredOrders.filter((order) => Boolean(rowSelection[order.baseOrderId])),
+    [filteredOrders, rowSelection]
   );
 
-  const selectedImportedOrders = React.useMemo(
-    () => selectedOrders.filter((order) => order.importState === 'imported'),
-    [selectedOrders]
+  const selectedHiddenCount = Math.max(selectedOrders.length - selectedVisibleOrders.length, 0);
+  const hasActiveViewFilters =
+    importStateFilter !== 'all' || search.trim().length > 0 || sortBy !== 'created-desc';
+  const hasActivePreviewScopeFilters =
+    dateFrom.trim().length > 0 || dateTo.trim().length > 0 || statusId.trim().length > 0 || limit !== '50';
+  const isPreviewStale =
+    preview !== null &&
+    lastPreviewScopeKey !== null &&
+    lastPreviewScopeKey !== currentPreviewScopeKey;
+
+  const selectedVisibleImportableOrders = React.useMemo(
+    () =>
+      selectedVisibleOrders.filter(
+        (order) => order.importState === 'new' || order.importState === 'changed'
+      ),
+    [selectedVisibleOrders]
+  );
+
+  const selectedVisibleImportedOrders = React.useMemo(
+    () => selectedVisibleOrders.filter((order) => order.importState === 'imported'),
+    [selectedVisibleOrders]
   );
 
   const importableVisibleOrders = React.useMemo(
@@ -337,6 +422,15 @@ export function AdminProductOrdersImportPage(): React.JSX.Element {
 
   const importedVisibleOrders = React.useMemo(
     () => filteredOrders.filter((order) => order.importState === 'imported'),
+    [filteredOrders]
+  );
+
+  const visibleStateCounts = React.useMemo(
+    () => ({
+      newCount: filteredOrders.filter((order) => order.importState === 'new').length,
+      changedCount: filteredOrders.filter((order) => order.importState === 'changed').length,
+      importedCount: filteredOrders.filter((order) => order.importState === 'imported').length,
+    }),
     [filteredOrders]
   );
 
@@ -364,6 +458,45 @@ export function AdminProductOrdersImportPage(): React.JSX.Element {
     setRowSelection({});
   }, []);
 
+  const handleClearHiddenSelection = React.useCallback(() => {
+    const visibleIds = new Set(filteredOrders.map((order) => order.baseOrderId));
+    setRowSelection((currentSelection) => {
+      const nextSelection: RowSelectionState = {};
+      for (const [orderId, selected] of Object.entries(currentSelection)) {
+        if (selected && visibleIds.has(orderId)) {
+          nextSelection[orderId] = true;
+        }
+      }
+      return nextSelection;
+    });
+  }, [filteredOrders]);
+
+  const handleClearVisibleSelection = React.useCallback(() => {
+    const visibleIds = new Set(filteredOrders.map((order) => order.baseOrderId));
+    setRowSelection((currentSelection) => {
+      const nextSelection: RowSelectionState = {};
+      for (const [orderId, selected] of Object.entries(currentSelection)) {
+        if (selected && !visibleIds.has(orderId)) {
+          nextSelection[orderId] = true;
+        }
+      }
+      return nextSelection;
+    });
+  }, [filteredOrders]);
+
+  const handleResetViewFilters = React.useCallback(() => {
+    setImportStateFilter('all');
+    setSearch('');
+    setSortBy('created-desc');
+  }, []);
+
+  const handleResetPreviewScope = React.useCallback(() => {
+    setDateFrom('');
+    setDateTo('');
+    setStatusId('');
+    setLimit('50');
+  }, []);
+
   const handleToggleExpanded = React.useCallback((orderId: string) => {
     setExpanded((currentExpanded) => ({
       ...currentExpanded,
@@ -387,6 +520,7 @@ export function AdminProductOrdersImportPage(): React.JSX.Element {
         limit: Number(limit),
       });
       setPreview(response);
+      setLastPreviewScopeKey(currentPreviewScopeKey);
       setRowSelection({});
       setExpanded({});
       setFeedback({
@@ -432,6 +566,13 @@ export function AdminProductOrdersImportPage(): React.JSX.Element {
 
   const handleImport = async (orders: BaseOrderImportPreviewItem[]): Promise<void> => {
     if (!selectedConnectionId.trim() || orders.length === 0) return;
+    if (isPreviewStale) {
+      setFeedback({
+        variant: 'error',
+        message: 'Refresh preview after changing connection, date, status, or limit before importing orders.',
+      });
+      return;
+    }
 
     setFeedback(null);
     try {
@@ -487,6 +628,7 @@ export function AdminProductOrdersImportPage(): React.JSX.Element {
             }
             onCheckedChange={(checked) => table.toggleAllPageRowsSelected(Boolean(checked))}
             aria-label='Select all orders'
+            disabled={isPreviewStale}
           />
         ),
         cell: ({ row }: { row: Row<BaseOrderImportPreviewItem> }) => (
@@ -494,6 +636,7 @@ export function AdminProductOrdersImportPage(): React.JSX.Element {
             checked={row.getIsSelected()}
             onCheckedChange={(checked) => row.toggleSelected(Boolean(checked))}
             aria-label={`Select order ${row.original.baseOrderId}`}
+            disabled={isPreviewStale}
           />
         ),
         enableSorting: false,
@@ -572,7 +715,7 @@ export function AdminProductOrdersImportPage(): React.JSX.Element {
         ),
       },
     ],
-    [expanded, handleToggleExpanded]
+    [expanded, handleToggleExpanded, isPreviewStale]
   );
 
   const panelAlerts = (
@@ -580,6 +723,26 @@ export function AdminProductOrdersImportPage(): React.JSX.Element {
       {!baseConnections.length ? (
         <Alert variant='warning' title='No Base.com connections available'>
           Configure a Base.com connection in <Link href='/admin/integrations' className='underline underline-offset-4'>Integrations</Link> before previewing orders.
+        </Alert>
+      ) : null}
+      {isPreviewStale ? (
+        <Alert variant='warning' title='Preview out of date'>
+          <div className='flex flex-wrap items-center gap-3'>
+            <span>
+              Preview scope changed. Run Preview orders again before importing or selecting orders.
+            </span>
+            <Button
+              type='button'
+              size='xs'
+              variant='outline'
+              onClick={() => {
+                void handlePreview();
+              }}
+              disabled={previewMutation.isPending || !selectedConnectionId}
+            >
+              Refresh preview now
+            </Button>
+          </div>
         </Alert>
       ) : null}
       {feedback ? (
@@ -601,13 +764,14 @@ export function AdminProductOrdersImportPage(): React.JSX.Element {
   );
 
   const panelFilters = (
-    <div className='grid gap-3 md:grid-cols-2 xl:grid-cols-7'>
+    <div className='grid gap-3 md:grid-cols-2 xl:grid-cols-8'>
       <SelectSimple
         value={selectedConnectionId || '__none__'}
         onValueChange={(value) => {
           const nextValue = value === '__none__' ? '' : value;
           setSelectedConnectionId(nextValue);
           setPreview(null);
+          setLastPreviewScopeKey(null);
           setRowSelection({});
           setFeedback(null);
         }}
@@ -658,6 +822,14 @@ export function AdminProductOrdersImportPage(): React.JSX.Element {
         ariaLabel='Import state'
         size='sm'
       />
+      <SelectSimple
+        value={sortBy}
+        onValueChange={(value) => setSortBy(value as PreviewSortOption)}
+        options={sortOptions}
+        placeholder='Sort by'
+        ariaLabel='Sort preview'
+        size='sm'
+      />
       <SearchInput
         value={search}
         onChange={(event) => setSearch(event.target.value)}
@@ -685,27 +857,44 @@ export function AdminProductOrdersImportPage(): React.JSX.Element {
       <Button
         type='button'
         size='sm'
-        variant='outline'
-        onClick={() => {
-          void handleImport(selectedImportableOrders);
-        }}
-        disabled={selectedImportableOrders.length === 0 || importMutation.isPending}
+        variant='ghost'
+        onClick={handleResetPreviewScope}
+        disabled={!hasActivePreviewScopeFilters || previewMutation.isPending}
       >
-        <Download className='size-4 mr-1' />
-        {importMutation.isPending
-          ? 'Importing...'
-          : `Import selected new + changed (${selectedImportableOrders.length})`}
+        Reset preview scope
       </Button>
       <Button
         type='button'
         size='sm'
         variant='outline'
         onClick={() => {
-          void handleImport(selectedImportedOrders);
+          void handleImport(selectedVisibleImportableOrders);
         }}
-        disabled={selectedImportedOrders.length === 0 || importMutation.isPending}
+        disabled={
+          selectedVisibleImportableOrders.length === 0 ||
+          importMutation.isPending ||
+          isPreviewStale
+        }
       >
-        Reimport selected imported ({selectedImportedOrders.length})
+        <Download className='size-4 mr-1' />
+        {importMutation.isPending
+          ? 'Importing...'
+          : `Import selected visible new + changed (${selectedVisibleImportableOrders.length})`}
+      </Button>
+      <Button
+        type='button'
+        size='sm'
+        variant='outline'
+        onClick={() => {
+          void handleImport(selectedVisibleImportedOrders);
+        }}
+        disabled={
+          selectedVisibleImportedOrders.length === 0 ||
+          importMutation.isPending ||
+          isPreviewStale
+        }
+      >
+        Reimport selected visible imported ({selectedVisibleImportedOrders.length})
       </Button>
       <Button
         type='button'
@@ -714,7 +903,7 @@ export function AdminProductOrdersImportPage(): React.JSX.Element {
         onClick={() => {
           void handleImport(importableVisibleOrders);
         }}
-        disabled={!importableVisibleOrders.length || importMutation.isPending}
+        disabled={!importableVisibleOrders.length || importMutation.isPending || isPreviewStale}
       >
         Import visible new + changed ({importableVisibleOrders.length})
       </Button>
@@ -728,9 +917,15 @@ export function AdminProductOrdersImportPage(): React.JSX.Element {
       <Badge variant='warning'>{preview.stats.changedCount} changed</Badge>
       <Badge variant='neutral'>{preview.stats.importedCount} imported</Badge>
       <Badge variant='outline'>{filteredOrders.length} visible</Badge>
-      <Badge variant='outline'>{selectedOrders.length} selected</Badge>
-      <Badge variant='active'>{selectedImportableOrders.length} selected to import</Badge>
-      <Badge variant='neutral'>{selectedImportedOrders.length} selected to reimport</Badge>
+      <Badge variant='active'>{visibleStateCounts.newCount} visible new</Badge>
+      <Badge variant='warning'>{visibleStateCounts.changedCount} visible changed</Badge>
+      <Badge variant='neutral'>{visibleStateCounts.importedCount} visible imported</Badge>
+      <Badge variant='outline'>{selectedVisibleOrders.length} selected visible</Badge>
+      {selectedHiddenCount > 0 ? (
+        <Badge variant='warning'>{selectedHiddenCount} hidden by filters</Badge>
+      ) : null}
+      <Badge variant='active'>{selectedVisibleImportableOrders.length} selected to import</Badge>
+      <Badge variant='neutral'>{selectedVisibleImportedOrders.length} selected to reimport</Badge>
     </div>
   ) : null;
 
@@ -797,7 +992,7 @@ export function AdminProductOrdersImportPage(): React.JSX.Element {
                 onClick={() => {
                   void handleImport([order]);
                 }}
-                disabled={importMutation.isPending}
+                disabled={importMutation.isPending || isPreviewStale}
               >
                 {order.importState === 'imported' ? 'Reimport this order' : 'Import this order'}
               </Button>
@@ -932,7 +1127,7 @@ export function AdminProductOrdersImportPage(): React.JSX.Element {
         </div>
       );
     },
-    [handleImport, importMutation.isPending]
+    [handleImport, importMutation.isPending, isPreviewStale]
   );
 
   const panelRowActions = preview ? (
@@ -942,7 +1137,7 @@ export function AdminProductOrdersImportPage(): React.JSX.Element {
         size='xs'
         variant='outline'
         onClick={handleSelectVisibleImportable}
-        disabled={importableVisibleOrders.length === 0}
+        disabled={importableVisibleOrders.length === 0 || isPreviewStale}
       >
         Select visible new + changed ({importableVisibleOrders.length})
       </Button>
@@ -951,9 +1146,27 @@ export function AdminProductOrdersImportPage(): React.JSX.Element {
         size='xs'
         variant='outline'
         onClick={handleSelectVisibleImported}
-        disabled={importedVisibleOrders.length === 0}
+        disabled={importedVisibleOrders.length === 0 || isPreviewStale}
       >
         Select visible imported ({importedVisibleOrders.length})
+      </Button>
+      <Button
+        type='button'
+        size='xs'
+        variant='ghost'
+        onClick={handleClearHiddenSelection}
+        disabled={selectedHiddenCount === 0}
+      >
+        Clear hidden selection ({selectedHiddenCount})
+      </Button>
+      <Button
+        type='button'
+        size='xs'
+        variant='ghost'
+        onClick={handleClearVisibleSelection}
+        disabled={selectedVisibleOrders.length === 0}
+      >
+        Clear visible selection ({selectedVisibleOrders.length})
       </Button>
       <Button
         type='button'
@@ -963,6 +1176,15 @@ export function AdminProductOrdersImportPage(): React.JSX.Element {
         disabled={selectedOrders.length === 0}
       >
         Clear selection
+      </Button>
+      <Button
+        type='button'
+        size='xs'
+        variant='ghost'
+        onClick={handleResetViewFilters}
+        disabled={!hasActiveViewFilters}
+      >
+        Reset view filters
       </Button>
     </div>
   ) : null;

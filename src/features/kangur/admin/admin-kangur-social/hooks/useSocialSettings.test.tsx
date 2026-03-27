@@ -1,0 +1,184 @@
+/**
+ * @vitest-environment jsdom
+ */
+
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { act, renderHook, waitFor } from '@testing-library/react';
+import type { ReactNode } from 'react';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+
+import { BRAIN_MODEL_DEFAULT_VALUE } from '../AdminKangurSocialPage.Constants';
+import { KANGUR_SOCIAL_CAPTURE_PRESETS } from '@/features/kangur/shared/social-capture-presets';
+import { KANGUR_SOCIAL_SETTINGS_KEY } from '@/features/kangur/settings-social';
+
+const {
+  toastMock,
+  useBrainModelOptionsMock,
+  useIntegrationsMock,
+  useIntegrationConnectionsMock,
+  mutateAsyncMock,
+  logKangurClientErrorMock,
+  captureExceptionMock,
+  settingsStoreMock,
+} = vi.hoisted(() => ({
+  toastMock: vi.fn(),
+  useBrainModelOptionsMock: vi.fn(),
+  useIntegrationsMock: vi.fn(),
+  useIntegrationConnectionsMock: vi.fn(),
+  mutateAsyncMock: vi.fn(),
+  logKangurClientErrorMock: vi.fn(),
+  captureExceptionMock: vi.fn(),
+  settingsStoreMock: {
+    get: vi.fn(),
+    refetch: vi.fn(),
+  },
+}));
+
+vi.mock('@/features/kangur/shared/ui', () => ({
+  useToast: () => ({ toast: toastMock }),
+}));
+
+vi.mock('@/shared/lib/ai-brain/hooks/useBrainModelOptions', () => ({
+  useBrainModelOptions: (...args: unknown[]) => useBrainModelOptionsMock(...args),
+}));
+
+vi.mock('@/features/integrations/public', () => ({
+  useIntegrations: (...args: unknown[]) => useIntegrationsMock(...args),
+  useIntegrationConnections: (...args: unknown[]) => useIntegrationConnectionsMock(...args),
+}));
+
+vi.mock('@/shared/hooks/use-settings', () => ({
+  useUpdateSetting: () => ({
+    mutateAsync: mutateAsyncMock,
+    isPending: false,
+  }),
+}));
+
+vi.mock('@/features/kangur/observability/client', () => ({
+  logKangurClientError: (...args: unknown[]) => logKangurClientErrorMock(...args),
+}));
+
+vi.mock('@/features/kangur/shared/utils/observability/error-system-client', () => ({
+  ErrorSystem: {
+    captureException: (...args: unknown[]) => captureExceptionMock(...args),
+  },
+}));
+
+vi.mock('@/features/kangur/shared/providers/SettingsStoreProvider', () => ({
+  useSettingsStore: () => settingsStoreMock,
+}));
+
+import { useSocialSettings } from './useSocialSettings';
+
+const createWrapper = () => {
+  const queryClient = new QueryClient({
+    defaultOptions: {
+      queries: { retry: false },
+      mutations: { retry: false },
+    },
+  });
+
+  return function Wrapper({ children }: { children: ReactNode }) {
+    return <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>;
+  };
+};
+
+describe('useSocialSettings', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    settingsStoreMock.get.mockReturnValue(null);
+    mutateAsyncMock.mockResolvedValue({});
+    useBrainModelOptionsMock.mockImplementation(
+      ({ capability }: { capability: string }) =>
+        capability === 'kangur_social.post_generation'
+          ? { effectiveModelId: 'brain-routing' }
+          : { effectiveModelId: 'vision-routing' }
+    );
+    useIntegrationsMock.mockReturnValue({
+      data: [{ id: 'linkedin-integration', slug: 'linkedin' }],
+    });
+    useIntegrationConnectionsMock.mockReturnValue({
+      data: [{ id: 'conn-1', hasLinkedInAccessToken: true }],
+    });
+  });
+
+  it('hydrates defaults from the window origin and saves normalized settings', async () => {
+    const { result } = renderHook(() => useSocialSettings(), {
+      wrapper: createWrapper(),
+    });
+
+    await waitFor(() =>
+      expect(result.current.batchCaptureBaseUrl).toBe(window.location.origin)
+    );
+
+    act(() => {
+      result.current.handleBrainModelChange('brain-override');
+      result.current.handleVisionModelChange('vision-override');
+      result.current.handleLinkedInConnectionChange('conn-1');
+      result.current.setProjectUrl(' https://project.example.com ');
+      result.current.setBatchCaptureBaseUrl(' https://capture.example.com ');
+      result.current.clearCapturePresets();
+      result.current.handleToggleCapturePreset('game');
+      result.current.setBatchCapturePresetLimit('2');
+    });
+
+    expect(result.current.isSettingsDirty).toBe(true);
+
+    await act(async () => {
+      await result.current.handleSaveSettings();
+    });
+
+    const saveCall = mutateAsyncMock.mock.calls[0]?.[0];
+    expect(saveCall.key).toBe(KANGUR_SOCIAL_SETTINGS_KEY);
+    expect(JSON.parse(saveCall.value)).toEqual({
+      brainModelId: 'brain-override',
+      visionModelId: 'vision-override',
+      linkedinConnectionId: 'conn-1',
+      batchCaptureBaseUrl: 'https://capture.example.com',
+      batchCapturePresetIds: ['game'],
+      batchCapturePresetLimit: 2,
+      projectUrl: 'https://project.example.com',
+    });
+    expect(settingsStoreMock.refetch).toHaveBeenCalledTimes(1);
+    expect(toastMock).toHaveBeenCalledWith('Social settings saved.', {
+      variant: 'success',
+    });
+  });
+
+  it('respects persisted settings and supports reset-style handlers', async () => {
+    settingsStoreMock.get.mockReturnValue(
+      JSON.stringify({
+        brainModelId: 'brain-persisted',
+        visionModelId: 'vision-persisted',
+        linkedinConnectionId: 'conn-1',
+        batchCaptureBaseUrl: 'https://persisted.example.com',
+        batchCapturePresetIds: ['tests', 'profile'],
+        batchCapturePresetLimit: 3,
+        projectUrl: 'https://project.persisted.example.com',
+      })
+    );
+
+    const { result } = renderHook(() => useSocialSettings(), {
+      wrapper: createWrapper(),
+    });
+
+    await waitFor(() => expect(result.current.batchCaptureBaseUrl).toBe('https://persisted.example.com'));
+
+    expect(result.current.brainModelId).toBe('brain-persisted');
+    expect(result.current.visionModelId).toBe('vision-persisted');
+    expect(result.current.batchCapturePresetIds).toEqual(['tests', 'profile']);
+    expect(result.current.batchCapturePresetLimit).toBe(3);
+
+    act(() => {
+      result.current.handleBrainModelChange(BRAIN_MODEL_DEFAULT_VALUE);
+      result.current.selectAllCapturePresets();
+      result.current.setBatchCapturePresetLimit('0');
+    });
+
+    expect(result.current.brainModelId).toBeNull();
+    expect(result.current.batchCapturePresetIds).toEqual(
+      KANGUR_SOCIAL_CAPTURE_PRESETS.map((preset) => preset.id)
+    );
+    expect(result.current.batchCapturePresetLimit).toBeNull();
+  });
+});

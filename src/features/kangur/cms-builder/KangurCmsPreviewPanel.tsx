@@ -648,28 +648,26 @@ export function KangurCmsPreviewPanel({
                         <KangurGuestPlayerProvider>
                           <KangurLoginModalProvider>
                             <KangurAuthProvider>
-                              <KangurProgressSyncProvider>
-                                <KangurScoreSyncProvider>
-                                  <KangurGameRuntimeBoundary enabled={activeScreenKey === 'Game'}>
-                                    <KangurLessonsRuntimeBoundary enabled={activeScreenKey === 'Lessons'}>
-                                      <KangurLearnerProfileRuntimeBoundary
-                                        enabled={activeScreenKey === 'LearnerProfile'}
-                                      >
-                                        <KangurParentDashboardRuntimeBoundary
-                                          enabled={activeScreenKey === 'ParentDashboard'}
-                                        >
-                                          <KangurCmsRuntimeDataProvider>
-                                            <KangurCmsPreviewCanvasSections
-                                              hierarchy={hierarchy}
-                                              rootSectionIdsByZone={rootSectionIdsByZone}
-                                            />
-                                          </KangurCmsRuntimeDataProvider>
-                                        </KangurParentDashboardRuntimeBoundary>
-                                      </KangurLearnerProfileRuntimeBoundary>
-                                    </KangurLessonsRuntimeBoundary>
-                                  </KangurGameRuntimeBoundary>
-                                </KangurScoreSyncProvider>
-                              </KangurProgressSyncProvider>
+                              <KangurProgressSyncProvider />
+                              <KangurScoreSyncProvider />
+                              <KangurGameRuntimeBoundary enabled={activeScreenKey === 'Game'}>
+                                <KangurLessonsRuntimeBoundary enabled={activeScreenKey === 'Lessons'}>
+                                  <KangurLearnerProfileRuntimeBoundary
+                                    enabled={activeScreenKey === 'LearnerProfile'}
+                                  >
+                                    <KangurParentDashboardRuntimeBoundary
+                                      enabled={activeScreenKey === 'ParentDashboard'}
+                                    >
+                                      <KangurCmsRuntimeDataProvider>
+                                        <KangurCmsPreviewCanvasSections
+                                          hierarchy={hierarchy}
+                                          rootSectionIdsByZone={rootSectionIdsByZone}
+                                        />
+                                      </KangurCmsRuntimeDataProvider>
+                                    </KangurParentDashboardRuntimeBoundary>
+                                  </KangurLearnerProfileRuntimeBoundary>
+                                </KangurLessonsRuntimeBoundary>
+                              </KangurGameRuntimeBoundary>
                             </KangurAuthProvider>
                           </KangurLoginModalProvider>
                         </KangurGuestPlayerProvider>

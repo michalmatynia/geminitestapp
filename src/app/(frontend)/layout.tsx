@@ -1,11 +1,10 @@
-import { headers } from 'next/headers';
-
 import { getFrontPageSetting, shouldApplyFrontPageAppSelection } from '@/app/(frontend)/home-helpers';
 import { CmsStorefrontAppearanceProvider } from '@/features/cms/components/frontend/CmsStorefrontAppearance';
 import { getCmsThemeSettings } from '@/features/cms/server';
 import { getKangurAuthBootstrapScript } from '@/features/kangur/server/auth-bootstrap';
 import { getKangurStorefrontInitialState } from '@/features/kangur/server/storefront-appearance';
 import { FrontendPublicOwnerProvider } from '@/features/kangur/ui/FrontendPublicOwnerContext';
+import { readOptionalRequestHeaders } from '@/shared/lib/request/optional-headers';
 import { getFrontPagePublicOwner } from '@/shared/lib/front-page-app';
 import { stripSiteLocalePrefix } from '@/shared/lib/i18n/site-locale';
 import { QueryErrorBoundary } from '@/shared/ui/QueryErrorBoundary';
@@ -15,20 +14,6 @@ import type { JSX } from 'react';
 const DEFAULT_CMS_THEME_SETTINGS = {
   darkMode: false,
 } as const;
-
-const isMissingRequestScopeError = (error: unknown): boolean =>
-  error instanceof Error && error.message.includes('outside a request scope');
-
-const readOptionalRequestHeaders = async (): Promise<Headers | null> => {
-  try {
-    return await headers();
-  } catch (error) {
-    if (isMissingRequestScopeError(error)) {
-      return null;
-    }
-    throw error;
-  }
-};
 
 const resolveFrontendRequestPathname = (headerValue: string | null | undefined): string | null => {
   if (typeof headerValue !== 'string') {

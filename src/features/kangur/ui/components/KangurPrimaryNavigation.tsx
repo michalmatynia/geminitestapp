@@ -21,7 +21,6 @@ import {
   CmsStorefrontAppearanceButtons,
   useOptionalCmsStorefrontAppearance,
 } from '@/features/cms/public';
-import { canAccessKangurPage } from '@/features/kangur/config/page-access';
 import { KANGUR_TIGHT_ROW_CLASSNAME } from '@/features/kangur/ui/design/tokens';
 import {
   getKangurHomeHref,
@@ -90,6 +89,7 @@ import {
 import { useKangurMobileBreakpoint } from '@/features/kangur/ui/hooks/useKangurMobileBreakpoint';
 import { useKangurPageContentEntry } from '@/features/kangur/ui/hooks/useKangurPageContent';
 import { useKangurCoarsePointer } from '@/features/kangur/ui/hooks/useKangurCoarsePointer';
+import { useKangurPageAccess } from '@/features/kangur/ui/hooks/useKangurPageAccess';
 import { useKangurTutorAnchor } from '@/features/kangur/ui/hooks/useKangurTutorAnchor';
 import { useKangurStorefrontAppearance } from '@/features/kangur/ui/useKangurStorefrontAppearance';
 import { DEFAULT_SITE_I18N_CONFIG } from '@/shared/contracts/site-i18n';
@@ -478,8 +478,8 @@ export function KangurPrimaryNavigation({
   const profileAvatar = getKangurAvatarById(activeLearner?.avatarId);
   const shouldRenderElevatedUserMenu =
     effectiveIsAuthenticated && Boolean(elevatedSessionUser);
-  const canAccessGamesLibrary =
-    effectiveIsAuthenticated && canAccessKangurPage('GamesLibrary', session);
+  const { canAccess: canAccessGamesLibraryPage } = useKangurPageAccess('GamesLibrary');
+  const canAccessGamesLibrary = effectiveIsAuthenticated && canAccessGamesLibraryPage;
   const accessibleCurrentPage = currentPage;
   const effectiveHomeActive = homeActive ?? accessibleCurrentPage === 'Game';
   const learnerProfileIsActive = accessibleCurrentPage === 'LearnerProfile';

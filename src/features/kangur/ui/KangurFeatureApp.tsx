@@ -8,7 +8,6 @@ import {
   LazyMotionDiv,
   usePrefersReducedMotion,
 } from '@/features/kangur/ui/components/LazyAnimatePresence';
-import { useOptionalNextAuthSession } from '@/features/kangur/ui/hooks/useOptionalNextAuthSession';
 
 import { KANGUR_CMS_PROJECT_SETTING_KEY } from '@/features/kangur/cms-builder/project-contracts';
 import { hasKangurCmsRuntimeScreen } from '@/features/kangur/cms-builder/runtime-screen-presence';
@@ -58,9 +57,9 @@ import { createKangurPageTransitionMotionProps } from '@/features/kangur/ui/moti
 import { useKangurRouteNavigator } from '@/features/kangur/ui/hooks/useKangurRouteNavigator';
 import type { KangurRouteTransitionSkeletonVariant } from '@/features/kangur/ui/routing/route-transition-skeletons';
 import {
-  resolveAccessibleKangurPendingRouteLoadingSnapshot,
   useKangurPendingRouteLoadingSnapshot,
 } from '@/features/kangur/ui/routing/pending-route-loading-snapshot';
+import { useKangurRouteAccess } from '@/features/kangur/ui/routing/useKangurRouteAccess';
 import { resolveManagedKangurEmbeddedFromHref } from '@/features/kangur/ui/routing/managed-paths';
 import { readKangurTopBarHeightCssValue } from '@/features/kangur/ui/utils/readKangurTopBarHeightCssValue';
 import { cn } from '@/features/kangur/shared/utils';
@@ -98,7 +97,7 @@ const AuthenticatedApp = (): JSX.Element | null => {
     hasResolvedAuth = true,
   } =
     useKangurAuth();
-  const { data: session } = useOptionalNextAuthSession();
+  const { resolvePendingSnapshot } = useKangurRouteAccess();
   const settingsStore = useSettingsStore();
   const isLoadingSettings = settingsStore.isLoading;
   const rawCmsProject = settingsStore.get(KANGUR_CMS_PROJECT_SETTING_KEY);
@@ -131,10 +130,9 @@ const AuthenticatedApp = (): JSX.Element | null => {
   const routeContentMotionProps = createKangurPageTransitionMotionProps(prefersReducedMotion);
   const routeTransitionKey = requestedPath || (pageKey ? `page:${pageKey}` : 'page:unknown');
   const currentRequestedHref = requestedHref ?? requestedPath ?? null;
-  const pendingRouteLoadingSnapshot = resolveAccessibleKangurPendingRouteLoadingSnapshot({
+  const pendingRouteLoadingSnapshot = resolvePendingSnapshot({
     currentHref: currentRequestedHref,
     fallbackPageKey: KANGUR_MAIN_PAGE,
-    session,
     snapshot: useKangurPendingRouteLoadingSnapshot(),
   });
   const isBootLoading = isLoadingPublicSettings || isLoadingAuth;
@@ -577,21 +575,19 @@ export function KangurFeatureApp(): JSX.Element {
               <KangurSubjectFocusProvider>
                 <KangurAgeGroupFocusProvider>
                   <KangurSubjectAgeGroupSync />
-                  <KangurProgressSyncProvider>
-                    <KangurScoreSyncProvider>
-                      <KangurContextRegistryPageBoundary>
-                        <KangurAiTutorContentProvider>
-                          <KangurAiTutorDeferredProvider>
-                            <KangurTutorAnchorProvider>
-                              <AuthenticatedApp />
-                              <KangurAiTutorWidget />
-                              <KangurLoginModalMount />
-                            </KangurTutorAnchorProvider>
-                          </KangurAiTutorDeferredProvider>
-                        </KangurAiTutorContentProvider>
-                      </KangurContextRegistryPageBoundary>
-                    </KangurScoreSyncProvider>
-                  </KangurProgressSyncProvider>
+                  <KangurProgressSyncProvider />
+                  <KangurScoreSyncProvider />
+                  <KangurContextRegistryPageBoundary>
+                    <KangurAiTutorContentProvider>
+                      <KangurAiTutorDeferredProvider>
+                        <KangurTutorAnchorProvider>
+                          <AuthenticatedApp />
+                          <KangurAiTutorWidget />
+                          <KangurLoginModalMount />
+                        </KangurTutorAnchorProvider>
+                      </KangurAiTutorDeferredProvider>
+                    </KangurAiTutorContentProvider>
+                  </KangurContextRegistryPageBoundary>
                 </KangurAgeGroupFocusProvider>
               </KangurSubjectFocusProvider>
             </KangurAuthProvider>

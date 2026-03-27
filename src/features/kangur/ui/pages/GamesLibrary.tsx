@@ -4,7 +4,6 @@ import React, { useCallback, useDeferredValue, useEffect, useMemo, useRef, useSt
 import { useLocale, useTranslations } from 'next-intl';
 import { useSearchParams } from 'next/navigation';
 
-import { canAccessKangurPage } from '@/features/kangur/config/page-access';
 import {
   appendKangurUrlParams,
   getKangurCanonicalPublicHref,
@@ -41,7 +40,7 @@ import {
   KangurSelectField,
   KangurStatusChip,
 } from '@/features/kangur/ui/design/primitives';
-import { useOptionalNextAuthSession } from '@/features/kangur/ui/hooks/useOptionalNextAuthSession';
+import { useKangurPageAccess } from '@/features/kangur/ui/hooks/useKangurPageAccess';
 import {
   KANGUR_PANEL_GAP_CLASSNAME,
   KANGUR_SEGMENTED_CONTROL_CLASSNAME,
@@ -2558,13 +2557,13 @@ function GamesLibraryContent(): React.JSX.Element {
 }
 
 export default function GamesLibrary(): React.JSX.Element {
-  const { data: session, status } = useOptionalNextAuthSession();
+  const { canAccess, status } = useKangurPageAccess('GamesLibrary');
 
   if (status === 'loading') {
     return <></>;
   }
 
-  if (!canAccessKangurPage('GamesLibrary', session)) {
+  if (!canAccess) {
     return <PageNotFound />;
   }
 

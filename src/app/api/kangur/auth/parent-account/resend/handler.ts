@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-import { auth } from '@/features/auth/server';
 import {
   buildKangurParentAccountCreateDebugPayload,
   resendKangurParentVerificationEmail,
@@ -9,6 +8,7 @@ import { ErrorSystem } from '@/features/kangur/shared/utils/observability/error-
 import type { KangurParentAccountResend } from '@/shared/contracts/kangur-auth';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { badRequestError } from '@/shared/errors/app-error';
+import { readTolerantServerAuthSession } from '@/shared/lib/auth/optional-server-auth';
 import { getSiteTranslator } from '@/shared/lib/i18n/server-translator';
 
 export async function postKangurParentAccountResendHandler(
@@ -16,9 +16,8 @@ export async function postKangurParentAccountResendHandler(
   ctx: ApiHandlerContext
 ): Promise<Response> {
   const { locale, t } = await getSiteTranslator({ request: req });
-  await auth().catch((error) => {
-    void ErrorSystem.captureException(error);
-    return null;
+  await readTolerantServerAuthSession({
+    onError: (error) => ErrorSystem.captureException(error),
   });
   const body = ctx.body as KangurParentAccountResend | undefined;
   if (!body) {

@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-import { auth } from '@/features/auth/server';
 import { findProductListingByIdAcrossProviders } from '@/features/integrations/server';
 import { getIntegrationRepository } from '@/features/integrations/server';
 import { deleteBaseProduct } from '@/features/integrations/server';
@@ -13,6 +12,7 @@ import {
 } from '@/shared/contracts/integrations';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { badRequestError, notFoundError } from '@/shared/errors/app-error';
+import { readOptionalServerAuthSession } from '@/shared/lib/auth/optional-server-auth';
 import { getPathRunRepository } from '@/shared/lib/ai-paths/services/path-run-repository';
 
 import { resolveDeleteInventoryId } from './helpers';
@@ -54,7 +54,7 @@ export async function POST_handler(
     throw badRequestError('Missing Base.com product id for deletion.');
   }
 
-  const session = await auth().catch(() => null);
+  const session = await readOptionalServerAuthSession();
   const userId = session?.user?.id ?? null;
   const runRepository = await getPathRunRepository();
   const baseRunMeta: Record<string, unknown> = {

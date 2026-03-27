@@ -135,8 +135,8 @@ const scheduleDeferredCallback = (callback: () => void): (() => void) => {
 export function KangurProgressSyncProvider({
   children,
 }: {
-  children: ReactNode;
-}): React.JSX.Element {
+  children?: ReactNode;
+}): React.JSX.Element | null {
   const { isAuthenticated, isLoadingAuth, user } = useKangurAuth();
   const { subject } = useKangurSubjectFocus();
   const isParentWithoutLearner =
@@ -394,5 +394,5 @@ export function KangurProgressSyncProvider({
     return unsubscribe;
   }, [isAuthenticated, isLoadingAuth, subject, userKey]);
 
-  return <>{children}</>;
+  return children != null ? <>{children}</> : null;
 }

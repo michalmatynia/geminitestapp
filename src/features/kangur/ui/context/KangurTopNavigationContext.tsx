@@ -14,8 +14,7 @@ import {
   KangurPrimaryNavigation,
   type KangurPrimaryNavigationProps,
 } from '@/features/kangur/ui/components/KangurPrimaryNavigation';
-import { resolveAccessibleKangurPrimaryNavigation } from '@/features/kangur/ui/components/KangurPrimaryNavigation.access';
-import { useOptionalNextAuthSession } from '@/features/kangur/ui/hooks/useOptionalNextAuthSession';
+import { useAccessibleKangurPrimaryNavigation } from '@/features/kangur/ui/components/KangurPrimaryNavigation.access';
 import { internalError } from '@/features/kangur/shared/errors/app-error';
 
 type KangurTopNavigationRegistration = {
@@ -39,6 +38,12 @@ const KangurTopNavigationActionsContext =
   createContext<KangurTopNavigationActionsContextValue | null>(null);
 
 const TOP_NAVIGATION_CLEAR_DELAY_MS = 1_200;
+const EMPTY_KANGUR_TOP_NAVIGATION: KangurPrimaryNavigationProps = {
+  basePath: '/kangur',
+  currentPage: 'Game',
+  isAuthenticated: false,
+  onLogout: () => {},
+};
 
 export function KangurTopNavigationProvider({
   children,
@@ -162,21 +167,19 @@ export function KangurTopNavigationHost({
   fallback?: ReactNode;
 } = {}): React.JSX.Element | null {
   const state = useContext(KangurTopNavigationStateContext);
-  const { data: session } = useOptionalNextAuthSession();
   if (!state) {
     throw internalError(
       'KangurTopNavigationHost must be used within a KangurTopNavigationProvider'
     );
   }
 
+  const navigation = useAccessibleKangurPrimaryNavigation(
+    state.visibleRegistration?.navigation ?? EMPTY_KANGUR_TOP_NAVIGATION
+  );
+
   if (!state.visibleRegistration) {
     return <>{fallback}</>;
   }
-
-  const navigation = resolveAccessibleKangurPrimaryNavigation(
-    state.visibleRegistration.navigation,
-    session
-  );
 
   return <KangurPrimaryNavigation {...navigation} />;
 }

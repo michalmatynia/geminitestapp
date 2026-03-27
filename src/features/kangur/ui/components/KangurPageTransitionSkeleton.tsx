@@ -50,10 +50,9 @@ import {
 } from '@/features/kangur/ui/design/tokens';
 import { useKangurProgressState } from '@/features/kangur/ui/hooks/useKangurProgressState';
 import {
-  resolveKangurRouteTransitionSkeletonVariant,
   type KangurRouteTransitionSkeletonVariant,
 } from '@/features/kangur/ui/routing/route-transition-skeletons';
-import { useOptionalNextAuthSession } from '@/features/kangur/ui/hooks/useOptionalNextAuthSession';
+import { useKangurRouteAccess } from '@/features/kangur/ui/routing/useKangurRouteAccess';
 import { readKangurTopBarHeightCssValue } from '@/features/kangur/ui/utils/readKangurTopBarHeightCssValue';
 import { cn } from '@/features/kangur/shared/utils';
 import { getPathLocale, normalizeSiteLocale } from '@/shared/lib/i18n/site-locale';
@@ -1081,7 +1080,7 @@ export function KangurPageTransitionSkeleton({
   const skeletonLocale = resolveSkeletonLocale(pathname);
   const skeletonCopy = KANGUR_SKELETON_COPY_BY_LOCALE[skeletonLocale];
   const routing = useOptionalKangurRouting();
-  const { data: session } = useOptionalNextAuthSession();
+  const { resolveTransitionSkeletonVariant } = useKangurRouteAccess();
   const embedded = routing?.embedded ?? false;
   const effectiveEmbedded = embeddedOverride ?? embedded;
   const isLocaleSwitch = reason === 'locale-switch';
@@ -1089,10 +1088,9 @@ export function KangurPageTransitionSkeleton({
     renderInlineTopNavigationSkeleton && !effectiveEmbedded;
   const resolvedVariant =
     variant ??
-    resolveKangurRouteTransitionSkeletonVariant({
+    resolveTransitionSkeletonVariant({
       basePath: routing?.basePath,
       pageKey,
-      session,
     });
   const resolvedPageKey = resolveSkeletonPageKey(resolvedVariant);
   const shouldOffsetStandaloneRouteOverlay =

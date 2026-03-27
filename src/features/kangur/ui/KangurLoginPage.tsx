@@ -20,12 +20,11 @@ import { useOptionalFrontendPublicOwner } from '@/features/kangur/ui/FrontendPub
 import { useKangurAiTutorSessionSync } from '@/features/kangur/ui/context/KangurAiTutorContext';
 import { useOptionalKangurAuth } from '@/features/kangur/ui/context/KangurAuthContext';
 import { useOptionalKangurRouting } from '@/features/kangur/ui/context/KangurRoutingContext';
-import { useOptionalNextAuthSession } from '@/features/kangur/ui/hooks/useOptionalNextAuthSession';
 import { useKangurPageContentEntry } from '@/features/kangur/ui/hooks/useKangurPageContent';
 import { useKangurTutorAnchor } from '@/features/kangur/ui/hooks/useKangurTutorAnchor';
+import { useKangurRouteAccess } from '@/features/kangur/ui/routing/useKangurRouteAccess';
 import {
   resolveRouteAwareManagedKangurHref,
-  sanitizeAccessibleManagedKangurHref,
 } from '@/features/kangur/ui/routing/managed-paths';
 import {
   KangurButton,
@@ -244,7 +243,7 @@ export function KangurLoginPageContent(): React.JSX.Element {
   const searchParams = useSearchParams();
   const frontendPublicOwner = useOptionalFrontendPublicOwner();
   const routing = useOptionalKangurRouting();
-  const { data: session } = useOptionalNextAuthSession();
+  const { sanitizeManagedHref } = useKangurRouteAccess();
   const {
     callbackUrl,
     defaultCallbackUrl,
@@ -448,14 +447,13 @@ export function KangurLoginPageContent(): React.JSX.Element {
   const currentOrigin = typeof window === 'undefined' ? null : window.location.origin;
   const normalizeLoginCallbackHref = useCallback(
     (href: string | null | undefined): string | undefined =>
-      sanitizeAccessibleManagedKangurHref({
+      sanitizeManagedHref({
         href,
         pathname,
         currentOrigin,
         canonicalizePublicAlias: frontendPublicOwner?.publicOwner === 'kangur',
         basePath: routing?.basePath,
         fallbackHref: defaultCallbackUrl,
-        session,
       }),
     [
       currentOrigin,
@@ -463,7 +461,7 @@ export function KangurLoginPageContent(): React.JSX.Element {
       frontendPublicOwner?.publicOwner,
       pathname,
       routing?.basePath,
-      session,
+      sanitizeManagedHref,
     ]
   );
   const callbackValue =
@@ -1345,7 +1343,7 @@ export function KangurLoginPage(props: KangurLoginPagePropsInput): React.JSX.Ele
   const searchParams = useSearchParams();
   const routing = useOptionalKangurRouting();
   const frontendPublicOwner = useOptionalFrontendPublicOwner();
-  const { data: session } = useOptionalNextAuthSession();
+  const { sanitizeManagedHref } = useKangurRouteAccess();
   const callbackParam = searchParams?.get('callbackUrl') ?? undefined;
   const authModeParam = searchParams?.get(KANGUR_PARENT_AUTH_MODE_PARAM);
   const currentOrigin = typeof window === 'undefined' ? null : window.location.origin;
@@ -1360,23 +1358,21 @@ export function KangurLoginPage(props: KangurLoginPagePropsInput): React.JSX.Ele
     [currentOrigin, frontendPublicOwner?.publicOwner, pathname, routing?.basePath]
   );
   const resolvedDefaultCallbackUrl =
-    sanitizeAccessibleManagedKangurHref({
+    sanitizeManagedHref({
       href: props.defaultCallbackUrl ?? routeAwareDefaultCallbackUrl,
       pathname,
       currentOrigin,
       canonicalizePublicAlias: frontendPublicOwner?.publicOwner === 'kangur',
       basePath: routing?.basePath,
       fallbackHref: routeAwareDefaultCallbackUrl,
-      session,
     }) ?? routeAwareDefaultCallbackUrl;
-  const resolvedCallbackUrl = sanitizeAccessibleManagedKangurHref({
+  const resolvedCallbackUrl = sanitizeManagedHref({
     href: props.callbackUrl ?? callbackParam,
     pathname,
     currentOrigin,
     canonicalizePublicAlias: frontendPublicOwner?.publicOwner === 'kangur',
     basePath: routing?.basePath,
     fallbackHref: resolvedDefaultCallbackUrl,
-    session,
   });
   const resolvedParentAuthMode = props.parentAuthMode ??
     parseKangurAuthMode(authModeParam, 'sign-in');

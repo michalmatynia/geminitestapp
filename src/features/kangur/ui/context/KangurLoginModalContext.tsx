@@ -13,8 +13,7 @@ import {
 import { getKangurHomeHref, getKangurLoginHref } from '@/features/kangur/config/routing';
 import { useKangurRouteNavigator } from '@/features/kangur/ui/hooks/useKangurRouteNavigator';
 import { useKangurRouting } from '@/features/kangur/ui/context/KangurRoutingContext';
-import { useOptionalNextAuthSession } from '@/features/kangur/ui/hooks/useOptionalNextAuthSession';
-import { sanitizeAccessibleManagedKangurHref } from '@/features/kangur/ui/routing/managed-paths';
+import { useKangurRouteAccess } from '@/features/kangur/ui/routing/useKangurRouteAccess';
 import { type KangurAuthMode, parseKangurAuthMode } from '@/features/kangur/shared/contracts/kangur-auth';
 import { internalError } from '@/features/kangur/shared/errors/app-error';
 import { withKangurClientErrorSync } from '@/features/kangur/observability/client';
@@ -108,7 +107,7 @@ export const KangurLoginModalProvider = ({
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const { basePath, requestedPath } = useKangurRouting();
-  const { data: session } = useOptionalNextAuthSession();
+  const { sanitizeManagedHref } = useKangurRouteAccess();
   const currentOrigin = typeof window === 'undefined' ? null : window.location.origin;
   const canonicalizePublicAlias = basePath === '/';
   const homeHref = useMemo(() => getKangurHomeHref(basePath), [basePath]);
@@ -116,16 +115,15 @@ export const KangurLoginModalProvider = ({
   const normalizedPathname = useMemo(() => stripSiteLocalePrefix(pathname), [pathname]);
   const resolveLoginModalCallbackHref = useCallback(
     (href: string | null | undefined): string | undefined =>
-      sanitizeAccessibleManagedKangurHref({
+      sanitizeManagedHref({
         href,
         pathname,
         currentOrigin,
         canonicalizePublicAlias,
         basePath,
         fallbackHref: homeHref,
-        session,
       }),
-    [basePath, canonicalizePublicAlias, currentOrigin, homeHref, pathname, session]
+    [basePath, canonicalizePublicAlias, currentOrigin, homeHref, pathname, sanitizeManagedHref]
   );
   const requestedCallbackUrl = useMemo(
     () => toNonEmptyString(resolveLoginModalCallbackHref(searchParams.get('callbackUrl')), homeHref),

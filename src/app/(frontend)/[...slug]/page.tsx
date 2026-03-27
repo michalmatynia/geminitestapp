@@ -2,9 +2,9 @@ import { getTranslations } from 'next-intl/server';
 import { notFound, redirect } from 'next/navigation';
 import { JSX } from 'react';
 
-import { auth } from '@/features/auth/server';
 import { canAccessKangurSlugSegments } from '@/features/kangur/config/page-access';
 import { getKangurConfiguredLaunchTarget } from '@/features/kangur/server/launch-route';
+import { readOptionalServerAuthSession } from '@/shared/lib/auth/optional-server-auth';
 import { getFrontPagePublicOwner } from '@/shared/lib/front-page-app';
 
 import { renderCmsPage } from '../cms-render';
@@ -19,20 +19,6 @@ interface SlugPageProps {
   params: Promise<{ slug: string[] }>;
   searchParams?: Promise<Record<string, string | string[] | undefined>>;
 }
-
-const isMissingRequestScopeError = (error: unknown): boolean =>
-  error instanceof Error && error.message.includes('outside a request scope');
-
-const readOptionalAuthSession = async () => {
-  try {
-    return await auth();
-  } catch (error) {
-    if (isMissingRequestScopeError(error)) {
-      return null;
-    }
-    throw error;
-  }
-};
 
 const isKangurFrontPageSelected = async (): Promise<boolean> => {
   if (!shouldApplyFrontPageAppSelection()) {
@@ -68,7 +54,7 @@ export default async function CmsSlugPage({
 }: SlugPageProps): Promise<JSX.Element | null> {
   const { slug } = await params;
   if (await isKangurFrontPageSelected()) {
-    const session = await readOptionalAuthSession();
+    const session = await readOptionalServerAuthSession();
     if (!canAccessKangurSlugSegments(slug, session)) {
       notFound();
     }

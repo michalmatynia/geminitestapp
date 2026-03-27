@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 
 import { authConfig } from '@/features/auth/auth.config';
-import { auth } from '@/features/auth/server';
 import {
   clearKangurLearnerSession,
   readKangurLearnerSession,
@@ -10,6 +9,7 @@ import { ActivityTypes } from '@/shared/constants/observability';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { logActivity } from '@/shared/utils/observability/activity-service';
 import { ErrorSystem } from '@/features/kangur/shared/utils/observability/error-system';
+import { readTolerantServerAuthSession } from '@/shared/lib/auth/optional-server-auth';
 
 const AUTH_COOKIE_KEYS = [
   'sessionToken',
@@ -123,9 +123,8 @@ export async function postKangurLogoutHandler(
   req: NextRequest,
   _ctx: ApiHandlerContext
 ): Promise<Response> {
-  await auth().catch((error) => {
-    void ErrorSystem.captureException(error);
-    return null;
+  await readTolerantServerAuthSession({
+    onError: (error) => ErrorSystem.captureException(error),
   });
   const learnerSession = readKangurLearnerSession(req);
   const response = NextResponse.json({ ok: true });

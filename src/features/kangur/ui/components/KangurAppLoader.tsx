@@ -100,7 +100,7 @@ export function KangurAppLoader({
       typeof performance !== 'undefined' && typeof performance.now === 'function'
         ? performance.now()
         : Date.now();
-    const maxWaitMs = 600;
+    const maxWaitMs = 100;
     const probeVars = [
       '--kangur-logo-accent-start',
       '--kangur-nav-item-active-text',

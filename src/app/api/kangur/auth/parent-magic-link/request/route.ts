@@ -3,15 +3,14 @@ export const dynamic = 'force-dynamic';
 
 import { NextResponse } from 'next/server';
 
-import { auth } from '@/features/auth/server';
 import { ErrorSystem } from '@/features/kangur/shared/utils/observability/error-system';
 import { apiHandler } from '@/shared/lib/api/api-handler';
+import { readTolerantServerAuthSession } from '@/shared/lib/auth/optional-server-auth';
 
 export const POST = apiHandler(
   async () => {
-    await auth().catch((error) => {
-      void ErrorSystem.captureException(error);
-      return null;
+    await readTolerantServerAuthSession({
+      onError: (error) => ErrorSystem.captureException(error),
     });
     return NextResponse.json(
       {

@@ -1,4 +1,3 @@
-import { headers } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { JSX } from 'react';
 
@@ -7,6 +6,7 @@ import { getSlugsForDomain, resolveCmsDomainFromHeaders } from '@/features/cms/s
 import { getKangurConfiguredLaunchTarget } from '@/features/kangur/server/launch-route';
 import { KangurSSRSkeleton } from '@/features/kangur/ui/KangurSSRSkeleton';
 import { getFrontPagePublicOwner, getFrontPageRedirectPath } from '@/shared/lib/front-page-app';
+import { readOptionalRequestHeaders } from '@/shared/lib/request/optional-headers';
 
 import { getFrontPageSetting, shouldApplyFrontPageAppSelection } from './home-helpers';
 import { createHomeTimingRecorder } from './home-timing';
@@ -51,7 +51,7 @@ export default async function Home(): Promise<JSX.Element | null> {
 
   const [cmsRepository, hdrs] = await Promise.all([
     withTiming('cmsRepository', getCmsRepository),
-    withTiming('headers', () => headers()),
+    withTiming('headers', readOptionalRequestHeaders),
     // Warm the isDomainZoningEnabled cache() so that resolveCmsDomainFromHeaders
     // and getSlugsForDomain find it already resolved instead of awaiting it.
     isDomainZoningEnabled(),

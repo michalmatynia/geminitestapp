@@ -1,14 +1,13 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { withKangurClientErrorSync } from '@/features/kangur/observability/client';
-import { useOptionalNextAuthSession } from '@/features/kangur/ui/hooks/useOptionalNextAuthSession';
 import {
-  resolveAccessibleKangurRouteTransitionTarget,
   type KangurRouteTransitionSkeletonVariant,
 } from '../../routing/route-transition-skeletons';
 import {
   clearKangurPendingRouteLoadingSnapshot,
   setKangurPendingRouteLoadingSnapshot,
 } from '../../routing/pending-route-loading-snapshot';
+import { useKangurRouteAccess } from '../../routing/useKangurRouteAccess';
 import { readKangurTopBarHeightCssValue } from '../../utils/readKangurTopBarHeightCssValue';
 
 type KangurRouteTransitionPhase =
@@ -208,7 +207,7 @@ export function useKangurRouteTransitionLogic({
   pageKey: string | null;
   currentRequestedHref: string | null;
 }) {
-  const { data: session } = useOptionalNextAuthSession();
+  const { resolveTransitionTarget } = useKangurRouteAccess();
   const [transitionState, setTransitionState] = useState<KangurRouteTransitionState | null>(null);
   const transitionStateRef = useRef<KangurRouteTransitionState | null>(null);
   const previousRequestedHrefRef = useRef<string | null>(currentRequestedHref);
@@ -388,12 +387,11 @@ export function useKangurRouteTransitionLogic({
     (input: KangurRouteTransitionStartInput = {}): KangurRouteTransitionStartResult => {
       const normalizedHref = normalizeTransitionHref(input.href);
       const normalizedRequestedHref = normalizeTransitionHref(currentRequestedHref);
-      const nextTransitionTarget = resolveAccessibleKangurRouteTransitionTarget({
+      const nextTransitionTarget = resolveTransitionTarget({
         basePath,
         fallbackPageKey: currentAccessiblePageKey,
         href: normalizedHref,
         pageKey: input.pageKey?.trim() || null,
-        session,
       });
       const nextPageKey = nextTransitionTarget.pageKey;
       const nextSourceId = input.sourceId?.trim() || null;
@@ -490,7 +488,7 @@ export function useKangurRouteTransitionLogic({
       clearAcknowledgementTimeout,
       currentAccessiblePageKey,
       currentRequestedHref,
-      session,
+      resolveTransitionTarget,
       updateTransitionState,
     ]
   );

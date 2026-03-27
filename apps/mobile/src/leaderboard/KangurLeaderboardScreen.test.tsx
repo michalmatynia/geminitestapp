@@ -26,6 +26,86 @@ const {
   useRouterMock: vi.fn(),
 }));
 
+vi.mock('react-native', () => {
+  const createPrimitive = (tagName: keyof React.JSX.IntrinsicElements) => {
+    return ({
+      accessibilityHint: _accessibilityHint,
+      accessibilityLabel,
+      accessibilityRole,
+      children,
+      contentContainerStyle: _contentContainerStyle,
+      horizontal: _horizontal,
+      keyboardShouldPersistTaps: _keyboardShouldPersistTaps,
+      onPress,
+      showsHorizontalScrollIndicator: _showsHorizontalScrollIndicator,
+      testID,
+      ...props
+    }: React.PropsWithChildren<
+      Record<string, unknown> & {
+        accessibilityHint?: string;
+        accessibilityLabel?: string;
+        accessibilityRole?: string;
+        contentContainerStyle?: unknown;
+        horizontal?: boolean;
+        keyboardShouldPersistTaps?: string;
+        onPress?: () => void;
+        showsHorizontalScrollIndicator?: boolean;
+        testID?: string;
+      }
+    >) =>
+      React.createElement(
+        tagName,
+        {
+          ...props,
+          ...(testID ? { 'data-testid': testID } : {}),
+          ...(accessibilityLabel ? { 'aria-label': accessibilityLabel } : {}),
+          ...(accessibilityRole ? { role: accessibilityRole } : {}),
+          ...(onPress ? { onClick: onPress } : {}),
+        },
+        children,
+      );
+  };
+
+  return {
+    Pressable: createPrimitive('button'),
+    ScrollView: createPrimitive('div'),
+    Text: createPrimitive('span'),
+    View: createPrimitive('div'),
+  };
+});
+
+vi.mock('react-native-safe-area-context', () => {
+  const createPrimitive = (tagName: keyof React.JSX.IntrinsicElements) => {
+    return ({
+      accessibilityLabel,
+      accessibilityRole,
+      children,
+      testID,
+      ...props
+    }: React.PropsWithChildren<
+      Record<string, unknown> & {
+        accessibilityLabel?: string;
+        accessibilityRole?: string;
+        testID?: string;
+      }
+    >) =>
+      React.createElement(
+        tagName,
+        {
+          ...props,
+          ...(testID ? { 'data-testid': testID } : {}),
+          ...(accessibilityLabel ? { 'aria-label': accessibilityLabel } : {}),
+          ...(accessibilityRole ? { role: accessibilityRole } : {}),
+        },
+        children,
+      );
+  };
+
+  return {
+    SafeAreaView: createPrimitive('div'),
+  };
+});
+
 vi.mock('expo-router', () => ({
   Link: ({ children }: React.PropsWithChildren) => children,
   useRouter: useRouterMock,

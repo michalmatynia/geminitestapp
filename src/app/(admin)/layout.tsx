@@ -1,8 +1,8 @@
-import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 
 import { AdminLayout } from '@/features/admin/public';
 import { auth, getUserPreferences } from '@/features/auth/server';
+import { readOptionalRequestCookies } from '@/shared/lib/request/optional-cookies';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
 import type { JSX } from 'react';
@@ -59,7 +59,7 @@ export default async function Layout({
         action: 'loadUserPreferences',
       });
       // Fallback to cookie-derived value when preferences are unavailable.
-      const cookieStore = await cookies();
+      const cookieStore = await readOptionalRequestCookies();
       const cookieValue = cookieStore.get(ADMIN_MENU_COLLAPSED_COOKIE_KEY)?.value;
       if (cookieValue === '1' || cookieValue === 'true') {
         initialMenuCollapsed = true;

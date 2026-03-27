@@ -1,4 +1,3 @@
-import { headers } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { JSX } from 'react';
 
@@ -11,6 +10,7 @@ import {
   normalizeSiteLocale,
 } from '@/shared/lib/i18n/site-locale';
 import { getFrontPagePublicOwner, getFrontPageRedirectPath } from '@/shared/lib/front-page-app';
+import { readOptionalRequestHeaders } from '@/shared/lib/request/optional-headers';
 
 import { HomeContent } from '../../(frontend)/HomeContent';
 import { getFrontPageSetting, shouldApplyFrontPageAppSelection } from '../../(frontend)/home-helpers';
@@ -67,7 +67,7 @@ export default async function LocalizedHome({
 
   const cmsRepository = await withTiming('cmsRepository', getCmsRepository);
 
-  const hdrs = await withTiming('headers', () => headers());
+  const hdrs = await withTiming('headers', readOptionalRequestHeaders);
   const domain = await withTiming('cmsDomain', () => resolveCmsDomainFromHeaders(hdrs));
   const slugs = await withTiming('cmsSlugs', () =>
     getSlugsForDomain(domain.id, cmsRepository, { locale: resolvedLocale })

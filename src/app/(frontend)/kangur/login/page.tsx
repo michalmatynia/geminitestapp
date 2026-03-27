@@ -2,9 +2,9 @@ import { getTranslations } from 'next-intl/server';
 import { redirect } from 'next/navigation';
 import { Suspense, type JSX } from 'react';
 
-import { auth } from '@/features/auth/server';
 import { getKangurCanonicalPublicHref, getKangurHomeHref } from '@/features/kangur/config/routing';
 import { KangurFeatureRouteShell } from '@/features/kangur/ui/KangurFeatureRouteShell';
+import { readOptionalServerAuthSession } from '@/shared/lib/auth/optional-server-auth';
 import { getFrontPagePublicOwner } from '@/shared/lib/front-page-app';
 
 import { sanitizeKangurAliasLoginSearchParams } from './alias-search-params';
@@ -12,20 +12,6 @@ import { getFrontPageSetting, shouldApplyFrontPageAppSelection } from '../../hom
 
 type KangurAliasLoginPageProps = {
   searchParams?: Promise<Record<string, string | string[] | undefined>>;
-};
-
-const isMissingRequestScopeError = (error: unknown): boolean =>
-  error instanceof Error && error.message.includes('outside a request scope');
-
-const readOptionalAuthSession = async () => {
-  try {
-    return await auth();
-  } catch (error) {
-    if (isMissingRequestScopeError(error)) {
-      return null;
-    }
-    throw error;
-  }
 };
 
 export default async function Page({
@@ -38,7 +24,7 @@ export default async function Page({
     const frontPageSetting = await getFrontPageSetting();
 
     if (getFrontPagePublicOwner(frontPageSetting) === 'kangur') {
-      const session = await readOptionalAuthSession();
+      const session = await readOptionalServerAuthSession();
       const resolvedSearchParams = sanitizeKangurAliasLoginSearchParams({
         searchParams: searchParams ? await searchParams : undefined,
         pathname: '/kangur/login',

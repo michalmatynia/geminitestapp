@@ -7,17 +7,13 @@ import { useCallback } from 'react';
 
 import { KANGUR_BASE_PATH } from '@/features/kangur/config/routing';
 import { useOptionalFrontendPublicOwner } from '@/features/kangur/ui/FrontendPublicOwnerContext';
-import { useOptionalNextAuthSession } from '@/features/kangur/ui/hooks/useOptionalNextAuthSession';
 import { useKangurRouteNavigator } from '@/features/kangur/ui/hooks/useKangurRouteNavigator';
 import { useOptionalKangurRouting } from '@/features/kangur/ui/context/KangurRoutingContext';
 import {
   canonicalizeKangurPublicAliasHref,
   localizeManagedKangurHref,
-  resolveAccessibleManagedKangurTargetPageKey,
 } from '@/features/kangur/ui/routing/managed-paths';
-import {
-  resolveKangurRouteTransitionSkeletonVariant,
-} from '@/features/kangur/ui/routing/route-transition-skeletons';
+import { useKangurRouteAccess } from '@/features/kangur/ui/routing/useKangurRouteAccess';
 import {
   setKangurPendingRouteLoadingSnapshot,
 } from '@/features/kangur/ui/routing/pending-route-loading-snapshot';
@@ -74,7 +70,7 @@ export function KangurTransitionLink({
 }: KangurTransitionLinkProps): React.JSX.Element {
   const routeNavigator = useKangurRouteNavigator();
   const routing = useOptionalKangurRouting();
-  const { data: session } = useOptionalNextAuthSession();
+  const { resolveManagedTargetPageKey, resolveTransitionSkeletonVariant } = useKangurRouteAccess();
   const frontendPublicOwner = useOptionalFrontendPublicOwner();
   const locale = useLocale();
   const pathname = usePathname();
@@ -108,19 +104,18 @@ export function KangurTransitionLink({
       return;
     }
 
-    const accessibleResolvedPageKey = resolveAccessibleManagedKangurTargetPageKey({
+    const accessibleResolvedPageKey = resolveManagedTargetPageKey({
       basePath: effectivePageKeyBasePath,
       fallbackPageKey: currentAccessiblePageKey,
       href: renderedHref,
       pageKey: targetPageKey,
-      session,
     });
 
     setKangurPendingRouteLoadingSnapshot({
       fromHref: pathname,
       href: renderedHref,
       pageKey: accessibleResolvedPageKey ?? null,
-      skeletonVariant: resolveKangurRouteTransitionSkeletonVariant({
+      skeletonVariant: resolveTransitionSkeletonVariant({
         basePath: effectivePageKeyBasePath,
         href: renderedHref,
         pageKey: accessibleResolvedPageKey ?? null,
@@ -134,8 +129,9 @@ export function KangurTransitionLink({
     managedLocalHref,
     pathname,
     renderedHref,
-    session,
     targetPageKey,
+    resolveManagedTargetPageKey,
+    resolveTransitionSkeletonVariant,
   ]);
 
   return (

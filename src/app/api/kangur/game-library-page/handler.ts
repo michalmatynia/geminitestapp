@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-import { auth } from '@/features/auth/server';
 import { canAccessKangurPage } from '@/features/kangur/config/page-access';
 import {
   createKangurGameLibraryPageDataFromGames,
@@ -25,6 +24,7 @@ import {
   kangurLessonSubjectSchema,
 } from '@/shared/contracts/kangur-lesson-constants';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
+import { readOptionalServerAuthSession } from '@/shared/lib/auth/optional-server-auth';
 
 export { kangurGameLibraryPageQuerySchema as querySchema };
 
@@ -37,7 +37,7 @@ export async function getKangurGameLibraryPageHandler(
   _req: NextRequest,
   ctx: ApiHandlerContext
 ): Promise<Response> {
-  const session = await auth().catch(() => null);
+  const session = await readOptionalServerAuthSession();
   if (!canAccessKangurPage('GamesLibrary', session)) {
     return NextResponse.json(
       {

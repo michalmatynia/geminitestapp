@@ -2,9 +2,9 @@ import { getTranslations } from 'next-intl/server';
 import { redirect } from 'next/navigation';
 import { Suspense, type JSX } from 'react';
 
-import { auth } from '@/features/auth/server';
 import { getKangurCanonicalPublicHref, getKangurHomeHref } from '@/features/kangur/config/routing';
 import { KangurFeatureRouteShell } from '@/features/kangur/ui/KangurFeatureRouteShell';
+import { readOptionalServerAuthSession } from '@/shared/lib/auth/optional-server-auth';
 import {
   buildLocalizedPathname,
   normalizeSiteLocale,
@@ -35,7 +35,7 @@ export default async function LocalizedKangurLoginPage({
     const frontPageSetting = await getFrontPageSetting();
 
     if (getFrontPagePublicOwner(frontPageSetting) === 'kangur') {
-      const session = await auth();
+      const session = await readOptionalServerAuthSession();
       const resolvedSearchParams = sanitizeKangurAliasLoginSearchParams({
         searchParams: searchParams ? await searchParams : undefined,
         pathname: buildLocalizedPathname('/kangur/login', resolvedLocale),

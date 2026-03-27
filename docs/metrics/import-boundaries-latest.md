@@ -8,16 +8,16 @@ canonical: true
 ---
 # Import Boundaries Check
 
-Generated at: 2026-03-27T02:24:38.712Z
+Generated at: 2026-03-27T02:51:47.794Z
 
 ## Summary
 
-- Status: WARN
-- Files scanned: 5889
+- Status: PASSED
+- Files scanned: 5891
 - Features tracked: 10
 - Circular dependencies: 0
 - Errors: 0
-- Warnings: 1
+- Warnings: 0
 - Info: 0
 
 ## Feature Dependency Graph
@@ -39,13 +39,10 @@ Generated at: 2026-03-27T02:24:38.712Z
 
 | Rule | Errors | Warnings | Info |
 | --- | ---: | ---: | ---: |
-| deep-relative-import | 0 | 1 | 0 |
 
 ## Issues
 
-| Severity | Rule | Location | Message |
-| --- | --- | --- | --- |
-| WARN | deep-relative-import | src/app/(frontend)/kangur/(app)/[[...slug]]/page.tsx:9 | Deep relative import (3 levels up). Consider using path aliases. |
+No import boundary issues detected.
 
 ## Notes
 

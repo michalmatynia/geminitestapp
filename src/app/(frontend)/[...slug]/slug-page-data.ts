@@ -1,5 +1,3 @@
-import { headers } from 'next/headers';
-
 import { auth } from '@/features/auth/server';
 import { getUserPreferences } from '@/features/auth/server';
 import {
@@ -13,6 +11,7 @@ import { getCmsThemeSettings } from '@/features/cms/server';
 import type { CmsTheme, Page, PageComponent } from '@/shared/contracts/cms';
 import { buildColorSchemeMap } from '@/shared/contracts/cms-theme';
 import { isElevatedSession } from '@/shared/lib/auth/elevated-session-user';
+import { readOptionalRequestHeaders } from '@/shared/lib/request/optional-headers';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
 import type { Metadata } from 'next';
@@ -76,7 +75,7 @@ export async function resolveSlugToPage(
   const slugValue = slugSegments.join('/');
   try {
     const cmsRepository = await getCmsRepository();
-    const hdrs = await headers();
+    const hdrs = await readOptionalRequestHeaders();
     const domain = await resolveCmsDomainFromHeaders(hdrs);
     const domainSlug = await getSlugForDomainByValue(domain.id, slugValue, cmsRepository, {
       locale: options?.locale,
@@ -136,7 +135,7 @@ export const loadSlugRenderData = async (
     theme = await cmsRepository.getThemeById(page.themeId);
   }
 
-  const hdrs = await headers();
+  const hdrs = await readOptionalRequestHeaders();
   const domain = await resolveCmsDomainFromHeaders(hdrs);
   const themeSettings = await getCmsThemeSettings();
   const menuSettings = await getCmsMenuSettings(

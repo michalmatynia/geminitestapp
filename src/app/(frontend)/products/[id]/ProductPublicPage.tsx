@@ -2,7 +2,6 @@ import { ArrowUpRight, ChevronLeft, LayoutGrid, ShieldCheck, Sparkles } from 'lu
 import { getTranslations } from 'next-intl/server';
 import Image from 'next/image';
 import Link from 'next/link';
-import { headers } from 'next/headers';
 import { notFound } from 'next/navigation';
 
 import { CmsPageShell } from '@/features/cms/components/frontend/CmsPageShell';
@@ -15,6 +14,7 @@ import { Link as LocaleLink } from '@/i18n/navigation';
 import { buildColorSchemeMap } from '@/shared/contracts/cms-theme';
 import { normalizeSiteLocale, resolveLocalizedText } from '@/shared/lib/i18n/site-locale';
 import { productService } from '@/shared/lib/products/services/productService';
+import { readOptionalRequestHeaders } from '@/shared/lib/request/optional-headers';
 import { MissingImagePlaceholder } from '@/shared/ui';
 
 import type { JSX } from 'react';
@@ -106,7 +106,7 @@ export async function ProductPublicPage({
     .map((tag) => tag.tag?.name ?? '')
     .filter((tag) => tag.trim().length > 0);
 
-  const hdrs = await headers();
+  const hdrs = await readOptionalRequestHeaders();
   const domain = await resolveCmsDomainFromHeaders(hdrs);
   const [themeSettings, menuSettings] = await Promise.all([
     getCmsThemeSettings(),

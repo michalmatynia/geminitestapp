@@ -33,8 +33,8 @@ const resolveAuthenticatedLearnerKey = (
 export function KangurScoreSyncProvider({
   children,
 }: {
-  children: ReactNode;
-}): React.JSX.Element {
+  children?: ReactNode;
+}): React.JSX.Element | null {
   const { isAuthenticated, isLoadingAuth, user } = useKangurAuth();
   const learnerKey = resolveAuthenticatedLearnerKey(user);
 
@@ -102,5 +102,5 @@ export function KangurScoreSyncProvider({
     };
   }, [isAuthenticated, isLoadingAuth, learnerKey]);
 
-  return <>{children}</>;
+  return children != null ? <>{children}</> : null;
 }

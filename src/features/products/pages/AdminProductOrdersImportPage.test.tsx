@@ -406,6 +406,214 @@ describe('AdminProductOrdersImportPage', () => {
     expect(
       screen.getByRole('button', { name: /Select visible new \+ changed \(0\)/i })
     ).toBeDisabled();
+    expect(screen.getByText('0 visible new')).toBeInTheDocument();
+    expect(screen.getByText('0 visible changed')).toBeInTheDocument();
+    expect(screen.getByText('1 visible imported')).toBeInTheDocument();
+  });
+
+  it('marks preview as stale after changing preview scope controls and blocks import actions', async () => {
+    const previewResponse: BaseOrderImportPreviewResponse = {
+      orders: [
+        {
+          baseOrderId: '1001',
+          orderNumber: 'SO-1001',
+          externalStatusId: 'paid',
+          externalStatusName: 'Paid',
+          buyerName: 'Alice',
+          buyerEmail: 'alice@example.com',
+          currency: 'PLN',
+          totalGross: 100,
+          deliveryMethod: 'Courier',
+          paymentMethod: 'Card',
+          source: 'Base',
+          orderCreatedAt: '2026-03-25T10:00:00.000Z',
+          orderUpdatedAt: null,
+          lineItems: [],
+          fingerprint: 'fp-1',
+          raw: {},
+          importState: 'new',
+          lastImportedAt: null,
+        },
+      ],
+      stats: {
+        total: 1,
+        newCount: 1,
+        importedCount: 0,
+        changedCount: 0,
+      },
+    };
+    usePreviewBaseOrdersMutation.mockReturnValue({
+      isPending: false,
+      mutateAsync: vi.fn().mockResolvedValue(previewResponse),
+    });
+
+    render(<AdminProductOrdersImportPage />);
+
+    fireEvent.click(screen.getByRole('button', { name: /Preview orders/i }));
+    await waitFor(() => expect(screen.getByTestId('orders-count')).toHaveTextContent('1'));
+
+    fireEvent.click(screen.getByLabelText('Select order 1001'));
+    expect(
+      screen.getByRole('button', { name: /Import selected visible new \+ changed \(1\)/i })
+    ).toBeEnabled();
+
+    fireEvent.change(screen.getByLabelText('Preview limit'), {
+      target: { value: '100' },
+    });
+
+    await waitFor(() =>
+      expect(screen.getByText(/Preview out of date/i)).toBeInTheDocument()
+    );
+    expect(
+      screen.getByText(
+        /Preview scope changed\. Run Preview orders again before importing or selecting orders\./i
+      )
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: /Import selected visible new \+ changed \(1\)/i })
+    ).toBeDisabled();
+    expect(
+      screen.getByRole('button', { name: /Import visible new \+ changed \(1\)/i })
+    ).toBeDisabled();
+    expect(
+      screen.getByRole('button', { name: /Select visible new \+ changed \(1\)/i })
+    ).toBeDisabled();
+    expect(screen.getByLabelText('Select order 1001')).toBeDisabled();
+
+    fireEvent.click(screen.getByRole('button', { name: /Expand order details/i }));
+    expect(screen.getByRole('button', { name: /Import this order/i })).toBeDisabled();
+  });
+
+  it('refreshes stale preview directly from the warning alert', async () => {
+    const mutateAsync = vi.fn().mockResolvedValue({
+      orders: [
+        {
+          baseOrderId: '1001',
+          orderNumber: 'SO-1001',
+          externalStatusId: 'paid',
+          externalStatusName: 'Paid',
+          buyerName: 'Alice',
+          buyerEmail: 'alice@example.com',
+          currency: 'PLN',
+          totalGross: 100,
+          deliveryMethod: 'Courier',
+          paymentMethod: 'Card',
+          source: 'Base',
+          orderCreatedAt: '2026-03-25T10:00:00.000Z',
+          orderUpdatedAt: null,
+          lineItems: [],
+          fingerprint: 'fp-1',
+          raw: {},
+          importState: 'new',
+          lastImportedAt: null,
+        },
+      ],
+      stats: {
+        total: 1,
+        newCount: 1,
+        importedCount: 0,
+        changedCount: 0,
+      },
+    });
+    usePreviewBaseOrdersMutation.mockReturnValue({
+      isPending: false,
+      mutateAsync,
+    });
+
+    render(<AdminProductOrdersImportPage />);
+
+    fireEvent.click(screen.getByRole('button', { name: /Preview orders/i }));
+    await waitFor(() => expect(screen.getByTestId('orders-count')).toHaveTextContent('1'));
+
+    fireEvent.change(screen.getByLabelText('Preview limit'), {
+      target: { value: '100' },
+    });
+
+    await waitFor(() =>
+      expect(screen.getByText(/Preview out of date/i)).toBeInTheDocument()
+    );
+    fireEvent.click(screen.getByRole('button', { name: /Refresh preview now/i }));
+
+    await waitFor(() =>
+      expect(mutateAsync).toHaveBeenLastCalledWith({
+        connectionId: 'conn-1',
+        dateFrom: undefined,
+        dateTo: undefined,
+        statusId: undefined,
+        limit: 100,
+      })
+    );
+    await waitFor(() =>
+      expect(screen.queryByText(/Preview out of date/i)).not.toBeInTheDocument()
+    );
+    expect(
+      screen.getByRole('button', { name: /Import visible new \+ changed \(1\)/i })
+    ).toBeEnabled();
+  });
+
+  it('resets preview scope controls back to defaults', async () => {
+    const previewResponse: BaseOrderImportPreviewResponse = {
+      orders: [
+        {
+          baseOrderId: '1001',
+          orderNumber: 'SO-1001',
+          externalStatusId: 'paid',
+          externalStatusName: 'Paid',
+          buyerName: 'Alice',
+          buyerEmail: 'alice@example.com',
+          currency: 'PLN',
+          totalGross: 100,
+          deliveryMethod: 'Courier',
+          paymentMethod: 'Card',
+          source: 'Base',
+          orderCreatedAt: '2026-03-25T10:00:00.000Z',
+          orderUpdatedAt: null,
+          lineItems: [],
+          fingerprint: 'fp-1',
+          raw: {},
+          importState: 'new',
+          lastImportedAt: null,
+        },
+      ],
+      stats: {
+        total: 1,
+        newCount: 1,
+        importedCount: 0,
+        changedCount: 0,
+      },
+    };
+    usePreviewBaseOrdersMutation.mockReturnValue({
+      isPending: false,
+      mutateAsync: vi.fn().mockResolvedValue(previewResponse),
+    });
+
+    render(<AdminProductOrdersImportPage />);
+
+    fireEvent.click(screen.getByRole('button', { name: /Preview orders/i }));
+    await waitFor(() => expect(screen.getByTestId('orders-count')).toHaveTextContent('1'));
+
+    fireEvent.change(screen.getByLabelText('Date from'), {
+      target: { value: '2026-03-01' },
+    });
+    fireEvent.change(screen.getByLabelText('Order status'), {
+      target: { value: 'paid' },
+    });
+    fireEvent.change(screen.getByLabelText('Preview limit'), {
+      target: { value: '100' },
+    });
+
+    await waitFor(() =>
+      expect(screen.getByText(/Preview out of date/i)).toBeInTheDocument()
+    );
+    fireEvent.click(screen.getByRole('button', { name: /Reset preview scope/i }));
+
+    await waitFor(() =>
+      expect(screen.queryByText(/Preview out of date/i)).not.toBeInTheDocument()
+    );
+    expect(screen.getByLabelText('Date from')).toHaveValue('');
+    expect(screen.getByLabelText('Order status')).toHaveValue('__all__');
+    expect(screen.getByLabelText('Preview limit')).toHaveValue('50');
+    expect(screen.getByRole('button', { name: /Reset preview scope/i })).toBeDisabled();
   });
 
   it('searches previewed orders by line item sku and name', async () => {
@@ -496,6 +704,202 @@ describe('AdminProductOrdersImportPage', () => {
     });
     await waitFor(() => expect(screen.getByTestId('orders-count')).toHaveTextContent('1'));
     expect(screen.getByText('1002')).toBeInTheDocument();
+  });
+
+  it('sorts previewed orders by the selected sort mode', async () => {
+    const previewResponse: BaseOrderImportPreviewResponse = {
+      orders: [
+        {
+          baseOrderId: '1001',
+          orderNumber: 'SO-1001',
+          externalStatusId: 'paid',
+          externalStatusName: 'Paid',
+          buyerName: 'Alice',
+          buyerEmail: 'alice@example.com',
+          currency: 'PLN',
+          totalGross: 300,
+          deliveryMethod: 'Courier',
+          paymentMethod: 'Card',
+          source: 'Base',
+          orderCreatedAt: '2026-03-24T10:00:00.000Z',
+          orderUpdatedAt: null,
+          lineItems: [],
+          fingerprint: 'fp-1',
+          raw: {},
+          importState: 'new',
+          lastImportedAt: null,
+        },
+        {
+          baseOrderId: '1002',
+          orderNumber: 'SO-1002',
+          externalStatusId: 'paid',
+          externalStatusName: 'Paid',
+          buyerName: 'Charlie',
+          buyerEmail: 'charlie@example.com',
+          currency: 'PLN',
+          totalGross: 100,
+          deliveryMethod: 'Courier',
+          paymentMethod: 'Card',
+          source: 'Base',
+          orderCreatedAt: '2026-03-26T10:00:00.000Z',
+          orderUpdatedAt: null,
+          lineItems: [],
+          fingerprint: 'fp-2',
+          raw: {},
+          importState: 'new',
+          lastImportedAt: null,
+        },
+        {
+          baseOrderId: '1003',
+          orderNumber: 'SO-1003',
+          externalStatusId: 'paid',
+          externalStatusName: 'Paid',
+          buyerName: 'Bob',
+          buyerEmail: 'bob@example.com',
+          currency: 'PLN',
+          totalGross: 200,
+          deliveryMethod: 'Courier',
+          paymentMethod: 'Card',
+          source: 'Base',
+          orderCreatedAt: '2026-03-25T10:00:00.000Z',
+          orderUpdatedAt: null,
+          lineItems: [],
+          fingerprint: 'fp-3',
+          raw: {},
+          importState: 'new',
+          lastImportedAt: null,
+        },
+      ],
+      stats: {
+        total: 3,
+        newCount: 3,
+        importedCount: 0,
+        changedCount: 0,
+      },
+    };
+    usePreviewBaseOrdersMutation.mockReturnValue({
+      isPending: false,
+      mutateAsync: vi.fn().mockResolvedValue(previewResponse),
+    });
+
+    render(<AdminProductOrdersImportPage />);
+
+    fireEvent.click(screen.getByRole('button', { name: /Preview orders/i }));
+    await waitFor(() => expect(screen.getByTestId('orders-count')).toHaveTextContent('3'));
+
+    expect(screen.getAllByText(/^(1001|1002|1003)$/).map((node) => node.textContent)).toEqual([
+      '1002',
+      '1003',
+      '1001',
+    ]);
+
+    fireEvent.change(screen.getByLabelText('Sort preview'), {
+      target: { value: 'customer-asc' },
+    });
+
+    await waitFor(() =>
+      expect(screen.getAllByText(/^(1001|1002|1003)$/).map((node) => node.textContent)).toEqual([
+        '1001',
+        '1003',
+        '1002',
+      ])
+    );
+  });
+
+  it('resets local view filters without clearing preview scope', async () => {
+    const previewResponse: BaseOrderImportPreviewResponse = {
+      orders: [
+        {
+          baseOrderId: '1001',
+          orderNumber: 'SO-1001',
+          externalStatusId: 'paid',
+          externalStatusName: 'Paid',
+          buyerName: 'Alice',
+          buyerEmail: 'alice@example.com',
+          currency: 'PLN',
+          totalGross: 100,
+          deliveryMethod: 'Courier',
+          paymentMethod: 'Card',
+          source: 'Base',
+          orderCreatedAt: '2026-03-24T10:00:00.000Z',
+          orderUpdatedAt: null,
+          lineItems: [],
+          fingerprint: 'fp-1',
+          raw: {},
+          importState: 'new',
+          lastImportedAt: null,
+        },
+        {
+          baseOrderId: '1002',
+          orderNumber: 'SO-1002',
+          externalStatusId: 'paid',
+          externalStatusName: 'Paid',
+          buyerName: 'Charlie',
+          buyerEmail: 'charlie@example.com',
+          currency: 'PLN',
+          totalGross: 200,
+          deliveryMethod: 'Courier',
+          paymentMethod: 'Card',
+          source: 'Base',
+          orderCreatedAt: '2026-03-26T10:00:00.000Z',
+          orderUpdatedAt: null,
+          lineItems: [],
+          fingerprint: 'fp-2',
+          raw: {},
+          importState: 'imported',
+          lastImportedAt: '2026-03-26T11:00:00.000Z',
+          previousImport: {
+            orderNumber: 'SO-1002',
+            externalStatusId: 'paid',
+            externalStatusName: 'Paid',
+            buyerName: 'Charlie',
+            buyerEmail: 'charlie@example.com',
+            currency: 'PLN',
+            totalGross: 200,
+            deliveryMethod: 'Courier',
+            paymentMethod: 'Card',
+            source: 'Base',
+            orderCreatedAt: '2026-03-26T10:00:00.000Z',
+            orderUpdatedAt: '2026-03-26T10:00:00.000Z',
+            lineItems: [],
+            lastImportedAt: '2026-03-26T11:00:00.000Z',
+          },
+        },
+      ],
+      stats: {
+        total: 2,
+        newCount: 1,
+        importedCount: 1,
+        changedCount: 0,
+      },
+    };
+    usePreviewBaseOrdersMutation.mockReturnValue({
+      isPending: false,
+      mutateAsync: vi.fn().mockResolvedValue(previewResponse),
+    });
+
+    render(<AdminProductOrdersImportPage />);
+
+    fireEvent.click(screen.getByRole('button', { name: /Preview orders/i }));
+    await waitFor(() => expect(screen.getByTestId('orders-count')).toHaveTextContent('2'));
+
+    fireEvent.change(screen.getByLabelText('Import state'), {
+      target: { value: 'imported' },
+    });
+    fireEvent.change(screen.getByLabelText('Sort preview'), {
+      target: { value: 'customer-asc' },
+    });
+    fireEvent.change(screen.getByPlaceholderText('Search previewed orders...'), {
+      target: { value: 'charlie' },
+    });
+
+    await waitFor(() => expect(screen.getByTestId('orders-count')).toHaveTextContent('1'));
+    fireEvent.click(screen.getByRole('button', { name: /Reset view filters/i }));
+
+    await waitFor(() => expect(screen.getByTestId('orders-count')).toHaveTextContent('2'));
+    expect(screen.getByLabelText('Import state')).toHaveValue('all');
+    expect(screen.getByLabelText('Sort preview')).toHaveValue('created-desc');
+    expect(screen.getByPlaceholderText('Search previewed orders...')).toHaveValue('');
   });
 
   it('renders expandable order details with line items after preview', async () => {
@@ -871,13 +1275,15 @@ describe('AdminProductOrdersImportPage', () => {
     fireEvent.click(screen.getByLabelText('Select order 1002'));
 
     expect(
-      screen.getByRole('button', { name: /Import selected new \+ changed \(1\)/i })
+      screen.getByRole('button', { name: /Import selected visible new \+ changed \(1\)/i })
     ).toBeEnabled();
     expect(
-      screen.getByRole('button', { name: /Reimport selected imported \(1\)/i })
+      screen.getByRole('button', { name: /Reimport selected visible imported \(1\)/i })
     ).toBeEnabled();
 
-    fireEvent.click(screen.getByRole('button', { name: /Import selected new \+ changed \(1\)/i }));
+    fireEvent.click(
+      screen.getByRole('button', { name: /Import selected visible new \+ changed \(1\)/i })
+    );
 
     await waitFor(() =>
       expect(importMutateAsync).toHaveBeenCalledWith({
@@ -977,7 +1383,9 @@ describe('AdminProductOrdersImportPage', () => {
 
     fireEvent.click(screen.getByLabelText('Select order 1001'));
     fireEvent.click(screen.getByLabelText('Select order 1002'));
-    fireEvent.click(screen.getByRole('button', { name: /Reimport selected imported \(1\)/i }));
+    fireEvent.click(
+      screen.getByRole('button', { name: /Reimport selected visible imported \(1\)/i })
+    );
 
     await waitFor(() =>
       expect(importMutateAsync).toHaveBeenCalledWith({
@@ -1108,10 +1516,338 @@ describe('AdminProductOrdersImportPage', () => {
     fireEvent.click(screen.getByRole('button', { name: /Select visible imported \(2\)/i }));
 
     expect(
-      screen.getByRole('button', { name: /Reimport selected imported \(2\)/i })
+      screen.getByRole('button', { name: /Reimport selected visible imported \(2\)/i })
     ).toBeEnabled();
     expect(
-      screen.getByRole('button', { name: /Import selected new \+ changed \(0\)/i })
+      screen.getByRole('button', { name: /Import selected visible new \+ changed \(0\)/i })
     ).toBeDisabled();
+  });
+
+  it('does not apply hidden selected orders to visible bulk actions after filter changes', async () => {
+    const previewResponse: BaseOrderImportPreviewResponse = {
+      orders: [
+        {
+          baseOrderId: '1001',
+          orderNumber: 'SO-1001',
+          externalStatusId: 'paid',
+          externalStatusName: 'Paid',
+          buyerName: 'Alice',
+          buyerEmail: 'alice@example.com',
+          currency: 'PLN',
+          totalGross: 100,
+          deliveryMethod: 'Courier',
+          paymentMethod: 'Card',
+          source: 'Base',
+          orderCreatedAt: '2026-03-25T10:00:00.000Z',
+          orderUpdatedAt: null,
+          lineItems: [],
+          fingerprint: 'fp-1',
+          raw: {},
+          importState: 'new',
+          lastImportedAt: null,
+        },
+        {
+          baseOrderId: '1002',
+          orderNumber: 'SO-1002',
+          externalStatusId: 'paid',
+          externalStatusName: 'Paid',
+          buyerName: 'Bob',
+          buyerEmail: 'bob@example.com',
+          currency: 'PLN',
+          totalGross: 200,
+          deliveryMethod: 'Courier',
+          paymentMethod: 'Card',
+          source: 'Base',
+          orderCreatedAt: '2026-03-24T10:00:00.000Z',
+          orderUpdatedAt: null,
+          lineItems: [],
+          fingerprint: 'fp-2',
+          raw: {},
+          importState: 'imported',
+          lastImportedAt: '2026-03-26T10:00:00.000Z',
+          previousImport: {
+            orderNumber: 'SO-1002',
+            externalStatusId: 'paid',
+            externalStatusName: 'Paid',
+            buyerName: 'Bob',
+            buyerEmail: 'bob@example.com',
+            currency: 'PLN',
+            totalGross: 200,
+            deliveryMethod: 'Courier',
+            paymentMethod: 'Card',
+            source: 'Base',
+            orderCreatedAt: '2026-03-24T10:00:00.000Z',
+            orderUpdatedAt: '2026-03-24T10:00:00.000Z',
+            lineItems: [],
+            lastImportedAt: '2026-03-26T10:00:00.000Z',
+          },
+        },
+      ],
+      stats: {
+        total: 2,
+        newCount: 1,
+        importedCount: 1,
+        changedCount: 0,
+      },
+    };
+    usePreviewBaseOrdersMutation.mockReturnValue({
+      isPending: false,
+      mutateAsync: vi.fn().mockResolvedValue(previewResponse),
+    });
+
+    render(<AdminProductOrdersImportPage />);
+
+    fireEvent.click(screen.getByRole('button', { name: /Preview orders/i }));
+    await waitFor(() => expect(screen.getByTestId('orders-count')).toHaveTextContent('2'));
+
+    fireEvent.change(screen.getByLabelText('Import state'), {
+      target: { value: 'imported' },
+    });
+    await waitFor(() => expect(screen.getByTestId('orders-count')).toHaveTextContent('1'));
+
+    fireEvent.click(screen.getByLabelText('Select order 1002'));
+    expect(screen.getByText('1 selected visible')).toBeInTheDocument();
+
+    fireEvent.change(screen.getByLabelText('Import state'), {
+      target: { value: 'new' },
+    });
+    await waitFor(() => expect(screen.getByTestId('orders-count')).toHaveTextContent('1'));
+
+    expect(screen.getByText('0 selected visible')).toBeInTheDocument();
+    expect(screen.getByText('1 hidden by filters')).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: /Import selected visible new \+ changed \(0\)/i })
+    ).toBeDisabled();
+    expect(
+      screen.getByRole('button', { name: /Reimport selected visible imported \(0\)/i })
+    ).toBeDisabled();
+  });
+
+  it('clears only hidden selected orders and preserves visible selection', async () => {
+    const previewResponse: BaseOrderImportPreviewResponse = {
+      orders: [
+        {
+          baseOrderId: '1001',
+          orderNumber: 'SO-1001',
+          externalStatusId: 'paid',
+          externalStatusName: 'Paid',
+          buyerName: 'Alice',
+          buyerEmail: 'alice@example.com',
+          currency: 'PLN',
+          totalGross: 100,
+          deliveryMethod: 'Courier',
+          paymentMethod: 'Card',
+          source: 'Base',
+          orderCreatedAt: '2026-03-25T10:00:00.000Z',
+          orderUpdatedAt: null,
+          lineItems: [],
+          fingerprint: 'fp-1',
+          raw: {},
+          importState: 'new',
+          lastImportedAt: null,
+        },
+        {
+          baseOrderId: '1002',
+          orderNumber: 'SO-1002',
+          externalStatusId: 'paid',
+          externalStatusName: 'Paid',
+          buyerName: 'Bob',
+          buyerEmail: 'bob@example.com',
+          currency: 'PLN',
+          totalGross: 200,
+          deliveryMethod: 'Courier',
+          paymentMethod: 'Card',
+          source: 'Base',
+          orderCreatedAt: '2026-03-24T10:00:00.000Z',
+          orderUpdatedAt: null,
+          lineItems: [],
+          fingerprint: 'fp-2',
+          raw: {},
+          importState: 'imported',
+          lastImportedAt: '2026-03-26T10:00:00.000Z',
+          previousImport: {
+            orderNumber: 'SO-1002',
+            externalStatusId: 'paid',
+            externalStatusName: 'Paid',
+            buyerName: 'Bob',
+            buyerEmail: 'bob@example.com',
+            currency: 'PLN',
+            totalGross: 200,
+            deliveryMethod: 'Courier',
+            paymentMethod: 'Card',
+            source: 'Base',
+            orderCreatedAt: '2026-03-24T10:00:00.000Z',
+            orderUpdatedAt: '2026-03-24T10:00:00.000Z',
+            lineItems: [],
+            lastImportedAt: '2026-03-26T10:00:00.000Z',
+          },
+        },
+      ],
+      stats: {
+        total: 2,
+        newCount: 1,
+        importedCount: 1,
+        changedCount: 0,
+      },
+    };
+    usePreviewBaseOrdersMutation.mockReturnValue({
+      isPending: false,
+      mutateAsync: vi.fn().mockResolvedValue(previewResponse),
+    });
+
+    render(<AdminProductOrdersImportPage />);
+
+    fireEvent.click(screen.getByRole('button', { name: /Preview orders/i }));
+    await waitFor(() => expect(screen.getByTestId('orders-count')).toHaveTextContent('2'));
+
+    fireEvent.click(screen.getByLabelText('Select order 1001'));
+    fireEvent.click(screen.getByLabelText('Select order 1002'));
+
+    fireEvent.change(screen.getByLabelText('Import state'), {
+      target: { value: 'new' },
+    });
+    await waitFor(() => expect(screen.getByTestId('orders-count')).toHaveTextContent('1'));
+
+    expect(screen.getByText('1 selected visible')).toBeInTheDocument();
+    expect(screen.getByText('1 hidden by filters')).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: /Clear hidden selection \(1\)/i }));
+
+    expect(screen.getByText('1 selected visible')).toBeInTheDocument();
+    expect(screen.queryByText('1 hidden by filters')).not.toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: /Clear hidden selection \(0\)/i })
+    ).toBeDisabled();
+
+    fireEvent.change(screen.getByLabelText('Import state'), {
+      target: { value: 'all' },
+    });
+    await waitFor(() => expect(screen.getByTestId('orders-count')).toHaveTextContent('2'));
+
+    expect(screen.getByText('1 selected visible')).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: /Reimport selected visible imported \(0\)/i })
+    ).toBeDisabled();
+  });
+
+  it('clears only visible selected orders and preserves hidden selection', async () => {
+    const previewResponse: BaseOrderImportPreviewResponse = {
+      orders: [
+        {
+          baseOrderId: '1001',
+          orderNumber: 'SO-1001',
+          externalStatusId: 'paid',
+          externalStatusName: 'Paid',
+          buyerName: 'Alice',
+          buyerEmail: 'alice@example.com',
+          currency: 'PLN',
+          totalGross: 100,
+          deliveryMethod: 'Courier',
+          paymentMethod: 'Card',
+          source: 'Base',
+          orderCreatedAt: '2026-03-25T10:00:00.000Z',
+          orderUpdatedAt: null,
+          lineItems: [],
+          fingerprint: 'fp-1',
+          raw: {},
+          importState: 'new',
+          lastImportedAt: null,
+        },
+        {
+          baseOrderId: '1002',
+          orderNumber: 'SO-1002',
+          externalStatusId: 'paid',
+          externalStatusName: 'Paid',
+          buyerName: 'Bob',
+          buyerEmail: 'bob@example.com',
+          currency: 'PLN',
+          totalGross: 200,
+          deliveryMethod: 'Courier',
+          paymentMethod: 'Card',
+          source: 'Base',
+          orderCreatedAt: '2026-03-24T10:00:00.000Z',
+          orderUpdatedAt: null,
+          lineItems: [],
+          fingerprint: 'fp-2',
+          raw: {},
+          importState: 'imported',
+          lastImportedAt: '2026-03-26T10:00:00.000Z',
+          previousImport: {
+            orderNumber: 'SO-1002',
+            externalStatusId: 'paid',
+            externalStatusName: 'Paid',
+            buyerName: 'Bob',
+            buyerEmail: 'bob@example.com',
+            currency: 'PLN',
+            totalGross: 200,
+            deliveryMethod: 'Courier',
+            paymentMethod: 'Card',
+            source: 'Base',
+            orderCreatedAt: '2026-03-24T10:00:00.000Z',
+            orderUpdatedAt: '2026-03-24T10:00:00.000Z',
+            lineItems: [],
+            lastImportedAt: '2026-03-26T10:00:00.000Z',
+          },
+        },
+      ],
+      stats: {
+        total: 2,
+        newCount: 1,
+        importedCount: 1,
+        changedCount: 0,
+      },
+    };
+    usePreviewBaseOrdersMutation.mockReturnValue({
+      isPending: false,
+      mutateAsync: vi.fn().mockResolvedValue(previewResponse),
+    });
+
+    render(<AdminProductOrdersImportPage />);
+
+    fireEvent.click(screen.getByRole('button', { name: /Preview orders/i }));
+    await waitFor(() => expect(screen.getByTestId('orders-count')).toHaveTextContent('2'));
+
+    fireEvent.change(screen.getByLabelText('Import state'), {
+      target: { value: 'imported' },
+    });
+    await waitFor(() => expect(screen.getByTestId('orders-count')).toHaveTextContent('1'));
+
+    fireEvent.click(screen.getByLabelText('Select order 1002'));
+    fireEvent.change(screen.getByLabelText('Import state'), {
+      target: { value: 'all' },
+    });
+    await waitFor(() => expect(screen.getByTestId('orders-count')).toHaveTextContent('2'));
+    fireEvent.change(screen.getByPlaceholderText('Search previewed orders...'), {
+      target: { value: 'alice' },
+    });
+    await waitFor(() => expect(screen.getByTestId('orders-count')).toHaveTextContent('1'));
+
+    fireEvent.click(screen.getByLabelText('Select order 1001'));
+    expect(screen.getByText('1 hidden by filters')).toBeInTheDocument();
+    expect(screen.getByText('1 selected visible')).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: /Clear visible selection \(1\)/i }));
+
+    expect(screen.getByText('0 selected visible')).toBeInTheDocument();
+    expect(screen.getByText('1 hidden by filters')).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: /Clear visible selection \(0\)/i })
+    ).toBeDisabled();
+    expect(
+      screen.getByRole('button', { name: /Reimport selected visible imported \(0\)/i })
+    ).toBeDisabled();
+
+    fireEvent.change(screen.getByPlaceholderText('Search previewed orders...'), {
+      target: { value: '' },
+    });
+    fireEvent.change(screen.getByLabelText('Import state'), {
+      target: { value: 'imported' },
+    });
+    await waitFor(() => expect(screen.getByTestId('orders-count')).toHaveTextContent('1'));
+
+    expect(screen.getByText('1 selected visible')).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: /Reimport selected visible imported \(1\)/i })
+    ).toBeEnabled();
   });
 });

@@ -22,8 +22,7 @@ import { isKangurAuthStatusError } from '@/features/kangur/services/status-error
 import { getKangurLoginHref, KANGUR_BASE_PATH } from '@/features/kangur/config/routing';
 import { isKangurSocialBatchCaptureHref } from '@/features/kangur/shared/capture-mode';
 import { useOptionalKangurRouting } from '@/features/kangur/ui/context/KangurRoutingContext';
-import { useOptionalNextAuthSession } from '@/features/kangur/ui/hooks/useOptionalNextAuthSession';
-import { sanitizeAccessibleManagedKangurHref } from '@/features/kangur/ui/routing/managed-paths';
+import { useKangurRouteAccess } from '@/features/kangur/ui/routing/useKangurRouteAccess';
 import type { KangurAuthMode } from '@/features/kangur/shared/contracts/kangur-auth';
 import { internalError } from '@/features/kangur/shared/errors/app-error';
 
@@ -201,18 +200,17 @@ export const clearKangurAuthBootstrapCache = (): void => {
 export const KangurAuthProvider = ({ children }: { children: ReactNode }): React.JSX.Element => {
   const router = useRouter();
   const routing = useOptionalKangurRouting();
-  const { data: session } = useOptionalNextAuthSession();
+  const { sanitizeManagedHref } = useKangurRouteAccess();
   const basePath = routing?.basePath ?? KANGUR_BASE_PATH;
   const canonicalizePublicAlias = basePath === '/';
   const fallbackCallbackUrl =
-    sanitizeAccessibleManagedKangurHref({
+    sanitizeManagedHref({
       href: routing?.requestedPath ?? basePath,
       pathname: routing?.requestedPath ?? null,
       currentOrigin: typeof window === 'undefined' ? null : window.location.origin,
       canonicalizePublicAlias,
       basePath,
       fallbackHref: basePath,
-      session,
     }) ?? basePath;
   const requestedHref =
     routing?.requestedHref ??
@@ -447,7 +445,7 @@ export const KangurAuthProvider = ({ children }: { children: ReactNode }): React
       const callbackUrl =
         typeof window === 'undefined' ? fallbackCallbackUrl : window.location.href;
       const resolvedCallbackUrl =
-        sanitizeAccessibleManagedKangurHref({
+        sanitizeManagedHref({
           href: callbackUrl,
           pathname:
             typeof window === 'undefined'
@@ -457,7 +455,6 @@ export const KangurAuthProvider = ({ children }: { children: ReactNode }): React
           canonicalizePublicAlias,
           basePath,
           fallbackHref: fallbackCallbackUrl,
-          session,
         }) ?? fallbackCallbackUrl;
       const loginHref = appendAuthModeParam(
         getKangurLoginHref(basePath, resolvedCallbackUrl),
@@ -465,7 +462,7 @@ export const KangurAuthProvider = ({ children }: { children: ReactNode }): React
       );
       router.push(loginHref);
     },
-    [basePath, canonicalizePublicAlias, fallbackCallbackUrl, router, routing?.requestedPath, session]
+    [basePath, canonicalizePublicAlias, fallbackCallbackUrl, router, routing?.requestedPath, sanitizeManagedHref]
   );
 
   const selectLearner = useCallback(async (learnerId: string): Promise<void> => {

@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-03-26T16:58:43.964Z",
+  "generatedAt": "2026-03-27T02:51:48.690Z",
   "status": "warn",
   "summary": {
     "total": 4,
@@ -21,7 +21,7 @@
     {
       "severity": "warn",
       "ruleId": "context-oversized",
-      "message": "Context file is 503 lines (threshold: 500). Consider extracting logic into hooks or splitting the context.",
+      "message": "Context file is 560 lines (threshold: 500). Consider extracting logic into hooks or splitting the context.",
       "file": "src/features/kangur/ui/context/KangurAuthContext.tsx",
       "line": null,
       "column": null,
@@ -73,5 +73,5 @@
       "infoCount": 2
     }
   ],
-  "durationMs": 353
+  "durationMs": 286
 }

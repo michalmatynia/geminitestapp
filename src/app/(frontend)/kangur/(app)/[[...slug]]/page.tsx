@@ -1,30 +1,19 @@
 import { notFound, redirect } from 'next/navigation';
 
-import { auth } from '@/features/auth/server';
 import { canAccessKangurSlugSegments } from '@/features/kangur/config/page-access';
 import { getKangurCanonicalPublicHref } from '@/features/kangur/config/routing';
 import { KangurServerShell } from '@/features/kangur/ui/components/KangurServerShell';
+import { readOptionalServerAuthSession } from '@/shared/lib/auth/optional-server-auth';
 import { getFrontPagePublicOwner } from '@/shared/lib/front-page-app';
 
-import { getFrontPageSetting, shouldApplyFrontPageAppSelection } from '../../../home-helpers';
+import {
+  getFrontPageSetting,
+  shouldApplyFrontPageAppSelection,
+} from '@/app/(frontend)/home-helpers';
 
 type KangurAliasPageProps = {
   params: Promise<{ slug?: string[] }>;
   searchParams?: Promise<Record<string, string | string[] | undefined>>;
-};
-
-const isMissingRequestScopeError = (error: unknown): boolean =>
-  error instanceof Error && error.message.includes('outside a request scope');
-
-const readOptionalAuthSession = async () => {
-  try {
-    return await auth();
-  } catch (error) {
-    if (isMissingRequestScopeError(error)) {
-      return null;
-    }
-    throw error;
-  }
 };
 
 export default async function Page({
@@ -36,7 +25,7 @@ export default async function Page({
     const frontPageSetting = await getFrontPageSetting();
 
     if (getFrontPagePublicOwner(frontPageSetting) === 'kangur') {
-      const session = await readOptionalAuthSession();
+      const session = await readOptionalServerAuthSession();
       if (!canAccessKangurSlugSegments(slug, session)) {
         notFound();
       }

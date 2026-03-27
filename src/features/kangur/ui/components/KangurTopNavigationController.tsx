@@ -6,9 +6,8 @@ import {
   KangurPrimaryNavigation,
   type KangurPrimaryNavigationProps,
 } from '@/features/kangur/ui/components/KangurPrimaryNavigation';
-import { resolveAccessibleKangurPrimaryNavigation } from '@/features/kangur/ui/components/KangurPrimaryNavigation.access';
+import { useAccessibleKangurPrimaryNavigation } from '@/features/kangur/ui/components/KangurPrimaryNavigation.access';
 import { useOptionalKangurTopNavigation } from '@/features/kangur/ui/context/KangurTopNavigationContext';
-import { useOptionalNextAuthSession } from '@/features/kangur/ui/hooks/useOptionalNextAuthSession';
 
 let kangurTopNavigationControllerId = 0;
 
@@ -25,9 +24,9 @@ export function KangurTopNavigationController({
   visible?: boolean;
 }): React.JSX.Element | null {
   const topNavigation = useOptionalKangurTopNavigation();
-  const { data: session } = useOptionalNextAuthSession();
   const ownerIdRef = useRef<string | null>(null);
   const primaryNavigation = navigation;
+  const accessibleNavigation = useAccessibleKangurPrimaryNavigation(primaryNavigation);
 
   if (ownerIdRef.current === null) {
     ownerIdRef.current = createKangurTopNavigationOwnerId();
@@ -55,11 +54,7 @@ export function KangurTopNavigationController({
   }, [primaryNavigation, topNavigation, visible]);
 
   if (!topNavigation) {
-    return visible ? (
-      <KangurPrimaryNavigation
-        {...resolveAccessibleKangurPrimaryNavigation(primaryNavigation, session)}
-      />
-    ) : null;
+    return visible ? <KangurPrimaryNavigation {...accessibleNavigation} /> : null;
   }
 
   return null;

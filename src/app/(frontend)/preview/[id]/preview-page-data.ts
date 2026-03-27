@@ -1,5 +1,3 @@
-import { headers } from 'next/headers';
-
 import {
   getMediaInlineStyles,
   getMediaStyleVars,
@@ -11,6 +9,7 @@ import { getCmsThemeSettings } from '@/features/cms/server';
 import type { CmsTheme, Page, PageComponent } from '@/shared/contracts/cms';
 import { buildColorSchemeMap } from '@/shared/contracts/cms-theme';
 import { isElevatedSession } from '@/shared/lib/auth/elevated-session-user';
+import { readOptionalRequestHeaders } from '@/shared/lib/request/optional-headers';
 
 import type { SlugRenderData as PreviewRenderData } from '../../[...slug]/slug-page-data';
 
@@ -42,7 +41,7 @@ export const loadPreviewRenderData = async (id: string): Promise<PreviewRenderDa
     theme = await cmsRepository.getThemeById(page.themeId);
   }
 
-  const hdrs = await headers();
+  const hdrs = await readOptionalRequestHeaders();
   const domain = await resolveCmsDomainFromHeaders(hdrs);
   const themeSettings = await getCmsThemeSettings();
   const menuSettings = await getCmsMenuSettings(domain.id, page.locale);

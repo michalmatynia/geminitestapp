@@ -196,6 +196,7 @@ export function KangurLessonsCatalogWidget(): JSX.Element {
                 progress,
                 masteryTranslations
               ),
+              onSelect: () => selectLesson(lesson.id),
             },
           ] as const;
         })
@@ -209,6 +210,7 @@ export function KangurLessonsCatalogWidget(): JSX.Element {
       masteryTranslations,
       orderedLessons,
       progress,
+      selectLesson,
     ]
   );
 
@@ -239,7 +241,7 @@ export function KangurLessonsCatalogWidget(): JSX.Element {
           localizedDescription={lessonCardState.localizedDescription}
           localizedTitle={lessonCardState.localizedTitle}
           masteryPresentation={lessonCardState.masteryPresentation}
-          onSelect={() => selectLesson(lesson.id)}
+          onSelect={lessonCardState.onSelect}
           resolvedCopy={lessonCardState.resolvedCopy}
           statusGroupClassName='w-full items-start max-[420px]:flex-col sm:w-auto sm:flex-col sm:items-end'
           translations={libraryCardTranslations}

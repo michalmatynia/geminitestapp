@@ -2,30 +2,15 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslations } from 'next-intl';
-import { useKangurDocsTooltips } from '@/features/kangur/docs/tooltips';
-import { KangurTopNavigationController } from '@/features/kangur/ui/components/KangurTopNavigationController';
+import { LazyKangurTopNavigationController } from '@/features/kangur/ui/components/LazyKangurTopNavigationController';
 import type { KangurPrimaryNavigationProps } from '@/features/kangur/ui/components/KangurPrimaryNavigation';
-import { KangurAiTutorSessionSync } from '@/features/kangur/ui/context/KangurAiTutorContext';
 import { LazyAnimatePresence } from '@/features/kangur/ui/components/LazyAnimatePresence';
 import { KangurStandardPageLayout } from '@/features/kangur/ui/components/KangurStandardPageLayout';
 import { useKangurLoginModal } from '@/features/kangur/ui/context/KangurLoginModalContext';
 import { useLessons, LessonsProvider } from './lessons/LessonsContext';
 import { LessonsCatalog } from './lessons/Lessons.Catalog';
-import { ActiveLessonView } from './lessons/Lessons.ActiveLesson';
-
-function LessonsDeferredDocsTooltips({
-  onResolved,
-}: {
-  onResolved: (enabled: boolean) => void;
-}) {
-  const { enabled } = useKangurDocsTooltips('lessons');
-
-  useEffect(() => {
-    onResolved(enabled);
-  }, [enabled, onResolved]);
-
-  return null;
-}
+import { LazyActiveLessonView } from './lessons/LazyActiveLessonView';
+import { LazyLessonsDeferredEnhancements } from './lessons/LazyLessonsDeferredEnhancements';
 
 function LessonsContent() {
   const pageTranslations = useTranslations('KangurLessonsPage');
@@ -34,12 +19,10 @@ function LessonsContent() {
     basePath,
     activeLesson,
     activeLessonId,
-    lessonDocuments,
     lessonAssignmentsByComponent,
     completedLessonAssignmentsByComponent,
     orderedLessons,
     isSecretLessonActive,
-    isActiveLessonDocumentLoading,
     progress,
     guestPlayerName,
     setGuestPlayerName,
@@ -79,23 +62,19 @@ function LessonsContent() {
         ? {
             activeLesson,
             activeLessonId: activeLessonId ?? activeLesson.id,
-            lessonDocuments,
             lessonAssignmentsByComponent,
             completedLessonAssignmentsByComponent,
             orderedLessons,
             isSecretLessonActive,
             progress,
-            isActiveLessonDocumentLoading,
           }
         : undefined,
     [
       activeLesson,
       activeLessonId,
       completedLessonAssignmentsByComponent,
-      isActiveLessonDocumentLoading,
       isSecretLessonActive,
       lessonAssignmentsByComponent,
-      lessonDocuments,
       orderedLessons,
       progress,
     ]
@@ -160,11 +139,9 @@ function LessonsContent() {
   return (
     <>
       {isDeferredEnhancementsReady ? (
-        <LessonsDeferredDocsTooltips onResolved={handleDeferredDocsTooltipsResolved} />
-      ) : null}
-      {isDeferredEnhancementsReady ? (
-        <KangurAiTutorSessionSync
+        <LazyLessonsDeferredEnhancements
           learnerId={user?.activeLearner?.id ?? null}
+          onDocsTooltipsResolved={handleDeferredDocsTooltipsResolved}
           sessionContext={lessonTutorContext}
         />
       ) : null}
@@ -174,7 +151,7 @@ function LessonsContent() {
         skipLinkTargetId='kangur-lessons-main'
         docsRootId={isDeferredEnhancementsReady ? 'kangur-lessons-page' : undefined}
         docsTooltipsEnabled={docsTooltipsEnabled}
-        navigation={<KangurTopNavigationController navigation={navigation} />}
+        navigation={<LazyKangurTopNavigationController navigation={navigation} />}
         containerProps={{
           as: 'section',
           'data-kangur-route-main': true,
@@ -184,7 +161,7 @@ function LessonsContent() {
       >
         {activeLesson ? (
           <LazyAnimatePresence mode='wait'>
-            <ActiveLessonView
+            <LazyActiveLessonView
               key={activeLessonId ?? activeLesson.id}
               snapshot={activeLessonRenderSnapshot}
             />

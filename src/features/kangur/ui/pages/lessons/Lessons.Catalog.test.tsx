@@ -143,8 +143,8 @@ vi.mock('@/features/kangur/ui/components/KangurPageIntroCard', () => ({
   ),
 }));
 
-vi.mock('@/features/kangur/ui/components/KangurLessonsWordmark', () => ({
-  KangurLessonsWordmark: ({ label }: { label: string }) => (
+vi.mock('@/features/kangur/ui/components/LazyKangurLessonsWordmark', () => ({
+  LazyKangurLessonsWordmark: ({ label }: { label: string }) => (
     <div data-testid='mock-lessons-wordmark'>{label}</div>
   ),
 }));

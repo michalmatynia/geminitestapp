@@ -2,7 +2,7 @@
 
 import type { ReactNode } from 'react';
 
-import { KangurDocsTooltipEnhancer } from '@/features/kangur/docs/tooltips';
+import { LazyKangurDocsTooltipEnhancer } from '@/features/kangur/ui/components/LazyKangurDocsTooltipEnhancer';
 import {
   KangurPageContainer,
   KangurPageShell,
@@ -75,7 +75,7 @@ const renderKangurStandardPageLayout = ({
     {...restShellProps}
   >
     {docsRootId ? (
-      <KangurDocsTooltipEnhancer enabled={docsTooltipsEnabled} rootId={docsRootId} />
+      <LazyKangurDocsTooltipEnhancer enabled={docsTooltipsEnabled} rootId={docsRootId} />
     ) : null}
     {beforeNavigation}
     {navigation}

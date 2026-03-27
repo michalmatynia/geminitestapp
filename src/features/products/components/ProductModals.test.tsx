@@ -12,6 +12,7 @@ const { useProductListHeaderActionsContextMock, useProductListModalsContextMock 
 }));
 
 const {
+  productFormPropsMock,
   useProductFormCoreMock,
   productFormProviderPropsMock,
   triggerButtonBarMock,
@@ -21,6 +22,7 @@ const {
   let providerInstanceCounter = 0;
 
   return {
+    productFormPropsMock: vi.fn(),
     useProductFormCoreMock: vi.fn(),
     productFormProviderPropsMock: vi.fn(),
     triggerButtonBarMock: vi.fn(),
@@ -113,7 +115,10 @@ vi.mock('@/shared/lib/ai-paths/components/trigger-buttons/TriggerButtonBar', () 
 }));
 
 vi.mock('@/features/products/components/ProductForm', () => ({
-  default: () => <div data-testid='product-form' />,
+  default: (props: Record<string, unknown>) => {
+    productFormPropsMock(props);
+    return <div data-testid='product-form' />;
+  },
 }));
 
 vi.mock('@/features/integrations/public', () => ({
@@ -410,6 +415,93 @@ describe('ProductModals edit hydration guard', () => {
 
     expect(providerAfter.getAttribute('data-instance-id')).toBe(instanceIdBefore);
     expect(providerAfter).toBe(providerBefore);
+  });
+
+  it('keeps the same validator session while edit hydration upgrades a product snapshot', () => {
+    let editingProduct = createProduct({
+      id: 'product-hydration-session',
+      updatedAt: '2026-01-01T00:00:00.000Z',
+    });
+
+    useProductFormCoreMock.mockImplementation(() => ({
+      handleSubmit: vi.fn(),
+      uploading: false,
+      hasUnsavedChanges: false,
+      product: editingProduct,
+      draft: null,
+      getValues: vi.fn().mockReturnValue({}),
+    }));
+    useProductListModalsContextMock.mockImplementation(() =>
+      buildContext({
+        editingProduct,
+      })
+    );
+
+    const { rerender } = render(<ProductModals />);
+
+    const sessionKeyBefore = productFormPropsMock.mock.lastCall?.[0]?.[
+      'validatorSessionKey'
+    ] as string | undefined;
+
+    editingProduct = markEditingProductHydrated(
+      createProduct({
+        id: 'product-hydration-session',
+        updatedAt: '2026-01-02T00:00:00.000Z',
+        name_en: 'Hydrated product',
+      })
+    );
+
+    rerender(<ProductModals />);
+
+    const sessionKeyAfter = productFormPropsMock.mock.lastCall?.[0]?.[
+      'validatorSessionKey'
+    ] as string | undefined;
+
+    expect(sessionKeyBefore).toBeTruthy();
+    expect(sessionKeyAfter).toBeTruthy();
+    expect(sessionKeyAfter).toBe(sessionKeyBefore);
+  });
+
+  it('starts a fresh validator session when reopening edit for the same product', () => {
+    const editingProduct = markEditingProductHydrated(createProduct());
+
+    useProductFormCoreMock.mockReturnValue({
+      handleSubmit: vi.fn(),
+      uploading: false,
+      hasUnsavedChanges: false,
+      product: editingProduct,
+      draft: null,
+      getValues: vi.fn().mockReturnValue({}),
+    });
+
+    const openContext = buildContext({ editingProduct });
+    const closedContext = buildContext({ editingProduct: null });
+    useProductListModalsContextMock.mockReturnValue(openContext);
+
+    const { rerender } = render(<ProductModals />);
+
+    const firstSessionKey = productFormPropsMock.mock.lastCall?.[0]?.[
+      'validatorSessionKey'
+    ] as string | undefined;
+
+    useProductListModalsContextMock.mockReturnValue(closedContext);
+    rerender(<ProductModals />);
+
+    useProductListModalsContextMock.mockReturnValue(openContext);
+    rerender(<ProductModals />);
+
+    const reopenedSessionKey = productFormPropsMock.mock.lastCall?.[0]?.[
+      'validatorSessionKey'
+    ] as string | undefined;
+
+    expect(firstSessionKey).toBeTruthy();
+    expect(reopenedSessionKey).toBeTruthy();
+    expect(reopenedSessionKey).not.toBe(firstSessionKey);
+    expect(productFormPropsMock.mock.lastCall?.[0]).toEqual(
+      expect.objectContaining({
+        validationInstanceScopeOverride: 'product_edit',
+      })
+    );
   });
 });
 

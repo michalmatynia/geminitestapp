@@ -20,6 +20,7 @@ vi.mock('use-intl', async () => await vi.importActual<typeof import('use-intl')>
 
 const {
   useLessonsMock,
+  useKangurLessonDocumentMock,
   useKangurMobileBreakpointMock,
   useKangurTutorAnchorMock,
   hasKangurLessonDocumentContentMock,
@@ -28,6 +29,7 @@ const {
   lessonComponentsMock,
 } = vi.hoisted(() => ({
   useLessonsMock: vi.fn(),
+  useKangurLessonDocumentMock: vi.fn(),
   useKangurMobileBreakpointMock: vi.fn(),
   useKangurTutorAnchorMock: vi.fn(),
   hasKangurLessonDocumentContentMock: vi.fn(() => true),
@@ -144,6 +146,10 @@ vi.mock('@/features/kangur/ui/hooks/useKangurPageContent', () => ({
   useKangurPageContentEntry: () => ({ entry: null }),
 }));
 
+vi.mock('@/features/kangur/ui/hooks/useKangurLessons', () => ({
+  useKangurLessonDocument: (...args: unknown[]) => useKangurLessonDocumentMock(...args),
+}));
+
 vi.mock('@/features/kangur/ui/hooks/useKangurTutorAnchor', () => ({
   useKangurTutorAnchor: (...args: unknown[]) => useKangurTutorAnchorMock(...args),
 }));
@@ -177,6 +183,14 @@ describe('ActiveLessonView mobile controls', () => {
   beforeEach(() => {
     useKangurMobileBreakpointMock.mockReturnValue(true);
     useKangurTutorAnchorMock.mockReset();
+    useKangurLessonDocumentMock.mockReset();
+    useKangurLessonDocumentMock.mockReturnValue({
+      data: {},
+      isPending: false,
+      isLoading: false,
+      isFetching: false,
+      isRefetching: false,
+    });
     hasKangurLessonDocumentContentMock.mockReturnValue(true);
     lessonDocumentBackButtonLabelMock.mockReturnValue(null);
     lessonDocumentBackClickMock.mockReset();
@@ -271,6 +285,13 @@ describe('ActiveLessonView mobile controls', () => {
   it('renders the loading document fallback title in English on the English route', async () => {
     useKangurMobileBreakpointMock.mockReturnValue(false);
     hasKangurLessonDocumentContentMock.mockReturnValue(false);
+    useKangurLessonDocumentMock.mockReturnValue({
+      data: undefined,
+      isPending: true,
+      isLoading: true,
+      isFetching: true,
+      isRefetching: false,
+    });
     useLessonsMock.mockReturnValue({
       activeLesson,
       handleSelectLesson,
@@ -285,7 +306,6 @@ describe('ActiveLessonView mobile controls', () => {
       orderedLessons: [activeLesson, nextLesson],
       isSecretLessonActive: false,
       progress: { lessonMastery: {} },
-      isActiveLessonDocumentLoading: true,
     });
 
     rtlRender(
@@ -626,6 +646,13 @@ describe('ActiveLessonView mobile controls', () => {
 
   it('hides the print action while a document lesson is still loading', async () => {
     hasKangurLessonDocumentContentMock.mockReturnValue(false);
+    useKangurLessonDocumentMock.mockReturnValue({
+      data: undefined,
+      isPending: true,
+      isLoading: true,
+      isFetching: true,
+      isRefetching: false,
+    });
     useLessonsMock.mockReturnValue({
       activeLesson,
       handleSelectLesson,
@@ -640,7 +667,6 @@ describe('ActiveLessonView mobile controls', () => {
       orderedLessons: [activeLesson, nextLesson],
       isSecretLessonActive: false,
       progress: { lessonMastery: {} },
-      isActiveLessonDocumentLoading: true,
     });
 
     render(<ActiveLessonView />);
@@ -656,6 +682,13 @@ describe('ActiveLessonView mobile controls', () => {
 
   it('hides the print action when a document lesson has no saved content', async () => {
     hasKangurLessonDocumentContentMock.mockReturnValue(false);
+    useKangurLessonDocumentMock.mockReturnValue({
+      data: {},
+      isPending: false,
+      isLoading: false,
+      isFetching: false,
+      isRefetching: false,
+    });
     useLessonsMock.mockReturnValue({
       activeLesson,
       handleSelectLesson,
@@ -670,7 +703,6 @@ describe('ActiveLessonView mobile controls', () => {
       orderedLessons: [activeLesson, nextLesson],
       isSecretLessonActive: false,
       progress: { lessonMastery: {} },
-      isActiveLessonDocumentLoading: false,
     });
 
     render(<ActiveLessonView />);
@@ -758,6 +790,13 @@ describe('ActiveLessonView mobile controls', () => {
 
   it('keeps rendering the latched lesson snapshot while the live active lesson clears', async () => {
     useKangurMobileBreakpointMock.mockReturnValue(false);
+    useKangurLessonDocumentMock.mockReturnValue({
+      data: {},
+      isPending: false,
+      isLoading: false,
+      isFetching: false,
+      isRefetching: false,
+    });
 
     let currentActiveLesson: typeof activeLesson | null = activeLesson;
 
@@ -775,7 +814,6 @@ describe('ActiveLessonView mobile controls', () => {
       orderedLessons: [activeLesson, nextLesson],
       isSecretLessonActive: false,
       progress: { lessonMastery: {} },
-      isActiveLessonDocumentLoading: false,
     }));
 
     const snapshot = {
@@ -787,7 +825,6 @@ describe('ActiveLessonView mobile controls', () => {
       orderedLessons: [activeLesson, nextLesson],
       isSecretLessonActive: false,
       progress: { lessonMastery: {} },
-      isActiveLessonDocumentLoading: false,
     };
 
     const { rerender } = render(<ActiveLessonView snapshot={snapshot} />);

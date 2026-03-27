@@ -1,4 +1,4 @@
-import React, { type AriaAttributes, type ComponentProps } from 'react';
+import React, { memo, type AriaAttributes, type ComponentProps } from 'react';
 import { useLocale, useTranslations } from 'next-intl';
 
 import type { KangurAssignmentSnapshot } from '@kangur/platform';
@@ -389,6 +389,8 @@ function KangurLessonLibraryCardResolved(
   );
 }
 
+const MemoizedKangurLessonLibraryCardResolved = memo(KangurLessonLibraryCardResolved);
+
 function KangurLessonLibraryCardWithContext(
   props: KangurLessonLibraryCardProps
 ): React.JSX.Element {
@@ -397,7 +399,7 @@ function KangurLessonLibraryCardWithContext(
   const isCoarsePointer = useKangurCoarsePointer();
   const { ageGroup } = useKangurAgeGroupFocus();
   return (
-    <KangurLessonLibraryCardResolved
+    <MemoizedKangurLessonLibraryCardResolved
       {...props}
       isCoarsePointer={Boolean(isCoarsePointer)}
       isSixYearOld={ageGroup === 'six_year_old'}
@@ -422,7 +424,7 @@ export function KangurLessonLibraryCard(props: KangurLessonLibraryCardProps): Re
       ...resolvedProps
     } = props;
     return (
-      <KangurLessonLibraryCardResolved
+      <MemoizedKangurLessonLibraryCardResolved
         {...resolvedProps}
         isCoarsePointer={isCoarsePointer}
         isSixYearOld={isSixYearOld}

@@ -1,5 +1,6 @@
 const { createServer } = require('http');
 const { createHash } = require('crypto');
+const { AsyncLocalStorage } = require('async_hooks');
 const { WebSocketServer } = require('ws');
 const { Redis } = require('ioredis');
 const fs = require('fs');
@@ -121,6 +122,31 @@ if (dev && requestedDevBundler === 'webpack') {
 
 const app = next(nextOptions);
 const handle = app.getRequestHandler();
+const serverRequestContextStorageKey = '__geminitestappServerRequestContextStorage';
+const serverRequestContextStorage =
+  globalThis[serverRequestContextStorageKey] ||
+  (globalThis[serverRequestContextStorageKey] = new AsyncLocalStorage());
+
+function createRequestHeadersSnapshot(nodeHeaders) {
+  const requestHeaders = new Headers();
+
+  for (const [name, value] of Object.entries(nodeHeaders || {})) {
+    if (Array.isArray(value)) {
+      for (const item of value) {
+        if (typeof item === 'string') {
+          requestHeaders.append(name, item);
+        }
+      }
+      continue;
+    }
+
+    if (typeof value === 'string') {
+      requestHeaders.set(name, value);
+    }
+  }
+
+  return requestHeaders;
+}
 
 const SCRAPER_GUARD = createScraperGuard({
   enabled: process.env.SCRAPER_GUARD_ENABLED ? process.env.SCRAPER_GUARD_ENABLED !== 'false' : !dev,
@@ -386,15 +412,23 @@ app.prepare().then(async () => {
       res.end(guardResult.message);
       return;
     }
-    Promise.resolve(handle(req, res, parsedUrl)).catch((error) => {
-      ErrorSystem.captureException(error, {
-        source: 'server',
-        context: { action: 'request-handler-failed', pathname: parsedUrl.pathname },
+    const serverRequestContext = {
+      pathname: url.pathname,
+      requestUrl: normalizedUrl,
+      headers: createRequestHeadersSnapshot(req.headers),
+    };
+
+    serverRequestContextStorage.run(serverRequestContext, () => {
+      Promise.resolve(handle(req, res, parsedUrl)).catch((error) => {
+        ErrorSystem.captureException(error, {
+          source: 'server',
+          context: { action: 'request-handler-failed', pathname: parsedUrl.pathname },
+        });
+        if (!res.headersSent) {
+          res.statusCode = 500;
+          res.end('Internal Server Error');
+        }
       });
-      if (!res.headersSent) {
-        res.statusCode = 500;
-        res.end('Internal Server Error');
-      }
     });
   });
 

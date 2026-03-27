@@ -11,7 +11,7 @@ import { hasKangurLessonDocumentContent } from '@/features/kangur/lesson-documen
 import { KangurLessonLibraryCard } from '@/features/kangur/ui/components/KangurLessonLibraryCard';
 import type { KangurLessonLibraryCardCopy } from '@/features/kangur/ui/components/KangurLessonLibraryCard';
 import { KangurLessonGroupAccordion } from '@/features/kangur/ui/components/KangurLessonGroupAccordion';
-import { KangurLessonsWordmark } from '@/features/kangur/ui/components/KangurLessonsWordmark';
+import { LazyKangurLessonsWordmark } from '@/features/kangur/ui/components/LazyKangurLessonsWordmark';
 import { KangurPageIntroCard } from '@/features/kangur/ui/components/KangurPageIntroCard';
 import KangurVisualCueContent from '@/features/kangur/ui/components/KangurVisualCueContent';
 import {
@@ -188,7 +188,7 @@ function LessonsCatalogIntroCardWithPageContent({
       testId='lessons-list-intro-card'
       title={title}
       visualTitle={showWordmark ? (
-        <KangurLessonsWordmark
+        <LazyKangurLessonsWordmark
           className='mx-auto'
           data-testid='kangur-lessons-heading-art'
           label={title}
@@ -349,6 +349,7 @@ function LessonsCatalogResolvedContent({
               masteryPresentation: isCardStatusReady
                 ? getLessonMasteryPresentation(lesson, progress, masteryTranslations)
                 : emptyMasteryPresentation,
+              onSelect: () => handleSelectLesson(lesson.id),
             },
           ] as const;
         })
@@ -364,6 +365,7 @@ function LessonsCatalogResolvedContent({
       masteryTranslations,
       orderedLessons,
       progress,
+      handleSelectLesson,
     ]
   );
 
@@ -430,7 +432,7 @@ function LessonsCatalogResolvedContent({
         locale={locale}
         localizedDescription={lessonCardState.localizedDescription}
         localizedTitle={lessonCardState.localizedTitle}
-        onSelect={() => handleSelectLesson(lesson.id)}
+        onSelect={lessonCardState.onSelect}
         masteryPresentation={lessonCardState.masteryPresentation}
         resolvedCopy={lessonCardState.resolvedCopy}
         lessonAssignment={lessonCardState.lessonAssignment}
@@ -673,7 +675,7 @@ export function LessonsCatalog() {
             testId='lessons-list-intro-card'
             title={translations('pageTitle')}
             visualTitle={isPageContentReady ? (
-              <KangurLessonsWordmark
+              <LazyKangurLessonsWordmark
                 className='mx-auto'
                 data-testid='kangur-lessons-heading-art'
                 label={translations('pageTitle')}

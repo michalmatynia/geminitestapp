@@ -6,19 +6,28 @@ import { createDefaultKangurLessonTemplates } from '@/features/kangur/lessons/le
 import type { KangurLessonTemplate } from '@/shared/contracts/kangur-lesson-templates';
 import { kangurLessonTemplateSchema } from '@/shared/contracts/kangur-lesson-templates';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
+import { normalizeSiteLocale } from '@/shared/lib/i18n/site-locale';
 
 import type { KangurLessonTemplateListInput, KangurLessonTemplateRepository } from './types';
 
 const COLLECTION = 'kangur_lesson_templates';
 const SUBJECT_SORT_INDEX = 'kangur_lesson_templates_subject_sort_idx';
-const COMPONENT_UNIQUE_INDEX = 'kangur_lesson_templates_componentId_unique_idx';
+const COMPONENT_LOCALE_UNIQUE_INDEX = 'kangur_lesson_templates_componentId_locale_unique_idx';
 
 type MongoKangurLessonTemplateDocument = Document &
   KangurLessonTemplate & {
     _id: string;
+    locale?: string;
     createdAt: Date;
     updatedAt: Date;
   };
+
+const normalizeTemplateLocale = (locale?: string | null): string => normalizeSiteLocale(locale);
+
+const buildLocalizedTemplateId = (componentId: string, locale?: string | null): string => {
+  const normalizedLocale = normalizeTemplateLocale(locale);
+  return normalizedLocale === 'pl' ? componentId : `${normalizedLocale}:${componentId}`;
+};
 
 let indexesInitialized = false;
 let indexesInFlight: Promise<void> | null = null;
@@ -33,12 +42,12 @@ const ensureIndexes = async (db: Db): Promise<void> => {
     const collection = db.collection<MongoKangurLessonTemplateDocument>(COLLECTION);
     await Promise.all([
       collection.createIndex(
-        { subject: 1, sortOrder: 1 },
+        { locale: 1, subject: 1, sortOrder: 1 },
         { name: SUBJECT_SORT_INDEX },
       ),
       collection.createIndex(
-        { componentId: 1 },
-        { name: COMPONENT_UNIQUE_INDEX, unique: true },
+        { componentId: 1, locale: 1 },
+        { name: COMPONENT_LOCALE_UNIQUE_INDEX, unique: true },
       ),
     ]);
     indexesInitialized = true;
@@ -53,10 +62,18 @@ const ensureIndexes = async (db: Db): Promise<void> => {
 const buildFilter = (
   input?: KangurLessonTemplateListInput,
 ): Filter<MongoKangurLessonTemplateDocument> => {
-  if (!input) return {};
-  const filter: Filter<MongoKangurLessonTemplateDocument> = {};
+  const normalizedLocale = normalizeTemplateLocale(input?.locale);
+  const filter =
+    normalizedLocale === 'pl'
+      ? {
+          $or: [{ locale: normalizedLocale }, { locale: { $exists: false } }],
+        }
+      : { locale: normalizedLocale };
   if (input.subject) {
-    filter['subject'] = input.subject;
+    return {
+      ...filter,
+      subject: input.subject,
+    };
   }
   return filter;
 };
@@ -91,11 +108,10 @@ export const mongoKangurLessonTemplateRepository: KangurLessonTemplateRepository
       .toArray();
 
     if (docs.length === 0) {
-      const filter: Filter<MongoKangurLessonTemplateDocument> = {};
-      if (input?.subject) filter['subject'] = input.subject;
+      const filter = buildFilter(input);
       const existingCount = await collection.countDocuments(filter);
       if (existingCount === 0) {
-        const defaults = createDefaultKangurLessonTemplates();
+        const defaults = createDefaultKangurLessonTemplates(normalizeTemplateLocale(input?.locale));
         if (input?.subject) {
           return defaults.filter((t) => t.subject === input.subject);
         }
@@ -106,25 +122,32 @@ export const mongoKangurLessonTemplateRepository: KangurLessonTemplateRepository
     return docs.map(toTemplate);
   },
 
-  async replaceTemplates(templates: KangurLessonTemplate[]): Promise<KangurLessonTemplate[]> {
+  async replaceTemplates(
+    templates: KangurLessonTemplate[],
+    locale?: string
+  ): Promise<KangurLessonTemplate[]> {
     const db = await getMongoDb();
     await ensureIndexes(db);
     const collection = db.collection<MongoKangurLessonTemplateDocument>(COLLECTION);
     const now = new Date();
+    const normalizedLocale = normalizeTemplateLocale(locale);
 
     if (templates.length === 0) {
-      await collection.deleteMany({});
+      await collection.deleteMany(buildFilter({ locale: normalizedLocale }));
       return [];
     }
 
-    const componentIds = templates.map((t) => t.componentId);
+    const localizedIds = templates.map((template) =>
+      buildLocalizedTemplateId(template.componentId, normalizedLocale)
+    );
     const operations = templates.map((template) => ({
       updateOne: {
-        filter: { _id: template.componentId },
+        filter: { _id: buildLocalizedTemplateId(template.componentId, normalizedLocale) },
         update: {
           $set: {
             ...template,
             componentId: template.componentId,
+            locale: normalizedLocale,
             updatedAt: now,
           },
           $setOnInsert: {
@@ -136,23 +159,28 @@ export const mongoKangurLessonTemplateRepository: KangurLessonTemplateRepository
     }));
 
     await collection.bulkWrite(operations, { ordered: false });
-    await collection.deleteMany({ _id: { $nin: componentIds } });
+    await collection.deleteMany({
+      ...buildFilter({ locale: normalizedLocale }),
+      _id: { $nin: localizedIds },
+    });
 
     return templates;
   },
 
-  async saveTemplate(template: KangurLessonTemplate): Promise<void> {
+  async saveTemplate(template: KangurLessonTemplate, locale?: string): Promise<void> {
     const db = await getMongoDb();
     await ensureIndexes(db);
     const collection = db.collection<MongoKangurLessonTemplateDocument>(COLLECTION);
     const now = new Date();
+    const normalizedLocale = normalizeTemplateLocale(locale);
 
     await collection.updateOne(
-      { _id: template.componentId },
+      { _id: buildLocalizedTemplateId(template.componentId, normalizedLocale) },
       {
         $set: {
           ...template,
           componentId: template.componentId,
+          locale: normalizedLocale,
           updatedAt: now,
         },
         $setOnInsert: {
@@ -163,10 +191,12 @@ export const mongoKangurLessonTemplateRepository: KangurLessonTemplateRepository
     );
   },
 
-  async removeTemplate(componentId: string): Promise<void> {
+  async removeTemplate(componentId: string, locale?: string): Promise<void> {
     const db = await getMongoDb();
     await ensureIndexes(db);
     const collection = db.collection<MongoKangurLessonTemplateDocument>(COLLECTION);
-    await collection.deleteOne({ _id: componentId });
+    await collection.deleteOne({
+      _id: buildLocalizedTemplateId(componentId, normalizeTemplateLocale(locale)),
+    });
   },
 };

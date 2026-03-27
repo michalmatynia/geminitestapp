@@ -1,8 +1,11 @@
 'use client';
 
-import { AnimatePresence, motion } from 'framer-motion';
 import { useId, useState, type HTMLAttributes, type ReactNode } from 'react';
 
+import {
+  LazyAnimatePresence,
+  LazyMotionDiv,
+} from '@/features/kangur/ui/components/LazyAnimatePresence';
 import {
   kangurPanelVariants,
   KANGUR_GLASS_PANEL_SURFACE_CLASSNAMES,
@@ -79,9 +82,9 @@ export function KangurLessonGroupAccordion({
         <span className='min-w-0 text-lg font-semibold text-current'>{label}</span>
       </button>
 
-      <AnimatePresence initial={false}>
+      <LazyAnimatePresence initial={false}>
         {isExpanded ? (
-          <motion.div
+          <LazyMotionDiv
             key={panelId}
             animate={{ height: 'auto', opacity: 1 }}
             className='overflow-hidden'
@@ -101,9 +104,9 @@ export function KangurLessonGroupAccordion({
             >
               {children}
             </div>
-          </motion.div>
+          </LazyMotionDiv>
         ) : null}
-      </AnimatePresence>
+      </LazyAnimatePresence>
     </div>
   );
 }

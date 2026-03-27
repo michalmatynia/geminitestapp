@@ -9,6 +9,7 @@ vi.mock('next/headers', () => ({
 }));
 
 import { readOptionalRequestHeaders } from './optional-headers';
+import { readOptionalRequestHeadersResult } from './optional-headers';
 
 describe('readOptionalRequestHeaders', () => {
   beforeEach(() => {
@@ -33,5 +34,23 @@ describe('readOptionalRequestHeaders', () => {
     headersMock.mockRejectedValue(error);
 
     await expect(readOptionalRequestHeaders()).rejects.toBe(error);
+  });
+
+  it('reports a timeout when request headers do not resolve in time', async () => {
+    vi.useFakeTimers();
+    headersMock.mockImplementation(() => new Promise<Headers>(() => {}));
+
+    try {
+      const readPromise = readOptionalRequestHeadersResult({ timeoutMs: 1200 });
+
+      await vi.advanceTimersByTimeAsync(1200);
+
+      await expect(readPromise).resolves.toEqual({
+        headers: null,
+        timedOut: true,
+      });
+    } finally {
+      vi.useRealTimers();
+    }
   });
 });

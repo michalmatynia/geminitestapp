@@ -14,6 +14,10 @@ const { handleSubmitMock, routerPushMock, useProductFormImagesMock } = vi.hoiste
   useProductFormImagesMock: vi.fn(),
 }));
 
+const { productFormPropsMock } = vi.hoisted(() => ({
+  productFormPropsMock: vi.fn(),
+}));
+
 vi.mock('next/navigation', () => ({
   useRouter: vi.fn(() => ({ push: routerPushMock })),
   usePathname: vi.fn(() => '/admin/products'),
@@ -38,7 +42,10 @@ vi.mock('next/dynamic', () => ({
 }));
 
 vi.mock('@/features/products/components/ProductForm', () => ({
-  default: () => <div data-testid='product-form'>product form</div>,
+  default: (props: Record<string, unknown>) => {
+    productFormPropsMock(props);
+    return <div data-testid='product-form'>product form</div>;
+  },
 }));
 
 vi.mock('@/features/products/context/ProductFormCoreContext', () => ({
@@ -65,6 +72,7 @@ describe('EditProductPage', () => {
   beforeEach(() => {
     handleSubmitMock.mockReset();
     routerPushMock.mockReset();
+    productFormPropsMock.mockReset();
     useProductFormImagesMock.mockReset();
     useProductFormImagesMock.mockReturnValue({
       showFileManager: false,
@@ -82,6 +90,13 @@ describe('EditProductPage', () => {
     );
     expect(screen.getByRole('heading', { name: 'Edit Product' })).toBeInTheDocument();
     expect(screen.getByTestId('product-form')).toBeInTheDocument();
+    expect(productFormPropsMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        submitButtonText: 'Update',
+        validationInstanceScopeOverride: 'product_edit',
+        validatorSessionKey: expect.any(String),
+      })
+    );
 
     fireEvent.click(screen.getByRole('button', { name: 'Update' }));
     expect(handleSubmitMock).toHaveBeenCalledTimes(1);

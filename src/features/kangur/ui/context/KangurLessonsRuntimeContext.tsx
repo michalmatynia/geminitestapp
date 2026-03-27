@@ -77,11 +77,9 @@ export function KangurLessonsRuntimeProvider({
       includeArchived: false,
     },
   });
-  const { data: lessonTemplates = [] } = useKangurLessonTemplates({
-    enabled: focusToken !== null,
-  });
+  const { data: lessonTemplates = [] } = useKangurLessonTemplates();
   const lessonTemplateMap = useMemo(
-    () => new Map(lessonTemplates.map((t) => [t.componentId, t])),
+    () => new Map(lessonTemplates.map((t) => [t.componentId, t] as const)),
     [lessonTemplates],
   );
   const lessonsCatalogQuery = useKangurLessonsCatalog({ subject, ageGroup, enabledOnly: true });
@@ -338,6 +336,7 @@ export function KangurLessonsRuntimeProvider({
   const stateValue = useMemo<KangurLessonsRuntimeStateContextValue>(
     () => ({
       orderedLessons,
+      lessonTemplateMap,
       lessonSections,
       lessonDocuments,
       progress,
@@ -367,6 +366,7 @@ export function KangurLessonsRuntimeProvider({
       lessonAssignmentsByComponent,
       lessonSections,
       lessonDocuments,
+      lessonTemplateMap,
       nextLesson,
       orderedLessons,
       prevLesson,

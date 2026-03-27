@@ -2,6 +2,7 @@
  * @vitest-environment jsdom
  */
 
+import React from 'react';
 import { act, fireEvent, render, screen } from '@testing-library/react';
 import { beforeEach, afterEach, describe, expect, it, vi } from 'vitest';
 import { DEFAULT_KANGUR_AGE_GROUP } from '@/features/kangur/lessons/lesson-catalog-metadata';
@@ -214,8 +215,8 @@ vi.mock('@/features/kangur/ui/components/KangurLessonNavigationWidget', () => ({
   KangurLessonNavigationWidget: () => <div data-testid='mock-lesson-navigation' />,
 }));
 
-vi.mock('@/features/kangur/ui/components/KangurLessonsWordmark', () => ({
-  KangurLessonsWordmark: (props: unknown) => {
+vi.mock('@/features/kangur/ui/components/LazyKangurLessonsWordmark', () => ({
+  LazyKangurLessonsWordmark: (props: unknown) => {
     lessonsWordmarkPropsMock(props);
     return <div data-testid='mock-lessons-wordmark' />;
   },
@@ -274,10 +275,49 @@ vi.mock('@/features/kangur/ui/components/KangurStandardPageLayout', () => ({
   },
 }));
 
-vi.mock('@/features/kangur/ui/components/KangurTopNavigationController', () => ({
-  KangurTopNavigationController: ({ navigation }: { navigation: unknown }) => {
+vi.mock('@/features/kangur/ui/components/LazyKangurTopNavigationController', () => ({
+  LazyKangurTopNavigationController: ({ navigation }: { navigation: unknown }) => {
     topNavigationPropsMock(navigation);
     return <div data-testid='mock-top-nav' />;
+  },
+}));
+
+vi.mock('@/features/kangur/ui/pages/lessons/LazyActiveLessonView', () => ({
+  LazyActiveLessonView: ({ snapshot }: { snapshot?: { activeLessonId?: string } }) => {
+    lessonDocumentsHookCallsMock({
+      enabled: Boolean(snapshot?.activeLessonId),
+      lessonId: snapshot?.activeLessonId ?? null,
+    });
+    return (
+      <div data-testid='mock-active-lesson-view'>
+        {snapshot?.activeLessonId ?? 'active-lesson'}
+      </div>
+    );
+  },
+}));
+
+vi.mock('@/features/kangur/ui/pages/lessons/LazyLessonsDeferredEnhancements', () => ({
+  LazyLessonsDeferredEnhancements: ({
+    learnerId,
+    onDocsTooltipsResolved,
+    sessionContext,
+  }: {
+    learnerId: string | null;
+    onDocsTooltipsResolved: (enabled: boolean) => void;
+    sessionContext?: Record<string, unknown> | null;
+  }) => {
+    const { enabled } = useKangurDocsTooltipsMock('lessons');
+
+    React.useEffect(() => {
+      onDocsTooltipsResolved(enabled);
+    }, [enabled, onDocsTooltipsResolved]);
+
+    tutorSessionSyncPropsMock({
+      learnerId,
+      sessionContext,
+    });
+
+    return null;
   },
 }));
 
@@ -864,10 +904,7 @@ describe('Lessons page subject filtering', () => {
       vi.runAllTimers();
     });
 
-    expect(lessonDocumentsHookCallsMock).toHaveBeenLastCalledWith({
-      enabled: false,
-      lessonId: null,
-    });
+    expect(lessonDocumentsHookCallsMock).not.toHaveBeenCalled();
 
     act(() => {
       fireEvent.click(screen.getByTestId('lesson-card-lesson-english'));

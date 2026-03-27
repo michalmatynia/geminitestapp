@@ -1,5 +1,7 @@
 'use client';
 
+import { useLocale } from 'next-intl';
+
 import type {
   KangurLessonAgeGroup,
   KangurLessonSubject,
@@ -16,12 +18,14 @@ import {
 import type { ListQuery, MutationResult } from '@/shared/contracts/ui';
 import { api } from '@/shared/lib/api-client';
 import { createListQueryV2, createUpdateMutationV2 } from '@/shared/lib/query-factories-v2';
+import { normalizeSiteLocale } from '@/shared/lib/i18n/site-locale';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 
 type LessonTemplatesQueryOptions = {
   subject?: KangurLessonSubject;
   ageGroup?: KangurLessonAgeGroup;
   enabled?: boolean;
+  locale?: string | null;
 };
 
 const filterTemplates = (
@@ -39,7 +43,7 @@ const filterTemplates = (
 };
 
 const buildTemplatesFallback = (options?: LessonTemplatesQueryOptions): KangurLessonTemplate[] =>
-  filterTemplates(createDefaultKangurLessonTemplates(), options);
+  filterTemplates(createDefaultKangurLessonTemplates(options?.locale ?? 'pl'), options);
 
 const fetchLessonTemplates = async (
   options?: LessonTemplatesQueryOptions,
@@ -57,6 +61,7 @@ const fetchLessonTemplates = async (
     async () => {
       const params: Record<string, string | undefined> = {
         subject: options?.subject,
+        locale: options?.locale ? normalizeSiteLocale(options.locale) : undefined,
       };
       const payload = await api.get<KangurLessonTemplate[]>('/api/kangur/lesson-templates', {
         params,
@@ -72,15 +77,24 @@ const fetchLessonTemplates = async (
 export const useKangurLessonTemplates = (
   options?: LessonTemplatesQueryOptions,
 ): ListQuery<KangurLessonTemplate, KangurLessonTemplate[]> =>
-  createListQueryV2<KangurLessonTemplate, KangurLessonTemplate[]>({
+  {
+    const routeLocale = useLocale();
+    const resolvedLocale = normalizeSiteLocale(options?.locale ?? routeLocale);
+
+    return createListQueryV2<KangurLessonTemplate, KangurLessonTemplate[]>({
     queryKey: [
       ...QUERY_KEYS.kangur.lessonTemplates(),
       {
+        locale: resolvedLocale,
         subject: options?.subject ?? null,
         ageGroup: options?.ageGroup ?? null,
       },
     ],
-    queryFn: async (): Promise<KangurLessonTemplate[]> => await fetchLessonTemplates(options),
+    queryFn: async (): Promise<KangurLessonTemplate[]> =>
+      await fetchLessonTemplates({
+        ...options,
+        locale: resolvedLocale,
+      }),
     select: (templates) => filterTemplates(templates, options),
     enabled: options?.enabled ?? true,
     staleTime: 1000 * 60 * 5,
@@ -96,7 +110,8 @@ export const useKangurLessonTemplates = (
       tags: ['kangur', 'lesson-templates'],
       description: 'Loads Kangur lesson templates from Mongo.',
     },
-  });
+    });
+  };
 
 const invalidateKangurLessonTemplates = (queryClient: {
   invalidateQueries: (args: { queryKey: readonly unknown[] }) => void;
@@ -104,14 +119,23 @@ const invalidateKangurLessonTemplates = (queryClient: {
   queryClient.invalidateQueries({ queryKey: QUERY_KEYS.kangur.lessonTemplates() });
 };
 
-export const useUpdateKangurLessonTemplates = (): MutationResult<
+export const useUpdateKangurLessonTemplates = (
+  locale?: string | null
+): MutationResult<
   KangurLessonTemplate[],
   KangurLessonTemplate[]
 > =>
-  createUpdateMutationV2<KangurLessonTemplate[], KangurLessonTemplate[]>({
-    mutationKey: [...QUERY_KEYS.kangur.lessonTemplates(), 'update'],
+  {
+    const routeLocale = useLocale();
+    const resolvedLocale = normalizeSiteLocale(locale ?? routeLocale);
+
+    return createUpdateMutationV2<KangurLessonTemplate[], KangurLessonTemplate[]>({
+    mutationKey: [...QUERY_KEYS.kangur.lessonTemplates(), { locale: resolvedLocale }, 'update'],
     mutationFn: async (templates: KangurLessonTemplate[]): Promise<KangurLessonTemplate[]> =>
-      await api.post<KangurLessonTemplate[]>('/api/kangur/lesson-templates', { templates }),
+      await api.post<KangurLessonTemplate[]>('/api/kangur/lesson-templates', {
+        locale: resolvedLocale,
+        templates,
+      }),
     invalidate: invalidateKangurLessonTemplates,
     meta: {
       source: 'kangur.hooks.useUpdateKangurLessonTemplates',
@@ -121,4 +145,5 @@ export const useUpdateKangurLessonTemplates = (): MutationResult<
       tags: ['kangur', 'lesson-templates', 'update'],
       description: 'Replaces Kangur lesson templates in Mongo.',
     },
-  });
+    });
+  };

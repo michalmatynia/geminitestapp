@@ -30,10 +30,12 @@ export type KangurLessonTemplates = z.infer<typeof kangurLessonTemplatesSchema>;
 
 export const kangurLessonTemplatesQuerySchema = z.object({
   subject: optionalTrimmedQueryString(kangurLessonSubjectSchema),
+  locale: optionalTrimmedQueryString(z.string().trim().min(2).max(16)),
 });
 export type KangurLessonTemplatesQuery = z.infer<typeof kangurLessonTemplatesQuerySchema>;
 
 export const kangurLessonTemplatesReplacePayloadSchema = z.object({
+  locale: z.string().trim().min(2).max(16).optional(),
   templates: kangurLessonTemplatesSchema,
 });
 export type KangurLessonTemplatesReplacePayload = z.infer<

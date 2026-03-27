@@ -87,8 +87,8 @@ export const QUERY_KEYS = {
     gameInstances: () => [...QUERY_KEYS.kangur.all, 'game-instances'] as const,
     lessonGameSections: () => [...QUERY_KEYS.kangur.all, 'lesson-game-sections'] as const,
     lessonDocuments: () => [...QUERY_KEYS.kangur.all, 'lesson-documents'] as const,
-    lessonDocument: (lessonId: string | null) =>
-      [...QUERY_KEYS.kangur.lessonDocuments(), 'detail', lessonId ?? null] as const,
+    lessonDocument: (lessonId: string | null, locale?: string | null) =>
+      [...QUERY_KEYS.kangur.lessonDocuments(), 'detail', lessonId ?? null, locale ?? null] as const,
     lessonSections: () => [...QUERY_KEYS.kangur.all, 'lesson-sections'] as const,
     lessonTemplates: () => [...QUERY_KEYS.kangur.all, 'lesson-templates'] as const,
     assignments: (options?: { includeArchived?: boolean | undefined }) =>

@@ -19,6 +19,8 @@ const {
   kangurServerShellMock,
   kangurSSRSkeletonMock,
   queryErrorBoundaryMock,
+  readServerRequestHeadersMock,
+  readServerRequestPathnameMock,
   shouldApplyFrontPageAppSelectionMock,
 } = vi.hoisted(() => ({
   cmsStorefrontAppearanceProviderMock: vi.fn(({ children }: { children: ReactNode }) => <>{children}</>),
@@ -34,6 +36,8 @@ const {
   kangurServerShellMock: vi.fn(() => <div data-testid='kangur-server-shell' />),
   kangurSSRSkeletonMock: vi.fn(() => <div data-testid='kangur-ssr-skeleton' />),
   queryErrorBoundaryMock: vi.fn(({ children }: { children: ReactNode }) => <>{children}</>),
+  readServerRequestHeadersMock: vi.fn(),
+  readServerRequestPathnameMock: vi.fn(),
   shouldApplyFrontPageAppSelectionMock: vi.fn(),
 }));
 
@@ -60,6 +64,11 @@ vi.mock('@/features/kangur/server/auth-bootstrap', () => ({
 
 vi.mock('@/shared/lib/front-page-app', () => ({
   getFrontPagePublicOwner: getFrontPagePublicOwnerMock,
+}));
+
+vi.mock('@/shared/lib/request/server-request-context', () => ({
+  readServerRequestHeaders: readServerRequestHeadersMock,
+  readServerRequestPathname: readServerRequestPathnameMock,
 }));
 
 vi.mock('@/features/cms/components/frontend/CmsStorefrontAppearance', () => ({
@@ -90,6 +99,8 @@ describe('frontend layout bootstrap', () => {
     vi.resetModules();
     vi.clearAllMocks();
     headersMock.mockResolvedValue(new Headers());
+    readServerRequestHeadersMock.mockReturnValue(null);
+    readServerRequestPathnameMock.mockReturnValue(null);
     shouldApplyFrontPageAppSelectionMock.mockReturnValue(true);
     getCmsThemeSettingsMock.mockResolvedValue({ darkMode: false });
     getKangurAuthBootstrapScriptMock.mockResolvedValue(null);
@@ -247,7 +258,7 @@ describe('frontend layout bootstrap', () => {
     expect(getFrontPagePublicOwnerMock).not.toHaveBeenCalled();
     expect(getCmsThemeSettingsMock).toHaveBeenCalledTimes(1);
     expect(getKangurStorefrontInitialStateMock).not.toHaveBeenCalled();
-    expect(getKangurAuthBootstrapScriptMock).toHaveBeenCalledTimes(1);
+    expect(getKangurAuthBootstrapScriptMock).not.toHaveBeenCalled();
     expect(frontendPublicOwnerKangurShellMock).not.toHaveBeenCalled();
     expect(frontendPublicOwnerShellClientMock).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -287,5 +298,60 @@ describe('frontend layout bootstrap', () => {
     );
     expect(frontendPublicOwnerKangurShellMock).not.toHaveBeenCalled();
     expect(kangurServerShellMock).toHaveBeenCalledTimes(1);
+  });
+
+  it('prefers the custom server request context over next headers', async () => {
+    readServerRequestHeadersMock.mockReturnValue(
+      new Headers({
+        'x-app-request-pathname': '/en/kangur/library',
+      })
+    );
+    readServerRequestPathnameMock.mockReturnValue('/en/kangur/library');
+
+    const { default: FrontendLayout } = await import('@/app/(frontend)/layout');
+
+    const layout = await FrontendLayout({
+      children: <div>kangur-explicit</div>,
+    });
+    render(layout);
+
+    expect(headersMock).not.toHaveBeenCalled();
+    expect(getFrontPageSettingMock).not.toHaveBeenCalled();
+    expect(getFrontPagePublicOwnerMock).not.toHaveBeenCalled();
+    expect(getKangurStorefrontInitialStateMock).not.toHaveBeenCalled();
+    expect(getKangurAuthBootstrapScriptMock).not.toHaveBeenCalled();
+  });
+
+  it('fails open when request header resolution stalls on explicit Kangur routes', async () => {
+    vi.useFakeTimers();
+    headersMock.mockImplementation(() => new Promise<Headers>(() => {}));
+    getFrontPageSettingMock.mockResolvedValue('kangur');
+    getFrontPagePublicOwnerMock.mockReturnValue('kangur');
+
+    try {
+      const { default: FrontendLayout } = await import('@/app/(frontend)/layout');
+      const layoutPromise = FrontendLayout({
+        children: <div>kangur-explicit</div>,
+      });
+
+      await vi.advanceTimersByTimeAsync(1200);
+
+      const layout = await layoutPromise;
+      render(layout);
+
+      expect(getFrontPageSettingMock).not.toHaveBeenCalled();
+      expect(getFrontPagePublicOwnerMock).not.toHaveBeenCalled();
+      expect(getKangurStorefrontInitialStateMock).not.toHaveBeenCalled();
+      expect(getKangurAuthBootstrapScriptMock).not.toHaveBeenCalled();
+      expect(frontendPublicOwnerShellClientMock).toHaveBeenCalledWith(
+        expect.objectContaining({
+          publicOwner: 'cms',
+          initialAppearance: undefined,
+        }),
+        undefined
+      );
+    } finally {
+      vi.useRealTimers();
+    }
   });
 });

@@ -2,20 +2,24 @@
 
 import React, { type ReactNode } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
-import { renderHook } from '@testing-library/react';
+import { act, renderHook } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const {
+  apiPostMock,
   createListQueryV2Mock,
   getProductsMock,
+  setValueSpy,
   useProductFormCoreMock,
   useProductFormMetadataMock,
   useProductValidatorConfigMock,
   useUpdateValidatorSettingsMutationMock,
   useProductValidatorIssuesMock,
 } = vi.hoisted(() => ({
+  apiPostMock: vi.fn(),
   createListQueryV2Mock: vi.fn(),
   getProductsMock: vi.fn(),
+  setValueSpy: vi.fn(),
   useProductFormCoreMock: vi.fn(),
   useProductFormMetadataMock: vi.fn(),
   useProductValidatorConfigMock: vi.fn(),
@@ -29,6 +33,12 @@ vi.mock('@/shared/lib/query-factories-v2', () => ({
 
 vi.mock('@/features/products/api/products', () => ({
   getProducts: (...args: unknown[]) => getProductsMock(...args),
+}));
+
+vi.mock('@/shared/lib/api-client', () => ({
+  api: {
+    post: (...args: unknown[]) => apiPostMock(...args),
+  },
 }));
 
 vi.mock('@/features/products/context/ProductFormCoreContext', () => ({
@@ -102,7 +112,62 @@ const validatorPatterns: ProductValidationPattern[] = buildSkuAutoIncrementSeque
   firstSequence: 10,
 }).patterns as ProductValidationPattern[];
 
-const createWrapper = ({ defaultSku = 'KEYCHA000' }: { defaultSku?: string } = {}) =>
+const createPattern = (
+  overrides: Partial<ProductValidationPattern> & {
+    regex: string;
+    target: ProductValidationPattern['target'];
+  }
+): ProductValidationPattern =>
+  ({
+    id: 'pattern-1',
+    label: 'Pattern',
+    target: overrides.target,
+    locale: null,
+    regex: overrides.regex,
+    flags: null,
+    message: 'Pattern mismatch',
+    severity: 'warning',
+    enabled: true,
+    replacementEnabled: true,
+    replacementAutoApply: true,
+    skipNoopReplacementProposal: false,
+    replacementValue: 'SKU-101',
+    replacementFields: ['sku'],
+    replacementAppliesToScopes: ['draft_template', 'product_create', 'product_edit'],
+    runtimeEnabled: false,
+    runtimeType: 'none',
+    runtimeConfig: null,
+    postAcceptBehavior: 'revalidate',
+    denyBehaviorOverride: null,
+    validationDebounceMs: 0,
+    sequenceGroupId: null,
+    sequenceGroupLabel: null,
+    sequenceGroupDebounceMs: 0,
+    sequence: null,
+    chainMode: 'continue',
+    maxExecutions: 1,
+    passOutputToNext: true,
+    launchEnabled: false,
+    launchAppliesToScopes: ['draft_template', 'product_create', 'product_edit'],
+    launchScopeBehavior: 'gate',
+    launchSourceMode: 'current_field',
+    launchSourceField: null,
+    launchOperator: 'equals',
+    launchValue: null,
+    launchFlags: null,
+    appliesToScopes: ['draft_template', 'product_create', 'product_edit'],
+    createdAt: '2026-01-01T00:00:00.000Z',
+    updatedAt: '2026-01-01T00:00:00.000Z',
+    ...overrides,
+  }) as ProductValidationPattern;
+
+const createWrapper = ({
+  defaultSku = 'KEYCHA000',
+  defaultSizeLength = 0,
+}: {
+  defaultSku?: string;
+  defaultSizeLength?: number;
+} = {}) =>
   function Wrapper({ children }: { children: ReactNode }) {
     const methods = useForm<ProductFormData>({
       defaultValues: {
@@ -116,7 +181,7 @@ const createWrapper = ({ defaultSku = 'KEYCHA000' }: { defaultSku?: string } = {
         price: 0,
         stock: 0,
         weight: 0,
-        sizeLength: 0,
+        sizeLength: defaultSizeLength,
         sizeWidth: 0,
         length: 0,
         supplierName: '',
@@ -125,6 +190,11 @@ const createWrapper = ({ defaultSku = 'KEYCHA000' }: { defaultSku?: string } = {
         categoryId: '',
       },
     });
+    const originalSetValueRef = React.useRef(methods.setValue);
+    methods.setValue = ((fieldName, value, options) => {
+      setValueSpy(fieldName, value, options);
+      return originalSetValueRef.current(fieldName, value, options);
+    }) as typeof methods.setValue;
 
     return <FormProvider {...methods}>{children}</FormProvider>;
   };
@@ -132,6 +202,8 @@ const createWrapper = ({ defaultSku = 'KEYCHA000' }: { defaultSku?: string } = {
 describe('useProductFormValidator latest SKU source', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.useRealTimers();
+    window.sessionStorage.clear();
 
     useProductFormCoreMock.mockReturnValue({
       product: null,
@@ -162,6 +234,7 @@ describe('useProductFormValidator latest SKU source', () => {
       isFetching: false,
     });
     getProductsMock.mockResolvedValue([]);
+    apiPostMock.mockResolvedValue({});
   });
 
   it('requests a fresh latest-product source snapshot for SKU sequencing', async () => {
@@ -229,5 +302,198 @@ describe('useProductFormValidator latest SKU source', () => {
     });
 
     expect(result.current.latestProductValues).toBeNull();
+  });
+
+  it('re-applies auto formatting when reopening the same edited product in a new validator session', async () => {
+    vi.useFakeTimers();
+
+    const editProduct = createProduct({
+      id: 'product-edit-reopen',
+      sizeLength: 10,
+    });
+    const sizeLengthPattern = createPattern({
+      id: 'pattern-size-length',
+      regex: '^10$',
+      target: 'size_length',
+      replacementValue: '12.5',
+      replacementFields: ['sizeLength'],
+    });
+
+    useProductFormCoreMock.mockReturnValue({
+      product: editProduct,
+      draft: null,
+    });
+    useProductValidatorConfigMock.mockReturnValue({
+      data: {
+        enabledByDefault: true,
+        formatterEnabledByDefault: true,
+        instanceDenyBehavior: null,
+        patterns: [sizeLengthPattern],
+      },
+    });
+    useProductValidatorIssuesMock.mockReturnValue({
+      visibleFieldIssues: {
+        sizeLength: [
+          {
+            patternId: 'pattern-size-length',
+            message: 'Length mismatch',
+            severity: 'warning',
+            matchText: '10',
+            index: 0,
+            length: 2,
+            regex: '^10$',
+            flags: null,
+            replacementValue: '12.5',
+            replacementApplyMode: 'replace_whole_field',
+            replacementScope: 'field',
+            replacementActive: true,
+            postAcceptBehavior: 'revalidate',
+            debounceMs: 0,
+          },
+        ],
+      },
+    });
+
+    const firstRender = renderHook(() => useProductFormValidator(undefined, 'edit-session-1'), {
+      wrapper: createWrapper({ defaultSizeLength: 10 }),
+    });
+
+    await act(async () => {
+      vi.advanceTimersByTime(250);
+      await Promise.resolve();
+    });
+
+    expect(setValueSpy).toHaveBeenCalledWith(
+      'sizeLength',
+      12.5,
+      expect.objectContaining({
+        shouldDirty: true,
+        shouldTouch: true,
+      })
+    );
+    expect(apiPostMock).toHaveBeenCalledTimes(1);
+
+    firstRender.unmount();
+
+    setValueSpy.mockClear();
+    apiPostMock.mockClear();
+
+    renderHook(() => useProductFormValidator(undefined, 'edit-session-2'), {
+      wrapper: createWrapper({ defaultSizeLength: 10 }),
+    });
+
+    await act(async () => {
+      vi.advanceTimersByTime(250);
+      await Promise.resolve();
+    });
+
+    expect(setValueSpy).toHaveBeenCalledWith(
+      'sizeLength',
+      12.5,
+      expect.objectContaining({
+        shouldDirty: true,
+        shouldTouch: true,
+      })
+    );
+    expect(apiPostMock).toHaveBeenCalledTimes(1);
+  });
+
+  it('re-applies auto formatting when hydration remounts the same edit session with reset field values', async () => {
+    vi.useFakeTimers();
+
+    const editProduct = createProduct({
+      id: 'product-edit-hydration',
+      sizeLength: 10,
+    });
+    const sizeLengthPattern = createPattern({
+      id: 'pattern-size-length-hydration',
+      regex: '^10$',
+      target: 'size_length',
+      replacementValue: '12.5',
+      replacementFields: ['sizeLength'],
+    });
+
+    useProductFormCoreMock.mockReturnValue({
+      product: editProduct,
+      draft: null,
+    });
+    useProductValidatorConfigMock.mockReturnValue({
+      data: {
+        enabledByDefault: true,
+        formatterEnabledByDefault: true,
+        instanceDenyBehavior: null,
+        patterns: [sizeLengthPattern],
+      },
+    });
+    useProductValidatorIssuesMock.mockReturnValue({
+      visibleFieldIssues: {
+        sizeLength: [
+          {
+            patternId: 'pattern-size-length-hydration',
+            message: 'Length mismatch',
+            severity: 'warning',
+            matchText: '10',
+            index: 0,
+            length: 2,
+            regex: '^10$',
+            flags: null,
+            replacementValue: '12.5',
+            replacementApplyMode: 'replace_whole_field',
+            replacementScope: 'field',
+            replacementActive: true,
+            postAcceptBehavior: 'revalidate',
+            debounceMs: 0,
+          },
+        ],
+      },
+    });
+
+    const hydrationSessionKey = 'edit-session-hydration';
+
+    const partialRender = renderHook(
+      () => useProductFormValidator(undefined, hydrationSessionKey),
+      {
+        wrapper: createWrapper({ defaultSizeLength: 10 }),
+      }
+    );
+
+    await act(async () => {
+      vi.advanceTimersByTime(250);
+      await Promise.resolve();
+    });
+
+    expect(setValueSpy).toHaveBeenCalledWith(
+      'sizeLength',
+      12.5,
+      expect.objectContaining({
+        shouldDirty: true,
+        shouldTouch: true,
+      })
+    );
+    expect(apiPostMock).toHaveBeenCalledTimes(1);
+
+    partialRender.unmount();
+
+    setValueSpy.mockClear();
+    apiPostMock.mockClear();
+
+    renderHook(() => useProductFormValidator(undefined, hydrationSessionKey), {
+      wrapper: createWrapper({ defaultSizeLength: 10 }),
+    });
+
+    await act(async () => {
+      vi.advanceTimersByTime(250);
+      await Promise.resolve();
+    });
+
+    expect(setValueSpy).toHaveBeenCalledWith(
+      'sizeLength',
+      12.5,
+      expect.objectContaining({
+        shouldDirty: true,
+        shouldTouch: true,
+      })
+    );
+    expect(apiPostMock).toHaveBeenCalledTimes(1);
   });
 });

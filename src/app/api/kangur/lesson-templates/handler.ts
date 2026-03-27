@@ -10,6 +10,7 @@ import {
 } from '@/shared/contracts/kangur-lesson-templates';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { forbiddenError } from '@/shared/errors/app-error';
+import { normalizeSiteLocale } from '@/shared/lib/i18n/site-locale';
 
 export { kangurLessonTemplatesQuerySchema as querySchema };
 export { kangurLessonTemplatesReplacePayloadSchema as bodySchema };
@@ -28,8 +29,12 @@ const cloneKangurLessonTemplates = (
   templates: KangurLessonTemplate[]
 ): KangurLessonTemplate[] => structuredClone(templates);
 
-const buildKangurLessonTemplatesCacheKey = (input: { subject?: string }): string =>
+const buildKangurLessonTemplatesCacheKey = (input: {
+  locale?: string | null;
+  subject?: string | null;
+}): string =>
   JSON.stringify({
+    locale: input.locale ?? 'pl',
     subject: input.subject ?? null,
   });
 
@@ -45,7 +50,8 @@ export async function getKangurLessonTemplatesHandler(
   const query = kangurLessonTemplatesQuerySchema.parse(ctx.query ?? {});
   const parsedSubject = kangurLessonSubjectSchema.safeParse(query.subject);
   const subject = parsedSubject.success ? parsedSubject.data : undefined;
-  const cacheKey = buildKangurLessonTemplatesCacheKey({ subject });
+  const locale = normalizeSiteLocale(query.locale);
+  const cacheKey = buildKangurLessonTemplatesCacheKey({ subject: subject ?? null, locale });
   const now = Date.now();
   const cached = kangurLessonTemplatesCache.get(cacheKey);
   if (cached && now - cached.fetchedAt < KANGUR_LESSON_TEMPLATES_CACHE_TTL_MS) {
@@ -67,7 +73,7 @@ export async function getKangurLessonTemplatesHandler(
 
   const repository = await getKangurLessonTemplateRepository();
   const inflightPromise = repository
-    .listTemplates({ subject })
+    .listTemplates({ locale, subject })
     .then((templates) => {
       kangurLessonTemplatesCache.set(cacheKey, {
         data: cloneKangurLessonTemplates(templates),
@@ -98,8 +104,9 @@ export async function postKangurLessonTemplatesHandler(
   }
 
   const parsed = kangurLessonTemplatesReplacePayloadSchema.parse(ctx.body ?? {});
+  const locale = normalizeSiteLocale(parsed.locale);
   const repository = await getKangurLessonTemplateRepository();
-  const templates = await repository.replaceTemplates(parsed.templates);
+  const templates = await repository.replaceTemplates(parsed.templates, locale);
   clearKangurLessonTemplatesCache();
 
   return NextResponse.json(templates, {

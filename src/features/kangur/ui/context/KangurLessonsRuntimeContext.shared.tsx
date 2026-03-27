@@ -186,6 +186,7 @@ export const getLessonMasteryPresentation = (
 
 export type KangurLessonsRuntimeStateContextValue = {
   orderedLessons: KangurLesson[];
+  lessonTemplateMap: Map<KangurLessonComponentId, KangurLessonTemplate>;
   lessonSections: KangurLessonSection[];
   lessonDocuments: KangurLessonDocumentStore;
   progress: KangurProgressState;

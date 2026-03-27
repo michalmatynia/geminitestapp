@@ -8,6 +8,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const {
   useKangurGameRuntimeMock,
+  useKangurGameContentSetsMock,
   useKangurGameInstancesMock,
   useKangurMobileBreakpointMock,
   routeNavigatorPrefetchMock,
@@ -21,6 +22,7 @@ const {
   clockTrainingGamePropsMock,
 } = vi.hoisted(() => ({
   useKangurGameRuntimeMock: vi.fn(),
+  useKangurGameContentSetsMock: vi.fn(),
   useKangurGameInstancesMock: vi.fn(),
   useKangurMobileBreakpointMock: vi.fn(),
   routeNavigatorPrefetchMock: vi.fn(),
@@ -86,6 +88,10 @@ vi.mock('@/features/kangur/ui/hooks/useKangurMobileBreakpoint', () => ({
 
 vi.mock('@/features/kangur/ui/hooks/useKangurGameInstances', () => ({
   useKangurGameInstances: (...args: unknown[]) => useKangurGameInstancesMock(...args),
+}));
+
+vi.mock('@/features/kangur/ui/hooks/useKangurGameContentSets', () => ({
+  useKangurGameContentSets: (...args: unknown[]) => useKangurGameContentSetsMock(...args),
 }));
 
 vi.mock('@/features/kangur/ui/hooks/useKangurRouteNavigator', () => ({
@@ -253,6 +259,10 @@ describe('Game page', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     useKangurMobileBreakpointMock.mockReturnValue(false);
+    useKangurGameContentSetsMock.mockReturnValue({
+      data: [],
+      isPending: false,
+    });
     useKangurGameInstancesMock.mockReturnValue({
       data: [],
       isPending: false,
@@ -681,6 +691,63 @@ describe('Game page', () => {
           initialMode: 'challenge',
           section: 'minutes',
           showMinuteHand: false,
+          showTaskTitle: false,
+        })
+      );
+    });
+  });
+
+  it('merges persisted custom content sets with saved engine overrides for launchable game instances', async () => {
+    useKangurGameRuntimeMock.mockReturnValue({
+      ...buildRuntime('clock_quiz'),
+      launchableGameInstanceId: 'clock-instance-custom-hours',
+    });
+    useKangurGameInstancesMock.mockReturnValue({
+      data: [
+        {
+          id: 'clock-instance-custom-hours',
+          gameId: 'clock_training',
+          launchableRuntimeId: 'clock_quiz',
+          contentSetId: 'clock_training:custom:hours-review',
+          title: 'Hours review',
+          description: 'Custom hour-reading run.',
+          emoji: '🕐',
+          enabled: true,
+          sortOrder: 1,
+          engineOverrides: {
+            clockInitialMode: 'challenge',
+            showClockTaskTitle: false,
+          },
+        },
+      ],
+      isPending: false,
+    });
+    useKangurGameContentSetsMock.mockReturnValue({
+      data: [
+        {
+          id: 'clock_training:custom:hours-review',
+          gameId: 'clock_training',
+          engineId: 'clock_training_engine',
+          launchableRuntimeId: 'clock_quiz',
+          label: 'Hours review',
+          description: 'Custom persisted hour-reading content set.',
+          contentKind: 'clock_section',
+          rendererProps: {
+            clockSection: 'hours',
+          },
+          sortOrder: 10,
+        },
+      ],
+      isPending: false,
+    });
+
+    render(<Game />);
+
+    await waitFor(() => {
+      expect(clockTrainingGamePropsMock).toHaveBeenCalledWith(
+        expect.objectContaining({
+          initialMode: 'challenge',
+          section: 'hours',
           showTaskTitle: false,
         })
       );

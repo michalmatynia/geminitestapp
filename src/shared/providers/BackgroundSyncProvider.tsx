@@ -1,15 +1,31 @@
 'use client';
 
-import dynamic from 'next/dynamic';
-import { createContext, useContext, useMemo } from 'react';
+import { createContext, useContext, useEffect, useMemo, useState } from 'react';
 
 import { useSystemSync } from '@/shared/hooks/sync/useSystemSync';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
 
-const QueryDevPanel = dynamic(
-  () => import('@/shared/ui/QueryDevPanel').then((m) => ({ default: m.QueryDevPanel })),
-  { ssr: false }
-);
+import type { JSX } from 'react';
+
+type QueryDevPanelComponent = typeof import('@/shared/ui/QueryDevPanel')['QueryDevPanel'];
+
+let cachedQueryDevPanel: QueryDevPanelComponent | null = null;
+let queryDevPanelPromise: Promise<QueryDevPanelComponent> | null = null;
+
+const loadQueryDevPanel = async (): Promise<QueryDevPanelComponent> => {
+  if (cachedQueryDevPanel) {
+    return cachedQueryDevPanel;
+  }
+
+  if (!queryDevPanelPromise) {
+    queryDevPanelPromise = import('@/shared/ui/QueryDevPanel').then((module) => {
+      cachedQueryDevPanel = module.QueryDevPanel;
+      return module.QueryDevPanel;
+    });
+  }
+
+  return queryDevPanelPromise;
+};
 
 type BackgroundSyncContextValue = {
   enabled: boolean;
@@ -51,7 +67,7 @@ export function BackgroundSyncProvider({
   children,
 }: {
   children: React.ReactNode;
-}): React.JSX.Element {
+}): JSX.Element {
   const settingsStore = useSettingsStore();
   const resolvedSettings = useMemo(() => {
     const map = settingsStore.map;
@@ -78,17 +94,43 @@ export function BackgroundSyncProvider({
     [resolvedSettings.enabled, resolvedSettings.intervalSeconds, isOnline, lastSync]
   );
   const actionsValue = useMemo(() => ({ forceSync }), [forceSync]);
+  const shouldLoadQueryDevPanel =
+    resolvedSettings.queryPanelEnabled || resolvedSettings.queryPanelOpen;
+  const [queryDevPanelComponent, setQueryDevPanelComponent] =
+    useState<QueryDevPanelComponent | null>(cachedQueryDevPanel);
+
+  useEffect(() => {
+    if (queryDevPanelComponent || !shouldLoadQueryDevPanel) {
+      return;
+    }
+
+    let cancelled = false;
+
+    void loadQueryDevPanel().then((component) => {
+      if (!cancelled) {
+        setQueryDevPanelComponent(() => component);
+      }
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [queryDevPanelComponent, shouldLoadQueryDevPanel]);
+
+  const QueryDevPanel = queryDevPanelComponent;
 
   return (
     <BackgroundSyncActionsContext.Provider value={actionsValue}>
       <BackgroundSyncStateContext.Provider value={stateValue}>
         {children}
-        <QueryDevPanel
-          isOnline={isOnline}
-          lastSync={lastSync}
-          enabled={resolvedSettings.queryPanelEnabled}
-          open={resolvedSettings.queryPanelOpen}
-        />
+        {QueryDevPanel ? (
+          <QueryDevPanel
+            isOnline={isOnline}
+            lastSync={lastSync}
+            enabled={resolvedSettings.queryPanelEnabled}
+            open={resolvedSettings.queryPanelOpen}
+          />
+        ) : null}
       </BackgroundSyncStateContext.Provider>
     </BackgroundSyncActionsContext.Provider>
   );

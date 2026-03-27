@@ -15,7 +15,11 @@ import {
   KangurSSRSkeleton,
   KangurServerShell,
 } from '@/features/kangur/public';
-import { readOptionalRequestHeaders } from '@/shared/lib/request/optional-headers';
+import { readOptionalRequestHeadersResult } from '@/shared/lib/request/optional-headers';
+import {
+  readServerRequestHeaders,
+  readServerRequestPathname,
+} from '@/shared/lib/request/server-request-context';
 import { getFrontPagePublicOwner } from '@/shared/lib/front-page-app';
 import { stripSiteLocalePrefix } from '@/shared/lib/i18n/site-locale';
 import { safeHtml } from '@/shared/lib/security/safe-html';
@@ -26,6 +30,8 @@ import type { JSX } from 'react';
 const DEFAULT_CMS_THEME_SETTINGS = {
   darkMode: false,
 } as const;
+
+const FRONTEND_LAYOUT_REQUEST_HEADERS_TIMEOUT_MS = 1200;
 
 const resolveFrontendRequestPathname = (headerValue: string | null | undefined): string | null => {
   if (typeof headerValue !== 'string') {
@@ -82,12 +88,22 @@ export default async function FrontendLayout({
   children: React.ReactNode;
 }): Promise<JSX.Element> {
   const requestHeadersStartedAt = performance.now();
-  const requestHeaders = await readOptionalRequestHeaders();
+  const requestContextHeaders = readServerRequestHeaders();
+  const requestContextPathname = readServerRequestPathname();
+  const { headers: requestHeaders, timedOut: requestHeadersTimedOut } = requestContextHeaders
+    ? {
+        headers: requestContextHeaders,
+        timedOut: false,
+      }
+    : await readOptionalRequestHeadersResult({
+        timeoutMs: FRONTEND_LAYOUT_REQUEST_HEADERS_TIMEOUT_MS,
+      });
   const layoutTiming = createFrontendLoadTimingRecorder(
     shouldEnableFrontendLoadTiming(requestHeaders)
   );
   const readRequestHeadersMs = performance.now() - requestHeadersStartedAt;
   const requestPathname =
+    requestContextPathname ??
     resolveFrontendRequestPathname(requestHeaders?.get('x-app-request-pathname')) ??
     resolveFrontendRequestPathname(requestHeaders?.get('x-app-request-url')) ??
     resolveFrontendRequestPathname(requestHeaders?.get('next-url')) ??
@@ -97,7 +113,7 @@ export default async function FrontendLayout({
   const isRootPublicRoute = isRootPublicRequest(requestPathname);
   const shouldUseFrontPageAppSelection = shouldApplyFrontPageAppSelection();
   const shouldResolveFrontPageSelection =
-    shouldUseFrontPageAppSelection && !isExplicitKangurAlias;
+    shouldUseFrontPageAppSelection && !isExplicitKangurAlias && !requestHeadersTimedOut;
   const frontPageSettingPromise = shouldResolveFrontPageSelection
     ? layoutTiming.withTiming('frontPageSetting', getFrontPageSetting)
     : Promise.resolve(null);
@@ -110,7 +126,7 @@ export default async function FrontendLayout({
   const shouldRenderStandaloneKangurShell =
     publicOwner === 'kangur' && !isExplicitKangurAlias && !isCanonicalPublicLogin;
   const shouldInjectKangurAuthBootstrap =
-    publicOwner === 'kangur' || isExplicitKangurAlias || isCanonicalPublicLogin;
+    !requestHeadersTimedOut && (publicOwner === 'kangur' || isCanonicalPublicLogin);
   const shouldLoadKangurStorefrontBootstrap =
     publicOwner === 'kangur' && shouldRenderStandaloneKangurShell && isRootPublicRoute;
   const kangurStatePromise = shouldLoadKangurStorefrontBootstrap

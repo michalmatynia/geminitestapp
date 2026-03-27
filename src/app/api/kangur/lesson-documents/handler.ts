@@ -6,14 +6,20 @@ import { getKangurLessonDocumentRepository } from '@/features/kangur/services/ka
 import { kangurLessonDocumentStoreSchema } from '@kangur/contracts';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { forbiddenError } from '@/shared/errors/app-error';
+import { normalizeSiteLocale } from '@/shared/lib/i18n/site-locale';
 
 const bodySchema = z.object({
+  locale: z.string().trim().min(2).max(16).optional(),
   documents: kangurLessonDocumentStoreSchema,
 });
 
-export async function getKangurLessonDocumentsHandler(): Promise<Response> {
+export async function getKangurLessonDocumentsHandler(
+  _req: NextRequest,
+  ctx: ApiHandlerContext
+): Promise<Response> {
+  const locale = normalizeSiteLocale(String(ctx.query?.['locale'] ?? '').trim() || undefined);
   const repository = await getKangurLessonDocumentRepository();
-  const documents = await repository.listLessonDocuments();
+  const documents = await repository.listLessonDocuments(locale);
 
   return NextResponse.json(documents, {
     headers: {
@@ -27,8 +33,9 @@ export async function getKangurLessonDocumentHandler(
   ctx: ApiHandlerContext
 ): Promise<Response> {
   const lessonId = String(ctx.params?.['lessonId'] ?? '').trim();
+  const locale = normalizeSiteLocale(String(ctx.query?.['locale'] ?? '').trim() || undefined);
   const repository = await getKangurLessonDocumentRepository();
-  const document = lessonId ? await repository.getLessonDocument(lessonId) : null;
+  const document = lessonId ? await repository.getLessonDocument(lessonId, locale) : null;
 
   return NextResponse.json(document, {
     headers: {
@@ -47,8 +54,9 @@ export async function postKangurLessonDocumentsHandler(
   }
 
   const parsed = bodySchema.parse(ctx.body ?? {});
+  const locale = normalizeSiteLocale(parsed.locale);
   const repository = await getKangurLessonDocumentRepository();
-  const documents = await repository.replaceLessonDocuments(parsed.documents);
+  const documents = await repository.replaceLessonDocuments(parsed.documents, locale);
 
   return NextResponse.json(documents, {
     headers: {

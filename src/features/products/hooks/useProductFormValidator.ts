@@ -10,7 +10,10 @@ import {
   useProductValidatorConfig,
   useUpdateValidatorSettingsMutation,
 } from '@/features/products/hooks/useProductSettingsQueries';
-import { applyValidatorFieldReplacement } from '@/features/products/lib/applyValidatorFieldReplacement';
+import {
+  applyValidatorFieldReplacement,
+  doesValidatorFieldReplacementMatchCurrentValue,
+} from '@/features/products/lib/applyValidatorFieldReplacement';
 import { buildProductValidationSourceValues } from '@/features/products/lib/validatorSourceFields';
 import { getProductValidationFieldChangedAtDependencies } from '@/features/products/lib/validatorTargetAdapters';
 import { useProductValidatorIssues } from '@/features/products/hooks/useProductValidatorIssues';
@@ -117,7 +120,10 @@ export const resolveLatestProductValidatorSourceValues = ({
 
 // --- Main Hook Implementation ---
 
-export function useProductFormValidator(scopeOverride?: string): UseProductFormValidatorResult {
+export function useProductFormValidator(
+  scopeOverride?: string,
+  validatorSessionKey?: string
+): UseProductFormValidatorResult {
   const { product, draft } = useProductFormCore();
   const { categories, selectedCategoryId, setCategoryId, selectedCatalogIds } =
     useProductFormMetadata();
@@ -132,7 +138,7 @@ export function useProductFormValidator(scopeOverride?: string): UseProductFormV
     defaultValidatorEnabled && typeof configFormatterEnabledByDefault === 'boolean'
       ? configFormatterEnabledByDefault
       : false;
-  const entityIdentity = `${product?.id?.trim() ?? ''}::${draft?.id?.trim() ?? ''}`;
+  const entityIdentity = `${product?.id?.trim() ?? ''}::${draft?.id?.trim() ?? ''}::${validatorSessionKey ?? ''}`;
 
   const [
     nameEn,
@@ -500,9 +506,15 @@ export function useProductFormValidator(scopeOverride?: string): UseProductFormV
   const deniedIssuesWriteTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const acceptedIssuesWriteTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const autoAcceptTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  // Use module-level tracking (survives p→h remount). The ref points to
-  // the same Set object stored in autoAcceptedByEntity.
+  // Use module-level tracking keyed by a per-open validator session so the
+  // quick p→h edit remount reuses the same auto-accept set, while reopening the
+  // same product starts fresh immediately.
   const autoAcceptedIssueKeysRef = useRef<Set<string>>(getOrCreateAutoAcceptedSet(entityIdentity));
+
+  useEffect(() => {
+    const currentSet = getOrCreateAutoAcceptedSet(entityIdentity);
+    autoAcceptedIssueKeysRef.current = currentSet;
+  }, [entityIdentity]);
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -806,6 +818,20 @@ export function useProductFormValidator(scopeOverride?: string): UseProductFormV
     [categories, getValues, setCategoryId, setValue]
   );
 
+  const doesAutoReplacementMatchField = useCallback(
+    (fieldName: string, replacementValue: string): boolean => {
+      return doesValidatorFieldReplacementMatchCurrentValue({
+        fieldName,
+        replacementValue,
+        categories,
+        getCurrentFieldValue: (nextFieldName: keyof ProductFormData) => getValues(nextFieldName),
+        setFormFieldValue: () => {},
+        setCategoryId: () => {},
+      });
+    },
+    [categories, getValues]
+  );
+
   useEffect(() => {
     if (!validatorEnabled || !formatterEnabled) {
       if (autoAcceptTimerRef.current) {
@@ -837,7 +863,6 @@ export function useProductFormValidator(scopeOverride?: string): UseProductFormV
         for (const issue of issues) {
           const issueKey = buildIssueDecisionKey(fieldName, issue.patternId);
           nextVisibleIssueKeys.add(issueKey);
-          if (autoAcceptedIssueKeysRef.current.has(issueKey)) continue;
           const issuePattern = validatorPatternById.get(issue.patternId);
           const shouldAutoApplyReplacement =
             issuePattern !== undefined &&
@@ -848,6 +873,16 @@ export function useProductFormValidator(scopeOverride?: string): UseProductFormV
             }) &&
             typeof issue.replacementValue === 'string' &&
             issue.replacementValue.trim().length > 0;
+          if (autoAcceptedIssueKeysRef.current.has(issueKey)) {
+            if (
+              shouldAutoApplyReplacement &&
+              !doesAutoReplacementMatchField(fieldName, issue.replacementValue ?? '')
+            ) {
+              autoAcceptedIssueKeysRef.current.delete(issueKey);
+            } else {
+              continue;
+            }
+          }
           if (shouldAutoApplyReplacement) {
             const applied = applyAutoReplacementToField(fieldName, issue.replacementValue ?? '');
             if (!applied) continue;
@@ -928,6 +963,7 @@ export function useProductFormValidator(scopeOverride?: string): UseProductFormV
   }, [
     applyAutoReplacementToField,
     buildIssueDecisionKey,
+    doesAutoReplacementMatchField,
     draft?.id,
     formatterEnabled,
     product?.id,

@@ -1,7 +1,7 @@
 import { motion } from 'framer-motion';
 import { ChevronsLeft } from 'lucide-react';
 import { useLocale, useTranslations } from 'next-intl';
-import { useCallback, useRef } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
 import {
   hasKangurLessonDocumentContent,
 } from '@/features/kangur/lesson-documents';
@@ -24,6 +24,7 @@ import {
 import { LESSON_COMPONENTS } from '@/features/kangur/lessons/lesson-ui-registry';
 import { useLessons } from './LessonsContext';
 import { useKangurPageContentEntry } from '@/features/kangur/ui/hooks/useKangurPageContent';
+import { useKangurLessonDocument } from '@/features/kangur/ui/hooks/useKangurLessons';
 import {
   LESSON_NAV_ANCHOR_ID,
   LESSONS_ACTIVE_LAYOUT_CLASSNAME,
@@ -37,7 +38,6 @@ import { normalizeSiteLocale } from '@/shared/lib/i18n/site-locale';
 type ActiveLessonRenderSnapshot = {
   activeLesson: NonNullable<ReturnType<typeof useLessons>['activeLesson']>;
   activeLessonId: string;
-  lessonDocuments: ReturnType<typeof useLessons>['lessonDocuments'];
   lessonAssignmentsByComponent: ReturnType<typeof useLessons>['lessonAssignmentsByComponent'];
   completedLessonAssignmentsByComponent: ReturnType<
     typeof useLessons
@@ -45,7 +45,6 @@ type ActiveLessonRenderSnapshot = {
   orderedLessons: ReturnType<typeof useLessons>['orderedLessons'];
   isSecretLessonActive: ReturnType<typeof useLessons>['isSecretLessonActive'];
   progress: ReturnType<typeof useLessons>['progress'];
-  isActiveLessonDocumentLoading: ReturnType<typeof useLessons>['isActiveLessonDocumentLoading'];
 };
 
 const STUDIQ_PRINT_BRAND_LABEL = 'StudiQ';
@@ -158,18 +157,28 @@ export function ActiveLessonView({
     activeLessonContentRef,
   } = lessons;
   const activeLesson = snapshot?.activeLesson ?? lessons.activeLesson;
-  const lessonDocuments = snapshot?.lessonDocuments ?? lessons.lessonDocuments;
   const lessonAssignmentsByComponent =
     snapshot?.lessonAssignmentsByComponent ?? lessons.lessonAssignmentsByComponent;
   const completedLessonAssignmentsByComponent =
     snapshot?.completedLessonAssignmentsByComponent ??
     lessons.completedLessonAssignmentsByComponent;
-  const isActiveLessonDocumentLoading =
-    snapshot?.isActiveLessonDocumentLoading ?? lessons.isActiveLessonDocumentLoading;
   const orderedLessons = snapshot?.orderedLessons ?? lessons.orderedLessons;
   const isSecretLessonActive =
     snapshot?.isSecretLessonActive ?? lessons.isSecretLessonActive;
   const progress = snapshot?.progress ?? lessons.progress;
+  const shouldLoadActiveLessonDocument = Boolean(activeLesson?.contentMode === 'document');
+  const activeLessonDocumentQuery = useKangurLessonDocument(activeLesson?.id ?? null, {
+    enabled: shouldLoadActiveLessonDocument,
+  });
+  const isActiveLessonDocumentLoading =
+    shouldLoadActiveLessonDocument &&
+    Boolean(
+      (activeLessonDocumentQuery.isPending ||
+        activeLessonDocumentQuery.isLoading ||
+        activeLessonDocumentQuery.isFetching ||
+        activeLessonDocumentQuery.isRefetching) &&
+        typeof activeLessonDocumentQuery.data === 'undefined'
+    );
 
   const { entry: activeLessonHeaderContent } = useKangurPageContentEntry('lessons-active-header');
   const { entry: activeLessonAssignmentContent } = useKangurPageContentEntry('lessons-active-assignment');
@@ -199,7 +208,9 @@ export function ActiveLessonView({
     fallbackCopy.emptyDocumentTitle;
   const emptyDocumentDescription =
     activeLessonEmptyDocumentContent?.summary?.trim() || fallbackCopy.emptyDocumentDescription;
-  const activeLessonDocument = activeLesson ? lessonDocuments[activeLesson.id] ?? null : null;
+  const activeLessonDocument = shouldLoadActiveLessonDocument
+    ? activeLessonDocumentQuery.data ?? null
+    : null;
   const hasActiveLessonDocContent = hasKangurLessonDocumentContent(activeLessonDocument);
   const activeLessonAssignment = activeLesson
     ? (lessonAssignmentsByComponent.get(activeLesson.componentId) ?? null)
@@ -403,6 +414,18 @@ export function ActiveLessonView({
       cleanup();
     }
   }, [activeLessonContentRef, printableLessonTitle]);
+
+  useEffect(() => {
+    if (!activeLesson || activeLesson.contentMode !== 'document') {
+      return;
+    }
+
+    setIsActiveLessonComponentReady(!isActiveLessonDocumentLoading);
+  }, [
+    activeLesson,
+    isActiveLessonDocumentLoading,
+    setIsActiveLessonComponentReady,
+  ]);
 
   if (!activeLesson) {
     return null;

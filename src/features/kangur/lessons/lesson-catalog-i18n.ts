@@ -1172,6 +1172,12 @@ export const getLocalizedKangurLessonTitle = (
   fallbackTitle: string
 ): string => resolveLessonOverride(componentId, locale, 'title', fallbackTitle);
 
+export const getLocalizedKangurLessonLabel = (
+  componentId: string,
+  locale: string | null | undefined,
+  fallbackLabel: string
+): string => resolveLessonOverride(componentId, locale, 'title', fallbackLabel);
+
 export const getLocalizedKangurLessonDescription = (
   componentId: string,
   locale: string | null | undefined,

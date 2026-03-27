@@ -1,5 +1,7 @@
 'use client';
 
+import { useLocale } from 'next-intl';
+
 import type {
   KangurLesson,
   KangurLessonDocument,
@@ -17,6 +19,7 @@ import { createListQueryV2, createSingleQueryV2, createUpdateMutationV2 } from '
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 import { createDefaultKangurLessons } from '@/features/kangur/settings';
 import { normalizeKangurLessonDocumentStore } from '@/features/kangur/lesson-documents';
+import { normalizeSiteLocale } from '@/shared/lib/i18n/site-locale';
 import {
   isRecoverableKangurClientFetchError,
   withKangurClientError,
@@ -73,15 +76,21 @@ const fetchLessons = async (options?: LessonsQueryOptions): Promise<KangurLesson
     }
   );
 
-const fetchLessonDocuments = async (): Promise<KangurLessonDocumentStore> =>
+const fetchLessonDocuments = async (locale?: string | null): Promise<KangurLessonDocumentStore> =>
   await withKangurClientError(
-    {
+    () => ({
       source: 'kangur.hooks.useKangurLessonDocuments',
       action: 'fetch-documents',
       description: 'Loads Kangur lesson documents from the API.',
-    },
+      context: {
+        locale: locale ? normalizeSiteLocale(locale) : null,
+      },
+    }),
     async () => {
-      const payload = await api.get<KangurLessonDocumentStore>('/api/kangur/lesson-documents');
+      const resolvedLocale = normalizeSiteLocale(locale);
+      const payload = await api.get<KangurLessonDocumentStore>(
+        `/api/kangur/lesson-documents?locale=${encodeURIComponent(resolvedLocale)}`
+      );
       const parsed = kangurLessonDocumentStoreSchema.parse(payload);
       return normalizeKangurLessonDocumentStore(parsed);
     },
@@ -91,7 +100,10 @@ const fetchLessonDocuments = async (): Promise<KangurLessonDocumentStore> =>
     }
   );
 
-const fetchLessonDocument = async (lessonId: string): Promise<KangurLessonDocument | null> =>
+const fetchLessonDocument = async (
+  lessonId: string,
+  locale?: string | null
+): Promise<KangurLessonDocument | null> =>
   await withKangurClientError(
     () => ({
       source: 'kangur.hooks.useKangurLessonDocument',
@@ -99,11 +111,13 @@ const fetchLessonDocument = async (lessonId: string): Promise<KangurLessonDocume
       description: 'Loads a single Kangur lesson document from the API.',
       context: {
         lessonId,
+        locale: locale ? normalizeSiteLocale(locale) : null,
       },
     }),
     async () => {
+      const resolvedLocale = normalizeSiteLocale(locale);
       const payload = await api.get<KangurLessonDocument | null>(
-        `/api/kangur/lesson-documents/${encodeURIComponent(lessonId)}`
+        `/api/kangur/lesson-documents/${encodeURIComponent(lessonId)}?locale=${encodeURIComponent(resolvedLocale)}`
       );
       return payload ? kangurLessonDocumentSchema.parse(payload) : null;
     },
@@ -148,9 +162,13 @@ export const useKangurLessonDocuments = (options?: { enabled?: boolean }): ListQ
   KangurLessonDocumentStore,
   KangurLessonDocumentStore
 > =>
-  createListQueryV2<KangurLessonDocumentStore, KangurLessonDocumentStore>({
-    queryKey: QUERY_KEYS.kangur.lessonDocuments(),
-    queryFn: fetchLessonDocuments,
+  {
+    const routeLocale = useLocale();
+    const resolvedLocale = normalizeSiteLocale(routeLocale);
+
+    return createListQueryV2<KangurLessonDocumentStore, KangurLessonDocumentStore>({
+    queryKey: [...QUERY_KEYS.kangur.lessonDocuments(), { locale: resolvedLocale }],
+    queryFn: async () => await fetchLessonDocuments(resolvedLocale),
     placeholderData: () => ({}),
     enabled: options?.enabled ?? true,
     staleTime: 1000 * 60 * 5,
@@ -166,16 +184,21 @@ export const useKangurLessonDocuments = (options?: { enabled?: boolean }): ListQ
       tags: ['kangur', 'lesson-documents'],
       description: 'Loads Kangur lesson documents from Mongo.',
     },
-  });
+    });
+  };
 
 export const useKangurLessonDocument = (
   lessonId: string | null,
   options?: { enabled?: boolean }
 ): SingleQuery<KangurLessonDocument | null> =>
-  createSingleQueryV2<KangurLessonDocument | null>({
-    queryKey: QUERY_KEYS.kangur.lessonDocument(lessonId),
+  {
+    const routeLocale = useLocale();
+    const resolvedLocale = normalizeSiteLocale(routeLocale);
+
+    return createSingleQueryV2<KangurLessonDocument | null>({
+    queryKey: QUERY_KEYS.kangur.lessonDocument(lessonId, resolvedLocale),
     queryFn: async (): Promise<KangurLessonDocument | null> =>
-      lessonId ? await fetchLessonDocument(lessonId) : null,
+      lessonId ? await fetchLessonDocument(lessonId, resolvedLocale) : null,
     enabled: Boolean(lessonId) && (options?.enabled ?? true),
     staleTime: 1000 * 60 * 5,
     refetchOnMount: false,
@@ -190,7 +213,8 @@ export const useKangurLessonDocument = (
       tags: ['kangur', 'lesson-document'],
       description: 'Loads a single Kangur lesson document from Mongo.',
     },
-  });
+    });
+  };
 
 const invalidateKangurLessons = (queryClient: { invalidateQueries: (args: { queryKey: readonly unknown[] }) => void }): void => {
   queryClient.invalidateQueries({ queryKey: QUERY_KEYS.kangur.all });
@@ -216,12 +240,17 @@ export const useUpdateKangurLessonDocuments = (): MutationResult<
   KangurLessonDocumentStore,
   KangurLessonDocumentStore
 > =>
-  createUpdateMutationV2<KangurLessonDocumentStore, KangurLessonDocumentStore>({
-    mutationKey: [...QUERY_KEYS.kangur.lessonDocuments(), 'update'],
+  {
+    const routeLocale = useLocale();
+    const resolvedLocale = normalizeSiteLocale(routeLocale);
+
+    return createUpdateMutationV2<KangurLessonDocumentStore, KangurLessonDocumentStore>({
+    mutationKey: [...QUERY_KEYS.kangur.lessonDocuments(), { locale: resolvedLocale }, 'update'],
     mutationFn: async (
       documents: KangurLessonDocumentStore
     ): Promise<KangurLessonDocumentStore> =>
       await api.post<KangurLessonDocumentStore>('/api/kangur/lesson-documents', {
+        locale: resolvedLocale,
         documents,
       }),
     invalidate: invalidateKangurLessons,
@@ -233,4 +262,5 @@ export const useUpdateKangurLessonDocuments = (): MutationResult<
       tags: ['kangur', 'lesson-documents', 'update'],
       description: 'Replaces Kangur lesson documents in Mongo.',
     },
-  });
+    });
+  };

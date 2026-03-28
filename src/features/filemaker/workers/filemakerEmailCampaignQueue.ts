@@ -5,8 +5,8 @@ import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
 import {
   processFilemakerEmailCampaignRun,
-  type FilemakerCampaignRunProcessProgress,
 } from '../server/campaign-runtime';
+import type { FilemakerCampaignRunProcessProgress } from '../server/campaign-runtime.helpers';
 
 import type { FilemakerEmailCampaignRunDispatchMode } from '../types';
 

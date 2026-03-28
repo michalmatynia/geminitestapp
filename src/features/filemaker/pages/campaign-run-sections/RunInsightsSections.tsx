@@ -2,10 +2,14 @@
 
 import { FormSection } from '@/shared/ui';
 import { formatTimestamp } from '../filemaker-page-utils';
+import type {
+  FilemakerEmailCampaignDelivery,
+} from '@/shared/contracts/filemaker';
+import type { FilemakerEmailCampaignRunMetrics } from '../../types/campaigns';
 
 interface RunMetricsSectionProps {
-  metrics: any;
-  deliveries: any[];
+  metrics: FilemakerEmailCampaignRunMetrics;
+  deliveries: FilemakerEmailCampaignDelivery[];
   queuedDeliveryCount: number;
 }
 

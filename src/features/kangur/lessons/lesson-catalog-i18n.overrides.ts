@@ -128,6 +128,10 @@ export const ENGLISH_LESSON_COPY_OVERRIDES: Partial<
     title: 'English: Subject-verb agreement',
     description: 'Subject-verb agreement in the Present Simple and the most common traps.',
   },
+  english_going_to: {
+    title: 'English: Going to',
+    description: 'Future plans with going to in positive sentences, negatives, and questions.',
+  },
   english_articles: {
     description: 'A, an, the, and the zero article in English.',
   },
@@ -421,6 +425,11 @@ export const GERMAN_LESSON_COPY_OVERRIDES: Partial<
   english_subject_verb_agreement: {
     title: 'Englisch: Subjekt-Verb-Kongruenz',
     description: 'Subjekt-Verb-Kongruenz im Present Simple und die haeufigsten Fallen.',
+  },
+  english_going_to: {
+    title: 'Englisch: Going to',
+    description:
+      'Zukuenftige Plaene mit going to in positiven Saetzen, Verneinungen und Fragen.',
   },
   english_articles: {
     description: 'A, an, the und der Nullartikel im Englischen.',

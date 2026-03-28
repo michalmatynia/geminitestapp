@@ -341,6 +341,19 @@ export const KANGUR_LAUNCHABLE_GAME_RUNTIME_SPECS = Object.freeze({
       shellTestId: 'kangur-english-subject-verb-agreement-quiz-top-section',
     },
   }),
+  english_going_to_quiz: createLaunchableGameRuntimeSpec({
+    kind: 'launchable_game_screen',
+    screen: 'english_going_to_quiz',
+    engineId: 'sentence-builder-engine',
+    rendererId: 'english_going_to_plan_parade_game',
+    finishMode: 'return_to_game_home',
+    finishLabelProp: 'finishLabel',
+    shell: {
+      accent: 'sky',
+      icon: '🧳',
+      shellTestId: 'kangur-english-going-to-quiz-top-section',
+    },
+  }),
   english_adjectives_quiz: createLaunchableGameRuntimeSpec({
     kind: 'launchable_game_screen',
     screen: 'english_adjectives_quiz',

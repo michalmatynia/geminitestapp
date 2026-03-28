@@ -144,7 +144,7 @@ export const isExpectedKangurClientError = (error: unknown): boolean =>
 export const withKangurClientError = async <T>(
   report: KangurClientErrorReport | ((error: unknown) => KangurClientErrorReport),
   task: () => Promise<T>,
-  options: KangurClientErrorHandlingOptions<T>
+  options?: Partial<KangurClientErrorHandlingOptions<T>>
 ): Promise<T> => {
   try {
     return await task();
@@ -152,7 +152,7 @@ export const withKangurClientError = async <T>(
     const shouldReport =
       !isRecoverableKangurClientFetchError(error) &&
       !isExpectedKangurClientError(error) &&
-      (options.shouldReport?.(error) ?? true);
+      (options?.shouldReport?.(error) ?? true);
     if (shouldReport) {
       void ErrorSystem.captureException(error);
     }
@@ -160,20 +160,20 @@ export const withKangurClientError = async <T>(
     if (shouldReport) {
       reportKangurClientError(error, resolvedReport);
     }
-    options.onError?.(error);
-    if (options.shouldRethrow?.(error)) {
+    options?.onError?.(error);
+    if (options?.shouldRethrow?.(error)) {
       throw error;
     }
-    return typeof options.fallback === 'function'
+    return typeof options?.fallback === 'function'
       ? (options.fallback as () => T)()
-      : options.fallback;
+      : (options?.fallback ?? (undefined as T)) as T;
   }
 };
 
 export const withKangurClientErrorSync = <T>(
   report: KangurClientErrorReport | ((error: unknown) => KangurClientErrorReport),
   task: () => T,
-  options: KangurClientErrorHandlingOptions<T>
+  options?: Partial<KangurClientErrorHandlingOptions<T>>
 ): T => {
   try {
     return task();
@@ -181,7 +181,7 @@ export const withKangurClientErrorSync = <T>(
     const shouldReport =
       !isRecoverableKangurClientFetchError(error) &&
       !isExpectedKangurClientError(error) &&
-      (options.shouldReport?.(error) ?? true);
+      (options?.shouldReport?.(error) ?? true);
     if (shouldReport) {
       void ErrorSystem.captureException(error);
     }
@@ -189,13 +189,13 @@ export const withKangurClientErrorSync = <T>(
     if (shouldReport) {
       reportKangurClientError(error, resolvedReport);
     }
-    options.onError?.(error);
-    if (options.shouldRethrow?.(error)) {
+    options?.onError?.(error);
+    if (options?.shouldRethrow?.(error)) {
       throw error;
     }
-    return typeof options.fallback === 'function'
+    return typeof options?.fallback === 'function'
       ? (options.fallback as () => T)()
-      : options.fallback;
+      : (options?.fallback ?? (undefined as T)) as T;
   }
 };
 

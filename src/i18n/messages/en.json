@@ -1171,6 +1171,7 @@
     "lessons": "Lessons",
     "duels": "Duels",
     "parent": "Parent",
+    "parentDashboard": "Parent dashboard",
     "languageSwitcher": {
       "triggerAriaLabel": "Current language: {language}. Open language menu.",
       "triggerTitle": "Language: {language}"

@@ -8,6 +8,7 @@ import {
   WEEKDAY_OPTIONS as FILEMAKER_WEEKDAY_OPTIONS,
 } from '../AdminFilemakerCampaignEditPage.utils';
 import type { FilemakerEmailCampaignLaunchMode } from '../../types';
+import type { FilemakerEmailCampaignRecurringRule } from '@/shared/contracts/filemaker';
 
 interface LaunchSchedulingSectionProps {
   launchMode: FilemakerEmailCampaignLaunchMode;
@@ -16,8 +17,8 @@ interface LaunchSchedulingSectionProps {
   setScheduledAt: (val: string | null) => void;
   isRecurring: boolean;
   setIsRecurring: (val: boolean) => void;
-  recurringFrequency: any;
-  setRecurringFrequency: (val: any) => void;
+  recurringFrequency: FilemakerEmailCampaignRecurringRule['frequency'];
+  setRecurringFrequency: (val: FilemakerEmailCampaignRecurringRule['frequency']) => void;
   recurringDayOfWeek: number | null;
   setRecurringDayOfWeek: (val: number | null) => void;
   recurringDayOfMonth: number | null;
@@ -79,7 +80,9 @@ export const LaunchSchedulingSection = ({
             <SelectSimple
               ariaLabel='Recurring frequency'
               value={recurringFrequency}
-              onValueChange={setRecurringFrequency}
+              onValueChange={(val) =>
+                setRecurringFrequency(val as FilemakerEmailCampaignRecurringRule['frequency'])
+              }
               options={FILEMAKER_RECURRING_FREQUENCY_OPTIONS}
             />
           </FormField>

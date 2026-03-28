@@ -1171,6 +1171,7 @@
     "lessons": "Lekcje",
     "duels": "Pojedynki",
     "parent": "Rodzic",
+    "parentDashboard": "Panel rodzica",
     "languageSwitcher": {
       "triggerAriaLabel": "Aktualny język: {language}. Otwórz menu zmiany języka.",
       "triggerTitle": "Język: {language}"

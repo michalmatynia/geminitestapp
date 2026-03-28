@@ -1,5 +1,3 @@
-import 'server-only';
-
 import { createHmac, timingSafeEqual } from 'crypto';
 
 type FilemakerCampaignUnsubscribeTokenPayload = {

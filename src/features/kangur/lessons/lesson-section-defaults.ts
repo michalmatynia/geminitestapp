@@ -279,6 +279,14 @@ const ENGLISH_SECTIONS: KangurLessonSection[] = [
         componentIds: ['english_subject_verb_agreement'],
       },
       {
+        id: 'english_grammar_going_to',
+        label: 'Going to',
+        typeLabel: 'Subsection',
+        sortOrder: 3500,
+        enabled: true,
+        componentIds: ['english_going_to'],
+      },
+      {
         id: 'english_grammar_articles',
         label: 'Articles',
         typeLabel: 'Subsection',

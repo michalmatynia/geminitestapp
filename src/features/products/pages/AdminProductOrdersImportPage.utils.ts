@@ -186,7 +186,7 @@ export const buildPreviousImportSnapshot = (
     sku: item.sku ?? null,
     name: item.name ?? null,
     quantity: item.quantity,
-    priceGross: item.priceGross ?? null,
+    unitPriceGross: item.unitPriceGross ?? null,
   })),
   fingerprint: order.fingerprint,
   syncedAt,

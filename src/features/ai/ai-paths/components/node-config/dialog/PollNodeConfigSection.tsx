@@ -81,7 +81,7 @@ export function PollNodeConfigSection(): React.JSX.Element | null {
     mode: pollConfig?.mode ?? 'job',
     dbQuery: {
       ...defaultQuery,
-      ...(pollConfig?.dbQuery ?? {}),
+      ...((pollConfig?.dbQuery as Partial<DbQueryConfig> | undefined) ?? {}),
     } as DbQueryConfig,
     successPath: pollConfig?.successPath ?? 'status',
     successOperator: pollConfig?.successOperator ?? 'equals',
@@ -89,8 +89,8 @@ export function PollNodeConfigSection(): React.JSX.Element | null {
     resultPath: pollConfig?.resultPath ?? 'result',
   };
   const queryConfig: DbQueryConfig = {
-    ...resolvedPollConfig.dbQuery!,
-    provider: resolvedPollConfig.dbQuery?.provider === 'mongodb' ? 'mongodb' : 'auto',
+    ...(resolvedPollConfig.dbQuery as DbQueryConfig),
+    provider: (resolvedPollConfig.dbQuery as DbQueryConfig)?.provider === 'mongodb' ? 'mongodb' : 'auto',
   };
   const collectionOption = DB_COLLECTION_OPTIONS.some(
     (option: LabeledOptionDto<string>) => option.value === queryConfig.collection

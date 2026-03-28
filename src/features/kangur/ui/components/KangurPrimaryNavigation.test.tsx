@@ -64,6 +64,7 @@ const { translationMessages } = vi.hoisted(() => ({
         lessons: 'Lekcje',
         duels: 'Pojedynki',
         parent: 'Rodzic',
+        parentDashboard: 'Panel rodzica',
         languageSwitcher: {
           triggerAriaLabel: 'Aktualny język: {language}. Otwórz menu zmiany języka.',
           triggerTitle: 'Język: {language}',
@@ -97,6 +98,7 @@ const { translationMessages } = vi.hoisted(() => ({
         lessons: 'Lessons',
         duels: 'Duels',
         parent: 'Parent',
+        parentDashboard: 'Parent dashboard',
         languageSwitcher: {
           triggerAriaLabel: 'Current language: {language}. Open language menu.',
           triggerTitle: 'Language: {language}',
@@ -129,6 +131,7 @@ const { translationMessages } = vi.hoisted(() => ({
         lessons: 'Lektionen',
         duels: 'Duelle',
         parent: 'Eltern',
+        parentDashboard: 'Elternbereich',
         languageSwitcher: {
           triggerAriaLabel: 'Aktuelle Sprache: {language}. Sprachmenü öffnen.',
           triggerTitle: 'Sprache: {language}',
@@ -162,6 +165,7 @@ const { translationMessages } = vi.hoisted(() => ({
         lessons: 'Уроки',
         duels: 'Дуелі',
         parent: 'Батьки',
+        parentDashboard: 'Панель батьків',
         languageSwitcher: {
           triggerAriaLabel: 'Поточна мова: {language}. Відкрити меню мов.',
           triggerTitle: 'Мова: {language}',

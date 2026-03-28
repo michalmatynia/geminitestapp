@@ -128,6 +128,10 @@ export const UKRAINIAN_LESSON_COPY_OVERRIDES: Partial<
     description:
       'Узгодження підмета й дієслова в Present Simple та найпоширеніші пастки.',
   },
+  english_going_to: {
+    title: 'Англійська: going to',
+    description: 'Майбутні плани з going to у ствердженнях, запереченнях і запитаннях.',
+  },
   english_articles: {
     title: 'Англійська: артиклі',
     description: 'A, an, the та нульовий артикль в англійській.',

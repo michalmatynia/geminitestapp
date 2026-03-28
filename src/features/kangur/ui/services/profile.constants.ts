@@ -42,6 +42,7 @@ export const ACTIVITY_PRIMARY_TO_OPERATION: Record<string, string> = {
   english_pronouns_warmup: 'english_parts_of_speech',
   english_sentence_structure_quiz: 'english_sentence_structure',
   english_subject_verb_agreement_quiz: 'english_subject_verb_agreement',
+  english_going_to_plan_parade: 'english_going_to',
   english_articles_drag_drop: 'english_articles',
   english_adjectives_scene_studio: 'english_adjectives',
   english_adverbs_action_studio: 'english_adverbs',

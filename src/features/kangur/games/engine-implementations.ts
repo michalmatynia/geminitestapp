@@ -123,6 +123,7 @@ export const KANGUR_GAME_ENGINE_IMPLEMENTATIONS: readonly KangurGameEngineImplem
     ownership: 'shared_runtime',
     runtimeIds: [
       'EnglishSubjectVerbAgreementGame',
+      'EnglishGoingToPlanParadeGame',
       'EnglishAdjectivesSceneGame',
       'EnglishComparativesSuperlativesCrownGame',
       'EnglishAdverbsActionStudioGame',

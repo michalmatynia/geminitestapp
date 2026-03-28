@@ -114,13 +114,13 @@ export function AdminKangurLessonsManagerPage({
   standalone?: boolean;
 } = {}): React.JSX.Element {
   const state = useAdminKangurLessonsManagerState();
+  const { toast } = useToast();
   const {
     contentLocale,
     setContentLocale,
     updateLessons,
     updateLessonDocuments,
     updateTemplates,
-    toast,
     isLoading,
     lessonTemplateMap,
     contentLocaleOptions,
@@ -362,8 +362,10 @@ export function AdminKangurLessonsManagerPage({
       async () => {
         const nextLessons = lessons.filter((l) => l.id !== lessonToDelete.id);
         await updateLessons.mutateAsync(nextLessons);
-        await removeKangurLessonDocument(lessonToDelete.id, contentLocale);
-        toast({ title: 'Lesson deleted', variant: 'success' });
+        // Clean up documents in current session
+        const nextDocuments = removeKangurLessonDocument(lessonDocuments, lessonToDelete.id);
+        await updateLessonDocuments.mutateAsync(nextDocuments);
+        toast('Lesson deleted', { variant: 'success' });
         setLessonToDelete(null);
       }
     );
@@ -400,9 +402,13 @@ export function AdminKangurLessonsManagerPage({
     await withKangurClientError(
       { source: 'kangur-admin', action: 'lesson-legacy-import', context: { lessonId: lesson.id } },
       async () => {
-        const nextDocument = await importLegacyKangurLessonDocument(lesson, contentLocale);
-        await updateLessonDocuments.mutateAsync({ [lesson.id]: nextDocument });
-        toast({ title: 'Legacy content imported', variant: 'success' });
+        const result = importLegacyKangurLessonDocument(lesson.componentId);
+        if (!result) {
+          toast('Legacy importer not found', { variant: 'error' });
+          return;
+        }
+        await updateLessonDocuments.mutateAsync({ [lesson.id]: result.document });
+        toast('Legacy content imported', { variant: 'success' });
       }
     );
   };
@@ -439,7 +445,7 @@ export function AdminKangurLessonsManagerPage({
       async () => {
         const nextLessons = appendMissingKangurLessonsByComponent(lessons);
         await updateLessons.mutateAsync(nextLessons);
-        toast({ title: 'Missing lessons added', variant: 'success' });
+        toast('Missing lessons added', { variant: 'success' });
       }
     );
   };
@@ -481,20 +487,20 @@ export function AdminKangurLessonsManagerPage({
             <div className='flex items-center gap-3'>
               <SelectSimple
                 value={contentLocale}
-                onChange={(val) => setContentLocale(val)}
+                onChange={(val) => setContentLocale(val as "en" | "pl" | "uk")}
                 options={contentLocaleOptions}
                 className='w-40'
               />
               <Badge variant='outline'>{contentLocaleLabel}</Badge>
               <SelectSimple
                 value={ageGroupFilter}
-                onChange={(val) => setAgeGroupFilter(val)}
-                options={[{ value: 'all', label: 'All Ages' }, ...KANGUR_AGE_GROUPS.map(g => ({ value: group.id, label: g.id }))]}
+                onChange={(val) => setAgeGroupFilter(val as "six_year_old" | "ten_year_old" | "grown_ups" | "all")}
+                options={[{ value: 'all', label: 'All Ages' }, ...KANGUR_AGE_GROUPS.map(g => ({ value: g.id, label: g.id }))]}
                 className='w-40'
               />
               <SelectSimple
                 value={authoringFilter}
-                onChange={(val) => setAuthoringFilter(val)}
+                onChange={(val) => setAuthoringFilter(val as any)}
                 options={[
                   { value: 'all', label: `All (${authoringFilterCounts.all})` },
                   { value: 'draft', label: `Draft (${authoringFilterCounts.draft})` },
@@ -566,7 +572,7 @@ export function AdminKangurLessonsManagerPage({
           <ConfirmModal
             isOpen={!!lessonToDelete}
             onClose={() => setLessonToDelete(null)}
-            onConfirm={handleDelete}
+            onConfirm={() => { void handleDelete(); }}
             title='Delete Lesson'
             message={`Are you sure you want to delete "${lessonToDelete?.title}"? This will also remove its content document.`}
             confirmLabel='Delete'
@@ -582,7 +588,7 @@ export function AdminKangurLessonsManagerPage({
               }}
               lesson={editingContentLesson}
               document={contentDraft}
-              onSave={handleSaveContent}
+              onSave={() => { void handleSaveContent(); }}
               isSaving={isSaving}
               locale={contentLocale}
             />
@@ -591,7 +597,7 @@ export function AdminKangurLessonsManagerPage({
           <LessonSvgQuickAddModal
             isOpen={!!svgModalLesson}
             onClose={() => setSvgModalLesson(null)}
-            onSave={handleSaveQuickSvg}
+            onSave={(markup) => { void handleSaveQuickSvg(markup); }}
             initialMarkup={svgModalInitialMarkup}
           />
         </KangurAdminContentShell>

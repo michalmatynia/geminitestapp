@@ -277,6 +277,7 @@
     "lessons": "Уроки",
     "duels": "Дуелі",
     "parent": "Батьки",
+    "parentDashboard": "Панель батьків",
     "languageSwitcher": {
       "triggerAriaLabel": "Поточна мова: {language}. Відкрити меню мов.",
       "triggerTitle": "Мова: {language}"

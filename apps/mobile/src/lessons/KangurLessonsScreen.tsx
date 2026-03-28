@@ -46,6 +46,7 @@ import { createKangurResultsHref } from '../scores/resultsHref';
 import {
   KangurMobileActionButton as ActionButton,
   KangurMobileCard as Card,
+  KangurMobileFilterChip as FilterChip,
   KangurMobileInsetPanel as InsetPanel,
   KangurMobileLinkButton as LinkButton,
   KangurMobilePendingActionButton,
@@ -935,48 +936,35 @@ export function KangurLessonsScreen(): React.JSX.Element {
                       </Text>
                     <View style={{ flexDirection: 'column', gap: 8 }}>
                       {selectedLessonBody.sections.map((section, index) => (
-                        <Pressable
+                        <FilterChip
                           key={section.id}
-                          accessibilityRole='button'
+                          horizontalPadding={12}
+                          idleTextColor='#475569'
+                          label={`${index + 1}. ${section.title}`}
                           onPress={() => {
                             setActiveSectionIndex(index);
                           }}
-                          style={{
-                            borderRadius: 999,
-                            borderWidth: 1,
-                            borderColor:
-                              index === activeSectionIndex ? '#1d4ed8' : '#e2e8f0',
-                            backgroundColor:
-                              index === activeSectionIndex ? '#eff6ff' : '#f8fafc',
-                            paddingHorizontal: 12,
-                            paddingVertical: 8,
-                          }}
-                        >
-                          <Text
-                            style={{
-                              color: index === activeSectionIndex ? '#1d4ed8' : '#475569',
-                              fontSize: 12,
-                              fontWeight: '700',
-                            }}
-                          >
-                            {index + 1}. {section.title}
-                          </Text>
-                        </Pressable>
+                          selected={index === activeSectionIndex}
+                          selectedBackgroundColor='#eff6ff'
+                          selectedBorderColor='#1d4ed8'
+                          selectedTextColor='#1d4ed8'
+                          style={
+                            index === activeSectionIndex
+                              ? undefined
+                              : {
+                                  backgroundColor: '#f8fafc',
+                                  borderColor: '#e2e8f0',
+                                }
+                          }
+                          textStyle={{ fontSize: 12 }}
+                          verticalPadding={8}
+                        />
                       ))}
                     </View>
                   </View>
 
                   {activeSection ? (
-                    <View
-                      style={{
-                        borderRadius: 20,
-                        borderWidth: 1,
-                        borderColor: '#e2e8f0',
-                        backgroundColor: '#f8fafc',
-                        padding: 14,
-                        gap: 10,
-                      }}
-                    >
+                    <InsetPanel gap={10}>
                       <View style={{ gap: 4 }}>
                         <Text style={{ color: '#64748b', fontSize: 12, fontWeight: '700' }}>
                           {copy({
@@ -995,14 +983,13 @@ export function KangurLessonsScreen(): React.JSX.Element {
                       </Text>
 
                       {activeSection.example ? (
-                        <View
+                        <InsetPanel
+                          gap={6}
+                          padding={12}
                           style={{
                             borderRadius: 18,
                             backgroundColor: '#fff7ed',
-                            borderWidth: 1,
                             borderColor: '#fdba74',
-                            padding: 12,
-                            gap: 6,
                           }}
                         >
                           <Text style={{ color: '#c2410c', fontSize: 12, fontWeight: '700' }}>
@@ -1014,7 +1001,7 @@ export function KangurLessonsScreen(): React.JSX.Element {
                           <Text style={{ color: '#7c2d12', fontSize: 13, lineHeight: 18 }}>
                             {activeSection.example.explanation}
                           </Text>
-                        </View>
+                        </InsetPanel>
                       ) : null}
 
                       {activeSection.reminders && activeSection.reminders.length > 0 ? (
@@ -1037,82 +1024,76 @@ export function KangurLessonsScreen(): React.JSX.Element {
                           gap: 10,
                         }}
                       >
-                        <Pressable
-                          accessibilityRole='button'
+                        <ActionButton
+                          centered
                           disabled={activeSectionIndex === 0}
+                          disabledOpacity={1}
+                          label={copy({
+                            de: 'Zurück',
+                            en: 'Previous',
+                            pl: 'Poprzednia',
+                          })}
                           onPress={() => {
                             setActiveSectionIndex((current) => Math.max(0, current - 1));
                           }}
                           style={{
-                            borderRadius: 999,
+                            flex: 1,
                             backgroundColor:
                               activeSectionIndex === 0 ? '#e2e8f0' : '#ffffff',
-                            borderWidth: 1,
                             borderColor: '#cbd5e1',
-                            paddingHorizontal: 14,
-                            paddingVertical: 10,
                           }}
-                        >
-                          <Text
-                            style={{
-                              color: activeSectionIndex === 0 ? '#94a3b8' : '#0f172a',
-                              fontWeight: '700',
-                            }}
-                          >
-                            {copy({
-                              de: 'Zurück',
-                              en: 'Previous',
-                              pl: 'Poprzednia',
-                            })}
-                          </Text>
-                        </Pressable>
+                          textStyle={{
+                            color: activeSectionIndex === 0 ? '#94a3b8' : '#0f172a',
+                          }}
+                          tone='secondary'
+                        />
 
-                        <Pressable
-                          accessibilityRole='button'
+                        <ActionButton
+                          centered
                           disabled={activeSectionIndex >= selectedLessonBody.sections.length - 1}
+                          disabledOpacity={1}
+                          label={copy({
+                            de: 'Weiter',
+                            en: 'Next',
+                            pl: 'Następna',
+                          })}
                           onPress={() => {
                             setActiveSectionIndex((current) =>
                               Math.min(selectedLessonBody.sections.length - 1, current + 1),
                             );
                           }}
                           style={{
-                            borderRadius: 999,
+                            flex: 1,
                             backgroundColor:
                               activeSectionIndex >= selectedLessonBody.sections.length - 1
                                 ? '#e2e8f0'
                                 : '#0f172a',
-                            paddingHorizontal: 14,
-                            paddingVertical: 10,
+                            borderWidth:
+                              activeSectionIndex >= selectedLessonBody.sections.length - 1 ? 1 : 0,
+                            borderColor:
+                              activeSectionIndex >= selectedLessonBody.sections.length - 1
+                                ? '#cbd5e1'
+                                : 'transparent',
                           }}
-                        >
-                          <Text
-                            style={{
-                              color:
-                                activeSectionIndex >= selectedLessonBody.sections.length - 1
-                                  ? '#94a3b8'
-                                  : '#ffffff',
-                              fontWeight: '700',
-                            }}
-                          >
-                            {copy({
-                              de: 'Weiter',
-                              en: 'Next',
-                              pl: 'Następna',
-                            })}
-                          </Text>
-                        </Pressable>
+                          textStyle={{
+                            color:
+                              activeSectionIndex >= selectedLessonBody.sections.length - 1
+                                ? '#94a3b8'
+                                : '#ffffff',
+                          }}
+                          tone='primary'
+                        />
                       </View>
-                    </View>
+                    </InsetPanel>
                   ) : null}
 
-                  <View
+                  <InsetPanel
+                    gap={6}
+                    padding={14}
                     style={{
                       borderRadius: 18,
                       backgroundColor: '#eef2ff',
-                      borderWidth: 1,
                       borderColor: '#c7d2fe',
-                      padding: 14,
-                      gap: 6,
                     }}
                   >
                     <Text style={{ color: '#4338ca', fontSize: 12, fontWeight: '700' }}>
@@ -1125,17 +1106,16 @@ export function KangurLessonsScreen(): React.JSX.Element {
                     <Text style={{ color: '#3730a3', fontSize: 14, lineHeight: 20 }}>
                       {selectedLessonBody.practiceNote}
                     </Text>
-                  </View>
+                  </InsetPanel>
 
                   {selectedLessonCheckpoint ? (
-                    <View
+                    <InsetPanel
+                      gap={10}
+                      padding={14}
                       style={{
                         borderRadius: 18,
                         backgroundColor: '#ecfeff',
-                        borderWidth: 1,
                         borderColor: '#a5f3fc',
-                        padding: 14,
-                        gap: 10,
                       }}
                     >
                       <View
@@ -1225,8 +1205,21 @@ export function KangurLessonsScreen(): React.JSX.Element {
                         </View>
                       ) : null}
 
-                      <Pressable
-                        accessibilityRole='button'
+                      <ActionButton
+                        centered
+                        label={
+                          selectedLessonCheckpoint.countsAsLessonCompletion
+                            ? copy({
+                                de: 'Lektion abschliessen',
+                                en: 'Complete lesson',
+                                pl: 'Ukończ lekcję',
+                              })
+                            : copy({
+                                de: 'Checkpoint speichern',
+                                en: 'Save checkpoint',
+                                pl: 'Zapisz checkpoint',
+                              })
+                        }
                         onPress={() => {
                           if (!selectedLesson) {
                             return;
@@ -1240,43 +1233,15 @@ export function KangurLessonsScreen(): React.JSX.Element {
                           });
                           setSavedLessonCheckpoint(savedCheckpoint);
                         }}
-                        style={{
-                          alignSelf: 'stretch',
-                          width: '100%',
-                          borderRadius: 999,
-                          backgroundColor: '#0f766e',
-                          paddingHorizontal: 14,
-                          paddingVertical: 10,
-                        }}
-                      >
-                        <Text style={{ color: '#ffffff', fontWeight: '700' }}>
-                          {selectedLessonCheckpoint.countsAsLessonCompletion
-                            ? copy({
-                                de: 'Lektion abschliessen',
-                                en: 'Complete lesson',
-                                pl: 'Ukończ lekcję',
-                              })
-                            : copy({
-                                de: 'Checkpoint speichern',
-                                en: 'Save checkpoint',
-                                pl: 'Zapisz checkpoint',
-                              })}
-                        </Text>
-                      </Pressable>
-                    </View>
+                        stretch
+                        style={{ backgroundColor: '#0f766e' }}
+                        tone='primary'
+                      />
+                    </InsetPanel>
                   ) : null}
                 </View>
               ) : (
-                <View
-                  style={{
-                    borderRadius: 18,
-                    borderWidth: 1,
-                    borderColor: '#e2e8f0',
-                    backgroundColor: '#f8fafc',
-                    padding: 14,
-                    gap: 10,
-                  }}
-                >
+                <InsetPanel gap={10} padding={14} style={{ borderRadius: 18 }}>
                   <Text style={{ color: '#64748b', fontSize: 12, fontWeight: '700' }}>
                     {copy({
                       de: 'Lektionsbrief',
@@ -1358,7 +1323,7 @@ export function KangurLessonsScreen(): React.JSX.Element {
                       })}
                     </Text>
                   )}
-                </View>
+                </InsetPanel>
               )}
               <ActionButton
                 label={copy({
@@ -2052,15 +2017,14 @@ export function KangurLessonsScreen(): React.JSX.Element {
                   };
 
                   return (
-                    <View
+                    <InsetPanel
                       key={item.lesson.id}
+                      gap={10}
+                      padding={16}
                       style={{
                         borderRadius: 22,
-                        borderWidth: 1,
                         borderColor: item.isFocused ? '#1d4ed8' : '#e2e8f0',
                         backgroundColor: item.isFocused ? '#eff6ff' : '#f8fafc',
-                        padding: 16,
-                        gap: 10,
                       }}
                     >
                       <Link href={href} asChild>
@@ -2097,14 +2061,13 @@ export function KangurLessonsScreen(): React.JSX.Element {
                           </Text>
 
                           {item.checkpointSummary ? (
-                            <View
+                            <InsetPanel
+                              gap={6}
+                              padding={12}
                               style={{
                                 borderRadius: 18,
-                                borderWidth: 1,
                                 borderColor: '#bfdbfe',
                                 backgroundColor: '#eff6ff',
-                                padding: 12,
-                                gap: 6,
                               }}
                             >
                               <Text
@@ -2148,36 +2111,26 @@ export function KangurLessonsScreen(): React.JSX.Element {
                                   pl: `Wynik ${item.checkpointSummary.lastScorePercent}% • najlepszy ${item.checkpointSummary.bestScorePercent}%`,
                                 })}
                               </Text>
-                            </View>
+                            </InsetPanel>
                           ) : null}
                         </Pressable>
                       </Link>
 
                       <View style={{ flexDirection: 'column', gap: 8 }}>
-                        <Link href={href} asChild>
-                          <Pressable
-                            accessibilityRole='button'
-                            onPress={() => {
-                              setDismissedFocusToken(null);
-                            }}
-                            style={{
-                              alignSelf: 'stretch',
-                              width: '100%',
-                              borderRadius: 999,
-                              backgroundColor: '#0f172a',
-                              paddingHorizontal: 14,
-                              paddingVertical: 10,
-                            }}
-                          >
-                            <Text style={{ color: '#ffffff', fontWeight: '700' }}>
-                              {`${copy({
-                                de: 'Lektion öffnen',
-                                en: 'Open lesson',
-                                pl: 'Otwórz lekcję',
-                              })}: ${item.lesson.title}`}
-                            </Text>
-                          </Pressable>
-                        </Link>
+                        <LinkButton
+                          href={href}
+                          label={`${copy({
+                            de: 'Lektion öffnen',
+                            en: 'Open lesson',
+                            pl: 'Otwórz lekcję',
+                          })}: ${item.lesson.title}`}
+                          onPress={() => {
+                            setDismissedFocusToken(null);
+                          }}
+                          stretch
+                          textStyle={{ textAlign: 'left' }}
+                          tone='primary'
+                        />
                         {renderLessonPracticeLink({
                           href: item.practiceHref,
                           label: `${copy({
@@ -2188,7 +2141,7 @@ export function KangurLessonsScreen(): React.JSX.Element {
                           fullWidth: true,
                         })}
                       </View>
-                    </View>
+                    </InsetPanel>
                   );
                 })}
               </View>

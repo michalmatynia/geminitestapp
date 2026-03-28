@@ -25,10 +25,10 @@ import {
 
 export function useProductValidationDecisions(
   validationInstanceScope: ProductValidationInstanceScope,
-  instanceDenyBehavior: any,
+  instanceDenyBehavior: ProductValidationDenyBehavior,
   patterns: ProductValidationPattern[],
-  productId: string | null,
-  draftId: string | null
+  _productId: string | null,
+  _draftId: string | null
 ) {
   const [validationDenyBehaviorOverrides, setValidationDenyBehaviorOverrides] = useState<
     Partial<Record<ProductValidationInstanceScope, ProductValidationDenyBehavior>>

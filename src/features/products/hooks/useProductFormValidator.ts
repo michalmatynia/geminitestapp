@@ -266,7 +266,15 @@ export function useProductFormValidator(
     autoAcceptTimerRef.current = setTimeout(() => {
       autoAcceptTimerRef.current = null;
       const nextVisibleIssueKeys = new Set<string>();
-      const pendingAccepts: any[] = [];
+      interface PendingAccept {
+        fieldName: string;
+        patternId: string;
+        postAcceptBehavior: string | null | undefined;
+        message: string;
+        replacementValue: string | null | undefined;
+        issueKey: string;
+      }
+      const pendingAccepts: PendingAccept[] = [];
       for (const [fieldName, issues] of Object.entries(visibleFieldIssues)) {
         for (const issue of issues) {
           const issueKey = buildIssueDecisionKey(fieldName, issue.patternId);
@@ -281,7 +289,7 @@ export function useProductFormValidator(
       }
       if (pendingAccepts.length > 0) {
         setAcceptedIssueKeys((prev) => { const next = new Set(prev); for (const a of pendingAccepts) if (a.postAcceptBehavior === 'stop_after_accept') next.add(a.issueKey); return next; });
-        void api.post('/api/v2/products/validator-decisions/batch', { decisions: pendingAccepts.map((a) => ({ action: 'accept', productId: product?.id ?? null, draftId: draft?.id ?? null, patternId: a.patternId, fieldName: a.fieldName, denyBehavior: null, message: a.message ?? null, replacementValue: a.replacementValue ?? null, sessionId: validationSessionId || null })) }, { logError: false }).catch(err => logClientError(err));
+        void api.post('/api/v2/products/validator-decisions/batch', { decisions: pendingAccepts.map((a: PendingAccept) => ({ action: 'accept', productId: product?.id ?? null, draftId: draft?.id ?? null, patternId: a.patternId, fieldName: a.fieldName, denyBehavior: null, message: a.message ?? null, replacementValue: a.replacementValue ?? null, sessionId: validationSessionId || null })) }, { logError: false }).catch(err => logClientError(err));
       }
       const staleKeys: string[] = [];
       for (const k of autoAcceptedIssueKeysRef.current) if (!nextVisibleIssueKeys.has(k)) staleKeys.push(k);

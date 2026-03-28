@@ -113,6 +113,7 @@ type KangurMobileLinkButtonProps = {
   href: Href;
   label: string;
   minHeight?: number;
+  onPress?: () => void;
   stretch?: boolean;
   style?: StyleProp<ViewStyle>;
   textStyle?: StyleProp<TextStyle>;
@@ -494,6 +495,7 @@ export function KangurMobileLinkButton(props: KangurMobileLinkButtonProps): Reac
     centered = false,
     label,
     minHeight,
+    onPress,
     stretch = false,
     style,
     textStyle,
@@ -507,6 +509,7 @@ export function KangurMobileLinkButton(props: KangurMobileLinkButtonProps): Reac
         accessibilityLabel={accessibilityLabel}
         accessibilityHint={accessibilityHint}
         accessibilityRole='button'
+        onPress={onPress}
         style={[
           getButtonContainerStyle({
             borderRadius,

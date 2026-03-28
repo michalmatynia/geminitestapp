@@ -8,7 +8,7 @@ import {
 import { DEFAULT_KANGUR_SUBJECT } from '@/features/kangur/lessons/lesson-catalog';
 import { kangurSubjectFocusSchema } from '@kangur/contracts';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
-import { parseJsonBody } from '@/shared/lib/api/parse-json';
+import { validationError } from '@/shared/errors/app-error';
 
 const DEFAULT_SUBJECT = DEFAULT_KANGUR_SUBJECT;
 
@@ -26,15 +26,17 @@ export async function getKangurSubjectFocusHandler(
 
 export async function patchKangurSubjectFocusHandler(
   req: NextRequest,
-  _ctx: ApiHandlerContext
+  ctx: ApiHandlerContext
 ): Promise<Response> {
   const actor = await resolveKangurActor(req);
   const activeLearner = requireActiveLearner(actor);
-  const parsed = await parseJsonBody(req, kangurSubjectFocusSchema, {
-    logPrefix: 'kangur.subject-focus.PATCH',
-  });
-  if (!parsed.ok) return parsed.response;
-  const payload = parsed.data;
+  const parsedPayload = kangurSubjectFocusSchema.safeParse(ctx.body);
+  if (!parsedPayload.success) {
+    throw validationError('Invalid payload', {
+      issues: parsedPayload.error.flatten(),
+    });
+  }
+  const payload = parsedPayload.data;
   const repository = await getKangurSubjectFocusRepository();
   const subject = await repository.saveSubjectFocus(activeLearner.id, payload.subject);
 

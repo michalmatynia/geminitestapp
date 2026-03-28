@@ -159,6 +159,15 @@ const KANGUR_OPERATION_FALLBACKS: Record<string, KangurOperationFallbackInfo> = 
       uk: 'Узгодження підмета і присудка',
     },
   },
+  english_going_to: {
+    emoji: '🧳',
+    labels: {
+      pl: 'Going to',
+      en: 'Going to',
+      de: 'Going to',
+      uk: 'Going to',
+    },
+  },
   english_articles: {
     emoji: '📰',
     labels: { pl: 'Przedimki', en: 'Articles', de: 'Artikel', uk: 'Артиклі' },

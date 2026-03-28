@@ -82,6 +82,7 @@ export const KANGUR_TEN_YEAR_OLD_GAME_LIBRARY_LESSON_COMPONENT_IDS = [
   'logical_classification',
   'logical_analogies',
   'english_sentence_structure',
+  'english_going_to',
   'english_parts_of_speech',
 ] as const satisfies readonly KangurLessonComponentId[];
 
@@ -112,6 +113,7 @@ export const KANGUR_LAUNCHABLE_GAME_LIBRARY_LESSON_COMPONENT_IDS = [
   'english_comparatives_superlatives',
   'english_adverbs',
   'english_adverbs_frequency',
+  'english_going_to',
   'english_articles',
   'english_parts_of_speech',
   'english_prepositions_time_place',

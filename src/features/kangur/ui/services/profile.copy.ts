@@ -18,6 +18,7 @@ export type KangurLearnerProfileFallbackCopy = {
       title: string;
     };
     dailyGoal: {
+      description: (remainingGames: number) => string;
       descriptionMultiple: (remainingGames: number, todayXpEarned: number) => string;
       descriptionSingle: (todayXpEarned: number) => string;
       title: string;
@@ -37,6 +38,10 @@ export type KangurLearnerProfileFallbackCopy = {
     };
     streakBootstrap: {
       description: string;
+      title: string;
+    };
+    streakPreservation: {
+      description: (streak: number) => string;
       title: string;
     };
     strengthenLessonMastery: {
@@ -68,6 +73,8 @@ export const getKangurLearnerProfileFallbackCopy = (
           title: 'Підкрути сьогоднішні XP',
         },
         dailyGoal: {
+          description: (remainingGames) =>
+            `До щоденної цілі бракує ще ${remainingGames} ігор. Проведи коротку сесію навчання зараз.`,
           descriptionMultiple: (remainingGames, todayXpEarned) =>
             `До щоденної цілі бракує ще ${remainingGames} ігор. Сьогодні ти вже маєш +${todayXpEarned} XP.`,
           descriptionSingle: (todayXpEarned) =>
@@ -93,6 +100,11 @@ export const getKangurLearnerProfileFallbackCopy = (
         streakBootstrap: {
           description: 'Зіграй також завтра, щоб запустити серію послідовних днів.',
           title: 'Побудуй серію',
+        },
+        streakPreservation: {
+          description: (streak) =>
+            `Сьогодні твій ${streak}-й день серії! Зіграй хоча б одну гру зараз, щоб зберегти цей результат.`,
+          title: 'Збережи серію',
         },
         strengthenLessonMastery: {
           description: (masteryPercent) =>
@@ -120,6 +132,8 @@ export const getKangurLearnerProfileFallbackCopy = (
           title: 'Drehe die heutigen XP hoch',
         },
         dailyGoal: {
+          description: (remainingGames) =>
+            `Es fehlen noch ${remainingGames} Spiele bis zum Tagesziel. Mache jetzt eine kurze Lerneinheit.`,
           descriptionMultiple: (remainingGames, todayXpEarned) =>
             `Es fehlen noch ${remainingGames} Spiele bis zum Tagesziel. Heute hast du bereits +${todayXpEarned} XP gesammelt.`,
           descriptionSingle: (todayXpEarned) =>
@@ -148,6 +162,11 @@ export const getKangurLearnerProfileFallbackCopy = (
             'Spiele auch morgen, um eine Serie aufeinanderfolgender Tage zu starten.',
           title: 'Baue eine Serie auf',
         },
+        streakPreservation: {
+          description: (streak) =>
+            `Heute ist dein ${streak}. Tag in Folge! Spiele jetzt mindestens ein Spiel, um dieses Ergebnis zu halten.`,
+          title: 'Serie halten',
+        },
         strengthenLessonMastery: {
           description: (masteryPercent) =>
             `Die aktuelle Beherrschung liegt bei ${masteryPercent} %. Eine Wiederholung dieser Lektion stabilisiert das Ergebnis.`,
@@ -174,6 +193,8 @@ export const getKangurLearnerProfileFallbackCopy = (
           title: 'Boost today\'s XP',
         },
         dailyGoal: {
+          description: (remainingGames) =>
+            `${remainingGames} games are left to reach the daily goal. Do a quick study session now.`,
           descriptionMultiple: (remainingGames, todayXpEarned) =>
             `${remainingGames} games are left to reach the daily goal. Today you already earned +${todayXpEarned} XP.`,
           descriptionSingle: (todayXpEarned) =>
@@ -200,6 +221,11 @@ export const getKangurLearnerProfileFallbackCopy = (
           description: 'Play again tomorrow to start a streak of consecutive days.',
           title: 'Build a streak',
         },
+        streakPreservation: {
+          description: (streak) =>
+            `Today is your day ${streak} in a row! Play at least one game now to keep this result.`,
+          title: 'Keep the streak',
+        },
         strengthenLessonMastery: {
           description: (masteryPercent) =>
             `Current mastery is ${masteryPercent}%. One review of this lesson will improve stability.`,
@@ -225,8 +251,10 @@ export const getKangurLearnerProfileFallbackCopy = (
         title: 'Podkręć dzisiejsze XP',
       },
       dailyGoal: {
+        description: (remainingGames) =>
+          `Brakuje ${remainingGames} gier do dziennego celu. Wykonaj krótką sesję nauki teraz.`,
         descriptionMultiple: (remainingGames, todayXpEarned) =>
-          `Brakuje ${remainingGames} gier do dziennego celu. Dziś masz już +${todayXpEarned} XP.`,
+          `Brakuje ${remainingGames} gier do dziennego celu. Dziś masz вже +${todayXpEarned} XP.`,
         descriptionSingle: (todayXpEarned) =>
           `Brakuje tylko 1 gry do dziennego celu. Dziś masz już +${todayXpEarned} XP.`,
         title: 'Domknij dzienny cel',
@@ -250,6 +278,11 @@ export const getKangurLearnerProfileFallbackCopy = (
       streakBootstrap: {
         description: 'Zagraj także jutro, aby uruchomić serię kolejnych dni.',
         title: 'Zbuduj serię',
+      },
+      streakPreservation: {
+        description: (streak) =>
+          `Dziś twój ${streak} dzień z rzędu! Zagraj chociaż jedną grę teraz, aby zachować ten wynik.`,
+        title: 'Utrzymaj serię',
       },
       strengthenLessonMastery: {
         description: (masteryPercent) =>

@@ -1,17 +1,17 @@
 import {
   completeKangurPracticeSession,
   generateKangurLogicPracticeQuestions,
-  generateTrainingQuestions,
-  getLocalizedKangurMetadataBadgeName,
   getKangurPracticeOperationConfig,
   isKangurLogicPracticeOperation,
   resolveKangurPracticeOperation,
-  type KangurOperation,
   type KangurPracticeCompletionResult,
   type KangurPracticeOperation,
   type KangurPracticeQuestion,
-  type KangurQuestionChoice,
-} from '@kangur/core';
+} from '@kangur/core/practice';
+import { generateTrainingQuestions } from '@kangur/core/math/questions';
+import { getLocalizedKangurMetadataBadgeName } from '@kangur/core/progress-i18n';
+import type { KangurOperation } from '@kangur/core/math/types';
+import type { KangurQuestionChoice } from '@kangur/contracts/kangur';
 import { useQueryClient } from '@tanstack/react-query';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Pressable, Text, View } from 'react-native';

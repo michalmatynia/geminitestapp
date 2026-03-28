@@ -244,7 +244,14 @@ describe('useProductFormValidator latest SKU source', () => {
 
     const config = createListQueryV2Mock.mock.calls[0]?.[0] as {
       queryFn: () => Promise<unknown>;
+      meta: {
+        source: string;
+        resource: string;
+      };
     };
+
+    expect(config.meta.source).toBe('products.hooks.useProductFormValidator');
+    expect(config.meta.resource).toBe('products.validator.latest-product-source');
 
     await config.queryFn();
 

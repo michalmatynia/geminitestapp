@@ -655,6 +655,18 @@ describe('KangurLanguageSwitcher', () => {
     await expectLocaleReplace('/de/kangur/duels', 'Duels');
   });
 
+  it('falls back to the Kangur home path when currentPage is missing', async () => {
+    pathnameMock.mockReturnValue(null);
+
+    render(<KangurLanguageSwitcher basePath='/kangur' currentPage={undefined} />);
+
+    openLanguageMenu();
+    fireEvent.click(await screen.findByTestId('kangur-language-switcher-option-en'));
+
+    expect(locationAssignSpy).not.toHaveBeenCalled();
+    await expectLocaleReplace('/en/kangur', undefined);
+  });
+
   it('canonicalizes /kangur alias lesson routes when Kangur owns the public frontend', async () => {
     frontendPublicOwnerMock.mockReturnValue({ publicOwner: 'kangur' });
     pathnameMock.mockReturnValue('/kangur/lessons');

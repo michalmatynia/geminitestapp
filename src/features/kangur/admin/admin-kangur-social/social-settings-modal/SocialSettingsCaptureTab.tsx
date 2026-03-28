@@ -1,10 +1,12 @@
 'use client';
 
 import React from 'react';
-import { Badge, Button, FormField, Input, SelectSimple } from '@/features/kangur/shared/ui';
+import { Button, FormField, Input, SelectSimple } from '@/features/kangur/shared/ui';
 import { KangurAdminCard } from '../../components/KangurAdminCard';
 import { KANGUR_SOCIAL_CAPTURE_PRESETS } from '@/features/kangur/shared/social-capture-presets';
 import { cn } from '@/shared/utils';
+import type { KangurSocialImageAddonsBatchResult } from '@/shared/contracts/kangur-social-image-addons';
+import type { AddonFormState } from '../AdminKangurSocialPage.Constants';
 
 export function SocialSettingsCaptureTab({
   addonForm,
@@ -24,21 +26,21 @@ export function SocialSettingsCaptureTab({
   batchCaptureResult,
   batchCaptureLimitSummary,
 }: {
-  addonForm: { title: string; prompt: string };
-  setAddonForm: React.Dispatch<React.SetStateAction<{ title: string; prompt: string }>>;
+  addonForm: AddonFormState;
+  setAddonForm: React.Dispatch<React.SetStateAction<AddonFormState>>;
   handleCreateAddon: () => void;
   createAddonMutationPending: boolean;
   batchCaptureBaseUrl: string;
   setBatchCaptureBaseUrl: (val: string) => void;
-  batchCapturePresetLimit: number;
-  setBatchCapturePresetLimit: (val: number) => void;
+  batchCapturePresetLimit: number | null;
+  setBatchCapturePresetLimit: (val: string) => void;
   batchCapturePresetIds: string[];
   handleToggleCapturePreset: (id: string) => void;
   selectAllCapturePresets: () => void;
   clearCapturePresets: () => void;
   handleBatchCapture: () => void;
   batchCaptureMutationPending: boolean;
-  batchCaptureResult: any;
+  batchCaptureResult: KangurSocialImageAddonsBatchResult | null;
   batchCaptureLimitSummary: string;
 }) {
   return (
@@ -57,13 +59,40 @@ export function SocialSettingsCaptureTab({
               aria-label='Add-on title'
             />
             <Input
-              placeholder='Add-on prompt'
-              value={addonForm.prompt}
-              onChange={(e) => setAddonForm((prev) => ({ ...prev, prompt: e.target.value }))}
-              aria-label='Add-on prompt'
+              type='url'
+              placeholder='Source URL'
+              value={addonForm.sourceUrl}
+              onChange={(e) => setAddonForm((prev) => ({ ...prev, sourceUrl: e.target.value }))}
+              aria-label='Source URL'
+            />
+            <Input
+              placeholder='Optional selector'
+              value={addonForm.selector}
+              onChange={(e) => setAddonForm((prev) => ({ ...prev, selector: e.target.value }))}
+              aria-label='Optional selector'
+            />
+            <Input
+              type='number'
+              min='0'
+              step='100'
+              placeholder='Wait before capture (ms)'
+              value={addonForm.waitForMs}
+              onChange={(e) => setAddonForm((prev) => ({ ...prev, waitForMs: e.target.value }))}
+              aria-label='Wait before capture (ms)'
+            />
+            <Input
+              placeholder='Optional description'
+              value={addonForm.description}
+              onChange={(e) => setAddonForm((prev) => ({ ...prev, description: e.target.value }))}
+              aria-label='Optional description'
             />
           </div>
-          <Button type='button' size='sm' onClick={handleCreateAddon} disabled={!addonForm.title || !addonForm.prompt || createAddonMutationPending}>
+          <Button
+            type='button'
+            size='sm'
+            onClick={handleCreateAddon}
+            disabled={!addonForm.title.trim() || !addonForm.sourceUrl.trim() || createAddonMutationPending}
+          >
             {createAddonMutationPending ? 'Creating...' : 'Create single add-on'}
           </Button>
         </div>
@@ -87,9 +116,12 @@ export function SocialSettingsCaptureTab({
             </FormField>
             <FormField label='Capture limit' description='Max concurrent captures.'>
               <SelectSimple
-                value={String(batchCapturePresetLimit)}
-                onValueChange={(val) => setBatchCapturePresetLimit(Number(val))}
-                options={['5', '10', '20', '50'].map((v) => ({ value: v, label: v }))}
+                value={batchCapturePresetLimit == null ? '' : String(batchCapturePresetLimit)}
+                onValueChange={setBatchCapturePresetLimit}
+                options={[
+                  { value: '', label: 'No limit' },
+                  ...['5', '10', '20', '50'].map((v) => ({ value: v, label: v })),
+                ]}
                 size='sm'
               />
             </FormField>
@@ -126,9 +158,10 @@ export function SocialSettingsCaptureTab({
           </div>
           {batchCaptureResult && (
             <div className='rounded-xl border border-border/60 bg-background/40 p-3 text-xs'>
-              <div className='font-semibold text-foreground'>Last batch: {batchCaptureResult.batchId}</div>
+              <div className='font-semibold text-foreground'>Last batch: {batchCaptureResult.runId}</div>
               <div className='mt-1 text-muted-foreground'>
-                Completed: {batchCaptureResult.completedCount} • Failed: {batchCaptureResult.failedCount} • Total: {batchCaptureResult.totalCount}
+                Completed: {batchCaptureResult.addons.length} • Failed: {batchCaptureResult.failures.length} • Total:{' '}
+                {batchCaptureResult.addons.length + batchCaptureResult.failures.length}
               </div>
             </div>
           )}

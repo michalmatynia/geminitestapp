@@ -1,6 +1,5 @@
 import type {
   KangurDuelDifficulty,
-  KangurDuelLobbyChatMessage,
   KangurDuelMode,
   KangurDuelOperation,
   KangurDuelPlayer,
@@ -9,7 +8,8 @@ import type {
   KangurDuelSeries,
   KangurDuelSession,
   KangurDuelStatus,
-} from '@kangur/contracts';
+} from '@kangur/contracts/kangur-duels';
+import type { KangurDuelLobbyChatMessage } from '@kangur/contracts/kangur-duels-chat';
 import type { Href } from 'expo-router';
 
 import type {

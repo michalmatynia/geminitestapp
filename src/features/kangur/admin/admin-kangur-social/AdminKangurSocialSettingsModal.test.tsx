@@ -243,13 +243,10 @@ describe('AdminKangurSocialSettingsModal', () => {
 
     fireEvent.click(screen.getByRole('tab', { name: 'Capture' }));
     expect(screen.getByText('Capture single add-on')).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Capture with Playwright' })).toBeInTheDocument();
-    expect(screen.getByText('Batch capture presets')).toBeInTheDocument();
-    expect(screen.getByPlaceholderText('All selected presets')).toHaveValue(2);
-    expect(
-      screen.getByText('Playwright will capture up to 1 of 1 selected presets in each run.')
-    ).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Capture presets' })).toBeInTheDocument();
+    expect(screen.getByLabelText('Source URL')).toBeInTheDocument();
+    expect(screen.getByText('Batch capture preview')).toBeInTheDocument();
+    expect(screen.getByText('Presets selected: 1 (Limit: 2)')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Launch batch capture' })).toBeInTheDocument();
   });
 
   it('blocks draft generation when no social or AI Brain post model is configured', () => {
@@ -300,6 +297,34 @@ describe('AdminKangurSocialSettingsModal', () => {
     expect(
       screen.getByText(
         'Choose a StudiQ Social post model in Settings or assign AI Brain routing in /admin/brain?tab=routing.'
+      )
+    ).toBeInTheDocument();
+  });
+
+  it('renders publishing settings when no LinkedIn integration exists', () => {
+    useSocialPostContextMock.mockReturnValue(
+      buildSocialPostContextState({
+        linkedinConnectionId: null,
+        linkedinConnections: [],
+        linkedinIntegration: null,
+      })
+    );
+
+    render(
+      <AdminKangurSocialSettingsModal
+        open={true}
+        onClose={vi.fn()}
+        onSave={vi.fn()}
+        isSaving={false}
+        hasUnsavedChanges={false}
+      />
+    );
+
+    fireEvent.click(screen.getByRole('tab', { name: 'Publishing' }));
+
+    expect(
+      screen.getByText(
+        'Create the LinkedIn integration in Admin > Integrations to enable publishing.'
       )
     ).toBeInTheDocument();
   });
@@ -354,11 +379,25 @@ function buildSocialPostContextState(
       effectiveModelId: 'gpt-4.1-mini',
       models: ['gpt-4.1-mini', 'gpt-4.1'],
       isLoading: false,
+      sourceWarnings: [],
+      assignment: {
+        enabled: true,
+        provider: 'model',
+        modelId: 'gpt-4.1-mini',
+      },
+      refresh: vi.fn(),
     },
     visionModelOptions: {
       effectiveModelId: 'gpt-4.1',
       models: ['gpt-4.1', 'gpt-4o'],
       isLoading: false,
+      sourceWarnings: [],
+      assignment: {
+        enabled: true,
+        provider: 'model',
+        modelId: 'gpt-4.1',
+      },
+      refresh: vi.fn(),
     },
     linkedinConnectionId: 'linkedin-1',
     handleLinkedInConnectionChange: vi.fn(),
@@ -371,7 +410,7 @@ function buildSocialPostContextState(
         linkedinExpiresAt: null,
       },
     ],
-    linkedinIntegration: { id: 'integration-1' },
+    linkedinIntegration: { id: 'integration-1', name: 'LinkedIn', slug: 'linkedin' },
     docReferenceInput: 'overview, lessons-and-activities',
     setDocReferenceInput: vi.fn(),
     generationNotes: 'Focus on current product changes.',
@@ -390,7 +429,7 @@ function buildSocialPostContextState(
     docUpdatesResult: null,
     addonForm: {
       title: '',
-      sourceUrl: '',
+      sourceUrl: 'https://studiq.example.com',
       selector: '',
       description: '',
       waitForMs: '',

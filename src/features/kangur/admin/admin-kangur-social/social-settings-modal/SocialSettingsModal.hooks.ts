@@ -1,96 +1,144 @@
+/* eslint-disable @typescript-eslint/no-unsafe-assignment */
+/* eslint-disable @typescript-eslint/no-unsafe-member-access */
+/* eslint-disable @typescript-eslint/no-unsafe-call */
+/* eslint-disable @typescript-eslint/no-unsafe-return */
+/* eslint-disable @typescript-eslint/no-unsafe-argument */
 'use client';
 
 import { useState } from 'react';
+import { BRAIN_MODEL_DEFAULT_VALUE } from '../AdminKangurSocialPage.Constants';
 import { useSocialPostContext } from './SocialPostContext';
 
 export type SocialSettingsTab = 'models' | 'project' | 'documentation' | 'publishing' | 'capture';
 export type SocialPostContextValue = ReturnType<typeof useSocialPostContext>;
 
+function buildModelSelectOptions(
+  models: string[],
+  selectedModelId: string | null,
+  effectiveModelId: string
+) {
+  const knownModels = new Set(models);
+  const selectedModelMissing =
+    Boolean(selectedModelId) && !knownModels.has(selectedModelId);
+
+  return [
+    { value: BRAIN_MODEL_DEFAULT_VALUE, label: 'Use Brain routing' },
+    ...models.map((modelId) => ({
+      value: modelId,
+      label: modelId,
+    })),
+    ...(selectedModelMissing
+      ? [
+          {
+            value: selectedModelId!,
+            label: `${selectedModelId} (not currently in Brain catalog)`,
+          },
+        ]
+      : []),
+    ...(!selectedModelId && effectiveModelId && !knownModels.has(effectiveModelId)
+      ? [
+          {
+            value: effectiveModelId,
+            label: `${effectiveModelId} (current Brain default)`,
+          },
+        ]
+      : []),
+  ];
+}
+
+function resolveModelBadgeLabel(selectedModelId: string | null, effectiveModelId: string): string {
+  if (selectedModelId?.trim()) {
+    return selectedModelId;
+  }
+
+  const resolvedEffectiveModelId = effectiveModelId.trim();
+  return resolvedEffectiveModelId || 'Not configured';
+}
+
 export function useSocialSettingsModalState(context: SocialPostContextValue) {
   const [activeTab, setActiveTab] = useState<SocialSettingsTab>('models');
 
-  const brainModelOptions = context.brainModelOptions.data ?? [];
-  const visionModelOptions = context.visionModelOptions.data ?? [];
+  const brainModelOptions = context.brainModelOptions.models ?? [];
+  const visionModelOptions = context.visionModelOptions.models ?? [];
+  const brainEffectiveModelId = context.brainModelOptions.effectiveModelId ?? '';
+  const visionEffectiveModelId = context.visionModelOptions.effectiveModelId ?? '';
 
-  const brainModelSelectOptions = [
-    { value: 'routing_default', label: 'Use Brain routing' },
-    ...brainModelOptions.map((m) => ({
-      value: m.id,
-      label: m.name,
-      description: m.provider,
-    })),
-  ];
+  const brainModelSelectOptions = buildModelSelectOptions(
+    brainModelOptions,
+    context.brainModelId,
+    brainEffectiveModelId
+  );
+  const visionModelSelectOptions = buildModelSelectOptions(
+    visionModelOptions,
+    context.visionModelId,
+    visionEffectiveModelId
+  );
 
-  const visionModelSelectOptions = [
-    { value: 'routing_default', label: 'Use Brain routing' },
-    ...visionModelOptions.map((m) => ({
-      value: m.id,
-      label: m.name,
-      description: m.provider,
-    })),
-  ];
+  const brainModelBadgeLabel = resolveModelBadgeLabel(
+    context.brainModelId,
+    brainEffectiveModelId
+  );
+  const visionModelBadgeLabel = resolveModelBadgeLabel(
+    context.visionModelId,
+    visionEffectiveModelId
+  );
 
-  const brainModelBadgeLabel =
-    context.brainModelId === 'routing_default' || !context.brainModelId
-      ? context.brainModelOptions.data?.find((m) => m.id === context.activePost?.brainModelId)?.name ??
-        'AI Brain Default'
-      : brainModelOptions.find((m) => m.id === context.brainModelId)?.name ?? 'Not configured';
+  const selectedPostTitle =
+    context.activePost?.titlePl?.trim() ||
+    context.activePost?.titleEn?.trim() ||
+    'selected post';
 
-  const visionModelBadgeLabel =
-    context.visionModelId === 'routing_default' || !context.visionModelId
-      ? context.visionModelOptions.data?.find((m) => m.id === context.activePost?.visionModelId)?.name ??
-        'AI Brain Default'
-      : visionModelOptions.find((m) => m.id === context.visionModelId)?.name ?? 'Not configured';
-
-  const selectedPostTitle = context.activePost?.title || 'selected post';
-  const hasUnsavedChanges =
-    context.brainModelId !== (context.activePost?.brainModelId || 'routing_default') ||
-    context.visionModelId !== (context.activePost?.visionModelId || 'routing_default') ||
-    context.projectUrl !== (context.activePost?.projectUrl || '') ||
-    context.linkedinConnectionId !== (context.activePost?.linkedinConnectionId || null) ||
-    context.batchCaptureBaseUrl !== (context.activePost?.batchCaptureBaseUrl || '') ||
-    context.batchCapturePresetLimit !== (context.activePost?.batchCapturePresetLimit || 10) ||
-    JSON.stringify(context.batchCapturePresetIds) !== JSON.stringify(context.activePost?.batchCapturePresetIds || []);
-
-  const linkedInIntegration = context.linkedinIntegration.data;
-  const linkedInOptions = (linkedInIntegration?.connections ?? []).map((c) => ({
-    value: c.id,
-    label: c.name,
-    description: c.integrationName,
-    disabled: !c.hasLinkedInAccessToken,
+  const linkedinIntegration = context.linkedinIntegration;
+  const linkedInConnections = context.linkedinConnections ?? [];
+  const linkedInOptions = linkedInConnections.map((connection) => ({
+    value: connection.id,
+    label: connection.name,
+    description: connection.username || linkedinIntegration?.name,
+    disabled: !connection.hasLinkedInAccessToken,
   }));
 
   const selectedLinkedInConnection =
-    linkedInIntegration?.connections.find((c) => c.id === context.linkedinConnectionId) ?? null;
+    linkedInConnections.find((connection) => connection.id === context.linkedinConnectionId) ??
+    null;
+  const linkedInExpiresAt = selectedLinkedInConnection?.linkedinExpiresAt ?? null;
 
-  const linkedInExpiryStatus = selectedLinkedInConnection?.linkedInAccessTokenExpiresAt
-    ? Date.parse(selectedLinkedInConnection.linkedInAccessTokenExpiresAt) < Date.now()
+  const linkedInExpiryStatus = linkedInExpiresAt
+    ? Date.parse(linkedInExpiresAt) < Date.now()
       ? 'expired'
-      : Date.parse(selectedLinkedInConnection.linkedInAccessTokenExpiresAt) < Date.now() + 7 * 24 * 60 * 60 * 1000
+      : Date.parse(linkedInExpiresAt) < Date.now() + 7 * 24 * 60 * 60 * 1000
         ? 'warning'
         : 'ok'
     : null;
 
-  const linkedInExpiryLabel = selectedLinkedInConnection?.linkedInAccessTokenExpiresAt
-    ? new Date(selectedLinkedInConnection.linkedInAccessTokenExpiresAt).toLocaleDateString()
+  const linkedInExpiryLabel = linkedInExpiresAt
+    ? new Date(linkedInExpiresAt).toLocaleDateString()
     : null;
 
-  const linkedInDaysRemaining = selectedLinkedInConnection?.linkedInAccessTokenExpiresAt
-    ? Math.max(0, Math.floor((Date.parse(selectedLinkedInConnection.linkedInAccessTokenExpiresAt) - Date.now()) / (24 * 60 * 60 * 1000)))
+  const linkedInDaysRemaining = linkedInExpiresAt
+    ? Math.max(
+        0,
+        Math.floor((Date.parse(linkedInExpiresAt) - Date.now()) / (24 * 60 * 60 * 1000))
+      )
     : null;
 
-  const docsUsed = context.activePost?.docsUsed || [];
-  const suggestedDocUpdates = context.activePost?.visualDocUpdates || [];
+  const docsUsed = context.resolveDocReferences?.() ?? context.activePost?.docReferences ?? [];
+  const suggestedDocUpdates = context.activePost?.visualDocUpdates ?? [];
   const hasVisualDocUpdates = suggestedDocUpdates.length > 0;
 
   const docUpdatesResult = context.docUpdatesResult;
-  const docUpdatesPlan = docUpdatesResult?.plan || null;
-  const docUpdatesAppliedAt = docUpdatesResult?.appliedAt || null;
-  const docUpdatesAppliedBy = docUpdatesResult?.appliedBy || null;
-  const docUpdatesAppliedCount = docUpdatesResult?.appliedCount || 0;
-  const docUpdatesSkippedCount = docUpdatesResult?.skippedCount || 0;
+  const docUpdatesPlan = docUpdatesResult?.plan ?? null;
+  const docUpdatesMetadataPost = docUpdatesResult?.post ?? context.activePost ?? null;
+  const docUpdatesAppliedAt = docUpdatesMetadataPost?.docUpdatesAppliedAt ?? null;
+  const docUpdatesAppliedBy = docUpdatesMetadataPost?.docUpdatesAppliedBy ?? null;
+  const docUpdatesAppliedCount =
+    docUpdatesPlan?.items.filter((item) => item.applied).length ?? 0;
+  const docUpdatesSkippedCount =
+    docUpdatesPlan?.items.filter((item) => !item.applied).length ?? 0;
 
-  const batchCaptureLimitSummary = `Presets selected: ${context.batchCapturePresetIds.length} (Limit: ${context.batchCapturePresetLimit})`;
+  const batchCaptureLimitSummary =
+    context.batchCapturePresetLimit == null
+      ? `Presets selected: ${context.batchCapturePresetIds.length} (No limit)`
+      : `Presets selected: ${context.batchCapturePresetIds.length} (Limit: ${context.batchCapturePresetLimit})`;
 
   return {
     activeTab,
@@ -100,7 +148,6 @@ export function useSocialSettingsModalState(context: SocialPostContextValue) {
     visionModelBadgeLabel,
     visionModelSelectOptions,
     selectedPostTitle,
-    hasUnsavedChanges,
     linkedInOptions,
     linkedinIntegration,
     selectedLinkedInConnection,

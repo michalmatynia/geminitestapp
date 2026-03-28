@@ -1,4 +1,4 @@
-import { resolvePreferredKangurPracticeOperation } from '@kangur/core';
+import { resolvePreferredKangurPracticeOperation } from '@kangur/core/practice';
 import type { Href } from 'expo-router';
 
 import { createKangurCompetitionHref } from '../competition/competitionHref';

@@ -1,11 +1,11 @@
 import type {
   KangurDuelLobbyChatListResponse,
   KangurDuelLobbyChatMessage,
-} from '@kangur/contracts';
+} from '@kangur/contracts/kangur-duels-chat';
 import {
   KANGUR_DUELS_LOBBY_CHAT_DEFAULT_LIMIT,
   KANGUR_DUELS_LOBBY_CHAT_MAX_MESSAGE_LENGTH,
-} from '@kangur/contracts';
+} from '@kangur/contracts/kangur-duels-chat';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 

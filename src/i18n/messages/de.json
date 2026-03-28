@@ -414,6 +414,10 @@
         "label": "Subjekt-Verb-Ubereinstimmung",
         "description": "Ordne Subjekt und Verb so zu, dass der Satz richtig klingt."
       },
+      "english_going_to_quiz": {
+        "label": "Going-to-Planparade",
+        "description": "Bilde in kurzen Runden Satze uber Zukunftsplane mit going to."
+      },
       "english_adjectives_quiz": {
         "label": "Adjektiv-Quiz",
         "description": "Wahle Adjektive fur Personen, Orte und Dinge."

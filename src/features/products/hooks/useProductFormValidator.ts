@@ -165,12 +165,21 @@ export function useProductFormValidator(
     [validatorPatterns]
   );
 
+  const latestProductsQueryKey = QUERY_KEYS.products.validatorLatestProductSource();
   const latestProductsQuery = createListQueryV2({
-    queryKey: QUERY_KEYS.products.validatorLatestProductSource(),
+    queryKey: latestProductsQueryKey,
     queryFn: () => productsApi.getProducts({ page: 1, pageSize: 2 }, undefined, { fresh: true }),
     enabled: validatorEnabled && needsLatestProductSource,
     staleTime: 0,
-    meta: { domain: 'products', operation: 'list', description: 'Loads products validator latest product source.' },
+    meta: {
+      source: 'products.hooks.useProductFormValidator',
+      operation: 'list',
+      resource: 'products.validator.latest-product-source',
+      domain: 'products',
+      queryKey: latestProductsQueryKey,
+      tags: ['products', 'validator', 'latest-product-source'],
+      description: 'Loads products validator latest product source.',
+    },
   });
 
   const latestProductValues = useMemo(

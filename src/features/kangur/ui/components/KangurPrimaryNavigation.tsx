@@ -412,6 +412,8 @@ export function KangurPrimaryNavigation(props: KangurPrimaryNavigationProps): Re
     <>
       <div className='flex items-center gap-2 max-sm:col-span-2 max-sm:justify-center'>
         <KangurLanguageSwitcher
+          basePath={basePath}
+          currentPage={currentPage}
           forceFallbackPath={forceLanguageSwitcherFallbackPath}
           variant='surface'
           size='sm'

@@ -19,6 +19,7 @@ import { useKangurRouteAccess } from '@/features/kangur/ui/routing/useKangurRout
 function RouteAccessProbe(): React.JSX.Element {
   const {
     resolveRouteState,
+    resolveRoutePageKey,
     sanitizeManagedHref,
     resolveManagedTargetPageKey,
     resolveTransitionSkeletonVariant,
@@ -52,6 +53,7 @@ function RouteAccessProbe(): React.JSX.Element {
     pageKey: 'GamesLibrary',
     requestedPath: '/kangur/games',
   });
+  const localizedLessonsPageKey = resolveRoutePageKey('/en/kangur/lessons', '/kangur');
 
   return (
     <div
@@ -60,6 +62,7 @@ function RouteAccessProbe(): React.JSX.Element {
       data-blocked-route-path={blockedRouteState.requestedPath}
       data-blocked-skeleton={blockedSkeleton}
       data-blocked-target={blockedTarget}
+      data-localized-lessons-page={localizedLessonsPageKey}
       data-blocked-transition-page={blockedTransition.pageKey}
       data-testid='kangur-route-access-probe'
     />
@@ -111,6 +114,10 @@ describe('useKangurRouteAccess', () => {
       'data-blocked-route-path',
       '/kangur'
     );
+    expect(screen.getByTestId('kangur-route-access-probe')).toHaveAttribute(
+      'data-localized-lessons-page',
+      'Lessons'
+    );
   });
 
   it('preserves GamesLibrary targets for exact super admins', () => {
@@ -152,6 +159,10 @@ describe('useKangurRouteAccess', () => {
     expect(screen.getByTestId('kangur-route-access-probe')).toHaveAttribute(
       'data-blocked-route-path',
       '/kangur/games'
+    );
+    expect(screen.getByTestId('kangur-route-access-probe')).toHaveAttribute(
+      'data-localized-lessons-page',
+      'Lessons'
     );
   });
 });

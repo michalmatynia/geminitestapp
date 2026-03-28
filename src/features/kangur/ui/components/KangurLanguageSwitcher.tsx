@@ -45,7 +45,7 @@ const DEFAULT_SITE_LOCALE = normalizeSiteLocale(DEFAULT_SITE_I18N_CONFIG.default
 type KangurLanguageSwitcherProps = {
   basePath: string;
   className?: string;
-  currentPage:
+  currentPage?:
     | 'Competition'
     | 'Game'
     | 'GamesLibrary'
@@ -165,6 +165,10 @@ const buildCurrentPageFallbackPath = (
   basePath: string
 ): string => {
   if (currentPage === 'Game') {
+    return getKangurHomeHref(basePath);
+  }
+
+  if (typeof currentPage !== 'string' || currentPage.trim().length === 0) {
     return getKangurHomeHref(basePath);
   }
 

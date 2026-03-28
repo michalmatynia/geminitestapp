@@ -1,7 +1,5 @@
-import {
-  getLocalizedKangurMetadataBadgeName,
-  getKangurPortableLessonBody,
-} from '@kangur/core';
+import { getKangurPortableLessonBody } from '@kangur/core/lesson-content';
+import { getLocalizedKangurMetadataBadgeName } from '@kangur/core/progress-i18n';
 import { Link, type Href, useLocalSearchParams, useRouter } from 'expo-router';
 import { Pressable, Text, View } from 'react-native';
 import { useEffect, useState } from 'react';

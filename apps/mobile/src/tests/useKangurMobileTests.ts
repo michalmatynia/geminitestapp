@@ -6,7 +6,7 @@ import {
   type KangurTestQuestion,
   type KangurTestQuestionStore,
   type KangurTestSuite,
-} from '@kangur/contracts';
+} from '@kangur/contracts/kangur-tests';
 import { useQuery } from '@tanstack/react-query';
 import { useMemo } from 'react';
 

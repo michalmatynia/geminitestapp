@@ -41,6 +41,11 @@ export const useKangurRouteAccess = (): {
     href?: string | null;
     pageKey?: string | null;
   }) => string;
+  resolveRoutePageKey: (
+    pathname: string | null | undefined,
+    basePath?: string | null,
+    fallbackPageKey?: string | null
+  ) => string;
   resolvePendingSnapshot: (input: {
     currentHref?: string | null;
     fallbackPageKey?: string | null;
@@ -112,6 +117,22 @@ export const useKangurRouteAccess = (): {
     [session]
   );
 
+  const resolveRoutePageKey = useCallback(
+    (
+      pathname: string | null | undefined,
+      basePath?: string | null,
+      fallbackPageKey?: string | null
+    ): string =>
+      resolveAccessibleManagedKangurTargetPageKey({
+        basePath: basePath ?? '/kangur',
+        fallbackPageKey: fallbackPageKey?.trim() || 'Game',
+        href: pathname,
+        pageKey: null,
+        session,
+      }),
+    [session]
+  );
+
   const resolvePendingSnapshot = useCallback(
     (input: {
       currentHref?: string | null;
@@ -160,6 +181,7 @@ export const useKangurRouteAccess = (): {
     resolveRouteState,
     sanitizeManagedHref,
     resolveManagedTargetPageKey,
+    resolveRoutePageKey,
     resolvePendingSnapshot,
     resolveTransitionTarget,
     resolveTransitionSkeletonVariant,

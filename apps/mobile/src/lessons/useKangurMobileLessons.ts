@@ -1,14 +1,16 @@
 import {
-  buildKangurLessonMasteryUpdate,
-  checkKangurNewBadges,
-  getKangurPracticeOperationForLessonComponent,
   getKangurLessonMasteryPresentation,
   getLocalizedKangurPortableLessons,
   resolveFocusedKangurLessonId,
   type KangurLessonMasteryPresentation,
   type KangurPortableLesson,
-} from '@kangur/core';
-import { createDefaultKangurProgressState } from '@kangur/contracts';
+} from '@kangur/core/lessons';
+import {
+  buildKangurLessonMasteryUpdate,
+  getKangurPracticeOperationForLessonComponent,
+} from '@kangur/core/practice';
+import { checkKangurNewBadges } from '@kangur/core/progress-metadata';
+import { createDefaultKangurProgressState } from '@kangur/contracts/kangur';
 import type { Href } from 'expo-router';
 import { useMemo, useState, useSyncExternalStore } from 'react';
 

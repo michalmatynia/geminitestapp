@@ -235,7 +235,13 @@ export function ThemePreviewPanel({
               </div>
             </div>
 
-            <input readOnly tabIndex={-1} placeholder={copy.searchPlaceholder} style={inputStyle} />
+            <input
+              readOnly
+              tabIndex={-1}
+              placeholder={copy.searchPlaceholder}
+              style={inputStyle}
+              aria-label='Search preview'
+            />
 
             <div style={glassStyle}>
               <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>

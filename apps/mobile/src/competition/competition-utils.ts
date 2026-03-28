@@ -1,4 +1,4 @@
-import type { KangurExamQuestion } from '@kangur/contracts';
+import type { KangurExamQuestion } from '@kangur/contracts/kangur';
 
 import type { KangurMobileLocale } from '../i18n/kangurMobileI18n';
 import type {

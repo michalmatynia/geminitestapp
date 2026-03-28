@@ -414,6 +414,10 @@
         "label": "Quiz zgodnosci podmiotu z czasownikiem",
         "description": "Dopasowuj podmiot i czasownik, aby zdanie brzmialo poprawnie."
       },
+      "english_going_to_quiz": {
+        "label": "Parada planow z going to",
+        "description": "Buduj zdania o planach na przyszlosc z going to w szybkich rundach."
+      },
       "english_adjectives_quiz": {
         "label": "Quiz przymiotnikow",
         "description": "Wybieraj przymiotniki opisujace osoby, miejsca i rzeczy."

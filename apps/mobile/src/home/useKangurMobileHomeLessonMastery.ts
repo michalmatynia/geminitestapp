@@ -1,8 +1,4 @@
-import {
-  buildLessonMasteryInsights,
-  getKangurPracticeOperationForLessonComponent,
-  type KangurLessonMasteryInsight,
-} from '@kangur/core';
+import type { KangurLessonMasteryInsight } from '@kangur/core/profile';
 import type { Href } from 'expo-router';
 import { useMemo } from 'react';
 
@@ -27,6 +23,7 @@ type UseKangurMobileHomeLessonMasteryResult = {
 const mapInsightToHomeItem = (
   insight: KangurLessonMasteryInsight,
 ): KangurMobileHomeLessonMasteryItem => {
+  const { getKangurPracticeOperationForLessonComponent } = require('@kangur/core/practice') as typeof import('@kangur/core/practice');
   const practiceOperation = getKangurPracticeOperationForLessonComponent(
     insight.componentId as Parameters<
       typeof getKangurPracticeOperationForLessonComponent
@@ -48,7 +45,10 @@ export const useKangurMobileHomeLessonMastery =
     const progress = useKangurMobileHomeProgressSnapshot();
 
     const masteryInsights = useMemo(
-      () => buildLessonMasteryInsights(progress, 2, locale),
+      () => {
+        const { buildLessonMasteryInsights } = require('@kangur/core/profile') as typeof import('@kangur/core/profile');
+        return buildLessonMasteryInsights(progress, 2, locale);
+      },
       [locale, progress],
     );
 

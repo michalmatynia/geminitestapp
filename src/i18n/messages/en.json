@@ -414,6 +414,10 @@
         "label": "Subject-verb agreement quiz",
         "description": "Match subjects and verbs so the sentence sounds correct."
       },
+      "english_going_to_quiz": {
+        "label": "Going to plan parade",
+        "description": "Build future-plan sentences with going to in quick rounds."
+      },
       "english_adjectives_quiz": {
         "label": "Adjectives quiz",
         "description": "Choose adjectives that describe people, places, and things."

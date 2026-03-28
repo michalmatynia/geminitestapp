@@ -1,5 +1,5 @@
-import type { KangurPracticeOperation } from '@kangur/core';
-import { createDefaultKangurProgressState } from '@kangur/contracts';
+import type { KangurPracticeOperation } from '@kangur/core/practice';
+import { createDefaultKangurProgressState } from '@kangur/contracts/kangur';
 import { useMemo, useSyncExternalStore } from 'react';
 
 import { useKangurMobileI18n } from '../i18n/kangurMobileI18n';

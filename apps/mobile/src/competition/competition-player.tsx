@@ -1,4 +1,4 @@
-import type { KangurQuestionChoice } from '@kangur/contracts';
+import type { KangurQuestionChoice } from '@kangur/contracts/kangur';
 import { useMemo, useState } from 'react';
 import { Text, View } from 'react-native';
 

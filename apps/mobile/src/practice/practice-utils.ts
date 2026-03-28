@@ -1,4 +1,4 @@
-import type { KangurPracticeCompletionResult } from '@kangur/core';
+import type { KangurPracticeCompletionResult } from '@kangur/core/practice';
 
 import type { KangurMobileLocale } from '../i18n/kangurMobileI18n';
 import type { KangurMobileTone as Tone } from '../shared/KangurMobileUi';

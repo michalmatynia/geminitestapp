@@ -1,5 +1,5 @@
-import { getKangurLeaderboardOperationInfo } from '@kangur/core';
-import type { KangurScore } from '@kangur/contracts';
+import { getKangurLeaderboardOperationInfo } from '@kangur/core/leaderboard';
+import type { KangurScore } from '@kangur/contracts/kangur';
 
 import {
   getKangurMobileLocaleTag,

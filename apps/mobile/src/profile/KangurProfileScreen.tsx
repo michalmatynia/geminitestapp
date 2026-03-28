@@ -1,6 +1,4 @@
-import {
-  getLocalizedKangurCoreLevelTitle,
-} from '@kangur/core';
+import { getLocalizedKangurCoreLevelTitle } from '@kangur/core/profile-i18n';
 import { type Href, useRouter } from 'expo-router';
 import { Text, View } from 'react-native';
 

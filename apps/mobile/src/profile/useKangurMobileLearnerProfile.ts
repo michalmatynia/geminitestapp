@@ -1,10 +1,10 @@
+import { resolvePreferredKangurPracticeOperation } from '@kangur/core/practice';
 import {
   buildKangurLearnerProfileSnapshot,
-  resolvePreferredKangurPracticeOperation,
   type KangurLearnerRecommendationAction,
   type KangurLearnerProfileSnapshot,
-} from '@kangur/core';
-import { createDefaultKangurProgressState } from '@kangur/contracts';
+} from '@kangur/core/profile';
+import { createDefaultKangurProgressState } from '@kangur/contracts/kangur';
 import type { Href } from 'expo-router';
 import { useMemo, useSyncExternalStore } from 'react';
 

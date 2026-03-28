@@ -3,7 +3,12 @@
 import React from 'react';
 import { Badge, Button, Input, Textarea } from '@/features/kangur/shared/ui';
 import { KangurAdminCard } from '../../components/KangurAdminCard';
-import type { SocialPostContextValue } from './SocialSettingsModal.hooks';
+import type {
+  KangurSocialPost,
+  KangurSocialDocUpdatesResponse,
+  KangurSocialDocUpdatePlan,
+  KangurSocialDocUpdate,
+} from '@/shared/contracts/kangur-social-posts';
 
 export function SocialSettingsDocumentationTab({
   activePost,
@@ -33,15 +38,15 @@ export function SocialSettingsDocumentationTab({
   socialVisionWarning,
   suggestedDocUpdates,
 }: {
-  activePost: SocialPostContextValue['activePost'];
+  activePost: KangurSocialPost | null;
   canGenerateSocialDraft: boolean;
   contextLoading: boolean;
   docReferenceInput: string;
   docUpdatesAppliedAt: string | null;
   docUpdatesAppliedBy: string | null;
   docUpdatesAppliedCount: number;
-  docUpdatesPlan: NonNullable<SocialPostContextValue['docUpdatesResult']>['plan'] | null;
-  docUpdatesResult: SocialPostContextValue['docUpdatesResult'];
+  docUpdatesPlan: KangurSocialDocUpdatePlan | null;
+  docUpdatesResult: KangurSocialDocUpdatesResponse | null;
   docUpdatesSkippedCount: number;
   docsUsed: string[];
   generationNotes: string;
@@ -58,7 +63,7 @@ export function SocialSettingsDocumentationTab({
   setGenerationNotes: (val: string) => void;
   socialDraftBlockedReason: string | null;
   socialVisionWarning: string | null;
-  suggestedDocUpdates: NonNullable<SocialPostContextValue['activePost']>['visualDocUpdates'];
+  suggestedDocUpdates: KangurSocialDocUpdate[];
 }) {
   return (
     <div className='space-y-4'>
@@ -88,7 +93,7 @@ export function SocialSettingsDocumentationTab({
               type='button'
               variant='outline'
               size='sm'
-              onClick={() => void handleLoadContext()}
+              onClick={() => handleLoadContext()}
               disabled={!activePost || contextLoading}
             >
               {contextLoading ? 'Loading context...' : 'Load context'}
@@ -97,7 +102,7 @@ export function SocialSettingsDocumentationTab({
               type='button'
               variant='outline'
               size='sm'
-              onClick={() => void handleGenerate()}
+              onClick={() => handleGenerate()}
               disabled={!activePost || !canGenerateSocialDraft}
             >
               Generate PL/EN draft
@@ -174,10 +179,10 @@ export function SocialSettingsDocumentationTab({
           )}
 
           <div className='flex flex-wrap items-center gap-2'>
-            <Button type='button' size='sm' onClick={() => void handlePreviewDocUpdates()} disabled={!activePost || previewDocUpdatesMutationPending || !hasVisualDocUpdates}>
+            <Button type='button' size='sm' onClick={() => handlePreviewDocUpdates()} disabled={!activePost || previewDocUpdatesMutationPending || !hasVisualDocUpdates}>
               {previewDocUpdatesMutationPending ? 'Previewing...' : 'Preview doc updates'}
             </Button>
-            <Button type='button' size='sm' variant='outline' onClick={() => void handleApplyDocUpdates()} disabled={!activePost || applyDocUpdatesMutationPending || !hasVisualDocUpdates}>
+            <Button type='button' size='sm' variant='outline' onClick={() => handleApplyDocUpdates()} disabled={!activePost || applyDocUpdatesMutationPending || !hasVisualDocUpdates}>
               {applyDocUpdatesMutationPending ? 'Applying...' : 'Apply doc updates'}
             </Button>
           </div>

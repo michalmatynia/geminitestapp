@@ -7,7 +7,7 @@ import {
   getKangurLeaderboardUserOptions,
   type KangurLeaderboardItem,
   type KangurLeaderboardUserFilter,
-} from '@kangur/core';
+} from '@kangur/core/leaderboard';
 import { useQuery } from '@tanstack/react-query';
 import { useMemo, useState } from 'react';
 

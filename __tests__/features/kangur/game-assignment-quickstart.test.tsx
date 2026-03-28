@@ -86,6 +86,19 @@ vi.mock('@/features/kangur/ui/hooks/useKangurLessons', () => ({
   }),
 }));
 
+vi.mock('@/features/kangur/ui/services/delegated-assignments', async (importOriginal) => {
+  const actual =
+    await importOriginal<typeof import('@/features/kangur/ui/services/delegated-assignments')>();
+
+  return {
+    ...actual,
+    filterKangurAssignmentsBySubject: (
+      assignments: Array<{ subject?: string | null }>,
+      subject: string
+    ) => assignments.filter((assignment) => (assignment.subject ?? 'maths') === subject),
+  };
+});
+
 vi.mock('@/features/kangur/docs/tooltips', () => ({
   KangurDocsTooltipEnhancer: () => null,
   useKangurDocsTooltips: getDisabledDocsTooltipsMock,

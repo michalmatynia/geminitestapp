@@ -1,42 +1,27 @@
 'use client';
 
 import {
-  Archive,
-  Folder,
   Inbox,
   Mail,
   MailPlus,
   RefreshCcw,
-  Send,
-  ShieldAlert,
-  Trash2,
 } from 'lucide-react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import React, { useCallback, useDeferredValue, useEffect, useMemo, useState } from 'react';
 
 import type { ColumnDef } from '@tanstack/react-table';
 
-import { FolderTreePanel } from '@/shared/ui/FolderTreePanel';
-import { FolderTreeViewportV2, useMasterFolderTreeShell } from '@/features/foldertree/public';
-import type { FolderTreeViewportRenderNodeInput } from '@/features/foldertree/public';
-import type { MasterTreeNode } from '@/shared/utils/master-folder-tree-contract';
 import { Badge, Button, Checkbox, FormField, FormSection, Input, useToast } from '@/shared/ui';
-import { cn } from '@/shared/utils';
 
+import { FilemakerMailSidebar } from '../components/FilemakerMailSidebar';
 import { buildFilemakerNavActions } from '../components/shared/filemaker-nav-actions';
 import { FilemakerEntityTablePage } from '../components/shared/FilemakerEntityTablePage';
-import {
-  buildFilemakerMailMasterNodes,
-  formatFilemakerMailFolderLabel,
-  parseFilemakerMailMasterNodeId,
-  toFilemakerMailAccountNodeId,
-} from '../mail-master-tree';
+import { formatFilemakerMailFolderLabel } from '../mail-master-tree';
 import { formatFilemakerMailboxAllowlist } from '../mail-utils';
 
 import type {
   FilemakerMailAccount,
   FilemakerMailAccountDraft,
-  FilemakerMailFolderRole,
   FilemakerMailFolderSummary,
   FilemakerMailThread,
 } from '../types';
@@ -102,36 +87,15 @@ const fetchJson = async <T,>(url: string, init?: RequestInit): Promise<T> => {
   return (await response.json()) as T;
 };
 
-const getFolderIcon = (role: FilemakerMailFolderRole): React.ComponentType<{ className?: string }> => {
-  if (role === 'inbox') return Inbox;
-  if (role === 'sent') return Send;
-  if (role === 'archive') return Archive;
-  if (role === 'spam') return ShieldAlert;
-  if (role === 'trash') return Trash2;
-  return Folder;
-};
-
-const renderCountBadge = (label: string, value: number, tone: 'default' | 'accent' = 'default') => (
-  <span
-    className={cn(
-      'inline-flex min-w-5 items-center justify-center rounded-full px-1.5 py-0.5 text-[10px] font-medium',
-      tone === 'accent'
-        ? 'bg-sky-500/20 text-sky-200'
-        : 'bg-white/10 text-gray-300'
-    )}
-  >
-    {label}
-    {value}
-  </span>
-);
-
 const buildMailSelectionHref = (input: {
   accountId?: string | null;
   mailboxPath?: string | null;
+  panel?: 'account' | 'settings' | null;
 }): string => {
   const search = new URLSearchParams();
   if (input.accountId) search.set('accountId', input.accountId);
   if (input.mailboxPath) search.set('mailboxPath', input.mailboxPath);
+  if (input.accountId && input.panel === 'settings') search.set('panel', 'settings');
   const nextSearch = search.toString();
   return nextSearch ? `/admin/filemaker/mail?${nextSearch}` : '/admin/filemaker/mail';
 };
@@ -145,7 +109,15 @@ export function AdminFilemakerMailPage(): React.JSX.Element {
   const [accounts, setAccounts] = useState<FilemakerMailAccount[]>([]);
   const [folders, setFolders] = useState<FilemakerMailFolderSummary[]>([]);
   const [threads, setThreads] = useState<FilemakerMailThread[]>([]);
-  const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
+  const [selection, setSelection] = useState<{
+    accountId: string | null;
+    mailboxPath: string | null;
+    panel: 'account' | 'settings' | null;
+  }>({
+    accountId: searchParams.get('accountId'),
+    mailboxPath: searchParams.get('mailboxPath'),
+    panel: searchParams.get('panel') === 'settings' ? 'settings' : null,
+  });
   const [isNavigationLoading, setIsNavigationLoading] = useState(true);
   const [isThreadsLoading, setIsThreadsLoading] = useState(false);
   const [isSavingAccount, setIsSavingAccount] = useState(false);
@@ -154,51 +126,23 @@ export function AdminFilemakerMailPage(): React.JSX.Element {
   const [folderAllowlistValue, setFolderAllowlistValue] = useState('');
   const requestedAccountId = searchParams.get('accountId');
   const requestedMailboxPath = searchParams.get('mailboxPath');
-
-  const treeNodes = useMemo(
-    (): MasterTreeNode[] => buildFilemakerMailMasterNodes({ accounts, folders }),
-    [accounts, folders]
-  );
-  const initiallyExpandedNodeIds = useMemo(
-    () =>
-      accounts
-        .map((account) => toFilemakerMailAccountNodeId(account.id)),
-    [accounts]
-  );
-  const selectedTreeNode = useMemo(
-    () => parseFilemakerMailMasterNodeId(selectedNodeId),
-    [selectedNodeId]
-  );
+  const requestedPanel = searchParams.get('panel') === 'settings' ? 'settings' : null;
+  const selectedAccountId = selection.accountId;
+  const selectedMailboxPath = selection.mailboxPath;
+  const selectedPanel = selection.panel;
   const selectedAccount = useMemo(() => {
-    const accountId =
-      selectedTreeNode?.kind === 'mail_account'
-        ? selectedTreeNode.accountId
-        : selectedTreeNode?.kind === 'mail_folder'
-          ? selectedTreeNode.accountId
-          : null;
-    return accounts.find((account) => account.id === accountId) ?? null;
-  }, [accounts, selectedTreeNode]);
+    return accounts.find((account) => account.id === selectedAccountId) ?? null;
+  }, [accounts, selectedAccountId]);
   const selectedFolder = useMemo(() => {
-    if (selectedTreeNode?.kind !== 'mail_folder') return null;
+    if (!selectedAccountId || !selectedMailboxPath) return null;
     return (
       folders.find(
         (folder) =>
-          folder.accountId === selectedTreeNode.accountId &&
-          folder.mailboxPath === selectedTreeNode.mailboxPath
+          folder.accountId === selectedAccountId &&
+          folder.mailboxPath === selectedMailboxPath
       ) ?? null
     );
-  }, [folders, selectedTreeNode]);
-
-  const {
-    controller,
-    appearance: { rootDropUi },
-    viewport: { scrollToNodeRef },
-  } = useMasterFolderTreeShell({
-    instance: 'filemaker_mail',
-    nodes: treeNodes,
-    selectedNodeId,
-    initiallyExpandedNodeIds,
-  });
+  }, [folders, selectedAccountId, selectedMailboxPath]);
 
   const loadNavigation = useCallback(async (): Promise<void> => {
     setIsNavigationLoading(true);
@@ -209,39 +153,6 @@ export function AdminFilemakerMailPage(): React.JSX.Element {
       ]);
       setAccounts(accountsResult.accounts);
       setFolders(foldersResult.folders);
-
-      const nextNodes = buildFilemakerMailMasterNodes({
-        accounts: accountsResult.accounts,
-        folders: foldersResult.folders,
-      });
-      const nextNodeIds = new Set(nextNodes.map((node) => node.id));
-      const requestedFolderNodeId =
-        requestedAccountId && requestedMailboxPath
-          ? (nextNodes.find(
-              (node) =>
-                node.kind === 'mail_folder' &&
-                node.metadata?.['accountId'] === requestedAccountId &&
-                node.metadata?.['mailboxPath'] === requestedMailboxPath
-            )?.id ?? null)
-          : null;
-      const requestedAccountNodeId = requestedAccountId
-        ? (nextNodes.find(
-            (node) =>
-              node.kind === 'mail_account' &&
-              node.metadata?.['accountId'] === requestedAccountId
-          )?.id ?? null)
-        : null;
-      const nextSelectedNodeId =
-        requestedFolderNodeId ??
-        requestedAccountNodeId ??
-        (selectedNodeId && nextNodeIds.has(selectedNodeId) ? selectedNodeId : null);
-      if (!nextSelectedNodeId) {
-        const firstFolder = nextNodes.find((node) => node.kind === 'mail_folder');
-        const firstAccount = nextNodes.find((node) => node.kind === 'mail_account');
-        setSelectedNodeId(firstFolder?.id ?? firstAccount?.id ?? null);
-      } else {
-        setSelectedNodeId(nextSelectedNodeId);
-      }
     } catch (error) {
       toast(error instanceof Error ? error.message : 'Failed to load Filemaker mail.', {
         variant: 'error',
@@ -249,11 +160,19 @@ export function AdminFilemakerMailPage(): React.JSX.Element {
     } finally {
       setIsNavigationLoading(false);
     }
-  }, [requestedAccountId, requestedMailboxPath, selectedNodeId, toast]);
+  }, [toast]);
 
   useEffect(() => {
     void loadNavigation();
   }, [loadNavigation]);
+
+  useEffect(() => {
+    setSelection({
+      accountId: requestedAccountId,
+      mailboxPath: requestedMailboxPath,
+      panel: requestedPanel,
+    });
+  }, [requestedAccountId, requestedMailboxPath, requestedPanel]);
 
   useEffect(() => {
     if (!selectedAccount) {
@@ -294,19 +213,65 @@ export function AdminFilemakerMailPage(): React.JSX.Element {
 
   useEffect(() => {
     if (isNavigationLoading) return;
-    const nextAccountId =
-      selectedTreeNode?.kind === 'mail_account'
-        ? selectedTreeNode.accountId
-        : selectedTreeNode?.kind === 'mail_folder'
-          ? selectedTreeNode.accountId
+    if (selection.accountId && selection.mailboxPath && selectedFolder) return;
+    if (selection.accountId && !selection.mailboxPath && selectedAccount) return;
+
+    const nextSelection =
+      selection.accountId && selection.mailboxPath
+        ? accounts.some((account) => account.id === selection.accountId)
+          ? {
+              accountId: selection.accountId,
+              mailboxPath: null as string | null,
+              panel: selection.panel,
+            }
+          : { accountId: null, mailboxPath: null, panel: null }
+        : selection.accountId && !selectedAccount
+          ? { accountId: null, mailboxPath: null, panel: null }
           : null;
-    const nextMailboxPath =
-      selectedTreeNode?.kind === 'mail_folder' ? selectedTreeNode.mailboxPath : null;
-    if ((requestedAccountId ?? null) === nextAccountId && (requestedMailboxPath ?? null) === nextMailboxPath) {
+
+    if (!nextSelection) {
       return;
     }
-    router.replace(buildMailSelectionHref({ accountId: nextAccountId, mailboxPath: nextMailboxPath }));
-  }, [isNavigationLoading, requestedAccountId, requestedMailboxPath, router, selectedTreeNode]);
+    setSelection(nextSelection);
+  }, [
+    accounts,
+    isNavigationLoading,
+    selectedAccount,
+    selectedFolder,
+    selection.accountId,
+    selection.mailboxPath,
+    selection.panel,
+  ]);
+
+  useEffect(() => {
+    if (isNavigationLoading) return;
+    const nextAccountId = selection.accountId ?? null;
+    const nextMailboxPath = selection.mailboxPath ?? null;
+    const nextPanel = selection.panel ?? null;
+    if (
+      (requestedAccountId ?? null) === nextAccountId &&
+      (requestedMailboxPath ?? null) === nextMailboxPath &&
+      requestedPanel === nextPanel
+    ) {
+      return;
+    }
+    router.replace(
+      buildMailSelectionHref({
+        accountId: nextAccountId,
+        mailboxPath: nextMailboxPath,
+        panel: nextPanel,
+      })
+    );
+  }, [
+    isNavigationLoading,
+    requestedAccountId,
+    requestedMailboxPath,
+    requestedPanel,
+    router,
+    selection.accountId,
+    selection.mailboxPath,
+    selection.panel,
+  ]);
 
   const handleSaveAccount = useCallback(async (): Promise<void> => {
     setIsSavingAccount(true);
@@ -329,7 +294,7 @@ export function AdminFilemakerMailPage(): React.JSX.Element {
         variant: 'success',
       });
       await loadNavigation();
-      setSelectedNodeId(toFilemakerMailAccountNodeId(result.account.id));
+      setSelection({ accountId: result.account.id, mailboxPath: null, panel: 'settings' });
     } catch (error) {
       toast(error instanceof Error ? error.message : 'Failed to save mailbox account.', {
         variant: 'error',
@@ -424,134 +389,30 @@ export function AdminFilemakerMailPage(): React.JSX.Element {
     [router]
   );
 
-  const renderTreeNode = useCallback(
-    (input: FolderTreeViewportRenderNodeInput): React.JSX.Element => {
-      const parsed = parseFilemakerMailMasterNodeId(input.node.id);
-      const unreadCount =
-        typeof input.node.metadata?.['unreadCount'] === 'number'
-          ? input.node.metadata['unreadCount']
-          : 0;
-      const threadCount =
-        typeof input.node.metadata?.['threadCount'] === 'number'
-          ? input.node.metadata['threadCount']
-          : 0;
-      const isAccount = parsed?.kind === 'mail_account';
-      const folderRole =
-        typeof input.node.metadata?.['mailboxRole'] === 'string'
-          ? (input.node.metadata['mailboxRole'] as FilemakerMailFolderRole)
-          : 'custom';
-      const Icon = isAccount ? Mail : getFolderIcon(folderRole);
-      const hasChildren = input.hasChildren;
-
-      return (
-        <button
-          type='button'
-          onClick={(event): void => {
-            input.select(event);
-            setSelectedNodeId(input.node.id);
-          }}
-          className={cn(
-            'flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-sm transition',
-            input.isSelected
-              ? 'bg-sky-500/15 text-white ring-1 ring-inset ring-sky-400/40'
-              : 'text-gray-300 hover:bg-white/5'
-          )}
-          style={{ paddingLeft: `${input.depth * 16 + 8}px` }}
-        >
-          {hasChildren ? (
-            <span
-              aria-hidden='true'
-              onClick={(event) => {
-                event.preventDefault();
-                event.stopPropagation();
-                input.toggleExpand();
-              }}
-              className='inline-flex size-4 items-center justify-center rounded hover:bg-white/5'
-            >
-              {input.isExpanded ? '▾' : '▸'}
-            </span>
-          ) : (
-            <span className='inline-flex size-4 items-center justify-center text-xs opacity-40'>•</span>
-          )}
-          <Icon className='size-4 shrink-0 text-gray-400' />
-          <span className='min-w-0 flex-1 truncate'>{input.node.name}</span>
-          {threadCount > 0 ? renderCountBadge('', threadCount) : null}
-          {unreadCount > 0 ? renderCountBadge('', unreadCount, 'accent') : null}
-        </button>
-      );
-    },
-    []
-  );
-
   const selectedAccountLabel = selectedAccount?.name ?? 'New mailbox account';
   const selectedFolderLabel = selectedFolder
     ? formatFilemakerMailFolderLabel(selectedFolder.mailboxPath, selectedFolder.mailboxRole)
     : null;
-  const composeHref = useMemo(() => {
-    const search = new URLSearchParams();
-    if (selectedAccount) search.set('accountId', selectedAccount.id);
-    if (selectedFolder) search.set('mailboxPath', selectedFolder.mailboxPath);
-    const nextSearch = search.toString();
-    return nextSearch ? `/admin/filemaker/mail/compose?${nextSearch}` : '/admin/filemaker/mail/compose';
-  }, [selectedAccount, selectedFolder]);
 
   return (
     <div className='page-section-compact grid gap-6 xl:grid-cols-[320px_minmax(0,1fr)]'>
-      <div className='rounded-lg border border-border/60 bg-card/25 p-3'>
-        <FolderTreePanel
-          className='min-h-[680px]'
-          bodyClassName='min-h-0 overflow-hidden'
-          masterInstance='filemaker_mail'
-          header={
-            <div className='space-y-3 border-b border-border/60 px-1 pb-3'>
-              <div>
-                <div className='text-sm font-semibold text-white'>Mail Navigation</div>
-                <div className='text-xs text-gray-500'>
-                  Manage mailbox accounts and browse synced folders.
-                </div>
-              </div>
-              <div className='flex flex-wrap gap-2'>
-                <Button
-                  type='button'
-                  size='sm'
-                  variant='outline'
-                  onClick={(): void => {
-                    setSelectedNodeId(null);
-                  }}
-                >
-                  New Mailbox
-                </Button>
-                <Button
-                  type='button'
-                  size='sm'
-                  variant='outline'
-                  onClick={(): void => {
-                    router.push(composeHref);
-                  }}
-                >
-                  <MailPlus className='mr-2 size-4' />
-                  Compose
-                </Button>
-              </div>
-              <div className='flex flex-wrap gap-2 text-[10px]'>
-                <Badge variant='outline'>Accounts: {accounts.length}</Badge>
-                <Badge variant='outline'>Folders: {folders.length}</Badge>
-              </div>
-            </div>
-          }
-        >
-          <div className='min-h-0 overflow-auto p-2'>
-            <FolderTreeViewportV2
-              controller={controller}
-              scrollToNodeRef={scrollToNodeRef}
-              rootDropUi={rootDropUi}
-              enableDnd={false}
-              emptyLabel={isNavigationLoading ? 'Loading mailboxes...' : 'No mailboxes configured'}
-              renderNode={renderTreeNode}
-            />
-          </div>
-        </FolderTreePanel>
-      </div>
+      <FilemakerMailSidebar
+        selectedAccountId={selectedAccountId}
+        selectedMailboxPath={selectedMailboxPath}
+        selectedPanel={selectedPanel}
+        onNewMailbox={() => {
+          setSelection({ accountId: null, mailboxPath: null, panel: null });
+        }}
+        onSelectAccount={(accountId) => {
+          setSelection({ accountId, mailboxPath: null, panel: 'account' });
+        }}
+        onSelectAccountSettings={(accountId) => {
+          setSelection({ accountId, mailboxPath: null, panel: 'settings' });
+        }}
+        onSelectFolder={({ accountId, mailboxPath }) => {
+          setSelection({ accountId, mailboxPath, panel: null });
+        }}
+      />
 
       {selectedFolder ? (
         <FilemakerEntityTablePage
@@ -588,7 +449,12 @@ export function AdminFilemakerMailPage(): React.JSX.Element {
               label: 'Open Account',
               icon: <Mail className='size-4' />,
               variant: 'outline',
-              onClick: () => setSelectedNodeId(toFilemakerMailAccountNodeId(selectedFolder.accountId)),
+              onClick: () =>
+                setSelection({
+                  accountId: selectedFolder.accountId,
+                  mailboxPath: null,
+                  panel: 'settings',
+                }),
             },
             ...buildFilemakerNavActions(router, 'mail'),
           ]}

@@ -6,6 +6,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 
 import { DocumentWysiwygEditor } from '@/features/document-editor/components/DocumentWysiwygEditor';
 import { parseFilemakerMailParticipantsInput } from '../mail-utils';
+import { FilemakerMailSidebar } from '../components/FilemakerMailSidebar';
 
 import type { FilemakerMailAccount, FilemakerMailParticipant } from '../types';
 import { Button, FormField, FormSection, Input, PanelHeader, SelectSimple, useToast } from '@/shared/ui';
@@ -101,99 +102,106 @@ export function AdminFilemakerMailComposePage(): React.JSX.Element {
   };
 
   return (
-    <div className='page-section-compact space-y-6'>
-      <PanelHeader
-        title='Compose Filemaker Email'
-        description='Write a new email using the shared rich-text editor.'
-        icon={<SendHorizonal className='size-4' />}
-        actions={[
-          {
-            key: 'back',
-            label: 'Back to Mail',
-            icon: <ArrowLeft className='size-4' />,
-            variant: 'outline',
-            onClick: () => router.push(backHref),
-          },
-          {
-            key: 'send',
-            label: isSending ? 'Sending...' : 'Send Email',
-            icon: <SendHorizonal className='size-4' />,
-            onClick: () => {
-              void handleSend();
-            },
-          },
-        ]}
+    <div className='page-section-compact grid gap-6 xl:grid-cols-[320px_minmax(0,1fr)]'>
+      <FilemakerMailSidebar
+        selectedAccountId={accountId || accountIdFromRoute}
+        selectedMailboxPath={mailboxPathFromRoute}
       />
 
-      <FormSection title='Message' className='space-y-4 p-4'>
-        <div className='grid gap-3 md:grid-cols-2'>
-          <FormField label='Mailbox account'>
-            <SelectSimple
-              value={accountId}
-              onValueChange={setAccountId}
-              options={accounts.map((account) => ({
-                value: account.id,
-                label: account.name,
-                description: account.emailAddress,
-              }))}
-              placeholder={isLoading ? 'Loading accounts...' : 'Select mailbox account'}
-              size='sm'
-              ariaLabel='Mailbox account'
-            />
-          </FormField>
-          <FormField label='Subject'>
-            <Input value={subject} onChange={(event) => setSubject(event.target.value)} />
-          </FormField>
-          <FormField label='To' className='md:col-span-2'>
-            <Input
-              value={to}
-              onChange={(event) => setTo(event.target.value)}
-              placeholder='Jane Doe <jane@example.com>, team@example.com'
-            />
-          </FormField>
-          <FormField label='Cc'>
-            <Input value={cc} onChange={(event) => setCc(event.target.value)} />
-          </FormField>
-          <FormField label='Bcc'>
-            <Input value={bcc} onChange={(event) => setBcc(event.target.value)} />
-          </FormField>
-        </div>
-
-        <DocumentWysiwygEditor
-          value={bodyHtml}
-          onChange={setBodyHtml}
-          placeholder='Write your email...'
-          enableAdvancedTools
-          allowFontFamily
-          allowTextAlign
+      <div className='space-y-6'>
+        <PanelHeader
+          title='Compose Filemaker Email'
+          description='Write a new email using the shared rich-text editor.'
+          icon={<SendHorizonal className='size-4' />}
+          actions={[
+            {
+              key: 'back',
+              label: 'Back to Mail',
+              icon: <ArrowLeft className='size-4' />,
+              variant: 'outline',
+              onClick: () => router.push(backHref),
+            },
+            {
+              key: 'send',
+              label: isSending ? 'Sending...' : 'Send Email',
+              icon: <SendHorizonal className='size-4' />,
+              onClick: () => {
+                void handleSend();
+              },
+            },
+          ]}
         />
 
-        {accountId ? (
-          <div className='text-xs text-gray-500'>
-            Sending from:{' '}
-            {formatParticipants(
-              accounts
-                .filter((account) => account.id === accountId)
-                .map((account) => ({
-                  address: account.emailAddress,
-                  name: account.fromName ?? null,
-                }))
-            ) || 'Unknown account'}
+        <FormSection title='Message' className='space-y-4 p-4'>
+          <div className='grid gap-3 md:grid-cols-2'>
+            <FormField label='Mailbox account'>
+              <SelectSimple
+                value={accountId}
+                onValueChange={setAccountId}
+                options={accounts.map((account) => ({
+                  value: account.id,
+                  label: account.name,
+                  description: account.emailAddress,
+                }))}
+                placeholder={isLoading ? 'Loading accounts...' : 'Select mailbox account'}
+                size='sm'
+                ariaLabel='Mailbox account'
+              />
+            </FormField>
+            <FormField label='Subject'>
+              <Input value={subject} onChange={(event) => setSubject(event.target.value)} />
+            </FormField>
+            <FormField label='To' className='md:col-span-2'>
+              <Input
+                value={to}
+                onChange={(event) => setTo(event.target.value)}
+                placeholder='Jane Doe <jane@example.com>, team@example.com'
+              />
+            </FormField>
+            <FormField label='Cc'>
+              <Input value={cc} onChange={(event) => setCc(event.target.value)} />
+            </FormField>
+            <FormField label='Bcc'>
+              <Input value={bcc} onChange={(event) => setBcc(event.target.value)} />
+            </FormField>
           </div>
-        ) : null}
 
-        <div className='flex justify-end'>
-          <Button
-            type='button'
-            onClick={(): void => {
-              void handleSend();
-            }}
-            disabled={isSending || isLoading}
-          >
-            {isSending ? 'Sending...' : 'Send Email'}
-          </Button>
-        </div>
-      </FormSection>
+          <DocumentWysiwygEditor
+            value={bodyHtml}
+            onChange={setBodyHtml}
+            placeholder='Write your email...'
+            enableAdvancedTools
+            allowFontFamily
+            allowTextAlign
+          />
+
+          {accountId ? (
+            <div className='text-xs text-gray-500'>
+              Sending from:{' '}
+              {formatParticipants(
+                accounts
+                  .filter((account) => account.id === accountId)
+                  .map((account) => ({
+                    address: account.emailAddress,
+                    name: account.fromName ?? null,
+                  }))
+              ) || 'Unknown account'}
+            </div>
+          ) : null}
+
+          <div className='flex justify-end'>
+            <Button
+              type='button'
+              onClick={(): void => {
+                void handleSend();
+              }}
+              disabled={isSending || isLoading}
+            >
+              {isSending ? 'Sending...' : 'Send Email'}
+            </Button>
+          </div>
+        </FormSection>
+      </div>
     </div>
   );
 }

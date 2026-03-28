@@ -21,6 +21,7 @@ const {
   xpToastPropsMock,
   calendarTrainingGamePropsMock,
   clockTrainingGamePropsMock,
+  englishAdverbsActionStudioGamePropsMock,
   logicalPatternsWorkshopGamePropsMock,
   disabledDocsTooltipsMock,
   getDisabledDocsTooltipsMock,
@@ -39,6 +40,7 @@ const {
   xpToastPropsMock: vi.fn(),
   calendarTrainingGamePropsMock: vi.fn(),
   clockTrainingGamePropsMock: vi.fn(),
+  englishAdverbsActionStudioGamePropsMock: vi.fn(),
   logicalPatternsWorkshopGamePropsMock: vi.fn(),
   disabledDocsTooltipsMock: { enabled: false },
   getDisabledDocsTooltipsMock: vi.fn(),
@@ -222,6 +224,13 @@ vi.mock('@/features/kangur/ui/components/ClockTrainingGame', () => ({
   },
 }));
 
+vi.mock('@/features/kangur/ui/components/EnglishAdverbsActionStudioGame', () => ({
+  default: (props: unknown) => {
+    englishAdverbsActionStudioGamePropsMock(props);
+    return <div data-testid='english-adverbs-action-studio-game' />;
+  },
+}));
+
 vi.mock('@/features/kangur/ui/components/LogicalPatternsWorkshopGame', () => ({
   default: (props: unknown) => {
     logicalPatternsWorkshopGamePropsMock(props);
@@ -278,6 +287,7 @@ describe('Game page', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    getDisabledDocsTooltipsMock.mockReturnValue(disabledDocsTooltipsMock);
     useKangurMobileBreakpointMock.mockReturnValue(false);
     useKangurGameContentSetsMock.mockReturnValue({
       data: [],
@@ -670,6 +680,38 @@ describe('Game page', () => {
         sessionContext: expect.objectContaining({
           surface: 'game',
           contentId: 'game:calendar_quiz',
+        }),
+      })
+    );
+  });
+
+  it('renders the general adverbs launchable runtime on the dedicated game screen', async () => {
+    useKangurGameRuntimeMock.mockReturnValue({
+      ...buildRuntime('english_adverbs_quiz'),
+      user: {
+        activeLearner: {
+          id: 'learner-1',
+        },
+      },
+    });
+
+    render(<Game />);
+
+    await waitFor(() => {
+      expect(screen.getByTestId('english-adverbs-action-studio-game')).toBeInTheDocument();
+    });
+
+    expect(englishAdverbsActionStudioGamePropsMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        finishLabel: 'Wroc do Grajmy',
+      })
+    );
+    expect(tutorSessionSyncPropsMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        learnerId: 'learner-1',
+        sessionContext: expect.objectContaining({
+          surface: 'game',
+          contentId: 'game:english_adverbs_quiz',
         }),
       })
     );

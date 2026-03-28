@@ -124,18 +124,19 @@ const renderSelectModal = <T,>({
  * Reusable modal template for single/multi-select operations.
  * Refactored to leverage FormModal and SearchInput for consistent UX.
  */
-export function SelectModal<T>({
-  open,
-  onClose,
-  title,
-  subtitle,
-  options,
-  onSelect,
-  loading = false,
-  searchable = true,
-  multiple = false,
-  size: modalSize = 'md',
-}: SelectModalProps<T>): React.JSX.Element {
+export function SelectModal<T>(props: SelectModalProps<T>): React.JSX.Element {
+  const {
+    open,
+    onClose,
+    title,
+    subtitle,
+    options,
+    onSelect,
+    loading = false,
+    searchable = true,
+    multiple = false,
+    size: modalSize = 'md',
+  } = props;
   const [search, setSearch] = useState('');
   const [selectedIds, setSelectedIds] = useState<Set<string | number>>(new Set());
 

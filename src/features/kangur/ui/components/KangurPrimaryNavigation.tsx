@@ -417,7 +417,7 @@ export function KangurPrimaryNavigation(props: KangurPrimaryNavigationProps): Re
           size='sm'
           className={isCoarsePointer ? 'min-h-11 min-w-11 sm:min-h-0 sm:min-w-0' : undefined}
         />
-        {storefrontAppearance.isAppearanceAvailable && (
+        {kangurAppearance.isAppearanceAvailable && (
           <CmsStorefrontAppearanceButtons
             variant='surface'
             size='sm'

@@ -1,6 +1,5 @@
 'use client';
 
-import React from 'react';
 import { Checkbox, FormField, FormSection, Input, SelectSimple } from '@/shared/ui';
 import {
   LAUNCH_MODE_OPTIONS as FILEMAKER_LAUNCH_MODE_OPTIONS,
@@ -8,7 +7,7 @@ import {
   toDateTimeLocalValue as filemakerToDateTimeLocalValue,
   WEEKDAY_OPTIONS as FILEMAKER_WEEKDAY_OPTIONS,
 } from '../AdminFilemakerCampaignEditPage.utils';
-import type { FilemakerEmailCampaign, FilemakerEmailCampaignLaunchMode } from '../types';
+import type { FilemakerEmailCampaignLaunchMode } from '../../types';
 
 interface LaunchSchedulingSectionProps {
   launchMode: FilemakerEmailCampaignLaunchMode;
@@ -51,8 +50,9 @@ export const LaunchSchedulingSection = ({
     <div className='grid gap-4 md:grid-cols-2'>
       <FormField label='Launch Mode'>
         <SelectSimple
+          ariaLabel='Launch mode'
           value={launchMode}
-          onChange={(val) => setLaunchMode(val as any)}
+          onValueChange={(value) => setLaunchMode(value as FilemakerEmailCampaignLaunchMode)}
           options={FILEMAKER_LAUNCH_MODE_OPTIONS}
         />
       </FormField>
@@ -77,16 +77,18 @@ export const LaunchSchedulingSection = ({
         <div className='grid gap-4 md:grid-cols-3'>
           <FormField label='Frequency'>
             <SelectSimple
+              ariaLabel='Recurring frequency'
               value={recurringFrequency}
-              onChange={(val) => setRecurringFrequency(val as any)}
+              onValueChange={setRecurringFrequency}
               options={FILEMAKER_RECURRING_FREQUENCY_OPTIONS}
             />
           </FormField>
           {recurringFrequency === 'weekly' && (
             <FormField label='Day of Week'>
               <SelectSimple
+                ariaLabel='Recurring weekday'
                 value={String(recurringDayOfWeek ?? 1)}
-                onChange={(val) => setRecurringDayOfWeek(Number.parseInt(val, 10))}
+                onValueChange={(value) => setRecurringDayOfWeek(Number.parseInt(value, 10))}
                 options={FILEMAKER_WEEKDAY_OPTIONS}
               />
             </FormField>

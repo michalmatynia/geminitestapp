@@ -24,6 +24,9 @@ describe('game launch helpers', () => {
   it('resolves fullscreen game screens from the shared game registry', () => {
     expect(getKangurLaunchableGameScreen(findGame('clock_training'))).toBe('clock_quiz');
     expect(getKangurLaunchableGameScreen(findGame('adding_ball'))).toBe('addition_quiz');
+    expect(getKangurLaunchableGameScreen(findGame('english_adverbs_action_studio'))).toBe(
+      'english_adverbs_quiz'
+    );
   });
 
   it('maps lesson components to launchable fullscreen screens when variants exist', () => {
@@ -32,6 +35,9 @@ describe('game launch helpers', () => {
     );
     expect(getKangurLaunchableGameScreenForLessonComponent('english_sentence_structure')).toBe(
       'english_sentence_quiz'
+    );
+    expect(getKangurLaunchableGameScreenForLessonComponent('english_adverbs')).toBe(
+      'english_adverbs_quiz'
     );
     expect(getKangurLaunchableGameScreenForLessonComponent('adding')).toBe('addition_quiz');
   });
@@ -54,9 +60,15 @@ describe('game launch helpers', () => {
     expect(buildKangurGameLaunchHref('/kangur', findGame('adding_ball'))).toBe(
       '/kangur/game?quickStart=screen&screen=addition_quiz'
     );
+    expect(buildKangurGameLaunchHref('/kangur', findGame('english_adverbs_action_studio'))).toBe(
+      '/kangur/game?quickStart=screen&screen=english_adverbs_quiz'
+    );
 
     expect(buildKangurGameLessonHref('/kangur', findGame('clock_training'))).toBe(
       '/kangur/lessons?focus=clock'
+    );
+    expect(buildKangurGameLessonHref('/kangur', findGame('english_adverbs_action_studio'))).toBe(
+      '/kangur/lessons?focus=english_adverbs'
     );
   });
 
@@ -64,7 +76,11 @@ describe('game launch helpers', () => {
     expect(getKangurLaunchableGameContentId('logical_patterns_quiz')).toBe(
       'game:logical_patterns_quiz'
     );
+    expect(getKangurLaunchableGameContentId('english_adverbs_quiz')).toBe(
+      'game:english_adverbs_quiz'
+    );
     expect(isKangurLaunchableGameContentId('game:logical_patterns_quiz')).toBe(true);
+    expect(isKangurLaunchableGameContentId('game:english_adverbs_quiz')).toBe(true);
     expect(isKangurLaunchableGameContentId('game:home')).toBe(false);
   });
 });

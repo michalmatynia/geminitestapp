@@ -110,6 +110,53 @@ describe('ScoreHistory i18n', () => {
     expect(screen.getByText('Games total')).toBeInTheDocument();
   });
 
+  it('renders English adverbs labels for both general and frequency sessions', async () => {
+    useKangurSubjectFocusMock.mockReturnValue({
+      subject: 'english',
+      setSubject: vi.fn(),
+      subjectKey: 'learner-1',
+    });
+
+    render(
+      <NextIntlClientProvider locale='en' messages={enMessages}>
+        <ScoreHistory
+          prefetchedLoading={false}
+          prefetchedScores={[
+            createScore({
+              id: 'score-english-adverbs',
+              operation: 'english_adverbs',
+              subject: 'english',
+              created_date: '2026-03-06T12:00:00.000Z',
+            }),
+            createScore({
+              id: 'score-english-adverbs-frequency',
+              operation: 'english_adverbs_frequency',
+              subject: 'english',
+              created_date: '2026-03-05T12:00:00.000Z',
+            }),
+          ]}
+        />
+      </NextIntlClientProvider>
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText('Results by operation')).toBeInTheDocument();
+    });
+
+    expect(
+      screen.getByTestId('score-history-operation-progress-english_adverbs')
+    ).toBeInTheDocument();
+    expect(
+      screen.getByTestId('score-history-operation-progress-english_adverbs_frequency')
+    ).toBeInTheDocument();
+    expect(
+      screen.getByTestId('score-history-recent-row-score-english-adverbs')
+    ).toHaveTextContent('Adverbs');
+    expect(
+      screen.getByTestId('score-history-recent-row-score-english-adverbs-frequency')
+    ).toHaveTextContent('Adverbs of frequency');
+  });
+
   it('uses English fallback copy when messages are unavailable', () => {
     render(
       <NextIntlClientProvider

@@ -26,8 +26,10 @@ import {
 import { createKangurPracticeHref } from '../practice/practiceHref';
 import {
   KangurMobileCard as Card,
+  KangurMobileInsetPanel as InsetPanel,
   KangurMobileLinkButton as LinkButton,
   KangurMobileMetric as Metric,
+  KangurMobilePill as Pill,
   KangurMobileScrollScreen,
   KangurMobileSummaryChip,
 } from '../shared/KangurMobileUi';
@@ -47,27 +49,6 @@ import {
   type KangurMobileResultsBadgeItem,
 } from './useKangurMobileResultsBadges';
 import { useKangurMobileResultsDuels } from './useKangurMobileResultsDuels';
-
-function SummaryChip({
-  label,
-  backgroundColor = '#eef2ff',
-  borderColor = '#c7d2fe',
-  textColor = '#4338ca',
-}: {
-  label: string;
-  backgroundColor?: string;
-  borderColor?: string;
-  textColor?: string;
-}): React.JSX.Element {
-  return (
-    <KangurMobileSummaryChip
-      backgroundColor={backgroundColor}
-      borderColor={borderColor}
-      label={label}
-      textColor={textColor}
-    />
-  );
-}
 
 const getAccuracyTone = (
   accuracyPercent: number,
@@ -207,17 +188,7 @@ function OperationInsightCard({
   const operationTone = getOperationTone(operation.family);
 
   return (
-    <View
-      style={{
-        flexBasis: '48%',
-        gap: 10,
-        borderRadius: 20,
-        borderWidth: 1,
-        borderColor: '#e2e8f0',
-        backgroundColor: '#f8fafc',
-        padding: 14,
-      }}
-    >
+    <InsetPanel gap={10} style={{ flexBasis: '48%' }}>
       <Text style={{ color: '#64748b', fontSize: 12, fontWeight: '700' }}>{title}</Text>
       <Text style={{ color: '#0f172a', fontSize: 18, fontWeight: '800' }}>
         {formatKangurMobileScoreOperation(operation.operation, locale)}
@@ -225,122 +196,58 @@ function OperationInsightCard({
       <Text style={{ color: '#475569', fontSize: 13, lineHeight: 18 }}>{description}</Text>
 
       <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
-        <View
-          style={{
-            borderRadius: 999,
-            borderWidth: 1,
-            borderColor: operationTone.borderColor,
-            backgroundColor: operationTone.backgroundColor,
-            paddingHorizontal: 12,
-            paddingVertical: 7,
-          }}
-        >
-          <Text
-            style={{
-              color: operationTone.textColor,
-              fontSize: 12,
-              fontWeight: '700',
-            }}
-          >
-            {copy({
-              de: `Durchschnitt ${operation.averageAccuracyPercent}%`,
-              en: `Average ${operation.averageAccuracyPercent}%`,
-              pl: `Średnio ${operation.averageAccuracyPercent}%`,
-            })}
-          </Text>
-        </View>
-        <View
-          style={{
-            borderRadius: 999,
-            borderWidth: 1,
-            borderColor: '#cbd5e1',
+        <Pill
+          label={copy({
+            de: `Durchschnitt ${operation.averageAccuracyPercent}%`,
+            en: `Average ${operation.averageAccuracyPercent}%`,
+            pl: `Średnio ${operation.averageAccuracyPercent}%`,
+          })}
+          tone={operationTone}
+        />
+        <Pill
+          label={copy({
+            de: `Ergebnisse ${operation.sessions}`,
+            en: `Results ${operation.sessions}`,
+            pl: `Wyniki ${operation.sessions}`,
+          })}
+          tone={{
             backgroundColor: '#ffffff',
-            paddingHorizontal: 12,
-            paddingVertical: 7,
+            borderColor: '#cbd5e1',
+            textColor: '#475569',
           }}
-        >
-          <Text style={{ color: '#475569', fontSize: 12, fontWeight: '700' }}>
-            {copy({
-              de: `Ergebnisse ${operation.sessions}`,
-              en: `Results ${operation.sessions}`,
-              pl: `Wyniki ${operation.sessions}`,
-            })}
-          </Text>
-        </View>
+        />
       </View>
 
       <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
-        <Link href={createKangurPracticeHref(operation.operation)} asChild>
-          <Pressable
-            accessibilityRole='button'
-            style={{
-              alignSelf: 'flex-start',
-              borderRadius: 999,
-              backgroundColor: '#0f172a',
-              paddingHorizontal: 12,
-              paddingVertical: 9,
-            }}
-          >
-            <Text style={{ color: '#ffffff', fontWeight: '700' }}>
-              {practiceLabel}
-            </Text>
-          </Pressable>
-        </Link>
+        <LinkButton
+          href={createKangurPracticeHref(operation.operation)}
+          label={practiceLabel}
+          tone='primary'
+        />
 
         {lessonHref ? (
-          <Link href={lessonHref} asChild>
-            <Pressable
-              accessibilityRole='button'
-              style={{
-                alignSelf: 'flex-start',
-                borderRadius: 999,
-                borderWidth: 1,
-                borderColor: '#cbd5e1',
-                backgroundColor: '#ffffff',
-                paddingHorizontal: 12,
-                paddingVertical: 9,
-              }}
-            >
-              <Text style={{ color: '#0f172a', fontWeight: '700' }}>
-                {copy({
-                  de: 'Lektion öffnen',
-                  en: 'Open lesson',
-                  pl: 'Otwórz lekcję',
-                })}
-              </Text>
-            </Pressable>
-          </Link>
+          <LinkButton
+            href={lessonHref}
+            label={copy({
+              de: 'Lektion öffnen',
+              en: 'Open lesson',
+              pl: 'Otwórz lekcję',
+            })}
+          />
         ) : null}
 
-        <Link
+        <LinkButton
           href={createKangurResultsHref({
             operation: operation.operation,
           })}
-          asChild
-        >
-          <Pressable
-            accessibilityRole='button'
-            style={{
-              alignSelf: 'flex-start',
-              borderRadius: 999,
-              borderWidth: 1,
-              borderColor: '#cbd5e1',
-              backgroundColor: '#ffffff',
-              paddingHorizontal: 12,
-              paddingVertical: 9,
-            }}
-            >
-              <Text style={{ color: '#0f172a', fontWeight: '700' }}>
-                {copy({
-                  de: 'Modusverlauf',
-                  en: 'Mode history',
-                  pl: 'Historia trybu',
-                })}
-              </Text>
-            </Pressable>
-          </Link>
+          label={copy({
+            de: 'Modusverlauf',
+            en: 'Mode history',
+            pl: 'Historia trybu',
+          })}
+        />
       </View>
-    </View>
+    </InsetPanel>
   );
 }
 
@@ -354,43 +261,19 @@ function LessonCheckpointRow({
 
   if (item.practiceHref) {
     practiceAction = (
-      <Link href={item.practiceHref} asChild>
-        <Pressable
-          accessibilityRole='button'
-          style={{
-            alignSelf: 'flex-start',
-            borderRadius: 999,
-            borderWidth: 1,
-            borderColor: '#cbd5e1',
-            backgroundColor: '#ffffff',
-            paddingHorizontal: 12,
-            paddingVertical: 9,
-          }}
-        >
-          <Text style={{ color: '#0f172a', fontWeight: '700' }}>
-            {copy({
-              de: 'Danach trainieren',
-              en: 'Practice after',
-              pl: 'Potem trenuj',
-            })}
-            {`: ${item.title}`}
-          </Text>
-        </Pressable>
-      </Link>
+      <LinkButton
+        href={item.practiceHref}
+        label={`${copy({
+          de: 'Danach trainieren',
+          en: 'Practice after',
+          pl: 'Potem trenuj',
+        })}: ${item.title}`}
+      />
     );
   }
 
   return (
-    <View
-      style={{
-        borderRadius: 20,
-        borderWidth: 1,
-        borderColor: '#e2e8f0',
-        backgroundColor: '#f8fafc',
-        padding: 14,
-        gap: 10,
-      }}
-    >
+    <InsetPanel gap={10}>
       <View
         style={{
           flexDirection: 'row',
@@ -411,20 +294,14 @@ function LessonCheckpointRow({
             })}
           </Text>
         </View>
-        <View
-          style={{
-            borderRadius: 999,
-            borderWidth: 1,
-            borderColor: '#c7d2fe',
+        <Pill
+          label={`${item.bestScorePercent}%`}
+          tone={{
             backgroundColor: '#eef2ff',
-            paddingHorizontal: 12,
-            paddingVertical: 7,
+            borderColor: '#c7d2fe',
+            textColor: '#4338ca',
           }}
-        >
-          <Text style={{ color: '#4338ca', fontSize: 12, fontWeight: '700' }}>
-            {item.bestScorePercent}%
-          </Text>
-        </View>
+        />
       </View>
 
       <Text style={{ color: '#64748b', fontSize: 12, lineHeight: 18 }}>
@@ -436,30 +313,18 @@ function LessonCheckpointRow({
       </Text>
 
       <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
-        <Link href={item.lessonHref} asChild>
-          <Pressable
-            accessibilityRole='button'
-            style={{
-              alignSelf: 'flex-start',
-              borderRadius: 999,
-              backgroundColor: '#0f172a',
-              paddingHorizontal: 12,
-              paddingVertical: 9,
-            }}
-          >
-            <Text style={{ color: '#ffffff', fontWeight: '700' }}>
-              {copy({
-                de: 'Zur Lektion zurück',
-                en: 'Return to lesson',
-                pl: 'Wróć do lekcji',
-              })}
-              {`: ${item.title}`}
-            </Text>
-          </Pressable>
-        </Link>
+        <LinkButton
+          href={item.lessonHref}
+          label={`${copy({
+            de: 'Zur Lektion zurück',
+            en: 'Return to lesson',
+            pl: 'Wróć do lekcji',
+          })}: ${item.title}`}
+          tone='primary'
+        />
         {practiceAction}
       </View>
-    </View>
+    </InsetPanel>
   );
 }
 
@@ -469,21 +334,14 @@ function ResultsBadgeChip({
   item: KangurMobileResultsBadgeItem;
 }): React.JSX.Element {
   return (
-    <View
-      style={{
-        alignSelf: 'flex-start',
-        borderRadius: 999,
-        borderWidth: 1,
-        borderColor: '#c7d2fe',
+    <Pill
+      label={`${item.emoji} ${item.name}`}
+      tone={{
         backgroundColor: '#eef2ff',
-        paddingHorizontal: 12,
-        paddingVertical: 7,
+        borderColor: '#c7d2fe',
+        textColor: '#4338ca',
       }}
-    >
-      <Text style={{ color: '#4338ca', fontSize: 12, fontWeight: '700' }}>
-        {item.emoji} {item.name}
-      </Text>
-    </View>
+    />
   );
 }
 
@@ -515,22 +373,7 @@ function ResultsAssignmentRow({
   let assignmentAction: React.JSX.Element;
 
   if (item.href) {
-    assignmentAction = (
-      <Link href={item.href} asChild>
-        <Pressable
-          accessibilityRole='button'
-          style={{
-            alignSelf: 'flex-start',
-            borderRadius: 999,
-            backgroundColor: '#0f172a',
-            paddingHorizontal: 12,
-            paddingVertical: 9,
-          }}
-        >
-          <Text style={{ color: '#ffffff', fontWeight: '700' }}>{assignmentActionLabel}</Text>
-        </Pressable>
-      </Link>
-    );
+    assignmentAction = <LinkButton href={item.href} label={assignmentActionLabel} tone='primary' />;
   } else {
     assignmentAction = (
       <View
@@ -565,40 +408,29 @@ function ResultsAssignmentRow({
         gap: 8,
       }}
     >
-      <View
-        style={{
-          alignSelf: 'flex-start',
-          borderRadius: 999,
-          borderWidth: 1,
-          borderColor: priorityTone.borderColor,
-          backgroundColor: priorityTone.backgroundColor,
-          paddingHorizontal: 12,
-          paddingVertical: 7,
-        }}
-      >
-        <Text style={{ color: priorityTone.textColor, fontSize: 12, fontWeight: '700' }}>
-          {copy({
-            de:
-              item.assignment.priority === 'high'
-                ? 'Hohe Priorität'
-                : item.assignment.priority === 'medium'
-                  ? 'Mittlere Priorität'
-                  : 'Niedrige Priorität',
-            en:
-              item.assignment.priority === 'high'
-                ? 'High priority'
-                : item.assignment.priority === 'medium'
-                  ? 'Medium priority'
-                  : 'Low priority',
-            pl:
-              item.assignment.priority === 'high'
-                ? 'Priorytet wysoki'
-                : item.assignment.priority === 'medium'
-                  ? 'Priorytet średni'
-                  : 'Priorytet niski',
-          })}
-        </Text>
-      </View>
+      <Pill
+        label={copy({
+          de:
+            item.assignment.priority === 'high'
+              ? 'Hohe Priorität'
+              : item.assignment.priority === 'medium'
+                ? 'Mittlere Priorität'
+                : 'Niedrige Priorität',
+          en:
+            item.assignment.priority === 'high'
+              ? 'High priority'
+              : item.assignment.priority === 'medium'
+                ? 'Medium priority'
+                : 'Low priority',
+          pl:
+            item.assignment.priority === 'high'
+              ? 'Priorytet wysoki'
+              : item.assignment.priority === 'medium'
+                ? 'Priorytet średni'
+                : 'Priorytet niski',
+        })}
+        tone={priorityTone}
+      />
       <Text style={{ color: '#0f172a', fontSize: 15, fontWeight: '800' }}>
         {item.assignment.title}
       </Text>
@@ -666,20 +498,7 @@ function LessonMasteryRow({
             })}
           </Text>
         </View>
-        <View
-          style={{
-            borderRadius: 999,
-            borderWidth: 1,
-            borderColor: masteryTone.borderColor,
-            backgroundColor: masteryTone.backgroundColor,
-            paddingHorizontal: 12,
-            paddingVertical: 7,
-          }}
-        >
-          <Text style={{ color: masteryTone.textColor, fontSize: 12, fontWeight: '700' }}>
-            {insight.masteryPercent}%
-          </Text>
-        </View>
+        <Pill label={`${insight.masteryPercent}%`} tone={masteryTone} />
       </View>
 
       <Text style={{ color: '#64748b', fontSize: 12, lineHeight: 18 }}>
@@ -1397,7 +1216,7 @@ export function KangurResultsScreen(): React.JSX.Element {
                 </View>
 
                 <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
-                  <SummaryChip
+                  <KangurMobileSummaryChip
                     label={copy({
                       de: `Rivalen ${duelResults.opponents.length}`,
                       en: `Rivals ${duelResults.opponents.length}`,
@@ -1407,7 +1226,7 @@ export function KangurResultsScreen(): React.JSX.Element {
                     borderColor='#bfdbfe'
                     textColor='#1d4ed8'
                   />
-                  <SummaryChip
+                  <KangurMobileSummaryChip
                     label={
                       duelResults.currentRank
                         ? copy({

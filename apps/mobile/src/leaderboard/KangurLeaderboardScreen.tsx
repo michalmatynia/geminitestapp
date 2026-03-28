@@ -11,7 +11,9 @@ import { createKangurPlanHref } from '../plan/planHref';
 import { formatKangurMobileScoreDateTime } from '../scores/mobileScoreSummary';
 import {
   KangurMobileFilterChip,
+  KangurMobileInsetPanel as InsetPanel,
   KangurMobileLinkButton as LinkButton,
+  KangurMobilePill as Pill,
   KangurMobileScrollScreen,
   KangurMobileSectionTitle,
   KangurMobileSummaryChip,
@@ -40,49 +42,6 @@ const LESSONS_ROUTE = '/lessons' as Href;
 const PLAN_ROUTE = createKangurPlanHref();
 const PROFILE_ROUTE = '/profile' as Href;
 
-function FilterChip({
-  label,
-  selected,
-  onPress,
-}: {
-  label: string;
-  selected: boolean;
-  onPress: () => void;
-}): React.JSX.Element {
-  return <KangurMobileFilterChip label={label} onPress={onPress} selected={selected} />;
-}
-
-function SectionTitle({
-  title,
-  subtitle,
-}: {
-  title: string;
-  subtitle: string;
-}): React.JSX.Element {
-  return <KangurMobileSectionTitle subtitle={subtitle} title={title} />;
-}
-
-function SummaryChip({
-  label,
-  backgroundColor = '#eef2ff',
-  borderColor = '#c7d2fe',
-  textColor = '#4338ca',
-}: {
-  label: string;
-  backgroundColor?: string;
-  borderColor?: string;
-  textColor?: string;
-}): React.JSX.Element {
-  return (
-    <KangurMobileSummaryChip
-      backgroundColor={backgroundColor}
-      borderColor={borderColor}
-      label={label}
-      textColor={textColor}
-    />
-  );
-}
-
 function LessonCheckpointRow({
   item,
 }: {
@@ -93,42 +52,19 @@ function LessonCheckpointRow({
 
   if (item.practiceHref) {
     practiceAction = (
-      <Link href={item.practiceHref} asChild>
-        <Pressable
-          accessibilityRole='button'
-          style={{
-            alignSelf: 'flex-start',
-            borderRadius: 999,
-            borderWidth: 1,
-            borderColor: '#cbd5e1',
-            backgroundColor: '#ffffff',
-            paddingHorizontal: 12,
-            paddingVertical: 9,
-          }}
-        >
-          <Text style={{ color: '#0f172a', fontWeight: '700' }}>
-            {`${copy({
-              de: 'Danach trainieren',
-              en: 'Practice after',
-              pl: 'Potem trenuj',
-            })}: ${item.title}`}
-          </Text>
-        </Pressable>
-      </Link>
+      <LinkButton
+        href={item.practiceHref}
+        label={`${copy({
+          de: 'Danach trainieren',
+          en: 'Practice after',
+          pl: 'Potem trenuj',
+        })}: ${item.title}`}
+      />
     );
   }
 
   return (
-    <View
-      style={{
-        borderRadius: 20,
-        borderWidth: 1,
-        borderColor: '#e2e8f0',
-        backgroundColor: '#f8fafc',
-        padding: 14,
-        gap: 10,
-      }}
-    >
+    <InsetPanel gap={10}>
       <View
         style={{
           flexDirection: 'row',
@@ -149,20 +85,14 @@ function LessonCheckpointRow({
             })}
           </Text>
         </View>
-        <View
-          style={{
-            borderRadius: 999,
-            borderWidth: 1,
-            borderColor: '#c7d2fe',
+        <Pill
+          label={`${item.bestScorePercent}%`}
+          tone={{
             backgroundColor: '#eef2ff',
-            paddingHorizontal: 12,
-            paddingVertical: 7,
+            borderColor: '#c7d2fe',
+            textColor: '#4338ca',
           }}
-        >
-          <Text style={{ color: '#4338ca', fontSize: 12, fontWeight: '700' }}>
-            {item.bestScorePercent}%
-          </Text>
-        </View>
+        />
       </View>
 
       <Text style={{ color: '#64748b', fontSize: 12, lineHeight: 18 }}>
@@ -174,30 +104,19 @@ function LessonCheckpointRow({
       </Text>
 
       <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
-        <Link href={item.lessonHref} asChild>
-          <Pressable
-            accessibilityRole='button'
-            style={{
-              alignSelf: 'flex-start',
-              borderRadius: 999,
-              backgroundColor: '#0f172a',
-              paddingHorizontal: 12,
-              paddingVertical: 9,
-            }}
-          >
-            <Text style={{ color: '#ffffff', fontWeight: '700' }}>
-              {`${copy({
-                de: 'Zur Lektion zurück',
-                en: 'Return to lesson',
-                pl: 'Wróć do lekcji',
-              })}: ${item.title}`}
-            </Text>
-          </Pressable>
-        </Link>
+        <LinkButton
+          href={item.lessonHref}
+          label={`${copy({
+            de: 'Zur Lektion zurück',
+            en: 'Return to lesson',
+            pl: 'Wróć do lekcji',
+          })}: ${item.title}`}
+          tone='primary'
+        />
 
         {practiceAction}
       </View>
-    </View>
+    </InsetPanel>
   );
 }
 
@@ -230,20 +149,7 @@ function LeaderboardAssignmentRow({
 
   if (item.href) {
     assignmentAction = (
-      <Link href={item.href} asChild>
-        <Pressable
-          accessibilityRole='button'
-          style={{
-            alignSelf: 'flex-start',
-            borderRadius: 999,
-            backgroundColor: '#0f172a',
-            paddingHorizontal: 12,
-            paddingVertical: 9,
-          }}
-        >
-          <Text style={{ color: '#ffffff', fontWeight: '700' }}>{assignmentActionLabel}</Text>
-        </Pressable>
-      </Link>
+      <LinkButton href={item.href} label={assignmentActionLabel} tone='primary' />
     );
   } else {
     assignmentAction = (
@@ -269,50 +175,30 @@ function LeaderboardAssignmentRow({
   }
 
   return (
-    <View
-      style={{
-        borderRadius: 20,
-        borderWidth: 1,
-        borderColor: '#e2e8f0',
-        backgroundColor: '#f8fafc',
-        padding: 14,
-        gap: 8,
-      }}
-    >
-      <View
-        style={{
-          alignSelf: 'flex-start',
-          borderRadius: 999,
-          borderWidth: 1,
-          borderColor: priorityTone.borderColor,
-          backgroundColor: priorityTone.backgroundColor,
-          paddingHorizontal: 12,
-          paddingVertical: 7,
-        }}
-      >
-        <Text style={{ color: priorityTone.textColor, fontSize: 12, fontWeight: '700' }}>
-          {copy({
-            de:
-              item.assignment.priority === 'high'
-                ? 'Hohe Priorität'
-                : item.assignment.priority === 'medium'
-                  ? 'Mittlere Priorität'
-                  : 'Niedrige Priorität',
-            en:
-              item.assignment.priority === 'high'
-                ? 'High priority'
-                : item.assignment.priority === 'medium'
-                  ? 'Medium priority'
-                  : 'Low priority',
-            pl:
-              item.assignment.priority === 'high'
-                ? 'Priorytet wysoki'
-                : item.assignment.priority === 'medium'
-                  ? 'Priorytet średni'
-                  : 'Priorytet niski',
-          })}
-        </Text>
-      </View>
+    <InsetPanel gap={8}>
+      <Pill
+        label={copy({
+          de:
+            item.assignment.priority === 'high'
+              ? 'Hohe Priorität'
+              : item.assignment.priority === 'medium'
+                ? 'Mittlere Priorität'
+                : 'Niedrige Priorität',
+          en:
+            item.assignment.priority === 'high'
+              ? 'High priority'
+              : item.assignment.priority === 'medium'
+                ? 'Medium priority'
+                : 'Low priority',
+          pl:
+            item.assignment.priority === 'high'
+              ? 'Priorytet wysoki'
+              : item.assignment.priority === 'medium'
+                ? 'Priorytet średni'
+                : 'Priorytet niski',
+        })}
+        tone={priorityTone}
+      />
 
       <Text style={{ color: '#0f172a', fontSize: 16, fontWeight: '800' }}>
         {item.assignment.title}
@@ -329,7 +215,7 @@ function LeaderboardAssignmentRow({
       </Text>
 
       {assignmentAction}
-    </View>
+    </InsetPanel>
   );
 }
 
@@ -339,21 +225,14 @@ function LeaderboardBadgeChip({
   item: KangurMobileLeaderboardBadgeItem;
 }): React.JSX.Element {
   return (
-    <View
-      style={{
-        alignSelf: 'flex-start',
-        borderRadius: 999,
-        borderWidth: 1,
-        borderColor: '#c7d2fe',
+    <Pill
+      label={`${item.emoji} ${item.name}`}
+      tone={{
         backgroundColor: '#eef2ff',
-        paddingHorizontal: 12,
-        paddingVertical: 7,
+        borderColor: '#c7d2fe',
+        textColor: '#4338ca',
       }}
-    >
-      <Text style={{ color: '#4338ca', fontSize: 12, fontWeight: '700' }}>
-        {item.emoji} {item.name}
-      </Text>
-    </View>
+    />
   );
 }
 
@@ -403,16 +282,7 @@ function LessonMasteryRow({
       });
 
   return (
-    <View
-      style={{
-        borderRadius: 20,
-        borderWidth: 1,
-        borderColor: '#e2e8f0',
-        backgroundColor: '#f8fafc',
-        padding: 14,
-        gap: 10,
-      }}
-    >
+    <InsetPanel gap={10}>
       <View
         style={{
           flexDirection: 'row',
@@ -434,20 +304,7 @@ function LessonMasteryRow({
             })}
           </Text>
         </View>
-        <View
-          style={{
-            borderRadius: 999,
-            borderWidth: 1,
-            borderColor: masteryTone.borderColor,
-            backgroundColor: masteryTone.backgroundColor,
-            paddingHorizontal: 12,
-            paddingVertical: 7,
-          }}
-        >
-          <Text style={{ color: masteryTone.textColor, fontSize: 12, fontWeight: '700' }}>
-            {insight.masteryPercent}%
-          </Text>
-        </View>
+        <Pill label={`${insight.masteryPercent}%`} tone={masteryTone} />
       </View>
 
       <Text style={{ color: '#64748b', fontSize: 12, lineHeight: 18 }}>
@@ -459,26 +316,15 @@ function LessonMasteryRow({
       </Text>
 
       <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
-        <Link href={insight.lessonHref} asChild>
-          <Pressable
-            accessibilityRole='button'
-            style={{
-              alignSelf: 'flex-start',
-              borderRadius: 999,
-              backgroundColor: '#0f172a',
-              paddingHorizontal: 12,
-              paddingVertical: 9,
-            }}
-          >
-            <Text style={{ color: '#ffffff', fontWeight: '700' }}>
-              {copy({
-                de: 'Lektion öffnen',
-                en: 'Open lesson',
-                pl: 'Otwórz lekcję',
-              })}
-            </Text>
-          </Pressable>
-        </Link>
+        <LinkButton
+          href={insight.lessonHref}
+          label={copy({
+            de: 'Lektion öffnen',
+            en: 'Open lesson',
+            pl: 'Otwórz lekcję',
+          })}
+          tone='primary'
+        />
         {renderLeaderboardPracticeLink({
           href: insight.practiceHref,
           label: copy({
@@ -488,7 +334,7 @@ function LessonMasteryRow({
           }),
         })}
       </View>
-    </View>
+    </InsetPanel>
   );
 }
 
@@ -558,7 +404,7 @@ export function KangurLeaderboardScreen(): React.JSX.Element {
             })}
           />
 
-          <SectionTitle
+          <KangurMobileSectionTitle
             title={copy({
               de: 'Rangliste',
               en: 'Leaderboard',
@@ -572,14 +418,14 @@ export function KangurLeaderboardScreen(): React.JSX.Element {
           />
 
           <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
-            <SummaryChip
+            <KangurMobileSummaryChip
               label={copy({
                 de: `Ergebnisse ${visibleCount}`,
                 en: `Results ${visibleCount}`,
                 pl: `Wyniki ${visibleCount}`,
               })}
             />
-            <SummaryChip
+            <KangurMobileSummaryChip
               label={
                 duelLeaderboard.isLoading
                   ? copy({
@@ -597,7 +443,7 @@ export function KangurLeaderboardScreen(): React.JSX.Element {
               borderColor='#bfdbfe'
               textColor='#1d4ed8'
             />
-            <SummaryChip
+            <KangurMobileSummaryChip
               label={copy({
                 de: `Lektionen ${lessonMastery.trackedLessons}`,
                 en: `Lessons ${lessonMastery.trackedLessons}`,
@@ -806,7 +652,7 @@ export function KangurLeaderboardScreen(): React.JSX.Element {
             </Text>
             <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={FILTER_SCROLL_STYLE}>
               {operationOptions.map((option) => (
-                <FilterChip
+                <KangurMobileFilterChip
                   key={option.id}
                   label={`${option.emoji} ${option.label}`}
                   onPress={() => {
@@ -828,7 +674,7 @@ export function KangurLeaderboardScreen(): React.JSX.Element {
             </Text>
             <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={FILTER_SCROLL_STYLE}>
               {userOptions.map((option) => (
-                <FilterChip
+                <KangurMobileFilterChip
                   key={option.id}
                   label={option.label}
                   onPress={() => {
@@ -1065,7 +911,7 @@ export function KangurLeaderboardScreen(): React.JSX.Element {
           </View>
 
           <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
-            <SummaryChip
+            <KangurMobileSummaryChip
               label={copy({
                 de: `Spieler ${duelLeaderboard.entries.length}`,
                 en: `Players ${duelLeaderboard.entries.length}`,
@@ -1075,7 +921,7 @@ export function KangurLeaderboardScreen(): React.JSX.Element {
               borderColor='#bfdbfe'
               textColor='#1d4ed8'
             />
-            <SummaryChip
+            <KangurMobileSummaryChip
               label={
                 duelTopWinRatePercent === null
                   ? copy({
@@ -1093,7 +939,7 @@ export function KangurLeaderboardScreen(): React.JSX.Element {
               borderColor='#fde68a'
               textColor='#b45309'
             />
-            <SummaryChip
+            <KangurMobileSummaryChip
               label={
                 duelLeaderboard.currentRank
                   ? copy({
@@ -1714,22 +1560,5 @@ function renderLeaderboardPracticeLink({
     return null;
   }
 
-  return (
-    <Link href={href} asChild>
-      <Pressable
-        accessibilityRole='button'
-        style={{
-          alignSelf: 'flex-start',
-          borderRadius: 999,
-          borderWidth: 1,
-          borderColor: '#cbd5e1',
-          backgroundColor: '#ffffff',
-          paddingHorizontal: 12,
-          paddingVertical: 9,
-        }}
-      >
-        <Text style={{ color: '#0f172a', fontWeight: '700' }}>{label}</Text>
-      </Pressable>
-    </Link>
-  );
+  return <LinkButton href={href} label={label} />;
 }

@@ -1,13 +1,12 @@
 'use client';
 
-import React from 'react';
-import { FormField, FormSection, Input, MultiSelect, SelectSimple, Textarea } from '@/shared/ui';
+import { FormField, FormSection, Input, SelectSimple } from '@/shared/ui';
 import {
   PARTY_KIND_OPTIONS as FILEMAKER_PARTY_KIND_OPTIONS,
   formatCommaSeparatedValues as filemakerFormatCommaSeparatedValues,
   parseCommaSeparatedValues as filemakerParseCommaSeparatedValues,
 } from '../AdminFilemakerCampaignEditPage.utils';
-import type { FilemakerPartyKind, FilemakerPartyReference } from '../types';
+import type { FilemakerPartyKind, FilemakerPartyReference } from '../../types';
 
 interface AudienceSourceSectionProps {
   partyKind: FilemakerPartyKind;
@@ -15,7 +14,6 @@ interface AudienceSourceSectionProps {
   manualPartyIds: string[];
   setManualPartyIds: (val: string[]) => void;
   manualPartyReferences: FilemakerPartyReference[];
-  setManualPartyReferences: (val: FilemakerPartyReference[]) => void;
 }
 
 export const AudienceSourceSection = ({
@@ -24,14 +22,14 @@ export const AudienceSourceSection = ({
   manualPartyIds,
   setManualPartyIds,
   manualPartyReferences,
-  setManualPartyReferences,
 }: AudienceSourceSectionProps) => (
   <FormSection title='Audience & Source' className='space-y-4 p-4'>
     <div className='grid gap-4 md:grid-cols-2'>
       <FormField label='Recipient Kind'>
         <SelectSimple
+          ariaLabel='Recipient kind'
           value={partyKind}
-          onChange={(val) => setPartyKind(val as any)}
+          onValueChange={(value) => setPartyKind(value as FilemakerPartyKind)}
           options={FILEMAKER_PARTY_KIND_OPTIONS}
         />
       </FormField>

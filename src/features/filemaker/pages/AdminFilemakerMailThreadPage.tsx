@@ -5,6 +5,7 @@ import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { DocumentWysiwygEditor } from '@/features/document-editor/components/DocumentWysiwygEditor';
+import { FilemakerMailSidebar } from '../components/FilemakerMailSidebar';
 import { parseFilemakerMailParticipantsInput } from '../mail-utils';
 import { sanitizeHtml } from '@/shared/utils';
 
@@ -121,103 +122,110 @@ export function AdminFilemakerMailThreadPage(): React.JSX.Element {
   };
 
   return (
-    <div className='page-section-compact space-y-6'>
-      <PanelHeader
-        title={detail?.thread.subject ?? 'Mail Thread'}
-        description='Review synced messages and reply using the shared rich-text editor.'
-        icon={<Reply className='size-4' />}
-        actions={[
-          {
-            key: 'back',
-            label: 'Back to Mail',
-            icon: <ArrowLeft className='size-4' />,
-            variant: 'outline',
-            onClick: () => router.push(backHref),
-          },
-        ]}
+    <div className='page-section-compact grid gap-6 xl:grid-cols-[320px_minmax(0,1fr)]'>
+      <FilemakerMailSidebar
+        selectedAccountId={searchParams.get('accountId')}
+        selectedMailboxPath={searchParams.get('mailboxPath')}
       />
 
-      {detail ? (
-        <div className='space-y-4'>
-          <div className='flex flex-wrap gap-2'>
-            <Badge variant='outline' className='text-[10px]'>
-              Messages: {detail.thread.messageCount}
-            </Badge>
-            <Badge variant='outline' className='text-[10px]'>
-              Unread: {detail.thread.unreadCount}
-            </Badge>
-            <Badge variant='outline' className='text-[10px]'>
-              Mailbox: {detail.thread.mailboxPath}
-            </Badge>
-          </div>
+      <div className='space-y-6'>
+        <PanelHeader
+          title={detail?.thread.subject ?? 'Mail Thread'}
+          description='Review synced messages and reply using the shared rich-text editor.'
+          icon={<Reply className='size-4' />}
+          actions={[
+            {
+              key: 'back',
+              label: 'Back to Mail',
+              icon: <ArrowLeft className='size-4' />,
+              variant: 'outline',
+              onClick: () => router.push(backHref),
+            },
+          ]}
+        />
 
-          <div className='space-y-3'>
-            {detail.messages.map((message) => (
-              <div
-                key={message.id}
-                className='rounded-lg border border-border/60 bg-card/25 p-4 text-sm text-gray-300'
-              >
-                <div className='mb-3 flex flex-wrap items-center justify-between gap-2'>
-                  <div>
-                    <div className='font-medium text-white'>
-                      {message.from?.name ?? message.from?.address ?? 'Unknown sender'}
+        {detail ? (
+          <div className='space-y-4'>
+            <div className='flex flex-wrap gap-2'>
+              <Badge variant='outline' className='text-[10px]'>
+                Messages: {detail.thread.messageCount}
+              </Badge>
+              <Badge variant='outline' className='text-[10px]'>
+                Unread: {detail.thread.unreadCount}
+              </Badge>
+              <Badge variant='outline' className='text-[10px]'>
+                Mailbox: {detail.thread.mailboxPath}
+              </Badge>
+            </div>
+
+            <div className='space-y-3'>
+              {detail.messages.map((message) => (
+                <div
+                  key={message.id}
+                  className='rounded-lg border border-border/60 bg-card/25 p-4 text-sm text-gray-300'
+                >
+                  <div className='mb-3 flex flex-wrap items-center justify-between gap-2'>
+                    <div>
+                      <div className='font-medium text-white'>
+                        {message.from?.name ?? message.from?.address ?? 'Unknown sender'}
+                      </div>
+                      <div className='text-[11px] text-gray-500'>
+                        To: {formatParticipants(message.to)}
+                      </div>
                     </div>
                     <div className='text-[11px] text-gray-500'>
-                      To: {formatParticipants(message.to)}
+                      {(message.receivedAt ?? message.sentAt)
+                        ? new Date(message.receivedAt ?? message.sentAt ?? '').toLocaleString()
+                        : 'Unknown time'}
                     </div>
                   </div>
-                  <div className='text-[11px] text-gray-500'>
-                    {(message.receivedAt ?? message.sentAt)
-                      ? new Date(message.receivedAt ?? message.sentAt ?? '').toLocaleString()
-                      : 'Unknown time'}
-                  </div>
+                  {message.htmlBody ? (
+                    <div
+                      className='prose prose-invert max-w-none prose-a:text-sky-300'
+                      dangerouslySetInnerHTML={{ __html: sanitizeHtml(message.htmlBody) }}
+                    />
+                  ) : (
+                    <pre className='whitespace-pre-wrap text-sm text-gray-300'>
+                      {message.textBody ?? '(no content)'}
+                    </pre>
+                  )}
                 </div>
-                {message.htmlBody ? (
-                  <div
-                    className='prose prose-invert max-w-none prose-a:text-sky-300'
-                    dangerouslySetInnerHTML={{ __html: sanitizeHtml(message.htmlBody) }}
-                  />
-                ) : (
-                  <pre className='whitespace-pre-wrap text-sm text-gray-300'>
-                    {message.textBody ?? '(no content)'}
-                  </pre>
-                )}
-              </div>
-            ))}
-          </div>
-
-          <FormSection title='Reply' className='space-y-4 p-4'>
-            <FormField label='Reply to'>
-              <Input value={replyTo} onChange={(event) => setReplyTo(event.target.value)} />
-            </FormField>
-            <FormField label='Subject'>
-              <Input
-                value={replySubject}
-                onChange={(event) => setReplySubject(event.target.value)}
-              />
-            </FormField>
-            <DocumentWysiwygEditor
-              value={replyHtml}
-              onChange={setReplyHtml}
-              placeholder='Write your reply...'
-              enableAdvancedTools
-              allowFontFamily
-              allowTextAlign
-            />
-            <div className='flex justify-end'>
-              <Button
-                type='button'
-                onClick={(): void => {
-                  void handleReply();
-                }}
-                disabled={isSending || isLoading}
-              >
-                {isSending ? 'Sending reply...' : 'Send Reply'}
-              </Button>
+              ))}
             </div>
-          </FormSection>
-        </div>
-      ) : null}
+
+            <FormSection title='Reply' className='space-y-4 p-4'>
+              <FormField label='Reply to'>
+                <Input value={replyTo} onChange={(event) => setReplyTo(event.target.value)} />
+              </FormField>
+              <FormField label='Subject'>
+                <Input
+                  value={replySubject}
+                  onChange={(event) => setReplySubject(event.target.value)}
+                />
+              </FormField>
+              <DocumentWysiwygEditor
+                value={replyHtml}
+                onChange={setReplyHtml}
+                placeholder='Write your reply...'
+                enableAdvancedTools
+                allowFontFamily
+                allowTextAlign
+              />
+              <div className='flex justify-end'>
+                <Button
+                  type='button'
+                  onClick={(): void => {
+                    void handleReply();
+                  }}
+                  disabled={isSending || isLoading}
+                >
+                  {isSending ? 'Sending reply...' : 'Send Reply'}
+                </Button>
+              </div>
+            </FormSection>
+          </div>
+        ) : null}
+      </div>
     </div>
   );
 }

@@ -16,7 +16,7 @@ import {
 } from '@/features/kangur/lessons/lesson-catalog-i18n';
 import type { GamesLibraryGameModalProps } from './GamesLibraryGameModal.types';
 
-export function GamesLibraryGameModal(props: GamesLibraryGameModalProps): React.JSX.Element {
+export function GamesLibraryGameModal(props: GamesLibraryGameModalProps): React.JSX.Element | null {
   const { game, open, onOpenChange } = props;
   const state = useGamesLibraryGameModalState(props);
   const {

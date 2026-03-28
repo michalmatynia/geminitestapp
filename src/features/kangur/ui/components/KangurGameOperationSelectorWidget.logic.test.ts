@@ -14,6 +14,11 @@ describe('KangurGameOperationSelectorWidget.logic', () => {
       screen: 'logical_patterns_quiz',
     });
 
+    expect(resolveLessonRecommendationTarget('english_adverbs', 79)).toEqual({
+      kind: 'screen',
+      screen: 'english_adverbs_quiz',
+    });
+
     expect(resolveLessonRecommendationTarget('english_sentence_structure', 76)).toEqual({
       kind: 'screen',
       screen: 'english_sentence_quiz',
@@ -30,6 +35,10 @@ describe('KangurGameOperationSelectorWidget.logic', () => {
     expect(resolveLessonRecommendationTarget('art_shapes_basic', 65)).toEqual({
       kind: 'screen',
       screen: 'art_shape_rotation_quiz',
+    });
+    expect(resolveLessonRecommendationTarget('english_adverbs_frequency', 65)).toEqual({
+      kind: 'screen',
+      screen: 'english_adverbs_frequency_quiz',
     });
   });
 

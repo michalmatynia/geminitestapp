@@ -168,6 +168,7 @@ import ParentDashboard from './ParentDashboard';
 describe('ParentDashboard', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    getDisabledDocsTooltipsMock.mockReturnValue(disabledDocsTooltipsMock);
     authState.value = {
       hasResolvedAuth: true,
       isLoadingAuth: false,

@@ -15,63 +15,6 @@ type KangurMobileAiTutorCardProps = {
   gameTarget?: 'competition' | 'practice';
 };
 
-function ActionButton({
-  disabled = false,
-  label,
-  onPress,
-}: {
-  disabled?: boolean;
-  label: string;
-  onPress?: () => void;
-}): React.JSX.Element {
-  return (
-    <KangurMobileActionButton
-      accessibilityLabel={label}
-      disabled={disabled}
-      label={label}
-      onPress={async () => {
-        onPress?.();
-      }}
-      style={{
-        alignItems: 'center',
-        borderWidth: 1,
-        justifyContent: 'center',
-        minHeight: 44,
-        opacity: disabled ? 0.7 : 1,
-        backgroundColor: disabled ? '#e2e8f0' : '#eef2ff',
-        borderColor: disabled ? '#cbd5e1' : '#c7d2fe',
-      }}
-      textStyle={{
-        color: disabled ? '#64748b' : '#4338ca',
-        textAlign: 'center',
-      }}
-      tone='secondary'
-    />
-  );
-}
-
-function LinkButton({
-  href,
-  label,
-}: {
-  href: NonNullable<ReturnType<typeof useKangurMobileAiTutor>['responseActions'][number]['href']>;
-  label: string;
-}): React.JSX.Element {
-  return (
-    <KangurMobileLinkButton
-      label={label}
-      accessibilityLabel={label}
-      href={href}
-      style={{
-        alignItems: 'center',
-        justifyContent: 'center',
-        minHeight: 44,
-      }}
-      textStyle={{ textAlign: 'center' }}
-    />
-  );
-}
-
 export function KangurMobileAiTutorCard({
   context,
   gameTarget = 'practice',
@@ -85,7 +28,20 @@ export function KangurMobileAiTutorCard({
 
   for (const action of tutor.responseActions) {
     if (action.href) {
-      responseActionItems.push(<LinkButton href={action.href} key={action.id} label={action.label} />);
+      responseActionItems.push(
+        <KangurMobileLinkButton
+          accessibilityLabel={action.label}
+          href={action.href}
+          key={action.id}
+          label={action.label}
+          style={{
+            alignItems: 'center',
+            justifyContent: 'center',
+            minHeight: 44,
+          }}
+          textStyle={{ textAlign: 'center' }}
+        />,
+      );
       continue;
     }
 
@@ -104,7 +60,14 @@ export function KangurMobileAiTutorCard({
   if (tutor.websiteHelpTarget) {
     if (tutor.websiteHelpTarget.href) {
       websiteHelpTargetContent = (
-        <LinkButton
+        <KangurMobileLinkButton
+          accessibilityLabel={
+            locale === 'de'
+              ? `Öffne: ${tutor.websiteHelpTarget.label}`
+              : locale === 'en'
+                ? `Open: ${tutor.websiteHelpTarget.label}`
+                : `Przejdź: ${tutor.websiteHelpTarget.label}`
+          }
           href={tutor.websiteHelpTarget.href}
           label={
             locale === 'de'
@@ -113,6 +76,12 @@ export function KangurMobileAiTutorCard({
                 ? `Open: ${tutor.websiteHelpTarget.label}`
                 : `Przejdź: ${tutor.websiteHelpTarget.label}`
           }
+          style={{
+            alignItems: 'center',
+            justifyContent: 'center',
+            minHeight: 44,
+          }}
+          textStyle={{ textAlign: 'center' }}
         />
       );
     } else {
@@ -295,13 +264,30 @@ export function KangurMobileAiTutorCard({
       {tutor.quickActions.length > 0 ? (
         <View style={{ flexDirection: 'column', gap: 8 }}>
           {tutor.quickActions.map((action) => (
-            <ActionButton
+            <KangurMobileActionButton
+              accessibilityLabel={action.label}
               disabled={!tutor.canSendMessages || tutor.isSending}
               key={action.id}
               label={action.label}
               onPress={() => {
                 void tutor.sendQuickAction(action.id);
               }}
+              style={{
+                alignItems: 'center',
+                borderWidth: 1,
+                justifyContent: 'center',
+                minHeight: 44,
+                opacity: !tutor.canSendMessages || tutor.isSending ? 0.7 : 1,
+                backgroundColor:
+                  !tutor.canSendMessages || tutor.isSending ? '#e2e8f0' : '#eef2ff',
+                borderColor:
+                  !tutor.canSendMessages || tutor.isSending ? '#cbd5e1' : '#c7d2fe',
+              }}
+              textStyle={{
+                color: !tutor.canSendMessages || tutor.isSending ? '#64748b' : '#4338ca',
+                textAlign: 'center',
+              }}
+              tone='secondary'
             />
           ))}
         </View>

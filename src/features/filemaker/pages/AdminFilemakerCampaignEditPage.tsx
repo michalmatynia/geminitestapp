@@ -56,7 +56,6 @@ export function AdminFilemakerCampaignEditPage(): React.JSX.Element {
     isLoading,
     isUpdatePending,
     router,
-    database,
     deliveryRegistry,
   } = useAdminFilemakerCampaignEditState();
 

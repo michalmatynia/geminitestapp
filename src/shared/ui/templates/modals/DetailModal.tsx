@@ -142,27 +142,28 @@ const renderDetailModal = ({
  * Used for logs, previews, and read-only detail views.
  * Consolidates *DetailModal, *PreviewModal, LogModal patterns.
  */
-export function DetailModal({
-  isOpen,
-  onClose,
-  title,
-  subtitle,
-  header,
-  headerActions,
-  children,
-  footer,
-  size = 'md',
-  padding = 'default',
-  maxHeight = 'max-h-[70vh]',
-  className,
-  contentClassName,
-  bodyClassName,
-  showClose,
-  closeOnOutside,
-  closeOnEscape,
-  onInteractOutside,
-  onEscapeKeyDown,
-}: DetailModalProps): React.JSX.Element {
+export function DetailModal(props: DetailModalProps): React.JSX.Element {
+  const {
+    isOpen,
+    onClose,
+    title,
+    subtitle,
+    header,
+    headerActions,
+    children,
+    footer,
+    size = 'md',
+    padding = 'default',
+    maxHeight = 'max-h-[70vh]',
+    className,
+    contentClassName,
+    bodyClassName,
+    showClose,
+    closeOnOutside,
+    closeOnEscape,
+    onInteractOutside,
+    onEscapeKeyDown,
+  } = props;
   const handleInteractOutside = (event: Event): void => {
     if (closeOnOutside === false) {
       event.preventDefault();

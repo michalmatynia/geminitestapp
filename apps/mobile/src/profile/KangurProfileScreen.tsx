@@ -28,6 +28,7 @@ import { createKangurResultsHref } from '../scores/resultsHref';
 import {
   KangurMobileActionButton as ActionButton,
   KangurMobileCard as Card,
+  KangurMobileInsetPanel as InsetPanel,
   KangurMobileLinkButton as LinkButton,
   KangurMobileMetric as Metric,
   KangurMobilePill as Pill,
@@ -279,16 +280,7 @@ function MasteryInsightRow({
   const masteryTone = getMasteryTone(insight.masteryPercent);
 
   return (
-    <View
-      style={{
-        borderRadius: 20,
-        borderWidth: 1,
-        borderColor: '#e2e8f0',
-        backgroundColor: '#f8fafc',
-        padding: 14,
-        gap: 8,
-      }}
-    >
+    <InsetPanel gap={8}>
       <View
         style={{
           flexDirection: 'row',
@@ -319,7 +311,7 @@ function MasteryInsightRow({
           pl: `Najlepszy wynik: ${insight.bestScorePercent}% · Ostatnia próba: ${formatProfileDate(insight.lastCompletedAt, locale)}`,
         })}
       </Text>
-    </View>
+    </InsetPanel>
   );
 }
 
@@ -334,43 +326,19 @@ function LessonCheckpointRow({
 
   if (item.practiceHref) {
     practiceAction = (
-      <Link href={item.practiceHref} asChild>
-        <Pressable
-          accessibilityRole='button'
-          style={{
-            alignSelf: 'flex-start',
-            borderRadius: 999,
-            borderWidth: 1,
-            borderColor: '#cbd5e1',
-            backgroundColor: '#ffffff',
-            paddingHorizontal: 14,
-            paddingVertical: 10,
-          }}
-        >
-          <Text style={{ color: '#0f172a', fontWeight: '700' }}>
-            {copy({
-              de: 'Danach trainieren',
-              en: 'Practice after',
-              pl: 'Potem trenuj',
-            })}
-            {`: ${item.title}`}
-          </Text>
-        </Pressable>
-      </Link>
+      <LinkButton
+        href={item.practiceHref}
+        label={`${copy({
+          de: 'Danach trainieren',
+          en: 'Practice after',
+          pl: 'Potem trenuj',
+        })}: ${item.title}`}
+      />
     );
   }
 
   return (
-    <View
-      style={{
-        borderRadius: 20,
-        borderWidth: 1,
-        borderColor: '#e2e8f0',
-        backgroundColor: '#f8fafc',
-        padding: 14,
-        gap: 10,
-      }}
-    >
+    <InsetPanel gap={10}>
       <View
         style={{
           flexDirection: 'row',
@@ -427,7 +395,7 @@ function LessonCheckpointRow({
 
         {practiceAction}
       </View>
-    </View>
+    </InsetPanel>
   );
 }
 
@@ -443,42 +411,19 @@ function SessionRow({
 
   if (item.lessonHref) {
     lessonAction = (
-      <Link href={item.lessonHref} asChild>
-        <Pressable
-          accessibilityRole='button'
-          style={{
-            alignSelf: 'flex-start',
-            borderRadius: 999,
-            borderWidth: 1,
-            borderColor: '#cbd5e1',
-            backgroundColor: '#ffffff',
-            paddingHorizontal: 14,
-            paddingVertical: 10,
-          }}
-        >
-          <Text style={{ color: '#0f172a', fontWeight: '700' }}>
-            {copy({
-              de: 'Lektion öffnen',
-              en: 'Open lesson',
-              pl: 'Otwórz lekcję',
-            })}
-          </Text>
-        </Pressable>
-      </Link>
+      <LinkButton
+        href={item.lessonHref}
+        label={copy({
+          de: 'Lektion öffnen',
+          en: 'Open lesson',
+          pl: 'Otwórz lekcję',
+        })}
+      />
     );
   }
 
   return (
-    <View
-      style={{
-        borderRadius: 20,
-        borderWidth: 1,
-        borderColor: '#e2e8f0',
-        backgroundColor: '#f8fafc',
-        padding: 14,
-        gap: 10,
-      }}
-    >
+    <InsetPanel gap={10}>
       <View
         style={{
           flexDirection: 'row',
@@ -541,53 +486,28 @@ function SessionRow({
       </View>
 
       <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
-        <Link href={item.practiceHref} asChild>
-          <Pressable
-            accessibilityRole='button'
-            style={{
-              alignSelf: 'flex-start',
-              borderRadius: 999,
-              backgroundColor: '#0f172a',
-              paddingHorizontal: 14,
-              paddingVertical: 10,
-            }}
-          >
-            <Text style={{ color: '#ffffff', fontWeight: '700' }}>
-              {copy({
-                de: 'Erneut trainieren',
-                en: 'Train again',
-                pl: 'Trenuj ponownie',
-              })}
-            </Text>
-          </Pressable>
-        </Link>
+        <LinkButton
+          href={item.practiceHref}
+          label={copy({
+            de: 'Erneut trainieren',
+            en: 'Train again',
+            pl: 'Trenuj ponownie',
+          })}
+          tone='primary'
+        />
 
         {lessonAction}
 
-        <Link href={item.historyHref} asChild>
-          <Pressable
-            accessibilityRole='button'
-            style={{
-              alignSelf: 'flex-start',
-              borderRadius: 999,
-              borderWidth: 1,
-              borderColor: '#cbd5e1',
-              backgroundColor: '#ffffff',
-              paddingHorizontal: 14,
-              paddingVertical: 10,
-            }}
-          >
-            <Text style={{ color: '#0f172a', fontWeight: '700' }}>
-              {copy({
-                de: 'Modusverlauf',
-                en: 'Mode history',
-                pl: 'Historia trybu',
-              })}
-            </Text>
-          </Pressable>
-        </Link>
+        <LinkButton
+          href={item.historyHref}
+          label={copy({
+            de: 'Modusverlauf',
+            en: 'Mode history',
+            pl: 'Historia trybu',
+          })}
+        />
       </View>
-    </View>
+    </InsetPanel>
   );
 }
 
@@ -642,16 +562,7 @@ function AssignmentRow({
   }
 
   return (
-    <View
-      style={{
-        borderRadius: 20,
-        borderWidth: 1,
-        borderColor: '#e2e8f0',
-        backgroundColor: '#f8fafc',
-        padding: 14,
-        gap: 8,
-      }}
-    >
+    <InsetPanel gap={8}>
       <Pill
         label={getPriorityLabel(assignment.priority, locale)}
         tone={priorityTone}
@@ -670,7 +581,7 @@ function AssignmentRow({
         })}
       </Text>
       {assignmentAction}
-    </View>
+    </InsetPanel>
   );
 }
 

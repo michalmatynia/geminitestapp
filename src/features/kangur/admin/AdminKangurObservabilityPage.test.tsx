@@ -94,6 +94,7 @@ import { AdminKangurObservabilityPage } from './AdminKangurObservabilityPage';
 describe('AdminKangurObservabilityPage', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    getDisabledDocsTooltipsMock.mockReturnValue(disabledDocsTooltipsMock);
     navigationState.pathname = '/admin/kangur/observability';
     navigationState.search = '';
     apiPostMock.mockImplementation(async (path: string) => {

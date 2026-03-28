@@ -37,18 +37,19 @@ import { cn } from '@/shared/utils';
  */
 export const GenericPickerDropdown = memo(function GenericPickerDropdown<
   T extends PickerOption = PickerOption,
->({
-  groups,
-  onSelect,
-  selectedKey,
-  ariaLabel = 'Add item',
-  triggerClassName,
-  dropdownClassName,
-  triggerContent = <Plus className='size-3' aria-hidden='true' />,
-  disabled = false,
-  searchable = false,
-  searchPlaceholder = 'Search...',
-}: GenericPickerDropdownProps<T>): React.ReactNode {
+>(props: GenericPickerDropdownProps<T>): React.ReactNode {
+  const {
+    groups,
+    onSelect,
+    selectedKey,
+    ariaLabel = 'Add item',
+    triggerClassName,
+    dropdownClassName,
+    triggerContent = <Plus className='size-3' aria-hidden='true' />,
+    disabled = false,
+    searchable = false,
+    searchPlaceholder = 'Search...',
+  } = props;
   const [isOpen, setIsOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const listboxId = useId();

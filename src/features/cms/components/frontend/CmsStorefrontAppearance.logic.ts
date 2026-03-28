@@ -1,6 +1,6 @@
 'use client';
 
-import type { ThemeSettings } from '@/shared/contracts/cms-theme';
+import { DEFAULT_THEME, type ThemeSettings } from '@/shared/contracts/cms-theme';
 import {
   CmsStorefrontAppearanceMode,
   CmsAppearanceTone,
@@ -10,14 +10,14 @@ import {
   clampNumber,
   isNonEmptyString,
   isDarkStorefrontAppearanceMode,
-  mixCssColor,
   resolveBackgroundValue,
-  resolveSolidColor,
   toCssPx,
 } from './CmsStorefrontAppearance.utils';
 import { resolveHomeActionVars } from './CmsStorefrontAppearance.home-actions';
 import {
-  resolveButtonTextShadow,
+  resolveStorefrontAppearanceColorSchemes,
+  resolveStorefrontAppearanceTone,
+  withFallbackTone,
 } from './appearance-logic/CmsStorefrontAppearance.color-resolvers';
 import { resolveKangurRuntimeThemeVars } from './appearance-logic/CmsStorefrontAppearance.runtime-vars';
 import {
@@ -56,6 +56,7 @@ export const resolveThemedKangurStorefrontAppearance = (
   const homeActionVars = resolveHomeActionVars(theme);
   const baseToneText = isDark ? '#f8fafc' : theme.textColor;
   const baseMutedText = isDark ? '#94a3b8' : theme.mutedTextColor;
+  const background = resolveBackgroundValue(theme.backgroundColor, '#f8fafc');
   
   const accents: Record<KangurAccentThemeName, KangurAccentThemeInput> = {
     indigo: { start: '#818cf8', end: '#4f46e5' },
@@ -75,7 +76,7 @@ export const resolveThemedKangurStorefrontAppearance = (
     textFieldBorder: theme.inputBorderColor || borderColor,
     toneText: baseToneText,
     pageMutedText: baseMutedText,
-    pageBackground: theme.bodyBg || '#f8fafc',
+    pageBackground: background,
     contrastText: '#ffffff',
     isDark,
     accents,
@@ -86,17 +87,16 @@ export const resolveThemedKangurStorefrontAppearance = (
     softCardBorder: borderColor,
     glassPanelBorder: borderColor,
     glassPanelShadow: '0 4px 12px rgba(0,0,0,0.05)',
-    pageBackground: theme.bodyBg || '#f8fafc',
+    pageBackground: background,
     accents,
   });
 
   return {
-    background: resolveBackgroundValue(theme.bodyBg, '#f8fafc'),
+    background,
     tone: {
-      mode,
-      theme: 'custom',
-      primary,
-      secondary,
+      background,
+      border: borderColor,
+      text: baseToneText,
       accent,
     },
     vars: {
@@ -120,4 +120,69 @@ export const resolveThemedKangurStorefrontAppearance = (
       ...glassVars,
     },
   };
+};
+
+export const resolveKangurStorefrontAppearance = (
+  mode: CmsStorefrontAppearanceMode,
+  theme: ThemeSettings = DEFAULT_THEME
+): {
+  background: string;
+  tone: Required<CmsAppearanceTone>;
+  vars: Record<string, string>;
+} => resolveThemedKangurStorefrontAppearance(theme, mode);
+
+export const resolveCmsStorefrontAppearance = (
+  theme: ThemeSettings,
+  mode: CmsStorefrontAppearanceMode
+): {
+  pageTone: Required<CmsAppearanceTone>;
+  vars: Record<string, string>;
+} => {
+  const kangurAppearance = resolveThemedKangurStorefrontAppearance(theme, mode);
+  const isDark = isDarkStorefrontAppearanceMode(mode);
+  const pageTone = resolveStorefrontAppearanceTone(
+    {
+      background: theme.backgroundColor || kangurAppearance.background,
+      text: theme.textColor || kangurAppearance.tone.text,
+      border: theme.borderColor || kangurAppearance.tone.border,
+      accent: theme.accentColor || theme.primaryColor || kangurAppearance.tone.accent,
+    },
+    mode
+  );
+  const surfaceTone = resolveStorefrontAppearanceTone(
+    {
+      background: theme.surfaceColor || theme.containerBg || theme.cardBg || pageTone.background,
+      text: pageTone.text,
+      border: theme.containerBorderColor || theme.borderColor || pageTone.border,
+      accent: pageTone.accent,
+    },
+    mode
+  );
+
+  return {
+    pageTone,
+    vars: {
+      ...kangurAppearance.vars,
+      '--cms-appearance-bg': pageTone.background,
+      '--cms-appearance-page-background': pageTone.background,
+      '--cms-appearance-page-text': pageTone.text,
+      '--cms-appearance-page-border': pageTone.border,
+      '--cms-appearance-page-accent': pageTone.accent,
+      '--cms-appearance-muted-text': isDark
+        ? 'color-mix(in srgb, #94a3b8 82%, white)'
+        : theme.mutedTextColor,
+      '--cms-appearance-surface-background': surfaceTone.background,
+      '--cms-appearance-surface-border': surfaceTone.border,
+      '--cms-appearance-input-border': pageTone.border,
+      '--cms-appearance-button-primary-text': isDark
+        ? `color-mix(in srgb, ${theme.btnPrimaryText || '#ffffff'} 72%, white)`
+        : theme.btnPrimaryText || pageTone.text,
+    },
+  };
+};
+
+export {
+  resolveStorefrontAppearanceColorSchemes,
+  resolveStorefrontAppearanceTone,
+  withFallbackTone,
 };

@@ -4,6 +4,7 @@ import {
   buildFilemakerMailMasterNodes,
   parseFilemakerMailMasterNodeId,
   toFilemakerMailAccountNodeId,
+  toFilemakerMailAccountSettingsNodeId,
   toFilemakerMailFolderNodeId,
 } from '../mail-master-tree';
 
@@ -60,7 +61,7 @@ describe('filemaker mail master tree', () => {
       ],
     });
 
-    expect(nodes).toHaveLength(3);
+    expect(nodes).toHaveLength(4);
     expect(nodes[0]).toEqual(
       expect.objectContaining({
         id: toFilemakerMailAccountNodeId('account-1'),
@@ -75,6 +76,14 @@ describe('filemaker mail master tree', () => {
     );
     expect(nodes[1]).toEqual(
       expect.objectContaining({
+        id: toFilemakerMailAccountSettingsNodeId('account-1'),
+        kind: 'mail_account_settings',
+        name: 'Settings',
+        parentId: toFilemakerMailAccountNodeId('account-1'),
+      })
+    );
+    expect(nodes[2]).toEqual(
+      expect.objectContaining({
         id: toFilemakerMailFolderNodeId('account-1', 'INBOX'),
         kind: 'mail_folder',
         name: 'Inbox',
@@ -85,7 +94,7 @@ describe('filemaker mail master tree', () => {
         }),
       })
     );
-    expect(nodes[2]).toEqual(
+    expect(nodes[3]).toEqual(
       expect.objectContaining({
         id: toFilemakerMailFolderNodeId('account-1', 'Sent'),
         kind: 'mail_folder',
@@ -97,6 +106,12 @@ describe('filemaker mail master tree', () => {
   it('parses account and folder node ids', () => {
     expect(parseFilemakerMailMasterNodeId(toFilemakerMailAccountNodeId('account-1'))).toEqual({
       kind: 'mail_account',
+      accountId: 'account-1',
+    });
+    expect(
+      parseFilemakerMailMasterNodeId(toFilemakerMailAccountSettingsNodeId('account-1'))
+    ).toEqual({
+      kind: 'mail_account_settings',
       accountId: 'account-1',
     });
     expect(

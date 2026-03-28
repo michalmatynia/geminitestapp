@@ -30,6 +30,7 @@ import {
   KangurMobileActionButton,
   KangurMobileCard,
   KangurMobileFilterChip,
+  KangurMobileInsetPanel,
   KangurMobileLinkButton,
   KangurMobilePill,
   KangurMobileScrollScreen,
@@ -312,16 +313,6 @@ function Card({
   return <KangurMobileCard>{children}</KangurMobileCard>;
 }
 
-function SectionTitle({
-  title,
-  subtitle,
-}: {
-  subtitle: string;
-  title: string;
-}): React.JSX.Element {
-  return <KangurMobileSectionTitle subtitle={subtitle} title={title} />;
-}
-
 function Pill({
   label,
   tone,
@@ -398,27 +389,6 @@ const renderOptionalLinkButton = ({
 
   return <LinkButton href={href} label={label} stretch={stretch} tone={tone} />;
 };
-
-function FilterChip({
-  label,
-  onPress,
-  selected,
-  fullWidth = false,
-}: {
-  label: string;
-  onPress: () => void;
-  selected: boolean;
-  fullWidth?: boolean;
-}): React.JSX.Element {
-  return (
-    <KangurMobileFilterChip
-      fullWidth={fullWidth}
-      label={label}
-      onPress={onPress}
-      selected={selected}
-    />
-  );
-}
 
 function AutoRefreshChip({
   enabled,
@@ -517,16 +487,7 @@ function LessonCheckpointRow({
   });
 
   return (
-    <View
-      style={{
-        borderRadius: 20,
-        borderWidth: 1,
-        borderColor: '#e2e8f0',
-        backgroundColor: '#f8fafc',
-        padding: 14,
-        gap: 10,
-      }}
-    >
+    <KangurMobileInsetPanel gap={10}>
       <View
         style={{
           flexDirection: 'row',
@@ -583,7 +544,7 @@ function LessonCheckpointRow({
         />
         {practiceLink}
       </View>
-    </View>
+    </KangurMobileInsetPanel>
   );
 }
 
@@ -593,20 +554,14 @@ function DuelsBadgeChip({
   item: KangurMobileDuelsBadgeItem;
 }): React.JSX.Element {
   return (
-    <View
-      style={{
-        borderRadius: 999,
-        borderWidth: 1,
-        borderColor: '#fde68a',
+    <Pill
+      label={`${item.emoji} ${item.name}`}
+      tone={{
         backgroundColor: '#fff7ed',
-        paddingHorizontal: 12,
-        paddingVertical: 8,
+        borderColor: '#fde68a',
+        textColor: '#9a3412',
       }}
-    >
-      <Text style={{ color: '#9a3412', fontSize: 13, fontWeight: '700' }}>
-        {item.emoji} {item.name}
-      </Text>
-    </View>
+      />
   );
 }
 
@@ -2203,7 +2158,7 @@ export function KangurDuelsScreen(): React.JSX.Element {
               onPress={openLobby}
               tone='ghost'
             />
-            <SectionTitle
+            <KangurMobileSectionTitle
               title={copy({
                 de: 'Einladung beitreten',
                 en: 'Joining invite',
@@ -2334,7 +2289,7 @@ export function KangurDuelsScreen(): React.JSX.Element {
               onPress={openLobby}
               tone='ghost'
             />
-            <SectionTitle
+            <KangurMobileSectionTitle
               title={
                 duel.isSpectating
                   ? copy({
@@ -3126,7 +3081,7 @@ export function KangurDuelsScreen(): React.JSX.Element {
             })}
             tone='secondary'
           />
-          <SectionTitle
+          <KangurMobileSectionTitle
             title={copy({
               de: 'Duelle',
               en: 'Duels',
@@ -3190,7 +3145,7 @@ export function KangurDuelsScreen(): React.JSX.Element {
             </Text>
             <View style={{ flexDirection: 'column', gap: 8 }}>
               {OPERATION_OPTIONS.map((option) => (
-                <FilterChip
+                <KangurMobileFilterChip
                   key={option}
                   fullWidth
                   label={formatOperationLabel(option, locale)}
@@ -3213,7 +3168,7 @@ export function KangurDuelsScreen(): React.JSX.Element {
             </Text>
             <View style={{ flexDirection: 'column', gap: 8 }}>
               {DIFFICULTY_OPTIONS.map((option) => (
-                <FilterChip
+                <KangurMobileFilterChip
                   key={option}
                   fullWidth
                   label={formatDifficultyLabel(option, locale)}
@@ -3236,7 +3191,7 @@ export function KangurDuelsScreen(): React.JSX.Element {
             </Text>
             <View style={{ flexDirection: 'column', gap: 8 }}>
               {SERIES_BEST_OF_OPTIONS.map((option) => (
-                <FilterChip
+                <KangurMobileFilterChip
                   key={`series-best-of-${option}`}
                   fullWidth
                   label={formatSeriesBestOfLabel(option, locale)}
@@ -3360,7 +3315,7 @@ export function KangurDuelsScreen(): React.JSX.Element {
 
           <View style={{ flexDirection: 'column', gap: 8 }}>
             {MODE_FILTER_OPTIONS.map((option) => (
-              <FilterChip
+              <KangurMobileFilterChip
                 fullWidth
                 key={option.value}
                 label={localizeDuelText(option.label, locale)}

@@ -7,8 +7,8 @@
   "max": {
     "source.filesOver1000": 0,
     "source.filesOver1500": 0,
-    "source.useClientFiles": 1758,
-    "source.largestFileLines": 997,
+    "source.useClientFiles": 1779,
+    "source.largestFileLines": 965,
     "api.totalRoutes": 30,
     "api.delegatedServerRoutes": 171,
     "api.routesWithoutApiHandler": 0,

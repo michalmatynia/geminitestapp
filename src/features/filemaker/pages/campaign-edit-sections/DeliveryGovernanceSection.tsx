@@ -1,12 +1,14 @@
 'use client';
 
-import React from 'react';
 import { Button, FormField, FormSection, Input, SelectSimple, Textarea } from '@/shared/ui';
 import { SUPPRESSION_REASON_OPTIONS as FILEMAKER_SUPPRESSION_REASON_OPTIONS } from '../AdminFilemakerCampaignEditPage.utils';
-import type { FilemakerEmailCampaignSuppressionReason } from '../types';
+import type {
+  FilemakerEmailCampaignSuppressionEntry,
+  FilemakerEmailCampaignSuppressionReason,
+} from '../../types';
 
 interface DeliveryGovernanceSectionProps {
-  suppressionEntries: any[];
+  suppressionEntries: FilemakerEmailCampaignSuppressionEntry[];
   suppressionEmailDraft: string;
   setSuppressionEmailDraft: (val: string) => void;
   suppressionReasonDraft: FilemakerEmailCampaignSuppressionReason;
@@ -50,8 +52,11 @@ export const DeliveryGovernanceSection = ({
           </FormField>
           <FormField label='Reason'>
             <SelectSimple
+              ariaLabel='Suppression reason'
               value={suppressionReasonDraft}
-              onChange={(val) => setSuppressionReasonDraft(val as any)}
+              onValueChange={(value) =>
+                setSuppressionReasonDraft(value as FilemakerEmailCampaignSuppressionReason)
+              }
               options={FILEMAKER_SUPPRESSION_REASON_OPTIONS}
             />
           </FormField>

@@ -10,11 +10,12 @@ import { resolveImagePreview } from './AdminKangurSocialPage.Constants';
 import { SocialPostImagesPanel } from './SocialPost.ImagesPanel';
 import { useSocialPostContext } from './SocialPostContext';
 
-export function SocialPostVisuals({
-  showImagesPanel = true,
-}: {
+export type SocialPostVisualsProps = {
   showImagesPanel?: boolean;
-}): React.JSX.Element {
+};
+
+export function SocialPostVisuals(props: SocialPostVisualsProps): React.JSX.Element {
+  const { showImagesPanel = true } = props;
   const {
     recentAddons,
     addonsQuery,

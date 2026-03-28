@@ -287,6 +287,7 @@ import Tests from '@/features/kangur/ui/pages/Tests';
 describe('Tests page', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    getDisabledDocsTooltipsMock.mockReturnValue(disabledDocsTooltipsMock);
     localeState.value = 'de';
     parsedSuitesState.value = [];
     publishedQuestionCountBySuiteState.value = new Map();

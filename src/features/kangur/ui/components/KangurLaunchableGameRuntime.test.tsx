@@ -45,6 +45,10 @@ vi.mock('next/dynamic', () => ({
       return createRuntimeRendererStub('color-harmony-game');
     }
 
+    if (signature.includes('EnglishAdverbsActionStudioGame')) {
+      return createRuntimeRendererStub('english-adverbs-action-studio-game');
+    }
+
     if (signature.includes('ShapeRecognitionGame')) {
       return createRuntimeRendererStub('shape-recognition-game');
     }
@@ -140,6 +144,29 @@ describe('KangurLaunchableGameRuntime', () => {
     render(<KangurLaunchableGameRuntime onFinish={vi.fn()} runtime={runtime} />);
 
     expect(screen.getByTestId('shape-recognition-game')).toHaveAttribute(
+      'data-finish-label',
+      'Return to game home'
+    );
+  });
+
+  it('renders the general adverbs launchable runtime', () => {
+    const runtime: KangurLaunchableGameRuntimeSpec = {
+      kind: 'launchable_game_screen',
+      screen: 'english_adverbs_quiz',
+      rendererId: 'english_adverbs_action_game',
+      finishMode: 'return_to_game_home',
+      finishLabelProp: 'finishLabel',
+      className: 'w-full flex flex-col items-center',
+      shell: {
+        accent: 'violet',
+        icon: '✨',
+        shellTestId: 'english-adverbs-runtime-shell',
+      },
+    };
+
+    render(<KangurLaunchableGameRuntime onFinish={vi.fn()} runtime={runtime} />);
+
+    expect(screen.getByTestId('english-adverbs-action-studio-game')).toHaveAttribute(
       'data-finish-label',
       'Return to game home'
     );

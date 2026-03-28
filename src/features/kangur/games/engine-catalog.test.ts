@@ -81,6 +81,7 @@ describe('kangur game engine catalog', () => {
     ).toEqual(
       expect.arrayContaining([
         'ColorHarmonyGame',
+        'EnglishAdverbsActionStudioGame',
         'geometry_drawing_game',
         'GeometrySymmetryGame',
         'GeometryPerimeterDrawingGame',

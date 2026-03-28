@@ -3,6 +3,7 @@ import { View } from 'react-native';
 import { useKangurMobileI18n } from '../i18n/kangurMobileI18n';
 import {
   KangurMobileCard as Card,
+  KangurMobileInsetPanel as InsetPanel,
   KangurMobileScrollScreen,
   KangurMobileSkeletonBlock as SkeletonBlock,
 } from '../shared/KangurMobileUi';
@@ -30,22 +31,13 @@ function LoadingInsetCard({
   height?: number;
 }): React.JSX.Element {
   return (
-    <View
-      style={{
-        backgroundColor: '#f8fafc',
-        borderColor: '#e2e8f0',
-        borderRadius: 20,
-        borderWidth: 1,
-        gap: 8,
-        padding: 14,
-      }}
-    >
+    <InsetPanel gap={8}>
       <SkeletonBlock height={20} radius={10} width='58%' />
       <SkeletonBlock height={16} width='100%' />
       <SkeletonBlock height={16} width='82%' />
       <SkeletonBlock height={40} radius={999} width='52%' />
       {height > 112 ? <SkeletonBlock height={height - 112} radius={16} width='100%' /> : null}
-    </View>
+    </InsetPanel>
   );
 }
 

@@ -68,4 +68,17 @@ describe('Game launchable screen registry', () => {
       })
     );
   });
+
+  it('keeps the general adverbs screen wired to the adverbs action runtime', () => {
+    const config = getKangurLaunchableGameScreenComponentConfig('english_adverbs_quiz');
+
+    expect(config.runtime).toEqual(
+      expect.objectContaining({
+        screen: 'english_adverbs_quiz',
+        engineId: 'sentence-builder-engine',
+        rendererId: 'english_adverbs_action_game',
+      })
+    );
+    expect(enMessages.KangurGamePage.screens.english_adverbs_quiz.label).toBeTruthy();
+  });
 });

@@ -1,6 +1,5 @@
 'use client';
 
-import React from 'react';
 import { Badge, Button, FormSection } from '@/shared/ui';
 import { formatTimestamp } from '../filemaker-page-utils';
 import { getRunActions } from '../AdminFilemakerCampaignEditPage.utils';

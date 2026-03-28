@@ -7,6 +7,10 @@ import {
 } from '@/shared/lib/api/query-schema';
 
 export * from './ai-paths-core';
+export * from './ai-paths-analytics';
+export * from './ai-paths-maintenance';
+export * from './ai-paths-ui';
+
 import { contextRegistryConsumerEnvelopeSchema } from './ai-context-registry';
 import {
   aiNodeSchema,
@@ -44,6 +48,8 @@ import {
 } from './ai-paths-run-contract';
 import { dtoBaseSchema, namedDtoSchema } from './base';
 import type { SettingRecord } from './settings';
+import { aiPathRuntimeTraceAnalyticsSchema, type AiPathRuntimeTraceAnalytics } from './ai-paths-analytics';
+import { pathUiStateSchema } from './ai-paths-ui';
 
 export {
   AI_PATH_RUN_ENQUEUED_EVENT_NAME,
@@ -67,6 +73,7 @@ export {
   type AiPathRunStatus,
   type AiPathRunUpdateInput,
 };
+
 export type {
   AiPathLocalRunRecord,
   AiPathLocalRunStatus,
@@ -75,6 +82,7 @@ export type {
   RuntimeNodeConfigHandlers,
   RuntimeRunStatus,
 } from './ai-paths-runtime-ui-types';
+
 export const aiPathSchema = namedDtoSchema.extend({
   nodes: z.array(z.lazy(() => aiNodeSchema)),
   edges: z.array(z.lazy(() => edgeSchema)),
@@ -83,6 +91,7 @@ export const aiPathSchema = namedDtoSchema.extend({
   version: z.number(),
 });
 export type AiPath = z.infer<typeof aiPathSchema>;
+
 export const createAiPathSchema = aiPathSchema.omit({
   id: true,
   createdAt: true,
@@ -90,8 +99,10 @@ export const createAiPathSchema = aiPathSchema.omit({
 });
 export type AiPathCreateInput = z.infer<typeof createAiPathSchema>;
 export type AiPathUpdateInput = Partial<AiPathCreateInput>;
+
 export type AiPathsSettingRecordDto = SettingRecord;
 export type AiPathsSettingRecord = AiPathsSettingRecordDto;
+
 export const aiPathEntityUpdateRequestSchema = z.object({
   entityType: z.enum(['product', 'note', 'custom']),
   entityId: z.string().trim().optional(),
@@ -99,12 +110,14 @@ export const aiPathEntityUpdateRequestSchema = z.object({
   mode: z.enum(['replace', 'append']).optional(),
 });
 export type AiPathEntityUpdateRequest = z.infer<typeof aiPathEntityUpdateRequestSchema>;
+
 export const aiPathRunDetailSchema = z.object({
   run: aiPathRunRecordSchema,
   nodes: z.array(z.lazy(() => aiPathRunNodeSchema)),
   events: z.array(z.lazy(() => aiPathRunEventSchema)),
 });
 export type AiPathRunDetail = z.infer<typeof aiPathRunDetailSchema>;
+
 export const aiPathRunUpdateSchema = aiPathRunRecordSchema.partial().omit({
   id: true,
   userId: true,
@@ -112,9 +125,7 @@ export const aiPathRunUpdateSchema = aiPathRunRecordSchema.partial().omit({
   createdAt: true,
 });
 type AiPathRunUpdateRecord = z.infer<typeof aiPathRunUpdateSchema>;
-/**
- * AI Path Run Node Contract
- */
+
 export const aiPathRunNodeSchema = dtoBaseSchema.extend({
   runId: z.string(),
   traceId: z.string().optional(),
@@ -134,11 +145,10 @@ export const aiPathRunNodeSchema = dtoBaseSchema.extend({
   finishedAt: z.string().nullable().optional(),
 });
 export type AiPathRunNodeRecord = z.infer<typeof aiPathRunNodeSchema>;
-/**
- * AI Path Run Event Contract
- */
+
 export const aiPathRunEventLevelSchema = z.enum(['debug', 'info', 'warn', 'error', 'fatal']);
 export type AiPathRunEventLevel = z.infer<typeof aiPathRunEventLevelSchema>;
+
 export const aiPathRunEventSchema = z.object({
   id: z.string(),
   createdAt: z.string(),
@@ -154,6 +164,7 @@ export const aiPathRunEventSchema = z.object({
   metadata: z.record(z.string(), z.unknown()).nullable().optional(),
 });
 export type AiPathRunEventRecord = z.infer<typeof aiPathRunEventSchema>;
+
 export const aiPathRunNodeUpdateSchema = aiPathRunNodeSchema.partial().omit({
   id: true,
   runId: true,
@@ -161,6 +172,7 @@ export const aiPathRunNodeUpdateSchema = aiPathRunNodeSchema.partial().omit({
   createdAt: true,
 });
 export type AiPathRunNodeUpdate = z.infer<typeof aiPathRunNodeUpdateSchema>;
+
 export const aiPathRunEventCreateInputSchema = z.object({
   runId: z.string(),
   nodeId: z.string().nullable().optional(),
@@ -173,193 +185,7 @@ export const aiPathRunEventCreateInputSchema = z.object({
   metadata: z.record(z.string(), z.unknown()).nullable().optional(),
 });
 export type AiPathRunEventCreateInput = z.infer<typeof aiPathRunEventCreateInputSchema>;
-/**
- * AI Paths Composite & Domain DTOs
- */
-export const aiPathRuntimeAnalyticsRangeSchema = z.enum(['1h', '24h', '7d', '30d']);
-export type AiPathRuntimeAnalyticsRange = z.infer<typeof aiPathRuntimeAnalyticsRangeSchema>;
-export const aiPathRuntimeAnalyticsRangeQuerySchema = z.object({
-  range: optionalTrimmedQueryString(),
-});
-export type AiPathRuntimeAnalyticsRangeQuery = z.infer<
-  typeof aiPathRuntimeAnalyticsRangeQuerySchema
->;
-export const aiPathRuntimeAnalyticsSlowestSpanSchema = z.object({
-  runId: z.string(),
-  spanId: z.string(),
-  nodeId: z.string(),
-  nodeType: z.string(),
-  status: z.string(),
-  durationMs: z.number(),
-});
-export type AiPathRuntimeAnalyticsSlowestSpan = z.infer<
-  typeof aiPathRuntimeAnalyticsSlowestSpanSchema
->;
-export const aiPathRuntimeTraceSlowNodeSchema = z.object({
-  nodeId: z.string(),
-  nodeType: z.string(),
-  spanCount: z.number(),
-  avgDurationMs: z.number(),
-  maxDurationMs: z.number(),
-  totalDurationMs: z.number(),
-});
-export type AiPathRuntimeTraceSlowNode = z.infer<typeof aiPathRuntimeTraceSlowNodeSchema>;
-export const aiPathRuntimeTraceFailedNodeSchema = z.object({
-  nodeId: z.string(),
-  nodeType: z.string(),
-  failedCount: z.number(),
-  spanCount: z.number(),
-});
-export type AiPathRuntimeTraceFailedNode = z.infer<typeof aiPathRuntimeTraceFailedNodeSchema>;
-export const aiPathRuntimeKernelStrategyCountsSchema = z.object({
-  compatibility: z.number(),
-  code_object_v3: z.number(),
-  unknown: z.number(),
-});
-export type AiPathRuntimeKernelStrategyCounts = z.infer<
-  typeof aiPathRuntimeKernelStrategyCountsSchema
->;
-export const aiPathRuntimeKernelResolutionSourceCountsSchema = z.object({
-  override: z.number(),
-  registry: z.number(),
-  missing: z.number(),
-  unknown: z.number(),
-});
-export type AiPathRuntimeKernelResolutionSourceCounts = z.infer<
-  typeof aiPathRuntimeKernelResolutionSourceCountsSchema
->;
-export const aiPathRuntimeKernelParityAnalyticsSchema = z.object({
-  sampledRuns: z.number(),
-  runsWithKernelParity: z.number(),
-  sampledHistoryEntries: z.number(),
-  strategyCounts: aiPathRuntimeKernelStrategyCountsSchema,
-  resolutionSourceCounts: aiPathRuntimeKernelResolutionSourceCountsSchema,
-  codeObjectIds: z.array(z.string()),
-});
-export type AiPathRuntimeKernelParityAnalytics = z.infer<
-  typeof aiPathRuntimeKernelParityAnalyticsSchema
->;
-export const aiPathRuntimeTraceAnalyticsSchema = z.object({
-  source: z.enum(['none', 'db_sample']),
-  sampledRuns: z.number(),
-  sampledSpans: z.number(),
-  completedSpans: z.number(),
-  failedSpans: z.number(),
-  cachedSpans: z.number(),
-  avgDurationMs: z.number().nullable(),
-  p95DurationMs: z.number().nullable(),
-  slowestSpan: aiPathRuntimeAnalyticsSlowestSpanSchema.nullable(),
-  topSlowNodes: z.array(aiPathRuntimeTraceSlowNodeSchema),
-  topFailedNodes: z.array(aiPathRuntimeTraceFailedNodeSchema),
-  kernelParity: aiPathRuntimeKernelParityAnalyticsSchema,
-  truncated: z.boolean(),
-});
-export type AiPathRuntimeTraceAnalytics = z.infer<typeof aiPathRuntimeTraceAnalyticsSchema>;
-export const aiPathRuntimePortableEngineCountsSchema = z.object({
-  attempts: z.number(),
-  successes: z.number(),
-  failures: z.number(),
-});
-export type AiPathRuntimePortableEngineCounts = z.infer<
-  typeof aiPathRuntimePortableEngineCountsSchema
->;
-export const aiPathRuntimePortableEngineFailureSchema = z.object({
-  at: z.string(),
-  runner: z.enum(['client', 'server']),
-  surface: z.enum(['canvas', 'product', 'api']),
-  source: z
-    .enum(['portable_package', 'portable_envelope', 'semantic_canvas', 'path_config'])
-    .nullable(),
-  stage: z.enum(['resolve', 'validation', 'runtime']),
-  error: z.string(),
-  durationMs: z.number(),
-  validateBeforeRun: z.boolean(),
-  validationMode: z.string().nullable(),
-});
-export type AiPathRuntimePortableEngineFailure = z.infer<
-  typeof aiPathRuntimePortableEngineFailureSchema
->;
-export const aiPathRuntimePortableEngineAnalyticsSchema = z.object({
-  source: z.enum(['in_memory', 'unavailable']),
-  totals: aiPathRuntimePortableEngineCountsSchema.extend({
-    successRate: z.number(),
-    failureRate: z.number(),
-  }),
-  byRunner: z.object({
-    client: aiPathRuntimePortableEngineCountsSchema,
-    server: aiPathRuntimePortableEngineCountsSchema,
-  }),
-  bySurface: z.object({
-    canvas: aiPathRuntimePortableEngineCountsSchema,
-    product: aiPathRuntimePortableEngineCountsSchema,
-    api: aiPathRuntimePortableEngineCountsSchema,
-  }),
-  byInputSource: z.object({
-    portable_package: aiPathRuntimePortableEngineCountsSchema,
-    portable_envelope: aiPathRuntimePortableEngineCountsSchema,
-    semantic_canvas: aiPathRuntimePortableEngineCountsSchema,
-    path_config: aiPathRuntimePortableEngineCountsSchema,
-  }),
-  failureStageCounts: z.object({
-    resolve: z.number(),
-    validation: z.number(),
-    runtime: z.number(),
-  }),
-  recentFailures: z.array(aiPathRuntimePortableEngineFailureSchema),
-});
-export type AiPathRuntimePortableEngineAnalytics = z.infer<
-  typeof aiPathRuntimePortableEngineAnalyticsSchema
->;
-export const aiPathRuntimeAnalyticsSummarySchema = z.object({
-  from: z.string(),
-  to: z.string(),
-  range: z.string(),
-  storage: z.enum(['redis', 'disabled']),
-  runs: z.object({
-    total: z.number(),
-    queued: z.number(),
-    started: z.number(),
-    completed: z.number(),
-    failed: z.number(),
-    canceled: z.number(),
-    deadLettered: z.number(),
-    blockedOnLease: z.number().optional(),
-    handoffReady: z.number().optional(),
-    successRate: z.number(),
-    failureRate: z.number(),
-    deadLetterRate: z.number(),
-    avgDurationMs: z.number().nullable(),
-    p95DurationMs: z.number().nullable(),
-  }),
-  nodes: z.object({
-    started: z.number(),
-    completed: z.number(),
-    failed: z.number(),
-    queued: z.number(),
-    running: z.number(),
-    polling: z.number(),
-    cached: z.number(),
-    waitingCallback: z.number(),
-  }),
-  brain: z.object({
-    analyticsReports: z.number(),
-    logReports: z.number(),
-    totalReports: z.number(),
-    warningReports: z.number(),
-    errorReports: z.number(),
-  }),
-  traces: aiPathRuntimeTraceAnalyticsSchema,
-  portableEngine: aiPathRuntimePortableEngineAnalyticsSchema.optional(),
-  generatedAt: z.string(),
-});
-export type AiPathRuntimeAnalyticsSummary = z.infer<typeof aiPathRuntimeAnalyticsSummarySchema>;
-export const aiPathRuntimeAnalyticsSummaryResponseSchema = z.object({
-  summary: aiPathRuntimeAnalyticsSummarySchema,
-});
-export type AiPathRuntimeAnalyticsSummaryResponse = z.infer<
-  typeof aiPathRuntimeAnalyticsSummaryResponseSchema
->;
-export type AiPathRuntimeAnalyticsSummaryResponseDto = AiPathRuntimeAnalyticsSummaryResponse;
+
 export const pathMetaSchema = z.object({
   id: z.string(),
   name: z.string(),
@@ -367,11 +193,7 @@ export const pathMetaSchema = z.object({
   updatedAt: z.string(),
 });
 export type PathMeta = z.infer<typeof pathMetaSchema>;
-export const pathUiStateSchema = z.object({
-  selectedNodeId: z.string().nullable().optional(),
-  configOpen: z.boolean().optional(),
-});
-export type PathUiState = z.infer<typeof pathUiStateSchema>;
+
 export type CentralDocsSnapshotSource = {
   id: string;
   path: string;
@@ -393,37 +215,7 @@ export type CentralDocsSnapshotResponse = {
   inferredCandidates: AiPathsValidationRule[];
 };
 export type CandidateChangeKind = 'new' | 'changed' | 'existing';
-export const AI_PATHS_MAINTENANCE_ACTION_IDS = [
-  'compact_oversized_configs',
-  'repair_path_index',
-  'ensure_starter_workflow_defaults',
-  'refresh_starter_workflow_configs',
-  'normalize_runtime_kernel_settings',
-] as const;
-export const aiPathsMaintenanceActionIdSchema = z.enum(AI_PATHS_MAINTENANCE_ACTION_IDS);
-export type AiPathsMaintenanceActionId = (typeof AI_PATHS_MAINTENANCE_ACTION_IDS)[number];
-export const aiPathsMaintenanceActionStatusSchema = z.enum(['pending', 'ready']);
-export const aiPathsMaintenanceActionReportSchema = z.object({
-  id: aiPathsMaintenanceActionIdSchema,
-  title: z.string(),
-  description: z.string(),
-  blocking: z.boolean(),
-  status: aiPathsMaintenanceActionStatusSchema,
-  affectedRecords: z.number().int().nonnegative(),
-});
-export type AiPathsMaintenanceActionReport = z.infer<typeof aiPathsMaintenanceActionReportSchema>;
-export const aiPathsMaintenanceReportSchema = z.object({
-  scannedAt: z.string(),
-  pendingActions: z.number().int().nonnegative(),
-  blockingActions: z.number().int().nonnegative(),
-  actions: z.array(aiPathsMaintenanceActionReportSchema),
-});
-export type AiPathsMaintenanceReport = z.infer<typeof aiPathsMaintenanceReportSchema>;
-export const aiPathsMaintenanceApplyResultSchema = z.object({
-  appliedActionIds: z.array(aiPathsMaintenanceActionIdSchema),
-  report: aiPathsMaintenanceReportSchema,
-});
-export type AiPathsMaintenanceApplyResult = z.infer<typeof aiPathsMaintenanceApplyResultSchema>;
+
 const aiPathsSettingKeySchema = z
   .string()
   .trim()
@@ -436,10 +228,12 @@ export const aiPathsSettingWriteSchema = z.object({
   value: z.string(),
 });
 export type AiPathsSettingWrite = z.infer<typeof aiPathsSettingWriteSchema>;
+
 export const aiPathsSettingsBulkWriteRequestSchema = z.object({
   items: z.array(aiPathsSettingWriteSchema).min(1),
 });
 export type AiPathsSettingsBulkWriteRequest = z.infer<typeof aiPathsSettingsBulkWriteRequestSchema>;
+
 export const aiPathsSettingsDeleteRequestSchema = z
   .object({
     key: z.string().trim().min(1).optional(),
@@ -449,20 +243,10 @@ export const aiPathsSettingsDeleteRequestSchema = z
     message: 'Provide "key" or non-empty "keys".',
   });
 export type AiPathsSettingsDeleteRequest = z.infer<typeof aiPathsSettingsDeleteRequestSchema>;
-export const AI_PATHS_MAINTENANCE_COMPAT_ACTION_IDS = ['normalize_runtime_kernel_mode'] as const;
-export type AiPathsMaintenanceCompatActionId =
-  (typeof AI_PATHS_MAINTENANCE_COMPAT_ACTION_IDS)[number];
-export const aiPathsMaintenanceCompatActionIdSchema = z.enum(
-  AI_PATHS_MAINTENANCE_COMPAT_ACTION_IDS
-);
-export const aiPathsMaintenanceApplyRequestSchema = z.object({
-  actionIds: z.array(
-    z.union([aiPathsMaintenanceActionIdSchema, aiPathsMaintenanceCompatActionIdSchema])
-  ).optional(),
-});
-export type AiPathsMaintenanceApplyRequest = z.infer<typeof aiPathsMaintenanceApplyRequestSchema>;
+
 export const pathBlockedRunPolicySchema = z.enum(['fail_run', 'complete_with_warning']);
 export type PathBlockedRunPolicy = z.infer<typeof pathBlockedRunPolicySchema>;
+
 export const pathConfigSchema = z.object({
   id: z.string(),
   version: z.number(),
@@ -489,18 +273,21 @@ export const pathConfigSchema = z.object({
   uiState: pathUiStateSchema.optional(),
 });
 export type PathConfig = z.infer<typeof pathConfigSchema>;
+
 export const pathDebugEntrySchema = z.object({
   nodeId: z.string(),
   title: z.string().optional(),
   debug: z.unknown(),
 });
 export type PathDebugEntry = z.infer<typeof pathDebugEntrySchema>;
+
 export const pathDebugSnapshotSchema = z.object({
   pathId: z.string(),
   runAt: z.string(),
   entries: z.array(pathDebugEntrySchema),
 });
 export type PathDebugSnapshot = z.infer<typeof pathDebugSnapshotSchema>;
+
 export const clusterPresetSchema = z.object({
   id: z.string(),
   name: z.string(),
@@ -511,6 +298,7 @@ export const clusterPresetSchema = z.object({
   updatedAt: z.string(),
 });
 export type ClusterPreset = z.infer<typeof clusterPresetSchema>;
+
 export const dbQueryPresetSchema = z.object({
   id: z.string(),
   name: z.string(),
@@ -520,6 +308,7 @@ export const dbQueryPresetSchema = z.object({
   updatedAt: z.string(),
 });
 export type DbQueryPreset = z.infer<typeof dbQueryPresetSchema>;
+
 export const dbNodePresetSchema = z.object({
   id: z.string(),
   name: z.string(),
@@ -529,16 +318,19 @@ export const dbNodePresetSchema = z.object({
   updatedAt: z.string(),
 });
 export type DbNodePreset = z.infer<typeof dbNodePresetSchema>;
+
 export const jsonPathEntrySchema = z.object({
   path: z.string(),
   type: z.enum(['object', 'array', 'value']),
 });
 export type JsonPathEntry = z.infer<typeof jsonPathEntrySchema>;
+
 export const connectionValidationSchema = z.object({
   valid: z.boolean(),
   message: z.string().optional(),
 });
 export type ConnectionValidation = z.infer<typeof connectionValidationSchema>;
+
 const AI_PATH_RUN_STATUS_SET: ReadonlySet<AiPathRunStatus> = new Set(aiPathRunStatusSchema.options);
 
 const aiPathRunVisibilityQueryValueSchema = z
@@ -733,9 +525,7 @@ export const aiPathsDbActionRequestSchema = z.object({
   returnDocument: z.enum(['before', 'after']).optional(),
 });
 export type AiPathsDbActionRequest = z.infer<typeof aiPathsDbActionRequestSchema>;
-/**
- * AI Path Run List Options Contract
- */
+
 export const aiPathRunEventListOptionsSchema = z.object({
   since: z.string().nullable().optional(),
   after: z
@@ -748,7 +538,9 @@ export const aiPathRunEventListOptionsSchema = z.object({
   limit: z.number().optional(),
 });
 export type AiPathRunEventListOptions = z.infer<typeof aiPathRunEventListOptionsSchema>;
+
 export type AiPathRunVisibility = 'scoped' | 'global';
+
 export const aiPathRunListOptionsSchema = z.object({
   id: z.string().optional(),
   userId: z.string().nullable().optional(),
@@ -767,20 +559,20 @@ export const aiPathRunListOptionsSchema = z.object({
   includeTotal: z.boolean().optional(),
 });
 export type AiPathRunListOptions = z.infer<typeof aiPathRunListOptionsSchema>;
+
 export type AiPathRunQueueStatsOptions = {
   userId?: string | null;
   pathId?: string;
   source?: string;
   sourceMode?: 'include' | 'exclude';
 };
+
 export const aiPathRunListResultSchema = z.object({
   runs: z.array(aiPathRunRecordSchema),
   total: z.number(),
 });
 export type AiPathRunListResult = z.infer<typeof aiPathRunListResultSchema>;
-/**
- * Execution Contract
- */
+
 export const executeAiPathSchema = z.object({
   pathId: z.string(),
   triggerNodeId: z.string().optional(),
@@ -788,71 +580,9 @@ export const executeAiPathSchema = z.object({
   context: z.record(z.string(), z.unknown()).optional(),
 });
 export type ExecuteAiPath = z.infer<typeof executeAiPathSchema>;
+
 export type PathFlowIntensity = 'off' | 'low' | 'medium' | 'high';
-/**
- * AI Path Canvas UI Types
- */
-export type MarqueeMode = 'replace' | 'add' | 'subtract';
-export type MarqueeSelectionState = {
-  startX: number;
-  startY: number;
-  currentX: number;
-  currentY: number;
-  mode: MarqueeMode;
-  baseNodeIds: string[];
-};
-export type SubgraphClipboardPayload = {
-  version: 1;
-  sourcePathId: string | null;
-  capturedAt: string;
-  nodes: AiNode[];
-  edges: Edge[];
-  bounds: { minX: number; minY: number; maxX: number; maxY: number };
-};
-export type TouchPointSample = {
-  x: number;
-  y: number;
-  time: number;
-  ts?: number;
-  vx?: number;
-  vy?: number;
-};
-export type TouchGestureState =
-  | {
-      mode: 'pinch';
-      pointerIds: [number, number];
-      startDistance: number;
-      startScale: number;
-      anchorCanvas: { x: number; y: number };
-    }
-  | {
-      mode: 'pan';
-      pointerId: number;
-      recentSamples: TouchPointSample[];
-    };
-export type TouchLongPressSelectionState = {
-  pointerId: number;
-  startClientX: number;
-  startClientY: number;
-  startedAt: number;
-  indicatorViewportX: number;
-  indicatorViewportY: number;
-  mode: MarqueeMode;
-  baseNodeIds: string[];
-  timerId: number | null;
-};
-export type TouchLongPressIndicatorState = {
-  x: number;
-  y: number;
-  progress: number;
-  phase: 'pending' | 'activated';
-};
-export interface HandleSelectNodeOptions {
-  toggle?: boolean;
-}
-/**
- * AI Path Runtime Profile Contracts
- */
+
 export type RuntimeProfileHighlight = {
   type: 'run' | 'iteration' | 'node';
   phase?: 'start' | 'end' | undefined;
@@ -867,6 +597,7 @@ export type RuntimeProfileHighlight = {
   runtimeResolutionSource?: 'override' | 'registry' | 'missing' | undefined;
   runtimeCodeObjectId?: string | null | undefined;
 };
+
 export type RuntimeProfileNodeSpanStatus =
   | 'running'
   | 'completed'
@@ -874,6 +605,7 @@ export type RuntimeProfileNodeSpanStatus =
   | 'cached'
   | 'skipped'
   | 'blocked';
+
 export type RuntimeProfileNodeSpan = {
   spanId: string;
   nodeId: string;
@@ -888,6 +620,7 @@ export type RuntimeProfileNodeSpan = {
   error: string | null;
   cached: boolean;
 };
+
 export type RuntimeProfileSnapshot = {
   traceId: string;
   recordedAt: string;
@@ -914,19 +647,19 @@ export type RuntimeProfileSnapshot = {
   highlights: RuntimeProfileHighlight[];
   nodeSpans: RuntimeProfileNodeSpan[];
 };
-/**
- * AI Path Repository Interfaces
- */
+
 export type AiPathRunCreateInput = Omit<z.infer<typeof createAiPathRunSchema>, 'status'> & {
   status?: AiPathRunStatus | undefined;
   graph?: { nodes: AiNode[]; edges: Edge[] | unknown[] } | null | undefined;
   runtimeState?: Record<string, unknown> | null | undefined;
 };
+
 export type AiPathRunUpdate = AiPathRunUpdateRecord & {
   status?: AiPathRunStatus;
   triggerContext?: Record<string, unknown> | null;
   graph?: { nodes: AiNode[]; edges: Edge[] | unknown[] } | null;
 };
+
 export type AiPathRunRepository = {
   createRun(input: AiPathRunCreateInput): Promise<AiPathRunRecord>;
   updateRun(runId: string, data: AiPathRunUpdate): Promise<AiPathRunRecord>;
@@ -973,9 +706,7 @@ export type AiPathRunRepository = {
     }
   ): Promise<void>;
 };
-/**
- * Runtime Types (imported from ai-paths-runtime for consolidation)
- */
+
 export type {
   RuntimeState,
   RuntimePortValues,

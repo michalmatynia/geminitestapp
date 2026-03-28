@@ -547,4 +547,95 @@ describe('Lessons page subject filtering', () => {
     expect(screen.getByRole('region').firstElementChild).toHaveClass('w-full', 'items-center');
     expect(screen.getByTestId('lesson-card-lesson-english')).toBeInTheDocument();
   });
+
+  it('shows both adverbs lessons inside the English grammar group', async () => {
+    lessonsState.value = [
+      {
+        id: 'lesson-english-adverbs',
+        componentId: 'english_adverbs',
+        subject: 'english',
+        ageGroup: DEFAULT_KANGUR_AGE_GROUP,
+        enabled: true,
+        sortOrder: 1,
+        title: 'Adverbs',
+        description: 'Adverbs of manner',
+        emoji: '✨',
+        color: 'sky',
+        activeBg: 'bg-sky-50',
+        contentMode: 'component',
+      },
+      {
+        id: 'lesson-english-adverbs-frequency',
+        componentId: 'english_adverbs_frequency',
+        subject: 'english',
+        ageGroup: DEFAULT_KANGUR_AGE_GROUP,
+        enabled: true,
+        sortOrder: 2,
+        title: 'Adverbs of Frequency',
+        description: 'always, usually, sometimes, never',
+        emoji: '📆',
+        color: 'violet',
+        activeBg: 'bg-violet-50',
+        contentMode: 'component',
+      },
+    ];
+    lessonSectionsState.value = [
+      {
+        id: 'english_grammar',
+        subject: 'english',
+        ageGroup: DEFAULT_KANGUR_AGE_GROUP,
+        enabled: true,
+        sortOrder: 1,
+        label: 'Gramatyka',
+        typeLabel: 'featured',
+        componentIds: [],
+        subsections: [
+          {
+            id: 'english_grammar_adverbs',
+            enabled: true,
+            sortOrder: 1,
+            label: 'Adverbs',
+            typeLabel: 'group',
+            componentIds: ['english_adverbs'],
+          },
+          {
+            id: 'english_grammar_adverbs_frequency',
+            enabled: true,
+            sortOrder: 2,
+            label: 'Adverbs of Frequency',
+            typeLabel: 'group',
+            componentIds: ['english_adverbs_frequency'],
+          },
+        ],
+      },
+    ];
+
+    render(<Lessons />);
+    act(() => {
+      vi.runAllTimers();
+    });
+
+    expect(screen.queryByTestId('lesson-card-lesson-english-adverbs')).not.toBeInTheDocument();
+    expect(
+      screen.queryByTestId('lesson-card-lesson-english-adverbs-frequency')
+    ).not.toBeInTheDocument();
+
+    const grammarSectionButton = screen.getByRole('button', { name: /gramatyka/i });
+    fireEvent.click(grammarSectionButton);
+
+    expect(grammarSectionButton).toHaveAttribute('aria-expanded', 'true');
+    expect(screen.getByTestId('lesson-card-lesson-english-adverbs')).toBeInTheDocument();
+    expect(
+      screen.getByTestId('lesson-card-lesson-english-adverbs-frequency')
+    ).toBeInTheDocument();
+    expect(lessonCardPropsMock).toHaveBeenCalledWith(
+      expect.objectContaining({ id: 'lesson-english-adverbs', componentId: 'english_adverbs' })
+    );
+    expect(lessonCardPropsMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        id: 'lesson-english-adverbs-frequency',
+        componentId: 'english_adverbs_frequency',
+      })
+    );
+  });
 });

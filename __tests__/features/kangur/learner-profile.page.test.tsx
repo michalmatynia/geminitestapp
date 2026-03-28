@@ -99,6 +99,21 @@ vi.mock('@/features/kangur/ui/hooks/useKangurRouteNavigator', () => ({
     }),
 }));
 
+vi.mock('@/features/kangur/ui/services/delegated-assignments', async (importOriginal) => {
+  const actual =
+    await importOriginal<typeof import('@/features/kangur/ui/services/delegated-assignments')>();
+
+  return {
+    ...actual,
+    formatKangurAssignmentPriorityLabel: (priority: 'high' | 'medium' | 'low') =>
+      ({
+        high: 'Priorytet wysoki',
+        medium: 'Priorytet średni',
+        low: 'Priorytet niski',
+      })[priority],
+  };
+});
+
 vi.mock('@/features/kangur/ui/context/KangurLearnerProfileRuntimeContext', async (importOriginal) => {
   const actual =
     await importOriginal<typeof import('@/features/kangur/ui/context/KangurLearnerProfileRuntimeContext')>();
@@ -250,6 +265,7 @@ const buildRuntimeValue = ({
 describe('LearnerProfile page', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    getDisabledDocsTooltipsMock.mockReturnValue(disabledDocsTooltipsMock);
 
     useKangurRoutingMock.mockReturnValue({
       basePath: '/kangur',

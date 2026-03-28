@@ -66,6 +66,9 @@ describe('kangur game coverage', () => {
       (componentId) => !hasKangurLaunchableGameCoverageForLessonComponent(componentId)
     );
 
+    expect(KANGUR_LAUNCHABLE_GAME_LIBRARY_LESSON_COMPONENT_IDS).toEqual(
+      expect.arrayContaining(['english_adverbs', 'english_adverbs_frequency'])
+    );
     expect(missingLaunchCoverage).toEqual([]);
   });
 
@@ -77,6 +80,7 @@ describe('kangur game coverage', () => {
 
   it('resolves lesson coverage status from shared coverage policy', () => {
     expect(resolveKangurGameLibraryLessonCoverageStatus('clock')).toBe('launchable');
+    expect(resolveKangurGameLibraryLessonCoverageStatus('english_adverbs')).toBe('launchable');
     expect(resolveKangurGameLibraryLessonCoverageStatus('geometry_shape_recognition')).toBe(
       'launchable'
     );
@@ -138,6 +142,9 @@ describe('kangur game coverage', () => {
     expect(getKangurGameLibraryLessonCoverageStatusFromMap('clock', coverage.statusMap)).toBe(
       'launchable'
     );
+    expect(
+      getKangurGameLibraryLessonCoverageStatusFromMap('english_adverbs', coverage.statusMap)
+    ).toBe('launchable');
     expect(
       getKangurGameLibraryLessonCoverageStatusFromMap('art_shapes_basic', coverage.statusMap)
     ).toBe('launchable');

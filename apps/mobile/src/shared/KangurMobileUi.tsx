@@ -26,6 +26,14 @@ type KangurMobileCardProps = {
   testID?: string;
 };
 
+type KangurMobileInsetPanelProps = {
+  children: ReactNode;
+  gap?: number;
+  padding?: number;
+  style?: StyleProp<ViewStyle>;
+  testID?: string;
+};
+
 type KangurMobilePillProps = {
   label: string;
   tone: KangurMobileTone;
@@ -120,6 +128,13 @@ const KANGUR_MOBILE_INSET_METRIC_STYLE: ViewStyle = {
   gap: 6,
 };
 
+const KANGUR_MOBILE_INSET_PANEL_STYLE: ViewStyle = {
+  borderRadius: 20,
+  borderWidth: 1,
+  borderColor: '#e2e8f0',
+  backgroundColor: '#f8fafc',
+};
+
 const getButtonContainerStyle = ({
   disabled = false,
   stretch = false,
@@ -157,6 +172,26 @@ export function KangurMobileCard(props: KangurMobileCardProps): React.JSX.Elemen
 
   return (
     <View testID={testID} style={[KANGUR_MOBILE_CARD_STYLE, { gap, padding }, style]}>
+      {children}
+    </View>
+  );
+}
+
+export function KangurMobileInsetPanel(
+  props: KangurMobileInsetPanelProps,
+): React.JSX.Element {
+  const { children, gap, padding = 14, style, testID } = props;
+
+  return (
+    <View
+      testID={testID}
+      style={[
+        KANGUR_MOBILE_INSET_PANEL_STYLE,
+        { padding },
+        gap === undefined ? null : { gap },
+        style,
+      ]}
+    >
       {children}
     </View>
   );

@@ -456,6 +456,83 @@ describe('AdminFilemakerMail pages', () => {
     });
   });
 
+  it('routes account settings selection through the mail tree shell', async () => {
+    const { AdminFilemakerMailPage } = await import(
+      '@/features/filemaker/pages/AdminFilemakerMailPage'
+    );
+    searchParamsGetMock.mockImplementation((key: string) => {
+      if (key === 'accountId') return 'account-1';
+      if (key === 'mailboxPath') return 'INBOX';
+      return null;
+    });
+
+    fetchMock.mockImplementation(async (input: RequestInfo | URL, init?: RequestInit) => {
+      const url = String(input);
+      if (url === '/api/filemaker/mail/accounts' && !init?.method) {
+        return jsonResponse({
+          accounts: [
+            {
+              id: 'account-1',
+              name: 'Support inbox',
+              emailAddress: 'support@example.com',
+              status: 'active',
+              imapHost: 'imap.example.com',
+              imapPort: 993,
+              imapSecure: true,
+              imapUser: 'support@example.com',
+              imapPasswordSettingKey: 'imap-key',
+              smtpHost: 'smtp.example.com',
+              smtpPort: 465,
+              smtpSecure: true,
+              smtpUser: 'support@example.com',
+              smtpPasswordSettingKey: 'smtp-key',
+              fromName: 'Support',
+              replyToEmail: null,
+              folderAllowlist: ['INBOX'],
+              initialSyncLookbackDays: 30,
+              maxMessagesPerSync: 100,
+              lastSyncedAt: null,
+              lastSyncError: null,
+              createdAt: '2026-03-28T10:00:00.000Z',
+              updatedAt: '2026-03-28T10:00:00.000Z',
+              provider: 'imap_smtp',
+            },
+          ],
+        });
+      }
+      if (url === '/api/filemaker/mail/folders' && !init?.method) {
+        return jsonResponse({
+          folders: [
+            {
+              id: 'account-1::INBOX',
+              accountId: 'account-1',
+              mailboxPath: 'INBOX',
+              mailboxRole: 'inbox',
+              threadCount: 1,
+              unreadCount: 1,
+              lastMessageAt: '2026-03-28T10:00:00.000Z',
+            },
+          ],
+        });
+      }
+      if (url.startsWith('/api/filemaker/mail/threads')) {
+        return jsonResponse({ threads: [] });
+      }
+      throw new Error(`Unexpected fetch: ${url} (${init?.method ?? 'GET'})`);
+    });
+
+    render(<AdminFilemakerMailPage />);
+
+    await screen.findByText('Support inbox');
+    fireEvent.click(screen.getByRole('button', { name: /Settings/ }));
+
+    await waitFor(() => {
+      expect(routerReplaceMock).toHaveBeenCalledWith(
+        '/admin/filemaker/mail?accountId=account-1&panel=settings'
+      );
+    });
+  });
+
   it('loads accounts in compose, sends an email, and navigates to the thread', async () => {
     const { AdminFilemakerMailComposePage } = await import(
       '@/features/filemaker/pages/AdminFilemakerMailComposePage'
@@ -474,6 +551,21 @@ describe('AdminFilemakerMail pages', () => {
               name: 'Support inbox',
               emailAddress: 'support@example.com',
               fromName: 'Support',
+            },
+          ],
+        });
+      }
+      if (url === '/api/filemaker/mail/folders' && !init?.method) {
+        return jsonResponse({
+          folders: [
+            {
+              id: 'account-1::INBOX',
+              accountId: 'account-1',
+              mailboxPath: 'INBOX',
+              mailboxRole: 'inbox',
+              threadCount: 0,
+              unreadCount: 0,
+              lastMessageAt: null,
             },
           ],
         });
@@ -540,6 +632,33 @@ describe('AdminFilemakerMail pages', () => {
     let threadLoads = 0;
     fetchMock.mockImplementation(async (input: RequestInfo | URL, init?: RequestInit) => {
       const url = String(input);
+      if (url === '/api/filemaker/mail/accounts' && !init?.method) {
+        return jsonResponse({
+          accounts: [
+            {
+              id: 'account-1',
+              name: 'Support inbox',
+              emailAddress: 'support@example.com',
+              fromName: 'Support',
+            },
+          ],
+        });
+      }
+      if (url === '/api/filemaker/mail/folders' && !init?.method) {
+        return jsonResponse({
+          folders: [
+            {
+              id: 'account-1::INBOX',
+              accountId: 'account-1',
+              mailboxPath: 'INBOX',
+              mailboxRole: 'inbox',
+              threadCount: 1,
+              unreadCount: 0,
+              lastMessageAt: '2026-03-28T10:00:00.000Z',
+            },
+          ],
+        });
+      }
       if (url === '/api/filemaker/mail/threads/thread%201' && !init?.method) {
         threadLoads += 1;
         return jsonResponse({

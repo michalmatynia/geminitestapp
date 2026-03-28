@@ -67,4 +67,17 @@ describe('launchable runtime specs', () => {
       );
     }
   });
+
+  it('keeps the general adverbs runtime spec pinned to the shared sentence-builder engine', () => {
+    expect(getKangurLaunchableGameRuntimeSpec('english_adverbs_quiz')).toEqual(
+      expect.objectContaining({
+        screen: 'english_adverbs_quiz',
+        engineId: 'sentence-builder-engine',
+        rendererId: 'english_adverbs_action_game',
+        shell: expect.objectContaining({
+          shellTestId: expect.any(String),
+        }),
+      })
+    );
+  });
 });

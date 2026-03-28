@@ -196,22 +196,23 @@ export const PRACTICE_ASSIGNMENT_ITEMS: KangurAssignmentCatalogItem[] = [
   },
   {
     id: 'practice-clock',
-    title: 'Trening: Zegary',
-    description: 'Jedna sesja odczytywania godziny i obliczeń czasowych.',
+    title: 'Trening: Zegar',
+    description: 'Sesja ćwiczeń z godzinami, minutami i pełnym czasem na zegarze.',
     badge: 'Praktyka',
     group: 'practice',
-    priorityLabel: 'Priorytet wysoki',
+    priorityLabel: 'Priorytet średni',
     createInput: {
-      title: 'Praktyka: Zegary i czas',
-      description: 'Rozwiąż sesję zegarów i utrwal umiejętność odczytywania czasu.',
-      priority: 'high',
+      title: 'Praktyka: Zegar',
+      description:
+        'Wykonaj zegarowy trening i sprawdź odczytywanie godzin, minut oraz pełnego czasu.',
+      priority: 'medium',
       target: {
         type: 'practice',
         operation: 'clock',
         requiredAttempts: 1,
-        minAccuracyPercent: 80,
+        minAccuracyPercent: 75,
       },
     },
-    keywords: ['zegary', 'czas', 'godzina', 'trening'],
+    keywords: ['zegar', 'zegary', 'czas', 'godziny', 'minuty', 'pełny czas', 'trening'],
   },
 ];

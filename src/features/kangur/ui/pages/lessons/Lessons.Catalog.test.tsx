@@ -349,4 +349,97 @@ describe('LessonsCatalog', () => {
     requestAnimationFrameSpy.mockRestore();
     vi.useRealTimers();
   });
+
+  it('renders the general adverbs lesson together with adverbs of frequency inside the grammar group', () => {
+    lessonCardPropsMock.mockClear();
+    useLessonsMock.mockReturnValue({
+      subject: 'english',
+      ageGroup: 'ten_year_old',
+      lessonSections: [
+        {
+          id: 'english_grammar',
+          subject: 'english',
+          enabled: true,
+          sortOrder: 1,
+          label: 'Gramatyka',
+          typeLabel: 'Dzial',
+          componentIds: [],
+          subsections: [
+            {
+              id: 'english_grammar_adverbs',
+              enabled: true,
+              sortOrder: 1,
+              label: 'Adverbs',
+              typeLabel: 'Podgrupa',
+              componentIds: ['english_adverbs'],
+            },
+            {
+              id: 'english_grammar_adverbs_frequency',
+              enabled: true,
+              sortOrder: 2,
+              label: 'Adverbs of Frequency',
+              typeLabel: 'Podgrupa',
+              componentIds: ['english_adverbs_frequency'],
+            },
+          ],
+        },
+      ],
+      orderedLessons: [
+        {
+          id: 'lesson-english-adverbs',
+          componentId: 'english_adverbs',
+          subject: 'english',
+          ageGroup: 'ten_year_old',
+          title: 'Adverbs',
+          description: 'Dowiedz się, jak opisać sposób wykonywania czynności.',
+          emoji: '✨',
+          color: 'kangur-gradient-accent-sky',
+          activeBg: 'bg-sky-500',
+          sortOrder: 1,
+          enabled: true,
+        },
+        {
+          id: 'lesson-english-adverbs-frequency',
+          componentId: 'english_adverbs_frequency',
+          subject: 'english',
+          ageGroup: 'ten_year_old',
+          title: 'Adverbs of Frequency',
+          description: 'Ćwicz always, usually, sometimes i never.',
+          emoji: '📆',
+          color: 'kangur-gradient-accent-violet',
+          activeBg: 'bg-violet-500',
+          sortOrder: 2,
+          enabled: true,
+        },
+      ],
+      handleSelectLesson: vi.fn(),
+      handleGoBack: vi.fn(),
+      progress: { lessonMastery: {} },
+      lessonAssignmentsByComponent: new Map(),
+      completedLessonAssignmentsByComponent: new Map(),
+      lessonDocuments: {},
+      activeLessonId: null,
+      isLessonsCatalogLoading: false,
+      isLessonSectionsLoading: false,
+      shouldShowLessonsCatalogSkeleton: false,
+    });
+
+    render(<LessonsCatalog />);
+
+    expect(screen.queryByTestId('mock-lesson-card-lesson-english-adverbs')).not.toBeInTheDocument();
+    expect(
+      screen.queryByTestId('mock-lesson-card-lesson-english-adverbs-frequency')
+    ).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: /gramatyka/i }));
+
+    expect(screen.getByTestId('mock-lesson-card-lesson-english-adverbs')).toBeInTheDocument();
+    expect(
+      screen.getByTestId('mock-lesson-card-lesson-english-adverbs-frequency')
+    ).toBeInTheDocument();
+    expect(lessonCardPropsMock.mock.calls.map(([props]) => props.lesson.id)).toEqual([
+      'lesson-english-adverbs',
+      'lesson-english-adverbs-frequency',
+    ]);
+  });
 });

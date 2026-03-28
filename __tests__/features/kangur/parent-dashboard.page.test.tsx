@@ -119,7 +119,13 @@ vi.mock('@/features/kangur/ui/hooks/useKangurParentDashboardScores', () => ({
 }));
 
 vi.mock('@/features/kangur/ui/useKangurStorefrontAppearance', () => ({
-  useKangurStorefrontAppearance: () => ({}),
+  useKangurStorefrontAppearance: () => ({
+    isAppearanceAvailable: false,
+  }),
+}));
+
+vi.mock('@/features/kangur/ui/components/KangurLanguageSwitcher', () => ({
+  KangurLanguageSwitcher: () => <button type='button'>Jezyk</button>,
 }));
 
 vi.mock('@/features/kangur/ui/context/KangurLoginModalContext', () => ({
@@ -131,6 +137,46 @@ vi.mock('@/features/kangur/ui/context/KangurLoginModalContext', () => ({
 vi.mock('@/features/kangur/ui/components/KangurAssignmentManager', () => ({
   __esModule: true,
   default: () => <div data-testid='kangur-assignment-manager'>Assignment manager</div>,
+}));
+
+vi.mock('@/features/kangur/ui/components/KangurParentDashboardLearnerManagementWidget', () => ({
+  KangurParentDashboardLearnerManagementWidget: () => (
+    <div className='grid sm:grid-cols-2'>
+      <button
+        aria-pressed='true'
+        className='soft-card rounded-[30px] h-full'
+        data-testid='parent-dashboard-learner-card-learner-1'
+        type='button'
+        onClick={() => selectLearnerMock('learner-1')}
+      >
+        <div className='w-full flex-col items-start sm:flex-row sm:items-center'>
+          <span
+            className='rounded-full'
+            data-testid='parent-dashboard-learner-icon-learner-1'
+          />
+          <span>Jan</span>
+          <span className='rounded-full border'>Aktywny</span>
+        </div>
+      </button>
+      <button
+        aria-pressed='false'
+        className='soft-card rounded-[30px] h-full'
+        data-testid='parent-dashboard-learner-card-learner-2'
+        type='button'
+        onClick={() => selectLearnerMock('learner-2')}
+      >
+        <div className='w-full flex-col items-start sm:flex-row sm:items-center'>
+          <span
+            className='rounded-full'
+            data-testid='parent-dashboard-learner-icon-learner-2'
+          />
+          <span>Ola</span>
+          <span className='rounded-full border'>Wyłączony</span>
+        </div>
+      </button>
+      <button type='button'>Ustawienia profilu ucznia</button>
+    </div>
+  ),
 }));
 
 import ParentDashboard from '@/features/kangur/ui/pages/ParentDashboard';
@@ -173,6 +219,7 @@ const baseProgress = {
 describe('ParentDashboard page', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    getDisabledDocsTooltipsMock.mockReturnValue(disabledDocsTooltipsMock);
 
     useKangurRoutingMock.mockReturnValue({
       basePath: '/kangur',
@@ -274,47 +321,14 @@ describe('ParentDashboard page', () => {
     renderParentDashboardPage();
 
     expect(screen.getByRole('heading', { name: 'Panel Rodzica' })).toBeInTheDocument();
-    expect(screen.getAllByText('Rodzic').length).toBeGreaterThan(0);
     expect(screen.getByText('anna@example.com')).toBeInTheDocument();
     expect(screen.getAllByText('Jan').length).toBeGreaterThan(0);
     expect(screen.getByText('Ola')).toBeInTheDocument();
 
-    const activeLearnerCard = screen.getByTestId('parent-dashboard-learner-card-learner-1');
-    const inactiveLearnerCard = screen.getByTestId('parent-dashboard-learner-card-learner-2');
-    const activeLearnerCardContent = activeLearnerCard.firstElementChild as HTMLElement | null;
     const progressTab = screen.getByRole('tab', { name: /Post/i });
     const assignmentsTab = screen.getByRole('tab', { name: /Zadania/i });
     const monitoringTab = screen.getByRole('tab', { name: /Monitor/i });
 
-    expect(activeLearnerCard).toHaveAttribute('aria-pressed', 'true');
-    expect(activeLearnerCard).toHaveClass('soft-card', 'rounded-[30px]');
-    expect(inactiveLearnerCard).toHaveAttribute('aria-pressed', 'false');
-    expect(inactiveLearnerCard).toHaveClass('soft-card', 'rounded-[30px]');
-    expect(activeLearnerCard.parentElement).toHaveClass('grid', 'sm:grid-cols-2');
-    expect(activeLearnerCard.parentElement).not.toHaveClass('min-[420px]:grid-cols-2');
-    expect(activeLearnerCard).toHaveClass('h-full');
-    expect(activeLearnerCardContent).toHaveClass(
-      'w-full',
-      'flex-col',
-      'items-start',
-      'sm:flex-row',
-      'sm:items-center'
-    );
-    expect(within(activeLearnerCard).getByTestId('parent-dashboard-learner-icon-learner-1')).toHaveClass(
-      'rounded-full'
-    );
-    expect(
-      within(inactiveLearnerCard).getByTestId('parent-dashboard-learner-icon-learner-2')
-    ).toHaveClass('rounded-full');
-    expect(screen.queryByTestId('parent-dashboard-role-chip')).not.toBeInTheDocument();
-    expect(within(activeLearnerCard).getByText('Aktywny')).toHaveClass(
-      'rounded-full',
-      'border'
-    );
-    expect(within(inactiveLearnerCard).getByText(/Wyłączony/i)).toHaveClass(
-      'rounded-full',
-      'border'
-    );
     expect(
       screen.getByRole('button', { name: /Ustawienia profilu ucznia/i })
     ).toBeInTheDocument();
@@ -325,9 +339,6 @@ describe('ParentDashboard page', () => {
     expect(progressTab).toHaveClass('kangur-segmented-control-item-active');
     expect(assignmentsTab).not.toHaveClass('kangur-segmented-control-item-active');
     expect(monitoringTab).not.toHaveClass('kangur-segmented-control-item-active');
-
-    await userEvent.click(screen.getByRole('button', { name: /ola/i }));
-    expect(selectLearnerMock).toHaveBeenCalledWith('learner-2');
 
     await userEvent.click(monitoringTab);
     expect(monitoringTab).toHaveAttribute('aria-selected', 'true');

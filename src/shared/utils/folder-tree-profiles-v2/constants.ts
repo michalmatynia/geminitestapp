@@ -144,7 +144,7 @@ export const folderTreeSettingsMetaByInstance: Record<
     title: 'Filemaker Mail',
     description: 'Controls the mailbox account and folder tree shown in Filemaker mail.',
     fileHint: 'Not used in the current account/folder shell.',
-    folderHint: 'Example: mail_account, mail_folder',
+    folderHint: 'Example: mail_account, mail_account_settings, mail_folder',
   },
   kangur_lessons_manager: {
     title: 'StudiQ Lessons Manager',

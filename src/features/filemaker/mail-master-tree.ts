@@ -3,6 +3,7 @@ import type { MasterTreeNode } from '@/shared/utils/master-folder-tree-contract'
 
 export type FilemakerMailMasterNode =
   | { kind: 'mail_account'; accountId: string }
+  | { kind: 'mail_account_settings'; accountId: string }
   | { kind: 'mail_folder'; accountId: string; mailboxPath: string };
 
 const FILEMAKER_MAIL_NODE_PREFIX = 'filemaker-mail';
@@ -20,6 +21,9 @@ const folderRoleOrder: Record<FilemakerMailFolderRole, number> = {
 export const toFilemakerMailAccountNodeId = (accountId: string): string =>
   `${FILEMAKER_MAIL_NODE_PREFIX}:account:${encodeURIComponent(accountId)}`;
 
+export const toFilemakerMailAccountSettingsNodeId = (accountId: string): string =>
+  `${FILEMAKER_MAIL_NODE_PREFIX}:account-settings:${encodeURIComponent(accountId)}`;
+
 export const toFilemakerMailFolderNodeId = (accountId: string, mailboxPath: string): string =>
   `${FILEMAKER_MAIL_NODE_PREFIX}:folder:${encodeURIComponent(accountId)}:${encodeURIComponent(mailboxPath)}`;
 
@@ -32,6 +36,12 @@ export const parseFilemakerMailMasterNodeId = (
   if (parts[1] === 'account' && parts[2]) {
     return {
       kind: 'mail_account',
+      accountId: decodeURIComponent(parts[2]),
+    };
+  }
+  if (parts[1] === 'account-settings' && parts[2]) {
+    return {
+      kind: 'mail_account_settings',
       accountId: decodeURIComponent(parts[2]),
     };
   }
@@ -86,6 +96,7 @@ export const buildFilemakerMailMasterNodes = (input: {
     .sort((left, right) => left.name.localeCompare(right.name))
     .flatMap((account, accountIndex): MasterTreeNode[] => {
       const accountNodeId = toFilemakerMailAccountNodeId(account.id);
+      const accountSettingsNodeId = toFilemakerMailAccountSettingsNodeId(account.id);
       const folderNodes = (foldersByAccountId.get(account.id) ?? [])
         .slice()
         .sort(compareFolders)
@@ -130,6 +141,21 @@ export const buildFilemakerMailMasterNodes = (input: {
               return sum + unreadCount;
             }, 0),
             folderCount: folderNodes.length,
+          },
+        },
+        {
+          id: accountSettingsNodeId,
+          type: 'folder',
+          kind: 'mail_account_settings',
+          parentId: accountNodeId,
+          name: 'Settings',
+          path: `${account.emailAddress}/settings`,
+          sortOrder: -1,
+          icon: null,
+          metadata: {
+            accountId: account.id,
+            emailAddress: account.emailAddress,
+            status: account.status,
           },
         },
         ...folderNodes,

@@ -12,9 +12,8 @@ export type SocialPostEditorProps = {
   showImagesPanel?: boolean;
 };
 
-export function SocialPostEditor({
-  showImagesPanel = true,
-}: SocialPostEditorProps): React.JSX.Element {
+export function SocialPostEditor(props: SocialPostEditorProps): React.JSX.Element {
+  const { showImagesPanel = true } = props;
   const {
     activePost,
     editorState,

@@ -365,6 +365,13 @@ export const defaultFolderTreeProfilesV2: FolderTreeProfilesV2Map = {
         },
         {
           childType: 'folder',
+          childKinds: ['mail_account_settings'],
+          targetType: 'folder',
+          targetKinds: ['mail_account'],
+          allow: true,
+        },
+        {
+          childType: 'folder',
           childKinds: ['mail_folder'],
           targetType: 'folder',
           targetKinds: ['mail_account'],

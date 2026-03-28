@@ -197,23 +197,26 @@ const renderProductMetadataMultiSelectField = ({
  * Generic field for product metadata selection (Catalogs, Producers, Tags).
  * Consolidates CatalogMultiSelectField, ProducerMultiSelectField, TagMultiSelectField.
  */
-export function ProductMetadataMultiSelectField({
-  label,
-  items: itemsProp,
-  selectedIds: selectedIdsProp,
-  onChange: onChangeProp,
-  loading = false,
-  disabled = false,
-  placeholder,
-  searchPlaceholder,
-  emptyMessage,
-  contextItemsKey,
-  contextSelectedKey,
-  contextLoadingKey,
-  contextOnChangeKey,
-  formContextToggleName,
-  single = false,
-}: ProductMetadataMultiSelectFieldProps): React.JSX.Element {
+export function ProductMetadataMultiSelectField(
+  props: ProductMetadataMultiSelectFieldProps
+): React.JSX.Element {
+  const {
+    label,
+    items: itemsProp,
+    selectedIds: selectedIdsProp,
+    onChange: onChangeProp,
+    loading = false,
+    disabled = false,
+    placeholder,
+    searchPlaceholder,
+    emptyMessage,
+    contextItemsKey,
+    contextSelectedKey,
+    contextLoadingKey,
+    contextOnChangeKey,
+    formContextToggleName,
+    single = false,
+  } = props;
   const formMetadataContext = useContext(ProductFormMetadataContext);
   const metadataStateContext = useOptionalProductMetadataFieldStateContext();
   const metadataActionsContext = useOptionalProductMetadataFieldActionsContext();

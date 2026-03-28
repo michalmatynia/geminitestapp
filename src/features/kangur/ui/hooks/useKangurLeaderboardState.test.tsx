@@ -164,4 +164,44 @@ describe('useKangurLeaderboardState', () => {
     ]);
     expect(scoreFilterMock).toHaveBeenCalledTimes(1);
   });
+
+  it('uses learner-friendly labels for general and frequency adverbs on the English leaderboard', async () => {
+    scoreFilterMock.mockResolvedValue([
+      createScore({
+        id: 'score-english-adverbs',
+        player_name: 'Ada',
+        operation: 'english_adverbs',
+        subject: 'english',
+        created_by: 'ada@example.com',
+      }),
+      createScore({
+        id: 'score-english-adverbs-frequency',
+        player_name: 'Bartek',
+        operation: 'english_adverbs_frequency',
+        subject: 'english',
+        created_by: 'bartek@example.com',
+      }),
+    ]);
+    useKangurSubjectFocusMock.mockReturnValue({
+      subject: 'english',
+      setSubject: vi.fn(),
+      subjectKey: 'learner-1',
+    });
+
+    const { result } = renderHook(() => useKangurLeaderboardState());
+
+    await waitFor(() => {
+      expect(result.current.loading).toBe(false);
+    });
+
+    expect(result.current.items.map((item) => item.operationLabel)).toEqual([
+      'Przysłówki',
+      'Przysłówki częstotliwości',
+    ]);
+    expect(result.current.operationFilters.map((item) => item.label)).toEqual(
+      expect.arrayContaining(['Przysłówki', 'Przysłówki częstotliwości'])
+    );
+    expect(result.current.items[0]?.metaLabel).toContain('Przysłówki');
+    expect(result.current.items[1]?.metaLabel).toContain('Przysłówki częstotliwości');
+  });
 });

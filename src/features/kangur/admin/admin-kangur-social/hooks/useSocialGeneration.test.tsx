@@ -57,6 +57,10 @@ describe('useSocialGeneration', () => {
   });
 
   it('sends selected brain and vision model ids with the generation request', async () => {
+    const setActivePostId = vi.fn();
+    const setEditorState = vi.fn();
+    const setContextSummary = vi.fn();
+
     const { result } = renderHook(() =>
       useSocialGeneration({
         activePost: {
@@ -75,6 +79,9 @@ describe('useSocialGeneration', () => {
         generateDraftBlockedReason: null,
         imageAddonIds: ['addon-1'],
         projectUrl: 'https://studiq.example.com/project',
+        setActivePostId,
+        setEditorState,
+        setContextSummary,
         buildSocialContext: () => ({ postId: 'post-1' }),
       })
     );
@@ -91,6 +98,17 @@ describe('useSocialGeneration', () => {
       visionModelId: 'gpt-4.1-mini',
       imageAddonIds: ['addon-1'],
       projectUrl: 'https://studiq.example.com/project',
+    });
+    expect(setActivePostId).toHaveBeenCalledWith('post-1');
+    expect(setEditorState).toHaveBeenCalledWith({
+      titlePl: 'Generated PL',
+      titleEn: 'Generated EN',
+      bodyPl: 'Body PL',
+      bodyEn: 'Body EN',
+    });
+    expect(setContextSummary).toHaveBeenCalledWith(null);
+    expect(toastMock).toHaveBeenCalledWith('Draft updated — review the generated post.', {
+      variant: 'success',
     });
   });
 });

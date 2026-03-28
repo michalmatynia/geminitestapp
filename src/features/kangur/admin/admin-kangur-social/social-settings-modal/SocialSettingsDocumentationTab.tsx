@@ -30,7 +30,7 @@ export function SocialSettingsDocumentationTab({
   hasVisualDocUpdates,
   previewDocUpdatesMutationPending,
   applyDocUpdatesMutationPending,
-  resolvedContextSummary,
+  contextSummary,
   selectedPostTitle,
   setDocReferenceInput,
   setGenerationNotes,
@@ -57,7 +57,7 @@ export function SocialSettingsDocumentationTab({
   hasVisualDocUpdates: boolean;
   previewDocUpdatesMutationPending: boolean;
   applyDocUpdatesMutationPending: boolean;
-  resolvedContextSummary: string | null;
+  contextSummary: string | null;
   selectedPostTitle: string;
   setDocReferenceInput: (val: string) => void;
   setGenerationNotes: (val: string) => void;
@@ -147,9 +147,9 @@ export function SocialSettingsDocumentationTab({
             <div className='text-sm font-semibold text-foreground'>Loaded context</div>
             <div className='text-sm text-muted-foreground'>Documentation context loaded for the selected post.</div>
           </div>
-          {resolvedContextSummary ? (
+          {contextSummary ? (
             <div className='max-h-48 overflow-y-auto rounded-xl border border-border bg-background/40 p-3'>
-              <pre className='whitespace-pre-wrap text-xs text-muted-foreground'>{resolvedContextSummary}</pre>
+              <pre className='whitespace-pre-wrap text-xs text-muted-foreground'>{contextSummary}</pre>
             </div>
           ) : (
             <div className='text-xs text-muted-foreground'>Load context to review the current documentation summary.</div>

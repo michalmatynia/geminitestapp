@@ -9,6 +9,7 @@ import {
 import { KangurProgressBar } from '@/features/kangur/ui/design/primitives';
 import { KangurAdminCard } from '../components/KangurAdminCard';
 import { useSocialPostContext } from './SocialPostContext';
+import type { PipelineStep } from './AdminKangurSocialPage.Constants';
 
 const PIPELINE_PROGRESS_VALUE_BY_STEP = {
   loading_context: 18,
@@ -21,6 +22,7 @@ const PIPELINE_PROGRESS_VALUE_BY_STEP = {
 export function SocialPostPipeline(): React.JSX.Element {
   const {
     activePostId,
+    editorState,
     pipelineStep,
     pipelineProgress,
     pipelineErrorMessage,
@@ -38,16 +40,34 @@ export function SocialPostPipeline(): React.JSX.Element {
     captureOnlyErrorMessage,
     batchCapturePresetLimit,
     hasBatchCaptureConfig,
+    setIsPostEditorModalOpen,
   } = useSocialPostContext();
 
+  const hasActivePost = Boolean(activePostId);
+  const canRunTextPipeline = hasActivePost && canGenerateSocialDraft;
+  const canRunFreshCapture = hasActivePost && canRunFreshCapturePipeline;
   const canCaptureImagesOnly =
-    Boolean(activePostId) &&
+    hasActivePost &&
     Boolean((batchCaptureBaseUrl ?? '').trim()) &&
     batchCapturePresetIds.length > 0;
   const batchCapturePresetCount = batchCapturePresetIds.length;
   const pipelineProgressValue = pipelineProgress
     ? PIPELINE_PROGRESS_VALUE_BY_STEP[pipelineProgress.step]
     : 0;
+  const generatedDraftLabel =
+    editorState?.titlePl?.trim() || editorState?.titleEn?.trim() || 'Untitled draft';
+  const previousPipelineStepRef = React.useRef<PipelineStep>('idle');
+
+  React.useEffect(() => {
+    if (
+      previousPipelineStepRef.current !== 'done' &&
+      pipelineStep === 'done' &&
+      hasActivePost
+    ) {
+      setIsPostEditorModalOpen(true);
+    }
+    previousPipelineStepRef.current = pipelineStep;
+  }, [hasActivePost, pipelineStep, setIsPostEditorModalOpen]);
 
   return (
     <KangurAdminCard>
@@ -73,7 +93,7 @@ export function SocialPostPipeline(): React.JSX.Element {
               type='button'
               size='sm'
               onClick={() => void handleRunFullPipeline()}
-              disabled={!canGenerateSocialDraft || pipelineStep !== 'idle'}
+              disabled={!canRunTextPipeline || pipelineStep !== 'idle'}
             >
               Run full pipeline
             </Button>
@@ -82,7 +102,7 @@ export function SocialPostPipeline(): React.JSX.Element {
               variant='outline'
               size='sm'
               onClick={() => void handleRunFullPipelineWithFreshCapture()}
-              disabled={!canRunFreshCapturePipeline || pipelineStep !== 'idle'}
+              disabled={!canRunFreshCapture || pipelineStep !== 'idle'}
             >
               Fresh capture & pipeline
             </Button>
@@ -96,6 +116,12 @@ export function SocialPostPipeline(): React.JSX.Element {
               Capture images only
             </Button>
           </div>
+
+          {!hasActivePost && (
+            <div className='rounded-xl border border-border/60 bg-background/40 px-3 py-2 text-xs text-muted-foreground'>
+              Create or select a draft before running the social pipeline.
+            </div>
+          )}
 
           {!canGenerateSocialDraft && socialDraftBlockedReason && (
             <div className='rounded-xl border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-xs text-amber-900 dark:text-amber-200'>
@@ -121,6 +147,12 @@ export function SocialPostPipeline(): React.JSX.Element {
           {pipelineStep === 'error' && pipelineErrorMessage && (
             <div className='rounded-xl border border-destructive/30 bg-destructive/10 px-3 py-2 text-xs text-destructive'>
               {pipelineErrorMessage}
+            </div>
+          )}
+
+          {pipelineStep === 'done' && hasActivePost && (
+            <div className='rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-3 py-2 text-xs text-emerald-900 dark:text-emerald-200'>
+              Draft updated: {generatedDraftLabel}. The editor opened with the generated content.
             </div>
           )}
 

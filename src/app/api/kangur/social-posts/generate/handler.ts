@@ -55,6 +55,7 @@ export async function postKangurSocialPostGenerateHandler(
         bodyPl: draft.bodyPl,
         bodyEn: draft.bodyEn,
         combinedBody: draft.combinedBody,
+        contextSummary: draft.summary,
         generatedSummary: draft.summary,
         docReferences: draft.docReferences,
         visualSummary: draft.visualSummary,

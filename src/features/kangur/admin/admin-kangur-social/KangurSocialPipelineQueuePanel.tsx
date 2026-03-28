@@ -199,7 +199,7 @@ export function KangurSocialPipelineQueuePanel({
         <div className='flex items-center justify-between'>
           <div className='flex items-center gap-2'>
             <span className='text-xs font-semibold text-foreground'>
-              Pipeline Queue
+              Capture Queue
             </span>
             {status ? (
               <Badge
@@ -222,11 +222,11 @@ export function KangurSocialPipelineQueuePanel({
                 variant='outline'
                 onClick={() => void handleTrigger()}
                 disabled={triggering}
-                aria-label='Run pipeline now'
+                aria-label='Run capture queue now'
                 className='gap-1 text-[10px]'
               >
                 <PlayIcon className='size-2.5' />
-                {triggering ? 'Running...' : 'Run Now'}
+                {triggering ? 'Running...' : 'Run Capture'}
               </Button>
             ) : null}
             <Button
@@ -254,10 +254,10 @@ export function KangurSocialPipelineQueuePanel({
         <div className='flex items-center justify-between'>
           <div>
             <div className='text-sm font-semibold text-foreground'>
-              StudiQ Social Pipeline
+              StudiQ Social Capture Queue
             </div>
             <div className='text-xs text-muted-foreground'>
-              Automated batch capture of social media screenshots via Redis queue.
+              Automated screenshot capture for social presets via Redis queue. Use the Social pipeline card to generate post drafts.
             </div>
           </div>
           <div className='flex items-center gap-2'>
@@ -294,11 +294,11 @@ export function KangurSocialPipelineQueuePanel({
                 variant='outline'
                 onClick={() => void handleTrigger()}
                 disabled={triggering}
-                aria-label='Run pipeline now'
+                aria-label='Run capture queue now'
                 className='gap-1.5'
               >
                 <PlayIcon className='size-3' />
-                {triggering ? 'Triggering...' : 'Run Now'}
+                {triggering ? 'Triggering...' : 'Run Capture'}
               </Button>
             ) : null}
             <Button
@@ -354,7 +354,7 @@ export function KangurSocialPipelineQueuePanel({
           padding='md'
           className='rounded-xl border-amber-500/30 bg-amber-500/5 text-sm text-amber-600'
         >
-          Pipeline worker is not running. Ensure Redis is available and REDIS_URL is configured.
+          Capture queue worker is not running. Ensure Redis is available and REDIS_URL is configured.
         </Card>
       ) : null}
 
@@ -439,7 +439,7 @@ function renderJobRow({
     (job.data as { input?: { postId?: string | null } } | null)?.input?.postId ??
     job.result?.postId ??
     null;
-  const jobLabel = isManualRun ? 'Manual post pipeline' : 'Scheduled pipeline tick';
+  const jobLabel = isManualRun ? 'Manual post draft pipeline' : 'Scheduled capture tick';
   const captureMode = job.progress?.captureMode ?? job.result?.captureMode ?? null;
   const captureModeLabel =
     captureMode === 'fresh_capture'

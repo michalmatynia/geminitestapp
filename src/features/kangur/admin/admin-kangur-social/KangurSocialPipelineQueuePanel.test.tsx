@@ -91,7 +91,7 @@ describe('KangurSocialPipelineQueuePanel', () => {
       });
     });
 
-    expect(screen.queryByRole('button', { name: 'Run pipeline now' })).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Run capture queue now' })).toBeNull();
   });
 
   it('keeps run now visible in compact mode when the queue is only waiting', async () => {
@@ -116,7 +116,7 @@ describe('KangurSocialPipelineQueuePanel', () => {
       });
     });
 
-    expect(screen.getByRole('button', { name: 'Run pipeline now' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Run capture queue now' })).toBeInTheDocument();
   });
 
   it('keeps run now visible when the worker is offline but a stale active job is still reported', async () => {
@@ -146,7 +146,7 @@ describe('KangurSocialPipelineQueuePanel', () => {
       });
     });
 
-    expect(screen.getByRole('button', { name: 'Run pipeline now' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Run capture queue now' })).toBeInTheDocument();
   });
 
   it('shows delete for terminal jobs, hides it for active jobs, and refreshes after delete', async () => {
@@ -222,6 +222,7 @@ describe('KangurSocialPipelineQueuePanel', () => {
 
     expect(await screen.findByRole('button', { name: 'Delete pipeline job job-completed' })).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Delete pipeline job job-active' })).toBeNull();
+    expect(screen.getByText('Manual post draft pipeline')).toBeInTheDocument();
     expect(screen.getByText('Post post-42')).toBeInTheDocument();
     expect(screen.getByText('Fresh Playwright capture')).toBeInTheDocument();
     expect(screen.getByText('2/3 presets used')).toBeInTheDocument();

@@ -117,6 +117,7 @@ describe('useSocialPipelineRunner', () => {
     });
 
     const setActivePostId = vi.fn();
+    const setContextSummary = vi.fn();
     const setEditorState = vi.fn();
     const setImageAddonIds = vi.fn();
     const setImageAssets = vi.fn();
@@ -157,6 +158,7 @@ describe('useSocialPipelineRunner', () => {
           resolveDocReferences: () => ['docs/kangur/example.mdx'],
           buildSocialContext: () => ({ postId: 'post-1' }),
           handleLoadContext: vi.fn(),
+          setContextSummary,
           setActivePostId,
           setEditorState,
           setImageAddonIds,
@@ -190,6 +192,7 @@ describe('useSocialPipelineRunner', () => {
       timeout: 60_000,
     });
     expect(setActivePostId).toHaveBeenCalledWith('post-1');
+    expect(setContextSummary).toHaveBeenCalledWith('summary');
     expect(setEditorState).toHaveBeenCalledWith({
       titlePl: 'Generated PL',
       titleEn: 'Generated EN',
@@ -315,6 +318,7 @@ describe('useSocialPipelineRunner', () => {
           resolveDocReferences: () => [],
           buildSocialContext: () => ({ postId: 'post-1' }),
           handleLoadContext: vi.fn(),
+          setContextSummary: vi.fn(),
           setActivePostId: vi.fn(),
           setEditorState: vi.fn(),
           setImageAddonIds: vi.fn(),
@@ -379,6 +383,7 @@ describe('useSocialPipelineRunner', () => {
           resolveDocReferences: () => [],
           buildSocialContext: () => ({ postId: 'post-1' }),
           handleLoadContext: vi.fn(),
+          setContextSummary: vi.fn(),
           setActivePostId: vi.fn(),
           setEditorState: vi.fn(),
           setImageAddonIds: vi.fn(),
@@ -463,6 +468,7 @@ describe('useSocialPipelineRunner', () => {
           resolveDocReferences: () => ['docs/kangur/example.mdx'],
           buildSocialContext: () => ({ postId: 'post-1' }),
           handleLoadContext: vi.fn(),
+          setContextSummary: vi.fn(),
           setActivePostId: vi.fn(),
           setEditorState: vi.fn(),
           setImageAddonIds: vi.fn(),

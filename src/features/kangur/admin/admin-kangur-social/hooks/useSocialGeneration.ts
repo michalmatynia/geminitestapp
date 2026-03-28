@@ -28,8 +28,20 @@ type SocialGenerationDeps = {
   generateDraftBlockedReason: string | null;
   imageAddonIds: string[];
   projectUrl: string;
+  setActivePostId: (value: string | null) => void;
+  setEditorState: (value: {
+    titlePl: string;
+    titleEn: string;
+    bodyPl: string;
+    bodyEn: string;
+  }) => void;
+  setContextSummary: (value: string | null) => void;
   buildSocialContext: (overrides?: Record<string, unknown>) => Record<string, unknown>;
 };
+
+const isSavedSocialPost = (
+  value: KangurSocialPostGenerationResult
+): value is KangurSocialPost => 'id' in value;
 
 export function useSocialGeneration(deps: SocialGenerationDeps) {
   const { toast } = useToast();
@@ -54,7 +66,7 @@ export function useSocialGeneration(deps: SocialGenerationDeps) {
       deps.buildSocialContext()
     );
     try {
-      await generateMutation.mutateAsync({
+      const generated = await generateMutation.mutateAsync({
         postId: deps.activePost.id,
         docReferences: deps.resolveDocReferences(),
         notes: deps.generationNotes,
@@ -63,6 +75,17 @@ export function useSocialGeneration(deps: SocialGenerationDeps) {
         imageAddonIds: deps.imageAddonIds,
         projectUrl: deps.projectUrl || undefined,
       });
+      if (isSavedSocialPost(generated)) {
+        deps.setActivePostId(generated.id);
+        deps.setEditorState({
+          titlePl: generated.titlePl ?? '',
+          titleEn: generated.titleEn ?? '',
+          bodyPl: generated.bodyPl ?? '',
+          bodyEn: generated.bodyEn ?? '',
+        });
+        deps.setContextSummary(generated.contextSummary ?? generated.generatedSummary ?? null);
+        toast('Draft updated — review the generated post.', { variant: 'success' });
+      }
       setDocUpdatesResult(null);
       trackKangurClientEvent(
         'kangur_social_post_generate_success',

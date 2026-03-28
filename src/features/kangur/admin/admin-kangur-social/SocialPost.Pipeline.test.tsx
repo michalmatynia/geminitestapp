@@ -147,4 +147,89 @@ describe('SocialPostPipeline', () => {
       screen.getByText(/Fresh capture: Triggers Playwright batch capture \(4 presets, limit: 2\) before generation\./)
     ).toBeInTheDocument();
   });
+
+  it('disables pipeline actions until a draft is selected', () => {
+    const handleRunFullPipeline = vi.fn();
+    const handleRunFullPipelineWithFreshCapture = vi.fn();
+    const handleCaptureImagesOnly = vi.fn();
+
+    useSocialPostContextMock.mockReturnValue({
+      activePostId: null,
+      editorState: {
+        titlePl: '',
+        titleEn: '',
+      },
+      pipelineStep: 'idle',
+      pipelineProgress: null,
+      pipelineErrorMessage: null,
+      handleRunFullPipeline,
+      handleRunFullPipelineWithFreshCapture,
+      handleCaptureImagesOnly,
+      canGenerateSocialDraft: true,
+      canRunFreshCapturePipeline: true,
+      batchCaptureBaseUrl: 'https://kangur.app',
+      batchCapturePresetIds: ['home'],
+      socialDraftBlockedReason: null,
+      socialBatchCaptureBlockedReason: null,
+      captureOnlyPending: false,
+      captureOnlyMessage: null,
+      captureOnlyErrorMessage: null,
+      batchCapturePresetLimit: 1,
+      hasBatchCaptureConfig: true,
+      setIsPostEditorModalOpen: vi.fn(),
+    });
+
+    render(<SocialPostPipeline />);
+
+    expect(screen.getByRole('button', { name: 'Run full pipeline' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Fresh capture & pipeline' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Capture images only' })).toBeDisabled();
+    expect(
+      screen.getByText('Create or select a draft before running the social pipeline.')
+    ).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Run full pipeline' }));
+    expect(handleRunFullPipeline).not.toHaveBeenCalled();
+    expect(handleRunFullPipelineWithFreshCapture).not.toHaveBeenCalled();
+    expect(handleCaptureImagesOnly).not.toHaveBeenCalled();
+  });
+
+  it('surfaces a completed pipeline by opening the draft editor', () => {
+    const setIsPostEditorModalOpen = vi.fn();
+
+    useSocialPostContextMock.mockReturnValue({
+      activePostId: 'post-1',
+      editorState: {
+        titlePl: 'Generated weekly update',
+        titleEn: '',
+      },
+      pipelineStep: 'done',
+      pipelineProgress: null,
+      pipelineErrorMessage: null,
+      handleRunFullPipeline: vi.fn(),
+      handleRunFullPipelineWithFreshCapture: vi.fn(),
+      handleCaptureImagesOnly: vi.fn(),
+      canGenerateSocialDraft: true,
+      canRunFreshCapturePipeline: true,
+      batchCaptureBaseUrl: 'https://kangur.app',
+      batchCapturePresetIds: ['home'],
+      socialDraftBlockedReason: null,
+      socialBatchCaptureBlockedReason: null,
+      captureOnlyPending: false,
+      captureOnlyMessage: null,
+      captureOnlyErrorMessage: null,
+      batchCapturePresetLimit: 1,
+      hasBatchCaptureConfig: true,
+      setIsPostEditorModalOpen,
+    });
+
+    render(<SocialPostPipeline />);
+
+    expect(
+      screen.getByText(
+        'Draft updated: Generated weekly update. The editor opened with the generated content.'
+      )
+    ).toBeInTheDocument();
+    expect(setIsPostEditorModalOpen).toHaveBeenCalledWith(true);
+  });
 });

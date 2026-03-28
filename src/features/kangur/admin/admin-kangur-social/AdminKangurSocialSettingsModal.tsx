@@ -2,6 +2,9 @@
 
 import React from 'react';
 
+/* eslint-disable @typescript-eslint/no-unsafe-assignment */
+/* eslint-disable @typescript-eslint/no-misused-promises */
+/* eslint-disable @typescript-eslint/no-confusing-void-expression */
 import {
   FormModal,
   Tabs,
@@ -20,11 +23,6 @@ import { SocialSettingsDocumentationTab } from './social-settings-modal/SocialSe
 import { SocialSettingsPublishingTab } from './social-settings-modal/SocialSettingsPublishingTab';
 import { SocialSettingsCaptureTab } from './social-settings-modal/SocialSettingsCaptureTab';
 
-/* eslint-disable @typescript-eslint/no-unsafe-assignment */
-/* eslint-disable @typescript-eslint/no-unsafe-member-access */
-/* eslint-disable @typescript-eslint/no-unsafe-call */
-/* eslint-disable @typescript-eslint/no-unsafe-return */
-/* eslint-disable @typescript-eslint/no-explicit-any */
 export function AdminKangurSocialSettingsModal({
   open,
   onClose,
@@ -38,8 +36,8 @@ export function AdminKangurSocialSettingsModal({
   isSaving: boolean;
   hasUnsavedChanges: boolean;
 }): React.JSX.Element {
-  const context = useSocialPostContext() as any;
-  const state = useSocialSettingsModalState(context) as any;
+  const context = useSocialPostContext();
+  const state = useSocialSettingsModalState(context);
 
   const {
     activeTab,
@@ -108,7 +106,7 @@ export function AdminKangurSocialSettingsModal({
     socialVisionWarning,
     visionModelId,
     visionModelOptions,
-    resolvedContextSummary,
+    contextSummary,
   } = context;
 
   return (
@@ -183,7 +181,7 @@ export function AdminKangurSocialSettingsModal({
             hasVisualDocUpdates={hasVisualDocUpdates}
             previewDocUpdatesMutationPending={previewDocUpdatesMutation.isPending}
             applyDocUpdatesMutationPending={applyDocUpdatesMutation.isPending}
-            resolvedContextSummary={resolvedContextSummary}
+            contextSummary={contextSummary}
             selectedPostTitle={selectedPostTitle}
             setDocReferenceInput={setDocReferenceInput}
             setGenerationNotes={setGenerationNotes}

@@ -328,6 +328,30 @@ describe('AdminKangurSocialSettingsModal', () => {
       )
     ).toBeInTheDocument();
   });
+
+  it('renders the loaded documentation context in the settings modal', () => {
+    useSocialPostContextMock.mockReturnValue(
+      buildSocialPostContextState({
+        contextSummary: 'Loaded context from overview and lessons-and-activities.',
+      })
+    );
+
+    render(
+      <AdminKangurSocialSettingsModal
+        open={true}
+        onClose={vi.fn()}
+        onSave={vi.fn()}
+        isSaving={false}
+        hasUnsavedChanges={false}
+      />
+    );
+
+    fireEvent.click(screen.getByRole('tab', { name: 'Documentation' }));
+
+    expect(
+      screen.getByText('Loaded context from overview and lessons-and-activities.')
+    ).toBeInTheDocument();
+  });
 });
 
 function buildActivePost() {
@@ -415,6 +439,7 @@ function buildSocialPostContextState(
     setDocReferenceInput: vi.fn(),
     generationNotes: 'Focus on current product changes.',
     setGenerationNotes: vi.fn(),
+    contextSummary: null,
     contextLoading: false,
     handleLoadContext: vi.fn(),
     handleGenerate: vi.fn(),

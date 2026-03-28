@@ -51,6 +51,7 @@ type SocialPipelineRunnerDeps = {
     persist?: boolean;
     useDirect?: boolean;
   }) => Promise<{ summary: string | null; docCount: number | null; error?: boolean }>;
+  setContextSummary: (value: string | null) => void;
   setActivePostId: (value: string | null) => void;
   setEditorState: (value: EditorState) => void;
   setImageAddonIds: (value: string[]) => void;
@@ -315,6 +316,9 @@ export function useSocialPipelineRunner(deps: SocialPipelineRunnerDeps) {
         bodyPl: generatedPost.bodyPl ?? '',
         bodyEn: generatedPost.bodyEn ?? '',
       });
+      latestDeps.setContextSummary(
+        generatedPost.contextSummary ?? result.contextSummary ?? null
+      );
       latestDeps.setDocUpdatesResult(result.docUpdates ?? null);
       latestDeps.setImageAddonIds(result.imageAddonIds ?? []);
       latestDeps.setImageAssets(result.imageAssets ?? []);

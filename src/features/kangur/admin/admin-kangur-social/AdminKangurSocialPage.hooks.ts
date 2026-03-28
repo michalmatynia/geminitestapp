@@ -136,6 +136,9 @@ export function useAdminKangurSocialPage() {
     generateDraftBlockedReason: socialDraftBlockedReason,
     imageAddonIds: editor.imageAddonIds,
     projectUrl: settings.projectUrl,
+    setActivePostId: editor.setActivePostId,
+    setEditorState: editor.setEditorState,
+    setContextSummary: editor.setContextSummary,
     buildSocialContext,
   });
 
@@ -158,6 +161,7 @@ export function useAdminKangurSocialPage() {
     resolveDocReferences: editor.resolveDocReferences,
     buildSocialContext,
     handleLoadContext: context.handleLoadContext,
+    setContextSummary: editor.setContextSummary,
     setActivePostId: editor.setActivePostId,
     setEditorState: editor.setEditorState,
     setImageAddonIds: editor.setImageAddonIds,

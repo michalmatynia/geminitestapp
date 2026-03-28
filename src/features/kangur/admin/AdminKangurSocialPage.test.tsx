@@ -469,7 +469,7 @@ describe('AdminKangurSocialPage', () => {
     expect(screen.getByText('Documentation updates')).toBeInTheDocument();
     expect(screen.getByLabelText('Default LinkedIn connection')).toBeInTheDocument();
     expect(screen.getByText('Capture single add-on')).toBeInTheDocument();
-    expect(screen.getByText('Batch capture presets')).toBeInTheDocument();
+    expect(screen.getByText('Batch capture preview')).toBeInTheDocument();
 
     expect(screen.getByTestId('social-post-list')).toBeInTheDocument();
     expect(screen.getByTestId('social-post-editor-modal')).toHaveAttribute('data-open', 'false');

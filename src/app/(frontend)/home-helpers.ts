@@ -4,6 +4,7 @@ import { getUserPreferences } from '@/features/auth/server';
 import type { MongoStringSettingRecord } from '@/shared/contracts/settings';
 import { isElevatedSession } from '@/shared/lib/auth/elevated-session-user';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
+import { isTransientMongoConnectionError } from '@/shared/lib/db/utils/mongo';
 import {
   FRONT_PAGE_ALLOWED,
   normalizeFrontPageApp,
@@ -66,28 +67,6 @@ export const shouldApplyFrontPageAppSelection = (): boolean => {
   return value !== 'false' && value !== '0';
 };
 
-const isTransientMongoFrontPageReadError = (error: unknown): boolean => {
-  if (!(error instanceof Error)) {
-    return false;
-  }
-
-  const constructorName = error.constructor?.name ?? '';
-  const normalized = `${constructorName} ${error.name} ${error.message}`.toLowerCase();
-
-  return (
-    constructorName === 'MongoServerSelectionError' ||
-    constructorName === 'MongoNetworkError' ||
-    constructorName === 'MongoTopologyClosedError' ||
-    constructorName === 'MongoServerClosedError' ||
-    normalized.includes('server selection') ||
-    normalized.includes('topology closed') ||
-    normalized.includes('econn') ||
-    normalized.includes('connection refused') ||
-    normalized.includes('connection closed') ||
-    (normalized.includes('connection') && normalized.includes('timed out'))
-  );
-};
-
 const readMongoFrontPageSetting = async (): Promise<string | null> => {
   if (!process.env['MONGODB_URI']) return lastKnownFrontPageSetting;
   const now = Date.now();
@@ -120,7 +99,7 @@ const readMongoFrontPageSetting = async (): Promise<string | null> => {
       })
     );
   } catch (error) {
-    if (isTransientMongoFrontPageReadError(error)) {
+    if (isTransientMongoConnectionError(error)) {
       frontPageSettingRetryBlockedUntil = Date.now() + FRONT_PAGE_SETTING_RETRY_COOLDOWN_MS;
       return lastKnownFrontPageSetting;
     }

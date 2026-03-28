@@ -327,7 +327,7 @@ export default function GeometryShapesLesson({ lessonTemplate }: LessonProps): R
       games={[
         {
           sectionId: 'game',
-          onStageEnter: handleGameStart,
+          onShellEnter: handleGameStart,
           stage: {
             accent: 'violet',
             icon: '✍️',

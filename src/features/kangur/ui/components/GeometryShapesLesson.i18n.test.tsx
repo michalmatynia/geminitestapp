@@ -50,7 +50,7 @@ describe('GeometryShapesLesson i18n', () => {
         stage: Record<string, unknown>;
         launchableInstance?: { gameId?: string; instanceId?: string };
         render?: unknown;
-        onStageEnter?: unknown;
+        onShellEnter?: unknown;
       }>) ?? [];
 
     expect(sections.find((section) => section.id === 'podstawowe')).toMatchObject({
@@ -71,7 +71,7 @@ describe('GeometryShapesLesson i18n', () => {
       gameId: 'geometry_shape_workshop',
       instanceId: 'geometry_shape_workshop:instance:default',
     });
-    expect(game).toHaveProperty('onStageEnter');
+    expect(game).toHaveProperty('onShellEnter');
     expect(game).not.toHaveProperty('render');
 
     const slides = (capturedProps?.slides as Record<string, CapturedSlide[]>) ?? {};

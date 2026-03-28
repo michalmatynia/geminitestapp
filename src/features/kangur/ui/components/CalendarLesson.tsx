@@ -599,7 +599,7 @@ export default function CalendarLesson(): React.JSX.Element {
         shellTestId: 'calendar-lesson-game-shell',
         title: section.title,
       },
-      onStageEnter: awardLessonCompletionOnce,
+      onShellEnter: awardLessonCompletionOnce,
       launchableInstance: {
         gameId: 'calendar_interactive',
         instanceId: CALENDAR_INSTANCE_ID_BY_SECTION[interactiveSection],

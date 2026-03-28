@@ -77,7 +77,7 @@ export type KangurUnifiedLessonSection<SectionId extends string> = {
   slideCount?: number;
 };
 
-type KangurUnifiedLessonGameStageConfig = {
+type KangurUnifiedLessonGameShellConfig = {
   accent: LessonActivityAccent;
   title: string;
   icon?: string;
@@ -95,22 +95,22 @@ type KangurUnifiedLessonGameStageConfig = {
 
 type KangurUnifiedLessonGameConfigBase<SectionId extends string> = {
   sectionId: SectionId;
-  onStageEnter?: (helpers: {
+  onShellEnter?: (helpers: {
     sectionId: SectionId;
     onFinish: () => void;
     onBack: () => void;
   }) => void;
-  onStageFinish?: (helpers: {
+  onShellFinish?: (helpers: {
     sectionId: SectionId;
     onFinish: () => void;
     onBack: () => void;
   }) => void;
-  onStageBack?: (helpers: {
+  onShellBack?: (helpers: {
     sectionId: SectionId;
     onFinish: () => void;
     onBack: () => void;
   }) => void;
-  stage: KangurUnifiedLessonGameStageConfig;
+  stage: KangurUnifiedLessonGameShellConfig;
 };
 
 export type KangurUnifiedLessonGameConfig<SectionId extends string> =
@@ -176,7 +176,7 @@ const normalizeSections = <SectionId extends string>(
     description: section.description ?? DEFAULT_DESCRIPTION,
   }));
 
-const renderKangurUnifiedLessonGameStage = <SectionId extends string>({
+const renderKangurUnifiedLessonGameShell = <SectionId extends string>({
   currentSection,
   gameConfig,
   handleReturnToHub,
@@ -188,41 +188,41 @@ const renderKangurUnifiedLessonGameStage = <SectionId extends string>({
   resolvedSections: ReadonlyArray<KangurUnifiedLessonSection<SectionId> & { description: string }>;
 }): JSX.Element => {
   const sectionHeader = resolveLessonSectionHeader(resolvedSections, currentSection);
-  const stage = gameConfig.stage;
+  const shell = gameConfig.stage;
   const rawGameHelpers = {
     sectionId: currentSection,
     onFinish: handleReturnToHub,
     onBack: handleReturnToHub,
   };
-  const runtimeFinishHandler = gameConfig.onStageFinish
-    ? () => gameConfig.onStageFinish?.(rawGameHelpers)
+  const runtimeFinishHandler = gameConfig.onShellFinish
+    ? () => gameConfig.onShellFinish?.(rawGameHelpers)
     : handleReturnToHub;
   const gameHelpers = {
     ...rawGameHelpers,
     onFinish: runtimeFinishHandler,
   };
-  const stageBackHandler = gameConfig.onStageBack
-    ? () => gameConfig.onStageBack?.(rawGameHelpers)
+  const shellBackHandler = gameConfig.onShellBack
+    ? () => gameConfig.onShellBack?.(rawGameHelpers)
     : handleReturnToHub;
 
   return (
     <LessonActivityShell
-      accent={stage.accent}
-      backButtonLabel={stage.backButtonLabel}
-      description={stage.description}
-      footerNavigation={stage.footerNavigation}
-      headerTestId={stage.headerTestId}
-      icon={stage.icon ?? '🎮'}
-      maxWidthClassName={stage.maxWidthClassName}
-      navigationPills={stage.navigationPills}
-      onBack={stageBackHandler}
+      accent={shell.accent}
+      backButtonLabel={shell.backButtonLabel}
+      description={shell.description}
+      footerNavigation={shell.footerNavigation}
+      headerTestId={shell.headerTestId}
+      icon={shell.icon ?? '🎮'}
+      maxWidthClassName={shell.maxWidthClassName}
+      navigationPills={shell.navigationPills}
+      onBack={shellBackHandler}
       sectionHeader={sectionHeader}
-      shellClassName={stage.shellClassName}
-      shellTestId={stage.shellTestId}
-      shellVariant={stage.shellVariant}
-      title={stage.title}
+      shellClassName={shell.shellClassName}
+      shellTestId={shell.shellTestId}
+      shellVariant={shell.shellVariant}
+      title={shell.title}
     >
-      {stage.bodyPrelude ? stage.bodyPrelude : null}
+      {shell.bodyPrelude ? shell.bodyPrelude : null}
       <KangurLaunchableGameInstanceRuntime
         engineOverrides={gameConfig.engineOverrides}
         gameId={gameConfig.launchableInstance.gameId}
@@ -433,7 +433,7 @@ function KangurUnifiedLessonBase<SectionId extends string>({
     }
 
     lastEnteredGameSectionRef.current = activeSection;
-    activeGameConfig.onStageEnter?.({
+    activeGameConfig.onShellEnter?.({
       sectionId: activeSection,
       onFinish: handleReturnToHub,
       onBack: handleReturnToHub,
@@ -447,7 +447,7 @@ function KangurUnifiedLessonBase<SectionId extends string>({
     const gameConfig = gameMap.get(currentSection);
 
     if (gameConfig) {
-      content = renderKangurUnifiedLessonGameStage({
+      content = renderKangurUnifiedLessonGameShell({
         currentSection,
         gameConfig,
         handleReturnToHub,

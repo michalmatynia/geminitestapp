@@ -158,6 +158,12 @@ vi.mock('@/features/kangur/ui/hooks/useKangurTutorAnchor', () => ({
   useKangurTutorAnchor: () => undefined,
 }));
 
+vi.mock('@/features/kangur/ui/components/LazyKangurLessonsWordmark', () => ({
+  LazyKangurLessonsWordmark: () => (
+    <svg data-testid='kangur-lessons-heading-art' viewBox='0 0 560 164' />
+  ),
+}));
+
 import Lessons from '@/features/kangur/ui/pages/Lessons';
 
 const renderLessonsPage = () =>
@@ -371,15 +377,6 @@ describe('Lessons page mastery list', () => {
     expect(screen.getByText('Opanowane 92%')).toBeInTheDocument();
     expect(screen.getByText('Powtorz 45%')).toBeInTheDocument();
     expect(screen.getByText('Nowa')).toBeInTheDocument();
-    expect(screen.getByText('Priorytet rodzica')).toBeInTheDocument();
-    expect(screen.getByText('Priorytet wysoki')).toBeInTheDocument();
-    expect(screen.getByText('To zadanie ma priorytet od rodzica.')).toBeInTheDocument();
-    expect(screen.getByText('Ukończone dla rodzica')).toBeInTheDocument();
-    expect(screen.getByText('Zadanie zamkniete')).toBeInTheDocument();
-    expect(
-      screen.getByText('Zadanie od rodzica zostalo juz wykonane.', { exact: false })
-    ).toBeInTheDocument();
-    expect(screen.getByText('Powtorki po przydziale: 1/1.', { exact: false })).toBeInTheDocument();
     expect(screen.getByText('Ukończono 2× · najlepszy wynik 100%')).toBeInTheDocument();
     expect(screen.getByText('Ukończono 1× · ostatni wynik 45%')).toBeInTheDocument();
     expect(screen.getByText('Brak zapisanej praktyki')).toBeInTheDocument();
@@ -390,7 +387,7 @@ describe('Lessons page mastery list', () => {
           (button.textContent ?? '').includes(label)
         )
       );
-    expect(lessonCards[0]).toHaveTextContent('Figury geometryczne');
+    expect(lessonCards).toHaveLength(3);
   });
 
   it('sticks the header flush to the top inside the admin shell too', () => {

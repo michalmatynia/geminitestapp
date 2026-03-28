@@ -42,6 +42,7 @@ import {
   getMongoDatabaseName,
   getMongoDumpCommand,
   getMongoRestoreCommand,
+  isTransientMongoConnectionError,
 } from '@/shared/lib/db/utils/mongo';
 
 describe('shared db mongo utils', () => {
@@ -124,5 +125,14 @@ describe('shared db mongo utils', () => {
     expect(() => assertValidBackupName('backup-2026-03-25.archive')).not.toThrow();
     expect(() => assertValidBackupName('backup.txt')).toThrow('Invalid backup file type.');
     expect(() => assertValidBackupName('../backup.archive')).toThrow('Invalid backup name.');
+  });
+
+  it('detects transient mongo connectivity errors', () => {
+    const error = new Error('querySrv ECONNREFUSED _mongodb._tcp.cluster0.example.mongodb.net');
+    error.name = 'MongoServerSelectionError';
+
+    expect(isTransientMongoConnectionError(error)).toBe(true);
+    expect(isTransientMongoConnectionError(new Error('settings schema mismatch'))).toBe(false);
+    expect(isTransientMongoConnectionError('ECONNREFUSED')).toBe(false);
   });
 });

@@ -2,7 +2,7 @@
  * @vitest-environment jsdom
  */
 
-import { act, fireEvent, render, screen } from '@testing-library/react';
+import { act, fireEvent, render, screen, within } from '@testing-library/react';
 import { NextIntlClientProvider } from 'next-intl';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -35,8 +35,6 @@ vi.mock('@/features/kangur/ui/services/progress', async (importOriginal) => {
 import ArtShapesBasicLesson from '@/features/kangur/ui/components/ArtShapesBasicLesson';
 import { KangurLessonNavigationProvider } from '@/features/kangur/ui/context/KangurLessonNavigationContext';
 
-const AUTO_ADVANCE_DELAY_MS = 950;
-
 const renderLesson = () =>
   render(
     <NextIntlClientProvider locale='pl' messages={plMessages}>
@@ -48,21 +46,6 @@ const renderLesson = () =>
 
 const openRotationGame = (): void => {
   fireEvent.click(screen.getByRole('button', { name: /uzupełnij wirujący wzór/i }));
-};
-
-const advanceRound = (): void => {
-  act(() => {
-    vi.advanceTimersByTime(AUTO_ADVANCE_DELAY_MS);
-  });
-};
-
-const solveRound = ({
-  optionId,
-}: {
-  optionId: string;
-}): void => {
-  fireEvent.click(screen.getByTestId(optionId));
-  advanceRound();
 };
 
 describe('ArtShapesBasicLesson', () => {
@@ -87,77 +70,39 @@ describe('ArtShapesBasicLesson', () => {
     expect(screen.queryByText(/przyjrzyj się sześcioczęściowemu wzorowi\./i)).not.toBeInTheDocument();
   });
 
-  it('accepts the correct animated tile, shows a success overlay, and auto-advances', () => {
+  it('shows the shared print-summary fallback alongside the inline puzzle options', () => {
     renderLesson();
 
     openRotationGame();
-    const correctOption = screen.getByTestId('art-shapes-rotation-option-r1-pizza-fast');
-
-    fireEvent.click(correctOption);
-
-    expect(correctOption).toHaveAttribute('data-result-status', 'correct-selected');
-    expect(correctOption.querySelector('.art-shapes-rotation-option-card__result-symbol')).toHaveTextContent(
-      'V'
-    );
-    expect(screen.getByText('Dobrze', { selector: '.sr-only' })).toBeInTheDocument();
-    expect(correctOption.querySelector('.art-shapes-rotation-option-card__feedback')).toBeNull();
-    expect(screen.getByText(/wynik: 1/i)).toBeInTheDocument();
-
-    advanceRound();
-
-    expect(screen.getByText(/runda 2\/4/i)).toBeInTheDocument();
-  });
-
-  it('shows wrong and correct overlays without rendering a separate panel', () => {
-    renderLesson();
-
-    openRotationGame();
-    const wrongOption = screen.getByTestId('art-shapes-rotation-option-r1-book-fast-option');
-    const correctOption = screen.getByTestId('art-shapes-rotation-option-r1-pizza-fast');
-
-    fireEvent.click(wrongOption);
-
-    expect(wrongOption).toHaveAttribute('data-result-status', 'wrong-selected');
-    expect(correctOption).toHaveAttribute('data-result-status', 'correct-answer');
-    expect(wrongOption.querySelector('.art-shapes-rotation-option-card__result-symbol')).toHaveTextContent(
-      'X'
-    );
-    expect(correctOption.querySelector('.art-shapes-rotation-option-card__result-symbol')).toHaveTextContent(
-      'V'
-    );
-    expect(screen.getByText('Nie to. To ten.', { selector: '.sr-only' })).toBeInTheDocument();
-    expect(screen.getByText(/wynik: 0/i)).toBeInTheDocument();
-    expect(wrongOption.querySelector('.art-shapes-rotation-option-card__feedback')).toBeNull();
-    expect(correctOption.querySelector('.art-shapes-rotation-option-card__feedback')).toBeNull();
-    expect(screen.queryByText('To jeszcze nie ten.')).not.toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: /następny wzór/i })).not.toBeInTheDocument();
-  });
-
-  it('reaches the finished summary after solving all four rounds and can restart', () => {
-    renderLesson();
-
-    openRotationGame();
-
-    solveRound({
-      optionId: 'art-shapes-rotation-option-r1-pizza-fast',
-    });
-    solveRound({
-      optionId: 'art-shapes-rotation-option-r2-circle-medium',
-    });
-    solveRound({
-      optionId: 'art-shapes-rotation-option-r3-ball-fast',
-    });
-    solveRound({
-      optionId: 'art-shapes-rotation-option-r4-book-fast',
-    });
-
-    expect(screen.getByText('Zadanie ukończone')).toBeInTheDocument();
-    expect(screen.getByText(/udało ci się rozwiązać 4 z 4 wirujących wzorów/i)).toBeInTheDocument();
-
-    fireEvent.click(screen.getByRole('button', { name: /zagraj jeszcze raz/i }));
-
+    expect(screen.getByTestId('lesson-activity-stage-print-summary')).toBeInTheDocument();
+    expect(
+      screen.getByText('Otwórz tę lekcję na ekranie, aby wykonać to ćwiczenie interaktywnie.')
+    ).toBeInTheDocument();
+    expect(screen.getByTestId('art-shapes-rotation-option-r1-pizza-fast')).toBeInTheDocument();
     expect(screen.getByText(/runda 1\/4/i)).toBeInTheDocument();
-    expect(screen.getByText(/wynik: 0/i)).toBeInTheDocument();
-    expect(screen.getByTestId('art-shapes-rotation-gap-placeholder')).toBeInTheDocument();
+  });
+
+  it('keeps the shared lesson back button instead of inline puzzle navigation controls', () => {
+    renderLesson();
+
+    openRotationGame();
+
+    expect(screen.getByRole('button', { name: /wróć do tematów/i })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /następny wzór/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /zagraj jeszcze raz/i })).not.toBeInTheDocument();
+  });
+
+  it('keeps the lesson-shell print summary scoped to the launched puzzle stage', () => {
+    renderLesson();
+
+    openRotationGame();
+
+    const printSummary = screen.getByTestId('lesson-activity-stage-print-summary');
+
+    expect(within(printSummary).getByText('Uzupełnij wirujący wzór')).toBeInTheDocument();
+    expect(
+      within(printSummary).getByText('Otwórz tę lekcję na ekranie, aby wykonać to ćwiczenie interaktywnie.')
+    ).toBeInTheDocument();
+    expect(screen.queryByText('Zadanie ukończone')).not.toBeInTheDocument();
   });
 });

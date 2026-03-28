@@ -11,6 +11,7 @@ import {
   type KangurLegacySettingDocument,
 } from '@/features/kangur/services/kangur-legacy-settings-store';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
+import { isTransientMongoConnectionError } from '@/shared/lib/db/utils/mongo';
 import { decodeSettingValue, encodeSettingValue } from '@/shared/lib/settings/settings-compression';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
@@ -33,6 +34,9 @@ const ensureKangurSettingsIndexes = async (): Promise<void> => {
           .collection<MongoPersistedStringSettingDocument>(KANGUR_SETTINGS_COLLECTION)
           .createIndex({ key: 1 }, { name: KANGUR_SETTINGS_KEY_INDEX, unique: true });
       } catch (error) {
+        if (isTransientMongoConnectionError(error)) {
+          return;
+        }
         void ErrorSystem.captureException(error);
         await ErrorSystem.logWarning('[kangur-settings] Failed to ensure settings indexes.', {
           service: 'kangur.settings',

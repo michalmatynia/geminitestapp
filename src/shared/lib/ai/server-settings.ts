@@ -2,6 +2,7 @@ import 'server-only';
 
 import type { MongoStringSettingRecord } from '@/shared/contracts/settings';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
+import { isTransientMongoConnectionError } from '@/shared/lib/db/utils/mongo';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
 const readMongoSettingValue = async (key: string): Promise<string | null> => {
@@ -17,6 +18,9 @@ export async function getSettingValue(key: string): Promise<string | null> {
   try {
     return await readMongoSettingValue(key);
   } catch (err) {
+    if (isTransientMongoConnectionError(err)) {
+      return null;
+    }
     void ErrorSystem.captureException(err);
     void ErrorSystem.logWarning(`Mongo setting fetch failed for ${key}`, {
       service: 'ai-server-settings',

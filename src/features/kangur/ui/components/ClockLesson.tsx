@@ -455,7 +455,7 @@ export default function ClockLesson(): React.JSX.Element {
         shellTestId: 'clock-lesson-training-shell',
         title: config.title,
       },
-      onStageFinish: ({ onFinish }: { onFinish: () => void }) => {
+      onShellFinish: ({ onFinish }: { onFinish: () => void }) => {
         setCompletedTrainingSections((currentSections) =>
           currentSections[config.hubId]
             ? currentSections
@@ -486,7 +486,7 @@ export default function ClockLesson(): React.JSX.Element {
       shellTestId: string;
       title: string;
     };
-    onStageFinish: (helpers: { onFinish: () => void }) => void;
+    onShellFinish: (helpers: { onFinish: () => void }) => void;
     launchableInstance: {
       gameId: 'clock_training';
       instanceId: string;

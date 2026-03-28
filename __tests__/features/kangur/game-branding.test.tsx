@@ -47,6 +47,28 @@ vi.mock('@/features/kangur/ui/hooks/useKangurAssignments', () => ({
   useKangurAssignments: useKangurAssignmentsMock,
 }));
 
+vi.mock('@/features/kangur/ui/hooks/useKangurGameInstances', () => ({
+  useKangurGameInstances: () => ({
+    data: [],
+    isLoading: false,
+    isFetching: false,
+    isPending: false,
+    error: null,
+    refetch: vi.fn(),
+  }),
+}));
+
+vi.mock('@/features/kangur/ui/hooks/useKangurGameContentSets', () => ({
+  useKangurGameContentSets: () => ({
+    data: [],
+    isLoading: false,
+    isFetching: false,
+    isPending: false,
+    error: null,
+    refetch: vi.fn(),
+  }),
+}));
+
 vi.mock('@/features/kangur/ui/hooks/useKangurLessons', () => ({
   useKangurLessons: (options: { subject?: string; enabledOnly?: boolean } = {}) => {
     let data = lessonsState.value;

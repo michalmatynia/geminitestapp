@@ -261,4 +261,35 @@ describe('kangur-settings-repository', () => {
     expect(kangurFindMock).toHaveBeenCalledTimes(1);
     expect(legacyFindMock).not.toHaveBeenCalled();
   });
+
+  it('suppresses transient mongo failures while ensuring Kangur settings indexes', async () => {
+    const transientError = new Error(
+      'querySrv ECONNREFUSED _mongodb._tcp.cluster0.example.mongodb.net'
+    );
+    transientError.name = 'MongoServerSelectionError';
+    createIndexMock.mockRejectedValue(transientError);
+
+    const kangurFindMock = vi.fn(() => ({
+      toArray: vi.fn().mockResolvedValue([]),
+    }));
+
+    getMongoDbMock.mockResolvedValue(
+      createMongoStub({
+        kangur_settings: {
+          createIndex: createIndexMock,
+          find: kangurFindMock,
+        },
+        [KANGUR_LEGACY_SETTINGS_COLLECTION]: {
+          find: vi.fn(() => ({ toArray: vi.fn().mockResolvedValue([]) })),
+        },
+      })
+    );
+
+    const { listKangurSettingsByKeys } = await import('./kangur-settings-repository');
+
+    await expect(listKangurSettingsByKeys(['kangur_theme_daily'])).resolves.toEqual([]);
+    await vi.waitFor(() => expect(createIndexMock).toHaveBeenCalledTimes(1));
+    expect(captureExceptionMock).not.toHaveBeenCalled();
+    expect(logWarningMock).not.toHaveBeenCalled();
+  });
 });

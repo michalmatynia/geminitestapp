@@ -58,4 +58,15 @@ describe('getSettingValue', () => {
       error,
     });
   });
+
+  it('silently downgrades transient mongo connectivity failures to null', async () => {
+    process.env['MONGODB_URI'] = 'mongodb://localhost:27017/test';
+    const error = new Error('querySrv ECONNREFUSED _mongodb._tcp.cluster0.example.mongodb.net');
+    error.name = 'MongoServerSelectionError';
+    getMongoDbMock.mockRejectedValue(error);
+
+    await expect(getSettingValue('feature_flag')).resolves.toBeNull();
+    expect(captureExceptionMock).not.toHaveBeenCalled();
+    expect(logWarningMock).not.toHaveBeenCalled();
+  });
 });

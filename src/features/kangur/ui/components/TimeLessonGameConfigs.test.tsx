@@ -72,7 +72,7 @@ describe('time lesson game configs', () => {
           gameId?: string;
           instanceId?: string;
         };
-        onStageEnter?: unknown;
+        onShellEnter?: unknown;
         render?: unknown;
       }>) ?? [];
 
@@ -85,7 +85,7 @@ describe('time lesson game configs', () => {
             gameId: 'calendar_interactive',
             instanceId: 'calendar_interactive:instance:calendar-days',
           }),
-          onStageEnter: expect.any(Function),
+          onShellEnter: expect.any(Function),
         }),
         expect.objectContaining({
           sectionId: 'game_months',
@@ -124,7 +124,7 @@ describe('time lesson game configs', () => {
           instanceId?: string;
         };
         engineOverrides?: Record<string, unknown>;
-        onStageFinish?: unknown;
+        onShellFinish?: unknown;
         render?: unknown;
       }>) ?? [];
 
@@ -141,7 +141,7 @@ describe('time lesson game configs', () => {
             instanceId: 'clock_training:instance:clock-hours',
           }),
           engineOverrides: {},
-          onStageFinish: expect.any(Function),
+          onShellFinish: expect.any(Function),
         }),
         expect.objectContaining({
           sectionId: 'game_minutes',

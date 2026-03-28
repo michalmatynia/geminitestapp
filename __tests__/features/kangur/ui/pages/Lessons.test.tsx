@@ -70,42 +70,43 @@ vi.mock('next/navigation', () => ({
   permanentRedirect: vi.fn(),
 }));
 
-vi.mock('next/dynamic', async () => {
+vi.mock('@/features/kangur/lessons/lesson-ui-registry', async () => {
   const lessonNavigation = await import(
     '@/features/kangur/ui/context/KangurLessonNavigationContext'
   );
 
+  function MockLegacyLesson({
+    onReady,
+  }: {
+    onReady?: () => void;
+  }): React.JSX.Element {
+    const secretLessonPill = lessonNavigation.useKangurLessonSecretPill();
+
+    React.useEffect(() => {
+      onReady?.();
+    }, [onReady]);
+
+    return (
+      <div data-testid='legacy-lesson'>
+        <div>Legacy lesson renderer</div>
+        {secretLessonPill?.isUnlocked ? (
+          <button type='button' onClick={secretLessonPill.onOpen}>
+            Open secret lesson
+          </button>
+        ) : null}
+      </div>
+    );
+  }
+
   return {
-    default: () =>
-      function MockLegacyLesson({
-        onBack,
-        onReady,
-      }: {
-        onBack?: () => void;
-        onReady?: () => void;
-      }): React.JSX.Element {
-        const secretLessonPill = lessonNavigation.useKangurLessonSecretPill();
-
-        React.useEffect(() => {
-          onReady?.();
-        }, [onReady]);
-
-        return (
-          <div data-testid='legacy-lesson'>
-            <div>Legacy lesson renderer</div>
-            {secretLessonPill?.isUnlocked ? (
-              <button type='button' onClick={secretLessonPill.onOpen}>
-                Open secret lesson
-              </button>
-            ) : null}
-            {onBack ? (
-              <button type='button' onClick={onBack}>
-                Back
-              </button>
-            ) : null}
-          </div>
-        );
-      },
+    LESSON_COMPONENTS: {
+      adding: MockLegacyLesson,
+      calendar: MockLegacyLesson,
+      clock: MockLegacyLesson,
+      english_basics: MockLegacyLesson,
+      geometry_shapes: MockLegacyLesson,
+      logical_patterns: MockLegacyLesson,
+    },
   };
 });
 
@@ -125,6 +126,21 @@ vi.mock('next/link', () => ({
       {children}
     </a>
   ),
+}));
+
+vi.mock('@/features/kangur/ui/pages/lessons/LazyActiveLessonView', async () => {
+  const actual = await import('@/features/kangur/ui/pages/lessons/Lessons.ActiveLesson');
+  return {
+    LazyActiveLessonView: actual.ActiveLessonView,
+  };
+});
+
+vi.mock('@/features/kangur/ui/pages/lessons/LazyLessonsDeferredEnhancements', () => ({
+  LazyLessonsDeferredEnhancements: () => null,
+}));
+
+vi.mock('@/features/kangur/ui/components/LazyKangurLessonsWordmark', () => ({
+  LazyKangurLessonsWordmark: () => <div data-testid='kangur-lessons-heading-art' />,
 }));
 
 vi.mock('framer-motion', () => {
@@ -603,7 +619,7 @@ describe('Lessons', () => {
     );
   });
 
-  it('applies documentation-backed titles to lesson navigation controls when tooltips are enabled', async () => {
+  it('keeps documentation metadata hooks on lesson navigation controls when tooltips are enabled', async () => {
     setLessonState({
       lessons: [createLesson()],
       helpSettings: {
@@ -628,12 +644,12 @@ describe('Lessons', () => {
       )
     );
     expect(screen.getByRole('link', { name: 'Strona główna' })).toHaveAttribute(
-      'title',
-      'Home Navigation: Returns to the main Kangur practice hub and quick-start home screen.'
+      'data-doc-id',
+      'top_nav_home'
     );
     expect(screen.getByRole('button', { name: /nauka zegara/i })).toHaveAttribute(
-      'title',
-      'Lesson Card: Opens a lesson from the Kangur lesson library and shows its progress state.'
+      'data-doc-id',
+      'lessons_library_entry'
     );
   });
 
@@ -747,7 +763,7 @@ describe('Lessons', () => {
     expect(screen.getByRole('button', { name: /nauka zegara/i })).toBeInTheDocument();
   });
 
-  it('uses the smoother motion preset for lessons list and active lesson transitions', async () => {
+  it('keeps the active lesson motion preset while leaving lesson library wrappers static', async () => {
     setLessonState({
       lessons: [
         createLesson(),
@@ -764,13 +780,13 @@ describe('Lessons', () => {
 
     await renderLessonsPage();
 
-    expect(screen.getByTestId('lesson-library-motion-kangur-lesson-clock')).toHaveAttribute(
-      'data-motion-transition',
-      JSON.stringify({ duration: 0.26, ease: [0.22, 1, 0.36, 1], delay: 0 })
+    expect(screen.getByTestId('lesson-library-motion-kangur-lesson-clock')).toBeInTheDocument();
+    expect(screen.getByTestId('lesson-library-motion-adding-lesson')).toBeInTheDocument();
+    expect(screen.getByTestId('lesson-library-motion-kangur-lesson-clock')).not.toHaveAttribute(
+      'data-motion-transition'
     );
-    expect(screen.getByTestId('lesson-library-motion-adding-lesson')).toHaveAttribute(
-      'data-motion-transition',
-      JSON.stringify({ duration: 0.26, ease: [0.22, 1, 0.36, 1], delay: 0.06 })
+    expect(screen.getByTestId('lesson-library-motion-adding-lesson')).not.toHaveAttribute(
+      'data-motion-transition'
     );
 
     fireEvent.click(screen.getByRole('button', { name: /nauka zegara/i }));

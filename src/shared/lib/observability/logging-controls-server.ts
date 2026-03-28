@@ -3,6 +3,7 @@ import 'server-only';
 import type { MongoStringSettingRecord } from '@/shared/contracts/settings';
 
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
+import { isTransientMongoConnectionError } from '@/shared/lib/db/utils/mongo';
 import { findProviderForKey } from '@/shared/lib/db/settings-registry';
 import { reportObservabilityInternalError } from '@/shared/utils/observability/internal-observability-fallback';
 
@@ -70,11 +71,13 @@ export const isServerLoggingEnabled = async (
       loggingControlCache.set(type, { enabled, fetchedAt: Date.now() });
       return enabled;
     } catch (error) {
-      reportObservabilityInternalError(error, {
-        source: 'observability.logging-controls-server',
-        action: 'isServerLoggingEnabled',
-        type,
-      });
+      if (!isTransientMongoConnectionError(error)) {
+        reportObservabilityInternalError(error, {
+          source: 'observability.logging-controls-server',
+          action: 'isServerLoggingEnabled',
+          type,
+        });
+      }
       return defaultEnabled;
     } finally {
       loggingControlReadDepth = Math.max(0, loggingControlReadDepth - 1);

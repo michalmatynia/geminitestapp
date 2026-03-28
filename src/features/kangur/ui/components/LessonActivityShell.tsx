@@ -229,10 +229,10 @@ export default function LessonActivityShell({
     shellClassName
   );
   const shellPanelTestId = shellTestId;
-  const shouldRenderStageHeader = sectionHeader === null;
-  const panelLabelledBy = shouldRenderStageHeader ? titleId : undefined;
-  const panelDescribedBy = shouldRenderStageHeader && description ? descriptionId : undefined;
-  const panelAriaLabel = shouldRenderStageHeader ? undefined : title;
+  const shouldRenderShellHeader = sectionHeader === null;
+  const panelLabelledBy = shouldRenderShellHeader ? titleId : undefined;
+  const panelDescribedBy = shouldRenderShellHeader && description ? descriptionId : undefined;
+  const panelAriaLabel = shouldRenderShellHeader ? undefined : title;
   const resolvedBackButtonLabel = translateLessonChrome(
     lessonChrome,
     'backToTopics',
@@ -247,14 +247,14 @@ export default function LessonActivityShell({
     accent,
     backButtonLabel: resolvedBackButtonLabel,
     description,
-    descriptionId: shouldRenderStageHeader ? descriptionId : undefined,
+    descriptionId: shouldRenderShellHeader ? descriptionId : undefined,
     headerTestId,
     icon,
     navigationPills,
     onBack,
     printPanelId,
     title,
-    titleId: shouldRenderStageHeader ? titleId : undefined,
+    titleId: shouldRenderShellHeader ? titleId : undefined,
     secretLessonPill,
   };
   useKangurSyncLessonSubsectionSummary(sectionHeader);
@@ -287,7 +287,7 @@ export default function LessonActivityShell({
             aria-labelledby={panelLabelledBy}
             aria-describedby={panelDescribedBy}
           >
-            {shouldRenderStageHeader ? <LessonActivityShellHeader /> : null}
+            {shouldRenderShellHeader ? <LessonActivityShellHeader /> : null}
             <div
               className='kangur-print-only space-y-2 border-b border-slate-200 pb-4'
               data-testid='lesson-activity-stage-print-summary'
@@ -316,7 +316,7 @@ export default function LessonActivityShell({
             padding='xl'
             surface='solid'
           >
-            {shouldRenderStageHeader ? <LessonActivityShellHeader /> : null}
+            {shouldRenderShellHeader ? <LessonActivityShellHeader /> : null}
             <div
               className='kangur-print-only space-y-2 border-b border-slate-200 pb-4'
               data-testid='lesson-activity-stage-print-summary'

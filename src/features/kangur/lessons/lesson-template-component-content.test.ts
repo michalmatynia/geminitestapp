@@ -18,6 +18,7 @@ import {
   MUSIC_DIATONIC_SCALE_LESSON_COMPONENT_CONTENT,
   SUBTRACTING_LESSON_COMPONENT_CONTENT,
   getDefaultKangurLessonTemplateComponentContent,
+  resolveKangurLessonTemplateComponentContent,
   parseKangurLessonTemplateComponentContentJson,
   serializeKangurLessonTemplateComponentContent,
   supportsKangurLessonTemplateComponentContent,
@@ -277,5 +278,223 @@ describe('lesson-template-component-content', () => {
     expect(() =>
       parseKangurLessonTemplateComponentContentJson('alphabet_words', invalidJson),
     ).toThrow('Section ids must match the lesson family template.');
+  });
+
+  it('normalizes legacy alphabet gameStage fields when resolving template content', () => {
+    const resolved = resolveKangurLessonTemplateComponentContent('alphabet_words', {
+      kind: 'alphabet_unified',
+      sections: [
+        {
+          id: 'slowa',
+          emoji: '📖',
+          title: 'Legacy intro',
+          description: 'Legacy intro description',
+          slides: [],
+        },
+        {
+          id: 'game_words',
+          emoji: '🎮',
+          title: 'Legacy game',
+          description: 'Legacy game description',
+          isGame: true,
+          slides: [],
+          gameStageTitle: 'Legacy game title',
+          gameStageDescription: 'Legacy game description',
+        },
+        {
+          id: 'summary',
+          emoji: '📋',
+          title: 'Legacy summary',
+          description: 'Legacy summary description',
+          slides: [],
+        },
+      ],
+    });
+
+    expect(resolved).toMatchObject({
+      kind: 'alphabet_unified',
+      sections: expect.arrayContaining([
+        expect.objectContaining({
+          id: 'game_words',
+          gameTitle: 'Legacy game title',
+          gameDescription: 'Legacy game description',
+        }),
+      ]),
+    });
+
+    const normalizedGameSection =
+      resolved?.kind === 'alphabet_unified'
+        ? resolved.sections.find((section) => section.id === 'game_words')
+        : null;
+
+    expect(normalizedGameSection).not.toHaveProperty('gameStageTitle');
+    expect(normalizedGameSection).not.toHaveProperty('gameStageDescription');
+  });
+
+  it('normalizes legacy music gameStage fields during JSON parsing', () => {
+    const parsed = parseKangurLessonTemplateComponentContentJson(
+      'music_diatonic_scale',
+      JSON.stringify({
+        ...MUSIC_DIATONIC_SCALE_LESSON_COMPONENT_CONTENT,
+        gameRepeatSection: {
+          ...MUSIC_DIATONIC_SCALE_LESSON_COMPONENT_CONTENT.gameRepeatSection,
+          gameTitle: undefined,
+          gameDescription: undefined,
+          gameStageTitle: 'Legacy repeat game',
+          gameStageDescription: 'Legacy repeat description',
+        },
+        gameFreeplaySection: {
+          ...MUSIC_DIATONIC_SCALE_LESSON_COMPONENT_CONTENT.gameFreeplaySection,
+          gameTitle: undefined,
+          gameDescription: undefined,
+          gameStageTitle: 'Legacy freeplay game',
+          gameStageDescription: 'Legacy freeplay description',
+        },
+      }),
+    );
+
+    expect(parsed).toMatchObject({
+      kind: 'music_diatonic_scale',
+      gameRepeatSection: {
+        gameTitle: 'Legacy repeat game',
+        gameDescription: 'Legacy repeat description',
+      },
+      gameFreeplaySection: {
+        gameTitle: 'Legacy freeplay game',
+        gameDescription: 'Legacy freeplay description',
+      },
+    });
+
+    expect(parsed?.gameRepeatSection).not.toHaveProperty('gameStageTitle');
+    expect(parsed?.gameRepeatSection).not.toHaveProperty('gameStageDescription');
+    expect(parsed?.gameFreeplaySection).not.toHaveProperty('gameStageTitle');
+    expect(parsed?.gameFreeplaySection).not.toHaveProperty('gameStageDescription');
+  });
+
+  it('normalizes legacy geometry stageTitle fields when resolving template content', () => {
+    const resolved = resolveKangurLessonTemplateComponentContent('geometry_basics', {
+      ...GEOMETRY_BASICS_LESSON_COMPONENT_CONTENT,
+      game: {
+        gameTitle: undefined,
+        stageTitle: 'Legacy geometry game title',
+      },
+    });
+
+    expect(resolved).toMatchObject({
+      kind: 'geometry_basics',
+      game: {
+        gameTitle: 'Legacy geometry game title',
+      },
+    });
+    expect(resolved?.game).not.toHaveProperty('stageTitle');
+  });
+
+  it('serializes legacy gameStage fields as normalized gameTitle fields', () => {
+    const serializedAlphabet = serializeKangurLessonTemplateComponentContent('alphabet_words', {
+      kind: 'alphabet_unified',
+      sections: [
+        {
+          id: 'slowa',
+          emoji: '📖',
+          title: 'Legacy intro',
+          description: 'Legacy intro description',
+          slides: [],
+        },
+        {
+          id: 'game_words',
+          emoji: '🎮',
+          title: 'Legacy game',
+          description: 'Legacy game description',
+          isGame: true,
+          slides: [],
+          gameStageTitle: 'Legacy serialized game title',
+          gameStageDescription: 'Legacy serialized game description',
+        },
+        {
+          id: 'summary',
+          emoji: '📋',
+          title: 'Legacy summary',
+          description: 'Legacy summary description',
+          slides: [],
+        },
+      ],
+    });
+    const serializedAlphabetJson = JSON.parse(serializedAlphabet) as {
+      sections: Array<Record<string, unknown>>;
+    };
+    const serializedAlphabetGameSection = serializedAlphabetJson.sections.find(
+      (section) => section.id === 'game_words',
+    );
+
+    expect(serializedAlphabetGameSection).toMatchObject({
+      gameTitle: 'Legacy serialized game title',
+      gameDescription: 'Legacy serialized game description',
+    });
+    expect(serializedAlphabetGameSection).not.toHaveProperty('gameStageTitle');
+    expect(serializedAlphabetGameSection).not.toHaveProperty('gameStageDescription');
+
+    const serializedMusic = serializeKangurLessonTemplateComponentContent(
+      'music_diatonic_scale',
+      {
+        ...MUSIC_DIATONIC_SCALE_LESSON_COMPONENT_CONTENT,
+        gameRepeatSection: {
+          ...MUSIC_DIATONIC_SCALE_LESSON_COMPONENT_CONTENT.gameRepeatSection,
+          gameTitle: undefined,
+          gameDescription: undefined,
+          gameStageTitle: 'Legacy serialized repeat game',
+          gameStageDescription: 'Legacy serialized repeat description',
+        },
+        gameFreeplaySection: {
+          ...MUSIC_DIATONIC_SCALE_LESSON_COMPONENT_CONTENT.gameFreeplaySection,
+          gameTitle: undefined,
+          gameDescription: undefined,
+          gameStageTitle: 'Legacy serialized freeplay game',
+          gameStageDescription: 'Legacy serialized freeplay description',
+        },
+      },
+    );
+    const serializedMusicJson = JSON.parse(serializedMusic) as {
+      gameRepeatSection: Record<string, unknown>;
+      gameFreeplaySection: Record<string, unknown>;
+    };
+
+    expect(serializedMusicJson.gameRepeatSection).toMatchObject({
+      gameTitle: 'Legacy serialized repeat game',
+      gameDescription: 'Legacy serialized repeat description',
+    });
+    expect(serializedMusicJson.gameRepeatSection).not.toHaveProperty('gameStageTitle');
+    expect(serializedMusicJson.gameRepeatSection).not.toHaveProperty('gameStageDescription');
+    expect(serializedMusicJson.gameFreeplaySection).toMatchObject({
+      gameTitle: 'Legacy serialized freeplay game',
+      gameDescription: 'Legacy serialized freeplay description',
+    });
+    expect(serializedMusicJson.gameFreeplaySection).not.toHaveProperty('gameStageTitle');
+    expect(serializedMusicJson.gameFreeplaySection).not.toHaveProperty('gameStageDescription');
+  });
+
+  it('serializes legacy geometry stageTitle fields as normalized gameTitle fields', () => {
+    const serializedGeometry = serializeKangurLessonTemplateComponentContent('geometry_basics', {
+      ...GEOMETRY_BASICS_LESSON_COMPONENT_CONTENT,
+      game: {
+        gameTitle: undefined,
+        stageTitle: 'Legacy serialized geometry title',
+        progress: GEOMETRY_BASICS_LESSON_COMPONENT_CONTENT.game.progress,
+        missingTileLabel: GEOMETRY_BASICS_LESSON_COMPONENT_CONTENT.game.missingTileLabel,
+        tileLabel: GEOMETRY_BASICS_LESSON_COMPONENT_CONTENT.game.tileLabel,
+        chooseOption: GEOMETRY_BASICS_LESSON_COMPONENT_CONTENT.game.chooseOption,
+        glyphs: GEOMETRY_BASICS_LESSON_COMPONENT_CONTENT.game.glyphs,
+        tempos: GEOMETRY_BASICS_LESSON_COMPONENT_CONTENT.game.tempos,
+        optionFeedback: GEOMETRY_BASICS_LESSON_COMPONENT_CONTENT.game.optionFeedback,
+        finished: GEOMETRY_BASICS_LESSON_COMPONENT_CONTENT.game.finished,
+      },
+    });
+    const serializedGeometryJson = JSON.parse(serializedGeometry) as {
+      game: Record<string, unknown>;
+    };
+
+    expect(serializedGeometryJson.game).toMatchObject({
+      gameTitle: 'Legacy serialized geometry title',
+    });
+    expect(serializedGeometryJson.game).not.toHaveProperty('stageTitle');
   });
 });

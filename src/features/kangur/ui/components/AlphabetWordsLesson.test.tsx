@@ -59,8 +59,8 @@ describe('AlphabetWordsLesson', () => {
                 description: 'Database game description',
                 isGame: true,
                 slides: [],
-                gameStageTitle: 'Database game title',
-                gameStageDescription: 'Database game description',
+                gameTitle: 'Database game title',
+                gameDescription: 'Database game description',
               },
               {
                 id: 'summary',
@@ -122,5 +122,64 @@ describe('AlphabetWordsLesson', () => {
       gameId: 'alphabet_first_words',
       instanceId: 'alphabet_first_words:instance:default',
     });
+  });
+
+  it('keeps backward compatibility with legacy gameStage template copy', () => {
+    render(
+      <AlphabetWordsLesson
+        lessonTemplate={{
+          componentId: 'alphabet_words',
+          subject: 'alphabet',
+          ageGroup: 'six_year_old',
+          label: 'Words',
+          title: 'Legacy words from Mongo',
+          description: 'Legacy description',
+          emoji: '📖',
+          color: 'kangur-gradient-accent-amber',
+          activeBg: 'bg-amber-500',
+          sortOrder: 100,
+          componentContent: {
+            kind: 'alphabet_unified',
+            sections: [
+              {
+                id: 'slowa',
+                emoji: '📘',
+                title: 'Legacy intro',
+                description: 'Legacy intro description',
+                slides: [],
+              },
+              {
+                id: 'game_words',
+                emoji: '🎮',
+                title: 'Legacy game',
+                description: 'Legacy game description',
+                isGame: true,
+                slides: [],
+                gameStageTitle: 'Legacy game title',
+                gameStageDescription: 'Legacy game shell description',
+              },
+              {
+                id: 'summary',
+                emoji: '📋',
+                title: 'Legacy summary',
+                description: 'Legacy summary description',
+                slides: [],
+              },
+            ],
+          },
+        }}
+      />,
+    );
+
+    const props = kangurUnifiedLessonMock.mock.calls.at(-1)?.[0] as {
+      games: Array<{ shell: { title: string; description: string } }>;
+    };
+
+    expect(props.games[0]?.shell).toEqual(
+      expect.objectContaining({
+        title: 'Legacy game title',
+        description: 'Legacy game shell description',
+      }),
+    );
   });
 });

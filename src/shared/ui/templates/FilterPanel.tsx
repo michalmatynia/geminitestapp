@@ -52,6 +52,7 @@ export interface FilterPanelProps {
 
   // Styling
   className?: string;
+  idBase?: string;
 }
 
 const isActiveFilterValue = (value: unknown): boolean => {
@@ -96,6 +97,7 @@ interface FilterPanelMainFiltersProps {
   defaultExpanded?: boolean;
   filterSearchPlaceholder: string;
   filters: FilterField[];
+  idBase?: string;
   onFilterChange: (key: string, value: unknown) => void;
   onReset?: () => void;
   onSearchChange?: (search: string) => void;
@@ -112,6 +114,7 @@ const renderFilterPanelMainFilters = ({
   defaultExpanded,
   filterSearchPlaceholder,
   filters,
+  idBase,
   onFilterChange,
   onReset,
   onSearchChange,
@@ -121,6 +124,7 @@ const renderFilterPanelMainFilters = ({
 }: FilterPanelMainFiltersProps): JSX.Element => (
   <PanelFiltersSearchPlaceholderRuntimeContext.Provider value={filterSearchPlaceholder}>
     <PanelFilters
+      {...(idBase !== undefined ? { idBase } : {})}
       filters={filters}
       values={values}
       {...(activeValues !== undefined ? { activeValues } : {})}
@@ -204,6 +208,7 @@ const renderFilterPanelContent = ({
   defaultExpanded,
   filterSearchPlaceholder,
   filters,
+  idBase,
   headerAction,
   headerTitle,
   onApplyPreset,
@@ -225,6 +230,7 @@ const renderFilterPanelContent = ({
   defaultExpanded?: boolean;
   filterSearchPlaceholder: string;
   filters: FilterField[];
+  idBase?: string;
   headerAction?: ReactNode;
   headerTitle: string;
   onApplyPreset?: (preset: Record<string, unknown>) => void;
@@ -254,6 +260,7 @@ const renderFilterPanelContent = ({
       defaultExpanded,
       filterSearchPlaceholder,
       filters,
+      idBase,
       onFilterChange,
       onReset,
       onSearchChange,
@@ -288,6 +295,7 @@ export const FilterPanel: React.FC<FilterPanelProps> = ({
   actions,
   children,
   className,
+  idBase,
 }) => {
   return renderFilterPanelContent({
     actions,
@@ -299,6 +307,7 @@ export const FilterPanel: React.FC<FilterPanelProps> = ({
     defaultExpanded,
     filterSearchPlaceholder,
     filters,
+    idBase,
     headerAction,
     headerTitle,
     onApplyPreset,

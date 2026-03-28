@@ -12,7 +12,7 @@ import { useKangurCoarsePointer } from '@/features/kangur/ui/hooks/useKangurCoar
 import {
   getAlphabetLiteracyDataset,
   type AlphabetLiteracyMatchSetId,
-} from './alphabet-literacy-stage-data';
+} from './alphabet-literacy-game-data';
 
 type AlphabetLiteracyGameProps = {
   finishLabel?: string;

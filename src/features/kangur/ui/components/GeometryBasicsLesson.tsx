@@ -353,7 +353,7 @@ export default function GeometryBasicsLesson({ lessonTemplate }: LessonProps): R
           sectionId: 'game',
           shell: {
             accent: 'sky',
-            title: translate('game.stageTitle'),
+            title: translate('game.gameTitle'),
             icon: '🎯',
             maxWidthClassName: 'max-w-3xl',
             shellTestId: 'geometry-basics-game-shell',

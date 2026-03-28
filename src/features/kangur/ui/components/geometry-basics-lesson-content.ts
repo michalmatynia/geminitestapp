@@ -10,6 +10,7 @@ import type {
 export const createGeometryBasicsLessonTranslate = (
   content: KangurGeometryBasicsLessonTemplateContent,
 ): LessonTranslate => {
+  const gameTitle = content.game.gameTitle ?? content.game.stageTitle ?? '';
   const translationMap = new Map<string, string>([
     ['lessonTitle', content.lessonTitle],
     ['terms.point', content.terms.point],
@@ -114,7 +115,8 @@ export const createGeometryBasicsLessonTranslate = (
     ['slides.podsumowanie.angleTypes.caption', content.slides.podsumowanie.angleTypes.caption],
     ['slides.podsumowanie.angleKinds.title', content.slides.podsumowanie.angleKinds.title],
     ['slides.podsumowanie.angleKinds.caption', content.slides.podsumowanie.angleKinds.caption],
-    ['game.stageTitle', content.game.stageTitle],
+    ['game.gameTitle', gameTitle],
+    ['game.stageTitle', gameTitle],
   ]);
 
   return (key: string): string => translationMap.get(key) ?? key;
@@ -245,7 +247,7 @@ export const createGeometryBasicsLessonContentFromTranslate = (
     },
   },
   game: {
-    stageTitle: translate('game.stageTitle'),
+    gameTitle: translate('game.stageTitle'),
   },
 });
 

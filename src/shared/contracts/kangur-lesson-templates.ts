@@ -24,6 +24,8 @@ export const kangurLessonTemplateSectionContentSchema = z.object({
   description: z.string().trim().min(1).max(240),
   isGame: z.boolean().optional(),
   slides: z.array(kangurLessonTemplateSlideContentSchema).default([]),
+  gameTitle: z.string().trim().min(1).max(120).optional(),
+  gameDescription: z.string().trim().min(1).max(240).optional(),
   gameStageTitle: z.string().trim().min(1).max(120).optional(),
   gameStageDescription: z.string().trim().min(1).max(240).optional(),
 });
@@ -80,12 +82,16 @@ export const kangurMusicDiatonicScaleLessonTemplateContentSchema = z.object({
     }),
   }),
   gameRepeatSection: kangurMusicDiatonicScaleSectionSchema.extend({
-    gameStageTitle: z.string().trim().min(1).max(120),
-    gameStageDescription: z.string().trim().min(1).max(240),
+    gameTitle: z.string().trim().min(1).max(120).optional(),
+    gameDescription: z.string().trim().min(1).max(240).optional(),
+    gameStageTitle: z.string().trim().min(1).max(120).optional(),
+    gameStageDescription: z.string().trim().min(1).max(240).optional(),
   }),
   gameFreeplaySection: kangurMusicDiatonicScaleSectionSchema.extend({
-    gameStageTitle: z.string().trim().min(1).max(120),
-    gameStageDescription: z.string().trim().min(1).max(240),
+    gameTitle: z.string().trim().min(1).max(120).optional(),
+    gameDescription: z.string().trim().min(1).max(240).optional(),
+    gameStageTitle: z.string().trim().min(1).max(120).optional(),
+    gameStageDescription: z.string().trim().min(1).max(240).optional(),
   }),
   summarySection: kangurMusicDiatonicScaleSectionSchema.extend({
     summarySlide: kangurMusicDiatonicScaleSlideSchema.extend({
@@ -946,9 +952,14 @@ export const kangurGeometryBasicsLessonTemplateContentSchema = z.object({
       angleKinds: kangurGeometryBasicsTitleCaptionSchema,
     }),
   }),
-  game: z.object({
-    stageTitle: z.string().trim().min(1).max(120),
-  }),
+  game: z
+    .object({
+      gameTitle: z.string().trim().min(1).max(120).optional(),
+      stageTitle: z.string().trim().min(1).max(120).optional(),
+    })
+    .refine(({ gameTitle, stageTitle }) => Boolean(gameTitle ?? stageTitle), {
+      message: 'Geometry basics game title is required.',
+    }),
 });
 
 export const kangurGeometryShapesLessonTemplateContentSchema = z.object({

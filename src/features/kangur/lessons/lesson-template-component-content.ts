@@ -48,6 +48,78 @@ const cloneComponentContent = <T extends KangurLessonTemplateComponentContent | 
   value: T,
 ): T => (value ? structuredClone(value) : value);
 
+const normalizeKangurLessonTemplateComponentContent = <
+  T extends KangurLessonTemplateComponentContent,
+>(
+  content: T,
+): T => {
+  if (content.kind === 'alphabet_unified') {
+    return {
+      ...content,
+      sections: content.sections.map((section) => {
+        const {
+          gameStageDescription: _legacyGameStageDescription,
+          gameStageTitle: _legacyGameStageTitle,
+          ...normalizedSection
+        } = section;
+
+        return {
+          ...normalizedSection,
+          gameDescription: section.gameDescription ?? section.gameStageDescription,
+          gameTitle: section.gameTitle ?? section.gameStageTitle,
+        };
+      }),
+    } as T;
+  }
+
+  if (content.kind === 'music_diatonic_scale') {
+    const {
+      gameStageDescription: _legacyFreeplayGameDescription,
+      gameStageTitle: _legacyFreeplayGameTitle,
+      ...normalizedFreeplaySection
+    } = content.gameFreeplaySection;
+    const {
+      gameStageDescription: _legacyRepeatGameDescription,
+      gameStageTitle: _legacyRepeatGameTitle,
+      ...normalizedRepeatSection
+    } = content.gameRepeatSection;
+
+    return {
+      ...content,
+      gameFreeplaySection: {
+        ...normalizedFreeplaySection,
+        gameDescription:
+          content.gameFreeplaySection.gameDescription ??
+          content.gameFreeplaySection.gameStageDescription,
+        gameTitle:
+          content.gameFreeplaySection.gameTitle ?? content.gameFreeplaySection.gameStageTitle,
+      },
+      gameRepeatSection: {
+        ...normalizedRepeatSection,
+        gameDescription:
+          content.gameRepeatSection.gameDescription ??
+          content.gameRepeatSection.gameStageDescription,
+        gameTitle:
+          content.gameRepeatSection.gameTitle ?? content.gameRepeatSection.gameStageTitle,
+      },
+    } as T;
+  }
+
+  if (content.kind === 'geometry_basics') {
+    const { stageTitle: _legacyStageTitle, ...normalizedGame } = content.game;
+
+    return {
+      ...content,
+      game: {
+        ...normalizedGame,
+        gameTitle: content.game.gameTitle ?? content.game.stageTitle,
+      },
+    } as T;
+  }
+
+  return content;
+};
+
 export const ALPHABET_UNIFIED_COMPONENT_IDS = [
   'alphabet_syllables',
   'alphabet_words',
@@ -119,8 +191,8 @@ export const ALPHABET_WORDS_LESSON_COMPONENT_CONTENT = createAlphabetUnifiedCont
     description: 'Dopasuj obrazek do właściwego słowa',
     isGame: true,
     slides: [],
-    gameStageTitle: 'Gra słowa',
-    gameStageDescription: 'Dopasuj obrazek do właściwego słowa.',
+    gameTitle: 'Gra słowa',
+    gameDescription: 'Dopasuj obrazek do właściwego słowa.',
   },
   {
     id: 'summary',
@@ -158,8 +230,8 @@ export const ALPHABET_MATCHING_LESSON_COMPONENT_CONTENT = createAlphabetUnifiedC
     description: 'Połącz wielkie i małe litery',
     isGame: true,
     slides: [],
-    gameStageTitle: 'Gra litery',
-    gameStageDescription: 'Połącz wielkie i małe litery.',
+    gameTitle: 'Gra litery',
+    gameDescription: 'Połącz wielkie i małe litery.',
   },
   {
     id: 'summary',
@@ -197,8 +269,8 @@ export const ALPHABET_SEQUENCE_LESSON_COMPONENT_CONTENT = createAlphabetUnifiedC
     description: 'Uzupełnij brakujące litery w kolejności',
     isGame: true,
     slides: [],
-    gameStageTitle: 'Gra alfabet',
-    gameStageDescription: 'Uzupełnij brakujące litery w kolejności alfabetu.',
+    gameTitle: 'Gra alfabet',
+    gameDescription: 'Uzupełnij brakujące litery w kolejności alfabetu.',
   },
   {
     id: 'summary',
@@ -270,15 +342,15 @@ export const MUSIC_DIATONIC_SCALE_LESSON_COMPONENT_CONTENT = createMusicDiatonic
     emoji: '🎹',
     title: 'Powtorz melodie',
     description: 'Najpierw posluchaj, potem zagraj te same kolory.',
-    gameStageTitle: 'Powtorz melodie',
-    gameStageDescription: 'Najpierw posluchaj, potem zagraj te same kolory.',
+    gameTitle: 'Powtorz melodie',
+    gameDescription: 'Najpierw posluchaj, potem zagraj te same kolory.',
   },
   gameFreeplaySection: {
     emoji: '🎛️',
     title: 'Swobodna gra',
     description: 'Graj na piano rollu bez zadania i sprawdzaj rozne brzmienia.',
-    gameStageTitle: 'Swobodna gra',
-    gameStageDescription: 'Graj na piano rollu bez zadania i sprawdzaj rozne brzmienia.',
+    gameTitle: 'Swobodna gra',
+    gameDescription: 'Graj na piano rollu bez zadania i sprawdzaj rozne brzmienia.',
   },
   summarySection: {
     emoji: '⭐',
@@ -572,7 +644,7 @@ export const GEOMETRY_BASICS_LESSON_COMPONENT_CONTENT: KangurGeometryBasicsLesso
     },
   },
   game: {
-    stageTitle: 'Geo-misja',
+    gameTitle: 'Geo-misja',
   },
 };
 
@@ -1241,7 +1313,7 @@ export const resolveKangurLessonTemplateComponentContent = (
 ): KangurLessonTemplateComponentContent | null => {
   const parsed = kangurLessonTemplateComponentContentSchema.safeParse(componentContent);
   if (parsed.success) {
-    return cloneComponentContent(parsed.data);
+    return cloneComponentContent(normalizeKangurLessonTemplateComponentContent(parsed.data));
   }
 
   return getDefaultKangurLessonTemplateComponentContent(componentId);
@@ -1265,7 +1337,9 @@ export const parseKangurLessonTemplateComponentContentJson = (
   }
 
   const parsedJson = JSON.parse(trimmed) as unknown;
-  const parsedContent = kangurLessonTemplateComponentContentSchema.parse(parsedJson);
+  const parsedContent = normalizeKangurLessonTemplateComponentContent(
+    kangurLessonTemplateComponentContentSchema.parse(parsedJson)
+  );
   const fallback = getDefaultKangurLessonTemplateComponentContent(componentId);
 
   if (fallback?.kind === 'alphabet_unified' && parsedContent.kind === 'alphabet_unified') {

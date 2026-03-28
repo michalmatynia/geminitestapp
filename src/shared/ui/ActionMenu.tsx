@@ -10,6 +10,7 @@ import { cn } from '@/shared/utils';
 interface ActionMenuProps {
   children: ReactNode;
   trigger?: ReactNode;
+  triggerId?: string;
   align?: 'start' | 'end' | 'center';
   className?: string;
   triggerClassName?: string;
@@ -22,6 +23,7 @@ interface ActionMenuProps {
 type ActionMenuResolvedProps = {
   children: ReactNode;
   trigger?: ReactNode;
+  triggerId?: string;
   align: 'start' | 'end' | 'center';
   className?: string;
   triggerClassName?: string;
@@ -34,6 +36,7 @@ type ActionMenuResolvedProps = {
 const renderActionMenu = ({
   children,
   trigger,
+  triggerId,
   align,
   className,
   triggerClassName,
@@ -45,6 +48,7 @@ const renderActionMenu = ({
   <DropdownMenu>
     <DropdownMenuTrigger asChild>
       <Button
+        {...(triggerId ? { id: triggerId } : {})}
         variant={variant}
         size={size}
         disabled={disabled}
@@ -68,6 +72,7 @@ const renderActionMenu = ({
 export function ActionMenu({
   children,
   trigger,
+  triggerId,
   align = 'end',
   className,
   triggerClassName,
@@ -79,6 +84,7 @@ export function ActionMenu({
   return renderActionMenu({
     children,
     trigger,
+    triggerId,
     align,
     className,
     triggerClassName,

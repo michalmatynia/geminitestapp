@@ -2,7 +2,15 @@
 
 import { PlusIcon, Package } from 'lucide-react';
 import dynamic from 'next/dynamic';
-import { memo, useEffect, useMemo, type ReactNode } from 'react';
+import {
+  cloneElement,
+  isValidElement,
+  memo,
+  useEffect,
+  useMemo,
+  type ReactElement,
+  type ReactNode,
+} from 'react';
 
 import {
   useProductListFiltersContext,
@@ -97,6 +105,15 @@ export const ProductListHeader = memo(function ProductListHeader({
       currencyOptions.map((code: string) => ({ value: code, label: code })),
     [currencyOptions]
   );
+  const renderFiltersContent = (instanceId: 'mobile' | 'desktop'): ReactNode => {
+    if (!filtersContent) return null;
+    if (isValidElement(filtersContent) && typeof filtersContent.type !== 'string') {
+      return cloneElement(filtersContent as ReactElement<Record<string, unknown>>, {
+        instanceId,
+      });
+    }
+    return filtersContent;
+  };
 
   useEffect(() => {
     return (): void => {
@@ -241,7 +258,7 @@ export const ProductListHeader = memo(function ProductListHeader({
               <div className='flex w-full flex-col items-stretch gap-2 sm:flex-row sm:items-center sm:justify-end'>
                 {renderSelectorsAndTriggers()}
               </div>
-              {filtersContent ? <div className='w-full'>{filtersContent}</div> : null}
+              {filtersContent ? <div className='w-full'>{renderFiltersContent('mobile')}</div> : null}
             </div>
           </div>
 
@@ -255,7 +272,7 @@ export const ProductListHeader = memo(function ProductListHeader({
               </>,
               'relative z-0 min-w-0 flex-1 justify-end'
             )}
-            {filtersContent ? <div className='w-full'>{filtersContent}</div> : null}
+            {filtersContent ? <div className='w-full'>{renderFiltersContent('desktop')}</div> : null}
           </div>
         </div>
       )}

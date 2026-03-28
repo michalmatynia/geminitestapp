@@ -59,10 +59,9 @@ export default function AlphabetSequenceLesson({ lessonTemplate }: LessonProps):
             accent: 'amber',
             icon: '🎮',
             shellTestId: 'alphabet-sequence-game-shell',
-            title: gameSection?.gameStageTitle ?? 'Gra alfabet',
+            title: gameSection?.gameTitle ?? 'Gra alfabet',
             description:
-              gameSection?.gameStageDescription ??
-              'Uzupełnij brakujące litery w kolejności alfabetu.',
+              gameSection?.gameDescription ?? 'Uzupełnij brakujące litery w kolejności alfabetu.',
           },
           launchableInstance: {
             gameId: 'alphabet_letter_order',

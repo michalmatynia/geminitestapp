@@ -216,4 +216,19 @@ describe('ProductListHeader', () => {
       'Filters content'
     );
   });
+
+  it('provides stable layout instance ids to non-DOM filter components', () => {
+    function FiltersProbe({
+      instanceId,
+    }: {
+      instanceId?: string;
+    }): React.JSX.Element {
+      return <div data-testid={`filters-probe-${instanceId ?? 'missing'}`}>{instanceId}</div>;
+    }
+
+    render(<ProductListHeader filtersContent={<FiltersProbe />} />);
+
+    expect(screen.getByTestId('filters-probe-mobile')).toBeInTheDocument();
+    expect(screen.getByTestId('filters-probe-desktop')).toBeInTheDocument();
+  });
 });

@@ -57,9 +57,8 @@ export default function AlphabetWordsLesson({ lessonTemplate }: LessonProps): JS
             accent: 'amber',
             icon: '🎮',
             shellTestId: 'alphabet-words-game-shell',
-            title: gameSection?.gameStageTitle ?? 'Gra słowa',
-            description:
-              gameSection?.gameStageDescription ?? 'Dopasuj obrazek do właściwego słowa.',
+            title: gameSection?.gameTitle ?? 'Gra słowa',
+            description: gameSection?.gameDescription ?? 'Dopasuj obrazek do właściwego słowa.',
           },
           launchableInstance: {
             gameId: 'alphabet_first_words',

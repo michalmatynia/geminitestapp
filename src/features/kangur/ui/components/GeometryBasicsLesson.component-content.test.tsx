@@ -158,7 +158,7 @@ describe('GeometryBasicsLesson', () => {
                 },
               },
               game: {
-                stageTitle: 'Database geo mission',
+                gameTitle: 'Database geo mission',
               },
             },
           }}

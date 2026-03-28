@@ -68,7 +68,7 @@ describe('kangur game catalog', () => {
     ).toBe('division_game');
   });
 
-  it('keeps the logical patterns .lesson-stage id unbound once lessons use launchable instances', () => {
+  it('keeps the stored logical patterns .lesson-stage id unbound once lessons use launchable instances', () => {
     const entry = createKangurGameCatalogEntries().find(
       (candidate) => candidate.game.id === 'logical_patterns_workshop'
     );
@@ -82,7 +82,7 @@ describe('kangur game catalog', () => {
     expect(variant).not.toHaveProperty('lessonActivityRuntimeId');
   });
 
-  it('keeps the alphabet sequence .lesson-stage id unbound once lessons use launchable instances', () => {
+  it('keeps the stored alphabet sequence .lesson-stage id unbound once lessons use launchable instances', () => {
     const entry = createKangurGameCatalogEntries().find(
       (candidate) => candidate.game.id === 'alphabet_letter_order'
     );
@@ -96,7 +96,7 @@ describe('kangur game catalog', () => {
     expect(variant).not.toHaveProperty('lessonActivityRuntimeId');
   });
 
-  it('keeps the alphabet literacy .lesson-stage id unbound once lessons use launchable instances', () => {
+  it('keeps the stored alphabet literacy .lesson-stage id unbound once lessons use launchable instances', () => {
     const entry = createKangurGameCatalogEntries().find(
       (candidate) => candidate.game.id === 'alphabet_letter_matching'
     );
@@ -110,7 +110,7 @@ describe('kangur game catalog', () => {
     expect(variant).not.toHaveProperty('lessonActivityRuntimeId');
   });
 
-  it('keeps the color harmony .lesson-stage id unbound once lessons use launchable instances', () => {
+  it('keeps the stored color harmony .lesson-stage id unbound once lessons use launchable instances', () => {
     const entry = createKangurGameCatalogEntries().find(
       (candidate) => candidate.game.id === 'art_color_harmony_studio'
     );
@@ -124,7 +124,7 @@ describe('kangur game catalog', () => {
     expect(variant).not.toHaveProperty('lessonActivityRuntimeId');
   });
 
-  it('keeps the geometry workshop .lesson-stage id unbound once lessons use launchable instances', () => {
+  it('keeps the stored geometry workshop .lesson-stage id unbound once lessons use launchable instances', () => {
     const entry = createKangurGameCatalogEntries().find(
       (candidate) => candidate.game.id === 'geometry_shape_workshop'
     );

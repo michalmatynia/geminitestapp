@@ -591,7 +591,7 @@ export default function LogicalClassificationGame({
     );
   }
 
-  const stageContent = (
+  const gameContent = (
     <KangurPracticeGameShell className='mx-auto max-w-2xl'>
         <KangurPracticeGameProgress
           accent='teal'
@@ -832,7 +832,7 @@ export default function LogicalClassificationGame({
   );
 
   if (round.type !== 'sort') {
-    return stageContent;
+    return gameContent;
   }
 
   return (
@@ -842,7 +842,7 @@ export default function LogicalClassificationGame({
         setSelectedTokenId(null);
       }}
     >
-      {stageContent}
+      {gameContent}
     </KangurDragDropContext>
   );
 }

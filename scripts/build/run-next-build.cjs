@@ -100,6 +100,10 @@ const main = async () => {
   // do not mask those failures by falling back to webpack.
   const preferredBundler = getPreferredBundler(forcedBundler);
 
+  console.log(
+    `[run-next-build] bundler=${preferredBundler} forcedBundler=${forcedBundler || 'auto'} vercel=${process.env.VERCEL ? '1' : '0'} distDir=${distDir}`
+  );
+
   let result = await runBuild(preferredBundler);
 
   if (result.signal) {

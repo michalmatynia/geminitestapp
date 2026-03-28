@@ -9,6 +9,7 @@
     "packages/*"
   ],
   "scripts": {
+    "preinstall": "node scripts/runtime/check-install-package-manager.cjs",
     "predev": "node scripts/runtime/check-node-version.cjs",
     "dev": "node --max-old-space-size=8192 server.cjs",
     "dev:web": "node --max-old-space-size=8192 server.cjs",
@@ -66,7 +67,7 @@
     "predev:playwright-broker": "node scripts/runtime/check-node-version.cjs",
     "dev:playwright-broker": "node --max-old-space-size=16384 server.cjs",
     "dev:heap": "node --max-old-space-size=8192 --heapsnapshot-near-heap-limit=2 --trace-gc server.cjs",
-    "prebuild": "node scripts/build/prebuild-cleanup.cjs && node scripts/quality/check-next-route-config-reexports.mjs --strict --no-write",
+    "prebuild": "node scripts/build/prebuild-cleanup.cjs && node scripts/build/check-vercel-build-contract.cjs && node scripts/quality/check-next-route-config-reexports.mjs --strict --no-write",
     "build": "node scripts/build/run-next-build.cjs",
     "build:turbopack": "npm run prebuild && NEXT_BUILD_BUNDLER=turbopack NEXT_BUILD_CPUS=1 NEXT_DIST_DIR=.next-turbo node scripts/build/run-next-build.cjs",
     "build:turbopack:cold": "NEXT_PRESERVE_TURBO_CACHE=0 npm run build:turbopack",

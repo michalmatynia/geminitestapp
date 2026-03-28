@@ -101,12 +101,12 @@ export default function MusicDiatonicScaleLesson({ lessonTemplate }: LessonProps
   const resolvedGameContentByVariant = useMemo(
     () => ({
       freePlay: {
-        description: resolvedContent.gameFreeplaySection.gameStageDescription,
-        title: resolvedContent.gameFreeplaySection.gameStageTitle,
+        description: resolvedContent.gameFreeplaySection.gameDescription ?? '',
+        title: resolvedContent.gameFreeplaySection.gameTitle ?? '',
       },
       repeat: {
-        description: resolvedContent.gameRepeatSection.gameStageDescription,
-        title: resolvedContent.gameRepeatSection.gameStageTitle,
+        description: resolvedContent.gameRepeatSection.gameDescription ?? '',
+        title: resolvedContent.gameRepeatSection.gameTitle ?? '',
       },
     }),
     [resolvedContent],

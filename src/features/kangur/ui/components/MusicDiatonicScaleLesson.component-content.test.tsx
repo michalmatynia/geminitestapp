@@ -90,15 +90,15 @@ describe('MusicDiatonicScaleLesson', () => {
               emoji: '🎹',
               title: 'Database repeat',
               description: 'Database repeat description',
-              gameStageTitle: 'Database repeat game',
-              gameStageDescription: 'Database repeat game description',
+              gameTitle: 'Database repeat game',
+              gameDescription: 'Database repeat game description',
             },
             gameFreeplaySection: {
               emoji: '🎛️',
               title: 'Database freeplay',
               description: 'Database freeplay description',
-              gameStageTitle: 'Database freeplay game',
-              gameStageDescription: 'Database freeplay game description',
+              gameTitle: 'Database freeplay game',
+              gameDescription: 'Database freeplay game description',
             },
             summarySection: {
               emoji: '⭐',
@@ -177,5 +177,115 @@ describe('MusicDiatonicScaleLesson', () => {
     expect(props.games[1]?.launchableInstance).toEqual({
       ...MUSIC_DIATONIC_SCALE_GAME_SECTION_CONFIGS.freePlay.launchableInstance,
     });
+  });
+
+  it('keeps backward compatibility with legacy gameStage music copy', () => {
+    render(
+      <MusicDiatonicScaleLesson
+        lessonTemplate={{
+          componentId: KANGUR_MUSIC_DIATONIC_SCALE_COMPONENT_ID,
+          subject: 'music',
+          ageGroup: 'six_year_old',
+          label: 'Music',
+          title: 'Legacy scale from Mongo',
+          description: 'Legacy DB description',
+          emoji: '🎵',
+          color: 'kangur-gradient-accent-sky',
+          activeBg: 'bg-sky-500',
+          sortOrder: 100,
+          componentContent: {
+            kind: KANGUR_MUSIC_DIATONIC_SCALE_COMPONENT_ID,
+            notesSection: {
+              emoji: '🎼',
+              title: 'Legacy notes',
+              description: 'Legacy note description',
+              introSlide: {
+                title: 'Legacy intro slide',
+                lead: 'Legacy intro lead',
+                noteCardLabel: 'Sound',
+                noteSequence: ['do', 're', 'mi'],
+                caption: 'Legacy intro caption',
+              },
+              colorsSlide: {
+                title: 'Legacy colors slide',
+                lead: 'Legacy colors lead',
+                noteChips: ['red', 'blue'],
+                previewTitle: 'Legacy preview title',
+                previewDescription: 'Legacy preview description',
+                caption: 'Legacy colors caption',
+              },
+            },
+            melodySection: {
+              emoji: '🎶',
+              title: 'Legacy melody',
+              description: 'Legacy melody description',
+              directionSlide: {
+                title: 'Legacy direction slide',
+                lead: 'Legacy direction lead',
+                ascendingTitle: 'Up',
+                ascendingSequence: 'do re mi',
+                ascendingCaption: 'Legacy ascending caption',
+                descendingTitle: 'Down',
+                descendingSequence: 'mi re do',
+                descendingCaption: 'Legacy descending caption',
+              },
+              listenSlide: {
+                title: 'Legacy listen slide',
+                lead: 'Legacy listen lead',
+                planTitle: 'Legacy plan',
+                planSteps: ['Listen', 'Watch', 'Repeat'],
+                caption: 'Legacy listen caption',
+              },
+            },
+            gameRepeatSection: {
+              emoji: '🎹',
+              title: 'Legacy repeat',
+              description: 'Legacy repeat description',
+              gameStageTitle: 'Legacy repeat game',
+              gameStageDescription: 'Legacy repeat game description',
+            },
+            gameFreeplaySection: {
+              emoji: '🎛️',
+              title: 'Legacy freeplay',
+              description: 'Legacy freeplay description',
+              gameStageTitle: 'Legacy freeplay game',
+              gameStageDescription: 'Legacy freeplay game description',
+            },
+            summarySection: {
+              emoji: '⭐',
+              title: 'Legacy summary',
+              description: 'Legacy summary description',
+              summarySlide: {
+                title: 'Legacy summary slide',
+                lead: 'Legacy summary lead',
+                facts: [
+                  {
+                    title: 'Legacy fact',
+                    caption: 'Legacy fact caption',
+                  },
+                ],
+              },
+            },
+          },
+        }}
+      />,
+    );
+
+    const props = kangurUnifiedLessonMock.mock.calls.at(-1)?.[0] as {
+      games: Array<{ shell: { title: string; description: string } }>;
+    };
+
+    expect(props.games[0]?.shell).toEqual(
+      expect.objectContaining({
+        title: 'Legacy repeat game',
+        description: 'Legacy repeat game description',
+      }),
+    );
+    expect(props.games[1]?.shell).toEqual(
+      expect.objectContaining({
+        title: 'Legacy freeplay game',
+        description: 'Legacy freeplay game description',
+      }),
+    );
   });
 });

@@ -51,9 +51,9 @@ export const createSharedLibraryGame = ({
   description,
   ...input
 }: SeedGameInput): KangurGameDefinition => {
-  const isLessonStage = lessonVariantSurface === 'lesson_stage';
-  const lessonVariantId = `${input.id}.${isLessonStage ? 'lesson-stage' : 'lesson-inline'}`;
-  const lessonVariantLabel = isLessonStage ? 'Lesson variant' : 'Lesson inline';
+  const usesStoredLessonStageSurface = lessonVariantSurface === 'lesson_stage';
+  const lessonVariantId = `${input.id}.${usesStoredLessonStageSurface ? 'lesson-stage' : 'lesson-inline'}`;
+  const lessonVariantLabel = usesStoredLessonStageSurface ? 'Lesson variant' : 'Lesson inline';
 
   return {
     ...input,
@@ -67,8 +67,10 @@ export const createSharedLibraryGame = ({
       createVariant({
         id: lessonVariantId,
         label: lessonVariantLabel,
-        title: isLessonStage ? `${input.title} as a lesson variant` : `${input.title} in lessons`,
-        description: isLessonStage
+        title: usesStoredLessonStageSurface
+          ? `${input.title} as a lesson variant`
+          : `${input.title} in lessons`,
+        description: usesStoredLessonStageSurface
           ? `Lesson-facing variant for ${input.title}, retained in the catalog alongside shared game instances.`
           : `Inline lesson variant for ${input.title}, exposed through the shared games library.`,
         surface: lessonVariantSurface,

@@ -59,8 +59,8 @@ export default function AlphabetMatchingLesson({ lessonTemplate }: LessonProps):
             accent: 'amber',
             icon: '🎮',
             shellTestId: 'alphabet-matching-game-shell',
-            title: gameSection?.gameStageTitle ?? 'Gra litery',
-            description: gameSection?.gameStageDescription ?? 'Połącz wielkie i małe litery.',
+            title: gameSection?.gameTitle ?? 'Gra litery',
+            description: gameSection?.gameDescription ?? 'Połącz wielkie i małe litery.',
           },
           launchableInstance: {
             gameId: 'alphabet_letter_matching',

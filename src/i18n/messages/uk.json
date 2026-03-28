@@ -387,7 +387,7 @@
       "cohortsLabel": "Когорти",
       "subjectsLabel": "Предмети",
       "coveredLessonsLabel": "Покриті уроки",
-      "fallbackOnlyLessonsLabel": "Уроки лише з fallback",
+      "uncoveredLessonsLabel": "Уроки без покриття",
       "groups": {
         "library_backed": {
           "eyebrow": "Спільний каталог",
@@ -398,11 +398,6 @@
           "eyebrow": "Повноекранний runtime",
           "title": "Уроки з запуском",
           "description": "Компоненти уроків, які мають зберігати прямий повноекранний маршрут гри поруч зі своїм спільним записом у каталозі."
-        },
-        "selector_fallback": {
-          "eyebrow": "Хаб селектора",
-          "title": "Уроки лише через селектор",
-          "description": "Компоненти уроків, які зараз ведуть у предметно-орієнтований селектор гри, а не в окрему повноекранну гру."
         }
       }
     },
@@ -802,7 +797,7 @@
     },
     "variantSurfaces": {
       "lesson_inline": "Вбудовано в урок",
-      "lesson_stage": "Сцена уроку",
+      "lesson_stage": "Варіант уроку",
       "library_preview": "Попередній перегляд бібліотеки",
       "game_screen": "Екран гри"
     },
@@ -831,7 +826,6 @@
     "lessonCoverageStatuses": {
       "launchable": "запускний",
       "library_backed": "у бібліотеці",
-      "selector_fallback": "fallback селектора",
       "lesson_only": "лише урок"
     },
     "mechanics": {

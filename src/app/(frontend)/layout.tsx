@@ -5,14 +5,16 @@ import {
   shouldEnableFrontendLoadTiming,
   type FrontendLoadTimingPayload,
 } from '@/app/(frontend)/frontend-load-timing';
-import { CmsStorefrontAppearanceProvider } from '@/features/cms/components/frontend/CmsStorefrontAppearance';
+import { CmsStorefrontAppearanceProvider } from '@/features/cms/public';
 import { getCmsThemeSettings } from '@/features/cms/server';
 import { getKangurAuthBootstrapScript } from '@/features/kangur/server';
 import { getKangurStorefrontInitialState } from '@/features/kangur/server';
-import { FrontendPublicOwnerProvider } from '@/features/kangur/ui/FrontendPublicOwnerContext';
-import FrontendPublicOwnerShellClient from '@/features/kangur/ui/FrontendPublicOwnerShellClient';
-import { KangurSSRSkeleton } from '@/features/kangur/ui/KangurSSRSkeleton';
-import { KangurServerShell } from '@/features/kangur/ui/components/KangurServerShell';
+import {
+  FrontendPublicOwnerProvider,
+  FrontendPublicOwnerShellClient,
+  KangurSSRSkeleton,
+  KangurServerShell,
+} from '@/features/kangur/public';
 import { readOptionalRequestHeadersResult } from '@/shared/lib/request/optional-headers';
 import {
   readServerRequestHeaders,

@@ -23,7 +23,7 @@ const findGame = (gameId: string) => {
 describe('game launch helpers', () => {
   it('resolves fullscreen game screens from the shared game registry', () => {
     expect(getKangurLaunchableGameScreen(findGame('clock_training'))).toBe('clock_quiz');
-    expect(getKangurLaunchableGameScreen(findGame('adding_ball'))).toBeNull();
+    expect(getKangurLaunchableGameScreen(findGame('adding_ball'))).toBe('addition_quiz');
   });
 
   it('maps lesson components to launchable fullscreen screens when variants exist', () => {
@@ -33,7 +33,7 @@ describe('game launch helpers', () => {
     expect(getKangurLaunchableGameScreenForLessonComponent('english_sentence_structure')).toBe(
       'english_sentence_quiz'
     );
-    expect(getKangurLaunchableGameScreenForLessonComponent('adding')).toBeNull();
+    expect(getKangurLaunchableGameScreenForLessonComponent('adding')).toBe('addition_quiz');
   });
 
   it('keeps the definition-level launch fallback for synthetic legacy-only games', () => {
@@ -51,7 +51,9 @@ describe('game launch helpers', () => {
     expect(buildKangurGameLaunchHref('/kangur', findGame('clock_training'))).toBe(
       '/kangur/game?quickStart=screen&screen=clock_quiz'
     );
-    expect(buildKangurGameLaunchHref('/kangur', findGame('adding_ball'))).toBeNull();
+    expect(buildKangurGameLaunchHref('/kangur', findGame('adding_ball'))).toBe(
+      '/kangur/game?quickStart=screen&screen=addition_quiz'
+    );
 
     expect(buildKangurGameLessonHref('/kangur', findGame('clock_training'))).toBe(
       '/kangur/lessons?focus=clock'

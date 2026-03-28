@@ -17,10 +17,6 @@ vi.mock('@/features/kangur/ui/context/KangurAuthContext', () => ({
   }),
 }));
 
-vi.mock('@/features/kangur/ui/components/GeometryPerimeterDrawingGame', () => ({
-  default: () => <div>Mock Geometry Perimeter Drawing Game</div>,
-}));
-
 import enMessages from '@/i18n/messages/en.json';
 import deMessages from '@/i18n/messages/de.json';
 import GeometryPerimeterLesson from '@/features/kangur/ui/components/GeometryPerimeterLesson';
@@ -85,7 +81,10 @@ describe('GeometryPerimeterLesson i18n', () => {
 
     fireEvent.click(screen.getByRole('button', { name: /Game: Draw the perimeter/i }));
 
-    expect(screen.getByText('Mock Geometry Perimeter Drawing Game')).toBeInTheDocument();
+    expect(screen.getByTestId('geometry-perimeter-game-shell')).toBeInTheDocument();
+    expect(
+      screen.getByText('Open this lesson on screen to complete this interactive activity.')
+    ).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /back to topics/i })).toBeInTheDocument();
   });
 

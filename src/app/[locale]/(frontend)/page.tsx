@@ -3,8 +3,8 @@ import { JSX } from 'react';
 
 import { getCmsRepository } from '@/features/cms/server';
 import { getSlugsForDomain, resolveCmsDomainFromHeaders } from '@/features/cms/server';
-import { getKangurPublicAliasHref } from '@/features/kangur/config/routing';
-import { getKangurConfiguredLaunchTarget } from '@/features/kangur/server/launch-route';
+import { getKangurPublicAliasHref } from '@/features/kangur/public';
+import { getKangurConfiguredLaunchTarget } from '@/features/kangur/server';
 import {
   buildLocalizedPathname,
   normalizeSiteLocale,

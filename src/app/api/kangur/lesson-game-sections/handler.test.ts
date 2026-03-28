@@ -47,6 +47,7 @@ const createClockSection = (
   id: 'clock_saved_section',
   lessonComponentId: 'clock',
   gameId: 'clock_training',
+  instanceId: 'clock_training:instance:clock-minutes',
   title: 'Saved clock deck',
   description: 'Saved section from the lesson hub.',
   emoji: '🧩',
@@ -101,10 +102,16 @@ describe('kangur lesson game sections handler', () => {
 
     expect(listSectionsMock).toHaveBeenCalledTimes(1);
     await expect(first.json()).resolves.toEqual([
-      expect.objectContaining({ id: 'clock_saved_section' }),
+      expect.objectContaining({
+        id: 'clock_saved_section',
+        instanceId: 'clock_training:instance:clock-minutes',
+      }),
     ]);
     await expect(second.json()).resolves.toEqual([
-      expect.objectContaining({ id: 'clock_saved_section' }),
+      expect.objectContaining({
+        id: 'clock_saved_section',
+        instanceId: 'clock_training:instance:clock-minutes',
+      }),
     ]);
   });
 
@@ -135,6 +142,7 @@ describe('kangur lesson game sections handler', () => {
     await expect(response.json()).resolves.toEqual([
       expect.objectContaining({
         id: 'clock_saved_calendar_section',
+        instanceId: 'clock_training:instance:clock-minutes',
         lessonComponentId: 'calendar',
       }),
     ]);
@@ -174,12 +182,16 @@ describe('kangur lesson game sections handler', () => {
     );
 
     expect(replaceSectionsForGameMock).toHaveBeenCalledWith('clock_training', [
-      expect.objectContaining({ id: 'clock_saved_section_updated' }),
+      expect.objectContaining({
+        id: 'clock_saved_section_updated',
+        instanceId: 'clock_training:instance:clock-minutes',
+      }),
     ]);
     expect(listSectionsMock).toHaveBeenCalledTimes(2);
     await expect(refreshed.json()).resolves.toEqual([
       expect.objectContaining({
         id: 'clock_saved_section_updated',
+        instanceId: 'clock_training:instance:clock-minutes',
         lessonComponentId: 'calendar',
       }),
     ]);

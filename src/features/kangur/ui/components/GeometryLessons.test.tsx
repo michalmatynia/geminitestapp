@@ -33,6 +33,27 @@ vi.mock('@/features/kangur/ui/components/ShapeRecognitionStageGame', () => ({
     </button>
   ),
 }));
+vi.mock('@/features/kangur/ui/components/KangurLaunchableGameInstanceRuntime', () => ({
+  __esModule: true,
+  default: ({
+    gameId,
+    onFinish,
+  }: {
+    gameId: string;
+    onFinish: () => void;
+  }): React.JSX.Element => {
+    const labels: Record<string, string> = {
+      geometry_shape_spotter: 'Mock Shape Recognition Game',
+      geometry_shape_workshop: 'Mock Geometry Drawing Game',
+    };
+
+    return (
+      <button type='button' onClick={onFinish}>
+        {labels[gameId] ?? `Mock ${gameId}`}
+      </button>
+    );
+  },
+}));
 
 vi.mock('@/features/kangur/ui/services/progress', async (importOriginal) => {
   const actual = await importOriginal<typeof import('@/features/kangur/ui/services/progress')>();
@@ -128,7 +149,7 @@ describe('Geometry lessons shared surfaces', () => {
     expect(addXp).toHaveBeenCalledTimes(1);
   });
 
-  it('routes the shape recognition practice and draw sections through shared stage runtimes', () => {
+  it('routes the shape recognition practice and draw sections through shared launchable instances', () => {
     renderLesson(<GeometryShapeRecognitionLesson />);
 
     fireEvent.click(screen.getByTestId('lesson-hub-section-practice'));

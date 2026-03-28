@@ -55,7 +55,7 @@ describe('time stage lesson configs', () => {
     lessonGameSectionsState = [];
   });
 
-  it('passes shared calendar lesson-stage runtimes into KangurUnifiedLesson', () => {
+  it('passes shared calendar instances into KangurUnifiedLesson', () => {
     render(
       <NextIntlClientProvider locale='pl' messages={plMessages}>
         <CalendarLesson />
@@ -68,11 +68,9 @@ describe('time stage lesson configs', () => {
       (capturedProps?.games as Array<{
         sectionId: string;
         stage: Record<string, unknown>;
-        runtime?: {
-          runtimeId?: string;
-          rendererId?: string;
-          engineId?: string;
-          rendererProps?: Record<string, unknown>;
+        launchableInstance?: {
+          gameId?: string;
+          instanceId?: string;
         };
         onStageEnter?: unknown;
         render?: unknown;
@@ -83,30 +81,24 @@ describe('time stage lesson configs', () => {
         expect.objectContaining({
           sectionId: 'game_days',
           stage: expect.objectContaining({ shellTestId: 'calendar-lesson-game-shell' }),
-          runtime: expect.objectContaining({
-            runtimeId: 'calendar_interactive_days_lesson_stage',
-            rendererId: 'calendar_interactive_stage_game',
-            engineId: 'calendar-grid-engine',
-            rendererProps: { calendarSection: 'dni' },
+          launchableInstance: expect.objectContaining({
+            gameId: 'calendar_interactive',
+            instanceId: 'calendar_interactive:instance:calendar-days',
           }),
           onStageEnter: expect.any(Function),
         }),
         expect.objectContaining({
           sectionId: 'game_months',
-          runtime: expect.objectContaining({
-            runtimeId: 'calendar_interactive_months_lesson_stage',
-            rendererId: 'calendar_interactive_stage_game',
-            engineId: 'calendar-grid-engine',
-            rendererProps: { calendarSection: 'miesiace' },
+          launchableInstance: expect.objectContaining({
+            gameId: 'calendar_interactive',
+            instanceId: 'calendar_interactive:instance:calendar-months',
           }),
         }),
         expect.objectContaining({
           sectionId: 'game_dates',
-          runtime: expect.objectContaining({
-            runtimeId: 'calendar_interactive_dates_lesson_stage',
-            rendererId: 'calendar_interactive_stage_game',
-            engineId: 'calendar-grid-engine',
-            rendererProps: { calendarSection: 'data' },
+          launchableInstance: expect.objectContaining({
+            gameId: 'calendar_interactive',
+            instanceId: 'calendar_interactive:instance:calendar-dates',
           }),
         }),
       ])
@@ -114,7 +106,7 @@ describe('time stage lesson configs', () => {
     expect(games.every((game) => !('render' in game))).toBe(true);
   });
 
-  it('passes shared clock lesson-stage runtimes into KangurUnifiedLesson', () => {
+  it('passes shared clock instances into KangurUnifiedLesson', () => {
     render(
       <NextIntlClientProvider locale='pl' messages={plMessages}>
         <ClockLesson />
@@ -127,12 +119,11 @@ describe('time stage lesson configs', () => {
       (capturedProps?.games as Array<{
         sectionId: string;
         stage: Record<string, unknown>;
-        runtime?: {
-          runtimeId?: string;
-          rendererId?: string;
-          engineId?: string;
-          rendererProps?: Record<string, unknown>;
+        launchableInstance?: {
+          gameId?: string;
+          instanceId?: string;
         };
+        engineOverrides?: Record<string, unknown>;
         onStageFinish?: unknown;
         render?: unknown;
       }>) ?? [];
@@ -145,31 +136,28 @@ describe('time stage lesson configs', () => {
             shellTestId: 'clock-lesson-training-shell',
             navigationPills: expect.anything(),
           }),
-          runtime: expect.objectContaining({
-            runtimeId: 'clock_training_hours_lesson_stage',
-            rendererId: 'clock_training_stage_game',
-            engineId: 'clock-dial-engine',
-            rendererProps: { clockSection: 'hours' },
+          launchableInstance: expect.objectContaining({
+            gameId: 'clock_training',
+            instanceId: 'clock_training:instance:clock-hours',
           }),
+          engineOverrides: {},
           onStageFinish: expect.any(Function),
         }),
         expect.objectContaining({
           sectionId: 'game_minutes',
-          runtime: expect.objectContaining({
-            runtimeId: 'clock_training_minutes_lesson_stage',
-            rendererId: 'clock_training_stage_game',
-            engineId: 'clock-dial-engine',
-            rendererProps: { clockSection: 'minutes' },
+          launchableInstance: expect.objectContaining({
+            gameId: 'clock_training',
+            instanceId: 'clock_training:instance:clock-minutes',
           }),
+          engineOverrides: {},
         }),
         expect.objectContaining({
           sectionId: 'game_combined',
-          runtime: expect.objectContaining({
-            runtimeId: 'clock_training_combined_lesson_stage',
-            rendererId: 'clock_training_stage_game',
-            engineId: 'clock-dial-engine',
-            rendererProps: { clockSection: 'combined' },
+          launchableInstance: expect.objectContaining({
+            gameId: 'clock_training',
+            instanceId: 'clock_training:instance:default',
           }),
+          engineOverrides: {},
         }),
       ])
     );
@@ -180,6 +168,7 @@ describe('time stage lesson configs', () => {
     lessonGameSectionsState = [
       {
         id: 'clock_custom_minutes',
+        instanceId: 'clock_training:instance:clock-hours',
         lessonComponentId: 'clock',
         gameId: 'clock_training',
         title: 'Ćwiczenie: Minuty bez czasu cyfrowego',
@@ -210,25 +199,24 @@ describe('time stage lesson configs', () => {
     const games =
       (capturedProps?.games as Array<{
         sectionId: string;
-        runtime?: {
-          rendererProps?: Record<string, unknown>;
-        };
+        launchableInstance?: { instanceId?: string };
+        engineOverrides?: Record<string, unknown>;
       }>) ?? [];
 
     expect(games).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
           sectionId: 'clock_custom_minutes',
-          runtime: expect.objectContaining({
-            rendererProps: expect.objectContaining({
-              clockInitialMode: 'challenge',
-              clockSection: 'minutes',
-              showClockHourHand: false,
-              showClockMinuteHand: true,
-              showClockModeSwitch: true,
-              showClockTaskTitle: true,
-              showClockTimeDisplay: false,
-            }),
+          launchableInstance: expect.objectContaining({
+            instanceId: 'clock_training:instance:clock-hours',
+          }),
+          engineOverrides: expect.objectContaining({
+            clockInitialMode: 'challenge',
+            showClockHourHand: false,
+            showClockMinuteHand: true,
+            showClockModeSwitch: true,
+            showClockTaskTitle: true,
+            showClockTimeDisplay: false,
           }),
         }),
       ])

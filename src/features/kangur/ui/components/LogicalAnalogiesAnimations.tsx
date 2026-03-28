@@ -33,6 +33,10 @@ type LogicalAnalogiesSurfaceProps = {
   rx: number;
 };
 
+type LogicalAnalogiesAnimationProps = {
+  ariaLabel?: string;
+};
+
 function useLogicalAnalogiesSurfaceIds(prefix: string): LogicalAnalogiesSurfaceIds {
   const baseId = useId().replace(/:/g, '');
 
@@ -116,17 +120,22 @@ function LogicalAnalogiesSurface({
   );
 }
 
-export function AnalogyBridgeAnimation(): React.JSX.Element {
+export function AnalogyBridgeAnimation({
+  ariaLabel,
+}: LogicalAnalogiesAnimationProps = {}): React.JSX.Element {
   const translations = useTranslations('KangurStaticLessons.logicalAnalogies.animations');
   const surfaceIds = useLogicalAnalogiesSurfaceIds('logical-analogies-bridge');
 
   return (
     <svg
-      aria-label={translateLogicalAnalogiesAnimation(
-        translations,
-        'analogyBridge',
-        'Animacja: relacja A:B = C:D.'
-      )}
+      aria-label={
+        ariaLabel ??
+        translateLogicalAnalogiesAnimation(
+          translations,
+          'analogyBridge',
+          'Animacja: relacja A:B = C:D.',
+        )
+      }
       className='h-auto w-full'
       data-testid='logical-analogies-bridge-animation'
       role='img'
@@ -182,17 +191,22 @@ export function AnalogyBridgeAnimation(): React.JSX.Element {
   );
 }
 
-export function NumberOperationAnimation(): React.JSX.Element {
+export function NumberOperationAnimation({
+  ariaLabel,
+}: LogicalAnalogiesAnimationProps = {}): React.JSX.Element {
   const translations = useTranslations('KangurStaticLessons.logicalAnalogies.animations');
   const surfaceIds = useLogicalAnalogiesSurfaceIds('logical-analogies-number-operation');
 
   return (
     <svg
-      aria-label={translateLogicalAnalogiesAnimation(
-        translations,
-        'numberOperation',
-        'Animacja: relacja liczbowa z tą samą operacją.'
-      )}
+      aria-label={
+        ariaLabel ??
+        translateLogicalAnalogiesAnimation(
+          translations,
+          'numberOperation',
+          'Animacja: relacja liczbowa z tą samą operacją.',
+        )
+      }
       className='h-auto w-full'
       data-testid='logical-analogies-number-operation-animation'
       role='img'
@@ -245,17 +259,22 @@ export function NumberOperationAnimation(): React.JSX.Element {
   );
 }
 
-export function ShapeTransformAnimation(): React.JSX.Element {
+export function ShapeTransformAnimation({
+  ariaLabel,
+}: LogicalAnalogiesAnimationProps = {}): React.JSX.Element {
   const translations = useTranslations('KangurStaticLessons.logicalAnalogies.animations');
   const surfaceIds = useLogicalAnalogiesSurfaceIds('logical-analogies-shape-transform');
 
   return (
     <svg
-      aria-label={translateLogicalAnalogiesAnimation(
-        translations,
-        'shapeTransform',
-        'Animacja: kształt obraca się według tej samej reguły.'
-      )}
+      aria-label={
+        ariaLabel ??
+        translateLogicalAnalogiesAnimation(
+          translations,
+          'shapeTransform',
+          'Animacja: kształt obraca się według tej samej reguły.',
+        )
+      }
       className='h-auto w-full'
       data-testid='logical-analogies-shape-transform-animation'
       role='img'
@@ -304,17 +323,22 @@ export function ShapeTransformAnimation(): React.JSX.Element {
   );
 }
 
-export function PartWholeAnimation(): React.JSX.Element {
+export function PartWholeAnimation({
+  ariaLabel,
+}: LogicalAnalogiesAnimationProps = {}): React.JSX.Element {
   const translations = useTranslations('KangurStaticLessons.logicalAnalogies.animations');
   const surfaceIds = useLogicalAnalogiesSurfaceIds('logical-analogies-part-whole');
 
   return (
     <svg
-      aria-label={translateLogicalAnalogiesAnimation(
-        translations,
-        'partWhole',
-        'Animacja: części łączą się w całość.'
-      )}
+      aria-label={
+        ariaLabel ??
+        translateLogicalAnalogiesAnimation(
+          translations,
+          'partWhole',
+          'Animacja: części łączą się w całość.',
+        )
+      }
       className='h-auto w-full'
       data-testid='logical-analogies-part-whole-animation'
       role='img'
@@ -366,17 +390,22 @@ export function PartWholeAnimation(): React.JSX.Element {
   );
 }
 
-export function CauseEffectAnimation(): React.JSX.Element {
+export function CauseEffectAnimation({
+  ariaLabel,
+}: LogicalAnalogiesAnimationProps = {}): React.JSX.Element {
   const translations = useTranslations('KangurStaticLessons.logicalAnalogies.animations');
   const surfaceIds = useLogicalAnalogiesSurfaceIds('logical-analogies-cause-effect');
 
   return (
     <svg
-      aria-label={translateLogicalAnalogiesAnimation(
-        translations,
-        'causeEffect',
-        'Animacja: przyczyna prowadzi do skutku.'
-      )}
+      aria-label={
+        ariaLabel ??
+        translateLogicalAnalogiesAnimation(
+          translations,
+          'causeEffect',
+          'Animacja: przyczyna prowadzi do skutku.',
+        )
+      }
       className='h-auto w-full'
       data-testid='logical-analogies-cause-effect-animation'
       role='img'

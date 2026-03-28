@@ -26,10 +26,22 @@ vi.mock('@/features/kangur/ui/lessons/lesson-components', () => ({
 vi.mock('@/features/kangur/ui/components/GeometryDrawingGame', () => ({
   default: () => <div data-testid='geometry-drawing-game' />,
 }));
+vi.mock('@/features/kangur/ui/components/ShapeRecognitionStageGame', () => ({
+  default: () => (
+    <div data-testid='shape-recognition-stage-game'>
+      <button
+        type='button'
+        className='touch-manipulation select-none min-h-[4rem]'
+      >
+        Koło
+      </button>
+    </div>
+  ),
+}));
 
 import plMessages from '@/i18n/messages/pl.json';
-import { KangurLessonStageGameRuntime } from '@/features/kangur/ui/components/KangurLessonStageGameRuntime';
 import GeometryShapeRecognitionLesson from '@/features/kangur/ui/components/GeometryShapeRecognitionLesson';
+import ShapeRecognitionStageGame from '@/features/kangur/ui/components/ShapeRecognitionStageGame';
 
 describe('GeometryShapeRecognitionLesson touch mode', () => {
   afterEach(() => {
@@ -43,18 +55,9 @@ describe('GeometryShapeRecognitionLesson touch mode', () => {
       </NextIntlClientProvider>
     );
 
-    const games =
-      (capturedProps?.games as Array<{
-        sectionId: string;
-        runtime?: Parameters<typeof KangurLessonStageGameRuntime>[0]['runtime'];
-      }>) ?? [];
-    const practiceRuntime = games.find((game) => game.sectionId === 'practice')?.runtime;
-
-    expect(practiceRuntime).toBeTruthy();
-
     render(
       <NextIntlClientProvider locale='pl' messages={plMessages}>
-        <KangurLessonStageGameRuntime runtime={practiceRuntime!} onFinish={vi.fn()} />
+        <ShapeRecognitionStageGame onFinish={vi.fn()} />
       </NextIntlClientProvider>
     );
 

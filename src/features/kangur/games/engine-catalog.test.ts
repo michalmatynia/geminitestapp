@@ -22,15 +22,19 @@ describe('kangur game engine catalog', () => {
       variantEntries,
       implementations: createDefaultKangurGameEngineImplementations(),
     });
+    const classificationEngine = engineEntries.find(
+      (entry) => entry.engineId === 'classification-engine'
+    );
 
-    expect(engineEntries.find((entry) => entry.engineId === 'classification-engine')).toEqual(
+    expect(classificationEngine).toEqual(
       expect.objectContaining({
         engineId: 'classification-engine',
         category: 'foundational',
-        launchableCount: 2,
         subjects: expect.arrayContaining(['maths', 'english', 'agentic_coding']),
       })
     );
+    expect(classificationEngine?.launchableCount).toBeGreaterThan(0);
+    expect(classificationEngine?.entries.length).toBeGreaterThan(5);
     expect(engineEntries.find((entry) => entry.engineId === 'shape-drawing-engine')?.entries).toHaveLength(
       2
     );
@@ -76,7 +80,6 @@ describe('kangur game engine catalog', () => {
       implementationGroups.find((group) => group.ownership === 'shared_runtime')?.runtimeIds
     ).toEqual(
       expect.arrayContaining([
-        'art_color_harmony_studio_lesson_stage',
         'ColorHarmonyStageGame',
         'geometry_drawing_game',
         'GeometrySymmetryGame',

@@ -1195,7 +1195,7 @@
       "cohortsLabel": "Kohorten",
       "subjectsLabel": "Facher",
       "coveredLessonsLabel": "Abgedeckte Lektionen",
-      "fallbackOnlyLessonsLabel": "Nur-Fallback-Lektionen",
+      "uncoveredLessonsLabel": "Nicht abgedeckte Lektionen",
       "groups": {
         "library_backed": {
           "eyebrow": "Gemeinsamer Katalog",
@@ -1206,11 +1206,6 @@
           "eyebrow": "Vollbild-Runtime",
           "title": "Startbare Lektionen",
           "description": "Lektionskomponenten, die neben ihrem gemeinsamen Katalogeintrag einen direkten Vollbild-Spielpfad behalten sollen."
-        },
-        "selector_fallback": {
-          "eyebrow": "Selector-Hub",
-          "title": "Nur-Selector-Lektionen",
-          "description": "Lektionskomponenten, die aktuell in den fachbezogenen Spiel-Selector statt in ein eigenes Vollbild-Spiel routen."
         }
       }
     },
@@ -1610,7 +1605,7 @@
     },
     "variantSurfaces": {
       "lesson_inline": "Lektion inline",
-      "lesson_stage": "Lektionsstufe",
+      "lesson_stage": "Lektionsvariante",
       "library_preview": "Bibliotheksvorschau",
       "game_screen": "Spielbildschirm"
     },
@@ -1639,7 +1634,6 @@
     "lessonCoverageStatuses": {
       "launchable": "startbar",
       "library_backed": "bibliotheksgestutzt",
-      "selector_fallback": "Selector-Fallback",
       "lesson_only": "nur Lektion"
     },
     "mechanics": {

@@ -20,6 +20,7 @@ vi.mock('@/features/kangur/ui/lessons/lesson-components', () => ({
 }));
 
 import deMessages from '@/i18n/messages/de.json';
+import { getKangurBuiltInGameInstanceId } from '@/features/kangur/games';
 import EnglishPartsOfSpeechLesson from '@/features/kangur/ui/components/EnglishPartsOfSpeechLesson';
 
 type CapturedSlide = {
@@ -46,7 +47,7 @@ describe('EnglishPartsOfSpeechLesson i18n', () => {
       (capturedProps?.games as Array<{
         sectionId: string;
         stage: Record<string, unknown>;
-        runtime?: { runtimeId?: string; rendererId?: string };
+        launchableInstance?: { gameId?: string; instanceId?: string };
       }>) ?? [];
 
     expect(
@@ -69,10 +70,10 @@ describe('EnglishPartsOfSpeechLesson i18n', () => {
       description: 'Schnelles Warm-up mit Pronomen in Mathe-Sätzen',
     });
     expect(
-      games.find((game) => game.sectionId === 'game_pronouns_warmup')?.runtime
+      games.find((game) => game.sectionId === 'game_pronouns_warmup')?.launchableInstance
     ).toMatchObject({
-      runtimeId: 'english_pronouns_warmup_lesson_stage',
-      rendererId: 'english_pronouns_warmup_game',
+      gameId: 'english_pronouns_warmup',
+      instanceId: getKangurBuiltInGameInstanceId('english_pronouns_warmup'),
     });
     expect(
       games.find((game) => game.sectionId === 'game_parts_of_speech')?.stage
@@ -81,10 +82,10 @@ describe('EnglishPartsOfSpeechLesson i18n', () => {
       description: 'Ziehe die Wörter in die richtigen Kategorien',
     });
     expect(
-      games.find((game) => game.sectionId === 'game_parts_of_speech')?.runtime
+      games.find((game) => game.sectionId === 'game_parts_of_speech')?.launchableInstance
     ).toMatchObject({
-      runtimeId: 'english_parts_of_speech_sort_lesson_stage',
-      rendererId: 'english_parts_of_speech_game',
+      gameId: 'english_parts_of_speech_sort',
+      instanceId: getKangurBuiltInGameInstanceId('english_parts_of_speech_sort'),
     });
 
     const slides = (capturedProps?.slides as Record<string, CapturedSlide[]>) ?? {};

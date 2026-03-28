@@ -28,6 +28,39 @@ vi.mock('@/features/kangur/ui/components/AddingSynthesisGame', () => ({
   ),
 }));
 
+vi.mock('@/features/kangur/ui/components/KangurLaunchableGameInstanceRuntime', () => ({
+  KangurLaunchableGameInstanceRuntime: ({
+    gameId,
+    onFinish,
+  }: {
+    gameId: string;
+    onFinish: () => void;
+  }): React.JSX.Element => (
+    <button type='button' onClick={onFinish}>
+      {gameId === 'adding_ball'
+        ? 'Mock Adding Ball Game'
+        : gameId === 'adding_synthesis'
+          ? 'Mock Adding Synthesis Game'
+          : `Mock ${gameId}`}
+    </button>
+  ),
+  default: ({
+    gameId,
+    onFinish,
+  }: {
+    gameId: string;
+    onFinish: () => void;
+  }): React.JSX.Element => (
+    <button type='button' onClick={onFinish}>
+      {gameId === 'adding_ball'
+        ? 'Mock Adding Ball Game'
+        : gameId === 'adding_synthesis'
+          ? 'Mock Adding Synthesis Game'
+          : `Mock ${gameId}`}
+    </button>
+  ),
+}));
+
 import AddingLesson from '@/features/kangur/ui/components/AddingLesson';
 import { KangurLessonNavigationProvider } from '@/features/kangur/ui/context/KangurLessonNavigationContext';
 

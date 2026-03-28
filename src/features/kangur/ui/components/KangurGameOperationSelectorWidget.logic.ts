@@ -10,7 +10,6 @@ import {
 } from '@/features/kangur/ui/services/recommendation-i18n';
 import { getKangurLaunchableGameScreenForLessonComponent } from '@/features/kangur/ui/services/game-launch';
 import {
-  shouldRouteKangurLessonComponentToOperationSelector,
 } from '@/features/kangur/games';
 import {
   getProgressAverageAccuracy,
@@ -85,10 +84,6 @@ export const resolveLessonRecommendationTarget = (
   );
   if (launchScreen) {
     return { kind: 'screen', screen: launchScreen };
-  }
-
-  if (shouldRouteKangurLessonComponentToOperationSelector(componentId)) {
-    return { kind: 'screen', screen: 'operation' };
   }
 
   return { kind: 'training' };

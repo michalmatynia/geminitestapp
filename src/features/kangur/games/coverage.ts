@@ -15,13 +15,11 @@ import { getKangurGameCatalogEntriesForLessonComponent } from './catalog';
 export type KangurGameLibraryLessonCoverageStatus =
   | 'launchable'
   | 'library_backed'
-  | 'selector_fallback'
   | 'lesson_only';
 
 export type KangurGameLibraryCoverageGroupId =
   | 'library_backed'
-  | 'launchable'
-  | 'selector_fallback';
+  | 'launchable';
 
 export type KangurGameLibraryCoverageGroup = {
   ageGroups: KangurLessonAgeGroup[];
@@ -97,25 +95,37 @@ export const KANGUR_GAME_LIBRARY_LESSON_COMPONENT_IDS = getUniqueLessonComponent
 );
 
 export const KANGUR_LAUNCHABLE_GAME_LIBRARY_LESSON_COMPONENT_IDS = [
-  'clock',
-  'calendar',
-  'multiplication',
-  'division',
-  'geometry_basics',
-  'geometry_shapes',
-  'geometry_symmetry',
-  'geometry_perimeter',
-  'logical_patterns',
-  'logical_classification',
-  'logical_analogies',
-  'english_sentence_structure',
-  'english_parts_of_speech',
-] as const satisfies readonly KangurLessonComponentId[];
-
-export const KANGUR_OPERATION_SELECTOR_FALLBACK_LESSON_COMPONENT_IDS = [
+  'adding',
+  'agentic_coding_codex_5_4_approvals',
+  'agentic_coding_codex_5_4_models',
+  'agentic_coding_codex_5_4_prompting',
+  'agentic_coding_codex_5_4_surfaces',
+  'alphabet_matching',
+  'alphabet_sequence',
+  'alphabet_words',
   'art_colors_harmony',
   'art_shapes_basic',
+  'calendar',
+  'clock',
+  'division',
+  'english_adjectives',
+  'english_adverbs_frequency',
+  'english_articles',
+  'english_parts_of_speech',
+  'english_prepositions_time_place',
+  'english_sentence_structure',
+  'english_subject_verb_agreement',
+  'geometry_basics',
+  'geometry_perimeter',
+  'geometry_shape_recognition',
+  'geometry_shapes',
+  'geometry_symmetry',
+  'logical_analogies',
+  'logical_classification',
+  'logical_patterns',
+  'multiplication',
   'music_diatonic_scale',
+  'subtracting',
 ] as const satisfies readonly KangurLessonComponentId[];
 
 const GAME_LIBRARY_COMPONENT_ID_SET = new Set<KangurLessonComponentId>(
@@ -124,10 +134,6 @@ const GAME_LIBRARY_COMPONENT_ID_SET = new Set<KangurLessonComponentId>(
 
 const LAUNCHABLE_GAME_LIBRARY_COMPONENT_ID_SET = new Set<KangurLessonComponentId>(
   KANGUR_LAUNCHABLE_GAME_LIBRARY_LESSON_COMPONENT_IDS
-);
-
-const OPERATION_SELECTOR_FALLBACK_COMPONENT_ID_SET = new Set<KangurLessonComponentId>(
-  KANGUR_OPERATION_SELECTOR_FALLBACK_LESSON_COMPONENT_IDS
 );
 
 export const isKangurGameLibraryLessonComponent = (
@@ -156,23 +162,11 @@ export const hasKangurLaunchableGameCoverageForLessonComponent = (
     Boolean(entry.launchableScreen)
   );
 
-export const shouldRouteKangurLessonComponentToOperationSelector = (
-  componentId: string | null | undefined
-): componentId is KangurLessonComponentId =>
-  Boolean(
-    componentId &&
-      OPERATION_SELECTOR_FALLBACK_COMPONENT_ID_SET.has(componentId as KangurLessonComponentId)
-  );
-
 export const resolveKangurGameLibraryLessonCoverageStatus = (
   componentId: KangurLessonComponentId
 ): KangurGameLibraryLessonCoverageStatus => {
   if (hasKangurLaunchableGameCoverageForLessonComponent(componentId)) {
     return 'launchable';
-  }
-
-  if (shouldRouteKangurLessonComponentToOperationSelector(componentId)) {
-    return 'selector_fallback';
   }
 
   if (
@@ -183,36 +177,6 @@ export const resolveKangurGameLibraryLessonCoverageStatus = (
   }
 
   return 'lesson_only';
-};
-
-const getKangurGameLibraryCoverageStatusPriority = (
-  status: KangurGameLibraryLessonCoverageStatus
-): number => {
-  switch (status) {
-    case 'launchable':
-      return 3;
-    case 'selector_fallback':
-      return 2;
-    case 'library_backed':
-      return 1;
-    case 'lesson_only':
-    default:
-      return 0;
-  }
-};
-
-const getKangurGameLibraryCoverageStatusForGroup = (
-  groupId: KangurGameLibraryCoverageGroupId
-): Exclude<KangurGameLibraryLessonCoverageStatus, 'lesson_only'> => {
-  switch (groupId) {
-    case 'launchable':
-      return 'launchable';
-    case 'selector_fallback':
-      return 'selector_fallback';
-    case 'library_backed':
-    default:
-      return 'library_backed';
-  }
 };
 
 const createKangurGameLibraryCoverageGroup = (
@@ -257,46 +221,33 @@ const createKangurGameLibraryCoverageGroup = (
 
 export const createKangurGameLibraryCoverageGroups = (
   catalogEntries: KangurGameCatalogEntry[]
-): KangurGameLibraryCoverageGroup[] => [
-  createKangurGameLibraryCoverageGroup(
-    'library_backed',
-    KANGUR_GAME_LIBRARY_LESSON_COMPONENT_IDS,
-    catalogEntries
-  ),
-  createKangurGameLibraryCoverageGroup(
-    'launchable',
-    KANGUR_LAUNCHABLE_GAME_LIBRARY_LESSON_COMPONENT_IDS,
-    catalogEntries
-  ),
-  createKangurGameLibraryCoverageGroup(
-    'selector_fallback',
-    KANGUR_OPERATION_SELECTOR_FALLBACK_LESSON_COMPONENT_IDS,
-    catalogEntries
-  ),
-];
+): KangurGameLibraryCoverageGroup[] =>
+  [
+    createKangurGameLibraryCoverageGroup(
+      'library_backed',
+      KANGUR_GAME_LIBRARY_LESSON_COMPONENT_IDS,
+      catalogEntries
+    ),
+    createKangurGameLibraryCoverageGroup(
+      'launchable',
+      KANGUR_LAUNCHABLE_GAME_LIBRARY_LESSON_COMPONENT_IDS,
+      catalogEntries
+    ),
+  ].filter((group) => group.componentIds.length > 0);
 
 export const createKangurGameLibraryCoverageStatusMap = (
   groups: readonly KangurGameLibraryCoverageGroup[]
 ): KangurGameLibraryCoverageStatusMap => {
-  const statusMap = new Map<KangurLessonComponentId, KangurGameLibraryLessonCoverageStatus>();
+  const componentIds = Array.from(
+    new Set(groups.flatMap((group) => group.componentIds))
+  );
 
-  groups.forEach((group) => {
-    const status = getKangurGameLibraryCoverageStatusForGroup(group.id);
-
-    group.coveredComponentIds.forEach((componentId) => {
-      const currentStatus = statusMap.get(componentId);
-
-      if (
-        !currentStatus ||
-        getKangurGameLibraryCoverageStatusPriority(status) >
-          getKangurGameLibraryCoverageStatusPriority(currentStatus)
-      ) {
-        statusMap.set(componentId, status);
-      }
-    });
-  });
-
-  return Object.fromEntries(statusMap) as KangurGameLibraryCoverageStatusMap;
+  return Object.fromEntries(
+    componentIds.map((componentId) => [
+      componentId,
+      resolveKangurGameLibraryLessonCoverageStatus(componentId),
+    ])
+  ) as KangurGameLibraryCoverageStatusMap;
 };
 
 export const getKangurGameLibraryLessonCoverageStatusFromMap = (

@@ -151,6 +151,29 @@ vi.mock('@/features/kangur/ui/components/MultiplicationArrayGame', () => ({
   default: () => <div>Mock Multiplication Array Game</div>,
 }));
 
+vi.mock('@/features/kangur/ui/components/KangurLaunchableGameInstanceRuntime', () => ({
+  KangurLaunchableGameInstanceRuntime: ({ gameId }: { gameId: string }) => {
+    const labels: Record<string, string> = {
+      adding_ball: 'Mock Adding Ball Game',
+      division_groups: 'Mock Division Groups Game',
+      multiplication_array: 'Mock Multiplication Array Game',
+      subtracting_garden: 'Mock Subtracting Garden Game',
+    };
+
+    return <div>{labels[gameId] ?? `Mock ${gameId}`}</div>;
+  },
+  default: ({ gameId }: { gameId: string }) => {
+    const labels: Record<string, string> = {
+      adding_ball: 'Mock Adding Ball Game',
+      division_groups: 'Mock Division Groups Game',
+      multiplication_array: 'Mock Multiplication Array Game',
+      subtracting_garden: 'Mock Subtracting Garden Game',
+    };
+
+    return <div>{labels[gameId] ?? `Mock ${gameId}`}</div>;
+  },
+}));
+
 import AddingLesson from '@/features/kangur/ui/components/AddingLesson';
 import DivisionLesson from '@/features/kangur/ui/components/DivisionLesson';
 import MultiplicationLesson from '@/features/kangur/ui/components/MultiplicationLesson';

@@ -393,7 +393,7 @@ describe('KangurFeatureApp', () => {
 
     expect(requestIdleCallbackMock).toHaveBeenCalledTimes(1);
     expect(requestIdleCallbackMock).toHaveBeenCalledWith(expect.any(Function), {
-      timeout: 1500,
+      timeout: 250,
     });
     expect(preloadKangurPageMock).not.toHaveBeenCalled();
 

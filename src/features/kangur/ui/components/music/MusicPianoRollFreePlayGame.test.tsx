@@ -80,6 +80,7 @@ vi.mock('@/features/kangur/ui/components/music/useKangurMusicSynth', async (impo
 });
 
 describe('MusicPianoRollFreePlayGame', () => {
+  let freePlayTestIds: typeof import('@/features/kangur/ui/components/music/MusicPianoRollFreePlayGame').MUSIC_PIANO_ROLL_FREE_PLAY_TEST_IDS;
   let pianoRollModule: typeof import('@/features/kangur/ui/components/music/KangurMusicPianoRoll');
   let MusicPianoRollFreePlayGame: typeof import('@/features/kangur/ui/components/music/MusicPianoRollFreePlayGame').default;
 
@@ -89,9 +90,11 @@ describe('MusicPianoRollFreePlayGame', () => {
     useKangurCoarsePointerMock.mockReturnValue(false);
     useKangurMobileBreakpointMock.mockReturnValue(false);
     pianoRollModule = await import('@/features/kangur/ui/components/music/KangurMusicPianoRoll');
-    MusicPianoRollFreePlayGame = (
-      await import('@/features/kangur/ui/components/music/MusicPianoRollFreePlayGame')
-    ).default;
+    const freePlayModule = await import(
+      '@/features/kangur/ui/components/music/MusicPianoRollFreePlayGame'
+    );
+    MusicPianoRollFreePlayGame = freePlayModule.default;
+    freePlayTestIds = freePlayModule.MUSIC_PIANO_ROLL_FREE_PLAY_TEST_IDS;
   });
 
   it('renders a free-play piano roll stage and lets the learner leave', () => {
@@ -99,18 +102,20 @@ describe('MusicPianoRollFreePlayGame', () => {
 
     render(<MusicPianoRollFreePlayGame onFinish={onFinish} />);
 
-    expect(screen.getByTestId('music-piano-roll-freeplay-game')).toBeInTheDocument();
-    expect(screen.getByTestId('music-piano-roll-freeplay-shell')).toBeInTheDocument();
-    expect(screen.getByTestId('music-piano-roll-freeplay-key-do')).toHaveClass(
+    expect(screen.getByTestId(freePlayTestIds.root)).toBeInTheDocument();
+    expect(screen.getByTestId(freePlayTestIds.pianoRoll.shell)).toBeInTheDocument();
+    expect(
+      screen.getByTestId(`${freePlayTestIds.pianoRoll.keyPrefix}-do`)
+    ).toHaveClass(
       pianoRollModule.KANGUR_MUSIC_PIANO_ROLL_MOTION_HOOKS.keyClassName
     );
     expect(
-      screen.getByTestId('music-piano-roll-freeplay-step-transport-freeplay')
+      screen.getByTestId(`${freePlayTestIds.pianoRoll.stepPrefix}-transport-freeplay`)
     ).toHaveTextContent('Swobodna gra');
-    expect(screen.getByTestId('music-piano-roll-freeplay-mode')).toHaveTextContent('Tryb: piano');
-    expect(screen.getByTestId('music-piano-roll-freeplay-audio')).toHaveTextContent('Audio: gotowe');
+    expect(screen.getByTestId(freePlayTestIds.modeStatus)).toHaveTextContent('Tryb: piano');
+    expect(screen.getByTestId(freePlayTestIds.audioStatus)).toHaveTextContent('Audio: gotowe');
 
-    fireEvent.click(screen.getByTestId('music-piano-roll-freeplay-finish'));
+    fireEvent.click(screen.getByTestId(freePlayTestIds.finishButton));
 
     expect(stopMock).toHaveBeenCalled();
     expect(stopAllSustainedNotesMock).toHaveBeenCalledWith({ immediate: true });
@@ -120,17 +125,21 @@ describe('MusicPianoRollFreePlayGame', () => {
   it('keeps ADSR settings in parent state for the synth piano roll', () => {
     render(<MusicPianoRollFreePlayGame onFinish={vi.fn()} />);
 
-    fireEvent.click(screen.getByTestId('music-piano-roll-freeplay-step-keyboard-mode-synth'));
-    expect(screen.getByTestId('music-piano-roll-freeplay-shell')).toHaveClass(
+    fireEvent.click(
+      screen.getByTestId(`${freePlayTestIds.pianoRoll.stepPrefix}-keyboard-mode-synth`)
+    );
+    expect(screen.getByTestId(freePlayTestIds.pianoRoll.shell)).toHaveClass(
       pianoRollModule.KANGUR_MUSIC_PIANO_ROLL_MOTION_HOOKS.engineClassName
     );
     expect(
-      screen.getByTestId('music-piano-roll-freeplay-step-synth-envelope-button')
+      screen.getByTestId(`${freePlayTestIds.pianoRoll.stepPrefix}-synth-envelope-button`)
     ).toHaveClass(pianoRollModule.KANGUR_MUSIC_PIANO_ROLL_MOTION_HOOKS.synthControlButtonClassName);
-    fireEvent.click(screen.getByTestId('music-piano-roll-freeplay-step-synth-envelope-button'));
+    fireEvent.click(
+      screen.getByTestId(`${freePlayTestIds.pianoRoll.stepPrefix}-synth-envelope-button`)
+    );
 
     const releaseInput = screen.getByTestId(
-      'music-piano-roll-freeplay-step-synth-envelope-release'
+      `${freePlayTestIds.pianoRoll.stepPrefix}-synth-envelope-release`
     ) as HTMLInputElement;
     expect(releaseInput.value).toBe('90');
 
@@ -138,104 +147,114 @@ describe('MusicPianoRollFreePlayGame', () => {
 
     expect(releaseInput.value).toBe('640');
     expect(
-      screen.getByTestId('music-piano-roll-freeplay-step-synth-envelope-release-value')
+      screen.getByTestId(`${freePlayTestIds.pianoRoll.stepPrefix}-synth-envelope-release-value`)
     ).toHaveTextContent('640 ms');
   });
 
   it('opens synth OSC settings panel and shows OSC 1 controls', () => {
     render(<MusicPianoRollFreePlayGame onFinish={vi.fn()} />);
 
-    fireEvent.click(screen.getByTestId('music-piano-roll-freeplay-step-keyboard-mode-synth'));
-    expect(screen.getByTestId('music-piano-roll-freeplay-shell')).toHaveClass(
+    fireEvent.click(
+      screen.getByTestId(`${freePlayTestIds.pianoRoll.stepPrefix}-keyboard-mode-synth`)
+    );
+    expect(screen.getByTestId(freePlayTestIds.pianoRoll.shell)).toHaveClass(
       pianoRollModule.KANGUR_MUSIC_PIANO_ROLL_MOTION_HOOKS.engineClassName
     );
     expect(
-      screen.getByTestId('music-piano-roll-freeplay-step-synth-osc-settings-button')
+      screen.getByTestId(`${freePlayTestIds.pianoRoll.stepPrefix}-synth-osc-settings-button`)
     ).toHaveClass(pianoRollModule.KANGUR_MUSIC_PIANO_ROLL_MOTION_HOOKS.synthControlButtonClassName);
     fireEvent.click(
-      screen.getByTestId('music-piano-roll-freeplay-step-synth-osc-settings-button')
+      screen.getByTestId(`${freePlayTestIds.pianoRoll.stepPrefix}-synth-osc-settings-button`)
     );
 
     expect(
-      screen.getByTestId('music-piano-roll-freeplay-step-synth-osc-panel')
+      screen.getByTestId(`${freePlayTestIds.pianoRoll.stepPrefix}-synth-osc-panel`)
     ).toBeInTheDocument();
     expect(
-      screen.getByTestId('music-piano-roll-freeplay-step-synth-osc1-panel')
+      screen.getByTestId(`${freePlayTestIds.pianoRoll.stepPrefix}-synth-osc1-panel`)
     ).toBeInTheDocument();
     expect(
-      screen.getByTestId('music-piano-roll-freeplay-step-synth-osc-tab-osc1')
+      screen.getByTestId(`${freePlayTestIds.pianoRoll.stepPrefix}-synth-osc-tab-osc1`)
     ).toHaveClass(pianoRollModule.KANGUR_MUSIC_PIANO_ROLL_MOTION_HOOKS.synthControlButtonClassName);
     expect(
-      screen.getByTestId('music-piano-roll-freeplay-step-synth-osc1-waveform-sine')
+      screen.getByTestId(`${freePlayTestIds.pianoRoll.stepPrefix}-synth-osc1-waveform-sine`)
     ).toHaveClass(pianoRollModule.KANGUR_MUSIC_PIANO_ROLL_MOTION_HOOKS.synthControlButtonClassName);
 
     const volumeInput = screen.getByTestId(
-      'music-piano-roll-freeplay-step-synth-osc1-volume'
+      `${freePlayTestIds.pianoRoll.stepPrefix}-synth-osc1-volume`
     ) as HTMLInputElement;
     expect(volumeInput.value).toBe('100');
 
     fireEvent.change(volumeInput, { target: { value: '60' } });
 
     expect(
-      screen.getByTestId('music-piano-roll-freeplay-step-synth-osc1-volume-value')
+      screen.getByTestId(`${freePlayTestIds.pianoRoll.stepPrefix}-synth-osc1-volume-value`)
     ).toHaveTextContent('60%');
   });
 
   it('switches to OSC 2 tab and changes detune', () => {
     render(<MusicPianoRollFreePlayGame onFinish={vi.fn()} />);
 
-    fireEvent.click(screen.getByTestId('music-piano-roll-freeplay-step-keyboard-mode-synth'));
     fireEvent.click(
-      screen.getByTestId('music-piano-roll-freeplay-step-synth-osc-settings-button')
+      screen.getByTestId(`${freePlayTestIds.pianoRoll.stepPrefix}-keyboard-mode-synth`)
     );
-    fireEvent.click(screen.getByTestId('music-piano-roll-freeplay-step-synth-osc-tab-osc2'));
+    fireEvent.click(
+      screen.getByTestId(`${freePlayTestIds.pianoRoll.stepPrefix}-synth-osc-settings-button`)
+    );
+    fireEvent.click(
+      screen.getByTestId(`${freePlayTestIds.pianoRoll.stepPrefix}-synth-osc-tab-osc2`)
+    );
 
     expect(
-      screen.getByTestId('music-piano-roll-freeplay-step-synth-osc2-panel')
+      screen.getByTestId(`${freePlayTestIds.pianoRoll.stepPrefix}-synth-osc2-panel`)
     ).toBeInTheDocument();
     expect(
-      screen.getByTestId('music-piano-roll-freeplay-step-synth-osc-tab-osc2')
+      screen.getByTestId(`${freePlayTestIds.pianoRoll.stepPrefix}-synth-osc-tab-osc2`)
     ).toHaveClass(pianoRollModule.KANGUR_MUSIC_PIANO_ROLL_MOTION_HOOKS.synthControlButtonClassName);
     expect(
-      screen.getByTestId('music-piano-roll-freeplay-step-synth-osc2-waveform-sine')
+      screen.getByTestId(`${freePlayTestIds.pianoRoll.stepPrefix}-synth-osc2-waveform-sine`)
     ).toHaveClass(pianoRollModule.KANGUR_MUSIC_PIANO_ROLL_MOTION_HOOKS.synthControlButtonClassName);
 
     const detuneInput = screen.getByTestId(
-      'music-piano-roll-freeplay-step-synth-osc2-detune'
+      `${freePlayTestIds.pianoRoll.stepPrefix}-synth-osc2-detune`
     ) as HTMLInputElement;
     expect(detuneInput.value).toBe('0');
     expect(
-      screen.getByTestId('music-piano-roll-freeplay-step-synth-osc2-detune-value')
+      screen.getByTestId(`${freePlayTestIds.pianoRoll.stepPrefix}-synth-osc2-detune-value`)
     ).toHaveTextContent('Auto');
 
     fireEvent.change(detuneInput, { target: { value: '12' } });
 
     expect(
-      screen.getByTestId('music-piano-roll-freeplay-step-synth-osc2-detune-value')
+      screen.getByTestId(`${freePlayTestIds.pianoRoll.stepPrefix}-synth-osc2-detune-value`)
     ).toHaveTextContent('+12c');
   });
 
   it('disabling OSC 2 hides waveform, blend, and detune controls', () => {
     render(<MusicPianoRollFreePlayGame onFinish={vi.fn()} />);
 
-    fireEvent.click(screen.getByTestId('music-piano-roll-freeplay-step-keyboard-mode-synth'));
     fireEvent.click(
-      screen.getByTestId('music-piano-roll-freeplay-step-synth-osc-settings-button')
+      screen.getByTestId(`${freePlayTestIds.pianoRoll.stepPrefix}-keyboard-mode-synth`)
     );
-    fireEvent.click(screen.getByTestId('music-piano-roll-freeplay-step-synth-osc-tab-osc2'));
+    fireEvent.click(
+      screen.getByTestId(`${freePlayTestIds.pianoRoll.stepPrefix}-synth-osc-settings-button`)
+    );
+    fireEvent.click(
+      screen.getByTestId(`${freePlayTestIds.pianoRoll.stepPrefix}-synth-osc-tab-osc2`)
+    );
 
     const enabledCheckbox = screen.getByTestId(
-      'music-piano-roll-freeplay-step-synth-osc2-enabled'
+      `${freePlayTestIds.pianoRoll.stepPrefix}-synth-osc2-enabled`
     ) as HTMLInputElement;
     expect(enabledCheckbox.checked).toBe(true);
 
     fireEvent.click(enabledCheckbox);
 
     expect(
-      screen.queryByTestId('music-piano-roll-freeplay-step-synth-osc2-blend')
+      screen.queryByTestId(`${freePlayTestIds.pianoRoll.stepPrefix}-synth-osc2-blend`)
     ).not.toBeInTheDocument();
     expect(
-      screen.queryByTestId('music-piano-roll-freeplay-step-synth-osc2-detune')
+      screen.queryByTestId(`${freePlayTestIds.pianoRoll.stepPrefix}-synth-osc2-detune`)
     ).not.toBeInTheDocument();
   });
 });

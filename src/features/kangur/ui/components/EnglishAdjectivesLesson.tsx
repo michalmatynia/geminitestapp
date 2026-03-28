@@ -3,7 +3,7 @@
 import { useTranslations } from 'next-intl';
 import { useMemo } from 'react';
 
-import { getKangurLessonStageGameRuntimeSpec } from '@/features/kangur/games/lesson-stage-runtime-specs';
+import { getKangurBuiltInGameInstanceId } from '@/features/kangur/games';
 import type { LessonSlide } from '@/features/kangur/ui/components/LessonSlideSection';
 import {
   EnglishAdjectiveOrderAnimation,
@@ -27,8 +27,8 @@ import { KangurUnifiedLesson } from '@/features/kangur/ui/lessons/lesson-compone
 import type { KangurIntlTranslate } from '@/features/kangur/ui/types';
 
 const LESSON_KEY = 'english_adjectives';
-const ENGLISH_ADJECTIVES_SCENE_RUNTIME = getKangurLessonStageGameRuntimeSpec(
-  'english_adjectives_scene_lesson_stage'
+const ENGLISH_ADJECTIVES_SCENE_INSTANCE_ID = getKangurBuiltInGameInstanceId(
+  'english_adjectives_scene'
 );
 
 type SectionId =
@@ -392,7 +392,10 @@ export default function EnglishAdjectivesLesson(): React.JSX.Element {
             maxWidthClassName: 'max-w-4xl',
             shellTestId: 'english-adjectives-scene-game-shell',
           },
-          runtime: ENGLISH_ADJECTIVES_SCENE_RUNTIME,
+          launchableInstance: {
+            gameId: 'english_adjectives_scene',
+            instanceId: ENGLISH_ADJECTIVES_SCENE_INSTANCE_ID,
+          },
         },
       ]}
     />

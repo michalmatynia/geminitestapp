@@ -3,7 +3,7 @@
 import { useTranslations } from 'next-intl';
 import { useMemo } from 'react';
 
-import { getKangurLessonStageGameRuntimeSpec } from '@/features/kangur/games/lesson-stage-runtime-specs';
+import { getKangurBuiltInGameInstanceId } from '@/features/kangur/games';
 import type { LessonSlide } from '@/features/kangur/ui/components/LessonSlideSection';
 import {
   EnglishPrepositionsPlaceAnimation,
@@ -28,14 +28,14 @@ import { KangurUnifiedLesson } from '@/features/kangur/ui/lessons/lesson-compone
 import type { KangurIntlTranslate } from '@/features/kangur/ui/types';
 
 const LESSON_KEY = 'english_prepositions_time_place';
-const ENGLISH_PREPOSITIONS_RUNTIME = getKangurLessonStageGameRuntimeSpec(
-  'english_prepositions_lesson_stage'
+const ENGLISH_PREPOSITIONS_INSTANCE_ID = getKangurBuiltInGameInstanceId(
+  'english_prepositions_time_place'
 );
-const ENGLISH_PREPOSITIONS_SORT_RUNTIME = getKangurLessonStageGameRuntimeSpec(
-  'english_prepositions_sort_lesson_stage'
+const ENGLISH_PREPOSITIONS_SORT_INSTANCE_ID = getKangurBuiltInGameInstanceId(
+  'english_prepositions_sort'
 );
-const ENGLISH_PREPOSITIONS_ORDER_RUNTIME = getKangurLessonStageGameRuntimeSpec(
-  'english_prepositions_order_lesson_stage'
+const ENGLISH_PREPOSITIONS_ORDER_INSTANCE_ID = getKangurBuiltInGameInstanceId(
+  'english_prepositions_order'
 );
 
 type SectionId =
@@ -484,7 +484,10 @@ export default function EnglishPrepositionsLesson(): React.JSX.Element {
             description: sectionDescriptions.game_prepositions,
             shellTestId: 'english-prepositions-game-shell',
           },
-          runtime: ENGLISH_PREPOSITIONS_RUNTIME,
+          launchableInstance: {
+            gameId: 'english_prepositions_time_place',
+            instanceId: ENGLISH_PREPOSITIONS_INSTANCE_ID,
+          },
         },
         {
           sectionId: 'game_prepositions_sort',
@@ -496,7 +499,10 @@ export default function EnglishPrepositionsLesson(): React.JSX.Element {
             maxWidthClassName: 'max-w-3xl',
             shellTestId: 'english-prepositions-sort-game-shell',
           },
-          runtime: ENGLISH_PREPOSITIONS_SORT_RUNTIME,
+          launchableInstance: {
+            gameId: 'english_prepositions_sort',
+            instanceId: ENGLISH_PREPOSITIONS_SORT_INSTANCE_ID,
+          },
         },
         {
           sectionId: 'game_prepositions_order',
@@ -508,7 +514,10 @@ export default function EnglishPrepositionsLesson(): React.JSX.Element {
             maxWidthClassName: 'max-w-3xl',
             shellTestId: 'english-prepositions-order-game-shell',
           },
-          runtime: ENGLISH_PREPOSITIONS_ORDER_RUNTIME,
+          launchableInstance: {
+            gameId: 'english_prepositions_order',
+            instanceId: ENGLISH_PREPOSITIONS_ORDER_INSTANCE_ID,
+          },
         },
       ]}
     />

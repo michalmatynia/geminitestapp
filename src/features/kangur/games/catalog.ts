@@ -13,14 +13,11 @@ import type {
   KangurGameVariantSurface,
   KangurLaunchableGameRuntimeSpec,
   KangurLaunchableGameScreen,
-  KangurLessonStageGameRuntimeId,
-  KangurLessonStageGameRuntimeSpec,
 } from '@/shared/contracts/kangur-games';
 import {
   KANGUR_LAUNCHABLE_GAME_SCREENS,
   KANGUR_GAME_ENGINE_CATEGORIES,
   KANGUR_GAME_ENGINE_IMPLEMENTATION_OWNERSHIPS,
-  KANGUR_LESSON_STAGE_GAME_RUNTIME_IDS,
 } from '@/shared/contracts/kangur-games';
 import type {
   KangurLessonAgeGroup,
@@ -35,7 +32,6 @@ import { getOptionalKangurGameEngineImplementation } from './engine-implementati
 import { createDefaultKangurGames } from './defaults';
 import { getKangurLaunchableGameRuntimeSpec } from './launchable-runtime-specs';
 import { getKangurLessonActivityRuntimeSpec } from './lesson-activity-runtime-specs';
-import { getKangurLessonStageGameRuntimeSpec } from './lesson-stage-runtime-specs';
 
 export { KANGUR_LAUNCHABLE_GAME_SCREENS };
 export type { KangurLaunchableGameScreen };
@@ -70,7 +66,6 @@ export type KangurGameCatalogEntry = {
   defaultVariant: KangurGameVariant | null;
   lessonVariant: KangurGameVariant | null;
   lessonActivityRuntime: KangurLessonActivityRuntimeSpec | null;
-  lessonStageRuntime: KangurLessonStageGameRuntimeSpec | null;
   libraryPreviewVariant: KangurGameVariant | null;
   gameScreenVariant: KangurGameVariant | null;
   launchableScreen: KangurLaunchableGameScreen | null;
@@ -181,20 +176,14 @@ const getGameVariantBySurface = (
 ): KangurGameVariant | null =>
   getSortedVariants(game).find((variant) => variant.surface === surface) ?? null;
 
+const getPreferredLessonVariant = (
+  game: KangurGameDefinition
+): KangurGameVariant | null => getGameVariantBySurface(game, 'lesson_inline');
+
 const isKangurLessonActivityId = (
   value: string | null | undefined
 ): value is KangurLessonActivityId =>
   Boolean(value && KANGUR_LESSON_ACTIVITY_IDS.includes(value as KangurLessonActivityId));
-
-const isKangurLessonStageGameRuntimeId = (
-  value: string | null | undefined
-): value is KangurLessonStageGameRuntimeId =>
-  Boolean(
-    value &&
-      KANGUR_LESSON_STAGE_GAME_RUNTIME_IDS.includes(
-        value as KangurLessonStageGameRuntimeId
-      )
-  );
 
 const getKangurLessonActivityRuntimeIdFromVariant = (
   variant: Pick<KangurGameVariant, 'lessonActivityRuntimeId' | 'legacyActivityId'> | null | undefined
@@ -209,13 +198,6 @@ const getKangurLessonActivityRuntimeIdFromVariant = (
 
   return null;
 };
-
-const getKangurLessonStageRuntimeIdFromVariant = (
-  variant: Pick<KangurGameVariant, 'lessonStageRuntimeId'> | null | undefined
-): KangurLessonStageGameRuntimeId | null =>
-  variant?.lessonStageRuntimeId && isKangurLessonStageGameRuntimeId(variant.lessonStageRuntimeId)
-    ? variant.lessonStageRuntimeId
-    : null;
 
 const getKangurLaunchableRuntimeIdFromVariant = (
   variant: Pick<KangurGameVariant, 'launchableRuntimeId' | 'legacyScreenId'> | null | undefined
@@ -257,19 +239,10 @@ export const getKangurLessonActivityRuntimeSpecForVariant = (
   return runtimeId ? getKangurLessonActivityRuntimeSpec(runtimeId) : null;
 };
 
-export const getKangurLessonStageGameRuntimeSpecForVariant = (
-  variant: KangurGameVariant
-): KangurLessonStageGameRuntimeSpec | null => {
-  const runtimeId = getKangurLessonStageRuntimeIdFromVariant(variant);
-
-  return runtimeId ? getKangurLessonStageGameRuntimeSpec(runtimeId) : null;
-};
-
 export const getKangurLessonActivityRuntimeSpecForGame = (
   game: KangurGameDefinition
 ): KangurLessonActivityRuntimeSpec | null => {
-  const lessonVariant =
-    getGameVariantBySurface(game, 'lesson_inline') ?? getGameVariantBySurface(game, 'lesson_stage');
+  const lessonVariant = getPreferredLessonVariant(game);
 
   if (lessonVariant) {
     return getKangurLessonActivityRuntimeSpecForVariant(lessonVariant);
@@ -278,14 +251,6 @@ export const getKangurLessonActivityRuntimeSpecForGame = (
   const fallbackRuntimeId = game.activityIds.find(isKangurLessonActivityId) ?? null;
 
   return fallbackRuntimeId ? getKangurLessonActivityRuntimeSpec(fallbackRuntimeId) : null;
-};
-
-export const getKangurLessonStageGameRuntimeSpecForGame = (
-  game: KangurGameDefinition
-): KangurLessonStageGameRuntimeSpec | null => {
-  const lessonStageVariant = getGameVariantBySurface(game, 'lesson_stage');
-
-  return lessonStageVariant ? getKangurLessonStageGameRuntimeSpecForVariant(lessonStageVariant) : null;
 };
 
 export const getKangurLaunchableGameRuntimeSpecForGame = (
@@ -311,10 +276,8 @@ const createKangurGameCatalogEntry = (
   engine: KangurGameEngineDefinition | null
 ): KangurGameCatalogEntry => {
   const defaultVariant = getSortedVariants(game)[0] ?? null;
-  const lessonVariant =
-    getGameVariantBySurface(game, 'lesson_inline') ?? getGameVariantBySurface(game, 'lesson_stage');
+  const lessonVariant = getPreferredLessonVariant(game);
   const lessonActivityRuntime = getKangurLessonActivityRuntimeSpecForGame(game);
-  const lessonStageRuntime = getKangurLessonStageGameRuntimeSpecForGame(game);
   const libraryPreviewVariant = getGameVariantBySurface(game, 'library_preview');
   const gameScreenVariant = getGameVariantBySurface(game, 'game_screen');
   const launchableRuntime = getKangurLaunchableGameRuntimeSpecForGame(game);
@@ -325,7 +288,6 @@ const createKangurGameCatalogEntry = (
     defaultVariant,
     lessonVariant,
     lessonActivityRuntime,
-    lessonStageRuntime,
     libraryPreviewVariant,
     gameScreenVariant,
     launchableScreen: launchableRuntime?.screen ?? null,

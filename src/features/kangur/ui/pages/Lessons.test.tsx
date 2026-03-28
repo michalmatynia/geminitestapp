@@ -275,8 +275,8 @@ vi.mock('@/features/kangur/ui/components/KangurStandardPageLayout', () => ({
   },
 }));
 
-vi.mock('@/features/kangur/ui/components/LazyKangurTopNavigationController', () => ({
-  LazyKangurTopNavigationController: ({ navigation }: { navigation: unknown }) => {
+vi.mock('@/features/kangur/ui/components/KangurTopNavigationController', () => ({
+  KangurTopNavigationController: ({ navigation }: { navigation: unknown }) => {
     topNavigationPropsMock(navigation);
     return <div data-testid='mock-top-nav' />;
   },
@@ -540,22 +540,40 @@ describe('Lessons page subject filtering', () => {
     vi.useFakeTimers();
     localeState.value = 'pl';
     focusTokenState.value = null;
-    if (!window.requestAnimationFrame) {
-      Object.defineProperty(window, 'requestAnimationFrame', {
-        value: (callback: FrameRequestCallback) => window.setTimeout(() => callback(0), 0),
+    if (!window.requestIdleCallback) {
+      Object.defineProperty(window, 'requestIdleCallback', {
+        value: (
+          callback: IdleRequestCallback,
+          options?: IdleRequestOptions
+        ) =>
+          window.setTimeout(
+            () =>
+              callback({
+                didTimeout: true,
+                timeRemaining: () => 0,
+              }),
+            options?.timeout ?? 0
+          ),
         writable: true,
       });
     }
-    if (!window.cancelAnimationFrame) {
-      Object.defineProperty(window, 'cancelAnimationFrame', {
+    if (!window.cancelIdleCallback) {
+      Object.defineProperty(window, 'cancelIdleCallback', {
         value: (handle: number) => window.clearTimeout(handle),
         writable: true,
       });
     }
-    vi.spyOn(window, 'requestAnimationFrame').mockImplementation((callback) =>
-      window.setTimeout(() => callback(0), 0)
+    vi.spyOn(window, 'requestIdleCallback').mockImplementation((callback, options) =>
+      window.setTimeout(
+        () =>
+          callback({
+            didTimeout: true,
+            timeRemaining: () => 0,
+          }),
+        options?.timeout ?? 0
+      )
     );
-    vi.spyOn(window, 'cancelAnimationFrame').mockImplementation((handle) => {
+    vi.spyOn(window, 'cancelIdleCallback').mockImplementation((handle) => {
       window.clearTimeout(handle);
     });
     lessonsState.value = lessonsFixture;
@@ -700,22 +718,15 @@ describe('Lessons page subject filtering', () => {
     routeTransitionStateState.value = {
       transitionPhase: 'waiting_for_ready',
       activeTransitionKind: 'navigation',
+      activeTransitionPageKey: 'Lessons',
       activeTransitionSkeletonVariant: 'lessons-library',
     };
     lessonsLoadingState.value = true;
     lessonSectionsLoadingState.value = true;
 
-    const view = render(<Lessons />);
-
-    expect(useKangurRoutePageReadyMock).toHaveBeenCalledWith(
-      expect.objectContaining({
-        pageKey: 'Lessons',
-        ready: false,
-      })
-    );
-
+    let view!: ReturnType<typeof render>;
     act(() => {
-      vi.runAllTimers();
+      view = render(<Lessons />);
     });
 
     expect(useKangurRoutePageReadyMock).toHaveBeenLastCalledWith(
@@ -733,6 +744,7 @@ describe('Lessons page subject filtering', () => {
     routeTransitionStateState.value = {
       transitionPhase: 'waiting_for_ready',
       activeTransitionKind: 'navigation',
+      activeTransitionPageKey: 'Lessons',
       activeTransitionSkeletonVariant: 'lessons-library',
     };
     lessonsLoadingState.value = true;
@@ -740,7 +752,9 @@ describe('Lessons page subject filtering', () => {
     lessonsRetainDataWhileLoadingState.value = true;
     lessonSectionsRetainDataWhileLoadingState.value = true;
 
-    render(<Lessons />);
+    act(() => {
+      render(<Lessons />);
+    });
 
     act(() => {
       vi.runAllTimers();
@@ -760,12 +774,16 @@ describe('Lessons page subject filtering', () => {
     routeTransitionStateState.value = {
       transitionPhase: 'waiting_for_ready',
       activeTransitionKind: 'navigation',
+      activeTransitionPageKey: 'Lessons',
       activeTransitionSkeletonVariant: 'lessons-library',
     };
     lessonsPlaceholderDataState.value = true;
     lessonSectionsPlaceholderDataState.value = true;
 
-    const view = render(<Lessons />);
+    let view!: ReturnType<typeof render>;
+    act(() => {
+      view = render(<Lessons />);
+    });
 
     act(() => {
       vi.runAllTimers();
@@ -803,9 +821,13 @@ describe('Lessons page subject filtering', () => {
     routeTransitionStateState.value = {
       transitionPhase: 'waiting_for_ready',
       activeTransitionKind: 'navigation',
+      activeTransitionPageKey: 'Lessons',
       activeTransitionSkeletonVariant: 'lessons-focus',
     };
-    const view = render(<Lessons />);
+    let view!: ReturnType<typeof render>;
+    act(() => {
+      view = render(<Lessons />);
+    });
 
     expect(useKangurRoutePageReadyMock).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -834,20 +856,19 @@ describe('Lessons page subject filtering', () => {
     );
   });
 
-  it('keeps the lessons list slot mounted and shows the skeleton before deferred content resolves', () => {
-    vi.mocked(window.requestAnimationFrame).mockImplementation(() => 0);
-    vi.mocked(window.cancelAnimationFrame).mockImplementation(() => undefined);
+  it('keeps the lessons list slot mounted without blocking on deferred content', () => {
+    vi.mocked(window.requestIdleCallback).mockImplementation(() => 0);
+    vi.mocked(window.cancelIdleCallback).mockImplementation(() => undefined);
 
-    render(<Lessons />);
+    act(() => {
+      render(<Lessons />);
+    });
 
-    expect(screen.getByTestId('lessons-intro-loading-state')).toBeInTheDocument();
     expect(screen.getByTestId('lessons-list-transition')).toBeInTheDocument();
-    expect(screen.getByTestId('lessons-catalog-skeleton')).toBeInTheDocument();
     expect(screen.getByText('Wybierz lekcje i zacznij nauke.')).toBeInTheDocument();
-    expect(screen.getByText('Ładowanie lekcji')).toBeInTheDocument();
-    expect(
-      screen.getByText('Przygotowujemy bibliotekę lekcji i dopasowujemy ją do wybranego tematu.')
-    ).toBeInTheDocument();
+    expect(screen.queryByTestId('lessons-intro-loading-state')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('lessons-catalog-skeleton')).not.toBeInTheDocument();
+    expect(screen.getByTestId('lesson-card-lesson-english')).toBeInTheDocument();
   });
 
   it('shows a lesson-section skeleton while the catalog data is loading', () => {
@@ -973,6 +994,43 @@ describe('Lessons page subject filtering', () => {
         docsTooltipsEnabled: false,
       })
     );
+  });
+
+  it('keeps deferred lessons enhancements off the library route until the transition is idle', () => {
+    routeTransitionStateState.value = {
+      transitionPhase: 'waiting_for_ready',
+      activeTransitionKind: 'navigation',
+      activeTransitionPageKey: 'Lessons',
+      activeTransitionSkeletonVariant: 'lessons-library',
+    };
+
+    const view = render(<Lessons />);
+
+    act(() => {
+      vi.runAllTimers();
+    });
+
+    expect(tutorSessionSyncPropsMock).not.toHaveBeenCalled();
+    expect(useKangurDocsTooltipsMock).not.toHaveBeenCalled();
+
+    routeTransitionStateState.value = {
+      transitionPhase: 'idle',
+    };
+
+    view.rerender(<Lessons />);
+
+    act(() => {
+      vi.runAllTimers();
+    });
+
+    expect(tutorSessionSyncPropsMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        sessionContext: expect.objectContaining({
+          contentId: 'lesson:list',
+        }),
+      })
+    );
+    expect(useKangurDocsTooltipsMock).toHaveBeenCalledWith('lessons');
   });
 
   it('defers the lessons wordmark until after the first deferred render turn', () => {

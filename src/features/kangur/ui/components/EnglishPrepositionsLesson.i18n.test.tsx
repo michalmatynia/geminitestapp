@@ -48,7 +48,7 @@ describe('EnglishPrepositionsLesson i18n', () => {
       (capturedProps?.games as Array<{
         sectionId: string;
         stage: Record<string, unknown>;
-        runtime?: { runtimeId?: string; rendererId?: string };
+        launchableInstance?: { gameId?: string; instanceId?: string };
       }>) ?? [];
 
     expect(
@@ -68,9 +68,11 @@ describe('EnglishPrepositionsLesson i18n', () => {
       title: 'Präpositionen-Sprint',
       description: 'Kurzes Auswahlspiel',
     });
-    expect(games.find((game) => game.sectionId === 'game_prepositions')?.runtime).toMatchObject({
-      runtimeId: 'english_prepositions_lesson_stage',
-      rendererId: 'english_prepositions_game',
+    expect(
+      games.find((game) => game.sectionId === 'game_prepositions')?.launchableInstance
+    ).toMatchObject({
+      gameId: 'english_prepositions_time_place',
+      instanceId: 'english_prepositions_time_place:instance:default',
     });
     expect(
       games.find((game) => game.sectionId === 'game_prepositions_order')?.stage
@@ -79,16 +81,16 @@ describe('EnglishPrepositionsLesson i18n', () => {
       description: 'Ordne Sätze mit Präpositionen',
     });
     expect(
-      games.find((game) => game.sectionId === 'game_prepositions_sort')?.runtime
+      games.find((game) => game.sectionId === 'game_prepositions_sort')?.launchableInstance
     ).toMatchObject({
-      runtimeId: 'english_prepositions_sort_lesson_stage',
-      rendererId: 'english_prepositions_sort_game',
+      gameId: 'english_prepositions_sort',
+      instanceId: 'english_prepositions_sort:instance:default',
     });
     expect(
-      games.find((game) => game.sectionId === 'game_prepositions_order')?.runtime
+      games.find((game) => game.sectionId === 'game_prepositions_order')?.launchableInstance
     ).toMatchObject({
-      runtimeId: 'english_prepositions_order_lesson_stage',
-      rendererId: 'english_prepositions_order_game',
+      gameId: 'english_prepositions_order',
+      instanceId: 'english_prepositions_order:instance:default',
     });
 
     const slides = (capturedProps?.slides as Record<string, CapturedSlide[]>) ?? {};

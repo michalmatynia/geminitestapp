@@ -26,10 +26,10 @@ describe('KangurGameOperationSelectorWidget.logic', () => {
     });
   });
 
-  it('keeps selector-only lessons routed to the operation screen', () => {
+  it('routes migrated shared-engine lessons to their launchable game screens', () => {
     expect(resolveLessonRecommendationTarget('art_shapes_basic', 65)).toEqual({
       kind: 'screen',
-      screen: 'operation',
+      screen: 'art_shape_rotation_quiz',
     });
   });
 

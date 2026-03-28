@@ -48,7 +48,7 @@ describe('GeometryShapesLesson i18n', () => {
       (capturedProps?.games as Array<{
         sectionId: string;
         stage: Record<string, unknown>;
-        runtime?: { runtimeId?: string; rendererId?: string; engineId?: string };
+        launchableInstance?: { gameId?: string; instanceId?: string };
         render?: unknown;
         onStageEnter?: unknown;
       }>) ?? [];
@@ -67,13 +67,12 @@ describe('GeometryShapesLesson i18n', () => {
     expect(game?.stage).toMatchObject({
       title: 'Formen zeichnen',
     });
-    expect(game?.runtime).toMatchObject({
-      runtimeId: 'geometry_shape_workshop_lesson_stage',
-      rendererId: 'geometry_drawing_game',
-      engineId: 'shape-drawing-engine',
+    expect(game?.launchableInstance).toMatchObject({
+      gameId: 'geometry_shape_workshop',
+      instanceId: 'geometry_shape_workshop:instance:default',
     });
-    expect(game).not.toHaveProperty('render');
     expect(game).toHaveProperty('onStageEnter');
+    expect(game).not.toHaveProperty('render');
 
     const slides = (capturedProps?.slides as Record<string, CapturedSlide[]>) ?? {};
 

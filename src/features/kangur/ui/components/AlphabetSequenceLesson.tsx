@@ -2,7 +2,7 @@
 
 import { useMemo } from 'react';
 
-import { getKangurLessonStageGameRuntimeSpec } from '@/features/kangur/games/lesson-stage-runtime-specs';
+import { getKangurBuiltInGameInstanceId } from '@/features/kangur/games';
 import type { LessonProps } from '@/features/kangur/lessons/lesson-ui-registry';
 import { useOptionalKangurLessonTemplate } from '@/features/kangur/ui/context/KangurLessonsRuntimeContext';
 import { KangurUnifiedLesson } from '../lessons/lesson-components';
@@ -16,10 +16,6 @@ import {
 } from './alphabet-unified-lesson-content';
 
 export { CONTENT };
-
-const ALPHABET_LETTER_ORDER_RUNTIME = getKangurLessonStageGameRuntimeSpec(
-  'alphabet_letter_order_lesson_stage'
-);
 
 export default function AlphabetSequenceLesson({ lessonTemplate }: LessonProps): JSX.Element {
   const runtimeTemplate = useOptionalKangurLessonTemplate('alphabet_sequence');
@@ -68,7 +64,10 @@ export default function AlphabetSequenceLesson({ lessonTemplate }: LessonProps):
               gameSection?.gameStageDescription ??
               'Uzupełnij brakujące litery w kolejności alfabetu.',
           },
-          runtime: ALPHABET_LETTER_ORDER_RUNTIME,
+          launchableInstance: {
+            gameId: 'alphabet_letter_order',
+            instanceId: getKangurBuiltInGameInstanceId('alphabet_letter_order'),
+          },
         },
       ]}
     />

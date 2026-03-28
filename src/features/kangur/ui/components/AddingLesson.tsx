@@ -1,8 +1,10 @@
 'use client';
 
-import { useMemo } from 'react';
+import React, { useMemo } from 'react';
 import { useTranslations } from 'next-intl';
 
+import { getKangurBuiltInGameInstanceId } from '@/features/kangur/games';
+import type { LessonProps } from '@/features/kangur/lessons/lesson-ui-registry';
 import type { LessonSlide } from '@/features/kangur/ui/components/LessonSlideSection';
 import {
   AddingAbacusAnimation,
@@ -37,19 +39,19 @@ import {
   KANGUR_CENTER_ROW_CLASSNAME,
   KANGUR_START_ROW_CLASSNAME,
 } from '@/features/kangur/ui/design/tokens';
-import { getKangurLessonStageGameRuntimeSpec } from '@/features/kangur/games/lesson-stage-runtime-specs';
+import { useOptionalKangurLessonTemplate } from '@/features/kangur/ui/context/KangurLessonsRuntimeContext';
 import { KangurUnifiedLesson } from '@/features/kangur/ui/lessons/lesson-components';
-import type { LessonTranslate, WidenLessonCopy } from './lesson-copy';
+import {
+  ADDING_LESSON_COMPONENT_CONTENT,
+  resolveAddingLessonContent,
+} from './adding-lesson-content';
+import type { KangurAddingLessonTemplateContent } from '@/shared/contracts/kangur-lesson-templates';
 
 type SectionId = 'podstawy' | 'przekroczenie' | 'dwucyfrowe' | 'zapamietaj' | 'synthesis' | 'game';
 type AddingSlideSectionId = Exclude<SectionId, 'game' | 'synthesis'>;
 
-const ADDING_BALL_LESSON_STAGE_RUNTIME = getKangurLessonStageGameRuntimeSpec(
-  'adding_ball_lesson_stage'
-);
-const ADDING_SYNTHESIS_LESSON_STAGE_RUNTIME = getKangurLessonStageGameRuntimeSpec(
-  'adding_synthesis_lesson_stage'
-);
+const ADDING_BALL_INSTANCE_ID = getKangurBuiltInGameInstanceId('adding_ball');
+const ADDING_SYNTHESIS_INSTANCE_ID = getKangurBuiltInGameInstanceId('adding_synthesis');
 
 const ADDING_LESSON_COPY_PL = {
   lessonTitle: 'Dodawanie',
@@ -1663,7 +1665,10 @@ export default function AddingLesson(): React.JSX.Element {
             shellTestId: 'adding-lesson-game-shell',
             title: copy.game.stageTitle,
           },
-          runtime: ADDING_BALL_LESSON_STAGE_RUNTIME,
+          launchableInstance: {
+            gameId: 'adding_ball',
+            instanceId: ADDING_BALL_INSTANCE_ID,
+          },
         },
         {
           sectionId: 'synthesis',
@@ -1676,7 +1681,10 @@ export default function AddingLesson(): React.JSX.Element {
             shellTestId: 'adding-lesson-synthesis-shell',
             title: copy.synthesis.stageTitle,
           },
-          runtime: ADDING_SYNTHESIS_LESSON_STAGE_RUNTIME,
+          launchableInstance: {
+            gameId: 'adding_synthesis',
+            instanceId: ADDING_SYNTHESIS_INSTANCE_ID,
+          },
         },
       ]}
     />

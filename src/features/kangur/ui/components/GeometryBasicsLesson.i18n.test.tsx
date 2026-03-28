@@ -6,6 +6,7 @@ import React from 'react';
 import { render, screen } from '@testing-library/react';
 import { NextIntlClientProvider } from 'next-intl';
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import { getKangurBuiltInGameInstanceId } from '@/features/kangur/games';
 
 vi.mock('next-intl', async () => await vi.importActual<typeof import('next-intl')>('next-intl'));
 vi.mock('use-intl', async () => await vi.importActual<typeof import('use-intl')>('use-intl'));
@@ -48,7 +49,7 @@ describe('GeometryBasicsLesson i18n', () => {
       (capturedProps?.games as Array<{
         sectionId: string;
         stage: Record<string, unknown>;
-        runtime?: { runtimeId?: string; rendererId?: string };
+        launchableInstance?: { gameId?: string; instanceId?: string };
       }>) ?? [];
 
     expect(sections.find((section) => section.id === 'punkt')).toMatchObject({
@@ -62,9 +63,9 @@ describe('GeometryBasicsLesson i18n', () => {
     expect(games.find((game) => game.sectionId === 'game')?.stage).toMatchObject({
       title: 'Geo-Mission',
     });
-    expect(games.find((game) => game.sectionId === 'game')?.runtime).toMatchObject({
-      runtimeId: 'geometry_basics_workshop_lesson_stage',
-      rendererId: 'geometry_basics_workshop_game',
+    expect(games.find((game) => game.sectionId === 'game')?.launchableInstance).toMatchObject({
+      gameId: 'geometry_shape_workshop',
+      instanceId: getKangurBuiltInGameInstanceId('geometry_shape_workshop'),
     });
 
     const slides = (capturedProps?.slides as Record<string, CapturedSlide[]>) ?? {};

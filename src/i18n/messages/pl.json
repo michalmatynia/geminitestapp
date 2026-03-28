@@ -1195,7 +1195,7 @@
       "cohortsLabel": "Kohorty",
       "subjectsLabel": "Przedmioty",
       "coveredLessonsLabel": "Pokryte lekcje",
-      "fallbackOnlyLessonsLabel": "Lekcje tylko z fallbackiem",
+      "uncoveredLessonsLabel": "Lekcje bez pokrycia",
       "groups": {
         "library_backed": {
           "eyebrow": "Wspolny katalog",
@@ -1206,11 +1206,6 @@
           "eyebrow": "Pelny ekran",
           "title": "Lekcje uruchamialne",
           "description": "Komponenty lekcji, ktore powinny zachowac bezposrednia trase do pelnoekranowej gry obok wspolnego wpisu katalogowego."
-        },
-        "selector_fallback": {
-          "eyebrow": "Hub selektora",
-          "title": "Lekcje tylko w selektorze",
-          "description": "Komponenty lekcji, ktore obecnie przechodza do selektora gry zalezneho od przedmiotu zamiast do osobnej gry pelnoekranowej."
         }
       }
     },
@@ -1610,7 +1605,7 @@
     },
     "variantSurfaces": {
       "lesson_inline": "W lekcji inline",
-      "lesson_stage": "Etap lekcji",
+      "lesson_stage": "Wariant lekcyjny",
       "library_preview": "Podglad biblioteki",
       "game_screen": "Ekran gry"
     },
@@ -1639,7 +1634,6 @@
     "lessonCoverageStatuses": {
       "launchable": "uruchamialna",
       "library_backed": "w bibliotece",
-      "selector_fallback": "fallback selektora",
       "lesson_only": "tylko lekcja"
     },
     "mechanics": {

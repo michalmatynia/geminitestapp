@@ -13,16 +13,21 @@ import type {
   KangurLessonTemplate,
   KangurMusicDiatonicScaleLessonTemplateContent,
 } from '@/shared/contracts/kangur-lesson-templates';
+import { KANGUR_MUSIC_DIATONIC_SCALE_COMPONENT_ID } from '@/features/kangur/games/music-piano-roll-contract';
 
 import KangurMusicPianoRoll from '@/features/kangur/ui/components/music/KangurMusicPianoRoll';
 import { DIATONIC_PIANO_KEYS } from '@/features/kangur/ui/components/music/music-theory';
 
+export const MUSIC_DIATONIC_SCALE_SECTION_IDS = {
+  freePlayGame: 'game_freeplay',
+  melody: 'melody',
+  notes: 'notes',
+  repeatGame: 'game_repeat',
+  summary: 'summary',
+} as const;
+
 export type MusicDiatonicScaleLessonSectionId =
-  | 'notes'
-  | 'melody'
-  | 'game_repeat'
-  | 'game_freeplay'
-  | 'summary';
+  (typeof MUSIC_DIATONIC_SCALE_SECTION_IDS)[keyof typeof MUSIC_DIATONIC_SCALE_SECTION_IDS];
 
 const PREVIEW_PIANO_ROLL = [
   { noteId: 'do', span: 2 },
@@ -34,6 +39,12 @@ const PREVIEW_PIANO_ROLL = [
   { noteId: 'si', span: 1 },
   { label: 'DO+', noteId: 'high_do', span: 3 },
 ] as const;
+
+export const MUSIC_DIATONIC_SCALE_PREVIEW_TEST_IDS = {
+  keyPrefix: 'music-diatonic-scale-preview-key',
+  shell: 'music-diatonic-scale-preview-roll',
+  stepPrefix: 'music-diatonic-scale-preview-step',
+} as const;
 
 export const buildMusicDiatonicScaleLessonSlides = (
   content: KangurMusicDiatonicScaleLessonTemplateContent,
@@ -80,9 +91,11 @@ export const buildMusicDiatonicScaleLessonSlides = (
             description={content.notesSection.colorsSlide.previewDescription}
             disabled
             interactive={false}
+            keyTestIdPrefix={MUSIC_DIATONIC_SCALE_PREVIEW_TEST_IDS.keyPrefix}
             keys={DIATONIC_PIANO_KEYS}
             melody={PREVIEW_PIANO_ROLL}
-            shellTestId='music-diatonic-scale-preview-roll'
+            shellTestId={MUSIC_DIATONIC_SCALE_PREVIEW_TEST_IDS.shell}
+            stepTestIdPrefix={MUSIC_DIATONIC_SCALE_PREVIEW_TEST_IDS.stepPrefix}
             title={content.notesSection.colorsSlide.previewTitle}
             visualCueMode='six_year_old'
           />
@@ -184,35 +197,35 @@ export const buildMusicDiatonicScaleLessonSections = (
   content: KangurMusicDiatonicScaleLessonTemplateContent,
 ): ReadonlyArray<KangurUnifiedLessonSection<MusicDiatonicScaleLessonSectionId>> => [
   {
-    id: 'notes',
+    id: MUSIC_DIATONIC_SCALE_SECTION_IDS.notes,
     emoji: content.notesSection.emoji,
     title: content.notesSection.title,
     description: content.notesSection.description,
     slideCount: 2,
   },
   {
-    id: 'melody',
+    id: MUSIC_DIATONIC_SCALE_SECTION_IDS.melody,
     emoji: content.melodySection.emoji,
     title: content.melodySection.title,
     description: content.melodySection.description,
     slideCount: 2,
   },
   {
-    id: 'game_repeat',
+    id: MUSIC_DIATONIC_SCALE_SECTION_IDS.repeatGame,
     emoji: content.gameRepeatSection.emoji,
     title: content.gameRepeatSection.title,
     description: content.gameRepeatSection.description,
     isGame: true,
   },
   {
-    id: 'game_freeplay',
+    id: MUSIC_DIATONIC_SCALE_SECTION_IDS.freePlayGame,
     emoji: content.gameFreeplaySection.emoji,
     title: content.gameFreeplaySection.title,
     description: content.gameFreeplaySection.description,
     isGame: true,
   },
   {
-    id: 'summary',
+    id: MUSIC_DIATONIC_SCALE_SECTION_IDS.summary,
     emoji: content.summarySection.emoji,
     title: content.summarySection.title,
     description: content.summarySection.description,
@@ -224,8 +237,14 @@ export const resolveMusicDiatonicScaleLessonContent = (
   template: KangurLessonTemplate | null | undefined,
   fallback: KangurMusicDiatonicScaleLessonTemplateContent,
 ): KangurMusicDiatonicScaleLessonTemplateContent => {
+  if (!template?.componentContent) {
+    return fallback;
+  }
+
   const resolved =
-    resolveKangurLessonTemplateComponentContent('music_diatonic_scale', template?.componentContent) ??
-    fallback;
-  return resolved.kind === 'music_diatonic_scale' ? resolved : fallback;
+    resolveKangurLessonTemplateComponentContent(
+      KANGUR_MUSIC_DIATONIC_SCALE_COMPONENT_ID,
+      template.componentContent
+    ) ?? fallback;
+  return resolved.kind === KANGUR_MUSIC_DIATONIC_SCALE_COMPONENT_ID ? resolved : fallback;
 };

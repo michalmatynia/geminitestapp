@@ -6,10 +6,15 @@ import { useTranslations } from 'next-intl';
 
 import type { ArtShapesBasicLessonTranslate } from '@/features/kangur/ui/components/ArtShapesBasicLesson.data';
 import {
+  createArtShapesBasicLessonTranslate,
+  resolveArtShapesBasicLessonContent,
+} from '@/features/kangur/ui/components/art-shapes-basic-lesson-content';
+import {
   KangurButton,
   KangurGlassPanel,
   KangurStatusChip,
 } from '@/features/kangur/ui/design/primitives';
+import { useOptionalKangurLessonTemplate } from '@/features/kangur/ui/context/KangurLessonsRuntimeContext';
 import { useKangurCoarsePointer } from '@/features/kangur/ui/hooks/useKangurCoarsePointer';
 
 import {
@@ -88,9 +93,18 @@ export function ArtShapesRotationGapGame({
   onFinish: () => void;
 }): React.JSX.Element {
   const translations = useTranslations('KangurStaticLessons.artShapesBasic');
-  const translate = useMemo<ArtShapesBasicLessonTranslate>(
+  const fallbackTranslate = useMemo<ArtShapesBasicLessonTranslate>(
     () => (key, values) => translations(key as never, values as never),
     [translations]
+  );
+  const runtimeTemplate = useOptionalKangurLessonTemplate('art_shapes_basic');
+  const resolvedContent = useMemo(
+    () => resolveArtShapesBasicLessonContent(runtimeTemplate, fallbackTranslate),
+    [fallbackTranslate, runtimeTemplate]
+  );
+  const translate = useMemo<ArtShapesBasicLessonTranslate>(
+    () => createArtShapesBasicLessonTranslate(resolvedContent),
+    [resolvedContent]
   );
   const isCoarsePointer = useKangurCoarsePointer();
   const prefersReducedMotion = useReducedMotion();

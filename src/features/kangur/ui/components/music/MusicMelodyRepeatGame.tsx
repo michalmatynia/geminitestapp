@@ -28,6 +28,10 @@ import {
   createLessonPracticeReward,
   loadProgress,
 } from '@/features/kangur/ui/services/progress';
+import {
+  KANGUR_MUSIC_DIATONIC_SCALE_COMPONENT_ID,
+  KANGUR_MUSIC_PIANO_ROLL_WRAPPER_TEST_IDS,
+} from '@/features/kangur/games/music-piano-roll-contract';
 import { scheduleKangurRoundFeedback } from '@/features/kangur/ui/services/round-transition';
 import { persistKangurSessionScore } from '@/features/kangur/ui/services/session-score';
 import type {
@@ -61,9 +65,12 @@ type MusicRoundFeedback = {
 };
 type MusicRoundOutcome = 'success' | 'error' | null;
 
-const LESSON_KEY = 'music_diatonic_scale';
+const LESSON_KEY = KANGUR_MUSIC_DIATONIC_SCALE_COMPONENT_ID;
 const TOTAL_ROUNDS = MUSIC_MELODY_REPEAT_ROUNDS.length;
 const PLAYBACK_DURATION_MS = 420;
+
+export const MUSIC_MELODY_REPEAT_TEST_IDS =
+  KANGUR_MUSIC_PIANO_ROLL_WRAPPER_TEST_IDS.repeat;
 
 const resolveExpectedNoteMessage = (noteId: DiatonicNoteId): string =>
   `Teraz dotknij dzwieku ${DIATONIC_PIANO_KEYS_BY_ID[noteId].spokenLabel}.`;
@@ -541,7 +548,7 @@ export default function MusicMelodyRepeatGame({
   }
 
   return (
-    <div className='w-full' data-testid='music-melody-repeat-stage'>
+    <div className='w-full' data-testid={MUSIC_MELODY_REPEAT_TEST_IDS.stage}>
       <div className='relative flex w-full flex-col gap-4 px-2 sm:gap-5 sm:px-3'>
         <div className='pointer-events-none absolute -right-12 top-0 h-40 w-40 rounded-full bg-sky-200/30 blur-3xl' />
         <div className='pointer-events-none absolute -left-14 bottom-0 h-36 w-36 rounded-full bg-violet-200/25 blur-3xl' />
@@ -681,7 +688,7 @@ export default function MusicMelodyRepeatGame({
             disabled={phase !== 'repeat' || isPlayingSequence}
             expectedStepIndex={phase === 'repeat' ? enteredNotes.length : null}
             interactive
-            keyTestIdPrefix='music-melody-repeat-key'
+            keyTestIdPrefix={MUSIC_MELODY_REPEAT_TEST_IDS.pianoRoll.keyPrefix}
             keyboardMode={keyboardMode}
             keys={DIATONIC_PIANO_KEYS}
             melody={round?.notes ?? []}
@@ -700,14 +707,14 @@ export default function MusicMelodyRepeatGame({
             onSynthWaveformChange={handleSynthWaveformChange}
             pressedNoteId={pressedNoteId}
             pressedVelocity={pressedVelocity}
-            shellTestId='music-melody-repeat-piano-roll'
+            shellTestId={MUSIC_MELODY_REPEAT_TEST_IDS.pianoRoll.shell}
             showSynthEnvelopeButton
             showKeyboardModeSwitch
             showSynthGlideModeSwitch
             showSynthWaveformSwitch
             synthEnvelope={synthEnvelope}
             synthGlideMode={synthGlideMode}
-            stepTestIdPrefix='music-melody-repeat-step'
+            stepTestIdPrefix={MUSIC_MELODY_REPEAT_TEST_IDS.pianoRoll.stepPrefix}
             synthWaveform={synthWaveform}
             visualCueMode='six_year_old'
           />

@@ -21,6 +21,7 @@ vi.mock('@/features/kangur/ui/lessons/lesson-components', () => ({
 
 import LogicalClassificationLesson from '@/features/kangur/ui/components/LogicalClassificationLesson';
 import deMessages from '@/i18n/messages/de.json';
+import { getKangurBuiltInGameInstanceId } from '@/features/kangur/games';
 
 type CapturedSlide = {
   title: string;
@@ -47,6 +48,7 @@ describe('LogicalClassificationLesson i18n', () => {
         sectionId: string;
         stage: Record<string, unknown>;
         runtime?: { runtimeId?: string; rendererId?: string };
+        launchableInstance?: { gameId?: string; instanceId?: string };
       }>) ?? [];
 
     expect(sections.find((section) => section.id === 'intro')).toMatchObject({
@@ -60,9 +62,9 @@ describe('LogicalClassificationLesson i18n', () => {
     expect(games.find((game) => game.sectionId === 'game')?.stage).toMatchObject({
       title: 'Klassifikationslabor',
     });
-    expect(games.find((game) => game.sectionId === 'game')?.runtime).toMatchObject({
-      runtimeId: 'logical_classification_lab_lesson_stage',
-      rendererId: 'logical_classification_game',
+    expect(games.find((game) => game.sectionId === 'game')?.launchableInstance).toMatchObject({
+      gameId: 'logical_classification_lab',
+      instanceId: getKangurBuiltInGameInstanceId('logical_classification_lab'),
     });
 
     const slides = (capturedProps?.slides as Record<string, CapturedSlide[]>) ?? {};

@@ -1,9 +1,10 @@
 'use client';
 
+import { useMemo } from 'react';
 import { useTranslations } from 'next-intl';
 
-import plMessages from '@/i18n/messages/pl.json';
-import { getKangurLessonStageGameRuntimeSpec } from '@/features/kangur/games/lesson-stage-runtime-specs';
+import { getKangurBuiltInGameInstanceId } from '@/features/kangur/games';
+import type { LessonProps } from '@/features/kangur/lessons/lesson-ui-registry';
 import type { LessonSlide } from '@/features/kangur/ui/components/LessonSlideSection';
 import {
   GeometryAngleAnimation,
@@ -21,25 +22,19 @@ import {
   KangurLessonLead,
   KangurLessonStack,
 } from '@/features/kangur/ui/design/lesson-primitives';
+import { useOptionalKangurLessonTemplate } from '@/features/kangur/ui/context/KangurLessonsRuntimeContext';
 import type { LessonTranslate } from '@/features/kangur/ui/components/lesson-copy';
 import { KangurUnifiedLesson } from '@/features/kangur/ui/lessons/lesson-components';
+import { GEOMETRY_BASICS_LESSON_COMPONENT_CONTENT as CONTENT } from '@/features/kangur/lessons/lesson-template-component-content';
+import {
+  createGeometryBasicsLessonTranslate,
+  resolveGeometryBasicsLessonContent,
+} from './geometry-basics-lesson-content';
 
 type SectionId = 'punkt' | 'bok' | 'kat' | 'podsumowanie' | 'game';
-const GEOMETRY_BASICS_WORKSHOP_RUNTIME = getKangurLessonStageGameRuntimeSpec(
-  'geometry_basics_workshop_lesson_stage'
+const GEOMETRY_BASICS_WORKSHOP_INSTANCE_ID = getKangurBuiltInGameInstanceId(
+  'geometry_shape_workshop'
 );
-
-const createStaticTranslator = (messages: Record<string, unknown>): LessonTranslate => (key) => {
-  const resolved = key.split('.').reduce<unknown>(
-    (current, segment) =>
-      typeof current === 'object' && current !== null
-        ? (current as Record<string, unknown>)[segment]
-        : undefined,
-    messages
-  );
-
-  return typeof resolved === 'string' ? resolved : key;
-};
 
 const buildGeometryBasicsSlides = (
   translations: LessonTranslate
@@ -314,25 +309,35 @@ const buildGeometryBasicsSections = (translations: LessonTranslate) => [
   },
 ] as const;
 
-const translateStaticGeometryBasics = createStaticTranslator(
-  plMessages.KangurStaticLessons.geometryBasics as Record<string, unknown>
-);
+const translateStaticGeometryBasics = createGeometryBasicsLessonTranslate(CONTENT);
 
 export const SLIDES = buildGeometryBasicsSlides(translateStaticGeometryBasics);
 export const HUB_SECTIONS = buildGeometryBasicsSections(translateStaticGeometryBasics);
+export { CONTENT };
 
-export default function GeometryBasicsLesson(): React.JSX.Element {
+export default function GeometryBasicsLesson({ lessonTemplate }: LessonProps): React.JSX.Element {
   const translations = useTranslations('KangurStaticLessons.geometryBasics');
-  const translate = (key: string): string => translations(key as never);
-  const sections = buildGeometryBasicsSections(translate);
-  const slides = buildGeometryBasicsSlides(translate);
+  const fallbackTranslate: LessonTranslate = (key: string): string => translations(key as never);
+  const runtimeTemplate = useOptionalKangurLessonTemplate('geometry_basics');
+  const resolvedTemplate = lessonTemplate ?? runtimeTemplate;
+  const resolvedContent = useMemo(
+    () => resolveGeometryBasicsLessonContent(resolvedTemplate, fallbackTranslate),
+    [fallbackTranslate, resolvedTemplate]
+  );
+  const translate = useMemo(
+    () => createGeometryBasicsLessonTranslate(resolvedContent),
+    [resolvedContent]
+  );
+  const sections = useMemo(() => buildGeometryBasicsSections(translate), [translate]);
+  const slides = useMemo(() => buildGeometryBasicsSlides(translate), [translate]);
+  const lessonTitle = resolvedTemplate?.title?.trim() || translate('lessonTitle');
 
   return (
     <KangurUnifiedLesson
       progressMode='panel'
       lessonId='geometry_basics'
       lessonEmoji='📐'
-      lessonTitle={translate('lessonTitle')}
+      lessonTitle={lessonTitle}
       sections={sections}
       slides={slides}
       gradientClass='kangur-gradient-accent-sky'
@@ -353,7 +358,10 @@ export default function GeometryBasicsLesson(): React.JSX.Element {
             maxWidthClassName: 'max-w-3xl',
             shellTestId: 'geometry-basics-game-shell',
           },
-          runtime: GEOMETRY_BASICS_WORKSHOP_RUNTIME,
+          launchableInstance: {
+            gameId: 'geometry_shape_workshop',
+            instanceId: GEOMETRY_BASICS_WORKSHOP_INSTANCE_ID,
+          },
         },
       ]}
     />

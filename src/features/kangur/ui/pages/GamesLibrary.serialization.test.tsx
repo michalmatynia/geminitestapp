@@ -221,7 +221,7 @@ const messageMap = {
   'KangurGamesLibraryPage.filters.clear': 'Clear filters',
   'KangurGamesLibraryPage.actions.previewGame': 'Preview & map',
   'KangurGamesLibraryPage.variantSurfaces.lesson_inline': 'Lesson inline',
-  'KangurGamesLibraryPage.variantSurfaces.lesson_stage': 'Lesson stage',
+  'KangurGamesLibraryPage.variantSurfaces.lesson_stage': 'Lesson variant',
   'KangurGamesLibraryPage.variantSurfaces.library_preview': 'Library preview',
   'KangurGamesLibraryPage.variantSurfaces.game_screen': 'Game screen',
   'KangurGamesLibraryPage.focus.eyebrow': 'Deep link focus',
@@ -1011,7 +1011,7 @@ describe('GamesLibrary serialization audit', () => {
           {
             kind: 'missing_runtime_variant',
             itemId: 'logical_patterns_workshop.lesson-stage',
-            label: 'Logical Patterns Workshop · Lesson stage',
+            label: 'Logical Patterns Workshop · Lesson variant',
             detail: 'logical_patterns_workshop.lesson-stage',
             targetKind: 'game',
             targetId: 'logical_patterns_workshop',
@@ -1124,7 +1124,7 @@ describe('GamesLibrary serialization audit', () => {
     expect(screen.getByTestId('metric-card:Legacy launch games')).toHaveTextContent('0');
     expect(screen.queryByText('Fix backlog')).not.toBeInTheDocument();
     expect(screen.getByRole('heading', { name: 'Games library' })).toBeInTheDocument();
-    expect(screen.getAllByText('Lesson stage').length).toBeGreaterThan(0);
+    expect(screen.getAllByText('Lesson variant').length).toBeGreaterThan(0);
   });
 
   it('opens the runtime tab directly from the route query and persists tab clicks back to the route', () => {
@@ -4786,6 +4786,7 @@ describe('GamesLibrary serialization audit', () => {
       sections: [
         expect.objectContaining({
           id: 'clock_saved_section',
+          instanceId: 'clock_training:instance:clock-minutes',
           lessonComponentId: 'calendar',
           title: 'Updated clock deck',
         }),
@@ -4849,6 +4850,7 @@ describe('GamesLibrary serialization audit', () => {
       sections: [
         expect.objectContaining({
           id: 'clock_saved_section',
+          instanceId: 'clock_training:instance:clock-minutes',
           settings: expect.objectContaining({
             clock: expect.objectContaining({
               clockSection: 'minutes',

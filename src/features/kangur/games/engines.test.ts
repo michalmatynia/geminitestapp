@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest';
 
 import {
+  KANGUR_MUSIC_PIANO_ROLL_ENGINE_DEFINITIONS,
+  KANGUR_MUSIC_PIANO_ROLL_LESSON_VARIANT_GAME_CONFIGS,
   createDefaultKangurGameEngines,
   createDefaultKangurGames,
   getKangurGameEngineDefinition,
@@ -48,6 +50,14 @@ describe('kangur game engines', () => {
       'alphabet_trace_letters',
       'alphabet_copy_letters',
     ]);
+    for (const engine of KANGUR_MUSIC_PIANO_ROLL_ENGINE_DEFINITIONS) {
+      expect(getKangurGameEngineDefinition(engine.id)).toMatchObject(engine);
+      expect(getKangurGamesForEngine(engine.id).map((game) => game.id)).toEqual(
+        KANGUR_MUSIC_PIANO_ROLL_LESSON_VARIANT_GAME_CONFIGS.filter(
+          (config) => config.engineId === engine.id
+        ).map((config) => config.id)
+      );
+    }
     expect(getKangurGamesForEngine('symmetry-drawing-engine').map((game) => game.id)).toEqual([
       'geometry_symmetry_studio',
     ]);

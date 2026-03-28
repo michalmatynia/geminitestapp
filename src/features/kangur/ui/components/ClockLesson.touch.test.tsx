@@ -27,11 +27,18 @@ vi.mock('@/features/kangur/ui/hooks/useKangurLessonGameSections', () => ({
   }),
 }));
 
-vi.mock('@/features/kangur/ui/components/ClockTrainingGame', () => ({
+vi.mock('@/features/kangur/ui/components/KangurLaunchableGameInstanceRuntime', () => ({
   __esModule: true,
-  default: ({ section }: { section?: string }) => (
-    <div data-testid='mock-clock-training-game'>{section ?? 'mixed'}</div>
-  ),
+  default: ({ instanceId }: { instanceId?: string }) => {
+    const section =
+      instanceId === 'clock_training:instance:clock-hours'
+        ? 'hours'
+        : instanceId === 'clock_training:instance:clock-minutes'
+          ? 'minutes'
+          : 'combined';
+
+    return <div data-testid='mock-clock-training-game'>{section}</div>;
+  },
 }));
 
 vi.mock('@/features/kangur/ui/components/KangurLessonNarrator', () => ({

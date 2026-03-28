@@ -1,6 +1,6 @@
 import type { KangurGameDefinition } from '@/shared/contracts/kangur-games';
 
-import { createVariant } from './factories';
+import { createSharedLibraryGame, createVariant } from './factories';
 
 export const KANGUR_TEN_YEAR_OLD_GAMES: readonly KangurGameDefinition[] = [
   {
@@ -112,7 +112,7 @@ export const KANGUR_TEN_YEAR_OLD_GAMES: readonly KangurGameDefinition[] = [
     emoji: '➕',
     mechanic: 'drag_drop',
     interactionMode: 'drag',
-    surfaces: ['lesson', 'library'],
+    surfaces: ['lesson', 'library', 'game'],
     tags: ['addition', 'drag', 'quantity'],
     variants: [
       createVariant({
@@ -125,12 +125,11 @@ export const KANGUR_TEN_YEAR_OLD_GAMES: readonly KangurGameDefinition[] = [
       }),
       createVariant({
         id: 'adding_ball.lesson-stage',
-        label: 'Lesson stage',
-        title: 'Adding ball as a lesson stage',
+        label: 'Lesson variant',
+        title: 'Adding ball as a lesson variant',
         description:
-          'Stage variant for the adding lesson game shell, backed by the same shared quantity-drag engine.',
+          'Lesson-facing variant for the adding lesson game shell, backed by the same shared quantity-drag engine.',
         surface: 'lesson_stage',
-        lessonStageRuntimeId: 'adding_ball_lesson_stage',
         sortOrder: 50,
       }),
       createVariant({
@@ -140,6 +139,15 @@ export const KANGUR_TEN_YEAR_OLD_GAMES: readonly KangurGameDefinition[] = [
         description: 'Preview variant used by the shared games library.',
         surface: 'library_preview',
         sortOrder: 100,
+      }),
+      createVariant({
+        id: 'adding_ball.game-screen',
+        label: 'Game screen',
+        title: 'Adding ball fullscreen',
+        description: 'Fullscreen entry wired to the shared addition drag-and-drop engine.',
+        surface: 'game_screen',
+        launchableRuntimeId: 'addition_quiz',
+        sortOrder: 200,
       }),
     ],
     status: 'active',
@@ -160,7 +168,7 @@ export const KANGUR_TEN_YEAR_OLD_GAMES: readonly KangurGameDefinition[] = [
     emoji: '🎵',
     mechanic: 'rhythm',
     interactionMode: 'tap',
-    surfaces: ['lesson', 'library'],
+    surfaces: ['lesson', 'library', 'game'],
     tags: ['addition', 'rhythm', 'fluency'],
     variants: [
       createVariant({
@@ -173,12 +181,11 @@ export const KANGUR_TEN_YEAR_OLD_GAMES: readonly KangurGameDefinition[] = [
       }),
       createVariant({
         id: 'adding_synthesis.lesson-stage',
-        label: 'Lesson stage',
-        title: 'Adding synthesis as a lesson stage',
+        label: 'Lesson variant',
+        title: 'Adding synthesis as a lesson variant',
         description:
-          'Stage variant for the addition synthesis lesson shell, using the shared rhythm-answer engine.',
+          'Lesson-facing variant for the addition synthesis lesson shell, using the shared rhythm-answer engine.',
         surface: 'lesson_stage',
-        lessonStageRuntimeId: 'adding_synthesis_lesson_stage',
         sortOrder: 50,
       }),
       createVariant({
@@ -188,6 +195,15 @@ export const KANGUR_TEN_YEAR_OLD_GAMES: readonly KangurGameDefinition[] = [
         description: 'Library preview of the shared rhythm engine.',
         surface: 'library_preview',
         sortOrder: 100,
+      }),
+      createVariant({
+        id: 'adding_synthesis.game-screen',
+        label: 'Game screen',
+        title: 'Adding synthesis fullscreen',
+        description: 'Launches the shared rhythm-answer engine from the standalone game runtime.',
+        surface: 'game_screen',
+        launchableRuntimeId: 'adding_synthesis_quiz',
+        sortOrder: 200,
       }),
     ],
     status: 'active',
@@ -221,12 +237,11 @@ export const KANGUR_TEN_YEAR_OLD_GAMES: readonly KangurGameDefinition[] = [
       }),
       createVariant({
         id: 'subtracting_garden.lesson-stage',
-        label: 'Lesson stage',
-        title: 'Subtracting garden as a lesson stage',
+        label: 'Lesson variant',
+        title: 'Subtracting garden as a lesson variant',
         description:
-          'Stage variant for the subtraction lesson game shell, still powered by the shared quantity-drag engine.',
+          'Lesson-facing variant for the subtraction lesson game shell, still powered by the shared quantity-drag engine.',
         surface: 'lesson_stage',
-        lessonStageRuntimeId: 'subtracting_garden_lesson_stage',
         sortOrder: 50,
       }),
       createVariant({
@@ -236,6 +251,15 @@ export const KANGUR_TEN_YEAR_OLD_GAMES: readonly KangurGameDefinition[] = [
         description: 'Library preview of the subtraction drag-and-drop variant.',
         surface: 'library_preview',
         sortOrder: 100,
+      }),
+      createVariant({
+        id: 'subtracting_garden.game-screen',
+        label: 'Game screen',
+        title: 'Subtracting garden fullscreen',
+        description: 'Fullscreen entry wired to the shared subtraction drag-and-drop engine.',
+        surface: 'game_screen',
+        launchableRuntimeId: 'subtraction_quiz',
+        sortOrder: 200,
       }),
     ],
     status: 'active',
@@ -269,12 +293,11 @@ export const KANGUR_TEN_YEAR_OLD_GAMES: readonly KangurGameDefinition[] = [
       }),
       createVariant({
         id: 'multiplication_array.lesson-stage',
-        label: 'Lesson stage',
-        title: 'Multiplication array as a lesson stage',
+        label: 'Lesson variant',
+        title: 'Multiplication array as a lesson variant',
         description:
-          'Stage variant for the multiplication lesson shell, backed by the shared array-builder engine.',
+          'Lesson-facing variant for the multiplication lesson shell, backed by the shared array-builder engine.',
         surface: 'lesson_stage',
-        lessonStageRuntimeId: 'multiplication_array_lesson_stage',
         sortOrder: 50,
       }),
       createVariant({
@@ -364,12 +387,11 @@ export const KANGUR_TEN_YEAR_OLD_GAMES: readonly KangurGameDefinition[] = [
       }),
       createVariant({
         id: 'division_groups.lesson-stage',
-        label: 'Lesson stage',
-        title: 'Division groups as a lesson stage',
+        label: 'Lesson variant',
+        title: 'Division groups as a lesson variant',
         description:
-          'Stage variant for the division lesson shell, using the extracted shared division-group practice engine.',
+          'Lesson-facing variant for the division lesson shell, using the extracted shared division-group practice engine.',
         surface: 'lesson_stage',
-        lessonStageRuntimeId: 'division_groups_lesson_stage',
         sortOrder: 50,
       }),
       createVariant({
@@ -421,12 +443,11 @@ export const KANGUR_TEN_YEAR_OLD_GAMES: readonly KangurGameDefinition[] = [
       }),
       createVariant({
         id: 'geometry_shape_workshop.lesson-stage',
-        label: 'Lesson stage',
-        title: 'Geometry shape workshop as a lesson stage',
+        label: 'Lesson variant',
+        title: 'Geometry shape workshop as a lesson variant',
         description:
-          'Stage variant for the geometry shapes lesson shell, backed by the shared shape drawing engine.',
+          'Lesson-facing variant for the geometry shapes lesson shell, backed by the shared shape drawing engine.',
         surface: 'lesson_stage',
-        lessonStageRuntimeId: 'geometry_shape_workshop_lesson_stage',
         sortOrder: 50,
       }),
       createVariant({
@@ -470,11 +491,10 @@ export const KANGUR_TEN_YEAR_OLD_GAMES: readonly KangurGameDefinition[] = [
     variants: [
       createVariant({
         id: 'geometry_symmetry_studio.lesson-stage',
-        label: 'Lesson stage',
+        label: 'Lesson variant',
         title: 'Geometry symmetry studio in lessons',
-        description: 'Lesson-stage variant for the shared symmetry drawing engine.',
+        description: 'Lesson-facing variant for the shared symmetry drawing engine.',
         surface: 'lesson_stage',
-        lessonStageRuntimeId: 'geometry_symmetry_studio_lesson_stage',
       }),
       createVariant({
         id: 'geometry_symmetry_studio.library-preview',
@@ -517,11 +537,10 @@ export const KANGUR_TEN_YEAR_OLD_GAMES: readonly KangurGameDefinition[] = [
     variants: [
       createVariant({
         id: 'geometry_perimeter_trainer.lesson-stage',
-        label: 'Lesson stage',
+        label: 'Lesson variant',
         title: 'Geometry perimeter trainer in lessons',
-        description: 'Lesson-stage variant for the shared perimeter drawing engine.',
+        description: 'Lesson-facing variant for the shared perimeter drawing engine.',
         surface: 'lesson_stage',
-        lessonStageRuntimeId: 'geometry_perimeter_trainer_lesson_stage',
       }),
       createVariant({
         id: 'geometry_perimeter_trainer.library-preview',
@@ -555,7 +574,7 @@ export const KANGUR_TEN_YEAR_OLD_GAMES: readonly KangurGameDefinition[] = [
     label: 'Logical patterns workshop',
     title: 'Logical Patterns Workshop',
     description:
-      'Pattern-sequence engine shared between lesson-stage presentation and standalone logical patterns practice.',
+      'Pattern-sequence engine shared between lesson variants, previews, and standalone logical patterns practice.',
     emoji: '🔢',
     mechanic: 'logic_pattern',
     interactionMode: 'tap',
@@ -564,11 +583,10 @@ export const KANGUR_TEN_YEAR_OLD_GAMES: readonly KangurGameDefinition[] = [
     variants: [
       createVariant({
         id: 'logical_patterns_workshop.lesson-stage',
-        label: 'Lesson stage',
+        label: 'Lesson variant',
         title: 'Logical patterns inside lessons',
-        description: 'Lesson-stage variant intended for unified lesson flows.',
+        description: 'Lesson-facing variant intended for unified lesson flows.',
         surface: 'lesson_stage',
-        lessonStageRuntimeId: 'logical_patterns_workshop_lesson_stage',
       }),
       createVariant({
         id: 'logical_patterns_workshop.library-preview',
@@ -602,7 +620,7 @@ export const KANGUR_TEN_YEAR_OLD_GAMES: readonly KangurGameDefinition[] = [
     label: 'Logical classification lab',
     title: 'Logical Classification Lab',
     description:
-      'Shared classification engine for grouping and odd-one-out mechanics used in lesson-stage and game-screen variants.',
+      'Shared classification engine for grouping and odd-one-out mechanics used in lesson variants and game screens.',
     emoji: '📦',
     mechanic: 'logic_classification',
     interactionMode: 'tap',
@@ -611,11 +629,10 @@ export const KANGUR_TEN_YEAR_OLD_GAMES: readonly KangurGameDefinition[] = [
     variants: [
       createVariant({
         id: 'logical_classification_lab.lesson-stage',
-        label: 'Lesson stage',
+        label: 'Lesson variant',
         title: 'Logical classification inside lessons',
-        description: 'Lesson-stage variant for the shared classification engine.',
+        description: 'Lesson-facing variant for the shared classification engine.',
         surface: 'lesson_stage',
-        lessonStageRuntimeId: 'logical_classification_lab_lesson_stage',
       }),
       createVariant({
         id: 'logical_classification_lab.library-preview',
@@ -649,7 +666,7 @@ export const KANGUR_TEN_YEAR_OLD_GAMES: readonly KangurGameDefinition[] = [
     label: 'Logical analogies relations',
     title: 'Logical Analogies Relations',
     description:
-      'Relation-matching engine shared across lesson-stage and fullscreen logical analogies practice.',
+      'Relation-matching engine shared across lesson variants and fullscreen logical analogies practice.',
     emoji: '🔗',
     mechanic: 'logic_relation',
     interactionMode: 'tap',
@@ -658,11 +675,10 @@ export const KANGUR_TEN_YEAR_OLD_GAMES: readonly KangurGameDefinition[] = [
     variants: [
       createVariant({
         id: 'logical_analogies_relations.lesson-stage',
-        label: 'Lesson stage',
+        label: 'Lesson variant',
         title: 'Logical analogies inside lessons',
-        description: 'Lesson-stage variant for the shared relation-match engine.',
+        description: 'Lesson-facing variant for the shared relation-match engine.',
         surface: 'lesson_stage',
-        lessonStageRuntimeId: 'logical_analogies_relations_lesson_stage',
       }),
       createVariant({
         id: 'logical_analogies_relations.library-preview',
@@ -685,6 +701,150 @@ export const KANGUR_TEN_YEAR_OLD_GAMES: readonly KangurGameDefinition[] = [
     status: 'active',
     sortOrder: 1200,
   },
+  createSharedLibraryGame({
+    id: 'english_subject_verb_agreement',
+    engineId: 'sentence-builder-engine',
+    subject: 'english',
+    ageGroup: 'ten_year_old',
+    lessonComponentIds: ['english_subject_verb_agreement'],
+    label: 'English subject-verb agreement',
+    title: 'English Subject-Verb Agreement',
+    description:
+      'Shared grammar agreement engine for lessons, library previews, and fullscreen English practice.',
+    emoji: '⚖️',
+    mechanic: 'sentence_building',
+    interactionMode: 'tap',
+    tags: ['english', 'grammar', 'agreement'],
+    sortOrder: 1210,
+    launchableRuntimeId: 'english_subject_verb_agreement_quiz',
+    lessonVariantSurface: 'lesson_stage',
+  }),
+  createSharedLibraryGame({
+    id: 'english_adjectives_scene',
+    engineId: 'sentence-builder-engine',
+    subject: 'english',
+    ageGroup: 'ten_year_old',
+    lessonComponentIds: ['english_adjectives'],
+    label: 'English adjectives scene',
+    title: 'English Adjectives Scene',
+    description:
+      'Shared adjectives practice engine for describing people, places, and objects across lesson and fullscreen flows.',
+    emoji: '🎨',
+    mechanic: 'sentence_building',
+    interactionMode: 'tap',
+    tags: ['english', 'grammar', 'adjectives'],
+    sortOrder: 1220,
+    launchableRuntimeId: 'english_adjectives_quiz',
+    lessonVariantSurface: 'lesson_stage',
+  }),
+  createSharedLibraryGame({
+    id: 'english_adverbs_frequency_routine',
+    engineId: 'sentence-builder-engine',
+    subject: 'english',
+    ageGroup: 'ten_year_old',
+    lessonComponentIds: ['english_adverbs_frequency'],
+    label: 'English adverbs frequency routine',
+    title: 'English Adverbs Frequency Routine',
+    description:
+      'Shared adverbs-of-frequency engine for routine building in lessons, previews, and fullscreen practice.',
+    emoji: '🔁',
+    mechanic: 'sentence_building',
+    interactionMode: 'tap',
+    tags: ['english', 'grammar', 'adverbs'],
+    sortOrder: 1230,
+    launchableRuntimeId: 'english_adverbs_frequency_quiz',
+    lessonVariantSurface: 'lesson_stage',
+  }),
+  createSharedLibraryGame({
+    id: 'english_articles_drag_drop',
+    engineId: 'sentence-builder-engine',
+    subject: 'english',
+    ageGroup: 'ten_year_old',
+    lessonComponentIds: ['english_articles'],
+    label: 'English articles drag drop',
+    title: 'English Articles Drag Drop',
+    description:
+      'Shared article-building engine for choosing a, an, and the across lesson and fullscreen surfaces.',
+    emoji: '🧲',
+    mechanic: 'sentence_building',
+    interactionMode: 'tap',
+    tags: ['english', 'grammar', 'articles'],
+    sortOrder: 1240,
+    launchableRuntimeId: 'english_articles_quiz',
+    lessonVariantSurface: 'lesson_stage',
+  }),
+  createSharedLibraryGame({
+    id: 'english_prepositions_time_place',
+    engineId: 'sentence-builder-engine',
+    subject: 'english',
+    ageGroup: 'ten_year_old',
+    lessonComponentIds: ['english_prepositions_time_place'],
+    label: 'English prepositions time and place',
+    title: 'English Prepositions Time and Place',
+    description:
+      'Shared prepositions quiz engine for time and place grammar across lessons, previews, and fullscreen practice.',
+    emoji: '🧭',
+    mechanic: 'sentence_building',
+    interactionMode: 'tap',
+    tags: ['english', 'grammar', 'prepositions'],
+    sortOrder: 1250,
+    launchableRuntimeId: 'english_prepositions_quiz',
+    lessonVariantSurface: 'lesson_stage',
+  }),
+  createSharedLibraryGame({
+    id: 'english_prepositions_sort',
+    engineId: 'classification-engine',
+    subject: 'english',
+    ageGroup: 'ten_year_old',
+    lessonComponentIds: ['english_prepositions_time_place'],
+    label: 'English prepositions sort',
+    title: 'English Prepositions Sort',
+    description:
+      'Shared sorting engine for grouping prepositions by time, place, and relation patterns.',
+    emoji: '🧲',
+    mechanic: 'logic_classification',
+    interactionMode: 'tap',
+    tags: ['english', 'grammar', 'prepositions', 'sorting'],
+    sortOrder: 1260,
+    launchableRuntimeId: 'english_prepositions_sort_quiz',
+    lessonVariantSurface: 'lesson_stage',
+  }),
+  createSharedLibraryGame({
+    id: 'english_prepositions_order',
+    engineId: 'sentence-builder-engine',
+    subject: 'english',
+    ageGroup: 'ten_year_old',
+    lessonComponentIds: ['english_prepositions_time_place'],
+    label: 'English prepositions order',
+    title: 'English Prepositions Order',
+    description:
+      'Shared sentence-order engine for rebuilding preposition phrases in lessons, previews, and fullscreen practice.',
+    emoji: '🧩',
+    mechanic: 'sentence_building',
+    interactionMode: 'tap',
+    tags: ['english', 'grammar', 'prepositions', 'word-order'],
+    sortOrder: 1270,
+    launchableRuntimeId: 'english_prepositions_order_quiz',
+    lessonVariantSurface: 'lesson_stage',
+  }),
+  createSharedLibraryGame({
+    id: 'english_pronouns_warmup',
+    engineId: 'sentence-builder-engine',
+    subject: 'english',
+    ageGroup: 'ten_year_old',
+    lessonComponentIds: ['english_parts_of_speech'],
+    label: 'English pronouns warmup',
+    title: 'English Pronouns Warm-up',
+    description:
+      'Shared pronoun warm-up engine for quick grammar rounds in lessons, previews, and fullscreen practice.',
+    emoji: '⚡',
+    mechanic: 'sentence_building',
+    interactionMode: 'tap',
+    tags: ['english', 'grammar', 'pronouns'],
+    sortOrder: 1280,
+    launchableRuntimeId: 'english_pronouns_warmup_quiz',
+    lessonVariantSurface: 'lesson_stage',
+  }),
   {
     id: 'english_sentence_builder',
     engineId: 'sentence-builder-engine',
@@ -705,11 +865,10 @@ export const KANGUR_TEN_YEAR_OLD_GAMES: readonly KangurGameDefinition[] = [
     variants: [
       createVariant({
         id: 'english_sentence_builder.lesson-stage',
-        label: 'Lesson stage',
+        label: 'Lesson variant',
         title: 'Sentence builder inside lessons',
-        description: 'Lesson-stage variant for the shared sentence-builder engine.',
+        description: 'Lesson-facing variant for the shared sentence-builder engine.',
         surface: 'lesson_stage',
-        lessonStageRuntimeId: 'english_sentence_builder_lesson_stage',
       }),
       createVariant({
         id: 'english_sentence_builder.library-preview',
@@ -752,11 +911,10 @@ export const KANGUR_TEN_YEAR_OLD_GAMES: readonly KangurGameDefinition[] = [
     variants: [
       createVariant({
         id: 'english_parts_of_speech_sort.lesson-stage',
-        label: 'Lesson stage',
+        label: 'Lesson variant',
         title: 'Parts of speech inside lessons',
-        description: 'Lesson-stage variant backed by the shared classification engine.',
+        description: 'Lesson-facing variant backed by the shared classification engine.',
         surface: 'lesson_stage',
-        lessonStageRuntimeId: 'english_parts_of_speech_sort_lesson_stage',
       }),
       createVariant({
         id: 'english_parts_of_speech_sort.library-preview',

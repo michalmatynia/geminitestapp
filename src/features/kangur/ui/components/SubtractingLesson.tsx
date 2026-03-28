@@ -22,16 +22,14 @@ import {
   KangurIconBadge,
 } from '@/features/kangur/ui/design/primitives';
 import { KANGUR_START_ROW_CLASSNAME } from '@/features/kangur/ui/design/tokens';
-import { getKangurLessonStageGameRuntimeSpec } from '@/features/kangur/games/lesson-stage-runtime-specs';
+import { getKangurBuiltInGameInstanceId } from '@/features/kangur/games';
 import { KangurUnifiedLesson } from '@/features/kangur/ui/lessons/lesson-components';
 import type { LessonTranslate, WidenLessonCopy } from './lesson-copy';
 
 type SectionId = 'podstawy' | 'przekroczenie' | 'dwucyfrowe' | 'zapamietaj' | 'game';
 type SubtractingSlideSectionId = Exclude<SectionId, 'game'>;
 
-const SUBTRACTING_GARDEN_LESSON_STAGE_RUNTIME = getKangurLessonStageGameRuntimeSpec(
-  'subtracting_garden_lesson_stage'
-);
+const SUBTRACTING_GARDEN_INSTANCE_ID = getKangurBuiltInGameInstanceId('subtracting_garden');
 
 const SUBTRACTING_LESSON_COPY_PL = {
   lessonTitle: 'Odejmowanie',
@@ -1837,7 +1835,10 @@ export default function SubtractingLesson(): React.JSX.Element {
             shellTestId: 'subtracting-lesson-game-shell',
             title: copy.game.stageTitle,
           },
-          runtime: SUBTRACTING_GARDEN_LESSON_STAGE_RUNTIME,
+          launchableInstance: {
+            gameId: 'subtracting_garden',
+            instanceId: SUBTRACTING_GARDEN_INSTANCE_ID,
+          },
         },
       ]}
     />

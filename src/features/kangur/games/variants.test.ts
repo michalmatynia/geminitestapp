@@ -5,6 +5,14 @@ import {
   createKangurGameVariantCatalogEntries,
   filterKangurGameVariantCatalogEntries,
 } from '@/features/kangur/games';
+import {
+  KANGUR_MUSIC_PIANO_ROLL_DEFAULT_INSTANCE_IDS,
+  KANGUR_MUSIC_PIANO_ROLL_ENGINE_IDS,
+  KANGUR_MUSIC_PIANO_ROLL_GAME_IDS,
+  KANGUR_MUSIC_PIANO_ROLL_LAUNCHABLE_RUNTIME_IDS,
+  KANGUR_MUSIC_PIANO_ROLL_RENDERER_IDS,
+  KANGUR_MUSIC_PIANO_ROLL_VARIANT_IDS,
+} from './music-piano-roll-contract';
 
 describe('kangur game variants', () => {
   it('flattens game variants with catalog metadata', () => {
@@ -29,18 +37,17 @@ describe('kangur game variants', () => {
     expect(entry?.launchableRuntime).toBeNull();
   });
 
-  it('attaches lesson-stage runtimes to serialized lesson-stage variants', () => {
+  it('keeps lesson-stage variants unbound once lessons use launchable instances', () => {
     const entry = createKangurGameVariantCatalogEntries(createKangurGameCatalogEntries()).find(
-      (candidate) => candidate.variant.id === 'logical_classification_lab.lesson-stage'
+      (candidate) => candidate.variant.id === 'agentic_approval_gate.lesson-stage'
     );
 
-    expect(entry?.isLessonVariant).toBe(true);
-    expect(entry?.lessonStageRuntime?.rendererId).toBe('logical_classification_game');
+    expect(entry?.isLessonVariant).toBe(false);
     expect(entry?.lessonActivityRuntime).toBeNull();
     expect(entry?.launchableRuntime).toBeNull();
   });
 
-  it('attaches the alphabet sequence lesson-stage runtime to the six-year-old stage variant', () => {
+  it('keeps the six-year-old alphabet lesson-stage variants unbound once lessons use launchable instances', () => {
     const entries = createKangurGameVariantCatalogEntries(createKangurGameCatalogEntries());
     const wordsEntry = entries.find(
       (candidate) => candidate.variant.id === 'alphabet_first_words.lesson-stage'
@@ -52,38 +59,14 @@ describe('kangur game variants', () => {
       (candidate) => candidate.variant.id === 'alphabet_letter_order.lesson-stage'
     );
 
-    expect(wordsEntry?.isLessonVariant).toBe(true);
-    expect(wordsEntry?.lessonStageRuntime).toMatchObject({
-      runtimeId: 'alphabet_first_words_lesson_stage',
-      rendererId: 'alphabet_literacy_stage_game',
-      engineId: 'letter-match-engine',
-      rendererProps: {
-        literacyMatchSetId: 'alphabet_first_words',
-      },
-    });
-    expect(matchingEntry?.isLessonVariant).toBe(true);
-    expect(matchingEntry?.lessonStageRuntime).toMatchObject({
-      runtimeId: 'alphabet_letter_matching_lesson_stage',
-      rendererId: 'alphabet_literacy_stage_game',
-      engineId: 'letter-match-engine',
-      rendererProps: {
-        literacyMatchSetId: 'alphabet_letter_matching',
-      },
-    });
-    expect(entry?.isLessonVariant).toBe(true);
-    expect(entry?.lessonStageRuntime).toMatchObject({
-      runtimeId: 'alphabet_letter_order_lesson_stage',
-      rendererId: 'logical_patterns_workshop_game',
-      engineId: 'pattern-sequence-engine',
-      rendererProps: {
-        patternSetId: 'alphabet_letter_order',
-      },
-    });
+    expect(wordsEntry?.isLessonVariant).toBe(false);
+    expect(matchingEntry?.isLessonVariant).toBe(false);
+    expect(entry?.isLessonVariant).toBe(false);
     expect(entry?.lessonActivityRuntime).toBeNull();
     expect(entry?.launchableRuntime).toBeNull();
   });
 
-  it('attaches geometry lesson-stage runtimes to drawing lesson variants', () => {
+  it('keeps geometry lesson-stage variants unbound once lessons use launchable instances', () => {
     const entries = createKangurGameVariantCatalogEntries(createKangurGameCatalogEntries());
     const workshopEntry = entries.find(
       (candidate) => candidate.variant.id === 'geometry_shape_workshop.lesson-stage'
@@ -93,27 +76,128 @@ describe('kangur game variants', () => {
     );
 
     expect(workshopEntry?.isLessonVariant).toBe(false);
-    expect(workshopEntry?.lessonStageRuntime).toMatchObject({
-      runtimeId: 'geometry_shape_workshop_lesson_stage',
-      rendererId: 'geometry_drawing_game',
-      engineId: 'shape-drawing-engine',
-    });
-    expect(entry?.isLessonVariant).toBe(true);
-    expect(entry?.lessonStageRuntime?.rendererId).toBe('geometry_symmetry_game');
-    expect(entry?.lessonStageRuntime?.engineId).toBe('symmetry-drawing-engine');
+    expect(entry?.isLessonVariant).toBe(false);
+    expect(entry?.lessonActivityRuntime).toBeNull();
+    expect(entry?.launchableRuntime).toBeNull();
   });
 
-  it('attaches the sentence-builder lesson-stage runtime to the english lesson variant', () => {
+  it('keeps the sentence-builder lesson-stage variant unbound once lessons use launchable instances', () => {
     const entry = createKangurGameVariantCatalogEntries(createKangurGameCatalogEntries()).find(
       (candidate) => candidate.variant.id === 'english_sentence_builder.lesson-stage'
     );
 
-    expect(entry?.isLessonVariant).toBe(true);
-    expect(entry?.lessonStageRuntime?.rendererId).toBe('english_sentence_structure_game');
-    expect(entry?.lessonStageRuntime?.engineId).toBe('sentence-builder-engine');
+    expect(entry?.isLessonVariant).toBe(false);
+    expect(entry?.lessonActivityRuntime).toBeNull();
+    expect(entry?.launchableRuntime).toBeNull();
   });
 
-  it('attaches shared lesson-stage runtimes to the seeded agentic stage variants', () => {
+  it('keeps seeded English grammar stage variants unbound once lessons use launchable instances', () => {
+    const entries = createKangurGameVariantCatalogEntries(createKangurGameCatalogEntries());
+    const subjectVerbEntry = entries.find(
+      (candidate) => candidate.variant.id === 'english_subject_verb_agreement.lesson-stage'
+    );
+    const adjectivesEntry = entries.find(
+      (candidate) => candidate.variant.id === 'english_adjectives_scene.lesson-stage'
+    );
+    const adverbsEntry = entries.find(
+      (candidate) => candidate.variant.id === 'english_adverbs_frequency_routine.lesson-stage'
+    );
+    const articlesEntry = entries.find(
+      (candidate) => candidate.variant.id === 'english_articles_drag_drop.lesson-stage'
+    );
+    const prepositionsEntry = entries.find(
+      (candidate) => candidate.variant.id === 'english_prepositions_time_place.lesson-stage'
+    );
+    const prepositionsSortEntry = entries.find(
+      (candidate) => candidate.variant.id === 'english_prepositions_sort.lesson-stage'
+    );
+    const prepositionsOrderEntry = entries.find(
+      (candidate) => candidate.variant.id === 'english_prepositions_order.lesson-stage'
+    );
+    const pronounsWarmupEntry = entries.find(
+      (candidate) => candidate.variant.id === 'english_pronouns_warmup.lesson-stage'
+    );
+
+    expect(subjectVerbEntry?.launchableRuntime).toBeNull();
+    expect(adjectivesEntry?.launchableRuntime).toBeNull();
+    expect(adverbsEntry?.launchableRuntime).toBeNull();
+    expect(articlesEntry?.launchableRuntime).toBeNull();
+    expect(prepositionsEntry?.launchableRuntime).toBeNull();
+    expect(prepositionsSortEntry?.launchableRuntime).toBeNull();
+    expect(prepositionsOrderEntry?.launchableRuntime).toBeNull();
+    expect(pronounsWarmupEntry?.launchableRuntime).toBeNull();
+  });
+
+  it('attaches launchable runtimes to the seeded English grammar game-screen variants', () => {
+    const entries = createKangurGameVariantCatalogEntries(createKangurGameCatalogEntries());
+    const subjectVerbEntry = entries.find(
+      (candidate) => candidate.variant.id === 'english_subject_verb_agreement.game-screen'
+    );
+    const adjectivesEntry = entries.find(
+      (candidate) => candidate.variant.id === 'english_adjectives_scene.game-screen'
+    );
+    const adverbsEntry = entries.find(
+      (candidate) => candidate.variant.id === 'english_adverbs_frequency_routine.game-screen'
+    );
+    const articlesEntry = entries.find(
+      (candidate) => candidate.variant.id === 'english_articles_drag_drop.game-screen'
+    );
+    const prepositionsEntry = entries.find(
+      (candidate) => candidate.variant.id === 'english_prepositions_time_place.game-screen'
+    );
+    const prepositionsSortEntry = entries.find(
+      (candidate) => candidate.variant.id === 'english_prepositions_sort.game-screen'
+    );
+    const prepositionsOrderEntry = entries.find(
+      (candidate) => candidate.variant.id === 'english_prepositions_order.game-screen'
+    );
+    const pronounsWarmupEntry = entries.find(
+      (candidate) => candidate.variant.id === 'english_pronouns_warmup.game-screen'
+    );
+
+    expect(subjectVerbEntry?.launchableRuntime).toMatchObject({
+      screen: 'english_subject_verb_agreement_quiz',
+      rendererId: 'english_subject_verb_agreement_game',
+      engineId: 'sentence-builder-engine',
+    });
+    expect(adjectivesEntry?.launchableRuntime).toMatchObject({
+      screen: 'english_adjectives_quiz',
+      rendererId: 'english_adjectives_scene_game',
+      engineId: 'sentence-builder-engine',
+    });
+    expect(adverbsEntry?.launchableRuntime).toMatchObject({
+      screen: 'english_adverbs_frequency_quiz',
+      rendererId: 'english_adverbs_frequency_routine_game',
+      engineId: 'sentence-builder-engine',
+    });
+    expect(articlesEntry?.launchableRuntime).toMatchObject({
+      screen: 'english_articles_quiz',
+      rendererId: 'english_articles_drag_drop_game',
+      engineId: 'sentence-builder-engine',
+    });
+    expect(prepositionsEntry?.launchableRuntime).toMatchObject({
+      screen: 'english_prepositions_quiz',
+      rendererId: 'english_prepositions_game',
+      engineId: 'sentence-builder-engine',
+    });
+    expect(prepositionsSortEntry?.launchableRuntime).toMatchObject({
+      screen: 'english_prepositions_sort_quiz',
+      rendererId: 'english_prepositions_sort_game',
+      engineId: 'classification-engine',
+    });
+    expect(prepositionsOrderEntry?.launchableRuntime).toMatchObject({
+      screen: 'english_prepositions_order_quiz',
+      rendererId: 'english_prepositions_order_game',
+      engineId: 'sentence-builder-engine',
+    });
+    expect(pronounsWarmupEntry?.launchableRuntime).toMatchObject({
+      screen: 'english_pronouns_warmup_quiz',
+      rendererId: 'english_pronouns_warmup_game',
+      engineId: 'sentence-builder-engine',
+    });
+  });
+
+  it('keeps seeded agentic stage variants unbound once lessons use launchable instances', () => {
     const entries = createKangurGameVariantCatalogEntries(createKangurGameCatalogEntries());
     const promptTrimEntry = entries.find(
       (candidate) => candidate.variant.id === 'agentic_prompt_trim_stage.lesson-stage'
@@ -128,29 +212,50 @@ describe('kangur game variants', () => {
       (candidate) => candidate.variant.id === 'agentic_surface_match.lesson-stage'
     );
 
-    expect(promptTrimEntry?.lessonStageRuntime).toMatchObject({
-      runtimeId: 'agentic_prompt_trim_lesson_stage',
+    expect(promptTrimEntry?.launchableRuntime).toBeNull();
+    expect(approvalGateEntry?.launchableRuntime).toBeNull();
+    expect(reasoningRouterEntry?.launchableRuntime).toBeNull();
+    expect(surfaceMatchEntry?.launchableRuntime).toBeNull();
+  });
+
+  it('attaches launchable runtimes to the seeded agentic game-screen variants', () => {
+    const entries = createKangurGameVariantCatalogEntries(createKangurGameCatalogEntries());
+    const promptTrimEntry = entries.find(
+      (candidate) => candidate.variant.id === 'agentic_prompt_trim_stage.game-screen'
+    );
+    const approvalGateEntry = entries.find(
+      (candidate) => candidate.variant.id === 'agentic_approval_gate.game-screen'
+    );
+    const reasoningRouterEntry = entries.find(
+      (candidate) => candidate.variant.id === 'agentic_reasoning_router.game-screen'
+    );
+    const surfaceMatchEntry = entries.find(
+      (candidate) => candidate.variant.id === 'agentic_surface_match.game-screen'
+    );
+
+    expect(promptTrimEntry?.launchableRuntime).toMatchObject({
+      screen: 'agentic_prompt_trim_quiz',
       rendererId: 'agentic_prompt_trim_game',
       engineId: 'token-trim-engine',
     });
-    expect(approvalGateEntry?.lessonStageRuntime).toMatchObject({
-      runtimeId: 'agentic_approval_gate_lesson_stage',
+    expect(approvalGateEntry?.launchableRuntime).toMatchObject({
+      screen: 'agentic_approval_gate_quiz',
       rendererId: 'agentic_approval_gate_game',
       engineId: 'classification-engine',
     });
-    expect(reasoningRouterEntry?.lessonStageRuntime).toMatchObject({
-      runtimeId: 'agentic_reasoning_router_lesson_stage',
+    expect(reasoningRouterEntry?.launchableRuntime).toMatchObject({
+      screen: 'agentic_reasoning_router_quiz',
       rendererId: 'agentic_reasoning_router_game',
       engineId: 'classification-engine',
     });
-    expect(surfaceMatchEntry?.lessonStageRuntime).toMatchObject({
-      runtimeId: 'agentic_surface_match_lesson_stage',
+    expect(surfaceMatchEntry?.launchableRuntime).toMatchObject({
+      screen: 'agentic_surface_match_quiz',
       rendererId: 'agentic_surface_match_game',
       engineId: 'classification-engine',
     });
   });
 
-  it('attaches shared lesson-stage runtimes to the seeded six-year-old art and music stage variants', () => {
+  it('keeps seeded six-year-old art and geometry stage variants unbound once lessons use launchable instances', () => {
     const entries = createKangurGameVariantCatalogEntries(createKangurGameCatalogEntries());
     const colorHarmonyEntry = entries.find(
       (candidate) => candidate.variant.id === 'art_color_harmony_studio.lesson-stage'
@@ -165,78 +270,102 @@ describe('kangur game variants', () => {
       (candidate) => candidate.variant.id === 'geometry_shape_drawing.lesson-stage'
     );
     const melodyEntry = entries.find(
-      (candidate) => candidate.variant.id === 'music_melody_repeat.lesson-stage'
+      (candidate) =>
+        candidate.variant.id === KANGUR_MUSIC_PIANO_ROLL_VARIANT_IDS.repeatLessonVariant
     );
     const freePlayEntry = entries.find(
-      (candidate) => candidate.variant.id === 'music_piano_roll_free_play.lesson-stage'
+      (candidate) =>
+        candidate.variant.id === KANGUR_MUSIC_PIANO_ROLL_VARIANT_IDS.freePlayLessonVariant
     );
 
-    expect(colorHarmonyEntry?.lessonStageRuntime).toMatchObject({
-      runtimeId: 'art_color_harmony_studio_lesson_stage',
-      rendererId: 'color_harmony_stage_game',
-      engineId: 'color-harmony-engine',
-    });
-    expect(artEntry?.lessonStageRuntime).toMatchObject({
-      runtimeId: 'art_shape_rotation_puzzle_lesson_stage',
-      rendererId: 'art_shapes_rotation_gap_game',
-      engineId: 'shape-recognition-engine',
-    });
-    expect(geometrySpotterEntry?.lessonStageRuntime).toMatchObject({
-      runtimeId: 'geometry_shape_spotter_lesson_stage',
+    expect(colorHarmonyEntry?.launchableRuntime).toBeNull();
+    expect(artEntry?.launchableRuntime).toBeNull();
+    expect(geometrySpotterEntry?.launchableRuntime).toBeNull();
+    expect(geometryDrawingEntry?.launchableRuntime).toBeNull();
+    expect(melodyEntry?.launchableRuntime).toBeNull();
+    expect(freePlayEntry?.launchableRuntime).toBeNull();
+  });
+
+  it('attaches the shape spotter launchable runtime to the seeded six-year-old game-screen variant', () => {
+    const entry = createKangurGameVariantCatalogEntries(createKangurGameCatalogEntries()).find(
+      (candidate) => candidate.variant.id === 'geometry_shape_spotter.game-screen'
+    );
+
+    expect(entry?.launchableRuntime).toMatchObject({
+      screen: 'geometry_shape_spotter_quiz',
       rendererId: 'shape_recognition_stage_game',
       engineId: 'shape-recognition-engine',
-    });
-    expect(geometryDrawingEntry?.lessonStageRuntime).toMatchObject({
-      runtimeId: 'geometry_shape_drawing_lesson_stage',
-      rendererId: 'geometry_drawing_game',
-      engineId: 'shape-drawing-engine',
-      rendererProps: {
-        activityKey: 'training:geometry_shape_recognition:draw',
-        lessonKey: 'geometry_shape_recognition',
-        operation: 'geometry',
-        shapeIds: ['circle', 'oval', 'triangle', 'diamond', 'square', 'rectangle'],
-        showDifficultySelector: false,
-      },
-    });
-    expect(melodyEntry?.lessonStageRuntime).toMatchObject({
-      runtimeId: 'music_melody_repeat_lesson_stage',
-      rendererId: 'music_melody_repeat_game',
-      engineId: 'melody-repeat-engine',
-    });
-    expect(freePlayEntry?.lessonStageRuntime).toMatchObject({
-      runtimeId: 'music_piano_roll_free_play_lesson_stage',
-      rendererId: 'music_piano_roll_free_play_game',
-      engineId: 'piano-roll-engine',
     });
   });
 
   it('attaches launchable runtimes to the seeded music game-screen variants', () => {
     const entries = createKangurGameVariantCatalogEntries(createKangurGameCatalogEntries());
     const melodyEntry = entries.find(
-      (candidate) => candidate.variant.id === 'music_melody_repeat.game-screen'
+      (candidate) => candidate.variant.id === KANGUR_MUSIC_PIANO_ROLL_VARIANT_IDS.repeatGameScreen
     );
     const freePlayEntry = entries.find(
-      (candidate) => candidate.variant.id === 'music_piano_roll_free_play.game-screen'
+      (candidate) => candidate.variant.id === KANGUR_MUSIC_PIANO_ROLL_VARIANT_IDS.freePlayGameScreen
     );
 
     expect(melodyEntry?.isGameScreenVariant).toBe(true);
-    expect(melodyEntry?.launchableScreen).toBe('music_melody_repeat_quiz');
+    expect(melodyEntry?.launchableScreen).toBe(
+      KANGUR_MUSIC_PIANO_ROLL_LAUNCHABLE_RUNTIME_IDS.repeat
+    );
     expect(melodyEntry?.launchableRuntime).toMatchObject({
-      screen: 'music_melody_repeat_quiz',
-      rendererId: 'music_melody_repeat_game',
-      engineId: 'melody-repeat-engine',
+      screen: KANGUR_MUSIC_PIANO_ROLL_LAUNCHABLE_RUNTIME_IDS.repeat,
+      rendererId: KANGUR_MUSIC_PIANO_ROLL_RENDERER_IDS.repeat,
+      engineId: KANGUR_MUSIC_PIANO_ROLL_ENGINE_IDS.repeat,
     });
 
     expect(freePlayEntry?.isGameScreenVariant).toBe(true);
-    expect(freePlayEntry?.launchableScreen).toBe('music_piano_roll_free_play_quiz');
+    expect(freePlayEntry?.launchableScreen).toBe(
+      KANGUR_MUSIC_PIANO_ROLL_LAUNCHABLE_RUNTIME_IDS.freePlay
+    );
     expect(freePlayEntry?.launchableRuntime).toMatchObject({
-      screen: 'music_piano_roll_free_play_quiz',
-      rendererId: 'music_piano_roll_free_play_game',
-      engineId: 'piano-roll-engine',
+      screen: KANGUR_MUSIC_PIANO_ROLL_LAUNCHABLE_RUNTIME_IDS.freePlay,
+      rendererId: KANGUR_MUSIC_PIANO_ROLL_RENDERER_IDS.freePlay,
+      engineId: KANGUR_MUSIC_PIANO_ROLL_ENGINE_IDS.freePlay,
     });
   });
 
-  it('attaches shared lesson-stage runtimes to the seeded arithmetic stage variants', () => {
+  it('attaches launchable runtimes to the seeded alphabet game-screen variants', () => {
+    const entries = createKangurGameVariantCatalogEntries(createKangurGameCatalogEntries());
+    const wordsEntry = entries.find(
+      (candidate) => candidate.variant.id === 'alphabet_first_words.game-screen'
+    );
+    const matchingEntry = entries.find(
+      (candidate) => candidate.variant.id === 'alphabet_letter_matching.game-screen'
+    );
+    const orderEntry = entries.find(
+      (candidate) => candidate.variant.id === 'alphabet_letter_order.game-screen'
+    );
+
+    expect(wordsEntry?.isGameScreenVariant).toBe(true);
+    expect(wordsEntry?.launchableScreen).toBe('alphabet_first_words_quiz');
+    expect(wordsEntry?.launchableRuntime).toMatchObject({
+      screen: 'alphabet_first_words_quiz',
+      rendererId: 'alphabet_literacy_stage_game',
+      engineId: 'letter-match-engine',
+    });
+
+    expect(matchingEntry?.isGameScreenVariant).toBe(true);
+    expect(matchingEntry?.launchableScreen).toBe('alphabet_letter_matching_quiz');
+    expect(matchingEntry?.launchableRuntime).toMatchObject({
+      screen: 'alphabet_letter_matching_quiz',
+      rendererId: 'alphabet_literacy_stage_game',
+      engineId: 'letter-match-engine',
+    });
+
+    expect(orderEntry?.isGameScreenVariant).toBe(true);
+    expect(orderEntry?.launchableScreen).toBe('alphabet_letter_order_quiz');
+    expect(orderEntry?.launchableRuntime).toMatchObject({
+      screen: 'alphabet_letter_order_quiz',
+      rendererId: 'logical_patterns_workshop_game',
+      engineId: 'pattern-sequence-engine',
+    });
+  });
+
+  it('keeps seeded arithmetic stage variants unbound once lessons use launchable instances', () => {
     const entries = createKangurGameVariantCatalogEntries(createKangurGameCatalogEntries());
     const addingBallEntry = entries.find(
       (candidate) => candidate.variant.id === 'adding_ball.lesson-stage'
@@ -254,42 +383,45 @@ describe('kangur game variants', () => {
       (candidate) => candidate.variant.id === 'division_groups.lesson-stage'
     );
 
-    expect(addingBallEntry?.lessonStageRuntime).toMatchObject({
-      runtimeId: 'adding_ball_lesson_stage',
+    expect(addingBallEntry?.launchableRuntime).toBeNull();
+    expect(addingSynthesisEntry?.launchableRuntime).toBeNull();
+    expect(multiplicationArrayEntry?.launchableRuntime).toBeNull();
+    expect(subtractingEntry?.launchableRuntime).toBeNull();
+    expect(divisionEntry?.launchableRuntime).toBeNull();
+  });
+
+  it('attaches shared launchable runtimes to the seeded arithmetic game-screen variants', () => {
+    const entries = createKangurGameVariantCatalogEntries(createKangurGameCatalogEntries());
+    const addingEntry = entries.find((candidate) => candidate.variant.id === 'adding_ball.game-screen');
+    const addingSynthesisEntry = entries.find(
+      (candidate) => candidate.variant.id === 'adding_synthesis.game-screen'
+    );
+    const subtractingEntry = entries.find(
+      (candidate) => candidate.variant.id === 'subtracting_garden.game-screen'
+    );
+
+    expect(addingEntry?.isGameScreenVariant).toBe(true);
+    expect(addingEntry?.launchableScreen).toBe('addition_quiz');
+    expect(addingEntry?.launchableRuntime).toMatchObject({
+      screen: 'addition_quiz',
       rendererId: 'adding_ball_game',
       engineId: 'quantity-drag-engine',
-      rendererProps: {
-        finishLabelVariant: 'topics',
-      },
     });
-    expect(addingSynthesisEntry?.lessonStageRuntime).toMatchObject({
-      runtimeId: 'adding_synthesis_lesson_stage',
+
+    expect(addingSynthesisEntry?.isGameScreenVariant).toBe(true);
+    expect(addingSynthesisEntry?.launchableScreen).toBe('adding_synthesis_quiz');
+    expect(addingSynthesisEntry?.launchableRuntime).toMatchObject({
+      screen: 'adding_synthesis_quiz',
       rendererId: 'adding_synthesis_game',
       engineId: 'rhythm-answer-engine',
     });
-    expect(multiplicationArrayEntry?.lessonStageRuntime).toMatchObject({
-      runtimeId: 'multiplication_array_lesson_stage',
-      rendererId: 'multiplication_array_game',
-      engineId: 'array-builder-engine',
-      rendererProps: {
-        finishLabelVariant: 'topics',
-      },
-    });
-    expect(subtractingEntry?.lessonStageRuntime).toMatchObject({
-      runtimeId: 'subtracting_garden_lesson_stage',
-      rendererId: 'subtracting_garden_game',
+
+    expect(subtractingEntry?.isGameScreenVariant).toBe(true);
+    expect(subtractingEntry?.launchableScreen).toBe('subtraction_quiz');
+    expect(subtractingEntry?.launchableRuntime).toMatchObject({
+      screen: 'subtraction_quiz',
+      rendererId: 'subtracting_game',
       engineId: 'quantity-drag-engine',
-      rendererProps: {
-        finishLabelVariant: 'topics',
-      },
-    });
-    expect(divisionEntry?.lessonStageRuntime).toMatchObject({
-      runtimeId: 'division_groups_lesson_stage',
-      rendererId: 'division_groups_game',
-      engineId: 'choice-quiz-engine',
-      rendererProps: {
-        finishLabelVariant: 'topics',
-      },
     });
   });
 
@@ -304,6 +436,14 @@ describe('kangur game variants', () => {
     );
 
     expect(filtered.map((entry) => entry.variant.id)).toEqual([
+      'english_subject_verb_agreement.game-screen',
+      'english_adjectives_scene.game-screen',
+      'english_adverbs_frequency_routine.game-screen',
+      'english_articles_drag_drop.game-screen',
+      'english_prepositions_time_place.game-screen',
+      'english_prepositions_sort.game-screen',
+      'english_prepositions_order.game-screen',
+      'english_pronouns_warmup.game-screen',
       'english_sentence_builder.game-screen',
       'english_parts_of_speech_sort.game-screen',
     ]);

@@ -2,7 +2,7 @@ import { getUserPreferences } from '@/features/auth/server';
 import {
   getMediaInlineStyles,
   getMediaStyleVars,
-} from '@/features/cms/components/frontend/theme-styles';
+} from '@/features/cms/public';
 import { getSlugForDomainByValue, resolveCmsDomainFromHeaders } from '@/features/cms/server';
 import { getCmsMenuSettings } from '@/features/cms/server';
 import { getCmsRepository } from '@/features/cms/server';

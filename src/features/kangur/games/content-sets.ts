@@ -47,6 +47,23 @@ export const getKangurGameContentSetsForGame = (
   }
 
   switch (runtime.rendererId) {
+    case 'alphabet_literacy_stage_game':
+      return [
+        createDefaultContentSet(game, runtime, {
+          label:
+            game.id === 'alphabet_first_words' ? 'First words set' : 'Letter matching set',
+          description:
+            game.id === 'alphabet_first_words'
+              ? 'Feeds the first-words literacy rounds into the shared alphabet engine.'
+              : 'Feeds uppercase-to-lowercase letter matching rounds into the shared alphabet engine.',
+          rendererProps: {
+            literacyMatchSetId:
+              game.id === 'alphabet_first_words'
+                ? 'alphabet_first_words'
+                : 'alphabet_letter_matching',
+          },
+        }),
+      ];
     case 'calendar_training_game':
       return [
         createDefaultContentSet(game, runtime, {
@@ -103,6 +120,17 @@ export const getKangurGameContentSetsForGame = (
         }),
       ];
     case 'logical_patterns_workshop_game':
+      if (game.id === 'alphabet_letter_order') {
+        return [
+          createDefaultContentSet(game, runtime, {
+            label: 'Alphabet order set',
+            description:
+              'Feeds alphabet letter ordering rounds into the shared pattern engine.',
+            rendererProps: { patternSetId: 'alphabet_letter_order' },
+          }),
+        ];
+      }
+
       return [
         createDefaultContentSet(game, runtime, {
           label: 'Logical patterns workshop',

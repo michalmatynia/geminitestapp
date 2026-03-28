@@ -4,7 +4,7 @@
 
 import { render, screen } from '@testing-library/react';
 import type { ReactNode } from 'react';
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 
 vi.mock('@vercel/analytics/next', () => ({
   Analytics: () => <div data-testid='kangur-vercel-analytics' />,
@@ -36,7 +36,11 @@ vi.mock('@/shared/lib/security/safe-html', () => ({
 }));
 
 describe('kangur layout', () => {
-  it('mounts vercel analytics once for the shared kangur route boundary', async () => {
+  afterEach(() => {
+    vi.unstubAllEnvs();
+  });
+
+  it('does not mount vercel analytics by default for the shared kangur route boundary', async () => {
     const { default: KangurLayout } = await import('@/app/(frontend)/kangur/layout');
 
     const view = await KangurLayout({
@@ -48,7 +52,7 @@ describe('kangur layout', () => {
     expect(screen.getByTestId('kangur-storefront-appearance-provider')).toBeInTheDocument();
     expect(screen.getByTestId('kangur-surface-class-sync')).toBeInTheDocument();
     expect(screen.getByTestId('kangur-layout-child')).toBeInTheDocument();
-    expect(screen.getAllByTestId('kangur-vercel-analytics')).toHaveLength(1);
+    expect(screen.queryByTestId('kangur-vercel-analytics')).not.toBeInTheDocument();
   });
 
   it('reuses the same analytics-backed shared layout for localized kangur routes', async () => {
@@ -72,6 +76,20 @@ describe('kangur layout', () => {
 
     expect(screen.getByTestId('localized-shared-kangur-layout')).toBeInTheDocument();
     expect(screen.getByTestId('localized-kangur-layout-child')).toBeInTheDocument();
+    expect(screen.getAllByTestId('kangur-vercel-analytics')).toHaveLength(1);
+  });
+
+  it('mounts vercel analytics when explicitly enabled for the shared kangur route boundary', async () => {
+    vi.stubEnv('NEXT_PUBLIC_ENABLE_VERCEL_ANALYTICS', 'true');
+
+    const { default: KangurLayout } = await import('@/app/(frontend)/kangur/layout');
+
+    const view = await KangurLayout({
+      children: <div data-testid='kangur-layout-child' />,
+    });
+
+    render(<>{view}</>);
+
     expect(screen.getAllByTestId('kangur-vercel-analytics')).toHaveLength(1);
   });
 });

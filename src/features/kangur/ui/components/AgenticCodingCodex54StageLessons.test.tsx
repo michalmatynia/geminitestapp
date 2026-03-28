@@ -82,6 +82,47 @@ vi.mock('@/features/kangur/ui/components/AgenticSurfaceMatchGame', () => ({
   ),
 }));
 
+vi.mock('@/features/kangur/ui/components/KangurLaunchableGameInstanceRuntime', () => ({
+  __esModule: true,
+  default: ({
+    gameId,
+    onFinish,
+  }: {
+    gameId: string;
+    onFinish: () => void;
+  }): React.JSX.Element => {
+    const config: Record<
+      string,
+      { testId: string; finishButtonLabel: string }
+    > = {
+      agentic_prompt_trim_stage: {
+        testId: 'mock-agentic-prompt-trim-game',
+        finishButtonLabel: 'Finish prompt trim game',
+      },
+      agentic_approval_gate: {
+        testId: 'mock-agentic-approval-gate-game',
+        finishButtonLabel: 'Finish approval gate game',
+      },
+      agentic_reasoning_router: {
+        testId: 'mock-agentic-reasoning-router-game',
+        finishButtonLabel: 'Finish reasoning router game',
+      },
+      agentic_surface_match: {
+        testId: 'mock-agentic-surface-match-game',
+        finishButtonLabel: 'Finish surface match game',
+      },
+    };
+    const entry = config[gameId];
+    return (
+      <div data-testid={entry?.testId ?? `mock-${gameId}`}>
+        <button type='button' onClick={onFinish}>
+          {entry?.finishButtonLabel ?? `Finish ${gameId}`}
+        </button>
+      </div>
+    );
+  },
+}));
+
 import AgenticCodingCodex54ApprovalsLesson from '@/features/kangur/ui/components/AgenticCodingCodex54ApprovalsLesson';
 import AgenticCodingCodex54ModelsLesson from '@/features/kangur/ui/components/AgenticCodingCodex54ModelsLesson';
 import AgenticCodingCodex54PromptingLesson from '@/features/kangur/ui/components/AgenticCodingCodex54PromptingLesson';
@@ -122,7 +163,7 @@ describe('AgenticCodingCodex54 stage lessons', () => {
       mockTestId: 'mock-agentic-surface-match-game',
       finishButtonLabel: 'Finish surface match game',
     },
-  ])('opens the $title section through the shared lesson-stage runtime and returns to the hub', async ({
+  ])('opens the $title section through the shared launchable instance runtime and returns to the hub', async ({
     Component,
     hubSectionTestId,
     shellTestId,

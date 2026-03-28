@@ -1,15 +1,13 @@
 'use client';
 
-import { getKangurLessonStageGameRuntimeSpec } from '@/features/kangur/games/lesson-stage-runtime-specs';
+import { getKangurBuiltInGameInstanceId } from '@/features/kangur/games';
 import { KangurUnifiedLesson } from '../lessons/lesson-components';
 
 import { HUB_SECTIONS, SLIDES } from './AgenticCodingCodex54PromptingLesson.data';
 
 export { HUB_SECTIONS, SLIDES };
 
-const AGENTIC_PROMPT_TRIM_RUNTIME = getKangurLessonStageGameRuntimeSpec(
-  'agentic_prompt_trim_lesson_stage'
-);
+const AGENTIC_PROMPT_TRIM_INSTANCE_ID = getKangurBuiltInGameInstanceId('agentic_prompt_trim_stage');
 
 export default function AgenticCodingCodex54PromptingLesson(): JSX.Element {
   return (
@@ -35,7 +33,10 @@ export default function AgenticCodingCodex54PromptingLesson(): JSX.Element {
             maxWidthClassName: 'max-w-4xl',
             shellTestId: 'agentic-prompt-trim-game-shell',
           },
-          runtime: AGENTIC_PROMPT_TRIM_RUNTIME,
+          launchableInstance: {
+            gameId: 'agentic_prompt_trim_stage',
+            instanceId: AGENTIC_PROMPT_TRIM_INSTANCE_ID,
+          },
         },
       ]}
       completionSectionId='prompting'

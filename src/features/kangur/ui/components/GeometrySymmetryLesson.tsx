@@ -1,10 +1,12 @@
 'use client';
 
-import { getKangurLessonStageGameRuntimeSpec } from '@/features/kangur/games/lesson-stage-runtime-specs';
+import type { LessonProps } from '@/features/kangur/lessons/lesson-ui-registry';
+import { GEOMETRY_SYMMETRY_LESSON_COMPONENT_CONTENT as CONTENT } from '@/features/kangur/lessons/lesson-template-component-content';
+import { useOptionalKangurLessonTemplate } from '@/features/kangur/ui/context/KangurLessonsRuntimeContext';
+import { getKangurBuiltInGameInstanceId } from '@/features/kangur/games';
 import { useKangurProgressOwnerKey } from '@/features/kangur/ui/hooks/useKangurProgressOwnerKey';
 import { useTranslations } from 'next-intl';
 
-import plMessages from '@/i18n/messages/pl.json';
 import type { LessonSlide } from '@/features/kangur/ui/components/LessonSlideSection';
 import {
   GeometrySymmetryAxesAnimation,
@@ -21,6 +23,10 @@ import {
   createLessonCompletionReward,
   loadProgress,
 } from '@/features/kangur/ui/services/progress';
+import {
+  createGeometrySymmetryLessonTranslate,
+  resolveGeometrySymmetryLessonContent,
+} from './geometry-symmetry-lesson-content';
 
 type SectionId = 'intro' | 'os' | 'figury' | 'podsumowanie' | 'game';
 type SlideSectionId = Exclude<SectionId, 'game'>;
@@ -31,18 +37,6 @@ type SymmetryShapeCardId =
   | 'isoscelesTriangle'
   | 'zigzag'
   | 'irregularPolygon';
-
-const createStaticTranslator = (messages: Record<string, unknown>): LessonTranslate => (key) => {
-  const resolved = key.split('.').reduce<unknown>(
-    (current, segment) =>
-      typeof current === 'object' && current !== null
-        ? (current as Record<string, unknown>)[segment]
-        : undefined,
-    messages
-  );
-
-  return typeof resolved === 'string' ? resolved : key;
-};
 
 const SYMMETRY_SHAPE_CARDS = [
   { id: 'square', icon: '✅', accent: 'emerald' },
@@ -314,20 +308,23 @@ const buildGeometrySymmetrySections = (translations: LessonTranslate) => [
   },
 ] as const;
 
-const translateStaticGeometrySymmetry = createStaticTranslator(
-  plMessages.KangurStaticLessons.geometrySymmetry as Record<string, unknown>
-);
+const translateStaticGeometrySymmetry = createGeometrySymmetryLessonTranslate(CONTENT);
 
 export const SLIDES = buildGeometrySymmetrySlides(translateStaticGeometrySymmetry);
 export const HUB_SECTIONS = buildGeometrySymmetrySections(translateStaticGeometrySymmetry);
-const GEOMETRY_SYMMETRY_RUNTIME = getKangurLessonStageGameRuntimeSpec(
-  'geometry_symmetry_studio_lesson_stage'
-);
+const GEOMETRY_SYMMETRY_INSTANCE_ID = getKangurBuiltInGameInstanceId('geometry_symmetry_studio');
 
-export default function GeometrySymmetryLesson(): React.JSX.Element {
+export default function GeometrySymmetryLesson({ lessonTemplate }: LessonProps): React.JSX.Element {
   const ownerKey = useKangurProgressOwnerKey();
+  const runtimeTemplate = useOptionalKangurLessonTemplate('geometry_symmetry');
+  const resolvedTemplate = lessonTemplate ?? runtimeTemplate;
   const translations = useTranslations('KangurStaticLessons.geometrySymmetry');
-  const translate = (key: string): string => translations(key as never);
+  const fallbackTranslate: LessonTranslate = (key) => translations(key as never);
+  const resolvedContent = resolveGeometrySymmetryLessonContent(
+    resolvedTemplate,
+    fallbackTranslate,
+  );
+  const translate = createGeometrySymmetryLessonTranslate(resolvedContent);
   const sections = buildGeometrySymmetrySections(translate);
   const slides = buildGeometrySymmetrySlides(translate);
 
@@ -342,7 +339,7 @@ export default function GeometrySymmetryLesson(): React.JSX.Element {
       progressMode='panel'
       lessonId='geometry_symmetry'
       lessonEmoji='🪞'
-      lessonTitle={translate('lessonTitle')}
+      lessonTitle={resolvedTemplate?.title?.trim() || translate('lessonTitle')}
       sections={sections}
       slides={slides}
       gradientClass='kangur-gradient-accent-emerald'
@@ -362,7 +359,10 @@ export default function GeometrySymmetryLesson(): React.JSX.Element {
             shellTestId: 'geometry-symmetry-game-shell',
             title: translate('game.stageTitle'),
           },
-          runtime: GEOMETRY_SYMMETRY_RUNTIME,
+          launchableInstance: {
+            gameId: 'geometry_symmetry_studio',
+            instanceId: GEOMETRY_SYMMETRY_INSTANCE_ID,
+          },
         },
       ]}
     />

@@ -21,6 +21,10 @@ type LogicalThinkingSurfaceProps = {
   rx: number;
 };
 
+type LogicalThinkingAnimationProps = {
+  ariaLabel?: string;
+};
+
 function useLogicalThinkingSurfaceIds(prefix: string): LogicalThinkingSurfaceIds {
   const baseId = useId().replace(/:/g, '');
 
@@ -104,12 +108,14 @@ function LogicalThinkingSurface({
   );
 }
 
-export function LogicalThinkingIntroAnimation(): React.JSX.Element {
+export function LogicalThinkingIntroAnimation({
+  ariaLabel,
+}: LogicalThinkingAnimationProps = {}): React.JSX.Element {
   const surfaceIds = useLogicalThinkingSurfaceIds('logical-thinking-intro');
 
   return (
     <svg
-      aria-label='Animacja: kroki logicznego myślenia połączone strzałkami.'
+      aria-label={ariaLabel ?? 'Animacja: kroki logicznego myślenia połączone strzałkami.'}
       className='h-auto w-full'
       data-testid='logical-thinking-intro-animation'
       role='img'
@@ -169,12 +175,14 @@ export function LogicalThinkingIntroAnimation(): React.JSX.Element {
   );
 }
 
-export function LogicalThinkingStepsAnimation(): React.JSX.Element {
+export function LogicalThinkingStepsAnimation({
+  ariaLabel,
+}: LogicalThinkingAnimationProps = {}): React.JSX.Element {
   const surfaceIds = useLogicalThinkingSurfaceIds('logical-thinking-steps');
 
   return (
     <svg
-      aria-label='Animacja: trzy kroki logiki podświetlane po kolei.'
+      aria-label={ariaLabel ?? 'Animacja: trzy kroki logiki podświetlane po kolei.'}
       className='h-auto w-full'
       data-testid='logical-thinking-steps-animation'
       role='img'
@@ -230,14 +238,16 @@ export function LogicalThinkingStepsAnimation(): React.JSX.Element {
   );
 }
 
-export function LogicalPatternAnimation(): React.JSX.Element {
+export function LogicalPatternAnimation({
+  ariaLabel,
+}: LogicalThinkingAnimationProps = {}): React.JSX.Element {
   const surfaceIds = useLogicalThinkingSurfaceIds('logical-thinking-pattern');
   const itemGradientId = `${surfaceIds.panelGradientId}-item`;
   const highlightGradientId = `${surfaceIds.panelGradientId}-highlight`;
 
   return (
     <svg
-      aria-label='Animacja: wzorzec powtarza się w rytmie.'
+      aria-label={ariaLabel ?? 'Animacja: wzorzec powtarza się w rytmie.'}
       className='h-auto w-full'
       data-testid='logical-thinking-pattern-animation'
       role='img'
@@ -289,13 +299,15 @@ export function LogicalPatternAnimation(): React.JSX.Element {
   );
 }
 
-export function LogicalPatternGrowthAnimation(): React.JSX.Element {
+export function LogicalPatternGrowthAnimation({
+  ariaLabel,
+}: LogicalThinkingAnimationProps = {}): React.JSX.Element {
   const surfaceIds = useLogicalThinkingSurfaceIds('logical-thinking-growth');
   const barGradientId = `${surfaceIds.panelGradientId}-bar`;
 
   return (
     <svg
-      aria-label='Animacja: wzorzec rośnie krok po kroku.'
+      aria-label={ariaLabel ?? 'Animacja: wzorzec rośnie krok po kroku.'}
       className='h-auto w-full'
       data-testid='logical-thinking-growth-animation'
       role='img'
@@ -350,12 +362,14 @@ export function LogicalPatternGrowthAnimation(): React.JSX.Element {
   );
 }
 
-export function LogicalClassificationAnimation(): React.JSX.Element {
+export function LogicalClassificationAnimation({
+  ariaLabel,
+}: LogicalThinkingAnimationProps = {}): React.JSX.Element {
   const surfaceIds = useLogicalThinkingSurfaceIds('logical-thinking-classification');
 
   return (
     <svg
-      aria-label='Animacja: elementy trafiają do dwóch grup.'
+      aria-label={ariaLabel ?? 'Animacja: elementy trafiają do dwóch grup.'}
       className='h-auto w-full'
       data-testid='logical-thinking-classification-animation'
       role='img'
@@ -411,12 +425,14 @@ export function LogicalClassificationAnimation(): React.JSX.Element {
   );
 }
 
-export function LogicalClassificationKeyAnimation(): React.JSX.Element {
+export function LogicalClassificationKeyAnimation({
+  ariaLabel,
+}: LogicalThinkingAnimationProps = {}): React.JSX.Element {
   const surfaceIds = useLogicalThinkingSurfaceIds('logical-thinking-key');
 
   return (
     <svg
-      aria-label='Animacja: cecha kieruje elementy do odpowiednich grup.'
+      aria-label={ariaLabel ?? 'Animacja: cecha kieruje elementy do odpowiednich grup.'}
       className='h-auto w-full'
       data-testid='logical-thinking-key-animation'
       role='img'
@@ -478,12 +494,14 @@ export function LogicalClassificationKeyAnimation(): React.JSX.Element {
   );
 }
 
-export function LogicalReasoningAnimation(): React.JSX.Element {
+export function LogicalReasoningAnimation({
+  ariaLabel,
+}: LogicalThinkingAnimationProps = {}): React.JSX.Element {
   const surfaceIds = useLogicalThinkingSurfaceIds('logical-thinking-reasoning');
 
   return (
     <svg
-      aria-label='Animacja: jeśli to prowadzi do wtedy.'
+      aria-label={ariaLabel ?? 'Animacja: jeśli to prowadzi do wtedy.'}
       className='h-auto w-full'
       data-testid='logical-thinking-reasoning-animation'
       role='img'
@@ -531,12 +549,14 @@ export function LogicalReasoningAnimation(): React.JSX.Element {
   );
 }
 
-export function LogicalAnalogiesAnimation(): React.JSX.Element {
+export function LogicalAnalogiesAnimation({
+  ariaLabel,
+}: LogicalThinkingAnimationProps = {}): React.JSX.Element {
   const surfaceIds = useLogicalThinkingSurfaceIds('logical-thinking-analogies');
 
   return (
     <svg
-      aria-label='Animacja: analogia łączy dwie pary.'
+      aria-label={ariaLabel ?? 'Animacja: analogia łączy dwie pary.'}
       className='h-auto w-full'
       data-testid='logical-thinking-analogies-animation'
       role='img'
@@ -586,12 +606,14 @@ export function LogicalAnalogiesAnimation(): React.JSX.Element {
   );
 }
 
-export function LogicalAnalogyMapAnimation(): React.JSX.Element {
+export function LogicalAnalogyMapAnimation({
+  ariaLabel,
+}: LogicalThinkingAnimationProps = {}): React.JSX.Element {
   const surfaceIds = useLogicalThinkingSurfaceIds('logical-thinking-analogy-map');
 
   return (
     <svg
-      aria-label='Animacja: relacja przenosi się z jednej pary na drugą.'
+      aria-label={ariaLabel ?? 'Animacja: relacja przenosi się z jednej pary na drugą.'}
       className='h-auto w-full'
       data-testid='logical-thinking-analogy-map-animation'
       role='img'
@@ -648,12 +670,14 @@ export function LogicalAnalogyMapAnimation(): React.JSX.Element {
   );
 }
 
-export function LogicalSummaryAnimation(): React.JSX.Element {
+export function LogicalSummaryAnimation({
+  ariaLabel,
+}: LogicalThinkingAnimationProps = {}): React.JSX.Element {
   const surfaceIds = useLogicalThinkingSurfaceIds('logical-thinking-summary');
 
   return (
     <svg
-      aria-label='Animacja: podsumowanie kroków logicznego myślenia.'
+      aria-label={ariaLabel ?? 'Animacja: podsumowanie kroków logicznego myślenia.'}
       className='h-auto w-full'
       data-testid='logical-thinking-summary-animation'
       role='img'

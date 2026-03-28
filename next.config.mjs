@@ -28,6 +28,12 @@ const requestedDevBundler =
 const isPlaywrightBrokerRuntime = Boolean(
   process.env.PLAYWRIGHT_RUNTIME_LEASE_KEY || process.env.PLAYWRIGHT_RUNTIME_AGENT_ID
 );
+const explicitBuildCpus = Number.parseInt(process.env.NEXT_BUILD_CPUS ?? '', 10);
+const buildWorkerCpuLimit = Number.isFinite(explicitBuildCpus)
+  ? Math.max(1, explicitBuildCpus)
+  : isVercel
+    ? 4
+    : 2;
 const outputFileTracingExcludes = {
   // These directories hold local runtime artifacts and user data. When server code
   // references them via process.cwd(), @vercel/nft can conservatively trace the
@@ -98,6 +104,11 @@ const nextConfig = {
     removeConsole: process.env.NODE_ENV === 'production',
   },
   experimental: {
+    // Default worker count follows host CPU count, which can fan out page-data
+    // collection aggressively on high-core machines and trigger SIGTERM/OOM
+    // in constrained build environments. Keep production builds on a stable
+    // cap and allow explicit overrides when we want to tune locally.
+    ...(isDev ? {} : { cpus: buildWorkerCpuLimit }),
     // Default proxy body clone limit (~10MB) is too low for multi-image product forms.
     // Raise it so multipart requests don't fail before route handlers read formData().
     proxyClientMaxBodySize: '50mb',

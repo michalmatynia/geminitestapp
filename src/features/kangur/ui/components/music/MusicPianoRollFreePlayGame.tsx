@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 
+import { KANGUR_MUSIC_PIANO_ROLL_WRAPPER_TEST_IDS } from '@/features/kangur/games/music-piano-roll-contract';
 import { KangurButton } from '@/features/kangur/ui/design/primitives';
 import type { KangurMiniGameFinishActionProps } from '@/features/kangur/ui/types';
 
@@ -22,6 +23,9 @@ import {
   type DiatonicNoteId,
 } from './music-theory';
 import { useKangurMusicSynth } from './useKangurMusicSynth';
+
+export const MUSIC_PIANO_ROLL_FREE_PLAY_TEST_IDS =
+  KANGUR_MUSIC_PIANO_ROLL_WRAPPER_TEST_IDS.freePlay;
 
 export default function MusicPianoRollFreePlayGame({
   onFinish,
@@ -196,7 +200,7 @@ export default function MusicPianoRollFreePlayGame({
   }, [clearPressedResetTimeout, stop, stopAllSustainedNotes]);
 
   return (
-    <div className='w-full' data-testid='music-piano-roll-freeplay-game'>
+    <div className='w-full' data-testid={MUSIC_PIANO_ROLL_FREE_PLAY_TEST_IDS.root}>
       <div className='flex w-full flex-col gap-4 px-2 sm:gap-5 sm:px-3'>
         <div className='flex flex-wrap items-center justify-between gap-3 rounded-[28px] border border-sky-200/80 bg-white/88 px-4 py-4 shadow-[0_24px_64px_-48px_rgba(14,116,144,0.5)]'>
           <div className='min-w-0 flex-1'>
@@ -211,13 +215,13 @@ export default function MusicPianoRollFreePlayGame({
           <div className='flex flex-wrap items-center gap-2 text-xs font-bold'>
             <span
               className='rounded-full bg-sky-100 px-3 py-1 text-sky-800'
-              data-testid='music-piano-roll-freeplay-mode'
+              data-testid={MUSIC_PIANO_ROLL_FREE_PLAY_TEST_IDS.modeStatus}
             >
               Tryb: {keyboardMode === 'synth' ? 'synth' : 'piano'}
             </span>
             <span
               className='rounded-full bg-white px-3 py-1 text-slate-700 ring-1 ring-slate-200'
-              data-testid='music-piano-roll-freeplay-audio'
+              data-testid={MUSIC_PIANO_ROLL_FREE_PLAY_TEST_IDS.audioStatus}
             >
               {!isAudioSupported
                 ? 'Audio: niedostepne'
@@ -230,7 +234,7 @@ export default function MusicPianoRollFreePlayGame({
 
         <KangurMusicPianoRoll
           description='Dotykaj dowolnych klawiszy i sprawdzaj, jak zmieniaja sie barwa, glide i vibrato.'
-          keyTestIdPrefix='music-piano-roll-freeplay-key'
+          keyTestIdPrefix={MUSIC_PIANO_ROLL_FREE_PLAY_TEST_IDS.pianoRoll.keyPrefix}
           keyboardMode={keyboardMode}
           keys={DIATONIC_PIANO_KEYS}
           melody={[]}
@@ -244,13 +248,13 @@ export default function MusicPianoRollFreePlayGame({
           onSynthOscSettingsChange={handleSynthOscSettingsChange}
           pressedNoteId={pressedNoteId}
           pressedVelocity={pressedVelocity}
-          shellTestId='music-piano-roll-freeplay-shell'
+          shellTestId={MUSIC_PIANO_ROLL_FREE_PLAY_TEST_IDS.pianoRoll.shell}
           showSynthEnvelopeButton
           showKeyboardModeSwitch
           showMeasureGuides={false}
           showSynthGlideModeSwitch
           showSynthOscSettingsPanel
-          stepTestIdPrefix='music-piano-roll-freeplay-step'
+          stepTestIdPrefix={MUSIC_PIANO_ROLL_FREE_PLAY_TEST_IDS.pianoRoll.stepPrefix}
           synthEnvelope={synthEnvelope}
           synthGlideMode={synthGlideMode}
           synthOsc1Config={osc1Config}
@@ -260,7 +264,7 @@ export default function MusicPianoRollFreePlayGame({
 
         <div className='flex justify-end'>
           <KangurButton
-            data-testid='music-piano-roll-freeplay-finish'
+            data-testid={MUSIC_PIANO_ROLL_FREE_PLAY_TEST_IDS.finishButton}
             onClick={() => {
               stop();
               stopAllSustainedNotes({ immediate: true });

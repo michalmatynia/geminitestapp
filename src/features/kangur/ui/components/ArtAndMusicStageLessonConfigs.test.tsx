@@ -8,6 +8,7 @@ import { NextIntlClientProvider } from 'next-intl';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import plMessages from '@/i18n/messages/pl.json';
+import { getKangurDefaultGameInstanceId } from '@/features/kangur/games';
 
 let capturedProps: Record<string, unknown> | null = null;
 
@@ -20,7 +21,10 @@ vi.mock('@/features/kangur/ui/lessons/lesson-components', () => ({
 
 import ArtColorsHarmonyLesson from '@/features/kangur/ui/components/ArtColorsHarmonyLesson';
 import ArtShapesBasicLesson from '@/features/kangur/ui/components/ArtShapesBasicLesson';
-import MusicDiatonicScaleLesson from '@/features/kangur/ui/components/MusicDiatonicScaleLesson';
+import MusicDiatonicScaleLesson, {
+  MUSIC_DIATONIC_SCALE_GAME_SECTION_CONFIGS,
+  MUSIC_DIATONIC_SCALE_LAUNCHABLE_GAME_IDS,
+} from '@/features/kangur/ui/components/MusicDiatonicScaleLesson';
 import { ART_SHAPES_ROTATION_PUZZLE_SECTION_ID } from '@/features/kangur/ui/components/ArtShapesBasicLesson.data';
 
 describe('art and music stage lesson configs', () => {
@@ -33,41 +37,35 @@ describe('art and music stage lesson configs', () => {
       lessonTitle: 'Harmony of colors',
       Component: ArtColorsHarmonyLesson,
       sectionId: 'gameHarmony',
-      runtimeId: 'art_color_harmony_studio_lesson_stage',
-      rendererId: 'color_harmony_stage_game',
-      engineId: 'color-harmony-engine',
+      launchableGameId: 'art_color_harmony_studio',
       shellTestId: 'art-colors-harmony-game-shell',
     },
     {
       lessonTitle: 'Skala diatoniczna',
       Component: MusicDiatonicScaleLesson,
-      sectionId: 'game_repeat',
-      runtimeId: 'music_melody_repeat_lesson_stage',
-      rendererId: 'music_melody_repeat_game',
-      engineId: 'melody-repeat-engine',
-      shellTestId: 'music-diatonic-scale-game-shell',
+      sectionId: MUSIC_DIATONIC_SCALE_GAME_SECTION_CONFIGS.repeat.sectionId,
+      launchableGameId: MUSIC_DIATONIC_SCALE_GAME_SECTION_CONFIGS.repeat.launchableInstance.gameId,
+      expectedInstanceId: MUSIC_DIATONIC_SCALE_GAME_SECTION_CONFIGS.repeat.launchableInstance.instanceId,
+      shellTestId: MUSIC_DIATONIC_SCALE_GAME_SECTION_CONFIGS.repeat.stage.shellTestId,
     },
     {
       lessonTitle: 'Skala diatoniczna',
       Component: MusicDiatonicScaleLesson,
-      sectionId: 'game_freeplay',
-      runtimeId: 'music_piano_roll_free_play_lesson_stage',
-      rendererId: 'music_piano_roll_free_play_game',
-      engineId: 'piano-roll-engine',
-      shellTestId: 'music-diatonic-scale-freeplay-shell',
+      sectionId: MUSIC_DIATONIC_SCALE_GAME_SECTION_CONFIGS.freePlay.sectionId,
+      launchableGameId: MUSIC_DIATONIC_SCALE_GAME_SECTION_CONFIGS.freePlay.launchableInstance.gameId,
+      expectedInstanceId: MUSIC_DIATONIC_SCALE_GAME_SECTION_CONFIGS.freePlay.launchableInstance.instanceId,
+      shellTestId: MUSIC_DIATONIC_SCALE_GAME_SECTION_CONFIGS.freePlay.stage.shellTestId,
     },
     {
       lessonTitle: 'Podstawowe kształty',
       Component: ArtShapesBasicLesson,
       sectionId: ART_SHAPES_ROTATION_PUZZLE_SECTION_ID,
-      runtimeId: 'art_shape_rotation_puzzle_lesson_stage',
-      rendererId: 'art_shapes_rotation_gap_game',
-      engineId: 'shape-recognition-engine',
+      launchableGameId: 'art_shape_rotation_puzzle',
       shellTestId: 'art-shapes-rotation-gap-game-shell',
     },
   ])(
-    'passes a shared lesson-stage runtime into KangurUnifiedLesson for $sectionId',
-    ({ Component, lessonTitle, sectionId, runtimeId, rendererId, engineId, shellTestId }) => {
+    'passes the expected game wiring into KangurUnifiedLesson for $sectionId',
+    ({ Component, lessonTitle, sectionId, launchableGameId, expectedInstanceId, shellTestId }) => {
       render(
         <NextIntlClientProvider locale='pl' messages={plMessages}>
           <Component />
@@ -81,6 +79,7 @@ describe('art and music stage lesson configs', () => {
           sectionId: string;
           stage: Record<string, unknown>;
           runtime?: { runtimeId?: string; rendererId?: string; engineId?: string };
+          launchableInstance?: { gameId?: string; instanceId?: string };
           render?: unknown;
         }>) ?? [];
       const game = games.find((candidate) => candidate.sectionId === sectionId);
@@ -88,10 +87,9 @@ describe('art and music stage lesson configs', () => {
       expect(game?.stage).toMatchObject({
         shellTestId,
       });
-      expect(game?.runtime).toMatchObject({
-        runtimeId,
-        rendererId,
-        engineId,
+      expect(game?.launchableInstance).toMatchObject({
+        gameId: launchableGameId,
+        instanceId: expectedInstanceId ?? getKangurDefaultGameInstanceId(launchableGameId),
       });
       expect(game).not.toHaveProperty('render');
     }

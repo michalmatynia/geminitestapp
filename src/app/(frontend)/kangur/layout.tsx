@@ -1,6 +1,7 @@
 import { getKangurStorefrontInitialState } from '@/features/kangur/server';
-import { KangurStorefrontAppearanceProvider } from '@/features/kangur/ui/KangurStorefrontAppearanceProvider';
-import { KangurSurfaceClassSync } from '@/features/kangur/ui/KangurSurfaceClassSync';
+import { KangurStorefrontAppearanceProvider } from '@/features/kangur/public';
+import { KangurSurfaceClassSync } from '@/features/kangur/public';
+import { shouldRenderVercelAnalytics } from '@/shared/lib/analytics/vercel-analytics';
 import { safeHtml } from '@/shared/lib/security/safe-html';
 import { Analytics } from '@vercel/analytics/next';
 
@@ -16,6 +17,7 @@ const SURFACE_HINT_SCRIPT =
 
 export default async function Layout({ children }: { children: ReactNode }): Promise<ReactNode> {
   const initialState = await getKangurStorefrontInitialState();
+  const shouldRenderAnalytics = shouldRenderVercelAnalytics();
 
   return (
     <>
@@ -28,7 +30,7 @@ export default async function Layout({ children }: { children: ReactNode }): Pro
       >
         <KangurSurfaceClassSync>{children}</KangurSurfaceClassSync>
       </KangurStorefrontAppearanceProvider>
-      <Analytics />
+      {shouldRenderAnalytics ? <Analytics /> : null}
     </>
   );
 }

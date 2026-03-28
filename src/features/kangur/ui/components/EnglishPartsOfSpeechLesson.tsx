@@ -3,7 +3,7 @@
 import { useTranslations } from 'next-intl';
 import { useMemo } from 'react';
 
-import { getKangurLessonStageGameRuntimeSpec } from '@/features/kangur/games/lesson-stage-runtime-specs';
+import { getKangurBuiltInGameInstanceId } from '@/features/kangur/games';
 import type { LessonSlide } from '@/features/kangur/ui/components/LessonSlideSection';
 import {
   EnglishPossessiveAdjectiveAnimation,
@@ -57,11 +57,11 @@ const POSSESSIVE_PRONOUNS = [
   { word: 'ours', example: 'The final answer is ours.' },
   { word: 'theirs', example: 'The project is theirs.' },
 ];
-const ENGLISH_PRONOUNS_WARMUP_RUNTIME = getKangurLessonStageGameRuntimeSpec(
-  'english_pronouns_warmup_lesson_stage'
+const ENGLISH_PRONOUNS_WARMUP_INSTANCE_ID = getKangurBuiltInGameInstanceId(
+  'english_pronouns_warmup'
 );
-const ENGLISH_PARTS_OF_SPEECH_RUNTIME = getKangurLessonStageGameRuntimeSpec(
-  'english_parts_of_speech_sort_lesson_stage'
+const ENGLISH_PARTS_OF_SPEECH_INSTANCE_ID = getKangurBuiltInGameInstanceId(
+  'english_parts_of_speech_sort'
 );
 
 const buildEnglishPartsOfSpeechSlides = (
@@ -429,7 +429,10 @@ export default function EnglishPartsOfSpeechLesson(): React.JSX.Element {
             headerTestId: 'english-pronouns-warmup-game-header',
             shellTestId: 'english-pronouns-warmup-game-shell',
           },
-          runtime: ENGLISH_PRONOUNS_WARMUP_RUNTIME,
+          launchableInstance: {
+            gameId: 'english_pronouns_warmup',
+            instanceId: ENGLISH_PRONOUNS_WARMUP_INSTANCE_ID,
+          },
         },
         {
           sectionId: 'game_parts_of_speech',
@@ -441,7 +444,10 @@ export default function EnglishPartsOfSpeechLesson(): React.JSX.Element {
             headerTestId: 'english-parts-of-speech-game-header',
             shellTestId: 'english-parts-of-speech-game-shell',
           },
-          runtime: ENGLISH_PARTS_OF_SPEECH_RUNTIME,
+          launchableInstance: {
+            gameId: 'english_parts_of_speech_sort',
+            instanceId: ENGLISH_PARTS_OF_SPEECH_INSTANCE_ID,
+          },
         },
       ]}
     />

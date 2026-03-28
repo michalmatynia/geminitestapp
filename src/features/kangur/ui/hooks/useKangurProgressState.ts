@@ -12,12 +12,23 @@ import {
 const subscribe = (onStoreChange: () => void): (() => void) =>
   subscribeToProgress(() => onStoreChange());
 
-export const useKangurProgressState = () => {
+type UseKangurProgressStateOptions = {
+  enabled?: boolean;
+};
+
+const subscribeDisabled = (): (() => void) => () => {};
+
+export const useKangurProgressState = (options: UseKangurProgressStateOptions = {}) => {
+  const enabled = options.enabled ?? true;
   const ownerKey = useKangurProgressOwnerKey();
   const getSnapshot = useCallback(
-    () => loadProgress({ ownerKey }),
-    [ownerKey]
+    () => (enabled ? loadProgress({ ownerKey }) : getKangurProgressServerSnapshot()),
+    [enabled, ownerKey]
   );
 
-  return useSyncExternalStore(subscribe, getSnapshot, getKangurProgressServerSnapshot);
+  return useSyncExternalStore(
+    enabled ? subscribe : subscribeDisabled,
+    getSnapshot,
+    getKangurProgressServerSnapshot
+  );
 };

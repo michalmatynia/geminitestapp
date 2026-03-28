@@ -9,6 +9,8 @@ import {
   memo,
   type AriaAttributes,
   type ComponentProps,
+  type FocusEventHandler,
+  type MouseEventHandler,
   type ReactNode,
   type Ref,
   useCallback,
@@ -29,7 +31,9 @@ export type KangurNavActionProps = {
   docId?: string;
   elementRef?: Ref<HTMLButtonElement>;
   href?: string;
+  onFocus?: FocusEventHandler<HTMLElement>;
   onClick?: () => void;
+  onMouseEnter?: MouseEventHandler<HTMLElement>;
   prefetch?: boolean;
   targetPageKey?: string;
   testId?: string;
@@ -56,7 +60,9 @@ export const KangurNavAction = memo(function KangurNavAction({
   docId,
   elementRef,
   href,
+  onFocus,
   onClick,
+  onMouseEnter,
   prefetch,
   targetPageKey,
   testId,
@@ -77,7 +83,9 @@ export const KangurNavAction = memo(function KangurNavAction({
     docId,
     elementRef,
     href,
+    onFocus,
     onClick,
+    onMouseEnter,
     prefetch,
     targetPageKey,
     testId,
@@ -97,7 +105,9 @@ export const KangurNavAction = memo(function KangurNavAction({
     docId: resolvedDocId,
     elementRef: resolvedElementRef,
     href: resolvedHref,
+    onFocus: resolvedOnFocus,
     onClick: resolvedOnClick,
+    onMouseEnter: resolvedOnMouseEnter,
     prefetch: resolvedPrefetch,
     targetPageKey: resolvedTargetPageKey,
     testId: resolvedTestId,
@@ -156,8 +166,10 @@ export const KangurNavAction = memo(function KangurNavAction({
     disabled: resolvedDisabled,
     onBlur: handlePressEnd,
     onClick: handleActionClick,
+    onFocus: resolvedOnFocus,
     onKeyDown: handleKeyDown,
     onKeyUp: handleKeyUp,
+    onMouseEnter: resolvedOnMouseEnter,
     onMouseLeave: handlePressEnd,
     onPointerCancel: handlePressEnd,
     onPointerDown: handlePressStart,
@@ -174,6 +186,8 @@ export const KangurNavAction = memo(function KangurNavAction({
   if (resolvedHref) {
     const transitionLinkProps = {
       href: resolvedHref,
+      onFocus: resolvedOnFocus,
+      onMouseEnter: resolvedOnMouseEnter,
       prefetch: resolvedPrefetch,
       targetPageKey: resolvedTargetPageKey,
       transitionAcknowledgeMs: resolvedTransition?.acknowledgeMs,

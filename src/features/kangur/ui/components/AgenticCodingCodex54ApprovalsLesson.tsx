@@ -1,15 +1,13 @@
 'use client';
 
-import { getKangurLessonStageGameRuntimeSpec } from '@/features/kangur/games/lesson-stage-runtime-specs';
+import { getKangurBuiltInGameInstanceId } from '@/features/kangur/games';
 import { KangurUnifiedLesson } from '../lessons/lesson-components';
 
 import { HUB_SECTIONS, SLIDES } from './AgenticCodingCodex54ApprovalsLesson.data';
 
 export { HUB_SECTIONS, SLIDES };
 
-const AGENTIC_APPROVAL_GATE_RUNTIME = getKangurLessonStageGameRuntimeSpec(
-  'agentic_approval_gate_lesson_stage'
-);
+const AGENTIC_APPROVAL_GATE_INSTANCE_ID = getKangurBuiltInGameInstanceId('agentic_approval_gate');
 
 export default function AgenticCodingCodex54ApprovalsLesson(): JSX.Element {
   return (
@@ -35,7 +33,10 @@ export default function AgenticCodingCodex54ApprovalsLesson(): JSX.Element {
             maxWidthClassName: 'max-w-4xl',
             shellTestId: 'agentic-approval-gate-game-shell',
           },
-          runtime: AGENTIC_APPROVAL_GATE_RUNTIME,
+          launchableInstance: {
+            gameId: 'agentic_approval_gate',
+            instanceId: AGENTIC_APPROVAL_GATE_INSTANCE_ID,
+          },
         },
       ]}
       completionSectionId='approvals'

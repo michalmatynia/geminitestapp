@@ -6,6 +6,10 @@ import {
   getKangurLaunchableGameRuntimeSpec,
   KANGUR_LAUNCHABLE_GAME_RUNTIME_SPECS,
 } from './launchable-runtime-specs';
+import {
+  KANGUR_MUSIC_PIANO_ROLL_LAUNCHABLE_RUNTIME_CONFIGS,
+  KANGUR_MUSIC_PIANO_ROLL_LAUNCHABLE_RUNTIME_IDS,
+} from './music-piano-roll-contract';
 import { kangurLaunchableGameRuntimeSpecSchema } from '@/shared/contracts/kangur-games';
 
 describe('launchable runtime specs', () => {
@@ -42,9 +46,25 @@ describe('launchable runtime specs', () => {
       expect.arrayContaining([
         'clock_quiz',
         'logical_patterns_quiz',
-        'music_melody_repeat_quiz',
-        'music_piano_roll_free_play_quiz',
+        KANGUR_MUSIC_PIANO_ROLL_LAUNCHABLE_RUNTIME_IDS.repeat,
+        KANGUR_MUSIC_PIANO_ROLL_LAUNCHABLE_RUNTIME_IDS.freePlay,
       ])
     );
+  });
+
+  it('derives the shared music launchable specs from one runtime config contract', () => {
+    for (const config of Object.values(KANGUR_MUSIC_PIANO_ROLL_LAUNCHABLE_RUNTIME_CONFIGS)) {
+      expect(getKangurLaunchableGameRuntimeSpec(config.screen)).toEqual(
+        expect.objectContaining({
+          engineId: config.engineId,
+          rendererId: config.rendererId,
+          screen: config.screen,
+          stage: expect.objectContaining({
+            icon: config.stage.icon,
+            shellTestId: config.stage.shellTestId,
+          }),
+        })
+      );
+    }
   });
 });

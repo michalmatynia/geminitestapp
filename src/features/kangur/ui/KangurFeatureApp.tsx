@@ -71,6 +71,11 @@ const BOOT_SKELETON_MIN_VISIBLE_MS = 120;
 const NAVIGATION_SKELETON_DELAY_MS = 0;
 const LANGUAGE_SWITCHER_TRANSITION_SOURCE_ID = 'kangur-language-switcher';
 const HOT_ROUTE_PRELOAD_TIMEOUT_MS = 1_500;
+const HOT_ROUTE_PRELOAD_TIMEOUTS: Readonly<Partial<Record<KangurPreloadPageKey, number>>> =
+  Object.freeze({
+    Game: 250,
+    Lessons: 250,
+  });
 type KangurPreloadPageKey = Parameters<typeof preloadKangurPage>[0];
 const KANGUR_PRELOAD_PAGE_KEYS: ReadonlyArray<KangurPreloadPageKey> = [
   'Competition',
@@ -337,6 +342,7 @@ const AuthenticatedApp = (): JSX.Element | null => {
     if (nextTargets.length === 0) {
       return;
     }
+    const preloadTimeoutMs = HOT_ROUTE_PRELOAD_TIMEOUTS[resolvedPageKey] ?? HOT_ROUTE_PRELOAD_TIMEOUT_MS;
 
     const preload = (): void => {
       nextTargets.forEach((target: KangurPreloadPageKey) => {
@@ -347,7 +353,7 @@ const AuthenticatedApp = (): JSX.Element | null => {
 
     if (typeof window.requestIdleCallback === 'function') {
       const idleId = window.requestIdleCallback(preload, {
-        timeout: HOT_ROUTE_PRELOAD_TIMEOUT_MS,
+        timeout: preloadTimeoutMs,
       });
       return () => {
         window.cancelIdleCallback?.(idleId);

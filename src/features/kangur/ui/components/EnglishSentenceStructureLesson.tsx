@@ -3,7 +3,7 @@
 import { useTranslations } from 'next-intl';
 import { useMemo } from 'react';
 
-import { getKangurLessonStageGameRuntimeSpec } from '@/features/kangur/games/lesson-stage-runtime-specs';
+import { getKangurBuiltInGameInstanceId } from '@/features/kangur/games';
 import type { LessonSlide } from '@/features/kangur/ui/components/LessonSlideSection';
 import {
   EnglishConnectorBridgeAnimation,
@@ -35,8 +35,8 @@ type SectionId =
   | 'practice'
   | 'game'
   | 'summary';
-const ENGLISH_SENTENCE_STRUCTURE_RUNTIME = getKangurLessonStageGameRuntimeSpec(
-  'english_sentence_builder_lesson_stage'
+const ENGLISH_SENTENCE_STRUCTURE_INSTANCE_ID = getKangurBuiltInGameInstanceId(
+  'english_sentence_builder'
 );
 
 const buildEnglishSentenceStructureSlides = (
@@ -296,7 +296,10 @@ export default function EnglishSentenceStructureLesson(): React.JSX.Element {
             headerTestId: 'english-sentence-structure-game-header',
             shellTestId: 'english-sentence-structure-game-shell',
           },
-          runtime: ENGLISH_SENTENCE_STRUCTURE_RUNTIME,
+          launchableInstance: {
+            gameId: 'english_sentence_builder',
+            instanceId: ENGLISH_SENTENCE_STRUCTURE_INSTANCE_ID,
+          },
         },
       ]}
     />

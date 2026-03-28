@@ -256,6 +256,10 @@ export const KangurAuthProvider = ({ children }: { children: ReactNode }): React
     // and the 1.5 s timeout race on first load.
     const cachedUser = readKangurAuthBootstrapCache();
     if (typeof cachedUser !== 'undefined') {
+      if (cachedUser === null) {
+        return;
+      }
+
       // Background revalidation — update state only if the result differs.
       void kangurPlatform.auth.me().then(
         (freshUser) => {

@@ -2,7 +2,7 @@ import type { KangurGameDefinition } from '@/shared/contracts/kangur-games';
 
 import {
   createAgenticInlineGame,
-  createAgenticStageGame,
+  createAgenticLessonVariantGame,
   createVariant,
   withAgenticTags,
 } from './factories';
@@ -71,7 +71,7 @@ export const KANGUR_GROWN_UP_GAMES: readonly KangurGameDefinition[] = [
     emoji: '🧩',
     mechanic: 'logic_classification',
     interactionMode: 'tap',
-    surfaces: ['lesson', 'library'],
+    surfaces: ['lesson', 'library', 'game'],
     tags: withAgenticTags('surfaces', 'routing', 'selection'),
     variants: [
       createVariant({
@@ -84,12 +84,11 @@ export const KANGUR_GROWN_UP_GAMES: readonly KangurGameDefinition[] = [
       }),
       createVariant({
         id: 'agentic_surface_match.lesson-stage',
-        label: 'Lesson stage',
-        title: 'Surface Match as a lesson stage',
+        label: 'Lesson variant',
+        title: 'Surface Match as a lesson variant',
         description:
-          'Stage variant for Surface Match, shared between the Codex surfaces lesson flow and the games library.',
+          'Lesson-facing variant for Surface Match, shared between the Codex surfaces lesson flow and the games library.',
         surface: 'lesson_stage',
-        lessonStageRuntimeId: 'agentic_surface_match_lesson_stage',
         sortOrder: 50,
       }),
       createVariant({
@@ -99,6 +98,15 @@ export const KANGUR_GROWN_UP_GAMES: readonly KangurGameDefinition[] = [
         description: 'Catalog preview for Surface Match in the shared games library.',
         surface: 'library_preview',
         sortOrder: 100,
+      }),
+      createVariant({
+        id: 'agentic_surface_match.game-screen',
+        label: 'Game screen',
+        title: 'Surface Match fullscreen',
+        description: 'Launches Surface Match through the shared standalone game runtime.',
+        surface: 'game_screen',
+        launchableRuntimeId: 'agentic_surface_match_quiz',
+        sortOrder: 200,
       }),
     ],
     status: 'active',
@@ -140,7 +148,7 @@ export const KANGUR_GROWN_UP_GAMES: readonly KangurGameDefinition[] = [
     tags: withAgenticTags('prompting', 'tokens', 'editing'),
     sortOrder: 2070,
   }),
-  createAgenticStageGame({
+  createAgenticLessonVariantGame({
     id: 'agentic_prompt_trim_stage',
     engineId: 'token-trim-engine',
     lessonComponentIds: ['agentic_coding_codex_5_4_prompting'],
@@ -149,7 +157,7 @@ export const KANGUR_GROWN_UP_GAMES: readonly KangurGameDefinition[] = [
     emoji: '🪄',
     mechanic: 'tap_select',
     interactionMode: 'tap',
-    lessonStageRuntimeId: 'agentic_prompt_trim_lesson_stage',
+    launchableRuntimeId: 'agentic_prompt_trim_quiz',
     tags: withAgenticTags('prompting', 'trim', 'focus'),
     sortOrder: 2080,
   }),
@@ -201,7 +209,7 @@ export const KANGUR_GROWN_UP_GAMES: readonly KangurGameDefinition[] = [
     tags: withAgenticTags('approvals', 'diagram', 'risk'),
     sortOrder: 2120,
   }),
-  createAgenticStageGame({
+  createAgenticLessonVariantGame({
     id: 'agentic_approval_gate',
     engineId: 'classification-engine',
     lessonComponentIds: ['agentic_coding_codex_5_4_approvals'],
@@ -210,7 +218,7 @@ export const KANGUR_GROWN_UP_GAMES: readonly KangurGameDefinition[] = [
     emoji: '🚦',
     mechanic: 'logic_classification',
     interactionMode: 'tap',
-    lessonStageRuntimeId: 'agentic_approval_gate_lesson_stage',
+    launchableRuntimeId: 'agentic_approval_gate_quiz',
     tags: withAgenticTags('approvals', 'gating', 'safety'),
     sortOrder: 2130,
   }),
@@ -334,7 +342,7 @@ export const KANGUR_GROWN_UP_GAMES: readonly KangurGameDefinition[] = [
     tags: withAgenticTags('models', 'routing', 'reasoning'),
     sortOrder: 2230,
   }),
-  createAgenticStageGame({
+  createAgenticLessonVariantGame({
     id: 'agentic_reasoning_router',
     engineId: 'classification-engine',
     lessonComponentIds: ['agentic_coding_codex_5_4_models'],
@@ -343,7 +351,7 @@ export const KANGUR_GROWN_UP_GAMES: readonly KangurGameDefinition[] = [
     emoji: '🎛️',
     mechanic: 'logic_classification',
     interactionMode: 'tap',
-    lessonStageRuntimeId: 'agentic_reasoning_router_lesson_stage',
+    launchableRuntimeId: 'agentic_reasoning_router_quiz',
     tags: withAgenticTags('models', 'routing', 'classification'),
     sortOrder: 2240,
   }),

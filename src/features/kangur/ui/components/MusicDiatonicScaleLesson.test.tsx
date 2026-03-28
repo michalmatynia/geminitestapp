@@ -43,30 +43,37 @@ vi.mock('@/features/kangur/ui/learner-activity/hooks', async (importOriginal) =>
   };
 });
 
-vi.mock('@/features/kangur/ui/components/music/MusicMelodyRepeatGame', () => ({
+vi.mock('@/features/kangur/ui/components/KangurLaunchableGameInstanceRuntime', () => ({
   __esModule: true,
-  default: ({ onFinish }: { onFinish: () => void }): React.JSX.Element => (
-    <div data-testid='mock-music-melody-repeat-game'>
+  default: ({
+    gameId,
+    instanceId,
+    onFinish,
+  }: {
+    gameId: string;
+    instanceId: string;
+    onFinish: () => void;
+  }): React.JSX.Element => (
+    <div data-testid='mock-music-diatonic-scale-instance-runtime'>
+      <span data-testid='mock-music-diatonic-scale-game-id'>{gameId}</span>
+      <span data-testid='mock-music-diatonic-scale-instance-id'>{instanceId}</span>
       <button type='button' onClick={onFinish}>
-        Finish music training
+        Finish music runtime
       </button>
     </div>
   ),
 }));
 
-vi.mock('@/features/kangur/ui/components/music/MusicPianoRollFreePlayGame', () => ({
-  __esModule: true,
-  default: ({ onFinish }: { onFinish: () => void }): React.JSX.Element => (
-    <div data-testid='mock-music-piano-roll-freeplay-game'>
-      <button type='button' onClick={onFinish}>
-        Finish freeplay
-      </button>
-    </div>
-  ),
-}));
-
-import MusicDiatonicScaleLesson from '@/features/kangur/ui/components/MusicDiatonicScaleLesson';
+import MusicDiatonicScaleLesson, {
+  MUSIC_DIATONIC_SCALE_GAME_SECTION_CONFIGS,
+  MUSIC_DIATONIC_SCALE_LAUNCHABLE_GAME_IDS,
+  MUSIC_DIATONIC_SCALE_LAUNCHABLE_INSTANCE_IDS,
+} from '@/features/kangur/ui/components/MusicDiatonicScaleLesson';
 import { KANGUR_MUSIC_PIANO_ROLL_MOTION_HOOKS } from '@/features/kangur/ui/components/music/KangurMusicPianoRoll';
+import {
+  MUSIC_DIATONIC_SCALE_PREVIEW_TEST_IDS,
+  MUSIC_DIATONIC_SCALE_SECTION_IDS,
+} from '@/features/kangur/ui/components/music-diatonic-scale-lesson-content';
 import { KangurLessonNavigationProvider } from '@/features/kangur/ui/context/KangurLessonNavigationContext';
 
 const renderWithIntl = (element: ReactElement) =>
@@ -140,13 +147,19 @@ describe('MusicDiatonicScaleLesson', () => {
       </KangurLessonNavigationProvider>
     );
 
-    expect(screen.getByTestId('lesson-hub-section-game_repeat')).toBeInTheDocument();
+    expect(
+      screen.getByTestId(`lesson-hub-section-${MUSIC_DIATONIC_SCALE_SECTION_IDS.repeatGame}`)
+    ).toBeInTheDocument();
     expect(screen.getByText('Powtorz melodie')).toBeInTheDocument();
 
-    fireEvent.click(screen.getByTestId('lesson-hub-section-game_repeat'));
+    fireEvent.click(
+      screen.getByTestId(`lesson-hub-section-${MUSIC_DIATONIC_SCALE_SECTION_IDS.repeatGame}`)
+    );
 
     await waitFor(() => {
-      expect(screen.getByTestId('music-diatonic-scale-game-shell')).toBeInTheDocument();
+      expect(
+        screen.getByTestId(MUSIC_DIATONIC_SCALE_GAME_SECTION_CONFIGS.repeat.stage.shellTestId)
+      ).toBeInTheDocument();
     });
 
     expect(scrollToMock).toHaveBeenCalledWith({
@@ -154,12 +167,19 @@ describe('MusicDiatonicScaleLesson', () => {
       left: 0,
       behavior: 'smooth',
     });
-    expect(screen.getByTestId('mock-music-melody-repeat-game')).toBeInTheDocument();
+    expect(screen.getByTestId('mock-music-diatonic-scale-game-id')).toHaveTextContent(
+      MUSIC_DIATONIC_SCALE_LAUNCHABLE_GAME_IDS.repeat
+    );
+    expect(screen.getByTestId('mock-music-diatonic-scale-instance-id')).toHaveTextContent(
+      MUSIC_DIATONIC_SCALE_LAUNCHABLE_INSTANCE_IDS.repeat
+    );
 
-    fireEvent.click(screen.getByRole('button', { name: 'Finish music training' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Finish music runtime' }));
 
     await waitFor(() => {
-      expect(screen.getByTestId('lesson-hub-section-game_repeat')).toBeInTheDocument();
+      expect(
+        screen.getByTestId(`lesson-hub-section-${MUSIC_DIATONIC_SCALE_SECTION_IDS.repeatGame}`)
+      ).toBeInTheDocument();
     });
   });
 
@@ -172,21 +192,34 @@ describe('MusicDiatonicScaleLesson', () => {
       </KangurLessonNavigationProvider>
     );
 
-    expect(screen.getByTestId('lesson-hub-section-game_freeplay')).toBeInTheDocument();
+    expect(
+      screen.getByTestId(`lesson-hub-section-${MUSIC_DIATONIC_SCALE_SECTION_IDS.freePlayGame}`)
+    ).toBeInTheDocument();
     expect(screen.getByText('Swobodna gra')).toBeInTheDocument();
 
-    fireEvent.click(screen.getByTestId('lesson-hub-section-game_freeplay'));
+    fireEvent.click(
+      screen.getByTestId(`lesson-hub-section-${MUSIC_DIATONIC_SCALE_SECTION_IDS.freePlayGame}`)
+    );
 
     await waitFor(() => {
-      expect(screen.getByTestId('music-diatonic-scale-freeplay-shell')).toBeInTheDocument();
+      expect(
+        screen.getByTestId(MUSIC_DIATONIC_SCALE_GAME_SECTION_CONFIGS.freePlay.stage.shellTestId)
+      ).toBeInTheDocument();
     });
 
-    expect(screen.getByTestId('mock-music-piano-roll-freeplay-game')).toBeInTheDocument();
+    expect(screen.getByTestId('mock-music-diatonic-scale-game-id')).toHaveTextContent(
+      MUSIC_DIATONIC_SCALE_LAUNCHABLE_GAME_IDS.freePlay
+    );
+    expect(screen.getByTestId('mock-music-diatonic-scale-instance-id')).toHaveTextContent(
+      MUSIC_DIATONIC_SCALE_LAUNCHABLE_INSTANCE_IDS.freePlay
+    );
 
-    fireEvent.click(screen.getByRole('button', { name: 'Finish freeplay' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Finish music runtime' }));
 
     await waitFor(() => {
-      expect(screen.getByTestId('lesson-hub-section-game_freeplay')).toBeInTheDocument();
+      expect(
+        screen.getByTestId(`lesson-hub-section-${MUSIC_DIATONIC_SCALE_SECTION_IDS.freePlayGame}`)
+      ).toBeInTheDocument();
     });
   });
 
@@ -197,7 +230,7 @@ describe('MusicDiatonicScaleLesson', () => {
       </KangurLessonNavigationProvider>
     );
 
-    fireEvent.click(screen.getByTestId('lesson-hub-section-notes'));
+    fireEvent.click(screen.getByTestId(`lesson-hub-section-${MUSIC_DIATONIC_SCALE_SECTION_IDS.notes}`));
 
     await waitFor(() => {
       expect(screen.getByText('Poznaj dzwieki skali')).toBeInTheDocument();
@@ -207,16 +240,24 @@ describe('MusicDiatonicScaleLesson', () => {
 
     await waitFor(() => {
       expect(screen.getByText('Kolory pomagaja zapamietac melodie')).toBeInTheDocument();
-      expect(screen.getByTestId('music-diatonic-scale-preview-roll')).toBeInTheDocument();
+      expect(screen.getByTestId(MUSIC_DIATONIC_SCALE_PREVIEW_TEST_IDS.shell)).toBeInTheDocument();
     });
 
-    expect(screen.getByTestId('music-diatonic-scale-preview-roll')).toHaveClass(
+    expect(screen.getByTestId(MUSIC_DIATONIC_SCALE_PREVIEW_TEST_IDS.shell)).toHaveClass(
       KANGUR_MUSIC_PIANO_ROLL_MOTION_HOOKS.engineClassName
     );
-    expect(screen.getByTestId('kangur-music-piano-key-do')).toHaveClass(
+    expect(
+      screen.getByTestId(`${MUSIC_DIATONIC_SCALE_PREVIEW_TEST_IDS.keyPrefix}-do`)
+    ).toHaveClass(
       KANGUR_MUSIC_PIANO_ROLL_MOTION_HOOKS.keyClassName
     );
-    expect(screen.getByTestId('kangur-music-piano-step-measure-3')).toHaveTextContent('Takt 3');
-    expect(screen.getByTestId('kangur-music-piano-step-7')).toHaveAttribute('data-span', '3');
+    expect(
+      screen.getByTestId(`${MUSIC_DIATONIC_SCALE_PREVIEW_TEST_IDS.stepPrefix}-measure-3`)
+    ).toHaveTextContent(
+      'Takt 3'
+    );
+    expect(
+      screen.getByTestId(`${MUSIC_DIATONIC_SCALE_PREVIEW_TEST_IDS.stepPrefix}-7`)
+    ).toHaveAttribute('data-span', '3');
   });
 });

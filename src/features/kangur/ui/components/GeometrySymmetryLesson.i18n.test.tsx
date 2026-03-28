@@ -20,6 +20,7 @@ vi.mock('@/features/kangur/ui/lessons/lesson-components', () => ({
 }));
 
 import deMessages from '@/i18n/messages/de.json';
+import { getKangurBuiltInGameInstanceId } from '@/features/kangur/games';
 import GeometrySymmetryLesson from '@/features/kangur/ui/components/GeometrySymmetryLesson';
 
 type CapturedSlide = {
@@ -48,6 +49,7 @@ describe('GeometrySymmetryLesson i18n', () => {
         sectionId: string;
         stage: Record<string, unknown>;
         runtime?: { runtimeId?: string; rendererId?: string };
+        launchableInstance?: { gameId?: string; instanceId?: string };
       }>) ?? [];
 
     expect(sections.find((section) => section.id === 'os')).toMatchObject({
@@ -62,9 +64,9 @@ describe('GeometrySymmetryLesson i18n', () => {
     expect(games.find((game) => game.sectionId === 'game')?.stage).toMatchObject({
       title: 'Symmetrie-Spiegel',
     });
-    expect(games.find((game) => game.sectionId === 'game')?.runtime).toMatchObject({
-      runtimeId: 'geometry_symmetry_studio_lesson_stage',
-      rendererId: 'geometry_symmetry_game',
+    expect(games.find((game) => game.sectionId === 'game')?.launchableInstance).toMatchObject({
+      gameId: 'geometry_symmetry_studio',
+      instanceId: getKangurBuiltInGameInstanceId('geometry_symmetry_studio'),
     });
 
     expect(slides.intro?.[0]?.title).toBe('Was ist Symmetrie?');

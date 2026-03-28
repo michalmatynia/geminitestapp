@@ -1,4 +1,4 @@
-import { renderAccessibleKangurAliasRoute } from '@/features/kangur/server/alias-shell-page';
+import { renderAccessibleKangurAliasRoute } from '@/features/kangur/server';
 
 type LocalizedKangurAliasPageProps = {
   params: Promise<{ locale: string; slug?: string[] }>;

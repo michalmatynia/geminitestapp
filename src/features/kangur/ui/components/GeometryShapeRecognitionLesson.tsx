@@ -1,10 +1,12 @@
 'use client';
 
+import type { LessonProps } from '@/features/kangur/lessons/lesson-ui-registry';
+import { useOptionalKangurLessonTemplate } from '@/features/kangur/ui/context/KangurLessonsRuntimeContext';
 import type * as React from 'react';
 import { useMemo } from 'react';
-import { useTranslations } from 'next-intl';
+import { useMessages } from 'next-intl';
 
-import { getKangurLessonStageGameRuntimeSpec } from '@/features/kangur/games/lesson-stage-runtime-specs';
+import { getKangurBuiltInGameInstanceId } from '@/features/kangur/games';
 import type { LessonSlide } from '@/features/kangur/ui/components/LessonSlideSection';
 import {
   KangurLessonCallout,
@@ -22,17 +24,22 @@ import {
   ShapeIcon,
   type ShapeDefinition,
 } from './GeometryShapeRecognition.shared';
+import {
+  createGeometryShapeRecognitionMessageTranslate,
+  createGeometryShapeRecognitionLessonTranslate,
+  resolveGeometryShapeRecognitionLessonContent,
+} from './geometry-shape-recognition-lesson-content';
 import type { LessonTranslate } from './lesson-copy';
 
 export { ShapeIcon } from './GeometryShapeRecognition.shared';
 
 type SectionId = 'intro' | 'practice' | 'draw' | 'summary';
 
-const GEOMETRY_SHAPE_SPOTTER_RUNTIME = getKangurLessonStageGameRuntimeSpec(
-  'geometry_shape_spotter_lesson_stage'
+const GEOMETRY_SHAPE_SPOTTER_INSTANCE_ID = getKangurBuiltInGameInstanceId(
+  'geometry_shape_spotter'
 );
-const GEOMETRY_SHAPE_DRAWING_RUNTIME = getKangurLessonStageGameRuntimeSpec(
-  'geometry_shape_drawing_lesson_stage'
+const GEOMETRY_SHAPE_DRAWING_INSTANCE_ID = getKangurBuiltInGameInstanceId(
+  'geometry_shape_workshop'
 );
 
 const buildSections = (translate: LessonTranslate) =>
@@ -46,7 +53,7 @@ const buildSections = (translate: LessonTranslate) =>
     {
       id: 'practice',
       emoji: '🎯',
-      title: translate('practiceSlide.title'),
+      title: translate('practice.slideTitle'),
       description: translate('sections.practice.description'),
       isGame: true,
     },
@@ -136,19 +143,42 @@ const buildSlides = (
   ],
 });
 
-export default function GeometryShapeRecognitionLesson(): React.JSX.Element {
-  const translations = useTranslations('KangurStaticLessons.geometryShapeRecognition');
-  const translate: LessonTranslate = (key, values) => translations(key as never, values as never);
-  const shapes = useMemo(() => buildGeometryShapeDefinitions(translate), [translations]);
-  const sections = useMemo(() => buildSections(translate), [translations]);
-  const slides = useMemo(() => buildSlides(shapes, translate), [shapes, translations]);
+export default function GeometryShapeRecognitionLesson({
+  lessonTemplate,
+}: LessonProps): React.JSX.Element {
+  const runtimeTemplate = useOptionalKangurLessonTemplate('geometry_shape_recognition');
+  const resolvedTemplate = lessonTemplate ?? runtimeTemplate;
+  const messages = useMessages() as Record<string, unknown>;
+  const fallbackTranslate = useMemo<LessonTranslate>(() => {
+    const staticLessons = messages['KangurStaticLessons'];
+    const lessonMessages =
+      staticLessons && typeof staticLessons === 'object' && !Array.isArray(staticLessons)
+        ? (((staticLessons as Record<string, unknown>)['geometryShapeRecognition'] as
+            | Record<string, unknown>
+            | undefined) ??
+          {})
+        : {};
+
+    return createGeometryShapeRecognitionMessageTranslate(lessonMessages);
+  }, [messages]);
+  const resolvedContent = useMemo(
+    () => resolveGeometryShapeRecognitionLessonContent(resolvedTemplate, fallbackTranslate),
+    [fallbackTranslate, resolvedTemplate],
+  );
+  const translate = useMemo(
+    () => createGeometryShapeRecognitionLessonTranslate(resolvedContent),
+    [resolvedContent],
+  );
+  const shapes = useMemo(() => buildGeometryShapeDefinitions(translate), [translate]);
+  const sections = useMemo(() => buildSections(translate), [translate]);
+  const slides = useMemo(() => buildSlides(shapes, translate), [shapes, translate]);
 
   return (
     <KangurUnifiedLesson
       progressMode='panel'
       lessonId='geometry_shape_recognition'
       lessonEmoji='🔷'
-      lessonTitle={translate('lessonTitle')}
+      lessonTitle={resolvedTemplate?.title?.trim() || translate('lessonTitle')}
       sections={sections}
       slides={slides}
       gradientClass='kangur-gradient-accent-emerald'
@@ -161,13 +191,16 @@ export default function GeometryShapeRecognitionLesson(): React.JSX.Element {
           sectionId: 'practice',
           stage: {
             accent: 'emerald',
-            title: translate('practiceSlide.title'),
+            title: translate('practice.slideTitle'),
             description: translate('sections.practice.description'),
             icon: '🎯',
             maxWidthClassName: 'max-w-3xl',
             shellTestId: 'geometry-shape-recognition-practice-shell',
           },
-          runtime: GEOMETRY_SHAPE_SPOTTER_RUNTIME,
+          launchableInstance: {
+            gameId: 'geometry_shape_spotter',
+            instanceId: GEOMETRY_SHAPE_SPOTTER_INSTANCE_ID,
+          },
         },
         {
           sectionId: 'draw',
@@ -179,7 +212,10 @@ export default function GeometryShapeRecognitionLesson(): React.JSX.Element {
             maxWidthClassName: 'max-w-3xl',
             shellTestId: 'geometry-shape-recognition-draw-shell',
           },
-          runtime: GEOMETRY_SHAPE_DRAWING_RUNTIME,
+          launchableInstance: {
+            gameId: 'geometry_shape_workshop',
+            instanceId: GEOMETRY_SHAPE_DRAWING_INSTANCE_ID,
+          },
         },
       ]}
     />

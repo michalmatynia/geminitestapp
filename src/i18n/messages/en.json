@@ -1195,7 +1195,7 @@
       "cohortsLabel": "Cohorts",
       "subjectsLabel": "Subjects",
       "coveredLessonsLabel": "Covered lessons",
-      "fallbackOnlyLessonsLabel": "Fallback-only lessons",
+      "uncoveredLessonsLabel": "Uncovered lessons",
       "groups": {
         "library_backed": {
           "eyebrow": "Shared catalog",
@@ -1206,11 +1206,6 @@
           "eyebrow": "Fullscreen runtime",
           "title": "Launchable lessons",
           "description": "Lesson components that should keep a direct fullscreen game route alongside their shared catalog entry."
-        },
-        "selector_fallback": {
-          "eyebrow": "Selector hub",
-          "title": "Selector-only lessons",
-          "description": "Lesson components that currently route into the subject-aware game selector instead of a dedicated fullscreen game."
         }
       }
     },
@@ -1610,7 +1605,7 @@
     },
     "variantSurfaces": {
       "lesson_inline": "Lesson inline",
-      "lesson_stage": "Lesson stage",
+      "lesson_stage": "Lesson variant",
       "library_preview": "Library preview",
       "game_screen": "Game screen"
     },
@@ -1639,7 +1634,6 @@
     "lessonCoverageStatuses": {
       "launchable": "launchable",
       "library_backed": "library-backed",
-      "selector_fallback": "selector fallback",
       "lesson_only": "lesson only"
     },
     "mechanics": {

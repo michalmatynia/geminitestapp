@@ -24,7 +24,12 @@ describe('kangur game library page data', () => {
         group.subjects.every((subject) => subject === 'maths')
       )
     ).toBe(true);
-    expect(pageData.coverage.groups[0]?.entries.length).toBe(globalCatalogEntries.length);
+    expect(pageData.coverage.groups.map((group) => group.id)).toEqual([
+      'library_backed',
+      'launchable',
+    ]);
+    expect(pageData.coverage.statusMap.division).toBe('launchable');
+    expect(pageData.coverage.statusMap.art_shapes_basic).toBe('launchable');
     expect(pageData.catalogFacets.gameCount).toBe(globalCatalogEntries.length);
     expect(pageData.catalogFacets.games).toHaveLength(globalCatalogEntries.length);
     expect(pageData.catalogFacets.games.some((game) => game.id === 'division_groups')).toBe(true);

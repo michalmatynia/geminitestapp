@@ -38,15 +38,6 @@ const getSerializationStateForVariant = (
         missingRuntimeVariants: !hasExplicitRuntime && !hasLegacyFallback ? 1 : 0,
       };
     }
-    case 'lesson_stage': {
-      const hasExplicitRuntime = Boolean(variant.lessonStageRuntimeId);
-      return {
-        explicitRuntimeVariants: hasExplicitRuntime ? 1 : 0,
-        compatibilityFallbackVariants: 0,
-        duplicatedLegacyVariants: 0,
-        missingRuntimeVariants: hasExplicitRuntime ? 0 : 1,
-      };
-    }
     case 'game_screen': {
       const hasExplicitRuntime = Boolean(variant.launchableRuntimeId);
       const hasLegacyFallback = Boolean(variant.legacyScreenId);
@@ -78,7 +69,6 @@ const isRuntimeBearingVariantEntry = (
         Boolean(entry.variant.lessonActivityRuntimeId) ||
         Boolean(entry.variant.legacyActivityId)
       );
-    case 'lesson_stage':
     case 'game_screen':
       return true;
     default:

@@ -1,5 +1,6 @@
 'use client';
 
+import { QueryClientContext } from '@tanstack/react-query';
 import {
   BookOpen,
   BookCheck,
@@ -15,7 +16,7 @@ import {
 } from 'lucide-react';
 import dynamic from 'next/dynamic';
 import { useLocale, useTranslations } from 'next-intl';
-import { useCallback, useEffect, useMemo, useRef, useState, type AriaAttributes } from 'react';
+import { useCallback, useContext, useEffect, useMemo, useRef, useState, type AriaAttributes } from 'react';
 
 import { CmsStorefrontAppearanceButtons } from '@/features/cms/components/frontend/CmsStorefrontAppearance';
 import { useOptionalCmsStorefrontAppearance } from '@/features/cms/components/frontend/CmsStorefrontAppearance.context';
@@ -83,6 +84,7 @@ import {
   getKangurSixYearOldAgeGroupVisual,
   getKangurSixYearOldSubjectVisual,
 } from '@/features/kangur/ui/constants/six-year-old-visuals';
+import { prefetchKangurLessonsCatalog } from '@/features/kangur/ui/hooks/useKangurLessonsCatalog';
 import { useKangurMobileBreakpoint } from '@/features/kangur/ui/hooks/useKangurMobileBreakpoint';
 import { useKangurPageContentEntry } from '@/features/kangur/ui/hooks/useKangurPageContent';
 import { useKangurCoarsePointer } from '@/features/kangur/ui/hooks/useKangurCoarsePointer';
@@ -116,7 +118,9 @@ type KangurNavActionConfig = {
   docId: string;
   elementRef?: React.Ref<HTMLButtonElement>;
   href?: string;
+  onFocus?: React.FocusEventHandler<HTMLElement>;
   onClick?: () => void;
+  onMouseEnter?: React.MouseEventHandler<HTMLElement>;
   prefetch?: boolean;
   targetPageKey?: KangurPrimaryNavigationPage;
   testId?: string;
@@ -465,6 +469,7 @@ export function KangurPrimaryNavigation({
   const kangurAppearance = useKangurStorefrontAppearance();
   const routeTransitionState = useOptionalKangurRouteTransitionState();
   const locale = useLocale();
+  const queryClient = useContext(QueryClientContext);
   const normalizedLocale = normalizeSiteLocale(locale);
   const fallbackCopy = useMemo(
     () => getPrimaryNavigationFallbackCopy(normalizedLocale),
@@ -527,6 +532,7 @@ export function KangurPrimaryNavigation({
     ? 'min-h-12 min-w-12 touch-manipulation select-none active:scale-[0.985]'
     : undefined;
   const loginActionRef = useRef<HTMLButtonElement | null>(null);
+  const prefetchedLessonsCatalogKeyRef = useRef<string | null>(null);
   const mobileMenuRef = useRef<HTMLDivElement | null>(null);
   const mobileMenuPreviousFocusRef = useRef<HTMLElement | null>(null);
   const [isTutorHidden, setIsTutorHidden] = useState(() => loadPersistedTutorVisibilityHidden());
@@ -871,6 +877,32 @@ export function KangurPrimaryNavigation({
     );
   };
 
+  const warmLessonsCatalog = useCallback((): void => {
+    if (queryClient === undefined || accessibleCurrentPage === 'Lessons') {
+      return;
+    }
+
+    const prefetchKey = JSON.stringify({
+      ageGroup,
+      enabledOnly: true,
+      subject,
+    });
+    if (prefetchedLessonsCatalogKeyRef.current === prefetchKey) {
+      return;
+    }
+
+    prefetchedLessonsCatalogKeyRef.current = prefetchKey;
+    void prefetchKangurLessonsCatalog(queryClient, {
+      ageGroup,
+      enabledOnly: true,
+      subject,
+    }).catch(() => {
+      if (prefetchedLessonsCatalogKeyRef.current === prefetchKey) {
+        prefetchedLessonsCatalogKeyRef.current = null;
+      }
+    });
+  }, [accessibleCurrentPage, ageGroup, queryClient, subject]);
+
   const tutorToggleActionConfig: KangurNavActionConfig = {
     ariaLabel: isTutorHidden ? enableTutorLabel : disableTutorLabel,
     className: isTutorHidden
@@ -944,6 +976,8 @@ export function KangurPrimaryNavigation({
     }),
     docId: 'top_nav_lessons',
     href: lessonsHref,
+    onFocus: warmLessonsCatalog,
+    onMouseEnter: warmLessonsCatalog,
     targetPageKey: 'Lessons',
     testId: 'kangur-primary-nav-lessons',
     transition: {

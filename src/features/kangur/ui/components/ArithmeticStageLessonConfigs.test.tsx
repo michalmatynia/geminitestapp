@@ -33,55 +33,54 @@ describe('arithmetic stage lesson configs', () => {
       lessonTitle: 'Dodawanie',
       Component: AddingLesson,
       sectionId: 'game',
-      runtimeId: 'adding_ball_lesson_stage',
-      rendererId: 'adding_ball_game',
-      engineId: 'quantity-drag-engine',
-      rendererProps: { finishLabelVariant: 'topics' },
+      launchableGameId: 'adding_ball',
+      launchableInstanceId: 'adding_ball:instance:default',
       shellTestId: 'adding-lesson-game-shell',
     },
     {
       lessonTitle: 'Dodawanie',
       Component: AddingLesson,
       sectionId: 'synthesis',
-      runtimeId: 'adding_synthesis_lesson_stage',
-      rendererId: 'adding_synthesis_game',
-      engineId: 'rhythm-answer-engine',
+      launchableGameId: 'adding_synthesis',
+      launchableInstanceId: 'adding_synthesis:instance:default',
       shellTestId: 'adding-lesson-synthesis-shell',
     },
     {
       lessonTitle: 'Odejmowanie',
       Component: SubtractingLesson,
       sectionId: 'game',
-      runtimeId: 'subtracting_garden_lesson_stage',
-      rendererId: 'subtracting_garden_game',
-      engineId: 'quantity-drag-engine',
-      rendererProps: { finishLabelVariant: 'topics' },
+      launchableGameId: 'subtracting_garden',
+      launchableInstanceId: 'subtracting_garden:instance:default',
       shellTestId: 'subtracting-lesson-game-shell',
     },
     {
       lessonTitle: 'Dzielenie',
       Component: DivisionLesson,
       sectionId: 'game',
-      runtimeId: 'division_groups_lesson_stage',
-      rendererId: 'division_groups_game',
-      engineId: 'choice-quiz-engine',
-      rendererProps: { finishLabelVariant: 'topics' },
+      launchableGameId: 'division_groups',
+      launchableInstanceId: 'division_groups:instance:default',
       shellTestId: 'division-lesson-game-shell',
     },
     {
       lessonTitle: 'Mnożenie',
       Component: MultiplicationLesson,
       sectionId: 'game_array',
-      runtimeId: 'multiplication_array_lesson_stage',
-      rendererId: 'multiplication_array_game',
-      engineId: 'array-builder-engine',
-      rendererProps: { finishLabelVariant: 'topics' },
+      launchableGameId: 'multiplication_array',
+      launchableInstanceId: 'multiplication_array:instance:default',
       shellTestId: 'multiplication-lesson-game-array-shell',
       hasBodyPrelude: true,
     },
   ])(
-    'passes a shared lesson-stage runtime into KangurUnifiedLesson for $sectionId',
-    ({ Component, lessonTitle, sectionId, runtimeId, rendererId, engineId, rendererProps, shellTestId, hasBodyPrelude }) => {
+    'passes a shared launchable instance into KangurUnifiedLesson for $sectionId',
+    ({
+      Component,
+      lessonTitle,
+      sectionId,
+      launchableGameId,
+      launchableInstanceId,
+      shellTestId,
+      hasBodyPrelude,
+    }) => {
       render(
         <NextIntlClientProvider locale='pl' messages={plMessages}>
           <Component />
@@ -94,11 +93,9 @@ describe('arithmetic stage lesson configs', () => {
         (capturedProps?.games as Array<{
           sectionId: string;
           stage: Record<string, unknown>;
-          runtime?: {
-            runtimeId?: string;
-            rendererId?: string;
-            engineId?: string;
-            rendererProps?: Record<string, unknown>;
+          launchableInstance?: {
+            gameId?: string;
+            instanceId?: string;
           };
           render?: unknown;
         }>) ?? [];
@@ -107,15 +104,14 @@ describe('arithmetic stage lesson configs', () => {
       expect(game?.stage).toMatchObject({
         shellTestId,
       });
-      expect(game?.runtime).toMatchObject({
-        runtimeId,
-        rendererId,
-        engineId,
-        ...(rendererProps ? { rendererProps } : {}),
+      expect(game?.launchableInstance).toMatchObject({
+        gameId: launchableGameId,
+        instanceId: launchableInstanceId,
       });
       if (hasBodyPrelude) {
         expect(game?.stage).toHaveProperty('bodyPrelude');
       }
+      expect(game).not.toHaveProperty('runtime');
       expect(game).not.toHaveProperty('render');
     }
   );

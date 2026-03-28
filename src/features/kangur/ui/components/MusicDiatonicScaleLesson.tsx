@@ -2,7 +2,11 @@
 
 import { useMemo } from 'react';
 
-import { getKangurLessonStageGameRuntimeSpec } from '@/features/kangur/games/lesson-stage-runtime-specs';
+import {
+  KANGUR_MUSIC_DIATONIC_SCALE_COMPONENT_ID,
+  KANGUR_MUSIC_PIANO_ROLL_DEFAULT_INSTANCE_IDS,
+  KANGUR_MUSIC_PIANO_ROLL_GAME_IDS,
+} from '@/features/kangur/games/music-piano-roll-contract';
 import type { LessonProps } from '@/features/kangur/lessons/lesson-ui-registry';
 import { useOptionalKangurLessonTemplate } from '@/features/kangur/ui/context/KangurLessonsRuntimeContext';
 import { KangurUnifiedLesson } from '../lessons/lesson-components';
@@ -11,20 +15,55 @@ import { CONTENT, HUB_SECTIONS, SLIDES } from './MusicDiatonicScaleLesson.data';
 import {
   buildMusicDiatonicScaleLessonSections,
   buildMusicDiatonicScaleLessonSlides,
+  MUSIC_DIATONIC_SCALE_SECTION_IDS,
   resolveMusicDiatonicScaleLessonContent,
 } from './music-diatonic-scale-lesson-content';
 
 export { HUB_SECTIONS, SLIDES };
 
-const MUSIC_MELODY_REPEAT_RUNTIME = getKangurLessonStageGameRuntimeSpec(
-  'music_melody_repeat_lesson_stage'
-);
-const MUSIC_PIANO_ROLL_FREE_PLAY_RUNTIME = getKangurLessonStageGameRuntimeSpec(
-  'music_piano_roll_free_play_lesson_stage'
-);
+export const MUSIC_DIATONIC_SCALE_COMPONENT_ID = KANGUR_MUSIC_DIATONIC_SCALE_COMPONENT_ID;
+export const MUSIC_DIATONIC_SCALE_LAUNCHABLE_GAME_IDS = KANGUR_MUSIC_PIANO_ROLL_GAME_IDS;
+export const MUSIC_DIATONIC_SCALE_LAUNCHABLE_INSTANCE_IDS =
+  KANGUR_MUSIC_PIANO_ROLL_DEFAULT_INSTANCE_IDS;
+
+export const MUSIC_DIATONIC_SCALE_GAME_SECTION_CONFIGS = {
+  freePlay: {
+    launchableInstance: {
+      gameId: MUSIC_DIATONIC_SCALE_LAUNCHABLE_GAME_IDS.freePlay,
+      instanceId: MUSIC_DIATONIC_SCALE_LAUNCHABLE_INSTANCE_IDS.freePlay,
+    },
+    sectionId: MUSIC_DIATONIC_SCALE_SECTION_IDS.freePlayGame,
+    stage: {
+      accent: 'sky',
+      icon: '🎛️',
+      maxWidthClassName: 'max-w-none',
+      shellTestId: 'music-diatonic-scale-freeplay-shell',
+      shellVariant: 'plain',
+    },
+  },
+  repeat: {
+    launchableInstance: {
+      gameId: MUSIC_DIATONIC_SCALE_LAUNCHABLE_GAME_IDS.repeat,
+      instanceId: MUSIC_DIATONIC_SCALE_LAUNCHABLE_INSTANCE_IDS.repeat,
+    },
+    sectionId: MUSIC_DIATONIC_SCALE_SECTION_IDS.repeatGame,
+    stage: {
+      accent: 'sky',
+      icon: '🎹',
+      maxWidthClassName: 'max-w-none',
+      shellTestId: 'music-diatonic-scale-game-shell',
+      shellVariant: 'plain',
+    },
+  },
+} as const;
+
+export const MUSIC_DIATONIC_SCALE_TOP_SECTION_TEST_IDS = {
+  freePlay: MUSIC_DIATONIC_SCALE_GAME_SECTION_CONFIGS.freePlay.stage.shellTestId,
+  repeat: MUSIC_DIATONIC_SCALE_GAME_SECTION_CONFIGS.repeat.stage.shellTestId,
+} as const;
 
 export default function MusicDiatonicScaleLesson({ lessonTemplate }: LessonProps): JSX.Element {
-  const runtimeTemplate = useOptionalKangurLessonTemplate('music_diatonic_scale');
+  const runtimeTemplate = useOptionalKangurLessonTemplate(MUSIC_DIATONIC_SCALE_COMPONENT_ID);
   const resolvedTemplate = lessonTemplate ?? runtimeTemplate;
   const resolvedTitle = resolvedTemplate?.title?.trim() || 'Skala diatoniczna';
   const resolvedContent = useMemo(
@@ -43,7 +82,7 @@ export default function MusicDiatonicScaleLesson({ lessonTemplate }: LessonProps
   return (
     <KangurUnifiedLesson
       progressMode='panel'
-      lessonId='music_diatonic_scale'
+      lessonId={MUSIC_DIATONIC_SCALE_COMPONENT_ID}
       lessonEmoji='🎵'
       lessonTitle={resolvedTitle}
       sections={resolvedSections}
@@ -52,36 +91,31 @@ export default function MusicDiatonicScaleLesson({ lessonTemplate }: LessonProps
       progressDotClassName='bg-sky-300'
       dotActiveClass='bg-sky-400'
       dotDoneClass='bg-sky-200'
-      completionSectionId='summary'
+      completionSectionId={MUSIC_DIATONIC_SCALE_SECTION_IDS.summary}
       autoRecordComplete
       scorePercent={100}
-      skipMarkFor={['game_repeat', 'game_freeplay']}
+      skipMarkFor={[
+        MUSIC_DIATONIC_SCALE_SECTION_IDS.repeatGame,
+        MUSIC_DIATONIC_SCALE_SECTION_IDS.freePlayGame,
+      ]}
       games={[
         {
-          sectionId: 'game_repeat',
+          sectionId: MUSIC_DIATONIC_SCALE_GAME_SECTION_CONFIGS.repeat.sectionId,
           stage: {
-            accent: 'sky',
-            icon: '🎹',
-            maxWidthClassName: 'max-w-none',
-            shellTestId: 'music-diatonic-scale-game-shell',
-            shellVariant: 'plain',
+            ...MUSIC_DIATONIC_SCALE_GAME_SECTION_CONFIGS.repeat.stage,
             title: resolvedContent.gameRepeatSection.gameStageTitle,
             description: resolvedContent.gameRepeatSection.gameStageDescription,
           },
-          runtime: MUSIC_MELODY_REPEAT_RUNTIME,
+          launchableInstance: MUSIC_DIATONIC_SCALE_GAME_SECTION_CONFIGS.repeat.launchableInstance,
         },
         {
-          sectionId: 'game_freeplay',
+          sectionId: MUSIC_DIATONIC_SCALE_GAME_SECTION_CONFIGS.freePlay.sectionId,
           stage: {
-            accent: 'sky',
-            icon: '🎛️',
-            maxWidthClassName: 'max-w-none',
-            shellTestId: 'music-diatonic-scale-freeplay-shell',
-            shellVariant: 'plain',
+            ...MUSIC_DIATONIC_SCALE_GAME_SECTION_CONFIGS.freePlay.stage,
             title: resolvedContent.gameFreeplaySection.gameStageTitle,
             description: resolvedContent.gameFreeplaySection.gameStageDescription,
           },
-          runtime: MUSIC_PIANO_ROLL_FREE_PLAY_RUNTIME,
+          launchableInstance: MUSIC_DIATONIC_SCALE_GAME_SECTION_CONFIGS.freePlay.launchableInstance,
         },
       ]}
     />

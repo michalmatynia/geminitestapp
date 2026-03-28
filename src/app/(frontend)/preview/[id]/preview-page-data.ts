@@ -1,7 +1,7 @@
 import {
   getMediaInlineStyles,
   getMediaStyleVars,
-} from '@/features/cms/components/frontend/theme-styles';
+} from '@/features/cms/public';
 import { resolveCmsDomainFromHeaders } from '@/features/cms/server';
 import { getCmsMenuSettings } from '@/features/cms/server';
 import { getCmsRepository } from '@/features/cms/server';

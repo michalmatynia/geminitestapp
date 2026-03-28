@@ -1,4 +1,5 @@
 import type { KangurGameEngineDefinition } from '@/shared/contracts/kangur-games';
+import { KANGUR_MUSIC_PIANO_ROLL_ENGINE_DEFINITIONS } from '../music-piano-roll-contract';
 
 export const KANGUR_EARLY_LEARNING_GAME_ENGINES: readonly KangurGameEngineDefinition[] = [
   {
@@ -43,34 +44,7 @@ export const KANGUR_EARLY_LEARNING_GAME_ENGINES: readonly KangurGameEngineDefini
     status: 'active',
     sortOrder: 1300,
   },
-  {
-    id: 'melody-repeat-engine',
-    category: 'early_learning',
-    label: 'Melody repeat engine',
-    title: 'Melody Repeat Engine',
-    description:
-      'Call-and-response music engine for repeating short melodies and developing pitch memory in shared lesson and library surfaces.',
-    mechanics: ['rhythm'],
-    interactionModes: ['tap'],
-    surfaces: ['lesson', 'library'],
-    tags: ['music', 'melody', 'memory'],
-    status: 'active',
-    sortOrder: 1400,
-  },
-  {
-    id: 'piano-roll-engine',
-    category: 'early_learning',
-    label: 'Piano roll engine',
-    title: 'Piano Roll Engine',
-    description:
-      'Exploratory piano-roll engine for free play, keyboard discovery, and music interaction variants that stay outside lesson-specific code.',
-    mechanics: ['tap_select'],
-    interactionModes: ['tap'],
-    surfaces: ['lesson', 'library'],
-    tags: ['music', 'piano', 'free-play'],
-    status: 'active',
-    sortOrder: 1500,
-  },
+  ...KANGUR_MUSIC_PIANO_ROLL_ENGINE_DEFINITIONS,
   {
     id: 'shape-recognition-engine',
     category: 'early_learning',

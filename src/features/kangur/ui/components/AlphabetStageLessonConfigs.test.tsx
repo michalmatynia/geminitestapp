@@ -32,10 +32,10 @@ describe('alphabet stage lesson configs', () => {
       sectionTitle: 'Gra słowa',
       sectionDescription: 'Dopasuj obrazek do właściwego słowa',
       shellTestId: 'alphabet-words-game-shell',
-      runtimeId: 'alphabet_first_words_lesson_stage',
-      rendererId: 'alphabet_literacy_stage_game',
-      engineId: 'letter-match-engine',
-      rendererProps: { literacyMatchSetId: 'alphabet_first_words' },
+      launchableInstance: {
+        gameId: 'alphabet_first_words',
+        instanceId: 'alphabet_first_words:instance:default',
+      },
     },
     {
       Component: AlphabetMatchingLesson,
@@ -44,10 +44,10 @@ describe('alphabet stage lesson configs', () => {
       sectionTitle: 'Gra litery',
       sectionDescription: 'Połącz wielkie i małe litery',
       shellTestId: 'alphabet-matching-game-shell',
-      runtimeId: 'alphabet_letter_matching_lesson_stage',
-      rendererId: 'alphabet_literacy_stage_game',
-      engineId: 'letter-match-engine',
-      rendererProps: { literacyMatchSetId: 'alphabet_letter_matching' },
+      launchableInstance: {
+        gameId: 'alphabet_letter_matching',
+        instanceId: 'alphabet_letter_matching:instance:default',
+      },
     },
     {
       Component: AlphabetSequenceLesson,
@@ -56,13 +56,13 @@ describe('alphabet stage lesson configs', () => {
       sectionTitle: 'Gra alfabet',
       sectionDescription: 'Uzupełnij brakujące litery w kolejności',
       shellTestId: 'alphabet-sequence-game-shell',
-      runtimeId: 'alphabet_letter_order_lesson_stage',
-      rendererId: 'logical_patterns_workshop_game',
-      engineId: 'pattern-sequence-engine',
-      rendererProps: { patternSetId: 'alphabet_letter_order' },
+      launchableInstance: {
+        gameId: 'alphabet_letter_order',
+        instanceId: 'alphabet_letter_order:instance:default',
+      },
     },
   ])(
-    'passes the shared stage runtime into KangurUnifiedLesson for $lessonTitle',
+    'passes the shared launchable instance into KangurUnifiedLesson for $lessonTitle',
     ({
       Component,
       lessonTitle,
@@ -70,10 +70,7 @@ describe('alphabet stage lesson configs', () => {
       sectionTitle,
       sectionDescription,
       shellTestId,
-      runtimeId,
-      rendererId,
-      engineId,
-      rendererProps,
+      launchableInstance,
     }) => {
       render(<Component />);
 
@@ -84,11 +81,9 @@ describe('alphabet stage lesson configs', () => {
         (capturedProps?.games as Array<{
           sectionId: string;
           stage: Record<string, unknown>;
-          runtime?: {
-            runtimeId?: string;
-            rendererId?: string;
-            engineId?: string;
-            rendererProps?: Record<string, unknown>;
+          launchableInstance?: {
+            gameId?: string;
+            instanceId?: string;
           };
           render?: unknown;
         }>) ?? [];
@@ -102,12 +97,9 @@ describe('alphabet stage lesson configs', () => {
         shellTestId,
         title: sectionTitle,
       });
-      expect(games.find((game) => game.sectionId === sectionId)?.runtime).toMatchObject({
-        runtimeId,
-        rendererId,
-        engineId,
-        rendererProps,
-      });
+      expect(games.find((game) => game.sectionId === sectionId)?.launchableInstance).toMatchObject(
+        launchableInstance
+      );
       expect(games.find((game) => game.sectionId === sectionId)).not.toHaveProperty('render');
     }
   );

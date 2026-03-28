@@ -3,7 +3,7 @@
 import { useTranslations } from 'next-intl';
 import { useId, useMemo } from 'react';
 
-import { getKangurLessonStageGameRuntimeSpec } from '@/features/kangur/games/lesson-stage-runtime-specs';
+import { getKangurBuiltInGameInstanceId } from '@/features/kangur/games';
 import type { LessonSlide } from '@/features/kangur/ui/components/LessonSlideSection';
 import {
   EnglishAgreementBalanceAnimation,
@@ -44,8 +44,8 @@ type SectionId =
   | 'game_agreement';
 
 type SlideSectionId = Exclude<SectionId, 'game_agreement'>;
-const ENGLISH_SUBJECT_VERB_AGREEMENT_RUNTIME = getKangurLessonStageGameRuntimeSpec(
-  'english_subject_verb_agreement_lesson_stage'
+const ENGLISH_SUBJECT_VERB_AGREEMENT_INSTANCE_ID = getKangurBuiltInGameInstanceId(
+  'english_subject_verb_agreement'
 );
 
 export function EnglishSubjectVerbGuideAnimation(): React.JSX.Element {
@@ -648,7 +648,10 @@ export default function EnglishSubjectVerbAgreementLesson(): React.JSX.Element {
             headerTestId: 'english-agreement-game-header',
             shellTestId: 'english-agreement-game-shell',
           },
-          runtime: ENGLISH_SUBJECT_VERB_AGREEMENT_RUNTIME,
+          launchableInstance: {
+            gameId: 'english_subject_verb_agreement',
+            instanceId: ENGLISH_SUBJECT_VERB_AGREEMENT_INSTANCE_ID,
+          },
         },
       ]}
     />

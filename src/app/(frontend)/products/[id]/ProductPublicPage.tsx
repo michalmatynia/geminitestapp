@@ -4,7 +4,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 
-import { CmsPageShell } from '@/features/cms/components/frontend/CmsPageShell';
+import { CmsPageShell } from '@/features/cms/public';
 import {
   getCmsMenuSettings,
   getCmsThemeSettings,

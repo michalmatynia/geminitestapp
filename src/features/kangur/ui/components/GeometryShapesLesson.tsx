@@ -1,13 +1,15 @@
 'use client';
 
+import type { LessonProps } from '@/features/kangur/lessons/lesson-ui-registry';
+import { useOptionalKangurLessonTemplate } from '@/features/kangur/ui/context/KangurLessonsRuntimeContext';
 import { useKangurProgressOwnerKey } from '@/features/kangur/ui/hooks/useKangurProgressOwnerKey';
 import { useCallback, useState } from 'react';
 import { useTranslations } from 'next-intl';
 
-import plMessages from '@/i18n/messages/pl.json';
 import type { LessonSlide } from '@/features/kangur/ui/components/LessonSlideSection';
 import { KangurLessonCallout } from '@/features/kangur/ui/design/lesson-primitives';
-import { getKangurLessonStageGameRuntimeSpec } from '@/features/kangur/games/lesson-stage-runtime-specs';
+import { getKangurBuiltInGameInstanceId } from '@/features/kangur/games';
+import { GEOMETRY_SHAPES_LESSON_COMPONENT_CONTENT as CONTENT } from '@/features/kangur/lessons/lesson-template-component-content';
 import {
   GeometryMovingPointAnimation,
   GeometryPolygonSidesAnimation,
@@ -27,25 +29,17 @@ import {
   loadProgress,
 } from '@/features/kangur/ui/services/progress';
 import type { LessonTranslate } from '@/features/kangur/ui/components/lesson-copy';
+import {
+  createGeometryShapesLessonTranslate,
+  resolveGeometryShapesLessonContent,
+} from './geometry-shapes-lesson-content';
 
 type SectionId = 'podstawowe' | 'ile_bokow' | 'podsumowanie' | 'game';
 type ShapeCardId = 'circle' | 'triangle' | 'square' | 'rectangle' | 'pentagon' | 'hexagon';
 
-const GEOMETRY_SHAPE_WORKSHOP_RUNTIME = getKangurLessonStageGameRuntimeSpec(
-  'geometry_shape_workshop_lesson_stage'
+const GEOMETRY_SHAPE_WORKSHOP_INSTANCE_ID = getKangurBuiltInGameInstanceId(
+  'geometry_shape_workshop'
 );
-
-const createStaticTranslator = (messages: Record<string, unknown>): LessonTranslate => (key) => {
-  const resolved = key.split('.').reduce<unknown>(
-    (current, segment) =>
-      typeof current === 'object' && current !== null
-        ? (current as Record<string, unknown>)[segment]
-        : undefined,
-    messages
-  );
-
-  return typeof resolved === 'string' ? resolved : key;
-};
 
 const SHAPE_CARD_IDS = [
   { id: 'circle', emoji: '⚪' },
@@ -292,18 +286,20 @@ const buildGeometryShapesSections = (translations: LessonTranslate) => [
   },
 ] as const;
 
-const translateStaticGeometryShapes = createStaticTranslator(
-  plMessages.KangurStaticLessons.geometryShapes as Record<string, unknown>
-);
+const translateStaticGeometryShapes = createGeometryShapesLessonTranslate(CONTENT);
 
 export const SLIDES = buildGeometryShapesSlides(translateStaticGeometryShapes);
 export const HUB_SECTIONS = buildGeometryShapesSections(translateStaticGeometryShapes);
 
-export default function GeometryShapesLesson(): React.JSX.Element {
+export default function GeometryShapesLesson({ lessonTemplate }: LessonProps): React.JSX.Element {
   const ownerKey = useKangurProgressOwnerKey();
+  const runtimeTemplate = useOptionalKangurLessonTemplate('geometry_shapes');
+  const resolvedTemplate = lessonTemplate ?? runtimeTemplate;
   const translations = useTranslations('KangurStaticLessons.geometryShapes');
   const [rewarded, setRewarded] = useState(false);
-  const translate = (key: string): string => translations(key as never);
+  const fallbackTranslate: LessonTranslate = (key: string) => translations(key as never);
+  const resolvedContent = resolveGeometryShapesLessonContent(resolvedTemplate, fallbackTranslate);
+  const translate = createGeometryShapesLessonTranslate(resolvedContent);
   const sections = buildGeometryShapesSections(translate);
   const slides = buildGeometryShapesSlides(translate);
 
@@ -320,7 +316,7 @@ export default function GeometryShapesLesson(): React.JSX.Element {
       progressMode='panel'
       lessonId='geometry_shapes'
       lessonEmoji='🔷'
-      lessonTitle={translate('lessonTitle')}
+      lessonTitle={resolvedTemplate?.title?.trim() || translate('lessonTitle')}
       sections={sections}
       slides={slides}
       gradientClass='kangur-gradient-accent-violet-reverse'
@@ -338,7 +334,10 @@ export default function GeometryShapesLesson(): React.JSX.Element {
             shellTestId: 'geometry-shapes-game-shell',
             title: translate('game.stageTitle'),
           },
-          runtime: GEOMETRY_SHAPE_WORKSHOP_RUNTIME,
+          launchableInstance: {
+            gameId: 'geometry_shape_workshop',
+            instanceId: GEOMETRY_SHAPE_WORKSHOP_INSTANCE_ID,
+          },
         },
       ]}
     />

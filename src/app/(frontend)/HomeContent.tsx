@@ -11,7 +11,7 @@ import { normalizeSiteLocale } from '@/shared/lib/i18n/site-locale';
 
 import { canPreviewDrafts } from './home-helpers';
 import { normalizeHomeProducts } from './home-product-normalize';
-import { HomeContentClient } from '@/features/cms/components/frontend/home/HomeContentClient';
+import { HomeContentClient } from '@/features/cms/public';
 
 type HomeContentProps = {
   domainId: string;

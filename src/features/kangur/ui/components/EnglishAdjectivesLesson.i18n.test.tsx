@@ -59,14 +59,14 @@ describe('EnglishAdjectivesLesson i18n', () => {
     const games =
       (capturedProps?.games as Array<{
         sectionId: string;
-        runtime?: { runtimeId?: string; rendererId?: string };
+        launchableInstance?: { gameId?: string; instanceId?: string };
       }>) ?? [];
     expect(games).toHaveLength(1);
     expect(games[0]).toMatchObject({
       sectionId: 'game_adjective_studio',
-      runtime: {
-        runtimeId: 'english_adjectives_scene_lesson_stage',
-        rendererId: 'english_adjectives_scene_game',
+      launchableInstance: {
+        gameId: 'english_adjectives_scene',
+        instanceId: 'english_adjectives_scene:instance:default',
       },
     });
 

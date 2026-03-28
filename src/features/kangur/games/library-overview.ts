@@ -6,7 +6,7 @@ import type {
   KangurLessonAgeGroup,
   KangurLessonSubject,
 } from '@/features/kangur/shared/contracts/kangur';
-import { KANGUR_GAME_VARIANT_SURFACES } from '@/shared/contracts/kangur-games';
+import type { KangurGameVariantSurface } from '@/shared/contracts/kangur-games';
 
 import type { KangurGameCatalogEntry } from './catalog';
 import type { KangurGameVariantCatalogEntry } from './variants';
@@ -34,7 +34,7 @@ export type KangurGamesLibrarySubjectGroup = {
 
 export type KangurGamesLibraryVariantGroup = {
   entries: KangurGameVariantCatalogEntry[];
-  surface: (typeof KANGUR_GAME_VARIANT_SURFACES)[number];
+  surface: KangurGamesLibraryVariantGroupSurface;
 };
 
 export type KangurGamesLibraryCohortGroup = {
@@ -54,6 +54,10 @@ export type KangurGamesLibraryOverview = {
   variantGroups: KangurGamesLibraryVariantGroup[];
 };
 
+export type KangurGamesLibraryVariantGroupSurface =
+  | 'lesson'
+  | Exclude<KangurGameVariantSurface, 'lesson_stage' | 'lesson_inline'>;
+
 const sortGameEntries = (left: KangurGameCatalogEntry, right: KangurGameCatalogEntry): number =>
   left.game.sortOrder - right.game.sortOrder || left.game.title.localeCompare(right.game.title);
 
@@ -66,6 +70,20 @@ const sortVariantEntries = (
   left.variant.title.localeCompare(right.variant.title);
 
 const unique = <T>(values: T[]): T[] => Array.from(new Set(values));
+
+const KANGUR_GAMES_LIBRARY_VARIANT_GROUP_SURFACES: readonly KangurGamesLibraryVariantGroupSurface[] =
+  ['lesson', 'library_preview', 'game_screen'];
+
+const matchesVariantGroupSurface = (
+  entry: KangurGameVariantCatalogEntry,
+  surface: KangurGamesLibraryVariantGroupSurface
+): boolean => {
+  if (surface === 'lesson') {
+    return entry.variant.surface === 'lesson_inline' || entry.variant.surface === 'lesson_stage';
+  }
+
+  return entry.variant.surface === surface;
+};
 
 const getAgeGroupSortOrder = (ageGroup: KangurLessonAgeGroup): number =>
   KANGUR_AGE_GROUPS.findIndex((entry) => entry.id === ageGroup);
@@ -102,10 +120,10 @@ export const createKangurGamesLibrarySubjectGroups = (
 export const createKangurGamesLibraryVariantGroups = (
   variantEntries: KangurGameVariantCatalogEntry[]
 ): KangurGamesLibraryVariantGroup[] =>
-  KANGUR_GAME_VARIANT_SURFACES.map((surface) => ({
+  KANGUR_GAMES_LIBRARY_VARIANT_GROUP_SURFACES.map((surface) => ({
     surface,
     entries: variantEntries
-      .filter((entry) => entry.variant.surface === surface)
+      .filter((entry) => matchesVariantGroupSurface(entry, surface))
       .slice()
       .sort(sortVariantEntries),
   })).filter((group) => group.entries.length > 0);

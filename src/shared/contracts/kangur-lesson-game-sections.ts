@@ -1,5 +1,6 @@
 import { z } from 'zod';
 
+import { kangurGameInstanceIdSchema } from './kangur-game-instances';
 import { kangurGameIdSchema } from './kangur-games';
 import { kangurLessonComponentIdSchema } from './kangur-lesson-constants';
 
@@ -35,6 +36,7 @@ export const kangurLessonGameSectionSchema = z.object({
   id: z.string().trim().min(1).max(120),
   lessonComponentId: kangurLessonComponentIdSchema,
   gameId: kangurGameIdSchema,
+  instanceId: kangurGameInstanceIdSchema.optional(),
   title: z.string().trim().min(1).max(120),
   description: z.string().trim().max(240).default(''),
   emoji: z.string().trim().min(1).max(12),

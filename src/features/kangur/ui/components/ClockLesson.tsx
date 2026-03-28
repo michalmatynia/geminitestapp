@@ -1,6 +1,6 @@
 'use client';
 
-import { getKangurLessonStageGameRuntimeSpec } from '@/features/kangur/games/lesson-stage-runtime-specs';
+import { getKangurBuiltInGameInstanceId } from '@/features/kangur/games';
 import { useKangurProgressOwnerKey } from '@/features/kangur/ui/hooks/useKangurProgressOwnerKey';
 import { useTranslations } from 'next-intl';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -42,6 +42,7 @@ import {
 import type { ClockLessonTranslate, WidenLessonCopy } from './ClockLesson.i18n';
 import { translateClockLesson } from './ClockLesson.i18n';
 import type { ClockTrainingSectionId } from './clock-training/types';
+import type { KangurGameRuntimeRendererProps } from '@/shared/contracts/kangur-game-runtime-renderer-props';
 import type {
   KangurLessonGameSection,
   KangurLessonGameSectionSettings,
@@ -51,6 +52,7 @@ type ClockTrainingHubConfig = {
   description: string;
   emoji: string;
   hubId: string;
+  instanceId: string;
   settings?: KangurLessonGameSectionSettings;
   title: string;
   trainingSectionId: ClockTrainingSectionId;
@@ -58,13 +60,10 @@ type ClockTrainingHubConfig = {
 
 export { HUB_SECTIONS, LESSON_SECTIONS, SLIDES } from './ClockLesson.data';
 
-const CLOCK_TRAINING_STAGE_RUNTIME_BY_SECTION: Record<
-  ClockTrainingSectionId,
-  ReturnType<typeof getKangurLessonStageGameRuntimeSpec>
-> = {
-  hours: getKangurLessonStageGameRuntimeSpec('clock_training_hours_lesson_stage'),
-  minutes: getKangurLessonStageGameRuntimeSpec('clock_training_minutes_lesson_stage'),
-  combined: getKangurLessonStageGameRuntimeSpec('clock_training_combined_lesson_stage'),
+const CLOCK_TRAINING_INSTANCE_ID_BY_SECTION: Record<ClockTrainingSectionId, string> = {
+  hours: getKangurBuiltInGameInstanceId('clock_training', 'clock_training:clock-hours'),
+  minutes: getKangurBuiltInGameInstanceId('clock_training', 'clock_training:clock-minutes'),
+  combined: getKangurBuiltInGameInstanceId('clock_training'),
 };
 
 const localizeClockCopy = <T,>(
@@ -114,36 +113,42 @@ const resolveClockTrainingSectionFromSettings = (
   return 'combined';
 };
 
-const buildClockLessonStageRuntime = (
-  trainingSectionId: ClockTrainingSectionId,
+const resolveClockTrainingInstanceIdFromSection = (
+  section: KangurLessonGameSection
+): string => {
+  if (section.instanceId) {
+    return section.instanceId;
+  }
+
+  return CLOCK_TRAINING_INSTANCE_ID_BY_SECTION[
+    resolveClockTrainingSectionFromSettings(section.settings)
+  ];
+};
+
+const buildClockLessonEngineOverrides = (
   settings?: KangurLessonGameSectionSettings
-) => {
-  const baseRuntime = CLOCK_TRAINING_STAGE_RUNTIME_BY_SECTION[trainingSectionId];
+): KangurGameRuntimeRendererProps => {
   const clockSettings = settings?.clock;
 
   return {
-    ...baseRuntime,
-    rendererProps: {
-      ...baseRuntime.rendererProps,
-      ...(clockSettings?.initialMode
-        ? { clockInitialMode: clockSettings.initialMode }
-        : {}),
-      ...(clockSettings?.showHourHand !== undefined
-        ? { showClockHourHand: clockSettings.showHourHand }
-        : {}),
-      ...(clockSettings?.showMinuteHand !== undefined
-        ? { showClockMinuteHand: clockSettings.showMinuteHand }
-        : {}),
-      ...(clockSettings?.showModeSwitch !== undefined
-        ? { showClockModeSwitch: clockSettings.showModeSwitch }
-        : {}),
-      ...(clockSettings?.showTaskTitle !== undefined
-        ? { showClockTaskTitle: clockSettings.showTaskTitle }
-        : {}),
-      ...(clockSettings?.showTimeDisplay !== undefined
-        ? { showClockTimeDisplay: clockSettings.showTimeDisplay }
-        : {}),
-    },
+    ...(clockSettings?.initialMode
+      ? { clockInitialMode: clockSettings.initialMode }
+      : {}),
+    ...(clockSettings?.showHourHand !== undefined
+      ? { showClockHourHand: clockSettings.showHourHand }
+      : {}),
+    ...(clockSettings?.showMinuteHand !== undefined
+      ? { showClockMinuteHand: clockSettings.showMinuteHand }
+      : {}),
+    ...(clockSettings?.showModeSwitch !== undefined
+      ? { showClockModeSwitch: clockSettings.showModeSwitch }
+      : {}),
+    ...(clockSettings?.showTaskTitle !== undefined
+      ? { showClockTaskTitle: clockSettings.showTaskTitle }
+      : {}),
+    ...(clockSettings?.showTimeDisplay !== undefined
+      ? { showClockTimeDisplay: clockSettings.showTimeDisplay }
+      : {}),
   };
 };
 
@@ -216,6 +221,7 @@ export default function ClockLesson(): React.JSX.Element {
         description: copy.hubSections.gameHours.description,
         emoji: '🎯',
         hubId: 'game_hours',
+        instanceId: CLOCK_TRAINING_INSTANCE_ID_BY_SECTION.hours,
         title: copy.hubSections.gameHours.title,
         trainingSectionId: 'hours',
       },
@@ -223,6 +229,7 @@ export default function ClockLesson(): React.JSX.Element {
         description: copy.hubSections.gameMinutes.description,
         emoji: '🟢',
         hubId: 'game_minutes',
+        instanceId: CLOCK_TRAINING_INSTANCE_ID_BY_SECTION.minutes,
         title: copy.hubSections.gameMinutes.title,
         trainingSectionId: 'minutes',
       },
@@ -230,6 +237,7 @@ export default function ClockLesson(): React.JSX.Element {
         description: copy.hubSections.gameCombined.description,
         emoji: '🕐',
         hubId: 'game_combined',
+        instanceId: CLOCK_TRAINING_INSTANCE_ID_BY_SECTION.combined,
         title: copy.hubSections.gameCombined.title,
         trainingSectionId: 'combined',
       },
@@ -242,6 +250,7 @@ export default function ClockLesson(): React.JSX.Element {
         description: section.description,
         emoji: section.emoji,
         hubId: section.id,
+        instanceId: resolveClockTrainingInstanceIdFromSection(section),
         settings: section.settings,
         title: section.title,
         trainingSectionId: resolveClockTrainingSectionFromSettings(section.settings),
@@ -457,7 +466,11 @@ export default function ClockLesson(): React.JSX.Element {
         );
         onFinish();
       },
-      runtime: buildClockLessonStageRuntime(config.trainingSectionId, config.settings),
+      launchableInstance: {
+        gameId: 'clock_training' as const,
+        instanceId: config.instanceId,
+      },
+      engineOverrides: buildClockLessonEngineOverrides(config.settings),
     };
   };
 
@@ -474,7 +487,11 @@ export default function ClockLesson(): React.JSX.Element {
       title: string;
     };
     onStageFinish: (helpers: { onFinish: () => void }) => void;
-    runtime: ReturnType<typeof getKangurLessonStageGameRuntimeSpec>;
+    launchableInstance: {
+      gameId: 'clock_training';
+      instanceId: string;
+    };
+    engineOverrides: KangurGameRuntimeRendererProps;
   }>;
   const handleSectionProgress = useCallback(
     (progress: Partial<Record<ClockHubId, unknown>>) => {

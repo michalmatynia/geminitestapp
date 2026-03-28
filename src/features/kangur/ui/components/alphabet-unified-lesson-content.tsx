@@ -48,8 +48,12 @@ export const resolveAlphabetUnifiedLessonContent = (
   template: KangurLessonTemplate | null | undefined,
   fallback: KangurAlphabetUnifiedLessonTemplateContent,
 ): KangurAlphabetUnifiedLessonTemplateContent => {
+  if (!template?.componentContent) {
+    return fallback;
+  }
+
   const resolved =
-    resolveKangurLessonTemplateComponentContent(componentId, template?.componentContent) ?? fallback;
+    resolveKangurLessonTemplateComponentContent(componentId, template.componentContent) ?? fallback;
   return resolved.kind === 'alphabet_unified' ? resolved : fallback;
 };
 

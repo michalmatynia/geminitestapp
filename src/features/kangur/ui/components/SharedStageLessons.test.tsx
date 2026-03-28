@@ -42,23 +42,26 @@ vi.mock('@/features/kangur/ui/learner-activity/hooks', async (importOriginal) =>
   };
 });
 
-vi.mock('@/features/kangur/ui/components/GeometryBasicsWorkshopGame', () => ({
+vi.mock('@/features/kangur/ui/components/KangurLaunchableGameInstanceRuntime', () => ({
   __esModule: true,
-  default: ({ onFinish }: { onFinish: () => void }): React.JSX.Element => (
-    <div data-testid='mock-geometry-basics-workshop-game'>
+  default: ({
+    gameId,
+    onFinish,
+  }: {
+    gameId: string;
+    onFinish: () => void;
+  }): React.JSX.Element => (
+    <div
+      data-testid={
+        gameId === 'geometry_shape_workshop'
+          ? 'mock-geometry-drawing-game'
+          : 'mock-english-subject-verb-agreement-game'
+      }
+    >
       <button type='button' onClick={onFinish}>
-        Finish geometry basics game
-      </button>
-    </div>
-  ),
-}));
-
-vi.mock('@/features/kangur/ui/components/EnglishSubjectVerbAgreementGame', () => ({
-  __esModule: true,
-  default: ({ onFinish }: { onFinish: () => void }): React.JSX.Element => (
-    <div data-testid='mock-english-subject-verb-agreement-game'>
-      <button type='button' onClick={onFinish}>
-        Finish agreement game
+        {gameId === 'geometry_shape_workshop'
+          ? 'Finish geometry basics game'
+          : 'Finish agreement game'}
       </button>
     </div>
   ),
@@ -89,7 +92,7 @@ describe('shared stage lessons', () => {
       expect(screen.getByTestId('geometry-basics-game-shell')).toBeInTheDocument();
     });
 
-    expect(screen.getByTestId('mock-geometry-basics-workshop-game')).toBeInTheDocument();
+    expect(screen.getByTestId('mock-geometry-drawing-game')).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole('button', { name: 'Finish geometry basics game' }));
 

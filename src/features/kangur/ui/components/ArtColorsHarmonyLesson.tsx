@@ -2,7 +2,7 @@
 
 import type { JSX } from 'react';
 
-import { getKangurLessonStageGameRuntimeSpec } from '@/features/kangur/games/lesson-stage-runtime-specs';
+import { getKangurBuiltInGameInstanceId } from '@/features/kangur/games';
 import type { LessonSlide } from '@/features/kangur/ui/components/LessonSlideSection';
 import {
   KangurLessonCallout,
@@ -15,10 +15,6 @@ import {
 import { KangurUnifiedLesson } from '@/features/kangur/ui/lessons/lesson-components';
 
 type SectionId = 'warmCool' | 'pairing' | 'gameHarmony' | 'lookAround' | 'summary';
-
-const ART_COLOR_HARMONY_RUNTIME = getKangurLessonStageGameRuntimeSpec(
-  'art_color_harmony_studio_lesson_stage'
-);
 
 type ColorCardProps = {
   accent: 'amber' | 'rose' | 'sky' | 'emerald';
@@ -265,7 +261,10 @@ export default function ArtColorsHarmonyLesson(): JSX.Element {
             title: 'Color studio game',
             description: 'Choose the palette that feels warm, calm, smooth, or balanced.',
           },
-          runtime: ART_COLOR_HARMONY_RUNTIME,
+          launchableInstance: {
+            gameId: 'art_color_harmony_studio',
+            instanceId: getKangurBuiltInGameInstanceId('art_color_harmony_studio'),
+          },
         },
       ]}
     />

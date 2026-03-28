@@ -2,7 +2,7 @@
 
 import { useMemo } from 'react';
 
-import { getKangurLessonStageGameRuntimeSpec } from '@/features/kangur/games/lesson-stage-runtime-specs';
+import { getKangurBuiltInGameInstanceId } from '@/features/kangur/games';
 import type { LessonProps } from '@/features/kangur/lessons/lesson-ui-registry';
 import { useOptionalKangurLessonTemplate } from '@/features/kangur/ui/context/KangurLessonsRuntimeContext';
 import { KangurUnifiedLesson } from '../lessons/lesson-components';
@@ -16,10 +16,6 @@ import {
 } from './alphabet-unified-lesson-content';
 
 export { CONTENT };
-
-const ALPHABET_FIRST_WORDS_RUNTIME = getKangurLessonStageGameRuntimeSpec(
-  'alphabet_first_words_lesson_stage'
-);
 
 export default function AlphabetWordsLesson({ lessonTemplate }: LessonProps): JSX.Element {
   const runtimeTemplate = useOptionalKangurLessonTemplate('alphabet_words');
@@ -65,7 +61,10 @@ export default function AlphabetWordsLesson({ lessonTemplate }: LessonProps): JS
             description:
               gameSection?.gameStageDescription ?? 'Dopasuj obrazek do właściwego słowa.',
           },
-          runtime: ALPHABET_FIRST_WORDS_RUNTIME,
+          launchableInstance: {
+            gameId: 'alphabet_first_words',
+            instanceId: getKangurBuiltInGameInstanceId('alphabet_first_words'),
+          },
         },
       ]}
     />

@@ -8,14 +8,8 @@ import { describe, expect, it, vi } from 'vitest';
 
 const {
   kangurUnifiedLessonMock,
-  getKangurLessonStageGameRuntimeSpecMock,
 } = vi.hoisted(() => ({
   kangurUnifiedLessonMock: vi.fn(),
-  getKangurLessonStageGameRuntimeSpecMock: vi.fn(() => ({ kind: 'runtime' })),
-}));
-
-vi.mock('@/features/kangur/games/lesson-stage-runtime-specs', () => ({
-  getKangurLessonStageGameRuntimeSpec: getKangurLessonStageGameRuntimeSpecMock,
 }));
 
 vi.mock('../lessons/lesson-components', () => ({
@@ -93,7 +87,10 @@ describe('AlphabetWordsLesson', () => {
       lessonTitle: string;
       sections: Array<{ id: string; title: string; description: string }>;
       slides: Record<string, Array<{ title: string }>>;
-      games: Array<{ stage: { title: string; description: string } }>;
+      games: Array<{
+        stage: { title: string; description: string };
+        launchableInstance?: { gameId: string; instanceId: string };
+      }>;
     };
 
     expect(props.lessonTitle).toBe('First words from Mongo');
@@ -120,6 +117,10 @@ describe('AlphabetWordsLesson', () => {
       accent: 'amber',
       icon: '🎮',
       shellTestId: 'alphabet-words-game-shell',
+    });
+    expect(props.games[0]?.launchableInstance).toEqual({
+      gameId: 'alphabet_first_words',
+      instanceId: 'alphabet_first_words:instance:default',
     });
   });
 });

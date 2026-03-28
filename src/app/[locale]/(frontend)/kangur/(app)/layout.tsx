@@ -1,11 +1,11 @@
-import { KangurAliasAppLayout } from '@/features/kangur/server/KangurAliasAppLayout';
+import { KangurAliasAppLayout } from '@/features/kangur/server';
 
 type LocalizedKangurAppLayoutProps = {
   children: React.ReactNode;
 };
 
-export default function LocalizedKangurAppLayout({
+export default async function LocalizedKangurAppLayout({
   children,
-}: LocalizedKangurAppLayoutProps): React.JSX.Element {
-  return <KangurAliasAppLayout>{children}</KangurAliasAppLayout>;
+}: LocalizedKangurAppLayoutProps): Promise<React.ReactNode> {
+  return await KangurAliasAppLayout({ children });
 }

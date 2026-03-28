@@ -12,9 +12,11 @@ import {
   type ReactNode,
 } from 'react';
 
-import type { KangurLessonStageGameRuntimeSpec } from '@/shared/contracts/kangur-games';
+import type { KangurGameId } from '@/shared/contracts/kangur-games';
+import type { KangurGameInstanceId } from '@/shared/contracts/kangur-game-instances';
+import type { KangurGameRuntimeRendererProps } from '@/shared/contracts/kangur-game-runtime-renderer-props';
 import LessonActivityStage from '@/features/kangur/ui/components/LessonActivityStage';
-import KangurLessonStageGameRuntime from '@/features/kangur/ui/components/KangurLessonStageGameRuntime';
+import KangurLaunchableGameInstanceRuntime from '@/features/kangur/ui/components/KangurLaunchableGameInstanceRuntime';
 import LessonHub, { type HubSection } from '@/features/kangur/ui/components/LessonHub';
 import LessonSlideSection, {
   type LessonSlide,
@@ -91,7 +93,7 @@ type KangurUnifiedLessonGameStageConfig = {
   footerNavigation?: ReactNode;
 };
 
-export type KangurUnifiedLessonGameConfig<SectionId extends string> = {
+type KangurUnifiedLessonGameConfigBase<SectionId extends string> = {
   sectionId: SectionId;
   onStageEnter?: (helpers: {
     sectionId: SectionId;
@@ -109,8 +111,16 @@ export type KangurUnifiedLessonGameConfig<SectionId extends string> = {
     onBack: () => void;
   }) => void;
   stage: KangurUnifiedLessonGameStageConfig;
-  runtime: KangurLessonStageGameRuntimeSpec;
 };
+
+export type KangurUnifiedLessonGameConfig<SectionId extends string> =
+  KangurUnifiedLessonGameConfigBase<SectionId> & {
+    launchableInstance: {
+      gameId: KangurGameId;
+      instanceId: KangurGameInstanceId;
+    };
+    engineOverrides?: KangurGameRuntimeRendererProps;
+  };
 
 type KangurUnifiedLessonBaseProps<SectionId extends string> = {
   lessonId: string;
@@ -213,8 +223,10 @@ const renderKangurUnifiedLessonGameStage = <SectionId extends string>({
       title={stage.title}
     >
       {stage.bodyPrelude ? stage.bodyPrelude : null}
-      <KangurLessonStageGameRuntime
-        runtime={gameConfig.runtime}
+      <KangurLaunchableGameInstanceRuntime
+        engineOverrides={gameConfig.engineOverrides}
+        gameId={gameConfig.launchableInstance.gameId}
+        instanceId={gameConfig.launchableInstance.instanceId}
         onFinish={gameHelpers.onFinish}
       />
     </LessonActivityStage>

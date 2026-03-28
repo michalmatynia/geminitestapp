@@ -22,13 +22,13 @@ let kangurAuthSsrBootstrapConsumed = false;
 // client-side /auth/me round-trip on first load.
 const hydrateKangurAuthFromSsrBootstrap = (): void => {
   if (kangurAuthSsrBootstrapConsumed) return;
-  kangurAuthSsrBootstrapConsumed = true;
 
   if (typeof window === 'undefined') return;
   const win = window as typeof window & { __KANGUR_AUTH_BOOTSTRAP__?: KangurUser | null };
   const ssrUser = win.__KANGUR_AUTH_BOOTSTRAP__;
 
   if (typeof ssrUser === 'undefined') return;
+  kangurAuthSsrBootstrapConsumed = true;
 
   kangurAuthBootstrapCache = {
     user: ssrUser,
@@ -49,6 +49,10 @@ export const primeKangurAuthBootstrapCache = (user: KangurUser | null): void => 
 };
 
 export const readKangurAuthBootstrapCache = (): KangurUser | null | undefined => {
+  if (!kangurAuthBootstrapCache) {
+    hydrateKangurAuthFromSsrBootstrap();
+  }
+
   if (!kangurAuthBootstrapCache) {
     return undefined;
   }

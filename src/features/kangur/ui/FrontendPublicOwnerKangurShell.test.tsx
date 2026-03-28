@@ -4,7 +4,7 @@
 
 import { render, screen } from '@testing-library/react';
 import type { ReactNode } from 'react';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 const { usePathnameMock, kangurFeatureRouteShellMock } = vi.hoisted(() => ({
   usePathnameMock: vi.fn<() => string | null>(),
@@ -59,8 +59,6 @@ vi.mock('@/features/kangur/ui/design/primitives/KangurPageContainer', () => ({
   ),
 }));
 
-import { FrontendPublicOwnerKangurShell } from '@/features/kangur/ui/FrontendPublicOwnerKangurShell';
-
 describe('FrontendPublicOwnerKangurShell', () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -68,7 +66,15 @@ describe('FrontendPublicOwnerKangurShell', () => {
     usePathnameMock.mockReturnValue('/');
   });
 
-  it('mounts vercel analytics for the standalone root-owned kangur shell', () => {
+  afterEach(() => {
+    vi.unstubAllEnvs();
+  });
+
+  it('does not mount vercel analytics by default for the standalone root-owned kangur shell', async () => {
+    const { FrontendPublicOwnerKangurShell } = await import(
+      '@/features/kangur/ui/FrontendPublicOwnerKangurShell'
+    );
+
     render(<FrontendPublicOwnerKangurShell />);
 
     expect(screen.getByTestId('kangur-storefront-appearance-provider')).toBeInTheDocument();
@@ -77,7 +83,7 @@ describe('FrontendPublicOwnerKangurShell', () => {
       'data-suppress-main-role',
       'true'
     );
-    expect(screen.getAllByTestId('kangur-vercel-analytics')).toHaveLength(1);
+    expect(screen.queryByTestId('kangur-vercel-analytics')).not.toBeInTheDocument();
     expect(kangurFeatureRouteShellMock).toHaveBeenCalledWith({
       basePath: '/',
       embedded: true,
@@ -85,17 +91,34 @@ describe('FrontendPublicOwnerKangurShell', () => {
     });
   });
 
-  it('keeps analytics mounted on non-embedded standalone kangur routes', () => {
+  it('keeps analytics disabled by default on non-embedded standalone kangur routes', async () => {
     window.history.replaceState({}, '', '/en/lessons');
     usePathnameMock.mockReturnValue('/en/lessons');
 
+    const { FrontendPublicOwnerKangurShell } = await import(
+      '@/features/kangur/ui/FrontendPublicOwnerKangurShell'
+    );
+
     render(<FrontendPublicOwnerKangurShell />);
 
-    expect(screen.getAllByTestId('kangur-vercel-analytics')).toHaveLength(1);
+    expect(screen.queryByTestId('kangur-vercel-analytics')).not.toBeInTheDocument();
     expect(kangurFeatureRouteShellMock).toHaveBeenCalledWith({
       basePath: '/',
       embedded: false,
       forceBodyScrollLock: false,
     });
+  });
+
+  it('mounts analytics when explicitly enabled for the standalone shell', async () => {
+    vi.resetModules();
+    vi.stubEnv('NEXT_PUBLIC_ENABLE_VERCEL_ANALYTICS', 'true');
+
+    const { FrontendPublicOwnerKangurShell } = await import(
+      '@/features/kangur/ui/FrontendPublicOwnerKangurShell'
+    );
+
+    render(<FrontendPublicOwnerKangurShell />);
+
+    expect(screen.getAllByTestId('kangur-vercel-analytics')).toHaveLength(1);
   });
 });

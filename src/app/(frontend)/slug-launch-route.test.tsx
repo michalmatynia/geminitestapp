@@ -11,6 +11,7 @@ const {
   getKangurConfiguredLaunchTargetMock,
   getKangurStorefrontInitialStateMock,
   notFoundMock,
+  permanentRedirectMock,
   redirectMock,
   shouldApplyFrontPageAppSelectionMock,
 } = vi.hoisted(() => ({
@@ -20,14 +21,21 @@ const {
   getKangurConfiguredLaunchTargetMock: vi.fn(),
   getKangurStorefrontInitialStateMock: vi.fn(),
   notFoundMock: vi.fn(),
+  permanentRedirectMock: vi.fn(),
   redirectMock: vi.fn(),
   shouldApplyFrontPageAppSelectionMock: vi.fn(),
 }));
 
-vi.mock('next/navigation', () => ({
-  redirect: redirectMock,
-  notFound: notFoundMock,
-}));
+vi.mock('next/navigation', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('next/navigation')>();
+
+  return {
+    ...actual,
+    redirect: redirectMock,
+    permanentRedirect: permanentRedirectMock,
+    notFound: notFoundMock,
+  };
+});
 
 vi.mock('@/features/auth/server', () => ({
   auth: authMock,
@@ -50,35 +58,30 @@ vi.mock('@/features/kangur/server/storefront-appearance', () => ({
   getKangurStorefrontInitialState: getKangurStorefrontInitialStateMock,
 }));
 
-vi.mock('@/features/kangur/config/routing', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('@/features/kangur/config/routing')>();
+vi.mock('@/features/kangur/public', () => ({
+  getKangurPublicAliasHref: (
+    slugSegments: readonly string[] = [],
+    searchParams?: Record<string, string | string[] | undefined>
+  ) => {
+    const pathname = slugSegments.length > 0 ? `/kangur/${slugSegments.join('/')}` : '/kangur';
+    const query = new URLSearchParams();
 
-  return {
-    ...actual,
-    getKangurPublicAliasHref: (
-      slugSegments: readonly string[] = [],
-      searchParams?: Record<string, string | string[] | undefined>
-    ) => {
-      const pathname = slugSegments.length > 0 ? `/kangur/${slugSegments.join('/')}` : '/kangur';
-      const query = new URLSearchParams();
-
-      for (const [key, value] of Object.entries(searchParams ?? {})) {
-        if (Array.isArray(value)) {
-          value.forEach((entry) => {
-            query.append(key, entry);
-          });
-          continue;
-        }
-        if (value != null) {
-          query.set(key, value);
-        }
+    for (const [key, value] of Object.entries(searchParams ?? {})) {
+      if (Array.isArray(value)) {
+        value.forEach((entry) => {
+          query.append(key, entry);
+        });
+        continue;
       }
+      if (value != null) {
+        query.set(key, value);
+      }
+    }
 
-      const serialized = query.toString();
-      return serialized ? `${pathname}?${serialized}` : pathname;
-    },
-  };
-});
+    const serialized = query.toString();
+    return serialized ? `${pathname}?${serialized}` : pathname;
+  },
+}));
 
 vi.mock('@/app/(frontend)/cms-render', () => ({
   renderCmsPage: vi.fn(),
@@ -96,6 +99,9 @@ describe('frontend slug launch route', () => {
     vi.clearAllMocks();
     redirectMock.mockImplementation((href: string) => {
       throw new Error(`redirect:${href}`);
+    });
+    permanentRedirectMock.mockImplementation((href: string) => {
+      throw new Error(`permanentRedirect:${href}`);
     });
     notFoundMock.mockImplementation(() => {
       throw new Error('notFound');

@@ -20,6 +20,7 @@ vi.mock('@/features/kangur/ui/lessons/lesson-components', () => ({
 }));
 
 import deMessages from '@/i18n/messages/de.json';
+import { getKangurBuiltInGameInstanceId } from '@/features/kangur/games';
 import EnglishSentenceStructureLesson from '@/features/kangur/ui/components/EnglishSentenceStructureLesson';
 
 type CapturedSlide = {
@@ -48,7 +49,7 @@ describe('EnglishSentenceStructureLesson i18n', () => {
       (capturedProps?.games as Array<{
         sectionId: string;
         stage: Record<string, unknown>;
-        runtime?: { runtimeId?: string; rendererId?: string };
+        launchableInstance?: { gameId?: string; instanceId?: string };
       }>) ?? [];
 
     expect(sections.find((section) => section.id === 'blueprint')).toMatchObject({
@@ -68,9 +69,9 @@ describe('EnglishSentenceStructureLesson i18n', () => {
       title: 'Zusammenfassung',
       description: 'Die wichtigsten Regeln',
     });
-    expect(games.find((game) => game.sectionId === 'game')?.runtime).toMatchObject({
-      runtimeId: 'english_sentence_builder_lesson_stage',
-      rendererId: 'english_sentence_structure_game',
+    expect(games.find((game) => game.sectionId === 'game')?.launchableInstance).toMatchObject({
+      gameId: 'english_sentence_builder',
+      instanceId: getKangurBuiltInGameInstanceId('english_sentence_builder'),
     });
 
     const slides = (capturedProps?.slides as Record<string, CapturedSlide[]>) ?? {};

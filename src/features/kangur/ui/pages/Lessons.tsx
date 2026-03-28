@@ -2,18 +2,38 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslations } from 'next-intl';
-import { LazyKangurTopNavigationController } from '@/features/kangur/ui/components/LazyKangurTopNavigationController';
 import type { KangurPrimaryNavigationProps } from '@/features/kangur/ui/components/KangurPrimaryNavigation';
+import { KangurTopNavigationController } from '@/features/kangur/ui/components/KangurTopNavigationController';
 import { LazyAnimatePresence } from '@/features/kangur/ui/components/LazyAnimatePresence';
 import { KangurStandardPageLayout } from '@/features/kangur/ui/components/KangurStandardPageLayout';
 import { useKangurLoginModal } from '@/features/kangur/ui/context/KangurLoginModalContext';
-import { useLessons, LessonsProvider } from './lessons/LessonsContext';
+import { useOptionalKangurRouteTransitionState } from '@/features/kangur/ui/context/KangurRouteTransitionContext';
+import { useKangurRoutePageReady } from '@/features/kangur/ui/hooks/useKangurRoutePageReady';
+import { LessonsProvider, useLessons } from './lessons/LessonsContext';
 import { LessonsCatalog } from './lessons/Lessons.Catalog';
 import { LazyActiveLessonView } from './lessons/LazyActiveLessonView';
 import { LazyLessonsDeferredEnhancements } from './lessons/LazyLessonsDeferredEnhancements';
 
+const LESSONS_DEFERRED_ENHANCEMENTS_IDLE_TIMEOUT_MS = 120;
+
+function LessonsRouteShellReadyReporter() {
+  const routeTransitionState = useOptionalKangurRouteTransitionState();
+  const isLessonsLibraryTransitionReady =
+    routeTransitionState?.transitionPhase === 'waiting_for_ready' &&
+    routeTransitionState.activeTransitionPageKey === 'Lessons' &&
+    routeTransitionState.activeTransitionSkeletonVariant !== 'lessons-focus';
+
+  useKangurRoutePageReady({
+    pageKey: 'Lessons',
+    ready: isLessonsLibraryTransitionReady,
+  });
+
+  return null;
+}
+
 function LessonsContent() {
   const pageTranslations = useTranslations('KangurLessonsPage');
+  const routeTransitionState = useOptionalKangurRouteTransitionState();
   const {
     auth,
     basePath,
@@ -34,6 +54,9 @@ function LessonsContent() {
   const [docsTooltipsEnabled, setDocsTooltipsEnabled] = useState(false);
 
   const { user, logout } = auth;
+  const isRouteTransitionIdle =
+    routeTransitionState?.transitionPhase == null ||
+    routeTransitionState.transitionPhase === 'idle';
   const handleLogout = useCallback(() => {
     logout(false);
   }, [logout]);
@@ -102,7 +125,7 @@ function LessonsContent() {
   );
 
   useEffect(() => {
-    if (activeLesson || isDeferredEnhancementsReady) {
+    if (isDeferredEnhancementsReady) {
       return;
     }
 
@@ -111,30 +134,38 @@ function LessonsContent() {
       return;
     }
 
-    let timeoutId: number | null = null;
-    const frameId =
-      typeof window.requestAnimationFrame === 'function'
-        ? window.requestAnimationFrame(() => {
-            setIsDeferredEnhancementsReady(true);
-          })
-        : window.setTimeout(() => {
-            timeoutId = null;
-            setIsDeferredEnhancementsReady(true);
-          }, 0);
+    if (activeLesson) {
+      setIsDeferredEnhancementsReady(true);
+      return;
+    }
+
+    if (!isRouteTransitionIdle) {
+      return;
+    }
+
+    if (typeof window.requestIdleCallback === 'function') {
+      const idleId = window.requestIdleCallback(
+        () => {
+          setIsDeferredEnhancementsReady(true);
+        },
+        {
+          timeout: LESSONS_DEFERRED_ENHANCEMENTS_IDLE_TIMEOUT_MS,
+        }
+      );
+
+      return () => {
+        window.cancelIdleCallback?.(idleId);
+      };
+    }
+
+    const timeoutId = window.setTimeout(() => {
+      setIsDeferredEnhancementsReady(true);
+    }, LESSONS_DEFERRED_ENHANCEMENTS_IDLE_TIMEOUT_MS);
 
     return () => {
-      if (timeoutId !== null) {
-        window.clearTimeout(timeoutId);
-        return;
-      }
-
-      if (typeof window.cancelAnimationFrame === 'function') {
-        window.cancelAnimationFrame(frameId);
-      } else {
-        window.clearTimeout(frameId);
-      }
+      window.clearTimeout(timeoutId);
     };
-  }, [activeLesson, isDeferredEnhancementsReady]);
+  }, [activeLesson, isDeferredEnhancementsReady, isRouteTransitionIdle]);
 
   return (
     <>
@@ -151,7 +182,7 @@ function LessonsContent() {
         skipLinkTargetId='kangur-lessons-main'
         docsRootId={isDeferredEnhancementsReady ? 'kangur-lessons-page' : undefined}
         docsTooltipsEnabled={docsTooltipsEnabled}
-        navigation={<LazyKangurTopNavigationController navigation={navigation} />}
+        navigation={<KangurTopNavigationController navigation={navigation} />}
         containerProps={{
           as: 'section',
           'data-kangur-route-main': true,
@@ -176,8 +207,11 @@ function LessonsContent() {
 
 export default function Lessons() {
   return (
-    <LessonsProvider>
-      <LessonsContent />
-    </LessonsProvider>
+    <>
+      <LessonsRouteShellReadyReporter />
+      <LessonsProvider>
+        <LessonsContent />
+      </LessonsProvider>
+    </>
   );
 }

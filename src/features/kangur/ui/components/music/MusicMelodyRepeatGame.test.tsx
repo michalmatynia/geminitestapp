@@ -4,6 +4,7 @@
 
 import { act, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { KANGUR_MUSIC_DIATONIC_SCALE_COMPONENT_ID } from '@/features/kangur/games/music-piano-roll-contract';
 
 vi.mock('next-intl', () => ({
   useTranslations: () => (key: string, values?: Record<string, unknown>) => {
@@ -238,6 +239,7 @@ class MockAudioContext {
 }
 
 describe('MusicMelodyRepeatGame', () => {
+  let melodyRepeatTestIds: typeof import('@/features/kangur/ui/components/music/MusicMelodyRepeatGame').MUSIC_MELODY_REPEAT_TEST_IDS;
   let MusicMelodyRepeatGame: typeof import('@/features/kangur/ui/components/music/MusicMelodyRepeatGame').default;
 
   const mockKeyRect = (element: HTMLElement, top = 0, height = 160): void => {
@@ -288,12 +290,14 @@ describe('MusicMelodyRepeatGame', () => {
     const pianoRollModule = await import(
       '@/features/kangur/ui/components/music/KangurMusicPianoRoll'
     );
-    MusicMelodyRepeatGame = (
-      await import('@/features/kangur/ui/components/music/MusicMelodyRepeatGame')
-    ).default;
+    const melodyRepeatModule = await import(
+      '@/features/kangur/ui/components/music/MusicMelodyRepeatGame'
+    );
+    MusicMelodyRepeatGame = melodyRepeatModule.default;
+    melodyRepeatTestIds = melodyRepeatModule.MUSIC_MELODY_REPEAT_TEST_IDS;
     render(<MusicMelodyRepeatGame onFinish={() => undefined} />);
 
-    expect(screen.getByTestId('music-melody-repeat-stage')).toHaveClass('w-full');
+    expect(screen.getByTestId(melodyRepeatTestIds.stage)).toHaveClass('w-full');
     expect(screen.queryByText('Kolorowy piano roll')).not.toBeInTheDocument();
     expect(
       screen.queryByText(
@@ -321,17 +325,19 @@ describe('MusicMelodyRepeatGame', () => {
     expect(screen.getByTestId('music-melody-repeat-status-phase-icon')).toHaveTextContent('▶');
     expect(screen.getByTestId('music-melody-repeat-status-notes-icon')).toHaveTextContent('🎵');
     expect(screen.getByTestId('music-melody-repeat-status-mode-icon')).toHaveTextContent('🎹');
-    expect(screen.getByTestId('music-melody-repeat-piano-roll')).toHaveClass(
+    expect(screen.getByTestId(melodyRepeatTestIds.pianoRoll.shell)).toHaveClass(
       '!border-0',
       '!bg-transparent',
       '!px-1.5',
       '!py-2.5',
       '!shadow-none'
     );
-    expect(screen.getByTestId('music-melody-repeat-key-do')).toHaveClass(
+    expect(
+      screen.getByTestId(`${melodyRepeatTestIds.pianoRoll.keyPrefix}-do`)
+    ).toHaveClass(
       pianoRollModule.KANGUR_MUSIC_PIANO_ROLL_MOTION_HOOKS.keyClassName
     );
-    expect(screen.getByTestId('music-melody-repeat-stage').firstElementChild).toHaveClass(
+    expect(screen.getByTestId(melodyRepeatTestIds.stage).firstElementChild).toHaveClass(
       'px-2',
       'sm:px-3'
     );
@@ -406,15 +412,19 @@ describe('MusicMelodyRepeatGame', () => {
     expect(screen.getByTestId('music-melody-repeat-feedback')).toHaveTextContent(
       'Twoja kolej. Zacznij od dzwieku do.'
     );
-    expect(screen.getByTestId('music-melody-repeat-step-0')).toHaveAttribute(
+    expect(
+      screen.getByTestId(`${melodyRepeatTestIds.pianoRoll.stepPrefix}-0`)
+    ).toHaveAttribute(
       'data-state',
       'expected'
     );
 
     await act(async () => {
-      fireEvent.click(screen.getByTestId('music-melody-repeat-key-do'));
+      fireEvent.click(screen.getByTestId(`${melodyRepeatTestIds.pianoRoll.keyPrefix}-do`));
     });
-    expect(screen.getByTestId('music-melody-repeat-step-0')).toHaveAttribute(
+    expect(
+      screen.getByTestId(`${melodyRepeatTestIds.pianoRoll.stepPrefix}-0`)
+    ).toHaveAttribute(
       'data-state',
       'played'
     );
@@ -423,7 +433,7 @@ describe('MusicMelodyRepeatGame', () => {
     );
 
     await act(async () => {
-      fireEvent.click(screen.getByTestId('music-melody-repeat-key-re'));
+      fireEvent.click(screen.getByTestId(`${melodyRepeatTestIds.pianoRoll.keyPrefix}-re`));
     });
 
     expect(screen.getByTestId('music-melody-repeat-status-outcome')).toHaveAttribute(
@@ -458,7 +468,7 @@ describe('MusicMelodyRepeatGame', () => {
     expect(persistKangurSessionScoreMock).toHaveBeenCalledWith(
       expect.objectContaining({
         correctAnswers: 1,
-        operation: 'music_diatonic_scale',
+        operation: KANGUR_MUSIC_DIATONIC_SCALE_COMPONENT_ID,
         score: 1,
         totalQuestions: 1,
         xpEarned: 18,
@@ -467,9 +477,11 @@ describe('MusicMelodyRepeatGame', () => {
   });
 
   it('keeps the learner on the same expected note after a wrong key press', async () => {
-    MusicMelodyRepeatGame = (
-      await import('@/features/kangur/ui/components/music/MusicMelodyRepeatGame')
-    ).default;
+    const melodyRepeatModule = await import(
+      '@/features/kangur/ui/components/music/MusicMelodyRepeatGame'
+    );
+    MusicMelodyRepeatGame = melodyRepeatModule.default;
+    melodyRepeatTestIds = melodyRepeatModule.MUSIC_MELODY_REPEAT_TEST_IDS;
     render(<MusicMelodyRepeatGame onFinish={() => undefined} />);
 
     await act(async () => {
@@ -478,7 +490,7 @@ describe('MusicMelodyRepeatGame', () => {
     });
 
     await act(async () => {
-      fireEvent.click(screen.getByTestId('music-melody-repeat-key-fa'));
+      fireEvent.click(screen.getByTestId(`${melodyRepeatTestIds.pianoRoll.keyPrefix}-fa`));
     });
 
     expect(screen.getByTestId('music-melody-repeat-status-outcome')).toHaveAttribute(
@@ -505,7 +517,9 @@ describe('MusicMelodyRepeatGame', () => {
       'aria-label',
       'Start'
     );
-    expect(screen.getByTestId('music-melody-repeat-key-fa')).toHaveAttribute('aria-pressed', 'true');
+    expect(
+      screen.getByTestId(`${melodyRepeatTestIds.pianoRoll.keyPrefix}-fa`)
+    ).toHaveAttribute('aria-pressed', 'true');
 
     await act(async () => {
       await vi.advanceTimersByTimeAsync(1_800);
@@ -521,7 +535,9 @@ describe('MusicMelodyRepeatGame', () => {
     expect(screen.getByTestId('music-melody-repeat-feedback')).toHaveTextContent(
       'Twoja kolej. Zacznij od dzwieku do.'
     );
-    expect(screen.getByTestId('music-melody-repeat-step-0')).toHaveAttribute(
+    expect(
+      screen.getByTestId(`${melodyRepeatTestIds.pianoRoll.stepPrefix}-0`)
+    ).toHaveAttribute(
       'data-state',
       'expected'
     );
@@ -581,45 +597,67 @@ describe('MusicMelodyRepeatGame', () => {
     const pianoRollModule = await import(
       '@/features/kangur/ui/components/music/KangurMusicPianoRoll'
     );
-    MusicMelodyRepeatGame = (
-      await import('@/features/kangur/ui/components/music/MusicMelodyRepeatGame')
-    ).default;
+    const melodyRepeatModule = await import(
+      '@/features/kangur/ui/components/music/MusicMelodyRepeatGame'
+    );
+    MusicMelodyRepeatGame = melodyRepeatModule.default;
+    melodyRepeatTestIds = melodyRepeatModule.MUSIC_MELODY_REPEAT_TEST_IDS;
     render(<MusicMelodyRepeatGame onFinish={() => undefined} />);
 
-    fireEvent.click(screen.getByTestId('music-melody-repeat-step-keyboard-mode-synth'));
-    expect(screen.getByTestId('music-melody-repeat-piano-roll')).toHaveClass(
+    fireEvent.click(
+      screen.getByTestId(`${melodyRepeatTestIds.pianoRoll.stepPrefix}-keyboard-mode-synth`)
+    );
+    expect(screen.getByTestId(melodyRepeatTestIds.pianoRoll.shell)).toHaveClass(
       pianoRollModule.KANGUR_MUSIC_PIANO_ROLL_MOTION_HOOKS.engineClassName
     );
-    fireEvent.click(screen.getByTestId('music-melody-repeat-step-synth-glide-mode-semitone'));
-    fireEvent.click(screen.getByTestId('music-melody-repeat-step-synth-waveform-triangle'));
+    fireEvent.click(
+      screen.getByTestId(`${melodyRepeatTestIds.pianoRoll.stepPrefix}-synth-glide-mode-semitone`)
+    );
+    fireEvent.click(
+      screen.getByTestId(`${melodyRepeatTestIds.pianoRoll.stepPrefix}-synth-waveform-triangle`)
+    );
 
-    expect(screen.getByTestId('music-melody-repeat-step-keyboard-mode-synth')).toHaveAttribute(
+    expect(
+      screen.getByTestId(`${melodyRepeatTestIds.pianoRoll.stepPrefix}-keyboard-mode-synth`)
+    ).toHaveAttribute(
       'aria-pressed',
       'true'
     );
-    expect(screen.getByTestId('music-melody-repeat-step-keyboard-mode-synth')).toHaveClass(
-      pianoRollModule.KANGUR_MUSIC_PIANO_ROLL_MOTION_HOOKS.synthControlButtonClassName
-    );
-    expect(screen.getByTestId('music-melody-repeat-step-synth-glide-mode-semitone')).toHaveClass(
-      pianoRollModule.KANGUR_MUSIC_PIANO_ROLL_MOTION_HOOKS.synthControlButtonClassName
-    );
-    expect(screen.getByTestId('music-melody-repeat-step-synth-envelope-button')).toHaveClass(
-      pianoRollModule.KANGUR_MUSIC_PIANO_ROLL_MOTION_HOOKS.synthControlButtonClassName
-    );
-    expect(screen.getByTestId('music-melody-repeat-step-synth-waveform-sine')).toHaveAttribute(
-      'aria-label',
-      'Brzmienie: Sine'
-    );
-    expect(screen.getByTestId('music-melody-repeat-step-synth-waveform-sine')).toHaveTextContent('');
-    expect(screen.getByTestId('music-melody-repeat-step-synth-waveform-triangle')).toHaveClass(
+    expect(
+      screen.getByTestId(`${melodyRepeatTestIds.pianoRoll.stepPrefix}-keyboard-mode-synth`)
+    ).toHaveClass(
       pianoRollModule.KANGUR_MUSIC_PIANO_ROLL_MOTION_HOOKS.synthControlButtonClassName
     );
     expect(
-      screen.getByTestId('music-melody-repeat-step-synth-waveform-icon-triangle')
-    ).toBeInTheDocument();
-    expect(screen.getByTestId('music-melody-repeat-step-keyboard-mode-icon-synth')).toHaveTextContent(
-      '✨'
+      screen.getByTestId(`${melodyRepeatTestIds.pianoRoll.stepPrefix}-synth-glide-mode-semitone`)
+    ).toHaveClass(
+      pianoRollModule.KANGUR_MUSIC_PIANO_ROLL_MOTION_HOOKS.synthControlButtonClassName
     );
+    expect(
+      screen.getByTestId(`${melodyRepeatTestIds.pianoRoll.stepPrefix}-synth-envelope-button`)
+    ).toHaveClass(
+      pianoRollModule.KANGUR_MUSIC_PIANO_ROLL_MOTION_HOOKS.synthControlButtonClassName
+    );
+    expect(
+      screen.getByTestId(`${melodyRepeatTestIds.pianoRoll.stepPrefix}-synth-waveform-sine`)
+    ).toHaveAttribute(
+      'aria-label',
+      'Brzmienie: Sine'
+    );
+    expect(
+      screen.getByTestId(`${melodyRepeatTestIds.pianoRoll.stepPrefix}-synth-waveform-sine`)
+    ).toHaveTextContent('');
+    expect(
+      screen.getByTestId(`${melodyRepeatTestIds.pianoRoll.stepPrefix}-synth-waveform-triangle`)
+    ).toHaveClass(
+      pianoRollModule.KANGUR_MUSIC_PIANO_ROLL_MOTION_HOOKS.synthControlButtonClassName
+    );
+    expect(
+      screen.getByTestId(`${melodyRepeatTestIds.pianoRoll.stepPrefix}-synth-waveform-icon-triangle`)
+    ).toBeInTheDocument();
+    expect(
+      screen.getByTestId(`${melodyRepeatTestIds.pianoRoll.stepPrefix}-keyboard-mode-icon-synth`)
+    ).toHaveTextContent('✨');
     expect(screen.getByTestId('music-melody-repeat-status-mode')).toHaveAttribute(
       'aria-label',
       'Tryb: synth'
@@ -631,36 +669,42 @@ describe('MusicMelodyRepeatGame', () => {
       await vi.advanceTimersByTimeAsync(1_200);
     });
 
-    expect(screen.getByTestId('music-melody-repeat-step-transport-mode')).toHaveAttribute(
+    expect(
+      screen.getByTestId(`${melodyRepeatTestIds.pianoRoll.stepPrefix}-transport-mode`)
+    ).toHaveAttribute(
       'aria-label',
       'Tryb: synth'
     );
-    expect(screen.getByTestId('music-melody-repeat-step-transport-mode-icon')).toHaveTextContent(
-      '✨'
-    );
-    expect(screen.getByTestId('music-melody-repeat-step-transport-waveform')).toHaveAttribute(
+    expect(
+      screen.getByTestId(`${melodyRepeatTestIds.pianoRoll.stepPrefix}-transport-mode-icon`)
+    ).toHaveTextContent('✨');
+    expect(
+      screen.getByTestId(`${melodyRepeatTestIds.pianoRoll.stepPrefix}-transport-waveform`)
+    ).toHaveAttribute(
       'aria-label',
       'Brzmienie: Triangle'
     );
-    expect(screen.getByTestId('music-melody-repeat-step-transport-waveform-cue')).toHaveTextContent(
-      '👂'
-    );
     expect(
-      screen.getByTestId('music-melody-repeat-step-transport-waveform-icon')
+      screen.getByTestId(`${melodyRepeatTestIds.pianoRoll.stepPrefix}-transport-waveform-cue`)
+    ).toHaveTextContent('👂');
+    expect(
+      screen.getByTestId(`${melodyRepeatTestIds.pianoRoll.stepPrefix}-transport-waveform-icon`)
     ).toBeInTheDocument();
-    expect(screen.getByTestId('music-melody-repeat-step-transport-glide-mode')).toHaveAttribute(
+    expect(
+      screen.getByTestId(`${melodyRepeatTestIds.pianoRoll.stepPrefix}-transport-glide-mode`)
+    ).toHaveAttribute(
       'aria-label',
       'Ruch: Stopnie'
     );
-    expect(screen.getByTestId('music-melody-repeat-step-transport-glide-mode-icon')).toHaveTextContent(
-      '↕'
-    );
     expect(
-      screen.getByTestId('music-melody-repeat-step-transport-glide-mode-detail')
+      screen.getByTestId(`${melodyRepeatTestIds.pianoRoll.stepPrefix}-transport-glide-mode-icon`)
+    ).toHaveTextContent('↕');
+    expect(
+      screen.getByTestId(`${melodyRepeatTestIds.pianoRoll.stepPrefix}-transport-glide-mode-detail`)
     ).toHaveTextContent('#');
 
-    const doKey = screen.getByTestId('music-melody-repeat-key-do');
-    const reKey = screen.getByTestId('music-melody-repeat-key-re');
+    const doKey = screen.getByTestId(`${melodyRepeatTestIds.pianoRoll.keyPrefix}-do`);
+    const reKey = screen.getByTestId(`${melodyRepeatTestIds.pianoRoll.keyPrefix}-re`);
     mockKeyRect(doKey);
     mockKeyRect(reKey);
 

@@ -1,9 +1,9 @@
 'use client';
 
-import { getKangurLessonStageGameRuntimeSpec } from '@/features/kangur/games/lesson-stage-runtime-specs';
 import { useCallback, useRef } from 'react';
 import { useTranslations } from 'next-intl';
 
+import { getKangurBuiltInGameInstanceId } from '@/features/kangur/games';
 import type { LessonSlide as LessonSlideSectionSlide } from '@/features/kangur/ui/components/LessonSlideSection';
 import {
   CalendarDateFormatAnimation,
@@ -552,13 +552,13 @@ const CALENDAR_GAME_SECTION_MAP: Record<TrainingCardId, CalendarInteractiveSecti
   game_months: 'miesiace',
   game_dates: 'data',
 };
-const CALENDAR_STAGE_RUNTIME_BY_SECTION: Record<
-  CalendarInteractiveSectionId,
-  ReturnType<typeof getKangurLessonStageGameRuntimeSpec>
-> = {
-  dni: getKangurLessonStageGameRuntimeSpec('calendar_interactive_days_lesson_stage'),
-  miesiace: getKangurLessonStageGameRuntimeSpec('calendar_interactive_months_lesson_stage'),
-  data: getKangurLessonStageGameRuntimeSpec('calendar_interactive_dates_lesson_stage'),
+const CALENDAR_INSTANCE_ID_BY_SECTION: Record<CalendarInteractiveSectionId, string> = {
+  dni: getKangurBuiltInGameInstanceId('calendar_interactive', 'calendar_interactive:calendar-days'),
+  miesiace: getKangurBuiltInGameInstanceId(
+    'calendar_interactive',
+    'calendar_interactive:calendar-months'
+  ),
+  data: getKangurBuiltInGameInstanceId('calendar_interactive', 'calendar_interactive:calendar-dates'),
 };
 
 export default function CalendarLesson(): React.JSX.Element {
@@ -600,7 +600,10 @@ export default function CalendarLesson(): React.JSX.Element {
         title: section.title,
       },
       onStageEnter: awardLessonCompletionOnce,
-      runtime: CALENDAR_STAGE_RUNTIME_BY_SECTION[interactiveSection],
+      launchableInstance: {
+        gameId: 'calendar_interactive',
+        instanceId: CALENDAR_INSTANCE_ID_BY_SECTION[interactiveSection],
+      },
     };
   });
 

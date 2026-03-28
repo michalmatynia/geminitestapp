@@ -161,7 +161,7 @@ export const KANGUR_FOUNDATIONAL_GAME_ENGINES: readonly KangurGameEngineDefiniti
     label: 'Relation match engine',
     title: 'Relation Match Engine',
     description:
-      'Shared engine for analogy matching and relationship reasoning across lesson-stage and fullscreen surfaces.',
+      'Shared engine for analogy matching and relationship reasoning across lesson variants and fullscreen surfaces.',
     mechanics: ['logic_relation'],
     interactionModes: ['tap'],
     surfaces: ['lesson', 'library', 'game'],

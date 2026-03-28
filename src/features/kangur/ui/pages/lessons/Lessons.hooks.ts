@@ -70,7 +70,9 @@ export function useLessonsLogic() {
     () => new Map(lessonTemplates.map((t) => [t.componentId, t] as const)),
     [lessonTemplates],
   );
-  const progress = useKangurProgressState();
+  const progress = useKangurProgressState({
+    enabled: isDeferredContentReady || activeLessonId !== null,
+  });
   
   const activeLessonNavigationRef = useRef<HTMLDivElement | null>(null);
   const activeLessonHeaderRef = useRef<HTMLDivElement | null>(null);
@@ -162,13 +164,10 @@ export function useLessonsLogic() {
     subject,
     ageGroup,
     enabledOnly: true,
-    enabled: isDeferredContentReady,
   });
-  const isLessonsCatalogPlaceholderData =
-    isDeferredContentReady && lessonsCatalogQuery.isPlaceholderData === true;
+  const isLessonsCatalogPlaceholderData = lessonsCatalogQuery.isPlaceholderData === true;
   const isLessonsCatalogDataMissing = typeof lessonsCatalogQuery.data === 'undefined';
   const isLessonsCatalogLoading =
-    isDeferredContentReady &&
     Boolean(
       (lessonsCatalogQuery.isPending ||
         lessonsCatalogQuery.isLoading ||
@@ -178,28 +177,20 @@ export function useLessonsLogic() {
     );
   const isLessonSectionsLoading = isLessonsCatalogLoading;
   const shouldShowLessonsCatalogSkeleton =
-    !isDeferredContentReady ||
-    isLessonsCatalogPlaceholderData ||
-    isLessonsCatalogLoading ||
-    isLessonSectionsLoading;
+    isLessonsCatalogPlaceholderData || isLessonsCatalogLoading || isLessonSectionsLoading;
   
   const lessons = useMemo(
     (): KangurLesson[] =>
-      isDeferredContentReady && !isLessonsCatalogPlaceholderData
-        ? lessonsCatalogQuery.data?.lessons ?? []
-        : [],
+      !isLessonsCatalogPlaceholderData ? lessonsCatalogQuery.data?.lessons ?? [] : [],
     [
-      isDeferredContentReady,
       isLessonsCatalogPlaceholderData,
       lessonsCatalogQuery.data?.lessons,
     ]
   );
   const lessonSections = useMemo(
     () =>
-      isDeferredContentReady && !isLessonsCatalogPlaceholderData
-        ? lessonsCatalogQuery.data?.sections ?? []
-        : [],
-    [isDeferredContentReady, isLessonsCatalogPlaceholderData, lessonsCatalogQuery.data?.sections]
+      !isLessonsCatalogPlaceholderData ? lessonsCatalogQuery.data?.sections ?? [] : [],
+    [isLessonsCatalogPlaceholderData, lessonsCatalogQuery.data?.sections]
   );
   const lessonAssignmentsByComponent = useMemo(() => {
     if (!isAssignmentsReady || assignments.length === 0 || lessons.length === 0) {
@@ -359,7 +350,6 @@ export function useLessonsLogic() {
     !expectsFocusedLesson &&
     activeLesson === null &&
     !isSecretLessonActive &&
-    isDeferredContentReady &&
     isLessonsShellReady;
 
   const isLessonsPageReady =

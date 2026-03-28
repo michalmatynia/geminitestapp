@@ -2,7 +2,7 @@
 
 import { useMemo } from 'react';
 
-import { getKangurLessonStageGameRuntimeSpec } from '@/features/kangur/games/lesson-stage-runtime-specs';
+import { getKangurBuiltInGameInstanceId } from '@/features/kangur/games';
 import type { LessonProps } from '@/features/kangur/lessons/lesson-ui-registry';
 import { useOptionalKangurLessonTemplate } from '@/features/kangur/ui/context/KangurLessonsRuntimeContext';
 import { KangurUnifiedLesson } from '../lessons/lesson-components';
@@ -16,10 +16,6 @@ import {
 } from './alphabet-unified-lesson-content';
 
 export { CONTENT };
-
-const ALPHABET_LETTER_MATCHING_RUNTIME = getKangurLessonStageGameRuntimeSpec(
-  'alphabet_letter_matching_lesson_stage'
-);
 
 export default function AlphabetMatchingLesson({ lessonTemplate }: LessonProps): JSX.Element {
   const runtimeTemplate = useOptionalKangurLessonTemplate('alphabet_matching');
@@ -66,7 +62,10 @@ export default function AlphabetMatchingLesson({ lessonTemplate }: LessonProps):
             title: gameSection?.gameStageTitle ?? 'Gra litery',
             description: gameSection?.gameStageDescription ?? 'Połącz wielkie i małe litery.',
           },
-          runtime: ALPHABET_LETTER_MATCHING_RUNTIME,
+          launchableInstance: {
+            gameId: 'alphabet_letter_matching',
+            instanceId: getKangurBuiltInGameInstanceId('alphabet_letter_matching'),
+          },
         },
       ]}
     />

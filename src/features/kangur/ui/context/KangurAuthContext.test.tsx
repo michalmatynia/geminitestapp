@@ -282,6 +282,30 @@ describe('KangurAuthContext', () => {
     expect(meMock).toHaveBeenCalledTimes(2);
   });
 
+  it('does not background revalidate when the bootstrap cache already resolved to guest', async () => {
+    clearKangurAuthBootstrapCache();
+    meMock.mockRejectedValueOnce({ status: 401 });
+
+    const firstRender = renderAuthHarness();
+
+    await waitFor(() => {
+      expect(screen.getByTestId('kangur-auth-loading')).toHaveTextContent('false');
+      expect(screen.getByTestId('kangur-parent-assignment-access')).toHaveTextContent('false');
+    });
+
+    expect(meMock).toHaveBeenCalledTimes(1);
+    firstRender.unmount();
+
+    renderAuthHarness();
+
+    await waitFor(() => {
+      expect(screen.getByTestId('kangur-auth-loading')).toHaveTextContent('false');
+      expect(screen.getByTestId('kangur-parent-assignment-access')).toHaveTextContent('false');
+    });
+
+    expect(meMock).toHaveBeenCalledTimes(1);
+  });
+
   it('navigates to the Kangur login page using the current location as callback target', async () => {
     const user = userEvent.setup();
 

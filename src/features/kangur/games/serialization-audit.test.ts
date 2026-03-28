@@ -20,7 +20,6 @@ describe('kangur game runtime serialization audit', () => {
 
     expect(audit.surfaces.map((entry) => entry.surface)).toEqual([
       'lesson_inline',
-      'lesson_stage',
       'game_screen',
     ]);
     expect(audit.runtimeBearingVariantCount).toBeGreaterThan(0);
@@ -64,13 +63,6 @@ describe('kangur game runtime serialization audit', () => {
       duplicatedInline.variant.legacyActivityId = 'clock-training';
     }
 
-    const missingStage = variantEntries.find(
-      (entry) => entry.variant.id === 'logical_patterns_workshop.lesson-stage'
-    );
-    if (missingStage) {
-      missingStage.variant.lessonStageRuntimeId = undefined;
-    }
-
     const legacyGameScreen = variantEntries.find(
       (entry) => entry.variant.id === 'english_sentence_builder.game-screen'
     );
@@ -102,15 +94,11 @@ describe('kangur game runtime serialization audit', () => {
 
     const audit = createKangurGameRuntimeSerializationAudit(variantEntries, engineEntries);
     const lessonInline = audit.surfaces.find((entry) => entry.surface === 'lesson_inline');
-    const lessonStage = audit.surfaces.find((entry) => entry.surface === 'lesson_stage');
     const gameScreen = audit.surfaces.find((entry) => entry.surface === 'game_screen');
 
     expect(lessonInline).toMatchObject({
       compatibilityFallbackVariants: 1,
       duplicatedLegacyVariants: 1,
-    });
-    expect(lessonStage).toMatchObject({
-      missingRuntimeVariants: 1,
     });
     expect(gameScreen).toMatchObject({
       compatibilityFallbackVariants: 1,
@@ -118,7 +106,7 @@ describe('kangur game runtime serialization audit', () => {
     });
     expect(audit.compatibilityFallbackVariantCount).toBe(2);
     expect(audit.duplicatedLegacyVariantCount).toBe(2);
-    expect(audit.missingRuntimeVariantCount).toBe(1);
+    expect(audit.missingRuntimeVariantCount).toBe(0);
     expect(audit.legacyLaunchFallbackGameCount).toBe(1);
     expect(
       audit.issues

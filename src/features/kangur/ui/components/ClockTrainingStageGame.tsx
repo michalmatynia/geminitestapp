@@ -1,6 +1,6 @@
 'use client';
 
-import type { KangurClockTrainingStageSection } from '@/shared/contracts/kangur-games';
+import type { KangurClockTrainingStageSection } from '@/shared/contracts/kangur-game-runtime-renderer-props';
 
 import {
   TRAINING_PANEL_TASKS,

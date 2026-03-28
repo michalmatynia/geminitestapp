@@ -67,24 +67,37 @@ const loadProgressMock = vi.fn(() => ({
   lessonMastery: {},
 }));
 
-vi.mock('@/features/kangur/ui/components/KangurLessonStageGameRuntime', () => ({
+vi.mock('@/features/kangur/ui/components/KangurLaunchableGameInstanceRuntime', () => ({
   __esModule: true,
   default: ({
-    runtime,
+    gameId,
+    instanceId,
     onFinish,
   }: {
-    runtime: { rendererProps?: { calendarSection?: string } };
+    gameId: string;
+    instanceId: string;
     onFinish: () => void;
-  }): React.JSX.Element => (
-    <div data-testid='mock-calendar-interactive-game'>
-      <span data-testid='mock-calendar-interactive-section'>
-        {runtime.rendererProps?.calendarSection ?? 'mixed'}
-      </span>
-      <button type='button' onClick={onFinish}>
-        Finish calendar training
-      </button>
-    </div>
-  ),
+  }): React.JSX.Element => {
+    const section =
+      instanceId === 'calendar_interactive:instance:calendar-days'
+        ? 'dni'
+        : instanceId === 'calendar_interactive:instance:calendar-months'
+          ? 'miesiace'
+          : instanceId === 'calendar_interactive:instance:calendar-dates'
+            ? 'data'
+            : 'mixed';
+
+    return (
+      <div data-testid='mock-calendar-interactive-game'>
+        <span data-testid='mock-calendar-interactive-game-id'>{gameId}</span>
+        <span data-testid='mock-calendar-interactive-instance-id'>{instanceId}</span>
+        <span data-testid='mock-calendar-interactive-section'>{section}</span>
+        <button type='button' onClick={onFinish}>
+          Finish calendar training
+        </button>
+      </div>
+    );
+  },
 }));
 
 vi.mock('@/features/kangur/ui/services/progress', async (importOriginal) => {
@@ -200,6 +213,12 @@ describe('CalendarLesson section hub layout', () => {
       within(screen.getByTestId('calendar-lesson-game-shell')).getByText('Ćwiczenie: Daty')
     ).toBeInTheDocument();
     expect(screen.getByTestId('mock-calendar-interactive-game')).toBeInTheDocument();
+    expect(screen.getByTestId('mock-calendar-interactive-game-id')).toHaveTextContent(
+      'calendar_interactive'
+    );
+    expect(screen.getByTestId('mock-calendar-interactive-instance-id')).toHaveTextContent(
+      'calendar_interactive:instance:calendar-dates'
+    );
     expect(screen.getByTestId('mock-calendar-interactive-section')).toHaveTextContent('data');
     expect(loadProgressMock).toHaveBeenCalledWith({ ownerKey: 'learner-1' });
     expect(addXpMock).toHaveBeenCalledTimes(1);

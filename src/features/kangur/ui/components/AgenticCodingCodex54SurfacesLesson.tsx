@@ -1,15 +1,13 @@
 'use client';
 
-import { getKangurLessonStageGameRuntimeSpec } from '@/features/kangur/games/lesson-stage-runtime-specs';
+import { getKangurBuiltInGameInstanceId } from '@/features/kangur/games';
 import { KangurUnifiedLesson } from '../lessons/lesson-components';
 
 import { HUB_SECTIONS, SLIDES } from './AgenticCodingCodex54SurfacesLesson.data';
 
 export { HUB_SECTIONS, SLIDES };
 
-const AGENTIC_SURFACE_MATCH_RUNTIME = getKangurLessonStageGameRuntimeSpec(
-  'agentic_surface_match_lesson_stage'
-);
+const AGENTIC_SURFACE_MATCH_INSTANCE_ID = getKangurBuiltInGameInstanceId('agentic_surface_match');
 
 export default function AgenticCodingCodex54SurfacesLesson(): JSX.Element {
   return (
@@ -35,7 +33,10 @@ export default function AgenticCodingCodex54SurfacesLesson(): JSX.Element {
             maxWidthClassName: 'max-w-4xl',
             shellTestId: 'agentic-surface-match-game-shell',
           },
-          runtime: AGENTIC_SURFACE_MATCH_RUNTIME,
+          launchableInstance: {
+            gameId: 'agentic_surface_match',
+            instanceId: AGENTIC_SURFACE_MATCH_INSTANCE_ID,
+          },
         },
       ]}
       completionSectionId='surfaces'

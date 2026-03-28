@@ -5,17 +5,13 @@
 import React from 'react';
 import { render } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
+import { KANGUR_MUSIC_DIATONIC_SCALE_COMPONENT_ID } from '@/features/kangur/games/music-piano-roll-contract';
+import { MUSIC_DIATONIC_SCALE_SECTION_IDS } from '@/features/kangur/ui/components/music-diatonic-scale-lesson-content';
 
 const {
   kangurUnifiedLessonMock,
-  getKangurLessonStageGameRuntimeSpecMock,
 } = vi.hoisted(() => ({
   kangurUnifiedLessonMock: vi.fn(),
-  getKangurLessonStageGameRuntimeSpecMock: vi.fn(() => ({ kind: 'runtime' })),
-}));
-
-vi.mock('@/features/kangur/games/lesson-stage-runtime-specs', () => ({
-  getKangurLessonStageGameRuntimeSpec: getKangurLessonStageGameRuntimeSpecMock,
 }));
 
 vi.mock('../lessons/lesson-components', () => ({
@@ -25,14 +21,18 @@ vi.mock('../lessons/lesson-components', () => ({
   },
 }));
 
-import MusicDiatonicScaleLesson from './MusicDiatonicScaleLesson';
+import MusicDiatonicScaleLesson, {
+  MUSIC_DIATONIC_SCALE_GAME_SECTION_CONFIGS,
+  MUSIC_DIATONIC_SCALE_LAUNCHABLE_GAME_IDS,
+  MUSIC_DIATONIC_SCALE_TOP_SECTION_TEST_IDS,
+} from './MusicDiatonicScaleLesson';
 
 describe('MusicDiatonicScaleLesson', () => {
   it('prefers localized template component content over the static fallback payload', () => {
     render(
       <MusicDiatonicScaleLesson
         lessonTemplate={{
-          componentId: 'music_diatonic_scale',
+          componentId: KANGUR_MUSIC_DIATONIC_SCALE_COMPONENT_ID,
           subject: 'music',
           ageGroup: 'six_year_old',
           label: 'Music',
@@ -43,7 +43,7 @@ describe('MusicDiatonicScaleLesson', () => {
           activeBg: 'bg-sky-500',
           sortOrder: 100,
           componentContent: {
-            kind: 'music_diatonic_scale',
+            kind: KANGUR_MUSIC_DIATONIC_SCALE_COMPONENT_ID,
             notesSection: {
               emoji: '🎼',
               title: 'Database notes',
@@ -126,19 +126,22 @@ describe('MusicDiatonicScaleLesson', () => {
       lessonTitle: string;
       sections: Array<{ id: string; title: string; description: string }>;
       slides: Record<string, Array<{ title: string }>>;
-      games: Array<{ stage: { title: string; description: string } }>;
+      games: Array<{
+        stage: { title: string; description: string };
+        launchableInstance?: { gameId?: string; instanceId?: string };
+      }>;
     };
 
     expect(props.lessonTitle).toBe('Scale from Mongo');
     expect(props.sections).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
-          id: 'notes',
+          id: MUSIC_DIATONIC_SCALE_SECTION_IDS.notes,
           title: 'Database notes',
           description: 'Database note description',
         }),
         expect.objectContaining({
-          id: 'game_repeat',
+          id: MUSIC_DIATONIC_SCALE_SECTION_IDS.repeatGame,
           title: 'Database repeat',
           description: 'Database repeat description',
         }),
@@ -156,7 +159,7 @@ describe('MusicDiatonicScaleLesson', () => {
       accent: 'sky',
       icon: '🎹',
       maxWidthClassName: 'max-w-none',
-      shellTestId: 'music-diatonic-scale-game-shell',
+      shellTestId: MUSIC_DIATONIC_SCALE_TOP_SECTION_TEST_IDS.repeat,
       shellVariant: 'plain',
     });
     expect(props.games[1]?.stage).toEqual({
@@ -165,8 +168,14 @@ describe('MusicDiatonicScaleLesson', () => {
       accent: 'sky',
       icon: '🎛️',
       maxWidthClassName: 'max-w-none',
-      shellTestId: 'music-diatonic-scale-freeplay-shell',
+      shellTestId: MUSIC_DIATONIC_SCALE_TOP_SECTION_TEST_IDS.freePlay,
       shellVariant: 'plain',
+    });
+    expect(props.games[0]?.launchableInstance).toEqual({
+      ...MUSIC_DIATONIC_SCALE_GAME_SECTION_CONFIGS.repeat.launchableInstance,
+    });
+    expect(props.games[1]?.launchableInstance).toEqual({
+      ...MUSIC_DIATONIC_SCALE_GAME_SECTION_CONFIGS.freePlay.launchableInstance,
     });
   });
 });

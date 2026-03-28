@@ -1,7 +1,7 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import { useLocale, useTranslations } from 'next-intl';
+import { useMessages } from 'next-intl';
 
 import {
   KangurButton,
@@ -9,6 +9,7 @@ import {
   KangurStatusChip,
 } from '@/features/kangur/ui/design/primitives';
 import { useKangurCoarsePointer } from '@/features/kangur/ui/hooks/useKangurCoarsePointer';
+import { useOptionalKangurLessonTemplate } from '@/features/kangur/ui/context/KangurLessonsRuntimeContext';
 
 import {
   buildGeometryShapeDefinitions,
@@ -16,8 +17,12 @@ import {
   SHAPE_ROUNDS,
   type ShapeId,
 } from './GeometryShapeRecognition.shared';
+import {
+  createGeometryShapeRecognitionMessageTranslate,
+  createGeometryShapeRecognitionLessonTranslate,
+  resolveGeometryShapeRecognitionLessonContent,
+} from './geometry-shape-recognition-lesson-content';
 import type { LessonTranslate } from './lesson-copy';
-import { normalizeSiteLocale } from '@/shared/lib/i18n/site-locale';
 
 type ShapeRecognitionStageGameProps = {
   finishLabel?: string;
@@ -28,10 +33,29 @@ export default function ShapeRecognitionStageGame({
   finishLabel,
   onFinish,
 }: ShapeRecognitionStageGameProps): React.JSX.Element {
-  const locale = normalizeSiteLocale(useLocale());
-  const translations = useTranslations('KangurStaticLessons.geometryShapeRecognition');
-  const translate: LessonTranslate = (key, values) => translations(key as never, values as never);
-  const shapes = useMemo(() => buildGeometryShapeDefinitions(translate), [translations]);
+  const runtimeTemplate = useOptionalKangurLessonTemplate('geometry_shape_recognition');
+  const messages = useMessages() as Record<string, unknown>;
+  const fallbackTranslate = useMemo<LessonTranslate>(() => {
+    const staticLessons = messages['KangurStaticLessons'];
+    const lessonMessages =
+      staticLessons && typeof staticLessons === 'object' && !Array.isArray(staticLessons)
+        ? (((staticLessons as Record<string, unknown>)['geometryShapeRecognition'] as
+            | Record<string, unknown>
+            | undefined) ??
+          {})
+        : {};
+
+    return createGeometryShapeRecognitionMessageTranslate(lessonMessages);
+  }, [messages]);
+  const resolvedContent = useMemo(
+    () => resolveGeometryShapeRecognitionLessonContent(runtimeTemplate, fallbackTranslate),
+    [fallbackTranslate, runtimeTemplate],
+  );
+  const translate = useMemo(
+    () => createGeometryShapeRecognitionLessonTranslate(resolvedContent),
+    [resolvedContent],
+  );
+  const shapes = useMemo(() => buildGeometryShapeDefinitions(translate), [translate]);
   const shapeLabels = useMemo(
     () =>
       Object.fromEntries(
@@ -43,15 +67,7 @@ export default function ShapeRecognitionStageGame({
   const [roundIndex, setRoundIndex] = useState(0);
   const [selected, setSelected] = useState<ShapeId | null>(null);
   const [score, setScore] = useState(0);
-  const resolvedFinishLabel =
-    finishLabel ??
-    (locale === 'uk'
-      ? 'Повернутися до тем'
-      : locale === 'de'
-        ? 'Zurück zu den Themen'
-        : locale === 'en'
-          ? 'Back to topics'
-          : 'Wróć do tematów');
+  const resolvedFinishLabel = finishLabel ?? translate('draw.finishLabel');
 
   if (SHAPE_ROUNDS.length === 0) {
     return (

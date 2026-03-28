@@ -17,6 +17,7 @@ import {
 import {
   getKangurGameLibraryLessonCoverageStatusFromMap,
   type KangurGameLibraryLessonCoverageStatus,
+  type KangurGamesLibraryVariantGroupSurface,
 } from '@/features/kangur/games';
 import {
   getLocalizedKangurAgeGroupLabel,
@@ -205,6 +206,28 @@ const resolveVariantSurfaceAccent = (
   }
 };
 
+const resolveVariantGroupAccent = (
+  surface: KangurGamesLibraryVariantGroupSurface
+): 'emerald' | 'rose' | 'sky' => {
+  switch (surface) {
+    case 'lesson':
+      return 'emerald';
+    case 'game_screen':
+      return 'rose';
+    case 'library_preview':
+    default:
+      return 'sky';
+  }
+};
+
+const getVariantGroupLabel = (
+  surface: KangurGamesLibraryVariantGroupSurface,
+  translations: ReturnType<typeof useTranslations>
+): string =>
+  surface === 'lesson'
+    ? translations('surfaces.lesson')
+    : translations(`variantSurfaces.${surface}`);
+
 const resolveAgeGroupAccent = (
   ageGroup: NonNullable<KangurGameDefinition['ageGroup']>
 ): 'amber' | 'sky' | 'slate' => {
@@ -220,13 +243,11 @@ const resolveAgeGroupAccent = (
 };
 
 const resolveCoverageAccent = (
-  coverageId: 'library_backed' | 'launchable' | 'selector_fallback'
-): 'amber' | 'rose' | 'sky' => {
+  coverageId: 'library_backed' | 'launchable'
+): 'rose' | 'sky' => {
   switch (coverageId) {
     case 'launchable':
       return 'rose';
-    case 'selector_fallback':
-      return 'amber';
     case 'library_backed':
     default:
       return 'sky';
@@ -399,12 +420,10 @@ const getLessonTitles = (
 
 const resolveLessonCoverageStatusAccent = (
   status: KangurGameLibraryLessonCoverageStatus
-): 'amber' | 'rose' | 'sky' | 'slate' => {
+): 'rose' | 'sky' | 'slate' => {
   switch (status) {
     case 'launchable':
       return 'rose';
-    case 'selector_fallback':
-      return 'amber';
     case 'lesson_only':
       return 'slate';
     case 'library_backed':
@@ -2234,7 +2253,7 @@ function GamesLibraryContent(): React.JSX.Element {
 
                   {uncoveredLessonTitles.length > 0 ? (
                     <GamesLibraryDetailSurface
-                      label={translations('coverageGroups.fallbackOnlyLessonsLabel')}
+                      label={translations('coverageGroups.uncoveredLessonsLabel')}
                     >
                       {uncoveredLessonTitles.join(', ')}
                     </GamesLibraryDetailSurface>
@@ -2598,7 +2617,7 @@ function GamesLibraryContent(): React.JSX.Element {
                         {translations('variantGroups.surfaceLabel')}
                       </div>
                       <div className='mt-1 text-xl font-black [color:var(--kangur-page-text)]'>
-                        {translations(`variantSurfaces.${group.surface}`)}
+                        {getVariantGroupLabel(group.surface, translations)}
                       </div>
                       <p className='mt-2 text-sm leading-6 [color:var(--kangur-page-muted-text)]'>
                         {translations('variantGroups.groupDescription', {
@@ -2607,7 +2626,7 @@ function GamesLibraryContent(): React.JSX.Element {
                       </p>
                     </div>
                     <KangurStatusChip
-                      accent={resolveVariantSurfaceAccent(group.surface)}
+                      accent={resolveVariantGroupAccent(group.surface)}
                       className='uppercase tracking-[0.14em]'
                       size='sm'
                     >

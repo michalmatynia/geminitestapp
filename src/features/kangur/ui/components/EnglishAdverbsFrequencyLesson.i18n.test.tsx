@@ -61,14 +61,14 @@ describe('EnglishAdverbsFrequencyLesson i18n', () => {
     const games =
       (capturedProps?.games as Array<{
         sectionId: string;
-        runtime?: { runtimeId?: string; rendererId?: string };
+        launchableInstance?: { gameId?: string; instanceId?: string };
       }>) ?? [];
     expect(games).toHaveLength(1);
     expect(games[0]).toMatchObject({
       sectionId: 'game_frequency_studio',
-      runtime: {
-        runtimeId: 'english_adverbs_frequency_routine_lesson_stage',
-        rendererId: 'english_adverbs_frequency_routine_game',
+      launchableInstance: {
+        gameId: 'english_adverbs_frequency_routine',
+        instanceId: 'english_adverbs_frequency_routine:instance:default',
       },
     });
 

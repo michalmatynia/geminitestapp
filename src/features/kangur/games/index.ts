@@ -33,7 +33,6 @@ export {
 export type { KangurGameLibraryLessonCoverageStatus } from './coverage';
 export {
   getKangurGameLibraryLessonCoverageStatusFromMap,
-  shouldRouteKangurLessonComponentToOperationSelector,
 } from './coverage';
 
 // defaults.ts
@@ -58,13 +57,21 @@ export * from './library-overview';
 export type { KangurGameLibraryPageData } from './library-page';
 export { createKangurGameLibraryPageDataFromCatalog, createKangurGameLibraryPageDataFromGames } from './library-page';
 
+// music-piano-roll-contract.ts
+export * from './music-piano-roll-contract';
+
 // content-sets.ts
 export * from './content-sets';
+
+// instances.ts
+export * from './instances';
+
+// launchable-runtime-resolution.ts
+export * from './launchable-runtime-resolution';
 
 // Runtime specs
 export * from './launchable-runtime-specs';
 export * from './lesson-activity-runtime-specs';
-export * from './lesson-stage-runtime-specs';
 
 // registry.ts
 export * from './registry';

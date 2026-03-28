@@ -48,7 +48,7 @@ describe('EnglishSubjectVerbAgreementLesson i18n', () => {
       (capturedProps?.games as Array<{
         sectionId: string;
         stage: Record<string, unknown>;
-        runtime?: { runtimeId?: string; rendererId?: string };
+        launchableInstance?: { gameId?: string; instanceId?: string };
       }>) ?? [];
 
     expect(sections.find((section) => section.id === 'core')).toMatchObject({
@@ -64,9 +64,11 @@ describe('EnglishSubjectVerbAgreementLesson i18n', () => {
       title: 'Spiel: Subjekt-Verb-Ubereinstimmung',
       description: 'Klicke in jedem Satz die richtige Verbform an.',
     });
-    expect(games.find((game) => game.sectionId === 'game_agreement')?.runtime).toMatchObject({
-      runtimeId: 'english_subject_verb_agreement_lesson_stage',
-      rendererId: 'english_subject_verb_agreement_game',
+    expect(
+      games.find((game) => game.sectionId === 'game_agreement')?.launchableInstance
+    ).toMatchObject({
+      gameId: 'english_subject_verb_agreement',
+      instanceId: 'english_subject_verb_agreement:instance:default',
     });
 
     const slides = (capturedProps?.slides as Record<string, CapturedSlide[]>) ?? {};

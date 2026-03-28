@@ -35,6 +35,11 @@ const ProgressProbe = (): React.JSX.Element => {
   return <div data-testid='kangur-progress-total-xp'>{progress.totalXp}</div>;
 };
 
+const DisabledProgressProbe = (): React.JSX.Element => {
+  const progress = useKangurProgressState({ enabled: false });
+  return <div data-testid='kangur-disabled-progress-total-xp'>{progress.totalXp}</div>;
+};
+
 describe('useKangurProgressState', () => {
   beforeEach(() => {
     localStorage.clear();
@@ -83,5 +88,19 @@ describe('useKangurProgressState', () => {
     render(<ProgressProbe />);
 
     expect(screen.getByTestId('kangur-progress-total-xp')).toHaveTextContent('84');
+  });
+
+  it('returns the inert server snapshot while disabled', () => {
+    saveProgress(
+      createProgress({
+        totalXp: 84,
+        gamesPlayed: 6,
+      }),
+      { ownerKey: 'learner-1' }
+    );
+
+    render(<DisabledProgressProbe />);
+
+    expect(screen.getByTestId('kangur-disabled-progress-total-xp')).toHaveTextContent('0');
   });
 });

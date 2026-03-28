@@ -1,5 +1,7 @@
 'use client';
 
+import type { QueryClient } from '@tanstack/react-query';
+
 import type {
   KangurLesson,
   KangurLessonCollectionFilterDto,
@@ -17,12 +19,24 @@ import {
   withKangurClientError,
 } from '@/features/kangur/observability/client';
 import { api } from '@/shared/lib/api-client';
-import { createListQueryV2 } from '@/shared/lib/query-factories-v2';
+import { createListQueryV2, prefetchQueryV2 } from '@/shared/lib/query-factories-v2';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 
 type LessonsCatalogQueryOptions = KangurLessonCollectionFilterDto & {
   enabled?: boolean;
 };
+
+const resolveLessonsCatalogFilters = (options?: LessonsCatalogQueryOptions) => ({
+  ageGroup: options?.ageGroup ?? null,
+  enabledOnly: options?.enabledOnly ?? null,
+  subject: options?.subject ?? null,
+});
+
+export const createKangurLessonsCatalogQueryKey = (options?: LessonsCatalogQueryOptions) =>
+  [
+    ...QUERY_KEYS.kangur.lessonsCatalog(),
+    resolveLessonsCatalogFilters(options),
+  ] as const;
 
 const filterLessons = (
   lessons: KangurLesson[],
@@ -77,7 +91,7 @@ const buildLessonsCatalogFallback = (
     options
   );
 
-const fetchLessonsCatalog = async (
+export const fetchKangurLessonsCatalog = async (
   options?: LessonsCatalogQueryOptions
 ): Promise<KangurLessonsCatalog> =>
   await withKangurClientError(
@@ -108,19 +122,35 @@ const fetchLessonsCatalog = async (
     }
   );
 
+export const prefetchKangurLessonsCatalog = async (
+  queryClient: QueryClient | null | undefined,
+  options?: LessonsCatalogQueryOptions
+): Promise<void> => {
+  if (!queryClient) {
+    return;
+  }
+
+  await prefetchQueryV2(queryClient, {
+    queryKey: createKangurLessonsCatalogQueryKey(options),
+    queryFn: () => fetchKangurLessonsCatalog(options),
+    staleTime: 1000 * 60 * 5,
+    meta: {
+      source: 'kangur.hooks.prefetchKangurLessonsCatalog',
+      operation: 'list',
+      resource: 'kangur.lessons-catalog',
+      domain: 'kangur',
+      tags: ['kangur', 'lessons', 'sections', 'catalog'],
+      description: 'Prefetches the combined Kangur lessons catalog payload.',
+    },
+  })();
+};
+
 export const useKangurLessonsCatalog = (
   options?: LessonsCatalogQueryOptions
 ): ListQuery<KangurLessonsCatalog, KangurLessonsCatalog> =>
   createListQueryV2<KangurLessonsCatalog, KangurLessonsCatalog>({
-    queryKey: [
-      ...QUERY_KEYS.kangur.lessonsCatalog(),
-      {
-        subject: options?.subject ?? null,
-        ageGroup: options?.ageGroup ?? null,
-        enabledOnly: options?.enabledOnly ?? null,
-      },
-    ],
-    queryFn: async (): Promise<KangurLessonsCatalog> => await fetchLessonsCatalog(options),
+    queryKey: createKangurLessonsCatalogQueryKey(options),
+    queryFn: async (): Promise<KangurLessonsCatalog> => await fetchKangurLessonsCatalog(options),
     enabled: options?.enabled ?? true,
     staleTime: 1000 * 60 * 5,
     refetchOnMount: false,

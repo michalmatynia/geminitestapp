@@ -54,11 +54,7 @@ describe('GeometryShapeRecognitionLesson i18n', () => {
       (capturedProps?.games as Array<{
         sectionId: string;
         stage: Record<string, unknown>;
-        runtime?: {
-          runtimeId?: string;
-          rendererId?: string;
-          rendererProps?: Record<string, unknown>;
-        };
+        launchableInstance?: { gameId?: string; instanceId?: string };
       }>) ?? [];
 
     expect(sections.find((section) => section.id === 'intro')).toMatchObject({
@@ -80,23 +76,16 @@ describe('GeometryShapeRecognitionLesson i18n', () => {
       title: 'Formen-Challenge',
       shellTestId: 'geometry-shape-recognition-practice-shell',
     });
-    expect(games.find((game) => game.sectionId === 'practice')?.runtime).toMatchObject({
-      runtimeId: 'geometry_shape_spotter_lesson_stage',
-      rendererId: 'shape_recognition_stage_game',
+    expect(games.find((game) => game.sectionId === 'practice')?.launchableInstance).toMatchObject({
+      gameId: 'geometry_shape_spotter',
+      instanceId: 'geometry_shape_spotter:instance:default',
     });
     expect(games.find((game) => game.sectionId === 'draw')?.stage).toMatchObject({
       title: 'Spiel: Formen zeichnen',
     });
-    expect(games.find((game) => game.sectionId === 'draw')?.runtime).toMatchObject({
-      runtimeId: 'geometry_shape_drawing_lesson_stage',
-      rendererId: 'geometry_drawing_game',
-      rendererProps: {
-        activityKey: 'training:geometry_shape_recognition:draw',
-        lessonKey: 'geometry_shape_recognition',
-        operation: 'geometry',
-        shapeIds: ['circle', 'oval', 'triangle', 'diamond', 'square', 'rectangle'],
-        showDifficultySelector: false,
-      },
+    expect(games.find((game) => game.sectionId === 'draw')?.launchableInstance).toMatchObject({
+      gameId: 'geometry_shape_workshop',
+      instanceId: 'geometry_shape_workshop:instance:default',
     });
 
     expect(slides.intro?.[0]?.title).toBe('Formen kennenlernen');

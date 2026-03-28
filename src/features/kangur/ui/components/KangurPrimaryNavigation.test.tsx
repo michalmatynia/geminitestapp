@@ -200,6 +200,10 @@ const { prefetchKangurPageContentStoreMock } = vi.hoisted(() => ({
   prefetchKangurPageContentStoreMock: vi.fn(),
 }));
 
+const { prefetchKangurLessonsCatalogMock } = vi.hoisted(() => ({
+  prefetchKangurLessonsCatalogMock: vi.fn(),
+}));
+
 const { useKangurSubjectFocusMock } = vi.hoisted(() => ({
   useKangurSubjectFocusMock: vi.fn(),
 }));
@@ -385,6 +389,10 @@ vi.mock('@/features/kangur/ui/hooks/useKangurPageContent', () => ({
   useKangurPageContentEntry: useKangurPageContentEntryMock,
 }));
 
+vi.mock('@/features/kangur/ui/hooks/useKangurLessonsCatalog', () => ({
+  prefetchKangurLessonsCatalog: prefetchKangurLessonsCatalogMock,
+}));
+
 vi.mock('@/features/kangur/shared/providers/SettingsStoreProvider', async (importOriginal) => {
   const actual = await importOriginal<typeof import('@/features/kangur/shared/providers/SettingsStoreProvider')>();
   return {
@@ -514,6 +522,8 @@ describe('KangurPrimaryNavigation', () => {
     });
     prefetchKangurPageContentStoreMock.mockReset();
     prefetchKangurPageContentStoreMock.mockResolvedValue(undefined);
+    prefetchKangurLessonsCatalogMock.mockReset();
+    prefetchKangurLessonsCatalogMock.mockResolvedValue(undefined);
     locationAssignSpy.mockReset();
     window.sessionStorage.clear();
     document.cookie = 'NEXT_LOCALE=; Max-Age=0; Path=/';
@@ -597,6 +607,55 @@ describe('KangurPrimaryNavigation', () => {
       pageKey: 'Lessons',
       sourceId: 'kangur-primary-nav:lessons',
     });
+  });
+
+  it('prefetches the lessons catalog on lessons-nav intent', () => {
+    const queryClient = { prefetchQuery: vi.fn() };
+
+    render(
+      <QueryClientContext.Provider value={queryClient as never}>
+        <KangurPrimaryNavigation
+          basePath='/kangur'
+          currentPage='Game'
+          isAuthenticated
+          onLogout={vi.fn()}
+        />
+      </QueryClientContext.Provider>
+    );
+
+    const lessonsLink = screen.getByTestId('kangur-primary-nav-lessons');
+
+    fireEvent.mouseEnter(lessonsLink);
+    fireEvent.focus(lessonsLink);
+
+    expect(prefetchKangurLessonsCatalogMock).toHaveBeenCalledTimes(1);
+    expect(prefetchKangurLessonsCatalogMock).toHaveBeenCalledWith(queryClient, {
+      ageGroup: 'ten_year_old',
+      enabledOnly: true,
+      subject: 'maths',
+    });
+  });
+
+  it('does not prefetch the lessons catalog when lessons is already active', () => {
+    const queryClient = { prefetchQuery: vi.fn() };
+
+    render(
+      <QueryClientContext.Provider value={queryClient as never}>
+        <KangurPrimaryNavigation
+          basePath='/kangur'
+          currentPage='Lessons'
+          isAuthenticated
+          onLogout={vi.fn()}
+        />
+      </QueryClientContext.Provider>
+    );
+
+    const lessonsLink = screen.getByTestId('kangur-primary-nav-lessons');
+
+    fireEvent.mouseEnter(lessonsLink);
+    fireEvent.focus(lessonsLink);
+
+    expect(prefetchKangurLessonsCatalogMock).not.toHaveBeenCalled();
   });
 
   it('renders canonical localized nav links when Kangur owns the public frontend', async () => {

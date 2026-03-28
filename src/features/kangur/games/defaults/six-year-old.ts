@@ -2,11 +2,14 @@ import type { KangurGameDefinition } from '@/shared/contracts/kangur-games';
 
 import {
   createSixYearOldInlineGame,
-  createSixYearOldStageGame,
+  createSixYearOldLessonVariantGame,
 } from './factories';
+import {
+  KANGUR_MUSIC_PIANO_ROLL_LESSON_VARIANT_GAME_CONFIGS,
+} from '../music-piano-roll-contract';
 
 export const KANGUR_SIX_YEAR_OLD_GAMES: readonly KangurGameDefinition[] = [
-  createSixYearOldStageGame({
+  createSixYearOldLessonVariantGame({
     id: 'art_color_harmony_studio',
     engineId: 'color-harmony-engine',
     subject: 'art',
@@ -16,7 +19,7 @@ export const KANGUR_SIX_YEAR_OLD_GAMES: readonly KangurGameDefinition[] = [
     emoji: '🎨',
     mechanic: 'tap_select',
     interactionMode: 'tap',
-    lessonStageRuntimeId: 'art_color_harmony_studio_lesson_stage',
+    launchableRuntimeId: 'art_color_harmony_quiz',
     tags: ['art', 'colors', 'warm-cool'],
     sortOrder: 55,
   }),
@@ -46,7 +49,7 @@ export const KANGUR_SIX_YEAR_OLD_GAMES: readonly KangurGameDefinition[] = [
     tags: ['alphabet', 'copying', 'handwriting'],
     sortOrder: 20,
   }),
-  createSixYearOldStageGame({
+  createSixYearOldLessonVariantGame({
     id: 'alphabet_first_words',
     engineId: 'letter-match-engine',
     subject: 'alphabet',
@@ -56,11 +59,11 @@ export const KANGUR_SIX_YEAR_OLD_GAMES: readonly KangurGameDefinition[] = [
     emoji: '📖',
     mechanic: 'tap_select',
     interactionMode: 'tap',
-    lessonStageRuntimeId: 'alphabet_first_words_lesson_stage',
+    launchableRuntimeId: 'alphabet_first_words_quiz',
     tags: ['alphabet', 'words', 'matching'],
     sortOrder: 30,
   }),
-  createSixYearOldStageGame({
+  createSixYearOldLessonVariantGame({
     id: 'alphabet_letter_matching',
     engineId: 'letter-match-engine',
     subject: 'alphabet',
@@ -70,11 +73,11 @@ export const KANGUR_SIX_YEAR_OLD_GAMES: readonly KangurGameDefinition[] = [
     emoji: '🔤',
     mechanic: 'tap_select',
     interactionMode: 'tap',
-    lessonStageRuntimeId: 'alphabet_letter_matching_lesson_stage',
+    launchableRuntimeId: 'alphabet_letter_matching_quiz',
     tags: ['alphabet', 'matching', 'pairs'],
     sortOrder: 40,
   }),
-  createSixYearOldStageGame({
+  createSixYearOldLessonVariantGame({
     id: 'alphabet_letter_order',
     engineId: 'pattern-sequence-engine',
     subject: 'alphabet',
@@ -84,11 +87,11 @@ export const KANGUR_SIX_YEAR_OLD_GAMES: readonly KangurGameDefinition[] = [
     emoji: '🧠',
     mechanic: 'logic_pattern',
     interactionMode: 'tap',
-    lessonStageRuntimeId: 'alphabet_letter_order_lesson_stage',
+    launchableRuntimeId: 'alphabet_letter_order_quiz',
     tags: ['alphabet', 'sequence', 'order'],
     sortOrder: 50,
   }),
-  createSixYearOldStageGame({
+  createSixYearOldLessonVariantGame({
     id: 'art_shape_rotation_puzzle',
     engineId: 'shape-recognition-engine',
     subject: 'art',
@@ -98,11 +101,11 @@ export const KANGUR_SIX_YEAR_OLD_GAMES: readonly KangurGameDefinition[] = [
     emoji: '🌀',
     mechanic: 'tap_select',
     interactionMode: 'tap',
-    lessonStageRuntimeId: 'art_shape_rotation_puzzle_lesson_stage',
+    launchableRuntimeId: 'art_shape_rotation_quiz',
     tags: ['art', 'shapes', 'rotation'],
     sortOrder: 60,
   }),
-  createSixYearOldStageGame({
+  createSixYearOldLessonVariantGame({
     id: 'geometry_shape_spotter',
     engineId: 'shape-recognition-engine',
     subject: 'geometry',
@@ -112,11 +115,11 @@ export const KANGUR_SIX_YEAR_OLD_GAMES: readonly KangurGameDefinition[] = [
     emoji: '🔷',
     mechanic: 'tap_select',
     interactionMode: 'tap',
-    lessonStageRuntimeId: 'geometry_shape_spotter_lesson_stage',
+    launchableRuntimeId: 'geometry_shape_spotter_quiz',
     tags: ['geometry', 'shapes', 'recognition'],
     sortOrder: 70,
   }),
-  createSixYearOldStageGame({
+  createSixYearOldLessonVariantGame({
     id: 'geometry_shape_drawing',
     engineId: 'shape-drawing-engine',
     subject: 'geometry',
@@ -126,38 +129,14 @@ export const KANGUR_SIX_YEAR_OLD_GAMES: readonly KangurGameDefinition[] = [
     emoji: '✏️',
     mechanic: 'drawing',
     interactionMode: 'draw',
-    lessonStageRuntimeId: 'geometry_shape_drawing_lesson_stage',
     tags: ['geometry', 'drawing', 'shapes'],
     sortOrder: 80,
   }),
-  createSixYearOldStageGame({
-    id: 'music_melody_repeat',
-    engineId: 'melody-repeat-engine',
-    subject: 'music',
-    lessonComponentIds: ['music_diatonic_scale'],
-    label: 'Melody repeat',
-    title: 'Melody Repeat',
-    emoji: '🎵',
-    mechanic: 'rhythm',
-    interactionMode: 'tap',
-    lessonStageRuntimeId: 'music_melody_repeat_lesson_stage',
-    launchableRuntimeId: 'music_melody_repeat_quiz',
-    tags: ['music', 'melody', 'memory'],
-    sortOrder: 90,
-  }),
-  createSixYearOldStageGame({
-    id: 'music_piano_roll_free_play',
-    engineId: 'piano-roll-engine',
-    subject: 'music',
-    lessonComponentIds: ['music_diatonic_scale'],
-    label: 'Piano roll free play',
-    title: 'Piano Roll Free Play',
-    emoji: '🎹',
-    mechanic: 'tap_select',
-    interactionMode: 'tap',
-    lessonStageRuntimeId: 'music_piano_roll_free_play_lesson_stage',
-    launchableRuntimeId: 'music_piano_roll_free_play_quiz',
-    tags: ['music', 'keyboard', 'free-play'],
-    sortOrder: 95,
-  }),
+  ...KANGUR_MUSIC_PIANO_ROLL_LESSON_VARIANT_GAME_CONFIGS.map((config) =>
+    createSixYearOldLessonVariantGame({
+      ...config,
+      lessonComponentIds: [...config.lessonComponentIds],
+      tags: [...config.tags],
+    })
+  ),
 ];

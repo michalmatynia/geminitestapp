@@ -63,14 +63,14 @@ describe('EnglishArticlesLesson i18n', () => {
     const games =
       (capturedProps?.games as Array<{
         sectionId: string;
-        runtime?: { runtimeId?: string; rendererId?: string };
+        launchableInstance?: { gameId?: string; instanceId?: string };
       }>) ?? [];
     expect(games).toHaveLength(1);
     expect(games[0]).toMatchObject({
       sectionId: 'game_articles_drag',
-      runtime: {
-        runtimeId: 'english_articles_drag_lesson_stage',
-        rendererId: 'english_articles_drag_drop_game',
+      launchableInstance: {
+        gameId: 'english_articles_drag_drop',
+        instanceId: 'english_articles_drag_drop:instance:default',
       },
     });
 

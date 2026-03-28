@@ -9,6 +9,7 @@ import {
   getLocalizedKangurLessonTitle,
 } from '@/features/kangur/lessons/lesson-catalog-i18n';
 import {
+  getKangurBuiltInGameInstanceId,
   getKangurLaunchableGameRuntimeSpecForGame,
 } from '@/features/kangur/games';
 import { mergeKangurGameContentSetsForGame } from '@/features/kangur/games/content-sets';
@@ -251,23 +252,40 @@ const normalizeInstanceSortOrder = (
     sortOrder: index + 1,
   }));
 
+const CLOCK_TRAINING_INSTANCE_ID_BY_SECTION: Record<ClockTrainingSectionId, string> = {
+  hours: getKangurBuiltInGameInstanceId('clock_training', 'clock_training:clock-hours'),
+  minutes: getKangurBuiltInGameInstanceId('clock_training', 'clock_training:clock-minutes'),
+  combined: getKangurBuiltInGameInstanceId('clock_training'),
+};
+
 const resolvePreviewSettingsFromPersistedSection = (
   section: KangurLessonGameSection | null | undefined
-): ClockPreviewSettings => ({
-  clockSection:
-    section?.settings.clock?.clockSection ?? DEFAULT_CLOCK_PREVIEW_SETTINGS.clockSection,
-  initialMode: section?.settings.clock?.initialMode ?? DEFAULT_CLOCK_PREVIEW_SETTINGS.initialMode,
-  showHourHand:
-    section?.settings.clock?.showHourHand ?? DEFAULT_CLOCK_PREVIEW_SETTINGS.showHourHand,
-  showMinuteHand:
-    section?.settings.clock?.showMinuteHand ?? DEFAULT_CLOCK_PREVIEW_SETTINGS.showMinuteHand,
-  showModeSwitch:
-    section?.settings.clock?.showModeSwitch ?? DEFAULT_CLOCK_PREVIEW_SETTINGS.showModeSwitch,
-  showTaskTitle:
-    section?.settings.clock?.showTaskTitle ?? DEFAULT_CLOCK_PREVIEW_SETTINGS.showTaskTitle,
-  showTimeDisplay:
-    section?.settings.clock?.showTimeDisplay ?? DEFAULT_CLOCK_PREVIEW_SETTINGS.showTimeDisplay,
-});
+): ClockPreviewSettings => {
+  const resolvedClockSection =
+    section?.instanceId === CLOCK_TRAINING_INSTANCE_ID_BY_SECTION.hours
+      ? 'hours'
+      : section?.instanceId === CLOCK_TRAINING_INSTANCE_ID_BY_SECTION.minutes
+        ? 'minutes'
+        : section?.instanceId === CLOCK_TRAINING_INSTANCE_ID_BY_SECTION.combined
+          ? 'combined'
+          : section?.settings.clock?.clockSection ?? DEFAULT_CLOCK_PREVIEW_SETTINGS.clockSection;
+
+  return {
+    clockSection: resolvedClockSection,
+    initialMode:
+      section?.settings.clock?.initialMode ?? DEFAULT_CLOCK_PREVIEW_SETTINGS.initialMode,
+    showHourHand:
+      section?.settings.clock?.showHourHand ?? DEFAULT_CLOCK_PREVIEW_SETTINGS.showHourHand,
+    showMinuteHand:
+      section?.settings.clock?.showMinuteHand ?? DEFAULT_CLOCK_PREVIEW_SETTINGS.showMinuteHand,
+    showModeSwitch:
+      section?.settings.clock?.showModeSwitch ?? DEFAULT_CLOCK_PREVIEW_SETTINGS.showModeSwitch,
+    showTaskTitle:
+      section?.settings.clock?.showTaskTitle ?? DEFAULT_CLOCK_PREVIEW_SETTINGS.showTaskTitle,
+    showTimeDisplay:
+      section?.settings.clock?.showTimeDisplay ?? DEFAULT_CLOCK_PREVIEW_SETTINGS.showTimeDisplay,
+  };
+};
 
 const buildEditorStateFromSection = (
   section: KangurLessonGameSection | null,
@@ -2081,6 +2099,9 @@ export function GamesLibraryGameModal({
       emoji: draftIcon.trim() || '🎮',
       enabled: draftEnabled,
       gameId: game.id,
+      ...(supportsPreviewSettings && game.id === 'clock_training'
+        ? { instanceId: CLOCK_TRAINING_INSTANCE_ID_BY_SECTION[clockSettings.clockSection] }
+        : {}),
       lessonComponentId: attachedLessonId,
       settings:
         supportsPreviewSettings

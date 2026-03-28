@@ -26,7 +26,6 @@ export type SeedGameInput = Pick<
   activityIds?: KangurGameDefinition['activityIds'];
   description?: string;
   legacyScreenIds?: KangurGameDefinition['legacyScreenIds'];
-  lessonStageRuntimeId?: KangurGameVariant['lessonStageRuntimeId'];
   launchableRuntimeId?: KangurGameVariant['launchableRuntimeId'];
   lessonVariantSurface?: SeedLessonVariantSurface;
   status?: KangurGameDefinition['status'];
@@ -45,7 +44,6 @@ export const createVariant = (
 export const createSharedLibraryGame = ({
   activityIds = [],
   legacyScreenIds = [],
-  lessonStageRuntimeId,
   launchableRuntimeId,
   surfaces = launchableRuntimeId ? ['lesson', 'library', 'game'] : ['lesson', 'library'],
   lessonVariantSurface = 'lesson_inline',
@@ -55,7 +53,7 @@ export const createSharedLibraryGame = ({
 }: SeedGameInput): KangurGameDefinition => {
   const isLessonStage = lessonVariantSurface === 'lesson_stage';
   const lessonVariantId = `${input.id}.${isLessonStage ? 'lesson-stage' : 'lesson-inline'}`;
-  const lessonVariantLabel = isLessonStage ? 'Lesson stage' : 'Lesson inline';
+  const lessonVariantLabel = isLessonStage ? 'Lesson variant' : 'Lesson inline';
 
   return {
     ...input,
@@ -69,12 +67,11 @@ export const createSharedLibraryGame = ({
       createVariant({
         id: lessonVariantId,
         label: lessonVariantLabel,
-        title: isLessonStage ? `${input.title} as a lesson stage` : `${input.title} in lessons`,
+        title: isLessonStage ? `${input.title} as a lesson variant` : `${input.title} in lessons`,
         description: isLessonStage
-          ? `Stage variant for ${input.title}, shared between lesson flows and the games library.`
+          ? `Lesson-facing variant for ${input.title}, retained in the catalog alongside shared game instances.`
           : `Inline lesson variant for ${input.title}, exposed through the shared games library.`,
         surface: lessonVariantSurface,
-        ...(isLessonStage && lessonStageRuntimeId ? { lessonStageRuntimeId } : {}),
       }),
       createVariant({
         id: `${input.id}.library-preview`,
@@ -111,7 +108,7 @@ export const createSixYearOldInlineGame = (
     lessonVariantSurface: 'lesson_inline',
   });
 
-export const createSixYearOldStageGame = (
+export const createSixYearOldLessonVariantGame = (
   input: Omit<SeedGameInput, 'ageGroup' | 'lessonVariantSurface'>
 ): KangurGameDefinition =>
   createSharedLibraryGame({
@@ -132,7 +129,7 @@ export const createAgenticInlineGame = (
     lessonVariantSurface: 'lesson_inline',
   });
 
-export const createAgenticStageGame = (
+export const createAgenticLessonVariantGame = (
   input: Omit<SeedGameInput, 'subject' | 'ageGroup' | 'lessonVariantSurface'>
 ): KangurGameDefinition =>
   createSharedLibraryGame({

@@ -36,8 +36,7 @@ describe('kangur games library overview', () => {
     expect(cohortGroups[1]?.subjects).toEqual(['maths', 'english']);
     expect(cohortGroups[2]?.subjects).toEqual(['agentic_coding']);
     expect(variantGroups.map((group) => group.surface)).toEqual([
-      'lesson_inline',
-      'lesson_stage',
+      'lesson',
       'library_preview',
       'game_screen',
     ]);
@@ -56,6 +55,6 @@ describe('kangur games library overview', () => {
     expect(overview.metrics).toEqual(metrics);
     expect(overview.subjectGroups).toHaveLength(7);
     expect(overview.cohortGroups).toHaveLength(3);
-    expect(overview.variantGroups).toHaveLength(4);
+    expect(overview.variantGroups).toHaveLength(3);
   });
 });

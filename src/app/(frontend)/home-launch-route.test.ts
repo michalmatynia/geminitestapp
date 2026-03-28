@@ -49,7 +49,7 @@ vi.mock('@/shared/lib/front-page-app', () => ({
   getFrontPageRedirectPath: getFrontPageRedirectPathMock,
 }));
 
-vi.mock('@/features/kangur/config/routing', () => ({
+vi.mock('@/features/kangur/public', () => ({
   getKangurPublicAliasHref: () => '/kangur',
 }));
 

@@ -1,9 +1,11 @@
 'use client';
 
+import type { LessonProps } from '@/features/kangur/lessons/lesson-ui-registry';
+import { LOGICAL_CLASSIFICATION_LESSON_COMPONENT_CONTENT as CONTENT } from '@/features/kangur/lessons/lesson-template-component-content';
+import { useOptionalKangurLessonTemplate } from '@/features/kangur/ui/context/KangurLessonsRuntimeContext';
 import { useTranslations } from 'next-intl';
 
-import plMessages from '@/i18n/messages/pl.json';
-import { getKangurLessonStageGameRuntimeSpec } from '@/features/kangur/games/lesson-stage-runtime-specs';
+import { getKangurBuiltInGameInstanceId } from '@/features/kangur/games';
 import type { LessonSlide } from '@/features/kangur/ui/components/LessonSlideSection';
 import {
   ClassificationCategoryBinsAnimation,
@@ -30,25 +32,15 @@ import {
 } from '@/features/kangur/ui/design/lesson-primitives';
 import type { LessonTranslate } from '@/features/kangur/ui/components/lesson-copy';
 import { KangurUnifiedLesson } from '@/features/kangur/ui/lessons/lesson-components';
+import {
+  createLogicalClassificationLessonTranslate,
+  resolveLogicalClassificationLessonContent,
+} from './logical-classification-lesson-content';
 
 type SectionId = 'intro' | 'diagram' | 'intruz' | 'podsumowanie' | 'game';
 
-const createStaticTranslator =
-  (messages: Record<string, unknown>): LessonTranslate =>
-  (key) => {
-    const resolved = key.split('.').reduce<unknown>(
-      (current, segment) =>
-        typeof current === 'object' && current !== null
-          ? (current as Record<string, unknown>)[segment]
-          : undefined,
-      messages
-    );
-
-    return typeof resolved === 'string' ? resolved : key;
-  };
-
-const LOGICAL_CLASSIFICATION_RUNTIME = getKangurLessonStageGameRuntimeSpec(
-  'logical_classification_lab_lesson_stage'
+const LOGICAL_CLASSIFICATION_INSTANCE_ID = getKangurBuiltInGameInstanceId(
+  'logical_classification_lab'
 );
 
 const buildLogicalClassificationSlides = (
@@ -606,16 +598,23 @@ const buildLogicalClassificationSections = (translate: LessonTranslate) =>
     },
   ] as const;
 
-const translateStaticLogicalClassification = createStaticTranslator(
-  plMessages.KangurStaticLessons.logicalClassification as Record<string, unknown>
-);
+const translateStaticLogicalClassification = createLogicalClassificationLessonTranslate(CONTENT);
 
 export const SLIDES = buildLogicalClassificationSlides(translateStaticLogicalClassification);
 export const HUB_SECTIONS = buildLogicalClassificationSections(translateStaticLogicalClassification);
 
-export default function LogicalClassificationLesson(): React.JSX.Element {
+export default function LogicalClassificationLesson({
+  lessonTemplate,
+}: LessonProps): React.JSX.Element {
+  const runtimeTemplate = useOptionalKangurLessonTemplate('logical_classification');
+  const resolvedTemplate = lessonTemplate ?? runtimeTemplate;
   const translations = useTranslations('KangurStaticLessons.logicalClassification');
-  const translate = (key: string): string => translations(key as never);
+  const fallbackTranslate: LessonTranslate = (key) => translations(key as never);
+  const resolvedContent = resolveLogicalClassificationLessonContent(
+    resolvedTemplate,
+    fallbackTranslate,
+  );
+  const translate = createLogicalClassificationLessonTranslate(resolvedContent);
   const sections = buildLogicalClassificationSections(translate);
   const slides = buildLogicalClassificationSlides(translate);
 
@@ -624,7 +623,7 @@ export default function LogicalClassificationLesson(): React.JSX.Element {
       progressMode='panel'
       lessonId='logical_classification'
       lessonEmoji='📦'
-      lessonTitle={translate('lessonTitle')}
+      lessonTitle={resolvedTemplate?.title?.trim() || translate('lessonTitle')}
       sections={sections}
       slides={slides}
       gradientClass='kangur-gradient-accent-teal'
@@ -642,7 +641,10 @@ export default function LogicalClassificationLesson(): React.JSX.Element {
             shellTestId: 'logical-classification-game-shell',
             title: translate('game.stageTitle'),
           },
-          runtime: LOGICAL_CLASSIFICATION_RUNTIME,
+          launchableInstance: {
+            gameId: 'logical_classification_lab',
+            instanceId: LOGICAL_CLASSIFICATION_INSTANCE_ID,
+          },
         },
       ]}
     />

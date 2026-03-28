@@ -12,6 +12,24 @@ import type {
 
 import { getKangurGameContentSetsForGame } from './content-sets';
 import { getKangurLaunchableGameRuntimeSpecForGame } from './catalog';
+import { KANGUR_MUSIC_PIANO_ROLL_BUILT_IN_INSTANCE_CONFIGS } from './music-piano-roll-contract';
+
+const getKangurBuiltInInstanceSuffix = (
+  gameId: string,
+  contentSetId: KangurGameContentSetId | null | undefined
+): string => {
+  if (!contentSetId) {
+    return 'default';
+  }
+
+  const gameScopedPrefix = `${gameId}:`;
+
+  if (contentSetId.startsWith(gameScopedPrefix)) {
+    return contentSetId.slice(gameScopedPrefix.length) || 'default';
+  }
+
+  return contentSetId;
+};
 
 const createBuiltInGameInstance = (
   game: KangurGameDefinition,
@@ -25,14 +43,14 @@ const createBuiltInGameInstance = (
   >
 ): KangurGameInstance =>
   kangurGameInstanceSchema.parse({
-    id: getKangurDefaultGameInstanceId(game.id),
+    id: getKangurBuiltInGameInstanceId(game.id, contentSet.id),
     gameId: game.id,
     launchableRuntimeId: runtime.screen,
     contentSetId: contentSet.id,
-    title: input?.title ?? `${game.title} default`,
+    title: input?.title ?? `${game.title} · ${contentSet.label}`,
     description:
       input?.description ??
-      `Uses the default ${game.title} engine configuration and starter content feed.`,
+      `Uses the shared ${game.title} engine with the "${contentSet.label}" content feed.`,
     emoji: input?.emoji ?? game.emoji,
     enabled: input?.enabled ?? true,
     sortOrder: input?.sortOrder ?? 1,
@@ -42,6 +60,12 @@ const createBuiltInGameInstance = (
 export const getKangurDefaultGameInstanceId = (gameId: string): KangurGameInstanceId =>
   `${gameId}:instance:default`;
 
+export const getKangurBuiltInGameInstanceId = (
+  gameId: string,
+  contentSetId?: KangurGameContentSetId | null
+): KangurGameInstanceId =>
+  `${gameId}:instance:${getKangurBuiltInInstanceSuffix(gameId, contentSetId)}`;
+
 export const getKangurGameBuiltInInstancesForGame = (
   game: KangurGameDefinition
 ): KangurGameInstance[] => {
@@ -50,31 +74,40 @@ export const getKangurGameBuiltInInstancesForGame = (
     return [];
   }
 
-  const [defaultContentSet] = getKangurGameContentSetsForGame(game);
+  const builtInContentSets = getKangurGameContentSetsForGame(game);
+  const [defaultContentSet] = builtInContentSets;
+
   if (!defaultContentSet) {
     return [];
   }
 
-  switch (game.id) {
-    case 'music_melody_repeat':
-      return [
-        createBuiltInGameInstance(game, runtime, defaultContentSet, {
-          description:
-            'Default melody-repeat lesson/library instance backed by the shared music engine.',
-          title: 'Melody repeat default',
-        }),
-      ];
-    case 'music_piano_roll_free_play':
-      return [
-        createBuiltInGameInstance(game, runtime, defaultContentSet, {
-          description:
-            'Default piano-roll free-play instance backed by the shared music engine.',
-          title: 'Piano roll free play default',
-        }),
-      ];
-    default:
-      return [createBuiltInGameInstance(game, runtime, defaultContentSet)];
+  const musicBuiltInInstanceConfig =
+    KANGUR_MUSIC_PIANO_ROLL_BUILT_IN_INSTANCE_CONFIGS[
+      game.id as keyof typeof KANGUR_MUSIC_PIANO_ROLL_BUILT_IN_INSTANCE_CONFIGS
+    ];
+
+  if (musicBuiltInInstanceConfig) {
+    const musicContentSet =
+      builtInContentSets.find((contentSet) => contentSet.id === musicBuiltInInstanceConfig.contentSetId) ??
+      defaultContentSet;
+
+    return [
+      createBuiltInGameInstance(game, runtime, musicContentSet, {
+        description: musicBuiltInInstanceConfig.description,
+        title: musicBuiltInInstanceConfig.title,
+      }),
+    ];
   }
+
+  return builtInContentSets.map((contentSet, index) =>
+    createBuiltInGameInstance(game, runtime, contentSet, {
+      sortOrder: index + 1,
+      title:
+        contentSet.contentKind === 'default_content'
+          ? `${game.title} default`
+          : `${game.title} · ${contentSet.label}`,
+    })
+  );
 };
 
 export const mergeKangurGameInstancesForGame = (

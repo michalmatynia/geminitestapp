@@ -9,6 +9,7 @@ import { KangurFeatureRouteShell } from '@/features/kangur/ui/KangurFeatureRoute
 import { KangurStorefrontAppearanceProvider } from '@/features/kangur/ui/KangurStorefrontAppearanceProvider';
 import { KangurSurfaceClassSync } from '@/features/kangur/ui/KangurSurfaceClassSync';
 import { KangurMainRoleProvider } from '@/features/kangur/ui/design/primitives/KangurPageContainer';
+import { shouldRenderVercelAnalytics } from '@/shared/lib/analytics/vercel-analytics';
 import { stripSiteLocalePrefix } from '@/shared/lib/i18n/site-locale';
 import type {
   KangurStorefrontAppearanceMode,
@@ -32,6 +33,7 @@ export function FrontendPublicOwnerKangurShell({
   embeddedOverride,
   initialAppearance,
 }: FrontendPublicOwnerKangurShellProps): JSX.Element {
+  const shouldRenderAnalytics = shouldRenderVercelAnalytics();
   const pathname = usePathname();
   const browserPathname =
     typeof window === 'undefined' ? null : window.location.pathname?.trim() || null;
@@ -54,7 +56,7 @@ export function FrontendPublicOwnerKangurShell({
           </KangurMainRoleProvider>
         </KangurSurfaceClassSync>
       </KangurStorefrontAppearanceProvider>
-      <Analytics />
+      {shouldRenderAnalytics ? <Analytics /> : null}
     </>
   );
 }

@@ -30,41 +30,37 @@ describe('AgenticCodingCodex54 stage lesson configs', () => {
       lessonTitle: 'Codex 5.4: Prompting & Context',
       Component: AgenticCodingCodex54PromptingLesson,
       sectionId: 'prompt_trim_game',
-      runtimeId: 'agentic_prompt_trim_lesson_stage',
-      rendererId: 'agentic_prompt_trim_game',
-      engineId: 'token-trim-engine',
+      gameId: 'agentic_prompt_trim_stage',
+      instanceId: 'agentic_prompt_trim_stage:instance:default',
       shellTestId: 'agentic-prompt-trim-game-shell',
     },
     {
       lessonTitle: 'Codex 5.4: Approvals & Network',
       Component: AgenticCodingCodex54ApprovalsLesson,
       sectionId: 'approval_gate_game',
-      runtimeId: 'agentic_approval_gate_lesson_stage',
-      rendererId: 'agentic_approval_gate_game',
-      engineId: 'classification-engine',
+      gameId: 'agentic_approval_gate',
+      instanceId: 'agentic_approval_gate:instance:default',
       shellTestId: 'agentic-approval-gate-game-shell',
     },
     {
       lessonTitle: 'Codex 5.4: Models & Reasoning',
       Component: AgenticCodingCodex54ModelsLesson,
       sectionId: 'reasoning_router_game',
-      runtimeId: 'agentic_reasoning_router_lesson_stage',
-      rendererId: 'agentic_reasoning_router_game',
-      engineId: 'classification-engine',
+      gameId: 'agentic_reasoning_router',
+      instanceId: 'agentic_reasoning_router:instance:default',
       shellTestId: 'agentic-reasoning-router-game-shell',
     },
     {
       lessonTitle: 'Codex 5.4: Surfaces',
       Component: AgenticCodingCodex54SurfacesLesson,
       sectionId: 'surface_match_game',
-      runtimeId: 'agentic_surface_match_lesson_stage',
-      rendererId: 'agentic_surface_match_game',
-      engineId: 'classification-engine',
+      gameId: 'agentic_surface_match',
+      instanceId: 'agentic_surface_match:instance:default',
       shellTestId: 'agentic-surface-match-game-shell',
     },
   ])(
-    'passes the shared lesson-stage runtime into KangurUnifiedLesson for $lessonTitle',
-    ({ Component, lessonTitle, sectionId, runtimeId, rendererId, engineId, shellTestId }) => {
+    'passes the shared launchable instance into KangurUnifiedLesson for $lessonTitle',
+    ({ Component, lessonTitle, sectionId, gameId, instanceId, shellTestId }) => {
       render(<Component />);
 
       expect(screen.getByTestId('kangur-unified-lesson')).toHaveTextContent(lessonTitle);
@@ -73,7 +69,7 @@ describe('AgenticCodingCodex54 stage lesson configs', () => {
         (capturedProps?.games as Array<{
           sectionId: string;
           stage: Record<string, unknown>;
-          runtime?: { runtimeId?: string; rendererId?: string; engineId?: string };
+          launchableInstance?: { gameId?: string; instanceId?: string };
           render?: unknown;
         }>) ?? [];
       const game = games.find((candidate) => candidate.sectionId === sectionId);
@@ -81,10 +77,9 @@ describe('AgenticCodingCodex54 stage lesson configs', () => {
       expect(game?.stage).toMatchObject({
         shellTestId,
       });
-      expect(game?.runtime).toMatchObject({
-        runtimeId,
-        rendererId,
-        engineId,
+      expect(game?.launchableInstance).toMatchObject({
+        gameId,
+        instanceId,
       });
       expect(game).not.toHaveProperty('render');
     }

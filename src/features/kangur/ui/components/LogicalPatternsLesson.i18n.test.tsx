@@ -21,6 +21,7 @@ vi.mock('@/features/kangur/ui/lessons/lesson-components', () => ({
 
 import LogicalPatternsLesson from '@/features/kangur/ui/components/LogicalPatternsLesson';
 import deMessages from '@/i18n/messages/de.json';
+import { getKangurBuiltInGameInstanceId } from '@/features/kangur/games';
 
 type CapturedSlide = {
   title: string;
@@ -47,6 +48,7 @@ describe('LogicalPatternsLesson i18n', () => {
         sectionId: string;
         stage: Record<string, unknown>;
         runtime?: { runtimeId?: string; rendererId?: string };
+        launchableInstance?: { gameId?: string; instanceId?: string };
       }>) ?? [];
 
     expect(sections.find((section) => section.id === 'intro')).toMatchObject({
@@ -60,9 +62,11 @@ describe('LogicalPatternsLesson i18n', () => {
     expect(games.find((game) => game.sectionId === 'game_warsztat')?.stage).toMatchObject({
       title: 'Musterwerkstatt',
     });
-    expect(games.find((game) => game.sectionId === 'game_warsztat')?.runtime).toMatchObject({
-      runtimeId: 'logical_patterns_workshop_lesson_stage',
-      rendererId: 'logical_patterns_workshop_game',
+    expect(
+      games.find((game) => game.sectionId === 'game_warsztat')?.launchableInstance,
+    ).toMatchObject({
+      gameId: 'logical_patterns_workshop',
+      instanceId: getKangurBuiltInGameInstanceId('logical_patterns_workshop'),
     });
 
     const slides = (capturedProps?.slides as Record<string, CapturedSlide[]>) ?? {};

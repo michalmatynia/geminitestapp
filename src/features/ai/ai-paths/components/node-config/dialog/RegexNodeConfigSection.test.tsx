@@ -284,16 +284,7 @@ vi.mock('./RegexPendingAiProposal', () => ({
 }));
 
 vi.mock('./RegexTemplatesTabContent', () => ({
-  RegexTemplatesTabContent: ({
-    regexTemplates,
-    globalTemplates,
-    onApplyNodeTemplate,
-    onRemoveNodeTemplate,
-    onUpdateNodeTemplate,
-    onApplyGlobalTemplate,
-    onRemoveGlobalTemplate,
-    onUpdateGlobalTemplate,
-  }: {
+  RegexTemplatesTabContent: (props: {
     regexTemplates: RegexTemplate[];
     globalTemplates: RegexTemplate[];
     onApplyNodeTemplate: (template: RegexTemplate) => void;
@@ -302,60 +293,81 @@ vi.mock('./RegexTemplatesTabContent', () => ({
     onApplyGlobalTemplate: (template: RegexTemplate) => void;
     onRemoveGlobalTemplate: (id: string) => void;
     onUpdateGlobalTemplate: (id: string, patch: Partial<RegexTemplate>) => void;
-  }): React.JSX.Element => (
-    <div>
-      <div>Node Templates:{regexTemplates.map((template) => template.name).join('|')}</div>
-      <div>Global Templates:{globalTemplates.map((template) => template.name).join('|')}</div>
-      <button
-        type='button'
-        onClick={() => {
-          if (regexTemplates[0]) onApplyNodeTemplate(regexTemplates[0]);
-        }}
-      >
-        Apply Node Template
-      </button>
-      <button
-        type='button'
-        onClick={() => {
-          if (regexTemplates[0]) onRemoveNodeTemplate(regexTemplates[0].id);
-        }}
-      >
-        Remove Node Template
-      </button>
-      <button
-        type='button'
-        onClick={() => {
-          if (regexTemplates[0]) onUpdateNodeTemplate(regexTemplates[0].id, { name: 'Updated Node Template' });
-        }}
-      >
-        Update Node Template
-      </button>
-      <button
-        type='button'
-        onClick={() => {
-          if (globalTemplates[0]) onApplyGlobalTemplate(globalTemplates[0]);
-        }}
-      >
-        Apply Global Template
-      </button>
-      <button
-        type='button'
-        onClick={() => {
-          if (globalTemplates[0]) onRemoveGlobalTemplate(globalTemplates[0].id);
-        }}
-      >
-        Remove Global Template
-      </button>
-      <button
-        type='button'
-        onClick={() => {
-          if (globalTemplates[0]) onUpdateGlobalTemplate(globalTemplates[0].id, { name: 'Updated Global Template' });
-        }}
-      >
-        Update Global Template
-      </button>
-    </div>
-  ),
+  }): React.JSX.Element => {
+    const {
+      regexTemplates,
+      globalTemplates,
+      onApplyNodeTemplate,
+      onRemoveNodeTemplate,
+      onUpdateNodeTemplate,
+      onApplyGlobalTemplate,
+      onRemoveGlobalTemplate,
+      onUpdateGlobalTemplate,
+    } = props;
+
+    return (
+      <div>
+        <div>Node Templates:{regexTemplates.map((template) => template.name).join('|')}</div>
+        <div>Global Templates:{globalTemplates.map((template) => template.name).join('|')}</div>
+        <button
+          type='button'
+          onClick={() => {
+            if (regexTemplates[0]) onApplyNodeTemplate(regexTemplates[0]);
+          }}
+        >
+          Apply Node Template
+        </button>
+        <button
+          type='button'
+          onClick={() => {
+            if (regexTemplates[0]) onRemoveNodeTemplate(regexTemplates[0].id);
+          }}
+        >
+          Remove Node Template
+        </button>
+        <button
+          type='button'
+          onClick={() => {
+            if (regexTemplates[0]) {
+              onUpdateNodeTemplate(regexTemplates[0].id, {
+                name: 'Updated Node Template',
+              });
+            }
+          }}
+        >
+          Update Node Template
+        </button>
+        <button
+          type='button'
+          onClick={() => {
+            if (globalTemplates[0]) onApplyGlobalTemplate(globalTemplates[0]);
+          }}
+        >
+          Apply Global Template
+        </button>
+        <button
+          type='button'
+          onClick={() => {
+            if (globalTemplates[0]) onRemoveGlobalTemplate(globalTemplates[0].id);
+          }}
+        >
+          Remove Global Template
+        </button>
+        <button
+          type='button'
+          onClick={() => {
+            if (globalTemplates[0]) {
+              onUpdateGlobalTemplate(globalTemplates[0].id, {
+                name: 'Updated Global Template',
+              });
+            }
+          }}
+        >
+          Update Global Template
+        </button>
+      </div>
+    );
+  },
 }));
 
 vi.mock('./regex/RegexConfigBasicTab', () => ({

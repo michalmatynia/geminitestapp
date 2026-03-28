@@ -81,7 +81,7 @@ vi.mock('@/features/kangur/ui/context/KangurLessonsRuntimeContext', () => ({
         },
       },
       game: {
-        stageTitle: 'DB game title',
+        gameTitle: 'DB game title',
         progress: {
           round: 'DB round {current}/{total}',
           score: 'DB score {score}',

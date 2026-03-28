@@ -107,7 +107,7 @@ describe('ShapeRecognitionGame', () => {
           caption: 'Summary caption',
         },
         draw: {
-          stageTitle: 'Draw game title',
+          gameTitle: 'Draw game title',
           difficultyLabel: 'Difficulty',
           finishLabel: 'Database finish label',
         },

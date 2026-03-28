@@ -34,6 +34,7 @@ const {
   lessonsState,
   lessonsLoadingState,
   lessonsPlaceholderDataState,
+  emptyPageContentEntryMock,
   lessonSectionsState,
   lessonSectionsLoadingState,
   lessonSectionsPlaceholderDataState,
@@ -75,6 +76,9 @@ const {
   },
   lessonsPlaceholderDataState: {
     value: false,
+  },
+  emptyPageContentEntryMock: {
+    entry: null,
   },
   lessonSectionsState: {
     value: [] as Array<Record<string, unknown>>,
@@ -137,10 +141,16 @@ const lessonsTranslations = {
   },
 } as const;
 
+function createLessonsTranslationsMock(namespace?: string): (key: string) => string {
+  return (key: string): string =>
+    lessonsTranslations[`${namespace}.${key}` as keyof typeof lessonsTranslations]?.[
+      localeState.value
+    ] ?? key;
+}
+
 vi.mock('next-intl', () => ({
   useLocale: () => localeState.value,
-  useTranslations: (namespace?: string) => (key: string) =>
-    lessonsTranslations[`${namespace}.${key}` as keyof typeof lessonsTranslations]?.[localeState.value] ?? key,
+  useTranslations: createLessonsTranslationsMock,
 }));
 
 vi.mock('@/features/kangur/config/routing', () => ({
@@ -481,7 +491,7 @@ vi.mock('@/features/kangur/ui/hooks/useKangurProgressState', () => ({
 }));
 
 vi.mock('@/features/kangur/ui/hooks/useKangurPageContent', () => ({
-  useKangurPageContentEntry: () => ({ entry: null }),
+  useKangurPageContentEntry: () => emptyPageContentEntryMock,
 }));
 
 vi.mock('@/features/kangur/ui/hooks/useKangurRouteNavigator', () => ({

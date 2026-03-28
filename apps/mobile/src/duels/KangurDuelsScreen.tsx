@@ -460,6 +460,24 @@ function LinkButton({
   );
 }
 
+const renderOptionalLinkButton = ({
+  href,
+  label,
+  stretch,
+  tone,
+}: {
+  href?: Href;
+  label: string;
+  stretch?: boolean;
+  tone?: 'primary' | 'secondary';
+}): React.JSX.Element | null => {
+  if (!href) {
+    return null;
+  }
+
+  return <LinkButton href={href} label={label} stretch={stretch} tone={tone} />;
+};
+
 function FilterChip({
   label,
   onPress,
@@ -587,6 +605,14 @@ function LessonCheckpointRow({
   item: KangurMobileLessonCheckpointItem;
 }): React.JSX.Element {
   const { copy, locale } = useKangurMobileI18n();
+  const practiceLink = renderOptionalLinkButton({
+    href: item.practiceHref,
+    label: `${copy({
+      de: 'Danach trainieren',
+      en: 'Practice after',
+      pl: 'Potem trenuj',
+    })}: ${item.title}`,
+  });
 
   return (
     <View
@@ -653,16 +679,7 @@ function LessonCheckpointRow({
           })}: ${item.title}`}
           tone='primary'
         />
-        {item.practiceHref ? (
-          <LinkButton
-            href={item.practiceHref}
-            label={`${copy({
-              de: 'Danach trainieren',
-              en: 'Practice after',
-              pl: 'Potem trenuj',
-            })}: ${item.title}`}
-          />
-        ) : null}
+        {practiceLink}
       </View>
     </View>
   );
@@ -897,6 +914,14 @@ function LessonMasteryRow({
 }): React.JSX.Element {
   const { copy, locale } = useKangurMobileI18n();
   const masteryTone = getLessonMasteryTone(insight.masteryPercent);
+  const practiceLink = renderOptionalLinkButton({
+    href: insight.practiceHref,
+    label: copy({
+      de: 'Danach trainieren',
+      en: 'Practice after',
+      pl: 'Potem trenuj',
+    }),
+  });
   const lastAttemptLabel = insight.lastCompletedAt
     ? formatKangurMobileScoreDateTime(insight.lastCompletedAt, locale)
     : copy({
@@ -958,16 +983,7 @@ function LessonMasteryRow({
           })}
           tone='primary'
         />
-        {insight.practiceHref ? (
-          <LinkButton
-            href={insight.practiceHref}
-            label={copy({
-              de: 'Danach trainieren',
-              en: 'Practice after',
-              pl: 'Potem trenuj',
-            })}
-          />
-        ) : null}
+        {practiceLink}
       </View>
     </View>
   );
@@ -1183,6 +1199,23 @@ function DuelAssignmentRow({
             borderColor: '#bfdbfe',
             textColor: '#1d4ed8',
           };
+  const assignmentActionLabel = translateKangurMobileActionLabel(item.assignment.action.label, locale);
+  const assignmentAction = item.href ? (
+    <LinkButton href={item.href} label={assignmentActionLabel} tone='primary' stretch />
+  ) : (
+    <Pill
+      label={`${assignmentActionLabel} · ${copy({
+        de: 'bald',
+        en: 'soon',
+        pl: 'wkrotce',
+      })}`}
+      tone={{
+        backgroundColor: '#e2e8f0',
+        borderColor: '#cbd5e1',
+        textColor: '#475569',
+      }}
+    />
+  );
 
   return (
     <View
@@ -1233,27 +1266,7 @@ function DuelAssignmentRow({
         })}
       </Text>
 
-      {item.href ? (
-        <LinkButton
-          href={item.href}
-          label={translateKangurMobileActionLabel(item.assignment.action.label, locale)}
-          tone='primary'
-          stretch
-        />
-      ) : (
-        <Pill
-          label={`${translateKangurMobileActionLabel(item.assignment.action.label, locale)} · ${copy({
-            de: 'bald',
-            en: 'soon',
-            pl: 'wkrotce',
-          })}`}
-          tone={{
-            backgroundColor: '#e2e8f0',
-            borderColor: '#cbd5e1',
-            textColor: '#475569',
-          }}
-        />
-      )}
+      {assignmentAction}
     </View>
   );
 }
@@ -1546,11 +1559,17 @@ function formatSpectatorQuestionProgress(
       : `Runda ${currentQuestion}/${session.questionCount}`;
 }
 
+type DuelRoundProgress = {
+  current: number;
+  percent: number;
+  total: number;
+};
+
 function resolveRoundProgress(
   session: KangurDuelSession,
   player: KangurDuelPlayer | null,
   isSpectating: boolean,
-): { current: number; percent: number; total: number } {
+): DuelRoundProgress {
   const total = Math.max(session.questionCount, 1);
   const current =
     session.status === 'completed' || session.status === 'aborted'
@@ -1571,7 +1590,7 @@ function resolveRoundProgress(
 }
 
 function formatRoundProgressLabel(
-  progress: { current: number; percent: number; total: number },
+  progress: DuelRoundProgress,
   locale: KangurMobileLocale,
 ): string {
   return locale === 'de'

@@ -42,6 +42,10 @@ const mocks = vi.hoisted(() => ({
   reportAiPathsErrorMock: vi.fn(),
   ensureNodeVisibleMock: vi.fn(),
 }));
+const graphActionsMock = {
+  setNodes: mocks.setNodesMock,
+  setEdges: mocks.setEdgesMock,
+};
 
 const basePresetDraft = {
   name: '',
@@ -51,10 +55,7 @@ const basePresetDraft = {
 };
 
 vi.mock('@/features/ai/ai-paths/context/GraphContext', () => ({
-  useGraphActions: () => ({
-    setNodes: mocks.setNodesMock,
-    setEdges: mocks.setEdgesMock,
-  }),
+  useGraphActions: () => graphActionsMock,
 }));
 
 vi.mock('@/features/ai/ai-paths/context/PresetsContext', () => ({

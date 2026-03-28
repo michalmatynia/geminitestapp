@@ -3,8 +3,8 @@ import type {
 } from '@/shared/contracts/kangur-lesson-templates';
 import {
   type LessonTranslate,
+  translateLessonShellTitle,
   translateLessonValue,
-  translateLessonValueWithLegacyKey,
 } from './lesson-copy';
 
 const LOGICAL_PATTERNS_LESSON_COPY_PL = {
@@ -215,7 +215,7 @@ const translateLogicalPatternsLesson = (
   fallback: string,
 ): string => {
   return key === 'game.gameTitle'
-    ? translateLessonValueWithLegacyKey(translate, key, 'game.stageTitle', fallback)
+    ? translateLessonShellTitle(translate, 'game', fallback)
     : translateLessonValue(translate, key, fallback);
 };
 

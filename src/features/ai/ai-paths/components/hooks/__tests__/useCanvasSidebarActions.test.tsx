@@ -31,6 +31,10 @@ const mockState = vi.hoisted(() => ({
     isPathSwitching: false,
   },
 }));
+const graphActionsMock = {
+  setNodes: mockState.setNodes,
+  setEdges: mockState.setEdges,
+};
 
 vi.mock('@/shared/ui', () => ({
   useToast: () => ({ toast: mockState.toast }),
@@ -50,10 +54,7 @@ vi.mock('@/shared/utils/drag-drop', () => ({
 
 vi.mock('@/features/ai/ai-paths/context', () => ({
   useGraphState: () => mockState.graphState,
-  useGraphActions: () => ({
-    setNodes: mockState.setNodes,
-    setEdges: mockState.setEdges,
-  }),
+  useGraphActions: () => graphActionsMock,
   useRuntimeActions: () => ({
     setRuntimeState: mockState.setRuntimeState,
   }),

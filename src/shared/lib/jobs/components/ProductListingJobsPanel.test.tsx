@@ -65,29 +65,26 @@ vi.mock('@/shared/ui', () => ({
   MetadataItem: ({ label, value }: { label: string; value: React.ReactNode }) => (
     <div>{`${label}:${String(value)}`}</div>
   ),
-  Pagination: ({
-    onPageChange,
-    onPageSizeChange,
-    page,
-    pageSize,
-    totalPages,
-  }: {
+  Pagination: (props: {
     onPageChange: (page: number) => void;
     onPageSizeChange: (size: number) => void;
     page: number;
     pageSize: number;
     totalPages: number;
-  }) => (
-    <div data-testid='pagination'>
-      <span>{`${page}/${totalPages}/${pageSize}`}</span>
-      <button onClick={() => onPageChange(2)} type='button'>
-        page-2
-      </button>
-      <button onClick={() => onPageSizeChange(50)} type='button'>
-        size-50
-      </button>
-    </div>
-  ),
+  }) => {
+    const { onPageChange, onPageSizeChange, page, pageSize, totalPages } = props;
+    return (
+      <div data-testid='pagination'>
+        <span>{`${page}/${totalPages}/${pageSize}`}</span>
+        <button onClick={() => onPageChange(2)} type='button'>
+          page-2
+        </button>
+        <button onClick={() => onPageSizeChange(50)} type='button'>
+          size-50
+        </button>
+      </div>
+    );
+  },
   RefreshButton: ({
     isRefreshing,
     onRefresh,

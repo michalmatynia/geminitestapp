@@ -13,7 +13,7 @@ import {
   type KangurQuestionChoice,
 } from '@kangur/core';
 import { useQueryClient } from '@tanstack/react-query';
-import { Link, useLocalSearchParams, useRouter } from 'expo-router';
+import { Link, type Href, useLocalSearchParams, useRouter } from 'expo-router';
 import { Pressable, ScrollView, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useEffect, useMemo, useRef, useState } from 'react';
@@ -567,31 +567,14 @@ function LessonCheckpointRow({
             </Text>
           </Pressable>
         </Link>
-        {item.practiceHref ? (
-          <Link href={item.practiceHref} asChild>
-            <Pressable
-              accessibilityRole='button'
-              style={{
-                alignSelf: 'flex-start',
-                borderRadius: 999,
-                borderWidth: 1,
-                borderColor: '#cbd5e1',
-                backgroundColor: '#ffffff',
-                paddingHorizontal: 12,
-                paddingVertical: 9,
-              }}
-            >
-              <Text style={{ color: '#0f172a', fontWeight: '700' }}>
-                {copy({
-                  de: 'Danach trainieren',
-                  en: 'Practice after',
-                  pl: 'Potem trenuj',
-                })}
-                {`: ${item.title}`}
-              </Text>
-            </Pressable>
-          </Link>
-        ) : null}
+        {renderPracticeLink({
+          href: item.practiceHref,
+          label: `${copy({
+            de: 'Danach trainieren',
+            en: 'Practice after',
+            pl: 'Potem trenuj',
+          })}: ${item.title}`,
+        })}
       </View>
     </View>
   );
@@ -628,6 +611,34 @@ function PracticeRecentResultRow({
   const { copy, locale } = useKangurMobileI18n();
   const accuracyPercent = getKangurMobileScoreAccuracyPercent(item.result);
   const accuracyTone = getPracticeAccuracyTone(accuracyPercent);
+  let lessonAction = null;
+
+  if (item.lessonHref) {
+    lessonAction = (
+      <Link href={item.lessonHref} asChild>
+        <Pressable
+          accessibilityRole='button'
+          style={{
+            alignSelf: 'flex-start',
+            borderRadius: 999,
+            borderWidth: 1,
+            borderColor: '#cbd5e1',
+            backgroundColor: '#ffffff',
+            paddingHorizontal: 14,
+            paddingVertical: 10,
+          }}
+        >
+          <Text style={{ color: '#0f172a', fontWeight: '700' }}>
+            {copy({
+              de: 'Lektion öffnen',
+              en: 'Open lesson',
+              pl: 'Otwórz lekcję',
+            })}
+          </Text>
+        </Pressable>
+      </Link>
+    );
+  }
 
   return (
     <View
@@ -707,30 +718,7 @@ function PracticeRecentResultRow({
           </Pressable>
         </Link>
 
-        {item.lessonHref ? (
-          <Link href={item.lessonHref} asChild>
-            <Pressable
-              accessibilityRole='button'
-              style={{
-                alignSelf: 'flex-start',
-                borderRadius: 999,
-                borderWidth: 1,
-                borderColor: '#cbd5e1',
-                backgroundColor: '#ffffff',
-                paddingHorizontal: 14,
-                paddingVertical: 10,
-              }}
-            >
-              <Text style={{ color: '#0f172a', fontWeight: '700' }}>
-                {copy({
-                  de: 'Lektion öffnen',
-                  en: 'Open lesson',
-                  pl: 'Otwórz lekcję',
-                })}
-              </Text>
-            </Pressable>
-          </Link>
-        ) : null}
+        {lessonAction}
 
         <Link href={item.historyHref} asChild>
           <Pressable
@@ -783,6 +771,46 @@ function PracticeAssignmentRow({
             borderColor: '#bfdbfe',
             textColor: '#1d4ed8',
           };
+  const actionLabel = translateKangurMobileActionLabel(item.assignment.action.label, locale);
+  let assignmentAction = (
+    <View
+      style={{
+        alignSelf: 'flex-start',
+        borderRadius: 999,
+        backgroundColor: '#e2e8f0',
+        paddingHorizontal: 12,
+        paddingVertical: 9,
+      }}
+    >
+      <Text style={{ color: '#475569', fontWeight: '700' }}>
+        {actionLabel} ·{' '}
+        {copy({
+          de: 'bald',
+          en: 'soon',
+          pl: 'wkrotce',
+        })}
+      </Text>
+    </View>
+  );
+
+  if (item.href) {
+    assignmentAction = (
+      <Link href={item.href} asChild>
+        <Pressable
+          accessibilityRole='button'
+          style={{
+            alignSelf: 'flex-start',
+            borderRadius: 999,
+            backgroundColor: '#0f172a',
+            paddingHorizontal: 12,
+            paddingVertical: 9,
+          }}
+        >
+          <Text style={{ color: '#ffffff', fontWeight: '700' }}>{actionLabel}</Text>
+        </Pressable>
+      </Link>
+    );
+  }
 
   return (
     <View
@@ -842,43 +870,7 @@ function PracticeAssignmentRow({
           pl: `Cel: ${item.assignment.target}`,
         })}
       </Text>
-      {item.href ? (
-        <Link href={item.href} asChild>
-          <Pressable
-            accessibilityRole='button'
-            style={{
-              alignSelf: 'flex-start',
-              borderRadius: 999,
-              backgroundColor: '#0f172a',
-              paddingHorizontal: 12,
-              paddingVertical: 9,
-            }}
-          >
-            <Text style={{ color: '#ffffff', fontWeight: '700' }}>
-              {translateKangurMobileActionLabel(item.assignment.action.label, locale)}
-            </Text>
-          </Pressable>
-        </Link>
-      ) : (
-        <View
-          style={{
-            alignSelf: 'flex-start',
-            borderRadius: 999,
-            backgroundColor: '#e2e8f0',
-            paddingHorizontal: 12,
-            paddingVertical: 9,
-          }}
-        >
-          <Text style={{ color: '#475569', fontWeight: '700' }}>
-            {translateKangurMobileActionLabel(item.assignment.action.label, locale)} ·{' '}
-            {copy({
-              de: 'bald',
-              en: 'soon',
-              pl: 'wkrotce',
-            })}
-          </Text>
-        </View>
-      )}
+      {assignmentAction}
     </View>
   );
 }
@@ -1007,30 +999,14 @@ function LessonMasteryRow({
             </Text>
           </Pressable>
         </Link>
-        {insight.practiceHref ? (
-          <Link href={insight.practiceHref} asChild>
-            <Pressable
-              accessibilityRole='button'
-              style={{
-                alignSelf: 'flex-start',
-                borderRadius: 999,
-                borderWidth: 1,
-                borderColor: '#cbd5e1',
-                backgroundColor: '#ffffff',
-                paddingHorizontal: 12,
-                paddingVertical: 9,
-              }}
-            >
-              <Text style={{ color: '#0f172a', fontWeight: '700' }}>
-                {copy({
-                  de: 'Danach trainieren',
-                  en: 'Practice after',
-                  pl: 'Potem trenuj',
-                })}
-              </Text>
-            </Pressable>
-          </Link>
-        ) : null}
+        {renderPracticeLink({
+          href: insight.practiceHref,
+          label: copy({
+            de: 'Danach trainieren',
+            en: 'Practice after',
+            pl: 'Potem trenuj',
+          }),
+        })}
       </View>
     </View>
   );
@@ -1042,6 +1018,37 @@ type PendingPracticeScoreSyncInput = {
   operation: KangurPracticeOperation;
   totalQuestions: number;
 };
+
+function renderPracticeLink({
+  href,
+  label,
+}: {
+  href: Href | null;
+  label: string;
+}): React.JSX.Element | null {
+  if (!href) {
+    return null;
+  }
+
+  return (
+    <Link href={href} asChild>
+      <Pressable
+        accessibilityRole='button'
+        style={{
+          alignSelf: 'flex-start',
+          borderRadius: 999,
+          borderWidth: 1,
+          borderColor: '#cbd5e1',
+          backgroundColor: '#ffffff',
+          paddingHorizontal: 12,
+          paddingVertical: 9,
+        }}
+      >
+        <Text style={{ color: '#0f172a', fontWeight: '700' }}>{label}</Text>
+      </Pressable>
+    </Link>
+  );
+}
 
 export function KangurPracticeScreen(): React.JSX.Element {
   const { copy, locale } = useKangurMobileI18n();
@@ -1360,6 +1367,55 @@ export function KangurPracticeScreen(): React.JSX.Element {
     locale,
     sessionStatus: session.status,
   });
+  let preparationLessonAction = null;
+  let completionLessonAction = null;
+
+  if (lessonHref) {
+    preparationLessonAction = (
+      <Link href={lessonHref} asChild>
+        <Pressable
+          accessibilityRole='button'
+          style={{
+            alignSelf: 'stretch',
+            width: '100%',
+            borderRadius: 16,
+            backgroundColor: '#0f172a',
+            paddingHorizontal: 14,
+            paddingVertical: 12,
+          }}
+        >
+          <Text
+            style={{
+              color: '#ffffff',
+              fontWeight: '700',
+              textAlign: 'center',
+            }}
+          >
+            {translateKangurMobileActionLabel('Open matching lesson', locale)}
+          </Text>
+        </Pressable>
+      </Link>
+    );
+    completionLessonAction = (
+      <Link href={lessonHref} asChild>
+        <Pressable
+          accessibilityRole='button'
+          style={{
+            borderRadius: 999,
+            borderWidth: 1,
+            borderColor: '#cbd5e1',
+            backgroundColor: '#ffffff',
+            paddingHorizontal: 14,
+            paddingVertical: 10,
+          }}
+        >
+          <Text style={{ color: '#0f172a', fontWeight: '700' }}>
+            {translateKangurMobileActionLabel('Open matching lesson', locale)}
+          </Text>
+        </Pressable>
+      </Link>
+    );
+  }
   const shouldShowPreparationCard = completion === null && currentIndex === 0;
   const practiceTutorContext: KangurAiTutorConversationContext = completion
     ? {
@@ -1497,31 +1553,7 @@ export function KangurPracticeScreen(): React.JSX.Element {
               </Text>
 
               <View style={{ gap: 10 }}>
-                {lessonHref ? (
-                  <Link href={lessonHref} asChild>
-                    <Pressable
-                      accessibilityRole='button'
-                      style={{
-                        alignSelf: 'stretch',
-                        width: '100%',
-                        borderRadius: 16,
-                        backgroundColor: '#0f172a',
-                        paddingHorizontal: 14,
-                        paddingVertical: 12,
-                      }}
-                    >
-                      <Text
-                        style={{
-                          color: '#ffffff',
-                          fontWeight: '700',
-                          textAlign: 'center',
-                        }}
-                      >
-                        {translateKangurMobileActionLabel('Open matching lesson', locale)}
-                      </Text>
-                    </Pressable>
-                  </Link>
-                ) : null}
+                {preparationLessonAction}
                 <Link href={practiceModeHistoryHref} asChild>
                   <Pressable
                     accessibilityRole='button'
@@ -2574,25 +2606,7 @@ export function KangurPracticeScreen(): React.JSX.Element {
                     </Text>
                   </Pressable>
                 </Link>
-                {lessonHref ? (
-                  <Link href={lessonHref} asChild>
-                    <Pressable
-                      accessibilityRole='button'
-                      style={{
-                        borderRadius: 999,
-                        borderWidth: 1,
-                        borderColor: '#cbd5e1',
-                        backgroundColor: '#ffffff',
-                        paddingHorizontal: 14,
-                        paddingVertical: 10,
-                      }}
-                    >
-                      <Text style={{ color: '#0f172a', fontWeight: '700' }}>
-                        {translateKangurMobileActionLabel('Open matching lesson', locale)}
-                      </Text>
-                    </Pressable>
-                  </Link>
-                ) : null}
+                {completionLessonAction}
                 <Link href={createKangurPlanHref()} asChild>
                   <Pressable
                     accessibilityRole='button'

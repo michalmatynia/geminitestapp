@@ -2522,7 +2522,6 @@
         "rushModeHint": "Tryb Bridge Rush: zdąż przed końcem czasu. Zmiana trybu restartuje grę.",
         "modeResetHint": "Zmiana trybu restartuje grę.",
         "title": "Most relacji",
-        "stageTitle": "Most relacji",
         "roundLabel": "Runda {current}/{total}",
         "timeExpired": "Czas minął",
         "instructions": "Przeciągnij relację na kartę pary albo kliknij relację i potem kliknij parę. Ikony relacji podpowiadają typy zależności.",
@@ -5213,10 +5212,10 @@
         }
       },
       "game": {
-        "stageTitle": "Gra z piłkami!"
+        "gameTitle": "Gra z piłkami!"
       },
       "synthesis": {
-        "stageTitle": "Synteza dodawania"
+        "gameTitle": "Synteza dodawania"
       }
     },
     "subtracting": {
@@ -5376,7 +5375,7 @@
         }
       },
       "game": {
-        "stageTitle": "Gra z odejmowaniem!"
+        "gameTitle": "Gra z odejmowaniem!"
       }
     },
     "geometryPerimeter": {
@@ -5442,7 +5441,7 @@
         }
       },
       "game": {
-        "stageTitle": "Gra: Rysuj obwód"
+        "gameTitle": "Gra: Rysuj obwód"
       }
     },
     "clock": {
@@ -5752,7 +5751,7 @@
         }
       },
       "game": {
-        "stageTitle": "Geo-misja"
+        "gameTitle": "Geo-misja"
       }
     },
     "geometryShapes": {
@@ -5857,7 +5856,7 @@
         }
       },
       "game": {
-        "stageTitle": "Rysuj figury"
+        "gameTitle": "Rysuj figury"
       }
     },
     "artShapesBasic": {
@@ -5960,7 +5959,7 @@
         }
       },
       "game": {
-        "stageTitle": "Uzupełnij wirujący wzór",
+        "gameTitle": "Uzupełnij wirujący wzór",
         "progress": {
           "round": "Runda {current}/{total}",
           "score": "Wynik: {score}"
@@ -6090,7 +6089,7 @@
         "caption": "Poszukaj kół, kwadratów, trójkątów, prostokątów, owali i rombów w domu."
       },
       "draw": {
-        "stageTitle": "Gra: Rysuj kształty",
+        "gameTitle": "Gra: Rysuj kształty",
         "difficultyLabel": "Podstawowe",
         "finishLabel": "Wróć do tematów"
       }
@@ -6197,7 +6196,7 @@
         }
       },
       "game": {
-        "stageTitle": "Lustra symetrii"
+        "gameTitle": "Lustra symetrii"
       }
     },
     "calendar": {
@@ -7446,7 +7445,7 @@
         }
       },
       "game": {
-        "stageTitle": "Most relacji"
+        "gameTitle": "Most relacji"
       },
       "animations": {
         "analogyBridge": "Animacja: relacja A:B = C:D.",
@@ -7642,7 +7641,7 @@
         }
       },
       "game": {
-        "stageTitle": "Warsztat wzorców"
+        "gameTitle": "Warsztat wzorców"
       }
     },
     "logicalClassification": {
@@ -7895,7 +7894,7 @@
         }
       },
       "game": {
-        "stageTitle": "Laboratorium klasyfikacji"
+        "gameTitle": "Laboratorium klasyfikacji"
       }
     },
     "logicalReasoning": {

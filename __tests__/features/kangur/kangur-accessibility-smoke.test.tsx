@@ -3,6 +3,7 @@
  */
 
 import { act, render, screen, waitFor, within, fireEvent } from '@testing-library/react';
+import { QueryClientProvider } from '@tanstack/react-query';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import React from 'react';
@@ -47,6 +48,7 @@ const {
   useKangurGuestPlayerMock: vi.fn(() => ({ guestPlayerName: '', setGuestPlayerName: vi.fn() })),
   useKangurLearnerProfileRuntimeMock: vi.fn(),
 }));
+const emptyPageContentEntryMock = vi.hoisted(() => ({ entry: null }));
 
 vi.mock('@/features/kangur/ui/context/KangurRoutingContext', () => ({
   useKangurRouting: useKangurRoutingMock,
@@ -159,7 +161,7 @@ vi.mock('@/features/kangur/ui/components/KangurLearnerProfileOverviewWidget', ()
 }));
 
 vi.mock('@/features/kangur/ui/hooks/useKangurPageContent', () => ({
-  useKangurPageContentEntry: () => ({ entry: null }),
+  useKangurPageContentEntry: () => emptyPageContentEntryMock,
 }));
 
 vi.mock('@/features/kangur/ui/context/KangurGameRuntimeContext', () => ({
@@ -169,6 +171,7 @@ vi.mock('@/features/kangur/ui/context/KangurGameRuntimeContext', () => ({
 
 import LearnerProfile from '@/features/kangur/ui/pages/LearnerProfile';
 import Game from '@/features/kangur/ui/pages/Game';
+import { createTestQueryClient } from '@/__tests__/test-utils';
 import { expectNoAxeViolations } from '@/testing/accessibility/axe';
 
 const renderLearnerProfilePage = async () => {
@@ -220,7 +223,13 @@ const renderGamePage = (screenState = 'home') => {
     handleStartGame: vi.fn(),
   } as any);
 
-  return render(<Game />);
+  const queryClient = createTestQueryClient();
+
+  return render(
+    <QueryClientProvider client={queryClient}>
+      <Game />
+    </QueryClientProvider>
+  );
 };
 
 const getFeaturedHomeAction = (label: string): HTMLElement => {
@@ -329,7 +338,11 @@ describe('Kangur accessibility smoke', () => {
       )
     }));
 
-    rerender(<Game />);
+    rerender(
+      <QueryClientProvider client={createTestQueryClient()}>
+        <Game />
+      </QueryClientProvider>
+    );
     expect(await screen.findByRole('heading', { name: 'Wybor rodzaju gry' })).toBeInTheDocument();
     expect(await screen.findByRole('button', { name: /wróć/i })).toBeInTheDocument();
   });

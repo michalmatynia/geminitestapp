@@ -10,6 +10,7 @@ type FilemakerPageKey =
   | 'persons'
   | 'organizations'
   | 'emails'
+  | 'mail'
   | 'events'
   | 'campaigns'
   | 'control-centre'
@@ -40,6 +41,13 @@ const NAV_ITEMS: Array<{
     key: 'emails',
     label: 'Emails',
     href: '/admin/filemaker/emails',
+    icon: <Mail className='size-4' />,
+    variant: 'outline',
+  },
+  {
+    key: 'mail',
+    label: 'Mail',
+    href: '/admin/filemaker/mail',
     icon: <Mail className='size-4' />,
     variant: 'outline',
   },

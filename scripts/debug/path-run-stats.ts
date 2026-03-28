@@ -4,6 +4,21 @@ import { getPathRunRepository } from '@/features/ai/ai-paths/services/path-run-r
 
 const pathId = process.argv[2] ?? 'path_65mv2p';
 
+const serializeRecentRun = (
+  run: Awaited<ReturnType<Awaited<ReturnType<typeof getPathRunRepository>>['listRuns']>>['runs'][number]
+) => ({
+  id: run.id,
+  status: run.status,
+  triggerEvent: run.triggerEvent,
+  errorMessage: run.errorMessage,
+  createdAt: run.createdAt,
+  updatedAt: run.updatedAt,
+  startedAt: run.startedAt,
+  finishedAt: run.finishedAt,
+  pathName: run.pathName,
+  userId: run.userId,
+});
+
 async function main(): Promise<void> {
   const repo = await getPathRunRepository();
   const [queueStats, recentForPath, recentQueued, recentFailed] = await Promise.all([
@@ -20,18 +35,7 @@ async function main(): Promise<void> {
         queueStats,
         recentForPath: {
           total: recentForPath.total,
-          runs: recentForPath.runs.map((run) => ({
-            id: run.id,
-            status: run.status,
-            triggerEvent: run.triggerEvent,
-            errorMessage: run.errorMessage,
-            createdAt: run.createdAt,
-            updatedAt: run.updatedAt,
-            startedAt: run.startedAt,
-            finishedAt: run.finishedAt,
-            pathName: run.pathName,
-            userId: run.userId,
-          })),
+          runs: recentForPath.runs.map(serializeRecentRun),
         },
         activeRuns: {
           total: recentQueued.total,

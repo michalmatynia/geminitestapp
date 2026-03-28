@@ -8,6 +8,7 @@ import { describe, expect, it, vi, beforeEach } from 'vitest';
 
 const {
   aiTutorSessionSyncMock,
+  disabledDocsTooltipsMock,
   useKangurLearnerProfileRuntimeMock,
   useKangurAuthMock,
   pushMock,
@@ -15,6 +16,7 @@ const {
   logoutMock,
 } = vi.hoisted(() => ({
   aiTutorSessionSyncMock: vi.fn(),
+  disabledDocsTooltipsMock: { enabled: false },
   useKangurLearnerProfileRuntimeMock: vi.fn(),
   useKangurAuthMock: vi.fn(),
   pushMock: vi.fn(),
@@ -24,7 +26,7 @@ const {
 
 vi.mock('@/features/kangur/docs/tooltips', () => ({
   KangurDocsTooltipEnhancer: () => null,
-  useKangurDocsTooltips: () => ({ enabled: false }),
+  useKangurDocsTooltips: () => disabledDocsTooltipsMock,
 }));
 
 vi.mock('@/features/kangur/ui/components/KangurLearnerProfileAiTutorMoodWidget', () => ({

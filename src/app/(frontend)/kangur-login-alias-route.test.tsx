@@ -1,3 +1,4 @@
+import React from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const {
@@ -23,6 +24,7 @@ vi.mock('next/navigation', () => ({
 
 vi.mock('@/features/auth/server', () => ({
   auth: authMock,
+  readOptionalServerAuthSession: authMock,
 }));
 
 vi.mock('next-intl/server', () => ({
@@ -38,21 +40,20 @@ vi.mock('@/shared/lib/front-page-app', () => ({
   getFrontPagePublicOwner: getFrontPagePublicOwnerMock,
 }));
 
-vi.mock('@/features/kangur/config/routing', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('@/features/kangur/config/routing')>();
-
+vi.mock('@/features/kangur/public', async () => {
+  const actual = await vi.importActual('@/features/kangur/public');
   return {
     ...actual,
     getKangurCanonicalPublicHref: getKangurCanonicalPublicHrefMock,
     getKangurHomeHref: (pathname = '/') => pathname,
+    KangurFeatureRouteShell: () =>
+      React.createElement(
+        'div',
+        { 'data-testid': 'kangur-feature-route-shell' },
+        'Kangur route shell'
+      ),
   };
 });
-
-vi.mock('@/features/kangur/ui/KangurFeatureRouteShell', () => ({
-  KangurFeatureRouteShell: () => (
-    <div data-testid='kangur-feature-route-shell'>Kangur route shell</div>
-  ),
-}));
 
 const buildCanonicalHref = (
   slug: string[],

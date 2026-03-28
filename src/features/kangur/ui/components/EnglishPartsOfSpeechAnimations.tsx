@@ -1,34 +1,16 @@
-import React, { useId } from 'react';
+import React from 'react';
+import {
+  type KangurAnimationSurfaceIdsDto,
+  type KangurAnimationSurfacePropsDto,
+  useKangurAnimationSurfaceIds,
+} from '@/features/kangur/ui/components/animations/animation-surface-contracts';
 
-type PartsOfSpeechSurfaceIds = {
-  clipId: string;
-  frameGradientId: string;
-  panelGradientId: string;
-};
+type PartsOfSpeechSurfaceIds = KangurAnimationSurfaceIdsDto;
 
-type PartsOfSpeechSurfaceProps = {
-  accentEnd: string;
-  accentStart: string;
-  atmosphereA: string;
-  atmosphereB: string;
-  ids: PartsOfSpeechSurfaceIds;
-  stroke: string;
-  testIdPrefix: string;
-  x: number;
-  y: number;
-  width: number;
-  height: number;
-  rx: number;
-};
+type PartsOfSpeechSurfaceProps = KangurAnimationSurfacePropsDto;
 
 function usePartsOfSpeechSurfaceIds(prefix: string): PartsOfSpeechSurfaceIds {
-  const baseId = useId().replace(/:/g, '');
-
-  return {
-    clipId: `${prefix}-${baseId}-clip`,
-    frameGradientId: `${prefix}-${baseId}-frame`,
-    panelGradientId: `${prefix}-${baseId}-panel`,
-  };
+  return useKangurAnimationSurfaceIds(prefix);
 }
 
 function PartsOfSpeechSurface({

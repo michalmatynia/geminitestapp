@@ -133,6 +133,22 @@ describe('AI Paths Playwright routes', () => {
       },
     });
     enqueuePlaywrightNodeRunMock.mockResolvedValueOnce(buildRun({ runId: 'run-123' }));
+    const expectedEnqueueRequest = expect.objectContaining({
+      script: 'export default async function run() {}',
+      input: { prompt: 'go' },
+      startUrl: 'https://example.com',
+      timeoutMs: 45000,
+      browserEngine: 'firefox',
+      personaId: 'persona-1',
+      contextRegistry: {
+        refs: [{ kind: 'static_node', id: 'page:ai-paths' }],
+        resolved: {
+          refs: [{ kind: 'static_node', id: 'page:ai-paths' }],
+          nodes: [],
+          documents: [],
+        },
+      },
+    }) as unknown;
 
     const response = await POST_handler(createPostRequest(), mockContext);
     const body = (await response.json()) as Record<string, unknown>;
@@ -147,22 +163,7 @@ describe('AI Paths Playwright routes', () => {
       'playwright-enqueue'
     );
     expect(enqueuePlaywrightNodeRunMock).toHaveBeenCalledWith({
-      request: expect.objectContaining({
-        script: 'export default async function run() {}',
-        input: { prompt: 'go' },
-        startUrl: 'https://example.com',
-        timeoutMs: 45000,
-        browserEngine: 'firefox',
-        personaId: 'persona-1',
-        contextRegistry: {
-          refs: [{ kind: 'static_node', id: 'page:ai-paths' }],
-          resolved: {
-            refs: [{ kind: 'static_node', id: 'page:ai-paths' }],
-            nodes: [],
-            documents: [],
-          },
-        },
-      }) as unknown,
+      request: expectedEnqueueRequest,
       waitForResult: false,
       ownerUserId: 'user-1',
     });

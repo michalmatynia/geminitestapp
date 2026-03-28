@@ -3,7 +3,7 @@ import {
 } from '@/features/kangur/lessons/lesson-template-component-content';
 import {
   type LessonTranslate,
-  translateLessonValueWithLegacyKey,
+  translateLessonShellTitle,
 } from '@/features/kangur/ui/components/lesson-copy';
 import type {
   KangurGeometryBasicsLessonTemplateContent,
@@ -249,12 +249,7 @@ export const createGeometryBasicsLessonContentFromTranslate = (
     },
   },
   game: {
-    gameTitle: translateLessonValueWithLegacyKey(
-      translate,
-      'game.gameTitle',
-      'game.stageTitle',
-      '',
-    ),
+    gameTitle: translateLessonShellTitle(translate, 'game', ''),
   },
 });
 

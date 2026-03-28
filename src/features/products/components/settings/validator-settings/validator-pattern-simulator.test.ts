@@ -159,8 +159,8 @@ describe('validator pattern simulator', () => {
       status: 'ready',
       launchMatched: true,
       applied: true,
-      outputValue: 12,
-      outputDisplayValue: '12',
+      outputValue: 12.9,
+      outputDisplayValue: '12.9',
     });
   });
 

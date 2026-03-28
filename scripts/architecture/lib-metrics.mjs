@@ -19,8 +19,9 @@ const isTestPath = (filePath) => /(__tests__|\.test\.|\.spec\.)/.test(filePath);
 
 const isGeneratedContractPath = (filePath) => filePath.startsWith('src/shared/contracts/');
 
-const isAppUiPath = (filePath) =>
-  filePath.startsWith('src/app/') && !filePath.startsWith('src/app/api/');
+const isScopedSourcePath = (filePath) =>
+  (filePath.startsWith('src/app/') && !filePath.startsWith('src/app/api/')) ||
+  filePath.startsWith('src/features/');
 
 const isFeatureUiPath = (filePath) =>
   filePath.startsWith('src/features/') && (filePath.includes('/ui/') || filePath.includes('/pages/'));
@@ -219,7 +220,7 @@ export const collectMetrics = async ({ root = process.cwd() } = {}) => {
 
   const totalSourceLines = sourceRecords.reduce((sum, record) => sum + record.lines, 0);
   const sourceScopeRecords = sourceRecords.filter(
-    (record) => isAppUiPath(record.path) && !record.isTest && !record.isGeneratedContract
+    (record) => isScopedSourcePath(record.path) && !record.isTest && !record.isGeneratedContract
   );
   const filesOver800 = sourceScopeRecords.filter((record) => record.lines >= 800);
   const filesOver1000 = sourceScopeRecords.filter((record) => record.lines >= 1000);

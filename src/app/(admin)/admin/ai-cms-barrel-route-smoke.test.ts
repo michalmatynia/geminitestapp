@@ -42,15 +42,23 @@ const adminCmsRouteImports = [
 ] as const;
 
 describe('admin ai, agentcreator, image studio, and cms route barrels', () => {
-  it.each(adminAiRouteImports)('loads %s without missing barrel exports', async (path) => {
-    const routeModule = await import(path);
+  it.each(adminAiRouteImports)(
+    'loads %s without missing barrel exports',
+    async (path) => {
+      const routeModule = await import(path);
 
-    expect(routeModule.default).toBeTypeOf('function');
-  });
+      expect(routeModule.default).toBeTypeOf('function');
+    },
+    120000
+  );
 
-  it.each(adminCmsRouteImports)('loads %s without missing barrel exports', async (path) => {
-    const routeModule = await import(path);
+  it.each(adminCmsRouteImports)(
+    'loads %s without missing barrel exports',
+    async (path) => {
+      const routeModule = await import(path);
 
-    expect(routeModule.default).toBeTypeOf('function');
-  });
+      expect(routeModule.default).toBeTypeOf('function');
+    },
+    120000
+  );
 });

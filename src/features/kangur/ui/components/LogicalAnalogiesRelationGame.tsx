@@ -61,13 +61,11 @@ import {
   type LogicalAnalogyRelationRound,
   type LogicalAnalogyRelationToken,
 } from './logical-analogies-game-data';
+import type { MultiSlottedRoundStateDto } from './round-state-contracts';
 
 import type { DropResult } from '@hello-pangea/dnd';
 
-type RoundState = {
-  pool: LogicalAnalogyRelationToken[];
-  slots: Record<string, LogicalAnalogyRelationToken[]>;
-};
+type RoundState = MultiSlottedRoundStateDto<LogicalAnalogyRelationToken>;
 
 const TOTAL_ROUNDS = Math.max(LOGICAL_ANALOGIES_RELATION_ROUNDS.length, 1);
 const TOTAL_TARGETS = LOGICAL_ANALOGIES_RELATION_ROUNDS.reduce(
@@ -89,7 +87,7 @@ const buildRoundState = (
   relationTokensById: Record<LogicalAnalogyRelationId, LogicalAnalogyRelationToken>
 ): RoundState => {
   const pool = shuffle(round.relationIds.map((relationId) => relationTokensById[relationId]));
-  const slots = round.targets.reduce<Record<string, LogicalAnalogyRelationToken[]>>((acc, target) => {
+  const slots = round.targets.reduce<RoundState['slots']>((acc, target) => {
     acc[target.id] = [];
     return acc;
   }, {});

@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import { DocumentWysiwygEditor } from '@/features/document-editor/components/DocumentWysiwygEditor';
 import {
   Badge,
   Button,
@@ -31,9 +32,9 @@ import {
   SUPPRESSION_REASON_OPTIONS as FILEMAKER_SUPPRESSION_REASON_OPTIONS,
   toDateTimeLocalValue as filemakerToDateTimeLocalValue,
   WEEKDAY_OPTIONS as FILEMAKER_WEEKDAY_OPTIONS,
-  formatTimestamp,
   getRunActions,
 } from './AdminFilemakerCampaignEditPage.utils';
+import { formatTimestamp } from './filemaker-page-utils';
 
 // ... (existing sections)
 
@@ -638,24 +639,37 @@ export const ContentSection = ({ draft, setDraft }: SectionProps) => (
           title='Campaign preview text'
         />
       </FormField>
-      <FormField label='Text body' className='md:col-span-2'>
+      <FormField
+        label='HTML body'
+        description='Write the primary campaign body with the shared rich-text editor.'
+        className='md:col-span-2'
+      >
+        <DocumentWysiwygEditor
+          value={draft.bodyHtml ?? ''}
+          onChange={(nextValue: string): void => {
+            setDraft((previous) => ({ ...previous, bodyHtml: nextValue || null }));
+          }}
+          placeholder='Write the HTML version of the campaign.'
+          enableAdvancedTools
+          allowFontFamily
+          allowTextAlign
+          surfaceClassName='min-h-[320px]'
+          editorContentClassName='[&_.ProseMirror]:min-h-[320px]'
+        />
+      </FormField>
+      <FormField
+        label='Plain-text override'
+        description='Optional. Leave blank to derive plain text from the HTML body during delivery.'
+        className='md:col-span-2'
+      >
         <Textarea
           value={draft.bodyText ?? ''}
           onChange={(event: React.ChangeEvent<HTMLTextAreaElement>): void => {
             setDraft((previous) => ({ ...previous, bodyText: event.target.value || null }));
           }}
-          placeholder='Write the plain text version of the campaign.'
-          aria-label='Campaign text body'
-        />
-      </FormField>
-      <FormField label='HTML body' className='md:col-span-2'>
-        <Textarea
-          value={draft.bodyHtml ?? ''}
-          onChange={(event: React.ChangeEvent<HTMLTextAreaElement>): void => {
-            setDraft((previous) => ({ ...previous, bodyHtml: event.target.value || null }));
-          }}
-          placeholder='<p>Write the HTML version of the campaign.</p>'
-          aria-label='Campaign HTML body'
+          rows={6}
+          placeholder='Optional plain-text fallback or custom text-only variant.'
+          aria-label='Campaign plain-text override'
         />
       </FormField>
     </div>

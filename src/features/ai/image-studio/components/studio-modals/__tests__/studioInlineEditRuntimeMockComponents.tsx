@@ -77,16 +77,7 @@ export function MockDetailModal({
   );
 }
 
-export function MockFormModal({
-  actions,
-  children,
-  isSaveDisabled = false,
-  onClose,
-  onSave,
-  open,
-  saveText = 'Save',
-  title,
-}: {
+type MockFormModalProps = {
   actions?: React.ReactNode;
   children: React.ReactNode;
   isSaveDisabled?: boolean;
@@ -95,7 +86,19 @@ export function MockFormModal({
   open: boolean;
   saveText?: string;
   title: string;
-}): React.JSX.Element | null {
+};
+
+export function MockFormModal(props: MockFormModalProps): React.JSX.Element | null {
+  const {
+    actions,
+    children,
+    isSaveDisabled = false,
+    onClose,
+    onSave,
+    open,
+    saveText = 'Save',
+    title,
+  } = props;
   if (!open) return null;
 
   return (

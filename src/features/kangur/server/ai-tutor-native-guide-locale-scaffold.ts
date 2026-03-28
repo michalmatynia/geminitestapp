@@ -32,8 +32,6 @@ type ComparableNativeGuideEntry = Pick<
   | 'triggerPhrases'
 >;
 
-export type KangurAiTutorNativeGuideTranslationStatus = KangurAiTutorTranslationStatusDto;
-
 const isPlainObject = (value: unknown): value is UnknownRecordDto =>
   typeof value === 'object' && value !== null && !Array.isArray(value);
 
@@ -151,7 +149,7 @@ export const buildKangurAiTutorNativeGuideTranslationStatusByEntryId = (input: {
   sourceStore: KangurAiTutorNativeGuideStore;
   localizedStore?: Partial<KangurAiTutorNativeGuideStore> | null;
   sourceLocale?: string;
-}): Map<string, KangurAiTutorNativeGuideTranslationStatus> => {
+}): Map<string, KangurAiTutorTranslationStatusDto> => {
   const locale = normalizeSiteLocale(input.locale);
   const sourceLocale = normalizeSiteLocale(input.sourceLocale ?? 'pl');
   const sourceStore = parseKangurAiTutorNativeGuideStore(input.sourceStore);
@@ -205,9 +203,9 @@ export const buildKangurAiTutorNativeGuideTranslationStatusByEntryId = (input: {
 };
 
 export const summarizeKangurAiTutorNativeGuideTranslationStatuses = (
-  statuses: Iterable<KangurAiTutorNativeGuideTranslationStatus>
-): Record<KangurAiTutorNativeGuideTranslationStatus, number> => {
-  const summary: Record<KangurAiTutorNativeGuideTranslationStatus, number> = {
+  statuses: Iterable<KangurAiTutorTranslationStatusDto>
+): Record<KangurAiTutorTranslationStatusDto, number> => {
+  const summary: Record<KangurAiTutorTranslationStatusDto, number> = {
     'source-locale': 0,
     missing: 0,
     'source-copy': 0,

@@ -16,6 +16,7 @@ import {
   createDefaultParentDashboardScreenComponents,
 } from './project-defaults';
 import {
+  KANGUR_HIDDEN_WIDGET_IDS,
   KANGUR_CMS_SCREEN_KEYS,
   type KangurCmsScreenKey,
   type KangurCmsScreen,
@@ -154,7 +155,7 @@ const resolveSingleWidgetId = (screen: KangurCmsScreen): string | null => {
   return typeof block.settings['widgetId'] === 'string' ? block.settings['widgetId'] : null;
 };
 
-const HIDDEN_KANGUR_WIDGET_IDS = new Set(['game-home-hero']);
+const HIDDEN_KANGUR_WIDGET_IDS = new Set(KANGUR_HIDDEN_WIDGET_IDS);
 
 const sectionContainsHiddenWidget = (blocks: BlockInstance[]): boolean => {
   for (const block of blocks) {

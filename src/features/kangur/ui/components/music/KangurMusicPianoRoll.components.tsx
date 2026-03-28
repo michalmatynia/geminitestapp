@@ -1,0 +1,134 @@
+'use client';
+
+import React from 'react';
+import { useTranslations } from 'next-intl';
+import { Settings2Icon, RotateCcwIcon, XIcon, SlidersHorizontalIcon } from 'lucide-react';
+import { KangurButton, KangurHeadline } from '@/features/kangur/ui/design/primitives';
+import {
+  KANGUR_SEGMENTED_CONTROL_CLASSNAME,
+} from '@/features/kangur/ui/design/tokens';
+import { cn } from '@/features/kangur/shared/utils';
+import type {
+  KangurMusicSynthWaveform,
+  KangurMusicSynthGlideMode,
+  KangurMusicSynthEnvelope,
+  KangurMusicSynthOsc1Config,
+  KangurMusicSynthOsc2Config,
+} from './music-theory';
+import {
+  KANGUR_MUSIC_SYNTH_WAVEFORMS,
+  KANGUR_MUSIC_SYNTH_WAVEFORM_LABELS,
+  KANGUR_MUSIC_SYNTH_GLIDE_MODES,
+  KANGUR_MUSIC_SYNTH_GLIDE_MODE_LABELS,
+} from './music-theory';
+import { KangurMusicWaveformIcon } from './music-waveform-icons';
+
+export function SynthControlPanel({
+  activeOscTab,
+  onActiveOscTabChange,
+  onEnvelopeChange,
+  onEnvelopeReset,
+  onGlideModeChange,
+  onOscSettingsChange,
+  onWaveformChange,
+  osc1Config,
+  osc2Config,
+  resolvedSynthEnvelope,
+  synthEnvelopeControls,
+  synthGlideMode,
+  synthWaveform,
+}: {
+  activeOscTab: 'osc1' | 'osc2';
+  onActiveOscTabChange: (tab: 'osc1' | 'osc2') => void;
+  onEnvelopeChange: (id: any, val: number) => void;
+  onEnvelopeReset: () => void;
+  onGlideModeChange: (mode: KangurMusicSynthGlideMode) => void;
+  onOscSettingsChange: (osc1: KangurMusicSynthOsc1Config, osc2: KangurMusicSynthOsc2Config) => void;
+  onWaveformChange: (waveform: KangurMusicSynthWaveform) => void;
+  osc1Config: KangurMusicSynthOsc1Config;
+  osc2Config: KangurMusicSynthOsc2Config;
+  resolvedSynthEnvelope: KangurMusicSynthEnvelope;
+  synthEnvelopeControls: any[];
+  synthGlideMode: KangurMusicSynthGlideMode;
+  synthWaveform: KangurMusicSynthWaveform;
+}) {
+  const translations = useTranslations('KangurMusicPianoRoll');
+  
+  return (
+    <div className='flex flex-col gap-6'>
+      <div className='space-y-4'>
+        <div className='flex items-center justify-between'>
+          <p className='text-xs font-black uppercase tracking-[0.18em] text-slate-500'>
+            {translations('synth.waveformsLabel')}
+          </p>
+        </div>
+        <div className={KANGUR_SEGMENTED_CONTROL_CLASSNAME}>
+          {KANGUR_MUSIC_SYNTH_WAVEFORMS.map((waveform) => (
+            <KangurButton
+              key={waveform}
+              onClick={() => onWaveformChange(waveform)}
+              size='sm'
+              variant={synthWaveform === waveform ? 'segmentActive' : 'segment'}
+              className='flex-1'
+            >
+              <div className='flex items-center gap-2'>
+                <KangurMusicWaveformIcon className='h-3 w-5' waveform={waveform} />
+                <span className='hidden sm:inline'>{KANGUR_MUSIC_SYNTH_WAVEFORM_LABELS[waveform]}</span>
+              </div>
+            </KangurButton>
+          ))}
+        </div>
+      </div>
+
+      <div className='space-y-4'>
+        <p className='text-xs font-black uppercase tracking-[0.18em] text-slate-500'>
+          {translations('synth.glideLabel')}
+        </p>
+        <div className={KANGUR_SEGMENTED_CONTROL_CLASSNAME}>
+          {KANGUR_MUSIC_SYNTH_GLIDE_MODES.map((mode) => (
+            <KangurButton
+              key={mode}
+              onClick={() => onGlideModeChange(mode)}
+              size='sm'
+              variant={synthGlideMode === mode ? 'segmentActive' : 'segment'}
+              className='flex-1'
+            >
+              {KANGUR_MUSIC_SYNTH_GLIDE_MODE_LABELS[mode]}
+            </KangurButton>
+          ))}
+        </div>
+      </div>
+
+      <div className='space-y-4'>
+        <div className='flex items-center justify-between'>
+          <p className='text-xs font-black uppercase tracking-[0.18em] text-slate-500'>
+            {translations('synth.envelopeLabel')}
+          </p>
+          <KangurButton onClick={onEnvelopeReset} size='xs' variant='ghost'>
+            <RotateCcwIcon className='mr-1.5 h-3 w-3' />
+            {translations('synth.resetButton')}
+          </KangurButton>
+        </div>
+        <div className='grid gap-4 sm:grid-cols-2'>
+          {synthEnvelopeControls.map((control) => (
+            <div key={control.id} className='space-y-2'>
+              <div className='flex justify-between text-[11px] font-bold text-slate-600'>
+                <span>{control.label}</span>
+                <span>{control.valueLabel}</span>
+              </div>
+              <input
+                className='h-1.5 w-full cursor-pointer appearance-none rounded-full bg-slate-200 accent-sky-500'
+                max={control.max}
+                min={control.min}
+                onChange={(e) => onEnvelopeChange(control.id, Number(e.target.value))}
+                step={control.step}
+                type='range'
+                value={control.value}
+              />
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}

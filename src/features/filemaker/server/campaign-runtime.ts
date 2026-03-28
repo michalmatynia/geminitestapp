@@ -46,6 +46,7 @@ import {
   readFilemakerCampaignSettingValue,
   upsertFilemakerCampaignSettingValue,
 } from './campaign-settings-store';
+import { buildFilemakerMailPlainText } from '../mail-utils';
 import {
   resolveFilemakerCampaignEmailFailureMetadata,
   sendFilemakerCampaignEmail,
@@ -128,15 +129,6 @@ export type FilemakerCampaignRunProcessResult = {
   retryExhaustedCount: number;
   suggestedRetryDelayMs: number | null;
 };
-
-const stripHtml = (value: string): string =>
-  value
-    .replace(/<style[\s\S]*?<\/style>/gi, ' ')
-    .replace(/<script[\s\S]*?<\/script>/gi, ' ')
-    .replace(/<[^>]+>/g, ' ')
-    .replace(/&nbsp;/gi, ' ')
-    .replace(/\s+/g, ' ')
-    .trim();
 
 const replaceCampaignInRegistry = (
   registry: FilemakerEmailCampaignRegistry,
@@ -244,7 +236,7 @@ const resolveCampaignBodyText = (campaign: FilemakerEmailCampaign): string => {
   const text = campaign.bodyText?.trim() ?? '';
   if (text.length > 0) return text;
   const html = campaign.bodyHtml?.trim() ?? '';
-  if (html.length > 0) return stripHtml(html);
+  if (html.length > 0) return buildFilemakerMailPlainText(html);
   return '';
 };
 

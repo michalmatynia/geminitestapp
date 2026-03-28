@@ -64,6 +64,7 @@ import {
   PartsOfSpeechGraphAnimation,
   PartsOfSpeechPrepositionAnimation,
 } from './EnglishPartsOfSpeechAnimations';
+import type { PartialBinnedRoundStateDto } from './round-state-contracts';
 
 import type { DropResult } from '@hello-pangea/dnd';
 
@@ -95,10 +96,7 @@ type Round = {
   visual: 'cards' | 'graph' | 'preposition';
 };
 
-type RoundState = {
-  pool: SpeechToken[];
-  bins: Partial<Record<PartOfSpeech, SpeechToken[]>>;
-};
+type RoundState = PartialBinnedRoundStateDto<SpeechToken, PartOfSpeech>;
 
 const getPartsOfSpeechRoundMessage = (
   translate: KangurIntlTranslate,

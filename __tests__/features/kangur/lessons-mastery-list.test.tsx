@@ -38,6 +38,22 @@ const { useKangurAgeGroupFocusMock } = vi.hoisted(() => ({
   useKangurAgeGroupFocusMock: vi.fn(),
 }));
 
+const emptyLessonSectionsQueryMock = {
+  data: [],
+  isLoading: false,
+  isPending: false,
+  isFetching: false,
+  error: null,
+} as const;
+
+const emptyPageContentEntryQueryMock = {
+  entry: null,
+  data: undefined,
+  isLoading: false,
+  isError: false,
+  error: null,
+} as const;
+
 vi.mock('@/features/kangur/ui/context/KangurRoutingContext', () => ({
   useKangurRouting: useKangurRoutingMock,
   useOptionalKangurRouting: () => null,
@@ -130,23 +146,11 @@ vi.mock('@/features/kangur/ui/hooks/useKangurLessonTemplates', () => ({
 }));
 
 vi.mock('@/features/kangur/ui/hooks/useKangurLessonSections', () => ({
-  useKangurLessonSections: () => ({
-    data: [],
-    isLoading: false,
-    isPending: false,
-    isFetching: false,
-    error: null,
-  }),
+  useKangurLessonSections: () => emptyLessonSectionsQueryMock,
 }));
 
 vi.mock('@/features/kangur/ui/hooks/useKangurPageContent', () => ({
-  useKangurPageContentEntry: () => ({
-    entry: null,
-    data: undefined,
-    isLoading: false,
-    isError: false,
-    error: null,
-  }),
+  useKangurPageContentEntry: () => emptyPageContentEntryQueryMock,
 }));
 
 vi.mock('@/features/kangur/ui/context/KangurAiTutorContext', () => ({

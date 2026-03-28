@@ -1,13 +1,9 @@
 'use client';
 
 import type { Point2d } from '@/shared/contracts/geometry';
+import type { KangurDrawingSnapshotDto, KangurDrawingSnapshotInputDto } from './snapshot-types';
 
-export type KangurPointDrawingSnapshot = {
-  logicalHeight: number;
-  logicalWidth: number;
-  strokes: Point2d[][];
-  version: 1;
-};
+export type KangurPointDrawingSnapshot = KangurDrawingSnapshotDto<Point2d[]>;
 
 const SNAPSHOT_VERSION = 1 as const;
 
@@ -27,7 +23,7 @@ export const createKangurPointDrawingSnapshot = ({
   logicalHeight,
   logicalWidth,
   strokes,
-}: Omit<KangurPointDrawingSnapshot, 'version'>): KangurPointDrawingSnapshot => ({
+}: KangurDrawingSnapshotInputDto<Point2d[]>): KangurPointDrawingSnapshot => ({
   logicalHeight,
   logicalWidth,
   strokes: strokes.map((stroke) => stroke.map((point) => ({ ...point }))),

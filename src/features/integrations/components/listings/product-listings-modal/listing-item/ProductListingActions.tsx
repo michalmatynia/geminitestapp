@@ -13,18 +13,14 @@ import {
   useProductListingsModals,
   useProductListingsUIState,
 } from '@/features/integrations/context/ProductListingsContext';
-import type {
-  ImageRetryPreset,
-  ProductListingWithDetails,
-} from '@/shared/contracts/integrations';
+import type { ImageRetryPreset } from '@/shared/contracts/integrations';
 import { Button, ActionMenu, DropdownMenuItem, Label, Input } from '@/shared/ui';
+import type { ProductListingWithDetailsProps } from './types';
 
 const normalizeIntegrationSlug = (value: string | null | undefined): string =>
   (value ?? '').trim().toLowerCase();
 
-export type ProductListingActionsProps = {
-  listing: ProductListingWithDetails;
-};
+type ProductListingActionsProps = ProductListingWithDetailsProps;
 
 export function ProductListingActions(props: ProductListingActionsProps): React.JSX.Element {
   const { listing } = props;

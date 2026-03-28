@@ -9,6 +9,7 @@ export type WidenLessonCopy<T> = T extends string
       : T;
 
 export type LessonTranslate = (key: string, values?: TranslationValues) => string;
+export type LessonShellScope = 'game' | 'draw' | 'synthesis';
 
 type LessonTranslateWithHas = LessonTranslate & { has?: (messageKey: string) => boolean };
 
@@ -49,4 +50,18 @@ export const translateLessonValueWithLegacyKey = (
   }
 
   return fallback;
+};
+
+export const getLessonShellTitleKeys = (scope: LessonShellScope) => ({
+  forward: `${scope}.gameTitle`,
+  legacy: `${scope}.stageTitle`,
+});
+
+export const translateLessonShellTitle = (
+  translate: LessonTranslate,
+  scope: LessonShellScope,
+  fallback: string,
+): string => {
+  const keys = getLessonShellTitleKeys(scope);
+  return translateLessonValueWithLegacyKey(translate, keys.forward, keys.legacy, fallback);
 };

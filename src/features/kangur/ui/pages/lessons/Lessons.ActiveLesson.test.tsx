@@ -37,6 +37,7 @@ const {
   lessonDocumentBackClickMock: vi.fn(),
   lessonComponentsMock: {} as Record<string, React.ComponentType<unknown>>,
 }));
+const emptyPageContentEntryMock = vi.hoisted(() => ({ entry: null }));
 
 vi.mock('@/features/kangur/lesson-documents', () => ({
   hasKangurLessonDocumentContent: (...args: unknown[]) =>
@@ -143,7 +144,7 @@ vi.mock('@/features/kangur/ui/hooks/useKangurMobileBreakpoint', () => ({
 }));
 
 vi.mock('@/features/kangur/ui/hooks/useKangurPageContent', () => ({
-  useKangurPageContentEntry: () => ({ entry: null }),
+  useKangurPageContentEntry: () => emptyPageContentEntryMock,
 }));
 
 vi.mock('@/features/kangur/ui/hooks/useKangurLessons', () => ({

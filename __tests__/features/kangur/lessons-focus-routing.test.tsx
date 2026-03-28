@@ -38,6 +38,18 @@ const { useKangurAgeGroupFocusMock } = vi.hoisted(() => ({
   useKangurAgeGroupFocusMock: vi.fn(),
 }));
 
+const emptyLessonSectionsQueryMock = {
+  data: [],
+  isLoading: false,
+  error: null,
+} as const;
+
+const emptyPageContentEntryQueryMock = {
+  entry: null,
+  isLoading: false,
+  error: null,
+} as const;
+
 let requestAnimationFrameMock: ReturnType<typeof vi.spyOn> | null = null;
 let cancelAnimationFrameMock: ReturnType<typeof vi.spyOn> | null = null;
 const scheduledAnimationFrameHandles = new Set<number>();
@@ -184,19 +196,11 @@ vi.mock('@/features/kangur/ui/hooks/useKangurLessonTemplates', () => ({
 }));
 
 vi.mock('@/features/kangur/ui/hooks/useKangurLessonSections', () => ({
-  useKangurLessonSections: () => ({
-    data: [],
-    isLoading: false,
-    error: null,
-  }),
+  useKangurLessonSections: () => emptyLessonSectionsQueryMock,
 }));
 
 vi.mock('@/features/kangur/ui/hooks/useKangurPageContent', () => ({
-  useKangurPageContentEntry: () => ({
-    entry: null,
-    isLoading: false,
-    error: null,
-  }),
+  useKangurPageContentEntry: () => emptyPageContentEntryQueryMock,
 }));
 
 vi.mock('@/features/kangur/ui/context/KangurAiTutorContext', () => ({

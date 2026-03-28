@@ -1,4 +1,4 @@
-import type { UnknownRecordDto } from '@/shared/contracts/base';
+import type { UnknownRecord } from '@/shared/contracts/base';
 import type {
   ClientErrorPayloadDto as ClientErrorPayload,
   SystemLogLevelDto as SystemLogLevel,
@@ -15,9 +15,9 @@ import {
 import { isSensitiveKey, REDACTED_VALUE, truncateString } from './client-redaction';
 import { isAbortLikeError } from './is-abort-like-error';
 import { getLastUserAction, initUserActionTracker } from './user-action-tracker';
-export type ClientErrorContext = UnknownRecordDto;
+export type ClientErrorContext = UnknownRecord;
 type SerializedContext =
-  | UnknownRecordDto
+  | UnknownRecord
   | { truncated: true; preview: string }
   | { error: string }
   | null;

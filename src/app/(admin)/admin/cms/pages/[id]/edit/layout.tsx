@@ -1,1 +1,1 @@
-export { default } from '@/features/cms/public';
+export { default } from '@/features/cms/components/CmsEditorLayout';

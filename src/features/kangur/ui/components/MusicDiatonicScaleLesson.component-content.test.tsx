@@ -6,6 +6,8 @@ import React from 'react';
 import { render } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import { KANGUR_MUSIC_DIATONIC_SCALE_COMPONENT_ID } from '@/features/kangur/games/music-piano-roll-contract';
+import { MUSIC_DIATONIC_SCALE_LESSON_COMPONENT_CONTENT } from '../../lessons/lesson-template-component-content';
+import { withLegacyMusicDiatonicScaleGameCopy } from '../../lessons/legacy-component-content.test-helpers';
 import { MUSIC_DIATONIC_SCALE_SECTION_IDS } from '@/features/kangur/ui/components/music-diatonic-scale-lesson-content';
 
 const {
@@ -193,80 +195,12 @@ describe('MusicDiatonicScaleLesson', () => {
           color: 'kangur-gradient-accent-sky',
           activeBg: 'bg-sky-500',
           sortOrder: 100,
-          componentContent: {
-            kind: KANGUR_MUSIC_DIATONIC_SCALE_COMPONENT_ID,
-            notesSection: {
-              emoji: '🎼',
-              title: 'Legacy notes',
-              description: 'Legacy note description',
-              introSlide: {
-                title: 'Legacy intro slide',
-                lead: 'Legacy intro lead',
-                noteCardLabel: 'Sound',
-                noteSequence: ['do', 're', 'mi'],
-                caption: 'Legacy intro caption',
-              },
-              colorsSlide: {
-                title: 'Legacy colors slide',
-                lead: 'Legacy colors lead',
-                noteChips: ['red', 'blue'],
-                previewTitle: 'Legacy preview title',
-                previewDescription: 'Legacy preview description',
-                caption: 'Legacy colors caption',
-              },
-            },
-            melodySection: {
-              emoji: '🎶',
-              title: 'Legacy melody',
-              description: 'Legacy melody description',
-              directionSlide: {
-                title: 'Legacy direction slide',
-                lead: 'Legacy direction lead',
-                ascendingTitle: 'Up',
-                ascendingSequence: 'do re mi',
-                ascendingCaption: 'Legacy ascending caption',
-                descendingTitle: 'Down',
-                descendingSequence: 'mi re do',
-                descendingCaption: 'Legacy descending caption',
-              },
-              listenSlide: {
-                title: 'Legacy listen slide',
-                lead: 'Legacy listen lead',
-                planTitle: 'Legacy plan',
-                planSteps: ['Listen', 'Watch', 'Repeat'],
-                caption: 'Legacy listen caption',
-              },
-            },
-            gameRepeatSection: {
-              emoji: '🎹',
-              title: 'Legacy repeat',
-              description: 'Legacy repeat description',
-              gameStageTitle: 'Legacy repeat game',
-              gameStageDescription: 'Legacy repeat game description',
-            },
-            gameFreeplaySection: {
-              emoji: '🎛️',
-              title: 'Legacy freeplay',
-              description: 'Legacy freeplay description',
-              gameStageTitle: 'Legacy freeplay game',
-              gameStageDescription: 'Legacy freeplay game description',
-            },
-            summarySection: {
-              emoji: '⭐',
-              title: 'Legacy summary',
-              description: 'Legacy summary description',
-              summarySlide: {
-                title: 'Legacy summary slide',
-                lead: 'Legacy summary lead',
-                facts: [
-                  {
-                    title: 'Legacy fact',
-                    caption: 'Legacy fact caption',
-                  },
-                ],
-              },
-            },
-          },
+          componentContent: withLegacyMusicDiatonicScaleGameCopy(
+            'Legacy repeat game',
+            'Legacy repeat game description',
+            'Legacy freeplay game',
+            'Legacy freeplay game description',
+          ),
         }}
       />,
     );

@@ -28,6 +28,7 @@ export * from './jobs';
 export * from './kangur';
 export * from './kangur-ai-tutor-content';
 export * from './kangur-auth';
+export * from './kangur-cms';
 export * from './kangur-observability';
 export * from './kangur-social-image-addons';
 export * from './kangur-social-posts';

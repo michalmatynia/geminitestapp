@@ -12,11 +12,13 @@ type DynamicCall = {
 
 const {
   dynamicCalls,
+  competitionPageImportMock,
   gamePageImportMock,
   lessonsPageImportMock,
   routeLoadingFallbackMock,
 } = vi.hoisted(() => ({
   dynamicCalls: [] as DynamicCall[],
+  competitionPageImportMock: vi.fn(),
   gamePageImportMock: vi.fn(),
   lessonsPageImportMock: vi.fn(),
   routeLoadingFallbackMock: vi.fn(),
@@ -35,6 +37,13 @@ vi.mock('@/features/kangur/ui/components/KangurRouteLoadingFallback', () => ({
     return <div data-testid='kangur-route-loading-fallback-probe' />;
   },
 }));
+
+vi.mock('@/features/kangur/ui/pages/Competition', () => {
+  competitionPageImportMock();
+  return {
+    default: () => <div data-testid='kangur-competition-page-probe' />,
+  };
+});
 
 vi.mock('@/features/kangur/ui/pages/Game', () => {
   gamePageImportMock();
@@ -59,6 +68,7 @@ describe('kangur page config', () => {
     vi.resetModules();
     cleanup();
     dynamicCalls.length = 0;
+    competitionPageImportMock.mockReset();
     gamePageImportMock.mockReset();
     lessonsPageImportMock.mockReset();
     routeLoadingFallbackMock.mockReset();
@@ -73,20 +83,24 @@ describe('kangur page config', () => {
   });
 
   it('preloads Kangur page modules on demand', async () => {
+    preloadKangurPage('Competition');
+    await vi.dynamicImportSettled();
+
+    expect(competitionPageImportMock).toHaveBeenCalledTimes(1);
     preloadKangurPage('Game');
     await vi.dynamicImportSettled();
 
-    expect(gamePageImportMock).toHaveBeenCalledTimes(1);
+    expect(gamePageImportMock).not.toHaveBeenCalled();
     expect(lessonsPageImportMock).not.toHaveBeenCalled();
 
     preloadKangurPage('Lessons');
     await vi.dynamicImportSettled();
 
-    expect(gamePageImportMock).toHaveBeenCalledTimes(1);
-    expect(lessonsPageImportMock).toHaveBeenCalledTimes(1);
+    expect(gamePageImportMock).not.toHaveBeenCalled();
+    expect(lessonsPageImportMock).not.toHaveBeenCalled();
   });
 
-  it('uses shared lazy route fallbacks for every Kangur page while keeping the main page skeleton lighter', () => {
+  it('uses shared lazy route fallbacks for lazy Kangur pages while keeping Game and Lessons eager', () => {
     expect(Object.keys(kangurPages)).toEqual([
       'Competition',
       'Game',
@@ -98,23 +112,17 @@ describe('kangur page config', () => {
       'SocialUpdates',
       'Tests',
     ]);
-    expect(dynamicCalls).toHaveLength(9);
+    expect(dynamicCalls).toHaveLength(7);
 
     const competitionLoadingFallback = dynamicCalls[0]?.loading;
-    const gameLoadingFallback = dynamicCalls[1]?.loading;
-    const lessonsLoadingFallback = dynamicCalls[5]?.loading;
+    const socialUpdatesLoadingFallback = dynamicCalls[5]?.loading;
 
     expect(competitionLoadingFallback).toBeTypeOf('function');
-    expect(gameLoadingFallback).toBeTypeOf('function');
-    expect(lessonsLoadingFallback).toBeTypeOf('function');
+    expect(socialUpdatesLoadingFallback).toBeTypeOf('function');
 
     const NonMainPageLoadingFallback = competitionLoadingFallback;
-    const MainPageLoadingFallback = gameLoadingFallback;
     if (!NonMainPageLoadingFallback) {
       throw new Error('Expected the shared non-main loading fallback component.');
-    }
-    if (!MainPageLoadingFallback) {
-      throw new Error('Expected the shared main-page loading fallback component.');
     }
 
     render(<NonMainPageLoadingFallback />);
@@ -125,18 +133,7 @@ describe('kangur page config', () => {
       includeTopNavigationSkeleton: true,
     });
 
-    cleanup();
-    routeLoadingFallbackMock.mockReset();
-
-    render(<MainPageLoadingFallback />);
-
-    expect(screen.getByTestId('kangur-route-loading-fallback-probe')).toBeInTheDocument();
-    expect(routeLoadingFallbackMock).toHaveBeenCalledTimes(1);
-    expect(routeLoadingFallbackMock).toHaveBeenCalledWith({
-      includeTopNavigationSkeleton: false,
-    });
-
-    expect(lessonsLoadingFallback).toBe(competitionLoadingFallback);
+    expect(socialUpdatesLoadingFallback).toBe(competitionLoadingFallback);
     expect(kangurPages['Game']).toBeTypeOf('function');
     expect(kangurPages['Lessons']).toBeTypeOf('function');
   });

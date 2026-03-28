@@ -42,17 +42,20 @@ export function KangurAdminInsetCard(props: KangurAdminCardProps): React.JSX.Ele
   );
 }
 
-export function KangurAdminCardHeader({
-  title,
-  description,
-  badge,
-  actions,
-  className,
-  contentClassName,
-  descriptionClassName,
-  titleAs = 'h3',
-  titleClassName,
-}: KangurAdminCardHeaderProps): React.JSX.Element {
+export function KangurAdminCardHeader(
+  props: KangurAdminCardHeaderProps
+): React.JSX.Element {
+  const {
+    title,
+    description,
+    badge,
+    actions,
+    className,
+    contentClassName,
+    descriptionClassName,
+    titleAs = 'h3',
+    titleClassName,
+  } = props;
   const TitleTag = titleAs;
 
   return (

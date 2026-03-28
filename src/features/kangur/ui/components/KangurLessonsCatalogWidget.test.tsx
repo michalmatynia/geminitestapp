@@ -56,20 +56,21 @@ const { ageGroupState } = vi.hoisted(() => ({
   },
 }));
 
+function createLessonsCatalogTranslationsMock(namespace?: string) {
+  const translations = {
+    'KangurLessonsPage.emptyTitle': 'No lessons',
+    'KangurLessonsPage.groupTypeLabel': 'Group',
+    'KangurLessonsPage.subsectionTypeLabel': 'Subsection',
+    'KangurLessonsWidgets.emptyDescription': 'No lessons available',
+    'KangurLessonsWidgets.mastery.ready': 'Ready',
+  } as const;
+
+  return (key: string) => translations[`${namespace}.${key}` as keyof typeof translations] ?? key;
+}
+
 vi.mock('next-intl', () => ({
   useLocale: () => 'en',
-  useTranslations: (namespace?: string) => {
-    const translations = {
-      'KangurLessonsPage.emptyTitle': 'No lessons',
-      'KangurLessonsPage.groupTypeLabel': 'Group',
-      'KangurLessonsPage.subsectionTypeLabel': 'Subsection',
-      'KangurLessonsWidgets.emptyDescription': 'No lessons available',
-      'KangurLessonsWidgets.mastery.ready': 'Ready',
-    } as const;
-
-    return (key: string) =>
-      translations[`${namespace}.${key}` as keyof typeof translations] ?? key;
-  },
+  useTranslations: createLessonsCatalogTranslationsMock,
 }));
 
 vi.mock('@/features/kangur/lesson-documents', () => ({

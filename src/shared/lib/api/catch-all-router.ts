@@ -1,11 +1,11 @@
 import { NextRequest } from 'next/server';
 
-import type { StringRecordDto } from '@/shared/contracts/base';
+import type { StringRecord } from '@/shared/contracts/base';
 import { methodNotAllowedError, notFoundError } from '@/shared/errors/app-error';
 import { createErrorResponse } from '@/shared/lib/api/handle-api-error';
 
 export type CatchAllRouteMethod = 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
-export type CatchAllRouteParams = StringRecordDto;
+export type CatchAllRouteParams = StringRecord;
 export type CatchAllRoutePathParams = { path?: string[] | string };
 export type CatchAllRouteHandler<P extends CatchAllRouteParams = CatchAllRouteParams> = (
   request: NextRequest,

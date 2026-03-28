@@ -8,10 +8,7 @@ import {
   KANGUR_MUSIC_PIANO_ROLL_RENDERER_IDS,
   KANGUR_MUSIC_PIANO_ROLL_VARIANT_KEYS,
 } from '@/features/kangur/games/music-piano-roll-contract';
-
-export type KangurMusicPianoRollLaunchableComponentProps = {
-  onFinish: () => void;
-};
+import type { KangurMiniGameFinishActionProps } from '@/features/kangur/ui/types';
 
 const KANGUR_MUSIC_PIANO_ROLL_LAUNCHABLE_IMPORTERS = {
   freePlay: () => import('@/features/kangur/ui/components/music/MusicPianoRollFreePlayGame'),
@@ -25,11 +22,11 @@ export const KANGUR_MUSIC_PIANO_ROLL_LAUNCHABLE_COMPONENTS = Object.fromEntries(
   ])
 ) as Record<
   (typeof KANGUR_MUSIC_PIANO_ROLL_RENDERER_IDS)[keyof typeof KANGUR_MUSIC_PIANO_ROLL_RENDERER_IDS],
-  ComponentType<KangurMusicPianoRollLaunchableComponentProps>
+  ComponentType<KangurMiniGameFinishActionProps>
 >;
 
 export const createKangurMusicPianoRollLaunchableRendererMap = <T,>(
-  createRenderer: (Component: ComponentType<KangurMusicPianoRollLaunchableComponentProps>) => T
+  createRenderer: (Component: ComponentType<KangurMiniGameFinishActionProps>) => T
 ) =>
   Object.fromEntries(
     KANGUR_MUSIC_PIANO_ROLL_VARIANT_KEYS.map((key) => [
@@ -45,9 +42,9 @@ export const createKangurMusicPianoRollLaunchableRendererMap = <T,>(
     T
   >;
 
-export const createKangurMusicPianoRollLaunchableOnFinishRendererMap = <TProps extends {
-  onFinish: () => void;
-}>() =>
+export const createKangurMusicPianoRollLaunchableOnFinishRendererMap = <
+  TProps extends KangurMiniGameFinishActionProps,
+>() =>
   createKangurMusicPianoRollLaunchableRendererMap((Component) => ({
     render: ({ onFinish }: TProps): React.JSX.Element => <Component onFinish={onFinish} />,
   }));

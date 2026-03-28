@@ -1,4 +1,4 @@
-import type { IdLabelOptionDto } from '@/shared/contracts/base';
+import type { IdLabelOption } from '@/shared/contracts/base';
 import type { KangurAccent } from '@/features/kangur/ui/design/tokens';
 
 export type SequenceGameConfig = {
@@ -11,8 +11,6 @@ export type SequenceGameConfig = {
   svgLabel: string;
 };
 
-export type SortGameBin = IdLabelOptionDto<string>;
-
 export type SortGameItem = {
   id: string;
   label: string;
@@ -23,7 +21,7 @@ export type SortGameConfig = {
   mode: 'sort';
   title: string;
   prompt: string;
-  bins: SortGameBin[];
+  bins: IdLabelOption<string>[];
   items: SortGameItem[];
   success: string;
   accent: KangurAccent;

@@ -58,13 +58,11 @@ import {
   type ClassificationRound,
   type ClassificationSortRound,
 } from './logical-classification-game-data';
+import type { BinnedRoundStateDto } from './round-state-contracts';
 
 import type { DropResult } from '@hello-pangea/dnd';
 
-type RoundState = {
-  pool: ClassificationItem[];
-  bins: Record<string, ClassificationItem[]>;
-};
+type RoundState = BinnedRoundStateDto<ClassificationItem>;
 
 const dragPortal = typeof document === 'undefined' ? null : document.body;
 
@@ -94,7 +92,7 @@ const buildRoundState = (round: ClassificationRound): RoundState => {
     return { pool: [], bins: {} };
   }
   const pool = shuffle(round.items);
-  const bins = round.bins.reduce<Record<string, ClassificationItem[]>>((acc, bin) => {
+  const bins = round.bins.reduce<RoundState['bins']>((acc, bin) => {
     acc[bin.id] = [];
     return acc;
   }, {});

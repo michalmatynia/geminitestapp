@@ -9,9 +9,30 @@ const rawEnglishMessages = JSON.parse(
   readFileSync(resolve(process.cwd(), 'src/i18n/messages/en.json'), 'utf8'),
 ) as unknown;
 
+const rawPolishMessages = JSON.parse(
+  readFileSync(resolve(process.cwd(), 'src/i18n/messages/pl.json'), 'utf8'),
+) as unknown;
+
+const rawGermanMessages = JSON.parse(
+  readFileSync(resolve(process.cwd(), 'src/i18n/messages/de.json'), 'utf8'),
+) as unknown;
+
 const rawUkrainianMessages = JSON.parse(
   readFileSync(resolve(process.cwd(), 'src/i18n/messages/uk.json'), 'utf8'),
 ) as unknown;
+
+const rawBundledLocaleMessages = [
+  rawEnglishMessages,
+  rawPolishMessages,
+  rawGermanMessages,
+  rawUkrainianMessages,
+] as const;
+
+const LEGACY_LESSON_TITLE_KEYS = [
+  'stageTitle',
+  'gameStageTitle',
+  'gameStageDescription',
+] as const;
 
 function collectMissingKeys(source: unknown, target: unknown, path: string[] = []): string[] {
   if (Array.isArray(source)) {
@@ -39,6 +60,27 @@ function collectMissingKeys(source: unknown, target: unknown, path: string[] = [
   }
 
   return [];
+}
+
+function collectKeysNamed(source: unknown, keyName: string, path: string[] = []): string[] {
+  if (Array.isArray(source)) {
+    return source.flatMap((item, index) => collectKeysNamed(item, keyName, [...path, String(index)]));
+  }
+
+  if (source && typeof source === 'object') {
+    return Object.entries(source as Record<string, unknown>).flatMap(([key, value]) => [
+      ...(key === keyName ? [[...path, key].join('.')] : []),
+      ...collectKeysNamed(value, keyName, [...path, key]),
+    ]);
+  }
+
+  return [];
+}
+
+function expectNoLegacyLessonTitleKeys(messages: unknown) {
+  for (const key of LEGACY_LESSON_TITLE_KEYS) {
+    expect(collectKeysNamed(messages, key)).toEqual([]);
+  }
 }
 
 describe('site messages', () => {
@@ -90,7 +132,7 @@ describe('site messages', () => {
     expect(messages.KangurMiniGames.geometrySymmetry.inRound.mode.axis).toBe('Вісь');
     expect(messages.KangurMiniGames.calendar.lessonTitle).toBe('Вивчення календаря');
     expect(messages.KangurMiniGames.addingSynthesis.intro.title).toBe('Синтез додавання');
-    expect(messages.KangurMiniGames.logicalAnalogies.game.stageTitle).toBe('Міст зв\'язків');
+    expect(messages.KangurMiniGames.logicalAnalogies.game.title).toBe('Міст зв\'язків');
     expect(messages.KangurMiniGames.geometryDrawing.inRound.shapes.square.label).toBe(
       'Квадрат',
     );
@@ -135,7 +177,7 @@ describe('site messages', () => {
       'Шестикутник',
     );
     expect(messages.KangurStaticLessons.logicalAnalogies.lessonTitle).toBe('Аналогії');
-    expect(messages.KangurStaticLessons.logicalAnalogies.game.stageTitle).toBe(
+    expect(messages.KangurStaticLessons.logicalAnalogies.game.gameTitle).toBe(
       'Міст зв\'язків',
     );
     expect(messages.KangurStaticLessons.logicalPatterns.lessonTitle).toBe(
@@ -248,6 +290,20 @@ describe('site messages', () => {
     expect(messages.FallbackHome.Products.addProducts).toBe('Додати товари');
     expect(messages.Product.fallbackTitle).toBe('Продукт');
     expect(messages.Product.backToStorefront).toBe('Назад до вітрини');
+  });
+
+  it('does not ship redundant legacy lesson title keys in the bundled locale files', () => {
+    for (const messages of rawBundledLocaleMessages) {
+      expectNoLegacyLessonTitleKeys(messages);
+    }
+  });
+
+  it('does not expose redundant legacy lesson title keys after locale fallback merging', async () => {
+    for (const locale of ['en', 'pl', 'de', 'uk'] as const) {
+      const messages = await loadSiteMessages(locale);
+
+      expectNoLegacyLessonTitleKeys(messages);
+    }
   });
 
   it('covers every English message key in the Ukrainian source bundle', () => {

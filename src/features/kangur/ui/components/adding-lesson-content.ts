@@ -1,6 +1,6 @@
 import {
   type LessonTranslate,
-  translateLessonValueWithLegacyKey,
+  translateLessonShellTitle,
 } from '@/features/kangur/ui/components/lesson-copy';
 import {
   resolveKangurLessonTemplateComponentContent,
@@ -912,18 +912,12 @@ export const createAddingLessonContentFromTranslate = (
     },
   },
   game: {
-    gameTitle: translateLessonValueWithLegacyKey(
-      translate,
-      'game.gameTitle',
-      'game.stageTitle',
-      ADDING_LESSON_DEFAULTS.game.gameTitle,
-    ),
+    gameTitle: translateLessonShellTitle(translate, 'game', ADDING_LESSON_DEFAULTS.game.gameTitle),
   },
   synthesis: {
-    gameTitle: translateLessonValueWithLegacyKey(
+    gameTitle: translateLessonShellTitle(
       translate,
-      'synthesis.gameTitle',
-      'synthesis.stageTitle',
+      'synthesis',
       ADDING_LESSON_DEFAULTS.synthesis.gameTitle,
     ),
   },

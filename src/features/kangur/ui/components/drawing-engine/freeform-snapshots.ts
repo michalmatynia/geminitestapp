@@ -3,13 +3,11 @@
 export { exportKangurCanvasDataUrl } from '@/features/kangur/ui/components/drawing-engine/canvas-export';
 
 import type { KangurDrawingStroke, KangurFreeformDrawingStrokeMeta } from './types';
+import type { KangurDrawingSnapshotDto, KangurDrawingSnapshotInputDto } from './snapshot-types';
 
-export type KangurFreeformDrawingSnapshot = {
-  logicalHeight: number;
-  logicalWidth: number;
-  strokes: KangurDrawingStroke<KangurFreeformDrawingStrokeMeta>[];
-  version: 1;
-};
+export type KangurFreeformDrawingSnapshot = KangurDrawingSnapshotDto<
+  KangurDrawingStroke<KangurFreeformDrawingStrokeMeta>
+>;
 
 const SNAPSHOT_VERSION = 1 as const;
 
@@ -42,7 +40,9 @@ export const createKangurFreeformDrawingSnapshot = ({
   logicalHeight,
   logicalWidth,
   strokes,
-}: Omit<KangurFreeformDrawingSnapshot, 'version'>): KangurFreeformDrawingSnapshot => ({
+}: KangurDrawingSnapshotInputDto<
+  KangurDrawingStroke<KangurFreeformDrawingStrokeMeta>
+>): KangurFreeformDrawingSnapshot => ({
   logicalHeight,
   logicalWidth,
   strokes: strokes.map((stroke) => ({

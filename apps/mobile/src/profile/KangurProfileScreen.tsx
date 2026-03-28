@@ -493,6 +493,35 @@ function LessonCheckpointRow({
 }): React.JSX.Element {
   const { copy, locale } = useKangurMobileI18n();
   const masteryTone = getMasteryTone(item.masteryPercent);
+  let practiceAction = null;
+
+  if (item.practiceHref) {
+    practiceAction = (
+      <Link href={item.practiceHref} asChild>
+        <Pressable
+          accessibilityRole='button'
+          style={{
+            alignSelf: 'flex-start',
+            borderRadius: 999,
+            borderWidth: 1,
+            borderColor: '#cbd5e1',
+            backgroundColor: '#ffffff',
+            paddingHorizontal: 14,
+            paddingVertical: 10,
+          }}
+        >
+          <Text style={{ color: '#0f172a', fontWeight: '700' }}>
+            {copy({
+              de: 'Danach trainieren',
+              en: 'Practice after',
+              pl: 'Potem trenuj',
+            })}
+            {`: ${item.title}`}
+          </Text>
+        </Pressable>
+      </Link>
+    );
+  }
 
   return (
     <View
@@ -559,31 +588,7 @@ function LessonCheckpointRow({
           </Pressable>
         </Link>
 
-        {item.practiceHref ? (
-          <Link href={item.practiceHref} asChild>
-            <Pressable
-              accessibilityRole='button'
-              style={{
-                alignSelf: 'flex-start',
-                borderRadius: 999,
-                borderWidth: 1,
-                borderColor: '#cbd5e1',
-                backgroundColor: '#ffffff',
-                paddingHorizontal: 14,
-                paddingVertical: 10,
-              }}
-            >
-              <Text style={{ color: '#0f172a', fontWeight: '700' }}>
-                {copy({
-                  de: 'Danach trainieren',
-                  en: 'Practice after',
-                  pl: 'Potem trenuj',
-                })}
-                {`: ${item.title}`}
-              </Text>
-            </Pressable>
-          </Link>
-        ) : null}
+        {practiceAction}
       </View>
     </View>
   );
@@ -597,6 +602,34 @@ function SessionRow({
   const { copy, locale } = useKangurMobileI18n();
   const accuracyPercent = getKangurMobileScoreAccuracyPercent(item.result);
   const operationTone = getSessionAccentTone(item.result.operation);
+  let lessonAction = null;
+
+  if (item.lessonHref) {
+    lessonAction = (
+      <Link href={item.lessonHref} asChild>
+        <Pressable
+          accessibilityRole='button'
+          style={{
+            alignSelf: 'flex-start',
+            borderRadius: 999,
+            borderWidth: 1,
+            borderColor: '#cbd5e1',
+            backgroundColor: '#ffffff',
+            paddingHorizontal: 14,
+            paddingVertical: 10,
+          }}
+        >
+          <Text style={{ color: '#0f172a', fontWeight: '700' }}>
+            {copy({
+              de: 'Lektion öffnen',
+              en: 'Open lesson',
+              pl: 'Otwórz lekcję',
+            })}
+          </Text>
+        </Pressable>
+      </Link>
+    );
+  }
 
   return (
     <View
@@ -692,30 +725,7 @@ function SessionRow({
           </Pressable>
         </Link>
 
-        {item.lessonHref ? (
-          <Link href={item.lessonHref} asChild>
-            <Pressable
-              accessibilityRole='button'
-              style={{
-                alignSelf: 'flex-start',
-                borderRadius: 999,
-                borderWidth: 1,
-                borderColor: '#cbd5e1',
-                backgroundColor: '#ffffff',
-                paddingHorizontal: 14,
-                paddingVertical: 10,
-              }}
-            >
-              <Text style={{ color: '#0f172a', fontWeight: '700' }}>
-                {copy({
-                  de: 'Lektion öffnen',
-                  en: 'Open lesson',
-                  pl: 'Otwórz lekcję',
-                })}
-              </Text>
-            </Pressable>
-          </Link>
-        ) : null}
+        {lessonAction}
 
         <Link href={item.historyHref} asChild>
           <Pressable
@@ -753,6 +763,46 @@ function AssignmentRow({
 }): React.JSX.Element {
   const { copy, locale } = useKangurMobileI18n();
   const priorityTone = getPriorityTone(assignment.priority);
+  const actionLabel = translateKangurMobileActionLabel(assignment.action.label, locale);
+  let assignmentAction = (
+    <View
+      style={{
+        alignSelf: 'flex-start',
+        borderRadius: 999,
+        backgroundColor: '#e2e8f0',
+        paddingHorizontal: 14,
+        paddingVertical: 10,
+      }}
+    >
+      <Text style={{ color: '#475569', fontWeight: '700' }}>
+        {actionLabel} ·{' '}
+        {copy({
+          de: 'bald',
+          en: 'soon',
+          pl: 'wkrotce',
+        })}
+      </Text>
+    </View>
+  );
+
+  if (href) {
+    assignmentAction = (
+      <Link href={href} asChild>
+        <Pressable
+          accessibilityRole='button'
+          style={{
+            alignSelf: 'flex-start',
+            borderRadius: 999,
+            backgroundColor: '#1d4ed8',
+            paddingHorizontal: 14,
+            paddingVertical: 10,
+          }}
+        >
+          <Text style={{ color: '#ffffff', fontWeight: '700' }}>{actionLabel}</Text>
+        </Pressable>
+      </Link>
+    );
+  }
 
   return (
     <View
@@ -782,43 +832,7 @@ function AssignmentRow({
           pl: `Cel: ${assignment.target}`,
         })}
       </Text>
-      {href ? (
-        <Link href={href} asChild>
-          <Pressable
-            accessibilityRole='button'
-            style={{
-              alignSelf: 'flex-start',
-              borderRadius: 999,
-              backgroundColor: '#1d4ed8',
-              paddingHorizontal: 14,
-              paddingVertical: 10,
-            }}
-          >
-            <Text style={{ color: '#ffffff', fontWeight: '700' }}>
-              {translateKangurMobileActionLabel(assignment.action.label, locale)}
-            </Text>
-          </Pressable>
-        </Link>
-      ) : (
-        <View
-          style={{
-            alignSelf: 'flex-start',
-            borderRadius: 999,
-            backgroundColor: '#e2e8f0',
-            paddingHorizontal: 14,
-            paddingVertical: 10,
-          }}
-        >
-          <Text style={{ color: '#475569', fontWeight: '700' }}>
-            {translateKangurMobileActionLabel(assignment.action.label, locale)} ·{' '}
-            {copy({
-              de: 'bald',
-              en: 'soon',
-              pl: 'wkrotce',
-            })}
-          </Text>
-        </View>
-      )}
+      {assignmentAction}
     </View>
   );
 }

@@ -120,6 +120,10 @@ const canvasInteractionsMock = {
   }[],
   ConfirmationModal: () => null,
 };
+const graphActionsMock = {
+  setNodes: setGraphNodesMock,
+  setEdges: setGraphEdgesMock,
+};
 
 vi.mock('@/features/ai/ai-paths/context/CanvasContext', () => ({
   useCanvasRefs: () => ({
@@ -151,10 +155,7 @@ vi.mock('@/features/ai/ai-paths/context/SelectionContext', () => ({
 
 vi.mock('@/features/ai/ai-paths/context/GraphContext', () => ({
   useGraphState: () => graphStateMock,
-  useGraphActions: () => ({
-    setNodes: setGraphNodesMock,
-    setEdges: setGraphEdgesMock,
-  }),
+  useGraphActions: () => graphActionsMock,
 }));
 
 vi.mock('@/features/ai/ai-paths/context/hooks/useCanvasInteractions', () => ({

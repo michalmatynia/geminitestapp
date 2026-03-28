@@ -42,8 +42,15 @@ vi.mock('@/features/kangur/ui/learner-activity/hooks', async (importOriginal) =>
   };
 });
 
-vi.mock('@/features/kangur/ui/components/EnglishArticlesDragDropGame', () => ({
+vi.mock('@/features/kangur/ui/components/KangurLaunchableGameInstanceRuntime', () => ({
   __esModule: true,
+  KangurLaunchableGameInstanceRuntime: ({ onFinish }: { onFinish: () => void }): React.JSX.Element => (
+    <div data-testid='mock-english-articles-drag-game'>
+      <button type='button' onClick={onFinish}>
+        Finish articles drag game
+      </button>
+    </div>
+  ),
   default: ({ onFinish }: { onFinish: () => void }): React.JSX.Element => (
     <div data-testid='mock-english-articles-drag-game'>
       <button type='button' onClick={onFinish}>

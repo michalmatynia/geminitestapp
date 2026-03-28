@@ -929,7 +929,7 @@ export type CmsLookupOptionsDto = {
 
 export type CmsPageLookupOptions = CmsLookupOptionsDto;
 
-export type CmsSlugLookupOptions = CmsLookupOptionsDto;
+export type CmsSlugLookupOptions = CmsPageLookupOptions;
 
 export type CmsRepository = {
   // Pages

@@ -567,6 +567,25 @@ function FocusCard({
 }): React.JSX.Element {
   const { copy, locale } = useKangurMobileI18n();
   const operationLabel = formatKangurMobileScoreOperation(operation, locale);
+  let lessonAction = null;
+
+  if (lessonHref) {
+    lessonAction = (
+      <OutlineLink
+        href={lessonHref}
+        hint={copy({
+          de: `Öffnet die Lektion für den Modus ${operationLabel}.`,
+          en: `Opens the lesson for the ${operationLabel} mode.`,
+          pl: `Otwiera lekcję dla trybu ${operationLabel}.`,
+        })}
+        label={`${copy({
+          de: 'Lektion öffnen',
+          en: 'Open lesson',
+          pl: 'Otwórz lekcję',
+        })}: ${operationLabel}`}
+      />
+    );
+  }
 
   return (
     <View
@@ -602,21 +621,7 @@ function FocusCard({
           })}
           label={`${actionLabel}: ${operationLabel}`}
         />
-        {lessonHref ? (
-          <OutlineLink
-            href={lessonHref}
-            hint={copy({
-              de: `Öffnet die Lektion für den Modus ${operationLabel}.`,
-              en: `Opens the lesson for the ${operationLabel} mode.`,
-              pl: `Otwiera lekcję dla trybu ${operationLabel}.`,
-            })}
-            label={`${copy({
-              de: 'Lektion öffnen',
-              en: 'Open lesson',
-              pl: 'Otwórz lekcję',
-            })}: ${operationLabel}`}
-          />
-        ) : null}
+        {lessonAction}
         <OutlineLink
           href={createKangurResultsHref({ operation })}
           hint={copy({
@@ -716,6 +721,33 @@ function AssignmentCard({
   item: KangurMobileHomeAssignmentItem;
 }): React.JSX.Element {
   const { copy, locale } = useKangurMobileI18n();
+  const actionLabel = translateKangurMobileActionLabel(item.assignment.action.label, locale);
+  let assignmentAction = (
+    <View
+      style={{
+        alignSelf: 'flex-start',
+        borderRadius: 999,
+        backgroundColor: '#e2e8f0',
+        paddingHorizontal: 14,
+        paddingVertical: 10,
+      }}
+    >
+      <Text style={{ color: '#475569', fontWeight: '700' }}>
+        {actionLabel} ·{' '}
+        {copy({
+          de: 'bald',
+          en: 'soon',
+          pl: 'wkrotce',
+        })}
+      </Text>
+    </View>
+  );
+
+  if (item.href) {
+    assignmentAction = (
+      <OutlineLink href={item.href} hint={item.assignment.description} label={actionLabel} />
+    );
+  }
   const priorityAccent =
     item.assignment.priority === 'high'
       ? 'rose'
@@ -770,32 +802,7 @@ function AssignmentCard({
           pl: `Cel: ${item.assignment.target}`,
         })}
       </Text>
-      {item.href ? (
-        <OutlineLink
-          href={item.href}
-          hint={item.assignment.description}
-          label={translateKangurMobileActionLabel(item.assignment.action.label, locale)}
-        />
-      ) : (
-        <View
-          style={{
-            alignSelf: 'flex-start',
-            borderRadius: 999,
-            backgroundColor: '#e2e8f0',
-            paddingHorizontal: 14,
-            paddingVertical: 10,
-          }}
-        >
-          <Text style={{ color: '#475569', fontWeight: '700' }}>
-            {translateKangurMobileActionLabel(item.assignment.action.label, locale)} ·{' '}
-            {copy({
-              de: 'bald',
-              en: 'soon',
-              pl: 'wkrotce',
-            })}
-          </Text>
-        </View>
-      )}
+      {assignmentAction}
     </View>
   );
 }
@@ -815,6 +822,25 @@ function LessonMasteryCard({
         en: 'not saved yet',
         pl: 'jeszcze nie zapisano',
       });
+  let practiceAction = null;
+
+  if (insight.practiceHref) {
+    practiceAction = (
+      <OutlineLink
+        href={insight.practiceHref}
+        hint={copy({
+          de: `Öffnet das Training für ${insight.title}.`,
+          en: `Opens practice for ${insight.title}.`,
+          pl: `Otwiera trening dla ${insight.title}.`,
+        })}
+        label={`${copy({
+          de: 'Trainieren',
+          en: 'Practice',
+          pl: 'Trenuj',
+        })}: ${insight.title}`}
+      />
+    );
+  }
 
   return (
     <View
@@ -859,21 +885,7 @@ function LessonMasteryCard({
             pl: 'Otwórz lekcję',
           })}: ${insight.title}`}
         />
-        {insight.practiceHref ? (
-          <OutlineLink
-            href={insight.practiceHref}
-            hint={copy({
-              de: `Öffnet das Training für ${insight.title}.`,
-              en: `Opens practice for ${insight.title}.`,
-              pl: `Otwiera trening dla ${insight.title}.`,
-            })}
-            label={`${copy({
-              de: 'Trainieren',
-              en: 'Practice',
-              pl: 'Trenuj',
-            })}: ${insight.title}`}
-          />
-        ) : null}
+        {practiceAction}
       </View>
     </View>
   );
@@ -885,6 +897,25 @@ function LessonCheckpointCard({
   item: KangurMobileHomeLessonCheckpointItem;
 }): React.JSX.Element {
   const { copy, locale } = useKangurMobileI18n();
+  let practiceAction = null;
+
+  if (item.practiceHref) {
+    practiceAction = (
+      <OutlineLink
+        href={item.practiceHref}
+        hint={copy({
+          de: `Öffnet ein passendes Training nach ${item.title}.`,
+          en: `Opens matching practice after ${item.title}.`,
+          pl: `Otwiera pasujący trening po ${item.title}.`,
+        })}
+        label={`${copy({
+          de: 'Danach trainieren',
+          en: 'Practice after',
+          pl: 'Potem trenuj',
+        })}: ${item.title}`}
+      />
+    );
+  }
 
   return (
     <View
@@ -935,21 +966,7 @@ function LessonCheckpointCard({
             pl: 'Wróć do lekcji',
           })}: ${item.title}`}
         />
-        {item.practiceHref ? (
-          <OutlineLink
-            href={item.practiceHref}
-            hint={copy({
-              de: `Öffnet ein passendes Training nach ${item.title}.`,
-              en: `Opens matching practice after ${item.title}.`,
-              pl: `Otwiera pasujący trening po ${item.title}.`,
-            })}
-            label={`${copy({
-              de: 'Danach trainieren',
-              en: 'Practice after',
-              pl: 'Potem trenuj',
-            })}: ${item.title}`}
-          />
-        ) : null}
+        {practiceAction}
       </View>
     </View>
   );

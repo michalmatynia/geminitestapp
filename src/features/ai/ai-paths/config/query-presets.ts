@@ -1,9 +1,12 @@
-import type { IdLabeledOptionDto, LabeledOptionDto } from '@/shared/contracts/base';
+import type {
+  IdLabeledOption,
+  LabelValueOption,
+} from '@/shared/contracts/base';
 import type { DbQueryConfig } from '@/shared/lib/ai-paths';
 
-export type DatabasePresetOption = IdLabeledOptionDto;
-export type DatabaseTemplateSnippet = LabeledOptionDto<string>;
-export type DatabaseSnippetItem = LabeledOptionDto<string> & {
+export type DatabasePresetOption = IdLabeledOption;
+export type DatabaseTemplateSnippet = LabelValueOption;
+export type DatabaseSnippetItem = LabelValueOption & {
   disabled?: boolean;
   note?: string;
 };

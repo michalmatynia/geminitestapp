@@ -62,6 +62,7 @@ import {
   EnglishPrepositionsRelationsDiagram,
   EnglishPrepositionsTimeAnimation,
 } from './LessonAnimations';
+import type { PartialBinnedRoundStateDto } from './round-state-contracts';
 
 import type { DropResult } from '@hello-pangea/dnd';
 
@@ -81,10 +82,7 @@ type Round = {
   bins: PrepositionBinId[];
 };
 
-type RoundState = {
-  pool: PrepositionToken[];
-  bins: Partial<Record<PrepositionBinId, PrepositionToken[]>>;
-};
+type RoundState = PartialBinnedRoundStateDto<PrepositionToken, PrepositionBinId>;
 
 const BINS: Record<
   PrepositionBinId,

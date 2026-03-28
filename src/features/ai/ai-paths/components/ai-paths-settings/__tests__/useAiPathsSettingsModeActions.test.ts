@@ -17,20 +17,21 @@ const setBlockedRunPolicyGraphMock = vi.fn();
 const setHistoryRetentionPassesGraphMock = vi.fn();
 const setIsPathLockedGraphMock = vi.fn();
 const setIsPathActiveGraphMock = vi.fn();
+const graphActionsMock = {
+  setPaths: setPathsGraphMock,
+  setPathConfigs: setPathConfigsGraphMock,
+  setExecutionMode: setExecutionModeGraphMock,
+  setFlowIntensity: setFlowIntensityGraphMock,
+  setRunMode: setRunModeGraphMock,
+  setStrictFlowMode: setStrictFlowModeGraphMock,
+  setBlockedRunPolicy: setBlockedRunPolicyGraphMock,
+  setHistoryRetentionPasses: setHistoryRetentionPassesGraphMock,
+  setIsPathLocked: setIsPathLockedGraphMock,
+  setIsPathActive: setIsPathActiveGraphMock,
+};
 
 vi.mock('@/features/ai/ai-paths/context/GraphContext', () => ({
-  useGraphActions: () => ({
-    setPaths: setPathsGraphMock,
-    setPathConfigs: setPathConfigsGraphMock,
-    setExecutionMode: setExecutionModeGraphMock,
-    setFlowIntensity: setFlowIntensityGraphMock,
-    setRunMode: setRunModeGraphMock,
-    setStrictFlowMode: setStrictFlowModeGraphMock,
-    setBlockedRunPolicy: setBlockedRunPolicyGraphMock,
-    setHistoryRetentionPasses: setHistoryRetentionPassesGraphMock,
-    setIsPathLocked: setIsPathLockedGraphMock,
-    setIsPathActive: setIsPathActiveGraphMock,
-  }),
+  useGraphActions: () => graphActionsMock,
 }));
 
 const emptyRuntimeState = (): RuntimeState =>

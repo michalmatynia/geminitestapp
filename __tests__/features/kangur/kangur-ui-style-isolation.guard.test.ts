@@ -34,7 +34,11 @@ const KANGUR_VISUAL_CONTRACTS = [
   },
   {
     file: 'src/app/(frontend)/kangur/(app)/layout.tsx',
-    requiredTokens: ['KangurFeatureRouteShell'],
+    requiredTokens: ['KangurAliasAppLayout'],
+  },
+  {
+    file: 'src/features/kangur/server/KangurAliasAppLayout.tsx',
+    requiredTokens: ['KangurFeatureRouteShellClientBoundary', '<KangurServerShell />'],
   },
   {
     file: 'src/features/kangur/ui/KangurFeaturePage.tsx',

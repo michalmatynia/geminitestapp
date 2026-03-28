@@ -1,14 +1,12 @@
 import React from 'react';
 
-import type { ProductListingWithDetails } from '@/shared/contracts/integrations';
 import { Card } from '@/shared/ui';
 
 import { ProductListingActions } from './listing-item/ProductListingActions';
 import { ProductListingDetails } from './listing-item/ProductListingDetails';
+import type { ProductListingWithDetailsProps } from './listing-item/types';
 
-export type ProductListingItemProps = {
-  listing: ProductListingWithDetails;
-};
+type ProductListingItemProps = ProductListingWithDetailsProps;
 
 export function ProductListingItem({
   listing,

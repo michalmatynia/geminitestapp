@@ -21,23 +21,25 @@ const {
   useTranslationsMock: vi.fn(),
 }));
 
+function createLessonLibraryTranslationsMock(namespace?: string) {
+  useTranslationsMock(namespace);
+
+  return (key: string, values?: Record<string, string | number>) =>
+    (
+      {
+        'KangurLessonsWidgets.libraryCard.ariaLabel': `Lekcja ${values?.title ?? ''}`.trim(),
+        'KangurLessonsWidgets.libraryCard.closedAssignment': 'Zadanie zamkniete',
+        'KangurLessonsWidgets.libraryCard.completedAssignmentSummary': `Zadanie od rodzica zostalo juz wykonane. ${values?.summary ?? ''}`.trim(),
+        'KangurLessonsWidgets.libraryCard.completedForParent': 'Ukończone dla rodzica',
+        'KangurLessonsWidgets.libraryCard.customContent': 'Wlasna zawartosc',
+        'KangurLessonsWidgets.libraryCard.parentPriority': 'Priorytet rodzica',
+      } as const
+    )[`${namespace}.${key}`] ?? key;
+}
+
 vi.mock('next-intl', () => ({
   useLocale: () => localeMock(),
-  useTranslations: (namespace?: string) => {
-    useTranslationsMock(namespace);
-
-    return (key: string, values?: Record<string, string | number>) =>
-      (
-        {
-          'KangurLessonsWidgets.libraryCard.ariaLabel': `Lekcja ${values?.title ?? ''}`.trim(),
-          'KangurLessonsWidgets.libraryCard.closedAssignment': 'Zadanie zamkniete',
-          'KangurLessonsWidgets.libraryCard.completedAssignmentSummary': `Zadanie od rodzica zostalo juz wykonane. ${values?.summary ?? ''}`.trim(),
-          'KangurLessonsWidgets.libraryCard.completedForParent': 'Ukończone dla rodzica',
-          'KangurLessonsWidgets.libraryCard.customContent': 'Wlasna zawartosc',
-          'KangurLessonsWidgets.libraryCard.parentPriority': 'Priorytet rodzica',
-        } as const
-      )[`${namespace}.${key}`] ?? key;
-  },
+  useTranslations: createLessonLibraryTranslationsMock,
 }));
 
 vi.mock('@/features/kangur/ui/hooks/useKangurCoarsePointer', () => ({

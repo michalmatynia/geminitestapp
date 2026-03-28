@@ -43,6 +43,44 @@ const { translationState } = vi.hoisted(() => ({
   },
 }));
 
+const operationSelectorTranslations = {
+  'KangurGameRecommendations.activityLabels.english_adverbs_frequency': {
+    de: 'Adverbien der Häufigkeit',
+    en: 'Adverbs of frequency',
+    pl: 'Przysłówki częstotliwości',
+  },
+  'KangurGameRecommendations.activityLabels.english_adjectives': {
+    de: 'Adjektive',
+    en: 'Adjectives',
+    pl: 'Przymiotniki',
+  },
+  'KangurGamePage.operationSelector.title': {
+    de: "Los geht's!",
+    en: "Let's play!",
+    pl: 'Grajmy!',
+  },
+  'KangurGamePage.screens.training.label': {
+    de: 'Training einrichten',
+    en: 'Training setup',
+    pl: 'Konfiguracja treningu',
+  },
+  'KangurGamePage.screens.training.wordmarkLabel': {
+    de: 'Training',
+    en: 'Training',
+    pl: 'Trening',
+  },
+  'KangurProgressRuntime.activityLabels.english_adjectives': {
+    de: 'Adjektive',
+    en: 'Adjectives',
+    pl: 'Przymiotniki',
+  },
+  'KangurProgressRuntime.activityLabels.english_adverbs_frequency': {
+    de: 'Adverbien der Häufigkeit',
+    en: 'Adverbs of frequency',
+    pl: 'Przysłówki częstotliwości',
+  },
+} as const;
+
 const lessonsState = vi.hoisted(() => ({
   value: [] as Array<Record<string, unknown>>,
 }));
@@ -54,45 +92,7 @@ vi.mock('next-intl', () => ({
     (key: string) =>
       translationState.missing
         ? key
-        : (
-            {
-              'KangurGameRecommendations.activityLabels.english_adverbs_frequency': {
-                de: 'Adverbien der Häufigkeit',
-                en: 'Adverbs of frequency',
-                pl: 'Przysłówki częstotliwości',
-              },
-              'KangurGameRecommendations.activityLabels.english_adjectives': {
-                de: 'Adjektive',
-                en: 'Adjectives',
-                pl: 'Przymiotniki',
-              },
-              'KangurGamePage.operationSelector.title': {
-                de: "Los geht's!",
-                en: "Let's play!",
-                pl: 'Grajmy!',
-              },
-              'KangurGamePage.screens.training.label': {
-                de: 'Training einrichten',
-                en: 'Training setup',
-                pl: 'Konfiguracja treningu',
-              },
-              'KangurGamePage.screens.training.wordmarkLabel': {
-                de: 'Training',
-                en: 'Training',
-                pl: 'Trening',
-              },
-              'KangurProgressRuntime.activityLabels.english_adjectives': {
-                de: 'Adjektive',
-                en: 'Adjectives',
-                pl: 'Przymiotniki',
-              },
-              'KangurProgressRuntime.activityLabels.english_adverbs_frequency': {
-                de: 'Adverbien der Häufigkeit',
-                en: 'Adverbs of frequency',
-                pl: 'Przysłówki częstotliwości',
-              },
-            } as const
-          )[`${namespace}.${key}`]?.[localeState.value] ?? key,
+        : operationSelectorTranslations[`${namespace}.${key}`]?.[localeState.value] ?? key,
 }));
 
 vi.mock('@/features/kangur/ui/context/KangurGameRuntimeContext', () => ({

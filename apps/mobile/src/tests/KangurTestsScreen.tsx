@@ -305,16 +305,7 @@ function PrimaryButton({
   );
 }
 
-function ChoiceButton({
-  choice,
-  disabled = false,
-  isCorrect,
-  isRevealed,
-  isSelected,
-  label,
-  locale,
-  onPress,
-}: {
+type ChoiceButtonProps = {
   choice: KangurTestChoice;
   disabled?: boolean;
   isCorrect: boolean;
@@ -323,7 +314,19 @@ function ChoiceButton({
   label: string;
   locale: KangurMobileLocale;
   onPress: () => void;
-}): React.JSX.Element {
+};
+
+function ChoiceButton(props: ChoiceButtonProps): React.JSX.Element {
+  const {
+    choice,
+    disabled = false,
+    isCorrect,
+    isRevealed,
+    isSelected,
+    label,
+    locale,
+    onPress,
+  } = props;
   const tone = isRevealed
     ? isCorrect
       ? SUCCESS_TONE

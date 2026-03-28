@@ -88,17 +88,20 @@ function getConfiguredTarget(
   };
 }
 
-async function streamInspectorAiResponse({
-  provider,
-  modelId,
-  agentId,
-  prompt,
-  sessionPrefix,
-  systemPrompt,
-  signal,
-  onDelta,
-  contextRegistry,
-}: StreamInspectorAiResponseArgs): Promise<string> {
+async function streamInspectorAiResponse(
+  args: StreamInspectorAiResponseArgs
+): Promise<string> {
+  const {
+    provider,
+    modelId,
+    agentId,
+    prompt,
+    sessionPrefix,
+    systemPrompt,
+    signal,
+    onDelta,
+    contextRegistry,
+  } = args;
   const timestamp = new Date().toISOString();
   const sessionId = `${sessionPrefix}-${Date.now()}`;
   const messages: ChatMessage[] = [

@@ -3,7 +3,7 @@ import {
 } from '@/features/kangur/lessons/lesson-template-component-content';
 import {
   type LessonTranslate,
-  translateLessonValueWithLegacyKey,
+  translateLessonShellTitle,
 } from '@/features/kangur/ui/components/lesson-copy';
 import type {
   KangurGeometryShapeRecognitionLessonTemplateContent,
@@ -144,12 +144,7 @@ export const createGeometryShapeRecognitionLessonContentFromTranslate = (
     caption: translate('summary.caption'),
   },
   draw: {
-    gameTitle: translateLessonValueWithLegacyKey(
-      translate,
-      'draw.gameTitle',
-      'draw.stageTitle',
-      '',
-    ),
+    gameTitle: translateLessonShellTitle(translate, 'draw', ''),
     difficultyLabel: translate('draw.difficultyLabel'),
     finishLabel: translate('draw.finishLabel'),
   },

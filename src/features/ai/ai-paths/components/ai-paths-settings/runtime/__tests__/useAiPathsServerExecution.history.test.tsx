@@ -30,6 +30,9 @@ const notifyAiPathRunEnqueuedMock = vi.hoisted(() => vi.fn());
 const optimisticallyInsertAiPathRunInQueueCacheMock = vi.hoisted(() => vi.fn());
 
 const setPathConfigsMock = vi.hoisted(() => vi.fn());
+const graphActionsMock = vi.hoisted(() => ({
+  setPathConfigs: setPathConfigsMock,
+}));
 
 vi.mock('@/shared/lib/ai-paths', async () => {
   const actual =
@@ -49,9 +52,7 @@ vi.mock('@/shared/lib/query-invalidation', () => ({
 }));
 
 vi.mock('@/features/ai/ai-paths/context/GraphContext', () => ({
-  useGraphActions: () => ({
-    setPathConfigs: setPathConfigsMock,
-  }),
+  useGraphActions: () => graphActionsMock,
 }));
 
 vi.mock('@/shared/lib/ai-paths/hooks/trigger-event-utils', () => ({

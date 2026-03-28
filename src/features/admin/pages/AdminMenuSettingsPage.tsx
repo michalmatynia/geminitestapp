@@ -156,29 +156,37 @@ function FavoritesSection(): React.JSX.Element {
           />
         </FormField>
         <div className='mt-3 max-h-72 space-y-2 overflow-auto pr-2'>
-          {filteredItems.map((item: AdminNavLeaf) => (
-            <label
-              key={item.id}
-              className={cn(
-                'flex cursor-pointer items-start gap-3 rounded-md border border-border/60 bg-card/30 px-3 py-2 transition hover:bg-card/50',
-                favoritesSet.has(item.id) && 'border-amber-500/40 bg-amber-500/5'
-              )}
-            >
-              <Checkbox
-                checked={favoritesSet.has(item.id)}
-                onCheckedChange={(checked: boolean | 'indeterminate') =>
-                  handleToggleFavorite(item.id, Boolean(checked))
-                }
-              />
-              <div className='min-w-0'>
-                <div className='truncate text-sm text-white'>{item.label}</div>
-                <div className='truncate text-[11px] text-gray-500'>{item.parents.join(' / ')}</div>
-                {item.href ? (
-                  <div className='truncate text-[11px] text-gray-600'>{item.href}</div>
-                ) : null}
-              </div>
-            </label>
-          ))}
+          {filteredItems.map((item: AdminNavLeaf) => {
+            let hrefLabel = null;
+
+            if (item.href) {
+              hrefLabel = <div className='truncate text-[11px] text-gray-600'>{item.href}</div>;
+            }
+
+            return (
+              <label
+                key={item.id}
+                className={cn(
+                  'flex cursor-pointer items-start gap-3 rounded-md border border-border/60 bg-card/30 px-3 py-2 transition hover:bg-card/50',
+                  favoritesSet.has(item.id) && 'border-amber-500/40 bg-amber-500/5'
+                )}
+              >
+                <Checkbox
+                  checked={favoritesSet.has(item.id)}
+                  onCheckedChange={(checked: boolean | 'indeterminate') =>
+                    handleToggleFavorite(item.id, Boolean(checked))
+                  }
+                />
+                <div className='min-w-0'>
+                  <div className='truncate text-sm text-white'>{item.label}</div>
+                  <div className='truncate text-[11px] text-gray-500'>
+                    {item.parents.join(' / ')}
+                  </div>
+                  {hrefLabel}
+                </div>
+              </label>
+            );
+          })}
         </div>
       </div>
     </FormSection>

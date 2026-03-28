@@ -4547,7 +4547,6 @@
         "rushModeHint": "Режим Bridge Rush: встигніть до завершення часу. Зміна режиму перезапускає гру.",
         "modeResetHint": "Зміна режиму перезапускає гру.",
         "title": "Міст зв'язків",
-        "stageTitle": "Міст зв'язків",
         "roundLabel": "Раунд {current}/{total}",
         "timeExpired": "Час вийшов",
         "instructions": "Перетягніть зв'язок на картку пари або натисніть зв'язок, а потім натисніть пару. Іконки підказують тип зв'язку.",
@@ -5632,10 +5631,10 @@
         }
       },
       "game": {
-        "stageTitle": "Гра з м'ячами!"
+        "gameTitle": "Гра з м'ячами!"
       },
       "synthesis": {
-        "stageTitle": "Синтез додавання"
+        "gameTitle": "Синтез додавання"
       }
     },
     "subtracting": {
@@ -5795,7 +5794,7 @@
         }
       },
       "game": {
-        "stageTitle": "Гра на віднімання!"
+        "gameTitle": "Гра на віднімання!"
       }
     },
     "clock": {
@@ -6221,7 +6220,7 @@
         }
       },
       "game": {
-        "stageTitle": "Геомісія"
+        "gameTitle": "Геомісія"
       }
     },
     "artShapesBasic": {
@@ -6324,7 +6323,7 @@
         }
       },
       "game": {
-        "stageTitle": "Доповни обертовий візерунок",
+        "gameTitle": "Доповни обертовий візерунок",
         "progress": {
           "round": "Раунд {current}/{total}",
           "score": "Рахунок: {score}"
@@ -6454,7 +6453,7 @@
         "caption": "Шукайте вдома кола, квадрати, трикутники, прямокутники, овали та ромби."
       },
       "draw": {
-        "stageTitle": "Гра: Малюй фігури",
+        "gameTitle": "Гра: Малюй фігури",
         "difficultyLabel": "Базовий",
         "finishLabel": "Назад до тем"
       }
@@ -6522,7 +6521,7 @@
         }
       },
       "game": {
-        "stageTitle": "Гра: Намалюй периметр"
+        "gameTitle": "Гра: Намалюй периметр"
       }
     },
     "geometryShapes": {
@@ -6627,7 +6626,7 @@
         }
       },
       "game": {
-        "stageTitle": "Малюй фігури"
+        "gameTitle": "Малюй фігури"
       }
     },
     "geometrySymmetry": {
@@ -6732,7 +6731,7 @@
         }
       },
       "game": {
-        "stageTitle": "Дзеркала симетрії"
+        "gameTitle": "Дзеркала симетрії"
       }
     },
     "logicalAnalogies": {
@@ -6931,7 +6930,7 @@
         }
       },
       "game": {
-        "stageTitle": "Міст зв'язків"
+        "gameTitle": "Міст зв'язків"
       },
       "animations": {
         "analogyBridge": "Анімація: зв'язок A:B = C:D.",
@@ -7127,7 +7126,7 @@
         }
       },
       "game": {
-        "stageTitle": "Майстерня візерунків"
+        "gameTitle": "Майстерня візерунків"
       }
     },
     "logicalClassification": {
@@ -7380,7 +7379,7 @@
         }
       },
       "game": {
-        "stageTitle": "Лабораторія класифікації"
+        "gameTitle": "Лабораторія класифікації"
       }
     },
     "logicalReasoning": {

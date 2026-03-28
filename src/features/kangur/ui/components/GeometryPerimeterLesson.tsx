@@ -21,7 +21,7 @@ import { KangurUnifiedLesson } from '@/features/kangur/ui/lessons/lesson-compone
 import {
   type LessonTranslate,
   type WidenLessonCopy,
-  translateLessonValueWithLegacyKey,
+  translateLessonShellTitle,
 } from './lesson-copy';
 
 type SectionId = 'intro' | 'kwadrat' | 'prostokan' | 'podsumowanie' | 'game_draw';
@@ -329,10 +329,9 @@ const buildGeometryPerimeterLessonCopy = (
     },
   },
   game: {
-    gameTitle: translateLessonValueWithLegacyKey(
+    gameTitle: translateLessonShellTitle(
       translate,
-      'game.gameTitle',
-      'game.stageTitle',
+      'game',
       GEOMETRY_PERIMETER_LESSON_COPY_PL.game.gameTitle
     ),
   },

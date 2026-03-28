@@ -41,21 +41,19 @@ vi.mock('@/features/kangur/shared/ui', async () => {
         {children}
       </label>
     ),
-    FormModal: ({
-      open,
-      title,
-      children,
-    }: {
+    FormModal: (props: {
       open?: boolean;
       title: string;
       children: React.ReactNode;
-    }) =>
-      open ? (
+    }) => {
+      const { open, title, children } = props;
+      return open ? (
         <div role='dialog' aria-label={title}>
           <h2>{title}</h2>
           {children}
         </div>
-      ) : null,
+      ) : null;
+    },
     Input: (props: React.InputHTMLAttributes<HTMLInputElement>) => <input {...props} />,
     SelectSimple: ({
       value,

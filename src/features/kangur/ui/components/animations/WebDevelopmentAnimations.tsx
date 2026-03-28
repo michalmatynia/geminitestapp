@@ -1,34 +1,16 @@
-import React, { useId } from 'react';
+import React from 'react';
+import {
+  type KangurAnimationSurfaceIdsDto,
+  type KangurAnimationSurfacePropsDto,
+  useKangurAnimationSurfaceIds,
+} from './animation-surface-contracts';
 
-type WebDevelopmentSurfaceIds = {
-  clipId: string;
-  frameGradientId: string;
-  panelGradientId: string;
-};
+type WebDevelopmentSurfaceIds = KangurAnimationSurfaceIdsDto;
 
-type WebDevelopmentSurfaceProps = {
-  accentEnd: string;
-  accentStart: string;
-  atmosphereA: string;
-  atmosphereB: string;
-  ids: WebDevelopmentSurfaceIds;
-  stroke: string;
-  testIdPrefix: string;
-  x: number;
-  y: number;
-  width: number;
-  height: number;
-  rx: number;
-};
+type WebDevelopmentSurfaceProps = KangurAnimationSurfacePropsDto;
 
 function useWebDevelopmentSurfaceIds(prefix: string): WebDevelopmentSurfaceIds {
-  const baseId = useId().replace(/:/g, '');
-
-  return {
-    clipId: `${prefix}-${baseId}-clip`,
-    frameGradientId: `${prefix}-${baseId}-frame`,
-    panelGradientId: `${prefix}-${baseId}-panel`,
-  };
+  return useKangurAnimationSurfaceIds(prefix);
 }
 
 function WebDevelopmentSurface({

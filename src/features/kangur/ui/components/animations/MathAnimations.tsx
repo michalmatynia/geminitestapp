@@ -1,25 +1,13 @@
-import React, { useId } from 'react';
+import React from 'react';
+import {
+  type KangurAnimationSurfaceIdsDto,
+  type KangurAnimationSurfacePropsDto,
+  useKangurAnimationSurfaceIds,
+} from './animation-surface-contracts';
 
-type MathSurfaceIds = {
-  clipId: string;
-  frameGradientId: string;
-  panelGradientId: string;
-};
+type MathSurfaceIds = KangurAnimationSurfaceIdsDto;
 
-type MathSurfaceProps = {
-  accentEnd: string;
-  accentStart: string;
-  atmosphereA: string;
-  atmosphereB: string;
-  ids: MathSurfaceIds;
-  stroke: string;
-  testIdPrefix: string;
-  x: number;
-  y: number;
-  width: number;
-  height: number;
-  rx: number;
-};
+type MathSurfaceProps = KangurAnimationSurfacePropsDto;
 
 type MathChipProps = {
   fill: string;
@@ -31,13 +19,7 @@ type MathChipProps = {
 };
 
 function useMathSurfaceIds(prefix: string): MathSurfaceIds {
-  const baseId = useId().replace(/:/g, '');
-
-  return {
-    clipId: `${prefix}-${baseId}-clip`,
-    frameGradientId: `${prefix}-${baseId}-frame`,
-    panelGradientId: `${prefix}-${baseId}-panel`,
-  };
+  return useKangurAnimationSurfaceIds(prefix);
 }
 
 function MathSurface({

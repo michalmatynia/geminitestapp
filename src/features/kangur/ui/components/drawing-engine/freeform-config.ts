@@ -16,16 +16,7 @@ export type KangurFreeformDrawingToolConfig = {
   strokeWidths?: readonly number[];
 };
 
-export type ResolvedKangurFreeformDrawingToolConfig = {
-  colors: readonly string[];
-  coarsePointerWidthBoost: number;
-  defaultColor: string;
-  defaultTool: KangurFreeformDrawingTool;
-  eraserWidthMultiplier: number;
-  preferredWidthIndex: number;
-  strokeRenderMode: KangurDrawingStrokeRenderMode;
-  strokeWidths: readonly number[];
-};
+export type ResolvedKangurFreeformDrawingToolConfig = Required<KangurFreeformDrawingToolConfig>;
 
 export const DEFAULT_KANGUR_FREEFORM_DRAWING_COLORS = [
   '#1e293b',

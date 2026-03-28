@@ -275,16 +275,19 @@ const getGeometryDifficultyLabel = (
     DIFFICULTY_LABELS[difficulty]
   );
 
-export default function GeometryDrawingGame({
-  activityKey,
-  difficultyLabelOverride,
-  finishLabel = 'Wróć',
-  lessonKey = 'geometry_shapes',
-  onFinish,
-  operation = 'geometry',
-  shapeIds,
-  showDifficultySelector,
-}: GeometryDrawingGameProps): React.JSX.Element {
+export default function GeometryDrawingGame(
+  props: GeometryDrawingGameProps
+): React.JSX.Element {
+  const {
+    activityKey,
+    difficultyLabelOverride,
+    finishLabel = 'Wróć',
+    lessonKey = 'geometry_shapes',
+    onFinish,
+    operation = 'geometry',
+    shapeIds,
+    showDifficultySelector,
+  } = props;
   const ownerKey = useKangurProgressOwnerKey();
   const locale = useLocale();
   const translations = useTranslations('KangurMiniGames');

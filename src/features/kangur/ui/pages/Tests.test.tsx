@@ -11,12 +11,14 @@ import {
 } from '@/features/kangur/ui/pages/lessons/Lessons.constants';
 
 const {
+  disabledDocsTooltipsMock,
   localeState,
   parsedSuitesState,
   publishedQuestionCountBySuiteState,
   routeNavigatorBackMock,
   settingsStoreMock,
 } = vi.hoisted(() => ({
+  disabledDocsTooltipsMock: { enabled: false },
   localeState: {
     value: 'de' as 'de' | 'en' | 'pl',
   },
@@ -138,7 +140,7 @@ vi.mock('@/features/kangur/config/routing', () => ({
 }));
 
 vi.mock('@/features/kangur/docs/tooltips', () => ({
-  useKangurDocsTooltips: () => ({ enabled: false }),
+  useKangurDocsTooltips: () => disabledDocsTooltipsMock,
 }));
 
 vi.mock('@/features/kangur/ui/components/KangurStandardPageLayout', () => ({

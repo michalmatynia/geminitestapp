@@ -120,6 +120,64 @@ export function KangurMobileAiTutorCard({
     context,
     gameTarget,
   });
+  const responseActionItems: React.JSX.Element[] = [];
+
+  for (const action of tutor.responseActions) {
+    if (action.href) {
+      responseActionItems.push(<LinkButton href={action.href} key={action.id} label={action.label} />);
+      continue;
+    }
+
+    responseActionItems.push(
+      <View key={action.id} style={{ gap: 4 }}>
+        <Text style={{ color: '#0f172a', fontSize: 14, fontWeight: '700' }}>{action.label}</Text>
+        {action.reason ? (
+          <Text style={{ color: '#475569', fontSize: 13, lineHeight: 18 }}>{action.reason}</Text>
+        ) : null}
+      </View>,
+    );
+  }
+  let websiteHelpTargetContent = null;
+  let nextStepSection = null;
+
+  if (tutor.websiteHelpTarget) {
+    if (tutor.websiteHelpTarget.href) {
+      websiteHelpTargetContent = (
+        <LinkButton
+          href={tutor.websiteHelpTarget.href}
+          label={
+            locale === 'de'
+              ? `Öffne: ${tutor.websiteHelpTarget.label}`
+              : locale === 'en'
+                ? `Open: ${tutor.websiteHelpTarget.label}`
+                : `Przejdź: ${tutor.websiteHelpTarget.label}`
+          }
+        />
+      );
+    } else {
+      websiteHelpTargetContent = (
+        <Text style={{ color: '#475569', fontSize: 13, lineHeight: 18 }}>
+          {tutor.websiteHelpTarget.label}
+        </Text>
+      );
+    }
+  }
+
+  if (tutor.responseActions.length > 0 || tutor.websiteHelpTarget) {
+    nextStepSection = (
+      <View style={{ flexDirection: 'column', gap: 8 }}>
+        <Text style={{ color: '#0f172a', fontSize: 14, fontWeight: '700' }}>
+          {copy({
+            de: 'Kolejny krok',
+            en: 'Next step',
+            pl: 'Kolejny krok',
+          })}
+        </Text>
+        {responseActionItems}
+        {websiteHelpTargetContent}
+      </View>
+    );
+  }
 
   const availabilityTone =
     tutor.availabilityState === 'available'
@@ -298,51 +356,7 @@ export function KangurMobileAiTutorCard({
         </View>
       ) : null}
 
-      {tutor.responseActions.length > 0 || tutor.websiteHelpTarget ? (
-        <View style={{ flexDirection: 'column', gap: 8 }}>
-          <Text style={{ color: '#0f172a', fontSize: 14, fontWeight: '700' }}>
-            {copy({
-              de: 'Kolejny krok',
-              en: 'Next step',
-              pl: 'Kolejny krok',
-            })}
-          </Text>
-          {tutor.responseActions.map((action) =>
-            action.href ? (
-              <LinkButton href={action.href} key={action.id} label={action.label} />
-            ) : (
-              <View key={action.id} style={{ gap: 4 }}>
-                <Text style={{ color: '#0f172a', fontSize: 14, fontWeight: '700' }}>
-                  {action.label}
-                </Text>
-                {action.reason ? (
-                  <Text style={{ color: '#475569', fontSize: 13, lineHeight: 18 }}>
-                    {action.reason}
-                  </Text>
-                ) : null}
-              </View>
-            ),
-          )}
-          {tutor.websiteHelpTarget ? (
-            tutor.websiteHelpTarget.href ? (
-              <LinkButton
-                href={tutor.websiteHelpTarget.href}
-                label={
-                  locale === 'de'
-                    ? `Öffne: ${tutor.websiteHelpTarget.label}`
-                    : locale === 'en'
-                      ? `Open: ${tutor.websiteHelpTarget.label}`
-                      : `Przejdź: ${tutor.websiteHelpTarget.label}`
-                }
-              />
-            ) : (
-              <Text style={{ color: '#475569', fontSize: 13, lineHeight: 18 }}>
-                {tutor.websiteHelpTarget.label}
-              </Text>
-            )
-          ) : null}
-        </View>
-      ) : null}
+      {nextStepSection}
     </View>
   );
 }

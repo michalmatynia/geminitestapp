@@ -1,9 +1,7 @@
-import type {
-  KangurLessonCollectionFilterDto,
-} from '@kangur/contracts';
 import type { KangurLessonSection } from '@/shared/contracts/kangur-lesson-sections';
+import type { KangurLessonListInput } from '../kangur-lesson-repository/types';
 
-export type KangurLessonSectionListInput = KangurLessonCollectionFilterDto;
+export type KangurLessonSectionListInput = KangurLessonListInput;
 
 export type KangurLessonSectionRepository = {
   listSections: (input?: KangurLessonSectionListInput) => Promise<KangurLessonSection[]>;

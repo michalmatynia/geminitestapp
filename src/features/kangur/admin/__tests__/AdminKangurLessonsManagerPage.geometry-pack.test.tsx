@@ -101,7 +101,10 @@ vi.mock('@/features/kangur/shared/ui', async (importOriginal) => {
     </div>
   ),
   FormField: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
-  FormModal: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
+  FormModal: (props: { children: React.ReactNode }) => {
+    const { children } = props;
+    return <div>{children}</div>;
+  },
   Input: (props: React.InputHTMLAttributes<HTMLInputElement>) => <input {...props} />,
   SectionHeader: ({ title }: { title: string }) => <h1>{title}</h1>,
   SelectSimple: () => <div data-testid='select-simple' />,

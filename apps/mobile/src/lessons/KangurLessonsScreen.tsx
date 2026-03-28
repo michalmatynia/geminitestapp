@@ -231,6 +231,40 @@ function Pill({
   );
 }
 
+function renderLessonPracticeLink({
+  href,
+  label,
+  fullWidth = false,
+}: {
+  href: Href | null;
+  label: string;
+  fullWidth?: boolean;
+}): React.JSX.Element | null {
+  if (!href) {
+    return null;
+  }
+
+  return (
+    <Link href={href} asChild>
+      <Pressable
+        accessibilityRole='button'
+        style={{
+          alignSelf: fullWidth ? 'stretch' : 'flex-start',
+          width: fullWidth ? '100%' : undefined,
+          borderRadius: 999,
+          borderWidth: 1,
+          borderColor: '#cbd5e1',
+          backgroundColor: '#ffffff',
+          paddingHorizontal: fullWidth ? 14 : 12,
+          paddingVertical: fullWidth ? 10 : 9,
+        }}
+      >
+        <Text style={{ color: '#0f172a', fontWeight: '700' }}>{label}</Text>
+      </Pressable>
+    </Link>
+  );
+}
+
 function LessonCheckpointRow({
   item,
 }: {
@@ -314,32 +348,15 @@ function LessonCheckpointRow({
             </Text>
           </Pressable>
         </Link>
-        {item.practiceHref ? (
-          <Link href={item.practiceHref} asChild>
-            <Pressable
-              accessibilityRole='button'
-              style={{
-                alignSelf: 'stretch',
-                width: '100%',
-                borderRadius: 999,
-                borderWidth: 1,
-                borderColor: '#cbd5e1',
-                backgroundColor: '#ffffff',
-                paddingHorizontal: 14,
-                paddingVertical: 10,
-              }}
-            >
-              <Text style={{ color: '#0f172a', fontWeight: '700' }}>
-                {copy({
-                  de: 'Danach trainieren',
-                  en: 'Practice after',
-                  pl: 'Potem trenuj',
-                })}
-                {`: ${item.title}`}
-              </Text>
-            </Pressable>
-          </Link>
-        ) : null}
+        {renderLessonPracticeLink({
+          href: item.practiceHref,
+          label: `${copy({
+            de: 'Danach trainieren',
+            en: 'Practice after',
+            pl: 'Potem trenuj',
+          })}: ${item.title}`,
+          fullWidth: true,
+        })}
       </View>
     </View>
   );
@@ -369,6 +386,41 @@ function LessonsAssignmentRow({
             borderColor: '#bfdbfe',
             textColor: '#1d4ed8',
           };
+  const actionLabel = translateKangurMobileActionLabel(item.assignment.action.label, locale);
+  let assignmentAction = (
+    <Pill
+      label={`${actionLabel} · ${copy({
+        de: 'bald',
+        en: 'soon',
+        pl: 'wkrotce',
+      })}`}
+      tone={{
+        backgroundColor: '#e2e8f0',
+        borderColor: '#cbd5e1',
+        textColor: '#475569',
+      }}
+    />
+  );
+
+  if (item.href) {
+    assignmentAction = (
+      <Link href={item.href} asChild>
+        <Pressable
+          accessibilityRole='button'
+          style={{
+            alignSelf: 'stretch',
+            width: '100%',
+            borderRadius: 999,
+            backgroundColor: '#0f172a',
+            paddingHorizontal: 14,
+            paddingVertical: 10,
+          }}
+        >
+          <Text style={{ color: '#ffffff', fontWeight: '700' }}>{actionLabel}</Text>
+        </Pressable>
+      </Link>
+    );
+  }
 
   return (
     <View
@@ -417,38 +469,7 @@ function LessonsAssignmentRow({
           pl: `Cel: ${item.assignment.target}`,
         })}
       </Text>
-      {item.href ? (
-        <Link href={item.href} asChild>
-          <Pressable
-            accessibilityRole='button'
-            style={{
-              alignSelf: 'stretch',
-              width: '100%',
-              borderRadius: 999,
-              backgroundColor: '#0f172a',
-              paddingHorizontal: 14,
-              paddingVertical: 10,
-            }}
-          >
-            <Text style={{ color: '#ffffff', fontWeight: '700' }}>
-              {translateKangurMobileActionLabel(item.assignment.action.label, locale)}
-            </Text>
-          </Pressable>
-        </Link>
-      ) : (
-        <Pill
-          label={`${translateKangurMobileActionLabel(item.assignment.action.label, locale)} · ${copy({
-            de: 'bald',
-            en: 'soon',
-            pl: 'wkrotce',
-          })}`}
-          tone={{
-            backgroundColor: '#e2e8f0',
-            borderColor: '#cbd5e1',
-            textColor: '#475569',
-          }}
-        />
-      )}
+      {assignmentAction}
     </View>
   );
 }
@@ -594,31 +615,15 @@ function LessonMasteryRow({
             </Text>
           </Pressable>
         </Link>
-        {insight.practiceHref ? (
-          <Link href={insight.practiceHref} asChild>
-            <Pressable
-              accessibilityRole='button'
-              style={{
-                alignSelf: 'stretch',
-                width: '100%',
-                borderRadius: 999,
-                borderWidth: 1,
-                borderColor: '#cbd5e1',
-                backgroundColor: '#ffffff',
-                paddingHorizontal: 14,
-                paddingVertical: 10,
-              }}
-            >
-              <Text style={{ color: '#0f172a', fontWeight: '700' }}>
-                {copy({
-                  de: 'Danach trainieren',
-                  en: 'Practice after',
-                  pl: 'Potem trenuj',
-                })}
-              </Text>
-            </Pressable>
-          </Link>
-        ) : null}
+        {renderLessonPracticeLink({
+          href: insight.practiceHref,
+          label: copy({
+            de: 'Danach trainieren',
+            en: 'Practice after',
+            pl: 'Potem trenuj',
+          }),
+          fullWidth: true,
+        })}
       </View>
     </View>
   );
@@ -654,6 +659,34 @@ function LessonRecentResultRow({
 }): React.JSX.Element {
   const { copy, locale } = useKangurMobileI18n();
   const accuracyPercent = getKangurMobileScoreAccuracyPercent(item.result);
+  let lessonAction = null;
+
+  if (item.lessonHref) {
+    lessonAction = (
+      <Link href={item.lessonHref} asChild>
+        <Pressable
+          accessibilityRole='button'
+          style={{
+            alignSelf: 'flex-start',
+            borderRadius: 999,
+            borderWidth: 1,
+            borderColor: '#cbd5e1',
+            backgroundColor: '#ffffff',
+            paddingHorizontal: 14,
+            paddingVertical: 10,
+          }}
+        >
+          <Text style={{ color: '#0f172a', fontWeight: '700' }}>
+            {copy({
+              de: 'Lektion öffnen',
+              en: 'Open lesson',
+              pl: 'Otwórz lekcję',
+            })}
+          </Text>
+        </Pressable>
+      </Link>
+    );
+  }
 
   return (
     <View
@@ -729,30 +762,7 @@ function LessonRecentResultRow({
           </Pressable>
         </Link>
 
-        {item.lessonHref ? (
-          <Link href={item.lessonHref} asChild>
-            <Pressable
-              accessibilityRole='button'
-              style={{
-                alignSelf: 'flex-start',
-                borderRadius: 999,
-                borderWidth: 1,
-                borderColor: '#cbd5e1',
-                backgroundColor: '#ffffff',
-                paddingHorizontal: 14,
-                paddingVertical: 10,
-              }}
-            >
-              <Text style={{ color: '#0f172a', fontWeight: '700' }}>
-                {copy({
-                  de: 'Lektion öffnen',
-                  en: 'Open lesson',
-                  pl: 'Otwórz lekcję',
-                })}
-              </Text>
-            </Pressable>
-          </Link>
-        ) : null}
+        {lessonAction}
 
         <Link href={item.historyHref} asChild>
           <Pressable
@@ -881,6 +891,36 @@ export function KangurLessonsScreen(): React.JSX.Element {
     null;
   const selectedPracticeHref: Href | null =
     !isPreparingLessonsView && selectedLesson ? selectedLesson.practiceHref : null;
+  const selectedLessonPracticeAction =
+    selectedPracticeHref && selectedLesson ? (
+      <Link href={selectedPracticeHref} asChild>
+        <Pressable
+          accessibilityRole='button'
+          style={{
+            alignSelf: 'stretch',
+            width: '100%',
+            borderRadius: 16,
+            backgroundColor: '#0f172a',
+            paddingHorizontal: 14,
+            paddingVertical: 12,
+          }}
+        >
+          <Text
+            style={{
+              color: '#ffffff',
+              fontWeight: '700',
+              textAlign: 'center',
+            }}
+          >
+            {copy({
+              de: `Training starten: ${selectedLesson.lesson.title}`,
+              en: `Start practice: ${selectedLesson.lesson.title}`,
+              pl: `Uruchom trening: ${selectedLesson.lesson.title}`,
+            })}
+          </Text>
+        </Pressable>
+      </Link>
+    ) : null;
   const selectedLessonCheckpoint =
     !isPreparingLessonsView && selectedLesson && selectedLessonBody
       ? (() => {
@@ -1043,35 +1083,7 @@ export function KangurLessonsScreen(): React.JSX.Element {
             )}
 
             <View style={{ gap: 10 }}>
-              {!isPreparingLessonsView && selectedLesson?.practiceHref ? (
-                <Link href={selectedLesson.practiceHref} asChild>
-                  <Pressable
-                    accessibilityRole='button'
-                    style={{
-                      alignSelf: 'stretch',
-                      width: '100%',
-                      borderRadius: 16,
-                      backgroundColor: '#0f172a',
-                      paddingHorizontal: 14,
-                      paddingVertical: 12,
-                    }}
-                  >
-                    <Text
-                      style={{
-                        color: '#ffffff',
-                        fontWeight: '700',
-                        textAlign: 'center',
-                      }}
-                    >
-                      {copy({
-                        de: `Training starten: ${selectedLesson.lesson.title}`,
-                        en: `Start practice: ${selectedLesson.lesson.title}`,
-                        pl: `Uruchom trening: ${selectedLesson.lesson.title}`,
-                      })}
-                    </Text>
-                  </Pressable>
-                </Link>
-              ) : null}
+              {selectedLessonPracticeAction}
 
               <Link href={RESULTS_ROUTE} asChild>
                 <Pressable
@@ -2601,31 +2613,15 @@ export function KangurLessonsScreen(): React.JSX.Element {
                             </Text>
                           </Pressable>
                         </Link>
-                        {item.practiceHref ? (
-                          <Link href={item.practiceHref} asChild>
-                          <Pressable
-                            accessibilityRole='button'
-                            style={{
-                              alignSelf: 'stretch',
-                              width: '100%',
-                              borderRadius: 999,
-                              borderWidth: 1,
-                              borderColor: '#cbd5e1',
-                              backgroundColor: '#ffffff',
-                              paddingHorizontal: 14,
-                              paddingVertical: 10,
-                            }}
-                          >
-                              <Text style={{ color: '#0f172a', fontWeight: '700' }}>
-                                {`${copy({
-                                  de: 'Training starten',
-                                  en: 'Start practice',
-                                  pl: 'Uruchom trening',
-                                })}: ${item.lesson.title}`}
-                              </Text>
-                            </Pressable>
-                          </Link>
-                        ) : null}
+                        {renderLessonPracticeLink({
+                          href: item.practiceHref,
+                          label: `${copy({
+                            de: 'Training starten',
+                            en: 'Start practice',
+                            pl: 'Uruchom trening',
+                          })}: ${item.lesson.title}`,
+                          fullWidth: true,
+                        })}
                       </View>
                     </View>
                   );

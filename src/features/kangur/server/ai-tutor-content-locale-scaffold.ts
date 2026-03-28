@@ -12,8 +12,6 @@ export type KangurAiTutorContentTranslatableSectionKey = Exclude<
   'locale' | 'version'
 >;
 
-export type KangurAiTutorContentTranslationStatus = KangurAiTutorTranslationStatusDto;
-
 const isPlainObject = (value: unknown): value is UnknownRecordDto =>
   typeof value === 'object' && value !== null && !Array.isArray(value);
 
@@ -137,7 +135,7 @@ export const buildKangurAiTutorContentTranslationStatusBySectionKey = (input: {
   sourceContent: KangurAiTutorContent;
   localizedContent?: Partial<KangurAiTutorContent> | null;
   sourceLocale?: string;
-}): Map<KangurAiTutorContentTranslatableSectionKey, KangurAiTutorContentTranslationStatus> => {
+}): Map<KangurAiTutorContentTranslatableSectionKey, KangurAiTutorTranslationStatusDto> => {
   const locale = normalizeSiteLocale(input.locale);
   const sourceLocale = normalizeSiteLocale(input.sourceLocale ?? 'pl');
   const sourceContent = parseKangurAiTutorContent(input.sourceContent);
@@ -187,9 +185,9 @@ export const buildKangurAiTutorContentTranslationStatusBySectionKey = (input: {
 };
 
 export const summarizeKangurAiTutorContentTranslationStatuses = (
-  statuses: Iterable<KangurAiTutorContentTranslationStatus>
-): Record<KangurAiTutorContentTranslationStatus, number> => {
-  const summary: Record<KangurAiTutorContentTranslationStatus, number> = {
+  statuses: Iterable<KangurAiTutorTranslationStatusDto>
+): Record<KangurAiTutorTranslationStatusDto, number> => {
+  const summary: Record<KangurAiTutorTranslationStatusDto, number> = {
     'source-locale': 0,
     missing: 0,
     'source-copy': 0,

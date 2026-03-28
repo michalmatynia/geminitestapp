@@ -2522,7 +2522,6 @@
         "rushModeHint": "Bridge-Rush-Modus: Schaffe es vor Ablauf der Zeit. Ein Moduswechsel startet das Spiel neu.",
         "modeResetHint": "Ein Moduswechsel startet das Spiel neu.",
         "title": "Beziehungsbruecke",
-        "stageTitle": "Beziehungsbruecke",
         "roundLabel": "Runde {current}/{total}",
         "timeExpired": "Zeit ist abgelaufen",
         "instructions": "Ziehe eine Beziehung auf die Kartenpaarung oder klicke zuerst eine Beziehung und dann ein Paar an. Die Symbole geben Hinweise auf den Beziehungstyp.",
@@ -5213,10 +5212,10 @@
         }
       },
       "game": {
-        "stageTitle": "Ballspiel!"
+        "gameTitle": "Ballspiel!"
       },
       "synthesis": {
-        "stageTitle": "Addition im Überblick"
+        "gameTitle": "Addition im Überblick"
       }
     },
     "subtracting": {
@@ -5376,7 +5375,7 @@
         }
       },
       "game": {
-        "stageTitle": "Subtraktionsspiel!"
+        "gameTitle": "Subtraktionsspiel!"
       }
     },
     "geometryPerimeter": {
@@ -5442,7 +5441,7 @@
         }
       },
       "game": {
-        "stageTitle": "Spiel: Zeichne den Umfang"
+        "gameTitle": "Spiel: Zeichne den Umfang"
       }
     },
     "clock": {
@@ -5752,7 +5751,7 @@
         }
       },
       "game": {
-        "stageTitle": "Geo-Mission"
+        "gameTitle": "Geo-Mission"
       }
     },
     "geometryShapes": {
@@ -5857,7 +5856,7 @@
         }
       },
       "game": {
-        "stageTitle": "Formen zeichnen"
+        "gameTitle": "Formen zeichnen"
       }
     },
     "artShapesBasic": {
@@ -5960,7 +5959,7 @@
         }
       },
       "game": {
-        "stageTitle": "Vervollständige das Drehmuster",
+        "gameTitle": "Vervollständige das Drehmuster",
         "progress": {
           "round": "Runde {current}/{total}",
           "score": "Punkte: {score}"
@@ -6090,7 +6089,7 @@
         "caption": "Suche zu Hause nach Kreisen, Quadraten, Dreiecken, Rechtecken, Ovalen und Rauten."
       },
       "draw": {
-        "stageTitle": "Spiel: Formen zeichnen",
+        "gameTitle": "Spiel: Formen zeichnen",
         "difficultyLabel": "Basis",
         "finishLabel": "Zurück zu den Themen"
       }
@@ -6197,7 +6196,7 @@
         }
       },
       "game": {
-        "stageTitle": "Symmetrie-Spiegel"
+        "gameTitle": "Symmetrie-Spiegel"
       }
     },
     "calendar": {
@@ -7446,7 +7445,7 @@
         }
       },
       "game": {
-        "stageTitle": "Beziehungsbruecke"
+        "gameTitle": "Beziehungsbruecke"
       },
       "animations": {
         "analogyBridge": "Animation: Beziehung A:B = C:D.",
@@ -7642,7 +7641,7 @@
         }
       },
       "game": {
-        "stageTitle": "Musterwerkstatt"
+        "gameTitle": "Musterwerkstatt"
       }
     },
     "logicalClassification": {
@@ -7895,7 +7894,7 @@
         }
       },
       "game": {
-        "stageTitle": "Klassifikationslabor"
+        "gameTitle": "Klassifikationslabor"
       }
     },
     "logicalReasoning": {

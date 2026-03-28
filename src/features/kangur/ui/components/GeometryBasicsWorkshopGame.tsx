@@ -51,6 +51,7 @@ import type {
   KangurRewardBreakdownEntry,
 } from '@/features/kangur/ui/types';
 import { cn } from '@/features/kangur/shared/utils';
+import type { SingleSlotRoundStateDto } from './round-state-contracts';
 
 import type { DropResult } from '@hello-pangea/dnd';
 
@@ -68,10 +69,7 @@ type Round = {
   correct: TileId;
 };
 
-type RoundState = {
-  pool: LabelTile[];
-  slot: LabelTile | null;
-};
+type RoundState = SingleSlotRoundStateDto<LabelTile>;
 
 const LABEL_TILES: LabelTile[] = [
   { id: 'point', icon: '●', accent: 'sky' },

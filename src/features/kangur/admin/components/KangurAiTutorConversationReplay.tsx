@@ -93,6 +93,25 @@ export const KangurAiTutorConversationReplay = (): JSX.Element => {
   };
 
   const selectedMessage = selectedMessageIndex !== null ? session?.messages[selectedMessageIndex] : null;
+  const selectedMessageMetadataPanel = selectedMessage?.metadata ? (
+    <div style={{ marginBottom: '12px' }}>
+      <div style={{ fontSize: '12px', color: '#666', marginBottom: '4px', fontWeight: 'bold' }}>
+        Metadata
+      </div>
+      <pre
+        style={{
+          padding: '12px',
+          backgroundColor: '#fafafa',
+          borderRadius: '4px',
+          fontSize: '12px',
+          overflow: 'auto',
+          margin: 0,
+        }}
+      >
+        {JSON.stringify(selectedMessage.metadata, null, 2)}
+      </pre>
+    </div>
+  ) : null;
 
   return (
     <div style={{ padding: '16px', fontFamily: 'system-ui, -apple-system, sans-serif' }}>
@@ -325,25 +344,7 @@ export const KangurAiTutorConversationReplay = (): JSX.Element => {
                     </div>
                   </div>
 
-                  {selectedMessage.metadata && (
-                    <div style={{ marginBottom: '12px' }}>
-                      <div style={{ fontSize: '12px', color: '#666', marginBottom: '4px', fontWeight: 'bold' }}>
-                        Metadata
-                      </div>
-                      <pre
-                        style={{
-                          padding: '12px',
-                          backgroundColor: '#fafafa',
-                          borderRadius: '4px',
-                          fontSize: '12px',
-                          overflow: 'auto',
-                          margin: 0,
-                        }}
-                      >
-                        {JSON.stringify(selectedMessage.metadata, null, 2)}
-                      </pre>
-                    </div>
-                  )}
+                  {selectedMessageMetadataPanel}
                 </div>
               </>
             ) : (

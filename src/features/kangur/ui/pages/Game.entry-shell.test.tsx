@@ -3,14 +3,18 @@
  */
 
 import React from 'react';
+import { QueryClientProvider } from '@tanstack/react-query';
 import { render, screen, within } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { createDefaultKangurProgressState } from '@/features/kangur/shared/contracts/kangur';
-const { useKangurGameRuntimeMock, useKangurSubjectFocusMock } = vi.hoisted(() => ({
-  useKangurGameRuntimeMock: vi.fn(),
-  useKangurSubjectFocusMock: vi.fn(),
-}));
+import { createTestQueryClient } from '@/__tests__/test-utils';
+const { disabledDocsTooltipsMock, useKangurGameRuntimeMock, useKangurSubjectFocusMock } =
+  vi.hoisted(() => ({
+    disabledDocsTooltipsMock: { enabled: false },
+    useKangurGameRuntimeMock: vi.fn(),
+    useKangurSubjectFocusMock: vi.fn(),
+  }));
 
 vi.mock('framer-motion', () => ({
   AnimatePresence: ({ children }: { children: React.ReactNode }) => <>{children}</>,
@@ -48,7 +52,7 @@ vi.mock('@/features/kangur/ui/context/KangurAiTutorContext', () => ({
 
 vi.mock('@/features/kangur/docs/tooltips', () => ({
   KangurDocsTooltipEnhancer: () => null,
-  useKangurDocsTooltips: () => ({ enabled: false }),
+  useKangurDocsTooltips: () => disabledDocsTooltipsMock,
 }));
 
 vi.mock('@/features/kangur/ui/components/KangurGameNavigationWidget', () => ({
@@ -190,6 +194,13 @@ const buildRuntime = (screenKey: 'operation' | 'training' | 'kangur_setup'): Rec
   },
 });
 
+const renderGame = (): ReturnType<typeof render> =>
+  render(
+    <QueryClientProvider client={createTestQueryClient()}>
+      <Game />
+    </QueryClientProvider>
+  );
+
 describe('Game page entry shells', () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -205,7 +216,7 @@ describe('Game page entry shells', () => {
     async ({ artTestId, heading, screen: runtimeScreen, topSectionTestId, widgetTestId }) => {
       useKangurGameRuntimeMock.mockReturnValue(buildRuntime(runtimeScreen));
 
-      render(<Game />);
+      renderGame();
 
       const topSection = await screen.findByTestId(topSectionTestId);
       expect(topSection).toHaveClass(
@@ -227,7 +238,7 @@ describe('Game page entry shells', () => {
   it('reuses the Grajmy shell when the training screen is requested', async () => {
     useKangurGameRuntimeMock.mockReturnValue(buildRuntime('training'));
 
-    render(<Game />);
+    renderGame();
 
     expect(await screen.findByTestId('kangur-game-operation-top-section')).toBeInTheDocument();
     expect(await screen.findByTestId('kangur-game-training-top-section')).toBeInTheDocument();

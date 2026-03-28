@@ -95,18 +95,19 @@ vi.mock('@/shared/ui', () => ({
       Card: ({ children }: { children: React.ReactNode }): React.JSX.Element => <div>{children}</div>,
       Hint: ({ children }: { children: React.ReactNode }): React.JSX.Element => <div>{children}</div>,
       Label: ({ children }: { children: React.ReactNode }): React.JSX.Element => <label>{children}</label>,
-      Pagination: ({
-        onPageChange,
-      }: {
+      Pagination: (props: {
         page: number;
         totalPages: number;
         pageSize: number;
         onPageChange: (page: number) => void;
-      }): React.JSX.Element => (
-        <button type='button' onClick={() => onPageChange(2)}>
-          Page 2
-        </button>
-      ),
+      }): React.JSX.Element => {
+        const { onPageChange } = props;
+        return (
+          <button type='button' onClick={() => onPageChange(2)}>
+            Page 2
+          </button>
+        );
+      },
       SearchInput: ({
         onClear,
         ...props

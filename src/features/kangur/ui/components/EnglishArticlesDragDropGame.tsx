@@ -62,16 +62,17 @@ import {
   type EnglishArticleId,
   type EnglishArticlesDragDropRound,
 } from './EnglishArticlesDragDropGame.data';
+import type {
+  SlottedRoundStateDto,
+  SlottedRoundTokenExtractionDto,
+} from './round-state-contracts';
 
 type ArticleToken = {
   id: string;
   article: EnglishArticleId;
 };
 
-type RoundState = {
-  pool: ArticleToken[];
-  slots: Record<string, ArticleToken | null>;
-};
+type RoundState = SlottedRoundStateDto<ArticleToken>;
 
 const ARTICLE_META: Record<
   EnglishArticleId,
@@ -139,11 +140,7 @@ const getSlotIdFromDroppable = (value: string): string => value.replace('slot-',
 const takeTokenFromState = (
   state: RoundState,
   tokenId: string
-): {
-  token?: ArticleToken;
-  pool: ArticleToken[];
-  slots: Record<string, ArticleToken | null>;
-} => {
+): SlottedRoundTokenExtractionDto<ArticleToken> => {
   const poolIndex = state.pool.findIndex((token) => token.id === tokenId);
   if (poolIndex !== -1) {
     const nextPool = [...state.pool];

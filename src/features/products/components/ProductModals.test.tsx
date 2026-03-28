@@ -88,22 +88,21 @@ vi.mock('@/shared/ui', () => ({
       {children}
     </button>
   ),
-  FormModal: ({
-    children,
-    isSaveDisabled,
-    saveText,
-  }: {
+  FormModal: (props: {
     children: ReactNode;
     isSaveDisabled?: boolean;
     saveText?: string;
-  }) => (
-    <div data-testid='loading-form-modal'>
-      <button type='button' disabled={Boolean(isSaveDisabled)}>
-        {saveText ?? 'Save'}
-      </button>
-      {children}
-    </div>
-  ),
+  }) => {
+    const { children, isSaveDisabled, saveText } = props;
+    return (
+      <div data-testid='loading-form-modal'>
+        <button type='button' disabled={Boolean(isSaveDisabled)}>
+          {saveText ?? 'Save'}
+        </button>
+        {children}
+      </div>
+    );
+  },
   Skeleton: ({ className }: { className?: string }) => (
     <div data-testid='skeleton' className={className} />
   ),

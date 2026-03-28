@@ -12,6 +12,7 @@ import { useOptionalCmsStorefrontAppearance } from './CmsStorefrontAppearance';
 import { useOptionalCmsRuntime } from './CmsRuntimeContext';
 
 export type { CmsPageRendererProps } from './CmsPageRendererBase';
+export type { SectionRendererProps } from './CmsPageRendererBase';
 
 export function CmsPageRenderer(props: CmsPageRendererProps): React.ReactNode {
   const runtime = useOptionalCmsRuntime();

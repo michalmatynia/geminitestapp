@@ -1,8 +1,9 @@
 'use client';
 
 import React, { createContext, useContext, useMemo } from 'react';
+import type { UnknownRecord } from '@/shared/contracts/base';
 
-import type { CmsRuntimeContextValue, CmsRuntimeSources } from './CmsRuntimeShared';
+import type { CmsRuntimeContextValue } from './CmsRuntimeShared';
 
 export {
   isCmsNodeVisible,
@@ -12,7 +13,6 @@ export {
   resolveCmsRuntimeValue,
   type CmsRuntimeAction,
   type CmsRuntimeContextValue,
-  type CmsRuntimeSources,
 } from './CmsRuntimeShared';
 
 const CmsRuntimeContext = createContext<CmsRuntimeContextValue | null>(null);
@@ -21,7 +21,7 @@ export function CmsRuntimeProvider({
   sources,
   children,
 }: {
-  sources: CmsRuntimeSources;
+  sources: UnknownRecord;
   children: React.ReactNode;
 }): React.ReactNode {
   const value = useMemo<CmsRuntimeContextValue>(() => ({ sources }), [sources]);
@@ -33,7 +33,7 @@ export function CmsRuntimeScopeProvider({
   sources,
   children,
 }: {
-  sources: CmsRuntimeSources;
+  sources: UnknownRecord;
   children: React.ReactNode;
 }): React.ReactNode {
   const parentRuntime = useContext(CmsRuntimeContext);

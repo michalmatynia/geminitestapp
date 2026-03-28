@@ -2,6 +2,9 @@ import { renderHook } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const stopServerRunStreamFns = vi.hoisted((): Array<ReturnType<typeof vi.fn>> => []);
+const graphActionsMock = vi.hoisted(() => ({
+  setPathConfigs: vi.fn(),
+}));
 
 vi.mock('@/features/ai/ai-paths/context/RuntimeContext', () => ({
   useRuntimeState: () => ({
@@ -47,9 +50,7 @@ vi.mock('@/shared/lib/ai-brain/hooks/useBrainAssignment', () => ({
 }));
 
 vi.mock('@/features/ai/ai-paths/context/GraphContext', () => ({
-  useGraphActions: () => ({
-    setPathConfigs: vi.fn(),
-  }),
+  useGraphActions: () => graphActionsMock,
 }));
 
 vi.mock('@/shared/lib/ai-paths', () => ({

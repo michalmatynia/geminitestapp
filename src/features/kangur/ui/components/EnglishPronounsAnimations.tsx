@@ -1,25 +1,25 @@
-import { useId } from 'react';
+import React from 'react';
 
 import {
   renderSoftAtmosphereGradients,
   renderSoftAtmosphereOvals,
 } from '@/features/kangur/ui/components/animations/svgAtmosphere';
+import {
+  type KangurAnimationSurfaceIdsDto,
+  useKangurAnimationSurfaceIds,
+} from '@/features/kangur/ui/components/animations/animation-surface-contracts';
 
-type PronounSurfaceIds = {
-  clipId: string;
-  frameGradientId: string;
-  panelGradientId: string;
+type PronounSurfaceIds = KangurAnimationSurfaceIdsDto & {
   atmosphereId: string;
 };
 
 function usePronounSurfaceIds(prefix: string): PronounSurfaceIds {
-  const baseId = useId().replace(/:/g, '');
+  const baseIds = useKangurAnimationSurfaceIds(prefix);
+  const atmosphereBaseId = React.useId().replace(/:/g, '');
 
   return {
-    clipId: `${prefix}-${baseId}-clip`,
-    frameGradientId: `${prefix}-${baseId}-frame`,
-    panelGradientId: `${prefix}-${baseId}-panel`,
-    atmosphereId: `${prefix}-${baseId}-atmosphere-oval`,
+    ...baseIds,
+    atmosphereId: `${prefix}-${atmosphereBaseId}-atmosphere-oval`,
   };
 }
 
@@ -101,10 +101,10 @@ function PronounSurface({ ids, testIdPrefix }: PronounSurfaceProps): React.JSX.E
 
 export function EnglishPronounsPulseAnimation(): React.JSX.Element {
   const surfaceIds = usePronounSurfaceIds('english-pronouns-pulse');
-  const glowId = useId().replace(/:/g, '');
-  const ringId = useId().replace(/:/g, '');
-  const highlightId = useId().replace(/:/g, '');
-  const ruleGlowId = useId().replace(/:/g, '');
+  const glowId = React.useId().replace(/:/g, '');
+  const ringId = React.useId().replace(/:/g, '');
+  const highlightId = React.useId().replace(/:/g, '');
+  const ruleGlowId = React.useId().replace(/:/g, '');
 
   return (
     <svg

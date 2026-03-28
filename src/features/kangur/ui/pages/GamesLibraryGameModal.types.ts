@@ -12,6 +12,7 @@ import type {
   KangurLogicalPatternSetId,
 } from '@/shared/contracts/kangur-game-runtime-renderer-props';
 import type { KangurGameDefinition } from '@/shared/contracts/kangur-games';
+import type { LabeledOptionDto } from '@/shared/contracts/base';
 
 export type GamesLibraryGameModalProps = {
   open: boolean;
@@ -75,10 +76,7 @@ export type ContentSetsSourceFilter = 'all' | 'built_in' | 'custom';
 export type ContentSetsUsageFilter = 'all' | 'in_use' | 'unused';
 export type SavedInstancesContentSetFilter = KangurGameContentSetId | 'all';
 
-export type SegmentedFilterOption<T extends string = string> = {
-  label: string;
-  value: T;
-};
+export type SegmentedFilterOption<T extends string = string> = LabeledOptionDto<T>;
 
 export type PendingInstanceEditorRestoreState = {
   contentSourceInstanceId: string | null;

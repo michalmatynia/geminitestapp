@@ -14,6 +14,9 @@ const mockState = vi.hoisted(() => ({
   setSimulationOpenNodeId: vi.fn(),
   setNodes: vi.fn(),
 }));
+const graphActionsMock = {
+  setNodes: mockState.setNodes,
+};
 
 vi.mock('@/features/ai/ai-paths/context', () => ({
   useSelectionState: () => mockState.selectionState,
@@ -27,9 +30,7 @@ vi.mock('@/features/ai/ai-paths/context', () => ({
 
 vi.mock('@/features/ai/ai-paths/context/GraphContext', () => ({
   useGraphState: () => mockState.graphState,
-  useGraphActions: () => ({
-    setNodes: mockState.setNodes,
-  }),
+  useGraphActions: () => graphActionsMock,
 }));
 
 vi.mock('@/shared/ui', () => ({

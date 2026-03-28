@@ -180,6 +180,7 @@ describe('kangur routing config', () => {
       'kangur-home-kangur-hero-focus',
       'kangur-home-kangur-hero-quickStart',
       'kangur-home-kangur-hero-screen',
+      'kangur-home-kangur-hero-instanceId',
       'kangur-home-kangur-hero-operation',
       'kangur-home-kangur-hero-difficulty',
       'kangur-home-kangur-hero-categories',

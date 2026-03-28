@@ -13,7 +13,7 @@ import {
 import {
   KANGUR_PANEL_GAP_CLASSNAME,
   KANGUR_SEGMENTED_CONTROL_CLASSNAME,
-} from '@/features/kangur/ui/design/layout';
+} from '@/features/kangur/ui/design/tokens';
 import { useKangurRoutePageReady } from '@/features/kangur/ui/hooks/useKangurRoutePageReady';
 import { useKangurPageAccess } from '@/features/kangur/ui/hooks/useKangurPageAccess';
 import { PageNotFound } from '@/features/kangur/ui/components/PageNotFound';

@@ -22,6 +22,24 @@ const { translationState } = vi.hoisted(() => ({
   },
 }));
 
+const trainingSetupTranslations = {
+  'KangurGamePage.screens.training.description': {
+    de: 'Konfiguriere das gemischte Training und wahl den Fragenbereich.',
+    en: 'Configure mixed training and choose the question range.',
+    pl: 'Skonfiguruj trening mieszany i dobierz zakres pytan.',
+  },
+  'KangurGamePage.screens.training.label': {
+    de: 'Training einrichten',
+    en: 'Training setup',
+    pl: 'Konfiguracja treningu',
+  },
+  'KangurGamePage.screens.training.wordmarkLabel': {
+    de: 'Training',
+    en: 'Training',
+    pl: 'Trening',
+  },
+} as const;
+
 vi.mock('next-intl', () => ({
   useLocale: () => localeState.value,
   useTranslations:
@@ -29,25 +47,7 @@ vi.mock('next-intl', () => ({
     (key: string) =>
       translationState.missing
         ? key
-        : (
-            {
-              'KangurGamePage.screens.training.description': {
-                de: 'Konfiguriere das gemischte Training und wahl den Fragenbereich.',
-                en: 'Configure mixed training and choose the question range.',
-                pl: 'Skonfiguruj trening mieszany i dobierz zakres pytan.',
-              },
-              'KangurGamePage.screens.training.label': {
-                de: 'Training einrichten',
-                en: 'Training setup',
-                pl: 'Konfiguracja treningu',
-              },
-              'KangurGamePage.screens.training.wordmarkLabel': {
-                de: 'Training',
-                en: 'Training',
-                pl: 'Trening',
-              },
-            } as const
-          )[`${namespace}.${key}`]?.[localeState.value] ?? key,
+        : trainingSetupTranslations[`${namespace}.${key}`]?.[localeState.value] ?? key,
 }));
 
 vi.mock('@/features/kangur/ui/context/KangurGameRuntimeContext', () => ({

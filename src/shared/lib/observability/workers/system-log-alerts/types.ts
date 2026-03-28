@@ -1,9 +1,10 @@
-import type { SchedulerQueueState } from '@/shared/lib/queue/scheduler-queue-types';
+import type {
+  SchedulerQueueState,
+  TypedSchedulerTickJobData,
+} from '@/shared/lib/queue/scheduler-queue-types';
 import type { MongoSystemLogDoc } from '@/shared/lib/observability/system-log-types';
 
-export type SystemLogAlertsJobData = {
-  type: 'alert-tick';
-};
+export type SystemLogAlertsJobData = TypedSchedulerTickJobData<'alert-tick'>;
 
 export type { MongoSystemLogDoc };
 

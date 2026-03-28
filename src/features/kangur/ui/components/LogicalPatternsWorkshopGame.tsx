@@ -58,13 +58,11 @@ import {
   type LogicalPatternRound,
   type LogicalPatternTile,
 } from './logical-patterns-workshop-data';
+import type { MultiSlottedRoundStateDto } from './round-state-contracts';
 
 import type { DropResult } from '@hello-pangea/dnd';
 
-type RoundState = {
-  pool: LogicalPatternTile[];
-  slots: Record<string, LogicalPatternTile[]>;
-};
+type RoundState = MultiSlottedRoundStateDto<LogicalPatternTile>;
 
 type BlankCell = Extract<LogicalPatternCell, { type: 'blank' }>;
 
@@ -92,7 +90,7 @@ const buildRoundState = (
   );
   const slots = round.sequence
     .filter((cell): cell is BlankCell => cell.type === 'blank')
-    .reduce<Record<string, LogicalPatternTile[]>>((acc, blank) => {
+    .reduce<RoundState['slots']>((acc, blank) => {
       acc[blank.id] = [];
       return acc;
     }, {});

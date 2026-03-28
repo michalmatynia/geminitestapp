@@ -46,6 +46,25 @@ type ColumnSlotProps = {
   testId?: string;
 };
 
+export type KangurGameHomeSectionsProps = {
+  actionsColumn: ReactNode;
+  actionsColumnProps?: ColumnSlotProps;
+  assignments?: ReactNode;
+  assignmentsSectionProps?: SectionSlotProps;
+  leaderboard?: ReactNode;
+  leaderboardColumnProps?: ColumnSlotProps;
+  parentSpotlight?: ReactNode;
+  parentSpotlightSectionProps?: SectionSlotProps;
+  playerProgress?: ReactNode;
+  playerProgressColumnProps?: ColumnSlotProps;
+  progressSectionProps?: SectionSlotProps;
+  quest?: ReactNode;
+  questSectionProps?: SectionSlotProps;
+  summary?: ReactNode;
+  summarySectionProps?: SectionSlotProps;
+  visibility: KangurGameHomeVisibility;
+};
+
 export const hasMeaningfulGameHomeProgress = (progress: GameHomeProgressLike): boolean =>
   (progress?.totalXp ?? 0) > 0 ||
   (progress?.gamesPlayed ?? 0) > 0 ||
@@ -76,24 +95,9 @@ export const resolveKangurGameHomeVisibility = ({
   };
 };
 
-export function KangurGameHomeSections(props: {
-  actionsColumn: ReactNode;
-  actionsColumnProps?: ColumnSlotProps;
-  assignments?: ReactNode;
-  assignmentsSectionProps?: SectionSlotProps;
-  leaderboard?: ReactNode;
-  leaderboardColumnProps?: ColumnSlotProps;
-  parentSpotlight?: ReactNode;
-  parentSpotlightSectionProps?: SectionSlotProps;
-  playerProgress?: ReactNode;
-  playerProgressColumnProps?: ColumnSlotProps;
-  progressSectionProps?: SectionSlotProps;
-  quest?: ReactNode;
-  questSectionProps?: SectionSlotProps;
-  summary?: ReactNode;
-  summarySectionProps?: SectionSlotProps;
-  visibility: KangurGameHomeVisibility;
-}): React.JSX.Element {
+export function KangurGameHomeSections(
+  props: KangurGameHomeSectionsProps
+): React.JSX.Element {
   const {
     actionsColumn,
     actionsColumnProps,

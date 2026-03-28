@@ -2522,7 +2522,6 @@
         "rushModeHint": "Bridge Rush mode: beat the clock. Changing the mode restarts the game.",
         "modeResetHint": "Changing the mode restarts the game.",
         "title": "Relationship bridge",
-        "stageTitle": "Relationship bridge",
         "roundLabel": "Round {current}/{total}",
         "timeExpired": "Time is up",
         "instructions": "Drag a relationship onto a pair card, or click a relationship and then click a pair. The icons hint at the relation type.",
@@ -5213,10 +5212,10 @@
         }
       },
       "game": {
-        "stageTitle": "Ball game!"
+        "gameTitle": "Ball game!"
       },
       "synthesis": {
-        "stageTitle": "Addition synthesis"
+        "gameTitle": "Addition synthesis"
       }
     },
     "subtracting": {
@@ -5376,7 +5375,7 @@
         }
       },
       "game": {
-        "stageTitle": "Subtraction game!"
+        "gameTitle": "Subtraction game!"
       }
     },
     "geometryPerimeter": {
@@ -5442,7 +5441,7 @@
         }
       },
       "game": {
-        "stageTitle": "Game: Draw the perimeter"
+        "gameTitle": "Game: Draw the perimeter"
       }
     },
     "clock": {
@@ -5752,7 +5751,7 @@
         }
       },
       "game": {
-        "stageTitle": "Geo mission"
+        "gameTitle": "Geo mission"
       }
     },
     "geometryShapes": {
@@ -5857,7 +5856,7 @@
         }
       },
       "game": {
-        "stageTitle": "Draw shapes"
+        "gameTitle": "Draw shapes"
       }
     },
     "geometryShapeRecognition": {
@@ -5953,7 +5952,7 @@
         "caption": "Look for circles, squares, triangles, rectangles, ovals, and diamonds at home."
       },
       "draw": {
-        "stageTitle": "Game: Draw shapes",
+        "gameTitle": "Game: Draw shapes",
         "difficultyLabel": "Basic",
         "finishLabel": "Back to topics"
       }
@@ -6060,7 +6059,7 @@
         }
       },
       "game": {
-        "stageTitle": "Symmetry mirrors"
+        "gameTitle": "Symmetry mirrors"
       }
     },
     "calendar": {
@@ -7309,7 +7308,7 @@
         }
       },
       "game": {
-        "stageTitle": "Relationship bridge"
+        "gameTitle": "Relationship bridge"
       },
       "animations": {
         "analogyBridge": "Animation: relationship A:B = C:D.",
@@ -7505,7 +7504,7 @@
         }
       },
       "game": {
-        "stageTitle": "Pattern workshop"
+        "gameTitle": "Pattern workshop"
       }
     },
     "logicalClassification": {
@@ -7758,7 +7757,7 @@
         }
       },
       "game": {
-        "stageTitle": "Classification lab"
+        "gameTitle": "Classification lab"
       }
     },
     "logicalReasoning": {

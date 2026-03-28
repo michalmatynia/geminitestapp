@@ -69,19 +69,20 @@ export type KangurMiniGameFinishVariantPropsDto = KangurMiniGameFinishActionProp
 };
 export type KangurMiniGameFinishVariantProps = KangurMiniGameFinishVariantPropsDto;
 
-export type KangurMiniGameFeedbackDto = {
-  kind: 'success' | 'error';
+export type KangurMiniGameFeedbackBaseDto<TKind extends string> = {
+  kind: TKind;
   text: string;
 };
+
+export type KangurMiniGameFeedbackDto = KangurMiniGameFeedbackBaseDto<'success' | 'error'>;
 export type KangurMiniGameFeedback = KangurMiniGameFeedbackDto;
 export type KangurMiniGameFeedbackState = KangurMiniGameFeedback | null;
 export type KangurMiniGameBinaryFeedbackState = 'correct' | 'wrong' | null;
 export type KangurIntlTranslate = ReturnType<(typeof import('next-intl'))['useTranslations']>;
 
-export type KangurMiniGameInformationalFeedbackDto = {
-  kind: 'success' | 'error' | 'info';
-  text: string;
-};
+export type KangurMiniGameInformationalFeedbackDto = KangurMiniGameFeedbackBaseDto<
+  'success' | 'error' | 'info'
+>;
 export type KangurMiniGameInformationalFeedback = KangurMiniGameInformationalFeedbackDto;
 
 export type KangurXpToastBadgeHint = {

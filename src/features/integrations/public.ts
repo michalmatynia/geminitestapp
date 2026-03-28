@@ -14,14 +14,42 @@ export * from './hooks/useProductListingMutations';
 export * from './components/listings/hooks/useIntegrationSelection';
 
 // Types
-export type { BaseCategory } from './types/category-mapping';
-export * from './types/category-mapping';
-export * from './types/producer-mapping';
-export * from './types/tag-mapping';
-export * from './types/integrations';
-export type { IntegrationWithConnections } from './types/integrations';
-export { integrationDefinitions } from '@/shared/contracts/integrations';
-export * from './types/listings';
+export {
+  integrationDefinitions,
+  type BaseCategory,
+  type CategoryMapping,
+  type CategoryMappingCreateInput,
+  type CategoryMappingUpdateInput,
+  type CategoryMappingWithDetails,
+  type ExternalCategory,
+  type ExternalCategorySyncInput,
+  type ExternalCategoryWithChildren,
+  type ExternalProducer,
+  type ExternalProducerSyncInput,
+  type ProducerMapping,
+  type ProducerMappingCreateInput,
+  type ProducerMappingUpdateInput,
+  type ProducerMappingWithDetails,
+  type ExternalTag,
+  type ExternalTagSyncInput,
+  type TagMapping,
+  type TagMappingCreateInput,
+  type TagMappingUpdateInput,
+  type TagMappingWithDetails,
+  type Integration,
+  type IntegrationConnection,
+  type IntegrationConnectionBasic,
+  type IntegrationConnectionRecord,
+  type IntegrationRecord,
+  type IntegrationRepository,
+  type IntegrationWithConnections,
+  type CreateProductListingInput,
+  type ProductListing,
+  type ProductListingExportEvent,
+  type ProductListingExportEventRecord,
+  type ProductListingRepository,
+  type ProductListingWithDetails,
+} from '@/shared/contracts/integrations';
 
 // Utils
 export * from './utils/connections';

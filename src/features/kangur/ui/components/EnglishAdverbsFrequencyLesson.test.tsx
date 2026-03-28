@@ -52,8 +52,15 @@ vi.mock('@/features/kangur/ui/learner-activity/hooks', async (importOriginal) =>
   };
 });
 
-vi.mock('@/features/kangur/ui/components/EnglishAdverbsFrequencyRoutineGame', () => ({
+vi.mock('@/features/kangur/ui/components/KangurLaunchableGameInstanceRuntime', () => ({
   __esModule: true,
+  KangurLaunchableGameInstanceRuntime: ({ onFinish }: { onFinish: () => void }): React.JSX.Element => (
+    <div data-testid='mock-english-adverbs-frequency-game'>
+      <button type='button' onClick={onFinish}>
+        Finish adverbs frequency game
+      </button>
+    </div>
+  ),
   default: ({ onFinish }: { onFinish: () => void }): React.JSX.Element => (
     <div data-testid='mock-english-adverbs-frequency-game'>
       <button type='button' onClick={onFinish}>

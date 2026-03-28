@@ -5,6 +5,7 @@
 import React from 'react';
 import { render } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
+import { withLegacyAlphabetWordsGameCopy } from '../../lessons/legacy-component-content.test-helpers';
 
 const {
   kangurUnifiedLessonMock,
@@ -138,35 +139,10 @@ describe('AlphabetWordsLesson', () => {
           color: 'kangur-gradient-accent-amber',
           activeBg: 'bg-amber-500',
           sortOrder: 100,
-          componentContent: {
-            kind: 'alphabet_unified',
-            sections: [
-              {
-                id: 'slowa',
-                emoji: '📘',
-                title: 'Legacy intro',
-                description: 'Legacy intro description',
-                slides: [],
-              },
-              {
-                id: 'game_words',
-                emoji: '🎮',
-                title: 'Legacy game',
-                description: 'Legacy game description',
-                isGame: true,
-                slides: [],
-                gameStageTitle: 'Legacy game title',
-                gameStageDescription: 'Legacy game shell description',
-              },
-              {
-                id: 'summary',
-                emoji: '📋',
-                title: 'Legacy summary',
-                description: 'Legacy summary description',
-                slides: [],
-              },
-            ],
-          },
+          componentContent: withLegacyAlphabetWordsGameCopy(
+            'Legacy game title',
+            'Legacy game shell description',
+          ),
         }}
       />,
     );

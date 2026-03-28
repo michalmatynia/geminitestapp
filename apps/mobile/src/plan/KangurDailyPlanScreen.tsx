@@ -145,6 +145,20 @@ function FocusCard({
   title: string;
 }): React.JSX.Element {
   const { copy, locale } = useKangurMobileI18n();
+  let lessonAction = null;
+
+  if (lessonHref) {
+    lessonAction = (
+      <LinkButton
+        href={lessonHref}
+        label={copy({
+          de: 'Lektion öffnen',
+          en: 'Open lesson',
+          pl: 'Otwórz lekcję',
+        })}
+      />
+    );
+  }
 
   return (
     <View
@@ -199,16 +213,7 @@ function FocusCard({
           })}
           tone='primary'
         />
-        {lessonHref ? (
-          <LinkButton
-            href={lessonHref}
-            label={copy({
-              de: 'Lektion öffnen',
-              en: 'Open lesson',
-              pl: 'Otwórz lekcję',
-            })}
-          />
-        ) : null}
+        {lessonAction}
         <LinkButton
           href={historyHref}
           label={copy({
@@ -263,6 +268,31 @@ function AssignmentRow({
   href: Href | null;
 }): React.JSX.Element {
   const { copy, locale } = useKangurMobileI18n();
+  const actionLabel = translateKangurMobileActionLabel(assignment.action.label, locale);
+  let assignmentAction = (
+    <View
+      style={{
+        alignSelf: 'flex-start',
+        borderRadius: 999,
+        backgroundColor: '#e2e8f0',
+        paddingHorizontal: 14,
+        paddingVertical: 10,
+      }}
+    >
+      <Text style={{ color: '#475569', fontWeight: '700' }}>
+        {actionLabel} ·{' '}
+        {copy({
+          de: 'bald',
+          en: 'soon',
+          pl: 'wkrotce',
+        })}
+      </Text>
+    </View>
+  );
+
+  if (href) {
+    assignmentAction = <LinkButton href={href} label={actionLabel} tone='primary' />;
+  }
 
   return (
     <View
@@ -311,32 +341,7 @@ function AssignmentRow({
           pl: `Cel: ${assignment.target}`,
         })}
       </Text>
-      {href ? (
-        <LinkButton
-          href={href}
-          label={translateKangurMobileActionLabel(assignment.action.label, locale)}
-          tone='primary'
-        />
-      ) : (
-        <View
-          style={{
-            alignSelf: 'flex-start',
-            borderRadius: 999,
-            backgroundColor: '#e2e8f0',
-            paddingHorizontal: 14,
-            paddingVertical: 10,
-          }}
-        >
-          <Text style={{ color: '#475569', fontWeight: '700' }}>
-            {translateKangurMobileActionLabel(assignment.action.label, locale)} ·{' '}
-            {copy({
-              de: 'bald',
-              en: 'soon',
-              pl: 'wkrotce',
-            })}
-          </Text>
-        </View>
-      )}
+      {assignmentAction}
     </View>
   );
 }
@@ -354,6 +359,20 @@ function RecentResultRow({
 }): React.JSX.Element {
   const { copy, locale } = useKangurMobileI18n();
   const accuracyPercent = getKangurMobileScoreAccuracyPercent(result);
+  let lessonAction = null;
+
+  if (lessonHref) {
+    lessonAction = (
+      <LinkButton
+        href={lessonHref}
+        label={copy({
+          de: 'Lektion öffnen',
+          en: 'Open lesson',
+          pl: 'Otwórz lekcję',
+        })}
+      />
+    );
+  }
 
   return (
     <View
@@ -404,16 +423,7 @@ function RecentResultRow({
           })}
           tone='primary'
         />
-        {lessonHref ? (
-          <LinkButton
-            href={lessonHref}
-            label={copy({
-              de: 'Lektion öffnen',
-              en: 'Open lesson',
-              pl: 'Otwórz lekcję',
-            })}
-          />
-        ) : null}
+        {lessonAction}
         <LinkButton
           href={historyHref}
           label={copy({
@@ -433,6 +443,20 @@ function LessonCheckpointRow({
   item: KangurMobileLessonCheckpointItem;
 }): React.JSX.Element {
   const { copy, locale } = useKangurMobileI18n();
+  let practiceAction = null;
+
+  if (item.practiceHref) {
+    practiceAction = (
+      <LinkButton
+        href={item.practiceHref}
+        label={`${copy({
+          de: 'Danach trainieren',
+          en: 'Practice after',
+          pl: 'Potem trenuj',
+        })}: ${item.title}`}
+      />
+    );
+  }
 
   return (
     <View
@@ -493,16 +517,7 @@ function LessonCheckpointRow({
           })}: ${item.title}`}
           tone='primary'
         />
-        {item.practiceHref ? (
-          <LinkButton
-            href={item.practiceHref}
-            label={`${copy({
-              de: 'Danach trainieren',
-              en: 'Practice after',
-              pl: 'Potem trenuj',
-            })}: ${item.title}`}
-          />
-        ) : null}
+        {practiceAction}
       </View>
     </View>
   );
@@ -552,6 +567,20 @@ function LessonMasteryRow({
         en: 'no date',
         pl: 'brak daty',
       });
+  let practiceAction = null;
+
+  if (insight.practiceHref) {
+    practiceAction = (
+      <LinkButton
+        href={insight.practiceHref}
+        label={copy({
+          de: 'Danach trainieren',
+          en: 'Practice after',
+          pl: 'Potem trenuj',
+        })}
+      />
+    );
+  }
 
   return (
     <View
@@ -606,16 +635,7 @@ function LessonMasteryRow({
           })}
           tone='primary'
         />
-        {insight.practiceHref ? (
-          <LinkButton
-            href={insight.practiceHref}
-            label={copy({
-              de: 'Danach trainieren',
-              en: 'Practice after',
-              pl: 'Potem trenuj',
-            })}
-          />
-        ) : null}
+        {practiceAction}
       </View>
     </View>
   );

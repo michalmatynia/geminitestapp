@@ -211,17 +211,7 @@ vi.mock('@/features/kangur/shared/ui', () => ({
       </label>
     );
   },
-  FormModal: ({
-    isOpen,
-    title,
-    titleTestId,
-    subtitle,
-    children,
-    onSave,
-    onClose,
-    saveText = 'Save',
-    actions,
-  }: {
+  FormModal: (props: {
     isOpen?: boolean;
     title: string;
     titleTestId?: string;
@@ -232,6 +222,18 @@ vi.mock('@/features/kangur/shared/ui', () => ({
     saveText?: string;
     actions?: React.ReactNode;
   }) => {
+    const {
+      isOpen,
+      title,
+      titleTestId,
+      subtitle,
+      children,
+      onSave,
+      onClose,
+      saveText = 'Save',
+      actions,
+    } = props;
+
     return isOpen ? (
       <div data-testid='mock-form-modal'>
         <h2 data-testid={titleTestId}>{title}</h2>

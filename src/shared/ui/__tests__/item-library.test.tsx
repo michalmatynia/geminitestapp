@@ -81,22 +81,24 @@ vi.mock('../empty-state', () => ({
 }));
 
 vi.mock('../FormModal', () => ({
-  FormModal: ({
-    open,
-    onSave,
-    onClose,
-    isSaveDisabled,
-    children,
-    saveText = 'Save',
-  }: {
+  FormModal: (props: {
     open: boolean;
     onSave: () => void;
     onClose: () => void;
     isSaveDisabled?: boolean;
     children: React.ReactNode;
     saveText?: string;
-  }) =>
-    open ? (
+  }) => {
+    const {
+      open,
+      onSave,
+      onClose,
+      isSaveDisabled,
+      children,
+      saveText = 'Save',
+    } = props;
+
+    return open ? (
       <div>
         <button type='button' disabled={isSaveDisabled} onClick={() => onSave()}>
           {saveText}
@@ -106,7 +108,8 @@ vi.mock('../FormModal', () => ({
         </button>
         {children}
       </div>
-    ) : null,
+    ) : null;
+  },
 }));
 
 vi.mock('../Input', () => ({

@@ -70,15 +70,13 @@ export type KangurAiTutorContextValue = {
   selectionExplainRequest?: { id: number; selectedText: string } | null;
 };
 
-export type KangurAiTutorSessionSyncProps = {
-  learnerId: string | null;
-  sessionContext?: KangurAiTutorConversationContext | null;
-};
-
 export type KangurAiTutorSessionSyncInput = {
   learnerId: string | null;
   sessionContext: KangurAiTutorConversationContext | null;
 };
+
+export type KangurAiTutorSessionSyncProps = Partial<KangurAiTutorSessionSyncInput> &
+  Pick<KangurAiTutorSessionSyncInput, 'learnerId'>;
 
 export type KangurAiTutorSessionRegistryContextValue = {
   setRegistration: (registration: KangurAiTutorSessionRegistrationSetter) => void;

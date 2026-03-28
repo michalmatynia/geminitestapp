@@ -23,6 +23,144 @@ import {
   serializeKangurLessonTemplateComponentContent,
   supportsKangurLessonTemplateComponentContent,
 } from './lesson-template-component-content';
+import {
+  withLegacyLessonShellTitle,
+  withLegacyAlphabetWordsGameCopy,
+  withLegacyMusicDiatonicScaleGameCopy,
+} from './legacy-component-content.test-helpers';
+
+type LegacyShellKey = 'game' | 'draw' | 'synthesis';
+
+type LegacyShellContent = Record<string, unknown> &
+  Partial<Record<LegacyShellKey, Record<string, unknown>>>;
+
+const legacyShellNormalizationCases = [
+  {
+    label: 'art shapes',
+    componentId: 'art_shapes_basic',
+    kind: 'art_shapes_basic',
+    content: ART_SHAPES_BASIC_LESSON_COMPONENT_CONTENT,
+    shellKey: 'game',
+    resolveLegacyTitle: 'Legacy art shapes game title',
+    serializedLegacyTitle: 'Legacy serialized art shapes title',
+  },
+  {
+    label: 'geometry',
+    componentId: 'geometry_basics',
+    kind: 'geometry_basics',
+    content: GEOMETRY_BASICS_LESSON_COMPONENT_CONTENT,
+    shellKey: 'game',
+    resolveLegacyTitle: 'Legacy geometry game title',
+    serializedLegacyTitle: 'Legacy serialized geometry title',
+  },
+  {
+    label: 'geometry shapes',
+    componentId: 'geometry_shapes',
+    kind: 'geometry_shapes',
+    content: GEOMETRY_SHAPES_LESSON_COMPONENT_CONTENT,
+    shellKey: 'game',
+    resolveLegacyTitle: 'Legacy geometry shapes game title',
+    serializedLegacyTitle: 'Legacy serialized geometry shapes title',
+  },
+  {
+    label: 'geometry shape recognition draw',
+    componentId: 'geometry_shape_recognition',
+    kind: 'geometry_shape_recognition',
+    content: GEOMETRY_SHAPE_RECOGNITION_LESSON_COMPONENT_CONTENT,
+    shellKey: 'draw',
+    resolveLegacyTitle: 'Legacy geometry draw game title',
+    serializedLegacyTitle: 'Legacy serialized geometry draw title',
+  },
+  {
+    label: 'geometry symmetry',
+    componentId: 'geometry_symmetry',
+    kind: 'geometry_symmetry',
+    content: GEOMETRY_SYMMETRY_LESSON_COMPONENT_CONTENT,
+    shellKey: 'game',
+    resolveLegacyTitle: 'Legacy geometry symmetry game title',
+    serializedLegacyTitle: 'Legacy serialized geometry symmetry title',
+  },
+  {
+    label: 'logical classification',
+    componentId: 'logical_classification',
+    kind: 'logical_classification',
+    content: LOGICAL_CLASSIFICATION_LESSON_COMPONENT_CONTENT,
+    shellKey: 'game',
+    resolveLegacyTitle: 'Legacy logical classification game title',
+    serializedLegacyTitle: 'Legacy serialized logical classification title',
+  },
+  {
+    label: 'logical patterns',
+    componentId: 'logical_patterns',
+    kind: 'logical_patterns',
+    content: LOGICAL_PATTERNS_LESSON_COMPONENT_CONTENT,
+    shellKey: 'game',
+    resolveLegacyTitle: 'Legacy logical patterns game title',
+    serializedLegacyTitle: 'Legacy serialized logical patterns title',
+  },
+  {
+    label: 'logical analogies',
+    componentId: 'logical_analogies',
+    kind: 'logical_analogies',
+    content: LOGICAL_ANALOGIES_LESSON_COMPONENT_CONTENT,
+    shellKey: 'game',
+    resolveLegacyTitle: 'Legacy logical analogies game title',
+    serializedLegacyTitle: 'Legacy serialized logical analogies title',
+  },
+  {
+    label: 'adding',
+    componentId: 'adding',
+    kind: 'adding',
+    content: ADDING_LESSON_COMPONENT_CONTENT,
+    shellKey: 'game',
+    resolveLegacyTitle: 'Legacy adding game title',
+    serializedLegacyTitle: 'Legacy serialized adding title',
+  },
+  {
+    label: 'adding synthesis',
+    componentId: 'adding',
+    kind: 'adding',
+    content: ADDING_LESSON_COMPONENT_CONTENT,
+    shellKey: 'synthesis',
+    resolveLegacyTitle: 'Legacy adding synthesis title',
+    serializedLegacyTitle: 'Legacy serialized adding synthesis title',
+  },
+  {
+    label: 'multiplication',
+    componentId: 'multiplication',
+    kind: 'multiplication',
+    content: MULTIPLICATION_LESSON_COMPONENT_CONTENT,
+    shellKey: 'game',
+    resolveLegacyTitle: 'Legacy multiplication game title',
+    serializedLegacyTitle: 'Legacy serialized multiplication title',
+  },
+  {
+    label: 'subtracting',
+    componentId: 'subtracting',
+    kind: 'subtracting',
+    content: SUBTRACTING_LESSON_COMPONENT_CONTENT,
+    shellKey: 'game',
+    resolveLegacyTitle: 'Legacy subtracting game title',
+    serializedLegacyTitle: 'Legacy serialized subtracting title',
+  },
+  {
+    label: 'division',
+    componentId: 'division',
+    kind: 'division',
+    content: DIVISION_LESSON_COMPONENT_CONTENT,
+    shellKey: 'game',
+    resolveLegacyTitle: 'Legacy division game title',
+    serializedLegacyTitle: 'Legacy serialized division title',
+  },
+] as const satisfies ReadonlyArray<{
+  label: string;
+  componentId: string;
+  kind: string;
+  content: LegacyShellContent;
+  shellKey: LegacyShellKey;
+  resolveLegacyTitle: string;
+  serializedLegacyTitle: string;
+}>;
 
 describe('lesson-template-component-content', () => {
   it('returns default component content for supported alphabet lessons', () => {
@@ -281,35 +419,10 @@ describe('lesson-template-component-content', () => {
   });
 
   it('normalizes legacy alphabet gameStage fields when resolving template content', () => {
-    const resolved = resolveKangurLessonTemplateComponentContent('alphabet_words', {
-      kind: 'alphabet_unified',
-      sections: [
-        {
-          id: 'slowa',
-          emoji: '📖',
-          title: 'Legacy intro',
-          description: 'Legacy intro description',
-          slides: [],
-        },
-        {
-          id: 'game_words',
-          emoji: '🎮',
-          title: 'Legacy game',
-          description: 'Legacy game description',
-          isGame: true,
-          slides: [],
-          gameStageTitle: 'Legacy game title',
-          gameStageDescription: 'Legacy game description',
-        },
-        {
-          id: 'summary',
-          emoji: '📋',
-          title: 'Legacy summary',
-          description: 'Legacy summary description',
-          slides: [],
-        },
-      ],
-    });
+    const resolved = resolveKangurLessonTemplateComponentContent(
+      'alphabet_words',
+      withLegacyAlphabetWordsGameCopy('Legacy game title', 'Legacy game description'),
+    );
 
     expect(resolved).toMatchObject({
       kind: 'alphabet_unified',
@@ -334,23 +447,14 @@ describe('lesson-template-component-content', () => {
   it('normalizes legacy music gameStage fields during JSON parsing', () => {
     const parsed = parseKangurLessonTemplateComponentContentJson(
       'music_diatonic_scale',
-      JSON.stringify({
-        ...MUSIC_DIATONIC_SCALE_LESSON_COMPONENT_CONTENT,
-        gameRepeatSection: {
-          ...MUSIC_DIATONIC_SCALE_LESSON_COMPONENT_CONTENT.gameRepeatSection,
-          gameTitle: undefined,
-          gameDescription: undefined,
-          gameStageTitle: 'Legacy repeat game',
-          gameStageDescription: 'Legacy repeat description',
-        },
-        gameFreeplaySection: {
-          ...MUSIC_DIATONIC_SCALE_LESSON_COMPONENT_CONTENT.gameFreeplaySection,
-          gameTitle: undefined,
-          gameDescription: undefined,
-          gameStageTitle: 'Legacy freeplay game',
-          gameStageDescription: 'Legacy freeplay description',
-        },
-      }),
+      JSON.stringify(
+        withLegacyMusicDiatonicScaleGameCopy(
+          'Legacy repeat game',
+          'Legacy repeat description',
+          'Legacy freeplay game',
+          'Legacy freeplay description',
+        ),
+      ),
     );
 
     expect(parsed).toMatchObject({
@@ -371,276 +475,35 @@ describe('lesson-template-component-content', () => {
     expect(parsed?.gameFreeplaySection).not.toHaveProperty('gameStageDescription');
   });
 
-  it('normalizes legacy art shapes stageTitle fields when resolving template content', () => {
-    const resolved = resolveKangurLessonTemplateComponentContent('art_shapes_basic', {
-      ...ART_SHAPES_BASIC_LESSON_COMPONENT_CONTENT,
-      game: {
-        ...ART_SHAPES_BASIC_LESSON_COMPONENT_CONTENT.game,
-        gameTitle: undefined,
-        stageTitle: 'Legacy art shapes game title',
-      },
-    });
+  legacyShellNormalizationCases.forEach(
+    ({ componentId, kind, content, label, shellKey, resolveLegacyTitle }) => {
+      it(`normalizes legacy ${label} stageTitle fields when resolving template content`, () => {
+        const resolved = resolveKangurLessonTemplateComponentContent(
+          componentId,
+          withLegacyLessonShellTitle(content, shellKey, resolveLegacyTitle) as never,
+        );
 
-    expect(resolved).toMatchObject({
-      kind: 'art_shapes_basic',
-      game: {
-        gameTitle: 'Legacy art shapes game title',
-      },
-    });
-    expect(resolved?.game).not.toHaveProperty('stageTitle');
-  });
-
-  it('normalizes legacy geometry stageTitle fields when resolving template content', () => {
-    const resolved = resolveKangurLessonTemplateComponentContent('geometry_basics', {
-      ...GEOMETRY_BASICS_LESSON_COMPONENT_CONTENT,
-      game: {
-        gameTitle: undefined,
-        stageTitle: 'Legacy geometry game title',
-      },
-    });
-
-    expect(resolved).toMatchObject({
-      kind: 'geometry_basics',
-      game: {
-        gameTitle: 'Legacy geometry game title',
-      },
-    });
-    expect(resolved?.game).not.toHaveProperty('stageTitle');
-  });
-
-  it('normalizes legacy geometry shapes stageTitle fields when resolving template content', () => {
-    const resolved = resolveKangurLessonTemplateComponentContent('geometry_shapes', {
-      ...GEOMETRY_SHAPES_LESSON_COMPONENT_CONTENT,
-      game: {
-        gameTitle: undefined,
-        stageTitle: 'Legacy geometry shapes game title',
-      },
-    });
-
-    expect(resolved).toMatchObject({
-      kind: 'geometry_shapes',
-      game: {
-        gameTitle: 'Legacy geometry shapes game title',
-      },
-    });
-    expect(resolved?.game).not.toHaveProperty('stageTitle');
-  });
-
-  it('normalizes legacy geometry shape recognition draw stageTitle fields when resolving template content', () => {
-    const resolved = resolveKangurLessonTemplateComponentContent(
-      'geometry_shape_recognition',
-      {
-        ...GEOMETRY_SHAPE_RECOGNITION_LESSON_COMPONENT_CONTENT,
-        draw: {
-          ...GEOMETRY_SHAPE_RECOGNITION_LESSON_COMPONENT_CONTENT.draw,
-          gameTitle: undefined,
-          stageTitle: 'Legacy geometry draw game title',
-        },
-      },
-    );
-
-    expect(resolved).toMatchObject({
-      kind: 'geometry_shape_recognition',
-      draw: {
-        gameTitle: 'Legacy geometry draw game title',
-      },
-    });
-    expect(resolved?.draw).not.toHaveProperty('stageTitle');
-  });
-
-  it('normalizes legacy geometry symmetry stageTitle fields when resolving template content', () => {
-    const resolved = resolveKangurLessonTemplateComponentContent('geometry_symmetry', {
-      ...GEOMETRY_SYMMETRY_LESSON_COMPONENT_CONTENT,
-      game: {
-        gameTitle: undefined,
-        stageTitle: 'Legacy geometry symmetry game title',
-      },
-    });
-
-    expect(resolved).toMatchObject({
-      kind: 'geometry_symmetry',
-      game: {
-        gameTitle: 'Legacy geometry symmetry game title',
-      },
-    });
-    expect(resolved?.game).not.toHaveProperty('stageTitle');
-  });
-
-  it('normalizes legacy logical classification stageTitle fields when resolving template content', () => {
-    const resolved = resolveKangurLessonTemplateComponentContent('logical_classification', {
-      ...LOGICAL_CLASSIFICATION_LESSON_COMPONENT_CONTENT,
-      game: {
-        gameTitle: undefined,
-        stageTitle: 'Legacy logical classification game title',
-      },
-    });
-
-    expect(resolved).toMatchObject({
-      kind: 'logical_classification',
-      game: {
-        gameTitle: 'Legacy logical classification game title',
-      },
-    });
-    expect(resolved?.game).not.toHaveProperty('stageTitle');
-  });
-
-  it('normalizes legacy logical patterns stageTitle fields when resolving template content', () => {
-    const resolved = resolveKangurLessonTemplateComponentContent('logical_patterns', {
-      ...LOGICAL_PATTERNS_LESSON_COMPONENT_CONTENT,
-      game: {
-        gameTitle: undefined,
-        stageTitle: 'Legacy logical patterns game title',
-      },
-    });
-
-    expect(resolved).toMatchObject({
-      kind: 'logical_patterns',
-      game: {
-        gameTitle: 'Legacy logical patterns game title',
-      },
-    });
-    expect(resolved?.game).not.toHaveProperty('stageTitle');
-  });
-
-  it('normalizes legacy logical analogies stageTitle fields when resolving template content', () => {
-    const resolved = resolveKangurLessonTemplateComponentContent('logical_analogies', {
-      ...LOGICAL_ANALOGIES_LESSON_COMPONENT_CONTENT,
-      game: {
-        gameTitle: undefined,
-        stageTitle: 'Legacy logical analogies game title',
-      },
-    });
-
-    expect(resolved).toMatchObject({
-      kind: 'logical_analogies',
-      game: {
-        gameTitle: 'Legacy logical analogies game title',
-      },
-    });
-    expect(resolved?.game).not.toHaveProperty('stageTitle');
-  });
-
-  it('normalizes legacy adding stageTitle fields when resolving template content', () => {
-    const resolved = resolveKangurLessonTemplateComponentContent('adding', {
-      ...ADDING_LESSON_COMPONENT_CONTENT,
-      game: {
-        gameTitle: undefined,
-        stageTitle: 'Legacy adding game title',
-      },
-    });
-
-    expect(resolved).toMatchObject({
-      kind: 'adding',
-      game: {
-        gameTitle: 'Legacy adding game title',
-      },
-    });
-    expect(resolved?.game).not.toHaveProperty('stageTitle');
-  });
-
-  it('normalizes legacy adding synthesis stageTitle fields when resolving template content', () => {
-    const resolved = resolveKangurLessonTemplateComponentContent('adding', {
-      ...ADDING_LESSON_COMPONENT_CONTENT,
-      synthesis: {
-        gameTitle: undefined,
-        stageTitle: 'Legacy adding synthesis title',
-      },
-    });
-
-    expect(resolved).toMatchObject({
-      kind: 'adding',
-      synthesis: {
-        gameTitle: 'Legacy adding synthesis title',
-      },
-    });
-    expect(resolved?.synthesis).not.toHaveProperty('stageTitle');
-  });
-
-  it('normalizes legacy multiplication stageTitle fields when resolving template content', () => {
-    const resolved = resolveKangurLessonTemplateComponentContent('multiplication', {
-      ...MULTIPLICATION_LESSON_COMPONENT_CONTENT,
-      game: {
-        ...MULTIPLICATION_LESSON_COMPONENT_CONTENT.game,
-        gameTitle: undefined,
-        stageTitle: 'Legacy multiplication game title',
-      },
-    });
-
-    expect(resolved).toMatchObject({
-      kind: 'multiplication',
-      game: {
-        gameTitle: 'Legacy multiplication game title',
-      },
-    });
-    expect(resolved?.game).not.toHaveProperty('stageTitle');
-  });
-
-  it('normalizes legacy subtracting stageTitle fields when resolving template content', () => {
-    const resolved = resolveKangurLessonTemplateComponentContent('subtracting', {
-      ...SUBTRACTING_LESSON_COMPONENT_CONTENT,
-      game: {
-        gameTitle: undefined,
-        stageTitle: 'Legacy subtracting game title',
-      },
-    });
-
-    expect(resolved).toMatchObject({
-      kind: 'subtracting',
-      game: {
-        gameTitle: 'Legacy subtracting game title',
-      },
-    });
-    expect(resolved?.game).not.toHaveProperty('stageTitle');
-  });
-
-  it('normalizes legacy division stageTitle fields when resolving template content', () => {
-    const resolved = resolveKangurLessonTemplateComponentContent('division', {
-      ...DIVISION_LESSON_COMPONENT_CONTENT,
-      game: {
-        gameTitle: undefined,
-        stageTitle: 'Legacy division game title',
-      },
-    });
-
-    expect(resolved).toMatchObject({
-      kind: 'division',
-      game: {
-        gameTitle: 'Legacy division game title',
-      },
-    });
-    expect(resolved?.game).not.toHaveProperty('stageTitle');
-  });
+        expect(resolved).toMatchObject({
+          kind,
+          [shellKey]: {
+            gameTitle: resolveLegacyTitle,
+          },
+        });
+        expect((resolved as Record<string, unknown> | null)?.[shellKey]).not.toHaveProperty(
+          'stageTitle',
+        );
+      });
+    },
+  );
 
   it('serializes legacy gameStage fields as normalized gameTitle fields', () => {
-    const serializedAlphabet = serializeKangurLessonTemplateComponentContent('alphabet_words', {
-      kind: 'alphabet_unified',
-      sections: [
-        {
-          id: 'slowa',
-          emoji: '📖',
-          title: 'Legacy intro',
-          description: 'Legacy intro description',
-          slides: [],
-        },
-        {
-          id: 'game_words',
-          emoji: '🎮',
-          title: 'Legacy game',
-          description: 'Legacy game description',
-          isGame: true,
-          slides: [],
-          gameStageTitle: 'Legacy serialized game title',
-          gameStageDescription: 'Legacy serialized game description',
-        },
-        {
-          id: 'summary',
-          emoji: '📋',
-          title: 'Legacy summary',
-          description: 'Legacy summary description',
-          slides: [],
-        },
-      ],
-    });
+    const serializedAlphabet = serializeKangurLessonTemplateComponentContent(
+      'alphabet_words',
+      withLegacyAlphabetWordsGameCopy(
+        'Legacy serialized game title',
+        'Legacy serialized game description',
+      ),
+    );
     const serializedAlphabetJson = JSON.parse(serializedAlphabet) as {
       sections: Array<Record<string, unknown>>;
     };
@@ -657,23 +520,12 @@ describe('lesson-template-component-content', () => {
 
     const serializedMusic = serializeKangurLessonTemplateComponentContent(
       'music_diatonic_scale',
-      {
-        ...MUSIC_DIATONIC_SCALE_LESSON_COMPONENT_CONTENT,
-        gameRepeatSection: {
-          ...MUSIC_DIATONIC_SCALE_LESSON_COMPONENT_CONTENT.gameRepeatSection,
-          gameTitle: undefined,
-          gameDescription: undefined,
-          gameStageTitle: 'Legacy serialized repeat game',
-          gameStageDescription: 'Legacy serialized repeat description',
-        },
-        gameFreeplaySection: {
-          ...MUSIC_DIATONIC_SCALE_LESSON_COMPONENT_CONTENT.gameFreeplaySection,
-          gameTitle: undefined,
-          gameDescription: undefined,
-          gameStageTitle: 'Legacy serialized freeplay game',
-          gameStageDescription: 'Legacy serialized freeplay description',
-        },
-      },
+      withLegacyMusicDiatonicScaleGameCopy(
+        'Legacy serialized repeat game',
+        'Legacy serialized repeat description',
+        'Legacy serialized freeplay game',
+        'Legacy serialized freeplay description',
+      ),
     );
     const serializedMusicJson = JSON.parse(serializedMusic) as {
       gameRepeatSection: Record<string, unknown>;
@@ -694,277 +546,20 @@ describe('lesson-template-component-content', () => {
     expect(serializedMusicJson.gameFreeplaySection).not.toHaveProperty('gameStageDescription');
   });
 
-  it('serializes legacy art shapes stageTitle fields as normalized gameTitle fields', () => {
-    const serializedArtShapes = serializeKangurLessonTemplateComponentContent(
-      'art_shapes_basic',
-      {
-        ...ART_SHAPES_BASIC_LESSON_COMPONENT_CONTENT,
-        game: {
-          ...ART_SHAPES_BASIC_LESSON_COMPONENT_CONTENT.game,
-          gameTitle: undefined,
-          stageTitle: 'Legacy serialized art shapes title',
-        },
-      },
-    );
-    const serializedArtShapesJson = JSON.parse(serializedArtShapes) as {
-      game: Record<string, unknown>;
-    };
+  legacyShellNormalizationCases.forEach(
+    ({ componentId, content, label, shellKey, serializedLegacyTitle }) => {
+      it(`serializes legacy ${label} stageTitle fields as normalized gameTitle fields`, () => {
+        const serialized = serializeKangurLessonTemplateComponentContent(
+          componentId,
+          withLegacyLessonShellTitle(content, shellKey, serializedLegacyTitle) as never,
+        );
+        const serializedJson = JSON.parse(serialized) as Record<string, Record<string, unknown>>;
 
-    expect(serializedArtShapesJson.game).toMatchObject({
-      gameTitle: 'Legacy serialized art shapes title',
-    });
-    expect(serializedArtShapesJson.game).not.toHaveProperty('stageTitle');
-  });
-
-  it('serializes legacy geometry stageTitle fields as normalized gameTitle fields', () => {
-    const serializedGeometry = serializeKangurLessonTemplateComponentContent('geometry_basics', {
-      ...GEOMETRY_BASICS_LESSON_COMPONENT_CONTENT,
-      game: {
-        gameTitle: undefined,
-        stageTitle: 'Legacy serialized geometry title',
-        progress: GEOMETRY_BASICS_LESSON_COMPONENT_CONTENT.game.progress,
-        missingTileLabel: GEOMETRY_BASICS_LESSON_COMPONENT_CONTENT.game.missingTileLabel,
-        tileLabel: GEOMETRY_BASICS_LESSON_COMPONENT_CONTENT.game.tileLabel,
-        chooseOption: GEOMETRY_BASICS_LESSON_COMPONENT_CONTENT.game.chooseOption,
-        glyphs: GEOMETRY_BASICS_LESSON_COMPONENT_CONTENT.game.glyphs,
-        tempos: GEOMETRY_BASICS_LESSON_COMPONENT_CONTENT.game.tempos,
-        optionFeedback: GEOMETRY_BASICS_LESSON_COMPONENT_CONTENT.game.optionFeedback,
-        finished: GEOMETRY_BASICS_LESSON_COMPONENT_CONTENT.game.finished,
-      },
-    });
-    const serializedGeometryJson = JSON.parse(serializedGeometry) as {
-      game: Record<string, unknown>;
-    };
-
-    expect(serializedGeometryJson.game).toMatchObject({
-      gameTitle: 'Legacy serialized geometry title',
-    });
-    expect(serializedGeometryJson.game).not.toHaveProperty('stageTitle');
-  });
-
-  it('serializes legacy geometry shapes stageTitle fields as normalized gameTitle fields', () => {
-    const serializedGeometryShapes = serializeKangurLessonTemplateComponentContent(
-      'geometry_shapes',
-      {
-        ...GEOMETRY_SHAPES_LESSON_COMPONENT_CONTENT,
-        game: {
-          gameTitle: undefined,
-          stageTitle: 'Legacy serialized geometry shapes title',
-        },
-      },
-    );
-    const serializedGeometryShapesJson = JSON.parse(serializedGeometryShapes) as {
-      game: Record<string, unknown>;
-    };
-
-    expect(serializedGeometryShapesJson.game).toMatchObject({
-      gameTitle: 'Legacy serialized geometry shapes title',
-    });
-    expect(serializedGeometryShapesJson.game).not.toHaveProperty('stageTitle');
-  });
-
-  it('serializes legacy geometry shape recognition draw stageTitle fields as normalized gameTitle fields', () => {
-    const serializedGeometryShapeRecognition =
-      serializeKangurLessonTemplateComponentContent('geometry_shape_recognition', {
-        ...GEOMETRY_SHAPE_RECOGNITION_LESSON_COMPONENT_CONTENT,
-        draw: {
-          ...GEOMETRY_SHAPE_RECOGNITION_LESSON_COMPONENT_CONTENT.draw,
-          gameTitle: undefined,
-          stageTitle: 'Legacy serialized geometry draw title',
-        },
+        expect(serializedJson[shellKey]).toMatchObject({
+          gameTitle: serializedLegacyTitle,
+        });
+        expect(serializedJson[shellKey]).not.toHaveProperty('stageTitle');
       });
-    const serializedGeometryShapeRecognitionJson = JSON.parse(
-      serializedGeometryShapeRecognition,
-    ) as {
-      draw: Record<string, unknown>;
-    };
-
-    expect(serializedGeometryShapeRecognitionJson.draw).toMatchObject({
-      gameTitle: 'Legacy serialized geometry draw title',
-    });
-    expect(serializedGeometryShapeRecognitionJson.draw).not.toHaveProperty('stageTitle');
-  });
-
-  it('serializes legacy geometry symmetry stageTitle fields as normalized gameTitle fields', () => {
-    const serializedGeometrySymmetry = serializeKangurLessonTemplateComponentContent(
-      'geometry_symmetry',
-      {
-        ...GEOMETRY_SYMMETRY_LESSON_COMPONENT_CONTENT,
-        game: {
-          gameTitle: undefined,
-          stageTitle: 'Legacy serialized geometry symmetry title',
-        },
-      },
-    );
-    const serializedGeometrySymmetryJson = JSON.parse(serializedGeometrySymmetry) as {
-      game: Record<string, unknown>;
-    };
-
-    expect(serializedGeometrySymmetryJson.game).toMatchObject({
-      gameTitle: 'Legacy serialized geometry symmetry title',
-    });
-    expect(serializedGeometrySymmetryJson.game).not.toHaveProperty('stageTitle');
-  });
-
-  it('serializes legacy logical classification stageTitle fields as normalized gameTitle fields', () => {
-    const serializedLogicalClassification = serializeKangurLessonTemplateComponentContent(
-      'logical_classification',
-      {
-        ...LOGICAL_CLASSIFICATION_LESSON_COMPONENT_CONTENT,
-        game: {
-          gameTitle: undefined,
-          stageTitle: 'Legacy serialized logical classification title',
-        },
-      },
-    );
-    const serializedLogicalClassificationJson = JSON.parse(
-      serializedLogicalClassification,
-    ) as {
-      game: Record<string, unknown>;
-    };
-
-    expect(serializedLogicalClassificationJson.game).toMatchObject({
-      gameTitle: 'Legacy serialized logical classification title',
-    });
-    expect(serializedLogicalClassificationJson.game).not.toHaveProperty('stageTitle');
-  });
-
-  it('serializes legacy logical patterns stageTitle fields as normalized gameTitle fields', () => {
-    const serializedLogicalPatterns = serializeKangurLessonTemplateComponentContent(
-      'logical_patterns',
-      {
-        ...LOGICAL_PATTERNS_LESSON_COMPONENT_CONTENT,
-        game: {
-          gameTitle: undefined,
-          stageTitle: 'Legacy serialized logical patterns title',
-        },
-      },
-    );
-    const serializedLogicalPatternsJson = JSON.parse(serializedLogicalPatterns) as {
-      game: Record<string, unknown>;
-    };
-
-    expect(serializedLogicalPatternsJson.game).toMatchObject({
-      gameTitle: 'Legacy serialized logical patterns title',
-    });
-    expect(serializedLogicalPatternsJson.game).not.toHaveProperty('stageTitle');
-  });
-
-  it('serializes legacy logical analogies stageTitle fields as normalized gameTitle fields', () => {
-    const serializedLogicalAnalogies = serializeKangurLessonTemplateComponentContent(
-      'logical_analogies',
-      {
-        ...LOGICAL_ANALOGIES_LESSON_COMPONENT_CONTENT,
-        game: {
-          gameTitle: undefined,
-          stageTitle: 'Legacy serialized logical analogies title',
-        },
-      },
-    );
-    const serializedLogicalAnalogiesJson = JSON.parse(serializedLogicalAnalogies) as {
-      game: Record<string, unknown>;
-    };
-
-    expect(serializedLogicalAnalogiesJson.game).toMatchObject({
-      gameTitle: 'Legacy serialized logical analogies title',
-    });
-    expect(serializedLogicalAnalogiesJson.game).not.toHaveProperty('stageTitle');
-  });
-
-  it('serializes legacy adding stageTitle fields as normalized gameTitle fields', () => {
-    const serializedAdding = serializeKangurLessonTemplateComponentContent('adding', {
-      ...ADDING_LESSON_COMPONENT_CONTENT,
-      game: {
-        gameTitle: undefined,
-        stageTitle: 'Legacy serialized adding title',
-      },
-    });
-    const serializedAddingJson = JSON.parse(serializedAdding) as {
-      game: Record<string, unknown>;
-    };
-
-    expect(serializedAddingJson.game).toMatchObject({
-      gameTitle: 'Legacy serialized adding title',
-    });
-    expect(serializedAddingJson.game).not.toHaveProperty('stageTitle');
-  });
-
-  it('serializes legacy adding synthesis stageTitle fields as normalized gameTitle fields', () => {
-    const serializedAdding = serializeKangurLessonTemplateComponentContent('adding', {
-      ...ADDING_LESSON_COMPONENT_CONTENT,
-      synthesis: {
-        gameTitle: undefined,
-        stageTitle: 'Legacy serialized adding synthesis title',
-      },
-    });
-    const serializedAddingJson = JSON.parse(serializedAdding) as {
-      synthesis: Record<string, unknown>;
-    };
-
-    expect(serializedAddingJson.synthesis).toMatchObject({
-      gameTitle: 'Legacy serialized adding synthesis title',
-    });
-    expect(serializedAddingJson.synthesis).not.toHaveProperty('stageTitle');
-  });
-
-  it('serializes legacy multiplication stageTitle fields as normalized gameTitle fields', () => {
-    const serializedMultiplication = serializeKangurLessonTemplateComponentContent(
-      'multiplication',
-      {
-        ...MULTIPLICATION_LESSON_COMPONENT_CONTENT,
-        game: {
-          ...MULTIPLICATION_LESSON_COMPONENT_CONTENT.game,
-          gameTitle: undefined,
-          stageTitle: 'Legacy serialized multiplication title',
-        },
-      },
-    );
-    const serializedMultiplicationJson = JSON.parse(serializedMultiplication) as {
-      game: Record<string, unknown>;
-    };
-
-    expect(serializedMultiplicationJson.game).toMatchObject({
-      gameTitle: 'Legacy serialized multiplication title',
-    });
-    expect(serializedMultiplicationJson.game).not.toHaveProperty('stageTitle');
-  });
-
-  it('serializes legacy subtracting stageTitle fields as normalized gameTitle fields', () => {
-    const serializedSubtracting = serializeKangurLessonTemplateComponentContent(
-      'subtracting',
-      {
-        ...SUBTRACTING_LESSON_COMPONENT_CONTENT,
-        game: {
-          gameTitle: undefined,
-          stageTitle: 'Legacy serialized subtracting title',
-        },
-      },
-    );
-    const serializedSubtractingJson = JSON.parse(serializedSubtracting) as {
-      game: Record<string, unknown>;
-    };
-
-    expect(serializedSubtractingJson.game).toMatchObject({
-      gameTitle: 'Legacy serialized subtracting title',
-    });
-    expect(serializedSubtractingJson.game).not.toHaveProperty('stageTitle');
-  });
-
-  it('serializes legacy division stageTitle fields as normalized gameTitle fields', () => {
-    const serializedDivision = serializeKangurLessonTemplateComponentContent('division', {
-      ...DIVISION_LESSON_COMPONENT_CONTENT,
-      game: {
-        gameTitle: undefined,
-        stageTitle: 'Legacy serialized division title',
-      },
-    });
-    const serializedDivisionJson = JSON.parse(serializedDivision) as {
-      game: Record<string, unknown>;
-    };
-
-    expect(serializedDivisionJson.game).toMatchObject({
-      gameTitle: 'Legacy serialized division title',
-    });
-    expect(serializedDivisionJson.game).not.toHaveProperty('stageTitle');
-  });
+    },
+  );
 });

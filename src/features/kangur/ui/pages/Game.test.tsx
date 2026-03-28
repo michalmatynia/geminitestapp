@@ -22,6 +22,7 @@ const {
   calendarTrainingGamePropsMock,
   clockTrainingGamePropsMock,
   logicalPatternsWorkshopGamePropsMock,
+  disabledDocsTooltipsMock,
 } = vi.hoisted(() => ({
   useKangurGameRuntimeMock: vi.fn(),
   useKangurGameContentSetsMock: vi.fn(),
@@ -38,6 +39,7 @@ const {
   calendarTrainingGamePropsMock: vi.fn(),
   clockTrainingGamePropsMock: vi.fn(),
   logicalPatternsWorkshopGamePropsMock: vi.fn(),
+  disabledDocsTooltipsMock: { enabled: false },
 }));
 
 vi.mock('framer-motion', () => {
@@ -237,7 +239,7 @@ vi.mock('@/features/kangur/ui/components/KangurGameResultWidget', () => ({
 
 vi.mock('@/features/kangur/docs/tooltips', () => ({
   KangurDocsTooltipEnhancer: () => null,
-  useKangurDocsTooltips: () => ({ enabled: false }),
+  useKangurDocsTooltips: () => disabledDocsTooltipsMock,
 }));
 
 import Game from '@/features/kangur/ui/pages/Game';

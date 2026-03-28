@@ -2,7 +2,7 @@ import {
   resolveKangurLessonTemplateComponentContent,
 } from '@/features/kangur/lessons/lesson-template-component-content';
 import type { ArtShapesBasicLessonTranslate } from '@/features/kangur/ui/components/ArtShapesBasicLesson.data';
-import { translateLessonValueWithLegacyKey } from '@/features/kangur/ui/components/lesson-copy';
+import { translateLessonShellTitle } from '@/features/kangur/ui/components/lesson-copy';
 import type {
   KangurArtShapesBasicLessonTemplateContent,
   KangurLessonTemplate,
@@ -158,12 +158,7 @@ export const createArtShapesBasicLessonContentFromTranslate = (
     },
   },
   game: {
-    gameTitle: translateLessonValueWithLegacyKey(
-      translate,
-      'game.gameTitle',
-      'game.stageTitle',
-      '',
-    ),
+    gameTitle: translateLessonShellTitle(translate, 'game', ''),
     progress: {
       round: translate('game.progress.round'),
       score: translate('game.progress.score'),

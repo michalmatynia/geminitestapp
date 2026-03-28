@@ -1,34 +1,16 @@
-import React, { useId } from 'react';
+import React from 'react';
+import {
+  type KangurAnimationSurfaceIdsDto,
+  type KangurAnimationSurfacePropsDto,
+  useKangurAnimationSurfaceIds,
+} from '@/features/kangur/ui/components/animations/animation-surface-contracts';
 
-type LogicalPatternsSurfaceIds = {
-  clipId: string;
-  frameGradientId: string;
-  panelGradientId: string;
-};
+type LogicalPatternsSurfaceIds = KangurAnimationSurfaceIdsDto;
 
-type LogicalPatternsSurfaceProps = {
-  accentEnd: string;
-  accentStart: string;
-  atmosphereA: string;
-  atmosphereB: string;
-  ids: LogicalPatternsSurfaceIds;
-  stroke: string;
-  testIdPrefix: string;
-  x: number;
-  y: number;
-  width: number;
-  height: number;
-  rx: number;
-};
+type LogicalPatternsSurfaceProps = KangurAnimationSurfacePropsDto;
 
 function useLogicalPatternsSurfaceIds(prefix: string): LogicalPatternsSurfaceIds {
-  const baseId = useId().replace(/:/g, '');
-
-  return {
-    clipId: `${prefix}-${baseId}-clip`,
-    frameGradientId: `${prefix}-${baseId}-frame`,
-    panelGradientId: `${prefix}-${baseId}-panel`,
-  };
+  return useKangurAnimationSurfaceIds(prefix);
 }
 
 function LogicalPatternsSurface({

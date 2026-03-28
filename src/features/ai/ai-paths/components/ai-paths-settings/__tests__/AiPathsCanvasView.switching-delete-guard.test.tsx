@@ -18,6 +18,10 @@ let pageContextMock: Record<string, unknown> = {};
 const setPathsMock = vi.fn();
 const setPathConfigsMock = vi.fn();
 const mockedFetchAiPathsSettingsByKeysCached = vi.mocked(fetchAiPathsSettingsByKeysCached);
+const graphActionsMock = {
+  setPaths: setPathsMock,
+  setPathConfigs: setPathConfigsMock,
+};
 
 vi.mock('react-dom', async () => {
   const actual = await vi.importActual<typeof import('react-dom')>('react-dom');
@@ -40,10 +44,7 @@ vi.mock('@/features/ai/ai-paths/context', () => ({
   useSelectionActions: () => ({
     setSelectionToolMode: vi.fn(),
   }),
-  useGraphActions: () => ({
-    setPaths: setPathsMock,
-    setPathConfigs: setPathConfigsMock,
-  }),
+  useGraphActions: () => graphActionsMock,
 }));
 
 vi.mock('../../canvas-board', () => ({

@@ -83,35 +83,34 @@ vi.mock('@/shared/ui', () => ({
       {children}
     </div>
   ),
-  Pagination: ({
-    page,
-    totalPages,
-    onPageChange,
-  }: {
+  Pagination: (props: {
     page: number;
     totalPages?: number;
     onPageChange: (page: number) => void;
-  }) => (
-    <div>
-      <button
-        type='button'
-        onClick={() => onPageChange(page - 1)}
-        disabled={page <= 1}
-      >
-        Previous page
-      </button>
-      <button
-        type='button'
-        onClick={() => onPageChange(page + 1)}
-        disabled={page >= (totalPages ?? 1)}
-      >
-        Next page
-      </button>
-      <span>
-        pagination:{page}/{totalPages ?? 1}
-      </span>
-    </div>
-  ),
+  }) => {
+    const { page, totalPages, onPageChange } = props;
+    return (
+      <div>
+        <button
+          type='button'
+          onClick={() => onPageChange(page - 1)}
+          disabled={page <= 1}
+        >
+          Previous page
+        </button>
+        <button
+          type='button'
+          onClick={() => onPageChange(page + 1)}
+          disabled={page >= (totalPages ?? 1)}
+        >
+          Next page
+        </button>
+        <span>
+          pagination:{page}/{totalPages ?? 1}
+        </span>
+      </div>
+    );
+  },
   RefreshButton: ({
     onRefresh,
     isRefreshing,

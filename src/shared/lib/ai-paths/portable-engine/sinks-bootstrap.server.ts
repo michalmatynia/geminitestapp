@@ -393,6 +393,18 @@ export const bootstrapPortablePathEnvelopeVerificationAuditSinksFromEnvironment 
       },
     });
   const remediationUnregisterCallbacks: Array<() => void> = [];
+  const autoRemediationNotificationConfig = {
+    enabled: autoRemediationNotificationsEnabled,
+    webhookUrl: autoRemediationWebhookUrl,
+    webhookSecret: autoRemediationWebhookSecret,
+    webhookSignatureKeyId: autoRemediationWebhookSignatureKeyId,
+    emailWebhookUrl: autoRemediationEmailWebhookUrl,
+    emailWebhookSecret: autoRemediationEmailWebhookSecret,
+    emailWebhookSignatureKeyId: autoRemediationEmailWebhookSignatureKeyId,
+    emailRecipients: autoRemediationEmailRecipients,
+    timeoutMs: autoRemediationNotificationTimeoutMs ?? undefined,
+    deadLetterMaxEntries: autoRemediationDeadLetterMaxEntries ?? undefined,
+  };
   const unregisterAll = (): void => {
     for (const unregister of [...remediationUnregisterCallbacks].reverse()) {
       try {
@@ -424,18 +436,10 @@ export const bootstrapPortablePathEnvelopeVerificationAuditSinksFromEnvironment 
         remediationUnregisterCallbacks.push(unregisterLogOnlySink);
       },
       notify: async (notificationInput) =>
-        notifyPortablePathAuditSinkAutoRemediation(notificationInput, {
-          enabled: autoRemediationNotificationsEnabled,
-          webhookUrl: autoRemediationWebhookUrl,
-          webhookSecret: autoRemediationWebhookSecret,
-          webhookSignatureKeyId: autoRemediationWebhookSignatureKeyId,
-          emailWebhookUrl: autoRemediationEmailWebhookUrl,
-          emailWebhookSecret: autoRemediationEmailWebhookSecret,
-          emailWebhookSignatureKeyId: autoRemediationEmailWebhookSignatureKeyId,
-          emailRecipients: autoRemediationEmailRecipients,
-          timeoutMs: autoRemediationNotificationTimeoutMs ?? undefined,
-          deadLetterMaxEntries: autoRemediationDeadLetterMaxEntries ?? undefined,
-        }),
+        notifyPortablePathAuditSinkAutoRemediation(
+          notificationInput,
+          autoRemediationNotificationConfig
+        ),
     }
   );
   return {

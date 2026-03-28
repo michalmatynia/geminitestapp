@@ -24,6 +24,12 @@ const selectNodeMock = vi.fn();
 const setConfigOpenMock = vi.fn();
 const setViewMock = vi.fn();
 const logCaseResolverWorkspaceEventMock = vi.fn();
+const graphActionsMock = {
+  addNode: addNodeMock,
+  setNodes: setNodesMock,
+  updateNode: updateNodeMock,
+  setEdges: setEdgesMock,
+};
 
 vi.mock('@/features/case-resolver/workspace-persistence', () => ({
   logCaseResolverWorkspaceEvent: (...args: unknown[]) =>
@@ -75,12 +81,7 @@ vi.mock('@/features/ai/public', () => ({
     nodes: graphNodes,
     edges: graphEdges,
   }),
-  useGraphActions: () => ({
-    addNode: addNodeMock,
-    setNodes: setNodesMock,
-    updateNode: updateNodeMock,
-    setEdges: setEdgesMock,
-  }),
+  useGraphActions: () => graphActionsMock,
   useSelectionState: () => ({
     selectedNodeId: null,
     selectedEdgeId: null,

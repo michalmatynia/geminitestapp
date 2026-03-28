@@ -119,6 +119,20 @@ const buildKangurTestSelectedChoiceFactsFromContext = (
   };
 };
 
+const buildOperationPerformanceItem = (
+  operation: KangurRegistryBaseData['snapshot']['operationPerformance'][number]
+) => ({
+  operation: operation.operation,
+  label: operation.label,
+  emoji: operation.emoji,
+  attempts: operation.attempts,
+  averageAccuracy: operation.averageAccuracy,
+  averageScore: operation.averageScore,
+  bestScore: operation.bestScore,
+  totalXpEarned: operation.totalXpEarned,
+  averageXpPerSession: operation.averageXpPerSession,
+});
+
 const buildLearnerSummary = (
   snapshot: KangurRegistryBaseData['snapshot'],
   activeAssignments: KangurRegistryBaseData['activeAssignments'],
@@ -302,17 +316,7 @@ export const buildKangurLearnerSnapshotRuntimeDocument = async (input: {
         id: 'operation_performance',
         kind: 'items',
         title: 'Performance by operation',
-        items: data.snapshot.operationPerformance.slice(0, 6).map((operation) => ({
-          operation: operation.operation,
-          label: operation.label,
-          emoji: operation.emoji,
-          attempts: operation.attempts,
-          averageAccuracy: operation.averageAccuracy,
-          averageScore: operation.averageScore,
-          bestScore: operation.bestScore,
-          totalXpEarned: operation.totalXpEarned,
-          averageXpPerSession: operation.averageXpPerSession,
-        })),
+        items: data.snapshot.operationPerformance.slice(0, 6).map(buildOperationPerformanceItem),
       },
       {
         id: 'active_assignments',

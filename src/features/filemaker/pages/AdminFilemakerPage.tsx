@@ -26,6 +26,13 @@ function AdminFilemakerPageInner(): React.JSX.Element {
         icon={<Database className='size-4' />}
         actions={[
           {
+            key: 'mail',
+            label: 'Mail',
+            icon: <Mail className='size-4' />,
+            variant: 'outline',
+            onClick: () => router.push('/admin/filemaker/mail'),
+          },
+          {
             key: 'campaigns',
             label: 'Campaigns Page',
             icon: <Megaphone className='size-4' />,

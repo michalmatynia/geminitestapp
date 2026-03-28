@@ -50,16 +50,19 @@ type LessonSlideSectionProps = {
   gradientClass: string;
 };
 
-export default function LessonSlideSection({
-  slides,
-  sectionHeader = null,
-  onBack,
-  onComplete,
-  onProgressChange,
-  onPanelTimeUpdate,
-  dotActiveClass,
-  dotDoneClass,
-}: LessonSlideSectionProps): React.JSX.Element {
+export default function LessonSlideSection(
+  props: LessonSlideSectionProps
+): React.JSX.Element {
+  const {
+    slides,
+    sectionHeader = null,
+    onBack,
+    onComplete,
+    onProgressChange,
+    onPanelTimeUpdate,
+    dotActiveClass,
+    dotDoneClass,
+  } = props;
   const lessonChrome = useTranslations('KangurLessonChrome');
   const lessonNavigationTranslations = useTranslations('KangurLessonsWidgets.navigation');
   const prefersReducedMotion = useReducedMotion();

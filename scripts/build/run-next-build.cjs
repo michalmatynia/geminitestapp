@@ -91,12 +91,13 @@ const shouldRetryWebpackServerManifestRace = (result) =>
   webpackServerManifestRacePattern.test(result.output);
 
 const main = async () => {
+  // Keep production builds deterministic. Turbopack still serves as an explicit
+  // opt-in via NEXT_BUILD_BUNDLER=turbopack, but defaulting Vercel to Turbopack
+  // makes deployments depend on a retry path after known transient failures.
   const preferredBundler =
     forcedBundler === 'webpack' || forcedBundler === 'turbopack'
       ? forcedBundler
-      : process.env.VERCEL
-        ? 'turbopack'
-        : 'webpack';
+      : 'webpack';
 
   let result = await runBuild(preferredBundler);
 

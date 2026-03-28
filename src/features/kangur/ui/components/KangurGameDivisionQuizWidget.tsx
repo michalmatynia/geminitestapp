@@ -1,8 +1,8 @@
-import { renderKangurGameQuizStage } from '@/features/kangur/ui/components/KangurGameQuizStage';
+import { renderKangurGameQuizShell } from '@/features/kangur/ui/components/KangurGameQuizShell';
 import DivisionGame from '@/features/kangur/ui/components/DivisionGame';
 
 export function KangurGameDivisionQuizWidget(): React.JSX.Element | null {
-  return renderKangurGameQuizStage({
+  return renderKangurGameQuizShell({
     accent: 'emerald',
     children: ({ handleHome }) => <DivisionGame finishLabelVariant='play' onFinish={handleHome} />,
     icon: '➗',

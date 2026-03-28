@@ -23,7 +23,7 @@ vi.mock('@/features/kangur/ui/components/GeometryDrawingGame', () => ({
   default: () => <div data-testid='geometry-drawing-game' />,
 }));
 vi.mock('@/features/kangur/ui/components/ShapeRecognitionGame', () => ({
-  default: () => <div data-testid='shape-recognition-stage-game' />,
+  default: () => <div data-testid='shape-recognition-game' />,
 }));
 
 import deMessages from '@/i18n/messages/de.json';

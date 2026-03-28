@@ -37,7 +37,7 @@ describe('kangur game variants', () => {
     expect(entry?.launchableRuntime).toBeNull();
   });
 
-  it('keeps lesson-stage variants unbound once lessons use launchable instances', () => {
+  it('keeps stored .lesson-stage ids unbound once lessons use launchable instances', () => {
     const entry = createKangurGameVariantCatalogEntries(createKangurGameCatalogEntries()).find(
       (candidate) => candidate.variant.id === 'agentic_approval_gate.lesson-stage'
     );
@@ -47,7 +47,7 @@ describe('kangur game variants', () => {
     expect(entry?.launchableRuntime).toBeNull();
   });
 
-  it('keeps the six-year-old alphabet lesson-stage variants unbound once lessons use launchable instances', () => {
+  it('keeps the six-year-old alphabet .lesson-stage ids unbound once lessons use launchable instances', () => {
     const entries = createKangurGameVariantCatalogEntries(createKangurGameCatalogEntries());
     const wordsEntry = entries.find(
       (candidate) => candidate.variant.id === 'alphabet_first_words.lesson-stage'
@@ -66,7 +66,7 @@ describe('kangur game variants', () => {
     expect(entry?.launchableRuntime).toBeNull();
   });
 
-  it('keeps geometry lesson-stage variants unbound once lessons use launchable instances', () => {
+  it('keeps geometry .lesson-stage ids unbound once lessons use launchable instances', () => {
     const entries = createKangurGameVariantCatalogEntries(createKangurGameCatalogEntries());
     const workshopEntry = entries.find(
       (candidate) => candidate.variant.id === 'geometry_shape_workshop.lesson-stage'
@@ -81,7 +81,7 @@ describe('kangur game variants', () => {
     expect(entry?.launchableRuntime).toBeNull();
   });
 
-  it('keeps the sentence-builder lesson-stage variant unbound once lessons use launchable instances', () => {
+  it('keeps the sentence-builder .lesson-stage id unbound once lessons use launchable instances', () => {
     const entry = createKangurGameVariantCatalogEntries(createKangurGameCatalogEntries()).find(
       (candidate) => candidate.variant.id === 'english_sentence_builder.lesson-stage'
     );
@@ -91,7 +91,7 @@ describe('kangur game variants', () => {
     expect(entry?.launchableRuntime).toBeNull();
   });
 
-  it('keeps seeded English grammar stage variants unbound once lessons use launchable instances', () => {
+  it('keeps seeded English grammar .lesson-stage ids unbound once lessons use launchable instances', () => {
     const entries = createKangurGameVariantCatalogEntries(createKangurGameCatalogEntries());
     const subjectVerbEntry = entries.find(
       (candidate) => candidate.variant.id === 'english_subject_verb_agreement.lesson-stage'
@@ -197,7 +197,7 @@ describe('kangur game variants', () => {
     });
   });
 
-  it('keeps seeded agentic stage variants unbound once lessons use launchable instances', () => {
+  it('keeps seeded agentic .lesson-stage ids unbound once lessons use launchable instances', () => {
     const entries = createKangurGameVariantCatalogEntries(createKangurGameCatalogEntries());
     const promptTrimEntry = entries.find(
       (candidate) => candidate.variant.id === 'agentic_prompt_trim_stage.lesson-stage'
@@ -255,7 +255,7 @@ describe('kangur game variants', () => {
     });
   });
 
-  it('keeps seeded six-year-old art and geometry stage variants unbound once lessons use launchable instances', () => {
+  it('keeps seeded six-year-old art and geometry .lesson-stage ids unbound once lessons use launchable instances', () => {
     const entries = createKangurGameVariantCatalogEntries(createKangurGameCatalogEntries());
     const colorHarmonyEntry = entries.find(
       (candidate) => candidate.variant.id === 'art_color_harmony_studio.lesson-stage'
@@ -365,7 +365,7 @@ describe('kangur game variants', () => {
     });
   });
 
-  it('keeps seeded arithmetic stage variants unbound once lessons use launchable instances', () => {
+  it('keeps seeded arithmetic .lesson-stage ids unbound once lessons use launchable instances', () => {
     const entries = createKangurGameVariantCatalogEntries(createKangurGameCatalogEntries());
     const addingBallEntry = entries.find(
       (candidate) => candidate.variant.id === 'adding_ball.lesson-stage'

@@ -12,7 +12,7 @@ import {
 
 import {
   KangurPracticeGameProgress,
-  KangurPracticeGameStage,
+  KangurPracticeGameShell,
   KangurPracticeGameSummary,
   KangurPracticeGameSummaryActions,
   KangurPracticeGameSummaryBreakdown,
@@ -592,7 +592,7 @@ export default function LogicalClassificationGame({
   }
 
   const stageContent = (
-    <KangurPracticeGameStage className='mx-auto max-w-2xl'>
+    <KangurPracticeGameShell className='mx-auto max-w-2xl'>
         <KangurPracticeGameProgress
           accent='teal'
           currentRound={roundIndex}
@@ -828,7 +828,7 @@ export default function LogicalClassificationGame({
             </KangurButton>
           )}
         </div>
-      </KangurPracticeGameStage>
+      </KangurPracticeGameShell>
   );
 
   if (round.type !== 'sort') {

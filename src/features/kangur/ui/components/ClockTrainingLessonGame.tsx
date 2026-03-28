@@ -8,7 +8,7 @@ import {
 } from './ClockLesson.data';
 import ClockTrainingGame from './ClockTrainingGame';
 
-type ClockTrainingStageGameProps = {
+type ClockTrainingLessonGameProps = {
   clockInitialMode?: 'practice' | 'challenge';
   clockSection?: KangurClockTrainingStageSection;
   onFinish: () => void;
@@ -23,9 +23,9 @@ const resolvePracticeTasks = (
   section: KangurClockTrainingStageSection
 ): ClockPracticeTask[] | undefined => TRAINING_PANEL_TASKS[section].pick_one;
 
-export type { ClockTrainingStageGameProps };
+export type { ClockTrainingLessonGameProps };
 
-export function renderClockTrainingStageGame({
+export function renderClockTrainingLessonGame({
   clockInitialMode = 'practice',
   clockSection = 'hours',
   onFinish,
@@ -34,7 +34,7 @@ export function renderClockTrainingStageGame({
   showClockModeSwitch = false,
   showClockTaskTitle = true,
   showClockTimeDisplay = false,
-}: ClockTrainingStageGameProps): React.JSX.Element {
+}: ClockTrainingLessonGameProps): React.JSX.Element {
   return (
     <ClockTrainingGame
       key={clockSection}

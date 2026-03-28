@@ -27,7 +27,7 @@ import {
 import type { KangurIntlTranslate } from '@/features/kangur/ui/types';
 import { cn } from '@/features/kangur/shared/utils';
 
-type LessonActivityStageProps = {
+type LessonActivityShellProps = {
   accent: 'amber' | 'emerald' | 'indigo' | 'rose' | 'sky' | 'teal' | 'violet';
   backButtonLabel?: string;
   children: React.ReactNode;
@@ -45,8 +45,8 @@ type LessonActivityStageProps = {
   title: string;
 };
 
-type LessonActivityStageContextValue = {
-  accent: LessonActivityStageProps['accent'];
+type LessonActivityShellContextValue = {
+  accent: LessonActivityShellProps['accent'];
   backButtonLabel: string;
   description?: React.ReactNode;
   descriptionId?: string;
@@ -60,12 +60,12 @@ type LessonActivityStageContextValue = {
   secretLessonPill: ReturnType<typeof useKangurLessonSecretPill>;
 };
 
-const LessonActivityStageContext = createContext<LessonActivityStageContextValue | null>(null);
+const LessonActivityShellContext = createContext<LessonActivityShellContextValue | null>(null);
 
-const useLessonActivityStageContext = () => {
-  const value = useContext(LessonActivityStageContext);
+const useLessonActivityShellContext = () => {
+  const value = useContext(LessonActivityShellContext);
   if (!value) {
-    throw new Error('LessonActivityStage context is unavailable.');
+    throw new Error('LessonActivityShell context is unavailable.');
   }
   return value;
 };
@@ -79,11 +79,11 @@ const translateLessonChrome = (
   return translated === key || translated.endsWith(`.${key}`) ? fallback : translated;
 };
 
-function LessonActivityStageTopBar(): React.JSX.Element {
+function LessonActivityShellTopBar(): React.JSX.Element {
   const lessonChrome = useTranslations('KangurLessonChrome');
   const lessonNavigationTranslations = useTranslations('KangurLessonsWidgets.navigation');
   const { backButtonLabel, navigationPills, onBack, printPanelId, secretLessonPill } =
-    useLessonActivityStageContext();
+    useLessonActivityShellContext();
   const isCoarsePointer = useKangurCoarsePointer();
   const lessonPrint = useOptionalKangurLessonPrint();
   const navigationLabel = translateLessonChrome(
@@ -169,9 +169,9 @@ function LessonActivityStageTopBar(): React.JSX.Element {
   );
 }
 
-function LessonActivityStageHeader(): React.JSX.Element {
+function LessonActivityShellHeader(): React.JSX.Element {
   const { accent, description, descriptionId, headerTestId, icon, title, titleId } =
-    useLessonActivityStageContext();
+    useLessonActivityShellContext();
 
   return (
     <div
@@ -200,7 +200,7 @@ function LessonActivityStageHeader(): React.JSX.Element {
   );
 }
 
-export default function LessonActivityStage({
+export default function LessonActivityShell({
   accent,
   backButtonLabel = 'Wróć do tematów',
   children,
@@ -216,7 +216,7 @@ export default function LessonActivityStage({
   shellTestId,
   shellVariant = 'panel',
   title,
-}: LessonActivityStageProps): React.JSX.Element {
+}: LessonActivityShellProps): React.JSX.Element {
   const lessonChrome = useTranslations('KangurLessonChrome');
   const registerSubsectionNavigation = useKangurRegisterLessonSubsectionNavigation();
   const secretLessonPill = useKangurLessonSecretPill();
@@ -243,7 +243,7 @@ export default function LessonActivityStage({
     'printInteractiveHint',
     'Otwórz tę lekcję na ekranie, aby wykonać to ćwiczenie interaktywnie.'
   );
-  const contextValue: LessonActivityStageContextValue = {
+  const contextValue: LessonActivityShellContextValue = {
     accent,
     backButtonLabel: resolvedBackButtonLabel,
     description,
@@ -265,7 +265,7 @@ export default function LessonActivityStage({
   }, [registerSubsectionNavigation]);
 
   return (
-    <LessonActivityStageContext.Provider value={contextValue}>
+    <LessonActivityShellContext.Provider value={contextValue}>
       <div
         className={cn(
           'flex w-full min-w-0 flex-col items-center',
@@ -274,7 +274,7 @@ export default function LessonActivityStage({
           'mx-auto'
         )}
       >
-        <LessonActivityStageTopBar />
+        <LessonActivityShellTopBar />
         {shellVariant === 'plain' ? (
           <div
             className={shellPanelClassName}
@@ -287,7 +287,7 @@ export default function LessonActivityStage({
             aria-labelledby={panelLabelledBy}
             aria-describedby={panelDescribedBy}
           >
-            {shouldRenderStageHeader ? <LessonActivityStageHeader /> : null}
+            {shouldRenderStageHeader ? <LessonActivityShellHeader /> : null}
             <div
               className='kangur-print-only space-y-2 border-b border-slate-200 pb-4'
               data-testid='lesson-activity-stage-print-summary'
@@ -316,7 +316,7 @@ export default function LessonActivityStage({
             padding='xl'
             surface='solid'
           >
-            {shouldRenderStageHeader ? <LessonActivityStageHeader /> : null}
+            {shouldRenderStageHeader ? <LessonActivityShellHeader /> : null}
             <div
               className='kangur-print-only space-y-2 border-b border-slate-200 pb-4'
               data-testid='lesson-activity-stage-print-summary'
@@ -338,6 +338,6 @@ export default function LessonActivityStage({
           </div>
         ) : null}
       </div>
-    </LessonActivityStageContext.Provider>
+    </LessonActivityShellContext.Provider>
   );
 }

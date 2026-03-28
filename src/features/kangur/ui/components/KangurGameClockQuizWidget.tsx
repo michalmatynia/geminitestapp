@@ -3,12 +3,12 @@
 import { useTranslations } from 'next-intl';
 
 import ClockTrainingGame from '@/features/kangur/ui/components/ClockTrainingGame';
-import { renderKangurGameQuizStage } from '@/features/kangur/ui/components/KangurGameQuizStage';
+import { renderKangurGameQuizShell } from '@/features/kangur/ui/components/KangurGameQuizShell';
 
 export function KangurGameClockQuizWidget(): React.JSX.Element | null {
   const translations = useTranslations('KangurGameWidgets');
 
-  return renderKangurGameQuizStage({
+  return renderKangurGameQuizShell({
     accent: 'indigo',
     children: ({ handleHome }) => (
       <ClockTrainingGame

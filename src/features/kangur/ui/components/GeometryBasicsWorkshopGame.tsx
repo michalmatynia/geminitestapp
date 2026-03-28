@@ -12,7 +12,7 @@ import {
 
 import {
   KangurPracticeGameProgress,
-  KangurPracticeGameStage,
+  KangurPracticeGameShell,
   KangurPracticeGameSummary,
   KangurPracticeGameSummaryActions,
   KangurPracticeGameSummaryBreakdown,
@@ -502,7 +502,7 @@ export default function GeometryBasicsWorkshopGame({
       onDragEnd={onDragEnd}
       onDragStart={() => setSelectedTileId(null)}
     >
-      <KangurPracticeGameStage className='mx-auto max-w-3xl'>
+      <KangurPracticeGameShell className='mx-auto max-w-3xl'>
         <KangurPracticeGameProgress
           accent='sky'
           currentRound={roundIndex}
@@ -701,7 +701,7 @@ export default function GeometryBasicsWorkshopGame({
             </KangurButton>
           )}
         </div>
-      </KangurPracticeGameStage>
+      </KangurPracticeGameShell>
     </KangurDragDropContext>
   );
 }

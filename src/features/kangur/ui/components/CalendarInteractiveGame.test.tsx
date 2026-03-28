@@ -109,7 +109,7 @@ describe('CalendarInteractiveGame', () => {
     expect(screen.queryByTestId('calendar-season-0')).toBeNull();
   });
 
-  it('accepts calendarSection as a lesson-stage alias for section', () => {
+  it('accepts calendarSection as a legacy lesson alias for section', () => {
     vi.spyOn(Math, 'random').mockReturnValue(0);
 
     render(<CalendarInteractiveGame onFinish={() => undefined} calendarSection='dni' />);

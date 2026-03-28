@@ -68,7 +68,7 @@ describe('kangur game catalog', () => {
     ).toBe('division_game');
   });
 
-  it('keeps logical patterns lesson-stage variants unbound once lessons use launchable instances', () => {
+  it('keeps the logical patterns .lesson-stage id unbound once lessons use launchable instances', () => {
     const entry = createKangurGameCatalogEntries().find(
       (candidate) => candidate.game.id === 'logical_patterns_workshop'
     );
@@ -82,7 +82,7 @@ describe('kangur game catalog', () => {
     expect(variant).not.toHaveProperty('lessonActivityRuntimeId');
   });
 
-  it('keeps the alphabet sequence lesson-stage variant unbound once lessons use launchable instances', () => {
+  it('keeps the alphabet sequence .lesson-stage id unbound once lessons use launchable instances', () => {
     const entry = createKangurGameCatalogEntries().find(
       (candidate) => candidate.game.id === 'alphabet_letter_order'
     );
@@ -96,7 +96,7 @@ describe('kangur game catalog', () => {
     expect(variant).not.toHaveProperty('lessonActivityRuntimeId');
   });
 
-  it('keeps the alphabet literacy lesson-stage variant unbound once lessons use launchable instances', () => {
+  it('keeps the alphabet literacy .lesson-stage id unbound once lessons use launchable instances', () => {
     const entry = createKangurGameCatalogEntries().find(
       (candidate) => candidate.game.id === 'alphabet_letter_matching'
     );
@@ -110,7 +110,7 @@ describe('kangur game catalog', () => {
     expect(variant).not.toHaveProperty('lessonActivityRuntimeId');
   });
 
-  it('keeps the color harmony lesson-stage variant unbound once lessons use launchable instances', () => {
+  it('keeps the color harmony .lesson-stage id unbound once lessons use launchable instances', () => {
     const entry = createKangurGameCatalogEntries().find(
       (candidate) => candidate.game.id === 'art_color_harmony_studio'
     );
@@ -124,7 +124,7 @@ describe('kangur game catalog', () => {
     expect(variant).not.toHaveProperty('lessonActivityRuntimeId');
   });
 
-  it('keeps geometry workshop lesson-stage variants unbound once lessons use launchable instances', () => {
+  it('keeps the geometry workshop .lesson-stage id unbound once lessons use launchable instances', () => {
     const entry = createKangurGameCatalogEntries().find(
       (candidate) => candidate.game.id === 'geometry_shape_workshop'
     );
@@ -155,7 +155,7 @@ describe('kangur game catalog', () => {
     );
   });
 
-  it('promotes shared English grammar stage engines into serialized game-screen variants', () => {
+  it('promotes shared English grammar engines into serialized game-screen variants', () => {
     const entries = createKangurGameCatalogEntries();
     const subjectVerbEntry = entries.find(
       (candidate) => candidate.game.id === 'english_subject_verb_agreement'
@@ -326,7 +326,7 @@ describe('kangur game catalog', () => {
     });
   });
 
-  it('promotes agentic stage engines into serialized game-screen variants for launchable reuse', () => {
+  it('promotes agentic engines into serialized game-screen variants for launchable reuse', () => {
     const entries = createKangurGameCatalogEntries();
     const promptTrimEntry = entries.find((candidate) => candidate.game.id === 'agentic_prompt_trim_stage');
     const approvalGateEntry = entries.find((candidate) => candidate.game.id === 'agentic_approval_gate');

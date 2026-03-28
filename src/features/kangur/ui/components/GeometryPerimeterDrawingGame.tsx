@@ -15,7 +15,7 @@ import {
 import KangurAnswerChoiceCard from '@/features/kangur/ui/components/KangurAnswerChoiceCard';
 import {
   KangurPracticeGameProgress,
-  KangurPracticeGameStage,
+  KangurPracticeGameShell,
   KangurPracticeGameSummary,
   KangurPracticeGameSummaryActions,
   KangurPracticeGameSummaryBreakdown,
@@ -648,7 +648,7 @@ export default function GeometryPerimeterDrawingGame({
   }
 
   return (
-    <KangurPracticeGameStage>
+    <KangurPracticeGameShell>
       <KangurDrawingStatusRegions
         keyboardStatus={keyboardStatus}
         keyboardStatusTestId='geometry-perimeter-keyboard-status'
@@ -840,6 +840,6 @@ export default function GeometryPerimeterDrawingGame({
           width={CANVAS_WIDTH}
         />
       </KangurGlassPanel>
-    </KangurPracticeGameStage>
+    </KangurPracticeGameShell>
   );
 }

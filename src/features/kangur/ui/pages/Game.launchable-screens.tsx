@@ -9,7 +9,7 @@ import type {
 import { getKangurLaunchableGameRuntimeSpec } from '@/features/kangur/games/launchable-runtime-specs';
 import { mergeKangurLaunchableGameRuntimeSpec } from '@/features/kangur/games/launchable-runtime-resolution';
 import KangurLaunchableGameRuntime from '@/features/kangur/ui/components/KangurLaunchableGameRuntime';
-import { renderKangurGameQuizStage } from '@/features/kangur/ui/components/KangurGameQuizStage';
+import { renderKangurGameQuizShell } from '@/features/kangur/ui/components/KangurGameQuizShell';
 import { KANGUR_LAUNCHABLE_GAME_SCREENS } from '@/features/kangur/ui/services/game-launch';
 import type { KangurGameScreen } from '@/features/kangur/ui/types';
 
@@ -30,7 +30,7 @@ const KangurConfigurableLaunchableGameScreen = ({
   };
 
   return (
-    renderKangurGameQuizStage({
+    renderKangurGameQuizShell({
       ...shellProps,
       children: ({ handleHome }) => (
         <KangurLaunchableGameRuntime onFinish={handleHome} runtime={runtime} />

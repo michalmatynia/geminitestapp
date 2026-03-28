@@ -2,13 +2,13 @@
 
 import { useTranslations } from 'next-intl';
 
-import { renderKangurGameQuizStage } from '@/features/kangur/ui/components/KangurGameQuizStage';
+import { renderKangurGameQuizShell } from '@/features/kangur/ui/components/KangurGameQuizShell';
 import LogicalClassificationGame from '@/features/kangur/ui/components/LogicalClassificationGame';
 
 export function KangurGameLogicalClassificationQuizWidget(): React.JSX.Element | null {
   const translations = useTranslations('KangurGameWidgets');
 
-  return renderKangurGameQuizStage({
+  return renderKangurGameQuizShell({
     accent: 'teal',
     children: ({ handleHome }) => (
       <LogicalClassificationGame

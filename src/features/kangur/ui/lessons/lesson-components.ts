@@ -1,4 +1,4 @@
-export { default as LessonActivityStage } from '@/features/kangur/ui/components/LessonActivityStage';
+export { default as LessonActivityShell } from '@/features/kangur/ui/components/LessonActivityShell';
 export { default as LessonHub } from '@/features/kangur/ui/components/LessonHub';
 export { default as LessonSlideSection } from '@/features/kangur/ui/components/LessonSlideSection';
 export {

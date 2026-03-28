@@ -183,7 +183,7 @@ describe('MusicDiatonicScaleLesson', () => {
     });
   });
 
-  it('renders the freeplay hub section and opens the freeplay stage', async () => {
+  it('renders the freeplay hub section and opens the freeplay game shell', async () => {
     isMobileViewportMock = true;
 
     renderWithIntl(

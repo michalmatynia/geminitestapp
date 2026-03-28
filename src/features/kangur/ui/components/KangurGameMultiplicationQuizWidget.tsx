@@ -1,8 +1,8 @@
-import { renderKangurGameQuizStage } from '@/features/kangur/ui/components/KangurGameQuizStage';
+import { renderKangurGameQuizShell } from '@/features/kangur/ui/components/KangurGameQuizShell';
 import MultiplicationGame from '@/features/kangur/ui/components/MultiplicationGame';
 
 export function KangurGameMultiplicationQuizWidget(): React.JSX.Element | null {
-  return renderKangurGameQuizStage({
+  return renderKangurGameQuizShell({
     accent: 'violet',
     children: ({ handleHome }) => (
       <MultiplicationGame finishLabelVariant='play' onFinish={handleHome} />

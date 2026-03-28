@@ -5,11 +5,11 @@
 import { fireEvent, render, screen, within } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 
-import LessonActivityStage from '@/features/kangur/ui/components/LessonActivityStage';
+import LessonActivityShell from '@/features/kangur/ui/components/LessonActivityShell';
 import { KangurLessonNavigationProvider } from '@/features/kangur/ui/context/KangurLessonNavigationContext';
 import { KangurLessonPrintProvider } from '@/features/kangur/ui/context/KangurLessonPrintContext';
 
-describe('LessonActivityStage', () => {
+describe('LessonActivityShell', () => {
   it('renders the unlocked secret pill in game subsections and routes it through the shared context', () => {
     const onOpen = vi.fn();
 
@@ -18,14 +18,14 @@ describe('LessonActivityStage', () => {
         onBack={vi.fn()}
         secretLessonPill={{ isUnlocked: true, onOpen }}
       >
-        <LessonActivityStage
+        <LessonActivityShell
           accent='indigo'
           icon='🕐'
           onBack={vi.fn()}
           title='Ćwiczenie: Godziny'
         >
           <div>Gra</div>
-        </LessonActivityStage>
+        </LessonActivityShell>
       </KangurLessonNavigationProvider>
     );
 
@@ -54,7 +54,7 @@ describe('LessonActivityStage', () => {
 
   it('does not repeat the inner title block when a subsection header already owns that content', () => {
     render(
-      <LessonActivityStage
+      <LessonActivityShell
         accent='indigo'
         description='Trenuj pełne godziny i krótką wskazówkę'
         headerTestId='lesson-activity-header'
@@ -70,7 +70,7 @@ describe('LessonActivityStage', () => {
         title='Ćwiczenie: Godziny'
       >
         <div>Gra</div>
-      </LessonActivityStage>
+      </LessonActivityShell>
     );
 
     expect(screen.queryByTestId('lesson-activity-header')).not.toBeInTheDocument();
@@ -80,7 +80,7 @@ describe('LessonActivityStage', () => {
 
   it('keeps the inner title block for standalone stages without a subsection header', () => {
     render(
-      <LessonActivityStage
+      <LessonActivityShell
         accent='indigo'
         description='Przejdź przez szybkie zadania.'
         headerTestId='lesson-activity-header'
@@ -90,7 +90,7 @@ describe('LessonActivityStage', () => {
         title='Ćwiczenia'
       >
         <div>Gra</div>
-      </LessonActivityStage>
+      </LessonActivityShell>
     );
 
     expect(screen.getByTestId('lesson-activity-header')).toBeInTheDocument();
@@ -121,7 +121,7 @@ describe('LessonActivityStage', () => {
 
   it('can render a plain shell without the shared glass panel wrapper', () => {
     render(
-      <LessonActivityStage
+      <LessonActivityShell
         accent='sky'
         icon='🎹'
         onBack={vi.fn()}
@@ -130,7 +130,7 @@ describe('LessonActivityStage', () => {
         title='Powtorz melodie'
       >
         <div>Gra muzyczna</div>
-      </LessonActivityStage>
+      </LessonActivityShell>
     );
 
     expect(screen.getByTestId('lesson-activity-plain-shell')).toBeInTheDocument();
@@ -148,14 +148,14 @@ describe('LessonActivityStage', () => {
 
     render(
       <KangurLessonPrintProvider onPrintPanel={onPrintPanel}>
-        <LessonActivityStage
+        <LessonActivityShell
           accent='indigo'
           icon='🕐'
           onBack={vi.fn()}
           title='Ćwiczenie: Godziny'
         >
           <div>Gra</div>
-        </LessonActivityStage>
+        </LessonActivityShell>
       </KangurLessonPrintProvider>
     );
 

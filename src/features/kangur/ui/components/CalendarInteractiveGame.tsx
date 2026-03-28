@@ -14,7 +14,7 @@ import {
 import KangurAnswerChoiceCard from '@/features/kangur/ui/components/KangurAnswerChoiceCard';
 import {
   KangurPracticeGameProgress,
-  KangurPracticeGameStage,
+  KangurPracticeGameShell,
   KangurPracticeGameSummary,
   KangurPracticeGameSummaryActions,
   KangurPracticeGameSummaryEmoji,
@@ -538,7 +538,7 @@ export default function CalendarInteractiveGame({
   }
 
   return (
-    <KangurPracticeGameStage className='mx-auto max-w-lg'>
+    <KangurPracticeGameShell className='mx-auto max-w-lg'>
       {resolvedSection !== 'mixed' ? (
         <KangurInfoCard
           accent={trainingSectionContent.accent}
@@ -985,6 +985,6 @@ export default function CalendarInteractiveGame({
           </div>
         </KangurDragDropContext>
       )}
-    </KangurPracticeGameStage>
+    </KangurPracticeGameShell>
   );
 }

@@ -9,19 +9,19 @@ vi.mock('@/features/kangur/ui/hooks/useKangurCoarsePointer', () => ({
   useKangurCoarsePointer: () => true,
 }));
 
-import LessonActivityStage from '@/features/kangur/ui/components/LessonActivityStage';
+import LessonActivityShell from '@/features/kangur/ui/components/LessonActivityShell';
 import { KangurLessonNavigationProvider } from '@/features/kangur/ui/context/KangurLessonNavigationContext';
 
-describe('LessonActivityStage touch mode', () => {
+describe('LessonActivityShell touch mode', () => {
   it('uses a larger touch-friendly secret lesson pill on coarse pointers', () => {
     render(
       <KangurLessonNavigationProvider
         onBack={vi.fn()}
         secretLessonPill={{ isUnlocked: true, onOpen: vi.fn() }}
       >
-        <LessonActivityStage accent='indigo' icon='🕐' onBack={vi.fn()} title='Ćwiczenie'>
+        <LessonActivityShell accent='indigo' icon='🕐' onBack={vi.fn()} title='Ćwiczenie'>
           <div>Gra</div>
-        </LessonActivityStage>
+        </LessonActivityShell>
       </KangurLessonNavigationProvider>
     );
 

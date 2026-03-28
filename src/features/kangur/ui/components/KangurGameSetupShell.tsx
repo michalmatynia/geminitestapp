@@ -7,7 +7,7 @@ import { KangurPageIntroCard } from '@/features/kangur/ui/components/KangurPageI
 import { KANGUR_PANEL_GAP_CLASSNAME } from '@/features/kangur/ui/design/tokens';
 import type { KangurProgressState } from '@/features/kangur/ui/types';
 
-export type KangurGameSetupStageProps = {
+export type KangurGameSetupShellProps = {
   afterIntro?: ReactNode;
   description: ReactNode;
   introClassName?: string;
@@ -20,7 +20,7 @@ export type KangurGameSetupStageProps = {
   children: ReactNode;
 };
 
-export function renderKangurGameSetupStage({
+export function renderKangurGameSetupShell({
   afterIntro,
   description,
   introClassName = 'max-w-md',
@@ -31,7 +31,7 @@ export function renderKangurGameSetupStage({
   title,
   visualTitle,
   children,
-}: KangurGameSetupStageProps): React.JSX.Element {
+}: KangurGameSetupShellProps): React.JSX.Element {
   return (
     <div className={`w-full flex flex-col items-center ${KANGUR_PANEL_GAP_CLASSNAME}`}>
       <KangurPageIntroCard

@@ -548,7 +548,7 @@ export default function MusicMelodyRepeatGame({
   }
 
   return (
-    <div className='w-full' data-testid={MUSIC_MELODY_REPEAT_TEST_IDS.stage}>
+    <div className='w-full' data-testid={MUSIC_MELODY_REPEAT_TEST_IDS.root}>
       <div className='relative flex w-full flex-col gap-4 px-2 sm:gap-5 sm:px-3'>
         <div className='pointer-events-none absolute -right-12 top-0 h-40 w-40 rounded-full bg-sky-200/30 blur-3xl' />
         <div className='pointer-events-none absolute -left-14 bottom-0 h-36 w-36 rounded-full bg-violet-200/25 blur-3xl' />

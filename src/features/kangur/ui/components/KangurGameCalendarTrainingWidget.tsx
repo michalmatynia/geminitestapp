@@ -1,8 +1,8 @@
 import CalendarTrainingGame from '@/features/kangur/ui/components/CalendarTrainingGame';
-import { renderKangurGameQuizStage } from '@/features/kangur/ui/components/KangurGameQuizStage';
+import { renderKangurGameQuizShell } from '@/features/kangur/ui/components/KangurGameQuizShell';
 
 export function KangurGameCalendarTrainingWidget(): React.JSX.Element | null {
-  return renderKangurGameQuizStage({
+  return renderKangurGameQuizShell({
     accent: 'emerald',
     children: ({ handleHome }) => <CalendarTrainingGame onFinish={handleHome} />,
     icon: '📅',

@@ -12,7 +12,7 @@ import {
 
 import {
   KangurPracticeGameProgress,
-  KangurPracticeGameStage,
+  KangurPracticeGameShell,
   KangurPracticeGameSummary,
   KangurPracticeGameSummaryActions,
   KangurPracticeGameSummaryBreakdown,
@@ -467,7 +467,7 @@ export default function EnglishSentenceStructureGame({
   }
 
   return (
-    <KangurPracticeGameStage className='max-w-sm' data-testid='english-structure-game-stage'>
+    <KangurPracticeGameShell className='max-w-sm' data-testid='english-structure-game-stage'>
       <KangurPracticeGameProgress
         accent={round.accent}
         currentRound={roundIndex}
@@ -690,6 +690,6 @@ export default function EnglishSentenceStructureGame({
           </KangurButton>
         </div>
       </KangurGlassPanel>
-    </KangurPracticeGameStage>
+    </KangurPracticeGameShell>
   );
 }

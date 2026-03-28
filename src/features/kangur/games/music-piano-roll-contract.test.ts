@@ -76,7 +76,7 @@ describe('music piano roll contract', () => {
         shell: 'music-melody-repeat-piano-roll',
         stepPrefix: 'music-melody-repeat-step',
       },
-      stage: 'music-melody-repeat-stage',
+      root: 'music-melody-repeat-game',
     });
     expect(KANGUR_MUSIC_PIANO_ROLL_WRAPPER_TEST_IDS.freePlay).toEqual({
       audioStatus: 'music-piano-roll-freeplay-audio',

@@ -22,12 +22,12 @@ import { useKangurCoarsePointer } from '@/features/kangur/ui/hooks/useKangurCoar
 import type { KangurRewardBreakdownEntry } from '@/features/kangur/ui/types';
 import { cn } from '@/features/kangur/shared/utils';
 
-type KangurPracticeGameStageProps = React.HTMLAttributes<HTMLDivElement>;
+type KangurPracticeGameShellProps = React.HTMLAttributes<HTMLDivElement>;
 
-export function KangurPracticeGameStage({
+export function KangurPracticeGameShell({
   className,
   ...props
-}: KangurPracticeGameStageProps): React.JSX.Element {
+}: KangurPracticeGameShellProps): React.JSX.Element {
   return (
     <div
       className={cn(

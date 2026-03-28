@@ -13,7 +13,7 @@ import {
 
 import {
   KangurPracticeGameProgress,
-  KangurPracticeGameStage,
+  KangurPracticeGameShell,
   KangurPracticeGameSummary,
   KangurPracticeGameSummaryActions,
   KangurPracticeGameSummaryBreakdown,
@@ -652,7 +652,7 @@ export default function DivisionGroupsGame({
   const tokenAriaLabel = translations('divisionGroups.aria.token');
 
   return (
-    <KangurPracticeGameStage className='w-full max-w-none'>
+    <KangurPracticeGameShell className='w-full max-w-none'>
       <KangurPracticeGameProgress
         accent='teal'
         currentRound={roundIndex}
@@ -1023,6 +1023,6 @@ export default function DivisionGroupsGame({
           </div>
         </div>
       </KangurGlassPanel>
-    </KangurPracticeGameStage>
+    </KangurPracticeGameShell>
   );
 }

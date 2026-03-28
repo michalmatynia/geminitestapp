@@ -7,7 +7,7 @@ import { useRef, useState } from 'react';
 import KangurAnswerChoiceCard from '@/features/kangur/ui/components/KangurAnswerChoiceCard';
 import {
   KangurPracticeGameProgress,
-  KangurPracticeGameStage,
+  KangurPracticeGameShell,
   KangurPracticeGameSummary,
   KangurPracticeGameSummaryActions,
   KangurPracticeGameSummaryBreakdown,
@@ -248,7 +248,7 @@ export default function MultiplicationGame({
   }
 
   return (
-    <KangurPracticeGameStage>
+    <KangurPracticeGameShell>
       <KangurPracticeGameProgress
         accent='indigo'
         currentRound={roundIndex}
@@ -388,6 +388,6 @@ export default function MultiplicationGame({
           </KangurButton>
         </KangurGlassPanel>
       </div>
-    </KangurPracticeGameStage>
+    </KangurPracticeGameShell>
   );
 }

@@ -21,14 +21,14 @@ export const KANGUR_GAME_ENGINE_IMPLEMENTATIONS: readonly KangurGameEngineImplem
   {
     engineId: 'clock-dial-engine',
     ownership: 'shared_runtime',
-    runtimeIds: ['clock_training_game', 'ClockTrainingStageGame'],
+    runtimeIds: ['clock_training_game', 'ClockTrainingLessonGame'],
     summary:
       'Clock practice now runs through shared lesson and fullscreen engine surfaces, with lesson usage stored as reusable instances instead of lesson-local wrappers.',
   },
   {
     engineId: 'calendar-grid-engine',
     ownership: 'shared_runtime',
-    runtimeIds: ['calendar_interactive_game', 'CalendarInteractiveStageGame', 'calendar_training_game'],
+    runtimeIds: ['calendar_interactive_game', 'CalendarInteractiveLessonGame', 'calendar_training_game'],
     summary:
       'Calendar practice is extracted into shared lesson and fullscreen engine surfaces, with reusable instances replacing lesson-local runtime wiring.',
   },

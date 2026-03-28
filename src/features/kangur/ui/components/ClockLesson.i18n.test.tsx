@@ -141,7 +141,7 @@ describe('ClockLesson i18n', () => {
     expect(screen.getByText(/We jump by 5 minutes/i)).toBeInTheDocument();
   });
 
-  it('renders English practice stage copy', async () => {
+  it('renders English practice game copy', async () => {
     renderLesson();
 
     fireEvent.click(screen.getByTestId('lesson-hub-section-game_hours'));
@@ -198,7 +198,7 @@ describe('ClockLesson i18n', () => {
     ).toBeInTheDocument();
   });
 
-  it('renders German practice stage copy', async () => {
+  it('renders German practice game copy', async () => {
     renderLesson({ locale: 'de', messages: deMessages });
 
     fireEvent.click(screen.getByTestId('lesson-hub-section-game_hours'));

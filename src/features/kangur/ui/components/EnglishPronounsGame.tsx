@@ -6,7 +6,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 
 import {
   KangurPracticeGameProgress,
-  KangurPracticeGameStage,
+  KangurPracticeGameShell,
   KangurPracticeGameSummary,
   KangurPracticeGameSummaryActions,
   KangurPracticeGameSummaryBreakdown,
@@ -242,7 +242,7 @@ export default function EnglishPronounsGame({
   const feedbackAccent: KangurAccent = feedback?.kind === 'success' ? 'emerald' : 'rose';
 
   return (
-    <KangurPracticeGameStage className='max-w-sm'>
+    <KangurPracticeGameShell className='max-w-sm'>
       <KangurPracticeGameProgress
         accent={round.accent}
         currentRound={roundIndex}
@@ -345,6 +345,6 @@ export default function EnglishPronounsGame({
           )}
         </KangurButton>
       </KangurGlassPanel>
-    </KangurPracticeGameStage>
+    </KangurPracticeGameShell>
   );
 }

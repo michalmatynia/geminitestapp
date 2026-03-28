@@ -1,8 +1,8 @@
 import GeometryDrawingGame from '@/features/kangur/ui/components/GeometryDrawingGame';
-import { renderKangurGameQuizStage } from '@/features/kangur/ui/components/KangurGameQuizStage';
+import { renderKangurGameQuizShell } from '@/features/kangur/ui/components/KangurGameQuizShell';
 
 export function KangurGameGeometryTrainingWidget(): React.JSX.Element | null {
-  return renderKangurGameQuizStage({
+  return renderKangurGameQuizShell({
     accent: 'violet',
     children: ({ handleHome }) => <GeometryDrawingGame onFinish={handleHome} />,
     icon: '🔷',

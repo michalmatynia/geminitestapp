@@ -13,7 +13,7 @@ import {
 } from '@/features/kangur/ui/components/KangurDragDropContext';
 import {
   KangurPracticeGameProgress,
-  KangurPracticeGameStage,
+  KangurPracticeGameShell,
   KangurPracticeGameSummary,
   KangurPracticeGameSummaryActions,
   KangurPracticeGameSummaryBreakdown,
@@ -796,7 +796,7 @@ export default function EnglishAdjectivesSceneGame({
   const feedbackAccent: KangurAccent = feedback?.kind === 'success' ? 'emerald' : 'rose';
 
   return (
-    <KangurPracticeGameStage className='mx-auto max-w-4xl'>
+    <KangurPracticeGameShell className='mx-auto max-w-4xl'>
       <KangurPracticeGameProgress
         accent={round.accent}
         currentRound={roundIndex}
@@ -1226,7 +1226,7 @@ export default function EnglishAdjectivesSceneGame({
           </div>
         </KangurGlassPanel>
       </KangurDragDropContext>
-    </KangurPracticeGameStage>
+    </KangurPracticeGameShell>
   );
 }
 

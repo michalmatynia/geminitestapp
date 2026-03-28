@@ -12,7 +12,7 @@ import {
 import { useInterval } from '@/features/kangur/shared/hooks/use-interval';
 import { ErrorSystem } from '@/features/kangur/shared/utils/observability/error-system-client';
 import {
-  KangurPracticeGameStage,
+  KangurPracticeGameShell,
   KangurPracticeGameSummary,
   KangurPracticeGameSummaryActions,
   KangurPracticeGameSummaryEmoji,
@@ -707,7 +707,7 @@ export default function NumberBalanceRushGame(
 
   if (phase === 'waiting' && match && player) {
     return (
-      <KangurPracticeGameStage className='w-full max-w-xl'>
+      <KangurPracticeGameShell className='w-full max-w-xl'>
         <KangurGlassPanel className='w-full rounded-[28px] p-6 text-center' surface='playField'>
           <div className='text-sm font-semibold text-amber-900'>
             {translations('numberBalance.inRound.waiting.title')}
@@ -739,13 +739,13 @@ export default function NumberBalanceRushGame(
             </KangurStatusChip>
           </div>
         </KangurGlassPanel>
-      </KangurPracticeGameStage>
+      </KangurPracticeGameShell>
     );
   }
 
   if (phase === 'loading' || !match || !player || !puzzle) {
     return (
-      <KangurPracticeGameStage className='w-full max-w-xl'>
+      <KangurPracticeGameShell className='w-full max-w-xl'>
         <KangurGlassPanel className='w-full rounded-[28px] p-6 text-center' surface='playField'>
           <div className='text-sm font-semibold text-amber-900'>
             {translations('numberBalance.inRound.loading')}
@@ -765,7 +765,7 @@ export default function NumberBalanceRushGame(
             </div>
           ) : null}
         </KangurGlassPanel>
-      </KangurPracticeGameStage>
+      </KangurPracticeGameShell>
     );
   }
 
@@ -831,7 +831,7 @@ export default function NumberBalanceRushGame(
 
   return (
     <KangurDragDropContext onDragEnd={handleDragEnd}>
-      <KangurPracticeGameStage className='w-full max-w-2xl'>
+      <KangurPracticeGameShell className='w-full max-w-2xl'>
         <div className='flex w-full flex-wrap items-center justify-between kangur-panel-gap'>
           <div className={KANGUR_WRAP_CENTER_ROW_CLASSNAME}>
             <KangurStatusChip className='px-4 py-2 text-sm font-bold' accent='amber'>
@@ -1112,7 +1112,7 @@ export default function NumberBalanceRushGame(
             })}
           </div>
         ) : null}
-      </KangurPracticeGameStage>
+      </KangurPracticeGameShell>
     </KangurDragDropContext>
   );
 }

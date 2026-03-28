@@ -43,12 +43,12 @@ describe('kangur game engine implementations', () => {
   it('resolves runtime component identifiers for extracted engine families', () => {
     expect(getKangurGameEngineImplementation('calendar-grid-engine').runtimeIds).toEqual([
       'calendar_interactive_game',
-      'CalendarInteractiveStageGame',
+      'CalendarInteractiveLessonGame',
       'calendar_training_game',
     ]);
     expect(getKangurGameEngineImplementation('clock-dial-engine').runtimeIds).toEqual([
       'clock_training_game',
-      'ClockTrainingStageGame',
+      'ClockTrainingLessonGame',
     ]);
     expect(getKangurGameEngineImplementation('quantity-drag-engine').runtimeIds).toEqual([
       'adding_ball_game',
@@ -161,7 +161,7 @@ describe('kangur game engine implementations', () => {
 
     expect(getKangurGameEngineImplementation('clock-dial-engine').runtimeIds).toEqual([
       'clock_training_game',
-      'ClockTrainingStageGame',
+      'ClockTrainingLessonGame',
     ]);
   });
 });

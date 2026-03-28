@@ -12,7 +12,7 @@ import {
 
 import {
   KangurPracticeGameProgress,
-  KangurPracticeGameStage,
+  KangurPracticeGameShell,
   KangurPracticeGameSummary,
   KangurPracticeGameSummaryActions,
   KangurPracticeGameSummaryBreakdown,
@@ -523,7 +523,7 @@ export default function LogicalPatternsWorkshopGame({
       onDragEnd={onDragEnd}
       onDragStart={() => setSelectedTokenId(null)}
     >
-      <KangurPracticeGameStage className='mx-auto max-w-3xl'>
+      <KangurPracticeGameShell className='mx-auto max-w-3xl'>
         <KangurPracticeGameProgress
           accent='violet'
           currentRound={roundIndex}
@@ -914,7 +914,7 @@ export default function LogicalPatternsWorkshopGame({
             </KangurButton>
           )}
         </div>
-      </KangurPracticeGameStage>
+      </KangurPracticeGameShell>
     </KangurDragDropContext>
   );
 }

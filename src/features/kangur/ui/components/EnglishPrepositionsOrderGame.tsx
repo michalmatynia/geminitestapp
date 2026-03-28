@@ -12,7 +12,7 @@ import {
 
 import {
   KangurPracticeGameProgress,
-  KangurPracticeGameStage,
+  KangurPracticeGameShell,
   KangurPracticeGameSummary,
   KangurPracticeGameSummaryActions,
   KangurPracticeGameSummaryBreakdown,
@@ -401,7 +401,7 @@ export default function EnglishPrepositionsOrderGame({
   const feedbackAccent: KangurAccent = feedback?.kind === 'success' ? 'emerald' : 'rose';
 
   return (
-    <KangurPracticeGameStage className='mx-auto max-w-3xl'>
+    <KangurPracticeGameShell className='mx-auto max-w-3xl'>
       <KangurPracticeGameProgress
         accent={round.accent}
         currentRound={roundIndex}
@@ -550,7 +550,7 @@ export default function EnglishPrepositionsOrderGame({
           </div>
         </KangurGlassPanel>
       </KangurDragDropContext>
-    </KangurPracticeGameStage>
+    </KangurPracticeGameShell>
   );
 }
 

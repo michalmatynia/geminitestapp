@@ -7,7 +7,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 
 import {
   KangurPracticeGameProgress,
-  KangurPracticeGameStage,
+  KangurPracticeGameShell,
   KangurPracticeGameSummary,
   KangurPracticeGameSummaryActions,
   KangurPracticeGameSummaryBreakdown,
@@ -523,7 +523,7 @@ export default function EnglishPrepositionsSortGame({
   const feedbackAccent: KangurAccent = feedback?.kind === 'success' ? 'emerald' : 'rose';
 
   return (
-    <KangurPracticeGameStage className='mx-auto max-w-3xl'>
+    <KangurPracticeGameShell className='mx-auto max-w-3xl'>
       <KangurPracticeGameProgress
         accent={round.accent}
         currentRound={roundIndex}
@@ -771,7 +771,7 @@ export default function EnglishPrepositionsSortGame({
           </div>
         </KangurGlassPanel>
       </KangurDragDropContext>
-    </KangurPracticeGameStage>
+    </KangurPracticeGameShell>
   );
 }
 

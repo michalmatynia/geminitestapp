@@ -7,7 +7,7 @@ import { useRef, useState } from 'react';
 
 import {
   KangurPracticeGameProgress,
-  KangurPracticeGameStage,
+  KangurPracticeGameShell,
   KangurPracticeGameSummary,
   KangurPracticeGameSummaryActions,
   KangurPracticeGameSummaryBreakdown,
@@ -166,7 +166,7 @@ export default function AddingBallGame({
   const touchHint = touchHintByMode[round.mode];
 
   return (
-    <KangurPracticeGameStage className='w-full max-w-none'>
+    <KangurPracticeGameShell className='w-full max-w-none'>
       <KangurPracticeGameProgress
         accent='amber'
         currentRound={roundIdx}
@@ -205,6 +205,6 @@ export default function AddingBallGame({
           </motion.div>
         </AnimatePresence>
       </KangurGlassPanel>
-    </KangurPracticeGameStage>
+    </KangurPracticeGameShell>
   );
 }

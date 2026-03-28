@@ -13,7 +13,7 @@ import {
 
 import {
   KangurPracticeGameProgress,
-  KangurPracticeGameStage,
+  KangurPracticeGameShell,
   KangurPracticeGameSummary,
   KangurPracticeGameSummaryActions,
   KangurPracticeGameSummaryBreakdown,
@@ -559,7 +559,7 @@ export default function SubtractingGardenGame({
   const tokenAriaLabel = translations('subtractingGarden.aria.token');
 
   return (
-    <KangurPracticeGameStage className='w-full max-w-none'>
+    <KangurPracticeGameShell className='w-full max-w-none'>
       <KangurPracticeGameProgress
         accent='rose'
         currentRound={roundIndex}
@@ -907,6 +907,6 @@ export default function SubtractingGardenGame({
           </div>
         </div>
       </KangurGlassPanel>
-    </KangurPracticeGameStage>
+    </KangurPracticeGameShell>
   );
 }

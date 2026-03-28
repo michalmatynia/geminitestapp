@@ -15,7 +15,7 @@ import {
 import type { KangurGameId } from '@/shared/contracts/kangur-games';
 import type { KangurGameInstanceId } from '@/shared/contracts/kangur-game-instances';
 import type { KangurGameRuntimeRendererProps } from '@/shared/contracts/kangur-game-runtime-renderer-props';
-import LessonActivityStage from '@/features/kangur/ui/components/LessonActivityStage';
+import LessonActivityShell from '@/features/kangur/ui/components/LessonActivityShell';
 import KangurLaunchableGameInstanceRuntime from '@/features/kangur/ui/components/KangurLaunchableGameInstanceRuntime';
 import LessonHub, { type HubSection } from '@/features/kangur/ui/components/LessonHub';
 import LessonSlideSection, {
@@ -41,8 +41,8 @@ import { getMotionSafeScrollBehavior } from '@/shared/utils/motion-accessibility
 
 const DEFAULT_DESCRIPTION = '';
 
-type LessonActivityAccent = ComponentProps<typeof LessonActivityStage>['accent'];
-type LessonActivityShellVariant = ComponentProps<typeof LessonActivityStage>['shellVariant'];
+type LessonActivityAccent = ComponentProps<typeof LessonActivityShell>['accent'];
+type LessonActivityShellVariant = ComponentProps<typeof LessonActivityShell>['shellVariant'];
 
 type KangurUnifiedLessonContextValue = {
   returnToHub: () => void;
@@ -206,7 +206,7 @@ const renderKangurUnifiedLessonGameStage = <SectionId extends string>({
     : handleReturnToHub;
 
   return (
-    <LessonActivityStage
+    <LessonActivityShell
       accent={stage.accent}
       backButtonLabel={stage.backButtonLabel}
       description={stage.description}
@@ -229,7 +229,7 @@ const renderKangurUnifiedLessonGameStage = <SectionId extends string>({
         instanceId={gameConfig.launchableInstance.instanceId}
         onFinish={gameHelpers.onFinish}
       />
-    </LessonActivityStage>
+    </LessonActivityShell>
   );
 };
 

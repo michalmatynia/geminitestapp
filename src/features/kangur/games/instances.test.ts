@@ -193,7 +193,7 @@ describe('kangur built-in game instances', () => {
     ]);
   });
 
-  it('creates built-in instances for agentic stage games once fullscreen variants exist', () => {
+  it('creates built-in instances for seeded agentic games once fullscreen variants exist', () => {
     const promptTrimInstances = getKangurGameBuiltInInstancesForGame(
       getKangurGameDefinition('agentic_prompt_trim_stage')
     );

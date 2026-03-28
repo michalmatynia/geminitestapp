@@ -37,7 +37,6 @@ type KangurMusicPianoRollWrapperTestIds = {
     stepPrefix: string;
   };
   root?: string;
-  stage?: string;
 };
 
 type KangurMusicPianoRollDerivedConfig = {
@@ -128,7 +127,7 @@ export const KANGUR_MUSIC_PIANO_ROLL_CONFIGS = {
         shell: 'music-melody-repeat-piano-roll',
         stepPrefix: 'music-melody-repeat-step',
       },
-      stage: 'music-melody-repeat-stage',
+      root: 'music-melody-repeat-game',
     },
   },
   freePlay: {

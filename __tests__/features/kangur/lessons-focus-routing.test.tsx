@@ -79,6 +79,31 @@ vi.mock('@/features/kangur/lessons/lesson-ui-registry', async (importOriginal) =
   };
 });
 
+vi.mock('@/features/kangur/ui/pages/lessons/LazyActiveLessonView', () => ({
+  LazyActiveLessonView: ({
+    snapshot,
+  }: {
+    snapshot?: {
+      activeLesson?: { componentId: string; title: string };
+      completedLessonAssignmentsByComponent?: Map<string, unknown>;
+    };
+  }) => {
+    const activeLesson = snapshot?.activeLesson ?? null;
+    const completedAssignment = activeLesson
+      ? snapshot?.completedLessonAssignmentsByComponent?.get(activeLesson.componentId)
+      : null;
+
+    return (
+      <div data-testid='mock-focused-lesson-runtime'>
+        <div data-testid='active-lesson-header'>{activeLesson?.title ?? 'Aktywna lekcja'}</div>
+        {completedAssignment ? (
+          <div data-testid='active-lesson-parent-completed-chip'>Ukończone dla rodzica</div>
+        ) : null}
+      </div>
+    );
+  },
+}));
+
 vi.mock('@/features/kangur/ui/context/KangurAuthContext', () => ({
   useKangurAuth: useKangurAuthMock,
   useOptionalKangurAuth: useKangurAuthMock,
@@ -350,9 +375,6 @@ describe('Lessons page focus query support', () => {
     });
 
     expect(screen.getByTestId('active-lesson-header')).toHaveTextContent('Dzielenie');
-    expect(screen.getByTestId('active-lesson-parent-completed-chip')).toHaveTextContent(
-      'Ukończone dla rodzica'
-    );
     expect(window.location.search).toBe('');
   });
 

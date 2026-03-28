@@ -3,7 +3,7 @@
 import { useLocale, useTranslations } from 'next-intl';
 import { useMemo } from 'react';
 
-import { renderKangurGameSetupStage } from '@/features/kangur/ui/components/KangurGameSetupStage';
+import { renderKangurGameSetupShell } from '@/features/kangur/ui/components/KangurGameSetupShell';
 import KangurPracticeAssignmentBanner from '@/features/kangur/ui/components/KangurPracticeAssignmentBanner';
 import { KangurTrainingSetupPanel } from '@/features/kangur/ui/components/KangurTrainingSetupPanel';
 import { KangurTreningWordmark } from '@/features/kangur/ui/components/KangurTreningWordmark';
@@ -60,7 +60,7 @@ export function KangurGameTrainingSetupWidget(): React.JSX.Element | null {
     return null;
   }
 
-  return renderKangurGameSetupStage({
+  return renderKangurGameSetupShell({
     afterIntro:
         activePracticeAssignment ? (
           <div className='flex w-full justify-center px-4'>

@@ -1,10 +1,10 @@
 'use client';
 
 import AddingBallGame from '@/features/kangur/ui/components/AddingBallGame';
-import { renderKangurGameQuizStage } from '@/features/kangur/ui/components/KangurGameQuizStage';
+import { renderKangurGameQuizShell } from '@/features/kangur/ui/components/KangurGameQuizShell';
 
 export function KangurGameAdditionQuizWidget(): React.JSX.Element | null {
-  return renderKangurGameQuizStage({
+  return renderKangurGameQuizShell({
     accent: 'amber',
     children: ({ handleHome }) => <AddingBallGame finishLabelVariant='play' onFinish={handleHome} />,
     icon: '➕',

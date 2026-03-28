@@ -97,7 +97,7 @@ describe('MusicPianoRollFreePlayGame', () => {
     freePlayTestIds = freePlayModule.MUSIC_PIANO_ROLL_FREE_PLAY_TEST_IDS;
   });
 
-  it('renders a free-play piano roll stage and lets the learner leave', () => {
+  it('renders a free-play piano roll game shell and lets the learner leave', () => {
     const onFinish = vi.fn();
 
     render(<MusicPianoRollFreePlayGame onFinish={onFinish} />);

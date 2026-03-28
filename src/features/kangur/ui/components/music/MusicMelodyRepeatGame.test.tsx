@@ -297,7 +297,7 @@ describe('MusicMelodyRepeatGame', () => {
     melodyRepeatTestIds = melodyRepeatModule.MUSIC_MELODY_REPEAT_TEST_IDS;
     render(<MusicMelodyRepeatGame onFinish={() => undefined} />);
 
-    expect(screen.getByTestId(melodyRepeatTestIds.stage)).toHaveClass('w-full');
+    expect(screen.getByTestId(melodyRepeatTestIds.root)).toHaveClass('w-full');
     expect(screen.queryByText('Kolorowy piano roll')).not.toBeInTheDocument();
     expect(
       screen.queryByText(
@@ -337,7 +337,7 @@ describe('MusicMelodyRepeatGame', () => {
     ).toHaveClass(
       pianoRollModule.KANGUR_MUSIC_PIANO_ROLL_MOTION_HOOKS.keyClassName
     );
-    expect(screen.getByTestId(melodyRepeatTestIds.stage).firstElementChild).toHaveClass(
+    expect(screen.getByTestId(melodyRepeatTestIds.root).firstElementChild).toHaveClass(
       'px-2',
       'sm:px-3'
     );

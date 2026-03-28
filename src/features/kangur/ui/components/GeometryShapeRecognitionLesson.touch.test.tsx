@@ -28,7 +28,7 @@ vi.mock('@/features/kangur/ui/components/GeometryDrawingGame', () => ({
 }));
 vi.mock('@/features/kangur/ui/components/ShapeRecognitionGame', () => ({
   default: () => (
-    <div data-testid='shape-recognition-stage-game'>
+    <div data-testid='shape-recognition-game'>
       <button
         type='button'
         className='touch-manipulation select-none min-h-[4rem]'

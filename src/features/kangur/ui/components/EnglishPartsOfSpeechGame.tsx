@@ -12,7 +12,7 @@ import {
 
 import {
   KangurPracticeGameProgress,
-  KangurPracticeGameStage,
+  KangurPracticeGameShell,
   KangurPracticeGameSummary,
   KangurPracticeGameSummaryActions,
   KangurPracticeGameSummaryBreakdown,
@@ -721,7 +721,7 @@ export default function EnglishPartsOfSpeechGame({
   const feedbackAccent: KangurAccent = feedback?.kind === 'success' ? 'emerald' : 'rose';
 
   return (
-    <KangurPracticeGameStage className='mx-auto max-w-3xl'>
+    <KangurPracticeGameShell className='mx-auto max-w-3xl'>
       <KangurPracticeGameProgress
         accent={round.accent}
         currentRound={roundIndex}
@@ -988,6 +988,6 @@ export default function EnglishPartsOfSpeechGame({
           </div>
         </KangurGlassPanel>
       </KangurDragDropContext>
-    </KangurPracticeGameStage>
+    </KangurPracticeGameShell>
   );
 }

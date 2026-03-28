@@ -1,8 +1,8 @@
 import SubtractingGame from '@/features/kangur/ui/components/SubtractingGame';
-import { renderKangurGameQuizStage } from '@/features/kangur/ui/components/KangurGameQuizStage';
+import { renderKangurGameQuizShell } from '@/features/kangur/ui/components/KangurGameQuizShell';
 
 export function KangurGameSubtractionQuizWidget(): React.JSX.Element | null {
-  return renderKangurGameQuizStage({
+  return renderKangurGameQuizShell({
     accent: 'rose',
     children: ({ handleHome }) => <SubtractingGame finishLabelVariant='play' onFinish={handleHome} />,
     icon: '➖',

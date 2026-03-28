@@ -3,14 +3,14 @@
 import type { ReactNode } from 'react';
 import { useTranslations } from 'next-intl';
 
-import LessonActivityStage from '@/features/kangur/ui/components/LessonActivityStage';
+import LessonActivityShell from '@/features/kangur/ui/components/LessonActivityShell';
 import { useKangurGameRuntime } from '@/features/kangur/ui/context/KangurGameRuntimeContext';
 import type { KangurGameScreen } from '@/features/kangur/ui/types';
 
-type LessonActivityStageProps = React.ComponentProps<typeof LessonActivityStage>;
+type LessonActivityShellProps = React.ComponentProps<typeof LessonActivityShell>;
 
-type KangurGameQuizStageProps = {
-  accent: LessonActivityStageProps['accent'];
+type KangurGameQuizShellProps = {
+  accent: LessonActivityShellProps['accent'];
   backButtonLabel?: string;
   backScreen?: KangurGameScreen;
   children:
@@ -24,9 +24,9 @@ type KangurGameQuizStageProps = {
   title?: string;
 };
 
-export type { KangurGameQuizStageProps };
+export type { KangurGameQuizShellProps };
 
-export function renderKangurGameQuizStage({
+export function renderKangurGameQuizShell({
   accent,
   backButtonLabel,
   backScreen = 'operation',
@@ -37,7 +37,7 @@ export function renderKangurGameQuizStage({
   shellClassName = 'items-center',
   shellTestId,
   title,
-}: KangurGameQuizStageProps): React.JSX.Element | null {
+}: KangurGameQuizShellProps): React.JSX.Element | null {
   const gamePageTranslations = useTranslations('KangurGamePage');
   const gameWidgetTranslations = useTranslations('KangurGameWidgets');
   const { handleHome, screen: activeScreen, setScreen } = useKangurGameRuntime();
@@ -53,7 +53,7 @@ export function renderKangurGameQuizStage({
     description ?? gamePageTranslations(`screens.${screen}.description` as never);
 
   return (
-    <LessonActivityStage
+    <LessonActivityShell
       accent={accent}
       backButtonLabel={resolvedBackButtonLabel}
       description={resolvedDescription}
@@ -64,6 +64,6 @@ export function renderKangurGameQuizStage({
       title={resolvedTitle}
     >
       {content}
-    </LessonActivityStage>
+    </LessonActivityShell>
   );
 }

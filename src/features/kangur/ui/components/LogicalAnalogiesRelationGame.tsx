@@ -12,7 +12,7 @@ import {
 
 import {
   KangurPracticeGameProgress,
-  KangurPracticeGameStage,
+  KangurPracticeGameShell,
   KangurPracticeGameSummary,
   KangurPracticeGameSummaryActions,
   KangurPracticeGameSummaryBreakdown,
@@ -464,7 +464,7 @@ export default function LogicalAnalogiesRelationGame({
         setHoveredRelationId(null);
       }}
     >
-      <KangurPracticeGameStage className='mx-auto max-w-2xl'>
+      <KangurPracticeGameShell className='mx-auto max-w-2xl'>
         <KangurPracticeGameProgress
           accent='rose'
           currentRound={roundIndex}
@@ -897,7 +897,7 @@ export default function LogicalAnalogiesRelationGame({
             )}
           </div>
         </div>
-      </KangurPracticeGameStage>
+      </KangurPracticeGameShell>
     </KangurDragDropContext>
   );
 }

@@ -178,26 +178,49 @@ const matchLookupPrefixes = (
   return { score, signal };
 };
 
+const hasKnowledgeReferenceNativeExplainIntent = (
+  context: KangurAiTutorConversationContext | undefined,
+): boolean =>
+  (context?.knowledgeReference?.sourceCollection ===
+    'kangur_ai_tutor_native_guides' ||
+    context?.knowledgeReference?.sourceCollection ===
+      'kangur_page_content') &&
+  context?.interactionIntent === 'explain';
+
+const hasAlwaysNativeExplainFocus = (
+  context: KangurAiTutorConversationContext | undefined,
+): boolean => {
+  const focusKind = context?.focusKind ?? null;
+
+  return (
+    context?.promptMode === 'explain' &&
+    Boolean(focusKind) &&
+    ALWAYS_NATIVE_EXPLAIN_FOCUS_KINDS.has(focusKind)
+  );
+};
+
+const shouldBlockNativeGuideForSelectionIntent = (
+  normalizedMessage: string,
+  context: KangurAiTutorConversationContext | undefined,
+): boolean =>
+  NON_NATIVE_PATTERNS.some((pattern) => pattern.test(normalizedMessage)) &&
+  (Boolean(context?.selectedText?.trim()) ||
+    Boolean(context?.currentQuestion?.trim()));
+
+const hasPageHelpIntent = (normalizedMessage: string): boolean =>
+  PAGE_HELP_PATTERNS.some((pattern) => pattern.test(normalizedMessage));
+
 const shouldUseNativeGuide = (input: {
   latestUserMessage: string | null;
   context: KangurAiTutorConversationContext | undefined;
 }): boolean => {
   const normalized = normalizeMessage(input.latestUserMessage);
-  const focusKind = input.context?.focusKind ?? null;
 
-  if (
-    (input.context?.knowledgeReference?.sourceCollection === 'kangur_ai_tutor_native_guides' ||
-      input.context?.knowledgeReference?.sourceCollection === 'kangur_page_content') &&
-    input.context?.interactionIntent === 'explain'
-  ) {
+  if (hasKnowledgeReferenceNativeExplainIntent(input.context)) {
     return true;
   }
 
-  if (
-    input.context?.promptMode === 'explain' &&
-    focusKind &&
-    ALWAYS_NATIVE_EXPLAIN_FOCUS_KINDS.has(focusKind)
-  ) {
+  if (hasAlwaysNativeExplainFocus(input.context)) {
     return true;
   }
 
@@ -205,14 +228,11 @@ const shouldUseNativeGuide = (input: {
     return false;
   }
 
-  if (
-    NON_NATIVE_PATTERNS.some((pattern) => pattern.test(normalized)) &&
-    (Boolean(input.context?.selectedText?.trim()) || Boolean(input.context?.currentQuestion?.trim()))
-  ) {
+  if (shouldBlockNativeGuideForSelectionIntent(normalized, input.context)) {
     return false;
   }
 
-  return PAGE_HELP_PATTERNS.some((pattern) => pattern.test(normalized));
+  return hasPageHelpIntent(normalized);
 };
 
 const analyzeEntryMatch = (

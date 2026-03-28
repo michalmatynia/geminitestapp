@@ -67,7 +67,11 @@ describe('kangur game coverage', () => {
     );
 
     expect(KANGUR_LAUNCHABLE_GAME_LIBRARY_LESSON_COMPONENT_IDS).toEqual(
-      expect.arrayContaining(['english_adverbs', 'english_adverbs_frequency'])
+      expect.arrayContaining([
+        'english_comparatives_superlatives',
+        'english_adverbs',
+        'english_adverbs_frequency',
+      ])
     );
     expect(missingLaunchCoverage).toEqual([]);
   });
@@ -80,6 +84,9 @@ describe('kangur game coverage', () => {
 
   it('resolves lesson coverage status from shared coverage policy', () => {
     expect(resolveKangurGameLibraryLessonCoverageStatus('clock')).toBe('launchable');
+    expect(resolveKangurGameLibraryLessonCoverageStatus('english_comparatives_superlatives')).toBe(
+      'launchable'
+    );
     expect(resolveKangurGameLibraryLessonCoverageStatus('english_adverbs')).toBe('launchable');
     expect(resolveKangurGameLibraryLessonCoverageStatus('geometry_shape_recognition')).toBe(
       'launchable'

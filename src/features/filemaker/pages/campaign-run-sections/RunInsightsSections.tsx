@@ -1,7 +1,6 @@
 'use client';
 
-import React from 'react';
-import { Badge, FormSection } from '@/shared/ui';
+import { FormSection } from '@/shared/ui';
 import { formatTimestamp } from '../filemaker-page-utils';
 
 interface RunMetricsSectionProps {

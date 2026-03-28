@@ -171,8 +171,8 @@ export function AdminFilemakerCampaignEditPage(): React.JSX.Element {
         setSuppressionReasonDraft={setSuppressionReasonDraft}
         suppressionNotesDraft={suppressionNotesDraft}
         setSuppressionNotesDraft={setSuppressionNotesDraft}
-        handleAddSuppressionEntry={handleAddSuppressionEntry}
-        handleRemoveSuppressionEntry={handleRemoveSuppressionEntry}
+        handleAddSuppressionEntry={() => { void handleAddSuppressionEntry(); }}
+        handleRemoveSuppressionEntry={(email: string) => { void handleRemoveSuppressionEntry(email); }}
         isUpdatePending={isUpdatePending}
         unsubscribeLinkTemplate='{{unsubscribe_url}}'
         preferencesLinkTemplate='{{preferences_url}}'

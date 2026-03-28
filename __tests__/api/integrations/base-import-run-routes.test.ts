@@ -30,6 +30,20 @@ import { GET as reportGet } from '@/app/api/v2/integrations/imports/base/runs/[r
 import { POST as resumePost } from '@/app/api/v2/integrations/imports/base/runs/[runId]/resume/route';
 import { GET as runDetailGet } from '@/app/api/v2/integrations/imports/base/runs/[runId]/route';
 
+const buildResumeRunRequest = (payload: Record<string, unknown>) =>
+  new NextRequest('http://localhost/api/v2/integrations/imports/base/runs/run-resume-1/resume', {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify(payload),
+  });
+
+const buildCancelRunRequest = () =>
+  new NextRequest('http://localhost/api/v2/integrations/imports/base/runs/run-cancel-1/cancel', {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({}),
+  });
+
 describe('base import run routes', () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -105,11 +119,7 @@ describe('base import run routes', () => {
     });
 
     const response = await resumePost(
-      new NextRequest('http://localhost/api/v2/integrations/imports/base/runs/run-resume-1/resume', {
-        method: 'POST',
-        headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ statuses: ['failed', 'pending'] }),
-      }),
+      buildResumeRunRequest({ statuses: ['failed', 'pending'] }),
       { params: Promise.resolve({ runId: 'run-resume-1' }) }
     );
     const payload = (await response.json()) as BaseImportRunStartResponse;
@@ -138,11 +148,7 @@ describe('base import run routes', () => {
     });
 
     const response = await cancelPost(
-      new NextRequest('http://localhost/api/v2/integrations/imports/base/runs/run-cancel-1/cancel', {
-        method: 'POST',
-        headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({}),
-      }),
+      buildCancelRunRequest(),
       { params: Promise.resolve({ runId: 'run-cancel-1' }) }
     );
     const payload = (await response.json()) as BaseImportRunStartResponse;

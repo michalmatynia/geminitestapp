@@ -86,6 +86,31 @@ const createScore = (id: string) => ({
   owner_user_id: 'parent-1',
 });
 
+const cachedStartupRecentResultsPayload = {
+  'learner:learner-1': [createScore('score-1')],
+};
+
+const cachedStartupRecentResultsJson = JSON.stringify(
+  cachedStartupRecentResultsPayload,
+);
+
+const cachedStartupTrainingFocusPayload = {
+  'learner:learner-1': {
+    strongestOperation: {
+      averageAccuracyPercent: 94,
+      bestAccuracyPercent: 100,
+      family: 'logic',
+      operation: 'logical_patterns',
+      sessions: 4,
+    },
+    weakestOperation: null,
+  },
+};
+
+const cachedStartupTrainingFocusJson = JSON.stringify(
+  cachedStartupTrainingFocusPayload,
+);
+
 describe('useKangurAppStartup', () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -113,9 +138,7 @@ describe('useKangurAppStartup', () => {
 
   it('treats an authenticated snapshot refresh as boot-ready without reading cached startup data by default', () => {
     const storage = createStorage({
-      'kangur.mobile.scores.recent': JSON.stringify({
-        'learner:learner-1': [createScore('score-1')],
-      }),
+      'kangur.mobile.scores.recent': cachedStartupRecentResultsJson,
     });
     useKangurMobileAuthMock.mockReturnValue({
       authError: null,
@@ -142,18 +165,7 @@ describe('useKangurAppStartup', () => {
     });
     useKangurMobileRuntimeMock.mockReturnValue({
       storage: createStorage({
-        'kangur.mobile.scores.trainingFocus': JSON.stringify({
-          'learner:learner-1': {
-            strongestOperation: {
-              averageAccuracyPercent: 94,
-              bestAccuracyPercent: 100,
-              family: 'logic',
-              operation: 'logical_patterns',
-              sessions: 4,
-            },
-            weakestOperation: null,
-          },
-        }),
+        'kangur.mobile.scores.trainingFocus': cachedStartupTrainingFocusJson,
       }),
     });
 

@@ -88,11 +88,11 @@ export const DeliveryGovernanceSection = ({
             <div className='max-h-[200px] space-y-2 overflow-y-auto pr-2'>
               {suppressionEntries.map((entry) => (
                 <div
-                  key={entry.email}
+                  key={entry.emailAddress}
                   className='flex items-center justify-between gap-2 rounded-md border border-border/40 bg-card/40 p-2 text-xs'
                 >
                   <div className='min-w-0 flex-1 truncate'>
-                    <div className='font-medium text-white'>{entry.email}</div>
+                    <div className='font-medium text-white'>{entry.emailAddress}</div>
                     <div className='text-[10px] text-gray-500'>
                       {entry.reason} • {entry.notes || 'No notes'}
                     </div>
@@ -102,7 +102,7 @@ export const DeliveryGovernanceSection = ({
                     variant='ghost'
                     size='xs'
                     className='h-6 text-rose-400 hover:text-rose-300'
-                    onClick={() => handleRemoveSuppressionEntry(entry.email)}
+                    onClick={() => handleRemoveSuppressionEntry(entry.emailAddress)}
                     disabled={isUpdatePending}
                   >
                     Remove

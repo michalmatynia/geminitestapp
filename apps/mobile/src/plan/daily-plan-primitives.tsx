@@ -15,6 +15,7 @@ import { createKangurResultsHref } from '../scores/resultsHref';
 import {
   KangurMobileInsetPanel as InsetPanel,
   KangurMobileLinkButton as LinkButton,
+  KangurMobileMutedActionChip as MutedActionChip,
   KangurMobilePill as Pill,
   type KangurMobileTone as Tone,
 } from '../shared/KangurMobileUi';
@@ -156,24 +157,13 @@ export function AssignmentRow({
   const assignmentAction = href ? (
     <LinkButton href={href} label={actionLabel} tone='primary' />
   ) : (
-    <View
-      style={{
-        alignSelf: 'flex-start',
-        borderRadius: 999,
-        backgroundColor: '#e2e8f0',
-        paddingHorizontal: 14,
-        paddingVertical: 10,
-      }}
-    >
-      <Text style={{ color: '#475569', fontWeight: '700' }}>
-        {actionLabel} ·{' '}
-        {copy({
-          de: 'bald',
-          en: 'soon',
-          pl: 'wkrotce',
-        })}
-      </Text>
-    </View>
+    <MutedActionChip
+      label={`${actionLabel} · ${copy({
+        de: 'bald',
+        en: 'soon',
+        pl: 'wkrotce',
+      })}`}
+    />
   );
 
   return (

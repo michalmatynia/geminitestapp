@@ -25,6 +25,82 @@ const installFetchMock = (fetchMock: ReturnType<typeof vi.fn>): void => {
   globalThis.fetch = fetchMock as typeof globalThis.fetch;
 };
 
+const LEGACY_EDGE_SNAPSHOT = {
+  kind: 'case_resolver_node_file_snapshot_v2',
+  source: 'manual',
+  nodes: [
+    {
+      id: 'node-a',
+      type: 'prompt',
+      title: 'Node A',
+      description: '',
+      inputs: ['wysiwygText'],
+      outputs: ['wysiwygText'],
+      position: { x: 0, y: 0 },
+      config: { prompt: { template: '' } },
+      data: {},
+      createdAt: '2026-01-01T00:00:00.000Z',
+      updatedAt: '2026-01-01T00:00:00.000Z',
+    },
+    {
+      id: 'node-b',
+      type: 'prompt',
+      title: 'Node B',
+      description: '',
+      inputs: ['plaintextContent'],
+      outputs: ['plaintextContent'],
+      position: { x: 32, y: 0 },
+      config: { prompt: { template: '' } },
+      data: {},
+      createdAt: '2026-01-01T00:00:00.000Z',
+      updatedAt: '2026-01-01T00:00:00.000Z',
+    },
+  ],
+  edges: [
+    {
+      id: 'edge-legacy',
+      from: 'node-a',
+      to: 'node-b',
+      fromPort: 'textfield',
+      toPort: 'content',
+    },
+  ],
+  nodeMeta: {},
+  edgeMeta: {},
+  nodeFileMeta: {},
+} as const;
+
+const INVALID_SNAPSHOT = {
+  kind: 'case_resolver_node_file_snapshot_v2',
+  source: 'manual',
+  nodeId: 'legacy-node',
+  sourceFileId: 'doc-legacy',
+} as const;
+
+const INLINE_NODEFILE_SNAPSHOT = {
+  kind: 'case_resolver_node_file_snapshot_v2',
+  source: 'manual',
+  nodes: [
+    {
+      id: 'node-1',
+      type: 'prompt',
+      title: 'Node 1',
+      description: '',
+      inputs: ['prompt'],
+      outputs: ['result'],
+      position: { x: 0, y: 0 },
+      config: { prompt: { template: '' } },
+      data: {},
+      createdAt: '2026-01-01T00:00:00.000Z',
+      updatedAt: '2026-01-01T00:00:00.000Z',
+    },
+  ],
+  edges: [],
+  nodeMeta: {},
+  edgeMeta: {},
+  nodeFileMeta: {},
+} as const;
+
 describe('case resolver nodefile persistence', () => {
   let originalFetch: typeof globalThis.fetch;
 
@@ -83,50 +159,7 @@ describe('case resolver nodefile persistence', () => {
     const fetchMock = vi.fn().mockResolvedValueOnce(
       toJsonResponse(200, {
         key: buildCaseResolverNodeFileSnapshotKey('asset-legacy'),
-        value: JSON.stringify({
-          kind: 'case_resolver_node_file_snapshot_v2',
-          source: 'manual',
-          nodes: [
-            {
-              id: 'node-a',
-              type: 'prompt',
-              title: 'Node A',
-              description: '',
-              inputs: ['wysiwygText'],
-              outputs: ['wysiwygText'],
-              position: { x: 0, y: 0 },
-              config: { prompt: { template: '' } },
-              data: {},
-              createdAt: '2026-01-01T00:00:00.000Z',
-              updatedAt: '2026-01-01T00:00:00.000Z',
-            },
-            {
-              id: 'node-b',
-              type: 'prompt',
-              title: 'Node B',
-              description: '',
-              inputs: ['plaintextContent'],
-              outputs: ['plaintextContent'],
-              position: { x: 32, y: 0 },
-              config: { prompt: { template: '' } },
-              data: {},
-              createdAt: '2026-01-01T00:00:00.000Z',
-              updatedAt: '2026-01-01T00:00:00.000Z',
-            },
-          ],
-          edges: [
-            {
-              id: 'edge-legacy',
-              from: 'node-a',
-              to: 'node-b',
-              fromPort: 'textfield',
-              toPort: 'content',
-            },
-          ],
-          nodeMeta: {},
-          edgeMeta: {},
-          nodeFileMeta: {},
-        }),
+        value: JSON.stringify(LEGACY_EDGE_SNAPSHOT),
       })
     );
     installFetchMock(fetchMock);
@@ -141,12 +174,7 @@ describe('case resolver nodefile persistence', () => {
     const fetchMock = vi.fn().mockResolvedValue(
       toJsonResponse(200, {
         key: buildCaseResolverNodeFileSnapshotKey('asset-1'),
-        value: JSON.stringify({
-          kind: 'case_resolver_node_file_snapshot_v2',
-          source: 'manual',
-          nodeId: 'legacy-node',
-          sourceFileId: 'doc-legacy',
-        }),
+        value: JSON.stringify(INVALID_SNAPSHOT),
       })
     );
     installFetchMock(fetchMock);
@@ -172,29 +200,7 @@ describe('case resolver nodefile persistence', () => {
   });
 
   it('rejects inline nodefile snapshots during workspace persist', async () => {
-    const inlineSnapshot = JSON.stringify({
-      kind: 'case_resolver_node_file_snapshot_v2',
-      source: 'manual',
-      nodes: [
-        {
-          id: 'node-1',
-          type: 'prompt',
-          title: 'Node 1',
-          description: '',
-          inputs: ['prompt'],
-          outputs: ['result'],
-          position: { x: 0, y: 0 },
-          config: { prompt: { template: '' } },
-          data: {},
-          createdAt: '2026-01-01T00:00:00.000Z',
-          updatedAt: '2026-01-01T00:00:00.000Z',
-        },
-      ],
-      edges: [],
-      nodeMeta: {},
-      edgeMeta: {},
-      nodeFileMeta: {},
-    });
+    const inlineSnapshot = JSON.stringify(INLINE_NODEFILE_SNAPSHOT);
     const workspace = {
       ...createDefaultCaseResolverWorkspace(),
       assets: [

@@ -1,5 +1,5 @@
 import type { KangurTestChoice } from '@kangur/contracts';
-import { Pressable, Text, View } from 'react-native';
+import { Text } from 'react-native';
 
 import { createKangurLessonsCatalogHref } from '../lessons/lessonHref';
 import { createKangurPlanHref } from '../plan/planHref';
@@ -7,6 +7,7 @@ import { createKangurPracticeHref } from '../practice/practiceHref';
 import { createKangurResultsHref } from '../scores/resultsHref';
 import {
   BASE_TONE,
+  ChoiceCardButton,
   INDIGO_TONE,
   SUCCESS_TONE,
   WARNING_TONE,
@@ -158,69 +159,32 @@ export function ChoiceButton(props: ChoiceButtonProps): React.JSX.Element {
       : BASE_TONE;
 
   return (
-    <Pressable
-      accessibilityRole='button'
+    <ChoiceCardButton
+      description={choice.description || undefined}
       disabled={disabled}
-      onPress={onPress}
-      style={{
-        backgroundColor: tone.backgroundColor,
-        borderColor: tone.borderColor,
-        borderRadius: 20,
-        borderWidth: 1,
-        gap: 8,
-        opacity: disabled ? 0.8 : 1,
-        paddingHorizontal: 16,
-        paddingVertical: 14,
-      }}
-    >
-      <View
-        style={{
-          alignItems: 'center',
-          flexDirection: 'row',
-          gap: 10,
-        }}
-      >
-        <View
-          style={{
-            alignItems: 'center',
-            backgroundColor: '#ffffff',
-            borderColor: tone.borderColor,
-            borderRadius: 999,
-            borderWidth: 1,
-            height: 28,
-            justifyContent: 'center',
-            width: 28,
-          }}
-        >
-          <Text style={{ color: '#0f172a', fontWeight: '800' }}>{label}</Text>
-        </View>
-        <Text
-          style={{
-            color: '#0f172a',
-            flex: 1,
-            fontSize: 15,
-            fontWeight: '700',
-          }}
-        >
-          {choice.text}
-        </Text>
-      </View>
-      {choice.description ? (
-        <Text style={{ color: '#475569', fontSize: 13, lineHeight: 18 }}>
-          {choice.description}
-        </Text>
-      ) : null}
-      {choice.svgContent.trim().length > 0 ? (
-        <Text style={{ color: '#64748b', fontSize: 12, lineHeight: 16 }}>
-          {
+      helperText={
+        choice.svgContent.trim().length > 0 ? (
+          <Text
+            style={{
+              color: '#64748b',
+              fontSize: 12,
+              lineHeight: 16,
+            }}
+          >
             {
-              de: 'Diese Antwort hat zusatzliche Illustrationen.',
-              en: 'This answer includes extra illustration content.',
-              pl: 'Ta odpowiedź ma dodatkową ilustrację.',
-            }[locale]
-          }
-        </Text>
-      ) : null}
-    </Pressable>
+              {
+                de: 'Diese Antwort hat zusatzliche Illustrationen.',
+                en: 'This answer includes extra illustration content.',
+                pl: 'Ta odpowiedź ma dodatkową ilustrację.',
+              }[locale]
+            }
+          </Text>
+        ) : undefined
+      }
+      indexLabel={label}
+      label={choice.text}
+      onPress={onPress}
+      tone={tone}
+    />
   );
 }

@@ -5,54 +5,54 @@ import { describe, expect, it, vi } from 'vitest';
 import { DocumentRelationSearchPanel } from '@/features/case-resolver/relation-search/components/DocumentRelationSearchPanel';
 import { parseCaseResolverWorkspace } from '@/features/case-resolver/settings';
 
+const WORKSPACE_PAYLOAD = {
+  files: [
+    {
+      id: 'case-1',
+      fileType: 'case',
+      name: 'Case A',
+      caseIdentifierId: 'id-1',
+    },
+    {
+      id: 'doc-a',
+      fileType: 'document',
+      name: 'Draft Document',
+      parentCaseId: 'case-1',
+      folder: '',
+    },
+    {
+      id: 'doc-b',
+      fileType: 'document',
+      name: 'Related Document',
+      parentCaseId: 'case-1',
+      folder: '',
+      documentContentPlainText: 'Preview text',
+    },
+    {
+      id: 'scan-c',
+      fileType: 'scanfile',
+      name: 'Scan C',
+      parentCaseId: 'case-1',
+      folder: '',
+    },
+    {
+      id: 'case-2',
+      fileType: 'case',
+      name: 'Case B',
+      caseIdentifierId: 'id-2',
+    },
+    {
+      id: 'doc-outside',
+      fileType: 'document',
+      name: 'Outside Case Document',
+      parentCaseId: 'case-2',
+      folder: '',
+    },
+  ],
+} as const;
+
 const mockViewState = {
-  workspace: parseCaseResolverWorkspace(
-    JSON.stringify({
-      files: [
-        {
-          id: 'case-1',
-          fileType: 'case',
-          name: 'Case A',
-          caseIdentifierId: 'id-1',
-        },
-        {
-          id: 'doc-a',
-          fileType: 'document',
-          name: 'Draft Document',
-          parentCaseId: 'case-1',
-          folder: '',
-        },
-        {
-          id: 'doc-b',
-          fileType: 'document',
-          name: 'Related Document',
-          parentCaseId: 'case-1',
-          folder: '',
-          documentContentPlainText: 'Preview text',
-        },
-        {
-          id: 'scan-c',
-          fileType: 'scanfile',
-          name: 'Scan C',
-          parentCaseId: 'case-1',
-          folder: '',
-        },
-        {
-          id: 'case-2',
-          fileType: 'case',
-          name: 'Case B',
-          caseIdentifierId: 'id-2',
-        },
-        {
-          id: 'doc-outside',
-          fileType: 'document',
-          name: 'Outside Case Document',
-          parentCaseId: 'case-2',
-          folder: '',
-        },
-      ],
-    })
-  ),
+  workspace: parseCaseResolverWorkspace(JSON.stringify(WORKSPACE_PAYLOAD)),
   caseResolverIdentifiers: [
     { id: 'id-1', label: 'SIG/1' },
     { id: 'id-2', label: 'SIG/2' },

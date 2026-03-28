@@ -418,4 +418,25 @@ describe('resolveKangurAiTutorNativeGuideResponse', () => {
       coverageLevel: 'overview_fallback',
     });
   });
+
+  it('skips the native guide for selected-answer prompts that imply step-by-step solving', async () => {
+    const resolution = await resolveKangurAiTutorNativeGuideResolution({
+      latestUserMessage: 'Wyjaśnij zaznaczony fragment krok po kroku.',
+      context: {
+        surface: 'test',
+        promptMode: 'selected_text',
+        focusKind: 'question',
+        selectedText: 'Który kwadrat został rozcięty?',
+        currentQuestion:
+          'Który kwadrat został rozcięty wzdłuż pogrubionych linii na dwie części o różnych kształtach?',
+      },
+      locale: 'pl',
+    });
+
+    expect(resolution).toMatchObject({
+      status: 'skipped',
+      entryId: null,
+      coverageLevel: null,
+    });
+  });
 });

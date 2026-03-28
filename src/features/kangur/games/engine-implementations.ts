@@ -124,6 +124,7 @@ export const KANGUR_GAME_ENGINE_IMPLEMENTATIONS: readonly KangurGameEngineImplem
     runtimeIds: [
       'EnglishSubjectVerbAgreementGame',
       'EnglishAdjectivesSceneGame',
+      'EnglishComparativesSuperlativesCrownGame',
       'EnglishAdverbsActionStudioGame',
       'EnglishAdverbsFrequencyRoutineGame',
       'EnglishArticlesDragDropGame',

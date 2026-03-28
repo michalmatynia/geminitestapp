@@ -3,17 +3,25 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 
-const { authMock, extractClientIpMock, insertAnalyticsEventMock, listAnalyticsEventsMock } =
+const {
+  authMock,
+  extractClientIpMock,
+  insertAnalyticsEventMock,
+  listAnalyticsEventsMock,
+  readOptionalServerAuthSessionMock,
+} =
   vi.hoisted(() => ({
     authMock: vi.fn(),
     extractClientIpMock: vi.fn(),
     insertAnalyticsEventMock: vi.fn(),
     listAnalyticsEventsMock: vi.fn(),
+    readOptionalServerAuthSessionMock: vi.fn(),
   }));
 
 vi.mock('@/features/auth/server', () => ({
   auth: authMock,
   extractClientIp: extractClientIpMock,
+  readOptionalServerAuthSession: readOptionalServerAuthSessionMock,
 }));
 
 vi.mock('@/shared/lib/analytics/server', () => ({
@@ -33,10 +41,37 @@ const createRequestContext = (query: Record<string, unknown>): ApiHandlerContext
     query,
   }) as ApiHandlerContext;
 
+const buildAnalyticsEventRequestPayload = (
+  overrides: Record<string, unknown>
+): Record<string, unknown> => ({
+  type: 'pageview',
+  scope: 'public',
+  path: '/products/widget',
+  search: '?utm_source=google',
+  referrer: 'https://www.google.com/search?q=widget',
+  visitorId: 'visitor-1',
+  sessionId: 'session-1',
+  meta: {
+    client: {
+      onLine: true,
+    },
+    performance: {
+      navigationType: 'navigate',
+    },
+  },
+  clientTs: '2026-03-19T10:00:00.000Z',
+  ...overrides,
+});
+
 describe('analytics events handler', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     authMock.mockResolvedValue({
+      user: {
+        id: 'user-1',
+      },
+    });
+    readOptionalServerAuthSessionMock.mockResolvedValue({
       user: {
         id: 'user-1',
       },
@@ -185,6 +220,7 @@ describe('analytics events handler', () => {
   });
 
   it('enriches created events with parsed connection context before inserting', async () => {
+    const requestPayload = buildAnalyticsEventRequestPayload({});
     const response = await POST_handler(
       new NextRequest('http://localhost/api/analytics/events', {
         method: 'POST',
@@ -200,24 +236,7 @@ describe('analytics events handler', () => {
           'x-vercel-ip-country-region': 'Mazowieckie',
           'x-vercel-ip-city': 'Warsaw',
         },
-        body: JSON.stringify({
-          type: 'pageview',
-          scope: 'public',
-          path: '/products/widget',
-          search: '?utm_source=google',
-          referrer: 'https://www.google.com/search?q=widget',
-          visitorId: 'visitor-1',
-          sessionId: 'session-1',
-          meta: {
-            client: {
-              onLine: true,
-            },
-            performance: {
-              navigationType: 'navigate',
-            },
-          },
-          clientTs: '2026-03-19T10:00:00.000Z',
-        }),
+        body: JSON.stringify(requestPayload),
       }),
       createRequestContext({})
     );

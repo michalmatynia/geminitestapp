@@ -1,14 +1,13 @@
 'use client';
 
-import React, { useRef } from 'react';
+import React from 'react';
+import { KangurPageIntroCard } from '@/features/kangur/ui/components/KangurPageIntroCard';
+import { KangurStandardPageLayout } from '@/features/kangur/ui/components/KangurStandardPageLayout';
+import { KangurTopNavigationController } from '@/features/kangur/ui/components/KangurTopNavigationController';
 import {
-  KangurStandardPageLayout,
-  KangurPageIntroCard,
   KangurInfoCard,
   KangurButton,
   KangurSelectField,
-  KangurStatusChip,
-  KangurTopNavigationController,
 } from '@/features/kangur/ui/design/primitives';
 import {
   KANGUR_PANEL_GAP_CLASSNAME,
@@ -24,19 +23,9 @@ import {
   GAMES_LIBRARY_MAIN_ID,
   getGamesLibraryTabIds,
 } from './GamesLibrary.utils';
-import {
-  GamesLibraryDetailSurface,
-} from './GamesLibrary.components';
+import type { GamesLibraryTabId } from './GamesLibrary.filters';
 import { useGamesLibraryState } from './GamesLibrary.hooks';
 import { CatalogTab, StructureTab, RuntimeTab } from './GamesLibrary.tabs';
-import {
-  getLocalizedKangurSubjectLabel,
-  KANGUR_SUBJECTS,
-  KANGUR_AGE_GROUPS,
-} from '@/features/kangur/lessons/lesson-catalog';
-import {
-  getLocalizedKangurAgeGroupLabel,
-} from '@/features/kangur/lessons/lesson-catalog-i18n';
 import { cn } from '@/features/kangur/shared/utils';
 
 function GamesLibraryContent(): React.JSX.Element {
@@ -51,40 +40,19 @@ function GamesLibraryContent(): React.JSX.Element {
     guestPlayerName,
     setGuestPlayerName,
     filters,
-    setFilters,
-    pageData,
-    serializationAudit,
-    metrics,
-    groupedGames,
     gameFilterOptions,
-    catalogFacets,
     hasActiveFilters,
     visibleGameCount,
     totalGameCount,
-    serializationAuditVisible,
-    currentGamesLibraryHref,
     availableTabs,
-    activeFilterBadges,
     activeTab,
-    setActiveTab,
     handleTabChange,
-    handleTabKeyDown,
-    handlePointerTabMouseDown,
     tabRefs,
     selectedGame,
     setSelectedGame,
     updateFilter,
     applyFilters,
-    activeTabSummaryDescription,
     orderedOverviewSections,
-    locale,
-    coverageStatusMap,
-    implementationGroups,
-    coverageGroups,
-    cohortGroups,
-    drawingGroups,
-    engineGroups,
-    variantGroups,
   } = state;
 
   useKangurRoutePageReady({
@@ -188,7 +156,7 @@ function GamesLibraryContent(): React.JSX.Element {
                       accent='slate'
                     >
                       <option value='all'>{translations('filters.game.all')}</option>
-                      {gameFilterOptions.map((game: any) => (
+                      {gameFilterOptions.map((game: { id: string; title: string }) => (
                         <option key={game.id} value={game.id}>{game.title}</option>
                       ))}
                     </KangurSelectField>
@@ -202,7 +170,7 @@ function GamesLibraryContent(): React.JSX.Element {
 
         <aside className={cn(`flex min-w-0 flex-col ${KANGUR_PANEL_GAP_CLASSNAME}`, 'xl:sticky xl:top-[calc(var(--kangur-top-bar-height,88px)+1rem)]')}>
           <div data-testid='games-library-overview-rail' className='space-y-4'>
-            {orderedOverviewSections.map((section: any) => (
+            {orderedOverviewSections.map((section: { id: string; node: React.ReactNode; title: string }) => (
               <React.Fragment key={section.id}>{section.node}</React.Fragment>
             ))}
           </div>
@@ -215,7 +183,7 @@ function GamesLibraryContent(): React.JSX.Element {
           <div className='flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between'>
             <div className='w-full xl:max-w-4xl'>
               <div className={`${KANGUR_SEGMENTED_CONTROL_CLASSNAME} w-full`} role='tablist'>
-                {availableTabs.map((tab: any, index: number) => {
+                {availableTabs.map((tab: { id: GamesLibraryTabId; labelKey: string }, index: number) => {
                   const { tabId, panelId } = getGamesLibraryTabIds(tab.id);
                   return (
                     <KangurButton
@@ -260,6 +228,7 @@ function GamesLibraryContent(): React.JSX.Element {
       <GamesLibraryGameModal
         basePath={basePath}
         game={selectedGame}
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
         key={selectedGame?.id ?? 'kangur-games-library-modal'}
         onOpenChange={(open) => { if (!open) setSelectedGame(null); }}
         open={selectedGame !== null}

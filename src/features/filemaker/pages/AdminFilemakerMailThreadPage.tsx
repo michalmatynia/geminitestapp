@@ -59,15 +59,27 @@ export function AdminFilemakerMailThreadPage(): React.JSX.Element {
   const [replyHtml, setReplyHtml] = useState('<p><br/></p>');
   const [isLoading, setIsLoading] = useState(true);
   const [isSending, setIsSending] = useState(false);
+  const originPanel = searchParams.get('panel') === 'recent' ? 'recent' : null;
+  const recentMailboxFilter = searchParams.get('recentMailbox');
+  const recentUnreadOnly = searchParams.get('recentUnread') === '1';
+  const recentQuery = searchParams.get('recentQuery');
+  const backLabel = originPanel === 'recent' ? 'Back to Recent' : 'Back to Mail';
   const backHref = useMemo(() => {
     const search = new URLSearchParams();
     const accountId = searchParams.get('accountId');
     const mailboxPath = searchParams.get('mailboxPath');
     if (accountId) search.set('accountId', accountId);
-    if (mailboxPath) search.set('mailboxPath', mailboxPath);
+    if (originPanel === 'recent' && accountId) {
+      search.set('panel', 'recent');
+    } else if (mailboxPath) {
+      search.set('mailboxPath', mailboxPath);
+    }
+    if (recentMailboxFilter) search.set('recentMailbox', recentMailboxFilter);
+    if (recentUnreadOnly) search.set('recentUnread', '1');
+    if (recentQuery) search.set('recentQuery', recentQuery);
     const nextSearch = search.toString();
     return nextSearch ? `/admin/filemaker/mail?${nextSearch}` : '/admin/filemaker/mail';
-  }, [searchParams]);
+  }, [originPanel, recentMailboxFilter, recentQuery, recentUnreadOnly, searchParams]);
 
   const load = useCallback(async (): Promise<void> => {
     setIsLoading(true);
@@ -126,6 +138,11 @@ export function AdminFilemakerMailThreadPage(): React.JSX.Element {
       <FilemakerMailSidebar
         selectedAccountId={searchParams.get('accountId')}
         selectedMailboxPath={searchParams.get('mailboxPath')}
+        selectedThreadId={threadId}
+        originPanel={originPanel}
+        recentMailboxFilter={recentMailboxFilter}
+        recentUnreadOnly={recentUnreadOnly}
+        recentQuery={recentQuery}
       />
 
       <div className='space-y-6'>
@@ -136,7 +153,7 @@ export function AdminFilemakerMailThreadPage(): React.JSX.Element {
           actions={[
             {
               key: 'back',
-              label: 'Back to Mail',
+              label: backLabel,
               icon: <ArrowLeft className='size-4' />,
               variant: 'outline',
               onClick: () => router.push(backHref),

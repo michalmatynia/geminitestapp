@@ -26,6 +26,14 @@ const createStorage = (
   };
 };
 
+const INVALID_GUEST_CHECKPOINTS_JSON = JSON.stringify({
+  guest: {
+    adding: {
+      attempts: 3,
+    },
+  },
+});
+
 describe('persistedKangurMobileHomeLessonCheckpoints', () => {
   it('builds, persists, and restores the latest learner-scoped lesson checkpoints', () => {
     const storage = createStorage({
@@ -75,27 +83,15 @@ describe('persistedKangurMobileHomeLessonCheckpoints', () => {
         locale: 'pl',
         storage,
       }),
-    ).toEqual([
-      expect.objectContaining({
-        componentId: 'clock',
-        title: 'Nauka zegara',
-      }),
-      expect.objectContaining({
-        componentId: 'adding',
-        title: 'Dodawanie',
-      }),
+    ).toMatchObject([
+      { componentId: 'clock', title: 'Nauka zegara' },
+      { componentId: 'adding', title: 'Dodawanie' },
     ]);
   });
 
   it('falls back to the guest identity and ignores invalid persisted payloads', () => {
     const storage = createStorage({
-      'kangur.mobile.home.lessonCheckpoints': JSON.stringify({
-        guest: {
-          adding: {
-            attempts: 3,
-          },
-        },
-      }),
+      'kangur.mobile.home.lessonCheckpoints': INVALID_GUEST_CHECKPOINTS_JSON,
     });
 
     expect(resolveKangurMobileHomeLessonCheckpointIdentity(storage)).toBe('guest');

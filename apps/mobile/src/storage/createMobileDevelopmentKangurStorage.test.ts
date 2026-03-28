@@ -8,6 +8,12 @@ import {
   resetMobileDevelopmentKangurStorage,
 } from './createMobileDevelopmentKangurStorage';
 
+const expectLessonMasteryProgress = (masteryPercent: number, attempts: number) =>
+  expect.objectContaining({
+    masteryPercent,
+    attempts,
+  });
+
 const createMockNativeFileSystem = (): KangurNativeFileSystemLike => {
   const directories = new Set<string>(['file:///documents']);
   const files = new Map<string, string>();
@@ -228,10 +234,7 @@ describe('createMobileDevelopmentKangurStorage', () => {
       totalXp: 50,
       lessonsCompleted: 1,
       lessonMastery: {
-        logical_patterns: expect.objectContaining({
-          masteryPercent: 100,
-          attempts: 1,
-        }),
+        logical_patterns: expectLessonMasteryProgress(100, 1),
       },
     });
   });
@@ -298,10 +301,7 @@ describe('createMobileDevelopmentKangurStorage', () => {
       totalXp: 75,
       lessonsCompleted: 2,
       lessonMastery: {
-        logical_reasoning: expect.objectContaining({
-          masteryPercent: 60,
-          attempts: 2,
-        }),
+        logical_reasoning: expectLessonMasteryProgress(60, 2),
       },
     });
   });

@@ -27,6 +27,9 @@ describe('game launch helpers', () => {
     expect(getKangurLaunchableGameScreen(findGame('english_adverbs_action_studio'))).toBe(
       'english_adverbs_quiz'
     );
+    expect(getKangurLaunchableGameScreen(findGame('english_compare_and_crown'))).toBe(
+      'english_compare_and_crown_quiz'
+    );
   });
 
   it('maps lesson components to launchable fullscreen screens when variants exist', () => {
@@ -38,6 +41,9 @@ describe('game launch helpers', () => {
     );
     expect(getKangurLaunchableGameScreenForLessonComponent('english_adverbs')).toBe(
       'english_adverbs_quiz'
+    );
+    expect(getKangurLaunchableGameScreenForLessonComponent('english_comparatives_superlatives')).toBe(
+      'english_compare_and_crown_quiz'
     );
     expect(getKangurLaunchableGameScreenForLessonComponent('adding')).toBe('addition_quiz');
   });
@@ -63,12 +69,18 @@ describe('game launch helpers', () => {
     expect(buildKangurGameLaunchHref('/kangur', findGame('english_adverbs_action_studio'))).toBe(
       '/kangur/game?quickStart=screen&screen=english_adverbs_quiz'
     );
+    expect(buildKangurGameLaunchHref('/kangur', findGame('english_compare_and_crown'))).toBe(
+      '/kangur/game?quickStart=screen&screen=english_compare_and_crown_quiz'
+    );
 
     expect(buildKangurGameLessonHref('/kangur', findGame('clock_training'))).toBe(
       '/kangur/lessons?focus=clock'
     );
     expect(buildKangurGameLessonHref('/kangur', findGame('english_adverbs_action_studio'))).toBe(
       '/kangur/lessons?focus=english_adverbs'
+    );
+    expect(buildKangurGameLessonHref('/kangur', findGame('english_compare_and_crown'))).toBe(
+      '/kangur/lessons?focus=english_comparatives_superlatives'
     );
   });
 
@@ -79,8 +91,12 @@ describe('game launch helpers', () => {
     expect(getKangurLaunchableGameContentId('english_adverbs_quiz')).toBe(
       'game:english_adverbs_quiz'
     );
+    expect(getKangurLaunchableGameContentId('english_compare_and_crown_quiz')).toBe(
+      'game:english_compare_and_crown_quiz'
+    );
     expect(isKangurLaunchableGameContentId('game:logical_patterns_quiz')).toBe(true);
     expect(isKangurLaunchableGameContentId('game:english_adverbs_quiz')).toBe(true);
+    expect(isKangurLaunchableGameContentId('game:english_compare_and_crown_quiz')).toBe(true);
     expect(isKangurLaunchableGameContentId('game:home')).toBe(false);
   });
 });

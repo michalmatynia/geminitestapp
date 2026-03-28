@@ -52,6 +52,14 @@ const mockContext: ApiHandlerContext = {
   getElapsedMs: () => 0,
 };
 
+const terminalScopedRunsDeleteExpectation = expect.objectContaining({
+  userId: 'user-1',
+  pathId: 'path-1',
+  source: 'trigger',
+  sourceMode: 'exclude',
+  statuses: ['completed', 'failed', 'canceled', 'dead_lettered'],
+});
+
 describe('AI Paths run delete handlers', () => {
   const repoMock = {
     findRunById: findRunByIdMock,
@@ -114,13 +122,7 @@ describe('AI Paths run delete handlers', () => {
     expect(enforceAiPathsActionRateLimitMock).toHaveBeenCalledWith(expect.anything(), 'runs-clear');
     expect(deletePathRunsWithRepositoryMock).toHaveBeenCalledWith(
       repoMock,
-      expect.objectContaining({
-        userId: 'user-1',
-        pathId: 'path-1',
-        source: 'trigger',
-        sourceMode: 'exclude',
-        statuses: ['completed', 'failed', 'canceled', 'dead_lettered'],
-      })
+      terminalScopedRunsDeleteExpectation
     );
     expect(payload).toMatchObject({
       deleted: 3,

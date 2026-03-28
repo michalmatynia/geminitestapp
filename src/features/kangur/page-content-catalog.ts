@@ -495,6 +495,31 @@ const LESSON_LIBRARY_FRAGMENT_DETAILS: Record<
     ],
     aliases: ['english adjectives', 'adjectives lesson', 'przymiotniki angielskie'],
   },
+  english_comparatives_superlatives: {
+    explanation:
+      'Comparatives i superlatives do porównywania dwóch rzeczy oraz wybierania najlepszej, największej albo najszybszej w grupie. Lekcja ćwiczy formy typu bigger, the biggest, better i the best.',
+    triggerPhrases: [
+      'comparatives',
+      'superlatives',
+      'comparative',
+      'superlative',
+      'english comparatives',
+      'english superlatives',
+      'comparatives and superlatives',
+      'bigger biggest',
+      'better best',
+      'more beautiful the most beautiful',
+      'stopniowanie',
+      'stopniowanie przymiotników',
+      'porównywanie po angielsku',
+      'przymiotniki stopniowanie',
+    ],
+    aliases: [
+      'english comparatives and superlatives',
+      'comparatives lesson',
+      'superlatives lesson',
+    ],
+  },
   english_adverbs: {
     explanation:
       'Przysłówki sposobu pokazujące, jak wykonujemy czynność: quickly, carefully, beautifully, badly, well. Lekcja pomaga odróżniać adjective i adverb oraz budować poprawne zdania z przysłówkami.',

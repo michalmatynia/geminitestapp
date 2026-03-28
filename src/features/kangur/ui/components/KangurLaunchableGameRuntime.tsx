@@ -70,6 +70,10 @@ const EnglishAdjectivesSceneGame = dynamic(
   () => import('@/features/kangur/ui/components/EnglishAdjectivesSceneGame'),
   { ssr: false }
 );
+const EnglishComparativesSuperlativesCrownGame = dynamic(
+  () => import('@/features/kangur/ui/components/EnglishComparativesSuperlativesCrownGame'),
+  { ssr: false }
+);
 const EnglishAdverbsActionStudioGame = dynamic(
   () => import('@/features/kangur/ui/components/EnglishAdverbsActionStudioGame'),
   { ssr: false }
@@ -271,6 +275,11 @@ const KANGUR_LAUNCHABLE_GAME_RENDERERS: Record<
   english_adjectives_scene_game: {
     render: ({ finishLabel, onFinish }) => (
       <EnglishAdjectivesSceneGame finishLabel={finishLabel} onFinish={onFinish} />
+    ),
+  },
+  english_compare_and_crown_game: {
+    render: ({ finishLabel, onFinish }) => (
+      <EnglishComparativesSuperlativesCrownGame finishLabel={finishLabel} onFinish={onFinish} />
     ),
   },
   english_adverbs_action_game: {

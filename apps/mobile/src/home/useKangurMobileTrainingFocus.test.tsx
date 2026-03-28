@@ -112,6 +112,81 @@ const createScore = (overrides: Partial<KangurScore> = {}): KangurScore => ({
   ...overrides,
 });
 
+const strongestScore = createScore({
+  id: 'score-1',
+  operation: 'logical_patterns',
+  correct_answers: 8,
+  score: 8,
+});
+
+const weakestScore = createScore({
+  id: 'score-2',
+  operation: 'addition',
+  correct_answers: 4,
+  score: 4,
+});
+
+const secondaryScore = createScore({
+  id: 'score-3',
+  operation: 'multiplication',
+  correct_answers: 6,
+  score: 6,
+});
+
+const persistedTrainingFocusPayload = {
+  'learner:learner-1': {
+    strongestOperation: {
+      averageAccuracyPercent: 94,
+      bestAccuracyPercent: 100,
+      family: 'logic',
+      operation: 'logical_patterns',
+      sessions: 4,
+    },
+    weakestOperation: {
+      averageAccuracyPercent: 52,
+      bestAccuracyPercent: 63,
+      family: 'arithmetic',
+      operation: 'addition',
+      sessions: 3,
+    },
+  },
+};
+
+const persistedTrainingFocusJson = JSON.stringify(
+  persistedTrainingFocusPayload,
+);
+
+const persistedComputedTrainingFocusPayload = {
+  'learner:learner-1': {
+    strongestOperation: {
+      averageAccuracyPercent: 100,
+      bestAccuracyPercent: 100,
+      family: 'logic',
+      operation: 'logical_patterns',
+      sessions: 1,
+    },
+    weakestOperation: {
+      averageAccuracyPercent: 50,
+      bestAccuracyPercent: 50,
+      family: 'arithmetic',
+      operation: 'addition',
+      sessions: 1,
+    },
+  },
+};
+
+const persistedComputedTrainingFocusJson = JSON.stringify(
+  persistedComputedTrainingFocusPayload,
+);
+
+const persistedRecentResultsPayload = {
+  'learner:learner-1': [strongestScore, weakestScore, secondaryScore],
+};
+
+const persistedRecentResultsJson = JSON.stringify(
+  persistedRecentResultsPayload,
+);
+
 const createWrapper =
   (queryClient: QueryClient) =>
   ({ children }: { children: React.ReactNode }): React.JSX.Element =>
@@ -124,24 +199,9 @@ describe('useKangurMobileTrainingFocus', () => {
     vi.clearAllMocks();
     const progressSnapshot = createDefaultKangurProgressState();
     listScoresMock.mockResolvedValue([
-      createScore({
-        id: 'score-1',
-        operation: 'logical_patterns',
-        correct_answers: 8,
-        score: 8,
-      }),
-      createScore({
-        id: 'score-2',
-        operation: 'addition',
-        correct_answers: 4,
-        score: 4,
-      }),
-      createScore({
-        id: 'score-3',
-        operation: 'multiplication',
-        correct_answers: 6,
-        score: 6,
-      }),
+      strongestScore,
+      weakestScore,
+      secondaryScore,
     ]);
 
     useKangurMobileRuntimeMock.mockReturnValue({
@@ -206,71 +266,14 @@ describe('useKangurMobileTrainingFocus', () => {
     expect(result.current.strongestLessonFocus).toBe('logical_patterns');
     expect(result.current.weakestOperation?.operation).toBe('addition');
     expect(result.current.weakestLessonFocus).toBe('adding');
-    expect(result.current.recentResults).toEqual([
-      createScore({
-        id: 'score-1',
-        operation: 'logical_patterns',
-        correct_answers: 8,
-        score: 8,
-      }),
-      createScore({
-        id: 'score-2',
-        operation: 'addition',
-        correct_answers: 4,
-        score: 4,
-      }),
-      createScore({
-        id: 'score-3',
-        operation: 'multiplication',
-        correct_answers: 6,
-        score: 6,
-      }),
-    ]);
+    expect(result.current.recentResults).toEqual([strongestScore, weakestScore, secondaryScore]);
     expect(storage.setItem).toHaveBeenCalledWith(
       'kangur.mobile.scores.trainingFocus',
-      JSON.stringify({
-        'learner:learner-1': {
-          strongestOperation: {
-            averageAccuracyPercent: 100,
-            bestAccuracyPercent: 100,
-            family: 'logic',
-            operation: 'logical_patterns',
-            sessions: 1,
-          },
-          weakestOperation: {
-            averageAccuracyPercent: 50,
-            bestAccuracyPercent: 50,
-            family: 'arithmetic',
-            operation: 'addition',
-            sessions: 1,
-          },
-        },
-      }),
+      persistedComputedTrainingFocusJson,
     );
     expect(storage.setItem).toHaveBeenCalledWith(
       'kangur.mobile.scores.recent',
-      JSON.stringify({
-        'learner:learner-1': [
-          createScore({
-            id: 'score-1',
-            operation: 'logical_patterns',
-            correct_answers: 8,
-            score: 8,
-          }),
-          createScore({
-            id: 'score-2',
-            operation: 'addition',
-            correct_answers: 4,
-            score: 4,
-          }),
-          createScore({
-            id: 'score-3',
-            operation: 'multiplication',
-            correct_answers: 6,
-            score: 6,
-          }),
-        ],
-      }),
+      persistedRecentResultsJson,
     );
   });
 
@@ -317,24 +320,7 @@ describe('useKangurMobileTrainingFocus', () => {
 
   it('hydrates persisted focus while the heavier score analysis is still deferred', () => {
     const storage = createStorage({
-      'kangur.mobile.scores.trainingFocus': JSON.stringify({
-        'learner:learner-1': {
-          strongestOperation: {
-            averageAccuracyPercent: 94,
-            bestAccuracyPercent: 100,
-            family: 'logic',
-            operation: 'logical_patterns',
-            sessions: 4,
-          },
-          weakestOperation: {
-            averageAccuracyPercent: 52,
-            bestAccuracyPercent: 63,
-            family: 'arithmetic',
-            operation: 'addition',
-            sessions: 3,
-          },
-        },
-      }),
+      'kangur.mobile.scores.trainingFocus': persistedTrainingFocusJson,
     });
     const progressSnapshot = createDefaultKangurProgressState();
     useKangurMobileRuntimeMock.mockReturnValue({

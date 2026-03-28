@@ -170,7 +170,7 @@ export function useProductFormValidator(
     queryFn: () => productsApi.getProducts({ page: 1, pageSize: 2 }, undefined, { fresh: true }),
     enabled: validatorEnabled && needsLatestProductSource,
     staleTime: 0,
-    meta: { domain: 'products', description: 'Loads products validator latest product source.' },
+    meta: { domain: 'products', operation: 'list', description: 'Loads products validator latest product source.' },
   });
 
   const latestProductValues = useMemo(

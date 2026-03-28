@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { dtoBaseSchema } from '../base';
+import { namedDtoSchema } from '../base';
 import { siteLocaleCodeSchema } from '../site-i18n';
 
 /**
@@ -68,7 +69,6 @@ export const cmsDomainSchema = namedDtoSchema.extend({
   domain: z.string(),
   aliasOf: z.string().nullable().optional(),
 });
-import { namedDtoSchema } from '../base';
 export type CmsDomainDto = z.infer<typeof cmsDomainSchema>;
 export type CmsDomain = CmsDomainDto;
 

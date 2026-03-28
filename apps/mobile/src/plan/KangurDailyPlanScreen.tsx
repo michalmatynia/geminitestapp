@@ -1,5 +1,5 @@
 import { useRouter } from 'expo-router';
-import { Pressable, Text, View } from 'react-native';
+import { Text, View } from 'react-native';
 
 import { createKangurDuelsHref } from '../duels/duelsHref';
 import { useKangurMobileI18n } from '../i18n/kangurMobileI18n';
@@ -8,8 +8,11 @@ import {
 } from '../lessons/useKangurMobileLessonCheckpoints';
 import { formatKangurMobileScoreDateTime } from '../scores/mobileScoreSummary';
 import {
+  KangurMobileActionButton as ActionButton,
   KangurMobileCard as Card,
+  KangurMobileInsetPanel as InsetPanel,
   KangurMobileLinkButton as LinkButton,
+  KangurMobilePendingActionButton,
   KangurMobilePill as Pill,
   KangurMobileScrollScreen,
 } from '../shared/KangurMobileUi';
@@ -190,30 +193,16 @@ export function KangurDailyPlanScreen(): React.JSX.Element {
                 })}
                 stretch
               />
-              <Pressable
-                accessibilityRole='button'
-                onPress={() => {
-                  void refresh();
-                }}
-                style={{
-                  alignSelf: 'stretch',
-                  width: '100%',
-                  borderRadius: 999,
-                  borderWidth: 1,
-                  borderColor: '#cbd5e1',
-                  backgroundColor: '#ffffff',
-                  paddingHorizontal: 14,
-                  paddingVertical: 10,
-                }}
-              >
-                <Text style={{ color: '#0f172a', fontWeight: '700', textAlign: 'center' }}>
-                  {copy({
-                    de: 'Plan aktualisieren',
-                    en: 'Refresh plan',
-                    pl: 'Odśwież plan',
-                  })}
-                </Text>
-              </Pressable>
+              <ActionButton
+                label={copy({
+                  de: 'Plan aktualisieren',
+                  en: 'Refresh plan',
+                  pl: 'Odśwież plan',
+                })}
+                onPress={() => refresh()}
+                stretch
+                tone='secondary'
+              />
             </View>
 
             {isLoadingAuth && !isAuthenticated ? (
@@ -244,27 +233,15 @@ export function KangurDailyPlanScreen(): React.JSX.Element {
                   />
                 </View>
               ) : (
-                <Pressable
-                  accessibilityRole='button'
-                  onPress={() => {
-                    void signIn();
-                  }}
-                  style={{
-                    alignSelf: 'flex-start',
-                    borderRadius: 999,
-                    backgroundColor: '#1d4ed8',
-                    paddingHorizontal: 14,
-                    paddingVertical: 10,
-                  }}
-                >
-                  <Text style={{ color: '#ffffff', fontWeight: '700' }}>
-                    {copy({
-                      de: 'Demo starten',
-                      en: 'Start demo',
-                      pl: 'Uruchom demo',
-                    })}
-                  </Text>
-                </Pressable>
+                <ActionButton
+                  label={copy({
+                    de: 'Demo starten',
+                    en: 'Start demo',
+                    pl: 'Uruchom demo',
+                  })}
+                  onPress={() => signIn()}
+                  tone='brand'
+                />
               )
             ) : null}
 
@@ -509,27 +486,14 @@ export function KangurDailyPlanScreen(): React.JSX.Element {
             ) : duelPlan.error ? (
               <View style={{ gap: 10 }}>
                 <Text style={{ color: '#b91c1c', lineHeight: 20 }}>{duelPlan.error}</Text>
-                <Pressable
-                  accessibilityRole='button'
-                  onPress={() => {
-                    void duelPlan.refresh();
-                  }}
-                  style={{
-                    alignSelf: 'flex-start',
-                    borderRadius: 999,
-                    backgroundColor: '#0f172a',
-                    paddingHorizontal: 14,
-                    paddingVertical: 10,
-                  }}
-                >
-                  <Text style={{ color: '#ffffff', fontWeight: '700' }}>
-                    {copy({
-                      de: 'Duelle aktualisieren',
-                      en: 'Refresh duels',
-                      pl: 'Odśwież pojedynki',
-                    })}
-                  </Text>
-                </Pressable>
+                <ActionButton
+                  label={copy({
+                    de: 'Duelle aktualisieren',
+                    en: 'Refresh duels',
+                    pl: 'Odśwież pojedynki',
+                  })}
+                  onPress={() => duelPlan.refresh()}
+                />
               </View>
             ) : !duelPlan.isAuthenticated ? (
               <Text style={{ color: '#475569', lineHeight: 22 }}>
@@ -542,14 +506,11 @@ export function KangurDailyPlanScreen(): React.JSX.Element {
             ) : (
               <View style={{ gap: 12 }}>
                 {duelPlan.currentEntry ? (
-                  <View
+                  <InsetPanel
+                    gap={8}
                     style={{
-                      borderRadius: 20,
-                      borderWidth: 1,
                       borderColor: '#bfdbfe',
                       backgroundColor: '#eff6ff',
-                      padding: 14,
-                      gap: 8,
                     }}
                   >
                     <Text style={{ color: '#1d4ed8', fontSize: 12, fontWeight: '800' }}>
@@ -569,7 +530,7 @@ export function KangurDailyPlanScreen(): React.JSX.Element {
                         pl: `Wygrane ${duelPlan.currentEntry.wins} • Porażki ${duelPlan.currentEntry.losses} • Remisy ${duelPlan.currentEntry.ties}`,
                       })}
                     </Text>
-                  </View>
+                  </InsetPanel>
                 ) : (
                   <Text style={{ color: '#475569', lineHeight: 22 }}>
                     {copy({
@@ -595,16 +556,9 @@ export function KangurDailyPlanScreen(): React.JSX.Element {
                 ) : (
                   <View style={{ gap: 12 }}>
                     {duelPlan.opponents.map((opponent) => (
-                      <View
+                      <InsetPanel
                         key={opponent.learnerId}
-                        style={{
-                          borderRadius: 20,
-                          borderWidth: 1,
-                          borderColor: '#e2e8f0',
-                          backgroundColor: '#f8fafc',
-                          padding: 14,
-                          gap: 8,
-                        }}
+                        gap={8}
                       >
                         <Text style={{ color: '#0f172a', fontSize: 16, fontWeight: '800' }}>
                           {opponent.displayName}
@@ -616,9 +570,13 @@ export function KangurDailyPlanScreen(): React.JSX.Element {
                             pl: `Ostatni pojedynek ${formatKangurMobileScoreDateTime(opponent.lastPlayedAt, locale)}`,
                           })}
                         </Text>
-                        <Pressable
-                          accessibilityRole='button'
-                          disabled={duelPlan.isActionPending}
+                        <KangurMobilePendingActionButton
+                          horizontalPadding={14}
+                          label={copy({
+                            de: 'Schneller Rückkampf',
+                            en: 'Quick rematch',
+                            pl: 'Szybki rewanż',
+                          })}
                           onPress={() => {
                             void duelPlan.createRematch(opponent.learnerId).then((sessionId) => {
                               if (sessionId) {
@@ -626,58 +584,29 @@ export function KangurDailyPlanScreen(): React.JSX.Element {
                               }
                             });
                           }}
-                          style={{
-                            alignSelf: 'flex-start',
-                            borderRadius: 999,
-                            backgroundColor: duelPlan.isActionPending ? '#94a3b8' : '#1d4ed8',
-                            paddingHorizontal: 14,
-                            paddingVertical: 10,
-                          }}
-                        >
-                          <Text style={{ color: '#ffffff', fontWeight: '700' }}>
-                            {duelPlan.pendingOpponentLearnerId === opponent.learnerId
-                              ? copy({
-                                  de: 'Rückkampf wird gesendet...',
-                                  en: 'Sending rematch...',
-                                  pl: 'Wysyłanie rewanżu...',
-                                })
-                              : copy({
-                                  de: 'Schneller Rückkampf',
-                                  en: 'Quick rematch',
-                                  pl: 'Szybki rewanż',
-                                })}
-                          </Text>
-                        </Pressable>
-                      </View>
+                          pending={duelPlan.pendingOpponentLearnerId === opponent.learnerId}
+                          pendingLabel={copy({
+                            de: 'Rückkampf wird gesendet...',
+                            en: 'Sending rematch...',
+                            pl: 'Wysyłanie rewanżu...',
+                          })}
+                        />
+                      </InsetPanel>
                     ))}
                   </View>
                 )}
 
                 <View style={{ alignSelf: 'stretch', gap: 10 }}>
-                  <Pressable
-                    accessibilityRole='button'
-                    onPress={() => {
-                      void duelPlan.refresh();
-                    }}
-                    style={{
-                      alignSelf: 'stretch',
-                      width: '100%',
-                      borderRadius: 999,
-                      borderWidth: 1,
-                      borderColor: '#cbd5e1',
-                      backgroundColor: '#ffffff',
-                      paddingHorizontal: 14,
-                      paddingVertical: 10,
-                    }}
-                  >
-                    <Text style={{ color: '#0f172a', fontWeight: '700', textAlign: 'center' }}>
-                      {copy({
-                        de: 'Duelle aktualisieren',
-                        en: 'Refresh duels',
-                        pl: 'Odśwież pojedynki',
-                      })}
-                    </Text>
-                  </Pressable>
+                  <ActionButton
+                    label={copy({
+                      de: 'Duelle aktualisieren',
+                      en: 'Refresh duels',
+                      pl: 'Odśwież pojedynki',
+                    })}
+                    onPress={() => duelPlan.refresh()}
+                    stretch
+                    tone='secondary'
+                  />
 
                   <LinkButton
                     href={DUELS_ROUTE}

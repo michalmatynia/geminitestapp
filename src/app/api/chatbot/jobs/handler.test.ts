@@ -54,6 +54,19 @@ vi.mock('@/features/jobs/server', () => ({
 
 import { POST_handler } from './handler';
 
+const buildChatbotJobRequestPayload = (
+  overrides: Record<string, unknown>
+): Record<string, unknown> => ({
+  sessionId: 'session-1',
+  messages: [
+    {
+      role: 'user',
+      content: 'Translate this',
+    },
+  ],
+  ...overrides,
+});
+
 describe('chatbot jobs handler', () => {
   beforeEach(() => {
     resolveBrainModelExecutionConfigMock.mockReset();
@@ -124,20 +137,14 @@ describe('chatbot jobs handler', () => {
   });
 
   it('creates a job with Brain-applied config and queues it', async () => {
+    const requestPayload = buildChatbotJobRequestPayload({
+      userMessage: 'Translate this',
+    });
     const response = await POST_handler(
       new Request('http://localhost/api/chatbot/jobs', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          sessionId: 'session-1',
-          messages: [
-            {
-              role: 'user',
-              content: 'Translate this',
-            },
-          ],
-          userMessage: 'Translate this',
-        }),
+        body: JSON.stringify(requestPayload),
       }) as Parameters<typeof POST_handler>[0],
       { requestId: 'req-3' } as Parameters<typeof POST_handler>[1]
     );
@@ -188,21 +195,15 @@ describe('chatbot jobs handler', () => {
   });
 
   it('rejects legacy model override payloads', async () => {
+    const requestPayload = buildChatbotJobRequestPayload({
+      model: 'legacy-model',
+    });
     await expect(
       POST_handler(
         new Request('http://localhost/api/chatbot/jobs', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            sessionId: 'session-1',
-            model: 'legacy-model',
-            messages: [
-              {
-                role: 'user',
-                content: 'Translate this',
-              },
-            ],
-          }),
+          body: JSON.stringify(requestPayload),
         }) as Parameters<typeof POST_handler>[0],
         { requestId: 'req-4' } as Parameters<typeof POST_handler>[1]
       )

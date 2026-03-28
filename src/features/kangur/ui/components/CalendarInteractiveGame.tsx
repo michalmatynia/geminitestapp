@@ -266,7 +266,7 @@ export function CalendarInteractiveGame(props: CalendarInteractiveGameProps): Re
                           className={cn(
                             'flex flex-col items-center justify-center gap-2 p-4 rounded-2xl border-2 border-dashed transition-colors',
                             snapshot.isDraggingOver ? `border-${season.accent}-400 bg-${season.accent}-50` : 'border-slate-200 bg-white/40',
-                            feedback === 'success' && season.id === task.correctSeason && `ring-2 ring-emerald-400 bg-emerald-50`
+                            feedback === 'success' && season.id === task.correctSeason && 'ring-2 ring-emerald-400 bg-emerald-50'
                           )}
                         >
                           <span className='text-2xl'>{season.emoji}</span>

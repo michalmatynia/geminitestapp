@@ -481,20 +481,20 @@ export function AdminKangurLessonsManagerPage({
             <div className='flex items-center gap-3'>
               <SelectSimple
                 value={contentLocale}
-                onChange={(val) => setContentLocale(val as any)}
+                onChange={(val) => setContentLocale(val)}
                 options={contentLocaleOptions}
                 className='w-40'
               />
               <Badge variant='outline'>{contentLocaleLabel}</Badge>
               <SelectSimple
                 value={ageGroupFilter}
-                onChange={(val) => setAgeGroupFilter(val as any)}
+                onChange={(val) => setAgeGroupFilter(val)}
                 options={[{ value: 'all', label: 'All Ages' }, ...KANGUR_AGE_GROUPS.map(g => ({ value: group.id, label: g.id }))]}
                 className='w-40'
               />
               <SelectSimple
                 value={authoringFilter}
-                onChange={(val) => setAuthoringFilter(val as any)}
+                onChange={(val) => setAuthoringFilter(val)}
                 options={[
                   { value: 'all', label: `All (${authoringFilterCounts.all})` },
                   { value: 'draft', label: `Draft (${authoringFilterCounts.draft})` },

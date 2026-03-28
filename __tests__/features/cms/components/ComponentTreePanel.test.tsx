@@ -13,6 +13,37 @@ const { usePageBuilderStateMock, usePageBuilderDispatchMock } = vi.hoisted(() =>
   usePageBuilderDispatchMock: vi.fn(),
 }));
 
+const dragStateMock = {
+  state: {
+    block: {
+      id: null,
+      type: null,
+      fromSectionId: null,
+      fromColumnId: null,
+      fromParentBlockId: null,
+    },
+    section: {
+      id: null,
+      type: null,
+      index: null,
+      zone: null,
+    },
+  },
+  endBlockDrag: vi.fn(),
+  endSectionDrag: vi.fn(),
+};
+
+type FolderTreePanelMockProps = {
+  children: React.ReactNode;
+  header?: React.ReactNode;
+};
+
+type TreeHeaderMockProps = {
+  title?: string;
+  subtitle?: string;
+  actions?: React.ReactNode;
+};
+
 // Mock the hooks
 vi.mock('@/features/cms/hooks/usePageBuilderContext', () => ({
   usePageBuilderState: usePageBuilderStateMock,
@@ -29,25 +60,7 @@ vi.mock('@/features/cms/hooks/useCmsQueries', () => ({
 }));
 
 vi.mock('@/features/cms/hooks/useDragStateContext', () => ({
-  useDragState: vi.fn(() => ({
-    state: {
-      block: {
-        id: null,
-        type: null,
-        fromSectionId: null,
-        fromColumnId: null,
-        fromParentBlockId: null,
-      },
-      section: {
-        id: null,
-        type: null,
-        index: null,
-        zone: null,
-      },
-    },
-    endBlockDrag: vi.fn(),
-    endSectionDrag: vi.fn(),
-  })),
+  useDragState: vi.fn(() => dragStateMock),
 }));
 
 // Mock the child components to simplify testing
@@ -55,31 +68,17 @@ vi.mock('@/shared/ui', async (importOriginal) => {
   const actual = await importOriginal<typeof import('@/shared/ui')>();
   return {
     ...actual,
-    FolderTreePanel: ({
-      children,
-      header,
-    }: {
-      children: React.ReactNode;
-      header?: React.ReactNode;
-    }) => (
+    FolderTreePanel: (props: FolderTreePanelMockProps) => (
       <div>
-        {header}
-        {children}
+        {props.header}
+        {props.children}
       </div>
     ),
-    TreeHeader: ({
-      title,
-      subtitle,
-      actions,
-    }: {
-      title?: string;
-      subtitle?: string;
-      actions?: React.ReactNode;
-    }) => (
+    TreeHeader: (props: TreeHeaderMockProps) => (
       <div>
-        <h1>{title}</h1>
-        <h2>{subtitle}</h2>
-        {actions}
+        <h1>{props.title}</h1>
+        <h2>{props.subtitle}</h2>
+        {props.actions}
       </div>
     ),
   };

@@ -23,6 +23,9 @@ import {
   EnglishArticleFocusAnimation,
   EnglishArticleVowelAnimation,
   EnglishBeVerbSwitchAnimation,
+  EnglishComparativeRepairAnimation,
+  EnglishComparativeScaleAnimation,
+  EnglishComparativeSpellingAnimation,
   EnglishConnectorBridgeAnimation,
   EnglishPossessiveAdjectiveAnimation,
   EnglishPossessivePronounAnimation,
@@ -33,6 +36,7 @@ import {
   EnglishPronounSwapAnimation,
   EnglishQuestionFlipAnimation,
   EnglishSentenceBlueprintAnimation,
+  EnglishSuperlativeCrownAnimation,
   EnglishThirdPersonSAnimation,
   EnglishZeroArticleAnimation,
 } from '@/features/kangur/ui/components/animations/EnglishAnimations';
@@ -149,6 +153,33 @@ describe('EnglishAnimations visuals', () => {
     expect(
       roomAnimation.querySelectorAll('ellipse[data-kangur-soft-oval="true"]').length
     ).toBeGreaterThan(0);
+  });
+
+  it('renders comparative and superlative lesson surfaces with frames and atmosphere', () => {
+    render(
+      <>
+        <EnglishComparativeScaleAnimation />
+        <EnglishSuperlativeCrownAnimation />
+        <EnglishComparativeSpellingAnimation />
+        <EnglishComparativeRepairAnimation />
+      </>
+    );
+
+    expect(screen.getByTestId('english-comparative-scale-animation')).toBeInTheDocument();
+    expect(screen.getByTestId('english-comparative-scale-atmosphere')).toBeInTheDocument();
+    expect(screen.getByTestId('english-comparative-scale-frame')).toBeInTheDocument();
+
+    expect(screen.getByTestId('english-superlative-crown-animation')).toBeInTheDocument();
+    expect(screen.getByTestId('english-superlative-crown-atmosphere')).toBeInTheDocument();
+    expect(screen.getByTestId('english-superlative-crown-frame')).toBeInTheDocument();
+
+    expect(screen.getByTestId('english-comparative-spelling-animation')).toBeInTheDocument();
+    expect(screen.getByTestId('english-comparative-spelling-atmosphere')).toBeInTheDocument();
+    expect(screen.getByTestId('english-comparative-spelling-frame')).toBeInTheDocument();
+
+    expect(screen.getByTestId('english-comparative-repair-animation')).toBeInTheDocument();
+    expect(screen.getByTestId('english-comparative-repair-atmosphere')).toBeInTheDocument();
+    expect(screen.getByTestId('english-comparative-repair-frame')).toBeInTheDocument();
   });
 
   it('renders upgraded core grammar surfaces for pronouns, agreement, and zero article', () => {

@@ -23,6 +23,13 @@ const mockContext: ApiHandlerContext = {
   getElapsedMs: () => 0,
 };
 
+const buildDefaultConnectionPostRequest = (connectionId: string) =>
+  new NextRequest('http://localhost/api/v2/integrations/exports/base/default-connection', {
+    method: 'POST',
+    body: JSON.stringify({ connectionId }),
+    headers: { 'content-type': 'application/json' },
+  });
+
 type DefaultExportConnectionResponse = {
   connectionId: string | null;
 };
@@ -97,11 +104,7 @@ describe('api/v2/integrations/exports/base/default-connection handler', () => {
 
   it('stores normalized connection id on POST and returns the centralized response', async () => {
     const response = await POST_handler(
-      new NextRequest('http://localhost/api/v2/integrations/exports/base/default-connection', {
-        method: 'POST',
-        body: JSON.stringify({ connectionId: '  conn-new  ' }),
-        headers: { 'content-type': 'application/json' },
-      }),
+      buildDefaultConnectionPostRequest('  conn-new  '),
       mockContext
     );
     const payload = (await response.json()) as DefaultExportConnectionResponse;
@@ -116,11 +119,7 @@ describe('api/v2/integrations/exports/base/default-connection handler', () => {
     getExportDefaultConnectionIdMock.mockResolvedValue('conn-existing');
 
     const response = await POST_handler(
-      new NextRequest('http://localhost/api/v2/integrations/exports/base/default-connection', {
-        method: 'POST',
-        body: JSON.stringify({ connectionId: 'conn-existing' }),
-        headers: { 'content-type': 'application/json' },
-      }),
+      buildDefaultConnectionPostRequest('conn-existing'),
       mockContext
     );
     const payload = (await response.json()) as DefaultExportConnectionResponse;
@@ -135,11 +134,7 @@ describe('api/v2/integrations/exports/base/default-connection handler', () => {
     getExportDefaultConnectionIdMock.mockRejectedValue(new Error('settings read failed'));
 
     const response = await POST_handler(
-      new NextRequest('http://localhost/api/v2/integrations/exports/base/default-connection', {
-        method: 'POST',
-        body: JSON.stringify({ connectionId: 'conn-new' }),
-        headers: { 'content-type': 'application/json' },
-      }),
+      buildDefaultConnectionPostRequest('conn-new'),
       mockContext
     );
     const payload = (await response.json()) as DefaultExportConnectionResponse;

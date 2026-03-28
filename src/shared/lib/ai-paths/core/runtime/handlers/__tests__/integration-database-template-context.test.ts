@@ -281,4 +281,40 @@ describe('prepareDatabaseTemplateContext catalogId canonical wiring', () => {
       })
     );
   });
+
+  it('formats schema placeholders with normalized primitive aliases', () => {
+    const { templateContext } = prepareDatabaseTemplateContext({
+      resolvedInputs: {},
+      dbConfig: {
+        operation: 'query',
+        entityType: 'product',
+      } as never,
+      aiPromptTemplate: '',
+      simulationEntityType: null,
+      fallbackEntityId: null,
+      fetchEntityCached: vi.fn(async () => null),
+      schemaData: {
+        collections: [
+          {
+            name: 'product_variants',
+            fields: [
+              { name: 'price', type: 'decimal' },
+              { name: 'enabled', type: 'bool' },
+              { name: 'payload', type: 'json' },
+              { name: 'createdAt', type: 'datetime' },
+            ],
+          },
+        ],
+      } as never,
+    });
+
+    expect(templateContext['Collection: product_variants']).toBe(
+      'interface Product Variant {\n' +
+        '  price: number;\n' +
+        '  enabled: boolean;\n' +
+        '  payload: Record<string, unknown>;\n' +
+        '  createdAt: string;\n' +
+        '}'
+    );
+  });
 });

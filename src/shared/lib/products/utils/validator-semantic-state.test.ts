@@ -16,6 +16,48 @@ import {
   serializeProductValidationSemanticState,
 } from './validator-semantic-state';
 
+const buildDynamicReplacementRecipe = (
+  overrides: Partial<Parameters<typeof encodeDynamicReplacementRecipe>[0]>
+) =>
+  encodeDynamicReplacementRecipe({
+    version: 1,
+    sourceMode: 'latest_product_field',
+    sourceField: 'price',
+    sourceRegex: null,
+    sourceFlags: null,
+    sourceMatchGroup: null,
+    mathOperation: 'none',
+    mathOperand: null,
+    roundMode: 'none',
+    padLength: null,
+    padChar: null,
+    logicOperator: 'none',
+    logicOperand: null,
+    logicFlags: null,
+    logicWhenTrueAction: 'keep',
+    logicWhenTrueValue: null,
+    logicWhenFalseAction: 'keep',
+    logicWhenFalseValue: null,
+    resultAssembly: 'segment_only',
+    targetApply: 'replace_whole_field',
+    ...overrides,
+  });
+
+const ORDERED_SERIALIZED_STATE = {
+  version: 2,
+  presetId: 'preset',
+  operation: 'op',
+  sourceField: null,
+  targetField: null,
+  metadata: {
+    a: {
+      x: true,
+      y: true,
+    },
+    z: 1,
+  },
+} as const;
+
 describe('validator semantic state utils', () => {
   it('normalizes semantic state fields, migrates the version, and deduplicates tags', () => {
     expect(
@@ -80,27 +122,8 @@ describe('validator semantic state utils', () => {
     const pattern = {
       target: 'price',
       replacementEnabled: true,
-      replacementValue: encodeDynamicReplacementRecipe({
-        version: 1,
-        sourceMode: 'latest_product_field',
+      replacementValue: buildDynamicReplacementRecipe({
         sourceField: 'price',
-        sourceRegex: null,
-        sourceFlags: null,
-        sourceMatchGroup: null,
-        mathOperation: 'none',
-        mathOperand: null,
-        roundMode: 'none',
-        padLength: null,
-        padChar: null,
-        logicOperator: 'none',
-        logicOperand: null,
-        logicFlags: null,
-        logicWhenTrueAction: 'keep',
-        logicWhenTrueValue: null,
-        logicWhenFalseAction: 'keep',
-        logicWhenFalseValue: null,
-        resultAssembly: 'segment_only',
-        targetApply: 'replace_whole_field',
       }),
     };
 
@@ -291,21 +314,6 @@ describe('validator semantic state utils', () => {
           },
         },
       })
-    ).toBe(
-      JSON.stringify({
-        version: 2,
-        presetId: 'preset',
-        operation: 'op',
-        sourceField: null,
-        targetField: null,
-        metadata: {
-          a: {
-            x: true,
-            y: true,
-          },
-          z: 1,
-        },
-      })
-    );
+    ).toBe(JSON.stringify(ORDERED_SERIALIZED_STATE));
   });
 });

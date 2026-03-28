@@ -275,3 +275,24 @@ export type FilemakerEmailCampaignRecipientActivityItem = {
   timestamp: string;
   details: string | null;
 };
+
+export type FilemakerEmailCampaignRecipientActivitySummary = {
+  emailAddress: string;
+  campaignId: string | null;
+  campaignName: string | null;
+  deliveryCount: number;
+  sentCount: number;
+  failedCount: number;
+  bouncedCount: number;
+  skippedCount: number;
+  openCount: number;
+  clickCount: number;
+  unsubscribeCount: number;
+  resubscribeCount: number;
+  latestSentAt: string | null;
+  latestOpenAt: string | null;
+  latestClickAt: string | null;
+  latestUnsubscribeAt: string | null;
+  latestResubscribeAt: string | null;
+  recentActivity: FilemakerEmailCampaignRecipientActivityItem[];
+};

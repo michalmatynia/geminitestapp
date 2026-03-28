@@ -26,6 +26,7 @@ import {
 } from './AdminProductOrdersImportPage.utils';
 import { buildColumns } from './AdminProductOrdersImportPage.columns';
 import { OrderDetails } from './AdminProductOrdersImportPage.OrderDetails';
+import type { BaseOrderImportPreviewItem } from '@/shared/contracts/products';
 import { useAdminProductOrdersImportState } from './AdminProductOrdersImportPage.hooks';
 
 export function AdminProductOrdersImportPage(): React.JSX.Element {
@@ -168,7 +169,7 @@ export function AdminProductOrdersImportPage(): React.JSX.Element {
         >
           <div className='grid grid-cols-1 gap-4 p-4 md:grid-cols-2 lg:grid-cols-5'>
             <div className='space-y-1'>
-              <label className='text-xs font-bold uppercase text-slate-500'>Connection</label>
+              <span className='mb-1 block text-xs font-bold uppercase text-slate-500'>Connection</span>
               <SelectSimple
                 value={selectedConnectionId}
                 onChange={setSelectedConnectionId}
@@ -178,15 +179,15 @@ export function AdminProductOrdersImportPage(): React.JSX.Element {
               />
             </div>
             <div className='space-y-1'>
-              <label className='text-xs font-bold uppercase text-slate-500'>From Date</label>
+              <span className='mb-1 block text-xs font-bold uppercase text-slate-500'>From Date</span>
               <Input type='date' value={dateFrom} onChange={(e) => setDateFrom(e.target.value)} />
             </div>
             <div className='space-y-1'>
-              <label className='text-xs font-bold uppercase text-slate-500'>To Date</label>
+              <span className='mb-1 block text-xs font-bold uppercase text-slate-500'>To Date</span>
               <Input type='date' value={dateTo} onChange={(e) => setDateTo(e.target.value)} />
             </div>
             <div className='space-y-1'>
-              <label className='text-xs font-bold uppercase text-slate-500'>Status</label>
+              <span className='mb-1 block text-xs font-bold uppercase text-slate-500'>Status</span>
               <SelectSimple
                 value={statusId}
                 onChange={setStatusId}
@@ -195,7 +196,7 @@ export function AdminProductOrdersImportPage(): React.JSX.Element {
               />
             </div>
             <div className='space-y-1'>
-              <label className='text-xs font-bold uppercase text-slate-500'>Limit</label>
+              <span className='mb-1 block text-xs font-bold uppercase text-slate-500'>Limit</span>
               <SelectSimple value={limit} onChange={setLimit} options={LIMIT_OPTIONS} />
             </div>
           </div>
@@ -227,7 +228,7 @@ export function AdminProductOrdersImportPage(): React.JSX.Element {
             headerActions={
               <div className='flex items-center gap-3'>
                 <div className='text-sm text-slate-500'>
-                  Total: <strong>{formatOrderTotal(aggregate.totalGross)}</strong> ({aggregate.count} orders)
+                  Total: <strong>{aggregate.grossLabel}</strong> ({filteredOrders.length} orders)
                 </div>
                 <Button
                   variant='primary'
@@ -249,7 +250,7 @@ export function AdminProductOrdersImportPage(): React.JSX.Element {
                   onChange={setViewSearchQuery}
                 />
                 <div className='flex items-center gap-2'>
-                  <label className='text-xs font-bold text-slate-500 uppercase'>State:</label>
+                  <span className='text-xs font-bold text-slate-500 uppercase'>State:</span>
                   <div className='flex gap-1'>
                     {(['all', 'new', 'changed', 'imported'] as const).map((f) => (
                       <Badge
@@ -273,9 +274,20 @@ export function AdminProductOrdersImportPage(): React.JSX.Element {
               data={filteredOrders}
               rowSelection={rowSelection}
               onRowSelectionChange={setRowSelection}
-              getRowId={(r) => r.baseOrderId}
-              renderExpandedRow={(order) => <OrderDetails order={order} />}
-              isRowExpanded={(r) => expanded[r.baseOrderId] ?? false}
+              getRowId={(r: BaseOrderImportPreviewItem) => r.baseOrderId}
+              renderRowDetails={({ row }) => (
+                <OrderDetails
+                  order={row.original}
+                  changeSummary={[]}
+                  isPreviewStale={isPreviewStale}
+                  isImportPending={importMutation.isPending}
+                  isQuickImportPending={quickImportMutation.isPending}
+                  onImport={(orders) => void handleImport(orders)}
+                />
+              )}
+              expanded={expanded}
+              // @ts-expect-error - ExpandedState type mismatch with Record<string, boolean>
+              onExpandedChange={setExpanded}
             />
           </StandardDataTablePanel>
         )}

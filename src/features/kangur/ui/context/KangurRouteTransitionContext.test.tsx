@@ -97,16 +97,7 @@ function RouteTransitionProbe({
   );
 }
 
-function renderRouteTransitionHarness({
-  acknowledgeMs,
-  pageKey,
-  requestedPath,
-  requestedHref = requestedPath,
-  sourceId,
-  targetHref = '/kangur/lessons',
-  targetPageKey = 'Lessons',
-  transitionKind,
-}: {
+type RouteTransitionHarnessOptions = {
   acknowledgeMs?: number;
   pageKey: string;
   requestedPath: string;
@@ -115,7 +106,22 @@ function renderRouteTransitionHarness({
   targetHref?: string | null;
   targetPageKey?: string;
   transitionKind?: 'navigation' | 'locale-switch';
-}) {
+};
+
+function renderRouteTransitionHarness(
+  options: RouteTransitionHarnessOptions,
+) {
+  const {
+    acknowledgeMs,
+    pageKey,
+    requestedPath,
+    requestedHref = requestedPath,
+    sourceId,
+    targetHref = '/kangur/lessons',
+    targetPageKey = 'Lessons',
+    transitionKind,
+  } = options;
+
   return render(
     <KangurRoutingProvider
       basePath='/kangur'

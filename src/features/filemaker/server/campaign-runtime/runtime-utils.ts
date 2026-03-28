@@ -1,5 +1,3 @@
-'use client';
-
 import { badRequestError } from '@/shared/errors/app-error';
 import type {
   FilemakerEmailCampaign,

@@ -81,4 +81,17 @@ describe('Game launchable screen registry', () => {
     );
     expect(enMessages.KangurGamePage.screens.english_adverbs_quiz.label).toBeTruthy();
   });
+
+  it('keeps the comparatives screen wired to the compare-and-crown runtime', () => {
+    const config = getKangurLaunchableGameScreenComponentConfig('english_compare_and_crown_quiz');
+
+    expect(config.runtime).toEqual(
+      expect.objectContaining({
+        screen: 'english_compare_and_crown_quiz',
+        engineId: 'sentence-builder-engine',
+        rendererId: 'english_compare_and_crown_game',
+      })
+    );
+    expect(enMessages.KangurGamePage.screens.english_compare_and_crown_quiz.label).toBeTruthy();
+  });
 });

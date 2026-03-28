@@ -189,7 +189,7 @@ export const CatalogTab = ({
                             <div className='flex flex-wrap items-center gap-2'>
                               <KangurStatusChip accent='slate' size='sm'>{game.engineId}</KangurStatusChip>
                               <KangurStatusChip accent={game.ageGroup ? resolveAgeGroupAccent(game.ageGroup) : 'slate'} size='sm'>
-                                {game.ageGroup ? translations(`labels.ageGroup`) : translations('labels.allAgeGroups')}
+                                {game.ageGroup ? translations('labels.ageGroup') : translations('labels.allAgeGroups')}
                               </KangurStatusChip>
                               <KangurStatusChip accent={resolveStatusAccent(game.status)} size='sm'>
                                 {translations(`statuses.${game.status}`)}

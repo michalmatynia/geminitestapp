@@ -1,8 +1,8 @@
 import { z } from 'zod';
+import type { CSSProperties, ReactNode } from 'react';
 
 import { contextRegistryConsumerEnvelopeSchema } from './ai-context-registry';
-import type { LabeledOptionDto } from './base';
-import { dtoBaseSchema, namedDtoSchema } from './base';
+import { dtoBaseSchema } from './base';
 import { chatMessageSchema } from './chatbot';
 import type {
   CmsTheme,
@@ -33,7 +33,6 @@ export type {
 } from './cms-theme-contract';
 import {
   cmsTranslationMetadataSchema,
-  cmsTranslationStatusSchema,
   siteLocaleCodeSchema,
   type CmsTranslationStatus,
 } from './site-i18n';
@@ -45,13 +44,19 @@ import {
   cmsPageStatusSchema,
   cmsSlugSchema,
   cmsPageSeoSchema,
+  createCmsSlugSchema,
+  type CmsDomainDto,
+  type Slug,
 } from './cms-contracts/cms-core';
 import {
+  type BlockInstance,
+  type ClipboardData,
+  type InspectorSettings,
   cmsBlockInstanceSchema,
-  cmsSectionInstanceSchema,
-  clipboardDataSchema,
   pageZoneSchema,
+  type SectionInstance,
 } from './cms-contracts/cms-builder';
+export * from './cms-animation';
 
 const cmsRequiredStringSchema = z.string().trim().min(1);
 const cmsIdArraySchema = z.array(cmsRequiredStringSchema);
@@ -133,6 +138,68 @@ export const cmsPageSchema = dtoBaseSchema
 export type CmsPageDto = z.infer<typeof cmsPageSchema>;
 export type Page = CmsPageDto;
 
+export const cmsPageCreateSchema = z
+  .object({
+    name: cmsRequiredStringSchema,
+    slugIds: cmsIdArraySchema.optional(),
+    themeId: z.string().nullable().optional(),
+  })
+  .strict();
+export type CmsPageCreateRequestDto = z.infer<typeof cmsPageCreateSchema>;
+
+export const cmsPageUpdateSchema = z
+  .object({
+    name: cmsRequiredStringSchema.optional(),
+    status: cmsPageStatusSchema.optional(),
+    publishedAt: z.string().nullable().optional(),
+    seoTitle: z.string().nullable().optional(),
+    seoDescription: z.string().nullable().optional(),
+    seoOgImage: z.string().nullable().optional(),
+    seoCanonical: z.string().nullable().optional(),
+    robotsMeta: z.string().nullable().optional(),
+    themeId: z.string().nullable().optional(),
+    slugIds: cmsIdArraySchema.optional(),
+    components: z.array(cmsPageComponentRequestSchema).optional(),
+    showMenu: z.boolean().optional(),
+  })
+  .strict();
+export type CmsPageUpdateRequestDto = z.infer<typeof cmsPageUpdateSchema>;
+
+export const cmsDomainCreateSchema = z
+  .object({
+    domain: cmsRequiredStringSchema,
+  })
+  .strict();
+export type CmsDomainCreateRequestDto = z.infer<typeof cmsDomainCreateSchema>;
+
+export const cmsDomainUpdateSchema = z
+  .object({
+    aliasOf: z.string().nullable().optional(),
+  })
+  .strict();
+export type CmsDomainUpdateRequestDto = z.infer<typeof cmsDomainUpdateSchema>;
+
+export const cmsSlugCreateSchema = createCmsSlugSchema;
+export type CmsSlugCreateRequestDto = z.infer<typeof cmsSlugCreateSchema>;
+
+export const cmsSlugUpdateSchema = z
+  .object({
+    slug: cmsRequiredStringSchema.optional(),
+    pageId: z.string().nullable().optional(),
+    isDefault: z.boolean().optional(),
+    locale: siteLocaleCodeSchema.optional(),
+    translationGroupId: z.string().trim().min(1).max(160).nullable().optional(),
+  })
+  .strict();
+export type CmsSlugUpdateRequestDto = z.infer<typeof cmsSlugUpdateSchema>;
+
+export const cmsSlugDomainsUpdateSchema = z
+  .object({
+    domainIds: cmsIdArraySchema,
+  })
+  .strict();
+export type CmsSlugDomainsUpdateRequestDto = z.infer<typeof cmsSlugDomainsUpdateSchema>;
+
 /**
  * CMS AI Config Contract
  */
@@ -184,6 +251,124 @@ export const CMS_DOMAIN_SETTINGS_KEY = 'cms_domain_settings.v1';
 
 export const DEFAULT_CMS_DOMAIN_SETTINGS: CmsDomainSettings = {
   zoningEnabled: true,
+};
+
+export const normalizeCmsDomainSettings = (
+  value: Partial<CmsDomainSettings> | null | undefined
+): CmsDomainSettings => ({
+  zoningEnabled: value?.zoningEnabled ?? DEFAULT_CMS_DOMAIN_SETTINGS.zoningEnabled,
+});
+
+export type SettingsFieldOption = {
+  label: string;
+  value: string;
+  description?: string;
+  disabled?: boolean;
+  [key: string]: unknown;
+};
+
+export type SettingsField = {
+  key: string;
+  label: string;
+  type: string;
+  options?: ReadonlyArray<SettingsFieldOption>;
+  defaultValue?: unknown;
+  disabled?: boolean;
+  min?: number;
+  max?: number;
+  step?: number;
+  suffix?: string;
+  placeholder?: string;
+  helperText?: string;
+  render?: (args: {
+    value: unknown;
+    onChange: (value: unknown) => void;
+    disabled?: boolean;
+  }) => ReactNode;
+  [key: string]: unknown;
+};
+
+export type BlockDefinition = {
+  type: string;
+  label: string;
+  icon?: string;
+  allowedBlockTypes?: string[];
+  defaultSettings: Record<string, unknown>;
+  settingsSchema: SettingsField[];
+  [key: string]: unknown;
+};
+
+export type SectionDefinition = {
+  type: string;
+  label: string;
+  icon?: string;
+  allowedBlockTypes: string[];
+  defaultSettings: Record<string, unknown>;
+  settingsSchema: SettingsField[];
+  [key: string]: unknown;
+};
+
+export type PreviewBlockProps = {
+  block: BlockInstance;
+  stretch?: boolean;
+  mediaStyles?: CSSProperties | null;
+};
+
+export type PreviewBlockItemProps = {
+  block: BlockInstance;
+};
+
+export type PageBuilderSnapshot = {
+  currentPage: Page | null;
+  sections: SectionInstance[];
+};
+
+export type PageBuilderState = {
+  pages: Page[];
+  currentPage: Page | null;
+  sections: SectionInstance[];
+  selectedNodeId: string | null;
+  inspectorEnabled: boolean;
+  inspectorSettings: InspectorSettings;
+  previewMode: string;
+  leftPanelCollapsed: boolean;
+  rightPanelCollapsed: boolean;
+  clipboard: ClipboardData | null;
+  history: {
+    past: PageBuilderSnapshot[];
+    future: PageBuilderSnapshot[];
+  };
+  [key: string]: unknown;
+};
+
+export type PageBuilderAction = {
+  type: string;
+  status?: string;
+  name?: string;
+  seo?: Record<string, unknown>;
+  slugIds?: string[];
+  slugValues?: string[];
+  showMenu?: boolean;
+  themeId?: string | null;
+  settings?: Record<string, unknown>;
+  mode?: string;
+  sectionId?: string;
+  zone?: string;
+  blockId?: string;
+  columnId?: string;
+  parentBlockId?: string | null;
+  fromSectionId?: string;
+  fromColumnId?: string;
+  fromParentBlockId?: string | null;
+  toSectionId?: string;
+  toColumnId?: string;
+  toIndex?: number;
+  toParentBlockId?: string | null;
+  toRowId?: string;
+  toFrameId?: string;
+  toZone?: string;
+  toParentSectionId?: string | null;
+  [key: string]: unknown;
 };
 
 /**
@@ -291,7 +476,7 @@ export type CmsRepository = {
   // Domains
   getDomains(): Promise<CmsDomainDto[]>;
   getDomainById(id: string): Promise<CmsDomainDto | null>;
-  createDomain(data: CreateCmsDomainDto): Promise<CmsDomainDto>;
-  updateDomain(id: string, data: UpdateCmsDomainDto): Promise<CmsDomainDto>;
+  createDomain(data: CmsDomainCreateRequestDto): Promise<CmsDomainDto>;
+  updateDomain(id: string, data: CmsDomainUpdateRequestDto): Promise<CmsDomainDto>;
   deleteDomain(id: string): Promise<void>;
 };

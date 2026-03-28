@@ -102,76 +102,90 @@ const createStorage = (
   };
 };
 
+const incomingInviteEntry = {
+  createdAt: '2026-03-21T08:00:00.000Z',
+  difficulty: 'medium',
+  host: {
+    displayName: 'Leo Mentor',
+    learnerId: 'learner-2',
+    status: 'ready',
+    score: 0,
+    bonusPoints: 0,
+    currentQuestionIndex: 0,
+    joinedAt: '2026-03-21T08:00:00.000Z',
+  },
+  mode: 'challenge',
+  operation: 'multiplication',
+  questionCount: 5,
+  sessionId: 'invite-1',
+  status: 'waiting',
+  timePerQuestionSec: 15,
+  updatedAt: '2026-03-21T08:05:00.000Z',
+  visibility: 'private',
+} as const;
+
+const publicLobbyEntry = {
+  createdAt: '2026-03-21T08:00:00.000Z',
+  difficulty: 'easy',
+  host: {
+    displayName: 'Public Room',
+    learnerId: 'learner-3',
+    status: 'ready',
+    score: 0,
+    bonusPoints: 0,
+    currentQuestionIndex: 0,
+    joinedAt: '2026-03-21T08:00:00.000Z',
+  },
+  mode: 'quick_match',
+  operation: 'addition',
+  questionCount: 5,
+  sessionId: 'public-1',
+  status: 'waiting',
+  timePerQuestionSec: 15,
+  updatedAt: '2026-03-21T08:06:00.000Z',
+  visibility: 'public',
+} as const;
+
+const outgoingInviteEntry = {
+  createdAt: '2026-03-21T08:00:00.000Z',
+  difficulty: 'hard',
+  host: {
+    displayName: 'Ada Learner',
+    learnerId: 'learner-1',
+    status: 'ready',
+    score: 0,
+    bonusPoints: 0,
+    currentQuestionIndex: 0,
+    joinedAt: '2026-03-21T08:00:00.000Z',
+  },
+  mode: 'challenge',
+  operation: 'division',
+  questionCount: 8,
+  sessionId: 'outgoing-1',
+  status: 'waiting',
+  timePerQuestionSec: 20,
+  updatedAt: '2026-03-21T08:07:00.000Z',
+  visibility: 'private',
+} as const;
+
+const persistedDeferredInvitesPayload = {
+  'learner-1': [incomingInviteEntry],
+};
+
+const persistedDeferredInvitesJson = JSON.stringify(
+  persistedDeferredInvitesPayload,
+);
+
+const persistedLiveInvitesPayload = {
+  'learner-1': [outgoingInviteEntry, incomingInviteEntry],
+};
+
 describe('useKangurMobileHomeDuelsInvites', () => {
   beforeEach(() => {
     vi.clearAllMocks();
 
     listDuelLobbyMock.mockResolvedValue({
-      entries: [
-        {
-          createdAt: '2026-03-21T08:00:00.000Z',
-          difficulty: 'medium',
-          host: {
-            displayName: 'Leo Mentor',
-            learnerId: 'learner-2',
-            status: 'ready',
-            score: 0,
-            bonusPoints: 0,
-            currentQuestionIndex: 0,
-            joinedAt: '2026-03-21T08:00:00.000Z',
-          },
-          mode: 'challenge',
-          operation: 'multiplication',
-          questionCount: 5,
-          sessionId: 'invite-1',
-          status: 'waiting',
-          timePerQuestionSec: 15,
-          updatedAt: '2026-03-21T08:05:00.000Z',
-          visibility: 'private',
-        },
-        {
-          createdAt: '2026-03-21T08:00:00.000Z',
-          difficulty: 'easy',
-          host: {
-            displayName: 'Public Room',
-            learnerId: 'learner-3',
-            status: 'ready',
-            score: 0,
-            bonusPoints: 0,
-            currentQuestionIndex: 0,
-            joinedAt: '2026-03-21T08:00:00.000Z',
-          },
-          mode: 'quick_match',
-          operation: 'addition',
-          questionCount: 5,
-          sessionId: 'public-1',
-          status: 'waiting',
-          timePerQuestionSec: 15,
-          updatedAt: '2026-03-21T08:06:00.000Z',
-          visibility: 'public',
-        },
-        {
-          createdAt: '2026-03-21T08:00:00.000Z',
-          difficulty: 'hard',
-          host: {
-            displayName: 'Ada Learner',
-            learnerId: 'learner-1',
-            status: 'ready',
-            score: 0,
-            bonusPoints: 0,
-            currentQuestionIndex: 0,
-            joinedAt: '2026-03-21T08:00:00.000Z',
-          },
-          mode: 'challenge',
-          operation: 'division',
-          questionCount: 8,
-          sessionId: 'outgoing-1',
-          status: 'waiting',
-          timePerQuestionSec: 20,
-          updatedAt: '2026-03-21T08:07:00.000Z',
-          visibility: 'private',
-        },
-      ],
+      entries: [incomingInviteEntry, publicLobbyEntry, outgoingInviteEntry],
       serverTime: '2026-03-21T08:08:00.000Z',
     });
 
@@ -242,31 +256,7 @@ describe('useKangurMobileHomeDuelsInvites', () => {
 
   it('hydrates persisted private invites while the live duel refresh is still deferred', () => {
     const storage = createStorage({
-      'kangur.mobile.home.duels.privateLobby': JSON.stringify({
-        'learner-1': [
-          {
-            createdAt: '2026-03-21T08:00:00.000Z',
-            difficulty: 'medium',
-            host: {
-              bonusPoints: 0,
-              currentQuestionIndex: 0,
-              displayName: 'Leo Mentor',
-              joinedAt: '2026-03-21T08:00:00.000Z',
-              learnerId: 'learner-2',
-              score: 0,
-              status: 'ready',
-            },
-            mode: 'challenge',
-            operation: 'multiplication',
-            questionCount: 5,
-            sessionId: 'invite-1',
-            status: 'waiting',
-            timePerQuestionSec: 15,
-            updatedAt: '2026-03-21T08:05:00.000Z',
-            visibility: 'private',
-          },
-        ],
-      }),
+      'kangur.mobile.home.duels.privateLobby': persistedDeferredInvitesJson,
     });
     useKangurMobileRuntimeMock.mockReturnValue({
       apiBaseUrl: 'http://localhost:3000',
@@ -315,51 +305,6 @@ describe('useKangurMobileHomeDuelsInvites', () => {
     });
 
     const persistedStoreRaw = (storage.setItem as ReturnType<typeof vi.fn>).mock.calls[0]?.[1];
-    expect(JSON.parse(persistedStoreRaw)).toEqual({
-      'learner-1': [
-        {
-          createdAt: '2026-03-21T08:00:00.000Z',
-          difficulty: 'hard',
-          host: {
-            bonusPoints: 0,
-            currentQuestionIndex: 0,
-            displayName: 'Ada Learner',
-            joinedAt: '2026-03-21T08:00:00.000Z',
-            learnerId: 'learner-1',
-            score: 0,
-            status: 'ready',
-          },
-          mode: 'challenge',
-          operation: 'division',
-          questionCount: 8,
-          sessionId: 'outgoing-1',
-          status: 'waiting',
-          timePerQuestionSec: 20,
-          updatedAt: '2026-03-21T08:07:00.000Z',
-          visibility: 'private',
-        },
-        {
-          createdAt: '2026-03-21T08:00:00.000Z',
-          difficulty: 'medium',
-          host: {
-            bonusPoints: 0,
-            currentQuestionIndex: 0,
-            displayName: 'Leo Mentor',
-            joinedAt: '2026-03-21T08:00:00.000Z',
-            learnerId: 'learner-2',
-            score: 0,
-            status: 'ready',
-          },
-          mode: 'challenge',
-          operation: 'multiplication',
-          questionCount: 5,
-          sessionId: 'invite-1',
-          status: 'waiting',
-          timePerQuestionSec: 15,
-          updatedAt: '2026-03-21T08:05:00.000Z',
-          visibility: 'private',
-        },
-      ],
-    });
+    expect(JSON.parse(persistedStoreRaw)).toEqual(persistedLiveInvitesPayload);
   });
 });

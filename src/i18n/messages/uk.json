@@ -999,6 +999,10 @@
         "label": "Вікторина з прикметників",
         "description": "Обирайте прикметники для опису людей, місць і речей."
       },
+      "english_compare_and_crown_quiz": {
+        "label": "Студія порівнянь і корони",
+        "description": "Порівнюй дві речі й обирай переможця за допомогою comparatives і superlatives."
+      },
       "english_adverbs_frequency_quiz": {
         "label": "Вікторина з прислівників частоти",
         "description": "Тренуйте речення про звички з always, often і never."
@@ -1578,6 +1582,7 @@
         "english_subject_verb_agreement": "Узгодження підмета і присудка",
         "english_articles": "Артиклі",
         "english_adjectives": "Прикметники",
+        "english_comparatives_superlatives": "Вищий і найвищий ступені",
         "english_adverbs_frequency": "Прислівники частоти",
         "english_prepositions_time_place": "Прийменники часу і місця",
         "alphabet_basics": "Абетка",
@@ -1958,6 +1963,7 @@
       "english_subject_verb_agreement": "Узгодження підмета і присудка",
       "english_articles": "Артиклі",
       "english_adjectives": "Прикметники",
+      "english_comparatives_superlatives": "Вищий і найвищий ступені",
       "english_adverbs_frequency": "Прислівники частоти",
       "english_prepositions_time_place": "Прийменники часу й місця",
       "english_adverbs": "Прислівники"
@@ -2321,6 +2327,7 @@
       "english_subject_verb_agreement": "Узгодження підмета і присудка",
       "english_articles": "Артиклі",
       "english_adjectives": "Прикметники",
+      "english_comparatives_superlatives": "Вищий і найвищий ступені",
       "english_adverbs_frequency": "Прислівники частоти",
       "english_prepositions_time_place": "Прийменники часу й місця",
       "english_adverbs": "Прислівники"
@@ -2523,6 +2530,7 @@
         "english_subject_verb_agreement": "Узгодження підмета і присудка",
         "english_articles": "Артиклі",
         "english_adjectives": "Прикметники",
+        "english_comparatives_superlatives": "Вищий і найвищий ступені",
         "english_adverbs_frequency": "Прислівники частоти",
         "english_prepositions_time_place": "Прийменники часу й місця",
         "english_adverbs": "Прислівники"
@@ -2668,6 +2676,7 @@
       "english_subject_verb_agreement": "Узгодження підмета і присудка",
       "english_articles": "Артиклі",
       "english_adjectives": "Прикметники",
+      "english_comparatives_superlatives": "Вищий і найвищий ступені",
       "english_adverbs_frequency": "Прислівники частоти",
       "english_prepositions_time_place": "Прийменники часу й місця",
       "english_adverbs": "Прислівники"
@@ -9309,6 +9318,35 @@
         }
       },
       "lessonTitle": "Англійська: прислівники"
+    },
+    "englishComparativesSuperlativesShell": {
+      "sections": {
+        "intro": {
+          "title": "Вступ",
+          "description": "Порівнюй дві речі й обирай переможця"
+        },
+        "form": {
+          "title": "Форма",
+          "description": "Будуй comparative і superlative форми"
+        },
+        "repair": {
+          "title": "Виправлення",
+          "description": "Полагодь неправильну форму"
+        },
+        "answer": {
+          "title": "Відповідь",
+          "description": "Використовуй порівняння у своїх реченнях"
+        },
+        "gameCompareAndCrown": {
+          "title": "Compare & Crown",
+          "description": "Керуй анімованими сценами з картками ступенів"
+        },
+        "summary": {
+          "title": "Підсумок",
+          "description": "Головні правила в одному місці"
+        }
+      },
+      "lessonTitle": "Англійська: Comparatives і Superlatives"
     }
   }
 }

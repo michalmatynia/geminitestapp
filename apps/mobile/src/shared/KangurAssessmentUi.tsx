@@ -1,5 +1,13 @@
-import { Link, type Href } from 'expo-router';
+import type { ReactNode } from 'react';
+
+import { type Href } from 'expo-router';
 import { Pressable, Text, View } from 'react-native';
+import {
+  KangurMobileActionButton as MobileActionButton,
+  KangurMobileCard as MobileCard,
+  KangurMobileLinkButton as MobileLinkButton,
+  KangurMobilePill as MobilePill,
+} from './KangurMobileUi';
 
 export type Tone = {
   backgroundColor: string;
@@ -31,6 +39,79 @@ export const INDIGO_TONE: Tone = {
   textColor: '#4338ca',
 };
 
+export function ChoiceCardButton({
+  description,
+  disabled = false,
+  helperText,
+  indexLabel,
+  label,
+  onPress,
+  tone = BASE_TONE,
+}: {
+  description?: string;
+  disabled?: boolean;
+  helperText?: ReactNode;
+  indexLabel: string;
+  label: string;
+  onPress: () => void;
+  tone?: Tone;
+}): React.JSX.Element {
+  return (
+    <Pressable
+      accessibilityRole='button'
+      disabled={disabled}
+      onPress={onPress}
+      style={{
+        backgroundColor: tone.backgroundColor,
+        borderColor: tone.borderColor,
+        borderRadius: 20,
+        borderWidth: 1,
+        gap: 8,
+        opacity: disabled ? 0.8 : 1,
+        paddingHorizontal: 16,
+        paddingVertical: 14,
+      }}
+    >
+      <View
+        style={{
+          alignItems: 'center',
+          flexDirection: 'row',
+          gap: 10,
+        }}
+      >
+        <View
+          style={{
+            alignItems: 'center',
+            backgroundColor: '#ffffff',
+            borderColor: tone.borderColor,
+            borderRadius: 999,
+            borderWidth: 1,
+            height: 28,
+            justifyContent: 'center',
+            width: 28,
+          }}
+        >
+          <Text style={{ color: '#0f172a', fontWeight: '800' }}>{indexLabel}</Text>
+        </View>
+        <Text
+          style={{
+            color: '#0f172a',
+            flex: 1,
+            fontSize: 15,
+            fontWeight: '700',
+          }}
+        >
+          {label}
+        </Text>
+      </View>
+      {description ? (
+        <Text style={{ color: '#475569', fontSize: 13, lineHeight: 18 }}>{description}</Text>
+      ) : null}
+      {helperText}
+    </Pressable>
+  );
+}
+
 export function SectionCard({
   children,
   title,
@@ -39,19 +120,7 @@ export function SectionCard({
   title: string;
 }): React.JSX.Element {
   return (
-    <View
-      style={{
-        backgroundColor: '#ffffff',
-        borderRadius: 24,
-        elevation: 3,
-        gap: 12,
-        padding: 20,
-        shadowColor: '#0f172a',
-        shadowOffset: { height: 10, width: 0 },
-        shadowOpacity: 0.08,
-        shadowRadius: 18,
-      }}
-    >
+    <MobileCard gap={12} padding={20}>
       <Text
         accessibilityRole='header'
         style={{ color: '#0f172a', fontSize: 18, fontWeight: '800' }}
@@ -59,7 +128,7 @@ export function SectionCard({
         {title}
       </Text>
       {children}
-    </View>
+    </MobileCard>
   );
 }
 
@@ -71,21 +140,12 @@ export function StatusPill({
   tone?: Tone;
 }): React.JSX.Element {
   return (
-    <View
-      style={{
-        alignSelf: 'flex-start',
-        backgroundColor: tone.backgroundColor,
-        borderColor: tone.borderColor,
-        borderRadius: 999,
-        borderWidth: 1,
-        paddingHorizontal: 10,
-        paddingVertical: 6,
-      }}
-    >
-      <Text style={{ color: tone.textColor, fontSize: 12, fontWeight: '700' }}>
-        {label}
-      </Text>
-    </View>
+    <MobilePill
+      label={label}
+      style={{ paddingHorizontal: 10, paddingVertical: 6 }}
+      textStyle={{ fontSize: 12 }}
+      tone={tone}
+    />
   );
 }
 
@@ -99,33 +159,14 @@ export function OutlineLink({
   label: string;
 }): React.JSX.Element {
   return (
-    <Link href={href} asChild>
-      <Pressable
-        accessibilityHint={hint}
-        accessibilityLabel={label}
-        accessibilityRole='button'
-        style={{
-          alignSelf: 'stretch',
-          backgroundColor: '#ffffff',
-          borderColor: '#cbd5e1',
-          borderRadius: 999,
-          borderWidth: 1,
-          paddingHorizontal: 14,
-          paddingVertical: 10,
-          width: '100%',
-        }}
-      >
-        <Text
-          style={{
-            color: '#0f172a',
-            fontWeight: '700',
-            textAlign: 'center',
-          }}
-        >
-          {label}
-        </Text>
-      </Pressable>
-    </Link>
+    <MobileLinkButton
+      accessibilityHint={hint}
+      accessibilityLabel={label}
+      href={href}
+      label={label}
+      stretch
+      tone='secondary'
+    />
   );
 }
 
@@ -143,34 +184,25 @@ export function PrimaryButton({
   tone?: Tone;
 }): React.JSX.Element {
   return (
-    <Pressable
+    <MobileActionButton
       accessibilityHint={hint}
       accessibilityLabel={label}
-      accessibilityRole='button'
+      centered
       disabled={disabled}
-      onPress={onPress}
+      label={label}
+      minHeight={44}
+      onPress={onPress ?? (() => {})}
+      stretch
       style={{
-        alignItems: 'center',
         backgroundColor: disabled ? '#e2e8f0' : tone.backgroundColor,
         borderColor: disabled ? '#cbd5e1' : tone.borderColor,
-        borderRadius: 999,
-        borderWidth: 1,
-        justifyContent: 'center',
-        minHeight: 44,
         opacity: disabled ? 0.7 : 1,
         paddingHorizontal: 16,
-        paddingVertical: 10,
       }}
-    >
-      <Text
-        style={{
-          color: disabled ? '#64748b' : tone.textColor,
-          fontWeight: '700',
-          textAlign: 'center',
-        }}
-      >
-        {label}
-      </Text>
-    </Pressable>
+      textStyle={{
+        color: disabled ? '#64748b' : tone.textColor,
+      }}
+      tone='secondary'
+    />
   );
 }

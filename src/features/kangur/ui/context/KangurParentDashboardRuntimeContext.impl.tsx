@@ -73,6 +73,9 @@ const KangurParentDashboardRuntimeShellActionsContext =
 const KangurParentDashboardRuntimeActionsContext =
   createContext<KangurParentDashboardRuntimeActionsContextValue | null>(null);
 
+type KangurParentDashboardRuntimeContextValue = KangurParentDashboardRuntimeStateContextValue &
+  KangurParentDashboardRuntimeActionsContextValue;
+
 export function KangurParentDashboardRuntimeProvider({
   children,
 }: {
@@ -266,3 +269,109 @@ export function KangurParentDashboardRuntimeProvider({
     </KangurParentDashboardRuntimeStateContext.Provider>
   );
 }
+
+export function KangurParentDashboardRuntimeBoundary({
+  enabled,
+  children,
+}: {
+  enabled: boolean;
+  children: ReactNode;
+}): JSX.Element {
+  const existingStateContext = useContext(KangurParentDashboardRuntimeStateContext);
+  const existingActionsContext = useContext(KangurParentDashboardRuntimeActionsContext);
+
+  if (!enabled || existingStateContext || existingActionsContext) {
+    return <>{children}</>;
+  }
+
+  return <KangurParentDashboardRuntimeProvider>{children}</KangurParentDashboardRuntimeProvider>;
+}
+
+export const useKangurParentDashboardRuntimeState =
+  (): KangurParentDashboardRuntimeStateContextValue => {
+    const context = useContext(KangurParentDashboardRuntimeStateContext);
+    if (!context) {
+      throw internalError(
+        'useKangurParentDashboardRuntimeState must be used within a KangurParentDashboardRuntimeProvider'
+      );
+    }
+    return context;
+  };
+
+export const useKangurParentDashboardRuntimeShellState =
+  (): KangurParentDashboardRuntimeShellStateContextValue => {
+    const context = useContext(KangurParentDashboardRuntimeShellStateContext);
+    if (!context) {
+      throw internalError(
+        'useKangurParentDashboardRuntimeShellState must be used within a KangurParentDashboardRuntimeProvider'
+      );
+    }
+    return context;
+  };
+
+export const useKangurParentDashboardRuntimeHeroState =
+  (): KangurParentDashboardRuntimeHeroStateContextValue => {
+    const context = useContext(KangurParentDashboardRuntimeHeroStateContext);
+    if (!context) {
+      throw internalError(
+        'useKangurParentDashboardRuntimeHeroState must be used within a KangurParentDashboardRuntimeProvider'
+      );
+    }
+    return context;
+  };
+
+export const useKangurParentDashboardRuntimeOverviewState =
+  (): KangurParentDashboardRuntimeOverviewStateContextValue => {
+    const context = useContext(KangurParentDashboardRuntimeOverviewStateContext);
+    if (!context) {
+      throw internalError(
+        'useKangurParentDashboardRuntimeOverviewState must be used within a KangurParentDashboardRuntimeProvider'
+      );
+    }
+    return context;
+  };
+
+export const useKangurParentDashboardRuntimeShellActions =
+  (): KangurParentDashboardRuntimeShellActionsContextValue => {
+    const context = useContext(KangurParentDashboardRuntimeShellActionsContext);
+    if (!context) {
+      throw internalError(
+        'useKangurParentDashboardRuntimeShellActions must be used within a KangurParentDashboardRuntimeProvider'
+      );
+    }
+    return context;
+  };
+
+export const useKangurParentDashboardRuntimeActions =
+  (): KangurParentDashboardRuntimeActionsContextValue => {
+    const context = useContext(KangurParentDashboardRuntimeActionsContext);
+    if (!context) {
+      throw internalError(
+        'useKangurParentDashboardRuntimeActions must be used within a KangurParentDashboardRuntimeProvider'
+      );
+    }
+    return context;
+  };
+
+export const useKangurParentDashboardRuntime = (): KangurParentDashboardRuntimeContextValue => {
+  const state = useContext(KangurParentDashboardRuntimeStateContext);
+  const actions = useContext(KangurParentDashboardRuntimeActionsContext);
+  if (!state || !actions) {
+    throw internalError(
+      'useKangurParentDashboardRuntime must be used within a KangurParentDashboardRuntimeProvider'
+    );
+  }
+  return useMemo(() => ({ ...state, ...actions }), [actions, state]);
+};
+
+export const useOptionalKangurParentDashboardRuntime =
+  (): KangurParentDashboardRuntimeContextValue | null => {
+    const state = useContext(KangurParentDashboardRuntimeStateContext);
+    const actions = useContext(KangurParentDashboardRuntimeActionsContext);
+    return useMemo(() => {
+      if (!state || !actions) {
+        return null;
+      }
+      return { ...state, ...actions };
+    }, [actions, state]);
+  };

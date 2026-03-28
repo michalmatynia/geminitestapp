@@ -45,13 +45,32 @@ export function AdminFilemakerMailComposePage(): React.JSX.Element {
   const [isSending, setIsSending] = useState(false);
   const accountIdFromRoute = searchParams.get('accountId');
   const mailboxPathFromRoute = searchParams.get('mailboxPath');
+  const originPanel = searchParams.get('panel') === 'recent' ? 'recent' : null;
+  const recentMailboxFilter = searchParams.get('recentMailbox');
+  const recentUnreadOnly = searchParams.get('recentUnread') === '1';
+  const recentQuery = searchParams.get('recentQuery');
+  const backLabel = originPanel === 'recent' ? 'Back to Recent' : 'Back to Mail';
   const backHref = useMemo(() => {
     const search = new URLSearchParams();
     if (accountIdFromRoute) search.set('accountId', accountIdFromRoute);
-    if (mailboxPathFromRoute) search.set('mailboxPath', mailboxPathFromRoute);
+    if (originPanel === 'recent' && accountIdFromRoute) {
+      search.set('panel', 'recent');
+    } else if (mailboxPathFromRoute) {
+      search.set('mailboxPath', mailboxPathFromRoute);
+    }
+    if (recentMailboxFilter) search.set('recentMailbox', recentMailboxFilter);
+    if (recentUnreadOnly) search.set('recentUnread', '1');
+    if (recentQuery) search.set('recentQuery', recentQuery);
     const nextSearch = search.toString();
     return nextSearch ? `/admin/filemaker/mail?${nextSearch}` : '/admin/filemaker/mail';
-  }, [accountIdFromRoute, mailboxPathFromRoute]);
+  }, [
+    accountIdFromRoute,
+    mailboxPathFromRoute,
+    originPanel,
+    recentMailboxFilter,
+    recentQuery,
+    recentUnreadOnly,
+  ]);
 
   useEffect(() => {
     const load = async (): Promise<void> => {
@@ -89,6 +108,10 @@ export function AdminFilemakerMailComposePage(): React.JSX.Element {
       const search = new URLSearchParams();
       search.set('accountId', accountId);
       if (mailboxPathFromRoute) search.set('mailboxPath', mailboxPathFromRoute);
+      if (originPanel === 'recent') search.set('panel', 'recent');
+      if (recentMailboxFilter) search.set('recentMailbox', recentMailboxFilter);
+      if (recentUnreadOnly) search.set('recentUnread', '1');
+      if (recentQuery) search.set('recentQuery', recentQuery);
       router.push(
         `/admin/filemaker/mail/threads/${encodeURIComponent(result.message.threadId)}?${search.toString()}`
       );
@@ -106,6 +129,16 @@ export function AdminFilemakerMailComposePage(): React.JSX.Element {
       <FilemakerMailSidebar
         selectedAccountId={accountId || accountIdFromRoute}
         selectedMailboxPath={mailboxPathFromRoute}
+        selectedPanel='compose'
+        originPanel={originPanel}
+        recentMailboxFilter={recentMailboxFilter}
+        recentUnreadOnly={recentUnreadOnly}
+        recentQuery={recentQuery}
+        onAccountUpdated={(account) => {
+          setAccounts((current) =>
+            current.map((entry) => (entry.id === account.id ? account : entry))
+          );
+        }}
       />
 
       <div className='space-y-6'>
@@ -116,7 +149,7 @@ export function AdminFilemakerMailComposePage(): React.JSX.Element {
           actions={[
             {
               key: 'back',
-              label: 'Back to Mail',
+              label: backLabel,
               icon: <ArrowLeft className='size-4' />,
               variant: 'outline',
               onClick: () => router.push(backHref),

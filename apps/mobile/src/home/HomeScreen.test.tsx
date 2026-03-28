@@ -253,6 +253,51 @@ const renderHomeScreen = (locale?: 'pl' | 'en' | 'de') =>
     ),
   );
 
+const persistedLessonCheckpointBootSnapshot = {
+  guest: {
+    adding: {
+      attempts: 3,
+      bestScorePercent: 72,
+      completions: 1,
+      lastCompletedAt: '2026-03-21T08:12:00.000Z',
+      lastScorePercent: 70,
+      masteryPercent: 68,
+    },
+  },
+};
+
+const persistedHeroRecentScoresBootSnapshot = {
+  'learner:learner-1': [
+    {
+      correct_answers: 7,
+      created_by: 'user-1',
+      created_date: '2026-03-21T08:00:00.000Z',
+      id: 'score-1',
+      learner_id: 'learner-1',
+      operation: 'addition',
+      owner_user_id: 'user-1',
+      player_name: 'Ada Learner',
+      score: 7,
+      subject: 'maths',
+      time_taken: 42,
+      total_questions: 8,
+    },
+  ],
+};
+
+const persistedHeroTrainingFocusBootSnapshot = {
+  'learner:learner-1': {
+    strongestOperation: null,
+    weakestOperation: {
+      averageAccuracyPercent: 52,
+      bestAccuracyPercent: 66,
+      family: 'arithmetic',
+      operation: 'addition',
+      sessions: 3,
+    },
+  },
+};
+
 describe('HomeScreen', () => {
   beforeEach(async () => {
     vi.clearAllMocks();
@@ -734,18 +779,7 @@ describe('HomeScreen', () => {
     const storageSnapshot = new Map<string, string>([
       [
         'kangur.mobile.home.lessonCheckpoints',
-        JSON.stringify({
-          guest: {
-            adding: {
-              attempts: 3,
-              bestScorePercent: 72,
-              completions: 1,
-              lastCompletedAt: '2026-03-21T08:12:00.000Z',
-              lastScorePercent: 70,
-              masteryPercent: 68,
-            },
-          },
-        }),
+        JSON.stringify(persistedLessonCheckpointBootSnapshot),
       ],
     ]);
     const getItemMock = vi.fn((key: string) => storageSnapshot.get(key) ?? null);
@@ -933,39 +967,11 @@ describe('HomeScreen', () => {
     const storageSnapshot = new Map<string, string>([
       [
         'kangur.mobile.scores.recent',
-        JSON.stringify({
-          'learner:learner-1': [
-            {
-              correct_answers: 7,
-              created_by: 'user-1',
-              created_date: '2026-03-21T08:00:00.000Z',
-              id: 'score-1',
-              learner_id: 'learner-1',
-              operation: 'addition',
-              owner_user_id: 'user-1',
-              player_name: 'Ada Learner',
-              score: 7,
-              subject: 'maths',
-              time_taken: 42,
-              total_questions: 8,
-            },
-          ],
-        }),
+        JSON.stringify(persistedHeroRecentScoresBootSnapshot),
       ],
       [
         'kangur.mobile.scores.trainingFocus',
-        JSON.stringify({
-          'learner:learner-1': {
-            strongestOperation: null,
-            weakestOperation: {
-              averageAccuracyPercent: 52,
-              bestAccuracyPercent: 66,
-              family: 'arithmetic',
-              operation: 'addition',
-              sessions: 3,
-            },
-          },
-        }),
+        JSON.stringify(persistedHeroTrainingFocusBootSnapshot),
       ],
     ]);
     const getItemMock = vi.fn((key: string) => storageSnapshot.get(key) ?? null);

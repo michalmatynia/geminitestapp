@@ -38,6 +38,17 @@ const mockContext: ApiHandlerContext = {
   getElapsedMs: () => 0,
 };
 
+const buildBaseImportParametersRequest = (payload: Record<string, unknown>) =>
+  new NextRequest('http://localhost/api/v2/integrations/imports/base/parameters', {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  });
+
+const inventoryCacheExpectation = expect.objectContaining({
+  inventoryId: 'inventory-1',
+  productId: 'p-1',
+});
+
 type BaseImportParametersResponse = {
   keys: string[];
   values: Record<string, string>;
@@ -89,13 +100,10 @@ describe('base import parameters handler', () => {
     });
 
     const response = await postBaseImportParametersHandler(
-      new NextRequest('http://localhost/api/v2/integrations/imports/base/parameters', {
-        method: 'POST',
-        body: JSON.stringify({
-          inventoryId: 'inventory-1',
-          connectionId: 'conn-1',
-          sampleSize: 2,
-        }),
+      buildBaseImportParametersRequest({
+        inventoryId: 'inventory-1',
+        connectionId: 'conn-1',
+        sampleSize: 2,
       }),
       mockContext
     );
@@ -109,12 +117,7 @@ describe('base import parameters handler', () => {
       'text_fields.features.Material': 'Steel',
       'text_fields.features.Color': 'Black',
     });
-    expect(setImportParameterCacheMock).toHaveBeenCalledWith(
-      expect.objectContaining({
-        inventoryId: 'inventory-1',
-        productId: 'p-1',
-      })
-    );
+    expect(setImportParameterCacheMock).toHaveBeenCalledWith(inventoryCacheExpectation);
     expect(callBaseApiMock).toHaveBeenNthCalledWith(
       1,
       'token-1',
@@ -150,13 +153,10 @@ describe('base import parameters handler', () => {
     });
 
     const response = await postBaseImportParametersHandler(
-      new NextRequest('http://localhost/api/v2/integrations/imports/base/parameters', {
-        method: 'POST',
-        body: JSON.stringify({
-          inventoryId: 'inventory-1',
-          productId: 'p-99',
-          connectionId: 'conn-1',
-        }),
+      buildBaseImportParametersRequest({
+        inventoryId: 'inventory-1',
+        productId: 'p-99',
+        connectionId: 'conn-1',
       }),
       mockContext
     );
@@ -175,12 +175,9 @@ describe('base import parameters handler', () => {
   it('requires explicit connectionId for parameter cache refresh', async () => {
     await expect(
       postBaseImportParametersHandler(
-        new NextRequest('http://localhost/api/v2/integrations/imports/base/parameters', {
-          method: 'POST',
-          body: JSON.stringify({
-            inventoryId: 'inventory-1',
-            sampleSize: 2,
-          }),
+        buildBaseImportParametersRequest({
+          inventoryId: 'inventory-1',
+          sampleSize: 2,
         }),
         mockContext
       )

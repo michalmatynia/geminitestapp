@@ -3,9 +3,21 @@
 import { Badge, Button, FormSection } from '@/shared/ui';
 import { formatTimestamp } from '../filemaker-page-utils';
 import { getRunActions } from '../AdminFilemakerCampaignEditPage.utils';
+import type { AppRouterInstance } from 'next/dist/shared/lib/app-router-context.shared-runtime';
+import type {
+  FilemakerEmailCampaignAnalytics,
+  FilemakerEmailCampaignRunMetrics,
+  FilemakerEmailCampaignLinkPerformance,
+} from '../../types/campaigns';
+import type {
+  FilemakerEmailCampaignRun,
+  FilemakerEmailCampaignDelivery,
+  FilemakerEmailCampaignRunStatus,
+  FilemakerEmailCampaignDeliveryRegistry,
+} from '@/shared/contracts/filemaker';
 
 interface CampaignAnalyticsSectionProps {
-  analytics: any;
+  analytics: FilemakerEmailCampaignAnalytics;
 }
 
 export const CampaignAnalyticsSection = ({ analytics }: CampaignAnalyticsSectionProps) => (
@@ -126,7 +138,7 @@ export const CampaignAnalyticsSection = ({ analytics }: CampaignAnalyticsSection
           No tracked click activity has been recorded for this campaign yet.
         </div>
       ) : (
-        analytics.topClickedLinks.map((link: any) => (
+        analytics.topClickedLinks.map((link: FilemakerEmailCampaignLinkPerformance) => (
           <div
             key={link.targetUrl}
             className='rounded-md border border-border/60 bg-card/25 p-3 text-sm text-gray-300'
@@ -147,13 +159,18 @@ export const CampaignAnalyticsSection = ({ analytics }: CampaignAnalyticsSection
 );
 
 interface RecentRunsSectionProps {
-  recentRuns: any[];
-  deliveryRegistry: any;
-  getFilemakerEmailCampaignDeliveriesForRun: (registry: any, runId: string) => any[];
-  summarizeFilemakerEmailCampaignRunDeliveries: (deliveries: any[]) => any;
-  handleRunStatusChange: (runId: string, nextStatus: any) => Promise<void>;
+  recentRuns: FilemakerEmailCampaignRun[];
+  deliveryRegistry: FilemakerEmailCampaignDeliveryRegistry;
+  getFilemakerEmailCampaignDeliveriesForRun: (
+    registry: FilemakerEmailCampaignDeliveryRegistry,
+    runId: string
+  ) => FilemakerEmailCampaignDelivery[];
+  summarizeFilemakerEmailCampaignRunDeliveries: (
+    deliveries: FilemakerEmailCampaignDelivery[]
+  ) => FilemakerEmailCampaignRunMetrics;
+  handleRunStatusChange: (runId: string, nextStatus: FilemakerEmailCampaignRunStatus) => Promise<void>;
   isUpdatePending: boolean;
-  router: any;
+  router: AppRouterInstance;
 }
 
 export const RecentRunsSection = ({
@@ -171,7 +188,7 @@ export const RecentRunsSection = ({
         No runs yet. Create a dry run or launch the campaign to start monitoring progress.
       </div>
     ) : (
-      recentRuns.map((run: any) => {
+      recentRuns.map((run: FilemakerEmailCampaignRun) => {
         const runDeliveries = getFilemakerEmailCampaignDeliveriesForRun(deliveryRegistry, run.id);
         const metrics =
           runDeliveries.length > 0

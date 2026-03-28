@@ -1,5 +1,4 @@
 import { type Href } from 'expo-router';
-import { Pressable, Text, View } from 'react-native';
 
 import { createKangurPlanHref } from '../plan/planHref';
 import { createKangurResultsHref } from '../scores/resultsHref';
@@ -10,6 +9,7 @@ import {
 } from '../shared/KangurAssessmentUi';
 import {
   KangurMobileActionButton as SharedActionButton,
+  KangurMobileFilterChip as SharedFilterChip,
   KangurMobileLinkButton as SharedLinkButton,
   type KangurMobileTone as Tone,
 } from '../shared/KangurMobileUi';
@@ -39,16 +39,13 @@ export function ActionButton({
 }): React.JSX.Element {
   return (
     <SharedActionButton
+      borderRadius={16}
+      centered
       disabled={disabled}
       label={label}
+      minHeight={46}
       onPress={onPress}
       stretch
-      style={{
-        alignItems: 'center',
-        borderRadius: 16,
-        justifyContent: 'center',
-        minHeight: 46,
-      }}
       tone={tone}
       verticalPadding={12}
     />
@@ -64,16 +61,12 @@ export function OutlineLink({
 }): React.JSX.Element {
   return (
     <SharedLinkButton
+      borderRadius={16}
+      centered
       href={href}
       label={label}
+      minHeight={46}
       stretch
-      style={{
-        alignItems: 'center',
-        borderRadius: 16,
-        justifyContent: 'center',
-        minHeight: 46,
-      }}
-      textStyle={{ textAlign: 'center' }}
       verticalPadding={12}
     />
   );
@@ -89,31 +82,17 @@ export function TabButton({
   onPress: () => void;
 }): React.JSX.Element {
   return (
-    <Pressable
-      accessibilityRole='button'
+    <SharedFilterChip
+      centered
+      idleTextColor='#0f172a'
+      label={label}
+      minHeight={40}
       onPress={onPress}
-      style={{
-        alignItems: 'center',
-        backgroundColor: active ? '#0f172a' : '#ffffff',
-        borderColor: active ? '#0f172a' : '#cbd5e1',
-        borderRadius: 999,
-        borderWidth: 1,
-        minHeight: 40,
-        paddingHorizontal: 14,
-        paddingVertical: 10,
-      }}
-    >
-      <Text
-        style={{
-          color: active ? '#ffffff' : '#0f172a',
-          fontSize: 13,
-          fontWeight: '700',
-          textAlign: 'center',
-        }}
-      >
-        {label}
-      </Text>
-    </Pressable>
+      selected={active}
+      selectedBackgroundColor='#0f172a'
+      selectedBorderColor='#0f172a'
+      selectedTextColor='#ffffff'
+    />
   );
 }
 

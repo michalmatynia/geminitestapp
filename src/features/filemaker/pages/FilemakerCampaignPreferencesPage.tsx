@@ -151,7 +151,7 @@ export function FilemakerCampaignPreferencesPage({
       setReason(parsed.data.reason ?? null);
       setCanRestore(parsed.data.canResubscribe);
       const eventAt = new Date().toISOString();
-      setRecipientSummary((current) => {
+      setRecipientSummary((current: FilemakerEmailCampaignRecipientActivitySummary | null) => {
         if (!current) return current;
         if (action === 'unsubscribe' && parsed.data.status === 'unsubscribed') {
           return {
@@ -162,11 +162,10 @@ export function FilemakerCampaignPreferencesPage({
               campaignName: current.campaignName,
               runId: null,
               deliveryId: null,
-              createdAt: eventAt,
-              message: isGlobalScope
+              timestamp: eventAt,
+              details: isGlobalScope
                 ? `${parsed.data.emailAddress} unsubscribed across all Filemaker campaigns from the preferences center.`
                 : `${parsed.data.emailAddress} unsubscribed from the preferences center.`,
-              targetUrl: null,
             })!,
             unsubscribeCount: current.unsubscribeCount + 1,
             latestUnsubscribeAt: eventAt,
@@ -181,11 +180,10 @@ export function FilemakerCampaignPreferencesPage({
               campaignName: current.campaignName,
               runId: null,
               deliveryId: null,
-              createdAt: eventAt,
-              message: isGlobalScope
+              timestamp: eventAt,
+              details: isGlobalScope
                 ? `${parsed.data.emailAddress} restored delivery across all Filemaker campaigns from the preferences center.`
                 : `${parsed.data.emailAddress} restored campaign delivery from the preferences center.`,
-              targetUrl: null,
             })!,
             resubscribeCount: current.resubscribeCount + 1,
             latestResubscribeAt: eventAt,
@@ -368,7 +366,8 @@ export function FilemakerCampaignPreferencesPage({
                     No delivery or engagement history has been recorded for this recipient yet.
                   </div>
                 ) : (
-                  recipientSummary.recentActivity.map((activity) => (
+                  recipientSummary.recentActivity.map(
+                    (activity: FilemakerEmailCampaignRecipientActivityItem) => (
                     <div
                       key={activity.id}
                       className='rounded-xl border border-border/40 bg-background/40 p-3'
@@ -377,18 +376,18 @@ export function FilemakerCampaignPreferencesPage({
                         <Badge variant='outline' className='text-[10px]'>
                           {RECIPIENT_ACTIVITY_LABELS[activity.type]}
                         </Badge>
-                        {activity.createdAt ? (
-                          <span className='text-[11px] text-gray-500'>{activity.createdAt}</span>
+                        {activity.timestamp ? (
+                          <span className='text-[11px] text-gray-500'>{activity.timestamp}</span>
                         ) : null}
                       </div>
-                      <div className='mt-2 text-sm leading-6 text-gray-200'>{activity.message}</div>
-                      {activity.targetUrl ? (
-                        <div className='mt-1 break-all text-[11px] text-sky-300'>
-                          {activity.targetUrl}
+                      {activity.details ? (
+                        <div className='mt-2 text-sm leading-6 text-gray-200'>
+                          {activity.details}
                         </div>
                       ) : null}
                     </div>
-                  ))
+                    )
+                  )
                 )}
               </div>
             </div>

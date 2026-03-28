@@ -10,6 +10,12 @@ import {
   type GamesLibraryFilterState,
   type GamesLibraryTabId,
 } from './GamesLibrary.filters';
+import {
+  KANGUR_LESSON_LIBRARY,
+} from '@/features/kangur/lessons/lesson-catalog';
+import {
+  getLocalizedKangurLessonTitle,
+} from '@/features/kangur/lessons/lesson-catalog-i18n';
 import type {
   KangurGameVariantSurface,
   KangurGameDefinition,
@@ -20,7 +26,10 @@ import type {
   KangurGameSurface,
   KangurGameStatus,
 } from '@/shared/contracts/kangur-games';
+import type { KangurLessonComponentId } from '@/features/kangur/shared/contracts/kangur';
 import type { KangurGamesLibraryVariantGroupSurface } from '@/features/kangur/games';
+
+export { DEFAULT_GAMES_LIBRARY_FILTERS };
 
 export const GAMES_LIBRARY_TABS: Array<{ id: GamesLibraryTabId; labelKey: string }> = [
   {
@@ -39,6 +48,8 @@ export const GAMES_LIBRARY_TABS: Array<{ id: GamesLibraryTabId; labelKey: string
 
 export const GAMES_LIBRARY_PANEL_SURFACE_CLASSNAME =
   'rounded-[2rem] border border-[color:var(--kangur-soft-card-border)] [background:color-mix(in_srgb,var(--kangur-soft-card-background)_95%,var(--kangur-page-background))] p-5 shadow-[0_28px_84px_-58px_rgba(15,23,42,0.44)] sm:p-6';
+
+export const GAMES_LIBRARY_MAIN_ID = 'kangur-games-library-main';
 
 export const GAMES_LIBRARY_PANEL_INSET_SURFACE_CLASSNAME =
   'rounded-[1.4rem] border border-[color:var(--kangur-soft-card-border)] [background:color-mix(in_srgb,var(--kangur-soft-card-background)_96%,white)] p-4 sm:p-5';
@@ -194,6 +205,20 @@ export const resolveCoverageAccent = (
   }
 };
 
+export const resolveLessonCoverageStatusAccent = (
+  status: 'launchable' | 'library_backed' | 'lesson_only'
+): 'amber' | 'rose' | 'sky' => {
+  switch (status) {
+    case 'launchable':
+      return 'rose';
+    case 'library_backed':
+      return 'sky';
+    case 'lesson_only':
+    default:
+      return 'amber';
+  }
+};
+
 export const resolveEngineCategoryAccent = (
   category: 'foundational' | 'early_learning' | 'adult_learning' | null
 ): 'amber' | 'sky' | 'slate' => {
@@ -313,6 +338,20 @@ export const withGamesLibraryAnchor = (href: string, anchorId: string): string =
   const [withoutHash = href] = href.split('#');
   return `${withoutHash}#${anchorId}`;
 };
+
+export const getLessonTitles = (
+  componentIds: readonly string[],
+  locale: string | null | undefined
+): string[] =>
+  componentIds
+    .map((componentId) => {
+      const lesson = KANGUR_LESSON_LIBRARY[componentId as KangurLessonComponentId];
+      if (!lesson) {
+        return componentId;
+      }
+      return getLocalizedKangurLessonTitle(componentId, locale, lesson.title);
+    })
+    .filter((title) => title.trim().length > 0);
 
 export const getSerializationIssueHref = (
   hrefBase: string,

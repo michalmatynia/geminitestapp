@@ -184,6 +184,9 @@ const EnglishArticlesLesson = loadLessonComponent(
 const EnglishAdjectivesLesson = loadLessonComponent(
   () => import('../ui/components/EnglishAdjectivesLesson')
 );
+const EnglishComparativesSuperlativesLesson = loadLessonComponent(
+  () => import('../ui/components/EnglishComparativesSuperlativesLesson')
+);
 const EnglishAdverbsLesson = loadLessonComponent(
   () => import('../ui/components/EnglishAdverbsLesson')
 );
@@ -374,6 +377,7 @@ export const LESSON_COMPONENTS: Record<KangurLessonComponentId, ComponentType<Le
   english_subject_verb_agreement: EnglishSubjectVerbAgreementLesson,
   english_articles: EnglishArticlesLesson,
   english_adjectives: EnglishAdjectivesLesson,
+  english_comparatives_superlatives: EnglishComparativesSuperlativesLesson,
   english_adverbs: EnglishAdverbsLesson,
   english_adverbs_frequency: EnglishAdverbsFrequencyLesson,
   webdev_react_components: WebDevelopmentReactComponentsLesson,

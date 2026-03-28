@@ -45,6 +45,10 @@ const createEntry = (sessionId: string, hostLearnerId: string) => ({
   visibility: 'private' as const,
 });
 
+const INVALID_PRIVATE_LOBBY_JSON = JSON.stringify({
+  'learner-1': [{ sessionId: 'invite-1' }],
+});
+
 describe('persistedKangurMobileHomeDuelInvites', () => {
   it('persists and restores a learner-scoped private lobby snapshot', () => {
     const storage = createStorage();
@@ -65,9 +69,7 @@ describe('persistedKangurMobileHomeDuelInvites', () => {
 
   it('ignores invalid persisted private lobby payloads', () => {
     const storage = createStorage({
-      'kangur.mobile.home.duels.privateLobby': JSON.stringify({
-        'learner-1': [{ sessionId: 'invite-1' }],
-      }),
+      'kangur.mobile.home.duels.privateLobby': INVALID_PRIVATE_LOBBY_JSON,
     });
 
     expect(

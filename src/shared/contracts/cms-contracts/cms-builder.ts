@@ -1,5 +1,4 @@
 import { z } from 'zod';
-import type { CmsPageSummaryDto, PageZoneDto } from './cms-core';
 
 /**
  * CMS Inspector Settings DTO
@@ -51,6 +50,8 @@ export const cmsBlockInstanceSchema: z.ZodType<BlockInstance> = z.lazy(() =>
 );
 
 export const pageZoneSchema = z.enum(['header', 'template', 'footer']);
+export type PageZoneDto = z.infer<typeof pageZoneSchema>;
+export type PageZone = PageZoneDto;
 
 export type SectionInstance = {
   id: string;
@@ -64,7 +65,7 @@ export type SectionInstance = {
 export const cmsSectionInstanceSchema: z.ZodType<SectionInstance> = z.object({
   id: z.string(),
   type: z.string(),
-  zone: z.lazy(() => pageZoneSchema) as any,
+  zone: pageZoneSchema,
   parentSectionId: z.string().nullable().optional(),
   settings: z.record(z.string(), z.unknown()),
   blocks: z.array(cmsBlockInstanceSchema),

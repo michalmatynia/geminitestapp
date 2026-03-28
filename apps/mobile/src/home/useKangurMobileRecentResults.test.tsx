@@ -103,6 +103,40 @@ const createScore = (
   ...overrides,
 });
 
+const cachedRecentResults = [
+  createScore('score-cached-1', {
+    created_date: '2026-03-22T08:00:00.000Z',
+  }),
+  createScore('score-cached-2', {
+    created_date: '2026-03-21T08:00:00.000Z',
+  }),
+];
+
+const liveRecentResults = [
+  createScore('score-live-1', {
+    created_date: '2026-03-23T08:00:00.000Z',
+  }),
+  createScore('score-live-2', {
+    created_date: '2026-03-22T08:00:00.000Z',
+  }),
+];
+
+const persistedRecentResultsStoragePayload = {
+  'learner:learner-1': cachedRecentResults,
+};
+
+const updatedRecentResultsStoragePayload = {
+  'learner:learner-1': liveRecentResults,
+};
+
+const persistedRecentResultsStorageJson = JSON.stringify(
+  persistedRecentResultsStoragePayload,
+);
+
+const updatedRecentResultsStorageJson = JSON.stringify(
+  updatedRecentResultsStoragePayload,
+);
+
 const createStorage = (
   initialValues: Record<string, string> = {},
 ): KangurClientStorageAdapter => {
@@ -204,16 +238,7 @@ describe('useKangurMobileRecentResults', () => {
     );
 
     const storage = createStorage({
-      'kangur.mobile.scores.recent': JSON.stringify({
-        'learner:learner-1': [
-          createScore('score-cached-1', {
-            created_date: '2026-03-22T08:00:00.000Z',
-          }),
-          createScore('score-cached-2', {
-            created_date: '2026-03-21T08:00:00.000Z',
-          }),
-        ],
-      }),
+      'kangur.mobile.scores.recent': persistedRecentResultsStorageJson,
     });
     const progressSnapshot = createDefaultKangurProgressState();
     useKangurMobileRuntimeMock.mockReturnValue({
@@ -235,52 +260,22 @@ describe('useKangurMobileRecentResults', () => {
     });
 
     await waitFor(() => {
-      expect(result.current.results).toEqual([
-        createScore('score-cached-1', {
-          created_date: '2026-03-22T08:00:00.000Z',
-        }),
-        createScore('score-cached-2', {
-          created_date: '2026-03-21T08:00:00.000Z',
-        }),
-      ]);
+      expect(result.current.results).toEqual(cachedRecentResults);
     });
 
     expect(result.current.isLoading).toBe(false);
 
     if (resolveScores) {
-      resolveScores([
-        createScore('score-live-1', {
-          created_date: '2026-03-23T08:00:00.000Z',
-        }),
-        createScore('score-live-2', {
-          created_date: '2026-03-22T08:00:00.000Z',
-        }),
-      ]);
+      resolveScores(liveRecentResults);
     }
 
     await waitFor(() => {
-      expect(result.current.results).toEqual([
-        createScore('score-live-1', {
-          created_date: '2026-03-23T08:00:00.000Z',
-        }),
-        createScore('score-live-2', {
-          created_date: '2026-03-22T08:00:00.000Z',
-        }),
-      ]);
+      expect(result.current.results).toEqual(liveRecentResults);
     });
 
     expect(storage.setItem).toHaveBeenCalledWith(
       'kangur.mobile.scores.recent',
-      JSON.stringify({
-        'learner:learner-1': [
-          createScore('score-live-1', {
-            created_date: '2026-03-23T08:00:00.000Z',
-          }),
-          createScore('score-live-2', {
-            created_date: '2026-03-22T08:00:00.000Z',
-          }),
-        ],
-      }),
+      updatedRecentResultsStorageJson,
     );
   });
 
@@ -331,16 +326,7 @@ describe('useKangurMobileRecentResults', () => {
 
   it('reuses persisted recent results while the home screen keeps the live query deferred', async () => {
     const storage = createStorage({
-      'kangur.mobile.scores.recent': JSON.stringify({
-        'learner:learner-1': [
-          createScore('score-cached-1', {
-            created_date: '2026-03-22T08:00:00.000Z',
-          }),
-          createScore('score-cached-2', {
-            created_date: '2026-03-21T08:00:00.000Z',
-          }),
-        ],
-      }),
+      'kangur.mobile.scores.recent': persistedRecentResultsStorageJson,
     });
     const progressSnapshot = createDefaultKangurProgressState();
     useKangurMobileRuntimeMock.mockReturnValue({
@@ -367,14 +353,7 @@ describe('useKangurMobileRecentResults', () => {
     await waitFor(() => {
       expect(result.current.isEnabled).toBe(false);
       expect(result.current.isLoading).toBe(false);
-      expect(result.current.results).toEqual([
-        createScore('score-cached-1', {
-          created_date: '2026-03-22T08:00:00.000Z',
-        }),
-        createScore('score-cached-2', {
-          created_date: '2026-03-21T08:00:00.000Z',
-        }),
-      ]);
+      expect(result.current.results).toEqual(cachedRecentResults);
     });
     expect(listScoresMock).not.toHaveBeenCalled();
   });

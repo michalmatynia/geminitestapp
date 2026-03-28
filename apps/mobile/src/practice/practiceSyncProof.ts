@@ -31,40 +31,64 @@ type BuildKangurPracticeSyncProofInput = {
   scores: KangurScore[];
 };
 
-const findMatchingKangurPracticeSyncScore = ({
-  expectedCorrectAnswers,
-  expectedTotalQuestions,
-  operation,
-  runStartedAt,
-  scores,
-}: Pick<
+type PracticeSyncScoreMatchInput = Pick<
   BuildKangurPracticeSyncProofInput,
   | 'expectedCorrectAnswers'
   | 'expectedTotalQuestions'
   | 'operation'
   | 'runStartedAt'
   | 'scores'
->): KangurScore | null => {
-  const exactMatches = scores.filter(
+>;
+
+const findExactPracticeSyncScoreMatches = ({
+  expectedCorrectAnswers,
+  expectedTotalQuestions,
+  operation,
+  scores,
+}: Omit<PracticeSyncScoreMatchInput, 'runStartedAt'>): KangurScore[] =>
+  scores.filter(
     (score) =>
       score.operation === operation &&
       score.correct_answers === expectedCorrectAnswers &&
       score.total_questions === expectedTotalQuestions,
   );
 
+const canUseRunStartedAt = (runStartedAt: number): boolean =>
+  Number.isFinite(runStartedAt) && runStartedAt > 0;
+
+const wasScoreCreatedAfterRunStart = (
+  score: KangurScore,
+  runStartedAt: number,
+): boolean => {
+  const createdAt = Date.parse(score.created_date);
+  return Number.isFinite(createdAt) && createdAt >= runStartedAt;
+};
+
+const findMatchingKangurPracticeSyncScore = ({
+  expectedCorrectAnswers,
+  expectedTotalQuestions,
+  operation,
+  runStartedAt,
+  scores,
+}: PracticeSyncScoreMatchInput): KangurScore | null => {
+  const exactMatches = findExactPracticeSyncScoreMatches({
+    expectedCorrectAnswers,
+    expectedTotalQuestions,
+    operation,
+    scores,
+  });
+
   if (exactMatches.length === 0) {
     return null;
   }
 
-  if (!Number.isFinite(runStartedAt) || runStartedAt <= 0) {
+  if (!canUseRunStartedAt(runStartedAt)) {
     return exactMatches[0] ?? null;
   }
 
   return (
-    exactMatches.find((score) => {
-      const createdAt = Date.parse(score.created_date);
-      return Number.isFinite(createdAt) && createdAt >= runStartedAt;
-    }) ?? null
+    exactMatches.find((score) => wasScoreCreatedAfterRunStart(score, runStartedAt)) ??
+    null
   );
 };
 

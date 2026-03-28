@@ -172,6 +172,15 @@ const KANGUR_OPERATION_FALLBACKS: Record<string, KangurOperationFallbackInfo> = 
       uk: 'Прикметники',
     },
   },
+  english_comparatives_superlatives: {
+    emoji: '👑',
+    labels: {
+      pl: 'Comparatives i Superlatives',
+      en: 'Comparatives & Superlatives',
+      de: 'Komparativ und Superlativ',
+      uk: 'Вищий і найвищий ступені',
+    },
+  },
   english_adverbs: {
     emoji: '🎭',
     labels: {

@@ -3,6 +3,13 @@ import { describe, expect, it } from 'vitest';
 import { createMobileDevelopmentKangurStorage } from '../storage/createMobileDevelopmentKangurStorage';
 import { createDevelopmentKangurAuthAdapter } from './createDevelopmentKangurAuthAdapter';
 
+const authenticatedDemoSessionExpectation = {
+  status: 'authenticated',
+  user: expect.objectContaining({
+    id: 'mobile-demo-parent',
+  }),
+};
+
 describe('createDevelopmentKangurAuthAdapter', () => {
   it('restores the demo session from the provided storage adapter', async () => {
     const storage = createMobileDevelopmentKangurStorage();
@@ -17,10 +24,7 @@ describe('createDevelopmentKangurAuthAdapter', () => {
     const secondAdapter = createDevelopmentKangurAuthAdapter(storage);
 
     await expect(secondAdapter.getSession()).resolves.toMatchObject({
-      status: 'authenticated',
-      user: expect.objectContaining({
-        id: 'mobile-demo-parent',
-      }),
+      ...authenticatedDemoSessionExpectation,
     });
 
     await secondAdapter.signOut();

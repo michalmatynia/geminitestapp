@@ -61,6 +61,13 @@ const buildPattern = (id: string, updatedAt: string): ProductValidationPattern =
   updatedAt,
 });
 
+const buildReorderRequest = (payload: Record<string, unknown>) =>
+  new NextRequest('http://localhost/api/v2/products/validator-patterns/reorder', {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify(payload),
+  });
+
 describe('validator-patterns/reorder route', () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -75,23 +82,19 @@ describe('validator-patterns/reorder route', () => {
       .mockResolvedValueOnce({ ...patternB, sequence: 10 });
 
     const response = await POST(
-      new NextRequest('http://localhost/api/v2/products/validator-patterns/reorder', {
-        method: 'POST',
-        headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({
-          updates: [
-            {
-              id: 'pattern-a',
-              sequence: 20,
-              expectedUpdatedAt: patternA.updatedAt,
-            },
-            {
-              id: 'pattern-b',
-              sequence: 10,
-              expectedUpdatedAt: patternB.updatedAt,
-            },
-          ],
-        }),
+      buildReorderRequest({
+        updates: [
+          {
+            id: 'pattern-a',
+            sequence: 20,
+            expectedUpdatedAt: patternA.updatedAt,
+          },
+          {
+            id: 'pattern-b',
+            sequence: 10,
+            expectedUpdatedAt: patternB.updatedAt,
+          },
+        ],
       })
     );
     const data = await response.json();
@@ -108,18 +111,14 @@ describe('validator-patterns/reorder route', () => {
     repositoryMock.listPatterns.mockResolvedValue([patternA]);
 
     const response = await POST(
-      new NextRequest('http://localhost/api/v2/products/validator-patterns/reorder', {
-        method: 'POST',
-        headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({
-          updates: [
-            {
-              id: 'pattern-a',
-              sequence: 20,
-              expectedUpdatedAt: '2026-02-01T00:00:05.000Z',
-            },
-          ],
-        }),
+      buildReorderRequest({
+        updates: [
+          {
+            id: 'pattern-a',
+            sequence: 20,
+            expectedUpdatedAt: '2026-02-01T00:00:05.000Z',
+          },
+        ],
       })
     );
     const data = await response.json();

@@ -131,7 +131,7 @@ describe('kangur lesson settings', () => {
     });
   });
 
-  it('defines English grammar subsections, including adjectives', () => {
+  it('defines English grammar subsections, including adjectives and comparatives', () => {
     const grammarSection = createDefaultKangurSections().find(
       (section) => section.id === 'english_grammar'
     );
@@ -142,6 +142,7 @@ describe('kangur lesson settings', () => {
       'english_grammar_subject_verb_agreement',
       'english_grammar_articles',
       'english_grammar_adjectives',
+      'english_grammar_comparatives_superlatives',
       'english_grammar_adverbs',
       'english_grammar_adverbs_frequency',
       'english_grammar_prepositions',
@@ -150,6 +151,13 @@ describe('kangur lesson settings', () => {
       .toMatchObject({
         componentIds: ['english_adjectives'],
       });
+    expect(
+      grammarSection?.subsections.find(
+        (subsection) => subsection.id === 'english_grammar_comparatives_superlatives'
+      )
+    ).toMatchObject({
+      componentIds: ['english_comparatives_superlatives'],
+    });
     expect(
       grammarSection?.subsections.find((subsection) => subsection.id === 'english_grammar_adverbs')
     ).toMatchObject({

@@ -115,20 +115,67 @@ const isPrivateIpv4 = (hostname: string): boolean => {
   return false;
 };
 
+const isLoopbackIpv6 = (hostname: string): boolean =>
+  hostname === '::1' || hostname === '::';
+
+const isLinkLocalIpv6 = (hostname: string): boolean =>
+  hostname.startsWith('fe80:');
+
+const isUniqueLocalIpv6 = (hostname: string): boolean =>
+  hostname.startsWith('fc') || hostname.startsWith('fd');
+
+const decodeMappedIpv6HexToIpv4 = (value: string): string | null => {
+  const parts = value.split(':');
+  if (
+    parts.length !== 2 ||
+    parts.some((part) => !/^[\da-f]{1,4}$/i.test(part))
+  ) {
+    return null;
+  }
+
+  const high = Number.parseInt(parts[0] ?? '', 16);
+  const low = Number.parseInt(parts[1] ?? '', 16);
+  if (!Number.isFinite(high) || !Number.isFinite(low)) {
+    return null;
+  }
+
+  return [
+    (high >> 8) & 0xff,
+    high & 0xff,
+    (low >> 8) & 0xff,
+    low & 0xff,
+  ].join('.');
+};
+
+const isMappedPrivateIpv6 = (hostname: string): boolean => {
+  if (!hostname.startsWith('::ffff:')) {
+    return false;
+  }
+
+  const mapped = hostname.slice('::ffff:'.length);
+  if (!mapped) {
+    return false;
+  }
+
+  return isPrivateIpv4(mapped) || isPrivateIpv4(decodeMappedIpv6HexToIpv4(mapped) ?? '');
+};
+
 const isPrivateIpv6 = (hostname: string): boolean => {
   const normalized = hostname.toLowerCase();
-  if (normalized === '::1' || normalized === '::') return true;
-  if (normalized.startsWith('fe80:')) return true;
-  if (normalized.startsWith('fc') || normalized.startsWith('fd')) return true;
-  if (normalized.startsWith('::ffff:')) {
-    const mapped = normalized.slice('::ffff:'.length);
-    if (mapped && isPrivateIpv4(mapped)) return true;
-  }
-  return false;
+  return (
+    isLoopbackIpv6(normalized) ||
+    isLinkLocalIpv6(normalized) ||
+    isUniqueLocalIpv6(normalized) ||
+    isMappedPrivateIpv6(normalized)
+  );
 };
 
 const normalizeHostname = (hostname: string): string => {
-  return hostname.trim().toLowerCase().replace(/\.$/, '');
+  return hostname
+    .trim()
+    .toLowerCase()
+    .replace(/^\[|\]$/g, '')
+    .replace(/\.$/, '');
 };
 
 const isRedirectStatus = (status: number): boolean =>

@@ -6,6 +6,7 @@ import { StatusPill } from '../shared/KangurAssessmentUi';
 import {
   KangurMobileActionButton,
   KangurMobileCard,
+  KangurMobileInsetPanel,
   KangurMobileLinkButton,
 } from '../shared/KangurMobileUi';
 import { useKangurMobileAiTutor } from './useKangurMobileAiTutor';
@@ -31,15 +32,11 @@ export function KangurMobileAiTutorCard({
       responseActionItems.push(
         <KangurMobileLinkButton
           accessibilityLabel={action.label}
+          centered
           href={action.href}
           key={action.id}
           label={action.label}
-          style={{
-            alignItems: 'center',
-            justifyContent: 'center',
-            minHeight: 44,
-          }}
-          textStyle={{ textAlign: 'center' }}
+          minHeight={44}
         />,
       );
       continue;
@@ -76,12 +73,8 @@ export function KangurMobileAiTutorCard({
                 ? `Open: ${tutor.websiteHelpTarget.label}`
                 : `Przejdź: ${tutor.websiteHelpTarget.label}`
           }
-          style={{
-            alignItems: 'center',
-            justifyContent: 'center',
-            minHeight: 44,
-          }}
-          textStyle={{ textAlign: 'center' }}
+          centered
+          minHeight={44}
         />
       );
     } else {
@@ -224,16 +217,7 @@ export function KangurMobileAiTutorCard({
       )}
 
       {tutor.guideEntry?.hints?.length ? (
-        <View
-          style={{
-            backgroundColor: '#f8fafc',
-            borderColor: '#cbd5e1',
-            borderRadius: 20,
-            borderWidth: 1,
-            gap: 8,
-            padding: 16,
-          }}
-        >
+        <KangurMobileInsetPanel gap={8} padding={16}>
           <Text style={{ color: '#0f172a', fontSize: 14, fontWeight: '700' }}>
             {copy({
               de: 'Wskazówki startowe',
@@ -246,7 +230,7 @@ export function KangurMobileAiTutorCard({
               {`• ${hint}`}
             </Text>
           ))}
-        </View>
+        </KangurMobileInsetPanel>
       ) : null}
 
       {tutor.availabilityMessage ? (
@@ -266,17 +250,16 @@ export function KangurMobileAiTutorCard({
           {tutor.quickActions.map((action) => (
             <KangurMobileActionButton
               accessibilityLabel={action.label}
+              centered
               disabled={!tutor.canSendMessages || tutor.isSending}
               key={action.id}
               label={action.label}
+              minHeight={44}
               onPress={() => {
                 void tutor.sendQuickAction(action.id);
               }}
               style={{
-                alignItems: 'center',
                 borderWidth: 1,
-                justifyContent: 'center',
-                minHeight: 44,
                 opacity: !tutor.canSendMessages || tutor.isSending ? 0.7 : 1,
                 backgroundColor:
                   !tutor.canSendMessages || tutor.isSending ? '#e2e8f0' : '#eef2ff',
@@ -285,7 +268,6 @@ export function KangurMobileAiTutorCard({
               }}
               textStyle={{
                 color: !tutor.canSendMessages || tutor.isSending ? '#64748b' : '#4338ca',
-                textAlign: 'center',
               }}
               tone='secondary'
             />

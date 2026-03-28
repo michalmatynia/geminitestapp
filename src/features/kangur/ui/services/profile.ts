@@ -24,6 +24,7 @@ import {
 } from './profile/profile-types';
 import {
   parseDateOrNull,
+  translateKangurLearnerProfileWithFallback,
   toLocalDateKey,
   toPercent,
 } from './profile/profile-utils';
@@ -42,6 +43,7 @@ import {
 
 export * from './profile/profile-types';
 export { buildLessonMasteryInsights } from './profile/profile-mastery';
+export { translateKangurLearnerProfileWithFallback } from './profile/profile-utils';
 
 const normalizeScoresDesc = (scores: KangurScoreRecord[]): KangurScoreRecord[] =>
   [...scores].sort((left, right) => {

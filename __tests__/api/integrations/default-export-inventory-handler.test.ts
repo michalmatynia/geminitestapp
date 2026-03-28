@@ -21,6 +21,13 @@ const mockContext: ApiHandlerContext = {
   getElapsedMs: () => 0,
 };
 
+const buildDefaultInventoryPostRequest = (inventoryId: string) =>
+  new NextRequest('http://localhost/api/v2/integrations/exports/base/default-inventory', {
+    method: 'POST',
+    body: JSON.stringify({ inventoryId }),
+    headers: { 'content-type': 'application/json' },
+  });
+
 type DefaultExportInventoryResponse = {
   inventoryId: string | null;
 };
@@ -63,11 +70,7 @@ describe('api/v2/integrations/exports/base/default-inventory handler', () => {
 
   it('stores inventory id on POST and returns the centralized response', async () => {
     const response = await POST_handler(
-      new NextRequest('http://localhost/api/v2/integrations/exports/base/default-inventory', {
-        method: 'POST',
-        body: JSON.stringify({ inventoryId: '4069' }),
-        headers: { 'content-type': 'application/json' },
-      }),
+      buildDefaultInventoryPostRequest('4069'),
       mockContext
     );
     const payload = (await response.json()) as DefaultExportInventoryResponse;

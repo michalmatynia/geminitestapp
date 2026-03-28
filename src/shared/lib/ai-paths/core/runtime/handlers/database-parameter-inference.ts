@@ -12,11 +12,22 @@ import {
   normalizeParameterDefinitions,
   parseChecklistValues,
   resolveChecklistValue,
-  resolveObjectPathValue,
   resolveParameterValue,
   toRecord,
 } from './database-parameter-inference-utils';
 import { coerceInput } from '../../utils';
+import {
+  ParameterInferenceGateError,
+  assertParameterInferenceGuardrails,
+} from './parameter-inference/parameter-inference.guardrails';
+import {
+  coerceParameterRecordArray,
+  normalizeParameterEntries,
+} from './parameter-inference/parameter-inference.normalizer';
+import {
+  mergeParameterInferenceUpdates,
+  resolveExistingParameterValueFromInputs,
+} from './parameter-inference/parameter-inference.merger';
 
 export {
   coerceArrayLike,
@@ -25,204 +36,15 @@ export {
   toRecord,
 } from './database-parameter-inference-utils';
 
-export class ParameterInferenceGateError extends Error {
-  constructor(message: string) {
-    super(message);
-    this.name = 'ParameterInferenceGateError';
-  }
-}
+export { ParameterInferenceGateError, assertParameterInferenceGuardrails };
+
+export { normalizeParameterEntries, coerceParameterRecordArray };
+
+export { mergeParameterInferenceUpdates, resolveExistingParameterValueFromInputs };
 
 const DEFAULT_PARAMETER_INFERENCE_LANGUAGE_CODE = 'en';
 
 const normalizeParameterId = (value: unknown): string | null => normalizeNonEmptyString(value);
-
-export const normalizeParameterEntries = (
-  value: unknown,
-  options: { allowEmptyValue: boolean }
-): Array<{ parameterId: string; value: string; raw: Record<string, unknown> }> => {
-  const entries = coerceArrayLike(value);
-  const normalized: Array<{ parameterId: string; value: string; raw: Record<string, unknown> }> =
-    [];
-  const seen = new Set<string>();
-  entries.forEach((entry: unknown) => {
-    const record = toRecord(entry);
-    if (!record) return;
-    const parameterId =
-      normalizeParameterId(record['parameterId']) ?? normalizeParameterId(record['id']);
-    if (!parameterId || seen.has(parameterId)) return;
-    const resolvedValue = resolveParameterValue(record['value']);
-    if (!resolvedValue && !options.allowEmptyValue) return;
-    normalized.push({
-      parameterId,
-      value: resolvedValue ?? '',
-      raw: { ...record },
-    });
-    seen.add(parameterId);
-  });
-  return normalized;
-};
-
-export const resolveExistingParameterValueFromInputs = (
-  templateInputs: RuntimePortValues,
-  targetPath: string,
-  options: { includeDerivedPorts?: boolean } = {}
-): unknown => {
-  const includeDerivedPorts = options.includeDerivedPorts !== false;
-  const candidates: unknown[] = [];
-  const entityLikeKeys = ['entity', 'entityJson', 'product', 'item', 'data', 'current'];
-  const pushFromRecord = (value: unknown, nestedKeys: string[] = entityLikeKeys): void => {
-    const record = toRecord(value);
-    if (!record) return;
-    candidates.push(resolveObjectPathValue(record, targetPath));
-    nestedKeys.forEach((key: string) => {
-      candidates.push(resolveObjectPathValue(toRecord(record[key]), targetPath));
-    });
-  };
-  pushFromRecord(coerceInput(templateInputs['context']));
-  pushFromRecord(coerceInput(templateInputs['bundle']));
-  pushFromRecord(templateInputs);
-  if (includeDerivedPorts) {
-    pushFromRecord(coerceInput(templateInputs['value']));
-    pushFromRecord(coerceInput(templateInputs['result']));
-  }
-  for (const candidate of candidates) {
-    if (coerceArrayLike(candidate).length > 0) {
-      return candidate;
-    }
-  }
-  return undefined;
-};
-
-export const mergeParameterInferenceUpdates = (args: {
-  targetPath: string;
-  updates: Record<string, unknown>;
-  templateInputs: RuntimePortValues;
-  languageCode?: string;
-}): {
-  updates: Record<string, unknown>;
-  applied: boolean;
-  meta?: Record<string, unknown>;
-} => {
-  // Runtime merge logic updates only the existing `parameters` payload.
-  if (args.targetPath !== 'parameters') {
-    return { updates: args.updates, applied: false };
-  }
-
-  const inferred = normalizeParameterEntries(args.updates[args.targetPath], {
-    allowEmptyValue: false,
-  });
-  if (inferred.length === 0) {
-    return { updates: args.updates, applied: false };
-  }
-
-  const existingSource = resolveExistingParameterValueFromInputs(
-    args.templateInputs,
-    args.targetPath
-  );
-  const existing = normalizeParameterEntries(existingSource, {
-    allowEmptyValue: true,
-  });
-  if (existing.length === 0) {
-    const nextUpdates: Record<string, unknown> = { ...args.updates };
-    delete nextUpdates[args.targetPath];
-    return {
-      updates: nextUpdates,
-      applied: true,
-      meta: {
-        targetPath: args.targetPath,
-        existingCount: 0,
-        inferredCount: inferred.length,
-        finalCount: 0,
-        merged: {
-          filledBlank: 0,
-          preservedNonEmpty: 0,
-          skippedNotExisting: inferred.length,
-        },
-        writeCandidates: 0,
-        skipped: {
-          reason: 'missing_existing_parameters',
-        },
-      },
-    };
-  }
-
-  const nextRecords = existing.map((entry) => ({ ...entry.raw }));
-  const indexByParameterId = new Map<string, number>();
-  existing.forEach((entry, index) => {
-    indexByParameterId.set(entry.parameterId, index);
-  });
-  const languageCode = resolveParameterInferenceLanguageCode(args.languageCode);
-
-  let filledBlankCount = 0;
-  let filledLocalizedCount = 0;
-  let preservedNonEmptyCount = 0;
-  let skippedNotExistingCount = 0;
-
-  inferred.forEach((entry) => {
-    const existingIndex = indexByParameterId.get(entry.parameterId);
-    if (existingIndex === undefined) {
-      skippedNotExistingCount += 1;
-      return;
-    }
-    const current = nextRecords[existingIndex] ?? {};
-    const currentValue = resolveParameterValue(current['value']);
-    if (currentValue && !entry.value) {
-      preservedNonEmptyCount += 1;
-      return;
-    }
-    if (currentValue) {
-      preservedNonEmptyCount += 1;
-    }
-
-    const mergeResult = mergeInferredParameterValueRecord({
-      current,
-      parameterId: entry.parameterId,
-      inferredValue: entry.value,
-      languageCode,
-      allowScalarFill: !currentValue,
-    });
-    if (JSON.stringify(current) === JSON.stringify(mergeResult.next)) {
-      return;
-    }
-
-    nextRecords[existingIndex] = mergeResult.next;
-    if (mergeResult.filledScalar) {
-      filledBlankCount += 1;
-    }
-    if (mergeResult.filledLocalized) {
-      filledLocalizedCount += 1;
-    }
-  });
-
-  const nextUpdates: Record<string, unknown> = { ...args.updates };
-  const changed = !areParameterRecordArraysEqual(
-    existing.map((entry) => entry.raw),
-    nextRecords
-  );
-  if (changed) {
-    nextUpdates[args.targetPath] = nextRecords;
-  } else {
-    delete nextUpdates[args.targetPath];
-  }
-  return {
-    updates: nextUpdates,
-    applied: true,
-    meta: {
-      targetPath: args.targetPath,
-      existingCount: existing.length,
-      inferredCount: inferred.length,
-      finalCount: nextRecords.length,
-      languageCode,
-      merged: {
-        filledBlank: filledBlankCount,
-        filledLocalized: filledLocalizedCount,
-        preservedNonEmpty: preservedNonEmptyCount,
-        skippedNotExisting: skippedNotExistingCount,
-      },
-      writeCandidates: changed ? nextRecords.length : 0,
-    },
-  };
-};
 
 const areParameterRecordArraysEqual = (
   left: Record<string, unknown>[],
@@ -235,29 +57,6 @@ const areParameterRecordArraysEqual = (
     }
   }
   return true;
-};
-
-const coerceParameterRecordArray = (value: unknown): Record<string, unknown>[] => {
-  if (Array.isArray(value)) {
-    return value
-      .map((entry: unknown): Record<string, unknown> | null => toRecord(entry))
-      .filter((entry: Record<string, unknown> | null): entry is Record<string, unknown> =>
-        Boolean(entry)
-      );
-  }
-  const record = toRecord(value);
-  if (record && Array.isArray(record['parameters'])) {
-    return record['parameters']
-      .map((entry: unknown): Record<string, unknown> | null => toRecord(entry))
-      .filter((entry: Record<string, unknown> | null): entry is Record<string, unknown> =>
-        Boolean(entry)
-      );
-  }
-  return coerceArrayLike(value)
-    .map((entry: unknown): Record<string, unknown> | null => toRecord(entry))
-    .filter((entry: Record<string, unknown> | null): entry is Record<string, unknown> =>
-      Boolean(entry)
-    );
 };
 
 const resolveLocalizedValueByLanguage = (

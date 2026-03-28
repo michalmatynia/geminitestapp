@@ -49,6 +49,10 @@ vi.mock('next/dynamic', () => ({
       return createRuntimeRendererStub('english-adverbs-action-studio-game');
     }
 
+    if (signature.includes('EnglishComparativesSuperlativesCrownGame')) {
+      return createRuntimeRendererStub('english-comparatives-crown-game');
+    }
+
     if (signature.includes('ShapeRecognitionGame')) {
       return createRuntimeRendererStub('shape-recognition-game');
     }
@@ -167,6 +171,29 @@ describe('KangurLaunchableGameRuntime', () => {
     render(<KangurLaunchableGameRuntime onFinish={vi.fn()} runtime={runtime} />);
 
     expect(screen.getByTestId('english-adverbs-action-studio-game')).toHaveAttribute(
+      'data-finish-label',
+      'Return to game home'
+    );
+  });
+
+  it('renders the comparatives launchable runtime', () => {
+    const runtime: KangurLaunchableGameRuntimeSpec = {
+      kind: 'launchable_game_screen',
+      screen: 'english_compare_and_crown_quiz',
+      rendererId: 'english_compare_and_crown_game',
+      finishMode: 'return_to_game_home',
+      finishLabelProp: 'finishLabel',
+      className: 'w-full flex flex-col items-center',
+      shell: {
+        accent: 'violet',
+        icon: '👑',
+        shellTestId: 'english-compare-and-crown-runtime-shell',
+      },
+    };
+
+    render(<KangurLaunchableGameRuntime onFinish={vi.fn()} runtime={runtime} />);
+
+    expect(screen.getByTestId('english-comparatives-crown-game')).toHaveAttribute(
       'data-finish-label',
       'Return to game home'
     );

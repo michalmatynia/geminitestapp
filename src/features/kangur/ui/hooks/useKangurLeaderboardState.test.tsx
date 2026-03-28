@@ -204,4 +204,33 @@ describe('useKangurLeaderboardState', () => {
     expect(result.current.items[0]?.metaLabel).toContain('Przysłówki');
     expect(result.current.items[1]?.metaLabel).toContain('Przysłówki częstotliwości');
   });
+
+  it('uses learner-friendly labels for comparatives and superlatives on the English leaderboard', async () => {
+    scoreFilterMock.mockResolvedValue([
+      createScore({
+        id: 'score-english-comparatives',
+        player_name: 'Ada',
+        operation: 'english_comparatives_superlatives',
+        subject: 'english',
+        created_by: 'ada@example.com',
+      }),
+    ]);
+    useKangurSubjectFocusMock.mockReturnValue({
+      subject: 'english',
+      setSubject: vi.fn(),
+      subjectKey: 'learner-1',
+    });
+
+    const { result } = renderHook(() => useKangurLeaderboardState());
+
+    await waitFor(() => {
+      expect(result.current.loading).toBe(false);
+    });
+
+    expect(result.current.items[0]?.operationLabel).toBe('Stopniowanie przymiotników');
+    expect(result.current.operationFilters.map((item) => item.label)).toEqual(
+      expect.arrayContaining(['Stopniowanie przymiotników'])
+    );
+    expect(result.current.items[0]?.metaLabel).toContain('Stopniowanie przymiotników');
+  });
 });

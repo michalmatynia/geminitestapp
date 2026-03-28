@@ -109,6 +109,7 @@ export const KANGUR_LAUNCHABLE_GAME_LIBRARY_LESSON_COMPONENT_IDS = [
   'clock',
   'division',
   'english_adjectives',
+  'english_comparatives_superlatives',
   'english_adverbs',
   'english_adverbs_frequency',
   'english_articles',

@@ -23,6 +23,10 @@ const createScore = (id: string) => ({
   owner_user_id: 'parent-1',
 });
 
+const INVALID_RECENT_RESULTS_JSON = JSON.stringify({
+  'learner:learner-1': [{ id: 'broken-score' }],
+});
+
 describe('persistedKangurMobileRecentResults', () => {
   it('persists and resolves recent results for the current score scope', () => {
     const storage = createMemoryKangurClientStorage();
@@ -49,12 +53,7 @@ describe('persistedKangurMobileRecentResults', () => {
 
   it('ignores invalid persisted score payloads', () => {
     const storage = createMemoryKangurClientStorage();
-    storage.setItem(
-      'kangur.mobile.scores.recent',
-      JSON.stringify({
-        'learner:learner-1': [{ id: 'broken-score' }],
-      }),
-    );
+    storage.setItem('kangur.mobile.scores.recent', INVALID_RECENT_RESULTS_JSON);
 
     expect(
       resolvePersistedKangurMobileRecentResults({

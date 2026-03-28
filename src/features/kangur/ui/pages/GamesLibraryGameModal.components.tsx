@@ -6,6 +6,7 @@ import {
   KangurButton,
   KangurStatusChip,
 } from '@/features/kangur/ui/design/primitives';
+import { type KangurAccent } from '@/features/kangur/ui/design/tokens';
 import { cn } from '@/features/kangur/shared/utils';
 import type { KangurGameDefinition } from '@/shared/contracts/kangur-games';
 import type { SegmentedFilterOption } from './GamesLibraryGameModal.types';
@@ -46,9 +47,9 @@ export function GameHeader({
   isPending,
 }: {
   game: KangurGameDefinition;
-  translations: any;
+  translations: (key: string) => React.ReactNode;
   settingsOpen: boolean;
-  setSettingsOpen: (open: (curr: boolean) => boolean) => void;
+  setSettingsOpen: React.Dispatch<React.SetStateAction<boolean>>;
   handleCloseModal: () => void;
   supportsPreviewSettings: boolean;
   isPending: boolean;
@@ -130,11 +131,11 @@ export function GameStats({
   resolveModalStatusAccent,
 }: {
   game: KangurGameDefinition;
-  translations: any;
+  translations: (key: string) => React.ReactNode;
   resolvedAgeGroupLabel: string;
   linkedLessonCount: number;
-  resolveModalAgeGroupAccent: (ag: any) => any;
-  resolveModalStatusAccent: (st: any) => any;
+  resolveModalAgeGroupAccent: (ag: string) => KangurAccent;
+  resolveModalStatusAccent: (st: string) => KangurAccent;
 }) {
   return (
     <div className='grid gap-3 sm:grid-cols-2 xl:grid-cols-4'>

@@ -39,6 +39,18 @@ const AUTH_USER = {
   learners: [],
 };
 
+const AUTH_USER_JSON = JSON.stringify(AUTH_USER);
+const authenticatedSessionExpectation = {
+  status: 'authenticated',
+  source: 'native-learner-session',
+  user: expect.objectContaining({
+    id: 'learner-1',
+  }),
+};
+const nativeCredentialsExpectation = expect.objectContaining({
+  credentials: 'include',
+});
+
 const createStatusError = (status: number): Error & { status: number } => {
   const error = new Error(`Request failed with ${status}`) as Error & {
     status: number;
@@ -58,11 +70,7 @@ describe('createLearnerSessionKangurAuthAdapter', () => {
     });
 
     await expect(adapter.getSession()).resolves.toMatchObject({
-      status: 'authenticated',
-      source: 'native-learner-session',
-      user: expect.objectContaining({
-        id: 'learner-1',
-      }),
+      ...authenticatedSessionExpectation,
     });
     expect(storage.getItem(KANGUR_MOBILE_AUTH_STATUS_STORAGE_KEY)).toBe(
       'authenticated',
@@ -71,7 +79,7 @@ describe('createLearnerSessionKangurAuthAdapter', () => {
       'learner-1',
     );
     expect(storage.getItem(KANGUR_MOBILE_AUTH_USER_STORAGE_KEY)).toBe(
-      JSON.stringify(AUTH_USER),
+      AUTH_USER_JSON,
     );
   });
 
@@ -79,7 +87,7 @@ describe('createLearnerSessionKangurAuthAdapter', () => {
     const storage = createMobileDevelopmentKangurStorage();
     storage.setItem(KANGUR_MOBILE_AUTH_STATUS_STORAGE_KEY, 'authenticated');
     storage.setItem(KANGUR_MOBILE_ACTIVE_LEARNER_STORAGE_KEY, 'learner-1');
-    storage.setItem(KANGUR_MOBILE_AUTH_USER_STORAGE_KEY, JSON.stringify(AUTH_USER));
+    storage.setItem(KANGUR_MOBILE_AUTH_USER_STORAGE_KEY, AUTH_USER_JSON);
 
     const adapter = createLearnerSessionKangurAuthAdapter({
       apiClient: {
@@ -134,8 +142,7 @@ describe('createLearnerSessionKangurAuthAdapter', () => {
         },
       }),
     ).resolves.toMatchObject({
-      status: 'authenticated',
-      source: 'native-learner-session',
+      ...authenticatedSessionExpectation,
     });
 
     expect(signInLearner).toHaveBeenCalledWith(
@@ -143,9 +150,7 @@ describe('createLearnerSessionKangurAuthAdapter', () => {
         loginName: 'ada',
         password: 'secret',
       },
-      expect.objectContaining({
-        credentials: 'include',
-      }),
+      nativeCredentialsExpectation,
     );
     expect(getAuthMe).toHaveBeenCalledTimes(1);
   });
@@ -183,7 +188,7 @@ describe('createLearnerSessionKangurAuthAdapter', () => {
     const storage = createMobileDevelopmentKangurStorage();
     storage.setItem(KANGUR_MOBILE_AUTH_STATUS_STORAGE_KEY, 'authenticated');
     storage.setItem(KANGUR_MOBILE_ACTIVE_LEARNER_STORAGE_KEY, 'learner-1');
-    storage.setItem(KANGUR_MOBILE_AUTH_USER_STORAGE_KEY, JSON.stringify(AUTH_USER));
+    storage.setItem(KANGUR_MOBILE_AUTH_USER_STORAGE_KEY, AUTH_USER_JSON);
     const signOutLearner = vi.fn().mockResolvedValue({ ok: true });
 
     const adapter = createLearnerSessionKangurAuthAdapter({
@@ -198,9 +203,7 @@ describe('createLearnerSessionKangurAuthAdapter', () => {
       source: 'native-learner-session',
     });
     expect(signOutLearner).toHaveBeenCalledWith(
-      expect.objectContaining({
-        credentials: 'include',
-      }),
+      nativeCredentialsExpectation,
     );
     expect(storage.getItem(KANGUR_MOBILE_AUTH_STATUS_STORAGE_KEY)).toBeNull();
     expect(storage.getItem(KANGUR_MOBILE_ACTIVE_LEARNER_STORAGE_KEY)).toBeNull();

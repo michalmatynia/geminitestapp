@@ -3,6 +3,7 @@ import type {
   PageBuilderAction,
   SectionInstance,
 } from '@/features/cms/types/page-builder';
+import type { Page, PageComponent } from '@/shared/contracts/cms';
 
 import { syncNextIdFromSections } from '../block-helpers';
 
@@ -12,11 +13,11 @@ export function reducePageActions(
 ): PageBuilderState | null {
   switch (action.type) {
     case 'SET_PAGES':
-      return { ...state, pages: action.pages };
+      return { ...state, pages: action.pages as Page[] };
 
     case 'SET_CURRENT_PAGE': {
-      const page = action.page;
-      const sections: SectionInstance[] = page.components.map((comp): SectionInstance => {
+      const page = action.page as Page;
+      const sections: SectionInstance[] = (page?.components || []).map((comp: PageComponent): SectionInstance => {
         const content = comp.content;
         return {
           id: content.sectionId,

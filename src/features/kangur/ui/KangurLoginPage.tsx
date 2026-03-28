@@ -370,10 +370,18 @@ export function KangurLoginPageContent(): React.JSX.Element {
 
   return (
     <div className='flex w-full justify-center py-12'>
-      <KangurGlassPanel variant='soft' padding='xl' className='w-full max-w-4xl overflow-hidden'>
+      <KangurGlassPanel
+        variant='soft'
+        padding='xl'
+        className='w-full max-w-4xl overflow-hidden'
+        data-testid='kangur-login-shell'
+      >
         <div className={`${KANGUR_PANEL_GAP_CLASSNAME} flex flex-col lg:flex-row`}>
           <div className='flex flex-1 flex-col gap-4'>
-            <div className='flex h-12 w-12 items-center justify-center rounded-2xl bg-amber-100 text-amber-700'>
+            <div
+              className='flex h-12 w-12 items-center justify-center rounded-2xl bg-amber-100 text-amber-700'
+              data-testid='kangur-login-hero-logo'
+            >
               <svg viewBox='0 0 48 48' aria-hidden='true' className='h-7 w-7'><path d='M12 32c0-8 6-14 14-14s14 6 14 14' fill='none' stroke='currentColor' strokeWidth='4' strokeLinecap='round'/><circle cx='18' cy='18' r='4' fill='currentColor'/><circle cx='30' cy='18' r='4' fill='currentColor'/></svg>
             </div>
             <div className='space-y-2'>
@@ -385,8 +393,24 @@ export function KangurLoginPageContent(): React.JSX.Element {
           <div className='flex-1'>
             {showParentAuthModeTabs !== false && (
               <div className={KANGUR_SEGMENTED_CONTROL_CLASSNAME}>
-                <KangurButton type='button' variant={authMode === 'sign-in' ? 'segmentActive' : 'segment'} size='sm' onClick={() => handleModeSwitch('sign-in')}>{translations('haveAccount')}</KangurButton>
-                <KangurButton type='button' variant={authMode === 'create-account' ? 'segmentActive' : 'segment'} size='sm' onClick={() => handleModeSwitch('create-account')}>{translations('createAccount')}</KangurButton>
+                <KangurButton
+                  type='button'
+                  variant={authMode === 'sign-in' ? 'segmentActive' : 'segment'}
+                  size='sm'
+                  aria-pressed={authMode === 'sign-in'}
+                  onClick={() => handleModeSwitch('sign-in')}
+                >
+                  {translations('haveAccount')}
+                </KangurButton>
+                <KangurButton
+                  type='button'
+                  variant={authMode === 'create-account' ? 'segmentActive' : 'segment'}
+                  size='sm'
+                  aria-pressed={authMode === 'create-account'}
+                  onClick={() => handleModeSwitch('create-account')}
+                >
+                  {translations('createAccount')}
+                </KangurButton>
               </div>
             )}
 
@@ -401,16 +425,22 @@ export function KangurLoginPageContent(): React.JSX.Element {
               <form
                 ref={formRef}
                 data-testid='kangur-login-form'
+                data-hydrated='true'
+                data-login-kind={loginKind}
+                data-tutor-anchor='login_form'
                 noValidate
                 onSubmit={handleSubmit}
                 className={`mt-6 ${KANGUR_STACK_RELAXED_CLASSNAME}`}
+                aria-busy={isLoading}
               >
                 <div className={KANGUR_STACK_COMPACT_CLASSNAME}>
                   <label htmlFor='identifier' className='text-sm font-medium text-slate-700'>{identifierLabel}</label>
                   <input
                     ref={identifierInputRef}
                     data-testid='kangur-login-identifier-input'
+                    data-tutor-anchor='login_identifier_field'
                     id='identifier'
+                    name='identifier'
                     type={identifierInputType}
                     value={identifier}
                     onChange={(e) => {
@@ -440,6 +470,7 @@ export function KangurLoginPageContent(): React.JSX.Element {
                     <input
                       ref={passwordInputRef}
                       id='password'
+                      name='password'
                       type={isPasswordVisible ? 'text' : 'password'}
                       value={password}
                       onChange={(e) => {

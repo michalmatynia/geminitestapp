@@ -58,6 +58,8 @@ const ACTIVITY_LABEL_KEYS: Record<string, string> = {
   logical_reasoning: 'activityLabels.logicalReasoning',
   logical_analogies: 'activityLabels.logicalAnalogies',
   logical: 'activityLabels.logical',
+  english_comparatives_superlatives: 'activityLabels.english_comparatives_superlatives',
+  english_compare_and_crown: 'activityLabels.english_comparatives_superlatives',
 };
 
 const CLOCK_SECTION_LABEL_KEYS: Record<string, string> = {

@@ -9,6 +9,7 @@ export * from './english/EnglishPronounsAnimations';
 export * from './english/EnglishVerbsAnimations';
 export * from './english/EnglishArticlesAnimations';
 export * from './english/EnglishAdjectivesAnimations';
+export * from './english/EnglishComparativesSuperlativesAnimations';
 export * from './english/EnglishSentencesAnimations';
 export * from './english/EnglishPrepositionsAnimations';
 export * from './english/EnglishAdverbsAnimations';

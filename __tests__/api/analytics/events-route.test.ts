@@ -4,6 +4,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 const insertAnalyticsEventMock = vi.hoisted(() => vi.fn());
 const listAnalyticsEventsMock = vi.hoisted(() => vi.fn());
 const authMock = vi.hoisted(() => vi.fn());
+const readOptionalServerAuthSessionMock = vi.hoisted(() => vi.fn());
 const extractClientIpMock = vi.hoisted(() => vi.fn(() => '127.0.0.1'));
 
 vi.mock('@/shared/lib/analytics/server', () => ({
@@ -13,6 +14,7 @@ vi.mock('@/shared/lib/analytics/server', () => ({
 
 vi.mock('@/features/auth/server', () => ({
   auth: authMock,
+  readOptionalServerAuthSession: readOptionalServerAuthSessionMock,
   extractClientIp: extractClientIpMock,
 }));
 
@@ -26,10 +28,25 @@ const payload = {
   sessionId: 'session-1',
 };
 
+const queuedResponseExpectation = expect.objectContaining({
+  ok: true,
+  queued: true,
+});
+
+const eventInsertRecordExpectation = expect.objectContaining({
+  path: '/admin/products',
+  userId: 'user-1',
+});
+
+const eventInsertMetaExpectation = expect.objectContaining({
+  ip: '127.0.0.1',
+});
+
 describe('/api/analytics/events POST', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     authMock.mockResolvedValue({ user: { id: 'user-1' } });
+    readOptionalServerAuthSessionMock.mockResolvedValue({ user: { id: 'user-1' } });
   });
 
   it('returns 202 without waiting for ingestion in default non-blocking mode', async () => {
@@ -57,24 +74,15 @@ describe('/api/analytics/events POST', () => {
 
     const data = (await response.json()) as { ok: boolean; queued: boolean };
     expect(response.status).toBe(202);
-    expect(data).toEqual(
-      expect.objectContaining({
-        ok: true,
-        queued: true,
-      })
-    );
+    expect(data).toEqual(queuedResponseExpectation);
 
     await new Promise((resolve) => setTimeout(resolve, 0));
-    expect(authMock).toHaveBeenCalledTimes(1);
+    expect(authMock).not.toHaveBeenCalled();
+    expect(readOptionalServerAuthSessionMock).toHaveBeenCalledTimes(1);
     expect(insertAnalyticsEventMock).toHaveBeenCalledTimes(1);
     expect(insertAnalyticsEventMock).toHaveBeenCalledWith(
-      expect.objectContaining({
-        path: '/admin/products',
-        userId: 'user-1',
-      }),
-      expect.objectContaining({
-        ip: '127.0.0.1',
-      })
+      eventInsertRecordExpectation,
+      eventInsertMetaExpectation
     );
   });
 });

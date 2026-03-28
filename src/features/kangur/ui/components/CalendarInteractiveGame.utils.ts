@@ -74,6 +74,18 @@ export const getCalendarInteractiveWeekdayFull = (
 ): string =>
   translate(`calendarInteractive.weekdays.full.${WEEKDAYS[dayIdx]?.full ?? WEEKDAYS[0].full}`);
 
+export const getCalendarInteractiveWeekdayShort = (
+  translate: CalendarInteractiveTranslate,
+  dayIdx: number
+): string =>
+  translate(`calendarInteractive.weekdays.short.${WEEKDAYS[dayIdx]?.short ?? WEEKDAYS[0].short}`);
+
+export const getCalendarInteractiveWeekdayAbbr = (
+  translate: CalendarInteractiveTranslate,
+  dayIdx: number
+): string =>
+  translate(`calendarInteractive.weekdays.abbr.${WEEKDAYS[dayIdx]?.abbr ?? WEEKDAYS[0].abbr}`);
+
 export const getCalendarInteractiveWeekdayLookup = (
   translate: CalendarInteractiveTranslate,
   dayIdx: number

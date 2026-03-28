@@ -157,6 +157,41 @@ describe('ScoreHistory i18n', () => {
     ).toHaveTextContent('Adverbs of frequency');
   });
 
+  it('renders English comparatives and superlatives labels in recent rows and operation breakdown', async () => {
+    useKangurSubjectFocusMock.mockReturnValue({
+      subject: 'english',
+      setSubject: vi.fn(),
+      subjectKey: 'learner-1',
+    });
+
+    render(
+      <NextIntlClientProvider locale='en' messages={enMessages}>
+        <ScoreHistory
+          prefetchedLoading={false}
+          prefetchedScores={[
+            createScore({
+              id: 'score-english-comparatives',
+              operation: 'english_comparatives_superlatives',
+              subject: 'english',
+              created_date: '2026-03-06T12:00:00.000Z',
+            }),
+          ]}
+        />
+      </NextIntlClientProvider>
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText('Results by operation')).toBeInTheDocument();
+    });
+
+    expect(
+      screen.getByTestId('score-history-operation-progress-english_comparatives_superlatives')
+    ).toBeInTheDocument();
+    expect(
+      screen.getByTestId('score-history-recent-row-score-english-comparatives')
+    ).toHaveTextContent('Comparatives & superlatives');
+  });
+
   it('uses English fallback copy when messages are unavailable', () => {
     render(
       <NextIntlClientProvider

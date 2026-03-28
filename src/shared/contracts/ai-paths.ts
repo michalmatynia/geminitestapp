@@ -18,6 +18,7 @@ import {
   aiPathsValidationConfigSchema,
   playwrightBrowserEngineSchema,
   playwrightCaptureConfigSchema,
+  type RegexTemplate,
   type AiNode,
   type Edge,
   type AiPathsValidationRule,
@@ -48,7 +49,6 @@ import {
 } from './ai-paths-run-contract';
 import { dtoBaseSchema, namedDtoSchema } from './base';
 import type { SettingRecord } from './settings';
-import { aiPathRuntimeTraceAnalyticsSchema, type AiPathRuntimeTraceAnalytics } from './ai-paths-analytics';
 import { pathUiStateSchema } from './ai-paths-ui';
 
 export {
@@ -215,6 +215,11 @@ export type CentralDocsSnapshotResponse = {
   inferredCandidates: AiPathsValidationRule[];
 };
 export type CandidateChangeKind = 'new' | 'changed' | 'existing';
+
+export type RegexTemplatesStore = {
+  version: number;
+  templates: RegexTemplate[];
+};
 
 const aiPathsSettingKeySchema = z
   .string()

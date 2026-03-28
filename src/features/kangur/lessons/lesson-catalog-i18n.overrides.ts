@@ -135,6 +135,11 @@ export const ENGLISH_LESSON_COPY_OVERRIDES: Partial<
     title: 'English: Adjectives',
     description: 'Describe people, places, and things with adjective order and detail.',
   },
+  english_comparatives_superlatives: {
+    title: 'English: Comparatives & Superlatives',
+    description:
+      'Compare two things, choose the top one in a group, and practise tricky forms like better and the best.',
+  },
   english_adverbs: {
     title: 'English: Adverbs',
     description: 'Describe how actions happen with adverbs, special forms, and sentence practice.',

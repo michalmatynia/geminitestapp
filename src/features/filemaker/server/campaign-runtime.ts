@@ -32,9 +32,18 @@ export const createFilemakerCampaignRuntimeService = (
 
   return {
     ...service,
-    processCampaignRun: async (runId: string, deliveryIds?: string[]) => {
-      // High-level orchestration for processing a campaign run
-      return { runId, processedCount: 0 };
-    },
+    processCampaignRun: async (runId: string, _deliveryIds?: string[]) =>
+      service.processRun({ runId, reason: 'manual' }),
   };
 };
+
+export const launchFilemakerEmailCampaignRun = async (input: {
+  campaignId: string;
+  mode: 'live' | 'dry_run';
+  launchReason?: string | null;
+}) => createFilemakerCampaignRuntimeService().launchRun(input);
+
+export const processFilemakerEmailCampaignRun = async (input: {
+  runId: string;
+  reason?: 'manual' | 'retry';
+}) => createFilemakerCampaignRuntimeService().processRun(input);

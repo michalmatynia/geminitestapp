@@ -66,7 +66,7 @@ export const OrderDetails = React.memo(function OrderDetails({
                     <td className='px-3 py-2 text-gray-200 line-clamp-1'>{item.name ?? '—'}</td>
                     <td className='px-3 py-2 text-right text-gray-300'>{item.quantity}</td>
                     <td className='px-3 py-2 text-right text-gray-300'>
-                      {formatOrderTotal(item.priceGross, order.currency)}
+                      {formatOrderTotal(item.unitPriceGross, order.currency)}
                     </td>
                   </tr>
                 ))}

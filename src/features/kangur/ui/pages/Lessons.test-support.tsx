@@ -333,7 +333,7 @@ vi.mock('@/features/kangur/ui/context/KangurAiTutorContext', () => ({
 }));
 
 vi.mock('@/features/kangur/ui/context/KangurAuthContext', () => ({
-  useKangurAuth: () => useKangurAuthMock(),
+  useKangurAuth: () => useKangurAuthMock() as unknown,
 }));
 
 vi.mock('@/features/kangur/ui/context/KangurGuestPlayerContext', () => ({
@@ -364,7 +364,7 @@ vi.mock('@/features/kangur/ui/context/KangurRoutingContext', () => ({
 }));
 
 vi.mock('@/features/kangur/ui/context/KangurSubjectFocusContext', () => ({
-  useKangurSubjectFocus: () => useKangurSubjectFocusMock(),
+  useKangurSubjectFocus: () => useKangurSubjectFocusMock() as unknown,
 }));
 
 vi.mock('@/features/kangur/lessons/lesson-ui-registry', () => ({
@@ -497,7 +497,7 @@ vi.mock('@/features/kangur/ui/hooks/useKangurRouteNavigator', () => ({
 }));
 
 vi.mock('@/features/kangur/ui/hooks/useKangurRoutePageReady', () => ({
-  useKangurRoutePageReady: (input: unknown) => useKangurRoutePageReadyMock(input),
+  useKangurRoutePageReady: (input: unknown) => useKangurRoutePageReadyMock(input) as unknown,
 }));
 
 vi.mock('@/features/kangur/ui/hooks/useKangurTutorAnchor', () => ({

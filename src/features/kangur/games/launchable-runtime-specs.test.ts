@@ -80,4 +80,17 @@ describe('launchable runtime specs', () => {
       })
     );
   });
+
+  it('keeps the comparatives runtime spec pinned to the shared sentence-builder engine', () => {
+    expect(getKangurLaunchableGameRuntimeSpec('english_compare_and_crown_quiz')).toEqual(
+      expect.objectContaining({
+        screen: 'english_compare_and_crown_quiz',
+        engineId: 'sentence-builder-engine',
+        rendererId: 'english_compare_and_crown_game',
+        shell: expect.objectContaining({
+          shellTestId: expect.any(String),
+        }),
+      })
+    );
+  });
 });

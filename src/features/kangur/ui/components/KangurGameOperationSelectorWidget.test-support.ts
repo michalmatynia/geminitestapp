@@ -17,9 +17,14 @@ export const operationSelectorTranslations = {
     en: 'Adjectives',
     pl: 'Przymiotniki',
   },
+  'KangurGameRecommendations.activityLabels.english_comparatives_superlatives': {
+    de: 'Komparativ und Superlativ',
+    en: 'Comparatives & superlatives',
+    pl: 'Stopniowanie przymiotników',
+  },
   'KangurGamePage.operationSelector.title': {
-    de: "Los geht's!",
-    en: "Let's play!",
+    de: 'Los geht\'s!',
+    en: 'Let\'s play!',
     pl: 'Grajmy!',
   },
   'KangurGamePage.screens.training.label': {
@@ -36,6 +41,11 @@ export const operationSelectorTranslations = {
     de: 'Adjektive',
     en: 'Adjectives',
     pl: 'Przymiotniki',
+  },
+  'KangurProgressRuntime.activityLabels.english_comparatives_superlatives': {
+    de: 'Komparativ und Superlativ',
+    en: 'Comparatives & superlatives',
+    pl: 'Stopniowanie przymiotników',
   },
   'KangurProgressRuntime.activityLabels.english_adverbs': {
     de: 'Adverbien',

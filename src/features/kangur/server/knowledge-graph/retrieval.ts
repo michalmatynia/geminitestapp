@@ -213,6 +213,56 @@ export const resolveKangurKnowledgeGraphContext = async (input: {
   context: KangurAiTutorConversationContext | undefined;
   limit?: number;
 }): Promise<KangurKnowledgeGraphRetrievalResult> => {
+  void input;
   // Knowledge graph retrieval orchestration
-  return { instructions: null, sources: [], followUpActions: [] };
+  return { status: 'miss', queryMode: null, instructions: null, sources: [], nodeIds: [] };
+};
+
+export const previewKangurAiTutorSemanticGraphContext = async (input: {
+  latestUserMessage: string | null;
+  context: KangurAiTutorConversationContext | undefined;
+  locale?: string;
+  runtimeDocuments?: ContextRuntimeDocument[];
+  limit?: number;
+}): Promise<KangurKnowledgeGraphRetrievalPreviewResult> => {
+  void input.locale;
+  void input.runtimeDocuments;
+
+  const querySeed = buildRawSemanticQuerySeed({
+    latestUserMessage: input.latestUserMessage,
+    context: input.context,
+  });
+  const normalizedQuerySeed = buildNormalizedSemanticQuerySeed({
+    latestUserMessage: input.latestUserMessage,
+    context: input.context,
+  });
+  const tokens = tokenizeQuery(normalizedQuerySeed);
+
+  const retrieval = await resolveKangurKnowledgeGraphContext({
+    latestUserMessage: input.latestUserMessage,
+    context: input.context,
+    limit: input.limit,
+  });
+
+  if (retrieval.status !== 'hit') {
+    return {
+      status: retrieval.status,
+      queryMode: null,
+      querySeed,
+      normalizedQuerySeed,
+      tokens,
+      instructions: null,
+      sources: [],
+      nodeIds: [],
+      hits: [],
+    };
+  }
+
+  return {
+    ...retrieval,
+    querySeed,
+    normalizedQuerySeed,
+    tokens,
+    hits: [],
+  };
 };

@@ -44,6 +44,15 @@ const createFocus = (overrides: {
         },
 });
 
+const INVALID_TRAINING_FOCUS_JSON = JSON.stringify({
+  'learner:learner-1': {
+    strongestOperation: {
+      operation: 'addition',
+    },
+    weakestOperation: null,
+  },
+});
+
 describe('persistedKangurMobileTrainingFocus', () => {
   it('persists and resolves training focus by learner scope', () => {
     const storage = createMemoryKangurClientStorage();
@@ -87,17 +96,7 @@ describe('persistedKangurMobileTrainingFocus', () => {
 
   it('ignores invalid persisted focus payloads', () => {
     const storage = createMemoryKangurClientStorage();
-    storage.setItem(
-      'kangur.mobile.scores.trainingFocus',
-      JSON.stringify({
-        'learner:learner-1': {
-          strongestOperation: {
-            operation: 'addition',
-          },
-          weakestOperation: null,
-        },
-      }),
-    );
+    storage.setItem('kangur.mobile.scores.trainingFocus', INVALID_TRAINING_FOCUS_JSON);
 
     expect(
       resolvePersistedKangurMobileTrainingFocus({

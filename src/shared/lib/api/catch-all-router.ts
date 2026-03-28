@@ -94,6 +94,20 @@ const normalizeToken = (
   return { isParam: true, key: token.param, optional: Boolean(token.optional) };
 };
 
+const resolveSegmentAt = (segments: string[], segmentIndex: number): string | null =>
+  segmentIndex < segments.length ? (segments[segmentIndex] ?? null) : null;
+
+const isMissingRequiredToken = (
+  segment: string | null,
+  optional: boolean,
+): boolean => segment === null && !optional;
+
+const shouldSkipOptionalLiteral = (
+  key: string,
+  currentSegment: string,
+  optional: boolean,
+): boolean => optional && key !== currentSegment;
+
 export const matchCatchAllPattern = (
   pattern: CatchAllOptionalRoutePatternToken[],
   segments: string[]
@@ -102,24 +116,21 @@ export const matchCatchAllPattern = (
   let segmentIndex = 0;
   for (const token of pattern) {
     const { isParam, key, optional } = normalizeToken(token);
+    const currentSegment = resolveSegmentAt(segments, segmentIndex);
 
-    if (segmentIndex >= segments.length) {
-      if (optional) {
-        continue;
-      }
+    if (isMissingRequiredToken(currentSegment, optional)) {
       return null;
     }
 
-    const currentSegment = segments[segmentIndex];
-    if (!currentSegment) {
-      return null;
+    if (currentSegment === null) {
+      continue;
     }
 
     if (!isParam) {
+      if (shouldSkipOptionalLiteral(key, currentSegment, optional)) {
+        continue;
+      }
       if (key !== currentSegment) {
-        if (optional) {
-          continue;
-        }
         return null;
       }
       segmentIndex += 1;

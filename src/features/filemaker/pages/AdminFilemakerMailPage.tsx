@@ -1,17 +1,29 @@
 'use client';
 
 import {
+  FilterX,
   Inbox,
   Mail,
   MailPlus,
   RefreshCcw,
+  Settings2,
+  ShieldAlert,
 } from 'lucide-react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import React, { useCallback, useDeferredValue, useEffect, useMemo, useState } from 'react';
 
 import type { ColumnDef } from '@tanstack/react-table';
 
-import { Badge, Button, Checkbox, FormField, FormSection, Input, useToast } from '@/shared/ui';
+import {
+  Badge,
+  Button,
+  Checkbox,
+  FormField,
+  FormSection,
+  Input,
+  SelectSimple,
+  useToast,
+} from '@/shared/ui';
 
 import { FilemakerMailSidebar } from '../components/FilemakerMailSidebar';
 import { buildFilemakerNavActions } from '../components/shared/filemaker-nav-actions';
@@ -90,12 +102,26 @@ const fetchJson = async <T,>(url: string, init?: RequestInit): Promise<T> => {
 const buildMailSelectionHref = (input: {
   accountId?: string | null;
   mailboxPath?: string | null;
-  panel?: 'account' | 'settings' | null;
+  panel?: 'account' | 'attention' | 'recent' | 'settings' | null;
+  recentMailboxFilter?: string | null;
+  recentUnreadOnly?: boolean;
+  recentQuery?: string | null;
 }): string => {
   const search = new URLSearchParams();
-  if (input.accountId) search.set('accountId', input.accountId);
-  if (input.mailboxPath) search.set('mailboxPath', input.mailboxPath);
+  if (input.panel !== 'attention' && input.accountId) search.set('accountId', input.accountId);
+  if (input.panel !== 'attention' && input.mailboxPath) search.set('mailboxPath', input.mailboxPath);
+  if (input.panel === 'attention') search.set('panel', 'attention');
+  if (input.accountId && input.panel === 'recent') search.set('panel', 'recent');
   if (input.accountId && input.panel === 'settings') search.set('panel', 'settings');
+  if (input.accountId && input.recentMailboxFilter) {
+    search.set('recentMailbox', input.recentMailboxFilter);
+  }
+  if (input.accountId && input.recentUnreadOnly) {
+    search.set('recentUnread', '1');
+  }
+  if (input.accountId && input.panel === 'recent' && input.recentQuery) {
+    search.set('recentQuery', input.recentQuery);
+  }
   const nextSearch = search.toString();
   return nextSearch ? `/admin/filemaker/mail?${nextSearch}` : '/admin/filemaker/mail';
 };
@@ -109,14 +135,23 @@ export function AdminFilemakerMailPage(): React.JSX.Element {
   const [accounts, setAccounts] = useState<FilemakerMailAccount[]>([]);
   const [folders, setFolders] = useState<FilemakerMailFolderSummary[]>([]);
   const [threads, setThreads] = useState<FilemakerMailThread[]>([]);
+  const [recentMailboxFilter, setRecentMailboxFilter] = useState('');
+  const [recentUnreadOnly, setRecentUnreadOnly] = useState(false);
   const [selection, setSelection] = useState<{
     accountId: string | null;
     mailboxPath: string | null;
-    panel: 'account' | 'settings' | null;
+    panel: 'account' | 'attention' | 'recent' | 'settings' | null;
   }>({
     accountId: searchParams.get('accountId'),
     mailboxPath: searchParams.get('mailboxPath'),
-    panel: searchParams.get('panel') === 'settings' ? 'settings' : null,
+    panel:
+      searchParams.get('panel') === 'attention'
+        ? 'attention'
+        : searchParams.get('panel') === 'settings'
+        ? 'settings'
+        : searchParams.get('panel') === 'recent'
+          ? 'recent'
+          : null,
   });
   const [isNavigationLoading, setIsNavigationLoading] = useState(true);
   const [isThreadsLoading, setIsThreadsLoading] = useState(false);
@@ -126,10 +161,27 @@ export function AdminFilemakerMailPage(): React.JSX.Element {
   const [folderAllowlistValue, setFolderAllowlistValue] = useState('');
   const requestedAccountId = searchParams.get('accountId');
   const requestedMailboxPath = searchParams.get('mailboxPath');
-  const requestedPanel = searchParams.get('panel') === 'settings' ? 'settings' : null;
+  const requestedPanel =
+    searchParams.get('panel') === 'attention'
+      ? 'attention'
+      : searchParams.get('panel') === 'settings'
+      ? 'settings'
+      : searchParams.get('panel') === 'recent'
+        ? 'recent'
+        : null;
+  const requestedRecentMailboxFilter = searchParams.get('recentMailbox') ?? '';
+  const requestedRecentUnreadOnly = searchParams.get('recentUnread') === '1';
+  const requestedRecentQuery = searchParams.get('recentQuery') ?? '';
   const selectedAccountId = selection.accountId;
   const selectedMailboxPath = selection.mailboxPath;
   const selectedPanel = selection.panel;
+  const attentionAccounts = useMemo(
+    () =>
+      accounts.filter(
+        (account) => account.status !== 'active' || Boolean(account.lastSyncError?.trim())
+      ),
+    [accounts]
+  );
   const selectedAccount = useMemo(() => {
     return accounts.find((account) => account.id === selectedAccountId) ?? null;
   }, [accounts, selectedAccountId]);
@@ -175,6 +227,15 @@ export function AdminFilemakerMailPage(): React.JSX.Element {
   }, [requestedAccountId, requestedMailboxPath, requestedPanel]);
 
   useEffect(() => {
+    setRecentMailboxFilter(requestedRecentMailboxFilter);
+    setRecentUnreadOnly(requestedRecentUnreadOnly);
+  }, [requestedRecentMailboxFilter, requestedRecentUnreadOnly]);
+
+  useEffect(() => {
+    setQuery(requestedPanel === 'recent' ? requestedRecentQuery : '');
+  }, [requestedPanel, requestedRecentQuery]);
+
+  useEffect(() => {
     if (!selectedAccount) {
       setDraft(defaultDraft());
       setFolderAllowlistValue('');
@@ -185,7 +246,7 @@ export function AdminFilemakerMailPage(): React.JSX.Element {
   }, [selectedAccount]);
 
   useEffect(() => {
-    if (!selectedFolder) {
+    if (!selectedAccountId || (!selectedFolder && selection.panel !== 'recent')) {
       setThreads([]);
       return;
     }
@@ -193,10 +254,15 @@ export function AdminFilemakerMailPage(): React.JSX.Element {
     const loadThreads = async (): Promise<void> => {
       setIsThreadsLoading(true);
       try {
+        const baseQuery = `/api/filemaker/mail/threads?accountId=${encodeURIComponent(
+          selectedAccountId
+        )}`;
         const result = await fetchJson<ThreadsResponse>(
-          `/api/filemaker/mail/threads?accountId=${encodeURIComponent(selectedFolder.accountId)}&mailboxPath=${encodeURIComponent(selectedFolder.mailboxPath)}${
-            deferredQuery ? `&query=${encodeURIComponent(deferredQuery)}` : ''
-          }`
+          selection.panel === 'recent'
+            ? `${baseQuery}${deferredQuery ? `&query=${encodeURIComponent(deferredQuery)}` : ''}`
+            : `${baseQuery}&mailboxPath=${encodeURIComponent(selectedFolder?.mailboxPath ?? '')}${
+                deferredQuery ? `&query=${encodeURIComponent(deferredQuery)}` : ''
+              }`
         );
         setThreads(result.threads);
       } catch (error) {
@@ -209,10 +275,12 @@ export function AdminFilemakerMailPage(): React.JSX.Element {
     };
 
     void loadThreads();
-  }, [deferredQuery, selectedFolder, toast]);
+  }, [deferredQuery, selectedAccountId, selectedFolder, selection.panel, toast]);
 
   useEffect(() => {
     if (isNavigationLoading) return;
+    if (selection.panel === 'attention') return;
+    if (selection.accountId && selection.panel === 'recent' && selectedAccount) return;
     if (selection.accountId && selection.mailboxPath && selectedFolder) return;
     if (selection.accountId && !selection.mailboxPath && selectedAccount) return;
 
@@ -222,7 +290,7 @@ export function AdminFilemakerMailPage(): React.JSX.Element {
           ? {
               accountId: selection.accountId,
               mailboxPath: null as string | null,
-              panel: selection.panel,
+              panel: selection.panel === 'recent' ? 'recent' : selection.panel,
             }
           : { accountId: null, mailboxPath: null, panel: null }
         : selection.accountId && !selectedAccount
@@ -251,7 +319,10 @@ export function AdminFilemakerMailPage(): React.JSX.Element {
     if (
       (requestedAccountId ?? null) === nextAccountId &&
       (requestedMailboxPath ?? null) === nextMailboxPath &&
-      requestedPanel === nextPanel
+      requestedPanel === nextPanel &&
+      requestedRecentMailboxFilter === recentMailboxFilter &&
+      requestedRecentUnreadOnly === recentUnreadOnly &&
+      requestedRecentQuery === query
     ) {
       return;
     }
@@ -260,13 +331,22 @@ export function AdminFilemakerMailPage(): React.JSX.Element {
         accountId: nextAccountId,
         mailboxPath: nextMailboxPath,
         panel: nextPanel,
+        recentMailboxFilter,
+        recentUnreadOnly,
+        recentQuery: query,
       })
     );
   }, [
     isNavigationLoading,
+    query,
     requestedAccountId,
     requestedMailboxPath,
     requestedPanel,
+    requestedRecentMailboxFilter,
+    requestedRecentQuery,
+    requestedRecentUnreadOnly,
+    recentMailboxFilter,
+    recentUnreadOnly,
     router,
     selection.accountId,
     selection.mailboxPath,
@@ -326,6 +406,12 @@ export function AdminFilemakerMailPage(): React.JSX.Element {
     },
     [loadNavigation, toast]
   );
+  const selectedAccountLabel = selectedAccount?.name ?? 'New mailbox account';
+  const selectedFolderLabel = selectedFolder
+    ? formatFilemakerMailFolderLabel(selectedFolder.mailboxPath, selectedFolder.mailboxRole)
+    : null;
+  const isAttentionPanel = selectedPanel === 'attention';
+  const isRecentPanel = selectedPanel === 'recent' && !selectedFolder;
 
   const columns = useMemo<ColumnDef<FilemakerMailThread>[]>(
     () => [
@@ -376,7 +462,15 @@ export function AdminFilemakerMailPage(): React.JSX.Element {
               variant='outline'
               onClick={(): void => {
                 router.push(
-                  `/admin/filemaker/mail/threads/${encodeURIComponent(row.original.id)}?accountId=${encodeURIComponent(row.original.accountId)}&mailboxPath=${encodeURIComponent(row.original.mailboxPath)}`
+                  `/admin/filemaker/mail/threads/${encodeURIComponent(row.original.id)}?accountId=${encodeURIComponent(row.original.accountId)}&mailboxPath=${encodeURIComponent(row.original.mailboxPath)}${
+                    isRecentPanel ? '&panel=recent' : ''
+                  }${
+                    recentMailboxFilter
+                      ? `&recentMailbox=${encodeURIComponent(recentMailboxFilter)}`
+                      : ''
+                  }${isRecentPanel && query ? `&recentQuery=${encodeURIComponent(query)}` : ''}${
+                    recentUnreadOnly ? '&recentUnread=1' : ''
+                  }`
                 );
               }}
             >
@@ -386,13 +480,102 @@ export function AdminFilemakerMailPage(): React.JSX.Element {
         ),
       },
     ],
-    [router]
+    [isRecentPanel, query, recentMailboxFilter, recentUnreadOnly, router]
   );
 
-  const selectedAccountLabel = selectedAccount?.name ?? 'New mailbox account';
-  const selectedFolderLabel = selectedFolder
-    ? formatFilemakerMailFolderLabel(selectedFolder.mailboxPath, selectedFolder.mailboxRole)
-    : null;
+  const recentMailboxOptions = useMemo(
+    () =>
+      Array.from(new Set(threads.map((thread) => thread.mailboxPath)))
+        .sort((left, right) => left.localeCompare(right))
+        .map((mailboxPath) => ({
+          value: mailboxPath,
+          label: mailboxPath,
+        })),
+    [threads]
+  );
+  const visibleThreads = useMemo(() => {
+    if (!isRecentPanel) return threads;
+    return threads.filter((thread) => {
+      if (recentMailboxFilter && thread.mailboxPath !== recentMailboxFilter) return false;
+      if (recentUnreadOnly && thread.unreadCount < 1) return false;
+      return true;
+    });
+  }, [isRecentPanel, recentMailboxFilter, recentUnreadOnly, threads]);
+  const tableActions = useMemo(
+    () => [
+      {
+        key: 'compose',
+        label: 'Compose',
+        icon: <MailPlus className='size-4' />,
+        onClick: () =>
+          router.push(
+            `/admin/filemaker/mail/compose?accountId=${encodeURIComponent(selectedAccountId ?? '')}${
+              selectedFolder
+                ? `&mailboxPath=${encodeURIComponent(selectedFolder.mailboxPath)}`
+                : ''
+            }${isRecentPanel ? '&panel=recent' : ''}${
+              recentMailboxFilter ? `&recentMailbox=${encodeURIComponent(recentMailboxFilter)}` : ''
+            }${isRecentPanel && query ? `&recentQuery=${encodeURIComponent(query)}` : ''}${
+              recentUnreadOnly ? '&recentUnread=1' : ''
+            }`
+          ),
+      },
+      ...(selectedAccount
+        ? [
+            {
+              key: 'sync',
+              label: syncingAccountId === selectedAccount.id ? 'Syncing...' : 'Sync',
+              icon: <RefreshCcw className='size-4' />,
+              variant: 'outline' as const,
+              disabled: syncingAccountId === selectedAccount.id,
+              onClick: () => {
+                void handleSyncAccount(selectedAccount.id);
+              },
+            },
+          ]
+        : []),
+      ...(isRecentPanel && (recentMailboxFilter || recentUnreadOnly || query)
+        ? [
+            {
+              key: 'clear-recent-filters',
+              label: 'Clear Filters',
+              icon: <FilterX className='size-4' />,
+              variant: 'outline' as const,
+              onClick: () => {
+                setQuery('');
+                setRecentMailboxFilter('');
+                setRecentUnreadOnly(false);
+              },
+            },
+          ]
+        : []),
+      {
+        key: 'account',
+        label: 'Open Account',
+        icon: <Mail className='size-4' />,
+        variant: 'outline' as const,
+        onClick: () =>
+          setSelection({
+            accountId: selectedAccountId,
+            mailboxPath: null,
+            panel: 'settings',
+          }),
+      },
+      ...buildFilemakerNavActions(router, 'mail'),
+    ],
+    [
+      handleSyncAccount,
+      isRecentPanel,
+      recentMailboxFilter,
+      recentUnreadOnly,
+      query,
+      router,
+      selectedAccount,
+      selectedAccountId,
+      selectedFolder,
+      syncingAccountId,
+    ]
+  );
 
   return (
     <div className='page-section-compact grid gap-6 xl:grid-cols-[320px_minmax(0,1fr)]'>
@@ -400,6 +583,16 @@ export function AdminFilemakerMailPage(): React.JSX.Element {
         selectedAccountId={selectedAccountId}
         selectedMailboxPath={selectedMailboxPath}
         selectedPanel={selectedPanel}
+        originPanel={isRecentPanel ? 'recent' : null}
+        recentMailboxFilter={recentMailboxFilter}
+        recentUnreadOnly={recentUnreadOnly}
+        recentQuery={query}
+        onRecentMailboxFilterChange={setRecentMailboxFilter}
+        onRecentQueryChange={setQuery}
+        onRecentUnreadOnlyChange={setRecentUnreadOnly}
+        onSelectAttention={() => {
+          setSelection({ accountId: null, mailboxPath: null, panel: 'attention' });
+        }}
         onNewMailbox={() => {
           setSelection({ accountId: null, mailboxPath: null, panel: null });
         }}
@@ -412,70 +605,194 @@ export function AdminFilemakerMailPage(): React.JSX.Element {
         onSelectFolder={({ accountId, mailboxPath }) => {
           setSelection({ accountId, mailboxPath, panel: null });
         }}
+        onAccountUpdated={(account) => {
+          setAccounts((current) =>
+            current.map((entry) => (entry.id === account.id ? account : entry))
+          );
+        }}
       />
 
-      {selectedFolder ? (
+      {isAttentionPanel ? (
+        <div className='space-y-6 rounded-lg border border-border/60 bg-card/25 p-4'>
+          <div className='flex flex-wrap items-center justify-between gap-3'>
+            <div>
+              <div className='text-base font-semibold text-white'>Mailboxes Requiring Attention</div>
+              <div className='text-sm text-gray-500'>
+                Review paused accounts and sync failures, then jump into mailbox settings.
+              </div>
+            </div>
+            <Badge variant='outline' className='text-[10px]'>
+              Affected: {attentionAccounts.length}
+            </Badge>
+          </div>
+
+          {attentionAccounts.length > 0 ? (
+            <div className='grid gap-3'>
+              {attentionAccounts.map((account) => (
+                <div
+                  key={account.id}
+                  className='rounded-lg border border-border/60 bg-card/25 p-4'
+                >
+                  <div className='flex flex-wrap items-start justify-between gap-3'>
+                    <div className='space-y-1'>
+                      <div className='text-sm font-semibold text-white'>{account.name}</div>
+                      <div className='text-xs text-gray-500'>{account.emailAddress}</div>
+                    </div>
+                    <div className='flex flex-wrap gap-2'>
+                      {account.status !== 'active' ? (
+                        <Badge variant='outline' className='text-[10px]'>
+                          Status: {account.status}
+                        </Badge>
+                      ) : null}
+                      {account.lastSyncError ? (
+                        <Badge variant='outline' className='text-[10px]'>
+                          Sync error
+                        </Badge>
+                      ) : null}
+                    </div>
+                  </div>
+                  <div className='mt-3 grid gap-2 text-xs text-gray-500 md:grid-cols-2'>
+                    <div>
+                      Last sync:{' '}
+                      {account.lastSyncedAt
+                        ? new Date(account.lastSyncedAt).toLocaleString()
+                        : 'Never'}
+                    </div>
+                    <div>
+                      Allowlist:{' '}
+                      {account.folderAllowlist.length > 0
+                        ? formatFilemakerMailboxAllowlist(account.folderAllowlist)
+                        : 'Auto'}
+                    </div>
+                    {account.lastSyncError ? (
+                      <div className='md:col-span-2 text-red-400'>{account.lastSyncError}</div>
+                    ) : null}
+                  </div>
+                  <div className='mt-4 flex flex-wrap gap-2'>
+                    <Button
+                      type='button'
+                      size='sm'
+                      variant='outline'
+                      onClick={() => {
+                        setSelection({
+                          accountId: account.id,
+                          mailboxPath: null,
+                          panel: 'settings',
+                        });
+                      }}
+                    >
+                      <Settings2 className='mr-2 size-4' />
+                      Open Settings
+                    </Button>
+                    <Button
+                      type='button'
+                      size='sm'
+                      variant='outline'
+                      onClick={() => {
+                        setSelection({
+                          accountId: account.id,
+                          mailboxPath: null,
+                          panel: 'account',
+                        });
+                      }}
+                    >
+                      <ShieldAlert className='mr-2 size-4' />
+                      Open Mailbox
+                    </Button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className='rounded-lg border border-border/60 bg-card/25 p-4 text-sm text-gray-500'>
+              All mailbox accounts are healthy.
+            </div>
+          )}
+        </div>
+      ) : selectedFolder || isRecentPanel ? (
         <FilemakerEntityTablePage
-          title={`${selectedAccountLabel} / ${selectedFolderLabel}`}
-          description='Browse synced mailbox threads and open a reply workspace.'
+          title={
+            isRecentPanel
+              ? `${selectedAccountLabel} / Recent`
+              : `${selectedAccountLabel} / ${selectedFolderLabel}`
+          }
+          description={
+            isRecentPanel
+              ? 'Browse the latest synced conversations across this mailbox account.'
+              : 'Browse synced mailbox threads and open a reply workspace.'
+          }
           icon={<Inbox className='size-4' />}
-          actions={[
-            {
-              key: 'compose',
-              label: 'Compose',
-              icon: <MailPlus className='size-4' />,
-              onClick: () =>
-                router.push(
-                  `/admin/filemaker/mail/compose?accountId=${encodeURIComponent(selectedFolder.accountId)}&mailboxPath=${encodeURIComponent(selectedFolder.mailboxPath)}`
-                ),
-            },
-            ...(selectedAccount
-              ? [
-                  {
-                    key: 'sync',
-                    label:
-                      syncingAccountId === selectedAccount.id ? 'Syncing...' : 'Sync',
-                    icon: <RefreshCcw className='size-4' />,
-                    variant: 'outline' as const,
-                    disabled: syncingAccountId === selectedAccount.id,
-                    onClick: () => {
-                      void handleSyncAccount(selectedAccount.id);
-                    },
-                  },
-                ]
-              : []),
-            {
-              key: 'account',
-              label: 'Open Account',
-              icon: <Mail className='size-4' />,
-              variant: 'outline',
-              onClick: () =>
-                setSelection({
-                  accountId: selectedFolder.accountId,
-                  mailboxPath: null,
-                  panel: 'settings',
-                }),
-            },
-            ...buildFilemakerNavActions(router, 'mail'),
-          ]}
+          actions={tableActions}
           badges={
             <>
-              <Badge variant='outline' className='text-[10px]'>
-                Threads: {selectedFolder.threadCount}
-              </Badge>
-              <Badge variant='outline' className='text-[10px]'>
-                Unread: {selectedFolder.unreadCount}
-              </Badge>
+              {selectedFolder ? (
+                <>
+                  <Badge variant='outline' className='text-[10px]'>
+                    Threads: {selectedFolder.threadCount}
+                  </Badge>
+                  <Badge variant='outline' className='text-[10px]'>
+                    Unread: {selectedFolder.unreadCount}
+                  </Badge>
+                </>
+              ) : (
+                <>
+                  <Badge variant='outline' className='text-[10px]'>
+                    Threads: {visibleThreads.length}
+                  </Badge>
+                  <Badge variant='outline' className='text-[10px]'>
+                    Account Recent
+                  </Badge>
+                  {recentMailboxFilter ? (
+                    <Badge variant='outline' className='text-[10px]'>
+                      Mailbox: {recentMailboxFilter}
+                    </Badge>
+                  ) : null}
+                  {recentUnreadOnly ? (
+                    <Badge variant='outline' className='text-[10px]'>
+                      Unread only
+                    </Badge>
+                  ) : null}
+                  {query ? (
+                    <Badge variant='outline' className='text-[10px]'>
+                      Search: {query}
+                    </Badge>
+                  ) : null}
+                  <SelectSimple
+                    value={recentMailboxFilter}
+                    onValueChange={setRecentMailboxFilter}
+                    options={recentMailboxOptions}
+                    placeholder='All mailboxes'
+                    ariaLabel='Recent mailbox filter'
+                  />
+                  <label
+                    htmlFor='filemaker-mail-recent-unread-only'
+                    className='flex items-center gap-2 text-[11px] text-gray-300'
+                  >
+                    <Checkbox
+                      id='filemaker-mail-recent-unread-only'
+                      checked={recentUnreadOnly}
+                      onCheckedChange={(checked) => setRecentUnreadOnly(checked === true)}
+                    />
+                    Unread only
+                  </label>
+                </>
+              )}
             </>
           }
           query={query}
           onQueryChange={setQuery}
           queryPlaceholder='Search subject, snippet, or participant...'
           columns={columns}
-          data={threads}
+          data={visibleThreads}
           isLoading={isNavigationLoading || isThreadsLoading}
-          emptyTitle='No synced threads in this folder yet'
-          emptyDescription='Run mailbox sync or select another folder.'
+          emptyTitle={
+            isRecentPanel ? 'No recent threads for this account yet' : 'No synced threads in this folder yet'
+          }
+          emptyDescription={
+            isRecentPanel
+              ? 'Run mailbox sync or open a specific folder.'
+              : 'Run mailbox sync or select another folder.'
+          }
         />
       ) : (
         <div className='space-y-6 rounded-lg border border-border/60 bg-card/25 p-4'>

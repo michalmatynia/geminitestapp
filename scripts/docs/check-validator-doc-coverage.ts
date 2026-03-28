@@ -1,4 +1,7 @@
-import { VALIDATOR_FUNCTION_DOC_IDS } from '../../src/features/products/components/settings/validator-settings/validator-docs-catalog';
+import {
+  VALIDATOR_FUNCTION_DOC_IDS,
+  VALIDATOR_UI_DOC_IDS,
+} from '../../src/features/products/components/settings/validator-settings/validator-docs-catalog';
 import {
   buildStaticCheckFilters,
   parseCommonCheckArgs,
@@ -35,7 +38,9 @@ const main = (): void => {
   const workspaceRoot = process.cwd();
   const exportedCallables = collectValidatorExportedCallables(workspaceRoot);
   const missingJsDoc = exportedCallables.filter((entry) => !entry.hasJsDoc);
-  const missingCatalog = exportedCallables.filter((entry) => !VALIDATOR_FUNCTION_DOC_IDS.has(entry.id));
+  const missingCatalog = exportedCallables.filter(
+    (entry) => !VALIDATOR_FUNCTION_DOC_IDS.has(entry.id) && !VALIDATOR_UI_DOC_IDS.has(entry.id)
+  );
   const issueCount = missingJsDoc.length + missingCatalog.length;
 
   if (summaryJson) {

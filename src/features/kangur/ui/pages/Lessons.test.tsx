@@ -638,4 +638,66 @@ describe('Lessons page subject filtering', () => {
       })
     );
   });
+
+  it('shows the comparatives lesson inside the English grammar group', async () => {
+    lessonsState.value = [
+      {
+        id: 'lesson-english-comparatives',
+        componentId: 'english_comparatives_superlatives',
+        subject: 'english',
+        ageGroup: DEFAULT_KANGUR_AGE_GROUP,
+        enabled: true,
+        sortOrder: 1,
+        title: 'Comparatives & Superlatives',
+        description: 'bigger, more beautiful, the best',
+        emoji: '👑',
+        color: 'fuchsia',
+        activeBg: 'bg-fuchsia-50',
+        contentMode: 'component',
+      },
+    ];
+    lessonSectionsState.value = [
+      {
+        id: 'english_grammar',
+        subject: 'english',
+        ageGroup: DEFAULT_KANGUR_AGE_GROUP,
+        enabled: true,
+        sortOrder: 1,
+        label: 'Gramatyka',
+        typeLabel: 'featured',
+        componentIds: [],
+        subsections: [
+          {
+            id: 'english_grammar_comparatives_superlatives',
+            enabled: true,
+            sortOrder: 1,
+            label: 'Comparatives & Superlatives',
+            typeLabel: 'group',
+            componentIds: ['english_comparatives_superlatives'],
+          },
+        ],
+      },
+    ];
+
+    render(<Lessons />);
+    act(() => {
+      vi.runAllTimers();
+    });
+
+    expect(
+      screen.queryByTestId('lesson-card-lesson-english-comparatives')
+    ).not.toBeInTheDocument();
+
+    const grammarSectionButton = screen.getByRole('button', { name: /gramatyka/i });
+    fireEvent.click(grammarSectionButton);
+
+    expect(grammarSectionButton).toHaveAttribute('aria-expanded', 'true');
+    expect(screen.getByTestId('lesson-card-lesson-english-comparatives')).toBeInTheDocument();
+    expect(lessonCardPropsMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        id: 'lesson-english-comparatives',
+        componentId: 'english_comparatives_superlatives',
+      })
+    );
+  });
 });

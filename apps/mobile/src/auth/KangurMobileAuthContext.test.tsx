@@ -113,6 +113,9 @@ const createStorageStub = () => ({
   setItem: vi.fn(),
 });
 
+const serializeSessionUser = (session: ReturnType<typeof createAuthenticatedSession>): string =>
+  JSON.stringify(session.user);
+
 const createCodedAuthError = (
   code: string,
   message: string,
@@ -423,7 +426,7 @@ describe('KangurMobileAuthProvider', () => {
           return 'authenticated';
         }
         if (key === KANGUR_MOBILE_AUTH_USER_STORAGE_KEY) {
-          return JSON.stringify(authenticatedSession.user);
+          return serializeSessionUser(authenticatedSession);
         }
         return null;
       });
@@ -470,7 +473,7 @@ describe('KangurMobileAuthProvider', () => {
         return 'authenticated';
       }
       if (key === KANGUR_MOBILE_AUTH_USER_STORAGE_KEY) {
-        return JSON.stringify(authenticatedSession.user);
+        return serializeSessionUser(authenticatedSession);
       }
       return null;
     });
@@ -540,7 +543,7 @@ describe('KangurMobileAuthProvider', () => {
         return 'authenticated';
       }
       if (key === KANGUR_MOBILE_AUTH_USER_STORAGE_KEY) {
-        return JSON.stringify(previousSession.user);
+        return serializeSessionUser(previousSession);
       }
       return null;
     });

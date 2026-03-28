@@ -212,6 +212,7 @@ function GameContent(): React.JSX.Element {
   const logicalAnalogiesQuizRef = useRef<HTMLDivElement | null>(null);
   const englishSubjectVerbAgreementQuizRef = useRef<HTMLDivElement | null>(null);
   const englishAdjectivesQuizRef = useRef<HTMLDivElement | null>(null);
+  const englishCompareAndCrownQuizRef = useRef<HTMLDivElement | null>(null);
   const englishAdverbsQuizRef = useRef<HTMLDivElement | null>(null);
   const englishAdverbsFrequencyQuizRef = useRef<HTMLDivElement | null>(null);
   const englishArticlesQuizRef = useRef<HTMLDivElement | null>(null);
@@ -252,6 +253,7 @@ function GameContent(): React.JSX.Element {
     logical_analogies_quiz: logicalAnalogiesQuizRef,
     english_subject_verb_agreement_quiz: englishSubjectVerbAgreementQuizRef,
     english_adjectives_quiz: englishAdjectivesQuizRef,
+    english_compare_and_crown_quiz: englishCompareAndCrownQuizRef,
     english_adverbs_quiz: englishAdverbsQuizRef,
     english_adverbs_frequency_quiz: englishAdverbsFrequencyQuizRef,
     english_articles_quiz: englishArticlesQuizRef,

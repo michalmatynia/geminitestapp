@@ -49,10 +49,23 @@ type KangurMobileMetricProps = {
 };
 
 type KangurMobileFilterChipProps = {
+  accessibilityLabel?: string;
+  borderRadius?: number;
+  centered?: boolean;
+  href?: Href;
   fullWidth?: boolean;
+  horizontalPadding?: number;
+  idleTextColor?: string;
   label: string;
-  onPress: () => void;
+  minHeight?: number;
+  onPress?: () => void;
+  selectedBackgroundColor?: string;
+  selectedBorderColor?: string;
+  selectedTextColor?: string;
   selected: boolean;
+  style?: StyleProp<ViewStyle>;
+  textStyle?: StyleProp<TextStyle>;
+  verticalPadding?: number;
 };
 
 type KangurMobileSectionTitleProps = {
@@ -67,26 +80,54 @@ type KangurMobileSummaryChipProps = {
   textColor?: string;
 };
 
-type KangurMobileActionButtonProps = {
-  accessibilityLabel?: string;
-  disabled?: boolean;
+type KangurMobileMutedActionChipProps = {
+  compact?: boolean;
   label: string;
+  style?: StyleProp<ViewStyle>;
+  textStyle?: StyleProp<TextStyle>;
+};
+
+type KangurMobileActionButtonProps = {
+  accessibilityHint?: string;
+  accessibilityLabel?: string;
+  borderRadius?: number;
+  centered?: boolean;
+  disabledOpacity?: number;
+  disabled?: boolean;
+  horizontalPadding?: number;
+  label: string;
+  minHeight?: number;
   onPress: () => void | Promise<void>;
   stretch?: boolean;
   style?: StyleProp<ViewStyle>;
   textStyle?: StyleProp<TextStyle>;
-  tone?: 'ghost' | 'primary' | 'secondary';
+  tone?: 'brand' | 'ghost' | 'primary' | 'secondary';
   verticalPadding?: number;
 };
 
 type KangurMobileLinkButtonProps = {
+  accessibilityHint?: string;
   accessibilityLabel?: string;
+  borderRadius?: number;
+  centered?: boolean;
   href: Href;
   label: string;
+  minHeight?: number;
   stretch?: boolean;
   style?: StyleProp<ViewStyle>;
   textStyle?: StyleProp<TextStyle>;
-  tone?: 'primary' | 'secondary';
+  tone?: 'brand' | 'primary' | 'secondary';
+  verticalPadding?: number;
+};
+
+type KangurMobilePendingActionButtonProps = {
+  accessibilityLabel?: string;
+  horizontalPadding?: number;
+  label: string;
+  onPress: () => void | Promise<void>;
+  pending: boolean;
+  pendingLabel: string;
+  stretch?: boolean;
   verticalPadding?: number;
 };
 
@@ -136,35 +177,53 @@ const KANGUR_MOBILE_INSET_PANEL_STYLE: ViewStyle = {
 };
 
 const getButtonContainerStyle = ({
+  borderRadius = 999,
+  centered = false,
+  disabledOpacity = 0.55,
   disabled = false,
+  horizontalPadding = 14,
+  minHeight,
   stretch = false,
   tone = 'secondary',
   verticalPadding = 10,
 }: {
+  borderRadius?: number;
+  centered?: boolean;
+  disabledOpacity?: number;
   disabled?: boolean;
+  horizontalPadding?: number;
+  minHeight?: number;
   stretch?: boolean;
-  tone?: 'ghost' | 'primary' | 'secondary';
+  tone?: 'brand' | 'ghost' | 'primary' | 'secondary';
   verticalPadding?: number;
 }): ViewStyle => ({
   alignSelf: stretch ? 'stretch' : 'flex-start',
   width: stretch ? '100%' : undefined,
-  opacity: disabled ? 0.55 : 1,
-  borderRadius: 999,
-  borderWidth: tone === 'primary' ? 0 : 1,
+  opacity: disabled ? disabledOpacity : 1,
+  borderRadius,
+  borderWidth: tone === 'primary' || tone === 'brand' ? 0 : 1,
   borderColor:
-    tone === 'primary' ? 'transparent' : tone === 'ghost' ? '#e2e8f0' : '#cbd5e1',
-  backgroundColor: tone === 'primary' ? '#0f172a' : '#ffffff',
-  paddingHorizontal: 14,
+    tone === 'primary' || tone === 'brand'
+      ? 'transparent'
+      : tone === 'ghost'
+        ? '#e2e8f0'
+        : '#cbd5e1',
+  backgroundColor: tone === 'primary' ? '#0f172a' : tone === 'brand' ? '#1d4ed8' : '#ffffff',
+  alignItems: centered ? 'center' : undefined,
+  justifyContent: centered ? 'center' : undefined,
+  minHeight,
+  paddingHorizontal: horizontalPadding,
   paddingVertical: verticalPadding,
 });
 
 const getButtonTextStyle = (
-  tone: 'ghost' | 'primary' | 'secondary',
+  centered: boolean,
+  tone: 'brand' | 'ghost' | 'primary' | 'secondary',
   stretch: boolean,
 ): TextStyle => ({
-  color: tone === 'primary' ? '#ffffff' : '#0f172a',
+  color: tone === 'primary' || tone === 'brand' ? '#ffffff' : '#0f172a',
   fontWeight: '700',
-  textAlign: stretch ? 'center' : 'left',
+  textAlign: centered || stretch ? 'center' : 'left',
 });
 
 export function KangurMobileCard(props: KangurMobileCardProps): React.JSX.Element {
@@ -237,33 +296,78 @@ export function KangurMobileMetric(props: KangurMobileMetricProps): React.JSX.El
 export function KangurMobileFilterChip(
   props: KangurMobileFilterChipProps,
 ): React.JSX.Element {
-  const { fullWidth = false, label, onPress, selected } = props;
+  const {
+    accessibilityLabel,
+    borderRadius = 999,
+    centered = false,
+    href,
+    fullWidth = false,
+    horizontalPadding = 14,
+    idleTextColor = '#334155',
+    label,
+    minHeight,
+    onPress,
+    selected,
+    selectedBackgroundColor = '#dbeafe',
+    selectedBorderColor = '#1d4ed8',
+    selectedTextColor = '#1d4ed8',
+    style,
+    textStyle,
+    verticalPadding = 10,
+  } = props;
+
+  const chipStyle: ViewStyle = {
+    alignSelf: fullWidth ? 'stretch' : 'flex-start',
+    width: fullWidth ? '100%' : undefined,
+    borderRadius,
+    borderWidth: 1,
+    borderColor: selected ? selectedBorderColor : '#cbd5e1',
+    backgroundColor: selected ? selectedBackgroundColor : '#ffffff',
+    alignItems: centered ? 'center' : undefined,
+    justifyContent: centered ? 'center' : undefined,
+    minHeight,
+    paddingHorizontal: horizontalPadding,
+    paddingVertical: verticalPadding,
+  };
+
+  const chipText = (
+    <Text
+      style={[
+        {
+          color: selected ? selectedTextColor : idleTextColor,
+          fontSize: 13,
+          fontWeight: '700',
+          textAlign: centered || fullWidth ? 'center' : 'left',
+        },
+        textStyle,
+      ]}
+    >
+      {label}
+    </Text>
+  );
+
+  if (href) {
+    return (
+      <Link href={href} asChild>
+        <Pressable
+          accessibilityLabel={accessibilityLabel}
+          accessibilityRole='button'
+          style={[chipStyle, style]}
+        >
+          {chipText}
+        </Pressable>
+      </Link>
+    );
+  }
 
   return (
     <Pressable
+      accessibilityLabel={accessibilityLabel}
       accessibilityRole='button'
       onPress={onPress}
-      style={{
-        alignSelf: fullWidth ? 'stretch' : 'flex-start',
-        width: fullWidth ? '100%' : undefined,
-        borderRadius: 999,
-        borderWidth: 1,
-        borderColor: selected ? '#1d4ed8' : '#cbd5e1',
-        backgroundColor: selected ? '#dbeafe' : '#ffffff',
-        paddingHorizontal: 14,
-        paddingVertical: 10,
-      }}
+      style={[chipStyle, style]}
     >
-      <Text
-        style={{
-          color: selected ? '#1d4ed8' : '#334155',
-          fontSize: 13,
-          fontWeight: '700',
-          textAlign: fullWidth ? 'center' : 'left',
-        }}
-      >
-        {label}
-      </Text>
+      {chipText}
     </Pressable>
   );
 }
@@ -308,13 +412,42 @@ export function KangurMobileSummaryChip(
   );
 }
 
+export function KangurMobileMutedActionChip(
+  props: KangurMobileMutedActionChipProps,
+): React.JSX.Element {
+  const { compact = false, label, style, textStyle } = props;
+
+  return (
+    <View
+      style={[
+        {
+          alignSelf: 'flex-start',
+          borderRadius: 999,
+          backgroundColor: '#e2e8f0',
+          paddingHorizontal: compact ? 12 : 14,
+          paddingVertical: compact ? 9 : 10,
+        },
+        style,
+      ]}
+    >
+      <Text style={[{ color: '#475569', fontWeight: '700' }, textStyle]}>{label}</Text>
+    </View>
+  );
+}
+
 export function KangurMobileActionButton(
   props: KangurMobileActionButtonProps,
 ): React.JSX.Element {
   const {
+    accessibilityHint,
     disabled = false,
     accessibilityLabel,
+    borderRadius,
+    centered = false,
+    disabledOpacity,
+    horizontalPadding,
     label,
+    minHeight,
     onPress,
     stretch = false,
     style,
@@ -326,17 +459,28 @@ export function KangurMobileActionButton(
   return (
     <Pressable
       accessibilityRole='button'
+      accessibilityHint={accessibilityHint}
       accessibilityLabel={accessibilityLabel}
       disabled={disabled}
       onPress={() => {
         void onPress();
       }}
       style={[
-        getButtonContainerStyle({ disabled, stretch, tone, verticalPadding }),
+        getButtonContainerStyle({
+          borderRadius,
+          centered,
+          disabledOpacity,
+          disabled,
+          horizontalPadding,
+          minHeight,
+          stretch,
+          tone,
+          verticalPadding,
+        }),
         style,
       ]}
     >
-      <Text style={[getButtonTextStyle(tone, stretch), textStyle]}>{label}</Text>
+      <Text style={[getButtonTextStyle(centered, tone, stretch), textStyle]}>{label}</Text>
     </Pressable>
   );
 }
@@ -344,8 +488,12 @@ export function KangurMobileActionButton(
 export function KangurMobileLinkButton(props: KangurMobileLinkButtonProps): React.JSX.Element {
   const {
     href,
+    accessibilityHint,
     accessibilityLabel,
+    borderRadius,
+    centered = false,
     label,
+    minHeight,
     stretch = false,
     style,
     textStyle,
@@ -357,12 +505,55 @@ export function KangurMobileLinkButton(props: KangurMobileLinkButtonProps): Reac
     <Link href={href} asChild>
       <Pressable
         accessibilityLabel={accessibilityLabel}
+        accessibilityHint={accessibilityHint}
         accessibilityRole='button'
-        style={[getButtonContainerStyle({ stretch, tone, verticalPadding }), style]}
+        style={[
+          getButtonContainerStyle({
+            borderRadius,
+            centered,
+            minHeight,
+            stretch,
+            tone,
+            verticalPadding,
+          }),
+          style,
+        ]}
       >
-        <Text style={[getButtonTextStyle(tone, stretch), textStyle]}>{label}</Text>
+        <Text style={[getButtonTextStyle(centered, tone, stretch), textStyle]}>{label}</Text>
       </Pressable>
     </Link>
+  );
+}
+
+export function KangurMobilePendingActionButton(
+  props: KangurMobilePendingActionButtonProps,
+): React.JSX.Element {
+  const {
+    accessibilityLabel,
+    horizontalPadding,
+    label,
+    onPress,
+    pending,
+    pendingLabel,
+    stretch = false,
+    verticalPadding = 10,
+  } = props;
+
+  return (
+    <KangurMobileActionButton
+      accessibilityLabel={accessibilityLabel}
+      disabled={pending}
+      disabledOpacity={1}
+      horizontalPadding={horizontalPadding}
+      label={pending ? pendingLabel : label}
+      onPress={onPress}
+      stretch={stretch}
+      style={{
+        backgroundColor: pending ? '#94a3b8' : '#1d4ed8',
+      }}
+      tone='brand'
+      verticalPadding={verticalPadding}
+    />
   );
 }
 

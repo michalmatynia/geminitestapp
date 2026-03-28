@@ -255,16 +255,7 @@ vi.mock('@/shared/ui/templates/FilterPanel', () => ({
 }));
 
 vi.mock('@/shared/ui/templates/modals', () => ({
-  ConfirmModal: ({
-    isOpen,
-    title,
-    children,
-    onClose,
-    onConfirm,
-    confirmText,
-    confirmDisabled,
-    loading,
-  }: {
+  ConfirmModal: (props: {
     isOpen: boolean;
     title: string;
     children?: React.ReactNode;
@@ -273,8 +264,18 @@ vi.mock('@/shared/ui/templates/modals', () => ({
     confirmText?: string;
     confirmDisabled?: boolean;
     loading?: boolean;
-  }) =>
-    isOpen ? (
+  }) => {
+    const {
+      isOpen,
+      title,
+      children,
+      onClose,
+      onConfirm,
+      confirmText,
+      confirmDisabled,
+      loading,
+    } = props;
+    return isOpen ? (
       <div role='dialog' aria-label={title}>
         <div>{title}</div>
         {children}
@@ -289,7 +290,8 @@ vi.mock('@/shared/ui/templates/modals', () => ({
           {confirmText ?? 'Confirm'}
         </button>
       </div>
-    ) : null,
+    ) : null;
+  },
 }));
 
 vi.mock('./SystemLogs.Context', () => ({

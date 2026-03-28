@@ -18,6 +18,10 @@ describe('KangurGameOperationSelectorWidget.logic', () => {
       kind: 'screen',
       screen: 'english_adverbs_quiz',
     });
+    expect(resolveLessonRecommendationTarget('english_comparatives_superlatives', 79)).toEqual({
+      kind: 'screen',
+      screen: 'english_compare_and_crown_quiz',
+    });
 
     expect(resolveLessonRecommendationTarget('english_sentence_structure', 76)).toEqual({
       kind: 'screen',

@@ -54,7 +54,7 @@ export function DatabaseMobileCards(): React.JSX.Element {
                 disabled={!backupMaintenanceAllowed}
                 onClick={() => {
                   if (backup) {
-                    void handleRestoreRequest(backup);
+                    handleRestoreRequest(backup);
                   }
                 }}
               >

@@ -21,6 +21,7 @@ const {
   xpToastPropsMock,
   calendarTrainingGamePropsMock,
   clockTrainingGamePropsMock,
+  englishComparativesCrownGamePropsMock,
   englishAdverbsActionStudioGamePropsMock,
   logicalPatternsWorkshopGamePropsMock,
   disabledDocsTooltipsMock,
@@ -40,6 +41,7 @@ const {
   xpToastPropsMock: vi.fn(),
   calendarTrainingGamePropsMock: vi.fn(),
   clockTrainingGamePropsMock: vi.fn(),
+  englishComparativesCrownGamePropsMock: vi.fn(),
   englishAdverbsActionStudioGamePropsMock: vi.fn(),
   logicalPatternsWorkshopGamePropsMock: vi.fn(),
   disabledDocsTooltipsMock: { enabled: false },
@@ -228,6 +230,13 @@ vi.mock('@/features/kangur/ui/components/EnglishAdverbsActionStudioGame', () => 
   default: (props: unknown) => {
     englishAdverbsActionStudioGamePropsMock(props);
     return <div data-testid='english-adverbs-action-studio-game' />;
+  },
+}));
+
+vi.mock('@/features/kangur/ui/components/EnglishComparativesSuperlativesCrownGame', () => ({
+  default: (props: unknown) => {
+    englishComparativesCrownGamePropsMock(props);
+    return <div data-testid='english-comparatives-crown-game' />;
   },
 }));
 
@@ -712,6 +721,38 @@ describe('Game page', () => {
         sessionContext: expect.objectContaining({
           surface: 'game',
           contentId: 'game:english_adverbs_quiz',
+        }),
+      })
+    );
+  });
+
+  it('renders the comparatives launchable runtime on the dedicated game screen', async () => {
+    useKangurGameRuntimeMock.mockReturnValue({
+      ...buildRuntime('english_compare_and_crown_quiz'),
+      user: {
+        activeLearner: {
+          id: 'learner-1',
+        },
+      },
+    });
+
+    render(<Game />);
+
+    await waitFor(() => {
+      expect(screen.getByTestId('english-comparatives-crown-game')).toBeInTheDocument();
+    });
+
+    expect(englishComparativesCrownGamePropsMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        finishLabel: 'Wroc do Grajmy',
+      })
+    );
+    expect(tutorSessionSyncPropsMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        learnerId: 'learner-1',
+        sessionContext: expect.objectContaining({
+          surface: 'game',
+          contentId: 'game:english_compare_and_crown_quiz',
         }),
       })
     );

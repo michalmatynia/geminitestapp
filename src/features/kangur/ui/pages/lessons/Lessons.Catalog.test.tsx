@@ -442,4 +442,97 @@ describe('LessonsCatalog', () => {
       'lesson-english-adverbs-frequency',
     ]);
   });
+
+  it('renders the comparatives lesson inside the grammar group next to the other English grammar lessons', () => {
+    lessonCardPropsMock.mockClear();
+    useLessonsMock.mockReturnValue({
+      subject: 'english',
+      ageGroup: 'ten_year_old',
+      lessonSections: [
+        {
+          id: 'english_grammar',
+          subject: 'english',
+          enabled: true,
+          sortOrder: 1,
+          label: 'Gramatyka',
+          typeLabel: 'Dzial',
+          componentIds: [],
+          subsections: [
+            {
+              id: 'english_grammar_adjectives',
+              enabled: true,
+              sortOrder: 1,
+              label: 'Adjectives',
+              typeLabel: 'Podgrupa',
+              componentIds: ['english_adjectives'],
+            },
+            {
+              id: 'english_grammar_comparatives_superlatives',
+              enabled: true,
+              sortOrder: 2,
+              label: 'Comparatives & Superlatives',
+              typeLabel: 'Podgrupa',
+              componentIds: ['english_comparatives_superlatives'],
+            },
+          ],
+        },
+      ],
+      orderedLessons: [
+        {
+          id: 'lesson-english-adjectives',
+          componentId: 'english_adjectives',
+          subject: 'english',
+          ageGroup: 'ten_year_old',
+          title: 'Adjectives',
+          description: 'Describe people, places, and things.',
+          emoji: '🎨',
+          color: 'kangur-gradient-accent-indigo',
+          activeBg: 'bg-indigo-500',
+          sortOrder: 1,
+          enabled: true,
+        },
+        {
+          id: 'lesson-english-comparatives',
+          componentId: 'english_comparatives_superlatives',
+          subject: 'english',
+          ageGroup: 'ten_year_old',
+          title: 'Comparatives & Superlatives',
+          description: 'Compare two things and crown the top one in a group.',
+          emoji: '👑',
+          color: 'kangur-gradient-accent-fuchsia',
+          activeBg: 'bg-fuchsia-500',
+          sortOrder: 2,
+          enabled: true,
+        },
+      ],
+      handleSelectLesson: vi.fn(),
+      handleGoBack: vi.fn(),
+      progress: { lessonMastery: {} },
+      lessonAssignmentsByComponent: new Map(),
+      completedLessonAssignmentsByComponent: new Map(),
+      lessonDocuments: {},
+      activeLessonId: null,
+      isLessonsCatalogLoading: false,
+      isLessonSectionsLoading: false,
+      shouldShowLessonsCatalogSkeleton: false,
+    });
+
+    render(<LessonsCatalog />);
+
+    expect(
+      screen.queryByTestId('mock-lesson-card-lesson-english-comparatives')
+    ).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: /gramatyka/i }));
+
+    expect(screen.getByTestId('mock-lesson-card-lesson-english-comparatives')).toBeInTheDocument();
+    expect(lessonCardPropsMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        lesson: expect.objectContaining({
+          componentId: 'english_comparatives_superlatives',
+          id: 'lesson-english-comparatives',
+        }),
+      })
+    );
+  });
 });

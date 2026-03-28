@@ -73,6 +73,12 @@ import { DELETE, PUT } from '@/app/api/v2/products/[id]/route-handler';
 import { GET as GET_LIST, POST } from '@/app/api/v2/products/route-handler';
 import { GET as GET_PUBLIC } from '@/app/api/public/products/[id]/route';
 
+const buildDuplicateProductRequest = (sku: string) =>
+  new NextRequest('http://localhost/api/products/product-1/duplicate', {
+    method: 'POST',
+    body: JSON.stringify({ sku }),
+  });
+
 describe('Products API', () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -211,10 +217,7 @@ describe('Products API', () => {
     });
 
     const res = await POST_DUPLICATE(
-      new NextRequest('http://localhost/api/products/product-1/duplicate', {
-        method: 'POST',
-        body: JSON.stringify({ sku: 'COPY-001' }),
-      }),
+      buildDuplicateProductRequest('COPY-001'),
       { params: Promise.resolve({ id: 'product-1' }) }
     );
     const product = await res.json();

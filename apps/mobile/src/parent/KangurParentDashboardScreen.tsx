@@ -12,10 +12,10 @@ import {
   BASE_TONE,
   INDIGO_TONE,
   SUCCESS_TONE,
-  WARNING_TONE,
 } from '../shared/KangurAssessmentUi';
 import {
   KangurMobileCard as Card,
+  KangurMobileInsetPanel as InsetPanel,
   KangurMobileLinkButton as LinkButton,
   KangurMobileMetric as Metric,
   KangurMobilePill as Pill,
@@ -617,16 +617,10 @@ export function KangurParentDashboardScreen(): React.JSX.Element {
                 ) : (
                   <View style={{ gap: 10 }}>
                     {dashboard.recentResultItems.map((item) => (
-                      <View
+                      <InsetPanel
                         key={item.result.id}
-                        style={{
-                          backgroundColor: '#f8fafc',
-                          borderColor: '#e2e8f0',
-                          borderRadius: 18,
-                          borderWidth: 1,
-                          gap: 8,
-                          padding: 14,
-                        }}
+                        gap={8}
+                        style={{ borderRadius: 18 }}
                       >
                         <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
                           <Pill
@@ -648,7 +642,7 @@ export function KangurParentDashboardScreen(): React.JSX.Element {
                         <Text style={{ color: '#475569', fontSize: 13, lineHeight: 18 }}>
                           {formatKangurMobileScoreDateTime(item.result.created_date, locale)}
                         </Text>
-                      </View>
+                      </InsetPanel>
                     ))}
                     <OutlineLink
                       href={RESULTS_ROUTE}
@@ -716,16 +710,10 @@ export function KangurParentDashboardScreen(): React.JSX.Element {
                 ) : (
                   <View style={{ gap: 10 }}>
                     {dashboard.assignmentItems.map((item) => (
-                      <View
+                      <InsetPanel
                         key={item.assignment.id}
-                        style={{
-                          backgroundColor: '#f8fafc',
-                          borderColor: '#e2e8f0',
-                          borderRadius: 18,
-                          borderWidth: 1,
-                          gap: 10,
-                          padding: 14,
-                        }}
+                        gap={10}
+                        style={{ borderRadius: 18 }}
                       >
                         <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
                           <Pill
@@ -758,7 +746,7 @@ export function KangurParentDashboardScreen(): React.JSX.Element {
                             }
                           />
                         ) : null}
-                      </View>
+                      </InsetPanel>
                     ))}
                   </View>
                 )}

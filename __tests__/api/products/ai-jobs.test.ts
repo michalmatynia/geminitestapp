@@ -6,6 +6,12 @@ import { POST as POST_BULK } from '@/app/api/v2/products/ai-jobs/bulk/route-hand
 import { POST as POST_ENQUEUE } from '@/app/api/v2/products/ai-jobs/enqueue/route-handler';
 import { GET } from '@/app/api/v2/products/ai-jobs/route-handler';
 
+const buildPostRequest = (url: string, payload: Record<string, unknown>) =>
+  new NextRequest(url, {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  });
+
 // Mock jobs server
 vi.mock('@/features/jobs/server', () => ({
   getProductAiJobs: vi.fn().mockResolvedValue([]),
@@ -77,19 +83,17 @@ describe('Product AI Jobs API', () => {
         },
       };
       const res = await POST_ENQUEUE(
-        new NextRequest('http://localhost/api/products/ai-jobs/enqueue', {
-          method: 'POST',
-          body: JSON.stringify(payload),
-        })
+        buildPostRequest('http://localhost/api/products/ai-jobs/enqueue', payload)
       );
       expect(res.status).toEqual(200);
     });
 
     it('rejects removed description_generation jobs', async () => {
       const res = await POST_ENQUEUE(
-        new NextRequest('http://localhost/api/products/ai-jobs/enqueue', {
-          method: 'POST',
-          body: JSON.stringify({ productId: 'prod1', type: 'description_generation', payload: {} }),
+        buildPostRequest('http://localhost/api/products/ai-jobs/enqueue', {
+          productId: 'prod1',
+          type: 'description_generation',
+          payload: {},
         })
       );
 
@@ -98,9 +102,10 @@ describe('Product AI Jobs API', () => {
 
     it('rejects removed translation jobs', async () => {
       const res = await POST_ENQUEUE(
-        new NextRequest('http://localhost/api/products/ai-jobs/enqueue', {
-          method: 'POST',
-          body: JSON.stringify({ productId: 'prod1', type: 'translation', payload: {} }),
+        buildPostRequest('http://localhost/api/products/ai-jobs/enqueue', {
+          productId: 'prod1',
+          type: 'translation',
+          payload: {},
         })
       );
 
@@ -111,9 +116,9 @@ describe('Product AI Jobs API', () => {
   describe('POST /api/products/ai-jobs/bulk', () => {
     it('rejects removed description_generation bulk jobs', async () => {
       const res = await POST_BULK(
-        new NextRequest('http://localhost/api/products/ai-jobs/bulk', {
-          method: 'POST',
-          body: JSON.stringify({ type: 'description_generation', config: {} }),
+        buildPostRequest('http://localhost/api/products/ai-jobs/bulk', {
+          type: 'description_generation',
+          config: {},
         })
       );
 
@@ -122,9 +127,9 @@ describe('Product AI Jobs API', () => {
 
     it('rejects removed translation bulk jobs', async () => {
       const res = await POST_BULK(
-        new NextRequest('http://localhost/api/products/ai-jobs/bulk', {
-          method: 'POST',
-          body: JSON.stringify({ type: 'translation', config: {} }),
+        buildPostRequest('http://localhost/api/products/ai-jobs/bulk', {
+          type: 'translation',
+          config: {},
         })
       );
 

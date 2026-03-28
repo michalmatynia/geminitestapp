@@ -7,40 +7,71 @@ import {
   SIMULATION_OUTPUT_PORTS,
 } from '../../constants';
 
+type EntityIdConfig = {
+  entityId?: string;
+  productId?: string;
+};
+
+type FetcherConfigShape = EntityIdConfig & {
+  entityType?: string;
+  sourceMode?: string;
+};
+
+type SimulationConfigShape = EntityIdConfig & {
+  entityType?: string;
+  runBehavior?: string;
+};
+
+const resolveEntityId = (config?: EntityIdConfig): string =>
+  config?.entityId ?? config?.productId ?? '';
+
+const buildFetcherConfig = (
+  fetcherConfig?: FetcherConfigShape,
+) => {
+  const entityId = resolveEntityId(fetcherConfig);
+
+  return {
+    sourceMode: fetcherConfig?.sourceMode ?? 'live_context',
+    entityType: fetcherConfig?.entityType ?? 'product',
+    entityId,
+    productId: entityId,
+  };
+};
+
+const buildSimulationConfig = (
+  simulationConfig?: SimulationConfigShape,
+) => {
+  const entityId = resolveEntityId(simulationConfig);
+
+  return {
+    productId: entityId,
+    entityType: simulationConfig?.entityType ?? 'product',
+    entityId,
+    runBehavior:
+      simulationConfig?.runBehavior ?? 'before_connected_trigger',
+  };
+};
+
 export const normalizeFetcherNode = (node: AiNode): AiNode => {
-  const fetcherConfig = node.config?.fetcher;
-  const rawEntityId = fetcherConfig?.entityId ?? fetcherConfig?.productId ?? '';
   return {
     ...node,
     inputs: FETCHER_INPUT_PORTS,
     outputs: FETCHER_OUTPUT_PORTS,
     config: {
       ...node.config,
-      fetcher: {
-        sourceMode: fetcherConfig?.sourceMode ?? 'live_context',
-        entityType: fetcherConfig?.entityType ?? 'product',
-        entityId: rawEntityId,
-        productId: rawEntityId,
-      },
+      fetcher: buildFetcherConfig(node.config?.fetcher),
     },
   };
 };
 
 export const normalizeSimulationNode = (node: AiNode): AiNode => {
-  const simulationConfig = node.config?.simulation;
-  const rawEntityId = simulationConfig?.entityId ?? simulationConfig?.productId ?? '';
   return {
     ...node,
     inputs: SIMULATION_INPUT_PORTS,
     outputs: SIMULATION_OUTPUT_PORTS,
     config: {
       ...node.config,
-      simulation: {
-        productId: rawEntityId,
-        entityType: simulationConfig?.entityType ?? 'product',
-        entityId: rawEntityId,
-        runBehavior: simulationConfig?.runBehavior ?? 'before_connected_trigger',
-      },
+      simulation: buildSimulationConfig(node.config?.simulation),
     },
   };
 };

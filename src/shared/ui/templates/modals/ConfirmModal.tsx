@@ -171,25 +171,26 @@ const renderConfirmModal = ({
  * Refactored to leverage AlertDialog primitive for better accessibility.
  * Consolidates destructive action confirmations across features.
  */
-export function ConfirmModal({
-  isOpen,
-  onClose,
-  onConfirm,
-  title,
-  subtitle: modalSubtitle,
-  message,
-  confirmText = 'Confirm',
-  cancelText = 'Cancel',
-  extraAction,
-  loading = false,
-  confirmDisabled = false,
-  isDangerous = false,
-  size = 'sm',
-  confirmPassword,
-  onConfirmPasswordChange,
-  confirmPasswordLabel = 'Confirm with your user password',
-  children,
-}: ConfirmModalProps): React.JSX.Element {
+export function ConfirmModal(props: ConfirmModalProps): React.JSX.Element {
+  const {
+    isOpen,
+    onClose,
+    onConfirm,
+    title,
+    subtitle: modalSubtitle,
+    message,
+    confirmText = 'Confirm',
+    cancelText = 'Cancel',
+    extraAction,
+    loading = false,
+    confirmDisabled = false,
+    isDangerous = false,
+    size = 'sm',
+    confirmPassword,
+    onConfirmPasswordChange,
+    confirmPasswordLabel = 'Confirm with your user password',
+    children,
+  } = props;
   const passwordInputRef = React.useRef<HTMLInputElement | null>(null);
   const passwordInputId = React.useId().replace(/:/g, '');
 

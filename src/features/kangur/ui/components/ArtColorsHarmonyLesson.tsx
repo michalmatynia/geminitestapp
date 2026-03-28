@@ -254,7 +254,7 @@ export default function ArtColorsHarmonyLesson(): JSX.Element {
       games={[
         {
           sectionId: 'gameHarmony',
-          stage: {
+          shell: {
             accent: 'rose',
             icon: '🎮',
             shellTestId: 'art-colors-harmony-game-shell',

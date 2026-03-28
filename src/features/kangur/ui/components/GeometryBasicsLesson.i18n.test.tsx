@@ -48,7 +48,7 @@ describe('GeometryBasicsLesson i18n', () => {
     const games =
       (capturedProps?.games as Array<{
         sectionId: string;
-        stage: Record<string, unknown>;
+        shell: Record<string, unknown>;
         launchableInstance?: { gameId?: string; instanceId?: string };
       }>) ?? [];
 
@@ -60,7 +60,7 @@ describe('GeometryBasicsLesson i18n', () => {
       title: 'Winkel',
       description: 'Spitz, recht und stumpf',
     });
-    expect(games.find((game) => game.sectionId === 'game')?.stage).toMatchObject({
+    expect(games.find((game) => game.sectionId === 'game')?.shell).toMatchObject({
       title: 'Geo-Mission',
     });
     expect(games.find((game) => game.sectionId === 'game')?.launchableInstance).toMatchObject({

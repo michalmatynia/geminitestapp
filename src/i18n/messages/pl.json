@@ -318,6 +318,42 @@
         "label": "Sesja Kangura Matematycznego",
         "description": "Rozwiazuj zadania Kangura Matematycznego krok po kroku."
       },
+      "agentic_approval_gate_quiz": {
+        "label": "Quiz bramki zgody",
+        "description": "Cwicz rozpoznawanie dzialan, ktore wymagaja zgody przed uruchomieniem."
+      },
+      "agentic_prompt_trim_quiz": {
+        "label": "Quiz skracania promptow",
+        "description": "Cwicz skracanie promptow do najkrotszej skutecznej wersji."
+      },
+      "agentic_reasoning_router_quiz": {
+        "label": "Quiz wyboru trybu rozumowania",
+        "description": "Dobieraj wlasciwy tryb rozumowania do kazdego zadania."
+      },
+      "agentic_surface_match_quiz": {
+        "label": "Quiz dopasowania interfejsu",
+        "description": "Dobieraj odpowiedni interfejs lub powierzchnie pracy do zadania."
+      },
+      "alphabet_first_words_quiz": {
+        "label": "Quiz pierwszych slow",
+        "description": "Lacz litery i obrazki, aby budowac pierwsze slowa."
+      },
+      "alphabet_letter_matching_quiz": {
+        "label": "Quiz dopasowywania liter",
+        "description": "Dopasowuj litery w krotkich rundach alfabetu."
+      },
+      "alphabet_letter_order_quiz": {
+        "label": "Quiz kolejnosci liter",
+        "description": "Ukladaj litery z powrotem we wlasciwej kolejnosci."
+      },
+      "art_color_harmony_quiz": {
+        "label": "Quiz harmonii kolorow",
+        "description": "Cwicz laczenie kolorow w cieple i chlodne harmonie."
+      },
+      "art_shape_rotation_quiz": {
+        "label": "Quiz obrotow figur",
+        "description": "Rozpoznawaj, jak figury wygladaja po obrocie."
+      },
       "calendar_quiz": {
         "label": "Cwiczenia z kalendarzem",
         "description": "Cwicz odczytywanie dat i zaleznosci w kalendarzu."
@@ -325,6 +361,10 @@
       "geometry_quiz": {
         "label": "Cwiczenia z figurami",
         "description": "Cwicz figury, ksztalty i zaleznosci przestrzenne."
+      },
+      "geometry_shape_spotter_quiz": {
+        "label": "Quiz rozpoznawania figur",
+        "description": "Rozpoznawaj i nazywaj figury w szybkich rundach."
       },
       "clock_quiz": {
         "label": "Cwiczenia z zegarem",
@@ -341,6 +381,10 @@
       "addition_quiz": {
         "label": "Quiz dodawania",
         "description": "Szybki quiz z dodawania."
+      },
+      "adding_synthesis_quiz": {
+        "label": "Quiz syntezy dodawania",
+        "description": "Buduj plynnosc dodawania w krotkich rytmicznych rundach."
       },
       "subtraction_quiz": {
         "label": "Quiz odejmowania",
@@ -365,6 +409,38 @@
       "logical_analogies_quiz": {
         "label": "Quiz analogii",
         "description": "Cwicz analogie i relacje w szybkich rundach."
+      },
+      "english_subject_verb_agreement_quiz": {
+        "label": "Quiz zgodnosci podmiotu z czasownikiem",
+        "description": "Dopasowuj podmiot i czasownik, aby zdanie brzmialo poprawnie."
+      },
+      "english_adjectives_quiz": {
+        "label": "Quiz przymiotnikow",
+        "description": "Wybieraj przymiotniki opisujace osoby, miejsca i rzeczy."
+      },
+      "english_adverbs_frequency_quiz": {
+        "label": "Quiz przyslowkow czestotliwosci",
+        "description": "Cwicz zdania o rutynie z always, often i never."
+      },
+      "english_articles_quiz": {
+        "label": "Quiz przedimkow",
+        "description": "Wybieraj a, an lub the w krotkich rundach gramatycznych."
+      },
+      "english_prepositions_quiz": {
+        "label": "Quiz przyimkow",
+        "description": "Cwicz angielskie przyimki czasu i miejsca."
+      },
+      "english_prepositions_sort_quiz": {
+        "label": "Quiz sortowania przyimkow",
+        "description": "Sortuj przyimki do wlasciwych grup gramatycznych."
+      },
+      "english_prepositions_order_quiz": {
+        "label": "Quiz szyku przyimkow",
+        "description": "Ukladaj krotkie wyrazenia z przyimkami we wlasciwej kolejnosci."
+      },
+      "english_pronouns_warmup_quiz": {
+        "label": "Rozgrzewka z zaimkami",
+        "description": "Rozgrzej sie szybkimi rundami z angielskimi zaimkami."
       },
       "english_sentence_quiz": {
         "label": "Quiz skladni zdania",

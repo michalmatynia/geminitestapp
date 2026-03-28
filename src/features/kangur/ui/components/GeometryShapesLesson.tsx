@@ -328,7 +328,7 @@ export default function GeometryShapesLesson({ lessonTemplate }: LessonProps): R
         {
           sectionId: 'game',
           onShellEnter: handleGameStart,
-          stage: {
+          shell: {
             accent: 'violet',
             icon: '✍️',
             shellTestId: 'geometry-shapes-game-shell',

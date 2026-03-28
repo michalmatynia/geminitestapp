@@ -1,5 +1,9 @@
 import { describe, expect, it } from 'vitest';
 
+import deMessages from '@/i18n/messages/de.json';
+import enMessages from '@/i18n/messages/en.json';
+import plMessages from '@/i18n/messages/pl.json';
+import ukMessages from '@/i18n/messages/uk.json';
 import {
   createLaunchableGameScreenComponentConfigFromRuntime,
   getKangurLaunchableGameScreenComponentConfig,
@@ -22,6 +26,25 @@ describe('Game launchable screen registry', () => {
       expect(config.Component).toBeTruthy();
       expect(config.runtime.screen).toBe(screen);
       expect(config.runtime.rendererId).toBeTruthy();
+    }
+  });
+
+  it('has translated labels and descriptions for every launchable fullscreen screen', () => {
+    const localeMessages = [plMessages, enMessages, deMessages, ukMessages];
+
+    for (const messages of localeMessages) {
+      const screens = messages.KangurGamePage.screens;
+
+      for (const screen of KANGUR_LAUNCHABLE_GAME_SCREENS) {
+        expect(screens[screen]).toEqual(
+          expect.objectContaining({
+            label: expect.any(String),
+            description: expect.any(String),
+          })
+        );
+        expect(screens[screen].label.trim().length).toBeGreaterThan(0);
+        expect(screens[screen].description.trim().length).toBeGreaterThan(0);
+      }
     }
   });
 

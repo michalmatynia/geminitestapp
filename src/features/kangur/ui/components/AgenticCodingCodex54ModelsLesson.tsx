@@ -27,7 +27,7 @@ export default function AgenticCodingCodex54ModelsLesson(): JSX.Element {
       games={[
         {
           sectionId: 'reasoning_router_game',
-          stage: {
+          shell: {
             accent: 'teal',
             icon: '🎛️',
             title: 'Reasoning Router',

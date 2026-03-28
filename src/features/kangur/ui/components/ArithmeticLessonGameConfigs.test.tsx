@@ -92,7 +92,7 @@ describe('arithmetic lesson game configs', () => {
       const games =
         (capturedProps?.games as Array<{
           sectionId: string;
-          stage: Record<string, unknown>;
+          shell: Record<string, unknown>;
           launchableInstance?: {
             gameId?: string;
             instanceId?: string;
@@ -101,7 +101,7 @@ describe('arithmetic lesson game configs', () => {
         }>) ?? [];
       const game = games.find((candidate) => candidate.sectionId === sectionId);
 
-      expect(game?.stage).toMatchObject({
+      expect(game?.shell).toMatchObject({
         shellTestId,
       });
       expect(game?.launchableInstance).toMatchObject({
@@ -109,7 +109,7 @@ describe('arithmetic lesson game configs', () => {
         instanceId: launchableInstanceId,
       });
       if (hasBodyPrelude) {
-        expect(game?.stage).toHaveProperty('bodyPrelude');
+        expect(game?.shell).toHaveProperty('bodyPrelude');
       }
       expect(game).not.toHaveProperty('runtime');
       expect(game).not.toHaveProperty('render');

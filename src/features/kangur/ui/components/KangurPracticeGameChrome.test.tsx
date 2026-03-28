@@ -25,7 +25,7 @@ vi.mock('@/features/kangur/ui/hooks/useKangurCoarsePointer', () => ({
 describe('KangurPracticeGameChrome', () => {
   it('renders the shared practice game shell and progress row', () => {
     render(
-      <KangurPracticeGameShell data-testid='practice-stage'>
+      <KangurPracticeGameShell data-testid='practice-shell'>
         <KangurPracticeGameProgress
           accent='amber'
           currentRound={2}
@@ -35,7 +35,7 @@ describe('KangurPracticeGameChrome', () => {
       </KangurPracticeGameShell>
     );
 
-    expect(screen.getByTestId('practice-stage')).toHaveClass(
+    expect(screen.getByTestId('practice-shell')).toHaveClass(
       'flex',
       'w-full',
       'max-w-sm',

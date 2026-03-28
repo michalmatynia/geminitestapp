@@ -124,7 +124,7 @@ describe('LessonSlideSection', () => {
       'true'
     );
     expect(screen.getByTestId('lesson-slide-print-panel-label')).toHaveTextContent('Panel 1');
-    expect(screen.getByTestId('lesson-slide-stage-root')).toHaveClass('mx-auto');
+    expect(screen.getByTestId('lesson-slide-shell-root')).toHaveClass('mx-auto');
     expect(firstIndicator).toHaveClass('kangur-cta-pill', 'bg-orange-400');
     expect(firstIndicator).toHaveClass('cursor-pointer');
     expect(firstIndicator).toHaveAttribute('aria-current', 'step');
@@ -229,7 +229,7 @@ describe('LessonSlideSection', () => {
     const navigationButtonRow = screen
       .getByTestId('lesson-slide-navigation-shell')
       .querySelector('[role="group"]');
-    const slideStageRoot = screen.getByTestId('lesson-slide-stage-root');
+    const slideShellRoot = screen.getByTestId('lesson-slide-shell-root');
     const slideShell = screen.getByTestId('lesson-slide-shell');
     const slideBody = slideShell.querySelector('[data-kangur-print-slide-body="true"]');
     expect(printButton).toHaveAttribute('aria-label', 'Drukuj panel');
@@ -246,7 +246,7 @@ describe('LessonSlideSection', () => {
     expect(slideShell).toHaveAttribute('data-kangur-print-slide-panel', 'true');
     expect(slideShell).toHaveAttribute('data-kangur-print-panel-id');
     expect(slideShell).toHaveAttribute('data-kangur-print-panel-title', 'Slajd 1');
-    expect(slideStageRoot).toHaveAttribute('data-kangur-print-slide-stage', 'true');
+    expect(slideShellRoot).toHaveAttribute('data-kangur-print-slide-shell', 'true');
     expect(slideBody).not.toBeNull();
 
     fireEvent.click(printButton);

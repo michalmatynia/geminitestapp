@@ -46,7 +46,7 @@ describe('LogicalAnalogiesLesson i18n', () => {
     const games =
       (capturedProps?.games as Array<{
         sectionId: string;
-        stage: Record<string, unknown>;
+        shell: Record<string, unknown>;
         launchableInstance?: { gameId?: string; instanceId?: string };
       }>) ?? [];
 
@@ -58,7 +58,7 @@ describe('LogicalAnalogiesLesson i18n', () => {
       title: 'Teil-Ganzes und Ursache-Wirkung',
       description: 'Zwei wichtige Typen relationaler Analogien',
     });
-    expect(games.find((game) => game.sectionId === 'game_relacje')?.stage).toMatchObject({
+    expect(games.find((game) => game.sectionId === 'game_relacje')?.shell).toMatchObject({
       title: 'Beziehungsbruecke',
     });
     expect(

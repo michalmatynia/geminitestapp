@@ -7,8 +7,6 @@ import { Analytics } from '@vercel/analytics/next';
 
 import type { ReactNode } from 'react';
 
-import './kangur.css';
-
 // Inline script that adds the kangur-surface-active class to <html> and <body>
 // before React hydrates. This eliminates the MutationObserver fallback
 // wait in KangurAppLoader when navigating directly to /kangur routes.

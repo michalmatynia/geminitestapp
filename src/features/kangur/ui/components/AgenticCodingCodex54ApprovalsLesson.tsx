@@ -25,7 +25,7 @@ export default function AgenticCodingCodex54ApprovalsLesson(): JSX.Element {
       games={[
         {
           sectionId: 'approval_gate_game',
-          stage: {
+          shell: {
             accent: 'sky',
             icon: '🛡️',
             title: 'Approval Gate',

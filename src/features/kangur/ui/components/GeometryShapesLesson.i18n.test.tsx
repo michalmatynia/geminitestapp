@@ -47,7 +47,7 @@ describe('GeometryShapesLesson i18n', () => {
     const games =
       (capturedProps?.games as Array<{
         sectionId: string;
-        stage: Record<string, unknown>;
+        shell: Record<string, unknown>;
         launchableInstance?: { gameId?: string; instanceId?: string };
         render?: unknown;
         onShellEnter?: unknown;
@@ -64,7 +64,7 @@ describe('GeometryShapesLesson i18n', () => {
     });
     const game = games.find((candidate) => candidate.sectionId === 'game');
 
-    expect(game?.stage).toMatchObject({
+    expect(game?.shell).toMatchObject({
       title: 'Formen zeichnen',
     });
     expect(game?.launchableInstance).toMatchObject({

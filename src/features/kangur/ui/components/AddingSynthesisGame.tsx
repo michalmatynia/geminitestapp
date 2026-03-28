@@ -661,7 +661,7 @@ export default function AddingSynthesisGame({
         >
           <KangurGlassPanel
             className='relative overflow-hidden rounded-[26px] !p-2.5 min-[360px]:!p-3 sm:rounded-[30px] sm:!p-4 min-w-0'
-            data-testid='adding-synthesis-stage-shell'
+            data-testid='adding-synthesis-shell'
             surface='playField'
             variant='soft'
           >

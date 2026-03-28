@@ -47,7 +47,7 @@ describe('GeometrySymmetryLesson i18n', () => {
     const games =
       (capturedProps?.games as Array<{
         sectionId: string;
-        stage: Record<string, unknown>;
+        shell: Record<string, unknown>;
         runtime?: { runtimeId?: string; rendererId?: string };
         launchableInstance?: { gameId?: string; instanceId?: string };
       }>) ?? [];
@@ -61,7 +61,7 @@ describe('GeometrySymmetryLesson i18n', () => {
       description: 'Zeichne die Achse und ergänze die Spiegelung',
       isGame: true,
     });
-    expect(games.find((game) => game.sectionId === 'game')?.stage).toMatchObject({
+    expect(games.find((game) => game.sectionId === 'game')?.shell).toMatchObject({
       title: 'Symmetrie-Spiegel',
     });
     expect(games.find((game) => game.sectionId === 'game')?.launchableInstance).toMatchObject({

@@ -68,13 +68,13 @@ describe('AgenticCodingCodex54 lesson game configs', () => {
       const games =
         (capturedProps?.games as Array<{
           sectionId: string;
-          stage: Record<string, unknown>;
+          shell: Record<string, unknown>;
           launchableInstance?: { gameId?: string; instanceId?: string };
           render?: unknown;
         }>) ?? [];
       const game = games.find((candidate) => candidate.sectionId === sectionId);
 
-      expect(game?.stage).toMatchObject({
+      expect(game?.shell).toMatchObject({
         shellTestId,
       });
       expect(game?.launchableInstance).toMatchObject({

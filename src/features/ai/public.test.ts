@@ -3,31 +3,43 @@ import { describe, expect, it } from 'vitest';
 import * as aiPublic from './public';
 
 describe('ai public barrel', () => {
-  it('exposes the admin ai-paths pages used by app routes', () => {
-    expect(aiPublic.AdminAiPathsPage).toBeDefined();
-    expect(aiPublic.AdminAiPathsQueuePage).toBeDefined();
-    expect(aiPublic.AdminAiPathsValidationPage).toBeDefined();
-    expect(aiPublic.AdminAiPathsTriggerButtonsPage).toBeDefined();
-    expect(aiPublic.AdminAiPathsDeadLetterPage).toBeDefined();
+  it('keeps admin route pages and layouts out of the shared ai barrel', () => {
+    expect(aiPublic).not.toHaveProperty('AdminAiPathsPage');
+    expect(aiPublic).not.toHaveProperty('AdminAiPathsQueuePage');
+    expect(aiPublic).not.toHaveProperty('AdminAiPathsValidationPage');
+    expect(aiPublic).not.toHaveProperty('AdminAiPathsTriggerButtonsPage');
+    expect(aiPublic).not.toHaveProperty('AdminAiPathsDeadLetterPage');
+    expect(aiPublic).not.toHaveProperty('AdminImageStudioPage');
+    expect(aiPublic).not.toHaveProperty('AdminImageStudioUiPresetsPage');
+    expect(aiPublic).not.toHaveProperty('AdminChatbotPage');
+    expect(aiPublic).not.toHaveProperty('AdminChatbotSessionsPage');
+    expect(aiPublic).not.toHaveProperty('AdminChatbotMemoryPage');
+    expect(aiPublic).not.toHaveProperty('AdminChatbotContextPage');
+    expect(aiPublic).not.toHaveProperty('AgentRunsPage');
+    expect(aiPublic).not.toHaveProperty('AgentRunProvider');
+    expect(aiPublic).not.toHaveProperty('AgentPersonasPage');
+    expect(aiPublic).not.toHaveProperty('AgentPersonaMemoryPage');
+    expect(aiPublic).not.toHaveProperty('AgentTeachingAgentsPage');
+    expect(aiPublic).not.toHaveProperty('AgentTeachingChatPage');
+    expect(aiPublic).not.toHaveProperty('AgentTeachingCollectionsPage');
+    expect(aiPublic).not.toHaveProperty('AgentTeachingCollectionDetailPage');
+    expect(aiPublic).not.toHaveProperty('AgentTeachingProvider');
+    expect(aiPublic).not.toHaveProperty('AdminAiContextRegistryPage');
+    expect(aiPublic).not.toHaveProperty('AdminAiInsightsPage');
   });
 
-  it('exposes the admin image studio pages used by app routes', () => {
-    expect(aiPublic.AdminImageStudioPage).toBeDefined();
-    expect(aiPublic.AdminImageStudioUiPresetsPage).toBeDefined();
-  });
-
-  it('keeps the existing chatbot and agent pages available through the shared barrel', () => {
-    expect(aiPublic.AdminChatbotPage).toBeDefined();
-    expect(aiPublic.AdminChatbotSessionsPage).toBeDefined();
-    expect(aiPublic.AdminChatbotMemoryPage).toBeDefined();
-    expect(aiPublic.AdminChatbotContextPage).toBeDefined();
-    expect(aiPublic.AgentRunsPage).toBeDefined();
-    expect(aiPublic.AgentPersonasPage).toBeDefined();
-    expect(aiPublic.AgentPersonaMemoryPage).toBeDefined();
-    expect(aiPublic.AgentTeachingAgentsPage).toBeDefined();
-    expect(aiPublic.AgentTeachingChatPage).toBeDefined();
-    expect(aiPublic.AgentTeachingCollectionsPage).toBeDefined();
-    expect(aiPublic.AgentTeachingCollectionDetailPage).toBeDefined();
-    expect(aiPublic.AgentTeachingProvider).toBeDefined();
+  it('continues exposing shared ai runtime hooks and helpers', () => {
+    expect(aiPublic.useChatbotSessions).toBeDefined();
+    expect(aiPublic.useCreateChatbotSession).toBeDefined();
+    expect(aiPublic.CanvasBoard).toBeDefined();
+    expect(aiPublic.AiPathsProvider).toBeDefined();
+    expect(aiPublic.useGraphState).toBeDefined();
+    expect(aiPublic.useCanvasState).toBeDefined();
+    expect(aiPublic.useStudioProjects).toBeDefined();
+    expect(aiPublic.getImageStudioSlotImageSrc).toBeDefined();
+    expect(aiPublic.SplitVariantPreview).toBeDefined();
+    expect(aiPublic.CenterPreviewProvider).toBeDefined();
+    expect(aiPublic.useCenterPreviewContext).toBeDefined();
+    expect(aiPublic.AgentPersonaMoodAvatar).toBeDefined();
   });
 });

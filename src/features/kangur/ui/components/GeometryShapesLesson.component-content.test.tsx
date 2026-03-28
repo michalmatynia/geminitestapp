@@ -153,7 +153,7 @@ describe('GeometryShapesLesson', () => {
       lessonTitle: string;
       sections: Array<{ id: string; title: string; description: string }>;
       slides: Record<string, Array<{ title: string }>>;
-      games: Array<{ stage: { title: string } }>;
+      games: Array<{ shell: { title: string } }>;
     };
 
     expect(props.lessonTitle).toBe('Geometry shapes from Mongo');
@@ -183,6 +183,6 @@ describe('GeometryShapesLesson', () => {
         expect.objectContaining({ title: 'Database sides slide' }),
       ]),
     );
-    expect(props.games[0]?.stage.title).toBe('Database game title');
+    expect(props.games[0]?.shell.title).toBe('Database game title');
   });
 });

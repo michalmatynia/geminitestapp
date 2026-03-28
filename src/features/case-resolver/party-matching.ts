@@ -1,4 +1,4 @@
-import type { FilemakerAddress, FilemakerDatabase } from '@/features/filemaker/types';
+import type { FilemakerAddress, FilemakerDatabase } from '@/features/filemaker/public';
 import type { FilemakerAddressFields } from '@/shared/contracts/filemaker';
 import type { CountryOption } from '@/shared/contracts/internationalization';
 import type { PromptExploderCaseResolverPartyCandidate } from '@/shared/contracts/prompt-exploder';

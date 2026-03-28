@@ -44,7 +44,7 @@ import type {
   KangurRewardBreakdownEntry,
 } from '@/features/kangur/ui/types';
 import { cn } from '@/features/kangur/shared/utils';
-import type { KangurCalendarInteractiveStageSection } from '@/shared/contracts/kangur-game-runtime-renderer-props';
+import type { KangurCalendarInteractiveSection } from '@/shared/contracts/kangur-game-runtime-renderer-props';
 
 type CalendarQuestion = {
   question: string;
@@ -53,7 +53,7 @@ type CalendarQuestion = {
 };
 
 type CalendarTrainingGameProps = KangurMiniGameFinishActionProps & {
-  section?: KangurCalendarInteractiveStageSection;
+  section?: KangurCalendarInteractiveSection;
 };
 
 const MONTHS = [
@@ -140,7 +140,7 @@ function createTimeUnitCountQuestion(kind: 'week' | 'year'): CalendarQuestion {
 }
 
 function generateQuestion(
-  section?: KangurCalendarInteractiveStageSection
+  section?: KangurCalendarInteractiveSection
 ): CalendarQuestion {
   if (section === 'dni') {
     return Math.random() > 0.5

@@ -467,7 +467,7 @@ export default function EnglishSentenceStructureGame({
   }
 
   return (
-    <KangurPracticeGameShell className='max-w-sm' data-testid='english-structure-game-stage'>
+    <KangurPracticeGameShell className='max-w-sm' data-testid='english-structure-game-shell'>
       <KangurPracticeGameProgress
         accent={round.accent}
         currentRound={roundIndex}

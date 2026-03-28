@@ -1,6 +1,6 @@
 ---
 owner: 'Platform Team'
-last_reviewed: '2026-03-27'
+last_reviewed: '2026-03-28'
 status: 'generated'
 doc_type: 'generated'
 scope: 'generated'
@@ -8,7 +8,7 @@ canonical: true
 ---
 # Route Hotspots (Static Heuristic)
 
-Generated at: 2026-03-27T13:43:52.963Z
+Generated at: 2026-03-28T04:18:19.569Z
 
 This report ranks route/page complexity using LOC as a fast heuristic baseline.
 
@@ -50,17 +50,17 @@ This report ranks route/page complexity using LOC as a fast heuristic baseline.
 | `src/app/(admin)/admin/agentcreator/page.tsx` | 45 |
 | `src/app/(frontend)/kangur/login/page.tsx` | 41 |
 | `src/app/(frontend)/preview/[id]/page.tsx` | 40 |
+| `src/app/[locale]/(frontend)/filemaker/preferences/page.tsx` | 30 |
+| `src/app/[locale]/(frontend)/filemaker/unsubscribe/page.tsx` | 30 |
 | `src/app/(admin)/admin/products/settings/page.tsx` | 29 |
 | `src/app/[locale]/(frontend)/login/page.tsx` | 29 |
+| `src/app/(frontend)/filemaker/preferences/page.tsx` | 27 |
+| `src/app/(frontend)/filemaker/unsubscribe/page.tsx` | 27 |
 | `src/app/(frontend)/preview/foldertree-shell-runtime/page.tsx` | 21 |
 | `src/app/[locale]/(frontend)/products/[id]/page.tsx` | 20 |
 | `src/app/(admin)/admin/integrations/aggregators/base-com/synchronization-engine/page.tsx` | 17 |
-| `src/app/(frontend)/kangur/(app)/[[...slug]]/page.tsx` | 17 |
 | `src/app/(admin)/admin/kangur/[...slug]/page.tsx` | 16 |
 | `src/app/(frontend)/login/page.tsx` | 16 |
-| `src/app/(admin)/admin/ai-paths/queue/page.tsx` | 15 |
-| `src/app/(frontend)/products/[id]/page.tsx` | 15 |
-| `src/app/[locale]/(frontend)/kangur/(app)/[[...slug]]/page.tsx` | 15 |
 
 ## Recommended First Runtime Profiling Targets
 

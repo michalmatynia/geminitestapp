@@ -31,9 +31,41 @@ const isPlaywrightBrokerRuntime = Boolean(
 const explicitBuildCpus = Number.parseInt(process.env.NEXT_BUILD_CPUS ?? '', 10);
 const buildWorkerCpuLimit = Number.isFinite(explicitBuildCpus)
   ? Math.max(1, explicitBuildCpus)
-  : isVercel
-    ? 4
-    : 1;
+  : isTurbopack
+    ? 1
+    : isVercel
+      ? 4
+      : 1;
+const optimizePackageImports = [
+  'lucide-react',
+  '@radix-ui/react-alert-dialog',
+  '@radix-ui/react-avatar',
+  '@radix-ui/react-checkbox',
+  '@radix-ui/react-collapsible',
+  '@radix-ui/react-dialog',
+  '@radix-ui/react-dropdown-menu',
+  '@radix-ui/react-label',
+  '@radix-ui/react-menu',
+  '@radix-ui/react-radio-group',
+  '@radix-ui/react-select',
+  '@radix-ui/react-separator',
+  '@radix-ui/react-slot',
+  '@radix-ui/react-switch',
+  '@radix-ui/react-tabs',
+  '@radix-ui/react-toast',
+  'date-fns',
+  'lodash',
+  'react-syntax-highlighter',
+  'three',
+  '@react-three/drei',
+  '@react-three/fiber',
+  '@react-three/postprocessing',
+  'postprocessing',
+  'papaparse',
+  'gsap',
+  'zod',
+  'framer-motion',
+];
 const outputFileTracingExcludes = {
   // These directories hold local runtime artifacts and user data. When server code
   // references them via process.cwd(), @vercel/nft can conservatively trace the
@@ -109,41 +141,19 @@ const nextConfig = {
     // in constrained build environments. Keep production builds on a stable
     // cap and allow explicit overrides when we want to tune locally. The local
     // default stays at 1 because the current app size has been unstable at 2
-    // workers on macOS during webpack production builds.
+    // workers on macOS during webpack production builds. Turbopack stays at 1
+    // everywhere until the production compile path is consistently green.
     ...(isDev ? {} : { cpus: buildWorkerCpuLimit }),
     // Default proxy body clone limit (~10MB) is too low for multi-image product forms.
     // Raise it so multipart requests don't fail before route handlers read formData().
     proxyClientMaxBodySize: '50mb',
-    optimizePackageImports: [
-      'lucide-react',
-      '@radix-ui/react-alert-dialog',
-      '@radix-ui/react-avatar',
-      '@radix-ui/react-checkbox',
-      '@radix-ui/react-collapsible',
-      '@radix-ui/react-dialog',
-      '@radix-ui/react-dropdown-menu',
-      '@radix-ui/react-label',
-      '@radix-ui/react-menu',
-      '@radix-ui/react-radio-group',
-      '@radix-ui/react-select',
-      '@radix-ui/react-separator',
-      '@radix-ui/react-slot',
-      '@radix-ui/react-switch',
-      '@radix-ui/react-tabs',
-      '@radix-ui/react-toast',
-      'date-fns',
-      'lodash',
-      'react-syntax-highlighter',
-      'three',
-      '@react-three/drei',
-      '@react-three/fiber',
-      '@react-three/postprocessing',
-      'postprocessing',
-      'papaparse',
-      'gsap',
-      'zod',
-      'framer-motion',
-    ],
+    // Turbopack production builds keep their own persistent cache under distDir/cache.
+    // Enable it for the isolated Turbopack lane so repeated stabilization runs and
+    // cached CI/Vercel builds can reuse prior work instead of recompiling the full graph.
+    ...(isTurbopack ? { turbopackFileSystemCacheForBuild: true } : {}),
+    // Turbopack is more stable in this repo when it resolves packages normally
+    // instead of rewriting import graphs through optimizePackageImports.
+    ...(isTurbopack ? {} : { optimizePackageImports }),
   },
   serverExternalPackages: [
     'bcrypt',

@@ -167,7 +167,7 @@ describe('ArtShapesBasicLesson', () => {
       lessonTitle: string;
       sections: Array<{ id: string; title: string; description: string }>;
       slides: Record<string, Array<{ title: string }>>;
-      games: Array<{ stage: { title: string } }>;
+      games: Array<{ shell: { title: string } }>;
     };
 
     expect(props.lessonTitle).toBe('Shapes from Mongo');
@@ -188,6 +188,6 @@ describe('ArtShapesBasicLesson', () => {
     expect(props.slides.meetShapes).toEqual(
       expect.arrayContaining([expect.objectContaining({ title: 'Database slide title' })]),
     );
-    expect(props.games[0]?.stage.title).toBe('Database game title');
+    expect(props.games[0]?.shell.title).toBe('Database game title');
   });
 });

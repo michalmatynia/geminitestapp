@@ -1,6 +1,6 @@
 'use client';
 
-import { ShieldAlert } from 'lucide-react';
+import { ShieldAlert, Activity } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import React, { useDeferredValue, useMemo, useState } from 'react';
 
@@ -12,6 +12,7 @@ import {
   PanelHeader,
   SearchInput,
   SectionHeader,
+  StandardDataTablePanel,
 } from '@/shared/ui';
 
 import { buildFilemakerNavActions } from '../components/shared/filemaker-nav-actions';
@@ -31,8 +32,10 @@ import {
   parseFilemakerEmailCampaignRunRegistry,
   parseFilemakerEmailCampaignSuppressionRegistry,
   summarizeFilemakerEmailCampaignDeliverabilityOverview,
+  type FilemakerEmailCampaignDomainDeliverability,
 } from '../settings';
 import { formatTimestamp, includeQuery } from './filemaker-page-utils';
+import type { ColumnDef } from '@tanstack/react-table';
 
 export function AdminFilemakerCampaignControlCentrePage(): React.JSX.Element {
   const router = useRouter();
@@ -211,6 +214,75 @@ export function AdminFilemakerCampaignControlCentrePage(): React.JSX.Element {
     () =>
       overview.campaignHealth.filter((campaign) => campaign.alertLevel !== 'healthy').length,
     [overview.campaignHealth]
+  );
+
+  const domainColumns = useMemo<ColumnDef<FilemakerEmailCampaignDomainDeliverability>[]>(
+    () => [
+      {
+        accessorKey: 'domain',
+        header: 'Domain',
+        cell: ({ row }) => <span className='font-medium text-white'>{row.original.domain}</span>,
+      },
+      {
+        accessorKey: 'alertLevel',
+        header: 'Health',
+        cell: ({ row }) => (
+          <Badge variant='outline' className='text-[10px] uppercase'>
+            {row.original.alertLevel}
+          </Badge>
+        ),
+      },
+      {
+        accessorKey: 'totalDeliveries',
+        header: 'Deliveries',
+      },
+      {
+        id: 'accepted',
+        header: 'Accepted',
+        cell: ({ row }) => (
+          <span>
+            {row.original.sentCount} ({row.original.deliveryRatePercent}%)
+          </span>
+        ),
+      },
+      {
+        accessorKey: 'failureRatePercent',
+        header: 'Failure Rate',
+        cell: ({ row }) => <span>{row.original.failureRatePercent}%</span>,
+      },
+      {
+        accessorKey: 'bounceRatePercent',
+        header: 'Bounce Rate',
+        cell: ({ row }) => <span>{row.original.bounceRatePercent}%</span>,
+      },
+      {
+        id: 'pendingRetries',
+        header: 'Pending Retries',
+        cell: ({ row }) => {
+          const domain = row.original;
+          return (
+            <div className='space-y-0.5'>
+              <div>{domain.pendingRetryCount}</div>
+              {domain.overdueRetryCount > 0 && (
+                <div className='text-[10px] text-rose-400'>{domain.overdueRetryCount} overdue</div>
+              )}
+            </div>
+          );
+        },
+      },
+      {
+        accessorKey: 'suppressionCount',
+        header: 'Suppressed',
+      },
+      {
+        accessorKey: 'latestDeliveryAt',
+        header: 'Latest',
+        cell: ({ row }) => (
+          <span className='text-gray-500'>{formatTimestamp(row.original.latestDeliveryAt)}</span>
+        ),
+      },
+    ],
+    []
   );
 
   return (
@@ -601,70 +673,20 @@ export function AdminFilemakerCampaignControlCentrePage(): React.JSX.Element {
         )}
       </InsetPanel>
 
-      <InsetPanel padding='md' className='space-y-4'>
-        <SectionHeader
-          title='Domain Health'
-          description='This is the fastest way to spot recipient-domain problems when mail is coming back.'
-          size='sm'
-        />
-        {filteredDomainHealth.length === 0 ? (
-          <div className='rounded-xl border border-dashed border-border/40 p-4 text-sm text-gray-500'>
+      <StandardDataTablePanel
+        title='Domain Health'
+        description='This is the fastest way to spot recipient-domain problems when mail is coming back.'
+        headerActions={<Activity className='size-4 text-gray-500' />}
+        columns={domainColumns}
+        data={filteredDomainHealth}
+        isLoading={settingsStore.isLoading}
+        variant='flat'
+        emptyState={
+          <div className='p-8 text-center text-sm text-gray-500'>
             No recipient domains match the current filter.
           </div>
-        ) : (
-          <div className='overflow-x-auto'>
-            <table className='min-w-full text-left text-sm'>
-              <thead className='text-[11px] uppercase tracking-[0.2em] text-gray-500'>
-                <tr>
-                  <th className='px-3 py-2'>Domain</th>
-                  <th className='px-3 py-2'>Health</th>
-                  <th className='px-3 py-2'>Deliveries</th>
-                  <th className='px-3 py-2'>Accepted</th>
-                  <th className='px-3 py-2'>Failure Rate</th>
-                  <th className='px-3 py-2'>Bounce Rate</th>
-                  <th className='px-3 py-2'>Pending Retries</th>
-                  <th className='px-3 py-2'>Suppressed</th>
-                  <th className='px-3 py-2'>Latest</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filteredDomainHealth.map((domain) => (
-                  <tr key={domain.domain} className='border-t border-border/30'>
-                    <td className='px-3 py-3 font-medium text-white'>{domain.domain}</td>
-                    <td className='px-3 py-3'>
-                      <Badge variant='outline' className='text-[10px] uppercase'>
-                        {domain.alertLevel}
-                      </Badge>
-                    </td>
-                    <td className='px-3 py-3 text-gray-300'>{domain.totalDeliveries}</td>
-                    <td className='px-3 py-3 text-gray-300'>
-                      {domain.sentCount} ({domain.deliveryRatePercent}%)
-                    </td>
-                    <td className='px-3 py-3 text-gray-300'>{domain.failureRatePercent}%</td>
-                    <td className='px-3 py-3 text-gray-300'>{domain.bounceRatePercent}%</td>
-                    <td className='px-3 py-3 text-gray-300'>
-                      {domain.pendingRetryCount}
-                      {domain.overdueRetryCount > 0
-                        ? ` • ${domain.overdueRetryCount} overdue`
-                        : ''}
-                      {domain.oldestOverdueRetryAt
-                        ? ` • oldest overdue ${formatTimestamp(domain.oldestOverdueRetryAt)}`
-                        : ''}
-                      {domain.nextScheduledRetryAt
-                        ? ` • ${formatTimestamp(domain.nextScheduledRetryAt)}`
-                        : ''}
-                    </td>
-                    <td className='px-3 py-3 text-gray-300'>{domain.suppressionCount}</td>
-                    <td className='px-3 py-3 text-gray-500'>
-                      {formatTimestamp(domain.latestDeliveryAt)}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </InsetPanel>
+        }
+      />
 
       <InsetPanel padding='md' className='space-y-4'>
         <SectionHeader

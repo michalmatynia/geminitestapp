@@ -2,6 +2,7 @@ import { NextIntlClientProvider } from 'next-intl';
 import { getLocale, getTranslations } from 'next-intl/server';
 
 import { RootClientShell } from './_providers/RootClientShell';
+import { loadSiteMessages } from '@/i18n/messages';
 import { cn } from '@/shared/utils';
 import { DEFAULT_SITE_I18N_CONFIG } from '@/shared/contracts/site-i18n';
 import { stripSiteLocalePrefix } from '@/shared/lib/i18n/site-locale';
@@ -51,10 +52,11 @@ export default async function RootLayout({
 }>): Promise<React.JSX.Element> {
   const requestPathname = readServerRequestPathname();
   const shouldHydrateLiteSettings = !isExplicitKangurAliasRequest(requestPathname);
-  const [locale, commonTranslations, liteSettings] = await Promise.all([
-    getLocale(),
+  const locale = await getLocale();
+  const [commonTranslations, liteSettings, messages] = await Promise.all([
     getTranslations('Common'),
     shouldHydrateLiteSettings ? getLiteSettingsForHydration() : Promise.resolve([]),
+    loadSiteMessages(locale),
   ]);
   const sanitizedLiteSettingsScript =
     liteSettings.length > 0
@@ -71,7 +73,7 @@ export default async function RootLayout({
             }}
           />
         ) : null}
-        <NextIntlClientProvider locale={locale}>
+        <NextIntlClientProvider locale={locale} messages={messages}>
           <a href='#kangur-main-content' className='app-skip-link'>
             {commonTranslations('skipToMainContent')}
           </a>

@@ -47,7 +47,7 @@ describe('EnglishSubjectVerbAgreementLesson i18n', () => {
     const games =
       (capturedProps?.games as Array<{
         sectionId: string;
-        stage: Record<string, unknown>;
+        shell: Record<string, unknown>;
         launchableInstance?: { gameId?: string; instanceId?: string };
       }>) ?? [];
 
@@ -60,7 +60,7 @@ describe('EnglishSubjectVerbAgreementLesson i18n', () => {
       description: 'Klicke in jedem Satz die richtige Verbform an.',
       isGame: true,
     });
-    expect(games.find((game) => game.sectionId === 'game_agreement')?.stage).toMatchObject({
+    expect(games.find((game) => game.sectionId === 'game_agreement')?.shell).toMatchObject({
       title: 'Spiel: Subjekt-Verb-Ubereinstimmung',
       description: 'Klicke in jedem Satz die richtige Verbform an.',
     });

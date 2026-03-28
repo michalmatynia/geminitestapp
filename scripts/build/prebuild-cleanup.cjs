@@ -15,6 +15,11 @@
  *   survive branch switches and surface phantom module resolution failures.
  * - .next/trace — stale trace output can make debugging the current build
  *   misleading.
+ * - .next-turbo/* except cache — isolated Turbopack build output used by
+ *   smoke/stability checks. Keep distDir/cache so repeated Turbopack runs and
+ *   cached CI builds can reuse persistent build artifacts, but clear the rest
+ *   of the dist output to avoid inheriting stale manifests or partial compile state.
+ *   Set NEXT_PRESERVE_TURBO_CACHE=0 when a fully cold Turbopack rebuild is needed.
  */
 
 'use strict';
@@ -23,6 +28,10 @@ const fs = require('fs');
 const path = require('path');
 
 const ROOT = path.resolve(__dirname, '..', '..');
+const preserveTurboCache =
+  typeof process.env.NEXT_PRESERVE_TURBO_CACHE === 'string'
+    ? !['0', 'false'].includes(process.env.NEXT_PRESERVE_TURBO_CACHE.trim().toLowerCase())
+    : true;
 
 const STALE_PATHS = [
   path.join(ROOT, '.next', 'lock'),
@@ -34,7 +43,31 @@ const STALE_PATHS = [
   path.join(ROOT, '.next', 'trace'),
 ];
 
+const TURBOPACK_DIST_DIR = path.join(ROOT, '.next-turbo');
+const TURBOPACK_CACHE_DIR = path.join(TURBOPACK_DIST_DIR, 'cache');
+
 let removed = 0;
+
+const cleanDistDirPreservingCache = (distDir, cacheDir) => {
+  if (!fs.existsSync(distDir)) {
+    return;
+  }
+
+  const entries = fs.readdirSync(distDir, { withFileTypes: true });
+  for (const entry of entries) {
+    const target = path.join(distDir, entry.name);
+    if (target === cacheDir) {
+      continue;
+    }
+
+    try {
+      fs.rmSync(target, { recursive: true, force: true });
+      removed++;
+    } catch (err) {
+      process.stderr.write(`prebuild-cleanup: warning: could not remove ${target}: ${err.message}\n`);
+    }
+  }
+};
 
 for (const target of STALE_PATHS) {
   if (!fs.existsSync(target)) {
@@ -47,6 +80,19 @@ for (const target of STALE_PATHS) {
   } catch (err) {
     // Non-fatal: if removal fails for any reason, log and continue.
     process.stderr.write(`prebuild-cleanup: warning: could not remove ${target}: ${err.message}\n`);
+  }
+}
+
+cleanDistDirPreservingCache(TURBOPACK_DIST_DIR, TURBOPACK_CACHE_DIR);
+
+if (!preserveTurboCache && fs.existsSync(TURBOPACK_DIST_DIR)) {
+  try {
+    fs.rmSync(TURBOPACK_DIST_DIR, { recursive: true, force: true });
+    removed++;
+  } catch (err) {
+    process.stderr.write(
+      `prebuild-cleanup: warning: could not remove ${TURBOPACK_DIST_DIR}: ${err.message}\n`
+    );
   }
 }
 

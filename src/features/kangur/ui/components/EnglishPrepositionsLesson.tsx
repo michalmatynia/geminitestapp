@@ -477,7 +477,7 @@ export default function EnglishPrepositionsLesson(): React.JSX.Element {
       games={[
         {
           sectionId: 'game_prepositions',
-          stage: {
+          shell: {
             accent: 'rose',
             title: sectionTitles.game_prepositions,
             icon: '🎯',
@@ -491,7 +491,7 @@ export default function EnglishPrepositionsLesson(): React.JSX.Element {
         },
         {
           sectionId: 'game_prepositions_sort',
-          stage: {
+          shell: {
             accent: 'rose',
             title: sectionTitles.game_prepositions_sort,
             icon: '🧲',
@@ -506,7 +506,7 @@ export default function EnglishPrepositionsLesson(): React.JSX.Element {
         },
         {
           sectionId: 'game_prepositions_order',
-          stage: {
+          shell: {
             accent: 'rose',
             title: sectionTitles.game_prepositions_order,
             icon: '🧩',

@@ -77,7 +77,8 @@ const removeDistDir = () => {
   }
 };
 
-const shouldRetryWithWebpack = (result) =>
+const shouldRetryWithWebpack = (result, bundlerOverride = forcedBundler) =>
+  bundlerOverride !== 'turbopack' &&
   result.bundler !== 'webpack' &&
   result.code !== 0 &&
   !result.signal &&
@@ -90,14 +91,14 @@ const shouldRetryWebpackServerManifestRace = (result) =>
   !result.signal &&
   webpackServerManifestRacePattern.test(result.output);
 
+const getPreferredBundler = (bundler) =>
+  bundler === 'webpack' || bundler === 'turbopack' ? bundler : 'turbopack';
+
 const main = async () => {
-  // Keep production builds deterministic. Turbopack still serves as an explicit
-  // opt-in via NEXT_BUILD_BUNDLER=turbopack, but defaulting Vercel to Turbopack
-  // makes deployments depend on a retry path after known transient failures.
-  const preferredBundler =
-    forcedBundler === 'webpack' || forcedBundler === 'turbopack'
-      ? forcedBundler
-      : 'webpack';
+  // Turbopack is the default production path again. Explicit bundler selection
+  // still overrides this, and an explicit Turbopack request remains strict:
+  // do not mask those failures by falling back to webpack.
+  const preferredBundler = getPreferredBundler(forcedBundler);
 
   let result = await runBuild(preferredBundler);
 
@@ -142,7 +143,16 @@ const main = async () => {
   process.exit(result.code);
 };
 
-main().catch((error) => {
-  console.error(error);
-  process.exit(1);
-});
+if (require.main === module) {
+  main().catch((error) => {
+    console.error(error);
+    process.exit(1);
+  });
+}
+
+module.exports = {
+  getPreferredBundler,
+  resolveBundlerArgs,
+  shouldRetryWithWebpack,
+  shouldRetryWebpackServerManifestRace,
+};

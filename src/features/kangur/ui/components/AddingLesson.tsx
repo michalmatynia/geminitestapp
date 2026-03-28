@@ -760,7 +760,7 @@ export default function AddingLesson({ lessonTemplate }: LessonProps): React.JSX
       games={[
         {
           sectionId: 'game',
-          stage: {
+          shell: {
             accent: 'amber',
             icon: '🎮',
             maxWidthClassName: 'max-w-2xl',
@@ -775,7 +775,7 @@ export default function AddingLesson({ lessonTemplate }: LessonProps): React.JSX
         },
         {
           sectionId: 'synthesis',
-          stage: {
+          shell: {
             accent: 'amber',
             icon: '🎼',
             maxWidthClassName: 'max-w-[1120px]',

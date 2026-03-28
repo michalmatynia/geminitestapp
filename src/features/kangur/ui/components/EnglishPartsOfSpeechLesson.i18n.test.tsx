@@ -46,7 +46,7 @@ describe('EnglishPartsOfSpeechLesson i18n', () => {
     const games =
       (capturedProps?.games as Array<{
         sectionId: string;
-        stage: Record<string, unknown>;
+        shell: Record<string, unknown>;
         launchableInstance?: { gameId?: string; instanceId?: string };
       }>) ?? [];
 
@@ -64,7 +64,7 @@ describe('EnglishPartsOfSpeechLesson i18n', () => {
       isGame: true,
     });
     expect(
-      games.find((game) => game.sectionId === 'game_pronouns_warmup')?.stage
+      games.find((game) => game.sectionId === 'game_pronouns_warmup')?.shell
     ).toMatchObject({
       title: 'Pronomen Warm-up',
       description: 'Schnelles Warm-up mit Pronomen in Mathe-Sätzen',
@@ -76,7 +76,7 @@ describe('EnglishPartsOfSpeechLesson i18n', () => {
       instanceId: getKangurBuiltInGameInstanceId('english_pronouns_warmup'),
     });
     expect(
-      games.find((game) => game.sectionId === 'game_parts_of_speech')?.stage
+      games.find((game) => game.sectionId === 'game_parts_of_speech')?.shell
     ).toMatchObject({
       title: 'Wortarten-Spiel',
       description: 'Ziehe die Wörter in die richtigen Kategorien',

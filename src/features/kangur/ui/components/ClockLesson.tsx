@@ -445,7 +445,7 @@ export default function ClockLesson(): React.JSX.Element {
 
     return {
       sectionId: config.hubId,
-      stage: {
+      shell: {
         accent: 'indigo',
         description: config.description,
         headerTestId: 'clock-lesson-training-header',
@@ -476,7 +476,7 @@ export default function ClockLesson(): React.JSX.Element {
 
   const games = trainingConfigs.map(buildTrainingConfig) as Array<{
     sectionId: TrainingCardId;
-    stage: {
+    shell: {
       accent: 'indigo';
       description: string;
       headerTestId: string;

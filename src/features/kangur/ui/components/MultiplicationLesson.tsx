@@ -350,7 +350,7 @@ export default function MultiplicationLesson({ lessonTemplate }: LessonProps): R
       games={[
         {
           sectionId: 'game_array',
-          stage: {
+          shell: {
             accent: 'violet',
             bodyPrelude: gamePrelude,
             icon: '✨',

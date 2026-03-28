@@ -439,7 +439,7 @@ export default function EnglishAdverbsFrequencyLesson(): React.JSX.Element {
       games={[
         {
           sectionId: 'game_frequency_studio',
-          stage: {
+          shell: {
             accent: 'sky',
             title: sectionTitles.game_frequency_studio,
             icon: '🗓️',

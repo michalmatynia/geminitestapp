@@ -384,7 +384,7 @@ export default function EnglishAdjectivesLesson(): React.JSX.Element {
       games={[
         {
           sectionId: 'game_adjective_studio',
-          stage: {
+          shell: {
             accent: 'indigo',
             title: sectionTitles.game_adjective_studio,
             icon: '🎨',

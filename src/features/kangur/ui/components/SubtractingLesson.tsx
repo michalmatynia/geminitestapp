@@ -1680,7 +1680,7 @@ export default function SubtractingLesson({ lessonTemplate }: LessonProps): Reac
       games={[
         {
           sectionId: 'game',
-          stage: {
+          shell: {
             accent: 'rose',
             icon: '🎮',
             maxWidthClassName: 'max-w-none',

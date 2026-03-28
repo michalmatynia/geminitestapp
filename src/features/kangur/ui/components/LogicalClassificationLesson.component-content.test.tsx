@@ -280,7 +280,7 @@ describe('LogicalClassificationLesson', () => {
       lessonTitle: string;
       sections: Array<{ id: string; title: string; description: string }>;
       slides: Record<string, Array<{ title: string }>>;
-      games: Array<{ stage: { title: string } }>;
+      games: Array<{ shell: { title: string } }>;
     };
 
     expect(props.lessonTitle).toBe('Logical classification from Mongo');
@@ -310,6 +310,6 @@ describe('LogicalClassificationLesson', () => {
         expect.objectContaining({ title: 'Database venn' }),
       ]),
     );
-    expect(props.games[0]?.stage.title).toBe('Database game title');
+    expect(props.games[0]?.shell.title).toBe('Database game title');
   });
 });

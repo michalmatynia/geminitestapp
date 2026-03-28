@@ -288,7 +288,7 @@ export default function EnglishSentenceStructureLesson(): React.JSX.Element {
       games={[
         {
           sectionId: 'game',
-          stage: {
+          shell: {
             accent: 'violet',
             title: shellTranslations('sections.game.title'),
             description: shellTranslations('sections.game.description'),

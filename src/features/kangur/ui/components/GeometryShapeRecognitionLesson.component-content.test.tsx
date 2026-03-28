@@ -128,7 +128,7 @@ describe('GeometryShapeRecognitionLesson', () => {
       slides: Record<string, Array<{ title: string }>>;
       games: Array<{
         sectionId: string;
-        stage: { title: string; description?: string };
+        shell: { title: string; description?: string };
       }>;
     };
 
@@ -153,10 +153,10 @@ describe('GeometryShapeRecognitionLesson', () => {
         expect.objectContaining({ title: 'Database clues' }),
       ]),
     );
-    expect(props.games.find((game) => game.sectionId === 'practice')?.stage.title).toBe(
+    expect(props.games.find((game) => game.sectionId === 'practice')?.shell.title).toBe(
       'Database practice title',
     );
-    expect(props.games.find((game) => game.sectionId === 'draw')?.stage.title).toBe(
+    expect(props.games.find((game) => game.sectionId === 'draw')?.shell.title).toBe(
       'Database draw game',
     );
   });

@@ -55,7 +55,7 @@ export default function AlphabetSequenceLesson({ lessonTemplate }: LessonProps):
       games={[
         {
           sectionId: 'game_order',
-          stage: {
+          shell: {
             accent: 'amber',
             icon: '🎮',
             shellTestId: 'alphabet-sequence-game-shell',

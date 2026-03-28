@@ -47,7 +47,7 @@ describe('EnglishPrepositionsLesson i18n', () => {
     const games =
       (capturedProps?.games as Array<{
         sectionId: string;
-        stage: Record<string, unknown>;
+        shell: Record<string, unknown>;
         launchableInstance?: { gameId?: string; instanceId?: string };
       }>) ?? [];
 
@@ -64,7 +64,7 @@ describe('EnglishPrepositionsLesson i18n', () => {
       description: 'Ziehe die Wendungen zu den richtigen Beziehungen',
       isGame: true,
     });
-    expect(games.find((game) => game.sectionId === 'game_prepositions')?.stage).toMatchObject({
+    expect(games.find((game) => game.sectionId === 'game_prepositions')?.shell).toMatchObject({
       title: 'Präpositionen-Sprint',
       description: 'Kurzes Auswahlspiel',
     });
@@ -75,7 +75,7 @@ describe('EnglishPrepositionsLesson i18n', () => {
       instanceId: 'english_prepositions_time_place:instance:default',
     });
     expect(
-      games.find((game) => game.sectionId === 'game_prepositions_order')?.stage
+      games.find((game) => game.sectionId === 'game_prepositions_order')?.shell
     ).toMatchObject({
       title: 'Wortstellung Warm-up',
       description: 'Ordne Sätze mit Präpositionen',

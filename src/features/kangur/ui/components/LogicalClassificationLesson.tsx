@@ -634,7 +634,7 @@ export default function LogicalClassificationLesson({
       games={[
         {
           sectionId: 'game',
-          stage: {
+          shell: {
             accent: 'teal',
             icon: '🎯',
             maxWidthClassName: 'max-w-3xl',

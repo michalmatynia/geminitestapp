@@ -13,7 +13,7 @@ const { useAssets3DMock, useAsset3DCategoriesMock, useAsset3DTagsMock } = vi.hoi
   useAsset3DTagsMock: vi.fn(),
 }));
 
-vi.mock('@/features/viewer3d/public', () => ({
+vi.mock('@/features/viewer3d/client/public', () => ({
   Viewer3D: () => <div data-testid='viewer-3d' />,
   Asset3DPreviewModal: () => null,
   useAssets3D: (...args: unknown[]) => useAssets3DMock(...args),

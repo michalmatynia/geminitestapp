@@ -640,7 +640,7 @@ export default function EnglishSubjectVerbAgreementLesson(): React.JSX.Element {
       games={[
         {
           sectionId: 'game_agreement',
-          stage: {
+          shell: {
             accent: 'teal',
             title: sectionTitles.game_agreement,
             icon: '🎮',

@@ -318,6 +318,42 @@
         "label": "Mathematical Kangaroo session",
         "description": "Solve Mathematical Kangaroo tasks step by step."
       },
+      "agentic_approval_gate_quiz": {
+        "label": "Approval gate quiz",
+        "description": "Decide which actions need approval before they can run."
+      },
+      "agentic_prompt_trim_quiz": {
+        "label": "Prompt trim quiz",
+        "description": "Practise trimming prompts down to the smallest useful version."
+      },
+      "agentic_reasoning_router_quiz": {
+        "label": "Reasoning router quiz",
+        "description": "Choose the right reasoning mode for each task."
+      },
+      "agentic_surface_match_quiz": {
+        "label": "Surface match quiz",
+        "description": "Match each task to the right interface or work surface."
+      },
+      "alphabet_first_words_quiz": {
+        "label": "First words quiz",
+        "description": "Match letters and pictures to build your first words."
+      },
+      "alphabet_letter_matching_quiz": {
+        "label": "Letter matching quiz",
+        "description": "Match letters in quick alphabet rounds."
+      },
+      "alphabet_letter_order_quiz": {
+        "label": "Letter order quiz",
+        "description": "Put letters back in the correct order."
+      },
+      "art_color_harmony_quiz": {
+        "label": "Color harmony quiz",
+        "description": "Practise matching colours into warm and cool harmonies."
+      },
+      "art_shape_rotation_quiz": {
+        "label": "Shape rotation quiz",
+        "description": "Spot how shapes look after they rotate."
+      },
       "calendar_quiz": {
         "label": "Calendar practice",
         "description": "Practise reading dates and calendar relationships."
@@ -325,6 +361,10 @@
       "geometry_quiz": {
         "label": "Shapes practice",
         "description": "Practise shapes and spatial relationships."
+      },
+      "geometry_shape_spotter_quiz": {
+        "label": "Shape spotter quiz",
+        "description": "Recognise and name shapes in quick rounds."
       },
       "clock_quiz": {
         "label": "Clock practice",
@@ -341,6 +381,10 @@
       "addition_quiz": {
         "label": "Addition quiz",
         "description": "A quick addition quiz."
+      },
+      "adding_synthesis_quiz": {
+        "label": "Adding synthesis quiz",
+        "description": "Build addition fluency in short rhythm rounds."
       },
       "subtraction_quiz": {
         "label": "Subtraction quiz",
@@ -365,6 +409,38 @@
       "logical_analogies_quiz": {
         "label": "Analogies quiz",
         "description": "Practise analogies and relationships in quick rounds."
+      },
+      "english_subject_verb_agreement_quiz": {
+        "label": "Subject-verb agreement quiz",
+        "description": "Match subjects and verbs so the sentence sounds correct."
+      },
+      "english_adjectives_quiz": {
+        "label": "Adjectives quiz",
+        "description": "Choose adjectives that describe people, places, and things."
+      },
+      "english_adverbs_frequency_quiz": {
+        "label": "Adverbs of frequency quiz",
+        "description": "Practise routine sentences with always, often, and never."
+      },
+      "english_articles_quiz": {
+        "label": "Articles quiz",
+        "description": "Choose a, an, or the in short grammar rounds."
+      },
+      "english_prepositions_quiz": {
+        "label": "Prepositions quiz",
+        "description": "Practise time and place prepositions in English."
+      },
+      "english_prepositions_sort_quiz": {
+        "label": "Prepositions sort quiz",
+        "description": "Sort prepositions into the right grammar groups."
+      },
+      "english_prepositions_order_quiz": {
+        "label": "Prepositions order quiz",
+        "description": "Rebuild short phrases with prepositions in the correct order."
+      },
+      "english_pronouns_warmup_quiz": {
+        "label": "Pronouns warm-up quiz",
+        "description": "Warm up with quick English pronoun rounds."
       },
       "english_sentence_quiz": {
         "label": "Sentence structure quiz",

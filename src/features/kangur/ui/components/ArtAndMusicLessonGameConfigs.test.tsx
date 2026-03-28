@@ -46,7 +46,7 @@ describe('art and music lesson game configs', () => {
       sectionId: MUSIC_DIATONIC_SCALE_GAME_SECTION_CONFIGS.repeat.sectionId,
       launchableGameId: MUSIC_DIATONIC_SCALE_GAME_SECTION_CONFIGS.repeat.launchableInstance.gameId,
       expectedInstanceId: MUSIC_DIATONIC_SCALE_GAME_SECTION_CONFIGS.repeat.launchableInstance.instanceId,
-      shellTestId: MUSIC_DIATONIC_SCALE_GAME_SECTION_CONFIGS.repeat.stage.shellTestId,
+      shellTestId: MUSIC_DIATONIC_SCALE_GAME_SECTION_CONFIGS.repeat.shell.shellTestId,
     },
     {
       lessonTitle: 'Skala diatoniczna',
@@ -54,7 +54,7 @@ describe('art and music lesson game configs', () => {
       sectionId: MUSIC_DIATONIC_SCALE_GAME_SECTION_CONFIGS.freePlay.sectionId,
       launchableGameId: MUSIC_DIATONIC_SCALE_GAME_SECTION_CONFIGS.freePlay.launchableInstance.gameId,
       expectedInstanceId: MUSIC_DIATONIC_SCALE_GAME_SECTION_CONFIGS.freePlay.launchableInstance.instanceId,
-      shellTestId: MUSIC_DIATONIC_SCALE_GAME_SECTION_CONFIGS.freePlay.stage.shellTestId,
+      shellTestId: MUSIC_DIATONIC_SCALE_GAME_SECTION_CONFIGS.freePlay.shell.shellTestId,
     },
     {
       lessonTitle: 'Podstawowe kształty',
@@ -77,14 +77,14 @@ describe('art and music lesson game configs', () => {
       const games =
         (capturedProps?.games as Array<{
           sectionId: string;
-          stage: Record<string, unknown>;
+          shell: Record<string, unknown>;
           runtime?: { runtimeId?: string; rendererId?: string; engineId?: string };
           launchableInstance?: { gameId?: string; instanceId?: string };
           render?: unknown;
         }>) ?? [];
       const game = games.find((candidate) => candidate.sectionId === sectionId);
 
-      expect(game?.stage).toMatchObject({
+      expect(game?.shell).toMatchObject({
         shellTestId,
       });
       expect(game?.launchableInstance).toMatchObject({

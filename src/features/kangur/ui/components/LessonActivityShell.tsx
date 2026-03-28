@@ -290,7 +290,7 @@ export default function LessonActivityShell({
             {shouldRenderShellHeader ? <LessonActivityShellHeader /> : null}
             <div
               className='kangur-print-only space-y-2 border-b border-slate-200 pb-4'
-              data-testid='lesson-activity-stage-print-summary'
+              data-testid='lesson-activity-shell-print-summary'
             >
               <div className='text-xs font-semibold uppercase tracking-[0.16em] text-slate-500'>
                 {title}
@@ -319,7 +319,7 @@ export default function LessonActivityShell({
             {shouldRenderShellHeader ? <LessonActivityShellHeader /> : null}
             <div
               className='kangur-print-only space-y-2 border-b border-slate-200 pb-4'
-              data-testid='lesson-activity-stage-print-summary'
+              data-testid='lesson-activity-shell-print-summary'
             >
               <div className='text-xs font-semibold uppercase tracking-[0.16em] text-slate-500'>
                 {title}

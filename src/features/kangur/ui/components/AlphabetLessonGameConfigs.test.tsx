@@ -80,7 +80,7 @@ describe('alphabet lesson game configs', () => {
       const games =
         (capturedProps?.games as Array<{
           sectionId: string;
-          stage: Record<string, unknown>;
+          shell: Record<string, unknown>;
           launchableInstance?: {
             gameId?: string;
             instanceId?: string;
@@ -93,7 +93,7 @@ describe('alphabet lesson game configs', () => {
         description: sectionDescription,
         isGame: true,
       });
-      expect(games.find((game) => game.sectionId === sectionId)?.stage).toMatchObject({
+      expect(games.find((game) => game.sectionId === sectionId)?.shell).toMatchObject({
         shellTestId,
         title: sectionTitle,
       });

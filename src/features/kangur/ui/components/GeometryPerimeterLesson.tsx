@@ -546,7 +546,7 @@ export default function GeometryPerimeterLesson(): React.JSX.Element {
       games={[
         {
           sectionId: 'game_draw',
-          stage: {
+          shell: {
             accent: 'amber',
             title: copy.game.stageTitle,
             icon: '✍️',

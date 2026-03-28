@@ -67,7 +67,7 @@ describe('time lesson game configs', () => {
     const games =
       (capturedProps?.games as Array<{
         sectionId: string;
-        stage: Record<string, unknown>;
+        shell: Record<string, unknown>;
         launchableInstance?: {
           gameId?: string;
           instanceId?: string;
@@ -80,7 +80,7 @@ describe('time lesson game configs', () => {
       expect.arrayContaining([
         expect.objectContaining({
           sectionId: 'game_days',
-          stage: expect.objectContaining({ shellTestId: 'calendar-lesson-game-shell' }),
+          shell: expect.objectContaining({ shellTestId: 'calendar-lesson-game-shell' }),
           launchableInstance: expect.objectContaining({
             gameId: 'calendar_interactive',
             instanceId: 'calendar_interactive:instance:calendar-days',
@@ -118,7 +118,7 @@ describe('time lesson game configs', () => {
     const games =
       (capturedProps?.games as Array<{
         sectionId: string;
-        stage: Record<string, unknown>;
+        shell: Record<string, unknown>;
         launchableInstance?: {
           gameId?: string;
           instanceId?: string;
@@ -132,7 +132,7 @@ describe('time lesson game configs', () => {
       expect.arrayContaining([
         expect.objectContaining({
           sectionId: 'game_hours',
-          stage: expect.objectContaining({
+          shell: expect.objectContaining({
             shellTestId: 'clock-lesson-training-shell',
             navigationPills: expect.anything(),
           }),

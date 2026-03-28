@@ -1,6 +1,6 @@
 'use client';
 
-import { CmsStorefrontAppearanceProvider } from '@/features/cms/components/frontend/CmsStorefrontAppearance.context';
+import { CmsStorefrontAppearanceProvider } from '@/features/cms/public';
 import {
   KANGUR_STOREFRONT_DEFAULT_MODE_SETTING_KEY,
   KANGUR_STOREFRONT_APPEARANCE_STORAGE_KEY,

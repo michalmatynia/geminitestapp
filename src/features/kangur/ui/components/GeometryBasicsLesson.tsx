@@ -351,7 +351,7 @@ export default function GeometryBasicsLesson({ lessonTemplate }: LessonProps): R
       games={[
         {
           sectionId: 'game',
-          stage: {
+          shell: {
             accent: 'sky',
             title: translate('game.stageTitle'),
             icon: '🎯',

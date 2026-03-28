@@ -25,7 +25,7 @@ type CapturedLessonProps = {
   lessonTitle: string;
   sections: Array<{ id: string; title: string; description: string }>;
   slides: Record<string, Array<{ title: string; content: React.ReactNode }>>;
-  games: Array<{ stage: { title: string } }>;
+  games: Array<{ shell: { title: string } }>;
 };
 
 describe('LogicalAnalogiesLesson', () => {
@@ -87,7 +87,7 @@ describe('LogicalAnalogiesLesson', () => {
         expect.objectContaining({ title: 'Database relation bridge' }),
       ]),
     );
-    expect(props.games[0]?.stage.title).toBe('Database relations game');
+    expect(props.games[0]?.shell.title).toBe('Database relations game');
 
     render(<>{props.slides.intro?.[1]?.content}</>);
 

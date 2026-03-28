@@ -127,7 +127,7 @@ describe('MusicDiatonicScaleLesson', () => {
       sections: Array<{ id: string; title: string; description: string }>;
       slides: Record<string, Array<{ title: string }>>;
       games: Array<{
-        stage: { title: string; description: string };
+        shell: { title: string; description: string };
         launchableInstance?: { gameId?: string; instanceId?: string };
       }>;
     };
@@ -153,7 +153,7 @@ describe('MusicDiatonicScaleLesson', () => {
         expect.objectContaining({ title: 'Database colors slide' }),
       ]),
     );
-    expect(props.games[0]?.stage).toEqual({
+    expect(props.games[0]?.shell).toEqual({
       title: 'Database repeat game',
       description: 'Database repeat game description',
       accent: 'sky',
@@ -162,7 +162,7 @@ describe('MusicDiatonicScaleLesson', () => {
       shellTestId: MUSIC_DIATONIC_SCALE_TOP_SECTION_TEST_IDS.repeat,
       shellVariant: 'plain',
     });
-    expect(props.games[1]?.stage).toEqual({
+    expect(props.games[1]?.shell).toEqual({
       title: 'Database freeplay game',
       description: 'Database freeplay game description',
       accent: 'sky',

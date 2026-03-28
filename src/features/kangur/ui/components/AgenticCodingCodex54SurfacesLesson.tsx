@@ -25,7 +25,7 @@ export default function AgenticCodingCodex54SurfacesLesson(): JSX.Element {
       games={[
         {
           sectionId: 'surface_match_game',
-          stage: {
+          shell: {
             accent: 'emerald',
             icon: '🧭',
             title: 'Surface Match',

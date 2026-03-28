@@ -172,7 +172,7 @@ describe('GeometryBasicsLesson', () => {
       lessonTitle: string;
       sections: Array<{ id: string; title: string; description: string }>;
       slides: Record<string, Array<{ title: string }>>;
-      games: Array<{ stage: { title: string } }>;
+      games: Array<{ shell: { title: string } }>;
     };
 
     expect(props.lessonTitle).toBe('Geometry from Mongo');
@@ -193,6 +193,6 @@ describe('GeometryBasicsLesson', () => {
     expect(props.slides.punkt).toEqual(
       expect.arrayContaining([expect.objectContaining({ title: 'Database segment slide' })]),
     );
-    expect(props.games[0]?.stage.title).toBe('Database geo mission');
+    expect(props.games[0]?.shell.title).toBe('Database geo mission');
   });
 });

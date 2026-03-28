@@ -30,7 +30,7 @@ export const MUSIC_DIATONIC_SCALE_LAUNCHABLE_INSTANCE_IDS =
 const MUSIC_DIATONIC_SCALE_GAME_SECTION_SHELL_PRESENTATION = {
   freePlay: {
     sectionId: MUSIC_DIATONIC_SCALE_SECTION_IDS.freePlayGame,
-    stage: {
+    shell: {
       accent: 'sky',
       icon: '🎛️',
       maxWidthClassName: 'max-w-none',
@@ -40,7 +40,7 @@ const MUSIC_DIATONIC_SCALE_GAME_SECTION_SHELL_PRESENTATION = {
   },
   repeat: {
     sectionId: MUSIC_DIATONIC_SCALE_SECTION_IDS.repeatGame,
-    stage: {
+    shell: {
       accent: 'sky',
       icon: '🎹',
       maxWidthClassName: 'max-w-none',
@@ -59,7 +59,7 @@ export const MUSIC_DIATONIC_SCALE_GAME_SECTION_CONFIGS = Object.fromEntries(
         instanceId: MUSIC_DIATONIC_SCALE_LAUNCHABLE_INSTANCE_IDS[key],
       },
       sectionId: MUSIC_DIATONIC_SCALE_GAME_SECTION_SHELL_PRESENTATION[key].sectionId,
-      stage: MUSIC_DIATONIC_SCALE_GAME_SECTION_SHELL_PRESENTATION[key].stage,
+      shell: MUSIC_DIATONIC_SCALE_GAME_SECTION_SHELL_PRESENTATION[key].shell,
     },
   ])
 ) as {
@@ -69,14 +69,14 @@ export const MUSIC_DIATONIC_SCALE_GAME_SECTION_CONFIGS = Object.fromEntries(
       instanceId: (typeof MUSIC_DIATONIC_SCALE_LAUNCHABLE_INSTANCE_IDS)[Key];
     };
     sectionId: (typeof MUSIC_DIATONIC_SCALE_GAME_SECTION_SHELL_PRESENTATION)[Key]['sectionId'];
-    stage: (typeof MUSIC_DIATONIC_SCALE_GAME_SECTION_SHELL_PRESENTATION)[Key]['stage'];
+    shell: (typeof MUSIC_DIATONIC_SCALE_GAME_SECTION_SHELL_PRESENTATION)[Key]['shell'];
   };
 };
 
 export const MUSIC_DIATONIC_SCALE_TOP_SECTION_TEST_IDS = Object.fromEntries(
   KANGUR_MUSIC_PIANO_ROLL_VARIANT_KEYS.map((key) => [
     key,
-    MUSIC_DIATONIC_SCALE_GAME_SECTION_CONFIGS[key].stage.shellTestId,
+    MUSIC_DIATONIC_SCALE_GAME_SECTION_CONFIGS[key].shell.shellTestId,
   ])
 ) as {
   [Key in (typeof KANGUR_MUSIC_PIANO_ROLL_VARIANT_KEYS)[number]]: string;
@@ -115,8 +115,8 @@ export default function MusicDiatonicScaleLesson({ lessonTemplate }: LessonProps
     () =>
       KANGUR_MUSIC_PIANO_ROLL_VARIANT_KEYS.map((key) => ({
         sectionId: MUSIC_DIATONIC_SCALE_GAME_SECTION_CONFIGS[key].sectionId,
-        stage: {
-          ...MUSIC_DIATONIC_SCALE_GAME_SECTION_CONFIGS[key].stage,
+        shell: {
+          ...MUSIC_DIATONIC_SCALE_GAME_SECTION_CONFIGS[key].shell,
           title: resolvedGameContentByVariant[key].title,
           description: resolvedGameContentByVariant[key].description,
         },

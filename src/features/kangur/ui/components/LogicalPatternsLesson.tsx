@@ -420,7 +420,7 @@ export default function LogicalPatternsLesson({
       games={[
         {
           sectionId: 'game_warsztat',
-          stage: {
+          shell: {
             accent: 'violet',
             icon: '🛠️',
             maxWidthClassName: 'max-w-3xl',

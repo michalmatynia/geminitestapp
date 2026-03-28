@@ -53,7 +53,7 @@ export default function AlphabetWordsLesson({ lessonTemplate }: LessonProps): JS
       games={[
         {
           sectionId: 'game_words',
-          stage: {
+          shell: {
             accent: 'amber',
             icon: '🎮',
             shellTestId: 'alphabet-words-game-shell',

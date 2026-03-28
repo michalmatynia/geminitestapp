@@ -6,7 +6,7 @@ import {
   Viewer3D,
   type EnvironmentPreset,
   type LightingPreset,
-} from '@/features/viewer3d/public';
+} from '@/features/viewer3d/client/public';
 
 import { useRequiredBlockSettings } from './BlockContext';
 import { toBoolean } from './image-utils';

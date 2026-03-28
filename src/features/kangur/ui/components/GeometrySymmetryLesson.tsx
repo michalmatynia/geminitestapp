@@ -352,7 +352,7 @@ export default function GeometrySymmetryLesson({ lessonTemplate }: LessonProps):
       games={[
         {
           sectionId: 'game',
-          stage: {
+          shell: {
             accent: 'emerald',
             icon: '🪞',
             maxWidthClassName: 'max-w-2xl',

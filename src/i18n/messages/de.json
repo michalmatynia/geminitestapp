@@ -318,6 +318,42 @@
         "label": "Mathe-Kanguru-Sitzung",
         "description": "Lose Mathe-Kanguru-Aufgaben Schritt fur Schritt."
       },
+      "agentic_approval_gate_quiz": {
+        "label": "Freigabe-Quiz",
+        "description": "Ube, welche Aktionen vor dem Start eine Freigabe brauchen."
+      },
+      "agentic_prompt_trim_quiz": {
+        "label": "Prompt-Kurzungsquiz",
+        "description": "Ube, Prompts auf die kurzeste nutzliche Form zu kuerzen."
+      },
+      "agentic_reasoning_router_quiz": {
+        "label": "Reasoning-Router-Quiz",
+        "description": "Wahle fur jede Aufgabe den passenden Denkmodus."
+      },
+      "agentic_surface_match_quiz": {
+        "label": "Surface-Match-Quiz",
+        "description": "Ordne jede Aufgabe der richtigen Oberflache oder dem richtigen Interface zu."
+      },
+      "alphabet_first_words_quiz": {
+        "label": "Erste-Worter-Quiz",
+        "description": "Verbinde Buchstaben und Bilder zu ersten Wortern."
+      },
+      "alphabet_letter_matching_quiz": {
+        "label": "Buchstaben-Matching-Quiz",
+        "description": "Ordne Buchstaben in kurzen Alphabet-Runden zu."
+      },
+      "alphabet_letter_order_quiz": {
+        "label": "Buchstabenfolge-Quiz",
+        "description": "Bringe Buchstaben wieder in die richtige Reihenfolge."
+      },
+      "art_color_harmony_quiz": {
+        "label": "Farbharmonie-Quiz",
+        "description": "Ube warme und kuhle Farbharmonien."
+      },
+      "art_shape_rotation_quiz": {
+        "label": "Formdrehungs-Quiz",
+        "description": "Erkenne, wie Formen nach einer Drehung aussehen."
+      },
       "calendar_quiz": {
         "label": "Kalenderubung",
         "description": "Ube das Lesen von Daten und Zusammenhangen im Kalender."
@@ -325,6 +361,10 @@
       "geometry_quiz": {
         "label": "Formenubung",
         "description": "Ube Formen und raumliche Beziehungen."
+      },
+      "geometry_shape_spotter_quiz": {
+        "label": "Formensucher-Quiz",
+        "description": "Erkenne und benenne Formen in kurzen Runden."
       },
       "clock_quiz": {
         "label": "Uhrzeitubung",
@@ -341,6 +381,10 @@
       "addition_quiz": {
         "label": "Additionsquiz",
         "description": "Ein schnelles Additionsquiz."
+      },
+      "adding_synthesis_quiz": {
+        "label": "Additionssynthese-Quiz",
+        "description": "Baue Rechenflussigkeit im Addieren in kurzen Rhythmusrunden auf."
       },
       "subtraction_quiz": {
         "label": "Subtraktionsquiz",
@@ -365,6 +409,38 @@
       "logical_analogies_quiz": {
         "label": "Analogiequiz",
         "description": "Ube Analogien und Beziehungen in kurzen Runden."
+      },
+      "english_subject_verb_agreement_quiz": {
+        "label": "Subjekt-Verb-Ubereinstimmung",
+        "description": "Ordne Subjekt und Verb so zu, dass der Satz richtig klingt."
+      },
+      "english_adjectives_quiz": {
+        "label": "Adjektiv-Quiz",
+        "description": "Wahle Adjektive fur Personen, Orte und Dinge."
+      },
+      "english_adverbs_frequency_quiz": {
+        "label": "Haufigkeitsadverbien-Quiz",
+        "description": "Ube Alltagssatze mit always, often und never."
+      },
+      "english_articles_quiz": {
+        "label": "Artikel-Quiz",
+        "description": "Wahle a, an oder the in kurzen Grammatikrunden."
+      },
+      "english_prepositions_quiz": {
+        "label": "Prapositionen-Quiz",
+        "description": "Ube englische Prapositionen fur Zeit und Ort."
+      },
+      "english_prepositions_sort_quiz": {
+        "label": "Prapositionen-Sortierquiz",
+        "description": "Sortiere Prapositionen in die richtigen Grammatikgruppen."
+      },
+      "english_prepositions_order_quiz": {
+        "label": "Prapositionen-Reihenfolge-Quiz",
+        "description": "Baue kurze Phrasen mit Prapositionen in der richtigen Reihenfolge."
+      },
+      "english_pronouns_warmup_quiz": {
+        "label": "Pronomen-Warm-up",
+        "description": "Starte mit kurzen Runden zu englischen Pronomen."
       },
       "english_sentence_quiz": {
         "label": "Satzbauquiz",

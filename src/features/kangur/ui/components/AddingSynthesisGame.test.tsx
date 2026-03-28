@@ -138,7 +138,7 @@ describe('AddingSynthesisGame', () => {
     expect(screen.getByTestId('adding-synthesis-board-shell').parentElement).toHaveClass(
       'lg:grid-cols-[minmax(0,1fr)_280px]'
     );
-    expect(screen.getByTestId('adding-synthesis-stage-shell')).toHaveClass(
+    expect(screen.getByTestId('adding-synthesis-shell')).toHaveClass(
       'glass-panel',
       'kangur-panel-soft',
       'kangur-glass-surface-play-field'

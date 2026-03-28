@@ -88,7 +88,7 @@ describe('AlphabetWordsLesson', () => {
       sections: Array<{ id: string; title: string; description: string }>;
       slides: Record<string, Array<{ title: string }>>;
       games: Array<{
-        stage: { title: string; description: string };
+        shell: { title: string; description: string };
         launchableInstance?: { gameId: string; instanceId: string };
       }>;
     };
@@ -111,7 +111,7 @@ describe('AlphabetWordsLesson', () => {
     expect(props.slides['slowa']).toEqual(
       expect.arrayContaining([expect.objectContaining({ title: 'Database slide' })]),
     );
-    expect(props.games[0]?.stage).toEqual({
+    expect(props.games[0]?.shell).toEqual({
       title: 'Database game title',
       description: 'Database game description',
       accent: 'amber',

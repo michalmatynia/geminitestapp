@@ -105,13 +105,13 @@ describe('LessonActivityShell', () => {
       'data-kangur-print-panel',
       'true'
     );
-    expect(screen.getByTestId('lesson-activity-stage-print-summary')).toHaveTextContent(
+    expect(screen.getByTestId('lesson-activity-shell-print-summary')).toHaveTextContent(
       'Ćwiczenia'
     );
-    expect(screen.getByTestId('lesson-activity-stage-print-summary')).toHaveTextContent(
+    expect(screen.getByTestId('lesson-activity-shell-print-summary')).toHaveTextContent(
       'Przejdź przez szybkie zadania.'
     );
-    expect(screen.getByTestId('lesson-activity-stage-print-summary')).toHaveTextContent(
+    expect(screen.getByTestId('lesson-activity-shell-print-summary')).toHaveTextContent(
       'Otwórz tę lekcję na ekranie, aby wykonać to ćwiczenie interaktywnie.'
     );
     expect(screen.getByRole('button', { name: 'Wróć do tematów' })).not.toHaveTextContent(

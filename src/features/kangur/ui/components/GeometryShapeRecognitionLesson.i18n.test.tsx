@@ -53,7 +53,7 @@ describe('GeometryShapeRecognitionLesson i18n', () => {
     const games =
       (capturedProps?.games as Array<{
         sectionId: string;
-        stage: Record<string, unknown>;
+        shell: Record<string, unknown>;
         launchableInstance?: { gameId?: string; instanceId?: string };
       }>) ?? [];
 
@@ -72,7 +72,7 @@ describe('GeometryShapeRecognitionLesson i18n', () => {
       isGame: true,
     });
 
-    expect(games.find((game) => game.sectionId === 'practice')?.stage).toMatchObject({
+    expect(games.find((game) => game.sectionId === 'practice')?.shell).toMatchObject({
       title: 'Formen-Challenge',
       shellTestId: 'geometry-shape-recognition-practice-shell',
     });
@@ -80,7 +80,7 @@ describe('GeometryShapeRecognitionLesson i18n', () => {
       gameId: 'geometry_shape_spotter',
       instanceId: 'geometry_shape_spotter:instance:default',
     });
-    expect(games.find((game) => game.sectionId === 'draw')?.stage).toMatchObject({
+    expect(games.find((game) => game.sectionId === 'draw')?.shell).toMatchObject({
       title: 'Spiel: Formen zeichnen',
     });
     expect(games.find((game) => game.sectionId === 'draw')?.launchableInstance).toMatchObject({

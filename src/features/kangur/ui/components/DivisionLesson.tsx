@@ -301,7 +301,7 @@ export default function DivisionLesson({
       games={[
         {
           sectionId: 'game',
-          stage: {
+          shell: {
             accent: 'sky',
             title: copy.game.stageTitle,
             icon: '🎮',

@@ -25,7 +25,7 @@ type CapturedLessonProps = {
   lessonTitle: string;
   sections: Array<{ id: string; title: string; description: string }>;
   slides: Record<string, Array<{ title: string }>>;
-  games: Array<{ stage: { title: string } }>;
+  games: Array<{ shell: { title: string } }>;
 };
 
 describe('SubtractingLesson', () => {
@@ -74,6 +74,6 @@ describe('SubtractingLesson', () => {
     expect(props.slides.podstawy).toEqual(
       expect.arrayContaining([expect.objectContaining({ title: 'Database subtracting meaning' })]),
     );
-    expect(props.games[0]?.stage.title).toBe('Database subtracting game');
+    expect(props.games[0]?.shell.title).toBe('Database subtracting game');
   });
 });

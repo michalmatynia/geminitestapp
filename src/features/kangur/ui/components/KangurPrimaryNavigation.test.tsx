@@ -468,7 +468,7 @@ const openLanguageMenu = async (trigger?: HTMLElement): Promise<void> => {
   });
 };
 
-import { CmsStorefrontAppearanceProvider } from '@/features/cms/components/frontend/CmsStorefrontAppearance';
+import { CmsStorefrontAppearanceProvider } from '@/features/cms/public';
 import { KANGUR_DAILY_THEME_SETTINGS_KEY } from '@/features/kangur/theme-settings';
 import { KangurPrimaryNavigation } from '@/features/kangur/ui/components/KangurPrimaryNavigation';
 import { persistTutorVisibilityHidden } from '@/features/kangur/ui/components/KangurAiTutorWidget.storage';

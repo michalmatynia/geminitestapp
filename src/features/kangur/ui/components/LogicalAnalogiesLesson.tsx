@@ -368,7 +368,7 @@ export default function LogicalAnalogiesLesson({
       games={[
         {
           sectionId: 'game_relacje',
-          stage: {
+          shell: {
             accent: 'rose',
             icon: '🎯',
             maxWidthClassName: 'max-w-3xl',

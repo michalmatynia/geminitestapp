@@ -27,6 +27,8 @@ import { QueryErrorBoundary } from '@/shared/ui/QueryErrorBoundary';
 
 import type { JSX } from 'react';
 
+import './kangur/kangur.css';
+
 const DEFAULT_CMS_THEME_SETTINGS = {
   darkMode: false,
 } as const;

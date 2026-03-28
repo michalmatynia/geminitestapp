@@ -25,7 +25,7 @@ export default function AgenticCodingCodex54PromptingLesson(): JSX.Element {
       games={[
         {
           sectionId: 'prompt_trim_game',
-          stage: {
+          shell: {
             accent: 'rose',
             icon: '✂️',
             title: 'Prompt Trim Game',

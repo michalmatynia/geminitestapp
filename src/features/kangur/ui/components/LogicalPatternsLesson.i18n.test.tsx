@@ -46,7 +46,7 @@ describe('LogicalPatternsLesson i18n', () => {
     const games =
       (capturedProps?.games as Array<{
         sectionId: string;
-        stage: Record<string, unknown>;
+        shell: Record<string, unknown>;
         runtime?: { runtimeId?: string; rendererId?: string };
         launchableInstance?: { gameId?: string; instanceId?: string };
       }>) ?? [];
@@ -59,7 +59,7 @@ describe('LogicalPatternsLesson i18n', () => {
       title: 'Geometrische Folgen und Fibonacci',
       description: 'Multiplikation und besondere Folgen',
     });
-    expect(games.find((game) => game.sectionId === 'game_warsztat')?.stage).toMatchObject({
+    expect(games.find((game) => game.sectionId === 'game_warsztat')?.shell).toMatchObject({
       title: 'Musterwerkstatt',
     });
     expect(

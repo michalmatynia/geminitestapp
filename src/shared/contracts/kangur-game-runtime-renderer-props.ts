@@ -20,20 +20,20 @@ export type KangurGeometryDrawingShapeId = z.infer<
   typeof kangurGeometryDrawingShapeIdSchema
 >;
 
-const KANGUR_CALENDAR_INTERACTIVE_STAGE_SECTIONS = ['dni', 'miesiace', 'data'] as const;
-export const kangurCalendarInteractiveStageSectionSchema = z.enum(
-  KANGUR_CALENDAR_INTERACTIVE_STAGE_SECTIONS
+const KANGUR_CALENDAR_INTERACTIVE_SECTIONS = ['dni', 'miesiace', 'data'] as const;
+export const kangurCalendarInteractiveSectionSchema = z.enum(
+  KANGUR_CALENDAR_INTERACTIVE_SECTIONS
 );
-export type KangurCalendarInteractiveStageSection = z.infer<
-  typeof kangurCalendarInteractiveStageSectionSchema
+export type KangurCalendarInteractiveSection = z.infer<
+  typeof kangurCalendarInteractiveSectionSchema
 >;
 
-const KANGUR_CLOCK_TRAINING_STAGE_SECTIONS = ['hours', 'minutes', 'combined'] as const;
-export const kangurClockTrainingStageSectionSchema = z.enum(
-  KANGUR_CLOCK_TRAINING_STAGE_SECTIONS
+const KANGUR_CLOCK_TRAINING_SECTIONS = ['hours', 'minutes', 'combined'] as const;
+export const kangurClockTrainingSectionSchema = z.enum(
+  KANGUR_CLOCK_TRAINING_SECTIONS
 );
-export type KangurClockTrainingStageSection = z.infer<
-  typeof kangurClockTrainingStageSectionSchema
+export type KangurClockTrainingSection = z.infer<
+  typeof kangurClockTrainingSectionSchema
 >;
 
 export const kangurClockTrainingInitialModeSchema = z.enum(['practice', 'challenge']);
@@ -72,8 +72,8 @@ export type KangurGameRuntimeFinishLabelVariant = z.infer<
 export const kangurGameRuntimeRendererPropsSchema = z
   .object({
     activityKey: nonEmptyTrimmedString.max(120).optional(),
-    calendarSection: kangurCalendarInteractiveStageSectionSchema.optional(),
-    clockSection: kangurClockTrainingStageSectionSchema.optional(),
+    calendarSection: kangurCalendarInteractiveSectionSchema.optional(),
+    clockSection: kangurClockTrainingSectionSchema.optional(),
     clockInitialMode: kangurClockTrainingInitialModeSchema.optional(),
     difficultyLabelOverride: nonEmptyTrimmedString.max(120).optional(),
     finishLabel: nonEmptyTrimmedString.max(120).optional(),

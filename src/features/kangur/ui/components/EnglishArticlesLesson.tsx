@@ -469,7 +469,7 @@ export default function EnglishArticlesLesson(): React.JSX.Element {
       games={[
         {
           sectionId: 'game_articles_drag',
-          stage: {
+          shell: {
             accent: 'amber',
             title: sectionTitles.game_articles_drag,
             icon: '🧲',

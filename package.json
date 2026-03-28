@@ -68,6 +68,8 @@
     "dev:heap": "node --max-old-space-size=8192 --heapsnapshot-near-heap-limit=2 --trace-gc server.cjs",
     "prebuild": "node scripts/build/prebuild-cleanup.cjs && node scripts/quality/check-next-route-config-reexports.mjs --strict --no-write",
     "build": "node scripts/build/run-next-build.cjs",
+    "build:turbopack": "npm run prebuild && NEXT_BUILD_BUNDLER=turbopack NEXT_BUILD_CPUS=1 NEXT_DIST_DIR=.next-turbo node scripts/build/run-next-build.cjs",
+    "build:turbopack:cold": "NEXT_PRESERVE_TURBO_CACHE=0 npm run build:turbopack",
     "build:webpack": "NODE_OPTIONS='--max-old-space-size=8192' next build --webpack",
     "build:hi-mem": "NODE_OPTIONS='--max-old-space-size=6144' next build --webpack",
     "neo4j:up": "docker compose -f compose.db.yaml up -d neo4j",

@@ -8,6 +8,7 @@ import type { ReactElement, ReactNode } from 'react';
 const {
   getLocaleMock,
   getLiteSettingsForHydrationMock,
+  loadSiteMessagesMock,
   getTranslationsMock,
   nextIntlClientProviderMock,
   readServerRequestPathnameMock,
@@ -15,6 +16,7 @@ const {
 } = vi.hoisted(() => ({
   getLocaleMock: vi.fn(),
   getLiteSettingsForHydrationMock: vi.fn(),
+  loadSiteMessagesMock: vi.fn(),
   getTranslationsMock: vi.fn(),
   nextIntlClientProviderMock: vi.fn(({ children }: { children: ReactNode }) => <>{children}</>),
   readServerRequestPathnameMock: vi.fn(),
@@ -38,6 +40,10 @@ vi.mock('@/shared/lib/lite-settings-ssr', () => ({
   getLiteSettingsForHydration: getLiteSettingsForHydrationMock,
 }));
 
+vi.mock('@/i18n/messages', () => ({
+  loadSiteMessages: loadSiteMessagesMock,
+}));
+
 vi.mock('@/shared/lib/request/server-request-context', () => ({
   readServerRequestPathname: readServerRequestPathnameMock,
 }));
@@ -50,6 +56,11 @@ describe('RootLayout', () => {
     getLiteSettingsForHydrationMock.mockResolvedValue([
       { key: 'observability.infoEnabled', value: 'true' },
     ]);
+    loadSiteMessagesMock.mockResolvedValue({
+      Common: {
+        skipToMainContent: 'Skip to main content',
+      },
+    });
     readServerRequestPathnameMock.mockReturnValue(null);
   });
 
@@ -63,8 +74,20 @@ describe('RootLayout', () => {
     const liteSettingsScript = bodyChildren.find(
       (child) => isValidElement(child) && child.type === 'script'
     ) as ReactElement<{ dangerouslySetInnerHTML?: { __html?: string } }> | undefined;
+    const intlProvider = bodyChildren.find(
+      (child) => isValidElement(child) && child.type === nextIntlClientProviderMock
+    ) as ReactElement<{ locale?: string; messages?: unknown }> | undefined;
 
     expect(getLiteSettingsForHydrationMock).toHaveBeenCalledTimes(1);
+    expect(loadSiteMessagesMock).toHaveBeenCalledWith('en');
+    expect(intlProvider?.props.locale).toBe('en');
+    expect(intlProvider?.props.messages).toEqual(
+      expect.objectContaining({
+        Common: expect.objectContaining({
+          skipToMainContent: 'Skip to main content',
+        }),
+      })
+    );
     expect(liteSettingsScript?.props.dangerouslySetInnerHTML?.__html).toContain(
       '__LITE_SETTINGS__'
     );

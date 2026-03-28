@@ -70,16 +70,14 @@ describe('ArtShapesBasicLesson', () => {
     expect(screen.queryByText(/przyjrzyj się sześcioczęściowemu wzorowi\./i)).not.toBeInTheDocument();
   });
 
-  it('shows the shared print-summary fallback alongside the inline puzzle options', () => {
+  it('shows the shared print-summary fallback for the launched puzzle shell', () => {
     renderLesson();
 
     openRotationGame();
-    expect(screen.getByTestId('lesson-activity-stage-print-summary')).toBeInTheDocument();
+    expect(screen.getByTestId('lesson-activity-shell-print-summary')).toBeInTheDocument();
     expect(
       screen.getByText('Otwórz tę lekcję na ekranie, aby wykonać to ćwiczenie interaktywnie.')
     ).toBeInTheDocument();
-    expect(screen.getByTestId('art-shapes-rotation-option-r1-pizza-fast')).toBeInTheDocument();
-    expect(screen.getByText(/runda 1\/4/i)).toBeInTheDocument();
   });
 
   it('keeps the shared lesson back button instead of inline puzzle navigation controls', () => {
@@ -97,7 +95,7 @@ describe('ArtShapesBasicLesson', () => {
 
     openRotationGame();
 
-    const printSummary = screen.getByTestId('lesson-activity-stage-print-summary');
+    const printSummary = screen.getByTestId('lesson-activity-shell-print-summary');
 
     expect(within(printSummary).getByText('Uzupełnij wirujący wzór')).toBeInTheDocument();
     expect(

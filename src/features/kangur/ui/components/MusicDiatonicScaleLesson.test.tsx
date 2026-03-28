@@ -158,7 +158,7 @@ describe('MusicDiatonicScaleLesson', () => {
 
     await waitFor(() => {
       expect(
-        screen.getByTestId(MUSIC_DIATONIC_SCALE_GAME_SECTION_CONFIGS.repeat.stage.shellTestId)
+        screen.getByTestId(MUSIC_DIATONIC_SCALE_GAME_SECTION_CONFIGS.repeat.shell.shellTestId)
       ).toBeInTheDocument();
     });
 
@@ -203,7 +203,7 @@ describe('MusicDiatonicScaleLesson', () => {
 
     await waitFor(() => {
       expect(
-        screen.getByTestId(MUSIC_DIATONIC_SCALE_GAME_SECTION_CONFIGS.freePlay.stage.shellTestId)
+        screen.getByTestId(MUSIC_DIATONIC_SCALE_GAME_SECTION_CONFIGS.freePlay.shell.shellTestId)
       ).toBeInTheDocument();
     });
 

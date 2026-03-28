@@ -443,8 +443,8 @@ export default function LessonSlideSection({
         activeSlide.containerClassName,
         'mx-auto'
       )}
-      data-testid='lesson-slide-stage-root'
-      data-kangur-print-slide-stage='true'
+      data-testid='lesson-slide-shell-root'
+      data-kangur-print-slide-shell='true'
       onKeyDownCapture={handleKeyDownCapture}
     >
       <div

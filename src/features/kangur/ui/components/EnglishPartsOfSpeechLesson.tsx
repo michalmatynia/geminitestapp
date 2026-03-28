@@ -421,7 +421,7 @@ export default function EnglishPartsOfSpeechLesson(): React.JSX.Element {
       games={[
         {
           sectionId: 'game_pronouns_warmup',
-          stage: {
+          shell: {
             accent: 'sky',
             title: sectionTitles.game_pronouns_warmup,
             icon: '⚡',
@@ -436,7 +436,7 @@ export default function EnglishPartsOfSpeechLesson(): React.JSX.Element {
         },
         {
           sectionId: 'game_parts_of_speech',
-          stage: {
+          shell: {
             accent: 'sky',
             title: sectionTitles.game_parts_of_speech,
             icon: '🎮',

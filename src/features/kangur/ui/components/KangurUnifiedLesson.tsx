@@ -110,7 +110,7 @@ type KangurUnifiedLessonGameConfigBase<SectionId extends string> = {
     onFinish: () => void;
     onBack: () => void;
   }) => void;
-  stage: KangurUnifiedLessonGameShellConfig;
+  shell: KangurUnifiedLessonGameShellConfig;
 };
 
 export type KangurUnifiedLessonGameConfig<SectionId extends string> =
@@ -188,7 +188,7 @@ const renderKangurUnifiedLessonGameShell = <SectionId extends string>({
   resolvedSections: ReadonlyArray<KangurUnifiedLessonSection<SectionId> & { description: string }>;
 }): JSX.Element => {
   const sectionHeader = resolveLessonSectionHeader(resolvedSections, currentSection);
-  const shell = gameConfig.stage;
+  const shell = gameConfig.shell;
   const rawGameHelpers = {
     sectionId: currentSection,
     onFinish: handleReturnToHub,

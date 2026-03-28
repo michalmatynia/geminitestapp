@@ -3,7 +3,7 @@
 import { useLocale, useTranslations } from 'next-intl';
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef } from 'react';
 
-import { useOptionalCmsStorefrontAppearance } from '@/features/cms/components/frontend/CmsStorefrontAppearance.context';
+import { useOptionalCmsStorefrontAppearance } from '@/features/cms/public';
 import {
   KANGUR_BASE_PATH,
   KANGUR_MAIN_PAGE_KEY,

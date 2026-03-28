@@ -52,7 +52,7 @@ import type {
   KangurGameInstance,
 } from '@/shared/contracts/kangur-game-instances';
 import type {
-  KangurCalendarInteractiveStageSection,
+  KangurCalendarInteractiveSection,
   KangurGameRuntimeRendererProps,
   KangurGeometryDrawingShapeId,
   KangurLogicalPatternSetId,
@@ -111,7 +111,7 @@ type GameInstanceEditorState = {
 };
 
 type ContentSetDraftState = {
-  calendarSection: KangurCalendarInteractiveStageSection;
+  calendarSection: KangurCalendarInteractiveSection;
   clockSection: ClockTrainingSectionId;
   description: string;
   label: string;
@@ -215,7 +215,7 @@ const DEFAULT_GEOMETRY_CONTENT_SET_SHAPE_IDS: KangurGeometryDrawingShapeId[] = [
   'square',
 ];
 
-const DEFAULT_CALENDAR_CONTENT_SET_SECTION: KangurCalendarInteractiveStageSection = 'data';
+const DEFAULT_CALENDAR_CONTENT_SET_SECTION: KangurCalendarInteractiveSection = 'data';
 const DEFAULT_LOGICAL_PATTERN_SET_ID: KangurLogicalPatternSetId = 'logical_patterns_workshop';
 
 const GAMES_LIBRARY_MODAL_SECTION_SURFACE_CLASSNAME =
@@ -3034,7 +3034,7 @@ export function GamesLibraryGameModal({
                             onChange={(event) =>
                               updateContentSetDraft(
                                 'calendarSection',
-                                event.target.value as KangurCalendarInteractiveStageSection
+                                event.target.value as KangurCalendarInteractiveSection
                               )
                             }
                             size='sm'

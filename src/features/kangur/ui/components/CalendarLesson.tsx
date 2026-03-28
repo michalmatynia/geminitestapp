@@ -590,7 +590,7 @@ export default function CalendarLesson(): React.JSX.Element {
 
     return {
       sectionId: trainingId,
-      stage: {
+      shell: {
         accent: 'emerald' as const,
         description: section.description,
         headerTestId: 'calendar-lesson-game-header',

@@ -56,7 +56,7 @@ export default function ArtShapesBasicLesson({ lessonTemplate }: LessonProps): J
       games={[
         {
           sectionId: ART_SHAPES_ROTATION_PUZZLE_SECTION_ID,
-          stage: {
+          shell: {
             accent: 'amber',
             title: translate('game.stageTitle'),
             icon: '🌀',

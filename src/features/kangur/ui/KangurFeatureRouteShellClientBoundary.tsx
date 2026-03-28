@@ -1,7 +1,5 @@
 'use client';
 
-import '@/app/(frontend)/kangur/kangur.css';
-
 import { useEffect, useState } from 'react';
 
 import { KangurStorefrontAppearanceProvider } from '@/features/kangur/ui/KangurStorefrontAppearanceProvider';

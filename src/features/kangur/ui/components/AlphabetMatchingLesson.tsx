@@ -55,7 +55,7 @@ export default function AlphabetMatchingLesson({ lessonTemplate }: LessonProps):
       games={[
         {
           sectionId: 'game_pairs',
-          stage: {
+          shell: {
             accent: 'amber',
             icon: '🎮',
             shellTestId: 'alphabet-matching-game-shell',

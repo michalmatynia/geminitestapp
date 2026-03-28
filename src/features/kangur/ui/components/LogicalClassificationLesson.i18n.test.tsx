@@ -46,7 +46,7 @@ describe('LogicalClassificationLesson i18n', () => {
     const games =
       (capturedProps?.games as Array<{
         sectionId: string;
-        stage: Record<string, unknown>;
+        shell: Record<string, unknown>;
         runtime?: { runtimeId?: string; rendererId?: string };
         launchableInstance?: { gameId?: string; instanceId?: string };
       }>) ?? [];
@@ -59,7 +59,7 @@ describe('LogicalClassificationLesson i18n', () => {
       title: 'Mehrere Merkmale und das Venn-Diagramm',
       description: 'Gruppieren nach mehreren Kriterien und Schnittmengen',
     });
-    expect(games.find((game) => game.sectionId === 'game')?.stage).toMatchObject({
+    expect(games.find((game) => game.sectionId === 'game')?.shell).toMatchObject({
       title: 'Klassifikationslabor',
     });
     expect(games.find((game) => game.sectionId === 'game')?.launchableInstance).toMatchObject({

@@ -1,6 +1,6 @@
 'use client';
 
-import type { KangurClockTrainingStageSection } from '@/shared/contracts/kangur-game-runtime-renderer-props';
+import type { KangurClockTrainingSection } from '@/shared/contracts/kangur-game-runtime-renderer-props';
 
 import {
   TRAINING_PANEL_TASKS,
@@ -10,7 +10,7 @@ import ClockTrainingGame from './ClockTrainingGame';
 
 type ClockTrainingLessonGameProps = {
   clockInitialMode?: 'practice' | 'challenge';
-  clockSection?: KangurClockTrainingStageSection;
+  clockSection?: KangurClockTrainingSection;
   onFinish: () => void;
   showClockHourHand?: boolean;
   showClockMinuteHand?: boolean;
@@ -20,7 +20,7 @@ type ClockTrainingLessonGameProps = {
 };
 
 const resolvePracticeTasks = (
-  section: KangurClockTrainingStageSection
+  section: KangurClockTrainingSection
 ): ClockPracticeTask[] | undefined => TRAINING_PANEL_TASKS[section].pick_one;
 
 export type { ClockTrainingLessonGameProps };

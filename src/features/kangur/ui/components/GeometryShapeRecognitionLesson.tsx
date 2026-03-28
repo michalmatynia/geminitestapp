@@ -189,7 +189,7 @@ export default function GeometryShapeRecognitionLesson({
       games={[
         {
           sectionId: 'practice',
-          stage: {
+          shell: {
             accent: 'emerald',
             title: translate('practice.slideTitle'),
             description: translate('sections.practice.description'),
@@ -204,7 +204,7 @@ export default function GeometryShapeRecognitionLesson({
         },
         {
           sectionId: 'draw',
-          stage: {
+          shell: {
             accent: 'emerald',
             title: translate('draw.stageTitle'),
             description: translate('sections.draw.description'),

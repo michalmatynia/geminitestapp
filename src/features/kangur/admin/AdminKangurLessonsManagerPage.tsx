@@ -13,7 +13,6 @@ import {
   ContextRegistryPageProvider,
   useRegisterContextRegistryPageSource,
 } from '@/shared/lib/ai-context-registry/page-context';
-import { AdminFavoriteBreadcrumbRow } from '@/shared/ui/admin-favorite-breadcrumb-row';
 import { Badge, FormModal, SelectSimple, useToast } from '@/features/kangur/shared/ui';
 import { ConfirmModal } from '@/features/kangur/shared/ui/templates/modals';
 import { KangurButton } from '@/features/kangur/ui/design/primitives';
@@ -460,6 +459,14 @@ export function AdminKangurLessonsManagerPage({
     () => countLessonsRequiringLegacyImport(lessons, lessonDocuments),
     [lessonDocuments, lessons]
   );
+  const breadcrumbs = useMemo(
+    () => [
+      { label: 'Admin', href: '/admin' },
+      { label: 'Kangur', href: '/admin/kangur' },
+      { label: 'Lessons Manager' },
+    ],
+    []
+  );
 
   return (
     <ContextRegistryPageProvider rootIds={KANGUR_ADMIN_LESSONS_MANAGER_ROOT_IDS}>
@@ -474,6 +481,8 @@ export function AdminKangurLessonsManagerPage({
       >
         <KangurAdminContentShell
           title='Lessons Manager'
+          description='Manage lesson metadata, localized content, section structure, and legacy imports.'
+          breadcrumbs={breadcrumbs}
           headerActions={
             <div className='flex items-center gap-3'>
               <SelectSimple
@@ -504,7 +513,6 @@ export function AdminKangurLessonsManagerPage({
             </div>
           }
         >
-          <AdminFavoriteBreadcrumbRow docId='kangur_lessons_manager' />
           <div className='mt-4 flex flex-col kangur-panel-gap'>
             <div className='flex items-center justify-between'>
               <div className='flex items-center gap-2'>

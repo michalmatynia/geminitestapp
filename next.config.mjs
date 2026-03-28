@@ -34,7 +34,7 @@ const buildWorkerCpuLimit = Number.isFinite(explicitBuildCpus)
   : isTurbopack
     ? 1
     : isVercel
-      ? 4
+      ? 2
       : 1;
 const optimizePackageImports = [
   'lucide-react',

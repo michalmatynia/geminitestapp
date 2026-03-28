@@ -43,6 +43,7 @@ describe('check-install-package-manager', () => {
 
     expect(result.status).toBe(0);
     expect(result.stdout).toContain('strict=1');
+    expect(result.stdout).toContain('workspaces=false');
   });
 
   it('fails for non-npm installs in strict environments', () => {
@@ -70,5 +71,19 @@ describe('check-install-package-manager', () => {
 
     expect(result.status).toBe(0);
     expect(result.stdout).toContain('strict=0');
+  });
+
+  it('fails fast when Vercel installs with npm workspaces enabled', () => {
+    const result = runScript({
+      ...process.env,
+      VERCEL: '1',
+      npm_lifecycle_event: 'preinstall',
+      npm_config_user_agent: 'npm/11.7.0 node/v22.22.0 linux x64 workspaces/true',
+      npm_execpath: '/usr/local/lib/node_modules/npm/bin/npm-cli.js',
+      npm_config_workspaces: 'true',
+    });
+
+    expect(result.status).toBe(1);
+    expect(result.stderr).toContain('Vercel install must keep npm workspaces disabled');
   });
 });

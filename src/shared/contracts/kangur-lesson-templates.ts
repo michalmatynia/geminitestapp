@@ -1004,9 +1004,14 @@ export const kangurGeometryShapesLessonTemplateContentSchema = z.object({
       build: kangurGeometryShapesTitleCaptionSchema,
     }),
   }),
-  game: z.object({
-    stageTitle: z.string().trim().min(1).max(120),
-  }),
+  game: z
+    .object({
+      gameTitle: z.string().trim().min(1).max(120).optional(),
+      stageTitle: z.string().trim().min(1).max(120).optional(),
+    })
+    .refine(({ gameTitle, stageTitle }) => Boolean(gameTitle ?? stageTitle), {
+      message: 'Geometry shapes game title is required.',
+    }),
 });
 
 export const kangurGeometryShapeRecognitionLessonTemplateContentSchema = z.object({
@@ -1142,9 +1147,14 @@ export const kangurGeometrySymmetryLessonTemplateContentSchema = z.object({
       rotation: kangurGeometrySymmetryTitleCaptionSchema,
     }),
   }),
-  game: z.object({
-    stageTitle: z.string().trim().min(1).max(120),
-  }),
+  game: z
+    .object({
+      gameTitle: z.string().trim().min(1).max(120).optional(),
+      stageTitle: z.string().trim().min(1).max(120).optional(),
+    })
+    .refine(({ gameTitle, stageTitle }) => Boolean(gameTitle ?? stageTitle), {
+      message: 'Geometry symmetry game title is required.',
+    }),
 });
 
 export const kangurLogicalClassificationLessonTemplateContentSchema = z.object({
@@ -1343,9 +1353,14 @@ export const kangurLogicalClassificationLessonTemplateContentSchema = z.object({
       oddOneOut: kangurGeometrySymmetryTitleCaptionSchema,
     }),
   }),
-  game: z.object({
-    stageTitle: z.string().trim().min(1).max(120),
-  }),
+  game: z
+    .object({
+      gameTitle: z.string().trim().min(1).max(120).optional(),
+      stageTitle: z.string().trim().min(1).max(120).optional(),
+    })
+    .refine(({ gameTitle, stageTitle }) => Boolean(gameTitle ?? stageTitle), {
+      message: 'Logical classification game title is required.',
+    }),
 });
 
 export const kangurLogicalAnalogiesLessonTemplateContentSchema = z.object({
@@ -1820,9 +1835,14 @@ export const kangurLogicalPatternsLessonTemplateContentSchema = z.object({
       }),
     }),
   }),
-  game: z.object({
-    stageTitle: z.string().trim().min(1).max(120),
-  }),
+  game: z
+    .object({
+      gameTitle: z.string().trim().min(1).max(120).optional(),
+      stageTitle: z.string().trim().min(1).max(120).optional(),
+    })
+    .refine(({ gameTitle, stageTitle }) => Boolean(gameTitle ?? stageTitle), {
+      message: 'Logical patterns game title is required.',
+    }),
 });
 
 export const kangurLogicalReasoningLessonTemplateContentSchema = z.object({

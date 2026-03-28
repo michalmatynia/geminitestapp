@@ -639,7 +639,7 @@ export default function LogicalClassificationLesson({
             icon: '🎯',
             maxWidthClassName: 'max-w-3xl',
             shellTestId: 'logical-classification-game-shell',
-            title: translate('game.stageTitle'),
+            title: translate('game.gameTitle'),
           },
           launchableInstance: {
             gameId: 'logical_classification_lab',

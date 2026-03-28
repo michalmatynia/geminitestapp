@@ -28,6 +28,7 @@ const packageManager = packageJson?.packageManager;
 const framework = vercelConfig?.framework;
 const installCommand = vercelConfig?.installCommand;
 const buildCommand = vercelConfig?.buildCommand;
+const expectedInstallCommand = 'npm ci --workspaces=false --include=dev --no-audit --no-fund';
 
 const fail = (message) => {
   console.error(`[build] ${message}`);
@@ -42,8 +43,8 @@ if (framework !== 'nextjs') {
   fail(`vercel.json framework must be "nextjs". Received "${framework ?? 'missing'}".`);
 }
 
-if (installCommand !== 'npm ci') {
-  fail(`vercel.json installCommand must be "npm ci". Received "${installCommand ?? 'missing'}".`);
+if (installCommand !== expectedInstallCommand) {
+  fail(`vercel.json installCommand must be "${expectedInstallCommand}". Received "${installCommand ?? 'missing'}".`);
 }
 
 if (buildCommand !== 'npm run build') {

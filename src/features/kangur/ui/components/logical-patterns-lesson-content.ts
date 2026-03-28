@@ -195,7 +195,7 @@ const LOGICAL_PATTERNS_LESSON_COPY_PL = {
     },
   },
   game: {
-    stageTitle: 'Warsztat wzorców',
+    gameTitle: 'Warsztat wzorców',
   },
 } as const;
 
@@ -210,8 +210,11 @@ const translateLogicalPatternsLesson = (
   key: string,
   fallback: string,
 ): string => {
-  const translated = translate(key);
-  return translated === key || translated.endsWith(`.${key}`) ? fallback : translated;
+  const translationKey = key === 'game.gameTitle' ? 'game.stageTitle' : key;
+  const translated = translate(translationKey);
+  return translated === translationKey || translated.endsWith(`.${translationKey}`)
+    ? fallback
+    : translated;
 };
 
 const localizeLogicalPatternsLessonCopy = <T,>(

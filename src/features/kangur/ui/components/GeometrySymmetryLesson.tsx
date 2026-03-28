@@ -357,7 +357,7 @@ export default function GeometrySymmetryLesson({ lessonTemplate }: LessonProps):
             icon: '🪞',
             maxWidthClassName: 'max-w-2xl',
             shellTestId: 'geometry-symmetry-game-shell',
-            title: translate('game.stageTitle'),
+            title: translate('game.gameTitle'),
           },
           launchableInstance: {
             gameId: 'geometry_symmetry_studio',

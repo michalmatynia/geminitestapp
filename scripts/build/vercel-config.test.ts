@@ -10,7 +10,7 @@ describe('root vercel.json', () => {
 
     expect(config).toMatchObject({
       framework: 'nextjs',
-      installCommand: 'npm ci',
+      installCommand: 'npm ci --workspaces=false --include=dev --no-audit --no-fund',
       buildCommand: 'npm run build',
     });
   });

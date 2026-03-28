@@ -32,7 +32,7 @@ describe('LogicalPatternsLesson', () => {
     componentContent.slides.intro.whatIsPattern.title = 'Database pattern slide';
     componentContent.slides.intro.colorsAndShapes.title = 'Database colors slide';
     componentContent.slides.ciagi_arytm.addition.title = 'Database addition slide';
-    componentContent.game.stageTitle = 'Database workshop game';
+    componentContent.game.gameTitle = 'Database workshop game';
 
     render(
       <NextIntlClientProvider locale='pl' messages={plMessages}>

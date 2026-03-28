@@ -139,7 +139,7 @@ describe('GeometrySymmetryLesson', () => {
                 },
               },
               game: {
-                stageTitle: 'Database game title',
+                gameTitle: 'Database game title',
               },
             },
           }}

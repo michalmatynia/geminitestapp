@@ -389,6 +389,78 @@ describe('lesson-template-component-content', () => {
     expect(resolved?.game).not.toHaveProperty('stageTitle');
   });
 
+  it('normalizes legacy geometry shapes stageTitle fields when resolving template content', () => {
+    const resolved = resolveKangurLessonTemplateComponentContent('geometry_shapes', {
+      ...GEOMETRY_SHAPES_LESSON_COMPONENT_CONTENT,
+      game: {
+        gameTitle: undefined,
+        stageTitle: 'Legacy geometry shapes game title',
+      },
+    });
+
+    expect(resolved).toMatchObject({
+      kind: 'geometry_shapes',
+      game: {
+        gameTitle: 'Legacy geometry shapes game title',
+      },
+    });
+    expect(resolved?.game).not.toHaveProperty('stageTitle');
+  });
+
+  it('normalizes legacy geometry symmetry stageTitle fields when resolving template content', () => {
+    const resolved = resolveKangurLessonTemplateComponentContent('geometry_symmetry', {
+      ...GEOMETRY_SYMMETRY_LESSON_COMPONENT_CONTENT,
+      game: {
+        gameTitle: undefined,
+        stageTitle: 'Legacy geometry symmetry game title',
+      },
+    });
+
+    expect(resolved).toMatchObject({
+      kind: 'geometry_symmetry',
+      game: {
+        gameTitle: 'Legacy geometry symmetry game title',
+      },
+    });
+    expect(resolved?.game).not.toHaveProperty('stageTitle');
+  });
+
+  it('normalizes legacy logical classification stageTitle fields when resolving template content', () => {
+    const resolved = resolveKangurLessonTemplateComponentContent('logical_classification', {
+      ...LOGICAL_CLASSIFICATION_LESSON_COMPONENT_CONTENT,
+      game: {
+        gameTitle: undefined,
+        stageTitle: 'Legacy logical classification game title',
+      },
+    });
+
+    expect(resolved).toMatchObject({
+      kind: 'logical_classification',
+      game: {
+        gameTitle: 'Legacy logical classification game title',
+      },
+    });
+    expect(resolved?.game).not.toHaveProperty('stageTitle');
+  });
+
+  it('normalizes legacy logical patterns stageTitle fields when resolving template content', () => {
+    const resolved = resolveKangurLessonTemplateComponentContent('logical_patterns', {
+      ...LOGICAL_PATTERNS_LESSON_COMPONENT_CONTENT,
+      game: {
+        gameTitle: undefined,
+        stageTitle: 'Legacy logical patterns game title',
+      },
+    });
+
+    expect(resolved).toMatchObject({
+      kind: 'logical_patterns',
+      game: {
+        gameTitle: 'Legacy logical patterns game title',
+      },
+    });
+    expect(resolved?.game).not.toHaveProperty('stageTitle');
+  });
+
   it('serializes legacy gameStage fields as normalized gameTitle fields', () => {
     const serializedAlphabet = serializeKangurLessonTemplateComponentContent('alphabet_words', {
       kind: 'alphabet_unified',
@@ -496,5 +568,91 @@ describe('lesson-template-component-content', () => {
       gameTitle: 'Legacy serialized geometry title',
     });
     expect(serializedGeometryJson.game).not.toHaveProperty('stageTitle');
+  });
+
+  it('serializes legacy geometry shapes stageTitle fields as normalized gameTitle fields', () => {
+    const serializedGeometryShapes = serializeKangurLessonTemplateComponentContent(
+      'geometry_shapes',
+      {
+        ...GEOMETRY_SHAPES_LESSON_COMPONENT_CONTENT,
+        game: {
+          gameTitle: undefined,
+          stageTitle: 'Legacy serialized geometry shapes title',
+        },
+      },
+    );
+    const serializedGeometryShapesJson = JSON.parse(serializedGeometryShapes) as {
+      game: Record<string, unknown>;
+    };
+
+    expect(serializedGeometryShapesJson.game).toMatchObject({
+      gameTitle: 'Legacy serialized geometry shapes title',
+    });
+    expect(serializedGeometryShapesJson.game).not.toHaveProperty('stageTitle');
+  });
+
+  it('serializes legacy geometry symmetry stageTitle fields as normalized gameTitle fields', () => {
+    const serializedGeometrySymmetry = serializeKangurLessonTemplateComponentContent(
+      'geometry_symmetry',
+      {
+        ...GEOMETRY_SYMMETRY_LESSON_COMPONENT_CONTENT,
+        game: {
+          gameTitle: undefined,
+          stageTitle: 'Legacy serialized geometry symmetry title',
+        },
+      },
+    );
+    const serializedGeometrySymmetryJson = JSON.parse(serializedGeometrySymmetry) as {
+      game: Record<string, unknown>;
+    };
+
+    expect(serializedGeometrySymmetryJson.game).toMatchObject({
+      gameTitle: 'Legacy serialized geometry symmetry title',
+    });
+    expect(serializedGeometrySymmetryJson.game).not.toHaveProperty('stageTitle');
+  });
+
+  it('serializes legacy logical classification stageTitle fields as normalized gameTitle fields', () => {
+    const serializedLogicalClassification = serializeKangurLessonTemplateComponentContent(
+      'logical_classification',
+      {
+        ...LOGICAL_CLASSIFICATION_LESSON_COMPONENT_CONTENT,
+        game: {
+          gameTitle: undefined,
+          stageTitle: 'Legacy serialized logical classification title',
+        },
+      },
+    );
+    const serializedLogicalClassificationJson = JSON.parse(
+      serializedLogicalClassification,
+    ) as {
+      game: Record<string, unknown>;
+    };
+
+    expect(serializedLogicalClassificationJson.game).toMatchObject({
+      gameTitle: 'Legacy serialized logical classification title',
+    });
+    expect(serializedLogicalClassificationJson.game).not.toHaveProperty('stageTitle');
+  });
+
+  it('serializes legacy logical patterns stageTitle fields as normalized gameTitle fields', () => {
+    const serializedLogicalPatterns = serializeKangurLessonTemplateComponentContent(
+      'logical_patterns',
+      {
+        ...LOGICAL_PATTERNS_LESSON_COMPONENT_CONTENT,
+        game: {
+          gameTitle: undefined,
+          stageTitle: 'Legacy serialized logical patterns title',
+        },
+      },
+    );
+    const serializedLogicalPatternsJson = JSON.parse(serializedLogicalPatterns) as {
+      game: Record<string, unknown>;
+    };
+
+    expect(serializedLogicalPatternsJson.game).toMatchObject({
+      gameTitle: 'Legacy serialized logical patterns title',
+    });
+    expect(serializedLogicalPatternsJson.game).not.toHaveProperty('stageTitle');
   });
 });

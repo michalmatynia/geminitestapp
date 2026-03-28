@@ -23,7 +23,22 @@ const resolveTranslationValue = (
 
 export const createLogicalClassificationLessonTranslate = (
   content: KangurLogicalClassificationLessonTemplateContent,
-): LessonTranslate => (key) => resolveTranslationValue(content, key) ?? key;
+): LessonTranslate => (key) => {
+  const resolved = resolveTranslationValue(content, key);
+  if (resolved) {
+    return resolved;
+  }
+
+  if (key === 'game.gameTitle') {
+    return content.game.stageTitle ?? key;
+  }
+
+  if (key === 'game.stageTitle') {
+    return content.game.gameTitle ?? key;
+  }
+
+  return key;
+};
 
 export const createLogicalClassificationLessonContentFromTranslate = (
   translate: LessonTranslate,
@@ -278,7 +293,7 @@ export const createLogicalClassificationLessonContentFromTranslate = (
     },
   },
   game: {
-    stageTitle: translate('game.stageTitle'),
+    gameTitle: translate('game.stageTitle'),
   },
 });
 

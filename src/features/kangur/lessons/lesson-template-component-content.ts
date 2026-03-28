@@ -117,6 +117,54 @@ const normalizeKangurLessonTemplateComponentContent = <
     } as T;
   }
 
+  if (content.kind === 'geometry_shapes') {
+    const { stageTitle: _legacyStageTitle, ...normalizedGame } = content.game;
+
+    return {
+      ...content,
+      game: {
+        ...normalizedGame,
+        gameTitle: content.game.gameTitle ?? content.game.stageTitle,
+      },
+    } as T;
+  }
+
+  if (content.kind === 'geometry_symmetry') {
+    const { stageTitle: _legacyStageTitle, ...normalizedGame } = content.game;
+
+    return {
+      ...content,
+      game: {
+        ...normalizedGame,
+        gameTitle: content.game.gameTitle ?? content.game.stageTitle,
+      },
+    } as T;
+  }
+
+  if (content.kind === 'logical_classification') {
+    const { stageTitle: _legacyStageTitle, ...normalizedGame } = content.game;
+
+    return {
+      ...content,
+      game: {
+        ...normalizedGame,
+        gameTitle: content.game.gameTitle ?? content.game.stageTitle,
+      },
+    } as T;
+  }
+
+  if (content.kind === 'logical_patterns') {
+    const { stageTitle: _legacyStageTitle, ...normalizedGame } = content.game;
+
+    return {
+      ...content,
+      game: {
+        ...normalizedGame,
+        gameTitle: content.game.gameTitle ?? content.game.stageTitle,
+      },
+    } as T;
+  }
+
   return content;
 };
 
@@ -751,7 +799,7 @@ export const GEOMETRY_SHAPES_LESSON_COMPONENT_CONTENT: KangurGeometryShapesLesso
     },
   },
   game: {
-    stageTitle: 'Rysowanie figur',
+    gameTitle: 'Rysowanie figur',
   },
 };
 
@@ -958,7 +1006,7 @@ export const GEOMETRY_SYMMETRY_LESSON_COMPONENT_CONTENT: KangurGeometrySymmetryL
       },
     },
     game: {
-      stageTitle: 'Lustra symetrii',
+      gameTitle: 'Lustra symetrii',
     },
   };
 
@@ -1242,7 +1290,7 @@ export const LOGICAL_CLASSIFICATION_LESSON_COMPONENT_CONTENT: KangurLogicalClass
       },
     },
     game: {
-      stageTitle: 'Laboratorium klasyfikacji',
+      gameTitle: 'Laboratorium klasyfikacji',
     },
   };
 

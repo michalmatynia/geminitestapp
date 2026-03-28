@@ -8,6 +8,7 @@ import { afterEach, describe, expect, it } from 'vitest';
 const tempRoots: string[] = [];
 const repoRoot = path.resolve(import.meta.dirname, '..', '..');
 const scriptPath = path.join(repoRoot, 'scripts', 'build', 'check-vercel-build-contract.cjs');
+const expectedInstallCommand = 'npm ci --workspaces=false --include=dev --no-audit --no-fund';
 
 const createTempRoot = () => {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), 'vercel-build-contract-'));
@@ -52,7 +53,7 @@ describe('check-vercel-build-contract', () => {
     });
     writeJson(root, 'vercel.json', {
       framework: 'nextjs',
-      installCommand: 'npm ci',
+      installCommand: expectedInstallCommand,
       buildCommand: 'npm run build',
     });
     writeFile(root, 'package-lock.json', '{}');
@@ -73,7 +74,7 @@ describe('check-vercel-build-contract', () => {
     });
     writeJson(root, 'vercel.json', {
       framework: 'nextjs',
-      installCommand: 'npm ci',
+      installCommand: expectedInstallCommand,
       buildCommand: 'next build',
     });
     writeFile(root, 'package-lock.json', '{}');
@@ -92,7 +93,7 @@ describe('check-vercel-build-contract', () => {
     });
     writeJson(root, 'vercel.json', {
       framework: 'nextjs',
-      installCommand: 'npm ci',
+      installCommand: expectedInstallCommand,
       buildCommand: 'npm run build',
     });
 
@@ -100,5 +101,24 @@ describe('check-vercel-build-contract', () => {
 
     expect(result.status).toBe(1);
     expect(result.stderr).toContain('package-lock.json must exist');
+  });
+
+  it('fails when vercel.json installCommand drifts back to a full workspace install', () => {
+    const root = createTempRoot();
+    writeJson(root, 'package.json', {
+      name: 'fixture',
+      packageManager: 'npm@11.7.0',
+    });
+    writeJson(root, 'vercel.json', {
+      framework: 'nextjs',
+      installCommand: 'npm ci',
+      buildCommand: 'npm run build',
+    });
+    writeFile(root, 'package-lock.json', '{}');
+
+    const result = runScript(root);
+
+    expect(result.status).toBe(1);
+    expect(result.stderr).toContain(`installCommand must be "${expectedInstallCommand}"`);
   });
 });

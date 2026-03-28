@@ -23,7 +23,22 @@ const resolveTranslationValue = (
 
 export const createGeometryShapesLessonTranslate = (
   content: KangurGeometryShapesLessonTemplateContent,
-): LessonTranslate => (key) => resolveTranslationValue(content, key) ?? key;
+): LessonTranslate => (key) => {
+  const resolved = resolveTranslationValue(content, key);
+  if (resolved) {
+    return resolved;
+  }
+
+  if (key === 'game.gameTitle') {
+    return content.game.stageTitle ?? key;
+  }
+
+  if (key === 'game.stageTitle') {
+    return content.game.gameTitle ?? key;
+  }
+
+  return key;
+};
 
 export const createGeometryShapesLessonContentFromTranslate = (
   translate: LessonTranslate,
@@ -130,7 +145,7 @@ export const createGeometryShapesLessonContentFromTranslate = (
     },
   },
   game: {
-    stageTitle: translate('game.stageTitle'),
+    gameTitle: translate('game.stageTitle'),
   },
 });
 

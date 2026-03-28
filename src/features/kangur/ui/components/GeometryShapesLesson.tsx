@@ -332,7 +332,7 @@ export default function GeometryShapesLesson({ lessonTemplate }: LessonProps): R
             accent: 'violet',
             icon: '✍️',
             shellTestId: 'geometry-shapes-game-shell',
-            title: translate('game.stageTitle'),
+            title: translate('game.gameTitle'),
           },
           launchableInstance: {
             gameId: 'geometry_shape_workshop',

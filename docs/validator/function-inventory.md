@@ -1,6 +1,6 @@
 ---
 owner: 'Products / Platform Team'
-last_reviewed: '2026-03-26'
+last_reviewed: '2026-03-28'
 status: 'generated'
 doc_type: 'generated'
 scope: 'feature:validator'
@@ -22,18 +22,19 @@ canonical: true
 | `src/features/products/validation-engine/core.ts:191` | `isPatternLocaleMatch` | core.isPatternLocaleMatch | yes | yes |
 | `src/features/products/validation-engine/core.ts:203` | `normalizeReplacementFields` | core.normalizeReplacementFields | yes | yes |
 | `src/features/products/validation-engine/core.ts:216` | `isReplacementAllowedForField` | core.isReplacementAllowedForField | yes | yes |
-| `src/features/products/validation-engine/core.ts:228` | `allowsPatternExecutionWithoutRegexMatch` | core.allowsPatternExecutionWithoutRegexMatch | yes | yes |
-| `src/features/products/validation-engine/core.ts:238` | `isLatestPriceStockMirrorPattern` | core.isLatestPriceStockMirrorPattern | yes | yes |
-| `src/features/products/validation-engine/core.ts:252` | `isRuntimePatternEnabled` | core.isRuntimePatternEnabled | yes | yes |
-| `src/features/products/validation-engine/core.ts:264` | `resolvePatternLaunchSourceValue` | core.resolvePatternLaunchSourceValue | yes | yes |
-| `src/features/products/validation-engine/core.ts:287` | `shouldLaunchPattern` | core.shouldLaunchPattern | yes | yes |
-| `src/features/products/validation-engine/core.ts:327` | `resolvePatternReplacementValue` | core.resolvePatternReplacementValue | yes | yes |
-| `src/features/products/validation-engine/core.ts:365` | `applyResolvedReplacement` | core.applyResolvedReplacement | yes | yes |
-| `src/features/products/validation-engine/core.ts:398` | `deriveDiffSegment` | core.deriveDiffSegment | yes | yes |
-| `src/features/products/validation-engine/core.ts:689` | `buildFieldIssues` | core.buildFieldIssues | yes | yes |
-| `src/features/products/validation-engine/core.ts:755` | `mergeFieldIssueMaps` | core.mergeFieldIssueMaps | yes | yes |
-| `src/features/products/validation-engine/core.ts:770` | `areIssueMapsEquivalent` | core.areIssueMapsEquivalent | yes | yes |
-| `src/features/products/validation-engine/core.ts:812` | `getIssueReplacementPreview` | core.getIssueReplacementPreview | yes | yes |
+| `src/features/products/validation-engine/core.ts:228` | `isPatternConfiguredForFormatterAutoApply` | core.isPatternConfiguredForFormatterAutoApply | yes | yes |
+| `src/features/products/validation-engine/core.ts:259` | `allowsPatternExecutionWithoutRegexMatch` | core.allowsPatternExecutionWithoutRegexMatch | yes | yes |
+| `src/features/products/validation-engine/core.ts:269` | `isLatestPriceStockMirrorPattern` | core.isLatestPriceStockMirrorPattern | yes | yes |
+| `src/features/products/validation-engine/core.ts:283` | `isRuntimePatternEnabled` | core.isRuntimePatternEnabled | yes | yes |
+| `src/features/products/validation-engine/core.ts:295` | `resolvePatternLaunchSourceValue` | core.resolvePatternLaunchSourceValue | yes | yes |
+| `src/features/products/validation-engine/core.ts:318` | `shouldLaunchPattern` | core.shouldLaunchPattern | yes | yes |
+| `src/features/products/validation-engine/core.ts:358` | `resolvePatternReplacementValue` | core.resolvePatternReplacementValue | yes | yes |
+| `src/features/products/validation-engine/core.ts:396` | `applyResolvedReplacement` | core.applyResolvedReplacement | yes | yes |
+| `src/features/products/validation-engine/core.ts:429` | `deriveDiffSegment` | core.deriveDiffSegment | yes | yes |
+| `src/features/products/validation-engine/core.ts:720` | `buildFieldIssues` | core.buildFieldIssues | yes | yes |
+| `src/features/products/validation-engine/core.ts:786` | `mergeFieldIssueMaps` | core.mergeFieldIssueMaps | yes | yes |
+| `src/features/products/validation-engine/core.ts:801` | `areIssueMapsEquivalent` | core.areIssueMapsEquivalent | yes | yes |
+| `src/features/products/validation-engine/core.ts:843` | `getIssueReplacementPreview` | core.getIssueReplacementPreview | yes | yes |
 | `src/features/products/components/settings/validator-settings/helpers.ts:96` | `normalizeReplacementFields` | helpers.normalizeReplacementFields | yes | yes |
 | `src/features/products/components/settings/validator-settings/helpers.ts:110` | `formatReplacementFields` | helpers.formatReplacementFields | yes | yes |
 | `src/features/products/components/settings/validator-settings/helpers.ts:119` | `getReplacementFieldsForTarget` | helpers.getReplacementFieldsForTarget | yes | yes |

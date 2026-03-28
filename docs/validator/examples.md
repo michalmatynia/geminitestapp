@@ -1,16 +1,12 @@
 ---
 owner: 'Products / Platform Team'
-last_reviewed: '2026-03-26'
+last_reviewed: '2026-03-28'
 status: 'active'
 doc_type: 'reference'
 scope: 'feature:validator'
 canonical: true
 ---
 # Validator Examples
-
-This is a maintained example guide for common validator behaviors. Use
-`docs/validator/architecture.md` for the pipeline overview and the generated
-function reference for exact symbol-level details.
 
 ## Example: Static Regex Pattern
 Pattern: target=`name`, regex=`\s{2,}`, replacement=` `.

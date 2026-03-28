@@ -1,6 +1,6 @@
 import { JSX } from 'react';
 
-import { AdminAiPathsQueuePage } from '@/features/ai/ai-paths/pages/AdminAiPathsQueuePage';
+import { AdminAiPathsQueuePage } from '@/features/ai/public';
 import { FileUploadEventsPanel } from '@/features/files/public';
 import { KangurSocialPipelineQueuePanel } from '@/features/kangur/public';
 

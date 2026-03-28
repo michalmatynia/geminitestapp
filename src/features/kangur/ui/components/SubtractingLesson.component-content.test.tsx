@@ -35,7 +35,7 @@ describe('SubtractingLesson', () => {
     componentContent.sections.podstawy.title = 'Database subtracting basics';
     componentContent.sections.podstawy.description = 'Database subtracting basics description';
     componentContent.slides.basics.meaning.title = 'Database subtracting meaning';
-    componentContent.game.stageTitle = 'Database subtracting game';
+    componentContent.game.gameTitle = 'Database subtracting game';
 
     render(
       <NextIntlClientProvider locale='pl' messages={plMessages}>

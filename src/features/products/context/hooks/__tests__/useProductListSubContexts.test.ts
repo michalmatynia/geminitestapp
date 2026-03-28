@@ -101,6 +101,7 @@ describe('useProductListSubContexts', () => {
     onEditSuccess: () => {},
     onEditSave: async () => {},
     integrationsProduct: null,
+    integrationsRecoveryContext: null,
     onCloseIntegrations: () => {},
     onStartListing: () => {},
     showListProductModal: false,

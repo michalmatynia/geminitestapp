@@ -61,15 +61,15 @@ export function StudioVariantsGrid(): React.JSX.Element {
       ) : gridItems.length === 0 ? (
         <p className='text-sm text-gray-400'>No generations yet for the selected product image.</p>
       ) : (
-        <GenericGridPicker<StudioVariantGridItem>
+        <GenericGridPicker
           items={gridItems}
           selectedId={selectedVariant?.id}
           onSelect={(item) => {
-            if (item.id && !item.metadata?.['isPending']) {
+            if (item.id && !item.metadata?.isPending) {
               setSelectedVariantSlotId(item.id);
             }
           }}
-          columns={5}
+          gridClassName='grid-cols-2 sm:grid-cols-3 md:grid-cols-5'
           gap='8px'
           renderItem={(item, isSelected) => {
             if (item.metadata?.['isPending']) {

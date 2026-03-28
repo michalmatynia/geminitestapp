@@ -119,7 +119,7 @@ describe('ArtShapesBasicLesson', () => {
                 },
               },
               game: {
-                stageTitle: 'Database game title',
+                gameTitle: 'Database game title',
                 progress: {
                   round: 'DB round {current}/{total}',
                   score: 'DB score {score}',

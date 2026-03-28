@@ -1,6 +1,6 @@
 ---
 owner: 'AI Paths Team'
-last_reviewed: '2026-03-26'
+last_reviewed: '2026-03-28'
 status: 'generated'
 doc_type: 'generated'
 scope: 'feature:ai-paths'
@@ -8,7 +8,7 @@ canonical: true
 ---
 # JSON Mapper Migration Sheet (`mapper`)
 
-Generated at: 2026-03-26T12:17:00.706Z
+Generated at: 2026-03-28T14:11:54.225Z
 
 ## Status
 
@@ -29,7 +29,7 @@ Generated at: 2026-03-26T12:17:00.706Z
 - v2 code object: `docs/ai-paths/node-code-objects-v2/mapper.json`
 - v3 scaffold: `docs/ai-paths/node-code-objects-v3/mapper.scaffold.json`
 - v3 object id: `node_obj_mapper_portable_v3`
-- v3 object hash: `36169e42e001a07c2b41114cd203dde8911dcfc3d6eb85064d8e5d1895a88693`
+- v3 object hash: `4347ea4b775dafa85b0137d878ce4ef259c2a7e065b4a24b07a6a32d42b72823`
 
 ## Ports
 

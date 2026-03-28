@@ -206,7 +206,7 @@ export default function GeometryShapeRecognitionLesson({
           sectionId: 'draw',
           shell: {
             accent: 'emerald',
-            title: translate('draw.stageTitle'),
+            title: translate('draw.gameTitle'),
             description: translate('sections.draw.description'),
             icon: '✍️',
             maxWidthClassName: 'max-w-3xl',

@@ -110,7 +110,7 @@ describe('GeometryShapeRecognitionLesson', () => {
                 caption: 'Database summary caption',
               },
               draw: {
-                stageTitle: 'Database draw game',
+                gameTitle: 'Database draw game',
                 difficultyLabel: 'Database difficulty',
                 finishLabel: 'Database finish label',
               },

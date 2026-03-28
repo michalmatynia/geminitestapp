@@ -8,7 +8,7 @@ canonical: true
 ---
 # Route Hotspots (Static Heuristic)
 
-Generated at: 2026-03-28T04:18:19.569Z
+Generated at: 2026-03-28T14:12:46.431Z
 
 This report ranks route/page complexity using LOC as a fast heuristic baseline.
 
@@ -23,10 +23,7 @@ This report ranks route/page complexity using LOC as a fast heuristic baseline.
 | `src/app/api/chatbot/[[...path]]/route.ts` | 168 |
 | `src/app/api/v2/products/[[...path]]/route.ts` | 167 |
 | `src/app/api/image-studio/[[...path]]/route.ts` | 126 |
-| `src/app/api/agent/leases/route.ts` | 122 |
 | `src/app/api/kangur/[[...path]]/route.ts` | 62 |
-| `src/app/api/agent/resources/route.ts` | 59 |
-| `src/app/api/agent/approval-gates/route.ts` | 50 |
 | `src/app/api/marketplace/[resource]/route.ts` | 38 |
 | `src/app/api/kangur/auth/parent-magic-link/exchange/route.ts` | 32 |
 | `src/app/api/kangur/auth/parent-magic-link/request/route.ts` | 32 |
@@ -36,6 +33,9 @@ This report ranks route/page complexity using LOC as a fast heuristic baseline.
 | `src/app/api/auth/users/[id]/route.ts` | 23 |
 | `src/app/api/drafts/[id]/route.ts` | 23 |
 | `src/app/api/kangur/auth/me/route.ts` | 23 |
+| `src/app/api/ai/schema/[entity]/route.ts` | 22 |
+| `src/app/api/assets3d/[id]/route.ts` | 22 |
+| `src/app/api/cms/pages/[id]/route.ts` | 22 |
 
 ## Top App Pages by LOC
 
@@ -71,6 +71,6 @@ This report ranks route/page complexity using LOC as a fast heuristic baseline.
 - `src/app/api/chatbot/[[...path]]/route.ts`
 - `src/app/api/v2/products/[[...path]]/route.ts`
 - `src/app/api/image-studio/[[...path]]/route.ts`
-- `src/app/api/agent/leases/route.ts`
 - `src/app/api/kangur/[[...path]]/route.ts`
-- `src/app/api/agent/resources/route.ts`
+- `src/app/api/marketplace/[resource]/route.ts`
+- `src/app/api/kangur/auth/parent-magic-link/exchange/route.ts`

@@ -202,7 +202,7 @@ const LOGICAL_ANALOGIES_LESSON_COPY_PL: Omit<
     },
   },
   game: {
-    stageTitle: 'Most relacji',
+    gameTitle: 'Most relacji',
   },
   animations: {
     analogyBridge: 'Animacja: relacja A:B = C:D.',
@@ -224,8 +224,11 @@ const translateLogicalAnalogiesLesson = (
   key: string,
   fallback: string,
 ): string => {
-  const translated = translate(key);
-  return translated === key || translated.endsWith(`.${key}`) ? fallback : translated;
+  const translationKey = key === 'game.gameTitle' ? 'game.stageTitle' : key;
+  const translated = translate(translationKey);
+  return translated === translationKey || translated.endsWith(`.${translationKey}`)
+    ? fallback
+    : translated;
 };
 
 const localizeLogicalAnalogiesLessonCopy = <T,>(

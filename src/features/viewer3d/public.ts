@@ -10,3 +10,6 @@ export {
   useAsset3DTags,
   useAssets3D,
 } from './hooks/useAsset3dQueries';
+
+export { default as Admin3DAssetsPage } from './pages/Admin3DAssetsPage';
+export { default as Asset3DListPage } from './pages/Asset3DListPage';

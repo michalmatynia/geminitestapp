@@ -29,7 +29,10 @@ const resolveTranslationValue = (
 export const createArtShapesBasicLessonTranslate = (
   content: KangurArtShapesBasicLessonTemplateContent,
 ): ArtShapesBasicLessonTranslate => (key, values) => {
-  const template = resolveTranslationValue(content, key);
+  const template =
+    resolveTranslationValue(content, key) ??
+    (key === 'game.gameTitle' ? resolveTranslationValue(content, 'game.stageTitle') : null) ??
+    (key === 'game.stageTitle' ? resolveTranslationValue(content, 'game.gameTitle') : null);
   if (!template) {
     return key;
   }
@@ -139,7 +142,7 @@ export const createArtShapesBasicLessonContentFromTranslate = (
     },
   },
   game: {
-    stageTitle: translate('game.stageTitle'),
+    gameTitle: translate('game.stageTitle'),
     progress: {
       round: translate('game.progress.round'),
       score: translate('game.progress.score'),

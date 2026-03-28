@@ -35,7 +35,8 @@ describe('AddingLesson', () => {
     componentContent.sections.podstawy.title = 'Database adding basics';
     componentContent.sections.podstawy.description = 'Database adding basics description';
     componentContent.slides.podstawy.meaning.title = 'Database adding meaning';
-    componentContent.game.stageTitle = 'Database adding game';
+    componentContent.game.gameTitle = 'Database adding game';
+    componentContent.synthesis.gameTitle = 'Database adding synthesis';
 
     render(
       <NextIntlClientProvider locale='pl' messages={plMessages}>
@@ -75,5 +76,6 @@ describe('AddingLesson', () => {
       expect.arrayContaining([expect.objectContaining({ title: 'Database adding meaning' })]),
     );
     expect(props.games[0]?.shell.title).toBe('Database adding game');
+    expect(props.games[1]?.shell.title).toBe('Database adding synthesis');
   });
 });

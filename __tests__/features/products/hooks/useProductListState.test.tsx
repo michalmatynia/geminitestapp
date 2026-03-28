@@ -267,6 +267,7 @@ vi.mock('@/features/products/hooks/product-list/useProductListModals', () => ({
     handleMassListSuccess: vi.fn(),
     handleAddToMarketplace: vi.fn(),
     integrationsProduct: null,
+    integrationsRecoveryContext: null,
     showListProductModal: false,
     listProductPreset: null,
     integrationBadgeIds: new Set<string>(),

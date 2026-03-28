@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-03-27T13:45:23.570Z",
+  "generatedAt": "2026-03-28T14:12:55.894Z",
   "status": "passed",
   "summary": {
     "total": 32,
@@ -12,7 +12,7 @@
     "featuresWithoutTestCount": 0,
     "featuresWithoutFastTestCount": 0,
     "featuresWithoutNegativeTestCount": 0,
-    "totalTestFiles": 2536,
+    "totalTestFiles": 2620,
     "onlyCount": 0,
     "skipCount": 32,
     "todoCount": 0
@@ -28,22 +28,22 @@
   "featuresWithTests": [
     {
       "feature": "kangur",
-      "testCount": 681,
-      "fastTestCount": 663,
+      "testCount": 721,
+      "fastTestCount": 703,
       "e2eTestCount": 18,
-      "negativePathTestCount": 118
+      "negativePathTestCount": 123
     },
     {
       "feature": "ai",
-      "testCount": 290,
-      "fastTestCount": 290,
+      "testCount": 294,
+      "fastTestCount": 294,
       "e2eTestCount": 0,
       "negativePathTestCount": 103
     },
     {
       "feature": "products",
-      "testCount": 110,
-      "fastTestCount": 103,
+      "testCount": 117,
+      "fastTestCount": 110,
       "e2eTestCount": 7,
       "negativePathTestCount": 33
     },
@@ -56,15 +56,15 @@
     },
     {
       "feature": "cms",
-      "testCount": 75,
-      "fastTestCount": 74,
+      "testCount": 76,
+      "fastTestCount": 75,
       "e2eTestCount": 1,
       "negativePathTestCount": 15
     },
     {
       "feature": "integrations",
-      "testCount": 51,
-      "fastTestCount": 50,
+      "testCount": 55,
+      "fastTestCount": 54,
       "e2eTestCount": 1,
       "negativePathTestCount": 18
     },
@@ -119,15 +119,15 @@
     },
     {
       "feature": "filemaker",
-      "testCount": 8,
-      "fastTestCount": 8,
+      "testCount": 10,
+      "fastTestCount": 10,
       "e2eTestCount": 0,
       "negativePathTestCount": 3
     },
     {
       "feature": "viewer3d",
-      "testCount": 8,
-      "fastTestCount": 7,
+      "testCount": 9,
+      "fastTestCount": 8,
       "e2eTestCount": 1,
       "negativePathTestCount": 3
     },
@@ -549,5 +549,5 @@
       "infoCount": 32
     }
   ],
-  "durationMs": 423
+  "durationMs": 512
 }

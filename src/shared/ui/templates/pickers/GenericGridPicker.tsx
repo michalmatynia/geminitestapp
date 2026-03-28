@@ -44,7 +44,7 @@ export const GenericGridPicker = memo(function GenericGridPicker<
   selectedId,
   onSelect,
   renderItem,
-  columns = 4,
+  columns,
   gap = '8px',
   searchable = false,
   searchPlaceholder = 'Search...',
@@ -122,7 +122,9 @@ export const GenericGridPicker = memo(function GenericGridPicker<
         <div
           className={cn('grid gap-2 auto-rows-max', gridClassName)}
           style={{
-            gridTemplateColumns: `repeat(${columns}, minmax(0, 1fr))`,
+            ...(columns !== undefined
+              ? { gridTemplateColumns: `repeat(${columns}, minmax(0, 1fr))` }
+              : {}),
             gap,
           }}
           role={onSelect ? 'listbox' : 'grid'}

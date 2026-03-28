@@ -1,8 +1,10 @@
 import type { LessonTranslate } from '@/features/kangur/ui/components/lesson-copy';
 import {
-  kangurLessonTemplateComponentContentSchema,
-  type KangurAddingLessonTemplateContent,
-  type KangurLessonTemplate,
+  resolveKangurLessonTemplateComponentContent,
+} from '@/features/kangur/lessons/lesson-template-component-content';
+import type {
+  KangurAddingLessonTemplateContent,
+  KangurLessonTemplate,
 } from '@/shared/contracts/kangur-lesson-templates';
 
 const ADDING_LESSON_DEFAULTS: Omit<KangurAddingLessonTemplateContent, 'kind'> = {
@@ -195,10 +197,10 @@ const ADDING_LESSON_DEFAULTS: Omit<KangurAddingLessonTemplateContent, 'kind'> = 
     },
   },
   game: {
-    stageTitle: 'Gra z piłkami!',
+    gameTitle: 'Gra z piłkami!',
   },
   synthesis: {
-    stageTitle: 'Synteza dodawania',
+    gameTitle: 'Synteza dodawania',
   },
 };
 
@@ -907,17 +909,17 @@ export const createAddingLessonContentFromTranslate = (
     },
   },
   game: {
-    stageTitle: translateAddingLesson(
+    gameTitle: translateAddingLesson(
       translate,
       'game.stageTitle',
-      ADDING_LESSON_DEFAULTS.game.stageTitle,
+      ADDING_LESSON_DEFAULTS.game.gameTitle ?? ADDING_LESSON_DEFAULTS.game.stageTitle,
     ),
   },
   synthesis: {
-    stageTitle: translateAddingLesson(
+    gameTitle: translateAddingLesson(
       translate,
       'synthesis.stageTitle',
-      ADDING_LESSON_DEFAULTS.synthesis.stageTitle,
+      ADDING_LESSON_DEFAULTS.synthesis.gameTitle ?? ADDING_LESSON_DEFAULTS.synthesis.stageTitle,
     ),
   },
 });
@@ -926,9 +928,15 @@ export const resolveAddingLessonContent = (
   template: KangurLessonTemplate | null | undefined,
   fallbackTranslate: LessonTranslate,
 ): KangurAddingLessonTemplateContent => {
-  const parsed = kangurLessonTemplateComponentContentSchema.safeParse(template?.componentContent);
-  if (parsed.success && parsed.data.kind === 'adding') {
-    return parsed.data;
+  if (template?.componentContent) {
+    const resolved = resolveKangurLessonTemplateComponentContent(
+      'adding',
+      template.componentContent,
+    );
+
+    if (resolved?.kind === 'adding') {
+      return resolved;
+    }
   }
 
   return createAddingLessonContentFromTranslate(fallbackTranslate);

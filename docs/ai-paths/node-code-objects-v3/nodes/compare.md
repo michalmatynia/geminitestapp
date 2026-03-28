@@ -1,6 +1,6 @@
 ---
 owner: 'AI Paths Team'
-last_reviewed: '2026-03-26'
+last_reviewed: '2026-03-28'
 status: 'generated'
 doc_type: 'generated'
 scope: 'feature:ai-paths'
@@ -8,7 +8,7 @@ canonical: true
 ---
 # Compare Migration Sheet (`compare`)
 
-Generated at: 2026-03-26T12:17:00.706Z
+Generated at: 2026-03-28T14:11:54.225Z
 
 ## Status
 
@@ -29,7 +29,7 @@ Generated at: 2026-03-26T12:17:00.706Z
 - v2 code object: `docs/ai-paths/node-code-objects-v2/compare.json`
 - v3 scaffold: `docs/ai-paths/node-code-objects-v3/compare.scaffold.json`
 - v3 object id: `node_obj_compare_portable_v3`
-- v3 object hash: `36551f48875e54fb823c8eb032468e0818238106ff83d46a8613b7a74891566f`
+- v3 object hash: `8183d8926501b11e720ce2df3488e901131bffc5a4214a05aa2ae2ee70ff9283`
 
 ## Ports
 

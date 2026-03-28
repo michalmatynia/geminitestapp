@@ -105,6 +105,18 @@ const normalizeKangurLessonTemplateComponentContent = <
     } as T;
   }
 
+  if (content.kind === 'art_shapes_basic') {
+    const { stageTitle: _legacyStageTitle, ...normalizedGame } = content.game;
+
+    return {
+      ...content,
+      game: {
+        ...normalizedGame,
+        gameTitle: content.game.gameTitle ?? content.game.stageTitle,
+      },
+    } as T;
+  }
+
   if (content.kind === 'geometry_basics') {
     const { stageTitle: _legacyStageTitle, ...normalizedGame } = content.game;
 
@@ -125,6 +137,18 @@ const normalizeKangurLessonTemplateComponentContent = <
       game: {
         ...normalizedGame,
         gameTitle: content.game.gameTitle ?? content.game.stageTitle,
+      },
+    } as T;
+  }
+
+  if (content.kind === 'geometry_shape_recognition') {
+    const { stageTitle: _legacyStageTitle, ...normalizedDraw } = content.draw;
+
+    return {
+      ...content,
+      draw: {
+        ...normalizedDraw,
+        gameTitle: content.draw.gameTitle ?? content.draw.stageTitle,
       },
     } as T;
   }
@@ -154,6 +178,71 @@ const normalizeKangurLessonTemplateComponentContent = <
   }
 
   if (content.kind === 'logical_patterns') {
+    const { stageTitle: _legacyStageTitle, ...normalizedGame } = content.game;
+
+    return {
+      ...content,
+      game: {
+        ...normalizedGame,
+        gameTitle: content.game.gameTitle ?? content.game.stageTitle,
+      },
+    } as T;
+  }
+
+  if (content.kind === 'logical_analogies') {
+    const { stageTitle: _legacyStageTitle, ...normalizedGame } = content.game;
+
+    return {
+      ...content,
+      game: {
+        ...normalizedGame,
+        gameTitle: content.game.gameTitle ?? content.game.stageTitle,
+      },
+    } as T;
+  }
+
+  if (content.kind === 'adding') {
+    const { stageTitle: _legacyStageTitle, ...normalizedGame } = content.game;
+    const { stageTitle: _legacySynthesisStageTitle, ...normalizedSynthesis } = content.synthesis;
+
+    return {
+      ...content,
+      game: {
+        ...normalizedGame,
+        gameTitle: content.game.gameTitle ?? content.game.stageTitle,
+      },
+      synthesis: {
+        ...normalizedSynthesis,
+        gameTitle: content.synthesis.gameTitle ?? content.synthesis.stageTitle,
+      },
+    } as T;
+  }
+
+  if (content.kind === 'multiplication') {
+    const { stageTitle: _legacyStageTitle, ...normalizedGame } = content.game;
+
+    return {
+      ...content,
+      game: {
+        ...normalizedGame,
+        gameTitle: content.game.gameTitle ?? content.game.stageTitle,
+      },
+    } as T;
+  }
+
+  if (content.kind === 'subtracting') {
+    const { stageTitle: _legacyStageTitle, ...normalizedGame } = content.game;
+
+    return {
+      ...content,
+      game: {
+        ...normalizedGame,
+        gameTitle: content.game.gameTitle ?? content.game.stageTitle,
+      },
+    } as T;
+  }
+
+  if (content.kind === 'division') {
     const { stageTitle: _legacyStageTitle, ...normalizedGame } = content.game;
 
     return {
@@ -531,7 +620,7 @@ export const ART_SHAPES_BASIC_LESSON_COMPONENT_CONTENT: KangurArtShapesBasicLess
     },
   },
   game: {
-    stageTitle: 'Uzupełnij wirujący wzór',
+    gameTitle: 'Uzupełnij wirujący wzór',
     progress: {
       round: 'Runda {current}/{total}',
       score: 'Wynik: {score}',
@@ -896,7 +985,7 @@ export const GEOMETRY_SHAPE_RECOGNITION_LESSON_COMPONENT_CONTENT: KangurGeometry
       caption: 'Poszukaj kół, kwadratów, trójkątów, prostokątów, owali i rombów w domu.',
     },
     draw: {
-      stageTitle: 'Gra: Rysuj kształty',
+      gameTitle: 'Gra: Rysuj kształty',
       difficultyLabel: 'Podstawowe',
       finishLabel: 'Wróć do tematów',
     },

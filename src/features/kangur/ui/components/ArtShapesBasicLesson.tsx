@@ -58,7 +58,7 @@ export default function ArtShapesBasicLesson({ lessonTemplate }: LessonProps): J
           sectionId: ART_SHAPES_ROTATION_PUZZLE_SECTION_ID,
           shell: {
             accent: 'amber',
-            title: translate('game.stageTitle'),
+            title: translate('game.gameTitle'),
             icon: '🌀',
             maxWidthClassName: 'max-w-4xl',
             shellTestId: 'art-shapes-rotation-gap-game-shell',

@@ -89,7 +89,7 @@ const GEOMETRY_PERIMETER_LESSON_COPY_PL = {
     },
   },
   game: {
-    stageTitle: 'Gra: Rysuj obwód',
+    gameTitle: 'Gra: Rysuj obwód',
   },
 } as const;
 
@@ -325,10 +325,11 @@ const buildGeometryPerimeterLessonCopy = (
     },
   },
   game: {
-    stageTitle: translateGeometryPerimeterLesson(
+    gameTitle: translateGeometryPerimeterLesson(
       translate,
       'game.stageTitle',
-      GEOMETRY_PERIMETER_LESSON_COPY_PL.game.stageTitle
+      GEOMETRY_PERIMETER_LESSON_COPY_PL.game.gameTitle ??
+        GEOMETRY_PERIMETER_LESSON_COPY_PL.game.stageTitle
     ),
   },
 });
@@ -548,7 +549,7 @@ export default function GeometryPerimeterLesson(): React.JSX.Element {
           sectionId: 'game_draw',
           shell: {
             accent: 'amber',
-            title: copy.game.stageTitle,
+            title: copy.game.gameTitle ?? copy.game.stageTitle ?? 'Gra: Rysuj obwód',
             icon: '✍️',
             maxWidthClassName: 'max-w-sm',
             headerTestId: 'geometry-perimeter-game-header',

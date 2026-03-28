@@ -14,11 +14,13 @@ import {
   Button,
   FormSection,
   StandardDataTablePanel,
+  DataTable,
   SelectSimple,
   StatusBadge,
   Badge,
+  Card,
   Tabs,
-  TabsList,
+...
   TabsTrigger,
   TabsContent,
   MetadataItem,
@@ -210,7 +212,38 @@ function DatabaseEngineSettingsTab(): React.JSX.Element {
         data={rows}
         isLoading={isLoading}
         variant='flat'
-      />
+        showTable={false}
+      >
+        <div className='md:hidden space-y-3 px-4 pb-4'>
+          {rows.map((row) => (
+            <Card key={row.name} className='bg-card/40 p-3 space-y-2'>
+              <div className='flex justify-between items-center'>
+                <span className='font-mono text-emerald-200 text-xs font-medium'>{row.name}</span>
+                <Badge variant='outline' className='text-[10px] uppercase'>MongoDB</Badge>
+              </div>
+              <div className='flex justify-between items-center text-[11px]'>
+                <span className='text-gray-500'>Assigned Provider</span>
+                <SelectSimple
+                  size='xs'
+                  value={collectionRouteMap[row.name] ?? 'auto'}
+                  onValueChange={(val) => {
+                    updateCollectionRoute(row.name, val);
+                  }}
+                  options={COLLECTION_PROVIDER_OPTIONS}
+                  className='h-6 w-24 text-[10px]'
+                 ariaLabel='Select option' title='Select option'/>
+              </div>
+            </Card>
+          ))}
+        </div>
+        <div className='hidden md:block'>
+          <DataTable
+            columns={collectionColumns}
+            data={rows}
+            isLoading={isLoading}
+          />
+        </div>
+      </StandardDataTablePanel>
 
       <div className={`${UI_GRID_ROOMY_CLASSNAME} md:grid-cols-2`}>
         <FormSection title='Redis Overview' className='p-6'>
@@ -245,7 +278,34 @@ function DatabaseEngineSettingsTab(): React.JSX.Element {
           data={(operationsJobs?.jobs ?? []).slice(0, 5)}
           isLoading={isLoading}
           variant='flat'
-        />
+          showTable={false}
+        >
+          <div className='md:hidden space-y-2 px-4 pb-4'>
+            {(operationsJobs?.jobs ?? []).slice(0, 5).map((job) => (
+              <Card key={job.id} className='bg-card/40 p-3 space-y-2'>
+                <div className='flex justify-between items-center'>
+                  <span className='font-mono text-[10px] text-gray-400'>
+                    {job.id.slice(0, 8)}...
+                  </span>
+                  <StatusBadge status={job.status} />
+                </div>
+                <div className='flex justify-between items-center text-[11px]'>
+                  <span className='text-gray-300'>{job.type}</span>
+                  <span className='text-gray-500'>
+                    {job.createdAt ? new Date(job.createdAt).toLocaleDateString() : '—'}
+                  </span>
+                </div>
+              </Card>
+            ))}
+          </div>
+          <div className='hidden md:block'>
+            <DataTable
+              columns={jobColumns}
+              data={(operationsJobs?.jobs ?? []).slice(0, 5)}
+              isLoading={isLoading}
+            />
+          </div>
+        </StandardDataTablePanel>
       </div>
     </div>
   );

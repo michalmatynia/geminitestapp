@@ -1180,10 +1180,10 @@ const buildSubtractingLessonCopy = (
     },
   },
   game: {
-    stageTitle: translateSubtractingLesson(
+    gameTitle: translateSubtractingLesson(
       translate,
       'game.stageTitle',
-      SUBTRACTING_LESSON_COPY_PL.game.stageTitle
+      SUBTRACTING_LESSON_COPY_PL.game.gameTitle ?? SUBTRACTING_LESSON_COPY_PL.game.stageTitle
     ),
   },
 });
@@ -1686,7 +1686,7 @@ export default function SubtractingLesson({ lessonTemplate }: LessonProps): Reac
             maxWidthClassName: 'max-w-none',
             headerTestId: 'subtracting-lesson-game-header',
             shellTestId: 'subtracting-lesson-game-shell',
-            title: copy.game.stageTitle,
+            title: copy.game.gameTitle ?? copy.game.stageTitle ?? 'Gra z odejmowaniem!',
           },
           launchableInstance: {
             gameId: 'subtracting_garden',

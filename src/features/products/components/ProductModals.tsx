@@ -57,24 +57,24 @@ const TriggerButtonBar = dynamic<ProductTriggerButtonBarProps>(
 
 const ListProductModal = dynamic(
   () =>
-    import('@/features/integrations/public').then(
-      (mod: typeof import('@/features/integrations/public')) => mod.ListProductModal
+    import('@/features/integrations/product-integrations-adapter').then(
+      (mod: typeof import('@/features/integrations/product-integrations-adapter')) => mod.ListProductModal
     ),
   { ssr: false }
 );
 
 const MassListProductModal = dynamic(
   () =>
-    import('@/features/integrations/public').then(
-      (mod: typeof import('@/features/integrations/public')) => mod.MassListProductModal
+    import('@/features/integrations/product-integrations-adapter').then(
+      (mod: typeof import('@/features/integrations/product-integrations-adapter')) => mod.MassListProductModal
     ),
   { ssr: false }
 );
 
 const ProductListingsModal = dynamic(
   () =>
-    import('@/features/integrations/public').then(
-      (mod: typeof import('@/features/integrations/public')) =>
+    import('@/features/integrations/product-integrations-adapter').then(
+      (mod: typeof import('@/features/integrations/product-integrations-adapter')) =>
         mod.ProductListingsModal
     ),
   { ssr: false }
@@ -425,6 +425,7 @@ export function ProductModals(): React.JSX.Element {
     onEditSuccess,
     onEditSave,
     integrationsProduct,
+    integrationsRecoveryContext,
     onCloseIntegrations,
     onStartListing,
     showListProductModal,
@@ -500,6 +501,7 @@ export function ProductModals(): React.JSX.Element {
           onClose={onCloseIntegrations}
           onStartListing={onStartListing}
           onListingsUpdated={onListingsUpdated}
+          recoveryContext={integrationsRecoveryContext}
         />
       )}
 

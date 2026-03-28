@@ -303,7 +303,7 @@ export default function DivisionLesson({
           sectionId: 'game',
           shell: {
             accent: 'sky',
-            title: copy.game.stageTitle,
+            title: copy.game.gameTitle ?? copy.game.stageTitle ?? 'Gra z dzieleniem!',
             icon: '🎮',
             maxWidthClassName: 'max-w-none',
             headerTestId: 'division-lesson-game-header',

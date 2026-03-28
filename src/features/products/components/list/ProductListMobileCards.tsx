@@ -351,7 +351,7 @@ const renderProductListMobileCard = ({
           status={status}
           prefetchListings={() => prefetchListings(product.id)}
           showMarketplaceBadge={showMarketplaceBadge}
-          onOpenIntegrations={() => onIntegrationsClick(product)}
+          onOpenIntegrations={(recoveryContext) => onIntegrationsClick(product, recoveryContext)}
           onOpenExportSettings={() => onExportSettingsClick(product)}
         />
 

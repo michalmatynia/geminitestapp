@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import React, { type ReactNode } from 'react';
 
@@ -16,6 +16,7 @@ const {
   useProductFormCoreMock,
   productFormProviderPropsMock,
   triggerButtonBarMock,
+  productListingsModalPropsMock,
   getNextProviderInstanceIdMock,
   resetProviderInstanceCounterMock,
 } = vi.hoisted(() => {
@@ -26,6 +27,7 @@ const {
     useProductFormCoreMock: vi.fn(),
     productFormProviderPropsMock: vi.fn(),
     triggerButtonBarMock: vi.fn(),
+    productListingsModalPropsMock: vi.fn(),
     getNextProviderInstanceIdMock: (): number => {
       providerInstanceCounter += 1;
       return providerInstanceCounter;
@@ -121,12 +123,13 @@ vi.mock('@/features/products/components/ProductForm', () => ({
   },
 }));
 
-vi.mock('@/features/integrations/public', () => ({
+vi.mock('@/features/integrations/product-integrations-adapter', () => ({
   ListProductModal: () => null,
   MassListProductModal: () => null,
-  ProductListingsModal: () => null,
-  __esModule: true,
-  default: () => null,
+  ProductListingsModal: (props: Record<string, unknown>) => {
+    productListingsModalPropsMock(props);
+    return null;
+  },
 }));
 
 import { ProductModals, buildTriggeredProductEntityJson } from './ProductModals';
@@ -198,6 +201,7 @@ const buildContext = (overrides: Record<string, unknown> = {}) => ({
   onEditSuccess: vi.fn(),
   onEditSave: vi.fn(),
   integrationsProduct: null,
+  integrationsRecoveryContext: null,
   onCloseIntegrations: vi.fn(),
   onStartListing: vi.fn(),
   showListProductModal: false,
@@ -278,6 +282,36 @@ describe('ProductModals edit hydration guard', () => {
     expect(screen.getByTestId('loading-form-modal')).toBeInTheDocument();
     expect(screen.getByTestId('product-form-provider')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Update' })).not.toBeDisabled();
+  });
+
+  it('passes failed export recovery context into the listings modal', async () => {
+    useProductListModalsContextMock.mockReturnValue(
+      buildContext({
+        integrationsProduct: createProduct(),
+        integrationsRecoveryContext: {
+          source: 'base_quick_export_failed',
+          integrationSlug: 'baselinker',
+          status: 'failed',
+          runId: 'run-failed-42',
+        },
+      })
+    );
+
+    render(<ProductModals />);
+
+    await waitFor(() => {
+      expect(productListingsModalPropsMock).toHaveBeenCalledWith(
+        expect.objectContaining({
+          item: expect.objectContaining({ id: 'product-1' }),
+          recoveryContext: {
+            source: 'base_quick_export_failed',
+            integrationSlug: 'baselinker',
+            status: 'failed',
+            runId: 'run-failed-42',
+          },
+        })
+      );
+    });
   });
 
   it('renders edit form when the editing product is hydrated', () => {

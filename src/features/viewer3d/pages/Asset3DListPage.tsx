@@ -318,7 +318,7 @@ export function Asset3DListPage(): React.JSX.Element {
         <GenericGridPicker<Asset3DGridItem>
           items={pickerItems}
           onSelect={(item) => setPreviewAsset(item.value)}
-          columns={5}
+          gridClassName='grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5'
           gap='16px'
           renderItem={(item) => {
             const asset = item.value;

@@ -33,7 +33,7 @@ describe('MultiplicationLesson', () => {
     componentContent.sections.intro.title = 'Database multiplication intro';
     componentContent.sections.intro.description = 'Database multiplication description';
     componentContent.slides.intro.meaning.title = 'Database multiplication meaning';
-    componentContent.game.stageTitle = 'Database multiplication game';
+    componentContent.game.gameTitle = 'Database multiplication game';
 
     render(
       <MultiplicationLesson

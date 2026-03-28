@@ -2206,7 +2206,7 @@ export const AI_PATHS_TOOLTIP_CATALOG: AiPathsTooltipDocEntry[] = [
   {
     "id": "node_config_field_database_database_action",
     "title": "Database Query: database.action",
-    "summary": "Provider action command aligned to MongoDB action labels.",
+    "summary": "Provider action command (MongoDB action labels).",
     "section": "Node Config - Database Query",
     "aliases": [
       "database",
@@ -2549,6 +2549,29 @@ export const AI_PATHS_TOOLTIP_CATALOG: AiPathsTooltipDocEntry[] = [
     ]
   },
   {
+    "id": "node_config_field_database_database_parameterinferenceguard_languagecode",
+    "title": "Database Query: database.parameterInferenceGuard.languageCode",
+    "summary": "Language code mirrored into valuesByLanguage for inferred parameter writes.",
+    "section": "Node Config - Database Query",
+    "aliases": [
+      "database",
+      "database.parameterInferenceGuard.languageCode",
+      "database.database.parameterInferenceGuard.languageCode"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/database.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node",
+      "config-field"
+    ],
+    "uiTargets": [
+      "node-config.database.database.parameterInferenceGuard.languageCode"
+    ]
+  },
+  {
     "id": "node_config_field_database_database_parameterinferenceguard_targetpath",
     "title": "Database Query: database.parameterInferenceGuard.targetPath",
     "summary": "Update field to sanitize (default: parameters).",
@@ -2758,7 +2781,7 @@ export const AI_PATHS_TOOLTIP_CATALOG: AiPathsTooltipDocEntry[] = [
   {
     "id": "node_config_field_database_database_query_provider",
     "title": "Database Query: database.query.provider",
-    "summary": "Database provider (mongodb only).",
+    "summary": "Database provider (mongodb; auto resolves to MongoDB).",
     "section": "Node Config - Database Query",
     "aliases": [
       "database",
@@ -3264,7 +3287,7 @@ export const AI_PATHS_TOOLTIP_CATALOG: AiPathsTooltipDocEntry[] = [
   {
     "id": "node_config_field_db_schema_db_schema_provider",
     "title": "Database Schema: db_schema.provider",
-    "summary": "Which provider to load: auto (primary) or mongodb. Legacy `all` is normalized to `auto`.",
+    "summary": "Which provider to load: auto (primary) or mongodb.",
     "section": "Node Config - Database Schema",
     "aliases": [
       "db_schema",
@@ -5495,7 +5518,7 @@ export const AI_PATHS_TOOLTIP_CATALOG: AiPathsTooltipDocEntry[] = [
   {
     "id": "node_config_field_poll_poll_dbquery_provider",
     "title": "Poll Job: poll.dbQuery.provider",
-    "summary": "Database provider (mongodb only).",
+    "summary": "Database provider (mongodb; auto resolves to MongoDB).",
     "section": "Node Config - Poll Job",
     "aliases": [
       "poll",

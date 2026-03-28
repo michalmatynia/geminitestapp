@@ -1,6 +1,6 @@
 ---
 owner: 'Platform Team'
-last_reviewed: '2026-03-27'
+last_reviewed: '2026-03-28'
 status: 'generated'
 doc_type: 'generated'
 scope: 'generated'
@@ -8,24 +8,28 @@ canonical: true
 ---
 # API Error Sources Check
 
-Generated at: 2026-03-27T13:36:19.973Z
+Generated at: 2026-03-28T14:12:09.331Z
 
 ## Summary
 
-- Status: PASSED
-- Route files scanned: 285
-- Handler files scanned: 399
+- Status: WARN
+- Route files scanned: 291
+- Handler files scanned: 410
 - Errors: 0
-- Warnings: 0
+- Warnings: 2
 
 ## Rule Breakdown
 
 | Rule | Errors | Warnings | Info |
 | --- | ---: | ---: | ---: |
+| raw-new-response | 0 | 2 | 0 |
 
 ## Issues
 
-All API error sources are consistent.
+| Severity | Rule | Location | Message |
+| --- | --- | --- | --- |
+| WARN | raw-new-response | src/app/api/filemaker/campaigns/click/handler.ts:27 | Direct `new Response()` usage. Consider using createErrorResponse/createSuccessResponse. |
+| WARN | raw-new-response | src/app/api/filemaker/campaigns/open/handler.ts:25 | Direct `new Response()` usage. Consider using createErrorResponse/createSuccessResponse. |
 
 ## Notes
 

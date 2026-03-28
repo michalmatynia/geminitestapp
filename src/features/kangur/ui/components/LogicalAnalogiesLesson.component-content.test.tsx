@@ -39,7 +39,7 @@ describe('LogicalAnalogiesLesson', () => {
     componentContent.slides.intro.introQuestion.title = 'Database analogy question';
     componentContent.slides.intro.relationBridge.title = 'Database relation bridge';
     componentContent.slides.podsumowanie.map.caption = 'Database map caption';
-    componentContent.game.stageTitle = 'Database relations game';
+    componentContent.game.gameTitle = 'Database relations game';
     componentContent.animations.analogyBridge = 'Database bridge animation';
 
     render(

@@ -99,7 +99,7 @@ export const MULTIPLICATION_LESSON_COMPONENT_CONTENT: KangurMultiplicationLesson
   game: {
     preludeChip: 'Zobacz grupy',
     preludeCaption: 'Łącz równe grupy kropek, aby zobaczyć mnożenie.',
-    stageTitle: 'Gra z grupami!',
+    gameTitle: 'Gra z grupami!',
   },
 };
 

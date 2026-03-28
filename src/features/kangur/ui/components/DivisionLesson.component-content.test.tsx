@@ -35,7 +35,7 @@ describe('DivisionLesson', () => {
     componentContent.sections.intro.title = 'Database intro section';
     componentContent.sections.intro.description = 'Database intro description';
     componentContent.slides.intro.meaning.title = 'Database division meaning';
-    componentContent.game.stageTitle = 'Database division game';
+    componentContent.game.gameTitle = 'Database division game';
 
     render(
       <NextIntlClientProvider locale='pl' messages={plMessages}>

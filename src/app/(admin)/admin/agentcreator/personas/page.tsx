@@ -1,4 +1,4 @@
-import { AgentPersonasPage } from '@/features/ai/agentcreator/pages/AgentPersonasPage';
+import { AgentPersonasPage } from '@/features/ai/public';
 
 export default function AgentCreatorPersonasRoute(): React.JSX.Element {
   return <AgentPersonasPage />;

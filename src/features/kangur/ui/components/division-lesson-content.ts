@@ -106,7 +106,7 @@ export const DIVISION_LESSON_COMPONENT_CONTENT: KangurDivisionLessonTemplateCont
     },
   },
   game: {
-    stageTitle: 'Gra z dzieleniem!',
+    gameTitle: 'Gra z dzieleniem!',
   },
 };
 

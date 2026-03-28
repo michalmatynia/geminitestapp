@@ -1,7 +1,9 @@
 import {
-  kangurLessonTemplateComponentContentSchema,
-  type KangurLessonTemplate,
-  type KangurSubtractingLessonTemplateContent,
+  resolveKangurLessonTemplateComponentContent,
+} from '@/features/kangur/lessons/lesson-template-component-content';
+import type {
+  KangurLessonTemplate,
+  KangurSubtractingLessonTemplateContent,
 } from '@/shared/contracts/kangur-lesson-templates';
 
 export const SUBTRACTING_LESSON_COMPONENT_CONTENT: KangurSubtractingLessonTemplateContent = {
@@ -163,13 +165,21 @@ export const SUBTRACTING_LESSON_COMPONENT_CONTENT: KangurSubtractingLessonTempla
     },
   },
   game: {
-    stageTitle: 'Gra z odejmowaniem!',
+    gameTitle: 'Gra z odejmowaniem!',
   },
 };
 
 export const resolveSubtractingLessonContent = (
   template: KangurLessonTemplate | null | undefined,
 ): KangurSubtractingLessonTemplateContent | null => {
-  const parsed = kangurLessonTemplateComponentContentSchema.safeParse(template?.componentContent);
-  return parsed.success && parsed.data.kind === 'subtracting' ? parsed.data : null;
+  if (!template?.componentContent) {
+    return null;
+  }
+
+  const resolved = resolveKangurLessonTemplateComponentContent(
+    'subtracting',
+    template?.componentContent,
+  );
+
+  return resolved?.kind === 'subtracting' ? resolved : null;
 };

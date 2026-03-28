@@ -1,6 +1,6 @@
 ---
 owner: 'AI Paths Team'
-last_reviewed: '2026-03-26'
+last_reviewed: '2026-03-28'
 status: 'generated'
 doc_type: 'generated'
 scope: 'feature:ai-paths'
@@ -8,7 +8,7 @@ canonical: true
 ---
 # Audio Speaker (Mono) Migration Sheet (`audio_speaker`)
 
-Generated at: 2026-03-26T12:17:00.706Z
+Generated at: 2026-03-28T14:11:54.225Z
 
 ## Status
 
@@ -29,7 +29,7 @@ Generated at: 2026-03-26T12:17:00.706Z
 - v2 code object: `docs/ai-paths/node-code-objects-v2/audio_speaker.json`
 - v3 scaffold: `docs/ai-paths/node-code-objects-v3/audio_speaker.scaffold.json`
 - v3 object id: `node_obj_audio_speaker_portable_v3`
-- v3 object hash: `8a7d955c9111289fbd03a5c419725b94aa3212a19c1604d247fbeedfb8c6ca17`
+- v3 object hash: `3bb56b4076598342fd2ca8998c47f2e2dca5c94bb3cf3b0f7d5092e9a50d2ec9`
 
 ## Ports
 

@@ -39,7 +39,7 @@ export function OutputImageGrid(props: OutputImageGridProps): React.JSX.Element 
   return (
     <GenericGridPicker
       items={gridItems}
-      columns={columns}
+      gridClassName={columns === 3 ? 'grid-cols-2 sm:grid-cols-3' : 'grid-cols-1 sm:grid-cols-2'}
       className={className}
       gap='8px'
       renderItem={(item) => {

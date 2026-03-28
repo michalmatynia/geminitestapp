@@ -1,4 +1,4 @@
-import { AdminAiContextRegistryPage } from '@/features/ai/ai-context-registry/pages/AdminAiContextRegistryPage';
+import { AdminAiContextRegistryPage } from '@/features/ai/public';
 
 export default function Page(): React.JSX.Element {
   return <AdminAiContextRegistryPage />;

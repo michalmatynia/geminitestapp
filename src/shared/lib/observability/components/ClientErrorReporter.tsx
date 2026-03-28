@@ -18,10 +18,9 @@ import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
 import {
   initClientErrorReporting,
   setClientErrorBaseContext,
+  logClientError,
 } from '@/shared/utils/observability/client-error-logger';
 import { parseJsonSetting } from '@/shared/utils/settings-json';
-import { logClientError } from '@/shared/utils/observability/client-error-logger';
-
 
 export default function ClientErrorReporter(): null {
   const pathname = usePathname();

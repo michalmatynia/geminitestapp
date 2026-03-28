@@ -4,7 +4,7 @@ import { useSearchParams } from 'next/navigation';
 import { SessionProvider } from 'next-auth/react';
 import { lazy, Suspense } from 'react';
 
-import ClientErrorReporter from '@/features/observability/components/ClientErrorReporter';
+import ClientErrorReporter from '@/shared/lib/observability/components/ClientErrorReporter';
 import PageAnalyticsTracker from '@/shared/lib/analytics/components/PageAnalyticsTracker';
 import { AppFontProvider } from '@/shared/providers/AppFontProvider';
 import { BackgroundSyncProvider } from '@/shared/providers/BackgroundSyncProvider';

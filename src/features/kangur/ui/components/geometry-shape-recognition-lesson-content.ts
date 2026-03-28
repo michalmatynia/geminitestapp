@@ -33,7 +33,13 @@ export const createGeometryShapeRecognitionMessageTranslate = (
 export const createGeometryShapeRecognitionLessonTranslate = (
   content: KangurGeometryShapeRecognitionLessonTemplateContent,
 ): LessonTranslate => (key, values) => {
-  const template = resolveTranslationValue(content, key);
+  const template =
+    resolveTranslationValue(content, key) ??
+    (key === 'draw.gameTitle'
+      ? resolveTranslationValue(content, 'draw.stageTitle')
+      : key === 'draw.stageTitle'
+        ? resolveTranslationValue(content, 'draw.gameTitle')
+        : null);
   if (!template) {
     return key;
   }
@@ -135,7 +141,7 @@ export const createGeometryShapeRecognitionLessonContentFromTranslate = (
     caption: translate('summary.caption'),
   },
   draw: {
-    stageTitle: translate('draw.stageTitle'),
+    gameTitle: translate('draw.stageTitle'),
     difficultyLabel: translate('draw.difficultyLabel'),
     finishLabel: translate('draw.finishLabel'),
   },

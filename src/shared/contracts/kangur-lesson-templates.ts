@@ -176,7 +176,8 @@ export const kangurArtShapesBasicLessonTemplateContentSchema = z.object({
     }),
   }),
   game: z.object({
-    stageTitle: z.string().trim().min(1).max(120),
+    gameTitle: z.string().trim().min(1).max(120).optional(),
+    stageTitle: z.string().trim().min(1).max(120).optional(),
     progress: z.object({
       round: z.string().trim().min(1).max(120),
       score: z.string().trim().min(1).max(120),
@@ -211,6 +212,8 @@ export const kangurArtShapesBasicLessonTemplateContentSchema = z.object({
       backToLesson: z.string().trim().min(1).max(120),
       playAgain: z.string().trim().min(1).max(120),
     }),
+  }).refine(({ gameTitle, stageTitle }) => Boolean(gameTitle ?? stageTitle), {
+    message: 'Art shapes basic game title is required.',
   }),
 });
 
@@ -475,11 +478,16 @@ export const kangurMultiplicationLessonTemplateContentSchema = z.object({
       }),
     }),
   }),
-  game: z.object({
-    preludeChip: z.string().trim().min(1).max(120),
-    preludeCaption: z.string().trim().min(1).max(240),
-    stageTitle: z.string().trim().min(1).max(120),
-  }),
+  game: z
+    .object({
+      preludeChip: z.string().trim().min(1).max(120),
+      preludeCaption: z.string().trim().min(1).max(240),
+      gameTitle: z.string().trim().min(1).max(120).optional(),
+      stageTitle: z.string().trim().min(1).max(120).optional(),
+    })
+    .refine(({ gameTitle, stageTitle }) => Boolean(gameTitle ?? stageTitle), {
+      message: 'Multiplication game title is required.',
+    }),
 });
 
 export const kangurAddingLessonTemplateContentSchema = z.object({
@@ -646,12 +654,22 @@ export const kangurAddingLessonTemplateContentSchema = z.object({
       }),
     }),
   }),
-  game: z.object({
-    stageTitle: z.string().trim().min(1).max(120),
-  }),
-  synthesis: z.object({
-    stageTitle: z.string().trim().min(1).max(120),
-  }),
+  game: z
+    .object({
+      gameTitle: z.string().trim().min(1).max(120).optional(),
+      stageTitle: z.string().trim().min(1).max(120).optional(),
+    })
+    .refine(({ gameTitle, stageTitle }) => Boolean(gameTitle ?? stageTitle), {
+      message: 'Adding game title is required.',
+    }),
+  synthesis: z
+    .object({
+      gameTitle: z.string().trim().min(1).max(120).optional(),
+      stageTitle: z.string().trim().min(1).max(120).optional(),
+    })
+    .refine(({ gameTitle, stageTitle }) => Boolean(gameTitle ?? stageTitle), {
+      message: 'Adding synthesis title is required.',
+    }),
 });
 
 const kangurSubtractingTitleDescriptionSchema = z.object({
@@ -791,9 +809,14 @@ export const kangurSubtractingLessonTemplateContentSchema = z.object({
       }),
     }),
   }),
-  game: z.object({
-    stageTitle: z.string().trim().min(1).max(120),
-  }),
+  game: z
+    .object({
+      gameTitle: z.string().trim().min(1).max(120).optional(),
+      stageTitle: z.string().trim().min(1).max(120).optional(),
+    })
+    .refine(({ gameTitle, stageTitle }) => Boolean(gameTitle ?? stageTitle), {
+      message: 'Subtracting game title is required.',
+    }),
 });
 
 export const kangurDivisionLessonTemplateContentSchema = z.object({
@@ -864,9 +887,14 @@ export const kangurDivisionLessonTemplateContentSchema = z.object({
       }),
     }),
   }),
-  game: z.object({
-    stageTitle: z.string().trim().min(1).max(120),
-  }),
+  game: z
+    .object({
+      gameTitle: z.string().trim().min(1).max(120).optional(),
+      stageTitle: z.string().trim().min(1).max(120).optional(),
+    })
+    .refine(({ gameTitle, stageTitle }) => Boolean(gameTitle ?? stageTitle), {
+      message: 'Division game title is required.',
+    }),
 });
 
 export const kangurGeometryBasicsLessonTemplateContentSchema = z.object({
@@ -1076,9 +1104,12 @@ export const kangurGeometryShapeRecognitionLessonTemplateContentSchema = z.objec
     caption: z.string().trim().min(1).max(240),
   }),
   draw: z.object({
-    stageTitle: z.string().trim().min(1).max(120),
+    gameTitle: z.string().trim().min(1).max(120).optional(),
+    stageTitle: z.string().trim().min(1).max(120).optional(),
     difficultyLabel: z.string().trim().min(1).max(120).optional(),
     finishLabel: z.string().trim().min(1).max(120),
+  }).refine(({ gameTitle, stageTitle }) => Boolean(gameTitle ?? stageTitle), {
+    message: 'Geometry shape recognition draw game title is required.',
   }),
 });
 
@@ -1471,9 +1502,14 @@ export const kangurLogicalAnalogiesLessonTemplateContentSchema = z.object({
       map: kangurLogicalAnalogiesTitleLeadCaptionSchema,
     }),
   }),
-  game: z.object({
-    stageTitle: z.string().trim().min(1).max(120),
-  }),
+  game: z
+    .object({
+      gameTitle: z.string().trim().min(1).max(120).optional(),
+      stageTitle: z.string().trim().min(1).max(120).optional(),
+    })
+    .refine(({ gameTitle, stageTitle }) => Boolean(gameTitle ?? stageTitle), {
+      message: 'Logical analogies game title is required.',
+    }),
   animations: z.object({
     analogyBridge: z.string().trim().min(1).max(240),
     numberOperation: z.string().trim().min(1).max(240),

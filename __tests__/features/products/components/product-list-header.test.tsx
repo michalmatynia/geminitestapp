@@ -149,6 +149,7 @@ describe('ProductListHeader Component', () => {
     onEditSuccess: vi.fn(),
     onEditSave: vi.fn(),
     integrationsProduct: null,
+    integrationsRecoveryContext: null,
     onCloseIntegrations: vi.fn(),
     onStartListing: vi.fn(),
     showListProductModal: false,

@@ -357,7 +357,7 @@ export default function MultiplicationLesson({ lessonTemplate }: LessonProps): R
             maxWidthClassName: 'max-w-sm',
             headerTestId: 'multiplication-lesson-game-array-header',
             shellTestId: 'multiplication-lesson-game-array-shell',
-            title: copy.game.stageTitle,
+            title: copy.game.gameTitle ?? copy.game.stageTitle ?? 'Gra z grupami!',
           },
           launchableInstance: {
             gameId: 'multiplication_array',

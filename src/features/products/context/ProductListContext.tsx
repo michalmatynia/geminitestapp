@@ -10,7 +10,7 @@ import {
   type ReactNode,
 } from 'react';
 
-import { useIntegrationListingBadges } from '@/features/integrations/public';
+import { useIntegrationListingBadges } from '@/features/integrations/product-integrations-adapter';
 import { useProductListListingStatuses } from '@/features/products/hooks/product-list/useProductListListingStatuses';
 import { internalError } from '@/shared/errors/app-error';
 

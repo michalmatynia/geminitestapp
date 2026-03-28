@@ -1,6 +1,6 @@
 ---
 owner: 'Products / Platform Team'
-last_reviewed: '2026-03-26'
+last_reviewed: '2026-03-28'
 status: 'generated'
 doc_type: 'generated'
 scope: 'feature:validator'
@@ -210,10 +210,7 @@ Generated from `src/features/products/components/settings/validator-settings/val
 - File: `src/features/products/validation-engine/core.ts`
 - Symbol: `isPatternConfiguredForFormatterAutoApply`
 - Purpose: Determines whether formatter auto-apply should run for the current field and validation scope.
-- Parameters:
-  pattern: pattern with replacement auto-apply configuration.
-  fieldName: current form field name.
-  validationScope: active validator scope.
+- Parameters: pattern: pattern with replacement auto-apply configuration. fieldName: current form field name. validationScope: active validator scope.
 - Returns: True when auto-apply is enabled and the pattern targets the current field.
 - Errors: No throws.
 - Edge Cases: Disabled patterns, missing replacement values, scope mismatches, and non-target fields return false.

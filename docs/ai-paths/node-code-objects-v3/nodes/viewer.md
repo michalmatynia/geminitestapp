@@ -1,6 +1,6 @@
 ---
 owner: 'AI Paths Team'
-last_reviewed: '2026-03-26'
+last_reviewed: '2026-03-28'
 status: 'generated'
 doc_type: 'generated'
 scope: 'feature:ai-paths'
@@ -8,7 +8,7 @@ canonical: true
 ---
 # Result Viewer Migration Sheet (`viewer`)
 
-Generated at: 2026-03-26T12:17:00.706Z
+Generated at: 2026-03-28T14:11:54.225Z
 
 ## Status
 
@@ -29,7 +29,7 @@ Generated at: 2026-03-26T12:17:00.706Z
 - v2 code object: `docs/ai-paths/node-code-objects-v2/viewer.json`
 - v3 scaffold: `docs/ai-paths/node-code-objects-v3/viewer.scaffold.json`
 - v3 object id: `node_obj_viewer_portable_v3`
-- v3 object hash: `eaf19e9d40b214d09373a87d29068ee7eeae507c9c91c95340d6b20857625b7e`
+- v3 object hash: `928e4d5b802935c90b00f0090230df796401efce85c6f081cf361d9724b21482`
 
 ## Ports
 

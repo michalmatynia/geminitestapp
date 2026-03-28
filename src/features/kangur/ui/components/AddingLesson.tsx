@@ -766,7 +766,7 @@ export default function AddingLesson({ lessonTemplate }: LessonProps): React.JSX
             maxWidthClassName: 'max-w-2xl',
             headerTestId: 'adding-lesson-game-header',
             shellTestId: 'adding-lesson-game-shell',
-            title: copy.game.stageTitle,
+            title: copy.game.gameTitle ?? copy.game.stageTitle ?? 'Gra z piłkami!',
           },
           launchableInstance: {
             gameId: 'adding_ball',
@@ -782,7 +782,7 @@ export default function AddingLesson({ lessonTemplate }: LessonProps): React.JSX
             shellClassName: '!p-4 sm:!p-6 lg:!p-8',
             headerTestId: 'adding-lesson-synthesis-header',
             shellTestId: 'adding-lesson-synthesis-shell',
-            title: copy.synthesis.stageTitle,
+            title: copy.synthesis.gameTitle ?? copy.synthesis.stageTitle ?? 'Synteza dodawania',
           },
           launchableInstance: {
             gameId: 'adding_synthesis',

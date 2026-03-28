@@ -181,6 +181,40 @@ Use `buildScanOutput`, `parseScanOutput`, and `parseScanSummary` from
 agent summarizing scanner output, keep findings in their matching fields instead
 of collapsing everything into one mixed block.
 
+## Testing Documentation Workflow
+
+Major test runs must leave a written record.
+
+- Canonical lanes are defined in
+  `scripts/testing/config/test-suite-registry.mjs`
+- Lane inventory is generated to
+  `docs/metrics/testing-suite-inventory-latest.*`
+- Run history is generated to
+  `docs/metrics/testing-run-ledger-latest.*`
+
+When you run a major validation pass, do one of the following:
+
+1. Prefer a canonical lane such as `npm run test:lane:pr-required` or
+   `npm run test:lane:weekly-audit`
+2. If you run a bespoke major validation command, follow it with
+   `npm run testing:record -- --label="..." --status=ok --suite=...`
+
+Treat these as major runs:
+
+- any lane with `pr-required`, `nightly-deep`, `weekly-audit`, or `release-gate`
+- any manual build + e2e or multi-suite regression sweep
+- any broader AI-agent validation pass used to support merge or release decisions
+
+Every recorded entry should capture:
+
+- what ran
+- when it ran
+- final status
+- lane or suite scope
+- duration when known
+- generated artifact paths
+- short follow-up notes for failures, skips, or advisory gaps
+
 ## Current Source Layout
 
 Use current `src/` paths, not older root-level conventions.

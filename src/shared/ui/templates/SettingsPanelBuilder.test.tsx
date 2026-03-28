@@ -5,20 +5,7 @@ import { fireEvent, render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 
 vi.mock('../FormModal', () => ({
-  FormModal: ({
-    cancelText,
-    children,
-    isSaving,
-    onClose,
-    onSave,
-    open,
-    saveText,
-    showCancelButton,
-    showSaveButton,
-    size,
-    subtitle,
-    title,
-  }: {
+  FormModal: (props: {
     cancelText: string;
     children?: React.ReactNode;
     isSaving?: boolean;
@@ -31,28 +18,45 @@ vi.mock('../FormModal', () => ({
     size: string;
     subtitle?: string;
     title: string;
-  }) => (
-    <div
-      data-testid='form-modal'
-      data-open={String(open)}
-      data-is-saving={String(isSaving)}
-      data-save-text={saveText}
-      data-cancel-text={cancelText}
-      data-show-save={String(showSaveButton)}
-      data-show-cancel={String(showCancelButton)}
-      data-size={size}
-      data-subtitle={subtitle}
-      data-title={title}
-    >
-      <button type='button' onClick={onSave}>
-        save
-      </button>
-      <button type='button' onClick={onClose}>
-        close
-      </button>
-      {children}
-    </div>
-  ),
+  }) => {
+    const {
+      cancelText,
+      children,
+      isSaving,
+      onClose,
+      onSave,
+      open,
+      saveText,
+      showCancelButton,
+      showSaveButton,
+      size,
+      subtitle,
+      title,
+    } = props;
+
+    return (
+      <div
+        data-testid='form-modal'
+        data-open={String(open)}
+        data-is-saving={String(isSaving)}
+        data-save-text={saveText}
+        data-cancel-text={cancelText}
+        data-show-save={String(showSaveButton)}
+        data-show-cancel={String(showCancelButton)}
+        data-size={size}
+        data-subtitle={subtitle}
+        data-title={title}
+      >
+        <button type='button' onClick={onSave}>
+          save
+        </button>
+        <button type='button' onClick={onClose}>
+          close
+        </button>
+        {children}
+      </div>
+    );
+  },
 }));
 
 import { SettingsPanelBuilder } from './SettingsPanelBuilder';

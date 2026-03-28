@@ -317,7 +317,12 @@ export { CONTENT };
 
 export default function GeometryBasicsLesson({ lessonTemplate }: LessonProps): React.JSX.Element {
   const translations = useTranslations('KangurStaticLessons.geometryBasics');
-  const fallbackTranslate: LessonTranslate = (key: string): string => translations(key as never);
+  const fallbackTranslate = Object.assign(
+    (key: string): string => translations(key as never),
+    {
+      has: (key: string): boolean => translations.has(key as never),
+    },
+  ) as LessonTranslate & { has: (key: string) => boolean };
   const runtimeTemplate = useOptionalKangurLessonTemplate('geometry_basics');
   const resolvedTemplate = lessonTemplate ?? runtimeTemplate;
   const resolvedContent = useMemo(

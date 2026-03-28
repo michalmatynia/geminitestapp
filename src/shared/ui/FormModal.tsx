@@ -55,23 +55,26 @@ type FormModalHeaderProps = {
   isCloseLocked: boolean;
 };
 
-const renderFormModalHeaderContent = ({
-  title,
-  titleTestId,
-  subtitle,
-  showSaveButton,
-  onSave,
-  saveText,
-  saveVariant,
-  saveIcon,
-  isSaving,
-  isSaveButtonDisabled,
-  actions,
-  showCancelButton,
-  onClose,
-  cancelText,
-  isCloseLocked,
-}: FormModalHeaderProps): React.JSX.Element => (
+const renderFormModalHeaderContent = (props: FormModalHeaderProps): React.JSX.Element => {
+  const {
+    title,
+    titleTestId,
+    subtitle,
+    showSaveButton,
+    onSave,
+    saveText,
+    saveVariant,
+    saveIcon,
+    isSaving,
+    isSaveButtonDisabled,
+    actions,
+    showCancelButton,
+    onClose,
+    cancelText,
+    isCloseLocked,
+  } = props;
+
+  return (
   <div className='flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between'>
     <div className='min-w-0'>
       <div className='flex min-w-0 items-center gap-2'>
@@ -107,7 +110,8 @@ const renderFormModalHeaderContent = ({
       ) : null}
     </div>
   </div>
-);
+  );
+};
 
 export function FormModal(props: FormModalProps): React.JSX.Element | null {
   const {

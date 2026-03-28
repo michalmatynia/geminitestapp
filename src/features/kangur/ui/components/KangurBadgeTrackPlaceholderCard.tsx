@@ -21,17 +21,21 @@ type KangurBadgeTrackPlaceholderCardProps = {
   trackLabelClassName?: string;
 };
 
-export function KangurBadgeTrackPlaceholderCard({
-  cardClassName,
-  dataTestId,
-  description,
-  headerClassName,
-  label,
-  statusChipClassName,
-  title,
-  trackEmoji = '✨',
-  trackLabelClassName,
-}: KangurBadgeTrackPlaceholderCardProps): React.JSX.Element {
+export function KangurBadgeTrackPlaceholderCard(
+  props: KangurBadgeTrackPlaceholderCardProps
+): React.JSX.Element {
+  const {
+    cardClassName,
+    dataTestId,
+    description,
+    headerClassName,
+    label,
+    statusChipClassName,
+    title,
+    trackEmoji = '✨',
+    trackLabelClassName,
+  } = props;
+
   const infoCardClassName = cn('rounded-[24px] text-left', cardClassName);
   const headerClassNameValue = cn(
     KANGUR_PANEL_ROW_MD_CLASSNAME,

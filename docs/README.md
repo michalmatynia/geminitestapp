@@ -75,6 +75,7 @@ These are canonical platform guides.
 
 - [`docs/platform/accessibility.md`](./platform/accessibility.md) — WCAG 2.1 Level AA patterns, screen reader support, keyboard navigation
 - [`docs/platform/developer-handbook.md`](./platform/developer-handbook.md)
+- [`docs/platform/testing-policy.md`](./platform/testing-policy.md)
 - [`docs/platform/best-practices.md`](./platform/best-practices.md)
 - [`docs/platform/component-patterns.md`](./platform/component-patterns.md)
 - [`docs/platform/architecture-guardrails.md`](./platform/architecture-guardrails.md)
@@ -84,6 +85,7 @@ These are canonical platform guides.
 - [`docs/build/bazel.md`](./build/bazel.md)
 - [`docs/build/bun.md`](./build/bun.md)
 - [`docs/platform/bun-support.md`](./platform/bun-support.md)
+- [`docs/runbooks/testing-operations.md`](./runbooks/testing-operations.md)
 
 Future platform-wide docs should land under [`docs/platform/`](./platform/README.md).
 

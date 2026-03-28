@@ -14,7 +14,7 @@ import {
   type ApiHandlerContext,
 } from '@/shared/contracts';
 import { badRequestError, internalError } from '@/shared/errors/app-error';
-import { assertSettingsManageAccess } from '@/shared/lib/auth/settings-manage-access';
+import { assertSettingsManageAccess } from '@/features/auth/server';
 import { isNeo4jEnabled } from '@/shared/lib/neo4j/config';
 
 export async function POST_handler(_req: NextRequest, ctx: ApiHandlerContext): Promise<Response> {

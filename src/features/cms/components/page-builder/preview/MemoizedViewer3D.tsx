@@ -6,7 +6,7 @@ import {
   Viewer3D,
   type EnvironmentPreset,
   type LightingPreset,
-} from '@/features/viewer3d/client/public';
+} from '@/features/viewer3d/public';
 
 import { toRadians } from './preview-utils';
 

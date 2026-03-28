@@ -2,7 +2,7 @@
 
 import React, { useCallback, useMemo, useState } from 'react';
 
-import { Viewer3D, Asset3DPreviewModal, useAsset3DById } from '@/features/viewer3d/client/public';
+import { Viewer3D, Asset3DPreviewModal, useAsset3DById } from '@/features/viewer3d/public';
 import type { LabeledOptionDto } from '@/shared/contracts/base';
 import type { ManagedImageSlot } from '@/shared/contracts/image-slots';
 import type { ProductImageManagerController } from '@/shared/contracts/product-image-manager';

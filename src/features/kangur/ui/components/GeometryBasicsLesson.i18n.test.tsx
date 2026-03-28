@@ -78,4 +78,25 @@ describe('GeometryBasicsLesson i18n', () => {
       screen.getByText('Eine Strecke hat einen Anfang und ein Ende — zwei Punkte.')
     ).toBeInTheDocument();
   });
+
+  it('prefers the gameTitle locale key for the game shell title', () => {
+    const customMessages = structuredClone(deMessages) as Record<string, any>;
+    customMessages.KangurStaticLessons.geometryBasics.game.gameTitle = 'Benutzerdefinierte Geo-Mission';
+
+    render(
+      <NextIntlClientProvider locale='de' messages={customMessages}>
+        <GeometryBasicsLesson />
+      </NextIntlClientProvider>
+    );
+
+    const games =
+      (capturedProps?.games as Array<{
+        sectionId: string;
+        shell: Record<string, unknown>;
+      }>) ?? [];
+
+    expect(games.find((game) => game.sectionId === 'game')?.shell).toMatchObject({
+      title: 'Benutzerdefinierte Geo-Mission',
+    });
+  });
 });

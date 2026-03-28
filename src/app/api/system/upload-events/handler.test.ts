@@ -2,7 +2,7 @@ import { NextRequest } from 'next/server';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { GET_handler } from './handler';
 import { listFileUploadEvents } from '@/features/files/server';
-import { assertSettingsManageAccess } from '@/shared/lib/auth/settings-manage-access';
+import { assertSettingsManageAccess } from '@/features/auth/server';
 
 vi.mock('@/features/files/server', () => ({
   listFileUploadEvents: vi.fn(),

@@ -13,7 +13,7 @@ import {
 } from '@/shared/contracts/filemaker';
 import type { ApiHandlerContext, JsonParseResult } from '@/shared/contracts/ui';
 import { notFoundError } from '@/shared/errors/app-error';
-import { assertSettingsManageAccess } from '@/shared/lib/auth/settings-manage-access';
+import { assertSettingsManageAccess } from '@/features/auth/server';
 import { parseJsonBody } from '@/shared/lib/api/parse-json';
 
 import {

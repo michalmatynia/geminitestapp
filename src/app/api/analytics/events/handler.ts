@@ -18,7 +18,7 @@ import {
   parseAnalyticsUserAgent,
 } from '@/shared/lib/analytics/server/enrichment';
 import { parseJsonBody } from '@/shared/lib/api/parse-json';
-import { readOptionalServerAuthSession } from '@/shared/lib/auth/optional-server-auth';
+import { readOptionalServerAuthSession } from '@/features/auth/server';
 import { logger } from '@/shared/utils/logger';
 
 const BLOCKING_ANALYTICS_EVENTS_INGESTION =

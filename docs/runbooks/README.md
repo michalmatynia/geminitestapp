@@ -25,6 +25,7 @@ Use this directory for multi-feature or platform-wide operational procedures:
 ## Current Docs
 
 - [`application-performance-operations.md`](./application-performance-operations.md)
+- [`testing-operations.md`](./testing-operations.md)
 
 ## Related Operational Surfaces
 

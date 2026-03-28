@@ -31,17 +31,18 @@ export type KangurIconBadgeProps = React.HTMLAttributes<HTMLSpanElement> &
     label?: string;
   };
 
-export function KangurIconBadge({
-  accent = 'slate',
-  className,
-  decorative,
-  label,
-  size,
-  'aria-label': ariaLabelProp,
-  'aria-labelledby': ariaLabelledBy,
-  'aria-describedby': ariaDescribedBy,
-  ...props
-}: KangurIconBadgeProps): React.JSX.Element {
+export function KangurIconBadge(props: KangurIconBadgeProps): React.JSX.Element {
+  const {
+    accent = 'slate',
+    className,
+    decorative,
+    label,
+    size,
+    'aria-label': ariaLabelProp,
+    'aria-labelledby': ariaLabelledBy,
+    'aria-describedby': ariaDescribedBy,
+    ...restProps
+  } = props;
   const resolvedLabel = ariaLabelProp ?? label;
   const shouldHide = decorative ?? !(resolvedLabel || ariaLabelledBy || ariaDescribedBy);
 
@@ -57,7 +58,7 @@ export function KangurIconBadge({
       aria-label={shouldHide ? undefined : resolvedLabel}
       aria-labelledby={ariaLabelledBy}
       aria-describedby={ariaDescribedBy}
-      {...props}
+      {...restProps}
     />
   );
 }

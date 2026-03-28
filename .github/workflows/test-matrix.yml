@@ -378,3 +378,82 @@ jobs:
           path: |
             docs/metrics/integration-mongo-latest.json
             docs/metrics/integration-mongo-latest.md
+
+  pr-required-ledger:
+    runs-on: ubuntu-latest
+    if: always()
+    needs:
+      - lint
+      - typecheck
+      - unit
+      - critical-flows
+      - security-smoke
+      - accessibility-smoke
+      - integration-mongo
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: '.nvmrc'
+
+      - name: Record pr-required lane ledger entry
+        env:
+          LINT_RESULT: ${{ needs.lint.result }}
+          TYPECHECK_RESULT: ${{ needs.typecheck.result }}
+          UNIT_RESULT: ${{ needs.unit.result }}
+          CRITICAL_FLOWS_RESULT: ${{ needs['critical-flows'].result }}
+          SECURITY_SMOKE_RESULT: ${{ needs['security-smoke'].result }}
+          ACCESSIBILITY_SMOKE_RESULT: ${{ needs['accessibility-smoke'].result }}
+          INTEGRATION_MONGO_RESULT: ${{ needs['integration-mongo'].result }}
+        run: |
+          to_ledger_status() {
+            case "$1" in
+              success) echo "ok" ;;
+              failure) echo "failed" ;;
+              cancelled|skipped) echo "warn" ;;
+              *) echo "warn" ;;
+            esac
+          }
+
+          overall_status="ok"
+          update_overall_status() {
+            case "$1" in
+              failed) overall_status="failed" ;;
+              warn)
+                if [ "$overall_status" = "ok" ]; then
+                  overall_status="warn"
+                fi
+                ;;
+            esac
+          }
+
+          lint_status="$(to_ledger_status "$LINT_RESULT")"
+          typecheck_status="$(to_ledger_status "$TYPECHECK_RESULT")"
+          unit_status="$(to_ledger_status "$UNIT_RESULT")"
+          critical_flows_status="$(to_ledger_status "$CRITICAL_FLOWS_RESULT")"
+          security_smoke_status="$(to_ledger_status "$SECURITY_SMOKE_RESULT")"
+          accessibility_smoke_status="$(to_ledger_status "$ACCESSIBILITY_SMOKE_RESULT")"
+          integration_mongo_status="$(to_ledger_status "$INTEGRATION_MONGO_RESULT")"
+
+          update_overall_status "$lint_status"
+          update_overall_status "$typecheck_status"
+          update_overall_status "$unit_status"
+          update_overall_status "$critical_flows_status"
+          update_overall_status "$security_smoke_status"
+          update_overall_status "$accessibility_smoke_status"
+          update_overall_status "$integration_mongo_status"
+
+          npm run testing:record -- --lane=pr-required --status="$overall_status" --trigger=ci --actor="${GITHUB_ACTOR}" --note="Recorded by test-matrix workflow" --artifact=docs/metrics/critical-flow-tests-latest.json --artifact=docs/metrics/security-smoke-latest.json --artifact=docs/metrics/accessibility-smoke-latest.json --artifact=docs/metrics/integration-mongo-latest.json --suite-result="lint:${lint_status}" --suite-result="typecheck:${typecheck_status}" --suite-result="unit:${unit_status}" --suite-result="critical-flows:${critical_flows_status}" --suite-result="security-smoke:${security_smoke_status}" --suite-result="accessibility-smoke:${accessibility_smoke_status}" --suite-result="integration-mongo:${integration_mongo_status}"
+
+      - name: Upload pr-required testing ledger
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: testing-pr-required-ledger
+          if-no-files-found: warn
+          path: |
+            docs/metrics/testing-run-ledger-latest.json
+            docs/metrics/testing-run-ledger-latest.md

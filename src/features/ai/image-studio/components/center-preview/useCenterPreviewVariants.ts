@@ -41,17 +41,21 @@ type UseCenterPreviewVariantsResult = {
   visibleVariantThumbnails: VariantThumbnailInfo[];
 };
 
-export function useCenterPreviewVariants({
-  activeRunId,
-  activeRunSourceSlotId,
-  landingSlots,
-  productImagesExternalBaseUrl,
-  projectId,
-  pendingSequenceThumbnail,
-  rootVariantSourceSlotId,
-  slots,
-  workingSlot,
-}: UseCenterPreviewVariantsArgs): UseCenterPreviewVariantsResult {
+export function useCenterPreviewVariants(
+  args: UseCenterPreviewVariantsArgs
+): UseCenterPreviewVariantsResult {
+  const {
+    activeRunId,
+    activeRunSourceSlotId,
+    landingSlots,
+    productImagesExternalBaseUrl,
+    projectId,
+    pendingSequenceThumbnail,
+    rootVariantSourceSlotId,
+    slots,
+    workingSlot,
+  } = args;
+
   const [variantTimestampQuery, setVariantTimestampQuery] = useState('');
   const [compareVariantIds, setCompareVariantIds] = useState<[string | null, string | null]>([
     null,

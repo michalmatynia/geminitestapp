@@ -2,7 +2,7 @@
 
 import { useCallback, useState } from 'react';
 
-import { useIntegrationModalOperations } from '@/features/integrations/product-integrations-adapter';
+import { useIntegrationModalOperations } from '@/features/integrations/public';
 import type { ProductListingsRecoveryContext } from '@/shared/contracts/integrations';
 import type { ProductWithImages, ProductDraft } from '@/shared/contracts/products';
 import type { Toast } from '@/shared/contracts/ui';

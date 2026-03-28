@@ -8,7 +8,7 @@ import { ErrorSystem } from '@/features/kangur/shared/utils/observability/error-
 import type { KangurParentAccountResend } from '@/shared/contracts/kangur-auth';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { badRequestError } from '@/shared/errors/app-error';
-import { readTolerantServerAuthSession } from '@/shared/lib/auth/optional-server-auth';
+import { readTolerantServerAuthSession } from '@/features/auth/server';
 import { getSiteTranslator } from '@/shared/lib/i18n/server-translator';
 
 export async function postKangurParentAccountResendHandler(

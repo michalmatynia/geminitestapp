@@ -38,20 +38,23 @@ type KangurAssignmentManagerTimeLimitModalProps = {
   maxMinutes: number;
 };
 
-export function renderKangurAssignmentManagerTimeLimitModal({
-  isOpen,
-  onClose,
-  onSave,
-  timeLimitDraft,
-  onTimeLimitDraftChange,
-  timeLimitTarget,
-  timeLimitPreview,
-  timeLimitParsedError,
-  isSaveDisabled,
-  saveLabel,
-  minMinutes,
-  maxMinutes,
-}: KangurAssignmentManagerTimeLimitModalProps): React.JSX.Element {
+export function renderKangurAssignmentManagerTimeLimitModal(
+  props: KangurAssignmentManagerTimeLimitModalProps
+): React.JSX.Element {
+  const {
+    isOpen,
+    onClose,
+    onSave,
+    timeLimitDraft,
+    onTimeLimitDraftChange,
+    timeLimitTarget,
+    timeLimitPreview,
+    timeLimitParsedError,
+    isSaveDisabled,
+    saveLabel,
+    minMinutes,
+    maxMinutes,
+  } = props;
   const translations = useTranslations('KangurAssignmentManager');
   const isCoarsePointer = useKangurCoarsePointer();
   const actionClassName = isCoarsePointer

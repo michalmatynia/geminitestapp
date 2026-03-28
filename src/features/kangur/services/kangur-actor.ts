@@ -5,7 +5,7 @@ import { z } from 'zod';
 import { findAuthUserById, normalizeAuthEmail } from '@/server/auth';
 import type { KangurAuthUser, KangurLearnerProfile } from '@kangur/contracts';
 import { authError, notFoundError } from '@/features/kangur/shared/errors/app-error';
-import { readOptionalServerAuthSession } from '@/shared/lib/auth/optional-server-auth';
+import { readOptionalServerAuthSession } from '@/features/auth/server';
 
 import { getKangurLearnerById, listKangurLearnersByOwner } from './kangur-learner-repository';
 import { readKangurLearnerSession } from './kangur-learner-session';

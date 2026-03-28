@@ -35,9 +35,9 @@ vi.mock('@/features/kangur/ui/services/progress', async (importOriginal) => {
 import ArtShapesBasicLesson from '@/features/kangur/ui/components/ArtShapesBasicLesson';
 import { KangurLessonNavigationProvider } from '@/features/kangur/ui/context/KangurLessonNavigationContext';
 
-const renderLesson = () =>
+const renderLesson = (messages: typeof plMessages = plMessages) =>
   render(
-    <NextIntlClientProvider locale='pl' messages={plMessages}>
+    <NextIntlClientProvider locale='pl' messages={messages}>
       <KangurLessonNavigationProvider onBack={vi.fn()}>
         <ArtShapesBasicLesson />
       </KangurLessonNavigationProvider>
@@ -103,4 +103,5 @@ describe('ArtShapesBasicLesson', () => {
     ).toBeInTheDocument();
     expect(screen.queryByText('Zadanie ukończone')).not.toBeInTheDocument();
   });
+
 });

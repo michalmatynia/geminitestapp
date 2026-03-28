@@ -13,15 +13,15 @@ export type KangurLessonGroupAccordionProps = Omit<
   isCoarsePointer?: boolean;
 };
 
-export function KangurLessonGroupAccordion({
-  isCoarsePointer: isCoarsePointerOverride,
-  ...props
-}: KangurLessonGroupAccordionProps): React.JSX.Element {
+export function KangurLessonGroupAccordion(
+  props: KangurLessonGroupAccordionProps
+): React.JSX.Element {
+  const { isCoarsePointer: isCoarsePointerOverride, ...restProps } = props;
   const isCoarsePointer = isCoarsePointerOverride ?? useKangurCoarsePointer();
 
   return (
     <KangurResolvedLessonGroupAccordion
-      {...props}
+      {...restProps}
       isCoarsePointer={Boolean(isCoarsePointer)}
     />
   );

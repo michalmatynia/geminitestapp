@@ -1,7 +1,10 @@
 import {
   resolveKangurLessonTemplateComponentContent,
 } from '@/features/kangur/lessons/lesson-template-component-content';
-import type { LessonTranslate } from '@/features/kangur/ui/components/lesson-copy';
+import {
+  type LessonTranslate,
+  translateLessonValueWithLegacyKey,
+} from '@/features/kangur/ui/components/lesson-copy';
 import type {
   KangurGeometryShapeRecognitionLessonTemplateContent,
   KangurLessonTemplate,
@@ -28,18 +31,18 @@ const resolveTranslationValue = (
 
 export const createGeometryShapeRecognitionMessageTranslate = (
   messages: Record<string, unknown>,
-): LessonTranslate => (key) => resolveTranslationValue(messages, key) ?? key;
+): LessonTranslate => {
+  const translate = ((key: string) => resolveTranslationValue(messages, key) ?? key) as
+    LessonTranslate & { has?: (messageKey: string) => boolean };
+  translate.has = (messageKey: string): boolean =>
+    resolveTranslationValue(messages, messageKey) !== null;
+  return translate;
+};
 
 export const createGeometryShapeRecognitionLessonTranslate = (
   content: KangurGeometryShapeRecognitionLessonTemplateContent,
 ): LessonTranslate => (key, values) => {
-  const template =
-    resolveTranslationValue(content, key) ??
-    (key === 'draw.gameTitle'
-      ? resolveTranslationValue(content, 'draw.stageTitle')
-      : key === 'draw.stageTitle'
-        ? resolveTranslationValue(content, 'draw.gameTitle')
-        : null);
+  const template = resolveTranslationValue(content, key);
   if (!template) {
     return key;
   }
@@ -141,7 +144,12 @@ export const createGeometryShapeRecognitionLessonContentFromTranslate = (
     caption: translate('summary.caption'),
   },
   draw: {
-    gameTitle: translate('draw.stageTitle'),
+    gameTitle: translateLessonValueWithLegacyKey(
+      translate,
+      'draw.gameTitle',
+      'draw.stageTitle',
+      '',
+    ),
     difficultyLabel: translate('draw.difficultyLabel'),
     finishLabel: translate('draw.finishLabel'),
   },

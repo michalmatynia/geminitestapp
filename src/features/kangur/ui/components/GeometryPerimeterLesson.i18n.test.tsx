@@ -3,7 +3,7 @@
  */
 
 import type { ReactNode } from 'react';
-import { fireEvent, render, screen } from '@testing-library/react';
+import { fireEvent, render, screen, within } from '@testing-library/react';
 import { NextIntlClientProvider } from 'next-intl';
 import { describe, expect, it, vi } from 'vitest';
 
@@ -125,6 +125,25 @@ describe('GeometryPerimeterLesson i18n', () => {
     expect(screen.getByText('Seiten: 6 cm, 4 cm, 6 cm, 4 cm')).toBeInTheDocument();
     expect(
       screen.getByText('Gegenüberliegende Seiten sind gleich - addiere die Paare.')
+    ).toBeInTheDocument();
+  });
+
+  it('prefers the gameTitle locale key for the game shell title', () => {
+    const customMessages = structuredClone(enMessages);
+    customMessages.KangurStaticLessons.geometryPerimeter.game.gameTitle =
+      'Custom perimeter shell title';
+
+    renderLesson(<GeometryPerimeterLesson />, {
+      locale: 'en',
+      messages: customMessages,
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: /Game: Draw the perimeter/i }));
+
+    expect(
+      within(screen.getByTestId('geometry-perimeter-game-shell')).getByText(
+        'Custom perimeter shell title'
+      )
     ).toBeInTheDocument();
   });
 });

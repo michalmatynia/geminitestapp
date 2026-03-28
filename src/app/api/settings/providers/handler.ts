@@ -9,7 +9,7 @@ import type {
   AppProviderValue as ProviderValue,
 } from '@/shared/contracts/system';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
-import { assertSettingsManageAccess } from '@/shared/lib/auth/settings-manage-access';
+import { assertSettingsManageAccess } from '@/features/auth/server';
 import { getCmsDataProvider } from '@/shared/lib/cms/services/cms-provider';
 import {
   APP_DB_PROVIDER_SETTING_KEY,

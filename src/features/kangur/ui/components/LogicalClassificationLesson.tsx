@@ -609,7 +609,12 @@ export default function LogicalClassificationLesson({
   const runtimeTemplate = useOptionalKangurLessonTemplate('logical_classification');
   const resolvedTemplate = lessonTemplate ?? runtimeTemplate;
   const translations = useTranslations('KangurStaticLessons.logicalClassification');
-  const fallbackTranslate: LessonTranslate = (key) => translations(key as never);
+  const fallbackTranslate = Object.assign(
+    (key: string): string => translations(key as never),
+    {
+      has: (key: string): boolean => translations.has(key as never),
+    },
+  ) as LessonTranslate & { has: (key: string) => boolean };
   const resolvedContent = resolveLogicalClassificationLessonContent(
     resolvedTemplate,
     fallbackTranslate,

@@ -1,5 +1,5 @@
-import { auth } from '@/features/auth/server';
 import { isMissingRequestScopeError } from '@/shared/lib/auth/request-scope-error';
+import { auth } from './auth';
 
 import type { Session } from 'next-auth';
 

@@ -39,17 +39,21 @@ const mapRequestedStatus = (
   return 'idle';
 };
 
-export function CaseResolverRuntimeProvider({
-  workspace,
-  selectedFileId,
-  selectedAssetId,
-  selectedFolderPath,
-  activeCaseId,
-  requestedFileId,
-  requestedContextStatus,
-  requestedContextIssue,
-  children,
-}: CaseResolverRuntimeProviderProps): React.JSX.Element {
+export function CaseResolverRuntimeProvider(
+  props: CaseResolverRuntimeProviderProps
+): React.JSX.Element {
+  const {
+    workspace,
+    selectedFileId,
+    selectedAssetId,
+    selectedFolderPath,
+    activeCaseId,
+    requestedFileId,
+    requestedContextStatus,
+    requestedContextIssue,
+    children,
+  } = props;
+
   const storeRef = useRef<CaseResolverRuntimeStore | null>(null);
   if (!storeRef.current) {
     storeRef.current = createCaseResolverRuntimeStore(

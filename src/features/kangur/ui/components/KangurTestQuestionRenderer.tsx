@@ -52,17 +52,19 @@ type Props = {
   showSectionIntro?: boolean;
 };
 
-export function KangurTestQuestionRenderer({
-  contentId = null,
-  question,
-  selectedLabel,
-  onSelect,
-  showAnswer,
-  questionIndex,
-  totalQuestions,
-  showReadControl = true,
-  showSectionIntro = true,
-}: Props): React.JSX.Element {
+export function KangurTestQuestionRenderer(props: Props): React.JSX.Element {
+  const {
+    contentId = null,
+    question,
+    selectedLabel,
+    onSelect,
+    showAnswer,
+    questionIndex,
+    totalQuestions,
+    showReadControl = true,
+    showSectionIntro = true,
+  } = props;
+
   const runtime = useOptionalKangurTestSuiteRuntime();
   const isCoarsePointer = useKangurCoarsePointer();
   const sectionEntryId = showSectionIntro ? (showAnswer ? 'tests-review' : 'tests-question') : null;

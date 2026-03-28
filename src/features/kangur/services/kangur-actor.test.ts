@@ -21,7 +21,7 @@ vi.mock('./kangur-learner-session', () => ({
 import { createDefaultKangurAiTutorLearnerMood } from '@/features/kangur/shared/contracts/kangur-ai-tutor-mood';
 import { kangurAuthUserSchema } from '@kangur/contracts';
 import { findAuthUserById } from '@/server/auth';
-import { readOptionalServerAuthSession } from '@/shared/lib/auth/optional-server-auth';
+import { readOptionalServerAuthSession } from '@/features/auth/server';
 
 import { listKangurLearnersByOwner } from './kangur-learner-repository';
 import { resolveKangurActor, toKangurAuthUser, type KangurParentActor } from './kangur-actor';

@@ -4,7 +4,7 @@ import {
 } from '@/features/integrations/server';
 import type { AiPathRunRepository } from '@/shared/contracts/ai-paths';
 import { getPathRunRepository } from '@/shared/lib/ai-paths/services/path-run-repository';
-import { readOptionalServerAuthSession } from '@/shared/lib/auth/optional-server-auth';
+import { readOptionalServerAuthSession } from '@/features/auth/server';
 import { getProductRepository } from '@/shared/lib/products/services/product-repository';
 
 import { BASE_EXPORT_RUN_PATH_ID, BASE_EXPORT_RUN_PATH_NAME } from './constants';

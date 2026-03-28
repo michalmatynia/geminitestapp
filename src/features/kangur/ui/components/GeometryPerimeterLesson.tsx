@@ -18,7 +18,11 @@ import {
   KangurLessonStack,
 } from '@/features/kangur/ui/design/lesson-primitives';
 import { KangurUnifiedLesson } from '@/features/kangur/ui/lessons/lesson-components';
-import type { LessonTranslate, WidenLessonCopy } from './lesson-copy';
+import {
+  type LessonTranslate,
+  type WidenLessonCopy,
+  translateLessonValueWithLegacyKey,
+} from './lesson-copy';
 
 type SectionId = 'intro' | 'kwadrat' | 'prostokan' | 'podsumowanie' | 'game_draw';
 type SlideSectionId = Exclude<SectionId, 'game_draw'>;
@@ -325,11 +329,11 @@ const buildGeometryPerimeterLessonCopy = (
     },
   },
   game: {
-    gameTitle: translateGeometryPerimeterLesson(
+    gameTitle: translateLessonValueWithLegacyKey(
       translate,
+      'game.gameTitle',
       'game.stageTitle',
-      GEOMETRY_PERIMETER_LESSON_COPY_PL.game.gameTitle ??
-        GEOMETRY_PERIMETER_LESSON_COPY_PL.game.stageTitle
+      GEOMETRY_PERIMETER_LESSON_COPY_PL.game.gameTitle
     ),
   },
 });
@@ -549,7 +553,7 @@ export default function GeometryPerimeterLesson(): React.JSX.Element {
           sectionId: 'game_draw',
           shell: {
             accent: 'amber',
-            title: copy.game.gameTitle ?? copy.game.stageTitle ?? 'Gra: Rysuj obwód',
+            title: copy.game.gameTitle ?? 'Gra: Rysuj obwód',
             icon: '✍️',
             maxWidthClassName: 'max-w-sm',
             headerTestId: 'geometry-perimeter-game-header',

@@ -16,19 +16,20 @@ export type KangurSummaryPanelProps = React.HTMLAttributes<HTMLDivElement> &
     tone?: 'neutral' | 'accent';
   };
 
-export function KangurSummaryPanel({
-  accent = 'slate',
-  align = 'left',
-  children,
-  className,
-  description,
-  label,
-  labelAccent,
-  padding = 'lg',
-  title,
-  tone = 'neutral',
-  ...props
-}: KangurSummaryPanelProps): React.JSX.Element {
+export function KangurSummaryPanel(props: KangurSummaryPanelProps): React.JSX.Element {
+  const {
+    accent = 'slate',
+    align = 'left',
+    children,
+    className,
+    description,
+    label,
+    labelAccent,
+    padding = 'lg',
+    title,
+    tone = 'neutral',
+    ...restProps
+  } = props;
   const centered = align === 'center';
 
   return (
@@ -42,7 +43,7 @@ export function KangurSummaryPanel({
         centered && 'text-center',
         className
       )}
-      {...props}
+      {...restProps}
     >
       {label ? (
         <span

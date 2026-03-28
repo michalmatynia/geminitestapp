@@ -276,24 +276,25 @@ test.describe('Master Folder Tree drag and drop', () => {
         children: [],
       },
     ];
+    const catalogsResponseBody = [
+      {
+        id: 'catalog-1',
+        name: 'Default Catalog',
+        isDefault: true,
+        languageIds: ['lang-en'],
+        defaultLanguageId: 'lang-en',
+        defaultPriceGroupId: null,
+        priceGroupIds: [],
+        createdAt: now,
+        updatedAt: now,
+      },
+    ];
 
     await page.route('**/api/v2/products/entities/catalogs**', async (route) => {
       await route.fulfill({
         status: 200,
         contentType: 'application/json',
-        body: JSON.stringify([
-          {
-            id: 'catalog-1',
-            name: 'Default Catalog',
-            isDefault: true,
-            languageIds: ['lang-en'],
-            defaultLanguageId: 'lang-en',
-            defaultPriceGroupId: null,
-            priceGroupIds: [],
-            createdAt: now,
-            updatedAt: now,
-          },
-        ]),
+        body: JSON.stringify(catalogsResponseBody),
       });
     });
 

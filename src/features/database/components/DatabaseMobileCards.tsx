@@ -11,7 +11,6 @@ import {
   UI_STACK_COMPACT_CLASSNAME,
   UI_CENTER_ROW_SPACED_CLASSNAME,
 } from '@/shared/ui';
-import type { DatabaseInfo } from '@/shared/contracts/database';
 import {
   useDatabaseBackupsActionsContext,
   useDatabaseBackupsStateContext,
@@ -53,7 +52,11 @@ export function DatabaseMobileCards(): React.JSX.Element {
               </DropdownMenuItem>
               <DropdownMenuItem
                 disabled={!backupMaintenanceAllowed}
-                onClick={() => handleRestoreRequest(backup)}
+                onClick={() => {
+                  if (backup) {
+                    void handleRestoreRequest(backup);
+                  }
+                }}
               >
                 Restore
               </DropdownMenuItem>

@@ -14,18 +14,19 @@ export type KangurMetricCardProps = React.HTMLAttributes<HTMLDivElement> &
     valueClassName?: string;
   };
 
-export function KangurMetricCard({
-  accent = 'slate',
-  align = 'left',
-  children,
-  className,
-  description,
-  label,
-  padding = 'md',
-  value,
-  valueClassName,
-  ...props
-}: KangurMetricCardProps): React.JSX.Element {
+export function KangurMetricCard(props: KangurMetricCardProps): React.JSX.Element {
+  const {
+    accent = 'slate',
+    align = 'left',
+    children,
+    className,
+    description,
+    label,
+    padding = 'md',
+    value,
+    valueClassName,
+    ...restProps
+  } = props;
   const centered = align === 'center';
   const tone = accent === 'slate' ? 'neutral' : 'accent';
   const metricAccent = accent;
@@ -48,7 +49,7 @@ export function KangurMetricCard({
         centered && 'text-center',
         metricCardClassName
       )}
-      {...props}
+      {...restProps}
     >
       <div
         className={cn(

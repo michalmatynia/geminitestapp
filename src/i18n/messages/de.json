@@ -2521,6 +2521,7 @@
         "rushMode": "Bridge Rush",
         "rushModeHint": "Bridge-Rush-Modus: Schaffe es vor Ablauf der Zeit. Ein Moduswechsel startet das Spiel neu.",
         "modeResetHint": "Ein Moduswechsel startet das Spiel neu.",
+        "title": "Beziehungsbruecke",
         "stageTitle": "Beziehungsbruecke",
         "roundLabel": "Runde {current}/{total}",
         "timeExpired": "Zeit ist abgelaufen",

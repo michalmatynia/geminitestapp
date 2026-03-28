@@ -150,26 +150,28 @@ const renderSelectSimple = ({
   </div>
 );
 
-export function SelectSimple({
-  value,
-  onValueChange,
-  options,
-  placeholder = 'Select an option',
-  className,
-  triggerClassName,
-  contentClassName,
-  disabled = false,
-  id,
-  ariaLabel,
-  ariaDescribedBy,
-  ariaInvalid,
-  ariaErrorMessage,
-  title,
-  size = 'default',
-  variant = 'default',
-  dataDocId,
-  dataDocAlias,
-}: SelectSimpleProps): React.JSX.Element {
+export function SelectSimple(props: SelectSimpleProps): React.JSX.Element {
+  const {
+    value,
+    onValueChange,
+    options,
+    placeholder = 'Select an option',
+    className,
+    triggerClassName,
+    contentClassName,
+    disabled = false,
+    id,
+    ariaLabel,
+    ariaDescribedBy,
+    ariaInvalid,
+    ariaErrorMessage,
+    title,
+    size = 'default',
+    variant = 'default',
+    dataDocId,
+    dataDocAlias,
+  } = props;
+
   const normalizedOptions = React.useMemo(
     () => options.filter((option) => option.value && option.value.trim() !== ''),
     [options]

@@ -26,7 +26,10 @@ import { KANGUR_START_ROW_CLASSNAME } from '@/features/kangur/ui/design/tokens';
 import { getKangurBuiltInGameInstanceId } from '@/features/kangur/games';
 import { useOptionalKangurLessonTemplate } from '@/features/kangur/ui/context/KangurLessonsRuntimeContext';
 import { KangurUnifiedLesson } from '@/features/kangur/ui/lessons/lesson-components';
-import type { LessonTranslate } from './lesson-copy';
+import {
+  type LessonTranslate,
+  translateLessonValueWithLegacyKey,
+} from './lesson-copy';
 import {
   resolveSubtractingLessonContent,
   SUBTRACTING_LESSON_COMPONENT_CONTENT,
@@ -1180,10 +1183,11 @@ const buildSubtractingLessonCopy = (
     },
   },
   game: {
-    gameTitle: translateSubtractingLesson(
+    gameTitle: translateLessonValueWithLegacyKey(
       translate,
+      'game.gameTitle',
       'game.stageTitle',
-      SUBTRACTING_LESSON_COPY_PL.game.gameTitle ?? SUBTRACTING_LESSON_COPY_PL.game.stageTitle
+      SUBTRACTING_LESSON_COPY_PL.game.gameTitle
     ),
   },
 });
@@ -1686,7 +1690,7 @@ export default function SubtractingLesson({ lessonTemplate }: LessonProps): Reac
             maxWidthClassName: 'max-w-none',
             headerTestId: 'subtracting-lesson-game-header',
             shellTestId: 'subtracting-lesson-game-shell',
-            title: copy.game.gameTitle ?? copy.game.stageTitle ?? 'Gra z odejmowaniem!',
+            title: copy.game.gameTitle ?? 'Gra z odejmowaniem!',
           },
           launchableInstance: {
             gameId: 'subtracting_garden',

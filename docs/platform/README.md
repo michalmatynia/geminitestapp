@@ -41,6 +41,7 @@ onramp.
 
 ### Developer Resources
 - [`developer-handbook.md`](./developer-handbook.md)
+- [`testing-policy.md`](./testing-policy.md)
 - [`tooltip-documentation-platform.md`](./tooltip-documentation-platform.md)
 - [`migration-checklist.md`](./migration-checklist.md)
 - [`bun-support.md`](./bun-support.md)

@@ -14,7 +14,7 @@ const runtimeState = vi.hoisted(() => ({
   routing: null as null | Record<string, unknown>,
 }));
 
-vi.mock('@/shared/lib/kangur-bridge', () => {
+vi.mock('@/features/kangur/public', () => {
   const Stub = () => <div />;
 
   return {

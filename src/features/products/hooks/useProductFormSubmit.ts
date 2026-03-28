@@ -93,19 +93,34 @@ export const normalizeProductParametersForSubmission = (
     ).values()
   );
 
-function buildFormData(
-  data: ProductFormData,
-  imageSlots: (ProductImageSlot | null)[],
-  imageLinks: string[],
-  imageBase64s: string[],
-  selectedCatalogIds: string[],
-  selectedCategoryId: string | null,
-  selectedTagIds: string[],
-  selectedProducerIds: string[],
-  selectedNoteIds: string[],
-  parameterValues: ProductParameterValue[],
-  studioProjectId: string | null
-): FormData {
+type BuildProductFormDataInput = {
+  data: ProductFormData;
+  imageSlots: (ProductImageSlot | null)[];
+  imageLinks: string[];
+  imageBase64s: string[];
+  selectedCatalogIds: string[];
+  selectedCategoryId: string | null;
+  selectedTagIds: string[];
+  selectedProducerIds: string[];
+  selectedNoteIds: string[];
+  parameterValues: ProductParameterValue[];
+  studioProjectId: string | null;
+};
+
+function buildFormData(input: BuildProductFormDataInput): FormData {
+  const {
+    data,
+    imageSlots,
+    imageLinks,
+    imageBase64s,
+    selectedCatalogIds,
+    selectedCategoryId,
+    selectedTagIds,
+    selectedProducerIds,
+    selectedNoteIds,
+    parameterValues,
+    studioProjectId,
+  } = input;
   const formData = new FormData();
 
   Object.entries(data).forEach(([key, value]: [string, unknown]): void => {
@@ -173,24 +188,28 @@ function buildFormData(
   return formData;
 }
 
-export function useProductFormSubmit({
-  product,
-  methods,
-  imageSlots,
-  imageLinks,
-  imageBase64s,
-  selectedCatalogIds,
-  selectedCategoryId,
-  selectedTagIds,
-  selectedProducerIds,
-  selectedNoteIds,
-  parameterValues,
-  studioProjectId,
-  refreshImages,
-  onSuccess,
-  onEditSave,
-  requireHydratedEditProduct = false,
-}: UseProductFormSubmitProps): UseProductFormSubmitResult {
+export function useProductFormSubmit(
+  props: UseProductFormSubmitProps
+): UseProductFormSubmitResult {
+  const {
+    product,
+    methods,
+    imageSlots,
+    imageLinks,
+    imageBase64s,
+    selectedCatalogIds,
+    selectedCategoryId,
+    selectedTagIds,
+    selectedProducerIds,
+    selectedNoteIds,
+    parameterValues,
+    studioProjectId,
+    refreshImages,
+    onSuccess,
+    onEditSave,
+    requireHydratedEditProduct = false,
+  } = props;
+
   const { toast } = useToast();
   const { confirm, ConfirmationModal } = useConfirm();
   const [uploadError, setUploadError] = useState<string | null>(null);
@@ -247,19 +266,19 @@ export function useProductFormSubmit({
             return;
           }
 
-          const formData = buildFormData(
-            data,
-            imageSlots,
-            imageLinks,
-            imageBase64s,
-            selectedCatalogIds,
-            selectedCategoryId,
-            selectedTagIds,
-            selectedProducerIds,
-            selectedNoteIds,
-            parameterValues,
-            studioProjectId
-          );
+      const formData = buildFormData({
+        data,
+        imageSlots,
+        imageLinks,
+        imageBase64s,
+        selectedCatalogIds,
+        selectedCategoryId,
+        selectedTagIds,
+        selectedProducerIds,
+        selectedNoteIds,
+        parameterValues,
+        studioProjectId,
+      });
 
           const savedProduct = product
             ? await updateMutationRef.current.mutateAsync({ id: product.id, data: formData })

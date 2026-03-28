@@ -85,4 +85,26 @@ describe('GeometryShapesLesson i18n', () => {
       screen.getByText('Formen können sich drehen und bleiben trotzdem dieselbe Figur.')
     ).toBeInTheDocument();
   });
+
+  it('prefers the gameTitle locale key for the game shell title', () => {
+    const customMessages = structuredClone(deMessages) as Record<string, any>;
+    customMessages.KangurStaticLessons.geometryShapes.game.gameTitle =
+      'Benutzerdefinierte Formenwerkstatt';
+
+    render(
+      <NextIntlClientProvider locale='de' messages={customMessages}>
+        <GeometryShapesLesson />
+      </NextIntlClientProvider>
+    );
+
+    const games =
+      (capturedProps?.games as Array<{
+        sectionId: string;
+        shell: Record<string, unknown>;
+      }>) ?? [];
+
+    expect(games.find((game) => game.sectionId === 'game')?.shell).toMatchObject({
+      title: 'Benutzerdefinierte Formenwerkstatt',
+    });
+  });
 });

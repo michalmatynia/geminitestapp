@@ -17,18 +17,21 @@ export type HandleDatabaseDeleteOperationInput = {
   aiPrompt: string;
 };
 
-export async function handleDatabaseDeleteOperation({
-  node,
-  nodeInputs,
-  executed,
-  reportAiPathsError,
-  toast,
-  simulationEntityType,
-  simulationEntityId,
-  dbConfig,
-  dryRun,
-  aiPrompt,
-}: HandleDatabaseDeleteOperationInput): Promise<RuntimePortValues> {
+export async function handleDatabaseDeleteOperation(
+  input: HandleDatabaseDeleteOperationInput
+): Promise<RuntimePortValues> {
+  const {
+    node,
+    nodeInputs,
+    executed,
+    reportAiPathsError,
+    toast,
+    simulationEntityType,
+    simulationEntityId,
+    dbConfig,
+    dryRun,
+    aiPrompt,
+  } = input;
   const entityType = (dbConfig.entityType ?? 'product').trim().toLowerCase();
   const idField = dbConfig.idField ?? 'entityId';
   const entityId = resolveEntityIdFromInputs(

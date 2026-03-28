@@ -35,6 +35,8 @@ export { normalizeAuthEmail, listAuthUsers } from './services/auth-user-reposito
 export * from './services/auth-user-service';
 export * from './services/user-preferences-repository';
 export * from './services/totp';
+export * from './optional-server-auth';
+export * from './settings-manage-access';
 export * from '@/shared/contracts/auth';
 export { AUTH_SETTINGS_KEYS } from './utils/auth-management';
 export type { AuthUserRoleMap } from './utils/auth-management';

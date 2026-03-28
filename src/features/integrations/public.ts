@@ -25,6 +25,7 @@ export * from './types/listings';
 
 // Utils
 export * from './utils/connections';
+export * from './product-integrations-adapter';
 
 // Constants
 export * from './constants/slugs';

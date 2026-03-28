@@ -78,6 +78,10 @@ is specifically for shared build, CI, and package-manager workflow guidance.
   split-domain coverage sweep bounded.
 - Shared feature test-distribution quality scan:
   `npm run check:test-distribution`
+- Shared test suite inventory snapshot:
+  `npm run metrics:test-suite-inventory`
+- Shared major-run testing ledger surface:
+  `npm run metrics:test-run-ledger`, `npm run testing:record -- --label="..." --status=ok --suite=...`
 - Shared testing quality baseline snapshot check:
   `npm run check:test-quality`
 - Shared Bun config contract check:

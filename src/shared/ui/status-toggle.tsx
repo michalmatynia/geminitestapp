@@ -14,17 +14,19 @@ export type { StatusToggleProps };
  * StatusToggle - A button that toggles between two states (ON/OFF).
  * Refactored to leverage the shared Badge component for consistent semantic styling.
  */
-export function StatusToggle({
-  enabled,
-  onToggle,
-  enabledLabel = 'ON',
-  disabledLabel = 'OFF',
-  enabledVariant = 'emerald',
-  disabledVariant = 'red',
-  size = 'default',
-  disabled,
-  className,
-}: StatusToggleProps): React.JSX.Element {
+export function StatusToggle(props: StatusToggleProps): React.JSX.Element {
+  const {
+    enabled,
+    onToggle,
+    enabledLabel = 'ON',
+    disabledLabel = 'OFF',
+    enabledVariant = 'emerald',
+    disabledVariant = 'red',
+    size = 'default',
+    disabled,
+    className,
+  } = props;
+
   // Map StatusToggle variants to Badge variants
   const getBadgeVariant = (): VariantProps<typeof badgeVariants>['variant'] => {
     if (enabled) {

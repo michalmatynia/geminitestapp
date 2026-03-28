@@ -80,27 +80,30 @@ type UseKangurAiTutorPanelInteractionsInput = {
   >;
 };
 
-export function useKangurAiTutorPanelInteractions({
-  activeConversationFocus,
-  activeSelectedText,
-  allowSelectedTextSupport,
-  bubblePlacementMode,
-  clearSelection,
-  closeChat,
-  freeformContextualPanelPoint,
-  isAskModalMode,
-  isOpen,
-  isTargetWithinTutorUi,
-  messageCount,
-  openChat,
-  persistSelectionGeometry,
-  selectedText,
-  selectionRect,
-  setHighlightedText,
-  setInputValue,
-  telemetryContext,
-  widgetState,
-}: UseKangurAiTutorPanelInteractionsInput) {
+export function useKangurAiTutorPanelInteractions(
+  input: UseKangurAiTutorPanelInteractionsInput
+) {
+  const {
+    activeConversationFocus,
+    activeSelectedText,
+    allowSelectedTextSupport,
+    bubblePlacementMode,
+    clearSelection,
+    closeChat,
+    freeformContextualPanelPoint,
+    isAskModalMode,
+    isOpen,
+    isTargetWithinTutorUi,
+    messageCount,
+    openChat,
+    persistSelectionGeometry,
+    selectedText,
+    selectionRect,
+    setHighlightedText,
+    setInputValue,
+    telemetryContext,
+    widgetState,
+  } = input;
   const {
     askModalReturnStateRef,
     avatarDragStateRef,

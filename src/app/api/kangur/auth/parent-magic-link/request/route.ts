@@ -5,7 +5,7 @@ import { NextResponse } from 'next/server';
 
 import { ErrorSystem } from '@/features/kangur/shared/utils/observability/error-system';
 import { apiHandler } from '@/shared/lib/api/api-handler';
-import { readTolerantServerAuthSession } from '@/shared/lib/auth/optional-server-auth';
+import { readTolerantServerAuthSession } from '@/features/auth/server';
 
 export const POST = apiHandler(
   async () => {

@@ -23,21 +23,23 @@ interface FormActionsProps {
   size?: 'default' | 'sm' | 'lg' | 'xs';
 }
 
-export function FormActions({
-  onCancel,
-  onSave,
-  cancelText = 'Cancel',
-  saveText = 'Save Changes',
-  isSaving = false,
-  isDisabled = false,
-  className,
-  saveVariant = 'default',
-  cancelVariant = 'outline',
-  saveIcon,
-  saveLoadingText = 'Saving...',
-  children,
-  size = 'sm',
-}: FormActionsProps): React.JSX.Element {
+export function FormActions(props: FormActionsProps): React.JSX.Element {
+  const {
+    onCancel,
+    onSave,
+    cancelText = 'Cancel',
+    saveText = 'Save Changes',
+    isSaving = false,
+    isDisabled = false,
+    className,
+    saveVariant = 'default',
+    cancelVariant = 'outline',
+    saveIcon,
+    saveLoadingText = 'Saving...',
+    children,
+    size = 'sm',
+  } = props;
+
   const actionRuntime = React.useMemo(
     () => ({
       onCancel,

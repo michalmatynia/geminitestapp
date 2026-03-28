@@ -1,7 +1,7 @@
 import 'server-only';
 
 import { authError } from '@/shared/errors/app-error';
-import { readOptionalServerAuthSession } from '@/shared/lib/auth/optional-server-auth';
+import { readOptionalServerAuthSession } from './optional-server-auth';
 
 export async function assertSettingsManageAccess(): Promise<void> {
   const session = await readOptionalServerAuthSession();

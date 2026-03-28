@@ -5,6 +5,7 @@ import path from 'node:path';
 import { afterEach, describe, expect, it } from 'vitest';
 
 import { collectTestingQualitySnapshot } from './lib/testing-quality-snapshot.mjs';
+import { getMajorTestingLaneIds, testingLanes, testingSuites } from '../testing/config/test-suite-registry.mjs';
 
 const tempRoots: string[] = [];
 
@@ -141,6 +142,30 @@ describe('collectTestingQualitySnapshot', () => {
         { id: 'public-auth', name: 'Public Auth', route: '/signin', status: 'pass', durationMs: 600 },
       ],
     });
+    writeJson(root, 'docs/metrics/testing-run-ledger-latest.json', {
+      generatedAt: '2026-03-11T09:30:00.000Z',
+      summary: {
+        totalEntries: 2,
+        passingEntries: 1,
+        failingEntries: 1,
+        warningEntries: 0,
+        latestRunAt: '2026-03-11T09:25:00.000Z',
+      },
+      entries: [
+        {
+          id: '2026-03-11T09:25:00.000Z:pr-required',
+          recordedAt: '2026-03-11T09:25:00.000Z',
+          label: 'Pull Request Required',
+          status: 'failed',
+          laneId: 'pr-required',
+          suiteIds: ['lint', 'typecheck'],
+          suiteResults: [],
+          durationMs: 50_000,
+          actor: 'ci-agent',
+          git: { sha: 'abcdef1', branch: 'main' },
+        },
+      ],
+    });
 
     const snapshot = collectTestingQualitySnapshot({
       root,
@@ -151,6 +176,12 @@ describe('collectTestingQualitySnapshot', () => {
     expect(snapshot.summary.repoTestFileCount).toBe(5);
     expect(snapshot.summary.e2eTestFileCount).toBe(1);
     expect(snapshot.summary.scriptTestFileCount).toBe(1);
+    expect(snapshot.summary.registeredSuiteCount).toBe(testingSuites.length);
+    expect(snapshot.summary.registeredLaneCount).toBe(testingLanes.length);
+    expect(snapshot.summary.majorLaneCount).toBe(getMajorTestingLaneIds().length);
+    expect(snapshot.summary.recordedRunCount).toBe(2);
+    expect(snapshot.summary.failingRecordedRunCount).toBe(1);
+    expect(snapshot.summary.latestRecordedRunAt).toBe('2026-03-11T09:25:00.000Z');
     expect(snapshot.summary.featuresWithoutTestCount).toBe(0);
     expect(snapshot.summary.featuresWithoutFastTestCount).toBe(1);
     expect(snapshot.summary.featuresWithoutNegativeTestCount).toBe(2);
@@ -161,6 +192,7 @@ describe('collectTestingQualitySnapshot', () => {
       expect.arrayContaining(['notes', 'products'])
     );
     expect(snapshot.inventory.hygiene.todoCount).toBe(1);
+    expect(snapshot.inventory.registry.majorLaneIds).toEqual(getMajorTestingLaneIds());
     expect(snapshot.inventory.featureCoverage.featuresWithoutFastTests).toContain('products');
     expect(snapshot.inventory.featureCoverage.featuresWithoutNegativeTests).toEqual(
       expect.arrayContaining(['notes', 'products'])
@@ -194,6 +226,11 @@ describe('collectTestingQualitySnapshot', () => {
       baselineId: 'accessibilityRouteCrawl',
       name: 'Public Home',
       durationMs: 2_100,
+    });
+    expect(snapshot.ledger.latestEntry).toMatchObject({
+      label: 'Pull Request Required',
+      laneId: 'pr-required',
+      status: 'failed',
     });
   });
 

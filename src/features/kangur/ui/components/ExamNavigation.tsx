@@ -38,21 +38,24 @@ type ExamNavigationResolvedProps = {
   buttonClassName: string;
 };
 
-const renderExamNavigation = ({
-  prevDisabled,
-  nextDisabled,
-  prevLabel,
-  nextLabel,
-  onPrev,
-  onNext,
-  ariaLabel,
-  printLabel,
-  progressLabel,
-  progressAriaLabel,
-  progressTestId,
-  onPrintPanel,
-  buttonClassName,
-}: ExamNavigationResolvedProps): React.JSX.Element => (
+const renderExamNavigation = (props: ExamNavigationResolvedProps): React.JSX.Element => {
+  const {
+    prevDisabled,
+    nextDisabled,
+    prevLabel,
+    nextLabel,
+    onPrev,
+    onNext,
+    ariaLabel,
+    printLabel,
+    progressLabel,
+    progressAriaLabel,
+    progressTestId,
+    onPrintPanel,
+    buttonClassName,
+  } = props;
+
+  return (
   <nav
     aria-label={ariaLabel}
     className={LESSONS_SELECTOR_NAV_LAYOUT_CLASSNAME}
@@ -103,22 +106,25 @@ const renderExamNavigation = ({
       ) : null}
     </div>
   </nav>
-);
+  );
+};
 
-export function ExamNavigation({
-  prevDisabled,
-  nextDisabled,
-  prevLabel,
-  nextLabel,
-  onPrev,
-  onNext,
-  ariaLabel = 'Nawigacja w teście Kangur',
-  printLabel = 'Drukuj panel',
-  progressLabel,
-  progressAriaLabel,
-  progressTestId,
-  onPrintPanel,
-}: ExamNavigationProps): React.JSX.Element {
+export function ExamNavigation(props: ExamNavigationProps): React.JSX.Element {
+  const {
+    prevDisabled,
+    nextDisabled,
+    prevLabel,
+    nextLabel,
+    onPrev,
+    onNext,
+    ariaLabel = 'Nawigacja w teście Kangur',
+    printLabel = 'Drukuj panel',
+    progressLabel,
+    progressAriaLabel,
+    progressTestId,
+    onPrintPanel,
+  } = props;
+
   const buttonClassName =
     'justify-center px-4 shadow-sm [border-color:var(--kangur-soft-card-border)] disabled:opacity-35 touch-manipulation select-none min-h-11 min-w-[3rem] active:scale-[0.98]';
 

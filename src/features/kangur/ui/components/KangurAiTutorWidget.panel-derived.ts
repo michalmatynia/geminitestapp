@@ -55,37 +55,40 @@ type UseKangurAiTutorPanelDerivedStateInput = {
   visibleProactiveNudge: TutorProactiveNudge | null;
 };
 
-export function useKangurAiTutorPanelDerivedState({
-  activeFocus,
-  activeSelectedText,
-  askModalHelperText,
-  bubblePlacementLaunchOrigin,
-  bubblePlacementMode,
-  canStartHomeOnboardingManually,
-  contextSwitchNotice,
-  emptyStateMessage,
-  focusChipLabel,
-  guidedTutorTarget,
-  highlightedSection,
-  inputValue,
-  isAskModalMode,
-  isGuidedTutorMode,
-  isOpen,
-  isSectionExplainPendingMode,
-  isSelectionExplainPendingMode,
-  messages,
-  sessionContext,
-  showSectionExplainCompleteState,
-  showSelectionExplainCompleteState,
-  showSources,
-  shouldRenderGuestIntroUi,
-  tutorContent,
-  tutorName,
-  tutorNarrationObservedText,
-  usageSummary,
-  viewportWidth,
-  visibleProactiveNudge,
-}: UseKangurAiTutorPanelDerivedStateInput) {
+export function useKangurAiTutorPanelDerivedState(
+  input: UseKangurAiTutorPanelDerivedStateInput
+) {
+  const {
+    activeFocus,
+    activeSelectedText,
+    askModalHelperText,
+    bubblePlacementLaunchOrigin,
+    bubblePlacementMode,
+    canStartHomeOnboardingManually,
+    contextSwitchNotice,
+    emptyStateMessage,
+    focusChipLabel,
+    guidedTutorTarget,
+    highlightedSection,
+    inputValue,
+    isAskModalMode,
+    isGuidedTutorMode,
+    isOpen,
+    isSectionExplainPendingMode,
+    isSelectionExplainPendingMode,
+    messages,
+    sessionContext,
+    showSectionExplainCompleteState,
+    showSelectionExplainCompleteState,
+    showSources,
+    shouldRenderGuestIntroUi,
+    tutorContent,
+    tutorName,
+    tutorNarrationObservedText,
+    usageSummary,
+    viewportWidth,
+    visibleProactiveNudge,
+  } = input;
   const shouldEnableTutorNarration = (isOpen || shouldRenderGuestIntroUi) && !isGuidedTutorMode;
   const panelEmptyStateMessage = isSelectionExplainPendingMode
     ? tutorContent.emptyStates.selectionPending

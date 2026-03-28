@@ -74,25 +74,26 @@ const sanitizeContent = (value: string | null | undefined): string => {
   return root.innerHTML;
 };
 
-export default function RichTextEditorImpl({
-  value,
-  onChange,
-  disabled = false,
-  placeholder,
-  variant = 'compact',
-  headingLevels = [2],
-  allowImage = false,
-  allowTable = false,
-  allowTaskList = false,
-  allowFontFamily = false,
-  allowTextAlign = false,
-  enableAdvancedTools = false,
-  fontFamilyOptions,
-  loadingLabel = 'Loading editor...',
-  containerClassName,
-  toolbarClassName,
-  surfaceOptions,
-}: RichTextEditorProps): React.JSX.Element {
+export default function RichTextEditorImpl(props: RichTextEditorProps): React.JSX.Element {
+  const {
+    value,
+    onChange,
+    disabled = false,
+    placeholder,
+    variant = 'compact',
+    headingLevels = [2],
+    allowImage = false,
+    allowTable = false,
+    allowTaskList = false,
+    allowFontFamily = false,
+    allowTextAlign = false,
+    enableAdvancedTools = false,
+    fontFamilyOptions,
+    loadingLabel = 'Loading editor...',
+    containerClassName,
+    toolbarClassName,
+    surfaceOptions,
+  } = props;
   const { prompt, PromptInputModal } = usePrompt();
   const lastValueRef = useRef(value);
   const hasAcceptedFocusedUpdateRef = useRef(false);

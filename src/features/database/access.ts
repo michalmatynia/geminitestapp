@@ -1,6 +1,6 @@
 import 'server-only';
 
-import { assertSettingsManageAccess } from '@/shared/lib/auth/settings-manage-access';
+import { assertSettingsManageAccess } from '@/features/auth/server';
 
 export async function assertDatabaseEngineManageAccess(): Promise<void> {
   await assertSettingsManageAccess();

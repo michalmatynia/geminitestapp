@@ -78,8 +78,11 @@ const normalizeStatus = (status) => {
   if (status === 'pass' || status === 'passed' || status === 'success') {
     return 'ok';
   }
-  if (status === 'fail' || status === 'error') {
+  if (status === 'fail' || status === 'failure' || status === 'failed' || status === 'error') {
     return 'failed';
+  }
+  if (status === 'cancelled' || status === 'canceled' || status === 'skipped' || status === 'neutral') {
+    return 'warn';
   }
   return 'warn';
 };
@@ -150,7 +153,9 @@ const toMarkdown = (payload) => {
   lines.push('');
   if (payload.entries.length === 0) {
     lines.push('- No major test runs have been recorded yet.');
-    lines.push('- Use `npm run test:lane:*` for lane-based runs or `npm run testing:record -- --help-like-usage-in-docs` for manual entries.');
+    lines.push(
+      '- Use `npm run test:lane:*` for lane-based runs or `npm run testing:record -- --label="Manual validation" --status=ok --suite=build` for manual entries.'
+    );
     return `${lines.join('\n')}\n`;
   }
 

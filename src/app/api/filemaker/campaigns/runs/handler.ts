@@ -13,7 +13,7 @@ import type {
 } from '@/features/filemaker/types';
 import { filemakerEmailCampaignLaunchRunRequestSchema } from '@/shared/contracts/filemaker';
 import type { ApiHandlerContext, JsonParseResult } from '@/shared/contracts/ui';
-import { assertSettingsManageAccess } from '@/shared/lib/auth/settings-manage-access';
+import { assertSettingsManageAccess } from '@/features/auth/server';
 import { parseJsonBody } from '@/shared/lib/api/parse-json';
 
 export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {

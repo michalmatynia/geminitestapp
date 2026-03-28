@@ -1,4 +1,7 @@
-import type { LessonTranslate } from '@/features/kangur/ui/components/lesson-copy';
+import {
+  type LessonTranslate,
+  translateLessonValueWithLegacyKey,
+} from '@/features/kangur/ui/components/lesson-copy';
 import {
   resolveKangurLessonTemplateComponentContent,
 } from '@/features/kangur/lessons/lesson-template-component-content';
@@ -909,17 +912,19 @@ export const createAddingLessonContentFromTranslate = (
     },
   },
   game: {
-    gameTitle: translateAddingLesson(
+    gameTitle: translateLessonValueWithLegacyKey(
       translate,
+      'game.gameTitle',
       'game.stageTitle',
-      ADDING_LESSON_DEFAULTS.game.gameTitle ?? ADDING_LESSON_DEFAULTS.game.stageTitle,
+      ADDING_LESSON_DEFAULTS.game.gameTitle,
     ),
   },
   synthesis: {
-    gameTitle: translateAddingLesson(
+    gameTitle: translateLessonValueWithLegacyKey(
       translate,
+      'synthesis.gameTitle',
       'synthesis.stageTitle',
-      ADDING_LESSON_DEFAULTS.synthesis.gameTitle ?? ADDING_LESSON_DEFAULTS.synthesis.stageTitle,
+      ADDING_LESSON_DEFAULTS.synthesis.gameTitle,
     ),
   },
 });

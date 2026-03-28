@@ -77,4 +77,26 @@ describe('LogicalPatternsLesson i18n', () => {
     expect(screen.getByText('Muster sind ueberall:')).toBeInTheDocument();
     expect(screen.getByText('1, 2, 3, 4, 5 - jede Zahl ist um 1 groesser')).toBeInTheDocument();
   });
+
+  it('prefers the gameTitle locale key for the workshop shell title', () => {
+    const customMessages = structuredClone(deMessages) as Record<string, any>;
+    customMessages.KangurStaticLessons.logicalPatterns.game.gameTitle =
+      'Benutzerdefinierte Musterwerkstatt';
+
+    render(
+      <NextIntlClientProvider locale='de' messages={customMessages}>
+        <LogicalPatternsLesson />
+      </NextIntlClientProvider>
+    );
+
+    const games =
+      (capturedProps?.games as Array<{
+        sectionId: string;
+        shell: Record<string, unknown>;
+      }>) ?? [];
+
+    expect(games.find((game) => game.sectionId === 'game_warsztat')?.shell).toMatchObject({
+      title: 'Benutzerdefinierte Musterwerkstatt',
+    });
+  });
 });

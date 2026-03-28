@@ -1,7 +1,11 @@
 import type {
   KangurLogicalAnalogiesLessonTemplateContent,
 } from '@/shared/contracts/kangur-lesson-templates';
-import type { LessonTranslate } from './lesson-copy';
+import {
+  type LessonTranslate,
+  translateLessonValue,
+  translateLessonValueWithLegacyKey,
+} from './lesson-copy';
 
 const LOGICAL_ANALOGIES_LESSON_COPY_PL: Omit<
   KangurLogicalAnalogiesLessonTemplateContent,
@@ -224,11 +228,9 @@ const translateLogicalAnalogiesLesson = (
   key: string,
   fallback: string,
 ): string => {
-  const translationKey = key === 'game.gameTitle' ? 'game.stageTitle' : key;
-  const translated = translate(translationKey);
-  return translated === translationKey || translated.endsWith(`.${translationKey}`)
-    ? fallback
-    : translated;
+  return key === 'game.gameTitle'
+    ? translateLessonValueWithLegacyKey(translate, key, 'game.stageTitle', fallback)
+    : translateLessonValue(translate, key, fallback);
 };
 
 const localizeLogicalAnalogiesLessonCopy = <T,>(

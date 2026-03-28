@@ -70,18 +70,7 @@ const parseTagInput = (input: string): string[] => {
   return Array.from(new Set(raw));
 };
 
-export function FileManagerProvider({
-  children,
-  onSelectFile,
-  mode = 'select',
-  selectionMode = 'multiple',
-  autoConfirmSelection = false,
-  showFolderFilter = false,
-  defaultFolder,
-  showBulkActions = false,
-  showTagSearch = false,
-  filepathFilter,
-}: {
+export function FileManagerProvider(props: {
   children: ReactNode;
   onSelectFile?: (files: ImageFileSelection[]) => void;
   mode?: 'view' | 'select';
@@ -93,6 +82,19 @@ export function FileManagerProvider({
   showTagSearch?: boolean;
   filepathFilter?: (filepath: string) => boolean;
 }): React.JSX.Element {
+  const {
+    children,
+    onSelectFile,
+    mode = 'select',
+    selectionMode = 'multiple',
+    autoConfirmSelection = false,
+    showFolderFilter = false,
+    defaultFolder,
+    showBulkActions = false,
+    showTagSearch = false,
+    filepathFilter,
+  } = props;
+
   const [filenameSearch, setFilenameSearch] = useState('');
   const [productNameSearch, setProductNameSearch] = useState('');
   const [tagSearch, setTagSearch] = useState('');

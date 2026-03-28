@@ -2,7 +2,7 @@ import { redirect } from 'next/navigation';
 
 import { AdminLayout } from '@/features/admin/public';
 import { getUserPreferences } from '@/features/auth/server';
-import { readOptionalServerAuthSession } from '@/shared/lib/auth/optional-server-auth';
+import { readOptionalServerAuthSession } from '@/features/auth/server';
 import { readOptionalRequestCookies } from '@/shared/lib/request/optional-cookies';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 

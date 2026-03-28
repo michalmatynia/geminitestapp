@@ -89,60 +89,58 @@ const {
 
 const splitClasses = (className: string): string[] => className.trim().split(/\s+/);
 
+const lessonsTranslations = {
+  'KangurLessonsPage.pageTitle': {
+    de: 'Lektionen',
+    en: 'Lessons',
+    pl: 'Lekcje',
+  },
+  'KangurLessonsPage.loadingDescription': {
+    de: 'Die Lektionen sind gleich bereit.',
+    en: 'The lessons will be ready in a moment.',
+    pl: 'Lekcje zaraz beda gotowe.',
+  },
+  'KangurLessonsPage.loadingLessonsStatus': {
+    de: 'Lektionen werden geladen',
+    en: 'Loading lessons',
+    pl: 'Ładowanie lekcji',
+  },
+  'KangurLessonsPage.loadingLessonsDetails': {
+    de: 'Die Lektionsbibliothek wird vorbereitet und an das gewahlte Thema angepasst.',
+    en: 'Preparing the lesson library and matching it to the selected topic.',
+    pl: 'Przygotowujemy bibliotekę lekcji i dopasowujemy ją do wybranego tematu.',
+  },
+  'KangurLessonsPage.loadingSectionsStatus': {
+    de: 'Abschnitte werden geladen',
+    en: 'Loading sections',
+    pl: 'Ładowanie sekcji',
+  },
+  'KangurLessonsPage.loadingSectionsDetails': {
+    de: 'Die Lektionsabschnitte werden geordnet, damit die Themenliste gleich angezeigt werden kann.',
+    en: 'Organising lesson sections so the full topic list can appear next.',
+    pl: 'Porządkujemy sekcje lekcji, aby zaraz pokazać pełną listę tematów.',
+  },
+  'KangurLessonsPage.introDescription': {
+    de: 'Wahle eine Lektion und starte mit dem Lernen.',
+    en: 'Choose a lesson and start learning.',
+    pl: 'Wybierz lekcje i zacznij nauke.',
+  },
+  'KangurLessonsPage.emptyTitle': {
+    de: 'Keine aktiven Lektionen',
+    en: 'No active lessons',
+    pl: 'Brak aktywnych lekcji',
+  },
+  'KangurLessonsWidgets.mastery.noSavedPractice': {
+    de: 'Kein gespeichertes Training',
+    en: 'No saved practice',
+    pl: 'Brak zapisanego treningu',
+  },
+} as const;
+
 vi.mock('next-intl', () => ({
   useLocale: () => localeState.value,
-  useTranslations:
-    (namespace?: string) =>
-    (key: string) =>
-      (
-        {
-          'KangurLessonsPage.pageTitle': {
-            de: 'Lektionen',
-            en: 'Lessons',
-            pl: 'Lekcje',
-          },
-          'KangurLessonsPage.loadingDescription': {
-            de: 'Die Lektionen sind gleich bereit.',
-            en: 'The lessons will be ready in a moment.',
-            pl: 'Lekcje zaraz beda gotowe.',
-          },
-          'KangurLessonsPage.loadingLessonsStatus': {
-            de: 'Lektionen werden geladen',
-            en: 'Loading lessons',
-            pl: 'Ładowanie lekcji',
-          },
-          'KangurLessonsPage.loadingLessonsDetails': {
-            de: 'Die Lektionsbibliothek wird vorbereitet und an das gewahlte Thema angepasst.',
-            en: 'Preparing the lesson library and matching it to the selected topic.',
-            pl: 'Przygotowujemy bibliotekę lekcji i dopasowujemy ją do wybranego tematu.',
-          },
-          'KangurLessonsPage.loadingSectionsStatus': {
-            de: 'Abschnitte werden geladen',
-            en: 'Loading sections',
-            pl: 'Ładowanie sekcji',
-          },
-          'KangurLessonsPage.loadingSectionsDetails': {
-            de: 'Die Lektionsabschnitte werden geordnet, damit die Themenliste gleich angezeigt werden kann.',
-            en: 'Organising lesson sections so the full topic list can appear next.',
-            pl: 'Porządkujemy sekcje lekcji, aby zaraz pokazać pełną listę tematów.',
-          },
-          'KangurLessonsPage.introDescription': {
-            de: 'Wahle eine Lektion und starte mit dem Lernen.',
-            en: 'Choose a lesson and start learning.',
-            pl: 'Wybierz lekcje i zacznij nauke.',
-          },
-          'KangurLessonsPage.emptyTitle': {
-            de: 'Keine aktiven Lektionen',
-            en: 'No active lessons',
-            pl: 'Brak aktywnych lekcji',
-          },
-          'KangurLessonsWidgets.mastery.noSavedPractice': {
-            de: 'Kein gespeichertes Training',
-            en: 'No saved practice',
-            pl: 'Brak zapisanego treningu',
-          },
-        } as const
-      )[`${namespace}.${key}`]?.[localeState.value] ?? key,
+  useTranslations: (namespace?: string) => (key: string) =>
+    lessonsTranslations[`${namespace}.${key}` as keyof typeof lessonsTranslations]?.[localeState.value] ?? key,
 }));
 
 vi.mock('@/features/kangur/config/routing', () => ({

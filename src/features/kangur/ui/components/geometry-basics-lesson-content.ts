@@ -1,7 +1,10 @@
 import {
   resolveKangurLessonTemplateComponentContent,
 } from '@/features/kangur/lessons/lesson-template-component-content';
-import type { LessonTranslate } from '@/features/kangur/ui/components/lesson-copy';
+import {
+  type LessonTranslate,
+  translateLessonValueWithLegacyKey,
+} from '@/features/kangur/ui/components/lesson-copy';
 import type {
   KangurGeometryBasicsLessonTemplateContent,
   KangurLessonTemplate,
@@ -10,7 +13,7 @@ import type {
 export const createGeometryBasicsLessonTranslate = (
   content: KangurGeometryBasicsLessonTemplateContent,
 ): LessonTranslate => {
-  const gameTitle = content.game.gameTitle ?? content.game.stageTitle ?? '';
+  const gameTitle = content.game.gameTitle ?? '';
   const translationMap = new Map<string, string>([
     ['lessonTitle', content.lessonTitle],
     ['terms.point', content.terms.point],
@@ -116,7 +119,6 @@ export const createGeometryBasicsLessonTranslate = (
     ['slides.podsumowanie.angleKinds.title', content.slides.podsumowanie.angleKinds.title],
     ['slides.podsumowanie.angleKinds.caption', content.slides.podsumowanie.angleKinds.caption],
     ['game.gameTitle', gameTitle],
-    ['game.stageTitle', gameTitle],
   ]);
 
   return (key: string): string => translationMap.get(key) ?? key;
@@ -247,7 +249,12 @@ export const createGeometryBasicsLessonContentFromTranslate = (
     },
   },
   game: {
-    gameTitle: translate('game.stageTitle'),
+    gameTitle: translateLessonValueWithLegacyKey(
+      translate,
+      'game.gameTitle',
+      'game.stageTitle',
+      '',
+    ),
   },
 });
 

@@ -82,4 +82,26 @@ describe('GeometrySymmetryLesson i18n', () => {
       screen.getByText('Symmetrie bedeutet: linke Seite = rechte Seite (oder oben = unten).')
     ).toBeInTheDocument();
   });
+
+  it('prefers the gameTitle locale key for the game shell title', () => {
+    const customMessages = structuredClone(deMessages) as Record<string, any>;
+    customMessages.KangurStaticLessons.geometrySymmetry.game.gameTitle =
+      'Benutzerdefinierter Symmetriespiegel';
+
+    render(
+      <NextIntlClientProvider locale='de' messages={customMessages}>
+        <GeometrySymmetryLesson />
+      </NextIntlClientProvider>
+    );
+
+    const games =
+      (capturedProps?.games as Array<{
+        sectionId: string;
+        shell: Record<string, unknown>;
+      }>) ?? [];
+
+    expect(games.find((game) => game.sectionId === 'game')?.shell).toMatchObject({
+      title: 'Benutzerdefinierter Symmetriespiegel',
+    });
+  });
 });

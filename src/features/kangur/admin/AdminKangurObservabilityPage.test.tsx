@@ -32,6 +32,22 @@ const {
   },
 }));
 
+const disabledDocsTooltipsMock = {
+  enabled: false,
+  helpSettings: {
+    version: 1,
+    docsTooltips: {
+      enabled: false,
+      homeEnabled: false,
+      lessonsEnabled: false,
+      testsEnabled: false,
+      profileEnabled: false,
+      parentDashboardEnabled: false,
+      adminEnabled: false,
+    },
+  },
+} as const;
+
 vi.mock('next/link', () => ({
   default: ({
     children,
@@ -66,21 +82,7 @@ vi.mock('@/shared/lib/api-client', () => ({
 
 vi.mock('@/features/kangur/docs/tooltips', () => ({
   KangurDocsTooltipEnhancer: () => null,
-  useKangurDocsTooltips: () => ({
-    enabled: false,
-    helpSettings: {
-      version: 1,
-      docsTooltips: {
-        enabled: false,
-        homeEnabled: false,
-        lessonsEnabled: false,
-        testsEnabled: false,
-        profileEnabled: false,
-        parentDashboardEnabled: false,
-        adminEnabled: false,
-      },
-    },
-  }),
+  useKangurDocsTooltips: () => disabledDocsTooltipsMock,
 }));
 
 import { AdminKangurObservabilityPage } from './AdminKangurObservabilityPage';

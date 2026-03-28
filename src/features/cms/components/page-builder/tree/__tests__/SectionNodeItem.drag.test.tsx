@@ -21,26 +21,28 @@ const {
   selectNodeMock: vi.fn(),
 }));
 
+const componentTreePanelStateMock = {
+  draggedMasterSectionId: null,
+  currentPage: { id: 'page-1' },
+  clipboard: null,
+  showExtractPlaceholder: true,
+  showSectionDropPlaceholder: true,
+  canDropSectionsAtRoot: true,
+  canDropBlocksAtRoot: true,
+  treePlaceholderClasses: {
+    rootIdle: 'root-idle',
+    rootActive: 'root-active',
+    lineIdle: 'line-idle',
+    lineActive: 'line-active',
+    badgeIdle: 'badge-idle',
+    badgeActive: 'badge-active',
+  },
+  treeInlineDropLabel: 'Drop here',
+  treeRootDropLabel: 'Drop section',
+} as const;
+
 vi.mock('@/features/cms/components/page-builder/tree/ComponentTreePanelContext', () => ({
-  useComponentTreePanelState: () => ({
-    draggedMasterSectionId: null,
-    currentPage: { id: 'page-1' },
-    clipboard: null,
-    showExtractPlaceholder: true,
-    showSectionDropPlaceholder: true,
-    canDropSectionsAtRoot: true,
-    canDropBlocksAtRoot: true,
-    treePlaceholderClasses: {
-      rootIdle: 'root-idle',
-      rootActive: 'root-active',
-      lineIdle: 'line-idle',
-      lineActive: 'line-active',
-      badgeIdle: 'badge-idle',
-      badgeActive: 'badge-active',
-    },
-    treeInlineDropLabel: 'Drop here',
-    treeRootDropLabel: 'Drop section',
-  }),
+  useComponentTreePanelState: () => componentTreePanelStateMock,
   useComponentTreePanelActions: () => ({
     startSectionMasterDrag: startSectionMasterDragMock,
     endSectionMasterDrag: endSectionMasterDragMock,

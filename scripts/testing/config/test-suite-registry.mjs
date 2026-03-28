@@ -1,10 +1,11 @@
 const defineSuite = (suite) =>
   Object.freeze({
     supportsSummaryJson: false,
-    summaryJsonArgs: ['--summary-json', '--no-write', '--no-history'],
+    summaryJsonArgs: [],
     artifacts: [],
     domains: ['repo'],
     owner: 'Platform Team',
+    legacyIds: [],
     ...suite,
   });
 
@@ -23,6 +24,20 @@ export const testingSuites = Object.freeze([
     cadence: ['pr', 'release'],
     cost: 'medium',
     command: ['npm', 'run', 'lint'],
+  }),
+  defineSuite({
+    id: 'lint-domains',
+    label: 'Lint Domain Gate',
+    kind: 'static-analysis',
+    cadence: ['nightly', 'weekly'],
+    cost: 'high',
+    command: ['node', 'scripts/quality/run-lint-domain-checks.mjs'],
+    supportsSummaryJson: true,
+    legacyIds: ['lintDomains'],
+    artifacts: [
+      'docs/metrics/lint-domain-checks-latest.json',
+      'docs/metrics/lint-domain-checks-latest.md',
+    ],
   }),
   defineSuite({
     id: 'typecheck',
@@ -47,6 +62,7 @@ export const testingSuites = Object.freeze([
     cadence: ['pr', 'release'],
     cost: 'high',
     command: ['npm', 'run', 'test:unit'],
+    legacyIds: ['fullUnit'],
   }),
   defineSuite({
     id: 'unit-domains',
@@ -56,6 +72,7 @@ export const testingSuites = Object.freeze([
     cost: 'high',
     command: ['npm', 'run', 'test:unit:domains'],
     supportsSummaryJson: true,
+    legacyIds: ['unitDomains'],
     artifacts: [
       'docs/metrics/unit-domain-timings-latest.json',
       'docs/metrics/unit-domain-timings-latest.md',
@@ -69,6 +86,7 @@ export const testingSuites = Object.freeze([
     cost: 'medium',
     command: ['npm', 'run', 'test:critical-flows'],
     supportsSummaryJson: true,
+    legacyIds: ['criticalFlows'],
     artifacts: [
       'docs/metrics/critical-flow-tests-latest.json',
       'docs/metrics/critical-flow-tests-latest.md',
@@ -82,6 +100,7 @@ export const testingSuites = Object.freeze([
     cost: 'medium',
     command: ['npm', 'run', 'test:security-smoke'],
     supportsSummaryJson: true,
+    legacyIds: ['securitySmoke'],
     artifacts: [
       'docs/metrics/security-smoke-latest.json',
       'docs/metrics/security-smoke-latest.md',
@@ -95,6 +114,7 @@ export const testingSuites = Object.freeze([
     cost: 'medium',
     command: ['npm', 'run', 'test:accessibility-smoke'],
     supportsSummaryJson: true,
+    legacyIds: ['accessibilitySmoke'],
     artifacts: [
       'docs/metrics/accessibility-smoke-latest.json',
       'docs/metrics/accessibility-smoke-latest.md',
@@ -120,6 +140,7 @@ export const testingSuites = Object.freeze([
     cadence: ['pr', 'release'],
     cost: 'high',
     command: ['npm', 'run', 'test:integration:mongo'],
+    legacyIds: ['integrationMongo'],
     domains: ['database', 'products', 'cms', 'integrations', 'kangur', 'ai-paths'],
   }),
   defineSuite({
@@ -144,6 +165,7 @@ export const testingSuites = Object.freeze([
     cost: 'high',
     command: ['npm', 'run', 'test:coverage:high-risk'],
     supportsSummaryJson: true,
+    legacyIds: ['highRiskCoverage'],
     artifacts: [
       'docs/metrics/high-risk-coverage-latest.json',
       'docs/metrics/high-risk-coverage-latest.md',
@@ -157,6 +179,7 @@ export const testingSuites = Object.freeze([
     cost: 'low',
     command: ['npm', 'run', 'check:test-distribution'],
     supportsSummaryJson: true,
+    legacyIds: ['testDistribution'],
     artifacts: [
       'docs/metrics/test-distribution-latest.json',
       'docs/metrics/test-distribution-latest.md',
@@ -231,6 +254,7 @@ export const testingLanes = Object.freeze([
     purpose: 'Broader regression and audit coverage that is too expensive for every PR.',
     requiresLedgerEntry: true,
     suites: [
+      'lint-domains',
       'unit-domains',
       'critical-flows',
       'security-smoke',
@@ -277,8 +301,27 @@ export const testingLanes = Object.freeze([
 export const getTestingSuiteById = (suiteId) =>
   testingSuites.find((suite) => suite.id === suiteId) ?? null;
 
+export const getTestingSuiteByCompatId = (suiteId) =>
+  testingSuites.find((suite) => suite.id === suiteId || suite.legacyIds.includes(suiteId)) ?? null;
+
 export const getTestingLaneById = (laneId) =>
   testingLanes.find((lane) => lane.id === laneId) ?? null;
+
+export const getTestingLaneIdsForSuiteId = (suiteId) =>
+  testingLanes.filter((lane) => lane.suites.includes(suiteId)).map((lane) => lane.id);
+
+export const getCanonicalTestingSuiteMetadata = (suiteOrAliasId) => {
+  const suite = getTestingSuiteByCompatId(suiteOrAliasId);
+  if (!suite) {
+    return null;
+  }
+
+  return {
+    canonicalSuiteId: suite.id,
+    canonicalSuiteLabel: suite.label,
+    canonicalLaneIds: getTestingLaneIdsForSuiteId(suite.id),
+  };
+};
 
 export const resolveSuitesForTestingLane = (laneId) => {
   const lane = getTestingLaneById(laneId);

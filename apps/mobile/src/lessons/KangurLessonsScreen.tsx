@@ -419,17 +419,17 @@ function LessonsAssignmentRow({
       </Text>
       {item.href ? (
         <Link href={item.href} asChild>
-        <Pressable
-          accessibilityRole='button'
-          style={{
-            alignSelf: 'stretch',
-            width: '100%',
-            borderRadius: 999,
-            backgroundColor: '#0f172a',
-            paddingHorizontal: 14,
-            paddingVertical: 10,
-          }}
-        >
+          <Pressable
+            accessibilityRole='button'
+            style={{
+              alignSelf: 'stretch',
+              width: '100%',
+              borderRadius: 999,
+              backgroundColor: '#0f172a',
+              paddingHorizontal: 14,
+              paddingVertical: 10,
+            }}
+          >
             <Text style={{ color: '#ffffff', fontWeight: '700' }}>
               {translateKangurMobileActionLabel(item.assignment.action.label, locale)}
             </Text>

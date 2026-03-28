@@ -128,16 +128,18 @@ type PromptEngineProviderProps = {
   lockedScope?: ScopeFilter | undefined;
 };
 
-export function PromptEngineProvider({
-  children,
-  onSaved,
-  initialPatternTab,
-  initialExploderSubTab,
-  lockedPatternTab,
-  lockedExploderSubTab,
-  initialScope,
-  lockedScope,
-}: PromptEngineProviderProps): React.JSX.Element {
+export function PromptEngineProvider(props: PromptEngineProviderProps): React.JSX.Element {
+  const {
+    children,
+    onSaved,
+    initialPatternTab,
+    initialExploderSubTab,
+    lockedPatternTab,
+    lockedExploderSubTab,
+    initialScope,
+    lockedScope,
+  } = props;
+
   const settingsQuery = useSettingsMap();
   const updateSetting = useUpdateSetting();
   const { toast } = useToast();

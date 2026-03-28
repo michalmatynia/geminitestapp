@@ -332,7 +332,12 @@ export default function LogicalAnalogiesLesson({
   const translations = useTranslations('KangurStaticLessons.logicalAnalogies');
   const copy = useMemo(
     () => {
-      const fallbackTranslate: LessonTranslate = (key) => translations(key as never);
+      const fallbackTranslate = Object.assign(
+        (key: string): string => translations(key as never),
+        {
+          has: (key: string): boolean => translations.has(key as never),
+        },
+      ) as LessonTranslate & { has: (key: string) => boolean };
 
       if (!resolvedTemplate?.componentContent) {
         return createLogicalAnalogiesLessonContentFromTranslate(fallbackTranslate);

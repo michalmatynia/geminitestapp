@@ -1,7 +1,10 @@
 import {
   resolveKangurLessonTemplateComponentContent,
 } from '@/features/kangur/lessons/lesson-template-component-content';
-import type { LessonTranslate } from '@/features/kangur/ui/components/lesson-copy';
+import {
+  type LessonTranslate,
+  translateLessonValueWithLegacyKey,
+} from '@/features/kangur/ui/components/lesson-copy';
 import type {
   KangurGeometrySymmetryLessonTemplateContent,
   KangurLessonTemplate,
@@ -27,14 +30,6 @@ export const createGeometrySymmetryLessonTranslate = (
   const resolved = resolveTranslationValue(content, key);
   if (resolved) {
     return resolved;
-  }
-
-  if (key === 'game.gameTitle') {
-    return content.game.stageTitle ?? key;
-  }
-
-  if (key === 'game.stageTitle') {
-    return content.game.gameTitle ?? key;
   }
 
   return key;
@@ -145,7 +140,12 @@ export const createGeometrySymmetryLessonContentFromTranslate = (
     },
   },
   game: {
-    gameTitle: translate('game.stageTitle'),
+    gameTitle: translateLessonValueWithLegacyKey(
+      translate,
+      'game.gameTitle',
+      'game.stageTitle',
+      '',
+    ),
   },
 });
 

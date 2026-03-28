@@ -297,7 +297,12 @@ export default function GeometryShapesLesson({ lessonTemplate }: LessonProps): R
   const resolvedTemplate = lessonTemplate ?? runtimeTemplate;
   const translations = useTranslations('KangurStaticLessons.geometryShapes');
   const [rewarded, setRewarded] = useState(false);
-  const fallbackTranslate: LessonTranslate = (key: string) => translations(key as never);
+  const fallbackTranslate = Object.assign(
+    (key: string): string => translations(key as never),
+    {
+      has: (key: string): boolean => translations.has(key as never),
+    },
+  ) as LessonTranslate & { has: (key: string) => boolean };
   const resolvedContent = resolveGeometryShapesLessonContent(resolvedTemplate, fallbackTranslate);
   const translate = createGeometryShapesLessonTranslate(resolvedContent);
   const sections = buildGeometryShapesSections(translate);

@@ -9,7 +9,7 @@ import { ActivityTypes } from '@/shared/constants/observability';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { logActivity } from '@/shared/utils/observability/activity-service';
 import { ErrorSystem } from '@/features/kangur/shared/utils/observability/error-system';
-import { readTolerantServerAuthSession } from '@/shared/lib/auth/optional-server-auth';
+import { readTolerantServerAuthSession } from '@/features/auth/server';
 
 const AUTH_COOKIE_KEYS = [
   'sessionToken',

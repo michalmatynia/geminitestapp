@@ -3,7 +3,7 @@
  */
 
 import type { ReactNode } from 'react';
-import { fireEvent, render, screen } from '@testing-library/react';
+import { fireEvent, render, screen, within } from '@testing-library/react';
 import { NextIntlClientProvider } from 'next-intl';
 import { describe, expect, it, vi } from 'vitest';
 
@@ -203,5 +203,24 @@ describe('SubtractingLesson i18n', () => {
       screen.getByText('Teile die Zahl, die du abziehst, in zwei Teile: zuerst gehst du bis zur 10 herunter, dann ziehst du den Rest ab.')
     ).toBeInTheDocument();
     expect(screen.getByText('Subtrahiere 2: 10 − 2 = 8')).toBeInTheDocument();
+  });
+
+  it('prefers the gameTitle locale key for the game shell title', () => {
+    const customMessages = structuredClone(enMessages);
+    customMessages.KangurStaticLessons.subtracting.game.gameTitle =
+      'Custom subtraction shell title';
+
+    renderLesson(<SubtractingLesson />, {
+      locale: 'en',
+      messages: customMessages,
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: /Subtraction game/i }));
+
+    expect(
+      within(screen.getByTestId('subtracting-lesson-game-shell')).getByText(
+        'Custom subtraction shell title'
+      )
+    ).toBeInTheDocument();
   });
 });

@@ -5,7 +5,7 @@ import { registerKangurGuestAiTutorIntroAppearance } from '@/features/kangur/ser
 import { readKangurLearnerSession } from '@/features/kangur/services/kangur-learner-session';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { ErrorSystem } from '@/features/kangur/shared/utils/observability/error-system';
-import { readTolerantServerAuthSession } from '@/shared/lib/auth/optional-server-auth';
+import { readTolerantServerAuthSession } from '@/features/auth/server';
 
 export async function getKangurAiTutorGuestIntroHandler(
   req: NextRequest,

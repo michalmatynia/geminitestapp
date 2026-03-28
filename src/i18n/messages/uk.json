@@ -4546,6 +4546,7 @@
         "rushMode": "Bridge Rush",
         "rushModeHint": "Режим Bridge Rush: встигніть до завершення часу. Зміна режиму перезапускає гру.",
         "modeResetHint": "Зміна режиму перезапускає гру.",
+        "title": "Міст зв'язків",
         "stageTitle": "Міст зв'язків",
         "roundLabel": "Раунд {current}/{total}",
         "timeExpired": "Час вийшов",

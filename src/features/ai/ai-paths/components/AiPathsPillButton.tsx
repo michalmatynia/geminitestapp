@@ -28,18 +28,20 @@ type AiPathsPillButtonProps = {
       | 'link';
   };
 
-export function AiPathsPillButton({
-  children,
-  onClick,
-  disabled = false,
-  type = 'button',
-  variant = 'default',
-  className,
-  active = false,
-  baseClassName = 'rounded-md border px-2 py-1 text-[10px]',
-  activeClassName = 'border-emerald-500/50 text-emerald-200',
-  inactiveClassName = 'text-gray-300 hover:bg-muted/60',
-}: AiPathsPillButtonProps): React.JSX.Element {
+export function AiPathsPillButton(props: AiPathsPillButtonProps): React.JSX.Element {
+  const {
+    children,
+    onClick,
+    disabled = false,
+    type = 'button',
+    variant = 'default',
+    className,
+    active = false,
+    baseClassName = 'rounded-md border px-2 py-1 text-[10px]',
+    activeClassName = 'border-emerald-500/50 text-emerald-200',
+    inactiveClassName = 'text-gray-300 hover:bg-muted/60',
+  } = props;
+
   return (
     <button
       type={type}

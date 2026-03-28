@@ -40,32 +40,35 @@ export type HandleDatabaseMongoUpdateActionInput = {
   aiPrompt: string;
 };
 
-export async function handleDatabaseMongoUpdateAction({
-  actionCategory,
-  action,
-  node,
-  nodeInputs,
-  prevOutputs,
-  executed,
-  reportAiPathsError,
-  toast,
-  simulationEntityType: _simulationEntityType,
-  simulationEntityId: _simulationEntityId,
-  resolvedInputs,
-  nodeInputPorts,
-  dbConfig,
-  queryConfig,
-  dryRun,
-  templateInputs,
-  queryPayload,
-  collection,
-  filter,
-  idType,
-  updateTemplate,
-  parseJsonTemplate,
-  ensureExistingParameterTemplateContext,
-  aiPrompt,
-}: HandleDatabaseMongoUpdateActionInput): Promise<RuntimePortValues> {
+export async function handleDatabaseMongoUpdateAction(
+  input: HandleDatabaseMongoUpdateActionInput
+): Promise<RuntimePortValues> {
+  const {
+    actionCategory,
+    action,
+    node,
+    nodeInputs,
+    prevOutputs,
+    executed,
+    reportAiPathsError,
+    toast,
+    simulationEntityType: _simulationEntityType,
+    simulationEntityId: _simulationEntityId,
+    resolvedInputs,
+    nodeInputPorts,
+    dbConfig,
+    queryConfig,
+    dryRun,
+    templateInputs,
+    queryPayload,
+    collection,
+    filter,
+    idType,
+    updateTemplate,
+    parseJsonTemplate,
+    ensureExistingParameterTemplateContext,
+    aiPrompt,
+  } = input;
   const planResult = await buildMongoUpdatePlan({
     actionCategory,
     action,

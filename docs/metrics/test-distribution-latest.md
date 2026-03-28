@@ -8,7 +8,7 @@ canonical: true
 ---
 # Test Distribution Check
 
-Generated at: 2026-03-28T14:12:55.894Z
+Generated at: 2026-03-28T15:00:07.108Z
 
 ## Summary
 
@@ -18,7 +18,7 @@ Generated at: 2026-03-28T14:12:55.894Z
 - Features without tests: 0
 - Features without fast tests: 0
 - Features without negative-path tests: 0
-- Total test files: 2620
+- Total test files: 2622
 - .only() occurrences: 0
 - .skip() occurrences: 32
 - .todo() occurrences: 0
@@ -27,12 +27,12 @@ Generated at: 2026-03-28T14:12:55.894Z
 
 | Feature | Test Files | Fast | E2E | Negative |
 | --- | ---: | ---: | ---: | ---: |
-| kangur | 721 | 703 | 18 | 123 |
+| kangur | 722 | 704 | 18 | 123 |
 | ai | 294 | 294 | 0 | 103 |
 | products | 117 | 110 | 7 | 33 |
 | case-resolver | 81 | 80 | 1 | 34 |
 | cms | 76 | 75 | 1 | 15 |
-| integrations | 55 | 54 | 1 | 18 |
+| integrations | 56 | 55 | 1 | 18 |
 | prompt-exploder | 46 | 46 | 0 | 23 |
 | foldertree | 28 | 26 | 2 | 7 |
 | observability | 27 | 26 | 1 | 4 |

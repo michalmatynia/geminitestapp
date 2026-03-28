@@ -215,6 +215,41 @@ test.describe('Products trigger button queue integration', () => {
   test.setTimeout(60_000);
 
   const routeSharedProductHarnessApis = async (page: Page, product: ProductFixture): Promise<void> => {
+    const preferencesResponseBody = {
+      productListNameLocale: 'name_en',
+      productListCatalogFilter: 'all',
+      productListCurrencyCode: 'USD',
+      productListPageSize: 12,
+      productListThumbnailSource: 'file',
+      productListFiltersCollapsedByDefault: false,
+      productListAdvancedFilterPresets: [],
+      productListAppliedAdvancedFilter: '',
+      productListAppliedAdvancedFilterPresetId: null,
+      aiPathsActivePathId: null,
+    };
+    const catalogResponseBody = [
+      {
+        id: 'catalog-e2e',
+        name: 'E2E Catalog',
+        defaultPriceGroupId: 'pg-e2e',
+        priceGroupIds: ['pg-e2e'],
+        languageIds: ['EN'],
+      },
+    ];
+    const priceGroupsResponseBody = [
+      {
+        id: 'pg-e2e',
+        currencyId: 'cur-usd',
+        currencyCode: 'USD',
+        isDefault: true,
+        sourceGroupId: null,
+        priceMultiplier: 1,
+        addToPrice: 0,
+        type: 'base',
+        currency: { id: 'cur-usd', code: 'USD', symbol: '$', name: 'US Dollar' },
+      },
+    ];
+
     await page.route('**/api/user/preferences**', async (route) => {
       if (route.request().method() !== 'GET') {
         await route.continue();
@@ -224,18 +259,7 @@ test.describe('Products trigger button queue integration', () => {
         status: 200,
         contentType: 'application/json',
         headers: { 'Cache-Control': 'no-store' },
-        body: JSON.stringify({
-          productListNameLocale: 'name_en',
-          productListCatalogFilter: 'all',
-          productListCurrencyCode: 'USD',
-          productListPageSize: 12,
-          productListThumbnailSource: 'file',
-          productListFiltersCollapsedByDefault: false,
-          productListAdvancedFilterPresets: [],
-          productListAppliedAdvancedFilter: '',
-          productListAppliedAdvancedFilterPresetId: null,
-          aiPathsActivePathId: null,
-        }),
+        body: JSON.stringify(preferencesResponseBody),
       });
     });
 
@@ -244,15 +268,7 @@ test.describe('Products trigger button queue integration', () => {
         status: 200,
         contentType: 'application/json',
         headers: { 'Cache-Control': 'no-store' },
-        body: JSON.stringify([
-          {
-            id: 'catalog-e2e',
-            name: 'E2E Catalog',
-            defaultPriceGroupId: 'pg-e2e',
-            priceGroupIds: ['pg-e2e'],
-            languageIds: ['EN'],
-          },
-        ]),
+        body: JSON.stringify(catalogResponseBody),
       });
     });
 
@@ -261,19 +277,7 @@ test.describe('Products trigger button queue integration', () => {
         status: 200,
         contentType: 'application/json',
         headers: { 'Cache-Control': 'no-store' },
-        body: JSON.stringify([
-          {
-            id: 'pg-e2e',
-            currencyId: 'cur-usd',
-            currencyCode: 'USD',
-            isDefault: true,
-            sourceGroupId: null,
-            priceMultiplier: 1,
-            addToPrice: 0,
-            type: 'base',
-            currency: { id: 'cur-usd', code: 'USD', symbol: '$', name: 'US Dollar' },
-          },
-        ]),
+        body: JSON.stringify(priceGroupsResponseBody),
       });
     });
 

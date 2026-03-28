@@ -2521,6 +2521,7 @@
         "rushMode": "Bridge Rush",
         "rushModeHint": "Bridge Rush mode: beat the clock. Changing the mode restarts the game.",
         "modeResetHint": "Changing the mode restarts the game.",
+        "title": "Relationship bridge",
         "stageTitle": "Relationship bridge",
         "roundLabel": "Round {current}/{total}",
         "timeExpired": "Time is up",

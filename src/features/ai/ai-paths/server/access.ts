@@ -4,7 +4,7 @@ import { resolveAiPathsStaleRunningMaxAgeMs } from '@/features/ai/ai-paths/servi
 import type { AiPathRunRecord, AiPathRunStatus } from '@/shared/contracts/ai-paths';
 import { forbiddenError, authError, rateLimitedError } from '@/shared/errors/app-error';
 import { getPathRunRepository } from '@/shared/lib/ai-paths/services/path-run-repository';
-import { readOptionalServerAuthSession } from '@/shared/lib/auth/optional-server-auth';
+import { readOptionalServerAuthSession } from '@/features/auth/server';
 import { logSystemEvent } from '@/shared/lib/observability/system-logger';
 import { getRedisConnection } from '@/shared/lib/queue';
 

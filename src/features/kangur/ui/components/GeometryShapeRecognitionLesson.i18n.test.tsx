@@ -96,4 +96,26 @@ describe('GeometryShapeRecognitionLesson i18n', () => {
     expect(screen.getByText('Quadrat')).toBeInTheDocument();
     expect(screen.getByText('4 gleich lange Seiten.')).toBeInTheDocument();
   });
+
+  it('prefers the draw gameTitle locale key for the draw shell title', () => {
+    const customMessages = structuredClone(deMessages) as Record<string, any>;
+    customMessages.KangurStaticLessons.geometryShapeRecognition.draw.gameTitle =
+      'Benutzerdefiniertes Formenzeichnen';
+
+    render(
+      <NextIntlClientProvider locale='de' messages={customMessages}>
+        <GeometryShapeRecognitionLesson />
+      </NextIntlClientProvider>
+    );
+
+    const games =
+      (capturedProps?.games as Array<{
+        sectionId: string;
+        shell: Record<string, unknown>;
+      }>) ?? [];
+
+    expect(games.find((game) => game.sectionId === 'draw')?.shell).toMatchObject({
+      title: 'Benutzerdefiniertes Formenzeichnen',
+    });
+  });
 });

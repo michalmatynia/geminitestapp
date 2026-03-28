@@ -5,6 +5,7 @@ export * from '@/shared/lib/db/services/database-json-backup';
 export * from '@/shared/lib/db/services/database-collection-copy';
 export * from '@/shared/lib/db/services/sync-utils';
 export * from '@/shared/contracts/database';
+export * from './access';
 
 export {
   backupsDir as mongoBackupsDir,

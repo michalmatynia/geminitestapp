@@ -10,6 +10,30 @@ const { useKangurLearnerProfileRuntimeMock, useKangurSubjectFocusMock } = vi.hoi
   useKangurSubjectFocusMock: vi.fn(),
 }));
 
+const currentDailyQuestMock = {
+  assignment: {
+    id: 'quest-1',
+    title: '➗ Powtórka: Dzielenie',
+    action: {
+      label: 'Otwórz lekcję',
+      page: 'Lessons',
+      query: {
+        focus: 'division',
+      },
+    },
+    questLabel: 'Misja ratunkowa',
+  },
+  progress: {
+    status: 'in_progress',
+    percent: 60,
+    summary: '45% / 75% opanowania',
+  },
+  reward: {
+    status: 'ready',
+    label: 'Nagroda +55 XP',
+  },
+} as const;
+
 vi.mock('next-intl', () => ({
   useTranslations: () => (key: string) => key,
 }));
@@ -27,29 +51,7 @@ vi.mock('@/features/kangur/ui/hooks/useKangurCoarsePointer', () => ({
 }));
 
 vi.mock('@/features/kangur/ui/services/daily-quests', () => ({
-  getCurrentKangurDailyQuest: () => ({
-    assignment: {
-      id: 'quest-1',
-      title: '➗ Powtórka: Dzielenie',
-      action: {
-        label: 'Otwórz lekcję',
-        page: 'Lessons',
-        query: {
-          focus: 'division',
-        },
-      },
-      questLabel: 'Misja ratunkowa',
-    },
-    progress: {
-      status: 'in_progress',
-      percent: 60,
-      summary: '45% / 75% opanowania',
-    },
-    reward: {
-      status: 'ready',
-      label: 'Nagroda +55 XP',
-    },
-  }),
+  getCurrentKangurDailyQuest: () => currentDailyQuestMock,
 }));
 
 vi.mock('@/features/kangur/ui/components/KangurTransitionLink', () => ({

@@ -75,6 +75,28 @@ const { translationMessages } = vi.hoisted(() => ({
   },
 }));
 
+const storefrontAppearanceMock = {
+  theme: {
+    dropdownBg: '#ffffff',
+    surfaceColor: '#ffffff',
+    borderColor: '#d1d5db',
+    textColor: '#111827',
+    accentColor: '#3b82f6',
+    primaryColor: '#3b82f6',
+    darkMode: false,
+    backgroundColor: '#ffffff',
+    dropdownBorder: '#d1d5db',
+    dropdownShadowBlur: 34,
+    dropdownShadowY: 14,
+  },
+  tone: {
+    background: '#f9fafb',
+    border: '#d1d5db',
+    text: '#111827',
+    accent: '#3b82f6',
+  },
+} as const;
+
 vi.mock('next-intl', () => ({
   NextIntlClientProvider: ({ children }: { children: React.ReactNode }) => children,
   useLocale: () => localeMock(),
@@ -139,27 +161,7 @@ vi.mock('@/features/kangur/ui/hooks/useKangurCoarsePointer', () => ({
 }));
 
 vi.mock('@/features/kangur/ui/useKangurStorefrontAppearance', () => ({
-  useKangurStorefrontAppearance: () => ({
-    theme: {
-      dropdownBg: '#ffffff',
-      surfaceColor: '#ffffff',
-      borderColor: '#d1d5db',
-      textColor: '#111827',
-      accentColor: '#3b82f6',
-      primaryColor: '#3b82f6',
-      darkMode: false,
-      backgroundColor: '#ffffff',
-      dropdownBorder: '#d1d5db',
-      dropdownShadowBlur: 34,
-      dropdownShadowY: 14,
-    },
-    tone: {
-      background: '#f9fafb',
-      border: '#d1d5db',
-      text: '#111827',
-      accent: '#3b82f6',
-    },
-  }),
+  useKangurStorefrontAppearance: () => storefrontAppearanceMock,
 }));
 
 vi.mock('@/features/kangur/ui/hooks/useKangurRouteNavigator', () => ({

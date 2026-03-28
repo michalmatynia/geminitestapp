@@ -2,6 +2,7 @@ import {
   resolveKangurLessonTemplateComponentContent,
 } from '@/features/kangur/lessons/lesson-template-component-content';
 import type { ArtShapesBasicLessonTranslate } from '@/features/kangur/ui/components/ArtShapesBasicLesson.data';
+import { translateLessonValueWithLegacyKey } from '@/features/kangur/ui/components/lesson-copy';
 import type {
   KangurArtShapesBasicLessonTemplateContent,
   KangurLessonTemplate,
@@ -29,15 +30,30 @@ const resolveTranslationValue = (
 export const createArtShapesBasicLessonTranslate = (
   content: KangurArtShapesBasicLessonTemplateContent,
 ): ArtShapesBasicLessonTranslate => (key, values) => {
-  const template =
-    resolveTranslationValue(content, key) ??
-    (key === 'game.gameTitle' ? resolveTranslationValue(content, 'game.stageTitle') : null) ??
-    (key === 'game.stageTitle' ? resolveTranslationValue(content, 'game.gameTitle') : null);
+  const template = resolveTranslationValue(content, key);
   if (!template) {
     return key;
   }
 
   return interpolateTemplate(template, values);
+};
+
+export const createArtShapesBasicLessonMessageTranslate = (
+  messages: Record<string, unknown>,
+): ArtShapesBasicLessonTranslate => {
+  const translate = ((key: string, values?: TranslationValues) => {
+    const template = resolveTranslationValue(messages, key);
+    if (!template) {
+      return key;
+    }
+
+    return interpolateTemplate(template, values);
+  }) as ArtShapesBasicLessonTranslate & { has?: (messageKey: string) => boolean };
+
+  translate.has = (messageKey: string): boolean =>
+    resolveTranslationValue(messages, messageKey) !== null;
+
+  return translate;
 };
 
 export const createArtShapesBasicLessonContentFromTranslate = (
@@ -142,7 +158,12 @@ export const createArtShapesBasicLessonContentFromTranslate = (
     },
   },
   game: {
-    gameTitle: translate('game.stageTitle'),
+    gameTitle: translateLessonValueWithLegacyKey(
+      translate,
+      'game.gameTitle',
+      'game.stageTitle',
+      '',
+    ),
     progress: {
       round: translate('game.progress.round'),
       score: translate('game.progress.score'),

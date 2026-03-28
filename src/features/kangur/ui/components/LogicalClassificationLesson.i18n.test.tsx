@@ -75,4 +75,26 @@ describe('LogicalClassificationLesson i18n', () => {
     expect(screen.getByText('Wir klassifizieren nach:')).toBeInTheDocument();
     expect(screen.getByText('🎨 Farbe - rot vs. blau')).toBeInTheDocument();
   });
+
+  it('prefers the gameTitle locale key for the game shell title', () => {
+    const customMessages = structuredClone(deMessages) as Record<string, any>;
+    customMessages.KangurStaticLessons.logicalClassification.game.gameTitle =
+      'Benutzerdefiniertes Klassifikationslabor';
+
+    render(
+      <NextIntlClientProvider locale='de' messages={customMessages}>
+        <LogicalClassificationLesson />
+      </NextIntlClientProvider>
+    );
+
+    const games =
+      (capturedProps?.games as Array<{
+        sectionId: string;
+        shell: Record<string, unknown>;
+      }>) ?? [];
+
+    expect(games.find((game) => game.sectionId === 'game')?.shell).toMatchObject({
+      title: 'Benutzerdefiniertes Klassifikationslabor',
+    });
+  });
 });

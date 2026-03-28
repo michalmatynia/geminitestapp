@@ -31,4 +31,17 @@ describe('LogicalAnalogiesRelationGame i18n', () => {
     expect(screen.getByText('Fruit -> apple')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Check' })).toBeDisabled();
   });
+
+  it('prefers the title locale key over the legacy stageTitle key', () => {
+    const customMessages = structuredClone(enMessages) as Record<string, any>;
+    customMessages.KangurMiniGames.logicalAnalogies.game.title = 'Custom relationship bridge';
+
+    render(
+      <NextIntlClientProvider locale='en' messages={customMessages}>
+        <LogicalAnalogiesRelationGame onFinish={vi.fn()} />
+      </NextIntlClientProvider>
+    );
+
+    expect(screen.getByText('Custom relationship bridge')).toBeInTheDocument();
+  });
 });

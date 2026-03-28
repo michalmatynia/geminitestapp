@@ -2,7 +2,7 @@ import React, { useMemo, useState } from 'react';
 
 import { formatPlaceholderLabel, formatPortLabel } from '@/features/ai/ai-paths/utils/ui-utils';
 import type { AiNode, NodeDefinition } from '@/shared/lib/ai-paths';
-import { createParserMappings, formatRuntimeValue } from '@/shared/lib/ai-paths';
+import { createParserMappings } from '@/shared/lib/ai-paths';
 import {
   Button,
   Input,
@@ -28,6 +28,11 @@ import {
   useRuntimeActions,
 } from '../context';
 import { usePaletteWithTriggerButtons } from './ai-paths-settings/hooks/usePaletteWithTriggerButtons';
+import {
+  CanvasRunControlNotice,
+  CanvasSelectedWireDataPane,
+  CanvasSelectedWireEndpointCard,
+} from './canvas-sidebar-primitives';
 import { useCanvasSidebarActions } from './hooks/useCanvasSidebarActions';
 
 type PaletteMode = 'data' | 'sound';
@@ -36,35 +41,6 @@ type PaletteGroup = {
   title: string;
   types: NodeDefinition['type'][];
   icon: string;
-};
-
-type CanvasRunControlNoticeProps = {
-  variant: 'warning' | 'info';
-  title: string;
-  description: React.ReactNode;
-  children?: React.ReactNode;
-};
-
-type CanvasSelectedWireMetaLineProps = {
-  label: string;
-  value: React.ReactNode;
-  valueClassName: string;
-};
-
-type CanvasSelectedWireEndpointCardProps = {
-  title: string;
-  nodeLabel: string;
-  nodeType: string;
-  portLabel: string;
-  accentClassName: string;
-};
-
-type CanvasSelectedWireDataPaneProps = {
-  labelId: string;
-  label: string;
-  value: unknown;
-  emptyMessage: string;
-  labelClassName: string;
 };
 
 const readPortRuntimeValue = (
@@ -133,96 +109,6 @@ const SOUND_PALETTE_GROUPS: PaletteGroup[] = [
     icon: '🎛',
   },
 ];
-
-function renderCanvasRunControlNotice({
-  variant,
-  title,
-  description,
-  children,
-}: CanvasRunControlNoticeProps): React.JSX.Element {
-  return (
-    <Card
-      variant={variant}
-      padding='sm'
-      className={cn(
-        'mb-3 space-y-1 text-[11px]',
-        variant === 'warning'
-          ? 'border-amber-500/30 bg-amber-500/10 text-amber-100'
-          : 'border-blue-500/30 bg-blue-500/10 text-blue-100'
-      )}
-    >
-      <div className='font-semibold text-white'>{title}</div>
-      <div>{description}</div>
-      {children}
-    </Card>
-  );
-}
-
-function CanvasSelectedWireMetaLine({
-  label,
-  value,
-  valueClassName,
-}: CanvasSelectedWireMetaLineProps): React.JSX.Element {
-  return (
-    <div className='text-[11px] text-gray-400'>
-      {label}:{' '}
-      <span className={valueClassName}>{value}</span>
-    </div>
-  );
-}
-
-function renderCanvasSelectedWireEndpointCard({
-  title,
-  nodeLabel,
-  nodeType,
-  portLabel,
-  accentClassName,
-}: CanvasSelectedWireEndpointCardProps): React.JSX.Element {
-  return (
-    <Card
-      variant='subtle-compact'
-      padding='sm'
-      className='border-border/60 bg-card/50'
-    >
-      <Hint size='xxs' uppercase className='text-gray-500'>
-        {title}
-      </Hint>
-      <div className='text-sm text-white'>{nodeLabel}</div>
-      <CanvasSelectedWireMetaLine
-        label='Type'
-        value={nodeType}
-        valueClassName={accentClassName}
-      />
-      <CanvasSelectedWireMetaLine
-        label='Port'
-        value={portLabel}
-        valueClassName={accentClassName}
-      />
-    </Card>
-  );
-}
-
-function CanvasSelectedWireDataPane({
-  labelId,
-  label,
-  value,
-  emptyMessage,
-  labelClassName,
-}: CanvasSelectedWireDataPaneProps): React.JSX.Element {
-  return (
-    <div>
-      <div id={labelId} className={cn('text-[10px]', labelClassName)}>
-        {label}
-      </div>
-      <pre
-        className='mt-1 max-h-28 overflow-auto whitespace-pre-wrap rounded border border-border/50 bg-black/30 px-2 py-1 text-[10px] text-gray-200'
-        aria-labelledby={labelId}
-      >
-        {value === undefined ? emptyMessage : formatRuntimeValue(value)}
-      </pre>
-    </div>
-  );
-}
 
 export function CanvasSidebar(): React.JSX.Element {
   const titleFieldId = React.useId();
@@ -739,12 +625,13 @@ export function CanvasSidebar(): React.JSX.Element {
               />
             </div>
             {runStatus === 'blocked_on_lease'
-              ? renderCanvasRunControlNotice({
-                  variant: 'warning',
-                  title: 'Execution lease blocked',
-                  description:
-                    'This run is waiting on another execution owner. Use the run history or run detail panel to inspect ownership and mark the run handoff-ready if work should change hands.',
-                  children: activeRunId ? (
+              ? (
+                <CanvasRunControlNotice
+                  variant='warning'
+                  title='Execution lease blocked'
+                  description='This run is waiting on another execution owner. Use the run history or run detail panel to inspect ownership and mark the run handoff-ready if work should change hands.'
+                >
+                  {activeRunId ? (
                     <div className='flex flex-wrap items-center gap-2 pt-1'>
                       <Button
                         type='button'
@@ -761,16 +648,18 @@ export function CanvasSidebar(): React.JSX.Element {
                         </span>
                       ) : null}
                     </div>
-                  ) : null,
-                })
+                  ) : null}
+                </CanvasRunControlNotice>
+                )
               : null}
             {runStatus === 'handoff_ready'
-              ? renderCanvasRunControlNotice({
-                  variant: 'info',
-                  title: 'Ready for delegated continuation',
-                  description:
-                    'This run has been prepared for another operator or agent to continue. Resume it from the run history once the next owner is ready.',
-                })
+              ? (
+                <CanvasRunControlNotice
+                  variant='info'
+                  title='Ready for delegated continuation'
+                  description='This run has been prepared for another operator or agent to continue. Resume it from the run history once the next owner is ready.'
+                />
+                )
               : null}
             <div className='grid grid-cols-2 gap-2'>
               {isRunControlActive ? (
@@ -889,21 +778,21 @@ export function CanvasSidebar(): React.JSX.Element {
                     Selected Wire
                     </Hint>
                     <div className='space-y-2'>
-                      {renderCanvasSelectedWireEndpointCard({
-                        title: 'From',
-                        nodeLabel: fromNode?.title ?? selectedEdge.from ?? 'unknown-node',
-                        nodeType: fromNode?.type ?? 'unknown',
-                        portLabel: selectedEdge.fromPort ?? 'default',
-                        accentClassName: 'text-amber-300',
-                      })}
+                      <CanvasSelectedWireEndpointCard
+                        title='From'
+                        nodeLabel={fromNode?.title ?? selectedEdge.from ?? 'unknown-node'}
+                        nodeType={fromNode?.type ?? 'unknown'}
+                        portLabel={selectedEdge.fromPort ?? 'default'}
+                        accentClassName='text-amber-300'
+                      />
                       <div className='flex justify-center text-gray-500'>↓</div>
-                      {renderCanvasSelectedWireEndpointCard({
-                        title: 'To',
-                        nodeLabel: toNode?.title ?? selectedEdge.to ?? 'unknown-node',
-                        nodeType: toNode?.type ?? 'unknown',
-                        portLabel: selectedEdge.toPort ?? 'default',
-                        accentClassName: 'text-sky-300',
-                      })}
+                      <CanvasSelectedWireEndpointCard
+                        title='To'
+                        nodeLabel={toNode?.title ?? selectedEdge.to ?? 'unknown-node'}
+                        nodeType={toNode?.type ?? 'unknown'}
+                        portLabel={selectedEdge.toPort ?? 'default'}
+                        accentClassName='text-sky-300'
+                      />
                     </div>
                     <Card
                       variant='subtle-compact'

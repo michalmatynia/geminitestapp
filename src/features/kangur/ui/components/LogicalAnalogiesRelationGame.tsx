@@ -147,6 +147,12 @@ export default function LogicalAnalogiesRelationGame({
 }: KangurMiniGameFinishProps): React.JSX.Element {
   const ownerKey = useKangurProgressOwnerKey();
   const translations = useTranslations('KangurMiniGames');
+  const hasMiniGameMessage =
+    typeof (translations as { has?: unknown }).has === 'function'
+      ? ((translations as { has: (key: string) => boolean }).has.bind(translations) as (
+          key: string,
+        ) => boolean)
+      : undefined;
   const isCoarsePointer = useKangurCoarsePointer();
   const t = (
     key: string,
@@ -159,6 +165,10 @@ export default function LogicalAnalogiesRelationGame({
       fallback,
       values
     );
+  const gameTitle =
+    !hasMiniGameMessage || hasMiniGameMessage('logicalAnalogies.game.title')
+      ? t('title', 'Relationship bridge')
+      : 'Relationship bridge';
   const localizedTokens = useMemo(
     () => getLocalizedLogicalAnalogyRelationTokens(translations),
     [translations]
@@ -522,7 +532,7 @@ export default function LogicalAnalogiesRelationGame({
         <KangurInfoCard accent='rose' className='w-full' padding='sm' tone='accent'>
           <div className={`${KANGUR_WRAP_CENTER_ROW_CLASSNAME} justify-between`}>
             <div>
-              <p className='text-sm font-bold'>{t('stageTitle', 'Most relacji')}</p>
+              <p className='text-sm font-bold'>{gameTitle}</p>
               <p className='text-xs [color:var(--kangur-page-muted-text)]'>{round.prompt}</p>
             </div>
             <div className={KANGUR_WRAP_CENTER_ROW_CLASSNAME}>

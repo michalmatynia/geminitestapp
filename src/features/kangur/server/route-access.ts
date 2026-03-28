@@ -6,7 +6,7 @@ import {
   isSuperAdminOnlyKangurPage,
 } from '@/features/kangur/config/page-access';
 import { resolveKangurPageKeyFromSlug } from '@/features/kangur/config/routing';
-import { readOptionalServerAuthSession } from '@/shared/lib/auth/optional-server-auth';
+import { readOptionalServerAuthSession } from '@/features/auth/server';
 
 export { readSanitizedKangurAliasLoginSearchParams } from './login-alias-search-params';
 

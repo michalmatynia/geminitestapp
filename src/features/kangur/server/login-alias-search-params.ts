@@ -4,7 +4,7 @@ import {
   resolveRouteAwareManagedKangurHref,
   sanitizeAccessibleManagedKangurHref,
 } from '@/features/kangur/ui/routing/managed-paths';
-import { readOptionalServerAuthSession } from '@/shared/lib/auth/optional-server-auth';
+import { readOptionalServerAuthSession } from '@/features/auth/server';
 
 type KangurAliasLoginSearchParams = Record<string, string | string[] | undefined>;
 

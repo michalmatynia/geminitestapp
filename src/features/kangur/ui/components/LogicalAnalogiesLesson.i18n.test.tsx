@@ -76,4 +76,26 @@ describe('LogicalAnalogiesLesson i18n', () => {
     expect(screen.getByText('Schreibweise der Analogie:')).toBeInTheDocument();
     expect(screen.getByText('Vogel : fliegen = Fisch : ❓')).toBeInTheDocument();
   });
+
+  it('prefers the gameTitle locale key for the relations shell title', () => {
+    const customMessages = structuredClone(deMessages) as Record<string, any>;
+    customMessages.KangurStaticLessons.logicalAnalogies.game.gameTitle =
+      'Benutzerdefinierte Beziehungsbruecke';
+
+    render(
+      <NextIntlClientProvider locale='de' messages={customMessages}>
+        <LogicalAnalogiesLesson />
+      </NextIntlClientProvider>
+    );
+
+    const games =
+      (capturedProps?.games as Array<{
+        sectionId: string;
+        shell: Record<string, unknown>;
+      }>) ?? [];
+
+    expect(games.find((game) => game.sectionId === 'game_relacje')?.shell).toMatchObject({
+      title: 'Benutzerdefinierte Beziehungsbruecke',
+    });
+  });
 });

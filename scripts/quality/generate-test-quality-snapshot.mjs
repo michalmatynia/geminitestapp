@@ -51,6 +51,11 @@ const toMarkdown = (payload) => {
   lines.push(`- Repo test files: ${payload.summary.repoTestFileCount}`);
   lines.push(`- E2E specs: ${payload.summary.e2eTestFileCount}`);
   lines.push(`- Script/runtime tests: ${payload.summary.scriptTestFileCount}`);
+  lines.push(`- Registered suites: ${payload.summary.registeredSuiteCount}`);
+  lines.push(`- Registered lanes: ${payload.summary.registeredLaneCount}`);
+  lines.push(`- Major lanes: ${payload.summary.majorLaneCount}`);
+  lines.push(`- Recorded major runs: ${payload.summary.recordedRunCount}`);
+  lines.push(`- Latest recorded run: ${payload.summary.latestRecordedRunAt ?? 'n/a'}`);
   lines.push(`- Features without tests: ${payload.summary.featuresWithoutTestCount}`);
   lines.push(`- Features without fast tests: ${payload.summary.featuresWithoutFastTestCount}`);
   lines.push(`- Features without negative-path tests: ${payload.summary.featuresWithoutNegativeTestCount}`);
@@ -63,6 +68,32 @@ const toMarkdown = (payload) => {
   lines.push(`- Required missing baselines: ${payload.summary.requiredMissingBaselineCount}`);
   lines.push(`- Aging baselines: ${payload.summary.agingBaselineCount}`);
   lines.push(`- Stale baselines: ${payload.summary.staleBaselineCount}`);
+  lines.push('');
+  lines.push('## Lane Registry');
+  lines.push('');
+  lines.push('| Lane | Cadence | Ledger | Suites |');
+  lines.push('| --- | --- | --- | --- |');
+  for (const lane of payload.registry.lanes) {
+    lines.push(
+      `| ${lane.label} (\`${lane.id}\`) | ${lane.cadence} | ${
+        lane.requiresLedgerEntry ? 'required' : 'optional'
+      } | ${lane.suites.map((suiteId) => `\`${suiteId}\``).join(', ')} |`
+    );
+  }
+  lines.push('');
+  lines.push('## Recorded Run Ledger');
+  lines.push('');
+  if (!payload.ledger.latestEntry) {
+    lines.push('- No major test runs have been recorded in the ledger yet.');
+  } else {
+    lines.push(`- Ledger generated at: ${payload.ledger.generatedAt ?? 'n/a'}`);
+    lines.push(`- Latest run: ${payload.ledger.latestEntry.label}`);
+    lines.push(`- Latest run status: ${String(payload.ledger.latestEntry.status).toUpperCase()}`);
+    lines.push(`- Latest run at: ${payload.ledger.latestEntry.recordedAt}`);
+    lines.push(`- Latest lane: ${payload.ledger.latestEntry.laneId ?? 'manual'}`);
+    lines.push(`- Recorded runs: ${payload.ledger.summary.totalEntries}`);
+    lines.push(`- Failing recorded runs: ${payload.ledger.summary.failingEntries}`);
+  }
   lines.push('');
   lines.push('## Baseline Status');
   lines.push('');
@@ -189,6 +220,9 @@ const buildSummaryJsonSummary = (payload) => ({
   status: payload.status,
   repoTestFileCount: payload.summary.repoTestFileCount,
   e2eTestFileCount: payload.summary.e2eTestFileCount,
+  registeredSuiteCount: payload.summary.registeredSuiteCount,
+  registeredLaneCount: payload.summary.registeredLaneCount,
+  recordedRunCount: payload.summary.recordedRunCount,
   featuresWithoutTestCount: payload.summary.featuresWithoutTestCount,
   featuresWithoutFastTestCount: payload.summary.featuresWithoutFastTestCount,
   featuresWithoutNegativeTestCount: payload.summary.featuresWithoutNegativeTestCount,

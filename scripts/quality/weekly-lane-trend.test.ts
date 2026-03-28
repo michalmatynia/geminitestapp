@@ -180,6 +180,11 @@ describe('weekly lane trend helpers', () => {
       status: 'pass',
       durationMs: 22_478,
       exitCode: 0,
+      canonicalTestingSuite: {
+        canonicalSuiteId: 'critical-flows',
+        canonicalSuiteLabel: 'Critical Flow Regression',
+        canonicalLaneIds: ['local-fast', 'pr-required', 'nightly-deep', 'release-gate'],
+      },
       structuredSummaryText: 'pass=5/6 fail=1',
       scanSummary: {
         status: 'ok',
@@ -206,6 +211,11 @@ describe('weekly lane trend helpers', () => {
       status: 'pass',
       durationMs: 1_200,
       exitCode: 0,
+      canonicalTestingSuite: {
+        canonicalSuiteId: 'build',
+        canonicalSuiteLabel: 'Production Build',
+        canonicalLaneIds: ['release-gate'],
+      },
       structuredSummaryText: null,
     });
   });

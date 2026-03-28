@@ -17,6 +17,20 @@ const { settingsStoreMock, mutateAsyncMock, toastMock, localeState } = vi.hoiste
   },
 }));
 
+const emptyPageContentEntryMock = {
+  data: undefined,
+  entry: null,
+  error: null,
+  isError: false,
+  isFetched: true,
+  isFetching: false,
+  isLoading: false,
+  isPending: false,
+  isSuccess: true,
+  refetch: vi.fn(),
+  status: 'success',
+} as const;
+
 vi.mock('@/shared/hooks/use-settings', () => ({
   useUpdateSetting: () => ({
     mutateAsync: mutateAsyncMock,
@@ -82,19 +96,7 @@ vi.mock('@/features/kangur/shared/ui', async (importOriginal) => {
 });
 
 vi.mock('@/features/kangur/ui/hooks/useKangurPageContent', () => ({
-  useKangurPageContentEntry: () => ({
-    data: undefined,
-    entry: null,
-    error: null,
-    isError: false,
-    isFetched: true,
-    isFetching: false,
-    isLoading: false,
-    isPending: false,
-    isSuccess: true,
-    refetch: vi.fn(),
-    status: 'success',
-  }),
+  useKangurPageContentEntry: () => emptyPageContentEntryMock,
 }));
 
 import { KANGUR_TEST_QUESTIONS_SETTING_KEY } from '../test-questions';

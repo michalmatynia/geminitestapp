@@ -22,7 +22,7 @@ import {
   integrationSelectionQueryKeys,
   isBaseIntegrationSlug,
   useGenericExportToBaseMutation,
-} from '@/features/integrations/product-integrations-adapter';
+} from '@/features/integrations/public';
 import type { ProductListingsRecoveryContext } from '@/shared/contracts/integrations';
 import {
   subscribeToTrackedAiPathRun,

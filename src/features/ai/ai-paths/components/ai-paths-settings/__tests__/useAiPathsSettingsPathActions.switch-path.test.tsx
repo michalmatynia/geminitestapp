@@ -29,6 +29,24 @@ const setBlockedRunPolicyGraphMock = vi.fn();
 const setAiPathsValidationGraphMock = vi.fn();
 const setIsPathLockedGraphMock = vi.fn();
 const setIsPathActiveGraphMock = vi.fn();
+const graphActionsMock = {
+  setNodes: setNodesGraphMock,
+  setEdges: setEdgesGraphMock,
+  setPathConfigs: setPathConfigsGraphMock,
+  setPaths: setPathsGraphMock,
+  setActivePathId: setActivePathIdGraphMock,
+  setPathName: setPathNameGraphMock,
+  setPathDescription: setPathDescriptionGraphMock,
+  setActiveTrigger: setActiveTriggerGraphMock,
+  setExecutionMode: setExecutionModeGraphMock,
+  setFlowIntensity: setFlowIntensityGraphMock,
+  setRunMode: setRunModeGraphMock,
+  setStrictFlowMode: setStrictFlowModeGraphMock,
+  setBlockedRunPolicy: setBlockedRunPolicyGraphMock,
+  setAiPathsValidation: setAiPathsValidationGraphMock,
+  setIsPathLocked: setIsPathLockedGraphMock,
+  setIsPathActive: setIsPathActiveGraphMock,
+};
 const setRuntimeStateMock = vi.fn();
 const setParserSamplesRuntimeMock = vi.fn();
 const setUpdaterSamplesRuntimeMock = vi.fn();
@@ -57,24 +75,7 @@ vi.mock('@/features/ai/ai-paths/context/SelectionContext', () => ({
 }));
 
 vi.mock('@/features/ai/ai-paths/context/GraphContext', () => ({
-  useGraphActions: () => ({
-    setNodes: setNodesGraphMock,
-    setEdges: setEdgesGraphMock,
-    setPathConfigs: setPathConfigsGraphMock,
-    setPaths: setPathsGraphMock,
-    setActivePathId: setActivePathIdGraphMock,
-    setPathName: setPathNameGraphMock,
-    setPathDescription: setPathDescriptionGraphMock,
-    setActiveTrigger: setActiveTriggerGraphMock,
-    setExecutionMode: setExecutionModeGraphMock,
-    setFlowIntensity: setFlowIntensityGraphMock,
-    setRunMode: setRunModeGraphMock,
-    setStrictFlowMode: setStrictFlowModeGraphMock,
-    setBlockedRunPolicy: setBlockedRunPolicyGraphMock,
-    setAiPathsValidation: setAiPathsValidationGraphMock,
-    setIsPathLocked: setIsPathLockedGraphMock,
-    setIsPathActive: setIsPathActiveGraphMock,
-  }),
+  useGraphActions: () => graphActionsMock,
 }));
 
 vi.mock('@/features/ai/ai-paths/context/RuntimeContext', () => ({

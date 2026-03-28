@@ -12,7 +12,7 @@ import {
 } from '@/shared/contracts/integrations';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { badRequestError, notFoundError } from '@/shared/errors/app-error';
-import { readOptionalServerAuthSession } from '@/shared/lib/auth/optional-server-auth';
+import { readOptionalServerAuthSession } from '@/features/auth/server';
 import { getPathRunRepository } from '@/shared/lib/ai-paths/services/path-run-repository';
 
 import { resolveDeleteInventoryId } from './helpers';

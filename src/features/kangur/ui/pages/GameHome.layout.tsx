@@ -76,24 +76,7 @@ export const resolveKangurGameHomeVisibility = ({
   };
 };
 
-export function KangurGameHomeSections({
-  actionsColumn,
-  actionsColumnProps,
-  assignments,
-  assignmentsSectionProps,
-  leaderboard,
-  leaderboardColumnProps,
-  parentSpotlight,
-  parentSpotlightSectionProps,
-  playerProgress,
-  playerProgressColumnProps,
-  progressSectionProps,
-  quest,
-  questSectionProps,
-  summary,
-  summarySectionProps,
-  visibility,
-}: {
+export function KangurGameHomeSections(props: {
   actionsColumn: ReactNode;
   actionsColumnProps?: ColumnSlotProps;
   assignments?: ReactNode;
@@ -111,6 +94,25 @@ export function KangurGameHomeSections({
   summarySectionProps?: SectionSlotProps;
   visibility: KangurGameHomeVisibility;
 }): React.JSX.Element {
+  const {
+    actionsColumn,
+    actionsColumnProps,
+    assignments,
+    assignmentsSectionProps,
+    leaderboard,
+    leaderboardColumnProps,
+    parentSpotlight,
+    parentSpotlightSectionProps,
+    playerProgress,
+    playerProgressColumnProps,
+    progressSectionProps,
+    quest,
+    questSectionProps,
+    summary,
+    summarySectionProps,
+    visibility,
+  } = props;
+
   const shouldRenderProgressGrid =
     visibility.showProgressGrid && (leaderboard !== undefined || playerProgress !== undefined);
 

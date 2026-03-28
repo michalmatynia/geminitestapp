@@ -59,18 +59,22 @@ export interface KangurNarratorSettingsPanelProps {
   className?: string;
 }
 
-export function renderKangurNarratorSettingsPanel({
-  engine,
-  voice,
-  setEngine,
-  setVoice,
-  copyStatus,
-  onCopyTemplateText,
-  isProbingNarrator,
-  onProbeNarrator,
-  narratorProbe,
-  className,
-}: KangurNarratorSettingsPanelProps): React.JSX.Element {
+export function renderKangurNarratorSettingsPanel(
+  props: KangurNarratorSettingsPanelProps
+): React.JSX.Element {
+  const {
+    engine,
+    voice,
+    setEngine,
+    setVoice,
+    copyStatus,
+    onCopyTemplateText,
+    isProbingNarrator,
+    onProbeNarrator,
+    narratorProbe,
+    className,
+  } = props;
+
   return (
     <FormSection
       title='Narrator Engine'

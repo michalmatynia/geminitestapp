@@ -3,7 +3,7 @@
  */
 
 import type { ReactNode } from 'react';
-import { fireEvent, render, screen } from '@testing-library/react';
+import { fireEvent, render, screen, within } from '@testing-library/react';
 import { NextIntlClientProvider } from 'next-intl';
 import { describe, expect, it, vi } from 'vitest';
 
@@ -136,5 +136,29 @@ describe('AddingLesson i18n', () => {
 
     expect(screen.getByText('Wenn die Summe über 10 geht, kannst du zuerst 10 bilden und dann den Rest addieren.')).toBeInTheDocument();
     expect(screen.getByText('+2 übrig')).toBeInTheDocument();
+  });
+
+  it('prefers gameTitle locale keys for the game and synthesis shell titles', () => {
+    const customMessages = structuredClone(enMessages);
+    customMessages.KangurStaticLessons.adding.game.gameTitle = 'Custom ball shell title';
+    customMessages.KangurStaticLessons.adding.synthesis.gameTitle = 'Custom synthesis shell title';
+
+    renderLesson(<AddingLesson />, {
+      locale: 'en',
+      messages: customMessages,
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: /Ball game/i }));
+    expect(
+      within(screen.getByTestId('adding-lesson-game-shell')).getByText('Custom ball shell title')
+    ).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: /Back to topics/i }));
+    fireEvent.click(screen.getByRole('button', { name: /Addition synthesis/i }));
+    expect(
+      within(screen.getByTestId('adding-lesson-synthesis-shell')).getByText(
+        'Custom synthesis shell title'
+      )
+    ).toBeInTheDocument();
   });
 });

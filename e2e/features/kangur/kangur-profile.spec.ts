@@ -185,35 +185,36 @@ test.describe('Kangur Learner Profile', () => {
         email: 'jan@example.com',
       })
     );
+    const scoresResponseBody = [
+      {
+        id: 'score-today-1',
+        player_name: 'Jan',
+        score: 8,
+        operation: 'addition',
+        total_questions: 10,
+        correct_answers: 8,
+        time_taken: 42,
+        created_date: nowIso,
+        created_by: 'jan@example.com',
+      },
+      {
+        id: 'score-yesterday-1',
+        player_name: 'Jan',
+        score: 10,
+        operation: 'multiplication',
+        total_questions: 10,
+        correct_answers: 10,
+        time_taken: 38,
+        created_date: yesterdayIso,
+        created_by: 'jan@example.com',
+      },
+    ];
 
     await page.route('**/api/kangur/scores**', async (route) => {
       await route.fulfill({
         status: 200,
         contentType: 'application/json',
-        body: JSON.stringify([
-          {
-            id: 'score-today-1',
-            player_name: 'Jan',
-            score: 8,
-            operation: 'addition',
-            total_questions: 10,
-            correct_answers: 8,
-            time_taken: 42,
-            created_date: nowIso,
-            created_by: 'jan@example.com',
-          },
-          {
-            id: 'score-yesterday-1',
-            player_name: 'Jan',
-            score: 10,
-            operation: 'multiplication',
-            total_questions: 10,
-            correct_answers: 10,
-            time_taken: 38,
-            created_date: yesterdayIso,
-            created_by: 'jan@example.com',
-          },
-        ]),
+        body: JSON.stringify(scoresResponseBody),
       });
     });
 

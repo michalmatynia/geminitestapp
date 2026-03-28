@@ -2521,6 +2521,7 @@
         "rushMode": "Bridge Rush",
         "rushModeHint": "Tryb Bridge Rush: zdąż przed końcem czasu. Zmiana trybu restartuje grę.",
         "modeResetHint": "Zmiana trybu restartuje grę.",
+        "title": "Most relacji",
         "stageTitle": "Most relacji",
         "roundLabel": "Runda {current}/{total}",
         "timeExpired": "Czas minął",

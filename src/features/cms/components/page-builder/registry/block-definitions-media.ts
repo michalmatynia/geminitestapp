@@ -6,7 +6,7 @@ import {
   DEFAULT_APP_EMBED_ID,
   KANGUR_APP_EMBED_ENTRY_PAGE_OPTIONS,
 } from '@/shared/lib/app-embeds';
-import { KANGUR_WIDGET_OPTIONS } from '@/shared/lib/kangur-bridge';
+import { KANGUR_WIDGET_OPTIONS } from '@/features/kangur/public';
 
 import { colorSchemeField, paddingFields } from './shared-field-helpers';
 

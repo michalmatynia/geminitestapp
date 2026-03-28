@@ -1,7 +1,6 @@
 'use client';
 
 import dynamic from 'next/dynamic';
-import type { ComponentType } from 'react';
 import { useTranslations } from 'next-intl';
 
 import type {
@@ -16,8 +15,7 @@ import type {
   KangurMiniGameFinishProps,
   KangurMiniGameFinishVariantProps,
 } from '@/features/kangur/ui/types';
-import { KANGUR_MUSIC_PIANO_ROLL_RENDERER_IDS } from '@/features/kangur/games';
-import { createKangurMusicPianoRollLaunchableRendererMap } from '@/features/kangur/ui/components/music/music-piano-roll-launchable-runtime';
+import { createKangurMusicPianoRollLaunchableOnFinishRendererMap } from '@/features/kangur/ui/components/music/music-piano-roll-launchable-runtime';
 
 const AddingBallGame = dynamic(() => import('@/features/kangur/ui/components/AddingBallGame'), {
   ssr: false,
@@ -42,7 +40,7 @@ const AgenticSurfaceMatchGame = dynamic(
   () => import('@/features/kangur/ui/components/AgenticSurfaceMatchGame'),
   { ssr: false }
 );
-const AlphabetLiteracyStageGame = dynamic(
+const AlphabetLiteracyGame = dynamic(
   () => import('@/features/kangur/ui/components/AlphabetLiteracyStageGame'),
   { ssr: false }
 );
@@ -61,7 +59,7 @@ const ClockTrainingGame = dynamic(
   () => import('@/features/kangur/ui/components/ClockTrainingGame'),
   { ssr: false }
 );
-const ColorHarmonyStageGame = dynamic(
+const ColorHarmonyGame = dynamic(
   () => import('@/features/kangur/ui/components/ColorHarmonyStageGame'),
   { ssr: false }
 );
@@ -128,7 +126,7 @@ const MultiplicationGame = dynamic(
   () => import('@/features/kangur/ui/components/MultiplicationGame'),
   { ssr: false }
 );
-const ShapeRecognitionStageGame = dynamic(
+const ShapeRecognitionGame = dynamic(
   () => import('@/features/kangur/ui/components/ShapeRecognitionStageGame'),
   { ssr: false }
 );
@@ -155,12 +153,6 @@ type LaunchableGameRendererProps = KangurMiniGameFinishActionProps & {
 type LaunchableGameRendererConfig = {
   render: (props: LaunchableGameRendererProps) => React.JSX.Element;
 };
-
-const createMusicPianoRollLaunchableRenderer = (
-  Component: ComponentType<Pick<LaunchableGameRendererProps, 'onFinish'>>
-): LaunchableGameRendererConfig => ({
-  render: ({ onFinish }) => <Component onFinish={onFinish} />,
-});
 
 const resolveLaunchableGameRendererProps = (
   context: LaunchableGameRendererContext
@@ -203,13 +195,7 @@ const toLessonPlayFinishLabelVariant = (
   finishLabelVariant === 'play' ? 'play' : finishLabelVariant === 'lesson' ? 'lesson' : undefined;
 
 const KANGUR_MUSIC_PIANO_ROLL_LAUNCHABLE_RENDERERS =
-  createKangurMusicPianoRollLaunchableRendererMap(
-    createMusicPianoRollLaunchableRenderer
-  ) satisfies Pick<
-  Record<KangurLaunchableGameRuntimeRendererId, LaunchableGameRendererConfig>,
-  | typeof KANGUR_MUSIC_PIANO_ROLL_RENDERER_IDS.repeat
-  | typeof KANGUR_MUSIC_PIANO_ROLL_RENDERER_IDS.freePlay
->;
+  createKangurMusicPianoRollLaunchableOnFinishRendererMap<LaunchableGameRendererProps>();
 
 const KANGUR_LAUNCHABLE_GAME_RENDERERS: Record<
   KangurLaunchableGameRuntimeRendererId,
@@ -235,9 +221,9 @@ const KANGUR_LAUNCHABLE_GAME_RENDERERS: Record<
   agentic_surface_match_game: {
     render: ({ onFinish }) => <AgenticSurfaceMatchGame onFinish={onFinish} />,
   },
-  alphabet_literacy_stage_game: {
+  alphabet_literacy_game: {
     render: ({ finishLabel, onFinish, rendererProps }) => (
-      <AlphabetLiteracyStageGame
+      <AlphabetLiteracyGame
         finishLabel={finishLabel}
         literacyMatchSetId={rendererProps?.literacyMatchSetId}
         onFinish={onFinish}
@@ -267,10 +253,8 @@ const KANGUR_LAUNCHABLE_GAME_RENDERERS: Record<
       />
     ),
   },
-  color_harmony_stage_game: {
-    render: ({ finishLabel, onFinish }) => (
-      <ColorHarmonyStageGame finishLabel={finishLabel} onFinish={onFinish} />
-    ),
+  color_harmony_game: {
+    render: ({ finishLabel, onFinish }) => <ColorHarmonyGame finishLabel={finishLabel} onFinish={onFinish} />,
   },
   division_game: {
     render: ({ finishLabelVariant, onFinish }) => (
@@ -372,10 +356,8 @@ const KANGUR_LAUNCHABLE_GAME_RENDERERS: Record<
     ),
   },
   ...KANGUR_MUSIC_PIANO_ROLL_LAUNCHABLE_RENDERERS,
-  shape_recognition_stage_game: {
-    render: ({ finishLabel, onFinish }) => (
-      <ShapeRecognitionStageGame finishLabel={finishLabel} onFinish={onFinish} />
-    ),
+  shape_recognition_game: {
+    render: ({ finishLabel, onFinish }) => <ShapeRecognitionGame finishLabel={finishLabel} onFinish={onFinish} />,
   },
   subtracting_game: {
     render: ({ finishLabelVariant, onFinish }) => (

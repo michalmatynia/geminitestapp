@@ -137,14 +137,14 @@ export const KANGUR_GAME_ENGINE_IMPLEMENTATIONS: readonly KangurGameEngineImplem
   {
     engineId: 'color-harmony-engine',
     ownership: 'shared_runtime',
-    runtimeIds: ['ColorHarmonyStageGame'],
+    runtimeIds: ['ColorHarmonyGame'],
     summary:
       'Color harmony now runs through a reusable shared palette-matching component instead of staying embedded in one lesson shell.',
   },
   {
     engineId: 'letter-match-engine',
     ownership: 'shared_runtime',
-    runtimeIds: ['AlphabetLiteracyStageGame'],
+    runtimeIds: ['AlphabetLiteracyGame'],
     summary:
       'Letter matching now uses a single shared literacy runtime that powers launchable instances across first words and uppercase-lowercase pairing.',
   },
@@ -152,7 +152,7 @@ export const KANGUR_GAME_ENGINE_IMPLEMENTATIONS: readonly KangurGameEngineImplem
   {
     engineId: 'shape-recognition-engine',
     ownership: 'shared_runtime',
-    runtimeIds: ['ArtShapesRotationGapGame', 'ShapeRecognitionStageGame'],
+    runtimeIds: ['ArtShapesRotationGapGame', 'ShapeRecognitionGame'],
     summary:
       'Shape recognition now uses shared runtime components for both art rotation and geometry spotting variants.',
   },

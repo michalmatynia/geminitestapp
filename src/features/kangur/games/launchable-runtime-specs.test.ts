@@ -59,9 +59,9 @@ describe('launchable runtime specs', () => {
           engineId: config.engineId,
           rendererId: config.rendererId,
           screen: config.screen,
-          stage: expect.objectContaining({
-            icon: config.stage.icon,
-            shellTestId: config.stage.shellTestId,
+          shell: expect.objectContaining({
+            icon: config.shell.icon,
+            shellTestId: config.shell.shellTestId,
           }),
         })
       );

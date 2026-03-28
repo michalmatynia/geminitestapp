@@ -27,6 +27,19 @@ export const KANGUR_MUSIC_DIATONIC_SCALE_COMPONENT_ID = 'music_diatonic_scale' a
 type KangurMusicPianoRollVariantKey =
   (typeof KANGUR_MUSIC_PIANO_ROLL_VARIANT_KEYS)[number];
 
+type KangurMusicPianoRollWrapperTestIds = {
+  audioStatus?: string;
+  finishButton?: string;
+  modeStatus?: string;
+  pianoRoll: {
+    keyPrefix: string;
+    shell: string;
+    stepPrefix: string;
+  };
+  root?: string;
+  stage?: string;
+};
+
 type KangurMusicPianoRollDerivedConfig = {
   builtInInstanceDescription: string;
   builtInInstanceTitle: string;
@@ -51,6 +64,7 @@ type KangurMusicPianoRollDerivedConfig = {
   runtimeComponentId: string;
   runtimeIcon: string;
   topSectionTestId: string;
+  wrapperTestIds: KangurMusicPianoRollWrapperTestIds;
 };
 
 type KangurMusicPianoRollLessonVariantGameConfig = Pick<
@@ -108,6 +122,14 @@ export const KANGUR_MUSIC_PIANO_ROLL_CONFIGS = {
     runtimeComponentId: 'MusicMelodyRepeatGame',
     runtimeIcon: '🎵',
     topSectionTestId: 'kangur-music-melody-repeat-top-section',
+    wrapperTestIds: {
+      pianoRoll: {
+        keyPrefix: 'music-melody-repeat-key',
+        shell: 'music-melody-repeat-piano-roll',
+        stepPrefix: 'music-melody-repeat-step',
+      },
+      stage: 'music-melody-repeat-stage',
+    },
   },
   freePlay: {
     builtInInstanceDescription:
@@ -146,6 +168,17 @@ export const KANGUR_MUSIC_PIANO_ROLL_CONFIGS = {
     runtimeComponentId: 'MusicPianoRollFreePlayGame',
     runtimeIcon: '🎹',
     topSectionTestId: 'kangur-music-piano-roll-free-play-top-section',
+    wrapperTestIds: {
+      audioStatus: 'music-piano-roll-freeplay-audio',
+      finishButton: 'music-piano-roll-freeplay-finish',
+      modeStatus: 'music-piano-roll-freeplay-mode',
+      pianoRoll: {
+        keyPrefix: 'music-piano-roll-freeplay-key',
+        shell: 'music-piano-roll-freeplay-shell',
+        stepPrefix: 'music-piano-roll-freeplay-step',
+      },
+      root: 'music-piano-roll-freeplay-game',
+    },
   },
 } as const satisfies Record<KangurMusicPianoRollVariantKey, KangurMusicPianoRollDerivedConfig>;
 
@@ -161,25 +194,8 @@ export const KANGUR_MUSIC_PIANO_ROLL_RUNTIME_COMPONENT_IDS = createVariantKeyRec
 );
 
 export const KANGUR_MUSIC_PIANO_ROLL_WRAPPER_TEST_IDS = {
-  freePlay: {
-    audioStatus: 'music-piano-roll-freeplay-audio',
-    finishButton: 'music-piano-roll-freeplay-finish',
-    modeStatus: 'music-piano-roll-freeplay-mode',
-    pianoRoll: {
-      keyPrefix: 'music-piano-roll-freeplay-key',
-      shell: 'music-piano-roll-freeplay-shell',
-      stepPrefix: 'music-piano-roll-freeplay-step',
-    },
-    root: 'music-piano-roll-freeplay-game',
-  },
-  repeat: {
-    pianoRoll: {
-      keyPrefix: 'music-melody-repeat-key',
-      shell: 'music-melody-repeat-piano-roll',
-      stepPrefix: 'music-melody-repeat-step',
-    },
-    stage: 'music-melody-repeat-stage',
-  },
+  freePlay: KANGUR_MUSIC_PIANO_ROLL_CONFIGS.freePlay.wrapperTestIds,
+  repeat: KANGUR_MUSIC_PIANO_ROLL_CONFIGS.repeat.wrapperTestIds,
 } as const;
 
 export const KANGUR_MUSIC_PIANO_ROLL_TOP_SECTION_TEST_IDS = createVariantKeyRecord(
@@ -195,7 +211,7 @@ export const KANGUR_MUSIC_PIANO_ROLL_LAUNCHABLE_RUNTIME_CONFIGS = Object.fromEnt
         engineId: config.engineId,
         rendererId: config.rendererId,
         screen: config.launchableRuntimeId,
-        stage: {
+        shell: {
           icon: config.runtimeIcon,
           shellTestId: config.topSectionTestId,
         },
@@ -208,7 +224,7 @@ export const KANGUR_MUSIC_PIANO_ROLL_LAUNCHABLE_RUNTIME_CONFIGS = Object.fromEnt
     engineId: (typeof KANGUR_MUSIC_PIANO_ROLL_ENGINE_IDS)[KangurMusicPianoRollVariantKey];
     rendererId: (typeof KANGUR_MUSIC_PIANO_ROLL_RENDERER_IDS)[KangurMusicPianoRollVariantKey];
     screen: (typeof KANGUR_MUSIC_PIANO_ROLL_LAUNCHABLE_RUNTIME_IDS)[KangurMusicPianoRollVariantKey];
-    stage: {
+    shell: {
       icon: string;
       shellTestId: string;
     };

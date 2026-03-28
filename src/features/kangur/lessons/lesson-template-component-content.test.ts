@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import {
+  ADDING_LESSON_COMPONENT_CONTENT,
   ALPHABET_WORDS_LESSON_COMPONENT_CONTENT,
   ART_SHAPES_BASIC_LESSON_COMPONENT_CONTENT,
   DIVISION_LESSON_COMPONENT_CONTENT,
@@ -15,6 +16,7 @@ import {
   LOGICAL_THINKING_LESSON_COMPONENT_CONTENT,
   MULTIPLICATION_LESSON_COMPONENT_CONTENT,
   MUSIC_DIATONIC_SCALE_LESSON_COMPONENT_CONTENT,
+  SUBTRACTING_LESSON_COMPONENT_CONTENT,
   getDefaultKangurLessonTemplateComponentContent,
   parseKangurLessonTemplateComponentContentJson,
   serializeKangurLessonTemplateComponentContent,
@@ -25,6 +27,8 @@ describe('lesson-template-component-content', () => {
   it('returns default component content for supported alphabet lessons', () => {
     expect(supportsKangurLessonTemplateComponentContent('alphabet_words')).toBe(true);
     expect(supportsKangurLessonTemplateComponentContent('art_shapes_basic')).toBe(true);
+    expect(supportsKangurLessonTemplateComponentContent('adding')).toBe(true);
+    expect(supportsKangurLessonTemplateComponentContent('subtracting')).toBe(true);
     expect(supportsKangurLessonTemplateComponentContent('multiplication')).toBe(true);
     expect(supportsKangurLessonTemplateComponentContent('division')).toBe(true);
     expect(supportsKangurLessonTemplateComponentContent('geometry_basics')).toBe(true);
@@ -42,6 +46,12 @@ describe('lesson-template-component-content', () => {
     );
     expect(getDefaultKangurLessonTemplateComponentContent('art_shapes_basic')).toEqual(
       ART_SHAPES_BASIC_LESSON_COMPONENT_CONTENT,
+    );
+    expect(getDefaultKangurLessonTemplateComponentContent('adding')).toEqual(
+      ADDING_LESSON_COMPONENT_CONTENT,
+    );
+    expect(getDefaultKangurLessonTemplateComponentContent('subtracting')).toEqual(
+      SUBTRACTING_LESSON_COMPONENT_CONTENT,
     );
     expect(getDefaultKangurLessonTemplateComponentContent('multiplication')).toEqual(
       MULTIPLICATION_LESSON_COMPONENT_CONTENT,
@@ -118,6 +128,24 @@ describe('lesson-template-component-content', () => {
     expect(
       parseKangurLessonTemplateComponentContentJson('multiplication', multiplicationSerialized),
     ).toEqual(MULTIPLICATION_LESSON_COMPONENT_CONTENT);
+
+    const addingSerialized = serializeKangurLessonTemplateComponentContent(
+      'adding',
+      ADDING_LESSON_COMPONENT_CONTENT,
+    );
+
+    expect(parseKangurLessonTemplateComponentContentJson('adding', addingSerialized)).toEqual(
+      ADDING_LESSON_COMPONENT_CONTENT,
+    );
+
+    const subtractingSerialized = serializeKangurLessonTemplateComponentContent(
+      'subtracting',
+      SUBTRACTING_LESSON_COMPONENT_CONTENT,
+    );
+
+    expect(
+      parseKangurLessonTemplateComponentContentJson('subtracting', subtractingSerialized),
+    ).toEqual(SUBTRACTING_LESSON_COMPONENT_CONTENT);
 
     const divisionSerialized = serializeKangurLessonTemplateComponentContent(
       'division',

@@ -195,7 +195,7 @@ const SwatchPair = ({
   );
 };
 
-export default function ColorHarmonyStageGame({
+export default function ColorHarmonyGame({
   finishLabel = 'Back to topics',
   onFinish,
 }: {

@@ -44,3 +44,10 @@ export const createKangurMusicPianoRollLaunchableRendererMap = <T,>(
     (typeof KANGUR_MUSIC_PIANO_ROLL_RENDERER_IDS)[keyof typeof KANGUR_MUSIC_PIANO_ROLL_RENDERER_IDS],
     T
   >;
+
+export const createKangurMusicPianoRollLaunchableOnFinishRendererMap = <TProps extends {
+  onFinish: () => void;
+}>() =>
+  createKangurMusicPianoRollLaunchableRendererMap((Component) => ({
+    render: ({ onFinish }: TProps): React.JSX.Element => <Component onFinish={onFinish} />,
+  }));

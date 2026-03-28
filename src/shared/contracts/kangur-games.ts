@@ -108,7 +108,7 @@ export const KANGUR_LAUNCHABLE_GAME_SCREENS = [
 export const kangurLaunchableGameScreenSchema = z.enum(KANGUR_LAUNCHABLE_GAME_SCREENS);
 export type KangurLaunchableGameScreen = z.infer<typeof kangurLaunchableGameScreenSchema>;
 
-export const KANGUR_LAUNCHABLE_GAME_STAGE_ACCENTS = [
+export const KANGUR_LAUNCHABLE_GAME_SHELL_ACCENTS = [
   'amber',
   'emerald',
   'indigo',
@@ -118,11 +118,11 @@ export const KANGUR_LAUNCHABLE_GAME_STAGE_ACCENTS = [
   'violet',
 ] as const;
 
-export const kangurLaunchableGameStageAccentSchema = z.enum(
-  KANGUR_LAUNCHABLE_GAME_STAGE_ACCENTS
+export const kangurLaunchableGameShellAccentSchema = z.enum(
+  KANGUR_LAUNCHABLE_GAME_SHELL_ACCENTS
 );
-export type KangurLaunchableGameStageAccent = z.infer<
-  typeof kangurLaunchableGameStageAccentSchema
+export type KangurLaunchableGameShellAccent = z.infer<
+  typeof kangurLaunchableGameShellAccentSchema
 >;
 
 export const KANGUR_LAUNCHABLE_GAME_RUNTIME_RENDERER_IDS = [
@@ -132,11 +132,11 @@ export const KANGUR_LAUNCHABLE_GAME_RUNTIME_RENDERER_IDS = [
   'agentic_prompt_trim_game',
   'agentic_reasoning_router_game',
   'agentic_surface_match_game',
-  'alphabet_literacy_stage_game',
+  'alphabet_literacy_game',
   'art_shapes_rotation_gap_game',
   'calendar_training_game',
   'clock_training_game',
-  'color_harmony_stage_game',
+  'color_harmony_game',
   'division_game',
   'english_adjectives_scene_game',
   'english_adverbs_frequency_routine_game',
@@ -149,7 +149,7 @@ export const KANGUR_LAUNCHABLE_GAME_RUNTIME_RENDERER_IDS = [
   'english_sentence_structure_game',
   'english_subject_verb_agreement_game',
   'geometry_drawing_game',
-  'shape_recognition_stage_game',
+  'shape_recognition_game',
   'logical_analogies_relation_game',
   'logical_classification_game',
   'logical_patterns_workshop_game',
@@ -192,16 +192,16 @@ export type KangurLaunchableGameRuntimeFinishLabelProp = z.infer<
   typeof kangurLaunchableGameRuntimeFinishLabelPropSchema
 >;
 
-export const kangurLaunchableGameStageConfigSchema = z.object({
-  accent: kangurLaunchableGameStageAccentSchema,
+export const kangurLaunchableGameShellConfigSchema = z.object({
+  accent: kangurLaunchableGameShellAccentSchema,
   backScreen: nonEmptyTrimmedString.max(120).optional(),
   description: z.string().trim().min(1).max(320).optional(),
   icon: z.string().trim().min(1).max(12),
   shellTestId: nonEmptyTrimmedString.max(160),
   title: nonEmptyTrimmedString.max(160).optional(),
 });
-export type KangurLaunchableGameStageConfig = z.infer<
-  typeof kangurLaunchableGameStageConfigSchema
+export type KangurLaunchableGameShellConfig = z.infer<
+  typeof kangurLaunchableGameShellConfigSchema
 >;
 
 export const kangurLaunchableGameRuntimeSpecSchema = z.object({
@@ -218,7 +218,7 @@ export const kangurLaunchableGameRuntimeSpecSchema = z.object({
     .min(1)
     .max(160)
     .default('w-full flex flex-col items-center'),
-  stage: kangurLaunchableGameStageConfigSchema,
+  shell: kangurLaunchableGameShellConfigSchema,
 });
 export type KangurLaunchableGameRuntimeSpec = z.infer<
   typeof kangurLaunchableGameRuntimeSpecSchema

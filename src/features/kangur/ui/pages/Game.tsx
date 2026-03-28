@@ -29,7 +29,7 @@ import {
   getKangurLaunchableGameScreenComponentConfig,
   mergeKangurLaunchableGameRuntimeSpec,
 } from '@/features/kangur/ui/pages/Game.launchable-screens';
-import { createKangurMusicPianoRollLaunchableScreenRefs } from '@/features/kangur/ui/pages/music-piano-roll-launchable-screen-refs';
+import { useKangurMusicPianoRollLaunchableScreenRefs } from '@/features/kangur/ui/pages/music-piano-roll-launchable-screen-refs';
 import {
   KangurGameHomeSections,
   resolveKangurGameHomeVisibility,
@@ -201,8 +201,7 @@ function GameContent(): React.JSX.Element {
   const geometryQuizRef = useRef<HTMLDivElement | null>(null);
   const geometryShapeSpotterQuizRef = useRef<HTMLDivElement | null>(null);
   const clockQuizRef = useRef<HTMLDivElement | null>(null);
-  const musicMelodyRepeatQuizRef = useRef<HTMLDivElement | null>(null);
-  const musicPianoRollFreePlayQuizRef = useRef<HTMLDivElement | null>(null);
+  const musicLaunchableGameScreenRefs = useKangurMusicPianoRollLaunchableScreenRefs();
   const additionQuizRef = useRef<HTMLDivElement | null>(null);
   const addingSynthesisQuizRef = useRef<HTMLDivElement | null>(null);
   const subtractionQuizRef = useRef<HTMLDivElement | null>(null);
@@ -224,10 +223,6 @@ function GameContent(): React.JSX.Element {
   const operationSelectorRef = useRef<HTMLDivElement | null>(null);
   const resultSummaryRef = useRef<HTMLDivElement | null>(null);
   const resultLeaderboardRef = useRef<HTMLDivElement | null>(null);
-  const musicLaunchableGameScreenRefs = createKangurMusicPianoRollLaunchableScreenRefs({
-    freePlay: musicPianoRollFreePlayQuizRef,
-    repeat: musicMelodyRepeatQuizRef,
-  });
   const launchableGameScreenRefs: Record<
     KangurLaunchableGameScreen,
     RefObject<HTMLDivElement | null>

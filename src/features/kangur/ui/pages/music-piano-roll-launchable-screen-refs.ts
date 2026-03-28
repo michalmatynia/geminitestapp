@@ -1,4 +1,4 @@
-import type { RefObject } from 'react';
+import { useMemo, useRef, type RefObject } from 'react';
 
 import type { KangurLaunchableGameScreen } from '@/shared/contracts/kangur-games';
 import {
@@ -30,3 +30,17 @@ export const createKangurMusicPianoRollLaunchableScreenRefs = (
     | typeof KANGUR_MUSIC_PIANO_ROLL_LAUNCHABLE_RUNTIME_IDS.repeat
     | typeof KANGUR_MUSIC_PIANO_ROLL_LAUNCHABLE_RUNTIME_IDS.freePlay
   >;
+
+export const useKangurMusicPianoRollLaunchableScreenRefs = (): Pick<
+  Record<KangurLaunchableGameScreen, LaunchableScreenRef>,
+  | typeof KANGUR_MUSIC_PIANO_ROLL_LAUNCHABLE_RUNTIME_IDS.repeat
+  | typeof KANGUR_MUSIC_PIANO_ROLL_LAUNCHABLE_RUNTIME_IDS.freePlay
+> => {
+  const repeat = useRef<HTMLDivElement | null>(null);
+  const freePlay = useRef<HTMLDivElement | null>(null);
+
+  return useMemo(
+    () => createKangurMusicPianoRollLaunchableScreenRefs({ freePlay, repeat }),
+    [freePlay, repeat]
+  );
+};

@@ -5,13 +5,13 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 
-import ColorHarmonyStageGame from '@/features/kangur/ui/components/ColorHarmonyStageGame';
+import ColorHarmonyGame from '@/features/kangur/ui/components/ColorHarmonyStageGame';
 
-describe('ColorHarmonyStageGame', () => {
+describe('ColorHarmonyGame', () => {
   it('plays through the shared color-harmony rounds and finishes cleanly', () => {
     const onFinish = vi.fn();
 
-    render(<ColorHarmonyStageGame finishLabel='Finish color studio' onFinish={onFinish} />);
+    render(<ColorHarmonyGame finishLabel='Finish color studio' onFinish={onFinish} />);
 
     fireEvent.click(screen.getByRole('button', { name: /yellow \+ orange/i }));
     fireEvent.click(screen.getByRole('button', { name: /next palette/i }));

@@ -41,7 +41,7 @@ vi.mock('@/features/kangur/ui/components/ShapeRecognitionStageGame', () => ({
 
 import plMessages from '@/i18n/messages/pl.json';
 import GeometryShapeRecognitionLesson from '@/features/kangur/ui/components/GeometryShapeRecognitionLesson';
-import ShapeRecognitionStageGame from '@/features/kangur/ui/components/ShapeRecognitionStageGame';
+import ShapeRecognitionGame from '@/features/kangur/ui/components/ShapeRecognitionStageGame';
 
 describe('GeometryShapeRecognitionLesson touch mode', () => {
   afterEach(() => {
@@ -57,7 +57,7 @@ describe('GeometryShapeRecognitionLesson touch mode', () => {
 
     render(
       <NextIntlClientProvider locale='pl' messages={plMessages}>
-        <ShapeRecognitionStageGame onFinish={vi.fn()} />
+        <ShapeRecognitionGame onFinish={vi.fn()} />
       </NextIntlClientProvider>
     );
 

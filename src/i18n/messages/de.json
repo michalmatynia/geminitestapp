@@ -258,7 +258,8 @@
   "KangurShell": {
     "creatorCredentials": "Erstellt von: {name} · erstellt {year} ·",
     "socialUpdates": "Social Updates",
-    "contactLabel": "Kontakt: {email}"
+    "contactLabel": "Kontakt: {email}",
+    "supportLabel": "Unterstutze die App:"
   },
   "KangurLessonsPage": {
     "pageTitle": "Lektionen",

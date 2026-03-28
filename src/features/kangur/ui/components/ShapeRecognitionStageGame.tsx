@@ -24,15 +24,15 @@ import {
 } from './geometry-shape-recognition-lesson-content';
 import type { LessonTranslate } from './lesson-copy';
 
-type ShapeRecognitionStageGameProps = {
+type ShapeRecognitionGameProps = {
   finishLabel?: string;
   onFinish?: () => void;
 };
 
-export default function ShapeRecognitionStageGame({
+export default function ShapeRecognitionGame({
   finishLabel,
   onFinish,
-}: ShapeRecognitionStageGameProps): React.JSX.Element {
+}: ShapeRecognitionGameProps): React.JSX.Element {
   const runtimeTemplate = useOptionalKangurLessonTemplate('geometry_shape_recognition');
   const messages = useMessages() as Record<string, unknown>;
   const fallbackTranslate = useMemo<LessonTranslate>(() => {

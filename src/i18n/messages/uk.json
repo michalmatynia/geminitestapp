@@ -268,7 +268,8 @@
   "KangurShell": {
     "creatorCredentials": "Дані автора: {name} · створено {year} ·",
     "socialUpdates": "Оновлення",
-    "contactLabel": "контакт: {email}"
+    "contactLabel": "контакт: {email}",
+    "supportLabel": "Підтримати застосунок:"
   },
   "KangurNavigation": {
     "home": "Головна",

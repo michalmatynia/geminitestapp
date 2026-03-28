@@ -118,13 +118,13 @@ describe('kangur game engine implementations', () => {
     ]);
     expect(getKangurGameEngineImplementation('shape-recognition-engine').runtimeIds).toEqual([
       'ArtShapesRotationGapGame',
-      'ShapeRecognitionStageGame',
+      'ShapeRecognitionGame',
     ]);
     expect(getKangurGameEngineImplementation('letter-match-engine').runtimeIds).toEqual([
-      'AlphabetLiteracyStageGame',
+      'AlphabetLiteracyGame',
     ]);
     expect(getKangurGameEngineImplementation('color-harmony-engine').runtimeIds).toEqual([
-      'ColorHarmonyStageGame',
+      'ColorHarmonyGame',
     ]);
     expect(getKangurGameEngineImplementation('symbol-tracing-engine').runtimeIds).toEqual([
       'AlphabetBasicsLesson',

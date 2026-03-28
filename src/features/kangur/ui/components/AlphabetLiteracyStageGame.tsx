@@ -14,17 +14,17 @@ import {
   type AlphabetLiteracyMatchSetId,
 } from './alphabet-literacy-stage-data';
 
-type AlphabetLiteracyStageGameProps = {
+type AlphabetLiteracyGameProps = {
   finishLabel?: string;
   literacyMatchSetId?: AlphabetLiteracyMatchSetId;
   onFinish?: () => void;
 };
 
-export default function AlphabetLiteracyStageGame({
+export default function AlphabetLiteracyGame({
   finishLabel = 'Wróć do tematów',
   literacyMatchSetId = 'alphabet_letter_matching',
   onFinish,
-}: AlphabetLiteracyStageGameProps): React.JSX.Element {
+}: AlphabetLiteracyGameProps): React.JSX.Element {
   const isCoarsePointer = useKangurCoarsePointer();
   const dataset = useMemo(
     () => getAlphabetLiteracyDataset(literacyMatchSetId),

@@ -293,7 +293,7 @@ describe('kangur game variants', () => {
 
     expect(entry?.launchableRuntime).toMatchObject({
       screen: 'geometry_shape_spotter_quiz',
-      rendererId: 'shape_recognition_stage_game',
+      rendererId: 'shape_recognition_game',
       engineId: 'shape-recognition-engine',
     });
   });
@@ -344,7 +344,7 @@ describe('kangur game variants', () => {
     expect(wordsEntry?.launchableScreen).toBe('alphabet_first_words_quiz');
     expect(wordsEntry?.launchableRuntime).toMatchObject({
       screen: 'alphabet_first_words_quiz',
-      rendererId: 'alphabet_literacy_stage_game',
+      rendererId: 'alphabet_literacy_game',
       engineId: 'letter-match-engine',
     });
 
@@ -352,7 +352,7 @@ describe('kangur game variants', () => {
     expect(matchingEntry?.launchableScreen).toBe('alphabet_letter_matching_quiz');
     expect(matchingEntry?.launchableRuntime).toMatchObject({
       screen: 'alphabet_letter_matching_quiz',
-      rendererId: 'alphabet_literacy_stage_game',
+      rendererId: 'alphabet_literacy_game',
       engineId: 'letter-match-engine',
     });
 

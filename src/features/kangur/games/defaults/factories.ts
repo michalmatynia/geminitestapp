@@ -139,6 +139,10 @@ export const createAgenticLessonVariantGame = (
     lessonVariantSurface: 'lesson_stage',
   });
 
+// Backward-compatible alias for older call sites and stale build graphs that still
+// import the pre-rename helper name.
+export const createAgenticStageGame = createAgenticLessonVariantGame;
+
 export const cloneKangurGameDefinition = (
   game: KangurGameDefinition
 ): KangurGameDefinition => ({

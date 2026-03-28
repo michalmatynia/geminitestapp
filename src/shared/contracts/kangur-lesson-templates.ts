@@ -648,6 +648,148 @@ export const kangurAddingLessonTemplateContentSchema = z.object({
   }),
 });
 
+const kangurSubtractingTitleDescriptionSchema = z.object({
+  title: z.string().trim().min(1).max(120),
+  description: z.string().trim().min(1).max(240),
+});
+
+const kangurSubtractingTitleLeadCaptionSchema = z.object({
+  title: z.string().trim().min(1).max(120),
+  lead: z.string().trim().min(1).max(240),
+  caption: z.string().trim().min(1).max(240),
+});
+
+export const kangurSubtractingLessonTemplateContentSchema = z.object({
+  kind: z.literal('subtracting'),
+  lessonTitle: z.string().trim().min(1).max(120),
+  sections: z.object({
+    podstawy: kangurSubtractingTitleDescriptionSchema,
+    przekroczenie: kangurSubtractingTitleDescriptionSchema,
+    dwucyfrowe: kangurSubtractingTitleDescriptionSchema,
+    zapamietaj: kangurSubtractingTitleDescriptionSchema,
+    game: kangurSubtractingTitleDescriptionSchema,
+  }),
+  animations: z.object({
+    subtractingSvg: z.object({
+      ariaLabel: z.string().trim().min(1).max(240),
+    }),
+    numberLine: z.object({
+      ariaLabel: z.string().trim().min(1).max(240),
+    }),
+    tenFrame: z.object({
+      ariaLabel: z.string().trim().min(1).max(240),
+    }),
+    differenceBar: z.object({
+      ariaLabel: z.string().trim().min(1).max(240),
+      differenceLabel: z.string().trim().min(1).max(120),
+    }),
+    abacus: z.object({
+      ariaLabel: z.string().trim().min(1).max(240),
+      tensLabel: z.string().trim().min(1).max(120),
+      onesLabel: z.string().trim().min(1).max(120),
+      startLabel: z.string().trim().min(1).max(120),
+      subtractLabel: z.string().trim().min(1).max(120),
+      resultLabel: z.string().trim().min(1).max(120),
+    }),
+  }),
+  slides: z.object({
+    basics: z.object({
+      meaning: z.object({
+        title: z.string().trim().min(1).max(120),
+        lead: z.string().trim().min(1).max(240),
+      }),
+      singleDigit: z.object({
+        title: z.string().trim().min(1).max(120),
+        lead: z.string().trim().min(1).max(240),
+        step1: z.string().trim().min(1).max(240),
+        step2: z.string().trim().min(1).max(240),
+        step3: z.string().trim().min(1).max(240),
+      }),
+      motion: kangurSubtractingTitleLeadCaptionSchema,
+    }),
+    crossTen: z.object({
+      overTen: z.object({
+        title: z.string().trim().min(1).max(120),
+        lead: z.string().trim().min(1).max(240),
+        caption: z.string().trim().min(1).max(240),
+        step1Title: z.string().trim().min(1).max(120),
+        step1Text: z.string().trim().min(1).max(240),
+        step2Title: z.string().trim().min(1).max(120),
+        step2Text: z.string().trim().min(1).max(240),
+        step3Title: z.string().trim().min(1).max(120),
+        step3Text: z.string().trim().min(1).max(240),
+      }),
+      numberLine: kangurSubtractingTitleLeadCaptionSchema,
+      tenFrame: kangurSubtractingTitleLeadCaptionSchema,
+    }),
+    doubleDigit: z.object({
+      intro: z.object({
+        title: z.string().trim().min(1).max(120),
+        lead: z.string().trim().min(1).max(240),
+        tensLabel: z.string().trim().min(1).max(120),
+        onesLabel: z.string().trim().min(1).max(120),
+      }),
+      abacus: kangurSubtractingTitleLeadCaptionSchema,
+    }),
+    remember: z.object({
+      rules: z.object({
+        title: z.string().trim().min(1).max(120),
+        orderChip: z.string().trim().min(1).max(120),
+        zeroChip: z.string().trim().min(1).max(120),
+        checkChip: z.string().trim().min(1).max(120),
+        breakChip: z.string().trim().min(1).max(120),
+        stepBackTitle: z.string().trim().min(1).max(120),
+        stepBackLead: z.string().trim().min(1).max(240),
+        stepBackPath: z.string().trim().min(1).max(240),
+        checkTitle: z.string().trim().min(1).max(120),
+        checkLead: z.string().trim().min(1).max(240),
+        checkEquation: z.string().trim().min(1).max(120),
+        orderTitle: z.string().trim().min(1).max(120),
+        orderLead: z.string().trim().min(1).max(240),
+        motionTitle: z.string().trim().min(1).max(120),
+        motionLead: z.string().trim().min(1).max(240),
+        motionCaption: z.string().trim().min(1).max(240),
+        pathTitle: z.string().trim().min(1).max(120),
+        pathStep1Title: z.string().trim().min(1).max(120),
+        pathStep1Text: z.string().trim().min(1).max(240),
+        pathStep2Title: z.string().trim().min(1).max(120),
+        pathStep2Text: z.string().trim().min(1).max(240),
+        pathStep3Title: z.string().trim().min(1).max(120),
+        pathStep3Text: z.string().trim().min(1).max(240),
+        pathStep4Title: z.string().trim().min(1).max(120),
+        pathStep4Text: z.string().trim().min(1).max(240),
+      }),
+      backJumps: z.object({
+        title: z.string().trim().min(1).max(120),
+        label: z.string().trim().min(1).max(120),
+        lead: z.string().trim().min(1).max(240),
+        caption: z.string().trim().min(1).max(240),
+      }),
+      tenFrame: z.object({
+        title: z.string().trim().min(1).max(120),
+        label: z.string().trim().min(1).max(120),
+        lead: z.string().trim().min(1).max(240),
+        caption: z.string().trim().min(1).max(240),
+      }),
+      checkAddition: z.object({
+        title: z.string().trim().min(1).max(120),
+        label: z.string().trim().min(1).max(120),
+        lead: z.string().trim().min(1).max(240),
+        caption: z.string().trim().min(1).max(240),
+      }),
+      difference: z.object({
+        title: z.string().trim().min(1).max(120),
+        label: z.string().trim().min(1).max(120),
+        lead: z.string().trim().min(1).max(240),
+        caption: z.string().trim().min(1).max(240),
+      }),
+    }),
+  }),
+  game: z.object({
+    stageTitle: z.string().trim().min(1).max(120),
+  }),
+});
+
 export const kangurDivisionLessonTemplateContentSchema = z.object({
   kind: z.literal('division'),
   lessonTitle: z.string().trim().min(1).max(120),
@@ -1812,6 +1954,7 @@ export const kangurLessonTemplateComponentContentSchema = z.discriminatedUnion('
   kangurMusicDiatonicScaleLessonTemplateContentSchema,
   kangurArtShapesBasicLessonTemplateContentSchema,
   kangurAddingLessonTemplateContentSchema,
+  kangurSubtractingLessonTemplateContentSchema,
   kangurMultiplicationLessonTemplateContentSchema,
   kangurDivisionLessonTemplateContentSchema,
   kangurGeometryBasicsLessonTemplateContentSchema,
@@ -1857,6 +2000,10 @@ export type KangurArtShapesBasicLessonTemplateContent = Extract<
 export type KangurAddingLessonTemplateContent = Extract<
   KangurLessonTemplateComponentContent,
   { kind: 'adding' }
+>;
+export type KangurSubtractingLessonTemplateContent = Extract<
+  KangurLessonTemplateComponentContent,
+  { kind: 'subtracting' }
 >;
 export type KangurMultiplicationLessonTemplateContent = Extract<
   KangurLessonTemplateComponentContent,

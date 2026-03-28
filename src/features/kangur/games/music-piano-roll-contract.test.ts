@@ -36,7 +36,7 @@ describe('music piano roll contract', () => {
         engineId: config.engineId,
         rendererId: config.rendererId,
         screen: config.launchableRuntimeId,
-        stage: {
+        shell: {
           icon: config.runtimeIcon,
           shellTestId: config.topSectionTestId,
         },

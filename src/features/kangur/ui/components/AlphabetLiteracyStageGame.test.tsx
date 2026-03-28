@@ -9,11 +9,11 @@ vi.mock('@/features/kangur/ui/hooks/useKangurCoarsePointer', () => ({
   useKangurCoarsePointer: () => true,
 }));
 
-import AlphabetLiteracyStageGame from '@/features/kangur/ui/components/AlphabetLiteracyStageGame';
+import AlphabetLiteracyGame from '@/features/kangur/ui/components/AlphabetLiteracyStageGame';
 
-describe('AlphabetLiteracyStageGame', () => {
+describe('AlphabetLiteracyGame', () => {
   it('renders the letter-matching dataset through the shared literacy runtime', () => {
-    render(<AlphabetLiteracyStageGame literacyMatchSetId='alphabet_letter_matching' />);
+    render(<AlphabetLiteracyGame literacyMatchSetId='alphabet_letter_matching' />);
 
     expect(screen.getByText('Dopasowanie liter')).toBeInTheDocument();
     expect(screen.getByText('A')).toBeInTheDocument();
@@ -27,7 +27,7 @@ describe('AlphabetLiteracyStageGame', () => {
   });
 
   it('renders the first-words dataset through the same shared literacy runtime', () => {
-    render(<AlphabetLiteracyStageGame literacyMatchSetId='alphabet_first_words' />);
+    render(<AlphabetLiteracyGame literacyMatchSetId='alphabet_first_words' />);
 
     expect(screen.getByText('Pierwsze słowa')).toBeInTheDocument();
     expect(screen.getByText('🍎')).toBeInTheDocument();

@@ -333,6 +333,20 @@ describe('KangurFeaturePage', () => {
     );
   });
 
+  it('renders support links in the root-mounted Kangur footer', () => {
+    renderWithIntl(<KangurFeaturePage basePath='/' />);
+
+    expect(screen.getByText('Wesprzyj aplikacje:')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'buycoffe.to/studiq' })).toHaveAttribute(
+      'href',
+      'https://buycoffe.to/studiq'
+    );
+    expect(screen.getByRole('link', { name: 'zrzutka.pl/b8ak55' })).toHaveAttribute(
+      'href',
+      'https://zrzutka.pl/b8ak55'
+    );
+  });
+
   it('supports direct competition route mounts', () => {
     renderWithIntl(<KangurFeaturePage slug={['competition']} basePath='/kangur' />);
 

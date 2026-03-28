@@ -6,6 +6,7 @@ import {
 } from '@/features/kangur/games/music-piano-roll-contract';
 
 import {
+  createKangurMusicPianoRollLaunchableOnFinishRendererMap,
   createKangurMusicPianoRollLaunchableRendererMap,
   KANGUR_MUSIC_PIANO_ROLL_LAUNCHABLE_COMPONENTS,
 } from './music-piano-roll-launchable-runtime';
@@ -30,5 +31,18 @@ describe('music piano roll launchable runtime helper', () => {
         KANGUR_MUSIC_PIANO_ROLL_RENDERER_IDS.freePlay
       ]
     );
+  });
+
+  it('builds finish-only renderer configs for the shared repeat and free-play components', () => {
+    const rendererMap =
+      createKangurMusicPianoRollLaunchableOnFinishRendererMap<{ onFinish: () => void }>();
+
+    expect(Object.keys(rendererMap).sort()).toEqual(
+      KANGUR_MUSIC_PIANO_ROLL_VARIANT_KEYS.map(
+        (key) => KANGUR_MUSIC_PIANO_ROLL_RENDERER_IDS[key]
+      ).sort()
+    );
+    expect(rendererMap[KANGUR_MUSIC_PIANO_ROLL_RENDERER_IDS.repeat]).toHaveProperty('render');
+    expect(rendererMap[KANGUR_MUSIC_PIANO_ROLL_RENDERER_IDS.freePlay]).toHaveProperty('render');
   });
 });

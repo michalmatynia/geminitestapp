@@ -27,12 +27,12 @@ const createMusicPianoRollLaunchableRuntimeSpec = ({
   engineId,
   rendererId,
   screen,
-  stage,
+  shell,
 }: {
   engineId: KangurLaunchableGameRuntimeSpec['engineId'];
   rendererId: KangurLaunchableGameRuntimeSpec['rendererId'];
   screen: KangurLaunchableGameScreen;
-  stage: Pick<KangurLaunchableGameRuntimeSpec['stage'], 'icon' | 'shellTestId'>;
+  shell: Pick<KangurLaunchableGameRuntimeSpec['shell'], 'icon' | 'shellTestId'>;
 }): KangurLaunchableGameRuntimeSpec =>
   createLaunchableGameRuntimeSpec({
     kind: 'launchable_game_screen',
@@ -41,9 +41,9 @@ const createMusicPianoRollLaunchableRuntimeSpec = ({
     rendererId,
     finishMode: 'return_to_game_home',
     finishLabelProp: 'finishLabel',
-    stage: {
+    shell: {
       accent: 'sky',
-      ...stage,
+      ...shell,
     },
   });
 
@@ -65,7 +65,7 @@ export const KANGUR_LAUNCHABLE_GAME_RUNTIME_SPECS = Object.freeze({
     rendererId: 'agentic_approval_gate_game',
     finishMode: 'return_to_game_home',
     finishLabelProp: 'finishLabel',
-    stage: {
+    shell: {
       accent: 'sky',
       icon: '🛡️',
       shellTestId: 'kangur-agentic-approval-gate-top-section',
@@ -78,7 +78,7 @@ export const KANGUR_LAUNCHABLE_GAME_RUNTIME_SPECS = Object.freeze({
     rendererId: 'agentic_prompt_trim_game',
     finishMode: 'return_to_game_home',
     finishLabelProp: 'finishLabel',
-    stage: {
+    shell: {
       accent: 'rose',
       icon: '✂️',
       shellTestId: 'kangur-agentic-prompt-trim-top-section',
@@ -91,7 +91,7 @@ export const KANGUR_LAUNCHABLE_GAME_RUNTIME_SPECS = Object.freeze({
     rendererId: 'agentic_reasoning_router_game',
     finishMode: 'return_to_game_home',
     finishLabelProp: 'finishLabel',
-    stage: {
+    shell: {
       accent: 'teal',
       icon: '🎛️',
       shellTestId: 'kangur-agentic-reasoning-router-top-section',
@@ -104,7 +104,7 @@ export const KANGUR_LAUNCHABLE_GAME_RUNTIME_SPECS = Object.freeze({
     rendererId: 'agentic_surface_match_game',
     finishMode: 'return_to_game_home',
     finishLabelProp: 'finishLabel',
-    stage: {
+    shell: {
       accent: 'emerald',
       icon: '🧭',
       shellTestId: 'kangur-agentic-surface-match-top-section',
@@ -114,10 +114,10 @@ export const KANGUR_LAUNCHABLE_GAME_RUNTIME_SPECS = Object.freeze({
     kind: 'launchable_game_screen',
     screen: 'alphabet_first_words_quiz',
     engineId: 'letter-match-engine',
-    rendererId: 'alphabet_literacy_stage_game',
+    rendererId: 'alphabet_literacy_game',
     finishMode: 'return_to_game_home',
     finishLabelProp: 'finishLabel',
-    stage: {
+    shell: {
       accent: 'amber',
       icon: '📖',
       shellTestId: 'kangur-alphabet-first-words-top-section',
@@ -127,10 +127,10 @@ export const KANGUR_LAUNCHABLE_GAME_RUNTIME_SPECS = Object.freeze({
     kind: 'launchable_game_screen',
     screen: 'alphabet_letter_matching_quiz',
     engineId: 'letter-match-engine',
-    rendererId: 'alphabet_literacy_stage_game',
+    rendererId: 'alphabet_literacy_game',
     finishMode: 'return_to_game_home',
     finishLabelProp: 'finishLabel',
-    stage: {
+    shell: {
       accent: 'amber',
       icon: '🔤',
       shellTestId: 'kangur-alphabet-letter-matching-top-section',
@@ -143,7 +143,7 @@ export const KANGUR_LAUNCHABLE_GAME_RUNTIME_SPECS = Object.freeze({
     rendererId: 'logical_patterns_workshop_game',
     finishMode: 'return_to_game_home',
     finishLabelProp: 'finishLabel',
-    stage: {
+    shell: {
       accent: 'amber',
       icon: '🧠',
       shellTestId: 'kangur-alphabet-letter-order-top-section',
@@ -153,10 +153,10 @@ export const KANGUR_LAUNCHABLE_GAME_RUNTIME_SPECS = Object.freeze({
     kind: 'launchable_game_screen',
     screen: 'art_color_harmony_quiz',
     engineId: 'color-harmony-engine',
-    rendererId: 'color_harmony_stage_game',
+    rendererId: 'color_harmony_game',
     finishMode: 'return_to_game_home',
     finishLabelProp: 'finishLabel',
-    stage: {
+    shell: {
       accent: 'amber',
       icon: '🎨',
       shellTestId: 'kangur-art-color-harmony-top-section',
@@ -169,7 +169,7 @@ export const KANGUR_LAUNCHABLE_GAME_RUNTIME_SPECS = Object.freeze({
     rendererId: 'art_shapes_rotation_gap_game',
     finishMode: 'return_to_game_home',
     finishLabelProp: 'finishLabel',
-    stage: {
+    shell: {
       accent: 'amber',
       icon: '🌀',
       shellTestId: 'kangur-art-shape-rotation-top-section',
@@ -180,7 +180,7 @@ export const KANGUR_LAUNCHABLE_GAME_RUNTIME_SPECS = Object.freeze({
     screen: 'calendar_quiz',
     engineId: 'calendar-grid-engine',
     rendererId: 'calendar_training_game',
-    stage: {
+    shell: {
       accent: 'emerald',
       icon: '📅',
       shellTestId: 'kangur-calendar-training-top-section',
@@ -191,7 +191,7 @@ export const KANGUR_LAUNCHABLE_GAME_RUNTIME_SPECS = Object.freeze({
     screen: 'geometry_quiz',
     engineId: 'shape-drawing-engine',
     rendererId: 'geometry_drawing_game',
-    stage: {
+    shell: {
       accent: 'violet',
       icon: '🔷',
       shellTestId: 'kangur-geometry-training-top-section',
@@ -201,10 +201,10 @@ export const KANGUR_LAUNCHABLE_GAME_RUNTIME_SPECS = Object.freeze({
     kind: 'launchable_game_screen',
     screen: 'geometry_shape_spotter_quiz',
     engineId: 'shape-recognition-engine',
-    rendererId: 'shape_recognition_stage_game',
+    rendererId: 'shape_recognition_game',
     finishMode: 'return_to_game_home',
     finishLabelProp: 'finishLabel',
-    stage: {
+    shell: {
       accent: 'emerald',
       icon: '🔷',
       shellTestId: 'kangur-geometry-shape-spotter-top-section',
@@ -217,7 +217,7 @@ export const KANGUR_LAUNCHABLE_GAME_RUNTIME_SPECS = Object.freeze({
     rendererId: 'clock_training_game',
     finishMode: 'return_to_game_home',
     finishLabelProp: 'completionPrimaryActionLabel',
-    stage: {
+    shell: {
       accent: 'indigo',
       icon: '🕐',
       shellTestId: 'kangur-clock-quiz-top-section',
@@ -231,7 +231,7 @@ export const KANGUR_LAUNCHABLE_GAME_RUNTIME_SPECS = Object.freeze({
     rendererId: 'adding_ball_game',
     finishMode: 'play_variant',
     finishLabelProp: 'finishLabelVariant',
-    stage: {
+    shell: {
       accent: 'amber',
       icon: '➕',
       shellTestId: 'kangur-addition-quiz-top-section',
@@ -244,7 +244,7 @@ export const KANGUR_LAUNCHABLE_GAME_RUNTIME_SPECS = Object.freeze({
     rendererId: 'adding_synthesis_game',
     finishMode: 'return_to_game_home',
     finishLabelProp: 'finishLabel',
-    stage: {
+    shell: {
       accent: 'amber',
       icon: '🎵',
       shellTestId: 'kangur-adding-synthesis-quiz-top-section',
@@ -257,7 +257,7 @@ export const KANGUR_LAUNCHABLE_GAME_RUNTIME_SPECS = Object.freeze({
     rendererId: 'subtracting_game',
     finishMode: 'play_variant',
     finishLabelProp: 'finishLabelVariant',
-    stage: {
+    shell: {
       accent: 'rose',
       icon: '➖',
       shellTestId: 'kangur-subtraction-quiz-top-section',
@@ -270,7 +270,7 @@ export const KANGUR_LAUNCHABLE_GAME_RUNTIME_SPECS = Object.freeze({
     rendererId: 'multiplication_game',
     finishMode: 'play_variant',
     finishLabelProp: 'finishLabelVariant',
-    stage: {
+    shell: {
       accent: 'violet',
       icon: '✖️',
       shellTestId: 'kangur-multiplication-quiz-top-section',
@@ -283,7 +283,7 @@ export const KANGUR_LAUNCHABLE_GAME_RUNTIME_SPECS = Object.freeze({
     rendererId: 'division_game',
     finishMode: 'play_variant',
     finishLabelProp: 'finishLabelVariant',
-    stage: {
+    shell: {
       accent: 'emerald',
       icon: '➗',
       shellTestId: 'kangur-division-quiz-top-section',
@@ -296,7 +296,7 @@ export const KANGUR_LAUNCHABLE_GAME_RUNTIME_SPECS = Object.freeze({
     rendererId: 'logical_patterns_workshop_game',
     finishMode: 'return_to_game_home',
     finishLabelProp: 'finishLabel',
-    stage: {
+    shell: {
       accent: 'violet',
       icon: '🔢',
       shellTestId: 'kangur-logical-patterns-quiz-top-section',
@@ -309,7 +309,7 @@ export const KANGUR_LAUNCHABLE_GAME_RUNTIME_SPECS = Object.freeze({
     rendererId: 'logical_classification_game',
     finishMode: 'return_to_game_home',
     finishLabelProp: 'finishLabel',
-    stage: {
+    shell: {
       accent: 'teal',
       icon: '📦',
       shellTestId: 'kangur-logical-classification-quiz-top-section',
@@ -322,7 +322,7 @@ export const KANGUR_LAUNCHABLE_GAME_RUNTIME_SPECS = Object.freeze({
     rendererId: 'logical_analogies_relation_game',
     finishMode: 'return_to_game_home',
     finishLabelProp: 'finishLabel',
-    stage: {
+    shell: {
       accent: 'rose',
       icon: '🔗',
       shellTestId: 'kangur-logical-analogies-quiz-top-section',
@@ -335,7 +335,7 @@ export const KANGUR_LAUNCHABLE_GAME_RUNTIME_SPECS = Object.freeze({
     rendererId: 'english_subject_verb_agreement_game',
     finishMode: 'return_to_game_home',
     finishLabelProp: 'finishLabel',
-    stage: {
+    shell: {
       accent: 'teal',
       icon: '⚖️',
       shellTestId: 'kangur-english-subject-verb-agreement-quiz-top-section',
@@ -348,7 +348,7 @@ export const KANGUR_LAUNCHABLE_GAME_RUNTIME_SPECS = Object.freeze({
     rendererId: 'english_adjectives_scene_game',
     finishMode: 'return_to_game_home',
     finishLabelProp: 'finishLabel',
-    stage: {
+    shell: {
       accent: 'indigo',
       icon: '🎨',
       shellTestId: 'kangur-english-adjectives-quiz-top-section',
@@ -361,7 +361,7 @@ export const KANGUR_LAUNCHABLE_GAME_RUNTIME_SPECS = Object.freeze({
     rendererId: 'english_adverbs_frequency_routine_game',
     finishMode: 'return_to_game_home',
     finishLabelProp: 'finishLabel',
-    stage: {
+    shell: {
       accent: 'sky',
       icon: '🔁',
       shellTestId: 'kangur-english-adverbs-frequency-quiz-top-section',
@@ -374,7 +374,7 @@ export const KANGUR_LAUNCHABLE_GAME_RUNTIME_SPECS = Object.freeze({
     rendererId: 'english_articles_drag_drop_game',
     finishMode: 'return_to_game_home',
     finishLabelProp: 'finishLabel',
-    stage: {
+    shell: {
       accent: 'amber',
       icon: '🧲',
       shellTestId: 'kangur-english-articles-quiz-top-section',
@@ -387,7 +387,7 @@ export const KANGUR_LAUNCHABLE_GAME_RUNTIME_SPECS = Object.freeze({
     rendererId: 'english_prepositions_game',
     finishMode: 'return_to_game_home',
     finishLabelProp: 'finishLabel',
-    stage: {
+    shell: {
       accent: 'rose',
       icon: '🧭',
       shellTestId: 'kangur-english-prepositions-quiz-top-section',
@@ -400,7 +400,7 @@ export const KANGUR_LAUNCHABLE_GAME_RUNTIME_SPECS = Object.freeze({
     rendererId: 'english_prepositions_sort_game',
     finishMode: 'return_to_game_home',
     finishLabelProp: 'finishLabel',
-    stage: {
+    shell: {
       accent: 'rose',
       icon: '🧲',
       shellTestId: 'kangur-english-prepositions-sort-quiz-top-section',
@@ -413,7 +413,7 @@ export const KANGUR_LAUNCHABLE_GAME_RUNTIME_SPECS = Object.freeze({
     rendererId: 'english_prepositions_order_game',
     finishMode: 'return_to_game_home',
     finishLabelProp: 'finishLabel',
-    stage: {
+    shell: {
       accent: 'rose',
       icon: '🧩',
       shellTestId: 'kangur-english-prepositions-order-quiz-top-section',
@@ -426,7 +426,7 @@ export const KANGUR_LAUNCHABLE_GAME_RUNTIME_SPECS = Object.freeze({
     rendererId: 'english_pronouns_warmup_game',
     finishMode: 'return_to_game_home',
     finishLabelProp: 'finishLabel',
-    stage: {
+    shell: {
       accent: 'sky',
       icon: '⚡',
       shellTestId: 'kangur-english-pronouns-warmup-quiz-top-section',
@@ -439,7 +439,7 @@ export const KANGUR_LAUNCHABLE_GAME_RUNTIME_SPECS = Object.freeze({
     rendererId: 'english_sentence_structure_game',
     finishMode: 'return_to_game_home',
     finishLabelProp: 'finishLabel',
-    stage: {
+    shell: {
       accent: 'violet',
       icon: '🧩',
       shellTestId: 'kangur-english-sentence-quiz-top-section',
@@ -452,7 +452,7 @@ export const KANGUR_LAUNCHABLE_GAME_RUNTIME_SPECS = Object.freeze({
     rendererId: 'english_parts_of_speech_game',
     finishMode: 'return_to_game_home',
     finishLabelProp: 'finishLabel',
-    stage: {
+    shell: {
       accent: 'sky',
       icon: '🎮',
       shellTestId: 'kangur-english-parts-of-speech-quiz-top-section',

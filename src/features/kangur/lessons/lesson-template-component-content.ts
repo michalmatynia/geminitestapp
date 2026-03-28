@@ -1,5 +1,8 @@
 import type { KangurLessonComponentId } from '@/features/kangur/shared/contracts/kangur';
 import {
+  SUBTRACTING_LESSON_COMPONENT_CONTENT as SUBTRACTING_LESSON_COMPONENT_CONTENT_SEED,
+} from '@/features/kangur/ui/components/subtracting-lesson-content';
+import {
   ADDING_LESSON_COMPONENT_CONTENT as ADDING_LESSON_COMPONENT_CONTENT_SEED,
 } from '@/features/kangur/ui/components/adding-lesson-content';
 import {
@@ -38,6 +41,7 @@ import {
   type KangurLogicalThinkingLessonTemplateContent,
   type KangurMultiplicationLessonTemplateContent,
   type KangurMusicDiatonicScaleLessonTemplateContent,
+  type KangurSubtractingLessonTemplateContent,
 } from '@/shared/contracts/kangur-lesson-templates';
 
 const cloneComponentContent = <T extends KangurLessonTemplateComponentContent | null>(
@@ -1180,6 +1184,8 @@ export const LOGICAL_THINKING_LESSON_COMPONENT_CONTENT: KangurLogicalThinkingLes
   LOGICAL_THINKING_LESSON_COMPONENT_CONTENT_SEED;
 export const ADDING_LESSON_COMPONENT_CONTENT: KangurAddingLessonTemplateContent =
   ADDING_LESSON_COMPONENT_CONTENT_SEED;
+export const SUBTRACTING_LESSON_COMPONENT_CONTENT: KangurSubtractingLessonTemplateContent =
+  SUBTRACTING_LESSON_COMPONENT_CONTENT_SEED;
 export const MULTIPLICATION_LESSON_COMPONENT_CONTENT: KangurMultiplicationLessonTemplateContent =
   MULTIPLICATION_LESSON_COMPONENT_CONTENT_SEED;
 export const DIVISION_LESSON_COMPONENT_CONTENT: KangurDivisionLessonTemplateContent =
@@ -1194,6 +1200,7 @@ const DEFAULT_COMPONENT_CONTENT_BY_ID: Partial<
   alphabet_sequence: ALPHABET_SEQUENCE_LESSON_COMPONENT_CONTENT,
   art_shapes_basic: ART_SHAPES_BASIC_LESSON_COMPONENT_CONTENT,
   adding: ADDING_LESSON_COMPONENT_CONTENT,
+  subtracting: SUBTRACTING_LESSON_COMPONENT_CONTENT,
   multiplication: MULTIPLICATION_LESSON_COMPONENT_CONTENT,
   division: DIVISION_LESSON_COMPONENT_CONTENT,
   geometry_basics: GEOMETRY_BASICS_LESSON_COMPONENT_CONTENT,

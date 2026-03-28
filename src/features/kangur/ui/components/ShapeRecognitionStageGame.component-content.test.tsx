@@ -20,10 +20,10 @@ vi.mock('@/features/kangur/ui/hooks/useKangurCoarsePointer', () => ({
   useKangurCoarsePointer: () => false,
 }));
 
-import ShapeRecognitionStageGame from './ShapeRecognitionStageGame';
+import ShapeRecognitionGame from './ShapeRecognitionStageGame';
 import { SHAPE_ROUNDS, type ShapeId } from './GeometryShapeRecognition.shared';
 
-describe('ShapeRecognitionStageGame', () => {
+describe('ShapeRecognitionGame', () => {
   it('prefers localized template component content over the static translation fallback', () => {
     const labels: Record<ShapeId, string> = {
       circle: 'DB circle',
@@ -116,7 +116,7 @@ describe('ShapeRecognitionStageGame', () => {
 
     render(
       <NextIntlClientProvider locale='pl' messages={plMessages}>
-        <ShapeRecognitionStageGame onFinish={vi.fn()} />
+        <ShapeRecognitionGame onFinish={vi.fn()} />
       </NextIntlClientProvider>,
     );
 

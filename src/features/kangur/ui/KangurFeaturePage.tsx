@@ -185,6 +185,26 @@ export function KangurFeaturePageShell({
           >
             {shellTranslations('contactLabel', { email: 'mmatynia@gmail.com' })}
           </a>
+          <span> · </span>
+          <span>{shellTranslations('supportLabel')}</span>
+          <span> </span>
+          <a
+            className='font-semibold [color:var(--kangur-page-text)] hover:underline'
+            href='https://buycoffe.to/studiq'
+            target='_blank'
+            rel='noopener noreferrer'
+          >
+            buycoffe.to/studiq
+          </a>
+          <span> · </span>
+          <a
+            className='font-semibold [color:var(--kangur-page-text)] hover:underline'
+            href='https://zrzutka.pl/b8ak55'
+            target='_blank'
+            rel='noopener noreferrer'
+          >
+            zrzutka.pl/b8ak55
+          </a>
         </footer>
       ) : null}
     </div>

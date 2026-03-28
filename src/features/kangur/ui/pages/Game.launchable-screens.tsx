@@ -18,20 +18,20 @@ const KangurConfigurableLaunchableGameScreen = ({
 }: {
   runtime: KangurLaunchableGameRuntimeSpec;
 }): React.JSX.Element => {
-  const backScreen = runtime.stage.backScreen as KangurGameScreen | undefined;
-  const stageProps = {
-    accent: runtime.stage.accent,
+  const backScreen = runtime.shell.backScreen as KangurGameScreen | undefined;
+  const shellProps = {
+    accent: runtime.shell.accent,
     backScreen,
-    description: runtime.stage.description,
-    icon: runtime.stage.icon,
+    description: runtime.shell.description,
+    icon: runtime.shell.icon,
     screen: runtime.screen,
-    shellTestId: runtime.stage.shellTestId,
-    title: runtime.stage.title,
+    shellTestId: runtime.shell.shellTestId,
+    title: runtime.shell.title,
   };
 
   return (
     renderKangurGameQuizStage({
-      ...stageProps,
+      ...shellProps,
       children: ({ handleHome }) => (
         <KangurLaunchableGameRuntime onFinish={handleHome} runtime={runtime} />
       ),

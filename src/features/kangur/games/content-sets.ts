@@ -47,7 +47,7 @@ export const getKangurGameContentSetsForGame = (
   }
 
   switch (runtime.rendererId) {
-    case 'alphabet_literacy_stage_game':
+    case 'alphabet_literacy_game':
       return [
         createDefaultContentSet(game, runtime, {
           label:

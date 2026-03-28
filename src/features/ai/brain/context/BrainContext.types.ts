@@ -1,8 +1,8 @@
-
 import type { AiPathRuntimeAnalyticsSummary, AnalyticsSummary } from '@/shared/contracts';
 import type { BrainOperationsRange } from '@/shared/contracts/ai-brain';
 import type { SystemLogMetrics } from '@/shared/contracts/observability';
 import type { SelectSimpleOption, SingleQuery } from '@/shared/contracts/ui';
+import type { BrainTab } from '@/shared/lib/ai-brain/context/BrainContext.types';
 import type {
   BrainModelsResponse,
   BrainOperationsOverviewResponse,
@@ -18,7 +18,7 @@ import type {
 } from '../settings';
 import type { Dispatch, SetStateAction } from 'react';
 
-export type BrainTab = 'operations' | 'routing' | 'providers' | 'reports' | 'metrics';
+export type { BrainTab };
 
 export interface BrainStateContextType {
   activeTab: BrainTab;

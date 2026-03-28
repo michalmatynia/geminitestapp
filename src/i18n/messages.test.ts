@@ -4,6 +4,9 @@ import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
 
 import { loadSiteMessages } from '@/i18n/messages';
+import {
+  KANGUR_LEGACY_LESSON_TITLE_KEYS,
+} from '@/shared/contracts/kangur-lesson-templates.shared';
 
 const rawEnglishMessages = JSON.parse(
   readFileSync(resolve(process.cwd(), 'src/i18n/messages/en.json'), 'utf8'),
@@ -26,12 +29,6 @@ const rawBundledLocaleMessages = [
   rawPolishMessages,
   rawGermanMessages,
   rawUkrainianMessages,
-] as const;
-
-const LEGACY_LESSON_TITLE_KEYS = [
-  'stageTitle',
-  'gameStageTitle',
-  'gameStageDescription',
 ] as const;
 
 function collectMissingKeys(source: unknown, target: unknown, path: string[] = []): string[] {
@@ -78,7 +75,7 @@ function collectKeysNamed(source: unknown, keyName: string, path: string[] = [])
 }
 
 function expectNoLegacyLessonTitleKeys(messages: unknown) {
-  for (const key of LEGACY_LESSON_TITLE_KEYS) {
+  for (const key of KANGUR_LEGACY_LESSON_TITLE_KEYS) {
     expect(collectKeysNamed(messages, key)).toEqual([]);
   }
 }

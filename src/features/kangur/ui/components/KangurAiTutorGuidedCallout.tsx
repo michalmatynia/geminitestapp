@@ -162,29 +162,30 @@ const resolveTutorGuidedFallback = (
   return value;
 };
 
-export function KangurAiTutorGuidedCallout({
-  avatarPlacement,
-  calloutKey,
-  calloutTestId,
-  detail,
-  entryDirection,
-  headerLabel,
-  mode,
-  onAction,
-  placement,
-  prefersReducedMotion,
-  reducedMotionTransitions,
-  sectionGuidanceLabel,
-  sectionResponsePendingKind,
-  shouldRender,
-  showSectionGuidanceCallout,
-  showSelectionGuidanceCallout,
-  stepLabel,
-  style,
-  title,
-  transitionDuration,
-  transitionEase,
-}: Props): JSX.Element {
+export function KangurAiTutorGuidedCallout(props: Props): JSX.Element {
+  const {
+    avatarPlacement,
+    calloutKey,
+    calloutTestId,
+    detail,
+    entryDirection,
+    headerLabel,
+    mode,
+    onAction,
+    placement,
+    prefersReducedMotion,
+    reducedMotionTransitions,
+    sectionGuidanceLabel,
+    sectionResponsePendingKind,
+    shouldRender,
+    showSectionGuidanceCallout,
+    showSelectionGuidanceCallout,
+    stepLabel,
+    style,
+    title,
+    transitionDuration,
+    transitionEase,
+  } = props;
   const tutorContent = useKangurAiTutorContent();
   const normalizedLocale = normalizeSiteLocale(tutorContent.locale);
   const fallbackCopy = useMemo(

@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-03-28T16:41:46.969Z",
+  "generatedAt": "2026-03-28T17:08:12.604Z",
   "status": "ok",
   "scanner": {
     "name": "scan-type-clusters",
@@ -16,203 +16,16 @@
     "minClusterSize": 2
   },
   "summary": {
-    "filesScanned": 8258,
-    "exportedDeclarationsScanned": 5466,
-    "candidateDeclarationsScanned": 5441,
+    "filesScanned": 8316,
+    "exportedDeclarationsScanned": 5505,
+    "candidateDeclarationsScanned": 5480,
     "exactShapeClusters": 0,
-    "nearShapeClusters": 5,
-    "clustersAfterFilters": 5,
-    "declarationsInClusters": 10,
-    "highestRiskScore": 13
+    "nearShapeClusters": 0,
+    "clustersAfterFilters": 0,
+    "declarationsInClusters": 0,
+    "highestRiskScore": 0
   },
-  "clusters": [
-    {
-      "clusterId": "near-0003",
-      "clusterKind": "near-shape",
-      "canonicalDtoCandidate": null,
-      "riskScore": 13,
-      "declarationCount": 2,
-      "domains": [
-        "feature:kangur"
-      ],
-      "signature": {
-        "shapeKind": "structural-members",
-        "normalizedShapeHash": "a13a4dffb61f",
-        "memberCount": 2,
-        "preview": "prop:pool:TToken[]; prop:slots:Record<TSlotId, TToken | null>"
-      },
-      "declarations": [
-        {
-          "name": "SlottedRoundStateDto",
-          "kind": "type",
-          "path": "src/features/kangur/ui/components/round-state-contracts.ts",
-          "line": 1,
-          "domain": "feature:kangur",
-          "usageCount": 3
-        },
-        {
-          "name": "MultiSlottedRoundStateDto",
-          "kind": "type",
-          "path": "src/features/kangur/ui/components/round-state-contracts.ts",
-          "line": 12,
-          "domain": "feature:kangur",
-          "usageCount": 2
-        }
-      ],
-      "notes": [
-        "Review semantics before consolidating structurally similar declarations into one DTO."
-      ]
-    },
-    {
-      "clusterId": "near-0005",
-      "clusterKind": "near-shape",
-      "canonicalDtoCandidate": null,
-      "riskScore": 13,
-      "declarationCount": 2,
-      "domains": [
-        "feature:kangur",
-        "shared"
-      ],
-      "signature": {
-        "shapeKind": "structural-members",
-        "normalizedShapeHash": "1cf197560be6",
-        "memberCount": 2,
-        "preview": "prop:kind:TKind; prop:text:string"
-      },
-      "declarations": [
-        {
-          "name": "Segment",
-          "kind": "type",
-          "path": "src/shared/utils/prompt-params/scanner.ts",
-          "line": 17,
-          "domain": "shared",
-          "usageCount": 3
-        },
-        {
-          "name": "KangurMiniGameFeedbackBaseDto",
-          "kind": "type",
-          "path": "src/features/kangur/ui/types.ts",
-          "line": 72,
-          "domain": "feature:kangur",
-          "usageCount": 0
-        }
-      ],
-      "notes": [
-        "Review semantics before consolidating structurally similar declarations into one DTO."
-      ]
-    },
-    {
-      "clusterId": "near-0004",
-      "clusterKind": "near-shape",
-      "canonicalDtoCandidate": null,
-      "riskScore": 11,
-      "declarationCount": 2,
-      "domains": [
-        "feature:kangur"
-      ],
-      "signature": {
-        "shapeKind": "structural-members",
-        "normalizedShapeHash": "93ab3db29385",
-        "memberCount": 2,
-        "preview": "prop:bins:Record<TBinId, TToken[]>; prop:pool:TToken[]"
-      },
-      "declarations": [
-        {
-          "name": "PartialBinnedRoundStateDto",
-          "kind": "type",
-          "path": "src/features/kangur/ui/components/round-state-contracts.ts",
-          "line": 22,
-          "domain": "feature:kangur",
-          "usageCount": 2
-        },
-        {
-          "name": "BinnedRoundStateDto",
-          "kind": "type",
-          "path": "src/features/kangur/ui/components/round-state-contracts.ts",
-          "line": 17,
-          "domain": "feature:kangur",
-          "usageCount": 1
-        }
-      ],
-      "notes": [
-        "Review semantics before consolidating structurally similar declarations into one DTO."
-      ]
-    },
-    {
-      "clusterId": "near-0002",
-      "clusterKind": "near-shape",
-      "canonicalDtoCandidate": null,
-      "riskScore": 10,
-      "declarationCount": 2,
-      "domains": [
-        "feature:kangur"
-      ],
-      "signature": {
-        "shapeKind": "structural-members",
-        "normalizedShapeHash": "f6972c388778",
-        "memberCount": 8,
-        "preview": "prop:avatar:{ ariaLabel: string; avatarAnchorKind: string; avatarButtonClassName: string; avatarButtonStyle: CSSProperties; avatarStyle: TutorMotionPosition; floatingAvatarPlacement: string; guidedArrowheadTransition?: string; guidedAvatarArrowhead: TutorGuidedArrowhead | null; guidedAvatarArrowheadDisplayAngle: number | null; guidedAvatarArrowheadDisplayAngleLabel?: string; guidedAvatarPlacement: string; guidedTargetKind: string; isAskModalMode: boolean; isGuidedTutorMode: boolean; isOpen: boolean; motionProfile: TutorMotionProfile; prefersReducedMotion: boolean; reducedMotionTransitions: TutorReducedMotionAvatarTransitions; rimColor: string; showFloatingAvatar: boolean; uiMode: string; }; prop:diagnostics:{ canonicalTutorModalVisible: boolean; contextualTutorMode: string | null; guidedMode: TutorGuidedMode; guestIntroShouldRender: boolean; isMinimalPanelMode: boolean; isOpen: boolean; panelShellMode: string; suppressPanelSurface: boolean; tutorSurfaceMode: string; }; prop:drawingPanel:{ shouldRender: boolean; style: CSSProperties | null; prefersReducedMotion: boolean; hint: string | undefined; }; prop:guestIntro:{ guestIntroDescription: string; guestIntroHeadline: string; guestTutorLabel: string; isAnonymousVisitor: boolean; panelStyle: CSSProperties; prefersReducedMotion: boolean; shouldRender: boolean; }; prop:guidedCallout:{ avatarPlacement: TutorEdgePlacement | null; calloutKey: string; calloutTestId: string; detail: string; entryDirection: TutorHorizontalSide; headerLabel: string; mode: TutorGuidedMode; placement: TutorEdgePlacement; prefersReducedMotion: boolean; reducedMotionTransitions: TutorReducedMotionStableTransitions; sectionGuidanceLabel: string | null; sectionResponsePendingKind: string | null; selectionPreview: string | null; shouldRender: boolean; showSectionGuidanceCallout: boolean; showSelectionGuidanceCallout: boolean; stepLabel: string | null; style: CSSProperties | null; title: string; transitionDuration: number; transitionEase: [number, number, number, number]; }; prop:panel:{ attachedAvatarStyle: CSSProperties; attachedLaunchOffset: { x: number; y: number; }; avatarAnchorKind: string; avatarAttachmentSide: TutorHorizontalSide; avatarButtonClassName: string; avatarPointer: TutorAvatarPointer | null; bubbleEntryDirection: TutorHorizontalSide; bubbleLaunchOrigin: 'dock-bottom-right' | 'sheet'; bubbleMode: 'bubble' | 'sheet'; bubbleStrategy: string; bubbleStyle: Record<string, number | string | undefined>; bubbleTailPlacement: 'bottom' | 'dock' | 'top'; bubbleWidth?: number; canDetachPanelFromContext: boolean; canMovePanelToContext: boolean; chromeVariant: TutorPanelChromeVariant; compactDockedTutorPanelWidth: number; isAskModalMode: boolean; isCompactDockedTutorPanel: boolean; isGuidedTutorMode: boolean; isMinimalPanelMode: boolean; isOpen: boolean; canResetPanelPosition: boolean; isPanelDraggable: boolean; isPanelDragging: boolean; isFollowingContext: boolean; isTutorHidden: boolean; minimalPanelStyle: CSSProperties; motionProfile: TutorMotionProfile; panelAvatarPlacement: string; panelBodyContextValue: KangurAiTutorPanelBodyContextValue; panelEmptyStateMessage: string; panelOpenAnimation: 'dock-launch' | 'fade' | 'sheet'; panelSnapState: TutorPanelSnapState | 'none'; panelTransition: Transition; pointerMarkerId: string; prefersReducedMotion: boolean; reducedMotionTransitions: TutorReducedMotionPanelTransitions; sessionSurfaceLabel: string | null; showAttachedAvatarShell: boolean; suppressPanelSurface: boolean; uiMode: string; }; prop:selectionAction:{ placement: TutorEdgePlacement; prefersReducedMotion: boolean; shouldRender: boolean; style: CSSProperties | null; }; prop:spotlights:{ guidedMode: TutorGuidedMode; prefersReducedMotion: boolean; reducedMotionTransitions: TutorReducedMotionStableTransitions; sectionContextSpotlightStyle: CSSProperties | null; sectionDropHighlightStyle: CSSProperties | null; selectionGlowStyles: CSSProperties[]; selectionContextSpotlightStyle: CSSProperties | null; selectionSpotlightStyle: CSSProperties | null; }"
-      },
-      "declarations": [
-        {
-          "name": "KangurAiTutorPortalContextValue",
-          "kind": "type",
-          "path": "src/features/kangur/ui/components/KangurAiTutorPortal.context.tsx",
-          "line": 219,
-          "domain": "feature:kangur",
-          "usageCount": 2
-        },
-        {
-          "name": "KangurAiTutorPortalStateContextValue",
-          "kind": "type",
-          "path": "src/features/kangur/ui/components/KangurAiTutorPortal.context.tsx",
-          "line": 32,
-          "domain": "feature:kangur",
-          "usageCount": 0
-        }
-      ],
-      "notes": [
-        "Review semantics before consolidating structurally similar declarations into one DTO."
-      ]
-    },
-    {
-      "clusterId": "near-0001",
-      "clusterKind": "near-shape",
-      "canonicalDtoCandidate": null,
-      "riskScore": 9,
-      "declarationCount": 2,
-      "domains": [
-        "feature:kangur"
-      ],
-      "signature": {
-        "shapeKind": "structural-members",
-        "normalizedShapeHash": "47f9b03eda02",
-        "memberCount": 2,
-        "preview": "prop:description?:string; prop:title?:string"
-      },
-      "declarations": [
-        {
-          "name": "LessonCopyOverride",
-          "kind": "type",
-          "path": "src/features/kangur/lessons/lesson-catalog-i18n.overrides.ts",
-          "line": 3,
-          "domain": "feature:kangur",
-          "usageCount": 1
-        },
-        {
-          "name": "KangurAssignmentManagerTimeLimitModalTarget",
-          "kind": "type",
-          "path": "src/features/kangur/ui/components/KangurAssignmentManagerTimeLimitModal.tsx",
-          "line": 21,
-          "domain": "feature:kangur",
-          "usageCount": 0
-        }
-      ],
-      "notes": [
-        "Review semantics before consolidating structurally similar declarations into one DTO."
-      ]
-    }
-  ],
+  "clusters": [],
   "notes": [
     "This is a scanner scaffold output. Risk and clustering heuristics are intentionally conservative.",
     "Use clusters as review candidates before moving declarations to canonical DTO modules."

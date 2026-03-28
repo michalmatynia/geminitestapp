@@ -2,12 +2,11 @@ import { renderHook } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const stopServerRunStreamFns = vi.hoisted((): Array<ReturnType<typeof vi.fn>> => []);
-const graphActionsMock = vi.hoisted(() => ({
-  setPathConfigs: vi.fn(),
-}));
-
-vi.mock('@/features/ai/ai-paths/context/RuntimeContext', () => ({
-  useRuntimeState: () => ({
+const { graphActionsMock, runtimeContextState } = vi.hoisted(() => ({
+  graphActionsMock: {
+    setPathConfigs: vi.fn(),
+  },
+  runtimeContextState: {
     runtimeState: {
       status: 'idle',
       nodeStatuses: {},
@@ -22,7 +21,11 @@ vi.mock('@/features/ai/ai-paths/context/RuntimeContext', () => ({
     parserSamples: {},
     updaterSamples: {},
     sendingToAi: false,
-  }),
+  },
+}));
+
+vi.mock('@/features/ai/ai-paths/context/RuntimeContext', () => ({
+  useRuntimeState: () => runtimeContextState,
   useRuntimeActions: () => ({
     setRuntimeState: vi.fn(),
     setLastRunAt: vi.fn(),

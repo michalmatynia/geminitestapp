@@ -185,16 +185,17 @@ describe('KangurTestSuitePlayer', () => {
     await userEvent.click(screen.getByRole('button', { name: /check answer/i }));
     await userEvent.click(screen.getByRole('button', { name: /finish/i }));
 
+    const expectedFinishedSessionContext = {
+      surface: 'test',
+      contentId: 'suite-2024',
+      title: 'Kangur 2024',
+      description: 'Wynik końcowy: 3/3 pkt (100%).',
+      questionProgressLabel: 'Ukończono 1/1',
+      answerRevealed: true,
+    };
     expect(useKangurAiTutorSessionSyncMock).toHaveBeenLastCalledWith({
       learnerId: null,
-      sessionContext: expect.objectContaining({
-        surface: 'test',
-        contentId: 'suite-2024',
-        title: 'Kangur 2024',
-        description: 'Wynik końcowy: 3/3 pkt (100%).',
-        questionProgressLabel: 'Ukończono 1/1',
-        answerRevealed: true,
-      }),
+      sessionContext: expect.objectContaining(expectedFinishedSessionContext),
     });
   });
 
@@ -203,19 +204,20 @@ describe('KangurTestSuitePlayer', () => {
 
     await userEvent.click(screen.getByRole('button', { name: /A.*4/i }));
 
+    const expectedSelectedChoiceSessionContext = {
+      surface: 'test',
+      contentId: 'suite-2024',
+      questionId: 'question-1',
+      selectedChoiceLabel: 'A',
+      selectedChoiceText: '4',
+      currentQuestion: 'Ile to jest 2 + 2?',
+      description: undefined,
+      questionProgressLabel: 'Pytanie 1/1',
+      answerRevealed: false,
+    };
     expect(useKangurAiTutorSessionSyncMock).toHaveBeenLastCalledWith({
       learnerId: null,
-      sessionContext: expect.objectContaining({
-        surface: 'test',
-        contentId: 'suite-2024',
-        questionId: 'question-1',
-        selectedChoiceLabel: 'A',
-        selectedChoiceText: '4',
-        currentQuestion: 'Ile to jest 2 + 2?',
-        description: undefined,
-        questionProgressLabel: 'Pytanie 1/1',
-        answerRevealed: false,
-      }),
+      sessionContext: expect.objectContaining(expectedSelectedChoiceSessionContext),
     });
   });
 

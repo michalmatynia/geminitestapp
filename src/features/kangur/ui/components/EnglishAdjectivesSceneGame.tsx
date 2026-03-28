@@ -28,7 +28,6 @@ import {
 } from '@/features/kangur/ui/design/primitives';
 import {
   KANGUR_PANEL_GAP_CLASSNAME,
-  type KangurAccent,
 } from '@/features/kangur/ui/design/tokens';
 import type {
   KangurMiniGameFinishProps,
@@ -39,16 +38,7 @@ import {
   TOTAL_ROUNDS,
   TOTAL_TARGETS,
   getRoundTranslation,
-  getTokenLabel,
   getObjectLabel,
-  buildAdjectiveObjectPhrase,
-  buildAdjectiveObjectSentence,
-  getAdjectiveFocusLabel,
-  getAdjectiveDescribePrompt,
-  buildAdjectiveObjectTemplate,
-  buildAdjectiveObjectSentenceTemplate,
-  slotDroppableId,
-  ADJECTIVE_TOKEN_META,
 } from './EnglishAdjectivesSceneGame.utils';
 import { useEnglishAdjectivesSceneGameState } from './EnglishAdjectivesSceneGame.hooks';
 import { DraggableAdjectiveToken } from './EnglishAdjectivesSceneGame.components';
@@ -68,14 +58,11 @@ export default function EnglishAdjectivesSceneGame({
     selectedTokenId,
     setSelectedTokenId,
     checked,
-    roundCorrect,
     totalCorrect,
-    feedback,
     done,
     xpEarned,
     xpBreakdown,
     round,
-    selectedToken,
     isRoundComplete,
     handleAssignToken,
     handleReturnToPool,
@@ -131,13 +118,12 @@ export default function EnglishAdjectivesSceneGame({
     );
   }
 
-  const feedbackAccent: KangurAccent = feedback?.kind === 'success' ? 'emerald' : 'rose';
-
   return (
     <KangurPracticeGameShell className='mx-auto max-w-4xl'>
       <KangurPracticeGameProgress
         accent={round.accent}
         currentRound={roundIndex}
+        dataTestId='english-adjectives-scene-progress-bar'
         totalRounds={TOTAL_ROUNDS}
       />
       <KangurDragDropContext onDragEnd={handleDragEnd}>

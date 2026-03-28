@@ -23,6 +23,17 @@ const mocks = vi.hoisted(() => ({
   },
 }));
 
+function getSlotsStateMock() {
+  return {
+    workingSlot: {
+      imageFile: {
+        width: mocks.runtime.workingSlotWidth,
+        height: mocks.runtime.workingSlotHeight,
+      },
+    },
+  };
+}
+
 vi.mock('@/features/ai/image-studio/context/ProjectsContext', () => ({
   useProjectsState: () => ({
     projectId: mocks.runtime.projectId,
@@ -47,14 +58,7 @@ vi.mock('@/features/ai/image-studio/context/ProjectsContext', () => ({
 }));
 
 vi.mock('@/features/ai/image-studio/context/SlotsContext', () => ({
-  useSlotsState: () => ({
-    workingSlot: {
-      imageFile: {
-        width: mocks.runtime.workingSlotWidth,
-        height: mocks.runtime.workingSlotHeight,
-      },
-    },
-  }),
+  useSlotsState: getSlotsStateMock,
 }));
 
 vi.mock('@/features/ai/image-studio/context/MaskingContext', () => ({

@@ -1,15 +1,15 @@
 {
-  "generatedAt": "2026-03-28T16:39:10.400Z",
+  "generatedAt": "2026-03-28T16:51:31.878Z",
   "source": {
-    "totalFiles": 8277,
-    "totalLines": 1379731,
-    "useClientFiles": 1719,
-    "filesOver800": 104,
-    "filesOver1000": 20,
+    "totalFiles": 8291,
+    "totalLines": 1382244,
+    "useClientFiles": 1724,
+    "filesOver800": 102,
+    "filesOver1000": 19,
     "filesOver1500": 0,
     "largestFile": {
-      "path": "src/features/filemaker/settings/campaign-summarizers.ts",
-      "lines": 1411
+      "path": "src/features/filemaker/pages/AdminFilemakerCampaignEditPage.sections.tsx",
+      "lines": 1256
     }
   },
   "api": {
@@ -132,8 +132,8 @@
     "featureSizeByLines": [
       {
         "feature": "kangur",
-        "files": 1995,
-        "lines": 425560
+        "files": 2003,
+        "lines": 427142
       },
       {
         "feature": "ai",
@@ -153,12 +153,12 @@
       {
         "feature": "cms",
         "files": 349,
-        "lines": 55502
+        "lines": 55501
       },
       {
         "feature": "integrations",
-        "files": 234,
-        "lines": 34449
+        "files": 229,
+        "lines": 34391
       },
       {
         "feature": "prompt-exploder",
@@ -167,8 +167,8 @@
       },
       {
         "feature": "filemaker",
-        "files": 85,
-        "lines": 23856
+        "files": 92,
+        "lines": 24786
       },
       {
         "feature": "notesapp",
@@ -183,7 +183,7 @@
       {
         "feature": "admin",
         "files": 46,
-        "lines": 8834
+        "lines": 8841
       },
       {
         "feature": "auth",
@@ -470,10 +470,6 @@
         "lines": 1664
       },
       {
-        "path": "src/features/filemaker/settings/campaign-summarizers.ts",
-        "lines": 1411
-      },
-      {
         "path": "src/features/filemaker/pages/AdminFilemakerCampaignEditPage.sections.tsx",
         "lines": 1256
       },
@@ -506,16 +502,8 @@
         "lines": 1128
       },
       {
-        "path": "src/features/kangur/ui/pages/Lessons.test.tsx",
-        "lines": 1124
-      },
-      {
         "path": "src/features/kangur/ui/components/NumberBalanceRushGame.tsx",
         "lines": 1119
-      },
-      {
-        "path": "src/features/kangur/ui/components/SubtractingLesson.tsx",
-        "lines": 1116
       },
       {
         "path": "src/features/filemaker/pages/AdminFilemakerCampaignRunPage.tsx",
@@ -562,6 +550,10 @@
         "lines": 1020
       },
       {
+        "path": "src/features/filemaker/settings/campaign-factories.ts",
+        "lines": 1012
+      },
+      {
         "path": "src/features/ai/ai-paths/components/__tests__/run-trace-utils.test.ts",
         "lines": 999
       },
@@ -572,6 +564,14 @@
       {
         "path": "src/features/products/hooks/useProductFormValidator.ts",
         "lines": 997
+      },
+      {
+        "path": "src/shared/contracts/cms.ts",
+        "lines": 994
+      },
+      {
+        "path": "src/features/kangur/lessons/lesson-catalog-i18n.overrides.ts",
+        "lines": 992
       }
     ],
     "topPagesByLines": [

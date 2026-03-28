@@ -49,59 +49,66 @@ type KangurStandardPageLayoutResolvedProps = {
   children: ReactNode;
 };
 
-const renderKangurStandardPageLayout = ({
-  embeddedOverride,
-  tone,
-  resolvedShellId,
-  resolvedSkipLinkTargetId,
-  skipLinkLabel,
-  resolvedShellClassName,
-  docsRootId,
-  docsTooltipsEnabled,
-  restShellProps,
-  beforeNavigation,
-  navigation,
-  afterNavigation,
-  resolvedContainerProps,
-  children,
-}: KangurStandardPageLayoutResolvedProps): React.JSX.Element => (
-  <KangurPageShell
-    embeddedOverride={embeddedOverride}
-    tone={tone}
-    id={resolvedShellId}
-    skipLinkTargetId={resolvedSkipLinkTargetId}
-    skipLinkLabel={skipLinkLabel}
-    className={resolvedShellClassName}
-    {...restShellProps}
-  >
-    {docsRootId ? (
-      <LazyKangurDocsTooltipEnhancer enabled={docsTooltipsEnabled} rootId={docsRootId} />
-    ) : null}
-    {beforeNavigation}
-    {navigation}
-    {afterNavigation}
-    <KangurPageContainer embeddedOverride={embeddedOverride} {...resolvedContainerProps}>
-      {children}
-    </KangurPageContainer>
-  </KangurPageShell>
-);
+const renderKangurStandardPageLayout = (
+  resolvedProps: KangurStandardPageLayoutResolvedProps
+): React.JSX.Element => {
+  const {
+    embeddedOverride,
+    tone,
+    resolvedShellId,
+    resolvedSkipLinkTargetId,
+    skipLinkLabel,
+    resolvedShellClassName,
+    docsRootId,
+    docsTooltipsEnabled,
+    restShellProps,
+    beforeNavigation,
+    navigation,
+    afterNavigation,
+    resolvedContainerProps,
+    children,
+  } = resolvedProps;
 
-export function KangurStandardPageLayout({
-  embeddedOverride,
-  tone = 'play',
-  id,
-  shellClassName,
-  skipLinkTargetId,
-  skipLinkLabel,
-  docsRootId,
-  docsTooltipsEnabled = true,
-  shellProps,
-  navigation,
-  beforeNavigation,
-  afterNavigation,
-  containerProps,
-  children,
-}: KangurStandardPageLayoutProps): React.JSX.Element {
+  return (
+    <KangurPageShell
+      embeddedOverride={embeddedOverride}
+      tone={tone}
+      id={resolvedShellId}
+      skipLinkTargetId={resolvedSkipLinkTargetId}
+      skipLinkLabel={skipLinkLabel}
+      className={resolvedShellClassName}
+      {...restShellProps}
+    >
+      {docsRootId ? (
+        <LazyKangurDocsTooltipEnhancer enabled={docsTooltipsEnabled} rootId={docsRootId} />
+      ) : null}
+      {beforeNavigation}
+      {navigation}
+      {afterNavigation}
+      <KangurPageContainer embeddedOverride={embeddedOverride} {...resolvedContainerProps}>
+        {children}
+      </KangurPageContainer>
+    </KangurPageShell>
+  );
+};
+
+export function KangurStandardPageLayout(props: KangurStandardPageLayoutProps): React.JSX.Element {
+  const {
+    embeddedOverride,
+    tone = 'play',
+    id,
+    shellClassName,
+    skipLinkTargetId,
+    skipLinkLabel,
+    docsRootId,
+    docsTooltipsEnabled = true,
+    shellProps,
+    navigation,
+    beforeNavigation,
+    afterNavigation,
+    containerProps,
+    children,
+  } = props;
   const { className: shellPropsClassName, id: shellPropsId, ...restShellProps } = shellProps ?? {};
   const resolvedContainerId =
     typeof containerProps?.id === 'string' && containerProps.id.trim().length > 0

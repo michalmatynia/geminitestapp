@@ -33,22 +33,23 @@ const TONE_CLASSES: Record<TreeRowTone, { base: string; selected: string; dragOv
   },
 };
 
-export function TreeRow({
-  asChild = false,
-  nodeId,
-  depth = 0,
-  baseIndent = 8,
-  indent = 16,
-  disableIndent = false,
-  tone = 'primary',
-  selected: propSelected,
-  dragOver = false,
-  selectedClassName,
-  dragOverClassName,
-  className,
-  style,
-  ...props
-}: TreeRowProps): React.JSX.Element {
+export function TreeRow(input: TreeRowProps): React.JSX.Element {
+  const {
+    asChild = false,
+    nodeId,
+    depth = 0,
+    baseIndent = 8,
+    indent = 16,
+    disableIndent = false,
+    tone = 'primary',
+    selected: propSelected,
+    dragOver = false,
+    selectedClassName,
+    dragOverClassName,
+    className,
+    style,
+    ...props
+  } = input;
   const { isSelected: contextSelected } = useTreeNodeState(nodeId);
   const selected = propSelected ?? contextSelected;
 

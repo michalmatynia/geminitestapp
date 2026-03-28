@@ -99,6 +99,9 @@ describe('kangur game variants', () => {
     const adjectivesEntry = entries.find(
       (candidate) => candidate.variant.id === 'english_adjectives_scene.lesson-stage'
     );
+    const adverbsActionEntry = entries.find(
+      (candidate) => candidate.variant.id === 'english_adverbs_action_studio.lesson-stage'
+    );
     const adverbsEntry = entries.find(
       (candidate) => candidate.variant.id === 'english_adverbs_frequency_routine.lesson-stage'
     );
@@ -120,6 +123,7 @@ describe('kangur game variants', () => {
 
     expect(subjectVerbEntry?.launchableRuntime).toBeNull();
     expect(adjectivesEntry?.launchableRuntime).toBeNull();
+    expect(adverbsActionEntry?.launchableRuntime).toBeNull();
     expect(adverbsEntry?.launchableRuntime).toBeNull();
     expect(articlesEntry?.launchableRuntime).toBeNull();
     expect(prepositionsEntry?.launchableRuntime).toBeNull();
@@ -135,6 +139,9 @@ describe('kangur game variants', () => {
     );
     const adjectivesEntry = entries.find(
       (candidate) => candidate.variant.id === 'english_adjectives_scene.game-screen'
+    );
+    const adverbsActionEntry = entries.find(
+      (candidate) => candidate.variant.id === 'english_adverbs_action_studio.game-screen'
     );
     const adverbsEntry = entries.find(
       (candidate) => candidate.variant.id === 'english_adverbs_frequency_routine.game-screen'
@@ -163,6 +170,11 @@ describe('kangur game variants', () => {
     expect(adjectivesEntry?.launchableRuntime).toMatchObject({
       screen: 'english_adjectives_quiz',
       rendererId: 'english_adjectives_scene_game',
+      engineId: 'sentence-builder-engine',
+    });
+    expect(adverbsActionEntry?.launchableRuntime).toMatchObject({
+      screen: 'english_adverbs_quiz',
+      rendererId: 'english_adverbs_action_game',
       engineId: 'sentence-builder-engine',
     });
     expect(adverbsEntry?.launchableRuntime).toMatchObject({
@@ -438,10 +450,11 @@ describe('kangur game variants', () => {
     expect(filtered.map((entry) => entry.variant.id)).toEqual([
       'english_subject_verb_agreement.game-screen',
       'english_adjectives_scene.game-screen',
+      'english_adverbs_action_studio.game-screen',
       'english_adverbs_frequency_routine.game-screen',
       'english_articles_drag_drop.game-screen',
-      'english_prepositions_time_place.game-screen',
       'english_prepositions_sort.game-screen',
+      'english_prepositions_time_place.game-screen',
       'english_prepositions_order.game-screen',
       'english_pronouns_warmup.game-screen',
       'english_sentence_builder.game-screen',

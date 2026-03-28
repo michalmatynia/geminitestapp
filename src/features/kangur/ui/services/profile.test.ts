@@ -41,6 +41,7 @@ const ENGLISH_PROFILE_MESSAGES = {
     calendar: 'Calendar',
     geometry: 'Geometry',
     english_adjectives: 'Adjectives',
+    english_adverbs: 'Adverbs',
     english_adverbs_frequency: 'Adverbs of frequency',
   },
   guidedMomentum: {
@@ -364,6 +365,45 @@ describe('buildKangurLearnerProfileSnapshot', () => {
         averageAccuracy: 75,
         totalXpEarned: 54,
         averageXpPerSession: 18,
+      }),
+    ]);
+  });
+
+  it('maps bare english adverb action-studio activity keys to the adverbs operation label', () => {
+    const snapshot = buildKangurLearnerProfileSnapshot({
+      progress: {
+        ...progress,
+        totalCorrectAnswers: 10,
+        totalQuestionsAnswered: 15,
+        activityStats: {
+          english_adverbs_action_studio: {
+            sessionsPlayed: 2,
+            perfectSessions: 1,
+            totalCorrectAnswers: 10,
+            totalQuestionsAnswered: 15,
+            totalXpEarned: 40,
+            bestScorePercent: 100,
+            lastScorePercent: 67,
+            currentStreak: 1,
+            bestStreak: 1,
+            lastPlayedAt: '2026-03-13T09:00:00.000Z',
+          },
+        },
+      },
+      scores: [],
+      dailyGoalGames: 3,
+      now: new Date('2026-03-13T15:00:00.000Z'),
+      locale: 'en',
+      translate: createProfileTranslator(ENGLISH_PROFILE_MESSAGES),
+    });
+
+    expect(snapshot.operationPerformance).toEqual([
+      expect.objectContaining({
+        operation: 'english_adverbs',
+        label: 'Adverbs',
+        averageAccuracy: 67,
+        totalXpEarned: 40,
+        averageXpPerSession: 20,
       }),
     ]);
   });

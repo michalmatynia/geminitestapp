@@ -12,6 +12,7 @@ import {
 
 const {
   disabledDocsTooltipsMock,
+  getDisabledDocsTooltipsMock,
   localeState,
   parsedSuitesState,
   publishedQuestionCountBySuiteState,
@@ -32,7 +33,10 @@ const {
   settingsStoreMock: {
     get: vi.fn(),
   },
+  getDisabledDocsTooltipsMock: vi.fn(),
 }));
+
+getDisabledDocsTooltipsMock.mockReturnValue(disabledDocsTooltipsMock);
 
 const splitClasses = (className: string): string[] => className.trim().split(/\s+/);
 
@@ -140,7 +144,7 @@ vi.mock('@/features/kangur/config/routing', () => ({
 }));
 
 vi.mock('@/features/kangur/docs/tooltips', () => ({
-  useKangurDocsTooltips: () => disabledDocsTooltipsMock,
+  useKangurDocsTooltips: getDisabledDocsTooltipsMock,
 }));
 
 vi.mock('@/features/kangur/ui/components/KangurStandardPageLayout', () => ({

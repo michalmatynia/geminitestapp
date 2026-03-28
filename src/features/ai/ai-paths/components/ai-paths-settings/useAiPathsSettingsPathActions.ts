@@ -74,19 +74,22 @@ export type UseAiPathsSettingsPathActionsReturn = {
   handleSwitchPath: (pathId: string) => void;
 };
 
-export function useAiPathsSettingsPathActions({
-  activePathId,
-  isPathLocked,
-  pathConfigs,
-  paths,
-  normalizeTriggerLabel,
-  persistPathSettings,
-  persistSettingsBulk,
-  persistActivePathPreference,
-  reportAiPathsError,
-  confirm,
-  toast,
-}: UseAiPathsSettingsPathActionsInput): UseAiPathsSettingsPathActionsReturn {
+export function useAiPathsSettingsPathActions(
+  input: UseAiPathsSettingsPathActionsInput
+): UseAiPathsSettingsPathActionsReturn {
+  const {
+    activePathId,
+    isPathLocked,
+    pathConfigs,
+    paths,
+    normalizeTriggerLabel,
+    persistPathSettings,
+    persistSettingsBulk,
+    persistActivePathPreference,
+    reportAiPathsError,
+    confirm,
+    toast,
+  } = input;
   const {
     setNodes,
     setEdges,

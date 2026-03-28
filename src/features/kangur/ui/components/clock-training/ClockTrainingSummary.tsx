@@ -42,20 +42,21 @@ export type ClockTrainingSummaryProps = {
   onRestart: () => void;
 };
 
-export function ClockTrainingSummary({
-  score,
-  tasksCount,
-  gameMode,
-  xpEarned,
-  xpBreakdown,
-  challengeMedal,
-  challengeBestStreak,
-  retryAddedCount,
-  section,
-  completionPrimaryActionLabel,
-  onFinish,
-  onRestart,
-}: ClockTrainingSummaryProps): React.JSX.Element {
+export function ClockTrainingSummary(props: ClockTrainingSummaryProps): React.JSX.Element {
+  const {
+    score,
+    tasksCount,
+    gameMode,
+    xpEarned,
+    xpBreakdown,
+    challengeMedal,
+    challengeBestStreak,
+    retryAddedCount,
+    section,
+    completionPrimaryActionLabel,
+    onFinish,
+    onRestart,
+  } = props;
   const translations = useTranslations('KangurMiniGames');
   const percent = Math.round((score / tasksCount) * 100);
   const summaryEmoji = score >= 4 ? '🏆' : score >= 2 ? '😊' : '💪';

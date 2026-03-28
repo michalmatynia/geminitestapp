@@ -102,6 +102,7 @@ const ENGLISH_OPERATION_LABELS: Record<string, KangurLeaderboardOperationLabel> 
   english_subject_verb_agreement: { label: 'Zgoda podmiotu', emoji: '🤝' },
   english_articles: { label: 'Przedimki', emoji: '📰' },
   english_adjectives: { label: 'Przymiotniki', emoji: '🎨' },
+  english_adverbs: { label: 'Przysłówki', emoji: '🎭' },
   english_adverbs_frequency: { label: 'Przysłówki częstotliwości', emoji: '🔁' },
   english_prepositions_time_place: { label: 'Przyimki czasu i miejsca', emoji: '🧭' },
 };
@@ -226,6 +227,7 @@ const TRANSLATED_OPERATION_IDS = new Set([
   'english_subject_verb_agreement',
   'english_articles',
   'english_adjectives',
+  'english_adverbs',
   'english_adverbs_frequency',
   'english_prepositions_time_place',
   'alphabet_basics',

@@ -49,9 +49,13 @@ vi.mock('@/shared/lib/front-page-app', () => ({
   getFrontPageRedirectPath: getFrontPageRedirectPathMock,
 }));
 
-vi.mock('@/features/kangur/public', () => ({
-  getKangurPublicAliasHref: () => '/kangur',
-}));
+vi.mock('@/features/kangur/public', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@/features/kangur/public')>();
+  return {
+    ...actual,
+    getKangurPublicAliasHref: () => '/kangur',
+  };
+});
 
 vi.mock('@/features/kangur/server/launch-route', () => ({
   getKangurConfiguredLaunchTarget: getKangurConfiguredLaunchTargetMock,

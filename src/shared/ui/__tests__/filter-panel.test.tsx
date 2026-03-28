@@ -8,10 +8,7 @@ vi.mock('@/shared/ui/templates/panels/PanelFilters', async () => {
   const ReactModule = await import('react');
   const PanelFiltersSearchPlaceholderRuntimeContext =
     ReactModule.createContext<string | undefined>(undefined);
-
-  return {
-  PanelFiltersSearchPlaceholderRuntimeContext,
-  PanelFilters: (props: {
+  type PanelFiltersMockProps = {
     actions?: React.ReactNode;
     activeValues?: Record<string, unknown>;
     collapsible?: boolean;
@@ -24,7 +21,9 @@ vi.mock('@/shared/ui/templates/panels/PanelFilters', async () => {
     search?: string;
     toggleButtonAlignment?: 'start' | 'end';
     values: Record<string, unknown>;
-  }) => {
+  };
+
+  function MockPanelFilters(props: PanelFiltersMockProps): React.JSX.Element {
     const {
       actions,
       activeValues,
@@ -40,6 +39,7 @@ vi.mock('@/shared/ui/templates/panels/PanelFilters', async () => {
       values,
     } = props;
     const placeholder = ReactModule.useContext(PanelFiltersSearchPlaceholderRuntimeContext);
+
     return (
       <div
         data-testid='panel-filters'
@@ -65,7 +65,11 @@ vi.mock('@/shared/ui/templates/panels/PanelFilters', async () => {
         {actions}
       </div>
     );
-  },
+  }
+
+  return {
+    PanelFiltersSearchPlaceholderRuntimeContext,
+    PanelFilters: MockPanelFilters,
   };
 });
 

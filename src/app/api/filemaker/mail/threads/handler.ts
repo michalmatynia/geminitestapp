@@ -8,11 +8,13 @@ export async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Pr
   await requireFilemakerMailAdminSession();
   const query = req.nextUrl.searchParams.get('query');
   const accountId = req.nextUrl.searchParams.get('accountId');
+  const mailboxPath = req.nextUrl.searchParams.get('mailboxPath');
+  const input = {
+    ...(query ? { query } : {}),
+    ...(accountId ? { accountId } : {}),
+    ...(mailboxPath ? { mailboxPath } : {}),
+  };
   return Response.json({
-    threads: await listFilemakerMailThreads({
-      query,
-      accountId,
-    }),
+    threads: await listFilemakerMailThreads(input),
   });
 }
-

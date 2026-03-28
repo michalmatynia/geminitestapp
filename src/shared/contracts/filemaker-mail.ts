@@ -100,6 +100,18 @@ export type FilemakerMailFolderSyncStateDto = z.infer<
 >;
 export type FilemakerMailFolderSyncState = FilemakerMailFolderSyncStateDto;
 
+export const filemakerMailFolderSummarySchema = z.object({
+  id: z.string(),
+  accountId: z.string(),
+  mailboxPath: z.string(),
+  mailboxRole: filemakerMailFolderRoleSchema.default('custom'),
+  threadCount: z.number().int().nonnegative().default(0),
+  unreadCount: z.number().int().nonnegative().default(0),
+  lastMessageAt: z.string().nullable().optional(),
+});
+export type FilemakerMailFolderSummaryDto = z.infer<typeof filemakerMailFolderSummarySchema>;
+export type FilemakerMailFolderSummary = FilemakerMailFolderSummaryDto;
+
 export const filemakerMailThreadSchema = dtoBaseSchema.extend({
   accountId: z.string(),
   mailboxPath: z.string(),
@@ -194,12 +206,12 @@ export const filemakerMailAccountDraftSchema = z.object({
   imapPort: z.number().int().positive(),
   imapSecure: z.boolean().default(true),
   imapUser: z.string().min(1),
-  imapPassword: z.string().min(1),
+  imapPassword: z.string(),
   smtpHost: z.string().min(1),
   smtpPort: z.number().int().positive(),
   smtpSecure: z.boolean().default(true),
   smtpUser: z.string().min(1),
-  smtpPassword: z.string().min(1),
+  smtpPassword: z.string(),
   fromName: z.string().nullable().optional(),
   replyToEmail: z.string().nullable().optional(),
   folderAllowlist: z.array(z.string()).default([]),

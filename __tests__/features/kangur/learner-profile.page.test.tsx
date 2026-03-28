@@ -22,6 +22,8 @@ const {
   checkAppStateMock,
   useKangurPageContentEntryMock,
   useKangurLearnerProfileRuntimeMock,
+  disabledDocsTooltipsMock,
+  getDisabledDocsTooltipsMock,
 } = vi.hoisted(() => ({
   useKangurRoutingMock: vi.fn(),
   useOptionalKangurRoutingMock: vi.fn(),
@@ -35,12 +37,14 @@ const {
   checkAppStateMock: vi.fn(),
   useKangurPageContentEntryMock: vi.fn(),
   useKangurLearnerProfileRuntimeMock: vi.fn(),
+  disabledDocsTooltipsMock: {
+    enabled: false,
+    helpSettings: {},
+  } as const,
+  getDisabledDocsTooltipsMock: vi.fn(),
 }));
 
-const disabledDocsTooltipsMock = {
-  enabled: false,
-  helpSettings: {},
-} as const;
+getDisabledDocsTooltipsMock.mockReturnValue(disabledDocsTooltipsMock);
 
 vi.mock('@/features/kangur/ui/context/KangurRoutingContext', () => ({
   useKangurRouting: () => ({ basePath: '/kangur' }),
@@ -67,7 +71,7 @@ vi.mock('@/features/kangur/ui/hooks/useKangurPageContent', () => ({
 
 vi.mock('@/features/kangur/docs/tooltips', () => ({
   KangurDocsTooltipEnhancer: () => null,
-  useKangurDocsTooltips: () => disabledDocsTooltipsMock,
+  useKangurDocsTooltips: getDisabledDocsTooltipsMock,
 }));
 
 vi.mock('@/features/kangur/ui/context/KangurAiTutorContext', () => ({

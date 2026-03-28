@@ -3,8 +3,7 @@ import {
   getKangurPortableLessonBody,
 } from '@kangur/core';
 import { Link, type Href, useLocalSearchParams, useRouter } from 'expo-router';
-import { Pressable, ScrollView, Text, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { Pressable, Text, View } from 'react-native';
 import { useEffect, useState } from 'react';
 
 import type { KangurAiTutorConversationContext } from '../../../../src/shared/contracts/kangur-ai-tutor';
@@ -44,61 +43,18 @@ import {
   getKangurMobileScoreAccuracyPercent,
 } from '../scores/mobileScoreSummary';
 import { createKangurResultsHref } from '../scores/resultsHref';
-
-type Tone = {
-  backgroundColor: string;
-  borderColor: string;
-  textColor: string;
-};
+import {
+  KangurMobileCard as Card,
+  KangurMobileLinkButton as LinkButton,
+  KangurMobilePill as Pill,
+  KangurMobileScrollScreen,
+  KangurMobileSkeletonBlock as SkeletonBlock,
+  type KangurMobileTone as Tone,
+} from '../shared/KangurMobileUi';
 
 const PROFILE_ROUTE = '/profile' as const;
 const PLAN_ROUTE = '/plan' as const;
 const RESULTS_ROUTE = createKangurResultsHref();
-
-function Card({
-  children,
-}: {
-  children: React.ReactNode;
-}): React.JSX.Element {
-  return (
-    <View
-      style={{
-        borderRadius: 24,
-        backgroundColor: '#ffffff',
-        padding: 18,
-        gap: 12,
-        shadowColor: '#0f172a',
-        shadowOpacity: 0.08,
-        shadowRadius: 18,
-        shadowOffset: { width: 0, height: 10 },
-        elevation: 3,
-      }}
-    >
-      {children}
-    </View>
-  );
-}
-
-function SkeletonBlock({
-  height,
-  width = '100%',
-  radius = 14,
-}: {
-  height: number;
-  width?: number | `${number}%`;
-  radius?: number;
-}): React.JSX.Element {
-  return (
-    <View
-      style={{
-        height,
-        width,
-        borderRadius: radius,
-        backgroundColor: '#e2e8f0',
-      }}
-    />
-  );
-}
 
 function LessonsLoadingDetailCard(): React.JSX.Element {
   const { copy } = useKangurMobileI18n();
@@ -204,30 +160,6 @@ function LessonsLoadingCatalogCard(): React.JSX.Element {
         ))}
       </View>
     </Card>
-  );
-}
-
-function Pill({
-  label,
-  tone,
-}: {
-  label: string;
-  tone: Tone;
-}): React.JSX.Element {
-  return (
-    <View
-      style={{
-        alignSelf: 'flex-start',
-        borderRadius: 999,
-        borderWidth: 1,
-        borderColor: tone.borderColor,
-        backgroundColor: tone.backgroundColor,
-        paddingHorizontal: 12,
-        paddingVertical: 7,
-      }}
-    >
-      <Text style={{ color: tone.textColor, fontSize: 12, fontWeight: '700' }}>{label}</Text>
-    </View>
   );
 }
 
@@ -961,38 +893,23 @@ export function KangurLessonsScreen(): React.JSX.Element {
       };
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: '#fffaf2' }}>
-      <ScrollView
-        contentContainerStyle={{
-          gap: 18,
-          paddingHorizontal: 20,
-          paddingVertical: 24,
-        }}
-      >
+    <KangurMobileScrollScreen
+      contentContainerStyle={{
+        gap: 18,
+        paddingHorizontal: 20,
+        paddingVertical: 24,
+      }}
+    >
         <View style={{ gap: 14 }}>
-          <Link href='/' asChild>
-            <Pressable
-              accessibilityRole='button'
-              style={{
-                alignSelf: 'stretch',
-                width: '100%',
-                borderRadius: 999,
-                backgroundColor: '#ffffff',
-                borderWidth: 1,
-                borderColor: '#e2e8f0',
-                paddingHorizontal: 14,
-                paddingVertical: 10,
-              }}
-            >
-              <Text style={{ color: '#0f172a', fontWeight: '700' }}>
-                {copy({
-                  de: 'Zurück',
-                  en: 'Back',
-                  pl: 'Wróć',
-                })}
-              </Text>
-            </Pressable>
-          </Link>
+          <LinkButton
+            href='/'
+            label={copy({
+              de: 'Zurück',
+              en: 'Back',
+              pl: 'Wróć',
+            })}
+            stretch
+          />
 
           <Card>
             <Text style={{ color: '#64748b', fontSize: 12, fontWeight: '700' }}>
@@ -2630,7 +2547,6 @@ export function KangurLessonsScreen(): React.JSX.Element {
             </Card>
           ) : null}
         </View>
-      </ScrollView>
-    </SafeAreaView>
+    </KangurMobileScrollScreen>
   );
 }

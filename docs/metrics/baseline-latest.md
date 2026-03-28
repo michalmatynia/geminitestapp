@@ -8,16 +8,16 @@ canonical: true
 ---
 # Architecture & Performance Baseline
 
-Generated at: 2026-03-28T16:39:10.400Z
+Generated at: 2026-03-28T16:51:31.878Z
 
 ## Snapshot
 
-- Source files: 8277
-- Source lines: 1379731
-- use client files: 1719
-- Files >= 1000 LOC: 20
+- Source files: 8291
+- Source lines: 1382244
+- use client files: 1724
+- Files >= 1000 LOC: 19
 - Files >= 1500 LOC: 0
-- Largest file: `src/features/filemaker/settings/campaign-summarizers.ts` (1411 LOC)
+- Largest file: `src/features/filemaker/pages/AdminFilemakerCampaignEditPage.sections.tsx` (1256 LOC)
 - API routes: 30
 - API delegated server routes: 170
 - API routes without apiHandler/delegation: 0
@@ -64,7 +64,6 @@ Generated at: 2026-03-28T16:39:10.400Z
 | `src/features/kangur/ui/components/music/useKangurMusicSynth.test.tsx` | 3348 |
 | `src/features/kangur/ui/components/KangurPrimaryNavigation.test.tsx` | 2426 |
 | `src/features/filemaker/__tests__/campaigns.test.ts` | 1664 |
-| `src/features/filemaker/settings/campaign-summarizers.ts` | 1411 |
 | `src/features/filemaker/pages/AdminFilemakerCampaignEditPage.sections.tsx` | 1256 |
 | `src/features/kangur/ui/components/KangurPrimaryNavigation.tsx` | 1140 |
 | `src/features/kangur/admin/components/KangurAiTutorContentSettingsPanel.tsx` | 1139 |
@@ -73,10 +72,11 @@ Generated at: 2026-03-28T16:39:10.400Z
 | `src/features/kangur/ui/components/KangurParentDashboardLearnerManagementWidget.tsx` | 1131 |
 | `src/features/products/pages/AdminProductOrdersImportPage.tsx` | 1130 |
 | `src/features/cms/components/frontend/CmsStorefrontAppearance.logic.ts` | 1128 |
-| `src/features/kangur/ui/pages/Lessons.test.tsx` | 1124 |
 | `src/features/kangur/ui/components/NumberBalanceRushGame.tsx` | 1119 |
-| `src/features/kangur/ui/components/SubtractingLesson.tsx` | 1116 |
 | `src/features/filemaker/pages/AdminFilemakerCampaignRunPage.tsx` | 1095 |
 | `src/features/kangur/ui/services/delegated-assignments.ts` | 1083 |
 | `src/features/filemaker/server/campaign-runtime.ts` | 1082 |
 | `src/features/filemaker/server/filemaker-mail-service.ts` | 1082 |
+| `src/app/api/kangur/ai-tutor/chat/handler.ts` | 1049 |
+| `src/features/kangur/ui/components/KangurParentDashboardAssignmentsMonitoringWidget.tsx` | 1045 |
+| `src/features/kangur/ui/components/music/useKangurMusicSynth.ts` | 1045 |

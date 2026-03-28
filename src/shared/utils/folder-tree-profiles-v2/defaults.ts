@@ -333,6 +333,49 @@ export const defaultFolderTreeProfilesV2: FolderTreeProfilesV2Map = {
       selectionBehavior: 'click_away',
     },
   },
+  filemaker_mail: {
+    version: 2,
+    placeholders: {
+      preset: 'sublime',
+      style: 'ghost',
+      emphasis: 'subtle',
+      rootDropLabel: 'Mail',
+      inlineDropLabel: 'Open',
+    },
+    icons: {
+      slots: {
+        folderClosed: 'Folder',
+        folderOpen: 'FolderOpen',
+        file: 'FileText',
+        root: 'Folder',
+        dragHandle: null,
+      },
+      byKind: {},
+    },
+    nesting: {
+      defaultAllow: false,
+      blockedTargetKinds: [],
+      rules: [
+        {
+          childType: 'folder',
+          childKinds: ['mail_account'],
+          targetType: 'root',
+          targetKinds: ['*'],
+          allow: true,
+        },
+        {
+          childType: 'folder',
+          childKinds: ['mail_folder'],
+          targetType: 'folder',
+          targetKinds: ['mail_account'],
+          allow: true,
+        },
+      ],
+    },
+    interactions: {
+      selectionBehavior: 'click_away',
+    },
+  },
   kangur_lessons_manager: {
     version: 2,
     placeholders: {

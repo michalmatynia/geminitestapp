@@ -27,6 +27,21 @@ import {
   KangurTextField,
 } from '@/features/kangur/ui/design/primitives';
 import {
+  asRecord,
+  formatDuration,
+  formatProgressTimestamp,
+  type InteractionFilter,
+  type InteractionView,
+  isLessonComponentId,
+  normalizePanelLabel,
+  parseDateFilterValue,
+  parsePanelIndex,
+  parseTimestamp,
+  parseTimestampStrict,
+  readNumber,
+  readString,
+} from '@/features/kangur/ui/components/KangurParentDashboardAssignmentsMonitoringWidget.utils';
+import {
   KANGUR_COMPACT_ROW_CLASSNAME,
   KANGUR_GRID_TIGHT_CLASSNAME,
   KANGUR_SEGMENTED_CONTROL_CLASSNAME,
@@ -40,7 +55,6 @@ import { useKangurPageContentEntry } from '@/features/kangur/ui/hooks/useKangurP
 import { ActivityTypes } from '@/shared/constants/observability';
 import { ErrorSystem } from '@/features/kangur/shared/utils/observability/error-system-client';
 import { withKangurClientError } from '@/features/kangur/observability/client';
-import type { KangurLessonComponentId } from '@/features/kangur/shared/contracts/kangur';
 
 
 const kangurPlatform = getKangurPlatform();
@@ -48,131 +62,6 @@ const INTERACTIONS_PAGE_LIMIT = 20;
 const INTERACTIONS_LOAD_DEFER_MS = 900;
 
 const DAY_MS = 24 * 60 * 60 * 1000;
-
-type InteractionFilter = 'all' | 'opened_task' | 'lesson_panel' | 'session';
-type InteractionView = {
-  description: string;
-  durationSeconds: number | null;
-  id: string;
-  kind: InteractionFilter | 'other';
-  label: string;
-  timestamp: string | null;
-  timestampMs: number | null;
-};
-
-const formatDuration = ({
-  seconds,
-  translate,
-}: {
-  seconds: number;
-  translate: (key: string, values?: Record<string, string | number>) => string;
-}): string => {
-  const normalized = Math.max(0, Math.round(seconds));
-  const minutes = Math.floor(normalized / 60);
-  const remainingSeconds = normalized % 60;
-  if (minutes === 0) {
-    return translate('widgets.monitoring.duration.seconds', {
-      seconds: remainingSeconds,
-    });
-  }
-  return translate('widgets.monitoring.duration.minutesSeconds', {
-    minutes,
-    seconds: `${remainingSeconds}`.padStart(2, '0'),
-  });
-};
-
-const formatProgressTimestamp = ({
-  value,
-  locale,
-  fallback,
-}: {
-  value: string | null | undefined;
-  locale: string;
-  fallback: string;
-}): string => {
-  if (!value) {
-    return fallback;
-  }
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) {
-    return fallback;
-  }
-  return new Intl.DateTimeFormat(locale, {
-    dateStyle: 'medium',
-    timeStyle: 'short',
-  }).format(date);
-};
-
-const normalizePanelLabel = (value: string | null | undefined, fallback: string): string => {
-  const trimmed = value?.trim();
-  if (trimmed) {
-    return trimmed;
-  }
-  return fallback.replace(/_/g, ' ').trim();
-};
-
-const parsePanelIndex = (panelId: string): number => {
-  const match = panelId.match(/\d+/u);
-  if (!match) {
-    return Number.MAX_SAFE_INTEGER;
-  }
-  const parsed = Number.parseInt(match[0], 10);
-  return Number.isNaN(parsed) ? Number.MAX_SAFE_INTEGER : parsed;
-};
-
-const parseTimestamp = (value: string | null | undefined): number => {
-  if (!value) {
-    return 0;
-  }
-  const parsed = Date.parse(value);
-  return Number.isNaN(parsed) ? 0 : parsed;
-};
-
-const parseTimestampStrict = (value: string | null | undefined): number | null => {
-  if (!value) {
-    return null;
-  }
-  const parsed = Date.parse(value);
-  return Number.isNaN(parsed) ? null : parsed;
-};
-
-const parseDateFilterValue = (value: string): number | null => {
-  if (!value) {
-    return null;
-  }
-  const parsed = new Date(`${value}T00:00:00`);
-  if (Number.isNaN(parsed.getTime())) {
-    return null;
-  }
-  return parsed.getTime();
-};
-
-const asRecord = (value: unknown): Record<string, unknown> | null => {
-  if (!value || typeof value !== 'object' || Array.isArray(value)) {
-    return null;
-  }
-  return value as Record<string, unknown>;
-};
-
-const readString = (value: unknown): string | null => {
-  if (typeof value !== 'string') {
-    return null;
-  }
-  const trimmed = value.trim();
-  return trimmed.length > 0 ? trimmed : null;
-};
-
-const readNumber = (value: unknown): number | null => {
-  if (typeof value !== 'number' || !Number.isFinite(value)) {
-    return null;
-  }
-  return value;
-};
-
-const isLessonComponentId = (
-  value: string,
-  lessonsMap: Map<KangurLessonComponentId, unknown>
-): value is KangurLessonComponentId => lessonsMap.has(value as KangurLessonComponentId);
 
 export function KangurParentDashboardAssignmentsMonitoringWidget({
   displayMode = 'always',

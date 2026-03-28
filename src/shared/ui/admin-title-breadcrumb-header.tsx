@@ -13,16 +13,19 @@ type AdminTitleBreadcrumbHeaderProps = {
   actionsClassName?: string;
 };
 
-export function AdminTitleBreadcrumbHeader({
-  title,
-  breadcrumb,
-  actions,
-  className,
-  titleStackClassName,
-  titleRowClassName,
-  breadcrumbClassName,
-  actionsClassName,
-}: AdminTitleBreadcrumbHeaderProps): React.JSX.Element {
+export function AdminTitleBreadcrumbHeader(
+  props: AdminTitleBreadcrumbHeaderProps
+): React.JSX.Element {
+  const {
+    title,
+    breadcrumb,
+    actions,
+    className,
+    titleStackClassName,
+    titleRowClassName,
+    breadcrumbClassName,
+    actionsClassName,
+  } = props;
   return (
     <div className={cn('flex flex-wrap items-start justify-between gap-3', className)}>
       <div className={cn('min-w-0 space-y-1', titleStackClassName)}>

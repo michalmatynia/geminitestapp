@@ -1,1 +1,1 @@
-export { RootProvidersClient } from '../components/RootProvidersClient';
+export { RootProvidersClient } from '@/shared/providers/RootProvidersClient';

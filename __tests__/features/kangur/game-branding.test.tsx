@@ -19,6 +19,8 @@ const {
   redirectToLoginMock,
   logoutMock,
   lessonsState,
+  disabledDocsTooltipsMock,
+  getDisabledDocsTooltipsMock,
 } = vi.hoisted(() => ({
   useKangurRoutingMock: vi.fn(),
   useKangurProgressStateMock: vi.fn(),
@@ -32,23 +34,25 @@ const {
   lessonsState: {
     value: [] as Array<Record<string, unknown>>,
   },
+  disabledDocsTooltipsMock: {
+    enabled: false,
+    helpSettings: {
+      version: 1,
+      docsTooltips: {
+        enabled: false,
+        homeEnabled: false,
+        lessonsEnabled: false,
+        testsEnabled: false,
+        profileEnabled: false,
+        parentDashboardEnabled: false,
+        adminEnabled: false,
+      },
+    },
+  } as const,
+  getDisabledDocsTooltipsMock: vi.fn(),
 }));
 
-const disabledDocsTooltipsMock = {
-  enabled: false,
-  helpSettings: {
-    version: 1,
-    docsTooltips: {
-      enabled: false,
-      homeEnabled: false,
-      lessonsEnabled: false,
-      testsEnabled: false,
-      profileEnabled: false,
-      parentDashboardEnabled: false,
-      adminEnabled: false,
-    },
-  },
-} as const;
+getDisabledDocsTooltipsMock.mockReturnValue(disabledDocsTooltipsMock);
 
 vi.mock('@/features/kangur/ui/context/KangurRoutingContext', () => ({
   useKangurRouting: useKangurRoutingMock,
@@ -119,7 +123,7 @@ vi.mock('@/features/kangur/ui/context/KangurSubjectFocusContext', () => ({
 
 vi.mock('@/features/kangur/docs/tooltips', () => ({
   KangurDocsTooltipEnhancer: () => null,
-  useKangurDocsTooltips: () => disabledDocsTooltipsMock,
+  useKangurDocsTooltips: getDisabledDocsTooltipsMock,
 }));
 
 vi.mock('@/features/kangur/services/kangur-platform', () => ({
@@ -213,6 +217,7 @@ const getFeaturedHomeAction = (label: string): HTMLElement => {
 describe('Game branding', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    getDisabledDocsTooltipsMock.mockReturnValue(disabledDocsTooltipsMock);
     Object.defineProperty(window, 'scrollTo', {
       configurable: true,
       value: vi.fn(),

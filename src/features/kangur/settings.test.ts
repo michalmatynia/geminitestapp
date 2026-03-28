@@ -81,6 +81,18 @@ describe('kangur lesson settings', () => {
     });
   });
 
+  it('includes English adverbs with grammar subsection references in the default library', () => {
+    const lessons = createDefaultKangurLessons();
+    const adverbs = lessons.find((lesson) => lesson.componentId === 'english_adverbs');
+
+    expect(adverbs).toMatchObject({
+      subject: 'english',
+      ageGroup: 'ten_year_old',
+      sectionId: 'english_grammar',
+      subsectionId: 'english_grammar_adverbs',
+    });
+  });
+
   it('includes English adverbs of frequency with grammar subsection references in the default library', () => {
     const lessons = createDefaultKangurLessons();
     const adverbs = lessons.find((lesson) => lesson.componentId === 'english_adverbs_frequency');
@@ -130,6 +142,7 @@ describe('kangur lesson settings', () => {
       'english_grammar_subject_verb_agreement',
       'english_grammar_articles',
       'english_grammar_adjectives',
+      'english_grammar_adverbs',
       'english_grammar_adverbs_frequency',
       'english_grammar_prepositions',
     ]);
@@ -137,6 +150,11 @@ describe('kangur lesson settings', () => {
       .toMatchObject({
         componentIds: ['english_adjectives'],
       });
+    expect(
+      grammarSection?.subsections.find((subsection) => subsection.id === 'english_grammar_adverbs')
+    ).toMatchObject({
+      componentIds: ['english_adverbs'],
+    });
     expect(
       grammarSection?.subsections.find(
         (subsection) => subsection.id === 'english_grammar_adverbs_frequency'

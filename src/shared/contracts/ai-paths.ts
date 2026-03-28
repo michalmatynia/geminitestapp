@@ -26,14 +26,6 @@ import {
   type AiPathRun,
   type AiPathRunStatus,
 } from './ai-paths-runtime';
-import type {
-  AiPathLocalRunRecord,
-  AiPathLocalRunStatus,
-  LastErrorInfo,
-  RuntimeControlHandlers,
-  RuntimeNodeConfigHandlers,
-  RuntimeRunStatus,
-} from './ai-paths-runtime-ui-types';
 import {
   AI_PATH_RUN_ENQUEUED_EVENT_NAME,
   AI_PATH_RUN_QUEUE_CHANNEL,

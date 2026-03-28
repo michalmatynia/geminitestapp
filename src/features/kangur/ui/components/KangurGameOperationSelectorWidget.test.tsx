@@ -5,7 +5,11 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import type { KangurProgressState } from '@/features/kangur/ui/types';
+import {
+  buildProgress,
+  buildRuntime,
+  operationSelectorTranslations,
+} from './KangurGameOperationSelectorWidget.test-support';
 
 const {
   getCurrentKangurDailyQuestMock,
@@ -42,44 +46,6 @@ const { translationState } = vi.hoisted(() => ({
     missing: false,
   },
 }));
-
-const operationSelectorTranslations = {
-  'KangurGameRecommendations.activityLabels.english_adverbs_frequency': {
-    de: 'Adverbien der Häufigkeit',
-    en: 'Adverbs of frequency',
-    pl: 'Przysłówki częstotliwości',
-  },
-  'KangurGameRecommendations.activityLabels.english_adjectives': {
-    de: 'Adjektive',
-    en: 'Adjectives',
-    pl: 'Przymiotniki',
-  },
-  'KangurGamePage.operationSelector.title': {
-    de: "Los geht's!",
-    en: "Let's play!",
-    pl: 'Grajmy!',
-  },
-  'KangurGamePage.screens.training.label': {
-    de: 'Training einrichten',
-    en: 'Training setup',
-    pl: 'Konfiguracja treningu',
-  },
-  'KangurGamePage.screens.training.wordmarkLabel': {
-    de: 'Training',
-    en: 'Training',
-    pl: 'Trening',
-  },
-  'KangurProgressRuntime.activityLabels.english_adjectives': {
-    de: 'Adjektive',
-    en: 'Adjectives',
-    pl: 'Przymiotniki',
-  },
-  'KangurProgressRuntime.activityLabels.english_adverbs_frequency': {
-    de: 'Adverbien der Häufigkeit',
-    en: 'Adverbs of frequency',
-    pl: 'Przysłówki częstotliwości',
-  },
-} as const;
 
 const lessonsState = vi.hoisted(() => ({
   value: [] as Array<Record<string, unknown>>,
@@ -167,60 +133,6 @@ vi.mock('@/features/kangur/ui/components/KangurPracticeAssignmentBanner', () => 
 }));
 
 import { KangurGameOperationSelectorWidget } from '@/features/kangur/ui/components/KangurGameOperationSelectorWidget';
-
-const buildProgress = (
-  overrides: Partial<KangurProgressState> = {}
-): KangurProgressState => ({
-  totalXp: 420,
-  gamesPlayed: 8,
-  perfectGames: 2,
-  lessonsCompleted: 3,
-  clockPerfect: 0,
-  calendarPerfect: 0,
-  geometryPerfect: 0,
-  badges: ['first_game'],
-  operationsPlayed: ['division', 'clock'],
-  lessonMastery: {
-    division: {
-      attempts: 3,
-      completions: 3,
-      masteryPercent: 88,
-      bestScorePercent: 94,
-      lastScorePercent: 90,
-      lastCompletedAt: '2026-03-10T09:00:00.000Z',
-    },
-  },
-  totalCorrectAnswers: 24,
-  totalQuestionsAnswered: 30,
-  currentWinStreak: 3,
-  bestWinStreak: 4,
-  dailyQuestsCompleted: 1,
-  activityStats: {
-    'game:clock': {
-      sessionsPlayed: 4,
-      perfectSessions: 1,
-      totalXpEarned: 180,
-      totalCorrectAnswers: 16,
-      totalQuestionsAnswered: 20,
-      bestScorePercent: 100,
-      currentStreak: 2,
-      bestStreak: 3,
-    },
-  },
-  ...overrides,
-});
-
-const buildRuntime = (progress: KangurProgressState, overrides: Record<string, unknown> = {}) => ({
-  activePracticeAssignment: null,
-  basePath: '/kangur',
-  handleHome: vi.fn(),
-  handleSelectOperation: vi.fn(),
-  practiceAssignmentsByOperation: {},
-  progress,
-  screen: 'operation',
-  setScreen: vi.fn(),
-  ...overrides,
-});
 
 describe('KangurGameOperationSelectorWidget', () => {
   beforeEach(() => {
@@ -874,6 +786,44 @@ describe('KangurGameOperationSelectorWidget', () => {
 
     expect(screen.getByTestId('kangur-operation-recommendation-description')).toHaveTextContent(
       'przymiotniki'
+    );
+  });
+
+  it('localizes bare adverb activity labels inside badge-track recommendations', () => {
+    const progress = buildProgress({
+      lessonMastery: {
+        division: {
+          attempts: 3,
+          completions: 3,
+          masteryPercent: 92,
+          bestScorePercent: 98,
+          lastScorePercent: 96,
+          lastCompletedAt: '2026-03-10T09:00:00.000Z',
+        },
+      },
+      totalCorrectAnswers: 19,
+      totalQuestionsAnswered: 20,
+      currentWinStreak: 4,
+      activityStats: {
+        english_adverbs_action_studio: {
+          sessionsPlayed: 4,
+          perfectSessions: 2,
+          totalXpEarned: 210,
+          totalCorrectAnswers: 19,
+          totalQuestionsAnswered: 20,
+          bestScorePercent: 100,
+          currentStreak: 3,
+          bestStreak: 4,
+        },
+      },
+    });
+    const runtime = buildRuntime(progress);
+    useKangurGameRuntimeMock.mockReturnValue(runtime);
+
+    render(<KangurGameOperationSelectorWidget />);
+
+    expect(screen.getByTestId('kangur-operation-recommendation-description')).toHaveTextContent(
+      'przysłówki'
     );
   });
 

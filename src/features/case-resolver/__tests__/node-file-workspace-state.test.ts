@@ -74,9 +74,12 @@ vi.mock('@/features/ai/public', () => ({
   useCanvasState: () => ({
     view: { x: 0, y: 0, scale: 1 },
   }),
-  useCanvasActions: () => ({
-    setView: setViewMock,
-  }),
+  useCanvasActions: () => {
+    const canvasActions = {
+      setView: setViewMock,
+    };
+    return canvasActions;
+  },
   useGraphState: () => ({
     nodes: graphNodes,
     edges: graphEdges,

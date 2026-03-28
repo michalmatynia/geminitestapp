@@ -1,11 +1,12 @@
-import type { KangurAssignmentSnapshot } from '@kangur/platform';
+'use client';
+
 import type {
   KangurAssignmentCreateInput,
-  KangurAssignmentUpdateInput,
+  KangurAssignmentSnapshot,
 } from '@kangur/platform';
-import type { KangurLesson } from '@/features/kangur/shared/contracts/kangur';
+import type { LessonRecordDto } from '@/features/kangur/lessons/lesson-template-component-content';
 
-export type KangurAssignmentManagerView =
+export type KangurAssignmentManagerViewMode =
   | 'full'
   | 'catalog'
   | 'catalogWithLists'
@@ -14,27 +15,16 @@ export type KangurAssignmentManagerView =
 
 export type KangurAssignmentManagerProps = {
   basePath: string;
-  preloadedCreateAssignment?: (
-    input: KangurAssignmentCreateInput
-  ) => Promise<KangurAssignmentSnapshot>;
+  preloadedCreateAssignment?: (input: KangurAssignmentCreateInput) => Promise<unknown>;
   preloadedAssignments?: KangurAssignmentSnapshot[];
   preloadedAssignmentsError?: string | null;
-  preloadedLessons?: KangurLesson[];
+  preloadedLessons?: LessonRecordDto[];
   preloadedLoading?: boolean;
-  preloadedReassignAssignment?: (id: string) => Promise<KangurAssignmentSnapshot>;
-  preloadedUpdateAssignment?: (
-    id: string,
-    input: KangurAssignmentUpdateInput
-  ) => Promise<KangurAssignmentSnapshot>;
-  view?: KangurAssignmentManagerView;
+  preloadedReassignAssignment?: (id: string) => Promise<unknown>;
+  preloadedUpdateAssignment?: (id: string, input: Partial<KangurAssignmentSnapshot>) => Promise<unknown>;
+  view?: KangurAssignmentManagerViewMode;
 };
 
 export type TimeLimitModalContext =
-  | {
-      mode: 'update';
-      assignmentId: string;
-    }
-  | {
-      mode: 'create';
-      catalogItemId: string;
-    };
+  | { mode: 'create'; catalogItemId: string }
+  | { mode: 'update'; assignmentId: string };

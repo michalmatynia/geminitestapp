@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 
+import { KANGUR_LEGACY_LESSON_SHELL_TITLE_KEY } from '@/shared/contracts/kangur-lesson-templates.shared';
 import type { LessonTranslate } from './lesson-copy';
 import { getLessonShellTitleKeys, translateLessonShellTitle } from './lesson-copy';
 
@@ -22,7 +23,7 @@ describe('translateLessonShellTitle', () => {
     expect(translateLessonShellTitle(translate, 'game', 'Fallback title')).toBe('Forward title');
   });
 
-  it('falls back to the legacy stageTitle key', () => {
+  it(`falls back to the legacy ${KANGUR_LEGACY_LESSON_SHELL_TITLE_KEY} key`, () => {
     const keys = getLessonShellTitleKeys('draw');
     const translate = createTranslate({
       [keys.legacy]: 'Legacy draw title',

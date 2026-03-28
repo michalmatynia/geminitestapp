@@ -17,7 +17,7 @@ export type EnglishAdverbActionId =
   | 'sing_song'
   | 'dance_show';
 
-export type EnglishAdverbsActionStudioAction = {
+type EnglishAdverbsActionStudioAction = {
   id: string;
   actionId: EnglishAdverbActionId;
   answer: EnglishAdverbId;

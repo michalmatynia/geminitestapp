@@ -23,6 +23,24 @@ const mocks = vi.hoisted(() => ({
   },
 }));
 
+function getSlotsStateMock() {
+  return {
+    workingSlot: {
+      id: 'slot-123',
+      width: 1024,
+      height: 1024,
+    },
+    selectedSlot: {
+      id: 'slot-123',
+    },
+    compositeAssetIds: ['composite-1'],
+    compositeAssetOptions: [
+      { value: 'composite-1', label: 'Composite 1' },
+      { value: 'composite-2', label: 'Composite 2' },
+    ],
+  };
+}
+
 vi.mock('@/shared/lib/vector-drawing', () => ({
   VectorDrawingProvider: ({ children }: { children: React.ReactNode }): React.JSX.Element => (
     <div>{children}</div>
@@ -146,21 +164,7 @@ vi.mock('@/features/ai/image-studio/context/ProjectsContext', () => ({
 }));
 
 vi.mock('@/features/ai/image-studio/context/SlotsContext', () => ({
-  useSlotsState: () => ({
-    workingSlot: {
-      id: 'slot-123',
-      width: 1024,
-      height: 1024,
-    },
-    selectedSlot: {
-      id: 'slot-123',
-    },
-    compositeAssetIds: ['composite-1'],
-    compositeAssetOptions: [
-      { value: 'composite-1', label: 'Composite 1' },
-      { value: 'composite-2', label: 'Composite 2' },
-    ],
-  }),
+  useSlotsState: getSlotsStateMock,
   useSlotsActions: () => ({
     setCompositeAssetIds: mocks.setCompositeAssetIds,
   }),

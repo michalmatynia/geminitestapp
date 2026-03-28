@@ -21,7 +21,12 @@ const topNavigationPropsMock = vi.hoisted(() => vi.fn());
 const routeReadyMock = vi.hoisted(() => vi.fn());
 const aiTutorSessionSyncMock = vi.hoisted(() => vi.fn());
 const tutorAnchorMock = vi.hoisted(() => vi.fn());
-const disabledDocsTooltipsMock = vi.hoisted(() => ({ enabled: false }));
+const { disabledDocsTooltipsMock, getDisabledDocsTooltipsMock } = vi.hoisted(() => ({
+  disabledDocsTooltipsMock: { enabled: false },
+  getDisabledDocsTooltipsMock: vi.fn(),
+}));
+
+getDisabledDocsTooltipsMock.mockReturnValue(disabledDocsTooltipsMock);
 const authState = vi.hoisted(() => ({
   value: {
     hasResolvedAuth: true,
@@ -51,7 +56,7 @@ vi.mock('next-intl', () => ({
 }));
 
 vi.mock('@/features/kangur/docs/tooltips', () => ({
-  useKangurDocsTooltips: () => disabledDocsTooltipsMock,
+  useKangurDocsTooltips: getDisabledDocsTooltipsMock,
 }));
 
 vi.mock('@/features/kangur/ui/context/KangurAiTutorContext', () => ({

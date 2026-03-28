@@ -12,6 +12,7 @@ const {
   pageBuilderStateRef,
   dragStateRef,
   expandedIdsRef,
+  componentTreePanelState,
 } = vi.hoisted(() => ({
   moveSectionByMasterMock: vi.fn(async () => true),
   endSectionDragMock: vi.fn(),
@@ -34,10 +35,7 @@ const {
   expandedIdsRef: {
     current: new Set<string>(),
   },
-}));
-
-vi.mock('@/features/cms/components/page-builder/tree/ComponentTreePanelContext', () => ({
-  useComponentTreePanelState: () => ({
+  componentTreePanelState: {
     draggedMasterSectionId: null,
     currentPage: { id: 'page-1' },
     clipboard: null,
@@ -55,7 +53,11 @@ vi.mock('@/features/cms/components/page-builder/tree/ComponentTreePanelContext',
     },
     treeInlineDropLabel: 'Drop here',
     treeRootDropLabel: 'Drop section',
-  }),
+  },
+}));
+
+vi.mock('@/features/cms/components/page-builder/tree/ComponentTreePanelContext', () => ({
+  useComponentTreePanelState: () => componentTreePanelState,
   useComponentTreePanelActions: () => ({
     startSectionMasterDrag: vi.fn(),
     endSectionMasterDrag: vi.fn(),

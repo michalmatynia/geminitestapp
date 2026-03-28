@@ -78,11 +78,8 @@ const translateQuestionCard = (
     values
   );
 
-function AnalogClockSmall({
-  hours,
-  minutes,
-  ariaLabel,
-}: AnalogClockSmallProps): React.JSX.Element {
+function AnalogClockSmall(props: AnalogClockSmallProps): React.JSX.Element {
+  const { hours, minutes, ariaLabel } = props;
   const hourAngle = ((hours % 12) + minutes / 60) * 30;
   const minuteAngle = minutes * 6;
 
@@ -156,16 +153,17 @@ function AnalogClockSmall({
   );
 }
 
-export default function QuestionCard({
-  question,
-  onAnswer,
-  onAnswerChoice,
-  questionNumber,
-  total,
-  timeLimit,
-  answerMode = 'client',
-  serverResult = null,
-}: QuestionCardProps): React.JSX.Element {
+export default function QuestionCard(props: QuestionCardProps): React.JSX.Element {
+  const {
+    question,
+    onAnswer,
+    onAnswerChoice,
+    questionNumber,
+    total,
+    timeLimit,
+    answerMode = 'client',
+    serverResult = null,
+  } = props;
   const translations = useTranslations('KangurMiniGames');
   const isCoarsePointer = useKangurCoarsePointer();
   const questionHeadingId = useId();

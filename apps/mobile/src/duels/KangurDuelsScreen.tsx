@@ -13,8 +13,7 @@ import type {
 } from '@kangur/contracts';
 import { Link, type Href, useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
-import { Pressable, ScrollView, Text, TextInput, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { Pressable, Text, TextInput, View } from 'react-native';
 
 import { useKangurMobileAuth } from '../auth/KangurMobileAuthContext';
 import {
@@ -27,6 +26,16 @@ import {
   type KangurMobileLessonCheckpointItem,
 } from '../lessons/useKangurMobileLessonCheckpoints';
 import { formatKangurMobileScoreDateTime } from '../scores/mobileScoreSummary';
+import {
+  KangurMobileActionButton,
+  KangurMobileCard,
+  KangurMobileFilterChip,
+  KangurMobileLinkButton,
+  KangurMobilePill,
+  KangurMobileScrollScreen,
+  KangurMobileSectionTitle,
+  type KangurMobileTone as Tone,
+} from '../shared/KangurMobileUi';
 import { translateKangurMobileActionLabel } from '../shared/translateKangurMobileActionLabel';
 import { shareKangurDuelInvite } from './duelInviteShare';
 import { createKangurDuelsHref } from './duelsHref';
@@ -45,12 +54,6 @@ import {
 import { useKangurMobileDuelLobbyChat } from './useKangurMobileDuelLobbyChat';
 import { useKangurMobileDuelSession } from './useKangurMobileDuelSession';
 import { useKangurMobileDuelsLobby } from './useKangurMobileDuelsLobby';
-
-type Tone = {
-  backgroundColor: string;
-  borderColor: string;
-  textColor: string;
-};
 
 const HOME_ROUTE = '/' as Href;
 const LESSONS_ROUTE = '/lessons' as Href;
@@ -306,23 +309,7 @@ function Card({
 }: {
   children: React.ReactNode;
 }): React.JSX.Element {
-  return (
-    <View
-      style={{
-        borderRadius: 24,
-        backgroundColor: '#ffffff',
-        padding: 18,
-        gap: 12,
-        shadowColor: '#0f172a',
-        shadowOpacity: 0.08,
-        shadowRadius: 18,
-        shadowOffset: { width: 0, height: 10 },
-        elevation: 3,
-      }}
-    >
-      {children}
-    </View>
-  );
+  return <KangurMobileCard>{children}</KangurMobileCard>;
 }
 
 function SectionTitle({
@@ -332,16 +319,7 @@ function SectionTitle({
   subtitle: string;
   title: string;
 }): React.JSX.Element {
-  return (
-    <View style={{ gap: 6 }}>
-      <Text style={{ fontSize: 28, fontWeight: '800', color: '#0f172a' }}>
-        {title}
-      </Text>
-      <Text style={{ color: '#475569', fontSize: 15, lineHeight: 22 }}>
-        {subtitle}
-      </Text>
-    </View>
-  );
+  return <KangurMobileSectionTitle subtitle={subtitle} title={title} />;
 }
 
 function Pill({
@@ -351,23 +329,7 @@ function Pill({
   label: string;
   tone: Tone;
 }): React.JSX.Element {
-  return (
-    <View
-      style={{
-        alignSelf: 'flex-start',
-        borderRadius: 999,
-        borderWidth: 1,
-        borderColor: tone.borderColor,
-        backgroundColor: tone.backgroundColor,
-        paddingHorizontal: 12,
-        paddingVertical: 7,
-      }}
-    >
-      <Text style={{ color: tone.textColor, fontSize: 12, fontWeight: '700' }}>
-        {label}
-      </Text>
-    </View>
-  );
+  return <KangurMobilePill label={label} tone={tone} />;
 }
 
 function ActionButton({
@@ -383,38 +345,16 @@ function ActionButton({
   stretch?: boolean;
   tone?: 'primary' | 'secondary' | 'ghost';
 }): React.JSX.Element {
-  const isPrimary = tone === 'primary';
-  const isGhost = tone === 'ghost';
-
   return (
-    <Pressable
-      accessibilityRole='button'
+    <KangurMobileActionButton
       disabled={disabled}
-      onPress={() => {
-        void onPress();
-      }}
-      style={{
-        alignSelf: stretch ? 'stretch' : 'flex-start',
-        width: stretch ? '100%' : undefined,
-        opacity: disabled ? 0.55 : 1,
-        borderRadius: 999,
-        borderWidth: isPrimary ? 0 : 1,
-        borderColor: isGhost ? '#e2e8f0' : isPrimary ? 'transparent' : '#cbd5e1',
-        backgroundColor: isPrimary ? '#0f172a' : '#ffffff',
-        paddingHorizontal: 14,
-        paddingVertical: 12,
-      }}
-    >
-      <Text
-        style={{
-          color: isPrimary ? '#ffffff' : '#0f172a',
-          fontWeight: '700',
-          textAlign: 'center',
-        }}
-      >
-        {label}
-      </Text>
-    </Pressable>
+      label={label}
+      onPress={onPress}
+      stretch={stretch}
+      textStyle={{ textAlign: 'center' }}
+      tone={tone}
+      verticalPadding={12}
+    />
   );
 }
 
@@ -429,34 +369,15 @@ function LinkButton({
   stretch?: boolean;
   tone?: 'primary' | 'secondary';
 }): React.JSX.Element {
-  const isPrimary = tone === 'primary';
-
   return (
-    <Link href={href} asChild>
-      <Pressable
-        accessibilityRole='button'
-        style={{
-          alignSelf: stretch ? 'stretch' : 'flex-start',
-          width: stretch ? '100%' : undefined,
-          borderRadius: 999,
-          borderWidth: isPrimary ? 0 : 1,
-          borderColor: isPrimary ? 'transparent' : '#cbd5e1',
-          backgroundColor: isPrimary ? '#0f172a' : '#ffffff',
-          paddingHorizontal: 14,
-          paddingVertical: 12,
-        }}
-      >
-        <Text
-          style={{
-            color: isPrimary ? '#ffffff' : '#0f172a',
-            fontWeight: '700',
-            textAlign: 'center',
-          }}
-        >
-          {label}
-        </Text>
-      </Pressable>
-    </Link>
+    <KangurMobileLinkButton
+      href={href}
+      label={label}
+      stretch={stretch}
+      textStyle={{ textAlign: 'center' }}
+      tone={tone}
+      verticalPadding={12}
+    />
   );
 }
 
@@ -490,31 +411,12 @@ function FilterChip({
   fullWidth?: boolean;
 }): React.JSX.Element {
   return (
-    <Pressable
-      accessibilityRole='button'
+    <KangurMobileFilterChip
+      fullWidth={fullWidth}
+      label={label}
       onPress={onPress}
-      style={{
-        borderRadius: 999,
-        borderWidth: 1,
-        borderColor: selected ? '#1d4ed8' : '#cbd5e1',
-        backgroundColor: selected ? '#dbeafe' : '#ffffff',
-        paddingHorizontal: 14,
-        paddingVertical: 10,
-        alignSelf: fullWidth ? 'stretch' : 'flex-start',
-        width: fullWidth ? '100%' : undefined,
-      }}
-    >
-      <Text
-        style={{
-          color: selected ? '#1d4ed8' : '#334155',
-          fontSize: 13,
-          fontWeight: '700',
-          textAlign: fullWidth ? 'center' : 'left',
-        }}
-      >
-        {label}
-      </Text>
-    </Pressable>
+      selected={selected}
+    />
   );
 }
 
@@ -2284,14 +2186,13 @@ export function KangurDuelsScreen(): React.JSX.Element {
 
   if (joinSessionId && !routeSessionId && !isSpectatingRoute) {
     return (
-      <SafeAreaView style={{ flex: 1, backgroundColor: '#fffaf2' }}>
-        <ScrollView
-          contentContainerStyle={{
-            gap: 18,
-            paddingHorizontal: 20,
-            paddingVertical: 24,
-          }}
-        >
+      <KangurMobileScrollScreen
+        contentContainerStyle={{
+          gap: 18,
+          paddingHorizontal: 20,
+          paddingVertical: 24,
+        }}
+      >
           <View style={{ gap: 14 }}>
             <ActionButton
               label={copy({
@@ -2410,21 +2311,19 @@ export function KangurDuelsScreen(): React.JSX.Element {
               />
             </Card>
           )}
-        </ScrollView>
-      </SafeAreaView>
+      </KangurMobileScrollScreen>
     );
   }
 
   if (sessionId) {
     return (
-      <SafeAreaView style={{ flex: 1, backgroundColor: '#fffaf2' }}>
-        <ScrollView
-          contentContainerStyle={{
-            gap: 18,
-            paddingHorizontal: 20,
-            paddingVertical: 24,
-          }}
-        >
+      <KangurMobileScrollScreen
+        contentContainerStyle={{
+          gap: 18,
+          paddingHorizontal: 20,
+          paddingVertical: 24,
+        }}
+      >
           <View style={{ gap: 14 }}>
             <ActionButton
               label={copy({
@@ -3204,21 +3103,19 @@ export function KangurDuelsScreen(): React.JSX.Element {
               <NextStepsCard context='session' />
             </>
           )}
-        </ScrollView>
-      </SafeAreaView>
+      </KangurMobileScrollScreen>
     );
   }
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: '#fffaf2' }}>
-      <ScrollView
-        keyboardShouldPersistTaps='handled'
-        contentContainerStyle={{
-          gap: 18,
-          paddingHorizontal: 20,
-          paddingVertical: 24,
-        }}
-      >
+    <KangurMobileScrollScreen
+      contentContainerStyle={{
+        gap: 18,
+        paddingHorizontal: 20,
+        paddingVertical: 24,
+      }}
+      keyboardShouldPersistTaps='handled'
+    >
         <View style={{ gap: 14 }}>
           <LinkButton
             href={HOME_ROUTE}
@@ -4226,7 +4123,6 @@ export function KangurDuelsScreen(): React.JSX.Element {
         <LessonMasteryCard context='lobby' />
         <BadgesCard context='lobby' />
         <NextStepsCard context='lobby' />
-      </ScrollView>
-    </SafeAreaView>
+    </KangurMobileScrollScreen>
   );
 }

@@ -135,6 +135,44 @@ vi.mock('@/shared/providers/SettingsStoreProvider', () => ({
   }),
 }));
 
+vi.mock('@/features/kangur/shared/providers/SettingsStoreProvider', () => ({
+  useSettingsStore: () => ({
+    get: settingsStoreGetMock,
+  }),
+}));
+
+vi.mock('@/features/kangur/ui/KangurStorefrontAppearanceProvider', () => ({
+  useKangurStorefrontAppearanceHydrated: () => false,
+  useKangurStorefrontInitialThemeSettings: () => ({
+    default: null,
+    dawn: null,
+    sunset: null,
+    dark: null,
+  }),
+}));
+
+vi.mock('@/features/cms/public', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@/features/cms/public')>();
+  return {
+    ...actual,
+    useOptionalCmsStorefrontAppearance: () => null,
+    resolveKangurStorefrontAppearance:
+      actual.resolveKangurStorefrontAppearance ??
+      (() => ({
+        vars: {},
+        background: 'transparent',
+        foreground: '#ffffff',
+        isAppearanceAvailable: false,
+      })),
+  };
+});
+
+vi.mock('@/features/kangur/ui/components/KangurTopNavigationController', () => ({
+  KangurTopNavigationController: ({ navigation }: { navigation: unknown }) => (
+    <div data-testid='mock-lessons-focus-top-nav'>{JSON.stringify(Boolean(navigation))}</div>
+  ),
+}));
+
 vi.mock('@/features/kangur/ui/hooks/useKangurProgressState', () => ({
   useKangurProgressState: useKangurProgressStateMock,
 }));

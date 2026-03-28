@@ -13,17 +13,18 @@ export type KangurEmptyStateProps = React.HTMLAttributes<HTMLDivElement> &
     title?: React.ReactNode;
   };
 
-export function KangurEmptyState({
-  accent = 'slate',
-  align = 'center',
-  children,
-  className,
-  description,
-  icon,
-  padding = 'lg',
-  title,
-  ...props
-}: KangurEmptyStateProps): React.JSX.Element {
+export function KangurEmptyState(input: KangurEmptyStateProps): React.JSX.Element {
+  const {
+    accent = 'slate',
+    align = 'center',
+    children,
+    className,
+    description,
+    icon,
+    padding = 'lg',
+    title,
+    ...props
+  } = input;
   const centered = align === 'center';
   const emptyStateAccent = accent;
   const emptyStateClassName = className;

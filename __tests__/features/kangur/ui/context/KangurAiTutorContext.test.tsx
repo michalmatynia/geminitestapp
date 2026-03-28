@@ -560,20 +560,21 @@ describe('KangurAiTutorContext', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Send' }));
 
     await waitFor(() => expect(apiPostMock).toHaveBeenCalledTimes(1));
+    const expectedHintContext = {
+      surface: 'test',
+      contentId: 'suite-1',
+      questionId: 'question-1',
+      currentQuestion: 'Ile to 2 + 2?',
+      questionProgressLabel: 'Pytanie 1/10',
+      selectedChoiceLabel: 'B',
+      selectedChoiceText: '5',
+      promptMode: 'hint',
+      selectedText: '2 + 2',
+    };
     expect(apiPostMock).toHaveBeenCalledWith(
       '/api/kangur/ai-tutor/chat',
       expect.objectContaining({
-        context: expect.objectContaining({
-          surface: 'test',
-          contentId: 'suite-1',
-          questionId: 'question-1',
-          currentQuestion: 'Ile to 2 + 2?',
-          questionProgressLabel: 'Pytanie 1/10',
-          selectedChoiceLabel: 'B',
-          selectedChoiceText: '5',
-          promptMode: 'hint',
-          selectedText: '2 + 2',
-        }),
+        context: expect.objectContaining(expectedHintContext),
       })
     );
   });

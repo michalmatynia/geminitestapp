@@ -10,6 +10,23 @@ const { useSocialPostContextMock } = vi.hoisted(() => ({
   useSocialPostContextMock: vi.fn(),
 }));
 
+type ListPanelMockProps = {
+  header?: React.ReactNode;
+  children?: React.ReactNode;
+  isLoading?: boolean;
+  loadingMessage?: string;
+};
+
+function MockListPanel(props: ListPanelMockProps): React.JSX.Element {
+  const { header, children, isLoading, loadingMessage } = props;
+  return (
+    <div>
+      {header}
+      {isLoading ? <div role='status'>{loadingMessage ?? 'Loading...'}</div> : children}
+    </div>
+  );
+}
+
 vi.mock('@/features/kangur/shared/ui', () => ({
   ActionMenu: ({
     ariaLabel,
@@ -85,22 +102,7 @@ vi.mock('@/features/kangur/shared/ui', () => ({
       {children}
     </button>
   ),
-  ListPanel: ({
-    header,
-    children,
-    isLoading,
-    loadingMessage,
-  }: {
-    header?: React.ReactNode;
-    children?: React.ReactNode;
-    isLoading?: boolean;
-    loadingMessage?: string;
-  }) => (
-    <div>
-      {header}
-      {isLoading ? <div role='status'>{loadingMessage ?? 'Loading...'}</div> : children}
-    </div>
-  ),
+  ListPanel: MockListPanel,
 }));
 
 vi.mock('./SocialPostContext', () => ({

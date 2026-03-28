@@ -48,30 +48,33 @@ export type KangurNavActionProps = {
   children: ReactNode;
 };
 
-export const KangurNavAction = memo(function KangurNavAction({
-  action,
-  active = false,
-  ariaControls,
-  ariaExpanded,
-  ariaHasPopup,
-  ariaLabel,
-  className,
-  disabled = false,
-  docId,
-  elementRef,
-  href,
-  onFocus,
-  onClick,
-  onMouseEnter,
-  prefetch,
-  targetPageKey,
-  testId,
-  title,
-  transition,
-  size = 'md',
-  variant,
-  children,
-}: KangurNavActionProps): React.JSX.Element {
+export const KangurNavAction = memo(function KangurNavAction(
+  props: KangurNavActionProps
+): React.JSX.Element {
+  const {
+    action,
+    active = false,
+    ariaControls,
+    ariaExpanded,
+    ariaHasPopup,
+    ariaLabel,
+    className,
+    disabled = false,
+    docId,
+    elementRef,
+    href,
+    onFocus,
+    onClick,
+    onMouseEnter,
+    prefetch,
+    targetPageKey,
+    testId,
+    title,
+    transition,
+    size = 'md',
+    variant,
+    children,
+  } = props;
   const resolvedAction = action ?? {
     active,
     ariaControls,

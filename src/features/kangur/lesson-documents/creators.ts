@@ -494,6 +494,7 @@ const STARTER_TEMPLATE_BY_COMPONENT_ID: Record<
   english_sentence_structure: 'article',
   english_subject_verb_agreement: 'article',
   english_adjectives: 'article',
+  english_adverbs: 'article',
   english_adverbs_frequency: 'article',
   english_articles: 'article',
   english_prepositions_time_place: 'article',

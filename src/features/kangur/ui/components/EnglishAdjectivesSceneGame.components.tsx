@@ -2,14 +2,7 @@
 
 import React from 'react';
 import { Draggable } from '@hello-pangea/dnd';
-import {
-  KangurButton,
-  KangurHeadline,
-  KangurStatusChip,
-} from '@/features/kangur/ui/design/primitives';
-import {
-  KANGUR_ACCENT_STYLES,
-} from '@/features/kangur/ui/design/tokens';
+import { KANGUR_ACCENT_STYLES } from '@/features/kangur/ui/design/tokens';
 import { cn } from '@/features/kangur/shared/utils';
 import {
   getKangurMobileDragHandleStyle,

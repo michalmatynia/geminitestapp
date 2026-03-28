@@ -5,6 +5,7 @@ import type {
   ClockPreviewSettings,
   HubSectionEditorState,
 } from './GamesLibraryGameModal.types';
+import type { KangurAccent } from '@/features/kangur/ui/design/tokens';
 import type {
   KangurGameInstance,
   KangurGameContentSetId,
@@ -15,7 +16,10 @@ import type {
   KangurLogicalPatternSetId,
 } from '@/shared/contracts/kangur-game-runtime-renderer-props';
 import type { KangurLessonGameSection } from '@/shared/contracts/kangur-lesson-game-sections';
-import type { KangurGameDefinition } from '@/shared/contracts/kangur-games';
+import type {
+  KangurGameDefinition,
+  KangurGameStatus,
+} from '@/shared/contracts/kangur-games';
 import type {
   ClockTrainingSectionId,
 } from '@/features/kangur/ui/components/clock-training/types';
@@ -63,6 +67,36 @@ export const GAMES_LIBRARY_MODAL_EMPTY_STATE_CLASSNAME =
 
 export const GAMES_LIBRARY_MODAL_STAT_CARD_CLASSNAME =
   'rounded-[1.15rem] border border-[color:var(--kangur-soft-card-border)] [background:color-mix(in_srgb,var(--kangur-soft-card-background)_92%,white)] px-3 py-3';
+
+export const resolveModalAgeGroupAccent = (
+  ageGroup: KangurGameDefinition['ageGroup']
+): KangurAccent => {
+  switch (ageGroup) {
+    case 'six_year_old':
+      return 'amber';
+    case 'ten_year_old':
+      return 'sky';
+    case 'grown_ups':
+    case null:
+    case undefined:
+    default:
+      return 'slate';
+  }
+};
+
+export const resolveModalStatusAccent = (
+  status: KangurGameStatus
+): KangurAccent => {
+  switch (status) {
+    case 'draft':
+      return 'amber';
+    case 'active':
+      return 'emerald';
+    case 'legacy':
+    default:
+      return 'slate';
+  }
+};
 
 export const getGamesLibraryContentSetCardTestId = (contentSetId: KangurGameContentSetId): string =>
   `games-library-content-set-${contentSetId.replaceAll(':', '_')}`;

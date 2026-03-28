@@ -8,6 +8,7 @@ export const ENGLISH_LESSON_COMPONENT_ORDER = [
   'english_subject_verb_agreement',
   'english_articles',
   'english_adjectives',
+  'english_adverbs',
   'english_adverbs_frequency',
   'english_prepositions_time_place',
 ] as const satisfies readonly KangurLessonComponentId[];
@@ -81,6 +82,17 @@ export const ENGLISH_LESSON_TEMPLATES: Record<EnglishLessonComponentId, KangurLe
     emoji: '🎨',
     color: 'kangur-gradient-accent-indigo',
     activeBg: 'bg-indigo-500',
+  },
+  english_adverbs: {
+    componentId: 'english_adverbs',
+    subject: 'english',
+    ageGroup: 'ten_year_old',
+    label: 'English Adverbs Lesson',
+    title: 'English: Adverbs',
+    description: 'Przysłówki sposobu i słowa opisujące, jak wykonujemy czynności',
+    emoji: '🎭',
+    color: 'kangur-gradient-accent-violet',
+    activeBg: 'bg-violet-500',
   },
   english_adverbs_frequency: {
     componentId: 'english_adverbs_frequency',

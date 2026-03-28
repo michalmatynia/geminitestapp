@@ -4,25 +4,10 @@ import { contextRegistryConsumerEnvelopeSchema } from './ai-context-registry';
 import type { LabeledOptionDto } from './base';
 import { dtoBaseSchema, namedDtoSchema } from './base';
 import { chatMessageSchema } from './chatbot';
-import {
-  cmsThemeColorsSchema,
-  cmsThemeCreateSchema,
-  cmsThemeSchema,
-  cmsThemeSpacingSchema,
-  cmsThemeTypographySchema,
-  cmsThemeUpdateSchema,
-  createCmsThemeSchema,
-  type CmsTheme,
-  type CmsThemeCreateInput,
-  type CmsThemeCreateRequestDto,
-  type CmsThemeDto,
-  type CmsThemeSpacing,
-  type CmsThemeTypography,
-  type CmsThemeUpdateInput,
-  type CmsThemeUpdateRequestDto,
-  type CmsThemeColors,
-  type CreateCmsThemeDto,
-  type UpdateCmsThemeDto,
+import type {
+  CmsTheme,
+  CreateCmsThemeDto,
+  UpdateCmsThemeDto,
 } from './cms-theme-contract';
 export {
   cmsThemeColorsSchema,

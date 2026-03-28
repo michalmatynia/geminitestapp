@@ -23,6 +23,7 @@ const {
   clockTrainingGamePropsMock,
   logicalPatternsWorkshopGamePropsMock,
   disabledDocsTooltipsMock,
+  getDisabledDocsTooltipsMock,
 } = vi.hoisted(() => ({
   useKangurGameRuntimeMock: vi.fn(),
   useKangurGameContentSetsMock: vi.fn(),
@@ -40,7 +41,10 @@ const {
   clockTrainingGamePropsMock: vi.fn(),
   logicalPatternsWorkshopGamePropsMock: vi.fn(),
   disabledDocsTooltipsMock: { enabled: false },
+  getDisabledDocsTooltipsMock: vi.fn(),
 }));
+
+getDisabledDocsTooltipsMock.mockReturnValue(disabledDocsTooltipsMock);
 
 vi.mock('framer-motion', () => {
   const serializeMotionValue = (value: unknown): string | undefined =>
@@ -239,7 +243,7 @@ vi.mock('@/features/kangur/ui/components/KangurGameResultWidget', () => ({
 
 vi.mock('@/features/kangur/docs/tooltips', () => ({
   KangurDocsTooltipEnhancer: () => null,
-  useKangurDocsTooltips: () => disabledDocsTooltipsMock,
+  useKangurDocsTooltips: getDisabledDocsTooltipsMock,
 }));
 
 import Game from '@/features/kangur/ui/pages/Game';

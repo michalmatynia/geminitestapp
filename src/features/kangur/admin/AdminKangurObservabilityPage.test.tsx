@@ -19,6 +19,8 @@ const {
   knowledgeGraphStatusRefetchMock,
   replaceMock,
   navigationState,
+  disabledDocsTooltipsMock,
+  getDisabledDocsTooltipsMock,
 } = vi.hoisted(() => ({
   useKangurObservabilitySummaryMock: vi.fn(),
   useKangurKnowledgeGraphStatusMock: vi.fn(),
@@ -30,23 +32,25 @@ const {
     pathname: '/admin/kangur/observability',
     search: '',
   },
+  disabledDocsTooltipsMock: {
+    enabled: false,
+    helpSettings: {
+      version: 1,
+      docsTooltips: {
+        enabled: false,
+        homeEnabled: false,
+        lessonsEnabled: false,
+        testsEnabled: false,
+        profileEnabled: false,
+        parentDashboardEnabled: false,
+        adminEnabled: false,
+      },
+    },
+  } as const,
+  getDisabledDocsTooltipsMock: vi.fn(),
 }));
 
-const disabledDocsTooltipsMock = {
-  enabled: false,
-  helpSettings: {
-    version: 1,
-    docsTooltips: {
-      enabled: false,
-      homeEnabled: false,
-      lessonsEnabled: false,
-      testsEnabled: false,
-      profileEnabled: false,
-      parentDashboardEnabled: false,
-      adminEnabled: false,
-    },
-  },
-} as const;
+getDisabledDocsTooltipsMock.mockReturnValue(disabledDocsTooltipsMock);
 
 vi.mock('next/link', () => ({
   default: ({
@@ -82,7 +86,7 @@ vi.mock('@/shared/lib/api-client', () => ({
 
 vi.mock('@/features/kangur/docs/tooltips', () => ({
   KangurDocsTooltipEnhancer: () => null,
-  useKangurDocsTooltips: () => disabledDocsTooltipsMock,
+  useKangurDocsTooltips: getDisabledDocsTooltipsMock,
 }));
 
 import { AdminKangurObservabilityPage } from './AdminKangurObservabilityPage';

@@ -11,6 +11,7 @@ describe('resolveLocalizedRecommendationActivityLabel', () => {
   const translate = createTranslator({
     'activityLabels.english_articles': 'Articles',
     'activityLabels.english_adjectives': 'Adjectives',
+    'activityLabels.english_adverbs': 'Adverbs',
     'activityLabels.english_adverbs_frequency': 'Adverbs of frequency',
     'activityLabels.english_prepositions_time_place': 'Time and place prepositions',
   });
@@ -53,5 +54,15 @@ describe('resolveLocalizedRecommendationActivityLabel', () => {
         translate,
       })
     ).toBe('Adverbs of frequency');
+  });
+
+  it('maps bare adverbs action-studio activity keys to the shared lesson label', () => {
+    expect(
+      resolveLocalizedRecommendationActivityLabel({
+        activityKey: 'english_adverbs_action_studio',
+        fallbackLabel: 'Action studio',
+        translate,
+      })
+    ).toBe('Adverbs');
   });
 });

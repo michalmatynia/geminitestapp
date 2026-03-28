@@ -7,14 +7,7 @@ import {
 } from './kangur-lesson-constants';
 import { optionalTrimmedQueryString } from '@/shared/lib/api/query-schema';
 import {
-  type LegacyCompatibleLessonSectionGameCopy,
-  type LegacyCompatibleLessonShellTitle,
-  kangurLegacyCompatibleLessonSectionGameCopyShape,
   kangurAlphabetUnifiedLessonTemplateContentSchema,
-  kangurLessonTemplateSectionContentSchema,
-  kangurLessonTemplateSlideContentSchema,
-  normalizeLegacyCompatibleLessonSectionGameCopy,
-  normalizeLegacyCompatibleLessonShellTitle,
 } from './kangur-lesson-templates.shared';
 import {
   kangurArtShapesBasicLessonTemplateContentSchema,

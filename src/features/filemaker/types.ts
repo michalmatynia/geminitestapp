@@ -122,6 +122,8 @@ export type {
   FilemakerMailFlagsDto,
   FilemakerMailFolderRole,
   FilemakerMailFolderRoleDto,
+  FilemakerMailFolderSummary,
+  FilemakerMailFolderSummaryDto,
   FilemakerMailFolderSyncState,
   FilemakerMailFolderSyncStateDto,
   FilemakerMailMessage,

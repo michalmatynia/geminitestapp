@@ -1,7 +1,7 @@
 'use client';
 
 import { ArrowLeft, Reply } from 'lucide-react';
-import { useParams, useRouter } from 'next/navigation';
+import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { DocumentWysiwygEditor } from '@/features/document-editor/components/DocumentWysiwygEditor';
@@ -44,6 +44,7 @@ const formatParticipants = (participants: FilemakerMailParticipant[]): string =>
 export function AdminFilemakerMailThreadPage(): React.JSX.Element {
   const params = useParams();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { toast } = useToast();
   const threadId = useMemo(() => {
     const raw = Array.isArray(params['threadId']) ? params['threadId'][0] : params['threadId'];
@@ -57,6 +58,15 @@ export function AdminFilemakerMailThreadPage(): React.JSX.Element {
   const [replyHtml, setReplyHtml] = useState('<p><br/></p>');
   const [isLoading, setIsLoading] = useState(true);
   const [isSending, setIsSending] = useState(false);
+  const backHref = useMemo(() => {
+    const search = new URLSearchParams();
+    const accountId = searchParams.get('accountId');
+    const mailboxPath = searchParams.get('mailboxPath');
+    if (accountId) search.set('accountId', accountId);
+    if (mailboxPath) search.set('mailboxPath', mailboxPath);
+    const nextSearch = search.toString();
+    return nextSearch ? `/admin/filemaker/mail?${nextSearch}` : '/admin/filemaker/mail';
+  }, [searchParams]);
 
   const load = useCallback(async (): Promise<void> => {
     setIsLoading(true);
@@ -122,7 +132,7 @@ export function AdminFilemakerMailThreadPage(): React.JSX.Element {
             label: 'Back to Mail',
             icon: <ArrowLeft className='size-4' />,
             variant: 'outline',
-            onClick: () => router.push('/admin/filemaker/mail'),
+            onClick: () => router.push(backHref),
           },
         ]}
       />

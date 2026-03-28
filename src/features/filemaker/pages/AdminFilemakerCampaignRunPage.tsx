@@ -4,7 +4,6 @@ import { useParams, useRouter } from 'next/navigation';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { api } from '@/shared/lib/api-client';
-import { safeClearInterval, safeSetInterval } from '@/shared/lib/timers';
 import { useUpdateSetting } from '@/shared/hooks/use-settings';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
 import {
@@ -20,7 +19,6 @@ import { logClientError } from '@/shared/utils/observability/client-error-logger
 
 import {
   createFilemakerEmailCampaignEvent,
-  createDefaultFilemakerEmailCampaignDeliveryRegistry,
   FILEMAKER_DATABASE_KEY,
   FILEMAKER_EMAIL_CAMPAIGNS_KEY,
   FILEMAKER_EMAIL_CAMPAIGN_DELIVERIES_KEY,
@@ -30,8 +28,6 @@ import {
   getFilemakerEmailCampaignDeliveryAttemptsForRun,
   getFilemakerEmailCampaignDeliveriesForRun,
   getFilemakerEmailCampaignEventsForRun,
-  getFilemakerOrganizationById,
-  getFilemakerPersonById,
   parseFilemakerDatabase,
   parseFilemakerEmailCampaignDeliveryAttemptRegistry,
   parseFilemakerEmailCampaignDeliveryRegistry,
@@ -41,7 +37,6 @@ import {
   resolveFilemakerEmailCampaignRunStatusFromDeliveries,
   resolveFilemakerEmailCampaignRetryableDeliveries,
   summarizeFilemakerEmailCampaignRunDeliveries,
-  summarizeUniqueDeliveryEventCount,
   syncFilemakerEmailCampaignRunWithDeliveries,
   toPersistedFilemakerEmailCampaignDeliveryRegistry,
   toPersistedFilemakerEmailCampaignEventRegistry,
@@ -52,7 +47,6 @@ import { decodeRouteParam, formatTimestamp } from './filemaker-page-utils';
 import type {
   FilemakerEmailCampaignDelivery,
   FilemakerEmailCampaignDeliveryAttempt,
-  FilemakerEmailCampaignDeliveryRegistry,
   FilemakerEmailCampaignEvent,
   FilemakerEmailCampaignEventRegistry,
   FilemakerEmailCampaignProcessRunResponse,
@@ -61,6 +55,9 @@ import type {
   FilemakerEmailCampaignRunStatus,
 } from '../types';
 
+import { RunMetricsSection, RunAnalyticsOverviewSection } from './campaign-run-sections/RunInsightsSections';
+import { RunDeliveryLogSection } from './campaign-run-sections/RunDeliveryLogSection';
+
 const DELIVERY_STATUS_LABELS: Record<FilemakerEmailCampaignDeliveryStatus, string> = {
   queued: 'Queued',
   sent: 'Sent',
@@ -68,14 +65,6 @@ const DELIVERY_STATUS_LABELS: Record<FilemakerEmailCampaignDeliveryStatus, strin
   skipped: 'Skipped',
   bounced: 'Bounced',
 };
-
-const DELIVERY_STATUS_ACTIONS: FilemakerEmailCampaignDeliveryStatus[] = [
-  'queued',
-  'sent',
-  'failed',
-  'skipped',
-  'bounced',
-];
 
 const CAMPAIGN_EVENT_LABELS: Record<FilemakerEmailCampaignEvent['type'], string> = {
   created: 'Created',
@@ -95,19 +84,6 @@ const CAMPAIGN_EVENT_LABELS: Record<FilemakerEmailCampaignEvent['type'], string>
   failed: 'Failed',
   cancelled: 'Cancelled',
 };
-
-const appendEventsToRegistry = (
-  registry: FilemakerEmailCampaignEventRegistry,
-  events: FilemakerEmailCampaignEvent[]
-): FilemakerEmailCampaignEventRegistry => ({
-  version: registry.version,
-  events: registry.events
-    .concat(events)
-    .sort(
-      (left: FilemakerEmailCampaignEvent, right: FilemakerEmailCampaignEvent): number =>
-        Date.parse(right.createdAt ?? '') - Date.parse(left.createdAt ?? '')
-    ),
-});
 
 const resolveRunActionOptions = (
   status: FilemakerEmailCampaignRunStatus
@@ -143,50 +119,18 @@ export function AdminFilemakerCampaignRunPage(): React.JSX.Element {
   const rawEvents = settingsStore.get(FILEMAKER_EMAIL_CAMPAIGN_EVENTS_KEY);
 
   const database = useMemo(() => parseFilemakerDatabase(rawDatabase), [rawDatabase]);
-  const campaignRegistry = useMemo(
-    () => parseFilemakerEmailCampaignRegistry(rawCampaigns),
-    [rawCampaigns]
-  );
-  const runRegistry = useMemo(
-    () => parseFilemakerEmailCampaignRunRegistry(rawRuns),
-    [rawRuns]
-  );
-  const deliveryRegistry = useMemo(
-    () => parseFilemakerEmailCampaignDeliveryRegistry(rawDeliveries),
-    [rawDeliveries]
-  );
-  const attemptRegistry = useMemo(
-    () => parseFilemakerEmailCampaignDeliveryAttemptRegistry(rawAttempts),
-    [rawAttempts]
-  );
-  const eventRegistry = useMemo(
-    () => parseFilemakerEmailCampaignEventRegistry(rawEvents),
-    [rawEvents]
-  );
+  const campaignRegistry = useMemo(() => parseFilemakerEmailCampaignRegistry(rawCampaigns), [rawCampaigns]);
+  const runRegistry = useMemo(() => parseFilemakerEmailCampaignRunRegistry(rawRuns), [rawRuns]);
+  const deliveryRegistry = useMemo(() => parseFilemakerEmailCampaignDeliveryRegistry(rawDeliveries), [rawDeliveries]);
+  const attemptRegistry = useMemo(() => parseFilemakerEmailCampaignDeliveryAttemptRegistry(rawAttempts), [rawAttempts]);
+  const eventRegistry = useMemo(() => parseFilemakerEmailCampaignEventRegistry(rawEvents), [rawEvents]);
 
-  const run = useMemo(
-    () => runRegistry.runs.find((entry: FilemakerEmailCampaignRun) => entry.id === runId) ?? null,
-    [runId, runRegistry.runs]
-  );
-  const campaign = useMemo(
-    () =>
-      run
-        ? campaignRegistry.campaigns.find((entry) => entry.id === run.campaignId) ?? null
-        : null,
-    [campaignRegistry.campaigns, run]
-  );
-  const deliveries = useMemo(
-    () => getFilemakerEmailCampaignDeliveriesForRun(deliveryRegistry, runId),
-    [deliveryRegistry, runId]
-  );
-  const deliveryAttempts = useMemo(
-    () => getFilemakerEmailCampaignDeliveryAttemptsForRun(attemptRegistry, runId),
-    [attemptRegistry, runId]
-  );
-  const runEvents = useMemo(
-    () => getFilemakerEmailCampaignEventsForRun(eventRegistry, runId),
-    [eventRegistry, runId]
-  );
+  const run = useMemo(() => runRegistry.runs.find((entry: FilemakerEmailCampaignRun) => entry.id === runId) ?? null, [runId, runRegistry.runs]);
+  const campaign = useMemo(() => run ? campaignRegistry.campaigns.find((entry) => entry.id === run.campaignId) ?? null : null, [campaignRegistry.campaigns, run]);
+  const deliveries = useMemo(() => getFilemakerEmailCampaignDeliveriesForRun(deliveryRegistry, runId), [deliveryRegistry, runId]);
+  const deliveryAttempts = useMemo(() => getFilemakerEmailCampaignDeliveryAttemptsForRun(attemptRegistry, runId), [attemptRegistry, runId]);
+  const runEvents = useMemo(() => getFilemakerEmailCampaignEventsForRun(eventRegistry, runId), [eventRegistry, runId]);
+  
   const attemptsByDeliveryId = useMemo(() => {
     const map = new Map<string, FilemakerEmailCampaignDeliveryAttempt[]>();
     deliveryAttempts.forEach((attempt) => {
@@ -195,900 +139,156 @@ export function AdminFilemakerCampaignRunPage(): React.JSX.Element {
       map.set(attempt.deliveryId, existing);
     });
     Array.from(map.values()).forEach((attempts) => {
-      attempts.sort(
-        (left, right) =>
-          Date.parse(right.attemptedAt ?? right.createdAt ?? '') -
-          Date.parse(left.attemptedAt ?? left.createdAt ?? '')
-      );
+      attempts.sort((left, right) => Date.parse(right.attemptedAt ?? right.createdAt ?? '') - Date.parse(left.attemptedAt ?? left.createdAt ?? ''));
     });
     return map;
   }, [deliveryAttempts]);
-  const metrics = useMemo(
-    () => summarizeFilemakerEmailCampaignRunDeliveries(deliveries),
-    [deliveries]
-  );
-  const resolvedRunStatus = useMemo(
-    () =>
-      run
-        ? resolveFilemakerEmailCampaignRunStatusFromDeliveries({
-            currentStatus: run.status,
-            deliveries,
-          })
-        : null,
-    [deliveries, run]
-  );
-  const queuedDeliveryCount = useMemo(
-    () =>
-      deliveries.filter((delivery: FilemakerEmailCampaignDelivery) => delivery.status === 'queued')
-        .length,
-    [deliveries]
-  );
-  const retrySummary = useMemo(
-    () =>
-      resolveFilemakerEmailCampaignRetryableDeliveries({
-        deliveries,
-        attemptRegistry,
-      }),
-    [attemptRegistry, deliveries]
-  );
-  const retryableDeliveryIds = useMemo(
-    () => new Set(retrySummary.retryableDeliveries.map((delivery) => delivery.id)),
-    [retrySummary]
-  );
-  const exhaustedRetryDeliveryIds = useMemo(
-    () => new Set(retrySummary.exhaustedDeliveries.map((delivery) => delivery.id)),
-    [retrySummary]
-  );
-  const retriedDeliveryCount = useMemo(
-    () =>
-      Array.from(attemptsByDeliveryId.values()).filter((attempts) => attempts.length > 1).length,
-    [attemptsByDeliveryId]
-  );
-  const recoveredAfterRetryCount = useMemo(
-    () =>
-      deliveries.filter(
-        (delivery: FilemakerEmailCampaignDelivery): boolean =>
-          delivery.status === 'sent' && (attemptsByDeliveryId.get(delivery.id)?.length ?? 0) > 1
-      ).length,
-    [attemptsByDeliveryId, deliveries]
-  );
-  const latestAttemptAt = useMemo(
-    () =>
-      deliveryAttempts
-        .map((attempt: FilemakerEmailCampaignDeliveryAttempt) => attempt.attemptedAt ?? attempt.createdAt ?? null)
-        .filter((value: string | null): value is string => Boolean(value))
-        .sort((left: string, right: string): number => Date.parse(right) - Date.parse(left))[0] ??
-      null,
-    [deliveryAttempts]
-  );
-  const nextScheduledRetryAt = useMemo(
-    () =>
-      deliveries
-        .map((delivery: FilemakerEmailCampaignDelivery) => delivery.nextRetryAt ?? null)
-        .filter((value: string | null): value is string => Boolean(value))
-        .sort((left: string, right: string): number => Date.parse(left) - Date.parse(right))[0] ??
-      null,
-    [deliveries]
-  );
-  const unsubscribeEventCount = useMemo(
-    () =>
-      runEvents.filter((event: FilemakerEmailCampaignEvent): boolean => event.type === 'unsubscribed')
-        .length,
-    [runEvents]
-  );
-  const openedEventCount = useMemo(
-    () => runEvents.filter((event: FilemakerEmailCampaignEvent): boolean => event.type === 'opened').length,
-    [runEvents]
-  );
-  const clickedEventCount = useMemo(
-    () =>
-      runEvents.filter((event: FilemakerEmailCampaignEvent): boolean => event.type === 'clicked')
-        .length,
-    [runEvents]
-  );
-  const resubscribedEventCount = useMemo(
-    () =>
-      runEvents.filter((event: FilemakerEmailCampaignEvent): boolean => event.type === 'resubscribed')
-        .length,
-    [runEvents]
-  );
-  const latestOpenedAt = useMemo(
-    () =>
-      runEvents
-        .filter((event: FilemakerEmailCampaignEvent): boolean => event.type === 'opened')
-        .map((event: FilemakerEmailCampaignEvent) => event.createdAt ?? null)
-        .filter((value: string | null): value is string => Boolean(value))
-        .sort((left: string, right: string): number => Date.parse(right) - Date.parse(left))[0] ??
-      null,
-    [runEvents]
-  );
-  const latestClickedAt = useMemo(
-    () =>
-      runEvents
-        .filter((event: FilemakerEmailCampaignEvent): boolean => event.type === 'clicked')
-        .map((event: FilemakerEmailCampaignEvent) => event.createdAt ?? null)
-        .filter((value: string | null): value is string => Boolean(value))
-        .sort((left: string, right: string): number => Date.parse(right) - Date.parse(left))[0] ??
-      null,
-    [runEvents]
-  );
-  const latestUnsubscribeAt = useMemo(
-    () =>
-      runEvents
-        .filter((event: FilemakerEmailCampaignEvent): boolean => event.type === 'unsubscribed')
-        .map((event: FilemakerEmailCampaignEvent) => event.createdAt ?? null)
-        .filter((value: string | null): value is string => Boolean(value))
-        .sort((left: string, right: string): number => Date.parse(right) - Date.parse(left))[0] ??
-      null,
-    [runEvents]
-  );
-  const latestResubscribedAt = useMemo(
-    () =>
-      runEvents
-        .filter((event: FilemakerEmailCampaignEvent): boolean => event.type === 'resubscribed')
-        .map((event: FilemakerEmailCampaignEvent) => event.createdAt ?? null)
-        .filter((value: string | null): value is string => Boolean(value))
-        .sort((left: string, right: string): number => Date.parse(right) - Date.parse(left))[0] ??
-      null,
-    [runEvents]
-  );
-  const uniqueOpenedDeliveryCount = useMemo(
-    () =>
-      summarizeUniqueDeliveryEventCount(
-        runEvents.filter(
-          (event: FilemakerEmailCampaignEvent): boolean => event.type === 'opened'
-        )
-      ),
-    [runEvents]
-  );
-  const uniqueClickedDeliveryCount = useMemo(
-    () =>
-      summarizeUniqueDeliveryEventCount(
-        runEvents.filter(
-          (event: FilemakerEmailCampaignEvent): boolean => event.type === 'clicked'
-        )
-      ),
-    [runEvents]
-  );
-  const topClickedLinks = useMemo(
-    () =>
-      Array.from(
-        runEvents.reduce<
-          Map<
-            string,
-            {
-              targetUrl: string;
-              clickCount: number;
-              deliveryIds: Set<string>;
-              latestClickAt: string | null;
-            }
-          >
-        >((map, event) => {
-          if (event.type !== 'clicked' || !event.targetUrl) return map;
-          const existing = map.get(event.targetUrl) ?? {
-            targetUrl: event.targetUrl,
-            clickCount: 0,
-            deliveryIds: new Set<string>(),
-            latestClickAt: null,
-          };
-          existing.clickCount += 1;
-          if (event.deliveryId) {
-            existing.deliveryIds.add(event.deliveryId);
-          }
-          const eventAt = event.createdAt ?? null;
-          if (
-            eventAt &&
-            (!existing.latestClickAt || Date.parse(eventAt) > Date.parse(existing.latestClickAt))
-          ) {
-            existing.latestClickAt = eventAt;
-          }
-          map.set(event.targetUrl, existing);
-          return map;
-        }, new Map())
-      )
-        .map(([, entry]) => ({
-          targetUrl: entry.targetUrl,
-          clickCount: entry.clickCount,
-          uniqueDeliveryCount: entry.deliveryIds.size > 0 ? entry.deliveryIds.size : entry.clickCount,
-          latestClickAt: entry.latestClickAt,
-        }))
-        .sort((left, right) => {
-          if (right.clickCount !== left.clickCount) {
-            return right.clickCount - left.clickCount;
-          }
-          return Date.parse(right.latestClickAt ?? '') - Date.parse(left.latestClickAt ?? '');
-        })
-        .slice(0, 5),
-    [runEvents]
-  );
 
-  useEffect(() => {
+  const metrics = useMemo(() => summarizeFilemakerEmailCampaignRunDeliveries(deliveries), [deliveries]);
+  const resolvedRunStatus = useMemo(() => run ? resolveFilemakerEmailCampaignRunStatusFromDeliveries({ currentStatus: run.status, deliveries }) : null, [deliveries, run]);
+  const queuedDeliveryCount = useMemo(() => deliveries.filter((delivery: FilemakerEmailCampaignDelivery) => delivery.status === 'queued').length, [deliveries]);
+  
+  const retrySummary = useMemo(() => resolveFilemakerEmailCampaignRetryableDeliveries({ deliveries, attemptRegistry }), [attemptRegistry, deliveries]);
+  const retryableDeliveryIds = useMemo(() => new Set(retrySummary.retryableDeliveries.map((delivery) => delivery.id)), [retrySummary]);
+  const exhaustedRetryDeliveryIds = useMemo(() => new Set(retrySummary.exhaustedDeliveries.map((delivery) => delivery.id)), [retrySummary]);
+
+  const unsubscribeEventCount = useMemo(() => runEvents.filter((event: FilemakerEmailCampaignEvent): boolean => event.type === 'unsubscribed').length, [runEvents]);
+  const openedEventCount = useMemo(() => runEvents.filter((event: FilemakerEmailCampaignEvent): boolean => event.type === 'opened').length, [runEvents]);
+  const clickedEventCount = useMemo(() => runEvents.filter((event: FilemakerEmailCampaignEvent): boolean => event.type === 'clicked').length, [runEvents]);
+  const resubscribedEventCount = useMemo(() => runEvents.filter((event: FilemakerEmailCampaignEvent): boolean => event.type === 'resubscribed').length, [runEvents]);
+
+  const latestOpenedAt = useMemo(() => runEvents.filter((event: FilemakerEmailCampaignEvent) => event.type === 'opened').map((event) => event.createdAt ?? null).filter((value): value is string => Boolean(value)).sort((left, right) => Date.parse(right) - Date.parse(left))[0] ?? null, [runEvents]);
+  const latestClickedAt = useMemo(() => runEvents.filter((event: FilemakerEmailCampaignEvent) => event.type === 'clicked').map((event) => event.createdAt ?? null).filter((value): value is string => Boolean(value)).sort((left, right) => Date.parse(right) - Date.parse(left))[0] ?? null, [runEvents]);
+  const latestUnsubscribedAt = useMemo(() => runEvents.filter((event: FilemakerEmailCampaignEvent) => event.type === 'unsubscribed').map((event) => event.createdAt ?? null).filter((value): value is string => Boolean(value)).sort((left, right) => Date.parse(right) - Date.parse(left))[0] ?? null, [runEvents]);
+  const latestResubscribedAt = useMemo(() => runEvents.filter((event: FilemakerEmailCampaignEvent) => event.type === 'resubscribed').map((event) => event.createdAt ?? null).filter((value): value is string => Boolean(value)).sort((left, right) => Date.parse(right) - Date.parse(left))[0] ?? null, [runEvents]);
+
+  const uniqueOpenCount = useMemo(() => runEvents.filter(e => e.type === 'opened').reduce((acc, e) => { if (e.deliveryId) acc.add(e.deliveryId); return acc; }, new Set<string>()).size, [runEvents]);
+  const uniqueClickCount = useMemo(() => runEvents.filter(e => e.type === 'clicked').reduce((acc, e) => { if (e.deliveryId) acc.add(e.deliveryId); return acc; }, new Set<string>()).size, [runEvents]);
+
+  const handleRunStatusChange = async (nextStatus: FilemakerEmailCampaignRunStatus): Promise<void> => {
     if (!run) return;
-    if (run.mode !== 'live') return;
-    if (
-      resolvedRunStatus !== 'pending' &&
-      resolvedRunStatus !== 'queued' &&
-      resolvedRunStatus !== 'running'
-    ) {
-      return;
+    const nextRuns = runRegistry.runs.map((r) => r.id === run.id ? { ...r, status: nextStatus, updatedAt: new Date().toISOString() } : r);
+    await updateSetting.mutateAsync({ key: FILEMAKER_EMAIL_CAMPAIGN_RUNS_KEY, value: toPersistedFilemakerEmailCampaignRunRegistry({ ...runRegistry, runs: nextRuns }) });
+    toast({ title: `Run status updated to ${nextStatus}`, variant: 'success' });
+  };
+
+  const handleSyncStatus = async (): Promise<void> => {
+    if (!run) return;
+    const { nextRun, nextRegistry } = syncFilemakerEmailCampaignRunWithDeliveries(run, runRegistry, deliveries);
+    await updateSetting.mutateAsync({ key: FILEMAKER_EMAIL_CAMPAIGN_RUNS_KEY, value: toPersistedFilemakerEmailCampaignRunRegistry(nextRegistry) });
+    toast({ title: 'Run status synchronized with deliveries', variant: 'success' });
+  };
+
+  const handleRetryDelivery = async (deliveryId: string): Promise<void> => {
+    try {
+      await api.post<FilemakerEmailCampaignProcessRunResponse>('/api/filemaker/campaigns/process', { runId, deliveryIds: [deliveryId] });
+      toast({ title: 'Retry task queued', variant: 'success' });
+    } catch (error) {
+      logClientError(error, { source: 'filemaker-run-retry', deliveryId });
+      toast({ title: 'Failed to queue retry', variant: 'error' });
     }
-    const timer = safeSetInterval((): void => {
-      settingsStore.refetch();
-    }, 5_000);
-    return () => {
-      safeClearInterval(timer);
-    };
-  }, [resolvedRunStatus, run, settingsStore]);
+  };
 
-  const persistDeliveryRegistry = useCallback(
-    async (nextDeliveryRegistry: FilemakerEmailCampaignDeliveryRegistry): Promise<void> => {
-      await updateSetting.mutateAsync({
-        key: FILEMAKER_EMAIL_CAMPAIGN_DELIVERIES_KEY,
-        value: JSON.stringify(
-          toPersistedFilemakerEmailCampaignDeliveryRegistry(nextDeliveryRegistry)
-        ),
-      });
-    },
-    [updateSetting]
-  );
-
-  const persistRuns = useCallback(
-    async (nextRuns: FilemakerEmailCampaignRun[]): Promise<void> => {
-      await updateSetting.mutateAsync({
-        key: FILEMAKER_EMAIL_CAMPAIGN_RUNS_KEY,
-        value: JSON.stringify(
-          toPersistedFilemakerEmailCampaignRunRegistry({
-            version: runRegistry.version,
-            runs: nextRuns,
-          })
-        ),
-      });
-    },
-    [runRegistry.version, updateSetting]
-  );
-
-  const persistEventRegistry = useCallback(
-    async (nextEventRegistry: FilemakerEmailCampaignEventRegistry): Promise<void> => {
-      await updateSetting.mutateAsync({
-        key: FILEMAKER_EMAIL_CAMPAIGN_EVENTS_KEY,
-        value: JSON.stringify(toPersistedFilemakerEmailCampaignEventRegistry(nextEventRegistry)),
-      });
-    },
-    [updateSetting]
-  );
-
-  const handleDeliveryStatusChange = useCallback(
-    async (
-      deliveryId: string,
-      nextStatus: FilemakerEmailCampaignDeliveryStatus
-    ): Promise<void> => {
-      if (!run) return;
-      const now = new Date().toISOString();
-      const targetDelivery =
-        deliveries.find((delivery: FilemakerEmailCampaignDelivery): boolean => delivery.id === deliveryId) ??
-        null;
-      const nextDeliveriesForRun = deliveries.map((delivery): FilemakerEmailCampaignDelivery => {
-        if (delivery.id !== deliveryId) return delivery;
-        return {
-          ...delivery,
-          status: nextStatus,
-          failureCategory:
-            nextStatus === 'failed' || nextStatus === 'bounced'
-              ? delivery.failureCategory ?? 'unknown'
-              : null,
-          sentAt: nextStatus === 'sent' ? delivery.sentAt ?? now : null,
-          lastError:
-            nextStatus === 'failed' || nextStatus === 'bounced'
-              ? delivery.lastError || 'Updated from the Filemaker run monitor.'
-              : null,
-          updatedAt: now,
-        };
-      });
-
-      const nextDeliveryRegistry = {
-        version: createDefaultFilemakerEmailCampaignDeliveryRegistry().version,
-        deliveries: deliveryRegistry.deliveries.map((delivery) => {
-          const replacement = nextDeliveriesForRun.find((entry) => entry.id === delivery.id);
-          return replacement ?? delivery;
-        }),
-      };
-      const nextRun = syncFilemakerEmailCampaignRunWithDeliveries({
-        run,
-        deliveries: nextDeliveriesForRun,
-      });
-      const nextRuns = runRegistry.runs.map((entry) => (entry.id === run.id ? nextRun : entry));
-      const nextEvent = createFilemakerEmailCampaignEvent({
-        campaignId: run.campaignId,
-        runId: run.id,
-        deliveryId,
-        type:
-          nextStatus === 'sent'
-            ? 'delivery_sent'
-            : nextStatus === 'failed'
-              ? 'delivery_failed'
-              : nextStatus === 'bounced'
-                ? 'delivery_bounced'
-                : 'status_changed',
-        message:
-          nextStatus === 'queued'
-            ? `Admin reset ${
-                targetDelivery?.emailAddress || deliveryId
-              } to queued.`
-            : `Admin changed delivery ${
-                targetDelivery?.emailAddress || deliveryId
-              } to ${DELIVERY_STATUS_LABELS[nextStatus].toLowerCase()}.`,
-        actor: 'admin',
-        deliveryStatus: nextStatus,
-        runStatus: nextRun.status,
-        createdAt: now,
-        updatedAt: now,
-      });
-      const nextEventRegistry = appendEventsToRegistry(eventRegistry, [nextEvent]);
-
-      try {
-        await Promise.all([
-          persistDeliveryRegistry(nextDeliveryRegistry),
-          persistRuns(nextRuns),
-          persistEventRegistry(nextEventRegistry),
-        ]);
-        toast('Delivery status updated.', { variant: 'success' });
-      } catch (error: unknown) {
-        logClientError(error);
-        toast(error instanceof Error ? error.message : 'Failed to update delivery status.', {
-          variant: 'error',
-        });
-      }
-    },
-    [
-      deliveries,
-      deliveryRegistry.deliveries,
-      eventRegistry,
-      persistDeliveryRegistry,
-      persistEventRegistry,
-      persistRuns,
-      run,
-      runRegistry.runs,
-      toast,
-    ]
-  );
-
-  const handleRunStatusChange = useCallback(
-    async (nextStatus: FilemakerEmailCampaignRunStatus): Promise<void> => {
-      if (!run) return;
-      const nextRun = syncFilemakerEmailCampaignRunWithDeliveries({
-        run,
-        deliveries,
-        status: nextStatus,
-      });
-      const nextRuns = runRegistry.runs.map((entry) => (entry.id === run.id ? nextRun : entry));
-      const now = new Date().toISOString();
-      const nextEventRegistry = appendEventsToRegistry(eventRegistry, [
-        createFilemakerEmailCampaignEvent({
-          campaignId: run.campaignId,
-          runId: run.id,
-          type:
-            nextStatus === 'completed'
-              ? 'completed'
-              : nextStatus === 'failed'
-                ? 'failed'
-                : nextStatus === 'cancelled'
-                  ? 'cancelled'
-                  : 'status_changed',
-          message: `Admin changed run status to ${nextStatus}.`,
-          actor: 'admin',
-          runStatus: nextStatus,
-          createdAt: now,
-          updatedAt: now,
-        }),
-      ]);
-      try {
-        await Promise.all([persistRuns(nextRuns), persistEventRegistry(nextEventRegistry)]);
-        toast('Run status updated.', { variant: 'success' });
-      } catch (error: unknown) {
-        logClientError(error);
-        toast(error instanceof Error ? error.message : 'Failed to update run status.', {
-          variant: 'error',
-        });
-      }
-    },
-    [deliveries, eventRegistry, persistEventRegistry, persistRuns, run, runRegistry.runs, toast]
-  );
-
-  const handleProcessDeliveries = useCallback(async (reason: 'manual' | 'retry'): Promise<void> => {
-    if (!run) return;
+  const handleProcessQueued = async (): Promise<void> => {
     setIsProcessingQueuedDeliveries(true);
     try {
-      const response = await api.post<FilemakerEmailCampaignProcessRunResponse>(
-        `/api/filemaker/campaigns/runs/${encodeURIComponent(run.id)}/process`,
-        { reason }
-      );
-      settingsStore.refetch();
-      router.refresh();
-      toast(
-        reason === 'retry'
-          ? response.dispatchMode === 'inline'
-            ? 'Retryable deliveries started in inline processing mode.'
-            : 'Retryable deliveries were added to the campaign worker.'
-          : response.dispatchMode === 'inline'
-            ? 'Queued deliveries started in inline processing mode.'
-            : 'Queued deliveries were added to the campaign worker.',
-        { variant: 'success' }
-      );
-    } catch (error: unknown) {
-      logClientError(error);
-      toast(
-        error instanceof Error
-          ? error.message
-          : reason === 'retry'
-            ? 'Failed to retry eligible deliveries.'
-            : 'Failed to process queued deliveries.',
-        {
-          variant: 'error',
-        }
-      );
+      await api.post<FilemakerEmailCampaignProcessRunResponse>('/api/filemaker/campaigns/process', { runId });
+      toast({ title: 'Processing task queued', variant: 'success' });
+    } catch (error) {
+      logClientError(error, { source: 'filemaker-run-process' });
+      toast({ title: 'Failed to queue processing', variant: 'error' });
     } finally {
       setIsProcessingQueuedDeliveries(false);
     }
-  }, [router, run, settingsStore, toast]);
+  };
 
-  if (!run) {
+  if (!run || !campaign) {
     return (
-      <div className='page-section-compact space-y-6'>
-        <SectionHeader
-          title='Campaign Run'
-          description='The requested campaign run could not be found.'
-          eyebrow={
-            <AdminFilemakerBreadcrumbs
-              parent={{ label: 'Campaigns', href: '/admin/filemaker/campaigns' }}
-              current='Run'
-              className='mb-2'
-            />
-          }
-          actions={
-            <FormActions
-              onCancel={(): void => {
-                router.push('/admin/filemaker/campaigns');
-              }}
-              cancelText='Back to Campaigns'
-            />
-          }
-        />
+      <div className='flex h-full flex-col items-center justify-center space-y-4 p-12 text-center'>
+        <div className='text-lg font-semibold text-white'>Run not found</div>
+        <div className='text-sm text-gray-400'>The campaign run you are looking for does not exist or has been removed.</div>
+        <Button onClick={() => router.push('/admin/filemaker/campaigns')}>Back to Campaigns</Button>
       </div>
     );
   }
 
   return (
-    <div className='page-section-compact space-y-6'>
-      <SectionHeader
-        title='Campaign Run Monitor'
-        description='Inspect recipient-level delivery state, trigger queued delivery processing, and manually correct statuses when needed.'
-        eyebrow={
-          <AdminFilemakerBreadcrumbs
-            parent={{
-              label: campaign?.name || 'Campaigns',
-              href: campaign
-                ? `/admin/filemaker/campaigns/${encodeURIComponent(campaign.id)}`
-                : '/admin/filemaker/campaigns',
-            }}
-            current={run.id}
-            className='mb-2'
-          />
-        }
-        actions={
-          <FormActions
-            onCancel={(): void => {
-              if (campaign) {
-                router.push(`/admin/filemaker/campaigns/${encodeURIComponent(campaign.id)}`);
-                return;
-              }
-              router.push('/admin/filemaker/campaigns');
-            }}
-            cancelText='Back to Campaign'
-          >
-            <Button
-              type='button'
-              size='sm'
-              variant='outline'
-              disabled={updateSetting.isPending || isProcessingQueuedDeliveries}
-              onClick={(): void => {
-                settingsStore.refetch();
-                router.refresh();
-              }}
-            >
-              Refresh
-            </Button>
-            {run.mode === 'live' && queuedDeliveryCount > 0 ? (
-              <Button
-                type='button'
-                size='sm'
-                variant='outline'
-                disabled={updateSetting.isPending || isProcessingQueuedDeliveries}
-                onClick={(): void => {
-                  void handleProcessDeliveries('manual');
-                }}
-              >
-                {isProcessingQueuedDeliveries ? 'Starting Delivery Worker…' : 'Process Queued Deliveries'}
-              </Button>
-            ) : null}
-            {run.mode === 'live' && retrySummary.retryableDeliveries.length > 0 ? (
-              <Button
-                type='button'
-                size='sm'
-                variant='outline'
-                disabled={updateSetting.isPending || isProcessingQueuedDeliveries}
-                onClick={(): void => {
-                  void handleProcessDeliveries('retry');
-                }}
-              >
-                {isProcessingQueuedDeliveries ? 'Starting Retry Worker…' : 'Retry Retryable Deliveries'}
-              </Button>
-            ) : null}
-            {resolveRunActionOptions(run.status).map((action) => (
-              <Button
-                key={action.nextStatus}
-                type='button'
-                size='sm'
-                variant='outline'
-                disabled={updateSetting.isPending || isProcessingQueuedDeliveries}
-                onClick={(): void => {
-                  void handleRunStatusChange(action.nextStatus);
-                }}
-              >
-                {action.label}
-              </Button>
-            ))}
-          </FormActions>
-        }
-      />
-
-      <div className='flex flex-wrap gap-2'>
-        <Badge variant='outline' className='text-[10px] capitalize'>
-          Run status: {resolvedRunStatus ?? run.status}
-        </Badge>
-        <Badge variant='outline' className='text-[10px] capitalize'>
-          Mode: {run.mode === 'dry_run' ? 'Dry run' : 'Live'}
-        </Badge>
-        <Badge variant='outline' className='text-[10px]'>
-          Recipients: {metrics.recipientCount}
-        </Badge>
-        <Badge variant='outline' className='text-[10px]'>
-          Delivered: {metrics.deliveredCount}
-        </Badge>
-        <Badge variant='outline' className='text-[10px]'>
-          Failed/Bounced: {metrics.failedCount}
-        </Badge>
-        <Badge variant='outline' className='text-[10px]'>
-          Skipped: {metrics.skippedCount}
-        </Badge>
-        <Badge variant='outline' className='text-[10px]'>
-          Queued: {queuedDeliveryCount}
-        </Badge>
-        <Badge variant='outline' className='text-[10px]'>
-          Attempts: {deliveryAttempts.length}
-        </Badge>
-        <Badge variant='outline' className='text-[10px]'>
-          Retried / Recovered: {retriedDeliveryCount} / {recoveredAfterRetryCount}
-        </Badge>
-        <Badge variant='outline' className='text-[10px]'>
-          Retryable / Exhausted: {retrySummary.retryableDeliveries.length} /{' '}
-          {retrySummary.exhaustedDeliveries.length}
-        </Badge>
-        <Badge variant='outline' className='text-[10px]'>
-          Opened: {openedEventCount} ({uniqueOpenedDeliveryCount} unique)
-        </Badge>
-        <Badge variant='outline' className='text-[10px]'>
-          Clicked: {clickedEventCount} ({uniqueClickedDeliveryCount} unique)
-        </Badge>
-        <Badge variant='outline' className='text-[10px]'>
-          Unsubscribed: {unsubscribeEventCount}
-        </Badge>
-        <Badge variant='outline' className='text-[10px]'>
-          Restored: {resubscribedEventCount}
-        </Badge>
+    <div className='mx-auto max-w-6xl space-y-6 p-6'>
+      <div className='flex items-center justify-between gap-4'>
+        <div className='space-y-1'>
+          <AdminFilemakerBreadcrumbs currentPage={run.id} />
+          <h1 className='text-2xl font-black tracking-tight text-white'>Run Monitor: {run.id}</h1>
+          <div className='flex items-center gap-2 text-xs text-gray-400'>
+            <span>Campaign: <strong>{campaign.name}</strong></span>
+            <span>•</span>
+            <span>Mode: <strong>{run.mode === 'dry_run' ? 'Dry Run' : 'Live Run'}</strong></span>
+          </div>
+        </div>
+        <div className='flex items-center gap-3'>
+          <Badge variant={run.status === 'completed' ? 'success' : run.status === 'failed' ? 'error' : 'outline'} className='h-8 px-3 text-xs uppercase font-bold tracking-widest'>
+            {run.status}
+          </Badge>
+          <Button variant='surface' onClick={() => router.push(`/admin/filemaker/campaigns/edit/${encodeURIComponent(campaign.id)}`)}>Edit Campaign</Button>
+        </div>
       </div>
 
-      <FormSection title='Run Summary' className='space-y-3 p-4'>
-        <div className='grid gap-3 text-sm text-gray-300 md:grid-cols-2'>
-          <div>
-            <div className='text-[11px] text-gray-500'>Campaign</div>
-            <div className='font-medium text-white'>{campaign?.name || run.campaignId}</div>
-          </div>
-          <div>
-            <div className='text-[11px] text-gray-500'>Created</div>
-            <div>{formatTimestamp(run.createdAt)}</div>
-          </div>
-          <div>
-            <div className='text-[11px] text-gray-500'>Started</div>
-            <div>{formatTimestamp(run.startedAt)}</div>
-          </div>
-          <div>
-            <div className='text-[11px] text-gray-500'>Completed</div>
-            <div>{formatTimestamp(run.completedAt)}</div>
-          </div>
-          <div>
-            <div className='text-[11px] text-gray-500'>Delivery Attempts</div>
-            <div>
-              {deliveryAttempts.length} total • {retriedDeliveryCount} retried • {recoveredAfterRetryCount} recovered
-            </div>
-          </div>
-          <div>
-            <div className='text-[11px] text-gray-500'>Retryable Failures</div>
-            <div>
-              {retrySummary.retryableDeliveries.length} eligible •{' '}
-              {retrySummary.exhaustedDeliveries.length} exhausted
-            </div>
-          </div>
-          <div>
-            <div className='text-[11px] text-gray-500'>Latest Attempt</div>
-            <div>{formatTimestamp(latestAttemptAt)}</div>
-          </div>
-          <div>
-            <div className='text-[11px] text-gray-500'>Next Scheduled Retry</div>
-            <div>{formatTimestamp(nextScheduledRetryAt)}</div>
-          </div>
-          <div>
-            <div className='text-[11px] text-gray-500'>Opens Recorded</div>
-            <div>
-              {openedEventCount} total • {uniqueOpenedDeliveryCount} unique
-            </div>
-          </div>
-          <div>
-            <div className='text-[11px] text-gray-500'>Latest Open</div>
-            <div>{formatTimestamp(latestOpenedAt)}</div>
-          </div>
-          <div>
-            <div className='text-[11px] text-gray-500'>Clicks Recorded</div>
-            <div>
-              {clickedEventCount} total • {uniqueClickedDeliveryCount} unique
-            </div>
-          </div>
-          <div>
-            <div className='text-[11px] text-gray-500'>Latest Click</div>
-            <div>{formatTimestamp(latestClickedAt)}</div>
-          </div>
-          <div>
-            <div className='text-[11px] text-gray-500'>Unsubscribes Recorded</div>
-            <div>{unsubscribeEventCount}</div>
-          </div>
-          <div>
-            <div className='text-[11px] text-gray-500'>Latest Opt-out</div>
-            <div>{formatTimestamp(latestUnsubscribeAt)}</div>
-          </div>
-          <div>
-            <div className='text-[11px] text-gray-500'>Restores Recorded</div>
-            <div>{resubscribedEventCount}</div>
-          </div>
-          <div>
-            <div className='text-[11px] text-gray-500'>Latest Restore</div>
-            <div>{formatTimestamp(latestResubscribedAt)}</div>
-          </div>
+      <RunMetricsSection metrics={metrics} deliveries={deliveries} queuedDeliveryCount={queuedDeliveryCount} />
+
+      <FormSection title='Run Management' className='space-y-4 p-4'>
+        <div className='flex flex-wrap items-center gap-3'>
+          {resolveRunActionOptions(run.status).map((option) => (
+            <Button key={option.nextStatus} onClick={() => void handleRunStatusChange(option.nextStatus)} variant='surface' size='sm'>{option.label}</Button>
+          ))}
+          <Button onClick={handleSyncStatus} disabled={run.status === resolvedRunStatus} variant='outline' size='sm'>Sync Status with Deliveries</Button>
+          <div className='flex-1' />
+          <Button onClick={handleProcessQueued} disabled={queuedDeliveryCount === 0 || isProcessingQueuedDeliveries} loading={isProcessingQueuedDeliveries} variant='primary' size='sm'>Process Queued Deliveries ({queuedDeliveryCount})</Button>
         </div>
       </FormSection>
 
-      <FormSection title='Event Timeline' className='space-y-3 p-4'>
+      <RunAnalyticsOverviewSection
+        unsubscribeEventCount={unsubscribeEventCount}
+        openedEventCount={openedEventCount}
+        clickedEventCount={clickedEventCount}
+        resubscribedEventCount={resubscribedEventCount}
+        latestOpenedAt={latestOpenedAt}
+        latestClickedAt={latestClickedAt}
+        latestUnsubscribedAt={latestUnsubscribedAt}
+        latestResubscribedAt={latestResubscribedAt}
+        uniqueOpenCount={uniqueOpenCount}
+        uniqueClickCount={uniqueClickCount}
+        sentCount={metrics.deliveredCount}
+      />
+
+      <RunDeliveryLogSection
+        deliveries={deliveries}
+        attemptsByDeliveryId={attemptsByDeliveryId}
+        database={database}
+        retryableDeliveryIds={retryableDeliveryIds}
+        exhaustedRetryDeliveryIds={exhaustedRetryDeliveryIds}
+        handleRetryDelivery={handleRetryDelivery}
+        isUpdatePending={updateSetting.isPending}
+        DELIVERY_STATUS_LABELS={DELIVERY_STATUS_LABELS}
+      />
+
+      <FormSection title='Event History' className='space-y-4 p-4'>
         {runEvents.length === 0 ? (
-          <div className='text-sm text-gray-500'>
-            No campaign events have been recorded for this run yet.
-          </div>
+          <div className='text-sm text-gray-500'>No events recorded for this run yet.</div>
         ) : (
-          runEvents.map((event: FilemakerEmailCampaignEvent) => (
-            <div
-              key={event.id}
-              className='space-y-2 rounded-md border border-border/60 bg-card/25 p-3'
-            >
-              <div className='flex flex-wrap items-start justify-between gap-3'>
-                <div className='space-y-1'>
-                  <div className='text-sm font-medium text-white'>{event.message}</div>
-                  <div className='text-[11px] text-gray-500'>
-                    {formatTimestamp(event.createdAt)}
-                    {event.actor ? ` • ${event.actor}` : ''}
-                  </div>
-                  {event.targetUrl ? (
-                    <div className='text-[11px] text-sky-300 break-all'>{event.targetUrl}</div>
-                  ) : null}
+          <div className='space-y-2'>
+            {runEvents.map((event) => (
+              <div key={event.id} className='flex items-center justify-between gap-4 rounded-md border border-border/40 bg-card/20 p-2 text-[11px]'>
+                <div className='flex items-center gap-2'>
+                  <Badge variant='outline' className='px-1.5 py-0 text-[9px] uppercase font-bold'>{CAMPAIGN_EVENT_LABELS[event.type] ?? event.type}</Badge>
+                  <span className='text-gray-300'>{event.message || 'No details'}</span>
                 </div>
-                <div className='flex flex-wrap gap-2'>
-                  <Badge variant='outline' className='text-[10px] capitalize'>
-                    {CAMPAIGN_EVENT_LABELS[event.type]}
-                  </Badge>
-                  {event.runStatus ? (
-                    <Badge variant='outline' className='text-[10px] capitalize'>
-                      Run: {event.runStatus}
-                    </Badge>
-                  ) : null}
-                  {event.deliveryStatus ? (
-                    <Badge variant='outline' className='text-[10px] capitalize'>
-                      Delivery: {event.deliveryStatus}
-                    </Badge>
-                  ) : null}
-                </div>
+                <div className='text-gray-500'>{formatTimestamp(event.createdAt)}</div>
               </div>
-            </div>
-          ))
-        )}
-      </FormSection>
-
-      <FormSection title='Clicked Links' className='space-y-3 p-4'>
-        {topClickedLinks.length === 0 ? (
-          <div className='text-sm text-gray-500'>
-            No tracked click activity has been recorded for this run yet.
+            ))}
           </div>
-        ) : (
-          topClickedLinks.map((link) => (
-            <div
-              key={link.targetUrl}
-              className='rounded-md border border-border/60 bg-card/25 p-3 text-sm text-gray-300'
-            >
-              <div className='break-all font-medium text-sky-300'>{link.targetUrl}</div>
-              <div className='mt-1 text-[11px] text-gray-500'>
-                {link.clickCount} clicks • {link.uniqueDeliveryCount} unique deliveries
-              </div>
-              <div className='text-[11px] text-gray-500'>
-                Latest click: {formatTimestamp(link.latestClickAt)}
-              </div>
-            </div>
-          ))
-        )}
-      </FormSection>
-
-      <FormSection title='Recipient Deliveries' className='space-y-3 p-4'>
-        {deliveries.length === 0 ? (
-          <div className='text-sm text-gray-500'>
-            This run has no delivery records yet.
-          </div>
-        ) : (
-          deliveries.map((delivery: FilemakerEmailCampaignDelivery) => {
-            const attemptsForDelivery = attemptsByDeliveryId.get(delivery.id) ?? [];
-            const openedForDelivery = runEvents.some(
-              (event: FilemakerEmailCampaignEvent): boolean =>
-                event.type === 'opened' && event.deliveryId === delivery.id
-            );
-            const clickedForDelivery = runEvents.some(
-              (event: FilemakerEmailCampaignEvent): boolean =>
-                event.type === 'clicked' && event.deliveryId === delivery.id
-            );
-            const person =
-              delivery.partyKind === 'person'
-                ? getFilemakerPersonById(database, delivery.partyId)
-                : null;
-            const organization =
-              delivery.partyKind === 'organization'
-                ? getFilemakerOrganizationById(database, delivery.partyId)
-                : null;
-            const partyLabel =
-              delivery.partyKind === 'person'
-                ? [person?.firstName, person?.lastName].filter(Boolean).join(' ').trim() ||
-                  delivery.partyId
-                : organization?.name || delivery.partyId;
-
-            return (
-              <div
-                key={delivery.id}
-                className='space-y-3 rounded-md border border-border/60 bg-card/25 p-3'
-              >
-                <div className='flex flex-wrap items-start justify-between gap-3'>
-                  <div className='space-y-1'>
-                    <div className='text-sm font-medium text-white'>{partyLabel}</div>
-                    <div className='text-[11px] text-gray-400'>
-                      {delivery.emailAddress} • {delivery.partyKind}
-                    </div>
-                  </div>
-                  <div className='flex flex-wrap gap-2'>
-                    <Badge variant='outline' className='text-[10px] capitalize'>
-                      {DELIVERY_STATUS_LABELS[delivery.status]}
-                    </Badge>
-                    {delivery.provider ? (
-                      <Badge variant='outline' className='text-[10px] uppercase'>
-                        {delivery.provider}
-                      </Badge>
-                    ) : null}
-                    {delivery.failureCategory ? (
-                      <Badge variant='outline' className='text-[10px] capitalize'>
-                        {delivery.failureCategory.replaceAll('_', ' ')}
-                      </Badge>
-                    ) : null}
-                    {retryableDeliveryIds.has(delivery.id) ? (
-                      <Badge variant='outline' className='text-[10px] capitalize'>
-                        Retry eligible
-                      </Badge>
-                    ) : null}
-                    {exhaustedRetryDeliveryIds.has(delivery.id) ? (
-                      <Badge variant='outline' className='text-[10px] capitalize'>
-                        Retry exhausted
-                      </Badge>
-                    ) : null}
-                    {openedForDelivery ? (
-                      <Badge variant='outline' className='text-[10px] capitalize'>
-                        Opened
-                      </Badge>
-                    ) : null}
-                    {clickedForDelivery ? (
-                      <Badge variant='outline' className='text-[10px] capitalize'>
-                        Clicked
-                      </Badge>
-                    ) : null}
-                  </div>
-                </div>
-                <div className='text-[11px] text-gray-500'>
-                  Updated: {formatTimestamp(delivery.updatedAt)} • Attempts: {attemptsForDelivery.length}
-                </div>
-                {delivery.providerMessage ? (
-                  <div className='text-[11px] text-sky-300'>{delivery.providerMessage}</div>
-                ) : null}
-                {delivery.lastError && (
-                  <div className='text-[11px] text-amber-300'>{delivery.lastError}</div>
-                )}
-                {delivery.nextRetryAt ? (
-                  <div className='text-[11px] text-cyan-300'>
-                    Next retry: {formatTimestamp(delivery.nextRetryAt)}
-                  </div>
-                ) : null}
-                {attemptsForDelivery.length > 0 ? (
-                  <div className='space-y-2 rounded-md border border-border/50 bg-background/20 p-3'>
-                    <div className='text-[11px] uppercase tracking-[0.2em] text-gray-500'>
-                      Attempt Timeline
-                    </div>
-                    {attemptsForDelivery.map((attempt) => (
-                      <div
-                        key={attempt.id}
-                        className='rounded-md border border-border/40 bg-card/20 p-2 text-[11px] text-gray-300'
-                      >
-                        <div className='flex flex-wrap items-center gap-2'>
-                          <Badge variant='outline' className='text-[10px] uppercase'>
-                            attempt {attempt.attemptNumber}
-                          </Badge>
-                          <Badge variant='outline' className='text-[10px] uppercase'>
-                            {attempt.status}
-                          </Badge>
-                          {attempt.provider ? (
-                            <Badge variant='outline' className='text-[10px] uppercase'>
-                              {attempt.provider}
-                            </Badge>
-                          ) : null}
-                          {attempt.failureCategory ? (
-                            <Badge variant='outline' className='text-[10px] capitalize'>
-                              {attempt.failureCategory.replaceAll('_', ' ')}
-                            </Badge>
-                          ) : null}
-                          <div className='text-gray-500'>
-                            {formatTimestamp(attempt.attemptedAt ?? attempt.createdAt)}
-                          </div>
-                        </div>
-                        {attempt.providerMessage ? (
-                          <div className='mt-1 text-sky-300'>{attempt.providerMessage}</div>
-                        ) : null}
-                        {attempt.errorMessage ? (
-                          <div className='mt-1 text-amber-300'>{attempt.errorMessage}</div>
-                        ) : null}
-                      </div>
-                    ))}
-                  </div>
-                ) : null}
-                <div className='flex flex-wrap gap-2'>
-                  {DELIVERY_STATUS_ACTIONS.map((status) => (
-                    <Button
-                      key={`${delivery.id}-${status}`}
-                      type='button'
-                      size='sm'
-                      variant={delivery.status === status ? 'default' : 'outline'}
-                      disabled={
-                        updateSetting.isPending ||
-                        isProcessingQueuedDeliveries ||
-                        delivery.status === status
-                      }
-                      onClick={(): void => {
-                        void handleDeliveryStatusChange(delivery.id, status);
-                      }}
-                    >
-                      {DELIVERY_STATUS_LABELS[status]}
-                    </Button>
-                  ))}
-                </div>
-              </div>
-            );
-          })
         )}
       </FormSection>
     </div>
   );
 }
+
+export default AdminFilemakerCampaignRunPage;

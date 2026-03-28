@@ -1,10 +1,6 @@
 'use client';
 
 import React from 'react';
-import {
-  renderSoftAtmosphereGradients,
-  renderSoftAtmosphereOvals,
-} from '@/features/kangur/ui/components/animations/svgAtmosphere';
 import { useEnglishAnimationSurfaceIds } from './EnglishAnimationSurface';
 import { cn } from '@/features/kangur/shared/utils';
 
@@ -50,10 +46,12 @@ export function EnglishAdverbFrequencyScaleAnimation(): React.JSX.Element {
       </defs>
       <g clipPath={`url(#${surfaceIds.clipId})`}>
         <rect className='panel' fill={`url(#${surfaceIds.panelGradientId})`} x='16' y='16' width='388' height='138' rx='24' />
-        <ellipse cx='92' cy='40' fill='url(#${surfaceIds.accentGradientId})' opacity='0.14' rx='96' ry='28' />
-        <ellipse cx='308' cy='132' fill='url(#${surfaceIds.atmosphereGradientId})' opacity='0.95' rx='124' ry='34' />
+        <g data-testid='english-adverb-frequency-scale-atmosphere'>
+          <ellipse cx='92' cy='40' fill='url(#${surfaceIds.accentGradientId})' opacity='0.14' rx='96' ry='28' />
+          <ellipse cx='308' cy='132' fill='url(#${surfaceIds.atmosphereGradientId})' opacity='0.95' rx='124' ry='34' />
+        </g>
       </g>
-      <rect className='frame' x='22' y='22' width='376' height='126' rx='20' />
+      <rect className='frame' data-testid='english-adverb-frequency-scale-frame' x='22' y='22' width='376' height='126' rx='20' />
       {items.map((item, index) => (
         <g key={item.key} transform={`translate(34, ${36 + index * 28})`}>
           <rect className='lane' x='-8' y='-14' width='344' height='24' rx='12' />
@@ -111,10 +109,12 @@ export function EnglishAdverbRoutineAnimation(): React.JSX.Element {
       </defs>
       <g clipPath={`url(#${surfaceIds.clipId})`}>
         <rect className='panel' fill={`url(#${surfaceIds.panelGradientId})`} x='16' y='16' width='388' height='148' rx='24' />
-        <ellipse cx='92' cy='42' fill='url(#${surfaceIds.accentGradientId})' opacity='0.16' rx='96' ry='26' />
-        <ellipse cx='318' cy='144' fill='url(#${surfaceIds.atmosphereGradientId})' opacity='0.95' rx='132' ry='30' />
+        <g data-testid='english-adverb-routine-atmosphere'>
+          <ellipse cx='92' cy='42' fill='url(#${surfaceIds.accentGradientId})' opacity='0.16' rx='96' ry='26' />
+          <ellipse cx='318' cy='144' fill='url(#${surfaceIds.atmosphereGradientId})' opacity='0.95' rx='132' ry='30' />
+        </g>
       </g>
-      <rect className='frame' x='22' y='22' width='376' height='136' rx='20' />
+      <rect className='frame' data-testid='english-adverb-routine-frame' x='22' y='22' width='376' height='136' rx='20' />
       {rows.map((row, idx) => (
         <g key={row.tag} transform={`translate(34, ${50 + idx * 42})`}>
           <rect className='lane' x='-10' y='-16' width='352' height='26' rx='13' />
@@ -170,10 +170,12 @@ export function EnglishAdverbWordOrderAnimation({ mode = 'mainVerb' }: { mode?: 
       </defs>
       <g clipPath={`url(#${surfaceIds.clipId})`}>
         <rect className='panel' fill={`url(#${surfaceIds.panelGradientId})`} x='18' y='18' width='364' height='114' rx='24' />
-        <ellipse cx='96' cy='34' fill='rgba(124, 58, 237, 0.12)' rx='88' ry='24' />
-        <ellipse cx='300' cy='122' fill='url(#${surfaceIds.atmosphereGradientId})' opacity='0.95' rx='126' ry='30' />
+        <g data-testid={`english-adverb-word-order-${mode}-atmosphere`}>
+          <ellipse cx='96' cy='34' fill='rgba(124, 58, 237, 0.12)' rx='88' ry='24' />
+          <ellipse cx='300' cy='122' fill='url(#${surfaceIds.atmosphereGradientId})' opacity='0.95' rx='126' ry='30' />
+        </g>
       </g>
-      <rect className='frame' x='24' y='24' width='352' height='102' rx='20' />
+      <rect className='frame' data-testid={`english-adverb-word-order-${mode}-frame`} x='24' y='24' width='352' height='102' rx='20' />
       <rect className='guide' x='32' y='52' width='336' height='42' rx='16' />
       <text className='tag' x='34' y='42'>{mainVerb ? 'before the main verb' : 'after be'}</text>
       <line className='order-line' x1='38' x2='360' y1='72' y2='72' />
@@ -229,10 +231,12 @@ export function EnglishAdverbSentenceRepairAnimation(): React.JSX.Element {
       </defs>
       <g clipPath={`url(#${surfaceIds.clipId})`}>
         <rect className='panel' fill={`url(#${surfaceIds.panelGradientId})`} x='16' y='16' width='388' height='138' rx='24' />
-        <ellipse cx='96' cy='40' fill='rgba(248, 113, 113, 0.12)' rx='88' ry='24' />
-        <ellipse cx='314' cy='136' fill='url(#${surfaceIds.atmosphereGradientId})' opacity='0.95' rx='130' ry='28' />
+        <g data-testid='english-adverb-sentence-repair-atmosphere'>
+          <ellipse cx='96' cy='40' fill='rgba(248, 113, 113, 0.12)' rx='88' ry='24' />
+          <ellipse cx='314' cy='136' fill='url(#${surfaceIds.atmosphereGradientId})' opacity='0.95' rx='130' ry='28' />
+        </g>
       </g>
-      <rect className='frame' x='22' y='22' width='376' height='126' rx='20' />
+      <rect className='frame' data-testid='english-adverb-sentence-repair-frame' x='22' y='22' width='376' height='126' rx='20' />
       <g className='wrong-line' transform='translate(36, 38)'>
         <rect className='card wrong-card' fill={`url(#${surfaceIds.accentGradientId})`} x='0' y='0' width='154' height='82' rx='18' />
         <rect fill='none' height='74' rx='14' stroke='rgba(255, 255, 255, 0.68)' strokeWidth='1.5' width='146' x='4' y='4' />
@@ -290,10 +294,12 @@ export function EnglishAdverbHabitCardAnimation(): React.JSX.Element {
       </defs>
       <g clipPath={`url(#${surfaceIds.clipId})`}>
         <rect className='panel' fill={`url(#${surfaceIds.panelGradientId})`} x='16' y='16' width='388' height='152' rx='24' />
-        <ellipse cx='96' cy='40' fill='rgba(34, 197, 94, 0.1)' rx='86' ry='26' />
-        <ellipse cx='308' cy='150' fill='url(#${surfaceIds.atmosphereGradientId})' opacity='0.95' rx='128' ry='28' />
+        <g data-testid='english-adverb-habit-card-atmosphere'>
+          <ellipse cx='96' cy='40' fill='rgba(34, 197, 94, 0.1)' rx='86' ry='26' />
+          <ellipse cx='308' cy='150' fill='url(#${surfaceIds.atmosphereGradientId})' opacity='0.95' rx='128' ry='28' />
+        </g>
       </g>
-      <rect className='frame' x='22' y='22' width='376' height='140' rx='20' />
+      <rect className='frame' data-testid='english-adverb-habit-card-frame' x='22' y='22' width='376' height='140' rx='20' />
       {rows.map((row, idx) => (
         <g key={row.label} transform={`translate(34, ${40 + idx * 40})`}>
           <rect className='card' fill='rgba(255, 255, 255, 0.66)' x='0' y='0' width='352' height='28' rx='14' />
@@ -348,10 +354,12 @@ export function EnglishAdverbPlaceRoutineAnimation(): React.JSX.Element {
       </defs>
       <g clipPath={`url(#${surfaceIds.clipId})`}>
         <rect className='panel' fill={`url(#${surfaceIds.panelGradientId})`} x='16' y='16' width='388' height='156' rx='24' />
-        <ellipse cx='102' cy='40' fill='rgba(56, 189, 248, 0.1)' rx='90' ry='26' />
-        <ellipse cx='310' cy='156' fill='url(#${surfaceIds.atmosphereGradientId})' opacity='0.95' rx='132' ry='30' />
+        <g data-testid='english-adverb-place-routine-atmosphere'>
+          <ellipse cx='102' cy='40' fill='rgba(56, 189, 248, 0.1)' rx='90' ry='26' />
+          <ellipse cx='310' cy='156' fill='url(#${surfaceIds.atmosphereGradientId})' opacity='0.95' rx='132' ry='30' />
+        </g>
       </g>
-      <rect className='frame' x='22' y='22' width='376' height='144' rx='20' />
+      <rect className='frame' data-testid='english-adverb-place-routine-frame' x='22' y='22' width='376' height='144' rx='20' />
       {places.map((place, idx) => (
         <g key={place.label} transform={`translate(${34 + idx * 122}, 38)`}>
           <rect className='card' fill='rgba(255, 255, 255, 0.68)' x='0' y='0' width='110' height='108' rx='18' />
@@ -359,9 +367,206 @@ export function EnglishAdverbPlaceRoutineAnimation(): React.JSX.Element {
           <text className='hint' x='14' y='42'>{place.count === 0 ? 'never' : place.count >= 6 ? 'usually' : 'sometimes'}</text>
           <line className='week-line' x1='16' y1='68' x2='94' y2='68' />
           {Array.from({ length: 7 }).map((_, dIdx) => (
-            <circle key={`${place.label}-${dIdx}`} className={cn('dot', dIdx < place.count && 'dot-active')} cx={16 + dIdx * 13} cy='68' r='5' fill={dIdx < place.count ? place.fill : undefined} style={dIdx < dIdx < place.count ? { animationDelay: `${dIdx * 0.08}s` } : undefined} />
+            <circle key={`${place.label}-${dIdx}`} className={cn('dot', dIdx < place.count && 'dot-active')} cx={16 + dIdx * 13} cy='68' r='5' fill={dIdx < place.count ? place.fill : undefined} style={dIdx < place.count ? { animationDelay: `${dIdx * 0.08}s` } : undefined} />
           ))}
           <text className='hint' x='14' y='94'>{place.count >= 6 ? 'I usually go here.' : place.count >= 1 ? 'I sometimes go here.' : 'I never go here.'}</text>
+        </g>
+      ))}
+    </svg>
+  );
+}
+
+export function EnglishAdverbActionStyleAnimation(): React.JSX.Element {
+  const surfaceIds = useEnglishAnimationSurfaceIds('english-adverb-action-style');
+
+  return (
+    <svg
+      aria-label='Animation: adverbs describe how an action happens.'
+      className='h-auto w-full'
+      data-testid='english-adverb-action-style-animation'
+      role='img'
+      viewBox='0 0 420 190'
+    >
+      <style>{`
+        .panel { stroke: rgba(139, 92, 246, 0.32); stroke-width: 2; }
+        .frame { fill: none; stroke: rgba(255,255,255,0.72); stroke-width: 1.6; }
+        .card { fill: rgba(255,255,255,0.7); stroke: rgba(255,255,255,0.82); stroke-width: 1.6; }
+        .label { font: 700 12px/1.2 "Space Grotesk", sans-serif; fill: #0f172a; }
+        .hint { font: 600 10px/1.2 "Space Grotesk", sans-serif; fill: #64748b; }
+        .runner { animation: runnerDash 1.5s ease-in-out infinite; }
+        .care { animation: carefulLift 2.2s ease-in-out infinite; }
+        .beauty { animation: beautyFloat 2.4s ease-in-out infinite; }
+        .bad { animation: badWobble 1.3s ease-in-out infinite; }
+        @keyframes runnerDash { 0%, 100% { transform: translateX(-4px); } 50% { transform: translateX(6px); } }
+        @keyframes carefulLift { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-2px); } }
+        @keyframes beautyFloat { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-3px); } }
+        @keyframes badWobble { 0%, 100% { transform: rotate(-5deg); } 50% { transform: rotate(6deg); } }
+        @media (prefers-reduced-motion: reduce) {
+          .runner, .care, .beauty, .bad { animation: none; }
+        }
+      `}</style>
+      <defs>
+        <clipPath id={surfaceIds.clipId}><rect x='16' y='16' width='388' height='158' rx='24' /></clipPath>
+        <linearGradient id={surfaceIds.panelGradientId} x1='16' x2='404' y1='16' y2='174' gradientUnits='userSpaceOnUse'>
+          <stop offset='0%' stopColor='#f5f3ff' />
+          <stop offset='55%' stopColor='#f8fafc' />
+          <stop offset='100%' stopColor='#eff6ff' />
+        </linearGradient>
+        <radialGradient id={surfaceIds.atmosphereGradientId} cx='50%' cy='38%' r='78%'>
+          <stop offset='0%' stopColor='rgba(139, 92, 246, 0.16)' />
+          <stop offset='100%' stopColor='rgba(139, 92, 246, 0)' />
+        </radialGradient>
+      </defs>
+      <g clipPath={`url(#${surfaceIds.clipId})`}>
+        <rect className='panel' fill={`url(#${surfaceIds.panelGradientId})`} x='16' y='16' width='388' height='158' rx='24' />
+        <g data-testid='english-adverb-action-style-atmosphere'>
+          <ellipse cx='94' cy='42' fill='rgba(56, 189, 248, 0.12)' rx='86' ry='24' />
+          <ellipse cx='314' cy='156' fill={`url(#${surfaceIds.atmosphereGradientId})`} opacity='0.95' rx='132' ry='30' />
+        </g>
+      </g>
+      <rect className='frame' data-testid='english-adverb-action-style-frame' x='22' y='22' width='376' height='146' rx='20' />
+      {[
+        { x: 34, y: 42, label: 'run fast', cls: 'runner', fill: '#38bdf8' },
+        { x: 220, y: 42, label: 'carry carefully', cls: 'care', fill: '#22c55e' },
+        { x: 34, y: 110, label: 'paint beautifully', cls: 'beauty', fill: '#c084fc' },
+        { x: 220, y: 110, label: 'play badly', cls: 'bad', fill: '#fb7185' },
+      ].map((item, index) => (
+        <g key={item.label} transform={`translate(${item.x}, ${item.y})`}>
+          <rect className='card' x='0' y='0' width='166' height='52' rx='18' />
+          <text className='label' x='16' y='20'>{item.label}</text>
+          <g className={item.cls} data-testid={`english-adverb-action-style-card-${index}`}>
+            <circle cx='38' cy='34' r='6' fill='#fcd7c0' />
+            <line x1='38' y1='40' x2='38' y2='52' stroke='#334155' strokeWidth='3' strokeLinecap='round' />
+            <line x1='38' y1='44' x2='28' y2='50' stroke='#334155' strokeWidth='3' strokeLinecap='round' />
+            <line x1='38' y1='44' x2='48' y2='50' stroke='#334155' strokeWidth='3' strokeLinecap='round' />
+            <line x1='38' y1='52' x2='28' y2='62' stroke='#334155' strokeWidth='3' strokeLinecap='round' />
+            <line x1='38' y1='52' x2='48' y2='62' stroke='#334155' strokeWidth='3' strokeLinecap='round' />
+            <rect x='88' y='20' width='48' height='20' rx='10' fill={item.fill} opacity='0.18' />
+            <text className='hint' x='96' y='33'>{index === 0 ? 'how fast?' : index === 1 ? 'how safe?' : index === 2 ? 'how pretty?' : 'how good?'}</text>
+          </g>
+        </g>
+      ))}
+    </svg>
+  );
+}
+
+export function EnglishAdverbTransformationAnimation(): React.JSX.Element {
+  const surfaceIds = useEnglishAnimationSurfaceIds('english-adverb-transformation');
+
+  return (
+    <svg
+      aria-label='Animation: adjective words change into adverbs.'
+      className='h-auto w-full'
+      data-testid='english-adverb-transformation-animation'
+      role='img'
+      viewBox='0 0 420 190'
+    >
+      <style>{`
+        .panel { stroke: rgba(16, 185, 129, 0.32); stroke-width: 2; }
+        .frame { fill: none; stroke: rgba(255,255,255,0.72); stroke-width: 1.6; }
+        .card { fill: rgba(255,255,255,0.74); stroke: rgba(255,255,255,0.86); stroke-width: 1.6; }
+        .label { font: 700 11px/1.2 "Space Grotesk", sans-serif; fill: #64748b; text-transform: uppercase; letter-spacing: 0.14em; }
+        .word { font: 700 15px/1.2 "Space Grotesk", sans-serif; fill: #0f172a; }
+        .arrow { stroke: #10b981; stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; fill: none; }
+      `}</style>
+      <defs>
+        <clipPath id={surfaceIds.clipId}><rect x='16' y='16' width='388' height='158' rx='24' /></clipPath>
+        <linearGradient id={surfaceIds.panelGradientId} x1='16' x2='404' y1='16' y2='174' gradientUnits='userSpaceOnUse'>
+          <stop offset='0%' stopColor='#ecfdf5' />
+          <stop offset='55%' stopColor='#f8fafc' />
+          <stop offset='100%' stopColor='#eff6ff' />
+        </linearGradient>
+        <radialGradient id={surfaceIds.atmosphereGradientId} cx='50%' cy='38%' r='78%'>
+          <stop offset='0%' stopColor='rgba(16, 185, 129, 0.16)' />
+          <stop offset='100%' stopColor='rgba(16, 185, 129, 0)' />
+        </radialGradient>
+      </defs>
+      <g clipPath={`url(#${surfaceIds.clipId})`}>
+        <rect className='panel' fill={`url(#${surfaceIds.panelGradientId})`} x='16' y='16' width='388' height='158' rx='24' />
+        <g data-testid='english-adverb-transformation-atmosphere'>
+          <ellipse cx='96' cy='42' fill='rgba(16, 185, 129, 0.12)' rx='86' ry='24' />
+          <ellipse cx='312' cy='156' fill={`url(#${surfaceIds.atmosphereGradientId})`} opacity='0.95' rx='130' ry='30' />
+        </g>
+      </g>
+      <rect className='frame' data-testid='english-adverb-transformation-frame' x='22' y='22' width='376' height='146' rx='20' />
+      {[
+        ['careful', 'carefully'],
+        ['beautiful', 'beautifully'],
+        ['good', 'well'],
+        ['fast', 'fast'],
+      ].map(([left, right], index) => {
+        const x = index % 2 === 0 ? 34 : 220;
+        const y = index < 2 ? 42 : 110;
+        return (
+          <g key={`${left}-${right}`} transform={`translate(${x}, ${y})`}>
+            <rect className='card' x='0' y='0' width='166' height='52' rx='18' />
+            <text className='label' x='16' y='18'>word pair</text>
+            <text className='word' x='16' y='38'>{left}</text>
+            <path className='arrow' d='M 74 30 L 100 30' />
+            <path className='arrow' d='M 92 22 L 100 30 L 92 38' />
+            <text className='word' x='110' y='38'>{right}</text>
+          </g>
+        );
+      })}
+    </svg>
+  );
+}
+
+export function EnglishAdverbRepairAnimation(): React.JSX.Element {
+  const surfaceIds = useEnglishAnimationSurfaceIds('english-adverb-repair');
+
+  return (
+    <svg
+      aria-label='Animation: wrong adverb forms change into the correct words.'
+      className='h-auto w-full'
+      data-testid='english-adverb-repair-animation'
+      role='img'
+      viewBox='0 0 420 180'
+    >
+      <style>{`
+        .panel { stroke: rgba(244, 63, 94, 0.32); stroke-width: 2; }
+        .frame { fill: none; stroke: rgba(255,255,255,0.72); stroke-width: 1.6; }
+        .card { fill: rgba(255,255,255,0.74); stroke-width: 2; }
+        .wrong { stroke: #fda4af; }
+        .right { stroke: #86efac; }
+        .label { font: 700 10px/1.2 "Space Grotesk", sans-serif; letter-spacing: 0.14em; text-transform: uppercase; }
+        .word { font: 700 13px/1.2 "Space Grotesk", sans-serif; fill: #0f172a; }
+        .arrow { stroke: #38bdf8; stroke-width: 4; stroke-linecap: round; stroke-linejoin: round; fill: none; }
+      `}</style>
+      <defs>
+        <clipPath id={surfaceIds.clipId}><rect x='16' y='16' width='388' height='148' rx='24' /></clipPath>
+        <linearGradient id={surfaceIds.panelGradientId} x1='16' x2='404' y1='16' y2='164' gradientUnits='userSpaceOnUse'>
+          <stop offset='0%' stopColor='#fff1f2' />
+          <stop offset='55%' stopColor='#f8fafc' />
+          <stop offset='100%' stopColor='#ecfdf5' />
+        </linearGradient>
+        <radialGradient id={surfaceIds.atmosphereGradientId} cx='50%' cy='38%' r='78%'>
+          <stop offset='0%' stopColor='rgba(244, 63, 94, 0.16)' />
+          <stop offset='100%' stopColor='rgba(244, 63, 94, 0)' />
+        </radialGradient>
+      </defs>
+      <g clipPath={`url(#${surfaceIds.clipId})`}>
+        <rect className='panel' fill={`url(#${surfaceIds.panelGradientId})`} x='16' y='16' width='388' height='148' rx='24' />
+        <g data-testid='english-adverb-repair-atmosphere'>
+          <ellipse cx='96' cy='42' fill='rgba(248, 113, 113, 0.12)' rx='86' ry='24' />
+          <ellipse cx='312' cy='154' fill={`url(#${surfaceIds.atmosphereGradientId})`} opacity='0.95' rx='130' ry='30' />
+        </g>
+      </g>
+      <rect className='frame' data-testid='english-adverb-repair-frame' x='22' y='22' width='376' height='136' rx='20' />
+      {[
+        ['I play tennis bad.', 'I play tennis badly.'],
+        ['He ran very fastly.', 'He ran very fast.'],
+        ['Do you speak English good?', 'Do you speak English well?'],
+      ].map(([wrong, right], index) => (
+        <g key={wrong} transform={`translate(34, ${38 + index * 38})`}>
+          <rect className='card wrong' x='0' y='0' width='150' height='28' rx='14' />
+          <text className='label' fill='#be123c' x='14' y='18'>wrong</text>
+          <text className='word' x='54' y='19'>{wrong}</text>
+          <path className='arrow' d='M 164 14 L 190 14' />
+          <path className='arrow' d='M 182 6 L 190 14 L 182 22' />
+          <rect className='card right' x='204' y='0' width='170' height='28' rx='14' />
+          <text className='label' fill='#15803d' x='218' y='18'>right</text>
+          <text className='word' x='254' y='19'>{right}</text>
         </g>
       ))}
     </svg>

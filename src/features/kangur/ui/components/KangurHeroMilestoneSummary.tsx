@@ -33,16 +33,19 @@ const hasMeaningfulProgress = (progress: KangurProgressState): boolean =>
   progress.lessonsCompleted > 0 ||
   (progress.dailyQuestsCompleted ?? 0) > 0;
 
-export default function KangurHeroMilestoneSummary({
-  className,
-  dataTestIdPrefix,
-  pinnedTrackKeys,
-  trackDataTestIdPrefix,
-  showPlaceholderForMissingPinnedTracks = false,
-  trackLimit = 2,
-  trackMinimumItems,
-  progress,
-}: KangurHeroMilestoneSummaryProps): React.JSX.Element | null {
+export default function KangurHeroMilestoneSummary(
+  props: KangurHeroMilestoneSummaryProps
+): React.JSX.Element | null {
+  const {
+    className,
+    dataTestIdPrefix,
+    pinnedTrackKeys,
+    trackDataTestIdPrefix,
+    showPlaceholderForMissingPinnedTracks = false,
+    trackLimit = 2,
+    trackMinimumItems,
+    progress,
+  } = props;
   const translations = useTranslations('KangurProgressRuntime');
 
   if (!hasMeaningfulProgress(progress)) {

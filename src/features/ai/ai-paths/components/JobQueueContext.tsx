@@ -31,16 +31,17 @@ type JobQueueProviderProps = {
   isActive?: boolean;
 };
 
-export function JobQueueProvider({
-  children,
-  activePathId,
-  initialSearchQuery,
-  initialExpandedRunId,
-  sourceFilter,
-  sourceMode = 'include',
-  visibility = 'scoped',
-  isActive = true,
-}: JobQueueProviderProps): JSX.Element {
+export function JobQueueProvider(props: JobQueueProviderProps): JSX.Element {
+  const {
+    children,
+    activePathId,
+    initialSearchQuery,
+    initialExpandedRunId,
+    sourceFilter,
+    sourceMode = 'include',
+    visibility = 'scoped',
+    isActive = true,
+  } = props;
   const { actionsValue, stateValue } = useJobQueueRuntime({
     activePathId,
     initialSearchQuery,

@@ -7,10 +7,15 @@ const mockState = vi.hoisted(() => ({
   jsonViewerProps: [] as Array<Record<string, unknown>>,
 }));
 
-vi.mock('@/features/ai/ai-paths/context', () => ({
-  useRuntimeState: () => ({
+function getRuntimeStateMock() {
+  const runtimeState = {
     runtimeState: mockState.runtimeState,
-  }),
+  };
+  return runtimeState;
+}
+
+vi.mock('@/features/ai/ai-paths/context', () => ({
+  useRuntimeState: getRuntimeStateMock,
 }));
 
 vi.mock('@/shared/ui', () => ({

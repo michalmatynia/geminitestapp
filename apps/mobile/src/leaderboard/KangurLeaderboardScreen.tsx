@@ -1,6 +1,5 @@
 import { Link, useRouter, type Href } from 'expo-router';
 import { Pressable, ScrollView, Text, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { createKangurDuelsHref } from '../duels/duelsHref';
 import { useKangurMobileI18n } from '../i18n/kangurMobileI18n';
@@ -10,6 +9,13 @@ import {
 } from '../lessons/useKangurMobileLessonCheckpoints';
 import { createKangurPlanHref } from '../plan/planHref';
 import { formatKangurMobileScoreDateTime } from '../scores/mobileScoreSummary';
+import {
+  KangurMobileFilterChip,
+  KangurMobileLinkButton as LinkButton,
+  KangurMobileScrollScreen,
+  KangurMobileSectionTitle,
+  KangurMobileSummaryChip,
+} from '../shared/KangurMobileUi';
 import { translateKangurMobileActionLabel } from '../shared/translateKangurMobileActionLabel';
 import { useKangurMobileLeaderboard } from './useKangurMobileLeaderboard';
 import {
@@ -43,30 +49,7 @@ function FilterChip({
   selected: boolean;
   onPress: () => void;
 }): React.JSX.Element {
-  return (
-    <Pressable
-      accessibilityRole='button'
-      onPress={onPress}
-      style={{
-        borderRadius: 999,
-        borderWidth: 1,
-        borderColor: selected ? '#1d4ed8' : '#cbd5e1',
-        backgroundColor: selected ? '#dbeafe' : '#ffffff',
-        paddingHorizontal: 14,
-        paddingVertical: 10,
-      }}
-    >
-      <Text
-        style={{
-          color: selected ? '#1d4ed8' : '#334155',
-          fontSize: 13,
-          fontWeight: '700',
-        }}
-      >
-        {label}
-      </Text>
-    </Pressable>
-  );
+  return <KangurMobileFilterChip label={label} onPress={onPress} selected={selected} />;
 }
 
 function SectionTitle({
@@ -76,28 +59,7 @@ function SectionTitle({
   title: string;
   subtitle: string;
 }): React.JSX.Element {
-  return (
-    <View style={{ gap: 6 }}>
-      <Text
-        style={{
-          fontSize: 28,
-          fontWeight: '800',
-          color: '#0f172a',
-        }}
-      >
-        {title}
-      </Text>
-      <Text
-        style={{
-          color: '#475569',
-          fontSize: 15,
-          lineHeight: 22,
-        }}
-      >
-        {subtitle}
-      </Text>
-    </View>
-  );
+  return <KangurMobileSectionTitle subtitle={subtitle} title={title} />;
 }
 
 function SummaryChip({
@@ -112,19 +74,12 @@ function SummaryChip({
   textColor?: string;
 }): React.JSX.Element {
   return (
-    <View
-      style={{
-        alignSelf: 'flex-start',
-        borderRadius: 999,
-        borderWidth: 1,
-        borderColor,
-        backgroundColor,
-        paddingHorizontal: 12,
-        paddingVertical: 7,
-      }}
-    >
-      <Text style={{ color: textColor, fontSize: 12, fontWeight: '700' }}>{label}</Text>
-    </View>
+    <KangurMobileSummaryChip
+      backgroundColor={backgroundColor}
+      borderColor={borderColor}
+      label={label}
+      textColor={textColor}
+    />
   );
 }
 
@@ -581,41 +536,27 @@ export function KangurLeaderboardScreen(): React.JSX.Element {
   };
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: '#fffaf2' }}>
-      <ScrollView
-        contentContainerStyle={{
-          gap: 18,
-          paddingHorizontal: 20,
-          paddingVertical: 24,
-        }}
-      >
+    <KangurMobileScrollScreen
+      contentContainerStyle={{
+        gap: 18,
+        paddingHorizontal: 20,
+        paddingVertical: 24,
+      }}
+    >
         <View
           style={{
             alignItems: 'flex-start',
             gap: 14,
           }}
         >
-          <Link href='/' asChild>
-            <Pressable
-              accessibilityRole='button'
-              style={{
-                borderRadius: 999,
-                backgroundColor: '#ffffff',
-                borderWidth: 1,
-                borderColor: '#e2e8f0',
-                paddingHorizontal: 14,
-                paddingVertical: 10,
-              }}
-            >
-              <Text style={{ color: '#0f172a', fontWeight: '700' }}>
-                {copy({
-                  de: 'Zurück',
-                  en: 'Back',
-                  pl: 'Wróć',
-                })}
-              </Text>
-            </Pressable>
-          </Link>
+          <LinkButton
+            href='/'
+            label={copy({
+              de: 'Zurück',
+              en: 'Back',
+              pl: 'Wróć',
+            })}
+          />
 
           <SectionTitle
             title={copy({
@@ -1758,8 +1699,7 @@ export function KangurLeaderboardScreen(): React.JSX.Element {
             </View>
           )}
         </View>
-      </ScrollView>
-    </SafeAreaView>
+    </KangurMobileScrollScreen>
   );
 }
 

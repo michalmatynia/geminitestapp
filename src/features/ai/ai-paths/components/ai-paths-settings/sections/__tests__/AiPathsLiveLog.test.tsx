@@ -6,10 +6,15 @@ const mockState = vi.hoisted(() => ({
   runtimeEvents: [] as Array<Record<string, unknown>>,
 }));
 
-vi.mock('@/features/ai/ai-paths/context', () => ({
-  useRuntimeState: () => ({
+function getRuntimeStateMock() {
+  const runtimeState = {
     runtimeEvents: mockState.runtimeEvents,
-  }),
+  };
+  return runtimeState;
+}
+
+vi.mock('@/features/ai/ai-paths/context', () => ({
+  useRuntimeState: getRuntimeStateMock,
 }));
 
 vi.mock('@/shared/ui', () => ({

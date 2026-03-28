@@ -69,7 +69,7 @@ export type KangurMiniGameFinishVariantPropsDto = KangurMiniGameFinishActionProp
 };
 export type KangurMiniGameFinishVariantProps = KangurMiniGameFinishVariantPropsDto;
 
-export type KangurMiniGameFeedbackBaseDto<TKind extends string> = {
+type KangurMiniGameFeedbackBaseDto<TKind extends string> = {
   kind: TKind;
   text: string;
 };

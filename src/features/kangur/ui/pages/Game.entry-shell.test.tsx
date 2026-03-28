@@ -9,12 +9,20 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { createDefaultKangurProgressState } from '@/features/kangur/shared/contracts/kangur';
 import { createTestQueryClient } from '@/__tests__/test-utils';
-const { disabledDocsTooltipsMock, useKangurGameRuntimeMock, useKangurSubjectFocusMock } =
+const {
+  disabledDocsTooltipsMock,
+  getDisabledDocsTooltipsMock,
+  useKangurGameRuntimeMock,
+  useKangurSubjectFocusMock,
+} =
   vi.hoisted(() => ({
     disabledDocsTooltipsMock: { enabled: false },
+    getDisabledDocsTooltipsMock: vi.fn(),
     useKangurGameRuntimeMock: vi.fn(),
     useKangurSubjectFocusMock: vi.fn(),
   }));
+
+getDisabledDocsTooltipsMock.mockReturnValue(disabledDocsTooltipsMock);
 
 vi.mock('framer-motion', () => ({
   AnimatePresence: ({ children }: { children: React.ReactNode }) => <>{children}</>,
@@ -52,7 +60,7 @@ vi.mock('@/features/kangur/ui/context/KangurAiTutorContext', () => ({
 
 vi.mock('@/features/kangur/docs/tooltips', () => ({
   KangurDocsTooltipEnhancer: () => null,
-  useKangurDocsTooltips: () => disabledDocsTooltipsMock,
+  useKangurDocsTooltips: getDisabledDocsTooltipsMock,
 }));
 
 vi.mock('@/features/kangur/ui/components/KangurGameNavigationWidget', () => ({

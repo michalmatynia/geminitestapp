@@ -8,7 +8,7 @@ import {
   ActionMenu,
   DropdownMenuItem,
   DropdownMenuSeparator,
-  UI_STACK_COMPACT_CLASSNAME,
+  UI_STACK_TIGHT_CLASSNAME,
   UI_CENTER_ROW_SPACED_CLASSNAME,
 } from '@/shared/ui';
 import {
@@ -36,7 +36,7 @@ export function DatabaseMobileCards(): React.JSX.Element {
   }
 
   return (
-    <div className={UI_STACK_COMPACT_CLASSNAME}>
+    <div className={UI_STACK_TIGHT_CLASSNAME}>
       {data.map((backup) => (
         <Card key={backup.name} className='bg-card/40 p-4 space-y-3'>
           <div className={UI_CENTER_ROW_SPACED_CLASSNAME}>

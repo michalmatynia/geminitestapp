@@ -4,50 +4,54 @@ import React from 'react';
 import { render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 
-vi.mock('@/shared/ui/pagination', () => ({
-  Pagination: (props: {
-    className?: string;
-    onPageChange: (page: number) => void;
-    onPageSizeChange: (pageSize: number) => void;
-    page: number;
-    pageSize: number;
-    pageSizeOptions: number[];
-    showInfo: boolean;
-    totalCount: number;
-    variant: string;
-  }) => {
-    const {
-      className,
-      onPageChange,
-      onPageSizeChange,
-      page,
-      pageSize,
-      pageSizeOptions,
-      showInfo,
-      totalCount,
-      variant,
-    } = props;
+type PaginationMockProps = {
+  className?: string;
+  onPageChange: (page: number) => void;
+  onPageSizeChange: (pageSize: number) => void;
+  page: number;
+  pageSize: number;
+  pageSizeOptions: number[];
+  showInfo: boolean;
+  totalCount: number;
+  variant: string;
+};
 
-    return (
-      <div
-        data-testid='pagination'
-        data-class-name={className}
-        data-page={String(page)}
-        data-page-size={String(pageSize)}
-        data-page-size-options={pageSizeOptions.join(',')}
-        data-show-info={String(showInfo)}
-        data-total-count={String(totalCount)}
-        data-variant={variant}
-      >
-        <button type='button' onClick={() => onPageChange(3)}>
-          page
-        </button>
-        <button type='button' onClick={() => onPageSizeChange(50)}>
-          size
-        </button>
-      </div>
-    );
-  },
+function MockPagination(props: PaginationMockProps): React.JSX.Element {
+  const {
+    className,
+    onPageChange,
+    onPageSizeChange,
+    page,
+    pageSize,
+    pageSizeOptions,
+    showInfo,
+    totalCount,
+    variant,
+  } = props;
+
+  return (
+    <div
+      data-testid='pagination'
+      data-class-name={className}
+      data-page={String(page)}
+      data-page-size={String(pageSize)}
+      data-page-size-options={pageSizeOptions.join(',')}
+      data-show-info={String(showInfo)}
+      data-total-count={String(totalCount)}
+      data-variant={variant}
+    >
+      <button type='button' onClick={() => onPageChange(3)}>
+        page
+      </button>
+      <button type='button' onClick={() => onPageSizeChange(50)}>
+        size
+      </button>
+    </div>
+  );
+}
+
+vi.mock('@/shared/ui/pagination', () => ({
+  Pagination: MockPagination,
 }));
 
 import { Pagination } from '@/shared/ui/pagination';

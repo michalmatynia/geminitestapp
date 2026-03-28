@@ -3,12 +3,14 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const {
   routerPushMock,
+  routerReplaceMock,
   searchParamsGetMock,
   routeParamsMock,
   toastMock,
   fetchMock,
 } = vi.hoisted(() => ({
   routerPushMock: vi.fn(),
+  routerReplaceMock: vi.fn(),
   searchParamsGetMock: vi.fn<(key: string) => string | null>(),
   routeParamsMock: { threadId: 'thread-1' as string | string[] | undefined },
   toastMock: vi.fn(),
@@ -18,6 +20,7 @@ const {
 vi.mock('next/navigation', () => ({
   useRouter: () => ({
     push: routerPushMock,
+    replace: routerReplaceMock,
   }),
   useSearchParams: () => ({
     get: searchParamsGetMock,
@@ -42,6 +45,75 @@ vi.mock('@/features/document-editor/components/DocumentWysiwygEditor', () => ({
       onChange={(event) => onChange(event.target.value)}
     />
   ),
+}));
+
+vi.mock('@/shared/ui/FolderTreePanel', () => ({
+  FolderTreePanel: ({
+    header,
+    children,
+  }: {
+    header?: React.ReactNode;
+    children: React.ReactNode;
+  }) => (
+    <section>
+      {header}
+      {children}
+    </section>
+  ),
+}));
+
+vi.mock('@/features/foldertree/public', () => ({
+  useMasterFolderTreeShell: ({
+    nodes,
+  }: {
+    nodes: Array<Record<string, unknown>>;
+  }) => ({
+    controller: { nodes },
+    appearance: { rootDropUi: null },
+    viewport: { scrollToNodeRef: { current: null } },
+  }),
+  FolderTreeViewportV2: ({
+    controller,
+    renderNode,
+    emptyLabel,
+  }: {
+    controller: { nodes: Array<Record<string, unknown>> };
+    renderNode: (input: {
+      node: Record<string, unknown>;
+      depth: number;
+      hasChildren: boolean;
+      isExpanded: boolean;
+      isSelected: boolean;
+      select: (event: React.MouseEvent<HTMLButtonElement>) => void;
+      toggleExpand: () => void;
+    }) => React.ReactNode;
+    emptyLabel?: string;
+  }) => {
+    const nodes = controller.nodes ?? [];
+    if (nodes.length === 0) return <div>{emptyLabel ?? 'No nodes'}</div>;
+    return (
+      <div>
+        {nodes.map((node) => {
+          const nodeId = String(node['id'] ?? '');
+          const parentId = node['parentId'];
+          const hasChildren = nodes.some((entry) => entry['parentId'] === nodeId);
+          return (
+            <div key={nodeId}>
+              {renderNode({
+                node,
+                depth: parentId ? 1 : 0,
+                hasChildren,
+                isExpanded: true,
+                isSelected: false,
+                select: () => {},
+                toggleExpand: () => {},
+              })}
+            </div>
+          );
+        })}
+      </div>
+    );
+  },
 }));
 
 vi.mock('@/shared/ui', () => ({
@@ -238,6 +310,11 @@ describe('AdminFilemakerMail pages', () => {
     const { AdminFilemakerMailPage } = await import(
       '@/features/filemaker/pages/AdminFilemakerMailPage'
     );
+    searchParamsGetMock.mockImplementation((key: string) => {
+      if (key === 'accountId') return 'account-1';
+      if (key === 'mailboxPath') return 'INBOX';
+      return null;
+    });
     const account = {
       id: 'account-1',
       name: 'Support inbox',
@@ -266,10 +343,25 @@ describe('AdminFilemakerMail pages', () => {
     };
     const thread = {
       id: 'thread-1',
+      accountId: 'account-1',
       subject: 'Welcome',
       participantSummary: [{ address: 'jane@example.com', name: 'Jane' }],
       snippet: 'Hello',
       mailboxPath: 'INBOX',
+      mailboxRole: 'inbox',
+      normalizedSubject: 'Welcome',
+      relatedPersonIds: [],
+      relatedOrganizationIds: [],
+      messageCount: 1,
+      unreadCount: 1,
+      lastMessageAt: '2026-03-28T10:00:00.000Z',
+    };
+    const folder = {
+      id: 'account-1::INBOX',
+      accountId: 'account-1',
+      mailboxPath: 'INBOX',
+      mailboxRole: 'inbox',
+      threadCount: 1,
       unreadCount: 1,
       lastMessageAt: '2026-03-28T10:00:00.000Z',
     };
@@ -278,6 +370,9 @@ describe('AdminFilemakerMail pages', () => {
       const url = String(input);
       if (url === '/api/filemaker/mail/accounts' && !init?.method) {
         return jsonResponse({ accounts: [account] });
+      }
+      if (url === '/api/filemaker/mail/folders' && !init?.method) {
+        return jsonResponse({ folders: [folder] });
       }
       if (url.startsWith('/api/filemaker/mail/threads')) {
         return jsonResponse({ threads: [thread] });
@@ -296,10 +391,13 @@ describe('AdminFilemakerMail pages', () => {
     render(<AdminFilemakerMailPage />);
 
     await screen.findByText('Support inbox');
-    expect(screen.getByText('Welcome')).toBeInTheDocument();
+    expect(await screen.findByText('Welcome')).toBeInTheDocument();
+    expect(routerReplaceMock).not.toHaveBeenCalled();
 
-    fireEvent.click(screen.getByRole('button', { name: 'Compose Email' }));
-    expect(routerPushMock).toHaveBeenCalledWith('/admin/filemaker/mail/compose');
+    fireEvent.click(screen.getAllByRole('button', { name: 'Compose' })[1]!);
+    expect(routerPushMock).toHaveBeenCalledWith(
+      '/admin/filemaker/mail/compose?accountId=account-1&mailboxPath=INBOX'
+    );
 
     fireEvent.click(screen.getByRole('button', { name: 'Sync' }));
 
@@ -310,31 +408,33 @@ describe('AdminFilemakerMail pages', () => {
       );
     });
 
-    fireEvent.change(screen.getByPlaceholderText('Primary support inbox'), {
+    fireEvent.click(screen.getByRole('button', { name: 'New Mailbox' }));
+
+    fireEvent.change(screen.getByLabelText('Mailbox name'), {
       target: { value: 'Primary inbox' },
     });
-    fireEvent.change(screen.getByPlaceholderText('support@example.com'), {
+    fireEvent.change(screen.getByLabelText('Email address'), {
       target: { value: 'primary@example.com' },
     });
-    fireEvent.change(screen.getByPlaceholderText('imap.example.com'), {
+    fireEvent.change(screen.getByLabelText('IMAP host'), {
       target: { value: 'imap.primary.test' },
     });
-    fireEvent.change(screen.getByPlaceholderText('smtp.example.com'), {
+    fireEvent.change(screen.getByLabelText('SMTP host'), {
       target: { value: 'smtp.primary.test' },
     });
-    fireEvent.change(screen.getAllByRole('textbox')[4], {
+    fireEvent.change(screen.getByLabelText('IMAP user'), {
       target: { value: 'imap-user' },
     });
-    fireEvent.change(screen.getAllByRole('textbox')[6], {
+    fireEvent.change(screen.getByLabelText('SMTP user'), {
       target: { value: 'smtp-user' },
     });
-    fireEvent.change(screen.getByPlaceholderText('INBOX, Sent'), {
+    fireEvent.change(screen.getByLabelText('Mailbox allowlist'), {
       target: { value: 'INBOX, Sent' },
     });
-    fireEvent.change(screen.getAllByDisplayValue('')[0], {
+    fireEvent.change(screen.getByLabelText('IMAP password'), {
       target: { value: 'imap-pass' },
     });
-    fireEvent.change(screen.getAllByDisplayValue('')[1], {
+    fireEvent.change(screen.getByLabelText('SMTP password'), {
       target: { value: 'smtp-pass' },
     });
 
@@ -361,7 +461,7 @@ describe('AdminFilemakerMail pages', () => {
       '@/features/filemaker/pages/AdminFilemakerMailComposePage'
     );
     searchParamsGetMock.mockImplementation((key: string) =>
-      key === 'accountId' ? 'account-1' : null
+      key === 'accountId' ? 'account-1' : key === 'mailboxPath' ? 'INBOX' : null
     );
 
     fetchMock.mockImplementation(async (input: RequestInfo | URL, init?: RequestInit) => {
@@ -422,7 +522,9 @@ describe('AdminFilemakerMail pages', () => {
       expect(payload.bodyHtml).toBe('<p>Hello team</p>');
     });
 
-    expect(routerPushMock).toHaveBeenCalledWith('/admin/filemaker/mail/threads/thread-99');
+    expect(routerPushMock).toHaveBeenCalledWith(
+      '/admin/filemaker/mail/threads/thread-99?accountId=account-1&mailboxPath=INBOX'
+    );
     expect(toastMock).toHaveBeenCalledWith('Email sent.', { variant: 'success' });
   });
 
@@ -431,6 +533,9 @@ describe('AdminFilemakerMail pages', () => {
       '@/features/filemaker/pages/AdminFilemakerMailThreadPage'
     );
     routeParamsMock.threadId = 'thread%201';
+    searchParamsGetMock.mockImplementation((key: string) =>
+      key === 'accountId' ? 'account-1' : key === 'mailboxPath' ? 'INBOX' : null
+    );
 
     let threadLoads = 0;
     fetchMock.mockImplementation(async (input: RequestInfo | URL, init?: RequestInit) => {
@@ -510,5 +615,10 @@ describe('AdminFilemakerMail pages', () => {
       expect(threadLoads).toBe(2);
     });
     expect(toastMock).toHaveBeenCalledWith('Reply sent.', { variant: 'success' });
+
+    fireEvent.click(screen.getByRole('button', { name: 'Back to Mail' }));
+    expect(routerPushMock).toHaveBeenCalledWith(
+      '/admin/filemaker/mail?accountId=account-1&mailboxPath=INBOX'
+    );
   });
 });

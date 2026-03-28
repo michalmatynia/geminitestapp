@@ -132,8 +132,19 @@ vi.mock('next/image', () => ({
   ),
 }));
 
-vi.mock('../KangurAiTutorMoodAvatar', () => ({
-  KangurAiTutorMoodAvatar: ({
+type MoodAvatarMockProps = {
+  avatarImageUrl?: string | null;
+  className?: string;
+  fallbackIconClassName?: string;
+  imgClassName?: string;
+  label: string;
+  svgClassName?: string;
+  svgContent?: string | null;
+  'data-testid'?: string;
+};
+
+function MockKangurAiTutorMoodAvatar(props: MoodAvatarMockProps): React.JSX.Element {
+  const {
     avatarImageUrl,
     className,
     fallbackIconClassName,
@@ -142,16 +153,9 @@ vi.mock('../KangurAiTutorMoodAvatar', () => ({
     svgClassName,
     svgContent,
     'data-testid': dataTestId,
-  }: {
-    avatarImageUrl?: string | null;
-    className?: string;
-    fallbackIconClassName?: string;
-    imgClassName?: string;
-    label: string;
-    svgClassName?: string;
-    svgContent?: string | null;
-    'data-testid'?: string;
-  }) => (
+  } = props;
+
+  return (
     <div aria-label={label} className={className} data-testid={dataTestId} role='img'>
       {avatarImageUrl ? (
         <img alt={label} className={imgClassName} src={avatarImageUrl} />
@@ -161,7 +165,11 @@ vi.mock('../KangurAiTutorMoodAvatar', () => ({
         <svg aria-hidden='true' className={fallbackIconClassName} />
       )}
     </div>
-  ),
+  );
+}
+
+vi.mock('../KangurAiTutorMoodAvatar', () => ({
+  KangurAiTutorMoodAvatar: MockKangurAiTutorMoodAvatar,
 }));
 
 vi.mock('@/features/kangur/shared/providers/SettingsStoreProvider', () => ({

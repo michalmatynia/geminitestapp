@@ -87,13 +87,16 @@ vi.mock('@/shared/ui/QueryErrorBoundary', () => ({
   QueryErrorBoundary: queryErrorBoundaryMock,
 }));
 
-vi.mock('@/features/kangur/public', () => ({
-  __esModule: true,
-  FrontendPublicOwnerProvider: frontendPublicOwnerProviderMock,
-  FrontendPublicOwnerShellClient: frontendPublicOwnerShellClientMock,
-  KangurSSRSkeleton: kangurSSRSkeletonMock,
-  KangurServerShell: kangurServerShellMock,
-}));
+vi.mock('@/features/kangur/public', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@/features/kangur/public')>();
+  return {
+    ...actual,
+    FrontendPublicOwnerProvider: frontendPublicOwnerProviderMock,
+    FrontendPublicOwnerShellClient: frontendPublicOwnerShellClientMock,
+    KangurSSRSkeleton: kangurSSRSkeletonMock,
+    KangurServerShell: kangurServerShellMock,
+  };
+});
 
 describe('frontend layout bootstrap', () => {
   beforeEach(() => {

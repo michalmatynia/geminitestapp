@@ -354,6 +354,19 @@ export const KANGUR_LAUNCHABLE_GAME_RUNTIME_SPECS = Object.freeze({
       shellTestId: 'kangur-english-adjectives-quiz-top-section',
     },
   }),
+  english_adverbs_quiz: createLaunchableGameRuntimeSpec({
+    kind: 'launchable_game_screen',
+    screen: 'english_adverbs_quiz',
+    engineId: 'sentence-builder-engine',
+    rendererId: 'english_adverbs_action_game',
+    finishMode: 'return_to_game_home',
+    finishLabelProp: 'finishLabel',
+    shell: {
+      accent: 'violet',
+      icon: '🎭',
+      shellTestId: 'kangur-english-adverbs-quiz-top-section',
+    },
+  }),
   english_adverbs_frequency_quiz: createLaunchableGameRuntimeSpec({
     kind: 'launchable_game_screen',
     screen: 'english_adverbs_frequency_quiz',

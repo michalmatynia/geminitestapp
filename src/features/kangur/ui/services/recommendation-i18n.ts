@@ -46,6 +46,7 @@ const ACTIVITY_LABEL_KEY_BY_PRIMARY: Record<string, string> = {
   english_subject_verb_agreement_quiz: 'english_subject_verb_agreement',
   english_articles_drag_drop: 'english_articles',
   english_adjectives_scene_studio: 'english_adjectives',
+  english_adverbs_action_studio: 'english_adverbs',
   english_adverbs_frequency_routine_studio: 'english_adverbs_frequency',
   english_prepositions_quiz: 'english_prepositions_time_place',
   english_prepositions_sort: 'english_prepositions_time_place',

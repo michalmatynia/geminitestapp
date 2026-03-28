@@ -1,4 +1,8 @@
 import { describe, expect, it } from 'vitest';
+import {
+  KANGUR_LEGACY_LESSON_SECTION_GAME_COPY_KEYS,
+  KANGUR_LEGACY_LESSON_SHELL_TITLE_KEY,
+} from '@/shared/contracts/kangur-lesson-templates.shared';
 
 import {
   ADDING_LESSON_COMPONENT_CONTENT,
@@ -33,6 +37,18 @@ type LegacyShellKey = 'game' | 'draw' | 'synthesis';
 
 type LegacyShellContent = Record<string, unknown> &
   Partial<Record<LegacyShellKey, Record<string, unknown>>>;
+
+const LEGACY_SECTION_GAME_COPY_LABEL = KANGUR_LEGACY_LESSON_SECTION_GAME_COPY_KEYS.join(' / ');
+
+const expectNoLegacySectionGameCopyKeys = (value: unknown) => {
+  for (const key of KANGUR_LEGACY_LESSON_SECTION_GAME_COPY_KEYS) {
+    expect(value).not.toHaveProperty(key);
+  }
+};
+
+const expectNoLegacyShellTitleKey = (value: unknown) => {
+  expect(value).not.toHaveProperty(KANGUR_LEGACY_LESSON_SHELL_TITLE_KEY);
+};
 
 const legacyShellNormalizationCases = [
   {
@@ -418,7 +434,7 @@ describe('lesson-template-component-content', () => {
     ).toThrow('Section ids must match the lesson family template.');
   });
 
-  it('normalizes legacy alphabet gameStage fields when resolving template content', () => {
+  it(`normalizes legacy alphabet ${LEGACY_SECTION_GAME_COPY_LABEL} fields when resolving template content`, () => {
     const resolved = resolveKangurLessonTemplateComponentContent(
       'alphabet_words',
       withLegacyAlphabetWordsGameCopy('Legacy game title', 'Legacy game description'),
@@ -440,11 +456,10 @@ describe('lesson-template-component-content', () => {
         ? resolved.sections.find((section) => section.id === 'game_words')
         : null;
 
-    expect(normalizedGameSection).not.toHaveProperty('gameStageTitle');
-    expect(normalizedGameSection).not.toHaveProperty('gameStageDescription');
+    expectNoLegacySectionGameCopyKeys(normalizedGameSection);
   });
 
-  it('normalizes legacy music gameStage fields during JSON parsing', () => {
+  it(`normalizes legacy music ${LEGACY_SECTION_GAME_COPY_LABEL} fields during JSON parsing`, () => {
     const parsed = parseKangurLessonTemplateComponentContentJson(
       'music_diatonic_scale',
       JSON.stringify(
@@ -469,15 +484,15 @@ describe('lesson-template-component-content', () => {
       },
     });
 
-    expect(parsed?.gameRepeatSection).not.toHaveProperty('gameStageTitle');
-    expect(parsed?.gameRepeatSection).not.toHaveProperty('gameStageDescription');
-    expect(parsed?.gameFreeplaySection).not.toHaveProperty('gameStageTitle');
-    expect(parsed?.gameFreeplaySection).not.toHaveProperty('gameStageDescription');
+    expectNoLegacySectionGameCopyKeys(parsed?.gameRepeatSection);
+    expectNoLegacySectionGameCopyKeys(parsed?.gameFreeplaySection);
   });
 
   legacyShellNormalizationCases.forEach(
     ({ componentId, kind, content, label, shellKey, resolveLegacyTitle }) => {
-      it(`normalizes legacy ${label} stageTitle fields when resolving template content`, () => {
+      it(
+        `normalizes legacy ${label} ${KANGUR_LEGACY_LESSON_SHELL_TITLE_KEY} fields when resolving template content`,
+        () => {
         const resolved = resolveKangurLessonTemplateComponentContent(
           componentId,
           withLegacyLessonShellTitle(content, shellKey, resolveLegacyTitle) as never,
@@ -489,14 +504,13 @@ describe('lesson-template-component-content', () => {
             gameTitle: resolveLegacyTitle,
           },
         });
-        expect((resolved as Record<string, unknown> | null)?.[shellKey]).not.toHaveProperty(
-          'stageTitle',
-        );
-      });
+        expectNoLegacyShellTitleKey((resolved as Record<string, unknown> | null)?.[shellKey]);
+      },
+      );
     },
   );
 
-  it('serializes legacy gameStage fields as normalized gameTitle fields', () => {
+  it(`serializes legacy ${LEGACY_SECTION_GAME_COPY_LABEL} fields as normalized gameTitle fields`, () => {
     const serializedAlphabet = serializeKangurLessonTemplateComponentContent(
       'alphabet_words',
       withLegacyAlphabetWordsGameCopy(
@@ -515,8 +529,7 @@ describe('lesson-template-component-content', () => {
       gameTitle: 'Legacy serialized game title',
       gameDescription: 'Legacy serialized game description',
     });
-    expect(serializedAlphabetGameSection).not.toHaveProperty('gameStageTitle');
-    expect(serializedAlphabetGameSection).not.toHaveProperty('gameStageDescription');
+    expectNoLegacySectionGameCopyKeys(serializedAlphabetGameSection);
 
     const serializedMusic = serializeKangurLessonTemplateComponentContent(
       'music_diatonic_scale',
@@ -536,19 +549,19 @@ describe('lesson-template-component-content', () => {
       gameTitle: 'Legacy serialized repeat game',
       gameDescription: 'Legacy serialized repeat description',
     });
-    expect(serializedMusicJson.gameRepeatSection).not.toHaveProperty('gameStageTitle');
-    expect(serializedMusicJson.gameRepeatSection).not.toHaveProperty('gameStageDescription');
+    expectNoLegacySectionGameCopyKeys(serializedMusicJson.gameRepeatSection);
     expect(serializedMusicJson.gameFreeplaySection).toMatchObject({
       gameTitle: 'Legacy serialized freeplay game',
       gameDescription: 'Legacy serialized freeplay description',
     });
-    expect(serializedMusicJson.gameFreeplaySection).not.toHaveProperty('gameStageTitle');
-    expect(serializedMusicJson.gameFreeplaySection).not.toHaveProperty('gameStageDescription');
+    expectNoLegacySectionGameCopyKeys(serializedMusicJson.gameFreeplaySection);
   });
 
   legacyShellNormalizationCases.forEach(
     ({ componentId, content, label, shellKey, serializedLegacyTitle }) => {
-      it(`serializes legacy ${label} stageTitle fields as normalized gameTitle fields`, () => {
+      it(
+        `serializes legacy ${label} ${KANGUR_LEGACY_LESSON_SHELL_TITLE_KEY} fields as normalized gameTitle fields`,
+        () => {
         const serialized = serializeKangurLessonTemplateComponentContent(
           componentId,
           withLegacyLessonShellTitle(content, shellKey, serializedLegacyTitle) as never,
@@ -558,8 +571,9 @@ describe('lesson-template-component-content', () => {
         expect(serializedJson[shellKey]).toMatchObject({
           gameTitle: serializedLegacyTitle,
         });
-        expect(serializedJson[shellKey]).not.toHaveProperty('stageTitle');
-      });
+        expectNoLegacyShellTitleKey(serializedJson[shellKey]);
+      },
+      );
     },
   );
 });

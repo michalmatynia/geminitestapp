@@ -2,8 +2,6 @@
 
 import React from 'react';
 import {
-  KangurButton,
-  KangurInfoCard,
   KangurStatusChip,
 } from '@/features/kangur/ui/design/primitives';
 import { useGamesLibraryGameModalState } from './GamesLibraryGameModal.hooks';
@@ -33,7 +31,7 @@ export function GamesLibraryGameModal(props: GamesLibraryGameModalProps): React.
   } = state;
 
   if (!game) {
-    return <></>;
+    return null;
   }
 
   const resolvedAgeGroupLabel = game.ageGroup

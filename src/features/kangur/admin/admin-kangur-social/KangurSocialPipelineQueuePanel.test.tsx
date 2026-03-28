@@ -16,6 +16,21 @@ const {
   apiDeleteMock: vi.fn(),
 }));
 
+type ListPanelMockProps = {
+  header?: ReactNode;
+  children: ReactNode;
+};
+
+function MockListPanel(props: ListPanelMockProps): React.JSX.Element {
+  const { header, children } = props;
+  return (
+    <section>
+      <div>{header}</div>
+      <div>{children}</div>
+    </section>
+  );
+}
+
 vi.mock('@/shared/lib/api-client', () => ({
   api: {
     get: (...args: unknown[]) => apiGetMock(...args),
@@ -31,18 +46,7 @@ vi.mock('@/features/kangur/shared/ui', () => ({
     ...props
   }: ButtonHTMLAttributes<HTMLButtonElement>) => <button {...props}>{children}</button>,
   Card: ({ children }: { children: ReactNode }) => <div>{children}</div>,
-  ListPanel: ({
-    header,
-    children,
-  }: {
-    header?: ReactNode;
-    children: ReactNode;
-  }) => (
-    <section>
-      <div>{header}</div>
-      <div>{children}</div>
-    </section>
-  ),
+  ListPanel: MockListPanel,
   LoadingState: ({ message }: { message: string }) => <div>{message}</div>,
 }));
 

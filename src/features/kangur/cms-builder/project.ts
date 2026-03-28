@@ -155,7 +155,7 @@ const resolveSingleWidgetId = (screen: KangurCmsScreen): string | null => {
   return typeof block.settings['widgetId'] === 'string' ? block.settings['widgetId'] : null;
 };
 
-const HIDDEN_KANGUR_WIDGET_IDS = new Set(KANGUR_HIDDEN_WIDGET_IDS);
+const HIDDEN_KANGUR_WIDGET_IDS = new Set<string>(KANGUR_HIDDEN_WIDGET_IDS);
 
 const sectionContainsHiddenWidget = (blocks: BlockInstance[]): boolean => {
   for (const block of blocks) {

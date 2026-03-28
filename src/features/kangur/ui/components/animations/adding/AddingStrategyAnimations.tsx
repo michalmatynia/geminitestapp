@@ -188,6 +188,192 @@ export function AddingCountOnAnimation(): React.JSX.Element {
   );
 }
 
+export function AddingNumberLineAnimation(): React.JSX.Element {
+  const surfaceIds = useAddingSurfaceIds('adding-number-line');
+
+  return (
+    <svg
+      aria-label='Animacja osi liczbowej: skokami dodajemy kolejne liczby.'
+      className='h-auto w-full'
+      data-testid='adding-number-line-animation'
+      role='img'
+      viewBox='0 0 340 150'
+    >
+      <style>{`
+        .adding-number-line-path { fill: none; stroke: rgba(99, 102, 241, 0.34); stroke-width: 5; stroke-linecap: round; }
+        .adding-number-line-node { fill: rgba(255,255,255,0.95); stroke: rgba(148, 163, 184, 0.24); stroke-width: 1.5; }
+        .adding-number-line-highlight { fill: #34d399; animation: addingNumberLineHighlight 4.6s ease-in-out infinite; }
+        @keyframes addingNumberLineHighlight {
+          0%, 100% { opacity: 0.35; transform: scale(0.94); }
+          50% { opacity: 1; transform: scale(1); }
+        }
+        @media (prefers-reduced-motion: reduce) {
+          .adding-number-line-highlight { animation: none; opacity: 1; transform: none; }
+        }
+      `}</style>
+      <AddingSurface
+        accentEnd='#dcfce7'
+        accentStart='#34d399'
+        atmosphereA='rgba(34, 197, 94, 0.08)'
+        atmosphereB='rgba(96, 165, 250, 0.08)'
+        ids={surfaceIds}
+        stroke='rgba(52, 211, 153, 0.12)'
+        testIdPrefix='adding-number-line'
+        x={12}
+        y={12}
+        width={316}
+        height={126}
+        rx={24}
+      />
+      <LabelChip fill='rgba(255,255,255,0.88)' label='4 + 3' stroke='rgba(52,211,153,0.22)' x={24} y={22} />
+      <path className='adding-number-line-path' d='M42 98 H286' />
+      {[4, 5, 6, 7].map((value, index) => {
+        const x = 68 + index * 56;
+        const isTarget = value === 7;
+        return (
+          <g key={value}>
+            <circle
+              className={isTarget ? 'adding-number-line-highlight' : 'adding-number-line-node'}
+              cx={x}
+              cy={98}
+              r={isTarget ? 14 : 12}
+            />
+            <text fill='#0f172a' fontSize='12' fontWeight='700' textAnchor='middle' x={x} y={102}>
+              {value}
+            </text>
+          </g>
+        );
+      })}
+      <path d='M78 74 C98 50 110 50 126 74' fill='none' stroke='#f59e0b' strokeLinecap='round' strokeWidth='4' />
+      <path d='M134 66 C154 42 166 42 182 66' fill='none' stroke='#60a5fa' strokeLinecap='round' strokeWidth='4' />
+      <path d='M190 58 C210 34 222 34 238 58' fill='none' stroke='#34d399' strokeLinecap='round' strokeWidth='4' />
+    </svg>
+  );
+}
+
+export function AddingAbacusAnimation(): React.JSX.Element {
+  const surfaceIds = useAddingSurfaceIds('adding-abacus');
+
+  return (
+    <svg
+      aria-label='Animacja liczydła: koraliki przesuwają się, aby pokazać sumę.'
+      className='h-auto w-full'
+      data-testid='adding-abacus-animation'
+      role='img'
+      viewBox='0 0 340 150'
+    >
+      <style>{`
+        .adding-abacus-rail { stroke: rgba(71, 85, 105, 0.34); stroke-width: 6; stroke-linecap: round; }
+        .adding-abacus-post { fill: rgba(100, 116, 139, 0.58); }
+        .adding-abacus-left { fill: #f59e0b; }
+        .adding-abacus-right { fill: #60a5fa; }
+        .adding-abacus-sum { fill: #34d399; animation: addingAbacusPulse 5.8s ease-in-out infinite; }
+        @keyframes addingAbacusPulse {
+          0%, 100% { opacity: 0.45; transform: scale(0.94); }
+          50% { opacity: 1; transform: scale(1); }
+        }
+        @media (prefers-reduced-motion: reduce) {
+          .adding-abacus-sum { animation: none; opacity: 1; transform: none; }
+        }
+      `}</style>
+      <AddingSurface
+        accentEnd='#fef3c7'
+        accentStart='#f59e0b'
+        atmosphereA='rgba(245, 158, 11, 0.08)'
+        atmosphereB='rgba(96, 165, 250, 0.08)'
+        ids={surfaceIds}
+        stroke='rgba(245, 158, 11, 0.12)'
+        testIdPrefix='adding-abacus'
+        x={12}
+        y={12}
+        width={316}
+        height={126}
+        rx={24}
+      />
+      <LabelChip fill='rgba(255,255,255,0.88)' label='2 + 3 = 5' stroke='rgba(245,158,11,0.22)' width={102} x={24} y={22} />
+      <rect className='adding-abacus-post' height='78' rx='8' width='10' x='56' y='44' />
+      <rect className='adding-abacus-post' height='78' rx='8' width='10' x='274' y='44' />
+      {[0, 1, 2].map((row) => (
+        <line
+          key={`rail-${row}`}
+          className='adding-abacus-rail'
+          x1='74'
+          x2='270'
+          y1={60 + row * 22}
+          y2={60 + row * 22}
+        />
+      ))}
+      {[0, 1].map((index) => (
+        <circle key={`left-${index}`} className='adding-abacus-left' cx={96 + index * 26} cy='60' r='10' />
+      ))}
+      {[0, 1, 2].map((index) => (
+        <circle key={`right-${index}`} className='adding-abacus-right' cx={176 + index * 26} cy='82' r='10' />
+      ))}
+      {[0, 1, 2, 3, 4].map((index) => (
+        <circle key={`sum-${index}`} className='adding-abacus-sum' cx={104 + index * 24} cy='104' r='8.5' />
+      ))}
+    </svg>
+  );
+}
+
+export function AddingAssociativeAnimation(): React.JSX.Element {
+  const surfaceIds = useAddingSurfaceIds('adding-associative');
+
+  return (
+    <svg
+      aria-label='Animacja łączności dodawania: najpierw łączymy wygodną parę, potem dodajemy resztę.'
+      className='h-auto w-full'
+      data-testid='adding-associative-animation'
+      role='img'
+      viewBox='0 0 360 150'
+    >
+      <style>{`
+        .adding-associative-card { fill: rgba(255,255,255,0.84); stroke: rgba(148, 163, 184, 0.24); stroke-width: 1.5; }
+        .adding-associative-accent-a { fill: #f59e0b; }
+        .adding-associative-accent-b { fill: #60a5fa; }
+        .adding-associative-sum { fill: #10b981; animation: addingAssociativeReveal 5.6s ease-in-out infinite; }
+        @keyframes addingAssociativeReveal {
+          0%, 100% { opacity: 0.5; transform: scale(0.96); }
+          50% { opacity: 1; transform: scale(1); }
+        }
+        @media (prefers-reduced-motion: reduce) {
+          .adding-associative-sum { animation: none; opacity: 1; transform: none; }
+        }
+      `}</style>
+      <AddingSurface
+        accentEnd='#dcfce7'
+        accentStart='#10b981'
+        atmosphereA='rgba(16, 185, 129, 0.08)'
+        atmosphereB='rgba(245, 158, 11, 0.08)'
+        ids={surfaceIds}
+        stroke='rgba(16, 185, 129, 0.12)'
+        testIdPrefix='adding-associative'
+        x={12}
+        y={12}
+        width={336}
+        height={126}
+        rx={24}
+      />
+      <LabelChip fill='rgba(255,255,255,0.88)' label='(2 + 3) + 4' stroke='rgba(16,185,129,0.22)' width={114} x={24} y={22} />
+      <rect className='adding-associative-card' height='56' rx='16' width='92' x='34' y='56' />
+      <rect className='adding-associative-card' height='56' rx='16' width='92' x='134' y='56' />
+      <rect className='adding-associative-card' height='56' rx='16' width='92' x='234' y='56' />
+      <text fill='#0f172a' fontSize='16' fontWeight='700' textAnchor='middle' x='80' y='90'>2 + 3</text>
+      <text fill='#0f172a' fontSize='16' fontWeight='700' textAnchor='middle' x='180' y='90'>5 + 4</text>
+      <text className='adding-associative-sum' fill='#0f172a' fontSize='16' fontWeight='700' textAnchor='middle' x='280' y='90'>9</text>
+      <circle className='adding-associative-accent-a' cx='62' cy='112' r='5.5' />
+      <circle className='adding-associative-accent-a' cx='80' cy='112' r='5.5' />
+      <circle className='adding-associative-accent-b' cx='98' cy='112' r='5.5' />
+      <circle className='adding-associative-accent-b' cx='162' cy='112' r='5.5' />
+      <circle className='adding-associative-accent-b' cx='180' cy='112' r='5.5' />
+      <circle className='adding-associative-accent-b' cx='198' cy='112' r='5.5' />
+      <circle className='adding-associative-sum' cx='262' cy='112' r='5.5' />
+      <circle className='adding-associative-sum' cx='280' cy='112' r='5.5' />
+      <circle className='adding-associative-sum' cx='298' cy='112' r='5.5' />
+    </svg>
+  );
+}
+
 export function AddingTensOnesAnimation(): React.JSX.Element {
   const surfaceIds = useAddingSurfaceIds('adding-tens-ones');
 

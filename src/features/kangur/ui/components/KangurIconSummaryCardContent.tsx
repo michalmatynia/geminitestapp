@@ -20,23 +20,26 @@ type KangurIconSummaryCardContentProps = {
   titleWrapperClassName?: string;
 };
 
-export function KangurIconSummaryCardContent({
-  aside,
-  asideClassName,
-  className,
-  contentClassName,
-  description,
-  descriptionClassName,
-  footer,
-  footerClassName,
-  headerClassName,
-  icon,
-  title,
-  titleClassName,
-  titleAs: TitleTag = 'div',
-  titleId,
-  titleWrapperClassName,
-}: KangurIconSummaryCardContentProps): React.JSX.Element {
+export function KangurIconSummaryCardContent(
+  props: KangurIconSummaryCardContentProps
+): React.JSX.Element {
+  const {
+    aside,
+    asideClassName,
+    className,
+    contentClassName,
+    description,
+    descriptionClassName,
+    footer,
+    footerClassName,
+    headerClassName,
+    icon,
+    title,
+    titleClassName,
+    titleAs: TitleTag = 'div',
+    titleId,
+    titleWrapperClassName,
+  } = props;
   return (
     <div className={cn('flex items-start kangur-panel-gap', className)}>
       {icon}

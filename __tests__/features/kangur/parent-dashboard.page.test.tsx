@@ -21,6 +21,8 @@ const {
   selectLearnerMock,
   checkAppStateMock,
   lessonsState,
+  disabledDocsTooltipsMock,
+  getDisabledDocsTooltipsMock,
 } = vi.hoisted(() => ({
   useKangurRoutingMock: vi.fn(),
   useKangurAuthMock: vi.fn(),
@@ -35,23 +37,25 @@ const {
   lessonsState: {
     value: [] as Array<Record<string, unknown>>,
   },
+  disabledDocsTooltipsMock: {
+    enabled: false,
+    helpSettings: {
+      version: 1,
+      docsTooltips: {
+        enabled: false,
+        homeEnabled: false,
+        lessonsEnabled: false,
+        testsEnabled: false,
+        profileEnabled: false,
+        parentDashboardEnabled: false,
+        adminEnabled: false,
+      },
+    },
+  } as const,
+  getDisabledDocsTooltipsMock: vi.fn(),
 }));
 
-const disabledDocsTooltipsMock = {
-  enabled: false,
-  helpSettings: {
-    version: 1,
-    docsTooltips: {
-      enabled: false,
-      homeEnabled: false,
-      lessonsEnabled: false,
-      testsEnabled: false,
-      profileEnabled: false,
-      parentDashboardEnabled: false,
-      adminEnabled: false,
-    },
-  },
-} as const;
+getDisabledDocsTooltipsMock.mockReturnValue(disabledDocsTooltipsMock);
 
 vi.mock('@/features/kangur/ui/context/KangurRoutingContext', () => ({
   useKangurRouting: useKangurRoutingMock,
@@ -76,7 +80,7 @@ vi.mock('@/features/kangur/ui/context/KangurAgeGroupFocusContext', () => ({
 
 vi.mock('@/features/kangur/docs/tooltips', () => ({
   KangurDocsTooltipEnhancer: () => null,
-  useKangurDocsTooltips: () => disabledDocsTooltipsMock,
+  useKangurDocsTooltips: getDisabledDocsTooltipsMock,
 }));
 
 vi.mock('@/features/kangur/ui/hooks/useKangurProgressState', () => ({
@@ -112,6 +116,10 @@ vi.mock('@/features/kangur/ui/hooks/useKangurParentDashboardScores', () => ({
     scoresError: null,
     isLoadingScores: false,
   }),
+}));
+
+vi.mock('@/features/kangur/ui/useKangurStorefrontAppearance', () => ({
+  useKangurStorefrontAppearance: () => ({}),
 }));
 
 vi.mock('@/features/kangur/ui/context/KangurLoginModalContext', () => ({

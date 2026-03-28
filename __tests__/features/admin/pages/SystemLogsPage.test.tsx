@@ -10,6 +10,21 @@ import {
 } from '@/features/observability/context/SystemLogsContext';
 import SystemLogsPage from '@/features/observability/pages/SystemLogsPage';
 
+type ListPanelMockProps = {
+  children?: React.ReactNode;
+  header?: React.ReactNode;
+};
+
+function MockListPanel(props: ListPanelMockProps): React.JSX.Element {
+  const { children, header } = props;
+  return (
+    <div data-testid='mock-list-panel'>
+      <div data-testid='mock-list-panel-header'>{header}</div>
+      <div data-testid='mock-list-panel-children'>{children}</div>
+    </div>
+  );
+}
+
 // Mock next/navigation
 vi.mock('next/navigation', () => ({
   useSearchParams: vi.fn(() => new URLSearchParams()),
@@ -53,12 +68,7 @@ vi.mock('@/shared/ui', async (importOriginal) => {
   return {
     ...actual,
     useToast: vi.fn(() => ({ toast: vi.fn() })),
-    ListPanel: ({ children, header }) => (
-      <div data-testid='mock-list-panel'>
-        <div data-testid='mock-list-panel-header'>{header}</div>
-        <div data-testid='mock-list-panel-children'>{children}</div>
-      </div>
-    ),
+    ListPanel: MockListPanel,
     Tabs: ({ children }) => <div data-testid='mock-tabs'>{children}</div>,
     TabsList: ({ children }) => <div data-testid='mock-tabs-list'>{children}</div>,
     TabsTrigger: ({ children, value }) => <button role='tab' data-value={value}>{children}</button>,

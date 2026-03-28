@@ -21,45 +21,50 @@ type SearchableSelectResolvedProps = {
   emptyMessage?: string;
 };
 
-const renderSearchableSelect = ({
-  options,
-  selected,
-  onChange,
-  placeholder,
-  searchPlaceholder,
-  label,
-  disabled,
-  className,
-  loading,
-  emptyMessage,
-}: SearchableSelectResolvedProps): React.JSX.Element => (
-  <MultiSelect
-    options={options}
-    selected={selected}
-    onChange={onChange}
-    single
-    placeholder={placeholder}
-    searchPlaceholder={searchPlaceholder}
-    label={label}
-    disabled={disabled}
-    className={className}
-    loading={loading}
-    emptyMessage={emptyMessage}
-  />
-);
+const renderSearchableSelect = (resolvedProps: SearchableSelectResolvedProps): React.JSX.Element => {
+  const {
+    options,
+    selected,
+    onChange,
+    placeholder,
+    searchPlaceholder,
+    label,
+    disabled,
+    className,
+    loading,
+    emptyMessage,
+  } = resolvedProps;
 
-export function SearchableSelect({
-  options,
-  value,
-  onChange,
-  placeholder,
-  searchPlaceholder,
-  label,
-  disabled,
-  className,
-  loading,
-  emptyMessage,
-}: SearchableSelectProps): React.JSX.Element {
+  return (
+    <MultiSelect
+      options={options}
+      selected={selected}
+      onChange={onChange}
+      single
+      placeholder={placeholder}
+      searchPlaceholder={searchPlaceholder}
+      label={label}
+      disabled={disabled}
+      className={className}
+      loading={loading}
+      emptyMessage={emptyMessage}
+    />
+  );
+};
+
+export function SearchableSelect(props: SearchableSelectProps): React.JSX.Element {
+  const {
+    options,
+    value,
+    onChange,
+    placeholder,
+    searchPlaceholder,
+    label,
+    disabled,
+    className,
+    loading,
+    emptyMessage,
+  } = props;
   const selected = React.useMemo(() => (value ? [value] : []), [value]);
 
   const handleChange = React.useCallback(

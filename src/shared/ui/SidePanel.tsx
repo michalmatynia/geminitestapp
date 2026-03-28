@@ -22,18 +22,19 @@ interface SidePanelProps {
  * Standardized SidePanel component for application sidebars (e.g., Image Studio, Page Builder).
  * Provides consistent styling, layout, and focus mode transitions.
  */
-export function SidePanel({
-  children,
-  header,
-  footer,
-  position = 'left',
-  width = 320,
-  className,
-  contentClassName,
-  headerClassName,
-  footerClassName,
-  isFocusMode = false,
-}: SidePanelProps): React.JSX.Element {
+export function SidePanel(props: SidePanelProps): React.JSX.Element {
+  const {
+    children,
+    header,
+    footer,
+    position = 'left',
+    width = 320,
+    className,
+    contentClassName,
+    headerClassName,
+    footerClassName,
+    isFocusMode = false,
+  } = props;
   const panelWidth = typeof width === 'number' ? `${width}px` : width;
 
   return (

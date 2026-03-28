@@ -37,20 +37,22 @@ export type KangurChoiceDialogProps = {
   doneLabel?: ReactNode;
 };
 
-export function renderKangurChoiceDialog({
-  contentId,
-  open,
-  onOpenChange,
-  header,
-  title,
-  defaultChoiceLabel,
-  currentChoiceLabel,
-  closeAriaLabel,
-  groupAriaLabel,
-  options,
-  doneAriaLabel,
-  doneLabel = 'Gotowe',
-}: KangurChoiceDialogProps): React.JSX.Element {
+export function renderKangurChoiceDialog(props: KangurChoiceDialogProps): React.JSX.Element {
+  const {
+    contentId,
+    open,
+    onOpenChange,
+    header,
+    title,
+    defaultChoiceLabel,
+    currentChoiceLabel,
+    closeAriaLabel,
+    groupAriaLabel,
+    options,
+    doneAriaLabel,
+    doneLabel = 'Gotowe',
+  } = props;
+
   return (
     <KangurDialog
       open={open}

@@ -4,7 +4,6 @@ import {
   BookCheck,
   BrainCircuit,
   LayoutGrid,
-  LogIn,
   LogOut,
   Menu,
   Trophy,
@@ -12,19 +11,17 @@ import {
   X,
 } from 'lucide-react';
 import dynamic from 'next/dynamic';
-import React, { Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, { Suspense, useMemo, useRef, useState } from 'react';
 
 import { CmsStorefrontAppearanceButtons } from '@/features/cms/public';
 import { useOptionalCmsStorefrontAppearance } from '@/features/cms/public';
 import {
   getKangurHomeHref,
   getKangurPageHref as createPageUrl,
-  isKangurEmbeddedBasePath,
 } from '@/features/kangur/config/routing';
 import {
   persistTutorVisibilityHidden,
 } from '@/features/kangur/ui/components/KangurAiTutorWidget.storage';
-import { getKangurAvatarById } from '@/features/kangur/ui/avatars/catalog';
 const KangurChoiceDialog = dynamic(() =>
   import('@/features/kangur/ui/components/KangurChoiceDialog').then((m) => ({
     default: function KangurChoiceDialogEntry(
@@ -52,7 +49,6 @@ import {
   KangurTopNavGroup,
 } from '@/features/kangur/ui/design/primitives';
 import {
-  DEFAULT_KANGUR_AGE_GROUP,
   KANGUR_AGE_GROUPS,
   getKangurDefaultSubjectForAgeGroup,
   getKangurSubjectsForAgeGroup,
@@ -65,16 +61,16 @@ import {
   getKangurSixYearOldAgeGroupVisual,
   getKangurSixYearOldSubjectVisual,
 } from '@/features/kangur/ui/constants/six-year-old-visuals';
-import { prefetchKangurLessonsCatalog } from '@/features/kangur/ui/hooks/useKangurLessonsCatalog';
-import { useKangurPageContentEntry } from '@/features/kangur/ui/hooks/useKangurPageContent';
-import { useKangurTutorAnchor } from '@/features/kangur/ui/hooks/useKangurTutorAnchor';
-import { DEFAULT_SITE_I18N_CONFIG } from '@/shared/contracts/site-i18n';
 import { LoadingState } from '@/features/kangur/shared/ui';
 import {
   KANGUR_TIGHT_ROW_CLASSNAME,
 } from '@/features/kangur/ui/design/tokens';
 
 import type {
+  KangurNavActionConfig,
+  KangurPrimaryNavigationProps,
+} from './KangurPrimaryNavigation.types';
+export type {
   KangurNavActionConfig,
   KangurPrimaryNavigationProps,
 } from './KangurPrimaryNavigation.types';
@@ -87,81 +83,14 @@ import {
   renderGamesLibraryNavActionContent,
 } from './KangurPrimaryNavigation.utils';
 import { useKangurPrimaryNavigationState } from './KangurPrimaryNavigation.hooks';
+import {
+  KangurHomeBetaBadge,
+  KangurPrimaryNavigationLoginAction,
+} from './KangurPrimaryNavigation.components';
 
 const KangurLanguageSwitcher = dynamic(() =>
   import('@/features/kangur/ui/components/KangurLanguageSwitcher').then(m => ({ default: m.KangurLanguageSwitcher }))
 );
-
-function KangurPrimaryNavigationLoginAction({
-  className,
-  fallbackLabel,
-  loginActionRef,
-  onActionClick,
-  onLogin,
-}: {
-  className?: string;
-  fallbackLabel: string;
-  loginActionRef?: React.Ref<HTMLButtonElement>;
-  onActionClick?: () => void;
-  onLogin: () => void;
-}): React.JSX.Element {
-  const { entry: loginActionContent } = useKangurPageContentEntry('shared-nav-login-action');
-
-  return renderNavAction({
-    className,
-    content: (
-      <>
-        <LogIn aria-hidden='true' className={ICON_CLASSNAME} strokeWidth={2.15} />
-        <span className='truncate'>{loginActionContent?.title ?? fallbackLabel}</span>
-      </>
-    ),
-    docId: 'profile_login',
-    elementRef: loginActionRef,
-    onClick: () => {
-      onLogin();
-      onActionClick?.();
-    },
-    testId: 'kangur-primary-nav-login',
-    title: loginActionContent?.summary ?? undefined,
-  });
-}
-
-function KangurHomeBetaBadge(): React.JSX.Element {
-  return (
-    <svg
-      aria-hidden='true'
-      className='mt-0.5 h-[12px] w-auto overflow-visible sm:h-[13px]'
-      data-testid='kangur-home-beta-badge'
-      fill='none'
-      viewBox='0 0 62 18'
-      xmlns='http://www.w3.org/2000/svg'
-    >
-      <title>StuqiQ Beta badge</title>
-      <rect
-        fill='color-mix(in srgb, var(--kangur-accent, #5566f2) 10%, white)'
-        height='17'
-        rx='8.5'
-        stroke='color-mix(in srgb, var(--kangur-accent, #5566f2) 36%, white)'
-        strokeWidth='1'
-        width='61'
-        x='0.5'
-        y='0.5'
-      />
-      <text
-        fill='color-mix(in srgb, var(--kangur-accent, #5566f2) 68%, #1e293b)'
-        fontFamily='ui-sans-serif, system-ui, sans-serif'
-        fontSize='8'
-        fontWeight='800'
-        letterSpacing='0.18em'
-        textAnchor='middle'
-        x='31'
-        y='11.2'
-      >
-        BETA
-      </text>
-    </svg>
-  );
-}
 
 const resolveTutorFallbackCopy = (
   locale: string,
@@ -225,12 +154,8 @@ export function KangurPrimaryNavigation(props: KangurPrimaryNavigationProps): Re
     rightAccessory,
   } = props;
 
-  const storefrontAppearance = useOptionalCmsStorefrontAppearance();
-  const [isEditingGuestPlayerName, setIsEditingGuestPlayerName] = useState(!(guestPlayerName?.trim() ?? ''));
   const loginActionRef = useRef<HTMLButtonElement | null>(null);
   const mobileMenuRef = useRef<HTMLDivElement | null>(null);
-  const mobileMenuPreviousFocusRef = useRef<HTMLElement | null>(null);
-  const prefetchedLessonsCatalogKeyRef = useRef<string | null>(null);
 
   const guestPlayerNameValue = typeof guestPlayerName === 'string' ? guestPlayerName : '';
   const guestPlayerPlaceholderText = guestPlayerNamePlaceholder ?? fallbackCopy.guestPlayerNamePlaceholder;
@@ -265,14 +190,6 @@ export function KangurPrimaryNavigation(props: KangurPrimaryNavigationProps): Re
   const isSixYearOld = ageGroup === 'six_year_old';
   const subjectChoiceLabel = getLocalizedKangurSubjectLabel(subject, normalizedLocale);
   const ageGroupChoiceLabel = getLocalizedKangurAgeGroupLabel(ageGroup, normalizedLocale);
-  const defaultSubjectLabel = getLocalizedKangurSubjectLabel(
-    getKangurDefaultSubjectForAgeGroup(ageGroup),
-    normalizedLocale
-  );
-  const defaultAgeGroupLabel = getLocalizedKangurAgeGroupLabel(
-    KANGUR_AGE_GROUPS.find((group) => group.default)?.id ?? DEFAULT_KANGUR_AGE_GROUP,
-    normalizedLocale
-  );
   const subjectVisual = getKangurSixYearOldSubjectVisual(subject);
   const ageGroupVisual = getKangurSixYearOldAgeGroupVisual(ageGroup);
   const availableSubjects = useMemo(() => getKangurSubjectsForAgeGroup(ageGroup), [ageGroup]);
@@ -299,10 +216,11 @@ export function KangurPrimaryNavigation(props: KangurPrimaryNavigationProps): Re
       })),
     [availableSubjects, isSixYearOld, normalizedLocale, setSubject, subject]
   );
+
   const ageGroupOptions = useMemo(
     () =>
       KANGUR_AGE_GROUPS.map((group) => ({
-        ariaLabel: getLocalizedKangurAgeGroupLabel(group.id, normalizedLocale, group.label),
+        ariaLabel: getLocalizedKangurAgeGroupLabel(group.id, normalizedLocale),
         id: group.id,
         label: isSixYearOld ? (
           <KangurVisualCueContent
@@ -312,52 +230,16 @@ export function KangurPrimaryNavigation(props: KangurPrimaryNavigationProps): Re
             icon={getKangurSixYearOldAgeGroupVisual(group.id).icon}
             iconClassName='text-lg'
             iconTestId={`kangur-primary-nav-age-group-option-icon-${group.id}`}
-            label={getLocalizedKangurAgeGroupLabel(group.id, normalizedLocale, group.label)}
+            label={getLocalizedKangurAgeGroupLabel(group.id, normalizedLocale)}
           />
         ) : (
-          getLocalizedKangurAgeGroupLabel(group.id, normalizedLocale, group.label)
+          getLocalizedKangurAgeGroupLabel(group.id, normalizedLocale)
         ),
         isActive: ageGroup === group.id,
         onSelect: () => setAgeGroup(group.id),
       })),
     [ageGroup, isSixYearOld, normalizedLocale, setAgeGroup]
   );
-  const shouldRenderLanguageSwitcher =
-    !isKangurEmbeddedBasePath(basePath) &&
-    DEFAULT_SITE_I18N_CONFIG.locales.filter((entry) => entry.enabled).length > 1;
-  const kangurAppearanceModes = useMemo(() => ['default', 'dawn', 'sunset', 'dark'] as const, []);
-  const kangurAppearanceLabels = useMemo(
-    () => ({
-      default: 'Daily',
-      dawn: 'Dawn',
-      sunset: 'Sunset',
-      dark: 'Nightly',
-    }),
-    []
-  );
-  const appearanceControls = storefrontAppearance ? (
-    <CmsStorefrontAppearanceButtons
-      tone={kangurAppearance.tone}
-      className='max-sm:w-full max-sm:justify-start'
-      label='Kangur appearance'
-      testId='kangur-primary-nav-appearance-controls'
-      modes={[...kangurAppearanceModes]}
-      modeLabels={kangurAppearanceLabels}
-    />
-  ) : null;
-  const appearanceControlsInline = storefrontAppearance ? (
-    <CmsStorefrontAppearanceButtons
-      tone={kangurAppearance.tone}
-      className='justify-start'
-      label='Kangur appearance'
-      testId='kangur-primary-nav-appearance-controls-inline'
-      modes={[...kangurAppearanceModes]}
-      modeLabels={kangurAppearanceLabels}
-    />
-  ) : null;
-  const mobileMenuId = 'kangur-mobile-menu';
-  const mobileMenuTitleId = 'kangur-mobile-menu-title';
-  const mobileMenuDescriptionId = 'kangur-mobile-menu-description';
 
   const enableTutorLabel = resolveTutorFallbackCopy(
     normalizedLocale,
@@ -371,494 +253,194 @@ export function KangurPrimaryNavigation(props: KangurPrimaryNavigationProps): Re
     DEFAULT_KANGUR_AI_TUTOR_CONTENT.common.disableTutorAria,
     fallbackCopy.disableTutorLabel
   );
-  const handleGuestPlayerNameChange = (value: string): void => {
-    props.onGuestPlayerNameChange?.(value);
-  };
-
-  const commitGuestPlayerName = (): void => {
-    if (!showGuestPlayerNameInput || !hasGuestPlayerName) {
-      setIsEditingGuestPlayerName(true);
-      return;
-    }
-
-    const trimmedValue = guestPlayerName.trim();
-    if (trimmedValue !== guestPlayerName) {
-      handleGuestPlayerNameChange(trimmedValue);
-    }
-    setIsEditingGuestPlayerName(false);
-  };
-
-  useKangurTutorAnchor({
-    id: 'kangur-auth-login-action',
-    kind: 'login_action',
-    ref: loginActionRef,
-    surface: 'auth',
-    enabled: !effectiveIsAuthenticated && Boolean(onLogin),
-    priority: 130,
-    metadata: {
-      label: fallbackCopy.loginLabel,
-    },
-  });
-
-  useEffect(() => {
-    if (!isMobileMenuOpen || typeof document === 'undefined') return;
-    const previousOverflow = document.body.style.overflow;
-    document.body.style.overflow = 'hidden';
-    return (): void => {
-      document.body.style.overflow = previousOverflow;
-    };
-  }, [isMobileMenuOpen]);
-
-  useEffect(() => {
-    if (!isMobileMenuOpen || typeof window === 'undefined') return;
-    const handleKeyDown = (event: KeyboardEvent): void => {
-      if (event.key === 'Escape') {
-        closeMobileMenu();
-      }
-    };
-    window.addEventListener('keydown', handleKeyDown);
-    return (): void => {
-      window.removeEventListener('keydown', handleKeyDown);
-    };
-  }, [closeMobileMenu, isMobileMenuOpen]);
-
-  useEffect(() => {
-    if (typeof document === 'undefined') return;
-    if (isMobileMenuOpen) {
-      mobileMenuPreviousFocusRef.current = document.activeElement as HTMLElement | null;
-      return;
-    }
-    if (mobileMenuPreviousFocusRef.current) {
-      mobileMenuPreviousFocusRef.current.focus();
-      mobileMenuPreviousFocusRef.current = null;
-    }
-  }, [isMobileMenuOpen]);
-
-  useEffect(() => {
-    if (!isMobileMenuOpen || typeof document === 'undefined') return;
-    const closeButton = document.getElementById('kangur-mobile-menu-close');
-    if (closeButton instanceof HTMLElement) {
-      closeButton.focus();
-    }
-  }, [isMobileMenuOpen]);
-
-  useEffect(() => {
-    if (!isMobileMenuOpen) return;
-    const menu = mobileMenuRef.current;
-    if (!menu || typeof document === 'undefined') return;
-    const selector = [
-      'a[href]',
-      'button:not([disabled])',
-      'textarea:not([disabled])',
-      'input:not([disabled])',
-      'select:not([disabled])',
-      '[tabindex]:not([tabindex="-1"])',
-    ].join(', ');
-    const getFocusable = (): HTMLElement[] =>
-      Array.from(menu.querySelectorAll<HTMLElement>(selector)).filter(
-        (element) => !element.hasAttribute('disabled') && !element.getAttribute('aria-hidden')
-      );
-    const handleKeyDown = (event: KeyboardEvent): void => {
-      if (event.key !== 'Tab') return;
-      const focusable = getFocusable();
-      const first = focusable.at(0);
-      const last = focusable.at(-1);
-      if (!first || !last) return;
-      if (event.shiftKey) {
-        if (document.activeElement === first || document.activeElement === menu) {
-          event.preventDefault();
-          last.focus();
-        }
-        return;
-      }
-      if (document.activeElement === last) {
-        event.preventDefault();
-        first.focus();
-      }
-    };
-    menu.addEventListener('keydown', handleKeyDown);
-    return (): void => {
-      menu.removeEventListener('keydown', handleKeyDown);
-    };
-  }, [isMobileMenuOpen]);
-
-  useEffect(() => {
-    if (!showGuestPlayerNameInput) {
-      setIsEditingGuestPlayerName(false);
-      return;
-    }
-    if (!hasGuestPlayerName) {
-      setIsEditingGuestPlayerName(true);
-    }
-  }, [hasGuestPlayerName, showGuestPlayerNameInput]);
-
-  const warmLessonsCatalog = useCallback((): void => {
-    if (queryClient === undefined || accessibleCurrentPage === 'Lessons') {
-      return;
-    }
-
-    const prefetchKey = JSON.stringify({
-      ageGroup,
-      enabledOnly: true,
-      subject,
-    });
-
-    if (prefetchedLessonsCatalogKeyRef.current === prefetchKey) {
-      return;
-    }
-
-    prefetchedLessonsCatalogKeyRef.current = prefetchKey;
-    void prefetchKangurLessonsCatalog(queryClient, {
-      ageGroup,
-      enabledOnly: true,
-      subject,
-    }).catch(() => {
-      if (prefetchedLessonsCatalogKeyRef.current === prefetchKey) {
-        prefetchedLessonsCatalogKeyRef.current = null;
-      }
-    });
-  }, [accessibleCurrentPage, ageGroup, queryClient, subject]);
-
-  const buildActionWithClose = (
-    action: KangurNavActionConfig,
-    onActionClick?: () => void
-  ): KangurNavActionConfig => {
-    if (!onActionClick) {
-      return action;
-    }
-
-    const existingClick = action.onClick;
-    return {
-      ...action,
-      onClick: () => {
-        existingClick?.();
-        onActionClick();
-      },
-    };
-  };
 
   const mobileNavItemClassName = `max-sm:col-span-1 max-sm:min-w-0 max-sm:w-full max-sm:justify-center ${isCoarsePointer ? 'max-sm:min-h-12 max-sm:px-4' : 'max-sm:px-3'}`;
   const mobileWideNavItemClassName = `max-sm:col-span-2 max-sm:min-w-0 max-sm:w-full max-sm:justify-center ${isCoarsePointer ? 'max-sm:min-h-12 max-sm:px-4' : 'max-sm:px-3'}`;
   const yellowPillActionClassName = `border-amber-200/90 bg-[linear-gradient(180deg,rgba(255,251,235,0.98)_0%,rgba(254,243,199,0.94)_100%)] px-4 text-amber-700 shadow-[0_14px_24px_-18px_rgba(245,158,11,0.55)] ring-1 ring-amber-100/90 hover:border-amber-200 hover:bg-[linear-gradient(180deg,rgba(255,255,255,0.98)_0%,rgba(254,243,199,0.96)_100%)] hover:text-amber-800 ${mobileWideNavItemClassName}`;
   const amberPillActionClassName = `border-amber-300/90 bg-[linear-gradient(180deg,rgba(254,243,199,0.96)_0%,rgba(253,230,138,0.92)_100%)] px-4 text-amber-800 shadow-[0_14px_24px_-18px_rgba(245,158,11,0.58)] ring-1 ring-amber-200/90 hover:border-amber-300 hover:bg-[linear-gradient(180deg,rgba(255,255,255,0.96)_0%,rgba(253,230,138,0.94)_100%)] hover:text-amber-900 ${mobileWideNavItemClassName}`;
 
-  const logoutAction: KangurNavActionConfig = {
-    content: (<><LogOut aria-hidden='true' className={ICON_CLASSNAME} strokeWidth={2.15} /><span className='truncate'>{isLoggingOut ? fallbackCopy.logoutPendingLabel : fallbackCopy.logoutLabel}</span></>),
-    disabled: isLoggingOut,
-    docId: 'profile_logout',
-    className: mobileNavItemClassName,
-    onClick: onLogout,
-    testId: 'kangur-primary-nav-logout',
-  };
+  const renderPrimaryNavActions = (onActionClick?: () => void) => (
+    <>
+      {renderNavAction({
+        active: effectiveHomeActive,
+        className: `px-3 sm:px-4 ${mobileNavItemClassName}`,
+        content: (
+          <span className='flex flex-col items-center justify-center' data-testid='kangur-home-brand'>
+            <span className='flex items-center justify-center transition-transform duration-200 ease-out group-hover:-translate-y-0.5 group-hover:scale-[1.02] motion-reduce:transform-none' data-testid='kangur-home-logo'>
+              <KangurHomeLogo idPrefix='kangur-primary-nav-logo' className='-translate-y-[1px]' />
+            </span>
+            <KangurHomeBetaBadge />
+          </span>
+        ),
+        docId: 'top_nav_home',
+        href: onHomeClick ? undefined : homeHref,
+        onClick: () => {
+          onHomeClick?.();
+          onActionClick?.();
+        },
+        testId: 'kangur-primary-nav-home',
+        transition: {
+          active: isTransitionSourceActive({ activeTransitionSourceId, transitionPhase, transitionSourceId: homeTransitionSourceId }),
+          acknowledgeMs: onHomeClick ? undefined : PRIMARY_NAV_ROUTE_ACKNOWLEDGE_MS,
+          sourceId: onHomeClick ? undefined : homeTransitionSourceId,
+        },
+      })}
 
-  const loginAction: KangurNavActionConfig = {
-    className: mobileNavItemClassName,
-    content: (<><LogIn aria-hidden='true' className={ICON_CLASSNAME} strokeWidth={2.15} /><span className='truncate'>{fallbackCopy.loginLabel}</span></>),
-    docId: 'profile_login',
-    elementRef: loginActionRef,
-    onClick: onLogin,
-    testId: 'kangur-primary-nav-login',
-  };
+      {canAccessGamesLibrary && renderNavAction({
+        active: accessibleCurrentPage === 'GamesLibrary',
+        className: mobileNavItemClassName,
+        content: renderGamesLibraryNavActionContent({ isSixYearOld, label: navTranslations('gamesLibrary') }),
+        docId: 'top_nav_games_library',
+        href: gamesLibraryHref,
+        onClick: onActionClick,
+        testId: 'kangur-primary-nav-games-library',
+        transition: {
+          active: isTransitionSourceActive({ activeTransitionSourceId, transitionPhase, transitionSourceId: gamesLibraryTransitionSourceId }),
+          sourceId: gamesLibraryTransitionSourceId,
+        },
+      })}
 
-  const homeAction: KangurNavActionConfig = {
-    active: effectiveHomeActive,
-    ariaLabel: fallbackCopy.homeLabel,
-    className: `px-3 sm:px-4 ${mobileNavItemClassName}`,
-    content: (
-      <span className='flex flex-col items-center justify-center' data-testid='kangur-home-brand'>
-        <span className='flex items-center justify-center transition-transform duration-200 ease-out group-hover:-translate-y-0.5 group-hover:scale-[1.02] motion-reduce:transform-none' data-testid='kangur-home-logo'>
-          <KangurHomeLogo idPrefix='kangur-primary-nav-logo' className='-translate-y-[1px]' />
-        </span>
-        <KangurHomeBetaBadge />
-      </span>
-    ),
-    docId: 'top_nav_home',
-    href: onHomeClick ? undefined : homeHref,
-    onClick: onHomeClick,
-    testId: 'kangur-primary-nav-home',
-    transition: {
-      active: isTransitionSourceActive({ activeTransitionSourceId, transitionPhase, transitionSourceId: homeTransitionSourceId }),
-      acknowledgeMs: onHomeClick ? undefined : PRIMARY_NAV_ROUTE_ACKNOWLEDGE_MS,
-      sourceId: onHomeClick ? undefined : homeTransitionSourceId,
-    },
-  };
+      {renderNavAction({
+        active: accessibleCurrentPage === 'Lessons',
+        className: mobileNavItemClassName,
+        content: renderLessonsNavActionContent({ isSixYearOld, label: navTranslations('lessons') }),
+        docId: 'top_nav_lessons',
+        href: lessonsHref,
+        onClick: onActionClick,
+        testId: 'kangur-primary-nav-lessons',
+        transition: {
+          active: isTransitionSourceActive({ activeTransitionSourceId, transitionPhase, transitionSourceId: lessonsTransitionSourceId }),
+          sourceId: lessonsTransitionSourceId,
+        },
+      })}
 
-  const lessonsAction: KangurNavActionConfig = {
-    active: accessibleCurrentPage === 'Lessons',
-    ariaLabel: navTranslations('lessons'),
-    className: mobileNavItemClassName,
-    content: renderLessonsNavActionContent({ isSixYearOld, label: navTranslations('lessons') }),
-    docId: 'top_nav_lessons',
-    href: lessonsHref,
-    onFocus: warmLessonsCatalog,
-    onMouseEnter: warmLessonsCatalog,
-    targetPageKey: 'Lessons',
-    testId: 'kangur-primary-nav-lessons',
-    transition: {
-      active: isTransitionSourceActive({ activeTransitionSourceId, transitionPhase, transitionSourceId: lessonsTransitionSourceId }),
-      sourceId: lessonsTransitionSourceId,
-    },
-  };
+      {renderNavAction({
+        active: accessibleCurrentPage === 'Duels',
+        className: mobileNavItemClassName,
+        content: (
+          <>
+            <Trophy aria-hidden='true' className={ICON_CLASSNAME} strokeWidth={2.15} />
+            <span className='truncate'>{navTranslations('duels')}</span>
+          </>
+        ),
+        docId: 'top_nav_duels',
+        href: duelsHref,
+        onClick: onActionClick,
+        testId: 'kangur-primary-nav-duels',
+        transition: {
+          active: isTransitionSourceActive({ activeTransitionSourceId, transitionPhase, transitionSourceId: duelsTransitionSourceId }),
+          sourceId: duelsTransitionSourceId,
+        },
+      })}
 
-  const gamesLibraryAction: KangurNavActionConfig = {
-    active: accessibleCurrentPage === 'GamesLibrary',
-    ariaLabel: 'Biblioteka',
-    className: mobileNavItemClassName,
-    content: renderGamesLibraryNavActionContent({ isSixYearOld, label: 'Biblioteka' }),
-    docId: 'top_nav_games_library',
-    href: gamesLibraryHref,
-    targetPageKey: 'GamesLibrary',
-    testId: 'kangur-primary-nav-games-library',
-    transition: {
-      active: isTransitionSourceActive({ activeTransitionSourceId, transitionPhase, transitionSourceId: gamesLibraryTransitionSourceId }),
-      sourceId: gamesLibraryTransitionSourceId,
-    },
-  };
-
-  const subjectAction: KangurNavActionConfig = {
-    ariaControls: subjectDialogId,
-    ariaExpanded: isSubjectModalOpen,
-    ariaHasPopup: 'dialog',
-    ariaLabel: navTranslations('subject.label'),
-    className: yellowPillActionClassName,
-    content: isSixYearOld ? (
-      <KangurVisualCueContent
-        detail={subjectVisual.detail}
-        detailClassName='text-sm font-bold'
-        detailTestId='kangur-primary-nav-subject-detail'
-        icon={subjectVisual.icon}
-        iconClassName='text-lg'
-        iconTestId='kangur-primary-nav-subject-icon'
-        label={subjectChoiceLabel}
-      />
-    ) : (
-      <><BookCheck aria-hidden='true' className={ICON_CLASSNAME} strokeWidth={2.15} /><span className='truncate'>{subjectChoiceLabel}</span></>
-    ),
-    docId: 'top_nav_subject_choice',
-    onClick: () => setIsSubjectModalOpen(true),
-    testId: 'kangur-primary-nav-subject',
-    title: navTranslations('subject.currentTitle', { subject: subjectChoiceLabel }),
-  };
-
-  const ageGroupAction: KangurNavActionConfig = {
-    ariaControls: ageGroupDialogId,
-    ariaExpanded: isAgeGroupModalOpen,
-    ariaHasPopup: 'dialog',
-    ariaLabel: navTranslations('ageGroup.label'),
-    className: amberPillActionClassName,
-    content: isSixYearOld ? (
-      <KangurVisualCueContent
-        detail={ageGroupVisual.detail}
-        detailClassName='text-sm font-bold'
-        detailTestId='kangur-primary-nav-age-group-detail'
-        icon={ageGroupVisual.icon}
-        iconClassName='text-lg'
-        iconTestId='kangur-primary-nav-age-group-icon'
-        label={ageGroupChoiceLabel}
-      />
-    ) : (
-      <><Users aria-hidden='true' className={ICON_CLASSNAME} strokeWidth={2.15} /><span className='truncate'>{ageGroupChoiceLabel}</span></>
-    ),
-    docId: 'top_nav_age_group_choice',
-    onClick: () => setIsAgeGroupModalOpen(true),
-    testId: 'kangur-primary-nav-age-group',
-    title: navTranslations('ageGroup.currentTitle', { group: ageGroupChoiceLabel }),
-  };
-
-  const tutorToggleAction: KangurNavActionConfig = {
-    ariaLabel: isTutorHidden ? enableTutorLabel : disableTutorLabel,
-    className: isTutorHidden ? yellowPillActionClassName : mobileNavItemClassName,
-    content: (<><BrainCircuit aria-hidden='true' className={ICON_CLASSNAME} strokeWidth={2.15} /><span className='truncate'>{isTutorHidden ? enableTutorLabel : disableTutorLabel}</span></>),
-    docId: isTutorHidden ? 'kangur-ai-tutor-enable' : 'kangur-ai-tutor-disable',
-    onClick: () => {
-      const next = !isTutorHidden;
-      persistTutorVisibilityHidden(next);
-      if (!next && tutor?.enabled) tutor.openChat();
-    },
-    testId: 'kangur-ai-tutor-toggle',
-    title: isTutorHidden ? enableTutorLabel : disableTutorLabel,
-  };
-
-  const duelsAction: KangurNavActionConfig = {
-    active: accessibleCurrentPage === 'Duels',
-    ariaLabel: navTranslations('duels'),
-    className: mobileNavItemClassName,
-    content: (
-      <>
-        <Trophy aria-hidden='true' className={ICON_CLASSNAME} strokeWidth={2.15} />
-        <span className='truncate'>{navTranslations('duels')}</span>
-      </>
-    ),
-    docId: 'top_nav_duels',
-    href: duelsHref,
-    prefetch: false,
-    targetPageKey: 'Duels',
-    testId: 'kangur-primary-nav-duels',
-    transition: {
-      active: isTransitionSourceActive({ activeTransitionSourceId, transitionPhase, transitionSourceId: duelsTransitionSourceId }),
-      sourceId: duelsTransitionSourceId,
-    },
-  };
-
-  const parentDashboardAction: KangurNavActionConfig | null = effectiveShowParentDashboard
-    ? {
+      {effectiveShowParentDashboard && renderNavAction({
         active: accessibleCurrentPage === 'ParentDashboard',
-        ariaLabel: navTranslations('parent'),
         className: mobileNavItemClassName,
         content: (
           <>
             <LayoutGrid aria-hidden='true' className={ICON_CLASSNAME} strokeWidth={2.15} />
-            <span className='truncate'>{navTranslations('parent')}</span>
+            <span className='truncate'>{navTranslations('parentDashboard')}</span>
           </>
         ),
         docId: 'top_nav_parent_dashboard',
         href: parentDashboardHref,
-        targetPageKey: 'ParentDashboard',
+        onClick: onActionClick,
         testId: 'kangur-primary-nav-parent-dashboard',
         transition: {
           active: isTransitionSourceActive({ activeTransitionSourceId, transitionPhase, transitionSourceId: parentDashboardTransitionSourceId }),
           sourceId: parentDashboardTransitionSourceId,
         },
-      }
-    : null;
+      })}
 
-  const renderAuthActions = (onActionClick?: () => void): React.ReactNode => {
-    if (effectiveIsAuthenticated) {
-      return renderNavAction(buildActionWithClose(logoutAction, onActionClick));
-    }
+      {renderNavAction({
+        className: yellowPillActionClassName,
+        content: isSixYearOld ? (
+          <KangurVisualCueContent detail={subjectVisual.detail} detailClassName='text-sm font-bold' detailTestId='kangur-primary-nav-subject-detail' icon={subjectVisual.icon} iconClassName='text-lg' iconTestId='kangur-primary-nav-subject-icon' label={subjectChoiceLabel} />
+        ) : (
+          <>
+            <BookCheck aria-hidden='true' className={ICON_CLASSNAME} strokeWidth={2.15} />
+            <span className='truncate'>{subjectChoiceLabel}</span>
+          </>
+        ),
+        docId: 'top_nav_subject_choice',
+        onClick: () => {
+          setIsSubjectModalOpen(true);
+          onActionClick?.();
+        },
+        testId: 'kangur-primary-nav-subject',
+      })}
 
-    if (!onLogin && !showGuestPlayerNameInput) {
-      return null;
-    }
+      {renderNavAction({
+        className: amberPillActionClassName,
+        content: isSixYearOld ? (
+          <KangurVisualCueContent detail={ageGroupVisual.detail} detailClassName='text-sm font-bold' detailTestId='kangur-primary-nav-age-group-detail' icon={ageGroupVisual.icon} iconClassName='text-lg' iconTestId='kangur-primary-nav-age-group-icon' label={ageGroupChoiceLabel} />
+        ) : (
+          <>
+            <Users aria-hidden='true' className={ICON_CLASSNAME} strokeWidth={2.15} />
+            <span className='truncate'>{ageGroupChoiceLabel}</span>
+          </>
+        ),
+        docId: 'top_nav_age_group_choice',
+        onClick: () => {
+          setIsAgeGroupModalOpen(true);
+          onActionClick?.();
+        },
+        testId: 'kangur-primary-nav-age-group',
+      })}
 
-    return (
-      <>
-        {showGuestPlayerNameInput ? (
-          isEditingGuestPlayerName || !hasGuestPlayerName ? (
-            <div className='w-full sm:w-[220px]'>
-              <label className='sr-only' htmlFor='kangur-primary-nav-guest-player-name'>
-                {fallbackCopy.guestPlayerNameLabel}
-              </label>
-              <KangurTextField
-                accent='indigo'
-                className='h-11 min-w-0 text-sm'
-                data-doc-id='profile_guest_player_name'
-                id='kangur-primary-nav-guest-player-name'
-                maxLength={20}
-                onBlur={commitGuestPlayerName}
-                onChange={(event) => handleGuestPlayerNameChange(event.target.value)}
-                onKeyDown={(event) => {
-                  if (event.key === 'Enter') {
-                    event.preventDefault();
-                    commitGuestPlayerName();
-                  }
-                }}
-                placeholder={guestPlayerPlaceholderText}
-                size='md'
-                type='text'
-                value={guestPlayerNameValue}
-              />
-            </div>
-          ) : (
-            <KangurButton
-              className='w-full justify-start px-3 text-left sm:w-auto sm:min-w-[180px]'
-              data-doc-id='profile_guest_player_name_display'
-              onClick={() => setIsEditingGuestPlayerName(true)}
-              size='md'
-              type='button'
-              variant='navigation'
-            >
-              <span className='truncate'>{guestPlayerName.trim()}</span>
-            </KangurButton>
-          )
-        ) : null}
-        {onLogin ? (
-          <KangurPrimaryNavigationLoginAction
-            className={mobileNavItemClassName}
-            fallbackLabel={fallbackCopy.loginLabel}
-            loginActionRef={loginActionRef}
-            onActionClick={onActionClick}
-            onLogin={onLogin}
+      {renderNavAction({
+        className: isTutorHidden ? yellowPillActionClassName : mobileNavItemClassName,
+        content: (
+          <>
+            <BrainCircuit aria-hidden='true' className={ICON_CLASSNAME} strokeWidth={2.15} />
+            <span className='truncate'>{isTutorHidden ? enableTutorLabel : disableTutorLabel}</span>
+          </>
+        ),
+        docId: isTutorHidden ? 'kangur-ai-tutor-enable' : 'kangur-ai-tutor-disable',
+        onClick: () => {
+          const next = !isTutorHidden;
+          persistTutorVisibilityHidden(next);
+          if (!next && tutor?.enabled) tutor.openChat();
+          onActionClick?.();
+        },
+        testId: 'kangur-ai-tutor-toggle',
+      })}
+    </>
+  );
+
+  const renderUtilityNavActions = (onActionClick?: () => void) => (
+    <>
+      <div className='flex items-center gap-2 max-sm:col-span-2 max-sm:justify-center'>
+        <KangurLanguageSwitcher
+          forceFallbackPath={forceLanguageSwitcherFallbackPath}
+          variant='surface'
+          size='sm'
+          className={isCoarsePointer ? 'min-h-11 min-w-11 sm:min-h-0 sm:min-w-0' : undefined}
+        />
+        {storefrontAppearance.isAppearanceAvailable && (
+          <CmsStorefrontAppearanceButtons
+            variant='surface'
+            size='sm'
+            className={isCoarsePointer ? 'min-h-11 min-w-11 sm:min-h-0 sm:min-w-0' : undefined}
           />
-        ) : null}
-      </>
-    );
-  };
-
-  const renderPrimaryActions = (options?: {
-    onActionClick?: () => void;
-    wrapperClassName?: string;
-  }): React.ReactNode => {
-    const { onActionClick, wrapperClassName } = options ?? {};
-    return (
-      <div
-        className={
-          wrapperClassName ??
-          'flex items-center gap-2 max-sm:grid max-sm:grid-cols-2 w-full sm:w-auto'
-        }
-        data-testid='kangur-primary-nav-primary-actions'
-      >
-        {renderNavAction(buildActionWithClose(homeAction, onActionClick))}
-        {canAccessGamesLibrary
-          ? renderNavAction(buildActionWithClose(gamesLibraryAction, onActionClick))
-          : null}
-        {renderNavAction(buildActionWithClose(lessonsAction, onActionClick))}
-        {renderNavAction(buildActionWithClose(duelsAction, onActionClick))}
-        {renderNavAction(buildActionWithClose(subjectAction, onActionClick))}
-        {renderNavAction(buildActionWithClose(ageGroupAction, onActionClick))}
-        {!isTutorHidden
-          ? renderNavAction(buildActionWithClose(tutorToggleAction, onActionClick))
-          : null}
+        )}
       </div>
-    );
-  };
 
-  const renderUtilityActions = (options?: {
-    onActionClick?: () => void;
-    wrapperClassName?: string;
-    hideAppearanceControls?: boolean;
-    hideLanguageSwitcher?: boolean;
-    testId?: string;
-  }): React.ReactNode => {
-    const {
-      onActionClick,
-      wrapperClassName,
-      hideAppearanceControls,
-      hideLanguageSwitcher,
-      testId = 'kangur-primary-nav-utility-actions',
-    } = options ?? {};
-
-    return (
-      <div
-        className={
-          wrapperClassName ??
-          `ml-auto ${KANGUR_TIGHT_ROW_CLASSNAME} items-stretch justify-end max-sm:ml-0 max-sm:justify-start sm:w-auto sm:flex-wrap sm:items-center`
-        }
-        data-testid={testId}
-      >
-        {shouldRenderLanguageSwitcher && !hideLanguageSwitcher ? (
-          <KangurLanguageSwitcher
-            basePath={basePath}
-            className={mobileNavItemClassName}
-            currentPage={accessibleCurrentPage}
-            forceFallbackPath={forceLanguageSwitcherFallbackPath}
-          />
-        ) : null}
-        {!hideAppearanceControls ? appearanceControls : null}
-        {rightAccessory}
-        {parentDashboardAction
-          ? renderNavAction(buildActionWithClose(parentDashboardAction, onActionClick))
-          : null}
+      <div className={`${KANGUR_TIGHT_ROW_CLASSNAME} items-center max-sm:col-span-2 max-sm:justify-center`}>
         {shouldRenderElevatedUserMenu && elevatedSessionUser && (
           <KangurElevatedUserMenu
             adminLabel={fallbackCopy.adminLabel}
             logoutLabel={fallbackCopy.logoutLabel}
-            onLogout={onLogout}
+            onLogout={() => {
+              onLogout();
+              onActionClick?.();
+            }}
             profile={!isParentAccount || hasActiveLearner ? { href: profileHref, label: profileLabel } : null}
             triggerAriaLabel={fallbackCopy.avatarLabel}
             user={elevatedSessionUser}
           />
         )}
+
         {shouldRenderProfileMenu && (
           <KangurProfileMenu
             avatar={profileAvatar}
@@ -868,269 +450,137 @@ export function KangurPrimaryNavigation(props: KangurPrimaryNavigationProps): Re
             triggerClassName={mobileNavItemClassName}
           />
         )}
-        {renderAuthActions(onActionClick)}
-      </div>
-    );
-  };
 
-  const mobileMenuLabel = isMobileMenuOpen
-    ? navTranslations('mobileMenu.close')
-    : navTranslations('mobileMenu.open');
-  const mobileMenuCloseButton = (
-    <KangurPanelCloseButton
-      id='kangur-mobile-menu-close'
-      aria-label={navTranslations('mobileMenu.close')}
-      onClick={closeMobileMenu}
-      variant='chat'
-    />
-  );
-  const desktopNav = (
-    <KangurTopNavGroup label={navigationLabel}>
-      {renderPrimaryActions()}
-      {renderUtilityActions()}
-    </KangurTopNavGroup>
-  );
-  const mobileNav = (
-    <KangurTopNavGroup label={navigationLabel}>
-      <KangurButton
-        aria-controls={mobileMenuId}
-        aria-expanded={isMobileMenuOpen}
-        aria-haspopup='dialog'
-        aria-label={mobileMenuLabel}
-        className={isCoarsePointer ? 'min-h-12 px-4 py-3' : 'px-4 py-3'}
-        data-testid='kangur-primary-nav-mobile-toggle'
-        fullWidth
-        onClick={toggleMobileMenu}
-        type='button'
-        variant='navigation'
-      >
-        {isMobileMenuOpen ? (
-          <X aria-hidden='true' className={ICON_CLASSNAME} />
+        {effectiveIsAuthenticated ? (
+          renderNavAction({
+            content: (
+              <>
+                <LogOut aria-hidden='true' className={ICON_CLASSNAME} strokeWidth={2.15} />
+                <span className='truncate'>{isLoggingOut ? fallbackCopy.logoutPendingLabel : fallbackCopy.logoutLabel}</span>
+              </>
+            ),
+            disabled: isLoggingOut,
+            docId: 'profile_logout',
+            className: mobileNavItemClassName,
+            onClick: () => {
+              onLogout();
+              onActionClick?.();
+            },
+            testId: 'kangur-primary-nav-logout',
+          })
         ) : (
-          <Menu aria-hidden='true' className={ICON_CLASSNAME} />
+          onLogin && (
+            <KangurPrimaryNavigationLoginAction
+              className={mobileNavItemClassName}
+              fallbackLabel={fallbackCopy.loginLabel}
+              loginActionRef={loginActionRef}
+              onLogin={onLogin}
+              onActionClick={onActionClick}
+            />
+          )
         )}
-        <span className='sr-only'>{mobileMenuLabel}</span>
-      </KangurButton>
-    </KangurTopNavGroup>
-  );
-  const leftContent = (
-    <>
-      <div aria-hidden={isMobileViewport} className='hidden w-full min-w-0 sm:block'>
-        {desktopNav}
-      </div>
-      <div aria-hidden={!isMobileViewport} className='w-full min-w-0 sm:hidden'>
-        {mobileNav}
       </div>
     </>
   );
-  const shouldRenderMobileAppearanceHeader = Boolean(appearanceControlsInline);
-  const shouldRenderMobileLanguageHeader = shouldRenderLanguageSwitcher;
-  const shouldHideMobileAppearanceControls = shouldRenderMobileAppearanceHeader;
-  const shouldHideMobileLanguageSwitcher = shouldRenderMobileLanguageHeader;
-  const mobileMenuOverlay = isMobileViewport || isMobileMenuOpen ? (
-    <div
-      aria-hidden={!isMobileMenuOpen}
-      className={`fixed inset-0 z-50 transition-opacity duration-200 sm:hidden ${
-        isMobileMenuOpen ? 'opacity-100' : 'pointer-events-none opacity-0'
-      }`}
-    >
-      <button
-        aria-hidden='true'
-        className='absolute inset-0 cursor-pointer border-0 bg-[radial-gradient(circle_at_top,rgba(15,23,42,0.4)_0%,rgba(15,23,42,0.72)_100%)] p-0 touch-manipulation active:opacity-95'
-        onClick={closeMobileMenu}
-        tabIndex={-1}
-        type='button'
-      />
-      <div
-        aria-describedby={mobileMenuDescriptionId}
-        aria-labelledby={mobileMenuTitleId}
-        aria-modal='true'
-        className={`relative flex h-full w-full flex-col kangur-panel-gap overflow-y-auto px-4 pb-[calc(var(--kangur-mobile-bottom-clearance,env(safe-area-inset-bottom))+32px)] pt-[calc(env(safe-area-inset-top)+20px)] transition-transform duration-200 min-[420px]:px-5 ${
-          isMobileMenuOpen ? 'translate-y-0' : 'translate-y-4'
-        }`}
-        id={mobileMenuId}
-        onClick={(event) => event.stopPropagation()}
-        ref={mobileMenuRef}
-        role='dialog'
-        style={{ backgroundColor: kangurAppearance.tone.background, color: kangurAppearance.tone.text }}
-      >
-        <h2 className='sr-only' id={mobileMenuTitleId}>
-          {navTranslations('mobileMenu.title')}
-        </h2>
-        <p className='sr-only' id={mobileMenuDescriptionId}>
-          {navTranslations('mobileMenu.description')}
-        </p>
-        <KangurTopNavGroup label={navigationLabel} className='w-full flex-col'>
-          <div
-            className='flex w-full items-center gap-2'
-            data-testid='kangur-primary-nav-mobile-header'
-          >
-            {shouldRenderMobileLanguageHeader || shouldRenderMobileAppearanceHeader ? (
-              <div
-                className='flex min-w-0 items-center gap-2'
-                data-testid='kangur-primary-nav-mobile-header-actions'
-              >
-                {shouldRenderMobileLanguageHeader ? (
-                  <KangurLanguageSwitcher
-                    basePath={basePath}
-                    currentPage={accessibleCurrentPage}
-                    forceFallbackPath={forceLanguageSwitcherFallbackPath}
-                  />
-                ) : null}
-                {shouldRenderMobileAppearanceHeader ? (
-                  <div className='flex shrink-0 items-center'>{appearanceControlsInline}</div>
-                ) : null}
-              </div>
-            ) : null}
-            <div className='ml-auto flex shrink-0 items-center'>{mobileMenuCloseButton}</div>
-          </div>
-          {renderPrimaryActions({
-            onActionClick: closeMobileMenu,
-            wrapperClassName: 'flex w-full flex-col gap-2',
-          })}
-          {renderUtilityActions({
-            onActionClick: closeMobileMenu,
-            wrapperClassName: 'flex w-full flex-col gap-2',
-            hideAppearanceControls: shouldHideMobileAppearanceControls,
-            hideLanguageSwitcher: shouldHideMobileLanguageSwitcher,
-            testId: 'kangur-primary-nav-mobile-utility-actions',
+
+  const topBarLeft = (
+    <div className='flex w-full items-center justify-between gap-4'>
+      <div className='hidden flex-1 items-center gap-2 sm:flex'>
+        <KangurTopNavGroup label={navigationLabel}>
+          <div className='flex items-center gap-2'>{renderPrimaryNavActions()}</div>
+        </KangurTopNavGroup>
+        <div className='ml-auto flex items-center gap-2'>{renderUtilityNavActions()}</div>
+      </div>
+
+      <div className='flex w-full items-center justify-between sm:hidden'>
+        <KangurTopNavGroup label={navigationLabel}>
+          {renderNavAction({
+            active: effectiveHomeActive,
+            className: 'px-2',
+            content: (
+              <span className='flex flex-col items-center justify-center scale-90' data-testid='kangur-home-brand-mobile'>
+                <KangurHomeLogo idPrefix='kangur-primary-nav-logo-mobile' className='-translate-y-[1px]' />
+                <KangurHomeBetaBadge />
+              </span>
+            ),
+            docId: 'top_nav_home_mobile',
+            href: onHomeClick ? undefined : homeHref,
+            onClick: onHomeClick,
+            testId: 'kangur-primary-nav-home-mobile',
           })}
         </KangurTopNavGroup>
+
+        <div className='flex items-center gap-2'>
+          {rightAccessory}
+          <KangurButton
+            aria-controls='kangur-primary-nav-mobile-menu'
+            aria-expanded={isMobileMenuOpen}
+            aria-label={isMobileMenuOpen ? 'Zamknij menu' : 'Otwórz menu'}
+            onClick={toggleMobileMenu}
+            size='sm'
+            variant='surface'
+            className='h-11 w-11 rounded-2xl p-0'
+            data-testid='kangur-primary-nav-mobile-toggle'
+          >
+            {isMobileMenuOpen ? <X className='h-6 w-6' /> : <Menu className='h-6 w-6' />}
+          </KangurButton>
+        </div>
       </div>
     </div>
-  ) : null;
-  const subjectModal = (
-    <KangurChoiceDialog
-      contentId={subjectDialogId}
-      open={isSubjectModalOpen}
-      onOpenChange={setIsSubjectModalOpen}
-      header={
-        <KangurDialogMeta
-          title={navTranslations('subject.label')}
-          description={navTranslations('subject.dialogDescription')}
-        />
-      }
-      title={
-        isSixYearOld ? (
-          <KangurVisualCueContent
-            detail='👆'
-            detailClassName='text-sm'
-            detailTestId='kangur-primary-nav-subject-modal-title-detail'
-            icon='📚'
-            iconClassName='text-lg'
-            iconTestId='kangur-primary-nav-subject-modal-title-icon'
-            label={navTranslations('subject.label')}
-          />
-        ) : (
-          navTranslations('subject.label')
-        )
-      }
-      defaultChoiceLabel={isSixYearOld ? (
-        <KangurVisualCueContent
-          detail={getKangurSixYearOldSubjectVisual(getKangurDefaultSubjectForAgeGroup(ageGroup)).detail}
-          detailClassName='text-sm font-bold'
-          detailTestId='kangur-primary-nav-subject-modal-default-detail'
-          icon={getKangurSixYearOldSubjectVisual(getKangurDefaultSubjectForAgeGroup(ageGroup)).icon}
-          iconClassName='text-lg'
-          iconTestId='kangur-primary-nav-subject-modal-default-icon'
-          label={defaultSubjectLabel}
-        />
-      ) : (
-        defaultSubjectLabel
-      )}
-      currentChoiceLabel={isSixYearOld ? (
-        <KangurVisualCueContent
-          detail={subjectVisual.detail}
-          detailClassName='text-sm font-bold'
-          detailTestId='kangur-primary-nav-subject-modal-current-detail'
-          icon={subjectVisual.icon}
-          iconClassName='text-lg'
-          iconTestId='kangur-primary-nav-subject-modal-current-icon'
-          label={subjectChoiceLabel}
-        />
-      ) : (
-        subjectChoiceLabel
-      )}
-      closeAriaLabel={navTranslations('subject.closeAriaLabel')}
-      groupAriaLabel={navTranslations('subject.groupAriaLabel')}
-      options={subjectOptions}
-      doneAriaLabel='Gotowe'
-    />
-  );
-  const ageGroupModal = (
-    <KangurChoiceDialog
-      contentId={ageGroupDialogId}
-      open={isAgeGroupModalOpen}
-      onOpenChange={setIsAgeGroupModalOpen}
-      header={
-        <KangurDialogMeta
-          title={navTranslations('ageGroup.label')}
-          description={navTranslations('ageGroup.dialogDescription')}
-        />
-      }
-      title={
-        isSixYearOld ? (
-          <KangurVisualCueContent
-            detail='👆'
-            detailClassName='text-sm'
-            detailTestId='kangur-primary-nav-age-group-modal-title-detail'
-            icon='👥'
-            iconClassName='text-lg'
-            iconTestId='kangur-primary-nav-age-group-modal-title-icon'
-            label={navTranslations('ageGroup.label')}
-          />
-        ) : (
-          navTranslations('ageGroup.label')
-        )
-      }
-      defaultChoiceLabel={isSixYearOld ? (
-        <KangurVisualCueContent
-          detail={getKangurSixYearOldAgeGroupVisual(
-            KANGUR_AGE_GROUPS.find((group) => group.default)?.id ?? DEFAULT_KANGUR_AGE_GROUP
-          ).detail}
-          detailClassName='text-sm font-bold'
-          detailTestId='kangur-primary-nav-age-group-modal-default-detail'
-          icon={getKangurSixYearOldAgeGroupVisual(
-            KANGUR_AGE_GROUPS.find((group) => group.default)?.id ?? DEFAULT_KANGUR_AGE_GROUP
-          ).icon}
-          iconClassName='text-lg'
-          iconTestId='kangur-primary-nav-age-group-modal-default-icon'
-          label={defaultAgeGroupLabel}
-        />
-      ) : (
-        defaultAgeGroupLabel
-      )}
-      currentChoiceLabel={isSixYearOld ? (
-        <KangurVisualCueContent
-          detail={ageGroupVisual.detail}
-          detailClassName='text-sm font-bold'
-          detailTestId='kangur-primary-nav-age-group-modal-current-detail'
-          icon={ageGroupVisual.icon}
-          iconClassName='text-lg'
-          iconTestId='kangur-primary-nav-age-group-modal-current-icon'
-          label={ageGroupChoiceLabel}
-        />
-      ) : (
-        ageGroupChoiceLabel
-      )}
-      closeAriaLabel={navTranslations('ageGroup.closeAriaLabel')}
-      groupAriaLabel={navTranslations('ageGroup.groupAriaLabel')}
-      options={ageGroupOptions}
-      doneAriaLabel='Gotowe'
-    />
   );
 
   return (
     <>
-      <KangurPageTopBar
-        className={props.className}
-        contentClassName={props.contentClassName}
-        left={leftContent}
-      />
-      {mobileMenuOverlay}
+      <KangurPageTopBar className={props.className} contentClassName={props.contentClassName} left={topBarLeft} />
+
+      {isMobileMenuOpen && (
+        <div
+          id='kangur-primary-nav-mobile-menu'
+          ref={mobileMenuRef}
+          className='fixed inset-0 z-[100] flex flex-col bg-[color:var(--kangur-page-background)] sm:hidden'
+          data-testid='kangur-primary-nav-mobile-overlay'
+        >
+          <div className='flex shrink-0 items-center justify-between border-b border-[color:var(--kangur-page-border)] px-5 py-4'>
+            <div className='flex items-center gap-3'>
+              <KangurHomeLogo idPrefix='kangur-mobile-menu-logo' size='sm' />
+              <KangurHomeBetaBadge />
+            </div>
+            <KangurPanelCloseButton onClick={closeMobileMenu} data-testid='kangur-primary-nav-mobile-close' />
+          </div>
+          <div className='flex-1 overflow-y-auto overscroll-contain p-5'>
+            <div className='grid grid-cols-2 gap-3'>
+              {renderPrimaryNavActions(closeMobileMenu)}
+              <div className='col-span-2 my-2 h-px bg-[color:var(--kangur-page-border)] opacity-60' />
+              {renderUtilityNavActions(closeMobileMenu)}
+            </div>
+          </div>
+        </div>
+      )}
+
       <Suspense fallback={null}>
-        {subjectModal}
-        {ageGroupModal}
+        {isSubjectModalOpen && (
+          <KangurChoiceDialog
+            dataTestId={subjectDialogId}
+            onOpenChange={setIsSubjectModalOpen}
+            open={isSubjectModalOpen}
+            options={subjectOptions}
+            title={isSixYearOld ? <KangurVisualCueContent icon='📚' label={navTranslations('subjectChoiceTitle')} /> : navTranslations('subjectChoiceTitle')}
+          >
+            <KangurDialogMeta description={navTranslations('subjectChoiceDescription')} />
+          </KangurChoiceDialog>
+        )}
+
+        {isAgeGroupModalOpen && (
+          <KangurChoiceDialog
+            dataTestId={ageGroupDialogId}
+            onOpenChange={setIsAgeGroupModalOpen}
+            open={isAgeGroupModalOpen}
+            options={ageGroupOptions}
+            title={isSixYearOld ? <KangurVisualCueContent icon='🎂' label={navTranslations('ageGroupChoiceTitle')} /> : navTranslations('ageGroupChoiceTitle')}
+          >
+            <KangurDialogMeta description={navTranslations('ageGroupChoiceDescription')} />
+          </KangurChoiceDialog>
+        )}
       </Suspense>
     </>
   );

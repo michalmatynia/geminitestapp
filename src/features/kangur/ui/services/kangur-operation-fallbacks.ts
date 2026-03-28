@@ -172,6 +172,15 @@ const KANGUR_OPERATION_FALLBACKS: Record<string, KangurOperationFallbackInfo> = 
       uk: 'Прикметники',
     },
   },
+  english_adverbs: {
+    emoji: '🎭',
+    labels: {
+      pl: 'Przysłówki',
+      en: 'Adverbs',
+      de: 'Adverbien',
+      uk: 'Прислівники',
+    },
+  },
   english_adverbs_frequency: {
     emoji: '🔁',
     labels: {

@@ -8,9 +8,23 @@ const mockState = vi.hoisted(() => ({
   logClientError: vi.fn(), logClientCatch: vi.fn(),
 }));
 
+function getRuntimeStateMock() {
+  const runtimeState = {
+    runtimeEvents: mockState.runtimeEvents,
+  };
+  return runtimeState;
+}
+
+function getRuntimeActionsMock() {
+  const runtimeActions = {
+    clearRuntimeEvents: mockState.clearRuntimeEvents,
+  };
+  return runtimeActions;
+}
+
 vi.mock('../../context', () => ({
-  useRuntimeState: () => ({ runtimeEvents: mockState.runtimeEvents }),
-  useRuntimeActions: () => ({ clearRuntimeEvents: mockState.clearRuntimeEvents }),
+  useRuntimeState: getRuntimeStateMock,
+  useRuntimeActions: getRuntimeActionsMock,
 }));
 
 vi.mock('@/shared/utils/observability/client-error-logger', () => ({

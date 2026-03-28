@@ -67,125 +67,130 @@ type AppModalResolvedProps = {
   footer?: React.ReactNode;
 };
 
-const renderAppModal = ({
-  isCurrentlyOpen,
-  handleOpenChange,
-  modalContentClassName,
-  handleInteractOutside,
-  handleEscapeKeyDown,
-  modalTitle,
-  dialogDescription,
-  isGlass,
-  size,
-  className,
-  header,
-  title,
-  subtitle,
-  titleHidden,
-  headerActions,
-  showClose,
-  canClose,
-  bodyHeightClass,
-  padding,
-  bodyClassName,
-  children,
-  footer,
-}: AppModalResolvedProps): React.JSX.Element => (
-  <Dialog open={isCurrentlyOpen} onOpenChange={handleOpenChange}>
-    <DialogContent
-      className={cn(
-        'max-w-none w-auto p-0 border-none bg-transparent shadow-none',
-        modalContentClassName ?? ''
-      )}
-      onInteractOutside={handleInteractOutside}
-      onEscapeKeyDown={handleEscapeKeyDown}
-    >
-      <DialogTitle className='sr-only'>{modalTitle}</DialogTitle>
-      <DialogDescription className='sr-only'>{dialogDescription}</DialogDescription>
-      <div
-        className={cn(
-          'pointer-events-auto w-full rounded-lg border flex flex-col',
-          isGlass ? 'bg-card/40 backdrop-blur-md border-white/10' : 'bg-card border-border',
-          sizeClasses[size],
-          className
-        )}
-      >
-        <div className='p-6 pb-4 border-b border-white/5'>
-          {header ? (
-            header
-          ) : (
-            <SectionHeader
-              title={title}
-              subtitle={subtitle}
-              size='md'
-              titleClassName={cn(titleHidden && 'sr-only')}
-              actions={
-                <div className='flex items-center gap-2'>
-                  {headerActions}
-                  {showClose ? (
-                    <Button
-                      type='button'
-                      onClick={() => handleOpenChange(false)}
-                      disabled={!canClose}
-                      variant='outline'
-                      size='sm'
-                    >
-                      Close
-                    </Button>
-                  ) : null}
-                </div>
-              }
-            />
-          )}
-        </div>
+const renderAppModal = (resolvedProps: AppModalResolvedProps): React.JSX.Element => {
+  const {
+    isCurrentlyOpen,
+    handleOpenChange,
+    modalContentClassName,
+    handleInteractOutside,
+    handleEscapeKeyDown,
+    modalTitle,
+    dialogDescription,
+    isGlass,
+    size,
+    className,
+    header,
+    title,
+    subtitle,
+    titleHidden,
+    headerActions,
+    showClose,
+    canClose,
+    bodyHeightClass,
+    padding,
+    bodyClassName,
+    children,
+    footer,
+  } = resolvedProps;
 
+  return (
+    <Dialog open={isCurrentlyOpen} onOpenChange={handleOpenChange}>
+      <DialogContent
+        className={cn(
+          'max-w-none w-auto p-0 border-none bg-transparent shadow-none',
+          modalContentClassName ?? ''
+        )}
+        onInteractOutside={handleInteractOutside}
+        onEscapeKeyDown={handleEscapeKeyDown}
+      >
+        <DialogTitle className='sr-only'>{modalTitle}</DialogTitle>
+        <DialogDescription className='sr-only'>{dialogDescription}</DialogDescription>
         <div
           className={cn(
-            bodyHeightClass,
-            'overflow-y-auto',
-            padding === 'default' && 'p-6',
-            bodyClassName ?? ''
+            'pointer-events-auto w-full rounded-lg border flex flex-col',
+            isGlass ? 'bg-card/40 backdrop-blur-md border-white/10' : 'bg-card border-border',
+            sizeClasses[size],
+            className
           )}
         >
-          {children}
-        </div>
-
-        {footer ? (
-          <div className='p-6 pt-4 border-t border-white/5 flex justify-end gap-2'>
-            {footer}
+          <div className='p-6 pb-4 border-b border-white/5'>
+            {header ? (
+              header
+            ) : (
+              <SectionHeader
+                title={title}
+                subtitle={subtitle}
+                size='md'
+                titleClassName={cn(titleHidden && 'sr-only')}
+                actions={
+                  <div className='flex items-center gap-2'>
+                    {headerActions}
+                    {showClose ? (
+                      <Button
+                        type='button'
+                        onClick={() => handleOpenChange(false)}
+                        disabled={!canClose}
+                        variant='outline'
+                        size='sm'
+                      >
+                        Close
+                      </Button>
+                    ) : null}
+                  </div>
+                }
+              />
+            )}
           </div>
-        ) : null}
-      </div>
-    </DialogContent>
-  </Dialog>
-);
 
-export function AppModal({
-  open,
-  isOpen,
-  onOpenChange,
-  onClose,
-  title,
-  subtitle,
-  description,
-  titleHidden = false,
-  header,
-  headerActions,
-  footer,
-  size = 'md',
-  variant = 'default',
-  padding = 'default',
-  showClose = true,
-  lockClose = false,
-  closeOnOutside = true,
-  closeOnEscape = true,
-  onInteractOutside,
-  onEscapeKeyDown,
-  children,
-  className,
-  contentClassName: modalContentClassName,
-  bodyClassName,
-}: AppModalProps): React.JSX.Element {
+          <div
+            className={cn(
+              bodyHeightClass,
+              'overflow-y-auto',
+              padding === 'default' && 'p-6',
+              bodyClassName ?? ''
+            )}
+          >
+            {children}
+          </div>
+
+          {footer ? (
+            <div className='p-6 pt-4 border-t border-white/5 flex justify-end gap-2'>
+              {footer}
+            </div>
+          ) : null}
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+};
+
+export function AppModal(props: AppModalProps): React.JSX.Element {
+  const {
+    open,
+    isOpen,
+    onOpenChange,
+    onClose,
+    title,
+    subtitle,
+    description,
+    titleHidden = false,
+    header,
+    headerActions,
+    footer,
+    size = 'md',
+    variant = 'default',
+    padding = 'default',
+    showClose = true,
+    lockClose = false,
+    closeOnOutside = true,
+    closeOnEscape = true,
+    onInteractOutside,
+    onEscapeKeyDown,
+    children,
+    className,
+    contentClassName: modalContentClassName,
+    bodyClassName,
+  } = props;
   const isCurrentlyOpen = isOpen ?? open ?? false;
   const canClose = !lockClose;
 

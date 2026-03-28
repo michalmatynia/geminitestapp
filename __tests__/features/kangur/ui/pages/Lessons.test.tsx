@@ -297,13 +297,16 @@ vi.mock('@/features/kangur/ui/hooks/useKangurLessonTemplates', () => ({
 }));
 
 vi.mock('@/features/kangur/ui/hooks/useKangurLessonSections', () => ({
-  useKangurLessonSections: () => ({
-    data: [],
-    isLoading: false,
-    isPending: false,
-    isFetching: false,
-    error: null,
-  }),
+  useKangurLessonSections: () => {
+    const lessonSectionsState = {
+      data: [],
+      isLoading: false,
+      isPending: false,
+      isFetching: false,
+      error: null,
+    };
+    return lessonSectionsState;
+  },
 }));
 
 vi.mock('@/features/kangur/ui/hooks/useKangurProgressState', () => ({

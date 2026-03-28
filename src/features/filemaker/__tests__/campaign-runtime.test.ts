@@ -305,6 +305,30 @@ describe('filemaker campaign runtime service', () => {
     expect(storedEvents.events.some((event) => event.type === 'completed')).toBe(true);
   });
 
+  it('derives plain-text delivery content from html when no text override is set', async () => {
+    const { service, sendCampaignEmail } = createRuntimeHarness({
+      campaign: createCampaign({
+        bodyText: '   ',
+        bodyHtml:
+          '<p>Hello <strong>World</strong></p><p>Second line with <a href="https://example.com">link</a>.</p>',
+      }),
+    });
+    const launched = await service.launchRun({
+      campaignId: 'campaign-1',
+      mode: 'live',
+    });
+
+    await service.processRun({
+      runId: launched.run.id,
+    });
+
+    const firstCall = sendCampaignEmail.mock.calls[0]?.[0];
+    expect(firstCall?.text).toContain('Hello World');
+    expect(firstCall?.text).toContain('Second line with link.');
+    expect(firstCall?.text).not.toContain('<strong>');
+    expect(firstCall?.html).toContain('<strong>World</strong>');
+  });
+
   it('expands signed unsubscribe, preferences, address-wide preferences, open tracking, and click tracking placeholders per recipient before sending', async () => {
     process.env['FILEMAKER_CAMPAIGN_UNSUBSCRIBE_SECRET'] = 'unsubscribe-secret';
     process.env['NEXT_PUBLIC_APP_URL'] = 'https://app.example.com';

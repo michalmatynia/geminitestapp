@@ -469,27 +469,28 @@ beforeEach(() => {
     effectiveModelId: 'brain-default',
     models: ['brain-default', 'brain-stable'],
   };
+  const globalRegexTemplatesPayload = {
+    templates: [
+      {
+        id: 'global-template-1',
+        name: 'Global Template',
+        pattern: 'GLOBAL-(\\d+)',
+        flags: 'i',
+        groupBy: 'match',
+        mode: 'group',
+        matchMode: 'first',
+        outputMode: 'object',
+        includeUnmatched: true,
+        unmatchedKey: '__unmatched__',
+        splitLines: true,
+        createdAt: '2026-03-19T00:00:00.000Z',
+      },
+    ],
+  };
   mockState.settingsQuery.data = [
     {
       key: REGEX_TEMPLATES_KEY,
-      value: JSON.stringify({
-        templates: [
-          {
-            id: 'global-template-1',
-            name: 'Global Template',
-            pattern: 'GLOBAL-(\\d+)',
-            flags: 'i',
-            groupBy: 'match',
-            mode: 'group',
-            matchMode: 'first',
-            outputMode: 'object',
-            includeUnmatched: true,
-            unmatchedKey: '__unmatched__',
-            splitLines: true,
-            createdAt: '2026-03-19T00:00:00.000Z',
-          },
-        ],
-      }),
+      value: JSON.stringify(globalRegexTemplatesPayload),
     },
   ];
   mockState.settingsQuery.isSuccess = true;

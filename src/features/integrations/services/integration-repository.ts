@@ -1,4 +1,4 @@
-import { IntegrationRepository, IntegrationWithConnections } from '../types/integrations';
+import type { IntegrationRepository, IntegrationWithConnections } from '@/shared/contracts/integrations';
 import { getMongoIntegrationRepository } from './integration-repository/mongo-impl';
 
 export async function getIntegrationRepository(): Promise<IntegrationRepository> {

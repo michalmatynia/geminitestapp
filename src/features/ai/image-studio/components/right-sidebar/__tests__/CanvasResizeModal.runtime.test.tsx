@@ -12,6 +12,17 @@ const mocks = vi.hoisted(() => ({
   setCanvasImageOffset: vi.fn(),
 }));
 
+function getSlotsStateMock() {
+  return {
+    workingSlot: {
+      imageFile: {
+        width: 1024,
+        height: 1024,
+      },
+    },
+  };
+}
+
 vi.mock('@/shared/ui', async () => {
   const mocks = await import('./rightSidebarRuntimeMockComponents');
   return {
@@ -51,14 +62,7 @@ vi.mock('@/features/ai/image-studio/context/ProjectsContext', () => ({
 }));
 
 vi.mock('@/features/ai/image-studio/context/SlotsContext', () => ({
-  useSlotsState: () => ({
-    workingSlot: {
-      imageFile: {
-        width: 1024,
-        height: 1024,
-      },
-    },
-  }),
+  useSlotsState: getSlotsStateMock,
 }));
 
 vi.mock('@/features/ai/image-studio/context/UiContext', () => ({

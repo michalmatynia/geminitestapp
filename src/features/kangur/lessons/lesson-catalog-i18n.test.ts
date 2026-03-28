@@ -26,6 +26,9 @@ describe('lesson-catalog-i18n', () => {
     expect(getLocalizedKangurLessonTitle('english_adjectives', 'de', 'English: Adjectives')).toBe(
       'Englisch: Adjektive'
     );
+    expect(getLocalizedKangurLessonTitle('english_adverbs', 'de', 'English: Adverbs')).toBe(
+      'Englisch: Adverbien'
+    );
     expect(
       getLocalizedKangurLessonTitle(
         'english_adverbs_frequency',
@@ -88,6 +91,13 @@ describe('lesson-catalog-i18n', () => {
         'Opisywanie osób, miejsc i rzeczy oraz kolejność przymiotników'
       )
     ).toContain('adjective order');
+    expect(
+      getLocalizedKangurLessonDescription(
+        'english_adverbs',
+        'en',
+        'Przysłówki sposobu i słowa opisujące, jak wykonujemy czynności'
+      )
+    ).toContain('actions happen');
     expect(
       getLocalizedKangurLessonDescription(
         'english_adverbs_frequency',
@@ -155,6 +165,9 @@ describe('lesson-catalog-i18n', () => {
     expect(getLocalizedKangurLessonSectionLabel('maths_geometry', 'en', 'Geometria')).toBe(
       'Geometry'
     );
+    expect(
+      getLocalizedKangurLessonSectionLabel('english_grammar_adverbs', 'en', 'Przysłówki')
+    ).toBe('Adverbs');
     expect(
       getLocalizedKangurLessonSectionLabel(
         'english_grammar_adverbs_frequency',

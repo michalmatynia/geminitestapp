@@ -1,7 +1,6 @@
 import { resolveKangurLessonFocusForPracticeOperation } from '@kangur/core';
 import { Link, useLocalSearchParams, useRouter, type Href } from 'expo-router';
-import { Pressable, ScrollView, Text, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { Pressable, Text, View } from 'react-native';
 
 import { createKangurDuelsHref } from '../duels/duelsHref';
 import { useKangurMobileI18n } from '../i18n/kangurMobileI18n';
@@ -25,6 +24,13 @@ import {
   getKangurMobileScoreFamily,
 } from './mobileScoreSummary';
 import { createKangurPracticeHref } from '../practice/practiceHref';
+import {
+  KangurMobileCard as Card,
+  KangurMobileLinkButton as LinkButton,
+  KangurMobileMetric as Metric,
+  KangurMobileScrollScreen,
+  KangurMobileSummaryChip,
+} from '../shared/KangurMobileUi';
 import { translateKangurMobileActionLabel } from '../shared/translateKangurMobileActionLabel';
 import { createKangurResultsHref } from './resultsHref';
 import { useKangurMobileResults } from './useKangurMobileResults';
@@ -42,58 +48,6 @@ import {
 } from './useKangurMobileResultsBadges';
 import { useKangurMobileResultsDuels } from './useKangurMobileResultsDuels';
 
-function Card({
-  children,
-}: {
-  children: React.ReactNode;
-}): React.JSX.Element {
-  return (
-    <View
-      style={{
-        borderRadius: 24,
-        backgroundColor: '#ffffff',
-        padding: 18,
-        gap: 12,
-        shadowColor: '#0f172a',
-        shadowOpacity: 0.08,
-        shadowRadius: 18,
-        shadowOffset: { width: 0, height: 10 },
-        elevation: 3,
-      }}
-    >
-      {children}
-    </View>
-  );
-}
-
-function Metric({
-  label,
-  value,
-  description,
-}: {
-  description: string;
-  label: string;
-  value: string;
-}): React.JSX.Element {
-  return (
-    <View
-      style={{
-        flexBasis: '48%',
-        gap: 6,
-        borderRadius: 20,
-        borderWidth: 1,
-        borderColor: '#e2e8f0',
-        backgroundColor: '#f8fafc',
-        padding: 14,
-      }}
-    >
-      <Text style={{ color: '#64748b', fontSize: 12, fontWeight: '700' }}>{label}</Text>
-      <Text style={{ color: '#0f172a', fontSize: 22, fontWeight: '800' }}>{value}</Text>
-      <Text style={{ color: '#475569', fontSize: 12, lineHeight: 18 }}>{description}</Text>
-    </View>
-  );
-}
-
 function SummaryChip({
   label,
   backgroundColor = '#eef2ff',
@@ -106,19 +60,12 @@ function SummaryChip({
   textColor?: string;
 }): React.JSX.Element {
   return (
-    <View
-      style={{
-        alignSelf: 'flex-start',
-        borderRadius: 999,
-        borderWidth: 1,
-        borderColor,
-        backgroundColor,
-        paddingHorizontal: 12,
-        paddingVertical: 7,
-      }}
-    >
-      <Text style={{ color: textColor, fontSize: 12, fontWeight: '700' }}>{label}</Text>
-    </View>
+    <KangurMobileSummaryChip
+      backgroundColor={backgroundColor}
+      borderColor={borderColor}
+      label={label}
+      textColor={textColor}
+    />
   );
 }
 
@@ -820,37 +767,22 @@ export function KangurResultsScreen(): React.JSX.Element {
   };
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: '#fffaf2' }}>
-      <ScrollView
-        contentContainerStyle={{
-          gap: 18,
-          paddingHorizontal: 20,
-          paddingVertical: 24,
-        }}
-      >
+    <KangurMobileScrollScreen
+      contentContainerStyle={{
+        gap: 18,
+        paddingHorizontal: 20,
+        paddingVertical: 24,
+      }}
+    >
         <View style={{ gap: 14 }}>
-          <Link href={RESULTS_HOME_ROUTE} asChild>
-            <Pressable
-              accessibilityRole='button'
-              style={{
-                alignSelf: 'flex-start',
-                borderRadius: 999,
-                backgroundColor: '#ffffff',
-                borderWidth: 1,
-                borderColor: '#e2e8f0',
-                paddingHorizontal: 14,
-                paddingVertical: 10,
-              }}
-            >
-              <Text style={{ color: '#0f172a', fontWeight: '700' }}>
-                {copy({
-                  de: 'Zurück',
-                  en: 'Back',
-                  pl: 'Wróć',
-                })}
-              </Text>
-            </Pressable>
-          </Link>
+          <LinkButton
+            href={RESULTS_HOME_ROUTE}
+            label={copy({
+              de: 'Zurück',
+              en: 'Back',
+              pl: 'Wróć',
+            })}
+          />
 
           <Card>
             <Text style={{ color: '#64748b', fontSize: 12, fontWeight: '700' }}>
@@ -2119,8 +2051,7 @@ export function KangurResultsScreen(): React.JSX.Element {
             </>
           )}
         </View>
-      </ScrollView>
-    </SafeAreaView>
+    </KangurMobileScrollScreen>
   );
 }
 

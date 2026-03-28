@@ -5,10 +5,12 @@ import {
   ADJECTIVE_TOKEN_META,
   getObjectLabel,
   getTokenLabel,
-  type EnglishAdjectivePhraseId,
-  type EnglishAdjectiveSceneObjectId,
 } from './EnglishAdjectivesSceneGame.utils';
-import type { EnglishAdjectivesSceneRound } from './EnglishAdjectivesSceneGame.data';
+import type {
+  EnglishAdjectivePhraseId,
+  EnglishAdjectiveSceneObjectId,
+  EnglishAdjectivesSceneRound,
+} from './EnglishAdjectivesSceneGame.data';
 import type { KangurMiniGameTranslate } from '@/features/kangur/ui/constants/mini-game-i18n';
 
 function ObjectSceneBadge({
@@ -90,9 +92,9 @@ export function renderAdjectiveStudioScene({
   ) as Record<EnglishAdjectiveSceneObjectId, EnglishAdjectivePhraseId | null>;
 
   switch (round.id) {
-    case 'room':
+    case 'bedroom':
       return renderRoomScene({ assignedByObject, translate });
-    case 'study':
+    case 'study_corner':
       return renderStudyScene({ assignedByObject, translate });
     case 'portrait':
       return renderPortraitScene({ assignedByObject, translate });
@@ -110,13 +112,16 @@ function renderRoomScene({
   assignedByObject: Record<EnglishAdjectiveSceneObjectId, EnglishAdjectivePhraseId | null>;
   translate: KangurMiniGameTranslate;
 }): React.JSX.Element {
-  const cupboardMeta = assignedByObject.cupboard
-    ? ADJECTIVE_TOKEN_META[assignedByObject.cupboard]
+  const cupboard = assignedByObject['cupboard'];
+  const curtains = assignedByObject['curtains'];
+  const rug = assignedByObject['rug'];
+  const cupboardMeta = cupboard
+    ? ADJECTIVE_TOKEN_META[cupboard]
     : null;
-  const curtainsMeta = assignedByObject.curtains
-    ? ADJECTIVE_TOKEN_META[assignedByObject.curtains]
+  const curtainsMeta = curtains
+    ? ADJECTIVE_TOKEN_META[curtains]
     : null;
-  const rugMeta = assignedByObject.rug ? ADJECTIVE_TOKEN_META[assignedByObject.rug] : null;
+  const rugMeta = rug ? ADJECTIVE_TOKEN_META[rug] : null;
 
   return (
     <svg
@@ -176,7 +181,7 @@ function renderRoomScene({
         </g>
         <ObjectSceneBadge
           label={getObjectLabel(translate, 'cupboard')}
-          value={assignedByObject.cupboard ? getTokenLabel(translate, assignedByObject.cupboard) : null}
+          value={cupboard ? getTokenLabel(translate, cupboard) : null}
           x={60}
           y={30}
         />
@@ -196,7 +201,7 @@ function renderRoomScene({
         </g>
         <ObjectSceneBadge
           label={getObjectLabel(translate, 'curtains')}
-          value={assignedByObject.curtains ? getTokenLabel(translate, assignedByObject.curtains) : null}
+          value={curtains ? getTokenLabel(translate, curtains) : null}
           x={200}
           y={20}
         />
@@ -214,7 +219,7 @@ function renderRoomScene({
         </g>
         <ObjectSceneBadge
           label={getObjectLabel(translate, 'rug')}
-          value={assignedByObject.rug ? getTokenLabel(translate, assignedByObject.rug) : null}
+          value={rug ? getTokenLabel(translate, rug) : null}
           x={150}
           y={210}
         />
@@ -230,11 +235,13 @@ function renderStudyScene({
   assignedByObject: Record<EnglishAdjectiveSceneObjectId, EnglishAdjectivePhraseId | null>;
   translate: KangurMiniGameTranslate;
 }): React.JSX.Element {
-  const deskMeta = assignedByObject.desk ? ADJECTIVE_TOKEN_META[assignedByObject.desk] : null;
-  const lampMeta = assignedByObject.lamp ? ADJECTIVE_TOKEN_META[assignedByObject.lamp] : null;
-  const bookMeta = assignedByObject.book ? ADJECTIVE_TOKEN_META[assignedByObject.book] : null;
+  const desk = assignedByObject['desk'];
+  const lamp = assignedByObject['lamp'];
+  const book = assignedByObject['book'];
+  const deskMeta = desk ? ADJECTIVE_TOKEN_META[desk] : null;
+  const lampMeta = lamp ? ADJECTIVE_TOKEN_META[lamp] : null;
+  const bookMeta = book ? ADJECTIVE_TOKEN_META[book] : null;
   const lampScale = (lampMeta?.scale ?? 1) * 0.92;
-  const brightBook = assignedByObject.book === 'bright_green';
 
   return (
     <svg
@@ -313,7 +320,7 @@ function renderStudyScene({
         </g>
         <ObjectSceneBadge
           label={getObjectLabel(translate, 'desk')}
-          value={assignedByObject.desk ? getTokenLabel(translate, assignedByObject.desk) : null}
+          value={desk ? getTokenLabel(translate, desk) : null}
           x={68}
           y={36}
         />
@@ -333,7 +340,7 @@ function renderStudyScene({
         </g>
         <ObjectSceneBadge
           label={getObjectLabel(translate, 'lamp')}
-          value={assignedByObject.lamp ? getTokenLabel(translate, assignedByObject.lamp) : null}
+          value={lamp ? getTokenLabel(translate, lamp) : null}
           x={178}
           y={34}
         />
@@ -362,7 +369,7 @@ function renderStudyScene({
         </g>
         <ObjectSceneBadge
           label={getObjectLabel(translate, 'book')}
-          value={assignedByObject.book ? getTokenLabel(translate, assignedByObject.book) : null}
+          value={book ? getTokenLabel(translate, book) : null}
           x={296}
           y={34}
         />
@@ -378,10 +385,13 @@ function renderPortraitScene({
   assignedByObject: Record<EnglishAdjectiveSceneObjectId, EnglishAdjectivePhraseId | null>;
   translate: KangurMiniGameTranslate;
 }): React.JSX.Element {
-  const eyesMeta = assignedByObject.eyes ? ADJECTIVE_TOKEN_META[assignedByObject.eyes] : null;
-  const hairMeta = assignedByObject.hair ? ADJECTIVE_TOKEN_META[assignedByObject.hair] : null;
-  const pictureMeta = assignedByObject.picture
-    ? ADJECTIVE_TOKEN_META[assignedByObject.picture]
+  const eyes = assignedByObject['eyes'];
+  const hair = assignedByObject['hair'];
+  const picture = assignedByObject['picture'];
+  const eyesMeta = eyes ? ADJECTIVE_TOKEN_META[eyes] : null;
+  const hairMeta = hair ? ADJECTIVE_TOKEN_META[hair] : null;
+  const pictureMeta = picture
+    ? ADJECTIVE_TOKEN_META[picture]
     : null;
   const hairLength = 64 * (hairMeta?.stretchY ?? 1);
 
@@ -436,13 +446,13 @@ function renderPortraitScene({
         </g>
         <ObjectSceneBadge
           label={getObjectLabel(translate, 'eyes')}
-          value={assignedByObject.eyes ? getTokenLabel(translate, assignedByObject.eyes) : null}
+          value={eyes ? getTokenLabel(translate, eyes) : null}
           x={136}
           y={34}
         />
         <ObjectSceneBadge
           label={getObjectLabel(translate, 'hair')}
-          value={assignedByObject.hair ? getTokenLabel(translate, assignedByObject.hair) : null}
+          value={hair ? getTokenLabel(translate, hair) : null}
           x={246}
           y={34}
         />
@@ -462,7 +472,7 @@ function renderPortraitScene({
         </g>
         <ObjectSceneBadge
           label={getObjectLabel(translate, 'picture')}
-          value={assignedByObject.picture ? getTokenLabel(translate, assignedByObject.picture) : null}
+          value={picture ? getTokenLabel(translate, picture) : null}
           x={308}
           y={176}
         />
@@ -478,9 +488,12 @@ function renderPlaygroundScene({
   assignedByObject: Record<EnglishAdjectiveSceneObjectId, EnglishAdjectivePhraseId | null>;
   translate: KangurMiniGameTranslate;
 }): React.JSX.Element {
-  const slideMeta = assignedByObject.slide ? ADJECTIVE_TOKEN_META[assignedByObject.slide] : null;
-  const kiteMeta = assignedByObject.kite ? ADJECTIVE_TOKEN_META[assignedByObject.kite] : null;
-  const benchMeta = assignedByObject.bench ? ADJECTIVE_TOKEN_META[assignedByObject.bench] : null;
+  const slide = assignedByObject['slide'];
+  const kite = assignedByObject['kite'];
+  const bench = assignedByObject['bench'];
+  const slideMeta = slide ? ADJECTIVE_TOKEN_META[slide] : null;
+  const kiteMeta = kite ? ADJECTIVE_TOKEN_META[kite] : null;
+  const benchMeta = bench ? ADJECTIVE_TOKEN_META[bench] : null;
   const slideScale = slideMeta?.scale ?? 1;
   const kiteStretch = kiteMeta?.stretchY ?? 1;
 
@@ -540,7 +553,7 @@ function renderPlaygroundScene({
         </g>
         <ObjectSceneBadge
           label={getObjectLabel(translate, 'slide')}
-          value={assignedByObject.slide ? getTokenLabel(translate, assignedByObject.slide) : null}
+          value={slide ? getTokenLabel(translate, slide) : null}
           x={52}
           y={34}
         />
@@ -559,7 +572,7 @@ function renderPlaygroundScene({
         </g>
         <ObjectSceneBadge
           label={getObjectLabel(translate, 'kite')}
-          value={assignedByObject.kite ? getTokenLabel(translate, assignedByObject.kite) : null}
+          value={kite ? getTokenLabel(translate, kite) : null}
           x={250}
           y={34}
         />
@@ -577,7 +590,7 @@ function renderPlaygroundScene({
         </g>
         <ObjectSceneBadge
           label={getObjectLabel(translate, 'bench')}
-          value={assignedByObject.bench ? getTokenLabel(translate, assignedByObject.bench) : null}
+          value={bench ? getTokenLabel(translate, bench) : null}
           x={292}
           y={188}
         />

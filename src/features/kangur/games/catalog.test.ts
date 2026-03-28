@@ -163,6 +163,9 @@ describe('kangur game catalog', () => {
     const adjectivesEntry = entries.find(
       (candidate) => candidate.game.id === 'english_adjectives_scene'
     );
+    const adverbsActionEntry = entries.find(
+      (candidate) => candidate.game.id === 'english_adverbs_action_studio'
+    );
     const adverbsEntry = entries.find(
       (candidate) => candidate.game.id === 'english_adverbs_frequency_routine'
     );
@@ -190,6 +193,11 @@ describe('kangur game catalog', () => {
     expect(adjectivesEntry?.launchableRuntime).toMatchObject({
       screen: 'english_adjectives_quiz',
       rendererId: 'english_adjectives_scene_game',
+      engineId: 'sentence-builder-engine',
+    });
+    expect(adverbsActionEntry?.launchableRuntime).toMatchObject({
+      screen: 'english_adverbs_quiz',
+      rendererId: 'english_adverbs_action_game',
       engineId: 'sentence-builder-engine',
     });
     expect(adverbsEntry?.launchableRuntime).toMatchObject({
@@ -448,10 +456,11 @@ describe('kangur game catalog', () => {
     expect(filtered.map((entry) => entry.game.id)).toEqual([
       'english_subject_verb_agreement',
       'english_adjectives_scene',
+      'english_adverbs_action_studio',
       'english_adverbs_frequency_routine',
       'english_articles_drag_drop',
-      'english_prepositions_time_place',
       'english_prepositions_sort',
+      'english_prepositions_time_place',
       'english_prepositions_order',
       'english_pronouns_warmup',
       'english_sentence_builder',
@@ -518,10 +527,11 @@ describe('kangur game catalog', () => {
     expect(filtered.map((entry) => entry.game.id)).toEqual([
       'english_subject_verb_agreement',
       'english_adjectives_scene',
+      'english_adverbs_action_studio',
       'english_adverbs_frequency_routine',
       'english_articles_drag_drop',
-      'english_prepositions_time_place',
       'english_prepositions_sort',
+      'english_prepositions_time_place',
       'english_prepositions_order',
       'english_pronouns_warmup',
       'english_sentence_builder',

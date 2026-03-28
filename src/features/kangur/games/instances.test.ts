@@ -116,6 +116,9 @@ describe('kangur built-in game instances', () => {
     const adjectivesInstances = getKangurGameBuiltInInstancesForGame(
       getKangurGameDefinition('english_adjectives_scene')
     );
+    const adverbsActionInstances = getKangurGameBuiltInInstancesForGame(
+      getKangurGameDefinition('english_adverbs_action_studio')
+    );
     const adverbsInstances = getKangurGameBuiltInInstancesForGame(
       getKangurGameDefinition('english_adverbs_frequency_routine')
     );
@@ -147,6 +150,13 @@ describe('kangur built-in game instances', () => {
         id: 'english_adjectives_scene:instance:default',
         contentSetId: 'english_adjectives_scene:default',
         launchableRuntimeId: 'english_adjectives_quiz',
+      }),
+    ]);
+    expect(adverbsActionInstances).toEqual([
+      expect.objectContaining({
+        id: 'english_adverbs_action_studio:instance:default',
+        contentSetId: 'english_adverbs_action_studio:default',
+        launchableRuntimeId: 'english_adverbs_quiz',
       }),
     ]);
     expect(adverbsInstances).toEqual([

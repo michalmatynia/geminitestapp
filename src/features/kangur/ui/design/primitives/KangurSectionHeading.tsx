@@ -25,22 +25,23 @@ export type KangurSectionHeadingProps = Omit<React.HTMLAttributes<HTMLDivElement
   titleId?: string;
 };
 
-export function KangurSectionHeading({
-  accent = 'slate',
-  align = 'center',
-  className,
-  description,
-  descriptionId,
-  headingAs = 'h2',
-  headingSize = 'sm',
-  icon,
-  iconAccent,
-  iconSize = 'md',
-  layout = 'stacked',
-  title,
-  titleId,
-  ...props
-}: KangurSectionHeadingProps): React.JSX.Element {
+export function KangurSectionHeading(props: KangurSectionHeadingProps): React.JSX.Element {
+  const {
+    accent = 'slate',
+    align = 'center',
+    className,
+    description,
+    descriptionId,
+    headingAs = 'h2',
+    headingSize = 'sm',
+    icon,
+    iconAccent,
+    iconSize = 'md',
+    layout = 'stacked',
+    title,
+    titleId,
+    ...restProps
+  } = props;
   const isInline = layout === 'inline';
   const alignmentClassName = align === 'left' ? 'items-start text-left' : 'items-center text-center';
   const HeadingComp = headingAs;
@@ -53,7 +54,7 @@ export function KangurSectionHeading({
         alignmentClassName,
         className
       )}
-      {...props}
+      {...restProps}
     >
       {icon ? (
         <span

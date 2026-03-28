@@ -495,6 +495,26 @@ const LESSON_LIBRARY_FRAGMENT_DETAILS: Record<
     ],
     aliases: ['english adjectives', 'adjectives lesson', 'przymiotniki angielskie'],
   },
+  english_adverbs: {
+    explanation:
+      'Przysłówki sposobu pokazujące, jak wykonujemy czynność: quickly, carefully, beautifully, badly, well. Lekcja pomaga odróżniać adjective i adverb oraz budować poprawne zdania z przysłówkami.',
+    triggerPhrases: [
+      'adverbs',
+      'adverb',
+      'adverbs of manner',
+      'manner adverbs',
+      'english adverbs',
+      'how do we do things',
+      'quickly carefully beautifully badly well',
+      'przysłówki',
+      'przyslowki',
+      'przysłówki sposobu',
+      'przyslowki sposobu',
+      'jak wykonujemy czynność',
+      'jak wykonujemy czynnosc',
+    ],
+    aliases: ['english adverbs', 'adverbs lesson', 'przysłówki angielskie'],
+  },
   english_adverbs_frequency: {
     explanation:
       'Przysłówki częstotliwości always, usually, sometimes i never w szkolnych i domowych rutynach. Lekcja pomaga opisywać, jak często coś się dzieje.',
@@ -507,13 +527,12 @@ const LESSON_LIBRARY_FRAGMENT_DETAILS: Record<
       'sometimes',
       'never',
       'how often',
-      'english adverbs',
       'przysłówki częstotliwości',
       'przyslowki czestotliwosci',
       'jak często',
       'jak czesto',
     ],
-    aliases: ['english adverbs of frequency', 'frequency lesson', 'adverbs lesson'],
+    aliases: ['english adverbs of frequency', 'frequency lesson'],
   },
   english_prepositions_time_place: {
     explanation:

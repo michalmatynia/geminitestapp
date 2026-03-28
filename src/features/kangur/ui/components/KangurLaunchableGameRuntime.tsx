@@ -70,6 +70,10 @@ const EnglishAdjectivesSceneGame = dynamic(
   () => import('@/features/kangur/ui/components/EnglishAdjectivesSceneGame'),
   { ssr: false }
 );
+const EnglishAdverbsActionStudioGame = dynamic(
+  () => import('@/features/kangur/ui/components/EnglishAdverbsActionStudioGame'),
+  { ssr: false }
+);
 const EnglishAdverbsFrequencyRoutineGame = dynamic(
   () => import('@/features/kangur/ui/components/EnglishAdverbsFrequencyRoutineGame'),
   { ssr: false }
@@ -267,6 +271,11 @@ const KANGUR_LAUNCHABLE_GAME_RENDERERS: Record<
   english_adjectives_scene_game: {
     render: ({ finishLabel, onFinish }) => (
       <EnglishAdjectivesSceneGame finishLabel={finishLabel} onFinish={onFinish} />
+    ),
+  },
+  english_adverbs_action_game: {
+    render: ({ finishLabel, onFinish }) => (
+      <EnglishAdverbsActionStudioGame finishLabel={finishLabel} onFinish={onFinish} />
     ),
   },
   english_adverbs_frequency_routine_game: {

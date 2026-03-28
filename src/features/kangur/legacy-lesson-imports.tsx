@@ -348,6 +348,10 @@ const LEGACY_IMPORTERS: Record<KangurLessonComponentId, LegacyImportDefinition> 
     kind: 'flat',
     slides: [],
   },
+  english_adverbs: {
+    kind: 'flat',
+    slides: [],
+  },
   english_adverbs_frequency: {
     kind: 'flat',
     slides: [],

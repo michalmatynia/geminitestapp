@@ -8,6 +8,31 @@ const mocks = vi.hoisted(() => ({
   useSearchParamsMock: vi.fn(),
 }));
 
+type ListPanelMockProps = {
+  eyebrow?: React.ReactNode;
+  header?: React.ReactNode;
+  title?: React.ReactNode;
+  headerActions?: React.ReactNode;
+  filters?: React.ReactNode;
+  actions?: React.ReactNode;
+  children?: React.ReactNode;
+};
+
+function MockListPanel(props: ListPanelMockProps): React.JSX.Element {
+  const { eyebrow, header, title, headerActions, filters, actions, children } = props;
+  return (
+    <div data-testid='list-panel'>
+      {eyebrow}
+      {header}
+      <div>{title}</div>
+      {headerActions}
+      {filters}
+      {actions}
+      {children}
+    </div>
+  );
+}
+
 vi.mock('next/navigation', () => ({
   useSearchParams: mocks.useSearchParamsMock,
 }));
@@ -26,33 +51,7 @@ vi.mock('@/shared/ui', () => ({
       {children}
     </button>
   ),
-  ListPanel: ({
-    eyebrow,
-    header,
-    title,
-    headerActions,
-    filters,
-    actions,
-    children,
-  }: {
-    eyebrow?: React.ReactNode;
-    header?: React.ReactNode;
-    title?: React.ReactNode;
-    headerActions?: React.ReactNode;
-    filters?: React.ReactNode;
-    actions?: React.ReactNode;
-    children?: React.ReactNode;
-  }) => (
-    <div data-testid='list-panel'>
-      {eyebrow}
-      {header}
-      <div>{title}</div>
-      {headerActions}
-      {filters}
-      {actions}
-      {children}
-    </div>
-  ),
+  ListPanel: MockListPanel,
   Breadcrumbs: () => <div>breadcrumbs</div>,
   Hint: ({ children }: { children?: React.ReactNode }) => <span>{children}</span>,
 }));

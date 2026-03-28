@@ -2,7 +2,7 @@
 
 import { ArrowLeft, SendHorizonal } from 'lucide-react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 
 import { DocumentWysiwygEditor } from '@/features/document-editor/components/DocumentWysiwygEditor';
 import { parseFilemakerMailParticipantsInput } from '../mail-utils';
@@ -42,6 +42,15 @@ export function AdminFilemakerMailComposePage(): React.JSX.Element {
   const [bodyHtml, setBodyHtml] = useState('<p><br/></p>');
   const [isLoading, setIsLoading] = useState(true);
   const [isSending, setIsSending] = useState(false);
+  const accountIdFromRoute = searchParams.get('accountId');
+  const mailboxPathFromRoute = searchParams.get('mailboxPath');
+  const backHref = useMemo(() => {
+    const search = new URLSearchParams();
+    if (accountIdFromRoute) search.set('accountId', accountIdFromRoute);
+    if (mailboxPathFromRoute) search.set('mailboxPath', mailboxPathFromRoute);
+    const nextSearch = search.toString();
+    return nextSearch ? `/admin/filemaker/mail?${nextSearch}` : '/admin/filemaker/mail';
+  }, [accountIdFromRoute, mailboxPathFromRoute]);
 
   useEffect(() => {
     const load = async (): Promise<void> => {
@@ -49,8 +58,7 @@ export function AdminFilemakerMailComposePage(): React.JSX.Element {
       try {
         const result = await fetchJson<AccountsResponse>('/api/filemaker/mail/accounts');
         setAccounts(result.accounts);
-        const requestedAccountId = searchParams.get('accountId');
-        setAccountId(requestedAccountId ?? result.accounts[0]?.id ?? '');
+        setAccountId(accountIdFromRoute ?? result.accounts[0]?.id ?? '');
       } catch (error) {
         toast(error instanceof Error ? error.message : 'Failed to load mailbox accounts.', {
           variant: 'error',
@@ -60,7 +68,7 @@ export function AdminFilemakerMailComposePage(): React.JSX.Element {
       }
     };
     void load();
-  }, [searchParams, toast]);
+  }, [accountIdFromRoute, searchParams, toast]);
 
   const handleSend = async (): Promise<void> => {
     setIsSending(true);
@@ -77,7 +85,12 @@ export function AdminFilemakerMailComposePage(): React.JSX.Element {
         }),
       });
       toast('Email sent.', { variant: 'success' });
-      router.push(`/admin/filemaker/mail/threads/${encodeURIComponent(result.message.threadId)}`);
+      const search = new URLSearchParams();
+      search.set('accountId', accountId);
+      if (mailboxPathFromRoute) search.set('mailboxPath', mailboxPathFromRoute);
+      router.push(
+        `/admin/filemaker/mail/threads/${encodeURIComponent(result.message.threadId)}?${search.toString()}`
+      );
     } catch (error) {
       toast(error instanceof Error ? error.message : 'Failed to send email.', {
         variant: 'error',
@@ -99,7 +112,7 @@ export function AdminFilemakerMailComposePage(): React.JSX.Element {
             label: 'Back to Mail',
             icon: <ArrowLeft className='size-4' />,
             variant: 'outline',
-            onClick: () => router.push('/admin/filemaker/mail'),
+            onClick: () => router.push(backHref),
           },
           {
             key: 'send',

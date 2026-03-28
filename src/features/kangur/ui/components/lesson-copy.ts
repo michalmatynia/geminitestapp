@@ -1,5 +1,7 @@
 import type { TranslationValues } from 'use-intl';
 
+import { KANGUR_LEGACY_LESSON_SHELL_TITLE_KEY } from '@/shared/contracts/kangur-lesson-templates.shared';
+
 export type WidenLessonCopy<T> = T extends string
   ? string
   : T extends readonly (infer U)[]
@@ -54,7 +56,7 @@ export const translateLessonValueWithLegacyKey = (
 
 export const getLessonShellTitleKeys = (scope: LessonShellScope) => ({
   forward: `${scope}.gameTitle`,
-  legacy: `${scope}.stageTitle`,
+  legacy: `${scope}.${KANGUR_LEGACY_LESSON_SHELL_TITLE_KEY}`,
 });
 
 export const translateLessonShellTitle = (

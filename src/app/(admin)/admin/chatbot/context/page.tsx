@@ -1,6 +1,6 @@
 import { JSX, Suspense } from 'react';
 
-import AdminChatbotContextPage from '@/features/ai/public';
+import { AdminChatbotContextPage } from '@/features/ai/chatbot/public';
 
 export const dynamic = 'force-dynamic';
 

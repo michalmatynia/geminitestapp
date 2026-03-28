@@ -13,7 +13,7 @@ export type EnglishAdverbFrequencyActionId =
   | 'watch_tv'
   | 'go_swimming';
 
-export type EnglishAdverbsFrequencyRoutineAction = {
+type EnglishAdverbsFrequencyRoutineAction = {
   id: string;
   actionId: EnglishAdverbFrequencyActionId;
   answer: EnglishAdverbFrequencyId;

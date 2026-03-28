@@ -16,17 +16,18 @@ type TooltipProps = {
   disableHover?: boolean;
 };
 
-export function Tooltip({
-  content,
-  children,
-  className,
-  contentClassName,
-  side = 'top',
-  maxWidth = '400px',
-  open,
-  onOpenChange,
-  disableHover = false,
-}: TooltipProps): JSX.Element {
+export function Tooltip(props: TooltipProps): JSX.Element {
+  const {
+    content,
+    children,
+    className,
+    contentClassName,
+    side = 'top',
+    maxWidth = '400px',
+    open,
+    onOpenChange,
+    disableHover = false,
+  } = props;
   const [internalOpen, setInternalOpen] = React.useState(false);
   const tooltipId = React.useId();
   const isControlled = typeof open === 'boolean';

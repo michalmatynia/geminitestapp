@@ -18,7 +18,7 @@ import { KangurDialogCloseButton } from '@/features/kangur/ui/components/KangurD
 import { KangurDialogMeta } from '@/features/kangur/ui/components/KangurDialogMeta';
 import { useKangurCoarsePointer } from '@/features/kangur/ui/hooks/useKangurCoarsePointer';
 
-export type KangurAssignmentManagerTimeLimitModalTarget = {
+type KangurAssignmentManagerTimeLimitModalTarget = {
   title: string;
   description?: string | null;
 };

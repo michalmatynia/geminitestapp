@@ -1,7 +1,6 @@
 import type { KangurExamQuestion, KangurQuestionChoice } from '@kangur/contracts';
-import { Link, useLocalSearchParams, useRouter, type Href } from 'expo-router';
-import { Pressable, ScrollView, Text, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { useLocalSearchParams, useRouter } from 'expo-router';
+import { Text, View } from 'react-native';
 import { useEffect, useMemo, useState } from 'react';
 
 import { KangurMobileAiTutorCard } from '../ai-tutor/KangurMobileAiTutorCard';
@@ -10,19 +9,25 @@ import { createKangurLessonsCatalogHref } from '../lessons/lessonHref';
 import { createKangurPlanHref } from '../plan/planHref';
 import { createKangurPracticeHref } from '../practice/practiceHref';
 import { createKangurResultsHref } from '../scores/resultsHref';
+import { KangurMobileScrollScreen } from '../shared/KangurMobileUi';
 import { createKangurTestsHref } from '../tests/testsHref';
 import { createKangurCompetitionHref } from './competitionHref';
+import {
+  BASE_TONE,
+  ChoiceButton,
+  INDIGO_TONE,
+  OutlineLink,
+  PrimaryButton,
+  SectionCard,
+  StatusPill,
+  SUCCESS_TONE,
+  WARNING_TONE,
+} from './competition-primitives';
 import {
   useKangurMobileCompetition,
   type KangurMobileCompetitionMode,
   type KangurMobileCompetitionModeItem,
 } from './useKangurMobileCompetition';
-
-type Tone = {
-  backgroundColor: string;
-  borderColor: string;
-  textColor: string;
-};
 
 const COMPETITION_ROUTE = createKangurCompetitionHref();
 const TESTS_ROUTE = createKangurTestsHref();
@@ -31,29 +36,6 @@ const PRACTICE_ROUTE = createKangurPracticeHref('mixed');
 const PLAN_ROUTE = createKangurPlanHref();
 const RESULTS_ROUTE = createKangurResultsHref();
 
-const BASE_TONE: Tone = {
-  backgroundColor: '#f8fafc',
-  borderColor: '#cbd5e1',
-  textColor: '#475569',
-};
-
-const SUCCESS_TONE: Tone = {
-  backgroundColor: '#ecfdf5',
-  borderColor: '#a7f3d0',
-  textColor: '#047857',
-};
-
-const WARNING_TONE: Tone = {
-  backgroundColor: '#fffbeb',
-  borderColor: '#fde68a',
-  textColor: '#b45309',
-};
-
-const INDIGO_TONE: Tone = {
-  backgroundColor: '#eef2ff',
-  borderColor: '#c7d2fe',
-  textColor: '#4338ca',
-};
 
 const formatQuestionCount = (
   count: number,
@@ -209,212 +191,6 @@ const getCompetitionChoiceDescription = (
 
   return choice ?? '';
 };
-
-function SectionCard({
-  children,
-  title,
-}: {
-  children: React.ReactNode;
-  title: string;
-}): React.JSX.Element {
-  return (
-    <View
-      style={{
-        backgroundColor: '#ffffff',
-        borderRadius: 24,
-        elevation: 3,
-        gap: 12,
-        padding: 20,
-        shadowColor: '#0f172a',
-        shadowOffset: { height: 10, width: 0 },
-        shadowOpacity: 0.08,
-        shadowRadius: 18,
-      }}
-    >
-      <Text
-        accessibilityRole='header'
-        style={{ color: '#0f172a', fontSize: 18, fontWeight: '800' }}
-      >
-        {title}
-      </Text>
-      {children}
-    </View>
-  );
-}
-
-function StatusPill({
-  label,
-  tone = BASE_TONE,
-}: {
-  label: string;
-  tone?: Tone;
-}): React.JSX.Element {
-  return (
-    <View
-      style={{
-        alignSelf: 'flex-start',
-        backgroundColor: tone.backgroundColor,
-        borderColor: tone.borderColor,
-        borderRadius: 999,
-        borderWidth: 1,
-        paddingHorizontal: 10,
-        paddingVertical: 6,
-      }}
-    >
-      <Text style={{ color: tone.textColor, fontSize: 12, fontWeight: '700' }}>
-        {label}
-      </Text>
-    </View>
-  );
-}
-
-function OutlineLink({
-  href,
-  hint,
-  label,
-}: {
-  href: Href;
-  hint?: string;
-  label: string;
-}): React.JSX.Element {
-  return (
-    <Link href={href} asChild>
-      <Pressable
-        accessibilityHint={hint}
-        accessibilityLabel={label}
-        accessibilityRole='button'
-        style={{
-          alignSelf: 'stretch',
-          backgroundColor: '#ffffff',
-          borderColor: '#cbd5e1',
-          borderRadius: 999,
-          borderWidth: 1,
-          paddingHorizontal: 14,
-          paddingVertical: 10,
-          width: '100%',
-        }}
-      >
-        <Text
-          style={{
-            color: '#0f172a',
-            fontWeight: '700',
-            textAlign: 'center',
-          }}
-        >
-          {label}
-        </Text>
-      </Pressable>
-    </Link>
-  );
-}
-
-function PrimaryButton({
-  disabled = false,
-  label,
-  onPress,
-  tone = INDIGO_TONE,
-}: {
-  disabled?: boolean;
-  label: string;
-  onPress?: () => void;
-  tone?: Tone;
-}): React.JSX.Element {
-  return (
-    <Pressable
-      accessibilityLabel={label}
-      accessibilityRole='button'
-      disabled={disabled}
-      onPress={onPress}
-      style={{
-        alignItems: 'center',
-        backgroundColor: disabled ? '#e2e8f0' : tone.backgroundColor,
-        borderColor: disabled ? '#cbd5e1' : tone.borderColor,
-        borderRadius: 999,
-        borderWidth: 1,
-        justifyContent: 'center',
-        minHeight: 44,
-        opacity: disabled ? 0.7 : 1,
-        paddingHorizontal: 16,
-        paddingVertical: 10,
-      }}
-    >
-      <Text
-        style={{
-          color: disabled ? '#64748b' : tone.textColor,
-          fontWeight: '700',
-          textAlign: 'center',
-        }}
-      >
-        {label}
-      </Text>
-    </Pressable>
-  );
-}
-
-function ChoiceButton({
-  index,
-  isSelected,
-  label,
-  onPress,
-}: {
-  index: number;
-  isSelected: boolean;
-  label: string;
-  onPress: () => void;
-}): React.JSX.Element {
-  const tone = isSelected ? INDIGO_TONE : BASE_TONE;
-
-  return (
-    <Pressable
-      accessibilityRole='button'
-      onPress={onPress}
-      style={{
-        backgroundColor: tone.backgroundColor,
-        borderColor: tone.borderColor,
-        borderRadius: 20,
-        borderWidth: 1,
-        gap: 8,
-        paddingHorizontal: 16,
-        paddingVertical: 14,
-      }}
-    >
-      <View
-        style={{
-          alignItems: 'center',
-          flexDirection: 'row',
-          gap: 10,
-        }}
-      >
-        <View
-          style={{
-            alignItems: 'center',
-            backgroundColor: '#ffffff',
-            borderColor: tone.borderColor,
-            borderRadius: 999,
-            borderWidth: 1,
-            height: 28,
-            justifyContent: 'center',
-            width: 28,
-          }}
-        >
-          <Text style={{ color: '#0f172a', fontWeight: '800' }}>
-            {String.fromCharCode(65 + index)}
-          </Text>
-        </View>
-        <Text
-          style={{
-            color: '#0f172a',
-            flex: 1,
-            fontSize: 15,
-            fontWeight: '700',
-          }}
-        >
-          {label}
-        </Text>
-      </View>
-    </Pressable>
-  );
-}
 
 function KangurMobileCompetitionPlayer({
   item,
@@ -774,14 +550,12 @@ export function KangurCompetitionScreen(): React.JSX.Element {
   };
 
   return (
-    <SafeAreaView
-      style={{ backgroundColor: '#f8fafc', flex: 1 }}
+    <KangurMobileScrollScreen
+      backgroundColor='#f8fafc'
+      contentContainerStyle={{ gap: 16, padding: 16, paddingBottom: 32 }}
       edges={['top', 'left', 'right']}
+      keyboardShouldPersistTaps='handled'
     >
-      <ScrollView
-        contentContainerStyle={{ gap: 16, padding: 16, paddingBottom: 32 }}
-        keyboardShouldPersistTaps='handled'
-      >
         <SectionCard
           title={copy({
             de: 'Kangur-Wettbewerb',
@@ -1004,7 +778,6 @@ export function KangurCompetitionScreen(): React.JSX.Element {
             />
           </View>
         </SectionCard>
-      </ScrollView>
-    </SafeAreaView>
+    </KangurMobileScrollScreen>
   );
 }

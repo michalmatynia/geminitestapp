@@ -31,6 +31,12 @@ vi.mock('next-intl', () => ({
       const resolvedKey = `${namespace}.${key}`;
       return (
         ({
+          'KangurGameRecommendations.activityLabels.english_adverbs': {
+            de: 'Adverbien',
+            en: 'Adverbs',
+            pl: 'Przysłówki',
+            uk: 'Прислівники',
+          },
           'KangurGameRecommendations.activityLabels.english_adverbs_frequency': {
             de: 'Adverbien der Häufigkeit',
             en: 'Adverbs of frequency',
@@ -48,6 +54,12 @@ vi.mock('next-intl', () => ({
             en: 'Adverbs of frequency',
             pl: 'Przysłówki częstotliwości',
             uk: 'Прислівники частоти',
+          },
+          'KangurProgressRuntime.activityLabels.english_adverbs': {
+            de: 'Adverbien',
+            en: 'Adverbs',
+            pl: 'Przysłówki',
+            uk: 'Прислівники',
           },
           'KangurProgressRuntime.activityLabels.english_adjectives': {
             de: 'Adjektive',
@@ -211,6 +223,44 @@ describe('KangurGameHomeMomentumWidget i18n fallbacks', () => {
     expect(screen.getByTestId('kangur-home-momentum-description')).toHaveTextContent(
       'adjectives'
     );
+  });
+
+  it('localizes bare adverb activity labels inside the track recommendation copy', () => {
+    localeState.value = 'en';
+
+    render(
+      <KangurGameHomeMomentumWidget
+        basePath='/kangur'
+        progress={buildProgress({
+          currentWinStreak: 3,
+          dailyQuestsCompleted: 1,
+          lessonMastery: {
+            division: {
+              attempts: 3,
+              completions: 3,
+              masteryPercent: 92,
+              bestScorePercent: 96,
+              lastScorePercent: 94,
+              lastCompletedAt: '2026-03-10T09:00:00.000Z',
+            },
+          },
+          activityStats: {
+            english_adverbs_action_studio: {
+              sessionsPlayed: 4,
+              perfectSessions: 2,
+              totalXpEarned: 210,
+              totalCorrectAnswers: 19,
+              totalQuestionsAnswered: 20,
+              bestScorePercent: 100,
+              currentStreak: 3,
+              bestStreak: 4,
+            },
+          },
+        })}
+      />
+    );
+
+    expect(screen.getByTestId('kangur-home-momentum-description')).toHaveTextContent('adverbs');
   });
 
   it('localizes bare adverbs-of-frequency activity labels inside the track recommendation copy', () => {

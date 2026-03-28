@@ -327,56 +327,56 @@
       "engineDescription": "Цей перегляд зараз звужено до сімейства рушіїв {engine}.",
       "clearEngine": "Прибрати фокус рушія"
     },
-  "tabs": {
-    "eyebrow": "Макет секцій",
-    "title": "Перегляд по вкладках",
-    "description": "Перемикайтеся між каталогом ігор, спільною структурою домену та серіалізацією runtime.",
-    "listLabel": "Секції бібліотеки ігор",
-    "catalog": "Каталог",
-    "structure": "Структура",
-    "runtime": "Runtime"
-  },
-  "metrics": {
-    "games": "Ігри",
-    "gamesDescription": "Видимі записи каталогу.",
-    "engines": "Рушії",
-    "enginesDescription": "Видимі сімейства рушіїв.",
-    "variants": "Варіанти",
-    "variantsDescription": "Видимі способи вбудовування та запуску.",
-    "lessonLinked": "Пов’язані з уроками",
-    "lessonLinkedDescription": "Видимі ігри, уже підключені до компонентів уроків."
-  },
-  "serializationAuditEyebrow": "Контракт runtime",
-  "serializationAuditTitle": "Серіалізація runtime",
-  "serializationAuditDescription": "Показує, які runtime-варіанти використовують явні ідентифікатори, а які ще спираються на fallback-и сумісності.",
-  "serializationAudit": {
-    "statusClean": "Явні runtime-ідентифікатори",
-    "statusAttention": "Прибирання сумісності",
-    "explicitLabel": "Явні runtime",
-    "explicitDescription": "{count} з {total} runtime-варіантів використовують явні runtime-ідентифікатори.",
-    "fallbackLabel": "Лише fallback",
-    "fallbackDescription": "Варіанти, які все ще розв’язуються тільки через ідентифікатори сумісності.",
-    "duplicatesLabel": "Дубльовані legacy ids",
-    "duplicatesDescription": "Варіанти, які все ще мають і явні, і legacy runtime-ідентифікатори.",
-    "legacyGameFallbackLabel": "Legacy launch games",
-    "legacyGameFallbackDescription": "Ігри, які все ще мають legacyScreenIds у спільній дефініції.",
-    "backlogEyebrow": "Беклог виправлень",
-    "backlogDescription": "Показує точні ідентифікатори каталогу, яким ще потрібне прибирання сумісності.",
-    "fallbackBacklogLabel": "Варіанти лише з fallback",
-    "duplicatesBacklogLabel": "Варіанти з дубльованим legacy",
-    "missingBacklogLabel": "Варіанти без runtime",
-    "legacyGameBacklogLabel": "Legacy launch games",
-    "nonSharedBacklogLabel": "Не shared рушії",
-    "nonSharedEnginesLabel": "Не shared рушії",
-    "nonSharedEnginesDescription": "Сімейства рушіїв, які ще не позначені як shared runtime.",
-    "surfaceDescription": "{count} runtime-варіантів зараз використовують цю поверхню.",
-    "totalVariantsLabel": "Runtime-варіанти",
-    "explicitVariantsLabel": "Явні",
-    "fallbackVariantsLabel": "Лише fallback",
-    "duplicatesVariantsLabel": "Дубльовані legacy",
-    "missingVariantsLabel": "Відсутній runtime"
-  },
-  "coverageGroupsEyebrow": "Політика покриття",
+    "tabs": {
+      "eyebrow": "Макет секцій",
+      "title": "Перегляд по вкладках",
+      "description": "Перемикайтеся між каталогом ігор, спільною структурою домену та серіалізацією runtime.",
+      "listLabel": "Секції бібліотеки ігор",
+      "catalog": "Каталог",
+      "structure": "Структура",
+      "runtime": "Runtime"
+    },
+    "metrics": {
+      "games": "Ігри",
+      "gamesDescription": "Видимі записи каталогу.",
+      "engines": "Рушії",
+      "enginesDescription": "Видимі сімейства рушіїв.",
+      "variants": "Варіанти",
+      "variantsDescription": "Видимі способи вбудовування та запуску.",
+      "lessonLinked": "Пов’язані з уроками",
+      "lessonLinkedDescription": "Видимі ігри, уже підключені до компонентів уроків."
+    },
+    "serializationAuditEyebrow": "Контракт runtime",
+    "serializationAuditTitle": "Серіалізація runtime",
+    "serializationAuditDescription": "Показує, які runtime-варіанти використовують явні ідентифікатори, а які ще спираються на fallback-и сумісності.",
+    "serializationAudit": {
+      "statusClean": "Явні runtime-ідентифікатори",
+      "statusAttention": "Прибирання сумісності",
+      "explicitLabel": "Явні runtime",
+      "explicitDescription": "{count} з {total} runtime-варіантів використовують явні runtime-ідентифікатори.",
+      "fallbackLabel": "Лише fallback",
+      "fallbackDescription": "Варіанти, які все ще розв’язуються тільки через ідентифікатори сумісності.",
+      "duplicatesLabel": "Дубльовані legacy ids",
+      "duplicatesDescription": "Варіанти, які все ще мають і явні, і legacy runtime-ідентифікатори.",
+      "legacyGameFallbackLabel": "Legacy launch games",
+      "legacyGameFallbackDescription": "Ігри, які все ще мають legacyScreenIds у спільній дефініції.",
+      "backlogEyebrow": "Беклог виправлень",
+      "backlogDescription": "Показує точні ідентифікатори каталогу, яким ще потрібне прибирання сумісності.",
+      "fallbackBacklogLabel": "Варіанти лише з fallback",
+      "duplicatesBacklogLabel": "Варіанти з дубльованим legacy",
+      "missingBacklogLabel": "Варіанти без runtime",
+      "legacyGameBacklogLabel": "Legacy launch games",
+      "nonSharedBacklogLabel": "Не shared рушії",
+      "nonSharedEnginesLabel": "Не shared рушії",
+      "nonSharedEnginesDescription": "Сімейства рушіїв, які ще не позначені як shared runtime.",
+      "surfaceDescription": "{count} runtime-варіантів зараз використовують цю поверхню.",
+      "totalVariantsLabel": "Runtime-варіанти",
+      "explicitVariantsLabel": "Явні",
+      "fallbackVariantsLabel": "Лише fallback",
+      "duplicatesVariantsLabel": "Дубльовані legacy",
+      "missingVariantsLabel": "Відсутній runtime"
+    },
+    "coverageGroupsEyebrow": "Політика покриття",
     "coverageGroupsTitle": "Мапа покриття уроків",
     "coverageGroupsDescription": "{count, plural, one {# напрям покриття відстежується у спільному домені ігор.} few {# напрями покриття відстежуються у спільному домені ігор.} many {# напрямів покриття відстежуються у спільному домені ігор.} other {# напрямів покриття відстежуються у спільному домені ігор.}}",
     "coverageGroups": {
@@ -606,185 +606,185 @@
         "taskTitleHidden": "Назву завдання приховано",
         "timeDisplayHidden": "Цифровий час приховано"
       },
-    "validation": {
-      "attachedLessonRequired": "Прив’яжи цю ігрову секцію до lesson hub перед збереженням.",
-      "sectionNameRequired": "Додай назву секції перед збереженням.",
-      "gameIconRequired": "Вибери або введи іконку гри перед збереженням.",
-      "visibleClockHandRequired": "Залиш щонайменше одну стрілку видимою, щоб зберегти цю секцію хаба."
-    },
-    "instances": {
-      "eyebrow": "Launchable instances",
-      "title": "Create game instances",
-      "description": "Combine the current engine settings with a reusable content set and save that launchable setup as a reusable game instance.",
-      "unavailable": "This game does not expose a launchable runtime yet, so instance creation is unavailable here.",
-      "engineLabel": "Engine",
-      "runtimeLabel": "Runtime screen",
-      "contentSetLabel": "Content set",
-      "contentSetSearchLabel": "Search content sets",
-      "contentSetSearchPlaceholder": "Search content sets",
-      "contentSetSourceFilterLabel": "Filter content sets by source",
-      "contentSetSourceFilterAll": "All",
-      "contentSetSourceFilterBuiltIn": "Built-in",
-      "contentSetSourceFilterCustom": "Custom",
-      "contentSetUsageFilterLabel": "Filter content sets by usage",
-      "contentSetUsageFilterAll": "All",
-      "contentSetUsageFilterInUse": "In use",
-      "contentSetUsageFilterUnused": "Unused",
-      "contentSetClearFiltersButton": "Clear content-set filters",
-      "contentSetSelectionOutsideFilters": "The current selection stays available while filters narrow the list.",
-      "contentSetListTitle": "Available content sets",
-      "contentSetListDescription": "Browse built-in and custom feeds, then select the one you want to mix into the current instance.",
-      "contentSetListEmpty": "No content sets match the current filters.",
-      "contentSetSourceBuiltIn": "Built-in",
-      "contentSetSourceCustom": "Custom",
-      "contentSetUsageBadgeInUse": "Used by {count}",
-      "contentSetUsageBadgeUnused": "Unused",
-      "selectContentSetButton": "Select",
-      "selectedContentSetButton": "Selected",
-      "showLinkedInstancesButton": "Show linked instances",
-      "showingLinkedInstancesButton": "Showing linked instances",
-      "contentSetLinkedInstancesLabel": "Linked instances",
-      "contentSetLinkedInstancesMore": "+{count} more",
-      "openLinkedInstanceButton": "Edit linked instance: {title}",
-      "contentSourceLabel": "Content source",
-      "engineSourceLabel": "Engine source",
-      "contentSourceBadge": "Content source",
-      "engineSourceBadge": "Engine source",
-      "sourceCustomDraft": "Current draft",
-      "contentSetComposerTitle": "Create custom content set",
-      "contentSetComposerEditTitle": "Edit custom content set",
-      "contentSetComposerDescription": "Save a reusable content feed separately from the engine so it can be mixed into any compatible instance.",
-      "contentSetDraftLabel": "Content-set name",
-      "contentSetDraftLabelPlaceholder": "Hours review pack",
-      "contentSetDraftDescriptionLabel": "Content-set description",
-      "contentSetDraftDescriptionPlaceholder": "Explain what content this reusable set feeds into the engine.",
-      "contentSetDraftFeedLabel": "Content feed",
-      "contentSetDraftShapesLabel": "Included shapes",
-      "contentSetDraftPatternSetLabel": "Pattern set",
-      "geometryShape": {
-        "circle": "Circle",
-        "oval": "Oval",
-        "triangle": "Triangle",
-        "diamond": "Diamond",
-        "square": "Square",
-        "rectangle": "Rectangle",
-        "pentagon": "Pentagon",
-        "hexagon": "Hexagon"
-      },
-      "logicalPatternSet": {
-        "logical_patterns_workshop": "Logical workshop",
-        "alphabet_letter_order": "Alphabet order"
-      },
-      "contentSetPlaceholder": "Select a content set",
-      "contentSetHint": "Choose which content payload is fed into the engine for this saved instance.",
-      "contentSetFallback": "Default content set",
-      "contentKind": {
-        "default_content": "Bundled content",
-        "calendar_section": "Calendar section",
-        "clock_section": "Clock section",
-        "logical_pattern_set": "Pattern set",
-        "geometry_shape_pack": "Shape pack"
-      },
-      "feedSummary": {
-        "defaultContent": "Bundled runtime content",
-        "calendarDays": "Days of week",
-        "calendarMonths": "Months",
-        "calendarDates": "Dates",
-        "logicalPatternsWorkshop": "Logical workshop",
-        "alphabetOrder": "Alphabet order",
-        "geometryShapeCount": "{count} shapes"
-      },
-      "contentSetDraftCalendarSectionLabel": "Calendar section",
-      "calendarSection": {
-        "dni": "Days of week",
-        "miesiace": "Months",
-        "data": "Dates"
-      },
-      "titleLabel": "Instance title",
-      "titlePlaceholder": "Hours only clock drill",
-      "descriptionLabel": "Instance description",
-      "descriptionPlaceholder": "Explain what content and engine setup this instance should launch with.",
-      "emojiLabel": "Instance icon",
-      "emojiPlaceholder": "🕐",
-      "enabledLabel": "Instance visible in the library",
-      "enabledDescription": "Disable the instance without deleting its saved engine and content configuration.",
-      "currentEngineSettingsTitle": "Current engine settings",
-      "currentEngineSettingsDescription": "Saving an instance captures the current engine settings from this modal separately from the selected content set.",
-      "usePreviewSettingsButton": "Use hub preview settings",
-      "currentEngineSettingsDefault": "Default engine settings",
-      "previewTitle": "Instance preview",
-      "previewDescription": "Review the current content payload and engine behavior that will be saved together as one launchable instance.",
-      "mode": {
-        "editing_saved": "Editing saved instance",
-        "draft_from_saved": "Draft from saved instance",
-        "mixed_draft": "Mixed draft",
-        "custom_draft": "Custom draft"
-      },
-      "initialModeAriaLabel": "Instance initial mode",
-      "showModeSwitchAriaLabel": "Instance show mode switch",
-      "showTaskTitleAriaLabel": "Instance show task title",
-      "showTimeDisplayAriaLabel": "Instance show time display",
-      "showHourHandAriaLabel": "Instance show hour hand",
-      "showMinuteHandAriaLabel": "Instance show minute hand",
-      "createButton": "Create instance",
-      "saveButton": "Save instance",
-      "newButton": "New instance",
-      "forkDraftButton": "Fork to new draft",
-      "createAndOpenButton": "Create and open instance",
-      "saveAndOpenButton": "Save and open instance",
-      "openButton": "Open instance",
-      "editButton": "Edit",
-      "useContentSetButton": "Use content set",
-      "usingContentSetButton": "Using content set",
-      "detachContentSourceButton": "Detach content source",
-      "useEngineSettingsButton": "Use engine settings",
-      "usingEngineSettingsButton": "Using engine settings",
-      "detachEngineSourceButton": "Detach engine source",
-      "contentSetSaveButton": "Save content set",
-      "contentSetUpdateButton": "Update content set",
-      "contentSetResetButton": "Reset content-set draft",
-      "contentSetDuplicateSuffix": "Copy",
-      "forkSelectedContentSetButton": "Fork selected content set",
-      "forkDraftContentSetButton": "Fork to new content set",
-      "discardContentSetChangesButton": "Discard content-set changes",
-      "editSelectedContentSetButton": "Edit selected content set",
-      "removeSelectedContentSetButton": "Remove selected content set",
-      "contentSetUsageSummaryUnused": "This custom content set is not used by any saved instance yet.",
-      "contentSetUsageSummaryInUse": "Used by {count} saved instance(s). Remove or retarget those instances first.",
-      "duplicateButton": "Duplicate",
-      "duplicateSuffix": "Copy",
-      "enableButton": "Enable",
-      "disableButton": "Disable",
-      "moveUpButton": "Move up",
-      "moveDownButton": "Move down",
-      "removeButton": "Remove",
-      "discardChangesButton": "Discard instance changes",
-      "dirtyBadge": "Unsaved instance changes",
-      "enabledBadge": "Enabled",
-      "disabledBadge": "Disabled",
-      "listTitle": "Saved instances",
-      "listDescription": "Each saved instance combines the chosen content set with the current engine settings.",
-      "listSearchLabel": "Search saved instances",
-      "listSearchPlaceholder": "Search saved instances",
-      "listClearFiltersButton": "Clear instance filters",
-      "listStatusFilterLabel": "Filter saved instances by status",
-      "listStatusFilterAll": "All",
-      "listStatusFilterEnabled": "Enabled",
-      "listStatusFilterDisabled": "Disabled",
-      "listContentSetFilterLabel": "Filter saved instances by content set",
-      "listContentSetFilterAll": "All content sets",
-      "listSearchEmpty": "No saved instances match the current filters.",
-      "listEmpty": "No saved launchable instances yet.",
-      "contentSetSyncError": "We couldn't save the last content-set change. Try again.",
-      "contentSetInUseError": "This content set is still used by saved instances. Remove or retarget those instances first.",
-      "syncError": "We couldn't save the last game-instance change. Try again.",
       "validation": {
-        "contentSetRequired": "Choose a content set before saving this instance.",
-        "titleRequired": "Add an instance title before saving.",
-        "emojiRequired": "Choose or enter an instance icon before saving."
+        "attachedLessonRequired": "Прив’яжи цю ігрову секцію до lesson hub перед збереженням.",
+        "sectionNameRequired": "Додай назву секції перед збереженням.",
+        "gameIconRequired": "Вибери або введи іконку гри перед збереженням.",
+        "visibleClockHandRequired": "Залиш щонайменше одну стрілку видимою, щоб зберегти цю секцію хаба."
+      },
+      "instances": {
+        "eyebrow": "Launchable instances",
+        "title": "Create game instances",
+        "description": "Combine the current engine settings with a reusable content set and save that launchable setup as a reusable game instance.",
+        "unavailable": "This game does not expose a launchable runtime yet, so instance creation is unavailable here.",
+        "engineLabel": "Engine",
+        "runtimeLabel": "Runtime screen",
+        "contentSetLabel": "Content set",
+        "contentSetSearchLabel": "Search content sets",
+        "contentSetSearchPlaceholder": "Search content sets",
+        "contentSetSourceFilterLabel": "Filter content sets by source",
+        "contentSetSourceFilterAll": "All",
+        "contentSetSourceFilterBuiltIn": "Built-in",
+        "contentSetSourceFilterCustom": "Custom",
+        "contentSetUsageFilterLabel": "Filter content sets by usage",
+        "contentSetUsageFilterAll": "All",
+        "contentSetUsageFilterInUse": "In use",
+        "contentSetUsageFilterUnused": "Unused",
+        "contentSetClearFiltersButton": "Clear content-set filters",
+        "contentSetSelectionOutsideFilters": "The current selection stays available while filters narrow the list.",
+        "contentSetListTitle": "Available content sets",
+        "contentSetListDescription": "Browse built-in and custom feeds, then select the one you want to mix into the current instance.",
+        "contentSetListEmpty": "No content sets match the current filters.",
+        "contentSetSourceBuiltIn": "Built-in",
+        "contentSetSourceCustom": "Custom",
+        "contentSetUsageBadgeInUse": "Used by {count}",
+        "contentSetUsageBadgeUnused": "Unused",
+        "selectContentSetButton": "Select",
+        "selectedContentSetButton": "Selected",
+        "showLinkedInstancesButton": "Show linked instances",
+        "showingLinkedInstancesButton": "Showing linked instances",
+        "contentSetLinkedInstancesLabel": "Linked instances",
+        "contentSetLinkedInstancesMore": "+{count} more",
+        "openLinkedInstanceButton": "Edit linked instance: {title}",
+        "contentSourceLabel": "Content source",
+        "engineSourceLabel": "Engine source",
+        "contentSourceBadge": "Content source",
+        "engineSourceBadge": "Engine source",
+        "sourceCustomDraft": "Current draft",
+        "contentSetComposerTitle": "Create custom content set",
+        "contentSetComposerEditTitle": "Edit custom content set",
+        "contentSetComposerDescription": "Save a reusable content feed separately from the engine so it can be mixed into any compatible instance.",
+        "contentSetDraftLabel": "Content-set name",
+        "contentSetDraftLabelPlaceholder": "Hours review pack",
+        "contentSetDraftDescriptionLabel": "Content-set description",
+        "contentSetDraftDescriptionPlaceholder": "Explain what content this reusable set feeds into the engine.",
+        "contentSetDraftFeedLabel": "Content feed",
+        "contentSetDraftShapesLabel": "Included shapes",
+        "contentSetDraftPatternSetLabel": "Pattern set",
+        "geometryShape": {
+          "circle": "Circle",
+          "oval": "Oval",
+          "triangle": "Triangle",
+          "diamond": "Diamond",
+          "square": "Square",
+          "rectangle": "Rectangle",
+          "pentagon": "Pentagon",
+          "hexagon": "Hexagon"
+        },
+        "logicalPatternSet": {
+          "logical_patterns_workshop": "Logical workshop",
+          "alphabet_letter_order": "Alphabet order"
+        },
+        "contentSetPlaceholder": "Select a content set",
+        "contentSetHint": "Choose which content payload is fed into the engine for this saved instance.",
+        "contentSetFallback": "Default content set",
+        "contentKind": {
+          "default_content": "Bundled content",
+          "calendar_section": "Calendar section",
+          "clock_section": "Clock section",
+          "logical_pattern_set": "Pattern set",
+          "geometry_shape_pack": "Shape pack"
+        },
+        "feedSummary": {
+          "defaultContent": "Bundled runtime content",
+          "calendarDays": "Days of week",
+          "calendarMonths": "Months",
+          "calendarDates": "Dates",
+          "logicalPatternsWorkshop": "Logical workshop",
+          "alphabetOrder": "Alphabet order",
+          "geometryShapeCount": "{count} shapes"
+        },
+        "contentSetDraftCalendarSectionLabel": "Calendar section",
+        "calendarSection": {
+          "dni": "Days of week",
+          "miesiace": "Months",
+          "data": "Dates"
+        },
+        "titleLabel": "Instance title",
+        "titlePlaceholder": "Hours only clock drill",
+        "descriptionLabel": "Instance description",
+        "descriptionPlaceholder": "Explain what content and engine setup this instance should launch with.",
+        "emojiLabel": "Instance icon",
+        "emojiPlaceholder": "🕐",
+        "enabledLabel": "Instance visible in the library",
+        "enabledDescription": "Disable the instance without deleting its saved engine and content configuration.",
+        "currentEngineSettingsTitle": "Current engine settings",
+        "currentEngineSettingsDescription": "Saving an instance captures the current engine settings from this modal separately from the selected content set.",
+        "usePreviewSettingsButton": "Use hub preview settings",
+        "currentEngineSettingsDefault": "Default engine settings",
+        "previewTitle": "Instance preview",
+        "previewDescription": "Review the current content payload and engine behavior that will be saved together as one launchable instance.",
+        "mode": {
+          "editing_saved": "Editing saved instance",
+          "draft_from_saved": "Draft from saved instance",
+          "mixed_draft": "Mixed draft",
+          "custom_draft": "Custom draft"
+        },
+        "initialModeAriaLabel": "Instance initial mode",
+        "showModeSwitchAriaLabel": "Instance show mode switch",
+        "showTaskTitleAriaLabel": "Instance show task title",
+        "showTimeDisplayAriaLabel": "Instance show time display",
+        "showHourHandAriaLabel": "Instance show hour hand",
+        "showMinuteHandAriaLabel": "Instance show minute hand",
+        "createButton": "Create instance",
+        "saveButton": "Save instance",
+        "newButton": "New instance",
+        "forkDraftButton": "Fork to new draft",
+        "createAndOpenButton": "Create and open instance",
+        "saveAndOpenButton": "Save and open instance",
+        "openButton": "Open instance",
+        "editButton": "Edit",
+        "useContentSetButton": "Use content set",
+        "usingContentSetButton": "Using content set",
+        "detachContentSourceButton": "Detach content source",
+        "useEngineSettingsButton": "Use engine settings",
+        "usingEngineSettingsButton": "Using engine settings",
+        "detachEngineSourceButton": "Detach engine source",
+        "contentSetSaveButton": "Save content set",
+        "contentSetUpdateButton": "Update content set",
+        "contentSetResetButton": "Reset content-set draft",
+        "contentSetDuplicateSuffix": "Copy",
+        "forkSelectedContentSetButton": "Fork selected content set",
+        "forkDraftContentSetButton": "Fork to new content set",
+        "discardContentSetChangesButton": "Discard content-set changes",
+        "editSelectedContentSetButton": "Edit selected content set",
+        "removeSelectedContentSetButton": "Remove selected content set",
+        "contentSetUsageSummaryUnused": "This custom content set is not used by any saved instance yet.",
+        "contentSetUsageSummaryInUse": "Used by {count} saved instance(s). Remove or retarget those instances first.",
+        "duplicateButton": "Duplicate",
+        "duplicateSuffix": "Copy",
+        "enableButton": "Enable",
+        "disableButton": "Disable",
+        "moveUpButton": "Move up",
+        "moveDownButton": "Move down",
+        "removeButton": "Remove",
+        "discardChangesButton": "Discard instance changes",
+        "dirtyBadge": "Unsaved instance changes",
+        "enabledBadge": "Enabled",
+        "disabledBadge": "Disabled",
+        "listTitle": "Saved instances",
+        "listDescription": "Each saved instance combines the chosen content set with the current engine settings.",
+        "listSearchLabel": "Search saved instances",
+        "listSearchPlaceholder": "Search saved instances",
+        "listClearFiltersButton": "Clear instance filters",
+        "listStatusFilterLabel": "Filter saved instances by status",
+        "listStatusFilterAll": "All",
+        "listStatusFilterEnabled": "Enabled",
+        "listStatusFilterDisabled": "Disabled",
+        "listContentSetFilterLabel": "Filter saved instances by content set",
+        "listContentSetFilterAll": "All content sets",
+        "listSearchEmpty": "No saved instances match the current filters.",
+        "listEmpty": "No saved launchable instances yet.",
+        "contentSetSyncError": "We couldn't save the last content-set change. Try again.",
+        "contentSetInUseError": "This content set is still used by saved instances. Remove or retarget those instances first.",
+        "syncError": "We couldn't save the last game-instance change. Try again.",
+        "validation": {
+          "contentSetRequired": "Choose a content set before saving this instance.",
+          "titleRequired": "Add an instance title before saving.",
+          "emojiRequired": "Choose or enter an instance icon before saving."
+        }
       }
-    }
-  },
+    },
     "statuses": {
       "active": "Активна",
       "draft": "Чернетка",
@@ -1042,6 +1042,10 @@
       "result": {
         "label": "Результат гри",
         "description": "Перегляньте результат гри й оберіть, що тренувати далі."
+      },
+      "english_adverbs_quiz": {
+        "label": "Студія прислівників",
+        "description": "Керуй сценками дій за допомогою прислівників, які описують, як усе відбувається."
       }
     },
     "home": {
@@ -1579,7 +1583,8 @@
         "alphabet_basics": "Абетка",
         "alphabet_copy": "Копіювання літер",
         "alphabet_syllables": "Склади",
-        "geometry_shape_recognition": "Геометрія"
+        "geometry_shape_recognition": "Геометрія",
+        "english_adverbs": "Прислівники"
       }
     }
   },
@@ -1954,7 +1959,8 @@
       "english_articles": "Артиклі",
       "english_adjectives": "Прикметники",
       "english_adverbs_frequency": "Прислівники частоти",
-      "english_prepositions_time_place": "Прийменники часу й місця"
+      "english_prepositions_time_place": "Прийменники часу й місця",
+      "english_adverbs": "Прислівники"
     },
     "weeklyActivity": {
       "sun": "Нд",
@@ -2316,7 +2322,8 @@
       "english_articles": "Артиклі",
       "english_adjectives": "Прикметники",
       "english_adverbs_frequency": "Прислівники частоти",
-      "english_prepositions_time_place": "Прийменники часу й місця"
+      "english_prepositions_time_place": "Прийменники часу й місця",
+      "english_adverbs": "Прислівники"
     }
   },
   "KangurAssignmentsRuntime": {
@@ -2517,7 +2524,8 @@
         "english_articles": "Артиклі",
         "english_adjectives": "Прикметники",
         "english_adverbs_frequency": "Прислівники частоти",
-        "english_prepositions_time_place": "Прийменники часу й місця"
+        "english_prepositions_time_place": "Прийменники часу й місця",
+        "english_adverbs": "Прислівники"
       }
     },
     "setupMomentum": {
@@ -2661,7 +2669,8 @@
       "english_articles": "Артиклі",
       "english_adjectives": "Прикметники",
       "english_adverbs_frequency": "Прислівники частоти",
-      "english_prepositions_time_place": "Прийменники часу й місця"
+      "english_prepositions_time_place": "Прийменники часу й місця",
+      "english_adverbs": "Прислівники"
     }
   },
   "KangurProgressRuntime": {
@@ -5239,6 +5248,163 @@
         "default": {
           "perfect": "Ідеально! Ви дуже добре знаєте годинник!",
           "retry": "Практикуйтеся далі, і ви опануєте годинник!"
+        }
+      }
+    },
+    "englishAdverbs": {
+      "summary": {
+        "perfect": "Perfect! Every action matches the right adverb.",
+        "good": "Good job! Most of the action scenes already sound right.",
+        "retry": "Try one more round and watch how the action style changes.",
+        "guideLabel": "Adverb guide",
+        "guideHint": "Each adverb changes the style of the action in a different way.",
+        "formGuideLabel": "Word-building guide",
+        "formGuideHint": "Remember the adjective → adverb change.",
+        "starterLabel": "Say it about yourself",
+        "starterHint": "Use one of these frames to build your own sentence.",
+        "starters": {
+          "carefully": "I work carefully in class.",
+          "happily": "I sing happily with my friends.",
+          "fast": "I run fast in PE."
+        },
+        "examples": {
+          "fast": "He runs fast.",
+          "carefully": "She carries the books carefully.",
+          "beautifully": "She paints beautifully.",
+          "happily": "They dance happily.",
+          "well": "She plays football well.",
+          "badly": "He writes badly."
+        },
+        "formPairs": {
+          "careful": {
+            "adjective": "careful",
+            "adverb": "carefully",
+            "hint": "Add -ly"
+          },
+          "beautiful": {
+            "adjective": "beautiful",
+            "adverb": "beautifully",
+            "hint": "Add -ly"
+          },
+          "good": {
+            "adjective": "good",
+            "adverb": "well",
+            "hint": "Special word"
+          },
+          "fast": {
+            "adjective": "fast",
+            "adverb": "fast",
+            "hint": "Same word"
+          }
+        },
+        "badges": {
+          "rounds": "Rounds {current}/{total}",
+          "actions": "Actions {current}/{total}",
+          "studio": "Studio {current}/{total}"
+        }
+      },
+      "inRound": {
+        "roundLabel": "Round {current}/{total}",
+        "hitsLabel": "{hits}/{total} correct",
+        "check": "Check",
+        "next": "Next",
+        "seeResult": "See result",
+        "studio": {
+          "modeLabel": "Drag adverb cards",
+          "modeLabelTouch": "Tap or drag cards",
+          "targetLabel": "Target actions",
+          "plannerLabel": "Action planner",
+          "poolLabel": "Adverb bank",
+          "poolAria": "Adverb bank",
+          "poolHint": "Two cards can stay unused in each round.",
+          "laneAria": "Action lane for {action}",
+          "dropLabel": "Drop or tap an adverb card here.",
+          "currentSentenceLabel": "Sentence",
+          "yourAdverbLabel": "Your adverb",
+          "targetAdverbLabel": "Target adverb",
+          "yourSentenceLabel": "Your sentence",
+          "targetSentenceLabel": "Target sentence",
+          "styleChangeLabel": "Style change",
+          "matchedLabel": "Matched",
+          "correctionLabel": "Fix this lane",
+          "actionAria": "Action scene for {action}: {adverb}",
+          "touchIdle": "Tap an adverb card, then tap an action lane or the bank.",
+          "touchSelected": "Selected adverb: {adverb}. Tap an action lane or the bank.",
+          "clearRound": "Clear round",
+          "feedback": {
+            "perfect": "Perfect! The action cards match every target scene.",
+            "retry": "Try again and compare how each action should happen."
+          },
+          "rounds": {
+            "race-day": {
+              "title": "Race day",
+              "prompt": "Match each action with the adverb that changes its style in the right way.",
+              "hint": "One action needs speed, one needs care, and one needs beauty."
+            },
+            "school-studio": {
+              "title": "School studio",
+              "prompt": "Direct the classroom actions with the best adverb card.",
+              "hint": "One action sounds strong, one joyful, and one not very successful."
+            },
+            "talent-corner": {
+              "title": "Talent corner",
+              "prompt": "Give each small performance the right action style.",
+              "hint": "Listen for speed, care, and beauty in the sentences."
+            },
+            "playground-show": {
+              "title": "Playground show",
+              "prompt": "Build the right adverb scenes for the playground performance.",
+              "hint": "One action is happy, one is poor, and one sounds strong."
+            },
+            "homework-club": {
+              "title": "Homework club",
+              "prompt": "Pick the adverbs that fit these club actions best.",
+              "hint": "Writing can go well, carrying needs care, and running stays fast."
+            }
+          },
+          "adverbs": {
+            "fast": {
+              "label": "fast",
+              "description": "with a lot of speed"
+            },
+            "carefully": {
+              "label": "carefully",
+              "description": "with care and attention"
+            },
+            "beautifully": {
+              "label": "beautifully",
+              "description": "in a very pretty way"
+            },
+            "happily": {
+              "label": "happily",
+              "description": "with joy"
+            },
+            "well": {
+              "label": "well",
+              "description": "in a strong or correct way"
+            },
+            "badly": {
+              "label": "badly",
+              "description": "in a poor or wrong way"
+            }
+          },
+          "actions": {
+            "run_race": "run the race",
+            "paint_picture": "paint the picture",
+            "carry_books": "carry the books",
+            "play_football": "play football",
+            "write_story": "write the story",
+            "sing_song": "sing the song",
+            "dance_show": "dance in the show"
+          },
+          "styleChanges": {
+            "speed": "change the speed",
+            "care": "change the care",
+            "beauty": "change the beauty",
+            "joy": "change the feeling",
+            "skill": "change the quality",
+            "mistake": "change the result"
+          }
         }
       }
     }
@@ -9052,6 +9218,97 @@
           "description": "Упорядкуй речення з прийменниками"
         }
       }
+    },
+    "englishAdverbs": {
+      "slides": {
+        "intro": {
+          "overview": {
+            "title": "Adverbs show how actions happen",
+            "lead": "We use adverbs to describe how somebody does something. They help us hear the style of the action.",
+            "caption": "run fast, carry books carefully, paint beautifully, sing happily"
+          },
+          "howQuestion": {
+            "title": "Ask: How?",
+            "lead": "A good adverb answer often comes after the verb. Ask How does she paint? How does he run?"
+          }
+        },
+        "form": {
+          "changeWords": {
+            "title": "Change the word into an adverb",
+            "lead": "Many adjectives become adverbs with -ly. This helps us describe the action, not the person or thing.",
+            "caption": "careful → carefully, beautiful → beautifully, happy → happily"
+          },
+          "specialWords": {
+            "title": "Remember the special words",
+            "lead": "A few important adverbs do not follow the simple -ly pattern. Learn them as special pairs.",
+            "caption": "good → well, fast → fast, hard → hard"
+          }
+        },
+        "repair": {
+          "makeItRight": {
+            "title": "Make it right",
+            "lead": "Some words look almost correct, but English uses a different adverb form. Spot the mistake and repair it.",
+            "caption": "bad → badly, fastly → fast, good → well"
+          }
+        },
+        "answer": {
+          "schoolDay": {
+            "title": "Talk about your school day",
+            "lead": "Use short action sentences to say how you work, play, or learn.",
+            "caption": "I work carefully. I write well. I run fast."
+          },
+          "wordBank": {
+            "title": "Adverb word bank",
+            "lead": "Keep these adverbs ready when you build a sentence about yourself."
+          },
+          "writeAndDraw": {
+            "title": "Write and draw",
+            "lead": "Draw your classroom or yourself in action, then write two or three short sentences with adverbs.",
+            "caption": "I listen carefully. I sing happily. I paint beautifully."
+          }
+        },
+        "summary": {
+          "recap": {
+            "title": "Quick recap",
+            "lead": "Keep these adverb rules in mind when you describe actions.",
+            "items": {
+              "meaning": "Adverbs tell us how an action happens.",
+              "ly": "Many adjectives change into adverbs with -ly.",
+              "special": "Some forms are special: good → well, fast → fast.",
+              "use": "Adverbs often come after the verb: She sings beautifully."
+            }
+          }
+        }
+      }
+    },
+    "englishAdverbsShell": {
+      "sections": {
+        "intro": {
+          "title": "Intro",
+          "description": "What adverbs do"
+        },
+        "form": {
+          "title": "Form",
+          "description": "Build adverbs from describing words"
+        },
+        "repair": {
+          "title": "Repair",
+          "description": "Fix the wrong adverb form"
+        },
+        "answer": {
+          "title": "Answer",
+          "description": "Use adverbs in your own sentences"
+        },
+        "gameActionStudio": {
+          "title": "Action Studio",
+          "description": "Direct animated actions with adverb cards"
+        },
+        "summary": {
+          "title": "Summary",
+          "description": "Key rules in one place"
+        }
+      },
+      "lessonTitle": "Англійська: прислівники"
     }
   }
 }

@@ -1,43 +1,73 @@
-import type { ComponentProps, ReactNode } from 'react';
+'use client';
 
+import React from 'react';
 import {
-  KangurInfoCard,
-  KangurPanelRow,
+  KangurButton,
+  KangurCardDescription,
+  KangurCardTitle,
+  KangurGlassPanel,
+  KangurStatusChip,
 } from '@/features/kangur/ui/design/primitives';
-
-type KangurAssignmentManagerItemCardProps = {
-  accent?: ComponentProps<typeof KangurInfoCard>['accent'];
-  children: ReactNode;
-  testId: string;
-};
-
-export function KangurAssignmentManagerItemCard({
-  accent,
-  children,
-  testId,
-}: KangurAssignmentManagerItemCardProps): React.JSX.Element {
-  const cardAccent = accent;
-  const cardTestId = testId;
-
-  return (
-    <KangurInfoCard accent={cardAccent} data-testid={cardTestId} padding='lg'>
-      {children}
-    </KangurInfoCard>
-  );
-}
+import {
+  KANGUR_STACK_COMPACT_CLASSNAME,
+  KANGUR_TIGHT_ROW_CLASSNAME,
+} from '@/features/kangur/ui/design/tokens';
+import { Clock } from 'lucide-react';
+import { KangurAssignmentPriorityChip } from '@/features/kangur/ui/components/KangurAssignmentPriorityChip';
+import { cn } from '@/features/kangur/shared/utils';
 
 export function KangurAssignmentManagerCardHeader({
-  children,
+  title,
+  description,
+  priority,
 }: {
-  children: ReactNode;
-}): React.JSX.Element {
-  return <KangurPanelRow className='items-start sm:justify-between'>{children}</KangurPanelRow>;
+  title: string;
+  description: string | null;
+  priority?: number;
+}) {
+  return (
+    <div className='space-y-1.5'>
+      <div className='flex items-start justify-between gap-3'>
+        <KangurCardTitle size='sm'>{title}</KangurCardTitle>
+        {priority !== undefined && <KangurAssignmentPriorityChip priority={priority} />}
+      </div>
+      {description && <KangurCardDescription lineLimit={2}>{description}</KangurCardDescription>}
+    </div>
+  );
 }
 
 export function KangurAssignmentManagerCardFooter({
   children,
+  className,
 }: {
-  children: ReactNode;
-}): React.JSX.Element {
-  return <KangurPanelRow className='mt-3 sm:items-center sm:justify-between'>{children}</KangurPanelRow>;
+  children: React.ReactNode;
+  className?: string;
+}) {
+  return (
+    <div className={cn('mt-auto pt-4', className)}>
+      <div className='flex flex-wrap items-center gap-2'>{children}</div>
+    </div>
+  );
+}
+
+export function KangurAssignmentManagerItemCard({
+  children,
+  className,
+  testId,
+}: {
+  children: React.ReactNode;
+  className?: string;
+  testId?: string;
+}) {
+  return (
+    <KangurGlassPanel
+      className={cn('flex flex-col h-full', className)}
+      padding='md'
+      surface='solid'
+      variant='soft'
+      data-testid={testId}
+    >
+      {children}
+    </KangurGlassPanel>
+  );
 }

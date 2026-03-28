@@ -502,16 +502,7 @@ function PrimaryButton({
   );
 }
 
-function LabeledTextField({
-  autoCapitalize = 'sentences',
-  hint,
-  label,
-  onChangeText,
-  placeholder,
-  secureTextEntry,
-  textContentType,
-  value,
-}: {
+function LabeledTextField(props: {
   autoCapitalize?: 'none' | 'sentences' | 'words' | 'characters';
   hint?: string;
   label: string;
@@ -521,6 +512,17 @@ function LabeledTextField({
   textContentType?: 'username' | 'password';
   value: string;
 }): React.JSX.Element {
+  const {
+    autoCapitalize = 'sentences',
+    hint,
+    label,
+    onChangeText,
+    placeholder,
+    secureTextEntry,
+    textContentType,
+    value,
+  } = props;
+
   return (
     <View style={{ gap: 6 }}>
       <Text style={{ color: '#0f172a', fontSize: 14, fontWeight: '700' }}>

@@ -1,7 +1,7 @@
 'use client';
 
 import { useTranslations } from 'next-intl';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import type { DropResult } from '@hello-pangea/dnd';
 import { useKangurProgressOwnerKey } from '@/features/kangur/ui/hooks/useKangurProgressOwnerKey';
 import { useKangurCoarsePointer } from '@/features/kangur/ui/hooks/useKangurCoarsePointer';
@@ -15,9 +15,7 @@ import type {
   KangurMiniGameFeedbackState,
   KangurRewardBreakdownEntry,
 } from '@/features/kangur/ui/types';
-import {
-  ENGLISH_ADJECTIVES_SCENE_ROUNDS,
-} from './EnglishAdjectivesSceneGame.data';
+import { ENGLISH_ADJECTIVES_SCENE_ROUNDS } from './EnglishAdjectivesSceneGame.data';
 import {
   buildRoundState,
   countRoundCorrect,

@@ -12,10 +12,13 @@ import {
   EnglishAdjectiveRepairAnimation,
   EnglishAdjectiveRoomAnimation,
   EnglishAdverbFrequencyScaleAnimation,
+  EnglishAdverbActionStyleAnimation,
   EnglishAdverbHabitCardAnimation,
   EnglishAdverbPlaceRoutineAnimation,
+  EnglishAdverbRepairAnimation,
   EnglishAdverbRoutineAnimation,
   EnglishAdverbSentenceRepairAnimation,
+  EnglishAdverbTransformationAnimation,
   EnglishAdverbWordOrderAnimation,
   EnglishArticleFocusAnimation,
   EnglishArticleVowelAnimation,
@@ -43,28 +46,28 @@ describe('EnglishAnimations visuals', () => {
       </>
     );
 
-    expect(screen.getByTestId('english-article-focus-animation')).toBeInTheDocument();
+    const focusAnimation = screen.getByTestId('english-article-focus-animation');
+    expect(focusAnimation).toBeInTheDocument();
     expect(screen.getByTestId('english-article-focus-atmosphere')).toBeInTheDocument();
-    expect(screen.getByTestId('english-article-focus-panel-a-frame')).toBeInTheDocument();
-    expect(screen.getByTestId('english-article-focus-panel-the-frame')).toBeInTheDocument();
-    expect(screen.getByTestId('english-article-focus-panel-the-focus')).toBeInTheDocument();
+    expect(focusAnimation.querySelectorAll('rect[fill="none"]').length).toBeGreaterThanOrEqual(2);
+    expect(focusAnimation.querySelector('circle.focus-ring')).not.toBeNull();
 
-    expect(screen.getByTestId('english-article-vowel-animation')).toBeInTheDocument();
+    const vowelAnimation = screen.getByTestId('english-article-vowel-animation');
+    expect(vowelAnimation).toBeInTheDocument();
     expect(screen.getByTestId('english-article-vowel-atmosphere')).toBeInTheDocument();
-    expect(screen.getByTestId('english-article-vowel-card-equation-frame')).toBeInTheDocument();
-    expect(screen.getByTestId('english-article-vowel-card-graph-frame')).toBeInTheDocument();
-    expect(screen.getByTestId('english-article-vowel-card-angle-frame')).toBeInTheDocument();
+    expect(vowelAnimation.querySelectorAll('rect.frame').length).toBeGreaterThanOrEqual(3);
 
     expect(
-      screen
-        .getByTestId('english-article-focus-animation')
-        .querySelectorAll('ellipse[data-kangur-soft-oval="true"]').length
+      focusAnimation.querySelectorAll('ellipse[data-kangur-soft-oval="true"]').length
     ).toBeGreaterThan(0);
   });
 
   it('renders upgraded adverb lesson surfaces with clipped frames and atmosphere', () => {
     render(
       <>
+        <EnglishAdverbActionStyleAnimation />
+        <EnglishAdverbTransformationAnimation />
+        <EnglishAdverbRepairAnimation />
         <EnglishAdverbFrequencyScaleAnimation />
         <EnglishAdverbRoutineAnimation />
         <EnglishAdverbWordOrderAnimation mode='mainVerb' />
@@ -78,6 +81,18 @@ describe('EnglishAnimations visuals', () => {
     expect(screen.getByTestId('english-adverb-frequency-scale-animation')).toBeInTheDocument();
     expect(screen.getByTestId('english-adverb-frequency-scale-atmosphere')).toBeInTheDocument();
     expect(screen.getByTestId('english-adverb-frequency-scale-frame')).toBeInTheDocument();
+
+    expect(screen.getByTestId('english-adverb-action-style-animation')).toBeInTheDocument();
+    expect(screen.getByTestId('english-adverb-action-style-atmosphere')).toBeInTheDocument();
+    expect(screen.getByTestId('english-adverb-action-style-frame')).toBeInTheDocument();
+
+    expect(screen.getByTestId('english-adverb-transformation-animation')).toBeInTheDocument();
+    expect(screen.getByTestId('english-adverb-transformation-atmosphere')).toBeInTheDocument();
+    expect(screen.getByTestId('english-adverb-transformation-frame')).toBeInTheDocument();
+
+    expect(screen.getByTestId('english-adverb-repair-animation')).toBeInTheDocument();
+    expect(screen.getByTestId('english-adverb-repair-atmosphere')).toBeInTheDocument();
+    expect(screen.getByTestId('english-adverb-repair-frame')).toBeInTheDocument();
 
     expect(screen.getByTestId('english-adverb-routine-animation')).toBeInTheDocument();
     expect(screen.getByTestId('english-adverb-routine-atmosphere')).toBeInTheDocument();
@@ -112,28 +127,27 @@ describe('EnglishAnimations visuals', () => {
       </>
     );
 
-    expect(screen.getByTestId('english-adjective-room-animation')).toBeInTheDocument();
-    expect(screen.getByTestId('english-adjective-room-atmosphere')).toBeInTheDocument();
-    expect(screen.getByTestId('english-adjective-room-frame')).toBeInTheDocument();
-    expect(screen.getByTestId('english-adjective-room-cupboard-surface')).toBeInTheDocument();
-    expect(screen.getByTestId('english-adjective-room-curtains-surface')).toBeInTheDocument();
-    expect(screen.getByTestId('english-adjective-room-rug-surface')).toBeInTheDocument();
+    const roomAnimation = screen.getByTestId('english-adjective-room-animation');
+    expect(roomAnimation).toBeInTheDocument();
+    expect(roomAnimation.querySelector('.frame')).not.toBeNull();
+    expect(roomAnimation.querySelector('g.cupboard rect')).not.toBeNull();
+    expect(roomAnimation.querySelector('g.curtains rect')).not.toBeNull();
+    expect(roomAnimation.querySelector('g.rug ellipse')).not.toBeNull();
 
-    expect(screen.getByTestId('english-adjective-order-animation')).toBeInTheDocument();
-    expect(screen.getByTestId('english-adjective-order-atmosphere')).toBeInTheDocument();
-    expect(screen.getByTestId('english-adjective-order-frame')).toBeInTheDocument();
-    expect(screen.getByTestId('english-adjective-order-small-card')).toBeInTheDocument();
-    expect(screen.getByTestId('english-adjective-order-blue-card')).toBeInTheDocument();
-    expect(screen.getByTestId('english-adjective-order-noun-card')).toBeInTheDocument();
+    const orderAnimation = screen.getByTestId('english-adjective-order-animation');
+    expect(orderAnimation).toBeInTheDocument();
+    expect(orderAnimation.querySelector('.frame')).not.toBeNull();
+    expect(orderAnimation.querySelectorAll('rect.adj').length).toBeGreaterThanOrEqual(2);
+    expect(orderAnimation.querySelector('rect.noun')).not.toBeNull();
 
-    expect(screen.getByTestId('english-adjective-repair-animation')).toBeInTheDocument();
-    expect(screen.getByTestId('english-adjective-repair-atmosphere')).toBeInTheDocument();
-    expect(screen.getByTestId('english-adjective-repair-frame')).toBeInTheDocument();
+    const repairAnimation = screen.getByTestId('english-adjective-repair-animation');
+    expect(repairAnimation).toBeInTheDocument();
+    expect(repairAnimation.querySelector('.frame')).not.toBeNull();
+    expect(repairAnimation.querySelector('.bad')).not.toBeNull();
+    expect(repairAnimation.querySelector('.good')).not.toBeNull();
 
     expect(
-      screen
-        .getByTestId('english-adjective-room-animation')
-        .querySelectorAll('ellipse[data-kangur-soft-oval="true"]').length
+      roomAnimation.querySelectorAll('ellipse[data-kangur-soft-oval="true"]').length
     ).toBeGreaterThan(0);
   });
 
@@ -164,23 +178,27 @@ describe('EnglishAnimations visuals', () => {
     expect(screen.getByTestId('english-possessive-pronoun-mine-frame')).toBeInTheDocument();
     expect(screen.getByTestId('english-possessive-pronoun-yours-frame')).toBeInTheDocument();
 
-    expect(screen.getByTestId('english-agreement-balance-animation')).toBeInTheDocument();
-    expect(screen.getByTestId('english-agreement-balance-atmosphere')).toBeInTheDocument();
-    expect(screen.getByTestId('english-agreement-balance-frame')).toBeInTheDocument();
+    const agreementAnimation = screen.getByTestId('english-agreement-balance-animation');
+    expect(agreementAnimation).toBeInTheDocument();
+    expect(agreementAnimation.querySelector('.frame')).not.toBeNull();
+    expect(
+      agreementAnimation.querySelectorAll('ellipse[data-kangur-soft-oval="true"]').length
+    ).toBeGreaterThan(0);
 
-    expect(screen.getByTestId('english-third-person-s-animation')).toBeInTheDocument();
-    expect(screen.getByTestId('english-third-person-s-atmosphere')).toBeInTheDocument();
-    expect(screen.getByTestId('english-third-person-s-frame')).toBeInTheDocument();
+    const thirdPersonAnimation = screen.getByTestId('english-third-person-s-animation');
+    expect(thirdPersonAnimation).toBeInTheDocument();
+    expect(thirdPersonAnimation.querySelector('.frame')).not.toBeNull();
+    expect(thirdPersonAnimation.querySelector('.reveal-s')).not.toBeNull();
 
-    expect(screen.getByTestId('english-be-verb-switch-animation')).toBeInTheDocument();
-    expect(screen.getByTestId('english-be-verb-switch-atmosphere')).toBeInTheDocument();
-    expect(screen.getByTestId('english-be-verb-switch-card-0-frame')).toBeInTheDocument();
-    expect(screen.getByTestId('english-be-verb-switch-card-1-frame')).toBeInTheDocument();
-    expect(screen.getByTestId('english-be-verb-switch-card-2-frame')).toBeInTheDocument();
+    const beVerbAnimation = screen.getByTestId('english-be-verb-switch-animation');
+    expect(beVerbAnimation).toBeInTheDocument();
+    expect(beVerbAnimation.querySelector('.frame')).not.toBeNull();
+    expect(beVerbAnimation.querySelectorAll('.step').length).toBeGreaterThanOrEqual(3);
 
-    expect(screen.getByTestId('english-zero-article-animation')).toBeInTheDocument();
-    expect(screen.getByTestId('english-zero-article-atmosphere')).toBeInTheDocument();
-    expect(screen.getByTestId('english-zero-article-frame')).toBeInTheDocument();
+    const zeroArticleAnimation = screen.getByTestId('english-zero-article-animation');
+    expect(zeroArticleAnimation).toBeInTheDocument();
+    expect(zeroArticleAnimation.querySelector('.frame')).not.toBeNull();
+    expect(zeroArticleAnimation.querySelector('.strike')).not.toBeNull();
   });
 
   it('renders upgraded sentence structure and prepositions teaching surfaces', () => {
@@ -196,42 +214,45 @@ describe('EnglishAnimations visuals', () => {
       </>
     );
 
-    expect(screen.getByTestId('english-sentence-blueprint-animation')).toBeInTheDocument();
-    expect(screen.getByTestId('english-sentence-blueprint-atmosphere')).toBeInTheDocument();
-    expect(screen.getByTestId('english-sentence-blueprint-frame')).toBeInTheDocument();
-    expect(screen.getByTestId('english-sentence-blueprint-subject-card')).toBeInTheDocument();
-    expect(screen.getByTestId('english-sentence-blueprint-verb-card')).toBeInTheDocument();
-    expect(screen.getByTestId('english-sentence-blueprint-object-card')).toBeInTheDocument();
+    const blueprintAnimation = screen.getByTestId('english-sentence-blueprint-animation');
+    expect(blueprintAnimation).toBeInTheDocument();
+    expect(blueprintAnimation.querySelector('.frame')).not.toBeNull();
+    expect(blueprintAnimation.querySelectorAll('rect.block').length).toBeGreaterThanOrEqual(3);
 
-    expect(screen.getByTestId('english-question-flip-animation')).toBeInTheDocument();
-    expect(screen.getByTestId('english-question-flip-atmosphere')).toBeInTheDocument();
-    expect(screen.getByTestId('english-question-flip-frame')).toBeInTheDocument();
+    const questionFlipAnimation = screen.getByTestId('english-question-flip-animation');
+    expect(questionFlipAnimation).toBeInTheDocument();
+    expect(questionFlipAnimation.querySelector('.frame')).not.toBeNull();
+    expect(questionFlipAnimation.querySelector('.swap-a')).not.toBeNull();
+    expect(questionFlipAnimation.querySelector('.swap-b')).not.toBeNull();
 
-    expect(screen.getByTestId('english-connector-bridge-animation')).toBeInTheDocument();
-    expect(screen.getByTestId('english-connector-bridge-left-frame')).toBeInTheDocument();
-    expect(screen.getByTestId('english-connector-bridge-right-frame')).toBeInTheDocument();
+    const connectorBridgeAnimation = screen.getByTestId('english-connector-bridge-animation');
+    expect(connectorBridgeAnimation).toBeInTheDocument();
+    expect(connectorBridgeAnimation.querySelectorAll('.frame').length).toBeGreaterThanOrEqual(2);
 
-    expect(screen.getByTestId('english-prepositions-time-animation')).toBeInTheDocument();
-    expect(screen.getByTestId('english-prepositions-time-at-frame')).toBeInTheDocument();
-    expect(screen.getByTestId('english-prepositions-time-on-frame')).toBeInTheDocument();
-    expect(screen.getByTestId('english-prepositions-time-in-frame')).toBeInTheDocument();
+    const prepositionsTimeAnimation = screen.getByTestId('english-prepositions-time-animation');
+    expect(prepositionsTimeAnimation).toBeInTheDocument();
+    expect(prepositionsTimeAnimation.querySelectorAll('.frame').length).toBeGreaterThanOrEqual(3);
 
-    expect(screen.getByTestId('english-prepositions-timeline-animation')).toBeInTheDocument();
-    expect(screen.getByTestId('english-prepositions-timeline-atmosphere')).toBeInTheDocument();
-    expect(screen.getByTestId('english-prepositions-timeline-frame')).toBeInTheDocument();
+    const prepositionsTimelineAnimation = screen.getByTestId('english-prepositions-timeline-animation');
+    expect(prepositionsTimelineAnimation).toBeInTheDocument();
+    expect(prepositionsTimelineAnimation.querySelector('.frame')).not.toBeNull();
     expect(
-      screen
-        .getByTestId('english-sentence-blueprint-animation')
-        .querySelectorAll('ellipse[data-kangur-soft-oval="true"]').length
+      prepositionsTimelineAnimation.querySelectorAll('ellipse[data-kangur-soft-oval="true"]').length
+    ).toBeGreaterThan(0);
+    expect(
+      blueprintAnimation.querySelectorAll('ellipse[data-kangur-soft-oval="true"]').length
     ).toBeGreaterThan(0);
 
-    expect(screen.getByTestId('english-prepositions-place-animation')).toBeInTheDocument();
-    expect(screen.getByTestId('english-prepositions-place-at-frame')).toBeInTheDocument();
-    expect(screen.getByTestId('english-prepositions-place-in-frame')).toBeInTheDocument();
-    expect(screen.getByTestId('english-prepositions-place-on-frame')).toBeInTheDocument();
+    const prepositionsPlaceAnimation = screen.getByTestId('english-prepositions-place-animation');
+    expect(prepositionsPlaceAnimation).toBeInTheDocument();
+    expect(prepositionsPlaceAnimation.querySelectorAll('.frame').length).toBeGreaterThanOrEqual(3);
 
-    expect(screen.getByTestId('english-prepositions-relations-animation')).toBeInTheDocument();
-    expect(screen.getByTestId('english-prepositions-relations-between-frame')).toBeInTheDocument();
-    expect(screen.getByTestId('english-prepositions-relations-vertical-frame')).toBeInTheDocument();
+    const prepositionsRelationsAnimation = screen.getByTestId(
+      'english-prepositions-relations-animation'
+    );
+    expect(prepositionsRelationsAnimation).toBeInTheDocument();
+    expect(prepositionsRelationsAnimation.querySelectorAll('.frame').length).toBeGreaterThanOrEqual(
+      2
+    );
   });
 });

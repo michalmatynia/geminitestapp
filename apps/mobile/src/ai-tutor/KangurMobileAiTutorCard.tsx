@@ -1,42 +1,19 @@
-import { Link } from 'expo-router';
-import { Pressable, Text, View } from 'react-native';
+import { Text, View } from 'react-native';
 
 import type { KangurAiTutorConversationContext } from '../../../../src/shared/contracts/kangur-ai-tutor';
 import { useKangurMobileI18n } from '../i18n/kangurMobileI18n';
+import { StatusPill } from '../shared/KangurAssessmentUi';
+import {
+  KangurMobileActionButton,
+  KangurMobileCard,
+  KangurMobileLinkButton,
+} from '../shared/KangurMobileUi';
 import { useKangurMobileAiTutor } from './useKangurMobileAiTutor';
 
 type KangurMobileAiTutorCardProps = {
   context: KangurAiTutorConversationContext;
   gameTarget?: 'competition' | 'practice';
 };
-
-function StatusPill({
-  backgroundColor,
-  borderColor,
-  label,
-  textColor,
-}: {
-  backgroundColor: string;
-  borderColor: string;
-  label: string;
-  textColor: string;
-}): React.JSX.Element {
-  return (
-    <View
-      style={{
-        alignSelf: 'flex-start',
-        backgroundColor,
-        borderColor,
-        borderRadius: 999,
-        borderWidth: 1,
-        paddingHorizontal: 10,
-        paddingVertical: 6,
-      }}
-    >
-      <Text style={{ color: textColor, fontSize: 12, fontWeight: '700' }}>{label}</Text>
-    </View>
-  );
-}
 
 function ActionButton({
   disabled = false,
@@ -48,34 +25,28 @@ function ActionButton({
   onPress?: () => void;
 }): React.JSX.Element {
   return (
-    <Pressable
+    <KangurMobileActionButton
       accessibilityLabel={label}
-      accessibilityRole='button'
       disabled={disabled}
-      onPress={onPress}
+      label={label}
+      onPress={async () => {
+        onPress?.();
+      }}
       style={{
         alignItems: 'center',
-        backgroundColor: disabled ? '#e2e8f0' : '#eef2ff',
-        borderColor: disabled ? '#cbd5e1' : '#c7d2fe',
-        borderRadius: 999,
         borderWidth: 1,
         justifyContent: 'center',
         minHeight: 44,
         opacity: disabled ? 0.7 : 1,
-        paddingHorizontal: 16,
-        paddingVertical: 10,
+        backgroundColor: disabled ? '#e2e8f0' : '#eef2ff',
+        borderColor: disabled ? '#cbd5e1' : '#c7d2fe',
       }}
-    >
-      <Text
-        style={{
-          color: disabled ? '#64748b' : '#4338ca',
-          fontWeight: '700',
-          textAlign: 'center',
-        }}
-      >
-        {label}
-      </Text>
-    </Pressable>
+      textStyle={{
+        color: disabled ? '#64748b' : '#4338ca',
+        textAlign: 'center',
+      }}
+      tone='secondary'
+    />
   );
 }
 
@@ -87,27 +58,17 @@ function LinkButton({
   label: string;
 }): React.JSX.Element {
   return (
-    <Link href={href} asChild>
-      <Pressable
-        accessibilityLabel={label}
-        accessibilityRole='button'
-        style={{
-          alignItems: 'center',
-          backgroundColor: '#ffffff',
-          borderColor: '#cbd5e1',
-          borderRadius: 999,
-          borderWidth: 1,
-          justifyContent: 'center',
-          minHeight: 44,
-          paddingHorizontal: 16,
-          paddingVertical: 10,
-        }}
-      >
-        <Text style={{ color: '#0f172a', fontWeight: '700', textAlign: 'center' }}>
-          {label}
-        </Text>
-      </Pressable>
-    </Link>
+    <KangurMobileLinkButton
+      label={label}
+      accessibilityLabel={label}
+      href={href}
+      style={{
+        alignItems: 'center',
+        justifyContent: 'center',
+        minHeight: 44,
+      }}
+      textStyle={{ textAlign: 'center' }}
+    />
   );
 }
 
@@ -238,19 +199,7 @@ export function KangurMobileAiTutorCard({
     : null;
 
   return (
-    <View
-      style={{
-        backgroundColor: '#ffffff',
-        borderRadius: 24,
-        elevation: 3,
-        gap: 12,
-        padding: 20,
-        shadowColor: '#0f172a',
-        shadowOffset: { height: 10, width: 0 },
-        shadowOpacity: 0.08,
-        shadowRadius: 18,
-      }}
-    >
+    <KangurMobileCard gap={12} padding={20}>
       <View style={{ gap: 8 }}>
         <Text
           accessibilityRole='header'
@@ -259,13 +208,15 @@ export function KangurMobileAiTutorCard({
           {`${tutor.tutorName} · AI Tutor`}
         </Text>
         <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
-          <StatusPill {...availabilityTone} label={availabilityLabel} />
+          <StatusPill label={availabilityLabel} tone={availabilityTone} />
           {usageLabel ? (
             <StatusPill
-              backgroundColor='#f8fafc'
-              borderColor='#cbd5e1'
               label={usageLabel}
-              textColor='#475569'
+              tone={{
+                backgroundColor: '#f8fafc',
+                borderColor: '#cbd5e1',
+                textColor: '#475569',
+              }}
             />
           ) : null}
         </View>
@@ -357,6 +308,6 @@ export function KangurMobileAiTutorCard({
       ) : null}
 
       {nextStepSection}
-    </View>
+    </KangurMobileCard>
   );
 }

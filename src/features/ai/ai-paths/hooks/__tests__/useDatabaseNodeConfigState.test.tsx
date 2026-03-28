@@ -542,26 +542,28 @@ describe('useDatabaseNodeConfigState', () => {
 
   it('applies the query-by-id preset patch', () => {
     const { result } = renderHook(() => useDatabaseNodeConfigState());
+    const expectedQueryPreset = {
+      collection: 'products',
+      preset: 'by_id',
+      idType: 'string',
+      queryTemplate: '{\n  "id": "{{value}}"\n}',
+      single: true,
+    };
+    const expectedDatabasePresetPatch = {
+      presetId: 'query_by_id',
+      actionCategory: 'read',
+      action: 'findOne',
+      operation: 'query',
+      entityType: 'product',
+      query: expect.objectContaining(expectedQueryPreset),
+    };
 
     act(() => {
       result.current.applyDatabasePreset('query_by_id');
     });
 
     expect(mocks.updateSelectedNodeConfigMock).toHaveBeenCalledWith({
-      database: expect.objectContaining({
-        presetId: 'query_by_id',
-        actionCategory: 'read',
-        action: 'findOne',
-        operation: 'query',
-        entityType: 'product',
-        query: expect.objectContaining({
-          collection: 'products',
-          preset: 'by_id',
-          idType: 'string',
-          queryTemplate: '{\n  "id": "{{value}}"\n}',
-          single: true,
-        }),
-      }),
+      database: expect.objectContaining(expectedDatabasePresetPatch),
     });
   });
 });

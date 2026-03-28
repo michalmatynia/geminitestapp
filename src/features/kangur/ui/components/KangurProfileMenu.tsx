@@ -58,16 +58,17 @@ const getProfileMenuFallbackLabel = (
   return 'Profil';
 };
 
-export function KangurProfileMenu({
-  label,
-  avatar,
-  profile,
-  triggerClassName,
-  basePath,
-  isActive,
-  transitionAcknowledgeMs,
-  transitionSourceId,
-}: KangurProfileMenuProps): React.JSX.Element {
+export function KangurProfileMenu(props: KangurProfileMenuProps): React.JSX.Element {
+  const {
+    label,
+    avatar,
+    profile,
+    triggerClassName,
+    basePath,
+    isActive,
+    transitionAcknowledgeMs,
+    transitionSourceId,
+  } = props;
   const routeTransitionState = useOptionalKangurRouteTransitionState();
   const isCoarsePointer = useKangurCoarsePointer();
   const locale = normalizeSiteLocale(useLocale());

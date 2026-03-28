@@ -14,6 +14,27 @@ const mocks = vi.hoisted(() => ({
   },
 }));
 
+type ListPanelMockProps = {
+  header?: React.ReactNode;
+  filters?: React.ReactNode;
+  actions?: React.ReactNode;
+  alerts?: React.ReactNode;
+  children?: React.ReactNode;
+};
+
+function MockListPanel(props: ListPanelMockProps): React.JSX.Element {
+  const { header, filters, actions, alerts, children } = props;
+  return (
+    <div data-testid='list-panel'>
+      {header}
+      {filters}
+      {actions}
+      {alerts}
+      {children}
+    </div>
+  );
+}
+
 vi.mock('next/link', () => ({
   default: ({
     children,
@@ -68,27 +89,7 @@ vi.mock('@/shared/ui', () => ({
   ClientOnly: ({ children }: { children?: React.ReactNode }) => <>{children}</>,
   FormSection: ({ children }: { children?: React.ReactNode }) => <div>{children}</div>,
   formatAdminAiEyebrow: (value: string) => value,
-  ListPanel: ({
-    header,
-    filters,
-    actions,
-    alerts,
-    children,
-  }: {
-    header?: React.ReactNode;
-    filters?: React.ReactNode;
-    actions?: React.ReactNode;
-    alerts?: React.ReactNode;
-    children?: React.ReactNode;
-  }) => (
-    <div data-testid='list-panel'>
-      {header}
-      {filters}
-      {actions}
-      {alerts}
-      {children}
-    </div>
-  ),
+  ListPanel: MockListPanel,
 }));
 
 import { AdminGlobalValidatorPage } from './AdminGlobalValidatorPage';

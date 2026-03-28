@@ -15,6 +15,6 @@ export {
   useAssets3D,
 } from './hooks/useAsset3dQueries';
 
-export { default as Admin3DAssetsPage } from './pages/Admin3DAssetsPage';
-export { default as Asset3DListPage } from './pages/Asset3DListPage';
+export { Admin3DAssetsPage } from './pages/Admin3DAssetsPage';
+export { Asset3DListPage } from './pages/Asset3DListPage';
 export type { Asset3DRecord } from '@/shared/contracts/viewer3d';

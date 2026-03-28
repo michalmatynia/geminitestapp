@@ -124,6 +124,18 @@ const graphActionsMock = {
   setNodes: setGraphNodesMock,
   setEdges: setGraphEdgesMock,
 };
+const canvasActionsMock = {
+  setView: setCanvasViewMock,
+  startPan: startPanMock,
+  endPan: endPanMock,
+  startDrag: startDragMock,
+  endDrag: endDragMock,
+  setConnecting: setConnectingMock,
+  setConnectingPos: setConnectingPosMock,
+  startConnection: startConnectionMock,
+  endConnection: endConnectionMock,
+  setLastDrop: setLastDropMock,
+};
 
 vi.mock('@/features/ai/ai-paths/context/CanvasContext', () => ({
   useCanvasRefs: () => ({
@@ -131,18 +143,7 @@ vi.mock('@/features/ai/ai-paths/context/CanvasContext', () => ({
     canvasRef: { current: null },
   }),
   useCanvasState: () => canvasStateMock,
-  useCanvasActions: () => ({
-    setView: setCanvasViewMock,
-    startPan: startPanMock,
-    endPan: endPanMock,
-    startDrag: startDragMock,
-    endDrag: endDragMock,
-    setConnecting: setConnectingMock,
-    setConnectingPos: setConnectingPosMock,
-    startConnection: startConnectionMock,
-    endConnection: endConnectionMock,
-    setLastDrop: setLastDropMock,
-  }),
+  useCanvasActions: () => canvasActionsMock,
 }));
 
 vi.mock('@/features/ai/ai-paths/context/SelectionContext', () => ({

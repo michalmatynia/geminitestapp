@@ -8,15 +8,12 @@ import { cn } from '@/features/kangur/shared/utils';
 
 // ── Badge Track Section Sub-components ───────────────────────────────────────
 
-export function KangurBadgeTrackSectionHeader({
-  heading = 'Ścieżki odznak',
-  headingAs = 'p',
-  className,
-}: {
+export function KangurBadgeTrackSectionHeader(input: {
   heading?: ReactNode;
   headingAs?: 'div' | 'p' | 'span';
   className?: string;
 }): React.JSX.Element {
+  const { heading = 'Ścieżki odznak', headingAs = 'p', className } = input;
   const headerClassName = className;
   const headerAs = headingAs;
 
@@ -40,16 +37,19 @@ type KangurBadgeTrackSectionProps = {
   progress: KangurProgressState;
 };
 
-export function KangurBadgeTrackSection({
-  className,
-  dataTestIdPrefix,
-  emptyTestId,
-  gridClassName,
-  heading,
-  headingAs = 'p',
-  headingClassName,
-  progress,
-}: KangurBadgeTrackSectionProps): React.JSX.Element {
+export function KangurBadgeTrackSection(
+  props: KangurBadgeTrackSectionProps
+): React.JSX.Element {
+  const {
+    className,
+    dataTestIdPrefix,
+    emptyTestId,
+    gridClassName,
+    heading,
+    headingAs = 'p',
+    headingClassName,
+    progress,
+  } = props;
   const translations = useTranslations('KangurLearnerProfileWidgets.sessions');
   const headerProps = {
     className: headingClassName,

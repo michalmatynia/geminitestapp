@@ -2,11 +2,9 @@ import { z } from 'zod';
 
 import { kangurLearnerPasswordSchema } from './kangur-learner-password';
 import {
-  kangurLessonActivityIdSchema,
   kangurLessonAgeGroupSchema,
   kangurLessonComponentIdSchema,
   kangurLessonContentModeSchema,
-  kangurLessonNarrationVoiceSchema,
   kangurLessonSubjectSchema,
 } from './kangur-lesson-constants';
 import type { KangurLessonSubject } from './kangur-lesson-constants';
@@ -14,40 +12,6 @@ import {
   createDefaultKangurAiTutorLearnerMood,
   kangurAiTutorLearnerMoodSchema,
 } from './kangur-ai-tutor-mood';
-import {
-  kangurLessonActivityBlockSchema,
-  kangurLessonCalloutBlockSchema,
-  kangurLessonCalloutVariantSchema,
-  kangurLessonDocumentNarrationSchema,
-  kangurLessonDocumentSchema,
-  kangurLessonDocumentStoreSchema,
-  kangurLessonGridBlockSchema,
-  kangurLessonGridItemSchema,
-  kangurLessonImageBlockSchema,
-  kangurLessonInlineBlockSchema,
-  kangurLessonPageSchema,
-  kangurLessonQuizBlockSchema,
-  kangurLessonQuizChoiceSchema,
-  kangurLessonRootBlockSchema,
-  kangurLessonSvgBlockSchema,
-  kangurLessonTextBlockSchema,
-  type KangurLessonActivityBlock,
-  type KangurLessonCalloutBlock,
-  type KangurLessonCalloutVariant,
-  type KangurLessonDocument,
-  type KangurLessonDocumentNarration,
-  type KangurLessonDocumentStore,
-  type KangurLessonGridBlock,
-  type KangurLessonGridItem,
-  type KangurLessonImageBlock,
-  type KangurLessonInlineBlock,
-  type KangurLessonPage,
-  type KangurLessonQuizBlock,
-  type KangurLessonQuizChoice,
-  type KangurLessonRootBlock,
-  type KangurLessonSvgBlock,
-  type KangurLessonTextBlock,
-} from './kangur-lesson-document-contract';
 import { activityLogSchema } from './system';
 import {
   optionalBooleanQuerySchema,

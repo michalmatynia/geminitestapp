@@ -17,6 +17,23 @@ const mocks = vi.hoisted(() => ({
   toastMock: vi.fn(),
 }));
 
+type ListPanelMockProps = {
+  header?: React.ReactNode;
+  filters?: React.ReactNode;
+  children?: React.ReactNode;
+};
+
+function MockListPanel(props: ListPanelMockProps): React.JSX.Element {
+  const { header, filters, children } = props;
+  return (
+    <div data-testid='list-panel'>
+      {header}
+      {filters}
+      {children}
+    </div>
+  );
+}
+
 vi.mock('next/link', () => ({
   default: ({
     children,
@@ -122,21 +139,7 @@ vi.mock('@/shared/ui', () => ({
   }) => (
     <input value={value} onChange={onChange} placeholder={placeholder} aria-label={ariaLabel} />
   ),
-  ListPanel: ({
-    header,
-    filters,
-    children,
-  }: {
-    header?: React.ReactNode;
-    filters?: React.ReactNode;
-    children?: React.ReactNode;
-  }) => (
-    <div data-testid='list-panel'>
-      {header}
-      {filters}
-      {children}
-    </div>
-  ),
+  ListPanel: MockListPanel,
   SearchInput: ({
     value,
     onChange,

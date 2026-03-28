@@ -18,6 +18,8 @@ const {
   authMeMock,
   redirectToLoginMock,
   logoutMock,
+  disabledDocsTooltipsMock,
+  getDisabledDocsTooltipsMock,
 } = vi.hoisted(() => ({
   useKangurRoutingMock: vi.fn(),
   useKangurProgressStateMock: vi.fn(),
@@ -28,23 +30,25 @@ const {
   authMeMock: vi.fn(),
   redirectToLoginMock: vi.fn(),
   logoutMock: vi.fn(),
+  disabledDocsTooltipsMock: {
+    enabled: false,
+    helpSettings: {
+      version: 1,
+      docsTooltips: {
+        enabled: false,
+        homeEnabled: false,
+        lessonsEnabled: false,
+        testsEnabled: false,
+        profileEnabled: false,
+        parentDashboardEnabled: false,
+        adminEnabled: false,
+      },
+    },
+  } as const,
+  getDisabledDocsTooltipsMock: vi.fn(),
 }));
 
-const disabledDocsTooltipsMock = {
-  enabled: false,
-  helpSettings: {
-    version: 1,
-    docsTooltips: {
-      enabled: false,
-      homeEnabled: false,
-      lessonsEnabled: false,
-      testsEnabled: false,
-      profileEnabled: false,
-      parentDashboardEnabled: false,
-      adminEnabled: false,
-    },
-  },
-} as const;
+getDisabledDocsTooltipsMock.mockReturnValue(disabledDocsTooltipsMock);
 
 vi.mock('@/features/kangur/ui/context/KangurRoutingContext', () => ({
   useKangurRouting: useKangurRoutingMock,
@@ -84,7 +88,7 @@ vi.mock('@/features/kangur/ui/hooks/useKangurLessons', () => ({
 
 vi.mock('@/features/kangur/docs/tooltips', () => ({
   KangurDocsTooltipEnhancer: () => null,
-  useKangurDocsTooltips: () => disabledDocsTooltipsMock,
+  useKangurDocsTooltips: getDisabledDocsTooltipsMock,
 }));
 
 vi.mock('@/features/kangur/services/kangur-platform', () => ({
@@ -158,6 +162,7 @@ const baseProgress: KangurProgressState = {
 describe('Game delegated quick starts', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    getDisabledDocsTooltipsMock.mockReturnValue(disabledDocsTooltipsMock);
     useKangurRoutingMock.mockReturnValue({ basePath: '/kangur' });
     useKangurProgressStateMock.mockReturnValue(baseProgress);
     useKangurAssignmentsMock.mockReturnValue({

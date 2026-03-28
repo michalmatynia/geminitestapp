@@ -86,79 +86,84 @@ function PageLayoutTabs({ tabs }: PageLayoutTabsProps): JSX.Element | null {
   );
 }
 
-const renderPageLayout = ({
-  children,
-  containerClassName,
-  description,
-  eyebrow,
-  headerActions,
-  icon,
-  isSaving,
-  onSave,
-  panelClassName,
-  refresh,
-  saveText,
-  stickyFooter,
-  tabs,
-  title,
-  wrapInPanel,
-}: PageLayoutRenderProps): JSX.Element => (
-  <div className={cn(containerClassName, stickyFooter && 'pb-32')}>
-    <PageLayoutTabs tabs={tabs} />
-    <SectionHeader
-      title={title}
-      className='mb-6'
-      description={description}
-      eyebrow={eyebrow}
-      icon={icon}
-      actions={headerActions}
-      refresh={refresh}
-    />
-    {wrapInPanel ? (
-      <div className={cn('rounded-lg border border-border bg-card p-4 sm:p-6', panelClassName)}>
-        {children}
-      </div>
-    ) : (
-      children
-    )}
-    {onSave ? (
-      <div
-        className={cn(
-          'mt-6',
-          stickyFooter &&
-            'fixed bottom-0 left-0 right-0 z-50 border-t border-white/5 bg-background/80 p-4 sm:p-6 backdrop-blur-md'
-        )}
-      >
-        <div className={cn(stickyFooter && 'page-container')}>
-          <FormActions
-            onSave={() => void onSave()}
-            isSaving={isSaving}
-            saveText={saveText}
-            className={cn(stickyFooter ? 'justify-end' : '')}
-          />
-        </div>
-      </div>
-    ) : null}
-  </div>
-);
+const renderPageLayout = (renderProps: PageLayoutRenderProps): JSX.Element => {
+  const {
+    children,
+    containerClassName,
+    description,
+    eyebrow,
+    headerActions,
+    icon,
+    isSaving,
+    onSave,
+    panelClassName,
+    refresh,
+    saveText,
+    stickyFooter,
+    tabs,
+    title,
+    wrapInPanel,
+  } = renderProps;
 
-export function PageLayout({
-  title,
-  description,
-  eyebrow,
-  icon,
-  headerActions,
-  refresh,
-  children,
-  tabs,
-  wrapInPanel = false,
-  panelClassName,
-  onSave,
-  isSaving = false,
-  saveText = 'Save Configuration',
-  stickyFooter = false,
-  containerClassName = 'page-section',
-}: PageLayoutProps): JSX.Element {
+  return (
+    <div className={cn(containerClassName, stickyFooter && 'pb-32')}>
+      <PageLayoutTabs tabs={tabs} />
+      <SectionHeader
+        title={title}
+        className='mb-6'
+        description={description}
+        eyebrow={eyebrow}
+        icon={icon}
+        actions={headerActions}
+        refresh={refresh}
+      />
+      {wrapInPanel ? (
+        <div className={cn('rounded-lg border border-border bg-card p-4 sm:p-6', panelClassName)}>
+          {children}
+        </div>
+      ) : (
+        children
+      )}
+      {onSave ? (
+        <div
+          className={cn(
+            'mt-6',
+            stickyFooter &&
+              'fixed bottom-0 left-0 right-0 z-50 border-t border-white/5 bg-background/80 p-4 sm:p-6 backdrop-blur-md'
+          )}
+        >
+          <div className={cn(stickyFooter && 'page-container')}>
+            <FormActions
+              onSave={() => void onSave()}
+              isSaving={isSaving}
+              saveText={saveText}
+              className={cn(stickyFooter ? 'justify-end' : '')}
+            />
+          </div>
+        </div>
+      ) : null}
+    </div>
+  );
+};
+
+export function PageLayout(props: PageLayoutProps): JSX.Element {
+  const {
+    title,
+    description,
+    eyebrow,
+    icon,
+    headerActions,
+    refresh,
+    children,
+    tabs,
+    wrapInPanel = false,
+    panelClassName,
+    onSave,
+    isSaving = false,
+    saveText = 'Save Configuration',
+    stickyFooter = false,
+    containerClassName = 'page-section',
+  } = props;
   return renderPageLayout({
     children,
     containerClassName,

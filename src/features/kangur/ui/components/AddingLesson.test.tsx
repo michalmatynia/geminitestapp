@@ -110,7 +110,7 @@ describe('AddingLesson', () => {
     );
   });
 
-  it('keeps the shared stage title visible inside the adding game shell', () => {
+  it('keeps the shared game title visible inside the adding game shell', () => {
     render(
       <KangurLessonNavigationProvider onBack={vi.fn()}>
         <AddingLesson />
@@ -126,7 +126,7 @@ describe('AddingLesson', () => {
     ).toBeInTheDocument();
   });
 
-  it('gives the synthesis activity a wide shell and keeps its stage title visible', () => {
+  it('gives the synthesis activity a wide shell and keeps its game title visible', () => {
     render(
       <KangurLessonNavigationProvider onBack={vi.fn()}>
         <AddingLesson />

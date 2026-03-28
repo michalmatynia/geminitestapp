@@ -96,7 +96,7 @@ describe('GeometryShapesLesson', () => {
     vi.clearAllMocks();
   });
 
-  it('opens the game stage through the launchable default instance', async () => {
+  it('opens the game shell through the launchable default instance', async () => {
     renderWithIntl(<GeometryShapesLesson />);
 
     fireEvent.click(screen.getByTestId('lesson-hub-section-game'));

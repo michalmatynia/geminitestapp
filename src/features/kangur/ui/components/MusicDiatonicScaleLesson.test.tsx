@@ -138,7 +138,7 @@ describe('MusicDiatonicScaleLesson', () => {
     delete (HTMLDivElement.prototype as Partial<HTMLDivElement>).getBoundingClientRect;
   });
 
-  it('renders the new melody-repeat hub section and opens the game stage', async () => {
+  it('renders the new melody-repeat hub section and opens the game shell', async () => {
     isMobileViewportMock = true;
 
     renderWithIntl(

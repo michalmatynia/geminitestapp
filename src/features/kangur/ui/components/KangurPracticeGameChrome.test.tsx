@@ -23,7 +23,7 @@ vi.mock('@/features/kangur/ui/hooks/useKangurCoarsePointer', () => ({
 }));
 
 describe('KangurPracticeGameChrome', () => {
-  it('renders the shared practice game stage and progress row', () => {
+  it('renders the shared practice game shell and progress row', () => {
     render(
       <KangurPracticeGameStage data-testid='practice-stage'>
         <KangurPracticeGameProgress

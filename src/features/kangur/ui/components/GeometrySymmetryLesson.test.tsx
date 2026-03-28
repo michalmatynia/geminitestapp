@@ -72,7 +72,7 @@ const renderWithIntl = (element: ReactElement) =>
   );
 
 describe('GeometrySymmetryLesson', () => {
-  it('opens the game stage through the launchable default instance', async () => {
+  it('opens the game shell through the launchable default instance', async () => {
     renderWithIntl(<GeometrySymmetryLesson />);
 
     fireEvent.click(screen.getByTestId('lesson-hub-section-game'));

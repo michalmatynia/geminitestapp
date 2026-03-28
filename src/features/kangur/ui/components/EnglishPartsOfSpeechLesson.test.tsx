@@ -91,7 +91,7 @@ describe('EnglishPartsOfSpeechLesson', () => {
     });
   });
 
-  it('opens the parts-of-speech game stage through the launchable default instance', async () => {
+  it('opens the parts-of-speech game shell through the launchable default instance', async () => {
     renderWithIntl(<EnglishPartsOfSpeechLesson />);
 
     fireEvent.click(screen.getByTestId('lesson-hub-section-game_parts_of_speech'));

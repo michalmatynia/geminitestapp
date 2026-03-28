@@ -32,7 +32,7 @@ describe('LogicalPatternsLesson', () => {
     componentContent.slides.intro.whatIsPattern.title = 'Database pattern slide';
     componentContent.slides.intro.colorsAndShapes.title = 'Database colors slide';
     componentContent.slides.ciagi_arytm.addition.title = 'Database addition slide';
-    componentContent.game.stageTitle = 'Database workshop stage';
+    componentContent.game.stageTitle = 'Database workshop game';
 
     render(
       <NextIntlClientProvider locale='pl' messages={plMessages}>
@@ -87,6 +87,6 @@ describe('LogicalPatternsLesson', () => {
     expect(props.slides.ciagi_arytm).toEqual(
       expect.arrayContaining([expect.objectContaining({ title: 'Database addition slide' })]),
     );
-    expect(props.games[0]?.stage.title).toBe('Database workshop stage');
+    expect(props.games[0]?.stage.title).toBe('Database workshop game');
   });
 });

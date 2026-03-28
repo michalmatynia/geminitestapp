@@ -119,7 +119,7 @@ describe('ArtShapesBasicLesson', () => {
                 },
               },
               game: {
-                stageTitle: 'Database stage title',
+                stageTitle: 'Database game title',
                 progress: {
                   round: 'DB round {current}/{total}',
                   score: 'DB score {score}',
@@ -188,6 +188,6 @@ describe('ArtShapesBasicLesson', () => {
     expect(props.slides.meetShapes).toEqual(
       expect.arrayContaining([expect.objectContaining({ title: 'Database slide title' })]),
     );
-    expect(props.games[0]?.stage.title).toBe('Database stage title');
+    expect(props.games[0]?.stage.title).toBe('Database game title');
   });
 });

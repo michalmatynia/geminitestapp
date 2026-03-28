@@ -139,7 +139,7 @@ describe('GeometryShapesLesson', () => {
                 },
               },
               game: {
-                stageTitle: 'Database game stage',
+                stageTitle: 'Database game title',
               },
             },
           }}
@@ -183,6 +183,6 @@ describe('GeometryShapesLesson', () => {
         expect.objectContaining({ title: 'Database sides slide' }),
       ]),
     );
-    expect(props.games[0]?.stage.title).toBe('Database game stage');
+    expect(props.games[0]?.stage.title).toBe('Database game title');
   });
 });

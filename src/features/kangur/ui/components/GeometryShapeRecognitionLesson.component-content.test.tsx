@@ -110,7 +110,7 @@ describe('GeometryShapeRecognitionLesson', () => {
                 caption: 'Database summary caption',
               },
               draw: {
-                stageTitle: 'Database draw stage',
+                stageTitle: 'Database draw game',
                 difficultyLabel: 'Database difficulty',
                 finishLabel: 'Database finish label',
               },
@@ -157,7 +157,7 @@ describe('GeometryShapeRecognitionLesson', () => {
       'Database practice title',
     );
     expect(props.games.find((game) => game.sectionId === 'draw')?.stage.title).toBe(
-      'Database draw stage',
+      'Database draw game',
     );
   });
 });

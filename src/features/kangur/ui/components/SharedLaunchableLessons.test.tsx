@@ -78,8 +78,8 @@ const renderWithIntl = (element: ReactElement) =>
     </NextIntlClientProvider>
   );
 
-describe('shared stage lessons', () => {
-  it('opens the geometry basics stage game through the shared runtime and returns to the hub', async () => {
+describe('shared launchable lessons', () => {
+  it('opens the geometry basics game through the shared launchable runtime and returns to the hub', async () => {
     renderWithIntl(
       <KangurLessonNavigationProvider onBack={vi.fn()}>
         <GeometryBasicsLesson />
@@ -101,7 +101,7 @@ describe('shared stage lessons', () => {
     });
   });
 
-  it('opens the agreement stage game through the shared runtime and returns to the hub', async () => {
+  it('opens the agreement game through the shared launchable runtime and returns to the hub', async () => {
     renderWithIntl(
       <KangurLessonNavigationProvider onBack={vi.fn()}>
         <EnglishSubjectVerbAgreementLesson />

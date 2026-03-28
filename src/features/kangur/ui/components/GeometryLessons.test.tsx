@@ -26,7 +26,7 @@ vi.mock('@/features/kangur/ui/components/GeometryDrawingGame', () => ({
     </button>
   ),
 }));
-vi.mock('@/features/kangur/ui/components/ShapeRecognitionStageGame', () => ({
+vi.mock('@/features/kangur/ui/components/ShapeRecognitionGame', () => ({
   default: ({ onFinish }: { onFinish?: () => void }): React.JSX.Element => (
     <button type='button' onClick={onFinish}>
       Mock Shape Recognition Game

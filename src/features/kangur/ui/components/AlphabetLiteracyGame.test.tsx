@@ -9,7 +9,7 @@ vi.mock('@/features/kangur/ui/hooks/useKangurCoarsePointer', () => ({
   useKangurCoarsePointer: () => true,
 }));
 
-import AlphabetLiteracyGame from '@/features/kangur/ui/components/AlphabetLiteracyStageGame';
+import AlphabetLiteracyGame from '@/features/kangur/ui/components/AlphabetLiteracyGame';
 
 describe('AlphabetLiteracyGame', () => {
   it('renders the letter-matching dataset through the shared literacy runtime', () => {

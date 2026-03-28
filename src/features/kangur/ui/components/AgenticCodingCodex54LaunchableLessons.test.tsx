@@ -129,7 +129,7 @@ import AgenticCodingCodex54PromptingLesson from '@/features/kangur/ui/components
 import AgenticCodingCodex54SurfacesLesson from '@/features/kangur/ui/components/AgenticCodingCodex54SurfacesLesson';
 import { KangurLessonNavigationProvider } from '@/features/kangur/ui/context/KangurLessonNavigationContext';
 
-describe('AgenticCodingCodex54 stage lessons', () => {
+describe('AgenticCodingCodex54 launchable lessons', () => {
   it.each([
     {
       title: 'Prompt Trim Game',

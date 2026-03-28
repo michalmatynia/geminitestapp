@@ -5,7 +5,7 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 
-import ColorHarmonyGame from '@/features/kangur/ui/components/ColorHarmonyStageGame';
+import ColorHarmonyGame from '@/features/kangur/ui/components/ColorHarmonyGame';
 
 describe('ColorHarmonyGame', () => {
   it('plays through the shared color-harmony rounds and finishes cleanly', () => {

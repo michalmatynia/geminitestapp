@@ -41,7 +41,7 @@ const AgenticSurfaceMatchGame = dynamic(
   { ssr: false }
 );
 const AlphabetLiteracyGame = dynamic(
-  () => import('@/features/kangur/ui/components/AlphabetLiteracyStageGame'),
+  () => import('@/features/kangur/ui/components/AlphabetLiteracyGame'),
   { ssr: false }
 );
 const ArtShapesRotationGapGame = dynamic(
@@ -60,7 +60,7 @@ const ClockTrainingGame = dynamic(
   { ssr: false }
 );
 const ColorHarmonyGame = dynamic(
-  () => import('@/features/kangur/ui/components/ColorHarmonyStageGame'),
+  () => import('@/features/kangur/ui/components/ColorHarmonyGame'),
   { ssr: false }
 );
 const DivisionGame = dynamic(() => import('@/features/kangur/ui/components/DivisionGame'), {
@@ -127,7 +127,7 @@ const MultiplicationGame = dynamic(
   { ssr: false }
 );
 const ShapeRecognitionGame = dynamic(
-  () => import('@/features/kangur/ui/components/ShapeRecognitionStageGame'),
+  () => import('@/features/kangur/ui/components/ShapeRecognitionGame'),
   { ssr: false }
 );
 const SubtractingGame = dynamic(

@@ -68,7 +68,7 @@ const renderWithIntl = (element: ReactElement) =>
   );
 
 describe('LogicalPatternsLesson', () => {
-  it('opens the workshop stage through the launchable default instance', async () => {
+  it('opens the workshop game shell through the launchable default instance', async () => {
     renderWithIntl(<LogicalPatternsLesson />);
 
     fireEvent.click(screen.getByTestId('lesson-hub-section-game_warsztat'));

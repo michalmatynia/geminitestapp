@@ -90,15 +90,15 @@ describe('MusicDiatonicScaleLesson', () => {
               emoji: '🎹',
               title: 'Database repeat',
               description: 'Database repeat description',
-              gameStageTitle: 'Database repeat stage',
-              gameStageDescription: 'Database repeat stage description',
+              gameStageTitle: 'Database repeat game',
+              gameStageDescription: 'Database repeat game description',
             },
             gameFreeplaySection: {
               emoji: '🎛️',
               title: 'Database freeplay',
               description: 'Database freeplay description',
-              gameStageTitle: 'Database freeplay stage',
-              gameStageDescription: 'Database freeplay stage description',
+              gameStageTitle: 'Database freeplay game',
+              gameStageDescription: 'Database freeplay game description',
             },
             summarySection: {
               emoji: '⭐',
@@ -154,8 +154,8 @@ describe('MusicDiatonicScaleLesson', () => {
       ]),
     );
     expect(props.games[0]?.stage).toEqual({
-      title: 'Database repeat stage',
-      description: 'Database repeat stage description',
+      title: 'Database repeat game',
+      description: 'Database repeat game description',
       accent: 'sky',
       icon: '🎹',
       maxWidthClassName: 'max-w-none',
@@ -163,8 +163,8 @@ describe('MusicDiatonicScaleLesson', () => {
       shellVariant: 'plain',
     });
     expect(props.games[1]?.stage).toEqual({
-      title: 'Database freeplay stage',
-      description: 'Database freeplay stage description',
+      title: 'Database freeplay game',
+      description: 'Database freeplay game description',
       accent: 'sky',
       icon: '🎛️',
       maxWidthClassName: 'max-w-none',

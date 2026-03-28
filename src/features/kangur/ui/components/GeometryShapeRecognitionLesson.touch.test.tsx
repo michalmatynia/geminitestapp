@@ -26,7 +26,7 @@ vi.mock('@/features/kangur/ui/lessons/lesson-components', () => ({
 vi.mock('@/features/kangur/ui/components/GeometryDrawingGame', () => ({
   default: () => <div data-testid='geometry-drawing-game' />,
 }));
-vi.mock('@/features/kangur/ui/components/ShapeRecognitionStageGame', () => ({
+vi.mock('@/features/kangur/ui/components/ShapeRecognitionGame', () => ({
   default: () => (
     <div data-testid='shape-recognition-stage-game'>
       <button
@@ -41,7 +41,7 @@ vi.mock('@/features/kangur/ui/components/ShapeRecognitionStageGame', () => ({
 
 import plMessages from '@/i18n/messages/pl.json';
 import GeometryShapeRecognitionLesson from '@/features/kangur/ui/components/GeometryShapeRecognitionLesson';
-import ShapeRecognitionGame from '@/features/kangur/ui/components/ShapeRecognitionStageGame';
+import ShapeRecognitionGame from '@/features/kangur/ui/components/ShapeRecognitionGame';
 
 describe('GeometryShapeRecognitionLesson touch mode', () => {
   afterEach(() => {

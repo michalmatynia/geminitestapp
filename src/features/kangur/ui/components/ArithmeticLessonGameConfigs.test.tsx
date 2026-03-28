@@ -23,7 +23,7 @@ import DivisionLesson from '@/features/kangur/ui/components/DivisionLesson';
 import MultiplicationLesson from '@/features/kangur/ui/components/MultiplicationLesson';
 import SubtractingLesson from '@/features/kangur/ui/components/SubtractingLesson';
 
-describe('arithmetic stage lesson configs', () => {
+describe('arithmetic lesson game configs', () => {
   afterEach(() => {
     capturedProps = null;
   });

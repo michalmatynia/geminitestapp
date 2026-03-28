@@ -49,7 +49,7 @@ vi.mock('@/features/kangur/ui/hooks/useKangurLessonGameSections', () => ({
 import CalendarLesson from '@/features/kangur/ui/components/CalendarLesson';
 import ClockLesson from '@/features/kangur/ui/components/ClockLesson';
 
-describe('time stage lesson configs', () => {
+describe('time lesson game configs', () => {
   afterEach(() => {
     capturedProps = null;
     lessonGameSectionsState = [];

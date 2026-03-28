@@ -68,7 +68,7 @@ const renderWithIntl = (element: ReactElement) =>
   );
 
 describe('EnglishSentenceStructureLesson', () => {
-  it('opens the game stage through the launchable default instance', async () => {
+  it('opens the game shell through the launchable default instance', async () => {
     renderWithIntl(<EnglishSentenceStructureLesson />);
 
     fireEvent.click(screen.getByTestId('lesson-hub-section-game'));

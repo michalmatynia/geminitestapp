@@ -27,7 +27,7 @@ import MusicDiatonicScaleLesson, {
 } from '@/features/kangur/ui/components/MusicDiatonicScaleLesson';
 import { ART_SHAPES_ROTATION_PUZZLE_SECTION_ID } from '@/features/kangur/ui/components/ArtShapesBasicLesson.data';
 
-describe('art and music stage lesson configs', () => {
+describe('art and music lesson game configs', () => {
   afterEach(() => {
     capturedProps = null;
   });

@@ -59,8 +59,8 @@ describe('AlphabetWordsLesson', () => {
                 description: 'Database game description',
                 isGame: true,
                 slides: [],
-                gameStageTitle: 'Database game stage',
-                gameStageDescription: 'Database game stage description',
+                gameStageTitle: 'Database game title',
+                gameStageDescription: 'Database game description',
               },
               {
                 id: 'summary',
@@ -112,8 +112,8 @@ describe('AlphabetWordsLesson', () => {
       expect.arrayContaining([expect.objectContaining({ title: 'Database slide' })]),
     );
     expect(props.games[0]?.stage).toEqual({
-      title: 'Database game stage',
-      description: 'Database game stage description',
+      title: 'Database game title',
+      description: 'Database game description',
       accent: 'amber',
       icon: '🎮',
       shellTestId: 'alphabet-words-game-shell',

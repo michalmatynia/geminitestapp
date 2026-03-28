@@ -20,7 +20,7 @@ vi.mock('@/features/kangur/ui/hooks/useKangurCoarsePointer', () => ({
   useKangurCoarsePointer: () => false,
 }));
 
-import ShapeRecognitionGame from './ShapeRecognitionStageGame';
+import ShapeRecognitionGame from './ShapeRecognitionGame';
 import { SHAPE_ROUNDS, type ShapeId } from './GeometryShapeRecognition.shared';
 
 describe('ShapeRecognitionGame', () => {
@@ -107,7 +107,7 @@ describe('ShapeRecognitionGame', () => {
           caption: 'Summary caption',
         },
         draw: {
-          stageTitle: 'Draw stage title',
+          stageTitle: 'Draw game title',
           difficultyLabel: 'Difficulty',
           finishLabel: 'Database finish label',
         },

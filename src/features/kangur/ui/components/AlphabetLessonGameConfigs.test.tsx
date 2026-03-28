@@ -19,7 +19,7 @@ import AlphabetMatchingLesson from '@/features/kangur/ui/components/AlphabetMatc
 import AlphabetSequenceLesson from '@/features/kangur/ui/components/AlphabetSequenceLesson';
 import AlphabetWordsLesson from '@/features/kangur/ui/components/AlphabetWordsLesson';
 
-describe('alphabet stage lesson configs', () => {
+describe('alphabet lesson game configs', () => {
   afterEach(() => {
     capturedProps = null;
   });

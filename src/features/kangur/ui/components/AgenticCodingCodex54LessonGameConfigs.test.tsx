@@ -20,7 +20,7 @@ import AgenticCodingCodex54ModelsLesson from '@/features/kangur/ui/components/Ag
 import AgenticCodingCodex54PromptingLesson from '@/features/kangur/ui/components/AgenticCodingCodex54PromptingLesson';
 import AgenticCodingCodex54SurfacesLesson from '@/features/kangur/ui/components/AgenticCodingCodex54SurfacesLesson';
 
-describe('AgenticCodingCodex54 stage lesson configs', () => {
+describe('AgenticCodingCodex54 lesson game configs', () => {
   afterEach(() => {
     capturedProps = null;
   });

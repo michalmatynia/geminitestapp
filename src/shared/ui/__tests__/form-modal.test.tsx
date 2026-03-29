@@ -31,4 +31,23 @@ describe('FormModal', () => {
     expect(onSave).not.toHaveBeenCalled();
     expect(onClose).toHaveBeenCalledTimes(1);
   });
+
+  it('passes the optional save button title through to the primary action', () => {
+    render(
+      <FormModal
+        open
+        onClose={vi.fn()}
+        onSave={vi.fn()}
+        title='Edit Profile'
+        saveTitle='Wait for the current runtime job to finish.'
+      >
+        <div>Form body</div>
+      </FormModal>
+    );
+
+    expect(screen.getByRole('button', { name: 'Save' })).toHaveAttribute(
+      'title',
+      'Wait for the current runtime job to finish.'
+    );
+  });
 });

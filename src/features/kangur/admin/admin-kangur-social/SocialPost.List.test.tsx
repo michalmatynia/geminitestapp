@@ -377,6 +377,80 @@ describe('SocialPostList', () => {
     ).toHaveAttribute('title', 'Wait for the current Social runtime job to finish.');
   });
 
+  it('shows the runtime lock reason on draft publish menu actions', () => {
+    useSocialPostContextMock.mockReturnValue(
+      buildSocialPostContextState({
+        posts: [
+          {
+            ...buildPost(),
+            id: 'post-active',
+            titlePl: 'Active runtime draft',
+            titleEn: 'Active runtime draft',
+          },
+        ],
+        activePostId: 'post-active',
+        currentGenerationJob: {
+          id: 'job-generate-live-1',
+          status: 'waiting',
+          progress: { message: 'Waiting for the generation worker.' },
+          failedReason: null,
+        },
+      })
+    );
+
+    render(<SocialPostList />);
+
+    expect(screen.getByRole('button', { name: 'Publish to LinkedIn' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Publish to LinkedIn' })).toHaveAttribute(
+      'title',
+      'Wait for the current Social runtime job to finish.'
+    );
+    expect(screen.getByRole('button', { name: 'Publish without images' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Publish without images' })).toHaveAttribute(
+      'title',
+      'Wait for the current Social runtime job to finish.'
+    );
+  });
+
+  it('shows the runtime lock reason on published LinkedIn menu actions', () => {
+    useSocialPostContextMock.mockReturnValue(
+      buildSocialPostContextState({
+        posts: [
+          {
+            ...buildPost(),
+            id: 'post-active',
+            titlePl: 'Published runtime post',
+            titleEn: 'Published runtime post',
+            status: 'published',
+            publishedAt: '2026-03-20T12:00:00.000Z',
+            linkedinPostId: 'linkedin-post-1',
+            linkedinUrl: 'https://linkedin.example/post/1',
+          },
+        ],
+        activePostId: 'post-active',
+        currentPipelineJob: {
+          id: 'job-pipeline-live-1',
+          status: 'active',
+          progress: { message: 'Pipeline is still updating the published draft.' },
+          failedReason: null,
+        },
+      })
+    );
+
+    render(<SocialPostList />);
+
+    expect(screen.getByRole('button', { name: 'Unpublish from LinkedIn' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Unpublish from LinkedIn' })).toHaveAttribute(
+      'title',
+      'Wait for the current Social runtime job to finish.'
+    );
+    expect(screen.getByRole('button', { name: 'Unpublish and delete' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Unpublish and delete' })).toHaveAttribute(
+      'title',
+      'Wait for the current Social runtime job to finish.'
+    );
+  });
+
   it('opens the modal from the post name without row hover zoom treatment', () => {
     const setActivePostId = vi.fn();
     const handleOpenPostEditor = vi.fn();

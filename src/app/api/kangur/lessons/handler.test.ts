@@ -69,6 +69,24 @@ describe('kangur lessons handler', () => {
     await expect(second.json()).resolves.toEqual([expect.objectContaining({ componentId: 'division' })]);
   });
 
+  it('forwards componentId subsets into the lesson repository filter', async () => {
+    const divisionLesson = createDefaultKangurLessons().find((lesson) => lesson.componentId === 'division');
+    expect(divisionLesson).toBeDefined();
+    listLessonsMock.mockResolvedValue([divisionLesson!]);
+
+    await getKangurLessonsHandler(
+      new NextRequest('http://localhost/api/kangur/lessons?subject=maths&componentIds=division&enabledOnly=true'),
+      createRequestContext({ subject: 'maths', componentIds: 'division', enabledOnly: true })
+    );
+
+    expect(listLessonsMock).toHaveBeenCalledWith({
+      subject: 'maths',
+      ageGroup: undefined,
+      componentIds: ['division'],
+      enabledOnly: true,
+    });
+  });
+
   it('invalidates cached lessons after a replace', async () => {
     const cachedLesson = createDefaultKangurLessons().find((lesson) => lesson.componentId === 'division');
     const replacedLesson = createDefaultKangurLessons().find(

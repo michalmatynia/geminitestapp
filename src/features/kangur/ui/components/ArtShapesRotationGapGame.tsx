@@ -87,6 +87,196 @@ type RotationOptionResultStatus =
   | 'wrong-selected'
   | 'correct-answer';
 
+type RotationOptionDisplay = {
+  accent: ReturnType<typeof getRotationTileAccent>;
+  ariaLabel: string;
+  glyphLabel: string;
+  option: RotationTile;
+  tempoLabel: string;
+  tileLabel: string;
+};
+
+const resolveArtShapesRotationButtonClassName = (
+  isCoarsePointer: boolean
+): string | undefined =>
+  isCoarsePointer
+    ? 'touch-manipulation select-none min-h-11 active:scale-[0.98]'
+    : undefined;
+
+const resolveArtShapesRotationOptionResultStatus = ({
+  isCorrectOption,
+  isSelected,
+  isSelectionLocked,
+}: {
+  isCorrectOption: boolean;
+  isSelected: boolean;
+  isSelectionLocked: boolean;
+}): RotationOptionResultStatus => {
+  if (!isSelectionLocked) {
+    return 'idle';
+  }
+  if (isSelected && isCorrectOption) {
+    return 'correct-selected';
+  }
+  if (isSelected) {
+    return 'wrong-selected';
+  }
+  if (isCorrectOption) {
+    return 'correct-answer';
+  }
+  return 'idle';
+};
+
+const resolveArtShapesRotationOptionPresentation = ({
+  resultStatus,
+  isSelectionLocked,
+  translate,
+}: {
+  isSelectionLocked: boolean;
+  resultStatus: RotationOptionResultStatus;
+  translate: ArtShapesBasicLessonTranslate;
+}): {
+  emphasis: 'accent' | 'neutral';
+  resultLabel: string | null;
+  state: 'default' | 'muted';
+} => {
+  let resultLabel: string | null = null;
+  if (resultStatus === 'correct-selected') {
+    resultLabel = translate('game.optionFeedback.correct');
+  } else if (resultStatus === 'wrong-selected') {
+    resultLabel = translate('game.optionFeedback.incorrect');
+  } else if (resultStatus === 'correct-answer') {
+    resultLabel = translate('game.optionFeedback.answer');
+  }
+
+  return {
+    emphasis: resultStatus === 'idle' ? 'neutral' : 'accent',
+    resultLabel,
+    state: isSelectionLocked && resultStatus === 'idle' ? 'muted' : 'default',
+  };
+};
+
+function ArtShapesRotationGapGameFinishedView({
+  handleRestart,
+  isCoarsePointer,
+  onFinish,
+  score,
+  translate,
+}: {
+  handleRestart: () => void;
+  isCoarsePointer: boolean;
+  onFinish: () => void;
+  score: number;
+  translate: ArtShapesBasicLessonTranslate;
+}): React.JSX.Element {
+  const buttonClassName = resolveArtShapesRotationButtonClassName(isCoarsePointer);
+
+  return (
+    <KangurGlassPanel
+      className='art-shapes-rotation-game w-full text-center'
+      padding='lg'
+      surface='playField'
+    >
+      <style>{ART_SHAPES_ROTATION_GAME_STYLES}</style>
+      <KangurStatusChip accent='emerald' size='sm'>
+        {translate('game.finished.status')}
+      </KangurStatusChip>
+      <div className='mt-4 text-xl font-semibold'>
+        {translate('game.finished.title', { score, total: ROTATION_ROUNDS.length })}
+      </div>
+      <div className='mt-2 text-sm [color:var(--kangur-page-muted-text)]'>
+        {translate('game.finished.subtitle')}
+      </div>
+      <div className='mt-5 flex flex-col gap-3 sm:flex-row sm:justify-center'>
+        <KangurButton className={buttonClassName} onClick={onFinish} variant='primary'>
+          {translate('game.finished.backToLesson')}
+        </KangurButton>
+        <KangurButton className={buttonClassName} onClick={handleRestart} variant='surface'>
+          {translate('game.finished.playAgain')}
+        </KangurButton>
+      </div>
+    </KangurGlassPanel>
+  );
+}
+
+function ArtShapesRotationGapGameProgress({
+  roundIndex,
+  score,
+  translate,
+}: {
+  roundIndex: number;
+  score: number;
+  translate: ArtShapesBasicLessonTranslate;
+}): React.JSX.Element {
+  return (
+    <div className='flex flex-wrap items-center justify-between gap-3'>
+      <KangurStatusChip accent='amber' size='sm'>
+        {translate('game.progress.round', {
+          current: roundIndex + 1,
+          total: ROTATION_ROUNDS.length,
+        })}
+      </KangurStatusChip>
+      <KangurStatusChip accent='sky' size='sm'>
+        {translate('game.progress.score', { score })}
+      </KangurStatusChip>
+    </div>
+  );
+}
+
+function ArtShapesRotationOptionEntry({
+  display,
+  onSelect,
+  optionIndex,
+  selectedOptionId,
+  shouldAnimateTiles,
+  translate,
+  correctOptionId,
+}: {
+  correctOptionId: string;
+  display: RotationOptionDisplay;
+  onSelect: (optionId: string) => void;
+  optionIndex: number;
+  selectedOptionId: string | null;
+  shouldAnimateTiles: boolean;
+  translate: ArtShapesBasicLessonTranslate;
+}): React.JSX.Element {
+  const { accent, ariaLabel, glyphLabel, option, tempoLabel, tileLabel } = display;
+  const isSelected = selectedOptionId === option.id;
+  const isSelectionLocked = Boolean(selectedOptionId);
+  const resultStatus = resolveArtShapesRotationOptionResultStatus({
+    isCorrectOption: option.id === correctOptionId,
+    isSelected,
+    isSelectionLocked,
+  });
+  const { emphasis, resultLabel, state } = resolveArtShapesRotationOptionPresentation({
+    isSelectionLocked,
+    resultStatus,
+    translate,
+  });
+
+  return (
+    <Fragment key={option.id}>
+      {renderRotationOptionCard({
+        accent,
+        ariaLabel,
+        animated: shouldAnimateTiles,
+        choiceLabel: String.fromCharCode(65 + optionIndex),
+        emphasis,
+        glyphLabel,
+        locked: isSelectionLocked,
+        onSelectOption: onSelect,
+        optionId: option.id,
+        resultLabel,
+        resultStatus,
+        state,
+        tempoLabel,
+        tile: option,
+        tileLabel,
+      })}
+    </Fragment>
+  );
+}
+
 export function ArtShapesRotationGapGame({
   onFinish,
 }: {
@@ -191,46 +381,13 @@ export function ArtShapesRotationGapGame({
 
   if (isFinished || !round) {
     return (
-      <KangurGlassPanel
-        className='art-shapes-rotation-game w-full text-center'
-        padding='lg'
-        surface='playField'
-      >
-        <style>{ART_SHAPES_ROTATION_GAME_STYLES}</style>
-        <KangurStatusChip accent='emerald' size='sm'>
-          {translate('game.finished.status')}
-        </KangurStatusChip>
-        <div className='mt-4 text-xl font-semibold'>
-          {translate('game.finished.title', { score, total: ROTATION_ROUNDS.length })}
-        </div>
-        <div className='mt-2 text-sm [color:var(--kangur-page-muted-text)]'>
-          {translate('game.finished.subtitle')}
-        </div>
-        <div className='mt-5 flex flex-col gap-3 sm:flex-row sm:justify-center'>
-          <KangurButton
-            variant='primary'
-            onClick={onFinish}
-            className={
-              isCoarsePointer
-                ? 'touch-manipulation select-none min-h-11 active:scale-[0.98]'
-                : undefined
-            }
-          >
-            {translate('game.finished.backToLesson')}
-          </KangurButton>
-          <KangurButton
-            variant='surface'
-            onClick={handleRestart}
-            className={
-              isCoarsePointer
-                ? 'touch-manipulation select-none min-h-11 active:scale-[0.98]'
-                : undefined
-            }
-          >
-            {translate('game.finished.playAgain')}
-          </KangurButton>
-        </div>
-      </KangurGlassPanel>
+      <ArtShapesRotationGapGameFinishedView
+        handleRestart={handleRestart}
+        isCoarsePointer={isCoarsePointer}
+        onFinish={onFinish}
+        score={score}
+        translate={translate}
+      />
     );
   }
 
@@ -240,17 +397,11 @@ export function ArtShapesRotationGapGame({
       <div aria-atomic='true' aria-live='polite' className='sr-only'>
         {roundAnnouncement}
       </div>
-      <div className='flex flex-wrap items-center justify-between gap-3'>
-        <KangurStatusChip accent='amber' size='sm'>
-          {translate('game.progress.round', {
-            current: roundIndex + 1,
-            total: ROTATION_ROUNDS.length,
-          })}
-        </KangurStatusChip>
-        <KangurStatusChip accent='sky' size='sm'>
-          {translate('game.progress.score', { score })}
-        </KangurStatusChip>
-      </div>
+      <ArtShapesRotationGapGameProgress
+        roundIndex={roundIndex}
+        score={score}
+        translate={translate}
+      />
 
       <div
         className='mt-5 flex flex-col gap-5'
@@ -272,57 +423,18 @@ export function ArtShapesRotationGapGame({
             data-selection-locked={selectedOptionId ? 'true' : 'false'}
             data-testid='art-shapes-rotation-gap-options'
           >
-            {optionDisplays.map(
-              ({ accent, ariaLabel, glyphLabel, option, tempoLabel, tileLabel }, optionIndex) => {
-                const isSelected = selectedOptionId === option.id;
-                const isSelectionLocked = Boolean(selectedOptionId);
-                const isCorrectOption = option.id === round.correctOptionId;
-                const resultStatus: RotationOptionResultStatus = !isSelectionLocked
-                  ? 'idle'
-                  : isSelected
-                    ? isCorrectOption
-                      ? 'correct-selected'
-                      : 'wrong-selected'
-                    : isCorrectOption
-                      ? 'correct-answer'
-                      : 'idle';
-                const emphasis = resultStatus !== 'idle' ? 'accent' : 'neutral';
-                const state =
-                  isSelectionLocked && resultStatus === 'idle'
-                    ? 'muted'
-                    : 'default';
-                const resultLabel =
-                  resultStatus === 'correct-selected'
-                    ? translate('game.optionFeedback.correct')
-                    : resultStatus === 'wrong-selected'
-                      ? translate('game.optionFeedback.incorrect')
-                      : resultStatus === 'correct-answer'
-                        ? translate('game.optionFeedback.answer')
-                        : null;
-
-                return (
-                  <Fragment key={option.id}>
-                    {renderRotationOptionCard({
-                      accent,
-                      ariaLabel,
-                      animated: shouldAnimateTiles,
-                      choiceLabel: String.fromCharCode(65 + optionIndex),
-                      emphasis,
-                      glyphLabel,
-                      locked: isSelectionLocked,
-                      onSelectOption: handleSelect,
-                      optionId: option.id,
-                      resultLabel,
-                      resultStatus,
-                      state,
-                      tempoLabel,
-                      tile: option,
-                      tileLabel,
-                    })}
-                  </Fragment>
-                );
-              }
-            )}
+            {optionDisplays.map((display, optionIndex) => (
+              <ArtShapesRotationOptionEntry
+                correctOptionId={round.correctOptionId}
+                display={display}
+                key={display.option.id}
+                onSelect={handleSelect}
+                optionIndex={optionIndex}
+                selectedOptionId={selectedOptionId}
+                shouldAnimateTiles={shouldAnimateTiles}
+                translate={translate}
+              />
+            ))}
           </div>
         </div>
       </div>

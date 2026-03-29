@@ -26,6 +26,7 @@ const KANGUR_LESSONS_CATALOG_REQUEST_TIMEOUT_MS = 30_000;
 
 const resolveLessonsCatalogFilters = (options?: LessonsCatalogQueryOptions) => ({
   ageGroup: options?.ageGroup ?? null,
+  componentIds: options?.componentIds ?? null,
   enabledOnly: options?.enabledOnly ?? null,
   subject: options?.subject ?? null,
 });
@@ -54,6 +55,7 @@ export const fetchKangurLessonsCatalog = async (
       const params: Record<string, string | boolean | undefined> = {
         subject: options?.subject,
         ageGroup: options?.ageGroup,
+        componentIds: options?.componentIds?.join(','),
         enabledOnly: options?.enabledOnly,
       };
       const payload = await api.get<KangurLessonsCatalog>('/api/kangur/lessons-catalog', {
@@ -101,6 +103,7 @@ export const useKangurLessonsCatalog = (
     queryKey: createKangurLessonsCatalogQueryKey(options),
     queryFn: async (): Promise<KangurLessonsCatalog> => await fetchKangurLessonsCatalog(options),
     enabled: options?.enabled ?? true,
+    placeholderData: (previous) => previous,
     staleTime: 1000 * 60 * 5,
     refetchOnMount: false,
     refetchOnWindowFocus: false,

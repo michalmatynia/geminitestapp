@@ -3,8 +3,8 @@ import { JSX } from 'react';
 
 import { getCmsRepository } from '@/features/cms/server';
 import { getSlugsForDomain, resolveCmsDomainFromHeaders } from '@/features/cms/server';
-import { getKangurConfiguredLaunchTarget } from '@/features/kangur/server';
-import { getKangurPublicAliasHref } from '@/features/kangur/config/routing';
+import { getKangurConfiguredLaunchRoute } from '@/features/kangur/server';
+import { getKangurPublicLaunchHref } from '@/features/kangur/config/routing';
 import { buildLocalizedPathname, normalizeSiteLocale } from '@/shared/lib/i18n/site-locale';
 import { getFrontPagePublicOwner, getFrontPageRedirectPath } from '@/shared/lib/front-page-app';
 import { readOptionalRequestHeaders } from '@/shared/lib/request/optional-headers';
@@ -37,9 +37,9 @@ export default async function LocalizedHome({
     : null;
   const publicOwner = getFrontPagePublicOwner(frontPageSetting);
   const redirectPath = getFrontPageRedirectPath(frontPageSetting);
-  const kangurLaunchTarget =
+  const kangurLaunchRoute =
     shouldApplyFrontPageSelection && publicOwner === 'kangur'
-      ? await withTiming('kangurLaunchTarget', () => getKangurConfiguredLaunchTarget())
+      ? await withTiming('kangurLaunchRoute', () => getKangurConfiguredLaunchRoute())
       : null;
 
   if (shouldApplyFrontPageSelection && redirectPath) {
@@ -47,19 +47,11 @@ export default async function LocalizedHome({
     redirect(localizePublicPath(redirectPath, resolvedLocale));
   }
 
-  if (
-    shouldApplyFrontPageSelection &&
-    publicOwner === 'kangur' &&
-    kangurLaunchTarget &&
-    kangurLaunchTarget.href !== kangurLaunchTarget.fallbackHref
-  ) {
-    await flush();
-    redirect(kangurLaunchTarget.href);
-  }
-
   if (shouldApplyFrontPageSelection && publicOwner === 'kangur') {
     await flush();
-    redirect(buildLocalizedPathname(getKangurPublicAliasHref(), resolvedLocale));
+    redirect(
+      buildLocalizedPathname(getKangurPublicLaunchHref(kangurLaunchRoute ?? undefined), resolvedLocale)
+    );
   }
 
   const cmsRepository = await withTiming('cmsRepository', getCmsRepository);

@@ -83,7 +83,7 @@ own tooltip text or state snapshots.
 Kangur now exposes a launch-route setting with two stable targets:
 
 - `web_mobile_view`: responsive browser route
-- `dedicated_app`: native app deep link with web fallback
+- `dedicated_app`: native app handoff prompt from supported learner routes, with the web shell kept as fallback
 
 That setting is part of the current public product contract and should be
 documented whenever launch behavior changes.

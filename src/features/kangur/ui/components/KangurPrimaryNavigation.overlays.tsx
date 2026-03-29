@@ -45,6 +45,94 @@ type KangurChoiceDialogConfig = {
 };
 
 type TranslationFn = (key: string, values?: Record<string, string>) => string;
+type KangurPrimaryNavigationVisual = { detail: string; icon: React.ReactNode };
+
+function renderKangurPrimaryNavigationVisualChoiceLabel({
+  detailTestId,
+  iconTestId,
+  isSixYearOld,
+  label,
+  visual,
+}: {
+  detailTestId: string;
+  iconTestId: string;
+  isSixYearOld: boolean;
+  label: string;
+  visual: KangurPrimaryNavigationVisual;
+}): React.ReactNode {
+  if (!isSixYearOld) {
+    return label;
+  }
+
+  return (
+    <KangurVisualCueContent
+      detail={visual.detail}
+      detailClassName='text-sm font-bold'
+      detailTestId={detailTestId}
+      icon={visual.icon}
+      iconClassName='text-lg'
+      iconTestId={iconTestId}
+      label={label}
+    />
+  );
+}
+
+function resolveKangurPrimaryNavigationDoneLabel(
+  isSixYearOld: boolean,
+  iconTestId: string
+): React.ReactNode | undefined {
+  if (!isSixYearOld) {
+    return undefined;
+  }
+
+  return (
+    <KangurVisualCueContent
+      icon='✅'
+      iconClassName='text-lg'
+      iconTestId={iconTestId}
+      label='Gotowe'
+    />
+  );
+}
+
+function resolveKangurPrimaryNavigationDialogTitle({
+  detail,
+  detailTestId,
+  icon,
+  iconTestId,
+  isSixYearOld,
+  label,
+}: {
+  detail: string;
+  detailTestId: string;
+  icon: React.ReactNode;
+  iconTestId: string;
+  isSixYearOld: boolean;
+  label: string;
+}): React.ReactNode {
+  if (!isSixYearOld) {
+    return label;
+  }
+
+  return (
+    <KangurVisualCueContent
+      detail={detail}
+      detailClassName='text-sm'
+      detailTestId={detailTestId}
+      icon={icon}
+      iconClassName='text-lg'
+      iconTestId={iconTestId}
+      label={label}
+    />
+  );
+}
+
+function resolveKangurPrimaryNavigationDefaultAgeGroupVisual(): KangurPrimaryNavigationVisual {
+  const defaultAgeGroupId =
+    KANGUR_AGE_GROUPS.find((group) => group.default)?.id ?? DEFAULT_KANGUR_AGE_GROUP;
+
+  return getKangurSixYearOldAgeGroupVisual(defaultAgeGroupId);
+}
 
 export const buildKangurPrimaryNavigationSubjectDialog = (input: {
   ageGroup: KangurLessonAgeGroup;
@@ -55,65 +143,51 @@ export const buildKangurPrimaryNavigationSubjectDialog = (input: {
   open: boolean;
   options: KangurChoiceDialogConfig['options'];
   subjectChoiceLabel: string;
-  subjectVisual: { detail: string; icon: React.ReactNode };
-}): KangurChoiceDialogConfig => ({
-  closeAriaLabel: input.navTranslations('subject.closeAriaLabel'),
-  contentId: 'kangur-primary-nav-subject-dialog',
-  currentChoiceLabel: input.isSixYearOld ? (
-    <KangurVisualCueContent
-      detail={input.subjectVisual.detail}
-      detailClassName='text-sm font-bold'
-      detailTestId='kangur-primary-nav-subject-modal-current-detail'
-      icon={input.subjectVisual.icon}
-      iconClassName='text-lg'
-      iconTestId='kangur-primary-nav-subject-modal-current-icon'
-      label={input.subjectChoiceLabel}
-    />
-  ) : (
-    input.subjectChoiceLabel
-  ),
-  defaultChoiceLabel: input.isSixYearOld ? (
-    <KangurVisualCueContent
-      detail={getKangurSixYearOldSubjectVisual(getKangurDefaultSubjectForAgeGroup(input.ageGroup)).detail}
-      detailClassName='text-sm font-bold'
-      detailTestId='kangur-primary-nav-subject-modal-default-detail'
-      icon={getKangurSixYearOldSubjectVisual(getKangurDefaultSubjectForAgeGroup(input.ageGroup)).icon}
-      iconClassName='text-lg'
-      iconTestId='kangur-primary-nav-subject-modal-default-icon'
-      label={input.defaultSubjectLabel}
-    />
-  ) : (
-    input.defaultSubjectLabel
-  ),
-  description: input.navTranslations('subject.dialogDescription'),
-  doneAriaLabel: 'Gotowe',
-  doneLabel: input.isSixYearOld ? (
-    <KangurVisualCueContent
-      icon='✅'
-      iconClassName='text-lg'
-      iconTestId='kangur-primary-nav-subject-modal-done-icon'
-      label='Gotowe'
-    />
-  ) : undefined,
-  groupAriaLabel: input.navTranslations('subject.groupAriaLabel'),
-  label: input.navTranslations('subject.label'),
-  onOpenChange: input.onOpenChange,
-  open: input.open,
-  options: input.options,
-  title: input.isSixYearOld ? (
-    <KangurVisualCueContent
-      detail='👆'
-      detailClassName='text-sm'
-      detailTestId='kangur-primary-nav-subject-modal-title-detail'
-      icon='📚'
-      iconClassName='text-lg'
-      iconTestId='kangur-primary-nav-subject-modal-title-icon'
-      label={input.navTranslations('subject.label')}
-    />
-  ) : (
-    input.navTranslations('subject.label')
-  ),
-});
+  subjectVisual: KangurPrimaryNavigationVisual;
+}): KangurChoiceDialogConfig => {
+  const subjectLabel = input.navTranslations('subject.label');
+  const defaultSubjectVisual = getKangurSixYearOldSubjectVisual(
+    getKangurDefaultSubjectForAgeGroup(input.ageGroup)
+  );
+
+  return {
+    closeAriaLabel: input.navTranslations('subject.closeAriaLabel'),
+    contentId: 'kangur-primary-nav-subject-dialog',
+    currentChoiceLabel: renderKangurPrimaryNavigationVisualChoiceLabel({
+      detailTestId: 'kangur-primary-nav-subject-modal-current-detail',
+      iconTestId: 'kangur-primary-nav-subject-modal-current-icon',
+      isSixYearOld: input.isSixYearOld,
+      label: input.subjectChoiceLabel,
+      visual: input.subjectVisual,
+    }),
+    defaultChoiceLabel: renderKangurPrimaryNavigationVisualChoiceLabel({
+      detailTestId: 'kangur-primary-nav-subject-modal-default-detail',
+      iconTestId: 'kangur-primary-nav-subject-modal-default-icon',
+      isSixYearOld: input.isSixYearOld,
+      label: input.defaultSubjectLabel,
+      visual: defaultSubjectVisual,
+    }),
+    description: input.navTranslations('subject.dialogDescription'),
+    doneAriaLabel: 'Gotowe',
+    doneLabel: resolveKangurPrimaryNavigationDoneLabel(
+      input.isSixYearOld,
+      'kangur-primary-nav-subject-modal-done-icon'
+    ),
+    groupAriaLabel: input.navTranslations('subject.groupAriaLabel'),
+    label: subjectLabel,
+    onOpenChange: input.onOpenChange,
+    open: input.open,
+    options: input.options,
+    title: resolveKangurPrimaryNavigationDialogTitle({
+      detail: '👆',
+      detailTestId: 'kangur-primary-nav-subject-modal-title-detail',
+      icon: '📚',
+      iconTestId: 'kangur-primary-nav-subject-modal-title-icon',
+      isSixYearOld: input.isSixYearOld,
+      label: subjectLabel,
+    }),
+  };
+};
 
 export const buildKangurPrimaryNavigationAgeGroupDialog = (input: {
   ageGroupChoiceLabel: string;
@@ -123,69 +197,49 @@ export const buildKangurPrimaryNavigationAgeGroupDialog = (input: {
   onOpenChange: (open: boolean) => void;
   open: boolean;
   options: KangurChoiceDialogConfig['options'];
-  ageGroupVisual: { detail: string; icon: React.ReactNode };
-}): KangurChoiceDialogConfig => ({
-  closeAriaLabel: input.navTranslations('ageGroup.closeAriaLabel'),
-  contentId: 'kangur-primary-nav-age-group-dialog',
-  currentChoiceLabel: input.isSixYearOld ? (
-    <KangurVisualCueContent
-      detail={input.ageGroupVisual.detail}
-      detailClassName='text-sm font-bold'
-      detailTestId='kangur-primary-nav-age-group-modal-current-detail'
-      icon={input.ageGroupVisual.icon}
-      iconClassName='text-lg'
-      iconTestId='kangur-primary-nav-age-group-modal-current-icon'
-      label={input.ageGroupChoiceLabel}
-    />
-  ) : (
-    input.ageGroupChoiceLabel
-  ),
-  defaultChoiceLabel: input.isSixYearOld ? (
-    <KangurVisualCueContent
-      detail={getKangurSixYearOldAgeGroupVisual(
-        KANGUR_AGE_GROUPS.find((group) => group.default)?.id ?? DEFAULT_KANGUR_AGE_GROUP
-      ).detail}
-      detailClassName='text-sm font-bold'
-      detailTestId='kangur-primary-nav-age-group-modal-default-detail'
-      icon={getKangurSixYearOldAgeGroupVisual(
-        KANGUR_AGE_GROUPS.find((group) => group.default)?.id ?? DEFAULT_KANGUR_AGE_GROUP
-      ).icon}
-      iconClassName='text-lg'
-      iconTestId='kangur-primary-nav-age-group-modal-default-icon'
-      label={input.defaultAgeGroupLabel}
-    />
-  ) : (
-    input.defaultAgeGroupLabel
-  ),
-  description: input.navTranslations('ageGroup.dialogDescription'),
-  doneAriaLabel: 'Gotowe',
-  doneLabel: input.isSixYearOld ? (
-    <KangurVisualCueContent
-      icon='✅'
-      iconClassName='text-lg'
-      iconTestId='kangur-primary-nav-age-group-modal-done-icon'
-      label='Gotowe'
-    />
-  ) : undefined,
-  groupAriaLabel: input.navTranslations('ageGroup.groupAriaLabel'),
-  label: input.navTranslations('ageGroup.label'),
-  onOpenChange: input.onOpenChange,
-  open: input.open,
-  options: input.options,
-  title: input.isSixYearOld ? (
-    <KangurVisualCueContent
-      detail='👆'
-      detailClassName='text-sm'
-      detailTestId='kangur-primary-nav-age-group-modal-title-detail'
-      icon='👥'
-      iconClassName='text-lg'
-      iconTestId='kangur-primary-nav-age-group-modal-title-icon'
-      label={input.navTranslations('ageGroup.label')}
-    />
-  ) : (
-    input.navTranslations('ageGroup.label')
-  ),
-});
+  ageGroupVisual: KangurPrimaryNavigationVisual;
+}): KangurChoiceDialogConfig => {
+  const ageGroupLabel = input.navTranslations('ageGroup.label');
+  const defaultAgeGroupVisual = resolveKangurPrimaryNavigationDefaultAgeGroupVisual();
+
+  return {
+    closeAriaLabel: input.navTranslations('ageGroup.closeAriaLabel'),
+    contentId: 'kangur-primary-nav-age-group-dialog',
+    currentChoiceLabel: renderKangurPrimaryNavigationVisualChoiceLabel({
+      detailTestId: 'kangur-primary-nav-age-group-modal-current-detail',
+      iconTestId: 'kangur-primary-nav-age-group-modal-current-icon',
+      isSixYearOld: input.isSixYearOld,
+      label: input.ageGroupChoiceLabel,
+      visual: input.ageGroupVisual,
+    }),
+    defaultChoiceLabel: renderKangurPrimaryNavigationVisualChoiceLabel({
+      detailTestId: 'kangur-primary-nav-age-group-modal-default-detail',
+      iconTestId: 'kangur-primary-nav-age-group-modal-default-icon',
+      isSixYearOld: input.isSixYearOld,
+      label: input.defaultAgeGroupLabel,
+      visual: defaultAgeGroupVisual,
+    }),
+    description: input.navTranslations('ageGroup.dialogDescription'),
+    doneAriaLabel: 'Gotowe',
+    doneLabel: resolveKangurPrimaryNavigationDoneLabel(
+      input.isSixYearOld,
+      'kangur-primary-nav-age-group-modal-done-icon'
+    ),
+    groupAriaLabel: input.navTranslations('ageGroup.groupAriaLabel'),
+    label: ageGroupLabel,
+    onOpenChange: input.onOpenChange,
+    open: input.open,
+    options: input.options,
+    title: resolveKangurPrimaryNavigationDialogTitle({
+      detail: '👆',
+      detailTestId: 'kangur-primary-nav-age-group-modal-title-detail',
+      icon: '👥',
+      iconTestId: 'kangur-primary-nav-age-group-modal-title-icon',
+      isSixYearOld: input.isSixYearOld,
+      label: ageGroupLabel,
+    }),
+  };
+};
 
 type KangurPrimaryNavigationMobileMenuOverlayProps = {
   closeMobileMenu: () => void;

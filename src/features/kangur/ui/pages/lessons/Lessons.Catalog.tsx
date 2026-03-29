@@ -37,6 +37,7 @@ import { useLessons } from './LessonsContext';
 import { getLessonMasteryPresentation } from './Lessons.utils';
 
 type LessonSubsection = {
+  componentIds: KangurLesson['componentId'][];
   id: string;
   label: string;
   typeLabel?: string;
@@ -44,6 +45,9 @@ type LessonSubsection = {
 };
 
 type LessonGroup = {
+  allComponentIds: KangurLesson['componentId'][];
+  componentIds: KangurLesson['componentId'][];
+  expectedLessonCount: number;
   groupIcon: string;
   hasSubsections: boolean;
   id: string;
@@ -59,7 +63,9 @@ type LessonsCatalogResolvedContentProps = Pick<
   LessonsViewState,
   | 'activeLessonId'
   | 'completedLessonAssignmentsByComponent'
+  | 'ensureLessonsCatalogLoaded'
   | 'handleSelectLesson'
+  | 'isLessonsCatalogLoading'
   | 'lessonAssignmentsByComponent'
   | 'lessonDocuments'
   | 'lessonSections'
@@ -232,9 +238,11 @@ function LessonsCatalogEmptyStateWithPageContent({
 function LessonsCatalogResolvedContent({
   activeLessonId,
   completedLessonAssignmentsByComponent,
+  ensureLessonsCatalogLoaded,
   handleSelectLesson,
   isCardStatusReady,
   isSixYearOld,
+  isLessonsCatalogLoading,
   lessonAssignmentsByComponent,
   lessonDocuments,
   lessonTemplateMap,
@@ -282,13 +290,14 @@ function LessonsCatalogResolvedContent({
 
     return lessonSections
       .map((section: KangurLessonSection): LessonGroup => {
+        const enabledSubsections = section.subsections.filter((subsection) => subsection.enabled);
         const groupLessons = section.componentIds
           .map((id) => lessonByComponent.get(id))
           .filter((lesson): lesson is KangurLesson => Boolean(lesson));
 
-        const subsections = section.subsections
-          .filter((subsection) => subsection.enabled)
+        const subsections = enabledSubsections
           .map((subsection) => ({
+            componentIds: [...subsection.componentIds],
             id: subsection.id,
             label: getLocalizedKangurLessonSectionLabel(subsection.id, locale, subsection.label),
             typeLabel: subsection.typeLabel
@@ -297,12 +306,20 @@ function LessonsCatalogResolvedContent({
             lessons: subsection.componentIds
               .map((componentId) => lessonByComponent.get(componentId))
               .filter((lesson): lesson is KangurLesson => Boolean(lesson)),
-          }))
-          .filter((subsection) => subsection.lessons.length > 0);
+          }));
 
-        const hasSubsections = subsections.length > 0;
+        const hasSubsections = enabledSubsections.length > 0;
+        const allComponentIds = [
+          ...section.componentIds,
+          ...enabledSubsections.flatMap((subsection) => subsection.componentIds),
+        ];
+        const expectedLessonCount =
+          allComponentIds.length;
 
         return {
+          allComponentIds,
+          componentIds: [...section.componentIds],
+          expectedLessonCount,
           groupIcon: getKangurSixYearOldLessonGroupIcon(hasSubsections),
           hasSubsections,
           id: section.id,
@@ -314,7 +331,7 @@ function LessonsCatalogResolvedContent({
           subsections: hasSubsections ? subsections : undefined,
         };
       })
-      .filter((group) => (group.subsections ? group.subsections.length > 0 : group.lessons.length > 0));
+      .filter((group) => group.expectedLessonCount > 0);
   }, [lessonSections, locale, orderedLessons]);
 
   const lessonCardStateById = useMemo(
@@ -377,41 +394,24 @@ function LessonsCatalogResolvedContent({
     | { kind: 'lesson'; lesson: KangurLesson };
 
   const lessonEntries: LessonEntry[] = useMemo(() => {
-    type LessonGroupId = (typeof displayLessonGroups)[number]['id'];
-    const lessonGroupById = new Map<LessonGroupId, (typeof displayLessonGroups)[number]>(
-      displayLessonGroups.map((group) => [group.id, group])
-    );
-    const lessonGroupIdByComponent = new Map<string, LessonGroupId>();
-
+    const groupedComponentIds = new Set<string>();
     displayLessonGroups.forEach((group) => {
-      const groupedLessons = group.subsections
-        ? group.subsections.flatMap((subsection) => subsection.lessons)
-        : group.lessons;
-
-      groupedLessons.forEach((lesson) => {
-        lessonGroupIdByComponent.set(lesson.componentId, group.id);
+      group.componentIds.forEach((componentId) => {
+        groupedComponentIds.add(componentId);
+      });
+      group.subsections?.forEach((subsection) => {
+        subsection.componentIds.forEach((componentId) => {
+          groupedComponentIds.add(componentId);
+        });
       });
     });
 
-    const resolvedEntries: LessonEntry[] = [];
-    const usedGroupIds = new Set<string>();
-    orderedLessons.forEach((lesson) => {
-      const groupId = lessonGroupIdByComponent.get(lesson.componentId);
-      if (groupId) {
-        if (!usedGroupIds.has(groupId)) {
-          const group = lessonGroupById.get(groupId);
-          if (group) {
-            resolvedEntries.push({ kind: 'group', group });
-          }
-          usedGroupIds.add(groupId);
-        }
-        return;
-      }
-
-      resolvedEntries.push({ kind: 'lesson', lesson });
-    });
-
-    return resolvedEntries;
+    return [
+      ...displayLessonGroups.map((group) => ({ kind: 'group', group }) as const),
+      ...orderedLessons
+        .filter((lesson) => !groupedComponentIds.has(lesson.componentId))
+        .map((lesson) => ({ kind: 'lesson', lesson }) as const),
+    ];
   }, [displayLessonGroups, orderedLessons]);
 
   const renderLessonCard = (lesson: KangurLesson, _index: number) => {
@@ -455,6 +455,16 @@ function LessonsCatalogResolvedContent({
       {lessonEntries.map((entry) => {
         if (entry.kind === 'group') {
           const isExpanded = expandedLessonGroupId === entry.group.id;
+          const resolvedLessonCount = entry.group.hasSubsections
+            ? (entry.group.subsections?.reduce(
+                (count, subsection) => count + subsection.lessons.length,
+                0
+              ) ?? 0)
+            : entry.group.lessons.length;
+          const shouldShowDeferredGroupLoading =
+            isExpanded &&
+            resolvedLessonCount < entry.group.expectedLessonCount &&
+            isLessonsCatalogLoading;
           let groupLessonIndex = 0;
 
           return (
@@ -494,7 +504,12 @@ function LessonsCatalogResolvedContent({
                   entry.group.label
                 )
               }
-              onToggle={() => setExpandedLessonGroupId(isExpanded ? null : entry.group.id)}
+              onToggle={() => {
+                if (!isExpanded) {
+                  ensureLessonsCatalogLoaded(entry.group.allComponentIds);
+                }
+                setExpandedLessonGroupId(isExpanded ? null : entry.group.id);
+              }}
               typeLabel={
                 entry.group.typeLabel
                   ? isSixYearOld
@@ -513,7 +528,21 @@ function LessonsCatalogResolvedContent({
                   : undefined
               }
             >
-              {entry.group.hasSubsections ? (
+              {shouldShowDeferredGroupLoading ? (
+                <div
+                  className='w-full rounded-[24px] border border-slate-200/60 bg-slate-50/90 p-4'
+                  data-testid={`lessons-group-loading-${entry.group.id}`}
+                >
+                  <div className='flex items-start gap-4'>
+                    <LessonsCatalogSkeletonBlock className='h-12 w-12 shrink-0 rounded-2xl bg-slate-200/80' />
+                    <div className='flex min-w-0 flex-1 flex-col gap-2'>
+                      <LessonsCatalogSkeletonBlock className='h-5 w-40 rounded-full bg-slate-200/80' />
+                      <LessonsCatalogSkeletonBlock className='h-4 w-full rounded-full bg-slate-200/70' />
+                      <LessonsCatalogSkeletonBlock className='h-4 w-3/4 rounded-full bg-slate-200/70' />
+                    </div>
+                  </div>
+                </div>
+              ) : entry.group.hasSubsections ? (
                 entry.group.subsections?.map((subsection) => (
                   <div
                     key={subsection.id}
@@ -557,6 +586,7 @@ export function LessonsCatalog() {
     ageGroup,
     lessonSections,
     orderedLessons,
+    ensureLessonsCatalogLoaded,
     handleSelectLesson,
     progress,
     lessonAssignmentsByComponent,
@@ -611,9 +641,8 @@ export function LessonsCatalog() {
     ? translations('loadingSectionsDetails')
     : translations('loadingLessonsDetails');
   const shouldShowIntroLoadingState =
-    shouldShowLessonsCatalogSkeleton ||
-    isLessonsCatalogLoading ||
-    isLessonSectionsLoading;
+    shouldShowLessonsCatalogSkeleton || isLessonSectionsLoading;
+  const shouldShowEmptyState = lessonSections.length === 0 && orderedLessons.length === 0;
 
   return (
     <div className={LESSONS_LIBRARY_LAYOUT_CLASSNAME} data-testid='lessons-shell-transition'>
@@ -736,7 +765,7 @@ export function LessonsCatalog() {
       >
         {shouldShowLessonsCatalogSkeleton ? (
           <LessonsCatalogSkeleton />
-        ) : orderedLessons.length === 0 ? (
+        ) : shouldShowEmptyState ? (
           isPageContentReady ? (
             <LessonsCatalogEmptyStateWithPageContent
               ageGroupLabel={ageGroupLabel}
@@ -753,9 +782,11 @@ export function LessonsCatalog() {
           <LessonsCatalogResolvedContent
             activeLessonId={activeLessonId}
             completedLessonAssignmentsByComponent={completedLessonAssignmentsByComponent}
+            ensureLessonsCatalogLoaded={ensureLessonsCatalogLoaded}
             handleSelectLesson={handleSelectLesson}
             isCardStatusReady={isPageContentReady}
             isSixYearOld={isSixYearOld}
+            isLessonsCatalogLoading={isLessonsCatalogLoading}
             lessonAssignmentsByComponent={lessonAssignmentsByComponent}
             lessonDocuments={lessonDocuments}
             libraryCardTranslations={libraryCardTranslations}

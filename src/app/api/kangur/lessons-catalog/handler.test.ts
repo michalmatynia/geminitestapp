@@ -82,4 +82,31 @@ describe('kangur lessons catalog handler', () => {
       sections: [expect.objectContaining({ id: 'maths_arithmetic' })],
     });
   });
+
+  it('forwards componentId subsets into the lesson repository filter', async () => {
+    const divisionLesson = createDefaultKangurLessons().find((lesson) => lesson.componentId === 'division');
+    const mathsSection = createDefaultKangurSections().find((section) => section.id === 'maths_arithmetic');
+    expect(divisionLesson).toBeDefined();
+    expect(mathsSection).toBeDefined();
+    listLessonsMock.mockResolvedValue([divisionLesson!]);
+    listSectionsMock.mockResolvedValue([mathsSection!]);
+
+    await getKangurLessonsCatalogHandler(
+      new NextRequest(
+        'http://localhost/api/kangur/lessons-catalog?subject=maths&componentIds=division&enabledOnly=true'
+      ),
+      createRequestContext({
+        subject: 'maths',
+        componentIds: 'division',
+        enabledOnly: true,
+      })
+    );
+
+    expect(listLessonsMock).toHaveBeenCalledWith({
+      subject: 'maths',
+      ageGroup: undefined,
+      componentIds: ['division'],
+      enabledOnly: true,
+    });
+  });
 });

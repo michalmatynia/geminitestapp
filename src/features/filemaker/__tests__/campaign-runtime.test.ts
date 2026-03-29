@@ -351,9 +351,9 @@ describe('filemaker campaign runtime service', () => {
     });
 
     const firstCall = sendCampaignEmail.mock.calls[0]?.[0];
-    expect(firstCall?.text).toContain('https://app.example.com/filemaker/unsubscribe?token=');
-    expect(firstCall?.text).toContain('https://app.example.com/filemaker/preferences?token=');
-    expect(firstCall?.text).toContain('manage all campaigns at https://app.example.com/filemaker/preferences?token=');
+    expect(firstCall?.text).toContain('https://app.example.com/admin/filemaker/campaigns/unsubscribe?token=');
+    expect(firstCall?.text).toContain('https://app.example.com/admin/filemaker/campaigns/preferences?token=');
+    expect(firstCall?.text).toContain('manage all campaigns at https://app.example.com/admin/filemaker/campaigns/preferences?token=');
     expect(firstCall?.text).toContain('https://app.example.com/api/filemaker/campaigns/open?token=');
     expect(firstCall?.text).toContain('https://app.example.com/api/filemaker/campaigns/click?token=');
     expect(firstCall?.text).toContain('jan@example.com');
@@ -362,8 +362,8 @@ describe('filemaker campaign runtime service', () => {
     expect(firstCall?.text).not.toContain('{{manage_all_preferences_url}}');
     expect(firstCall?.text).not.toContain('{{open_tracking_url}}');
     expect(firstCall?.text).not.toContain('{{click_tracking_url:');
-    expect(firstCall?.html).toContain('https://app.example.com/filemaker/unsubscribe?token=');
-    expect(firstCall?.html).toContain('https://app.example.com/filemaker/preferences?token=');
+    expect(firstCall?.html).toContain('https://app.example.com/admin/filemaker/campaigns/unsubscribe?token=');
+    expect(firstCall?.html).toContain('https://app.example.com/admin/filemaker/campaigns/preferences?token=');
     expect(firstCall?.html).toContain('https://app.example.com/api/filemaker/campaigns/open?token=');
     expect(firstCall?.html).toContain('https://app.example.com/api/filemaker/campaigns/click?token=');
     expect(firstCall?.html).toContain('<img src="https://app.example.com/api/filemaker/campaigns/open?token=');
@@ -374,7 +374,7 @@ describe('filemaker campaign runtime service', () => {
     expect(firstCall?.html).not.toContain('{{open_tracking_pixel}}');
     expect(firstCall?.html).not.toContain('{{click_tracking_url:');
     const unsubscribeUrl = firstCall?.text.match(
-      /https:\/\/app\.example\.com\/filemaker\/unsubscribe\?token=[^\s,]+/
+      /https:\/\/app\.example\.com\/admin\/filemaker\/campaigns\/unsubscribe\?token=[^\s,]+/
     )?.[0];
     expect(unsubscribeUrl).toBeTruthy();
     const token = unsubscribeUrl
@@ -389,7 +389,7 @@ describe('filemaker campaign runtime service', () => {
       })
     );
     const preferencesUrl = firstCall?.text.match(
-      /https:\/\/app\.example\.com\/filemaker\/preferences\?token=[^\s,]+/
+      /https:\/\/app\.example\.com\/admin\/filemaker\/campaigns\/preferences\?token=[^\s,]+/
     )?.[0];
     expect(preferencesUrl).toBeTruthy();
     const preferencesToken = preferencesUrl
@@ -406,7 +406,9 @@ describe('filemaker campaign runtime service', () => {
       })
     );
     const allPreferencesUrls =
-      firstCall?.text.match(/https:\/\/app\.example\.com\/filemaker\/preferences\?token=[^\s,]+/g) ??
+      firstCall?.text.match(
+        /https:\/\/app\.example\.com\/admin\/filemaker\/campaigns\/preferences\?token=[^\s,]+/g
+      ) ??
       [];
     expect(allPreferencesUrls).toHaveLength(2);
     const allPreferencesToken = new URL(allPreferencesUrls[1] ?? '').searchParams.get('token');

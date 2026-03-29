@@ -201,4 +201,43 @@ describe('mongoKangurLessonRepository fallback', () => {
       result.some((lesson) => lesson.componentId === 'english_comparatives_superlatives')
     ).toBe(true);
   });
+
+  it('filters lessons by componentIds when a subset is requested', async () => {
+    vi.resetModules();
+    const { createDefaultKangurLessons } = await import('@/features/kangur/settings');
+    const filteredLessons = createDefaultKangurLessons().filter(
+      (lesson) =>
+        lesson.subject === 'english' &&
+        lesson.enabled &&
+        ['english_adjectives', 'english_comparatives_superlatives'].includes(lesson.componentId)
+    );
+    const { db, collection } = buildDb(filteredLessons, filteredLessons.length);
+    vi.doMock('@/shared/lib/db/mongo-client', () => ({
+      getMongoDb: vi.fn().mockResolvedValue(db),
+    }));
+    vi.doMock('@/features/kangur/services/kangur-settings-repository', () => ({
+      readKangurSettingValue: vi.fn().mockResolvedValue(null),
+    }));
+
+    const { mongoKangurLessonRepository } = await import(
+      './mongo-kangur-lesson-repository'
+    );
+
+    const result = await mongoKangurLessonRepository.listLessons({
+      subject: 'english',
+      enabledOnly: true,
+      componentIds: ['english_adjectives', 'english_comparatives_superlatives'],
+    });
+
+    expect(collection.find).toHaveBeenCalledWith(
+      expect.objectContaining({
+        subject: 'english',
+        enabled: true,
+        componentId: {
+          $in: ['english_adjectives', 'english_comparatives_superlatives'],
+        },
+      })
+    );
+    expect(result).toEqual(filteredLessons);
+  });
 });

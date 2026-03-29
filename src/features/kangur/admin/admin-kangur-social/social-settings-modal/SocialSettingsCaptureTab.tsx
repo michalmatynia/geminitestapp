@@ -228,6 +228,7 @@ export function SocialSettingsCaptureTab({
               onChange={(e) => setAddonForm((prev) => ({ ...prev, title: e.target.value }))}
               aria-label='Add-on title'
               disabled={hasBlockingRuntimeJob}
+              title={captureActionTitle}
             />
             <Input
               type='url'
@@ -236,6 +237,7 @@ export function SocialSettingsCaptureTab({
               onChange={(e) => setAddonForm((prev) => ({ ...prev, sourceUrl: e.target.value }))}
               aria-label='Source URL'
               disabled={hasBlockingRuntimeJob}
+              title={captureActionTitle}
             />
             <Input
               placeholder='Optional selector'
@@ -243,6 +245,7 @@ export function SocialSettingsCaptureTab({
               onChange={(e) => setAddonForm((prev) => ({ ...prev, selector: e.target.value }))}
               aria-label='Optional selector'
               disabled={hasBlockingRuntimeJob}
+              title={captureActionTitle}
             />
             <Input
               type='number'
@@ -253,6 +256,7 @@ export function SocialSettingsCaptureTab({
               onChange={(e) => setAddonForm((prev) => ({ ...prev, waitForMs: e.target.value }))}
               aria-label='Wait before capture (ms)'
               disabled={hasBlockingRuntimeJob}
+              title={captureActionTitle}
             />
             <Input
               placeholder='Optional description'
@@ -260,6 +264,7 @@ export function SocialSettingsCaptureTab({
               onChange={(e) => setAddonForm((prev) => ({ ...prev, description: e.target.value }))}
               aria-label='Optional description'
               disabled={hasBlockingRuntimeJob}
+              title={captureActionTitle}
             />
           </div>
           <Button
@@ -400,6 +405,7 @@ export function SocialSettingsCaptureTab({
                 onChange={(e) => setBatchCaptureBaseUrl(e.target.value)}
                 size='sm'
                 disabled={hasBlockingRuntimeJob}
+                title={captureActionTitle}
               />
             </FormField>
             <FormField label='Capture limit' description='Max concurrent captures.'>
@@ -412,6 +418,7 @@ export function SocialSettingsCaptureTab({
                 ]}
                 size='sm'
                 disabled={hasBlockingRuntimeJob}
+                title={captureActionTitle}
               />
             </FormField>
           </div>

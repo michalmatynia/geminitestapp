@@ -6,20 +6,17 @@ import {
 import type { Metadata } from 'next';
 import type { JSX } from 'react';
 
-type FilemakerUnsubscribePageProps = {
+type AdminFilemakerCampaignUnsubscribePageProps = {
   searchParams?: Promise<Record<string, string | string[] | undefined>>;
 };
-
-export const dynamic = 'force-dynamic';
-export const revalidate = 0;
 
 export async function generateMetadata(): Promise<Metadata> {
   return generateFilemakerUnsubscribeMetadata();
 }
 
-export default async function FilemakerUnsubscribePage({
+export default async function AdminFilemakerCampaignUnsubscribePage({
   searchParams,
-}: FilemakerUnsubscribePageProps): Promise<JSX.Element> {
+}: AdminFilemakerCampaignUnsubscribePageProps): Promise<JSX.Element> {
   return renderFilemakerUnsubscribeRoute({
     searchParams: searchParams ? await searchParams : undefined,
   });

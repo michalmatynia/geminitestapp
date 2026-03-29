@@ -411,6 +411,61 @@ describe('enqueuePlaywrightNodeRun', () => {
     expect(runtime.browser.close).toHaveBeenCalledTimes(1);
   });
 
+  it('sanitizes invalid prefixed cookies before creating a browser context', async () => {
+    const { enqueuePlaywrightNodeRun } = await loadRunner();
+    const runtime = await createPlaywrightRuntime();
+    mocks.chromiumLaunchMock.mockResolvedValue(runtime.browser);
+
+    await enqueuePlaywrightNodeRun({
+      waitForResult: true,
+      request: {
+        script: 'export default async () => ({ ok: true });',
+        startUrl: 'https://kangur.app/login',
+        contextOptions: {
+          storageState: {
+            cookies: [
+              {
+                name: '__Host-next-auth.csrf-token',
+                value: 'csrf123',
+                domain: 'kangur.app',
+                path: '/login',
+              },
+              {
+                name: 'theme',
+                value: 'dark',
+                domain: 'kangur.app',
+                path: '/',
+              },
+            ],
+            origins: [],
+          },
+        },
+      },
+    });
+
+    expect(runtime.browser.newContext).toHaveBeenCalledWith(
+      expect.objectContaining({
+        storageState: {
+          cookies: [
+            {
+              name: '__Host-next-auth.csrf-token',
+              value: 'csrf123',
+              url: 'https://kangur.app',
+              secure: true,
+            },
+            {
+              name: 'theme',
+              value: 'dark',
+              domain: 'kangur.app',
+              path: '/',
+            },
+          ],
+          origins: [],
+        },
+      })
+    );
+  });
+
   it('fails when the start URL violates outbound policy', async () => {
     const { enqueuePlaywrightNodeRun, readPlaywrightNodeRun } = await loadRunner();
     const runtime = await createPlaywrightRuntime();

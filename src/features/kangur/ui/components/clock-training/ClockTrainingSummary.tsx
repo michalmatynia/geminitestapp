@@ -42,6 +42,121 @@ export type ClockTrainingSummaryProps = {
   onRestart: () => void;
 };
 
+const resolveClockTrainingSummaryEmoji = (score: number): string =>
+  score >= 4 ? '🏆' : score >= 2 ? '😊' : '💪';
+
+const resolveClockTrainingSummaryMedalAccent = (
+  challengeMedal: ClockChallengeMedal | null
+): 'amber' | 'slate' | 'rose' =>
+  challengeMedal === 'gold' ? 'amber' : challengeMedal === 'silver' ? 'slate' : 'rose';
+
+const resolveClockTrainingSummaryModeLabel = ({
+  gameMode,
+  translations,
+}: {
+  gameMode: ClockGameMode;
+  translations: ReturnType<typeof useTranslations>;
+}): string =>
+  gameMode === 'challenge'
+    ? translations('clockTraining.mode.challenge')
+    : translations('clockTraining.mode.practice');
+
+const resolveClockTrainingSummaryMessage = ({
+  score,
+  section,
+  tasksCount,
+  translations,
+}: {
+  score: number;
+  section: ClockTrainingTaskPoolId;
+  tasksCount: number;
+  translations: ReturnType<typeof useTranslations>;
+}): string => {
+  const suffix = score === tasksCount ? 'perfect' : 'retry';
+
+  if (section === 'hours') {
+    return translations(`clockTraining.summary.hours.${suffix}`);
+  }
+
+  if (section === 'minutes') {
+    return translations(`clockTraining.summary.minutes.${suffix}`);
+  }
+
+  if (section === 'combined') {
+    return translations(`clockTraining.summary.combined.${suffix}`);
+  }
+
+  return translations(`clockTraining.summary.default.${suffix}`);
+};
+
+function ClockTrainingSummaryMode({
+  gameMode,
+  translations,
+}: {
+  gameMode: ClockGameMode;
+  translations: ReturnType<typeof useTranslations>;
+}): React.JSX.Element {
+  return (
+    <p className='text-xs font-semibold text-indigo-600'>
+      {translations('clockTraining.mode.label')}:{' '}
+      {resolveClockTrainingSummaryModeLabel({ gameMode, translations })}
+    </p>
+  );
+}
+
+function ClockTrainingSummaryChallengeMeta({
+  challengeBestStreak,
+  challengeMedal,
+  gameMode,
+  translations,
+}: {
+  challengeBestStreak: number;
+  challengeMedal: ClockChallengeMedal | null;
+  gameMode: ClockGameMode;
+  translations: ReturnType<typeof useTranslations>;
+}): React.JSX.Element | null {
+  if (gameMode !== 'challenge') {
+    return null;
+  }
+
+  return (
+    <>
+      {challengeMedal ? (
+        <KangurStatusChip
+          accent={resolveClockTrainingSummaryMedalAccent(challengeMedal)}
+          className='px-4 py-2 text-sm font-bold'
+          data-testid='clock-challenge-medal'
+        >
+          {getClockChallengeMedalLabel(challengeMedal, translations)}
+        </KangurStatusChip>
+      ) : null}
+      <p data-testid='clock-challenge-summary' className='text-xs font-semibold text-amber-600'>
+        {translations('clockTraining.bestStreak')}: {challengeBestStreak}
+      </p>
+    </>
+  );
+}
+
+function ClockTrainingSummaryPracticeMeta({
+  gameMode,
+  retryAddedCount,
+  translations,
+}: {
+  gameMode: ClockGameMode;
+  retryAddedCount: number;
+  translations: ReturnType<typeof useTranslations>;
+}): React.JSX.Element | null {
+  if (gameMode !== 'practice' || retryAddedCount <= 0) {
+    return null;
+  }
+
+  return (
+    <p className='text-xs font-semibold text-indigo-600'>
+      {translations('clockTraining.adaptiveRetries')}: {retryAddedCount}
+    </p>
+  );
+}
+
 export function ClockTrainingSummary(props: ClockTrainingSummaryProps): React.JSX.Element {
   const {
     score,
@@ -59,39 +174,18 @@ export function ClockTrainingSummary(props: ClockTrainingSummaryProps): React.JS
   } = props;
   const translations = useTranslations('KangurMiniGames');
   const percent = Math.round((score / tasksCount) * 100);
-  const summaryEmoji = score >= 4 ? '🏆' : score >= 2 ? '😊' : '💪';
+  const summaryEmoji = resolveClockTrainingSummaryEmoji(score);
   const summaryTitle = (
     <h3 className='text-2xl font-extrabold text-indigo-700'>
       {getKangurMiniGameScoreLabel(translations, score, tasksCount)}
     </h3>
   );
-  const summaryXpEarned = xpEarned;
-  const summaryBreakdown = xpBreakdown;
-  const challengeMedalAccent =
-    challengeMedal === 'gold' ? 'amber' : challengeMedal === 'silver' ? 'slate' : 'rose';
-  const primaryActionLabel = completionPrimaryActionLabel;
-  const handleFinish = onFinish;
-  const handleRestart = onRestart;
-  const summaryMessage = (() => {
-    if (section === 'hours') {
-      return score === tasksCount
-        ? translations('clockTraining.summary.hours.perfect')
-        : translations('clockTraining.summary.hours.retry');
-    }
-    if (section === 'minutes') {
-      return score === tasksCount
-        ? translations('clockTraining.summary.minutes.perfect')
-        : translations('clockTraining.summary.minutes.retry');
-    }
-    if (section === 'combined') {
-      return score === tasksCount
-        ? translations('clockTraining.summary.combined.perfect')
-        : translations('clockTraining.summary.combined.retry');
-    }
-    return score === tasksCount
-      ? translations('clockTraining.summary.default.perfect')
-      : translations('clockTraining.summary.default.retry');
-  })();
+  const summaryMessage = resolveClockTrainingSummaryMessage({
+    score,
+    section,
+    tasksCount,
+    translations,
+  });
 
   return (
     <KangurPracticeGameSummary
@@ -108,37 +202,24 @@ export function ClockTrainingSummary(props: ClockTrainingSummaryProps): React.JS
         title={summaryTitle}
         unwrapped
       />
-      <KangurPracticeGameSummaryXP accent='indigo' xpEarned={summaryXpEarned} />
+      <KangurPracticeGameSummaryXP accent='indigo' xpEarned={xpEarned} />
       <KangurPracticeGameSummaryBreakdown
-        breakdown={summaryBreakdown}
+        breakdown={xpBreakdown}
         dataTestId='clock-training-summary-breakdown'
         itemDataTestIdPrefix='clock-training-summary-breakdown'
       />
-      <p className='text-xs font-semibold text-indigo-600'>
-        {translations('clockTraining.mode.label')}:{' '}
-        {gameMode === 'challenge'
-          ? translations('clockTraining.mode.challenge')
-          : translations('clockTraining.mode.practice')}
-      </p>
-      {gameMode === 'challenge' && challengeMedal ? (
-        <KangurStatusChip
-          accent={challengeMedalAccent}
-          className='px-4 py-2 text-sm font-bold'
-          data-testid='clock-challenge-medal'
-        >
-          {getClockChallengeMedalLabel(challengeMedal, translations)}
-        </KangurStatusChip>
-      ) : null}
-      {gameMode === 'challenge' ? (
-        <p data-testid='clock-challenge-summary' className='text-xs font-semibold text-amber-600'>
-          {translations('clockTraining.bestStreak')}: {challengeBestStreak}
-        </p>
-      ) : null}
-      {gameMode === 'practice' && retryAddedCount > 0 ? (
-        <p className='text-xs font-semibold text-indigo-600'>
-          {translations('clockTraining.adaptiveRetries')}: {retryAddedCount}
-        </p>
-      ) : null}
+      <ClockTrainingSummaryMode gameMode={gameMode} translations={translations} />
+      <ClockTrainingSummaryChallengeMeta
+        challengeBestStreak={challengeBestStreak}
+        challengeMedal={challengeMedal}
+        gameMode={gameMode}
+        translations={translations}
+      />
+      <ClockTrainingSummaryPracticeMeta
+        gameMode={gameMode}
+        retryAddedCount={retryAddedCount}
+        translations={translations}
+      />
       <KangurPracticeGameSummaryProgress
         accent='indigo'
         ariaLabel={translations('clockTraining.progressAriaLabel')}
@@ -150,10 +231,10 @@ export function ClockTrainingSummary(props: ClockTrainingSummaryProps): React.JS
         {summaryMessage}
       </KangurPracticeGameSummaryMessage>
       <KangurPracticeGameSummaryActions
-        finishLabel={primaryActionLabel}
-        onFinish={handleFinish}
+        finishLabel={completionPrimaryActionLabel}
+        onFinish={onFinish}
         restartLabel={translations('shared.restart')}
-        onRestart={handleRestart}
+        onRestart={onRestart}
       />
     </KangurPracticeGameSummary>
   );

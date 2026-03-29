@@ -5,7 +5,11 @@ import { cn } from '@/shared/utils';
 
 import type { CSSProperties } from 'react';
 
-type FrontendCmsRouteLoadingVariant = 'home' | 'page' | 'preview' | 'product';
+export type FrontendCmsRouteLoadingVariant =
+  | 'home'
+  | 'page'
+  | 'preview'
+  | 'preview-runtime';
 
 const SHELL_SURFACE_STYLE: CSSProperties = {
   backgroundColor: 'var(--cms-appearance-page-background, #f8fafc)',
@@ -34,10 +38,6 @@ export const resolveFrontendCmsRouteLoadingVariant = (
 
   if (!normalizedPathname || normalizedPathname === '/') {
     return 'home';
-  }
-
-  if (normalizedPathname.startsWith('/products/')) {
-    return 'product';
   }
 
   if (normalizedPathname.startsWith('/preview/')) {
@@ -135,40 +135,17 @@ function CmsPreviewRouteSkeleton(): React.JSX.Element {
   );
 }
 
-function CmsProductRouteSkeleton(): React.JSX.Element {
+function CmsPreviewRuntimeRouteSkeleton(): React.JSX.Element {
   return (
-    <div className='mx-auto flex w-full max-w-6xl flex-col gap-8 px-4 py-8 md:px-6 lg:py-12'>
-      <div className='flex items-center gap-3'>
-        <CmsSkeletonBlock className='h-5 w-24 rounded-full' />
-        <CmsSkeletonBlock className='h-5 w-3 rounded-full' style={SOFT_BLOCK_STYLE} />
-        <CmsSkeletonBlock className='h-5 w-40 rounded-full' />
+    <div className='mx-auto flex w-full max-w-3xl flex-col gap-4 px-4 py-8 md:px-6 lg:py-12'>
+      <CmsSkeletonBlock className='h-10 w-72 rounded-[24px]' style={ACCENT_BLOCK_STYLE} />
+      <CmsSkeletonBlock className='h-5 w-full rounded-full' style={SOFT_BLOCK_STYLE} />
+      <CmsSkeletonBlock className='h-5 w-4/5 rounded-full' style={SOFT_BLOCK_STYLE} />
+      <div className='flex gap-2'>
+        <CmsSkeletonBlock className='h-10 w-28 rounded-[18px]' />
+        <CmsSkeletonBlock className='h-10 w-28 rounded-[18px]' />
       </div>
-      <div className='grid gap-8 lg:grid-cols-[minmax(0,1.05fr)_minmax(20rem,0.95fr)]'>
-        <div className='space-y-4'>
-          <CmsSkeletonBlock className='aspect-[4/3] w-full rounded-[36px]' />
-          <div className='grid grid-cols-4 gap-3'>
-            <CmsSkeletonBlock className='aspect-square w-full rounded-[24px]' />
-            <CmsSkeletonBlock className='aspect-square w-full rounded-[24px]' />
-            <CmsSkeletonBlock className='aspect-square w-full rounded-[24px]' />
-            <CmsSkeletonBlock className='aspect-square w-full rounded-[24px]' />
-          </div>
-        </div>
-        <div className='space-y-4'>
-          <div className='flex gap-2'>
-            <CmsSkeletonBlock className='h-9 w-24 rounded-full' style={ACCENT_BLOCK_STYLE} />
-            <CmsSkeletonBlock className='h-9 w-20 rounded-full' />
-          </div>
-          <CmsSkeletonBlock className='h-16 w-4/5 rounded-[28px]' />
-          <CmsSkeletonBlock className='h-10 w-40 rounded-[24px]' />
-          <CmsSkeletonBlock className='h-24 w-full rounded-[28px]' />
-          <div className='grid gap-3 sm:grid-cols-2'>
-            <CmsSkeletonBlock className='h-20 w-full rounded-[24px]' />
-            <CmsSkeletonBlock className='h-20 w-full rounded-[24px]' />
-            <CmsSkeletonBlock className='h-20 w-full rounded-[24px]' />
-            <CmsSkeletonBlock className='h-20 w-full rounded-[24px]' />
-          </div>
-        </div>
-      </div>
+      <CmsSkeletonBlock className='h-[20rem] w-full rounded-[28px]' />
     </div>
   );
 }
@@ -177,33 +154,35 @@ const ROUTE_STATUS_LABELS: Record<FrontendCmsRouteLoadingVariant, string> = {
   home: 'Loading storefront home',
   page: 'Loading page',
   preview: 'Loading preview',
-  product: 'Loading product page',
+  'preview-runtime': 'Loading preview runtime',
 };
 
 export function FrontendCmsRouteLoadingFallback({
   pathname,
+  variant,
 }: {
   pathname: string | null | undefined;
+  variant?: FrontendCmsRouteLoadingVariant;
 }): React.JSX.Element {
-  const variant = resolveFrontendCmsRouteLoadingVariant(pathname);
+  const resolvedVariant = variant ?? resolveFrontendCmsRouteLoadingVariant(pathname);
 
   return (
     <div
       className='min-h-screen w-full'
       data-testid='frontend-route-loading-fallback'
-      data-frontend-route-loading-variant={variant}
+      data-frontend-route-loading-variant={resolvedVariant}
       role='status'
       aria-live='polite'
       aria-atomic='true'
-      aria-label={ROUTE_STATUS_LABELS[variant]}
+      aria-label={ROUTE_STATUS_LABELS[resolvedVariant]}
       style={SHELL_SURFACE_STYLE}
     >
       <CmsSkeletonHeader />
-      <div data-testid={`frontend-route-loading-fallback-${variant}`}>
-        {variant === 'home' ? <CmsHomeRouteSkeleton /> : null}
-        {variant === 'page' ? <CmsPageRouteSkeleton /> : null}
-        {variant === 'preview' ? <CmsPreviewRouteSkeleton /> : null}
-        {variant === 'product' ? <CmsProductRouteSkeleton /> : null}
+      <div data-testid={`frontend-route-loading-fallback-${resolvedVariant}`}>
+        {resolvedVariant === 'home' ? <CmsHomeRouteSkeleton /> : null}
+        {resolvedVariant === 'page' ? <CmsPageRouteSkeleton /> : null}
+        {resolvedVariant === 'preview' ? <CmsPreviewRouteSkeleton /> : null}
+        {resolvedVariant === 'preview-runtime' ? <CmsPreviewRuntimeRouteSkeleton /> : null}
       </div>
     </div>
   );

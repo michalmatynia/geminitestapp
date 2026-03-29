@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { act, fireEvent, render, screen } from '@testing-library/react';
 import type { ReactNode } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { clearLatchedKangurTopBarHeightCssValue } from '@/features/kangur/ui/utils/readKangurTopBarHeightCssValue';
@@ -9,6 +9,7 @@ const {
   withKangurClientError,
   withKangurClientErrorSync,
   usePathnameMock,
+  useRouterReplaceMock,
   useSelectedLayoutSegmentsMock,
   useSearchParamsMock,
   sessionMock,
@@ -20,6 +21,7 @@ const {
     withKangurClientError: mocks.withKangurClientError,
     withKangurClientErrorSync: mocks.withKangurClientErrorSync,
     usePathnameMock: vi.fn<() => string | null>(),
+    useRouterReplaceMock: vi.fn(),
     useSelectedLayoutSegmentsMock: vi.fn<() => string[]>(),
     useSearchParamsMock: vi.fn<() => URLSearchParams>(),
     sessionMock: vi.fn(),
@@ -37,6 +39,9 @@ const mockKangurRoutingState = {
 
 vi.mock('next/navigation', () => ({
   usePathname: () => usePathnameMock(),
+  useRouter: () => ({
+    replace: useRouterReplaceMock,
+  }),
   useSelectedLayoutSegments: () => useSelectedLayoutSegmentsMock(),
   useSearchParams: () => useSearchParamsMock(),
   redirect: vi.fn(),
@@ -110,6 +115,7 @@ import { KangurFeatureRouteShell } from '@/features/kangur/ui/KangurFeatureRoute
 describe('KangurFeatureRouteShell', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.useRealTimers();
     sessionMock.mockReturnValue({
       data: null,
       status: 'unauthenticated',
@@ -122,6 +128,21 @@ describe('KangurFeatureRouteShell', () => {
     usePathnameMock.mockReturnValue('/kangur');
     useSelectedLayoutSegmentsMock.mockReturnValue([]);
     useSearchParamsMock.mockReturnValue(new URLSearchParams());
+    useRouterReplaceMock.mockReset();
+    Object.defineProperty(navigator, 'maxTouchPoints', {
+      configurable: true,
+      value: 0,
+    });
+    window.matchMedia = vi.fn().mockImplementation(() => ({
+      matches: false,
+      media: '',
+      onchange: null,
+      addEventListener: vi.fn(),
+      addListener: vi.fn(),
+      dispatchEvent: vi.fn(),
+      removeEventListener: vi.fn(),
+      removeListener: vi.fn(),
+    }));
   });
 
   it('marks the client shell active instead of removing the server shell overlay directly', () => {
@@ -346,6 +367,62 @@ describe('KangurFeatureRouteShell', () => {
       pageKey: 'Game',
       requestedPath: '/',
     });
+  });
+
+  it('strips launch-intent params from shared routing before the web shell takes over', () => {
+    vi.useFakeTimers();
+    usePathnameMock.mockReturnValue('/kangur/lessons');
+    useSelectedLayoutSegmentsMock.mockReturnValue(['lessons']);
+    useSearchParamsMock.mockReturnValue(
+      new URLSearchParams('focus=division&__kangurLaunch=dedicated_app')
+    );
+    Object.defineProperty(navigator, 'maxTouchPoints', {
+      configurable: true,
+      value: 5,
+    });
+
+    render(<KangurFeatureRouteShell />);
+
+    expect(kangurRoutingProviderMock).toHaveBeenCalledWith({
+      pageKey: 'Lessons',
+      requestedPath: '/kangur/lessons',
+      requestedHref: '/kangur/lessons?focus=division',
+      basePath: '/kangur',
+      embedded: false,
+    });
+    expect(useRouterReplaceMock).toHaveBeenCalledWith('/kangur/lessons?focus=division', {
+      scroll: false,
+    });
+
+    act(() => {
+      vi.advanceTimersByTime(160);
+    });
+
+    expect(screen.getByRole('button', { name: 'Open app' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Stay on web' })).toBeInTheDocument();
+  });
+
+  it('lets the learner dismiss the dedicated-app launch prompt and continue on web', () => {
+    vi.useFakeTimers();
+    usePathnameMock.mockReturnValue('/kangur/lessons');
+    useSelectedLayoutSegmentsMock.mockReturnValue(['lessons']);
+    useSearchParamsMock.mockReturnValue(
+      new URLSearchParams('focus=division&__kangurLaunch=dedicated_app')
+    );
+    Object.defineProperty(navigator, 'maxTouchPoints', {
+      configurable: true,
+      value: 5,
+    });
+
+    render(<KangurFeatureRouteShell />);
+
+    act(() => {
+      vi.advanceTimersByTime(160);
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: 'Stay on web' }));
+
+    expect(screen.queryByRole('button', { name: 'Open app' })).toBeNull();
   });
 
   it('clears the client observability context on unmount', () => {

@@ -72,6 +72,9 @@ const buildFilter = (input?: KangurLessonListInput): Filter<MongoKangurLessonDoc
   if (input.ageGroup) {
     filter.ageGroup = input.ageGroup;
   }
+  if (input.componentIds && input.componentIds.length > 0) {
+    filter.componentId = { $in: input.componentIds };
+  }
   if (input.enabledOnly) {
     filter.enabled = true;
   }

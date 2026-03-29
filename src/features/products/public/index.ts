@@ -11,3 +11,4 @@ export {
   ProductImageManagerControllerProvider,
 } from '@/shared/ui';
 export { default as ProductCard } from '../components/ProductCard';
+export { ProductRouteLoadingFallback } from './ProductRouteLoadingFallback';

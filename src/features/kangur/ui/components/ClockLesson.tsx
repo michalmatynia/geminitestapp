@@ -9,6 +9,7 @@ import { KANGUR_STEP_PILL_CLASSNAME } from '@/features/kangur/ui/design/tokens';
 import {
   buildLessonHubSectionsWithProgress,
 } from '@/features/kangur/ui/components/lesson-utils';
+import type { HubSection } from '@/features/kangur/ui/components/LessonHub';
 import type { LessonHubSectionProgress } from '@/features/kangur/ui/hooks/useLessonHubProgress';
 import { useKangurCoarsePointer } from '@/features/kangur/ui/hooks/useKangurCoarsePointer';
 import { useKangurLessonGameSections } from '@/features/kangur/ui/hooks/useKangurLessonGameSections';
@@ -97,6 +98,26 @@ const localizeClockCopy = <T,>(
   ) as WidenLessonCopy<T>;
 };
 
+const resolveClockTrainingSectionFromVisibility = (
+  clockSettings: KangurLessonGameSectionSettings['clock']
+): ClockTrainingSectionId => {
+  if (isClockMinuteOnlyTrainingSection(clockSettings)) {
+    return 'minutes';
+  }
+  if (isClockHourOnlyTrainingSection(clockSettings)) {
+    return 'hours';
+  }
+  return 'combined';
+};
+
+const isClockMinuteOnlyTrainingSection = (
+  clockSettings: KangurLessonGameSectionSettings['clock']
+): boolean => clockSettings?.showHourHand === false && clockSettings?.showMinuteHand !== false;
+
+const isClockHourOnlyTrainingSection = (
+  clockSettings: KangurLessonGameSectionSettings['clock']
+): boolean => clockSettings?.showMinuteHand === false && clockSettings?.showHourHand !== false;
+
 const resolveClockTrainingSectionFromSettings = (
   settings?: KangurLessonGameSectionSettings
 ): ClockTrainingSectionId => {
@@ -104,13 +125,7 @@ const resolveClockTrainingSectionFromSettings = (
   if (clockSettings?.clockSection) {
     return clockSettings.clockSection;
   }
-  if (clockSettings?.showHourHand === false && clockSettings?.showMinuteHand !== false) {
-    return 'minutes';
-  }
-  if (clockSettings?.showMinuteHand === false && clockSettings?.showHourHand !== false) {
-    return 'hours';
-  }
-  return 'combined';
+  return resolveClockTrainingSectionFromVisibility(clockSettings);
 };
 
 const resolveClockTrainingInstanceIdFromSection = (
@@ -129,27 +144,44 @@ const buildClockLessonEngineOverrides = (
   settings?: KangurLessonGameSectionSettings
 ): KangurGameRuntimeRendererProps => {
   const clockSettings = settings?.clock;
+  const overrides: KangurGameRuntimeRendererProps = {};
 
-  return {
-    ...(clockSettings?.initialMode
-      ? { clockInitialMode: clockSettings.initialMode }
-      : {}),
-    ...(clockSettings?.showHourHand !== undefined
-      ? { showClockHourHand: clockSettings.showHourHand }
-      : {}),
-    ...(clockSettings?.showMinuteHand !== undefined
-      ? { showClockMinuteHand: clockSettings.showMinuteHand }
-      : {}),
-    ...(clockSettings?.showModeSwitch !== undefined
-      ? { showClockModeSwitch: clockSettings.showModeSwitch }
-      : {}),
-    ...(clockSettings?.showTaskTitle !== undefined
-      ? { showClockTaskTitle: clockSettings.showTaskTitle }
-      : {}),
-    ...(clockSettings?.showTimeDisplay !== undefined
-      ? { showClockTimeDisplay: clockSettings.showTimeDisplay }
-      : {}),
-  };
+  assignClockLessonEngineOverride(overrides, 'clockInitialMode', clockSettings?.initialMode);
+  assignClockLessonEngineOverride(overrides, 'showClockHourHand', clockSettings?.showHourHand);
+  assignClockLessonEngineOverride(
+    overrides,
+    'showClockMinuteHand',
+    clockSettings?.showMinuteHand
+  );
+  assignClockLessonEngineOverride(
+    overrides,
+    'showClockModeSwitch',
+    clockSettings?.showModeSwitch
+  );
+  assignClockLessonEngineOverride(
+    overrides,
+    'showClockTaskTitle',
+    clockSettings?.showTaskTitle
+  );
+  assignClockLessonEngineOverride(
+    overrides,
+    'showClockTimeDisplay',
+    clockSettings?.showTimeDisplay
+  );
+
+  return overrides;
+};
+
+const assignClockLessonEngineOverride = <
+  Key extends keyof KangurGameRuntimeRendererProps,
+>(
+  overrides: KangurGameRuntimeRendererProps,
+  key: Key,
+  value: KangurGameRuntimeRendererProps[Key] | undefined
+): void => {
+  if (value !== undefined) {
+    overrides[key] = value;
+  }
 };
 
 const isSameSectionProgressSnapshot = (
@@ -172,12 +204,357 @@ const isSameSectionProgressSnapshot = (
   });
 };
 
+type ClockLessonCopy = WidenLessonCopy<typeof CLOCK_LESSON_COPY_PL>;
+type ClockLessonSlidesBySection = Record<SectionId, LessonSlide[]>;
+type ClockLessonTrainingGame = {
+  sectionId: TrainingCardId;
+  shell: {
+    accent: 'indigo';
+    description: string;
+    headerTestId: string;
+    icon: string;
+    maxWidthClassName: string;
+    navigationPills: React.ReactNode;
+    shellTestId: string;
+    title: string;
+  };
+  onShellFinish: (helpers: { onFinish: () => void }) => void;
+  launchableInstance: {
+    gameId: 'clock_training';
+    instanceId: string;
+  };
+  engineOverrides: KangurGameRuntimeRendererProps;
+};
+
+type ClockLessonCompletionState = {
+  isClockLessonComplete: boolean;
+  isCombinedComplete: boolean;
+  isCombinedUnlocked: boolean;
+  isHoursComplete: boolean;
+  isMinutesComplete: boolean;
+};
+
+type ClockResolvedHubSection = HubSection & { id: ClockHubId };
+
+const resolveClockLessonBackToTopicsLabel = (translated: string): string =>
+  translated === 'backToTopics' || translated.endsWith('.backToTopics')
+    ? 'Wróć do tematów'
+    : translated;
+
+const buildDefaultClockTrainingConfigs = (copy: ClockLessonCopy): ClockTrainingHubConfig[] => [
+  {
+    description: copy.hubSections.gameHours.description,
+    emoji: '🎯',
+    hubId: 'game_hours',
+    instanceId: CLOCK_TRAINING_INSTANCE_ID_BY_SECTION.hours,
+    title: copy.hubSections.gameHours.title,
+    trainingSectionId: 'hours',
+  },
+  {
+    description: copy.hubSections.gameMinutes.description,
+    emoji: '🟢',
+    hubId: 'game_minutes',
+    instanceId: CLOCK_TRAINING_INSTANCE_ID_BY_SECTION.minutes,
+    title: copy.hubSections.gameMinutes.title,
+    trainingSectionId: 'minutes',
+  },
+  {
+    description: copy.hubSections.gameCombined.description,
+    emoji: '🕐',
+    hubId: 'game_combined',
+    instanceId: CLOCK_TRAINING_INSTANCE_ID_BY_SECTION.combined,
+    title: copy.hubSections.gameCombined.title,
+    trainingSectionId: 'combined',
+  },
+];
+
+const buildCustomClockTrainingConfig = (
+  section: KangurLessonGameSection
+): ClockTrainingHubConfig => ({
+  description: section.description,
+  emoji: section.emoji,
+  hubId: section.id,
+  instanceId: resolveClockTrainingInstanceIdFromSection(section),
+  settings: section.settings,
+  title: section.title,
+  trainingSectionId: resolveClockTrainingSectionFromSettings(section.settings),
+});
+
+const buildClockLocalizedHubSections = (
+  copy: ClockLessonCopy,
+  trainingConfigs: ClockTrainingHubConfig[]
+): ClockHubSection[] => [
+  ...buildClockHubSections(copy).filter((section) => !section.isGame),
+  ...trainingConfigs.map(
+    (config): ClockHubSection => ({
+      id: config.hubId,
+      emoji: config.emoji,
+      title: config.title,
+      description: config.description,
+      isGame: true,
+    })
+  ),
+];
+
+const renderClockLessonTrainingSlide = ({
+  backToTopicsLabel,
+  copy,
+  returnToHub,
+  section,
+}: {
+  backToTopicsLabel: string;
+  copy: ClockLessonCopy;
+  returnToHub: () => void;
+  section: ClockTrainingSectionId;
+}): LessonSlide => ({
+  title: copy.trainingSlides[section].title,
+  tts: copy.trainingSlides[section].tts,
+  content: (
+    <ClockTrainingGame
+      completionPrimaryActionLabel={backToTopicsLabel}
+      enableAdaptiveRetry={false}
+      hideModeSwitch
+      onFinish={returnToHub}
+      practiceTasks={TRAINING_PANEL_TASKS[section].learn}
+      section={section}
+      showTaskTitle
+      showTimeDisplay
+    />
+  ),
+});
+
+const buildClockRuntimeSlides = ({
+  backToTopicsLabel,
+  combinedSlides,
+  copy,
+  hoursSlides,
+  minutesSlides,
+  returnToHub,
+}: {
+  backToTopicsLabel: string;
+  combinedSlides: LessonSlide[];
+  copy: ClockLessonCopy;
+  hoursSlides: LessonSlide[];
+  minutesSlides: LessonSlide[];
+  returnToHub: () => void;
+}): ClockLessonSlidesBySection => ({
+  hours: [
+    ...hoursSlides,
+    renderClockLessonTrainingSlide({
+      backToTopicsLabel,
+      copy,
+      returnToHub,
+      section: 'hours',
+    }),
+  ],
+  minutes: [
+    ...minutesSlides,
+    renderClockLessonTrainingSlide({
+      backToTopicsLabel,
+      copy,
+      returnToHub,
+      section: 'minutes',
+    }),
+  ],
+  combined: [
+    ...combinedSlides,
+    renderClockLessonTrainingSlide({
+      backToTopicsLabel,
+      copy,
+      returnToHub,
+      section: 'combined',
+    }),
+  ],
+});
+
+const resolveClockLessonCompletionState = (
+  sectionProgressSnapshot: Partial<Record<SectionId, { viewedCount: number; totalCount: number }>>
+): ClockLessonCompletionState => {
+  const isHoursComplete = isClockLessonSectionComplete(sectionProgressSnapshot.hours);
+  const isMinutesComplete = isClockLessonSectionComplete(sectionProgressSnapshot.minutes);
+  const isCombinedComplete = isClockLessonSectionComplete(sectionProgressSnapshot.combined);
+  const isCombinedUnlocked = isHoursComplete && isMinutesComplete;
+
+  return {
+    isClockLessonComplete: isHoursComplete && isMinutesComplete && isCombinedComplete,
+    isCombinedComplete,
+    isCombinedUnlocked,
+    isHoursComplete,
+    isMinutesComplete,
+  };
+};
+
+const isClockLessonSectionComplete = (
+  progress: { viewedCount: number; totalCount: number } | undefined
+): boolean => (progress?.totalCount ?? 0) > 0 && (progress?.viewedCount ?? 0) >= (progress?.totalCount ?? 0);
+
+const resolveClockLessonCombinedLockSection = ({
+  copy,
+  isCombinedUnlocked,
+  section,
+}: {
+  copy: ClockLessonCopy;
+  isCombinedUnlocked: boolean;
+  section: ClockResolvedHubSection;
+}): ClockResolvedHubSection => {
+  if (!section.isGame && section.id === 'combined' && !isCombinedUnlocked) {
+    return {
+      ...section,
+      description: copy.hubSections.combinedLockedDescription,
+      locked: true,
+      lockedLabel: copy.hubSections.lockedLabel,
+    };
+  }
+
+  return section;
+};
+
+const resolveClockLessonTrainingProgressSection = ({
+  completedTrainingSections,
+  section,
+}: {
+  completedTrainingSections: Partial<Record<string, boolean>>;
+  section: ClockResolvedHubSection;
+}): ClockResolvedHubSection => {
+  if (!section.isGame) {
+    return section;
+  }
+
+  return {
+    ...section,
+    progress: {
+      totalCount: 1,
+      viewedCount: completedTrainingSections[section.id] ? 1 : 0,
+    },
+  };
+};
+
+const buildClockLessonHubSectionsWithTrainingProgress = ({
+  completedTrainingSections,
+  copy,
+  isCombinedUnlocked,
+  sectionProgress,
+  sections,
+}: {
+  completedTrainingSections: Partial<Record<string, boolean>>;
+  copy: ClockLessonCopy;
+  isCombinedUnlocked: boolean;
+  sectionProgress: Partial<Record<ClockHubId, unknown>>;
+  sections: ReadonlyArray<ClockHubSection>;
+}): ClockResolvedHubSection[] =>
+  buildLessonHubSectionsWithProgress<ClockHubId, ClockHubSection, LessonHubSectionProgress>(
+    sections,
+    sectionProgress as Partial<Record<ClockHubId, LessonHubSectionProgress>>
+  )
+    .map((section) =>
+      resolveClockLessonCombinedLockSection({
+        copy,
+        isCombinedUnlocked,
+        section,
+      })
+    )
+    .map((section) =>
+      resolveClockLessonTrainingProgressSection({
+        completedTrainingSections,
+        section,
+      })
+    );
+
+const renderClockLessonTrainingPills = ({
+  copy,
+  isCoarsePointer,
+  translations,
+}: {
+  copy: ClockLessonCopy;
+  isCoarsePointer: boolean;
+  translations: ClockLessonTranslate;
+}): React.JSX.Element => (
+  <div className='flex gap-2'>
+    <button
+      type='button'
+      aria-label={translateClockLesson(
+        translations,
+        'training.goToPanel',
+        CLOCK_LESSON_COPY_PL.training.goToPanel,
+        { label: copy.training.panelLabel }
+      )}
+      aria-current='step'
+      className={cn(
+        KANGUR_STEP_PILL_CLASSNAME,
+        isCoarsePointer
+          ? 'h-11 min-w-11 w-12 scale-[1.02] touch-manipulation select-none'
+          : 'h-[14px] min-w-[14px] w-8 scale-[1.04]',
+        'bg-indigo-500'
+      )}
+      data-testid='clock-lesson-training-panel-pick_one'
+      disabled
+    />
+  </div>
+);
+
+const buildClockLessonTrainingGame = ({
+  config,
+  copy,
+  isCoarsePointer,
+  markSectionComplete,
+  translations,
+}: {
+  config: ClockTrainingHubConfig;
+  copy: ClockLessonCopy;
+  isCoarsePointer: boolean;
+  markSectionComplete: (sectionId: string) => void;
+  translations: ClockLessonTranslate;
+}): ClockLessonTrainingGame => ({
+  sectionId: config.hubId,
+  shell: {
+    accent: 'indigo',
+    description: config.description,
+    headerTestId: 'clock-lesson-training-header',
+    icon: '🕐',
+    maxWidthClassName: 'max-w-lg',
+    navigationPills: renderClockLessonTrainingPills({
+      copy,
+      isCoarsePointer,
+      translations,
+    }),
+    shellTestId: 'clock-lesson-training-shell',
+    title: config.title,
+  },
+  onShellFinish: ({ onFinish }: { onFinish: () => void }) => {
+    markSectionComplete(config.hubId);
+    onFinish();
+  },
+  launchableInstance: {
+    gameId: 'clock_training',
+    instanceId: config.instanceId,
+  },
+  engineOverrides: buildClockLessonEngineOverrides(config.settings),
+});
+
+const createClockLessonMarkTrainingSectionComplete =
+  (
+    setCompletedTrainingSections: React.Dispatch<React.SetStateAction<Partial<Record<string, boolean>>>>
+  ) =>
+  (sectionId: string): void => {
+    setCompletedTrainingSections((currentSections) =>
+      currentSections[sectionId]
+        ? currentSections
+        : {
+            ...currentSections,
+            [sectionId]: true,
+          }
+    );
+  };
+
 export default function ClockLesson(): React.JSX.Element {
   const ownerKey = useKangurProgressOwnerKey();
   const translations = useTranslations('KangurStaticLessons.clock');
   const isCoarsePointer = useKangurCoarsePointer();
   const [sectionProgressSnapshot, setSectionProgressSnapshot] = useState<
     Partial<Record<SectionId, { viewedCount: number; totalCount: number }>>
+  >({});
+  const [completedTrainingSections, setCompletedTrainingSections] = useState<
+    Partial<Record<string, boolean>>
   >({});
   const copy = useMemo(
     () => localizeClockCopy(CLOCK_LESSON_COPY_PL, '', translations),
@@ -216,45 +593,11 @@ export default function ClockLesson(): React.JSX.Element {
     [localizedCombinedCopy]
   );
   const defaultTrainingConfigs = useMemo<ClockTrainingHubConfig[]>(
-    () => [
-      {
-        description: copy.hubSections.gameHours.description,
-        emoji: '🎯',
-        hubId: 'game_hours',
-        instanceId: CLOCK_TRAINING_INSTANCE_ID_BY_SECTION.hours,
-        title: copy.hubSections.gameHours.title,
-        trainingSectionId: 'hours',
-      },
-      {
-        description: copy.hubSections.gameMinutes.description,
-        emoji: '🟢',
-        hubId: 'game_minutes',
-        instanceId: CLOCK_TRAINING_INSTANCE_ID_BY_SECTION.minutes,
-        title: copy.hubSections.gameMinutes.title,
-        trainingSectionId: 'minutes',
-      },
-      {
-        description: copy.hubSections.gameCombined.description,
-        emoji: '🕐',
-        hubId: 'game_combined',
-        instanceId: CLOCK_TRAINING_INSTANCE_ID_BY_SECTION.combined,
-        title: copy.hubSections.gameCombined.title,
-        trainingSectionId: 'combined',
-      },
-    ],
+    () => buildDefaultClockTrainingConfigs(copy),
     [copy]
   );
   const customTrainingConfigs = useMemo<ClockTrainingHubConfig[]>(
-    () =>
-      persistedClockGameSections.map((section: KangurLessonGameSection) => ({
-        description: section.description,
-        emoji: section.emoji,
-        hubId: section.id,
-        instanceId: resolveClockTrainingInstanceIdFromSection(section),
-        settings: section.settings,
-        title: section.title,
-        trainingSectionId: resolveClockTrainingSectionFromSettings(section.settings),
-      })),
+    () => persistedClockGameSections.map(buildCustomClockTrainingConfig),
     [persistedClockGameSections]
   );
   const trainingConfigs = useMemo(
@@ -262,106 +605,29 @@ export default function ClockLesson(): React.JSX.Element {
     [customTrainingConfigs, defaultTrainingConfigs]
   );
   const localizedHubSections = useMemo(
-    () => [
-      ...buildClockHubSections(copy).filter((section) => !section.isGame),
-      ...trainingConfigs.map(
-        (config): ClockHubSection => ({
-          id: config.hubId,
-          emoji: config.emoji,
-          title: config.title,
-          description: config.description,
-          isGame: true,
-        })
-      ),
-    ],
+    () => buildClockLocalizedHubSections(copy, trainingConfigs),
     [copy, trainingConfigs]
   );
   const returnToHub = useKangurUnifiedLessonBack();
   const lessonChrome = useTranslations('KangurLessonChrome');
-  const backToTopicsLabel = (() => {
-    const translated = lessonChrome('backToTopics');
-    return translated === 'backToTopics' || translated.endsWith('.backToTopics')
-      ? 'Wróć do tematów'
-      : translated;
-  })();
+  const backToTopicsLabel = resolveClockLessonBackToTopicsLabel(lessonChrome('backToTopics'));
   const runtimeSlides = useMemo<Record<SectionId, LessonSlide[]>>(
-    () => ({
-      hours: [
-        ...hoursSlides,
-        {
-          title: copy.trainingSlides.hours.title,
-          tts: copy.trainingSlides.hours.tts,
-          content: (
-            <ClockTrainingGame
-              completionPrimaryActionLabel={backToTopicsLabel}
-              enableAdaptiveRetry={false}
-              hideModeSwitch
-              onFinish={returnToHub}
-              practiceTasks={TRAINING_PANEL_TASKS.hours.learn}
-              section='hours'
-              showTaskTitle
-              showTimeDisplay
-            />
-          ),
-        },
-      ],
-      minutes: [
-        ...minutesSlides,
-        {
-          title: copy.trainingSlides.minutes.title,
-          tts: copy.trainingSlides.minutes.tts,
-          content: (
-            <ClockTrainingGame
-              completionPrimaryActionLabel={backToTopicsLabel}
-              enableAdaptiveRetry={false}
-              hideModeSwitch
-              onFinish={returnToHub}
-              practiceTasks={TRAINING_PANEL_TASKS.minutes.learn}
-              section='minutes'
-              showTaskTitle
-              showTimeDisplay
-            />
-          ),
-        },
-      ],
-      combined: [
-        ...combinedSlides,
-        {
-          title: copy.trainingSlides.combined.title,
-          tts: copy.trainingSlides.combined.tts,
-          content: (
-            <ClockTrainingGame
-              completionPrimaryActionLabel={backToTopicsLabel}
-              enableAdaptiveRetry={false}
-              hideModeSwitch
-              onFinish={returnToHub}
-              practiceTasks={TRAINING_PANEL_TASKS.combined.learn}
-              section='combined'
-              showTaskTitle
-              showTimeDisplay
-            />
-          ),
-        },
-      ],
-    }),
+    () =>
+      buildClockRuntimeSlides({
+        backToTopicsLabel,
+        combinedSlides,
+        copy,
+        hoursSlides,
+        minutesSlides,
+        returnToHub,
+      }),
     [backToTopicsLabel, combinedSlides, copy, hoursSlides, minutesSlides, returnToHub]
   );
 
   const lessonCompletionAwardedRef = useRef(false);
-  const isHoursComplete =
-    (sectionProgressSnapshot.hours?.totalCount ?? 0) > 0 &&
-    (sectionProgressSnapshot.hours?.viewedCount ?? 0) >=
-      (sectionProgressSnapshot.hours?.totalCount ?? 0);
-  const isMinutesComplete =
-    (sectionProgressSnapshot.minutes?.totalCount ?? 0) > 0 &&
-    (sectionProgressSnapshot.minutes?.viewedCount ?? 0) >=
-      (sectionProgressSnapshot.minutes?.totalCount ?? 0);
-  const isCombinedComplete =
-    (sectionProgressSnapshot.combined?.totalCount ?? 0) > 0 &&
-    (sectionProgressSnapshot.combined?.viewedCount ?? 0) >=
-      (sectionProgressSnapshot.combined?.totalCount ?? 0);
-  const isCombinedUnlocked = isHoursComplete && isMinutesComplete;
-  const isClockLessonComplete = isHoursComplete && isMinutesComplete && isCombinedComplete;
+  const { isClockLessonComplete, isCombinedUnlocked } = resolveClockLessonCompletionState(
+    sectionProgressSnapshot
+  );
 
   useEffect(() => {
     if (!isClockLessonComplete || lessonCompletionAwardedRef.current) {
@@ -372,127 +638,35 @@ export default function ClockLesson(): React.JSX.Element {
     addXp(reward.xp, reward.progressUpdates, { ownerKey });
     lessonCompletionAwardedRef.current = true;
   }, [isClockLessonComplete, ownerKey]);
-
-  const [completedTrainingSections, setCompletedTrainingSections] = useState<
-    Partial<Record<string, boolean>>
-  >({});
+  const markTrainingSectionComplete = useMemo(
+    () => createClockLessonMarkTrainingSectionComplete(setCompletedTrainingSections),
+    []
+  );
 
   const buildHubSections = useCallback(
     (
       sections: ReadonlyArray<ClockHubSection>,
       sectionProgress: Partial<Record<ClockHubId, unknown>>
-    ) => {
-      const baseSections = buildLessonHubSectionsWithProgress(
+    ) =>
+      buildClockLessonHubSectionsWithTrainingProgress({
+        completedTrainingSections,
+        copy,
+        isCombinedUnlocked,
+        sectionProgress,
         sections,
-        sectionProgress as Partial<Record<ClockHubId, LessonHubSectionProgress>>
-      ).map((section) => {
-        if (!section.isGame && section.id === 'combined' && !isCombinedUnlocked) {
-          return {
-            ...section,
-            description: copy.hubSections.combinedLockedDescription,
-            locked: true,
-            lockedLabel: copy.hubSections.lockedLabel,
-          };
-        }
-
-        return section;
-      });
-
-      return baseSections.map((section) => {
-        if (!section.isGame) {
-          return section;
-        }
-        const viewedCount = completedTrainingSections[section.id] ? 1 : 0;
-
-        return {
-          ...section,
-          progress: {
-            totalCount: 1,
-            viewedCount,
-          },
-        };
-      });
-    },
+      }),
     [completedTrainingSections, copy, isCombinedUnlocked]
   );
 
-  const buildTrainingConfig = (
-    config: ClockTrainingHubConfig
-  ) => {
-    const trainingPills = (
-      <div className='flex gap-2'>
-        <button
-          type='button'
-          aria-label={translateClockLesson(
-            translations,
-            'training.goToPanel',
-            CLOCK_LESSON_COPY_PL.training.goToPanel,
-            { label: copy.training.panelLabel }
-          )}
-          aria-current='step'
-          className={cn(
-            KANGUR_STEP_PILL_CLASSNAME,
-            isCoarsePointer
-              ? 'h-11 min-w-11 w-12 scale-[1.02] touch-manipulation select-none'
-              : 'h-[14px] min-w-[14px] w-8 scale-[1.04]',
-            'bg-indigo-500'
-          )}
-          data-testid='clock-lesson-training-panel-pick_one'
-          disabled
-        />
-      </div>
-    );
-
-    return {
-      sectionId: config.hubId,
-      shell: {
-        accent: 'indigo',
-        description: config.description,
-        headerTestId: 'clock-lesson-training-header',
-        icon: '🕐',
-        maxWidthClassName: 'max-w-lg',
-        navigationPills: trainingPills,
-        shellTestId: 'clock-lesson-training-shell',
-        title: config.title,
-      },
-      onShellFinish: ({ onFinish }: { onFinish: () => void }) => {
-        setCompletedTrainingSections((currentSections) =>
-          currentSections[config.hubId]
-            ? currentSections
-            : {
-                ...currentSections,
-                [config.hubId]: true,
-              }
-        );
-        onFinish();
-      },
-      launchableInstance: {
-        gameId: 'clock_training' as const,
-        instanceId: config.instanceId,
-      },
-      engineOverrides: buildClockLessonEngineOverrides(config.settings),
-    };
-  };
-
-  const games = trainingConfigs.map(buildTrainingConfig) as Array<{
-    sectionId: TrainingCardId;
-    shell: {
-      accent: 'indigo';
-      description: string;
-      headerTestId: string;
-      icon: string;
-      maxWidthClassName: string;
-      navigationPills: React.ReactNode;
-      shellTestId: string;
-      title: string;
-    };
-    onShellFinish: (helpers: { onFinish: () => void }) => void;
-    launchableInstance: {
-      gameId: 'clock_training';
-      instanceId: string;
-    };
-    engineOverrides: KangurGameRuntimeRendererProps;
-  }>;
+  const games = trainingConfigs.map((config) =>
+    buildClockLessonTrainingGame({
+      config,
+      copy,
+      isCoarsePointer,
+      markSectionComplete: markTrainingSectionComplete,
+      translations,
+    })
+  );
   const handleSectionProgress = useCallback(
     (progress: Partial<Record<ClockHubId, unknown>>) => {
       const nextProgress = progress as Partial<

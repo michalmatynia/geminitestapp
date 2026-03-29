@@ -39,7 +39,7 @@ const KANGUR_LAUNCH_ROUTE_OPTIONS = [
     value: 'dedicated_app',
     label: 'Dedicated app',
     description:
-      'Uses the native Kangur deep link so the installed mobile app can open directly.',
+      'Offers a native Kangur app handoff on supported learner routes and keeps the web shell as fallback.',
   },
 ] as const;
 

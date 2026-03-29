@@ -413,6 +413,11 @@ describe('social pipeline jobs handler', () => {
             postId: 'post-2',
             docReferences: ['overview'],
             imageAddonIds: ['addon-3'],
+            prefetchedVisualAnalysis: {
+              summary: 'Updated hero',
+              highlights: ['New CTA'],
+            },
+            requireVisualAnalysisInBody: true,
           },
         },
         progress: {
@@ -477,6 +482,7 @@ describe('social pipeline jobs handler', () => {
             postId: 'post-2',
             docReferenceCount: 1,
             imageAddonCount: 1,
+            usesVisualAnalysisContext: true,
           },
         },
         progress: {

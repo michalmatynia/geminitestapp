@@ -2,7 +2,10 @@
 
 import { usePathname } from 'next/navigation';
 
-import { FrontendCmsRouteLoadingFallback } from '@/features/kangur/ui/components/FrontendCmsRouteLoadingFallback';
+import {
+  FrontendCmsRouteLoadingFallback,
+  type FrontendCmsRouteLoadingVariant,
+} from '@/features/kangur/ui/components/FrontendCmsRouteLoadingFallback';
 import { KANGUR_MAIN_PAGE_KEY } from '@/features/kangur/config/routing';
 import { KangurRouteLoadingFallback } from '@/features/kangur/ui/components/KangurRouteLoadingFallback';
 import { useOptionalFrontendPublicOwner } from '@/features/kangur/ui/FrontendPublicOwnerContext';
@@ -116,11 +119,15 @@ const resolveFrontendRouteLoadingIncludeTopNavigationSkeleton = ({
 
 const shouldRenderKangurFrontendRouteLoadingFallback = (
   publicOwnerContext: ReturnType<typeof useOptionalFrontendPublicOwner>
-): boolean => publicOwnerContext?.publicOwner === 'kangur';
+): boolean =>
+  publicOwnerContext?.publicOwner === 'kangur' ||
+  publicOwnerContext?.routeFamily === 'studiq';
 
 export function FrontendRouteLoadingFallback({
+  cmsVariant,
   includeTopNavigationSkeleton,
 }: {
+  cmsVariant?: FrontendCmsRouteLoadingVariant;
   includeTopNavigationSkeleton?: boolean;
 } = {}): React.JSX.Element {
   const { resolvePendingSnapshot, resolveTransitionTarget } = useKangurRouteAccess();
@@ -156,5 +163,5 @@ export function FrontendRouteLoadingFallback({
     );
   }
 
-  return <FrontendCmsRouteLoadingFallback pathname={pathname} />;
+  return <FrontendCmsRouteLoadingFallback pathname={pathname} variant={cmsVariant} />;
 }

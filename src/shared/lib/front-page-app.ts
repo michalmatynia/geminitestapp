@@ -1,8 +1,9 @@
+import type { FrontendPublicOwner } from '@/shared/lib/frontend-public-route-family';
+
 export const FRONT_PAGE_ALLOWED = new Set(['cms', 'products', 'kangur', 'chatbot', 'notes']);
 
 export type FrontPageStoredApp = 'cms' | 'products' | 'kangur' | 'chatbot' | 'notes';
 export type FrontPageSelectableApp = Exclude<FrontPageStoredApp, 'products'>;
-export type FrontPagePublicOwner = 'cms' | 'kangur';
 export type FrontPageOption = {
   id: FrontPageSelectableApp;
   title: string;
@@ -88,7 +89,7 @@ export const getFrontPageRedirectPath = (
 
 export const getFrontPagePublicOwner = (
   value: string | null | undefined
-): FrontPagePublicOwner => {
+): FrontendPublicOwner => {
   const app = normalizeFrontPageApp(value);
   return app === 'kangur' ? 'kangur' : 'cms';
 };

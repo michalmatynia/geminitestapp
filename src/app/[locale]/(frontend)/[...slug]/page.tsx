@@ -2,8 +2,8 @@ import { getTranslations } from 'next-intl/server';
 import { notFound, redirect } from 'next/navigation';
 import { JSX } from 'react';
 
-import { getKangurPublicAliasHref } from '@/features/kangur/config/routing';
-import { getKangurConfiguredLaunchTarget } from '@/features/kangur/server';
+import { getKangurPublicLaunchHref } from '@/features/kangur/config/routing';
+import { getKangurConfiguredLaunchRoute } from '@/features/kangur/server';
 import { requireAccessibleKangurSlugRoute } from '@/features/kangur/server';
 import { buildLocalizedPathname, normalizeSiteLocale } from '@/shared/lib/i18n/site-locale';
 import { getFrontPagePublicOwner } from '@/shared/lib/front-page-app';
@@ -81,18 +81,20 @@ export default async function LocalizedCmsSlugPage({
   if (await isKangurFrontPageSelected()) {
     await requireAccessibleKangurSlugRoute(slug);
 
-    const resolvedSearchParams = searchParams ? await searchParams : undefined;
-    const launchTarget = await getKangurConfiguredLaunchTarget(slug, resolvedSearchParams);
-    if (launchTarget.href !== launchTarget.fallbackHref) {
-      redirect(launchTarget.href);
-    }
-
     if (slug[0]?.trim().toLowerCase() === 'login') {
       return null;
     }
 
+    const [launchRoute, resolvedSearchParams] = await Promise.all([
+      getKangurConfiguredLaunchRoute(),
+      searchParams ? searchParams : Promise.resolve(undefined),
+    ]);
+
     redirect(
-      buildLocalizedPathname(getKangurPublicAliasHref(slug, resolvedSearchParams), resolvedLocale)
+      buildLocalizedPathname(
+        getKangurPublicLaunchHref(launchRoute, slug, resolvedSearchParams),
+        resolvedLocale
+      )
     );
   }
 

@@ -2,10 +2,10 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const {
   getCmsRepositoryMock,
+  getKangurConfiguredLaunchRouteMock,
   getFrontPagePublicOwnerMock,
   getFrontPageRedirectPathMock,
   getFrontPageSettingMock,
-  getKangurConfiguredLaunchTargetMock,
   getSlugsForDomainMock,
   redirectMock,
   permanentRedirectMock,
@@ -13,10 +13,10 @@ const {
   shouldApplyFrontPageAppSelectionMock,
 } = vi.hoisted(() => ({
   getCmsRepositoryMock: vi.fn(),
+  getKangurConfiguredLaunchRouteMock: vi.fn(),
   getFrontPagePublicOwnerMock: vi.fn(),
   getFrontPageRedirectPathMock: vi.fn(),
   getFrontPageSettingMock: vi.fn(),
-  getKangurConfiguredLaunchTargetMock: vi.fn(),
   getSlugsForDomainMock: vi.fn(),
   redirectMock: vi.fn(),
   permanentRedirectMock: vi.fn(),
@@ -49,17 +49,20 @@ vi.mock('@/shared/lib/front-page-app', () => ({
   getFrontPageRedirectPath: getFrontPageRedirectPathMock,
 }));
 
-vi.mock('@/features/kangur/public', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('@/features/kangur/public')>();
+vi.mock('@/features/kangur/config/routing', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@/features/kangur/config/routing')>();
   return {
     ...actual,
-    getKangurPublicAliasHref: () => '/kangur',
+    getKangurPublicLaunchHref: (route?: string) =>
+      route === 'dedicated_app' ? '/kangur?__kangurLaunch=dedicated_app' : '/kangur',
   };
 });
 
-vi.mock('@/features/kangur/server/launch-route', () => ({
-  getKangurConfiguredLaunchTarget: getKangurConfiguredLaunchTargetMock,
-}));
+vi.mock('@/features/kangur/server', () => {
+  return {
+    getKangurConfiguredLaunchRoute: getKangurConfiguredLaunchRouteMock,
+  };
+});
 
 describe('frontend home launch route', () => {
   beforeEach(() => {
@@ -74,26 +77,18 @@ describe('frontend home launch route', () => {
     getFrontPageRedirectPathMock.mockReturnValue(null);
   });
 
-  it('redirects the root home route to the dedicated Kangur app when configured', async () => {
-    getKangurConfiguredLaunchTargetMock.mockResolvedValue({
-      route: 'dedicated_app',
-      href: 'kangur://',
-      fallbackHref: '/',
-    });
+  it('redirects the root home route into the web shell with a dedicated-app launch hint', async () => {
+    getKangurConfiguredLaunchRouteMock.mockResolvedValue('dedicated_app');
 
     const { default: Home } = await import('@/app/(frontend)/page');
 
-    await expect(Home()).rejects.toThrow('redirect:kangur://');
-    expect(redirectMock).toHaveBeenCalledWith('kangur://');
+    await expect(Home()).rejects.toThrow('redirect:/kangur?__kangurLaunch=dedicated_app');
+    expect(redirectMock).toHaveBeenCalledWith('/kangur?__kangurLaunch=dedicated_app');
     expect(getCmsRepositoryMock).not.toHaveBeenCalled();
   });
 
   it('redirects the web mount to the /kangur alias route when Kangur owns home', async () => {
-    getKangurConfiguredLaunchTargetMock.mockResolvedValue({
-      route: 'web_mobile_view',
-      href: '/',
-      fallbackHref: '/',
-    });
+    getKangurConfiguredLaunchRouteMock.mockResolvedValue('web_mobile_view');
 
     const { default: Home } = await import('@/app/(frontend)/page');
     await expect(Home()).rejects.toThrow('redirect:/kangur');
@@ -101,12 +96,8 @@ describe('frontend home launch route', () => {
     expect(getCmsRepositoryMock).not.toHaveBeenCalled();
   });
 
-  it('does not localize dedicated app redirects on localized home routes', async () => {
-    getKangurConfiguredLaunchTargetMock.mockResolvedValue({
-      route: 'dedicated_app',
-      href: 'kangur://',
-      fallbackHref: '/',
-    });
+  it('omits the default locale prefix on dedicated-app web handoff routes', async () => {
+    getKangurConfiguredLaunchRouteMock.mockResolvedValue('dedicated_app');
 
     const { default: LocalizedHome } = await import('@/app/[locale]/(frontend)/page');
 
@@ -114,17 +105,13 @@ describe('frontend home launch route', () => {
       LocalizedHome({
         params: Promise.resolve({ locale: 'pl' }),
       })
-    ).rejects.toThrow('redirect:kangur://');
-    expect(redirectMock).toHaveBeenCalledWith('kangur://');
+    ).rejects.toThrow('redirect:/kangur?__kangurLaunch=dedicated_app');
+    expect(redirectMock).toHaveBeenCalledWith('/kangur?__kangurLaunch=dedicated_app');
     expect(getCmsRepositoryMock).not.toHaveBeenCalled();
   });
 
   it('redirects localized home routes to the localized /kangur alias when Kangur owns home', async () => {
-    getKangurConfiguredLaunchTargetMock.mockResolvedValue({
-      route: 'web_mobile_view',
-      href: '/',
-      fallbackHref: '/',
-    });
+    getKangurConfiguredLaunchRouteMock.mockResolvedValue('web_mobile_view');
 
     const { default: LocalizedHome } = await import('@/app/[locale]/(frontend)/page');
     await expect(

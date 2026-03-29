@@ -29,16 +29,23 @@ export function SocialSettingsModelsTab({
   visionModelOptionsLoading: boolean;
   isRuntimeLocked?: boolean;
 }) {
-  const settingsTitle = isRuntimeLocked
+  const brainModelTitle = isRuntimeLocked
     ? 'Wait for the current Social runtime job to finish.'
-    : undefined;
+    : brainModelOptionsLoading
+      ? 'Loading AI Brain model options...'
+      : 'Selected brain model';
+  const visionModelTitle = isRuntimeLocked
+    ? 'Wait for the current Social runtime job to finish.'
+    : visionModelOptionsLoading
+      ? 'Loading AI Brain vision model options...'
+      : 'Selected vision model';
   const brainModelSelectProps = {
     value: brainModelId ?? BRAIN_MODEL_DEFAULT_VALUE,
     onValueChange: handleBrainModelChange,
     options: brainModelSelectOptions,
     ariaLabel: 'Selected brain model',
     disabled: brainModelOptionsLoading || isRuntimeLocked,
-    title: settingsTitle ?? 'Selected brain model',
+    title: brainModelTitle,
     variant: 'subtle' as const,
   };
   const visionModelSelectProps = {
@@ -46,7 +53,7 @@ export function SocialSettingsModelsTab({
     onValueChange: handleVisionModelChange,
     options: visionModelSelectOptions,
     ariaLabel: 'Selected vision model',
-    title: settingsTitle ?? 'Selected vision model',
+    title: visionModelTitle,
     disabled: visionModelOptionsLoading || isRuntimeLocked,
     variant: 'subtle' as const,
   };

@@ -35,6 +35,7 @@ type PipelineJobRecord = {
           postId?: string | null;
           docReferenceCount?: number;
           imageAddonCount?: number;
+          usesVisualAnalysisContext?: boolean;
         };
       }
     | unknown;
@@ -237,6 +238,15 @@ export function KangurSocialPipelineQueuePanel({
   const workerHeartbeatLabel = useMemo(() => {
     return formatElapsedLabel(status?.timeSinceWorkerHeartbeat);
   }, [status?.timeSinceWorkerHeartbeat]);
+  const triggerButtonTitle = triggering
+    ? 'Capture queue trigger is already in progress.'
+    : 'Run capture queue now';
+  const refreshButtonTitle = loading ? 'Refreshing queue status...' : 'Refresh queue status';
+  const pauseButtonTitle = togglingPause
+    ? 'Updating queue pause state...'
+    : isPaused
+      ? 'Resume pipeline'
+      : 'Pause pipeline';
 
   if (variant === 'compact') {
     return (
@@ -244,7 +254,7 @@ export function KangurSocialPipelineQueuePanel({
         <div className='flex items-center justify-between'>
           <div className='flex items-center gap-2'>
             <span className='text-xs font-semibold text-foreground'>
-              Capture Queue
+              Runtime Queue
             </span>
             {status ? (
               <SocialJobStatusPill
@@ -266,6 +276,7 @@ export function KangurSocialPipelineQueuePanel({
                 onClick={() => void handleTrigger()}
                 disabled={triggering}
                 aria-label='Run capture queue now'
+                title={triggerButtonTitle}
                 className='gap-1 text-[10px]'
               >
                 <PlayIcon className='size-2.5' />
@@ -278,6 +289,7 @@ export function KangurSocialPipelineQueuePanel({
               onClick={() => void fetchData()}
               disabled={loading}
               aria-label='Refresh'
+              title={refreshButtonTitle}
             >
               <RefreshCwIcon className={`size-3 ${loading ? 'animate-spin' : ''}`} />
             </Button>
@@ -297,10 +309,10 @@ export function KangurSocialPipelineQueuePanel({
         <div className='flex items-center justify-between'>
           <div>
             <div className='text-sm font-semibold text-foreground'>
-              StudiQ Social Capture Queue
+              StudiQ Social Runtime Queue
             </div>
             <div className='text-xs text-muted-foreground'>
-              Automated screenshot capture for social presets via Redis queue. Use the Social pipeline card to generate post drafts.
+              Redis-backed runtime for screenshot capture, image analysis, and post generation across StudiQ Social.
             </div>
           </div>
           <div className='flex items-center gap-2'>
@@ -314,6 +326,7 @@ export function KangurSocialPipelineQueuePanel({
                 onClick={() => void handleTogglePause()}
                 disabled={togglingPause}
                 aria-label={isPaused ? 'Resume pipeline' : 'Pause pipeline'}
+                title={pauseButtonTitle}
                 className='gap-1'
               >
                 {isPaused ? (
@@ -336,6 +349,7 @@ export function KangurSocialPipelineQueuePanel({
                 onClick={() => void handleTrigger()}
                 disabled={triggering}
                 aria-label='Run capture queue now'
+                title={triggerButtonTitle}
                 className='gap-1.5'
               >
                 <PlayIcon className='size-3' />
@@ -348,6 +362,7 @@ export function KangurSocialPipelineQueuePanel({
               onClick={() => void fetchData()}
               disabled={loading}
               aria-label='Refresh queue status'
+              title={refreshButtonTitle}
             >
               <RefreshCwIcon className={`size-3.5 ${loading ? 'animate-spin' : ''}`} />
             </Button>
@@ -502,13 +517,18 @@ function renderJobRow({
   const inputImageAddonCount =
     (job.data as { input?: { imageAddonCount?: number | null } } | null)?.input
       ?.imageAddonCount ?? null;
+  const usesVisualAnalysisContext =
+    (job.data as { input?: { usesVisualAnalysisContext?: boolean } } | null)?.input
+      ?.usesVisualAnalysisContext ?? false;
   const jobLabel =
     jobType === 'manual-post-pipeline'
       ? 'Manual post draft pipeline'
       : jobType === 'manual-post-visual-analysis'
         ? 'Manual image analysis'
         : jobType === 'manual-post-generation'
-          ? 'Manual post generation'
+          ? usesVisualAnalysisContext
+            ? 'Post generation from image analysis'
+            : 'Manual post generation'
           : 'Scheduled capture tick';
   const visualAnalysisHighlightCount =
     jobType === 'manual-post-visual-analysis'
@@ -516,9 +536,10 @@ function renderJobRow({
       : null;
   const generationVisualContextLabel =
     jobType === 'manual-post-generation' &&
-    ((job.progress?.visualSummaryPresent ?? false) ||
+    (usesVisualAnalysisContext ||
+      (job.progress?.visualSummaryPresent ?? false) ||
       ((job.progress?.highlightCount ?? 0) > 0))
-      ? 'Includes visual context'
+      ? 'Uses image-analysis context'
       : null;
   const generationSavedLabel =
     jobType === 'manual-post-generation' && job.result?.saved
@@ -581,6 +602,9 @@ function renderJobRow({
       ? 'Running...'
       : '---';
   const canDelete = job.status === 'completed' || job.status === 'failed';
+  const deleteButtonTitle = deleting
+    ? `Deleting queue job ${job.id}...`
+    : `Delete pipeline job ${job.id}`;
 
   return (
     <tr className='border-b border-border/20'>
@@ -621,6 +645,7 @@ function renderJobRow({
               }}
               disabled={deleting}
               aria-label={`Delete pipeline job ${job.id}`}
+              title={deleteButtonTitle}
               className='h-auto px-0 text-[10px] text-destructive hover:text-destructive'
             >
               {deleting ? 'Deleting...' : 'Delete'}

@@ -2,7 +2,7 @@
  * @vitest-environment jsdom
  */
 
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { ButtonHTMLAttributes, ReactNode } from 'react';
 
@@ -51,6 +51,20 @@ vi.mock('@/features/kangur/shared/ui', () => ({
 }));
 
 import { KangurSocialPipelineQueuePanel } from './KangurSocialPipelineQueuePanel';
+
+function createDeferred<T>(): {
+  promise: Promise<T>;
+  resolve: (value: T | PromiseLike<T>) => void;
+  reject: (reason?: unknown) => void;
+} {
+  let resolve!: (value: T | PromiseLike<T>) => void;
+  let reject!: (reason?: unknown) => void;
+  const promise = new Promise<T>((res, rej) => {
+    resolve = res;
+    reject = rej;
+  });
+  return { promise, resolve, reject };
+}
 
 describe('KangurSocialPipelineQueuePanel', () => {
   beforeEach(() => {
@@ -125,6 +139,121 @@ describe('KangurSocialPipelineQueuePanel', () => {
     });
 
     expect(screen.getByRole('button', { name: 'Run capture queue now' })).toBeInTheDocument();
+  });
+
+  it('shows explicit disabled titles while triggering and deleting queue actions', async () => {
+    const triggerDeferred = createDeferred<Record<string, never>>();
+    const deleteDeferred = createDeferred<{ success: boolean }>();
+    apiPostMock.mockReturnValueOnce(triggerDeferred.promise);
+    apiDeleteMock.mockReturnValueOnce(deleteDeferred.promise);
+    apiGetMock
+      .mockResolvedValueOnce({
+        deliveryMode: 'queue',
+        workerState: 'idle',
+        redisAvailable: true,
+        workerLocal: true,
+        running: true,
+        healthy: true,
+        processing: false,
+        activeCount: 0,
+        waitingCount: 0,
+        failedCount: 0,
+        completedCount: 1,
+        lastPollTime: 0,
+        timeSinceLastPoll: 0,
+        isPaused: false,
+      })
+      .mockResolvedValueOnce([
+        {
+          id: 'job-completed',
+          status: 'completed',
+          data: {
+            type: 'manual-post-pipeline',
+            input: {
+              postId: 'post-42',
+            },
+          },
+          progress: null,
+          result: {
+            type: 'manual-post-pipeline',
+            postId: 'post-42',
+            addonsCreated: 1,
+            failures: 0,
+          },
+          failedReason: null,
+          processedOn: null,
+          finishedOn: null,
+          timestamp: Date.now(),
+          duration: 1_000,
+        },
+      ])
+      .mockResolvedValueOnce({
+        deliveryMode: 'queue',
+        workerState: 'idle',
+        redisAvailable: true,
+        workerLocal: true,
+        running: true,
+        healthy: true,
+        processing: false,
+        activeCount: 0,
+        waitingCount: 0,
+        failedCount: 0,
+        completedCount: 1,
+        lastPollTime: 0,
+        timeSinceLastPoll: 0,
+        isPaused: false,
+      })
+      .mockResolvedValueOnce([
+        {
+          id: 'job-completed',
+          status: 'completed',
+          data: {
+            type: 'manual-post-pipeline',
+            input: {
+              postId: 'post-42',
+            },
+          },
+          progress: null,
+          result: {
+            type: 'manual-post-pipeline',
+            postId: 'post-42',
+            addonsCreated: 1,
+            failures: 0,
+          },
+          failedReason: null,
+          processedOn: null,
+          finishedOn: null,
+          timestamp: Date.now(),
+          duration: 1_000,
+        },
+      ]);
+
+    render(<KangurSocialPipelineQueuePanel />);
+
+    const runCaptureButton = await screen.findByRole('button', { name: 'Run capture queue now' });
+    const deleteButton = await screen.findByRole('button', {
+      name: 'Delete pipeline job job-completed',
+    });
+
+    fireEvent.click(runCaptureButton);
+    fireEvent.click(deleteButton);
+
+    expect(screen.getByRole('button', { name: 'Run capture queue now' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Run capture queue now' })).toHaveAttribute(
+      'title',
+      'Capture queue trigger is already in progress.'
+    );
+    expect(screen.getByRole('button', { name: 'Delete pipeline job job-completed' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Delete pipeline job job-completed' })).toHaveAttribute(
+      'title',
+      'Deleting queue job job-completed...'
+    );
+
+    await act(async () => {
+      triggerDeferred.resolve({});
+      deleteDeferred.resolve({ success: true });
+      await Promise.all([triggerDeferred.promise, deleteDeferred.promise]);
+    });
   });
 
   it('keeps run now visible when the worker is offline but a stale active job is still reported', async () => {
@@ -328,6 +457,7 @@ describe('KangurSocialPipelineQueuePanel', () => {
               postId: 'post-45',
               docReferenceCount: 4,
               imageAddonCount: 2,
+              usesVisualAnalysisContext: true,
             },
           },
           progress: {
@@ -353,14 +483,14 @@ describe('KangurSocialPipelineQueuePanel', () => {
     render(<KangurSocialPipelineQueuePanel />);
 
     expect(await screen.findByText('Manual image analysis')).toBeInTheDocument();
-    expect(screen.getByText('Manual post generation')).toBeInTheDocument();
+    expect(screen.getByText('Post generation from image analysis')).toBeInTheDocument();
     expect(screen.getByText('Post post-44')).toBeInTheDocument();
     expect(screen.getByText('3 visuals')).toBeInTheDocument();
     expect(screen.getByText('2 highlights')).toBeInTheDocument();
     expect(screen.getByText('Post post-45')).toBeInTheDocument();
     expect(screen.getByText('4 docs')).toBeInTheDocument();
     expect(screen.getByText('2 visuals')).toBeInTheDocument();
-    expect(screen.getByText('Includes visual context')).toBeInTheDocument();
+    expect(screen.getByText('Uses image-analysis context')).toBeInTheDocument();
     expect(screen.getByText('Saved to post')).toBeInTheDocument();
   });
 

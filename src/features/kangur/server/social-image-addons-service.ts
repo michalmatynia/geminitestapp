@@ -22,6 +22,7 @@ import {
 } from '@/shared/contracts/kangur-social-image-addons';
 import type { ImageFileSelection } from '@/shared/contracts/files';
 import { operationFailedError } from '@/shared/errors/app-error';
+import { sanitizePlaywrightCookiesFromHeader } from '@/shared/lib/playwright/storage-state';
 import { ErrorSystem } from '@/features/kangur/shared/utils/observability/error-system';
 import { KANGUR_STOREFRONT_APPEARANCE_STORAGE_KEY } from '@/features/kangur/storefront-appearance-settings';
 
@@ -134,40 +135,13 @@ const normalizeCaptureAppearanceMode = (
 ): KangurSocialCaptureAppearanceMode | null =>
   value === 'default' || value === 'dawn' || value === 'sunset' || value === 'dark' ? value : null;
 
-const parseCookiesForPlaywright = (
-  cookieHeader: string,
-  sourceUrl: string
-): Array<{ name: string; value: string; domain: string; path: string }> => {
-  let domain: string;
-  try {
-    domain = new URL(sourceUrl).hostname;
-  } catch {
-    domain = 'localhost';
-  }
-  return cookieHeader
-    .split(';')
-    .map((pair) => pair.trim())
-    .filter(Boolean)
-    .map((pair) => {
-      const eqIdx = pair.indexOf('=');
-      if (eqIdx < 0) return null;
-      return {
-        name: pair.slice(0, eqIdx).trim(),
-        value: pair.slice(eqIdx + 1).trim(),
-        domain,
-        path: '/',
-      };
-    })
-    .filter((c): c is NonNullable<typeof c> => c !== null && c.name.length > 0);
-};
-
 const resolvePlaywrightStorageState = (params: {
   cookieHeader: string | null | undefined;
   sourceUrl: string;
   appearanceMode: string | null | undefined;
 }):
   | {
-      cookies: Array<{ name: string; value: string; domain: string; path: string }>;
+      cookies: Array<Record<string, unknown>>;
       origins: Array<{
         origin: string;
         localStorage: Array<{ name: string; value: string }>;
@@ -175,7 +149,7 @@ const resolvePlaywrightStorageState = (params: {
     }
   | null => {
   const cookies = params.cookieHeader
-    ? parseCookiesForPlaywright(params.cookieHeader, params.sourceUrl)
+    ? sanitizePlaywrightCookiesFromHeader(params.cookieHeader, params.sourceUrl)
     : [];
   const appearanceMode = normalizeCaptureAppearanceMode(params.appearanceMode);
   let origin: string | null = null;

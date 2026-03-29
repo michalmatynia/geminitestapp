@@ -52,14 +52,20 @@ vi.mock('@/features/kangur/shared/ui', async () => {
       title: string;
       onSave?: () => void;
       isSaveDisabled?: boolean;
+      saveTitle?: string;
       saveText?: string;
       children: React.ReactNode;
     }) => {
-      const { open, title, onSave, isSaveDisabled, saveText = 'Save', children } = props;
+      const { open, title, onSave, isSaveDisabled, saveTitle, saveText = 'Save', children } = props;
       return open ? (
         <div role='dialog' aria-label={title}>
           <h2>{title}</h2>
-          <button type='button' disabled={Boolean(isSaveDisabled)} onClick={() => onSave?.()}>
+          <button
+            type='button'
+            disabled={Boolean(isSaveDisabled)}
+            title={saveTitle}
+            onClick={() => onSave?.()}
+          >
             {saveText}
           </button>
           {children}
@@ -502,8 +508,6 @@ describe('AdminKangurSocialSettingsModal', () => {
       />
     );
 
-    expect(screen.getByText('Runtime jobs:')).toBeInTheDocument();
-    expect(screen.getByText('Full pipeline: Running')).toBeInTheDocument();
     expect(screen.getByLabelText('Selected brain model')).toBeDisabled();
     expect(screen.getByLabelText('Selected brain model')).toHaveAttribute(
       'title',
@@ -529,6 +533,106 @@ describe('AdminKangurSocialSettingsModal', () => {
     expect(screen.getByLabelText('Default LinkedIn connection')).toHaveAttribute(
       'title',
       'Wait for the current Social runtime job to finish.'
+    );
+  });
+
+  it('explains disabled model and publishing selects for loading and missing LinkedIn setup states', () => {
+    usePlaywrightPersonasMock.mockReturnValue({
+      data: [],
+      isLoading: false,
+      error: null,
+    });
+    useSocialPostContextMock.mockReturnValue(
+      buildSocialPostContextState({
+        brainModelOptions: {
+          effectiveModelId: 'gpt-4.1-mini',
+          models: ['gpt-4.1-mini', 'gpt-4.1'],
+          isLoading: true,
+          sourceWarnings: [],
+          assignment: {
+            enabled: true,
+            provider: 'model',
+            modelId: 'gpt-4.1-mini',
+          },
+          refresh: vi.fn(),
+        },
+        visionModelOptions: {
+          effectiveModelId: 'gpt-4.1',
+          models: ['gpt-4.1', 'gpt-4o'],
+          isLoading: true,
+          sourceWarnings: [],
+          assignment: {
+            enabled: true,
+            provider: 'model',
+            modelId: 'gpt-4.1',
+          },
+          refresh: vi.fn(),
+        },
+        linkedinIntegration: null,
+        linkedinConnectionId: null,
+        linkedinConnections: [],
+      })
+    );
+
+    render(
+      <AdminKangurSocialSettingsModal
+        open={true}
+        onClose={vi.fn()}
+        onSave={vi.fn()}
+        isSaving={false}
+        hasUnsavedChanges={false}
+      />
+    );
+
+    expect(screen.getByLabelText('Selected brain model')).toBeDisabled();
+    expect(screen.getByLabelText('Selected brain model')).toHaveAttribute(
+      'title',
+      'Loading AI Brain model options...'
+    );
+    expect(screen.getByLabelText('Selected vision model')).toBeDisabled();
+    expect(screen.getByLabelText('Selected vision model')).toHaveAttribute(
+      'title',
+      'Loading AI Brain vision model options...'
+    );
+
+    fireEvent.click(screen.getByRole('tab', { name: 'Publishing' }));
+
+    expect(screen.getByLabelText('Default LinkedIn connection')).toBeDisabled();
+    expect(screen.getByLabelText('Default LinkedIn connection')).toHaveAttribute(
+      'title',
+      'Create LinkedIn integration first'
+    );
+  });
+
+  it('explains when LinkedIn publishing is disabled because no connections are available yet', () => {
+    usePlaywrightPersonasMock.mockReturnValue({
+      data: [],
+      isLoading: false,
+      error: null,
+    });
+    useSocialPostContextMock.mockReturnValue(
+      buildSocialPostContextState({
+        linkedinConnectionId: null,
+        linkedinConnections: [],
+      })
+    );
+
+    render(
+      <AdminKangurSocialSettingsModal
+        open={true}
+        onClose={vi.fn()}
+        onSave={vi.fn()}
+        isSaving={false}
+        hasUnsavedChanges={false}
+      />
+    );
+
+    fireEvent.click(screen.getByRole('tab', { name: 'Publishing' }));
+
+    expect(screen.getByLabelText('Default LinkedIn connection')).toBeDisabled();
+    expect(screen.getByLabelText('Default LinkedIn connection')).toHaveAttribute(
+      'title',
+      'Add a LinkedIn connection in Admin > Integrations to use it here.'
     );
   });
 
@@ -562,6 +666,10 @@ describe('AdminKangurSocialSettingsModal', () => {
     );
 
     expect(screen.getByRole('button', { name: 'Save Settings' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Save Settings' })).toHaveAttribute(
+      'title',
+      'Wait for the current Social runtime job to finish.'
+    );
   });
 
   it('blocks the documentation editor while a full pipeline job is still in flight', () => {
@@ -597,7 +705,15 @@ describe('AdminKangurSocialSettingsModal', () => {
     fireEvent.click(screen.getByRole('tab', { name: 'Documentation' }));
 
     expect(screen.getByLabelText('Documentation references')).toBeDisabled();
+    expect(screen.getByLabelText('Documentation references')).toHaveAttribute(
+      'title',
+      'Wait for the current Social runtime job to finish.'
+    );
     expect(screen.getByLabelText('Notes for the Brain generator')).toBeDisabled();
+    expect(screen.getByLabelText('Notes for the Brain generator')).toHaveAttribute(
+      'title',
+      'Wait for the current Social runtime job to finish.'
+    );
     expect(screen.getByRole('button', { name: 'Load context' })).toBeDisabled();
     expect(screen.getByRole('button', { name: 'Load context' })).toHaveAttribute(
       'title',
@@ -708,15 +824,42 @@ describe('AdminKangurSocialSettingsModal', () => {
       'Wait for the current Social runtime job to finish.'
     );
     expect(screen.getByLabelText('Add-on title')).toBeDisabled();
+    expect(screen.getByLabelText('Add-on title')).toHaveAttribute(
+      'title',
+      'Wait for the current Social runtime job to finish.'
+    );
     expect(screen.getByLabelText('Source URL')).toBeDisabled();
+    expect(screen.getByLabelText('Source URL')).toHaveAttribute(
+      'title',
+      'Wait for the current Social runtime job to finish.'
+    );
     expect(screen.getByLabelText('Optional selector')).toBeDisabled();
+    expect(screen.getByLabelText('Optional selector')).toHaveAttribute(
+      'title',
+      'Wait for the current Social runtime job to finish.'
+    );
     expect(screen.getByLabelText('Wait before capture (ms)')).toBeDisabled();
+    expect(screen.getByLabelText('Wait before capture (ms)')).toHaveAttribute(
+      'title',
+      'Wait for the current Social runtime job to finish.'
+    );
     expect(screen.getByLabelText('Optional description')).toBeDisabled();
+    expect(screen.getByLabelText('Optional description')).toHaveAttribute(
+      'title',
+      'Wait for the current Social runtime job to finish.'
+    );
     expect(screen.getAllByDisplayValue('https://studiq.example.com')).toHaveLength(2);
     screen
       .getAllByDisplayValue('https://studiq.example.com')
-      .forEach((element) => expect(element).toBeDisabled());
+      .forEach((element) => {
+        expect(element).toBeDisabled();
+        expect(element).toHaveAttribute('title', 'Wait for the current Social runtime job to finish.');
+      });
     expect(screen.getByRole('combobox')).toBeDisabled();
+    expect(screen.getByRole('combobox')).toHaveAttribute(
+      'title',
+      'Wait for the current Social runtime job to finish.'
+    );
     expect(screen.getByRole('button', { name: 'Select all' })).toBeDisabled();
     expect(screen.getByRole('button', { name: 'Select all' })).toHaveAttribute(
       'title',

@@ -5,6 +5,9 @@
 import { act, renderHook } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { ApiError } from '@/shared/lib/api-client';
+import { KANGUR_STOREFRONT_APPEARANCE_STORAGE_KEY } from '@/features/kangur/storefront-appearance-settings';
+
 import { emptyAddonForm } from '../AdminKangurSocialPage.Constants';
 
 const {
@@ -65,7 +68,6 @@ vi.mock('@/features/kangur/shared/utils/observability/error-system-client', () =
 }));
 
 import { useSocialImageAddons } from './useSocialImageAddons';
-import { KANGUR_STOREFRONT_APPEARANCE_STORAGE_KEY } from '@/features/kangur/storefront-appearance-settings';
 
 describe('useSocialImageAddons', () => {
   beforeEach(() => {
@@ -246,6 +248,42 @@ describe('useSocialImageAddons', () => {
         programmableRouteCount: 1,
         playwrightPersonaId: 'persona-1',
         isProgrammableCapture: true,
+      })
+    );
+  });
+
+  it('surfaces the batch capture mutation error message', async () => {
+    batchCaptureMutateAsyncMock.mockRejectedValueOnce(
+      new ApiError('Playwright batch capture timed out.', 500)
+    );
+
+    const { result } = renderHook(() =>
+      useSocialImageAddons({
+        addonForm: emptyAddonForm,
+        setAddonForm: vi.fn(),
+        batchCaptureBaseUrl: 'https://example.com',
+        batchCapturePresetIds: ['preset-1'],
+        batchCapturePresetLimit: 2,
+        buildSocialContext: (overrides?: Record<string, unknown>) => ({
+          postId: 'post-1',
+          ...overrides,
+        }),
+      })
+    );
+
+    await expect(result.current.runBatchCapture()).rejects.toThrow(
+      'Playwright batch capture timed out.'
+    );
+
+    expect(toastMock).toHaveBeenCalledWith('Playwright batch capture timed out.', {
+      variant: 'error',
+    });
+    expect(trackKangurClientEventMock).toHaveBeenCalledWith(
+      'kangur_social_batch_capture_failed',
+      expect.objectContaining({
+        postId: 'post-1',
+        error: true,
+        errorMessage: 'Playwright batch capture timed out.',
       })
     );
   });

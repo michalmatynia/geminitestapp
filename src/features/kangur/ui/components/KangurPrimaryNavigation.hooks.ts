@@ -35,6 +35,243 @@ type KangurPrimaryNavigationStateInput = Pick<
   | 'showParentDashboard'
 >;
 
+type KangurPrimaryNavigationSessionState = {
+  activeLearner: NonNullable<NonNullable<ReturnType<typeof useOptionalKangurAuth>>['user']>['activeLearner'] | null;
+  authUser: NonNullable<ReturnType<typeof useOptionalKangurAuth>>['user'] | null;
+  effectiveCanManageLearners: boolean;
+  effectiveIsAuthenticated: boolean;
+  effectiveShowParentDashboard: boolean;
+  hasActiveLearner: boolean;
+  isLoggingOut: boolean;
+  isParentAccount: boolean;
+};
+
+type KangurPrimaryNavigationMenuState = {
+  shouldRenderElevatedUserMenu: boolean;
+  shouldRenderProfileMenu: boolean;
+};
+
+type KangurPrimaryNavigationUiState = {
+  closeMobileMenu: () => void;
+  isAgeGroupModalOpen: boolean;
+  isCoarsePointer: boolean;
+  isMobileMenuOpen: boolean;
+  isMobileViewport: boolean;
+  isSubjectModalOpen: boolean;
+  isTutorHidden: boolean;
+  setIsAgeGroupModalOpen: React.Dispatch<React.SetStateAction<boolean>>;
+  setIsMobileMenuOpen: React.Dispatch<React.SetStateAction<boolean>>;
+  setIsSubjectModalOpen: React.Dispatch<React.SetStateAction<boolean>>;
+  setIsTutorHidden: React.Dispatch<React.SetStateAction<boolean>>;
+  toggleMobileMenu: () => void;
+};
+
+function resolveKangurPrimaryNavigationAuthUser(
+  auth: ReturnType<typeof useOptionalKangurAuth>
+): NonNullable<ReturnType<typeof useOptionalKangurAuth>>['user'] | null {
+  return auth?.user ?? null;
+}
+
+function resolveKangurPrimaryNavigationActiveLearner(
+  authUser: NonNullable<ReturnType<typeof useOptionalKangurAuth>>['user'] | null
+): {
+  activeLearner: NonNullable<NonNullable<ReturnType<typeof useOptionalKangurAuth>>['user']>['activeLearner'] | null;
+  hasActiveLearner: boolean;
+} {
+  const activeLearner = authUser?.activeLearner ?? null;
+  const activeLearnerId = activeLearner?.id?.trim() ?? '';
+
+  return {
+    activeLearner,
+    hasActiveLearner: activeLearnerId.length > 0,
+  };
+}
+
+function resolveKangurPrimaryNavigationEffectiveAuthState({
+  auth,
+  isAuthenticated,
+}: {
+  auth: ReturnType<typeof useOptionalKangurAuth>;
+  isAuthenticated: boolean | undefined;
+}): { effectiveIsAuthenticated: boolean; isLoggingOut: boolean } {
+  return {
+    effectiveIsAuthenticated: Boolean(auth?.isAuthenticated ?? isAuthenticated),
+    isLoggingOut: auth?.isLoggingOut ?? false,
+  };
+}
+
+function resolveKangurPrimaryNavigationEffectiveCanManageLearners({
+  authUser,
+  canManageLearners,
+}: {
+  authUser: NonNullable<ReturnType<typeof useOptionalKangurAuth>>['user'] | null;
+  canManageLearners: boolean | undefined;
+}): boolean {
+  if (authUser) {
+    return Boolean(authUser.canManageLearners);
+  }
+
+  return Boolean(canManageLearners);
+}
+
+function resolveKangurPrimaryNavigationEffectiveShowParentDashboard({
+  canManageLearners,
+  effectiveCanManageLearners,
+  showParentDashboard,
+}: {
+  canManageLearners: boolean | undefined;
+  effectiveCanManageLearners: boolean;
+  showParentDashboard: boolean | undefined;
+}): boolean {
+  return effectiveCanManageLearners && (showParentDashboard ?? Boolean(canManageLearners));
+}
+
+function resolveKangurPrimaryNavigationSessionState({
+  auth,
+  canManageLearners,
+  isAuthenticated,
+  showParentDashboard,
+}: {
+  auth: ReturnType<typeof useOptionalKangurAuth>;
+  canManageLearners: boolean | undefined;
+  isAuthenticated: boolean | undefined;
+  showParentDashboard: boolean | undefined;
+}): KangurPrimaryNavigationSessionState {
+  const authUser = resolveKangurPrimaryNavigationAuthUser(auth);
+  const { activeLearner, hasActiveLearner } = resolveKangurPrimaryNavigationActiveLearner(authUser);
+  const { effectiveIsAuthenticated, isLoggingOut } =
+    resolveKangurPrimaryNavigationEffectiveAuthState({
+      auth,
+      isAuthenticated,
+    });
+  const effectiveCanManageLearners = resolveKangurPrimaryNavigationEffectiveCanManageLearners({
+    authUser,
+    canManageLearners,
+  });
+
+  return {
+    activeLearner,
+    authUser,
+    effectiveCanManageLearners,
+    effectiveIsAuthenticated,
+    effectiveShowParentDashboard: resolveKangurPrimaryNavigationEffectiveShowParentDashboard({
+      canManageLearners,
+      effectiveCanManageLearners,
+      showParentDashboard,
+    }),
+    hasActiveLearner,
+    isLoggingOut,
+    isParentAccount: authUser?.actorType === 'parent',
+  };
+}
+
+function buildKangurPrimaryNavigationElevatedSessionUser({
+  authUser,
+  elevatedSessionSnapshot,
+}: {
+  authUser: NonNullable<ReturnType<typeof useOptionalKangurAuth>>['user'] | null;
+  elevatedSessionSnapshot: NonNullable<ReturnType<typeof useKangurElevatedSession>['elevatedUser']>;
+}) {
+  return {
+    ...elevatedSessionSnapshot,
+    email: resolveKangurPrimaryNavigationElevatedSessionEmail(authUser, elevatedSessionSnapshot),
+    name: resolveKangurPrimaryNavigationElevatedSessionName(authUser, elevatedSessionSnapshot),
+  };
+}
+
+function resolveKangurPrimaryNavigationElevatedSessionEmail(
+  authUser: NonNullable<ReturnType<typeof useOptionalKangurAuth>>['user'] | null,
+  elevatedSessionSnapshot: NonNullable<ReturnType<typeof useKangurElevatedSession>['elevatedUser']>
+): string | null {
+  return elevatedSessionSnapshot.email ?? authUser?.email?.trim() ?? null;
+}
+
+function resolveKangurPrimaryNavigationElevatedSessionName(
+  authUser: NonNullable<ReturnType<typeof useOptionalKangurAuth>>['user'] | null,
+  elevatedSessionSnapshot: NonNullable<ReturnType<typeof useKangurElevatedSession>['elevatedUser']>
+): string | null {
+  return elevatedSessionSnapshot.name ?? authUser?.full_name?.trim() ?? null;
+}
+
+function resolveKangurPrimaryNavigationElevatedSessionUser({
+  authUser,
+  elevatedSessionSnapshot,
+}: {
+  authUser: NonNullable<ReturnType<typeof useOptionalKangurAuth>>['user'] | null;
+  elevatedSessionSnapshot: ReturnType<typeof useKangurElevatedSession>['elevatedUser'];
+}) {
+  if (!elevatedSessionSnapshot) {
+    return null;
+  }
+
+  return buildKangurPrimaryNavigationElevatedSessionUser({
+    authUser,
+    elevatedSessionSnapshot,
+  });
+}
+
+function resolveKangurPrimaryNavigationMenuState({
+  effectiveIsAuthenticated,
+  elevatedSessionUser,
+  hasActiveLearner,
+  isParentAccount,
+}: {
+  effectiveIsAuthenticated: boolean;
+  elevatedSessionUser: ReturnType<typeof resolveKangurPrimaryNavigationElevatedSessionUser>;
+  hasActiveLearner: boolean;
+  isParentAccount: boolean;
+}): KangurPrimaryNavigationMenuState {
+  return {
+    shouldRenderElevatedUserMenu:
+      effectiveIsAuthenticated && Boolean(elevatedSessionUser) && !hasActiveLearner,
+    shouldRenderProfileMenu:
+      effectiveIsAuthenticated &&
+      (!isParentAccount || hasActiveLearner) &&
+      (!elevatedSessionUser || hasActiveLearner),
+  };
+}
+
+function useKangurPrimaryNavigationUiState(
+  currentPage: KangurPrimaryNavigationStateInput['currentPage']
+): KangurPrimaryNavigationUiState {
+  const [isTutorHidden, setIsTutorHidden] = useState(() => loadPersistedTutorVisibilityHidden());
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isSubjectModalOpen, setIsSubjectModalOpen] = useState(false);
+  const [isAgeGroupModalOpen, setIsAgeGroupModalOpen] = useState(false);
+  const isMobileViewport = useKangurMobileBreakpoint();
+  const isCoarsePointer = useKangurCoarsePointer();
+
+  useEffect(() => subscribeToTutorVisibilityChanges(setIsTutorHidden), []);
+
+  useEffect(() => {
+    if (!isMobileViewport) {
+      setIsMobileMenuOpen(false);
+    }
+  }, [isMobileViewport]);
+
+  useEffect(() => {
+    setIsMobileMenuOpen(false);
+  }, [currentPage]);
+
+  const closeMobileMenu = useCallback((): void => setIsMobileMenuOpen(false), []);
+  const toggleMobileMenu = useCallback((): void => setIsMobileMenuOpen((prev) => !prev), []);
+
+  return {
+    closeMobileMenu,
+    isAgeGroupModalOpen,
+    isCoarsePointer,
+    isMobileMenuOpen,
+    isMobileViewport,
+    isSubjectModalOpen,
+    isTutorHidden,
+    setIsAgeGroupModalOpen,
+    setIsMobileMenuOpen,
+    setIsSubjectModalOpen,
+    setIsTutorHidden,
+    toggleMobileMenu,
+  };
+}
+
 export function useKangurPrimaryNavigationState({
   canManageLearners,
   currentPage,
@@ -57,59 +294,53 @@ export function useKangurPrimaryNavigationState({
     [normalizedLocale]
   );
   const navigationLabel = navLabel ?? fallbackCopy.navLabel;
-
-  const effectiveIsAuthenticated = auth?.isAuthenticated ?? isAuthenticated;
-  const effectiveCanManageLearners = auth?.user
-    ? Boolean(auth.user.canManageLearners)
-    : canManageLearners;
-  const effectiveShowParentDashboard =
-    effectiveCanManageLearners && (showParentDashboard ?? canManageLearners);
-  const authUser = auth?.user ?? null;
-  const isLoggingOut = auth?.isLoggingOut ?? false;
-  const isParentAccount = authUser?.actorType === 'parent';
-  const activeLearner = authUser?.activeLearner ?? null;
-  const activeLearnerId = activeLearner?.id?.trim() ?? '';
-  const hasActiveLearner = activeLearnerId.length > 0;
-  
-  const elevatedSessionUser = useMemo(() => {
-    if (!elevatedSessionSnapshot) return null;
-    return {
-      ...elevatedSessionSnapshot,
-      email: elevatedSessionSnapshot.email ?? authUser?.email?.trim() ?? null,
-      name: elevatedSessionSnapshot.name ?? authUser?.full_name?.trim() ?? null,
-    };
-  }, [authUser?.email, authUser?.full_name, elevatedSessionSnapshot]);
-
+  const {
+    activeLearner,
+    authUser,
+    effectiveCanManageLearners,
+    effectiveIsAuthenticated,
+    effectiveShowParentDashboard,
+    hasActiveLearner,
+    isLoggingOut,
+    isParentAccount,
+  } = resolveKangurPrimaryNavigationSessionState({
+    auth,
+    canManageLearners,
+    isAuthenticated,
+    showParentDashboard,
+  });
+  const elevatedSessionUser = useMemo(
+    () =>
+      resolveKangurPrimaryNavigationElevatedSessionUser({
+        authUser,
+        elevatedSessionSnapshot,
+      }),
+    [authUser, elevatedSessionSnapshot]
+  );
   const profileAvatar = getKangurAvatarById(activeLearner?.avatarId);
-  const shouldRenderElevatedUserMenu =
-    effectiveIsAuthenticated && Boolean(elevatedSessionUser) && !hasActiveLearner;
-  const shouldRenderProfileMenu =
-    effectiveIsAuthenticated &&
-    (!isParentAccount || hasActiveLearner) &&
-    (!elevatedSessionUser || hasActiveLearner);
-
-  const [isTutorHidden, setIsTutorHidden] = useState(() => loadPersistedTutorVisibilityHidden());
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [isSubjectModalOpen, setIsSubjectModalOpen] = useState(false);
-  const [isAgeGroupModalOpen, setIsAgeGroupModalOpen] = useState(false);
-  
+  const { shouldRenderElevatedUserMenu, shouldRenderProfileMenu } =
+    resolveKangurPrimaryNavigationMenuState({
+      effectiveIsAuthenticated,
+      elevatedSessionUser,
+      hasActiveLearner,
+      isParentAccount,
+    });
   const { subject, setSubject } = useKangurSubjectFocus();
   const { ageGroup, setAgeGroup } = useKangurAgeGroupFocus();
-  const isMobileViewport = useKangurMobileBreakpoint();
-  const isCoarsePointer = useKangurCoarsePointer();
-
-  useEffect(() => subscribeToTutorVisibilityChanges(setIsTutorHidden), []);
-
-  useEffect(() => {
-    if (!isMobileViewport) setIsMobileMenuOpen(false);
-  }, [isMobileViewport]);
-
-  useEffect(() => {
-    setIsMobileMenuOpen(false);
-  }, [currentPage]);
-
-  const closeMobileMenu = useCallback((): void => setIsMobileMenuOpen(false), []);
-  const toggleMobileMenu = useCallback((): void => setIsMobileMenuOpen((prev) => !prev), []);
+  const {
+    closeMobileMenu,
+    isAgeGroupModalOpen,
+    isCoarsePointer,
+    isMobileMenuOpen,
+    isMobileViewport,
+    isSubjectModalOpen,
+    isTutorHidden,
+    setIsAgeGroupModalOpen,
+    setIsMobileMenuOpen,
+    setIsSubjectModalOpen,
+    setIsTutorHidden,
+    toggleMobileMenu,
+  } = useKangurPrimaryNavigationUiState(currentPage);
 
   return {
     auth,

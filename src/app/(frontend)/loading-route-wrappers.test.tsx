@@ -46,33 +46,29 @@ describe('frontend loading route wrappers', () => {
 
     expect(screen.getAllByTestId('frontend-route-loading-fallback-probe')).toHaveLength(2);
     expect(frontendRouteLoadingFallbackMock).toHaveBeenCalledTimes(2);
+    expect(frontendRouteLoadingFallbackMock.mock.calls.map(([props]) => props)).toEqual([
+      { cmsVariant: 'home' },
+      {},
+    ]);
   });
 
-  it('renders route-specific CMS fallbacks for product and preview loaders', async () => {
-    const { default: ProductLoading } = await import('@/app/(frontend)/products/[id]/loading');
-    const { default: PreviewLoading } = await import('@/app/(frontend)/preview/[id]/loading');
-    const { default: LocalizedProductLoading } = await import(
-      '@/app/[locale]/(frontend)/products/[id]/loading'
-    );
-    const { default: LocalizedPreviewLoading } = await import(
-      '@/app/[locale]/(frontend)/preview/[id]/loading'
+  it('renders route-specific CMS fallbacks for remaining standalone public loaders', async () => {
+    const { default: LoginLoading } = await import('@/app/(frontend)/login/loading');
+    const { default: LocalizedLoginLoading } = await import(
+      '@/app/[locale]/(frontend)/login/loading'
     );
 
     render(
       <>
-        <ProductLoading />
-        <PreviewLoading />
-        <LocalizedProductLoading />
-        <LocalizedPreviewLoading />
+        <LoginLoading />
+        <LocalizedLoginLoading />
       </>
     );
 
-    expect(screen.getAllByTestId('frontend-cms-route-loading-fallback-probe')).toHaveLength(4);
+    expect(screen.getAllByTestId('frontend-cms-route-loading-fallback-probe')).toHaveLength(2);
     expect(frontendCmsRouteLoadingFallbackMock.mock.calls.map(([props]) => props)).toEqual([
-      { pathname: '/products/loading' },
-      { pathname: '/preview/loading' },
-      { pathname: '/en/products/loading' },
-      { pathname: '/en/preview/loading' },
+      { pathname: null, variant: 'page' },
+      { pathname: null, variant: 'page' },
     ]);
   });
 
@@ -91,5 +87,29 @@ describe('frontend loading route wrappers', () => {
 
     expect(screen.getAllByTestId('frontend-route-loading-fallback-probe')).toHaveLength(2);
     expect(frontendRouteLoadingFallbackMock).toHaveBeenCalledTimes(2);
+    expect(frontendRouteLoadingFallbackMock.mock.calls.map(([props]) => props)).toEqual([
+      { cmsVariant: 'home' },
+      {},
+    ]);
+  });
+
+  it('passes the page variant through the catch-all frontend wrappers', async () => {
+    const { default: FrontendSlugLoading } = await import('@/app/(frontend)/[...slug]/loading');
+    const { default: LocalizedFrontendSlugLoading } = await import(
+      '@/app/[locale]/(frontend)/[...slug]/loading'
+    );
+
+    render(
+      <>
+        <FrontendSlugLoading />
+        <LocalizedFrontendSlugLoading />
+      </>
+    );
+
+    expect(screen.getAllByTestId('frontend-route-loading-fallback-probe')).toHaveLength(2);
+    expect(frontendRouteLoadingFallbackMock.mock.calls.map(([props]) => props)).toEqual([
+      { cmsVariant: 'page', includeTopNavigationSkeleton: true },
+      { cmsVariant: 'page', includeTopNavigationSkeleton: true },
+    ]);
   });
 });

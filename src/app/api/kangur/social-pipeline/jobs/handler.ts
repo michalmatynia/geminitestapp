@@ -83,6 +83,8 @@ const sanitizeJobData = (data: unknown): unknown => {
         postId?: string | null;
         docReferences?: string[];
         imageAddonIds?: string[];
+        prefetchedVisualAnalysis?: unknown;
+        requireVisualAnalysisInBody?: boolean;
       };
     };
 
@@ -92,6 +94,9 @@ const sanitizeJobData = (data: unknown): unknown => {
         postId: manual.input?.postId ?? null,
         docReferenceCount: manual.input?.docReferences?.length ?? 0,
         imageAddonCount: manual.input?.imageAddonIds?.length ?? 0,
+        usesVisualAnalysisContext: Boolean(
+          manual.input?.prefetchedVisualAnalysis || manual.input?.requireVisualAnalysisInBody
+        ),
       },
     };
   }

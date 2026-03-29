@@ -15,7 +15,12 @@ import {
 } from '@/features/kangur/server/social-image-addons-batch-jobs';
 import { ErrorSystem } from '@/features/kangur/shared/utils/observability/error-system';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
-import { forbiddenError } from '@/shared/errors/app-error';
+import {
+  AppErrorCodes,
+  createAppError,
+  forbiddenError,
+  isAppError,
+} from '@/shared/errors/app-error';
 import { optionalTrimmedQueryString } from '@/shared/lib/api/query-schema';
 
 export const querySchema = z.object({
@@ -25,6 +30,23 @@ export const querySchema = z.object({
 const bodySchema = kangurSocialImageAddonsBatchPayloadSchema.extend({
   async: z.boolean().optional(),
 });
+
+const surfaceBatchCaptureError = (error: unknown): unknown => {
+  if (!isAppError(error) || error.code !== AppErrorCodes.operationFailed) {
+    return error;
+  }
+
+  return createAppError(error.message, {
+    code: error.code,
+    httpStatus: error.httpStatus,
+    cause: error.cause,
+    meta: error.meta,
+    expected: true,
+    critical: error.critical,
+    retryable: error.retryable,
+    ...(error.retryAfterMs !== undefined ? { retryAfterMs: error.retryAfterMs } : {}),
+  });
+};
 
 export async function getKangurSocialImageAddonsBatchHandler(
   req: NextRequest,
@@ -138,12 +160,13 @@ export async function postKangurSocialImageAddonsBatchHandler(
 
     return NextResponse.json(result, { headers: { 'Cache-Control': 'no-store' } });
   } catch (error) {
-    void ErrorSystem.captureException(error, {
+    const surfacedError = surfaceBatchCaptureError(error);
+    void ErrorSystem.captureException(surfacedError, {
       service: 'kangur.social-image-addons',
       action: 'apiBatch',
       durationMs: Date.now() - startedAt,
       baseUrl,
     });
-    throw error;
+    throw surfacedError;
   }
 }

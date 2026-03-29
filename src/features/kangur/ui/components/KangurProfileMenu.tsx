@@ -55,14 +55,16 @@ const isTransitionSourceActive = ({
 const getProfileMenuFallbackLabel = (
   locale: ReturnType<typeof normalizeSiteLocale>
 ): string => {
-  const labelsByLocale = {
-    de: 'Profil',
-    en: 'Profile',
-    pl: 'Profil',
-    uk: 'Профіль',
-  } as const satisfies Record<ReturnType<typeof normalizeSiteLocale>, string>;
-
-  return labelsByLocale[locale];
+  switch (locale) {
+    case 'en':
+      return 'Profile';
+    case 'uk':
+      return 'Профіль';
+    case 'de':
+    case 'pl':
+    default:
+      return 'Profil';
+  }
 };
 
 const resolveKangurProfileMenuClassName = ({
@@ -78,6 +80,43 @@ const resolveKangurProfileMenuClassName = ({
   ]
     .filter(Boolean)
     .join(' ');
+
+const resolveKangurProfileMenuTransitionState = ({
+  routeTransitionState,
+  transitionSource,
+}: {
+  routeTransitionState: ReturnType<typeof useOptionalKangurRouteTransitionState>;
+  transitionSource: string | undefined;
+}): boolean =>
+  isTransitionSourceActive({
+    activeTransitionSourceId: routeTransitionState?.activeTransitionSourceId,
+    transitionPhase: routeTransitionState?.transitionPhase,
+    transitionSourceId: transitionSource,
+  });
+
+const resolveKangurProfileMenuHref = ({
+  basePath,
+  profile,
+}: {
+  basePath: string | undefined;
+  profile: KangurProfileMenuProps['profile'];
+}): string => profile?.href ?? getKangurPageHref('LearnerProfile', basePath ?? KANGUR_BASE_PATH);
+
+const resolveKangurProfileMenuNavigationActive = ({
+  isActive,
+  profile,
+}: {
+  isActive: boolean | undefined;
+  profile: KangurProfileMenuProps['profile'];
+}): boolean => isActive ?? profile?.isActive ?? false;
+
+const resolveKangurProfileMenuLabel = ({
+  label,
+  locale,
+}: {
+  label: string | undefined;
+  locale: ReturnType<typeof normalizeSiteLocale>;
+}): string => label ?? getProfileMenuFallbackLabel(locale);
 
 const resolveKangurProfileMenuState = ({
   avatar,
@@ -105,14 +144,22 @@ const resolveKangurProfileMenuState = ({
       isCoarsePointer,
       triggerClassName,
     }),
-    isTransitionActive: isTransitionSourceActive({
-      activeTransitionSourceId: routeTransitionState?.activeTransitionSourceId,
-      transitionPhase: routeTransitionState?.transitionPhase,
-      transitionSourceId: transitionSource,
+    isTransitionActive: resolveKangurProfileMenuTransitionState({
+      routeTransitionState,
+      transitionSource,
     }),
-    navigationActive: isActive ?? profile?.isActive ?? false,
-    resolvedHref: profile?.href ?? getKangurPageHref('LearnerProfile', basePath ?? KANGUR_BASE_PATH),
-    resolvedLabel: label ?? getProfileMenuFallbackLabel(locale),
+    navigationActive: resolveKangurProfileMenuNavigationActive({
+      isActive,
+      profile,
+    }),
+    resolvedHref: resolveKangurProfileMenuHref({
+      basePath,
+      profile,
+    }),
+    resolvedLabel: resolveKangurProfileMenuLabel({
+      label,
+      locale,
+    }),
     shouldRenderAvatar: avatarSrc.length > 0,
     transitionMs: transitionAcknowledgeMs,
     transitionSource,

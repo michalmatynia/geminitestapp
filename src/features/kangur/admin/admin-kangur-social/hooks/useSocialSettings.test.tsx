@@ -18,6 +18,7 @@ const {
   useIntegrationConnectionsMock,
   mutateAsyncMock,
   logKangurClientErrorMock,
+  isRecoverableKangurClientFetchErrorMock,
   captureExceptionMock,
   settingsStoreMock,
 } = vi.hoisted(() => ({
@@ -27,6 +28,27 @@ const {
   useIntegrationConnectionsMock: vi.fn(),
   mutateAsyncMock: vi.fn(),
   logKangurClientErrorMock: vi.fn(),
+  isRecoverableKangurClientFetchErrorMock: vi.fn((error: unknown) => {
+    const message =
+      error instanceof Error
+        ? error.message
+        : typeof error === 'string'
+          ? error
+          : error &&
+              typeof error === 'object' &&
+              'message' in error &&
+              typeof error.message === 'string'
+            ? error.message
+            : null;
+    if (!message) {
+      return false;
+    }
+    const normalizedMessage = message.trim().toLowerCase();
+    return (
+      normalizedMessage.includes('failed to fetch') ||
+      normalizedMessage.includes('load failed')
+    );
+  }),
   captureExceptionMock: vi.fn(),
   settingsStoreMock: {
     get: vi.fn(),
@@ -55,6 +77,8 @@ vi.mock('@/shared/hooks/use-settings', () => ({
 }));
 
 vi.mock('@/features/kangur/observability/client', () => ({
+  isRecoverableKangurClientFetchError: (...args: unknown[]) =>
+    isRecoverableKangurClientFetchErrorMock(...args),
   logKangurClientError: (...args: unknown[]) => logKangurClientErrorMock(...args),
 }));
 
@@ -283,6 +307,56 @@ describe('useSocialSettings', () => {
     });
     expect(toastMock).toHaveBeenCalledWith('Programmable Playwright defaults saved.', {
       variant: 'success',
+    });
+  });
+
+  it('suppresses handled network save failures while keeping the user-facing error toast', async () => {
+    mutateAsyncMock.mockRejectedValueOnce(new Error('Failed to fetch'));
+
+    const { result } = renderHook(() => useSocialSettings(), {
+      wrapper: createWrapper(),
+    });
+
+    let saveResult = true;
+    await act(async () => {
+      saveResult = await result.current.handleSaveSettings();
+    });
+
+    expect(saveResult).toBe(false);
+    expect(isRecoverableKangurClientFetchErrorMock).toHaveBeenCalledTimes(1);
+    expect(captureExceptionMock).not.toHaveBeenCalled();
+    expect(logKangurClientErrorMock).not.toHaveBeenCalled();
+    expect(toastMock).toHaveBeenCalledWith(
+      'Failed to save social settings. Check your connection and try again.',
+      { variant: 'error' }
+    );
+  });
+
+  it('still reports unexpected save failures through client observability', async () => {
+    const unexpectedError = new Error('Unexpected save failure');
+    mutateAsyncMock.mockRejectedValueOnce(unexpectedError);
+
+    const { result } = renderHook(() => useSocialSettings(), {
+      wrapper: createWrapper(),
+    });
+
+    let saveResult = true;
+    await act(async () => {
+      saveResult = await result.current.handleSaveSettings();
+    });
+
+    expect(saveResult).toBe(false);
+    expect(isRecoverableKangurClientFetchErrorMock).toHaveBeenCalledWith(unexpectedError);
+    expect(captureExceptionMock).toHaveBeenCalledWith(unexpectedError);
+    expect(logKangurClientErrorMock).toHaveBeenCalledWith(
+      unexpectedError,
+      expect.objectContaining({
+        source: 'AdminKangurSocialPage',
+        action: 'saveSettings',
+      })
+    );
+    expect(toastMock).toHaveBeenCalledWith('Failed to save social settings.', {
+      variant: 'error',
     });
   });
 });

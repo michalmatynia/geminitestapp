@@ -164,7 +164,9 @@ describe('KangurTestSuitePlayer', () => {
     expect(screen.getByText('Podsumowanie testu')).toBeInTheDocument();
     expect(
       screen.getByText(
-        'Sprawdź wynik końcowy i wróć do pytań, aby przeanalizować odpowiedzi.'
+        repairKangurPolishCopy(
+          'Sprawdź wynik końcowy i wróć do pytań, aby przeanalizować odpowiedzi.'
+        )
       )
     ).toBeInTheDocument();
     expect(screen.getByTestId('kangur-test-suite-summary')).toHaveClass(

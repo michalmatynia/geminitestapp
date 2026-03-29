@@ -1,5 +1,5 @@
 import { FrontendCmsRouteLoadingFallback } from '@/features/kangur/ui/components/FrontendCmsRouteLoadingFallback';
 
 export default function Loading(): React.JSX.Element {
-  return <FrontendCmsRouteLoadingFallback pathname='/en/preview/loading' />;
+  return <FrontendCmsRouteLoadingFallback pathname={null} variant='preview' />;
 }

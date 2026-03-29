@@ -188,14 +188,51 @@ describe('createKangurSocialImageAddonsBatch', () => {
                 {
                   name: 'session',
                   value: 'abc123',
-                  domain: 'kangur.app',
-                  path: '/',
+                  url: 'https://kangur.app',
                 },
                 {
                   name: 'theme',
                   value: 'light',
-                  domain: 'kangur.app',
-                  path: '/',
+                  url: 'https://kangur.app',
+                },
+              ],
+              origins: [],
+            },
+          },
+        }),
+      })
+    );
+  });
+
+  it('normalizes secure auth cookie prefixes into url-scoped Playwright cookies', async () => {
+    mocks.enqueuePlaywrightNodeRunMock.mockResolvedValue(
+      makeCompletedRun(['game'])
+    );
+
+    await createKangurSocialImageAddonsBatch({
+      baseUrl: 'https://kangur.app',
+      presetIds: ['game'],
+      forwardCookies:
+        '__Host-next-auth.csrf-token=csrf123; __Secure-next-auth.session-token=session456',
+    });
+
+    expect(mocks.enqueuePlaywrightNodeRunMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        request: expect.objectContaining({
+          contextOptions: {
+            storageState: {
+              cookies: [
+                {
+                  name: '__Host-next-auth.csrf-token',
+                  value: 'csrf123',
+                  url: 'https://kangur.app',
+                  secure: true,
+                },
+                {
+                  name: '__Secure-next-auth.session-token',
+                  value: 'session456',
+                  url: 'https://kangur.app',
+                  secure: true,
                 },
               ],
               origins: [],

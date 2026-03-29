@@ -31,6 +31,7 @@ import {
   KANGUR_SOCIAL_DEFAULT_PLAYWRIGHT_CAPTURE_SCRIPT,
 } from '@/features/kangur/shared/social-playwright-capture';
 import { KANGUR_STOREFRONT_APPEARANCE_STORAGE_KEY } from '@/features/kangur/storefront-appearance-settings';
+import { sanitizePlaywrightCookiesFromHeader } from '@/shared/lib/playwright/storage-state';
 
 import {
   findLatestAddonByPresetId,
@@ -172,33 +173,6 @@ const buildTargetFromProgrammableRoute = (
   captureRouteTitle: route.title.trim() || route.id,
 });
 
-const parseCookiesForPlaywright = (
-  cookieHeader: string,
-  baseUrl: string
-): Array<{ name: string; value: string; domain: string; path: string }> => {
-  let domain: string;
-  try {
-    domain = new URL(baseUrl).hostname;
-  } catch {
-    domain = 'localhost';
-  }
-  return cookieHeader
-    .split(';')
-    .map((pair) => pair.trim())
-    .filter(Boolean)
-    .map((pair) => {
-      const eqIdx = pair.indexOf('=');
-      if (eqIdx < 0) return null;
-      return {
-        name: pair.slice(0, eqIdx).trim(),
-        value: pair.slice(eqIdx + 1).trim(),
-        domain,
-        path: '/',
-      };
-    })
-    .filter((c): c is NonNullable<typeof c> => c !== null && c.name.length > 0);
-};
-
 const normalizeCaptureAppearanceMode = (
   value: string | null | undefined
 ): KangurSocialCaptureAppearanceMode | null =>
@@ -210,7 +184,7 @@ const resolvePlaywrightStorageState = (params: {
   appearanceMode: string | null | undefined;
 }):
   | {
-      cookies: Array<{ name: string; value: string; domain: string; path: string }>;
+      cookies: Array<Record<string, unknown>>;
       origins: Array<{
         origin: string;
         localStorage: Array<{ name: string; value: string }>;
@@ -218,7 +192,7 @@ const resolvePlaywrightStorageState = (params: {
     }
   | null => {
   const cookies = params.cookieHeader
-    ? parseCookiesForPlaywright(params.cookieHeader, params.baseUrl)
+    ? sanitizePlaywrightCookiesFromHeader(params.cookieHeader, params.baseUrl)
     : [];
   const appearanceMode = normalizeCaptureAppearanceMode(params.appearanceMode);
   let origin: string | null = null;

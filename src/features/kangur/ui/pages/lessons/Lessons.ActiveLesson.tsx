@@ -44,6 +44,9 @@ type ActiveLessonRenderSnapshot = {
     typeof useLessons
   >['completedLessonAssignmentsByComponent'];
   orderedLessons: ReturnType<typeof useLessons>['orderedLessons'];
+  isCompleteLessonsCatalogLoaded?: ReturnType<
+    typeof useLessons
+  >['isCompleteLessonsCatalogLoaded'];
   isSecretLessonActive: ReturnType<typeof useLessons>['isSecretLessonActive'];
   progress: ReturnType<typeof useLessons>['progress'];
 };
@@ -165,6 +168,10 @@ export function ActiveLessonView({
     snapshot?.completedLessonAssignmentsByComponent ??
     lessons.completedLessonAssignmentsByComponent;
   const orderedLessons = snapshot?.orderedLessons ?? lessons.orderedLessons;
+  const isCompleteLessonsCatalogLoaded =
+    snapshot?.isCompleteLessonsCatalogLoaded ??
+    lessons.isCompleteLessonsCatalogLoaded ??
+    true;
   const isSecretLessonActive =
     snapshot?.isSecretLessonActive ?? lessons.isSecretLessonActive;
   const progress = snapshot?.progress ?? lessons.progress;
@@ -205,9 +212,10 @@ export function ActiveLessonView({
   const isMobile = useKangurMobileBreakpoint();
   const backToLessonsLabel = translations('mobileControls.backToLessons');
 
-  const secretHostLesson = orderedLessons.at(-1) ?? null;
+  const secretHostLesson = isCompleteLessonsCatalogLoaded ? (orderedLessons.at(-1) ?? null) : null;
   const masteryByComponent = progress?.lessonMastery ?? {};
   const isSecretLessonUnlocked =
+    isCompleteLessonsCatalogLoaded &&
     orderedLessons.length > 0 &&
     orderedLessons.every((lesson) => (masteryByComponent[lesson.componentId]?.completions ?? 0) > 0);
   const isSecretLessonHostActive = isSecretLessonActive && Boolean(activeLesson?.id === secretHostLesson?.id);

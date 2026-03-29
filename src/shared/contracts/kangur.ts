@@ -15,6 +15,7 @@ import {
 import { activityLogSchema } from './system';
 import {
   optionalBooleanQuerySchema,
+  optionalCsvQueryStringArray,
   optionalTrimmedQueryString,
 } from '@/shared/lib/api/query-schema';
 import { kangurLessonSectionsSchema } from './kangur-lesson-sections';
@@ -103,6 +104,7 @@ export type KangurLessons = z.infer<typeof kangurLessonsSchema>;
 export const kangurLessonsQuerySchema = z.object({
   subject: optionalTrimmedQueryString(kangurLessonSubjectSchema),
   ageGroup: optionalTrimmedQueryString(kangurLessonAgeGroupSchema),
+  componentIds: optionalCsvQueryStringArray(kangurLessonComponentIdSchema),
   enabledOnly: optionalBooleanQuerySchema(),
 });
 export type KangurLessonsQuery = z.infer<typeof kangurLessonsQuerySchema>;

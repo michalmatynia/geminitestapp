@@ -94,11 +94,15 @@ export function SocialPostPlaywrightCaptureModal(): React.JSX.Element {
   ]
     .filter((value): value is string => Boolean(value))
     .join(' · ');
+  const isVisualAnalysisJobInFlight = isSocialRuntimeJobInFlight(currentVisualAnalysisJob?.status);
+  const isGenerationJobInFlight = isSocialRuntimeJobInFlight(currentGenerationJob?.status);
+  const isPipelineJobInFlight = isSocialRuntimeJobInFlight(currentPipelineJob?.status);
   const hasBlockingRuntimeJob =
-    isSocialRuntimeJobInFlight(currentVisualAnalysisJob?.status) ||
-    isSocialRuntimeJobInFlight(currentGenerationJob?.status) ||
-    isSocialRuntimeJobInFlight(currentPipelineJob?.status);
+    isVisualAnalysisJobInFlight || isGenerationJobInFlight || isPipelineJobInFlight;
   const isConfigEditingLocked = programmableCapturePending || hasBlockingRuntimeJob;
+  const configLockTitle = isConfigEditingLocked
+    ? 'Wait for the current Social runtime job to finish.'
+    : undefined;
   const hasValidCaptureConfig =
     Boolean(activePost) &&
     programmableCaptureBaseUrl.trim().length > 0 &&
@@ -106,8 +110,17 @@ export function SocialPostPlaywrightCaptureModal(): React.JSX.Element {
     programmableCaptureScript.trim().length > 0;
   const canSave = hasValidCaptureConfig && !isConfigEditingLocked;
   const canCaptureAndRunPipeline = canSave && canGenerateSocialDraft;
+  const captureSaveTitle = hasBlockingRuntimeJob
+    ? 'Wait for the current Social runtime job to finish.'
+    : !activePost
+      ? 'Select an active draft before running programmable capture.'
+      : !hasValidCaptureConfig
+        ? 'Add a base URL, at least one route, and a script before starting programmable capture.'
+        : 'Capture programmable images';
   const captureAndRunPipelineTitle = hasBlockingRuntimeJob
     ? 'Wait for the current Social runtime job to finish.'
+    : !activePost
+      ? 'Select an active draft before running programmable capture and pipeline.'
     : !hasValidCaptureConfig
       ? 'Add a base URL, at least one route, and a script before starting capture and pipeline.'
       : !canGenerateSocialDraft
@@ -138,6 +151,11 @@ export function SocialPostPlaywrightCaptureModal(): React.JSX.Element {
       programmableCaptureRoutes,
     ]
   );
+  const captureAndRunPipelineText = isPipelineJobInFlight
+    ? 'Full pipeline in progress...'
+    : hasBlockingRuntimeJob
+      ? 'Generate post in progress...'
+      : 'Capture + run pipeline';
   return (
     <FormModal
       open={isProgrammablePlaywrightModalOpen}
@@ -148,6 +166,7 @@ export function SocialPostPlaywrightCaptureModal(): React.JSX.Element {
         void handleRunProgrammablePlaywrightCapture();
       }}
       saveText={isConfigEditingLocked ? 'Capture in progress...' : 'Capture programmable images'}
+      saveTitle={captureSaveTitle}
       isSaveDisabled={!canSave}
       showSaveButton={true}
       cancelText='Close'
@@ -160,6 +179,7 @@ export function SocialPostPlaywrightCaptureModal(): React.JSX.Element {
             size='sm'
             onClick={handleAddProgrammableCaptureRoute}
             disabled={isConfigEditingLocked}
+            title={configLockTitle}
           >
             Add route
           </Button>
@@ -169,6 +189,7 @@ export function SocialPostPlaywrightCaptureModal(): React.JSX.Element {
             size='sm'
             onClick={handleSeedProgrammableCaptureRoutesFromPresets}
             disabled={isConfigEditingLocked}
+            title={configLockTitle}
           >
             Seed from presets
           </Button>
@@ -178,6 +199,7 @@ export function SocialPostPlaywrightCaptureModal(): React.JSX.Element {
             size='sm'
             onClick={handleResetProgrammableCaptureScript}
             disabled={isConfigEditingLocked}
+            title={configLockTitle}
           >
             Reset script
           </Button>
@@ -189,6 +211,7 @@ export function SocialPostPlaywrightCaptureModal(): React.JSX.Element {
               void handleSaveProgrammableCaptureDefaults();
             }}
             disabled={isConfigEditingLocked}
+            title={configLockTitle}
           >
             Save as defaults
           </Button>
@@ -208,6 +231,7 @@ export function SocialPostPlaywrightCaptureModal(): React.JSX.Element {
               placeholder='https://example.com'
               aria-label='Programmable capture base URL'
               disabled={isConfigEditingLocked}
+              title={configLockTitle}
             />
           </FormField>
 
@@ -222,6 +246,7 @@ export function SocialPostPlaywrightCaptureModal(): React.JSX.Element {
               placeholder='Default runtime persona'
               ariaLabel='Playwright persona'
               disabled={isConfigEditingLocked}
+              title={configLockTitle}
             />
           </FormField>
         </div>
@@ -313,6 +338,7 @@ export function SocialPostPlaywrightCaptureModal(): React.JSX.Element {
                         size='xs'
                         onClick={() => handleRemoveProgrammableCaptureRoute(route.id)}
                         disabled={isConfigEditingLocked}
+                        title={configLockTitle}
                       >
                         Remove
                       </Button>
@@ -329,6 +355,7 @@ export function SocialPostPlaywrightCaptureModal(): React.JSX.Element {
                         placeholder='Route title'
                         aria-label={`Programmable route ${index + 1} title`}
                         disabled={isConfigEditingLocked}
+                        title={configLockTitle}
                       />
                       <Input
                         value={route.path}
@@ -340,6 +367,7 @@ export function SocialPostPlaywrightCaptureModal(): React.JSX.Element {
                         placeholder='/pricing or https://example.com/pricing'
                         aria-label={`Programmable route ${index + 1} path`}
                         disabled={isConfigEditingLocked}
+                        title={configLockTitle}
                       />
                       <Input
                         value={route.selector ?? ''}
@@ -351,6 +379,7 @@ export function SocialPostPlaywrightCaptureModal(): React.JSX.Element {
                         placeholder='Optional selector'
                         aria-label={`Programmable route ${index + 1} selector`}
                         disabled={isConfigEditingLocked}
+                        title={configLockTitle}
                       />
                       <Input
                         value={route.description ?? ''}
@@ -362,6 +391,7 @@ export function SocialPostPlaywrightCaptureModal(): React.JSX.Element {
                         placeholder='Optional description'
                         aria-label={`Programmable route ${index + 1} description`}
                         disabled={isConfigEditingLocked}
+                        title={configLockTitle}
                       />
                       <Input
                         type='number'
@@ -378,6 +408,7 @@ export function SocialPostPlaywrightCaptureModal(): React.JSX.Element {
                         placeholder='Wait before capture (ms)'
                         aria-label={`Programmable route ${index + 1} wait before capture`}
                         disabled={isConfigEditingLocked}
+                        title={configLockTitle}
                       />
                       <Input
                         type='number'
@@ -394,6 +425,7 @@ export function SocialPostPlaywrightCaptureModal(): React.JSX.Element {
                         placeholder='Wait for selector (ms)'
                         aria-label={`Programmable route ${index + 1} wait for selector`}
                         disabled={isConfigEditingLocked}
+                        title={configLockTitle}
                       />
                     </div>
 
@@ -425,6 +457,7 @@ export function SocialPostPlaywrightCaptureModal(): React.JSX.Element {
             className='font-mono text-xs'
             aria-label='Programmable Playwright capture script'
             disabled={isConfigEditingLocked}
+            title={configLockTitle}
           />
         </FormField>
 
@@ -458,7 +491,7 @@ export function SocialPostPlaywrightCaptureModal(): React.JSX.Element {
             disabled={!canCaptureAndRunPipeline}
             title={captureAndRunPipelineTitle}
           >
-            {hasBlockingRuntimeJob ? 'Generate post in progress...' : 'Capture + run pipeline'}
+            {captureAndRunPipelineText}
           </Button>
         </div>
 

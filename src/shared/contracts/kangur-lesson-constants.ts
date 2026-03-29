@@ -111,6 +111,7 @@ export type KangurLessonAgeGroup = z.infer<typeof kangurLessonAgeGroupSchema>;
 export const kangurLessonCollectionFilterSchema = z.object({
   subject: kangurLessonSubjectSchema.optional(),
   ageGroup: kangurLessonAgeGroupSchema.optional(),
+  componentIds: z.array(kangurLessonComponentIdSchema).optional(),
   enabledOnly: z.boolean().optional(),
 });
 export type KangurLessonCollectionFilterDto = z.infer<typeof kangurLessonCollectionFilterSchema>;

@@ -131,7 +131,7 @@ export const buildFilemakerCampaignUnsubscribeUrl = (input: {
 }): string => {
   const token = createFilemakerCampaignUnsubscribeToken(input);
   const baseUrl = (input.appUrl?.trim() || resolvePublicAppUrl()).replace(/\/+$/g, '');
-  return `${baseUrl}/filemaker/unsubscribe?token=${encodeURIComponent(token)}`;
+  return `${baseUrl}/admin/filemaker/campaigns/unsubscribe?token=${encodeURIComponent(token)}`;
 };
 
 export const buildFilemakerCampaignPreferencesUrl = (input: {
@@ -145,7 +145,7 @@ export const buildFilemakerCampaignPreferencesUrl = (input: {
 }): string => {
   const token = createFilemakerCampaignUnsubscribeToken(input);
   const baseUrl = (input.appUrl?.trim() || resolvePublicAppUrl()).replace(/\/+$/g, '');
-  return `${baseUrl}/filemaker/preferences?token=${encodeURIComponent(token)}`;
+  return `${baseUrl}/admin/filemaker/campaigns/preferences?token=${encodeURIComponent(token)}`;
 };
 
 export const buildFilemakerCampaignManageAllPreferencesUrl = (input: {
@@ -162,7 +162,7 @@ export const buildFilemakerCampaignManageAllPreferencesUrl = (input: {
     scope: 'all_campaigns',
   });
   const baseUrl = (input.appUrl?.trim() || resolvePublicAppUrl()).replace(/\/+$/g, '');
-  return `${baseUrl}/filemaker/preferences?token=${encodeURIComponent(token)}`;
+  return `${baseUrl}/admin/filemaker/campaigns/preferences?token=${encodeURIComponent(token)}`;
 };
 
 export const buildFilemakerCampaignOpenTrackingUrl = (input: {

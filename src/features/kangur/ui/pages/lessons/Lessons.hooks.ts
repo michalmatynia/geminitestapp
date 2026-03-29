@@ -12,6 +12,7 @@ import { useKangurRouting } from '@/features/kangur/ui/context/KangurRoutingCont
 import { useKangurSubjectFocus } from '@/features/kangur/ui/context/KangurSubjectFocusContext';
 import { useKangurAssignments } from '@/features/kangur/ui/hooks/useKangurAssignments';
 import { useKangurLessonsCatalog } from '@/features/kangur/ui/hooks/useKangurLessonsCatalog';
+import { useKangurLessonSections } from '@/features/kangur/ui/hooks/useKangurLessonSections';
 import { useKangurProgressState } from '@/features/kangur/ui/hooks/useKangurProgressState';
 import { useKangurMobileBreakpoint } from '@/features/kangur/ui/hooks/useKangurMobileBreakpoint';
 import { useKangurRouteNavigator } from '@/features/kangur/ui/hooks/useKangurRouteNavigator';
@@ -61,6 +62,10 @@ export function useLessonsLogic() {
     auth.canAccessParentAssignments ?? Boolean(user?.activeLearner?.id);
   const isMobile = useKangurMobileBreakpoint();
   const [isDeferredContentReady, setIsDeferredContentReady] = useState(false);
+  const [requestedLessonComponentIds, setRequestedLessonComponentIds] = useState<
+    KangurLessonComponentId[]
+  >([]);
+  const [shouldLoadCompleteLessonsCatalog, setShouldLoadCompleteLessonsCatalog] = useState(false);
   const [isActiveLessonComponentReady, setIsActiveLessonComponentReady] = useState(false);
   const [activeLessonId, setActiveLessonId] = useState<string | null>(null);
   const [isSecretLessonActive, setIsSecretLessonActive] = useState(false);
@@ -157,13 +162,33 @@ export function useLessonsLogic() {
     };
   }, [canAccessParentAssignments, isDeferredContentReady]);
 
-  const lessonsCatalogQuery = useKangurLessonsCatalog({
+  const lessonSectionsQuery = useKangurLessonSections({
     subject,
     ageGroup,
     enabledOnly: true,
   });
-  const isLessonsCatalogPlaceholderData = lessonsCatalogQuery.isPlaceholderData === true;
+  const requestedLessonsCatalogComponentIds =
+    shouldLoadCompleteLessonsCatalog || requestedLessonComponentIds.length === 0
+      ? undefined
+      : requestedLessonComponentIds;
+  const lessonsCatalogQuery = useKangurLessonsCatalog({
+    subject,
+    ageGroup,
+    componentIds: requestedLessonsCatalogComponentIds,
+    enabledOnly: true,
+    enabled: shouldLoadCompleteLessonsCatalog || requestedLessonComponentIds.length > 0,
+  });
+  const isLessonSectionsPlaceholderData = lessonSectionsQuery.isPlaceholderData === true;
+  const isLessonSectionsDataMissing = typeof lessonSectionsQuery.data === 'undefined';
   const isLessonsCatalogDataMissing = typeof lessonsCatalogQuery.data === 'undefined';
+  const isLessonSectionsLoading =
+    Boolean(
+      (lessonSectionsQuery.isPending ||
+        lessonSectionsQuery.isLoading ||
+        lessonSectionsQuery.isFetching ||
+        lessonSectionsQuery.isRefetching) &&
+        isLessonSectionsDataMissing
+    );
   const isLessonsCatalogLoading =
     Boolean(
       (lessonsCatalogQuery.isPending ||
@@ -171,24 +196,48 @@ export function useLessonsLogic() {
         lessonsCatalogQuery.isFetching ||
         lessonsCatalogQuery.isRefetching) &&
         isLessonsCatalogDataMissing
-    );
-  const isLessonSectionsLoading = isLessonsCatalogLoading;
+    ) &&
+    (shouldLoadCompleteLessonsCatalog || requestedLessonComponentIds.length > 0);
   const shouldShowLessonsCatalogSkeleton =
-    isLessonsCatalogPlaceholderData || isLessonsCatalogLoading || isLessonSectionsLoading;
+    isLessonSectionsPlaceholderData || isLessonSectionsLoading;
   
   const lessons = useMemo(
-    (): KangurLesson[] =>
-      !isLessonsCatalogPlaceholderData ? lessonsCatalogQuery.data?.lessons ?? [] : [],
-    [
-      isLessonsCatalogPlaceholderData,
-      lessonsCatalogQuery.data?.lessons,
-    ]
+    (): KangurLesson[] => lessonsCatalogQuery.data?.lessons ?? [],
+    [lessonsCatalogQuery.data?.lessons]
   );
   const lessonSections = useMemo(
-    () =>
-      !isLessonsCatalogPlaceholderData ? lessonsCatalogQuery.data?.sections ?? [] : [],
-    [isLessonsCatalogPlaceholderData, lessonsCatalogQuery.data?.sections]
+    () => lessonSectionsQuery.data ?? [],
+    [lessonSectionsQuery.data]
   );
+
+  const ensureLessonsCatalogLoaded = useCallback(
+    (componentIds?: readonly KangurLessonComponentId[] | null): void => {
+      if (!componentIds || componentIds.length === 0) {
+        setShouldLoadCompleteLessonsCatalog(true);
+        return;
+      }
+
+      setRequestedLessonComponentIds((current) => {
+        const next = new Set(current);
+        componentIds.forEach((componentId) => {
+          next.add(componentId);
+        });
+        return [...next];
+      });
+    },
+    []
+  );
+
+  useEffect((): void => {
+    setRequestedLessonComponentIds([]);
+    setShouldLoadCompleteLessonsCatalog(false);
+  }, [ageGroup, subject]);
+
+  useEffect((): void => {
+    if (focusToken) {
+      setShouldLoadCompleteLessonsCatalog(true);
+    }
+  }, [focusToken]);
   const lessonAssignmentsByComponent = useMemo(() => {
     if (!isAssignmentsReady || assignments.length === 0 || lessons.length === 0) {
       return EMPTY_LESSON_ASSIGNMENTS_BY_COMPONENT;
@@ -330,6 +379,8 @@ export function useLessonsLogic() {
       ? -1
       : orderedLessons.findIndex((lesson) => lesson.id === activeLessonId);
   const activeLesson = activeIdx >= 0 ? orderedLessons[activeIdx] : null;
+  const isCompleteLessonsCatalogLoaded =
+    requestedLessonsCatalogComponentIds === undefined && lessons.length > 0;
   const lessonDocuments = EMPTY_LESSON_DOCUMENTS;
   const isActiveLessonSurfaceReady =
     !activeLesson ||
@@ -413,12 +464,14 @@ export function useLessonsLogic() {
     setAgeGroup,
     lessons,
     lessonSections,
-    lessonTemplateMap,
-    orderedLessons,
-    lessonDocuments,
-    isLessonsCatalogLoading,
-    isLessonSectionsLoading,
-    shouldShowLessonsCatalogSkeleton,
+      lessonTemplateMap,
+      orderedLessons,
+      isCompleteLessonsCatalogLoaded,
+      lessonDocuments,
+      isLessonsCatalogLoading,
+      ensureLessonsCatalogLoaded,
+      isLessonSectionsLoading,
+      shouldShowLessonsCatalogSkeleton,
     activeLesson,
     activeLessonId,
     handleSelectLesson,

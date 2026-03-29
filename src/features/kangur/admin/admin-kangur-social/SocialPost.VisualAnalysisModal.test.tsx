@@ -19,6 +19,7 @@ vi.mock('@/features/kangur/shared/ui', () => ({
     actions,
     onSave,
     isSaveDisabled,
+    saveTitle,
     saveText = 'Save',
     cancelText = 'Close',
     onClose,
@@ -30,6 +31,7 @@ vi.mock('@/features/kangur/shared/ui', () => ({
     actions?: React.ReactNode;
     onSave: () => void;
     isSaveDisabled?: boolean;
+    saveTitle?: string;
     saveText?: string;
     cancelText?: string;
     onClose: () => void;
@@ -39,7 +41,12 @@ vi.mock('@/features/kangur/shared/ui', () => ({
       <div role='dialog' aria-label={String(title)}>
         <div>{title}</div>
         {subtitle ? <div>{subtitle}</div> : null}
-        <button type='button' disabled={Boolean(isSaveDisabled)} onClick={() => onSave()}>
+        <button
+          type='button'
+          disabled={Boolean(isSaveDisabled)}
+          title={saveTitle}
+          onClick={() => onSave()}
+        >
           {saveText}
         </button>
         <div>{actions}</div>
@@ -107,7 +114,7 @@ describe('SocialPostVisualAnalysisModal', () => {
       isVisualAnalysisModalOpen: true,
       handleCloseVisualAnalysisModal: vi.fn(),
       handleAnalyzeSelectedVisuals: vi.fn(),
-      handleRunFullPipelineWithVisualAnalysis: vi.fn(),
+      handleGeneratePostWithVisualAnalysis: vi.fn(),
       visualAnalysisResult: {
         summary: 'The hero now emphasizes the classroom card and stronger CTA.',
         highlights: ['Classroom card is larger', 'CTA is stronger'],
@@ -170,9 +177,13 @@ describe('SocialPostVisualAnalysisModal', () => {
     expect(
       screen.getByText(
         'Analyze the selected visuals to produce a visual description first. Then use Generate post with analysis to combine that description with the current context in a separate AI pass.'
-      )
+    )
     ).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Generate post in progress...' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Full pipeline in progress...' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Full pipeline in progress...' })).toHaveAttribute(
+      'title',
+      'Wait for the current Social runtime job to finish.'
+    );
     expect(screen.getByRole('button', { name: 'Analyzing visuals...' })).toBeDisabled();
     expect(screen.getByRole('button', { name: 'Analyzing visuals...' })).toHaveAttribute(
       'title',
@@ -183,13 +194,13 @@ describe('SocialPostVisualAnalysisModal', () => {
   it('triggers analysis and generation actions from the modal controls', () => {
     const handleCloseVisualAnalysisModal = vi.fn();
     const handleAnalyzeSelectedVisuals = vi.fn();
-    const handleRunFullPipelineWithVisualAnalysis = vi.fn();
+    const handleGeneratePostWithVisualAnalysis = vi.fn();
 
     useSocialPostContextMock.mockReturnValue({
       isVisualAnalysisModalOpen: true,
       handleCloseVisualAnalysisModal,
       handleAnalyzeSelectedVisuals,
-      handleRunFullPipelineWithVisualAnalysis,
+      handleGeneratePostWithVisualAnalysis,
       visualAnalysisResult: null,
       hasSavedVisualAnalysis: false,
       isSavedVisualAnalysisStale: false,
@@ -209,7 +220,11 @@ describe('SocialPostVisualAnalysisModal', () => {
     expect(handleAnalyzeSelectedVisuals).toHaveBeenCalledTimes(1);
     expect(handleCloseVisualAnalysisModal).toHaveBeenCalledTimes(1);
     expect(screen.getByRole('button', { name: 'Generate post with analysis' })).toBeDisabled();
-    expect(handleRunFullPipelineWithVisualAnalysis).not.toHaveBeenCalled();
+    expect(screen.getByRole('button', { name: 'Generate post with analysis' })).toHaveAttribute(
+      'title',
+      'Run image analysis before generating post copy from visuals.'
+    );
+    expect(handleGeneratePostWithVisualAnalysis).not.toHaveBeenCalled();
     expect(screen.getByRole('button', { name: 'Analyze selected visuals' })).toHaveAttribute(
       'title',
       'Analyze selected visuals'
@@ -221,12 +236,90 @@ describe('SocialPostVisualAnalysisModal', () => {
     ).toBeInTheDocument();
   });
 
+  it('starts the dedicated generation step once image analysis is ready', () => {
+    const handleGeneratePostWithVisualAnalysis = vi.fn();
+
+    useSocialPostContextMock.mockReturnValue({
+      isVisualAnalysisModalOpen: true,
+      handleCloseVisualAnalysisModal: vi.fn(),
+      handleAnalyzeSelectedVisuals: vi.fn(),
+      handleGeneratePostWithVisualAnalysis,
+      visualAnalysisResult: {
+        summary: 'The hero now emphasizes the classroom card and stronger CTA.',
+        highlights: ['Classroom card is larger', 'CTA is stronger'],
+      },
+      hasSavedVisualAnalysis: true,
+      isSavedVisualAnalysisStale: false,
+      visualAnalysisErrorMessage: null,
+      visualAnalysisPending: false,
+      imageAddonIds: ['addon-1'],
+      recentAddons: [recentAddon],
+      visionModelId: 'vision-1',
+      visionModelOptions: { effectiveModelId: 'vision-routing' },
+      currentVisualAnalysisJob: {
+        id: 'job-analysis-complete-1',
+        status: 'completed',
+        progress: {
+          message: 'Image analysis is ready to use for generation.',
+        },
+        failedReason: null,
+      },
+      currentGenerationJob: null,
+      currentPipelineJob: null,
+    });
+
+    render(<SocialPostVisualAnalysisModal />);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Generate post with analysis' }));
+
+    expect(handleGeneratePostWithVisualAnalysis).toHaveBeenCalledTimes(1);
+  });
+
+  it('shows the dedicated generation progress label when only the follow-up generation job is running', () => {
+    useSocialPostContextMock.mockReturnValue({
+      isVisualAnalysisModalOpen: true,
+      handleCloseVisualAnalysisModal: vi.fn(),
+      handleAnalyzeSelectedVisuals: vi.fn(),
+      handleGeneratePostWithVisualAnalysis: vi.fn(),
+      visualAnalysisResult: {
+        summary: 'The hero now emphasizes the classroom card and stronger CTA.',
+        highlights: ['Classroom card is larger', 'CTA is stronger'],
+      },
+      hasSavedVisualAnalysis: true,
+      isSavedVisualAnalysisStale: false,
+      visualAnalysisErrorMessage: null,
+      visualAnalysisPending: false,
+      imageAddonIds: ['addon-1'],
+      recentAddons: [recentAddon],
+      visionModelId: 'vision-1',
+      visionModelOptions: { effectiveModelId: 'vision-routing' },
+      currentVisualAnalysisJob: null,
+      currentGenerationJob: {
+        id: 'job-generate-10',
+        status: 'active',
+        progress: {
+          message: 'Generating the post from the saved image analysis.',
+        },
+        failedReason: null,
+      },
+      currentPipelineJob: null,
+    });
+
+    render(<SocialPostVisualAnalysisModal />);
+
+    expect(screen.getByRole('button', { name: 'Generate post in progress...' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Generate post in progress...' })).toHaveAttribute(
+      'title',
+      'Wait for the current Social runtime job to finish.'
+    );
+  });
+
   it('warns when saved analysis exists but no longer matches the current draft scope', () => {
     useSocialPostContextMock.mockReturnValue({
       isVisualAnalysisModalOpen: true,
       handleCloseVisualAnalysisModal: vi.fn(),
       handleAnalyzeSelectedVisuals: vi.fn(),
-      handleRunFullPipelineWithVisualAnalysis: vi.fn(),
+      handleGeneratePostWithVisualAnalysis: vi.fn(),
       visualAnalysisResult: null,
       hasSavedVisualAnalysis: true,
       isSavedVisualAnalysisStale: true,
@@ -251,6 +344,10 @@ describe('SocialPostVisualAnalysisModal', () => {
       )
     ).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Generate post with analysis' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Generate post with analysis' })).toHaveAttribute(
+      'title',
+      'Rerun image analysis before generating post copy from visuals.'
+    );
   });
 
   it('surfaces failed saved-analysis metadata and rerun guidance before a new result exists', () => {
@@ -264,7 +361,7 @@ describe('SocialPostVisualAnalysisModal', () => {
       isVisualAnalysisModalOpen: true,
       handleCloseVisualAnalysisModal: vi.fn(),
       handleAnalyzeSelectedVisuals: vi.fn(),
-      handleRunFullPipelineWithVisualAnalysis: vi.fn(),
+      handleGeneratePostWithVisualAnalysis: vi.fn(),
       visualAnalysisResult: null,
       hasSavedVisualAnalysis: false,
       isSavedVisualAnalysisStale: false,
@@ -294,6 +391,10 @@ describe('SocialPostVisualAnalysisModal', () => {
       )
     ).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Generate post with analysis' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Generate post with analysis' })).toHaveAttribute(
+      'title',
+      'Rerun image analysis before generating post copy from visuals.'
+    );
   });
 
   it('explains why image analysis cannot start when no visuals are selected', () => {
@@ -301,7 +402,7 @@ describe('SocialPostVisualAnalysisModal', () => {
       isVisualAnalysisModalOpen: true,
       handleCloseVisualAnalysisModal: vi.fn(),
       handleAnalyzeSelectedVisuals: vi.fn(),
-      handleRunFullPipelineWithVisualAnalysis: vi.fn(),
+      handleGeneratePostWithVisualAnalysis: vi.fn(),
       visualAnalysisResult: null,
       hasSavedVisualAnalysis: false,
       isSavedVisualAnalysisStale: false,

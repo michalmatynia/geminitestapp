@@ -3,7 +3,7 @@
  */
 
 import React from 'react';
-import { act, fireEvent, render, screen } from '@testing-library/react';
+import { act, cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { beforeEach, afterEach, describe, expect, it, vi } from 'vitest';
 import {
   LESSONS_LIBRARY_LAYOUT_CLASSNAME,
@@ -14,8 +14,10 @@ import {
   emptyPageContentEntryMock,
   focusTokenState,
   lessonAssignmentsHookCallsMock,
+  lessonCatalogHookCallsMock,
   lessonCardPropsMock,
   lessonDocumentsHookCallsMock,
+  lessonSectionsHookCallsMock,
   lessonSectionsLoadingState,
   lessonSectionsPlaceholderDataState,
   lessonSectionsRetainDataWhileLoadingState,
@@ -49,7 +51,10 @@ describe('Lessons page subject filtering', () => {
   });
 
   afterEach(() => {
-    vi.runOnlyPendingTimers();
+    act(() => {
+      vi.runOnlyPendingTimers();
+    });
+    cleanup();
     vi.useRealTimers();
     vi.restoreAllMocks();
   });
@@ -64,6 +69,52 @@ describe('Lessons page subject filtering', () => {
     expect(screen.getByTestId('lesson-card-lesson-english')).toBeInTheDocument();
     expect(lessonCardPropsMock).toHaveBeenCalledWith(
       expect.objectContaining({ id: 'lesson-english', subject: 'english' })
+    );
+  });
+
+  it('loads lesson sections first and keeps the detailed lessons catalog disabled until interaction', () => {
+    lessonSectionsState.value = [
+      {
+        id: 'english_foundations',
+        subject: 'english',
+        ageGroup: 'ten_year_old',
+        label: 'English foundations',
+        typeLabel: 'Group',
+        sortOrder: 1,
+        enabled: true,
+        componentIds: ['english_basics'],
+        subsections: [],
+      },
+    ];
+
+    act(() => {
+      render(<Lessons />);
+    });
+
+    expect(lessonSectionsHookCallsMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        enabledOnly: true,
+        subject: 'english',
+      })
+    );
+    expect(lessonCatalogHookCallsMock).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        enabled: false,
+        enabledOnly: true,
+        subject: 'english',
+      })
+    );
+
+    act(() => {
+      vi.runAllTimers();
+    });
+
+    expect(lessonCatalogHookCallsMock).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        enabled: false,
+        enabledOnly: true,
+        subject: 'english',
+      })
     );
   });
 
@@ -97,6 +148,30 @@ describe('Lessons page subject filtering', () => {
     });
 
     expect(lessonTemplatesHookCallsMock).not.toHaveBeenCalled();
+  });
+
+  it('keeps the selected lesson active while the catalog hands off from retained subset data to a full refetch', () => {
+    render(<Lessons />);
+
+    act(() => {
+      vi.runAllTimers();
+    });
+
+    lessonsLoadingState.value = true;
+    lessonsPlaceholderDataState.value = true;
+    lessonsRetainDataWhileLoadingState.value = true;
+
+    act(() => {
+      fireEvent.click(screen.getByTestId('lesson-card-lesson-english'));
+    });
+
+    expect(screen.getByTestId('mock-active-lesson-view')).toHaveTextContent('lesson-english');
+    expect(lessonDocumentsHookCallsMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        enabled: true,
+        lessonId: 'lesson-english',
+      })
+    );
   });
 
   it('defers assignments hydration until after the first deferred render turn for parent access', () => {
@@ -538,6 +613,70 @@ describe('Lessons page subject filtering', () => {
     expect(openingSectionButton).toHaveAttribute('aria-expanded', 'true');
     expect(screen.getByRole('region').firstElementChild).toHaveClass('w-full', 'items-center');
     expect(screen.getByTestId('lesson-card-lesson-english')).toBeInTheDocument();
+  });
+
+  it('keeps a grouped lesson open on the scoped section catalog instead of escalating to the full subject catalog', () => {
+    lessonsState.value = [
+      {
+        id: 'lesson-english',
+        componentId: 'english_basics',
+        subject: 'english',
+        ageGroup: DEFAULT_KANGUR_AGE_GROUP,
+        enabled: true,
+        sortOrder: 1,
+        title: 'English Basics',
+        description: '',
+        emoji: '📘',
+        color: 'sky',
+        activeBg: 'bg-sky-50',
+        contentMode: 'component',
+      },
+      {
+        id: 'lesson-english-adverbs',
+        componentId: 'english_adverbs',
+        subject: 'english',
+        ageGroup: DEFAULT_KANGUR_AGE_GROUP,
+        enabled: true,
+        sortOrder: 2,
+        title: 'Adverbs',
+        description: '',
+        emoji: '✨',
+        color: 'violet',
+        activeBg: 'bg-violet-50',
+        contentMode: 'component',
+      },
+    ];
+    lessonSectionsState.value = [
+      {
+        id: 'opening-section',
+        subject: 'english',
+        ageGroup: DEFAULT_KANGUR_AGE_GROUP,
+        enabled: true,
+        sortOrder: 1,
+        label: 'Opening Section',
+        typeLabel: 'featured',
+        componentIds: ['english_basics'],
+        subsections: [],
+      },
+    ];
+
+    render(<Lessons />);
+    act(() => {
+      vi.runAllTimers();
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: /opening section/i }));
+    fireEvent.click(screen.getByTestId('lesson-card-lesson-english'));
+
+    expect(screen.getByTestId('mock-active-lesson-view')).toHaveTextContent('lesson-english');
+    expect(lessonCatalogHookCallsMock).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        componentIds: ['english_basics'],
+        enabled: true,
+        enabledOnly: true,
+        subject: 'english',
+      })
+    );
   });
 
   it('shows both adverbs lessons inside the English grammar group', async () => {

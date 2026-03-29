@@ -6,6 +6,7 @@ import { fileURLToPath } from 'node:url';
 const scriptDir = path.dirname(fileURLToPath(import.meta.url));
 const repoRoot = path.resolve(scriptDir, '..', '..');
 const tempDir = path.join(repoRoot, 'tmp', 'typecheck-segments');
+const segmentedNextEnvPath = path.join(tempDir, 'next-env.segment.d.ts');
 const tscBin = path.join(
   repoRoot,
   'node_modules',
@@ -15,7 +16,6 @@ const tscBin = path.join(
 
 const CONFIG_RELATIVE_PREFIX = '../../';
 const COMMON_INCLUDE_PATTERNS = [
-  'next-env.d.ts',
   'types/**/*.d.ts',
   'src/global.d.ts',
   'src/shared/contracts/ambient.d.ts',
@@ -261,7 +261,11 @@ const buildSegmentConfig = (segment) => ({
     noEmit: true,
     incremental: false,
   },
-  include: [...COMMON_INCLUDE_PATTERNS, ...segment.include].map(toConfigPattern),
+  include: [
+    './next-env.segment.d.ts',
+    ...COMMON_INCLUDE_PATTERNS.map(toConfigPattern),
+    ...segment.include.map(toConfigPattern),
+  ],
   exclude: COMMON_EXCLUDE_PATTERNS.map(toConfigPattern),
 });
 
@@ -282,6 +286,10 @@ const run = () => {
       : SEGMENTS;
 
   mkdirSync(tempDir, { recursive: true });
+  writeFileSync(
+    segmentedNextEnvPath,
+    '/// <reference types="next" />\n/// <reference types="next/image-types/global" />\n'
+  );
 
   for (const segment of selectedSegments) {
     const configPath = path.join(tempDir, `${segment.id}.json`);

@@ -33,6 +33,13 @@ export function SocialSettingsPublishingTab({
   const placeholder = linkedinIntegration
     ? 'Select LinkedIn connection'
     : 'Create LinkedIn integration first';
+  const connectionTitle = isRuntimeLocked
+    ? 'Wait for the current Social runtime job to finish.'
+    : !linkedinIntegration
+      ? 'Create LinkedIn integration first'
+      : linkedInOptions.length === 0
+        ? 'Add a LinkedIn connection in Admin > Integrations to use it here.'
+        : 'Default LinkedIn connection';
 
   let helperMessage: React.ReactNode =
     'Per-post editors now use the default publishing connection from this settings modal.';
@@ -74,11 +81,7 @@ export function SocialSettingsPublishingTab({
           disabled={!linkedinIntegration || linkedInOptions.length === 0 || isRuntimeLocked}
           size='sm'
           ariaLabel='Default LinkedIn connection'
-          title={
-            isRuntimeLocked
-              ? 'Wait for the current Social runtime job to finish.'
-              : 'Default LinkedIn connection'
-          }
+          title={connectionTitle}
         />
       </FormField>
 

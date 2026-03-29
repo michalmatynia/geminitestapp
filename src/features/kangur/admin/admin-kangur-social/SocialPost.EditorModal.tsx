@@ -95,6 +95,13 @@ export function SocialPostEditorModal({
   const imageMutationTitle = hasBlockingImageMutationJob
     ? 'Wait for the current Social runtime job to finish.'
     : undefined;
+  const saveDraftTitle = hasBlockingRuntimeJob
+    ? 'Wait for the current Social runtime job to finish.'
+    : !activePost
+      ? 'Select a social post to save it.'
+      : !hasUnsavedChanges
+        ? 'No draft changes to save.'
+        : undefined;
   const currentVisualAnalysisJobTitle = [
     currentVisualAnalysisJob?.progress?.message ?? null,
     currentVisualAnalysisJob?.failedReason ?? null,
@@ -186,6 +193,7 @@ export function SocialPostEditorModal({
       isSaveDisabled={!activePost || isSubmitting || !hasUnsavedChanges || hasBlockingRuntimeJob}
       hasUnsavedChanges={hasUnsavedChanges}
       saveText={isSavingDraft ? 'Saving...' : 'Save draft'}
+      saveTitle={saveDraftTitle}
       cancelText='Close'
       size='xl'
       className='md:min-w-[63rem] max-w-[66rem]'

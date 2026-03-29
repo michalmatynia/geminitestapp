@@ -89,6 +89,7 @@ function useLessonsActiveLessonRenderSnapshot(input: {
   activeLesson: ReturnType<typeof useLessons>['activeLesson'];
   activeLessonId: ReturnType<typeof useLessons>['activeLessonId'];
   completedLessonAssignmentsByComponent: ReturnType<typeof useLessons>['completedLessonAssignmentsByComponent'];
+  isCompleteLessonsCatalogLoaded: ReturnType<typeof useLessons>['isCompleteLessonsCatalogLoaded'];
   isSecretLessonActive: ReturnType<typeof useLessons>['isSecretLessonActive'];
   lessonAssignmentsByComponent: ReturnType<typeof useLessons>['lessonAssignmentsByComponent'];
   orderedLessons: ReturnType<typeof useLessons>['orderedLessons'];
@@ -98,6 +99,7 @@ function useLessonsActiveLessonRenderSnapshot(input: {
     activeLesson,
     activeLessonId,
     completedLessonAssignmentsByComponent,
+    isCompleteLessonsCatalogLoaded,
     isSecretLessonActive,
     lessonAssignmentsByComponent,
     orderedLessons,
@@ -113,6 +115,7 @@ function useLessonsActiveLessonRenderSnapshot(input: {
             lessonAssignmentsByComponent,
             completedLessonAssignmentsByComponent,
             orderedLessons,
+            isCompleteLessonsCatalogLoaded,
             isSecretLessonActive,
             progress,
           }
@@ -121,6 +124,7 @@ function useLessonsActiveLessonRenderSnapshot(input: {
       activeLesson,
       activeLessonId,
       completedLessonAssignmentsByComponent,
+      isCompleteLessonsCatalogLoaded,
       isSecretLessonActive,
       lessonAssignmentsByComponent,
       orderedLessons,
@@ -261,6 +265,7 @@ function LessonsContent() {
     lessonAssignmentsByComponent,
     completedLessonAssignmentsByComponent,
     orderedLessons,
+    isCompleteLessonsCatalogLoaded,
     isSecretLessonActive,
     progress,
     guestPlayerName,
@@ -285,6 +290,7 @@ function LessonsContent() {
     activeLesson,
     activeLessonId,
     completedLessonAssignmentsByComponent,
+    isCompleteLessonsCatalogLoaded,
     isSecretLessonActive,
     lessonAssignmentsByComponent,
     orderedLessons,

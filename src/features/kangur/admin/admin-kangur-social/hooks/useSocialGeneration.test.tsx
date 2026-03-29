@@ -44,6 +44,11 @@ vi.mock('@/features/kangur/observability/client', () => ({
 
 import { useSocialGeneration } from './useSocialGeneration';
 
+const completedVisualAnalysis = {
+  summary: 'The hero now shows a larger student card and clearer CTA.',
+  highlights: ['Larger student card', 'Clearer CTA'],
+} as const;
+
 const createWrapper = (): React.ComponentType<{ children: ReactNode }> => {
   const queryClient = new QueryClient({
     defaultOptions: {
@@ -142,5 +147,125 @@ describe('useSocialGeneration', () => {
     expect(toastMock).toHaveBeenCalledWith('Draft updated — review the generated post.', {
       variant: 'success',
     });
+  });
+
+  it('sends prefetched visual analysis through the dedicated generation queue path', async () => {
+    const setActivePostId = vi.fn();
+    const setEditorState = vi.fn();
+    const setContextSummary = vi.fn();
+
+    const { result } = renderHook(() =>
+      useSocialGeneration({
+        activePost: {
+          id: 'post-1',
+          titlePl: 'Draft',
+          titleEn: '',
+          bodyPl: '',
+          bodyEn: '',
+          status: 'draft',
+        } as never,
+        resolveDocReferences: () => ['docs/overview.mdx'],
+        generationNotes: 'Focus on product changes.',
+        brainModelId: 'gpt-4.1',
+        visionModelId: 'gpt-4.1-mini',
+        canGenerateDraft: true,
+        generateDraftBlockedReason: null,
+        imageAddonIds: ['addon-1'],
+        projectUrl: 'https://studiq.example.com/project',
+        setActivePostId,
+        setEditorState,
+        setContextSummary,
+        buildSocialContext: () => ({ postId: 'post-1' }),
+      }),
+      { wrapper: createWrapper() }
+    );
+
+    await act(async () => {
+      await expect(
+        result.current.handleGenerateWithVisualAnalysis(completedVisualAnalysis)
+      ).resolves.toBe(true);
+    });
+
+    expect(generateMutateAsyncMock).toHaveBeenCalledWith({
+      postId: 'post-1',
+      docReferences: ['docs/overview.mdx'],
+      notes: 'Focus on product changes.',
+      modelId: 'gpt-4.1',
+      visionModelId: 'gpt-4.1-mini',
+      imageAddonIds: ['addon-1'],
+      projectUrl: 'https://studiq.example.com/project',
+      prefetchedVisualAnalysis: completedVisualAnalysis,
+      requireVisualAnalysisInBody: true,
+    });
+    expect(setEditorState).toHaveBeenCalledWith({
+      titlePl: 'Generated PL',
+      titleEn: 'Generated EN',
+      bodyPl: 'Body PL',
+      bodyEn: 'Body EN',
+    });
+    expect(toastMock).toHaveBeenCalledWith('Draft updated — review the generated post.', {
+      variant: 'success',
+    });
+  });
+
+  it('fails instead of reporting success when the generation job returns no post copy', async () => {
+    const setActivePostId = vi.fn();
+    const setEditorState = vi.fn();
+    const setContextSummary = vi.fn();
+
+    apiGetMock.mockResolvedValueOnce({
+      id: 'job-generate-1',
+      status: 'completed',
+      failedReason: null,
+      result: {
+        type: 'manual-post-generation',
+        generatedPost: {
+          id: 'post-1',
+          titlePl: '',
+          titleEn: '',
+          bodyPl: '',
+          bodyEn: '',
+        },
+        draft: null,
+      },
+    });
+
+    const { result } = renderHook(() =>
+      useSocialGeneration({
+        activePost: {
+          id: 'post-1',
+          titlePl: 'Draft',
+          titleEn: '',
+          bodyPl: '',
+          bodyEn: '',
+          status: 'draft',
+        } as never,
+        resolveDocReferences: () => ['docs/overview.mdx'],
+        generationNotes: 'Focus on product changes.',
+        brainModelId: 'gpt-4.1',
+        visionModelId: 'gpt-4.1-mini',
+        canGenerateDraft: true,
+        generateDraftBlockedReason: null,
+        imageAddonIds: ['addon-1'],
+        projectUrl: 'https://studiq.example.com/project',
+        setActivePostId,
+        setEditorState,
+        setContextSummary,
+        buildSocialContext: () => ({ postId: 'post-1' }),
+      }),
+      { wrapper: createWrapper() }
+    );
+
+    await act(async () => {
+      await expect(result.current.handleGenerate()).resolves.toBe(false);
+    });
+
+    expect(setActivePostId).not.toHaveBeenCalled();
+    expect(setEditorState).not.toHaveBeenCalled();
+    expect(setContextSummary).not.toHaveBeenCalled();
+    expect(toastMock).toHaveBeenCalledWith(
+      'Generation completed, but no post copy was returned. Check the queued result and retry.',
+      { variant: 'error' }
+    );
   });
 });

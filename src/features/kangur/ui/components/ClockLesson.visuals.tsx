@@ -8,15 +8,214 @@ type AnalogClockProps = {
   showMinuteHand?: boolean;
 };
 
-export function AnalogClock({
-  hours,
-  minutes,
-  label,
-  highlightHour = false,
-  highlightMinute = false,
-  showHourHand = true,
-  showMinuteHand = true,
-}: AnalogClockProps): React.JSX.Element {
+type ResolvedAnalogClockProps = {
+  highlightHour: boolean;
+  highlightMinute: boolean;
+  hours: number;
+  label?: string;
+  minutes: number;
+  showHourHand: boolean;
+  showMinuteHand: boolean;
+};
+
+const CLOCK_ANGLE_OFFSET_DEGREES = -90;
+
+const isClockElement = (
+  element: React.JSX.Element | null
+): element is React.JSX.Element => element !== null;
+
+const resolveClockPolarCoordinate = ({
+  angleDegrees,
+  radius,
+}: {
+  angleDegrees: number;
+  radius: number;
+}): { x: number; y: number } => {
+  const angle = angleDegrees * (Math.PI / 180);
+  return {
+    x: 100 + radius * Math.cos(angle),
+    y: 100 + radius * Math.sin(angle),
+  };
+};
+
+function ClockHourMarks(): React.JSX.Element[] {
+  return Array.from({ length: 12 }, (_, i) => {
+    const angleDegrees = i * 30 + CLOCK_ANGLE_OFFSET_DEGREES;
+    const start = resolveClockPolarCoordinate({ angleDegrees, radius: 80 });
+    const end = resolveClockPolarCoordinate({ angleDegrees, radius: 90 });
+
+    return (
+      <line
+        key={i}
+        x1={start.x}
+        y1={start.y}
+        x2={end.x}
+        y2={end.y}
+        stroke='#4f46e5'
+        strokeWidth='3'
+        strokeLinecap='round'
+      />
+    );
+  });
+}
+
+function ClockMinuteMarks(): React.JSX.Element[] {
+  return Array.from({ length: 60 }, (_, i) => {
+    if (i % 5 === 0) {
+      return null;
+    }
+
+    const angleDegrees = i * 6 + CLOCK_ANGLE_OFFSET_DEGREES;
+    const start = resolveClockPolarCoordinate({ angleDegrees, radius: 85 });
+    const end = resolveClockPolarCoordinate({ angleDegrees, radius: 90 });
+
+    return (
+      <line
+        key={i}
+        x1={start.x}
+        y1={start.y}
+        x2={end.x}
+        y2={end.y}
+        stroke='#a5b4fc'
+        strokeWidth='1'
+      />
+    );
+  }).filter(isClockElement);
+}
+
+function ClockNumbers(): React.JSX.Element[] {
+  return [12, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11].map((n, i) => {
+    const angleDegrees = i * 30 + CLOCK_ANGLE_OFFSET_DEGREES;
+    const position = resolveClockPolarCoordinate({ angleDegrees, radius: 66 });
+
+    return (
+      <text
+        key={n}
+        x={position.x}
+        y={position.y}
+        textAnchor='middle'
+        dominantBaseline='central'
+        fontSize='14'
+        fontWeight='bold'
+        fill='#3730a3'
+      >
+        {n}
+      </text>
+    );
+  });
+}
+
+function ClockHand({
+  angleDegrees,
+  dataTestId,
+  length,
+  stroke,
+  strokeWidth,
+}: {
+  angleDegrees: number;
+  dataTestId: string;
+  length: number;
+  stroke: string;
+  strokeWidth: number;
+}): React.JSX.Element {
+  const end = resolveClockPolarCoordinate({
+    angleDegrees: angleDegrees + CLOCK_ANGLE_OFFSET_DEGREES,
+    radius: length,
+  });
+
+  return (
+    <line
+      data-testid={dataTestId}
+      x1='100'
+      y1='100'
+      x2={end.x}
+      y2={end.y}
+      stroke={stroke}
+      strokeWidth={strokeWidth}
+      strokeLinecap='round'
+    />
+  );
+}
+
+function ClockLabel({ label }: { label?: string }): React.JSX.Element | null {
+  if (!label) {
+    return null;
+  }
+
+  return <div className='text-sm font-semibold text-indigo-900'>{label}</div>;
+}
+
+const resolveAnalogClockProps = (props: AnalogClockProps): ResolvedAnalogClockProps => ({
+  highlightHour: props.highlightHour ?? false,
+  highlightMinute: props.highlightMinute ?? false,
+  hours: props.hours,
+  label: props.label,
+  minutes: props.minutes,
+  showHourHand: props.showHourHand ?? true,
+  showMinuteHand: props.showMinuteHand ?? true,
+});
+
+const resolveClockHourHandStroke = (highlightHour: boolean): string =>
+  highlightHour ? '#dc2626' : '#1e1b4b';
+
+const resolveClockMinuteHandStroke = (highlightMinute: boolean): string =>
+  highlightMinute ? '#16a34a' : '#4f46e5';
+
+const resolveClockHourHandStrokeWidth = (highlightHour: boolean): number =>
+  highlightHour ? 8 : 6;
+
+const resolveClockMinuteHandStrokeWidth = (highlightMinute: boolean): number =>
+  highlightMinute ? 6 : 4;
+
+function ClockHands({
+  highlightHour,
+  highlightMinute,
+  hourAngle,
+  minuteAngle,
+  showHourHand,
+  showMinuteHand,
+}: {
+  highlightHour: boolean;
+  highlightMinute: boolean;
+  hourAngle: number;
+  minuteAngle: number;
+  showHourHand: boolean;
+  showMinuteHand: boolean;
+}): React.JSX.Element[] {
+  return [
+    showHourHand ? (
+      <ClockHand
+        key='hour'
+        angleDegrees={hourAngle}
+        dataTestId='clock-lesson-hour-hand'
+        length={48}
+        stroke={resolveClockHourHandStroke(highlightHour)}
+        strokeWidth={resolveClockHourHandStrokeWidth(highlightHour)}
+      />
+    ) : null,
+    showMinuteHand ? (
+      <ClockHand
+        key='minute'
+        angleDegrees={minuteAngle}
+        dataTestId='clock-lesson-minute-hand'
+        length={68}
+        stroke={resolveClockMinuteHandStroke(highlightMinute)}
+        strokeWidth={resolveClockMinuteHandStrokeWidth(highlightMinute)}
+      />
+    ) : null,
+  ].filter(isClockElement);
+}
+
+export function AnalogClock(props: AnalogClockProps): React.JSX.Element {
+  const {
+    hours,
+    minutes,
+    label,
+    highlightHour,
+    highlightMinute,
+    showHourHand,
+    showMinuteHand,
+  } = resolveAnalogClockProps(props);
   const hourAngle = ((hours % 12) + minutes / 60) * 30;
   const minuteAngle = minutes * 6;
 
@@ -31,82 +230,20 @@ export function AnalogClock({
           stroke='#6366f1'
           strokeWidth='4'
         />
-        {Array.from({ length: 12 }, (_, i) => {
-          const angle = (i * 30 - 90) * (Math.PI / 180);
-          const x1 = 100 + 80 * Math.cos(angle);
-          const y1 = 100 + 80 * Math.sin(angle);
-          const x2 = 100 + 90 * Math.cos(angle);
-          const y2 = 100 + 90 * Math.sin(angle);
-          return (
-            <line
-              key={i}
-              x1={x1}
-              y1={y1}
-              x2={x2}
-              y2={y2}
-              stroke='#4f46e5'
-              strokeWidth='3'
-              strokeLinecap='round'
-            />
-          );
-        })}
-        {Array.from({ length: 60 }, (_, i) => {
-          if (i % 5 === 0) return null;
-          const angle = (i * 6 - 90) * (Math.PI / 180);
-          const x1 = 100 + 85 * Math.cos(angle);
-          const y1 = 100 + 85 * Math.sin(angle);
-          const x2 = 100 + 90 * Math.cos(angle);
-          const y2 = 100 + 90 * Math.sin(angle);
-          return (
-            <line key={i} x1={x1} y1={y1} x2={x2} y2={y2} stroke='#a5b4fc' strokeWidth='1' />
-          );
-        })}
-        {[12, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11].map((n, i) => {
-          const angle = (i * 30 - 90) * (Math.PI / 180);
-          const x = 100 + 66 * Math.cos(angle);
-          const y = 100 + 66 * Math.sin(angle);
-          return (
-            <text
-              key={n}
-              x={x}
-              y={y}
-              textAnchor='middle'
-              dominantBaseline='central'
-              fontSize='14'
-              fontWeight='bold'
-              fill='#3730a3'
-            >
-              {n}
-            </text>
-          );
-        })}
-        {showHourHand ? (
-          <line
-            data-testid='clock-lesson-hour-hand'
-            x1='100'
-            y1='100'
-            x2={100 + 48 * Math.cos((hourAngle - 90) * (Math.PI / 180))}
-            y2={100 + 48 * Math.sin((hourAngle - 90) * (Math.PI / 180))}
-            stroke={highlightHour ? '#dc2626' : '#1e1b4b'}
-            strokeWidth={highlightHour ? 8 : 6}
-            strokeLinecap='round'
-          />
-        ) : null}
-        {showMinuteHand ? (
-          <line
-            data-testid='clock-lesson-minute-hand'
-            x1='100'
-            y1='100'
-            x2={100 + 68 * Math.cos((minuteAngle - 90) * (Math.PI / 180))}
-            y2={100 + 68 * Math.sin((minuteAngle - 90) * (Math.PI / 180))}
-            stroke={highlightMinute ? '#16a34a' : '#4f46e5'}
-            strokeWidth={highlightMinute ? 6 : 4}
-            strokeLinecap='round'
-          />
-        ) : null}
+        <ClockHourMarks />
+        <ClockMinuteMarks />
+        <ClockNumbers />
+        <ClockHands
+          highlightHour={highlightHour}
+          highlightMinute={highlightMinute}
+          hourAngle={hourAngle}
+          minuteAngle={minuteAngle}
+          showHourHand={showHourHand}
+          showMinuteHand={showMinuteHand}
+        />
         <circle cx='100' cy='100' r='6' fill='#4f46e5' />
       </svg>
-      {label ? <div className='text-sm font-semibold text-indigo-900'>{label}</div> : null}
+      <ClockLabel label={label} />
     </div>
   );
 }

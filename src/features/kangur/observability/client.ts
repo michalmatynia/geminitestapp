@@ -139,15 +139,26 @@ export const reportKangurClientError = (
 };
 
 export const isRecoverableKangurClientFetchError = (error: unknown): boolean => {
-  if (!(error instanceof Error)) {
+  let message: string | null = null;
+  if (error instanceof Error) {
+    message = error.message;
+  } else if (typeof error === 'string') {
+    message = error;
+  } else if (
+    error &&
+    typeof error === 'object' &&
+    'message' in error &&
+    typeof error.message === 'string'
+  ) {
+    message = error.message;
+  }
+
+  if (!message) {
     return false;
   }
 
-  const message = error.message.trim().toLowerCase();
-  return (
-    error.name === 'TypeError' &&
-    (message === 'failed to fetch' || message.includes('load failed'))
-  );
+  const normalizedMessage = message.trim().toLowerCase();
+  return normalizedMessage.includes('failed to fetch') || normalizedMessage.includes('load failed');
 };
 
 export const isExpectedKangurClientError = (error: unknown): boolean =>

@@ -23,18 +23,55 @@ const resolvePracticeTasks = (
   section: KangurClockTrainingSection
 ): ClockPracticeTask[] | undefined => TRAINING_PANEL_TASKS[section].pick_one;
 
+type ResolvedClockTrainingLessonGameProps = {
+  clockInitialMode: 'practice' | 'challenge';
+  clockSection: KangurClockTrainingSection;
+  onFinish: () => void;
+  showClockHourHand: boolean;
+  showClockMinuteHand: boolean;
+  showClockModeSwitch: boolean;
+  showClockTaskTitle: boolean;
+  showClockTimeDisplay: boolean;
+};
+
+const resolveClockTrainingLessonGameProps = (
+  props: ClockTrainingLessonGameProps
+): ResolvedClockTrainingLessonGameProps => ({
+  clockInitialMode: props.clockInitialMode ?? 'practice',
+  clockSection: props.clockSection ?? 'hours',
+  onFinish: props.onFinish,
+  showClockHourHand: props.showClockHourHand ?? true,
+  showClockMinuteHand: props.showClockMinuteHand ?? true,
+  showClockModeSwitch: props.showClockModeSwitch ?? false,
+  showClockTaskTitle: props.showClockTaskTitle ?? true,
+  showClockTimeDisplay: props.showClockTimeDisplay ?? false,
+});
+
+const resolveClockTrainingLessonPracticeCompleted = ({
+  clockInitialMode,
+  onFinish,
+}: {
+  clockInitialMode: 'practice' | 'challenge';
+  onFinish: () => void;
+}): (() => void) | undefined =>
+  clockInitialMode === 'practice' ? () => onFinish() : undefined;
+
 export type { ClockTrainingLessonGameProps };
 
-export function renderClockTrainingLessonGame({
-  clockInitialMode = 'practice',
-  clockSection = 'hours',
-  onFinish,
-  showClockHourHand = true,
-  showClockMinuteHand = true,
-  showClockModeSwitch = false,
-  showClockTaskTitle = true,
-  showClockTimeDisplay = false,
-}: ClockTrainingLessonGameProps): React.JSX.Element {
+export function renderClockTrainingLessonGame(
+  props: ClockTrainingLessonGameProps
+): React.JSX.Element {
+  const {
+    clockInitialMode,
+    clockSection,
+    onFinish,
+    showClockHourHand,
+    showClockMinuteHand,
+    showClockModeSwitch,
+    showClockTaskTitle,
+    showClockTimeDisplay,
+  } = resolveClockTrainingLessonGameProps(props);
+
   return (
     <ClockTrainingGame
       key={clockSection}
@@ -42,7 +79,10 @@ export function renderClockTrainingLessonGame({
       hideModeSwitch={!showClockModeSwitch}
       initialMode={clockInitialMode}
       onFinish={onFinish}
-      onPracticeCompleted={clockInitialMode === 'practice' ? () => onFinish() : undefined}
+      onPracticeCompleted={resolveClockTrainingLessonPracticeCompleted({
+        clockInitialMode,
+        onFinish,
+      })}
       practiceTasks={resolvePracticeTasks(clockSection)}
       section={clockSection}
       showHourHand={showClockHourHand}

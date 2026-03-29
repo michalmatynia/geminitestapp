@@ -6,23 +6,25 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const {
   authMock,
+  getKangurConfiguredLaunchRouteMock,
   getFrontPagePublicOwnerMock,
   getFrontPageSettingMock,
-  getKangurConfiguredLaunchTargetMock,
   getKangurStorefrontInitialStateMock,
   notFoundMock,
   permanentRedirectMock,
   redirectMock,
+  requireAccessibleKangurSlugRouteMock,
   shouldApplyFrontPageAppSelectionMock,
 } = vi.hoisted(() => ({
   authMock: vi.fn(),
+  getKangurConfiguredLaunchRouteMock: vi.fn(),
   getFrontPagePublicOwnerMock: vi.fn(),
   getFrontPageSettingMock: vi.fn(),
-  getKangurConfiguredLaunchTargetMock: vi.fn(),
   getKangurStorefrontInitialStateMock: vi.fn(),
   notFoundMock: vi.fn(),
   permanentRedirectMock: vi.fn(),
   redirectMock: vi.fn(),
+  requireAccessibleKangurSlugRouteMock: vi.fn(),
   shouldApplyFrontPageAppSelectionMock: vi.fn(),
 }));
 
@@ -51,21 +53,24 @@ vi.mock('@/shared/lib/front-page-app', () => ({
   getFrontPagePublicOwner: getFrontPagePublicOwnerMock,
 }));
 
-vi.mock('@/features/kangur/server/launch-route', () => ({
-  getKangurConfiguredLaunchTarget: getKangurConfiguredLaunchTargetMock,
-}));
+vi.mock('@/features/kangur/server', () => {
+  return {
+    getKangurConfiguredLaunchRoute: getKangurConfiguredLaunchRouteMock,
+    requireAccessibleKangurSlugRoute: requireAccessibleKangurSlugRouteMock,
+  };
+});
 
 vi.mock('@/features/kangur/server/storefront-appearance', () => ({
   getKangurStorefrontInitialState: getKangurStorefrontInitialStateMock,
 }));
 
-vi.mock('@/features/kangur/public', async () => {
-  const actual = await vi.importActual('@/features/kangur/public');
+vi.mock('@/features/kangur/config/routing', async () => {
+  const actual = await vi.importActual('@/features/kangur/config/routing');
 
   return {
     ...actual,
-    KANGUR_WIDGET_OPTIONS: [],
-    getKangurPublicAliasHref: (
+    getKangurPublicLaunchHref: (
+      route: string | undefined,
       slugSegments: readonly string[] = [],
       searchParams?: Record<string, string | string[] | undefined>
     ) => {
@@ -82,6 +87,10 @@ vi.mock('@/features/kangur/public', async () => {
         if (value != null) {
           query.set(key, value);
         }
+      }
+
+      if (route === 'dedicated_app' && slugSegments[0] !== 'games' && slugSegments[0] !== 'parent-dashboard') {
+        query.set('__kangurLaunch', 'dedicated_app');
       }
 
       const serialized = query.toString();
@@ -117,18 +126,25 @@ describe('frontend slug launch route', () => {
     getFrontPageSettingMock.mockResolvedValue({ publicOwner: 'kangur' });
     getFrontPagePublicOwnerMock.mockReturnValue('kangur');
     authMock.mockResolvedValue(null);
+    requireAccessibleKangurSlugRouteMock.mockImplementation(async (slugSegments: readonly string[]) => {
+      const slug = slugSegments[0]?.trim().toLowerCase();
+      if (slug !== 'games' && slug !== 'parent-dashboard') {
+        return;
+      }
+
+      const session = await authMock();
+      if (session?.user?.role !== 'super_admin') {
+        notFoundMock();
+      }
+    });
     getKangurStorefrontInitialStateMock.mockResolvedValue({
       initialMode: 'default',
       initialThemeSettings: {},
     });
   });
 
-  it('redirects supported public Kangur slug routes to the dedicated app', async () => {
-    getKangurConfiguredLaunchTargetMock.mockResolvedValue({
-      route: 'dedicated_app',
-      href: 'kangur://lessons?focus=division',
-      fallbackHref: '/lessons?focus=division',
-    });
+  it('redirects supported public Kangur slug routes into the web shell with a dedicated-app launch hint', async () => {
+    getKangurConfiguredLaunchRouteMock.mockResolvedValue('dedicated_app');
 
     const { default: CmsSlugPage } = await import('@/app/(frontend)/[...slug]/page');
 
@@ -137,16 +153,14 @@ describe('frontend slug launch route', () => {
         params: Promise.resolve({ slug: ['lessons'] }),
         searchParams: Promise.resolve({ focus: 'division' }),
       })
-    ).rejects.toThrow('redirect:kangur://lessons?focus=division');
-    expect(redirectMock).toHaveBeenCalledWith('kangur://lessons?focus=division');
+    ).rejects.toThrow('redirect:/kangur/lessons?focus=division&__kangurLaunch=dedicated_app');
+    expect(redirectMock).toHaveBeenCalledWith(
+      '/kangur/lessons?focus=division&__kangurLaunch=dedicated_app'
+    );
   });
 
   it('redirects supported public Kangur slug routes to the /kangur alias on the web path', async () => {
-    getKangurConfiguredLaunchTargetMock.mockResolvedValue({
-      route: 'web_mobile_view',
-      href: '/lessons?focus=division',
-      fallbackHref: '/lessons?focus=division',
-    });
+    getKangurConfiguredLaunchRouteMock.mockResolvedValue('web_mobile_view');
 
     const { default: CmsSlugPage } = await import('@/app/(frontend)/[...slug]/page');
 
@@ -160,12 +174,6 @@ describe('frontend slug launch route', () => {
   });
 
   it('keeps unsupported slug routes on the shared Kangur shell path without redirecting', async () => {
-    getKangurConfiguredLaunchTargetMock.mockResolvedValue({
-      route: 'dedicated_app',
-      href: '/login',
-      fallbackHref: '/login',
-    });
-
     const { default: CmsSlugPage } = await import('@/app/(frontend)/[...slug]/page');
     const page = await CmsSlugPage({
       params: Promise.resolve({ slug: ['login'] }),
@@ -177,11 +185,7 @@ describe('frontend slug launch route', () => {
   });
 
   it('does not redirect the games slug for non-super-admin sessions', async () => {
-    getKangurConfiguredLaunchTargetMock.mockResolvedValue({
-      route: 'dedicated_app',
-      href: 'kangur://games',
-      fallbackHref: '/games',
-    });
+    getKangurConfiguredLaunchRouteMock.mockResolvedValue('dedicated_app');
     authMock.mockResolvedValue({
       expires: '2099-01-01T00:00:00.000Z',
       user: {
@@ -198,17 +202,13 @@ describe('frontend slug launch route', () => {
       })
     ).rejects.toThrow('notFound');
 
-    expect(getKangurConfiguredLaunchTargetMock).not.toHaveBeenCalled();
+    expect(getKangurConfiguredLaunchRouteMock).not.toHaveBeenCalled();
     expect(redirectMock).not.toHaveBeenCalled();
     expect(notFoundMock).toHaveBeenCalledTimes(1);
   });
 
-  it('still redirects the games slug for exact super-admin sessions', async () => {
-    getKangurConfiguredLaunchTargetMock.mockResolvedValue({
-      route: 'dedicated_app',
-      href: 'kangur://games',
-      fallbackHref: '/games',
-    });
+  it('keeps the games slug on the shared web shell even when the dedicated app launch mode is selected', async () => {
+    getKangurConfiguredLaunchRouteMock.mockResolvedValue('dedicated_app');
     authMock.mockResolvedValue({
       expires: '2099-01-01T00:00:00.000Z',
       user: {
@@ -224,16 +224,12 @@ describe('frontend slug launch route', () => {
         params: Promise.resolve({ slug: ['games'] }),
         searchParams: Promise.resolve({}),
       })
-    ).rejects.toThrow('redirect:kangur://games');
-    expect(redirectMock).toHaveBeenCalledWith('kangur://games');
+    ).rejects.toThrow('redirect:/kangur/games');
+    expect(redirectMock).toHaveBeenCalledWith('/kangur/games');
   });
 
   it('does not redirect localized games slugs for non-super-admin sessions', async () => {
-    getKangurConfiguredLaunchTargetMock.mockResolvedValue({
-      route: 'dedicated_app',
-      href: 'kangur://games',
-      fallbackHref: '/games',
-    });
+    getKangurConfiguredLaunchRouteMock.mockResolvedValue('dedicated_app');
     authMock.mockResolvedValue({
       expires: '2099-01-01T00:00:00.000Z',
       user: {
@@ -250,17 +246,13 @@ describe('frontend slug launch route', () => {
       })
     ).rejects.toThrow('notFound');
 
-    expect(getKangurConfiguredLaunchTargetMock).not.toHaveBeenCalled();
+    expect(getKangurConfiguredLaunchRouteMock).not.toHaveBeenCalled();
     expect(redirectMock).not.toHaveBeenCalled();
     expect(notFoundMock).toHaveBeenCalledTimes(1);
   });
 
-  it('does not add locale prefixes to dedicated app redirects on localized slug routes', async () => {
-    getKangurConfiguredLaunchTargetMock.mockResolvedValue({
-      route: 'dedicated_app',
-      href: 'kangur://duels?join=invite-1',
-      fallbackHref: '/duels?join=invite-1',
-    });
+  it('omits the default locale prefix on dedicated-app launch handoff routes', async () => {
+    getKangurConfiguredLaunchRouteMock.mockResolvedValue('dedicated_app');
 
     const { default: LocalizedCmsSlugPage } = await import('@/app/[locale]/(frontend)/[...slug]/page');
 
@@ -269,16 +261,14 @@ describe('frontend slug launch route', () => {
         params: Promise.resolve({ locale: 'pl', slug: ['duels'] }),
         searchParams: Promise.resolve({ join: 'invite-1' }),
       })
-    ).rejects.toThrow('redirect:kangur://duels?join=invite-1');
-    expect(redirectMock).toHaveBeenCalledWith('kangur://duels?join=invite-1');
+    ).rejects.toThrow('redirect:/kangur/duels?join=invite-1&__kangurLaunch=dedicated_app');
+    expect(redirectMock).toHaveBeenCalledWith(
+      '/kangur/duels?join=invite-1&__kangurLaunch=dedicated_app'
+    );
   });
 
   it('redirects localized Kangur slug routes to the localized /kangur alias on the web path', async () => {
-    getKangurConfiguredLaunchTargetMock.mockResolvedValue({
-      route: 'web_mobile_view',
-      href: '/duels?join=invite-1',
-      fallbackHref: '/duels?join=invite-1',
-    });
+    getKangurConfiguredLaunchRouteMock.mockResolvedValue('web_mobile_view');
 
     const { default: LocalizedCmsSlugPage } = await import('@/app/[locale]/(frontend)/[...slug]/page');
 

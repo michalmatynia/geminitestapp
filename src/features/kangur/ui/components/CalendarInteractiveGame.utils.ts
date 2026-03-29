@@ -5,6 +5,7 @@ import type { KangurMiniGameTranslate } from '@/features/kangur/ui/constants/min
 import type {
   CalendarInteractiveSectionContent,
   CalendarInteractiveTaskPoolId,
+  TaskType,
   Season,
   Task,
 } from './CalendarInteractiveGame.types';
@@ -97,70 +98,100 @@ export const getCalendarInteractiveSeasonLabel = (
   season: Season
 ): string => translate(`calendarInteractive.seasons.${season}`);
 
-export function generateTask(
-  month: number,
-  year: number,
-  translate: KangurMiniGameTranslate,
-  section: CalendarInteractiveTaskPoolId = 'mixed'
-): Task {
+const resolveCalendarInteractiveTaskType = (
+  section: CalendarInteractiveTaskPoolId
+): TaskType => {
   const taskTypes = CALENDAR_INTERACTIVE_TASK_TYPE_POOLS[section];
-  const type =
-    taskTypes[Math.floor(Math.random() * taskTypes.length)] ??
-    CALENDAR_INTERACTIVE_TASK_TYPE_POOLS.mixed[0];
-  const cells = getCalendarCells(month, year);
-  const validDays = cells.filter((day): day is number => day !== null);
+  const fallbackTaskType: TaskType = 'click_weekday_name';
+  return taskTypes[Math.floor(Math.random() * taskTypes.length)] ?? fallbackTaskType;
+};
 
-  if (type === 'click_weekday_name') {
-    const targetIdx = Math.floor(Math.random() * 7);
-    return {
-      type: 'click_weekday_name',
-      targetIdx,
-      label: translate('calendarInteractive.tasks.clickWeekday', {
-        dayLabel: getCalendarInteractiveWeekdayLookup(translate, targetIdx),
-      }),
-    };
-  }
+const buildCalendarInteractiveClickWeekdayTask = (
+  translate: KangurMiniGameTranslate
+): Task => {
+  const targetIdx = Math.floor(Math.random() * 7);
+  return {
+    type: 'click_weekday_name',
+    targetIdx,
+    label: translate('calendarInteractive.tasks.clickWeekday', {
+      dayLabel: getCalendarInteractiveWeekdayLookup(translate, targetIdx),
+    }),
+  };
+};
 
-  if (type === 'click_all_weekends') {
-    const dayIdx: 5 | 6 = Math.random() > 0.5 ? 5 : 6;
-    const targets = cells
-      .map((day) => (day !== null && getDayOfWeek(year, month, day) === dayIdx ? day : null))
-      .filter((day): day is number => day !== null);
-    return {
-      type: 'click_all_weekends',
-      targets,
-      dayIdx,
-      label: translate('calendarInteractive.tasks.clickAllWeekends', {
-        dayName: getCalendarInteractiveWeekdayLookup(translate, dayIdx),
-      }),
-    };
-  }
+const buildCalendarInteractiveClickAllWeekendsTask = ({
+  cells,
+  month,
+  translate,
+  year,
+}: {
+  cells: Array<number | null>;
+  month: number;
+  translate: KangurMiniGameTranslate;
+  year: number;
+}): Task => {
+  const dayIdx: 5 | 6 = Math.random() > 0.5 ? 5 : 6;
+  const targets = cells
+    .map((day) => (day !== null && getDayOfWeek(year, month, day) === dayIdx ? day : null))
+    .filter((day): day is number => day !== null);
 
-  if (type === 'drag_season') {
-    const monthData = MONTHS_DATA[month] ?? MONTHS_DATA[0];
-    return {
-      type: 'drag_season',
-      monthName: getCalendarInteractiveMonthName(translate, month),
-      correctSeason: monthData.season,
-      label: translate('calendarInteractive.tasks.dragSeason', {
-        monthName: getCalendarInteractiveMonthName(translate, month),
-      }),
-    };
-  }
+  return {
+    type: 'click_all_weekends',
+    targets,
+    dayIdx,
+    label: translate('calendarInteractive.tasks.clickAllWeekends', {
+      dayName: getCalendarInteractiveWeekdayLookup(translate, dayIdx),
+    }),
+  };
+};
 
-  if (type === 'flip_month') {
-    const targetMonth = Math.floor(Math.random() * 12);
-    return {
-      type: 'flip_month',
-      targetMonth,
-      label: translate('calendarInteractive.tasks.flipMonth', {
-        monthNumber: targetMonth + 1,
-        monthName: getCalendarInteractiveMonthName(translate, targetMonth),
-      }),
-    };
-  }
+const buildCalendarInteractiveDragSeasonTask = ({
+  month,
+  translate,
+}: {
+  month: number;
+  translate: KangurMiniGameTranslate;
+}): Task => {
+  const monthData = MONTHS_DATA[month] ?? MONTHS_DATA[0];
+  const monthName = getCalendarInteractiveMonthName(translate, month);
 
+  return {
+    type: 'drag_season',
+    monthName,
+    correctSeason: monthData.season,
+    label: translate('calendarInteractive.tasks.dragSeason', {
+      monthName,
+    }),
+  };
+};
+
+const buildCalendarInteractiveFlipMonthTask = (
+  translate: KangurMiniGameTranslate
+): Task => {
+  const targetMonth = Math.floor(Math.random() * 12);
+  return {
+    type: 'flip_month',
+    targetMonth,
+    label: translate('calendarInteractive.tasks.flipMonth', {
+      monthNumber: targetMonth + 1,
+      monthName: getCalendarInteractiveMonthName(translate, targetMonth),
+    }),
+  };
+};
+
+const buildCalendarInteractiveClickDateTask = ({
+  month,
+  translate,
+  validDays,
+  year,
+}: {
+  month: number;
+  translate: KangurMiniGameTranslate;
+  validDays: number[];
+  year: number;
+}): Task => {
   const targetDay = validDays[Math.floor(Math.random() * validDays.length)] ?? 1;
+
   return {
     type: 'click_date',
     targetDay,
@@ -173,4 +204,42 @@ export function generateTask(
       ),
     }),
   };
+};
+
+export function generateTask(
+  month: number,
+  year: number,
+  translate: KangurMiniGameTranslate,
+  section: CalendarInteractiveTaskPoolId = 'mixed'
+): Task {
+  const type = resolveCalendarInteractiveTaskType(section);
+  const cells = getCalendarCells(month, year);
+  const validDays = cells.filter((day): day is number => day !== null);
+
+  switch (type) {
+    case 'click_weekday_name':
+      return buildCalendarInteractiveClickWeekdayTask(translate);
+    case 'click_all_weekends':
+      return buildCalendarInteractiveClickAllWeekendsTask({
+        cells,
+        month,
+        translate,
+        year,
+      });
+    case 'drag_season':
+      return buildCalendarInteractiveDragSeasonTask({
+        month,
+        translate,
+      });
+    case 'flip_month':
+      return buildCalendarInteractiveFlipMonthTask(translate);
+    case 'click_date':
+    default:
+      return buildCalendarInteractiveClickDateTask({
+        month,
+        translate,
+        validDays,
+        year,
+      });
+  }
 }

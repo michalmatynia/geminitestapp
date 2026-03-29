@@ -3,8 +3,8 @@ import { JSX } from 'react';
 
 import { getCmsRepository, isDomainZoningEnabled } from '@/features/cms/server';
 import { getSlugsForDomain, resolveCmsDomainFromHeaders } from '@/features/cms/server';
-import { getKangurPublicAliasHref } from '@/features/kangur/config/routing';
-import { getKangurConfiguredLaunchTarget } from '@/features/kangur/server';
+import { getKangurPublicLaunchHref } from '@/features/kangur/config/routing';
+import { getKangurConfiguredLaunchRoute } from '@/features/kangur/server';
 import { getFrontPagePublicOwner, getFrontPageRedirectPath } from '@/shared/lib/front-page-app';
 import { readOptionalRequestHeaders } from '@/shared/lib/request/optional-headers';
 
@@ -19,34 +19,23 @@ export default async function Home(): Promise<JSX.Element | null> {
   const { withTiming, flush } = createHomeTimingRecorder();
 
   const shouldApplyFrontPageSelection = shouldApplyFrontPageAppSelection();
-  const [frontPageSetting, kangurLaunchTargetEager] = shouldApplyFrontPageSelection
+  const [frontPageSetting, kangurLaunchRoute] = shouldApplyFrontPageSelection
     ? await Promise.all([
         withTiming('frontPageSetting', getFrontPageSetting),
-        withTiming('kangurLaunchTarget', () => getKangurConfiguredLaunchTarget()),
+        withTiming('kangurLaunchRoute', () => getKangurConfiguredLaunchRoute()),
       ])
     : [null, null];
   const publicOwner = getFrontPagePublicOwner(frontPageSetting);
   const redirectPath = getFrontPageRedirectPath(frontPageSetting);
-  const kangurLaunchTarget = publicOwner === 'kangur' ? kangurLaunchTargetEager : null;
 
   if (shouldApplyFrontPageSelection && redirectPath) {
     await flush();
     redirect(redirectPath);
   }
 
-  if (
-    shouldApplyFrontPageSelection &&
-    publicOwner === 'kangur' &&
-    kangurLaunchTarget &&
-    kangurLaunchTarget.href !== kangurLaunchTarget.fallbackHref
-  ) {
-    await flush();
-    redirect(kangurLaunchTarget.href);
-  }
-
   if (shouldApplyFrontPageSelection && publicOwner === 'kangur') {
     await flush();
-    redirect(getKangurPublicAliasHref());
+    redirect(getKangurPublicLaunchHref(kangurLaunchRoute ?? undefined));
   }
 
   const [cmsRepository, hdrs] = await Promise.all([

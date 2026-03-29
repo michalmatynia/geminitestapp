@@ -24,7 +24,11 @@ import {
   readServerRequestHeaders,
   readServerRequestPathname,
 } from '@/shared/lib/request/server-request-context';
-import { getFrontPagePublicOwner } from '@/shared/lib/front-page-app';
+import {
+  resolveFrontendPublicRouteFamily,
+  type FrontendPublicOwner,
+  type FrontendPublicRouteFamily,
+} from '@/shared/lib/frontend-public-route-family';
 import { stripSiteLocalePrefix } from '@/shared/lib/i18n/site-locale';
 import { safeHtml } from '@/shared/lib/security/safe-html';
 import { QueryErrorBoundary } from '@/shared/ui/QueryErrorBoundary';
@@ -125,16 +129,19 @@ export default async function FrontendLayout({
     : Promise.resolve(null);
   const themePromise = getCmsThemeSettings();
 
-  const frontPageSetting = await frontPageSettingPromise;
-  const publicOwner = shouldResolveFrontPageSelection
-    ? getFrontPagePublicOwner(frontPageSetting)
-    : 'cms';
+  const frontPageSetting: string | null = await frontPageSettingPromise;
+  const publicOwner: FrontendPublicOwner =
+    shouldResolveFrontPageSelection && frontPageSetting === 'kangur' ? 'kangur' : 'cms';
   const shouldRenderStandaloneKangurShell =
     publicOwner === 'kangur' && !isExplicitKangurAlias && !isCanonicalPublicLogin;
   const shouldInjectKangurAuthBootstrap =
     !requestHeadersTimedOut && (publicOwner === 'kangur' || isCanonicalPublicLogin);
   const shouldLoadKangurStorefrontBootstrap =
     publicOwner === 'kangur' && shouldRenderStandaloneKangurShell;
+  const publicRouteFamily: FrontendPublicRouteFamily = resolveFrontendPublicRouteFamily({
+    pathname: requestPathname,
+    publicOwner,
+  });
   const kangurStatePromise = shouldLoadKangurStorefrontBootstrap
     ? layoutTiming.withTiming(
       'kangurStorefrontInitialState',
@@ -159,6 +166,7 @@ export default async function FrontendLayout({
   const frontendLoadTimingPayload = layoutTiming.buildPayload({
     pathname: requestPathname,
     publicOwner,
+    routeFamily: publicRouteFamily,
     flags: {
       explicitKangurAlias: isExplicitKangurAlias,
       canonicalPublicLogin: isCanonicalPublicLogin,
@@ -203,6 +211,7 @@ export default async function FrontendLayout({
       id='kangur-main-content'
       tabIndex={-1}
       className='min-h-screen bg-background focus:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 focus-visible:ring-offset-2 focus-visible:ring-offset-background'
+      data-frontend-public-route-family={publicRouteFamily}
     >
       {inlineFrontendLoadTimingPayload ? (
         <script
@@ -225,7 +234,7 @@ export default async function FrontendLayout({
       {kangurAuthBootstrapScript ? (
         <script dangerouslySetInnerHTML={{ __html: safeHtml(kangurAuthBootstrapScript) }} />
       ) : null}
-      <FrontendPublicOwnerProvider publicOwner={publicOwner}>
+      <FrontendPublicOwnerProvider publicOwner={publicOwner} routeFamily={publicRouteFamily}>
         <QueryErrorBoundary>
           <FrontendPublicOwnerShellClient
             publicOwner={publicOwner}

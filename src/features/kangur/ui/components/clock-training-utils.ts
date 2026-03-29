@@ -211,6 +211,183 @@ export function getMinuteRingDistance(actualMinutes: number, expectedMinutes: nu
   return Math.min(distance, 60 - distance);
 }
 
+const buildClockHoursWrongFeedback = ({
+  actualHours,
+  actualMinutes,
+  expectedHours,
+  expectedMinutes,
+  totalMinuteDistance,
+  translate,
+}: {
+  actualHours: number;
+  actualMinutes: number;
+  expectedHours: number;
+  expectedMinutes: number;
+  totalMinuteDistance: number;
+  translate?: KangurMiniGameTranslate;
+}): ClockFeedback => {
+  const hourDistance = Math.max(1, Math.round(totalMinuteDistance / 60));
+  const title =
+    hourDistance === 1
+      ? translateClockTrainingWithFallback(
+          translate,
+          'feedback.wrong.title.hours.neighbor',
+          'Prawie! To sąsiednia godzina.'
+        )
+      : hourDistance <= 2
+        ? translateClockTrainingWithFallback(
+            translate,
+            'feedback.wrong.title.hours.close',
+            'Blisko!'
+          )
+        : translateClockTrainingWithFallback(
+            translate,
+            'feedback.wrong.title.default',
+            'Spróbuj jeszcze raz!'
+          );
+  const hint =
+    actualMinutes !== 0
+      ? translateClockTrainingWithFallback(
+          translate,
+          'feedback.wrong.hint.hours.minutesStayZero',
+          'W treningu godzin dłuższa wskazówka zostaje na 12, więc minuty powinny być równe :00.'
+        )
+      : translateClockTrainingWithFallback(
+          translate,
+          'feedback.wrong.hint.hours.checkShortHand',
+          'Sprawdź pozycję krótkiej wskazówki i wybierz pełną godzinę.'
+        );
+
+  return {
+    kind: 'wrong',
+    title,
+    tone: hourDistance === 1 ? 'near' : 'far',
+    emoji: '❌',
+    details: translateClockTrainingWithFallback(
+      translate,
+      'feedback.wrong.details.hours',
+      `Twoja odpowiedź: ${actualHours}:${pad(actualMinutes)}. Poprawna: ${expectedHours}:${pad(expectedMinutes)}. Pomyłka o ${hourDistance} godz. ${hint}`,
+      {
+        actual: `${actualHours}:${pad(actualMinutes)}`,
+        expected: `${expectedHours}:${pad(expectedMinutes)}`,
+        distance: hourDistance,
+        hint,
+      }
+    ),
+  };
+};
+
+const resolveClockGeneralWrongFeedbackTitle = ({
+  section,
+  totalMinuteDistance,
+  translate,
+}: {
+  section: ClockTrainingTaskPoolId;
+  totalMinuteDistance: number;
+  translate?: KangurMiniGameTranslate;
+}): { title: string; tone: 'near' | 'far' } => {
+  if (totalMinuteDistance < 5) {
+    return {
+      title:
+        section === 'minutes'
+          ? translateClockTrainingWithFallback(
+              translate,
+              'feedback.wrong.title.minutes.veryNear',
+              'Bardzo blisko z minutami!'
+            )
+          : translateClockTrainingWithFallback(
+              translate,
+              'feedback.wrong.title.veryNear',
+              'Bardzo blisko!'
+            ),
+      tone: 'near',
+    };
+  }
+
+  if (totalMinuteDistance <= 15) {
+    return {
+      title:
+        section === 'minutes'
+          ? translateClockTrainingWithFallback(
+              translate,
+              'feedback.wrong.title.minutes.near',
+              'Prawie! Minuty są blisko.'
+            )
+          : translateClockTrainingWithFallback(
+              translate,
+              'feedback.wrong.title.near',
+              'Prawie!'
+            ),
+      tone: 'far',
+    };
+  }
+
+  return {
+    title: translateClockTrainingWithFallback(
+      translate,
+      'feedback.wrong.title.default',
+      'Spróbuj jeszcze raz!'
+    ),
+    tone: 'far',
+  };
+};
+
+const resolveClockGeneralWrongFeedbackHint = ({
+  minuteRingDistance,
+  section,
+  translate,
+}: {
+  minuteRingDistance: number;
+  section: ClockTrainingTaskPoolId;
+  translate?: KangurMiniGameTranslate;
+}): string => {
+  if (section === 'minutes') {
+    if (minuteRingDistance <= 5) {
+      return translateClockTrainingWithFallback(
+        translate,
+        'feedback.wrong.hint.minutes.moveOneTick',
+        'Długa wskazówka jest prawie dobrze. Przesuń ją jeszcze o jedną kreskę.'
+      );
+    }
+
+    if (minuteRingDistance <= 15) {
+      return translateClockTrainingWithFallback(
+        translate,
+        'feedback.wrong.hint.minutes.countByFives',
+        'Policz kreski po 5 minut i popraw długą wskazówkę.'
+      );
+    }
+
+    return translateClockTrainingWithFallback(
+      translate,
+      'feedback.wrong.hint.minutes.focusLongHand',
+      'Skup się tylko na długiej wskazówce. Krótka zostaje na 12.'
+    );
+  }
+
+  if (minuteRingDistance <= 5) {
+    return translateClockTrainingWithFallback(
+      translate,
+      'feedback.wrong.hint.combined.adjustShortHand',
+      'Długa wskazówka jest prawie dobrze. Dopracuj krótką wskazówkę (godziny).'
+    );
+  }
+
+  if (minuteRingDistance <= 15) {
+    return translateClockTrainingWithFallback(
+      translate,
+      'feedback.wrong.hint.combined.focusLongHand',
+      'Skup się na długiej wskazówce (minuty).'
+    );
+  }
+
+  return translateClockTrainingWithFallback(
+    translate,
+    'feedback.wrong.hint.default',
+    'Sprawdź obie wskazówki.'
+  );
+};
+
 export function buildClockWrongFeedback(
   actualHours: number,
   actualMinutes: number,
@@ -228,130 +405,26 @@ export function buildClockWrongFeedback(
   const minuteRingDistance = getMinuteRingDistance(actualMinutes, expectedMinutes);
 
   if (section === 'hours') {
-    const hourDistance = Math.max(1, Math.round(totalMinuteDistance / 60));
-    const title =
-      hourDistance === 1
-        ? translateClockTrainingWithFallback(
-            translate,
-            'feedback.wrong.title.hours.neighbor',
-            'Prawie! To sąsiednia godzina.'
-          )
-        : hourDistance <= 2
-          ? translateClockTrainingWithFallback(
-              translate,
-              'feedback.wrong.title.hours.close',
-              'Blisko!'
-            )
-          : translateClockTrainingWithFallback(
-              translate,
-              'feedback.wrong.title.default',
-              'Spróbuj jeszcze raz!'
-            );
-    const hint =
-      actualMinutes !== 0
-        ? translateClockTrainingWithFallback(
-            translate,
-            'feedback.wrong.hint.hours.minutesStayZero',
-            'W treningu godzin dłuższa wskazówka zostaje na 12, więc minuty powinny być równe :00.'
-          )
-        : translateClockTrainingWithFallback(
-            translate,
-            'feedback.wrong.hint.hours.checkShortHand',
-            'Sprawdź pozycję krótkiej wskazówki i wybierz pełną godzinę.'
-          );
-
-    return {
-      kind: 'wrong',
-      title,
-      tone: hourDistance === 1 ? 'near' : 'far',
-      emoji: '❌',
-      details: translateClockTrainingWithFallback(
-        translate,
-        'feedback.wrong.details.hours',
-        `Twoja odpowiedź: ${actualHours}:${pad(actualMinutes)}. Poprawna: ${expectedHours}:${pad(expectedMinutes)}. Pomyłka o ${hourDistance} godz. ${hint}`,
-        {
-          actual: `${actualHours}:${pad(actualMinutes)}`,
-          expected: `${expectedHours}:${pad(expectedMinutes)}`,
-          distance: hourDistance,
-          hint,
-        }
-      ),
-    };
-  }
-
-  let title = translateClockTrainingWithFallback(
-    translate,
-    'feedback.wrong.title.default',
-    'Spróbuj jeszcze raz!'
-  );
-  let tone: 'near' | 'far' = 'far';
-  if (totalMinuteDistance < 5) {
-    title =
-      section === 'minutes'
-        ? translateClockTrainingWithFallback(
-            translate,
-            'feedback.wrong.title.minutes.veryNear',
-            'Bardzo blisko z minutami!'
-          )
-        : translateClockTrainingWithFallback(
-            translate,
-            'feedback.wrong.title.veryNear',
-            'Bardzo blisko!'
-          );
-    tone = 'near';
-  } else if (totalMinuteDistance <= 15) {
-    title =
-      section === 'minutes'
-        ? translateClockTrainingWithFallback(
-            translate,
-            'feedback.wrong.title.minutes.near',
-            'Prawie! Minuty są blisko.'
-          )
-        : translateClockTrainingWithFallback(
-            translate,
-            'feedback.wrong.title.near',
-            'Prawie!'
-          );
-  }
-
-  let hint = translateClockTrainingWithFallback(
-    translate,
-    'feedback.wrong.hint.default',
-    'Sprawdź obie wskazówki.'
-  );
-  if (section === 'minutes') {
-    if (minuteRingDistance <= 5) {
-      hint = translateClockTrainingWithFallback(
-        translate,
-        'feedback.wrong.hint.minutes.moveOneTick',
-        'Długa wskazówka jest prawie dobrze. Przesuń ją jeszcze o jedną kreskę.'
-      );
-    } else if (minuteRingDistance <= 15) {
-      hint = translateClockTrainingWithFallback(
-        translate,
-        'feedback.wrong.hint.minutes.countByFives',
-        'Policz kreski po 5 minut i popraw długą wskazówkę.'
-      );
-    } else {
-      hint = translateClockTrainingWithFallback(
-        translate,
-        'feedback.wrong.hint.minutes.focusLongHand',
-        'Skup się tylko na długiej wskazówce. Krótka zostaje na 12.'
-      );
-    }
-  } else if (minuteRingDistance <= 5) {
-    hint = translateClockTrainingWithFallback(
+    return buildClockHoursWrongFeedback({
+      actualHours,
+      actualMinutes,
+      expectedHours,
+      expectedMinutes,
+      totalMinuteDistance,
       translate,
-      'feedback.wrong.hint.combined.adjustShortHand',
-      'Długa wskazówka jest prawie dobrze. Dopracuj krótką wskazówkę (godziny).'
-    );
-  } else if (minuteRingDistance <= 15) {
-    hint = translateClockTrainingWithFallback(
-      translate,
-      'feedback.wrong.hint.combined.focusLongHand',
-      'Skup się na długiej wskazówce (minuty).'
-    );
+    });
   }
+
+  const { title, tone } = resolveClockGeneralWrongFeedbackTitle({
+    section,
+    totalMinuteDistance,
+    translate,
+  });
+  const hint = resolveClockGeneralWrongFeedbackHint({
+    minuteRingDistance,
+    section,
+    translate,
+  });
 
   return {
     kind: 'wrong',
@@ -376,46 +449,54 @@ export function taskToKey(task: ClockTask): string {
   return `${task.hours}:${task.minutes}`;
 }
 
-export function buildClockTaskPrompt(
+const resolveClockTaskPromptNextHour = (hour: number): number => (hour === 12 ? 1 : hour + 1);
+
+const buildClockHourTaskPrompt = (translate?: KangurMiniGameTranslate): string =>
+  translateClockTrainingWithFallback(
+    translate,
+    'prompt.hours.default',
+    'Pełna godzina. Ustaw krótką wskazówkę, a minuty zostają na 00.'
+  );
+
+const buildClockMinuteTaskPrompt = (
   task: ClockTask,
-  section: ClockTrainingTaskPoolId = 'mixed',
   translate?: KangurMiniGameTranslate
-): string {
-  if (section === 'hours') {
+): string => {
+  if (task.minutes === 15) {
     return translateClockTrainingWithFallback(
       translate,
-      'prompt.hours.default',
-      'Pełna godzina. Ustaw krótką wskazówkę, a minuty zostają na 00.'
+      'prompt.minutes.quarterPast',
+      'Kwadrans. Krótka wskazówka zostaje na 12.'
     );
   }
-  if (section === 'minutes') {
-    if (task.minutes === 15) {
-      return translateClockTrainingWithFallback(
-        translate,
-        'prompt.minutes.quarterPast',
-        'Kwadrans. Krótka wskazówka zostaje na 12.'
-      );
-    }
-    if (task.minutes === 30) {
-      return translateClockTrainingWithFallback(
-        translate,
-        'prompt.minutes.halfHour',
-        'Pół godziny. Krótka wskazówka zostaje na 12.'
-      );
-    }
-    if (task.minutes === 45) {
-      return translateClockTrainingWithFallback(
-        translate,
-        'prompt.minutes.fortyFiveMinutes',
-        '45 minut. Krótka wskazówka zostaje na 12.'
-      );
-    }
+
+  if (task.minutes === 30) {
     return translateClockTrainingWithFallback(
       translate,
-      'prompt.minutes.default',
-      'Skup się na długiej wskazówce. Krótka wskazówka zostaje na 12.'
+      'prompt.minutes.halfHour',
+      'Pół godziny. Krótka wskazówka zostaje na 12.'
     );
   }
+
+  if (task.minutes === 45) {
+    return translateClockTrainingWithFallback(
+      translate,
+      'prompt.minutes.fortyFiveMinutes',
+      '45 minut. Krótka wskazówka zostaje na 12.'
+    );
+  }
+
+  return translateClockTrainingWithFallback(
+    translate,
+    'prompt.minutes.default',
+    'Skup się na długiej wskazówce. Krótka wskazówka zostaje na 12.'
+  );
+};
+
+const buildClockDefaultTaskPrompt = (
+  task: ClockTask,
+  translate?: KangurMiniGameTranslate
+): string => {
   if (task.minutes === 0) {
     return translateClockTrainingWithFallback(
       translate,
@@ -423,6 +504,7 @@ export function buildClockTaskPrompt(
       'Pełna godzina (minuty = 00).'
     );
   }
+
   if (task.minutes === 15) {
     return translateClockTrainingWithFallback(
       translate,
@@ -431,30 +513,51 @@ export function buildClockTaskPrompt(
       { hour: task.hours }
     );
   }
+
   if (task.minutes === 30) {
+    const nextHour = resolveClockTaskPromptNextHour(task.hours);
     return translateClockTrainingWithFallback(
       translate,
       'prompt.default.halfTo',
-      `Wpół do ${task.hours === 12 ? 1 : task.hours + 1}.`,
+      `Wpół do ${nextHour}.`,
       {
         currentHour: task.hours,
-        nextHour: task.hours === 12 ? 1 : task.hours + 1,
+        nextHour,
       }
     );
   }
+
   if (task.minutes === 45) {
+    const nextHour = resolveClockTaskPromptNextHour(task.hours);
     return translateClockTrainingWithFallback(
       translate,
       'prompt.default.quarterTo',
-      `Kwadrans do ${task.hours === 12 ? 1 : task.hours + 1}.`,
-      { nextHour: task.hours === 12 ? 1 : task.hours + 1 }
+      `Kwadrans do ${nextHour}.`,
+      { nextHour }
     );
   }
+
   return translateClockTrainingWithFallback(
     translate,
     'prompt.default.general',
     'Wskazówka godzin przesuwa się razem z minutami.'
   );
+};
+
+export function buildClockTaskPrompt(
+  task: ClockTask,
+  section: ClockTrainingTaskPoolId = 'mixed',
+  translate?: KangurMiniGameTranslate
+): string {
+  if (section === 'hours') {
+    return buildClockHourTaskPrompt(translate);
+  }
+
+  if (section === 'minutes') {
+    return buildClockMinuteTaskPrompt(task, translate);
+  }
+
+  return buildClockDefaultTaskPrompt(task, translate);
 }
 
 export function buildClockCorrectFeedback(

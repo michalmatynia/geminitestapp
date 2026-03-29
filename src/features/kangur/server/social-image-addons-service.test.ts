@@ -72,7 +72,8 @@ describe('createKangurSocialImageAddonFromPlaywright', () => {
       title: 'Hero screenshot',
       sourceUrl: 'https://kangur.app/landing',
       appearanceMode: 'dark',
-      forwardCookies: 'session=abc123',
+      forwardCookies:
+        'session=abc123; __Host-next-auth.csrf-token=csrf123; __Secure-next-auth.session-token=session456',
     });
 
     expect(mocks.enqueuePlaywrightNodeRunMock).toHaveBeenCalledWith(
@@ -87,8 +88,19 @@ describe('createKangurSocialImageAddonFromPlaywright', () => {
                 {
                   name: 'session',
                   value: 'abc123',
-                  domain: 'kangur.app',
-                  path: '/',
+                  url: 'https://kangur.app',
+                },
+                {
+                  name: '__Host-next-auth.csrf-token',
+                  value: 'csrf123',
+                  url: 'https://kangur.app',
+                  secure: true,
+                },
+                {
+                  name: '__Secure-next-auth.session-token',
+                  value: 'session456',
+                  url: 'https://kangur.app',
+                  secure: true,
                 },
               ],
               origins: [

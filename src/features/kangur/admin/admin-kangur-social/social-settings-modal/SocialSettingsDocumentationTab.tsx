@@ -70,6 +70,9 @@ export function SocialSettingsDocumentationTab({
   const isPipelineJobInFlight = isSocialRuntimeJobInFlight(currentPipelineJob?.status);
   const isGenerationJobInFlight = isSocialRuntimeJobInFlight(currentGenerationJob?.status);
   const hasBlockingDocumentationRuntimeJob = isGenerationJobInFlight || isPipelineJobInFlight;
+  const documentationActionTitle = hasBlockingDocumentationRuntimeJob
+    ? 'Wait for the current Social runtime job to finish.'
+    : undefined;
   const generateButtonLabel = isGenerationJobInFlight
     ? 'Generate draft in progress...'
     : 'Generate PL/EN draft';
@@ -90,6 +93,7 @@ export function SocialSettingsDocumentationTab({
             onChange={(event) => setDocReferenceInput(event.target.value)}
             aria-label='Documentation references'
             disabled={hasBlockingDocumentationRuntimeJob}
+            title={documentationActionTitle}
           />
           <Textarea
             placeholder='Notes for the Brain generator'
@@ -98,6 +102,7 @@ export function SocialSettingsDocumentationTab({
             onChange={(event) => setGenerationNotes(event.target.value)}
             aria-label='Notes for the Brain generator'
             disabled={hasBlockingDocumentationRuntimeJob}
+            title={documentationActionTitle}
           />
           <div className='flex flex-wrap items-center gap-2'>
             <Button
@@ -106,11 +111,7 @@ export function SocialSettingsDocumentationTab({
               size='sm'
               onClick={() => handleLoadContext()}
               disabled={!activePost || contextLoading || hasBlockingDocumentationRuntimeJob}
-              title={
-                hasBlockingDocumentationRuntimeJob
-                  ? 'Wait for the current Social runtime job to finish.'
-                  : undefined
-              }
+              title={documentationActionTitle}
             >
               {contextLoading ? 'Loading context...' : 'Load context'}
             </Button>
@@ -120,11 +121,7 @@ export function SocialSettingsDocumentationTab({
               size='sm'
               onClick={() => handleGenerate()}
               disabled={!activePost || !canGenerateSocialDraft || hasBlockingDocumentationRuntimeJob}
-              title={
-                hasBlockingDocumentationRuntimeJob
-                  ? 'Wait for the current Social runtime job to finish.'
-                  : undefined
-              }
+              title={documentationActionTitle}
             >
               {generateButtonLabel}
             </Button>

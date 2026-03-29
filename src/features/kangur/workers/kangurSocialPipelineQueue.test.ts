@@ -331,6 +331,62 @@ describe('kangurSocialPipelineQueue', () => {
     expect(result.type).toBe('manual-post-generation');
   });
 
+  it('forwards prefetched visual analysis through manual post generation jobs', async () => {
+    runKangurSocialPostGenerationJobMock.mockResolvedValue({
+      type: 'manual-post-generation',
+      postId: 'post-1',
+      imageAddonIds: ['addon-1'],
+      docReferences: ['overview'],
+      brainModelId: 'brain-1',
+      visionModelId: 'vision-1',
+      generatedPost: { id: 'post-1', titlePl: 'Generated from visuals' },
+      draft: null,
+    });
+
+    await import('./kangurSocialPipelineQueue');
+    const config = createManagedQueueMock.mock.calls.at(-1)?.[0];
+
+    await config.processor(
+      {
+        type: 'manual-post-generation',
+        input: {
+          postId: 'post-1',
+          imageAddonIds: ['addon-1'],
+          docReferences: ['overview'],
+          modelId: 'brain-1',
+          visionModelId: 'vision-1',
+          actorId: 'admin-1',
+          projectUrl: 'https://studiq.example.com/project',
+          prefetchedVisualAnalysis: {
+            summary: 'The hero now shows a larger classroom card.',
+            highlights: ['Larger classroom card'],
+          },
+          requireVisualAnalysisInBody: true,
+        },
+      },
+      'job-generate-visual-1',
+      undefined,
+      {
+        updateProgress: vi.fn(),
+      }
+    );
+
+    expect(runKangurSocialPostGenerationJobMock).toHaveBeenCalledWith({
+      postId: 'post-1',
+      imageAddonIds: ['addon-1'],
+      docReferences: ['overview'],
+      modelId: 'brain-1',
+      visionModelId: 'vision-1',
+      actorId: 'admin-1',
+      projectUrl: 'https://studiq.example.com/project',
+      prefetchedVisualAnalysis: {
+        summary: 'The hero now shows a larger classroom card.',
+        highlights: ['Larger classroom card'],
+      },
+      requireVisualAnalysisInBody: true,
+    });
+  });
+
   it('marks visual analysis as failed on the post when the runtime helper throws', async () => {
     runKangurSocialPostVisualAnalysisJobMock.mockRejectedValue(
       new Error('Vision runtime failed')

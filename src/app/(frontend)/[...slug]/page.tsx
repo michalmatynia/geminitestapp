@@ -2,8 +2,8 @@ import { getTranslations } from 'next-intl/server';
 import { notFound, redirect } from 'next/navigation';
 import { JSX } from 'react';
 
-import { getKangurPublicAliasHref } from '@/features/kangur/config/routing';
-import { getKangurConfiguredLaunchTarget } from '@/features/kangur/server';
+import { getKangurPublicLaunchHref } from '@/features/kangur/config/routing';
+import { getKangurConfiguredLaunchRoute } from '@/features/kangur/server';
 import { requireAccessibleKangurSlugRoute } from '@/features/kangur/server';
 import { getFrontPagePublicOwner } from '@/shared/lib/front-page-app';
 
@@ -67,17 +67,16 @@ export default async function CmsSlugPage({
   if (await isKangurFrontPageSelected()) {
     await requireAccessibleKangurSlugRoute(slug);
 
-    const resolvedSearchParams = searchParams ? await searchParams : undefined;
-    const launchTarget = await getKangurConfiguredLaunchTarget(slug, resolvedSearchParams);
-    if (launchTarget.href !== launchTarget.fallbackHref) {
-      redirect(launchTarget.href);
-    }
-
     if (slug[0]?.trim().toLowerCase() === 'login') {
       return null;
     }
 
-    redirect(getKangurPublicAliasHref(slug, resolvedSearchParams));
+    const [launchRoute, resolvedSearchParams] = await Promise.all([
+      getKangurConfiguredLaunchRoute(),
+      searchParams ? searchParams : Promise.resolve(undefined),
+    ]);
+
+    redirect(getKangurPublicLaunchHref(launchRoute, slug, resolvedSearchParams));
   }
   const { loadSlugRenderData, renderCmsPage, resolveSlugToPage } = await loadCmsSlugPageModules();
   const page = await resolveSlugToPage(slug);

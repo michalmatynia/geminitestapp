@@ -612,6 +612,23 @@ export function useAdminKangurSocialPage() {
     await pipeline.handleRunFullPipelineWithFreshCapture();
   }, [pipeline.handleRunFullPipelineWithFreshCapture]);
 
+  const handleGeneratePostWithVisualAnalysis = useCallback(async (): Promise<void> => {
+    if (!pipeline.visualAnalysisResult) {
+      return;
+    }
+
+    const didGenerate = await generation.handleGenerateWithVisualAnalysis(
+      pipeline.visualAnalysisResult
+    );
+    if (didGenerate) {
+      pipeline.handleCloseVisualAnalysisModal();
+    }
+  }, [
+    generation.handleGenerateWithVisualAnalysis,
+    pipeline.handleCloseVisualAnalysisModal,
+    pipeline.visualAnalysisResult,
+  ]);
+
   // Track model/connection changes via settings handlers with telemetry
   const handleBrainModelChange = useMemo(() => {
     const original = settings.handleBrainModelChange;
@@ -747,6 +764,7 @@ export function useAdminKangurSocialPage() {
     generateMutation: generation.generateMutation,
     currentGenerationJob: generation.currentGenerationJob,
     handleGenerate: generation.handleGenerate,
+    handleGenerateWithVisualAnalysis: generation.handleGenerateWithVisualAnalysis,
 
     // Pipeline
     pipelineStep: pipeline.pipelineStep,
@@ -765,8 +783,7 @@ export function useAdminKangurSocialPage() {
     handleOpenVisualAnalysisModal: pipeline.handleOpenVisualAnalysisModal,
     handleCloseVisualAnalysisModal: pipeline.handleCloseVisualAnalysisModal,
     handleAnalyzeSelectedVisuals: pipeline.handleAnalyzeSelectedVisuals,
-    handleRunFullPipelineWithVisualAnalysis:
-      pipeline.handleRunFullPipelineWithVisualAnalysis,
+    handleGeneratePostWithVisualAnalysis,
     captureOnlyPending,
     captureOnlyMessage,
     captureOnlyErrorMessage,

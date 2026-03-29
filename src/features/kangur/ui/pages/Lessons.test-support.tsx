@@ -14,6 +14,8 @@ const {
   lessonCardPropsMock,
   lessonDocumentsHookCallsMock,
   lessonAssignmentsHookCallsMock,
+  lessonCatalogHookCallsMock,
+  lessonSectionsHookCallsMock,
   lessonTemplatesHookCallsMock,
   lessonsWordmarkPropsMock,
   useKangurDocsTooltipsMock,
@@ -41,6 +43,8 @@ const {
   lessonCardPropsMock: vi.fn(),
   lessonDocumentsHookCallsMock: vi.fn(),
   lessonAssignmentsHookCallsMock: vi.fn(),
+  lessonCatalogHookCallsMock: vi.fn(),
+  lessonSectionsHookCallsMock: vi.fn(),
   lessonTemplatesHookCallsMock: vi.fn(),
   lessonsWordmarkPropsMock: vi.fn(),
   useKangurDocsTooltipsMock: vi.fn((_surface?: string) => ({ enabled: false })),
@@ -147,6 +151,7 @@ export function createLessonsTranslationsMock(namespace?: string): (key: string)
 type LessonsCatalogMockOptions = {
   subject?: string;
   ageGroup?: string;
+  componentIds?: string[];
   enabledOnly?: boolean;
 };
 
@@ -174,16 +179,27 @@ const filterAgeGroupCatalogRecords = (
     ? records.filter((record) => (record['ageGroup'] ?? DEFAULT_KANGUR_AGE_GROUP) === ageGroup)
     : records;
 
+const filterComponentCatalogRecords = (
+  records: LessonsCatalogRecord[],
+  componentIds: string[] | undefined
+): LessonsCatalogRecord[] =>
+  componentIds && componentIds.length > 0
+    ? records.filter((record) => componentIds.includes(String(record['componentId'] ?? '')))
+    : records;
+
 const resolveFilteredCatalogRecords = (
   records: LessonsCatalogRecord[],
   options: LessonsCatalogMockOptions
 ): LessonsCatalogRecord[] =>
-  filterAgeGroupCatalogRecords(
-    filterSubjectCatalogRecords(
-      filterEnabledCatalogRecords(records, options.enabledOnly),
-      options.subject
+  filterComponentCatalogRecords(
+    filterAgeGroupCatalogRecords(
+      filterSubjectCatalogRecords(
+        filterEnabledCatalogRecords(records, options.enabledOnly),
+        options.subject
+      ),
+      options.ageGroup
     ),
-    options.ageGroup
+    options.componentIds
   );
 
 const resolveLessonsCatalogMockData = (options: LessonsCatalogMockOptions): {
@@ -501,12 +517,33 @@ vi.mock('@/features/kangur/ui/hooks/useKangurLessons', () => ({
 
 vi.mock('@/features/kangur/ui/hooks/useKangurLessonsCatalog', () => ({
   useKangurLessonsCatalog: (options: LessonsCatalogMockOptions = {}) => {
+    lessonCatalogHookCallsMock(options);
     const { lessons, sections } = resolveLessonsCatalogMockData(options);
     const { hasRetainedData, isLoading, isPlaceholderData } =
       resolveLessonsCatalogLoadingMeta();
 
     return {
       data: isLoading && !hasRetainedData ? undefined : { lessons, sections },
+      isFetching: isLoading,
+      isLoading: isLoading && !hasRetainedData,
+      isPending: isLoading && !hasRetainedData,
+      isPlaceholderData,
+      isRefetching: hasRetainedData,
+      refetch: vi.fn(),
+    };
+  },
+}));
+
+vi.mock('@/features/kangur/ui/hooks/useKangurLessonSections', () => ({
+  useKangurLessonSections: (options: LessonsCatalogMockOptions = {}) => {
+    lessonSectionsHookCallsMock(options);
+    const { sections } = resolveLessonsCatalogMockData(options);
+    const hasRetainedData = lessonSectionsRetainDataWhileLoadingState.value;
+    const isLoading = lessonSectionsLoadingState.value;
+    const isPlaceholderData = lessonSectionsPlaceholderDataState.value;
+
+    return {
+      data: isLoading && !hasRetainedData ? undefined : sections,
       isFetching: isLoading,
       isLoading: isLoading && !hasRetainedData,
       isPending: isLoading && !hasRetainedData,
@@ -664,6 +701,8 @@ export const setupLessonsPageTest = async () => {
   useKangurRoutePageReadyMock.mockClear();
   lessonDocumentsHookCallsMock.mockClear();
   lessonAssignmentsHookCallsMock.mockClear();
+  lessonCatalogHookCallsMock.mockClear();
+  lessonSectionsHookCallsMock.mockClear();
   lessonTemplatesHookCallsMock.mockClear();
 
   const { default: Lessons } = await import('@/features/kangur/ui/pages/Lessons');
@@ -675,8 +714,10 @@ export {
   emptyPageContentEntryMock,
   focusTokenState,
   lessonAssignmentsHookCallsMock,
+  lessonCatalogHookCallsMock,
   lessonCardPropsMock,
   lessonDocumentsHookCallsMock,
+  lessonSectionsHookCallsMock,
   lessonSectionsLoadingState,
   lessonSectionsPlaceholderDataState,
   lessonSectionsRetainDataWhileLoadingState,

@@ -111,6 +111,23 @@ describe('FrontendRouteLoadingFallback', () => {
     });
   });
 
+  it('renders the Kangur fallback for explicit alias routes even when the frontend owner falls back to cms', () => {
+    usePathnameMock.mockReturnValue('/en/kangur/lessons');
+
+    render(
+      <FrontendPublicOwnerProvider publicOwner='cms' routeFamily='studiq'>
+        <FrontendRouteLoadingFallback />
+      </FrontendPublicOwnerProvider>
+    );
+
+    expect(screen.getByTestId('kangur-route-loading-fallback-probe')).toBeInTheDocument();
+    expect(kangurRouteLoadingFallbackMock).toHaveBeenCalledTimes(1);
+    expect(kangurRouteLoadingFallbackMock).toHaveBeenCalledWith({
+      includeTopNavigationSkeleton: true,
+    });
+    expect(screen.queryByTestId('frontend-route-loading-fallback')).not.toBeInTheDocument();
+  });
+
   it('uses the pending transition target instead of the current main-page pathname', () => {
     usePathnameMock.mockReturnValue('/en/kangur');
     setKangurPendingRouteLoadingSnapshot({
@@ -208,22 +225,6 @@ describe('FrontendRouteLoadingFallback', () => {
     expect(screen.queryByTestId('kangur-route-loading-fallback-probe')).not.toBeInTheDocument();
   });
 
-  it('renders the product-page skeleton when CMS owns a product route', () => {
-    usePathnameMock.mockReturnValue('/en/products/sku-123');
-
-    render(
-      <FrontendPublicOwnerProvider publicOwner='cms'>
-        <FrontendRouteLoadingFallback />
-      </FrontendPublicOwnerProvider>
-    );
-
-    expect(screen.getByTestId('frontend-route-loading-fallback')).toHaveAttribute(
-      'data-frontend-route-loading-variant',
-      'product'
-    );
-    expect(screen.getByTestId('frontend-route-loading-fallback-product')).toBeInTheDocument();
-  });
-
   it('renders the preview-page skeleton when CMS owns a preview route', () => {
     usePathnameMock.mockReturnValue('/en/preview/page-42');
 
@@ -254,5 +255,39 @@ describe('FrontendRouteLoadingFallback', () => {
       'page'
     );
     expect(screen.getByTestId('frontend-route-loading-fallback-page')).toBeInTheDocument();
+  });
+
+  it('lets route wrappers force the destination CMS skeleton variant', () => {
+    usePathnameMock.mockReturnValue('/en');
+
+    render(
+      <FrontendPublicOwnerProvider publicOwner='cms'>
+        <FrontendRouteLoadingFallback cmsVariant='page' />
+      </FrontendPublicOwnerProvider>
+    );
+
+    expect(screen.getByTestId('frontend-route-loading-fallback')).toHaveAttribute(
+      'data-frontend-route-loading-variant',
+      'page'
+    );
+    expect(screen.getByTestId('frontend-route-loading-fallback-page')).toBeInTheDocument();
+  });
+
+  it('renders the dedicated preview-runtime skeleton when forced by a route loader', () => {
+    usePathnameMock.mockReturnValue('/en/preview/foldertree-shell-runtime');
+
+    render(
+      <FrontendPublicOwnerProvider publicOwner='cms'>
+        <FrontendRouteLoadingFallback cmsVariant='preview-runtime' />
+      </FrontendPublicOwnerProvider>
+    );
+
+    expect(screen.getByTestId('frontend-route-loading-fallback')).toHaveAttribute(
+      'data-frontend-route-loading-variant',
+      'preview-runtime'
+    );
+    expect(
+      screen.getByTestId('frontend-route-loading-fallback-preview-runtime')
+    ).toBeInTheDocument();
   });
 });

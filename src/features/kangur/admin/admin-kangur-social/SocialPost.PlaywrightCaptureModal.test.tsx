@@ -22,6 +22,7 @@ vi.mock('@/features/kangur/shared/ui', () => ({
     actions,
     onSave,
     isSaveDisabled,
+    saveTitle,
     saveText = 'Save',
     cancelText = 'Close',
     onClose,
@@ -33,6 +34,7 @@ vi.mock('@/features/kangur/shared/ui', () => ({
     actions?: React.ReactNode;
     onSave: () => void;
     isSaveDisabled?: boolean;
+    saveTitle?: string;
     saveText?: string;
     cancelText?: string;
     onClose: () => void;
@@ -43,7 +45,12 @@ vi.mock('@/features/kangur/shared/ui', () => ({
         <div>{title}</div>
         {subtitle ? <div>{subtitle}</div> : null}
         <div>{actions}</div>
-        <button type='button' disabled={Boolean(isSaveDisabled)} onClick={() => onSave()}>
+        <button
+          type='button'
+          disabled={Boolean(isSaveDisabled)}
+          title={saveTitle}
+          onClick={() => onSave()}
+        >
           {saveText}
         </button>
         <button type='button' onClick={() => onClose()}>
@@ -82,15 +89,21 @@ vi.mock('@/features/kangur/shared/ui', () => ({
     onValueChange,
     options,
     ariaLabel,
+    title,
+    disabled,
   }: {
     value?: string;
     onValueChange: (value: string) => void;
     options: Array<{ value: string; label: string }>;
     ariaLabel?: string;
+    title?: string;
+    disabled?: boolean;
   }) => (
     <select
       aria-label={ariaLabel}
+      title={title}
       value={value}
+      disabled={disabled}
       onChange={(event) => onValueChange(event.target.value)}
     >
       {options.map((option) => (
@@ -215,15 +228,31 @@ describe('SocialPostPlaywrightCaptureModal', () => {
     expect(screen.getByText('Generate post: Queued')).toBeInTheDocument();
     expect(screen.getByText('Full pipeline: Running')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Capture in progress...' })).toBeDisabled();
-    expect(screen.getByRole('button', { name: 'Generate post in progress...' })).toBeDisabled();
-    expect(screen.getByRole('button', { name: 'Generate post in progress...' })).toHaveAttribute(
+    expect(screen.getByRole('button', { name: 'Capture in progress...' })).toHaveAttribute(
+      'title',
+      'Wait for the current Social runtime job to finish.'
+    );
+    expect(screen.getByRole('button', { name: 'Full pipeline in progress...' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Full pipeline in progress...' })).toHaveAttribute(
       'title',
       'Wait for the current Social runtime job to finish.'
     );
     expect(screen.getByRole('button', { name: 'Add route' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Add route' })).toHaveAttribute(
+      'title',
+      'Wait for the current Social runtime job to finish.'
+    );
     expect(screen.getByRole('button', { name: 'Seed from presets' })).toBeDisabled();
     expect(screen.getByRole('button', { name: 'Reset script' })).toBeDisabled();
     expect(screen.getByRole('button', { name: 'Save as defaults' })).toBeDisabled();
+    expect(screen.getByLabelText('Programmable capture base URL')).toHaveAttribute(
+      'title',
+      'Wait for the current Social runtime job to finish.'
+    );
+    expect(screen.getByLabelText('Playwright persona')).toHaveAttribute(
+      'title',
+      'Wait for the current Social runtime job to finish.'
+    );
   });
 
   it('delegates modal actions to the Social page context', () => {
@@ -358,10 +387,18 @@ describe('SocialPostPlaywrightCaptureModal', () => {
     expect(
       screen.getByText(
         'No active draft is selected. You can still edit the programmable Playwright config and save it as defaults, but capture actions stay disabled until a draft is active.'
-      )
+    )
     ).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Capture programmable images' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Capture programmable images' })).toHaveAttribute(
+      'title',
+      'Select an active draft before running programmable capture.'
+    );
     expect(screen.getByRole('button', { name: 'Capture + run pipeline' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Capture + run pipeline' })).toHaveAttribute(
+      'title',
+      'Select an active draft before running programmable capture and pipeline.'
+    );
     expect(screen.getByText(hasTextContent('Appearance mode: default'))).toBeInTheDocument();
     expect(screen.getByText(hasTextContent('Persona: Default runtime persona'))).toBeInTheDocument();
     expect(screen.getByText(/"personaId": null/)).toBeInTheDocument();
@@ -423,6 +460,16 @@ describe('SocialPostPlaywrightCaptureModal', () => {
     expect(
       screen.getByText('Add a base URL to resolve this route.')
     ).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Capture programmable images' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Capture programmable images' })).toHaveAttribute(
+      'title',
+      'Add a base URL, at least one route, and a script before starting programmable capture.'
+    );
+    expect(screen.getByRole('button', { name: 'Capture + run pipeline' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Capture + run pipeline' })).toHaveAttribute(
+      'title',
+      'Add a base URL, at least one route, and a script before starting capture and pipeline.'
+    );
     expect(screen.getByText('Runtime request preview')).toBeInTheDocument();
     expect(screen.getByText(/"issue": "Add a base URL to resolve this route\."/)).toBeInTheDocument();
   });
@@ -482,17 +529,94 @@ describe('SocialPostPlaywrightCaptureModal', () => {
 
     expect(screen.getByText('Image analysis: Running')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Capture in progress...' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Capture in progress...' })).toHaveAttribute(
+      'title',
+      'Wait for the current Social runtime job to finish.'
+    );
     expect(screen.getByRole('button', { name: 'Generate post in progress...' })).toBeDisabled();
     expect(screen.getByRole('button', { name: 'Generate post in progress...' })).toHaveAttribute(
       'title',
       'Wait for the current Social runtime job to finish.'
     );
     expect(screen.getByRole('button', { name: 'Add route' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Add route' })).toHaveAttribute(
+      'title',
+      'Wait for the current Social runtime job to finish.'
+    );
     expect(screen.getByRole('button', { name: 'Seed from presets' })).toBeDisabled();
     expect(screen.getByRole('button', { name: 'Reset script' })).toBeDisabled();
     expect(screen.getByRole('button', { name: 'Save as defaults' })).toBeDisabled();
     expect(screen.getByRole('button', { name: 'Remove' })).toBeDisabled();
     expect(screen.getByLabelText('Programmable capture base URL')).toBeDisabled();
+    expect(screen.getByLabelText('Programmable capture base URL')).toHaveAttribute(
+      'title',
+      'Wait for the current Social runtime job to finish.'
+    );
     expect(screen.getByLabelText('Programmable Playwright capture script')).toBeDisabled();
+    expect(screen.getByLabelText('Programmable Playwright capture script')).toHaveAttribute(
+      'title',
+      'Wait for the current Social runtime job to finish.'
+    );
+  });
+
+  it('shows a dedicated generation progress label when post generation is the blocker', () => {
+    usePlaywrightPersonasMock.mockReturnValue({
+      data: [],
+      isLoading: false,
+      error: null,
+    });
+    useSocialPostContextMock.mockReturnValue({
+      activePost: { id: 'post-1' },
+      isProgrammablePlaywrightModalOpen: true,
+      handleCloseProgrammablePlaywrightModal: vi.fn(),
+      captureAppearanceMode: 'default',
+      programmableCaptureBaseUrl: 'https://example.com',
+      setProgrammableCaptureBaseUrl: vi.fn(),
+      programmableCapturePersonaId: '',
+      setProgrammableCapturePersonaId: vi.fn(),
+      programmableCaptureScript: 'return input.captures;',
+      setProgrammableCaptureScript: vi.fn(),
+      programmableCaptureRoutes: [
+        {
+          id: 'route-1',
+          title: 'Pricing page',
+          path: '/pricing',
+          description: '',
+          selector: '',
+          waitForMs: 0,
+          waitForSelectorMs: 10000,
+        },
+      ],
+      programmableCapturePending: false,
+      programmableCaptureMessage: null,
+      programmableCaptureErrorMessage: null,
+      handleAddProgrammableCaptureRoute: vi.fn(),
+      handleUpdateProgrammableCaptureRoute: vi.fn(),
+      handleRemoveProgrammableCaptureRoute: vi.fn(),
+      handleSeedProgrammableCaptureRoutesFromPresets: vi.fn(),
+      handleResetProgrammableCaptureScript: vi.fn(),
+      handleSaveProgrammableCaptureDefaults: vi.fn(),
+      handleRunProgrammablePlaywrightCapture: vi.fn(),
+      handleRunProgrammablePlaywrightCaptureAndPipeline: vi.fn(),
+      canGenerateSocialDraft: true,
+      currentVisualAnalysisJob: null,
+      currentGenerationJob: {
+        id: 'job-generate-1',
+        status: 'active',
+        progress: { message: 'Generating the post from the current draft.' },
+        failedReason: null,
+      },
+      currentPipelineJob: null,
+      socialDraftBlockedReason: null,
+    });
+
+    render(<SocialPostPlaywrightCaptureModal />);
+
+    expect(screen.getByText('Generate post: Running')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Generate post in progress...' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Generate post in progress...' })).toHaveAttribute(
+      'title',
+      'Wait for the current Social runtime job to finish.'
+    );
   });
 });

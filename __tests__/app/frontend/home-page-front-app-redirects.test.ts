@@ -5,7 +5,7 @@ const {
   frontPageAllowed,
   getFrontPagePublicOwnerMock,
   getFrontPageRedirectPathMock,
-  getKangurConfiguredLaunchTargetMock,
+  getKangurConfiguredLaunchRouteMock,
   getCmsRepositoryMock,
   isDomainZoningEnabledMock,
   getSlugsForDomainMock,
@@ -21,7 +21,7 @@ const {
   frontPageAllowed: new Set(['cms', 'products', 'kangur', 'chatbot', 'notes']),
   getFrontPagePublicOwnerMock: vi.fn(),
   getFrontPageRedirectPathMock: vi.fn(),
-  getKangurConfiguredLaunchTargetMock: vi.fn(),
+  getKangurConfiguredLaunchRouteMock: vi.fn(),
   getCmsRepositoryMock: vi.fn(),
   isDomainZoningEnabledMock: vi.fn(),
   getSlugsForDomainMock: vi.fn(),
@@ -54,8 +54,8 @@ vi.mock('@/app/(frontend)/HomeContent', () => ({
   HomeContent: homeContentMock,
 }));
 
-vi.mock('@/features/kangur/server/launch-route', () => ({
-  getKangurConfiguredLaunchTarget: getKangurConfiguredLaunchTargetMock,
+vi.mock('@/features/kangur/server', () => ({
+  getKangurConfiguredLaunchRoute: getKangurConfiguredLaunchRouteMock,
 }));
 
 vi.mock('@/features/kangur/public', () => ({
@@ -117,11 +117,7 @@ describe('front page app selection', () => {
     isDomainZoningEnabledMock.mockResolvedValue(false);
     getSlugsForDomainMock.mockResolvedValue([]);
     getFrontPageSettingMock.mockResolvedValue('kangur');
-    getKangurConfiguredLaunchTargetMock.mockResolvedValue({
-      route: 'web_mobile_view',
-      href: '/',
-      fallbackHref: '/',
-    });
+    getKangurConfiguredLaunchRouteMock.mockResolvedValue('web_mobile_view');
     headersMock.mockResolvedValue(new Headers());
     flushMock.mockResolvedValue(undefined);
     homeContentMock.mockReturnValue(null);

@@ -139,49 +139,56 @@ function createTimeUnitCountQuestion(kind: 'week' | 'year'): CalendarQuestion {
   };
 }
 
+function generateDaySectionQuestion(): CalendarQuestion {
+  return Math.random() > 0.5
+    ? createNextDayQuestion()
+    : createTimeUnitCountQuestion('week');
+}
+
+function generateMonthSectionQuestion(): CalendarQuestion {
+  const type = randInt(0, 2);
+  if (type === 0) {
+    return createMonthOrdinalQuestion();
+  }
+  if (type === 1) {
+    return createMonthNumberQuestion();
+  }
+  return createTimeUnitCountQuestion('year');
+}
+
+function generateMixedCalendarQuestion(): CalendarQuestion {
+  const type = randInt(0, 4);
+
+  switch (type) {
+    case 0:
+      return createMonthOrdinalQuestion();
+    case 1:
+      return createMonthNumberQuestion();
+    case 2:
+      return createMonthDaysQuestion();
+    case 3:
+      return createNextDayQuestion();
+    default:
+      return createTimeUnitCountQuestion(Math.random() > 0.5 ? 'week' : 'year');
+  }
+}
+
 function generateQuestion(
   section?: KangurCalendarInteractiveSection
 ): CalendarQuestion {
   if (section === 'dni') {
-    return Math.random() > 0.5
-      ? createNextDayQuestion()
-      : createTimeUnitCountQuestion('week');
+    return generateDaySectionQuestion();
   }
 
   if (section === 'miesiace') {
-    const type = randInt(0, 2);
-    if (type === 0) {
-      return createMonthOrdinalQuestion();
-    }
-    if (type === 1) {
-      return createMonthNumberQuestion();
-    }
-    return createTimeUnitCountQuestion('year');
+    return generateMonthSectionQuestion();
   }
 
   if (section === 'data') {
     return createMonthDaysQuestion();
   }
 
-  const type = randInt(0, 4);
-
-  if (type === 0) {
-    return createMonthOrdinalQuestion();
-  }
-
-  if (type === 1) {
-    return createMonthNumberQuestion();
-  }
-
-  if (type === 2) {
-    return createMonthDaysQuestion();
-  }
-
-  if (type === 3) {
-    return createNextDayQuestion();
-  }
-
-  return createTimeUnitCountQuestion(Math.random() > 0.5 ? 'week' : 'year');
+  return generateMixedCalendarQuestion();
 }
 
 const TOTAL = 6;

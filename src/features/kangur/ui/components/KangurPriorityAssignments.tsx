@@ -76,7 +76,7 @@ function useKangurPriorityAssignmentsState({
   limit = 3,
   title,
   emptyLabel,
-}: KangurPriorityAssignmentsProps): React.JSX.Element | null {
+}: KangurPriorityAssignmentsProps): KangurPriorityAssignmentsState {
   const translations = useTranslations('KangurGameWidgets');
   const { entry: assignmentsContent } = useKangurPageContentEntry(PRIORITY_ASSIGNMENTS_SECTION_ID);
   const { subject, setSubject } = useKangurSubjectFocus();

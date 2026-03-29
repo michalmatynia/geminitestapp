@@ -393,13 +393,26 @@ export function SocialPostList(): React.JSX.Element {
                   isActive &&
                   (isSocialRuntimeJobInFlight(currentGenerationJob?.status) ||
                     isSocialRuntimeJobInFlight(currentPipelineJob?.status));
+                const runtimeLockTitle = 'Wait for the current Social runtime job to finish.';
                 const publishLabel = isPublished
                   ? hasBlockingRuntimeJob
-                    ? 'Wait for the current Social runtime job to finish.'
+                    ? runtimeLockTitle
                     : 'LinkedIn publication details'
                   : hasBlockingRuntimeJob
-                    ? 'Wait for the current Social runtime job to finish.'
+                    ? runtimeLockTitle
                     : 'Publish options';
+                const publishToLinkedInTitle = hasBlockingRuntimeJob
+                  ? runtimeLockTitle
+                  : 'Publish to LinkedIn';
+                const publishWithoutImagesTitle = hasBlockingRuntimeJob
+                  ? runtimeLockTitle
+                  : 'Publish without images';
+                const unpublishTitle = hasBlockingRuntimeJob
+                  ? runtimeLockTitle
+                  : 'Unpublish from LinkedIn';
+                const unpublishAndDeleteTitle = hasBlockingRuntimeJob
+                  ? runtimeLockTitle
+                  : 'Unpublish and delete';
                 const button = (
                   <Button
                     type='button'
@@ -446,6 +459,7 @@ export function SocialPostList(): React.JSX.Element {
                             hasBlockingRuntimeJob ||
                             !canPublish
                           }
+                          title={publishToLinkedInTitle}
                         >
                           Publish to LinkedIn
                         </DropdownMenuItem>
@@ -460,6 +474,7 @@ export function SocialPostList(): React.JSX.Element {
                             hasBlockingRuntimeJob ||
                             !canPublish
                           }
+                          title={publishWithoutImagesTitle}
                         >
                           Publish without images
                         </DropdownMenuItem>
@@ -501,6 +516,7 @@ export function SocialPostList(): React.JSX.Element {
                           void handleUnpublishPost(post.id, { keepLocal: true });
                         }}
                         disabled={unpublishPending || hasBlockingRuntimeJob || !post.linkedinPostId}
+                        title={unpublishTitle}
                       >
                         Unpublish from LinkedIn
                       </DropdownMenuItem>
@@ -508,6 +524,7 @@ export function SocialPostList(): React.JSX.Element {
                         onSelect={() => setPostToUnpublish(post)}
                         className='text-destructive focus:text-destructive'
                         disabled={unpublishPending || hasBlockingRuntimeJob || !post.linkedinPostId}
+                        title={unpublishAndDeleteTitle}
                       >
                         Unpublish and delete
                       </DropdownMenuItem>

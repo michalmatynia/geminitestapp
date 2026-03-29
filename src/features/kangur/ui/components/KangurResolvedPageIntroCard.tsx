@@ -62,6 +62,17 @@ type ResolvedKangurPageIntroCardProps = {
   testId?: string;
 };
 
+const KANGUR_RESOLVED_PAGE_INTRO_CARD_DEFAULTS = {
+  accent: 'slate',
+  headingAs: 'h2',
+  headingSize: 'lg',
+  isCoarsePointer: false,
+  onBack: (): void => {},
+  showBackButton: true,
+  showDescription: true,
+  showHeading: true,
+} as const;
+
 const KangurResolvedPageIntroCardContext =
   createContext<KangurResolvedPageIntroCardContextValue | null>(null);
 
@@ -177,30 +188,40 @@ function KangurRenderedPageIntroBackButton(): React.JSX.Element | null {
   );
 }
 
-const resolveKangurResolvedPageIntroCardProps = ({
-  accent = 'slate',
+const resolveKangurResolvedPageIntroCardPanelClassName = ({
+  className,
+  headingAction,
+}: Pick<KangurResolvedPageIntroCardProps, 'className' | 'headingAction'>): string =>
+  cn('w-full', headingAction ? 'text-left' : 'text-center', className);
+
+const resolveKangurResolvedPageIntroCardContextValue = (
+  props: KangurResolvedPageIntroCardProps
+): KangurResolvedPageIntroCardContextValue => {
+  const resolvedProps = {
+    ...KANGUR_RESOLVED_PAGE_INTRO_CARD_DEFAULTS,
+    ...props,
+  };
+  const {
+  accent,
   backButtonContent,
   backButtonTestId,
-  className,
-  children,
   description,
   headingAction,
-  headingAs = 'h2',
-  headingSize = 'lg',
+  headingAs,
+  headingSize,
   headingTestId,
-  isCoarsePointer = false,
+  isCoarsePointer,
   resolvedBackButtonLabel,
-  showDescription = true,
-  showBackButton = true,
-  showHeading = true,
-  testId,
+  showDescription,
+  showBackButton,
+  showHeading,
   title,
   titleId,
   visualTitle,
-  onBack = () => {},
-}: KangurResolvedPageIntroCardProps): ResolvedKangurPageIntroCardProps => ({
-  children,
-  contextValue: {
+  onBack,
+  } = resolvedProps;
+
+  return {
     accent,
     backButtonContent,
     backButtonTestId,
@@ -218,9 +239,16 @@ const resolveKangurResolvedPageIntroCardProps = ({
     titleId,
     visualTitle,
     onBack,
-  },
-  panelClassName: cn('w-full', headingAction ? 'text-left' : 'text-center', className),
-  testId,
+  };
+};
+
+const resolveKangurResolvedPageIntroCardProps = (
+  props: KangurResolvedPageIntroCardProps
+): ResolvedKangurPageIntroCardProps => ({
+  children: props.children,
+  contextValue: resolveKangurResolvedPageIntroCardContextValue(props),
+  panelClassName: resolveKangurResolvedPageIntroCardPanelClassName(props),
+  testId: props.testId,
 });
 
 function KangurResolvedPageIntroCardBody({

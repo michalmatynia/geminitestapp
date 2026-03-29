@@ -244,6 +244,7 @@ describe('useAdminKangurSocialPage', () => {
     useSocialGenerationMock.mockReturnValue({
       generateMutation: {},
       handleGenerate: vi.fn(),
+      handleGenerateWithVisualAnalysis: vi.fn(),
     });
     useSocialPipelineRunnerMock.mockReturnValue({
       pipelineStep: 'idle',
@@ -328,6 +329,89 @@ describe('useAdminKangurSocialPage', () => {
     });
     expect(result.current.programmableCapturePending).toBe(false);
     expect(result.current.programmableCaptureErrorMessage).toBeNull();
+  });
+
+  it('routes Generate post with analysis through the dedicated generation hook', async () => {
+    const handleCloseVisualAnalysisModalMock = vi.fn();
+    const handleGenerateWithVisualAnalysisMock = vi.fn().mockResolvedValue(true);
+    const visualAnalysisResult = {
+      summary: 'Hero card is larger and the CTA is clearer.',
+      highlights: ['Larger hero card', 'Clearer CTA'],
+    };
+
+    useSocialGenerationMock.mockReturnValue({
+      generateMutation: {},
+      handleGenerate: vi.fn(),
+      handleGenerateWithVisualAnalysis: handleGenerateWithVisualAnalysisMock,
+    });
+    useSocialPipelineRunnerMock.mockReturnValue({
+      pipelineStep: 'idle',
+      pipelineProgress: null,
+      pipelineErrorMessage: null,
+      isVisualAnalysisModalOpen: true,
+      visualAnalysisResult,
+      visualAnalysisErrorMessage: null,
+      visualAnalysisPending: false,
+      handleRunFullPipeline: pipelineRunMock,
+      handleRunFullPipelineWithOverrides: pipelineRunWithOverridesMock,
+      handleRunFullPipelineWithFreshCapture: pipelineRunFreshMock,
+      handleOpenVisualAnalysisModal: vi.fn(),
+      handleCloseVisualAnalysisModal: handleCloseVisualAnalysisModalMock,
+      handleAnalyzeSelectedVisuals: vi.fn(),
+      handleRunFullPipelineWithVisualAnalysis: vi.fn(),
+    });
+
+    const { result } = renderHook(() => useAdminKangurSocialPage());
+
+    await act(async () => {
+      await result.current.handleGeneratePostWithVisualAnalysis();
+    });
+
+    expect(handleCloseVisualAnalysisModalMock).toHaveBeenCalledTimes(1);
+    expect(handleGenerateWithVisualAnalysisMock).toHaveBeenCalledWith(visualAnalysisResult);
+    expect(pipelineRunMock).not.toHaveBeenCalled();
+    expect(pipelineRunWithOverridesMock).not.toHaveBeenCalled();
+    expect(pipelineRunFreshMock).not.toHaveBeenCalled();
+  });
+
+  it('keeps the image-analysis modal open when the dedicated generation step fails', async () => {
+    const handleCloseVisualAnalysisModalMock = vi.fn();
+    const handleGenerateWithVisualAnalysisMock = vi.fn().mockResolvedValue(false);
+    const visualAnalysisResult = {
+      summary: 'Hero card is larger and the CTA is clearer.',
+      highlights: ['Larger hero card', 'Clearer CTA'],
+    };
+
+    useSocialGenerationMock.mockReturnValue({
+      generateMutation: {},
+      handleGenerate: vi.fn(),
+      handleGenerateWithVisualAnalysis: handleGenerateWithVisualAnalysisMock,
+    });
+    useSocialPipelineRunnerMock.mockReturnValue({
+      pipelineStep: 'idle',
+      pipelineProgress: null,
+      pipelineErrorMessage: null,
+      isVisualAnalysisModalOpen: true,
+      visualAnalysisResult,
+      visualAnalysisErrorMessage: null,
+      visualAnalysisPending: false,
+      handleRunFullPipeline: pipelineRunMock,
+      handleRunFullPipelineWithOverrides: pipelineRunWithOverridesMock,
+      handleRunFullPipelineWithFreshCapture: pipelineRunFreshMock,
+      handleOpenVisualAnalysisModal: vi.fn(),
+      handleCloseVisualAnalysisModal: handleCloseVisualAnalysisModalMock,
+      handleAnalyzeSelectedVisuals: vi.fn(),
+      handleRunFullPipelineWithVisualAnalysis: vi.fn(),
+    });
+
+    const { result } = renderHook(() => useAdminKangurSocialPage());
+
+    await act(async () => {
+      await result.current.handleGeneratePostWithVisualAnalysis();
+    });
+
+    expect(handleGenerateWithVisualAnalysisMock).toHaveBeenCalledWith(visualAnalysisResult);
+    expect(handleCloseVisualAnalysisModalMock).not.toHaveBeenCalled();
   });
 
   it('delegates settings telemetry wrappers and reports blocked capture state', async () => {

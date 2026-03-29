@@ -16,6 +16,7 @@ import {
 } from '@/shared/contracts/playwright';
 import { getSettingValue } from '@/shared/lib/ai/server-settings';
 import { buildAiPathsContextRegistrySystemPrompt } from '@/shared/lib/ai-paths/context-registry/system-prompt';
+import { sanitizePlaywrightStorageState } from '@/shared/lib/playwright/storage-state';
 import { defaultPlaywrightSettings } from '@/shared/lib/playwright/settings';
 import { evaluateOutboundUrlPolicy } from '@/shared/lib/security/outbound-url-policy';
 import { getFsPromises, joinRuntimePath } from '@/shared/lib/files/runtime-fs';
@@ -274,7 +275,8 @@ const buildContextOptions = (
   settings: PlaywrightSettings,
   runArtifactsDir: string,
   contextOverrides: Record<string, unknown>,
-  capture: PlaywrightNodeRunRequest['capture']
+  capture: PlaywrightNodeRunRequest['capture'],
+  startUrl?: string
 ): BrowserContextOptions => {
   const devicePreset =
     settings.emulateDevice && settings.deviceName
@@ -292,10 +294,21 @@ const buildContextOptions = (
       },
     };
   }
-  return {
+  const merged = {
     ...base,
     ...(contextOverrides as BrowserContextOptions),
   };
+  if (typeof merged.storageState !== 'string' && merged.storageState) {
+    const sanitizedStorageState = sanitizePlaywrightStorageState(merged.storageState, {
+      fallbackOrigin: startUrl ?? null,
+    });
+    if (sanitizedStorageState) {
+      merged.storageState = sanitizedStorageState as BrowserContextOptions['storageState'];
+    } else {
+      delete merged.storageState;
+    }
+  }
+  return merged;
 };
 
 const parseUserScript = (
@@ -446,7 +459,8 @@ const executePlaywrightNodeRun = async (
     effectiveSettings,
     runArtifactsDir,
     request.contextOptions ?? {},
-    request.capture
+    request.capture,
+    request.startUrl
   );
   const timeoutMs = Math.max(1_000, request.timeoutMs ?? 120_000);
   const browserEngine = request.browserEngine ?? 'chromium';

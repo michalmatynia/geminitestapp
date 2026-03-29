@@ -205,6 +205,7 @@ describe('LessonsCatalog', () => {
       ageGroup: 'six_year_old',
       lessonSections: [],
       orderedLessons: [],
+      ensureLessonsCatalogLoaded: vi.fn(),
       handleSelectLesson: vi.fn(),
       handleGoBack: vi.fn(),
       progress: { lessonMastery: {} },
@@ -290,6 +291,7 @@ describe('LessonsCatalog', () => {
           enabled: true,
         },
       ],
+      ensureLessonsCatalogLoaded: vi.fn(),
       handleSelectLesson: vi.fn(),
       handleGoBack: vi.fn(),
       progress: { lessonMastery: {} },
@@ -352,6 +354,7 @@ describe('LessonsCatalog', () => {
 
   it('renders the general adverbs lesson together with adverbs of frequency inside the grammar group', () => {
     lessonCardPropsMock.mockClear();
+    const ensureLessonsCatalogLoaded = vi.fn();
     useLessonsMock.mockReturnValue({
       subject: 'english',
       ageGroup: 'ten_year_old',
@@ -412,6 +415,7 @@ describe('LessonsCatalog', () => {
           enabled: true,
         },
       ],
+      ensureLessonsCatalogLoaded,
       handleSelectLesson: vi.fn(),
       handleGoBack: vi.fn(),
       progress: { lessonMastery: {} },
@@ -433,6 +437,10 @@ describe('LessonsCatalog', () => {
 
     fireEvent.click(screen.getByRole('button', { name: /gramatyka/i }));
 
+    expect(ensureLessonsCatalogLoaded).toHaveBeenCalledWith([
+      'english_adverbs',
+      'english_adverbs_frequency',
+    ]);
     expect(screen.getByTestId('mock-lesson-card-lesson-english-adverbs')).toBeInTheDocument();
     expect(
       screen.getByTestId('mock-lesson-card-lesson-english-adverbs-frequency')
@@ -505,6 +513,7 @@ describe('LessonsCatalog', () => {
           enabled: true,
         },
       ],
+      ensureLessonsCatalogLoaded: vi.fn(),
       handleSelectLesson: vi.fn(),
       handleGoBack: vi.fn(),
       progress: { lessonMastery: {} },

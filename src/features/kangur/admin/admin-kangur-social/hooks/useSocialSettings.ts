@@ -11,6 +11,7 @@ import {
 } from '@/features/integrations/public';
 import { useUpdateSetting } from '@/shared/hooks/use-settings';
 import {
+  isRecoverableKangurClientFetchError,
   logKangurClientError,
 } from '@/features/kangur/observability/client';
 import { ErrorSystem } from '@/features/kangur/shared/utils/observability/error-system-client';
@@ -150,13 +151,21 @@ export function useSocialSettings() {
         toast(options.successMessage, { variant: 'success' });
         return true;
       } catch (error) {
-        void ErrorSystem.captureException(error);
-        logKangurClientError(error, {
-          source: 'AdminKangurSocialPage',
-          action: options.errorAction,
-          nextSettings: payload,
-        });
-        toast('Failed to save social settings.', { variant: 'error' });
+        const isRecoverableFetchFailure = isRecoverableKangurClientFetchError(error);
+        if (!isRecoverableFetchFailure) {
+          void ErrorSystem.captureException(error);
+          logKangurClientError(error, {
+            source: 'AdminKangurSocialPage',
+            action: options.errorAction,
+            nextSettings: payload,
+          });
+        }
+        toast(
+          isRecoverableFetchFailure
+            ? 'Failed to save social settings. Check your connection and try again.'
+            : 'Failed to save social settings.',
+          { variant: 'error' }
+        );
         return false;
       }
     },

@@ -13,6 +13,7 @@ import { ErrorSystem } from '@/features/kangur/shared/utils/observability/error-
 import type {
   KangurSocialGeneratedDraft,
   KangurSocialPost,
+  KangurSocialVisualAnalysis,
 } from '@/shared/contracts/kangur-social-posts';
 import { api } from '@/shared/lib/api-client';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
@@ -75,6 +76,25 @@ const isManualGenerationJobResult = (value: unknown): value is GenerationJobResu
       (value as { type?: string }).type === 'manual-post-generation'
   );
 
+const hasUsableGeneratedContent = <
+  T extends
+    | Pick<KangurSocialGeneratedDraft, 'titlePl' | 'titleEn' | 'bodyPl' | 'bodyEn'>
+    | Pick<KangurSocialPost, 'titlePl' | 'titleEn' | 'bodyPl' | 'bodyEn'>,
+>(
+  draftLike: T | null | undefined
+): draftLike is T =>
+  Boolean(
+    draftLike &&
+      [draftLike.titlePl, draftLike.titleEn, draftLike.bodyPl, draftLike.bodyEn].some((value) =>
+        Boolean(value?.trim())
+      )
+  );
+
+type RunGenerationOptions = {
+  prefetchedVisualAnalysis?: KangurSocialVisualAnalysis;
+  requireVisualAnalysisInBody?: boolean;
+};
+
 export function useSocialGeneration(deps: SocialGenerationDeps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -112,20 +132,29 @@ export function useSocialGeneration(deps: SocialGenerationDeps) {
     });
   };
 
-  const handleGenerate = async (): Promise<void> => {
+  const handleGenerateInternal = async (
+    options?: RunGenerationOptions
+  ): Promise<boolean> => {
     if (!deps.canGenerateDraft) {
       toast(
         deps.generateDraftBlockedReason ??
           'Choose a StudiQ Social post model in Settings or assign AI Brain routing first.',
         { variant: 'warning' }
       );
-      return;
+      return false;
     }
-    if (!deps.activePost) return;
+    if (!deps.activePost) return false;
+
+    const usesPrefetchedVisualAnalysis = Boolean(options?.prefetchedVisualAnalysis);
+    const generationContext = deps.buildSocialContext({
+      usesPrefetchedVisualAnalysis,
+      requireVisualAnalysisInBody: options?.requireVisualAnalysisInBody ?? false,
+      visualHighlightCount: options?.prefetchedVisualAnalysis?.highlights?.length ?? 0,
+    });
 
     trackKangurClientEvent(
       'kangur_social_post_generate_attempt',
-      deps.buildSocialContext()
+      generationContext
     );
 
     try {
@@ -139,6 +168,10 @@ export function useSocialGeneration(deps: SocialGenerationDeps) {
         visionModelId: deps.visionModelId ?? undefined,
         imageAddonIds: deps.imageAddonIds,
         projectUrl: deps.projectUrl || undefined,
+        ...(options?.prefetchedVisualAnalysis
+          ? { prefetchedVisualAnalysis: options.prefetchedVisualAnalysis }
+          : {}),
+        ...(options?.requireVisualAnalysisInBody ? { requireVisualAnalysisInBody: true } : {}),
       });
 
       if (response.jobType !== 'manual-post-generation') {
@@ -167,7 +200,7 @@ export function useSocialGeneration(deps: SocialGenerationDeps) {
 
         if (!job) {
           if (!(await waitForNextPoll(GENERATION_POLL_INTERVAL_MS))) {
-            return;
+            return false;
           }
           continue;
         }
@@ -181,7 +214,7 @@ export function useSocialGeneration(deps: SocialGenerationDeps) {
           throw new Error(job.failedReason ?? 'Server generation job failed.');
         }
         if (!(await waitForNextPoll(GENERATION_POLL_INTERVAL_MS))) {
-          return;
+          return false;
         }
       }
 
@@ -194,7 +227,7 @@ export function useSocialGeneration(deps: SocialGenerationDeps) {
       }
 
       const generated = finalJob.result.generatedPost;
-      if (generated) {
+      if (hasUsableGeneratedContent(generated)) {
         deps.setActivePostId(generated.id);
         deps.setEditorState({
           titlePl: generated.titlePl ?? '',
@@ -210,7 +243,7 @@ export function useSocialGeneration(deps: SocialGenerationDeps) {
         queryClient.setQueryData<KangurSocialPost[]>(postsQueryKey, (current) =>
           (current ?? []).map((post) => (post.id === generated.id ? generated : post))
         );
-      } else if (finalJob.result.draft) {
+      } else if (hasUsableGeneratedContent(finalJob.result.draft)) {
         deps.setEditorState({
           titlePl: finalJob.result.draft.titlePl ?? '',
           titleEn: finalJob.result.draft.titleEn ?? '',
@@ -219,21 +252,25 @@ export function useSocialGeneration(deps: SocialGenerationDeps) {
         });
         deps.setContextSummary(finalJob.result.draft.summary ?? null);
       } else {
-        throw new Error('Generation completed without generated content.');
+        throw new Error(
+          'Generation completed, but no post copy was returned. Check the queued result and retry.'
+        );
       }
 
       void queryClient.invalidateQueries({ queryKey: KANGUR_SOCIAL_POSTS_QUERY_KEY });
       toast('Draft updated — review the generated post.', { variant: 'success' });
       trackKangurClientEvent(
         'kangur_social_post_generate_success',
-        deps.buildSocialContext()
+        generationContext
       );
+      return true;
     } catch (error) {
       void ErrorSystem.captureException(error);
       logKangurClientError(error, {
         source: 'AdminKangurSocialPage',
         action: 'generatePost',
-        ...deps.buildSocialContext({ error: true }),
+        ...generationContext,
+        error: true,
       });
       toast(
         error instanceof Error ? error.message : 'Failed to generate the social post draft.',
@@ -241,11 +278,28 @@ export function useSocialGeneration(deps: SocialGenerationDeps) {
       );
       trackKangurClientEvent(
         'kangur_social_post_generate_failed',
-        deps.buildSocialContext({ error: true })
+        {
+          ...generationContext,
+          error: true,
+        }
       );
+      return false;
     } finally {
       setGeneratePending(false);
     }
+  };
+
+  const handleGenerate = async (): Promise<boolean> => {
+    return await handleGenerateInternal();
+  };
+
+  const handleGenerateWithVisualAnalysis = async (
+    prefetchedVisualAnalysis: KangurSocialVisualAnalysis
+  ): Promise<boolean> => {
+    return await handleGenerateInternal({
+      prefetchedVisualAnalysis,
+      requireVisualAnalysisInBody: true,
+    });
   };
 
   return {
@@ -255,5 +309,6 @@ export function useSocialGeneration(deps: SocialGenerationDeps) {
     } as typeof generateMutation,
     currentGenerationJob,
     handleGenerate,
+    handleGenerateWithVisualAnalysis,
   };
 }

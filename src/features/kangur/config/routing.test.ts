@@ -4,6 +4,7 @@ import {
   appendKangurUrlParams,
   buildKangurEmbeddedBasePath,
   getKangurPublicAliasHref,
+  getKangurPublicLaunchHref,
   getKangurCanonicalPublicHref,
   getKangurDedicatedAppHref,
   getKangurHomeHref,
@@ -13,10 +14,12 @@ import {
   getKangurInternalQueryParamKeys,
   getKangurInternalQueryParamName,
   normalizeKangurRequestedPath,
+  readKangurLaunchIntent,
   readKangurUrlParam,
   resolveKangurFeaturePageRoute,
   resolveKangurPublicBasePathFromHref,
   resolveKangurPageKeyFromSlug,
+  stripKangurLaunchIntent,
 } from '@/features/kangur/config/routing';
 
 describe('kangur routing config', () => {
@@ -92,7 +95,8 @@ describe('kangur routing config', () => {
     expect(getKangurDedicatedAppHref(['lessons'], { focus: 'division' })).toBe(
       'kangur://lessons?focus=division'
     );
-    expect(getKangurDedicatedAppHref(['parent-dashboard'])).toBe('kangur://parent');
+    expect(getKangurDedicatedAppHref(['parent-dashboard'])).toBeNull();
+    expect(getKangurDedicatedAppHref(['games'])).toBeNull();
     expect(getKangurDedicatedAppHref(['login'])).toBeNull();
   });
 
@@ -116,6 +120,23 @@ describe('kangur routing config', () => {
       href: 'kangur://duels?join=invite-1',
       fallbackHref: '/duels?join=invite-1',
     });
+  });
+
+  it('builds public launch hrefs that keep the web shell as the canonical route', () => {
+    expect(getKangurPublicLaunchHref('web_mobile_view', ['lessons'], { focus: 'division' })).toBe(
+      '/kangur/lessons?focus=division'
+    );
+    expect(getKangurPublicLaunchHref('dedicated_app', ['lessons'], { focus: 'division' })).toBe(
+      '/kangur/lessons?focus=division&__kangurLaunch=dedicated_app'
+    );
+    expect(getKangurPublicLaunchHref('dedicated_app', ['games'])).toBe('/kangur/games');
+  });
+
+  it('reads and strips launch-intent params without affecting learner params', () => {
+    const searchParams = new URLSearchParams('focus=division&__kangurLaunch=dedicated_app');
+
+    expect(readKangurLaunchIntent(searchParams)).toBe('dedicated_app');
+    expect(stripKangurLaunchIntent(searchParams).toString()).toBe('focus=division');
   });
 
   it('resolves the public kangur base path from a return href', () => {

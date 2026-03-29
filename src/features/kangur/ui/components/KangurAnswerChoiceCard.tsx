@@ -16,6 +16,26 @@ type KangurAnswerChoiceCardProps = Omit<ComponentProps<typeof KangurOptionCardBu
     wrapperRole?: string;
   };
 
+const resolveKangurAnswerChoiceHoverState = ({
+  hoverScale,
+  interactive,
+  whileHover,
+}: Pick<KangurAnswerChoiceCardProps, 'hoverScale' | 'interactive' | 'whileHover'>): MotionProps['whileHover'] =>
+  whileHover ?? (interactive ? { scale: hoverScale ?? 1.04 } : undefined);
+
+const resolveKangurAnswerChoiceTapState = ({
+  interactive,
+  tapScale,
+  whileTap,
+}: Pick<KangurAnswerChoiceCardProps, 'interactive' | 'tapScale' | 'whileTap'>): MotionProps['whileTap'] =>
+  whileTap ?? (interactive ? { scale: tapScale ?? 0.96 } : undefined);
+
+const resolveKangurAnswerChoiceButtonClassName = ({
+  buttonClassName,
+  interactive,
+}: Pick<KangurAnswerChoiceCardProps, 'buttonClassName' | 'interactive'>): string =>
+  cn('w-full transition-all', interactive ? 'cursor-pointer' : 'cursor-default', buttonClassName);
+
 export default function KangurAnswerChoiceCard(
   props: KangurAnswerChoiceCardProps
 ): React.JSX.Element {
@@ -35,8 +55,16 @@ export default function KangurAnswerChoiceCard(
     wrapperRole,
     ...buttonProps
   } = props;
-  const resolvedWhileHover = whileHover ?? (interactive ? { scale: hoverScale } : undefined);
-  const resolvedWhileTap = whileTap ?? (interactive ? { scale: tapScale } : undefined);
+  const resolvedWhileHover = resolveKangurAnswerChoiceHoverState({
+    hoverScale,
+    interactive,
+    whileHover,
+  });
+  const resolvedWhileTap = resolveKangurAnswerChoiceTapState({
+    interactive,
+    tapScale,
+    whileTap,
+  });
 
   return (
     <motion.div
@@ -50,11 +78,7 @@ export default function KangurAnswerChoiceCard(
       whileTap={resolvedWhileTap}
     >
       <KangurOptionCardButton
-        className={cn(
-          'w-full transition-all',
-          interactive ? 'cursor-pointer' : 'cursor-default',
-          buttonClassName
-        )}
+        className={resolveKangurAnswerChoiceButtonClassName({ buttonClassName, interactive })}
         {...buttonProps}
       >
         {children}

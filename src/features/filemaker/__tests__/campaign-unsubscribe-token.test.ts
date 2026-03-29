@@ -69,7 +69,7 @@ describe('filemaker campaign unsubscribe token', () => {
       ttlMs: 5_000,
     });
 
-    expect(url.startsWith('https://app.example.com/filemaker/unsubscribe?token=')).toBe(true);
+    expect(url.startsWith('https://app.example.com/admin/filemaker/campaigns/unsubscribe?token=')).toBe(true);
     expect(__testOnly.resolvePublicAppUrl()).toBe('https://app.example.com');
   });
 
@@ -104,7 +104,7 @@ describe('filemaker campaign unsubscribe token', () => {
       ttlMs: 5_000,
     });
 
-    expect(url.startsWith('https://app.example.com/filemaker/preferences?token=')).toBe(true);
+    expect(url.startsWith('https://app.example.com/admin/filemaker/campaigns/preferences?token=')).toBe(true);
     const token = new URL(url).searchParams.get('token');
     expect(parseFilemakerCampaignUnsubscribeToken(token, 2_000)).toEqual({
       emailAddress: 'jan@example.com',
@@ -130,7 +130,7 @@ describe('filemaker campaign unsubscribe token', () => {
       ttlMs: 5_000,
     });
 
-    expect(url.startsWith('https://app.example.com/filemaker/preferences?token=')).toBe(true);
+    expect(url.startsWith('https://app.example.com/admin/filemaker/campaigns/preferences?token=')).toBe(true);
     const token = new URL(url).searchParams.get('token');
     expect(parseFilemakerCampaignUnsubscribeToken(token, 2_000)).toEqual({
       emailAddress: 'jan@example.com',

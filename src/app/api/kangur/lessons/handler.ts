@@ -5,6 +5,7 @@ import { getKangurLessonRepository } from '@/features/kangur/services/kangur-les
 import type { KangurLesson } from '@kangur/contracts';
 import {
   kangurLessonAgeGroupSchema,
+  kangurLessonComponentIdSchema,
   kangurLessonsQuerySchema,
   kangurLessonsReplacePayloadSchema,
   kangurLessonSubjectSchema,
@@ -32,11 +33,13 @@ const cloneKangurLessons = (lessons: KangurLesson[]): KangurLesson[] => structur
 const buildKangurLessonsCacheKey = (input: {
   subject?: string;
   ageGroup?: string;
+  componentIds?: string[];
   enabledOnly?: boolean;
 }): string =>
   JSON.stringify({
     subject: input.subject ?? null,
     ageGroup: input.ageGroup ?? null,
+    componentIds: input.componentIds ?? null,
     enabledOnly: input.enabledOnly === true,
   });
 
@@ -52,11 +55,14 @@ export async function getKangurLessonsHandler(
   const query = kangurLessonsQuerySchema.parse(ctx.query ?? {});
   const parsedSubject = kangurLessonSubjectSchema.safeParse(query.subject);
   const parsedAgeGroup = kangurLessonAgeGroupSchema.safeParse(query.ageGroup);
+  const parsedComponentIds = kangurLessonComponentIdSchema.array().safeParse(query.componentIds);
   const subject = parsedSubject.success ? parsedSubject.data : undefined;
   const ageGroup = parsedAgeGroup.success ? parsedAgeGroup.data : undefined;
+  const componentIds = parsedComponentIds.success ? parsedComponentIds.data : undefined;
   const cacheKey = buildKangurLessonsCacheKey({
     subject,
     ageGroup,
+    componentIds,
     enabledOnly: query.enabledOnly,
   });
   const now = Date.now();
@@ -83,6 +89,7 @@ export async function getKangurLessonsHandler(
     .listLessons({
       subject,
       ageGroup,
+      componentIds,
       enabledOnly: query.enabledOnly,
     })
     .then((lessons) => {

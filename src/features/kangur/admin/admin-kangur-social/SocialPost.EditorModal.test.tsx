@@ -24,6 +24,7 @@ vi.mock('@/features/kangur/shared/ui', async () => {
       actions,
       onSave,
       isSaveDisabled,
+      saveTitle,
       hasUnsavedChanges,
       saveText = 'Save',
       cancelText = 'Close',
@@ -36,6 +37,7 @@ vi.mock('@/features/kangur/shared/ui', async () => {
       actions?: React.ReactNode;
       onSave: () => void;
       isSaveDisabled?: boolean;
+      saveTitle?: string;
       hasUnsavedChanges?: boolean;
       saveText?: string;
       cancelText?: string;
@@ -50,6 +52,7 @@ vi.mock('@/features/kangur/shared/ui', async () => {
             type='button'
             data-variant={hasUnsavedChanges ? 'success' : 'outline'}
             disabled={Boolean(isSaveDisabled)}
+            title={saveTitle}
             onClick={() => onSave()}
           >
             {saveText}
@@ -257,6 +260,10 @@ describe('SocialPostEditorModal', () => {
     render(<SocialPostEditorModal isOpen={true} onClose={vi.fn()} />);
 
     expect(screen.getByRole('button', { name: 'Save draft' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Save draft' })).toHaveAttribute(
+      'title',
+      'Wait for the current Social runtime job to finish.'
+    );
     expect(screen.getByRole('button', { name: 'Publish to LinkedIn' })).toBeDisabled();
     expect(screen.getByRole('button', { name: 'Publish to LinkedIn' })).toHaveAttribute(
       'title',
@@ -363,5 +370,9 @@ describe('SocialPostEditorModal', () => {
       'outline'
     );
     expect(screen.getByRole('button', { name: 'Save draft' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Save draft' })).toHaveAttribute(
+      'title',
+      'No draft changes to save.'
+    );
   });
 });

@@ -190,12 +190,15 @@ describe('kangur client observability', () => {
     );
   });
 
-  it('treats plain browser fetch failures as recoverable client load errors', () => {
+  it('treats fetch-style network failures as recoverable client load errors', () => {
     expect(isRecoverableKangurClientFetchError(new TypeError('Failed to fetch'))).toBe(true);
     expect(
       isRecoverableKangurClientFetchError(new TypeError('Network load failed'))
     ).toBe(true);
-    expect(isRecoverableKangurClientFetchError(new Error('Failed to fetch'))).toBe(false);
+    expect(isRecoverableKangurClientFetchError(new Error('Failed to fetch'))).toBe(true);
+    expect(isRecoverableKangurClientFetchError({ message: 'Failed to fetch' })).toBe(true);
+    expect(isRecoverableKangurClientFetchError('Failed to fetch')).toBe(true);
+    expect(isRecoverableKangurClientFetchError(new Error('Failed to fetch resource'))).toBe(true);
     expect(isRecoverableKangurClientFetchError(new Error('Unexpected failure'))).toBe(false);
   });
 

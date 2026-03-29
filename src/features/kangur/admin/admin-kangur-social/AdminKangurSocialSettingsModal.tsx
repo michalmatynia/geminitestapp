@@ -139,6 +139,11 @@ export function AdminKangurSocialSettingsModal({
   ]
     .filter((value): value is string => Boolean(value))
     .join(' · ');
+  const saveSettingsTitle = hasBlockingRuntimeJob
+    ? 'Wait for the current Social runtime job to finish.'
+    : !hasUnsavedChanges
+      ? 'No settings changes to save.'
+      : undefined;
 
   return (
     <FormModal
@@ -152,6 +157,7 @@ export function AdminKangurSocialSettingsModal({
       isSaveDisabled={!hasUnsavedChanges || isSaving || hasBlockingRuntimeJob}
       hasUnsavedChanges={hasUnsavedChanges}
       saveText='Save Settings'
+      saveTitle={saveSettingsTitle}
       cancelText='Close'
       size='xl'
       className='md:min-w-[52rem] max-w-[56rem]'

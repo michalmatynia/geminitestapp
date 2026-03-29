@@ -27,7 +27,7 @@ export function SocialPostVisualAnalysisModal(): React.JSX.Element | null {
     isVisualAnalysisModalOpen,
     handleCloseVisualAnalysisModal,
     handleAnalyzeSelectedVisuals,
-    handleRunFullPipelineWithVisualAnalysis,
+    handleGeneratePostWithVisualAnalysis,
     visualAnalysisResult,
     visualAnalysisErrorMessage,
     visualAnalysisPending,
@@ -101,12 +101,25 @@ export function SocialPostVisualAnalysisModal(): React.JSX.Element | null {
   const visualAnalysisHighlights = visualAnalysisResult?.highlights ?? [];
   const isVisualAnalysisJobInFlight =
     visualAnalysisPending || isSocialRuntimeJobInFlight(currentVisualAnalysisJob?.status);
+  const isGenerationJobInFlight = isSocialRuntimeJobInFlight(currentGenerationJob?.status);
+  const isPipelineJobInFlight = isSocialRuntimeJobInFlight(currentPipelineJob?.status);
   const isFollowUpGenerationInFlight =
-    isSocialRuntimeJobInFlight(currentGenerationJob?.status) ||
-    isSocialRuntimeJobInFlight(currentPipelineJob?.status);
-  const saveText = isFollowUpGenerationInFlight
-    ? 'Generate post in progress...'
-    : 'Generate post with analysis';
+    isGenerationJobInFlight || isPipelineJobInFlight;
+  const saveText = isPipelineJobInFlight
+    ? 'Full pipeline in progress...'
+    : isGenerationJobInFlight
+      ? 'Generate post in progress...'
+      : 'Generate post with analysis';
+  const saveButtonTitle =
+    isVisualAnalysisJobInFlight || isFollowUpGenerationInFlight
+      ? 'Wait for the current Social runtime job to finish.'
+      : !visualAnalysisResult
+        ? isSavedVisualAnalysisStale && hasSavedVisualAnalysis
+          ? 'Rerun image analysis before generating post copy from visuals.'
+          : hasFailedSavedAnalysis
+            ? 'Rerun image analysis before generating post copy from visuals.'
+            : 'Run image analysis before generating post copy from visuals.'
+        : 'Generate post with analysis';
   const analyzeButtonTitle =
     selectedAddons.length === 0
       ? 'Select at least one image add-on before running image analysis.'
@@ -121,9 +134,10 @@ export function SocialPostVisualAnalysisModal(): React.JSX.Element | null {
       title='Image analysis pipeline'
       subtitle='Analyze the selected visuals to produce a visual description first. Then use Generate post with analysis to combine that description with the current context in a separate AI pass.'
       onSave={() => {
-        void handleRunFullPipelineWithVisualAnalysis();
+        void handleGeneratePostWithVisualAnalysis();
       }}
       saveText={saveText}
+      saveTitle={saveButtonTitle}
       isSaveDisabled={!visualAnalysisResult || isVisualAnalysisJobInFlight || isFollowUpGenerationInFlight}
       showSaveButton={true}
       cancelText='Close'

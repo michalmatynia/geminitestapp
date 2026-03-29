@@ -6,11 +6,13 @@ const {
   kangurFeatureRouteShellMock,
   getFrontPagePublicOwnerMock,
   getFrontPageSettingMock,
-  getKangurConfiguredLaunchTargetMock,
+  getKangurConfiguredLaunchRouteMock,
   kangurPublicAppMock,
   loadSlugRenderDataMock,
   notFoundMock,
+  readSanitizedKangurAliasLoginSearchParamsMock,
   redirectMock,
+  renderAccessibleKangurAliasRouteMock,
   resolveSlugToPageMock,
   shouldApplyFrontPageAppSelectionMock,
 } = vi.hoisted(() => ({
@@ -18,11 +20,13 @@ const {
   kangurFeatureRouteShellMock: vi.fn(),
   getFrontPagePublicOwnerMock: vi.fn(),
   getFrontPageSettingMock: vi.fn(),
-  getKangurConfiguredLaunchTargetMock: vi.fn(),
+  getKangurConfiguredLaunchRouteMock: vi.fn(),
   kangurPublicAppMock: vi.fn(),
   loadSlugRenderDataMock: vi.fn(),
   notFoundMock: vi.fn(),
+  readSanitizedKangurAliasLoginSearchParamsMock: vi.fn(),
   redirectMock: vi.fn(),
+  renderAccessibleKangurAliasRouteMock: vi.fn(),
   resolveSlugToPageMock: vi.fn(),
   shouldApplyFrontPageAppSelectionMock: vi.fn(),
 }));
@@ -98,12 +102,11 @@ vi.mock('@/features/kangur/public', () => ({
   getKangurHomeHref: (pathname = '/') => pathname,
 }));
 
-vi.mock('@/features/kangur/server/launch-route', () => ({
-  getKangurConfiguredLaunchTarget: getKangurConfiguredLaunchTargetMock,
-  getKangurConfiguredLaunchHref: vi.fn(async (slug, searchParams) => {
-    const resolved = await getKangurConfiguredLaunchTargetMock(slug, searchParams);
-    return resolved.href;
-  }),
+vi.mock('@/features/kangur/server', () => ({
+  getKangurConfiguredLaunchRoute: getKangurConfiguredLaunchRouteMock,
+  requireAccessibleKangurSlugRoute: vi.fn(async () => undefined),
+  renderAccessibleKangurAliasRoute: renderAccessibleKangurAliasRouteMock,
+  readSanitizedKangurAliasLoginSearchParams: readSanitizedKangurAliasLoginSearchParamsMock,
 }));
 
 vi.mock('@/features/cms/components/frontend/CmsPageRenderer', () => ({
@@ -141,28 +144,11 @@ describe('kangur public-owner frontend routes', () => {
       value === 'kangur' ? 'kangur' : 'cms'
     );
     shouldApplyFrontPageAppSelectionMock.mockReturnValue(true);
-    getKangurConfiguredLaunchTargetMock.mockImplementation(
-      async (slug: string[] = [], searchParams?: Record<string, string | string[] | undefined>) => {
-        const pathname = `/${slug.join('/') || ''}`.replace(/\/+$/, '') || '/';
-        const query = new URLSearchParams();
-        Object.entries(searchParams ?? {}).forEach(([key, value]) => {
-          if (Array.isArray(value)) {
-            value.forEach((entry) => {
-              if (typeof entry === 'string') query.append(key, entry);
-            });
-            return;
-          }
-          if (typeof value === 'string') {
-            query.set(key, value);
-          }
-        });
-        const serializedQuery = query.toString();
-        const href = serializedQuery ? `${pathname}?${serializedQuery}` : pathname;
-        return {
-          href,
-          fallbackHref: pathname,
-        };
-      }
+    getKangurConfiguredLaunchRouteMock.mockResolvedValue('web_mobile_view');
+    renderAccessibleKangurAliasRouteMock.mockResolvedValue(null);
+    readSanitizedKangurAliasLoginSearchParamsMock.mockImplementation(
+      async ({ searchParams }: { searchParams?: Record<string, string | string[] | undefined> }) =>
+        searchParams
     );
     redirectMock.mockImplementation((target: string) => {
       throw new Error(`redirect:${target}`);

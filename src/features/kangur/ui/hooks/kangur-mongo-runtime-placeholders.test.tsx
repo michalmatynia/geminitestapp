@@ -71,7 +71,7 @@ describe('Kangur Mongo runtime placeholders', () => {
     await expect(config.queryFn()).resolves.toEqual(sectionsPayload);
   });
 
-  it('configures the combined lessons catalog without built-in placeholder data', async () => {
+  it('configures the combined lessons catalog to retain previous data while refetching', async () => {
     const catalogPayload = {
       lessons: createDefaultKangurLessons().filter(
         (lesson) => lesson.subject === 'english' && lesson.ageGroup === 'ten_year_old'
@@ -89,12 +89,48 @@ describe('Kangur Mongo runtime placeholders', () => {
     const config = createListQueryV2Mock.mock.calls[0]?.[0];
 
     expect(result.current).toEqual({ kind: 'list-query' });
-    expect(config.placeholderData).toBeUndefined();
+    expect(config.placeholderData(catalogPayload)).toEqual(catalogPayload);
     await expect(config.queryFn()).resolves.toEqual(catalogPayload);
     expect(apiGetMock).toHaveBeenCalledWith('/api/kangur/lessons-catalog', {
       params: {
         subject: 'english',
         ageGroup: undefined,
+        componentIds: undefined,
+        enabledOnly: true,
+      },
+      timeout: 30000,
+    });
+  });
+
+  it('serializes subset componentIds for the lessons catalog request', async () => {
+    const catalogPayload = {
+      lessons: createDefaultKangurLessons().filter(
+        (lesson) =>
+          lesson.subject === 'english' &&
+          ['english_adjectives', 'english_comparatives_superlatives'].includes(lesson.componentId)
+      ),
+      sections: createDefaultKangurSections().filter(
+        (section) => section.subject === 'english' && section.ageGroup === 'ten_year_old'
+      ),
+    };
+    apiGetMock.mockResolvedValueOnce(catalogPayload);
+
+    const { useKangurLessonsCatalog } = await import('./useKangurLessonsCatalog');
+    renderHook(() =>
+      useKangurLessonsCatalog({
+        subject: 'english',
+        enabledOnly: true,
+        componentIds: ['english_adjectives', 'english_comparatives_superlatives'],
+      })
+    );
+    const config = createListQueryV2Mock.mock.calls.at(-1)?.[0];
+
+    await expect(config.queryFn()).resolves.toEqual(catalogPayload);
+    expect(apiGetMock).toHaveBeenCalledWith('/api/kangur/lessons-catalog', {
+      params: {
+        subject: 'english',
+        ageGroup: undefined,
+        componentIds: 'english_adjectives,english_comparatives_superlatives',
         enabledOnly: true,
       },
       timeout: 30000,

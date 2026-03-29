@@ -1,7 +1,10 @@
+import type { FrontendPublicOwner, FrontendPublicRouteFamily } from '@/shared/lib/frontend-public-route-family';
+
 export type FrontendLoadTimingPayload = {
   source: 'frontend-layout';
   pathname: string | null;
-  publicOwner: 'cms' | 'kangur';
+  publicOwner: FrontendPublicOwner;
+  routeFamily: FrontendPublicRouteFamily;
   flags: {
     explicitKangurAlias: boolean;
     canonicalPublicLogin: boolean;

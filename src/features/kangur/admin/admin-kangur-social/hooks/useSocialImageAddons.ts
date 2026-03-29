@@ -18,6 +18,7 @@ import {
   trackKangurClientEvent,
 } from '@/features/kangur/observability/client';
 import { ErrorSystem } from '@/features/kangur/shared/utils/observability/error-system-client';
+import { extractMutationErrorMessage } from '@/shared/lib/mutation-error-handler';
 import {
   KANGUR_STOREFRONT_APPEARANCE_STORAGE_KEY,
   KANGUR_STOREFRONT_DEFAULT_MODE_SETTING_KEY,
@@ -201,16 +202,17 @@ const handleBatchCaptureFailure = ({
   deps: Pick<SocialImageAddonsDeps, 'buildSocialContext'>;
   toast: ToastFn;
 }): void => {
+  const message = extractMutationErrorMessage(error, 'Batch capture failed');
   void ErrorSystem.captureException(error);
   logKangurClientError(error, {
     source: 'AdminKangurSocialPage',
     action: 'batchCapture',
     ...deps.buildSocialContext({ error: true }),
   });
-  toast('Batch capture failed', { variant: 'error' });
+  toast(message, { variant: 'error' });
   trackKangurClientEvent(
     'kangur_social_batch_capture_failed',
-    deps.buildSocialContext({ error: true })
+    deps.buildSocialContext({ error: true, errorMessage: message })
   );
 };
 

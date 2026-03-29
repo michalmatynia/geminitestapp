@@ -24,6 +24,7 @@ interface FormModalProps extends Partial<ModalStateProps> {
   isSaveDisabled?: boolean;
   hasUnsavedChanges?: boolean;
   saveText?: string;
+  saveTitle?: string;
   cancelText?: string;
   saveVariant?: VariantProps<typeof buttonVariants>['variant'];
   saveIcon?: ReactNode;
@@ -44,6 +45,7 @@ type FormModalHeaderProps = {
   showSaveButton: boolean;
   onSave: () => void;
   saveText: string;
+  saveTitle?: string;
   saveVariant: VariantProps<typeof buttonVariants>['variant'];
   saveIcon?: ReactNode;
   isSaving: boolean;
@@ -63,6 +65,7 @@ const renderFormModalHeaderContent = (props: FormModalHeaderProps): React.JSX.El
     showSaveButton,
     onSave,
     saveText,
+    saveTitle,
     saveVariant,
     saveIcon,
     isSaving,
@@ -82,6 +85,7 @@ const renderFormModalHeaderContent = (props: FormModalHeaderProps): React.JSX.El
           <FormActions
             onSave={onSave}
             saveText={saveText}
+            saveTitle={saveTitle}
             saveVariant={saveVariant}
             saveIcon={saveIcon}
             isSaving={isSaving}
@@ -128,6 +132,7 @@ export function FormModal(props: FormModalProps): React.JSX.Element | null {
     isSaveDisabled = false,
     hasUnsavedChanges,
     saveText = 'Save',
+    saveTitle,
     cancelText = 'Cancel',
     saveVariant,
     saveIcon,
@@ -184,6 +189,7 @@ export function FormModal(props: FormModalProps): React.JSX.Element | null {
           showSaveButton,
           onSave: handleSave,
           saveText,
+          saveTitle,
           saveVariant: resolvedSaveVariant,
           saveIcon,
           isSaving,

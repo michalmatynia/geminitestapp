@@ -87,7 +87,12 @@ export function SocialPostEditorModal({
   const hasBlockingRuntimeJob =
     isSocialRuntimeJobInFlight(currentGenerationJob?.status) ||
     isSocialRuntimeJobInFlight(currentPipelineJob?.status);
+  const hasBlockingImageMutationJob =
+    isSocialRuntimeJobInFlight(currentVisualAnalysisJob?.status) || hasBlockingRuntimeJob;
   const editorActionTitle = hasBlockingRuntimeJob
+    ? 'Wait for the current Social runtime job to finish.'
+    : undefined;
+  const imageMutationTitle = hasBlockingImageMutationJob
     ? 'Wait for the current Social runtime job to finish.'
     : undefined;
   const currentVisualAnalysisJobTitle = [
@@ -163,6 +168,8 @@ export function SocialPostEditorModal({
     setShowMediaLibrary,
     showMediaLibrary,
     handleAddImages,
+    isInteractionBlocked: hasBlockingImageMutationJob,
+    interactionTitle: imageMutationTitle,
   };
 
   return (
@@ -215,6 +222,8 @@ export function SocialPostEditorModal({
                     type='datetime-local'
                     aria-label='Scheduled publish date and time'
                     value={scheduledAt}
+                    disabled={hasBlockingRuntimeJob}
+                    title={editorActionTitle}
                     onChange={(event) => setScheduledAt(event.target.value)}
                   />
                 </div>

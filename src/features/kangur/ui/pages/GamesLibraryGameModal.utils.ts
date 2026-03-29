@@ -15,6 +15,7 @@ import type {
   KangurGeometryDrawingShapeId,
   KangurLogicalPatternSetId,
 } from '@/shared/contracts/kangur-game-runtime-renderer-props';
+import type { KangurLessonComponentId } from '@/features/kangur/shared/contracts/kangur';
 import type { KangurLessonGameSection } from '@/shared/contracts/kangur-lesson-game-sections';
 import type {
   KangurGameDefinition,
@@ -195,7 +196,8 @@ const resolveClockPreviewShowTimeDisplay = (
 const resolveEditorStateAttachedLessonId = (
   section: KangurLessonGameSection | null,
   nextGame: KangurGameDefinition
-): string | null => (section?.lessonComponentId ?? nextGame.lessonComponentIds[0]) ?? null;
+): KangurLessonComponentId | null =>
+  (section?.lessonComponentId ?? nextGame.lessonComponentIds[0] ?? null) as KangurLessonComponentId | null;
 
 const resolveEditorStateIcon = (
   section: KangurLessonGameSection | null,
@@ -205,7 +207,7 @@ const resolveEditorStateIcon = (
 const resolveEditorStateSubtext = (
   section: KangurLessonGameSection | null,
   nextGame: KangurGameDefinition
-): string | null | undefined => section?.description ?? nextGame.description;
+): string => section?.description ?? nextGame.description ?? '';
 
 const resolveEditorStateTitle = (
   section: KangurLessonGameSection | null,

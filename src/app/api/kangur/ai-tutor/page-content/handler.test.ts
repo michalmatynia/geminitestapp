@@ -5,16 +5,19 @@ import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { parseKangurPageContentStore } from '@/shared/contracts/kangur-page-content';
 
 const {
+  clearKangurPageContentServerCacheMock,
   getKangurPageContentStoreMock,
   upsertKangurPageContentStoreMock,
   resolveKangurActorMock,
 } = vi.hoisted(() => ({
+  clearKangurPageContentServerCacheMock: vi.fn(),
   getKangurPageContentStoreMock: vi.fn(),
   upsertKangurPageContentStoreMock: vi.fn(),
   resolveKangurActorMock: vi.fn(),
 }));
 
 vi.mock('@/features/kangur/server/page-content-repository', () => ({
+  clearKangurPageContentServerCache: clearKangurPageContentServerCacheMock,
   getKangurPageContentStore: getKangurPageContentStoreMock,
   upsertKangurPageContentStore: upsertKangurPageContentStoreMock,
 }));
@@ -25,6 +28,7 @@ vi.mock('@/features/kangur/services/kangur-actor', () => ({
 }));
 
 import {
+  clearKangurPageContentHandlerCache,
   getKangurPageContentHandler,
   postKangurPageContentHandler,
 } from './handler';
@@ -71,6 +75,7 @@ const createRequestContext = (body?: unknown, query?: unknown): ApiHandlerContex
 describe('kangur page content handler', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    clearKangurPageContentHandlerCache();
     getKangurPageContentStoreMock.mockResolvedValue(DEFAULT_STORE);
     upsertKangurPageContentStoreMock.mockResolvedValue(DEFAULT_STORE);
     resolveKangurActorMock.mockResolvedValue({
@@ -110,6 +115,24 @@ describe('kangur page content handler', () => {
     await expect(response.json()).resolves.toEqual(DEFAULT_STORE);
   });
 
+  it('reuses cached page content across repeated list requests', async () => {
+    const first = await getKangurPageContentHandler(
+      new NextRequest('http://localhost/api/kangur/ai-tutor/page-content?locale=en'),
+      createRequestContext(undefined, { locale: 'en' })
+    );
+    const second = await getKangurPageContentHandler(
+      new NextRequest('http://localhost/api/kangur/ai-tutor/page-content?locale=en'),
+      createRequestContext(undefined, { locale: 'en' })
+    );
+
+    expect(getKangurPageContentStoreMock).toHaveBeenCalledTimes(1);
+    expect(getKangurPageContentStoreMock).toHaveBeenCalledWith('en');
+    expect(first.headers.get('cache-control')).toBe('public, max-age=60, stale-while-revalidate=300');
+    expect(second.headers.get('cache-control')).toBe('public, max-age=60, stale-while-revalidate=300');
+    await expect(first.json()).resolves.toEqual(DEFAULT_STORE);
+    await expect(second.json()).resolves.toEqual(DEFAULT_STORE);
+  });
+
   it('allows admins to upsert page content', async () => {
     const response = await postKangurPageContentHandler(
       new NextRequest('http://localhost/api/kangur/ai-tutor/page-content', {
@@ -120,8 +143,47 @@ describe('kangur page content handler', () => {
 
     expect(resolveKangurActorMock).toHaveBeenCalledTimes(1);
     expect(upsertKangurPageContentStoreMock).toHaveBeenCalledWith(DEFAULT_STORE);
+    expect(clearKangurPageContentServerCacheMock).toHaveBeenCalledWith('pl');
     expect(response.status).toBe(200);
     await expect(response.json()).resolves.toEqual(DEFAULT_STORE);
+  });
+
+  it('clears the cached locale after an admin update', async () => {
+    await getKangurPageContentHandler(
+      new NextRequest('http://localhost/api/kangur/ai-tutor/page-content?locale=en'),
+      createRequestContext(undefined, { locale: 'en' })
+    );
+
+    const updatedStore = parseKangurPageContentStore({
+      ...DEFAULT_STORE,
+      locale: 'en',
+      entries: DEFAULT_STORE.entries.map((entry) =>
+        entry.id === 'game-home-actions'
+          ? {
+              ...entry,
+              title: 'Quick actions',
+            }
+          : entry
+      ),
+    });
+
+    upsertKangurPageContentStoreMock.mockResolvedValueOnce(updatedStore);
+    getKangurPageContentStoreMock.mockResolvedValueOnce(updatedStore);
+
+    await postKangurPageContentHandler(
+      new NextRequest('http://localhost/api/kangur/ai-tutor/page-content', {
+        method: 'POST',
+      }),
+      createRequestContext(updatedStore)
+    );
+
+    const refreshed = await getKangurPageContentHandler(
+      new NextRequest('http://localhost/api/kangur/ai-tutor/page-content?locale=en'),
+      createRequestContext(undefined, { locale: 'en' })
+    );
+
+    expect(getKangurPageContentStoreMock).toHaveBeenCalledTimes(2);
+    await expect(refreshed.json()).resolves.toEqual(updatedStore);
   });
 
   it('rejects non-admin actors from updating page content', async () => {

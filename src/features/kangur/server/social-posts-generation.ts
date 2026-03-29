@@ -278,7 +278,7 @@ const logDraftGenerationSuccess = ({
     visionModelId: context.visionModelId || null,
     docReferenceCount: context.docReferences.length,
     resolvedDocCount: docs.length,
-    usedDocReferenceCount: draft.docReferences.length,
+    usedDocReferenceCount: draft.docReferences?.length ?? 0,
     imageAddonCount: context.imageAddons.length,
     visualHighlightCount: visualAnalysis.visualHighlights.length,
     notesLength: context.notesLength,

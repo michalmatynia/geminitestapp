@@ -635,6 +635,12 @@ export const claimCurrentKangurDailyQuestReward = (
       xpAwarded: 0,
     };
   }
+  if (!stored) {
+    return {
+      quest: getCurrentKangurDailyQuest(progress, { ...options, persist: false }),
+      xpAwarded: 0,
+    };
+  }
 
   const quest = toDailyQuestState(stored, progress, fallbackCopy, options.translate);
   const rewardXp = Math.max(0, stored.assignment.rewardXp ?? 0);

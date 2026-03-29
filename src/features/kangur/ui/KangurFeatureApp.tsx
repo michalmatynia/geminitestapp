@@ -1,7 +1,9 @@
 'use client';
 
 import dynamic from 'next/dynamic';
+import { useLocale } from 'next-intl';
 import { Suspense, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 
 import {
   LazyAnimatePresence,
@@ -54,6 +56,7 @@ import {
 } from '@/features/kangur/ui/context/KangurTopNavigationContext';
 import { KangurTutorAnchorProvider } from '@/features/kangur/ui/context/KangurTutorAnchorContext';
 import { createKangurPageTransitionMotionProps } from '@/features/kangur/ui/motion/page-transition';
+import { prefetchKangurPageContentStore } from '@/features/kangur/ui/hooks/useKangurPageContent';
 import { useKangurRouteNavigator } from '@/features/kangur/ui/hooks/useKangurRouteNavigator';
 import type { KangurRouteTransitionSkeletonVariant } from '@/features/kangur/ui/routing/route-transition-skeletons';
 import {
@@ -64,12 +67,14 @@ import { resolveManagedKangurEmbeddedFromHref } from '@/features/kangur/ui/routi
 import { readKangurTopBarHeightCssValue } from '@/features/kangur/ui/utils/readKangurTopBarHeightCssValue';
 import { cn } from '@/features/kangur/shared/utils';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
+import { normalizeSiteLocale } from '@/shared/lib/i18n/site-locale';
 
 import type { JSX } from 'react';
 
 const BOOT_SKELETON_MIN_VISIBLE_MS = 50;
 const NAVIGATION_SKELETON_DELAY_MS = 0;
 const LANGUAGE_SWITCHER_TRANSITION_SOURCE_ID = 'kangur-language-switcher';
+const HOT_PAGE_CONTENT_PREFETCH_TIMEOUT_MS = 250;
 const HOT_ROUTE_PRELOAD_TIMEOUT_MS = 1_500;
 const HOT_ROUTE_PRELOAD_TIMEOUTS: Readonly<Partial<Record<KangurPreloadPageKey, number>>> =
   Object.freeze({
@@ -144,6 +149,8 @@ const AuthenticatedApp = (): JSX.Element | null => {
   } = useKangurRouteTransitionState();
   const routeNavigator = useKangurRouteNavigator();
   const { pageKey, embedded, requestedPath, requestedHref, basePath } = useKangurRouting();
+  const queryClient = useQueryClient();
+  const routeLocale = normalizeSiteLocale(useLocale());
   const authErrorType = authError?.type;
   const resolvedPageKey = resolveKangurPageKey(pageKey, kangurPages, KANGUR_MAIN_PAGE);
   const homeHref = getKangurHomeHref(basePath);
@@ -202,6 +209,7 @@ const AuthenticatedApp = (): JSX.Element | null => {
   const [latchedNavigationTopBarHeightCssValue, setLatchedNavigationTopBarHeightCssValue] =
     useState<string | null>(null);
   const preloadedHotRoutesRef = useRef<Set<string>>(new Set());
+  const prefetchedPageContentLocalesRef = useRef<Set<string>>(new Set());
   const bootSkeletonShownAtRef = useRef<number | null>(
     shouldShowBootLoader ? Date.now() : null
   );
@@ -425,6 +433,43 @@ const AuthenticatedApp = (): JSX.Element | null => {
     isNavigationTransitionActive,
     isThemeBootLoading,
     resolvedPageKey,
+  ]);
+
+  useEffect(() => {
+    if (
+      typeof window === 'undefined' ||
+      isBootLoading ||
+      isThemeBootLoading ||
+      isNavigationTransitionActive ||
+      prefetchedPageContentLocalesRef.current.has(routeLocale)
+    ) {
+      return;
+    }
+
+    const prefetch = (): void => {
+      prefetchedPageContentLocalesRef.current.add(routeLocale);
+      void prefetchKangurPageContentStore(queryClient, routeLocale);
+    };
+
+    if (typeof window.requestIdleCallback === 'function') {
+      const idleId = window.requestIdleCallback(prefetch, {
+        timeout: HOT_PAGE_CONTENT_PREFETCH_TIMEOUT_MS,
+      });
+      return () => {
+        window.cancelIdleCallback?.(idleId);
+      };
+    }
+
+    const timeoutId = window.setTimeout(prefetch, 0);
+    return () => {
+      window.clearTimeout(timeoutId);
+    };
+  }, [
+    isBootLoading,
+    isNavigationTransitionActive,
+    isThemeBootLoading,
+    queryClient,
+    routeLocale,
   ]);
 
   useEffect(() => {

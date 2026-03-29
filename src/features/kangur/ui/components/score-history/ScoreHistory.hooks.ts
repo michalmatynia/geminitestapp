@@ -11,6 +11,7 @@ import {
 import { loadScopedKangurScores } from '@/features/kangur/ui/services/learner-profile-scores';
 import { useKangurSubjectFocus } from '@/features/kangur/ui/context/KangurSubjectFocusContext';
 import { resolveKangurScoreSubject } from '@/shared/contracts/kangur';
+import type { KangurLessonSubject } from '@/features/kangur/shared/contracts/kangur';
 import { normalizeSiteLocale } from '@/shared/lib/i18n/site-locale';
 import {
   buildKangurScoreInsights,
@@ -72,7 +73,7 @@ const setScoreHistoryRecordsIfActive = (
 const loadScoreHistoryRecords = async (input: {
   normalizedScope: NormalizedScoreHistoryScope;
   onError: () => void;
-  subject: string;
+  subject: KangurLessonSubject;
 }): Promise<KangurScoreRecord[]> =>
   withKangurClientError(
     {

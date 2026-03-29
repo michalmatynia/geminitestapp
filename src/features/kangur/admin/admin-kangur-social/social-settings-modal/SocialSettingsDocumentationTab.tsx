@@ -16,6 +16,7 @@ export function SocialSettingsDocumentationTab({
   canGenerateSocialDraft,
   contextLoading,
   currentGenerationJob,
+  currentPipelineJob,
   docReferenceInput,
   docsUsed,
   generationNotes,
@@ -32,6 +33,14 @@ export function SocialSettingsDocumentationTab({
   canGenerateSocialDraft: boolean;
   contextLoading: boolean;
   currentGenerationJob: {
+    id: string;
+    status: string;
+    progress: {
+      message: string | null;
+    } | null;
+    failedReason: string | null;
+  } | null;
+  currentPipelineJob: {
     id: string;
     status: string;
     progress: {
@@ -58,7 +67,9 @@ export function SocialSettingsDocumentationTab({
   ]
     .filter((value): value is string => Boolean(value))
     .join(' · ');
+  const isPipelineJobInFlight = isSocialRuntimeJobInFlight(currentPipelineJob?.status);
   const isGenerationJobInFlight = isSocialRuntimeJobInFlight(currentGenerationJob?.status);
+  const hasBlockingDocumentationRuntimeJob = isGenerationJobInFlight || isPipelineJobInFlight;
   const generateButtonLabel = isGenerationJobInFlight
     ? 'Generate draft in progress...'
     : 'Generate PL/EN draft';
@@ -78,6 +89,7 @@ export function SocialSettingsDocumentationTab({
             value={docReferenceInput}
             onChange={(event) => setDocReferenceInput(event.target.value)}
             aria-label='Documentation references'
+            disabled={hasBlockingDocumentationRuntimeJob}
           />
           <Textarea
             placeholder='Notes for the Brain generator'
@@ -85,6 +97,7 @@ export function SocialSettingsDocumentationTab({
             value={generationNotes}
             onChange={(event) => setGenerationNotes(event.target.value)}
             aria-label='Notes for the Brain generator'
+            disabled={hasBlockingDocumentationRuntimeJob}
           />
           <div className='flex flex-wrap items-center gap-2'>
             <Button
@@ -92,7 +105,12 @@ export function SocialSettingsDocumentationTab({
               variant='outline'
               size='sm'
               onClick={() => handleLoadContext()}
-              disabled={!activePost || contextLoading}
+              disabled={!activePost || contextLoading || hasBlockingDocumentationRuntimeJob}
+              title={
+                hasBlockingDocumentationRuntimeJob
+                  ? 'Wait for the current Social runtime job to finish.'
+                  : undefined
+              }
             >
               {contextLoading ? 'Loading context...' : 'Load context'}
             </Button>
@@ -101,9 +119,9 @@ export function SocialSettingsDocumentationTab({
               variant='outline'
               size='sm'
               onClick={() => handleGenerate()}
-              disabled={!activePost || !canGenerateSocialDraft || isGenerationJobInFlight}
+              disabled={!activePost || !canGenerateSocialDraft || hasBlockingDocumentationRuntimeJob}
               title={
-                isGenerationJobInFlight
+                hasBlockingDocumentationRuntimeJob
                   ? 'Wait for the current Social runtime job to finish.'
                   : undefined
               }

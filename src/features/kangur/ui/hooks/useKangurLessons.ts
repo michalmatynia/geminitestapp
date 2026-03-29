@@ -30,10 +30,10 @@ type LessonsQueryOptions = KangurLessonCollectionFilterDto & {
 
 const resolveLessonsQueryFilters = (
   options?: LessonsQueryOptions
-): KangurLessonCollectionFilterDto & { enabledOnly: boolean | null } => ({
-  subject: options?.subject ?? null,
-  ageGroup: options?.ageGroup ?? null,
-  enabledOnly: options?.enabledOnly ?? null,
+): KangurLessonCollectionFilterDto => ({
+  subject: options?.subject ?? undefined,
+  ageGroup: options?.ageGroup ?? undefined,
+  enabledOnly: options?.enabledOnly ?? undefined,
 });
 
 const isLessonsQueryEnabled = (options?: LessonsQueryOptions): boolean =>

@@ -299,6 +299,14 @@ vi.mock('@/features/kangur/ui/hooks/useKangurLessonTemplates', () => ({
     isFetching: false,
     error: null,
   }),
+  useKangurLessonTemplate: () => ({
+    data: null,
+    isLoading: false,
+    isPending: false,
+    isFetching: false,
+    isRefetching: false,
+    error: null,
+  }),
 }));
 
 vi.mock('@/features/kangur/ui/hooks/useKangurLessonSections', () => ({

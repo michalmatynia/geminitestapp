@@ -92,7 +92,9 @@ const renderKangurStandardPageLayout = (
   );
 };
 
-export function KangurStandardPageLayout(props: KangurStandardPageLayoutProps): React.JSX.Element {
+const resolveKangurStandardPageLayoutResolvedProps = (
+  props: KangurStandardPageLayoutProps
+): KangurStandardPageLayoutResolvedProps => {
   const {
     embeddedOverride,
     tone = 'play',
@@ -110,35 +112,43 @@ export function KangurStandardPageLayout(props: KangurStandardPageLayoutProps): 
     children,
   } = props;
   const { className: shellPropsClassName, id: shellPropsId, ...restShellProps } = shellProps ?? {};
-  const resolvedContainerId =
-    typeof containerProps?.id === 'string' && containerProps.id.trim().length > 0
-      ? containerProps.id
-      : undefined;
-  const resolvedSkipLinkTargetId = skipLinkTargetId ?? resolvedContainerId;
-  const resolvedShellId = id ?? shellPropsId;
-  const resolvedShellClassName = cn(shellPropsClassName, shellClassName);
-  const resolvedContainerProps: Omit<KangurPageContainerProps, 'children'> = {
-    ...containerProps,
-    'data-kangur-route-main':
-      containerProps && 'data-kangur-route-main' in containerProps
-        ? containerProps['data-kangur-route-main']
-        : true,
-  };
+  const resolvedContainerId = resolveKangurStandardPageLayoutContainerId(containerProps);
 
-  return renderKangurStandardPageLayout({
+  return {
     embeddedOverride,
     tone,
-    resolvedShellId,
-    resolvedSkipLinkTargetId,
+    resolvedShellId: id ?? shellPropsId,
+    resolvedSkipLinkTargetId: skipLinkTargetId ?? resolvedContainerId,
     skipLinkLabel,
-    resolvedShellClassName,
+    resolvedShellClassName: cn(shellPropsClassName, shellClassName),
     docsRootId,
     docsTooltipsEnabled,
     restShellProps,
     beforeNavigation,
     navigation,
     afterNavigation,
-    resolvedContainerProps,
+    resolvedContainerProps: resolveKangurStandardPageLayoutContainerProps(containerProps),
     children,
-  });
+  };
+};
+
+const resolveKangurStandardPageLayoutContainerId = (
+  containerProps: KangurStandardPageLayoutProps['containerProps']
+): string | undefined => {
+  const containerId = containerProps?.id;
+  return typeof containerId === 'string' && containerId.trim().length > 0 ? containerId : undefined;
+};
+
+const resolveKangurStandardPageLayoutContainerProps = (
+  containerProps: KangurStandardPageLayoutProps['containerProps']
+): Omit<KangurPageContainerProps, 'children'> => ({
+  ...containerProps,
+  'data-kangur-route-main':
+    containerProps && 'data-kangur-route-main' in containerProps
+      ? containerProps['data-kangur-route-main']
+      : true,
+});
+
+export function KangurStandardPageLayout(props: KangurStandardPageLayoutProps): React.JSX.Element {
+  return renderKangurStandardPageLayout(resolveKangurStandardPageLayoutResolvedProps(props));
 }

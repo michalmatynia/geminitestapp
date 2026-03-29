@@ -1,6 +1,12 @@
 'use client';
 
-import { Draggable, Droppable, type DropResult } from '@hello-pangea/dnd';
+import {
+  Draggable,
+  Droppable,
+  type DraggableProvidedDragHandleProps,
+  type DraggableProvidedDraggableProps,
+  type DropResult,
+} from '@hello-pangea/dnd';
 import { createPortal } from 'react-dom';
 import { useCallback, useEffect, useId, useMemo, useState } from 'react';
 import {
@@ -78,13 +84,13 @@ const resolveTouchHint = ({
   selectedItem,
   touchSelectedTemplate,
 }: {
-  helperText: string;
+  helperText?: string;
   selectedItem: HierarchyItem | null;
-  touchSelectedTemplate: string;
+  touchSelectedTemplate?: string;
 }): string => (
   selectedItem
-    ? touchSelectedTemplate.replaceAll('{title}', selectedItem.title)
-    : helperText
+    ? (touchSelectedTemplate ?? '').replaceAll('{title}', selectedItem.title)
+    : helperText ?? ''
 );
 
 const resolveGuidanceCaption = ({
@@ -164,10 +170,8 @@ type HierarchyItemButtonProps = {
   isDragging: boolean;
   isSelected: boolean;
   isComplete: boolean;
-  dragHandleProps: Record<string, unknown> | undefined;
-  draggableProps: {
-    style?: React.CSSProperties;
-  } & Record<string, unknown>;
+  dragHandleProps: DraggableProvidedDragHandleProps | null | undefined;
+  draggableProps: DraggableProvidedDraggableProps;
   innerRef: (element: HTMLElement | null) => void;
   onItemClick: (itemId: string, targetIndex: number) => void;
 };

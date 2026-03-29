@@ -21,6 +21,46 @@ export type DuelLeaderboardOptions = {
   canPlayTools: boolean;
 };
 
+const abortLeaderboardRequest = (ref: React.MutableRefObject<AbortController | null>): void => {
+  ref.current?.abort();
+  ref.current = null;
+};
+
+const beginAbortableLeaderboardLoad = (input: {
+  errorReset: () => void;
+  loadingRef: React.MutableRefObject<AbortController | null>;
+  setIsLoading: React.Dispatch<React.SetStateAction<boolean>>;
+  showLoading: boolean;
+}): AbortController => {
+  if (input.loadingRef.current && input.showLoading) {
+    input.loadingRef.current.abort();
+  }
+
+  const controller = new AbortController();
+  input.loadingRef.current = controller;
+  if (input.showLoading) {
+    input.setIsLoading(true);
+  }
+  input.errorReset();
+  return controller;
+};
+
+const finishAbortableLeaderboardLoad = (input: {
+  controller: AbortController;
+  loadingRef: React.MutableRefObject<AbortController | null>;
+  setIsLoading: React.Dispatch<React.SetStateAction<boolean>>;
+  showLoading: boolean;
+}): void => {
+  if (input.loadingRef.current !== input.controller) {
+    return;
+  }
+
+  input.loadingRef.current = null;
+  if (input.showLoading) {
+    input.setIsLoading(false);
+  }
+};
+
 export function useDuelLeaderboard(options: DuelLeaderboardOptions) {
   const { isOnline, canPlayTools } = options;
 
@@ -40,33 +80,68 @@ export function useDuelLeaderboard(options: DuelLeaderboardOptions) {
   const opponentsAbortRef = useRef<AbortController | null>(null);
   const leaderboardAbortRef = useRef<AbortController | null>(null);
 
+  const handleOpponentsLoadBlocker = useCallback((): boolean => {
+    if (!canPlayTools) {
+      abortLeaderboardRequest(opponentsAbortRef);
+      setRecentOpponents([]);
+      setOpponentsError(null);
+      setIsOpponentsLoading(false);
+      return true;
+    }
+
+    if (!isOnline) {
+      abortLeaderboardRequest(opponentsAbortRef);
+      setOpponentsError('Brak połączenia z internetem.');
+      setIsOpponentsLoading(false);
+      return true;
+    }
+
+    return false;
+  }, [canPlayTools, isOnline]);
+
+  const handleLeaderboardLoadBlocker = useCallback((): boolean => {
+    if (!isOnline) {
+      abortLeaderboardRequest(leaderboardAbortRef);
+      setLeaderboardError('Brak połączenia z internetem.');
+      setIsLeaderboardLoading(false);
+      return true;
+    }
+
+    return false;
+  }, [isOnline]);
+
+  const handleOpponentsLoadError = useCallback(
+    (error: unknown, controller: AbortController): void => {
+      if (isAbortLikeError(error, controller.signal)) {
+        return;
+      }
+      setOpponentsError('Nie udało się pobrać listy rywali. Spróbuj ponownie.');
+    },
+    []
+  );
+
+  const handleLeaderboardLoadError = useCallback(
+    (error: unknown, controller: AbortController): void => {
+      if (isAbortLikeError(error, controller.signal)) {
+        return;
+      }
+      setLeaderboardError('Nie udało się pobrać rankingu.');
+    },
+    []
+  );
+
   const loadOpponents = useCallback(
     async ({ showLoading = false }: { showLoading?: boolean } = {}) => {
-      if (!canPlayTools) {
-        opponentsAbortRef.current?.abort();
-        opponentsAbortRef.current = null;
-        setRecentOpponents([]);
-        setOpponentsError(null);
-        setIsOpponentsLoading(false);
+      if (handleOpponentsLoadBlocker()) {
         return;
       }
 
-      if (!isOnline) {
-        opponentsAbortRef.current?.abort();
-        opponentsAbortRef.current = null;
-        setOpponentsError('Brak połączenia z internetem.');
-        setIsOpponentsLoading(false);
-        return;
-      }
-
-      if (opponentsAbortRef.current && showLoading) {
-        opponentsAbortRef.current.abort();
-      }
-
-      const controller = new AbortController();
-      opponentsAbortRef.current = controller;
-      if (showLoading) setIsOpponentsLoading(true);
-      setOpponentsError(null);
+      const controller = beginAbortableLeaderboardLoad({
+        errorReset: () => setOpponentsError(null),
+        loadingRef: opponentsAbortRef,
+        setIsLoading: setIsOpponentsLoading,
+        showLoading,
+      });
 
       await withKangurClientError(
         {
@@ -85,39 +160,32 @@ export function useDuelLeaderboard(options: DuelLeaderboardOptions) {
         {
           fallback: undefined,
           shouldReport: (err) => !isAbortLikeError(err, controller.signal),
-          onError: (err) => {
-            if (isAbortLikeError(err, controller.signal)) return;
-            setOpponentsError('Nie udało się pobrać listy rywali. Spróbuj ponownie.');
-          },
+          onError: (err) => handleOpponentsLoadError(err, controller),
         }
       );
 
-      if (opponentsAbortRef.current === controller) {
-        opponentsAbortRef.current = null;
-        if (showLoading) setIsOpponentsLoading(false);
-      }
+      finishAbortableLeaderboardLoad({
+        controller,
+        loadingRef: opponentsAbortRef,
+        setIsLoading: setIsOpponentsLoading,
+        showLoading,
+      });
     },
-    [canPlayTools, isOnline]
+    [handleOpponentsLoadBlocker, handleOpponentsLoadError]
   );
 
   const loadLeaderboard = useCallback(
     async ({ showLoading = false }: { showLoading?: boolean } = {}) => {
-      if (!isOnline) {
-        leaderboardAbortRef.current?.abort();
-        leaderboardAbortRef.current = null;
-        setLeaderboardError('Brak połączenia z internetem.');
-        setIsLeaderboardLoading(false);
+      if (handleLeaderboardLoadBlocker()) {
         return;
       }
 
-      if (leaderboardAbortRef.current && showLoading) {
-        leaderboardAbortRef.current.abort();
-      }
-
-      const controller = new AbortController();
-      leaderboardAbortRef.current = controller;
-      if (showLoading) setIsLeaderboardLoading(true);
-      setLeaderboardError(null);
+      const controller = beginAbortableLeaderboardLoad({
+        errorReset: () => setLeaderboardError(null),
+        loadingRef: leaderboardAbortRef,
+        setIsLoading: setIsLeaderboardLoading,
+        showLoading,
+      });
 
       await withKangurClientError(
         {
@@ -136,19 +204,18 @@ export function useDuelLeaderboard(options: DuelLeaderboardOptions) {
         {
           fallback: undefined,
           shouldReport: (err) => !isAbortLikeError(err, controller.signal),
-          onError: (err) => {
-            if (isAbortLikeError(err, controller.signal)) return;
-            setLeaderboardError('Nie udało się pobrać rankingu.');
-          },
+          onError: (err) => handleLeaderboardLoadError(err, controller),
         }
       );
 
-      if (leaderboardAbortRef.current === controller) {
-        leaderboardAbortRef.current = null;
-        if (showLoading) setIsLeaderboardLoading(false);
-      }
+      finishAbortableLeaderboardLoad({
+        controller,
+        loadingRef: leaderboardAbortRef,
+        setIsLoading: setIsLeaderboardLoading,
+        showLoading,
+      });
     },
-    [isOnline]
+    [handleLeaderboardLoadBlocker, handleLeaderboardLoadError]
   );
 
   return {

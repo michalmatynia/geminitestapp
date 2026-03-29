@@ -123,7 +123,9 @@ const resolveKangurLoginSuccessNavigationState = ({
   auth: ReturnType<typeof useOptionalKangurAuth>;
   currentPath: string | null;
   navigation: ReturnType<typeof resolveKangurLoginCallbackNavigation>;
-  refreshedUser: Awaited<ReturnType<NonNullable<ReturnType<typeof useOptionalKangurAuth>['checkAppState']>>> | undefined;
+  refreshedUser: Awaited<
+    ReturnType<NonNullable<NonNullable<ReturnType<typeof useOptionalKangurAuth>>['checkAppState']>>
+  > | undefined;
 }) => ({
   isSameRoute:
     Boolean(currentPath) &&

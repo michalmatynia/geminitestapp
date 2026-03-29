@@ -8,6 +8,7 @@ import {
   KANGUR_AGE_GROUPS,
   getKangurDefaultSubjectForAgeGroup,
 } from '@/features/kangur/lessons/lesson-catalog-metadata';
+import type { KangurLessonAgeGroup } from '@/features/kangur/shared/contracts/kangur';
 import { KangurDialogMeta } from '@/features/kangur/ui/components/KangurDialogMeta';
 import { KangurPanelCloseButton } from '@/features/kangur/ui/components/KangurPanelCloseButton';
 import { KangurTopNavGroup } from '@/features/kangur/ui/design/primitives';
@@ -46,7 +47,7 @@ type KangurChoiceDialogConfig = {
 type TranslationFn = (key: string, values?: Record<string, string>) => string;
 
 export const buildKangurPrimaryNavigationSubjectDialog = (input: {
-  ageGroup: string;
+  ageGroup: KangurLessonAgeGroup;
   defaultSubjectLabel: string;
   isSixYearOld: boolean;
   navTranslations: TranslationFn;

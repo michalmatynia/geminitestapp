@@ -34,7 +34,7 @@ import type {
   KangurLessonSubject,
 } from '@/features/kangur/shared/contracts/kangur';
 import { internalError } from '@/features/kangur/shared/errors/app-error';
-import { useKangurLessonTemplates } from '@/features/kangur/ui/hooks/useKangurLessonTemplates';
+import { useKangurLessonTemplate } from '@/features/kangur/ui/hooks/useKangurLessonTemplates';
 import { useKangurLessonsCatalog } from '@/features/kangur/ui/hooks/useKangurLessonsCatalog';
 import type { KangurLessonTemplate } from '@/shared/contracts/kangur-lesson-templates';
 
@@ -56,6 +56,7 @@ const EMPTY_LESSON_ASSIGNMENTS_BY_COMPONENT = new Map<
   KangurLessonComponentId,
   KangurAssignmentSnapshot
 >();
+const EMPTY_LESSON_TEMPLATE_MAP = new Map<KangurLessonComponentId, KangurLessonTemplate>();
 
 type KangurLessonAssignmentsMode = 'active' | 'completed';
 type KangurLessonTargetAssignment = KangurAssignmentSnapshot & {
@@ -343,7 +344,7 @@ const resolveKangurFocusedLessonAction = ({
     return { kind: 'none' };
   }
 
-  const focusScope = resolveFocusedLessonScope(focusToken, lessonTemplateMap);
+  const focusScope = resolveFocusedLessonScope(focusToken ?? '', lessonTemplateMap);
   const focusScopeAction = resolveKangurFocusedLessonScopeAction({
     ageGroup,
     focusScope,
@@ -353,7 +354,7 @@ const resolveKangurFocusedLessonAction = ({
     return focusScopeAction;
   }
 
-  const focusedLessonId = resolveFocusedLessonId(focusToken, lessons);
+  const focusedLessonId = resolveFocusedLessonId(focusToken ?? '', lessons);
   if (!focusedLessonId) {
     return { kind: 'none' };
   }
@@ -527,7 +528,7 @@ const resolveKangurActiveLessonRuntime = ({
     ActiveLessonComponent,
     activeLesson,
     activeLessonAssignment,
-    activeLessonDocument,
+    activeLessonDocument: activeLessonDocument ?? null,
     completedActiveLessonAssignment,
     hasActiveLessonDocumentContent,
     lessonDocuments,
@@ -594,11 +595,6 @@ export function KangurLessonsRuntimeProvider({
       includeArchived: false,
     },
   });
-  const { data: lessonTemplates = [] } = useKangurLessonTemplates();
-  const lessonTemplateMap = useMemo(
-    () => new Map(lessonTemplates.map((t) => [t.componentId, t] as const)),
-    [lessonTemplates],
-  );
   const lessonsCatalogQuery = useKangurLessonsCatalog({ subject, ageGroup, enabledOnly: true });
   const lessons = useMemo(
     (): KangurLesson[] => lessonsCatalogQuery.data?.lessons ?? [],
@@ -642,6 +638,21 @@ export function KangurLessonsRuntimeProvider({
   );
 
   const [activeLessonId, setActiveLessonId] = useState<string | null>(null);
+  const activeLessonComponentId = useMemo(
+    () => orderedLessons.find((lesson) => lesson.id === activeLessonId)?.componentId ?? null,
+    [activeLessonId, orderedLessons]
+  );
+  const activeLessonTemplateQuery = useKangurLessonTemplate(activeLessonComponentId, {
+    enabled: activeLessonComponentId !== null,
+  });
+  const lessonTemplateMap = useMemo(() => {
+    const activeLessonTemplate = activeLessonTemplateQuery.data ?? null;
+    if (!activeLessonTemplate) {
+      return EMPTY_LESSON_TEMPLATE_MAP;
+    }
+
+    return new Map([[activeLessonTemplate.componentId, activeLessonTemplate] as const]);
+  }, [activeLessonTemplateQuery.data]);
   const activeLessonDocumentQuery = useKangurLessonDocument(activeLessonId, {
     enabled: activeLessonId !== null,
   });

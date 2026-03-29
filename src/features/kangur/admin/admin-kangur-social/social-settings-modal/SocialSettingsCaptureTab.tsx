@@ -227,6 +227,7 @@ export function SocialSettingsCaptureTab({
               value={addonForm.title}
               onChange={(e) => setAddonForm((prev) => ({ ...prev, title: e.target.value }))}
               aria-label='Add-on title'
+              disabled={hasBlockingRuntimeJob}
             />
             <Input
               type='url'
@@ -234,12 +235,14 @@ export function SocialSettingsCaptureTab({
               value={addonForm.sourceUrl}
               onChange={(e) => setAddonForm((prev) => ({ ...prev, sourceUrl: e.target.value }))}
               aria-label='Source URL'
+              disabled={hasBlockingRuntimeJob}
             />
             <Input
               placeholder='Optional selector'
               value={addonForm.selector}
               onChange={(e) => setAddonForm((prev) => ({ ...prev, selector: e.target.value }))}
               aria-label='Optional selector'
+              disabled={hasBlockingRuntimeJob}
             />
             <Input
               type='number'
@@ -249,12 +252,14 @@ export function SocialSettingsCaptureTab({
               value={addonForm.waitForMs}
               onChange={(e) => setAddonForm((prev) => ({ ...prev, waitForMs: e.target.value }))}
               aria-label='Wait before capture (ms)'
+              disabled={hasBlockingRuntimeJob}
             />
             <Input
               placeholder='Optional description'
               value={addonForm.description}
               onChange={(e) => setAddonForm((prev) => ({ ...prev, description: e.target.value }))}
               aria-label='Optional description'
+              disabled={hasBlockingRuntimeJob}
             />
           </div>
           <Button
@@ -293,7 +298,12 @@ export function SocialSettingsCaptureTab({
               variant='ghost'
               size='sm'
               onClick={handleResetProgrammableCaptureDefaults}
-              disabled={!hasSavedProgrammableCaptureDefaults}
+              disabled={!hasSavedProgrammableCaptureDefaults || hasBlockingRuntimeJob}
+              title={
+                hasBlockingRuntimeJob
+                  ? 'Wait for the current Social runtime job to finish.'
+                  : 'Reset saved defaults'
+              }
             >
               Reset saved defaults
             </Button>
@@ -389,6 +399,7 @@ export function SocialSettingsCaptureTab({
                 value={batchCaptureBaseUrl}
                 onChange={(e) => setBatchCaptureBaseUrl(e.target.value)}
                 size='sm'
+                disabled={hasBlockingRuntimeJob}
               />
             </FormField>
             <FormField label='Capture limit' description='Max concurrent captures.'>
@@ -400,6 +411,7 @@ export function SocialSettingsCaptureTab({
                   ...['5', '10', '20', '50'].map((v) => ({ value: v, label: v })),
                 ]}
                 size='sm'
+                disabled={hasBlockingRuntimeJob}
               />
             </FormField>
           </div>
@@ -407,8 +419,26 @@ export function SocialSettingsCaptureTab({
             <div className='flex items-center justify-between'>
               <div className='text-xs font-semibold uppercase tracking-wide text-muted-foreground'>Presets ({batchCapturePresetIds.length})</div>
               <div className='flex items-center gap-2'>
-                <Button type='button' variant='ghost' size='xs' onClick={selectAllCapturePresets}>Select all</Button>
-                <Button type='button' variant='ghost' size='xs' onClick={clearCapturePresets}>Clear</Button>
+                <Button
+                  type='button'
+                  variant='ghost'
+                  size='xs'
+                  onClick={selectAllCapturePresets}
+                  disabled={hasBlockingRuntimeJob}
+                  title={captureActionTitle}
+                >
+                  Select all
+                </Button>
+                <Button
+                  type='button'
+                  variant='ghost'
+                  size='xs'
+                  onClick={clearCapturePresets}
+                  disabled={hasBlockingRuntimeJob}
+                  title={captureActionTitle}
+                >
+                  Clear
+                </Button>
               </div>
             </div>
             <div className='flex flex-wrap gap-2 rounded-xl border border-border/60 bg-background/40 p-3'>
@@ -417,6 +447,8 @@ export function SocialSettingsCaptureTab({
                   key={preset.id}
                   type='button'
                   onClick={() => handleToggleCapturePreset(preset.id)}
+                  disabled={hasBlockingRuntimeJob}
+                  title={captureActionTitle}
                   className={cn(
                     'inline-flex items-center rounded-lg border px-2 py-1 text-[11px] font-medium transition-colors',
                     batchCapturePresetIds.includes(preset.id) ? 'border-primary bg-primary/10 text-primary' : 'border-border bg-background text-muted-foreground hover:bg-muted'

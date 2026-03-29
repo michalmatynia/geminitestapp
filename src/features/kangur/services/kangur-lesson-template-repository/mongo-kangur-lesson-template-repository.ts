@@ -65,7 +65,10 @@ const ensureIndexes = async (db: Db): Promise<void> => {
           hasExpectedIndexShape(index, { componentId: 1 }))
     );
     if (legacyComponentUniqueIndex) {
-      await collection.dropIndex(legacyComponentUniqueIndex.name);
+      const legacyIndexName = legacyComponentUniqueIndex.name;
+      if (typeof legacyIndexName === 'string' && legacyIndexName.length > 0) {
+        await collection.dropIndex(legacyIndexName);
+      }
     }
     await Promise.all([
       collection.createIndex(
@@ -90,20 +93,25 @@ const buildFilter = (
   input?: KangurLessonTemplateListInput,
 ): Filter<MongoKangurLessonTemplateDocument> => {
   const normalizedLocale = normalizeTemplateLocale(input?.locale);
+  const componentId = input?.componentId;
   const subject = input?.subject;
+  const ageGroup = input?.ageGroup;
   const filter =
     normalizedLocale === 'pl'
       ? {
           $or: [{ locale: normalizedLocale }, { locale: { $exists: false } }],
         }
       : { locale: normalizedLocale };
-  if (subject) {
-    return {
-      ...filter,
-      subject,
-    };
+  if (!componentId && !subject && !ageGroup) {
+    return filter;
   }
-  return filter;
+
+  return {
+    ...filter,
+    ...(componentId ? { componentId } : {}),
+    ...(subject ? { subject } : {}),
+    ...(ageGroup ? { ageGroup } : {}),
+  };
 };
 
 const toTemplate = (doc: MongoKangurLessonTemplateDocument): KangurLessonTemplate => {
@@ -206,10 +214,18 @@ export const mongoKangurLessonTemplateRepository: KangurLessonTemplateRepository
       const existingCount = await collection.countDocuments(filter);
       if (existingCount === 0) {
         const defaults = createDefaultKangurLessonTemplates(normalizeTemplateLocale(input?.locale));
-        if (input?.subject) {
-          return defaults.filter((t) => t.subject === input.subject);
-        }
-        return defaults;
+        return defaults.filter((template) => {
+          if (input?.componentId && template.componentId !== input.componentId) {
+            return false;
+          }
+          if (input?.subject && template.subject !== input.subject) {
+            return false;
+          }
+          if (input?.ageGroup && template.ageGroup !== input.ageGroup) {
+            return false;
+          }
+          return true;
+        });
       }
     }
 

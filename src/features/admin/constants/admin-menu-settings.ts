@@ -14,9 +14,6 @@ export const parseAdminMenuJson = <T>(value: string | undefined, fallback: T): T
   }
 };
 
-const isEmptyAdminMenuValue = (value: string | undefined | null): boolean =>
-  value === undefined || value === null || value === '';
-
 const parseBooleanLiteral = (value: string): boolean | null => {
   const normalized = value.trim().toLowerCase();
   if (normalized === 'true' || normalized === '1') return true;
@@ -38,8 +35,9 @@ export const parseAdminMenuBoolean = (
   value: string | undefined | null,
   fallback = false
 ): boolean => {
-  if (isEmptyAdminMenuValue(value)) return fallback;
-  const literal = parseBooleanLiteral(value);
+  if (typeof value !== 'string' || value === '') return fallback;
+  const normalizedValue = value;
+  const literal = parseBooleanLiteral(normalizedValue);
   if (literal !== null) return literal;
-  return parseAdminMenuBooleanJson(value) ?? fallback;
+  return parseAdminMenuBooleanJson(normalizedValue) ?? fallback;
 };

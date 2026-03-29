@@ -30,6 +30,23 @@ type KangurTransitionLinkProps = React.ComponentProps<typeof NextLink> & {
   transitionSourceId?: string | null;
 };
 
+type KangurTransitionLinkState = {
+  managedLocalHref: string | null;
+  renderedHref: React.ComponentProps<typeof NextLink>['href'];
+  resolvedPrefetch: React.ComponentProps<typeof NextLink>['prefetch'];
+  resolvedScroll: React.ComponentProps<typeof NextLink>['scroll'];
+  resolvedTabIndex: number | undefined;
+  resolvedAriaDisabled: React.AriaAttributes['aria-disabled'];
+  shouldManualPrefetchManagedHref: boolean;
+};
+
+const hasBlockedTransitionModifiers = (event: MouseEvent<HTMLAnchorElement>): boolean =>
+  event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey;
+
+const isManagedTransitionHref = (
+  href: React.ComponentProps<typeof NextLink>['href']
+): href is string => typeof href === 'string' && href.startsWith('/') && !href.startsWith('#');
+
 const shouldStartTransition = (
   event: MouseEvent<HTMLAnchorElement>,
   href: React.ComponentProps<typeof NextLink>['href'],
@@ -39,7 +56,7 @@ const shouldStartTransition = (
     return false;
   }
 
-  if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) {
+  if (hasBlockedTransitionModifiers(event)) {
     return false;
   }
 
@@ -47,11 +64,174 @@ const shouldStartTransition = (
     return false;
   }
 
-  if (typeof href !== 'string' || href.startsWith('#')) {
-    return false;
+  return isManagedTransitionHref(href);
+};
+
+const resolveManagedLocalHref = (
+  href: React.ComponentProps<typeof NextLink>['href'],
+  target: string | undefined
+): string | null => (isManagedTransitionHref(href) && target !== '_blank' ? href : null);
+
+const resolveRenderedTransitionHref = ({
+  frontendPublicOwner,
+  href,
+  locale,
+  pathname,
+}: {
+  frontendPublicOwner: ReturnType<typeof useOptionalFrontendPublicOwner>;
+  href: string;
+  locale: string;
+  pathname: string;
+}): React.ComponentProps<typeof NextLink>['href'] => {
+  const localizedHref = localizeManagedKangurHref({
+    href,
+    locale,
+    pathname,
+  });
+
+  return frontendPublicOwner?.publicOwner === 'kangur'
+    ? canonicalizeKangurPublicAliasHref(localizedHref)
+    : localizedHref;
+};
+
+const resolveTransitionLinkRenderedHref = ({
+  frontendPublicOwner,
+  href,
+  locale,
+  managedLocalHref,
+  pathname,
+}: {
+  frontendPublicOwner: ReturnType<typeof useOptionalFrontendPublicOwner>;
+  href: React.ComponentProps<typeof NextLink>['href'];
+  locale: string;
+  managedLocalHref: string | null;
+  pathname: string;
+}): React.ComponentProps<typeof NextLink>['href'] => {
+  if (managedLocalHref === null) {
+    return href;
   }
 
-  return href.startsWith('/');
+  return resolveRenderedTransitionHref({
+    frontendPublicOwner,
+    href: managedLocalHref,
+    locale,
+    pathname,
+  });
+};
+
+const resolveTransitionLinkPrefetch = ({
+  managedLocalHref,
+  prefetch,
+}: {
+  managedLocalHref: string | null;
+  prefetch: React.ComponentProps<typeof NextLink>['prefetch'];
+}): React.ComponentProps<typeof NextLink>['prefetch'] =>
+  managedLocalHref !== null ? (prefetch ?? false) : prefetch;
+
+const resolveTransitionLinkScroll = ({
+  managedLocalHref,
+  scroll,
+}: {
+  managedLocalHref: string | null;
+  scroll: React.ComponentProps<typeof NextLink>['scroll'];
+}): React.ComponentProps<typeof NextLink>['scroll'] =>
+  scroll ?? (managedLocalHref !== null ? false : undefined);
+
+const resolveTransitionLinkTabIndex = ({
+  disabled,
+  tabIndex,
+}: {
+  disabled: boolean;
+  tabIndex: number | undefined;
+}): number | undefined => (disabled ? -1 : tabIndex);
+
+const resolveTransitionLinkAriaDisabled = ({
+  ariaDisabledProp,
+  disabled,
+}: {
+  ariaDisabledProp: React.AriaAttributes['aria-disabled'];
+  disabled: boolean;
+}): React.AriaAttributes['aria-disabled'] => (disabled ? 'true' : ariaDisabledProp);
+
+const resolveKangurTransitionLinkState = ({
+  ariaDisabledProp,
+  disabled,
+  frontendPublicOwner,
+  href,
+  isCoarsePointer,
+  locale,
+  pathname,
+  prefetch,
+  scroll,
+  tabIndex,
+  target,
+}: {
+  ariaDisabledProp: React.AriaAttributes['aria-disabled'];
+  disabled: boolean;
+  frontendPublicOwner: ReturnType<typeof useOptionalFrontendPublicOwner>;
+  href: React.ComponentProps<typeof NextLink>['href'];
+  isCoarsePointer: boolean;
+  locale: string;
+  pathname: string;
+  prefetch: React.ComponentProps<typeof NextLink>['prefetch'];
+  scroll: React.ComponentProps<typeof NextLink>['scroll'];
+  tabIndex: number | undefined;
+  target: string | undefined;
+}): KangurTransitionLinkState => {
+  const managedLocalHref = resolveManagedLocalHref(href, target);
+  const isManagedLocalHref = managedLocalHref !== null;
+  const shouldManualPrefetchManagedHref =
+    isManagedLocalHref && prefetch !== false && !disabled && !isCoarsePointer;
+
+  return {
+    managedLocalHref,
+    renderedHref: resolveTransitionLinkRenderedHref({
+      frontendPublicOwner,
+      href,
+      locale,
+      managedLocalHref,
+      pathname,
+    }),
+    resolvedPrefetch: resolveTransitionLinkPrefetch({
+      managedLocalHref,
+      prefetch,
+    }),
+    resolvedScroll: resolveTransitionLinkScroll({
+      managedLocalHref,
+      scroll,
+    }),
+    resolvedTabIndex: resolveTransitionLinkTabIndex({
+      disabled,
+      tabIndex,
+    }),
+    resolvedAriaDisabled: resolveTransitionLinkAriaDisabled({
+      ariaDisabledProp,
+      disabled,
+    }),
+    shouldManualPrefetchManagedHref,
+  };
+};
+
+const resolveTransitionPushOptions = ({
+  resolvedScroll,
+  targetPageKey,
+  transitionAcknowledgeMs,
+  transitionSourceId,
+}: {
+  resolvedScroll: React.ComponentProps<typeof NextLink>['scroll'];
+  targetPageKey: string | null | undefined;
+  transitionAcknowledgeMs: number | undefined;
+  transitionSourceId: string | null | undefined;
+}): Parameters<ReturnType<typeof useKangurRouteNavigator>['push']>[1] => ({
+  ...(typeof transitionAcknowledgeMs === 'number' ? { acknowledgeMs: transitionAcknowledgeMs } : {}),
+  pageKey: targetPageKey ?? null,
+  scroll: resolvedScroll ?? false,
+  ...(transitionSourceId ? { sourceId: transitionSourceId } : {}),
+});
+
+const stopDisabledLinkInteraction = (event: MouseEvent<HTMLAnchorElement>): void => {
+  event.preventDefault();
+  event.stopPropagation();
 };
 
 export function KangurTransitionLink({
@@ -79,31 +259,29 @@ export function KangurTransitionLink({
   const locale = useLocale();
   const pathname = usePathname();
   const currentAccessiblePageKey = routing?.pageKey ?? 'Game';
-  const managedLocalHref =
-    typeof href === 'string' && href.startsWith('/') && target !== '_blank' ? href : null;
-  const isManagedLocalHref = managedLocalHref !== null;
-  const resolvedPrefetch = isManagedLocalHref ? (prefetch ?? false) : prefetch;
-  const shouldUseManagedScroll = isManagedLocalHref;
-  const resolvedScroll = scroll ?? (shouldUseManagedScroll ? false : undefined);
-  const resolvedTabIndex = disabled ? -1 : tabIndex;
-  const resolvedAriaDisabled = disabled ? 'true' : ariaDisabledProp;
   const hasIntentPrefetchedRef = useRef(false);
-  const shouldManualPrefetchManagedHref =
-    managedLocalHref !== null && prefetch !== false && !disabled && !isCoarsePointer;
-  const renderedHref =
-    managedLocalHref === null
-      ? href
-      : (() => {
-        const localizedHref = localizeManagedKangurHref({
-          href: managedLocalHref,
-          locale,
-          pathname,
-        });
+  const {
+    managedLocalHref,
+    renderedHref,
+    resolvedPrefetch,
+    resolvedScroll,
+    resolvedTabIndex,
+    resolvedAriaDisabled,
+    shouldManualPrefetchManagedHref,
+  } = resolveKangurTransitionLinkState({
+    ariaDisabledProp,
+    disabled,
+    frontendPublicOwner,
+    href,
+    isCoarsePointer,
+    locale,
+    pathname,
+    prefetch,
+    scroll,
+    tabIndex,
+    target,
+  });
 
-        return frontendPublicOwner?.publicOwner === 'kangur'
-          ? canonicalizeKangurPublicAliasHref(localizedHref)
-          : localizedHref;
-      })();
   const prefetchManagedHrefOnIntent = useCallback((): void => {
     if (!shouldManualPrefetchManagedHref || hasIntentPrefetchedRef.current || managedLocalHref === null) {
       return;
@@ -152,6 +330,85 @@ export function KangurTransitionLink({
     resolveTransitionSkeletonVariant,
   ]);
 
+  const handleFocus = useCallback(
+    (event: React.FocusEvent<HTMLAnchorElement>): void => {
+      prefetchManagedHrefOnIntent();
+      onFocus?.(event);
+    },
+    [onFocus, prefetchManagedHrefOnIntent]
+  );
+
+  const handleMouseEnter = useCallback(
+    (event: React.MouseEvent<HTMLAnchorElement>): void => {
+      prefetchManagedHrefOnIntent();
+      onMouseEnter?.(event);
+    },
+    [onMouseEnter, prefetchManagedHrefOnIntent]
+  );
+
+  const handlePointerDownCapture = useCallback(
+    (event: React.PointerEvent<HTMLAnchorElement>): void => {
+      if (event.button !== 0) {
+        return;
+      }
+
+      prefetchManagedHrefOnIntent();
+    },
+    [prefetchManagedHrefOnIntent]
+  );
+
+  const handleClickCapture = useCallback(
+    (event: MouseEvent<HTMLAnchorElement>): void => {
+      if (disabled) {
+        stopDisabledLinkInteraction(event);
+        return;
+      }
+
+      if (!shouldStartTransition(event, href, target)) {
+        return;
+      }
+
+      publishPendingSnapshot();
+      event.preventDefault();
+      routeNavigator.push(
+        href,
+        resolveTransitionPushOptions({
+          resolvedScroll,
+          targetPageKey,
+          transitionAcknowledgeMs,
+          transitionSourceId,
+        })
+      );
+    },
+    [
+      disabled,
+      href,
+      publishPendingSnapshot,
+      resolvedScroll,
+      routeNavigator,
+      target,
+      targetPageKey,
+      transitionAcknowledgeMs,
+      transitionSourceId,
+    ]
+  );
+
+  const handleClick = useCallback(
+    (event: MouseEvent<HTMLAnchorElement>): void => {
+      if (disabled) {
+        stopDisabledLinkInteraction(event);
+        return;
+      }
+
+      onClick?.(event);
+
+      if (!shouldStartTransition(event, href, target)) {
+        return;
+      }
+    },
+    [disabled, href, onClick, target]
+  );
+
   return (
     <NextLink
       href={renderedHref}
@@ -165,56 +422,11 @@ export function KangurTransitionLink({
       scroll={resolvedScroll}
       tabIndex={resolvedTabIndex}
       target={target}
-      onFocus={(event) => {
-        prefetchManagedHrefOnIntent();
-        onFocus?.(event);
-      }}
-      onMouseEnter={(event) => {
-        prefetchManagedHrefOnIntent();
-        onMouseEnter?.(event);
-      }}
-      onPointerDownCapture={(event) => {
-        if (event.button !== 0) {
-          return;
-        }
-
-        prefetchManagedHrefOnIntent();
-      }}
-      onClickCapture={(event) => {
-        if (disabled) {
-          event.preventDefault();
-          event.stopPropagation();
-          return;
-        }
-
-        if (!shouldStartTransition(event, href, target)) {
-          return;
-        }
-
-        publishPendingSnapshot();
-        event.preventDefault();
-        routeNavigator.push(href, {
-          ...(typeof transitionAcknowledgeMs === 'number' ? { acknowledgeMs: transitionAcknowledgeMs } : {}),
-          pageKey: targetPageKey ?? null,
-          scroll: resolvedScroll ?? false,
-          ...(transitionSourceId ? { sourceId: transitionSourceId } : {}),
-        });
-      }}
-      onClick={(event) => {
-        if (disabled) {
-          event.preventDefault();
-          event.stopPropagation();
-          return;
-        }
-
-        if (onClick) {
-          onClick(event);
-        }
-
-        if (!shouldStartTransition(event, href, target)) {
-          return;
-        }
-      }}
+      onFocus={handleFocus}
+      onMouseEnter={handleMouseEnter}
+      onPointerDownCapture={handlePointerDownCapture}
+      onClickCapture={handleClickCapture}
+      onClick={handleClick}
       {...props}
     />
   );

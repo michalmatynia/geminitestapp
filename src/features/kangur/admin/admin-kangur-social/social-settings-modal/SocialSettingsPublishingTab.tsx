@@ -18,6 +18,7 @@ export function SocialSettingsPublishingTab({
   linkedInExpiryStatus,
   linkedInExpiryLabel,
   linkedInDaysRemaining,
+  isRuntimeLocked,
 }: {
   linkedinConnectionId: string | null;
   handleLinkedInConnectionChange: (val: string) => void;
@@ -27,6 +28,7 @@ export function SocialSettingsPublishingTab({
   linkedInExpiryStatus: 'expired' | 'warning' | 'ok' | null;
   linkedInExpiryLabel: string | null;
   linkedInDaysRemaining: number | null;
+  isRuntimeLocked?: boolean;
 }) {
   const placeholder = linkedinIntegration
     ? 'Select LinkedIn connection'
@@ -69,10 +71,14 @@ export function SocialSettingsPublishingTab({
           onValueChange={handleLinkedInConnectionChange}
           options={linkedInOptions}
           placeholder={placeholder}
-          disabled={!linkedinIntegration || linkedInOptions.length === 0}
+          disabled={!linkedinIntegration || linkedInOptions.length === 0 || isRuntimeLocked}
           size='sm'
           ariaLabel='Default LinkedIn connection'
-          title='Default LinkedIn connection'
+          title={
+            isRuntimeLocked
+              ? 'Wait for the current Social runtime job to finish.'
+              : 'Default LinkedIn connection'
+          }
         />
       </FormField>
 

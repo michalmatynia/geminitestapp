@@ -333,7 +333,7 @@ function ScoreHistoryRecentSessionEntry(props: {
       titleClassName='text-slate-700'
       title={operationInfo.label}
       xpTestId={`score-history-recent-xp-${props.score.id}`}
-      xpText={resolveScoreHistoryXpText(props.score.xp_earned)}
+      xpText={resolveScoreHistoryXpText(props.score.xp_earned ?? null)}
     />
   );
 }
@@ -460,7 +460,7 @@ export function ScoreHistory(props: ScoreHistoryProps): React.JSX.Element {
         />
         <ScoreHistoryWeakestPanel
           actionClassName={weakestLessonActionClassName}
-          basePath={props.basePath}
+          basePath={props.basePath ?? undefined}
           fallbackCopy={fallbackCopy}
           insights={insights}
           translations={translations}

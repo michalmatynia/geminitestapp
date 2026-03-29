@@ -174,7 +174,9 @@ export const kangurLessonTemplatesSchema = z.array(kangurLessonTemplateSchema);
 export type KangurLessonTemplates = z.infer<typeof kangurLessonTemplatesSchema>;
 
 export const kangurLessonTemplatesQuerySchema = z.object({
+  componentId: optionalTrimmedQueryString(kangurLessonComponentIdSchema),
   subject: optionalTrimmedQueryString(kangurLessonSubjectSchema),
+  ageGroup: optionalTrimmedQueryString(kangurLessonAgeGroupSchema),
   locale: optionalTrimmedQueryString(z.string().trim().min(2).max(16)),
 });
 export type KangurLessonTemplatesQuery = z.infer<typeof kangurLessonTemplatesQuerySchema>;

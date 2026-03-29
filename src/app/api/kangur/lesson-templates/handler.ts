@@ -3,7 +3,11 @@ import { NextRequest, NextResponse } from 'next/server';
 import { resolveKangurActor } from '@/features/kangur/services/kangur-actor';
 import { getKangurLessonTemplateRepository } from '@/features/kangur/services/kangur-lesson-template-repository';
 import type { KangurLessonTemplate } from '@/shared/contracts/kangur-lesson-templates';
-import { kangurLessonSubjectSchema } from '@/shared/contracts/kangur';
+import {
+  kangurLessonAgeGroupSchema,
+  kangurLessonComponentIdSchema,
+  kangurLessonSubjectSchema,
+} from '@/shared/contracts/kangur';
 import {
   kangurLessonTemplatesQuerySchema,
   kangurLessonTemplatesReplacePayloadSchema,
@@ -30,12 +34,16 @@ const cloneKangurLessonTemplates = (
 ): KangurLessonTemplate[] => structuredClone(templates);
 
 const buildKangurLessonTemplatesCacheKey = (input: {
+  componentId?: string | null;
   locale?: string | null;
   subject?: string | null;
+  ageGroup?: string | null;
 }): string =>
   JSON.stringify({
+    componentId: input.componentId ?? null,
     locale: input.locale ?? 'pl',
     subject: input.subject ?? null,
+    ageGroup: input.ageGroup ?? null,
   });
 
 export const clearKangurLessonTemplatesCache = (): void => {
@@ -48,10 +56,19 @@ export async function getKangurLessonTemplatesHandler(
   ctx: ApiHandlerContext,
 ): Promise<Response> {
   const query = kangurLessonTemplatesQuerySchema.parse(ctx.query ?? {});
+  const parsedComponentId = kangurLessonComponentIdSchema.safeParse(query.componentId);
+  const componentId = parsedComponentId.success ? parsedComponentId.data : undefined;
   const parsedSubject = kangurLessonSubjectSchema.safeParse(query.subject);
   const subject = parsedSubject.success ? parsedSubject.data : undefined;
+  const parsedAgeGroup = kangurLessonAgeGroupSchema.safeParse(query.ageGroup);
+  const ageGroup = parsedAgeGroup.success ? parsedAgeGroup.data : undefined;
   const locale = normalizeSiteLocale(query.locale);
-  const cacheKey = buildKangurLessonTemplatesCacheKey({ subject: subject ?? null, locale });
+  const cacheKey = buildKangurLessonTemplatesCacheKey({
+    componentId: componentId ?? null,
+    subject: subject ?? null,
+    ageGroup: ageGroup ?? null,
+    locale,
+  });
   const now = Date.now();
   const cached = kangurLessonTemplatesCache.get(cacheKey);
   if (cached && now - cached.fetchedAt < KANGUR_LESSON_TEMPLATES_CACHE_TTL_MS) {
@@ -73,7 +90,7 @@ export async function getKangurLessonTemplatesHandler(
 
   const repository = await getKangurLessonTemplateRepository();
   const inflightPromise = repository
-    .listTemplates({ locale, subject })
+    .listTemplates({ locale, componentId, subject, ageGroup })
     .then((templates) => {
       kangurLessonTemplatesCache.set(cacheKey, {
         data: cloneKangurLessonTemplates(templates),

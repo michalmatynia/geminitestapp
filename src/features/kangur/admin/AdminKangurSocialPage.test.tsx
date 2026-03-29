@@ -170,7 +170,29 @@ vi.mock('@/features/kangur/shared/ui', () => ({
 }));
 
 vi.mock('@/features/kangur/shared/ui/templates/modals', () => ({
-  ConfirmModal: () => null,
+  ConfirmModal: ({
+    isOpen,
+    title,
+    message,
+    confirmText = 'Confirm',
+    onConfirm,
+    confirmDisabled,
+  }: {
+    isOpen?: boolean;
+    title: string;
+    message?: React.ReactNode;
+    confirmText?: string;
+    onConfirm?: () => void;
+    confirmDisabled?: boolean;
+  }) =>
+    isOpen ? (
+      <div role='dialog' aria-label={title}>
+        <div>{message}</div>
+        <button type='button' disabled={Boolean(confirmDisabled)} onClick={() => onConfirm?.()}>
+          {confirmText}
+        </button>
+      </div>
+    ) : null,
 }));
 
 vi.mock('@/shared/ui/admin-favorite-breadcrumb-row', () => ({
@@ -192,12 +214,26 @@ vi.mock('./admin-kangur-social/SocialPost.List', async () => {
 
   return {
     SocialPostList: () => {
-      const { handleOpenPostEditor } = actual.useSocialPostContext();
+      const {
+        activePost,
+        handleOpenPostEditor,
+        setPostToDelete,
+        setPostToUnpublish,
+      } = actual.useSocialPostContext();
 
       return (
         <div data-testid='social-post-list'>
           <button type='button' onClick={() => handleOpenPostEditor('post-1')}>
             Open post row
+          </button>
+          <button type='button' onClick={() => handleOpenPostEditor('post-2')}>
+            Open other post row
+          </button>
+          <button type='button' onClick={() => setPostToDelete(activePost)}>
+            Delete active post
+          </button>
+          <button type='button' onClick={() => setPostToUnpublish(activePost)}>
+            Unpublish active post
           </button>
         </div>
       );
@@ -282,6 +318,13 @@ const buildPost = () => ({
   updatedBy: null,
   createdAt: '2026-03-19T10:00:00.000Z',
   updatedAt: '2026-03-19T10:00:00.000Z',
+});
+
+const buildSecondPost = () => ({
+  ...buildPost(),
+  id: 'post-2',
+  titlePl: 'Second pipeline target',
+  titleEn: 'Second pipeline target',
 });
 
 const buildHookState = () => ({
@@ -513,6 +556,29 @@ describe('AdminKangurSocialPage', () => {
     );
   });
 
+  it('blocks opening another post editor while Social runtime jobs are still in flight', () => {
+    const setActivePostId = vi.fn();
+
+    useAdminKangurSocialPageMock.mockReturnValue({
+      ...buildHookState(),
+      posts: [buildPost(), buildSecondPost()],
+      setActivePostId,
+      currentVisualAnalysisJob: {
+        id: 'job-analysis-7',
+        status: 'active',
+        progress: { message: 'Analyzing visuals for the active draft.' },
+        failedReason: null,
+      },
+    });
+
+    render(<AdminKangurSocialPage />);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Open other post row' }));
+
+    expect(setActivePostId).not.toHaveBeenCalled();
+    expect(screen.getByTestId('social-post-editor-modal')).toHaveAttribute('data-open', 'false');
+  });
+
   it('shows header-level runtime job pills for the active Social draft', () => {
     useAdminKangurSocialPageMock.mockReturnValue({
       ...buildHookState(),
@@ -542,5 +608,90 @@ describe('AdminKangurSocialPage', () => {
     expect(screen.getByText('Image analysis: Running')).toBeInTheDocument();
     expect(screen.getByText('Generate post: Queued')).toBeInTheDocument();
     expect(screen.getByText('Full pipeline: Completed')).toBeInTheDocument();
+  });
+
+  it('blocks creating a new draft while Social runtime jobs are still in flight', () => {
+    const handleCreateDraft = vi.fn();
+
+    useAdminKangurSocialPageMock.mockReturnValue({
+      ...buildHookState(),
+      handleCreateDraft,
+      currentVisualAnalysisJob: {
+        id: 'job-analysis-3',
+        status: 'active',
+        progress: { message: 'Analyzing the selected visuals.' },
+        failedReason: null,
+      },
+    });
+
+    render(<AdminKangurSocialPage />);
+
+    expect(screen.getByRole('button', { name: 'New draft' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'New draft' })).toHaveAttribute(
+      'title',
+      'Wait for the current Social runtime job to finish.'
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: 'New draft' }));
+
+    expect(handleCreateDraft).not.toHaveBeenCalled();
+  });
+
+  it('blocks deleting the active post while Social runtime jobs are still in flight', () => {
+    const handleDeletePost = vi.fn();
+
+    useAdminKangurSocialPageMock.mockReturnValue({
+      ...buildHookState(),
+      handleDeletePost,
+      currentGenerationJob: {
+        id: 'job-generate-5',
+        status: 'active',
+        progress: { message: 'Generating the current draft.' },
+        failedReason: null,
+      },
+    });
+
+    render(<AdminKangurSocialPage />);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Delete active post' }));
+
+    expect(screen.getByRole('dialog', { name: 'Delete draft' })).toBeInTheDocument();
+    expect(
+      screen.getByText('Wait for the current Social runtime job to finish before confirming this action.')
+    ).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Delete' })).toBeDisabled();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Delete' }));
+
+    expect(handleDeletePost).not.toHaveBeenCalled();
+  });
+
+  it('blocks unpublishing the active post while Social runtime jobs are still in flight', () => {
+    const handleUnpublishPost = vi.fn();
+
+    useAdminKangurSocialPageMock.mockReturnValue({
+      ...buildHookState(),
+      handleUnpublishPost,
+      currentPipelineJob: {
+        id: 'job-pipeline-5',
+        status: 'active',
+        progress: { message: 'Pipeline is still updating the current draft.' },
+        failedReason: null,
+      },
+    });
+
+    render(<AdminKangurSocialPage />);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Unpublish active post' }));
+
+    expect(screen.getByRole('dialog', { name: 'Unpublish from LinkedIn' })).toBeInTheDocument();
+    expect(
+      screen.getByText('Wait for the current Social runtime job to finish before confirming this action.')
+    ).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Unpublish' })).toBeDisabled();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Unpublish' }));
+
+    expect(handleUnpublishPost).not.toHaveBeenCalled();
   });
 });

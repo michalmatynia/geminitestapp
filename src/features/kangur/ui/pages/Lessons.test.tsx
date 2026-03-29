@@ -77,21 +77,17 @@ describe('Lessons page subject filtering', () => {
     expect(routeNavigatorBackMock).not.toHaveBeenCalled();
   });
 
-  it('keeps lesson templates disabled on the default lessons route', () => {
+  it('does not preload the lesson template collection on the default lessons route', () => {
     render(<Lessons />);
 
     act(() => {
       vi.runAllTimers();
     });
 
-    expect(lessonTemplatesHookCallsMock).toHaveBeenLastCalledWith(
-      expect.objectContaining({
-        enabled: false,
-      })
-    );
+    expect(lessonTemplatesHookCallsMock).not.toHaveBeenCalled();
   });
 
-  it('enables lesson templates when a focused lesson token is present in the URL', () => {
+  it('still avoids preloading the lesson template collection when a focused lesson token is present', () => {
     focusTokenState.value = 'mystery-focus-token';
 
     render(<Lessons />);
@@ -100,11 +96,7 @@ describe('Lessons page subject filtering', () => {
       vi.runAllTimers();
     });
 
-    expect(lessonTemplatesHookCallsMock).toHaveBeenLastCalledWith(
-      expect.objectContaining({
-        enabled: true,
-      })
-    );
+    expect(lessonTemplatesHookCallsMock).not.toHaveBeenCalled();
   });
 
   it('defers assignments hydration until after the first deferred render turn for parent access', () => {

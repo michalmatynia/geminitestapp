@@ -174,6 +174,10 @@ describe('SocialPostVisualAnalysisModal', () => {
     ).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Generate post in progress...' })).toBeDisabled();
     expect(screen.getByRole('button', { name: 'Analyzing visuals...' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Analyzing visuals...' })).toHaveAttribute(
+      'title',
+      'Wait for the current Social runtime job to finish.'
+    );
   });
 
   it('triggers analysis and generation actions from the modal controls', () => {
@@ -206,6 +210,10 @@ describe('SocialPostVisualAnalysisModal', () => {
     expect(handleCloseVisualAnalysisModal).toHaveBeenCalledTimes(1);
     expect(screen.getByRole('button', { name: 'Generate post with analysis' })).toBeDisabled();
     expect(handleRunFullPipelineWithVisualAnalysis).not.toHaveBeenCalled();
+    expect(screen.getByRole('button', { name: 'Analyze selected visuals' })).toHaveAttribute(
+      'title',
+      'Analyze selected visuals'
+    );
     expect(
       screen.getByText(
         'Run image analysis first. After reviewing the visual description, use Generate post with analysis to create the LinkedIn update in the next AI pass.'
@@ -286,5 +294,31 @@ describe('SocialPostVisualAnalysisModal', () => {
       )
     ).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Generate post with analysis' })).toBeDisabled();
+  });
+
+  it('explains why image analysis cannot start when no visuals are selected', () => {
+    useSocialPostContextMock.mockReturnValue({
+      isVisualAnalysisModalOpen: true,
+      handleCloseVisualAnalysisModal: vi.fn(),
+      handleAnalyzeSelectedVisuals: vi.fn(),
+      handleRunFullPipelineWithVisualAnalysis: vi.fn(),
+      visualAnalysisResult: null,
+      hasSavedVisualAnalysis: false,
+      isSavedVisualAnalysisStale: false,
+      visualAnalysisErrorMessage: null,
+      visualAnalysisPending: false,
+      imageAddonIds: [],
+      recentAddons: [recentAddon],
+      visionModelId: 'vision-1',
+      visionModelOptions: { effectiveModelId: 'vision-routing' },
+    });
+
+    render(<SocialPostVisualAnalysisModal />);
+
+    expect(screen.getByRole('button', { name: 'Analyze selected visuals' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Analyze selected visuals' })).toHaveAttribute(
+      'title',
+      'Select at least one image add-on before running image analysis.'
+    );
   });
 });

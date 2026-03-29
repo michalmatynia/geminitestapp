@@ -21,6 +21,7 @@ vi.mock('use-intl', async () => await vi.importActual<typeof import('use-intl')>
 const {
   useLessonsMock,
   useKangurLessonDocumentMock,
+  useKangurLessonTemplateMock,
   useKangurMobileBreakpointMock,
   useKangurTutorAnchorMock,
   hasKangurLessonDocumentContentMock,
@@ -30,6 +31,7 @@ const {
 } = vi.hoisted(() => ({
   useLessonsMock: vi.fn(),
   useKangurLessonDocumentMock: vi.fn(),
+  useKangurLessonTemplateMock: vi.fn(),
   useKangurMobileBreakpointMock: vi.fn(),
   useKangurTutorAnchorMock: vi.fn(),
   hasKangurLessonDocumentContentMock: vi.fn(() => true),
@@ -151,6 +153,10 @@ vi.mock('@/features/kangur/ui/hooks/useKangurLessons', () => ({
   useKangurLessonDocument: (...args: unknown[]) => useKangurLessonDocumentMock(...args),
 }));
 
+vi.mock('@/features/kangur/ui/hooks/useKangurLessonTemplates', () => ({
+  useKangurLessonTemplate: (...args: unknown[]) => useKangurLessonTemplateMock(...args),
+}));
+
 vi.mock('@/features/kangur/ui/hooks/useKangurTutorAnchor', () => ({
   useKangurTutorAnchor: (...args: unknown[]) => useKangurTutorAnchorMock(...args),
 }));
@@ -191,6 +197,10 @@ describe('ActiveLessonView mobile controls', () => {
       isLoading: false,
       isFetching: false,
       isRefetching: false,
+    });
+    useKangurLessonTemplateMock.mockReset();
+    useKangurLessonTemplateMock.mockReturnValue({
+      data: null,
     });
     hasKangurLessonDocumentContentMock.mockReturnValue(true);
     lessonDocumentBackButtonLabelMock.mockReturnValue(null);
@@ -289,22 +299,7 @@ describe('ActiveLessonView mobile controls', () => {
       activeLesson,
       handleSelectLesson,
       lessonDocuments: {},
-      lessonTemplateMap: new Map([
-        [
-          'adding',
-          {
-            componentId: 'adding',
-            subject: 'maths',
-            label: 'Dodawanie z bazy',
-            title: 'Dodawanie z bazy',
-            description: 'Opis lekcji z bazy',
-            emoji: '➕',
-            color: 'from-sky-500 to-cyan-400',
-            activeBg: 'bg-sky-100',
-            sortOrder: 1,
-          },
-        ],
-      ]),
+      lessonTemplateMap: new Map(),
       lessonAssignmentsByComponent: new Map(),
       completedLessonAssignmentsByComponent: new Map(),
       setIsActiveLessonComponentReady: vi.fn(),
@@ -316,6 +311,19 @@ describe('ActiveLessonView mobile controls', () => {
       isSecretLessonActive: false,
       progress: { lessonMastery: {} },
     });
+    useKangurLessonTemplateMock.mockReturnValue({
+      data: {
+        componentId: 'adding',
+        subject: 'maths',
+        label: 'Dodawanie z bazy',
+        title: 'Dodawanie z bazy',
+        description: 'Opis lekcji z bazy',
+        emoji: '➕',
+        color: 'from-sky-500 to-cyan-400',
+        activeBg: 'bg-sky-100',
+        sortOrder: 1,
+      },
+    });
 
     render(<ActiveLessonView />);
 
@@ -325,6 +333,9 @@ describe('ActiveLessonView mobile controls', () => {
       screen.getByRole('heading', { level: 1, name: 'Dodawanie z bazy' })
     ).toBeInTheDocument();
     expect(screen.getByText('Opis lekcji z bazy')).toBeInTheDocument();
+    expect(useKangurLessonTemplateMock).toHaveBeenCalledWith('adding', {
+      enabled: true,
+    });
   });
 
   it('renders the loading document fallback title in English on the English route', async () => {

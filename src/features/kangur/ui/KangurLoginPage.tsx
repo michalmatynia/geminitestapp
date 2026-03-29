@@ -10,7 +10,6 @@ import { useOptionalKangurRouting } from '@/features/kangur/ui/context/KangurRou
 import { useKangurRouteAccess } from '@/features/kangur/ui/routing/useKangurRouteAccess';
 import {
   KangurLoginPagePropsContext,
-  type KangurLoginPageProps,
   useKangurLoginPageProps,
 } from '@/features/kangur/ui/login-page/login-context';
 import { LoadingState } from '@/features/kangur/shared/ui';

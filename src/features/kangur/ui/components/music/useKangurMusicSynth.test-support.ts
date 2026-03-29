@@ -7,10 +7,10 @@ import { afterEach, beforeEach, vi } from 'vitest';
 export class MockOscillatorNode {
   readonly detune = {
     cancelScheduledValues: vi.fn(),
-    linearRampToValueAtTime: vi.fn((value: number) => {
+    linearRampToValueAtTime: vi.fn((value: number, _when?: number) => {
       this.detune.value = value;
     }),
-    setValueAtTime: vi.fn((value: number) => {
+    setValueAtTime: vi.fn((value: number, _when?: number) => {
       this.detune.value = value;
     }),
     value: 0,
@@ -38,13 +38,13 @@ export class MockOscillatorNode {
 export class MockGainNode {
   readonly gain = {
     cancelScheduledValues: vi.fn(),
-    exponentialRampToValueAtTime: vi.fn((value: number) => {
+    exponentialRampToValueAtTime: vi.fn((value: number, _when?: number) => {
       this.gain.value = value;
     }),
-    linearRampToValueAtTime: vi.fn((value: number) => {
+    linearRampToValueAtTime: vi.fn((value: number, _when?: number) => {
       this.gain.value = value;
     }),
-    setValueAtTime: vi.fn((value: number) => {
+    setValueAtTime: vi.fn((value: number, _when?: number) => {
       this.gain.value = value;
     }),
     value: 0.0001,
@@ -57,10 +57,10 @@ export class MockGainNode {
 export class MockBiquadFilterNode {
   readonly Q = {
     cancelScheduledValues: vi.fn(),
-    linearRampToValueAtTime: vi.fn((value: number) => {
+    linearRampToValueAtTime: vi.fn((value: number, _when?: number) => {
       this.Q.value = value;
     }),
-    setValueAtTime: vi.fn((value: number) => {
+    setValueAtTime: vi.fn((value: number, _when?: number) => {
       this.Q.value = value;
     }),
     value: 0,
@@ -68,13 +68,13 @@ export class MockBiquadFilterNode {
 
   readonly frequency = {
     cancelScheduledValues: vi.fn(),
-    exponentialRampToValueAtTime: vi.fn((value: number) => {
+    exponentialRampToValueAtTime: vi.fn((value: number, _when?: number) => {
       this.frequency.value = value;
     }),
-    linearRampToValueAtTime: vi.fn((value: number) => {
+    linearRampToValueAtTime: vi.fn((value: number, _when?: number) => {
       this.frequency.value = value;
     }),
-    setValueAtTime: vi.fn((value: number) => {
+    setValueAtTime: vi.fn((value: number, _when?: number) => {
       this.frequency.value = value;
     }),
     value: 0,
@@ -113,10 +113,10 @@ export class MockConvolverNode {
 export class MockStereoPannerNode {
   readonly pan = {
     cancelScheduledValues: vi.fn(),
-    linearRampToValueAtTime: vi.fn((value: number) => {
+    linearRampToValueAtTime: vi.fn((value: number, _when?: number) => {
       this.pan.value = value;
     }),
-    setValueAtTime: vi.fn((value: number) => {
+    setValueAtTime: vi.fn((value: number, _when?: number) => {
       this.pan.value = value;
     }),
     value: 0,

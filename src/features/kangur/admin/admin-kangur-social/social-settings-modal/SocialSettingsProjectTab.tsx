@@ -6,9 +6,11 @@ import { KangurAdminCard } from '../../components/KangurAdminCard';
 export function SocialSettingsProjectTab({
   projectUrl,
   setProjectUrl,
+  isRuntimeLocked,
 }: {
   projectUrl: string;
   setProjectUrl: (val: string) => void;
+  isRuntimeLocked?: boolean;
 }) {
   return (
     <KangurAdminCard>
@@ -20,6 +22,8 @@ export function SocialSettingsProjectTab({
           placeholder='https://example.com/project'
           size='sm'
           aria-label='Project URL'
+          disabled={isRuntimeLocked}
+          title={isRuntimeLocked ? 'Wait for the current Social runtime job to finish.' : 'Project URL'}
         />
       </FormField>
     </KangurAdminCard>

@@ -6,11 +6,14 @@ import {
   getKangurGameDefinition,
   resolveKangurLaunchableGameRuntimeForPersistedInstance,
 } from '@/features/kangur/games';
+import type {
+  KangurGameContentSet,
+  KangurGameInstance,
+} from '@/shared/contracts/kangur-game-instances';
 import { useKangurGameContentSets } from '@/features/kangur/ui/hooks/useKangurGameContentSets';
 import { useKangurGameInstances } from '@/features/kangur/ui/hooks/useKangurGameInstances';
 import { useKangurMusicPianoRollLaunchableScreenRefs } from '@/features/kangur/ui/pages/music-piano-roll-launchable-screen-refs';
 import {
-  KANGUR_LAUNCHABLE_GAME_SCREENS,
   isKangurLaunchableGameScreen,
   type KangurLaunchableGameScreen,
 } from '@/features/kangur/ui/services/game-launch';
@@ -197,11 +200,12 @@ const resolveActiveLaunchableGameRuntime = ({
   screen,
 }: {
   activeLaunchableGameInstance: {
-    contentSetId?: string | null;
-    gameId: string;
-    launchableRuntimeId?: string | null;
+    contentSetId: KangurGameInstance['contentSetId'];
+    engineOverrides?: KangurGameInstance['engineOverrides'];
+    gameId: KangurGameInstance['gameId'];
+    launchableRuntimeId: KangurGameInstance['launchableRuntimeId'];
   } | null;
-  contentSets: unknown;
+  contentSets: readonly KangurGameContentSet[] | null | undefined;
   launchableGameInstanceId?: string | null;
   screen: KangurGameScreen;
 }): GameLaunchableRuntime | null => {
@@ -225,7 +229,11 @@ const resolveActiveLaunchableGameRuntime = ({
   const game = getKangurGameDefinition(activeLaunchableGameInstance.gameId);
   return resolveKangurLaunchableGameRuntimeForPersistedInstance(
     game,
-    activeLaunchableGameInstance,
+    {
+      ...activeLaunchableGameInstance,
+      engineOverrides: activeLaunchableGameInstance.engineOverrides ?? {},
+      launchableRuntimeId: screen,
+    },
     contentSets
   );
 };

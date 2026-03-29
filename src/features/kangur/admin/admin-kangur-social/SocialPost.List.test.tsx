@@ -437,6 +437,62 @@ describe('SocialPostList', () => {
     expect(handleOpenPostEditor).not.toHaveBeenCalled();
   });
 
+  it('blocks switching to another post while Social runtime jobs are still in flight', () => {
+    const setActivePostId = vi.fn();
+    const handleOpenPostEditor = vi.fn();
+
+    useSocialPostContextMock.mockReturnValue(
+      buildSocialPostContextState({
+        posts: [
+          buildPost(),
+          {
+            ...buildPost(),
+            id: 'post-2',
+            titlePl: 'Second pipeline target',
+            titleEn: 'Second pipeline target',
+          },
+        ],
+        activePostId: 'post-1',
+        setActivePostId,
+        handleOpenPostEditor,
+        currentVisualAnalysisJob: {
+          id: 'job-analysis-live-1',
+          status: 'active',
+          progress: { message: 'Analyzing visuals for the active draft.' },
+          failedReason: null,
+        },
+      })
+    );
+
+    render(<SocialPostList />);
+
+    expect(
+      screen.getByRole('button', { name: 'Select Second pipeline target for pipeline' })
+    ).toBeDisabled();
+    expect(
+      screen.getByRole('button', { name: 'Select Second pipeline target for pipeline' })
+    ).toHaveAttribute('title', 'Wait for the current Social runtime job to finish.');
+    expect(
+      screen.getByRole('button', { name: 'Open social post Second pipeline target' })
+    ).toBeDisabled();
+    expect(
+      screen.getByRole('button', { name: 'Open social post Second pipeline target' })
+    ).toHaveAttribute('title', 'Wait for the current Social runtime job to finish.');
+    expect(screen.getAllByRole('button', { name: 'Edit post' })[1]).toBeDisabled();
+    expect(screen.getAllByRole('button', { name: 'Edit post' })[1]).toHaveAttribute(
+      'title',
+      'Wait for the current Social runtime job to finish.'
+    );
+
+    fireEvent.click(
+      screen.getByRole('button', { name: 'Open social post Second pipeline target' })
+    );
+    fireEvent.click(screen.getAllByRole('button', { name: 'Edit post' })[1]);
+
+    expect(setActivePostId).not.toHaveBeenCalled();
+    expect(handleOpenPostEditor).not.toHaveBeenCalled();
+  });
+
   it('keeps delete actions separate from opening the post modal', () => {
     const post = buildPost();
     const setActivePostId = vi.fn();
@@ -462,6 +518,40 @@ describe('SocialPostList', () => {
     expect(setPostToDelete).toHaveBeenCalledWith(post);
     expect(setActivePostId).not.toHaveBeenCalled();
     expect(handleOpenPostEditor).not.toHaveBeenCalled();
+  });
+
+  it('blocks deleting the active post while Social runtime jobs are still in flight', () => {
+    const post = buildPost();
+    const setPostToDelete = vi.fn();
+    const clearDeleteError = vi.fn();
+
+    useSocialPostContextMock.mockReturnValue(
+      buildSocialPostContextState({
+        posts: [post],
+        activePostId: 'post-1',
+        setPostToDelete,
+        clearDeleteError,
+        currentGenerationJob: {
+          id: 'job-generate-live-9',
+          status: 'waiting',
+          progress: { message: 'Waiting for the generation worker.' },
+          failedReason: null,
+        },
+      })
+    );
+
+    render(<SocialPostList />);
+
+    expect(screen.getByRole('button', { name: 'Delete post permanently' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Delete post permanently' })).toHaveAttribute(
+      'title',
+      'Wait for the current Social runtime job to finish.'
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: 'Delete post permanently' }));
+
+    expect(clearDeleteError).not.toHaveBeenCalled();
+    expect(setPostToDelete).not.toHaveBeenCalled();
   });
 
   it('opens the post editor from the three dot menu edit action', () => {

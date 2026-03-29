@@ -24,6 +24,18 @@ type KangurProfileMenuProps = {
   triggerClassName?: string;
 };
 
+type KangurProfileMenuState = {
+  avatarSrc: string;
+  buttonClassName: string;
+  isTransitionActive: boolean;
+  navigationActive: boolean;
+  resolvedHref: string;
+  resolvedLabel: string;
+  shouldRenderAvatar: boolean;
+  transitionMs: number | undefined;
+  transitionSource?: string;
+};
+
 const isTransitionSourceActive = ({
   activeTransitionSourceId,
   transitionPhase,
@@ -43,84 +55,140 @@ const isTransitionSourceActive = ({
 const getProfileMenuFallbackLabel = (
   locale: ReturnType<typeof normalizeSiteLocale>
 ): string => {
-  if (locale === 'uk') {
-    return 'Профіль';
-  }
+  const labelsByLocale = {
+    de: 'Profil',
+    en: 'Profile',
+    pl: 'Profil',
+    uk: 'Профіль',
+  } as const satisfies Record<ReturnType<typeof normalizeSiteLocale>, string>;
 
-  if (locale === 'de') {
-    return 'Profil';
-  }
-
-  if (locale === 'en') {
-    return 'Profile';
-  }
-
-  return 'Profil';
+  return labelsByLocale[locale];
 };
 
-export function KangurProfileMenu(props: KangurProfileMenuProps): React.JSX.Element {
-  const {
-    label,
-    avatar,
-    profile,
-    triggerClassName,
-    basePath,
-    isActive,
-    transitionAcknowledgeMs,
-    transitionSourceId,
-  } = props;
-  const routeTransitionState = useOptionalKangurRouteTransitionState();
-  const isCoarsePointer = useKangurCoarsePointer();
-  const locale = normalizeSiteLocale(useLocale());
-  const resolvedHref =
-    profile?.href ??
-    getKangurPageHref('LearnerProfile', basePath ?? KANGUR_BASE_PATH);
-  const navigationActive = isActive ?? profile?.isActive ?? false;
-  const buttonClassName = [
+const resolveKangurProfileMenuClassName = ({
+  isCoarsePointer,
+  triggerClassName,
+}: {
+  isCoarsePointer: boolean;
+  triggerClassName: string | undefined;
+}): string =>
+  [
     triggerClassName,
     isCoarsePointer ? 'min-h-12 px-4 touch-manipulation select-none active:scale-[0.985]' : null,
   ]
     .filter(Boolean)
     .join(' ');
-  const transitionMs = transitionAcknowledgeMs;
-  const transitionSource = transitionSourceId;
-  const avatarSrc = avatar?.src?.trim() ?? '';
-  const shouldRenderAvatar = avatarSrc.length > 0;
-  const resolvedLabel = label ?? getProfileMenuFallbackLabel(locale);
 
-  const isTransitionActive = isTransitionSourceActive({
-    activeTransitionSourceId: routeTransitionState?.activeTransitionSourceId,
-    transitionPhase: routeTransitionState?.transitionPhase,
-    transitionSourceId: transitionSourceId ?? undefined,
+const resolveKangurProfileMenuState = ({
+  avatar,
+  basePath,
+  isActive,
+  isCoarsePointer,
+  label,
+  locale,
+  profile,
+  routeTransitionState,
+  transitionAcknowledgeMs,
+  transitionSourceId,
+  triggerClassName,
+}: KangurProfileMenuProps & {
+  isCoarsePointer: boolean;
+  locale: ReturnType<typeof normalizeSiteLocale>;
+  routeTransitionState: ReturnType<typeof useOptionalKangurRouteTransitionState>;
+}): KangurProfileMenuState => {
+  const avatarSrc = avatar?.src?.trim() ?? '';
+  const transitionSource = transitionSourceId ?? undefined;
+
+  return {
+    avatarSrc,
+    buttonClassName: resolveKangurProfileMenuClassName({
+      isCoarsePointer,
+      triggerClassName,
+    }),
+    isTransitionActive: isTransitionSourceActive({
+      activeTransitionSourceId: routeTransitionState?.activeTransitionSourceId,
+      transitionPhase: routeTransitionState?.transitionPhase,
+      transitionSourceId: transitionSource,
+    }),
+    navigationActive: isActive ?? profile?.isActive ?? false,
+    resolvedHref: profile?.href ?? getKangurPageHref('LearnerProfile', basePath ?? KANGUR_BASE_PATH),
+    resolvedLabel: label ?? getProfileMenuFallbackLabel(locale),
+    shouldRenderAvatar: avatarSrc.length > 0,
+    transitionMs: transitionAcknowledgeMs,
+    transitionSource,
+  };
+};
+
+function KangurProfileMenuIcon({
+  avatarSrc,
+  shouldRenderAvatar,
+}: {
+  avatarSrc: string;
+  shouldRenderAvatar: boolean;
+}): React.JSX.Element {
+  if (shouldRenderAvatar) {
+    return (
+      <span className='relative h-[18px] w-[18px] overflow-hidden rounded-full border border-white/80 bg-white/80 shadow-sm sm:h-5 sm:w-5'>
+        <img
+          src={avatarSrc}
+          alt=''
+          aria-hidden='true'
+          className='h-full w-full object-cover'
+        />
+      </span>
+    );
+  }
+
+  return <User aria-hidden='true' className='h-[18px] w-[18px] sm:h-5 sm:w-5' strokeWidth={2.15} />;
+}
+
+export function KangurProfileMenu(props: KangurProfileMenuProps): React.JSX.Element {
+  const {
+    avatar,
+    basePath,
+    isActive,
+    label,
+    profile,
+    transitionAcknowledgeMs,
+    transitionSourceId,
+    triggerClassName,
+  } = props;
+  const routeTransitionState = useOptionalKangurRouteTransitionState();
+  const isCoarsePointer = useKangurCoarsePointer();
+  const locale = normalizeSiteLocale(useLocale());
+  const state = resolveKangurProfileMenuState({
+    avatar,
+    basePath,
+    isActive,
+    isCoarsePointer,
+    label,
+    locale,
+    profile,
+    routeTransitionState,
+    transitionAcknowledgeMs,
+    transitionSourceId,
+    triggerClassName,
   });
 
   return (
     <KangurNavAction
-      active={navigationActive}
-      className={buttonClassName}
+      active={state.navigationActive}
+      className={state.buttonClassName}
       docId='top_nav_profile'
-      href={resolvedHref}
+      href={state.resolvedHref}
       size='md'
       targetPageKey='LearnerProfile'
       transition={{
-        active: isTransitionActive,
-        acknowledgeMs: transitionMs,
-        sourceId: transitionSource ?? undefined,
+        active: state.isTransitionActive,
+        acknowledgeMs: state.transitionMs,
+        sourceId: state.transitionSource,
       }}
     >
-      {shouldRenderAvatar ? (
-        <span className='relative h-[18px] w-[18px] overflow-hidden rounded-full border border-white/80 bg-white/80 shadow-sm sm:h-5 sm:w-5'>
-          <img
-            src={avatarSrc}
-            alt=''
-            aria-hidden='true'
-            className='h-full w-full object-cover'
-          />
-        </span>
-      ) : (
-        <User aria-hidden='true' className='h-[18px] w-[18px] sm:h-5 sm:w-5' strokeWidth={2.15} />
-      )}
-      <span className='truncate'>{resolvedLabel}</span>
+      <KangurProfileMenuIcon
+        avatarSrc={state.avatarSrc}
+        shouldRenderAvatar={state.shouldRenderAvatar}
+      />
+      <span className='truncate'>{state.resolvedLabel}</span>
     </KangurNavAction>
   );
 }

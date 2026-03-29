@@ -102,16 +102,19 @@ export const buildKgTelemetry = (input: {
     : null,
 });
 
-export const buildSettingsTelemetry = (input: {
-  showSources: boolean;
-  allowSelectedTextSupport: boolean;
-  allowLessons: boolean;
-  allowGames: boolean;
-  testAccessMode: string;
-  hintDepth: string;
-  proactiveNudges: boolean;
-  rememberTutorContext: boolean;
-}) => ({
+export const buildSettingsTelemetry = (
+  input: Pick<
+    KangurAiTutorLearnerSettings,
+    | 'showSources'
+    | 'allowSelectedTextSupport'
+    | 'allowLessons'
+    | 'allowGames'
+    | 'testAccessMode'
+    | 'hintDepth'
+    | 'proactiveNudges'
+    | 'rememberTutorContext'
+  >
+) => ({
   showSources: input.showSources,
   allowSelectedTextSupport: input.allowSelectedTextSupport,
   allowLessons: input.allowLessons,
@@ -128,3 +131,4 @@ export const buildMoodTelemetry = (input: TutorMoodState) => ({
   tutorMoodReasonCode: input.lastReasonCode,
   tutorMoodConfidence: input.confidence,
 });
+import type { KangurAiTutorLearnerSettings } from '@/features/kangur/settings-ai-tutor';

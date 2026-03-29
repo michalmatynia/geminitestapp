@@ -17,7 +17,6 @@ import {
   expectApiSuccess,
   isPlaywrightAiPathsFixturePathId,
   isPlaywrightAiPathsFixtureTriggerButton,
-  readRecordString,
 } from './ai-paths-product-workflow-fixtures.api-shared';
 
 const playwrightFixtureJanitorRun = new WeakSet<Page>();

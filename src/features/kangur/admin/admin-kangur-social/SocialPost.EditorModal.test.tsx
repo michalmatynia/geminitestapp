@@ -83,8 +83,35 @@ vi.mock('./SocialPost.Editor', () => ({
 }));
 
 vi.mock('./SocialPost.ImagesPanel', () => ({
-  SocialPostImagesPanel: () => (
-    <div data-testid='social-post-images-panel'>social-post-images-panel</div>
+  SocialPostImagesPanel: ({
+    handleRemoveImage,
+    setShowMediaLibrary,
+    isInteractionBlocked,
+    interactionTitle,
+  }: {
+    handleRemoveImage: (id: string) => void;
+    setShowMediaLibrary: React.Dispatch<React.SetStateAction<boolean>>;
+    isInteractionBlocked?: boolean;
+    interactionTitle?: string;
+  }) => (
+    <div data-testid='social-post-images-panel'>
+      <button
+        type='button'
+        disabled={Boolean(isInteractionBlocked)}
+        title={interactionTitle}
+        onClick={() => handleRemoveImage('image-1')}
+      >
+        Remove image
+      </button>
+      <button
+        type='button'
+        disabled={Boolean(isInteractionBlocked)}
+        title={interactionTitle}
+        onClick={() => setShowMediaLibrary(true)}
+      >
+        Add images
+      </button>
+    </div>
   ),
 }));
 
@@ -238,8 +265,70 @@ describe('SocialPostEditorModal', () => {
 
     fireEvent.click(screen.getByRole('tab', { name: 'Schedule' }));
 
+    expect(screen.getByLabelText('Scheduled publish date and time')).toBeDisabled();
+    expect(screen.getByLabelText('Scheduled publish date and time')).toHaveAttribute(
+      'title',
+      'Wait for the current Social runtime job to finish.'
+    );
     expect(screen.getByRole('button', { name: 'Schedule' })).toBeDisabled();
     expect(screen.getByRole('button', { name: 'Schedule' })).toHaveAttribute(
+      'title',
+      'Wait for the current Social runtime job to finish.'
+    );
+
+    fireEvent.click(screen.getByRole('tab', { name: 'Images' }));
+
+    expect(screen.getByRole('button', { name: 'Add images' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Add images' })).toHaveAttribute(
+      'title',
+      'Wait for the current Social runtime job to finish.'
+    );
+    expect(screen.getByRole('button', { name: 'Remove image' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Remove image' })).toHaveAttribute(
+      'title',
+      'Wait for the current Social runtime job to finish.'
+    );
+  });
+
+  it('blocks image changes while Social image analysis is in flight', () => {
+    useSocialPostContextMock.mockReturnValue({
+      activePost: buildPost(),
+      scheduledAt: '2026-03-21T10:30',
+      setScheduledAt: vi.fn(),
+      hasUnsavedChanges: true,
+      handleSave: vi.fn(async () => {}),
+      handlePublish: vi.fn(async () => {}),
+      patchMutation: { isPending: false },
+      publishMutation: { isPending: false },
+      currentVisualAnalysisJob: {
+        id: 'job-analysis-1',
+        status: 'active',
+        progress: { message: 'Analyzing the selected screenshots.' },
+        failedReason: null,
+      },
+      currentGenerationJob: null,
+      currentPipelineJob: null,
+      imageAssets: buildPost().imageAssets,
+      handleRemoveImage: vi.fn(),
+      setShowMediaLibrary: vi.fn(),
+      showMediaLibrary: false,
+      handleAddImages: vi.fn(),
+    });
+
+    render(<SocialPostEditorModal isOpen={true} onClose={vi.fn()} />);
+
+    expect(screen.getByRole('button', { name: 'Save draft' })).toBeEnabled();
+    expect(screen.getByRole('button', { name: 'Publish to LinkedIn' })).toBeEnabled();
+
+    fireEvent.click(screen.getByRole('tab', { name: 'Images' }));
+
+    expect(screen.getByRole('button', { name: 'Add images' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Add images' })).toHaveAttribute(
+      'title',
+      'Wait for the current Social runtime job to finish.'
+    );
+    expect(screen.getByRole('button', { name: 'Remove image' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Remove image' })).toHaveAttribute(
       'title',
       'Wait for the current Social runtime job to finish.'
     );

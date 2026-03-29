@@ -70,6 +70,9 @@ describe('useKangurPageContentStore', () => {
     });
 
     expect(apiGetMock).toHaveBeenCalledTimes(1);
+    expect(apiGetMock).toHaveBeenCalledWith('/api/kangur/ai-tutor/page-content?locale=pl', {
+      timeout: 30000,
+    });
   });
 
   it('does not refetch stale page content when Kangur widgets remount', async () => {

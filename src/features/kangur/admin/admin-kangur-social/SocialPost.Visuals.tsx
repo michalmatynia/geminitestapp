@@ -17,6 +17,12 @@ type SocialPostVisualsProps = {
   showImagesPanel?: boolean;
 };
 
+const isSocialRuntimeJobInFlight = (status: string | null | undefined): boolean => {
+  const normalized = status?.trim().toLowerCase();
+  if (!normalized) return false;
+  return normalized !== 'completed' && normalized !== 'failed';
+};
+
 export function SocialPostVisuals(props: SocialPostVisualsProps): React.JSX.Element {
   const { showImagesPanel = true } = props;
   const {
@@ -88,6 +94,13 @@ export function SocialPostVisuals(props: SocialPostVisualsProps): React.JSX.Elem
   ]
     .filter((value): value is string => Boolean(value))
     .join(' · ');
+  const hasBlockingVisualMutationJob =
+    isSocialRuntimeJobInFlight(currentVisualAnalysisJob?.status) ||
+    isSocialRuntimeJobInFlight(currentGenerationJob?.status) ||
+    isSocialRuntimeJobInFlight(currentPipelineJob?.status);
+  const visualMutationTitle = hasBlockingVisualMutationJob
+    ? 'Wait for the current Social runtime job to finish.'
+    : undefined;
 
   return (
     <>
@@ -278,6 +291,8 @@ export function SocialPostVisuals(props: SocialPostVisualsProps): React.JSX.Elem
                       type='button'
                       variant={isSelected ? 'secondary' : 'outline'}
                       size='xs'
+                      disabled={hasBlockingVisualMutationJob}
+                      title={visualMutationTitle}
                       onClick={() =>
                         isSelected ? handleRemoveAddon(addon.id) : handleSelectAddon(addon)
                       }
@@ -299,6 +314,8 @@ export function SocialPostVisuals(props: SocialPostVisualsProps): React.JSX.Elem
           setShowMediaLibrary={setShowMediaLibrary}
           showMediaLibrary={showMediaLibrary}
           handleAddImages={handleAddImages}
+          isInteractionBlocked={hasBlockingVisualMutationJob}
+          interactionTitle={visualMutationTitle}
         />
       )}
     </>

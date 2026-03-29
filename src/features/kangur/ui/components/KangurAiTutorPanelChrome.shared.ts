@@ -18,7 +18,6 @@ import type {
   TutorMotionProfile,
   TutorPanelChromeVariant,
   TutorPanelSnapState,
-  TutorReducedMotionPanelTransitions,
 } from './KangurAiTutorWidget.shared';
 import type { KangurAiTutorPanelBodyContextValue } from './KangurAiTutorPanelBody.context';
 
@@ -173,7 +172,7 @@ export const resolvePanelSurfaceStyle = ({
   isAskModalMode: boolean;
   isCompactDockedTutorPanel: boolean;
   shouldUseMinimalPanelShell: boolean;
-}): MotionStyle => ({
+}): CSSProperties => ({
   maxHeight: isAskModalMode
     ? 'min(82vh, 720px)'
     : shouldUseMinimalPanelShell

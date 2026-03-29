@@ -55,6 +55,13 @@ type KangurResolvedPageIntroCardContextValue = {
   onBack: () => void;
 };
 
+type ResolvedKangurPageIntroCardProps = {
+  children?: ReactNode;
+  contextValue: KangurResolvedPageIntroCardContextValue;
+  panelClassName: string;
+  testId?: string;
+};
+
 const KangurResolvedPageIntroCardContext =
   createContext<KangurResolvedPageIntroCardContextValue | null>(null);
 
@@ -170,7 +177,7 @@ function KangurRenderedPageIntroBackButton(): React.JSX.Element | null {
   );
 }
 
-export function KangurResolvedPageIntroCard({
+const resolveKangurResolvedPageIntroCardProps = ({
   accent = 'slate',
   backButtonContent,
   backButtonTestId,
@@ -191,9 +198,9 @@ export function KangurResolvedPageIntroCard({
   titleId,
   visualTitle,
   onBack = () => {},
-}: KangurResolvedPageIntroCardProps): React.JSX.Element {
-  const panelClassName = cn('w-full', headingAction ? 'text-left' : 'text-center', className);
-  const contextValue: KangurResolvedPageIntroCardContextValue = {
+}: KangurResolvedPageIntroCardProps): ResolvedKangurPageIntroCardProps => ({
+  children,
+  contextValue: {
     accent,
     backButtonContent,
     backButtonTestId,
@@ -211,22 +218,48 @@ export function KangurResolvedPageIntroCard({
     titleId,
     visualTitle,
     onBack,
-  };
+  },
+  panelClassName: cn('w-full', headingAction ? 'text-left' : 'text-center', className),
+  testId,
+});
+
+function KangurResolvedPageIntroCardBody({
+  children,
+  panelClassName,
+  testId,
+}: {
+  children?: ReactNode;
+  panelClassName: string;
+  testId?: string;
+}): React.JSX.Element {
+  return (
+    <KangurGlassPanel
+      className={panelClassName}
+      data-testid={testId}
+      padding='lg'
+      surface='mistStrong'
+      variant='soft'
+    >
+      <KangurPageIntroHeading />
+      <KangurPageIntroDescription />
+      <KangurPageIntroBackButton />
+      {children ? <div className='mt-3 w-full'>{children}</div> : null}
+    </KangurGlassPanel>
+  );
+}
+
+export function KangurResolvedPageIntroCard(
+  props: KangurResolvedPageIntroCardProps
+): React.JSX.Element {
+  const resolvedProps = resolveKangurResolvedPageIntroCardProps(props);
 
   return (
-    <KangurResolvedPageIntroCardContext.Provider value={contextValue}>
-      <KangurGlassPanel
-        className={panelClassName}
-        data-testid={testId}
-        padding='lg'
-        surface='mistStrong'
-        variant='soft'
-      >
-        <KangurPageIntroHeading />
-        <KangurPageIntroDescription />
-        <KangurPageIntroBackButton />
-        {children ? <div className='mt-3 w-full'>{children}</div> : null}
-      </KangurGlassPanel>
+    <KangurResolvedPageIntroCardContext.Provider value={resolvedProps.contextValue}>
+      <KangurResolvedPageIntroCardBody
+        children={resolvedProps.children}
+        panelClassName={resolvedProps.panelClassName}
+        testId={resolvedProps.testId}
+      />
     </KangurResolvedPageIntroCardContext.Provider>
   );
 }

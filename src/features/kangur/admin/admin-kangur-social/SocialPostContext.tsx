@@ -19,6 +19,12 @@ type SocialPostContextValue = ReturnType<typeof useAdminKangurSocialPage> & {
 
 const SocialPostContext = createContext<SocialPostContextValue | null>(null);
 
+const isSocialRuntimeJobInFlight = (status: string | null | undefined): boolean => {
+  const normalized = status?.trim().toLowerCase();
+  if (!normalized) return false;
+  return normalized !== 'completed' && normalized !== 'failed';
+};
+
 export function SocialPostProvider({ children }: { children: React.ReactNode }) {
   const socialPage = useAdminKangurSocialPage();
   const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
@@ -28,10 +34,27 @@ export function SocialPostProvider({ children }: { children: React.ReactNode }) 
 
   const handleOpenPostEditor = useCallback(
     (postId: string): void => {
+      const isCrossPostEditorSwitch =
+        Boolean(socialPage.activePost?.id) && socialPage.activePost?.id !== postId;
+      const hasBlockingRuntimeJob =
+        isSocialRuntimeJobInFlight(socialPage.currentVisualAnalysisJob?.status) ||
+        isSocialRuntimeJobInFlight(socialPage.currentGenerationJob?.status) ||
+        isSocialRuntimeJobInFlight(socialPage.currentPipelineJob?.status);
+
+      if (isCrossPostEditorSwitch && hasBlockingRuntimeJob) {
+        return;
+      }
+
       socialPage.setActivePostId(postId);
       setIsPostEditorModalOpen(true);
     },
-    [socialPage.setActivePostId]
+    [
+      socialPage.activePost?.id,
+      socialPage.currentGenerationJob?.status,
+      socialPage.currentPipelineJob?.status,
+      socialPage.currentVisualAnalysisJob?.status,
+      socialPage.setActivePostId,
+    ]
   );
 
   const value = {

@@ -7,20 +7,26 @@ const {
   useKangurRoutingMock,
   resolveKangurPageKeyMock,
   preloadKangurPageMock,
+  queryClientMock,
   routeNavigatorMock,
+  sessionMock,
   settingsStoreStateMock,
+  useLocaleMock,
 } = vi.hoisted(() => ({
   useKangurAuthMock: vi.fn(),
   useKangurRoutingMock: vi.fn(),
   resolveKangurPageKeyMock: vi.fn(),
   preloadKangurPageMock: vi.fn(),
+  queryClientMock: vi.fn(),
   routeNavigatorMock: {
     back: vi.fn(),
     prefetch: vi.fn(),
     push: vi.fn(),
     replace: vi.fn(),
   },
+  sessionMock: vi.fn(),
   settingsStoreStateMock: vi.fn(),
+  useLocaleMock: vi.fn(),
 }));
 
 vi.mock('@/features/kangur/ui/context/KangurAuthContext', () => ({
@@ -51,12 +57,42 @@ vi.mock('framer-motion', () => ({
   useReducedMotion: () => false,
 }));
 
+vi.mock('@tanstack/react-query', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@tanstack/react-query')>();
+  return {
+    ...actual,
+    useQueryClient: () => queryClientMock(),
+  };
+});
+
+vi.mock('next-auth/react', () => ({
+  useSession: () => sessionMock(),
+}));
+
+vi.mock('next-intl', () => ({
+  useLocale: () => useLocaleMock(),
+  useTranslations: () => (key: string) => key,
+}));
+
 vi.mock('@/features/kangur/ui/context/KangurTutorAnchorContext', () => ({
   KangurTutorAnchorProvider: ({ children }: { children: ReactNode }) => <>{children}</>,
 }));
 
 vi.mock('@/features/kangur/ui/components/KangurAiTutorWidget', () => ({
   KangurAiTutorWidget: () => null,
+}));
+
+vi.mock('@/features/kangur/ui/components/KangurPageTransitionSkeleton', () => ({
+  KangurPageTransitionSkeleton: () => <div data-testid='kangur-page-transition-skeleton' />,
+}));
+
+vi.mock('@/features/kangur/ui/components/KangurAppLoader', () => ({
+  KangurAppLoader: ({ visible }: { visible: boolean }) =>
+    visible ? <div data-testid='kangur-app-loader' /> : null,
+}));
+
+vi.mock('@/features/kangur/ui/components/KangurLoginModal', () => ({
+  KangurLoginModal: () => <div data-testid='kangur-login-modal' />,
 }));
 
 vi.mock('@/features/kangur/ui/hooks/useKangurRouteNavigator', () => ({
@@ -119,6 +155,13 @@ const buildAuthState = (overrides: Record<string, unknown> = {}) => ({
 describe('KangurFeatureApp shell behavior', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    queryClientMock.mockReturnValue({
+      prefetchQuery: vi.fn(),
+    });
+    sessionMock.mockReturnValue({
+      data: null,
+      status: 'unauthenticated',
+    });
     settingsStoreStateMock.mockReturnValue({
       map: new Map(),
       isLoading: false,
@@ -129,6 +172,7 @@ describe('KangurFeatureApp shell behavior', () => {
       getNumber: vi.fn(),
       refetch: vi.fn(),
     });
+    useLocaleMock.mockReturnValue('pl');
     useKangurRoutingMock.mockReturnValue({
       pageKey: 'Game',
       requestedPath: '/kangur/game',
@@ -160,7 +204,8 @@ describe('KangurFeatureApp shell behavior', () => {
 
     render(<KangurFeatureApp />);
 
-    expect(screen.getByTestId('kangur-app-loader')).toBeInTheDocument();
+    expect(screen.getByTestId('kangur-page-transition-skeleton')).toBeInTheDocument();
+    expect(screen.queryByTestId('kangur-app-loader')).not.toBeInTheDocument();
     expect(screen.queryByTestId('kangur-route-content')).not.toBeInTheDocument();
   });
 

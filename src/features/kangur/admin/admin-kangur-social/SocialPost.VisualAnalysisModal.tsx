@@ -107,6 +107,12 @@ export function SocialPostVisualAnalysisModal(): React.JSX.Element | null {
   const saveText = isFollowUpGenerationInFlight
     ? 'Generate post in progress...'
     : 'Generate post with analysis';
+  const analyzeButtonTitle =
+    selectedAddons.length === 0
+      ? 'Select at least one image add-on before running image analysis.'
+      : isVisualAnalysisJobInFlight
+        ? 'Wait for the current Social runtime job to finish.'
+        : 'Analyze selected visuals';
 
   return (
     <FormModal
@@ -131,6 +137,7 @@ export function SocialPostVisualAnalysisModal(): React.JSX.Element | null {
             void handleAnalyzeSelectedVisuals();
           }}
           disabled={isVisualAnalysisJobInFlight || selectedAddons.length === 0}
+          title={analyzeButtonTitle}
         >
           {isVisualAnalysisJobInFlight ? 'Analyzing visuals...' : 'Analyze selected visuals'}
         </Button>

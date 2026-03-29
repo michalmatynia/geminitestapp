@@ -91,5 +91,13 @@ describe('Kangur Mongo runtime placeholders', () => {
     expect(result.current).toEqual({ kind: 'list-query' });
     expect(config.placeholderData).toBeUndefined();
     await expect(config.queryFn()).resolves.toEqual(catalogPayload);
+    expect(apiGetMock).toHaveBeenCalledWith('/api/kangur/lessons-catalog', {
+      params: {
+        subject: 'english',
+        ageGroup: undefined,
+        enabledOnly: true,
+      },
+      timeout: 30000,
+    });
   });
 });

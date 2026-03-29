@@ -36,6 +36,7 @@ import {
   buildKangurLearnerProfileSnapshot,
   translateKangurLearnerProfileWithFallback,
 } from '@/features/kangur/ui/services/profile';
+import type { KangurLessonSubject } from '@/features/kangur/shared/contracts/kangur';
 import type { KangurLearnerProfileSnapshot } from '@/features/kangur/shared/contracts/kangur-profile';
 import type { KangurDifficulty, KangurOperation } from '@/features/kangur/ui/types';
 import type {
@@ -281,7 +282,7 @@ const loadDeferredLearnerProfileScores = async ({
           learnerId,
           userName,
           userEmail,
-          subject,
+          subject: subject as KangurLessonSubject,
           limit: LEARNER_PROFILE_SCORE_FETCH_LIMIT,
         }),
       {

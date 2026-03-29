@@ -520,9 +520,14 @@ const buildWeakestLessonTrainingRecommendation = (
 
 const resolveProgressActivityLocalizer = (
   localizer: KangurRecommendationLocalizer | undefined
-): Pick<KangurRecommendationLocalizer, 'translate'> => ({
-  translate: localizer?.progressTranslate,
-});
+): Pick<KangurRecommendationLocalizer, 'translate'> => {
+  const progressTranslate = localizer?.progressTranslate;
+  return {
+    translate: progressTranslate
+      ? (key, values) => progressTranslate(key, values as Record<string, string | number>)
+      : undefined,
+  };
+};
 
 const buildTopActivityTrainingRecommendation = (
   context: KangurTrainingRecommendationContext
@@ -588,9 +593,9 @@ const buildMixedTrainingRecommendation = (
       ? translateRecommendationWithFallback(
           context.translate,
           'training.mixed.descriptionWithTrack',
-          context.fallbackCopy.training.mixed.descriptionWithTrack(topTrack.label),
+          context.fallbackCopy.training.mixed.descriptionWithTrack(topTrack?.label ?? ''),
           {
-            track: topTrack.label,
+            track: topTrack?.label ?? '',
           }
         )
       : translateRecommendationWithFallback(

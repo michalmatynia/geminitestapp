@@ -29,7 +29,6 @@ import {
   KANGUR_TOP_BAR_DEFAULT_HEIGHT_PX,
   KANGUR_TOP_BAR_HEIGHT_VAR_NAME,
 } from '@/features/kangur/ui/design/tokens';
-import { useKangurLessonTemplates } from '@/features/kangur/ui/hooks/useKangurLessonTemplates';
 import type { KangurAssignmentSnapshot } from '@kangur/platform';
 import {
   ACTIVE_LESSON_HEADER_SCROLL_MAX_FRAMES,
@@ -42,6 +41,10 @@ import {
 const EMPTY_LESSON_ASSIGNMENTS_BY_COMPONENT = new Map<
   KangurLessonComponentId,
   KangurAssignmentSnapshot
+>();
+const EMPTY_LESSON_TEMPLATE_MAP = new Map<
+  KangurLessonComponentId,
+  import('@/shared/contracts/kangur-lesson-templates').KangurLessonTemplate
 >();
 const EMPTY_LESSON_DOCUMENTS = {} as KangurLessonDocumentStore;
 
@@ -63,13 +66,7 @@ export function useLessonsLogic() {
   const [isSecretLessonActive, setIsSecretLessonActive] = useState(false);
   const [focusToken, setFocusToken] = useState<string | null>(null);
   const [isAssignmentsReady, setIsAssignmentsReady] = useState(false);
-  const { data: lessonTemplates = [] } = useKangurLessonTemplates({
-    enabled: isDeferredContentReady && focusToken !== null,
-  });
-  const lessonTemplateMap = useMemo(
-    () => new Map(lessonTemplates.map((t) => [t.componentId, t] as const)),
-    [lessonTemplates],
-  );
+  const lessonTemplateMap = EMPTY_LESSON_TEMPLATE_MAP;
   const progress = useKangurProgressState({
     enabled: isDeferredContentReady || activeLessonId !== null,
   });

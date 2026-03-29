@@ -1060,6 +1060,9 @@ const resolvePreferredTimestampValue = (
   }
 
   const [leftCandidate, rightCandidate] = candidates;
+  if (!leftCandidate || !rightCandidate) {
+    return leftCandidate?.value ?? rightCandidate?.value ?? null;
+  }
   const useLeftCandidate =
     preference === 'earliest'
       ? leftCandidate.timestamp <= rightCandidate.timestamp

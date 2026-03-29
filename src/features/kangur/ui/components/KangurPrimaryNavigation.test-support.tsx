@@ -2,11 +2,9 @@
  * @vitest-environment jsdom
  */
 
-import { QueryClientContext } from '@tanstack/react-query';
 import React from 'react';
-import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
-import { afterAll, beforeEach, describe, expect, it, vi } from 'vitest';
+import { fireEvent, screen } from '@testing-library/react';
+import { afterAll, beforeEach, vi } from 'vitest';
 
 import type { LabeledOptionDto } from '@/shared/contracts/base';
 

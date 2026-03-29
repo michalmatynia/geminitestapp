@@ -3,40 +3,152 @@
  */
 
 import React, { type ReactNode } from 'react';
+import type { QueryClient } from '@tanstack/react-query';
 import { vi } from 'vitest';
 import { clearLatchedKangurTopBarHeightCssValue } from '@/features/kangur/ui/utils/readKangurTopBarHeightCssValue';
+
+type MockedSessionState = {
+  data: unknown;
+  status: 'authenticated' | 'loading' | 'unauthenticated';
+};
+
+type MockedLoginModalState = ReturnType<
+  typeof import('@/features/kangur/ui/context/KangurLoginModalContext')['useKangurLoginModalState']
+>;
+type MockedAuthState = ReturnType<
+  typeof import('@/features/kangur/ui/context/KangurAuthContext')['useKangurAuth']
+>;
+type MockedRoutingState = ReturnType<
+  typeof import('@/features/kangur/ui/context/KangurRoutingContext')['useKangurRouting']
+>;
+type MockedRouteTransitionState = ReturnType<
+  typeof import('@/features/kangur/ui/context/KangurRouteTransitionContext')['useKangurRouteTransitionState']
+>;
+type MockedRouteTransitionStateInput = MockedRouteTransitionState & {
+  markRouteTransitionReady?: ReturnType<typeof vi.fn>;
+  startRouteTransition?: ReturnType<typeof vi.fn>;
+};
+type MockedPendingRouteLoadingSnapshot = ReturnType<
+  typeof import('@/features/kangur/ui/routing/pending-route-loading-snapshot')['useKangurPendingRouteLoadingSnapshot']
+>;
+type MockedSettingsStore = ReturnType<
+  typeof import('@/shared/providers/SettingsStoreProvider')['useSettingsStore']
+>;
+type MockedAuthStateInput = Partial<MockedAuthState> &
+  Pick<
+    MockedAuthState,
+    | 'authError'
+    | 'hasResolvedAuth'
+    | 'isAuthenticated'
+    | 'isLoadingAuth'
+    | 'isLoadingPublicSettings'
+  >;
+type MockedQueryClient = Pick<QueryClient, 'prefetchQuery'>;
 
 const {
   authStateMock,
   loginModalStateMock,
   pendingRouteLoadingSnapshotMock,
+  prefetchKangurPageContentStoreMock,
   routingStateMock,
   routeTransitionStateMock,
   routeNavigatorMock,
+  queryClientMock,
   sessionMock,
   settingsStoreStateMock,
   topNavigationHostVisibleMock,
   preloadKangurPageMock,
+  useLocaleMock,
 } = vi.hoisted(() => ({
-  authStateMock: vi.fn(),
-  loginModalStateMock: vi.fn(),
-  pendingRouteLoadingSnapshotMock: vi.fn(),
-  preloadKangurPageMock: vi.fn(),
-  routingStateMock: vi.fn(),
-  routeTransitionStateMock: vi.fn(),
+  authStateMock: vi.fn<() => MockedAuthStateInput>(),
+  loginModalStateMock: vi.fn<() => MockedLoginModalState>(),
+  pendingRouteLoadingSnapshotMock: vi.fn<() => MockedPendingRouteLoadingSnapshot>(),
+  preloadKangurPageMock: vi.fn<(pageKey: string) => void>(),
+  prefetchKangurPageContentStoreMock: vi.fn<
+    (queryClient: QueryClient | null | undefined, locale?: string | null) => Promise<void>
+  >(),
+  queryClientMock: vi.fn<() => MockedQueryClient>(),
+  routingStateMock: vi.fn<() => MockedRoutingState>(),
+  routeTransitionStateMock: vi.fn<() => MockedRouteTransitionStateInput>(),
   routeNavigatorMock: {
     back: vi.fn(),
     prefetch: vi.fn(),
     push: vi.fn(),
     replace: vi.fn(),
   },
-  sessionMock: vi.fn(),
-  settingsStoreStateMock: vi.fn(),
+  sessionMock: vi.fn<() => MockedSessionState>(),
+  settingsStoreStateMock: vi.fn<() => MockedSettingsStore>(),
   topNavigationHostVisibleMock: vi.fn(),
+  useLocaleMock: vi.fn<() => string>(),
 }));
 
 const serializeMotionProp = (value: unknown): string | undefined =>
   value === undefined ? undefined : JSON.stringify(value);
+
+const createMockedAuthState = (
+  overrides: MockedAuthStateInput = {
+    authError: null,
+    hasResolvedAuth: true,
+    isAuthenticated: true,
+    isLoadingAuth: false,
+    isLoadingPublicSettings: false,
+  },
+): MockedAuthState => {
+  const defaults: MockedAuthState = {
+    user: null,
+    isAuthenticated: true,
+    hasResolvedAuth: true,
+    canAccessParentAssignments: false,
+    isLoadingAuth: false,
+    isLoadingPublicSettings: false,
+    authError: null,
+    appPublicSettings: null,
+    logout: vi.fn(),
+    navigateToLogin: vi.fn(),
+    checkAppState: vi.fn(async () => null),
+    selectLearner: vi.fn(async () => undefined),
+  };
+
+  return {
+    ...defaults,
+    ...overrides,
+  };
+};
+
+const createMockedRouteTransitionState = (
+  overrides: MockedRouteTransitionStateInput = {
+    activeTransitionKind: null,
+    activeTransitionPageKey: null,
+    activeTransitionRequestedHref: null,
+    activeTransitionSkeletonVariant: null,
+    activeTransitionSourceId: null,
+    isRouteAcknowledging: false,
+    isRoutePending: false,
+    isRouteRevealing: false,
+    isRouteWaitingForReady: false,
+    pendingPageKey: null,
+    transitionPhase: 'idle',
+  },
+): MockedRouteTransitionState => {
+  const defaults: MockedRouteTransitionState = {
+    isRouteAcknowledging: false,
+    isRoutePending: false,
+    isRouteWaitingForReady: false,
+    isRouteRevealing: false,
+    transitionPhase: 'idle',
+    activeTransitionSourceId: null,
+    activeTransitionKind: null,
+    activeTransitionPageKey: null,
+    activeTransitionRequestedHref: null,
+    activeTransitionSkeletonVariant: null,
+    pendingPageKey: null,
+  };
+
+  return {
+    ...defaults,
+    ...overrides,
+  };
+};
 
 vi.mock('next/dynamic', () => ({
   default: (loader: unknown) => {
@@ -123,6 +235,18 @@ vi.mock('framer-motion', () => ({
 vi.mock('next-auth/react', () => ({
   useSession: () => sessionMock(),
 }));
+
+vi.mock('next-intl', () => ({
+  useLocale: () => useLocaleMock(),
+}));
+
+vi.mock('@tanstack/react-query', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@tanstack/react-query')>();
+  return {
+    ...actual,
+    useQueryClient: () => queryClientMock() as QueryClient,
+  };
+});
 
 vi.mock('@/features/kangur/ui/components/KangurPageTransitionSkeleton', () => ({
   KangurPageTransitionSkeleton: ({
@@ -224,15 +348,15 @@ vi.mock('@/features/kangur/ui/context/KangurScoreSyncProvider', () => ({
 
 vi.mock('@/features/kangur/ui/context/KangurAuthContext', () => ({
   KangurAuthProvider: ({ children }: { children: ReactNode }) => <>{children}</>,
-  useKangurAuth: () => authStateMock(),
-  useKangurAuthState: () => authStateMock(),
+  useKangurAuth: () => createMockedAuthState(authStateMock()),
+  useKangurAuthState: () => createMockedAuthState(authStateMock()),
   useKangurAuthActions: () => ({
     logout: vi.fn(),
     navigateToLogin: vi.fn(),
     checkAppState: vi.fn(),
     selectLearner: vi.fn(),
   }),
-  useOptionalKangurAuth: () => authStateMock(),
+  useOptionalKangurAuth: () => createMockedAuthState(authStateMock()),
 }));
 
 vi.mock('@/features/kangur/ui/context/KangurRoutingContext', () => ({
@@ -241,12 +365,19 @@ vi.mock('@/features/kangur/ui/context/KangurRoutingContext', () => ({
 
 vi.mock('@/features/kangur/ui/context/KangurRouteTransitionContext', () => ({
   KangurRouteTransitionProvider: ({ children }: { children: ReactNode }) => <>{children}</>,
-  useKangurRouteTransition: () => routeTransitionStateMock(),
-  useKangurRouteTransitionState: () => routeTransitionStateMock(),
+  useKangurRouteTransition: () => createMockedRouteTransitionState(routeTransitionStateMock()),
+  useKangurRouteTransitionState: () =>
+    createMockedRouteTransitionState(routeTransitionStateMock()),
 }));
 
 vi.mock('@/features/kangur/ui/hooks/useKangurRouteNavigator', () => ({
   useKangurRouteNavigator: () => routeNavigatorMock,
+}));
+
+vi.mock('@/features/kangur/ui/hooks/useKangurPageContent', () => ({
+  prefetchKangurPageContentStore: (
+    ...args: Parameters<typeof prefetchKangurPageContentStoreMock>
+  ) => prefetchKangurPageContentStoreMock(...args),
 }));
 
 vi.mock('@/features/kangur/ui/routing/pending-route-loading-snapshot', async (importOriginal) => {
@@ -309,12 +440,15 @@ export {
   loginModalStateMock,
   pendingRouteLoadingSnapshotMock,
   preloadKangurPageMock,
+  prefetchKangurPageContentStoreMock,
+  queryClientMock,
   routingStateMock,
   routeNavigatorMock,
   routeTransitionStateMock,
   sessionMock,
   settingsStoreStateMock,
   topNavigationHostVisibleMock,
+  useLocaleMock,
 };
 
 export async function setupKangurFeatureAppTest() {
@@ -375,11 +509,15 @@ export async function setupKangurFeatureAppTest() {
     activeTransitionRequestedHref: null,
     activeTransitionSkeletonVariant: null,
     pendingPageKey: null,
-    startRouteTransition: vi.fn(),
-    markRouteTransitionReady: vi.fn(),
   });
   topNavigationHostVisibleMock.mockReturnValue(true);
   preloadKangurPageMock.mockReset();
+  prefetchKangurPageContentStoreMock.mockReset();
+  prefetchKangurPageContentStoreMock.mockResolvedValue(undefined);
+  queryClientMock.mockReturnValue({
+    prefetchQuery: vi.fn() as QueryClient['prefetchQuery'],
+  });
+  useLocaleMock.mockReturnValue('pl');
 
   const { KangurFeatureApp } = await import('@/features/kangur/ui/KangurFeatureApp');
   return KangurFeatureApp;

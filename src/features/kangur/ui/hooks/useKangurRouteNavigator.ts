@@ -240,19 +240,19 @@ const buildManagedRouteTransitionPayload = ({
   const trimmedSourceId = sourceId?.trim() ?? '';
 
   if (resolvedHref) {
-    payload.href = resolvedHref;
+    payload['href'] = resolvedHref;
   }
   if (accessibleResolvedPageKey) {
-    payload.pageKey = accessibleResolvedPageKey;
+    payload['pageKey'] = accessibleResolvedPageKey;
   }
   if (trimmedSourceId) {
-    payload.sourceId = trimmedSourceId;
+    payload['sourceId'] = trimmedSourceId;
   }
   if (effectiveAcknowledgeMs > 0) {
-    payload.acknowledgeMs = effectiveAcknowledgeMs;
+    payload['acknowledgeMs'] = effectiveAcknowledgeMs;
   }
   if (transitionKind) {
-    payload.transitionKind = transitionKind;
+    payload['transitionKind'] = transitionKind;
   }
 
   return payload;

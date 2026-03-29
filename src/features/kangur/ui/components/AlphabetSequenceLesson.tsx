@@ -57,7 +57,7 @@ export default function AlphabetSequenceLesson({ lessonTemplate }: LessonProps):
       autoRecordComplete
       skipMarkFor={['game_order']}
       games={[
-        createAlphabetUnifiedLessonGame({
+        createAlphabetUnifiedLessonGame<'kolejnosc' | 'game_order' | 'summary'>({
           fallbackDescription: 'Uzupełnij brakujące litery w kolejności alfabetu.',
           fallbackTitle: 'Gra alfabet',
           gameId: 'alphabet_letter_order',

@@ -107,4 +107,47 @@ describe('kangur lesson templates handler', () => {
       expect.objectContaining({ componentId: 'multiplication' }),
     ]);
   });
+
+  it('forwards componentId and ageGroup filters and keeps them in separate cache entries', async () => {
+    const divisionTemplate = createDefaultKangurLessonTemplates().find(
+      (template) => template.componentId === 'division'
+    );
+    expect(divisionTemplate).toBeDefined();
+    listTemplatesMock.mockResolvedValue([divisionTemplate!]);
+
+    await getKangurLessonTemplatesHandler(
+      new NextRequest(
+        'http://localhost/api/kangur/lesson-templates?componentId=division&ageGroup=ten_year_old&locale=en'
+      ),
+      createRequestContext({
+        componentId: 'division',
+        ageGroup: 'ten_year_old',
+        locale: 'en',
+      })
+    );
+
+    await getKangurLessonTemplatesHandler(
+      new NextRequest(
+        'http://localhost/api/kangur/lesson-templates?componentId=division&ageGroup=six_year_old&locale=en'
+      ),
+      createRequestContext({
+        componentId: 'division',
+        ageGroup: 'six_year_old',
+        locale: 'en',
+      })
+    );
+
+    expect(listTemplatesMock).toHaveBeenNthCalledWith(1, {
+      locale: 'en',
+      componentId: 'division',
+      subject: undefined,
+      ageGroup: 'ten_year_old',
+    });
+    expect(listTemplatesMock).toHaveBeenNthCalledWith(2, {
+      locale: 'en',
+      componentId: 'division',
+      subject: undefined,
+      ageGroup: 'six_year_old',
+    });
+  });
 });

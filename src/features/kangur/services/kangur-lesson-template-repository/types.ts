@@ -1,11 +1,15 @@
 import type {
+  KangurLessonAgeGroup,
+  KangurLessonComponentId,
   KangurLessonSubject,
 } from '@kangur/contracts';
 import type { KangurLessonTemplate } from '@/shared/contracts/kangur-lesson-templates';
 
 export type KangurLessonTemplateListInput = {
   locale?: string;
+  componentId?: KangurLessonComponentId;
   subject?: KangurLessonSubject;
+  ageGroup?: KangurLessonAgeGroup;
 };
 
 export type KangurLessonTemplateRepository = {

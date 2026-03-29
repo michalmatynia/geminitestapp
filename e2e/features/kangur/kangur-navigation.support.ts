@@ -102,7 +102,7 @@ export const expectAnimatedTransitionSnapshot = (
 
 export const startRouteScrollMonitor = async (page: Page): Promise<void> => {
   await page.evaluate((monitorKey) => {
-    const globalWindow = window as Window & {
+    const globalWindow = window as unknown as Window & {
       [key: string]:
         | {
             stop: () => RouteScrollMonitorSample[];
@@ -173,7 +173,7 @@ export const stopRouteScrollMonitor = async (
   page: Page
 ): Promise<RouteScrollMonitorSample[]> =>
   page.evaluate((monitorKey) => {
-    const globalWindow = window as Window & {
+    const globalWindow = window as unknown as Window & {
       [key: string]:
         | {
             stop: () => RouteScrollMonitorSample[];

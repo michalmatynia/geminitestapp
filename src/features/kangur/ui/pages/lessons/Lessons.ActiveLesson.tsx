@@ -1,7 +1,7 @@
 import { motion } from 'framer-motion';
 import { ChevronsLeft } from 'lucide-react';
 import { useLocale, useTranslations } from 'next-intl';
-import { useCallback, useEffect, useRef } from 'react';
+import { useCallback, useEffect, useMemo, useRef } from 'react';
 import {
   hasKangurLessonDocumentContent,
 } from '@/features/kangur/lesson-documents';
@@ -25,6 +25,7 @@ import { LESSON_COMPONENTS } from '@/features/kangur/lessons/lesson-ui-registry'
 import { useLessons } from './LessonsContext';
 import { useKangurPageContentEntry } from '@/features/kangur/ui/hooks/useKangurPageContent';
 import { useKangurLessonDocument } from '@/features/kangur/ui/hooks/useKangurLessons';
+import { useKangurLessonTemplate } from '@/features/kangur/ui/hooks/useKangurLessonTemplates';
 import {
   LESSON_NAV_ANCHOR_ID,
   LESSONS_ACTIVE_LAYOUT_CLASSNAME,
@@ -171,6 +172,19 @@ export function ActiveLessonView({
   const activeLessonDocumentQuery = useKangurLessonDocument(activeLesson?.id ?? null, {
     enabled: shouldLoadActiveLessonDocument,
   });
+  const activeLessonTemplateQuery = useKangurLessonTemplate(activeLesson?.componentId ?? null, {
+    enabled: Boolean(activeLesson),
+  });
+  const activeLessonTemplateMap = useMemo(() => {
+    if (!activeLessonTemplateQuery.data) {
+      return lessonTemplateMap;
+    }
+
+    return new Map([
+      ...lessonTemplateMap,
+      [activeLessonTemplateQuery.data.componentId, activeLessonTemplateQuery.data] as const,
+    ]);
+  }, [activeLessonTemplateQuery.data, lessonTemplateMap]);
   const isActiveLessonDocumentLoading =
     shouldLoadActiveLessonDocument &&
     Boolean(
@@ -221,7 +235,7 @@ export function ActiveLessonView({
       ? (completedLessonAssignmentsByComponent.get(activeLesson.componentId) ?? null)
       : null;
   const printableLessonTitle = activeLesson
-    ? getResolvedKangurLessonTitle(activeLesson, locale, lessonTemplateMap)
+    ? getResolvedKangurLessonTitle(activeLesson, locale, activeLessonTemplateMap)
     : '';
   const activeLessonAssignmentRef = useRef<HTMLDivElement | null>(null);
 
@@ -441,12 +455,12 @@ export function ActiveLessonView({
   const localizedLessonTitle = getResolvedKangurLessonTitle(
     activeLesson,
     locale,
-    lessonTemplateMap
+    activeLessonTemplateMap
   );
   const localizedLessonDescription = getResolvedKangurLessonDescription(
     activeLesson,
     locale,
-    lessonTemplateMap
+    activeLessonTemplateMap
   );
   const isPrintAvailable =
     isSecretLessonHostActive ||
@@ -603,7 +617,7 @@ export function ActiveLessonView({
         </div>
       ) : ActiveLessonComponent ? (
         <ActiveLessonComponent
-          lessonTemplate={lessonTemplateMap.get(activeLesson.componentId) ?? null}
+          lessonTemplate={activeLessonTemplateMap.get(activeLesson.componentId) ?? null}
           onReady={() => setIsActiveLessonComponentReady(true)}
         />
       ) : null}

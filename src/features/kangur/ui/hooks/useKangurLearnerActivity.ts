@@ -401,12 +401,12 @@ const useKangurLearnerActivityStatusRefresh = ({
 
     try {
       const nextStatus = await readKangurLearnerActivityStatusFromApi({
-        learnerId,
+        learnerId: learnerId ?? '',
         setError,
         setStatus,
       });
       applyRefreshedKangurLearnerActivityStatus({
-        learnerId,
+        learnerId: learnerId ?? '',
         nextStatus,
         setStatus,
       });

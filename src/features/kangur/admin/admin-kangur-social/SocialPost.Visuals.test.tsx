@@ -396,4 +396,61 @@ describe('SocialPostVisuals', () => {
     expect(screen.getByText('Run: playwright-run-9')).toBeInTheDocument();
     expect(screen.getByText('Appearance: dark')).toBeInTheDocument();
   });
+
+  it('blocks add-on selection changes while Social runtime jobs are still in flight', () => {
+    const handleSelectAddon = vi.fn();
+    const handleRemoveAddon = vi.fn();
+
+    useSocialPostContextMock.mockReturnValue({
+      activePost: buildPost(),
+      recentAddons: [
+        {
+          id: 'addon-1',
+          title: 'Pricing hero capture',
+          description: 'Programmable capture from the pricing route.',
+          sourceUrl: 'https://example.com/pricing',
+          sourceLabel: 'Programmable Playwright capture',
+          imageAsset: {
+            id: 'asset-1',
+            url: 'https://example.com/pricing.png',
+            filepath: '/tmp/pricing.png',
+            filename: 'pricing.png',
+          },
+          presetId: null,
+          previousAddonId: null,
+          createdBy: 'admin',
+          updatedBy: 'admin',
+          createdAt: '2026-03-21T09:00:00.000Z',
+          updatedAt: '2026-03-21T09:00:00.000Z',
+        },
+      ],
+      addonsQuery: { isLoading: false },
+      imageAddonIds: [],
+      handleSelectAddon,
+      handleRemoveAddon,
+      imageAssets: [],
+      handleRemoveImage: vi.fn(),
+      setShowMediaLibrary: vi.fn(),
+      showMediaLibrary: false,
+      handleAddImages: vi.fn(),
+      currentVisualAnalysisJob: {
+        id: 'job-analysis-live-9',
+        status: 'active',
+        progress: { message: 'Analyzing visuals for the active draft.' },
+        failedReason: null,
+      },
+      currentGenerationJob: null,
+      currentPipelineJob: null,
+    });
+
+    render(<SocialPostVisuals showImagesPanel={false} />);
+
+    expect(screen.getByRole('button', { name: 'Select' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Select' })).toHaveAttribute(
+      'title',
+      'Wait for the current Social runtime job to finish.'
+    );
+    expect(handleSelectAddon).not.toHaveBeenCalled();
+    expect(handleRemoveAddon).not.toHaveBeenCalled();
+  });
 });

@@ -55,7 +55,7 @@ export default function AlphabetWordsLesson({ lessonTemplate }: LessonProps): JS
       autoRecordComplete
       skipMarkFor={['game_words']}
       games={[
-        createAlphabetUnifiedLessonGame({
+        createAlphabetUnifiedLessonGame<'slowa' | 'game_words' | 'summary'>({
           fallbackDescription: 'Dopasuj obrazek do właściwego słowa.',
           fallbackTitle: 'Gra słowa',
           gameId: 'alphabet_first_words',

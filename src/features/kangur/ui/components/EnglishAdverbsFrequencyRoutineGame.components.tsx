@@ -17,7 +17,6 @@ import {
   getFrequencyLabel,
   getFrequencyDescription,
   getFrequencyDaysLitLabel,
-  countFrequencyActiveDays,
   WEEKDAY_LABELS,
   type FrequencyToken,
 } from './EnglishAdverbsFrequencyRoutineGame.utils';

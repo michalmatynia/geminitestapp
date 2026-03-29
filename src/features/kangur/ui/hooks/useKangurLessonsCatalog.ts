@@ -22,6 +22,8 @@ type LessonsCatalogQueryOptions = KangurLessonCollectionFilterDto & {
   enabled?: boolean;
 };
 
+const KANGUR_LESSONS_CATALOG_REQUEST_TIMEOUT_MS = 30_000;
+
 const resolveLessonsCatalogFilters = (options?: LessonsCatalogQueryOptions) => ({
   ageGroup: options?.ageGroup ?? null,
   enabledOnly: options?.enabledOnly ?? null,
@@ -56,6 +58,7 @@ export const fetchKangurLessonsCatalog = async (
       };
       const payload = await api.get<KangurLessonsCatalog>('/api/kangur/lessons-catalog', {
         params,
+        timeout: KANGUR_LESSONS_CATALOG_REQUEST_TIMEOUT_MS,
       });
       return kangurLessonsCatalogSchema.parse(payload);
     },

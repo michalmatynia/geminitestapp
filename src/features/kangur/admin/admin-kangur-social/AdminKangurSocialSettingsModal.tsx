@@ -13,6 +13,7 @@ import {
   TabsTrigger,
 } from '@/features/kangur/shared/ui';
 import { useSocialPostContext } from './SocialPostContext';
+import { SocialJobStatusPill } from './SocialJobStatusPill';
 import {
   type SocialSettingsTab,
   useSocialSettingsModalState,
@@ -22,6 +23,12 @@ import { SocialSettingsProjectTab } from './social-settings-modal/SocialSettings
 import { SocialSettingsDocumentationTab } from './social-settings-modal/SocialSettingsDocumentationTab';
 import { SocialSettingsPublishingTab } from './social-settings-modal/SocialSettingsPublishingTab';
 import { SocialSettingsCaptureTab } from './social-settings-modal/SocialSettingsCaptureTab';
+
+const isSocialRuntimeJobInFlight = (status: string | null | undefined): boolean => {
+  const normalized = status?.trim().toLowerCase();
+  if (!normalized) return false;
+  return normalized !== 'completed' && normalized !== 'failed';
+};
 
 export function AdminKangurSocialSettingsModal({
   open,
@@ -107,6 +114,31 @@ export function AdminKangurSocialSettingsModal({
     visionModelOptions,
     contextSummary,
   } = context;
+  const hasBlockingRuntimeJob =
+    isSocialRuntimeJobInFlight(currentVisualAnalysisJob?.status) ||
+    isSocialRuntimeJobInFlight(currentGenerationJob?.status) ||
+    isSocialRuntimeJobInFlight(currentPipelineJob?.status);
+  const currentVisualAnalysisJobTitle = [
+    currentVisualAnalysisJob?.progress?.message ?? null,
+    currentVisualAnalysisJob?.failedReason ?? null,
+    currentVisualAnalysisJob?.id ? `Queue job: ${currentVisualAnalysisJob.id}` : null,
+  ]
+    .filter((value): value is string => Boolean(value))
+    .join(' · ');
+  const currentGenerationJobTitle = [
+    currentGenerationJob?.progress?.message ?? null,
+    currentGenerationJob?.failedReason ?? null,
+    currentGenerationJob?.id ? `Queue job: ${currentGenerationJob.id}` : null,
+  ]
+    .filter((value): value is string => Boolean(value))
+    .join(' · ');
+  const currentPipelineJobTitle = [
+    currentPipelineJob?.progress?.message ?? null,
+    currentPipelineJob?.failedReason ?? null,
+    currentPipelineJob?.id ? `Queue job: ${currentPipelineJob.id}` : null,
+  ]
+    .filter((value): value is string => Boolean(value))
+    .join(' · ');
 
   return (
     <FormModal
@@ -117,13 +149,44 @@ export function AdminKangurSocialSettingsModal({
       onSave={onSave}
       isSaving={isSaving}
       disableCloseWhileSaving
-      isSaveDisabled={!hasUnsavedChanges || isSaving}
+      isSaveDisabled={!hasUnsavedChanges || isSaving || hasBlockingRuntimeJob}
       hasUnsavedChanges={hasUnsavedChanges}
       saveText='Save Settings'
       cancelText='Close'
       size='xl'
       className='md:min-w-[52rem] max-w-[56rem]'
     >
+      {(currentVisualAnalysisJob?.status ||
+        currentGenerationJob?.status ||
+        currentPipelineJob?.status) ? (
+        <div className='mb-4 flex flex-wrap items-center gap-2 text-xs text-muted-foreground'>
+          <span className='font-medium text-foreground/80'>Runtime jobs:</span>
+          {currentVisualAnalysisJob?.status ? (
+            <SocialJobStatusPill
+              status={currentVisualAnalysisJob.status}
+              label='Image analysis'
+              title={currentVisualAnalysisJobTitle || undefined}
+              className='text-[10px]'
+            />
+          ) : null}
+          {currentGenerationJob?.status ? (
+            <SocialJobStatusPill
+              status={currentGenerationJob.status}
+              label='Generate post'
+              title={currentGenerationJobTitle || undefined}
+              className='text-[10px]'
+            />
+          ) : null}
+          {currentPipelineJob?.status ? (
+            <SocialJobStatusPill
+              status={currentPipelineJob.status}
+              label='Full pipeline'
+              title={currentPipelineJobTitle || undefined}
+              className='text-[10px]'
+            />
+          ) : null}
+        </div>
+      ) : null}
       <Tabs
         value={activeTab}
         onValueChange={(value: string) => setActiveTab(value as SocialSettingsTab)}
@@ -149,6 +212,7 @@ export function AdminKangurSocialSettingsModal({
             visionModelId={visionModelId}
             handleVisionModelChange={handleVisionModelChange}
             visionModelOptionsLoading={visionModelOptions.isLoading}
+            isRuntimeLocked={hasBlockingRuntimeJob}
           />
         </TabsContent>
 
@@ -156,6 +220,7 @@ export function AdminKangurSocialSettingsModal({
           <SocialSettingsProjectTab
             projectUrl={projectUrl}
             setProjectUrl={setProjectUrl}
+            isRuntimeLocked={hasBlockingRuntimeJob}
           />
         </TabsContent>
 
@@ -165,6 +230,7 @@ export function AdminKangurSocialSettingsModal({
             canGenerateSocialDraft={canGenerateSocialDraft}
             contextLoading={contextLoading}
             currentGenerationJob={currentGenerationJob}
+            currentPipelineJob={currentPipelineJob}
             docReferenceInput={docReferenceInput}
             docsUsed={docsUsed}
             generationNotes={generationNotes}
@@ -191,6 +257,7 @@ export function AdminKangurSocialSettingsModal({
             linkedInExpiryStatus={linkedInExpiryStatus}
             linkedInExpiryLabel={linkedInExpiryLabel}
             linkedInDaysRemaining={linkedInDaysRemaining}
+            isRuntimeLocked={hasBlockingRuntimeJob}
           />
         </TabsContent>
 

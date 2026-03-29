@@ -204,6 +204,55 @@ describe('FrontendRouteLoadingFallback', () => {
     );
 
     expect(screen.getByTestId('frontend-route-loading-fallback')).toBeInTheDocument();
+    expect(screen.getByTestId('frontend-route-loading-fallback-home')).toBeInTheDocument();
     expect(screen.queryByTestId('kangur-route-loading-fallback-probe')).not.toBeInTheDocument();
+  });
+
+  it('renders the product-page skeleton when CMS owns a product route', () => {
+    usePathnameMock.mockReturnValue('/en/products/sku-123');
+
+    render(
+      <FrontendPublicOwnerProvider publicOwner='cms'>
+        <FrontendRouteLoadingFallback />
+      </FrontendPublicOwnerProvider>
+    );
+
+    expect(screen.getByTestId('frontend-route-loading-fallback')).toHaveAttribute(
+      'data-frontend-route-loading-variant',
+      'product'
+    );
+    expect(screen.getByTestId('frontend-route-loading-fallback-product')).toBeInTheDocument();
+  });
+
+  it('renders the preview-page skeleton when CMS owns a preview route', () => {
+    usePathnameMock.mockReturnValue('/en/preview/page-42');
+
+    render(
+      <FrontendPublicOwnerProvider publicOwner='cms'>
+        <FrontendRouteLoadingFallback />
+      </FrontendPublicOwnerProvider>
+    );
+
+    expect(screen.getByTestId('frontend-route-loading-fallback')).toHaveAttribute(
+      'data-frontend-route-loading-variant',
+      'preview'
+    );
+    expect(screen.getByTestId('frontend-route-loading-fallback-preview')).toBeInTheDocument();
+  });
+
+  it('renders the generic CMS page skeleton for non-home CMS routes', () => {
+    usePathnameMock.mockReturnValue('/en/about');
+
+    render(
+      <FrontendPublicOwnerProvider publicOwner='cms'>
+        <FrontendRouteLoadingFallback />
+      </FrontendPublicOwnerProvider>
+    );
+
+    expect(screen.getByTestId('frontend-route-loading-fallback')).toHaveAttribute(
+      'data-frontend-route-loading-variant',
+      'page'
+    );
+    expect(screen.getByTestId('frontend-route-loading-fallback-page')).toBeInTheDocument();
   });
 });

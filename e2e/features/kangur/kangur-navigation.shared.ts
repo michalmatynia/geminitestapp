@@ -273,7 +273,7 @@ export const matchesRoutePath = (path: string, targetPath: string | RegExp): boo
 
 export const startRouteShellMonitor = async (page: Page): Promise<void> => {
   await page.evaluate((monitorKey) => {
-    const globalWindow = window as Window & {
+    const globalWindow = window as unknown as Window & {
       [key: string]:
         | {
             stop: () => RouteShellMonitorSample[];
@@ -318,7 +318,7 @@ export const startRouteShellMonitor = async (page: Page): Promise<void> => {
 
 export const stopRouteShellMonitor = async (page: Page): Promise<RouteShellMonitorSample[]> =>
   page.evaluate((monitorKey) => {
-    const globalWindow = window as Window & {
+    const globalWindow = window as unknown as Window & {
       [key: string]:
         | {
             stop: () => RouteShellMonitorSample[];
@@ -367,7 +367,7 @@ export const expectRouteShellContinuity = (
 
 export const startKangurSurfaceMonitor = async (page: Page): Promise<void> => {
   await page.evaluate((monitorKey) => {
-    const globalWindow = window as Window & {
+    const globalWindow = window as unknown as Window & {
       [key: string]:
         | {
             stop: () => KangurSurfaceMonitorSample[];
@@ -420,7 +420,7 @@ export const stopKangurSurfaceMonitor = async (
   page: Page
 ): Promise<KangurSurfaceMonitorSample[]> =>
   page.evaluate((monitorKey) => {
-    const globalWindow = window as Window & {
+    const globalWindow = window as unknown as Window & {
       [key: string]:
         | {
             stop: () => KangurSurfaceMonitorSample[];
@@ -491,7 +491,7 @@ export const expectKangurAppShellVisible = async (
 
 export const startRouteLayoutMonitor = async (page: Page): Promise<void> => {
   await page.evaluate((monitorKey) => {
-    const globalWindow = window as Window & {
+    const globalWindow = window as unknown as Window & {
       [key: string]:
         | {
             stop: () => RouteLayoutMonitorSample[];
@@ -547,7 +547,7 @@ export const stopRouteLayoutMonitor = async (
   page: Page
 ): Promise<RouteLayoutMonitorSample[]> =>
   page.evaluate((monitorKey) => {
-    const globalWindow = window as Window & {
+    const globalWindow = window as unknown as Window & {
       [key: string]:
         | {
             stop: () => RouteLayoutMonitorSample[];

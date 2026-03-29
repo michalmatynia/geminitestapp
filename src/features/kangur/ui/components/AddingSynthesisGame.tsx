@@ -42,7 +42,6 @@ export default function AddingSynthesisGame({
 }: KangurMiniGameFinishActionProps): React.JSX.Element {
   const state = useAddingSynthesisGameState();
   const {
-    bestStreak,
     currentIndex,
     currentNote,
     feedback,

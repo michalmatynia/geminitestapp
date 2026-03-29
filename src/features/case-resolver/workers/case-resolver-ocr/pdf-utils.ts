@@ -6,14 +6,25 @@ type PdfParseResult = {
   text?: unknown;
 };
 
-type PdfParseModule = {
-  default: (buffer: Buffer) => Promise<PdfParseResult>;
+type PdfParseFunction = (buffer: Buffer) => Promise<PdfParseResult>;
+
+const resolvePdfParseFunction = (module: unknown): PdfParseFunction => {
+  if (
+    typeof module === 'object' &&
+    module !== null &&
+    'default' in module &&
+    typeof module.default === 'function'
+  ) {
+    return module.default as PdfParseFunction;
+  }
+
+  return module as PdfParseFunction;
 };
 
 export const extractPdfTextForOcr = async (diskPath: string): Promise<string> => {
   const fileBuffer = await fs.readFile(diskPath);
-  const pdfParseModule = (await import('pdf-parse')) as PdfParseModule;
-  const parsed = await pdfParseModule.default(fileBuffer);
+  const pdfParse = resolvePdfParseFunction(await import('pdf-parse'));
+  const parsed = await pdfParse(fileBuffer);
   const text = typeof parsed.text === 'string' ? parsed.text.trim() : '';
   if (!text) return '';
   if (text.length <= MAX_PDF_OCR_TEXT_CHARS) return text;

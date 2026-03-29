@@ -50,12 +50,18 @@ vi.mock('@/features/kangur/shared/ui', async () => {
     FormModal: (props: {
       open?: boolean;
       title: string;
+      onSave?: () => void;
+      isSaveDisabled?: boolean;
+      saveText?: string;
       children: React.ReactNode;
     }) => {
-      const { open, title, children } = props;
+      const { open, title, onSave, isSaveDisabled, saveText = 'Save', children } = props;
       return open ? (
         <div role='dialog' aria-label={title}>
           <h2>{title}</h2>
+          <button type='button' disabled={Boolean(isSaveDisabled)} onClick={() => onSave?.()}>
+            {saveText}
+          </button>
           {children}
         </div>
       ) : null;
@@ -455,8 +461,150 @@ describe('AdminKangurSocialSettingsModal', () => {
     fireEvent.click(screen.getByRole('tab', { name: 'Documentation' }));
 
     expect(screen.getByText('Generate draft: Running')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Load context' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Load context' })).toHaveAttribute(
+      'title',
+      'Wait for the current Social runtime job to finish.'
+    );
     expect(screen.getByRole('button', { name: 'Generate draft in progress...' })).toBeDisabled();
     expect(screen.getByRole('button', { name: 'Generate draft in progress...' })).toHaveAttribute(
+      'title',
+      'Wait for the current Social runtime job to finish.'
+    );
+  });
+
+  it('locks models, project, and publishing settings while Social runtime jobs are in flight', () => {
+    usePlaywrightPersonasMock.mockReturnValue({
+      data: [],
+      isLoading: false,
+      error: null,
+    });
+    useSocialPostContextMock.mockReturnValue(
+      buildSocialPostContextState({
+        currentPipelineJob: {
+          id: 'job-pipeline-8',
+          status: 'active',
+          progress: {
+            message: 'Pipeline is still updating the current Social draft.',
+          },
+          failedReason: null,
+        },
+      })
+    );
+
+    render(
+      <AdminKangurSocialSettingsModal
+        open={true}
+        onClose={vi.fn()}
+        onSave={vi.fn()}
+        isSaving={false}
+        hasUnsavedChanges={false}
+      />
+    );
+
+    expect(screen.getByText('Runtime jobs:')).toBeInTheDocument();
+    expect(screen.getByText('Full pipeline: Running')).toBeInTheDocument();
+    expect(screen.getByLabelText('Selected brain model')).toBeDisabled();
+    expect(screen.getByLabelText('Selected brain model')).toHaveAttribute(
+      'title',
+      'Wait for the current Social runtime job to finish.'
+    );
+    expect(screen.getByLabelText('Selected vision model')).toBeDisabled();
+    expect(screen.getByLabelText('Selected vision model')).toHaveAttribute(
+      'title',
+      'Wait for the current Social runtime job to finish.'
+    );
+
+    fireEvent.click(screen.getByRole('tab', { name: 'Project' }));
+
+    expect(screen.getByLabelText('Project URL')).toBeDisabled();
+    expect(screen.getByLabelText('Project URL')).toHaveAttribute(
+      'title',
+      'Wait for the current Social runtime job to finish.'
+    );
+
+    fireEvent.click(screen.getByRole('tab', { name: 'Publishing' }));
+
+    expect(screen.getByLabelText('Default LinkedIn connection')).toBeDisabled();
+    expect(screen.getByLabelText('Default LinkedIn connection')).toHaveAttribute(
+      'title',
+      'Wait for the current Social runtime job to finish.'
+    );
+  });
+
+  it('disables Save Settings while Social runtime jobs are in flight', () => {
+    usePlaywrightPersonasMock.mockReturnValue({
+      data: [],
+      isLoading: false,
+      error: null,
+    });
+    useSocialPostContextMock.mockReturnValue(
+      buildSocialPostContextState({
+        currentGenerationJob: {
+          id: 'job-generate-11',
+          status: 'active',
+          progress: {
+            message: 'Generating the current Social draft.',
+          },
+          failedReason: null,
+        },
+      })
+    );
+
+    render(
+      <AdminKangurSocialSettingsModal
+        open={true}
+        onClose={vi.fn()}
+        onSave={vi.fn()}
+        isSaving={false}
+        hasUnsavedChanges={true}
+      />
+    );
+
+    expect(screen.getByRole('button', { name: 'Save Settings' })).toBeDisabled();
+  });
+
+  it('blocks the documentation editor while a full pipeline job is still in flight', () => {
+    usePlaywrightPersonasMock.mockReturnValue({
+      data: [],
+      isLoading: false,
+      error: null,
+    });
+    useSocialPostContextMock.mockReturnValue(
+      buildSocialPostContextState({
+        currentGenerationJob: null,
+        currentPipelineJob: {
+          id: 'job-pipeline-7',
+          status: 'active',
+          progress: {
+            message: 'Pipeline is updating the draft from the current documentation context.',
+          },
+          failedReason: null,
+        },
+      })
+    );
+
+    render(
+      <AdminKangurSocialSettingsModal
+        open={true}
+        onClose={vi.fn()}
+        onSave={vi.fn()}
+        isSaving={false}
+        hasUnsavedChanges={false}
+      />
+    );
+
+    fireEvent.click(screen.getByRole('tab', { name: 'Documentation' }));
+
+    expect(screen.getByLabelText('Documentation references')).toBeDisabled();
+    expect(screen.getByLabelText('Notes for the Brain generator')).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Load context' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Load context' })).toHaveAttribute(
+      'title',
+      'Wait for the current Social runtime job to finish.'
+    );
+    expect(screen.getByRole('button', { name: 'Generate PL/EN draft' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Generate PL/EN draft' })).toHaveAttribute(
       'title',
       'Wait for the current Social runtime job to finish.'
     );
@@ -510,9 +658,9 @@ describe('AdminKangurSocialSettingsModal', () => {
     fireEvent.click(screen.getByRole('tab', { name: 'Capture' }));
 
     expect(screen.getByText('Runtime jobs')).toBeInTheDocument();
-    expect(screen.getByText('Image analysis: Running')).toBeInTheDocument();
-    expect(screen.getByText('Generate post: Queued')).toBeInTheDocument();
-    expect(screen.getByText('Full pipeline: Completed')).toBeInTheDocument();
+    expect(screen.getAllByText('Image analysis: Running')).toHaveLength(2);
+    expect(screen.getAllByText('Generate post: Queued')).toHaveLength(2);
+    expect(screen.getAllByText('Full pipeline: Completed')).toHaveLength(2);
   });
 
   it('blocks capture launch actions while Social runtime jobs are still in flight', () => {
@@ -556,6 +704,32 @@ describe('AdminKangurSocialSettingsModal', () => {
 
     expect(screen.getByRole('button', { name: 'Create single add-on' })).toBeDisabled();
     expect(screen.getByRole('button', { name: 'Create single add-on' })).toHaveAttribute(
+      'title',
+      'Wait for the current Social runtime job to finish.'
+    );
+    expect(screen.getByLabelText('Add-on title')).toBeDisabled();
+    expect(screen.getByLabelText('Source URL')).toBeDisabled();
+    expect(screen.getByLabelText('Optional selector')).toBeDisabled();
+    expect(screen.getByLabelText('Wait before capture (ms)')).toBeDisabled();
+    expect(screen.getByLabelText('Optional description')).toBeDisabled();
+    expect(screen.getAllByDisplayValue('https://studiq.example.com')).toHaveLength(2);
+    screen
+      .getAllByDisplayValue('https://studiq.example.com')
+      .forEach((element) => expect(element).toBeDisabled());
+    expect(screen.getByRole('combobox')).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Select all' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Select all' })).toHaveAttribute(
+      'title',
+      'Wait for the current Social runtime job to finish.'
+    );
+    expect(screen.getByRole('button', { name: 'Clear' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Kangur Game Home' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Kangur Game Home' })).toHaveAttribute(
+      'title',
+      'Wait for the current Social runtime job to finish.'
+    );
+    expect(screen.getByRole('button', { name: 'Reset saved defaults' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Reset saved defaults' })).toHaveAttribute(
       'title',
       'Wait for the current Social runtime job to finish.'
     );

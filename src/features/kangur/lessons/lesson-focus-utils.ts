@@ -8,6 +8,11 @@ import type { KangurLessonTemplate } from '@/shared/contracts/kangur-lesson-temp
 import { KANGUR_LESSON_LIBRARY } from './lesson-catalog';
 import { FOCUS_TO_COMPONENT } from './lesson-focus-map';
 
+type KangurFocusedLessonTemplate = Pick<
+  KangurLessonTemplate,
+  'ageGroup' | 'componentId' | 'subject'
+>;
+
 export const resolveFocusedLessonId = (
   focusToken: string,
   lessons: KangurLesson[]
@@ -39,10 +44,8 @@ export const resolveFocusedLessonComponentId = (
     return mappedComponent;
   }
 
-  if (templateMap) {
-    return templateMap.has(normalizedToken)
-      ? (normalizedToken as KangurLessonComponentId)
-      : null;
+  if (templateMap?.has(normalizedToken)) {
+    return normalizedToken as KangurLessonComponentId;
   }
 
   return normalizedToken in KANGUR_LESSON_LIBRARY
@@ -58,13 +61,9 @@ export type KangurFocusedLessonScope = {
 
 const resolveFocusedLessonTemplate = (
   componentId: KangurLessonComponentId,
-  templateMap?: Map<string, KangurLessonTemplate>,
-): KangurLessonTemplate | null => {
-  if (templateMap) {
-    return templateMap.get(componentId) ?? null;
-  }
-  return KANGUR_LESSON_LIBRARY[componentId] ?? null;
-};
+  templateMap?: Map<string, KangurFocusedLessonTemplate>,
+): KangurFocusedLessonTemplate | null =>
+  templateMap?.get(componentId) ?? KANGUR_LESSON_LIBRARY[componentId] ?? null;
 
 export const resolveFocusedLessonScope = (
   focusToken: string,

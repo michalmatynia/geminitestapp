@@ -26,9 +26,7 @@ import {
   KangurStatusChip,
 } from '@/features/kangur/ui/design/primitives';
 import {
-  KANGUR_ACCENT_STYLES,
   KANGUR_STACK_ROW_CLASSNAME,
-  type KangurAccent,
 } from '@/features/kangur/ui/design/tokens';
 import { useKangurCoarsePointer } from '@/features/kangur/ui/hooks/useKangurCoarsePointer';
 import {
@@ -926,7 +924,7 @@ export default function GeometryBasicsWorkshopGame({
     xpBreakdown,
     xpEarned,
   } = useGeometryBasicsWorkshopRuntime({
-    ownerKey,
+    ownerKey: ownerKey ?? '',
     translations,
   });
 

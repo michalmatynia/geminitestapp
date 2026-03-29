@@ -281,7 +281,7 @@ function GameHomeScreen(props: {
           id: 'kangur-home-leaderboard',
           ref: homeRefs.homeLeaderboardRef,
         }}
-        playerProgress={<PlayerProgressCard progress={progress} />}
+        playerProgress={progress ? <PlayerProgressCard progress={progress} /> : null}
         playerProgressColumnProps={{
           id: 'kangur-home-player-progress',
           ref: homeRefs.homeProgressRef,

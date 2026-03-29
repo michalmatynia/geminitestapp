@@ -1,5 +1,8 @@
 import type { LessonSlide } from '@/features/kangur/ui/components/LessonSlideSection';
-import type { KangurUnifiedLessonSection } from '@/features/kangur/ui/components/KangurUnifiedLesson';
+import type {
+  KangurUnifiedLessonGameConfig,
+  KangurUnifiedLessonSection,
+} from '@/features/kangur/ui/components/KangurUnifiedLesson';
 import {
   KangurLessonCaption,
   KangurLessonLead,
@@ -9,6 +12,7 @@ import {
   resolveKangurLessonTemplateComponentContent,
 } from '@/features/kangur/lessons/lesson-template-component-content';
 import { getKangurBuiltInGameInstanceId } from '@/features/kangur/games';
+import type { KangurGameId } from '@/shared/contracts/kangur-games';
 import type {
   KangurAlphabetUnifiedLessonTemplateContent,
   KangurLessonTemplate,
@@ -68,7 +72,7 @@ export const resolveAlphabetUnifiedLessonTitle = (
   fallbackTitle: string,
 ): string => template?.title?.trim() || fallbackTitle;
 
-export const createAlphabetUnifiedLessonGame = ({
+export const createAlphabetUnifiedLessonGame = <SectionId extends string>({
   fallbackDescription,
   fallbackTitle,
   gameId,
@@ -78,11 +82,11 @@ export const createAlphabetUnifiedLessonGame = ({
 }: {
   fallbackDescription: string;
   fallbackTitle: string;
-  gameId: string;
+  gameId: KangurGameId;
   gameSection: ReturnType<typeof findAlphabetUnifiedLessonSection>;
-  sectionId: string;
+  sectionId: SectionId;
   shellTestId: string;
-}) => ({
+}): KangurUnifiedLessonGameConfig<SectionId> => ({
   sectionId,
   shell: {
     accent: 'amber' as const,

@@ -11,7 +11,10 @@ import {
   KANGUR_NARRATOR_SETTINGS_KEY,
   parseKangurNarratorSettings,
 } from '@/features/kangur/settings';
-import { KANGUR_TTS_DEFAULT_VOICE } from '@/features/kangur/tts/contracts';
+import {
+  KANGUR_TTS_DEFAULT_VOICE,
+  type KangurLessonTtsVoice,
+} from '@/features/kangur/tts/contracts';
 import {
   buildKangurLessonDocumentNarrationScript,
   buildKangurLessonNarrationScriptFromText,
@@ -90,8 +93,8 @@ const resolveNarratorVoice = ({
 }: {
   lesson: KangurLessonNarratorProps['lesson'];
   lessonDocument: KangurLessonDocument | null;
-  defaultVoice: string;
-}): string =>
+  defaultVoice: KangurLessonTtsVoice;
+}): KangurLessonTtsVoice =>
   lesson.contentMode === 'document'
     ? (lessonDocument?.narration?.voice ?? defaultVoice)
     : defaultVoice;

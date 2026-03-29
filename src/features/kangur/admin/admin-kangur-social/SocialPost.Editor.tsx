@@ -11,9 +11,22 @@ type SocialPostEditorProps = {
   showImagesPanel?: boolean;
 };
 
+const isSocialRuntimeJobInFlight = (status: string | null | undefined): boolean => {
+  const normalized = status?.trim().toLowerCase();
+  if (!normalized) return false;
+  return normalized !== 'completed' && normalized !== 'failed';
+};
+
 export function SocialPostEditor(props: SocialPostEditorProps): React.JSX.Element {
   const { showImagesPanel = true } = props;
-  const { editorState, setEditorState } = useSocialPostContext();
+  const { editorState, setEditorState, currentGenerationJob, currentPipelineJob } =
+    useSocialPostContext();
+  const isEditorLocked =
+    isSocialRuntimeJobInFlight(currentGenerationJob?.status) ||
+    isSocialRuntimeJobInFlight(currentPipelineJob?.status);
+  const editorLockTitle = isEditorLocked
+    ? 'Wait for the current Social runtime job to finish.'
+    : undefined;
 
   return (
     <div className='space-y-4'>
@@ -23,6 +36,8 @@ export function SocialPostEditor(props: SocialPostEditorProps): React.JSX.Elemen
         <Input
           placeholder='Polish title'
           value={editorState.titlePl}
+          disabled={isEditorLocked}
+          title={editorLockTitle}
           onChange={(event) =>
             setEditorState((prev) => ({ ...prev, titlePl: event.target.value }))
           }
@@ -31,6 +46,8 @@ export function SocialPostEditor(props: SocialPostEditorProps): React.JSX.Elemen
           placeholder='Polish body'
           rows={5}
           value={editorState.bodyPl}
+          disabled={isEditorLocked}
+          title={editorLockTitle}
           onChange={(event) =>
             setEditorState((prev) => ({ ...prev, bodyPl: event.target.value }))
           }
@@ -41,6 +58,8 @@ export function SocialPostEditor(props: SocialPostEditorProps): React.JSX.Elemen
         <Input
           placeholder='English title'
           value={editorState.titleEn}
+          disabled={isEditorLocked}
+          title={editorLockTitle}
           onChange={(event) =>
             setEditorState((prev) => ({ ...prev, titleEn: event.target.value }))
           }
@@ -49,6 +68,8 @@ export function SocialPostEditor(props: SocialPostEditorProps): React.JSX.Elemen
           placeholder='English body'
           rows={5}
           value={editorState.bodyEn}
+          disabled={isEditorLocked}
+          title={editorLockTitle}
           onChange={(event) =>
             setEditorState((prev) => ({ ...prev, bodyEn: event.target.value }))
           }

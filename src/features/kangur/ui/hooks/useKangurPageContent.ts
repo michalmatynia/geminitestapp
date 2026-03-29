@@ -15,6 +15,7 @@ import { normalizeSiteLocale } from '@/shared/lib/i18n/site-locale';
 
 const KANGUR_PAGE_CONTENT_STALE_TIME_MS = 5 * 60_000;
 const KANGUR_PAGE_CONTENT_GC_TIME_MS = 30 * 60_000;
+const KANGUR_PAGE_CONTENT_REQUEST_TIMEOUT_MS = 30_000;
 
 const resolveKangurPageContentLocale = (locale?: string | null, routeLocale?: string | null): string =>
   normalizeSiteLocale(locale ?? routeLocale);
@@ -29,7 +30,10 @@ export const fetchKangurPageContentStore = async (
 
   return parseKangurPageContentStore(
     await api.get<KangurPageContentStore>(
-      `/api/kangur/ai-tutor/page-content?locale=${encodeURIComponent(resolvedLocale)}`
+      `/api/kangur/ai-tutor/page-content?locale=${encodeURIComponent(resolvedLocale)}`,
+      {
+        timeout: KANGUR_PAGE_CONTENT_REQUEST_TIMEOUT_MS,
+      }
     )
   );
 };

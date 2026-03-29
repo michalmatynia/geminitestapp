@@ -1,4 +1,4 @@
-import { execFile, execFileSync } from 'node:child_process';
+import { execFile, execFileSync, type ExecFileException } from 'node:child_process';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
@@ -468,7 +468,7 @@ const seedGuardrailBaseline = (root: string): void => {
   );
 };
 
-const seedUnitDomainTimingHarness = (root: string): Record<string, string> => {
+const seedUnitDomainTimingHarness = (root: string): NodeJS.ProcessEnv => {
   writeExecutable(
     root,
     'bin/npx',
@@ -485,7 +485,7 @@ const seedUnitDomainTimingHarness = (root: string): Record<string, string> => {
 
   return {
     ...process.env,
-    PATH: `${path.join(root, 'bin')}${path.delimiter}${process.env.PATH ?? ''}`,
+    PATH: `${path.join(root, 'bin')}${path.delimiter}${process.env['PATH'] ?? ''}`,
   };
 };
 
@@ -498,7 +498,7 @@ const seedAccessibilityCommandHarness = (
     baseUrl: string;
     routeCrawlReportPath?: string | null;
   }
-): Record<string, string> => {
+): NodeJS.ProcessEnv => {
   writeFile(
     root,
     'bin/mock-playwright-runtime-fetch.mjs',
@@ -572,22 +572,22 @@ const seedAccessibilityCommandHarness = (
     ].join('\n')
   );
 
-  const env: Record<string, string> = {
+  const env: NodeJS.ProcessEnv = {
     ...process.env,
     A11Y_SMOKE_BROWSER_NODE_BIN: path.join(root, 'bin'),
     NODE_OPTIONS: [
-      process.env.NODE_OPTIONS,
+      process.env['NODE_OPTIONS'],
       `--import=${pathToFileURL(path.join(root, 'bin', 'mock-playwright-runtime-fetch.mjs')).href}`,
     ]
       .filter(Boolean)
       .join(' '),
-    PATH: `${path.join(root, 'bin')}${path.delimiter}${process.env.PATH ?? ''}`,
+    PATH: `${path.join(root, 'bin')}${path.delimiter}${process.env['PATH'] ?? ''}`,
     PLAYWRIGHT_BASE_URL: baseUrl,
     PLAYWRIGHT_USE_EXISTING_SERVER: 'true',
   };
 
   if (routeCrawlReportPath) {
-    env.SCAN_ENVELOPE_ROUTE_CRAWL_REPORT = routeCrawlReportPath;
+    env['SCAN_ENVELOPE_ROUTE_CRAWL_REPORT'] = routeCrawlReportPath;
   }
 
   return env;
@@ -704,7 +704,7 @@ const runSummaryJson = (
   scriptPath: string,
   args: string[],
   nodeArgs: string[] = [],
-  env?: Record<string, string | undefined>
+  env?: NodeJS.ProcessEnv
 ) => {
   try {
     return parseScanOutput(
@@ -733,7 +733,7 @@ const runSummaryJsonAsync = async (
   scriptPath: string,
   args: string[],
   nodeArgs: string[] = [],
-  env?: Record<string, string | undefined>
+  env?: NodeJS.ProcessEnv
 ) =>
   parseScanOutput(
     await new Promise<string>((resolve, reject) => {
@@ -746,7 +746,7 @@ const runSummaryJsonAsync = async (
           env,
           maxBuffer: 20 * 1024 * 1024,
         },
-        (error, stdout) => {
+        (error: ExecFileException | null, stdout: string) => {
           if (error) {
             reject(error);
             return;

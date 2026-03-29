@@ -86,7 +86,7 @@ type GeometrySymmetryGameRuntime = {
   handleCheck: () => void;
   handlePointerDown: (event: React.PointerEvent<HTMLCanvasElement>) => void;
   handlePointerMove: (event: React.PointerEvent<HTMLCanvasElement>) => void;
-  handlePointerUp: (event?: React.PointerEvent<HTMLCanvasElement>) => void;
+  handlePointerUp: (event: React.PointerEvent<HTMLCanvasElement>) => void;
   handleRestart: () => void;
   hasDrawableContent: boolean;
   isCoarsePointer: boolean;
@@ -713,7 +713,7 @@ function GeometrySymmetryPracticeBoardPanel(props: {
   handleCheck: () => void;
   handlePointerDown: (event: React.PointerEvent<HTMLCanvasElement>) => void;
   handlePointerMove: (event: React.PointerEvent<HTMLCanvasElement>) => void;
-  handlePointerUp: (event?: React.PointerEvent<HTMLCanvasElement>) => void;
+  handlePointerUp: (event: React.PointerEvent<HTMLCanvasElement>) => void;
   hasDrawableContent: boolean;
   isCoarsePointer: boolean;
   isPointerDrawing: boolean;
@@ -947,7 +947,7 @@ export default function GeometrySymmetryGame({
   const runtime = useGeometrySymmetryGameRuntime({
     isCoarsePointer,
     locale,
-    ownerKey,
+    ownerKey: ownerKey ?? '',
     translations,
   });
 

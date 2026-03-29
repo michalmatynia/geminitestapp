@@ -15,6 +15,7 @@ export function SocialSettingsModelsTab({
   visionModelId,
   handleVisionModelChange,
   visionModelOptionsLoading,
+  isRuntimeLocked,
 }: {
   brainModelBadgeLabel: string;
   brainModelSelectOptions: Array<{ value: string; label: string; description?: string }>;
@@ -26,7 +27,29 @@ export function SocialSettingsModelsTab({
   visionModelId: string | null;
   handleVisionModelChange: (val: string) => void;
   visionModelOptionsLoading: boolean;
+  isRuntimeLocked?: boolean;
 }) {
+  const settingsTitle = isRuntimeLocked
+    ? 'Wait for the current Social runtime job to finish.'
+    : undefined;
+  const brainModelSelectProps = {
+    value: brainModelId ?? BRAIN_MODEL_DEFAULT_VALUE,
+    onValueChange: handleBrainModelChange,
+    options: brainModelSelectOptions,
+    ariaLabel: 'Selected brain model',
+    disabled: brainModelOptionsLoading || isRuntimeLocked,
+    title: settingsTitle ?? 'Selected brain model',
+    variant: 'subtle' as const,
+  };
+  const visionModelSelectProps = {
+    value: visionModelId ?? BRAIN_MODEL_DEFAULT_VALUE,
+    onValueChange: handleVisionModelChange,
+    options: visionModelSelectOptions,
+    ariaLabel: 'Selected vision model',
+    title: settingsTitle ?? 'Selected vision model',
+    disabled: visionModelOptionsLoading || isRuntimeLocked,
+    variant: 'subtle' as const,
+  };
   return (
     <div className='grid gap-4 xl:grid-cols-2'>
       <KangurAdminCard>
@@ -40,15 +63,7 @@ export function SocialSettingsModelsTab({
         <div className='mt-3 space-y-3 text-sm text-muted-foreground'>
           <p>Available models are provided by AI Brain. Choose a specific model or keep the routing default.</p>
           <FormField label='Selected brain model' description='Use Brain routing follows the current AI Brain default for this capability.'>
-            <SelectSimple
-              value={brainModelId ?? BRAIN_MODEL_DEFAULT_VALUE}
-              onValueChange={handleBrainModelChange}
-              options={brainModelSelectOptions}
-              ariaLabel='Selected brain model'
-              title='Selected brain model'
-              disabled={brainModelOptionsLoading}
-              variant='subtle'
-            />
+            <SelectSimple {...brainModelSelectProps} />
           </FormField>
           {brainModelBadgeLabel === 'Not configured' ? (
             <div className='rounded-xl border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-amber-900 dark:text-amber-200'>
@@ -74,15 +89,7 @@ export function SocialSettingsModelsTab({
         <div className='mt-3 space-y-3 text-sm text-muted-foreground'>
           <p>Available vision models are provided by AI Brain. Choose a specific model or keep the routing default.</p>
           <FormField label='Selected vision model' description='Use Brain routing follows the current AI Brain default for visual analysis.'>
-            <SelectSimple
-              value={visionModelId ?? BRAIN_MODEL_DEFAULT_VALUE}
-              onValueChange={handleVisionModelChange}
-              options={visionModelSelectOptions}
-              ariaLabel='Selected vision model'
-              title='Selected vision model'
-              disabled={visionModelOptionsLoading}
-              variant='subtle'
-            />
+            <SelectSimple {...visionModelSelectProps} />
           </FormField>
           {visionModelBadgeLabel === 'Not configured' ? (
             <div className='rounded-xl border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-amber-900 dark:text-amber-200'>

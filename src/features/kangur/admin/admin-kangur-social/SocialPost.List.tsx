@@ -240,7 +240,16 @@ export function SocialPostList(): React.JSX.Element {
           ]
             .filter((value): value is string => Boolean(value))
             .join(' · ');
+          const hasBlockingRuntimeSelectionJob =
+            isSocialRuntimeJobInFlight(currentVisualAnalysisJob?.status) ||
+            isSocialRuntimeJobInFlight(currentGenerationJob?.status) ||
+            isSocialRuntimeJobInFlight(currentPipelineJob?.status);
+          const isSelectionBlocked = !isActive && hasBlockingRuntimeSelectionJob;
+          const isDeleteBlocked = isActive && hasBlockingRuntimeSelectionJob;
           const handleOpen = (): void => {
+            if (isSelectionBlocked) {
+              return;
+            }
             setActivePostId(post.id);
             handleOpenPostEditor?.(post.id);
           };
@@ -259,9 +268,14 @@ export function SocialPostList(): React.JSX.Element {
                 variant={isActive ? 'secondary' : 'outline'}
                 size='xs'
                 onClick={() => setActivePostId(post.id)}
+                disabled={isSelectionBlocked}
                 aria-pressed={isActive}
                 aria-label={pipelineSelectionLabel}
-                title={pipelineSelectionLabel}
+                title={
+                  isSelectionBlocked
+                    ? 'Wait for the current Social runtime job to finish.'
+                    : pipelineSelectionLabel
+                }
                 className='shrink-0'
               >
                 {isActive ? 'Active' : 'Select'}
@@ -271,9 +285,14 @@ export function SocialPostList(): React.JSX.Element {
                 <div className='min-w-0'>
                   <button
                     type='button'
-                    title={title}
+                    title={
+                      isSelectionBlocked
+                        ? 'Wait for the current Social runtime job to finish.'
+                        : title
+                    }
                     onClick={handleOpen}
                     aria-label={`Open social post ${title}`}
+                    disabled={isSelectionBlocked}
                     className={[
                       'inline-block max-w-full min-w-0 overflow-hidden text-ellipsis whitespace-nowrap align-top',
                       'cursor-pointer border-0 bg-transparent p-0 text-left',
@@ -508,6 +527,12 @@ export function SocialPostList(): React.JSX.Element {
                         event.preventDefault();
                         handleOpen();
                       }}
+                      disabled={isSelectionBlocked}
+                      title={
+                        isSelectionBlocked
+                          ? 'Wait for the current Social runtime job to finish.'
+                          : 'Edit post'
+                      }
                     >
                       Edit post
                     </DropdownMenuItem>
@@ -519,6 +544,12 @@ export function SocialPostList(): React.JSX.Element {
                         clearDeleteError();
                         setPostToDelete(post);
                       }}
+                      disabled={isDeleteBlocked}
+                      title={
+                        isDeleteBlocked
+                          ? 'Wait for the current Social runtime job to finish.'
+                          : 'Delete post permanently'
+                      }
                     >
                       Delete post permanently
                     </DropdownMenuItem>

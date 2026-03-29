@@ -25,6 +25,12 @@ import { SocialJobStatusPill } from './admin-kangur-social/SocialJobStatusPill';
 import { KangurAdminCard } from './components/KangurAdminCard';
 import { SocialPostProvider, useSocialPostContext } from './admin-kangur-social/SocialPostContext';
 
+const isSocialRuntimeJobInFlight = (status: string | null | undefined): boolean => {
+  const normalized = status?.trim().toLowerCase();
+  if (!normalized) return false;
+  return normalized !== 'completed' && normalized !== 'failed';
+};
+
 function AdminKangurSocialPageContent(): React.JSX.Element {
   const {
     posts,
@@ -93,6 +99,16 @@ function AdminKangurSocialPageContent(): React.JSX.Element {
   ]
     .filter((value): value is string => Boolean(value))
     .join(' · ');
+  const hasBlockingRuntimeJob =
+    isSocialRuntimeJobInFlight(currentVisualAnalysisJob?.status) ||
+    isSocialRuntimeJobInFlight(currentGenerationJob?.status) ||
+    isSocialRuntimeJobInFlight(currentPipelineJob?.status);
+  const isDeleteConfirmBlocked =
+    Boolean(postToDelete?.id) && postToDelete?.id === activePost?.id && hasBlockingRuntimeJob;
+  const isUnpublishConfirmBlocked =
+    Boolean(postToUnpublish?.id) && postToUnpublish?.id === activePost?.id && hasBlockingRuntimeJob;
+  const runtimeConfirmBlockMessage =
+    'Wait for the current Social runtime job to finish before confirming this action.';
 
   return (
     <KangurAdminContentShell
@@ -150,6 +166,12 @@ function AdminKangurSocialPageContent(): React.JSX.Element {
             onClick={() => {
               void handleCreateDraftAndOpen();
             }}
+            disabled={hasBlockingRuntimeJob}
+            title={
+              hasBlockingRuntimeJob
+                ? 'Wait for the current Social runtime job to finish.'
+                : 'New draft'
+            }
           >
             New draft
           </Button>
@@ -228,11 +250,17 @@ function AdminKangurSocialPageContent(): React.JSX.Element {
                 {deleteError}
               </div>
             ) : null}
+            {isDeleteConfirmBlocked ? (
+              <div className='rounded-lg border border-border/60 bg-background/40 px-3 py-2 text-xs text-muted-foreground'>
+                {runtimeConfirmBlockMessage}
+              </div>
+            ) : null}
           </div>
         }
         confirmText='Delete'
         isDangerous={true}
         loading={deleteMutation.isPending}
+        confirmDisabled={isDeleteConfirmBlocked}
       />
 
       <SocialPostEditorModal
@@ -251,10 +279,20 @@ function AdminKangurSocialPageContent(): React.JSX.Element {
           setPostToUnpublish(null);
         }}
         title='Unpublish from LinkedIn'
-        message='This will delete the LinkedIn post and remove it from Kangur Social. Continue?'
+        message={
+          <div className='space-y-2'>
+            <div>This will delete the LinkedIn post and remove it from Kangur Social. Continue?</div>
+            {isUnpublishConfirmBlocked ? (
+              <div className='rounded-lg border border-border/60 bg-background/40 px-3 py-2 text-xs text-muted-foreground'>
+                {runtimeConfirmBlockMessage}
+              </div>
+            ) : null}
+          </div>
+        }
         confirmText='Unpublish'
         isDangerous={true}
         loading={unpublishMutation.isPending}
+        confirmDisabled={isUnpublishConfirmBlocked}
       />
       <AdminKangurSocialSettingsModal
         open={isSettingsModalOpen}

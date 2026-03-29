@@ -269,7 +269,7 @@ const ARITHMETIC_PRACTICE_OPERATIONS = new Set<KangurPracticeAssignmentOperation
   'roots',
   'mixed',
 ]);
-const LOGIC_PRACTICE_OPERATIONS = new Set<KangurPracticeAssignmentOperation>([
+const LOGIC_PRACTICE_OPERATIONS = new Set<string>([
   'logical_thinking',
   'logical_patterns',
   'logical_classification',
@@ -604,7 +604,8 @@ export const resolveKangurAssignmentCountdownLabel = (
   }
 
   const now = params.now ?? Date.now();
-  const deadline = startTimestamp + params.timeLimitMinutes * 60_000;
+  const timeLimitMinutes = params.timeLimitMinutes ?? 0;
+  const deadline = startTimestamp + timeLimitMinutes * 60_000;
   const remainingMs = deadline - now;
 
   if (remainingMs <= 0) {

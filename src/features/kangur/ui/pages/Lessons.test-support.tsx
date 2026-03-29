@@ -522,6 +522,14 @@ vi.mock('@/features/kangur/ui/hooks/useKangurLessonTemplates', () => ({
     lessonTemplatesHookCallsMock(options ?? {});
     return { data: [] };
   },
+  useKangurLessonTemplate: () => ({
+    data: null,
+    isLoading: false,
+    isPending: false,
+    isFetching: false,
+    isRefetching: false,
+    error: null,
+  }),
 }));
 
 vi.mock('@/features/kangur/ui/hooks/useKangurMobileBreakpoint', () => ({

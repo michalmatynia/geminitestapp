@@ -15,6 +15,8 @@ type SocialPostImagesPanelResolvedProps = {
   setShowMediaLibrary: React.Dispatch<React.SetStateAction<boolean>>;
   showMediaLibrary: boolean;
   handleAddImages: (filepaths: string[]) => void;
+  isInteractionBlocked?: boolean;
+  interactionTitle?: string;
 };
 
 const renderSocialPostImagesPanel = ({
@@ -23,6 +25,8 @@ const renderSocialPostImagesPanel = ({
   setShowMediaLibrary,
   showMediaLibrary,
   handleAddImages,
+  isInteractionBlocked = false,
+  interactionTitle,
 }: SocialPostImagesPanelResolvedProps): React.JSX.Element => (
   <FormSection title='Images' className='space-y-3'>
     {imageAssets.length === 0 ? (
@@ -56,9 +60,13 @@ const renderSocialPostImagesPanel = ({
                   type='button'
                   size='xs'
                   variant='ghost'
-                  onClick={() => handleRemoveImage(asset.id)}
+                  onClick={() => {
+                    if (isInteractionBlocked) return;
+                    handleRemoveImage(asset.id);
+                  }}
+                  disabled={isInteractionBlocked}
                   aria-label='Remove image'
-                  title='Remove image'
+                  title={isInteractionBlocked ? interactionTitle : 'Remove image'}
                 >
                   <Trash2 className='h-3 w-3' />
                 </Button>
@@ -72,7 +80,12 @@ const renderSocialPostImagesPanel = ({
       type='button'
       variant='outline'
       size='sm'
-      onClick={() => setShowMediaLibrary(true)}
+      onClick={() => {
+        if (isInteractionBlocked) return;
+        setShowMediaLibrary(true);
+      }}
+      disabled={isInteractionBlocked}
+      title={isInteractionBlocked ? interactionTitle : 'Add images'}
       className='inline-flex items-center gap-2'
     >
       <ImagePlus className='h-4 w-4' />
@@ -82,7 +95,10 @@ const renderSocialPostImagesPanel = ({
       open={showMediaLibrary}
       onOpenChange={setShowMediaLibrary}
       selectionMode='multiple'
-      onSelect={handleAddImages}
+      onSelect={(filepaths) => {
+        if (isInteractionBlocked) return;
+        handleAddImages(filepaths);
+      }}
       title='Select social images'
     />
   </FormSection>
@@ -94,12 +110,16 @@ export function SocialPostImagesPanel({
   setShowMediaLibrary,
   showMediaLibrary,
   handleAddImages,
+  isInteractionBlocked,
+  interactionTitle,
 }: {
   imageAssets: ImageFileSelection[];
   handleRemoveImage: (id: string) => void;
   setShowMediaLibrary: React.Dispatch<React.SetStateAction<boolean>>;
   showMediaLibrary: boolean;
   handleAddImages: (filepaths: string[]) => void;
+  isInteractionBlocked?: boolean;
+  interactionTitle?: string;
 }): React.JSX.Element {
   return renderSocialPostImagesPanel({
     imageAssets,
@@ -107,5 +127,7 @@ export function SocialPostImagesPanel({
     setShowMediaLibrary,
     showMediaLibrary,
     handleAddImages,
+    isInteractionBlocked,
+    interactionTitle,
   });
 }

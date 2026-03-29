@@ -80,6 +80,8 @@ describe('renderSocialPostEditor', () => {
       activePost: buildPost(),
       editorState: { titlePl: '', titleEn: '', bodyPl: '', bodyEn: '' },
       setEditorState: vi.fn(),
+      currentGenerationJob: null,
+      currentPipelineJob: null,
     });
 
     render(renderSocialPostEditor({}));
@@ -93,5 +95,41 @@ describe('renderSocialPostEditor', () => {
     expect(screen.queryByRole('button', { name: 'Save draft' })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Schedule' })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Publish to LinkedIn' })).not.toBeInTheDocument();
+  });
+
+  it('blocks editing draft copy while Social generation or pipeline jobs are in flight', () => {
+    useSocialPostContextMock.mockReturnValue({
+      activePost: buildPost(),
+      editorState: {
+        titlePl: 'Polski tytul',
+        titleEn: 'English title',
+        bodyPl: 'Polska tresc',
+        bodyEn: 'English body',
+      },
+      setEditorState: vi.fn(),
+      currentGenerationJob: {
+        id: 'job-generate-1',
+        status: 'waiting',
+        progress: { message: 'Waiting for the draft generation worker.' },
+        failedReason: null,
+      },
+      currentPipelineJob: {
+        id: 'job-pipeline-1',
+        status: 'active',
+        progress: { message: 'Pipeline is still updating the draft.' },
+        failedReason: null,
+      },
+    });
+
+    render(renderSocialPostEditor({}));
+
+    expect(screen.getByPlaceholderText('Polish title')).toBeDisabled();
+    expect(screen.getByPlaceholderText('Polish title')).toHaveAttribute(
+      'title',
+      'Wait for the current Social runtime job to finish.'
+    );
+    expect(screen.getByPlaceholderText('Polish body')).toBeDisabled();
+    expect(screen.getByPlaceholderText('English title')).toBeDisabled();
+    expect(screen.getByPlaceholderText('English body')).toBeDisabled();
   });
 });

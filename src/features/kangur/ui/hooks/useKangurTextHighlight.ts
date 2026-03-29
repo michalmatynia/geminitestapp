@@ -363,7 +363,7 @@ export function useKangurTextHighlight(): KangurTextHighlightResult {
       }
 
       selectionRangeRef.current = hasSelectionSnapshot(snapshot.text, snapshot.range)
-        ? snapshot.range.cloneRange()
+        ? snapshot.range?.cloneRange() ?? null
         : null;
       setSelectionLineRects(snapshot.lineRects);
       setSelectedText(snapshot.text.length > 0 ? snapshot.text : null);

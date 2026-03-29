@@ -120,7 +120,6 @@ const persistVisualAnalysisOnPost = async ({
 const persistGeneratedDraftOnPost = async ({
   actorId,
   brainModelId,
-  docReferences,
   draft,
   imageAddonIds,
   postId,
@@ -128,7 +127,6 @@ const persistGeneratedDraftOnPost = async ({
 }: {
   actorId: string | null;
   brainModelId: string | null;
-  docReferences: string[];
   draft: KangurSocialGeneratedDraft;
   imageAddonIds: string[];
   postId: string | null;
@@ -228,7 +226,6 @@ export async function runKangurSocialPostGenerationJob(
   const generatedPost = await persistGeneratedDraftOnPost({
     actorId: normalizedActorId,
     brainModelId: normalizedBrainModelId,
-    docReferences,
     draft,
     imageAddonIds,
     postId: normalizedPostId,

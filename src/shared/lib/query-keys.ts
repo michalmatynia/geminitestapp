@@ -91,6 +91,21 @@ export const QUERY_KEYS = {
       [...QUERY_KEYS.kangur.lessonDocuments(), 'detail', lessonId ?? null, locale ?? null] as const,
     lessonSections: () => [...QUERY_KEYS.kangur.all, 'lesson-sections'] as const,
     lessonTemplates: () => [...QUERY_KEYS.kangur.all, 'lesson-templates'] as const,
+    lessonTemplate: (
+      componentId: string | null,
+      locale?: string | null,
+      filters?: { subject?: string | null; ageGroup?: string | null }
+    ) =>
+      [
+        ...QUERY_KEYS.kangur.lessonTemplates(),
+        'detail',
+        componentId ?? null,
+        locale ?? null,
+        {
+          subject: filters?.subject ?? null,
+          ageGroup: filters?.ageGroup ?? null,
+        },
+      ] as const,
     assignments: (options?: { includeArchived?: boolean | undefined }) =>
       [...QUERY_KEYS.kangur.all, 'assignments', { includeArchived: options?.includeArchived ?? false }] as const,
     socialPosts: (options: { scope: string; limit: number | null }) =>

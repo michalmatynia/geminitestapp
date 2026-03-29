@@ -82,7 +82,7 @@ const resolveLessonsTutorContext = ({
   surface: 'lesson',
   contentId: activeLesson?.id ?? 'lesson:list',
   title: activeLesson?.title ?? pageTitle,
-  assignmentId: activeLessonAssignment?.id ?? completedActiveLessonAssignment?.id,
+  assignmentId: activeLessonAssignment?.id ?? completedActiveLessonAssignment?.id ?? undefined,
 });
 
 function useLessonsActiveLessonRenderSnapshot(input: {

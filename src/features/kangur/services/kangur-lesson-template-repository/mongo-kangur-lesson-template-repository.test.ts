@@ -125,4 +125,39 @@ describe('mongoKangurLessonTemplateRepository bootstrap', () => {
       { name: 'kangur_lesson_templates_subject_sort_idx' }
     );
   });
+
+  it('filters fallback defaults by componentId and ageGroup when Mongo has no matching rows', async () => {
+    const collection = {
+      bulkWrite: vi.fn().mockResolvedValue({ acknowledged: true }),
+      countDocuments: vi.fn().mockResolvedValue(0),
+      createIndex: vi.fn().mockResolvedValue('ok'),
+      dropIndex: vi.fn().mockResolvedValue('ok'),
+      find: vi.fn().mockReturnValue({
+        sort: vi.fn().mockReturnValue({
+          toArray: vi.fn().mockResolvedValue([]),
+        }),
+      }),
+      indexes: vi.fn().mockResolvedValue([]),
+    };
+    getMongoDbMock.mockResolvedValue({
+      collection: vi.fn().mockReturnValue(collection),
+    });
+
+    const { mongoKangurLessonTemplateRepository } = await import(
+      './mongo-kangur-lesson-template-repository'
+    );
+
+    const result = await mongoKangurLessonTemplateRepository.listTemplates({
+      locale: 'en',
+      componentId: 'division',
+      ageGroup: 'ten_year_old',
+    });
+
+    expect(result).toEqual([
+      expect.objectContaining({
+        componentId: 'division',
+        ageGroup: 'ten_year_old',
+      }),
+    ]);
+  });
 });

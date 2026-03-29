@@ -57,7 +57,7 @@ export default function AlphabetMatchingLesson({ lessonTemplate }: LessonProps):
       autoRecordComplete
       skipMarkFor={['game_pairs']}
       games={[
-        createAlphabetUnifiedLessonGame({
+        createAlphabetUnifiedLessonGame<'dopasowanie' | 'game_pairs' | 'summary'>({
           fallbackDescription: 'Połącz wielkie i małe litery.',
           fallbackTitle: 'Gra litery',
           gameId: 'alphabet_letter_matching',

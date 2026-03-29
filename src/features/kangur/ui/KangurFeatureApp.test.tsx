@@ -11,6 +11,8 @@ import {
   loginModalStateMock,
   pendingRouteLoadingSnapshotMock,
   preloadKangurPageMock,
+  prefetchKangurPageContentStoreMock,
+  queryClientMock,
   routingStateMock,
   routeNavigatorMock,
   routeTransitionStateMock,
@@ -18,6 +20,7 @@ import {
   setupKangurFeatureAppTest,
   settingsStoreStateMock,
   topNavigationHostVisibleMock,
+  useLocaleMock,
 } from '@/features/kangur/ui/KangurFeatureApp.test-support';
 
 let KangurFeatureApp: typeof import('@/features/kangur/ui/KangurFeatureApp').KangurFeatureApp;
@@ -68,6 +71,20 @@ describe('KangurFeatureApp', () => {
     expect(preloadKangurPageMock).toHaveBeenCalledWith('Lessons');
   });
 
+  it('prefetches page content for the active locale after the shell settles', async () => {
+    const queryClient = { prefetchQuery: vi.fn() };
+    queryClientMock.mockReturnValue(queryClient);
+    useLocaleMock.mockReturnValue('en');
+
+    render(<KangurFeatureApp />);
+
+    await act(async () => {
+      vi.runAllTimers();
+    });
+
+    expect(prefetchKangurPageContentStoreMock).toHaveBeenCalledWith(queryClient, 'en');
+  });
+
   it('preloads the hot Game page after the Lessons route settles', async () => {
     routingStateMock.mockReturnValue({
       pageKey: 'Lessons',
@@ -84,6 +101,27 @@ describe('KangurFeatureApp', () => {
     });
 
     expect(preloadKangurPageMock).toHaveBeenCalledWith('Game');
+  });
+
+  it('does not prefetch page content for the same locale twice after rerender', async () => {
+    const queryClient = { prefetchQuery: vi.fn() };
+    queryClientMock.mockReturnValue(queryClient);
+    useLocaleMock.mockReturnValue('pl');
+
+    const { rerender } = render(<KangurFeatureApp />);
+
+    await act(async () => {
+      vi.runAllTimers();
+    });
+
+    rerender(<KangurFeatureApp />);
+
+    await act(async () => {
+      vi.runAllTimers();
+    });
+
+    expect(prefetchKangurPageContentStoreMock).toHaveBeenCalledTimes(1);
+    expect(prefetchKangurPageContentStoreMock).toHaveBeenCalledWith(queryClient, 'pl');
   });
 
   it('cancels scheduled hot-route preloads when requestIdleCallback is available and the app unmounts first', () => {

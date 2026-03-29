@@ -165,6 +165,12 @@ describe('SocialPostPlaywrightCaptureModal', () => {
       handleRunProgrammablePlaywrightCapture: vi.fn(),
       handleRunProgrammablePlaywrightCaptureAndPipeline: vi.fn(),
       canGenerateSocialDraft: true,
+      currentVisualAnalysisJob: {
+        id: 'job-analysis-4',
+        status: 'active',
+        progress: { message: 'Analyzing the current draft screenshots.' },
+        failedReason: null,
+      },
       currentGenerationJob: {
         id: 'job-generate-2',
         status: 'waiting',
@@ -205,11 +211,12 @@ describe('SocialPostPlaywrightCaptureModal', () => {
     expect(
       screen.getByText(/"url": "https:\/\/example.com\/pricing\?kangurCapture=social-batch"/)
     ).toBeInTheDocument();
+    expect(screen.getByText('Image analysis: Running')).toBeInTheDocument();
     expect(screen.getByText('Generate post: Queued')).toBeInTheDocument();
     expect(screen.getByText('Full pipeline: Running')).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Capture programmable images' })).toBeDisabled();
-    expect(screen.getByRole('button', { name: 'Capture + run pipeline' })).toBeDisabled();
-    expect(screen.getByRole('button', { name: 'Capture + run pipeline' })).toHaveAttribute(
+    expect(screen.getByRole('button', { name: 'Capture in progress...' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Generate post in progress...' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Generate post in progress...' })).toHaveAttribute(
       'title',
       'Wait for the current Social runtime job to finish.'
     );
@@ -268,6 +275,7 @@ describe('SocialPostPlaywrightCaptureModal', () => {
       handleRunProgrammablePlaywrightCapture,
       handleRunProgrammablePlaywrightCaptureAndPipeline,
       canGenerateSocialDraft: true,
+      currentVisualAnalysisJob: null,
       currentGenerationJob: null,
       currentPipelineJob: null,
       socialDraftBlockedReason: null,
@@ -338,6 +346,7 @@ describe('SocialPostPlaywrightCaptureModal', () => {
       handleRunProgrammablePlaywrightCapture: vi.fn(),
       handleRunProgrammablePlaywrightCaptureAndPipeline: vi.fn(),
       canGenerateSocialDraft: false,
+      currentVisualAnalysisJob: null,
       currentGenerationJob: null,
       currentPipelineJob: null,
       socialDraftBlockedReason:
@@ -402,6 +411,7 @@ describe('SocialPostPlaywrightCaptureModal', () => {
       handleRunProgrammablePlaywrightCapture: vi.fn(),
       handleRunProgrammablePlaywrightCaptureAndPipeline: vi.fn(),
       canGenerateSocialDraft: true,
+      currentVisualAnalysisJob: null,
       currentGenerationJob: null,
       currentPipelineJob: null,
       socialDraftBlockedReason: null,
@@ -415,5 +425,74 @@ describe('SocialPostPlaywrightCaptureModal', () => {
     ).toBeInTheDocument();
     expect(screen.getByText('Runtime request preview')).toBeInTheDocument();
     expect(screen.getByText(/"issue": "Add a base URL to resolve this route\."/)).toBeInTheDocument();
+  });
+
+  it('blocks programmable capture while Social image analysis is already running', () => {
+    usePlaywrightPersonasMock.mockReturnValue({
+      data: [],
+      isLoading: false,
+      error: null,
+    });
+    useSocialPostContextMock.mockReturnValue({
+      activePost: { id: 'post-1' },
+      isProgrammablePlaywrightModalOpen: true,
+      handleCloseProgrammablePlaywrightModal: vi.fn(),
+      captureAppearanceMode: 'default',
+      programmableCaptureBaseUrl: 'https://example.com',
+      setProgrammableCaptureBaseUrl: vi.fn(),
+      programmableCapturePersonaId: '',
+      setProgrammableCapturePersonaId: vi.fn(),
+      programmableCaptureScript: 'return input.captures;',
+      setProgrammableCaptureScript: vi.fn(),
+      programmableCaptureRoutes: [
+        {
+          id: 'route-1',
+          title: 'Pricing page',
+          path: '/pricing',
+          description: '',
+          selector: '',
+          waitForMs: 0,
+          waitForSelectorMs: 10000,
+        },
+      ],
+      programmableCapturePending: false,
+      programmableCaptureMessage: null,
+      programmableCaptureErrorMessage: null,
+      handleAddProgrammableCaptureRoute: vi.fn(),
+      handleUpdateProgrammableCaptureRoute: vi.fn(),
+      handleRemoveProgrammableCaptureRoute: vi.fn(),
+      handleSeedProgrammableCaptureRoutesFromPresets: vi.fn(),
+      handleResetProgrammableCaptureScript: vi.fn(),
+      handleSaveProgrammableCaptureDefaults: vi.fn(),
+      handleRunProgrammablePlaywrightCapture: vi.fn(),
+      handleRunProgrammablePlaywrightCaptureAndPipeline: vi.fn(),
+      canGenerateSocialDraft: true,
+      currentVisualAnalysisJob: {
+        id: 'job-analysis-1',
+        status: 'active',
+        progress: { message: 'Analyzing the selected screenshots.' },
+        failedReason: null,
+      },
+      currentGenerationJob: null,
+      currentPipelineJob: null,
+      socialDraftBlockedReason: null,
+    });
+
+    render(<SocialPostPlaywrightCaptureModal />);
+
+    expect(screen.getByText('Image analysis: Running')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Capture in progress...' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Generate post in progress...' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Generate post in progress...' })).toHaveAttribute(
+      'title',
+      'Wait for the current Social runtime job to finish.'
+    );
+    expect(screen.getByRole('button', { name: 'Add route' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Seed from presets' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Reset script' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Save as defaults' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Remove' })).toBeDisabled();
+    expect(screen.getByLabelText('Programmable capture base URL')).toBeDisabled();
+    expect(screen.getByLabelText('Programmable Playwright capture script')).toBeDisabled();
   });
 });

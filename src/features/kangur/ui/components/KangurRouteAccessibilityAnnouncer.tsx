@@ -12,6 +12,22 @@ type KangurAccessibilityTranslations = (
   values?: Record<string, string | number>
 ) => string;
 
+const KANGUR_ACCESSIBILITY_PAGE_LABELS = {
+  Competition: 'accessibility.pages.Competition',
+  Duels: 'accessibility.pages.Duels',
+  Game: 'accessibility.pages.Game',
+  GamesLibrary: 'accessibility.pages.GamesLibrary',
+  LearnerProfile: 'accessibility.pages.LearnerProfile',
+  Lessons: 'accessibility.pages.Lessons',
+  ParentDashboard: 'accessibility.pages.ParentDashboard',
+  Tests: 'accessibility.pages.Tests',
+} as const satisfies Record<string, string>;
+
+const isKnownKangurAccessibilityPage = (
+  pageKey: string
+): pageKey is keyof typeof KANGUR_ACCESSIBILITY_PAGE_LABELS =>
+  pageKey in KANGUR_ACCESSIBILITY_PAGE_LABELS;
+
 const focusKangurMainRegion = (): void => {
   if (typeof document === 'undefined') {
     return;
@@ -44,32 +60,113 @@ const focusKangurMainRegion = (): void => {
   );
 };
 
+const scheduleKangurMainRegionFocus = (): (() => void) | undefined => {
+  if (typeof window === 'undefined') {
+    return undefined;
+  }
+
+  const frameId = window.requestAnimationFrame(() => {
+    focusKangurMainRegion();
+  });
+
+  return () => {
+    window.cancelAnimationFrame(frameId);
+  };
+};
+
 const resolveAnnouncementLabel = (
   pageKey: string | null | undefined,
   translate: KangurAccessibilityTranslations
 ): string => {
-  const normalizedPageKey = pageKey?.trim();
-
-  switch (normalizedPageKey) {
-    case 'Competition':
-      return translate('accessibility.pages.Competition');
-    case 'Game':
-      return translate('accessibility.pages.Game');
-    case 'GamesLibrary':
-      return translate('accessibility.pages.GamesLibrary');
-    case 'Lessons':
-      return translate('accessibility.pages.Lessons');
-    case 'Tests':
-      return translate('accessibility.pages.Tests');
-    case 'LearnerProfile':
-      return translate('accessibility.pages.LearnerProfile');
-    case 'ParentDashboard':
-      return translate('accessibility.pages.ParentDashboard');
-    case 'Duels':
-      return translate('accessibility.pages.Duels');
-    default:
-      return translate('accessibility.pages.default');
+  const normalizedPageKey = pageKey?.trim() ?? '';
+  if (isKnownKangurAccessibilityPage(normalizedPageKey)) {
+    return translate(KANGUR_ACCESSIBILITY_PAGE_LABELS[normalizedPageKey]);
   }
+
+  return translate('accessibility.pages.default');
+};
+
+const shouldAnnounceRequestedRouteChange = ({
+  previousRequestedHref,
+  previousRequestedPath,
+  requestedHref,
+  requestedPath,
+}: {
+  previousRequestedHref: string | undefined;
+  previousRequestedPath: string | undefined;
+  requestedHref: string | undefined;
+  requestedPath: string | undefined;
+}): boolean => {
+  const pathChanged = Boolean(previousRequestedPath && previousRequestedPath !== requestedPath);
+  const hrefChanged = Boolean(previousRequestedHref && previousRequestedHref !== requestedHref);
+  return pathChanged || hrefChanged;
+};
+
+const isLocaleSwitchRouteAnnouncement = ({
+  previousRequestedHref,
+  previousRequestedPath,
+  requestedHref,
+  requestedPath,
+  routeTransitionKind,
+}: {
+  previousRequestedHref: string | undefined;
+  previousRequestedPath: string | undefined;
+  requestedHref: string | undefined;
+  requestedPath: string | undefined;
+  routeTransitionKind: string | null | undefined;
+}): boolean => {
+  if (routeTransitionKind === 'locale-switch') {
+    return true;
+  }
+
+  const didPathStayTheSame = !previousRequestedPath || previousRequestedPath === requestedPath;
+  return didPathStayTheSame && previousRequestedHref !== undefined && previousRequestedHref !== requestedHref;
+};
+
+const resolveKangurRouteAnnouncement = ({
+  pageKey,
+  requestedHref,
+  requestedPath,
+  previousRequestedHref,
+  previousRequestedPath,
+  routeTransitionKind,
+  translate,
+}: {
+  pageKey: string | null | undefined;
+  requestedHref: string | undefined;
+  requestedPath: string | undefined;
+  previousRequestedHref: string | undefined;
+  previousRequestedPath: string | undefined;
+  routeTransitionKind: string | null | undefined;
+  translate: KangurAccessibilityTranslations;
+}): string | null => {
+  if (!requestedPath && !requestedHref) {
+    return null;
+  }
+
+  if (
+    !shouldAnnounceRequestedRouteChange({
+      previousRequestedHref,
+      previousRequestedPath,
+      requestedHref,
+      requestedPath,
+    })
+  ) {
+    return null;
+  }
+
+  const label = resolveAnnouncementLabel(pageKey, translate);
+  const isLocaleSwitch = isLocaleSwitchRouteAnnouncement({
+    previousRequestedHref,
+    previousRequestedPath,
+    requestedHref,
+    requestedPath,
+    routeTransitionKind,
+  });
+
+  return isLocaleSwitch
+    ? translate('accessibility.languageSwitchAnnouncement', { label })
+    : translate('accessibility.pageAnnouncement', { label });
 };
 
 export function KangurRouteAccessibilityAnnouncer(): React.JSX.Element {
@@ -81,43 +178,26 @@ export function KangurRouteAccessibilityAnnouncer(): React.JSX.Element {
   const [announcement, setAnnouncement] = useState('');
 
   useEffect(() => {
-    if (!requestedPath && !requestedHref) {
-      return;
-    }
-
     const previousRequestedPath = previousRequestedPathRef.current;
     const previousRequestedHref = previousRequestedHrefRef.current;
     previousRequestedPathRef.current = requestedPath;
     previousRequestedHrefRef.current = requestedHref;
 
-    const pathChanged = Boolean(previousRequestedPath && previousRequestedPath !== requestedPath);
-    const hrefChanged = Boolean(previousRequestedHref && previousRequestedHref !== requestedHref);
-    if (!pathChanged && !hrefChanged) {
-      return;
-    }
-
-    const label = resolveAnnouncementLabel(pageKey, translations);
-    const isLocaleSwitch =
-      routeTransitionState?.activeTransitionKind === 'locale-switch' ||
-      (!pathChanged && hrefChanged);
-
-    setAnnouncement(
-      isLocaleSwitch
-        ? translations('accessibility.languageSwitchAnnouncement', { label })
-        : translations('accessibility.pageAnnouncement', { label })
-    );
-
-    if (typeof window === 'undefined') {
-      return;
-    }
-
-    const frameId = window.requestAnimationFrame(() => {
-      focusKangurMainRegion();
+    const nextAnnouncement = resolveKangurRouteAnnouncement({
+      pageKey,
+      requestedHref,
+      requestedPath,
+      previousRequestedHref,
+      previousRequestedPath,
+      routeTransitionKind: routeTransitionState?.activeTransitionKind,
+      translate: translations,
     });
+    if (!nextAnnouncement) {
+      return;
+    }
 
-    return () => {
-      window.cancelAnimationFrame(frameId);
-    };
+    setAnnouncement(nextAnnouncement);
+    return scheduleKangurMainRegionFocus();
   }, [
     pageKey,
     requestedHref,

@@ -5,7 +5,6 @@ import { useTranslations } from 'next-intl';
 import { createPortal } from 'react-dom';
 
 import {
-  KangurDragDropContext,
   getKangurMobileDragHandleStyle,
 } from '@/features/kangur/ui/components/KangurDragDropContext';
 import {

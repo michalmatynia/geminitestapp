@@ -82,6 +82,53 @@ export type FrontendPublicOwnerShellProps = {
   children: JSX.Element;
 };
 
+const resolveFrontendPublicOwnerShellBrowserPathname = (): string | null =>
+  typeof window === 'undefined' ? null : window.location.pathname?.trim() || null;
+
+const resolveFrontendPublicOwnerShellPathname = (
+  pathname: string | null,
+  browserPathname: string | null
+): string => pathname?.trim() || browserPathname || '/';
+
+const resolveFrontendPublicOwnerShellRouteState = ({
+  pathname,
+  publicOwner,
+}: {
+  pathname: string;
+  publicOwner: FrontendPublicOwnerShellProps['publicOwner'];
+}) => {
+  const normalizedPathname = stripSiteLocalePrefix(pathname);
+  const isCanonicalPublicLoginRoute = normalizedPathname === '/login';
+  const isKangurAliasRoute =
+    normalizedPathname === '/kangur' || normalizedPathname.startsWith('/kangur/');
+
+  return {
+    shouldRenderStandaloneKangurShell:
+      publicOwner === 'kangur' &&
+      !isKangurAliasRoute &&
+      !isCanonicalPublicLoginRoute,
+  };
+};
+
+const renderFrontendPublicOwnerShell = ({
+  children,
+  initialAppearance,
+  kangurShellComponent,
+  shouldRenderStandaloneKangurShell,
+}: {
+  children: JSX.Element;
+  initialAppearance: FrontendPublicOwnerKangurShellInitialAppearance | undefined;
+  kangurShellComponent: FrontendPublicOwnerKangurShellComponent | null;
+  shouldRenderStandaloneKangurShell: boolean;
+}): JSX.Element => {
+  if (!shouldRenderStandaloneKangurShell || !kangurShellComponent) {
+    return children;
+  }
+
+  const KangurShellComponent = kangurShellComponent;
+  return <KangurShellComponent initialAppearance={initialAppearance} />;
+};
+
 export default function FrontendPublicOwnerShellClient({
   publicOwner,
   initialAppearance,
@@ -90,15 +137,16 @@ export default function FrontendPublicOwnerShellClient({
   const [kangurShellComponent, setKangurShellComponent] =
     useState<FrontendPublicOwnerKangurShellComponent | null>(null);
   const pathname = usePathname();
-  const browserPathname =
-    typeof window === 'undefined' ? null : window.location.pathname?.trim() || null;
-  const resolvedPathname = pathname?.trim() || browserPathname || '/';
-  const normalizedPathname = stripSiteLocalePrefix(resolvedPathname);
-  const isCanonicalPublicLoginRoute = normalizedPathname === '/login';
-  const isKangurAliasRoute =
-    normalizedPathname === '/kangur' || normalizedPathname.startsWith('/kangur/');
-  const shouldRenderStandaloneKangurShell =
-    publicOwner === 'kangur' && !isKangurAliasRoute && !isCanonicalPublicLoginRoute;
+  const browserPathname = resolveFrontendPublicOwnerShellBrowserPathname();
+  const resolvedPathname = resolveFrontendPublicOwnerShellPathname(
+    pathname,
+    browserPathname
+  );
+  const { shouldRenderStandaloneKangurShell } =
+    resolveFrontendPublicOwnerShellRouteState({
+      pathname: resolvedPathname,
+      publicOwner,
+    });
 
   useEffect(() => {
     if (process.env['NODE_ENV'] === 'test') {
@@ -143,14 +191,10 @@ export default function FrontendPublicOwnerShellClient({
     };
   }, [kangurShellComponent, shouldRenderStandaloneKangurShell]);
 
-  if (shouldRenderStandaloneKangurShell) {
-    if (!kangurShellComponent) {
-      return children;
-    }
-
-    const KangurShellComponent = kangurShellComponent;
-    return <KangurShellComponent initialAppearance={initialAppearance} />;
-  }
-
-  return children;
+  return renderFrontendPublicOwnerShell({
+    children,
+    initialAppearance,
+    kangurShellComponent,
+    shouldRenderStandaloneKangurShell,
+  });
 }

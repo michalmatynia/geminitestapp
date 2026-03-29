@@ -2,7 +2,6 @@
 
 import { useMemo } from 'react';
 
-import { getKangurBuiltInGameInstanceId } from '@/features/kangur/games';
 import type { LessonProps } from '@/features/kangur/lessons/lesson-ui-registry';
 import { useOptionalKangurLessonTemplate } from '@/features/kangur/ui/context/KangurLessonsRuntimeContext';
 import { KangurUnifiedLesson } from '../lessons/lesson-components';
@@ -11,8 +10,10 @@ import { CONTENT } from './AlphabetSequenceLesson.data';
 import {
   buildAlphabetUnifiedLessonSections,
   buildAlphabetUnifiedLessonSlides,
+  createAlphabetUnifiedLessonGame,
   findAlphabetUnifiedLessonSection,
   resolveAlphabetUnifiedLessonContent,
+  resolveAlphabetUnifiedLessonTitle,
 } from './alphabet-unified-lesson-content';
 
 export { CONTENT };
@@ -20,7 +21,10 @@ export { CONTENT };
 export default function AlphabetSequenceLesson({ lessonTemplate }: LessonProps): JSX.Element {
   const runtimeTemplate = useOptionalKangurLessonTemplate('alphabet_sequence');
   const resolvedTemplate = lessonTemplate ?? runtimeTemplate;
-  const resolvedTitle = resolvedTemplate?.title?.trim() || 'Alfabet - kolejność';
+  const resolvedTitle = resolveAlphabetUnifiedLessonTitle(
+    resolvedTemplate,
+    'Alfabet - kolejność'
+  );
   const resolvedContent = useMemo(
     () => resolveAlphabetUnifiedLessonContent('alphabet_sequence', resolvedTemplate, CONTENT),
     [resolvedTemplate],
@@ -53,21 +57,14 @@ export default function AlphabetSequenceLesson({ lessonTemplate }: LessonProps):
       autoRecordComplete
       skipMarkFor={['game_order']}
       games={[
-        {
+        createAlphabetUnifiedLessonGame({
+          fallbackDescription: 'Uzupełnij brakujące litery w kolejności alfabetu.',
+          fallbackTitle: 'Gra alfabet',
+          gameId: 'alphabet_letter_order',
+          gameSection,
           sectionId: 'game_order',
-          shell: {
-            accent: 'amber',
-            icon: '🎮',
-            shellTestId: 'alphabet-sequence-game-shell',
-            title: gameSection?.gameTitle ?? 'Gra alfabet',
-            description:
-              gameSection?.gameDescription ?? 'Uzupełnij brakujące litery w kolejności alfabetu.',
-          },
-          launchableInstance: {
-            gameId: 'alphabet_letter_order',
-            instanceId: getKangurBuiltInGameInstanceId('alphabet_letter_order'),
-          },
-        },
+          shellTestId: 'alphabet-sequence-game-shell',
+        }),
       ]}
     />
   );

@@ -50,15 +50,24 @@ const normalizeOptionalId = (value: string | null | undefined): string | null =>
   return normalized || null;
 };
 
+const hasVisualAnalysisContent = (draft: KangurSocialGeneratedDraft): boolean =>
+  Boolean(
+    draft.visualSummary != null ||
+      (draft.visualHighlights?.length ?? 0) > 0 ||
+      (draft.visualDocUpdates?.length ?? 0) > 0
+  );
+
 const buildVisualAnalysisPatch = ({
   analysis,
   actorId,
+  docReferences,
   imageAddonIds,
   jobId,
   visionModelId,
 }: {
   analysis: KangurSocialVisualAnalysis;
   actorId: string | null;
+  docReferences: string[];
   imageAddonIds: string[];
   jobId: string | null;
   visionModelId: string | null;
@@ -66,6 +75,9 @@ const buildVisualAnalysisPatch = ({
   visualSummary: analysis.summary.trim() || null,
   visualHighlights: analysis.highlights,
   visualDocUpdates: analysis.docUpdates,
+  visualAnalysisSourceImageAddonIds: imageAddonIds,
+  visualAnalysisSourceDocReferences: docReferences,
+  visualAnalysisSourceVisionModelId: visionModelId,
   visualAnalysisStatus: 'completed' as const,
   visualAnalysisUpdatedAt: new Date().toISOString(),
   visualAnalysisJobId: jobId,
@@ -73,6 +85,7 @@ const buildVisualAnalysisPatch = ({
   docUpdatesAppliedAt: null,
   docUpdatesAppliedBy: null,
   imageAddonIds,
+  docReferences,
   ...(visionModelId ? { visionModelId } : {}),
   ...(actorId ? { updatedBy: actorId } : {}),
 });
@@ -81,6 +94,7 @@ const persistVisualAnalysisOnPost = async ({
   postId,
   analysis,
   actorId,
+  docReferences,
   imageAddonIds,
   jobId,
   visionModelId,
@@ -88,6 +102,7 @@ const persistVisualAnalysisOnPost = async ({
   postId: string | null;
   analysis: KangurSocialVisualAnalysis;
   actorId: string | null;
+  docReferences: string[];
   imageAddonIds: string[];
   jobId: string | null;
   visionModelId: string | null;
@@ -99,6 +114,7 @@ const persistVisualAnalysisOnPost = async ({
     buildVisualAnalysisPatch({
       analysis,
       actorId,
+      docReferences,
       imageAddonIds,
       jobId,
       visionModelId,
@@ -115,6 +131,7 @@ const persistVisualAnalysisOnPost = async ({
 const persistGeneratedDraftOnPost = async ({
   actorId,
   brainModelId,
+  docReferences,
   draft,
   imageAddonIds,
   postId,
@@ -122,12 +139,15 @@ const persistGeneratedDraftOnPost = async ({
 }: {
   actorId: string | null;
   brainModelId: string | null;
+  docReferences: string[];
   draft: KangurSocialGeneratedDraft;
   imageAddonIds: string[];
   postId: string | null;
   visionModelId: string | null;
 }): Promise<KangurSocialPost | null> => {
   if (!postId) return null;
+
+  const includeVisualAnalysisSource = hasVisualAnalysisContent(draft);
 
   const updated = await updateKangurSocialPost(postId, {
     titlePl: draft.titlePl,
@@ -141,6 +161,9 @@ const persistGeneratedDraftOnPost = async ({
     visualSummary: draft.visualSummary ?? null,
     visualHighlights: draft.visualHighlights ?? [],
     visualDocUpdates: draft.visualDocUpdates ?? [],
+    visualAnalysisSourceImageAddonIds: includeVisualAnalysisSource ? imageAddonIds : [],
+    visualAnalysisSourceDocReferences: includeVisualAnalysisSource ? docReferences : [],
+    visualAnalysisSourceVisionModelId: includeVisualAnalysisSource ? visionModelId : null,
     docUpdatesAppliedAt: null,
     docUpdatesAppliedBy: null,
     imageAddonIds,
@@ -182,6 +205,7 @@ export async function runKangurSocialPostVisualAnalysisJob(
     postId: normalizedPostId,
     analysis,
     actorId: normalizedActorId,
+    docReferences,
     imageAddonIds,
     jobId: normalizedJobId,
     visionModelId: normalizedVisionModelId,
@@ -224,6 +248,7 @@ export async function runKangurSocialPostGenerationJob(
   const generatedPost = await persistGeneratedDraftOnPost({
     actorId: normalizedActorId,
     brainModelId: normalizedBrainModelId,
+    docReferences,
     draft,
     imageAddonIds,
     postId: normalizedPostId,

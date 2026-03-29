@@ -8,6 +8,7 @@ import {
 import {
   resolveKangurLessonTemplateComponentContent,
 } from '@/features/kangur/lessons/lesson-template-component-content';
+import { getKangurBuiltInGameInstanceId } from '@/features/kangur/games';
 import type {
   KangurAlphabetUnifiedLessonTemplateContent,
   KangurLessonTemplate,
@@ -61,3 +62,37 @@ export const findAlphabetUnifiedLessonSection = (
   content: KangurAlphabetUnifiedLessonTemplateContent,
   sectionId: string,
 ) => content.sections.find((section) => section.id === sectionId) ?? null;
+
+export const resolveAlphabetUnifiedLessonTitle = (
+  template: KangurLessonTemplate | null | undefined,
+  fallbackTitle: string,
+): string => template?.title?.trim() || fallbackTitle;
+
+export const createAlphabetUnifiedLessonGame = ({
+  fallbackDescription,
+  fallbackTitle,
+  gameId,
+  gameSection,
+  sectionId,
+  shellTestId,
+}: {
+  fallbackDescription: string;
+  fallbackTitle: string;
+  gameId: string;
+  gameSection: ReturnType<typeof findAlphabetUnifiedLessonSection>;
+  sectionId: string;
+  shellTestId: string;
+}) => ({
+  sectionId,
+  shell: {
+    accent: 'amber' as const,
+    icon: '🎮',
+    shellTestId,
+    title: gameSection?.gameTitle ?? fallbackTitle,
+    description: gameSection?.gameDescription ?? fallbackDescription,
+  },
+  launchableInstance: {
+    gameId,
+    instanceId: getKangurBuiltInGameInstanceId(gameId),
+  },
+});

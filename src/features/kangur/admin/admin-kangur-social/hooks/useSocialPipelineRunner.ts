@@ -119,6 +119,8 @@ type VisualAnalysisJobRecord = {
 type RunPipelineOptions = {
   prefetchedVisualAnalysis?: KangurSocialVisualAnalysis;
   requireVisualAnalysisInBody?: boolean;
+  imageAssetsOverride?: ImageFileSelection[];
+  imageAddonIdsOverride?: string[];
 };
 
 const PIPELINE_POLL_INTERVAL_MS = 2_000;
@@ -168,6 +170,46 @@ const buildVisualAnalysisFromPost = (
   };
 };
 
+const buildStringArraySignature = (values: string[] | null | undefined): string =>
+  (values ?? [])
+    .map((value) => value.trim())
+    .filter(Boolean)
+    .slice()
+    .sort()
+    .join('|');
+
+const hasSavedVisualAnalysisScopeMetadata = (post: KangurSocialPost | null): boolean =>
+  Boolean(
+    post &&
+      ((post.visualAnalysisSourceImageAddonIds?.length ?? 0) > 0 ||
+        (post.visualAnalysisSourceDocReferences?.length ?? 0) > 0 ||
+        post.visualAnalysisSourceVisionModelId?.trim())
+  );
+
+const savedVisualAnalysisMatchesDraft = ({
+  post,
+  currentDocReferences,
+  currentImageAddonIds,
+  currentVisionModelId,
+}: {
+  post: KangurSocialPost | null;
+  currentDocReferences: string[];
+  currentImageAddonIds: string[];
+  currentVisionModelId: string | null;
+}): boolean => {
+  if (!post) return false;
+  if (!hasSavedVisualAnalysisScopeMetadata(post)) return true;
+
+  return (
+    buildStringArraySignature(post.visualAnalysisSourceImageAddonIds) ===
+      buildStringArraySignature(currentImageAddonIds) &&
+    buildStringArraySignature(post.visualAnalysisSourceDocReferences) ===
+      buildStringArraySignature(currentDocReferences) &&
+    (post.visualAnalysisSourceVisionModelId?.trim() ?? '') ===
+      (currentVisionModelId?.trim() ?? '')
+  );
+};
+
 export function useSocialPipelineRunner(deps: SocialPipelineRunnerDeps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -184,7 +226,20 @@ export function useSocialPipelineRunner(deps: SocialPipelineRunnerDeps) {
     null
   );
   const [visualAnalysisPending, setVisualAnalysisPending] = useState(false);
-  const savedVisualAnalysisResult = buildVisualAnalysisFromPost(deps.activePost);
+  const currentDocReferences = deps.resolveDocReferences();
+  const persistedVisualAnalysisResult = buildVisualAnalysisFromPost(deps.activePost);
+  const hasSavedVisualAnalysis = Boolean(persistedVisualAnalysisResult);
+  const isSavedVisualAnalysisStale =
+    hasSavedVisualAnalysis &&
+    !savedVisualAnalysisMatchesDraft({
+      post: deps.activePost,
+      currentDocReferences,
+      currentImageAddonIds: deps.imageAddonIds,
+      currentVisionModelId: deps.visionModelId,
+    });
+  const savedVisualAnalysisResult = isSavedVisualAnalysisStale
+    ? null
+    : persistedVisualAnalysisResult;
   const visualAnalysisResult =
     transientVisualAnalysisResult?.postId === deps.activePostId
       ? transientVisualAnalysisResult.result
@@ -194,7 +249,7 @@ export function useSocialPipelineRunner(deps: SocialPipelineRunnerDeps) {
     imageAddonIds: deps.imageAddonIds,
     visionModelId: deps.visionModelId ?? null,
     generationNotes: deps.generationNotes.trim(),
-    docReferences: deps.resolveDocReferences(),
+    docReferences: currentDocReferences,
   });
 
   const depsRef = useRef(deps);
@@ -220,11 +275,7 @@ export function useSocialPipelineRunner(deps: SocialPipelineRunnerDeps) {
     setPipelineErrorMessage(null);
     setVisualAnalysisErrorMessage(null);
     setIsVisualAnalysisModalOpen(false);
-  }, [
-    deps.activePostId,
-    deps.setBatchCaptureResult,
-    deps.setDocUpdatesResult,
-  ]);
+  }, [deps.activePostId]);
 
   useEffect(() => {
     const previousScope = previousVisualAnalysisScopeRef.current;
@@ -287,9 +338,16 @@ export function useSocialPipelineRunner(deps: SocialPipelineRunnerDeps) {
 
     const activePostId = d.activePost.id;
     const usesPrefetchedVisualAnalysis = Boolean(options?.prefetchedVisualAnalysis);
+    const effectiveImageAssets = options?.imageAssetsOverride ?? d.imageAssets;
+    const effectiveImageAddonIds = options?.imageAddonIdsOverride ?? d.imageAddonIds;
     trackKangurClientEvent(
       'kangur_social_pipeline_attempt',
-      d.buildSocialContext({ captureMode, usesPrefetchedVisualAnalysis })
+      d.buildSocialContext({
+        captureMode,
+        usesPrefetchedVisualAnalysis,
+        imageAssetCount: effectiveImageAssets.length,
+        imageAddonCount: effectiveImageAddonIds.length,
+      })
     );
 
     try {
@@ -331,8 +389,8 @@ export function useSocialPipelineRunner(deps: SocialPipelineRunnerDeps) {
       const pipelineInput: Record<string, unknown> = {
         postId: activePostId,
         editorState: d.editorState,
-        imageAssets: d.imageAssets,
-        imageAddonIds: d.imageAddonIds,
+        imageAssets: effectiveImageAssets,
+        imageAddonIds: effectiveImageAddonIds,
         captureMode,
         linkedinConnectionId: d.linkedinConnectionId ?? null,
         brainModelId: d.brainModelId ?? null,
@@ -496,6 +554,18 @@ export function useSocialPipelineRunner(deps: SocialPipelineRunnerDeps) {
     [runPipeline]
   );
 
+  const handleRunFullPipelineWithOverrides = useCallback(
+    async (options: {
+      imageAssets: ImageFileSelection[];
+      imageAddonIds: string[];
+    }): Promise<void> =>
+      runPipeline('existing_assets', {
+        imageAssetsOverride: options.imageAssets,
+        imageAddonIdsOverride: options.imageAddonIds,
+      }),
+    [runPipeline]
+  );
+
   const handleRunFullPipelineWithFreshCapture = useCallback(
     async (): Promise<void> => runPipeline('fresh_capture'),
     [runPipeline]
@@ -656,9 +726,14 @@ export function useSocialPipelineRunner(deps: SocialPipelineRunnerDeps) {
 
   const handleRunFullPipelineWithVisualAnalysis = useCallback(async (): Promise<void> => {
     if (!visualAnalysisResult) {
-      toast('Run image analysis first to generate the post with visual context.', {
-        variant: 'warning',
-      });
+      toast(
+        hasSavedVisualAnalysis && isSavedVisualAnalysisStale
+          ? 'Saved image analysis is outdated for this draft. Rerun image analysis before generating.'
+          : 'Run image analysis first to generate the post with visual context.',
+        {
+          variant: 'warning',
+        }
+      );
       return;
     }
 
@@ -675,9 +750,12 @@ export function useSocialPipelineRunner(deps: SocialPipelineRunnerDeps) {
     pipelineErrorMessage,
     isVisualAnalysisModalOpen,
     visualAnalysisResult,
+    hasSavedVisualAnalysis,
+    isSavedVisualAnalysisStale,
     visualAnalysisErrorMessage,
     visualAnalysisPending,
     handleRunFullPipeline,
+    handleRunFullPipelineWithOverrides,
     handleRunFullPipelineWithFreshCapture,
     handleOpenVisualAnalysisModal,
     handleCloseVisualAnalysisModal,

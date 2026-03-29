@@ -37,6 +37,32 @@ export const useKangurStorefrontInitialThemeSettings =
 export const useKangurStorefrontAppearanceHydrated = (): boolean =>
   useContext(KangurStorefrontAppearanceHydratedContext);
 
+const resolveKangurStorefrontInitialThemeSettings = (
+  initialThemeSettings:
+    | Partial<KangurStorefrontThemeSettingsSnapshot>
+    | null
+    | undefined
+): KangurStorefrontThemeSettingsSnapshot => {
+  const settings =
+    initialThemeSettings ?? KANGUR_EMPTY_THEME_SETTINGS_SNAPSHOT;
+
+  return {
+    default: settings.default ?? null,
+    dawn: settings.dawn ?? null,
+    sunset: settings.sunset ?? null,
+    dark: settings.dark ?? null,
+  };
+};
+
+const resolveKangurStorefrontPersistMode = (): boolean => {
+  const raw = process.env['NEXT_PUBLIC_KANGUR_APPEARANCE_PERSIST'];
+  if (process.env['NODE_ENV'] !== 'production') {
+    return raw !== 'false';
+  }
+
+  return raw === 'true';
+};
+
 export function KangurStorefrontAppearanceProvider({
   children,
   initialAppearance,
@@ -62,22 +88,11 @@ export function KangurStorefrontAppearanceProvider({
     [storedMode]
   );
   const resolvedInitialThemeSettings = useMemo<KangurStorefrontThemeSettingsSnapshot>(
-    () => ({
-      default: resolvedInitialThemeSettingsInput?.default ?? null,
-      dawn: resolvedInitialThemeSettingsInput?.dawn ?? null,
-      sunset: resolvedInitialThemeSettingsInput?.sunset ?? null,
-      dark: resolvedInitialThemeSettingsInput?.dark ?? null,
-    }),
+    () => resolveKangurStorefrontInitialThemeSettings(resolvedInitialThemeSettingsInput),
     [resolvedInitialThemeSettingsInput]
   );
   const defaultMode = hydrated ? resolvedMode : (resolvedInitialMode ?? 'default');
-  const shouldPersistMode = useMemo(() => {
-    const raw = process.env['NEXT_PUBLIC_KANGUR_APPEARANCE_PERSIST'];
-    if (process.env['NODE_ENV'] !== 'production') {
-      return raw !== 'false';
-    }
-    return raw === 'true';
-  }, []);
+  const shouldPersistMode = useMemo(() => resolveKangurStorefrontPersistMode(), []);
 
   useEffect(() => {
     setHydrated(true);

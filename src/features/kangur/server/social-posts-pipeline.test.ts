@@ -87,6 +87,9 @@ const basePost: KangurSocialPost = {
   visualSummary: null,
   visualHighlights: [],
   visualDocUpdates: [],
+  visualAnalysisSourceImageAddonIds: [],
+  visualAnalysisSourceDocReferences: [],
+  visualAnalysisSourceVisionModelId: null,
   docUpdatesAppliedAt: null,
   docUpdatesAppliedBy: null,
   createdBy: null,
@@ -187,6 +190,50 @@ describe('runKangurSocialPostPipeline', () => {
       expect.objectContaining({
         step: 'previewing',
         contextSummary: 'Loaded context summary',
+      })
+    );
+  });
+
+  it('persists the analysis source snapshot when generated content includes visual analysis', async () => {
+    mocks.generateKangurSocialPostDraftMock.mockResolvedValueOnce({
+      titlePl: 'Generated PL',
+      titleEn: 'Generated EN',
+      bodyPl: 'Generated body PL',
+      bodyEn: 'Generated body EN',
+      combinedBody: 'Generated body PL\n\n---\n\nGenerated body EN',
+      summary: 'Generated draft summary',
+      docReferences: ['overview'],
+      visualSummary: 'The teacher CTA is larger in the hero.',
+      visualHighlights: ['Larger teacher CTA'],
+      visualDocUpdates: [],
+    });
+
+    await runKangurSocialPostPipeline({
+      postId: 'post-1',
+      editorState: {
+        titlePl: 'Draft PL',
+        titleEn: 'Draft EN',
+        bodyPl: 'Body PL',
+        bodyEn: 'Body EN',
+      },
+      imageAssets: [],
+      imageAddonIds: ['addon-1'],
+      captureMode: 'existing_assets',
+      linkedinConnectionId: null,
+      brainModelId: 'brain-model',
+      visionModelId: 'vision-model',
+      projectUrl: 'https://studiq.example.com',
+      generationNotes: 'Focus on the new onboarding improvements.',
+      docReferences: ['overview'],
+      actorId: 'user-1',
+    });
+
+    expect(mocks.updateKangurSocialPostMock).toHaveBeenCalledWith(
+      'post-1',
+      expect.objectContaining({
+        visualAnalysisSourceImageAddonIds: ['addon-1'],
+        visualAnalysisSourceDocReferences: ['overview'],
+        visualAnalysisSourceVisionModelId: 'vision-model',
       })
     );
   });

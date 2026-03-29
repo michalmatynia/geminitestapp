@@ -456,6 +456,52 @@ describe('SocialPostPipeline', () => {
     );
   });
 
+  it('warns when saved image analysis exists but the draft changed since that analysis', () => {
+    useSocialPostContextMock.mockReturnValue({
+      activePostId: 'post-1',
+      editorState: {
+        titlePl: 'Selected pipeline target',
+        titleEn: '',
+      },
+      pipelineStep: 'idle',
+      pipelineProgress: null,
+      pipelineErrorMessage: null,
+      visualAnalysisResult: null,
+      hasSavedVisualAnalysis: true,
+      isSavedVisualAnalysisStale: true,
+      handleRunFullPipeline: vi.fn(),
+      handleRunFullPipelineWithFreshCapture: vi.fn(),
+      handleOpenVisualAnalysisModal: vi.fn(),
+      handleCaptureImagesOnly: vi.fn(),
+      canGenerateSocialDraft: true,
+      canRunVisualAnalysisPipeline: true,
+      canRunFreshCapturePipeline: true,
+      batchCaptureBaseUrl: 'https://kangur.app',
+      batchCapturePresetIds: ['home'],
+      socialDraftBlockedReason: null,
+      socialBatchCaptureBlockedReason: null,
+      socialVisualAnalysisBlockedReason: null,
+      captureOnlyPending: false,
+      captureOnlyMessage: null,
+      captureOnlyErrorMessage: null,
+      batchCapturePresetLimit: 1,
+      hasBatchCaptureConfig: true,
+      setIsPostEditorModalOpen: vi.fn(),
+    });
+
+    render(<SocialPostPipeline />);
+
+    expect(
+      screen.getByText(
+        'Saved image analysis exists for this draft, but the current visuals or doc references changed. Rerun image analysis before generating.'
+      )
+    ).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Pipeline + image analysis' })).toHaveAttribute(
+      'title',
+      'Saved image analysis exists for this draft, but the current visuals or docs changed. Rerun image analysis before generating.'
+    );
+  });
+
   it('surfaces a completed pipeline by opening the draft editor', () => {
     const handleRunFullPipeline = vi.fn();
     const handleRunFullPipelineWithFreshCapture = vi.fn();

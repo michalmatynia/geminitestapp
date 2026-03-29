@@ -20,6 +20,7 @@ const {
   settingsHandleVisionModelChangeMock,
   settingsHandleLinkedInConnectionChangeMock,
   pipelineRunMock,
+  pipelineRunWithOverridesMock,
   pipelineRunFreshMock,
   runBatchCaptureMock,
   patchMutateAsyncMock,
@@ -40,6 +41,7 @@ const {
   settingsHandleVisionModelChangeMock: vi.fn(),
   settingsHandleLinkedInConnectionChangeMock: vi.fn(),
   pipelineRunMock: vi.fn(),
+  pipelineRunWithOverridesMock: vi.fn(),
   pipelineRunFreshMock: vi.fn(),
   runBatchCaptureMock: vi.fn(),
   patchMutateAsyncMock: vi.fn(),
@@ -181,6 +183,7 @@ describe('useAdminKangurSocialPage', () => {
     vi.clearAllMocks();
     patchMutateAsyncMock.mockResolvedValue({});
     pipelineRunMock.mockResolvedValue(undefined);
+    pipelineRunWithOverridesMock.mockResolvedValue(undefined);
     pipelineRunFreshMock.mockResolvedValue(undefined);
     runBatchCaptureMock.mockResolvedValue({
       addons: [
@@ -244,6 +247,7 @@ describe('useAdminKangurSocialPage', () => {
       visualAnalysisErrorMessage: null,
       visualAnalysisPending: false,
       handleRunFullPipeline: pipelineRunMock,
+      handleRunFullPipelineWithOverrides: pipelineRunWithOverridesMock,
       handleRunFullPipelineWithFreshCapture: pipelineRunFreshMock,
       handleOpenVisualAnalysisModal: vi.fn(),
       handleCloseVisualAnalysisModal: vi.fn(),
@@ -280,6 +284,42 @@ describe('useAdminKangurSocialPage', () => {
     expect(result.current.captureOnlyMessage).toBe(
       'Captured 1 screenshot from 1 preset and linked them to the draft.'
     );
+  });
+
+  it('runs programmable capture and then starts the pipeline with the fresh attachments', async () => {
+    const { result } = renderHook(() => useAdminKangurSocialPage());
+
+    await act(async () => {
+      await result.current.handleRunProgrammablePlaywrightCaptureAndPipeline();
+    });
+
+    expect(runBatchCaptureMock).toHaveBeenCalledWith({
+      baseUrl: 'https://capture.example.com',
+      presetIds: [],
+      presetLimit: null,
+      playwrightPersonaId: null,
+      playwrightScript: expect.any(String),
+      playwrightRoutes: expect.any(Array),
+    });
+    expect(patchMutateAsyncMock).toHaveBeenCalledWith({
+      id: 'post-1',
+      updates: {
+        imageAddonIds: ['addon-old', 'addon-1'],
+        imageAssets: [
+          { id: 'existing', url: '/existing.png' },
+          { id: 'asset-1', url: '/capture.png' },
+        ],
+      },
+    });
+    expect(pipelineRunWithOverridesMock).toHaveBeenCalledWith({
+      imageAddonIds: ['addon-old', 'addon-1'],
+      imageAssets: [
+        { id: 'existing', url: '/existing.png' },
+        { id: 'asset-1', url: '/capture.png' },
+      ],
+    });
+    expect(result.current.programmableCapturePending).toBe(false);
+    expect(result.current.programmableCaptureErrorMessage).toBeNull();
   });
 
   it('delegates settings telemetry wrappers and reports blocked capture state', async () => {

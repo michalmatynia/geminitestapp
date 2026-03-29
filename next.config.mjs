@@ -216,7 +216,11 @@ const nextConfig = {
     config.optimization.moduleIds = 'deterministic';
     config.optimization.minimize = process.env.NODE_ENV === 'production';
 
-    if (isDev && requestedDevBundler === 'webpack' && isPlaywrightBrokerRuntime) {
+    if (isVercel) {
+      // Disable webpack's filesystem cache on Vercel. The cache serialization
+      // phase spikes memory and contributes to OOM on 8 GB build machines.
+      config.cache = false;
+    } else if (isDev && requestedDevBundler === 'webpack' && isPlaywrightBrokerRuntime) {
       // Brokered Playwright runtimes already isolate their dist dir. Keep webpack
       // cache in memory to avoid ENOSPC and partial on-disk cache writes during
       // accessibility/browser smoke runs on near-full local volumes.

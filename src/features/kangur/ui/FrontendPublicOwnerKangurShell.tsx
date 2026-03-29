@@ -27,17 +27,35 @@ type FrontendPublicOwnerKangurShellProps = {
 export type FrontendPublicOwnerKangurShellInitialAppearance =
   FrontendPublicOwnerKangurShellProps['initialAppearance'];
 
+const resolveBrowserPathname = (): string | null =>
+  typeof window === 'undefined' ? null : window.location.pathname?.trim() || null;
+
+const resolveFrontendPublicOwnerPathname = (
+  pathname: string | null,
+  browserPathname: string | null
+): string => pathname?.trim() || browserPathname || '/';
+
+const resolveFrontendPublicOwnerEmbedded = (
+  embeddedOverride: boolean | undefined,
+  normalizedPathname: string
+): boolean => embeddedOverride ?? normalizedPathname === '/';
+
 export function FrontendPublicOwnerKangurShell({
   embeddedOverride,
   initialAppearance,
 }: FrontendPublicOwnerKangurShellProps): JSX.Element {
   const shouldRenderAnalytics = shouldRenderVercelAnalytics();
   const pathname = usePathname();
-  const browserPathname =
-    typeof window === 'undefined' ? null : window.location.pathname?.trim() || null;
-  const resolvedPathname = pathname?.trim() || browserPathname || '/';
+  const browserPathname = resolveBrowserPathname();
+  const resolvedPathname = resolveFrontendPublicOwnerPathname(
+    pathname,
+    browserPathname
+  );
   const normalizedPathname = stripSiteLocalePrefix(resolvedPathname);
-  const embedded = embeddedOverride ?? normalizedPathname === '/';
+  const embedded = resolveFrontendPublicOwnerEmbedded(
+    embeddedOverride,
+    normalizedPathname
+  );
 
   return (
     <>

@@ -27,6 +27,8 @@ export function SocialPostPipeline(): React.JSX.Element {
     pipelineProgress,
     pipelineErrorMessage,
     visualAnalysisResult,
+    hasSavedVisualAnalysis,
+    isSavedVisualAnalysisStale,
     handleRunFullPipeline,
     handleRunFullPipelineWithFreshCapture,
     handleOpenVisualAnalysisModal,
@@ -99,6 +101,8 @@ export function SocialPostPipeline(): React.JSX.Element {
         'Select at least one image add-on and configure a vision model first.'
       : isPipelineBusy
         ? 'Wait for the current pipeline run to finish.'
+        : isSavedVisualAnalysisStale && hasSavedVisualAnalysis
+          ? 'Saved image analysis exists for this draft, but the current visuals or docs changed. Rerun image analysis before generating.'
         : hasReadyVisualAnalysis
           ? 'Review the saved image analysis or generate from it without rerunning vision analysis.'
           : 'Analyze the selected visuals first, then generate a post that mentions the findings.';
@@ -235,6 +239,12 @@ export function SocialPostPipeline(): React.JSX.Element {
           {!hasBatchCaptureConfig && !canGenerateSocialDraft && socialBatchCaptureBlockedReason && (
             <div className='rounded-xl border border-border/60 bg-background/40 px-3 py-2 text-xs text-muted-foreground'>
               {socialBatchCaptureBlockedReason}
+            </div>
+          )}
+
+          {isSavedVisualAnalysisStale && hasSavedVisualAnalysis && !isPipelineBusy && (
+            <div className='rounded-xl border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-xs text-amber-900 dark:text-amber-200'>
+              Saved image analysis exists for this draft, but the current visuals or doc references changed. Rerun image analysis before generating.
             </div>
           )}
 

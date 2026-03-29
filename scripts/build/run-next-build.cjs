@@ -24,9 +24,11 @@ const getDefaultHeapMb = () => {
     return String(Math.max(1024, explicitHeapMb));
   }
 
-  // Vercel's default build machine provides 8 GB of system RAM. A 6 GB Node
-  // heap still leaves headroom for the OS while avoiding the earlier OOM path.
-  return process.env.VERCEL ? '6144' : '8192';
+  // Vercel's default build machine provides 8 GB of system RAM. Next.js spawns
+  // a worker for static page generation that inherits NODE_OPTIONS, so the total
+  // memory is roughly 2× this value. 3584 MB × 2 = 7168 MB, leaving ~800 MB
+  // for the OS and other processes.
+  return process.env.VERCEL ? '3584' : '8192';
 };
 
 const buildEnv = {

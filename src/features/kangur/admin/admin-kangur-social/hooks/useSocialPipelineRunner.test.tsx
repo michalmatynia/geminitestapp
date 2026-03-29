@@ -2,63 +2,19 @@
  * @vitest-environment jsdom
  */
 
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { act, renderHook } from '@testing-library/react';
-import type { ReactNode } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-const {
+import {
   apiGetMock,
   apiPostMock,
+  completedVisualAnalysis,
+  createWrapper,
   logKangurClientErrorMock,
   toastMock,
   trackKangurClientEventMock,
-} = vi.hoisted(() => ({
-  apiGetMock: vi.fn(),
-  apiPostMock: vi.fn(),
-  logKangurClientErrorMock: vi.fn(),
-  toastMock: vi.fn(),
-  trackKangurClientEventMock: vi.fn(),
-}));
-
-vi.mock('@/shared/lib/api-client', () => ({
-  api: {
-    get: (...args: unknown[]) => apiGetMock(...args),
-    post: (...args: unknown[]) => apiPostMock(...args),
-  },
-}));
-
-vi.mock('@/features/kangur/shared/ui', () => ({
-  useToast: () => ({
-    toast: toastMock,
-  }),
-}));
-
-vi.mock('@/features/kangur/observability/client', () => ({
-  logKangurClientError: (...args: unknown[]) => logKangurClientErrorMock(...args),
-  trackKangurClientEvent: (...args: unknown[]) => trackKangurClientEventMock(...args),
-}));
-
-import { useSocialPipelineRunner } from './useSocialPipelineRunner';
-
-const completedVisualAnalysis = {
-  summary: 'The hero now shows a larger student card and clearer CTA.',
-  highlights: ['Larger student card', 'Clearer CTA'],
-  docUpdates: [],
-} as const;
-
-const createWrapper = (): React.ComponentType<{ children: ReactNode }> => {
-  const queryClient = new QueryClient({
-    defaultOptions: {
-      queries: { retry: false },
-      mutations: { retry: false },
-    },
-  });
-
-  return function Wrapper({ children }: { children: ReactNode }) {
-    return <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>;
-  };
-};
+  useSocialPipelineRunner,
+} from './useSocialPipelineRunner.test-support';
 
 describe('useSocialPipelineRunner', () => {
   beforeEach(() => {
@@ -613,7 +569,7 @@ describe('useSocialPipelineRunner', () => {
     expect(result.current.visualAnalysisResult).toEqual(completedVisualAnalysis);
   });
 
-  it('invalidates the saved analysis result when the analysis inputs change', async () => {
+  it('invalidates the transient analysis result when the analysis inputs change', async () => {
     apiPostMock.mockResolvedValueOnce({
       success: true,
       jobId: 'job-visual-analysis-3',
@@ -695,6 +651,239 @@ describe('useSocialPipelineRunner', () => {
     });
 
     expect(result.current.visualAnalysisResult).toBeNull();
+  });
+
+  it('retains the saved draft analysis when switching away from a post and back again', async () => {
+    apiPostMock.mockResolvedValueOnce({
+      success: true,
+      jobId: 'job-visual-retained-1',
+      jobType: 'manual-post-pipeline',
+    });
+    apiGetMock.mockResolvedValueOnce({
+      id: 'job-visual-retained-1',
+      status: 'completed',
+      progress: {
+        type: 'manual-post-pipeline',
+        step: 'previewing',
+        captureMode: 'existing_assets',
+        message: 'Preparing documentation diff...',
+        updatedAt: 1_700_000_002_000,
+        contextDocCount: 1,
+        contextSummary: 'summary',
+        addonsCreated: 0,
+        captureFailureCount: 0,
+        captureFailures: [],
+        requestedPresetCount: 0,
+        usedPresetCount: 0,
+        usedPresetIds: [],
+        captureCompletedCount: 0,
+        captureRemainingCount: 0,
+        captureTotalCount: 0,
+        runId: null,
+      },
+      failedReason: null,
+      result: {
+        type: 'manual-post-pipeline',
+        postId: 'post-1',
+        captureMode: 'existing_assets',
+        addonsCreated: 0,
+        failures: 0,
+        runId: null,
+        contextSummary: 'summary',
+        contextDocCount: 1,
+        imageAddonIds: ['addon-1'],
+        imageAssets: [],
+        batchCaptureResult: null,
+        generatedPost: {
+          id: 'post-1',
+          titlePl: 'Generated PL',
+          titleEn: 'Generated EN',
+          bodyPl: 'Body PL',
+          bodyEn: 'Body EN',
+        },
+        docUpdates: null,
+      },
+    });
+
+    const baseArgs = {
+      activePost: {
+        id: 'post-1',
+        titlePl: 'Draft',
+        titleEn: '',
+        bodyPl: '',
+        bodyEn: '',
+        status: 'draft',
+        visualSummary: completedVisualAnalysis.summary,
+        visualHighlights: [...completedVisualAnalysis.highlights],
+        visualDocUpdates: [],
+      } as never,
+      activePostId: 'post-1',
+      editorState: {
+        titlePl: 'Draft',
+        titleEn: '',
+        bodyPl: '',
+        bodyEn: '',
+      },
+      imageAssets: [],
+      imageAddonIds: ['addon-1'],
+      batchCaptureBaseUrl: 'https://example.com',
+      batchCapturePresetIds: ['preset-1'],
+      batchCapturePresetLimit: 1,
+      linkedinConnectionId: null,
+      brainModelId: 'brain-1',
+      visionModelId: 'vision-1',
+      canRunServerPipeline: true,
+      pipelineBlockedReason: null,
+      canRunVisualAnalysisPipeline: true,
+      visualAnalysisBlockedReason: null,
+      projectUrl: 'https://example.com/project',
+      generationNotes: 'Call out the updated hero.',
+      resolveDocReferences: () => ['docs/kangur/example.mdx'],
+      buildSocialContext: () => ({ postId: 'post-1' }),
+      handleLoadContext: vi.fn(),
+      setContextSummary: vi.fn(),
+      setActivePostId: vi.fn(),
+      setEditorState: vi.fn(),
+      setImageAddonIds: vi.fn(),
+      setImageAssets: vi.fn(),
+      setDocUpdatesResult: vi.fn(),
+      setBatchCaptureResult: vi.fn(),
+      handleSelectAddons: vi.fn(),
+    };
+
+    const { result, rerender } = renderHook(
+      (args: typeof baseArgs) => useSocialPipelineRunner(args),
+      {
+        initialProps: baseArgs,
+        wrapper: createWrapper(),
+      }
+    );
+
+    await act(async () => {});
+
+    expect(result.current.visualAnalysisResult).toEqual(completedVisualAnalysis);
+
+    rerender({
+      ...baseArgs,
+      activePost: {
+        id: 'post-2',
+        titlePl: 'Other draft',
+        titleEn: '',
+        bodyPl: '',
+        bodyEn: '',
+        status: 'draft',
+      } as never,
+      activePostId: 'post-2',
+      imageAddonIds: ['addon-2'],
+      buildSocialContext: () => ({ postId: 'post-2' }),
+      resolveDocReferences: () => ['docs/kangur/other.mdx'],
+    });
+
+    expect(result.current.visualAnalysisResult).toBeNull();
+
+    rerender(baseArgs);
+
+    expect(result.current.visualAnalysisResult).toEqual(completedVisualAnalysis);
+
+    await act(async () => {
+      await result.current.handleRunFullPipelineWithVisualAnalysis();
+    });
+
+    expect(apiPostMock).toHaveBeenCalledWith(
+      '/api/kangur/social-pipeline/trigger',
+      expect.objectContaining({
+        input: expect.objectContaining({
+          captureMode: 'existing_assets',
+          prefetchedVisualAnalysis: completedVisualAnalysis,
+          requireVisualAnalysisInBody: true,
+        }),
+      }),
+      expect.any(Object)
+    );
+  });
+
+  it('marks saved draft analysis as stale when the current draft scope no longer matches', async () => {
+    const baseArgs = {
+      activePost: {
+        id: 'post-1',
+        titlePl: 'Draft',
+        titleEn: '',
+        bodyPl: '',
+        bodyEn: '',
+        status: 'draft',
+        visualSummary: completedVisualAnalysis.summary,
+        visualHighlights: [...completedVisualAnalysis.highlights],
+        visualDocUpdates: [],
+        visualAnalysisSourceImageAddonIds: ['addon-1'],
+        visualAnalysisSourceDocReferences: ['docs/kangur/example.mdx'],
+        visualAnalysisSourceVisionModelId: 'vision-1',
+      } as never,
+      activePostId: 'post-1',
+      editorState: {
+        titlePl: 'Draft',
+        titleEn: '',
+        bodyPl: '',
+        bodyEn: '',
+      },
+      imageAssets: [],
+      imageAddonIds: ['addon-1'],
+      batchCaptureBaseUrl: 'https://example.com',
+      batchCapturePresetIds: ['preset-1'],
+      batchCapturePresetLimit: 1,
+      linkedinConnectionId: null,
+      brainModelId: 'brain-1',
+      visionModelId: 'vision-1',
+      canRunServerPipeline: true,
+      pipelineBlockedReason: null,
+      canRunVisualAnalysisPipeline: true,
+      visualAnalysisBlockedReason: null,
+      projectUrl: 'https://example.com/project',
+      generationNotes: 'Call out the updated hero.',
+      resolveDocReferences: () => ['docs/kangur/example.mdx'],
+      buildSocialContext: () => ({ postId: 'post-1' }),
+      handleLoadContext: vi.fn(),
+      setContextSummary: vi.fn(),
+      setActivePostId: vi.fn(),
+      setEditorState: vi.fn(),
+      setImageAddonIds: vi.fn(),
+      setImageAssets: vi.fn(),
+      setDocUpdatesResult: vi.fn(),
+      setBatchCaptureResult: vi.fn(),
+      handleSelectAddons: vi.fn(),
+    };
+
+    const { result, rerender } = renderHook(
+      (args: typeof baseArgs) => useSocialPipelineRunner(args),
+      {
+        initialProps: baseArgs,
+        wrapper: createWrapper(),
+      }
+    );
+
+    await act(async () => {});
+
+    expect(result.current.visualAnalysisResult).toEqual(completedVisualAnalysis);
+    expect(result.current.hasSavedVisualAnalysis).toBe(true);
+    expect(result.current.isSavedVisualAnalysisStale).toBe(false);
+
+    rerender({
+      ...baseArgs,
+      imageAddonIds: ['addon-2'],
+    });
+
+    expect(result.current.visualAnalysisResult).toBeNull();
+    expect(result.current.hasSavedVisualAnalysis).toBe(true);
+    expect(result.current.isSavedVisualAnalysisStale).toBe(true);
+
+    await act(async () => {
+      await result.current.handleRunFullPipelineWithVisualAnalysis();
+    });
+
+    expect(apiPostMock).not.toHaveBeenCalled();
+    expect(toastMock).toHaveBeenCalledWith(
+      'Saved image analysis is outdated for this draft. Rerun image analysis before generating.',
+      { variant: 'warning' }
+    );
   });
 
   it('does not queue a server job when no social or AI Brain post model is configured', async () => {

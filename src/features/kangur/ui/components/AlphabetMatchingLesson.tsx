@@ -2,7 +2,6 @@
 
 import { useMemo } from 'react';
 
-import { getKangurBuiltInGameInstanceId } from '@/features/kangur/games';
 import type { LessonProps } from '@/features/kangur/lessons/lesson-ui-registry';
 import { useOptionalKangurLessonTemplate } from '@/features/kangur/ui/context/KangurLessonsRuntimeContext';
 import { KangurUnifiedLesson } from '../lessons/lesson-components';
@@ -11,8 +10,10 @@ import { CONTENT } from './AlphabetMatchingLesson.data';
 import {
   buildAlphabetUnifiedLessonSections,
   buildAlphabetUnifiedLessonSlides,
+  createAlphabetUnifiedLessonGame,
   findAlphabetUnifiedLessonSection,
   resolveAlphabetUnifiedLessonContent,
+  resolveAlphabetUnifiedLessonTitle,
 } from './alphabet-unified-lesson-content';
 
 export { CONTENT };
@@ -20,7 +21,10 @@ export { CONTENT };
 export default function AlphabetMatchingLesson({ lessonTemplate }: LessonProps): JSX.Element {
   const runtimeTemplate = useOptionalKangurLessonTemplate('alphabet_matching');
   const resolvedTemplate = lessonTemplate ?? runtimeTemplate;
-  const resolvedTitle = resolvedTemplate?.title?.trim() || 'Dopasowanie liter';
+  const resolvedTitle = resolveAlphabetUnifiedLessonTitle(
+    resolvedTemplate,
+    'Dopasowanie liter'
+  );
   const resolvedContent = useMemo(
     () => resolveAlphabetUnifiedLessonContent('alphabet_matching', resolvedTemplate, CONTENT),
     [resolvedTemplate],
@@ -53,20 +57,14 @@ export default function AlphabetMatchingLesson({ lessonTemplate }: LessonProps):
       autoRecordComplete
       skipMarkFor={['game_pairs']}
       games={[
-        {
+        createAlphabetUnifiedLessonGame({
+          fallbackDescription: 'Połącz wielkie i małe litery.',
+          fallbackTitle: 'Gra litery',
+          gameId: 'alphabet_letter_matching',
+          gameSection,
           sectionId: 'game_pairs',
-          shell: {
-            accent: 'amber',
-            icon: '🎮',
-            shellTestId: 'alphabet-matching-game-shell',
-            title: gameSection?.gameTitle ?? 'Gra litery',
-            description: gameSection?.gameDescription ?? 'Połącz wielkie i małe litery.',
-          },
-          launchableInstance: {
-            gameId: 'alphabet_letter_matching',
-            instanceId: getKangurBuiltInGameInstanceId('alphabet_letter_matching'),
-          },
-        },
+          shellTestId: 'alphabet-matching-game-shell',
+        }),
       ]}
     />
   );

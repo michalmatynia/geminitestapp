@@ -146,6 +146,9 @@ describe('SocialPostPlaywrightCaptureModal', () => {
       handleSeedProgrammableCaptureRoutesFromPresets: vi.fn(),
       handleResetProgrammableCaptureScript: vi.fn(),
       handleRunProgrammablePlaywrightCapture: vi.fn(),
+      handleRunProgrammablePlaywrightCaptureAndPipeline: vi.fn(),
+      canGenerateSocialDraft: true,
+      socialDraftBlockedReason: null,
     });
 
     render(<SocialPostPlaywrightCaptureModal />);
@@ -158,6 +161,7 @@ describe('SocialPostPlaywrightCaptureModal', () => {
     expect(screen.getByDisplayValue('/pricing')).toBeInTheDocument();
     expect(screen.getByDisplayValue('return input.captures;')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Capture programmable images' })).toBeEnabled();
+    expect(screen.getByRole('button', { name: 'Capture + run pipeline' })).toBeEnabled();
   });
 
   it('delegates modal actions to the Social page context', () => {
@@ -167,6 +171,7 @@ describe('SocialPostPlaywrightCaptureModal', () => {
     const handleSeedProgrammableCaptureRoutesFromPresets = vi.fn();
     const handleResetProgrammableCaptureScript = vi.fn();
     const handleRunProgrammablePlaywrightCapture = vi.fn();
+    const handleRunProgrammablePlaywrightCaptureAndPipeline = vi.fn();
 
     usePlaywrightPersonasMock.mockReturnValue({
       data: [{ id: 'persona-1', name: 'Fast reviewer' }],
@@ -202,6 +207,9 @@ describe('SocialPostPlaywrightCaptureModal', () => {
       handleSeedProgrammableCaptureRoutesFromPresets,
       handleResetProgrammableCaptureScript,
       handleRunProgrammablePlaywrightCapture,
+      handleRunProgrammablePlaywrightCaptureAndPipeline,
+      canGenerateSocialDraft: true,
+      socialDraftBlockedReason: null,
     });
 
     render(<SocialPostPlaywrightCaptureModal />);
@@ -213,6 +221,7 @@ describe('SocialPostPlaywrightCaptureModal', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Seed from presets' }));
     fireEvent.click(screen.getByRole('button', { name: 'Reset script' }));
     fireEvent.click(screen.getByRole('button', { name: 'Capture programmable images' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Capture + run pipeline' }));
     fireEvent.click(screen.getByRole('button', { name: 'Close' }));
 
     expect(setProgrammableCapturePersonaId).toHaveBeenCalledWith('persona-1');
@@ -220,6 +229,7 @@ describe('SocialPostPlaywrightCaptureModal', () => {
     expect(handleSeedProgrammableCaptureRoutesFromPresets).toHaveBeenCalledTimes(1);
     expect(handleResetProgrammableCaptureScript).toHaveBeenCalledTimes(1);
     expect(handleRunProgrammablePlaywrightCapture).toHaveBeenCalledTimes(1);
+    expect(handleRunProgrammablePlaywrightCaptureAndPipeline).toHaveBeenCalledTimes(1);
     expect(handleCloseProgrammablePlaywrightModal).toHaveBeenCalledTimes(1);
   });
 });

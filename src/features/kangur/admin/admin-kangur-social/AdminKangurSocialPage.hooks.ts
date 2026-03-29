@@ -212,9 +212,14 @@ export function useAdminKangurSocialPage() {
     useState<string | null>(null);
 
   const attachBatchCaptureResultToActiveDraft = useCallback(
-    async (result: KangurSocialImageAddonsBatchResult): Promise<void> => {
+    async (
+      result: KangurSocialImageAddonsBatchResult
+    ): Promise<{
+      imageAddonIds: string[];
+      imageAssets: ImageFileSelection[];
+    } | null> => {
       if (!editor.activePost || result.addons.length === 0) {
-        return;
+        return null;
       }
 
       const nextImageAddonIds = Array.from(
@@ -237,6 +242,11 @@ export function useAdminKangurSocialPage() {
 
       editor.setImageAddonIds(patched.imageAddonIds ?? nextImageAddonIds);
       editor.setImageAssets(patched.imageAssets ?? nextImageAssets);
+
+      return {
+        imageAddonIds: patched.imageAddonIds ?? nextImageAddonIds,
+        imageAssets: patched.imageAssets ?? nextImageAssets,
+      };
     },
     [
       crud.patchMutation,
@@ -406,6 +416,90 @@ export function useAdminKangurSocialPage() {
     programmableCaptureRoutes,
     programmableCaptureScript,
   ]);
+
+  const handleRunProgrammablePlaywrightCaptureAndPipeline = useCallback(
+    async (): Promise<void> => {
+      if (!editor.activePost) {
+        setProgrammableCaptureMessage(null);
+        setProgrammableCaptureErrorMessage('Create or select a draft before capturing images.');
+        return;
+      }
+
+      if (!canGenerateSocialDraft) {
+        setProgrammableCaptureMessage(null);
+        setProgrammableCaptureErrorMessage(
+          socialDraftBlockedReason ??
+            'Choose a StudiQ Social post model before running capture and pipeline.'
+        );
+        return;
+      }
+
+      setProgrammableCapturePending(true);
+      setProgrammableCaptureMessage(
+        'Running programmable Playwright capture, linking the images to the draft, and starting the pipeline...'
+      );
+      setProgrammableCaptureErrorMessage(null);
+
+      try {
+        const result = await imageAddons.runBatchCapture({
+          baseUrl: programmableCaptureBaseUrl,
+          presetIds: [],
+          presetLimit: null,
+          playwrightPersonaId: programmableCapturePersonaId || null,
+          playwrightScript: programmableCaptureScript,
+          playwrightRoutes: programmableCaptureRoutes,
+        });
+        const attached = await attachBatchCaptureResultToActiveDraft(result);
+        const routeCount = programmableCaptureRoutes.length;
+
+        if (!attached || result.addons.length === 0) {
+          setProgrammableCaptureMessage(
+            'Programmable capture finished with no new screenshots to attach. The pipeline was not started.'
+          );
+          return;
+        }
+
+        setProgrammableCaptureMessage(
+          `Captured ${result.addons.length} screenshot${result.addons.length === 1 ? '' : 's'} from ${routeCount} programmable route${routeCount === 1 ? '' : 's'}. Starting the draft pipeline now...`
+        );
+        setIsProgrammablePlaywrightModalOpen(false);
+        setProgrammableCapturePending(false);
+
+        await pipeline.handleRunFullPipelineWithOverrides({
+          imageAddonIds: attached.imageAddonIds,
+          imageAssets: attached.imageAssets,
+        });
+      } catch (error) {
+        const message =
+          error instanceof Error
+            ? error.message
+            : 'Failed to run programmable Playwright capture and pipeline.';
+        setProgrammableCaptureMessage(null);
+        setProgrammableCaptureErrorMessage(message);
+        void ErrorSystem.captureException(error);
+        logKangurClientError(error, {
+          source: 'AdminKangurSocialPage',
+          action: 'programmablePlaywrightCaptureAndPipeline',
+          ...buildSocialContext({ error: true }),
+        });
+      } finally {
+        setProgrammableCapturePending(false);
+      }
+    },
+    [
+      attachBatchCaptureResultToActiveDraft,
+      buildSocialContext,
+      canGenerateSocialDraft,
+      editor.activePost,
+      imageAddons,
+      pipeline,
+      programmableCaptureBaseUrl,
+      programmableCapturePersonaId,
+      programmableCaptureRoutes,
+      programmableCaptureScript,
+      socialDraftBlockedReason,
+    ]
+  );
 
   const handleRunFullPipeline = useCallback(async (): Promise<void> => {
     setCaptureOnlyMessage(null);
@@ -592,6 +686,7 @@ export function useAdminKangurSocialPage() {
     handleSeedProgrammableCaptureRoutesFromPresets,
     handleResetProgrammableCaptureScript,
     handleRunProgrammablePlaywrightCapture,
+    handleRunProgrammablePlaywrightCaptureAndPipeline,
 
     // Queries (for isPending checks in consumer)
     postsQuery: editor.postsQuery,

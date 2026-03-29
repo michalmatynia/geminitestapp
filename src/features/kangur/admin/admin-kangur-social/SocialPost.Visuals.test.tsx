@@ -220,4 +220,52 @@ describe('SocialPostVisuals', () => {
       )
     ).toBeInTheDocument();
   });
+
+  it('shows programmable Playwright provenance on captured add-ons', () => {
+    useSocialPostContextMock.mockReturnValue({
+      activePost: buildPost(),
+      recentAddons: [
+        {
+          id: 'addon-1',
+          title: 'Pricing hero capture',
+          description: 'Programmable capture from the pricing route.',
+          sourceUrl: 'https://example.com/pricing',
+          sourceLabel: 'Programmable Playwright capture',
+          imageAsset: {
+            id: 'asset-1',
+            url: 'https://example.com/pricing.png',
+            filepath: '/tmp/pricing.png',
+            filename: 'pricing.png',
+          },
+          presetId: null,
+          previousAddonId: null,
+          playwrightRunId: 'playwright-run-9',
+          playwrightArtifact: 'screenshots/pricing.png',
+          playwrightPersonaId: 'teacher-persona',
+          playwrightCaptureRouteId: 'pricing-route',
+          playwrightCaptureRouteTitle: 'Pricing page',
+          createdBy: 'admin',
+          updatedBy: 'admin',
+          createdAt: '2026-03-21T09:00:00.000Z',
+          updatedAt: '2026-03-21T09:00:00.000Z',
+        },
+      ],
+      addonsQuery: { isLoading: false },
+      imageAddonIds: ['addon-1'],
+      handleSelectAddon: vi.fn(),
+      handleRemoveAddon: vi.fn(),
+      imageAssets: [],
+      handleRemoveImage: vi.fn(),
+      setShowMediaLibrary: vi.fn(),
+      showMediaLibrary: false,
+      handleAddImages: vi.fn(),
+    });
+
+    render(<SocialPostVisuals showImagesPanel={false} />);
+
+    expect(screen.getByText('Source: Programmable Playwright capture')).toBeInTheDocument();
+    expect(screen.getByText('Persona: teacher-persona')).toBeInTheDocument();
+    expect(screen.getByText('Route: Pricing page (pricing-route)')).toBeInTheDocument();
+    expect(screen.getByText('Run: playwright-run-9')).toBeInTheDocument();
+  });
 });

@@ -32,6 +32,19 @@ vi.mock('@/features/kangur/ui/services/progress', async (importOriginal) => {
   };
 });
 
+vi.mock('@/features/kangur/ui/components/KangurLaunchableGameInstanceRuntime', () => ({
+  KangurLaunchableGameInstanceRuntime: ({
+    gameId,
+  }: {
+    gameId: string;
+  }): React.JSX.Element => <div data-testid={`mock-launchable-game-${gameId}`} />,
+  default: ({
+    gameId,
+  }: {
+    gameId: string;
+  }): React.JSX.Element => <div data-testid={`mock-launchable-game-${gameId}`} />,
+}));
+
 import ArtShapesBasicLesson from '@/features/kangur/ui/components/ArtShapesBasicLesson';
 import { KangurLessonNavigationProvider } from '@/features/kangur/ui/context/KangurLessonNavigationContext';
 

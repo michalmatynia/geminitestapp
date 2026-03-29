@@ -40,6 +40,9 @@ export function SocialPostPlaywrightCaptureModal(): React.JSX.Element {
     handleSeedProgrammableCaptureRoutesFromPresets,
     handleResetProgrammableCaptureScript,
     handleRunProgrammablePlaywrightCapture,
+    handleRunProgrammablePlaywrightCaptureAndPipeline,
+    canGenerateSocialDraft,
+    socialDraftBlockedReason,
   } = useSocialPostContext();
 
   const personaOptions = React.useMemo(
@@ -58,6 +61,13 @@ export function SocialPostPlaywrightCaptureModal(): React.JSX.Element {
     programmableCaptureRoutes.some((route) => route.path.trim().length > 0) &&
     programmableCaptureScript.trim().length > 0 &&
     !programmableCapturePending;
+  const canCaptureAndRunPipeline = canSave && canGenerateSocialDraft;
+  const captureAndRunPipelineTitle = !canSave
+    ? 'Add a base URL, at least one route, and a script before starting capture and pipeline.'
+    : !canGenerateSocialDraft
+      ? socialDraftBlockedReason ??
+        'Choose a StudiQ Social post model before running capture and pipeline.'
+      : 'Capture programmable screenshots, attach them to the draft, and start the normal generation pipeline.';
 
   return (
     <FormModal
@@ -272,6 +282,21 @@ export function SocialPostPlaywrightCaptureModal(): React.JSX.Element {
             aria-label='Programmable Playwright capture script'
           />
         </FormField>
+
+        <div className='flex flex-wrap gap-2'>
+          <Button
+            type='button'
+            variant='secondary'
+            size='sm'
+            onClick={() => {
+              void handleRunProgrammablePlaywrightCaptureAndPipeline();
+            }}
+            disabled={!canCaptureAndRunPipeline}
+            title={captureAndRunPipelineTitle}
+          >
+            Capture + run pipeline
+          </Button>
+        </div>
 
         {programmableCapturePending ? (
           <LoadingState

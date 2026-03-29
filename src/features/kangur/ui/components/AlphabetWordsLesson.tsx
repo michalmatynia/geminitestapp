@@ -2,7 +2,6 @@
 
 import { useMemo } from 'react';
 
-import { getKangurBuiltInGameInstanceId } from '@/features/kangur/games';
 import type { LessonProps } from '@/features/kangur/lessons/lesson-ui-registry';
 import { useOptionalKangurLessonTemplate } from '@/features/kangur/ui/context/KangurLessonsRuntimeContext';
 import { KangurUnifiedLesson } from '../lessons/lesson-components';
@@ -11,8 +10,10 @@ import { CONTENT } from './AlphabetWordsLesson.data';
 import {
   buildAlphabetUnifiedLessonSections,
   buildAlphabetUnifiedLessonSlides,
+  createAlphabetUnifiedLessonGame,
   findAlphabetUnifiedLessonSection,
   resolveAlphabetUnifiedLessonContent,
+  resolveAlphabetUnifiedLessonTitle,
 } from './alphabet-unified-lesson-content';
 
 export { CONTENT };
@@ -20,7 +21,10 @@ export { CONTENT };
 export default function AlphabetWordsLesson({ lessonTemplate }: LessonProps): JSX.Element {
   const runtimeTemplate = useOptionalKangurLessonTemplate('alphabet_words');
   const resolvedTemplate = lessonTemplate ?? runtimeTemplate;
-  const resolvedTitle = resolvedTemplate?.title?.trim() || 'Pierwsze słowa';
+  const resolvedTitle = resolveAlphabetUnifiedLessonTitle(
+    resolvedTemplate,
+    'Pierwsze słowa'
+  );
   const resolvedContent = useMemo(
     () => resolveAlphabetUnifiedLessonContent('alphabet_words', resolvedTemplate, CONTENT),
     [resolvedTemplate],
@@ -51,20 +55,14 @@ export default function AlphabetWordsLesson({ lessonTemplate }: LessonProps): JS
       autoRecordComplete
       skipMarkFor={['game_words']}
       games={[
-        {
+        createAlphabetUnifiedLessonGame({
+          fallbackDescription: 'Dopasuj obrazek do właściwego słowa.',
+          fallbackTitle: 'Gra słowa',
+          gameId: 'alphabet_first_words',
+          gameSection,
           sectionId: 'game_words',
-          shell: {
-            accent: 'amber',
-            icon: '🎮',
-            shellTestId: 'alphabet-words-game-shell',
-            title: gameSection?.gameTitle ?? 'Gra słowa',
-            description: gameSection?.gameDescription ?? 'Dopasuj obrazek do właściwego słowa.',
-          },
-          launchableInstance: {
-            gameId: 'alphabet_first_words',
-            instanceId: getKangurBuiltInGameInstanceId('alphabet_first_words'),
-          },
-        },
+          shellTestId: 'alphabet-words-game-shell',
+        }),
       ]}
     />
   );

@@ -4,24 +4,6 @@ import type {
   KangurAssignmentSnapshot,
   KangurAssignmentUpdateInput,
   KangurAuthUser,
-  KangurDuelAnswerInput as KangurDuelAnswerInputContract,
-  KangurDuelCreateInput as KangurDuelCreateInputContract,
-  KangurDuelHeartbeatInput as KangurDuelHeartbeatInputContract,
-  KangurDuelJoinInput as KangurDuelJoinInputContract,
-  KangurDuelLeaderboardResponse as KangurDuelLeaderboardResponseContract,
-  KangurDuelLobbyChatCreateInput as KangurDuelLobbyChatCreateInputContract,
-  KangurDuelLobbyChatListResponse as KangurDuelLobbyChatListResponseContract,
-  KangurDuelLobbyChatMessage as KangurDuelLobbyChatMessageContract,
-  KangurDuelLobbyChatSendResponse as KangurDuelLobbyChatSendResponseContract,
-  KangurDuelLobbyPresenceResponse as KangurDuelLobbyPresenceResponseContract,
-  KangurDuelLobbyResponse as KangurDuelLobbyResponseContract,
-  KangurDuelOpponentsResponse as KangurDuelOpponentsResponseContract,
-  KangurDuelReactionInput as KangurDuelReactionInputContract,
-  KangurDuelReactionResponse as KangurDuelReactionResponseContract,
-  KangurDuelSearchResponse as KangurDuelSearchResponseContract,
-  KangurDuelSpectatorStateResponse as KangurDuelSpectatorStateResponseContract,
-  KangurDuelLeaveInput as KangurDuelLeaveInputContract,
-  KangurDuelStateResponse as KangurDuelStateResponseContract,
   KangurLearnerActivitySnapshot,
   KangurLearnerActivityStatus,
   KangurLearnerActivityUpdateInput,
@@ -35,6 +17,28 @@ import type {
   KangurScore,
   KangurScoreCreateInput,
 } from '@kangur/contracts';
+import type {
+  KangurDuelAnswerInput as KangurDuelAnswerInputContract,
+  KangurDuelCreateInput as KangurDuelCreateInputContract,
+  KangurDuelHeartbeatInput as KangurDuelHeartbeatInputContract,
+  KangurDuelJoinInput as KangurDuelJoinInputContract,
+  KangurDuelLeaderboardResponse as KangurDuelLeaderboardResponseContract,
+  KangurDuelLobbyPresenceResponse as KangurDuelLobbyPresenceResponseContract,
+  KangurDuelLobbyResponse as KangurDuelLobbyResponseContract,
+  KangurDuelOpponentsResponse as KangurDuelOpponentsResponseContract,
+  KangurDuelReactionInput as KangurDuelReactionInputContract,
+  KangurDuelReactionResponse as KangurDuelReactionResponseContract,
+  KangurDuelSearchResponse as KangurDuelSearchResponseContract,
+  KangurDuelSpectatorStateResponse as KangurDuelSpectatorStateResponseContract,
+  KangurDuelLeaveInput as KangurDuelLeaveInputContract,
+  KangurDuelStateResponse as KangurDuelStateResponseContract,
+} from '@kangur/contracts/kangur-duels';
+import type {
+  KangurDuelLobbyChatCreateInput as KangurDuelLobbyChatCreateInputContract,
+  KangurDuelLobbyChatListResponse as KangurDuelLobbyChatListResponseContract,
+  KangurDuelLobbyChatMessage as KangurDuelLobbyChatMessageContract,
+  KangurDuelLobbyChatSendResponse as KangurDuelLobbyChatSendResponseContract,
+} from '@kangur/contracts/kangur-duels-chat';
 
 export type KangurRole = 'admin' | 'user';
 

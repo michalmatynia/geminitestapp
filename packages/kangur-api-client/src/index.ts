@@ -4,24 +4,6 @@ import type {
   KangurAssignmentSnapshot,
   KangurAssignmentUpdateInput,
   KangurAuthUser,
-  KangurDuelAnswerInput,
-  KangurDuelCreateInput,
-  KangurDuelHeartbeatInput,
-  KangurDuelJoinInput,
-  KangurDuelLeaderboardResponse,
-  KangurDuelLobbyChatCreateInput,
-  KangurDuelLobbyChatListResponse,
-  KangurDuelLobbyChatSendResponse,
-  KangurDuelLobbyPresenceResponse,
-  KangurDuelLobbyResponse,
-  KangurDuelOpponentsResponse,
-  KangurDuelVisibility,
-  KangurDuelReactionInput,
-  KangurDuelReactionResponse,
-  KangurDuelSearchResponse,
-  KangurDuelSpectatorStateResponse,
-  KangurDuelStateResponse,
-  KangurDuelLeaveInput,
   KangurLearnerCreateInput,
   KangurLearnerActivitySnapshot,
   KangurLearnerActivityStatus,
@@ -37,6 +19,28 @@ import type {
   KangurScoreCreateInput,
   KangurSubjectFocus,
 } from '@kangur/contracts';
+import type {
+  KangurDuelAnswerInput,
+  KangurDuelCreateInput,
+  KangurDuelHeartbeatInput,
+  KangurDuelJoinInput,
+  KangurDuelLeaderboardResponse,
+  KangurDuelLobbyPresenceResponse,
+  KangurDuelLobbyResponse,
+  KangurDuelOpponentsResponse,
+  KangurDuelVisibility,
+  KangurDuelReactionInput,
+  KangurDuelReactionResponse,
+  KangurDuelSearchResponse,
+  KangurDuelSpectatorStateResponse,
+  KangurDuelStateResponse,
+  KangurDuelLeaveInput,
+} from '@kangur/contracts/kangur-duels';
+import type {
+  KangurDuelLobbyChatCreateInput,
+  KangurDuelLobbyChatListResponse,
+  KangurDuelLobbyChatSendResponse,
+} from '@kangur/contracts/kangur-duels-chat';
 
 export type KangurApiClientOptions = {
   baseUrl?: string;

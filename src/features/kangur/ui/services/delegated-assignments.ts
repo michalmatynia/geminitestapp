@@ -7,16 +7,12 @@ import {
 } from '@/features/kangur/config/routing';
 import type { TranslationValues } from 'use-intl';
 import { KANGUR_LESSON_LIBRARY, getKangurSubjectLabel } from '@/features/kangur/lessons/lesson-catalog';
-import type {
-  KangurAssignmentCreateInput,
-  KangurAssignmentSnapshot,
-} from '@kangur/platform';
-import type { KangurAccent } from '@/features/kangur/ui/design/tokens';
-import { buildKangurAssignments } from '@/features/kangur/ui/services/assignments';
+import type { KangurAssignmentSnapshot } from '@kangur/platform';
 import type {
   KangurDifficulty,
   KangurGameScreen,
   KangurOperation,
+  KangurTrainingSelection,
 } from '@/features/kangur/ui/types';
 import type {
   KangurLesson,
@@ -27,7 +23,6 @@ import type {
 } from '@/features/kangur/shared/contracts/kangur';
 
 import {
-  type KangurAssignmentCatalogGroup,
   type KangurAssignmentCatalogItem,
   type KangurAssignmentListItem,
   type KangurAssignmentsRuntimeLocalizer,
@@ -87,12 +82,12 @@ export const buildKangurAssignmentCatalog = (
     priorityLabel: 'Priorytet niski',
     createInput: {
       title: lesson.title,
-      description: lesson.description || undefined,
+      description: lesson.description || '',
       priority: 'low',
       target: {
         type: 'lesson',
-        lessonId: lesson.id,
-        requiredMasteryPercent: 100,
+        lessonComponentId: lesson.componentId,
+        requiredCompletions: 1,
       },
     },
     keywords: [lesson.id, lesson.componentId, lesson.subject, ...(lesson.title.toLowerCase().split(/\s+/))],
@@ -142,8 +137,8 @@ export const buildKangurAssignmentCatalog = (
 };
 
 export const buildRecommendedKangurAssignmentCatalog = (
-  progress: KangurProgressState,
-  localizer?: KangurAssignmentsRuntimeLocalizer
+  _progress: KangurProgressState,
+  _localizer?: KangurAssignmentsRuntimeLocalizer
 ): KangurAssignmentCatalogItem[] => {
   // Logic to suggest assignments based on progress state
   return [];
@@ -152,7 +147,7 @@ export const buildRecommendedKangurAssignmentCatalog = (
 export const filterKangurAssignmentCatalog = (
   catalog: KangurAssignmentCatalogItem[],
   query: string,
-  filter: 'all' | 'unassigned' | 'assigned'
+  _filter: 'all' | 'unassigned' | 'assigned'
 ): KangurAssignmentCatalogItem[] => {
   const normalizedQuery = query.trim().toLowerCase();
   return catalog.filter((item) => {
@@ -283,9 +278,7 @@ const getKangurLessonSubjectFromAssignment = (
     return 'maths';
   }
 
-  const componentId =
-    (assignment.target.lessonComponentId ??
-      assignment.target.lessonId) as KangurLessonComponentId | undefined;
+  const componentId = assignment.target.lessonComponentId as KangurLessonComponentId | undefined;
 
   if (!componentId || !(componentId in KANGUR_LESSON_LIBRARY)) {
     return 'maths';
@@ -419,7 +412,7 @@ export const buildKangurAssignmentHref = (
     return appendKangurUrlParams(
       createPageUrl('Lessons', basePath),
       {
-        focus: assignment.target.lessonComponentId ?? assignment.target.lessonId ?? null,
+        focus: assignment.target.lessonComponentId,
       },
       basePath
     );

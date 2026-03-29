@@ -67,12 +67,19 @@ import {
 import { KangurGuestPlayerProvider } from '@/features/kangur/ui/context/KangurGuestPlayerContext';
 
 const RuntimeProbe = (): React.JSX.Element => {
-  const { canStartFromHome, handleStartGame, playerName, screen } = useKangurGameRuntime();
+  const {
+    canStartFromHome,
+    handleStartGame,
+    launchableGameInstanceId,
+    playerName,
+    screen,
+  } = useKangurGameRuntime();
 
   return (
     <div>
       <div data-testid='kangur-game-can-start'>{String(canStartFromHome)}</div>
       <div data-testid='kangur-game-screen'>{screen}</div>
+      <div data-testid='kangur-game-instance-id'>{launchableGameInstanceId ?? 'none'}</div>
       <div data-testid='kangur-game-player-name'>{playerName}</div>
       <button type='button' onClick={handleStartGame}>
         Start game
@@ -177,7 +184,7 @@ describe('KangurGameRuntimeContext', () => {
     expect(window.location.search).toBe('');
     expect(
       window.sessionStorage.getItem('kangur:game:pending-quick-start')
-    ).toBeNull();
+    ).not.toBeNull();
   });
 
   it('replays pending quick starts after a clean remount path', async () => {
@@ -185,6 +192,7 @@ describe('KangurGameRuntimeContext', () => {
     window.sessionStorage.setItem(
       'kangur:game:pending-quick-start',
       JSON.stringify({
+        createdAt: Date.now(),
         quickStart: 'screen',
         screen: 'multiplication_array_quiz',
       })
@@ -206,6 +214,47 @@ describe('KangurGameRuntimeContext', () => {
     expect(window.location.pathname).toBe('/en/kangur/game');
     expect(
       window.sessionStorage.getItem('kangur:game:pending-quick-start')
-    ).toBeNull();
+    ).not.toBeNull();
+  });
+
+  it('keeps instance-backed screen quick starts across repeated remounts on the sanitized game route', async () => {
+    window.history.replaceState(
+      {},
+      '',
+      '/en/kangur/game?quickStart=screen&screen=division_quiz&instanceId=division_groups:instance:default'
+    );
+
+    const { unmount } = render(
+      <KangurGuestPlayerProvider>
+        <KangurGameRuntimeProvider>
+          <RuntimeProbe />
+        </KangurGameRuntimeProvider>
+      </KangurGuestPlayerProvider>
+    );
+
+    await waitFor(() => {
+      expect(screen.getByTestId('kangur-game-screen')).toHaveTextContent('division_quiz');
+      expect(screen.getByTestId('kangur-game-instance-id')).toHaveTextContent(
+        'division_groups:instance:default'
+      );
+    });
+
+    unmount();
+    window.history.replaceState({}, '', '/en/kangur/game');
+
+    render(
+      <KangurGuestPlayerProvider>
+        <KangurGameRuntimeProvider>
+          <RuntimeProbe />
+        </KangurGameRuntimeProvider>
+      </KangurGuestPlayerProvider>
+    );
+
+    await waitFor(() => {
+      expect(screen.getByTestId('kangur-game-screen')).toHaveTextContent('division_quiz');
+      expect(screen.getByTestId('kangur-game-instance-id')).toHaveTextContent(
+        'division_groups:instance:default'
+      );
+    });
   });
 });

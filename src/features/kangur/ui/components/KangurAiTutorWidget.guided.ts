@@ -12,8 +12,8 @@ import type { KangurTutorAnchorRegistration } from '@/features/kangur/ui/context
 import type { KangurAiTutorContextValue } from '@/features/kangur/ui/context/KangurAiTutorRuntime.shared';
 import {
   resolveKangurTutorSectionKnowledgeReference,
-} from '@/features/kangur/ai-tutor-section-knowledge';
-import { resolveKangurPageContentFragment } from '@/features/kangur/page-content-fragments';
+} from '@/features/kangur/ai-tutor/section-knowledge';
+import { resolveKangurPageContentFragment } from '@/features/kangur/ai-tutor/page-content-fragments';
 import type { KangurAiTutorTelemetryContextDto } from '@/features/kangur/shared/contracts/kangur-ai-tutor';
 import {
   formatKangurAiTutorTemplate,

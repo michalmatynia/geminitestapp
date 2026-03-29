@@ -1,4 +1,4 @@
-import type { KangurAiTutorOnboardingValidationIssue } from '@/features/kangur/ai-tutor-onboarding-validation';
+import type { KangurAiTutorOnboardingValidationIssue } from '@/features/kangur/ai-tutor/onboarding-validation';
 import { Badge } from '@/features/kangur/shared/ui';
 
 type Props = {

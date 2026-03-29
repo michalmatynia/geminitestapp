@@ -28,7 +28,7 @@ vi.mock('@/features/kangur/shared/ui', async (importOriginal) => {
   };
 });
 
-import { DEFAULT_KANGUR_PAGE_CONTENT_STORE } from '@/features/kangur/page-content-catalog';
+import { DEFAULT_KANGUR_PAGE_CONTENT_STORE } from '@/features/kangur/ai-tutor/page-content-catalog';
 import {
   parseKangurPageContentStore,
   type KangurPageContentStore,

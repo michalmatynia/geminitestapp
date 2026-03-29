@@ -3,7 +3,7 @@ import 'server-only';
 import { LRUCache } from 'lru-cache';
 import type { AnyBulkWriteOperation } from 'mongodb';
 
-import { buildDefaultKangurPageContentStore } from '@/features/kangur/page-content-catalog';
+import { buildDefaultKangurPageContentStore } from '@/features/kangur/ai-tutor/page-content-catalog';
 import {
   KANGUR_PAGE_CONTENT_COLLECTION,
   mergeKangurPageContentStore,

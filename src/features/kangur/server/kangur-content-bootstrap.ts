@@ -1,8 +1,5 @@
 import 'server-only';
 
-import type { KangurLesson, KangurLessonDocumentStore } from '@kangur/contracts';
-import { createStarterKangurLessonDocument } from '@/features/kangur/lesson-documents';
-import { createDefaultKangurLessons } from '@/features/kangur/settings';
 import { getKangurAiTutorContent } from '@/features/kangur/server/ai-tutor-content-repository';
 import { getKangurAiTutorNativeGuideStore } from '@/features/kangur/server/ai-tutor-native-guide-repository';
 import { getKangurPageContentStore } from '@/features/kangur/server/page-content-repository';
@@ -13,6 +10,10 @@ import { getKangurLessonRepository } from '@/features/kangur/services/kangur-les
 import { getKangurLessonSectionRepository } from '@/features/kangur/services/kangur-lesson-section-repository';
 import { getKangurLessonTemplateRepository } from '@/features/kangur/services/kangur-lesson-template-repository';
 import { listKangurGames } from '@/features/kangur/services/kangur-game-repository/mongo-kangur-game-repository';
+import {
+  buildLocalKangurLessonContentSnapshot,
+  KANGUR_LESSON_DOCUMENT_SYNC_LOCALES,
+} from './kangur-lesson-content-snapshot';
 
 const DEFAULT_KANGUR_CONTENT_LOCALES = ['pl', 'en', 'de', 'uk'] as const;
 
@@ -23,6 +24,7 @@ export type KangurContentBootstrapSummary = {
   gameContentSetsByGame: Record<string, number>;
   gameInstancesByGame: Record<string, number>;
   games: number;
+  lessonContentRevision: string;
   lessonDocuments: number;
   lessonSections: number;
   lessons: number;
@@ -35,60 +37,11 @@ export type KangurContentBootstrapSummary = {
 export const KANGUR_CONTENT_BOOTSTRAP_LOCALES: readonly KangurContentBootstrapLocale[] =
   DEFAULT_KANGUR_CONTENT_LOCALES;
 
-type LegacyLessonImportFn = typeof import('@/features/kangur/legacy-lesson-imports').importLegacyKangurLessonDocument;
-
-const loadLegacyLessonImportFn = async (): Promise<LegacyLessonImportFn | null> => {
-  try {
-    const module = await import('@/features/kangur/legacy-lesson-imports');
-    return module.importLegacyKangurLessonDocument;
-  } catch {
-    return null;
-  }
-};
-
-const sortLessons = (lessons: readonly KangurLesson[]): KangurLesson[] =>
-  [...lessons].sort(
-    (left, right) => left.sortOrder - right.sortOrder || left.id.localeCompare(right.id)
-  );
-
-const buildBootstrapLessons = (existingLessons: readonly KangurLesson[]): KangurLesson[] => {
-  const merged = new Map<string, KangurLesson>();
-
-  for (const lesson of createDefaultKangurLessons()) {
-    merged.set(lesson.id, lesson);
-  }
-
-  for (const lesson of existingLessons) {
-    merged.set(lesson.id, lesson);
-  }
-
-  return sortLessons([...merged.values()]);
-};
-
-const buildBootstrapLessonDocumentStore = async (
-  lessons: readonly KangurLesson[],
-  existingStore: KangurLessonDocumentStore
-): Promise<KangurLessonDocumentStore> => {
-  const nextStore: KangurLessonDocumentStore = { ...existingStore };
-  const importLegacyLessonDocument = await loadLegacyLessonImportFn();
-
-  for (const lesson of lessons) {
-    if (nextStore[lesson.id]) {
-      continue;
-    }
-
-    const importedDocument = importLegacyLessonDocument?.(lesson.componentId)?.document;
-    nextStore[lesson.id] =
-      importedDocument ?? createStarterKangurLessonDocument(lesson.componentId);
-  }
-
-  return nextStore;
-};
-
 export async function bootstrapKangurContentToMongo(
   locales: readonly string[] = KANGUR_CONTENT_BOOTSTRAP_LOCALES
 ): Promise<KangurContentBootstrapSummary> {
   const resolvedLocales = locales.length > 0 ? [...new Set(locales)] : [...KANGUR_CONTENT_BOOTSTRAP_LOCALES];
+  const lessonContentSnapshot = await buildLocalKangurLessonContentSnapshot(resolvedLocales);
 
   const [
     lessonRepository,
@@ -106,40 +59,27 @@ export async function bootstrapKangurContentToMongo(
     getKangurGameInstanceRepository(),
   ]);
 
-  const [initialLessons, initialLessonDocuments, lessonSections, games] = await Promise.all([
-    lessonRepository.listLessons(),
-    lessonDocumentRepository.listLessonDocuments('pl'),
-    lessonSectionRepository.listSections(),
-    listKangurGames(),
-  ]);
-
-  const hydratedLessons = buildBootstrapLessons(initialLessons);
-  const lessons =
-    hydratedLessons.length === initialLessons.length
-      ? initialLessons
-      : await lessonRepository.replaceLessons(hydratedLessons);
-
-  const hydratedLessonDocuments = await buildBootstrapLessonDocumentStore(
-    lessons,
-    initialLessonDocuments
-  );
-  const lessonDocuments =
-    Object.keys(hydratedLessonDocuments).length === Object.keys(initialLessonDocuments).length
-      ? initialLessonDocuments
-      : await lessonDocumentRepository.replaceLessonDocuments(hydratedLessonDocuments, 'pl');
-
-  const [pageContentEntriesByLocale, lessonTemplatesByLocale, aiTutorLocales, nativeGuideLocales] =
+  const [lessons, lessonSections, lessonDocuments, lessonTemplatesByLocale, pageContentEntriesByLocale, aiTutorLocales, nativeGuideLocales, games] =
     await Promise.all([
+    lessonRepository.replaceLessons(lessonContentSnapshot.lessons),
+    lessonSectionRepository.replaceSections(lessonContentSnapshot.sections),
+    lessonDocumentRepository.replaceLessonDocuments(
+      lessonContentSnapshot.lessonDocumentsByLocale['pl'] ?? {},
+      KANGUR_LESSON_DOCUMENT_SYNC_LOCALES[0]
+    ),
     Promise.all(
       resolvedLocales.map(async (locale) => {
-        const store = await getKangurPageContentStore(locale);
-        return [locale, store.entries.length] as const;
+        const templates = await lessonTemplateRepository.replaceTemplates(
+          lessonContentSnapshot.lessonTemplatesByLocale[locale] ?? [],
+          locale
+        );
+        return [locale, templates.length] as const;
       })
     ).then((entries) => Object.fromEntries(entries)),
     Promise.all(
       resolvedLocales.map(async (locale) => {
-        const templates = await lessonTemplateRepository.listTemplates({ locale });
-        return [locale, templates.length] as const;
+        const store = await getKangurPageContentStore(locale);
+        return [locale, store.entries.length] as const;
       })
     ).then((entries) => Object.fromEntries(entries)),
     Promise.all(
@@ -154,6 +94,7 @@ export async function bootstrapKangurContentToMongo(
         return store.locale;
       })
     ),
+    listKangurGames(),
     ]);
 
   const gameContentSetsByGame = Object.fromEntries(
@@ -179,6 +120,7 @@ export async function bootstrapKangurContentToMongo(
     gameContentSetsByGame,
     gameInstancesByGame,
     games: games.length,
+    lessonContentRevision: lessonContentSnapshot.lessonContentRevision,
     lessonDocuments: Object.keys(lessonDocuments).length,
     lessonSections: lessonSections.length,
     lessons: lessons.length,

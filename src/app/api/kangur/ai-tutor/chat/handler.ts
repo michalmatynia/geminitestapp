@@ -28,7 +28,7 @@ import {
   resolveKangurAiTutorAppSettings,
   resolveKangurAiTutorAvailability,
   KANGUR_AI_TUTOR_SETTINGS_KEY,
-} from '@/features/kangur/settings-ai-tutor';
+} from '@/features/kangur/ai-tutor/settings';
 import type { AgentPersonaMoodId } from '@/shared/contracts/agents';
 import type { ChatMessageDto as ChatMessage } from '@/shared/contracts/chatbot';
 import type { ContextRuntimeDocument } from '@/shared/contracts/ai-context-registry';

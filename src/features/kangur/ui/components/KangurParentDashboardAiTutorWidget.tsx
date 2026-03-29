@@ -16,7 +16,7 @@ import {
   type KangurAiTutorProactiveNudges,
   type KangurAiTutorTestAccessMode,
   type KangurAiTutorUiMode,
-} from '@/features/kangur/settings-ai-tutor';
+} from '@/features/kangur/ai-tutor/settings';
 import { useKangurAiTutorContent } from '@/features/kangur/ui/context/KangurAiTutorContentContext';
 import { KangurLabeledValueSummary } from '@/features/kangur/ui/components/KangurLabeledValueSummary';
 import {

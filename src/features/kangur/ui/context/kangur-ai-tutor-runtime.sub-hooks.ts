@@ -11,7 +11,7 @@ import {
   resolveKangurAiTutorAvailability,
   type KangurAiTutorAppSettings,
   type KangurAiTutorLearnerSettings,
-} from '@/features/kangur/settings-ai-tutor';
+} from '@/features/kangur/ai-tutor/settings';
 import {
   DEFAULT_AGENT_PERSONA_MOOD_ID,
   type AgentPersona,

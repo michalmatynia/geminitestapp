@@ -1,7 +1,7 @@
 import 'server-only';
 
-import { resolveKangurPageContentFragment } from '@/features/kangur/page-content-fragments';
-import { resolveKangurTutorSectionKnowledgeReference } from '@/features/kangur/ai-tutor-section-knowledge';
+import { resolveKangurPageContentFragment } from '@/features/kangur/ai-tutor/page-content-fragments';
+import { resolveKangurTutorSectionKnowledgeReference } from '@/features/kangur/ai-tutor/section-knowledge';
 import { getKangurAiTutorNativeGuideStore } from '@/features/kangur/server/ai-tutor-native-guide-repository';
 import { getKangurPageContentStore } from '@/features/kangur/server/page-content-repository';
 import { ErrorSystem } from '@/features/kangur/shared/utils/observability/error-system';

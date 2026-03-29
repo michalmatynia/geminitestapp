@@ -14,7 +14,7 @@ import {
   DEFAULT_KANGUR_AI_TUTOR_NATIVE_GUIDE_STORE,
   type KangurAiTutorNativeGuideStore,
 } from '@/features/kangur/shared/contracts/kangur-ai-tutor-native-guide';
-import { buildDefaultKangurPageContentStore } from '@/features/kangur/page-content-catalog';
+import { buildDefaultKangurPageContentStore } from '@/features/kangur/ai-tutor/page-content-catalog';
 import type { KangurPageContentStore } from '@/features/kangur/shared/contracts/kangur-page-content';
 import type { Page } from '@/shared/contracts/cms';
 import {

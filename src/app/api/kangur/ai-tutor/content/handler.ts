@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
-import { validateKangurAiTutorOnboardingContent } from '@/features/kangur/ai-tutor-onboarding-validation';
+import { validateKangurAiTutorOnboardingContent } from '@/features/kangur/ai-tutor/onboarding-validation';
 import {
   getKangurAiTutorContent,
   upsertKangurAiTutorContent,

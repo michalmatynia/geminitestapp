@@ -6,7 +6,7 @@ import {
   resolveKangurAiTutorAvailability,
   resolveKangurAiTutorAppSettings,
   resolveKangurAiTutorMotionPresetKind,
-} from './settings-ai-tutor';
+} from './settings';
 
 describe('kangur ai tutor settings', () => {
   it('fills guardrail defaults for legacy learner settings payloads', () => {

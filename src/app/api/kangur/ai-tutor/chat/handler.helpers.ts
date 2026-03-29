@@ -4,7 +4,7 @@ import { logKangurServerEvent } from '@/features/kangur/observability/server';
 import { resolveKangurActor, setKangurLearnerAiTutorState } from '@/features/kangur/server';
 import {
   type KangurAiTutorAvailabilityReason,
-} from '@/features/kangur/settings-ai-tutor';
+} from '@/features/kangur/ai-tutor/settings';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import type { KangurAiTutorConversationContext } from '@/shared/contracts/kangur-ai-tutor';
 import { createDefaultKangurAiTutorLearnerMood } from '@/shared/contracts/kangur-ai-tutor-mood';
@@ -131,4 +131,4 @@ export const buildMoodTelemetry = (input: TutorMoodState) => ({
   tutorMoodReasonCode: input.lastReasonCode,
   tutorMoodConfidence: input.confidence,
 });
-import type { KangurAiTutorLearnerSettings } from '@/features/kangur/settings-ai-tutor';
+import type { KangurAiTutorLearnerSettings } from '@/features/kangur/ai-tutor/settings';

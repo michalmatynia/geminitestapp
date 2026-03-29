@@ -6,7 +6,7 @@ import type {
 import {
   KANGUR_AI_TUTOR_PAGE_COVERAGE_READY_FOR_MONGO,
   type KangurAiTutorPageCoverageEntry,
-} from './ai-tutor-page-coverage-manifest';
+} from './page-coverage-manifest';
 
 // Scoring weights for section knowledge resolution.
 // Higher = stronger signal. Anchor matches take priority over content ID matches.

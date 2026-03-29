@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { Badge, Button, FormField, Input, Textarea } from '@/features/kangur/shared/ui';
-import type { KangurAiTutorOnboardingValidationField, KangurAiTutorOnboardingValidationIssue } from '@/features/kangur/ai-tutor-onboarding-validation';
+import type { KangurAiTutorOnboardingValidationField, KangurAiTutorOnboardingValidationIssue } from '@/features/kangur/ai-tutor/onboarding-validation';
 import type { KangurAiTutorNativeGuideEntry } from '@/features/kangur/shared/contracts/kangur-ai-tutor-native-guide';
 import { KANGUR_GRID_RELAXED_CLASSNAME } from '@/features/kangur/ui/design/tokens';
 

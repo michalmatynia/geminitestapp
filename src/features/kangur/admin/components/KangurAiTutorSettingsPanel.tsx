@@ -8,7 +8,7 @@ import {
   KANGUR_AI_TUTOR_MOTION_PRESET_OPTIONS,
   type KangurAiTutorGuestIntroMode,
   type KangurAiTutorHomeOnboardingMode,
-} from '@/features/kangur/settings-ai-tutor';
+} from '@/features/kangur/ai-tutor/settings';
 import { resolveAgentPersonaMood } from '@/shared/lib/agent-personas';
 import {
   AgentPersonaMoodAvatar,

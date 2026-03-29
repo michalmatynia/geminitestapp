@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { validateKangurAiTutorOnboardingContent } from '@/features/kangur/ai-tutor-onboarding-validation';
+import { validateKangurAiTutorOnboardingContent } from '@/features/kangur/ai-tutor/onboarding-validation';
 import {
   buildKangurAiTutorContentTranslationStatusBySectionKey,
   type KangurAiTutorContentTranslatableSectionKey,

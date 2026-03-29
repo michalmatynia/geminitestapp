@@ -2,10 +2,10 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react';
 
-import { KANGUR_AI_TUTOR_PAGE_COVERAGE_READY_FOR_MONGO } from '@/features/kangur/ai-tutor-page-coverage-manifest';
+import { KANGUR_AI_TUTOR_PAGE_COVERAGE_READY_FOR_MONGO } from '@/features/kangur/ai-tutor/page-coverage-manifest';
 import {
   validateKangurAiTutorOnboardingStore,
-} from '@/features/kangur/ai-tutor-onboarding-validation';
+} from '@/features/kangur/ai-tutor/onboarding-validation';
 import type { KangurAiTutorFollowUpAction } from '@/features/kangur/shared/contracts/kangur-ai-tutor';
 import {
   DEFAULT_KANGUR_AI_TUTOR_NATIVE_GUIDE_STORE,

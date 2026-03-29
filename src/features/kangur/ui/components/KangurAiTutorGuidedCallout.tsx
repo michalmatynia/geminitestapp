@@ -3,7 +3,7 @@
 import { useEffect, useId, useMemo, useState } from 'react';
 import { AnimatePresence, motion, type Transition } from 'framer-motion';
 
-import { resolveKangurPageContentFragment } from '@/features/kangur/page-content-fragments';
+import { resolveKangurPageContentFragment } from '@/features/kangur/ai-tutor/page-content-fragments';
 import { useKangurAiTutorContent } from '@/features/kangur/ui/context/KangurAiTutorContentContext';
 import { KangurButton, KangurPanelRow } from '@/features/kangur/ui/design/primitives';
 import { useKangurCoarsePointer } from '@/features/kangur/ui/hooks/useKangurCoarsePointer';

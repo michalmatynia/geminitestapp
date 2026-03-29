@@ -3,7 +3,7 @@
  */
 import { act, fireEvent, render, screen, waitFor } from '../../../../../../__tests__/test-utils';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { buildDefaultKangurPageContentStore } from '@/features/kangur/page-content-catalog';
+import { buildDefaultKangurPageContentStore } from '@/features/kangur/ai-tutor/page-content-catalog';
 import { DEFAULT_KANGUR_AI_TUTOR_CONTENT } from '@/features/kangur/shared/contracts/kangur-ai-tutor-content';
 import { persistTutorVisibilityHidden } from '@/features/kangur/ui/components/KangurAiTutorWidget.storage';
 

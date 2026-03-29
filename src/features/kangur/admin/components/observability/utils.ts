@@ -15,7 +15,7 @@ import { kangurKnowledgeGraphPreviewRequestSchema } from '@/shared/contracts';
 import {
   KANGUR_AI_TUTOR_PAGE_COVERAGE_READY_FOR_MONGO,
   type KangurAiTutorPageCoverageEntry,
-} from '@/features/kangur/ai-tutor-page-coverage-manifest';
+} from '@/features/kangur/ai-tutor/page-coverage-manifest';
 
 import type { KnowledgeGraphPreviewDraft, KnowledgeGraphPreviewReplayCandidate, KnowledgeGraphPreviewSelectOption } from './KnowledgeGraphObservabilityContext';
 

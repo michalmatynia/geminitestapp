@@ -13,8 +13,8 @@ import type {
   KangurAiTutorLearnerSettings,
   KangurAiTutorProactiveNudges,
   KangurAiTutorUiMode,
-} from '@/features/kangur/settings-ai-tutor';
-import { resolveKangurAiTutorMotionPresetKind } from '@/features/kangur/settings-ai-tutor';
+} from '@/features/kangur/ai-tutor/settings';
+import { resolveKangurAiTutorMotionPresetKind } from '@/features/kangur/ai-tutor/settings';
 import type { KangurTutorAnchorRegistration } from '@/features/kangur/ui/context/kangur-tutor-types';
 import { useOptionalKangurRouting } from '@/features/kangur/ui/context/KangurRoutingContext';
 import {

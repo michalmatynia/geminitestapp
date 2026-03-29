@@ -6,7 +6,7 @@ import { useContext, useEffect, type JSX } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { render, screen, waitFor } from '@/__tests__/test-utils';
-import { DEFAULT_KANGUR_AI_TUTOR_APP_SETTINGS } from '@/features/kangur/settings-ai-tutor';
+import { DEFAULT_KANGUR_AI_TUTOR_APP_SETTINGS } from '@/features/kangur/ai-tutor/settings';
 
 import {
   KangurAiTutorDeferredProvider,

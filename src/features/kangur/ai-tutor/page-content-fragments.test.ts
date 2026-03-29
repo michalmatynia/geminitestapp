@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
-import { buildDefaultKangurPageContentStore } from '@/features/kangur/page-content-catalog';
-import { resolveKangurPageContentFragment } from '@/features/kangur/page-content-fragments';
+import { buildDefaultKangurPageContentStore } from '@/features/kangur/ai-tutor/page-content-catalog';
+import { resolveKangurPageContentFragment } from '@/features/kangur/ai-tutor/page-content-fragments';
 
 const getTestsQuestionEntry = () => {
   const entry = buildDefaultKangurPageContentStore('pl').entries.find(

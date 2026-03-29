@@ -87,37 +87,6 @@ describe('bootstrapKangurContentToMongo', () => {
   });
 
   it('persists authored starter lesson documents for missing lessons during bootstrap', async () => {
-    const lessons = [
-      {
-        id: 'kangur-lesson-english_adverbs',
-        componentId: 'english_adverbs',
-        contentMode: 'component',
-        subject: 'english',
-        ageGroup: 'ten_year_old',
-        title: 'Adverbs',
-        description: 'desc',
-        emoji: '📝',
-        color: 'from-sky-500 to-cyan-500',
-        activeBg: 'from-sky-500/20 via-cyan-500/15 to-white',
-        sortOrder: 1,
-        enabled: true,
-      },
-      {
-        id: 'kangur-lesson-english_comparatives_superlatives',
-        componentId: 'english_comparatives_superlatives',
-        contentMode: 'component',
-        subject: 'english',
-        ageGroup: 'ten_year_old',
-        title: 'Comparatives',
-        description: 'desc',
-        emoji: '🏆',
-        color: 'from-rose-500 to-orange-500',
-        activeBg: 'from-rose-500/20 via-orange-500/15 to-white',
-        sortOrder: 2,
-        enabled: true,
-      },
-    ] as const;
-
     const starterDocument = { version: 1, blocks: [], pages: [], narration: {}, updatedAt: 'now' };
     const importedDocument = {
       version: 1,
@@ -128,18 +97,16 @@ describe('bootstrapKangurContentToMongo', () => {
     };
 
     const lessonDocumentRepository = {
-      listLessonDocuments: vi.fn().mockResolvedValue({}),
       replaceLessonDocuments: vi.fn().mockImplementation(async (store) => store),
     };
     const lessonRepository = {
-      listLessons: vi.fn().mockResolvedValue(lessons),
       replaceLessons: vi.fn().mockImplementation(async (nextLessons) => nextLessons),
     };
     const lessonSectionRepository = {
-      listSections: vi.fn().mockResolvedValue([{ id: 'english' }]),
+      replaceSections: vi.fn().mockImplementation(async (sections) => sections),
     };
     const lessonTemplateRepository = {
-      listTemplates: vi.fn().mockResolvedValue([{ componentId: 'english_adverbs' }]),
+      replaceTemplates: vi.fn().mockImplementation(async (templates) => templates),
     };
     const gameContentSetRepository = {
       listContentSets: vi.fn().mockResolvedValue([]),
@@ -169,6 +136,7 @@ describe('bootstrapKangurContentToMongo', () => {
     const { createDefaultKangurLessons } = await import('@/features/kangur/settings');
 
     const summary = await bootstrapKangurContentToMongo(['pl']);
+    const defaultLessons = createDefaultKangurLessons();
 
     expect(lessonDocumentRepository.replaceLessonDocuments).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -177,40 +145,23 @@ describe('bootstrapKangurContentToMongo', () => {
       }),
       'pl'
     );
-    expect(summary.lessonDocuments).toBe(createDefaultKangurLessons().length);
+    expect(lessonRepository.replaceLessons).toHaveBeenCalledWith(defaultLessons);
+    expect(summary.lessonDocuments).toBe(defaultLessons.length);
+    expect(summary.lessons).toBe(defaultLessons.length);
   });
 
-  it('fills missing default lessons into Mongo before seeding lesson documents', async () => {
-    const existingSubset = [
-      {
-        id: 'kangur-lesson-english_adverbs',
-        componentId: 'english_adverbs',
-        contentMode: 'component',
-        subject: 'english',
-        ageGroup: 'ten_year_old',
-        title: 'Adverbs',
-        description: 'desc',
-        emoji: '📝',
-        color: 'from-sky-500 to-cyan-500',
-        activeBg: 'from-sky-500/20 via-cyan-500/15 to-white',
-        sortOrder: 1,
-        enabled: true,
-      },
-    ] as const;
-
+  it('replaces lessons, sections, and templates from the local snapshot', async () => {
     const lessonDocumentRepository = {
-      listLessonDocuments: vi.fn().mockResolvedValue({}),
       replaceLessonDocuments: vi.fn().mockImplementation(async (store) => store),
     };
     const lessonRepository = {
-      listLessons: vi.fn().mockResolvedValue(existingSubset),
       replaceLessons: vi.fn().mockImplementation(async (nextLessons) => nextLessons),
     };
     const lessonSectionRepository = {
-      listSections: vi.fn().mockResolvedValue([{ id: 'english' }]),
+      replaceSections: vi.fn().mockImplementation(async (sections) => sections),
     };
     const lessonTemplateRepository = {
-      listTemplates: vi.fn().mockResolvedValue([{ componentId: 'english_adverbs' }]),
+      replaceTemplates: vi.fn().mockImplementation(async (templates) => templates),
     };
     const gameContentSetRepository = {
       listContentSets: vi.fn().mockResolvedValue([]),
@@ -240,21 +191,20 @@ describe('bootstrapKangurContentToMongo', () => {
 
     const { bootstrapKangurContentToMongo } = await import('./kangur-content-bootstrap');
     const { createDefaultKangurLessons } = await import('@/features/kangur/settings');
+    const { createDefaultKangurSections } = await import('@/features/kangur/lessons/lesson-section-defaults');
+    const { createDefaultKangurLessonTemplates } = await import('@/features/kangur/lessons/lesson-template-defaults');
 
     const summary = await bootstrapKangurContentToMongo(['pl']);
-    const persistedLessons = lessonRepository.replaceLessons.mock.calls[0]?.[0];
+    const defaultLessons = createDefaultKangurLessons();
+    const defaultSections = createDefaultKangurSections();
+    const defaultTemplates = createDefaultKangurLessonTemplates('pl');
 
-    expect(lessonRepository.replaceLessons).toHaveBeenCalledTimes(1);
-    expect(Array.isArray(persistedLessons)).toBe(true);
-    expect(persistedLessons).toHaveLength(createDefaultKangurLessons().length);
-    expect(
-      persistedLessons.find((lesson: { id: string }) => lesson.id === 'kangur-lesson-english_adverbs')
-    ).toMatchObject({
-      description: 'desc',
-      sortOrder: 1,
-      title: 'Adverbs',
-    });
+    expect(lessonRepository.replaceLessons).toHaveBeenCalledWith(defaultLessons);
+    expect(lessonSectionRepository.replaceSections).toHaveBeenCalledWith(defaultSections);
+    expect(lessonTemplateRepository.replaceTemplates).toHaveBeenCalledWith(defaultTemplates, 'pl');
     expect(summary.lessons).toBe(createDefaultKangurLessons().length);
-    expect(lessonDocumentRepository.replaceLessonDocuments).toHaveBeenCalledTimes(1);
+    expect(summary.lessonSections).toBe(defaultSections.length);
+    expect(summary.lessonTemplatesByLocale['pl']).toBe(defaultTemplates.length);
+    expect(summary.lessonContentRevision).toHaveLength(16);
   });
 });

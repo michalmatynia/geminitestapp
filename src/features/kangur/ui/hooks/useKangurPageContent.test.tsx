@@ -25,7 +25,7 @@ vi.mock('@/shared/lib/api-client', () => ({
   },
 }));
 
-import { buildDefaultKangurPageContentStore } from '@/features/kangur/page-content-catalog';
+import { buildDefaultKangurPageContentStore } from '@/features/kangur/ai-tutor/page-content-catalog';
 import { useKangurPageContentStore } from '@/features/kangur/ui/hooks/useKangurPageContent';
 
 const STALE_TIME_MS = 5 * 60_000;

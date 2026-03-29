@@ -10,14 +10,14 @@ import {
 import {
   KANGUR_AI_TUTOR_PAGE_COVERAGE_READY_FOR_MONGO,
   type KangurAiTutorPageCoverageEntry,
-} from './ai-tutor-page-coverage-manifest';
-import { getKangurHomeHref, getKangurPageSlug } from './config/routing';
+} from './page-coverage-manifest';
+import { getKangurHomeHref, getKangurPageSlug } from '../config/routing';
 import {
   getLocalizedKangurLessonDescription,
   getLocalizedKangurLessonTitle,
-} from './lessons/lesson-catalog-i18n';
+} from '../lessons/lesson-catalog-i18n';
 import type { KangurLessonComponentId } from '@/features/kangur/shared/contracts/kangur';
-import { KANGUR_LESSON_COMPONENT_OPTIONS, KANGUR_LESSON_LIBRARY } from './settings';
+import { KANGUR_LESSON_COMPONENT_OPTIONS, KANGUR_LESSON_LIBRARY } from '../settings';
 import { repairKangurPolishCopy } from '@/shared/lib/i18n/kangur-polish-diacritics';
 import { normalizeSiteLocale } from '@/shared/lib/i18n/site-locale';
 import {

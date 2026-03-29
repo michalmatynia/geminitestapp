@@ -12,7 +12,7 @@ import {
   getKangurAiTutorSettingsForLearner,
   parseKangurAiTutorSettings,
   resolveKangurAiTutorAppSettings,
-} from '@/features/kangur/settings-ai-tutor';
+} from '@/features/kangur/ai-tutor/settings';
 import type { KangurAiTutorUsageResponse } from '@/shared/contracts/kangur-ai-tutor';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { badRequestError } from '@/shared/errors/app-error';

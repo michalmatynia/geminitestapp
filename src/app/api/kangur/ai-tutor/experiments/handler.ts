@@ -13,7 +13,7 @@ import {
   getKangurAiTutorSettingsForLearner,
   normalizeKangurAiTutorLearnerSettings,
   type KangurAiTutorExperimentFlags,
-} from '@/features/kangur/settings-ai-tutor';
+} from '@/features/kangur/ai-tutor/settings';
 
 const experimentFlagsSchema = z.object({
   coachingMode: z

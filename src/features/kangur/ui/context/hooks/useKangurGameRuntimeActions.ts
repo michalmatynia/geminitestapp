@@ -8,7 +8,10 @@ import { getKangurPlatform } from '@/features/kangur/services/kangur-platform';
 import { resolveKangurScoreSubject } from '@/shared/contracts/kangur';
 import type { KangurUser } from '@kangur/platform';
 
-import { buildKangurCompletedGameOutcome } from '../KangurGameRuntimeContext.helpers';
+import {
+  buildKangurCompletedGameOutcome,
+  clearPendingKangurGameQuickStart,
+} from '../KangurGameRuntimeContext.helpers';
 import { TOTAL_QUESTIONS } from '../KangurGameRuntimeContext.shared';
 
 import type {
@@ -543,6 +546,7 @@ export function useKangurGameRuntimeActions(
   );
 
   const handleStartGame = useCallback((): void => {
+    clearPendingKangurGameQuickStart();
     ensureSessionPlayerName();
     input.setActiveSessionRecommendation(null);
     input.setLaunchableGameInstanceId(null);
@@ -556,6 +560,7 @@ export function useKangurGameRuntimeActions(
 
   const handleStartKangur = useCallback(
     (mode: KangurMode, options?: KangurSessionStartOptions): void => {
+      clearPendingKangurGameQuickStart();
       ensureSessionPlayerName();
       input.setKangurMode(mode);
       input.setActiveSessionRecommendation(options?.recommendation ?? null);
@@ -572,12 +577,14 @@ export function useKangurGameRuntimeActions(
   );
 
   const handleRestart = useCallback((): void => {
+    clearPendingKangurGameQuickStart();
     input.setActiveSessionRecommendation(null);
     input.setLaunchableGameInstanceId(null);
     input.setScreen('operation');
   }, [input.setActiveSessionRecommendation, input.setLaunchableGameInstanceId, input.setScreen]);
 
   const handleHome = useCallback((): void => {
+    clearPendingKangurGameQuickStart();
     input.setActiveSessionRecommendation(null);
     input.setLaunchableGameInstanceId(null);
     input.setScreen('home');

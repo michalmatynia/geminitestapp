@@ -120,7 +120,7 @@ vi.mock('@/features/kangur/server/context-registry', () => ({
   resolveKangurAiTutorRuntimeDocuments: resolveKangurAiTutorRuntimeDocumentsMock,
 }));
 
-vi.mock('@/features/kangur/settings-ai-tutor', () => ({
+vi.mock('@/features/kangur/ai-tutor/settings', () => ({
   KANGUR_AI_TUTOR_APP_SETTINGS_KEY: 'kangur.aiTutor.app',
   KANGUR_AI_TUTOR_SETTINGS_KEY: 'kangur.aiTutor.settings',
   parseKangurAiTutorSettings: parseKangurAiTutorSettingsMock,

@@ -1,7 +1,7 @@
 import type {
   KangurAiTutorAppSettings,
   KangurAiTutorLearnerSettings,
-} from '@/features/kangur/settings-ai-tutor';
+} from '@/features/kangur/ai-tutor/settings';
 import type {
   KangurAiTutorConversationContext,
   KangurAiTutorFocusKind,

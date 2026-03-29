@@ -9,7 +9,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   KANGUR_AI_TUTOR_APP_SETTINGS_KEY,
   KANGUR_AI_TUTOR_SETTINGS_KEY,
-} from '@/features/kangur/settings-ai-tutor';
+} from '@/features/kangur/ai-tutor/settings';
 import { subscribeToTutorVisibilityChanges } from '@/features/kangur/ui/components/KangurAiTutorWidget.storage';
 import { repairKangurPolishCopy } from '@/shared/lib/i18n/kangur-polish-diacritics';
 

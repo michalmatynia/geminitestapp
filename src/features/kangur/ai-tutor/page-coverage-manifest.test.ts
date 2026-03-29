@@ -6,7 +6,7 @@ import {
   KANGUR_AI_TUTOR_PAGE_COVERAGE_MANIFEST,
   KANGUR_AI_TUTOR_PAGE_COVERAGE_READY_FOR_MONGO,
   KANGUR_AI_TUTOR_PAGE_COVERAGE_SUMMARY,
-} from './ai-tutor-page-coverage-manifest';
+} from './page-coverage-manifest';
 
 describe('Kangur tutor page coverage manifest', () => {
   it('keeps a stable inventory summary for the current Kangur UI', () => {

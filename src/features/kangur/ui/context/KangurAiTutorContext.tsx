@@ -13,7 +13,7 @@ import {
   type SetStateAction,
 } from 'react';
 
-import { DEFAULT_KANGUR_AI_TUTOR_APP_SETTINGS } from '@/features/kangur/settings-ai-tutor';
+import { DEFAULT_KANGUR_AI_TUTOR_APP_SETTINGS } from '@/features/kangur/ai-tutor/settings';
 import { internalError } from '@/features/kangur/shared/errors/app-error';
 
 import {

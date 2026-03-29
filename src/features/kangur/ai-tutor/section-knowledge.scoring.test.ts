@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { resolveKangurTutorSectionKnowledgeReference } from '../ai-tutor-section-knowledge';
+import { resolveKangurTutorSectionKnowledgeReference } from './section-knowledge';
 
 // These tests exercise the scoring/ranking logic through the public API.
 // Anchor IDs and content IDs are chosen to match entries in the real manifest.

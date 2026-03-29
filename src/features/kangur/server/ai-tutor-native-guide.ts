@@ -6,7 +6,7 @@ import type {
 } from '@/features/kangur/shared/contracts/kangur-ai-tutor';
 import type { KangurAiTutorNativeGuideEntry } from '@/features/kangur/shared/contracts/kangur-ai-tutor-native-guide';
 
-import { extractKangurPageContentFragmentId } from '@/features/kangur/page-content-fragments';
+import { extractKangurPageContentFragmentId } from '@/features/kangur/ai-tutor/page-content-fragments';
 import { getKangurAiTutorNativeGuideStore } from './ai-tutor-native-guide-repository';
 import { getKangurPageContentEntry } from './page-content-repository';
 

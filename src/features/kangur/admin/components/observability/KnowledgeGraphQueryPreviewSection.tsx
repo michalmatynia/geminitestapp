@@ -12,7 +12,7 @@ import {
   Textarea,
 } from '@/features/kangur/shared/ui';
 import { KANGUR_GRID_LOOSE_CLASSNAME } from '@/features/kangur/ui/design/tokens';
-import { KANGUR_AI_TUTOR_PAGE_COVERAGE_READY_FOR_MONGO } from '@/features/kangur/ai-tutor-page-coverage-manifest';
+import { KANGUR_AI_TUTOR_PAGE_COVERAGE_READY_FOR_MONGO } from '@/features/kangur/ai-tutor/page-coverage-manifest';
 import type { KangurAiTutorPromptMode, KangurAiTutorSurface } from '@/features/kangur/shared/contracts/kangur-ai-tutor';
 
 import { useKnowledgeGraphObservability } from './KnowledgeGraphObservabilityContext';

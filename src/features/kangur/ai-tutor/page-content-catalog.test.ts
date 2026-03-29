@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { buildDefaultKangurPageContentStore } from '@/features/kangur/page-content-catalog';
+import { buildDefaultKangurPageContentStore } from '@/features/kangur/ai-tutor/page-content-catalog';
 
 const getEntry = (locale: string, id: string) => {
   const entry = buildDefaultKangurPageContentStore(locale).entries.find((candidate) => candidate.id === id);

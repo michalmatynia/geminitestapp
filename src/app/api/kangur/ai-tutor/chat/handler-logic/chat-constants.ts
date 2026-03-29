@@ -5,7 +5,7 @@ import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { createDefaultKangurAiTutorLearnerMood } from '@/shared/contracts/kangur-ai-tutor-mood';
 import { resolveKangurActor } from '@/features/kangur/server';
 import type { KangurAiTutorConversationContext } from '@/shared/contracts/kangur-ai-tutor';
-import type { KangurAiTutorAvailabilityReason } from '@/features/kangur/settings-ai-tutor';
+import type { KangurAiTutorAvailabilityReason } from '@/features/kangur/ai-tutor/settings';
 
 export const AVAILABILITY_ERROR_MESSAGES: Record<KangurAiTutorAvailabilityReason, string> = {
   disabled: 'AI Tutor is not enabled for this learner.',

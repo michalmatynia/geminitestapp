@@ -64,6 +64,7 @@ type UseKangurGameQuickStartInput = {
 type KangurGameQuickStartPayload = {
   categories?: string | null;
   count?: string | null;
+  createdAt?: number;
   difficulty?: string | null;
   instanceId?: string | null;
   operation?: string | null;
@@ -98,11 +99,12 @@ type BuildKangurCompletedGameOutcomeResult = {
 };
 
 const KANGUR_GAME_PENDING_QUICK_START_STORAGE_KEY = 'kangur:game:pending-quick-start';
+const KANGUR_GAME_PENDING_QUICK_START_MAX_AGE_MS = 60_000;
 
 const canUseKangurGameQuickStartStorage = (): boolean =>
   typeof window !== 'undefined' && typeof window.sessionStorage !== 'undefined';
 
-const clearPendingKangurGameQuickStart = (): void => {
+export const clearPendingKangurGameQuickStart = (): void => {
   if (!canUseKangurGameQuickStartStorage()) {
     return;
   }
@@ -124,7 +126,10 @@ const persistPendingKangurGameQuickStart = (
   try {
     window.sessionStorage.setItem(
       KANGUR_GAME_PENDING_QUICK_START_STORAGE_KEY,
-      JSON.stringify(payload)
+      JSON.stringify({
+        ...payload,
+        createdAt: Date.now(),
+      } satisfies KangurGameQuickStartPayload)
     );
   } catch {
     // Ignore storage failures and keep the URL-driven fallback behavior.
@@ -150,9 +155,22 @@ const readPendingKangurGameQuickStart = (): KangurGameQuickStartPayload | null =
       return null;
     }
 
+    const createdAt =
+      typeof parsed.createdAt === 'number' && Number.isFinite(parsed.createdAt)
+        ? parsed.createdAt
+        : null;
+    if (
+      createdAt === null ||
+      Date.now() - createdAt > KANGUR_GAME_PENDING_QUICK_START_MAX_AGE_MS
+    ) {
+      clearPendingKangurGameQuickStart();
+      return null;
+    }
+
     return {
       categories: parsed.categories ?? null,
       count: parsed.count ?? null,
+      createdAt,
       difficulty: parsed.difficulty ?? null,
       instanceId: parsed.instanceId ?? null,
       operation: parsed.operation ?? null,
@@ -228,14 +246,6 @@ export const useKangurGameQuickStart = ({
   handleStartTraining,
 }: UseKangurGameQuickStartInput): void => {
   const quickStartConsumedRef = useRef(false);
-
-  useEffect(() => {
-    if (screen === 'home') {
-      return;
-    }
-
-    clearPendingKangurGameQuickStart();
-  }, [screen]);
 
   useEffect(() => {
     if (

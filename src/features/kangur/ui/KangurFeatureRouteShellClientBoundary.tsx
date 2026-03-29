@@ -2,8 +2,6 @@
 
 import { useEffect, useState } from 'react';
 
-import { KangurStorefrontAppearanceProvider } from '@/features/kangur/ui/KangurStorefrontAppearanceProvider';
-import { KangurSurfaceClassSync } from '@/features/kangur/ui/KangurSurfaceClassSync';
 import { KangurMainRoleProvider } from '@/features/kangur/ui/design/primitives/KangurPageContainer';
 
 import type { JSX } from 'react';
@@ -62,12 +60,8 @@ export function KangurFeatureRouteShellClientBoundary(): JSX.Element | null {
 
   const RouteShellComponent = routeShellComponent;
   return (
-    <KangurStorefrontAppearanceProvider>
-      <KangurSurfaceClassSync>
-        <KangurMainRoleProvider suppressMainRole>
-          <RouteShellComponent />
-        </KangurMainRoleProvider>
-      </KangurSurfaceClassSync>
-    </KangurStorefrontAppearanceProvider>
+    <KangurMainRoleProvider suppressMainRole>
+      <RouteShellComponent />
+    </KangurMainRoleProvider>
   );
 }

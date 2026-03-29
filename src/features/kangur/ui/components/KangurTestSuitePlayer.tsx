@@ -4,7 +4,7 @@ import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import { ChevronLeft, ChevronRight, RotateCcw } from 'lucide-react';
 import React, { useMemo, useRef, useState } from 'react';
 
-import { resolveKangurTutorSectionKnowledgeReference } from '@/features/kangur/ai-tutor-section-knowledge';
+import { resolveKangurTutorSectionKnowledgeReference } from '@/features/kangur/ai-tutor/section-knowledge';
 import { isPublishedKangurTestQuestion } from '@/features/kangur/test-questions';
 import { renderKangurLessonNavigationIconButton } from '@/features/kangur/ui/components/KangurLessonNavigationIconButton';
 import {

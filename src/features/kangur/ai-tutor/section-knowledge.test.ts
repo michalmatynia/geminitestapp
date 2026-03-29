@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { resolveKangurTutorSectionKnowledgeReference } from '@/features/kangur/ai-tutor-section-knowledge';
+import { resolveKangurTutorSectionKnowledgeReference } from '@/features/kangur/ai-tutor/section-knowledge';
 
 describe('resolveKangurTutorSectionKnowledgeReference', () => {
   it('returns canonical page-content ids for matched sections', () => {

@@ -3,13 +3,16 @@
  */
 
 import React from 'react';
-import { fireEvent, render, screen } from '@testing-library/react';
-import { describe, expect, it, vi } from 'vitest';
+import { cleanup, fireEvent, render, screen } from '@testing-library/react';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 const { useSocialPostContextMock, usePlaywrightPersonasMock } = vi.hoisted(() => ({
   useSocialPostContextMock: vi.fn(),
   usePlaywrightPersonasMock: vi.fn(),
 }));
+
+const hasTextContent = (text: string) => (_content: string, node: Element | null) =>
+  node?.textContent === text;
 
 vi.mock('@/features/kangur/shared/ui', () => ({
   FormModal: ({
@@ -111,6 +114,16 @@ vi.mock('@/shared/hooks/usePlaywrightPersonas', () => ({
 import { SocialPostPlaywrightCaptureModal } from './SocialPost.PlaywrightCaptureModal';
 
 describe('SocialPostPlaywrightCaptureModal', () => {
+  beforeEach(() => {
+    useSocialPostContextMock.mockReset();
+    usePlaywrightPersonasMock.mockReset();
+  });
+
+  afterEach(() => {
+    cleanup();
+    vi.clearAllMocks();
+  });
+
   it('renders personas, programmable routes, and the editable script', () => {
     usePlaywrightPersonasMock.mockReturnValue({
       data: [{ id: 'persona-1', name: 'Fast reviewer' }],
@@ -118,8 +131,10 @@ describe('SocialPostPlaywrightCaptureModal', () => {
       error: null,
     });
     useSocialPostContextMock.mockReturnValue({
+      activePost: { id: 'post-1' },
       isProgrammablePlaywrightModalOpen: true,
       handleCloseProgrammablePlaywrightModal: vi.fn(),
+      captureAppearanceMode: 'dark',
       programmableCaptureBaseUrl: 'https://example.com',
       setProgrammableCaptureBaseUrl: vi.fn(),
       programmableCapturePersonaId: 'persona-1',
@@ -145,6 +160,7 @@ describe('SocialPostPlaywrightCaptureModal', () => {
       handleRemoveProgrammableCaptureRoute: vi.fn(),
       handleSeedProgrammableCaptureRoutesFromPresets: vi.fn(),
       handleResetProgrammableCaptureScript: vi.fn(),
+      handleSaveProgrammableCaptureDefaults: vi.fn(),
       handleRunProgrammablePlaywrightCapture: vi.fn(),
       handleRunProgrammablePlaywrightCaptureAndPipeline: vi.fn(),
       canGenerateSocialDraft: true,
@@ -160,6 +176,22 @@ describe('SocialPostPlaywrightCaptureModal', () => {
     expect(screen.getByDisplayValue('Pricing page')).toBeInTheDocument();
     expect(screen.getByDisplayValue('/pricing')).toBeInTheDocument();
     expect(screen.getByDisplayValue('return input.captures;')).toBeInTheDocument();
+    expect(screen.getByText('Resolved target')).toBeInTheDocument();
+    expect(
+      screen.getByText('https://example.com/pricing?kangurCapture=social-batch')
+    ).toBeInTheDocument();
+    expect(screen.getByText('Runtime request preview')).toBeInTheDocument();
+    expect(screen.getByText(hasTextContent('Appearance mode: dark'))).toBeInTheDocument();
+    expect(screen.getByText(hasTextContent('Persona: Fast reviewer'))).toBeInTheDocument();
+    expect(screen.getByText(/"browserEngine": "chromium"/)).toBeInTheDocument();
+    expect(screen.getByText(/"timeoutMs": 180000/)).toBeInTheDocument();
+    expect(screen.getByText(/"appearanceMode": "dark"/)).toBeInTheDocument();
+    expect(screen.getByText(/"personaId": "persona-1"/)).toBeInTheDocument();
+    expect(screen.getByText(/"input": \{/)).toBeInTheDocument();
+    expect(screen.getByText(/"title": "Pricing page"/)).toBeInTheDocument();
+    expect(
+      screen.getByText(/"url": "https:\/\/example.com\/pricing\?kangurCapture=social-batch"/)
+    ).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Capture programmable images' })).toBeEnabled();
     expect(screen.getByRole('button', { name: 'Capture + run pipeline' })).toBeEnabled();
   });
@@ -170,6 +202,7 @@ describe('SocialPostPlaywrightCaptureModal', () => {
     const handleAddProgrammableCaptureRoute = vi.fn();
     const handleSeedProgrammableCaptureRoutesFromPresets = vi.fn();
     const handleResetProgrammableCaptureScript = vi.fn();
+    const handleSaveProgrammableCaptureDefaults = vi.fn();
     const handleRunProgrammablePlaywrightCapture = vi.fn();
     const handleRunProgrammablePlaywrightCaptureAndPipeline = vi.fn();
 
@@ -179,8 +212,10 @@ describe('SocialPostPlaywrightCaptureModal', () => {
       error: null,
     });
     useSocialPostContextMock.mockReturnValue({
+      activePost: { id: 'post-1' },
       isProgrammablePlaywrightModalOpen: true,
       handleCloseProgrammablePlaywrightModal,
+      captureAppearanceMode: 'default',
       programmableCaptureBaseUrl: 'https://example.com',
       setProgrammableCaptureBaseUrl: vi.fn(),
       programmableCapturePersonaId: '',
@@ -206,6 +241,7 @@ describe('SocialPostPlaywrightCaptureModal', () => {
       handleRemoveProgrammableCaptureRoute: vi.fn(),
       handleSeedProgrammableCaptureRoutesFromPresets,
       handleResetProgrammableCaptureScript,
+      handleSaveProgrammableCaptureDefaults,
       handleRunProgrammablePlaywrightCapture,
       handleRunProgrammablePlaywrightCaptureAndPipeline,
       canGenerateSocialDraft: true,
@@ -220,6 +256,7 @@ describe('SocialPostPlaywrightCaptureModal', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Add route' }));
     fireEvent.click(screen.getByRole('button', { name: 'Seed from presets' }));
     fireEvent.click(screen.getByRole('button', { name: 'Reset script' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Save as defaults' }));
     fireEvent.click(screen.getByRole('button', { name: 'Capture programmable images' }));
     fireEvent.click(screen.getByRole('button', { name: 'Capture + run pipeline' }));
     fireEvent.click(screen.getByRole('button', { name: 'Close' }));
@@ -228,8 +265,126 @@ describe('SocialPostPlaywrightCaptureModal', () => {
     expect(handleAddProgrammableCaptureRoute).toHaveBeenCalledTimes(1);
     expect(handleSeedProgrammableCaptureRoutesFromPresets).toHaveBeenCalledTimes(1);
     expect(handleResetProgrammableCaptureScript).toHaveBeenCalledTimes(1);
+    expect(handleSaveProgrammableCaptureDefaults).toHaveBeenCalledTimes(1);
     expect(handleRunProgrammablePlaywrightCapture).toHaveBeenCalledTimes(1);
     expect(handleRunProgrammablePlaywrightCaptureAndPipeline).toHaveBeenCalledTimes(1);
     expect(handleCloseProgrammablePlaywrightModal).toHaveBeenCalledTimes(1);
+  });
+
+  it('allows saving defaults without an active draft while keeping capture actions disabled', () => {
+    const handleSaveProgrammableCaptureDefaults = vi.fn();
+
+    usePlaywrightPersonasMock.mockReturnValue({
+      data: [],
+      isLoading: false,
+      error: null,
+    });
+    useSocialPostContextMock.mockReturnValue({
+      activePost: null,
+      isProgrammablePlaywrightModalOpen: true,
+      handleCloseProgrammablePlaywrightModal: vi.fn(),
+      captureAppearanceMode: 'default',
+      programmableCaptureBaseUrl: 'https://example.com',
+      setProgrammableCaptureBaseUrl: vi.fn(),
+      programmableCapturePersonaId: '',
+      setProgrammableCapturePersonaId: vi.fn(),
+      programmableCaptureScript: 'return input.captures;',
+      setProgrammableCaptureScript: vi.fn(),
+      programmableCaptureRoutes: [
+        {
+          id: 'route-1',
+          title: 'Pricing page',
+          path: '/pricing',
+          description: '',
+          selector: '',
+          waitForMs: 0,
+          waitForSelectorMs: 10000,
+        },
+      ],
+      programmableCapturePending: false,
+      programmableCaptureMessage: null,
+      programmableCaptureErrorMessage: null,
+      handleAddProgrammableCaptureRoute: vi.fn(),
+      handleUpdateProgrammableCaptureRoute: vi.fn(),
+      handleRemoveProgrammableCaptureRoute: vi.fn(),
+      handleSeedProgrammableCaptureRoutesFromPresets: vi.fn(),
+      handleResetProgrammableCaptureScript: vi.fn(),
+      handleSaveProgrammableCaptureDefaults,
+      handleRunProgrammablePlaywrightCapture: vi.fn(),
+      handleRunProgrammablePlaywrightCaptureAndPipeline: vi.fn(),
+      canGenerateSocialDraft: false,
+      socialDraftBlockedReason:
+        'Choose a StudiQ Social post model before running capture and pipeline.',
+    });
+
+    render(<SocialPostPlaywrightCaptureModal />);
+
+    expect(
+      screen.getByText(
+        'No active draft is selected. You can still edit the programmable Playwright config and save it as defaults, but capture actions stay disabled until a draft is active.'
+      )
+    ).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Capture programmable images' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Capture + run pipeline' })).toBeDisabled();
+    expect(screen.getByText(hasTextContent('Appearance mode: default'))).toBeInTheDocument();
+    expect(screen.getByText(hasTextContent('Persona: Default runtime persona'))).toBeInTheDocument();
+    expect(screen.getByText(/"personaId": null/)).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Save as defaults' }));
+
+    expect(handleSaveProgrammableCaptureDefaults).toHaveBeenCalledTimes(1);
+  });
+
+  it('shows route preview guidance when a relative route has no base URL yet', () => {
+    usePlaywrightPersonasMock.mockReturnValue({
+      data: [],
+      isLoading: false,
+      error: null,
+    });
+    useSocialPostContextMock.mockReturnValue({
+      activePost: { id: 'post-1' },
+      isProgrammablePlaywrightModalOpen: true,
+      handleCloseProgrammablePlaywrightModal: vi.fn(),
+      captureAppearanceMode: 'default',
+      programmableCaptureBaseUrl: '',
+      setProgrammableCaptureBaseUrl: vi.fn(),
+      programmableCapturePersonaId: '',
+      setProgrammableCapturePersonaId: vi.fn(),
+      programmableCaptureScript: 'return input.captures;',
+      setProgrammableCaptureScript: vi.fn(),
+      programmableCaptureRoutes: [
+        {
+          id: 'route-1',
+          title: 'Pricing page',
+          path: '/pricing',
+          description: '',
+          selector: '',
+          waitForMs: 0,
+          waitForSelectorMs: 10000,
+        },
+      ],
+      programmableCapturePending: false,
+      programmableCaptureMessage: null,
+      programmableCaptureErrorMessage: null,
+      handleAddProgrammableCaptureRoute: vi.fn(),
+      handleUpdateProgrammableCaptureRoute: vi.fn(),
+      handleRemoveProgrammableCaptureRoute: vi.fn(),
+      handleSeedProgrammableCaptureRoutesFromPresets: vi.fn(),
+      handleResetProgrammableCaptureScript: vi.fn(),
+      handleSaveProgrammableCaptureDefaults: vi.fn(),
+      handleRunProgrammablePlaywrightCapture: vi.fn(),
+      handleRunProgrammablePlaywrightCaptureAndPipeline: vi.fn(),
+      canGenerateSocialDraft: true,
+      socialDraftBlockedReason: null,
+    });
+
+    render(<SocialPostPlaywrightCaptureModal />);
+
+    expect(screen.getByText('Resolved target')).toBeInTheDocument();
+    expect(
+      screen.getByText('Add a base URL to resolve this route.')
+    ).toBeInTheDocument();
+    expect(screen.getByText('Runtime request preview')).toBeInTheDocument();
+    expect(screen.getByText(/"issue": "Add a base URL to resolve this route\."/)).toBeInTheDocument();
   });
 });

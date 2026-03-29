@@ -14,6 +14,10 @@ import {
 } from '@/features/kangur/ui/routing/managed-paths';
 import { useKangurRouteAccess } from '@/features/kangur/ui/routing/useKangurRouteAccess';
 
+type PendingRouteLoadingSnapshot =
+  ReturnType<typeof useKangurPendingRouteLoadingSnapshot>;
+type KangurRouteAccess = ReturnType<typeof useKangurRouteAccess>;
+
 const GenericFrontendLoadingFallback = (): React.JSX.Element => (
   <div
     className='min-h-screen w-full animate-pulse bg-[radial-gradient(circle_at_top,_#ffffff_0%,_#f5f7fb_46%,_#eef2f8_100%)]'
@@ -65,6 +69,77 @@ const resolveAutoIncludeTopNavigationSkeleton = ({
   return pageKey !== KANGUR_MAIN_PAGE_KEY;
 };
 
+const resolveFrontendRouteLoadingSnapshot = ({
+  currentHref,
+  resolvePendingSnapshot,
+  snapshot,
+}: {
+  currentHref: string | null;
+  resolvePendingSnapshot: KangurRouteAccess['resolvePendingSnapshot'];
+  snapshot: PendingRouteLoadingSnapshot;
+}) =>
+  resolvePendingSnapshot({
+    currentHref,
+    fallbackPageKey: KANGUR_MAIN_PAGE_KEY,
+    snapshot,
+  });
+
+const resolveFrontendRouteLoadingTransitionTarget = ({
+  pathname,
+  pendingRouteLoadingSnapshot,
+  resolveTransitionTarget,
+}: {
+  pathname: string | null;
+  pendingRouteLoadingSnapshot: PendingRouteLoadingSnapshot;
+  resolveTransitionTarget: KangurRouteAccess['resolveTransitionTarget'];
+}) => {
+  if (pendingRouteLoadingSnapshot !== null) {
+    return null;
+  }
+
+  return resolveTransitionTarget({
+    basePath: resolveManagedKangurBasePath(pathname ?? null),
+    fallbackPageKey: KANGUR_MAIN_PAGE_KEY,
+    href: pathname ?? '/',
+  });
+};
+
+const resolveFrontendRouteLoadingPageKey = ({
+  currentTransitionTarget,
+  pendingRouteLoadingSnapshot,
+}: {
+  currentTransitionTarget: ReturnType<
+    KangurRouteAccess['resolveTransitionTarget']
+  > | null;
+  pendingRouteLoadingSnapshot: PendingRouteLoadingSnapshot;
+}): string =>
+  pendingRouteLoadingSnapshot?.pageKey ??
+  currentTransitionTarget?.pageKey ??
+  KANGUR_MAIN_PAGE_KEY;
+
+const resolveFrontendRouteLoadingIncludeTopNavigationSkeleton = ({
+  accessiblePageKey,
+  includeTopNavigationSkeleton,
+  pathname,
+  pendingRouteLoadingSnapshot,
+}: {
+  accessiblePageKey: string;
+  includeTopNavigationSkeleton: boolean | undefined;
+  pathname: string | null;
+  pendingRouteLoadingSnapshot: PendingRouteLoadingSnapshot;
+}): boolean =>
+  includeTopNavigationSkeleton ??
+  resolveAutoIncludeTopNavigationSkeleton({
+    currentHref: pendingRouteLoadingSnapshot?.fromHref ?? pathname,
+    targetHref: pendingRouteLoadingSnapshot?.href ?? pathname,
+    hasPendingTransition: pendingRouteLoadingSnapshot !== null,
+    pageKey: accessiblePageKey,
+  });
+
+const shouldRenderKangurFrontendRouteLoadingFallback = (
+  publicOwnerContext: ReturnType<typeof useOptionalFrontendPublicOwner>
+): boolean => publicOwnerContext?.publicOwner === 'kangur';
+
 export function FrontendRouteLoadingFallback({
   includeTopNavigationSkeleton,
 }: {
@@ -73,31 +148,29 @@ export function FrontendRouteLoadingFallback({
   const { resolvePendingSnapshot, resolveTransitionTarget } = useKangurRouteAccess();
   const publicOwnerContext = useOptionalFrontendPublicOwner();
   const pathname = usePathname();
-  const pendingRouteLoadingSnapshot = resolvePendingSnapshot({
+  const pendingRouteLoadingSnapshot = resolveFrontendRouteLoadingSnapshot({
     currentHref: pathname,
-    fallbackPageKey: KANGUR_MAIN_PAGE_KEY,
+    resolvePendingSnapshot,
     snapshot: useKangurPendingRouteLoadingSnapshot(),
   });
-  const currentTransitionTarget =
-    pendingRouteLoadingSnapshot === null
-      ? resolveTransitionTarget({
-          basePath: resolveManagedKangurBasePath(pathname ?? null),
-          fallbackPageKey: KANGUR_MAIN_PAGE_KEY,
-          href: pathname ?? '/',
-        })
-      : null;
-  const accessiblePageKey =
-    pendingRouteLoadingSnapshot?.pageKey ?? currentTransitionTarget?.pageKey ?? KANGUR_MAIN_PAGE_KEY;
+  const currentTransitionTarget = resolveFrontendRouteLoadingTransitionTarget({
+    pathname,
+    pendingRouteLoadingSnapshot,
+    resolveTransitionTarget,
+  });
+  const accessiblePageKey = resolveFrontendRouteLoadingPageKey({
+    currentTransitionTarget,
+    pendingRouteLoadingSnapshot,
+  });
   const resolvedIncludeTopNavigationSkeleton =
-    includeTopNavigationSkeleton ??
-    resolveAutoIncludeTopNavigationSkeleton({
-      currentHref: pendingRouteLoadingSnapshot?.fromHref ?? pathname,
-      targetHref: pendingRouteLoadingSnapshot?.href ?? pathname,
-      hasPendingTransition: pendingRouteLoadingSnapshot !== null,
-      pageKey: accessiblePageKey,
+    resolveFrontendRouteLoadingIncludeTopNavigationSkeleton({
+      accessiblePageKey,
+      includeTopNavigationSkeleton,
+      pathname,
+      pendingRouteLoadingSnapshot,
     });
 
-  if (publicOwnerContext?.publicOwner === 'kangur') {
+  if (shouldRenderKangurFrontendRouteLoadingFallback(publicOwnerContext)) {
     return (
       <KangurRouteLoadingFallback
         includeTopNavigationSkeleton={resolvedIncludeTopNavigationSkeleton}

@@ -2,7 +2,10 @@ import { render, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { KANGUR_DAILY_THEME_SETTINGS_KEY } from '@/features/kangur/theme-settings';
-import { KANGUR_STOREFRONT_DEFAULT_MODE_SETTING_KEY } from '@/features/kangur/storefront-appearance-settings';
+import {
+  KANGUR_STOREFRONT_APPEARANCE_STORAGE_KEY,
+  KANGUR_STOREFRONT_DEFAULT_MODE_SETTING_KEY,
+} from '@/features/kangur/storefront-appearance-settings';
 import { KangurSurfaceClassSync } from '@/features/kangur/ui/KangurSurfaceClassSync';
 import { KangurStorefrontAppearanceProvider } from '@/features/kangur/ui/KangurStorefrontAppearanceProvider';
 import { DEFAULT_THEME } from '@/shared/contracts/cms-theme';
@@ -24,6 +27,7 @@ describe('KangurSurfaceClassSync', () => {
   beforeEach(() => {
     document.body.className = '';
     document.body.innerHTML = '';
+    window.localStorage.clear();
     settingsStoreMock.get.mockReset();
     settingsStoreMock.get.mockReturnValue(undefined);
     const appContent = document.createElement('main');
@@ -92,6 +96,26 @@ describe('KangurSurfaceClassSync', () => {
     expect(document.body.style.getPropertyValue('--kangur-button-surface-hover-background')).toContain(
       'linear-gradient'
     );
+  });
+
+  it('syncs a persisted storefront appearance override to the capture-ready surface markers', async () => {
+    const appContent = document.getElementById('app-content');
+    expect(appContent).not.toBeNull();
+    window.localStorage.setItem(KANGUR_STOREFRONT_APPEARANCE_STORAGE_KEY, 'dark');
+
+    render(
+      <KangurStorefrontAppearanceProvider>
+        <KangurSurfaceClassSync>
+          <div>Surface</div>
+        </KangurSurfaceClassSync>
+      </KangurStorefrontAppearanceProvider>
+    );
+
+    await waitFor(() => {
+      expect(document.documentElement).toHaveAttribute('data-kangur-appearance-mode', 'dark');
+    });
+    expect(document.body).toHaveAttribute('data-kangur-appearance-mode', 'dark');
+    expect(appContent).toHaveAttribute('data-kangur-appearance-mode', 'dark');
   });
 
   it('applies a stored Kangur theme document to the page chrome', async () => {

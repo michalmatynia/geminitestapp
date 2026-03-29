@@ -8,7 +8,6 @@ import {
 } from '@/shared/lib/ai-brain/server-runtime-client';
 import {
   buildKangurSocialPostCombinedBody,
-  type KangurSocialDocUpdate,
   type KangurSocialGeneratedDraft,
   type KangurSocialVisualAnalysis,
 } from '@/shared/contracts/kangur-social-posts';
@@ -47,7 +46,6 @@ type GenerationContext = {
 type VisualAnalysisSnapshot = {
   visualSummary: string | null;
   visualHighlights: string[];
-  visualDocUpdates: KangurSocialDocUpdate[];
 };
 
 const buildImageAddonSummary = (addons: KangurSocialImageAddon[]): string => {
@@ -73,6 +71,7 @@ const buildSystemPrompt = (basePrompt: string): string => {
     'Return a JSON object with keys: titlePl, titleEn, bodyPl, bodyEn.',
     'Keep each body concise and professional for LinkedIn.',
     'If image add-ons are provided, reference them naturally in the post.',
+    'Treat the visual analysis as descriptive input only and consolidate it with the current documentation context to write the update.',
   ].filter(Boolean);
   return lines.join('\n');
 };
@@ -107,7 +106,6 @@ const normalizeGenerationInput = (input: GenerationInput): GenerationContext => 
 const createEmptyVisualAnalysisSnapshot = (): VisualAnalysisSnapshot => ({
   visualSummary: null,
   visualHighlights: [],
-  visualDocUpdates: [],
 });
 
 const normalizePrefetchedVisualAnalysis = (
@@ -115,7 +113,6 @@ const normalizePrefetchedVisualAnalysis = (
 ): VisualAnalysisSnapshot => ({
   visualSummary: analysis.summary.trim() || null,
   visualHighlights: analysis.highlights,
-  visualDocUpdates: analysis.docUpdates,
 });
 
 const runVisualAnalysisSafely = async ({
@@ -131,8 +128,6 @@ const runVisualAnalysisSafely = async ({
 
   try {
     const analysis = await analyzeKangurSocialVisuals({
-      docReferences: context.docReferences,
-      notes: context.notes,
       modelId: context.visionModelId || undefined,
       imageAddons: context.imageAddons,
     });
@@ -140,7 +135,6 @@ const runVisualAnalysisSafely = async ({
     return {
       visualSummary: analysis.summary || null,
       visualHighlights: analysis.highlights,
-      visualDocUpdates: analysis.docUpdates,
     };
   } catch (error) {
     void ErrorSystem.captureException(error, {
@@ -152,13 +146,6 @@ const runVisualAnalysisSafely = async ({
     });
     return createEmptyVisualAnalysisSnapshot();
   }
-};
-
-const formatVisualDocUpdate = (update: KangurSocialDocUpdate): string => {
-  const section = update.section?.trim();
-  const header = section ? `${update.docPath} (${section})` : update.docPath;
-  const proposed = update.proposedText?.trim();
-  return `- ${header}${proposed ? `: ${proposed}` : ''}`;
 };
 
 const pushPromptSection = (
@@ -183,21 +170,20 @@ const buildUserPromptLines = ({
   visualAnalysis: VisualAnalysisSnapshot;
 }): string[] => {
   const userPromptLines = [
-    'Use the following documentation summary and excerpts to craft the post:',
+    'Use the following documentation summary and excerpts together with the visual analysis to craft the post:',
     '',
     docsContext,
   ];
 
-  pushPromptSection(userPromptLines, 'Visual analysis summary:', visualAnalysis.visualSummary);
+  pushPromptSection(
+    userPromptLines,
+    'Visual analysis summary from the prior image-only pass:',
+    visualAnalysis.visualSummary
+  );
   pushPromptSection(
     userPromptLines,
     'Visual highlights:',
     visualAnalysis.visualHighlights.map((item) => `- ${item}`)
-  );
-  pushPromptSection(
-    userPromptLines,
-    'Documentation updates suggested from visuals:',
-    visualAnalysis.visualDocUpdates.map(formatVisualDocUpdate)
   );
   if (
     context.requireVisualAnalysisInBody &&
@@ -290,7 +276,6 @@ const logDraftGenerationSuccess = ({
     usedDocReferenceCount: draft.docReferences.length,
     imageAddonCount: context.imageAddons.length,
     visualHighlightCount: visualAnalysis.visualHighlights.length,
-    visualDocUpdateCount: visualAnalysis.visualDocUpdates.length,
     notesLength: context.notesLength,
   });
 };
@@ -391,7 +376,7 @@ export async function generateKangurSocialPostDraft(
           : docs.map((doc) => doc.id),
       visualSummary: visualAnalysis.visualSummary,
       visualHighlights: visualAnalysis.visualHighlights,
-      visualDocUpdates: visualAnalysis.visualDocUpdates,
+      visualDocUpdates: [],
     };
 
     logDraftGenerationSuccess({

@@ -24,6 +24,162 @@ type SignupFormProps = {
   isCaptchaRequired?: boolean;
 };
 
+type SignupFormFeedbackProps = Pick<SignupFormProps, 'error' | 'notice'>;
+
+const resolveKangurSignupSubmitDisabled = ({
+  captchaToken,
+  isCaptchaRequired,
+  isLoading,
+  password,
+}: {
+  captchaToken: string | null;
+  isCaptchaRequired: boolean;
+  isLoading: boolean;
+  password: string;
+}): boolean =>
+  isLoading || !password.trim() || (isCaptchaRequired && !captchaToken);
+
+function SignupPasswordField(props: {
+  isLoading: boolean;
+  password: string;
+  setPassword: (value: string) => void;
+  setShowPassword: React.Dispatch<React.SetStateAction<boolean>>;
+  showPassword: boolean;
+  translations: ReturnType<typeof useTranslations>;
+}): JSX.Element {
+  const {
+    isLoading,
+    password,
+    setPassword,
+    setShowPassword,
+    showPassword,
+    translations,
+  } = props;
+
+  return (
+    <div className={KANGUR_STACK_COMPACT_CLASSNAME}>
+      <label htmlFor='new-password' className='text-sm font-medium text-slate-700'>
+        {translations('setPasswordLabel')}
+      </label>
+      <div className='relative'>
+        <input
+          id='new-password'
+          type={showPassword ? 'text' : 'password'}
+          aria-label={translations('setPasswordLabel')}
+          value={password}
+          onChange={(event) => setPassword(event.target.value)}
+          disabled={isLoading}
+          className='w-full rounded-xl border border-slate-200 px-4 py-3 pr-11 text-sm outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20'
+          placeholder={translations('setPasswordPlaceholder')}
+          autoComplete='new-password'
+        />
+        <button
+          type='button'
+          onClick={() => setShowPassword((visible) => !visible)}
+          className='absolute inset-y-0 right-0 flex items-center px-3 text-slate-400 hover:text-slate-600'
+          aria-label={
+            showPassword
+              ? translations('hidePassword')
+              : translations('showPassword')
+          }
+          tabIndex={-1}
+        >
+          {showPassword ? (
+            <EyeOff className='h-4 w-4' aria-hidden='true' />
+          ) : (
+            <Eye className='h-4 w-4' aria-hidden='true' />
+          )}
+        </button>
+      </div>
+      <p className='text-xs text-slate-500'>{translations('passwordRequirement')}</p>
+    </div>
+  );
+}
+
+function SignupCaptchaSection(props: {
+  captchaContainerRef: React.RefObject<HTMLDivElement | null>;
+  captchaError?: string | null;
+  isCaptchaRequired: boolean;
+  translations: ReturnType<typeof useTranslations>;
+}): JSX.Element | null {
+  const {
+    captchaContainerRef,
+    captchaError,
+    isCaptchaRequired,
+    translations,
+  } = props;
+
+  if (!isCaptchaRequired || !KANGUR_PARENT_CAPTCHA_SITE_KEY) {
+    return null;
+  }
+
+  return (
+    <div className={KANGUR_STACK_TIGHT_CLASSNAME}>
+      <div
+        ref={captchaContainerRef}
+        className='min-h-[65px] self-center'
+        aria-label={translations('securityVerificationLabel')}
+      />
+      {captchaError ? (
+        <p className='text-center text-xs font-medium text-rose-600' role='alert'>
+          {captchaError}
+        </p>
+      ) : null}
+    </div>
+  );
+}
+
+function SignupFormFeedback({
+  error,
+  notice,
+}: SignupFormFeedbackProps): JSX.Element | null {
+  if (error) {
+    return (
+      <div className='rounded-lg bg-rose-50 px-4 py-3 text-sm text-rose-600' role='alert'>
+        {error}
+      </div>
+    );
+  }
+
+  if (notice) {
+    return (
+      <div className='rounded-lg bg-blue-50 px-4 py-3 text-sm text-blue-600' role='status'>
+        {notice}
+      </div>
+    );
+  }
+
+  return null;
+}
+
+function VerificationDebugLink(props: {
+  debugUrl?: string | null;
+  translations: ReturnType<typeof useTranslations>;
+}): JSX.Element | null {
+  const { debugUrl, translations } = props;
+  if (!debugUrl || process.env.NODE_ENV === 'production') {
+    return null;
+  }
+
+  return (
+    <div
+      className={`mt-4 ${KANGUR_STACK_COMPACT_CLASSNAME} rounded-lg border border-slate-200 bg-slate-50 p-3 text-left`}
+    >
+      <p className='text-xs font-bold uppercase tracking-wider text-slate-500'>
+        {translations('debugLinkLabel')}
+      </p>
+      <a
+        href={debugUrl}
+        className='break-all text-xs font-mono text-indigo-600 underline'
+        target='_blank'
+        rel='noopener noreferrer'
+      >
+        {debugUrl}
+      </a>
+    </div>
+  );
+}
+
 export function SignupForm({
   email,
   onSubmit,
@@ -58,13 +214,18 @@ export function SignupForm({
     },
   });
 
-
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
     if (!password.trim()) return;
     if (isCaptchaRequired && !captchaToken) return;
     onSubmit(password, captchaToken || undefined);
   };
+  const submitDisabled = resolveKangurSignupSubmitDisabled({
+    captchaToken,
+    isCaptchaRequired,
+    isLoading,
+    password,
+  });
 
   return (
     <form
@@ -80,67 +241,27 @@ export function SignupForm({
         </div>
       </div>
 
-      <div className={KANGUR_STACK_COMPACT_CLASSNAME}>
-        <label htmlFor='new-password' className='text-sm font-medium text-slate-700'>
-          {translations('setPasswordLabel')}
-        </label>
-        <div className='relative'>
-          <input
-            id='new-password'
-            type={showPassword ? 'text' : 'password'}
-            aria-label={translations('setPasswordLabel')}
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            disabled={isLoading}
-            className='w-full rounded-xl border border-slate-200 px-4 py-3 pr-11 text-sm outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20'
-            placeholder={translations('setPasswordPlaceholder')}
-            autoComplete='new-password'
-          />
-          <button
-            type='button'
-            onClick={() => setShowPassword((v) => !v)}
-            className='absolute inset-y-0 right-0 flex items-center px-3 text-slate-400 hover:text-slate-600'
-            aria-label={showPassword ? translations('hidePassword') : translations('showPassword')}
-            tabIndex={-1}
-          >
-            {showPassword ? <EyeOff className='h-4 w-4' aria-hidden='true' /> : <Eye className='h-4 w-4' aria-hidden='true' />}
-          </button>
-        </div>
-        <p className='text-xs text-slate-500'>
-          {translations('passwordRequirement')}
-        </p>
-      </div>
+      <SignupPasswordField
+        isLoading={isLoading}
+        password={password}
+        setPassword={setPassword}
+        setShowPassword={setShowPassword}
+        showPassword={showPassword}
+        translations={translations}
+      />
 
-      {isCaptchaRequired && KANGUR_PARENT_CAPTCHA_SITE_KEY && (
-        <div className={KANGUR_STACK_TIGHT_CLASSNAME}>
-          <div
-            ref={captchaContainerRef}
-            className='min-h-[65px] self-center'
-            aria-label={translations('securityVerificationLabel')}
-          />
-          {captchaError && (
-            <p className='text-center text-xs font-medium text-rose-600' role='alert'>
-              {captchaError}
-            </p>
-          )}
-        </div>
-      )}
+      <SignupCaptchaSection
+        captchaContainerRef={captchaContainerRef}
+        captchaError={captchaError}
+        isCaptchaRequired={isCaptchaRequired}
+        translations={translations}
+      />
 
-      {error && (
-        <div className='rounded-lg bg-rose-50 px-4 py-3 text-sm text-rose-600' role='alert'>
-          {error}
-        </div>
-      )}
-
-      {notice && (
-        <div className='rounded-lg bg-blue-50 px-4 py-3 text-sm text-blue-600' role='status'>
-          {notice}
-        </div>
-      )}
+      <SignupFormFeedback error={error} notice={notice} />
 
       <button
         type='submit'
-        disabled={isLoading || !password.trim() || (isCaptchaRequired && !captchaToken)}
+        disabled={submitDisabled}
         className={cn(
           kangurButtonVariants({ variant: 'primary', size: 'lg', fullWidth: true }),
           'mt-2 justify-center rounded-xl font-bold'
@@ -201,22 +322,7 @@ export function VerificationView({
         >
           {resendButtonLabel}
         </button>
-        
-        {debugUrl && process.env.NODE_ENV !== 'production' && (
-          <div className={`mt-4 ${KANGUR_STACK_COMPACT_CLASSNAME} rounded-lg border border-slate-200 bg-slate-50 p-3 text-left`}>
-            <p className='text-xs font-bold text-slate-500 uppercase tracking-wider'>
-              {translations('debugLinkLabel')}
-            </p>
-            <a 
-              href={debugUrl} 
-              className='break-all text-xs font-mono text-indigo-600 underline'
-              target='_blank'
-              rel='noopener noreferrer'
-            >
-              {debugUrl}
-            </a>
-          </div>
-        )}
+        <VerificationDebugLink debugUrl={debugUrl} translations={translations} />
       </div>
     </div>
   );

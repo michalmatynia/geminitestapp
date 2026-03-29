@@ -3,8 +3,8 @@
  */
 
 import React from 'react';
-import { fireEvent, render, screen } from '@testing-library/react';
-import { describe, expect, it, vi } from 'vitest';
+import { cleanup, fireEvent, render, screen } from '@testing-library/react';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 const { useSocialPostContextMock } = vi.hoisted(() => ({
   useSocialPostContextMock: vi.fn(),
@@ -52,6 +52,15 @@ vi.mock('./SocialPostContext', () => ({
 import { SocialPostPipeline } from './SocialPost.Pipeline';
 
 describe('SocialPostPipeline', () => {
+  beforeEach(() => {
+    useSocialPostContextMock.mockReset();
+  });
+
+  afterEach(() => {
+    cleanup();
+    vi.clearAllMocks();
+  });
+
   it('disables the pipeline when no social or AI Brain post model is configured', () => {
     const handleRunFullPipeline = vi.fn();
     const handleRunFullPipelineWithFreshCapture = vi.fn();
@@ -92,7 +101,7 @@ describe('SocialPostPipeline', () => {
       'title',
       'Choose a StudiQ Social post model in Settings or assign AI Brain routing in /admin/brain?tab=routing.'
     );
-    expect(screen.getByRole('button', { name: 'Pipeline + image analysis' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Image analysis' })).toBeDisabled();
     expect(screen.getByRole('button', { name: 'Programmable Playwright' })).toBeEnabled();
     expect(screen.getByRole('button', { name: 'Fresh capture & pipeline' })).toBeDisabled();
     expect(screen.getByRole('button', { name: 'Capture images only' })).toBeDisabled();
@@ -263,7 +272,7 @@ describe('SocialPostPipeline', () => {
     render(<SocialPostPipeline />);
 
     expect(screen.getByRole('button', { name: 'Run full pipeline' })).toBeDisabled();
-    expect(screen.getByRole('button', { name: 'Pipeline + image analysis' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Image analysis' })).toBeDisabled();
     expect(screen.getByRole('button', { name: 'Programmable Playwright' })).toBeDisabled();
     expect(screen.getByRole('button', { name: 'Fresh capture & pipeline' })).toBeDisabled();
     expect(screen.getByRole('button', { name: 'Capture images only' })).toBeDisabled();
@@ -349,12 +358,12 @@ describe('SocialPostPipeline', () => {
 
     render(<SocialPostPipeline />);
 
-    fireEvent.click(screen.getByRole('button', { name: 'Pipeline + image analysis' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Image analysis' }));
 
     expect(handleOpenVisualAnalysisModal).toHaveBeenCalledTimes(1);
-    expect(screen.getByRole('button', { name: 'Pipeline + image analysis' })).toHaveAttribute(
+    expect(screen.getByRole('button', { name: 'Image analysis' })).toHaveAttribute(
       'title',
-      'Analyze the selected visuals first, then generate a post that mentions the findings.'
+      'Analyze the selected visuals first, then use Generate post with analysis as the follow-up AI pass.'
     );
   });
 
@@ -418,14 +427,7 @@ describe('SocialPostPipeline', () => {
       visualAnalysisResult: {
         summary: 'The hero now emphasizes the teacher CTA.',
         highlights: ['Larger teacher CTA', 'Cleaner hero composition'],
-        docUpdates: [
-          {
-            docPath: 'docs/social/teacher-launch.md',
-            section: 'Hero',
-            proposedText: 'Use the teacher CTA variant.',
-            reason: 'Keep launch docs aligned with the analyzed visual.',
-          },
-        ],
+        docUpdates: [],
       },
       handleRunFullPipeline: vi.fn(),
       handleRunFullPipelineWithFreshCapture: vi.fn(),
@@ -449,10 +451,14 @@ describe('SocialPostPipeline', () => {
 
     render(<SocialPostPipeline />);
 
-    expect(screen.getByText('Image analysis ready for this draft. 2 highlights. 1 doc update. Open the modal to review or generate.')).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        'Image analysis ready for this draft. 2 highlights. Open the modal to review it or start the post-generation pass.'
+      )
+    ).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Review image analysis' })).toHaveAttribute(
       'title',
-      'Review the saved image analysis or generate from it without rerunning vision analysis.'
+      'Review the saved image analysis or start the separate Generate post with analysis step.'
     );
   });
 
@@ -493,12 +499,12 @@ describe('SocialPostPipeline', () => {
 
     expect(
       screen.getByText(
-        'Saved image analysis exists for this draft, but the current visuals or doc references changed. Rerun image analysis before generating.'
+        'Saved image analysis exists for this draft, but the selected visuals changed. Rerun image analysis before generating.'
       )
     ).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Pipeline + image analysis' })).toHaveAttribute(
+    expect(screen.getByRole('button', { name: 'Image analysis' })).toHaveAttribute(
       'title',
-      'Saved image analysis exists for this draft, but the current visuals or docs changed. Rerun image analysis before generating.'
+      'Saved image analysis exists for this draft, but the selected visuals changed. Rerun image analysis before generating.'
     );
   });
 

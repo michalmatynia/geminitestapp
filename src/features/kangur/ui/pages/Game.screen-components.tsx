@@ -24,9 +24,9 @@ import {
 import {
   GAME_HOME_LAYOUT_CLASSNAME,
 } from '@/features/kangur/ui/pages/GameHome.constants';
+import { resolveKangurGameHomeVisibility } from '@/features/kangur/ui/pages/GameHome.visibility';
 import {
   KangurGameHomeSections,
-  resolveKangurGameHomeVisibility,
 } from '@/features/kangur/ui/pages/GameHome.layout';
 import {
   createLaunchableGameScreenComponentConfigFromRuntime,

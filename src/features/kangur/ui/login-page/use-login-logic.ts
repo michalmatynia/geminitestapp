@@ -70,6 +70,148 @@ const resolveCurrentPath = (): string | null => {
   return `${window.location.pathname}${window.location.search}${window.location.hash}`;
 };
 
+const resolveKangurLoginSuccessMessage = ({
+  kind,
+  translations,
+}: {
+  kind: KangurLoginKind;
+  translations: ReturnType<typeof useTranslations>;
+}): string =>
+  kind === 'student'
+    ? translations('successStudent')
+    : translations('successParent');
+
+const syncKangurLoginSuccessLearnerState = ({
+  kind,
+  learnerId,
+}: {
+  kind: KangurLoginKind;
+  learnerId?: string | null;
+}): void => {
+  if (kind === 'student' && learnerId) {
+    setStoredActiveLearnerId(learnerId);
+    return;
+  }
+
+  if (kind === 'parent') {
+    clearStoredActiveLearnerId();
+  }
+};
+
+const waitForKangurLoginSuccessNotice = async (): Promise<void> => {
+  await new Promise((resolve) => {
+    setTimeout(resolve, LOGIN_SUCCESS_NOTICE_DELAY_MS);
+  });
+};
+
+const resolveKangurLoginSuccessTarget = ({
+  callbackOverride,
+  callbackUrl,
+  defaultCallbackUrl,
+}: {
+  callbackOverride?: string | null;
+  callbackUrl?: string;
+  defaultCallbackUrl?: string;
+}): string | null => callbackOverride ?? callbackUrl ?? defaultCallbackUrl ?? null;
+
+const resolveKangurLoginSuccessNavigationState = ({
+  auth,
+  currentPath,
+  navigation,
+  refreshedUser,
+}: {
+  auth: ReturnType<typeof useOptionalKangurAuth>;
+  currentPath: string | null;
+  navigation: ReturnType<typeof resolveKangurLoginCallbackNavigation>;
+  refreshedUser: Awaited<ReturnType<NonNullable<ReturnType<typeof useOptionalKangurAuth>['checkAppState']>>> | undefined;
+}) => ({
+  isSameRoute:
+    Boolean(currentPath) &&
+    navigation?.kind === 'router' &&
+    navigation.href === currentPath,
+  shouldForceFullReload: Boolean(auth?.checkAppState) && refreshedUser === null,
+});
+
+const performKangurLoginFallbackNavigation = ({
+  currentPath,
+  router,
+  shouldForceFullReload,
+}: {
+  currentPath: string | null;
+  router: ReturnType<typeof useRouter>;
+  shouldForceFullReload: boolean;
+}): void => {
+  if (shouldForceFullReload) {
+    window.location.assign(currentPath ?? window.location.href);
+    return;
+  }
+
+  router.refresh();
+};
+
+const performKangurLoginRouterNavigation = ({
+  currentPath,
+  href,
+  router,
+  shouldForceFullReload,
+}: {
+  currentPath: string | null;
+  href: string;
+  router: ReturnType<typeof useRouter>;
+  shouldForceFullReload: boolean;
+}): void => {
+  if (shouldForceFullReload) {
+    window.location.assign(href);
+    return;
+  }
+
+  if (currentPath && href === currentPath) {
+    router.refresh();
+    return;
+  }
+
+  router.push(href, { scroll: false });
+};
+
+const performKangurLoginSuccessNavigation = ({
+  currentPath,
+  navigation,
+  onClose,
+  router,
+  shouldForceFullReload,
+}: {
+  currentPath: string | null;
+  navigation: ReturnType<typeof resolveKangurLoginCallbackNavigation>;
+  onClose?: (() => void) | null;
+  router: ReturnType<typeof useRouter>;
+  shouldForceFullReload: boolean;
+}): void => {
+  if (onClose) {
+    onClose();
+  }
+
+  if (!navigation) {
+    performKangurLoginFallbackNavigation({
+      currentPath,
+      router,
+      shouldForceFullReload,
+    });
+    return;
+  }
+
+  if (navigation.kind === 'router') {
+    performKangurLoginRouterNavigation({
+      currentPath,
+      href: navigation.href,
+      router,
+      shouldForceFullReload,
+    });
+    return;
+  }
+
+  window.location.assign(navigation.href);
+};
+
 export function useLoginLogic() {
   const translations = useTranslations('KangurLogin');
   const router = useRouter();
@@ -86,67 +228,41 @@ export function useLoginLogic() {
       callbackUrl: callbackOverride,
       onStageChange,
     }: KangurLoginSuccessOptions) => {
-      setSuccessMessage(
-        kind === 'student'
-          ? translations('successStudent')
-          : translations('successParent')
-      );
+      setSuccessMessage(resolveKangurLoginSuccessMessage({ kind, translations }));
 
-      // Force session refresh
       clearSessionUserCache();
-      
-      // Update active learner state
-      if (kind === 'student' && learnerId) {
-        setStoredActiveLearnerId(learnerId);
-      } else if (kind === 'parent') {
-        clearStoredActiveLearnerId();
-      }
+      syncKangurLoginSuccessLearnerState({ kind, learnerId });
 
-      // Refresh auth context
       onStageChange?.('refreshing-session');
       const refreshedUser = await auth?.checkAppState?.({
         timeoutMs: LOGIN_AUTH_REFRESH_TIMEOUT_MS,
       });
 
-      // Handle navigation
-      const target = callbackOverride ?? callbackUrl ?? defaultCallbackUrl;
+      const target = resolveKangurLoginSuccessTarget({
+        callbackOverride,
+        callbackUrl,
+        defaultCallbackUrl,
+      });
       const navigation = target
         ? resolveKangurLoginCallbackNavigation(target, window.location.origin)
         : null;
       const currentPath = resolveCurrentPath();
-      const isSameRoute =
-        Boolean(currentPath) &&
-        navigation?.kind === 'router' &&
-        navigation.href === currentPath;
-      const shouldForceFullReload = Boolean(auth?.checkAppState) && refreshedUser === null;
+      const { shouldForceFullReload } = resolveKangurLoginSuccessNavigationState({
+        auth,
+        currentPath,
+        navigation,
+        refreshedUser,
+      });
       onStageChange?.('redirecting');
 
-      await new Promise((resolve) => {
-        setTimeout(resolve, LOGIN_SUCCESS_NOTICE_DELAY_MS);
+      await waitForKangurLoginSuccessNotice();
+      performKangurLoginSuccessNavigation({
+        currentPath,
+        navigation,
+        onClose,
+        router,
+        shouldForceFullReload,
       });
-
-      if (onClose) {
-        onClose();
-      }
-      if (navigation) {
-        if (navigation.kind === 'router' && shouldForceFullReload) {
-          window.location.assign(navigation.href);
-        } else if (navigation.kind === 'router') {
-          if (isSameRoute) {
-            router.refresh();
-          } else {
-            router.push(navigation.href, { scroll: false });
-          }
-        } else {
-          window.location.assign(navigation.href);
-        }
-        return;
-      }
-      if (shouldForceFullReload) {
-        window.location.assign(currentPath ?? window.location.href);
-        return;
-      }
-      router.refresh();
     },
     [auth, callbackUrl, defaultCallbackUrl, onClose, router, translations]
   );

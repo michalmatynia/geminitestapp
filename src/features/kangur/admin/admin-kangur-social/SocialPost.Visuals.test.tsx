@@ -4,10 +4,11 @@
 
 import React from 'react';
 import { render, screen } from '@testing-library/react';
-import { describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-const { useSocialPostContextMock } = vi.hoisted(() => ({
+const { useSocialPostContextMock, usePlaywrightPersonasMock } = vi.hoisted(() => ({
   useSocialPostContextMock: vi.fn(),
+  usePlaywrightPersonasMock: vi.fn(),
 }));
 
 vi.mock('@/features/kangur/shared/ui', () => ({
@@ -43,6 +44,10 @@ vi.mock('./SocialPost.ImagesPanel', () => ({
 
 vi.mock('./SocialPostContext', () => ({
   useSocialPostContext: () => useSocialPostContextMock(),
+}));
+
+vi.mock('@/shared/hooks/usePlaywrightPersonas', () => ({
+  usePlaywrightPersonas: (...args: unknown[]) => usePlaywrightPersonasMock(...args),
 }));
 
 import { SocialPostVisuals } from './SocialPost.Visuals';
@@ -89,6 +94,14 @@ const buildPostBase = () => ({
 });
 
 describe('SocialPostVisuals', () => {
+  beforeEach(() => {
+    usePlaywrightPersonasMock.mockReset();
+    usePlaywrightPersonasMock.mockReturnValue({
+      data: [],
+      isLoading: false,
+    });
+  });
+
   it('keeps only post-scoped add-on selection controls in the editor surface', () => {
     useSocialPostContextMock.mockReturnValue({
       activePost: buildPost(),
@@ -148,10 +161,10 @@ describe('SocialPostVisuals', () => {
         visualHighlights: ['Classroom card is larger', 'CTA is more prominent'],
         visualDocUpdates: [
           {
-            docPath: 'docs/social/teacher-launch.md',
+            docPath: 'docs/homepage.md',
             section: 'Hero',
-            proposedText: 'Use the classroom card variation in the launch section.',
-            reason: 'The analyzed visuals now emphasize the larger classroom CTA.',
+            reason: 'Document the stronger CTA emphasis for teachers.',
+            proposedText: 'Note that the classroom CTA card is now larger and more prominent.',
           },
         ],
         visualAnalysisStatus: 'completed',
@@ -169,6 +182,8 @@ describe('SocialPostVisuals', () => {
       setShowMediaLibrary: vi.fn(),
       showMediaLibrary: false,
       handleAddImages: vi.fn(),
+      hasSavedVisualAnalysis: true,
+      isSavedVisualAnalysisStale: false,
     });
 
     render(<SocialPostVisuals showImagesPanel={false} />);
@@ -180,13 +195,16 @@ describe('SocialPostVisuals', () => {
     expect(screen.getByText('- Classroom card is larger')).toBeInTheDocument();
     expect(screen.getByText('- CTA is more prominent')).toBeInTheDocument();
     expect(screen.getByText('Suggested documentation updates')).toBeInTheDocument();
-    expect(screen.getByText('docs/social/teacher-launch.md · Hero')).toBeInTheDocument();
+    expect(screen.getByText('docs/homepage.md -> Hero')).toBeInTheDocument();
+    expect(
+      screen.getByText('Document the stronger CTA emphasis for teachers.')
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText('Note that the classroom CTA card is now larger and more prominent.')
+    ).toBeInTheDocument();
     expect(screen.getByText('Status: Completed')).toBeInTheDocument();
     expect(screen.getByText('Model: vision-1')).toBeInTheDocument();
     expect(screen.getByText('Queue job: job-analysis-7')).toBeInTheDocument();
-    expect(
-      screen.getByText('The analyzed visuals now emphasize the larger classroom CTA.')
-    ).toBeInTheDocument();
   });
 
   it('shows pending analysis metadata even before a summary is saved', () => {
@@ -206,6 +224,8 @@ describe('SocialPostVisuals', () => {
       setShowMediaLibrary: vi.fn(),
       showMediaLibrary: false,
       handleAddImages: vi.fn(),
+      hasSavedVisualAnalysis: false,
+      isSavedVisualAnalysisStale: false,
     });
 
     render(<SocialPostVisuals showImagesPanel={false} />);
@@ -221,7 +241,42 @@ describe('SocialPostVisuals', () => {
     ).toBeInTheDocument();
   });
 
+  it('warns when the saved image analysis is outdated for the current draft scope', () => {
+    useSocialPostContextMock.mockReturnValue({
+      activePost: buildPost({
+        visualSummary: 'Old analysis summary.',
+        visualHighlights: ['Old highlight'],
+        visualAnalysisStatus: 'completed',
+      }),
+      recentAddons: [],
+      addonsQuery: { isLoading: false },
+      imageAddonIds: [],
+      handleSelectAddon: vi.fn(),
+      handleRemoveAddon: vi.fn(),
+      imageAssets: [],
+      handleRemoveImage: vi.fn(),
+      setShowMediaLibrary: vi.fn(),
+      showMediaLibrary: false,
+      handleAddImages: vi.fn(),
+      hasSavedVisualAnalysis: true,
+      isSavedVisualAnalysisStale: true,
+    });
+
+    render(<SocialPostVisuals showImagesPanel={false} />);
+
+    expect(
+      screen.getByText(
+        'Saved image analysis exists for this draft, but the selected visuals changed. Rerun image analysis before generating new copy from it.'
+      )
+    ).toBeInTheDocument();
+    expect(screen.getByText('Old analysis summary.')).toBeInTheDocument();
+  });
+
   it('shows programmable Playwright provenance on captured add-ons', () => {
+    usePlaywrightPersonasMock.mockReturnValue({
+      data: [{ id: 'teacher-persona', name: 'Teacher reviewer' }],
+      isLoading: false,
+    });
     useSocialPostContextMock.mockReturnValue({
       activePost: buildPost(),
       recentAddons: [
@@ -244,6 +299,7 @@ describe('SocialPostVisuals', () => {
           playwrightPersonaId: 'teacher-persona',
           playwrightCaptureRouteId: 'pricing-route',
           playwrightCaptureRouteTitle: 'Pricing page',
+          captureAppearanceMode: 'dark',
           createdBy: 'admin',
           updatedBy: 'admin',
           createdAt: '2026-03-21T09:00:00.000Z',
@@ -264,8 +320,9 @@ describe('SocialPostVisuals', () => {
     render(<SocialPostVisuals showImagesPanel={false} />);
 
     expect(screen.getByText('Source: Programmable Playwright capture')).toBeInTheDocument();
-    expect(screen.getByText('Persona: teacher-persona')).toBeInTheDocument();
+    expect(screen.getByText('Persona: Teacher reviewer (teacher-persona)')).toBeInTheDocument();
     expect(screen.getByText('Route: Pricing page (pricing-route)')).toBeInTheDocument();
     expect(screen.getByText('Run: playwright-run-9')).toBeInTheDocument();
+    expect(screen.getByText('Appearance: dark')).toBeInTheDocument();
   });
 });

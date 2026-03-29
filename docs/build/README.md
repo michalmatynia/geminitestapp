@@ -25,6 +25,7 @@ is specifically for shared build, CI, and package-manager workflow guidance.
 
 ## Current Docs
 
+- [`vercel-deployment.md`](./vercel-deployment.md) — **Vercel deploy config (DO NOT MODIFY without approval)**
 - [`agentic-ci.md`](./agentic-ci.md)
 - [`agentic-engineering.md`](./agentic-engineering.md)
 - [`bazel.md`](./bazel.md)

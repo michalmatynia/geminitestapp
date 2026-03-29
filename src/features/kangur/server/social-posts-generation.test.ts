@@ -110,6 +110,12 @@ describe('generateKangurSocialPostDraft', () => {
       expect.objectContaining({
         messages: expect.arrayContaining([
           expect.objectContaining({
+            role: 'system',
+            content: expect.stringContaining(
+              'Treat the visual analysis as descriptive input only and consolidate it with the current documentation context to write the update.'
+            ),
+          }),
+          expect.objectContaining({
             role: 'user',
             content: expect.stringContaining(
               'Both the Polish and English post bodies must explicitly mention the visual analysis findings or visible UI changes.'
@@ -118,5 +124,9 @@ describe('generateKangurSocialPostDraft', () => {
         ]),
       })
     );
+    const callArgs = mocks.runBrainChatCompletionMock.mock.calls[0]?.[0];
+    const userMessage = callArgs?.messages?.find((entry: { role?: string }) => entry.role === 'user');
+    expect(userMessage?.content).toContain('Visual analysis summary from the prior image-only pass:');
+    expect(userMessage?.content).not.toContain('Documentation updates suggested from visuals:');
   });
 });

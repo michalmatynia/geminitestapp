@@ -8,9 +8,11 @@ import {
   FormModal,
   LoadingState,
 } from '@/features/kangur/shared/ui';
+import { usePlaywrightPersonas } from '@/shared/hooks/usePlaywrightPersonas';
 
 import { resolveImagePreview } from './AdminKangurSocialPage.Constants';
 import { useSocialPostContext } from './SocialPostContext';
+import { getSocialPostAddonCaptureDetailLabels } from './social-post-addon-capture-details';
 
 export function SocialPostVisualAnalysisModal(): React.JSX.Element | null {
   const {
@@ -23,6 +25,8 @@ export function SocialPostVisualAnalysisModal(): React.JSX.Element | null {
     visualAnalysisPending,
     imageAddonIds,
     recentAddons,
+    hasSavedVisualAnalysis,
+    isSavedVisualAnalysisStale,
     visionModelId,
     visionModelOptions,
   } = useSocialPostContext();
@@ -30,6 +34,18 @@ export function SocialPostVisualAnalysisModal(): React.JSX.Element | null {
   const selectedAddons = React.useMemo(
     () => (recentAddons ?? []).filter((addon) => (imageAddonIds ?? []).includes(addon.id)),
     [imageAddonIds, recentAddons]
+  );
+  const personasQuery = usePlaywrightPersonas({
+    enabled: selectedAddons.some((addon) => Boolean(addon.playwrightPersonaId?.trim())),
+  });
+  const personaNameById = React.useMemo(
+    () =>
+      new Map(
+        (personasQuery.data ?? [])
+          .filter((persona) => Boolean(persona.id?.trim()))
+          .map((persona) => [persona.id.trim(), persona.name?.trim() || persona.id.trim()])
+      ),
+    [personasQuery.data]
   );
   const resolvedVisionModelLabel =
     visionModelId?.trim() ||
@@ -41,7 +57,7 @@ export function SocialPostVisualAnalysisModal(): React.JSX.Element | null {
       open={isVisualAnalysisModalOpen}
       onClose={handleCloseVisualAnalysisModal}
       title='Image analysis pipeline'
-      subtitle='Analyze the selected visuals first, then generate a post that explicitly mentions the findings.'
+      subtitle='Analyze the selected visuals to produce a visual description first. Then use Generate post with analysis to combine that description with the current context in a separate AI pass.'
       onSave={() => {
         void handleRunFullPipelineWithVisualAnalysis();
       }}
@@ -78,27 +94,44 @@ export function SocialPostVisualAnalysisModal(): React.JSX.Element | null {
           </div>
         ) : (
           <div className='grid gap-3 sm:grid-cols-2 xl:grid-cols-3'>
-            {selectedAddons.map((addon) => (
-              <div
-                key={addon.id}
-                className='rounded-xl border border-border/60 bg-background/40 p-2'
-              >
-                <div className='overflow-hidden rounded-lg border border-border/50'>
-                  <img
-                    src={resolveImagePreview(addon.imageAsset)}
-                    alt={addon.title || 'Selected visual'}
-                    className='h-28 w-full object-cover'
-                    loading='lazy'
-                  />
+            {selectedAddons.map((addon) => {
+              const captureDetailLabels = getSocialPostAddonCaptureDetailLabels(addon, {
+                personaNameById,
+              });
+              return (
+                <div
+                  key={addon.id}
+                  className='rounded-xl border border-border/60 bg-background/40 p-2'
+                >
+                  <div className='overflow-hidden rounded-lg border border-border/50'>
+                    <img
+                      src={resolveImagePreview(addon.imageAsset)}
+                      alt={addon.title || 'Selected visual'}
+                      className='h-28 w-full object-cover'
+                      loading='lazy'
+                    />
+                  </div>
+                  <div className='mt-2 text-xs'>
+                    <div className='font-medium text-foreground/90'>{addon.title}</div>
+                    {addon.description ? (
+                      <div className='mt-1 text-muted-foreground'>{addon.description}</div>
+                    ) : null}
+                    {captureDetailLabels.length > 0 ? (
+                      <div className='mt-2 flex flex-wrap gap-1 text-[11px] text-muted-foreground'>
+                        {captureDetailLabels.map((label) => (
+                          <span
+                            key={`${addon.id}-${label}`}
+                            className='rounded-full border border-border/50 px-1.5 py-0.5'
+                          >
+                            {label}
+                          </span>
+                        ))}
+                      </div>
+                    ) : null}
+                  </div>
                 </div>
-                <div className='mt-2 text-xs'>
-                  <div className='font-medium text-foreground/90'>{addon.title}</div>
-                  {addon.description ? (
-                    <div className='mt-1 text-muted-foreground'>{addon.description}</div>
-                  ) : null}
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
 
@@ -113,6 +146,13 @@ export function SocialPostVisualAnalysisModal(): React.JSX.Element | null {
         {visualAnalysisErrorMessage ? (
           <div className='rounded-xl border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive'>
             {visualAnalysisErrorMessage}
+          </div>
+        ) : null}
+
+        {isSavedVisualAnalysisStale && hasSavedVisualAnalysis && !visualAnalysisResult ? (
+          <div className='rounded-xl border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-sm text-amber-900 dark:text-amber-200'>
+            Saved image analysis exists for this draft, but the selected visuals changed.
+            Rerun image analysis to refresh it before generating copy.
           </div>
         ) : null}
 
@@ -137,36 +177,46 @@ export function SocialPostVisualAnalysisModal(): React.JSX.Element | null {
                 <div className='text-sm text-muted-foreground'>No highlight bullets returned.</div>
               )}
             </div>
-
             <div className='space-y-2'>
               <div className='text-sm font-semibold text-foreground'>
                 Suggested documentation updates
               </div>
               {visualAnalysisResult.docUpdates.length > 0 ? (
                 <div className='space-y-2 text-sm text-muted-foreground'>
-                  {visualAnalysisResult.docUpdates.map((update, index) => (
-                    <div
-                      key={`${update.docPath}-${update.section ?? 'root'}-${index}`}
-                      className='rounded-lg border border-border/50 bg-background/50 px-3 py-2'
-                    >
-                      <div className='font-medium text-foreground/90'>
-                        {update.docPath}
-                        {update.section ? ` · ${update.section}` : ''}
+                  {visualAnalysisResult.docUpdates.map((update, index) => {
+                    const target = update.section?.trim()
+                      ? `${update.docPath} -> ${update.section.trim()}`
+                      : update.docPath;
+                    return (
+                      <div
+                        key={`${target}-${index}`}
+                        className='rounded-lg border border-border/50 bg-background/60 px-3 py-2'
+                      >
+                        <div className='font-medium text-foreground/90'>{target}</div>
+                        {update.reason?.trim() ? (
+                          <div className='mt-1'>{update.reason.trim()}</div>
+                        ) : null}
+                        {update.proposedText?.trim() ? (
+                          <div className='mt-1 text-xs text-muted-foreground/90'>
+                            {update.proposedText.trim()}
+                          </div>
+                        ) : null}
                       </div>
-                      {update.reason ? <div className='mt-1'>{update.reason}</div> : null}
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               ) : (
                 <div className='text-sm text-muted-foreground'>
-                  No documentation updates suggested by the analysis.
+                  No documentation updates suggested.
                 </div>
               )}
             </div>
           </div>
         ) : (
           <div className='rounded-xl border border-border/60 bg-background/40 px-3 py-2 text-sm text-muted-foreground'>
-            Run image analysis first. After reviewing the summary, generate the post to inject the findings into the description.
+            {isSavedVisualAnalysisStale && hasSavedVisualAnalysis
+              ? 'Rerun image analysis first. After reviewing the refreshed visual description, use Generate post with analysis to create the LinkedIn update in the next AI pass.'
+              : 'Run image analysis first. After reviewing the visual description, use Generate post with analysis to create the LinkedIn update in the next AI pass.'}
           </div>
         )}
       </div>

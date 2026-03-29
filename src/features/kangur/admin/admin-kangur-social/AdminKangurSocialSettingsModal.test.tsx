@@ -9,6 +9,12 @@ import { describe, expect, it, vi } from 'vitest';
 const { useSocialPostContextMock } = vi.hoisted(() => ({
   useSocialPostContextMock: vi.fn(),
 }));
+const { usePlaywrightPersonasMock } = vi.hoisted(() => ({
+  usePlaywrightPersonasMock: vi.fn(),
+}));
+
+const hasTextContent = (text: string) => (_content: string, node: Element | null) =>
+  node?.textContent === text;
 
 vi.mock('@/features/kangur/shared/ui', async () => {
   const ReactModule = await vi.importActual<typeof import('react')>('react');
@@ -141,6 +147,10 @@ vi.mock('./SocialPostContext', () => ({
   useSocialPostContext: () => useSocialPostContextMock(),
 }));
 
+vi.mock('@/shared/hooks/usePlaywrightPersonas', () => ({
+  usePlaywrightPersonas: (...args: unknown[]) => usePlaywrightPersonasMock(...args),
+}));
+
 import { AdminKangurSocialSettingsModal } from './AdminKangurSocialSettingsModal';
 
 describe('AdminKangurSocialSettingsModal', () => {
@@ -153,8 +163,6 @@ describe('AdminKangurSocialSettingsModal', () => {
     const onGenerationNotesChange = vi.fn();
     const onLoadContext = vi.fn();
     const onGenerate = vi.fn();
-    const onPreviewDocUpdates = vi.fn();
-    const onApplyDocUpdates = vi.fn();
     const onHandleCreateAddon = vi.fn();
     const onBatchCaptureBaseUrlChange = vi.fn();
     const onBatchCapturePresetLimitChange = vi.fn();
@@ -162,7 +170,15 @@ describe('AdminKangurSocialSettingsModal', () => {
     const onSelectAllCapturePresets = vi.fn();
     const onClearCapturePresets = vi.fn();
     const onHandleBatchCapture = vi.fn();
+    const onHandleOpenProgrammablePlaywrightModal = vi.fn();
+    const onHandleOpenProgrammablePlaywrightModalFromDefaults = vi.fn();
+    const onHandleResetProgrammableCaptureDefaults = vi.fn();
 
+    usePlaywrightPersonasMock.mockReturnValue({
+      data: [{ id: 'persona-fast', name: 'Fast reviewer' }],
+      isLoading: false,
+      error: null,
+    });
     useSocialPostContextMock.mockReturnValue(
       buildSocialPostContextState({
         brainModelId: 'gpt-4.1-mini',
@@ -176,8 +192,6 @@ describe('AdminKangurSocialSettingsModal', () => {
         setGenerationNotes: onGenerationNotesChange,
         handleLoadContext: onLoadContext,
         handleGenerate: onGenerate,
-        handlePreviewDocUpdates: onPreviewDocUpdates,
-        handleApplyDocUpdates: onApplyDocUpdates,
         handleCreateAddon: onHandleCreateAddon,
         setBatchCaptureBaseUrl: onBatchCaptureBaseUrlChange,
         setBatchCapturePresetLimit: onBatchCapturePresetLimitChange,
@@ -185,6 +199,10 @@ describe('AdminKangurSocialSettingsModal', () => {
         selectAllCapturePresets: onSelectAllCapturePresets,
         clearCapturePresets: onClearCapturePresets,
         handleBatchCapture: onHandleBatchCapture,
+        handleOpenProgrammablePlaywrightModal: onHandleOpenProgrammablePlaywrightModal,
+        handleOpenProgrammablePlaywrightModalFromDefaults:
+          onHandleOpenProgrammablePlaywrightModalFromDefaults,
+        handleResetProgrammableCaptureDefaults: onHandleResetProgrammableCaptureDefaults,
         docReferenceInput: 'overview, lessons-and-activities',
         generationNotes: 'Focus on current product changes.',
         resolveDocReferences: () => ['overview', 'lessons-and-activities'],
@@ -233,7 +251,7 @@ describe('AdminKangurSocialSettingsModal', () => {
     );
     expect(screen.getByRole('button', { name: 'Load context' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Generate PL/EN draft' })).toBeInTheDocument();
-    expect(screen.getByText('Documentation updates')).toBeInTheDocument();
+    expect(screen.getByText('Loaded context')).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole('tab', { name: 'Publishing' }));
     expect(screen.getByLabelText('Default LinkedIn connection')).toBeInTheDocument();
@@ -245,11 +263,53 @@ describe('AdminKangurSocialSettingsModal', () => {
     expect(screen.getByText('Capture single add-on')).toBeInTheDocument();
     expect(screen.getByLabelText('Source URL')).toBeInTheDocument();
     expect(screen.getByText('Batch capture preview')).toBeInTheDocument();
+    expect(screen.getByText('Programmable Playwright defaults')).toBeInTheDocument();
+    expect(screen.getByText('Base URL:')).toBeInTheDocument();
+    expect(screen.getByText('https://studiq.example.com/program')).toBeInTheDocument();
+    expect(screen.getByText('Persona:')).toBeInTheDocument();
+    expect(screen.getByText('Fast reviewer (persona-fast)')).toBeInTheDocument();
+    expect(
+      screen.getByText((_, node) => node?.textContent === 'Routes: 2')
+    ).toBeInTheDocument();
+    expect(screen.getByText('Custom script saved')).toBeInTheDocument();
+    expect(screen.getByText('Pricing page')).toBeInTheDocument();
+    expect(screen.getByText('Dashboard hero')).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        hasTextContent(
+          'Target: https://studiq.example.com/program/pricing?kangurCapture=social-batch'
+        )
+      )
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        hasTextContent(
+          'Target: https://studiq.example.com/program/dashboard?kangurCapture=social-batch'
+        )
+      )
+    ).toBeInTheDocument();
+    expect(screen.getByText('Runtime request preview')).toBeInTheDocument();
+    expect(screen.getByText(/"browserEngine": "chromium"/)).toBeInTheDocument();
+    expect(screen.getByText(/"timeoutMs": 180000/)).toBeInTheDocument();
+    expect(screen.getByText(/"appearanceMode": "default"/)).toBeInTheDocument();
+    expect(screen.getByText(/"personaId": "persona-fast"/)).toBeInTheDocument();
     expect(screen.getByText('Presets selected: 1 (Limit: 2)')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Launch batch capture' })).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Open programmable editor' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Reset saved defaults' }));
+
+    expect(onHandleOpenProgrammablePlaywrightModal).not.toHaveBeenCalled();
+    expect(onHandleOpenProgrammablePlaywrightModalFromDefaults).toHaveBeenCalledTimes(1);
+    expect(onHandleResetProgrammableCaptureDefaults).toHaveBeenCalledTimes(1);
   });
 
   it('blocks draft generation when no social or AI Brain post model is configured', () => {
+    usePlaywrightPersonasMock.mockReturnValue({
+      data: [],
+      isLoading: false,
+      error: null,
+    });
     useSocialPostContextMock.mockReturnValue(
       buildSocialPostContextState({
         brainModelId: null,
@@ -302,6 +362,11 @@ describe('AdminKangurSocialSettingsModal', () => {
   });
 
   it('renders publishing settings when no LinkedIn integration exists', () => {
+    usePlaywrightPersonasMock.mockReturnValue({
+      data: [],
+      isLoading: false,
+      error: null,
+    });
     useSocialPostContextMock.mockReturnValue(
       buildSocialPostContextState({
         linkedinConnectionId: null,
@@ -330,6 +395,11 @@ describe('AdminKangurSocialSettingsModal', () => {
   });
 
   it('renders the loaded documentation context in the settings modal', () => {
+    usePlaywrightPersonasMock.mockReturnValue({
+      data: [],
+      isLoading: false,
+      error: null,
+    });
     useSocialPostContextMock.mockReturnValue(
       buildSocialPostContextState({
         contextSummary: 'Loaded context from overview and lessons-and-activities.',
@@ -447,11 +517,6 @@ function buildSocialPostContextState(
     socialDraftBlockedReason: null,
     socialVisionWarning: null,
     resolveDocReferences: () => ['overview', 'lessons-and-activities'],
-    previewDocUpdatesMutation: { isPending: false },
-    applyDocUpdatesMutation: { isPending: false },
-    handlePreviewDocUpdates: vi.fn(),
-    handleApplyDocUpdates: vi.fn(),
-    docUpdatesResult: null,
     addonForm: {
       title: '',
       sourceUrl: 'https://studiq.example.com',
@@ -471,9 +536,37 @@ function buildSocialPostContextState(
     selectAllCapturePresets: vi.fn(),
     clearCapturePresets: vi.fn(),
     handleBatchCapture: vi.fn(),
+    handleOpenProgrammablePlaywrightModal: vi.fn(),
+    handleOpenProgrammablePlaywrightModalFromDefaults: vi.fn(),
+    handleResetProgrammableCaptureDefaults: vi.fn(),
+    captureAppearanceMode: 'default',
     batchCaptureMutation: { isPending: false },
     batchCaptureResult: null,
     effectiveBatchCapturePresetCount: 1,
+    hasSavedProgrammableCaptureDefaults: true,
+    persistedProgrammableCaptureBaseUrl: 'https://studiq.example.com/program',
+    persistedProgrammableCapturePersonaId: 'persona-fast',
+    persistedProgrammableCaptureScript: 'return input.captures.filter(Boolean);',
+    persistedProgrammableCaptureRoutes: [
+      {
+        id: 'route-1',
+        title: 'Pricing page',
+        path: '/pricing',
+        description: 'Capture pricing hero',
+        selector: '[data-pricing]',
+        waitForMs: 200,
+        waitForSelectorMs: 3000,
+      },
+      {
+        id: 'route-2',
+        title: 'Dashboard hero',
+        path: '/dashboard',
+        description: 'Capture dashboard entry',
+        selector: '[data-dashboard]',
+        waitForMs: 0,
+        waitForSelectorMs: 4000,
+      },
+    ],
     ...overrides,
   };
 }

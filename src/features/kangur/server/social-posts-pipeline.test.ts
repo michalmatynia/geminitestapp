@@ -10,7 +10,6 @@ const mocks = vi.hoisted(() => ({
   buildKangurDocContextMock: vi.fn(),
   resolveKangurDocReferencesMock: vi.fn(),
   createKangurSocialImageAddonsBatchMock: vi.fn(),
-  planKangurSocialDocUpdatesMock: vi.fn(),
   generateKangurSocialPostDraftMock: vi.fn(),
   findKangurSocialImageAddonsByIdsMock: vi.fn(),
   getKangurSocialPostByIdMock: vi.fn(),
@@ -28,11 +27,6 @@ vi.mock('./social-posts-docs', () => ({
 vi.mock('./social-image-addons-batch', () => ({
   createKangurSocialImageAddonsBatch: (...args: unknown[]) =>
     mocks.createKangurSocialImageAddonsBatchMock(...args),
-}));
-
-vi.mock('./social-posts-doc-updates', () => ({
-  planKangurSocialDocUpdates: (...args: unknown[]) =>
-    mocks.planKangurSocialDocUpdatesMock(...args),
 }));
 
 vi.mock('./social-posts-generation', () => ({
@@ -129,10 +123,6 @@ describe('runKangurSocialPostPipeline', () => {
         ...updates,
       })
     );
-    mocks.planKangurSocialDocUpdatesMock.mockResolvedValue({
-      items: [],
-      files: [],
-    });
   });
 
   it('returns the generated draft and keeps the resolved context summary in the saved result', async () => {
@@ -186,9 +176,9 @@ describe('runKangurSocialPostPipeline', () => {
     expect(result.generatedPost.titlePl).toBe('Generated PL');
     expect(result.generatedPost.generatedSummary).toBe('Generated draft summary');
     expect(result.generatedPost.contextSummary).toBe('Loaded context summary');
-    expect(reportProgress).toHaveBeenCalledWith(
+    expect(reportProgress).toHaveBeenLastCalledWith(
       expect.objectContaining({
-        step: 'previewing',
+        step: 'generating',
         contextSummary: 'Loaded context summary',
       })
     );
@@ -232,7 +222,7 @@ describe('runKangurSocialPostPipeline', () => {
       'post-1',
       expect.objectContaining({
         visualAnalysisSourceImageAddonIds: ['addon-1'],
-        visualAnalysisSourceDocReferences: ['overview'],
+        visualAnalysisSourceDocReferences: [],
         visualAnalysisSourceVisionModelId: 'vision-model',
       })
     );

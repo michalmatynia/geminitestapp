@@ -1,4 +1,10 @@
-import { getKangurStorefrontInitialState } from '@/features/kangur/server';
+import {
+  getKangurStorefrontInitialState,
+} from '@/features/kangur/server';
+import {
+  getKangurSurfaceBootstrapStyle,
+  KANGUR_SURFACE_HINT_SCRIPT,
+} from '@/features/kangur/server/storefront-appearance-bootstrap';
 import { KangurStorefrontAppearanceProvider } from '@/features/kangur/public';
 import { KangurSurfaceClassSync } from '@/features/kangur/public';
 import { shouldRenderVercelAnalytics } from '@/shared/lib/analytics/vercel-analytics';
@@ -7,19 +13,21 @@ import { Analytics } from '@vercel/analytics/next';
 
 import type { ReactNode } from 'react';
 
-// Inline script that adds the kangur-surface-active class to <html> and <body>
-// before React hydrates. This eliminates the MutationObserver fallback
-// wait in KangurAppLoader when navigating directly to /kangur routes.
-const SURFACE_HINT_SCRIPT =
-  'document.documentElement.classList.add(\'kangur-surface-active\');document.body.classList.add(\'kangur-surface-active\');';
-
 export default async function Layout({ children }: { children: ReactNode }): Promise<ReactNode> {
   const initialState = await getKangurStorefrontInitialState();
   const shouldRenderAnalytics = shouldRenderVercelAnalytics();
+  const surfaceBootstrapStyle = getKangurSurfaceBootstrapStyle({
+    mode: initialState?.initialMode,
+    themeSettings: initialState?.initialThemeSettings,
+  });
 
   return (
     <>
-      <script dangerouslySetInnerHTML={{ __html: safeHtml(SURFACE_HINT_SCRIPT) }} />
+      <script dangerouslySetInnerHTML={{ __html: safeHtml(KANGUR_SURFACE_HINT_SCRIPT) }} />
+      <style
+        id='__KANGUR_SURFACE_BOOTSTRAP__'
+        dangerouslySetInnerHTML={{ __html: safeHtml(surfaceBootstrapStyle) }}
+      />
       <KangurStorefrontAppearanceProvider
         initialAppearance={{
           mode: initialState?.initialMode,

@@ -163,6 +163,9 @@ describe('frontend layout bootstrap', () => {
     expect(getKangurStorefrontInitialStateMock).toHaveBeenCalledTimes(1);
     expect(getKangurAuthBootstrapScriptMock).toHaveBeenCalledTimes(1);
     expect(document.body.innerHTML).toContain('window.__KANGUR_AUTH_BOOTSTRAP__=null;');
+    expect(
+      document.querySelector('#__KANGUR_SURFACE_BOOTSTRAP__')?.textContent
+    ).toContain('--kangur-soft-card-border:');
     expect(frontendPublicOwnerShellClientMock).toHaveBeenCalledWith(
       expect.objectContaining({
         publicOwner: 'kangur',
@@ -182,7 +185,7 @@ describe('frontend layout bootstrap', () => {
     expect(kangurSSRSkeletonMock).toHaveBeenCalledTimes(1);
   });
 
-  it('skips Kangur storefront bootstrap on explicit Kangur app routes like lessons', async () => {
+  it('loads Kangur storefront bootstrap on standalone Kangur routes like lessons', async () => {
     headersMock.mockResolvedValue(
       new Headers({
         'x-app-request-pathname': '/en/lessons',
@@ -199,14 +202,22 @@ describe('frontend layout bootstrap', () => {
     render(layout);
 
     expect(getFrontPageSettingMock).toHaveBeenCalledTimes(1);
-    expect(getKangurStorefrontInitialStateMock).not.toHaveBeenCalled();
+    expect(getKangurStorefrontInitialStateMock).toHaveBeenCalledTimes(1);
     expect(getKangurAuthBootstrapScriptMock).toHaveBeenCalledTimes(1);
+    expect(
+      document.querySelector('#__KANGUR_SURFACE_BOOTSTRAP__')?.textContent
+    ).toContain('--kangur-soft-card-border:');
     expect(frontendPublicOwnerShellClientMock).toHaveBeenCalledWith(
       expect.objectContaining({
         publicOwner: 'kangur',
         initialAppearance: {
-          mode: undefined,
-          themeSettings: undefined,
+          mode: 'default',
+          themeSettings: {
+            dark: null,
+            dawn: null,
+            default: null,
+            sunset: null,
+          },
         },
       }),
       undefined
@@ -289,13 +300,18 @@ describe('frontend layout bootstrap', () => {
     });
     render(layout);
 
-    expect(getKangurStorefrontInitialStateMock).not.toHaveBeenCalled();
+    expect(getKangurStorefrontInitialStateMock).toHaveBeenCalledTimes(1);
     expect(frontendPublicOwnerShellClientMock).toHaveBeenCalledWith(
       expect.objectContaining({
         publicOwner: 'kangur',
         initialAppearance: {
-          mode: undefined,
-          themeSettings: undefined,
+          mode: 'default',
+          themeSettings: {
+            dark: null,
+            dawn: null,
+            default: null,
+            sunset: null,
+          },
         },
       }),
       undefined

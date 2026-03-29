@@ -5,6 +5,7 @@ import {
   kangurSocialImageAddonsBatchJobSchema,
   kangurSocialImageAddonsBatchResultSchema,
   kangurSocialImageAddonsSchema,
+  type KangurSocialCaptureAppearanceMode,
   type KangurSocialImageAddonsBatchJob,
   type KangurSocialImageAddonsBatchPayload,
   type KangurSocialImageAddonsBatchResult,
@@ -72,6 +73,7 @@ export type CreateKangurSocialImageAddonPayload = {
   selector?: string;
   waitForMs?: number;
   waitForSelectorMs?: number;
+  appearanceMode?: KangurSocialCaptureAppearanceMode;
 };
 
 export const useCreateKangurSocialImageAddon = (): MutationResult<

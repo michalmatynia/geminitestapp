@@ -1,5 +1,10 @@
 import { parseJsonSetting } from '@/features/kangur/utils/settings-json';
 import { KANGUR_SOCIAL_CAPTURE_PRESETS } from '@/features/kangur/shared/social-capture-presets';
+import { KANGUR_SOCIAL_DEFAULT_PLAYWRIGHT_CAPTURE_SCRIPT } from '@/features/kangur/shared/social-playwright-capture';
+import {
+  kangurSocialProgrammableCaptureRouteSchema,
+  type KangurSocialProgrammableCaptureRoute,
+} from '@/shared/contracts/kangur-social-image-addons';
 
 export const KANGUR_SOCIAL_SETTINGS_KEY = 'kangur_social_settings_v1';
 
@@ -10,6 +15,10 @@ export type KangurSocialSettings = {
   batchCaptureBaseUrl: string | null;
   batchCapturePresetIds: string[];
   batchCapturePresetLimit: number | null;
+  programmableCaptureBaseUrl: string | null;
+  programmableCapturePersonaId: string | null;
+  programmableCaptureScript: string;
+  programmableCaptureRoutes: KangurSocialProgrammableCaptureRoute[];
   projectUrl: string | null;
 };
 
@@ -23,6 +32,10 @@ export const DEFAULT_KANGUR_SOCIAL_SETTINGS: Readonly<KangurSocialSettings> = Ob
   batchCaptureBaseUrl: null,
   batchCapturePresetIds: DEFAULT_PRESET_IDS,
   batchCapturePresetLimit: null,
+  programmableCaptureBaseUrl: null,
+  programmableCapturePersonaId: null,
+  programmableCaptureScript: KANGUR_SOCIAL_DEFAULT_PLAYWRIGHT_CAPTURE_SCRIPT,
+  programmableCaptureRoutes: [],
   projectUrl: null,
 });
 
@@ -39,6 +52,29 @@ const normalizeBaseUrl = (value: unknown): string | null => {
   if (typeof value !== 'string') return null;
   const trimmed = value.trim();
   return trimmed.length > 0 ? trimmed : null;
+};
+
+const normalizeProgrammableCaptureScript = (value: unknown): string => {
+  if (typeof value !== 'string') {
+    return KANGUR_SOCIAL_DEFAULT_PLAYWRIGHT_CAPTURE_SCRIPT;
+  }
+  return value.trim().length > 0
+    ? value
+    : KANGUR_SOCIAL_DEFAULT_PLAYWRIGHT_CAPTURE_SCRIPT;
+};
+
+const normalizeProgrammableCaptureRoutes = (
+  value: unknown
+): KangurSocialProgrammableCaptureRoute[] => {
+  if (!Array.isArray(value)) {
+    return [];
+  }
+
+  return value
+    .slice(0, 50)
+    .map((entry) => kangurSocialProgrammableCaptureRouteSchema.safeParse(entry))
+    .filter((entry): entry is { success: true; data: KangurSocialProgrammableCaptureRoute } => entry.success)
+    .map((entry) => entry.data);
 };
 
 const normalizePresetLimit = (value: unknown): number | null => {
@@ -91,6 +127,14 @@ export const parseKangurSocialSettings = (
     batchCaptureBaseUrl: normalizeBaseUrl(parsed['batchCaptureBaseUrl']),
     batchCapturePresetIds: normalizePresetIds(parsed['batchCapturePresetIds']),
     batchCapturePresetLimit: normalizePresetLimit(parsed['batchCapturePresetLimit']),
+    programmableCaptureBaseUrl: normalizeBaseUrl(parsed['programmableCaptureBaseUrl']),
+    programmableCapturePersonaId: normalizeOptionalId(parsed['programmableCapturePersonaId']),
+    programmableCaptureScript: normalizeProgrammableCaptureScript(
+      parsed['programmableCaptureScript']
+    ),
+    programmableCaptureRoutes: normalizeProgrammableCaptureRoutes(
+      parsed['programmableCaptureRoutes']
+    ),
     projectUrl: normalizeBaseUrl(parsed['projectUrl']),
   };
 };

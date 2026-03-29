@@ -1,5 +1,3 @@
-'use client';
-
 import type { ThemeSettings } from '@/shared/contracts/cms-theme';
 import {
   CmsStorefrontAppearanceMode,

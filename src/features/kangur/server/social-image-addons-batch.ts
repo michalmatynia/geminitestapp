@@ -16,6 +16,7 @@ import {
 import { uploadToConfiguredStorage } from '@/features/files/server';
 import {
   normalizeKangurSocialImageAddon,
+  type KangurSocialCaptureAppearanceMode,
   type KangurSocialImageAddonsBatchPayload,
   type KangurSocialImageAddonsBatchResult,
   type KangurSocialImageAddon,
@@ -24,12 +25,12 @@ import {
 import type { ImageFileSelection } from '@/shared/contracts/files';
 import { operationFailedError } from '@/shared/errors/app-error';
 import { ErrorSystem } from '@/features/kangur/shared/utils/observability/error-system';
-import {
-  KANGUR_CAPTURE_MODE_QUERY_PARAM,
-  KANGUR_CAPTURE_MODE_SOCIAL_BATCH,
-} from '@/features/kangur/shared/capture-mode';
 import { KANGUR_SOCIAL_CAPTURE_PRESETS } from '@/features/kangur/shared/social-capture-presets';
-import { KANGUR_SOCIAL_DEFAULT_PLAYWRIGHT_CAPTURE_SCRIPT } from '@/features/kangur/shared/social-playwright-capture';
+import {
+  buildKangurSocialProgrammableCaptureUrl,
+  KANGUR_SOCIAL_DEFAULT_PLAYWRIGHT_CAPTURE_SCRIPT,
+} from '@/features/kangur/shared/social-playwright-capture';
+import { KANGUR_STOREFRONT_APPEARANCE_STORAGE_KEY } from '@/features/kangur/storefront-appearance-settings';
 
 import {
   findLatestAddonByPresetId,
@@ -80,6 +81,7 @@ type BatchCaptureTarget = {
 
 type ResolvedBatchCaptureRequest = {
   baseUrl: string;
+  appearanceMode: KangurSocialCaptureAppearanceMode | null;
   createdBy: string | null;
   contextOptions: Record<string, unknown> | undefined;
   requestedTargets: BatchCaptureTarget[];
@@ -140,28 +142,6 @@ const normalizeOptionalTrimmedString = (value: string | null | undefined): strin
   return normalized || null;
 };
 
-const buildCaptureUrl = (baseUrl: string, pathValue: string): string => {
-  const trimmedBase = baseUrl.trim().replace(/\/+$/, '');
-  const trimmedPath = pathValue.trim();
-  const href = /^https?:\/\//i.test(trimmedPath)
-    ? trimmedPath
-    : `${trimmedBase}${trimmedPath.startsWith('/') ? trimmedPath : `/${trimmedPath}`}`;
-
-  try {
-    const parsed = new URL(href);
-    parsed.searchParams.set(
-      KANGUR_CAPTURE_MODE_QUERY_PARAM,
-      KANGUR_CAPTURE_MODE_SOCIAL_BATCH
-    );
-    return parsed.toString();
-  } catch {
-    const separator = href.includes('?') ? '&' : '?';
-    return `${href}${separator}${KANGUR_CAPTURE_MODE_QUERY_PARAM}=${encodeURIComponent(
-      KANGUR_CAPTURE_MODE_SOCIAL_BATCH
-    )}`;
-  }
-};
-
 const buildTargetFromPreset = (preset: BatchCapturePreset): BatchCaptureTarget => ({
   id: preset.id,
   title: preset.title,
@@ -217,6 +197,59 @@ const parseCookiesForPlaywright = (
       };
     })
     .filter((c): c is NonNullable<typeof c> => c !== null && c.name.length > 0);
+};
+
+const normalizeCaptureAppearanceMode = (
+  value: string | null | undefined
+): KangurSocialCaptureAppearanceMode | null =>
+  value === 'default' || value === 'dawn' || value === 'sunset' || value === 'dark' ? value : null;
+
+const resolvePlaywrightStorageState = (params: {
+  cookieHeader: string | null | undefined;
+  baseUrl: string;
+  appearanceMode: string | null | undefined;
+}):
+  | {
+      cookies: Array<{ name: string; value: string; domain: string; path: string }>;
+      origins: Array<{
+        origin: string;
+        localStorage: Array<{ name: string; value: string }>;
+      }>;
+    }
+  | null => {
+  const cookies = params.cookieHeader
+    ? parseCookiesForPlaywright(params.cookieHeader, params.baseUrl)
+    : [];
+  const appearanceMode = normalizeCaptureAppearanceMode(params.appearanceMode);
+  let origin: string | null = null;
+  if (appearanceMode) {
+    try {
+      origin = new URL(params.baseUrl).origin;
+    } catch {
+      origin = null;
+    }
+  }
+
+  const origins =
+    appearanceMode && origin
+      ? [
+          {
+            origin,
+            localStorage: [
+              {
+                name: KANGUR_STOREFRONT_APPEARANCE_STORAGE_KEY,
+                value: appearanceMode,
+              },
+            ],
+          },
+        ]
+      : [];
+
+  if (cookies.length === 0 && origins.length === 0) {
+    return null;
+  }
+
+  return { cookies, origins };
 };
 
 const sleep = async (ms: number): Promise<void> =>
@@ -353,6 +386,7 @@ const resolveBatchCaptureRequest = (
   const playwrightPersonaId = normalizeOptionalTrimmedString(input.playwrightPersonaId ?? null);
   const playwrightScript =
     input.playwrightScript?.trim() || KANGUR_SOCIAL_DEFAULT_PLAYWRIGHT_CAPTURE_SCRIPT;
+  const appearanceMode = normalizeCaptureAppearanceMode(input.appearanceMode);
 
   if (!baseUrl) {
     throw operationFailedError('Base URL is required for batch capture.');
@@ -367,18 +401,18 @@ const resolveBatchCaptureRequest = (
   }
 
   const contextOptions: Record<string, unknown> = {};
-  if (input.forwardCookies) {
-    const cookies = parseCookiesForPlaywright(input.forwardCookies, baseUrl);
-    if (cookies.length > 0) {
-      contextOptions['storageState'] = {
-        cookies,
-        origins: [],
-      };
-    }
+  const storageState = resolvePlaywrightStorageState({
+    cookieHeader: input.forwardCookies,
+    baseUrl,
+    appearanceMode,
+  });
+  if (storageState) {
+    contextOptions['storageState'] = storageState;
   }
 
   return {
     baseUrl,
+    appearanceMode,
     createdBy: input.createdBy ?? null,
     contextOptions: Object.keys(contextOptions).length > 0 ? contextOptions : undefined,
     requestedTargets,
@@ -395,7 +429,7 @@ export const startPlaywrightBatchCapture = async (
   const captures = resolved.targets.map((target) => ({
     id: target.id,
     title: target.title,
-    url: buildCaptureUrl(resolved.baseUrl, target.path),
+    url: buildKangurSocialProgrammableCaptureUrl(resolved.baseUrl, target.path),
     selector: target.selector,
     waitForMs: target.waitForMs ?? 0,
     waitForSelectorMs: target.waitForSelectorMs ?? 10000,
@@ -406,6 +440,7 @@ export const startPlaywrightBatchCapture = async (
     request: {
       script: resolved.playwrightScript,
       input: {
+        appearanceMode: resolved.appearanceMode,
         captures,
       },
       timeoutMs: 180_000,
@@ -427,7 +462,15 @@ export const finalizePlaywrightBatchCapture = async (
   input: StartedPlaywrightBatchCapture & { run: PlaywrightNodeRunRecord }
 ): Promise<KangurSocialImageAddonsBatchResult> => {
   const startedAt = Date.now();
-  const { run, requestedTargets, targets, baseUrl, createdBy, playwrightPersonaId } = input;
+  const {
+    run,
+    requestedTargets,
+    targets,
+    baseUrl,
+    createdBy,
+    playwrightPersonaId,
+    appearanceMode,
+  } = input;
 
   logger.info('[BATCH] Playwright run finished', {
     status: run.status,
@@ -538,7 +581,7 @@ export const finalizePlaywrightBatchCapture = async (
       id: randomUUID(),
       title: target.title,
       description: target.description,
-      sourceUrl: buildCaptureUrl(baseUrl, target.path),
+      sourceUrl: buildKangurSocialProgrammableCaptureUrl(baseUrl, target.path),
       sourceLabel: target.sourceLabel,
       imageAsset,
       presetId: target.presetId,
@@ -548,6 +591,7 @@ export const finalizePlaywrightBatchCapture = async (
       playwrightPersonaId,
       playwrightCaptureRouteId: target.captureRouteId,
       playwrightCaptureRouteTitle: target.captureRouteTitle,
+      captureAppearanceMode: appearanceMode,
       createdBy,
       updatedBy: createdBy,
     });

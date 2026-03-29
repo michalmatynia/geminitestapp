@@ -311,13 +311,13 @@ const AuthenticatedApp = (): JSX.Element | null => {
           initial: { opacity: 0 },
           animate: { opacity: 1 },
           exit: { opacity: 0 },
-          transition: { duration: 0.1, ease: [0.16, 1, 0.3, 1] as const },
+          transition: { duration: 0.18, ease: [0.16, 1, 0.3, 1] as const },
         }
       : {
           initial: { opacity: 1 },
           animate: { opacity: 1 },
           exit: { opacity: 0 },
-          transition: { duration: 0.1, ease: [0.16, 1, 0.3, 1] as const },
+          transition: { duration: 0.22, ease: [0.16, 1, 0.3, 1] as const },
         };
   const shouldSkipRouteContentPresence =
     isNavigationTransitionActive || isPendingRouteSnapshotVisible;
@@ -616,7 +616,7 @@ const AuthenticatedApp = (): JSX.Element | null => {
       {shouldHideTopNavigationDuringBoot ? (
         topNavigationFallback
       ) : shouldHideTopNavigationHost ? (
-        null
+        topNavigationFallback
       ) : (
         <KangurTopNavigationHost fallback={topNavigationFallback} />
       )}

@@ -82,7 +82,6 @@ import {
 } from '../../social-posts/[id]/handler';
 import { postKangurSocialPostPublishHandler } from '../../social-posts/[id]/publish/handler';
 import { postKangurSocialPostUnpublishHandler } from '../../social-posts/[id]/unpublish/handler';
-import { postKangurSocialPostDocUpdatesHandler } from '../../social-posts/[id]/doc-updates/handler';
 import { postKangurSocialPostAnalyzeVisualsHandler } from '../../social-posts/analyze-visuals/handler';
 import { postKangurSocialPostGenerateHandler } from '../../social-posts/generate/handler';
 import {
@@ -392,13 +391,6 @@ export const socialPostUnpublishHandler: ParamRouteHandler<{ id: string }> =
     parseJsonBody: true,
   });
 
-export const socialPostDocUpdatesHandler: ParamRouteHandler<{ id: string }> =
-  apiHandlerWithParams<{ id: string }>(postKangurSocialPostDocUpdatesHandler, {
-    source: 'kangur.social-posts.[id].doc-updates.POST',
-    service: 'kangur.api',
-    parseJsonBody: true,
-  });
-
 export const socialPostGenerateHandler: SimpleRouteHandler = apiHandler(
   postKangurSocialPostGenerateHandler,
   {
@@ -640,10 +632,6 @@ export const handleMiscRouting = (request: NextRequest, segments: string[]): Pro
     if (segments[2] === 'unpublish' && segments.length === 3) {
       if (request.method !== 'POST') return methodNotAllowed(request, ['POST'], request.method);
       return socialPostUnpublishHandler(request, { params: { id } });
-    }
-    if (segments[2] === 'doc-updates' && segments.length === 3) {
-      if (request.method !== 'POST') return methodNotAllowed(request, ['POST'], request.method);
-      return socialPostDocUpdatesHandler(request, { params: { id } });
     }
   }
   if (segments[0] === 'social-image-addons') {

@@ -10,6 +10,10 @@ import { getCmsThemeSettings } from '@/features/cms/server';
 import { getKangurAuthBootstrapScript } from '@/features/kangur/server';
 import { getKangurStorefrontInitialState } from '@/features/kangur/server';
 import {
+  getKangurSurfaceBootstrapStyle,
+  KANGUR_SURFACE_HINT_SCRIPT,
+} from '@/features/kangur/server/storefront-appearance-bootstrap';
+import {
   FrontendPublicOwnerProvider,
   FrontendPublicOwnerShellClient,
   KangurSSRSkeleton,
@@ -130,7 +134,7 @@ export default async function FrontendLayout({
   const shouldInjectKangurAuthBootstrap =
     !requestHeadersTimedOut && (publicOwner === 'kangur' || isCanonicalPublicLogin);
   const shouldLoadKangurStorefrontBootstrap =
-    publicOwner === 'kangur' && shouldRenderStandaloneKangurShell && isRootPublicRoute;
+    publicOwner === 'kangur' && shouldRenderStandaloneKangurShell;
   const kangurStatePromise = shouldLoadKangurStorefrontBootstrap
     ? layoutTiming.withTiming(
       'kangurStorefrontInitialState',
@@ -174,15 +178,14 @@ export default async function FrontendLayout({
           },
         }
       : null;
-
-  // When Kangur is the public owner, inject a tiny blocking script that pre-applies
-  // the kangur-surface-active class to html/body before React hydrates. This lets
-  // KangurAppLoader's MutationObserver fast-path fire immediately instead of waiting
-  // up to 600ms for the client-side KangurSurfaceClassSync useEffect.
-  const kangurSurfaceHintScript =
-    publicOwner === 'kangur'
-      ? 'document.documentElement.classList.add(\'kangur-surface-active\');document.body.classList.add(\'kangur-surface-active\');'
+  const kangurSurfaceBootstrapStyle =
+    publicOwner === 'kangur' && kangurInitialState
+      ? getKangurSurfaceBootstrapStyle({
+          mode: kangurInitialState.initialMode,
+          themeSettings: kangurInitialState.initialThemeSettings,
+        })
       : null;
+
   const frontendShellChildren = shouldRenderStandaloneKangurShell ? (
     isRootPublicRoute ? (
       <KangurSSRSkeleton />
@@ -210,8 +213,14 @@ export default async function FrontendLayout({
           }}
         />
       ) : null}
-      {kangurSurfaceHintScript ? (
-        <script dangerouslySetInnerHTML={{ __html: safeHtml(kangurSurfaceHintScript) }} />
+      {publicOwner === 'kangur' ? (
+        <script dangerouslySetInnerHTML={{ __html: safeHtml(KANGUR_SURFACE_HINT_SCRIPT) }} />
+      ) : null}
+      {kangurSurfaceBootstrapStyle ? (
+        <style
+          id='__KANGUR_SURFACE_BOOTSTRAP__'
+          dangerouslySetInnerHTML={{ __html: safeHtml(kangurSurfaceBootstrapStyle) }}
+        />
       ) : null}
       {kangurAuthBootstrapScript ? (
         <script dangerouslySetInnerHTML={{ __html: safeHtml(kangurAuthBootstrapScript) }} />

@@ -54,21 +54,12 @@ export function AdminKangurSocialSettingsModal({
     linkedInExpiryLabel,
     linkedInDaysRemaining,
     docsUsed,
-    suggestedDocUpdates,
-    hasVisualDocUpdates,
-    docUpdatesResult,
-    docUpdatesPlan,
-    docUpdatesAppliedAt,
-    docUpdatesAppliedBy,
-    docUpdatesAppliedCount,
-    docUpdatesSkippedCount,
     batchCaptureLimitSummary,
   } = state;
 
   const {
     activePost,
     addonForm,
-    applyDocUpdatesMutation,
     batchCaptureBaseUrl,
     batchCaptureMutation,
     batchCapturePresetIds,
@@ -80,20 +71,18 @@ export function AdminKangurSocialSettingsModal({
     clearCapturePresets,
     contextLoading,
     createAddonMutation,
+    captureAppearanceMode,
     docReferenceInput,
     generationNotes,
-    handleApplyDocUpdates,
     handleBatchCapture,
     handleBrainModelChange,
     handleCreateAddon,
     handleGenerate,
     handleLinkedInConnectionChange,
     handleLoadContext,
-    handlePreviewDocUpdates,
     handleToggleCapturePreset,
     handleVisionModelChange,
     linkedinConnectionId,
-    previewDocUpdatesMutation,
     projectUrl,
     selectAllCapturePresets,
     setAddonForm,
@@ -104,6 +93,14 @@ export function AdminKangurSocialSettingsModal({
     setProjectUrl,
     socialDraftBlockedReason,
     socialVisionWarning,
+    handleOpenProgrammablePlaywrightModal,
+    handleOpenProgrammablePlaywrightModalFromDefaults,
+    handleResetProgrammableCaptureDefaults,
+    hasSavedProgrammableCaptureDefaults,
+    persistedProgrammableCaptureBaseUrl,
+    persistedProgrammableCapturePersonaId,
+    persistedProgrammableCaptureScript,
+    persistedProgrammableCaptureRoutes,
     visionModelId,
     visionModelOptions,
     contextSummary,
@@ -166,28 +163,16 @@ export function AdminKangurSocialSettingsModal({
             canGenerateSocialDraft={canGenerateSocialDraft}
             contextLoading={contextLoading}
             docReferenceInput={docReferenceInput}
-            docUpdatesAppliedAt={docUpdatesAppliedAt}
-            docUpdatesAppliedBy={docUpdatesAppliedBy}
-            docUpdatesAppliedCount={docUpdatesAppliedCount}
-            docUpdatesPlan={docUpdatesPlan}
-            docUpdatesResult={docUpdatesResult}
-            docUpdatesSkippedCount={docUpdatesSkippedCount}
             docsUsed={docsUsed}
             generationNotes={generationNotes}
-            handleApplyDocUpdates={handleApplyDocUpdates}
             handleGenerate={handleGenerate}
             handleLoadContext={handleLoadContext}
-            handlePreviewDocUpdates={handlePreviewDocUpdates}
-            hasVisualDocUpdates={hasVisualDocUpdates}
-            previewDocUpdatesMutationPending={previewDocUpdatesMutation.isPending}
-            applyDocUpdatesMutationPending={applyDocUpdatesMutation.isPending}
             contextSummary={contextSummary}
             selectedPostTitle={selectedPostTitle}
             setDocReferenceInput={setDocReferenceInput}
             setGenerationNotes={setGenerationNotes}
             socialDraftBlockedReason={socialDraftBlockedReason}
             socialVisionWarning={socialVisionWarning}
-            suggestedDocUpdates={suggestedDocUpdates}
           />
         </TabsContent>
 
@@ -226,6 +211,18 @@ export function AdminKangurSocialSettingsModal({
             batchCaptureMutationPending={batchCaptureMutation.isPending}
             batchCaptureResult={batchCaptureResult}
             batchCaptureLimitSummary={batchCaptureLimitSummary}
+            hasSavedProgrammableCaptureDefaults={hasSavedProgrammableCaptureDefaults}
+            programmableCaptureDefaultsBaseUrl={persistedProgrammableCaptureBaseUrl}
+            programmableCaptureDefaultsPersonaId={persistedProgrammableCapturePersonaId}
+            programmableCaptureDefaultsScript={persistedProgrammableCaptureScript}
+            programmableCaptureDefaultsRoutes={persistedProgrammableCaptureRoutes}
+            captureAppearanceMode={captureAppearanceMode ?? 'default'}
+            handleOpenProgrammableCaptureModal={
+              handleOpenProgrammablePlaywrightModalFromDefaults
+            }
+            handleResetProgrammableCaptureDefaults={() => {
+              void handleResetProgrammableCaptureDefaults();
+            }}
           />
         </TabsContent>
       </Tabs>

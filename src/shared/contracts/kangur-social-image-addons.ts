@@ -4,6 +4,15 @@ import { imageFileSelectionSchema } from './files';
 
 const trimmedString = z.string().trim();
 const optionalText = (max: number) => trimmedString.max(max).default('');
+export const kangurSocialCaptureAppearanceModeSchema = z.enum([
+  'default',
+  'dawn',
+  'sunset',
+  'dark',
+]);
+export type KangurSocialCaptureAppearanceMode = z.infer<
+  typeof kangurSocialCaptureAppearanceModeSchema
+>;
 
 export const KANGUR_SOCIAL_IMAGE_ADDONS_COLLECTION = 'kangur_social_image_addons';
 
@@ -21,6 +30,7 @@ export const kangurSocialImageAddonSchema = z.object({
   playwrightPersonaId: trimmedString.max(160).nullable().default(null),
   playwrightCaptureRouteId: trimmedString.max(160).nullable().default(null),
   playwrightCaptureRouteTitle: trimmedString.max(200).nullable().default(null),
+  captureAppearanceMode: kangurSocialCaptureAppearanceModeSchema.nullable().default(null),
   createdBy: trimmedString.max(120).nullable().default(null),
   updatedBy: trimmedString.max(120).nullable().default(null),
   createdAt: z.string().datetime().optional(),
@@ -49,6 +59,7 @@ export const kangurSocialImageAddonsBatchPayloadSchema = z.object({
   baseUrl: z.string().trim().url().optional(),
   presetIds: z.array(trimmedString.min(1).max(160)).optional(),
   presetLimit: z.number().int().positive().nullable().optional(),
+  appearanceMode: kangurSocialCaptureAppearanceModeSchema.optional(),
   playwrightPersonaId: trimmedString.max(160).nullable().optional(),
   playwrightScript: trimmedString.max(120_000).optional(),
   playwrightRoutes: z.array(kangurSocialProgrammableCaptureRouteSchema).max(50).optional(),

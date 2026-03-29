@@ -241,11 +241,6 @@ describe('social pipeline jobs handler', () => {
             id: 'post-1',
             titlePl: 'Generated title',
           },
-          docUpdates: {
-            applied: false,
-            plan: { items: [], files: [] },
-            post: { id: 'post-1' },
-          },
         },
       })
     );
@@ -307,11 +302,6 @@ describe('social pipeline jobs handler', () => {
         generatedPost: {
           id: 'post-1',
           titlePl: 'Generated title',
-        },
-        docUpdates: {
-          applied: false,
-          plan: { items: [], files: [] },
-          post: { id: 'post-1' },
         },
       },
       failedReason: null,
@@ -393,7 +383,6 @@ describe('social pipeline jobs handler', () => {
           type: 'manual-post-visual-analysis',
           input: {
             postId: 'post-1',
-            docReferences: ['overview'],
             imageAddonIds: ['addon-1', 'addon-2'],
           },
         },
@@ -404,9 +393,7 @@ describe('social pipeline jobs handler', () => {
           updatedAt: 1_700_000_002_000,
           postId: 'post-1',
           imageAddonCount: 2,
-          docReferenceCount: 1,
           highlightCount: 2,
-          docUpdateCount: 1,
         },
         returnvalue: {
           type: 'manual-post-visual-analysis',
@@ -439,7 +426,6 @@ describe('social pipeline jobs handler', () => {
           docReferenceCount: 1,
           visualSummaryPresent: true,
           highlightCount: 1,
-          docUpdateCount: 0,
         },
         returnvalue: {
           type: 'manual-post-generation',
@@ -465,7 +451,6 @@ describe('social pipeline jobs handler', () => {
           type: 'manual-post-visual-analysis',
           input: {
             postId: 'post-1',
-            docReferenceCount: 1,
             imageAddonCount: 2,
           },
         },
@@ -476,16 +461,13 @@ describe('social pipeline jobs handler', () => {
           updatedAt: 1_700_000_002_000,
           postId: 'post-1',
           imageAddonCount: 2,
-          docReferenceCount: 1,
           highlightCount: 2,
-          docUpdateCount: 1,
         },
         result: {
           type: 'manual-post-visual-analysis',
           postId: 'post-1',
           imageAddonCount: 2,
           highlightCount: 2,
-          docUpdateCount: 1,
         },
       }),
       expect.objectContaining({
@@ -508,7 +490,6 @@ describe('social pipeline jobs handler', () => {
           docReferenceCount: 1,
           visualSummaryPresent: true,
           highlightCount: 1,
-          docUpdateCount: 0,
         },
         result: {
           type: 'manual-post-generation',
@@ -527,7 +508,6 @@ describe('social pipeline jobs handler', () => {
           type: 'manual-post-visual-analysis',
           input: {
             postId: 'post-1',
-            docReferences: ['overview'],
             imageAddonIds: ['addon-1'],
           },
         },
@@ -538,9 +518,7 @@ describe('social pipeline jobs handler', () => {
           updatedAt: 1_700_000_002_000,
           postId: 'post-1',
           imageAddonCount: 1,
-          docReferenceCount: 1,
           highlightCount: 2,
-          docUpdateCount: 1,
         },
         returnvalue: {
           type: 'manual-post-visual-analysis',
@@ -572,7 +550,6 @@ describe('social pipeline jobs handler', () => {
           type: 'manual-post-visual-analysis',
           input: {
             postId: 'post-1',
-            docReferenceCount: 1,
             imageAddonCount: 1,
           },
         },
@@ -581,7 +558,6 @@ describe('social pipeline jobs handler', () => {
           postId: 'post-1',
           imageAddonCount: 1,
           highlightCount: 2,
-          docUpdateCount: 1,
           analysis: {
             summary: 'Updated hero',
             highlights: ['Updated hero', 'New CTA'],

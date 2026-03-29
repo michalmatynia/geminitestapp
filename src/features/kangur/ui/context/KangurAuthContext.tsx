@@ -78,46 +78,270 @@ type KangurAuthActionsContextValue = Pick<
   'logout' | 'navigateToLogin' | 'checkAppState' | 'selectLearner'
 >;
 
+type KangurAuthBootstrapSnapshot = {
+  cachedUser: KangurUser | null | undefined;
+  hasResolvedAuth: boolean;
+  isAuthenticated: boolean;
+  isLoadingAuth: boolean;
+  user: KangurUser | null;
+};
+
+type KangurAuthRuntimeSetters = {
+  authRequestVersionRef: { current: number };
+  setAuthError: (value: KangurAuthError | null) => void;
+  setHasResolvedAuth: (value: boolean) => void;
+  setIsAuthenticated: (value: boolean) => void;
+  setIsLoadingAuth: (value: boolean) => void;
+  setUser: (value: KangurUser | null) => void;
+};
+
 const KangurAuthStateContext = createContext<KangurAuthStateContextValue | null>(null);
 const KangurAuthActionsContext = createContext<KangurAuthActionsContextValue | null>(null);
 
 export { clearKangurAuthBootstrapCache };
 
+const readKangurAuthBootstrapSnapshot = (): KangurAuthBootstrapSnapshot => {
+  const cachedUser = readKangurAuthBootstrapCache();
+  const hasResolvedAuth = typeof cachedUser !== 'undefined';
+
+  return {
+    cachedUser,
+    hasResolvedAuth,
+    isAuthenticated: hasResolvedAuth ? cachedUser !== null : false,
+    isLoadingAuth: !hasResolvedAuth,
+    user: hasResolvedAuth ? cachedUser ?? null : null,
+  };
+};
+
+const resolveKangurAuthCurrentOrigin = (): string | null =>
+  typeof window === 'undefined' ? null : window.location.origin;
+
+const resolveKangurAuthRequestedPath = ({
+  basePath,
+  routing,
+}: {
+  basePath: string;
+  routing: ReturnType<typeof useOptionalKangurRouting>;
+}): { href: string; pathname: string | null } => ({
+  href: routing?.requestedPath ?? basePath,
+  pathname: routing?.requestedPath ?? null,
+});
+
+const resolveKangurAuthProviderRouteConfig = ({
+  routing,
+  sanitizeManagedHref,
+}: {
+  routing: ReturnType<typeof useOptionalKangurRouting>;
+  sanitizeManagedHref: ReturnType<typeof useKangurRouteAccess>['sanitizeManagedHref'];
+}): {
+  basePath: string;
+  canonicalizePublicAlias: boolean;
+  fallbackCallbackUrl: string;
+} => {
+  const basePath = routing?.basePath ?? KANGUR_BASE_PATH;
+  const canonicalizePublicAlias = basePath === '/';
+  const requestedPath = resolveKangurAuthRequestedPath({ basePath, routing });
+
+  return {
+    basePath,
+    canonicalizePublicAlias,
+    fallbackCallbackUrl:
+      sanitizeManagedHref({
+        href: requestedPath.href,
+        pathname: requestedPath.pathname,
+        currentOrigin: resolveKangurAuthCurrentOrigin(),
+        canonicalizePublicAlias,
+        basePath,
+        fallbackHref: basePath,
+      }) ?? basePath,
+  };
+};
+
+const resolveKangurAuthCheckTimeoutMs = (
+  options?: KangurAuthCheckAppStateOptions
+): number | null =>
+  typeof options?.timeoutMs === 'number' && Number.isFinite(options.timeoutMs)
+    ? Math.max(0, options.timeoutMs)
+    : null;
+
+const handleKangurAuthCheckError = ({
+  error,
+  requestVersion,
+  runtime,
+}: {
+  error: unknown;
+  requestVersion: number;
+  runtime: Pick<
+    KangurAuthRuntimeSetters,
+    'authRequestVersionRef' | 'setAuthError' | 'setIsAuthenticated' | 'setUser'
+  >;
+}): void => {
+  if (runtime.authRequestVersionRef.current !== requestVersion) {
+    return;
+  }
+
+  runtime.setUser(null);
+  runtime.setIsAuthenticated(false);
+
+  if (isKangurAuthStatusError(error)) {
+    primeKangurAuthBootstrapCache(null);
+    runtime.setAuthError(null);
+    return;
+  }
+
+  runtime.setAuthError({
+    type: 'unknown',
+    message: resolveErrorMessage(error),
+  });
+};
+
+const createKangurAuthSessionRequest = ({
+  requestVersion,
+  runtime,
+  useBootstrapCache,
+}: {
+  requestVersion: number;
+  runtime: Pick<
+    KangurAuthRuntimeSetters,
+    'authRequestVersionRef' | 'setAuthError' | 'setIsAuthenticated' | 'setUser'
+  >;
+  useBootstrapCache: boolean;
+}): Promise<KangurUser | null> =>
+  withKangurClientError(
+    {
+      source: 'kangur.auth',
+      action: 'check-app-state',
+      description: 'Fetches the current Kangur auth session.',
+      context: { stage: useBootstrapCache ? 'auth.me.bootstrap' : 'auth.me' },
+    },
+    async () =>
+      useBootstrapCache
+        ? await loadKangurAuthBootstrapSession()
+        : await kangurPlatform.auth.me(),
+    {
+      fallback: null,
+      shouldReport: (error) => !isKangurAuthStatusError(error),
+      onError: (error) =>
+        handleKangurAuthCheckError({
+          error,
+          requestVersion,
+          runtime,
+        }),
+    }
+  );
+
+const awaitKangurTimedAuthCheck = async ({
+  authCheck,
+  timeoutMs,
+}: {
+  authCheck: Promise<KangurUser | null>;
+  timeoutMs: number | null;
+}): Promise<{ currentUser: KangurUser | null; didSoftTimeout: boolean }> => {
+  if (timeoutMs === null) {
+    return {
+      currentUser: await authCheck,
+      didSoftTimeout: false,
+    };
+  }
+
+  let didSoftTimeout = false;
+  let timeoutId: ReturnType<typeof globalThis.setTimeout> | null = null;
+  const currentUser = await Promise.race([
+    authCheck,
+    new Promise<null>((resolve) => {
+      timeoutId = globalThis.setTimeout(() => {
+        didSoftTimeout = true;
+        resolve(null);
+      }, timeoutMs);
+    }),
+  ]);
+
+  if (timeoutId !== null) {
+    globalThis.clearTimeout(timeoutId);
+  }
+
+  return { currentUser, didSoftTimeout };
+};
+
+const scheduleKangurLateAuthCheckSettlement = ({
+  authCheck,
+  requestVersion,
+  runtime,
+}: {
+  authCheck: Promise<KangurUser | null>;
+  requestVersion: number;
+  runtime: Pick<
+    KangurAuthRuntimeSetters,
+    | 'authRequestVersionRef'
+    | 'setAuthError'
+    | 'setHasResolvedAuth'
+    | 'setIsAuthenticated'
+    | 'setUser'
+  >;
+}): void => {
+  void authCheck.then((lateUser) => {
+    if (runtime.authRequestVersionRef.current !== requestVersion) {
+      return;
+    }
+
+    if (lateUser) {
+      runtime.setUser(lateUser);
+      runtime.setIsAuthenticated(true);
+      runtime.setAuthError(null);
+    }
+
+    runtime.setHasResolvedAuth(true);
+  });
+};
+
+const applyKangurResolvedAuthState = ({
+  currentUser,
+  runtime,
+}: {
+  currentUser: KangurUser | null;
+  runtime: Pick<
+    KangurAuthRuntimeSetters,
+    'setAuthError' | 'setHasResolvedAuth' | 'setIsAuthenticated' | 'setUser'
+  >;
+}): void => {
+  if (currentUser) {
+    primeKangurAuthBootstrapCache(currentUser);
+    runtime.setUser(currentUser);
+    runtime.setIsAuthenticated(true);
+    runtime.setAuthError(null);
+  } else {
+    primeKangurAuthBootstrapCache(null);
+  }
+
+  runtime.setHasResolvedAuth(true);
+};
+
 export const KangurAuthProvider = ({ children }: { children: ReactNode }): React.JSX.Element => {
   const router = useRouter();
   const routing = useOptionalKangurRouting();
   const { sanitizeManagedHref } = useKangurRouteAccess();
-  const basePath = routing?.basePath ?? KANGUR_BASE_PATH;
-  const canonicalizePublicAlias = basePath === '/';
-  const fallbackCallbackUrl =
-    sanitizeManagedHref({
-      href: routing?.requestedPath ?? basePath,
-      pathname: routing?.requestedPath ?? null,
-      currentOrigin: typeof window === 'undefined' ? null : window.location.origin,
-      canonicalizePublicAlias,
-      basePath,
-      fallbackHref: basePath,
-    }) ?? basePath;
+  const { basePath, canonicalizePublicAlias, fallbackCallbackUrl } = useMemo(
+    () =>
+      resolveKangurAuthProviderRouteConfig({
+        routing,
+        sanitizeManagedHref,
+      }),
+    [routing, sanitizeManagedHref]
+  );
+  const bootstrapSnapshot = useMemo(() => readKangurAuthBootstrapSnapshot(), []);
   const authRequestVersionRef = useRef(0);
   const logoutInFlightRef = useRef(false);
 
-  // Read bootstrap cache synchronously so the first render already has auth
-  // state when the SSR-injected __KANGUR_AUTH_BOOTSTRAP__ script is present.
-  // This eliminates the extra render cycle that waiting for useEffect would cost.
-  const [user, setUser] = useState<KangurUser | null>(() => {
-    const cached = readKangurAuthBootstrapCache();
-    return typeof cached !== 'undefined' ? cached : null;
-  });
-  const [isAuthenticated, setIsAuthenticated] = useState(() => {
-    const cached = readKangurAuthBootstrapCache();
-    return typeof cached !== 'undefined' ? cached !== null : false;
-  });
-  const [hasResolvedAuth, setHasResolvedAuth] = useState(() => {
-    return typeof readKangurAuthBootstrapCache() !== 'undefined';
-  });
-  const [isLoadingAuth, setIsLoadingAuth] = useState(() => {
-    return typeof readKangurAuthBootstrapCache() === 'undefined';
-  });
+  const [user, setUser] = useState<KangurUser | null>(bootstrapSnapshot.user);
+  const [isAuthenticated, setIsAuthenticated] = useState(
+    bootstrapSnapshot.isAuthenticated
+  );
+  const [hasResolvedAuth, setHasResolvedAuth] = useState(
+    bootstrapSnapshot.hasResolvedAuth
+  );
+  const [isLoadingAuth, setIsLoadingAuth] = useState(
+    bootstrapSnapshot.isLoadingAuth
+  );
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [isLoadingPublicSettings] = useState(false);
   const [authError, setAuthError] = useState<KangurAuthError | null>(null);
@@ -126,103 +350,63 @@ export const KangurAuthProvider = ({ children }: { children: ReactNode }): React
 
   const checkAppState = useCallback(
     async (options?: KangurAuthCheckAppStateOptions): Promise<KangurUser | null> => {
-      const timeoutMs =
-        typeof options?.timeoutMs === 'number' && Number.isFinite(options.timeoutMs)
-          ? Math.max(0, options.timeoutMs)
-          : null;
+      const timeoutMs = resolveKangurAuthCheckTimeoutMs(options);
       const useBootstrapCache = options?.useBootstrapCache ?? false;
       const requestVersion = ++authRequestVersionRef.current;
-      let didSoftTimeout = false;
-      let timeoutId: ReturnType<typeof globalThis.setTimeout> | null = null;
       setAuthError(null);
       setIsLoadingAuth(true);
-      try {
-        const authCheck = withKangurClientError(
-          {
-            source: 'kangur.auth',
-            action: 'check-app-state',
-            description: 'Fetches the current Kangur auth session.',
-            context: { stage: useBootstrapCache ? 'auth.me.bootstrap' : 'auth.me' },
-          },
-          async () =>
-            useBootstrapCache
-              ? await loadKangurAuthBootstrapSession()
-              : await kangurPlatform.auth.me(),
-          {
-            fallback: null,
-            shouldReport: (error) => !isKangurAuthStatusError(error),
-            onError: (error) => {
-              if (authRequestVersionRef.current !== requestVersion) {
-                return;
-              }
-              setUser(null);
-              setIsAuthenticated(false);
 
-              if (isKangurAuthStatusError(error)) {
-                primeKangurAuthBootstrapCache(null);
-                // Anonymous mode is allowed; authentication is optional.
-                setAuthError(null);
-              } else {
-                setAuthError({
-                  type: 'unknown',
-                  message: resolveErrorMessage(error),
-                });
-              }
-            },
-          }
-        );
-        const currentUser =
-          timeoutMs === null
-            ? await authCheck
-            : await Promise.race([
-                authCheck,
-                new Promise<null>((resolve) => {
-                  timeoutId = globalThis.setTimeout(() => {
-                    didSoftTimeout = true;
-                    resolve(null);
-                  }, timeoutMs);
-                }),
-              ]);
-        if (timeoutId !== null) {
-          globalThis.clearTimeout(timeoutId);
-        }
+      try {
+        const authCheck = createKangurAuthSessionRequest({
+          requestVersion,
+          runtime: {
+            authRequestVersionRef,
+            setAuthError,
+            setIsAuthenticated,
+            setUser,
+          },
+          useBootstrapCache,
+        });
+        const { currentUser, didSoftTimeout } = await awaitKangurTimedAuthCheck({
+          authCheck,
+          timeoutMs,
+        });
 
         if (didSoftTimeout) {
           if (authRequestVersionRef.current === requestVersion) {
             setIsLoadingAuth(false);
           }
 
-          // Let the original request finish in the background so slow auth checks
-          // can still settle the session instead of downgrading to anonymous mode.
-          void authCheck.then((lateUser) => {
-            if (authRequestVersionRef.current !== requestVersion) {
-              return;
-            }
-            if (lateUser) {
-              setUser(lateUser);
-              setIsAuthenticated(true);
-              setAuthError(null);
-            }
-            setHasResolvedAuth(true);
+          scheduleKangurLateAuthCheckSettlement({
+            authCheck,
+            requestVersion,
+            runtime: {
+              authRequestVersionRef,
+              setAuthError,
+              setHasResolvedAuth,
+              setIsAuthenticated,
+              setUser,
+            },
           });
-
           return null;
         }
+
         if (authRequestVersionRef.current !== requestVersion) {
           return null;
         }
-        if (currentUser) {
-          primeKangurAuthBootstrapCache(currentUser);
-          setUser(currentUser);
-          setIsAuthenticated(true);
-          setAuthError(null);
-        } else {
-          primeKangurAuthBootstrapCache(null);
-        }
-        setHasResolvedAuth(true);
+
+        applyKangurResolvedAuthState({
+          currentUser,
+          runtime: {
+            setAuthError,
+            setHasResolvedAuth,
+            setIsAuthenticated,
+            setUser,
+          },
+        });
         return currentUser;
       } finally {
-        if (!didSoftTimeout && authRequestVersionRef.current === requestVersion) {
+        if (authRequestVersionRef.current === requestVersion) {
           setIsLoadingAuth(false);
         }
       }
@@ -235,7 +419,7 @@ export const KangurAuthProvider = ({ children }: { children: ReactNode }): React
     // initialisers above, skip the blocking auth check and run a silent
     // background revalidation instead.  This avoids the extra render cycle
     // and the 1.5 s timeout race on first load.
-    const cachedUser = readKangurAuthBootstrapCache();
+    const cachedUser = bootstrapSnapshot.cachedUser;
     if (typeof cachedUser !== 'undefined') {
       if (cachedUser === null) {
         return;
@@ -260,7 +444,7 @@ export const KangurAuthProvider = ({ children }: { children: ReactNode }): React
     }
 
     void checkAppState({ timeoutMs: AUTH_CHECK_TIMEOUT_MS, useBootstrapCache: true });
-  }, [checkAppState]);
+  }, [bootstrapSnapshot.cachedUser, checkAppState]);
 
   const logout = useCallback((shouldRedirect = true): void => {
     if (logoutInFlightRef.current) {

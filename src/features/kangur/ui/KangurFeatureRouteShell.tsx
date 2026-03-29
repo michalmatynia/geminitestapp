@@ -30,6 +30,92 @@ const normalizeSelectedKangurSegments = (segments: readonly string[]): string[] 
     .filter(Boolean)
     .filter((segment) => !segment.startsWith('(') && !segment.startsWith('@'));
 
+const resolveKangurFeatureRouteShellBrowserPathname = (): string | null =>
+  typeof window === 'undefined' ? null : window.location.pathname?.trim() || null;
+
+const resolveKangurFeatureRouteShellBrowserSearch = (): string =>
+  typeof window === 'undefined' ? '' : window.location.search || '';
+
+const resolveKangurFeatureRouteShellPathname = ({
+  browserPathname,
+  normalizedBasePath,
+  pathname,
+}: {
+  browserPathname: string | null;
+  normalizedBasePath: string;
+  pathname: string | null;
+}): string => pathname?.trim() || browserPathname || normalizedBasePath;
+
+const resolveKangurFeatureRouteShellSlug = ({
+  normalizedBasePath,
+  resolvedPathname,
+  selectedLayoutSegments,
+}: {
+  normalizedBasePath: string;
+  resolvedPathname: string;
+  selectedLayoutSegments: readonly string[];
+}): string[] => {
+  const selectedSlug = normalizeSelectedKangurSegments(selectedLayoutSegments);
+  if (selectedSlug.length > 0) {
+    return selectedSlug;
+  }
+
+  return getKangurSlugFromPathname(resolvedPathname, normalizedBasePath);
+};
+
+const resolveKangurFeatureRouteShellEffectiveSlug = (slug: string[]): string[] =>
+  slug[0]?.trim().toLowerCase() === 'login' ? [] : slug;
+
+const resolveKangurFeatureRequestedHref = ({
+  browserSearch,
+  requestedPath,
+  resolvedPathname,
+  searchParams,
+}: {
+  browserSearch: string;
+  requestedPath: string;
+  resolvedPathname: string;
+  searchParams: ReturnType<typeof useSearchParams>;
+}): string => {
+  const search = searchParams?.toString() || browserSearch.replace(/^\?/, '');
+  const baseHref = resolvedPathname || requestedPath;
+  const fallbackHref = baseHref.replace(/\/+$/, '') || '/';
+
+  return withKangurClientErrorSync(
+    {
+      source: 'kangur-feature-route-shell',
+      action: 'resolve-requested-href',
+      description: 'Resolve the requested href for the Kangur route shell.',
+      context: {
+        baseHref,
+        requestedPath,
+      },
+    },
+    () => {
+      const parsed = new URL(baseHref, 'https://kangur.local');
+      const normalizedPathname = parsed.pathname.replace(/\/+$/, '') || '/';
+      return search ? `${normalizedPathname}?${search}` : normalizedPathname;
+    },
+    { fallback: search ? `${fallbackHref}?${search}` : fallbackHref }
+  );
+};
+
+function useSyncKangurFeatureRouteShellActiveClass(): void {
+  useEffect(() => {
+    if (typeof document === 'undefined') {
+      return;
+    }
+
+    document.documentElement.classList.add(KANGUR_CLIENT_SHELL_ACTIVE_CLASSNAME);
+    document.body.classList.add(KANGUR_CLIENT_SHELL_ACTIVE_CLASSNAME);
+
+    return () => {
+      document.documentElement.classList.remove(KANGUR_CLIENT_SHELL_ACTIVE_CLASSNAME);
+      document.body.classList.remove(KANGUR_CLIENT_SHELL_ACTIVE_CLASSNAME);
+    };
+  }, []);
+}
+
 export function KangurFeatureRouteShell({
   basePath = KANGUR_BASE_PATH,
   embedded = false,
@@ -46,58 +132,33 @@ export function KangurFeatureRouteShell({
   const normalizedBasePath = normalizeKangurBasePath(basePath);
   const appearanceMode = appearance?.mode ?? 'default';
   const kangurAppearance = useKangurStorefrontAppearance();
-  const browserPathname =
-    typeof window === 'undefined' ? null : window.location.pathname?.trim() || null;
-  const browserSearch = typeof window === 'undefined' ? '' : window.location.search || '';
-  const resolvedPathname = pathname?.trim() || browserPathname || normalizedBasePath;
+  const browserPathname = resolveKangurFeatureRouteShellBrowserPathname();
+  const browserSearch = resolveKangurFeatureRouteShellBrowserSearch();
+  const resolvedPathname = resolveKangurFeatureRouteShellPathname({
+    browserPathname,
+    normalizedBasePath,
+    pathname,
+  });
   const slug = useMemo(() => {
-    const selectedSlug = normalizeSelectedKangurSegments(selectedLayoutSegments);
-    if (selectedSlug.length > 0) {
-      return selectedSlug;
-    }
-
-    return getKangurSlugFromPathname(resolvedPathname, normalizedBasePath);
+    return resolveKangurFeatureRouteShellSlug({
+      normalizedBasePath,
+      resolvedPathname,
+      selectedLayoutSegments,
+    });
   }, [normalizedBasePath, resolvedPathname, selectedLayoutSegments]);
   const activeSlug = slug[0] ?? null;
-  const effectiveSlug = activeSlug?.trim().toLowerCase() === 'login' ? [] : slug;
+  const effectiveSlug = resolveKangurFeatureRouteShellEffectiveSlug(slug);
   const pageKey = resolveKangurPageKeyFromSlug(activeSlug);
   const requestedPath = normalizeKangurRequestedPath(effectiveSlug, normalizedBasePath);
   const requestedHref = useMemo(() => {
-    const search = searchParams?.toString() || browserSearch.replace(/^\?/, '');
-    const baseHref = resolvedPathname || requestedPath;
-
-    const fallbackHref = baseHref.replace(/\/+$/, '') || '/';
-    return withKangurClientErrorSync(
-      {
-        source: 'kangur-feature-route-shell',
-        action: 'resolve-requested-href',
-        description: 'Resolve the requested href for the Kangur route shell.',
-        context: {
-          baseHref,
-          requestedPath,
-        },
-      },
-      () => {
-        const parsed = new URL(baseHref, 'https://kangur.local');
-        const normalizedPathname = parsed.pathname.replace(/\/+$/, '') || '/';
-        return search ? `${normalizedPathname}?${search}` : normalizedPathname;
-      },
-      { fallback: search ? `${fallbackHref}?${search}` : fallbackHref }
-    );
+    return resolveKangurFeatureRequestedHref({
+      browserSearch,
+      requestedPath,
+      resolvedPathname,
+      searchParams,
+    });
   }, [browserSearch, requestedPath, resolvedPathname, searchParams]);
-  useEffect(() => {
-    if (typeof document === 'undefined') {
-      return;
-    }
-
-    document.documentElement.classList.add(KANGUR_CLIENT_SHELL_ACTIVE_CLASSNAME);
-    document.body.classList.add(KANGUR_CLIENT_SHELL_ACTIVE_CLASSNAME);
-
-    return () => {
-      document.documentElement.classList.remove(KANGUR_CLIENT_SHELL_ACTIVE_CLASSNAME);
-      document.body.classList.remove(KANGUR_CLIENT_SHELL_ACTIVE_CLASSNAME);
-    };
-  }, []);
+  useSyncKangurFeatureRouteShellActiveClass();
 
   const isEmbedded = embedded;
   const shellStyle: CSSProperties & Record<string, string> = {

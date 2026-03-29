@@ -63,7 +63,6 @@ const sanitizeJobData = (data: unknown): unknown => {
       type: 'manual-post-visual-analysis';
       input?: {
         postId?: string | null;
-        docReferences?: string[];
         imageAddonIds?: string[];
       };
     };
@@ -72,7 +71,6 @@ const sanitizeJobData = (data: unknown): unknown => {
       type: manual.type,
       input: {
         postId: manual.input?.postId ?? null,
-        docReferenceCount: manual.input?.docReferences?.length ?? 0,
         imageAddonCount: manual.input?.imageAddonIds?.length ?? 0,
       },
     };
@@ -170,7 +168,6 @@ const sanitizeJobResult = (
       imageAssets?: unknown[];
       batchCaptureResult?: unknown;
       generatedPost?: unknown;
-      docUpdates?: unknown;
     };
 
     const summary = {
@@ -194,7 +191,6 @@ const sanitizeJobResult = (
       imageAssets: manual.imageAssets ?? [],
       batchCaptureResult: manual.batchCaptureResult ?? null,
       generatedPost: manual.generatedPost ?? null,
-      docUpdates: manual.docUpdates ?? null,
     };
   }
 
@@ -216,7 +212,6 @@ const sanitizeJobResult = (
       postId: manual.postId ?? null,
       imageAddonCount: manual.imageAddonIds?.length ?? 0,
       highlightCount: manual.analysis?.highlights?.length ?? 0,
-      docUpdateCount: manual.analysis?.docUpdates?.length ?? 0,
     };
 
     if (!options?.full) {

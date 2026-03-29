@@ -16,7 +16,6 @@ import {
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 import { safeClearTimeout, safeSetTimeout, type SafeTimerId } from '@/shared/lib/timers';
 import type {
-  KangurSocialDocUpdatesResponse,
   KangurSocialPost,
   KangurSocialVisualAnalysis,
 } from '@/shared/contracts/kangur-social-posts';
@@ -62,7 +61,6 @@ type SocialPipelineRunnerDeps = {
   setEditorState: (value: EditorState) => void;
   setImageAddonIds: (value: string[]) => void;
   setImageAssets: (value: ImageFileSelection[]) => void;
-  setDocUpdatesResult: (value: KangurSocialDocUpdatesResponse | null) => void;
   setBatchCaptureResult: (value: KangurSocialImageAddonsBatchResult | null) => void;
   handleSelectAddons: (addons: KangurSocialImageAddon[]) => void;
 };
@@ -92,7 +90,6 @@ type ManualPipelineJobResult = {
   imageAssets: ImageFileSelection[];
   batchCaptureResult: KangurSocialImageAddonsBatchResult | null;
   generatedPost: KangurSocialPost | null;
-  docUpdates: KangurSocialDocUpdatesResponse | null;
 };
 
 type PipelineJobRecord = {
@@ -157,16 +154,15 @@ const buildVisualAnalysisFromPost = (
 
   const summary = post.visualSummary ?? '';
   const highlights = post.visualHighlights ?? [];
-  const docUpdates = post.visualDocUpdates ?? [];
 
-  if (!summary.trim() && highlights.length === 0 && docUpdates.length === 0) {
+  if (!summary.trim() && highlights.length === 0) {
     return null;
   }
 
   return {
     summary,
     highlights,
-    docUpdates,
+    docUpdates: [],
   };
 };
 
@@ -182,18 +178,15 @@ const hasSavedVisualAnalysisScopeMetadata = (post: KangurSocialPost | null): boo
   Boolean(
     post &&
       ((post.visualAnalysisSourceImageAddonIds?.length ?? 0) > 0 ||
-        (post.visualAnalysisSourceDocReferences?.length ?? 0) > 0 ||
         post.visualAnalysisSourceVisionModelId?.trim())
   );
 
 const savedVisualAnalysisMatchesDraft = ({
   post,
-  currentDocReferences,
   currentImageAddonIds,
   currentVisionModelId,
 }: {
   post: KangurSocialPost | null;
-  currentDocReferences: string[];
   currentImageAddonIds: string[];
   currentVisionModelId: string | null;
 }): boolean => {
@@ -203,8 +196,6 @@ const savedVisualAnalysisMatchesDraft = ({
   return (
     buildStringArraySignature(post.visualAnalysisSourceImageAddonIds) ===
       buildStringArraySignature(currentImageAddonIds) &&
-    buildStringArraySignature(post.visualAnalysisSourceDocReferences) ===
-      buildStringArraySignature(currentDocReferences) &&
     (post.visualAnalysisSourceVisionModelId?.trim() ?? '') ===
       (currentVisionModelId?.trim() ?? '')
   );
@@ -226,14 +217,12 @@ export function useSocialPipelineRunner(deps: SocialPipelineRunnerDeps) {
     null
   );
   const [visualAnalysisPending, setVisualAnalysisPending] = useState(false);
-  const currentDocReferences = deps.resolveDocReferences();
   const persistedVisualAnalysisResult = buildVisualAnalysisFromPost(deps.activePost);
   const hasSavedVisualAnalysis = Boolean(persistedVisualAnalysisResult);
   const isSavedVisualAnalysisStale =
     hasSavedVisualAnalysis &&
     !savedVisualAnalysisMatchesDraft({
       post: deps.activePost,
-      currentDocReferences,
       currentImageAddonIds: deps.imageAddonIds,
       currentVisionModelId: deps.visionModelId,
     });
@@ -248,8 +237,6 @@ export function useSocialPipelineRunner(deps: SocialPipelineRunnerDeps) {
     postId: deps.activePostId ?? null,
     imageAddonIds: deps.imageAddonIds,
     visionModelId: deps.visionModelId ?? null,
-    generationNotes: deps.generationNotes.trim(),
-    docReferences: currentDocReferences,
   });
 
   const depsRef = useRef(deps);
@@ -269,7 +256,6 @@ export function useSocialPipelineRunner(deps: SocialPipelineRunnerDeps) {
   }, []);
 
   useEffect(() => {
-    deps.setDocUpdatesResult(null);
     deps.setBatchCaptureResult(null);
     setPipelineProgress(null);
     setPipelineErrorMessage(null);
@@ -492,7 +478,6 @@ export function useSocialPipelineRunner(deps: SocialPipelineRunnerDeps) {
       latestDeps.setContextSummary(
         generatedPost.contextSummary ?? result.contextSummary ?? null
       );
-      latestDeps.setDocUpdatesResult(result.docUpdates ?? null);
       latestDeps.setImageAddonIds(result.imageAddonIds ?? []);
       latestDeps.setImageAssets(result.imageAssets ?? []);
       latestDeps.setBatchCaptureResult(result.batchCaptureResult ?? null);
@@ -515,7 +500,7 @@ export function useSocialPipelineRunner(deps: SocialPipelineRunnerDeps) {
       toast(
         captureMode === 'fresh_capture'
           ? 'Pipeline complete — fresh screenshots captured and draft updated.'
-          : 'Pipeline complete — review your post and documentation updates.',
+          : 'Pipeline complete — review your updated post.',
         { variant: 'success' }
       );
       trackKangurClientEvent(
@@ -623,8 +608,6 @@ export function useSocialPipelineRunner(deps: SocialPipelineRunnerDeps) {
         '/api/kangur/social-posts/analyze-visuals',
         {
           postId: d.activePost.id,
-          docReferences: d.resolveDocReferences(),
-          notes: d.generationNotes,
           visionModelId: d.visionModelId ?? undefined,
           imageAddonIds: d.imageAddonIds,
         },
@@ -702,7 +685,6 @@ export function useSocialPipelineRunner(deps: SocialPipelineRunnerDeps) {
         'kangur_social_visual_analysis_success',
         d.buildSocialContext({
           visualHighlightCount: analysis.highlights.length,
-          visualDocUpdateCount: analysis.docUpdates.length,
         })
       );
     } catch (error) {

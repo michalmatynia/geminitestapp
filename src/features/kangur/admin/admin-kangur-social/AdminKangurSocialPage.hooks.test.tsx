@@ -4,6 +4,11 @@
 
 import { act, renderHook } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { KANGUR_SOCIAL_CAPTURE_PRESETS } from '@/features/kangur/shared/social-capture-presets';
+import {
+  buildKangurSocialProgrammableCaptureRoutesFromPresetIds,
+  KANGUR_SOCIAL_DEFAULT_PLAYWRIGHT_CAPTURE_SCRIPT,
+} from '@/features/kangur/shared/social-playwright-capture';
 
 const {
   useSocialSettingsMock,
@@ -19,6 +24,7 @@ const {
   settingsHandleBrainModelChangeMock,
   settingsHandleVisionModelChangeMock,
   settingsHandleLinkedInConnectionChangeMock,
+  settingsHandleSaveProgrammableCaptureDefaultsMock,
   pipelineRunMock,
   pipelineRunWithOverridesMock,
   pipelineRunFreshMock,
@@ -40,6 +46,7 @@ const {
   settingsHandleBrainModelChangeMock: vi.fn(),
   settingsHandleVisionModelChangeMock: vi.fn(),
   settingsHandleLinkedInConnectionChangeMock: vi.fn(),
+  settingsHandleSaveProgrammableCaptureDefaultsMock: vi.fn(),
   pipelineRunMock: vi.fn(),
   pipelineRunWithOverridesMock: vi.fn(),
   pipelineRunFreshMock: vi.fn(),
@@ -110,6 +117,7 @@ const createSettingsState = (overrides?: Record<string, unknown>) => ({
   isSettingsDirty: false,
   isSavingSettings: false,
   handleSaveSettings: vi.fn(),
+  handleSaveProgrammableCaptureDefaults: settingsHandleSaveProgrammableCaptureDefaultsMock,
   handleBrainModelChange: settingsHandleBrainModelChangeMock,
   handleVisionModelChange: settingsHandleVisionModelChangeMock,
   handleLinkedInConnectionChange: settingsHandleLinkedInConnectionChangeMock,
@@ -120,15 +128,19 @@ const createSettingsState = (overrides?: Record<string, unknown>) => ({
   linkedinConnections: [{ id: 'conn-1' }],
   brainModelOptions: { effectiveModelId: 'brain-routing' },
   visionModelOptions: { effectiveModelId: 'vision-routing' },
-  persistedSocialSettings: {
-    linkedinConnectionId: 'conn-1',
-    brainModelId: null,
-    visionModelId: null,
-    batchCaptureBaseUrl: 'https://capture.example.com',
-    batchCapturePresetIds: ['preset-1', 'preset-2'],
-    batchCapturePresetLimit: 1,
-    projectUrl: 'https://project.example.com',
-  },
+    persistedSocialSettings: {
+      linkedinConnectionId: 'conn-1',
+      brainModelId: null,
+      visionModelId: null,
+      batchCaptureBaseUrl: 'https://capture.example.com',
+      batchCapturePresetIds: ['preset-1', 'preset-2'],
+      batchCapturePresetLimit: 1,
+      programmableCaptureBaseUrl: null,
+      programmableCapturePersonaId: null,
+      programmableCaptureScript: 'return input.captures;',
+      programmableCaptureRoutes: [],
+      projectUrl: 'https://project.example.com',
+    },
   ...overrides,
 });
 
@@ -195,6 +207,7 @@ describe('useAdminKangurSocialPage', () => {
       failures: [],
       usedPresetCount: 1,
     });
+    settingsHandleSaveProgrammableCaptureDefaultsMock.mockResolvedValue(true);
 
     useSocialSettingsMock.mockReturnValue(createSettingsState());
     useSocialEditorSyncMock.mockReturnValue(createEditorState());
@@ -219,6 +232,7 @@ describe('useAdminKangurSocialPage', () => {
       createAddonMutation: {},
       batchCaptureMutation: {},
       batchCaptureResult: null,
+      captureAppearanceMode: 'default',
       setBatchCaptureResult: vi.fn(),
       runBatchCapture: runBatchCaptureMock,
       handleCreateAddon: vi.fn(),
@@ -230,13 +244,7 @@ describe('useAdminKangurSocialPage', () => {
     });
     useSocialGenerationMock.mockReturnValue({
       generateMutation: {},
-      previewDocUpdatesMutation: {},
-      applyDocUpdatesMutation: {},
-      docUpdatesResult: null,
-      setDocUpdatesResult: vi.fn(),
       handleGenerate: vi.fn(),
-      handlePreviewDocUpdates: vi.fn(),
-      handleApplyDocUpdates: vi.fn(),
     });
     useSocialPipelineRunnerMock.mockReturnValue({
       pipelineStep: 'idle',
@@ -259,6 +267,7 @@ describe('useAdminKangurSocialPage', () => {
   it('captures images, patches the draft, and exposes the success message', async () => {
     const { result } = renderHook(() => useAdminKangurSocialPage());
 
+    expect(result.current.captureAppearanceMode).toBe('default');
     await act(async () => {
       await result.current.handleCaptureImagesOnly();
     });
@@ -378,5 +387,125 @@ describe('useAdminKangurSocialPage', () => {
     expect(pipelineRunMock).toHaveBeenCalledTimes(1);
     expect(pipelineRunFreshMock).toHaveBeenCalledTimes(1);
     expect(runBatchCaptureMock).not.toHaveBeenCalled();
+  });
+
+  it('resets saved programmable defaults and restores the local advanced-capture draft state', async () => {
+    const presetIds = KANGUR_SOCIAL_CAPTURE_PRESETS.slice(0, 2).map((preset) => preset.id);
+    useSocialSettingsMock.mockReturnValue(
+      createSettingsState({
+        batchCaptureBaseUrl: 'https://capture.example.com',
+        batchCapturePresetIds: presetIds,
+        persistedSocialSettings: {
+          linkedinConnectionId: 'conn-1',
+          brainModelId: null,
+          visionModelId: null,
+          batchCaptureBaseUrl: 'https://capture.example.com',
+          batchCapturePresetIds: presetIds,
+          batchCapturePresetLimit: 1,
+          programmableCaptureBaseUrl: 'https://programmable.example.com',
+          programmableCapturePersonaId: 'persona-fast',
+          programmableCaptureScript: 'return input.captures.filter(Boolean);',
+          programmableCaptureRoutes: [
+            {
+              id: 'route-1',
+              title: 'Pricing page',
+              path: '/pricing',
+              description: 'Capture pricing hero',
+              selector: '[data-pricing]',
+              waitForMs: 200,
+              waitForSelectorMs: 3000,
+            },
+          ],
+          projectUrl: 'https://project.example.com',
+        },
+      })
+    );
+
+    const { result } = renderHook(() => useAdminKangurSocialPage());
+
+    await act(async () => {
+      await result.current.handleResetProgrammableCaptureDefaults();
+    });
+
+    expect(settingsHandleSaveProgrammableCaptureDefaultsMock).toHaveBeenCalledWith({
+      baseUrl: null,
+      personaId: null,
+      script: KANGUR_SOCIAL_DEFAULT_PLAYWRIGHT_CAPTURE_SCRIPT,
+      routes: [],
+    });
+    expect(result.current.programmableCaptureBaseUrl).toBe('https://capture.example.com');
+    expect(result.current.programmableCapturePersonaId).toBe('');
+    expect(result.current.programmableCaptureScript).toBe(
+      KANGUR_SOCIAL_DEFAULT_PLAYWRIGHT_CAPTURE_SCRIPT
+    );
+    expect(result.current.programmableCaptureRoutes).toEqual(
+      buildKangurSocialProgrammableCaptureRoutesFromPresetIds(presetIds)
+    );
+    expect(result.current.programmableCaptureMessage).toBeNull();
+    expect(result.current.programmableCaptureErrorMessage).toBeNull();
+  });
+
+  it('opens the programmable editor from Settings with persisted defaults instead of stale local edits', async () => {
+    const presetIds = KANGUR_SOCIAL_CAPTURE_PRESETS.slice(0, 2).map((preset) => preset.id);
+    useSocialSettingsMock.mockReturnValue(
+      createSettingsState({
+        batchCaptureBaseUrl: 'https://capture.example.com',
+        batchCapturePresetIds: presetIds,
+        persistedSocialSettings: {
+          linkedinConnectionId: 'conn-1',
+          brainModelId: null,
+          visionModelId: null,
+          batchCaptureBaseUrl: 'https://capture.example.com',
+          batchCapturePresetIds: presetIds,
+          batchCapturePresetLimit: 1,
+          programmableCaptureBaseUrl: 'https://saved.example.com',
+          programmableCapturePersonaId: 'persona-fast',
+          programmableCaptureScript: 'return input.captures.filter(Boolean);',
+          programmableCaptureRoutes: [
+            {
+              id: 'route-saved',
+              title: 'Saved route',
+              path: '/saved',
+              description: 'Saved route description',
+              selector: '[data-saved]',
+              waitForMs: 100,
+              waitForSelectorMs: 2500,
+            },
+          ],
+          projectUrl: 'https://project.example.com',
+        },
+      })
+    );
+
+    const { result } = renderHook(() => useAdminKangurSocialPage());
+
+    act(() => {
+      result.current.setProgrammableCaptureBaseUrl('https://dirty.example.com');
+      result.current.setProgrammableCapturePersonaId('persona-dirty');
+      result.current.setProgrammableCaptureScript('return ["dirty"];');
+      result.current.handleAddProgrammableCaptureRoute();
+    });
+
+    act(() => {
+      result.current.handleOpenProgrammablePlaywrightModalFromDefaults();
+    });
+
+    expect(result.current.programmableCaptureBaseUrl).toBe('https://saved.example.com');
+    expect(result.current.programmableCapturePersonaId).toBe('persona-fast');
+    expect(result.current.programmableCaptureScript).toBe(
+      'return input.captures.filter(Boolean);'
+    );
+    expect(result.current.programmableCaptureRoutes).toEqual([
+      {
+        id: 'route-saved',
+        title: 'Saved route',
+        path: '/saved',
+        description: 'Saved route description',
+        selector: '[data-saved]',
+        waitForMs: 100,
+        waitForSelectorMs: 2500,
+      },
+    ]);
+    expect(result.current.isProgrammablePlaywrightModalOpen).toBe(true);
   });
 });

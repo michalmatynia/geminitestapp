@@ -4,7 +4,6 @@ import type { ListQuery, MutationResult } from '@/shared/contracts/ui';
 import {
   kangurSocialPublishModeSchema,
   kangurSocialPostsSchema,
-  type KangurSocialDocUpdatesResponse,
   type KangurSocialGeneratedDraft,
   type KangurSocialPost,
   type KangurSocialPublishMode,
@@ -239,40 +238,3 @@ export const useUnpublishKangurSocialPost = (): MutationResult<KangurSocialPost,
       description: 'Unpublishes Kangur social posts from LinkedIn.',
     },
   });
-
-const makeDocUpdatesMutation = (mode: 'preview' | 'apply') =>
-  createUpdateMutationV2<KangurSocialDocUpdatesResponse, string>({
-    mutationKey: [
-      ...QUERY_KEYS.kangur.socialPosts({ scope: 'admin', limit: null }),
-      'doc-updates',
-      mode,
-    ],
-    mutationFn: async (postId: string): Promise<KangurSocialDocUpdatesResponse> =>
-      await api.post<KangurSocialDocUpdatesResponse>(
-        `/api/kangur/social-posts/${postId}/doc-updates`,
-        { mode },
-        { timeout: 120_000 }
-      ),
-    invalidate: invalidateSocialPosts,
-    meta: {
-      source: `kangur.hooks.useKangurSocialDocUpdates.${mode}`,
-      operation: 'update',
-      resource: 'kangur.social-posts.doc-updates',
-      domain: 'kangur',
-      tags: ['kangur', 'social-posts', 'doc-updates', mode],
-      description:
-        mode === 'apply'
-          ? 'Applies Kangur social post doc updates.'
-          : 'Previews Kangur social post doc updates.',
-    },
-  });
-
-export const usePreviewKangurSocialDocUpdates = (): MutationResult<
-  KangurSocialDocUpdatesResponse,
-  string
-> => makeDocUpdatesMutation('preview');
-
-export const useApplyKangurSocialDocUpdates = (): MutationResult<
-  KangurSocialDocUpdatesResponse,
-  string
-> => makeDocUpdatesMutation('apply');

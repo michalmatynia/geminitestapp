@@ -3,6 +3,10 @@
 import React from 'react';
 
 import {
+  buildKangurSocialProgrammableCaptureRuntimeRequestPreview,
+  resolveKangurSocialProgrammableCaptureRoutePreview,
+} from '@/features/kangur/shared/social-playwright-capture';
+import {
   Button,
   FormField,
   FormModal,
@@ -22,8 +26,10 @@ export function SocialPostPlaywrightCaptureModal(): React.JSX.Element {
     enabled: true,
   });
   const {
+    activePost,
     isProgrammablePlaywrightModalOpen,
     handleCloseProgrammablePlaywrightModal,
+    captureAppearanceMode,
     programmableCaptureBaseUrl,
     setProgrammableCaptureBaseUrl,
     programmableCapturePersonaId,
@@ -39,6 +45,7 @@ export function SocialPostPlaywrightCaptureModal(): React.JSX.Element {
     handleRemoveProgrammableCaptureRoute,
     handleSeedProgrammableCaptureRoutesFromPresets,
     handleResetProgrammableCaptureScript,
+    handleSaveProgrammableCaptureDefaults,
     handleRunProgrammablePlaywrightCapture,
     handleRunProgrammablePlaywrightCaptureAndPipeline,
     canGenerateSocialDraft,
@@ -57,6 +64,7 @@ export function SocialPostPlaywrightCaptureModal(): React.JSX.Element {
   );
 
   const canSave =
+    Boolean(activePost) &&
     programmableCaptureBaseUrl.trim().length > 0 &&
     programmableCaptureRoutes.some((route) => route.path.trim().length > 0) &&
     programmableCaptureScript.trim().length > 0 &&
@@ -68,6 +76,30 @@ export function SocialPostPlaywrightCaptureModal(): React.JSX.Element {
       ? socialDraftBlockedReason ??
         'Choose a StudiQ Social post model before running capture and pipeline.'
       : 'Capture programmable screenshots, attach them to the draft, and start the normal generation pipeline.';
+  const selectedPersonaLabel = React.useMemo(() => {
+    const trimmedPersonaId = programmableCapturePersonaId.trim();
+    if (!trimmedPersonaId) {
+      return 'Default runtime persona';
+    }
+    return (
+      personaOptions.find((option) => option.value === trimmedPersonaId)?.label ?? trimmedPersonaId
+    );
+  }, [personaOptions, programmableCapturePersonaId]);
+  const runtimeRequestPreview = React.useMemo(
+    () =>
+      buildKangurSocialProgrammableCaptureRuntimeRequestPreview({
+        appearanceMode: captureAppearanceMode,
+        personaId: programmableCapturePersonaId,
+        routes: programmableCaptureRoutes,
+        baseUrl: programmableCaptureBaseUrl,
+      }),
+    [
+      captureAppearanceMode,
+      programmableCaptureBaseUrl,
+      programmableCapturePersonaId,
+      programmableCaptureRoutes,
+    ]
+  );
 
   return (
     <FormModal
@@ -111,6 +143,17 @@ export function SocialPostPlaywrightCaptureModal(): React.JSX.Element {
             disabled={programmableCapturePending}
           >
             Reset script
+          </Button>
+          <Button
+            type='button'
+            variant='ghost'
+            size='sm'
+            onClick={() => {
+              void handleSaveProgrammableCaptureDefaults();
+            }}
+            disabled={programmableCapturePending}
+          >
+            Save as defaults
           </Button>
         </div>
       }
@@ -158,6 +201,12 @@ export function SocialPostPlaywrightCaptureModal(): React.JSX.Element {
           </div>
         ) : null}
 
+        {!activePost ? (
+          <div className='rounded-xl border border-border/60 bg-background/40 px-3 py-2 text-sm text-muted-foreground'>
+            No active draft is selected. You can still edit the programmable Playwright config and save it as defaults, but capture actions stay disabled until a draft is active.
+          </div>
+        ) : null}
+
         <div className='space-y-3 rounded-xl border border-border/60 bg-background/40 p-4'>
           <div>
             <div className='text-sm font-semibold text-foreground'>Capture routes</div>
@@ -172,100 +221,118 @@ export function SocialPostPlaywrightCaptureModal(): React.JSX.Element {
             </div>
           ) : (
             <div className='space-y-3'>
-              {programmableCaptureRoutes.map((route, index) => (
-                <div
-                  key={route.id}
-                  className='space-y-3 rounded-lg border border-border/60 bg-background px-3 py-3'
-                >
-                  <div className='flex items-center justify-between gap-3'>
-                    <div className='text-sm font-medium text-foreground'>
-                      Route {index + 1}
-                    </div>
-                    <Button
-                      type='button'
-                      variant='ghost'
-                      size='xs'
-                      onClick={() => handleRemoveProgrammableCaptureRoute(route.id)}
-                      disabled={programmableCapturePending}
-                    >
-                      Remove
-                    </Button>
-                  </div>
+              {programmableCaptureRoutes.map((route, index) => {
+                const routePreview = resolveKangurSocialProgrammableCaptureRoutePreview(
+                  route.path,
+                  programmableCaptureBaseUrl
+                );
 
-                  <div className='grid gap-3 md:grid-cols-2'>
-                    <Input
-                      value={route.title}
-                      onChange={(event) =>
-                        handleUpdateProgrammableCaptureRoute(route.id, {
-                          title: event.target.value,
-                        })
-                      }
-                      placeholder='Route title'
-                      aria-label={`Programmable route ${index + 1} title`}
-                    />
-                    <Input
-                      value={route.path}
-                      onChange={(event) =>
-                        handleUpdateProgrammableCaptureRoute(route.id, {
-                          path: event.target.value,
-                        })
-                      }
-                      placeholder='/pricing or https://example.com/pricing'
-                      aria-label={`Programmable route ${index + 1} path`}
-                    />
-                    <Input
-                      value={route.selector ?? ''}
-                      onChange={(event) =>
-                        handleUpdateProgrammableCaptureRoute(route.id, {
-                          selector: event.target.value,
-                        })
-                      }
-                      placeholder='Optional selector'
-                      aria-label={`Programmable route ${index + 1} selector`}
-                    />
-                    <Input
-                      value={route.description ?? ''}
-                      onChange={(event) =>
-                        handleUpdateProgrammableCaptureRoute(route.id, {
-                          description: event.target.value,
-                        })
-                      }
-                      placeholder='Optional description'
-                      aria-label={`Programmable route ${index + 1} description`}
-                    />
-                    <Input
-                      type='number'
-                      min='0'
-                      step='100'
-                      value={route.waitForMs ?? 0}
-                      onChange={(event) =>
-                        handleUpdateProgrammableCaptureRoute(route.id, {
-                          waitForMs: Number.isFinite(Number(event.target.value))
-                            ? Math.max(0, Number(event.target.value))
-                            : 0,
-                        })
-                      }
-                      placeholder='Wait before capture (ms)'
-                      aria-label={`Programmable route ${index + 1} wait before capture`}
-                    />
-                    <Input
-                      type='number'
-                      min='0'
-                      step='100'
-                      value={route.waitForSelectorMs ?? 10000}
-                      onChange={(event) =>
-                        handleUpdateProgrammableCaptureRoute(route.id, {
-                          waitForSelectorMs: Number.isFinite(Number(event.target.value))
-                            ? Math.max(0, Number(event.target.value))
-                            : 10000,
-                        })
-                      }
-                      placeholder='Wait for selector (ms)'
-                      aria-label={`Programmable route ${index + 1} wait for selector`}
-                    />
+                return (
+                  <div
+                    key={route.id}
+                    className='space-y-3 rounded-lg border border-border/60 bg-background px-3 py-3'
+                  >
+                    <div className='flex items-center justify-between gap-3'>
+                      <div className='text-sm font-medium text-foreground'>
+                        Route {index + 1}
+                      </div>
+                      <Button
+                        type='button'
+                        variant='ghost'
+                        size='xs'
+                        onClick={() => handleRemoveProgrammableCaptureRoute(route.id)}
+                        disabled={programmableCapturePending}
+                      >
+                        Remove
+                      </Button>
+                    </div>
+
+                    <div className='grid gap-3 md:grid-cols-2'>
+                      <Input
+                        value={route.title}
+                        onChange={(event) =>
+                          handleUpdateProgrammableCaptureRoute(route.id, {
+                            title: event.target.value,
+                          })
+                        }
+                        placeholder='Route title'
+                        aria-label={`Programmable route ${index + 1} title`}
+                      />
+                      <Input
+                        value={route.path}
+                        onChange={(event) =>
+                          handleUpdateProgrammableCaptureRoute(route.id, {
+                            path: event.target.value,
+                          })
+                        }
+                        placeholder='/pricing or https://example.com/pricing'
+                        aria-label={`Programmable route ${index + 1} path`}
+                      />
+                      <Input
+                        value={route.selector ?? ''}
+                        onChange={(event) =>
+                          handleUpdateProgrammableCaptureRoute(route.id, {
+                            selector: event.target.value,
+                          })
+                        }
+                        placeholder='Optional selector'
+                        aria-label={`Programmable route ${index + 1} selector`}
+                      />
+                      <Input
+                        value={route.description ?? ''}
+                        onChange={(event) =>
+                          handleUpdateProgrammableCaptureRoute(route.id, {
+                            description: event.target.value,
+                          })
+                        }
+                        placeholder='Optional description'
+                        aria-label={`Programmable route ${index + 1} description`}
+                      />
+                      <Input
+                        type='number'
+                        min='0'
+                        step='100'
+                        value={route.waitForMs ?? 0}
+                        onChange={(event) =>
+                          handleUpdateProgrammableCaptureRoute(route.id, {
+                            waitForMs: Number.isFinite(Number(event.target.value))
+                              ? Math.max(0, Number(event.target.value))
+                              : 0,
+                          })
+                        }
+                        placeholder='Wait before capture (ms)'
+                        aria-label={`Programmable route ${index + 1} wait before capture`}
+                      />
+                      <Input
+                        type='number'
+                        min='0'
+                        step='100'
+                        value={route.waitForSelectorMs ?? 10000}
+                        onChange={(event) =>
+                          handleUpdateProgrammableCaptureRoute(route.id, {
+                            waitForSelectorMs: Number.isFinite(Number(event.target.value))
+                              ? Math.max(0, Number(event.target.value))
+                              : 10000,
+                          })
+                        }
+                        placeholder='Wait for selector (ms)'
+                        aria-label={`Programmable route ${index + 1} wait for selector`}
+                      />
+                    </div>
+
+                    <div className='rounded-lg border border-border/50 bg-background/80 px-3 py-2 text-xs text-muted-foreground'>
+                      <div className='font-medium uppercase tracking-wide text-foreground/80'>
+                        Resolved target
+                      </div>
+                      {routePreview.resolvedUrl ? (
+                        <div className='mt-1 break-all'>{routePreview.resolvedUrl}</div>
+                      ) : (
+                        <div className='mt-1'>{routePreview.issue}</div>
+                      )}
+                    </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
         </div>
@@ -282,6 +349,25 @@ export function SocialPostPlaywrightCaptureModal(): React.JSX.Element {
             aria-label='Programmable Playwright capture script'
           />
         </FormField>
+
+        <div className='space-y-2 rounded-xl border border-border/60 bg-background/40 p-4'>
+          <div className='text-sm font-semibold text-foreground'>Runtime request preview</div>
+          <div className='text-xs text-muted-foreground'>
+            This mirrors the request sent to the Playwright runtime. Inside the script, use <code>input.appearanceMode</code> and <code>input.captures</code>.
+          </div>
+          <div className='grid gap-2 text-xs text-muted-foreground md:grid-cols-2'>
+            <div>
+              <span className='font-medium text-foreground'>Appearance mode:</span>{' '}
+              {captureAppearanceMode}
+            </div>
+            <div>
+              <span className='font-medium text-foreground'>Persona:</span> {selectedPersonaLabel}
+            </div>
+          </div>
+          <pre className='overflow-x-auto rounded-lg border border-border/50 bg-background px-3 py-2 text-[11px] text-muted-foreground'>
+            {JSON.stringify(runtimeRequestPreview, null, 2)}
+          </pre>
+        </div>
 
         <div className='flex flex-wrap gap-2'>
           <Button

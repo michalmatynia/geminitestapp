@@ -4,9 +4,19 @@ import React from 'react';
 import { Button, FormField, Input, SelectSimple } from '@/features/kangur/shared/ui';
 import { KangurAdminCard } from '../../components/KangurAdminCard';
 import { KANGUR_SOCIAL_CAPTURE_PRESETS } from '@/features/kangur/shared/social-capture-presets';
+import {
+  buildKangurSocialProgrammableCaptureRuntimeRequestPreview,
+  KANGUR_SOCIAL_DEFAULT_PLAYWRIGHT_CAPTURE_SCRIPT,
+  resolveKangurSocialProgrammableCaptureRoutePreview,
+} from '@/features/kangur/shared/social-playwright-capture';
 import { cn } from '@/shared/utils';
-import type { KangurSocialImageAddonsBatchResult } from '@/shared/contracts/kangur-social-image-addons';
+import type {
+  KangurSocialCaptureAppearanceMode,
+  KangurSocialImageAddonsBatchResult,
+  KangurSocialProgrammableCaptureRoute,
+} from '@/shared/contracts/kangur-social-image-addons';
 import type { AddonFormState } from '../AdminKangurSocialPage.Constants';
+import { usePlaywrightPersonas } from '@/shared/hooks/usePlaywrightPersonas';
 
 export function SocialSettingsCaptureTab({
   addonForm,
@@ -25,6 +35,14 @@ export function SocialSettingsCaptureTab({
   batchCaptureMutationPending,
   batchCaptureResult,
   batchCaptureLimitSummary,
+  hasSavedProgrammableCaptureDefaults,
+  programmableCaptureDefaultsBaseUrl,
+  programmableCaptureDefaultsPersonaId,
+  programmableCaptureDefaultsScript,
+  programmableCaptureDefaultsRoutes,
+  captureAppearanceMode,
+  handleOpenProgrammableCaptureModal,
+  handleResetProgrammableCaptureDefaults,
 }: {
   addonForm: AddonFormState;
   setAddonForm: React.Dispatch<React.SetStateAction<AddonFormState>>;
@@ -42,7 +60,56 @@ export function SocialSettingsCaptureTab({
   batchCaptureMutationPending: boolean;
   batchCaptureResult: KangurSocialImageAddonsBatchResult | null;
   batchCaptureLimitSummary: string;
+  hasSavedProgrammableCaptureDefaults: boolean;
+  programmableCaptureDefaultsBaseUrl: string | null;
+  programmableCaptureDefaultsPersonaId: string | null;
+  programmableCaptureDefaultsScript: string;
+  programmableCaptureDefaultsRoutes: KangurSocialProgrammableCaptureRoute[];
+  captureAppearanceMode: KangurSocialCaptureAppearanceMode;
+  handleOpenProgrammableCaptureModal: () => void;
+  handleResetProgrammableCaptureDefaults: () => void;
 }) {
+  const personasQuery = usePlaywrightPersonas({
+    enabled: Boolean(programmableCaptureDefaultsPersonaId?.trim()),
+  });
+  const hasCustomProgrammableScript =
+    programmableCaptureDefaultsScript !== KANGUR_SOCIAL_DEFAULT_PLAYWRIGHT_CAPTURE_SCRIPT;
+  const programmablePersonaSummary = React.useMemo(() => {
+    const personaId = programmableCaptureDefaultsPersonaId?.trim();
+    if (!personaId) {
+      return 'Default runtime persona';
+    }
+    const resolvedName =
+      personasQuery.data?.find((persona) => persona.id === personaId)?.name?.trim() ?? '';
+    return resolvedName ? `${resolvedName} (${personaId})` : personaId;
+  }, [personasQuery.data, programmableCaptureDefaultsPersonaId]);
+  const programmableRouteSummaries = React.useMemo(
+    () =>
+      programmableCaptureDefaultsRoutes.map((route) => ({
+        route,
+        preview: resolveKangurSocialProgrammableCaptureRoutePreview(
+          route.path,
+          programmableCaptureDefaultsBaseUrl ?? ''
+        ),
+      })),
+    [programmableCaptureDefaultsBaseUrl, programmableCaptureDefaultsRoutes]
+  );
+  const programmableRuntimeRequestPreview = React.useMemo(
+    () =>
+      buildKangurSocialProgrammableCaptureRuntimeRequestPreview({
+        appearanceMode: captureAppearanceMode,
+        personaId: programmableCaptureDefaultsPersonaId,
+        routes: programmableCaptureDefaultsRoutes,
+        baseUrl: programmableCaptureDefaultsBaseUrl ?? '',
+      }),
+    [
+      captureAppearanceMode,
+      programmableCaptureDefaultsBaseUrl,
+      programmableCaptureDefaultsPersonaId,
+      programmableCaptureDefaultsRoutes,
+    ]
+  );
+
   return (
     <div className='space-y-4'>
       <KangurAdminCard>
@@ -95,6 +162,107 @@ export function SocialSettingsCaptureTab({
           >
             {createAddonMutationPending ? 'Creating...' : 'Create single add-on'}
           </Button>
+        </div>
+      </KangurAdminCard>
+
+      <KangurAdminCard>
+        <div className='space-y-3'>
+          <div>
+            <div className='text-sm font-semibold text-foreground'>
+              Programmable Playwright defaults
+            </div>
+            <div className='text-sm text-muted-foreground'>
+              Saved from the advanced Playwright capture modal and reused the next time it opens.
+            </div>
+          </div>
+          <div className='flex flex-wrap justify-start gap-2'>
+            <Button type='button' variant='outline' size='sm' onClick={handleOpenProgrammableCaptureModal}>
+              Open programmable editor
+            </Button>
+            <Button
+              type='button'
+              variant='ghost'
+              size='sm'
+              onClick={handleResetProgrammableCaptureDefaults}
+              disabled={!hasSavedProgrammableCaptureDefaults}
+            >
+              Reset saved defaults
+            </Button>
+          </div>
+          <div className='rounded-xl border border-border/60 bg-background/40 p-3 text-xs text-muted-foreground'>
+            {!hasSavedProgrammableCaptureDefaults ? (
+              <div>No programmable capture defaults have been saved yet.</div>
+            ) : (
+              <div className='space-y-1.5'>
+                <div>
+                  Base URL:{' '}
+                  <span className='font-medium text-foreground/90'>
+                    {programmableCaptureDefaultsBaseUrl || 'Use modal input'}
+                  </span>
+                </div>
+                <div>
+                  Persona:{' '}
+                  <span className='font-medium text-foreground/90'>
+                    {programmablePersonaSummary}
+                  </span>
+                </div>
+                <div>
+                  Routes:{' '}
+                  <span className='font-medium text-foreground/90'>
+                    {programmableCaptureDefaultsRoutes.length}
+                  </span>
+                </div>
+                <div>
+                  Script:{' '}
+                  <span className='font-medium text-foreground/90'>
+                    {hasCustomProgrammableScript
+                      ? 'Custom script saved'
+                      : 'Default script template'}
+                  </span>
+                </div>
+                {programmableCaptureDefaultsRoutes.length > 0 ? (
+                  <div className='pt-1'>
+                    <div className='pb-1 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground'>
+                      Saved routes
+                    </div>
+                    <div className='space-y-2'>
+                      {programmableRouteSummaries.map(({ route, preview }) => (
+                        <div
+                          key={route.id}
+                          className='rounded-lg border border-border/50 bg-background/60 px-2 py-2'
+                        >
+                          <div className='font-medium text-foreground/90'>
+                            {route.title.trim() || route.id}
+                          </div>
+                          <div className='mt-1 break-all text-[11px] text-muted-foreground'>
+                            {preview.resolvedUrl ? (
+                              <>
+                                <span className='font-medium text-foreground/80'>Target:</span>{' '}
+                                {preview.resolvedUrl}
+                              </>
+                            ) : (
+                              <>
+                                <span className='font-medium text-foreground/80'>Target:</span>{' '}
+                                {preview.issue}
+                              </>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ) : null}
+                <div className='pt-1'>
+                  <div className='pb-1 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground'>
+                    Runtime request preview
+                  </div>
+                  <pre className='overflow-x-auto rounded-lg border border-border/50 bg-background px-3 py-2 text-[11px] text-muted-foreground'>
+                    {JSON.stringify(programmableRuntimeRequestPreview, null, 2)}
+                  </pre>
+                </div>
+              </div>
+            )}
+          </div>
         </div>
       </KangurAdminCard>
 

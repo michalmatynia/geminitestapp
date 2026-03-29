@@ -84,23 +84,37 @@ to the canonical repo references.
   sections instead of flattening them: `summary`, `details`, `paths`,
   `filters`, and `notes` each have a distinct role.
 
-## Locked Build Configuration — DO NOT MODIFY
+## Locked Build & Vercel Deploy Configuration — DO NOT MODIFY
 
-The following files contain the production/Vercel build configuration and must
-**NOT** be modified by AI agents without explicit user approval:
+The Vercel deployment was stabilised on 2026-03-29 after extensive debugging of
+OOM and timeout failures. The settings below are the **known-working
+configuration**. Do NOT change any of them without explicit user approval.
 
-- `next.config.mjs` — Next.js build config (standalone output, cpus, memory, optimizePackageImports, serverExternalPackages)
-- `package.json` `"build"` script — heap size and build runtime policy
-- `tsconfig.json` — TypeScript compiler config and `include`/`exclude` paths
-- `vercel.json` — Vercel deployment settings (if present)
+See [`docs/build/vercel-deployment.md`](./build/vercel-deployment.md) for the
+full rationale behind each setting.
 
-**Key build constraints that must be preserved:**
-- `NODE_OPTIONS='--max-old-space-size=8192'` in the build script
-- no explicit `experimental.cpus` override is set in `next.config.mjs`
-- Conditional `output: 'standalone'` — enabled only for non-Vercel deploys (Docker/self-hosted); disabled on Vercel to avoid expensive file-tracing
-- `typescript.ignoreBuildErrors: true` — type-checking is enforced in CI, not during `next build`
+**Protected files:**
 
-If you need to change any of these files, **stop and ask the user for permission first**.
+- `next.config.mjs` — serverExternalPackages, compiler, experimental, webpack cache
+- `scripts/build/run-next-build.cjs` — heap size, bundler selection, Vercel defaults
+- `scripts/build/prebuild-cleanup.cjs` — Vercel-safe minimal cleanup
+- `vercel.json` — install/build commands
+- `tsconfig.json` — TypeScript compiler config
+
+**Critical constraints (changing any of these WILL break Vercel deploys):**
+
+- Heap on Vercel: `3584 MB` (NOT higher — main + worker must fit in 8 GB)
+- Bundler on Vercel: `webpack` (turbopack cold builds exceed 45-min limit)
+- Webpack cache on Vercel: `false` (cache serialization causes OOM)
+- `compiler.removeConsole`: disabled on Vercel (`&& !isVercel`)
+- `experimental.cpus`: `1` for webpack (prevents worker fan-out OOM)
+- `serverExternalPackages`: 29 packages — do NOT remove any; adding is safe
+- `prebuild-cleanup.cjs`: on Vercel, only cleans lock/standalone/trace-build
+  (must NOT clean server/static/cache — destroys incremental build cache)
+- `output: 'standalone'` only for non-Vercel (Docker/self-hosted)
+- `typescript.ignoreBuildErrors: true` — type-checking is in CI, not build
+
+If you need to change any of these files, **stop and ask the user first**.
 
 ## Sensitive / Avoid-By-Default Areas
 
@@ -131,6 +145,7 @@ bun run bun:repo:ci
 
 ## Last Updated
 
+- `2026-03-29` — Updated locked build config to match working Vercel deployment (webpack, 3584 MB heap, no cache)
 - `2026-03-26` — Refreshed repo topology to include active mobile and shared Kangur workspaces
 - `2026-03-21` — Added comprehensive AI features documentation and accessibility patterns
 - `2026-03-16` — Aligned to the scanned repo structure

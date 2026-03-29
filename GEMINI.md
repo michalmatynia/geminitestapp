@@ -618,19 +618,23 @@ SCRAPER_GUARD_PAGE_MAX=
 SCRAPER_GUARD_API_MAX=
 ```
 
-## Locked Build Configuration — DO NOT MODIFY
+## Locked Build & Vercel Deploy Configuration — DO NOT MODIFY
 
-The following files are locked and must NOT be modified by AI agents without explicit user approval:
+The Vercel deployment was stabilised on 2026-03-29. The following files must
+NOT be modified by AI agents without explicit user approval:
 
-- `next.config.mjs` — Next.js build config
-- `package.json` `"build"` script — heap size and build runtime policy
+- `next.config.mjs` — serverExternalPackages (29), compiler, experimental, webpack cache
+- `scripts/build/run-next-build.cjs` — heap (3584 MB on Vercel), bundler (webpack on Vercel)
+- `scripts/build/prebuild-cleanup.cjs` — Vercel-safe minimal cleanup
+- `vercel.json` — install/build commands
 - `tsconfig.json` — TypeScript compiler config
-- `vercel.json` — Vercel deployment settings (if present)
 
-Key constraints: `NODE_OPTIONS='--max-old-space-size=8192'` in the build
-script, conditional `output: 'standalone'` (disabled on Vercel and Turbopack
-builds), and `typescript.ignoreBuildErrors: true`. There is currently no
-explicit `experimental.cpus` override in `next.config.mjs`.
+Key constraints: heap `3584 MB` on Vercel (main + worker must fit 8 GB),
+webpack bundler on Vercel (turbopack cold builds exceed 45-min limit),
+webpack cache disabled on Vercel, `compiler.removeConsole` disabled on Vercel,
+`experimental.cpus: 1` for webpack, `output: 'standalone'` only for non-Vercel.
+
+See `docs/build/vercel-deployment.md` for full rationale.
 
 If you need to change any of these files, stop and ask the user for permission first.
 

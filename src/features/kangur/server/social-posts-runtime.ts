@@ -21,8 +21,6 @@ import { analyzeKangurSocialVisuals } from './social-posts-vision';
 
 type SocialVisualAnalysisRuntimeInput = {
   postId?: string | null;
-  docReferences?: string[];
-  notes?: string;
   visionModelId?: string | null;
   imageAddonIds?: string[];
   actorId?: string | null;
@@ -51,23 +49,17 @@ const normalizeOptionalId = (value: string | null | undefined): string | null =>
 };
 
 const hasVisualAnalysisContent = (draft: KangurSocialGeneratedDraft): boolean =>
-  Boolean(
-    draft.visualSummary != null ||
-      (draft.visualHighlights?.length ?? 0) > 0 ||
-      (draft.visualDocUpdates?.length ?? 0) > 0
-  );
+  Boolean(draft.visualSummary?.trim() || (draft.visualHighlights?.length ?? 0) > 0);
 
 const buildVisualAnalysisPatch = ({
   analysis,
   actorId,
-  docReferences,
   imageAddonIds,
   jobId,
   visionModelId,
 }: {
   analysis: KangurSocialVisualAnalysis;
   actorId: string | null;
-  docReferences: string[];
   imageAddonIds: string[];
   jobId: string | null;
   visionModelId: string | null;
@@ -76,7 +68,7 @@ const buildVisualAnalysisPatch = ({
   visualHighlights: analysis.highlights,
   visualDocUpdates: analysis.docUpdates,
   visualAnalysisSourceImageAddonIds: imageAddonIds,
-  visualAnalysisSourceDocReferences: docReferences,
+  visualAnalysisSourceDocReferences: [],
   visualAnalysisSourceVisionModelId: visionModelId,
   visualAnalysisStatus: 'completed' as const,
   visualAnalysisUpdatedAt: new Date().toISOString(),
@@ -85,7 +77,6 @@ const buildVisualAnalysisPatch = ({
   docUpdatesAppliedAt: null,
   docUpdatesAppliedBy: null,
   imageAddonIds,
-  docReferences,
   ...(visionModelId ? { visionModelId } : {}),
   ...(actorId ? { updatedBy: actorId } : {}),
 });
@@ -94,7 +85,6 @@ const persistVisualAnalysisOnPost = async ({
   postId,
   analysis,
   actorId,
-  docReferences,
   imageAddonIds,
   jobId,
   visionModelId,
@@ -102,7 +92,6 @@ const persistVisualAnalysisOnPost = async ({
   postId: string | null;
   analysis: KangurSocialVisualAnalysis;
   actorId: string | null;
-  docReferences: string[];
   imageAddonIds: string[];
   jobId: string | null;
   visionModelId: string | null;
@@ -114,7 +103,6 @@ const persistVisualAnalysisOnPost = async ({
     buildVisualAnalysisPatch({
       analysis,
       actorId,
-      docReferences,
       imageAddonIds,
       jobId,
       visionModelId,
@@ -162,7 +150,7 @@ const persistGeneratedDraftOnPost = async ({
     visualHighlights: draft.visualHighlights ?? [],
     visualDocUpdates: draft.visualDocUpdates ?? [],
     visualAnalysisSourceImageAddonIds: includeVisualAnalysisSource ? imageAddonIds : [],
-    visualAnalysisSourceDocReferences: includeVisualAnalysisSource ? docReferences : [],
+    visualAnalysisSourceDocReferences: [],
     visualAnalysisSourceVisionModelId: includeVisualAnalysisSource ? visionModelId : null,
     docUpdatesAppliedAt: null,
     docUpdatesAppliedBy: null,
@@ -184,7 +172,6 @@ export async function runKangurSocialPostVisualAnalysisJob(
   input: SocialVisualAnalysisRuntimeInput
 ): Promise<KangurSocialManualVisualAnalysisJobResult> {
   const imageAddonIds = normalizeTrimmedIdArray(input.imageAddonIds);
-  const docReferences = normalizeTrimmedIdArray(input.docReferences);
   const normalizedPostId = normalizeOptionalId(input.postId);
   const normalizedVisionModelId = normalizeOptionalId(input.visionModelId);
   const normalizedActorId = normalizeOptionalId(input.actorId);
@@ -194,8 +181,6 @@ export async function runKangurSocialPostVisualAnalysisJob(
 
   const analysis = kangurSocialVisualAnalysisSchema.parse(
     await analyzeKangurSocialVisuals({
-      docReferences,
-      notes: input.notes?.trim() ?? '',
       modelId: normalizedVisionModelId ?? undefined,
       imageAddons,
     })
@@ -205,7 +190,6 @@ export async function runKangurSocialPostVisualAnalysisJob(
     postId: normalizedPostId,
     analysis,
     actorId: normalizedActorId,
-    docReferences,
     imageAddonIds,
     jobId: normalizedJobId,
     visionModelId: normalizedVisionModelId,
@@ -215,7 +199,6 @@ export async function runKangurSocialPostVisualAnalysisJob(
     type: 'manual-post-visual-analysis',
     postId: normalizedPostId,
     imageAddonIds,
-    docReferences,
     visionModelId: normalizedVisionModelId,
     analysis,
     savedPost,

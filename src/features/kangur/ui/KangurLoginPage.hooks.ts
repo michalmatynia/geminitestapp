@@ -38,6 +38,193 @@ import {
   type VerificationCardState,
 } from './KangurLoginPage.utils';
 
+const resolveKangurLoginCurrentOrigin = (): string | null =>
+  typeof window === 'undefined' ? null : window.location.origin;
+
+const resolveKangurLoginCallbackValue = ({
+  callbackUrl,
+  defaultCallbackUrl,
+  normalizeLoginCallbackHref,
+}: {
+  callbackUrl: string | null | undefined;
+  defaultCallbackUrl: string | undefined;
+  normalizeLoginCallbackHref: (href: string | null | undefined) => string | undefined;
+}): string | undefined =>
+  normalizeLoginCallbackHref(callbackUrl ?? defaultCallbackUrl) ?? defaultCallbackUrl;
+
+const resolveKangurLoginCaptchaRequired = (
+  authMode: KangurAuthMode
+): boolean => authMode === 'create-account' && Boolean(KANGUR_PARENT_CAPTCHA_SITE_KEY);
+
+const resolveKangurLoginCaptchaEnabled = ({
+  authMode,
+  isCaptchaRequired,
+  verificationCard,
+}: {
+  authMode: KangurAuthMode;
+  isCaptchaRequired: boolean;
+  verificationCard: VerificationCardState | null;
+}): boolean =>
+  isCaptchaRequired && (authMode !== 'create-account' || !verificationCard);
+
+const resolveKangurLoginFocusTarget = (
+  identifier: string
+): 'identifier' | 'password' => (identifier.trim() ? 'password' : 'identifier');
+
+const clearKangurLoginTimer = (
+  timerRef: React.MutableRefObject<ReturnType<typeof setTimeout> | null>
+): void => {
+  if (timerRef.current) {
+    clearTimeout(timerRef.current);
+    timerRef.current = null;
+  }
+};
+
+const resolveKangurLoginCooldownMs = ({
+  forceDefault,
+  retryAfterMs,
+}: {
+  forceDefault: boolean | undefined;
+  retryAfterMs: number | null | undefined;
+}): number | null => {
+  if (
+    typeof retryAfterMs === 'number' &&
+    Number.isFinite(retryAfterMs) &&
+    retryAfterMs > 0
+  ) {
+    return retryAfterMs;
+  }
+
+  return forceDefault
+    ? KANGUR_PARENT_VERIFICATION_DEFAULT_RESEND_COOLDOWN_MS
+    : null;
+};
+
+const resolveKangurLoginPayloadString = (
+  payload: Record<string, unknown>,
+  key: string
+): string | null => (typeof payload[key] === 'string' ? payload[key] : null);
+
+const resolveKangurLoginRetryAfterMs = (
+  payload: Record<string, unknown>
+): number | null =>
+  typeof payload['retryAfterMs'] === 'number' ? payload['retryAfterMs'] : null;
+
+const resolveKangurLoginVerificationUrl = ({
+  payload,
+  verificationCard,
+}: {
+  payload: Record<string, unknown>;
+  verificationCard: VerificationCardState;
+}): string | null => {
+  const debugPayload = payload['debug'];
+  if (
+    typeof debugPayload === 'object' &&
+    debugPayload !== null &&
+    typeof (debugPayload as Record<string, unknown>)['verificationUrl'] === 'string'
+  ) {
+    return (debugPayload as Record<string, unknown>)['verificationUrl'] as string;
+  }
+
+  return verificationCard.verificationUrl ?? null;
+};
+
+const buildKangurLoginVerificationCardState = ({
+  email,
+  error,
+  message,
+  verificationUrl,
+}: {
+  email: string;
+  error: string | null;
+  message: string | null;
+  verificationUrl: string | null;
+}): VerificationCardState => ({
+  email,
+  error,
+  message,
+  verificationUrl,
+});
+
+const requestKangurParentVerificationResend = async ({
+  callbackValue,
+  email,
+}: {
+  callbackValue: string | undefined;
+  email: string;
+}) =>
+  fetch('/api/kangur/auth/parent-account/resend', {
+    method: 'POST',
+    credentials: 'same-origin',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      email,
+      callbackUrl: callbackValue,
+    }),
+  });
+
+const isSuccessfulKangurVerificationResend = (
+  response: Response,
+  payload: Record<string, unknown>
+): boolean => response.ok && payload['ok'] === true;
+
+const isRateLimitedKangurVerificationResend = (
+  response: Response,
+  payload: Record<string, unknown>
+): boolean => payload['code'] === 'RATE_LIMITED' || response.status === 429;
+
+const applyKangurVerificationResendResponse = ({
+  payload,
+  response,
+  scheduleResendCooldown,
+  setVerificationCard,
+  verificationCard,
+}: {
+  payload: Record<string, unknown>;
+  response: Response;
+  scheduleResendCooldown: (
+    retryAfterMs?: number | null,
+    options?: { forceDefault?: boolean }
+  ) => void;
+  setVerificationCard: React.Dispatch<
+    React.SetStateAction<VerificationCardState | null>
+  >;
+  verificationCard: VerificationCardState;
+}): void => {
+  const retryAfterMs = resolveKangurLoginRetryAfterMs(payload);
+  const verificationUrl = resolveKangurLoginVerificationUrl({
+    payload,
+    verificationCard,
+  });
+
+  if (isSuccessfulKangurVerificationResend(response, payload)) {
+    setVerificationCard(
+      buildKangurLoginVerificationCardState({
+        email: verificationCard.email,
+        error: null,
+        message: resolveKangurLoginPayloadString(payload, 'message'),
+        verificationUrl,
+      })
+    );
+    scheduleResendCooldown(retryAfterMs, { forceDefault: true });
+    return;
+  }
+
+  const nextCardState = buildKangurLoginVerificationCardState({
+    email: verificationCard.email,
+    error: resolveKangurLoginPayloadString(payload, 'error'),
+    message: verificationCard.message ?? null,
+    verificationUrl,
+  });
+
+  setVerificationCard(nextCardState);
+  if (isRateLimitedKangurVerificationResend(response, payload)) {
+    scheduleResendCooldown(retryAfterMs, { forceDefault: true });
+  }
+};
+
 export function useKangurLoginPageState() {
   const translations = useTranslations('KangurLogin');
   const pathname = usePathname();
@@ -121,7 +308,7 @@ export function useKangurLoginPageState() {
     [submitStage]
   );
 
-  const currentOrigin = typeof window === 'undefined' ? null : window.location.origin;
+  const currentOrigin = resolveKangurLoginCurrentOrigin();
   const normalizeLoginCallbackHref = useCallback(
     (href: string | null | undefined): string | undefined =>
       sanitizeManagedHref({
@@ -142,14 +329,20 @@ export function useKangurLoginPageState() {
     ]
   );
 
-  const callbackValue =
-    normalizeLoginCallbackHref(callbackUrl ?? defaultCallbackUrl) ?? defaultCallbackUrl;
+  const callbackValue = resolveKangurLoginCallbackValue({
+    callbackUrl,
+    defaultCallbackUrl,
+    normalizeLoginCallbackHref,
+  });
 
-  const isCaptchaRequired =
-    authMode === 'create-account' && Boolean(KANGUR_PARENT_CAPTCHA_SITE_KEY);
+  const isCaptchaRequired = resolveKangurLoginCaptchaRequired(authMode);
 
   const { containerRef: captchaContainerRef } = useTurnstile({
-    enabled: isCaptchaRequired && (authMode !== 'create-account' || !verificationCard),
+    enabled: resolveKangurLoginCaptchaEnabled({
+      authMode,
+      isCaptchaRequired,
+      verificationCard,
+    }),
     onVerify: (token) => setCaptchaToken(token),
     onError: () => setCaptchaToken(null),
     onExpire: () => setCaptchaToken(null),
@@ -160,10 +353,7 @@ export function useKangurLoginPageState() {
   });
 
   const clearResendCooldown = useCallback(() => {
-    if (resendTimerRef.current) {
-      clearTimeout(resendTimerRef.current);
-      resendTimerRef.current = null;
-    }
+    clearKangurLoginTimer(resendTimerRef);
     setResendCooldownLabel(null);
   }, []);
 
@@ -180,19 +370,11 @@ export function useKangurLoginPageState() {
 
   const scheduleResendCooldown = useCallback(
     (retryAfterMs?: number | null, options?: { forceDefault?: boolean }) => {
-      if (resendTimerRef.current) {
-        clearTimeout(resendTimerRef.current);
-        resendTimerRef.current = null;
-      }
-
-      let nextMs =
-        typeof retryAfterMs === 'number' && Number.isFinite(retryAfterMs) && retryAfterMs > 0
-          ? retryAfterMs
-          : null;
-
-      if (!nextMs && options?.forceDefault) {
-        nextMs = KANGUR_PARENT_VERIFICATION_DEFAULT_RESEND_COOLDOWN_MS;
-      }
+      clearKangurLoginTimer(resendTimerRef);
+      const nextMs = resolveKangurLoginCooldownMs({
+        forceDefault: options?.forceDefault,
+        retryAfterMs,
+      });
 
       if (!nextMs) {
         setResendCooldownLabel(null);
@@ -236,7 +418,7 @@ export function useKangurLoginPageState() {
       return;
     }
     initialFocusAppliedRef.current = true;
-    scheduleFieldFocus(identifier.trim() ? 'password' : 'identifier');
+    scheduleFieldFocus(resolveKangurLoginFocusTarget(identifier));
   }, [identifier, scheduleFieldFocus]);
 
   const handleModeSwitch = (nextMode: KangurAuthMode) => {
@@ -249,7 +431,7 @@ export function useKangurLoginPageState() {
       clearVerificationState();
     }
     setCaptchaToken(null);
-    scheduleFieldFocus(identifier.trim() ? 'password' : 'identifier');
+    scheduleFieldFocus(resolveKangurLoginFocusTarget(identifier));
   };
 
   const handleResendVerification = async (): Promise<void> => {
@@ -262,64 +444,28 @@ export function useKangurLoginPageState() {
     setSubmitStage('sending-verification');
 
     try {
-      const response = await fetch('/api/kangur/auth/parent-account/resend', {
-        method: 'POST',
-        credentials: 'same-origin',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          email: verificationCard.email,
-          callbackUrl: callbackValue,
-        }),
-      });
-
-      const payload = await parseJsonResponse(response);
-      const retryAfterMs =
-        typeof payload['retryAfterMs'] === 'number' ? payload['retryAfterMs'] : null;
-      const verificationUrl =
-        typeof (payload['debug'] as Record<string, unknown> | null | undefined)?.[
-          'verificationUrl'
-        ] === 'string'
-          ? ((payload['debug'] as Record<string, unknown>)['verificationUrl'] as string)
-          : verificationCard.verificationUrl ?? null;
-
-      if (response.ok && payload['ok'] === true) {
-        setVerificationCard({
-          email: verificationCard.email,
-          message: typeof payload['message'] === 'string' ? payload['message'] : null,
-          error: null,
-          verificationUrl,
-        });
-        scheduleResendCooldown(retryAfterMs, { forceDefault: true });
-        return;
-      }
-
-      const isRateLimited = payload['code'] === 'RATE_LIMITED' || response.status === 429;
-      if (isRateLimited) {
-        setVerificationCard({
-          email: verificationCard.email,
-          message: verificationCard.message ?? null,
-          error: typeof payload['error'] === 'string' ? payload['error'] : null,
-          verificationUrl,
-        });
-        scheduleResendCooldown(retryAfterMs, { forceDefault: true });
-        return;
-      }
-
-      setVerificationCard({
+      const response = await requestKangurParentVerificationResend({
+        callbackValue,
         email: verificationCard.email,
-        message: verificationCard.message ?? null,
-        error: typeof payload['error'] === 'string' ? payload['error'] : null,
-        verificationUrl,
+      });
+      const payload = await parseJsonResponse(response);
+
+      applyKangurVerificationResendResponse({
+        payload,
+        response,
+        scheduleResendCooldown,
+        setVerificationCard,
+        verificationCard,
       });
     } catch {
-      setVerificationCard({
-        email: verificationCard.email,
-        message: verificationCard.message ?? null,
-        error: translations('resendEmailUnexpected'),
-        verificationUrl: verificationCard.verificationUrl ?? null,
-      });
+      setVerificationCard(
+        buildKangurLoginVerificationCardState({
+          email: verificationCard.email,
+          error: translations('resendEmailUnexpected'),
+          message: verificationCard.message ?? null,
+          verificationUrl: verificationCard.verificationUrl ?? null,
+        })
+      );
     } finally {
       setIsLoading(false);
     }

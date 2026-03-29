@@ -16,12 +16,14 @@ import {
 import { ErrorSystem } from '@/features/kangur/shared/utils/observability/error-system-client';
 import {
   KANGUR_SOCIAL_SETTINGS_KEY,
+  DEFAULT_KANGUR_SOCIAL_SETTINGS,
   parseKangurSocialSettings,
 } from '@/features/kangur/settings-social';
 import { serializeSetting } from '@/features/kangur/shared/utils/settings-json';
 import { useSettingsStore } from '@/features/kangur/shared/providers/SettingsStoreProvider';
 import { KANGUR_SOCIAL_CAPTURE_PRESETS } from '@/features/kangur/shared/social-capture-presets';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
+import type { KangurSocialProgrammableCaptureRoute } from '@/shared/contracts/kangur-social-image-addons';
 
 import { BRAIN_MODEL_DEFAULT_VALUE } from '../AdminKangurSocialPage.Constants';
 
@@ -122,8 +124,47 @@ export function useSocialSettings() {
       normalizedBatchCapturePresetIds
     );
 
-  const handleSaveSettings = useCallback(async (): Promise<void> => {
-    if (updateSetting.isPending) return;
+  const persistSettingsValue = useCallback(
+    async (
+      payload: Record<string, unknown>,
+      options: {
+        successMessage: string;
+        errorAction: string;
+      }
+    ): Promise<boolean> => {
+      try {
+        const serialized = serializeSetting(payload);
+        await updateSetting.mutateAsync({
+          key: KANGUR_SOCIAL_SETTINGS_KEY,
+          value: serialized,
+        });
+        queryClient.setQueryData<Map<string, string>>(
+          QUERY_KEYS.settings.scope('light'),
+          (current) => {
+            const next = new Map(current ?? []);
+            next.set(KANGUR_SOCIAL_SETTINGS_KEY, serialized);
+            return next;
+          }
+        );
+        settingsStore.refetch();
+        toast(options.successMessage, { variant: 'success' });
+        return true;
+      } catch (error) {
+        void ErrorSystem.captureException(error);
+        logKangurClientError(error, {
+          source: 'AdminKangurSocialPage',
+          action: options.errorAction,
+          nextSettings: payload,
+        });
+        toast('Failed to save social settings.', { variant: 'error' });
+        return false;
+      }
+    },
+    [queryClient, settingsStore, toast, updateSetting]
+  );
+
+  const handleSaveSettings = useCallback(async (): Promise<boolean> => {
+    if (updateSetting.isPending) return false;
     const payload = {
       brainModelId: brainModelId ?? null,
       visionModelId: visionModelId ?? null,
@@ -131,32 +172,16 @@ export function useSocialSettings() {
       batchCaptureBaseUrl: normalizedBatchCaptureBaseUrl,
       batchCapturePresetIds: normalizedBatchCapturePresetIds,
       batchCapturePresetLimit: normalizedBatchCapturePresetLimit,
+      programmableCaptureBaseUrl: persistedSocialSettings.programmableCaptureBaseUrl,
+      programmableCapturePersonaId: persistedSocialSettings.programmableCapturePersonaId,
+      programmableCaptureScript: persistedSocialSettings.programmableCaptureScript,
+      programmableCaptureRoutes: persistedSocialSettings.programmableCaptureRoutes,
       projectUrl: normalizedProjectUrl,
     };
-    try {
-      await updateSetting.mutateAsync({
-        key: KANGUR_SOCIAL_SETTINGS_KEY,
-        value: serializeSetting(payload),
-      });
-      queryClient.setQueryData<Map<string, string>>(
-        QUERY_KEYS.settings.scope('light'),
-        (current) => {
-          const next = new Map(current ?? []);
-          next.set(KANGUR_SOCIAL_SETTINGS_KEY, serializeSetting(payload));
-          return next;
-        }
-      );
-      settingsStore.refetch();
-      toast('Social settings saved.', { variant: 'success' });
-    } catch (error) {
-      void ErrorSystem.captureException(error);
-      logKangurClientError(error, {
-        source: 'AdminKangurSocialPage',
-        action: 'saveSettings',
-        nextSettings: payload,
-      });
-      toast('Failed to save social settings.', { variant: 'error' });
-    }
+    return await persistSettingsValue(payload, {
+      successMessage: 'Social settings saved.',
+      errorAction: 'saveSettings',
+    });
   }, [
     brainModelId,
     linkedinConnectionId,
@@ -164,12 +189,44 @@ export function useSocialSettings() {
     normalizedBatchCapturePresetLimit,
     normalizedBatchCapturePresetIds,
     normalizedProjectUrl,
-    queryClient,
-    settingsStore,
-    toast,
-    updateSetting,
+    persistSettingsValue,
+    persistedSocialSettings.programmableCaptureBaseUrl,
+    persistedSocialSettings.programmableCapturePersonaId,
+    persistedSocialSettings.programmableCaptureRoutes,
+    persistedSocialSettings.programmableCaptureScript,
     visionModelId,
   ]);
+
+  const handleSaveProgrammableCaptureDefaults = useCallback(
+    async (input: {
+      baseUrl: string | null;
+      personaId: string | null;
+      script: string;
+      routes: KangurSocialProgrammableCaptureRoute[];
+    }): Promise<boolean> => {
+      if (updateSetting.isPending) return false;
+      const payload = {
+        ...persistedSocialSettings,
+        programmableCaptureBaseUrl: normalizeBatchCaptureBaseUrl(input.baseUrl ?? ''),
+        programmableCapturePersonaId: input.personaId?.trim() || null,
+        programmableCaptureScript:
+          input.script.trim().length > 0
+            ? input.script
+            : DEFAULT_KANGUR_SOCIAL_SETTINGS.programmableCaptureScript,
+        programmableCaptureRoutes: input.routes,
+      };
+      return await persistSettingsValue(payload, {
+        successMessage: 'Programmable Playwright defaults saved.',
+        errorAction: 'saveProgrammableCaptureDefaults',
+      });
+    },
+    [
+      normalizeBatchCaptureBaseUrl,
+      persistSettingsValue,
+      persistedSocialSettings,
+      updateSetting.isPending,
+    ]
+  );
 
   const handleBrainModelChange = (value: string): void => {
     setBrainModelId(value === BRAIN_MODEL_DEFAULT_VALUE ? null : value);
@@ -298,6 +355,7 @@ export function useSocialSettings() {
     handleToggleCapturePreset,
     selectAllCapturePresets,
     clearCapturePresets,
+    handleSaveProgrammableCaptureDefaults,
     linkedinIntegration,
     linkedinConnections,
     brainModelOptions,

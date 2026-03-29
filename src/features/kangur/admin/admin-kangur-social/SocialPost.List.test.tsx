@@ -202,15 +202,16 @@ describe('SocialPostList', () => {
             visualHighlights: ['Larger CTA card', 'Teacher illustration is more central'],
             visualDocUpdates: [
               {
-                docPath: 'docs/social/teacher-launch.md',
+                docPath: 'docs/homepage.md',
                 section: 'Hero',
-                proposedText: 'Use the classroom CTA variation.',
-                reason: 'Keep the teacher-facing CTA in the launch docs.',
+                reason: 'Document the larger teacher CTA card',
+                proposedText: 'Update the hero section docs with the new classroom CTA emphasis.',
               },
             ],
             visualAnalysisStatus: 'completed',
             visualAnalysisUpdatedAt: '2026-03-20T12:00:00.000Z',
             visualAnalysisModelId: 'vision-1',
+            visualAnalysisJobId: 'job-analysis-1',
           },
           {
             ...buildPost(),
@@ -228,11 +229,12 @@ describe('SocialPostList', () => {
     expect(screen.getByText('Image analysis')).toBeInTheDocument();
     expect(screen.getByText(/Analyzed /)).toBeInTheDocument();
     expect(screen.getByText('Model: vision-1')).toBeInTheDocument();
+    expect(screen.getByText('Job: job-analysis-1')).toBeInTheDocument();
     expect(screen.getByText('2 highlights')).toBeInTheDocument();
     expect(screen.getByText('1 doc update')).toBeInTheDocument();
 
     fireEvent.change(screen.getByLabelText('Search social posts'), {
-      target: { value: 'teacher-facing' },
+      target: { value: 'classroom cta emphasis' },
     });
 
     expect(screen.getByText('Visual refresh')).toBeInTheDocument();
@@ -261,6 +263,7 @@ describe('SocialPostList', () => {
 
     expect(screen.getByText('Analysis queued')).toBeInTheDocument();
     expect(screen.getByText('Model: vision-queued')).toBeInTheDocument();
+    expect(screen.getByText('Job: job-analysis-queued-1')).toBeInTheDocument();
   });
 
   it('opens the modal from the post name without row hover zoom treatment', () => {

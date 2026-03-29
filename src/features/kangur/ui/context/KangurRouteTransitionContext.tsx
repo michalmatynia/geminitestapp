@@ -64,6 +64,42 @@ const KangurRouteTransitionStateContext =
 const KangurRouteTransitionActionsContext =
   createContext<KangurRouteTransitionActionsContextValue | null>(null);
 
+const resolveKangurRouteTransitionPhase = (
+  transitionState: ReturnType<typeof useKangurRouteTransitionLogic>['transitionState']
+): KangurRouteTransitionStateContextValue['transitionPhase'] =>
+  transitionState?.phase ?? 'idle';
+
+const resolveKangurRouteTransitionRequestedHref = (
+  transitionState: ReturnType<typeof useKangurRouteTransitionLogic>['transitionState']
+): string | null =>
+  transitionState ? transitionState.committedRequestedHref ?? transitionState.href : null;
+
+const resolveKangurRouteTransitionPendingPageKey = (
+  transitionState: ReturnType<typeof useKangurRouteTransitionLogic>['transitionState']
+): string | null =>
+  transitionState?.phase === 'pending' ? transitionState.pageKey ?? null : null;
+
+const resolveKangurRouteTransitionStateValue = (
+  transitionState: ReturnType<typeof useKangurRouteTransitionLogic>['transitionState']
+): KangurRouteTransitionStateContextValue => {
+  const transitionPhase = resolveKangurRouteTransitionPhase(transitionState);
+
+  return {
+    isRouteAcknowledging: transitionPhase === 'acknowledging',
+    isRoutePending: transitionPhase === 'pending',
+    isRouteWaitingForReady: transitionPhase === 'waiting_for_ready',
+    isRouteRevealing: transitionPhase === 'revealing',
+    transitionPhase,
+    activeTransitionSourceId: transitionState?.sourceId ?? null,
+    activeTransitionKind: transitionState?.kind ?? null,
+    activeTransitionPageKey: transitionState?.pageKey ?? null,
+    activeTransitionRequestedHref:
+      resolveKangurRouteTransitionRequestedHref(transitionState),
+    activeTransitionSkeletonVariant: transitionState?.skeletonVariant ?? null,
+    pendingPageKey: resolveKangurRouteTransitionPendingPageKey(transitionState),
+  };
+};
+
 export function KangurRouteTransitionProvider({
   children,
 }: {
@@ -83,21 +119,7 @@ export function KangurRouteTransitionProvider({
   });
 
   const stateValue = useMemo<KangurRouteTransitionStateContextValue>(
-    () => ({
-      isRouteAcknowledging: transitionState?.phase === 'acknowledging',
-      isRoutePending: transitionState?.phase === 'pending',
-      isRouteWaitingForReady: transitionState?.phase === 'waiting_for_ready',
-      isRouteRevealing: transitionState?.phase === 'revealing',
-      transitionPhase: transitionState?.phase ?? 'idle',
-      activeTransitionSourceId: transitionState?.sourceId ?? null,
-      activeTransitionKind: transitionState?.kind ?? null,
-      activeTransitionPageKey: transitionState?.pageKey ?? null,
-      activeTransitionRequestedHref: transitionState
-        ? transitionState.committedRequestedHref ?? transitionState.href
-        : null,
-      activeTransitionSkeletonVariant: transitionState?.skeletonVariant ?? null,
-      pendingPageKey: transitionState?.phase === 'pending' ? transitionState.pageKey ?? null : null,
-    }),
+    () => resolveKangurRouteTransitionStateValue(transitionState),
     [transitionState]
   );
   const actionsValue = useMemo<KangurRouteTransitionActionsContextValue>(

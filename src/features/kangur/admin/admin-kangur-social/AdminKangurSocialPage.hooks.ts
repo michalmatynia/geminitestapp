@@ -48,6 +48,19 @@ export function useAdminKangurSocialPage() {
   const socialVisionWarning = resolvedVisionModelId
     ? null
     : 'Visual analysis is not configured. Choose a StudiQ Social vision model in Settings or assign AI Brain routing to enable screenshot analysis.';
+  const persistedProgrammableCaptureBaseUrl =
+    settings.persistedSocialSettings.programmableCaptureBaseUrl;
+  const persistedProgrammableCapturePersonaId =
+    settings.persistedSocialSettings.programmableCapturePersonaId;
+  const persistedProgrammableCaptureScript =
+    settings.persistedSocialSettings.programmableCaptureScript;
+  const persistedProgrammableCaptureRoutes =
+    settings.persistedSocialSettings.programmableCaptureRoutes;
+  const hasSavedProgrammableCaptureDefaults =
+    Boolean(persistedProgrammableCaptureBaseUrl?.trim()) ||
+    Boolean(persistedProgrammableCapturePersonaId?.trim()) ||
+    persistedProgrammableCaptureRoutes.length > 0 ||
+    persistedProgrammableCaptureScript !== KANGUR_SOCIAL_DEFAULT_PLAYWRIGHT_CAPTURE_SCRIPT;
 
   const editor = useSocialEditorSync({
     linkedinConnections: settings.linkedinConnections,
@@ -74,7 +87,6 @@ export function useAdminKangurSocialPage() {
     imageCount: editor.imageAssets.length,
     imageAddonCount: editor.imageAddonIds.length,
     docReferenceCount: editor.resolveDocReferences().length,
-    visualDocUpdateCount: editor.activePost?.visualDocUpdates?.length ?? 0,
     notesLength: editor.generationNotes.trim().length,
     hasLinkedInConnection: Boolean(settings.linkedinConnectionId),
     brainModelId: resolvedBrainModelId,
@@ -93,7 +105,6 @@ export function useAdminKangurSocialPage() {
   }), [
     editor.activePost?.id,
     editor.activePost?.status,
-    editor.activePost?.visualDocUpdates?.length,
     editor.imageAssets.length,
     editor.imageAddonIds.length,
     editor.resolveDocReferences,
@@ -185,7 +196,6 @@ export function useAdminKangurSocialPage() {
     setEditorState: editor.setEditorState,
     setImageAddonIds: editor.setImageAddonIds,
     setImageAssets: editor.setImageAssets,
-    setDocUpdatesResult: generation.setDocUpdatesResult,
     setBatchCaptureResult: imageAddons.setBatchCaptureResult,
     handleSelectAddons: editor.handleSelectAddons,
   });
@@ -195,16 +205,21 @@ export function useAdminKangurSocialPage() {
   const [captureOnlyErrorMessage, setCaptureOnlyErrorMessage] = useState<string | null>(null);
   const [isProgrammablePlaywrightModalOpen, setIsProgrammablePlaywrightModalOpen] = useState(false);
   const [programmableCaptureBaseUrl, setProgrammableCaptureBaseUrl] = useState(
-    settings.batchCaptureBaseUrl
+    settings.persistedSocialSettings.programmableCaptureBaseUrl ?? settings.batchCaptureBaseUrl
   );
-  const [programmableCapturePersonaId, setProgrammableCapturePersonaId] = useState('');
+  const [programmableCapturePersonaId, setProgrammableCapturePersonaId] = useState(
+    settings.persistedSocialSettings.programmableCapturePersonaId ?? ''
+  );
   const [programmableCaptureScript, setProgrammableCaptureScript] = useState(
-    KANGUR_SOCIAL_DEFAULT_PLAYWRIGHT_CAPTURE_SCRIPT
+    settings.persistedSocialSettings.programmableCaptureScript ||
+      KANGUR_SOCIAL_DEFAULT_PLAYWRIGHT_CAPTURE_SCRIPT
   );
   const [programmableCaptureRoutes, setProgrammableCaptureRoutes] = useState<
     KangurSocialProgrammableCaptureRoute[]
   >(() =>
-    buildKangurSocialProgrammableCaptureRoutesFromPresetIds(settings.batchCapturePresetIds)
+    settings.persistedSocialSettings.programmableCaptureRoutes.length > 0
+      ? settings.persistedSocialSettings.programmableCaptureRoutes
+      : buildKangurSocialProgrammableCaptureRoutesFromPresetIds(settings.batchCapturePresetIds)
   );
   const [programmableCapturePending, setProgrammableCapturePending] = useState(false);
   const [programmableCaptureMessage, setProgrammableCaptureMessage] = useState<string | null>(null);
@@ -311,19 +326,68 @@ export function useAdminKangurSocialPage() {
     attachBatchCaptureResultToActiveDraft,
   ]);
 
-  const handleOpenProgrammablePlaywrightModal = useCallback((): void => {
+  const openProgrammablePlaywrightModal = useCallback((options?: {
+    loadPersistedDefaults?: boolean;
+  }): void => {
+    const loadPersistedDefaults = options?.loadPersistedDefaults === true;
     setCaptureOnlyMessage(null);
     setCaptureOnlyErrorMessage(null);
     setProgrammableCaptureMessage(null);
     setProgrammableCaptureErrorMessage(null);
-    setProgrammableCaptureBaseUrl((current) => current.trim() || settings.batchCaptureBaseUrl);
+    setProgrammableCaptureBaseUrl(
+      (current) =>
+        loadPersistedDefaults
+          ? settings.persistedSocialSettings.programmableCaptureBaseUrl ||
+            settings.batchCaptureBaseUrl
+          : current.trim() ||
+            settings.persistedSocialSettings.programmableCaptureBaseUrl ||
+            settings.batchCaptureBaseUrl
+    );
+    setProgrammableCapturePersonaId(
+      (current) =>
+        loadPersistedDefaults
+          ? settings.persistedSocialSettings.programmableCapturePersonaId || ''
+          : current.trim() || settings.persistedSocialSettings.programmableCapturePersonaId || ''
+    );
+    setProgrammableCaptureScript(
+      (current) =>
+        loadPersistedDefaults
+          ? settings.persistedSocialSettings.programmableCaptureScript ||
+            KANGUR_SOCIAL_DEFAULT_PLAYWRIGHT_CAPTURE_SCRIPT
+          : current.trim() ||
+            settings.persistedSocialSettings.programmableCaptureScript ||
+            KANGUR_SOCIAL_DEFAULT_PLAYWRIGHT_CAPTURE_SCRIPT
+    );
     setProgrammableCaptureRoutes((current) =>
-      current.length > 0
-        ? current
-        : buildKangurSocialProgrammableCaptureRoutesFromPresetIds(settings.batchCapturePresetIds)
+      loadPersistedDefaults
+        ? settings.persistedSocialSettings.programmableCaptureRoutes.length > 0
+          ? settings.persistedSocialSettings.programmableCaptureRoutes
+          : buildKangurSocialProgrammableCaptureRoutesFromPresetIds(settings.batchCapturePresetIds)
+        : current.length > 0
+          ? current
+          : settings.persistedSocialSettings.programmableCaptureRoutes.length > 0
+            ? settings.persistedSocialSettings.programmableCaptureRoutes
+            : buildKangurSocialProgrammableCaptureRoutesFromPresetIds(
+                settings.batchCapturePresetIds
+              )
     );
     setIsProgrammablePlaywrightModalOpen(true);
-  }, [settings.batchCaptureBaseUrl, settings.batchCapturePresetIds]);
+  }, [
+    settings.batchCaptureBaseUrl,
+    settings.batchCapturePresetIds,
+    settings.persistedSocialSettings.programmableCaptureBaseUrl,
+    settings.persistedSocialSettings.programmableCapturePersonaId,
+    settings.persistedSocialSettings.programmableCaptureRoutes,
+    settings.persistedSocialSettings.programmableCaptureScript,
+  ]);
+
+  const handleOpenProgrammablePlaywrightModal = useCallback((): void => {
+    openProgrammablePlaywrightModal();
+  }, [openProgrammablePlaywrightModal]);
+
+  const handleOpenProgrammablePlaywrightModalFromDefaults = useCallback((): void => {
+    openProgrammablePlaywrightModal({ loadPersistedDefaults: true });
+  }, [openProgrammablePlaywrightModal]);
 
   const handleCloseProgrammablePlaywrightModal = useCallback((): void => {
     if (programmableCapturePending) {
@@ -364,6 +428,41 @@ export function useAdminKangurSocialPage() {
   const handleResetProgrammableCaptureScript = useCallback((): void => {
     setProgrammableCaptureScript(KANGUR_SOCIAL_DEFAULT_PLAYWRIGHT_CAPTURE_SCRIPT);
   }, []);
+
+  const handleSaveProgrammableCaptureDefaults = useCallback(async (): Promise<void> => {
+    await settings.handleSaveProgrammableCaptureDefaults({
+      baseUrl: programmableCaptureBaseUrl.trim() || null,
+      personaId: programmableCapturePersonaId.trim() || null,
+      script: programmableCaptureScript,
+      routes: programmableCaptureRoutes,
+    });
+  }, [
+    programmableCaptureBaseUrl,
+    programmableCapturePersonaId,
+    programmableCaptureRoutes,
+    programmableCaptureScript,
+    settings,
+  ]);
+
+  const handleResetProgrammableCaptureDefaults = useCallback(async (): Promise<void> => {
+    const didSave = await settings.handleSaveProgrammableCaptureDefaults({
+      baseUrl: null,
+      personaId: null,
+      script: KANGUR_SOCIAL_DEFAULT_PLAYWRIGHT_CAPTURE_SCRIPT,
+      routes: [],
+    });
+    if (!didSave) {
+      return;
+    }
+    setProgrammableCaptureBaseUrl(settings.batchCaptureBaseUrl);
+    setProgrammableCapturePersonaId('');
+    setProgrammableCaptureScript(KANGUR_SOCIAL_DEFAULT_PLAYWRIGHT_CAPTURE_SCRIPT);
+    setProgrammableCaptureRoutes(
+      buildKangurSocialProgrammableCaptureRoutesFromPresetIds(settings.batchCapturePresetIds)
+    );
+    setProgrammableCaptureMessage(null);
+    setProgrammableCaptureErrorMessage(null);
+  }, [settings]);
 
   const handleRunProgrammablePlaywrightCapture = useCallback(async (): Promise<void> => {
     if (!editor.activePost) {
@@ -607,6 +706,11 @@ export function useAdminKangurSocialPage() {
     linkedinConnections: settings.linkedinConnections,
     brainModelOptions: settings.brainModelOptions,
     visionModelOptions: settings.visionModelOptions,
+    persistedProgrammableCaptureBaseUrl,
+    persistedProgrammableCapturePersonaId,
+    persistedProgrammableCaptureScript,
+    persistedProgrammableCaptureRoutes,
+    hasSavedProgrammableCaptureDefaults,
 
     // CRUD
     saveMutation: crud.saveMutation,
@@ -629,6 +733,7 @@ export function useAdminKangurSocialPage() {
     createAddonMutation: imageAddons.createAddonMutation,
     batchCaptureMutation: imageAddons.batchCaptureMutation,
     batchCaptureResult: imageAddons.batchCaptureResult,
+    captureAppearanceMode: imageAddons.captureAppearanceMode,
     setBatchCaptureResult: imageAddons.setBatchCaptureResult,
     handleCreateAddon: imageAddons.handleCreateAddon,
     handleBatchCapture: imageAddons.handleBatchCapture,
@@ -640,13 +745,7 @@ export function useAdminKangurSocialPage() {
 
     // Generation
     generateMutation: generation.generateMutation,
-    previewDocUpdatesMutation: generation.previewDocUpdatesMutation,
-    applyDocUpdatesMutation: generation.applyDocUpdatesMutation,
-    docUpdatesResult: generation.docUpdatesResult,
-    setDocUpdatesResult: generation.setDocUpdatesResult,
     handleGenerate: generation.handleGenerate,
-    handlePreviewDocUpdates: generation.handlePreviewDocUpdates,
-    handleApplyDocUpdates: generation.handleApplyDocUpdates,
 
     // Pipeline
     pipelineStep: pipeline.pipelineStep,
@@ -679,12 +778,15 @@ export function useAdminKangurSocialPage() {
     programmableCaptureMessage,
     programmableCaptureErrorMessage,
     handleOpenProgrammablePlaywrightModal,
+    handleOpenProgrammablePlaywrightModalFromDefaults,
     handleCloseProgrammablePlaywrightModal,
     handleAddProgrammableCaptureRoute,
     handleUpdateProgrammableCaptureRoute,
     handleRemoveProgrammableCaptureRoute,
     handleSeedProgrammableCaptureRoutesFromPresets,
     handleResetProgrammableCaptureScript,
+    handleSaveProgrammableCaptureDefaults,
+    handleResetProgrammableCaptureDefaults,
     handleRunProgrammablePlaywrightCapture,
     handleRunProgrammablePlaywrightCaptureAndPipeline,
 

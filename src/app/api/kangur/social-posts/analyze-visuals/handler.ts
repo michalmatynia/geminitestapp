@@ -16,8 +16,6 @@ import { isRedisAvailable, isRedisReachable } from '@/shared/lib/queue';
 
 const bodySchema = z.object({
   postId: z.string().trim().optional(),
-  docReferences: z.array(z.string().trim().min(1)).optional(),
-  notes: z.string().trim().optional(),
   visionModelId: z.string().trim().optional(),
   imageAddonIds: z.array(z.string().trim().min(1)).max(30).default([]),
 });
@@ -57,8 +55,6 @@ export async function postKangurSocialPostAnalyzeVisualsHandler(
       type: 'manual-post-visual-analysis',
       input: {
         postId: normalizedPostId,
-        docReferences: parsed.docReferences ?? [],
-        notes: parsed.notes ?? '',
         visionModelId: parsed.visionModelId?.trim() || null,
         imageAddonIds,
         actorId: actor.actorId,
@@ -85,8 +81,6 @@ export async function postKangurSocialPostAnalyzeVisualsHandler(
         postId: parsed.postId ?? null,
         normalizedPostId,
         imageAddonCount: imageAddonIds.length,
-        docReferenceCount: parsed.docReferences?.length ?? 0,
-        notesLength: parsed.notes?.trim().length ?? 0,
         durationMs: Date.now() - startedAt,
         jobId,
       },
@@ -109,8 +103,6 @@ export async function postKangurSocialPostAnalyzeVisualsHandler(
       action: 'apiAnalyzeVisuals',
       postId: normalizedPostId,
       imageAddonCount: imageAddonIds.length,
-      docReferenceCount: parsed.docReferences?.length ?? 0,
-      notesLength: parsed.notes?.trim().length ?? 0,
       durationMs: Date.now() - startedAt,
     });
     throw error;

@@ -237,7 +237,6 @@ describe('kangurSocialPipelineQueue', () => {
       type: 'manual-post-visual-analysis',
       postId: 'post-1',
       imageAddonIds: ['addon-1'],
-      docReferences: ['overview'],
       visionModelId: 'vision-1',
       analysis: {
         summary: 'Updated classroom card',
@@ -257,7 +256,6 @@ describe('kangurSocialPipelineQueue', () => {
         input: {
           postId: 'post-1',
           imageAddonIds: ['addon-1'],
-          docReferences: ['overview'],
           visionModelId: 'vision-1',
           actorId: 'admin-1',
         },
@@ -272,7 +270,6 @@ describe('kangurSocialPipelineQueue', () => {
     expect(runKangurSocialPostVisualAnalysisJobMock).toHaveBeenCalledWith({
       postId: 'post-1',
       imageAddonIds: ['addon-1'],
-      docReferences: ['overview'],
       visionModelId: 'vision-1',
       actorId: 'admin-1',
       jobId: 'job-analysis-1',
@@ -351,7 +348,6 @@ describe('kangurSocialPipelineQueue', () => {
           input: {
             postId: 'post-1',
             imageAddonIds: ['addon-1'],
-            docReferences: ['overview'],
             visionModelId: 'vision-1',
             actorId: 'admin-1',
           },

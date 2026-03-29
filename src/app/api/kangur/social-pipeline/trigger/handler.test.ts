@@ -162,8 +162,6 @@ describe('social pipeline trigger handler', () => {
         jobType: 'manual-post-visual-analysis',
         input: {
           postId: 'post-1',
-          docReferences: ['overview'],
-          notes: 'Focus on the updated hero.',
           visionModelId: 'vision-1',
           imageAddonIds: ['addon-1'],
         },
@@ -174,8 +172,6 @@ describe('social pipeline trigger handler', () => {
       type: 'manual-post-visual-analysis',
       input: {
         postId: 'post-1',
-        docReferences: ['overview'],
-        notes: 'Focus on the updated hero.',
         visionModelId: 'vision-1',
         imageAddonIds: ['addon-1'],
         actorId: 'admin-1',

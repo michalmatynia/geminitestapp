@@ -158,11 +158,11 @@ describe('createKangurSocialImageAddonsBatch', () => {
     expect(mocks.enqueuePlaywrightNodeRunMock).toHaveBeenCalledWith(
       expect.objectContaining({
         request: expect.objectContaining({
-          input: {
+          input: expect.objectContaining({
             captures: [
               expect.objectContaining({ id: 'game' }),
             ],
-          },
+          }),
         }),
       })
     );
@@ -202,6 +202,49 @@ describe('createKangurSocialImageAddonsBatch', () => {
             },
           },
         }),
+      })
+    );
+  });
+
+  it('seeds the requested storefront appearance mode into Playwright storage and batch input', async () => {
+    mocks.enqueuePlaywrightNodeRunMock.mockResolvedValue(
+      makeCompletedRun(['game'])
+    );
+
+    await createKangurSocialImageAddonsBatch({
+      baseUrl: 'https://kangur.app',
+      presetIds: ['game'],
+      appearanceMode: 'dark',
+    });
+
+    expect(mocks.enqueuePlaywrightNodeRunMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        request: expect.objectContaining({
+          input: expect.objectContaining({
+            appearanceMode: 'dark',
+          }),
+          contextOptions: {
+            storageState: {
+              cookies: [],
+              origins: [
+                {
+                  origin: 'https://kangur.app',
+                  localStorage: [
+                    {
+                      name: 'kangur-storefront-appearance-mode',
+                      value: 'dark',
+                    },
+                  ],
+                },
+              ],
+            },
+          },
+        }),
+      })
+    );
+    expect(mocks.upsertKangurSocialImageAddonMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        captureAppearanceMode: 'dark',
       })
     );
   });
@@ -318,15 +361,22 @@ describe('createKangurSocialImageAddonsBatch', () => {
     expect(mocks.enqueuePlaywrightNodeRunMock).toHaveBeenCalledWith(
       expect.objectContaining({
         request: expect.objectContaining({
-          input: {
+          input: expect.objectContaining({
             captures: [
               expect.objectContaining({
                 id: 'game',
                 url: 'https://kangur.app/kangur/game?kangurCapture=social-batch',
               }),
             ],
-          },
+          }),
           script: expect.stringContaining('data-route-capture-ready'),
+        }),
+      })
+    );
+    expect(mocks.enqueuePlaywrightNodeRunMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        request: expect.objectContaining({
+          script: expect.stringContaining('data-kangur-appearance-mode'),
         }),
       })
     );
@@ -450,7 +500,7 @@ describe('createKangurSocialImageAddonsBatch', () => {
         request: expect.objectContaining({
           personaId: 'persona-1',
           script: 'return input.captures;',
-          input: {
+          input: expect.objectContaining({
             captures: [
               {
                 id: 'route-1',
@@ -461,7 +511,7 @@ describe('createKangurSocialImageAddonsBatch', () => {
                 waitForSelectorMs: 3000,
               },
             ],
-          },
+          }),
         }),
       })
     );

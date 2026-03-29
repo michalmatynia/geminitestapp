@@ -10,8 +10,7 @@ import { getDiskPathFromPublicPath, isHttpFilepath } from '@/features/files/serv
 import type { KangurSocialImageAddon } from '@/shared/contracts/kangur-social-image-addons';
 import { findKangurSocialImageAddonsByIds } from './social-image-addons-repository';
 import {
-  kangurSocialDocUpdateSchema,
-  type KangurSocialDocUpdate,
+  type KangurSocialVisualAnalysis,
 } from '@/shared/contracts/kangur-social-posts';
 import { configurationError } from '@/shared/errors/app-error';
 import { resolveBrainExecutionConfigForCapability } from '@/shared/lib/ai-brain/server';
@@ -22,17 +21,7 @@ import {
 import { inferBrainModelVendor } from '@/shared/lib/ai-brain/model-vendor';
 import { ErrorSystem } from '@/features/kangur/shared/utils/observability/error-system';
 
-import { buildKangurDocContext, resolveKangurDocReferences } from './social-posts-docs';
-
-export type KangurSocialVisualAnalysis = {
-  summary: string;
-  highlights: string[];
-  docUpdates: KangurSocialDocUpdate[];
-};
-
 type VisualAnalysisInput = {
-  docReferences?: string[];
-  notes?: string;
   modelId?: string;
   imageAddons: KangurSocialImageAddon[];
 };
@@ -191,26 +180,14 @@ const parseHighlights = (value: unknown): string[] => {
     .slice(0, 24);
 };
 
-const parseDocUpdates = (value: unknown): KangurSocialDocUpdate[] => {
-  if (!Array.isArray(value)) return [];
-  const updates: KangurSocialDocUpdate[] = [];
-  value.forEach((entry) => {
-    const parsed = kangurSocialDocUpdateSchema.safeParse(entry);
-    if (parsed.success) updates.push(parsed.data);
-  });
-  return updates.slice(0, 50);
-};
-
 const buildSystemPrompt = (basePrompt: string, hasBeforeAfter: boolean): string => {
   const lines = [
     basePrompt.trim(),
-    'You analyze StudiQ UI screenshots against the documentation context.',
-    'Return a JSON object with keys: summary, highlights, docUpdates.',
-    'summary: short paragraph describing visible changes or notable UI details.',
-    'highlights: array of short bullet sentences.',
-    'docUpdates: array of objects { docPath, section, proposedText, reason }.',
-    'Use docPath values that exist under /docs/kangur when possible.',
-    'If you are not confident about a doc update, return an empty docUpdates array.',
+    'You analyze StudiQ UI screenshots only.',
+    'Do not write marketing copy, LinkedIn post drafts, publishing recommendations, or documentation update proposals.',
+    'Return a JSON object with keys: summary and highlights.',
+    'summary: a concise visual analysis paragraph describing what is visible in the current screenshots.',
+    'highlights: an array of short factual bullet sentences about visible UI details or changes.',
   ];
   if (hasBeforeAfter) {
     lines.push(
@@ -228,10 +205,6 @@ export async function analyzeKangurSocialVisuals(
   input: VisualAnalysisInput
 ): Promise<KangurSocialVisualAnalysis> {
   const startedAt = Date.now();
-  const docReferences = (input.docReferences ?? []).map((ref) => ref.trim()).filter(Boolean);
-  const docs = resolveKangurDocReferences(docReferences);
-  const { context } = await buildKangurDocContext(docs);
-  const notes = input.notes?.trim() ?? '';
   const imageAddons = input.imageAddons ?? [];
   let modelId = '';
 
@@ -269,10 +242,6 @@ export async function analyzeKangurSocialVisuals(
 
     const systemPrompt = buildSystemPrompt(brainConfig.systemPrompt ?? '', hasBeforeAfter);
     const userPromptLines = [
-      'Documentation context:',
-      '',
-      context,
-      '',
       'Captured screenshots:',
       ...pairs.map(({ addon, previousAddon }, index) => {
         const label = addon.title?.trim() || `Screenshot ${index + 1}`;
@@ -281,9 +250,6 @@ export async function analyzeKangurSocialVisuals(
         return `- ${label}${source ? ` (${source})` : ''}${changeNote}`;
       }),
     ];
-    if (notes) {
-      userPromptLines.push('', 'Additional notes:', notes);
-    }
 
     const content: ChatCompletionContentPart[] = [
       { type: 'text', text: userPromptLines.join('\n') },
@@ -303,7 +269,6 @@ export async function analyzeKangurSocialVisuals(
     });
 
     let parsed: Partial<KangurSocialVisualAnalysis> & {
-      docUpdates?: unknown;
       highlights?: unknown;
     } = {};
     try {
@@ -335,7 +300,7 @@ export async function analyzeKangurSocialVisuals(
     const analysis: KangurSocialVisualAnalysis = {
       summary: truncateText(summaryText, MAX_SUMMARY_CHARS),
       highlights: parseHighlights(parsed.highlights),
-      docUpdates: parseDocUpdates(parsed.docUpdates),
+      docUpdates: [],
     };
 
     const beforeAfterCount = pairs.filter((p) => p.previousAddon !== null).length;
@@ -346,10 +311,7 @@ export async function analyzeKangurSocialVisuals(
       modelId,
       imageAddonCount: imageAddons.length,
       beforeAfterPairCount: beforeAfterCount,
-      docReferenceCount: docReferences.length,
       highlightCount: analysis.highlights.length,
-      docUpdateCount: analysis.docUpdates.length,
-      notesLength: notes.length,
     });
 
     return analysis;
@@ -360,8 +322,6 @@ export async function analyzeKangurSocialVisuals(
       durationMs: Date.now() - startedAt,
       modelId: modelId || null,
       imageAddonCount: imageAddons.length,
-      docReferenceCount: docReferences.length,
-      notesLength: notes.length,
     });
     throw error;
   }

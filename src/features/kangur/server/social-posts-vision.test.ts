@@ -7,8 +7,6 @@ const mocks = vi.hoisted(() => ({
   runBrainChatCompletionMock: vi.fn(),
   supportsBrainJsonModeMock: vi.fn(),
   inferBrainModelVendorMock: vi.fn(),
-  resolveKangurDocReferencesMock: vi.fn(),
-  buildKangurDocContextMock: vi.fn(),
   getDiskPathFromPublicPathMock: vi.fn(),
   isHttpFilepathMock: vi.fn(),
   findKangurSocialImageAddonsByIdsMock: vi.fn(),
@@ -28,12 +26,6 @@ vi.mock('@/shared/lib/ai-brain/server-runtime-client', () => ({
 
 vi.mock('@/shared/lib/ai-brain/model-vendor', () => ({
   inferBrainModelVendor: (...args: unknown[]) => mocks.inferBrainModelVendorMock(...args),
-}));
-
-vi.mock('./social-posts-docs', () => ({
-  resolveKangurDocReferences: (...args: unknown[]) =>
-    mocks.resolveKangurDocReferencesMock(...args),
-  buildKangurDocContext: (...args: unknown[]) => mocks.buildKangurDocContextMock(...args),
 }));
 
 vi.mock('@/features/files/server', () => ({
@@ -87,15 +79,12 @@ describe('analyzeKangurSocialVisuals', () => {
     mocks.resolveBrainExecutionConfigMock.mockResolvedValue(defaultBrainConfig);
     mocks.supportsBrainJsonModeMock.mockReturnValue(true);
     mocks.inferBrainModelVendorMock.mockReturnValue('openai');
-    mocks.resolveKangurDocReferencesMock.mockReturnValue([]);
-    mocks.buildKangurDocContextMock.mockResolvedValue({ context: 'Doc context here.' });
     mocks.isHttpFilepathMock.mockReturnValue(false);
     mocks.findKangurSocialImageAddonsByIdsMock.mockResolvedValue([]);
     mocks.runBrainChatCompletionMock.mockResolvedValue({
       text: JSON.stringify({
         summary: 'Visual summary of the UI.',
         highlights: ['New button added', 'Layout updated'],
-        docUpdates: [],
       }),
       vendor: 'openai',
       modelId: 'gpt-4o',
@@ -131,6 +120,30 @@ describe('analyzeKangurSocialVisuals', () => {
     expect(result.summary).toBe('Visual summary of the UI.');
     expect(result.highlights).toEqual(['New button added', 'Layout updated']);
     expect(result.docUpdates).toEqual([]);
+  });
+
+  it('does not inject documentation context and forbids non-visual proposals in the prompt', async () => {
+    const addon = makeAddon();
+
+    await analyzeKangurSocialVisuals({ imageAddons: [addon] });
+
+    const callArgs = mocks.runBrainChatCompletionMock.mock.calls[0]?.[0];
+    const systemMessage = callArgs?.messages?.[0];
+    const userMessage = callArgs?.messages?.[1];
+    const userText =
+      Array.isArray(userMessage?.content)
+        ? userMessage.content.find((p: { type?: string; text?: string }) => p.type === 'text')?.text
+        : userMessage?.content;
+
+    expect(systemMessage?.content).toContain(
+      'Do not write marketing copy, LinkedIn post drafts, publishing recommendations, or documentation update proposals.'
+    );
+    expect(systemMessage?.content).toContain(
+      'Return a JSON object with keys: summary and highlights.'
+    );
+    expect(userText).not.toContain('Documentation context:');
+    expect(userText).not.toContain('Additional notes:');
+    expect(userText).toContain('Captured screenshots:');
   });
 
   it('uses raw text as summary when JSON parsing fails', async () => {
@@ -202,13 +215,10 @@ describe('analyzeKangurSocialVisuals', () => {
     expect(mocks.findKangurSocialImageAddonsByIdsMock).not.toHaveBeenCalled();
   });
 
-  it('includes notes in the user prompt when provided', async () => {
+  it('keeps the user prompt limited to screenshot context', async () => {
     const addon = makeAddon();
 
-    await analyzeKangurSocialVisuals({
-      imageAddons: [addon],
-      notes: 'Focus on the sidebar changes.',
-    });
+    await analyzeKangurSocialVisuals({ imageAddons: [addon] });
 
     const callArgs = mocks.runBrainChatCompletionMock.mock.calls[0]?.[0];
     const userMessage = callArgs?.messages?.[1];
@@ -216,7 +226,8 @@ describe('analyzeKangurSocialVisuals', () => {
       Array.isArray(userMessage?.content)
         ? userMessage.content.find((p: any) => p.type === 'text')?.text
         : userMessage?.content;
-    expect(textPart).toContain('Focus on the sidebar changes.');
+    expect(textPart).toContain('Captured screenshots:');
+    expect(textPart).not.toContain('Additional notes:');
   });
 
   it('skips Ollama guard limits for Ollama vendor', async () => {

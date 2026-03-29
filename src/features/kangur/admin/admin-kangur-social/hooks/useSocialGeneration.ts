@@ -4,18 +4,13 @@ import { useEffect, useRef, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 
 import { useToast } from '@/features/kangur/shared/ui';
-import {
-  useApplyKangurSocialDocUpdates,
-  useGenerateKangurSocialPost,
-  usePreviewKangurSocialDocUpdates,
-} from '@/features/kangur/ui/hooks/useKangurSocialPosts';
+import { useGenerateKangurSocialPost } from '@/features/kangur/ui/hooks/useKangurSocialPosts';
 import {
   logKangurClientError,
   trackKangurClientEvent,
 } from '@/features/kangur/observability/client';
 import { ErrorSystem } from '@/features/kangur/shared/utils/observability/error-system-client';
 import type {
-  KangurSocialDocUpdatesResponse,
   KangurSocialGeneratedDraft,
   KangurSocialPost,
 } from '@/shared/contracts/kangur-social-posts';
@@ -73,10 +68,6 @@ export function useSocialGeneration(deps: SocialGenerationDeps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const generateMutation = useGenerateKangurSocialPost();
-  const previewDocUpdatesMutation = usePreviewKangurSocialDocUpdates();
-  const applyDocUpdatesMutation = useApplyKangurSocialDocUpdates();
-  const [docUpdatesResult, setDocUpdatesResult] =
-    useState<KangurSocialDocUpdatesResponse | null>(null);
   const [generatePending, setGeneratePending] = useState(false);
   const generateDelayTimeoutRef = useRef<SafeTimerId | null>(null);
   const isUnmountedRef = useRef(false);
@@ -205,7 +196,6 @@ export function useSocialGeneration(deps: SocialGenerationDeps) {
       }
 
       void queryClient.invalidateQueries({ queryKey: KANGUR_SOCIAL_POSTS_QUERY_KEY });
-      setDocUpdatesResult(null);
       toast('Draft updated — review the generated post.', { variant: 'success' });
       trackKangurClientEvent(
         'kangur_social_post_generate_success',
@@ -231,85 +221,11 @@ export function useSocialGeneration(deps: SocialGenerationDeps) {
     }
   };
 
-  const handlePreviewDocUpdates = async (): Promise<void> => {
-    if (!deps.activePost) return;
-    trackKangurClientEvent(
-      'kangur_social_doc_updates_preview_attempt',
-      deps.buildSocialContext()
-    );
-    try {
-      const result = await previewDocUpdatesMutation.mutateAsync(deps.activePost.id);
-      setDocUpdatesResult(result);
-      const fileCount = result.plan.files.length;
-      const updateCount = result.plan.items.length;
-      toast(
-        `Documentation preview ready (${fileCount} file${fileCount === 1 ? '' : 's'}, ${updateCount} update${updateCount === 1 ? '' : 's'})`,
-        { variant: 'success' }
-      );
-      trackKangurClientEvent(
-        'kangur_social_doc_updates_preview_success',
-        deps.buildSocialContext({ fileCount, updateCount })
-      );
-    } catch (error) {
-      void ErrorSystem.captureException(error);
-      logKangurClientError(error, {
-        source: 'AdminKangurSocialPage',
-        action: 'previewDocUpdates',
-        ...deps.buildSocialContext({ error: true }),
-      });
-      toast('Failed to preview documentation updates', { variant: 'error' });
-      trackKangurClientEvent(
-        'kangur_social_doc_updates_preview_failed',
-        deps.buildSocialContext({ error: true })
-      );
-    }
-  };
-
-  const handleApplyDocUpdates = async (): Promise<void> => {
-    if (!deps.activePost) return;
-    trackKangurClientEvent(
-      'kangur_social_doc_updates_apply_attempt',
-      deps.buildSocialContext()
-    );
-    try {
-      const result = await applyDocUpdatesMutation.mutateAsync(deps.activePost.id);
-      setDocUpdatesResult(result);
-      const appliedFiles = result.plan.files.filter((file) => file.applied).length;
-      const updateCount = result.plan.items.length;
-      toast(
-        `${appliedFiles > 0 ? 'Documentation updated' : 'No documentation changes applied'} (${appliedFiles} file${appliedFiles === 1 ? '' : 's'} updated, ${updateCount} update${updateCount === 1 ? '' : 's'})`,
-        { variant: appliedFiles > 0 ? 'success' : 'warning' }
-      );
-      trackKangurClientEvent(
-        'kangur_social_doc_updates_apply_success',
-        deps.buildSocialContext({ appliedFiles, updateCount })
-      );
-    } catch (error) {
-      void ErrorSystem.captureException(error);
-      logKangurClientError(error, {
-        source: 'AdminKangurSocialPage',
-        action: 'applyDocUpdates',
-        ...deps.buildSocialContext({ error: true }),
-      });
-      toast('Failed to apply documentation updates', { variant: 'error' });
-      trackKangurClientEvent(
-        'kangur_social_doc_updates_apply_failed',
-        deps.buildSocialContext({ error: true })
-      );
-    }
-  };
-
   return {
     generateMutation: {
       ...generateMutation,
       isPending: generatePending || generateMutation.isPending,
     } as typeof generateMutation,
-    previewDocUpdatesMutation,
-    applyDocUpdatesMutation,
-    docUpdatesResult,
-    setDocUpdatesResult,
     handleGenerate,
-    handlePreviewDocUpdates,
-    handleApplyDocUpdates,
   };
 }

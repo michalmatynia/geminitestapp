@@ -2,8 +2,10 @@
 
 import { useState } from 'react';
 
+import { useOptionalCmsStorefrontAppearance } from '@/features/cms/public';
 import { useToast } from '@/features/kangur/shared/ui';
 import type {
+  KangurSocialCaptureAppearanceMode,
   KangurSocialImageAddonsBatchResult,
   KangurSocialProgrammableCaptureRoute,
 } from '@/shared/contracts/kangur-social-image-addons';
@@ -16,6 +18,11 @@ import {
   trackKangurClientEvent,
 } from '@/features/kangur/observability/client';
 import { ErrorSystem } from '@/features/kangur/shared/utils/observability/error-system-client';
+import {
+  KANGUR_STOREFRONT_APPEARANCE_STORAGE_KEY,
+  KANGUR_STOREFRONT_DEFAULT_MODE_SETTING_KEY,
+} from '@/features/kangur/storefront-appearance-settings';
+import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
 
 import { emptyAddonForm, type AddonFormState } from '../AdminKangurSocialPage.Constants';
 
@@ -28,6 +35,25 @@ type SocialImageAddonsDeps = {
   batchCapturePresetIds: string[];
   batchCapturePresetLimit: number | null;
   buildSocialContext: (overrides?: Record<string, unknown>) => Record<string, unknown>;
+};
+
+const normalizeAppearanceMode = (
+  value: string | null | undefined
+): KangurSocialCaptureAppearanceMode | null =>
+  value === 'default' || value === 'dawn' || value === 'sunset' || value === 'dark' ? value : null;
+
+const readPersistedAppearanceMode = (): KangurSocialCaptureAppearanceMode | null => {
+  if (typeof window === 'undefined') {
+    return null;
+  }
+
+  try {
+    return normalizeAppearanceMode(
+      window.localStorage.getItem(KANGUR_STOREFRONT_APPEARANCE_STORAGE_KEY)
+    );
+  } catch {
+    return null;
+  }
 };
 
 const throwBatchCaptureValidationError = (
@@ -190,10 +216,22 @@ const handleBatchCaptureFailure = ({
 
 export function useSocialImageAddons(deps: SocialImageAddonsDeps) {
   const { toast } = useToast();
+  const settingsStore = useSettingsStore();
+  const storefrontAppearance = useOptionalCmsStorefrontAppearance();
   const createAddonMutation = useCreateKangurSocialImageAddon();
   const batchCaptureMutation = useBatchCaptureKangurSocialImageAddons();
   const [batchCaptureResult, setBatchCaptureResult] =
     useState<KangurSocialImageAddonsBatchResult | null>(null);
+  const storedDefaultAppearanceMode = settingsStore.get(
+    KANGUR_STOREFRONT_DEFAULT_MODE_SETTING_KEY
+  );
+
+  const resolveCaptureAppearanceMode = (): KangurSocialCaptureAppearanceMode =>
+    normalizeAppearanceMode(storefrontAppearance?.mode) ??
+    readPersistedAppearanceMode() ??
+    normalizeAppearanceMode(storedDefaultAppearanceMode) ??
+    'default';
+  const captureAppearanceMode = resolveCaptureAppearanceMode();
 
   const handleCreateAddon = async (): Promise<void> => {
     const title = deps.addonForm.title.trim();
@@ -211,6 +249,7 @@ export function useSocialImageAddons(deps: SocialImageAddonsDeps) {
         sourceUrl,
         description: deps.addonForm.description.trim() || undefined,
         selector: deps.addonForm.selector.trim() || undefined,
+        appearanceMode: captureAppearanceMode,
         ...(waitForMs !== undefined ? { waitForMs } : {}),
       });
       deps.setAddonForm(emptyAddonForm);
@@ -254,7 +293,10 @@ export function useSocialImageAddons(deps: SocialImageAddonsDeps) {
       })
     );
     try {
-      const result = await batchCaptureMutation.mutateAsync(request);
+      const result = await batchCaptureMutation.mutateAsync({
+        ...request,
+        appearanceMode: captureAppearanceMode,
+      });
       handleBatchCaptureSuccess({
         result,
         toast,
@@ -281,6 +323,7 @@ export function useSocialImageAddons(deps: SocialImageAddonsDeps) {
     createAddonMutation,
     batchCaptureMutation,
     batchCaptureResult,
+    captureAppearanceMode,
     setBatchCaptureResult,
     runBatchCapture,
     handleCreateAddon,

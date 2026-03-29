@@ -17,11 +17,13 @@ import {
 } from '@/features/files/server';
 import {
   normalizeKangurSocialImageAddon,
+  type KangurSocialCaptureAppearanceMode,
   type KangurSocialImageAddon,
 } from '@/shared/contracts/kangur-social-image-addons';
 import type { ImageFileSelection } from '@/shared/contracts/files';
 import { operationFailedError } from '@/shared/errors/app-error';
 import { ErrorSystem } from '@/features/kangur/shared/utils/observability/error-system';
+import { KANGUR_STOREFRONT_APPEARANCE_STORAGE_KEY } from '@/features/kangur/storefront-appearance-settings';
 
 import { upsertKangurSocialImageAddon } from './social-image-addons-repository';
 
@@ -32,6 +34,13 @@ export default async function run({ page, input, artifacts, helpers, log }) {
   const timeoutMs = Number.isFinite(input.waitForSelectorMs)
     ? Number(input.waitForSelectorMs)
     : 15000;
+  const expectedAppearanceMode =
+    typeof input.appearanceMode === 'string' ? input.appearanceMode.trim() : '';
+  const expectedAppearanceSelector = expectedAppearanceMode
+    ? 'html[data-kangur-appearance-mode="' + expectedAppearanceMode + '"], ' +
+      'body[data-kangur-appearance-mode="' + expectedAppearanceMode + '"], ' +
+      '#app-content[data-kangur-appearance-mode="' + expectedAppearanceMode + '"]'
+    : '';
 
   log(\`Load event fired — current URL: \${page.url()}\`);
 
@@ -57,6 +66,10 @@ export default async function run({ page, input, artifacts, helpers, log }) {
       if (!routeContent) { await helpers.sleep(400); continue; }
       const captureReady = await routeContent.getAttribute('data-route-capture-ready');
       if (captureReady !== 'true') { await helpers.sleep(400); continue; }
+      if (expectedAppearanceSelector) {
+        const appearanceApplied = await page.$(expectedAppearanceSelector);
+        if (!appearanceApplied) { await helpers.sleep(400); continue; }
+      }
       pageReady = true;
       break;
     }
@@ -94,6 +107,7 @@ type CreateSocialImageAddonInput = {
   selector?: string | null;
   waitForMs?: number | null;
   waitForSelectorMs?: number | null;
+  appearanceMode?: KangurSocialCaptureAppearanceMode | null;
   createdBy?: string | null;
   forwardCookies?: string | null;
 };
@@ -114,6 +128,11 @@ const resolveArtifactByName = (
 
 const buildAddonPublicPath = (filename: string): string =>
   `/uploads/kangur/social-addons/${filename}`;
+
+const normalizeCaptureAppearanceMode = (
+  value: string | null | undefined
+): KangurSocialCaptureAppearanceMode | null =>
+  value === 'default' || value === 'dawn' || value === 'sunset' || value === 'dark' ? value : null;
 
 const parseCookiesForPlaywright = (
   cookieHeader: string,
@@ -140,6 +159,54 @@ const parseCookiesForPlaywright = (
       };
     })
     .filter((c): c is NonNullable<typeof c> => c !== null && c.name.length > 0);
+};
+
+const resolvePlaywrightStorageState = (params: {
+  cookieHeader: string | null | undefined;
+  sourceUrl: string;
+  appearanceMode: string | null | undefined;
+}):
+  | {
+      cookies: Array<{ name: string; value: string; domain: string; path: string }>;
+      origins: Array<{
+        origin: string;
+        localStorage: Array<{ name: string; value: string }>;
+      }>;
+    }
+  | null => {
+  const cookies = params.cookieHeader
+    ? parseCookiesForPlaywright(params.cookieHeader, params.sourceUrl)
+    : [];
+  const appearanceMode = normalizeCaptureAppearanceMode(params.appearanceMode);
+  let origin: string | null = null;
+  if (appearanceMode) {
+    try {
+      origin = new URL(params.sourceUrl).origin;
+    } catch {
+      origin = null;
+    }
+  }
+
+  const origins =
+    appearanceMode && origin
+      ? [
+          {
+            origin,
+            localStorage: [
+              {
+                name: KANGUR_STOREFRONT_APPEARANCE_STORAGE_KEY,
+                value: appearanceMode,
+              },
+            ],
+          },
+        ]
+      : [];
+
+  if (cookies.length === 0 && origins.length === 0) {
+    return null;
+  }
+
+  return { cookies, origins };
 };
 
 const writeLocalCopy = async (publicPath: string, buffer: Buffer): Promise<void> => {
@@ -187,6 +254,7 @@ export async function createKangurSocialImageAddonFromPlaywright(
   const hasSelector = selectorValue.length > 0;
   const waitForMs = input.waitForMs ?? 0;
   const waitForSelectorMs = input.waitForSelectorMs ?? 10000;
+  const appearanceMode = normalizeCaptureAppearanceMode(input.appearanceMode);
 
   try {
     if (!title) {
@@ -199,20 +267,20 @@ export async function createKangurSocialImageAddonFromPlaywright(
 
     stage = 'enqueue';
     const contextOptions: Record<string, unknown> = {};
-    if (input.forwardCookies) {
-      const cookies = parseCookiesForPlaywright(input.forwardCookies, sourceUrl);
-      if (cookies.length > 0) {
-        contextOptions['storageState'] = {
-          cookies,
-          origins: [],
-        };
-      }
+    const storageState = resolvePlaywrightStorageState({
+      cookieHeader: input.forwardCookies,
+      sourceUrl,
+      appearanceMode,
+    });
+    if (storageState) {
+      contextOptions['storageState'] = storageState;
     }
 
     const run = await enqueuePlaywrightNodeRun({
       request: {
         script: SOCIAL_ADDON_PLAYWRIGHT_SCRIPT,
         input: {
+          appearanceMode,
           selector: selectorValue,
           waitForMs,
           waitForSelectorMs,
@@ -296,6 +364,7 @@ export async function createKangurSocialImageAddonFromPlaywright(
       previousAddonId: null,
       playwrightRunId: run.runId,
       playwrightArtifact: artifact.path,
+      captureAppearanceMode: appearanceMode,
       createdBy: input.createdBy ?? null,
       updatedBy: input.createdBy ?? null,
     });

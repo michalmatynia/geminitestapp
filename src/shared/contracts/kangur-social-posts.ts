@@ -32,28 +32,6 @@ export type KangurSocialVisualAnalysisStatus = z.infer<
   typeof kangurSocialVisualAnalysisStatusSchema
 >;
 
-export type KangurSocialDocUpdateItemPlan = {
-  docPath: string;
-  section: string | null;
-  proposedText: string;
-  applied: boolean;
-  skipReason?: string;
-};
-
-export type KangurSocialDocUpdateFilePlan = {
-  docPath: string;
-  applied: boolean;
-  diff: string;
-  truncated: boolean;
-  before: string;
-  after: string;
-};
-
-export type KangurSocialDocUpdatePlan = {
-  items: KangurSocialDocUpdateItemPlan[];
-  files: KangurSocialDocUpdateFilePlan[];
-};
-
 export const kangurSocialPublishModeSchema = z.enum(['published', 'draft']);
 export type KangurSocialPublishMode = z.infer<typeof kangurSocialPublishModeSchema>;
 
@@ -133,12 +111,6 @@ export type KangurSocialPostEditorStateDto = z.infer<
 
 export const kangurSocialPostsSchema = z.array(kangurSocialPostSchema);
 export type KangurSocialPosts = z.infer<typeof kangurSocialPostsSchema>;
-
-export type KangurSocialDocUpdatesResponse = {
-  applied: boolean;
-  plan: KangurSocialDocUpdatePlan;
-  post: KangurSocialPost | null;
-};
 
 export const kangurSocialPostStoreSchema = z.object({
   version: z.number().int().positive().default(1),

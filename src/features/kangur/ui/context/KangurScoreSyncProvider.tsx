@@ -10,25 +10,9 @@ import { syncGuestKangurScores } from '@/features/kangur/services/guest-kangur-s
 import { getKangurPlatform } from '@/features/kangur/services/kangur-platform';
 import { isKangurAuthStatusError } from '@/features/kangur/services/status-errors';
 import { useKangurAuth } from '@/features/kangur/ui/context/KangurAuthContext';
-
+import { resolveKangurUserScopeKey } from '@/features/kangur/ui/context/kangur-user-scope';
 
 const kangurPlatform = getKangurPlatform();
-
-const resolveAuthenticatedLearnerKey = (
-  user: ReturnType<typeof useKangurAuth>['user']
-): string | null => {
-  const activeLearnerId = user?.activeLearner?.id?.trim();
-  if (activeLearnerId) {
-    return activeLearnerId;
-  }
-
-  if (user?.actorType === 'parent') {
-    return null;
-  }
-
-  const userId = user?.id?.trim();
-  return userId && userId.length > 0 ? userId : null;
-};
 
 export function KangurScoreSyncProvider({
   children,
@@ -36,7 +20,7 @@ export function KangurScoreSyncProvider({
   children?: ReactNode;
 }): React.JSX.Element | null {
   const { isAuthenticated, isLoadingAuth, user } = useKangurAuth();
-  const learnerKey = resolveAuthenticatedLearnerKey(user);
+  const learnerKey = resolveKangurUserScopeKey(user);
 
   useEffect(() => {
     if (isLoadingAuth || !isAuthenticated || !learnerKey) {

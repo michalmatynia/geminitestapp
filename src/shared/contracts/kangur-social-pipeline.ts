@@ -133,9 +133,7 @@ export const kangurSocialManualVisualAnalysisProgressSchema = z.object({
   updatedAt: z.number().int().nonnegative(),
   postId: z.string().nullable().default(null),
   imageAddonCount: z.number().int().nonnegative().default(0),
-  docReferenceCount: z.number().int().nonnegative().default(0),
   highlightCount: z.number().int().nonnegative().nullable().default(null),
-  docUpdateCount: z.number().int().nonnegative().nullable().default(null),
 });
 
 export type KangurSocialManualVisualAnalysisProgress = z.infer<
@@ -163,7 +161,6 @@ export const kangurSocialManualGenerationProgressSchema = z.object({
   docReferenceCount: z.number().int().nonnegative().default(0),
   visualSummaryPresent: z.boolean().default(false),
   highlightCount: z.number().int().nonnegative().nullable().default(null),
-  docUpdateCount: z.number().int().nonnegative().nullable().default(null),
 });
 
 export type KangurSocialManualGenerationProgress = z.infer<
@@ -174,7 +171,6 @@ export type KangurSocialManualVisualAnalysisJobResult = {
   type: 'manual-post-visual-analysis';
   postId: string | null;
   imageAddonIds: string[];
-  docReferences: string[];
   visionModelId: string | null;
   analysis: KangurSocialVisualAnalysis;
   savedPost: KangurSocialPost | null;

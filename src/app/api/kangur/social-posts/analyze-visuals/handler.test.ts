@@ -80,8 +80,6 @@ describe('social post analyze visuals handler', () => {
       }),
       createContext({
         postId: 'post-1',
-        docReferences: ['overview'],
-        notes: 'Focus on homepage changes.',
         visionModelId: 'vision-1',
         imageAddonIds: ['addon-1'],
       })
@@ -93,8 +91,6 @@ describe('social post analyze visuals handler', () => {
       type: 'manual-post-visual-analysis',
       input: {
         postId: 'post-1',
-        docReferences: ['overview'],
-        notes: 'Focus on homepage changes.',
         visionModelId: 'vision-1',
         imageAddonIds: ['addon-1'],
         actorId: 'admin-1',

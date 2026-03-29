@@ -14,6 +14,8 @@ const {
   logKangurClientErrorMock,
   trackKangurClientEventMock,
   captureExceptionMock,
+  settingsStoreGetMock,
+  storefrontAppearanceModeRef,
 } = vi.hoisted(() => ({
   toastMock: vi.fn(),
   createAddonMutateAsyncMock: vi.fn(),
@@ -21,10 +23,19 @@ const {
   logKangurClientErrorMock: vi.fn(),
   trackKangurClientEventMock: vi.fn(),
   captureExceptionMock: vi.fn(),
+  settingsStoreGetMock: vi.fn<(key: string) => string | undefined>(),
+  storefrontAppearanceModeRef: { current: null as string | null },
 }));
 
 vi.mock('@/features/kangur/shared/ui', () => ({
   useToast: () => ({ toast: toastMock }),
+}));
+
+vi.mock('@/features/cms/public', () => ({
+  useOptionalCmsStorefrontAppearance: () =>
+    storefrontAppearanceModeRef.current
+      ? { mode: storefrontAppearanceModeRef.current, setMode: vi.fn() }
+      : null,
 }));
 
 vi.mock('@/features/kangur/ui/hooks/useKangurSocialImageAddons', () => ({
@@ -33,6 +44,12 @@ vi.mock('@/features/kangur/ui/hooks/useKangurSocialImageAddons', () => ({
   }),
   useBatchCaptureKangurSocialImageAddons: () => ({
     mutateAsync: batchCaptureMutateAsyncMock,
+  }),
+}));
+
+vi.mock('@/shared/providers/SettingsStoreProvider', () => ({
+  useSettingsStore: () => ({
+    get: settingsStoreGetMock,
   }),
 }));
 
@@ -48,19 +65,24 @@ vi.mock('@/features/kangur/shared/utils/observability/error-system-client', () =
 }));
 
 import { useSocialImageAddons } from './useSocialImageAddons';
+import { KANGUR_STOREFRONT_APPEARANCE_STORAGE_KEY } from '@/features/kangur/storefront-appearance-settings';
 
 describe('useSocialImageAddons', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    window.localStorage.clear();
     createAddonMutateAsyncMock.mockResolvedValue({ id: 'addon-1' });
     batchCaptureMutateAsyncMock.mockResolvedValue({
       addons: [{ id: 'addon-1', title: 'Addon 1' }],
       failures: [],
       usedPresetCount: 1,
     });
+    settingsStoreGetMock.mockReturnValue('default');
+    storefrontAppearanceModeRef.current = null;
   });
 
-  it('creates an add-on and resets the form on success', async () => {
+  it('creates an add-on with the persisted storefront appearance mode and resets the form on success', async () => {
+    window.localStorage.setItem(KANGUR_STOREFRONT_APPEARANCE_STORAGE_KEY, 'dark');
     const setAddonForm = vi.fn();
     const { result } = renderHook(() =>
       useSocialImageAddons({
@@ -86,11 +108,13 @@ describe('useSocialImageAddons', () => {
       await result.current.handleCreateAddon();
     });
 
+    expect(result.current.captureAppearanceMode).toBe('dark');
     expect(createAddonMutateAsyncMock).toHaveBeenCalledWith({
       title: 'Hero screenshot',
       sourceUrl: 'https://example.com/page',
       description: 'Landing page',
       selector: 'main',
+      appearanceMode: 'dark',
       waitForMs: 250,
     });
     expect(setAddonForm).toHaveBeenCalledWith(emptyAddonForm);
@@ -143,6 +167,7 @@ describe('useSocialImageAddons', () => {
       batchResult = await result.current.runBatchCapture();
     });
 
+    expect(result.current.captureAppearanceMode).toBe('default');
     expect(batchResult).toEqual({
       addons: [{ id: 'addon-1', title: 'Addon 1' }],
       failures: [],
@@ -152,6 +177,7 @@ describe('useSocialImageAddons', () => {
       baseUrl: 'https://example.com',
       presetIds: ['preset-1'],
       presetLimit: 2,
+      appearanceMode: 'default',
     });
     expect(result.current.batchCaptureResult).toEqual(batchResult);
     expect(toastMock).toHaveBeenCalledWith('Batch capture completed (1 add-on, 0 failures)', {
@@ -199,6 +225,7 @@ describe('useSocialImageAddons', () => {
       baseUrl: 'https://preview.example.com',
       presetIds: [],
       presetLimit: null,
+      appearanceMode: 'default',
       playwrightPersonaId: 'persona-1',
       playwrightScript: 'return input.captures;',
       playwrightRoutes: [

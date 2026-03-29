@@ -82,11 +82,9 @@ export function SocialPostPipeline(): React.JSX.Element {
   const captureTotalCount = pipelineProgress?.captureTotalCount ?? 0;
   const captureFailureCount = pipelineProgress?.captureFailureCount ?? 0;
   const readyVisualHighlightCount = visualAnalysisResult?.highlights.length ?? 0;
-  const readyVisualDocUpdateCount = visualAnalysisResult?.docUpdates.length ?? 0;
   const hasReadyVisualAnalysis =
     Boolean(visualAnalysisResult?.summary.trim()) ||
-    readyVisualHighlightCount > 0 ||
-    readyVisualDocUpdateCount > 0;
+    readyVisualHighlightCount > 0;
   const textPipelineButtonTitle = !hasActivePost
     ? 'Create or select a draft before running the pipeline.'
     : !canGenerateSocialDraft
@@ -102,13 +100,13 @@ export function SocialPostPipeline(): React.JSX.Element {
       : isPipelineBusy
         ? 'Wait for the current pipeline run to finish.'
         : isSavedVisualAnalysisStale && hasSavedVisualAnalysis
-          ? 'Saved image analysis exists for this draft, but the current visuals or docs changed. Rerun image analysis before generating.'
+          ? 'Saved image analysis exists for this draft, but the selected visuals changed. Rerun image analysis before generating.'
         : hasReadyVisualAnalysis
-          ? 'Review the saved image analysis or generate from it without rerunning vision analysis.'
-          : 'Analyze the selected visuals first, then generate a post that mentions the findings.';
+          ? 'Review the saved image analysis or start the separate Generate post with analysis step.'
+          : 'Analyze the selected visuals first, then use Generate post with analysis as the follow-up AI pass.';
   const visualAnalysisButtonLabel = hasReadyVisualAnalysis
     ? 'Review image analysis'
-    : 'Pipeline + image analysis';
+    : 'Image analysis';
   const freshCaptureButtonTitle = !hasActivePost
     ? 'Create or select a draft before running fresh capture.'
     : !canRunFreshCapture
@@ -244,7 +242,7 @@ export function SocialPostPipeline(): React.JSX.Element {
 
           {isSavedVisualAnalysisStale && hasSavedVisualAnalysis && !isPipelineBusy && (
             <div className='rounded-xl border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-xs text-amber-900 dark:text-amber-200'>
-              Saved image analysis exists for this draft, but the current visuals or doc references changed. Rerun image analysis before generating.
+              Saved image analysis exists for this draft, but the selected visuals changed. Rerun image analysis before generating.
             </div>
           )}
 
@@ -254,10 +252,7 @@ export function SocialPostPipeline(): React.JSX.Element {
               {readyVisualHighlightCount > 0
                 ? ` ${readyVisualHighlightCount} highlight${readyVisualHighlightCount === 1 ? '' : 's'}.`
                 : ''}
-              {readyVisualDocUpdateCount > 0
-                ? ` ${readyVisualDocUpdateCount} doc update${readyVisualDocUpdateCount === 1 ? '' : 's'}.`
-                : ''}
-              {' '}Open the modal to review or generate.
+              {' '}Open the modal to review it or start the post-generation pass.
             </div>
           )}
 

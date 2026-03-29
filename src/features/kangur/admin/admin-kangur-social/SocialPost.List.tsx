@@ -51,9 +51,11 @@ const buildSearchText = (post: KangurSocialPost): string =>
     ...(post.visualDocUpdates ?? []).flatMap((update) => [
       update.docPath,
       update.section,
-      update.proposedText,
       update.reason,
+      update.proposedText,
     ]),
+    post.visualAnalysisModelId,
+    post.visualAnalysisJobId,
     post.linkedinPostId,
     post.linkedinUrl,
   ]
@@ -277,6 +279,9 @@ export function SocialPostList(): React.JSX.Element {
                         ) : null}
                         {post.visualAnalysisModelId ? (
                           <span>Model: {post.visualAnalysisModelId}</span>
+                        ) : null}
+                        {post.visualAnalysisJobId ? (
+                          <span>Job: {post.visualAnalysisJobId}</span>
                         ) : null}
                         {visualHighlightCount > 0 ? (
                           <span>

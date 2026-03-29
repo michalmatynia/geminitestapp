@@ -137,6 +137,10 @@ describe('useSocialSettings', () => {
       batchCaptureBaseUrl: 'https://capture.example.com',
       batchCapturePresetIds: ['game'],
       batchCapturePresetLimit: 2,
+      programmableCaptureBaseUrl: null,
+      programmableCapturePersonaId: null,
+      programmableCaptureScript: expect.any(String),
+      programmableCaptureRoutes: [],
       projectUrl: 'https://project.example.com',
     });
     expect(settingsStoreMock.refetch).toHaveBeenCalledTimes(1);
@@ -154,6 +158,20 @@ describe('useSocialSettings', () => {
         batchCaptureBaseUrl: 'https://persisted.example.com',
         batchCapturePresetIds: ['tests', 'profile'],
         batchCapturePresetLimit: 3,
+        programmableCaptureBaseUrl: 'https://persisted-programmable.example.com',
+        programmableCapturePersonaId: 'persona-fast',
+        programmableCaptureScript: 'return input.captures;',
+        programmableCaptureRoutes: [
+          {
+            id: 'route-1',
+            title: 'Pricing page',
+            path: '/pricing',
+            description: 'Capture pricing hero',
+            selector: '[data-pricing]',
+            waitForMs: 200,
+            waitForSelectorMs: 3000,
+          },
+        ],
         projectUrl: 'https://project.persisted.example.com',
       })
     );
@@ -168,6 +186,26 @@ describe('useSocialSettings', () => {
     expect(result.current.visionModelId).toBe('vision-persisted');
     expect(result.current.batchCapturePresetIds).toEqual(['tests', 'profile']);
     expect(result.current.batchCapturePresetLimit).toBe(3);
+    expect(result.current.persistedSocialSettings.programmableCaptureBaseUrl).toBe(
+      'https://persisted-programmable.example.com'
+    );
+    expect(result.current.persistedSocialSettings.programmableCapturePersonaId).toBe(
+      'persona-fast'
+    );
+    expect(result.current.persistedSocialSettings.programmableCaptureScript).toBe(
+      'return input.captures;'
+    );
+    expect(result.current.persistedSocialSettings.programmableCaptureRoutes).toEqual([
+      {
+        id: 'route-1',
+        title: 'Pricing page',
+        path: '/pricing',
+        description: 'Capture pricing hero',
+        selector: '[data-pricing]',
+        waitForMs: 200,
+        waitForSelectorMs: 3000,
+      },
+    ]);
 
     act(() => {
       result.current.handleBrainModelChange(BRAIN_MODEL_DEFAULT_VALUE);
@@ -180,5 +218,71 @@ describe('useSocialSettings', () => {
       KANGUR_SOCIAL_CAPTURE_PRESETS.map((preset) => preset.id)
     );
     expect(result.current.batchCapturePresetLimit).toBeNull();
+  });
+
+  it('saves programmable Playwright defaults without overwriting the rest of the Social settings', async () => {
+    settingsStoreMock.get.mockReturnValue(
+      JSON.stringify({
+        brainModelId: 'brain-persisted',
+        visionModelId: 'vision-persisted',
+        linkedinConnectionId: 'conn-1',
+        batchCaptureBaseUrl: 'https://persisted.example.com',
+        batchCapturePresetIds: ['tests', 'profile'],
+        batchCapturePresetLimit: 3,
+        projectUrl: 'https://project.persisted.example.com',
+      })
+    );
+
+    const { result } = renderHook(() => useSocialSettings(), {
+      wrapper: createWrapper(),
+    });
+
+    await act(async () => {
+      await result.current.handleSaveProgrammableCaptureDefaults({
+        baseUrl: 'https://programmable.example.com',
+        personaId: 'persona-screens',
+        script: 'return input.captures;',
+        routes: [
+          {
+            id: 'route-1',
+            title: 'Pricing page',
+            path: '/pricing',
+            description: 'Capture pricing hero',
+            selector: '[data-pricing]',
+            waitForMs: 200,
+            waitForSelectorMs: 3000,
+          },
+        ],
+      });
+    });
+
+    const saveCall = mutateAsyncMock.mock.calls.at(-1)?.[0];
+    expect(saveCall.key).toBe(KANGUR_SOCIAL_SETTINGS_KEY);
+    expect(JSON.parse(saveCall.value)).toEqual({
+      brainModelId: 'brain-persisted',
+      visionModelId: 'vision-persisted',
+      linkedinConnectionId: 'conn-1',
+      batchCaptureBaseUrl: 'https://persisted.example.com',
+      batchCapturePresetIds: ['tests', 'profile'],
+      batchCapturePresetLimit: 3,
+      programmableCaptureBaseUrl: 'https://programmable.example.com',
+      programmableCapturePersonaId: 'persona-screens',
+      programmableCaptureScript: 'return input.captures;',
+      programmableCaptureRoutes: [
+        {
+          id: 'route-1',
+          title: 'Pricing page',
+          path: '/pricing',
+          description: 'Capture pricing hero',
+          selector: '[data-pricing]',
+          waitForMs: 200,
+          waitForSelectorMs: 3000,
+        },
+      ],
+      projectUrl: 'https://project.persisted.example.com',
+    });
+    expect(toastMock).toHaveBeenCalledWith('Programmable Playwright defaults saved.', {
+      variant: 'success',
+    });
   });
 });

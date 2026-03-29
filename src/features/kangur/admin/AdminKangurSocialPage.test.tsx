@@ -10,6 +10,10 @@ const { useAdminKangurSocialPageMock } = vi.hoisted(() => ({
   useAdminKangurSocialPageMock: vi.fn(),
 }));
 
+const { usePlaywrightPersonasMock } = vi.hoisted(() => ({
+  usePlaywrightPersonasMock: vi.fn(),
+}));
+
 vi.mock('next/link', () => ({
   default: ({
     children,
@@ -177,6 +181,10 @@ vi.mock('./admin-kangur-social/AdminKangurSocialPage.hooks', () => ({
   useAdminKangurSocialPage: () => useAdminKangurSocialPageMock(),
 }));
 
+vi.mock('@/shared/hooks/usePlaywrightPersonas', () => ({
+  usePlaywrightPersonas: (...args: unknown[]) => usePlaywrightPersonasMock(...args),
+}));
+
 vi.mock('./admin-kangur-social/SocialPost.List', async () => {
   const actual = await vi.importActual<typeof import('./admin-kangur-social/SocialPostContext')>(
     './admin-kangur-social/SocialPostContext'
@@ -317,7 +325,6 @@ const buildHookState = () => ({
   isSettingsDirty: false,
   isSavingSettings: false,
   handleSaveSettings: vi.fn(),
-  docUpdatesResult: null,
   recentAddons: [],
   batchCaptureBaseUrl: 'https://studiq.example.com',
   setBatchCaptureBaseUrl: vi.fn(),
@@ -326,6 +333,11 @@ const buildHookState = () => ({
   setBatchCapturePresetLimit: vi.fn(),
   effectiveBatchCapturePresetCount: 0,
   batchCaptureResult: null,
+  hasSavedProgrammableCaptureDefaults: false,
+  persistedProgrammableCaptureBaseUrl: null,
+  persistedProgrammableCapturePersonaId: null,
+  persistedProgrammableCaptureScript: '',
+  persistedProgrammableCaptureRoutes: [],
   deleteError: null,
   clearDeleteError: vi.fn(),
   linkedinIntegration: null,
@@ -361,12 +373,6 @@ const buildHookState = () => ({
   unpublishMutation: {
     isPending: false,
   },
-  previewDocUpdatesMutation: {
-    isPending: false,
-  },
-  applyDocUpdatesMutation: {
-    isPending: false,
-  },
   createAddonMutation: {
     isPending: false,
   },
@@ -379,12 +385,13 @@ const buildHookState = () => ({
   handleUnpublishPost: vi.fn(),
   handleSave: vi.fn(),
   handleGenerate: vi.fn(),
-  handlePreviewDocUpdates: vi.fn(),
-  handleApplyDocUpdates: vi.fn(),
   handleSelectAddon: vi.fn(),
   handleRemoveAddon: vi.fn(),
   handleCreateAddon: vi.fn(),
   handleBatchCapture: vi.fn(),
+  handleOpenProgrammablePlaywrightModal: vi.fn(),
+  handleOpenProgrammablePlaywrightModalFromDefaults: vi.fn(),
+  handleResetProgrammableCaptureDefaults: vi.fn(),
   handlePublish: vi.fn(),
   handleRemoveImage: vi.fn(),
   handleAddImages: vi.fn(),
@@ -414,6 +421,11 @@ const buildHookState = () => ({
 describe('AdminKangurSocialPage', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    usePlaywrightPersonasMock.mockReturnValue({
+      data: [],
+      isLoading: false,
+      error: null,
+    });
     useAdminKangurSocialPageMock.mockReturnValue(buildHookState());
   });
 
@@ -480,7 +492,6 @@ describe('AdminKangurSocialPage', () => {
     expect(screen.getByLabelText('Notes for the Brain generator')).toHaveValue('');
     expect(screen.getByRole('button', { name: 'Load context' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Generate PL/EN draft' })).toBeInTheDocument();
-    expect(screen.getByText('Documentation updates')).toBeInTheDocument();
     expect(screen.getByLabelText('Default LinkedIn connection')).toBeInTheDocument();
     expect(screen.getByText('Capture single add-on')).toBeInTheDocument();
     expect(screen.getByText('Batch capture preview')).toBeInTheDocument();

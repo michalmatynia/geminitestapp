@@ -41,9 +41,9 @@ import {
   GAME_HOME_PLAYER_PROGRESS_SHELL_CLASSNAME,
   GAME_HOME_QUEST_SHELL_CLASSNAME,
 } from '@/features/kangur/ui/pages/GameHome.constants';
+import { resolveKangurGameHomeVisibility } from '@/features/kangur/ui/pages/GameHome.visibility';
 import {
   KangurGameHomeSections,
-  resolveKangurGameHomeVisibility,
 } from '@/features/kangur/ui/pages/GameHome.layout';
 import { useKangurProgressState } from '@/features/kangur/ui/hooks/useKangurProgressState';
 import {
@@ -99,14 +99,13 @@ const resolveDefaultSkeletonVariant = (
 };
 
 const SkeletonStatusHeader = ({
-  pageLabel,
   className,
 }: {
-  pageLabel: string;
+  pageLabel?: string;
   className?: string;
 }): React.JSX.Element => (
-  <div className={cn('text-center', className)}>
-    <p className='text-sm font-semibold tracking-[-0.02em] text-slate-600'>{pageLabel}</p>
+  <div className={cn('flex justify-center', className)}>
+    <SkeletonLine className='h-4 w-24' />
   </div>
 );
 

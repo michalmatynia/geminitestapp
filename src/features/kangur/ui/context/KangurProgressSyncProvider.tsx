@@ -7,7 +7,6 @@ import {
   withKangurClientError,
 } from '@/features/kangur/observability/client';
 import { getKangurPlatform } from '@/features/kangur/services/kangur-platform';
-import type { KangurUser } from '@kangur/platform';
 import { isKangurAuthStatusError } from '@/features/kangur/services/status-errors';
 import { useKangurAuth } from '@/features/kangur/ui/context/KangurAuthContext';
 import {
@@ -25,7 +24,10 @@ import {
   type KangurProgressState,
 } from '@/features/kangur/shared/contracts/kangur';
 import { useKangurSubjectFocus } from '@/features/kangur/ui/context/KangurSubjectFocusContext';
-
+import {
+  isKangurParentWithoutActiveLearner,
+  resolveKangurUserScopeKey,
+} from '@/features/kangur/ui/context/kangur-user-scope';
 
 const kangurPlatform = getKangurPlatform();
 const KANGUR_PROGRESS_HYDRATION_CACHE_TTL_MS = 30_000;
@@ -37,24 +39,6 @@ type KangurProgressHydrationCacheEntry = {
 
 const kangurProgressHydrationCache = new Map<string, KangurProgressHydrationCacheEntry>();
 const kangurProgressHydrationInflight = new Map<string, Promise<KangurProgressState>>();
-
-const resolveUserProgressKey = (user: KangurUser | null): string | null => {
-  const activeLearnerId = user?.activeLearner?.id?.trim();
-  if (activeLearnerId) {
-    return activeLearnerId;
-  }
-
-  if (user?.actorType === 'parent') {
-    return null;
-  }
-
-  if (user?.actorType === 'learner') {
-    const id = user?.id?.trim();
-    return id && id.length > 0 ? id : null;
-  }
-
-  return null;
-};
 
 const serializeProgress = (progress: KangurProgressState): string => JSON.stringify(progress);
 
@@ -139,9 +123,8 @@ export function KangurProgressSyncProvider({
 }): React.JSX.Element | null {
   const { isAuthenticated, isLoadingAuth, user } = useKangurAuth();
   const { subject } = useKangurSubjectFocus();
-  const isParentWithoutLearner =
-    user?.actorType === 'parent' && !user?.activeLearner?.id;
-  const userKey = resolveUserProgressKey(user);
+  const isParentWithoutLearner = isKangurParentWithoutActiveLearner(user);
+  const userKey = resolveKangurUserScopeKey(user);
   const lastSyncedProgressRef = useRef<string | null>(null);
   const syncStateRef = useRef<'idle' | 'loading' | 'ready'>('idle');
 

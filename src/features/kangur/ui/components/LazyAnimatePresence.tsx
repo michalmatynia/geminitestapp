@@ -35,6 +35,14 @@ const loadFramerMotion = (): Promise<FramerMotionExports> => {
   return loadPromise;
 };
 
+// Eagerly start loading framer-motion at module evaluation time so it is
+// available before the first navigation. Without this, the first route
+// transition renders a plain <div> instead of an animated motion component,
+// causing a jarring instant swap.
+if (typeof window !== 'undefined') {
+  void loadFramerMotion();
+}
+
 const useFramerMotion = (): FramerMotionExports | null => {
   const [resolved, setResolved] = useState<FramerMotionExports | null>(() => cached);
 

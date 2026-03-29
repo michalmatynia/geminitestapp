@@ -12,7 +12,6 @@ import {
   buildKangurSocialPostCombinedBody,
   kangurSocialPostSchema,
   type KangurSocialVisualAnalysis,
-  type KangurSocialDocUpdatesResponse,
   type KangurSocialPostEditorStateDto,
   type KangurSocialPost,
 } from '@/shared/contracts/kangur-social-posts';
@@ -29,7 +28,6 @@ import {
   buildKangurDocContext,
   resolveKangurDocReferences,
 } from './social-posts-docs';
-import { planKangurSocialDocUpdates } from './social-posts-doc-updates';
 import { generateKangurSocialPostDraft } from './social-posts-generation';
 import {
   findKangurSocialImageAddonsByIds,
@@ -75,7 +73,6 @@ export type KangurSocialManualPipelineJobResult = {
   batchCaptureResult: KangurSocialImageAddonsBatchResult | null;
   savedPost: KangurSocialPost;
   generatedPost: KangurSocialPost;
-  docUpdates: KangurSocialDocUpdatesResponse | null;
 };
 
 type RunKangurSocialPostPipelineOptions = {
@@ -435,6 +432,9 @@ export async function runKangurSocialPostPipeline(
       prefetchedVisualAnalysis: input.prefetchedVisualAnalysis,
       requireVisualAnalysisInBody: input.requireVisualAnalysisInBody,
     });
+    const hasVisualAnalysisContent = Boolean(
+      draft.visualSummary?.trim() || (draft.visualHighlights?.length ?? 0) > 0
+    );
 
     const generatedPost = await updateKangurSocialPost(savedPost.id, {
       titlePl: draft.titlePl,
@@ -447,6 +447,11 @@ export async function runKangurSocialPostPipeline(
       visualSummary: draft.visualSummary,
       visualHighlights: draft.visualHighlights,
       visualDocUpdates: draft.visualDocUpdates,
+      visualAnalysisSourceImageAddonIds: hasVisualAnalysisContent ? mergedImageAddonIds : [],
+      visualAnalysisSourceDocReferences: [],
+      visualAnalysisSourceVisionModelId: hasVisualAnalysisContent
+        ? (input.visionModelId ?? null)
+        : null,
       docUpdatesAppliedAt: null,
       docUpdatesAppliedBy: null,
       imageAddonIds: mergedImageAddonIds,
@@ -463,24 +468,6 @@ export async function runKangurSocialPostPipeline(
       throw operationFailedError('Pipeline stopped: generated post could not be saved.');
     }
 
-    let docUpdates: KangurSocialDocUpdatesResponse | null = null;
-    try {
-      await publishProgress('previewing', {
-        message: 'Preparing documentation diff...',
-      });
-      docUpdates = {
-        applied: false,
-        plan: await planKangurSocialDocUpdates(generatedPost, { apply: false }),
-        post: generatedPost,
-      };
-    } catch (error) {
-      void ErrorSystem.captureException(error, {
-        service: 'kangur.social-posts.pipeline',
-        action: 'previewDocUpdates',
-        postId: generatedPost.id,
-      });
-    }
-
     return {
       type: 'manual-post-pipeline',
       postId: generatedPost.id,
@@ -495,7 +482,6 @@ export async function runKangurSocialPostPipeline(
       batchCaptureResult,
       savedPost,
       generatedPost,
-      docUpdates,
     };
   } catch (error) {
     void ErrorSystem.captureException(error, {

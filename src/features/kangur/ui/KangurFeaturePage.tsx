@@ -42,22 +42,86 @@ type KangurFeaturePageShellProps = {
 };
 
 const KANGUR_CUSTOM_CSS_SCOPE_SELECTOR = '[data-kangur-custom-css-scope="true"]';
+const KANGUR_FEATURE_PAGE_FOOTER_LINK_CLASSNAME =
+  'font-semibold [color:var(--kangur-page-text)] hover:underline';
+const KANGUR_FEATURE_PAGE_SKIP_LINK_CLASSNAME =
+  'sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-30 focus:rounded-full focus:bg-white/96 focus:px-4 focus:py-2 focus:text-sm focus:font-semibold focus:text-indigo-700 focus:shadow-[0_18px_40px_-28px_rgba(79,99,216,0.6)] focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-300/70';
 
-export function KangurFeaturePageShell({
-  forceBodyScrollLock = false,
-}: KangurFeaturePageShellProps): JSX.Element {
-  const locale = useLocale() ?? 'en';
-  const commonTranslations = useTranslations('Common');
-  const shellTranslations = useTranslations('KangurShell');
-  const appearance = useOptionalCmsStorefrontAppearance();
-  const { embedded, pageKey, requestedPath, basePath } = useKangurRoutingState();
-  const resolvedPageKey = pageKey ?? KANGUR_MAIN_PAGE_KEY;
-  const appearanceMode = appearance?.mode ?? 'default';
-  const showFooter = !embedded && resolvedPageKey === KANGUR_MAIN_PAGE_KEY;
-  const kangurAppearance = useKangurStorefrontAppearance();
-  const debugRef = useRef<string | null>(null);
-  const browserPathname = typeof window === 'undefined' ? null : window.location.pathname?.trim() || null;
-  const socialUpdatesHref = useMemo(
+const resolveKangurFeaturePageShellBrowserPathname = (): string | null =>
+  typeof window === 'undefined' ? null : window.location.pathname?.trim() || null;
+
+const resolveKangurFeaturePageShowFooter = (
+  embedded: boolean,
+  pageKey: string
+): boolean => !embedded && pageKey === KANGUR_MAIN_PAGE_KEY;
+
+const resolveKangurFeaturePageShouldLockBodyScroll = ({
+  embedded,
+  forceBodyScrollLock,
+}: {
+  embedded: boolean;
+  forceBodyScrollLock: boolean;
+}): boolean => forceBodyScrollLock || !embedded;
+
+const resolveKangurFeaturePageShellStyle = (
+  vars: Record<string, string>
+): CSSProperties & Record<string, string> => ({
+  ...vars,
+});
+
+const resolveKangurFeaturePageScopedCustomCss = ({
+  customCss,
+  customCssSelectors,
+}: {
+  customCss: string | null | undefined;
+  customCssSelectors: string | null | undefined;
+}): string | null => {
+  if (process.env['NEXT_PUBLIC_KANGUR_CUSTOM_CSS_ENABLED'] !== 'true') {
+    return null;
+  }
+
+  return buildKangurScopedCustomCss(
+    customCss,
+    customCssSelectors,
+    KANGUR_CUSTOM_CSS_SCOPE_SELECTOR
+  );
+};
+
+const resolveKangurFeaturePageMainContentTarget = (): HTMLElement | null => {
+  if (typeof document === 'undefined') {
+    return null;
+  }
+
+  const target = document.getElementById(KANGUR_MAIN_CONTENT_ID);
+  return target instanceof HTMLElement ? target : null;
+};
+
+const focusKangurFeaturePageMainContent = (
+  event: { preventDefault: () => void }
+): void => {
+  const target = resolveKangurFeaturePageMainContentTarget();
+  if (!target) {
+    return;
+  }
+
+  event.preventDefault();
+  window.location.hash = KANGUR_MAIN_CONTENT_ID;
+  target.focus();
+};
+
+const isKangurFeaturePageSkipKey = (
+  event: KeyboardEvent<HTMLAnchorElement>
+): boolean => event.key === 'Enter' || event.key === ' ';
+
+function useKangurFeaturePageSocialUpdatesHref(input: {
+  basePath: string;
+  locale: string;
+  requestedPath: string | null | undefined;
+}): string {
+  const { basePath, locale, requestedPath } = input;
+  const browserPathname = resolveKangurFeaturePageShellBrowserPathname();
+
+  return useMemo(
     () =>
       localizeManagedKangurHref({
         href: getKangurPageHref('SocialUpdates', basePath),
@@ -66,63 +130,79 @@ export function KangurFeaturePageShell({
       }),
     [basePath, browserPathname, locale, requestedPath]
   );
+}
+
+function useKangurFeaturePageSkipLink(): {
+  focusSkipTarget: (event: { preventDefault: () => void }) => void;
+  handleSkipKeyDown: (event: KeyboardEvent<HTMLAnchorElement>) => void;
+} {
   const focusSkipTarget = useCallback((event: { preventDefault: () => void }): void => {
-    if (typeof document === 'undefined') return;
-    const target = document.getElementById(KANGUR_MAIN_CONTENT_ID);
-    if (!(target instanceof HTMLElement)) return;
-    event.preventDefault();
-    window.location.hash = KANGUR_MAIN_CONTENT_ID;
-    target.focus();
+    focusKangurFeaturePageMainContent(event);
   }, []);
+
   const handleSkipKeyDown = useCallback(
     (event: KeyboardEvent<HTMLAnchorElement>): void => {
-      if (event.key !== 'Enter' && event.key !== ' ') return;
+      if (!isKangurFeaturePageSkipKey(event)) {
+        return;
+      }
+
       event.stopPropagation();
       focusSkipTarget(event);
     },
     [focusSkipTarget]
   );
-  const shellStyle: CSSProperties & Record<string, string> = {
-    ...kangurAppearance.vars,
-  };
-  const scopedCustomCss = useMemo(() => {
-    if (process.env['NEXT_PUBLIC_KANGUR_CUSTOM_CSS_ENABLED'] !== 'true') {
-      return null;
-    }
 
-    return buildKangurScopedCustomCss(
-      kangurAppearance.theme?.customCss,
-      kangurAppearance.theme?.customCssSelectors,
-      KANGUR_CUSTOM_CSS_SCOPE_SELECTOR
-    );
-  }, [kangurAppearance.theme?.customCss, kangurAppearance.theme?.customCssSelectors]);
+  return {
+    focusSkipTarget,
+    handleSkipKeyDown,
+  };
+}
+
+function useKangurFeaturePageThemeDebug(input: {
+  appearanceMode: string;
+  themePreset: string | null | undefined;
+}): void {
+  const { appearanceMode, themePreset } = input;
+  const debugRef = useRef<string | null>(null);
 
   useEffect(() => {
-    if (!isKangurThemeDebugEnabled()) return;
+    if (!isKangurThemeDebugEnabled()) {
+      return;
+    }
+
     const payload = {
       mode: appearanceMode,
-      themePreset: kangurAppearance.theme?.themePreset ?? null,
+      themePreset: themePreset ?? null,
     };
     const signature = JSON.stringify(payload);
-    if (debugRef.current === signature) return;
+    if (debugRef.current === signature) {
+      return;
+    }
+
     debugRef.current = signature;
     logger.info('[KangurThemeDebug]', payload);
-  }, [appearanceMode, kangurAppearance.theme?.themePreset]);
+  }, [appearanceMode, themePreset]);
+}
+
+function useKangurFeaturePageObservability(input: {
+  requestedPath: string | null | undefined;
+  resolvedPageKey: string;
+}): void {
+  const { requestedPath, resolvedPageKey } = input;
 
   useEffect(() => {
     setKangurClientObservabilityContext({
       pageKey: resolvedPageKey,
       requestedPath: requestedPath ?? '',
     });
+
     return () => {
       clearKangurClientObservabilityContext();
     };
   }, [requestedPath, resolvedPageKey]);
+}
 
-  const shouldLockBodyScroll = forceBodyScrollLock || !embedded;
-
-  useKangurMobileViewportVars();
-
+function useKangurFeaturePageBodyScrollLock(shouldLockBodyScroll: boolean): void {
   useLayoutEffect(() => {
     if (!shouldLockBodyScroll || typeof document === 'undefined') {
       return;
@@ -137,6 +217,151 @@ export function KangurFeaturePageShell({
       delete document.body.dataset['kangurShell'];
     };
   }, [shouldLockBodyScroll]);
+}
+
+function KangurFeaturePageSkipLink(props: {
+  commonTranslations: ReturnType<typeof useTranslations>;
+  focusSkipTarget: (event: { preventDefault: () => void }) => void;
+  handleSkipKeyDown: (event: KeyboardEvent<HTMLAnchorElement>) => void;
+}): JSX.Element {
+  const { commonTranslations, focusSkipTarget, handleSkipKeyDown } = props;
+
+  return (
+    <a
+      href={`#${KANGUR_MAIN_CONTENT_ID}`}
+      aria-label={commonTranslations('skipToMainContent')}
+      className={KANGUR_FEATURE_PAGE_SKIP_LINK_CLASSNAME}
+      onClick={focusSkipTarget}
+      onKeyDown={handleSkipKeyDown}
+    >
+      {commonTranslations('skipToMainContent')}
+    </a>
+  );
+}
+
+function KangurFeaturePageFooter(props: {
+  shellTranslations: ReturnType<typeof useTranslations>;
+  socialUpdatesHref: string;
+}): JSX.Element {
+  const { shellTranslations, socialUpdatesHref } = props;
+
+  return (
+    <footer className='hidden w-full border-t px-4 pt-6 pb-[calc(env(safe-area-inset-bottom)+24px)] text-center text-xs [border-color:color-mix(in_srgb,var(--kangur-soft-card-border)_62%,transparent)] [color:var(--kangur-page-muted-text)] sm:block sm:px-6'>
+      <span>
+        {shellTranslations('creatorCredentials', {
+          name: 'Michał Matynia',
+          year: '2026',
+        })}
+      </span>
+      <a
+        className={KANGUR_FEATURE_PAGE_FOOTER_LINK_CLASSNAME}
+        href={socialUpdatesHref}
+      >
+        {shellTranslations('socialUpdates')}
+      </a>
+      <span> · </span>
+      <a
+        className={KANGUR_FEATURE_PAGE_FOOTER_LINK_CLASSNAME}
+        href='mailto:mmatynia@gmail.com'
+      >
+        {shellTranslations('contactLabel', { email: 'mmatynia@gmail.com' })}
+      </a>
+      <span> · </span>
+      <span>{shellTranslations('supportLabel')}</span>
+      <span> </span>
+      <a
+        className={KANGUR_FEATURE_PAGE_FOOTER_LINK_CLASSNAME}
+        href='https://buycoffe.to/studiq'
+        target='_blank'
+        rel='noopener noreferrer'
+      >
+        buycoffe.to/studiq
+      </a>
+      <span> · </span>
+      <a
+        className={KANGUR_FEATURE_PAGE_FOOTER_LINK_CLASSNAME}
+        href='https://zrzutka.pl/b8ak55'
+        target='_blank'
+        rel='noopener noreferrer'
+      >
+        zrzutka.pl/b8ak55
+      </a>
+    </footer>
+  );
+}
+
+function useKangurFeaturePageShellRuntime(forceBodyScrollLock: boolean) {
+  const locale = useLocale() ?? 'en';
+  const commonTranslations = useTranslations('Common');
+  const shellTranslations = useTranslations('KangurShell');
+  const appearance = useOptionalCmsStorefrontAppearance();
+  const { embedded, pageKey, requestedPath, basePath } = useKangurRoutingState();
+  const resolvedPageKey = pageKey ?? KANGUR_MAIN_PAGE_KEY;
+  const appearanceMode = appearance?.mode ?? 'default';
+  const showFooter = resolveKangurFeaturePageShowFooter(embedded, resolvedPageKey);
+  const kangurAppearance = useKangurStorefrontAppearance();
+  const socialUpdatesHref = useKangurFeaturePageSocialUpdatesHref({
+    basePath,
+    locale,
+    requestedPath,
+  });
+  const { focusSkipTarget, handleSkipKeyDown } = useKangurFeaturePageSkipLink();
+  const shellStyle = resolveKangurFeaturePageShellStyle(kangurAppearance.vars);
+  const scopedCustomCss = useMemo(
+    () =>
+      resolveKangurFeaturePageScopedCustomCss({
+        customCss: kangurAppearance.theme?.customCss,
+        customCssSelectors: kangurAppearance.theme?.customCssSelectors,
+      }),
+    [kangurAppearance.theme?.customCss, kangurAppearance.theme?.customCssSelectors]
+  );
+  const shouldLockBodyScroll = resolveKangurFeaturePageShouldLockBodyScroll({
+    embedded,
+    forceBodyScrollLock,
+  });
+
+  useKangurMobileViewportVars();
+  useKangurFeaturePageThemeDebug({
+    appearanceMode,
+    themePreset: kangurAppearance.theme?.themePreset,
+  });
+  useKangurFeaturePageObservability({
+    requestedPath,
+    resolvedPageKey,
+  });
+  useKangurFeaturePageBodyScrollLock(shouldLockBodyScroll);
+
+  return {
+    appearanceMode,
+    commonTranslations,
+    embedded,
+    focusSkipTarget,
+    handleSkipKeyDown,
+    locale,
+    scopedCustomCss,
+    shellStyle,
+    shellTranslations,
+    showFooter,
+    socialUpdatesHref,
+  };
+}
+
+function KangurFeaturePageShellLayout(
+  props: ReturnType<typeof useKangurFeaturePageShellRuntime>
+): JSX.Element {
+  const {
+    appearanceMode,
+    commonTranslations,
+    embedded,
+    focusSkipTarget,
+    handleSkipKeyDown,
+    locale,
+    scopedCustomCss,
+    shellStyle,
+    shellTranslations,
+    showFooter,
+    socialUpdatesHref,
+  } = props;
 
   return (
     <div
@@ -152,63 +377,29 @@ export function KangurFeaturePageShell({
       style={shellStyle}
     >
       {scopedCustomCss ? <style data-kangur-custom-css='true'>{scopedCustomCss}</style> : null}
-      <a
-        href={`#${KANGUR_MAIN_CONTENT_ID}`}
-        aria-label={commonTranslations('skipToMainContent')}
-        className='sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-30 focus:rounded-full focus:bg-white/96 focus:px-4 focus:py-2 focus:text-sm focus:font-semibold focus:text-indigo-700 focus:shadow-[0_18px_40px_-28px_rgba(79,99,216,0.6)] focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-300/70'
-        onClick={focusSkipTarget}
-        onKeyDown={handleSkipKeyDown}
-      >
-        {commonTranslations('skipToMainContent')}
-      </a>
+      <KangurFeaturePageSkipLink
+        commonTranslations={commonTranslations}
+        focusSkipTarget={focusSkipTarget}
+        handleSkipKeyDown={handleSkipKeyDown}
+      />
       <div className='w-full min-w-0 flex-1'>
         <KangurFeatureApp />
       </div>
       {showFooter ? (
-        <footer className='hidden w-full border-t px-4 pt-6 pb-[calc(env(safe-area-inset-bottom)+24px)] text-center text-xs [border-color:color-mix(in_srgb,var(--kangur-soft-card-border)_62%,transparent)] [color:var(--kangur-page-muted-text)] sm:block sm:px-6'>
-          <span>
-            {shellTranslations('creatorCredentials', {
-              name: 'Michał Matynia',
-              year: '2026',
-            })}
-          </span>
-          <a
-            className='font-semibold [color:var(--kangur-page-text)] hover:underline'
-            href={socialUpdatesHref}
-          >
-            {shellTranslations('socialUpdates')}
-          </a>
-          <span> · </span>
-          <a
-            className='font-semibold [color:var(--kangur-page-text)] hover:underline'
-            href='mailto:mmatynia@gmail.com'
-          >
-            {shellTranslations('contactLabel', { email: 'mmatynia@gmail.com' })}
-          </a>
-          <span> · </span>
-          <span>{shellTranslations('supportLabel')}</span>
-          <span> </span>
-          <a
-            className='font-semibold [color:var(--kangur-page-text)] hover:underline'
-            href='https://buycoffe.to/studiq'
-            target='_blank'
-            rel='noopener noreferrer'
-          >
-            buycoffe.to/studiq
-          </a>
-          <span> · </span>
-          <a
-            className='font-semibold [color:var(--kangur-page-text)] hover:underline'
-            href='https://zrzutka.pl/b8ak55'
-            target='_blank'
-            rel='noopener noreferrer'
-          >
-            zrzutka.pl/b8ak55
-          </a>
-        </footer>
+        <KangurFeaturePageFooter
+          shellTranslations={shellTranslations}
+          socialUpdatesHref={socialUpdatesHref}
+        />
       ) : null}
     </div>
   );
+}
+
+export function KangurFeaturePageShell({
+  forceBodyScrollLock = false,
+}: KangurFeaturePageShellProps): JSX.Element {
+  const runtime = useKangurFeaturePageShellRuntime(forceBodyScrollLock);
+  return <KangurFeaturePageShellLayout {...runtime} />;
 }
 
 export function KangurFeaturePage({

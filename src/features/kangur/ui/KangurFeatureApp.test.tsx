@@ -323,7 +323,7 @@ describe('KangurFeatureApp', () => {
       vi.advanceTimersByTime(1);
     });
 
-    expect(screen.queryByTestId('kangur-top-navigation-skeleton')).toBeNull();
+    expect(screen.getByTestId('kangur-top-navigation-skeleton')).toBeInTheDocument();
     expect(screen.getByTestId('kangur-page-transition-skeleton')).toHaveAttribute(
       'data-inline-top-navigation-skeleton',
       'true'
@@ -583,7 +583,7 @@ describe('KangurFeatureApp', () => {
     render(<KangurFeatureApp />);
 
     expect(screen.queryByTestId('kangur-top-navigation-host')).toBeNull();
-    expect(screen.queryByTestId('kangur-top-navigation-skeleton')).toBeNull();
+    expect(screen.getByTestId('kangur-top-navigation-skeleton')).toBeInTheDocument();
     expect(screen.getByTestId('kangur-page-transition-skeleton')).toHaveAttribute(
       'data-inline-top-navigation-skeleton',
       'true'

@@ -10,16 +10,12 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 const {
   apiGetMock,
   generateMutateAsyncMock,
-  previewMutateAsyncMock,
-  applyMutateAsyncMock,
   toastMock,
   logKangurClientErrorMock,
   trackKangurClientEventMock,
 } = vi.hoisted(() => ({
   apiGetMock: vi.fn(),
   generateMutateAsyncMock: vi.fn(),
-  previewMutateAsyncMock: vi.fn(),
-  applyMutateAsyncMock: vi.fn(),
   toastMock: vi.fn(),
   logKangurClientErrorMock: vi.fn(),
   trackKangurClientEventMock: vi.fn(),
@@ -38,12 +34,6 @@ vi.mock('@/shared/lib/api-client', () => ({
 vi.mock('@/features/kangur/ui/hooks/useKangurSocialPosts', () => ({
   useGenerateKangurSocialPost: () => ({
     mutateAsync: generateMutateAsyncMock,
-  }),
-  usePreviewKangurSocialDocUpdates: () => ({
-    mutateAsync: previewMutateAsyncMock,
-  }),
-  useApplyKangurSocialDocUpdates: () => ({
-    mutateAsync: applyMutateAsyncMock,
   }),
 }));
 

@@ -59,8 +59,6 @@ const manualPipelineInputSchema = z.object({
 
 const manualVisualAnalysisInputSchema = z.object({
   postId: z.string().trim().optional(),
-  docReferences: z.array(z.string().trim().min(1)).max(80).default([]),
-  notes: z.string().trim().optional().default(''),
   visionModelId: z.string().trim().nullable().optional(),
   imageAddonIds: z.array(z.string().trim().min(1)).max(30).default([]),
 });

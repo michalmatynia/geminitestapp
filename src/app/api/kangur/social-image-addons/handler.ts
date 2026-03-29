@@ -8,6 +8,7 @@ import {
 } from '@/features/kangur/server/social-image-addons-repository';
 import { createKangurSocialImageAddonFromPlaywright } from '@/features/kangur/server/social-image-addons-service';
 import { ErrorSystem } from '@/features/kangur/shared/utils/observability/error-system';
+import { kangurSocialCaptureAppearanceModeSchema } from '@/shared/contracts/kangur-social-image-addons';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { forbiddenError } from '@/shared/errors/app-error';
 import {
@@ -27,6 +28,7 @@ const bodySchema = z.object({
   selector: z.string().trim().optional(),
   waitForMs: z.number().int().min(0).max(15000).optional(),
   waitForSelectorMs: z.number().int().min(1000).max(20000).optional(),
+  appearanceMode: kangurSocialCaptureAppearanceModeSchema.optional(),
 });
 
 const toSourceHost = (sourceUrl: string): string | null => {
@@ -87,6 +89,7 @@ export async function postKangurSocialImageAddonsHandler(
       selector: parsed.selector,
       waitForMs: parsed.waitForMs,
       waitForSelectorMs: parsed.waitForSelectorMs,
+      appearanceMode: parsed.appearanceMode,
       createdBy: actor.actorId,
       forwardCookies: requestCookies || null,
     });

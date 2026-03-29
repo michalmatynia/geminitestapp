@@ -39,8 +39,6 @@ export type KangurSocialPipelineJobData =
       type: 'manual-post-visual-analysis';
       input: {
         postId?: string | null;
-        docReferences?: string[];
-        notes?: string;
         visionModelId?: string | null;
         imageAddonIds?: string[];
         actorId: string;
@@ -233,9 +231,7 @@ const queue = createManagedQueue<KangurSocialPipelineJobData>({
         updatedAt: Date.now(),
         postId: normalizedPostId,
         imageAddonCount: data.input.imageAddonIds?.length ?? 0,
-        docReferenceCount: data.input.docReferences?.length ?? 0,
         highlightCount: null,
-        docUpdateCount: null,
       });
       await helpers?.updateProgress({
         type: 'manual-post-visual-analysis',
@@ -244,9 +240,7 @@ const queue = createManagedQueue<KangurSocialPipelineJobData>({
         updatedAt: Date.now(),
         postId: normalizedPostId,
         imageAddonCount: data.input.imageAddonIds?.length ?? 0,
-        docReferenceCount: data.input.docReferences?.length ?? 0,
         highlightCount: null,
-        docUpdateCount: null,
       });
       try {
         const result = await runKangurSocialPostVisualAnalysisJob({
@@ -260,16 +254,13 @@ const queue = createManagedQueue<KangurSocialPipelineJobData>({
           updatedAt: Date.now(),
           postId: result.postId,
           imageAddonCount: result.imageAddonIds.length,
-          docReferenceCount: result.docReferences.length,
           highlightCount: result.analysis.highlights.length,
-          docUpdateCount: result.analysis.docUpdates.length,
         });
         void ErrorSystem.logInfo('Kangur social visual analysis job completed', {
           service: 'kangur-social-pipeline-queue',
           postId: result.postId,
           imageAddonCount: result.imageAddonIds.length,
           highlightCount: result.analysis.highlights.length,
-          docUpdateCount: result.analysis.docUpdates.length,
           durationMs: Date.now() - startedAt,
         });
         return result satisfies KangurSocialPipelineJobResult;
@@ -297,7 +288,6 @@ const queue = createManagedQueue<KangurSocialPipelineJobData>({
         docReferenceCount: data.input.docReferences?.length ?? 0,
         visualSummaryPresent: Boolean(data.input.prefetchedVisualAnalysis?.summary?.trim()),
         highlightCount: data.input.prefetchedVisualAnalysis?.highlights?.length ?? null,
-        docUpdateCount: data.input.prefetchedVisualAnalysis?.docUpdates?.length ?? null,
       });
       await helpers?.updateProgress({
         type: 'manual-post-generation',
@@ -309,7 +299,6 @@ const queue = createManagedQueue<KangurSocialPipelineJobData>({
         docReferenceCount: data.input.docReferences?.length ?? 0,
         visualSummaryPresent: Boolean(data.input.prefetchedVisualAnalysis?.summary?.trim()),
         highlightCount: data.input.prefetchedVisualAnalysis?.highlights?.length ?? null,
-        docUpdateCount: data.input.prefetchedVisualAnalysis?.docUpdates?.length ?? null,
       });
       const result = await runKangurSocialPostGenerationJob(data.input);
       await helpers?.updateProgress({
@@ -328,10 +317,6 @@ const queue = createManagedQueue<KangurSocialPipelineJobData>({
         highlightCount:
           result.generatedPost?.visualHighlights?.length ??
           result.draft?.visualHighlights?.length ??
-          null,
-        docUpdateCount:
-          result.generatedPost?.visualDocUpdates?.length ??
-          result.draft?.visualDocUpdates?.length ??
           null,
       });
       void ErrorSystem.logInfo('Kangur social generation job completed', {

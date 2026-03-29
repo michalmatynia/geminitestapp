@@ -6,12 +6,14 @@ const {
   useKangurAuthMock,
   useKangurRoutingMock,
   resolveKangurPageKeyMock,
+  preloadKangurPageMock,
   routeNavigatorMock,
   settingsStoreStateMock,
 } = vi.hoisted(() => ({
   useKangurAuthMock: vi.fn(),
   useKangurRoutingMock: vi.fn(),
   resolveKangurPageKeyMock: vi.fn(),
+  preloadKangurPageMock: vi.fn(),
   routeNavigatorMock: {
     back: vi.fn(),
     prefetch: vi.fn(),
@@ -75,6 +77,7 @@ vi.mock('@/features/kangur/config/routing', async () => {
 
 vi.mock('@/features/kangur/config/pages', () => ({
   KANGUR_MAIN_PAGE: 'Game',
+  preloadKangurPage: preloadKangurPageMock,
   kangurPages: {
     Game: () => <div data-testid='kangur-game-page'>Game page</div>,
     LearnerProfile: () => <div data-testid='kangur-profile-page'>Profile page</div>,

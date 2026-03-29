@@ -26,7 +26,13 @@ vi.mock('@/features/kangur/server/storefront-appearance', () => ({
   getKangurStorefrontInitialState: vi.fn(async () => ({
     initialMode: 'dark',
     initialThemeSettings: {
-      dark: { accent: '#000000' },
+      default: null,
+      dawn: null,
+      sunset: null,
+      dark: JSON.stringify({
+        cardBg: '#0f172a',
+        containerBorderColor: '#334155',
+      }),
     },
   })),
 }));
@@ -53,6 +59,12 @@ describe('kangur layout', () => {
     expect(screen.getByTestId('kangur-surface-class-sync')).toBeInTheDocument();
     expect(screen.getByTestId('kangur-layout-child')).toBeInTheDocument();
     expect(screen.queryByTestId('kangur-vercel-analytics')).not.toBeInTheDocument();
+    expect(
+      document.querySelector('#__KANGUR_SURFACE_BOOTSTRAP__')?.textContent
+    ).toContain('--kangur-soft-card-border:');
+    expect(document.querySelector('script')?.textContent).toContain(
+      'document.documentElement.classList.add(\'kangur-surface-active\')'
+    );
   });
 
   it('reuses the same analytics-backed shared layout for localized kangur routes', async () => {

@@ -122,19 +122,6 @@ export function useSocialSettingsModalState(context: SocialPostContextValue) {
     : null;
 
   const docsUsed = context.resolveDocReferences?.() ?? context.activePost?.docReferences ?? [];
-  const suggestedDocUpdates = context.activePost?.visualDocUpdates ?? [];
-  const hasVisualDocUpdates = suggestedDocUpdates.length > 0;
-
-  const docUpdatesResult = context.docUpdatesResult;
-  const docUpdatesPlan = docUpdatesResult?.plan ?? null;
-  const docUpdatesMetadataPost = docUpdatesResult?.post ?? context.activePost ?? null;
-  const docUpdatesAppliedAt = docUpdatesMetadataPost?.docUpdatesAppliedAt ?? null;
-  const docUpdatesAppliedBy = docUpdatesMetadataPost?.docUpdatesAppliedBy ?? null;
-  const docUpdatesAppliedCount =
-    docUpdatesPlan?.items.filter((item) => item.applied).length ?? 0;
-  const docUpdatesSkippedCount =
-    docUpdatesPlan?.items.filter((item) => !item.applied).length ?? 0;
-
   const batchCaptureLimitSummary =
     context.batchCapturePresetLimit == null
       ? `Presets selected: ${context.batchCapturePresetIds.length} (No limit)`
@@ -155,14 +142,6 @@ export function useSocialSettingsModalState(context: SocialPostContextValue) {
     linkedInExpiryLabel,
     linkedInDaysRemaining,
     docsUsed,
-    suggestedDocUpdates,
-    hasVisualDocUpdates,
-    docUpdatesResult,
-    docUpdatesPlan,
-    docUpdatesAppliedAt,
-    docUpdatesAppliedBy,
-    docUpdatesAppliedCount,
-    docUpdatesSkippedCount,
     batchCaptureLimitSummary,
   };
 }

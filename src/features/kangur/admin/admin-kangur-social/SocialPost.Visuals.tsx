@@ -6,44 +6,14 @@ import {
   FormSection,
   LoadingState,
 } from '@/features/kangur/shared/ui';
+import { usePlaywrightPersonas } from '@/shared/hooks/usePlaywrightPersonas';
 import { resolveImagePreview } from './AdminKangurSocialPage.Constants';
 import { SocialPostImagesPanel } from './SocialPost.ImagesPanel';
 import { useSocialPostContext } from './SocialPostContext';
-import type { KangurSocialImageAddon } from '@/shared/contracts/kangur-social-image-addons';
+import { getSocialPostAddonCaptureDetailLabels } from './social-post-addon-capture-details';
 
 type SocialPostVisualsProps = {
   showImagesPanel?: boolean;
-};
-
-const buildAddonCaptureDetailLabels = (addon: KangurSocialImageAddon): string[] => {
-  const labels: string[] = [];
-  const sourceLabel = addon.sourceLabel?.trim();
-  const personaId = addon.playwrightPersonaId?.trim();
-  const routeTitle = addon.playwrightCaptureRouteTitle?.trim();
-  const routeId = addon.playwrightCaptureRouteId?.trim();
-  const presetId = addon.presetId?.trim();
-  const runId = addon.playwrightRunId?.trim();
-
-  if (sourceLabel) {
-    labels.push(`Source: ${sourceLabel}`);
-  }
-  if (personaId) {
-    labels.push(`Persona: ${personaId}`);
-  }
-  if (routeTitle || routeId) {
-    const routeLabel =
-      routeTitle && routeId && routeTitle !== routeId
-        ? `${routeTitle} (${routeId})`
-        : routeTitle || routeId;
-    labels.push(`Route: ${routeLabel}`);
-  } else if (presetId) {
-    labels.push(`Preset: ${presetId}`);
-  }
-  if (runId) {
-    labels.push(`Run: ${runId}`);
-  }
-
-  return labels;
 };
 
 export function SocialPostVisuals(props: SocialPostVisualsProps): React.JSX.Element {
@@ -60,9 +30,23 @@ export function SocialPostVisuals(props: SocialPostVisualsProps): React.JSX.Elem
     setShowMediaLibrary,
     showMediaLibrary,
     handleAddImages,
+    hasSavedVisualAnalysis,
+    isSavedVisualAnalysisStale,
   } = useSocialPostContext();
 
+  const personasQuery = usePlaywrightPersonas({
+    enabled: (recentAddons ?? []).some((addon) => Boolean(addon.playwrightPersonaId?.trim())),
+  });
   const selectedAddonSet = useMemo(() => new Set(imageAddonIds), [imageAddonIds]);
+  const personaNameById = useMemo(
+    () =>
+      new Map(
+        (personasQuery.data ?? [])
+          .filter((persona) => Boolean(persona.id?.trim()))
+          .map((persona) => [persona.id.trim(), persona.name?.trim() || persona.id.trim()])
+      ),
+    [personasQuery.data]
+  );
   const recentAddonsLoading = addonsQuery.isLoading;
   const visualSummary = activePost?.visualSummary?.trim() ?? '';
   const visualHighlights = activePost?.visualHighlights ?? [];
@@ -93,6 +77,12 @@ export function SocialPostVisuals(props: SocialPostVisualsProps): React.JSX.Elem
     <>
       {hasVisualAnalysisSection ? (
         <FormSection title='Image analysis result' className='space-y-3'>
+          {isSavedVisualAnalysisStale && hasSavedVisualAnalysis ? (
+            <div className='rounded-xl border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-sm text-amber-900 dark:text-amber-200'>
+              Saved image analysis exists for this draft, but the selected visuals changed.
+              Rerun image analysis before generating new copy from it.
+            </div>
+          ) : null}
           {visualAnalysisStatusLabel ||
           visualAnalysisUpdatedAt ||
           visualAnalysisModelId ||
@@ -138,15 +128,28 @@ export function SocialPostVisuals(props: SocialPostVisualsProps): React.JSX.Elem
                 Suggested documentation updates
               </div>
               <div className='mt-2 space-y-2 text-sm text-muted-foreground'>
-                {visualDocUpdates.map((update, index) => (
-                  <div key={`${update.docPath}-${update.section ?? 'root'}-${index}`}>
-                    <div className='font-medium text-foreground/90'>
-                      {update.docPath}
-                      {update.section ? ` · ${update.section}` : ''}
+                {visualDocUpdates.map((update, index) => {
+                  const target =
+                    update.section?.trim()
+                      ? `${update.docPath} -> ${update.section.trim()}`
+                      : update.docPath;
+                  return (
+                    <div
+                      key={`${target}-${index}`}
+                      className='rounded-lg border border-border/50 bg-background/50 px-2 py-2'
+                    >
+                      <div className='font-medium text-foreground/90'>{target}</div>
+                      {update.reason?.trim() ? (
+                        <div className='mt-1'>{update.reason.trim()}</div>
+                      ) : null}
+                      {update.proposedText?.trim() ? (
+                        <div className='mt-1 text-xs text-muted-foreground/90'>
+                          {update.proposedText.trim()}
+                        </div>
+                      ) : null}
                     </div>
-                    {update.reason ? <div>{update.reason}</div> : null}
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </div>
           ) : null}
@@ -177,7 +180,9 @@ export function SocialPostVisuals(props: SocialPostVisualsProps): React.JSX.Elem
                 ? resolveImagePreview(previousAddon.imageAsset)
                 : null;
               const hasComparison = Boolean(previousPreview && preview);
-              const captureDetailLabels = buildAddonCaptureDetailLabels(addon);
+              const captureDetailLabels = getSocialPostAddonCaptureDetailLabels(addon, {
+                personaNameById,
+              });
               return (
                 <div
                   key={addon.id}

@@ -1,11 +1,25 @@
 import { KANGUR_SOCIAL_CAPTURE_PRESETS } from '@/features/kangur/shared/social-capture-presets';
-import type { KangurSocialProgrammableCaptureRoute } from '@/shared/contracts/kangur-social-image-addons';
+import {
+  KANGUR_CAPTURE_MODE_QUERY_PARAM,
+  KANGUR_CAPTURE_MODE_SOCIAL_BATCH,
+} from '@/features/kangur/shared/capture-mode';
+import type {
+  KangurSocialCaptureAppearanceMode,
+  KangurSocialProgrammableCaptureRoute,
+} from '@/shared/contracts/kangur-social-image-addons';
 
 const DEFAULT_WAIT_FOR_SELECTOR_MS = 15_000;
 
 export const KANGUR_SOCIAL_DEFAULT_PLAYWRIGHT_CAPTURE_SCRIPT = `
 export default async function run({ page, input, artifacts, helpers, emit, log }) {
   const captures = Array.isArray(input.captures) ? input.captures : [];
+  const expectedAppearanceMode =
+    typeof input.appearanceMode === 'string' ? input.appearanceMode.trim() : '';
+  const expectedAppearanceSelector = expectedAppearanceMode
+    ? 'html[data-kangur-appearance-mode="' + expectedAppearanceMode + '"], ' +
+      'body[data-kangur-appearance-mode="' + expectedAppearanceMode + '"], ' +
+      '#app-content[data-kangur-appearance-mode="' + expectedAppearanceMode + '"]'
+    : '';
   const results = [];
   let successCount = 0;
   let failureCount = 0;
@@ -23,6 +37,8 @@ export default async function run({ page, input, artifacts, helpers, emit, log }
         return 'Waiting for route content to mount.';
       case 'capture_ready':
         return 'Waiting for route capture-ready flag.';
+      case 'appearance_mode':
+        return 'Waiting for expected appearance mode.';
       default:
         return 'Waiting for page readiness.';
     }
@@ -117,6 +133,14 @@ export default async function run({ page, input, artifacts, helpers, emit, log }
               const captureReady = await routeContent.getAttribute('data-route-capture-ready');
               if (captureReady !== 'true') {
                 waitReason = 'capture_ready';
+              } else if (expectedAppearanceSelector) {
+                const appearanceApplied = await page.$(expectedAppearanceSelector);
+                if (!appearanceApplied) {
+                  waitReason = 'appearance_mode';
+                } else {
+                  pageReady = true;
+                  break;
+                }
               } else {
                 pageReady = true;
                 break;
@@ -224,6 +248,31 @@ export const createEmptyKangurSocialProgrammableCaptureRoute = (
   waitForSelectorMs: DEFAULT_WAIT_FOR_SELECTOR_MS,
 });
 
+export const buildKangurSocialProgrammableCaptureUrl = (
+  baseUrl: string,
+  pathValue: string
+): string => {
+  const trimmedBase = baseUrl.trim().replace(/\/+$/, '');
+  const trimmedPath = pathValue.trim();
+  const href = /^https?:\/\//i.test(trimmedPath)
+    ? trimmedPath
+    : `${trimmedBase}${trimmedPath.startsWith('/') ? trimmedPath : `/${trimmedPath}`}`;
+
+  try {
+    const parsed = new URL(href);
+    parsed.searchParams.set(
+      KANGUR_CAPTURE_MODE_QUERY_PARAM,
+      KANGUR_CAPTURE_MODE_SOCIAL_BATCH
+    );
+    return parsed.toString();
+  } catch {
+    const separator = href.includes('?') ? '&' : '?';
+    return `${href}${separator}${KANGUR_CAPTURE_MODE_QUERY_PARAM}=${encodeURIComponent(
+      KANGUR_CAPTURE_MODE_SOCIAL_BATCH
+    )}`;
+  }
+};
+
 export const buildKangurSocialProgrammableCaptureRoutesFromPresetIds = (
   presetIds?: string[]
 ): KangurSocialProgrammableCaptureRoute[] => {
@@ -243,3 +292,101 @@ export const buildKangurSocialProgrammableCaptureRoutesFromPresetIds = (
     waitForSelectorMs: preset.waitForSelectorMs ?? DEFAULT_WAIT_FOR_SELECTOR_MS,
   }));
 };
+
+export const resolveKangurSocialProgrammableCaptureRoutePreview = (
+  path: string,
+  baseUrl: string
+): { resolvedUrl: string | null; issue: string | null } => {
+  const normalizedPath = path.trim();
+  const normalizedBaseUrl = baseUrl.trim();
+  const isAbsoluteUrl = /^https?:\/\//i.test(normalizedPath);
+
+  if (!normalizedPath) {
+    return {
+      resolvedUrl: null,
+      issue: 'Add a route path to preview the final capture URL.',
+    };
+  }
+
+  if (isAbsoluteUrl) {
+    return {
+      resolvedUrl: buildKangurSocialProgrammableCaptureUrl('', normalizedPath),
+      issue: null,
+    };
+  }
+
+  if (!normalizedBaseUrl) {
+    return {
+      resolvedUrl: null,
+      issue: 'Add a base URL to resolve this route.',
+    };
+  }
+
+  try {
+    return {
+      resolvedUrl: buildKangurSocialProgrammableCaptureUrl(normalizedBaseUrl, normalizedPath),
+      issue: null,
+    };
+  } catch {
+    return {
+      resolvedUrl: null,
+      issue: 'This route cannot be resolved with the current base URL.',
+    };
+  }
+};
+
+export const buildKangurSocialProgrammableCaptureInputPreview = (
+  routes: KangurSocialProgrammableCaptureRoute[],
+  baseUrl: string
+): Array<{
+  id: string;
+  title: string;
+  url: string | null;
+  issue?: string;
+  description?: string;
+  selector: string | null;
+  waitForMs: number | null;
+  waitForSelectorMs: number | null;
+}> =>
+  routes.map((route) => {
+    const preview = resolveKangurSocialProgrammableCaptureRoutePreview(route.path, baseUrl);
+    const description = route.description?.trim() || '';
+    return {
+      id: route.id,
+      title: route.title.trim() || route.id,
+      url: preview.resolvedUrl,
+      ...(preview.issue ? { issue: preview.issue } : {}),
+      ...(description ? { description } : {}),
+      selector: route.selector?.trim() || null,
+      waitForMs: route.waitForMs ?? null,
+      waitForSelectorMs: route.waitForSelectorMs ?? null,
+    };
+  });
+
+export const buildKangurSocialProgrammableCaptureRuntimeRequestPreview = ({
+  appearanceMode,
+  personaId,
+  routes,
+  baseUrl,
+}: {
+  appearanceMode: KangurSocialCaptureAppearanceMode;
+  personaId: string | null | undefined;
+  routes: KangurSocialProgrammableCaptureRoute[];
+  baseUrl: string;
+}): {
+  browserEngine: 'chromium';
+  timeoutMs: number;
+  personaId: string | null;
+  input: {
+    appearanceMode: KangurSocialCaptureAppearanceMode;
+    captures: ReturnType<typeof buildKangurSocialProgrammableCaptureInputPreview>;
+  };
+} => ({
+  browserEngine: 'chromium',
+  timeoutMs: 180_000,
+  personaId: personaId?.trim() || null,
+  input: {
+    appearanceMode,
+    captures: buildKangurSocialProgrammableCaptureInputPreview(routes, baseUrl),
+  },
+});

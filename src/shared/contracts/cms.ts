@@ -54,6 +54,7 @@ import {
   type InspectorSettings,
   cmsBlockInstanceSchema,
   pageZoneSchema,
+  type PageZone,
   type SectionInstance,
 } from './cms-contracts/cms-builder';
 export * from './cms-animation';
@@ -341,19 +342,8 @@ export type PageBuilderState = {
   [key: string]: unknown;
 };
 
-export type PageBuilderAction = {
-  type: string;
-  status?: string;
-  name?: string;
-  seo?: Record<string, unknown>;
-  slugIds?: string[];
-  slugValues?: string[];
-  showMenu?: boolean;
-  themeId?: string | null;
-  settings?: Record<string, unknown>;
-  mode?: string;
+type PageBuilderCommonActionFields = {
   sectionId?: string;
-  zone?: string;
   blockId?: string;
   columnId?: string;
   parentBlockId?: string | null;
@@ -362,14 +352,173 @@ export type PageBuilderAction = {
   fromParentBlockId?: string | null;
   toSectionId?: string;
   toColumnId?: string;
-  toIndex?: number;
   toParentBlockId?: string | null;
+  toIndex?: number;
   toRowId?: string;
   toFrameId?: string;
-  toZone?: string;
+  toZone?: PageZone;
   toParentSectionId?: string | null;
-  [key: string]: unknown;
 };
+
+export type PageBuilderAction =
+  | { type: 'UNDO' }
+  | { type: 'REDO' }
+  | { type: 'SET_PAGES'; pages: Page[] }
+  | { type: 'SET_CURRENT_PAGE'; page: Page }
+  | { type: 'CLEAR_CURRENT_PAGE' }
+  | { type: 'SET_PAGE_STATUS'; status: Page['status'] }
+  | { type: 'SET_PAGE_NAME'; name: string }
+  | { type: 'UPDATE_SEO'; seo: Record<string, unknown> }
+  | { type: 'UPDATE_PAGE_SLUGS'; slugIds: string[]; slugValues: string[] }
+  | { type: 'SET_PAGE_MENU_VISIBILITY'; showMenu: boolean }
+  | { type: 'SET_PAGE_THEME'; themeId: string | null }
+  | { type: 'TOGGLE_INSPECTOR' }
+  | { type: 'UPDATE_INSPECTOR_SETTINGS'; settings: Partial<InspectorSettings> }
+  | { type: 'SET_PREVIEW_MODE'; mode: string }
+  | { type: 'TOGGLE_LEFT_PANEL' }
+  | { type: 'TOGGLE_RIGHT_PANEL' }
+  | { type: 'SELECT_NODE'; nodeId: string | null }
+  | { type: 'COPY_SECTION'; sectionId: string }
+  | ({ type: 'PASTE_SECTION'; zone: PageZone } & PageBuilderCommonActionFields)
+  | ({
+      type: 'COPY_BLOCK';
+      sectionId: string;
+      blockId: string;
+      columnId?: string;
+      parentBlockId?: string | null;
+    } & PageBuilderCommonActionFields)
+  | ({
+      type: 'PASTE_BLOCK';
+      sectionId: string;
+      columnId?: string;
+      parentBlockId?: string | null;
+    } & PageBuilderCommonActionFields)
+  | { type: 'ADD_SECTION'; sectionType: string; zone: PageZone; initialSettings?: Record<string, unknown> }
+  | { type: 'REMOVE_SECTION'; sectionId: string }
+  | { type: 'DUPLICATE_SECTION'; sectionId: string }
+  | { type: 'UPDATE_SECTION_SETTINGS'; sectionId: string; settings: Record<string, unknown> }
+  | { type: 'REORDER_SECTION_IN_ZONE'; zone: PageZone; fromIndex: number; toIndex: number }
+  | { type: 'REORDER_SECTIONS'; zone: PageZone; fromIndex: number; toIndex: number }
+  | { type: 'ADD_BLOCK'; sectionId: string; blockType: string }
+  | { type: 'ADD_BLOCK_TO_COLUMN'; sectionId: string; columnId: string; blockType: string }
+  | { type: 'REMOVE_BLOCK'; sectionId: string; blockId: string }
+  | {
+      type: 'REMOVE_BLOCK_FROM_COLUMN';
+      sectionId: string;
+      columnId: string;
+      blockId: string;
+      parentBlockId?: string | null;
+    }
+  | { type: 'UPDATE_BLOCK_SETTINGS'; sectionId: string; blockId: string; settings: Record<string, unknown> }
+  | { type: 'MOVE_BLOCK'; blockId: string; fromSectionId: string; toSectionId: string; toIndex: number }
+  | { type: 'REORDER_BLOCKS'; sectionId: string; fromIndex: number; toIndex: number }
+  | { type: 'SET_GRID_COLUMNS'; sectionId: string; columnCount: number }
+  | { type: 'SET_GRID_ROWS'; sectionId: string; rowCount: number }
+  | { type: 'ADD_GRID_ROW'; sectionId: string }
+  | { type: 'REMOVE_GRID_ROW'; sectionId: string; rowId: string }
+  | { type: 'ADD_COLUMN_TO_ROW'; sectionId: string; rowId: string }
+  | { type: 'REMOVE_COLUMN_FROM_ROW'; sectionId: string; columnId: string; rowId?: string }
+  | {
+      type: 'UPDATE_NESTED_BLOCK_SETTINGS';
+      sectionId: string;
+      blockId: string;
+      settings: Record<string, unknown>;
+    }
+  | {
+      type: 'ADD_ELEMENT_TO_NESTED_BLOCK';
+      sectionId: string;
+      columnId: string;
+      parentBlockId: string;
+      elementType: string;
+    }
+  | {
+      type: 'REMOVE_ELEMENT_FROM_NESTED_BLOCK';
+      sectionId: string;
+      columnId: string;
+      parentBlockId: string;
+      elementId: string;
+    }
+  | {
+      type: 'ADD_ELEMENT_TO_SECTION_BLOCK';
+      sectionId: string;
+      parentBlockId: string;
+      elementType: string;
+    }
+  | {
+      type: 'REMOVE_ELEMENT_FROM_SECTION_BLOCK';
+      sectionId: string;
+      parentBlockId: string;
+      elementId: string;
+    }
+  | {
+      type: 'MOVE_BLOCK_TO_COLUMN';
+      blockId: string;
+      fromSectionId: string;
+      toSectionId: string;
+      toColumnId: string;
+      toIndex: number;
+      fromColumnId?: string;
+      fromParentBlockId?: string | null;
+      toParentBlockId?: string | null;
+    }
+  | {
+      type: 'MOVE_BLOCK_TO_ROW';
+      blockId: string;
+      fromSectionId: string;
+      toSectionId: string;
+      toRowId: string;
+      toIndex: number;
+      fromColumnId?: string;
+      fromParentBlockId?: string | null;
+      toParentBlockId?: string | null;
+    }
+  | {
+      type: 'MOVE_BLOCK_TO_SECTION';
+      blockId: string;
+      fromSectionId: string;
+      toSectionId: string;
+      toIndex: number;
+      fromColumnId?: string;
+      fromParentBlockId?: string | null;
+      toParentBlockId?: string | null;
+    }
+  | {
+      type: 'MOVE_BLOCK_TO_SLIDESHOW_FRAME';
+      blockId: string;
+      fromSectionId: string;
+      toSectionId: string;
+      toFrameId: string;
+      toIndex: number;
+      fromColumnId?: string;
+      fromParentBlockId?: string | null;
+    }
+  | { type: 'MOVE_SECTION_TO_SLIDESHOW_FRAME'; sectionId: string; toSectionId: string; toFrameId: string; toIndex: number }
+  | {
+      type: 'CONVERT_BLOCK_TO_SECTION';
+      blockId: string;
+      fromSectionId: string;
+      toZone: PageZone;
+      toIndex: number;
+      fromColumnId?: string;
+      fromParentBlockId?: string | null;
+    }
+  | { type: 'CONVERT_SECTION_TO_BLOCK'; sectionId: string; toSectionId: string; toIndex: number }
+  | {
+      type: 'MOVE_SECTION_TO_COLUMN';
+      sectionId: string;
+      toSectionId: string;
+      toColumnId: string;
+      toIndex: number;
+      toParentBlockId?: string | null;
+    }
+  | { type: 'MOVE_SECTION_TO_ZONE'; sectionId: string; toZone: PageZone; toIndex: number }
+  | {
+      type: 'MOVE_SECTION_IN_TREE';
+      sectionId: string;
+      toZone: PageZone;
+      toIndex: number;
+      toParentSectionId?: string | null;
+    };
 
 /**
  * CMS Event Effects Contract

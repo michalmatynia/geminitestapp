@@ -4,6 +4,7 @@
   "installCommand": "npm ci --workspaces=false --include=dev --no-audit --no-fund",
   "buildCommand": "npm run build",
   "env": {
-    "NEXT_BUILD_BUNDLER": "webpack"
+    "NEXT_BUILD_BUNDLER": "turbopack",
+    "NEXT_BUILD_HEAP_MB": "3584"
   }
 }

@@ -179,6 +179,10 @@ const nextConfig = {
     'sharp',
     // instrumentation-winston lazily requires this optional transport at runtime.
     '@opentelemetry/winston-transport',
+    // Node-only IMAP/mail-parsing libraries with native bindings — bundling them
+    // inflates webpack memory usage significantly on constrained builders.
+    'imapflow',
+    'mailparser',
   ],
   turbopack: {
     root: __dirname,

@@ -3406,6 +3406,7 @@
             "bench": "bench"
           },
           "sceneAria": {
+            "room": "Animated bedroom scene",
             "bedroom": "Animated bedroom scene",
             "toyShelf": "Animated toy shelf scene",
             "studyCorner": "Animated study corner scene",

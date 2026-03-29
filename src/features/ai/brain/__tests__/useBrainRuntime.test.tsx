@@ -114,6 +114,7 @@ describe('useBrainRuntime', () => {
     act(() => {
       result.current.actionsValue.setActiveTab('providers');
       result.current.actionsValue.setOperationsRange('24h');
+      result.current.actionsValue.setFeatureEnabled('prompt_engine', false);
       result.current.actionsValue.handleDefaultChange({
         ...defaultBrainAssignment,
         provider: 'agent',
@@ -136,6 +137,8 @@ describe('useBrainRuntime', () => {
 
     expect(result.current.stateValue.activeTab).toBe('providers');
     expect(result.current.stateValue.operationsRange).toBe('24h');
+    expect(result.current.stateValue.overridesEnabled.prompt_engine).toBe(true);
+    expect(result.current.stateValue.settings.assignments.prompt_engine?.enabled).toBe(false);
     expect(result.current.stateValue.settings.defaults.provider).toBe('model');
     expect(result.current.stateValue.settings.defaults.modelId).toBe('default-agent-attempt');
     expect(result.current.stateValue.overridesEnabled.products).toBe(true);

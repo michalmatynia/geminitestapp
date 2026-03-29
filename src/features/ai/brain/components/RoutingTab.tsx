@@ -2,7 +2,7 @@
 
 import React from 'react';
 
-import { Card, Checkbox, CollapsibleSection, Label, StatusBadge } from '@/shared/ui';
+import { Card, CollapsibleSection, StatusBadge, StatusToggle } from '@/shared/ui';
 
 import { useBrain } from '../context/BrainContext';
 import { type AiBrainAssignment } from '../settings';
@@ -19,6 +19,8 @@ export function RoutingTab(): React.JSX.Element {
     effectiveAssignments,
     handleDefaultChange,
     handleOverrideChange,
+    saving,
+    setFeatureEnabled,
     toggleOverride,
   } = useBrain();
 
@@ -34,6 +36,7 @@ export function RoutingTab(): React.JSX.Element {
             const isOverridden = overridesEnabled[feature.key];
             const hasModel = Boolean(assignment?.modelId?.trim());
             const label = hasModel ? assignment.modelId.trim() : 'inherits default';
+            const enabledLabel = assignment.enabled ? 'enabled' : 'disabled';
 
             return (
               <div
@@ -43,11 +46,24 @@ export function RoutingTab(): React.JSX.Element {
                 <span className='font-medium text-gray-100'>{feature.label}</span>
                 <span className='text-gray-300'>·</span>
                 <span className='text-gray-200'>{label}</span>
+                <span className='text-gray-300'>·</span>
+                <span className='text-gray-200'>{enabledLabel}</span>
                 <StatusBadge
                   status={isOverridden ? 'ok' : 'none'}
                   size='sm'
                   className='ml-1'
                   label={isOverridden ? 'override' : 'default'}
+                />
+                <StatusToggle
+                  enabled={assignment.enabled}
+                  disabled={saving}
+                  size='sm'
+                  enabledLabel='ON'
+                  disabledLabel='OFF'
+                  onToggle={(nextEnabled: boolean): void =>
+                    setFeatureEnabled(feature.key, nextEnabled)
+                  }
+                  className='ml-1 shrink-0'
                 />
               </div>
             );
@@ -57,8 +73,9 @@ export function RoutingTab(): React.JSX.Element {
 
       <Card variant='subtle-compact' padding='md' className='border-border/60 bg-card/30'>
         <div className='text-xs text-gray-300'>
-          Capability routing is authoritative. Use the routing list for quick enable/disable and
-          route-level editing. Feature/global fallback controls are available in Advanced settings.
+          Feature switches are authoritative. Use the routing list for master on/off control, then
+          fine-tune route-level overrides inside enabled features. Feature/global fallback controls
+          remain available in Advanced settings.
         </div>
       </Card>
 
@@ -67,7 +84,8 @@ export function RoutingTab(): React.JSX.Element {
           <div className='space-y-2'>
             <div className='text-xs font-semibold uppercase text-gray-500'>Routing list</div>
             <div className='text-[11px] text-gray-400'>
-              Toggle route state inline or click edit for full assignment settings.
+              Toggle features on/off inline, then use route switches or edit for full assignment
+              settings.
             </div>
           </div>
           <div className='mt-3'>
@@ -103,7 +121,6 @@ export function RoutingTab(): React.JSX.Element {
               const featureAssignment = featureOverrideEnabled
                 ? (settings.assignments[feature.key] ?? effectiveAssignments[feature.key])
                 : effectiveAssignments[feature.key];
-              const checkboxId = `routing-feature-override-${feature.key}`;
 
               return (
                 <Card
@@ -118,20 +135,35 @@ export function RoutingTab(): React.JSX.Element {
                       <div className='text-[11px] text-gray-400'>{feature.description}</div>
                     </div>
 
-                    <div className='flex items-center gap-2 text-[11px] text-gray-400'>
-                      <Checkbox
-                        id={checkboxId}
-                        checked={featureOverrideEnabled}
-                        onCheckedChange={(checked: boolean | 'indeterminate') =>
-                          toggleOverride(feature.key, Boolean(checked))
-                        }
-                      />
-                      <Label
-                        htmlFor={checkboxId}
-                        className='cursor-pointer text-[11px] text-gray-400'
-                      >
-                        Override feature fallback
-                      </Label>
+                    <div className='flex flex-wrap items-center gap-3 text-[11px] text-gray-400'>
+                      <div className='inline-flex items-center gap-2'>
+                        <span>Feature</span>
+                        <StatusToggle
+                          enabled={featureAssignment.enabled}
+                          disabled={saving}
+                          size='sm'
+                          enabledLabel='ON'
+                          disabledLabel='OFF'
+                          onToggle={(nextEnabled: boolean): void =>
+                            setFeatureEnabled(feature.key, nextEnabled)
+                          }
+                        />
+                      </div>
+                      <div className='inline-flex items-center gap-2'>
+                        <span>Fallback override</span>
+                        <StatusToggle
+                          enabled={featureOverrideEnabled}
+                          disabled={saving}
+                          size='sm'
+                          enabledLabel='CUSTOM'
+                          disabledLabel='DEFAULT'
+                          enabledVariant='blue'
+                          disabledVariant='gray'
+                          onToggle={(nextEnabled: boolean): void =>
+                            toggleOverride(feature.key, nextEnabled)
+                          }
+                        />
+                      </div>
                     </div>
 
                     <AssignmentEditor
@@ -147,6 +179,12 @@ export function RoutingTab(): React.JSX.Element {
                     {!featureOverrideEnabled ? (
                       <div className='text-[11px] text-gray-500'>
                         Using global defaults as this feature fallback.
+                      </div>
+                    ) : null}
+                    {!featureAssignment.enabled ? (
+                      <div className='text-[11px] text-amber-300'>
+                        Feature is off. Route-level settings are preserved, but this feature will
+                        stay inactive until you turn it back on.
                       </div>
                     ) : null}
                   </div>

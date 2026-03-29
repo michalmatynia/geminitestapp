@@ -17,7 +17,8 @@ export interface BrainRoutingCapabilityNodeItemProps {
   isDragging: boolean;
   select: () => void;
   enabled: boolean;
-  sourceLabel: 'Capability override' | 'Feature fallback' | 'Global defaults';
+  sourceLabel: 'Capability override' | 'Feature fallback' | 'Global defaults' | 'Feature disabled';
+  toggleDisabled?: boolean;
 }
 
 export type BrainRoutingCapabilityNodeItemRuntimeValue = {
@@ -41,12 +42,23 @@ const sourceBadgeClassName: Record<BrainRoutingCapabilityNodeItemProps['sourceLa
   'Capability override': 'border-emerald-400/40 text-emerald-300',
   'Feature fallback': 'border-sky-400/40 text-sky-300',
   'Global defaults': 'border-gray-500/40 text-gray-400',
+  'Feature disabled': 'border-amber-400/40 text-amber-300',
 };
 
 export function BrainRoutingCapabilityNodeItem(
   props: BrainRoutingCapabilityNodeItemProps
 ): React.JSX.Element {
-  const { node, capability, depth, isSelected, isDragging, select, enabled, sourceLabel } = props;
+  const {
+    node,
+    capability,
+    depth,
+    isSelected,
+    isDragging,
+    select,
+    enabled,
+    sourceLabel,
+    toggleDisabled = false,
+  } = props;
 
   const { onToggleEnabled, onEdit, isPending } = useBrainRoutingCapabilityNodeItemRuntime();
 
@@ -96,7 +108,7 @@ export function BrainRoutingCapabilityNodeItem(
 
           <StatusToggle
             enabled={enabled}
-            disabled={isPending}
+            disabled={isPending || toggleDisabled}
             size='sm'
             enabledLabel='ENABLED'
             disabledLabel='DISABLED'

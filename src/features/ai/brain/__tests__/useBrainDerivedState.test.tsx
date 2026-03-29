@@ -220,5 +220,6 @@ describe('useBrainDerivedState', () => {
     expect(useBrainInsights).toHaveBeenLastCalledWith(false);
     expect(useBrainRuntimeAnalytics).toHaveBeenLastCalledWith(false);
     expect(result.current.runtimeAnalyticsLiveEnabled).toBe(false);
+    expect(result.current.effectiveCapabilityAssignments['ai_paths.model'].enabled).toBe(false);
   });
 });

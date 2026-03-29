@@ -54,6 +54,7 @@ import {
   resetSessionsBeforeStudentLogin,
   resolveCredentialErrorTarget,
 } from './KangurLoginPage.utils';
+export { resolveKangurLoginCallbackNavigation } from '@/features/kangur/ui/login-page/use-login-logic';
 
 export function KangurLoginPageContent(): React.JSX.Element {
   const state = useKangurLoginPageState();

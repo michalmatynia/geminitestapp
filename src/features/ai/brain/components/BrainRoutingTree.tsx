@@ -28,10 +28,13 @@ import {
 import { BrainRoutingFeatureNodeItem } from './BrainRoutingFeatureNodeItem';
 
 import type { AiBrainAssignment, AiBrainCapabilityKey, AiBrainSettings } from '../settings';
+import type { AiBrainFeature } from '../settings';
 
 export interface BrainRoutingTreeProps {
   settings?: AiBrainSettings;
+  effectiveAssignments?: Record<AiBrainFeature, AiBrainAssignment>;
   effectiveCapabilityAssignments?: Record<AiBrainCapabilityKey, AiBrainAssignment>;
+  onToggleFeatureEnabled?: (feature: AiBrainFeature, enabled: boolean) => void;
   onToggleEnabled?: (capability: AiBrainCapabilityKey, enabled: boolean) => void;
   onEdit?: (capability: AiBrainCapabilityKey) => void;
   isPending?: boolean;
@@ -42,13 +45,23 @@ export function BrainRoutingTree(props: BrainRoutingTreeProps): React.JSX.Elemen
   const actionsContext = useOptionalBrainRoutingActionsContext();
 
   const settings = props.settings ?? stateContext?.settings;
+  const effectiveAssignments = props.effectiveAssignments ?? stateContext?.effectiveAssignments;
   const effectiveCapabilityAssignments =
     props.effectiveCapabilityAssignments ?? stateContext?.effectiveCapabilityAssignments;
+  const onToggleFeatureEnabled =
+    props.onToggleFeatureEnabled ?? actionsContext?.onToggleFeatureEnabled;
   const onToggleEnabled = props.onToggleEnabled ?? actionsContext?.onToggleEnabled;
   const onEdit = props.onEdit ?? actionsContext?.onEdit;
   const isPending = props.isPending ?? stateContext?.isPending ?? false;
 
-  if (!settings || !effectiveCapabilityAssignments || !onToggleEnabled || !onEdit) {
+  if (
+    !settings ||
+    !effectiveAssignments ||
+    !effectiveCapabilityAssignments ||
+    !onToggleFeatureEnabled ||
+    !onToggleEnabled ||
+    !onEdit
+  ) {
     throw internalError(
       'BrainRoutingTree must be used within BrainRoutingProvider or receive explicit routing props'
     );
@@ -87,6 +100,9 @@ export function BrainRoutingTree(props: BrainRoutingTreeProps): React.JSX.Elemen
             isDragging={input.isDragging}
             select={input.select}
             toggleExpand={input.toggleExpand}
+            enabled={effectiveAssignments[featureGroup.key].enabled}
+            isPending={isPending}
+            onToggleEnabled={onToggleFeatureEnabled}
           />
         );
       }
@@ -95,15 +111,18 @@ export function BrainRoutingTree(props: BrainRoutingTreeProps): React.JSX.Elemen
       if (!capability) return null;
 
       const definition = getBrainCapabilityDefinition(capability);
+      const featureEnabled = effectiveAssignments[definition.feature].enabled;
       const capabilityOverrideEnabled = Boolean(settings.capabilities[capability]);
       const assignment = capabilityOverrideEnabled
         ? (settings.capabilities[capability] ?? effectiveCapabilityAssignments[capability])
         : effectiveCapabilityAssignments[capability];
-      const sourceLabel = capabilityOverrideEnabled
-        ? 'Capability override'
-        : settings.assignments[definition.feature]
-          ? 'Feature fallback'
-          : 'Global defaults';
+      const sourceLabel = !featureEnabled
+        ? 'Feature disabled'
+        : capabilityOverrideEnabled
+          ? 'Capability override'
+          : settings.assignments[definition.feature]
+            ? 'Feature fallback'
+            : 'Global defaults';
 
       return (
         <BrainRoutingCapabilityNodeItem
@@ -113,20 +132,21 @@ export function BrainRoutingTree(props: BrainRoutingTreeProps): React.JSX.Elemen
           isSelected={input.isSelected}
           isDragging={input.isDragging}
           select={input.select}
-          enabled={assignment.enabled}
+          enabled={featureEnabled ? assignment.enabled : false}
           sourceLabel={sourceLabel}
+          toggleDisabled={!featureEnabled}
         />
       );
     },
     [
+      effectiveAssignments,
       capabilityByNodeId,
       effectiveCapabilityAssignments,
       featureByNodeId,
       isPending,
-      onEdit,
-      onToggleEnabled,
       settings.assignments,
       settings.capabilities,
+      onToggleFeatureEnabled,
     ]
   );
   const capabilityNodeRuntimeValue = useMemo(

@@ -11,8 +11,10 @@ import {
   Users,
   X,
 } from 'lucide-react';
+import dynamic from 'next/dynamic';
 import { useLocale, useTranslations } from 'next-intl';
 import React, {
+  Suspense,
   useCallback,
   useContext,
   useEffect,
@@ -35,14 +37,9 @@ import {
   persistTutorVisibilityHidden,
   subscribeToTutorVisibilityChanges,
 } from '@/features/kangur/ui/components/KangurAiTutorWidget.storage';
-import {
-  renderKangurChoiceDialog,
-  type KangurChoiceDialogProps,
-} from '@/features/kangur/ui/components/KangurChoiceDialog';
 import { KangurDialogMeta } from '@/features/kangur/ui/components/KangurDialogMeta';
 import { KangurElevatedUserMenu } from '@/features/kangur/ui/components/KangurElevatedUserMenu';
 import { KangurHomeLogo } from '@/features/kangur/ui/components/KangurHomeLogo';
-import { KangurLanguageSwitcher } from '@/features/kangur/ui/components/KangurLanguageSwitcher';
 import { KangurPanelCloseButton } from '@/features/kangur/ui/components/KangurPanelCloseButton';
 import { KangurProfileMenu } from '@/features/kangur/ui/components/KangurProfileMenu';
 import { useKangurAiTutorContent } from '@/features/kangur/ui/context/KangurAiTutorContentContext';
@@ -109,9 +106,21 @@ import {
 } from './KangurPrimaryNavigation.utils';
 import KangurVisualCueContent from '@/features/kangur/ui/components/KangurVisualCueContent';
 
-function KangurChoiceDialog(props: KangurChoiceDialogProps): React.JSX.Element {
-  return renderKangurChoiceDialog(props);
-}
+const KangurChoiceDialog = dynamic(() =>
+  import('@/features/kangur/ui/components/KangurChoiceDialog').then((m) => ({
+    default: function KangurChoiceDialogEntry(
+      props: import('@/features/kangur/ui/components/KangurChoiceDialog').KangurChoiceDialogProps
+    ) {
+      return m.renderKangurChoiceDialog(props);
+    },
+  }))
+);
+
+const KangurLanguageSwitcher = dynamic(() =>
+  import('@/features/kangur/ui/components/KangurLanguageSwitcher').then((m) => ({
+    default: m.KangurLanguageSwitcher,
+  }))
+);
 
 const resolveTutorFallbackCopy = (
   locale: ReturnType<typeof normalizeSiteLocale>,
@@ -1259,8 +1268,10 @@ export function KangurPrimaryNavigation({
         left={leftContent}
       />
       {mobileMenuOverlay}
-      {isSubjectModalOpen ? subjectModal : null}
-      {isAgeGroupModalOpen ? ageGroupModal : null}
+      <Suspense fallback={null}>
+        {isSubjectModalOpen ? subjectModal : null}
+        {isAgeGroupModalOpen ? ageGroupModal : null}
+      </Suspense>
     </>
   );
 }

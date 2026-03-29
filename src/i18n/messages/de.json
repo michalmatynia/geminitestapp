@@ -3406,6 +3406,7 @@
             "bench": "bench"
           },
           "sceneAria": {
+            "room": "Animierte Schlafzimmerszene",
             "bedroom": "Animierte Schlafzimmerszene",
             "toyShelf": "Animierte Spielzeugregal-Szene",
             "studyCorner": "Animierte Lernecke",

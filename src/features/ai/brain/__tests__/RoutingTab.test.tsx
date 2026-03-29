@@ -22,8 +22,7 @@ vi.mock('../components/BrainRoutingTree', () => ({
     const { onToggleEnabled, onEdit } = useBrainRoutingActionsContext();
     return (
       <div>
-        <div>Prompt Engine</div>
-        <div>Prompt Exploder AI</div>
+        <div>Mock Routing Tree</div>
         <button
           type='button'
           onClick={() => onToggleEnabled('prompt_engine.prompt_exploder', false)}
@@ -106,6 +105,23 @@ vi.mock('@/shared/ui', () => ({
   ),
   Textarea: (props: React.TextareaHTMLAttributes<HTMLTextAreaElement>) => <textarea {...props} />,
   StatusBadge: ({ label }: { label?: string }) => <span>{label ?? ''}</span>,
+  StatusToggle: ({
+    enabled,
+    onToggle,
+    disabled,
+    enabledLabel = 'ON',
+    disabledLabel = 'OFF',
+  }: {
+    enabled: boolean;
+    onToggle: (enabled: boolean) => void;
+    disabled?: boolean;
+    enabledLabel?: string;
+    disabledLabel?: string;
+  }) => (
+    <button type='button' disabled={disabled} onClick={() => onToggle(!enabled)}>
+      {enabled ? enabledLabel : disabledLabel}
+    </button>
+  ),
   FormModal: (props: {
     open?: boolean;
     title: string;
@@ -137,6 +153,7 @@ const buildUseBrainMock = (overrides?: { capabilityOverride?: boolean }) => {
   const handleDefaultChange = vi.fn();
   const handleOverrideChange = vi.fn();
   const handleCapabilityChange = vi.fn();
+  const setFeatureEnabled = vi.fn();
   const setCapabilityEnabled = vi.fn();
   const clearCapabilityOverride = vi.fn();
   const toggleOverride = vi.fn();
@@ -174,6 +191,7 @@ const buildUseBrainMock = (overrides?: { capabilityOverride?: boolean }) => {
     handleDefaultChange,
     handleOverrideChange,
     handleCapabilityChange,
+    setFeatureEnabled,
     setCapabilityEnabled,
     clearCapabilityOverride,
     toggleOverride,
@@ -181,6 +199,7 @@ const buildUseBrainMock = (overrides?: { capabilityOverride?: boolean }) => {
 
   return {
     handleCapabilityChange,
+    setFeatureEnabled,
     setCapabilityEnabled,
     clearCapabilityOverride,
   };
@@ -193,8 +212,20 @@ describe('RoutingTab', () => {
     render(<RoutingTab />);
 
     expect(screen.getAllByText('Prompt Engine').length).toBeGreaterThan(0);
-    expect(screen.getByText('Prompt Exploder AI')).toBeInTheDocument();
+    expect(screen.getByText('Mock Routing Tree')).toBeInTheDocument();
     expect(screen.getByText('Advanced fallback settings')).toBeInTheDocument();
+  });
+
+  it('routes summary feature toggles through the feature enable helper', () => {
+    const { setFeatureEnabled } = buildUseBrainMock();
+
+    render(<RoutingTab />);
+
+    const promptEngineChip = screen.getAllByText('Prompt Engine')[0]?.parentElement;
+    expect(promptEngineChip).not.toBeNull();
+    fireEvent.click(within(promptEngineChip as HTMLElement).getByRole('button', { name: 'ON' }));
+
+    expect(setFeatureEnabled).toHaveBeenCalledWith('prompt_engine', false);
   });
 
   it('routes quick toggle through capability enable helper', () => {

@@ -3,10 +3,11 @@
 import { Brain, GripVertical } from 'lucide-react';
 import React from 'react';
 
-import { TreeCaret, TreeRow } from '@/shared/ui';
+import { StatusToggle, TreeCaret, TreeRow } from '@/shared/ui';
 import { cn, type MasterTreeNode } from '@/shared/utils';
 
 import type { BrainRoutingCapabilityGroup } from './brain-routing-master-tree';
+import type { AiBrainFeature } from '../settings';
 
 export interface BrainRoutingFeatureNodeItemProps {
   node: MasterTreeNode;
@@ -18,6 +19,9 @@ export interface BrainRoutingFeatureNodeItemProps {
   isDragging: boolean;
   select: () => void;
   toggleExpand: () => void;
+  enabled: boolean;
+  isPending: boolean;
+  onToggleEnabled: (feature: AiBrainFeature, enabled: boolean) => void;
 }
 
 export function BrainRoutingFeatureNodeItem(
@@ -33,6 +37,9 @@ export function BrainRoutingFeatureNodeItem(
     isDragging,
     select,
     toggleExpand,
+    enabled,
+    isPending,
+    onToggleEnabled,
   } = props;
 
   return (
@@ -75,6 +82,15 @@ export function BrainRoutingFeatureNodeItem(
             {group.capabilities.length} route{group.capabilities.length === 1 ? '' : 's'}
           </span>
         </button>
+        <StatusToggle
+          enabled={enabled}
+          disabled={isPending}
+          size='sm'
+          enabledLabel='ON'
+          disabledLabel='OFF'
+          onToggle={(nextEnabled: boolean): void => onToggleEnabled(group.key, nextEnabled)}
+          className='shrink-0'
+        />
       </div>
     </TreeRow>
   );

@@ -8,6 +8,7 @@ import { Checkbox, FormModal, Label } from '@/shared/ui';
 import { useBrain } from '../context/BrainContext';
 import {
   getBrainCapabilityDefinition,
+  resolveBrainAssignment,
   type AiBrainAssignment,
   type AiBrainCapabilityKey,
 } from '../settings';
@@ -71,11 +72,14 @@ export function BrainRoutingEditModal(props: BrainRoutingEditModalProps): React.
     );
   }
 
-  const sourceLabel = settings.capabilities[capability]
-    ? 'Capability override'
-    : settings.assignments[capabilityDefinition.feature]
-      ? 'Feature fallback'
-      : 'Global defaults';
+  const featureEnabled = resolveBrainAssignment(settings, capabilityDefinition.feature).enabled;
+  const sourceLabel = !featureEnabled
+    ? 'Feature disabled'
+    : settings.capabilities[capability]
+      ? 'Capability override'
+      : settings.assignments[capabilityDefinition.feature]
+        ? 'Feature fallback'
+        : 'Global defaults';
 
   const allowedProviders =
     capabilityDefinition.policy === 'agent-or-model'
@@ -140,6 +144,12 @@ export function BrainRoutingEditModal(props: BrainRoutingEditModalProps): React.
           readOnly={!state.overrideEnabled}
           allowedProviders={[...allowedProviders]}
         />
+        {!featureEnabled ? (
+          <div className='text-[11px] text-amber-300'>
+            This feature is currently off. Route settings are staged, but they will stay inactive
+            until the feature is turned back on.
+          </div>
+        ) : null}
         {!state.overrideEnabled ? (
           <div className='text-[11px] text-gray-500'>
             Override is off. Saving will clear this route override and use fallback inheritance.

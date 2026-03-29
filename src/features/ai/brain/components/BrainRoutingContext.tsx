@@ -7,16 +7,23 @@ import { createStrictContext } from '@/shared/lib/react/createStrictContext';
 
 import { useBrain } from '../context/BrainContext';
 
-import type { AiBrainAssignment, AiBrainCapabilityKey, AiBrainSettings } from '../settings';
+import type {
+  AiBrainAssignment,
+  AiBrainCapabilityKey,
+  AiBrainFeature,
+  AiBrainSettings,
+} from '../settings';
 
 export type BrainRoutingStateContextValue = {
   settings: AiBrainSettings;
+  effectiveAssignments: Record<AiBrainFeature, AiBrainAssignment>;
   effectiveCapabilityAssignments: Record<AiBrainCapabilityKey, AiBrainAssignment>;
   isPending: boolean;
   editingCapability: AiBrainCapabilityKey | null;
 };
 
 export type BrainRoutingActionsContextValue = {
+  onToggleFeatureEnabled: (feature: AiBrainFeature, enabled: boolean) => void;
   onToggleEnabled: (capability: AiBrainCapabilityKey, enabled: boolean) => void;
   onEdit: (capability: AiBrainCapabilityKey) => void;
   onCloseEdit: () => void;
@@ -51,28 +58,37 @@ type BrainRoutingProviderProps = {
 export function BrainRoutingProvider({
   children,
 }: BrainRoutingProviderProps): React.JSX.Element {
-  const { settings, effectiveCapabilityAssignments, saving, setCapabilityEnabled } = useBrain();
+  const {
+    settings,
+    effectiveAssignments,
+    effectiveCapabilityAssignments,
+    saving,
+    setCapabilityEnabled,
+    setFeatureEnabled,
+  } = useBrain();
   const [editingCapability, setEditingCapability] =
     React.useState<AiBrainCapabilityKey | null>(null);
 
   const stateValue = React.useMemo(
     (): BrainRoutingStateContextValue => ({
       settings,
+      effectiveAssignments,
       effectiveCapabilityAssignments,
       isPending: saving,
       editingCapability,
     }),
-    [effectiveCapabilityAssignments, editingCapability, saving, settings]
+    [effectiveAssignments, effectiveCapabilityAssignments, editingCapability, saving, settings]
   );
   const actionsValue = React.useMemo(
     (): BrainRoutingActionsContextValue => ({
+      onToggleFeatureEnabled: setFeatureEnabled,
       onToggleEnabled: setCapabilityEnabled,
       onEdit: setEditingCapability,
       onCloseEdit: () => {
         setEditingCapability(null);
       },
     }),
-    [setCapabilityEnabled]
+    [setCapabilityEnabled, setFeatureEnabled]
   );
 
   return (

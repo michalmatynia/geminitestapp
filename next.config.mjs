@@ -29,12 +29,14 @@ const isPlaywrightBrokerRuntime = Boolean(
   process.env.PLAYWRIGHT_RUNTIME_LEASE_KEY || process.env.PLAYWRIGHT_RUNTIME_AGENT_ID
 );
 const explicitBuildCpus = Number.parseInt(process.env.NEXT_BUILD_CPUS ?? '', 10);
-// Keep production builds on a single worker unless explicitly overridden.
-// This repo has crossed the point where webpack page-data generation becomes
-// unreliable on the default Vercel builder when it fans out work.
+// Webpack page-data generation becomes unreliable on the default Vercel builder
+// when it fans out work, so cap at 1 worker for webpack. Turbopack handles its
+// own parallelism in its Rust runtime and should use the default CPU count.
 const buildWorkerCpuLimit = Number.isFinite(explicitBuildCpus)
   ? Math.max(1, explicitBuildCpus)
-  : 1;
+  : isTurbopack
+    ? undefined
+    : 1;
 const optimizePackageImports = [
   'lucide-react',
   '@radix-ui/react-alert-dialog',
@@ -135,14 +137,10 @@ const nextConfig = {
     removeConsole: process.env.NODE_ENV === 'production',
   },
   experimental: {
-    // Default worker count follows host CPU count, which can fan out page-data
-    // collection aggressively on high-core machines and trigger SIGTERM/OOM
-    // in constrained build environments. Keep production builds on a stable
-    // cap and allow explicit overrides when we want to tune locally. The local
-    // default stays at 1 because the current app size has been unstable at 2
-    // workers on macOS during webpack production builds. Turbopack stays at 1
-    // everywhere until the production compile path is consistently green.
-    ...(isDev ? {} : { cpus: buildWorkerCpuLimit }),
+    // Webpack page-data workers fan out aggressively and trigger OOM on Vercel;
+    // cap at 1 for webpack. Turbopack handles parallelism in Rust and should
+    // use the default CPU count for faster builds.
+    ...(isDev || buildWorkerCpuLimit === undefined ? {} : { cpus: buildWorkerCpuLimit }),
     // Default proxy body clone limit (~10MB) is too low for multi-image product forms.
     // Raise it so multipart requests don't fail before route handlers read formData().
     proxyClientMaxBodySize: '50mb',

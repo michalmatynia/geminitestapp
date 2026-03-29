@@ -6,7 +6,6 @@ import {
   DEFAULT_RUNTIME_ANALYTICS_INSIGHT_SYSTEM_PROMPT,
 } from '@/shared/contracts/ai-insights';
 import {
-  Checkbox,
   Input,
   Textarea,
   FormSection,
@@ -14,7 +13,7 @@ import {
   SimpleSettingsList,
   ToggleRow,
   CollapsibleSection,
-  Label,
+  StatusToggle,
   UI_GRID_RELAXED_CLASSNAME,
 } from '@/shared/ui';
 
@@ -57,6 +56,8 @@ export function ReportsTab(): React.JSX.Element {
     overridesEnabled,
     effectiveAssignments,
     handleOverrideChange,
+    saving,
+    setFeatureEnabled,
     toggleOverride,
     analyticsScheduleEnabled,
     setAnalyticsScheduleEnabled,
@@ -225,24 +226,41 @@ export function ReportsTab(): React.JSX.Element {
               id: feature.key,
               title: feature.label,
               description: feature.description,
-              original: { feature, overrideEnabled, assignment },
+              original: { feature, overrideEnabled, assignment, featureEnabled: assignment.enabled },
             };
           })}
           columns={2}
           renderActions={(item) => {
-            const checkboxId = `reports-feature-override-${item.id}`;
             return (
-              <div className='flex items-center gap-2 text-[11px] text-gray-400'>
-                <Checkbox
-                  id={checkboxId}
-                  checked={item.original.overrideEnabled}
-                  onCheckedChange={(checked: boolean) =>
-                    toggleOverride(item.original.feature.key, Boolean(checked))
-                  }
-                />
-                <Label htmlFor={checkboxId} className='cursor-pointer text-[11px] text-gray-400'>
-                  Override
-                </Label>
+              <div className='flex flex-wrap items-center gap-3 text-[11px] text-gray-400'>
+                <div className='inline-flex items-center gap-2'>
+                  <span>Feature</span>
+                  <StatusToggle
+                    enabled={item.original.featureEnabled}
+                    disabled={saving}
+                    size='sm'
+                    enabledLabel='ON'
+                    disabledLabel='OFF'
+                    onToggle={(nextEnabled: boolean): void =>
+                      setFeatureEnabled(item.original.feature.key, nextEnabled)
+                    }
+                  />
+                </div>
+                <div className='inline-flex items-center gap-2'>
+                  <span>Fallback override</span>
+                  <StatusToggle
+                    enabled={item.original.overrideEnabled}
+                    disabled={saving}
+                    size='sm'
+                    enabledLabel='CUSTOM'
+                    disabledLabel='DEFAULT'
+                    enabledVariant='blue'
+                    disabledVariant='gray'
+                    onToggle={(nextEnabled: boolean): void =>
+                      toggleOverride(item.original.feature.key, nextEnabled)
+                    }
+                  />
+                </div>
               </div>
             );
           }}
@@ -257,6 +275,12 @@ export function ReportsTab(): React.JSX.Element {
                 allowedProviders={['model']}
                 showSystemPrompt={false}
               />
+              {!item.original.featureEnabled && (
+                <div className='text-[11px] text-amber-300'>
+                  Feature is off. Report prompts and assignments are preserved, but this report
+                  feature will stay inactive until you turn it back on.
+                </div>
+              )}
               {!item.original.overrideEnabled && (
                 <div className='text-[11px] text-gray-500'>Using global defaults.</div>
               )}

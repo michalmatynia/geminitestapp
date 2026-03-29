@@ -1,9 +1,10 @@
-import { fireEvent, render, screen } from '@testing-library/react';
+import { fireEvent, render, screen, within } from '@testing-library/react';
 import React from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { ReportsTab } from '../components/ReportsTab';
 import { useBrain } from '../context/BrainContext';
+import { defaultBrainAssignment } from '@/shared/lib/ai-brain/settings';
 
 vi.mock('../context/BrainContext', () => ({
   useBrain: vi.fn(),
@@ -33,22 +34,6 @@ vi.mock('../components/AssignmentEditor', () => ({
 }));
 
 vi.mock('@/shared/ui', () => ({
-  Checkbox: ({
-    id,
-    checked,
-    onCheckedChange,
-  }: {
-    id?: string;
-    checked?: boolean;
-    onCheckedChange?: (checked: boolean) => void;
-  }) => (
-    <input
-      id={id}
-      type='checkbox'
-      checked={checked}
-      onChange={(event) => onCheckedChange?.(event.target.checked)}
-    />
-  ),
   Input: ({
     value,
     onChange,
@@ -147,6 +132,23 @@ vi.mock('@/shared/ui', () => ({
       {description ? <span>{description}</span> : null}
     </label>
   ),
+  StatusToggle: ({
+    enabled,
+    onToggle,
+    disabled,
+    enabledLabel = 'ON',
+    disabledLabel = 'OFF',
+  }: {
+    enabled: boolean;
+    onToggle: (enabled: boolean) => void;
+    disabled?: boolean;
+    enabledLabel?: string;
+    disabledLabel?: string;
+  }) => (
+    <button type='button' disabled={disabled} onClick={() => onToggle(!enabled)}>
+      {enabled ? enabledLabel : disabledLabel}
+    </button>
+  ),
   CollapsibleSection: ({
     title,
     children,
@@ -187,6 +189,7 @@ describe('ReportsTab', () => {
   const setRuntimeAnalyticsPromptSystem = vi.fn();
   const setLogsPromptSystem = vi.fn();
   const handleOverrideChange = vi.fn();
+  const setFeatureEnabled = vi.fn();
   const toggleOverride = vi.fn();
 
   beforeEach(() => {
@@ -201,15 +204,16 @@ describe('ReportsTab', () => {
     setRuntimeAnalyticsPromptSystem.mockReset();
     setLogsPromptSystem.mockReset();
     handleOverrideChange.mockReset();
+    setFeatureEnabled.mockReset();
     toggleOverride.mockReset();
 
     vi.mocked(useBrain).mockReturnValue({
       settings: {
         assignments: {
-          analytics: { modelId: 'analytics-model' },
-          runtime_analytics: { modelId: 'runtime-model' },
-          system_logs: { modelId: 'logs-model' },
-          error_logs: { modelId: 'error-model' },
+          analytics: { ...defaultBrainAssignment, modelId: 'analytics-model' },
+          runtime_analytics: { ...defaultBrainAssignment, modelId: 'runtime-model' },
+          system_logs: { ...defaultBrainAssignment, modelId: 'logs-model' },
+          error_logs: { ...defaultBrainAssignment, modelId: 'error-model' },
         },
       },
       overridesEnabled: {
@@ -219,12 +223,14 @@ describe('ReportsTab', () => {
         error_logs: true,
       },
       effectiveAssignments: {
-        analytics: { modelId: 'global-analytics' },
-        runtime_analytics: { modelId: 'runtime-model' },
-        system_logs: { modelId: 'global-logs' },
-        error_logs: { modelId: 'error-model' },
+        analytics: { ...defaultBrainAssignment, modelId: 'global-analytics' },
+        runtime_analytics: { ...defaultBrainAssignment, modelId: 'runtime-model' },
+        system_logs: { ...defaultBrainAssignment, modelId: 'global-logs' },
+        error_logs: { ...defaultBrainAssignment, modelId: 'error-model' },
       },
       handleOverrideChange,
+      saving: false,
+      setFeatureEnabled,
       toggleOverride,
       analyticsScheduleEnabled: true,
       setAnalyticsScheduleEnabled,
@@ -266,12 +272,20 @@ describe('ReportsTab', () => {
     fireEvent.click(toggleInputs[1] as HTMLInputElement);
     fireEvent.click(toggleInputs[2] as HTMLInputElement);
     fireEvent.click(toggleInputs[3] as HTMLInputElement);
-    fireEvent.click(toggleInputs[4] as HTMLInputElement);
 
     expect(setAnalyticsScheduleEnabled).toHaveBeenCalledWith(false);
     expect(setRuntimeAnalyticsScheduleEnabled).toHaveBeenCalledWith(true);
     expect(setLogsScheduleEnabled).toHaveBeenCalledWith(false);
     expect(setLogsAutoOnError).toHaveBeenCalledWith(true);
+
+    const analyticsSection = screen.getByText('Analytics Reports').parentElement;
+    expect(analyticsSection).not.toBeNull();
+    fireEvent.click(within(analyticsSection as HTMLElement).getByRole('button', { name: 'ON' }));
+    fireEvent.click(
+      within(analyticsSection as HTMLElement).getByRole('button', { name: 'DEFAULT' })
+    );
+
+    expect(setFeatureEnabled).toHaveBeenCalledWith('analytics', false);
     expect(toggleOverride).toHaveBeenCalledWith('analytics', true);
 
     const minuteInputs = screen.getAllByRole('spinbutton');
@@ -298,8 +312,11 @@ describe('ReportsTab', () => {
     expect(setLogsPromptSystem).toHaveBeenCalledWith('new logs prompt');
 
     fireEvent.click(screen.getAllByRole('button', { name: 'change assignment' })[0]!);
-    expect(handleOverrideChange).toHaveBeenCalledWith('analytics', {
-      modelId: 'override-model',
-    });
+    expect(handleOverrideChange).toHaveBeenCalledWith(
+      'analytics',
+      expect.objectContaining({
+        modelId: 'override-model',
+      })
+    );
   });
 });

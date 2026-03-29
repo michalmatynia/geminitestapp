@@ -37,6 +37,33 @@ describe('ai-brain settings helpers', () => {
     expect(resolved.temperature).toBe(0.4);
   });
 
+  it('treats a disabled feature as authoritative over enabled capability overrides', () => {
+    const settings = {
+      ...defaultBrainSettings,
+      assignments: {
+        ...defaultBrainSettings.assignments,
+        prompt_engine: {
+          ...defaultBrainSettings.defaults,
+          enabled: false,
+          modelId: 'feature-off-model',
+        },
+      },
+      capabilities: {
+        ...defaultBrainSettings.capabilities,
+        'prompt_engine.prompt_exploder': {
+          ...defaultBrainSettings.defaults,
+          enabled: true,
+          modelId: 'capability-model',
+        },
+      },
+    };
+
+    const resolved = resolveBrainCapabilityAssignment(settings, 'prompt_engine.prompt_exploder');
+
+    expect(resolved.enabled).toBe(false);
+    expect(resolved.modelId).toBe('capability-model');
+  });
+
   it('trims system prompts during assignment sanitization', () => {
     const sanitized = sanitizeBrainAssignment({
       ...defaultBrainSettings.defaults,

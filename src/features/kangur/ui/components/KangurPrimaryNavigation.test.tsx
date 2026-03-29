@@ -1175,7 +1175,7 @@ describe('KangurPrimaryNavigation', () => {
     });
   });
 
-  it('exposes chooser dialog state for assistive technology', () => {
+  it('exposes chooser dialog state for assistive technology', async () => {
     render(
       <KangurPrimaryNavigation
         basePath='/kangur'
@@ -1198,9 +1198,11 @@ describe('KangurPrimaryNavigation', () => {
     fireEvent.click(subjectButton);
 
     expect(subjectButton).toHaveAttribute('aria-expanded', 'true');
-    expect(screen.getByRole('dialog')).toHaveAttribute('id', 'kangur-primary-nav-subject-dialog');
+    expect(await screen.findByRole('dialog')).toHaveAttribute('id', 'kangur-primary-nav-subject-dialog');
     fireEvent.click(screen.getByRole('button', { name: /gotowe/i }));
-    expect(subjectButton).toHaveAttribute('aria-expanded', 'false');
+    await waitFor(() => {
+      expect(subjectButton).toHaveAttribute('aria-expanded', 'false');
+    });
   });
 
   it('announces mobile menu guidance for assistive technology', () => {

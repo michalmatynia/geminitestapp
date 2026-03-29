@@ -174,12 +174,26 @@ export function KangurSocialPipelineQueuePanel({
   );
 
   const isHealthy = status?.healthy ?? false;
-  const isRunning = status?.running ?? false;
   const isPaused = status?.isPaused ?? false;
+  const workerState = status?.workerState ?? (isPaused ? 'paused' : status?.running ? 'running' : 'offline');
+  const isRunning = workerState === 'running';
+  const isIdle = workerState === 'idle';
+  const isInlineMode = (status?.deliveryMode ?? 'queue') === 'inline';
   const hasActiveServerRun =
     isRunning &&
     ((status?.processing ?? false) || (status?.activeCount ?? 0) > 0);
   const isLoadingStatus = loading && !status;
+  const statusBadgeLabel = isPaused
+    ? 'Paused'
+    : isRunning
+      ? 'Running'
+      : isIdle
+        ? 'Idle'
+        : isInlineMode
+          ? 'No Redis'
+          : 'Offline';
+  const showRedisWarning = Boolean(status) && isInlineMode;
+  const showOfflineNotice = Boolean(status) && !isInlineMode && !isRunning && !isIdle && !isPaused;
 
   const lastPollLabel = useMemo(() => {
     if (!status?.lastPollTime) return 'Never';
@@ -203,13 +217,13 @@ export function KangurSocialPipelineQueuePanel({
             </span>
             {status ? (
               <Badge
-                variant={!isRunning ? 'outline' : isHealthy ? 'secondary' : 'outline'}
+                variant={isRunning || isIdle || isPaused ? (isHealthy ? 'secondary' : 'outline') : 'outline'}
                 className='text-[10px]'
               >
-                {!isRunning ? 'Offline' : isPaused ? 'Paused' : 'Running'}
+                {statusBadgeLabel}
               </Badge>
             ) : null}
-            {status && isRunning ? (
+            {status && !isInlineMode ? (
               <span className='text-[10px] text-muted-foreground'>
                 {status.activeCount} active / {status.completedCount} done / {status.failedCount} failed
               </span>
@@ -263,10 +277,10 @@ export function KangurSocialPipelineQueuePanel({
           <div className='flex items-center gap-2'>
             {status ? (
               <Badge variant={isHealthy ? 'secondary' : 'outline'}>
-                {isRunning ? (isPaused ? 'Paused' : 'Running') : 'Stopped'}
+                {statusBadgeLabel}
               </Badge>
             ) : null}
-            {isRunning ? (
+            {(isRunning || isIdle || isPaused) && !isInlineMode ? (
               <Button
                 size='xs'
                 variant='ghost'
@@ -348,13 +362,23 @@ export function KangurSocialPipelineQueuePanel({
         </>
       ) : null}
 
-      {status && !isRunning ? (
+      {showRedisWarning ? (
         <Card
           variant='subtle'
           padding='md'
           className='rounded-xl border-amber-500/30 bg-amber-500/5 text-sm text-amber-600'
         >
           Capture queue worker is not running. Ensure Redis is available and REDIS_URL is configured.
+        </Card>
+      ) : null}
+
+      {showOfflineNotice ? (
+        <Card
+          variant='subtle'
+          padding='md'
+          className='rounded-xl border-border/50 bg-muted/30 text-sm text-muted-foreground'
+        >
+          Capture queue is connected, but this app instance has not observed an active worker recently.
         </Card>
       ) : null}
 

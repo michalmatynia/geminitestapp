@@ -154,6 +154,10 @@ describe('queue-factory', () => {
     );
 
     await expect(managed.getHealthStatus()).resolves.toEqual({
+      deliveryMode: 'inline',
+      workerState: 'inline',
+      redisAvailable: false,
+      workerLocal: false,
       running: false,
       healthy: false,
       processing: false,
@@ -300,6 +304,10 @@ describe('queue-factory', () => {
 
     await expect(managed.getHealthStatus()).resolves.toEqual(
       expect.objectContaining({
+        deliveryMode: 'queue',
+        workerState: 'idle',
+        redisAvailable: true,
+        workerLocal: true,
         running: true,
         healthy: true,
         processing: false,
@@ -395,6 +403,38 @@ describe('queue-factory', () => {
     expect(captureExceptionMock).toHaveBeenCalledWith(fatal, {
       service: 'queue-worker:timeout-queue',
       category: 'SYSTEM',
+    });
+  });
+
+  it('reports redis-backed queues as idle when shared queue activity exists but no local worker is active', async () => {
+    const managed = createManagedQueue({
+      name: 'idle-queue',
+      concurrency: 1,
+      processor: vi.fn(async () => null),
+    });
+
+    const queue = queueInstances[0];
+    queue.getJobCounts.mockResolvedValue({
+      active: 0,
+      waiting: 0,
+      failed: 0,
+      completed: 3,
+    });
+
+    await expect(managed.getHealthStatus()).resolves.toEqual({
+      deliveryMode: 'queue',
+      workerState: 'idle',
+      redisAvailable: true,
+      workerLocal: false,
+      running: false,
+      healthy: true,
+      processing: false,
+      activeCount: 0,
+      waitingCount: 0,
+      failedCount: 0,
+      completedCount: 3,
+      lastPollTime: 0,
+      timeSinceLastPoll: 0,
     });
   });
 });

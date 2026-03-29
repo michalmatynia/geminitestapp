@@ -13,8 +13,6 @@ export async function GET_handler(
 ): Promise<Response> {
   const managed = getKangurSocialPipelineQueue();
   const status = await managed.getHealthStatus();
-  const effectiveRunning = (status.running ?? false) || (status.processing ?? false);
-  const effectiveHealthy = (status.healthy ?? false) || (status.processing ?? false);
 
   let isPaused = false;
   const rawQueue = managed.getQueue() as Queue | null;
@@ -22,9 +20,27 @@ export async function GET_handler(
     isPaused = await rawQueue.isPaused();
   }
 
+  const effectiveWorkerState = isPaused
+    ? 'paused'
+    : (status.workerState ??
+      ((status.processing ?? false)
+        ? 'running'
+        : (status.running ?? false)
+          ? 'idle'
+          : status.deliveryMode === 'inline'
+            ? 'inline'
+            : 'offline'));
+  const effectiveRunning = effectiveWorkerState === 'running';
+  const effectiveHealthy =
+    status.healthy ??
+    (effectiveWorkerState === 'running' ||
+      effectiveWorkerState === 'idle' ||
+      effectiveWorkerState === 'paused');
+
   return NextResponse.json(
     {
       ...status,
+      workerState: effectiveWorkerState,
       running: effectiveRunning,
       healthy: effectiveHealthy,
       isPaused,

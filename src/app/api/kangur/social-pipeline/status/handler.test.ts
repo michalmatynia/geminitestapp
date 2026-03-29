@@ -40,6 +40,10 @@ describe('social pipeline status handler', () => {
       getQueue: getQueueMock,
     });
     getHealthStatusMock.mockResolvedValue({
+      deliveryMode: 'queue',
+      workerState: 'running',
+      redisAvailable: true,
+      workerLocal: false,
       running: false,
       healthy: false,
       processing: true,
@@ -64,6 +68,10 @@ describe('social pipeline status handler', () => {
 
     expect(response.status).toBe(200);
     await expect(response.json()).resolves.toEqual({
+      deliveryMode: 'queue',
+      workerState: 'running',
+      redisAvailable: true,
+      workerLocal: false,
       running: true,
       healthy: true,
       processing: true,
@@ -71,6 +79,48 @@ describe('social pipeline status handler', () => {
       waitingCount: 0,
       failedCount: 1,
       completedCount: 46,
+      lastPollTime: 0,
+      timeSinceLastPoll: 0,
+      isPaused: false,
+      repeatEveryMs: 600000,
+    });
+  });
+
+  it('reports a shared redis queue with recent completed work as healthy idle instead of stopped', async () => {
+    getHealthStatusMock.mockResolvedValueOnce({
+      deliveryMode: 'queue',
+      workerState: 'idle',
+      redisAvailable: true,
+      workerLocal: false,
+      running: false,
+      healthy: true,
+      processing: false,
+      activeCount: 0,
+      waitingCount: 0,
+      failedCount: 0,
+      completedCount: 8,
+      lastPollTime: 0,
+      timeSinceLastPoll: 0,
+    });
+
+    const response = await GET_handler(
+      new NextRequest('http://localhost/api/kangur/social-pipeline/status'),
+      createContext()
+    );
+
+    expect(response.status).toBe(200);
+    await expect(response.json()).resolves.toEqual({
+      deliveryMode: 'queue',
+      workerState: 'idle',
+      redisAvailable: true,
+      workerLocal: false,
+      running: false,
+      healthy: true,
+      processing: false,
+      activeCount: 0,
+      waitingCount: 0,
+      failedCount: 0,
+      completedCount: 8,
       lastPollTime: 0,
       timeSinceLastPoll: 0,
       isPaused: false,

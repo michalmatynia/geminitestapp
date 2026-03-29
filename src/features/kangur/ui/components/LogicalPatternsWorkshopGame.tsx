@@ -1,11 +1,10 @@
 'use client';
 
 import { Draggable, Droppable } from '@hello-pangea/dnd';
-import React, { useMemo } from 'react';
+import React from 'react';
 import { createPortal } from 'react-dom';
 import {
   KangurDragDropContext,
-  getKangurMobileDragHandleStyle,
 } from '@/features/kangur/ui/components/KangurDragDropContext';
 
 import {
@@ -69,11 +68,18 @@ export default function LogicalPatternsWorkshopGame({
     const totalTargets = state.totalTargets;
     const percent = totalTargets ? Math.round((score / totalTargets) * 100) : 0;
     return (
-      <KangurPracticeGameSummary>
-        <KangurPracticeGameSummaryEmoji emoji={percent === 100 ? '🏆' : percent >= 70 ? '🌟' : '💪'} />
+      <KangurPracticeGameSummary dataTestId='logical-patterns-summary-shell'>
+        <KangurPracticeGameSummaryEmoji
+          dataTestId='logical-patterns-summary-emoji'
+          emoji={percent === 100 ? '🏆' : percent >= 70 ? '🌟' : '💪'}
+        />
         <KangurPracticeGameSummaryTitle accent='violet' title={getKangurMiniGameScoreLabel(translations, score, totalTargets)} />
         <KangurPracticeGameSummaryXP accent='violet' xpEarned={xpEarned} />
-        <KangurPracticeGameSummaryBreakdown breakdown={xpBreakdown} />
+        <KangurPracticeGameSummaryBreakdown
+          breakdown={xpBreakdown}
+          dataTestId='logical-patterns-summary-breakdown'
+          itemDataTestIdPrefix='logical-patterns-summary-breakdown'
+        />
         <KangurPracticeGameSummaryProgress accent='violet' percent={percent} />
         <KangurPracticeGameSummaryMessage>{percent === 100 ? translations('logicalPatterns.summary.perfect') : percent >= 70 ? translations('logicalPatterns.summary.good') : translations('logicalPatterns.summary.retry')}</KangurPracticeGameSummaryMessage>
         <KangurPracticeGameSummaryActions className={KANGUR_STACK_ROW_CLASSNAME} finishLabel={summaryFinishLabel} onFinish={onFinish} onRestart={restart} restartLabel={translations('shared.restart')} />

@@ -10,7 +10,6 @@ import {
 } from '@/shared/ui';
 
 import {
-  decodeFilemakerPartyReference,
   getFilemakerEmailCampaignDeliveriesForRun,
   summarizeFilemakerEmailCampaignRunDeliveries,
 } from '../settings';
@@ -160,7 +159,6 @@ export function AdminFilemakerCampaignEditPage(): React.JSX.Element {
         eventOptions={eventOptions}
         organizationOptions={organizationOptions}
         partyOptions={partyOptions}
-        decodeFilemakerPartyReference={decodeFilemakerPartyReference}
       />
       <LaunchSection draft={draft} setDraft={setDraft} />
       <DeliveryGovernanceSection

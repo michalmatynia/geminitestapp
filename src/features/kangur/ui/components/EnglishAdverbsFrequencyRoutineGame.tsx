@@ -1,7 +1,6 @@
 'use client';
 
 import { Droppable } from '@hello-pangea/dnd';
-import { useTranslations } from 'next-intl';
 import React from 'react';
 
 import {
@@ -34,7 +33,6 @@ import {
   KANGUR_ACCENT_STYLES,
   KANGUR_GRID_SPACED_CLASSNAME,
   KANGUR_PANEL_GAP_CLASSNAME,
-  KANGUR_WRAP_CENTER_ROW_CLASSNAME,
   type KangurAccent,
 } from '@/features/kangur/ui/design/tokens';
 import type {
@@ -47,26 +45,16 @@ import {
   TOTAL_ACTIONS,
   getRoundTranslation,
   getFrequencyLabel,
-  getFrequencyDescription,
-  getFrequencyDaysLitLabel,
   getActionLabel,
   slotDroppableId,
   FREQUENCY_META,
   ACTION_META,
-  countFrequencyActiveDays,
-  countFrequencyChangedDays,
-  countFrequencyTurnedOnDays,
-  countFrequencyTurnedOffDays,
 } from './EnglishAdverbsFrequencyRoutineGame.utils';
 import { useEnglishAdverbsFrequencyRoutineGameState } from './EnglishAdverbsFrequencyRoutineGame.hooks';
 import {
   DraggableFrequencyToken,
   RoutineWeekStrip,
-  CompactFrequencyDots,
   SummaryFrequencyGuideCard,
-  SummaryPatternGuideCard,
-  SummaryStarterCard,
-  SummaryQuestionCard,
 } from './EnglishAdverbsFrequencyRoutineGame.components';
 import {
   buildEnglishAdverbsFrequencySentence,
@@ -83,20 +71,17 @@ export default function EnglishAdverbsFrequencyRoutineGame({
   const state = useEnglishAdverbsFrequencyRoutineGameState();
   const {
     translations,
-    isCoarsePointer,
     roundIndex,
     roundState,
     selectedTokenId,
     setSelectedTokenId,
     checked,
-    roundCorrect,
     totalCorrect,
     feedback,
     done,
     xpEarned,
     xpBreakdown,
     round,
-    selectedToken,
     isRoundComplete,
     handleAssignToken,
     handleReturnToPool,
@@ -253,7 +238,6 @@ export default function EnglishAdverbsFrequencyRoutineGame({
                 <div className='rounded-[20px] border border-white/70 bg-white/80 p-3'>
                   <div className='mt-1 space-y-2'>
                     {round.actions.map((action) => {
-                      const targetMeta = FREQUENCY_META[action.answer];
                       return (
                         <div
                           key={`target-${action.id}`}
@@ -301,7 +285,7 @@ export default function EnglishAdverbsFrequencyRoutineGame({
                   : 'border-slate-200 bg-white/80';
                 return (
                   <Droppable key={action.id} droppableId={slotDroppableId(action.id)}>
-                    {(provided, snapshot) => (
+                    {(provided) => (
                       <div
                         ref={provided.innerRef}
                         {...provided.droppableProps}

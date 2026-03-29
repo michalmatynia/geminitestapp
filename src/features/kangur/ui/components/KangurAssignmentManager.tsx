@@ -1,6 +1,6 @@
 'use client';
 
-import { Clock, Menu, X } from 'lucide-react';
+import { Clock } from 'lucide-react';
 import React from 'react';
 
 import { buildKangurAssignmentDedupeKey } from '@/features/kangur/services/kangur-assignments';
@@ -8,7 +8,6 @@ import KangurAssignmentsList from '@/features/kangur/ui/components/KangurAssignm
 import {
   KangurButton,
   KangurCardDescription,
-  KangurCardTitle,
   KangurEmptyState,
   KangurGlassPanel,
   KangurMetricCard,
@@ -31,8 +30,6 @@ import {
 } from './KangurAssignmentManager.cards';
 import {
   FILTER_OPTION_VALUES,
-  TIME_LIMIT_MINUTES_MAX,
-  TIME_LIMIT_MINUTES_MIN,
 } from './KangurAssignmentManager.helpers';
 import { useKangurAssignmentManagerState } from './KangurAssignmentManager.hooks';
 import { KangurAssignmentManagerTimeLimitModal } from './KangurAssignmentManager.modals';
@@ -62,7 +59,6 @@ export function KangurAssignmentManager(
     setTimeLimitDraft,
     isLoading,
     error,
-    timeLimitTarget,
     isTimeLimitModalOpen,
     filteredCatalog,
     assignedAssignmentsByKey,

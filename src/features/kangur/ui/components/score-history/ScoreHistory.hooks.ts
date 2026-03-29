@@ -186,5 +186,6 @@ export function useScoreHistoryState(props: ScoreHistoryProps) {
     subjectScores,
     insights,
     normalizedLocale,
+    translateOperationLabel: scoreInsightsLocalizer.translateOperationLabel,
   };
 }

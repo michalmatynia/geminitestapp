@@ -1,16 +1,13 @@
 'use client';
 
 import { Draggable, Droppable, type DropResult } from '@hello-pangea/dnd';
-import { motion } from 'framer-motion';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
-import React, { useState } from 'react';
 import { createPortal } from 'react-dom';
 import {
   KangurDragDropContext,
   getKangurMobileDragHandleStyle,
 } from '@/features/kangur/ui/components/KangurDragDropContext';
 
-import KangurAnswerChoiceCard from '@/features/kangur/ui/components/KangurAnswerChoiceCard';
 import {
   KangurPracticeGameProgress,
   KangurPracticeGameShell,
@@ -30,21 +27,16 @@ import {
   KangurButton,
   KangurInfoCard,
 } from '@/features/kangur/ui/design/primitives';
-import {
-  KANGUR_ACCENT_STYLES,
-  KANGUR_STACK_ROW_CLASSNAME,
-} from '@/features/kangur/ui/design/tokens';
 import { cn } from '@/features/kangur/shared/utils';
 
-import { MONTHS_DATA, SEASONS, SEASON_ACCENTS, WEEKDAYS } from './CalendarInteractiveGame.constants';
+import { SEASONS, WEEKDAYS } from './CalendarInteractiveGame.constants';
 import { useCalendarInteractiveGameState } from './CalendarInteractiveGame.hooks';
-import type { CalendarInteractiveGameProps, Season } from './CalendarInteractiveGame.types';
+import type { CalendarInteractiveGameProps } from './CalendarInteractiveGame.types';
 import {
   getCalendarCells,
   getCalendarInteractiveMonthName,
   getCalendarInteractiveSeasonLabel,
   getCalendarInteractiveWeekdayAbbr,
-  getCalendarInteractiveWeekdayFull,
   getCalendarInteractiveWeekdayShort,
   getDayOfWeek,
   resolveSeasonFromDroppableId,
@@ -68,8 +60,6 @@ export function CalendarInteractiveGame(props: CalendarInteractiveGameProps): Re
     feedback,
     setFeedback,
     done,
-    xpEarned,
-    xpBreakdown,
     checkedAllWeekends,
     setCheckedAllWeekends,
     sectionContent,
@@ -77,6 +67,7 @@ export function CalendarInteractiveGame(props: CalendarInteractiveGameProps): Re
     handleRestart,
     TOTAL_ROUNDS,
   } = state;
+  const handleFinish = props.onFinish ?? props.stage?.onFinish ?? (() => undefined);
 
   if (done) {
     const percent = Math.round((score / TOTAL_ROUNDS) * 100);
@@ -96,7 +87,7 @@ export function CalendarInteractiveGame(props: CalendarInteractiveGameProps): Re
         <KangurPracticeGameSummaryProgress accent='indigo' percent={percent} />
         <KangurPracticeGameSummaryActions
           finishLabel={getKangurMiniGameFinishLabel(translations, 'lesson')}
-          onFinish={props.onFinish ?? props.stage?.onFinish}
+          onFinish={handleFinish}
           onRestart={handleRestart}
           restartLabel={translations('shared.restart')}
         />
@@ -319,3 +310,5 @@ export function CalendarInteractiveGame(props: CalendarInteractiveGameProps): Re
 }
 
 export default CalendarInteractiveGame;
+
+export type { CalendarInteractiveSectionId } from './CalendarInteractiveGame.types';

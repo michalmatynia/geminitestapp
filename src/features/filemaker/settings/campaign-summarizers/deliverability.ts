@@ -2,6 +2,7 @@ import {
   FilemakerDatabase,
   FilemakerEmailCampaign,
   FilemakerEmailCampaignDelivery,
+  FilemakerEmailCampaignDeliveryFailureCategory,
   FilemakerEmailCampaignDeliveryAttemptRegistry,
   FilemakerEmailCampaignDeliveryRegistry,
   FilemakerEmailCampaignEventRegistry,
@@ -416,17 +417,23 @@ export const summarizeFilemakerEmailCampaignDeliverabilityOverview = (input: {
   ).length;
 
   const failureCategoryBreakdown = Array.from(
-    attemptRegistry.attempts.reduce<Map<string, number>>(
+    attemptRegistry.attempts.reduce<Map<FilemakerEmailCampaignDeliveryFailureCategory, number>>(
       (map, attempt) => {
         const category = attempt.failureCategory;
         if (!category) return map;
         map.set(category, (map.get(category) ?? 0) + 1);
         return map;
       },
-      new Map()
+      new Map<FilemakerEmailCampaignDeliveryFailureCategory, number>()
     )
   )
-    .map(([category, count]): FilemakerEmailCampaignDeliveryFailureCategorySummary => ({
+    .map(([
+      category,
+      count,
+    ]: [
+      FilemakerEmailCampaignDeliveryFailureCategory,
+      number,
+    ]): FilemakerEmailCampaignDeliveryFailureCategorySummary => ({
       category,
       count,
     }))

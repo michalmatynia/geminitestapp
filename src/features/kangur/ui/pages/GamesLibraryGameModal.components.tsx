@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import type { useTranslations } from 'next-intl';
 import { KangurDialog } from '@/features/kangur/ui/components/KangurDialog';
 import {
   KangurButton,
@@ -47,7 +48,7 @@ export function GameHeader({
   isPending,
 }: {
   game: KangurGameDefinition;
-  translations: (key: string) => React.ReactNode;
+  translations: ReturnType<typeof useTranslations<'KangurGamesLibraryPage'>>;
   settingsOpen: boolean;
   setSettingsOpen: React.Dispatch<React.SetStateAction<boolean>>;
   handleCloseModal: () => void;
@@ -131,11 +132,11 @@ export function GameStats({
   resolveModalStatusAccent,
 }: {
   game: KangurGameDefinition;
-  translations: (key: string) => React.ReactNode;
+  translations: ReturnType<typeof useTranslations<'KangurGamesLibraryPage'>>;
   resolvedAgeGroupLabel: string;
   linkedLessonCount: number;
-  resolveModalAgeGroupAccent: (ag: string) => KangurAccent;
-  resolveModalStatusAccent: (st: string) => KangurAccent;
+  resolveModalAgeGroupAccent: (ageGroup: KangurGameDefinition['ageGroup']) => KangurAccent;
+  resolveModalStatusAccent: (status: KangurGameDefinition['status']) => KangurAccent;
 }) {
   return (
     <div className='grid gap-3 sm:grid-cols-2 xl:grid-cols-4'>

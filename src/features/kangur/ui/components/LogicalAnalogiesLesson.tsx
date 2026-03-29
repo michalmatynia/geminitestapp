@@ -378,7 +378,7 @@ export default function LogicalAnalogiesLesson({
             icon: '🎯',
             maxWidthClassName: 'max-w-3xl',
             shellTestId: 'logical-analogies-game-shell',
-            title: copy.game.gameTitle,
+            title: copy.game.gameTitle ?? '',
           },
           launchableInstance: {
             gameId: 'logical_analogies_relations',

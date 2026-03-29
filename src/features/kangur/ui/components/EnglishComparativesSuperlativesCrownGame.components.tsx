@@ -17,9 +17,11 @@ import {
   getFormDescription,
   getFormLabel,
   type ComparisonToken,
-  type EnglishComparisonActionId,
-  type EnglishComparisonFormId,
 } from './EnglishComparativesSuperlativesCrownGame.utils';
+import type {
+  EnglishComparisonActionId,
+  EnglishComparisonFormId,
+} from './EnglishComparativesSuperlativesCrownGame.data';
 
 export function DraggableComparisonToken({
   token,

@@ -103,6 +103,14 @@ export function useBrainDerivedState({
     (): AiBrainAssignment => resolveBrainCapabilityAssignment(settings, 'ai_paths.model'),
     [settings]
   );
+  const aiPathsFeatureAssignment = useMemo(
+    (): AiBrainAssignment => resolveBrainAssignment(settings, 'ai_paths'),
+    [settings]
+  );
+  const runtimeAnalyticsFeatureAssignment = useMemo(
+    (): AiBrainAssignment => resolveBrainAssignment(settings, 'runtime_analytics'),
+    [settings]
+  );
 
   const liveOllamaModels = useMemo((): string[] => {
     const models = Array.isArray(ollamaModelsQuery.data?.sources?.liveOllamaModels)
@@ -158,10 +166,15 @@ export function useBrainDerivedState({
 
   const analyticsSummaryQuery: SingleQuery<AnalyticsSummary> = useBrainAnalyticsSummary();
   const logMetricsQuery: SingleQuery<SystemLogMetrics> = useBrainLogMetrics();
-  const insightsQuery: SingleQuery<InsightsSnapshot> = useBrainInsights();
-
   const runtimeAnalyticsLiveEnabled =
-    runtimeAnalyticsCapability.enabled && aiPathsModelCapability.enabled;
+    aiPathsFeatureAssignment.enabled &&
+    runtimeAnalyticsFeatureAssignment.enabled &&
+    runtimeAnalyticsCapability.enabled &&
+    aiPathsModelCapability.enabled;
+
+  const insightsQuery: SingleQuery<InsightsSnapshot> =
+    useBrainInsights(runtimeAnalyticsLiveEnabled);
+
   const runtimeAnalyticsQuery: SingleQuery<AiPathRuntimeAnalyticsSummary> =
     useBrainRuntimeAnalytics(runtimeAnalyticsLiveEnabled);
 

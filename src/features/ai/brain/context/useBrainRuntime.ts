@@ -193,6 +193,29 @@ export function useBrainRuntime(): BrainRuntimeResult {
     []
   );
 
+  const setFeatureEnabled = useCallback((feature: AiBrainFeature, enabled: boolean): void => {
+    setOverridesEnabled((prev: Record<AiBrainFeature, boolean>) => ({
+      ...prev,
+      [feature]: true,
+    }));
+    setSettings((prev: AiBrainSettings) => {
+      const baseAssignment = prev.assignments[feature] ?? resolveBrainAssignment(prev, feature);
+      return {
+        ...prev,
+        assignments: {
+          ...prev.assignments,
+          [feature]: sanitizeBrainAssignmentForProviders(
+            {
+              ...baseAssignment,
+              enabled,
+            },
+            getAllowedProvidersForFeature(feature)
+          ),
+        },
+      };
+    });
+  }, []);
+
   const setCapabilityEnabled = useCallback(
     (capability: AiBrainCapabilityKey, enabled: boolean): void => {
       setSettings((prev: AiBrainSettings) => {
@@ -378,6 +401,7 @@ export function useBrainRuntime(): BrainRuntimeResult {
       handleDefaultChange,
       handleOverrideChange,
       handleCapabilityChange,
+      setFeatureEnabled,
       setCapabilityEnabled,
       clearCapabilityOverride,
       toggleOverride,
@@ -391,6 +415,7 @@ export function useBrainRuntime(): BrainRuntimeResult {
       handleOverrideChange,
       handleReset,
       handleSave,
+      setFeatureEnabled,
       setCapabilityEnabled,
       syncPlaywrightPersonas,
       toggleCapabilityOverride,

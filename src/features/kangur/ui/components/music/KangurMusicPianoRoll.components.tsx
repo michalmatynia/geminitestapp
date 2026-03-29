@@ -1,17 +1,14 @@
 'use client';
 
-import React from 'react';
 import { useTranslations } from 'next-intl';
-import { Settings2Icon, RotateCcwIcon, XIcon, SlidersHorizontalIcon } from 'lucide-react';
-import { KangurButton, KangurHeadline } from '@/features/kangur/ui/design/primitives';
+import { RotateCcwIcon } from 'lucide-react';
+import { KangurButton } from '@/features/kangur/ui/design/primitives';
 import {
   KANGUR_SEGMENTED_CONTROL_CLASSNAME,
 } from '@/features/kangur/ui/design/tokens';
-import { cn } from '@/features/kangur/shared/utils';
 import type {
   KangurMusicSynthWaveform,
   KangurMusicSynthGlideMode,
-  KangurMusicSynthEnvelope,
   KangurMusicSynthOsc1Config,
   KangurMusicSynthOsc2Config,
 } from './music-theory';
@@ -22,22 +19,9 @@ import {
   KANGUR_MUSIC_SYNTH_GLIDE_MODE_LABELS,
 } from './music-theory';
 import { KangurMusicWaveformIcon } from './music-waveform-icons';
+import type { KangurMusicSynthEnvelope } from './useKangurMusicSynth';
 
-export function SynthControlPanel({
-  activeOscTab,
-  onActiveOscTabChange,
-  onEnvelopeChange,
-  onEnvelopeReset,
-  onGlideModeChange,
-  onOscSettingsChange,
-  onWaveformChange,
-  osc1Config,
-  osc2Config,
-  resolvedSynthEnvelope,
-  synthEnvelopeControls,
-  synthGlideMode,
-  synthWaveform,
-}: {
+type SynthControlPanelProps = {
   activeOscTab: 'osc1' | 'osc2';
   onActiveOscTabChange: (tab: 'osc1' | 'osc2') => void;
   onEnvelopeChange: (id: any, val: number) => void;
@@ -51,7 +35,18 @@ export function SynthControlPanel({
   synthEnvelopeControls: any[];
   synthGlideMode: KangurMusicSynthGlideMode;
   synthWaveform: KangurMusicSynthWaveform;
-}) {
+};
+
+export function SynthControlPanel(props: SynthControlPanelProps) {
+  const {
+    onEnvelopeChange,
+    onEnvelopeReset,
+    onGlideModeChange,
+    onWaveformChange,
+    synthEnvelopeControls,
+    synthGlideMode,
+    synthWaveform,
+  } = props;
   const translations = useTranslations('KangurMusicPianoRoll');
   
   return (
@@ -104,7 +99,7 @@ export function SynthControlPanel({
           <p className='text-xs font-black uppercase tracking-[0.18em] text-slate-500'>
             {translations('synth.envelopeLabel')}
           </p>
-          <KangurButton onClick={onEnvelopeReset} size='xs' variant='ghost'>
+          <KangurButton onClick={onEnvelopeReset} size='sm' variant='ghost'>
             <RotateCcwIcon className='mr-1.5 h-3 w-3' />
             {translations('synth.resetButton')}
           </KangurButton>

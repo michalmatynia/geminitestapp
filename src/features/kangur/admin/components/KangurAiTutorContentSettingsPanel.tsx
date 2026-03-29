@@ -13,7 +13,6 @@ import { Alert, Badge, Button, FormField, FormSection, Textarea } from '@/featur
 import { KANGUR_GRID_RELAXED_CLASSNAME } from '@/features/kangur/ui/design/tokens';
 
 import {
-  KANGUR_ADMIN_INSET_CARD_CLASS_NAME,
   KangurAdminCard,
   KangurAdminInsetCard,
 } from './KangurAdminCard';
@@ -101,7 +100,6 @@ export function KangurAiTutorContentSettingsPanel(): React.JSX.Element {
     activeTranslationStatusFilters,
     setActiveTranslationStatusFilters,
     parsedAiTutorContentState,
-    aiTutorContentValidation,
     aiTutorContentDirty,
     aiTutorContentBlockingIssues,
     hasAiTutorContentBlockingIssues,
@@ -112,7 +110,7 @@ export function KangurAiTutorContentSettingsPanel(): React.JSX.Element {
   const translationSummaryByLocale = useMemo(() => {
     const summary = new Map<string, ReturnType<typeof summarizeKangurAiTutorContentTranslationStatuses>>();
     translationStatusesByLocale.forEach((statuses, locale) => {
-      summary.set(locale, summarizeKangurAiTutorContentTranslationStatuses(statuses));
+      summary.set(locale, summarizeKangurAiTutorContentTranslationStatuses(statuses.values()));
     });
     return summary;
   }, [translationStatusesByLocale]);
@@ -166,7 +164,7 @@ export function KangurAiTutorContentSettingsPanel(): React.JSX.Element {
               <div key={locale} className='flex items-center gap-2'>
                 <Badge variant='outline' className='font-bold'>{locale.toUpperCase()}</Badge>
                 <span className='text-xs text-muted-foreground'>
-                  Manual: <strong>{summary.manualCount}</strong> • Scaffolded: <strong>{summary.scaffoldedCount}</strong> • Copy: <strong>{summary.sourceCopyCount}</strong>
+                  Manual: <strong>{summary.manual}</strong> • Scaffolded: <strong>{summary.scaffolded}</strong> • Copy: <strong>{summary['source-copy']}</strong>
                 </span>
               </div>
             ))}
@@ -238,7 +236,11 @@ export function KangurAiTutorContentSettingsPanel(): React.JSX.Element {
                     <div className='flex flex-col gap-2'>
                       <div className='flex items-center justify-between'>
                         <span className='text-xs font-bold text-slate-700'>{field.label}</span>
-                        {parsedAiTutorContentState.content?.homeOnboarding.steps.some(s => s.id === field.key) ? <Badge variant='success' className='h-4 px-1 text-[9px]'>Live</Badge> : <Badge variant='outline' className='h-4 px-1 text-[9px]'>Missing</Badge>}
+                        {parsedAiTutorContentState.content?.homeOnboarding.steps[field.key] ? (
+                          <Badge variant='success' className='h-4 px-1 text-[9px]'>Live</Badge>
+                        ) : (
+                          <Badge variant='outline' className='h-4 px-1 text-[9px]'>Missing</Badge>
+                        )}
                       </div>
                       {renderSectionTranslationStatus('homeOnboarding')}
                     </div>

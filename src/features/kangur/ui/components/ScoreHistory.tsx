@@ -1,7 +1,6 @@
 'use client';
 
 import React from 'react';
-import { KangurPanelSectionHeading } from '@/features/kangur/ui/components/KangurPanelSectionHeading';
 import { KangurSessionHistoryRow } from '@/features/kangur/ui/components/KangurSessionHistoryRow';
 import { KangurTransitionLink as Link } from '@/features/kangur/ui/components/KangurTransitionLink';
 import {
@@ -15,11 +14,11 @@ import { cn } from '@/shared/utils';
 import {
   KANGUR_PANEL_GAP_CLASSNAME,
   KANGUR_STACK_COMPACT_CLASSNAME,
-  KANGUR_STACK_TIGHT_CLASSNAME,
 } from '@/features/kangur/ui/design/tokens';
 import { useKangurCoarsePointer } from '@/features/kangur/ui/hooks/useKangurCoarsePointer';
 import {
   SCORE_INSIGHT_WINDOW_DAYS,
+  resolveKangurScoreOperationInfo,
 } from '@/features/kangur/ui/services/score-insights';
 
 import type { ScoreHistoryProps } from './score-history/ScoreHistory.types';
@@ -34,16 +33,47 @@ import {
   translateScoreHistoryWithFallback,
 } from './score-history/ScoreHistory.utils';
 
+function formatRecentSessionDate(
+  value: string,
+  locale: string,
+  fallback: string
+): string {
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) {
+    return fallback;
+  }
+
+  return new Intl.DateTimeFormat(locale, {
+    dateStyle: 'medium',
+    timeStyle: 'short',
+  }).format(parsed);
+}
+
+function formatRecentSessionDuration(value: number | null | undefined): string | undefined {
+  if (typeof value !== 'number' || !Number.isFinite(value) || value <= 0) {
+    return undefined;
+  }
+
+  const totalSeconds = Math.max(0, Math.round(value));
+  if (totalSeconds < 60) {
+    return `${totalSeconds}s`;
+  }
+
+  const minutes = Math.floor(totalSeconds / 60);
+  const seconds = totalSeconds % 60;
+  return seconds === 0 ? `${minutes} min` : `${minutes} min ${seconds}s`;
+}
+
 export function ScoreHistory(props: ScoreHistoryProps): React.JSX.Element {
   const state = useScoreHistoryState(props);
   const {
     translations,
     fallbackCopy,
-    subject,
     loading,
     subjectScores,
     insights,
     normalizedLocale,
+    translateOperationLabel,
   } = state;
 
   const isCoarsePointer = useKangurCoarsePointer();
@@ -194,7 +224,7 @@ export function ScoreHistory(props: ScoreHistoryProps): React.JSX.Element {
         </h3>
         <div className='grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3'>
           {insights.operationPerformance.map((op) => (
-            <KangurGlassPanel key={op.operation} className='space-y-3' padding='sm' surface='solid' variant='soft'>
+            <KangurGlassPanel key={op.operation} className='space-y-3' padding='md' surface='solid' variant='soft'>
               <div className='flex items-center justify-between gap-2'>
                 <div className='flex items-center gap-2'>
                   <span className='text-lg'>{op.emoji}</span>
@@ -211,7 +241,7 @@ export function ScoreHistory(props: ScoreHistoryProps): React.JSX.Element {
                     {op.averageAccuracy}%
                   </span>
                 </div>
-                <KangurProgressBar accent={resolveAccuracyAccent(op.averageAccuracy)} percent={op.averageAccuracy} size='xs' />
+                <KangurProgressBar accent={resolveAccuracyAccent(op.averageAccuracy)} size='sm' value={op.averageAccuracy} />
               </div>
             </KangurGlassPanel>
           ))}
@@ -227,18 +257,33 @@ export function ScoreHistory(props: ScoreHistoryProps): React.JSX.Element {
           )}
         </h3>
         <div className='space-y-2'>
-          {subjectScores.slice(0, 10).map((score) => (
-            <KangurSessionHistoryRow
-              key={score.id}
-              accent={resolveOperationAccent(score.operation)}
-              accuracyPercent={Math.round((score.correct_answers / Math.max(1, score.total_questions || 1)) * 100)}
-              createdAt={score.created_date}
-              label={translateScoreHistoryWithFallback(operationTranslations, score.operation, score.operation)}
-              score={score.score}
-              timeTakenSeconds={score.time_taken || 0}
-              xpEarned={score.xp_earned}
-            />
-          ))}
+          {subjectScores.slice(0, 10).map((score) => {
+            const totalQuestions = Math.max(1, score.total_questions || 1);
+            const accuracyPercent = Math.round((score.correct_answers / totalQuestions) * 100);
+            const operationInfo = resolveKangurScoreOperationInfo(score.operation, {
+              locale: normalizedLocale,
+              translateOperationLabel,
+            });
+
+            return (
+              <KangurSessionHistoryRow
+                key={score.id}
+                accent={resolveOperationAccent(score.operation)}
+                dataTestId={`score-history-session-${score.id}`}
+                durationText={formatRecentSessionDuration(score.time_taken)}
+                icon={operationInfo.emoji}
+                scoreAccent={resolveAccuracyAccent(accuracyPercent)}
+                scoreText={`${score.score}/${totalQuestions}`}
+                subtitle={formatRecentSessionDate(
+                  score.created_date,
+                  normalizedLocale,
+                  fallbackCopy.relative.noActivity
+                )}
+                title={operationInfo.label}
+                xpText={score.xp_earned !== null ? `+${score.xp_earned} XP` : undefined}
+              />
+            );
+          })}
         </div>
       </div>
     </div>

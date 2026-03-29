@@ -2,7 +2,7 @@
 
 import type { ShapeRound } from './GeometryDrawingGame.types';
 
-export const SHAPE_ROUND_LIBRARY: Record<string, ShapeRound> = {
+export const SHAPE_ROUND_LIBRARY = {
   circle: {
     id: 'circle',
     label: 'Koło',
@@ -59,14 +59,14 @@ export const SHAPE_ROUND_LIBRARY: Record<string, ShapeRound> = {
     hint: '6 rogów i zamknięta linia.',
     accent: 'kangur-gradient-accent-violet',
   },
-};
+} satisfies Record<string, ShapeRound>;
 
 export const STARTER_ROUNDS: ShapeRound[] = [
   SHAPE_ROUND_LIBRARY.circle,
   SHAPE_ROUND_LIBRARY.triangle,
   SHAPE_ROUND_LIBRARY.square,
   SHAPE_ROUND_LIBRARY.rectangle,
-].filter((round): round is ShapeRound => Boolean(round));
+];
 
 export const PRO_ROUNDS: ShapeRound[] = [
   SHAPE_ROUND_LIBRARY.circle,
@@ -77,7 +77,7 @@ export const PRO_ROUNDS: ShapeRound[] = [
   SHAPE_ROUND_LIBRARY.rectangle,
   SHAPE_ROUND_LIBRARY.pentagon,
   SHAPE_ROUND_LIBRARY.hexagon,
-].filter((round): round is ShapeRound => Boolean(round));
+];
 
 export const LEGACY_SHAPE_ROUNDS: ShapeRound[] = [
   SHAPE_ROUND_LIBRARY.circle,
@@ -85,7 +85,7 @@ export const LEGACY_SHAPE_ROUNDS: ShapeRound[] = [
   SHAPE_ROUND_LIBRARY.square,
   SHAPE_ROUND_LIBRARY.rectangle,
   SHAPE_ROUND_LIBRARY.pentagon,
-].filter((round): round is ShapeRound => Boolean(round));
+];
 
 export const CANVAS_WIDTH = 320;
 export const CANVAS_HEIGHT = 220;

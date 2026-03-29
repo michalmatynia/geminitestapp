@@ -16,7 +16,6 @@ import {
   loadProgress,
 } from '@/features/kangur/ui/services/progress';
 import { persistKangurSessionScore } from '@/features/kangur/ui/services/session-score';
-import { translateKangurMiniGameWithFallback } from '@/features/kangur/ui/constants/mini-game-i18n';
 import {
   createKangurDrawingDraftStorageKey,
   createKangurDrawingExportFilename,
@@ -31,7 +30,6 @@ import {
   CANVAS_WIDTH,
   KEYBOARD_CURSOR_START,
   KEYBOARD_DRAW_STEP,
-  LEGACY_SHAPE_ROUNDS,
   PRO_ROUNDS,
   SHAPE_ROUND_LIBRARY,
   STARTER_ROUNDS,
@@ -52,10 +50,8 @@ const localizeShapeRound = (
 export function useGeometryDrawingGameState(props: GeometryDrawingGameProps) {
   const {
     activityKey,
-    onFinish,
     operation = 'geometry',
     shapeIds,
-    showDifficultySelector,
     lessonKey = 'geometry_shapes',
   } = props;
 
@@ -87,7 +83,7 @@ export function useGeometryDrawingGameState(props: GeometryDrawingGameProps) {
   );
 
   const customRounds = useMemo(() => 
-    shapeIds?.map(id => localizedShapeLibrary[id]).filter((r): r is ShapeRound => !!r) ?? [],
+    shapeIds?.map((id) => localizedShapeLibrary[id]) ?? [],
     [localizedShapeLibrary, shapeIds]
   );
 
@@ -108,12 +104,14 @@ export function useGeometryDrawingGameState(props: GeometryDrawingGameProps) {
     clearDrawing,
     undoDrawing,
     redoDrawing,
+    exportDrawing,
     handlePointerDown,
     handlePointerMove,
     handlePointerUp,
     hasDrawableContent,
     canUndo,
     canRedo,
+    isPointerDrawing,
   } = useKangurManagedStoredPointDrawing({
     actions: {
       clearFeedback: () => setFeedback(null),
@@ -178,15 +176,24 @@ export function useGeometryDrawingGameState(props: GeometryDrawingGameProps) {
     if (done || feedback || !currentRound) return;
     const minDrawingPoints = isCoarsePointer ? Math.max(8, Math.round(BASE_MIN_DRAWING_POINTS * 0.7)) : BASE_MIN_DRAWING_POINTS;
     if (points.length < minDrawingPoints) {
-      setFeedback({ kind: 'info', title: translations('geometryDrawing.feedback.empty.title'), description: translations('geometryDrawing.feedback.empty.description') });
+      setFeedback({
+        kind: 'info',
+        text: translations('geometryDrawing.feedback.empty.description'),
+        title: translations('geometryDrawing.feedback.empty.title'),
+        description: translations('geometryDrawing.feedback.empty.description'),
+      });
       return;
     }
-    const result = evaluateGeometryDrawing(currentRound.id, points, { width: CANVAS_WIDTH, height: CANVAS_HEIGHT });
-    const wasCorrect = result.accuracy >= 70;
+    const result = evaluateGeometryDrawing(currentRound.id, points, {
+      locale,
+      translate: translations,
+    });
+    const wasCorrect = result.accepted;
     setFeedback({
       kind: wasCorrect ? 'success' : 'error',
+      text: result.message,
       title: wasCorrect ? translations('geometryDrawing.feedback.success.title') : translations('geometryDrawing.feedback.error.title'),
-      description: wasCorrect ? translations('geometryDrawing.feedback.success.description') : translations('geometryDrawing.feedback.error.description'),
+      description: result.message,
     });
     
     const nextScore = wasCorrect ? score + 1 : score;
@@ -198,7 +205,7 @@ export function useGeometryDrawingGameState(props: GeometryDrawingGameProps) {
       if (roundIndex + 1 >= totalRounds) finishGame(nextScore);
       else setRoundIndex(prev => prev + 1);
     }, 1200);
-  }, [currentRound, done, feedback, points, score, roundIndex, totalRounds, translations, isCoarsePointer, clearDrawing, finishGame]);
+  }, [clearDrawing, currentRound, done, feedback, finishGame, isCoarsePointer, locale, points, roundIndex, score, totalRounds, translations]);
 
   const resetRun = useCallback(() => {
     setRoundIndex(0); setScore(0); setDone(false); setXpEarned(0); setXpBreakdown([]); setFeedback(null);
@@ -209,9 +216,9 @@ export function useGeometryDrawingGameState(props: GeometryDrawingGameProps) {
   return {
     translations, fallbackCopy, difficulty, setDifficulty, roundIndex, score, done, xpEarned, xpBreakdown, feedback, setFeedback, isCoarsePointer,
     currentRound, totalRounds, resolvedActivityKey, canvasRef,
-    clearStrokes, setStrokes, strokes, clearDrawing, undoDrawing, redoDrawing, handlePointerDown, handlePointerMove, handlePointerUp,
+    clearStrokes, setStrokes, strokes, clearDrawing, undoDrawing, redoDrawing, exportDrawing, handlePointerDown, handlePointerMove, handlePointerUp,
     hasDrawableContent, canUndo, canRedo,
-    keyboardCursor, keyboardDrawing, keyboardStatus, handleCanvasKeyDown,
+    isPointerDrawing, keyboardCursor, keyboardDrawing, keyboardStatus, handleCanvasKeyDown,
     handleCheck, resetRun, finishGame,
   };
 }

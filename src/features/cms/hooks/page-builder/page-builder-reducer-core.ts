@@ -185,7 +185,7 @@ export function reducePageBuilderStateCore(
               action.columnId,
               nextBlock,
               Number.MAX_SAFE_INTEGER,
-              action.parentBlockId
+              action.parentBlockId ?? undefined
             ),
           };
         }

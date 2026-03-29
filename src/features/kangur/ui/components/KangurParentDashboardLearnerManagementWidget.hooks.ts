@@ -3,7 +3,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useLocale } from 'next-intl';
 import { normalizeSiteLocale } from '@/shared/lib/i18n/site-locale';
-import { withKangurClientError } from '@/features/kangur/observability/client';
 import { ErrorSystem } from '@/features/kangur/shared/utils/observability/error-system-client';
 import { getKangurPlatform } from '@/features/kangur/services/kangur-platform';
 import type { KangurLearnerSessionHistory } from '@kangur/platform';
@@ -31,12 +30,11 @@ export function useLearnerManagementState() {
   const [activeProfileId, setActiveProfileId] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<ProfileModalTabId>('settings');
   const [isCreating, setIsCreating] = useState(false);
-  const [feedback, setFeedback] = useState<{ message: string; tone: 'indigo' | 'rose' } | null>(null);
-  const [isPending, setIsPending] = useState(false);
-
   const [sessions, setSessions] = useState<KangurLearnerSessionHistory | null>(null);
   const [isLoadingSessions, setIsLoadingSessions] = useState(false);
+  const [isLoadingMoreSessions, setIsLoadingMoreSessions] = useState(false);
   const [sessionsError, setSessionsError] = useState<string | null>(null);
+  const [sessionsLoadMoreError, setSessionsLoadMoreError] = useState<string | null>(null);
 
   const activeProfile = useMemo(
     () => (activeProfileId ? overview.learners.find((l) => l.id === activeProfileId) ?? null : null),
@@ -44,19 +42,21 @@ export function useLearnerManagementState() {
   );
 
   const fetchSessions = useCallback(
-    async (learnerId: string, cursor?: string): Promise<void> => {
-      if (!cursor) {
+    async (learnerId: string, offset = 0): Promise<void> => {
+      if (offset === 0) {
         setIsLoadingSessions(true);
         setSessionsError(null);
+      } else {
+        setIsLoadingMoreSessions(true);
+        setSessionsLoadMoreError(null);
       }
       try {
-        const result = await kangurPlatform.getLearnerSessionHistory({
-          learnerId,
+        const result = await kangurPlatform.learnerSessions.list(learnerId, {
           limit: SESSION_PAGE_LIMIT,
-          cursor,
+          offset,
         });
         setSessions((prev) => {
-          if (!cursor || !prev) return result;
+          if (offset === 0 || !prev) return result;
           return {
             ...result,
             sessions: [...prev.sessions, ...result.sessions],
@@ -64,10 +64,11 @@ export function useLearnerManagementState() {
         });
       } catch (err) {
         void ErrorSystem.captureException(err);
-        if (!cursor) setSessionsError(copy.noSessionsError);
-        else setFeedback({ message: copy.olderSessionsError, tone: 'rose' });
+        if (offset === 0) setSessionsError(copy.noSessionsError);
+        else setSessionsLoadMoreError(copy.olderSessionsError);
       } finally {
-        setIsLoadingSessions(false);
+        if (offset === 0) setIsLoadingSessions(false);
+        else setIsLoadingMoreSessions(false);
       }
     },
     [copy.noSessionsError, copy.olderSessionsError]
@@ -79,19 +80,19 @@ export function useLearnerManagementState() {
     } else {
       setSessions(null);
       setSessionsError(null);
+      setSessionsLoadMoreError(null);
     }
   }, [activeProfileId, activeTab, fetchSessions]);
 
   const handleOpenSettings = (learnerId: string): void => {
     setActiveProfileId(learnerId);
     setActiveTab('settings');
-    setFeedback(null);
   };
 
   const handleCloseModal = (): void => {
     setActiveProfileId(null);
     setIsCreating(false);
-    setFeedback(null);
+    setSessionsLoadMoreError(null);
   };
 
   return {
@@ -105,13 +106,11 @@ export function useLearnerManagementState() {
     setActiveTab,
     isCreating,
     setIsCreating,
-    feedback,
-    setFeedback,
-    isPending,
-    setIsPending,
     sessions,
     isLoadingSessions,
+    isLoadingMoreSessions,
     sessionsError,
+    sessionsLoadMoreError,
     activeProfile,
     fetchSessions,
     handleOpenSettings,

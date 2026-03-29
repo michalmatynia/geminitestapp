@@ -43,7 +43,7 @@ export function KangurPracticeGameShell({
 type KangurPracticeGameProgressProps = {
   accent: KangurAccent;
   currentRound: number;
-  dataTestId: string;
+  dataTestId?: string;
   totalRounds: number;
 };
 
@@ -54,7 +54,7 @@ export function KangurPracticeGameProgress({
   totalRounds,
 }: KangurPracticeGameProgressProps): React.JSX.Element {
   const progressAccent = accent;
-  const progressTestId = dataTestId;
+  const progressTestId = dataTestId ?? 'kangur-practice-progress';
   const progressValue = (currentRound / totalRounds) * 100;
 
   return (

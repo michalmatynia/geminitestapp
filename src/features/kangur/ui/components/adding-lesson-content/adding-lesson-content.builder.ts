@@ -709,13 +709,17 @@ export const createAddingLessonContentFromTranslate = (
     },
   },
   game: {
-    gameTitle: translateLessonShellTitle(translate, 'game', ADDING_LESSON_DEFAULTS.game.gameTitle),
+    gameTitle: translateLessonShellTitle(
+      translate,
+      'game',
+      ADDING_LESSON_DEFAULTS.game.gameTitle ?? '',
+    ),
   },
   synthesis: {
     gameTitle: translateLessonShellTitle(
       translate,
       'synthesis',
-      ADDING_LESSON_DEFAULTS.synthesis.gameTitle,
+      ADDING_LESSON_DEFAULTS.synthesis.gameTitle ?? '',
     ),
   },
 });

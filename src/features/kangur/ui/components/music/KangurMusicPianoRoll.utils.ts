@@ -1,9 +1,5 @@
 'use client';
 
-import {
-  KANGUR_MUSIC_SYNTH_DEFAULT_OSC1_CONFIG,
-  KANGUR_MUSIC_SYNTH_DEFAULT_OSC2_CONFIG,
-} from './music-theory';
 import type {
   KangurMusicPointerType,
 } from './KangurMusicPianoRoll.types';

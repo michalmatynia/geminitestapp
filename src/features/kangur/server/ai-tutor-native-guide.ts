@@ -194,7 +194,7 @@ const hasAlwaysNativeExplainFocus = (
 
   return (
     context?.promptMode === 'explain' &&
-    Boolean(focusKind) &&
+    typeof focusKind === 'string' &&
     ALWAYS_NATIVE_EXPLAIN_FOCUS_KINDS.has(focusKind)
   );
 };

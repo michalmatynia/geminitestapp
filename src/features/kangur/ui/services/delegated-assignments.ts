@@ -36,6 +36,14 @@ import {
 
 export * from './delegated-assignments/delegated-assignments.types';
 
+type KangurPracticeAssignment = KangurAssignmentSnapshot & {
+  target: Extract<KangurAssignmentSnapshot['target'], { type: 'practice' }>;
+};
+
+const isKangurPracticeAssignment = (
+  assignment: KangurAssignmentSnapshot
+): assignment is KangurPracticeAssignment => assignment.target.type === 'practice';
+
 const interpolateAssignmentTemplate = (
   template: string,
   values?: TranslationValues
@@ -147,7 +155,15 @@ export const buildRecommendedKangurAssignmentCatalog = (
 export const filterKangurAssignmentCatalog = (
   catalog: KangurAssignmentCatalogItem[],
   query: string,
-  _filter: 'all' | 'unassigned' | 'assigned'
+  _filter:
+    | 'all'
+    | 'unassigned'
+    | 'assigned'
+    | 'time'
+    | 'arithmetic'
+    | 'geometry'
+    | 'logic'
+    | 'practice'
 ): KangurAssignmentCatalogItem[] => {
   const normalizedQuery = query.trim().toLowerCase();
   return catalog.filter((item) => {
@@ -541,11 +557,11 @@ export const selectKangurPriorityAssignments = (
 
 export const mapKangurPracticeAssignmentsByOperation = (
   assignments: KangurAssignmentSnapshot[]
-): Partial<Record<KangurPracticeAssignmentOperation, KangurAssignmentSnapshot>> => {
-  const mapped: Partial<Record<KangurPracticeAssignmentOperation, KangurAssignmentSnapshot>> = {};
+): Partial<Record<KangurPracticeAssignmentOperation, KangurPracticeAssignment>> => {
+  const mapped: Partial<Record<KangurPracticeAssignmentOperation, KangurPracticeAssignment>> = {};
 
   for (const assignment of selectKangurPriorityAssignments(assignments)) {
-    if (assignment.target.type !== 'practice') {
+    if (!isKangurPracticeAssignment(assignment)) {
       continue;
     }
 
@@ -561,7 +577,7 @@ export const selectKangurPracticeAssignmentForScreen = (
   assignments: KangurAssignmentSnapshot[],
   screen: KangurGameScreen,
   operation: KangurOperation | null
-): KangurAssignmentSnapshot | null => {
+): KangurPracticeAssignment | null => {
   const mapped = mapKangurPracticeAssignmentsByOperation(assignments);
 
   if (screen === 'training') {
@@ -575,8 +591,8 @@ export const selectKangurPracticeAssignmentForScreen = (
 
     return (
       selectKangurPriorityAssignments(assignments).find(
-        (assignment) =>
-          assignment.target.type === 'practice' && assignment.target.operation !== 'mixed'
+        (assignment): assignment is KangurPracticeAssignment =>
+          isKangurPracticeAssignment(assignment) && assignment.target.operation !== 'mixed'
       ) ?? null
     );
   }
@@ -591,7 +607,7 @@ export const selectKangurPracticeAssignmentForScreen = (
 export const selectKangurResultPracticeAssignment = (
   assignments: KangurAssignmentSnapshot[],
   operation: KangurPracticeAssignmentOperation
-): KangurAssignmentSnapshot | null => {
+): KangurPracticeAssignment | null => {
   const activeAssignment = mapKangurPracticeAssignmentsByOperation(assignments)[operation];
   if (activeAssignment) {
     return activeAssignment;
@@ -599,8 +615,8 @@ export const selectKangurResultPracticeAssignment = (
 
   return assignments
     .filter(
-      (assignment) =>
-        assignment.target.type === 'practice' &&
+      (assignment): assignment is KangurPracticeAssignment =>
+        isKangurPracticeAssignment(assignment) &&
         assignment.target.operation === operation &&
         assignment.progress.status === 'completed'
     )

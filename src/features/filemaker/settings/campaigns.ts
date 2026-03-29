@@ -1,17 +1,6 @@
 import { normalizeString } from '../filemaker-settings.helpers';
 import type {
-  FilemakerDatabase,
   FilemakerEmailCampaign,
-  FilemakerEmailCampaignAudienceRule,
-  FilemakerEmailCampaignDelivery,
-  FilemakerEmailCampaignDeliveryAttemptRegistry,
-  FilemakerEmailCampaignDeliveryRegistry,
-  FilemakerEmailCampaignEvent,
-  FilemakerEmailCampaignEventRegistry,
-  FilemakerEmailCampaignRegistry,
-  FilemakerEmailCampaignRun,
-  FilemakerEmailCampaignRunRegistry,
-  FilemakerEmailCampaignSuppressionRegistry,
 } from '../types';
 
 export * from '../types/campaigns';
@@ -22,12 +11,6 @@ import {
   FilemakerEmailCampaignAudiencePreview,
   FilemakerEmailCampaignLaunchEvaluation,
 } from '../types/campaigns';
-import {
-  normalizeCampaignAudienceRule,
-} from './campaign-factories';
-import {
-  resolveFilemakerEmailCampaignAudiencePreview,
-} from './campaign-summarizers';
 
 const isWithinAllowedHours = (
   hour: number,

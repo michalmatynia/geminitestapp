@@ -452,45 +452,92 @@ const HOME_ACTION_TOKEN_LABELS: Record<KangurThemeSettingsLocale, Record<string,
 const PANEL_COPY: Record<
   KangurThemeSettingsLocale,
   {
+    locale: KangurThemeSettingsLocale;
     autosaveTitle: string;
     autosaveDescription: string;
     restoreDefaultButton: string;
     restoring: string;
     resetError: string;
+    modeTitle: string;
+    modeSubtitle: string;
+    saveAction: string;
+    resetAction: string;
+    unsavedChanges: string;
+    previewTitle: string;
+    previewInfoTitle: string;
+    previewInfoText: string;
+    saveSuccess: string;
+    saveError: string;
     auto: string;
     progressTrackColorPickerAria: string;
     progressTrackColorValueAria: string;
   }
 > = {
   en: {
+    locale: 'en',
     autosaveTitle: 'Autosave',
     autosaveDescription:
       'Changes in this editor save to Mongo automatically and feed the live Kangur storefront theme. This panel only shows tokens that the public Kangur runtime maps today, so every field here has a live storefront effect.',
     restoreDefaultButton: 'Restore defaults',
     restoring: 'Restoring...',
     resetError: 'Failed to restore the theme.',
+    modeTitle: 'Theme mode',
+    modeSubtitle: 'Choose which Kangur storefront theme slot you want to edit.',
+    saveAction: 'Save theme',
+    resetAction: 'Reset draft',
+    unsavedChanges: 'Unsaved changes',
+    previewTitle: 'Preview',
+    previewInfoTitle: 'Live preview',
+    previewInfoText:
+      'The preview reflects the current draft and lets you compare it across Kangur theme slots.',
+    saveSuccess: 'Theme saved successfully.',
+    saveError: 'Failed to save theme.',
     auto: 'Auto',
     progressTrackColorPickerAria: 'Progress track color picker',
     progressTrackColorValueAria: 'Progress track color value',
   },
   pl: {
+    locale: 'pl',
     autosaveTitle: 'Automatyczny zapis',
     autosaveDescription:
       'Zmiany w tym edytorze zapisują się automatycznie do Mongo i zasilają motyw live Kangur. Ten panel pokazuje tylko tokeny, które dzisiejszy runtime publiczny Kangur mapuje, więc każde pole ma realny efekt w storefrontcie.',
     restoreDefaultButton: 'Przywróć domyślne',
     restoring: 'Przywracam...',
     resetError: 'Nie udało się przywrócić motywu.',
+    modeTitle: 'Tryb motywu',
+    modeSubtitle: 'Wybierz slot motywu storefrontu Kangur, który chcesz edytować.',
+    saveAction: 'Zapisz motyw',
+    resetAction: 'Resetuj szkic',
+    unsavedChanges: 'Niezapisane zmiany',
+    previewTitle: 'Podgląd',
+    previewInfoTitle: 'Podgląd na żywo',
+    previewInfoText:
+      'Podgląd odzwierciedla bieżący szkic i pozwala porównać go między slotami motywu Kangur.',
+    saveSuccess: 'Motyw został zapisany.',
+    saveError: 'Nie udało się zapisać motywu.',
     auto: 'Auto',
     progressTrackColorPickerAria: 'Wybierak koloru toru postępu',
     progressTrackColorValueAria: 'Wartość koloru toru postępu',
   },
   uk: {
+    locale: 'uk',
     autosaveTitle: 'Автозбереження',
     autosaveDescription:
       'Зміни в цьому редакторі автоматично зберігаються в Mongo і живлять live-тему Kangur. Ця панель показує лише ті токени, які сьогодні мапить публічний runtime Kangur, тому кожне поле тут має реальний ефект у storefront.',
     restoreDefaultButton: 'Відновити типові',
     restoring: 'Відновлюю...',
     resetError: 'Не вдалося відновити тему.',
+    modeTitle: 'Режим теми',
+    modeSubtitle: 'Виберіть слот теми storefront Kangur, який потрібно редагувати.',
+    saveAction: 'Зберегти тему',
+    resetAction: 'Скинути чернетку',
+    unsavedChanges: 'Є незбережені зміни',
+    previewTitle: 'Попередній перегляд',
+    previewInfoTitle: 'Живий перегляд',
+    previewInfoText:
+      'Попередній перегляд відображає поточну чернетку та дозволяє порівнювати її між слотами тем Kangur.',
+    saveSuccess: 'Тему успішно збережено.',
+    saveError: 'Не вдалося зберегти тему.',
     auto: 'Авто',
     progressTrackColorPickerAria: 'Вибір кольору смужки прогресу',
     progressTrackColorValueAria: 'Значення кольору смужки прогресу',

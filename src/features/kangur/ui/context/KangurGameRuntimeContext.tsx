@@ -334,7 +334,7 @@ export function KangurGameRuntimeProvider({
   );
   const resultPracticeAssignment = useMemo(
     () =>
-      screen === 'result'
+      screen === 'result' && operation
         ? selectKangurResultPracticeAssignment(subjectAssignments, operation)
         : null,
     [operation, screen, subjectAssignments]

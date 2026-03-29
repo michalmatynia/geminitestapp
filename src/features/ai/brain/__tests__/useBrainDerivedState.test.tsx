@@ -108,6 +108,7 @@ describe('useBrainDerivedState', () => {
     );
 
     expect(useBrainOperationsOverview).toHaveBeenCalledWith({ range: '24h' });
+    expect(useBrainInsights).toHaveBeenCalledWith(true);
     expect(useBrainRuntimeAnalytics).toHaveBeenCalledWith(true);
     expect(result.current.analyticsSummaryQuery).toBe(analyticsSummaryQuery);
     expect(result.current.logMetricsQuery).toBe(logMetricsQuery);
@@ -168,10 +169,56 @@ describe('useBrainDerivedState', () => {
     );
 
     expect(useBrainOperationsOverview).toHaveBeenCalledWith({ range: '7d' });
+    expect(useBrainInsights).toHaveBeenLastCalledWith(false);
     expect(useBrainRuntimeAnalytics).toHaveBeenLastCalledWith(false);
     expect(result.current.runtimeAnalyticsLiveEnabled).toBe(false);
     expect(result.current.liveOllamaModels).toEqual([]);
     expect(result.current.modelQuickPicks).toEqual([]);
     expect(result.current.agentQuickPicks).toEqual([]);
+  });
+
+  it('keeps runtime analytics disabled when the AI Paths feature is off even if capability overrides are enabled', () => {
+    vi.mocked(useBrainModels).mockReturnValue({
+      data: {
+        sources: {
+          liveOllamaModels: [],
+        },
+      },
+    } as ReturnType<typeof useBrainModels>);
+
+    const { result } = renderHook(() =>
+      useBrainDerivedState({
+        operationsRange: '1h',
+        providerCatalog: { entries: [] },
+        settings: {
+          ...defaultBrainSettings,
+          assignments: {
+            ...defaultBrainSettings.assignments,
+            ai_paths: {
+              ...defaultBrainAssignment,
+              enabled: false,
+              modelId: 'feature-disabled',
+            },
+          },
+          capabilities: {
+            ...defaultBrainSettings.capabilities,
+            'insights.runtime_analytics': {
+              ...defaultBrainAssignment,
+              enabled: true,
+              modelId: 'runtime-model',
+            },
+            'ai_paths.model': {
+              ...defaultBrainAssignment,
+              enabled: true,
+              modelId: 'paths-model',
+            },
+          },
+        },
+      })
+    );
+
+    expect(useBrainInsights).toHaveBeenLastCalledWith(false);
+    expect(useBrainRuntimeAnalytics).toHaveBeenLastCalledWith(false);
+    expect(result.current.runtimeAnalyticsLiveEnabled).toBe(false);
   });
 });

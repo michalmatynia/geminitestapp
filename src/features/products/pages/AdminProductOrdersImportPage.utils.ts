@@ -168,7 +168,7 @@ export const formatPreviewScopeConnection = (
 
 export const buildPreviousImportSnapshot = (
   order: BaseOrderImportPreviewItem,
-  syncedAt: string
+  syncedAt: string = order.lastImportedAt ?? new Date().toISOString()
 ): BaseOrderImportPreviousSnapshot => ({
   orderNumber: order.orderNumber ?? null,
   externalStatusId: order.externalStatusId ?? null,
@@ -184,10 +184,10 @@ export const buildPreviousImportSnapshot = (
   orderUpdatedAt: order.orderUpdatedAt ?? null,
   lineItems: order.lineItems.map((item) => ({
     sku: item.sku ?? null,
-    name: item.name ?? null,
+    name: item.name,
     quantity: item.quantity,
     unitPriceGross: item.unitPriceGross ?? null,
+    baseProductId: item.baseProductId ?? null,
   })),
-  fingerprint: order.fingerprint,
-  syncedAt,
+  lastImportedAt: syncedAt,
 });

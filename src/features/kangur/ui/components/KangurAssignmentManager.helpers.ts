@@ -20,6 +20,8 @@ export type KangurAssignmentTrackerSummary = {
   inProgressCount: number;
   completedCount: number;
   completionRate: number;
+  totalXp: number;
+  averageMasteryPercent: number;
 };
 
 export const buildTrackerSummary = (
@@ -38,6 +40,19 @@ export const buildTrackerSummary = (
   const completedCount = visibleAssignments.filter(
     (assignment) => assignment.progress.status === 'completed'
   ).length;
+  const totalXp = 0;
+  const masteryAssignments = visibleAssignments.filter(
+    (assignment) => typeof assignment.progress.percent === 'number'
+  );
+  const averageMasteryPercent =
+    masteryAssignments.length === 0
+      ? 0
+      : Math.round(
+          masteryAssignments.reduce(
+            (sum, assignment) => sum + assignment.progress.percent,
+            0
+          ) / masteryAssignments.length
+        );
 
   return {
     activeCount: activeAssignments.length,
@@ -48,6 +63,8 @@ export const buildTrackerSummary = (
       visibleAssignments.length === 0
         ? 0
         : Math.round((completedCount / visibleAssignments.length) * 100),
+    totalXp,
+    averageMasteryPercent,
   };
 };
 

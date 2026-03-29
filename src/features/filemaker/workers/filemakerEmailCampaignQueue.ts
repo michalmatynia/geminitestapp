@@ -64,18 +64,16 @@ const queue = createManagedQueue<FilemakerEmailCampaignQueueJobData>({
   processor: async (data, jobId, _signal, context) => {
     const result = await processFilemakerEmailCampaignRun({
       runId: data.runId,
-      reason: data.reason,
-      onProgress: async (progress: FilemakerCampaignRunProcessProgress) => {
-        await context?.updateProgress?.({
-          totalCount: progress.totalCount,
-          processedCount: progress.processedCount,
-          queuedCount: progress.queuedCount,
-          sentCount: progress.sentCount,
-          failedCount: progress.failedCount,
-          skippedCount: progress.skippedCount,
-          bouncedCount: progress.bouncedCount,
-        });
-      },
+      reason: data.reason === 'launch' ? 'manual' : data.reason,
+    });
+    await context?.updateProgress?.({
+      totalCount: result.progress.totalCount,
+      processedCount: result.progress.processedCount,
+      queuedCount: result.progress.queuedCount,
+      sentCount: result.progress.sentCount,
+      failedCount: result.progress.failedCount,
+      skippedCount: result.progress.skippedCount,
+      bouncedCount: result.progress.bouncedCount,
     });
     return {
       ok: true,

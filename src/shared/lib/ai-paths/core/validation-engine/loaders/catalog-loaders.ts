@@ -238,26 +238,28 @@ export const buildTooltipDocsCatalogSourcePayload = async (args: {
     const hash = hashText(JSON.stringify(rows));
     const docsBinding = source.path;
 
-    const assertions: AiPathsDocAssertion[] = rows.map((row) => ({
-      id: `tooltip.catalog.${row.id.replace(/[^a-z0-9]+/gi, '_')}`,
-      title: `Tooltip configured: ${row.id}`,
-      module: 'ui',
-      severity: 'info',
-      description: `Guideline: ${row.title}. Tooltip should be available for ${row.id}.`,
-      recommendation: `Verify that ${row.id} has a correctly configured tooltip in the registry.`,
-      sequenceHint: 200,
-      confidence: 0.6,
-      sourcePath: source.path,
-      sourceType: 'tooltip_docs_catalog',
-      sourceHash: hash,
-      docsBindings: [docsBinding],
-      conditions: [
-        {
-          operator: 'tooltip_exists',
-          id: row.id,
-        },
-      ],
-    }));
+    const assertions: AiPathsDocAssertion[] = rows.map(
+      (row): AiPathsDocAssertion => ({
+        id: `tooltip.catalog.${row.id.replace(/[^a-z0-9]+/gi, '_')}`,
+        title: `Tooltip configured: ${row.id}`,
+        module: 'custom',
+        severity: 'info',
+        description: `Guideline: ${row.title}. Tooltip should be available for ${row.id}.`,
+        recommendation: `Verify that ${row.id} has a correctly configured tooltip in the registry.`,
+        sequenceHint: 200,
+        confidence: 0.6,
+        sourcePath: source.path,
+        sourceType: 'tooltip_docs_catalog',
+        sourceHash: hash,
+        docsBindings: [docsBinding],
+        conditions: [
+          {
+            operator: 'tooltip_exists',
+            id: row.id,
+          },
+        ],
+      })
+    );
 
     return { hash, assertions };
   } catch (error) {

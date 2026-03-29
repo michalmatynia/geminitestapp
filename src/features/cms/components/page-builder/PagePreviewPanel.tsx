@@ -349,16 +349,13 @@ export function PagePreviewPanel(): React.ReactNode {
           dispatch({
             type: 'UPDATE_NESTED_BLOCK_SETTINGS',
             sectionId: mediaTarget.sectionId,
-            columnId: mediaTarget.columnId,
-            parentBlockId: mediaTarget.parentBlockId,
             blockId: mediaTarget.blockId,
             settings: { [mediaTarget.key]: image },
           });
         } else if (mediaTarget.columnId) {
           dispatch({
-            type: 'UPDATE_BLOCK_IN_COLUMN',
+            type: 'UPDATE_NESTED_BLOCK_SETTINGS',
             sectionId: mediaTarget.sectionId,
-            columnId: mediaTarget.columnId,
             blockId: mediaTarget.blockId,
             settings: { [mediaTarget.key]: image },
           });

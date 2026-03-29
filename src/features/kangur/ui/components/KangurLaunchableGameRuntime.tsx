@@ -327,6 +327,11 @@ const KANGUR_LAUNCHABLE_GAME_RENDERERS: Record<
       <EnglishSentenceStructureGame finishLabel={finishLabel} onFinish={onFinish} />
     ),
   },
+  english_going_to_plan_parade_game: {
+    render: ({ finishLabel, onFinish }) => (
+      <EnglishSentenceStructureGame finishLabel={finishLabel} onFinish={onFinish} />
+    ),
+  },
   english_subject_verb_agreement_game: {
     render: ({ finishLabel, onFinish }) => (
       <EnglishSubjectVerbAgreementGame finishLabel={finishLabel} onFinish={onFinish} />

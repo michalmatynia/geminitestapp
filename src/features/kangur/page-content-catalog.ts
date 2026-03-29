@@ -437,6 +437,23 @@ const LESSON_LIBRARY_FRAGMENT_DETAILS: Record<
     ],
     aliases: ['sentence structure', 'szyk zdania', 'word order', 'english sentence'],
   },
+  english_going_to: {
+    explanation:
+      'Plany na przyszłość z konstrukcją going to. Lekcja pomaga budować zdania twierdzące, przeczenia i pytania o zamiary oraz najbliższą przyszłość.',
+    triggerPhrases: [
+      'going to',
+      'future plans',
+      'plany na przyszłość',
+      'plany na przyszlosc',
+      'be going to',
+      'future intentions',
+      'intentions',
+      'zamierzenia',
+      'przyszłość',
+      'przyszlosc',
+    ],
+    aliases: ['going to', 'future plans', 'be going to', 'english future'],
+  },
   english_subject_verb_agreement: {
     explanation:
       'Zgodność podmiotu i czasownika w Present Simple. Lekcja pokazuje reguły he/she/it + -s, am/is/are oraz typowe pułapki w dłuższych zdaniach.',

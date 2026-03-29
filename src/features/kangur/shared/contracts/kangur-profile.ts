@@ -99,4 +99,5 @@ export type KangurLearnerProfileSnapshot = {
   recentSessions: KangurRecentSession[];
   weeklyActivity: KangurWeeklyActivityPoint[];
   recommendations: KangurLearnerRecommendation[];
+  lessonMastery?: KangurLessonMasteryInsights;
 };

@@ -1,6 +1,6 @@
 'use client';
 
-import type { LogicalPatternCell, LogicalPatternTile, LogicalPatternRound } from '../logical-patterns-workshop-data';
+import type { LogicalPatternCell, LogicalPatternTile } from '../logical-patterns-workshop-data';
 import type { MultiSlottedRoundStateDto } from '../round-state-contracts';
 import type { KangurRewardBreakdownEntry } from '@/features/kangur/ui/types';
 

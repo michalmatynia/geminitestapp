@@ -4,7 +4,6 @@ import { useEffect, useMemo, useState } from 'react';
 import type { DropResult } from '@hello-pangea/dnd';
 import { useKangurCoarsePointer } from '@/features/kangur/ui/hooks/useKangurCoarsePointer';
 import type {
-  StageId,
   PatternZoneId,
   ClassifyZoneId,
   PatternToken,
@@ -25,7 +24,6 @@ import {
 
 export function useLogicalThinkingLabGameState({
   analogyRounds,
-  copy,
 }: LogicalThinkingLabGameProps) {
   const isCoarsePointer = useKangurCoarsePointer();
   const [stageIndex, setStageIndex] = useState(0);

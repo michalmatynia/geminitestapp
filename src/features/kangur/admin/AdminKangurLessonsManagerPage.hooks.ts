@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useLocale } from 'next-intl';
 import type {
   KangurLesson,
@@ -56,6 +56,8 @@ export function useAdminKangurLessonsManagerState() {
       })),
     []
   );
+  const contentLocaleLabel =
+    contentLocaleOptions.find((option) => option.value === contentLocale)?.label ?? contentLocale;
   
   const isPrimaryContentLocale = contentLocale === 'pl';
   const lessons = useMemo((): KangurLesson[] => lessonsQuery.data ?? [], [lessonsQuery.data]);
@@ -92,6 +94,7 @@ export function useAdminKangurLessonsManagerState() {
     isLoading,
     lessonTemplateMap,
     contentLocaleOptions,
+    contentLocaleLabel,
     isPrimaryContentLocale,
     lessons,
     lessonDocuments,

@@ -7,6 +7,7 @@ import {
   useApplyKangurSocialDocUpdates,
   useGenerateKangurSocialPost,
   usePreviewKangurSocialDocUpdates,
+  type KangurSocialPostGenerationResult,
 } from '@/features/kangur/ui/hooks/useKangurSocialPosts';
 import {
   logKangurClientError,

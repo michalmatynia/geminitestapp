@@ -35,11 +35,11 @@ export interface StandardDataTablePanelProps<TData> {
   footer?: React.ReactNode | undefined;
   className?: string | undefined;
   contentClassName?: string | undefined;
-  variant?: 'default' | 'flat' | undefined;
+  variant?: 'default' | 'flat' | 'embedded' | undefined;
 
   // DataTable props
-  columns: ColumnDef<TData, unknown>[];
-  data: TData[];
+  columns?: ColumnDef<TData, unknown>[] | undefined;
+  data?: TData[] | undefined;
   isLoading?: boolean | undefined;
   loadingMessage?: string | undefined;
   emptyState?: React.ReactNode | undefined;
@@ -96,12 +96,12 @@ type StandardDataTablePanelShellProps = {
   header: React.ReactNode | undefined;
   isLoading: boolean;
   loadingMessage: string | undefined;
-  variant: 'default' | 'flat' | undefined;
+  variant: 'default' | 'flat' | 'embedded' | undefined;
 };
 
 interface StandardDataTablePanelTableProps<TData> {
-  columns: ColumnDef<TData, unknown>[];
-  data: TData[];
+  columns: ColumnDef<TData, unknown>[] | undefined;
+  data: TData[] | undefined;
   enableVirtualization: boolean | undefined;
   emptyState: React.ReactNode | undefined;
   expanded: ExpandedState | undefined;
@@ -150,8 +150,8 @@ const renderStandardDataTable = <TData,>({
   stickyHeader,
 }: StandardDataTablePanelTableProps<TData>): React.JSX.Element => (
   <DataTable
-    columns={columns}
-    data={data}
+    columns={columns ?? []}
+    data={data ?? []}
     isLoading={isLoading}
     emptyState={emptyState}
     initialSorting={initialSorting}
@@ -221,13 +221,17 @@ const renderStandardDataTablePanel = <TData,>({
     {...(shellProps.footer !== undefined ? { footer: shellProps.footer } : {})}
     {...(shellProps.className !== undefined ? { className: shellProps.className } : {})}
     contentClassName={cn('min-w-0', shellProps.contentClassName)}
-    {...(shellProps.variant !== undefined ? { variant: shellProps.variant } : {})}
+    {...(shellProps.variant !== undefined
+      ? { variant: shellProps.variant === 'embedded' ? 'flat' : shellProps.variant }
+      : {})}
     isLoading={shellProps.isLoading}
     {...(shellProps.loadingMessage !== undefined ? { loadingMessage: shellProps.loadingMessage } : {})}
     {...(shellProps.emptyState !== undefined ? { emptyState: shellProps.emptyState } : {})}
   >
     {children}
-    {showTable && renderStandardDataTable(tableProps)}
+    {showTable && tableProps.columns && tableProps.data
+      ? renderStandardDataTable(tableProps)
+      : null}
   </ListPanel>
 );
 

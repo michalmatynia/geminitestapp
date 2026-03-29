@@ -1,4 +1,4 @@
-import { signIn, signOut } from 'next-auth/react';
+import { signOut } from 'next-auth/react';
 import {
   type KangurAuthMode,
 } from '@/features/kangur/shared/contracts/kangur-auth';

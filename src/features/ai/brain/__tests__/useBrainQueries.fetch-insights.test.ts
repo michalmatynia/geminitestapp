@@ -45,6 +45,29 @@ describe('fetchBrainInsightsSnapshot', () => {
     expect(snapshot.runtimeAnalytics).toEqual([]);
   });
 
+  it('skips runtime insights entirely when runtime analytics are disabled', async () => {
+    apiGetMock
+      .mockResolvedValueOnce({ insights: [{ id: 'analytics-1' }] })
+      .mockResolvedValueOnce({ insights: [{ id: 'logs-1' }] });
+
+    const snapshot = await fetchBrainInsightsSnapshot({ includeRuntimeAnalytics: false });
+
+    expect(apiGetMock).toHaveBeenNthCalledWith(
+      1,
+      '/api/analytics/insights',
+      expect.objectContaining({ params: { limit: 5 } })
+    );
+    expect(apiGetMock).toHaveBeenNthCalledWith(
+      2,
+      '/api/system/logs/insights',
+      expect.objectContaining({ params: { limit: 5 } })
+    );
+    expect(apiGetMock).toHaveBeenCalledTimes(2);
+    expect(snapshot.analytics).toHaveLength(1);
+    expect(snapshot.logs).toHaveLength(1);
+    expect(snapshot.runtimeAnalytics).toEqual([]);
+  });
+
   it('throws when analytics insight fetch fails', async () => {
     apiGetMock
       .mockResolvedValueOnce({ insights: [{ id: 'runtime-1' }] })

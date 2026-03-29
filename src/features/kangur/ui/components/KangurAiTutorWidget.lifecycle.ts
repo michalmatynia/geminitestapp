@@ -1,23 +1,13 @@
 'use client';
 
-import { useEffect, useLayoutEffect } from 'react';
+import { useEffect } from 'react';
 
-import { trackKangurClientEvent } from '@/features/kangur/observability/client';
 import type { KangurAiTutorConversationContext } from '@/features/kangur/shared/contracts/kangur-ai-tutor';
 import type { KangurAiTutorContent } from '@/features/kangur/shared/contracts/kangur-ai-tutor-content';
-import { getMotionSafeScrollBehavior } from '@/features/kangur/shared/utils';
-
-import {
-  scrollToAndSpotlightAnchor,
-} from './KangurAiTutorWidget.navigation-spotlight';
 import {
   clearPersistedTutorAvatarPosition,
   clearPersistedTutorPanelPosition,
   persistTutorDrawingDraftSnapshot,
-  loadPersistedPendingNavigationTarget,
-  loadPersistedPendingTutorFollowUp,
-  clearPersistedPendingNavigationTarget,
-  clearPersistedPendingTutorFollowUp,
 } from './KangurAiTutorWidget.storage';
 
 import type { KangurAiTutorWidgetState } from './KangurAiTutorWidget.state';
@@ -112,7 +102,6 @@ export function useKangurAiTutorLifecycleEffects(input: UseKangurAiTutorLifecycl
     mounted,
     selectionGuidanceRevealTimeoutRef,
     setAskModalVisible,
-    setContextSwitchNotice,
     setDismissedSelectedText,
     setDraggedAvatarPoint,
     setGuestAuthFormVisible,
@@ -123,7 +112,6 @@ export function useKangurAiTutorLifecycleEffects(input: UseKangurAiTutorLifecycl
     setHighlightedSection,
     setHomeOnboardingStepIndex,
     setHoveredSectionAnchorId,
-    setIsTutorHidden,
     setPanelPosition,
     setPanelPositionMode,
     setPanelSnapPreference,

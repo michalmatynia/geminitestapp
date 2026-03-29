@@ -1,14 +1,14 @@
 'use client';
 
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo } from 'react';
 
 import {
+  useMasterFolderTreeSearch,
   useMasterFolderTreeShell,
+  type FolderTreeViewportRenderNodeInput,
 } from '@/features/foldertree/public';
 import { KANGUR_AGE_GROUPS } from '@/features/kangur/lessons/lesson-catalog-metadata';
-import type {
-  KangurLesson,
-} from '@/features/kangur/shared/contracts/kangur';
+import type { KangurLesson } from '@/features/kangur/shared/contracts/kangur';
 import {
   ContextRegistryPageProvider,
   useRegisterContextRegistryPageSource,
@@ -37,6 +37,7 @@ import {
 } from '../lesson-documents';
 import {
   appendMissingKangurLessonsByComponent,
+  KANGUR_LESSON_COMPONENT_OPTIONS,
   KANGUR_LESSON_SORT_ORDER_GAP,
   canonicalizeKangurLessons,
   createKangurLessonId,
@@ -47,7 +48,8 @@ import { AdminKangurLessonSectionsPanel } from './components/AdminKangurLessonSe
 import { LessonContentEditorDialog } from './components/LessonContentEditorDialog';
 import { LessonMetadataForm } from './components/LessonMetadataForm';
 import { LessonSvgQuickAddModal } from './components/LessonSvgQuickAddModal';
-import { TREE_MODE_STORAGE_KEY, CATALOG_TREE_INSTANCE, ORDERED_TREE_INSTANCE } from './constants';
+import { LessonTreeRow } from './components/LessonTreeRow';
+import { CATALOG_TREE_INSTANCE, ORDERED_TREE_INSTANCE, TREE_MODE_STORAGE_KEY } from './constants';
 import {
   getKangurLessonAuthoringFilterCounts,
   getKangurLessonAuthoringStatus,
@@ -64,15 +66,13 @@ import {
   countLessonsRequiringLegacyImport,
   createInitialLessonFormData,
   resolveLessonComponentContentJson,
+  sanitizeSvgMarkup,
   supportsLessonComponentContentAuthoring,
   toLocalizedLessonFormData,
   upsertLesson,
-  sanitizeSvgMarkup,
 } from './utils';
 
-import {
-  parseKangurLessonTemplateComponentContentJson,
-} from '../lessons/lesson-template-component-content';
+import { parseKangurLessonTemplateComponentContentJson } from '../lessons/lesson-template-component-content';
 import type { KangurLessonTemplateComponentContent } from '@/shared/contracts/kangur-lesson-templates';
 import type { LessonFormData, LessonTreeMode } from './types';
 import { useAdminKangurLessonsManagerState } from './AdminKangurLessonsManagerPage.hooks';
@@ -91,12 +91,27 @@ function AdminKangurLessonsManagerRegistrySource({
   return null;
 }
 
+const buildLessonsManagerErrorReport = (
+  action: string,
+  description: string,
+  context?: Record<string, unknown>,
+) => ({
+  source: 'kangur-admin',
+  action,
+  description,
+  ...(context ? { context } : {}),
+});
+
+const KANGUR_ADMIN_LESSONS_MANAGER_ROOT_IDS = [
+  ...KANGUR_ADMIN_LESSONS_MANAGER_CONTEXT_ROOT_IDS,
+];
+
 export function AdminKangurLessonsManagerPage({
   standalone = true,
 }: {
   standalone?: boolean;
 } = {}): React.JSX.Element {
-  const state: ReturnType<typeof useAdminKangurLessonsManagerState> = useAdminKangurLessonsManagerState();
+  const state = useAdminKangurLessonsManagerState();
   const { toast } = useToast();
   const {
     contentLocale,
@@ -151,6 +166,16 @@ export function AdminKangurLessonsManagerPage({
   const showComponentContentEditor = supportsLessonComponentContentAuthoring(formData.componentId);
   const activeTreeInstance = isCatalogMode ? CATALOG_TREE_INSTANCE : ORDERED_TREE_INSTANCE;
   const treeSearchQuery = isCatalogMode ? catalogTreeSearchQuery : orderedTreeSearchQuery;
+
+  const setTreeModeAndPersist = useCallback(
+    (nextMode: LessonTreeMode): void => {
+      setTreeMode(nextMode);
+      if (typeof window !== 'undefined') {
+        window.localStorage.setItem(TREE_MODE_STORAGE_KEY, nextMode);
+      }
+    },
+    [setTreeMode]
+  );
 
   const registrySource = useMemo(
     () => ({
@@ -224,7 +249,7 @@ export function AdminKangurLessonsManagerPage({
         | 'color'
         | 'activeBg'
       >,
-      componentContent?: KangurLessonTemplateComponentContent
+      componentContent?: KangurLessonTemplateComponentContent,
     ): Promise<void> => {
       const existingTemplate = lessonTemplateMap.get(source.componentId);
       const nextTemplate = {
@@ -270,7 +295,10 @@ export function AdminKangurLessonsManagerPage({
   useEffect(() => {
     if (typeof window === 'undefined') return;
     withKangurClientErrorSync(
-      { source: 'kangur-admin', action: 'lessons-manager-init' },
+      buildLessonsManagerErrorReport(
+        'lessons-manager-init',
+        'Loads persisted lessons manager tree mode.',
+      ),
       () => {
         const stored = window.localStorage.getItem(TREE_MODE_STORAGE_KEY);
         if (stored === 'catalog' || stored === 'ordered' || stored === 'sections') {
@@ -281,12 +309,14 @@ export function AdminKangurLessonsManagerPage({
   }, [setTreeMode]);
 
   const handleToggleTreeMode = useCallback((): void => {
-    setTreeMode((prev) => {
-      const next: LessonTreeMode = prev === 'sections' ? 'ordered' : prev === 'ordered' ? 'catalog' : 'sections';
-      window.localStorage.setItem(TREE_MODE_STORAGE_KEY, next);
-      return next;
-    });
-  }, [setTreeMode]);
+    const nextMode: LessonTreeMode =
+      treeMode === 'sections'
+        ? 'ordered'
+        : treeMode === 'ordered'
+          ? 'catalog'
+          : 'sections';
+    setTreeModeAndPersist(nextMode);
+  }, [setTreeModeAndPersist, treeMode]);
 
   const handleCloseModal = (): void => {
     setShowModal(false);
@@ -302,33 +332,66 @@ export function AdminKangurLessonsManagerPage({
     setShowModal(true);
   };
 
-  const handleEdit = (lesson: KangurLesson): void => {
-    const template = lessonTemplateMap.get(lesson.componentId);
-    setFormData(toLocalizedLessonFormData(lesson, template));
-    setComponentContentJson(resolveLessonComponentContentJson(template));
-    setEditingLesson(lesson);
-    setShowModal(true);
-  };
+  const handleEdit = useCallback(
+    (lesson: KangurLesson): void => {
+      const template = lessonTemplateMap.get(lesson.componentId);
+      setFormData(toLocalizedLessonFormData(lesson, template));
+      setComponentContentJson(resolveLessonComponentContentJson(lesson.componentId, template));
+      setEditingLesson(lesson);
+      setShowModal(true);
+    },
+    [lessonTemplateMap, setComponentContentJson, setEditingLesson, setFormData, setShowModal]
+  );
 
-  const handleEditContent = (lesson: KangurLesson): void => {
-    const document = lessonDocuments[lesson.id];
-    setContentDraft(document ?? createStarterKangurLessonDocument(lesson));
-    setEditingContentLesson(lesson);
-    setShowContentModal(true);
-  };
+  const handleEditContent = useCallback(
+    (lesson: KangurLesson): void => {
+      const document = lessonDocuments[lesson.id];
+      setContentDraft(document ?? createStarterKangurLessonDocument(lesson.componentId));
+      setEditingContentLesson(lesson);
+      setShowContentModal(true);
+    },
+    [lessonDocuments, setContentDraft, setEditingContentLesson, setShowContentModal]
+  );
+
+  const handleComponentChange = useCallback(
+    (componentId: string): void => {
+      const nextComponentId = componentId as LessonFormData['componentId'];
+      setFormData((current) => ({ ...current, componentId: nextComponentId }));
+      setComponentContentJson(
+        resolveLessonComponentContentJson(
+          nextComponentId,
+          lessonTemplateMap.get(nextComponentId)
+        )
+      );
+    },
+    [lessonTemplateMap, setComponentContentJson, setFormData]
+  );
 
   const handleSave = async (): Promise<void> => {
     await withKangurClientError(
-      { source: 'kangur-admin', action: 'lesson-save', context: { lessonId: editingLesson?.id, componentId: formData.componentId } },
+      buildLessonsManagerErrorReport('lesson-save', 'Saves lesson metadata.', {
+        lessonId: editingLesson?.id,
+        componentId: formData.componentId,
+      }),
       async () => {
-        const lessonId = editingLesson?.id || createKangurLessonId(formData.componentId);
-        const sortOrder = editingLesson?.sortOrder ?? (lessons.length > 0 ? Math.max(...lessons.map(l => l.sortOrder)) + KANGUR_LESSON_SORT_ORDER_GAP : 0);
+        const lessonId = editingLesson?.id ?? createKangurLessonId(formData.componentId);
+        const sortOrder =
+          editingLesson?.sortOrder ??
+          (lessons.length > 0
+            ? Math.max(...lessons.map((lesson) => lesson.sortOrder)) +
+              KANGUR_LESSON_SORT_ORDER_GAP
+            : 0);
         const nextLesson = buildPersistedLessonRecord(lessonId, formData, sortOrder);
         const nextLessons = upsertLesson(lessons, nextLesson);
         await updateLessons.mutateAsync(nextLessons);
 
         if (isPrimaryContentLocale) {
-          const componentContent = showComponentContentEditor ? parseKangurLessonTemplateComponentContentJson(componentContentJson) : undefined;
+          const componentContent = showComponentContentEditor
+            ? parseKangurLessonTemplateComponentContentJson(
+                formData.componentId,
+                componentContentJson,
+              )
+            : undefined;
           await saveLocalizedLessonTemplate(formData, componentContent);
         }
 
@@ -341,11 +404,14 @@ export function AdminKangurLessonsManagerPage({
   const handleDelete = async (): Promise<void> => {
     if (!lessonToDelete) return;
     await withKangurClientError(
-      { source: 'kangur-admin', action: 'lesson-delete', context: { lessonId: lessonToDelete.id } },
+      buildLessonsManagerErrorReport(
+        'lesson-delete',
+        'Deletes a lesson and its content document.',
+        { lessonId: lessonToDelete.id },
+      ),
       async () => {
-        const nextLessons = lessons.filter((l) => l.id !== lessonToDelete.id);
+        const nextLessons = lessons.filter((lesson) => lesson.id !== lessonToDelete.id);
         await updateLessons.mutateAsync(nextLessons);
-        // Clean up documents in current session
         const nextDocuments = removeKangurLessonDocument(lessonDocuments, lessonToDelete.id);
         await updateLessonDocuments.mutateAsync(nextDocuments);
         toast('Lesson deleted', { variant: 'success' });
@@ -357,12 +423,19 @@ export function AdminKangurLessonsManagerPage({
   const handleSaveContent = async (): Promise<void> => {
     if (!editingContentLesson) return;
     await withKangurClientError(
-      { source: 'kangur-admin', action: 'lesson-content-save', context: { lessonId: editingContentLesson.id } },
+      buildLessonsManagerErrorReport(
+        'lesson-content-save',
+        'Saves the lesson document editor content.',
+        { lessonId: editingContentLesson.id },
+      ),
       async () => {
         const pages = resolveKangurLessonDocumentPages(contentDraft);
         const nextDocument = updateKangurLessonDocumentPages(contentDraft, pages);
-        await updateLessonDocuments.mutateAsync({ [editingContentLesson.id]: nextDocument });
-        clearLessonContentEditorDraft(editingContentLesson.id, contentLocale);
+        await updateLessonDocuments.mutateAsync({
+          ...lessonDocuments,
+          [editingContentLesson.id]: nextDocument,
+        });
+        clearLessonContentEditorDraft(editingContentLesson.id);
         toast('Content saved', { variant: 'success' });
         setShowContentModal(false);
         setEditingContentLesson(null);
@@ -372,7 +445,10 @@ export function AdminKangurLessonsManagerPage({
 
   const handleCanonicalize = async (): Promise<void> => {
     await withKangurClientError(
-      { source: 'kangur-admin', action: 'lessons-canonicalize' },
+      buildLessonsManagerErrorReport(
+        'lessons-canonicalize',
+        'Canonicalizes lesson ordering and identifiers.',
+      ),
       async () => {
         const nextLessons = canonicalizeKangurLessons(lessons);
         await updateLessons.mutateAsync(nextLessons);
@@ -381,73 +457,141 @@ export function AdminKangurLessonsManagerPage({
     );
   };
 
-  const handleImportLegacy = async (lesson: KangurLesson): Promise<void> => {
-    await withKangurClientError(
-      { source: 'kangur-admin', action: 'lesson-legacy-import', context: { lessonId: lesson.id } },
-      async () => {
-        const result = importLegacyKangurLessonDocument(lesson.componentId);
-        if (!result) {
-          toast('Legacy importer not found', { variant: 'error' });
-          return;
+  const handleImportLegacy = useCallback(
+    async (lesson: KangurLesson): Promise<void> => {
+      await withKangurClientError(
+        buildLessonsManagerErrorReport(
+          'lesson-legacy-import',
+          'Imports legacy lesson content into the editor.',
+          { lessonId: lesson.id, componentId: lesson.componentId },
+        ),
+        async () => {
+          const result = importLegacyKangurLessonDocument(lesson.componentId);
+          if (!result) {
+            toast('Legacy importer not found', { variant: 'error' });
+            return;
+          }
+          await updateLessonDocuments.mutateAsync({
+            ...lessonDocuments,
+            [lesson.id]: result.document,
+          });
+          if (editingContentLesson?.id === lesson.id) {
+            setContentDraft(result.document);
+          }
+          toast('Legacy content imported', { variant: 'success' });
         }
-        await updateLessonDocuments.mutateAsync({ [lesson.id]: result.document });
-        toast('Legacy content imported', { variant: 'success' });
-      }
-    );
-  };
+      );
+    },
+    [
+      editingContentLesson?.id,
+      lessonDocuments,
+      setContentDraft,
+      toast,
+      updateLessonDocuments,
+    ]
+  );
 
-  const handleQuickAddSvg = (lesson: KangurLesson, markup: string): void => {
-    setSvgModalLesson(lesson);
-    setSvgModalInitialMarkup(sanitizeSvgMarkup(markup));
-  };
+  const handleQuickAddSvg = useCallback(
+    (lesson: KangurLesson): void => {
+      setSvgModalLesson(lesson);
+      setSvgModalInitialMarkup('');
+    },
+    [setSvgModalInitialMarkup, setSvgModalLesson]
+  );
 
   const handleSaveQuickSvg = async (markup: string): Promise<void> => {
     if (!svgModalLesson) return;
     await withKangurClientError(
-      { source: 'kangur-admin', action: 'lesson-quick-svg-save', context: { lessonId: svgModalLesson.id } },
+      buildLessonsManagerErrorReport(
+        'lesson-quick-svg-save',
+        'Adds a quick SVG block to the lesson document.',
+        { lessonId: svgModalLesson.id },
+      ),
       async () => {
-        const block = createKangurLessonSvgBlock(markup);
-        const document = lessonDocuments[svgModalLesson.id] ?? createDefaultKangurLessonDocument();
+        const block = {
+          ...createKangurLessonSvgBlock(),
+          markup: sanitizeSvgMarkup(markup),
+        };
+        const document =
+          lessonDocuments[svgModalLesson.id] ?? createDefaultKangurLessonDocument();
         const pages = resolveKangurLessonDocumentPages(document);
-        const firstPage = pages[0] || { id: 'p1', blocks: [] };
+        const firstPage = pages[0] ?? { id: 'p1', sectionKey: '', title: '', description: '', blocks: [] };
         const nextPages = [
           { ...firstPage, blocks: [...firstPage.blocks, block] },
           ...pages.slice(1),
         ];
-        const nextDocument = updateKangurLessonDocumentTimestamp(updateKangurLessonDocumentPages(document, nextPages));
-        await updateLessonDocuments.mutateAsync({ [svgModalLesson.id]: nextDocument });
+        const nextDocument = updateKangurLessonDocumentTimestamp(
+          updateKangurLessonDocumentPages(document, nextPages)
+        );
+        await updateLessonDocuments.mutateAsync({
+          ...lessonDocuments,
+          [svgModalLesson.id]: nextDocument,
+        });
         toast('SVG added to lesson', { variant: 'success' });
         setSvgModalLesson(null);
+        setSvgModalInitialMarkup('');
       }
     );
   };
 
   const handleAppendMissing = async (): Promise<void> => {
     await withKangurClientError(
-      { source: 'kangur-admin', action: 'lessons-append-missing' },
+      buildLessonsManagerErrorReport(
+        'lessons-append-missing',
+        'Adds missing lessons for the known component catalog.',
+      ),
       async () => {
-        const nextLessons = appendMissingKangurLessonsByComponent(lessons);
-        await updateLessons.mutateAsync(nextLessons);
-        toast('Missing lessons added', { variant: 'success' });
+        const result = appendMissingKangurLessonsByComponent(
+          lessons,
+          KANGUR_LESSON_COMPONENT_OPTIONS.map((option) => option.value),
+        );
+        await updateLessons.mutateAsync(result.lessons);
+        toast(`Added ${result.addedCount} missing lessons`, { variant: 'success' });
       }
     );
   };
 
-  const masterNodes = useMemo(
-    () => (isCatalogMode ? buildKangurLessonCatalogMasterNodes(lessons) : buildKangurLessonMasterNodes(lessons)),
-    [isCatalogMode, lessons]
+  const authoringFilteredLessons = useMemo(
+    () =>
+      lessons.filter((lesson) =>
+        matchesKangurLessonAuthoringFilter(authoringFilter, lesson, lessonDocuments)
+      ),
+    [authoringFilter, lessonDocuments, lessons]
   );
 
   const filteredLessons = useMemo(
     () =>
-      lessons.filter((lesson) => {
-        const doc = lessonDocuments[lesson.id];
-        const status = getKangurLessonAuthoringStatus(lesson, doc);
-        if (!matchesKangurLessonAuthoringFilter(status, authoringFilter)) return false;
-        if (ageGroupFilter !== 'all' && lesson.ageGroup !== ageGroupFilter) return false;
-        return true;
-      }),
-    [ageGroupFilter, authoringFilter, lessonDocuments, lessons]
+      authoringFilteredLessons.filter((lesson) =>
+        ageGroupFilter === 'all' ? true : lesson.ageGroup === ageGroupFilter
+      ),
+    [ageGroupFilter, authoringFilteredLessons]
+  );
+
+  const masterNodes = useMemo(
+    () =>
+      isCatalogMode
+        ? buildKangurLessonCatalogMasterNodes(filteredLessons)
+        : buildKangurLessonMasterNodes(filteredLessons),
+    [filteredLessons, isCatalogMode]
+  );
+
+  const {
+    controller,
+    capabilities,
+    appearance: { rootDropUi },
+    viewport: { scrollToNodeRef },
+  } = useMasterFolderTreeShell({
+    instance: activeTreeInstance,
+    nodes: masterNodes,
+  });
+
+  const searchState = useMasterFolderTreeSearch(masterNodes, treeSearchQuery, {
+    config: capabilities.search,
+  });
+
+  const getLessonAuthoringStatus = useCallback(
+    (lesson: KangurLesson) => getKangurLessonAuthoringStatus(lesson, lessonDocuments),
+    [lessonDocuments]
   );
 
   const authoringFilterCounts = useMemo(
@@ -455,10 +599,27 @@ export function AdminKangurLessonsManagerPage({
     [lessonDocuments, lessons]
   );
 
+  const ageGroupCounts = useMemo(
+    () =>
+      new Map(
+        KANGUR_AGE_GROUPS.map((group) => [
+          group.id,
+          authoringFilteredLessons.filter((lesson) => lesson.ageGroup === group.id).length,
+        ])
+      ),
+    [authoringFilteredLessons]
+  );
+
+  const activeAgeGroupLabel =
+    ageGroupFilter === 'all'
+      ? 'All ages'
+      : KANGUR_AGE_GROUPS.find((group) => group.id === ageGroupFilter)?.label ?? ageGroupFilter;
+
   const legacyImportCount = useMemo(
     () => countLessonsRequiringLegacyImport(lessons, lessonDocuments),
     [lessonDocuments, lessons]
   );
+
   const breadcrumbs = useMemo(
     () => [
       { label: 'Admin', href: '/admin' },
@@ -468,16 +629,46 @@ export function AdminKangurLessonsManagerPage({
     []
   );
 
+  const renderTreeNode = useCallback(
+    (input: FolderTreeViewportRenderNodeInput): React.ReactNode => (
+      <LessonTreeRow
+        input={input}
+        lessonById={lessonById}
+        authoringStatus={getLessonAuthoringStatus}
+        onEdit={handleEdit}
+        onEditContent={handleEditContent}
+        onQuickSvg={handleQuickAddSvg}
+        onDelete={setLessonToDelete}
+        isUpdating={isSaving}
+      />
+    ),
+    [
+      getLessonAuthoringStatus,
+      handleEdit,
+      handleEditContent,
+      handleQuickAddSvg,
+      isSaving,
+      lessonById,
+      setLessonToDelete,
+    ]
+  );
+
   return (
-    <ContextRegistryPageProvider rootIds={KANGUR_ADMIN_LESSONS_MANAGER_ROOT_IDS}>
+    <ContextRegistryPageProvider
+      pageId='page:kangur-admin-lessons-manager'
+      title='Kangur Lessons Manager'
+      rootNodeIds={KANGUR_ADMIN_LESSONS_MANAGER_ROOT_IDS}
+    >
       <AdminKangurLessonsManagerRegistrySource registrySource={registrySource} />
       <LessonSvgQuickAddRuntimeProvider
         lesson={svgModalLesson}
         initialMarkup={svgModalInitialMarkup}
-        isOpen={!!svgModalLesson}
+        isOpen={Boolean(svgModalLesson)}
         isSaving={isSaving}
         onClose={() => setSvgModalLesson(null)}
-        onSave={(markup, _viewBox) => { void handleSaveQuickSvg(markup); }}
+        onSave={(markup, _viewBox) => {
+          void handleSaveQuickSvg(markup);
+        }}
       >
         <KangurAdminContentShell
           title='Lessons Manager'
@@ -487,29 +678,39 @@ export function AdminKangurLessonsManagerPage({
             <div className='flex items-center gap-3'>
               <SelectSimple
                 value={contentLocale}
-                onChange={(val) => setContentLocale(val as 'en' | 'pl' | 'uk')}
+                onChange={(value) => setContentLocale(value as 'en' | 'pl' | 'uk')}
                 options={contentLocaleOptions}
                 className='w-40'
               />
               <Badge variant='outline'>{contentLocaleLabel}</Badge>
               <SelectSimple
                 value={ageGroupFilter}
-                onChange={(val) => setAgeGroupFilter(val as 'six_year_old' | 'ten_year_old' | 'grown_ups' | 'all')}
-                options={[{ value: 'all', label: 'All Ages' }, ...KANGUR_AGE_GROUPS.map(g => ({ value: g.id, label: g.id }))]}
+                onChange={(value) =>
+                  setAgeGroupFilter(
+                    value as 'all' | 'six_year_old' | 'ten_year_old' | 'grown_ups'
+                  )
+                }
+                options={[
+                  { value: 'all', label: 'All Ages' },
+                  ...KANGUR_AGE_GROUPS.map((group) => ({
+                    value: group.id,
+                    label: group.label,
+                  })),
+                ]}
                 className='w-40'
               />
               <SelectSimple
                 value={authoringFilter}
-                onChange={(val) => setAuthoringFilter(val as KangurLessonAuthoringFilter)}
-                options={[
-                  { value: 'all', label: `All (${authoringFilterCounts.all})` },
-                  { value: 'draft', label: `Draft (${authoringFilterCounts.draft})` },
-                  { value: 'ready', label: `Ready (${authoringFilterCounts.ready})` },
-                  { value: 'live', label: `Live (${authoringFilterCounts.live})` },
-                ]}
-                className='w-40'
+                onChange={(value) => setAuthoringFilter(value as KangurLessonAuthoringFilter)}
+                options={authoringFilterCounts.map(({ id, label, count }) => ({
+                  value: id,
+                  label: `${label} (${count})`,
+                }))}
+                className='w-52'
               />
-              <KangurButton variant='primary' onClick={handleCreate}>Create Lesson</KangurButton>
+              <KangurButton variant='primary' onClick={handleCreate}>
+                Create Lesson
+              </KangurButton>
             </div>
           }
         >
@@ -519,33 +720,80 @@ export function AdminKangurLessonsManagerPage({
                 <KangurButton variant='surface' size='sm' onClick={handleToggleTreeMode}>
                   Mode: {treeMode.toUpperCase()}
                 </KangurButton>
-                {legacyImportCount > 0 && (
+                {legacyImportCount > 0 ? (
                   <Badge variant='warning'>{legacyImportCount} Legacy</Badge>
-                )}
+                ) : null}
               </div>
               <div className='flex items-center gap-2'>
-                <KangurButton variant='ghost' size='sm' onClick={() => { void handleCanonicalize(); }}>Canonicalize</KangurButton>
-                <KangurButton variant='ghost' size='sm' onClick={() => { void handleAppendMissing(); }}>Add Missing</KangurButton>
-              </div>            </div>
+                <KangurButton
+                  variant='ghost'
+                  size='sm'
+                  onClick={() => {
+                    void handleCanonicalize();
+                  }}
+                >
+                  Canonicalize
+                </KangurButton>
+                <KangurButton
+                  variant='ghost'
+                  size='sm'
+                  onClick={() => {
+                    void handleAppendMissing();
+                  }}
+                >
+                  Add Missing
+                </KangurButton>
+              </div>
+            </div>
 
             {isSectionsMode ? (
-              <AdminKangurLessonSectionsPanel
-                lessons={filteredLessons}
-                onEdit={handleEdit}
-                onEditContent={handleEditContent}
-                onDelete={setLessonToDelete}
-                onImportLegacy={handleImportLegacy}
-              />
+              <AdminKangurLessonSectionsPanel standalone={standalone} />
             ) : (
               <AdminKangurLessonsManagerTreePanel
-                instanceId={activeTreeInstance}
-                nodes={masterNodes}
-                onSearchChange={handleTreeSearchChange}
-                searchQuery={treeSearchQuery}
-                onEdit={handleEdit}
-                onEditContent={handleEditContent}
-                onDelete={setLessonToDelete}
-                onImportLegacy={handleImportLegacy}
+                standalone={standalone}
+                isCatalogMode={isCatalogMode}
+                isSaving={isSaving}
+                isLoading={isLoading}
+                lessonsCount={lessons.length}
+                lessonsNeedingLegacyImport={legacyImportCount}
+                geometryPackAddedCount={0}
+                logicPackAddedCount={0}
+                filterCounts={authoringFilterCounts}
+                authoringFilter={authoringFilter}
+                onAuthoringFilterChange={setAuthoringFilter}
+                authoringFilteredLessonCount={authoringFilteredLessons.length}
+                ageGroupFilter={ageGroupFilter}
+                onAgeGroupFilterChange={setAgeGroupFilter}
+                ageGroupCounts={ageGroupCounts}
+                filteredLessonCount={filteredLessons.length}
+                activeAgeGroupLabel={activeAgeGroupLabel}
+                treeSearchQuery={treeSearchQuery}
+                onTreeSearchChange={handleTreeSearchChange}
+                searchEnabled={capabilities.search.enabled}
+                searchState={searchState}
+                controller={controller}
+                scrollToNodeRef={scrollToNodeRef}
+                rootDropUi={rootDropUi}
+                renderNode={renderTreeNode}
+                onAddGeometryPack={() => {
+                  toast('Geometry pack shortcuts are unavailable in this workspace.', {
+                    variant: 'warning',
+                  });
+                }}
+                onAddLogicalThinkingPack={() => {
+                  toast('Logical thinking pack shortcuts are unavailable in this workspace.', {
+                    variant: 'warning',
+                  });
+                }}
+                onImportAllLessonsToEditor={() => {
+                  toast('Bulk lesson import is unavailable in this workspace.', {
+                    variant: 'warning',
+                  });
+                }}
+                onAddLesson={handleCreate}
+                onSelectOrderedView={() => setTreeModeAndPersist('ordered')}
+                onSelectCatalogView={() => setTreeModeAndPersist('catalog')}
+                onSelectSectionsView={() => setTreeModeAndPersist('sections')}
               />
             )}
           </div>
@@ -554,30 +802,34 @@ export function AdminKangurLessonsManagerPage({
             title={editingLesson ? 'Edit Lesson' : 'Create Lesson'}
             isOpen={showModal}
             onClose={handleCloseModal}
-            onSave={() => { void handleSave(); }}
+            onSave={() => {
+              void handleSave();
+            }}
             isSaving={isSaving}
           >
             <LessonMetadataForm
-              data={formData}
-              onChange={setFormData}
+              formData={formData}
+              setFormData={setFormData}
               componentContentJson={componentContentJson}
-              onComponentContentJsonChange={setComponentContentJson}
+              setComponentContentJson={setComponentContentJson}
               showComponentContentEditor={showComponentContentEditor}
-              isPrimaryLocale={isPrimaryContentLocale}
+              onComponentChange={handleComponentChange}
             />
           </FormModal>
 
           <ConfirmModal
-            isOpen={!!lessonToDelete}
+            isOpen={Boolean(lessonToDelete)}
             onClose={() => setLessonToDelete(null)}
-            onConfirm={() => { void handleDelete(); }}
+            onConfirm={() => {
+              void handleDelete();
+            }}
             title='Delete Lesson'
             message={`Are you sure you want to delete "${lessonToDelete?.title}"? This will also remove its content document.`}
             confirmLabel='Delete'
             variant='danger'
           />
 
-          {editingContentLesson && (
+          {editingContentLesson ? (
             <LessonContentEditorDialog
               isOpen={showContentModal}
               onClose={() => {
@@ -586,11 +838,20 @@ export function AdminKangurLessonsManagerPage({
               }}
               lesson={editingContentLesson}
               document={contentDraft}
-              onSave={() => { void handleSaveContent(); }}
+              onLessonChange={setEditingContentLesson}
+              onChange={setContentDraft}
+              onSave={() => {
+                void handleSaveContent();
+              }}
               isSaving={isSaving}
-              locale={contentLocale}
+              onImportLegacy={() => {
+                void handleImportLegacy(editingContentLesson);
+              }}
+              onClearContent={() => {
+                setContentDraft(createDefaultKangurLessonDocument());
+              }}
             />
-          )}
+          ) : null}
 
           <LessonSvgQuickAddModal />
         </KangurAdminContentShell>
@@ -599,9 +860,4 @@ export function AdminKangurLessonsManagerPage({
   );
 }
 
-const KANGUR_ADMIN_LESSONS_MANAGER_ROOT_IDS = [
-  ...KANGUR_ADMIN_LESSONS_MANAGER_CONTEXT_ROOT_IDS,
-];
-
 export default AdminKangurLessonsManagerPage;
-AdminKangurLessonsManagerPage;

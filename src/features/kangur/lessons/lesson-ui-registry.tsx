@@ -374,6 +374,7 @@ export const LESSON_COMPONENTS: Record<KangurLessonComponentId, ComponentType<Le
   english_parts_of_speech: EnglishPartsOfSpeechLesson,
   english_prepositions_time_place: EnglishPrepositionsLesson,
   english_sentence_structure: EnglishSentenceStructureLesson,
+  english_going_to: EnglishSentenceStructureLesson,
   english_subject_verb_agreement: EnglishSubjectVerbAgreementLesson,
   english_articles: EnglishArticlesLesson,
   english_adjectives: EnglishAdjectivesLesson,

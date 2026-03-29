@@ -1,4 +1,8 @@
-import { type AiNode } from '@/shared/contracts/ai-paths';
+import type {
+  AiNode,
+  FetcherConfig,
+  SimulationConfig,
+} from '@/shared/contracts/ai-paths';
 
 import {
   FETCHER_INPUT_PORTS,
@@ -14,12 +18,12 @@ type EntityIdConfig = {
 
 type FetcherConfigShape = EntityIdConfig & {
   entityType?: string;
-  sourceMode?: string;
+  sourceMode?: FetcherConfig['sourceMode'];
 };
 
 type SimulationConfigShape = EntityIdConfig & {
   entityType?: string;
-  runBehavior?: string;
+  runBehavior?: SimulationConfig['runBehavior'];
 };
 
 const resolveEntityId = (config?: EntityIdConfig): string =>
@@ -27,7 +31,7 @@ const resolveEntityId = (config?: EntityIdConfig): string =>
 
 const buildFetcherConfig = (
   fetcherConfig?: FetcherConfigShape,
-) => {
+): FetcherConfig => {
   const entityId = resolveEntityId(fetcherConfig);
 
   return {
@@ -40,7 +44,7 @@ const buildFetcherConfig = (
 
 const buildSimulationConfig = (
   simulationConfig?: SimulationConfigShape,
-) => {
+): SimulationConfig => {
   const entityId = resolveEntityId(simulationConfig);
 
   return {

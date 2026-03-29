@@ -153,9 +153,7 @@ export default function LogicalThinkingLabGame(
     completed,
     stage,
     analogyRound,
-    patternFilled,
     patternCorrect,
-    classifyFilled,
     classifyCorrect,
     analogyCorrect,
     patternSelectedToken,
@@ -205,7 +203,6 @@ export default function LogicalThinkingLabGame(
             <div className='flex flex-wrap items-center justify-center gap-2 text-2xl'>
               {PATTERN_SEQUENCE.map((token, i) => <span key={i} className='rounded-xl bg-white/80 px-3 py-2 shadow-sm'>{token}</span>)}
               {(['pattern-slot-1', 'pattern-slot-2'] as PatternZoneId[]).map((slotId) => {
-                const slotLabel = slotId === 'pattern-slot-1' ? copy.pattern.slotLabels.first : copy.pattern.slotLabels.second;
                 return (
                   <Droppable key={slotId} droppableId={slotId} direction='horizontal'>
                     {(provided, snapshot) => (

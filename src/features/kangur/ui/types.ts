@@ -77,12 +77,20 @@ type KangurMiniGameFeedbackBaseDto<TKind extends string> = {
 export type KangurMiniGameFeedbackDto = KangurMiniGameFeedbackBaseDto<'success' | 'error'>;
 export type KangurMiniGameFeedback = KangurMiniGameFeedbackDto;
 export type KangurMiniGameFeedbackState = KangurMiniGameFeedback | null;
-export type KangurMiniGameBinaryFeedbackState = 'correct' | 'wrong' | null;
+export type KangurMiniGameBinaryFeedbackState =
+  | 'correct'
+  | 'wrong'
+  | 'success'
+  | 'error'
+  | null;
 export type KangurIntlTranslate = ReturnType<(typeof import('next-intl'))['useTranslations']>;
 
 export type KangurMiniGameInformationalFeedbackDto = KangurMiniGameFeedbackBaseDto<
   'success' | 'error' | 'info'
->;
+> & {
+  title?: string;
+  description?: string;
+};
 export type KangurMiniGameInformationalFeedback = KangurMiniGameInformationalFeedbackDto;
 
 export type KangurXpToastBadgeHint = {

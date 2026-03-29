@@ -1,7 +1,6 @@
 'use client';
 
 import { RefreshCcw, ShoppingBag } from 'lucide-react';
-import Link from 'next/link';
 import React, { useMemo } from 'react';
 
 import { buildBaseOrderQuickImportFeedback } from '@/features/products/utils/base-order-quick-import-feedback';
@@ -18,11 +17,8 @@ import {
 } from '@/shared/ui';
 
 import {
-  formatOrderTotal,
-  ImportStateFilter,
   LIMIT_OPTIONS,
   summarizeOrderAggregate,
-  buildPreviousImportSnapshot,
 } from './AdminProductOrdersImportPage.utils';
 import { buildColumns } from './AdminProductOrdersImportPage.columns';
 import { OrderDetails } from './AdminProductOrdersImportPage.OrderDetails';
@@ -45,7 +41,6 @@ export function AdminProductOrdersImportPage(): React.JSX.Element {
     limit,
     setLimit,
     preview,
-    setPreview,
     lastPreviewScope,
     feedback,
     setFeedback,
@@ -53,8 +48,6 @@ export function AdminProductOrdersImportPage(): React.JSX.Element {
     setImportStateFilter,
     viewSearchQuery,
     setViewSearchQuery,
-    viewSort,
-    setViewSort,
     rowSelection,
     setRowSelection,
     expanded,
@@ -78,27 +71,26 @@ export function AdminProductOrdersImportPage(): React.JSX.Element {
   }, [preview, rowSelection]);
 
   const aggregate = useMemo(() => summarizeOrderAggregate(filteredOrders), [filteredOrders]);
-  const selectedAggregate = useMemo(() => summarizeOrderAggregate(selectedOrders), [selectedOrders]);
 
   const columns = useMemo(
     () =>
       buildColumns({
         expanded,
-        onToggleExpanded: handleToggleExpanded,
+        handleToggleExpanded,
+        isPreviewStale,
       }),
-    [expanded, handleToggleExpanded]
+    [expanded, handleToggleExpanded, isPreviewStale]
   );
 
-  const handleImport = async (): Promise<void> => {
-    if (!preview || !selectedConnectionId || selectedOrders.length === 0) return;
+  const handleImport = async (
+    ordersToImport: BaseOrderImportPreviewItem[] = selectedOrders
+  ): Promise<void> => {
+    if (!preview || !selectedConnectionId || ordersToImport.length === 0) return;
     try {
       setFeedback(null);
       const result = await importMutation.mutateAsync({
         connectionId: selectedConnectionId,
-        orders: selectedOrders.map((o) => ({
-          baseOrderId: o.baseOrderId,
-          previousSnapshot: buildPreviousImportSnapshot(o),
-        })),
+        orders: ordersToImport,
       });
       setFeedback({
         variant: 'success',
@@ -118,7 +110,13 @@ export function AdminProductOrdersImportPage(): React.JSX.Element {
     if (!selectedConnectionId) return;
     try {
       setFeedback(null);
-      const result = await quickImportMutation.mutateAsync({ connectionId: selectedConnectionId });
+      const result = await quickImportMutation.mutateAsync({
+        connectionId: selectedConnectionId,
+        dateFrom: dateFrom || undefined,
+        dateTo: dateTo || undefined,
+        statusId: statusId || undefined,
+        limit: Number.parseInt(limit, 10),
+      });
       setFeedback(buildBaseOrderQuickImportFeedback(result));
       if (preview) void handlePreview();
     } catch (error) {
@@ -247,7 +245,7 @@ export function AdminProductOrdersImportPage(): React.JSX.Element {
                   className='max-w-xs'
                   placeholder='Search orders...'
                   value={viewSearchQuery}
-                  onChange={setViewSearchQuery}
+                  onChange={(event) => setViewSearchQuery(event.target.value)}
                 />
                 <div className='flex items-center gap-2'>
                   <span className='text-xs font-bold text-slate-500 uppercase'>State:</span>

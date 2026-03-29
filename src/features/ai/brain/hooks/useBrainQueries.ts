@@ -28,12 +28,17 @@ export type { BrainModelsResponse, InsightsSnapshot, BrainOperationsOverviewResp
 const INSIGHTS_LIMIT = 5;
 const EMPTY_INSIGHTS_RESPONSE: AiInsightsResponse = { insights: [] };
 
-export async function fetchBrainInsightsSnapshot(): Promise<InsightsSnapshot> {
-  const runtimeInsightsPromise = api
-    .get<AiInsightsResponse>('/api/ai-paths/runtime-analytics/insights', {
-      params: { limit: INSIGHTS_LIMIT },
-    })
-    .catch(() => EMPTY_INSIGHTS_RESPONSE);
+export async function fetchBrainInsightsSnapshot(options?: {
+  includeRuntimeAnalytics?: boolean;
+}): Promise<InsightsSnapshot> {
+  const includeRuntimeAnalytics = options?.includeRuntimeAnalytics ?? true;
+  const runtimeInsightsPromise = includeRuntimeAnalytics
+    ? api
+        .get<AiInsightsResponse>('/api/ai-paths/runtime-analytics/insights', {
+          params: { limit: INSIGHTS_LIMIT },
+        })
+        .catch(() => EMPTY_INSIGHTS_RESPONSE)
+    : Promise.resolve(EMPTY_INSIGHTS_RESPONSE);
 
   const [analyticsData, logsData, runtimeData] = await Promise.all([
     api.get<AiInsightsResponse>('/api/analytics/insights', {
@@ -149,11 +154,11 @@ export function useBrainLogMetrics(): SingleQuery<SystemLogMetrics> {
   });
 }
 
-export function useBrainInsights(): SingleQuery<InsightsSnapshot> {
+export function useBrainInsights(includeRuntimeAnalytics: boolean = true): SingleQuery<InsightsSnapshot> {
   const queryKey = brainKeys.insights();
   return createSingleQueryV2<InsightsSnapshot>({
     queryKey,
-    queryFn: fetchBrainInsightsSnapshot,
+    queryFn: () => fetchBrainInsightsSnapshot({ includeRuntimeAnalytics }),
     id: 'insights',
     refetchInterval: 30_000,
     meta: {

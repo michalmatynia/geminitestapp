@@ -14,7 +14,6 @@ import { persistKangurSessionScore } from '@/features/kangur/ui/services/session
 import {
   getLogicalPatternDataset,
   type LogicalPatternSetId,
-  type LogicalPatternTile,
 } from '../logical-patterns-workshop-data';
 import {
   buildRoundState,
@@ -23,7 +22,7 @@ import {
   isSlotId,
   removeTokenById,
 } from './LogicalPatternsGame.utils';
-import type { RoundState, BlankCell, GameSummary } from './LogicalPatternsGame.types';
+import type { RoundState, BlankCell } from './LogicalPatternsGame.types';
 import type { KangurRewardBreakdownEntry } from '@/features/kangur/ui/types';
 
 export function useLogicalPatternsGameState(patternSetId: LogicalPatternSetId) {
@@ -170,7 +169,7 @@ export function useLogicalPatternsGameState(patternSetId: LogicalPatternSetId) {
   return {
     translations, isCoarsePointer, roundIndex, roundState, selectedTokenId, setSelectedTokenId, checked, setChecked,
     showHint, setShowHint, usedHint, setUsedHint, roundCorrect, score, done, xpEarned, xpBreakdown,
-    round, blanks, tiles, selectedToken, isRoundComplete,
+    round, blanks, tiles, selectedToken, isRoundComplete, totalRounds, totalTargets,
     handleCheck, goToNextRound, restart, onDragEnd, handleSlotClick,
   };
 }

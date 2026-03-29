@@ -3,13 +3,9 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type {
   ProductValidationDenyBehavior,
-  ProductValidationInstanceDenyBehaviorMap,
   ProductValidationInstanceScope,
   ProductValidationPattern,
-  ProductValidationAcceptIssueInput,
-  ProductValidationDenyIssueInput,
 } from '@/shared/contracts/products';
-import { api } from '@/shared/lib/api-client';
 import {
   normalizeProductValidationDenyBehavior,
   normalizeProductValidationInstanceDenyBehaviorMap,
@@ -25,7 +21,7 @@ import {
 
 export function useProductValidationDecisions(
   validationInstanceScope: ProductValidationInstanceScope,
-  instanceDenyBehavior: ProductValidationDenyBehavior,
+  instanceDenyBehavior: unknown,
   patterns: ProductValidationPattern[],
   _productId: string | null,
   _draftId: string | null

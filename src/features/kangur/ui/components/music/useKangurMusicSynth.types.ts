@@ -1,7 +1,5 @@
 'use client';
 
-import type { KangurMusicSynthOsc2Config } from './music-theory';
-
 export type KangurMusicSynthEnvelope = {
   attackMs: number;
   decayMs: number;

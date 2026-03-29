@@ -3,7 +3,7 @@ import type {
   PageBuilderAction,
   SectionInstance,
 } from '@/features/cms/types/page-builder';
-import type { Page, PageComponent } from '@/shared/contracts/cms';
+import type { Page } from '@/shared/contracts/cms';
 
 import { syncNextIdFromSections } from '../block-helpers';
 
@@ -17,17 +17,19 @@ export function reducePageActions(
 
     case 'SET_CURRENT_PAGE': {
       const page = action.page as Page;
-      const sections: SectionInstance[] = (page?.components || []).map((comp: PageComponent): SectionInstance => {
-        const content = comp.content;
-        return {
-          id: content.sectionId,
-          type: comp.type,
-          zone: content.zone,
-          parentSectionId: content.parentSectionId,
-          settings: content.settings,
-          blocks: content.blocks,
-        };
-      });
+      const sections: SectionInstance[] = (page?.components ?? []).map(
+        (comp): SectionInstance => {
+          const content = comp.content;
+          return {
+            id: content.sectionId,
+            type: comp.type,
+            zone: content.zone,
+            parentSectionId: content.parentSectionId,
+            settings: content.settings,
+            blocks: content.blocks,
+          };
+        }
+      );
       syncNextIdFromSections(sections);
       return {
         ...state,

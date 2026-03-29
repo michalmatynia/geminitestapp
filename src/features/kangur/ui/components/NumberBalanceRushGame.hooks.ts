@@ -41,7 +41,6 @@ export function useNumberBalanceRushGameState(props: NumberBalanceRushGameProps)
     tier = 'tier1',
     matchId,
     balancedProbability,
-    onFinish,
   } = props;
 
   const [match, setMatch] = useState<NumberBalanceMatchState | null>(null);

@@ -1,12 +1,8 @@
 'use client';
 
-import { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { useLocale, useTranslations } from 'next-intl';
 import { QueryClientContext } from '@tanstack/react-query';
-import {
-  getKangurHomeHref,
-  getKangurPageHref as createPageUrl,
-} from '@/features/kangur/config/routing';
 import {
   loadPersistedTutorVisibilityHidden,
   subscribeToTutorVisibilityChanges,
@@ -31,13 +27,10 @@ import type {
 } from './KangurPrimaryNavigation.types';
 
 export function useKangurPrimaryNavigationState({
-  basePath,
   canManageLearners,
   currentPage,
-  guestPlayerName,
   isAuthenticated,
   navLabel,
-  onGuestPlayerNameChange,
   showParentDashboard,
 }: KangurPrimaryNavigationProps) {
   const tutorContent = useKangurAiTutorContent();

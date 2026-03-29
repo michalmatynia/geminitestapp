@@ -7,7 +7,7 @@
 
 import { useState } from 'react';
 import { BRAIN_MODEL_DEFAULT_VALUE } from '../AdminKangurSocialPage.Constants';
-import { useSocialPostContext } from './SocialPostContext';
+import { useSocialPostContext } from '../SocialPostContext';
 
 export type SocialSettingsTab = 'models' | 'project' | 'documentation' | 'publishing' | 'capture';
 export type SocialPostContextValue = ReturnType<typeof useSocialPostContext>;
@@ -19,7 +19,7 @@ function buildModelSelectOptions(
 ) {
   const knownModels = new Set(models);
   const selectedModelMissing =
-    Boolean(selectedModelId) && !knownModels.has(selectedModelId);
+    typeof selectedModelId === 'string' && !knownModels.has(selectedModelId);
 
   return [
     { value: BRAIN_MODEL_DEFAULT_VALUE, label: 'Use Brain routing' },
@@ -102,7 +102,7 @@ export function useSocialSettingsModalState(context: SocialPostContextValue) {
     null;
   const linkedInExpiresAt = selectedLinkedInConnection?.linkedinExpiresAt ?? null;
 
-  const linkedInExpiryStatus = linkedInExpiresAt
+  const linkedInExpiryStatus: 'expired' | 'warning' | 'ok' | null = linkedInExpiresAt
     ? Date.parse(linkedInExpiresAt) < Date.now()
       ? 'expired'
       : Date.parse(linkedInExpiresAt) < Date.now() + 7 * 24 * 60 * 60 * 1000

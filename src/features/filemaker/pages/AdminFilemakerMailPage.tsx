@@ -284,7 +284,7 @@ export function AdminFilemakerMailPage(): React.JSX.Element {
     if (selection.accountId && selection.mailboxPath && selectedFolder) return;
     if (selection.accountId && !selection.mailboxPath && selectedAccount) return;
 
-    const nextSelection =
+    const nextSelection: typeof selection | null =
       selection.accountId && selection.mailboxPath
         ? accounts.some((account) => account.id === selection.accountId)
           ? {

@@ -3,12 +3,17 @@
 import type {
   NumberBalanceTier,
   NumberBalanceTile,
-  NumberBalancePuzzle,
 } from '@/features/kangur/games/number-balance/number-balance-generator';
 import type {
   NumberBalanceMatchStatus,
-  NumberBalanceMatchState,
+} from '@/features/kangur/shared/contracts/kangur-multiplayer-number-balance';
+
+export type {
+  NumberBalancePuzzle,
+} from '@/features/kangur/games/number-balance/number-balance-generator';
+export type {
   NumberBalanceMatchPlayerState,
+  NumberBalanceMatchState,
   NumberBalancePlayerScore,
 } from '@/features/kangur/shared/contracts/kangur-multiplayer-number-balance';
 

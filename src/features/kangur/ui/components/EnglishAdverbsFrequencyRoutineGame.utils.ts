@@ -1,7 +1,4 @@
-import {
-  KANGUR_ACCENT_STYLES,
-  type KangurAccent,
-} from '@/features/kangur/ui/design/tokens';
+import { type KangurAccent } from '@/features/kangur/ui/design/tokens';
 import {
   type KangurMiniGameTranslate,
 } from '@/features/kangur/ui/constants/mini-game-i18n';

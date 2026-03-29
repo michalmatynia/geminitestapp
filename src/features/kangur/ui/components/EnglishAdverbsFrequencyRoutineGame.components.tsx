@@ -20,10 +20,12 @@ import {
   countFrequencyActiveDays,
   WEEKDAY_LABELS,
   type FrequencyToken,
-  type EnglishAdverbFrequencyId,
-  type EnglishAdverbFrequencyActionId,
 } from './EnglishAdverbsFrequencyRoutineGame.utils';
 import type { KangurMiniGameTranslate } from '@/features/kangur/ui/constants/mini-game-i18n';
+import type {
+  EnglishAdverbFrequencyActionId,
+  EnglishAdverbFrequencyId,
+} from './EnglishAdverbsFrequencyRoutineGame.data';
 
 export function DraggableFrequencyToken({
   token,
@@ -221,7 +223,7 @@ export function CompactFrequencyDots({
     <div className='space-y-1' data-testid={dataTestId}>
       <p className='text-[10px] font-black uppercase tracking-[0.16em] text-rose-500'>{label}</p>
       <div className='flex items-center gap-1.5'>
-        {meta.activeDays.map((isActive, index) => {
+        {meta.activeDays.map((isActive: boolean, index: number) => {
           const isChanged = compareMeta ? compareMeta.activeDays[index] !== isActive : false;
           return (
             <span
@@ -274,7 +276,7 @@ export function SummaryFrequencyGuideCard({
       </div>
       <p className='mt-1 text-xs text-slate-600'>{getFrequencyDescription(translate, frequency)}</p>
       <div className='mt-2 flex items-center gap-1.5'>
-        {meta.activeDays.map((isActive, index) => (
+        {meta.activeDays.map((isActive: boolean, index: number) => (
           <span
             key={`${dataTestId}-day-${index}`}
             className={cn(

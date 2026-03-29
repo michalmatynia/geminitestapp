@@ -4,7 +4,6 @@ import { Gauge, Music2, RefreshCw, Sparkles, Target, Zap } from 'lucide-react';
 import React, { useEffect } from 'react';
 
 import { translateKangurMiniGameWithFallback } from '@/features/kangur/ui/constants/mini-game-i18n';
-import KangurAnswerChoiceCard from '@/features/kangur/ui/components/KangurAnswerChoiceCard';
 import KangurRewardBreakdownChips from '@/features/kangur/ui/components/KangurRewardBreakdownChips';
 import {
   KangurButton,
@@ -13,7 +12,6 @@ import {
   KangurInfoCard,
   KangurMetricCard,
   KangurPanelRow,
-  KangurProgressBar,
   KangurStatusChip,
   KangurSummaryPanel,
 } from '@/features/kangur/ui/design/primitives';
@@ -21,7 +19,6 @@ import {
   KANGUR_PANEL_GAP_CLASSNAME,
   KANGUR_PANEL_ROW_LG_CLASSNAME,
   KANGUR_STACK_TIGHT_CLASSNAME,
-  KANGUR_TIGHT_ROW_CLASSNAME,
   KANGUR_WRAP_CENTER_ROW_CLASSNAME,
 } from '@/features/kangur/ui/design/tokens';
 import {
@@ -44,18 +41,12 @@ export default function AddingSynthesisGame({
   const state = useAddingSynthesisGameState();
   const {
     translations,
-    isCoarsePointer,
     phase,
-    setPhase,
-    notes,
     currentIndex,
     noteElapsedMs,
     feedback,
-    setFeedback,
     score,
     streak,
-    bestStreak,
-    perfectHits,
     summary,
     currentNote,
     startSession,
@@ -166,10 +157,13 @@ export default function AddingSynthesisGame({
   const noteProgress = Math.min(noteElapsedMs / ADDING_SYNTHESIS_NOTE_DURATION_MS, 1);
   const noteTop = 24 + noteProgress * 236;
   const currentStage = currentNote ? getLocalizedAddingSynthesisStage(currentNote.stageId, translations) : localizedStages[0]!;
+  const answeredCount = currentIndex + (feedback ? 1 : 0);
+  const accuracy = Math.round((score / Math.max(1, answeredCount)) * 100);
+  const currentPrompt = currentNote ? `${currentNote.left} + ${currentNote.right}` : '?';
 
   return (
     <div className='flex w-full flex-col kangur-panel-gap'>
-      <KangurGlassPanel className='relative overflow-hidden' padding='none' surface='playField' variant='soft'>
+      <KangurGlassPanel className='relative overflow-hidden' surface='playField' variant='soft'>
         <div className='relative h-[320px] w-full overflow-hidden bg-slate-900/5'>
           {/* Hit line */}
           <div className='absolute inset-x-0 z-10 h-px bg-slate-200 opacity-40' style={{ top: `${ADDING_SYNTHESIS_HIT_LINE_RATIO * 100}%` }} />
@@ -192,11 +186,11 @@ export default function AddingSynthesisGame({
           </div>
         </div>
 
-        <div className='border-t border-slate-200/60 p-6'>
+          <div className='border-t border-slate-200/60 p-6'>
           <div className='flex items-center justify-between'>
             <div className='flex items-center gap-4'>
               <div className='text-3xl'>{currentStage.icon}</div>
-              <div><div className='text-xs font-black uppercase tracking-widest text-slate-400'>{currentStage.title}</div><div className='text-sm font-bold text-slate-900'>{currentNote?.question} = ?</div></div>
+              <div><div className='text-xs font-black uppercase tracking-widest text-slate-400'>{currentStage.title}</div><div className='text-sm font-bold text-slate-900'>{currentPrompt} = ?</div></div>
             </div>
             <div className='flex items-center gap-6'>
               <div className='text-right'><div className='text-[10px] font-black uppercase tracking-widest text-slate-400'>Skuteczność</div><div className='text-sm font-bold text-slate-900'>{accuracy}%</div></div>

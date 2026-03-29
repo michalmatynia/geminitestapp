@@ -82,7 +82,7 @@ export function useGamesLibraryState() {
   const [filters, setFilters] = useState<GamesLibraryFilterState>(() =>
     readGamesLibraryFiltersFromSearchParams(searchParams)
   );
-  const [selectedGame, setSelectedGame] = useState<unknown | null>(null);
+  const [selectedGame, setSelectedGame] = useState<any | null>(null);
   const deferredFilters = useDeferredValue(filters);
   const catalogFilter = useMemo(() => buildGamesLibraryCatalogFilter(deferredFilters), [deferredFilters]);
   const pageDataQuery = useKangurGameLibraryPage(catalogFilter);
@@ -389,15 +389,15 @@ export function useGamesLibraryState() {
           GamesLibrarySidebarSection,
           {
             dataTestId: `games-library-overview-${tab.id}`,
+            children: React.createElement('div', {
+              className: 'text-xs [color:var(--kangur-page-muted-text)]',
+            }, description),
             eyebrow: translations('tabs.eyebrow'),
             isActive,
             key: tab.id,
             title,
             description,
-          },
-          React.createElement('div', {
-            className: 'text-xs [color:var(--kangur-page-muted-text)]',
-          }, description)
+          }
         ),
       };
     });

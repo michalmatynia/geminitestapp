@@ -9,7 +9,6 @@ import { useOptionalKangurLessonTemplate } from '@/features/kangur/ui/context/Ka
 import { KangurUnifiedLesson } from '@/features/kangur/ui/lessons/lesson-components';
 import {
   type LessonTranslate,
-  translateLessonShellTitle,
 } from './lesson-copy';
 import {
   resolveSubtractingLessonContent,
@@ -17,8 +16,6 @@ import {
 } from './subtracting-lesson-content';
 import type { KangurSubtractingLessonTemplateContent } from '@/shared/contracts/kangur-lesson-templates';
 import { buildSubtractingLessonSlides } from './SubtractingLesson.slides';
-
-type SectionId = 'podstawy' | 'przekroczenie' | 'dwucyfrowe' | 'zapamietaj' | 'game';
 
 const SUBTRACTING_GARDEN_INSTANCE_ID = getKangurBuiltInGameInstanceId('subtracting_garden');
 const SUBTRACTING_LESSON_COPY_PL = SUBTRACTING_LESSON_COMPONENT_CONTENT;
@@ -577,7 +574,7 @@ const buildSubtractingLessonCopy = (
     gameTitle: translateSubtractingLesson(
       translate,
       'game.gameTitle',
-      SUBTRACTING_LESSON_COPY_PL.game.gameTitle
+      SUBTRACTING_LESSON_COPY_PL.game.gameTitle ?? ''
     ),
   },
 });
@@ -635,7 +632,7 @@ export default function SubtractingLesson({ lessonTemplate }: LessonProps): Reac
       progressMode='panel'
       lessonId='subtracting'
       lessonEmoji='➖'
-      lessonTitle={translateLessonShellTitle(translations, resolvedTemplate?.title?.trim() || copy.lessonTitle)}
+      lessonTitle={resolvedTemplate?.title?.trim() || copy.lessonTitle || ''}
       sections={localizedSections}
       slides={localizedSlides}
       gradientClass='kangur-gradient-accent-rose'

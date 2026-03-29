@@ -21,7 +21,7 @@ export const OP_ACCENTS: Record<string, KangurAccent> = {
   english_going_to: 'sky',
   english_articles: 'amber',
   english_adjectives: 'indigo',
-  english_comparatives_superlatives: 'fuchsia',
+  english_comparatives_superlatives: 'violet',
   english_adverbs: 'violet',
   english_adverbs_frequency: 'sky',
   english_prepositions_time_place: 'rose',

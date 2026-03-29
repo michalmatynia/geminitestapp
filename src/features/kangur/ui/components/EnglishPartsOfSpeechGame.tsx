@@ -1,7 +1,6 @@
 'use client';
 
 import { Draggable, Droppable } from '@hello-pangea/dnd';
-import { useTranslations } from 'next-intl';
 import React from 'react';
 import {
   KangurDragDropContext,
@@ -31,17 +30,12 @@ import {
   KangurStatusChip,
 } from '@/features/kangur/ui/design/primitives';
 import {
-  KANGUR_ACCENT_STYLES,
   KANGUR_CENTER_ROW_CLASSNAME,
   KANGUR_GRID_SPACED_CLASSNAME,
   KANGUR_PANEL_GAP_CLASSNAME,
   KANGUR_WRAP_CENTER_ROW_CLASSNAME,
-  KANGUR_WRAP_ROW_CLASSNAME,
 } from '@/features/kangur/ui/design/tokens';
 import { getKangurCheckButtonClassName } from '@/features/kangur/ui/components/KangurCheckButton';
-import type {
-  KangurMiniGameFinishProps,
-} from '@/features/kangur/ui/types';
 import { cn } from '@/features/kangur/shared/utils';
 
 import {
@@ -58,7 +52,7 @@ import {
   getPartsOfSpeechPartMessage,
   getPartsOfSpeechRoundMessage,
 } from './EnglishPartsOfSpeechGame.utils';
-import type { PartOfSpeech, SpeechToken } from './EnglishPartsOfSpeechGame.types';
+import type { SpeechToken } from './EnglishPartsOfSpeechGame.types';
 
 function PartsOfSpeechToken({
   token,
@@ -106,9 +100,11 @@ function PartsOfSpeechToken({
 }
 
 export function EnglishPartsOfSpeechGame({
+  finishLabel,
   finishLabelVariant = 'lesson',
   onFinish,
 }: {
+  finishLabel?: string;
   finishLabelVariant?: 'lesson' | 'topics';
   onFinish: () => void;
 }): React.JSX.Element {
@@ -152,13 +148,17 @@ export function EnglishPartsOfSpeechGame({
           }
         />
         <KangurPracticeGameSummaryXP accent='sky' xpEarned={xpEarned} />
-        <KangurPracticeGameSummaryBreakdown breakdown={xpBreakdown} />
+        <KangurPracticeGameSummaryBreakdown
+          breakdown={xpBreakdown}
+          dataTestId='english-parts-summary-breakdown'
+          itemDataTestIdPrefix='english-parts-summary-breakdown'
+        />
         <KangurPracticeGameSummaryProgress accent='sky' percent={percent} />
         <KangurPracticeGameSummaryMessage>
           {percent === 100 ? 'Perfect score!' : percent >= 70 ? 'Great job!' : 'Keep practicing!'}
         </KangurPracticeGameSummaryMessage>
         <KangurPracticeGameSummaryActions
-          finishLabel={getKangurMiniGameFinishLabel(translations, finishLabelVariant)}
+          finishLabel={finishLabel ?? getKangurMiniGameFinishLabel(translations, finishLabelVariant)}
           onFinish={onFinish}
           onRestart={handleRestart}
           restartLabel={translations('shared.restart')}
@@ -204,7 +204,7 @@ export function EnglishPartsOfSpeechGame({
                 </span>
                 {isCoarsePointer && selectedTokenId && (
                   <KangurButton
-                    size='xs'
+                    size='sm'
                     variant='surface'
                     onClick={() => moveSelectedTokenTo('pool')}
                   >
@@ -259,7 +259,7 @@ export function EnglishPartsOfSpeechGame({
                           </div>
                           {isCoarsePointer && selectedTokenId && (
                             <KangurButton
-                              size='xs'
+                              size='sm'
                               variant='surface'
                               onClick={() => moveSelectedTokenTo(droppableId)}
                             >
@@ -319,16 +319,18 @@ export function EnglishPartsOfSpeechGame({
 
         {feedback && (
           <KangurInfoCard
-            accent={feedback === 'success' ? 'emerald' : feedback === 'error' ? 'rose' : 'amber'}
+            accent={
+              feedback.kind === 'success'
+                ? 'emerald'
+                : feedback.kind === 'error'
+                  ? 'rose'
+                  : 'amber'
+            }
             tone='accent'
             padding='sm'
             className='text-sm'
           >
-            {feedback === 'info'
-              ? translations('englishPartsOfSpeech.inRound.feedback.info')
-              : feedback === 'success'
-                ? translations('englishPartsOfSpeech.inRound.feedback.success')
-                : translations('englishPartsOfSpeech.inRound.feedback.error')}
+            {feedback.text}
           </KangurInfoCard>
         )}
 
@@ -338,7 +340,10 @@ export function EnglishPartsOfSpeechGame({
               variant='primary'
               size='lg'
               onClick={handleCheck}
-              className={getKangurCheckButtonClassName(undefined, feedback === 'success' ? 'success' : feedback === 'error' ? 'error' : null)}
+              className={getKangurCheckButtonClassName(
+                undefined,
+                feedback?.kind === 'info' ? null : feedback?.kind ?? null
+              )}
             >
               {translations('shared.check')}
             </KangurButton>

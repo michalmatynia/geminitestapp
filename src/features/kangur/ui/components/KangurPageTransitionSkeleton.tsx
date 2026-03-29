@@ -15,7 +15,6 @@ import {
   HOME_ACTION_SKELETONS,
   HomeActionSkeletonCard,
   KANGUR_SKELETON_COPY_BY_LOCALE,
-  type KangurSkeletonLocale,
   type KangurSkeletonPageKey,
   resolveSkeletonLocale,
   SkeletonBlock,
@@ -28,7 +27,6 @@ import {
   GAME_HOME_ACTIONS_SHELL_CLASSNAME,
   GAME_HOME_ASSIGNMENT_SPOTLIGHT_INNER_SHELL_CLASSNAME,
   GAME_HOME_ASSIGNMENT_SPOTLIGHT_SHELL_CLASSNAME,
-  GAME_HOME_DUELS_SHELL_CLASSNAME,
   GAME_HOME_HERO_SHELL_CLASSNAME,
   GAME_HOME_LAYOUT_CLASSNAME,
   GAME_PAGE_STANDARD_CONTAINER_CLASSNAME,
@@ -38,7 +36,6 @@ import {
   resolveKangurGameHomeVisibility,
 } from '@/features/kangur/ui/pages/GameHome.layout';
 import {
-  KANGUR_GRID_TIGHT_CLASSNAME,
   KANGUR_WRAP_ROW_CLASSNAME,
 } from '@/features/kangur/ui/design/tokens';
 import { useKangurProgressState } from '@/features/kangur/ui/hooks/useKangurProgressState';
@@ -136,6 +133,11 @@ const GameHomeSkeleton = (): React.JSX.Element => {
 };
 
 export type KangurPageTransitionSkeletonProps = {
+  embeddedOverride?: boolean | null;
+  pageKey?: string | null;
+  reason?: string;
+  renderInlineTopNavigationSkeleton?: boolean;
+  topBarHeightCssValue?: string | null;
   variant?: KangurRouteTransitionSkeletonVariant;
   forcePageKey?: KangurSkeletonPageKey;
 };
@@ -148,8 +150,8 @@ export function KangurPageTransitionSkeleton(
   const { resolveRoutePageKey } = useKangurRouteAccess();
 
   const pageKey = props.forcePageKey ?? resolveRoutePageKey(pathname, routing?.basePath);
-  const skeletonLocale = resolveSkeletonLocale();
-  const copy = KANGUR_SKELETON_COPY_BY_LOCALE[skeletonLocale];
+  const skeletonLocale = resolveSkeletonLocale(pathname);
+  KANGUR_SKELETON_COPY_BY_LOCALE[skeletonLocale];
 
   const renderContent = (): React.JSX.Element => {
     switch (pageKey) {
@@ -173,10 +175,7 @@ export function KangurPageTransitionSkeleton(
       className={cn('min-h-screen bg-[color:var(--kangur-page-background)]')}
       data-testid='kangur-page-transition-skeleton'
     >
-      <KangurTopNavigationSkeleton
-        copy={copy}
-        currentPage={pageKey === 'Game' ? 'Game' : pageKey === 'Lessons' ? 'Lessons' : 'Game'}
-      />
+      <KangurTopNavigationSkeleton topBarHeightCssValue={props.topBarHeightCssValue} />
       <main className={cn(GAME_PAGE_STANDARD_CONTAINER_CLASSNAME, 'py-6 sm:py-8')}>
         {renderContent()}
       </main>

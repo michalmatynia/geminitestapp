@@ -13,8 +13,9 @@ type AdminPageBreadcrumbsProps = {
 };
 
 type AdminPageLayoutProps = Omit<React.ComponentProps<typeof PageLayout>, 'eyebrow'> & {
-  current: string;
+  current?: string;
   parent?: AdminPageBreadcrumbNode;
+  activeTab?: string;
 };
 
 type CreateAdminPageLayoutConfig = {
@@ -38,8 +39,9 @@ export function createAdminPageLayout({
   containerClassName,
 }: CreateAdminPageLayoutConfig): React.FC<AdminPageLayoutProps> {
   const AdminPageLayout: React.FC<AdminPageLayoutProps> = ({
-    current,
+    current = '',
     parent,
+    activeTab: _activeTab,
     containerClassName: containerClassNameProp,
     ...props
   }): React.JSX.Element => {

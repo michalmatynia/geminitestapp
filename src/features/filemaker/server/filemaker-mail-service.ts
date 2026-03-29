@@ -167,8 +167,8 @@ const listThreadDocuments = async (
 ): Promise<FilemakerMailThread[]> => {
   const mongo = await getMongoDb();
   const filter: Record<string, unknown> = {};
-  if (input.accountId) filter.accountId = input.accountId;
-  if (input.mailboxPath) filter.mailboxPath = input.mailboxPath;
+  if (input.accountId) filter['accountId'] = input.accountId;
+  if (input.mailboxPath) filter['mailboxPath'] = input.mailboxPath;
   return await mongo
     .collection<FilemakerMailThreadDocument>(MAIL_THREADS_COLLECTION)
     .find(filter)
@@ -475,7 +475,7 @@ export const sendFilemakerMailMessage = async (input: FilemakerMailComposeInput)
   };
   await storage.upsertOutboxEntry(queuedOutbox);
 
-  const transport = smtp.createSmtpTransport(account, password);
+  const transport = smtp.createSmtpTransport(account, password ?? undefined);
   const sendResult = await transport.sendMail({
     from: account.fromName
       ? `"${account.fromName}" <${account.emailAddress}>`

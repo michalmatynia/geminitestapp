@@ -170,7 +170,7 @@ function GamesLibraryContent(): React.JSX.Element {
 
         <aside className={cn(`flex min-w-0 flex-col ${KANGUR_PANEL_GAP_CLASSNAME}`, 'xl:sticky xl:top-[calc(var(--kangur-top-bar-height,88px)+1rem)]')}>
           <div data-testid='games-library-overview-rail' className='space-y-4'>
-            {orderedOverviewSections.map((section: { id: string; node: React.ReactNode; title: string }) => (
+            {orderedOverviewSections.map((section) => (
               <React.Fragment key={section.id}>{section.node}</React.Fragment>
             ))}
           </div>
@@ -210,17 +210,46 @@ function GamesLibraryContent(): React.JSX.Element {
         {/* Tab Contents */}
         {activeTab === 'catalog' && (
           <CatalogTab
-            {...state}
+            applyFilters={applyFilters}
+            basePath={basePath}
+            catalogFacets={state.catalogFacets}
+            coverageStatusMap={state.coverageStatusMap}
+            filters={filters}
+            gameFilterOptions={gameFilterOptions}
+            groupedGames={state.groupedGames}
+            hasActiveFilters={hasActiveFilters}
+            locale={state.locale}
+            selectedGame={selectedGame}
+            setSelectedGame={setSelectedGame}
+            totalGameCount={totalGameCount}
+            translations={translations}
+            updateFilter={(key, value) =>
+              updateFilter(key as keyof typeof filters, value as (typeof filters)[keyof typeof filters])
+            }
+            visibleGameCount={visibleGameCount}
           />
         )}
         {activeTab === 'structure' && (
           <StructureTab
-            {...state}
+            coverageGroups={state.coverageGroups}
+            cohortGroups={state.cohortGroups}
+            drawingGroups={state.drawingGroups}
+            engineGroups={state.engineGroups}
+            filters={filters}
+            implementationGroups={state.implementationGroups}
+            locale={state.locale}
+            metrics={state.metrics}
+            translations={translations}
+            variantGroups={state.variantGroups}
           />
         )}
         {activeTab === 'runtime' && (
           <RuntimeTab
-            {...state}
+            basePath={basePath}
+            currentGamesLibraryHref={state.currentGamesLibraryHref}
+            serializationAudit={state.serializationAudit}
+            serializationAuditVisible={state.serializationAuditVisible}
+            translations={translations}
           />
         )}
       </section>

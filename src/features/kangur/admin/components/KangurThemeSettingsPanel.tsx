@@ -1,22 +1,26 @@
 'use client';
 
-import React, { useMemo } from 'react';
-import { useTranslations } from 'next-intl';
+import React, { useEffect, useMemo } from 'react';
 
+import { ThemeSettingsFieldsSection } from '@/features/cms/public';
 import {
-  ThemeSettingsFieldsSection,
-  ThemeSettingsProvider,
-  useThemeSettingsValue,
-} from '@/features/cms/public';
-import {
+  KANGUR_DAILY_THEME_SETTINGS_KEY,
   KANGUR_DEFAULT_DAILY_THEME,
   KANGUR_DEFAULT_DAWN_THEME,
   KANGUR_DEFAULT_SUNSET_THEME,
   KANGUR_DEFAULT_THEME,
+  KANGUR_DAWN_THEME_SETTINGS_KEY,
+  KANGUR_NIGHTLY_THEME_SETTINGS_KEY,
+  KANGUR_SUNSET_THEME_SETTINGS_KEY,
+  parseKangurThemeSettings,
   type KangurThemeMode,
 } from '@/features/kangur/theme-settings';
+import { Alert, Button, FormSection } from '@/features/kangur/shared/ui';
 import type { ThemeSettings } from '@/shared/contracts/cms-theme';
-import { Alert, Button, FormSection, Input } from '@/features/kangur/shared/ui';
+import type { SettingsPanelField } from '@/shared/contracts/ui';
+import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
+
+import { ThemePreviewPanel } from '../appearance/ThemePreviewPanel';
 import {
   buildKangurThemeFontWeightOptions,
   buildKangurThemeHomeActionFields,
@@ -24,26 +28,66 @@ import {
   getKangurThemeSectionCopy,
   localizeKangurThemeField,
 } from './kangur-theme-settings.copy';
-import { ThemePreviewPanel } from '../appearance/ThemePreviewPanel';
-
 import { KANGUR_THEME_SECTIONS } from './theme-settings/KangurThemeSettings.constants';
 import { useKangurThemeSettingsState } from './theme-settings/KangurThemeSettings.hooks';
 
-export function KangurThemeSettingsPanel(): React.JSX.Element {
-  const daily = useThemeSettingsValue('daily', KANGUR_DEFAULT_DAILY_THEME);
-  const nightly = useThemeSettingsValue('nightly', KANGUR_DEFAULT_THEME);
-  const dawn = useThemeSettingsValue('dawn', KANGUR_DEFAULT_DAWN_THEME);
-  const sunset = useThemeSettingsValue('sunset', KANGUR_DEFAULT_SUNSET_THEME);
+type KangurThemeSettingsPanelProps = {
+  onSectionChange?: (section: string) => void;
+  onThemeChange?: (theme: ThemeSettings) => void;
+  onModeChange?: (mode: KangurThemeMode) => void;
+};
+
+const resolvePersistedTheme = (
+  rawValue: string | null | undefined,
+  fallbackTheme: ThemeSettings
+): ThemeSettings => parseKangurThemeSettings(rawValue, fallbackTheme) ?? fallbackTheme;
+
+export function KangurThemeSettingsPanel({
+  onSectionChange,
+  onThemeChange,
+  onModeChange,
+}: KangurThemeSettingsPanelProps = {}): React.JSX.Element {
+  const settingsStore = useSettingsStore();
+  const dailyThemeRaw = settingsStore.get(KANGUR_DAILY_THEME_SETTINGS_KEY);
+  const nightlyThemeRaw = settingsStore.get(KANGUR_NIGHTLY_THEME_SETTINGS_KEY);
+  const dawnThemeRaw = settingsStore.get(KANGUR_DAWN_THEME_SETTINGS_KEY);
+  const sunsetThemeRaw = settingsStore.get(KANGUR_SUNSET_THEME_SETTINGS_KEY);
+
+  const initialDaily = useMemo(
+    (): ThemeSettings => resolvePersistedTheme(dailyThemeRaw, KANGUR_DEFAULT_DAILY_THEME),
+    [dailyThemeRaw]
+  );
+  const initialNightly = useMemo(
+    (): ThemeSettings => resolvePersistedTheme(nightlyThemeRaw, KANGUR_DEFAULT_THEME),
+    [nightlyThemeRaw]
+  );
+  const initialDawn = useMemo(
+    (): ThemeSettings => resolvePersistedTheme(dawnThemeRaw, KANGUR_DEFAULT_DAWN_THEME),
+    [dawnThemeRaw]
+  );
+  const initialSunset = useMemo(
+    (): ThemeSettings => resolvePersistedTheme(sunsetThemeRaw, KANGUR_DEFAULT_SUNSET_THEME),
+    [sunsetThemeRaw]
+  );
+
+  const resetKey = [
+    dailyThemeRaw ?? '',
+    nightlyThemeRaw ?? '',
+    dawnThemeRaw ?? '',
+    sunsetThemeRaw ?? '',
+  ].join('|');
 
   return (
-    <ThemeSettingsProvider value={daily}>
-      <KangurThemeSettingsPanelContent
-        initialDaily={daily}
-        initialNightly={nightly}
-        initialDawn={dawn}
-        initialSunset={sunset}
-      />
-    </ThemeSettingsProvider>
+    <KangurThemeSettingsPanelContent
+      key={resetKey}
+      initialDaily={initialDaily}
+      initialNightly={initialNightly}
+      initialDawn={initialDawn}
+      initialSunset={initialSunset}
+      onSectionChange={onSectionChange}
+      onThemeChange={onThemeChange}
+      onModeChange={onModeChange}
+    />
   );
 }
 
@@ -52,15 +96,27 @@ function KangurThemeSettingsPanelContent({
   initialNightly,
   initialDawn,
   initialSunset,
+  onSectionChange,
+  onThemeChange,
+  onModeChange,
 }: {
   initialDaily: ThemeSettings;
   initialNightly: ThemeSettings;
   initialDawn: ThemeSettings;
   initialSunset: ThemeSettings;
+  onSectionChange?: (section: string) => void;
+  onThemeChange?: (theme: ThemeSettings) => void;
+  onModeChange?: (mode: KangurThemeMode) => void;
 }): React.JSX.Element {
-  const state = useKangurThemeSettingsState(initialDaily, initialNightly, initialDawn, initialSunset);
+  const state = useKangurThemeSettingsState(
+    initialDaily,
+    initialNightly,
+    initialDawn,
+    initialSunset
+  );
   const {
     copy,
+    locale,
     mode,
     setMode,
     currentDraft,
@@ -72,34 +128,55 @@ function KangurThemeSettingsPanelContent({
     drafts,
   } = state;
 
+  useEffect(() => {
+    onModeChange?.(mode);
+  }, [mode, onModeChange]);
+
+  useEffect(() => {
+    onThemeChange?.(currentDraft);
+  }, [currentDraft, onThemeChange]);
+
+  useEffect(() => {
+    onSectionChange?.(KANGUR_THEME_SECTIONS[0]?.id ?? 'corePalette');
+  }, [onSectionChange]);
+
   const modeOptions = useMemo(
     () =>
-      (['daily', 'nightly', 'dawn', 'sunset'] as KangurThemeMode[]).map((m) => ({
-        id: m,
-        label: getKangurThemeModeCopy(m, copy.locale),
+      (['daily', 'nightly', 'dawn', 'sunset'] as KangurThemeMode[]).map((themeMode) => ({
+        id: themeMode,
+        label: getKangurThemeModeCopy(locale, themeMode).label,
       })),
-    [copy.locale]
+    [locale]
   );
 
   const sections = useMemo(
     () =>
       KANGUR_THEME_SECTIONS.map((section) => {
-        const sectionCopy = getKangurThemeSectionCopy(section.id, copy.locale);
-        let fields = section.fields.map((f) => localizeKangurThemeField(f, copy.locale));
+        const sectionCopy = getKangurThemeSectionCopy(locale, section.id);
+        let fields = section.fields.map((field) =>
+          localizeKangurThemeField(locale, field as SettingsPanelField<ThemeSettings>)
+        );
 
         if (section.id === 'buttons') {
-          fields = fields.map((f) =>
-            f.key === 'btnFontWeight' ? { ...f, options: buildKangurThemeFontWeightOptions(copy.locale) } : f
+          fields = fields.map((field) =>
+            field.key === 'btnFontWeight'
+              ? { ...field, options: buildKangurThemeFontWeightOptions(locale) }
+              : field
           );
         }
 
         if (section.id === 'homeActions') {
-          fields = buildKangurThemeHomeActionFields(copy.locale);
+          fields = buildKangurThemeHomeActionFields(locale);
         }
 
-        return { ...section, title: sectionCopy.title, subtitle: sectionCopy.subtitle, fields };
+        return {
+          ...section,
+          title: sectionCopy.title,
+          subtitle: sectionCopy.subtitle,
+          fields,
+        };
       }),
-    [copy.locale]
+    [locale]
   );
 
   return (
@@ -107,15 +184,15 @@ function KangurThemeSettingsPanelContent({
       <div className='space-y-6'>
         <FormSection title={copy.modeTitle} subtitle={copy.modeSubtitle}>
           <div className='flex flex-wrap gap-2'>
-            {modeOptions.map((opt) => (
+            {modeOptions.map((option) => (
               <Button
-                key={opt.id}
+                key={option.id}
                 type='button'
-                variant={mode === opt.id ? 'primary' : 'outline'}
+                variant={mode === option.id ? 'primary' : 'outline'}
                 size='sm'
-                onClick={() => setMode(opt.id)}
+                onClick={() => setMode(option.id)}
               >
-                {opt.label}
+                {option.label}
               </Button>
             ))}
           </div>
@@ -138,21 +215,40 @@ function KangurThemeSettingsPanelContent({
         <div className='sticky bottom-0 z-10 -mx-4 border-t border-border bg-background/80 p-4 backdrop-blur-md'>
           <div className='flex items-center justify-between gap-4'>
             <div className='flex items-center gap-2'>
-              <Button type='button' variant='primary' size='sm' onClick={saveTheme} loading={isSaving} disabled={!hasUnsavedChanges}>
+              <Button
+                type='button'
+                variant='primary'
+                size='sm'
+                onClick={saveTheme}
+                loading={isSaving}
+                disabled={!hasUnsavedChanges}
+              >
                 {copy.saveAction}
               </Button>
-              <Button type='button' variant='outline' size='sm' onClick={resetTheme} disabled={!hasUnsavedChanges || isSaving}>
+              <Button
+                type='button'
+                variant='outline'
+                size='sm'
+                onClick={resetTheme}
+                disabled={!hasUnsavedChanges || isSaving}
+              >
                 {copy.resetAction}
               </Button>
             </div>
-            {hasUnsavedChanges && <p className='text-xs font-semibold text-amber-600 animate-pulse'>{copy.unsavedChanges}</p>}
+            {hasUnsavedChanges ? (
+              <p className='text-xs font-semibold text-amber-600 animate-pulse'>
+                {copy.unsavedChanges}
+              </p>
+            ) : null}
           </div>
         </div>
       </div>
 
       <div className='relative'>
         <div className='sticky top-20 space-y-6'>
-          <h3 className='text-sm font-black uppercase tracking-widest text-muted-foreground'>{copy.previewTitle}</h3>
+          <h3 className='text-sm font-black uppercase tracking-widest text-muted-foreground'>
+            {copy.previewTitle}
+          </h3>
           <ThemePreviewPanel
             draft={currentDraft}
             selectedId='custom'
@@ -164,7 +260,11 @@ function KangurThemeSettingsPanelContent({
             }}
             slotThemes={drafts}
           />
-          <Alert variant='info' title={copy.previewInfoTitle} description={copy.previewInfoText} />
+          <Alert
+            variant='info'
+            title={copy.previewInfoTitle}
+            description={copy.previewInfoText}
+          />
         </div>
       </div>
     </div>

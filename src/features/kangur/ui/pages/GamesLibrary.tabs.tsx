@@ -6,57 +6,31 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 'use client';
 
-import React from 'react';
-import { useTranslations } from 'next-intl';
 import {
   KangurButton,
   KangurEmptyState,
   KangurInfoCard,
-  KangurMetricCard,
   KangurStatusChip,
 } from '@/features/kangur/ui/design/primitives';
 import {
   GAMES_LIBRARY_PANEL_SURFACE_CLASSNAME,
   GAMES_LIBRARY_PANEL_INSET_SURFACE_CLASSNAME,
-  GAMES_LIBRARY_COMPACT_STAT_CARD_CLASSNAME,
   getGamesLibraryTabIds,
-  resolveSerializationAuditAccent,
-  getSerializationAuditIssueCount,
-  getSerializationSurfaceIssueCount,
-  resolveSerializationSurfaceAccent,
-  getSerializationIssueHref,
-  resolveImplementationOwnershipAccent,
-  resolveCoverageAccent,
   resolveAgeGroupAccent,
-  resolveEngineCategoryAccent,
   resolveStatusAccent,
-  resolveSurfaceAccent,
-  resolveVariantGroupAccent,
-  getVariantGroupLabel,
-  formatMechanicLabel,
-  resolveLessonCoverageStatusAccent,
-  getLessonTitles,
   getKangurGameCardAnchorId,
-  getKangurEngineCardAnchorId,
   isGamesLibraryCardInteractiveTarget,
-  resolveVariantSurfaceAccent,
   DEFAULT_GAMES_LIBRARY_FILTERS,
 } from './GamesLibrary.utils';
 import {
   GamesLibraryCompactMetric,
-  GamesLibraryDetailSurface,
   GamesLibrarySectionHeader,
 } from './GamesLibrary.components';
 import {
   getLocalizedKangurSubjectLabel,
 } from '@/features/kangur/lessons/lesson-catalog-i18n';
-import { KANGUR_SUBJECTS } from '@/features/kangur/lessons/lesson-catalog';
-import { getKangurGameLibraryLessonCoverageStatusFromMap } from '@/features/kangur/games';
 import { getKangurSixYearOldSubjectVisual } from '@/features/kangur/ui/constants/six-year-old-visuals';
-import {
-  buildKangurGameLaunchHref,
-  buildKangurGameLessonHref,
-} from '@/features/kangur/ui/services/game-launch';
+import { buildKangurGameLaunchHref } from '@/features/kangur/ui/services/game-launch';
 import { cn } from '@/features/kangur/shared/utils';
 import Link from 'next/link';
 
@@ -82,18 +56,13 @@ export const CatalogTab = ({
   filters,
   hasActiveFilters,
   applyFilters,
-  updateFilter,
   translations,
   visibleGameCount,
   totalGameCount,
   groupedGames,
   locale,
   basePath,
-  selectedGame,
   setSelectedGame,
-  coverageStatusMap,
-  gameFilterOptions,
-  catalogFacets,
 }: CatalogTabProps) => {
   const catalogPanelEyebrow = filters.gameId === 'all' ? translations('tabs.catalog') : translations('focus.gameTitle');
   const catalogSummaryText = hasActiveFilters
@@ -170,9 +139,7 @@ export const CatalogTab = ({
                 <div className='grid gap-4 lg:grid-cols-2'>
                   {subjectEntries.map((entry: any) => {
                     const game = entry.game;
-                    const linkedLessonTitles = getLessonTitles(game.lessonComponentIds, locale);
                     const gameHref = buildKangurGameLaunchHref(basePath, game);
-                    const lessonHref = buildKangurGameLessonHref(basePath, game);
                     return (
                       <KangurInfoCard
                         key={game.id}
@@ -249,12 +216,6 @@ export const StructureTab = ({
   translations,
   implementationGroups,
   coverageGroups,
-  cohortGroups,
-  drawingGroups,
-  engineGroups,
-  variantGroups,
-  locale,
-  metrics,
 }: StructureTabProps) => {
   const structurePanelEyebrow = filters.engineId === 'all' ? translations('tabs.structure') : translations('focus.engineTitle');
 
@@ -296,8 +257,6 @@ export const RuntimeTab = ({
   serializationAudit,
   translations,
   serializationAuditVisible,
-  currentGamesLibraryHref,
-  basePath,
 }: RuntimeTabProps) => {
   if (!serializationAuditVisible) return null;
 

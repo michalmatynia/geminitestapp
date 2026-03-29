@@ -514,14 +514,24 @@ export const resolveBrainCapabilityAssignment = (
   settings: AiBrainSettings,
   capability: AiBrainCapabilityKey
 ): AiBrainAssignment => {
+  const feature = resolveBrainFeatureForCapability(capability);
+  const featureAssignment = resolveBrainAssignment(settings, feature);
   const capabilityOverride = settings.capabilities?.[capability];
-  if (capabilityOverride) {
-    return {
-      ...settings.defaults,
-      ...capabilityOverride,
-    };
+  const resolvedAssignment = capabilityOverride
+    ? {
+        ...settings.defaults,
+        ...capabilityOverride,
+      }
+    : featureAssignment;
+
+  if (featureAssignment.enabled) {
+    return resolvedAssignment;
   }
-  return resolveBrainAssignment(settings, resolveBrainFeatureForCapability(capability));
+
+  return {
+    ...resolvedAssignment,
+    enabled: false,
+  };
 };
 
 export const sanitizeBrainAssignment = (assignment: AiBrainAssignment): AiBrainAssignment => ({

@@ -71,7 +71,6 @@ export default function EnglishComparativesSuperlativesCrownGame({
     selectedTokenId,
     setSelectedTokenId,
     checked,
-    roundCorrect,
     totalCorrect,
     feedback,
     done,

@@ -2,7 +2,6 @@ import {
   resolveKangurLessonTemplateComponentContent,
 } from '@/features/kangur/lessons/lesson-template-component-content';
 import type { ArtShapesBasicLessonTranslate } from '@/features/kangur/ui/components/ArtShapesBasicLesson.data';
-import { translateLessonShellTitle } from '@/features/kangur/ui/components/lesson-copy';
 import type {
   KangurArtShapesBasicLessonTemplateContent,
   KangurLessonTemplate,
@@ -14,7 +13,7 @@ const interpolateTemplate = (template: string, values?: TranslationValues): stri
   template.replace(/\{(\w+)\}/g, (_match, key: string) => String(values?.[key] ?? `{${key}}`));
 
 const resolveTranslationValue = (
-  content: KangurArtShapesBasicLessonTemplateContent,
+  content: Record<string, unknown>,
   key: string,
 ): string | null => {
   const value = key.split('.').reduce<unknown>((current, part) => {
@@ -158,7 +157,7 @@ export const createArtShapesBasicLessonContentFromTranslate = (
     },
   },
   game: {
-    gameTitle: translateLessonShellTitle(translate, 'game', ''),
+    gameTitle: translate('game.gameTitle'),
     progress: {
       round: translate('game.progress.round'),
       score: translate('game.progress.score'),

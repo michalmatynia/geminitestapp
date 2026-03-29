@@ -492,6 +492,7 @@ const STARTER_TEMPLATE_BY_COMPONENT_ID: Record<
   english_basics: 'article',
   english_parts_of_speech: 'article',
   english_sentence_structure: 'article',
+  english_going_to: 'article',
   english_subject_verb_agreement: 'article',
   english_adjectives: 'article',
   english_comparatives_superlatives: 'article',

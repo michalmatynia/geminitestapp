@@ -134,10 +134,19 @@ export function useThemeSettingsValue(): ThemeSettings {
   return ctx.theme;
 }
 
+export function useOptionalThemeSettingsValue(): ThemeSettings | null {
+  const ctx = useContext(ThemeSettingsStateContext);
+  return ctx?.theme ?? null;
+}
+
 export function useThemeSettingsActions(): ThemeSettingsActionsContextValue {
   const ctx = useContext(ThemeSettingsActionsContext);
   if (!ctx) {
     throw internalError('useThemeSettingsActions must be used within ThemeSettingsProvider');
   }
   return ctx;
+}
+
+export function useOptionalThemeSettingsActions(): ThemeSettingsActionsContextValue | null {
+  return useContext(ThemeSettingsActionsContext) ?? null;
 }

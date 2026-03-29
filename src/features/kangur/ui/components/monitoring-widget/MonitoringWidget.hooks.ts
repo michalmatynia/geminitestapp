@@ -1,19 +1,17 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { useLocale, useTranslations } from 'next-intl';
+import { useTranslations } from 'next-intl';
 import { getKangurPlatform } from '@/features/kangur/services/kangur-platform';
 import type { KangurLearnerInteractionHistory } from '@kangur/platform';
 import { useKangurParentDashboardRuntime } from '@/features/kangur/ui/context/KangurParentDashboardRuntimeContext';
 import {
   asRecord,
   formatDuration,
-  formatProgressTimestamp,
   type InteractionFilter,
   type InteractionView,
   isLessonComponentId,
   normalizePanelLabel,
-  parseDateFilterValue,
   parsePanelIndex,
   parseTimestamp,
   parseTimestampStrict,
@@ -22,14 +20,12 @@ import {
 } from '../KangurParentDashboardAssignmentsMonitoringWidget.utils';
 import { ActivityTypes } from '@/shared/constants/observability';
 import { ErrorSystem } from '@/features/kangur/shared/utils/observability/error-system-client';
-import { withKangurClientError } from '@/features/kangur/observability/client';
 
 const kangurPlatform = getKangurPlatform();
 const INTERACTIONS_PAGE_LIMIT = 20;
 const INTERACTIONS_LOAD_DEFER_MS = 900;
 
 export function useMonitoringWidgetState() {
-  const locale = useLocale();
   const translations = useTranslations('KangurParentDashboard');
   const {
     activeLearner,
@@ -78,13 +74,9 @@ export function useMonitoringWidgetState() {
       }
 
       try {
-        const result = await kangurPlatform.getLearnerInteractionHistory({
-          learnerId,
+        const result = await kangurPlatform.learnerInteractions.list(learnerId, {
           limit: INTERACTIONS_PAGE_LIMIT,
           offset,
-          type: interactionFilter === 'all' ? undefined : interactionFilter as any,
-          dateFrom: interactionDateFrom || undefined,
-          dateTo: interactionDateTo || undefined,
         });
 
         if (reset) {

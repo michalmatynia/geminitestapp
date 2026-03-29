@@ -1,17 +1,9 @@
 import 'server-only';
 
-import { createHash, randomUUID } from 'crypto';
 import { createRequire } from 'module';
-import { sanitizeHtml } from '@/shared/utils';
 import { configurationError } from '@/shared/errors/app-error';
-import {
-  buildFilemakerMailSnippet,
-  normalizeFilemakerMailSubject,
-} from '../../mail-utils';
 import type {
   FilemakerMailAccount,
-  FilemakerMailMessage,
-  FilemakerMailParticipant,
   FilemakerMailThread,
 } from '../../types';
 import type {
@@ -20,15 +12,10 @@ import type {
 } from './mail-types';
 import {
   buildThreadId,
-  normalizeEmailAddress,
-  parseMailParserAddressList,
-  pickAnchorAddress,
-  resolveDirection,
 } from './mail-utils';
 import {
   findMailThreadByProviderId,
   findMailThreadBySubjectAndAnchor,
-  upsertMailMessage,
   upsertMailThread,
 } from './mail-storage';
 
@@ -87,16 +74,25 @@ export const resolveOrCreateThread = async (input: {
   }
 
   const newThread: FilemakerMailThread = {
-    id: buildThreadId(input),
+    id: buildThreadId({
+      accountId: input.account.id,
+      providerThreadId: input.providerThreadId ?? null,
+      normalizedSubject: input.normalizedSubject,
+      anchorAddress: input.anchorAddress,
+    }),
     accountId: input.account.id,
+    mailboxPath: 'Inbox',
+    mailboxRole: 'inbox',
     providerThreadId: input.providerThreadId ?? null,
     subject: input.normalizedSubject,
     normalizedSubject: input.normalizedSubject,
-    anchorAddress: input.anchorAddress,
     lastMessageAt: input.lastMessageAt,
     snippet: input.snippet ?? null,
-    isArchived: false,
-    isFlagged: false,
+    participantSummary: [],
+    relatedPersonIds: [],
+    relatedOrganizationIds: [],
+    unreadCount: 0,
+    messageCount: 1,
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
   };

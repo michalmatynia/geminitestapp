@@ -340,6 +340,10 @@ const LEGACY_IMPORTERS: Record<KangurLessonComponentId, LegacyImportDefinition> 
     kind: 'flat',
     slides: [],
   },
+  english_going_to: {
+    kind: 'flat',
+    slides: [],
+  },
   english_subject_verb_agreement: {
     kind: 'flat',
     slides: [],

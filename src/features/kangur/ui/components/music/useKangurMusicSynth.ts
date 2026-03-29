@@ -1,7 +1,6 @@
 'use client';
 
 import { useCallback, useEffect } from 'react';
-import type { KangurMusicSynthOsc2Config } from './music-theory';
 import {
   DEFAULT_DURATION_MS,
   DEFAULT_GAP_MS,
@@ -56,7 +55,6 @@ export function useKangurMusicSynth<NoteId extends string>() {
     clearActivePlayback
   );
   const {
-    sustainedNodesRef,
     stopSustainedNote,
     stopAllSustainedNotes,
     startSustainedNote,

@@ -74,7 +74,7 @@ export const normalizeCampaignLaunchRule = (
     allowedHourStart: normalizeNullableBoundedInt(input?.allowedHourStart, 0, 23),
     allowedHourEnd: normalizeNullableBoundedInt(input?.allowedHourEnd, 0, 23),
     pauseOnBounceRatePercent:
-      input?.pauseOnBounceRatePercent == null || input.pauseOnBounceRatePercent === ''
+      input?.pauseOnBounceRatePercent == null
         ? null
         : Math.min(100, Math.max(0, Number(input.pauseOnBounceRatePercent))),
     timezone: normalizeString(input?.timezone) || 'UTC',
@@ -117,7 +117,7 @@ export const createDefaultFilemakerEmailCampaignRegistry = (): FilemakerEmailCam
 });
 
 export const normalizeFilemakerEmailCampaignRegistry = (
-  value: FilemakerEmailCampaignRegistry | null | undefined
+  value: unknown | null | undefined
 ): FilemakerEmailCampaignRegistry => {
   if (!value || typeof value !== 'object') {
     return createDefaultFilemakerEmailCampaignRegistry();

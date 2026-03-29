@@ -129,7 +129,7 @@ export const buildRecommendations = (input: {
   // Streak preservation
   if (input.currentStreakDays > 0 && input.todayGames === 0) {
     recommendations.push({
-      id: 'streak-preservation',
+      id: 'streak_preservation',
       title: translateKangurLearnerProfileWithFallback(
         input.translate,
         'recommendations.streakPreservation.title',
@@ -138,12 +138,12 @@ export const buildRecommendations = (input: {
       description: translateKangurLearnerProfileWithFallback(
         input.translate,
         'recommendations.streakPreservation.description',
-        fallbackCopy.recommendations.streakPreservation.description,
+        fallbackCopy.recommendations.streakPreservation.description(input.currentStreakDays),
         {
           streak: input.currentStreakDays,
         }
       ),
-      kind: 'critical',
+      priority: 'high',
       action: buildPracticeRecommendationAction(
         strongestOperation?.operation ?? null,
         strongestOperation?.averageAccuracy ?? 80,
@@ -155,8 +155,9 @@ export const buildRecommendations = (input: {
 
   // Daily goal
   if (remainingDailyGames > 0) {
+    const isSingleRemaining = remainingDailyGames === 1;
     recommendations.push({
-      id: 'daily-goal',
+      id: 'daily_goal',
       title: translateKangurLearnerProfileWithFallback(
         input.translate,
         'recommendations.dailyGoal.title',
@@ -164,13 +165,44 @@ export const buildRecommendations = (input: {
       ),
       description: translateKangurLearnerProfileWithFallback(
         input.translate,
-        'recommendations.dailyGoal.description',
-        fallbackCopy.recommendations.dailyGoal.description,
+        isSingleRemaining
+          ? 'recommendations.dailyGoal.descriptionSingle'
+          : 'recommendations.dailyGoal.descriptionMultiple',
+        isSingleRemaining
+          ? fallbackCopy.recommendations.dailyGoal.descriptionSingle(input.todayXpEarned)
+          : fallbackCopy.recommendations.dailyGoal.descriptionMultiple(
+              remainingDailyGames,
+              input.todayXpEarned
+            ),
         {
-          remaining: remainingDailyGames,
+          remainingGames: remainingDailyGames,
+          todayXpEarned: input.todayXpEarned,
         }
       ),
-      kind: 'primary',
+      priority: 'medium',
+      action: buildPracticeRecommendationAction(
+        weakestOperation?.operation ?? null,
+        weakestOperation?.averageAccuracy ?? 50,
+        fallbackCopy,
+        input.translate
+      ),
+    });
+  }
+
+  if (input.currentStreakDays < 2) {
+    recommendations.push({
+      id: 'streak_bootstrap',
+      title: translateKangurLearnerProfileWithFallback(
+        input.translate,
+        'recommendations.streakBootstrap.title',
+        fallbackCopy.recommendations.streakBootstrap.title
+      ),
+      description: translateKangurLearnerProfileWithFallback(
+        input.translate,
+        'recommendations.streakBootstrap.description',
+        fallbackCopy.recommendations.streakBootstrap.description
+      ),
+      priority: 'medium',
       action: buildPracticeRecommendationAction(
         weakestOperation?.operation ?? null,
         weakestOperation?.averageAccuracy ?? 50,

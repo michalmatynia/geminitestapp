@@ -2,7 +2,6 @@ import { useTranslations } from 'next-intl';
 import type { useSearchParams } from 'next/navigation';
 import {
   appendKangurUrlParams,
-  getKangurCanonicalPublicHref,
 } from '@/features/kangur/config/routing';
 import {
   DEFAULT_GAMES_LIBRARY_FILTERS,
@@ -355,7 +354,6 @@ export const getLessonTitles = (
 
 export const getSerializationIssueHref = (
   hrefBase: string,
-  basePath: string,
   issue: Pick<KangurGameRuntimeSerializationIssueDto, 'targetId' | 'targetKind'>
 ): string => {
   const anchorId =

@@ -6,7 +6,6 @@ import { signIn } from 'next-auth/react';
 import { useTranslations } from 'next-intl';
 import React, {
   Suspense,
-  useEffect,
   useMemo,
   useRef,
 } from 'react';
@@ -30,7 +29,6 @@ import {
   KANGUR_SEGMENTED_CONTROL_CLASSNAME,
   KANGUR_STACK_COMPACT_CLASSNAME,
   KANGUR_STACK_RELAXED_CLASSNAME,
-  KANGUR_STACK_TIGHT_CLASSNAME,
 } from '@/features/kangur/ui/design/tokens';
 import {
   parseKangurAuthMode,
@@ -56,7 +54,6 @@ import {
   resetSessionsBeforeStudentLogin,
   resolveCredentialErrorTarget,
 } from './KangurLoginPage.utils';
-import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
 export function KangurLoginPageContent(): React.JSX.Element {
   const state = useKangurLoginPageState();

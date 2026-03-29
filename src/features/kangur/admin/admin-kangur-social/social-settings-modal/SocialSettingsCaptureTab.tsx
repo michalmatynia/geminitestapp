@@ -145,7 +145,7 @@ export function SocialSettingsCaptureTab({
                     batchCapturePresetIds.includes(preset.id) ? 'border-primary bg-primary/10 text-primary' : 'border-border bg-background text-muted-foreground hover:bg-muted'
                   )}
                 >
-                  {preset.name}
+                  {preset.title}
                 </button>
               ))}
             </div>

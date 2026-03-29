@@ -2,14 +2,6 @@ import type { LabeledOptionDto } from '@/shared/contracts/base';
 import type { KangurStorefrontAppearanceMode } from '@/features/kangur/storefront-appearance-settings';
 import type { KangurAdminLocaleDto as AppearanceAdminLocale } from '../kangur-admin-locale';
 
-type AppearancePreviewSection =
-  | 'page'
-  | 'buttons'
-  | 'cards'
-  | 'colors'
-  | 'chat'
-  | 'components';
-
 type AppearanceCatalogSortOption =
   | 'created-desc'
   | 'created-asc'

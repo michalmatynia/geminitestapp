@@ -618,7 +618,7 @@ const AuthenticatedApp = (): JSX.Element | null => {
               reason={isLanguageSwitcherTransition ? 'locale-switch' : 'navigation'}
               renderInlineTopNavigationSkeleton={shouldRenderInlineRouteSkeletonTopNavigation}
               topBarHeightCssValue={visibleTransitionSkeletonTopBarHeightCssValue}
-              variant={visibleTransitionSkeletonVariant}
+              variant={visibleTransitionSkeletonVariant ?? undefined}
             />
           </LazyMotionDiv>
         ) : null}

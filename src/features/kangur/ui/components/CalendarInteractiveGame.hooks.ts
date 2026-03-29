@@ -16,7 +16,6 @@ import type {
 } from '@/features/kangur/ui/types';
 import type {
   CalendarInteractiveGameProps,
-  CalendarInteractiveTaskPoolId,
   Task,
 } from './CalendarInteractiveGame.types';
 import {

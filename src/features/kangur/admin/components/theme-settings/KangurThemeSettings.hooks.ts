@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { useLocale } from 'next-intl';
 import { useUpdateSetting } from '@/shared/hooks/use-settings';
 import { useToast } from '@/features/kangur/shared/ui';
@@ -28,7 +28,7 @@ export function useKangurThemeSettingsState(
   const locale = useLocale();
   const normalizedLocale = resolveKangurThemeSettingsLocale(locale);
   const copy = getKangurThemePanelCopy(normalizedLocale);
-  const { notifyError, notifySuccess } = useToast();
+  const { toast } = useToast();
   const updateSetting = useUpdateSetting();
 
   const [mode, setMode] = useState<KangurThemeMode>('daily');
@@ -80,13 +80,13 @@ export function useKangurThemeSettingsState(
           value: serializeSetting(drafts[mode]),
         })
       );
-      notifySuccess(copy.saveSuccess);
+      toast(copy.saveSuccess, { variant: 'success' });
     } catch (err) {
-      notifyError(copy.saveError);
+      toast(copy.saveError, { variant: 'error', error: err });
     } finally {
       setIsSaving(false);
     }
-  }, [copy.saveError, copy.saveSuccess, drafts, mode, notifyError, notifySuccess, updateSetting]);
+  }, [copy.saveError, copy.saveSuccess, drafts, mode, toast, updateSetting]);
 
   const resetTheme = useCallback(() => {
     setDrafts((prev) => ({ ...prev, [mode]: initialThemes[mode] }));
@@ -94,6 +94,7 @@ export function useKangurThemeSettingsState(
 
   return {
     copy,
+    locale: normalizedLocale,
     mode,
     setMode,
     currentDraft,

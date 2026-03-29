@@ -19,7 +19,7 @@ import {
 import { ensureCompressorNode, ensureReverbChain } from '../useKangurMusicSynth.audio';
 
 export function useKangurMusicSynthTransient(
-  audioContextRef: React.MutableRefObject<AudioContext | null>,
+  _audioContextRef: React.MutableRefObject<AudioContext | null>,
   compressorNodeRef: React.MutableRefObject<DynamicsCompressorNode | null>,
   reverbChainRef: React.MutableRefObject<any | null>,
   activeNodesRef: React.MutableRefObject<any[]>,
@@ -86,7 +86,7 @@ export function useKangurMusicSynthTransient(
       transientGainNode.gain.exponentialRampToValueAtTime(0.0001, now + 0.035);
 
       const waveShaperNode = context.createWaveShaper();
-      waveShaperNode.curve = WAVE_SHAPER_CURVE;
+      waveShaperNode.curve = WAVE_SHAPER_CURVE as Float32Array<ArrayBuffer>;
       waveShaperNode.oversample = '2x';
 
       const compressor = ensureCompressorNode(context, compressorNodeRef);

@@ -1,7 +1,6 @@
 import 'server-only';
 
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
-import { normalizeString } from '../../filemaker-settings.helpers';
 import type {
   FilemakerMailAccount,
   FilemakerMailFolderSyncState,

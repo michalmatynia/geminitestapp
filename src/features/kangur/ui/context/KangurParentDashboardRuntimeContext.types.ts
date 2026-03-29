@@ -50,7 +50,7 @@ export type KangurParentDashboardRuntimeStateContextValue = {
   viewerName: string;
   scoreViewerName: string | null;
   scoreViewerEmail: string | null;
-  viewerRoleLabel: string;
+  viewerRoleLabel: string | null;
   progress: KangurProgressState;
   activeTab: KangurParentDashboardTabId;
   isCreateLearnerModalOpen: boolean;
@@ -123,7 +123,7 @@ export type KangurParentDashboardRuntimeActionsContextValue = {
     key: K,
     value: KangurParentDashboardEditForm[K]
   ) => void;
-  handleCreateLearner: () => Promise<void>;
+  handleCreateLearner: () => Promise<boolean>;
   handleSaveLearner: () => Promise<boolean>;
   handleDeleteLearner: (learnerId: string) => Promise<boolean>;
   updateAssignment: (

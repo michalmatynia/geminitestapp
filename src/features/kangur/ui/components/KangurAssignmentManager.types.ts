@@ -4,7 +4,7 @@ import type {
   KangurAssignmentCreateInput,
   KangurAssignmentSnapshot,
 } from '@kangur/platform';
-import type { LessonRecordDto } from '@/features/kangur/lessons/lesson-template-component-content';
+import type { KangurLesson } from '@/features/kangur/shared/contracts/kangur';
 
 export type KangurAssignmentManagerViewMode =
   | 'full'
@@ -18,7 +18,7 @@ export type KangurAssignmentManagerProps = {
   preloadedCreateAssignment?: (input: KangurAssignmentCreateInput) => Promise<unknown>;
   preloadedAssignments?: KangurAssignmentSnapshot[];
   preloadedAssignmentsError?: string | null;
-  preloadedLessons?: LessonRecordDto[];
+  preloadedLessons?: KangurLesson[];
   preloadedLoading?: boolean;
   preloadedReassignAssignment?: (id: string) => Promise<unknown>;
   preloadedUpdateAssignment?: (id: string, input: Partial<KangurAssignmentSnapshot>) => Promise<unknown>;

@@ -331,13 +331,21 @@ export function FilemakerMailSidebar({
     [recentMailboxFilter, recentQuery, recentThreads, recentUnreadOnly]
   );
   const recentMailboxOptions = useMemo(
-    () =>
-      Array.from(new Set(recentThreads.map((thread) => thread.mailboxPath)))
-        .sort((left, right) => left.localeCompare(right))
-        .map((mailboxPath) => ({
+    () => {
+      const rolesByMailboxPath = new Map<string, FilemakerMailThread['mailboxRole']>();
+      recentThreads.forEach((thread) => {
+        if (!rolesByMailboxPath.has(thread.mailboxPath)) {
+          rolesByMailboxPath.set(thread.mailboxPath, thread.mailboxRole);
+        }
+      });
+
+      return Array.from(rolesByMailboxPath.entries())
+        .sort(([left], [right]) => left.localeCompare(right))
+        .map(([mailboxPath, mailboxRole]) => ({
           value: mailboxPath,
-          label: formatFilemakerMailFolderLabel(mailboxPath),
-        })),
+          label: formatFilemakerMailFolderLabel(mailboxPath, mailboxRole),
+        }));
+    },
     [recentThreads]
   );
 

@@ -1,6 +1,6 @@
 'use client';
 
-import { usePathname, useSearchParams } from 'next/navigation';
+import { usePathname } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import {
   useCallback,
@@ -31,10 +31,7 @@ import {
 } from '@/features/kangur/ui/login-page/use-login-logic';
 import { useTurnstile } from '@/features/kangur/ui/login-page/use-turnstile';
 import {
-  isValidParentEmail,
-  normalizeParentEmail,
   parseJsonResponse,
-  resolveCredentialErrorTarget,
   resolveLoginKind,
   type KangurLoginInputErrorTarget,
   type KangurLoginSubmitStage,
@@ -44,7 +41,6 @@ import {
 export function useKangurLoginPageState() {
   const translations = useTranslations('KangurLogin');
   const pathname = usePathname();
-  const searchParams = useSearchParams();
   const frontendPublicOwner = useOptionalFrontendPublicOwner();
   const routing = useOptionalKangurRouting();
   const { sanitizeManagedHref } = useKangurRouteAccess();
@@ -53,7 +49,7 @@ export function useKangurLoginPageState() {
     defaultCallbackUrl,
     parentAuthMode,
   } = useKangurLoginPageProps();
-  const auth = useOptionalKangurAuth();
+  useOptionalKangurAuth();
   const { isLoading, setIsLoading, successMessage, handleLoginSuccess } = useLoginLogic();
   const loginFormEntry = useKangurPageContentEntry('login-page-form');
   const identifierEntry = useKangurPageContentEntry('login-page-identifier-field');
@@ -74,7 +70,6 @@ export function useKangurLoginPageState() {
 
   const identifierInputRef = useRef<HTMLInputElement>(null);
   const passwordInputRef = useRef<HTMLInputElement>(null);
-  const verifyAttemptedRef = useRef(false);
   const initialFocusAppliedRef = useRef(false);
   const resendTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const focusTimerRef = useRef<number | null>(null);

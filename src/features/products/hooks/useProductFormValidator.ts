@@ -75,8 +75,6 @@ export function useProductFormValidator(
     setFormatterEnabledState,
     setValidatorInitialized,
     setValidatorManuallyChanged,
-    validatorInitialized,
-    validatorManuallyChanged,
     configEnabledByDefault,
     defaultValidatorEnabled,
     defaultFormatterEnabled,

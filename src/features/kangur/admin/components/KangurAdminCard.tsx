@@ -22,12 +22,26 @@ type KangurAdminCardHeaderProps = {
 type KangurAdminCardProps = {
   children: ReactNode;
   className?: string;
+  title?: ReactNode;
+  description?: ReactNode;
+  headerActions?: ReactNode;
+  badge?: ReactNode;
 };
 
 export function KangurAdminCard(props: KangurAdminCardProps): React.JSX.Element {
-  const { children, className } = props;
+  const { children, className, title, description, headerActions, badge } = props;
   return (
     <Card variant='subtle' padding='md' className={cn(KANGUR_ADMIN_CARD_CLASS_NAME, className)}>
+      {title || description || headerActions || badge ? (
+        <div className='mb-4'>
+          <KangurAdminCardHeader
+            title={title ?? ''}
+            description={description}
+            actions={headerActions}
+            badge={badge}
+          />
+        </div>
+      ) : null}
       {children}
     </Card>
   );

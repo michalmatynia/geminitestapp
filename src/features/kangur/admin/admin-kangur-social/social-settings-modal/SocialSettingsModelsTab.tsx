@@ -1,6 +1,5 @@
 'use client';
 
-import React from 'react';
 import { Badge, FormField, SelectSimple } from '@/features/kangur/shared/ui';
 import { KangurAdminCard } from '../../components/KangurAdminCard';
 import { BRAIN_MODEL_DEFAULT_VALUE } from '../AdminKangurSocialPage.Constants';

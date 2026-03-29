@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useMemo, useRef, useState } from 'react';
+import { useRef, useState } from 'react';
 import { useTranslations } from 'next-intl';
 import type { DropResult } from '@hello-pangea/dnd';
 import { useKangurProgressOwnerKey } from '@/features/kangur/ui/hooks/useKangurProgressOwnerKey';
@@ -12,15 +12,13 @@ import {
 } from '@/features/kangur/ui/services/progress';
 import { persistKangurSessionScore } from '@/features/kangur/ui/services/session-score';
 import type {
-  KangurMiniGameFeedbackState,
+  KangurMiniGameInformationalFeedback,
   KangurRewardBreakdownEntry,
 } from '@/features/kangur/ui/types';
 import type { PartOfSpeech, Round, RoundState, SpeechToken } from './EnglishPartsOfSpeechGame.types';
 import { ROUNDS, TOTAL_ROUNDS } from './EnglishPartsOfSpeechGame.constants';
 import {
-  binIdForDroppable,
   getBinIdFromDroppable,
-  isBinDroppable,
   moveBetweenLists,
   moveWithinList,
   removeTokenById,
@@ -44,7 +42,7 @@ export function useEnglishPartsOfSpeechGameState() {
   const [score, setScore] = useState(0);
   const [roundState, setRoundState] = useState<RoundState>(() => buildRoundState(ROUNDS[0]!));
   const [checked, setChecked] = useState(false);
-  const [feedback, setFeedback] = useState<KangurMiniGameFeedbackState>(null);
+  const [feedback, setFeedback] = useState<KangurMiniGameInformationalFeedback | null>(null);
   const [done, setDone] = useState(false);
   const [xpEarned, setXpEarned] = useState(0);
   const [xpBreakdown, setXpBreakdown] = useState<KangurRewardBreakdownEntry[]>([]);
@@ -52,7 +50,7 @@ export function useEnglishPartsOfSpeechGameState() {
   const sessionStartedAtRef = useRef(Date.now());
 
   const round = ROUNDS[roundIndex]!;
-  const isLocked = checked && feedback === 'success';
+  const isLocked = checked && feedback?.kind === 'success';
 
   const handleDragEnd = (result: DropResult): void => {
     if (isLocked) return;
@@ -143,7 +141,10 @@ export function useEnglishPartsOfSpeechGameState() {
     if (isLocked) return;
     const allPlaced = roundState.pool.length === 0;
     if (!allPlaced) {
-      setFeedback('info');
+      setFeedback({
+        kind: 'info',
+        text: translations('englishPartsOfSpeech.inRound.feedback.info'),
+      });
       return;
     }
 
@@ -153,10 +154,16 @@ export function useEnglishPartsOfSpeechGameState() {
 
     if (allCorrect) {
       setChecked(true);
-      setFeedback('success');
+      setFeedback({
+        kind: 'success',
+        text: translations('englishPartsOfSpeech.inRound.feedback.success'),
+      });
       setScore((s) => s + 1);
     } else {
-      setFeedback('error');
+      setFeedback({
+        kind: 'error',
+        text: translations('englishPartsOfSpeech.inRound.feedback.error'),
+      });
     }
   };
 

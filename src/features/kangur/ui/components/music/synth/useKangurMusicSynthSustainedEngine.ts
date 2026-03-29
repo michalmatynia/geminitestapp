@@ -59,7 +59,7 @@ import {
 import { ensureCompressorNode, ensureReverbChain } from '../useKangurMusicSynth.audio';
 
 export function useKangurMusicSynthSustainedEngine<NoteId extends string>(
-  audioContextRef: React.MutableRefObject<AudioContext | null>,
+  _audioContextRef: React.MutableRefObject<AudioContext | null>,
   compressorNodeRef: React.MutableRefObject<DynamicsCompressorNode | null>,
   reverbChainRef: React.MutableRefObject<any | null>,
   ensureAudioContext: () => Promise<AudioContext | null>,

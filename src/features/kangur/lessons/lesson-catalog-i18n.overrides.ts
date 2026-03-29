@@ -1,6 +1,10 @@
 import type { KangurLessonComponentId } from '@/features/kangur/shared/contracts/kangur';
+import { normalizeSiteLocale } from '@/shared/lib/i18n/site-locale';
 
+import { KANGUR_LESSON_LIBRARY } from './lesson-catalog';
 import { UKRAINIAN_LESSON_COPY_OVERRIDES } from './lesson-catalog-i18n.overrides.uk';
+
+type KangurLessonCatalogLocale = 'pl' | 'en' | 'de' | 'uk';
 
 export type LessonCopyOverride = {
   title?: string;
@@ -647,7 +651,7 @@ const shouldApplyOverride = (
   return fallbackValue.trim() === sourceValue.trim();
 };
 
-const resolveLessonOverride = (
+export const resolveLessonOverride = (
   componentId: string,
   locale: string | null | undefined,
   field: keyof LessonCopyOverride,

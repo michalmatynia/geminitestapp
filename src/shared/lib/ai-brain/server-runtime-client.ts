@@ -189,8 +189,20 @@ export const runBrainChatCompletion = async (input: {
         ? { response_format: { type: 'json_object' as const } }
         : {}),
     });
+    const choice = completion.choices[0];
+    const text = choice?.message?.content?.trim() || '';
+    if (!text) {
+      const finishReason = choice?.finish_reason ?? 'unknown';
+      const refusal = (choice?.message as { refusal?: string })?.refusal;
+      const detail = refusal
+        ? `refused: ${refusal}`
+        : `finish_reason=${finishReason}`;
+      throw operationFailedError(
+        `${openAiCompatibleVendor} model "${normalizedModelId}" returned an empty response (${detail}). Check that the model is available and try again or use a different model.`
+      );
+    }
     return {
-      text: completion.choices[0]?.message?.content?.trim() || '',
+      text,
       vendor: openAiCompatibleVendor,
       modelId: normalizedModelId,
     };
@@ -219,12 +231,19 @@ export const runBrainChatCompletion = async (input: {
     }
     const payload = (await response.json()) as {
       content?: Array<{ type?: string; text?: string }>;
+      stop_reason?: string;
     };
+    const text = (payload.content ?? [])
+      .map((part) => (part?.type === 'text' ? (part.text ?? '') : ''))
+      .join('')
+      .trim();
+    if (!text) {
+      throw operationFailedError(
+        `Anthropic returned an empty response${payload.stop_reason ? ` (${payload.stop_reason})` : ''}. Try rephrasing or using a different model.`
+      );
+    }
     return {
-      text: (payload.content ?? [])
-        .map((part) => (part?.type === 'text' ? (part.text ?? '') : ''))
-        .join('')
-        .trim(),
+      text,
       vendor,
       modelId: normalizedModelId,
     };
@@ -263,13 +282,40 @@ export const runBrainChatCompletion = async (input: {
       content?: {
         parts?: Array<{ text?: string }>;
       };
+      finishReason?: string;
     }>;
+    promptFeedback?: {
+      blockReason?: string;
+    };
   };
+
+  if (payload.promptFeedback?.blockReason) {
+    throw operationFailedError(
+      `Gemini blocked the prompt: ${payload.promptFeedback.blockReason}`
+    );
+  }
+
+  const candidate = payload.candidates?.[0];
+  if (!candidate?.content?.parts?.length) {
+    const reason = candidate?.finishReason ?? 'no candidates returned';
+    throw operationFailedError(
+      `Gemini returned an empty response (${reason}). Try rephrasing or using a different model.`
+    );
+  }
+
+  const text = candidate.content.parts
+    .map((part) => part.text ?? '')
+    .join('')
+    .trim();
+
+  if (!text) {
+    throw operationFailedError(
+      'Gemini returned an empty response. Try rephrasing or using a different model.'
+    );
+  }
+
   return {
-    text: (payload.candidates?.[0]?.content?.parts ?? [])
-      .map((part) => part.text ?? '')
-      .join('')
-      .trim(),
+    text,
     vendor,
     modelId: normalizedModelId,
   };

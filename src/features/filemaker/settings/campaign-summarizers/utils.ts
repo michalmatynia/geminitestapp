@@ -2,9 +2,11 @@ import { normalizeString } from '../../filemaker-settings.helpers';
 import type {
   FilemakerEmailCampaignDelivery,
   FilemakerEmailCampaignEvent,
-  FilemakerEmailCampaignRecipientActivityType,
 } from '../../types';
-import type { FilemakerEmailCampaignDeliverabilityHealthLevel } from '../../types/campaigns';
+import type {
+  FilemakerEmailCampaignDeliverabilityHealthLevel,
+  FilemakerEmailCampaignRecipientActivityType,
+} from '../../types/campaigns';
 
 export const roundPercentage = (numerator: number, denominator: number): number => {
   if (!Number.isFinite(numerator) || !Number.isFinite(denominator) || denominator <= 0) {

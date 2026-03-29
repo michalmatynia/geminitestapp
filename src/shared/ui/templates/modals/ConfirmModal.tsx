@@ -27,11 +27,13 @@ export interface ConfirmModalProps {
   subtitle?: string;
   message?: React.ReactNode;
   confirmText?: string;
+  confirmLabel?: string;
   cancelText?: string;
   extraAction?: React.ReactNode;
   loading?: boolean;
   confirmDisabled?: boolean;
   isDangerous?: boolean;
+  variant?: 'default' | 'danger' | 'destructive';
   size?: 'sm' | 'md' | 'lg' | 'xl';
   confirmPassword?: string;
   onConfirmPasswordChange?: (value: string) => void;
@@ -180,11 +182,13 @@ export function ConfirmModal(props: ConfirmModalProps): React.JSX.Element {
     subtitle: modalSubtitle,
     message,
     confirmText = 'Confirm',
+    confirmLabel,
     cancelText = 'Cancel',
     extraAction,
     loading = false,
     confirmDisabled = false,
     isDangerous = false,
+    variant = 'default',
     size = 'sm',
     confirmPassword,
     onConfirmPasswordChange,
@@ -225,6 +229,7 @@ export function ConfirmModal(props: ConfirmModalProps): React.JSX.Element {
     loading ||
     confirmDisabled ||
     (onConfirmPasswordChange !== undefined && !confirmPassword?.trim());
+  const isDestructiveVariant = variant === 'danger' || variant === 'destructive';
   const resolvedDescription =
     modalSubtitle ??
     (typeof message === 'string' && message.trim().length > 0 ? message : 'Confirm this action.');
@@ -251,10 +256,10 @@ export function ConfirmModal(props: ConfirmModalProps): React.JSX.Element {
     children,
     extraAction,
     cancelText,
-    isDangerous,
+    isDangerous: isDangerous || isDestructiveVariant,
     isConfirmDisabled,
     handleConfirm,
-    confirmText,
+    confirmText: confirmLabel ?? confirmText,
     sizeClasses,
   });
 }

@@ -1,7 +1,6 @@
 'use client';
 
-import { useTranslations } from 'next-intl';
-import React, { useMemo } from 'react';
+import React from 'react';
 import { cn } from '@/features/kangur/shared/utils';
 
 import type {
@@ -22,6 +21,20 @@ import type {
 } from './KangurMusicPianoRoll.types';
 import { useKangurMusicPianoRollState } from './KangurMusicPianoRoll.hooks';
 import { SynthControlPanel } from './KangurMusicPianoRoll.components';
+
+export type {
+  KangurMusicKeyboardMode,
+  KangurMusicSynthGlideMode,
+  KangurMusicSynthOsc1Config,
+  KangurMusicSynthOsc2Config,
+  KangurMusicSynthWaveform,
+} from './music-theory';
+export type { KangurMusicSynthEnvelope } from './useKangurMusicSynth';
+export type {
+  KangurMusicPianoKeyPressDetails,
+  KangurMusicPianoRollStep,
+  KangurMusicSynthGestureDetails,
+} from './KangurMusicPianoRoll.types';
 
 export default function KangurMusicPianoRoll<NoteId extends string>(props: {
   activeStepIndex?: number | null;
@@ -72,18 +85,14 @@ export default function KangurMusicPianoRoll<NoteId extends string>(props: {
   });
 
   const {
-    translations,
-    isCoarsePointer,
     resolvedKeyboardMode,
     resolvedSynthWaveform,
     resolvedSynthGlideMode,
     resolvedSynthEnvelope,
     resolvedOsc1Config,
     resolvedOsc2Config,
-    isSynthOscPanelOpen,
     activeOscTab,
     setActiveOscTab,
-    handleKeyboardModeChange,
     handleSynthWaveformChange,
     handleSynthGlideModeChange,
     handleSynthEnvelopeChange,

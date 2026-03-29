@@ -7,12 +7,11 @@ import {
 import {
   KANGUR_ACCENT_STYLES,
   KANGUR_INLINE_CENTER_ROW_CLASSNAME,
-  type KangurAccent,
 } from '@/features/kangur/ui/design/tokens';
 import type {
   KangurIntlTranslate,
 } from '@/features/kangur/ui/types';
-import type { PartOfSpeech, Round, SpeechToken } from './EnglishPartsOfSpeechGame.types';
+import type { PartOfSpeech } from './EnglishPartsOfSpeechGame.types';
 
 export const getPartsOfSpeechRoundMessage = (
   translate: KangurIntlTranslate,

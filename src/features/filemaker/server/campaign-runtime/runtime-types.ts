@@ -2,7 +2,6 @@ import type {
   FilemakerDatabase,
   FilemakerEmailCampaign,
   FilemakerEmailCampaignDelivery,
-  FilemakerEmailCampaignDeliveryAttempt,
   FilemakerEmailCampaignDeliveryAttemptRegistry,
   FilemakerEmailCampaignDeliveryRegistry,
   FilemakerEmailCampaignEventRegistry,

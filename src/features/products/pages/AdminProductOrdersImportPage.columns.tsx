@@ -1,6 +1,5 @@
 'use client';
 
-import React from 'react';
 import { ChevronDown, ChevronUp } from 'lucide-react';
 import { Badge, Button, Checkbox, StatusBadge } from '@/shared/ui';
 import type { ColumnDef, Row, Table } from '@tanstack/react-table';
@@ -15,12 +14,14 @@ import {
 interface BuildColumnsOptions {
   expanded: Record<string, boolean>;
   handleToggleExpanded: (orderId: string) => void;
+  onToggleExpanded?: (orderId: string) => void;
   isPreviewStale: boolean;
 }
 
 export const buildColumns = ({
   expanded,
   handleToggleExpanded,
+  onToggleExpanded,
   isPreviewStale,
 }: BuildColumnsOptions): ColumnDef<BaseOrderImportPreviewItem>[] => [
   {
@@ -34,7 +35,9 @@ export const buildColumns = ({
           size='icon'
           variant='ghost'
           className='h-7 w-7'
-          onClick={() => handleToggleExpanded(row.original.baseOrderId)}
+          onClick={() =>
+            (onToggleExpanded ?? handleToggleExpanded)(row.original.baseOrderId)
+          }
           aria-label={isExpanded ? 'Collapse order details' : 'Expand order details'}
           aria-expanded={isExpanded}
           title={isExpanded ? 'Collapse order details' : 'Expand order details'}

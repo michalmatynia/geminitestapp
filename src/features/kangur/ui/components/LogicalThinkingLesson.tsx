@@ -8,14 +8,16 @@ import { useMessages } from 'next-intl';
 
 import type { LessonSlide } from '@/features/kangur/ui/components/LessonSlideSection';
 import type { KangurUnifiedLessonSection } from '@/features/kangur/ui/components/KangurUnifiedLesson';
-import LogicalIfThenStepsGame, {
-  type LogicalIfThenStepsGameCopy,
-  type LogicalIfThenStepsRound,
+import LogicalIfThenStepsGame from '@/features/kangur/ui/components/LogicalIfThenStepsGame';
+import type {
+  LogicalIfThenStepsGameCopy,
+  LogicalIfThenStepsRound,
 } from '@/features/kangur/ui/components/LogicalIfThenStepsGame';
-import LogicalThinkingLabGame, {
-  type LogicalThinkingLabAnalogyRound,
-  type LogicalThinkingLabGameCopy,
-} from '@/features/kangur/ui/components/LogicalThinkingLabGame';
+import LogicalThinkingLabGame from '@/features/kangur/ui/components/LogicalThinkingLabGame';
+import type {
+  LogicalThinkingLabAnalogyRound,
+  LogicalThinkingLabGameCopy,
+} from '@/features/kangur/ui/components/LogicalThinkingLabGame.types';
 import {
   LogicalAnalogyMapAnimation,
   LogicalAnalogiesAnimation,

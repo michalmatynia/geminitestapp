@@ -10,17 +10,11 @@ import {
   useKangurParentDashboardRuntime,
 } from '@/features/kangur/ui/context/KangurParentDashboardRuntimeContext';
 import {
-  KangurActivityColumn,
   KangurButton,
   KangurEmptyState,
-  KangurInfoCard,
-  KangurMetricCard,
-  KangurMetaText,
+  KangurGlassPanel,
   KangurPanelIntro,
   KangurPanelStack,
-  KangurProgressBar,
-  KangurStatusChip,
-  KangurSummaryPanel,
   KangurTextField,
 } from '@/features/kangur/ui/design/primitives';
 import {
@@ -28,10 +22,7 @@ import {
   type InteractionFilter,
 } from '@/features/kangur/ui/components/KangurParentDashboardAssignmentsMonitoringWidget.utils';
 import {
-  KANGUR_COMPACT_ROW_CLASSNAME,
-  KANGUR_GRID_TIGHT_CLASSNAME,
   KANGUR_SEGMENTED_CONTROL_CLASSNAME,
-  KANGUR_STACK_COMPACT_CLASSNAME,
   KANGUR_STACK_TIGHT_CLASSNAME,
   KANGUR_TIGHT_ROW_CLASSNAME,
   KANGUR_WIDGET_TITLE_CLASSNAME,
@@ -99,21 +90,23 @@ function KangurParentDashboardAssignmentsMonitoringWidgetContent(): React.JSX.El
   const segmentedFilterClassName = isCoarsePointer
     ? 'min-h-11 min-w-0 flex-1 px-4 text-xs touch-manipulation select-none active:scale-[0.97] sm:flex-none'
     : 'min-w-0 flex-1 px-3 text-xs sm:flex-none';
+  const hasMoreInteractions = interactionHistory
+    ? interactionHistory.offset + interactionHistory.items.length < interactionHistory.total
+    : false;
+  const nextInteractionOffset = interactionHistory
+    ? interactionHistory.offset + interactionHistory.items.length
+    : null;
 
   return (
     <KangurPanelStack className='w-full'>
       <KangurPanelIntro
-        eyebrow={monitoringContent?.eyebrow ?? translations('widgets.monitoring.eyebrow')}
+        eyebrow={translations('widgets.monitoring.eyebrow')}
         title={monitoringContent?.title ?? translations('widgets.monitoring.title')}
-        relaxed
-      >
-        <p className='max-w-2xl text-sm leading-relaxed text-slate-600'>
-          {monitoringContent?.summary ?? translations('widgets.monitoring.description')}
-        </p>
-      </KangurPanelIntro>
+        description={monitoringContent?.summary ?? translations('widgets.monitoring.description')}
+      />
 
       <div className='grid grid-cols-1 gap-6 xl:grid-cols-[1fr_320px]'>
-        <div className={KANGUR_STACK_ROOMY_CLASSNAME}>
+        <div className='space-y-6'>
           <div className={KANGUR_STACK_TIGHT_CLASSNAME}>
             <div className='flex items-center justify-between'>
               <h3 className={KANGUR_WIDGET_TITLE_CLASSNAME}>{translations('widgets.monitoring.history.title')}</h3>
@@ -149,23 +142,34 @@ function KangurParentDashboardAssignmentsMonitoringWidgetContent(): React.JSX.El
             ) : (
               <div className='space-y-3'>
                 {interactionViews.map((view) => (
-                  <KangurActivityColumn key={view.id} accent={view.kind === 'session' ? 'emerald' : view.kind === 'opened_task' ? 'amber' : 'indigo'}>
+                  <KangurGlassPanel
+                    key={view.id}
+                    className='space-y-2'
+                    padding='md'
+                    surface='mistSoft'
+                    variant='soft'
+                  >
                     <div className='flex flex-wrap items-center justify-between gap-2'>
                       <span className='text-[10px] font-black uppercase tracking-wider text-slate-400'>{view.label}</span>
                       <span className='text-[10px] font-bold text-slate-400'>{formatTimestamp(view.timestamp)}</span>
                     </div>
                     <div className='text-sm font-bold text-slate-900'>{view.description}</div>
-                  </KangurActivityColumn>
+                  </KangurGlassPanel>
                 ))}
-                {interactionHistory?.hasMore && (
+                {hasMoreInteractions && (
                   <KangurButton
-                    onClick={() => activeLearnerId && fetchInteractions(activeLearnerId, { offset: interactionHistory.offset + interactionHistory.items.length })}
+                    onClick={() => {
+                      if (!activeLearnerId || nextInteractionOffset === null) return;
+                      void fetchInteractions(activeLearnerId, { offset: nextInteractionOffset });
+                    }}
                     variant='surface'
                     size='sm'
                     className='w-full'
-                    loading={isLoadingMoreInteractions}
+                    disabled={isLoadingMoreInteractions}
                   >
-                    {translations('widgets.monitoring.actions.loadMore')}
+                    {isLoadingMoreInteractions
+                      ? translations('shared.loading')
+                      : translations('widgets.monitoring.actions.loadMore')}
                   </KangurButton>
                 )}
                 {interactionsLoadMoreError && <p className='text-center text-xs text-rose-500 font-semibold'>{interactionsLoadMoreError}</p>}
@@ -174,7 +178,7 @@ function KangurParentDashboardAssignmentsMonitoringWidgetContent(): React.JSX.El
           </div>
         </div>
 
-        <div className={KANGUR_STACK_ROOMY_CLASSNAME}>
+        <div className='space-y-6'>
           <div className={KANGUR_STACK_TIGHT_CLASSNAME}>
             <h3 className={KANGUR_WIDGET_TITLE_CLASSNAME}>{translations('widgets.monitoring.lessonPanelTime.title')}</h3>
             {lessonPanelTimeCards.length === 0 ? (
@@ -182,7 +186,7 @@ function KangurParentDashboardAssignmentsMonitoringWidgetContent(): React.JSX.El
             ) : (
               <div className='space-y-4'>
                 {lessonPanelTimeCards.map((card) => (
-                  <KangurGlassPanel key={card.lesson.id} padding='sm' surface='solid' variant='soft' className='space-y-3'>
+                  <KangurGlassPanel key={card.lesson.id} padding='md' surface='solid' variant='soft' className='space-y-3'>
                     <div className='flex items-center gap-3'>
                       <div className='text-xl'>{card.lesson.emoji}</div>
                       <div className='flex-1 min-w-0'>

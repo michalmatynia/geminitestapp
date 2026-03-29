@@ -4,7 +4,6 @@ import { createHash, randomUUID } from 'crypto';
 import type { ListResponse, MessageAddressObject, MessageEnvelopeObject } from 'imapflow';
 import {
   dedupeFilemakerMailParticipants,
-  normalizeFilemakerMailSubject,
 } from '../../mail-utils';
 import { normalizeString, toIdToken } from '../../filemaker-settings.helpers';
 import type {

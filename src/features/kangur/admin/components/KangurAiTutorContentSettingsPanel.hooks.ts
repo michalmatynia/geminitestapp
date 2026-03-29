@@ -205,7 +205,11 @@ export function useKangurAiTutorContentSettingsState() {
       }
       map.set(
         locale,
-        buildKangurAiTutorContentTranslationStatusBySectionKey(sourceContent, content)
+        buildKangurAiTutorContentTranslationStatusBySectionKey({
+          locale,
+          sourceContent,
+          localizedContent: content,
+        })
       );
     });
     return map;

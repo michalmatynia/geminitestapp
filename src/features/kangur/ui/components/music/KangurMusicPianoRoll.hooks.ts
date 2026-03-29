@@ -1,9 +1,7 @@
 'use client';
 
 import { useTranslations } from 'next-intl';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import type { CSSProperties } from 'react';
-import type { DropResult } from '@hello-pangea/dnd';
+import { useRef, useState } from 'react';
 
 import { useKangurCoarsePointer } from '@/features/kangur/ui/hooks/useKangurCoarsePointer';
 import { useKangurMobileBreakpoint } from '@/features/kangur/ui/hooks/useKangurMobileBreakpoint';
@@ -18,7 +16,6 @@ import type {
 import {
   KANGUR_MUSIC_SYNTH_DEFAULT_OSC1_CONFIG,
   KANGUR_MUSIC_SYNTH_DEFAULT_OSC2_CONFIG,
-  resolveFrequencyWithSemitoneOffset,
 } from './music-theory';
 import {
   KANGUR_DEFAULT_MUSIC_SYNTH_ENVELOPE,
@@ -26,47 +23,14 @@ import {
   type KangurMusicSynthEnvelope,
 } from './useKangurMusicSynth';
 import type {
-  ActiveKeyPressState,
   ActiveSynthGestureState,
   KeyPulseState,
-  KeyPulsePhase,
-  KangurMusicPointerType,
   KangurMusicPianoKeyPressDetails,
   KangurMusicSynthGestureDetails,
-  SynthPitchCandidate,
-  SynthPitchResolution,
 } from './KangurMusicPianoRoll.types';
-import {
-  clamp,
-  nowMs,
-  resolvePointerPressure,
-  resolveVibratoDepth,
-  resolveVibratoRateHz,
-  resolveSmoothedVibratoDepth,
-  resolveStereoPan,
-  SYNTH_NOTE_HYSTERESIS_PX,
-  TOUCH_SYNTH_NOTE_HYSTERESIS_PX,
-} from './KangurMusicPianoRoll.utils';
 
-export function useKangurMusicPianoRollState<NoteId extends string>({
-  keyboardMode,
-  keys,
-  onKeyboardModeChange,
-  onKeyPress,
-  onSynthGlideModeChange,
-  onSynthGestureChange,
-  onSynthGestureEnd,
-  onSynthGestureStart,
-  onSynthEnvelopeChange,
-  onSynthOscSettingsChange,
-  onSynthWaveformChange,
-  referenceFrequencyHz,
-  synthEnvelope,
-  synthGlideMode,
-  synthOsc1Config,
-  synthOsc2Config,
-  synthWaveform,
-}: {
+type UseKangurMusicPianoRollStateInput<NoteId extends string> = {
+  [key: string]: unknown;
   keyboardMode?: KangurMusicKeyboardMode;
   keys: readonly KangurMusicPianoKeyDefinition<NoteId>[];
   onKeyboardModeChange?: (mode: KangurMusicKeyboardMode) => void;
@@ -76,7 +40,10 @@ export function useKangurMusicPianoRollState<NoteId extends string>({
   onSynthGestureEnd?: (details: KangurMusicSynthGestureDetails<NoteId>) => void;
   onSynthGestureStart?: (details: KangurMusicSynthGestureDetails<NoteId>) => void;
   onSynthEnvelopeChange?: (envelope: KangurMusicSynthEnvelope) => void;
-  onSynthOscSettingsChange?: (osc1: KangurMusicSynthOsc1Config, osc2: KangurMusicSynthOsc2Config) => void;
+  onSynthOscSettingsChange?: (
+    osc1: KangurMusicSynthOsc1Config,
+    osc2: KangurMusicSynthOsc2Config
+  ) => void;
   onSynthWaveformChange?: (waveform: KangurMusicSynthWaveform) => void;
   referenceFrequencyHz: number;
   synthEnvelope?: KangurMusicSynthEnvelope;
@@ -84,7 +51,24 @@ export function useKangurMusicPianoRollState<NoteId extends string>({
   synthOsc1Config?: KangurMusicSynthOsc1Config;
   synthOsc2Config?: KangurMusicSynthOsc2Config;
   synthWaveform?: KangurMusicSynthWaveform;
-}) {
+};
+
+export function useKangurMusicPianoRollState<NoteId extends string>(
+  input: UseKangurMusicPianoRollStateInput<NoteId>
+) {
+  const {
+  keyboardMode,
+  onKeyboardModeChange,
+  onSynthGlideModeChange,
+  onSynthEnvelopeChange,
+  onSynthOscSettingsChange,
+  onSynthWaveformChange,
+  synthEnvelope,
+  synthGlideMode,
+  synthOsc1Config,
+  synthOsc2Config,
+  synthWaveform,
+  } = input;
   const translations = useTranslations('KangurMusicPianoRoll');
   const isCoarsePointer = useKangurCoarsePointer();
   const isMobileViewport = useKangurMobileBreakpoint();
@@ -99,13 +83,10 @@ export function useKangurMusicPianoRollState<NoteId extends string>({
   const [isSynthOscPanelOpen, setSynthOscPanelOpen] = useState(false);
   const [activeOscTab, setActiveOscTab] = useState<'osc1' | 'osc2'>('osc1');
   const [activeSynthGestures, setActiveSynthGestures] = useState<ActiveSynthGestureState<NoteId>[]>([]);
-  const [recentKeyPulses, setRecentKeyPulses] = useState<Map<NoteId, KeyPulseState>>(new Map());
+  const [recentKeyPulses] = useState<Map<NoteId, KeyPulseState>>(new Map());
 
-  const activePressesRef = useRef<Map<NoteId, ActiveKeyPressState>>(new Map());
   const activeSynthGesturesRef = useRef<Map<number, ActiveSynthGestureState<NoteId>>>(new Map());
-  const keyPulseTimeoutIdsRef = useRef<Map<NoteId, ReturnType<typeof setTimeout>>>(new Map());
   const keyButtonRefs = useRef<Map<NoteId, HTMLButtonElement>>(new Map());
-  const lastTriggeredAtRef = useRef<number | null>(null);
 
   const resolvedKeyboardMode = keyboardMode ?? uncontrolledKeyboardMode;
   const resolvedSynthGlideMode = synthGlideMode ?? uncontrolledSynthGlideMode;
@@ -113,10 +94,6 @@ export function useKangurMusicPianoRollState<NoteId extends string>({
   const resolvedSynthEnvelope = normalizeKangurMusicSynthEnvelope(synthEnvelope ?? uncontrolledSynthEnvelope);
   const resolvedOsc1Config = synthOsc1Config ?? uncontrolledOsc1Config;
   const resolvedOsc2Config = synthOsc2Config ?? uncontrolledOsc2Config;
-
-  const keyDefinitionById = useMemo(() => new Map<NoteId, KangurMusicPianoKeyDefinition<NoteId>>(
-    keys.map((key) => [key.id, key] as const)
-  ), [keys]);
 
   // ... (Implementation of helper functions like triggerKeyPulse, triggerPress, etc.)
   // For the sake of this modular step, I will include the core state-modifying logic.

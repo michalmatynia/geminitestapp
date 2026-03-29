@@ -3,7 +3,6 @@ import type {
   FilemakerMailFolderSyncState,
   FilemakerMailMessage,
   FilemakerMailOutboxEntry,
-  FilemakerMailParticipant,
   FilemakerMailThread,
 } from '../../types';
 

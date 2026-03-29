@@ -16,13 +16,14 @@ import { cn } from '@/features/kangur/shared/utils';
 import {
   ACTION_META,
   ADVERB_TOKEN_META,
-  getActionLabel,
   getAdverbDescription,
   getAdverbLabel,
   type AdverbToken,
-  type EnglishAdverbActionId,
-  type EnglishAdverbId,
 } from './EnglishAdverbsActionStudioGame.utils';
+import type {
+  EnglishAdverbActionId,
+  EnglishAdverbId,
+} from './EnglishAdverbsActionStudioGame.data';
 
 export function DraggableAdverbToken({
   token,

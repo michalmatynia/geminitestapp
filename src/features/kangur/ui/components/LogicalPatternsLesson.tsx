@@ -430,7 +430,7 @@ export default function LogicalPatternsLesson({
             icon: '🛠️',
             maxWidthClassName: 'max-w-3xl',
             shellTestId: 'logical-patterns-game-shell',
-            title: copy.game.gameTitle,
+            title: copy.game.gameTitle ?? '',
           },
           launchableInstance: {
             gameId: 'logical_patterns_workshop',

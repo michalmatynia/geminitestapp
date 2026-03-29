@@ -1,35 +1,26 @@
 'use client';
 
-import { Eye, EyeOff, Settings } from 'lucide-react';
-import { memo, useId, useState } from 'react';
+import { Eye, EyeOff } from 'lucide-react';
+import { useState } from 'react';
 
 import { KangurDialog } from '@/features/kangur/ui/components/KangurDialog';
 import { KangurDialogCloseButton } from '@/features/kangur/ui/components/KangurDialogCloseButton';
-import { KangurDialogMeta } from '@/features/kangur/ui/components/KangurDialogMeta';
 import { KangurIconSummaryOptionCard } from '@/features/kangur/ui/components/KangurIconSummaryOptionCard';
 import { KangurIconSummaryCardContent } from '@/features/kangur/ui/components/KangurIconSummaryCardContent';
 import {
   KangurButton,
   KangurEmptyState,
-  KangurGlassPanel,
-  KangurIconBadge,
-  KangurMetaText,
   KangurPanelIntro,
-  KangurPanelRow,
   KangurPanelStack,
   KangurSelectField,
   KangurStatusChip,
   KangurSummaryPanel,
   KangurTextField,
 } from '@/features/kangur/ui/design/primitives';
-import { cn } from '@/features/kangur/shared/utils';
 import { withKangurClientError } from '@/features/kangur/observability/client';
 import {
-  KANGUR_STACK_COMPACT_CLASSNAME,
   KANGUR_STACK_TIGHT_CLASSNAME,
   KANGUR_SEGMENTED_CONTROL_CLASSNAME,
-  KANGUR_TIGHT_ROW_CLASSNAME,
-  KANGUR_WIDGET_TITLE_CLASSNAME,
 } from '@/features/kangur/ui/design/tokens';
 
 import {
@@ -49,114 +40,121 @@ export function KangurParentDashboardLearnerManagementWidget(): React.JSX.Elemen
     setActiveTab,
     isCreating,
     setIsCreating,
-    feedback,
-    setFeedback,
-    isPending,
-    setIsPending,
     sessions,
     isLoadingSessions,
+    isLoadingMoreSessions,
     sessionsError,
+    sessionsLoadMoreError,
     activeProfile,
     fetchSessions,
     handleOpenSettings,
     handleCloseModal,
   } = state;
 
-  const [formName, setFormName] = useState('');
-  const [formNickname, setFormNickname] = useState('');
-  const [formLogin, setFormLogin] = useState('');
-  const [formPassword, setFormLoginPassword] = useState('');
-  const [formAge, setFormAge] = useState<number | null>(null);
-  const [formStatus, setFormStatus] = useState<'active' | 'disabled'>('active');
   const [showPassword, setShowPassword] = useState(false);
 
-  const resetForm = (learner?: (typeof overview.learners)[number]) => {
-    setFormName(learner?.displayName ?? '');
-    setFormNickname(learner?.loginName ?? '');
-    setFormLogin(learner?.loginName ?? '');
-    setFormLoginPassword('');
-    setFormAge(learner?.age ?? null);
-    setFormStatus(learner?.status === 'active' ? 'active' : 'disabled');
+  const resetCreateForm = () => {
+    actions.updateCreateField('displayName', '');
+    actions.updateCreateField('age', '');
+    actions.updateCreateField('loginName', '');
+    actions.updateCreateField('password', '');
+    setShowPassword(false);
+  };
+
+  const resetEditForm = (learner: (typeof overview.learners)[number]) => {
+    actions.updateEditField('displayName', learner.displayName ?? '');
+    actions.updateEditField('loginName', learner.loginName ?? '');
+    actions.updateEditField('password', '');
+    actions.updateEditField('status', learner.status === 'active' ? 'active' : 'disabled');
     setShowPassword(false);
   };
 
   const handleCreateNew = () => {
-    resetForm();
+    resetCreateForm();
     setIsCreating(true);
+    setActiveTab('settings');
+  };
+
+  const handleOpenLearner = async (learner: (typeof overview.learners)[number]) => {
+    const didSelectLearner = await withKangurClientError(
+      {
+        source: 'learner-management',
+        action: 'select-learner',
+        description: 'Switches the active learner before opening learner management settings.',
+        context: { learnerId: learner.id },
+      },
+      async () => {
+        await actions.selectLearner(learner.id);
+        return true;
+      },
+      { fallback: false }
+    );
+
+    if (!didSelectLearner) return;
+
+    resetEditForm(learner);
+    handleOpenSettings(learner.id);
   };
 
   const handleSave = async () => {
-    setIsPending(true);
-    setFeedback(null);
-    try {
-      if (isCreating) {
-        await withKangurClientError(
-          { source: 'learner-management', action: 'create-learner' },
-          async () => {
-            await actions.createLearner({
-              displayName: formName,
-              loginName: formLogin,
-              password: formPassword,
-              age: formAge ?? undefined,
-            });
-            return true;
-          },
-          { onError: (err) => setFeedback({ message: String(err), tone: 'rose' }) }
-        );
-      } else if (activeProfile) {
-        await withKangurClientError(
-          { source: 'learner-management', action: 'update-learner' },
-          async () => {
-            await actions.updateLearner(activeProfile.id, {
-              displayName: formName,
-              loginName: formLogin,
-              password: formPassword || undefined,
-              age: formAge ?? undefined,
-              status: formStatus,
-            });
-            return true;
-          },
-          { onError: (err) => setFeedback({ message: String(err), tone: 'rose' }) }
-        );
-      }
+    const didSave = isCreating
+      ? await actions.handleCreateLearner()
+      : await actions.handleSaveLearner();
+
+    if (didSave) {
       handleCloseModal();
-    } finally {
-      setIsPending(false);
     }
   };
 
   const handleRemove = async () => {
     if (!activeProfile) return;
-    setIsPending(true);
-    try {
-      await actions.removeLearner(activeProfile.id);
+    const didDelete = await actions.handleDeleteLearner(activeProfile.id);
+    if (didDelete) {
       handleCloseModal();
-    } finally {
-      setIsPending(false);
     }
   };
 
+  const createForm = overview.createForm;
+  const editForm = overview.editForm;
+  const feedbackMessage = overview.feedback ?? sessionsLoadMoreError;
+  const hasMoreSessions = Boolean(sessions?.nextOffset !== null && sessions?.nextOffset !== undefined);
+
   return (
     <KangurPanelStack className='w-full'>
-      <KangurPanelIntro eyebrow={copy.learnerManagementEyebrow} title={copy.learnerManagementTitle} relaxed>
-        <p className='max-w-2xl text-sm leading-relaxed text-slate-600'>{copy.learnerManagementDescription}</p>
-      </KangurPanelIntro>
+      <KangurPanelIntro
+        eyebrow={copy.learnerManagementEyebrow}
+        title={copy.learnerManagementTitle}
+        description={copy.learnerManagementDescription}
+      />
 
       <div className='grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3'>
         {overview.learners.map((learner) => (
           <KangurIconSummaryOptionCard
             key={learner.id}
-            active={false}
-            onClick={() => {
-              resetForm(learner);
-              handleOpenSettings(learner.id);
-            }}
+            accent={learner.status === 'active' ? 'emerald' : 'slate'}
+            emphasis={activeProfileId === learner.id ? 'accent' : 'neutral'}
+            onClick={() => { void handleOpenLearner(learner); }}
             aria-label={copy.learnerCardAriaLabel(learner.displayName, learner.status === 'active' ? copy.activeStatus : copy.disabledStatus)}
           >
             <KangurIconSummaryCardContent
-              title={learner.displayName}
+              aside={
+                learner.status === 'active' ? (
+                  <KangurStatusChip accent='emerald' size='sm'>
+                    {copy.activeStatus}
+                  </KangurStatusChip>
+                ) : (
+                  <KangurStatusChip accent='slate' size='sm'>
+                    {copy.disabledStatus}
+                  </KangurStatusChip>
+                )
+              }
               description={copy.learnerLoginDescription(learner.loginName)}
-              badge={learner.status === 'active' ? <KangurStatusChip accent='emerald' size='sm'>{copy.activeStatus}</KangurStatusChip> : <KangurStatusChip accent='slate' size='sm'>{copy.disabledStatus}</KangurStatusChip>}
+              icon={
+                <div className='flex size-12 shrink-0 items-center justify-center rounded-2xl bg-slate-100 text-lg'>
+                  {learner.avatarId?.trim() ? '🦘' : '👤'}
+                </div>
+              }
+              title={learner.displayName}
             />
           </KangurIconSummaryOptionCard>
         ))}
@@ -199,14 +197,49 @@ export function KangurParentDashboardLearnerManagementWidget(): React.JSX.Elemen
           <div className='flex-1 overflow-y-auto p-6'>
             {activeTab === 'settings' || isCreating ? (
               <div className={KANGUR_STACK_TIGHT_CLASSNAME}>
-                <KangurTextField label={copy.learnerNameLabel} value={formName} onChange={(e) => setFormName(e.target.value)} placeholder={copy.learnerNamePlaceholder} />
-                <KangurTextField label={copy.loginLabel} value={formLogin} onChange={(e) => setFormLogin(e.target.value)} placeholder={copy.learnerNicknamePlaceholder} />
+                <KangurTextField
+                  aria-label={copy.learnerNameLabel}
+                  title={copy.learnerNameLabel}
+                  value={isCreating ? createForm.displayName : editForm.displayName}
+                  onChange={(event) => {
+                    const nextValue = event.target.value;
+                    if (isCreating) actions.updateCreateField('displayName', nextValue);
+                    else actions.updateEditField('displayName', nextValue);
+                  }}
+                  placeholder={copy.learnerNamePlaceholder}
+                />
+                <KangurTextField
+                  aria-label={copy.loginLabel}
+                  title={copy.loginLabel}
+                  value={isCreating ? createForm.loginName : editForm.loginName}
+                  onChange={(event) => {
+                    const nextValue = event.target.value;
+                    if (isCreating) actions.updateCreateField('loginName', nextValue);
+                    else actions.updateEditField('loginName', nextValue);
+                  }}
+                  placeholder={copy.learnerNicknamePlaceholder}
+                />
+                {isCreating ? (
+                  <KangurTextField
+                    aria-label={copy.ageLabel}
+                    title={copy.ageLabel}
+                    inputMode='numeric'
+                    value={createForm.age}
+                    onChange={(event) => actions.updateCreateField('age', event.target.value)}
+                    placeholder={copy.agePlaceholder}
+                  />
+                ) : null}
                 <div className='relative'>
                   <KangurTextField
-                    label={isCreating ? copy.learnerPasswordLabel : copy.newPasswordOptional}
+                    aria-label={isCreating ? copy.learnerPasswordLabel : copy.newPasswordOptional}
+                    title={isCreating ? copy.learnerPasswordLabel : copy.newPasswordOptional}
                     type={showPassword ? 'text' : 'password'}
-                    value={formPassword}
-                    onChange={(e) => setFormLoginPassword(e.target.value)}
+                    value={isCreating ? createForm.password : editForm.password}
+                    onChange={(event) => {
+                      const nextValue = event.target.value;
+                      if (isCreating) actions.updateCreateField('password', nextValue);
+                      else actions.updateEditField('password', nextValue);
+                    }}
                   />
                   <button
                     type='button'
@@ -218,22 +251,35 @@ export function KangurParentDashboardLearnerManagementWidget(): React.JSX.Elemen
                 </div>
                 {!isCreating && (
                   <KangurSelectField
-                    label={copy.statusLabel}
-                    value={formStatus}
-                    onChange={(val) => setFormStatus(val as any)}
-                    options={[
-                      { value: 'active', label: copy.activeStatus },
-                      { value: 'disabled', label: copy.disabledStatus },
-                    ]}
-                  />
+                    aria-label={copy.statusLabel}
+                    title={copy.statusLabel}
+                    value={editForm.status}
+                    onChange={(event) =>
+                      actions.updateEditField(
+                        'status',
+                        event.target.value === 'active' ? 'active' : 'disabled'
+                      )
+                    }
+                  >
+                    <option value='active'>{copy.activeStatus}</option>
+                    <option value='disabled'>{copy.disabledStatus}</option>
+                  </KangurSelectField>
                 )}
-                {feedback && <KangurSummaryPanel accent={feedback.tone} description={feedback.message} tone='accent' padding='sm' className='mt-2' />}
+                {feedbackMessage ? (
+                  <KangurSummaryPanel
+                    accent='rose'
+                    description={feedbackMessage}
+                    tone='accent'
+                    padding='md'
+                    className='mt-2'
+                  />
+                ) : null}
                 <div className='mt-6 flex flex-col gap-3'>
-                  <KangurButton onClick={handleSave} disabled={isPending} variant='primary' size='lg' className='w-full'>
-                    {isPending ? copy.loading : copy.saveLearner}
+                  <KangurButton onClick={() => void handleSave()} disabled={overview.isSubmitting} variant='primary' size='lg' className='w-full'>
+                    {overview.isSubmitting ? copy.loading : copy.saveLearner}
                   </KangurButton>
                   {!isCreating && (
-                    <KangurButton onClick={handleRemove} disabled={isPending} variant='ghost' size='sm' className='text-rose-600 hover:bg-rose-50'>
+                    <KangurButton onClick={() => void handleRemove()} disabled={overview.isSubmitting} variant='ghost' size='sm' className='text-rose-600 hover:bg-rose-50'>
                       {copy.removeLearnerProfile}
                     </KangurButton>
                   )}
@@ -271,9 +317,18 @@ export function KangurParentDashboardLearnerManagementWidget(): React.JSX.Elemen
                         </div>
                       </div>
                     ))}
-                    {sessions?.hasMore && (
-                      <KangurButton onClick={() => activeProfileId && fetchSessions(activeProfileId, sessions.nextCursor)} variant='surface' size='sm' className='w-full'>
-                        {copy.loadMoreSessions}
+                    {hasMoreSessions && (
+                      <KangurButton
+                        onClick={() => {
+                          if (!activeProfileId || sessions?.nextOffset == null) return;
+                          void fetchSessions(activeProfileId, sessions.nextOffset);
+                        }}
+                        disabled={isLoadingMoreSessions}
+                        variant='surface'
+                        size='sm'
+                        className='w-full'
+                      >
+                        {isLoadingMoreSessions ? copy.loading : copy.loadMoreSessions}
                       </KangurButton>
                     )}
                   </div>

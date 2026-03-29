@@ -16,25 +16,10 @@ import {
 } from 'react';
 
 import { getKangurPlatform } from '@/features/kangur/services/kangur-platform';
-import type {
-  KangurAssignmentCreateInput,
-  KangurAssignmentSnapshot,
-  KangurAssignmentUpdateInput,
-} from '@kangur/platform';
 import { useKangurAuth } from '@/features/kangur/ui/context/KangurAuthContext';
 import { useKangurRouting } from '@/features/kangur/ui/context/KangurRoutingContext';
 import { useKangurProgressState } from '@/features/kangur/ui/hooks/useKangurProgressState';
 import { internalError } from '@/features/kangur/shared/errors/app-error';
-import {
-  reportKangurClientError,
-  withKangurClientError,
-} from '@/features/kangur/observability/client';
-import { ErrorSystem } from '@/features/kangur/shared/utils/observability/error-system-client';
-import {
-  KANGUR_LEARNER_PASSWORD_MAX_LENGTH,
-  KANGUR_LEARNER_PASSWORD_MIN_LENGTH,
-  KANGUR_LEARNER_PASSWORD_PATTERN,
-} from '@/shared/contracts/kangur';
 import { useKangurAgeGroupFocus } from '@/features/kangur/ui/context/KangurAgeGroupFocusContext';
 import { useKangurAssignments } from '@/features/kangur/ui/hooks/useKangurAssignments';
 import { useKangurLessons } from '@/features/kangur/ui/hooks/useKangurLessons';
@@ -96,6 +81,7 @@ export function KangurParentDashboardRuntimeProvider({
     checkAppState,
   } = useKangurAuth();
   const { ageGroup } = useKangurAgeGroupFocus();
+  const { subject } = useKangurSubjectFocus();
   const progress = useKangurProgressState();
   const [activeTab, setActiveTab] = useState<KangurParentDashboardTabId>('progress');
   const [isCreateLearnerModalOpen, setCreateLearnerModalOpen] = useState(false);
@@ -144,20 +130,20 @@ export function KangurParentDashboardRuntimeProvider({
   const assignmentsError = canAccessDashboard && activeLearnerId ? assignmentsQuery.error : null;
   const isLoadingAssignments = canAccessDashboard && activeLearnerId ? assignmentsQuery.isLoading : false;
   const viewerName = user?.email?.trim() || translations('account');
+  const scoreViewerName = activeLearner?.displayName?.trim() || null;
+  const scoreViewerEmail = user?.email?.trim() || null;
+  const viewerRoleLabel = null;
 
   const {
     scores,
-    error: scoresError,
-    isLoading: isLoadingScores,
-    scoreViewerEmail,
-    scoreViewerName,
-    viewerRoleLabel,
-    refreshScores,
+    scoresError,
+    isLoadingScores,
   } = useKangurParentDashboardScores({
     enabled: canAccessDashboard && Boolean(activeLearnerId) && isPrimaryQueriesReady,
-    activeLearnerId,
-    isAuthenticated,
-    user,
+    createdBy: user?.email?.trim() || null,
+    learnerId: activeLearnerId,
+    playerName: activeLearner?.displayName?.trim() || null,
+    subject,
   });
 
   const actions = useMemo((): KangurParentDashboardRuntimeActionsContextValue => {
@@ -169,17 +155,19 @@ export function KangurParentDashboardRuntimeProvider({
     const updateCreateField = <K extends keyof KangurParentDashboardCreateForm>(key: K, value: KangurParentDashboardCreateForm[K]): void => setCreateForm((prev) => ({ ...prev, [key]: value }));
     const updateEditField = <K extends keyof KangurParentDashboardEditForm>(key: K, value: KangurParentDashboardEditForm[K]): void => setEditForm((prev) => ({ ...prev, [key]: value }));
 
-    const handleCreateLearner = async (): Promise<void> => {
+    const handleCreateLearner = async (): Promise<boolean> => {
       setIsSubmitting(true);
       setFeedback(null);
       try {
         const age = parseInt(createForm.age, 10);
-        await withTimeout(kangurPlatform.createLearnerProfile({ displayName: createForm.displayName, age: isNaN(age) ? undefined : age, loginName: createForm.loginName, password: createForm.password }), ACTION_TIMEOUT_MS, translations('errors.createTimeout'));
+        await withTimeout(kangurPlatform.learners.create({ displayName: createForm.displayName, age: isNaN(age) ? undefined : age, loginName: createForm.loginName, password: createForm.password }), ACTION_TIMEOUT_MS, translations('errors.createTimeout'));
         await checkAppState();
         setCreateLearnerModalOpen(false);
         setCreateForm({ displayName: '', age: '', loginName: '', password: '' });
+        return true;
       } catch (error) {
         setFeedback(error instanceof Error ? error.message : translations('errors.createFailed'));
+        return false;
       } finally {
         setIsSubmitting(false);
       }
@@ -190,7 +178,7 @@ export function KangurParentDashboardRuntimeProvider({
       setIsSubmitting(true);
       setFeedback(null);
       try {
-        await withTimeout(kangurPlatform.updateLearnerProfile(activeLearnerId, { displayName: editForm.displayName, loginName: editForm.loginName, password: editForm.password || undefined, status: editForm.status }), ACTION_TIMEOUT_MS, translations('errors.saveTimeout'));
+        await withTimeout(kangurPlatform.learners.update(activeLearnerId, { displayName: editForm.displayName, loginName: editForm.loginName, password: editForm.password || undefined, status: editForm.status }), ACTION_TIMEOUT_MS, translations('errors.saveTimeout'));
         await checkAppState();
         return true;
       } catch (error) {
@@ -205,7 +193,7 @@ export function KangurParentDashboardRuntimeProvider({
       setIsSubmitting(true);
       setFeedback(null);
       try {
-        await withTimeout(kangurPlatform.removeLearnerProfile(learnerId), ACTION_TIMEOUT_MS, translations('errors.deleteTimeout'));
+        await withTimeout(kangurPlatform.learners.delete(learnerId), ACTION_TIMEOUT_MS, translations('errors.deleteTimeout'));
         await checkAppState();
         return true;
       } catch (error) {

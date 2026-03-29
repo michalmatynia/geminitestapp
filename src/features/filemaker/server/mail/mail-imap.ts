@@ -1,7 +1,7 @@
 import 'server-only';
 
 import { ImapFlow } from 'imapflow';
-import type { FetchMessageObject, ListResponse } from 'imapflow';
+import type { ListResponse } from 'imapflow';
 import { configurationError } from '@/shared/errors/app-error';
 import type {
   FilemakerMailAccount,

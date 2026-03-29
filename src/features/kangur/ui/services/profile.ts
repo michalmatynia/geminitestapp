@@ -9,22 +9,18 @@ import {
   getNextLevel,
   getProgressBadges,
   getProgressAverageAccuracy,
+  getProgressAverageXpPerSession,
   getProgressBestAccuracy,
   getRecommendedSessionMomentum,
 } from '@/features/kangur/ui/services/progress';
-import {
-  getKangurLearnerProfileFallbackCopy,
-} from '@/features/kangur/ui/services/profile.copy';
 import { normalizeSiteLocale } from '@/shared/lib/i18n/site-locale';
 
 import {
-  type KangurLearnerProfileLocalizer,
   type KangurLearnerProfileSnapshot,
   type KangurLearnerProfileTranslate,
 } from './profile/profile-types';
 import {
   parseDateOrNull,
-  translateKangurLearnerProfileWithFallback,
   toLocalDateKey,
   toPercent,
 } from './profile/profile-utils';
@@ -68,7 +64,6 @@ export const buildKangurLearnerProfileSnapshot = (
 ): KangurLearnerProfileSnapshot => {
   const now = input.now ?? new Date();
   const normalizedLocale = normalizeSiteLocale(input.locale);
-  const fallbackCopy = getKangurLearnerProfileFallbackCopy(normalizedLocale);
   const sortedScores = normalizeScoresDesc(input.scores);
 
   const streaks = computeStreaks(sortedScores, now);
@@ -86,8 +81,18 @@ export const buildKangurLearnerProfileSnapshot = (
   );
   const recentSessions = computeRecentSessions(sortedScores, normalizedLocale, input.translate);
   const xpAnalytics = computeXpAnalytics(sortedScores, input.progress, now);
+  const badges = getProgressBadges(input.progress);
+  const level = getCurrentLevel(input.progress.totalXp);
+  const nextLevel = getNextLevel(input.progress.totalXp);
+  const xpIntoLevel = input.progress.totalXp - level.minXp;
+  const xpNeeded = nextLevel ? Math.max(1, nextLevel.minXp - level.minXp) : 1;
+  const todayDateKey = toLocalDateKey(now);
 
-  const todayGames = weeklyActivity.at(-1)?.games ?? 0;
+  const todayGames =
+    weeklyActivity.find((entry) => entry.dateKey === todayDateKey)?.games ??
+    weeklyActivity.at(-1)?.games ??
+    0;
+  const dailyGoalGames = Math.max(1, Math.round(input.dailyGoalGames));
   const averageAccuracy = getProgressAverageAccuracy(input.progress);
 
   const rawMomentum = getRecommendedSessionMomentum(input.progress);
@@ -113,20 +118,32 @@ export const buildKangurLearnerProfileSnapshot = (
   });
 
   return {
-    level: getCurrentLevel(input.progress.totalXp),
-    nextLevel: getNextLevel(input.progress.totalXp),
     totalXp: input.progress.totalXp,
+    gamesPlayed: input.progress.gamesPlayed,
+    lessonsCompleted: input.progress.lessonsCompleted,
+    perfectGames: input.progress.perfectGames,
+    totalBadges: badges.length,
+    unlockedBadges: badges.filter((badge) => badge.isUnlocked).length,
+    unlockedBadgeIds: badges.filter((badge) => badge.isUnlocked).map((badge) => badge.id),
+    level,
+    nextLevel,
+    levelProgressPercent: nextLevel ? toPercent((xpIntoLevel / xpNeeded) * 100) : 100,
     todayXpEarned: xpAnalytics.todayXpEarned,
     weeklyXpEarned: xpAnalytics.weeklyXpEarned,
-    averageXpPerSession: xpAnalytics.averageXpPerSession,
-    gamesPlayed: input.progress.gamesPlayed,
+    averageXpPerSession:
+      xpAnalytics.averageXpPerSession || getProgressAverageXpPerSession(input.progress),
     averageAccuracy,
     bestAccuracy: getProgressBestAccuracy(input.progress),
     currentStreakDays: streaks.currentStreakDays,
     longestStreakDays: streaks.longestStreakDays,
     lastPlayedAt: streaks.lastPlayedAt,
-    badges: getProgressBadges(input.progress),
-    momentum,
+    dailyGoalGames,
+    todayGames,
+    dailyGoalPercent: toPercent((todayGames / dailyGoalGames) * 100),
+    recommendedSessionsCompleted: rawMomentum.completedSessions,
+    recommendedSessionProgressPercent: rawMomentum.progressPercent,
+    recommendedSessionSummary: momentum.summary,
+    recommendedSessionNextBadgeName: momentum.nextBadgeName,
     weeklyActivity,
     operationPerformance,
     recentSessions,

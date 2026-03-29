@@ -1,6 +1,5 @@
 'use client';
 
-import type { KangurAccent } from '@/features/kangur/ui/design/tokens';
 import type {
   CalendarInteractiveSectionContent,
   CalendarInteractiveTaskPoolId,
@@ -124,7 +123,7 @@ export function generateTask(
   if (type === 'click_all_weekends') {
     const dayIdx: 5 | 6 = Math.random() > 0.5 ? 5 : 6;
     const targets = cells
-      .map((day, idx) => (day !== null && getDayOfWeek(year, month, day) === dayIdx ? day : null))
+      .map((day) => (day !== null && getDayOfWeek(year, month, day) === dayIdx ? day : null))
       .filter((day): day is number => day !== null);
     return {
       type: 'click_all_weekends',

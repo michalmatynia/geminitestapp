@@ -1,6 +1,5 @@
 'use client';
 
-import React from 'react';
 import { Button, Input } from '@/features/kangur/shared/ui';
 import type { SettingsPanelField } from '@/features/kangur/shared/ui/templates/SettingsPanelBuilder';
 import type { ThemeSettings } from '@/shared/contracts/cms-theme';

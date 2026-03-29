@@ -8,12 +8,16 @@ import {
   renderNavAction,
 } from './KangurPrimaryNavigation.utils';
 
-export function KangurHomeBetaBadge(): React.JSX.Element {
+export function KangurHomeBetaBadge({
+  testId = 'kangur-home-beta-badge',
+}: {
+  testId?: string;
+} = {}): React.JSX.Element {
   return (
     <svg
       aria-hidden='true'
       className='mt-0.5 h-[12px] w-auto overflow-visible sm:h-[13px]'
-      data-testid='kangur-home-beta-badge'
+      data-testid={testId}
       fill='none'
       viewBox='0 0 62 18'
       xmlns='http://www.w3.org/2000/svg'

@@ -19,7 +19,8 @@ export type { SelectSimpleOption };
 
 interface SelectSimpleProps {
   value: string | undefined;
-  onValueChange: (value: string) => void;
+  onValueChange?: (value: string) => void;
+  onChange?: (value: string) => void;
   options: SelectSimpleOption[] | readonly SelectSimpleOption[];
   placeholder?: string | undefined;
   className?: string | undefined;
@@ -154,6 +155,7 @@ export function SelectSimple(props: SelectSimpleProps): React.JSX.Element {
   const {
     value,
     onValueChange,
+    onChange,
     options,
     placeholder = 'Select an option',
     className,
@@ -171,6 +173,13 @@ export function SelectSimple(props: SelectSimpleProps): React.JSX.Element {
     dataDocId,
     dataDocAlias,
   } = props;
+  const handleValueChange = React.useCallback(
+    (nextValue: string): void => {
+      onValueChange?.(nextValue);
+      onChange?.(nextValue);
+    },
+    [onChange, onValueChange]
+  );
 
   const normalizedOptions = React.useMemo(
     () => options.filter((option) => option.value && option.value.trim() !== ''),
@@ -248,11 +257,11 @@ export function SelectSimple(props: SelectSimpleProps): React.JSX.Element {
     contentClassName,
     dataDocAlias,
     dataDocId,
-    disabled,
-    groupedOptions,
-    id,
-    onValueChange,
-    placeholder,
+      disabled,
+      groupedOptions,
+      id,
+      onValueChange: handleValueChange,
+      placeholder,
     resolvedTitle,
     resolvedTriggerAriaLabel,
     safeValue,

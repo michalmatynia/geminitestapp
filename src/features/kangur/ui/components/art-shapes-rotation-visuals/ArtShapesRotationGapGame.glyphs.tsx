@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import type { RotationGlyph } from './ArtShapesRotationGapGame.data';
+import type { RotationGlyph } from '../ArtShapesRotationGapGame.data';
 
 export function RotationGlyphVisual({
   glyph,

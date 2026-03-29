@@ -252,6 +252,7 @@ function GameContent(): React.JSX.Element {
     logical_classification_quiz: logicalClassificationQuizRef,
     logical_analogies_quiz: logicalAnalogiesQuizRef,
     english_subject_verb_agreement_quiz: englishSubjectVerbAgreementQuizRef,
+    english_going_to_quiz: englishSentenceQuizRef,
     english_adjectives_quiz: englishAdjectivesQuizRef,
     english_compare_and_crown_quiz: englishCompareAndCrownQuizRef,
     english_adverbs_quiz: englishAdverbsQuizRef,

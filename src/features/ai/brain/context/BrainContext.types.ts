@@ -77,6 +77,7 @@ export interface BrainActionsContextType {
   handleDefaultChange: (next: AiBrainAssignment) => void;
   handleOverrideChange: (feature: AiBrainFeature, next: AiBrainAssignment) => void;
   handleCapabilityChange: (capability: AiBrainCapabilityKey, next: AiBrainAssignment) => void;
+  setFeatureEnabled: (feature: AiBrainFeature, enabled: boolean) => void;
   setCapabilityEnabled: (capability: AiBrainCapabilityKey, enabled: boolean) => void;
   clearCapabilityOverride: (capability: AiBrainCapabilityKey) => void;
   toggleOverride: (feature: AiBrainFeature, enabled: boolean) => void;

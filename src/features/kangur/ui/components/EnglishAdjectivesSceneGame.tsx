@@ -109,7 +109,7 @@ export default function EnglishAdjectivesSceneGame({
           {percent === 100 ? translations('englishAdjectives.summary.perfect') : translations('englishAdjectives.summary.retry')}
         </KangurPracticeGameSummaryMessage>
         <KangurPracticeGameSummaryActions
-          finishLabel={finishLabel}
+          finishLabel={finishLabel ?? translations('shared.finish.lesson')}
           onFinish={onFinish}
           onRestart={handleRestart}
           restartLabel={translations('shared.restart')}

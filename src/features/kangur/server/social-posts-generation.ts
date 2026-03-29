@@ -1,6 +1,6 @@
 import 'server-only';
 
-import { configurationError } from '@/shared/errors/app-error';
+import { configurationError, operationFailedError } from '@/shared/errors/app-error';
 import { resolveBrainExecutionConfigForCapability } from '@/shared/lib/ai-brain/server';
 import {
   runBrainChatCompletion,
@@ -204,6 +204,13 @@ export async function generateKangurSocialPostDraft(
     const titleEn = (parsed.titleEn ?? '').trim();
     const bodyPl = (parsed.bodyPl ?? '').trim();
     const bodyEn = (parsed.bodyEn ?? '').trim();
+
+    if (!bodyPl && !bodyEn) {
+      throw operationFailedError(
+        'The model returned an empty draft. Check your AI Brain routing for kangur_social.post_generation or try a different model.'
+      );
+    }
+
     const combinedBody = buildKangurSocialPostCombinedBody(bodyPl, bodyEn);
 
     const draft: KangurSocialPostDraft = {

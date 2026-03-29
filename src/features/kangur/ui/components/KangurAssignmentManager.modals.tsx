@@ -1,25 +1,15 @@
 'use client';
 
-import React from 'react';
 import {
   KangurButton,
+  KangurGlassPanel,
   KangurHeadline,
   KangurTextField,
 } from '@/features/kangur/ui/design/primitives';
 import {
   KANGUR_STACK_COMPACT_CLASSNAME,
 } from '@/features/kangur/ui/design/tokens';
-import dynamic from 'next/dynamic';
-
-const KangurChoiceDialog = dynamic(() =>
-  import('@/features/kangur/ui/components/KangurChoiceDialog').then((m) => ({
-    default: function KangurChoiceDialogEntry(
-      props: import('@/features/kangur/ui/components/KangurChoiceDialog').KangurChoiceDialogProps
-    ) {
-      return m.renderKangurChoiceDialog(props);
-    },
-  }))
-);
+import { KangurDialog } from '@/features/kangur/ui/components/KangurDialog';
 
 export function KangurAssignmentManagerTimeLimitModal({
   isOpen,
@@ -42,38 +32,48 @@ export function KangurAssignmentManagerTimeLimitModal({
   saveLabel: string;
   isDisabled: boolean;
   error: string | null;
-  preview: string;
-}) {
+  preview: string | null;
+}): React.JSX.Element {
   return (
-    <KangurChoiceDialog
+    <KangurDialog
       open={isOpen}
       onOpenChange={onOpenChange}
-      title={title}
-      showCloseButton
+      overlayVariant='dark'
+      contentSize='sm'
     >
-      <div className={KANGUR_STACK_COMPACT_CLASSNAME}>
+      <KangurGlassPanel className={KANGUR_STACK_COMPACT_CLASSNAME} padding='lg' surface='playField'>
+        <KangurHeadline accent='indigo' as='h2' size='sm'>
+          {title}
+        </KangurHeadline>
         <KangurTextField
-          label='Limit czasu (minuty)'
+          aria-label='Limit czasu w minutach'
+          title='Limit czasu w minutach'
           value={draftValue}
-          onChange={onDraftChange}
+          onChange={(event) => onDraftChange(event.target.value)}
           placeholder='Brak limitu'
-          error={error ?? undefined}
           autoFocus
         />
+        {error ? <p className='text-xs font-semibold text-rose-600'>{error}</p> : null}
         <div className='flex items-center justify-between gap-4'>
           <p className='text-xs text-slate-500'>
-            Obecny limit: <span className='font-bold text-slate-700'>{preview}</span>
+            Obecny limit: <span className='font-bold text-slate-700'>{preview ?? 'Brak limitu'}</span>
           </p>
-          <KangurButton
-            onClick={onSave}
-            disabled={isDisabled}
-            size='sm'
-            variant='primary'
-          >
-            {saveLabel}
-          </KangurButton>
+          <div className='flex items-center gap-2'>
+            <KangurButton onClick={() => onOpenChange(false)} size='sm' type='button' variant='ghost'>
+              Zamknij
+            </KangurButton>
+            <KangurButton
+              onClick={onSave}
+              disabled={isDisabled}
+              size='sm'
+              type='button'
+              variant='primary'
+            >
+              {saveLabel}
+            </KangurButton>
+          </div>
         </div>
-      </div>
-    </KangurChoiceDialog>
+      </KangurGlassPanel>
+    </KangurDialog>
   );
 }

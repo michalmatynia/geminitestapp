@@ -386,7 +386,7 @@ export function buildKangurCmsBuilderState(
 
   return {
     pages: KANGUR_CMS_SCREEN_KEYS.map((key: KangurCmsScreenKey) =>
-      buildKangurCmsPageSummary(project.screens[key])
+      buildKangurCmsSyntheticPage(project.screens[key], locale)
     ),
     currentPage,
     sections,

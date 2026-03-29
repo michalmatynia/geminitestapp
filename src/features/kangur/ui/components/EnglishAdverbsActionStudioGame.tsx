@@ -44,7 +44,6 @@ import {
 } from './EnglishAdverbsActionStudioGame.components';
 import {
   ACTION_META,
-  ADVERB_TOKEN_META,
   buildEnglishAdverbSentence,
   buildEnglishAdverbSentenceTemplate,
   getActionLabel,
@@ -54,8 +53,8 @@ import {
   slotDroppableId,
   TOTAL_ACTIONS,
   TOTAL_ROUNDS,
-  type EnglishAdverbId,
 } from './EnglishAdverbsActionStudioGame.utils';
+import type { EnglishAdverbId } from './EnglishAdverbsActionStudioGame.data';
 
 const ADVERB_GUIDE_ORDER: EnglishAdverbId[] = [
   'fast',
@@ -79,7 +78,6 @@ export default function EnglishAdverbsActionStudioGame({
     selectedTokenId,
     setSelectedTokenId,
     checked,
-    roundCorrect,
     totalCorrect,
     feedback,
     done,

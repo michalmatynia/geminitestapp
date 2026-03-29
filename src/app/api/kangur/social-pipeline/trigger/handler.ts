@@ -11,7 +11,7 @@ import {
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { imageFileSelectionSchema } from '@/shared/contracts/files';
 import { forbiddenError, operationFailedError } from '@/shared/errors/app-error';
-import { isRedisAvailable } from '@/shared/lib/queue';
+import { isRedisAvailable, isRedisReachable } from '@/shared/lib/queue';
 
 const editorStateSchema = z.object({
   titlePl: z.string().trim().max(200),
@@ -83,14 +83,21 @@ export async function POST_handler(
     parsed.jobType ??
     (parsed.input ? 'manual-post-pipeline' : 'pipeline-tick');
 
-  await recoverKangurSocialPipelineQueue();
-  startKangurSocialPipelineQueue();
-
   if (!isRedisAvailable()) {
     throw operationFailedError(
       'Social pipeline queue is not available. Configure REDIS_URL and start Redis.'
     );
   }
+
+  const redisReachable = await isRedisReachable();
+  if (!redisReachable) {
+    throw operationFailedError(
+      'Social pipeline queue is not available. Redis is configured but unreachable.'
+    );
+  }
+
+  await recoverKangurSocialPipelineQueue();
+  startKangurSocialPipelineQueue();
 
   const jobId =
     jobType === 'manual-post-pipeline'

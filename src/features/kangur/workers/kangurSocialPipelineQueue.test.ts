@@ -4,24 +4,31 @@ const {
   cleanMock,
   createManagedQueueMock,
   enqueueMock,
+  getMock,
   getHealthStatusMock,
+  getRedisConnectionMock,
   getQueueMock,
   logInfoMock,
   runKangurSocialPostPipelineMock,
+  setMock,
   startWorkerMock,
 } = vi.hoisted(() => ({
   cleanMock: vi.fn(),
   createManagedQueueMock: vi.fn(),
   enqueueMock: vi.fn(),
+  getMock: vi.fn(),
   getHealthStatusMock: vi.fn(),
+  getRedisConnectionMock: vi.fn(),
   getQueueMock: vi.fn(),
   logInfoMock: vi.fn(),
   runKangurSocialPostPipelineMock: vi.fn(),
+  setMock: vi.fn(),
   startWorkerMock: vi.fn(),
 }));
 
 vi.mock('@/shared/lib/queue', () => ({
   createManagedQueue: createManagedQueueMock,
+  getRedisConnection: (...args: unknown[]) => getRedisConnectionMock(...args),
 }));
 
 vi.mock('@/shared/utils/observability/error-system', () => ({
@@ -62,8 +69,19 @@ describe('kangurSocialPipelineQueue', () => {
   beforeEach(() => {
     vi.resetModules();
     vi.clearAllMocks();
+    delete (
+      globalThis as typeof globalThis & {
+        __kangurSocialPipelineQueueState__?: unknown;
+      }
+    ).__kangurSocialPipelineQueueState__;
     createManagedQueueMock.mockReturnValue(createQueueMock());
     enqueueMock.mockResolvedValue('job-1');
+    getRedisConnectionMock.mockReturnValue({
+      set: setMock,
+      get: getMock,
+    });
+    setMock.mockResolvedValue('OK');
+    getMock.mockResolvedValue(null);
     getHealthStatusMock.mockResolvedValue({
       running: false,
       healthy: false,
@@ -167,5 +185,32 @@ describe('kangurSocialPipelineQueue', () => {
       })
     );
     expect(result).toEqual(manualResult);
+  });
+
+  it('writes a shared worker heartbeat when the queue worker starts', async () => {
+    vi.useFakeTimers();
+    const { startKangurSocialPipelineQueue } = await import('./kangurSocialPipelineQueue');
+
+    startKangurSocialPipelineQueue();
+    await Promise.resolve();
+
+    expect(startWorkerMock).toHaveBeenCalledTimes(1);
+    expect(setMock).toHaveBeenCalledWith(
+      'kangur-social-pipeline:worker-heartbeat',
+      expect.any(String),
+      'EX',
+      120
+    );
+  });
+
+  it('reads the shared worker heartbeat timestamp from redis', async () => {
+    const heartbeatAt = Date.now() - 1_000;
+    getMock.mockResolvedValueOnce(JSON.stringify({ heartbeatAt, pid: 123 }));
+
+    const { getKangurSocialPipelineWorkerHeartbeat } = await import(
+      './kangurSocialPipelineQueue'
+    );
+
+    await expect(getKangurSocialPipelineWorkerHeartbeat()).resolves.toBe(heartbeatAt);
   });
 });

@@ -13,6 +13,12 @@ import { KANGUR_ADMIN_CARD_CLASS_NAME, KangurAdminCard } from '../components/Kan
 const REFRESH_INTERVAL_MS = 10_000;
 const QUEUE_PANEL_REQUEST_TIMEOUT_MS = 60_000;
 
+const formatElapsedLabel = (ms: number | null | undefined): string | null => {
+  if (!ms || ms <= 0) return null;
+  if (ms < 60_000) return `${Math.round(ms / 1000)}s ago`;
+  return `${Math.round(ms / 60_000)}m ago`;
+};
+
 type PipelineStatus = QueueHealthStatus & {
   isPaused?: boolean;
   repeatEveryMs?: number;
@@ -179,6 +185,7 @@ export function KangurSocialPipelineQueuePanel({
   const isRunning = workerState === 'running';
   const isIdle = workerState === 'idle';
   const isInlineMode = (status?.deliveryMode ?? 'queue') === 'inline';
+  const statusReason = status?.statusReason;
   const hasActiveServerRun =
     isRunning &&
     ((status?.processing ?? false) || (status?.activeCount ?? 0) > 0);
@@ -187,13 +194,23 @@ export function KangurSocialPipelineQueuePanel({
     ? 'Paused'
     : isRunning
       ? 'Running'
+      : statusReason === 'redis_unreachable'
+        ? 'Redis Down'
       : isIdle
         ? 'Idle'
         : isInlineMode
           ? 'No Redis'
           : 'Offline';
-  const showRedisWarning = Boolean(status) && isInlineMode;
-  const showOfflineNotice = Boolean(status) && !isInlineMode && !isRunning && !isIdle && !isPaused;
+  const showRedisWarning =
+    Boolean(status) && (statusReason === 'missing_redis' || (isInlineMode && !statusReason));
+  const showRedisUnreachableWarning = Boolean(status) && statusReason === 'redis_unreachable';
+  const showOfflineNotice =
+    Boolean(status) &&
+    statusReason !== 'redis_unreachable' &&
+    !isInlineMode &&
+    !isRunning &&
+    !isIdle &&
+    !isPaused;
 
   const lastPollLabel = useMemo(() => {
     if (!status?.lastPollTime) return 'Never';
@@ -201,11 +218,12 @@ export function KangurSocialPipelineQueuePanel({
   }, [status?.lastPollTime]);
 
   const timeSinceLastPollLabel = useMemo(() => {
-    const ms = status?.timeSinceLastPoll;
-    if (!ms || ms <= 0) return null;
-    if (ms < 60_000) return `${Math.round(ms / 1000)}s ago`;
-    return `${Math.round(ms / 60_000)}m ago`;
+    return formatElapsedLabel(status?.timeSinceLastPoll);
   }, [status?.timeSinceLastPoll]);
+
+  const workerHeartbeatLabel = useMemo(() => {
+    return formatElapsedLabel(status?.timeSinceWorkerHeartbeat);
+  }, [status?.timeSinceWorkerHeartbeat]);
 
   if (variant === 'compact') {
     return (
@@ -355,9 +373,14 @@ export function KangurSocialPipelineQueuePanel({
               Last run: {lastPollLabel}
               {timeSinceLastPollLabel ? ` (${timeSinceLastPollLabel})` : ''}
             </span>
-            {status.delayedCount != null && status.delayedCount > 0 ? (
-              <span>Delayed: {status.delayedCount}</span>
-            ) : null}
+            <div className='flex items-center gap-3'>
+              {workerHeartbeatLabel && !status.workerLocal ? (
+                <span>Worker heartbeat: {workerHeartbeatLabel}</span>
+              ) : null}
+              {status.delayedCount != null && status.delayedCount > 0 ? (
+                <span>Delayed: {status.delayedCount}</span>
+              ) : null}
+            </div>
           </div>
         </>
       ) : null}
@@ -369,6 +392,16 @@ export function KangurSocialPipelineQueuePanel({
           className='rounded-xl border-amber-500/30 bg-amber-500/5 text-sm text-amber-600'
         >
           Capture queue worker is not running. Ensure Redis is available and REDIS_URL is configured.
+        </Card>
+      ) : null}
+
+      {showRedisUnreachableWarning ? (
+        <Card
+          variant='subtle'
+          padding='md'
+          className='rounded-xl border-destructive/40 bg-destructive/5 text-sm text-destructive'
+        >
+          Capture queue cannot reach Redis. Verify the Redis service is online and the REDIS_URL connection settings are correct.
         </Card>
       ) : null}
 

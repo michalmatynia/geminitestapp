@@ -13,7 +13,7 @@ import {
   KANGUR_SOCIAL_SETTINGS_KEY,
   parseKangurSocialSettings,
 } from '@/features/kangur/settings-social';
-import { createManagedQueue, type ManagedQueue } from '@/shared/lib/queue';
+import { createManagedQueue, getRedisConnection, type ManagedQueue } from '@/shared/lib/queue';
 import type { SchedulerQueueState } from '@/shared/lib/queue/scheduler-queue-types';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
@@ -62,8 +62,27 @@ const KANGUR_SOCIAL_PIPELINE_LOCK_DURATION_MS = parseMsFromEnv(
   60_000
 );
 
+const KANGUR_SOCIAL_PIPELINE_WORKER_HEARTBEAT_INTERVAL_MS = parseMsFromEnv(
+  process.env['KANGUR_SOCIAL_PIPELINE_WORKER_HEARTBEAT_INTERVAL_MS'],
+  30_000,
+  5_000
+);
+
+export const KANGUR_SOCIAL_PIPELINE_WORKER_HEARTBEAT_TTL_MS = parseMsFromEnv(
+  process.env['KANGUR_SOCIAL_PIPELINE_WORKER_HEARTBEAT_TTL_MS'],
+  120_000,
+  15_000
+);
+
+const KANGUR_SOCIAL_PIPELINE_WORKER_HEARTBEAT_KEY =
+  'kangur-social-pipeline:worker-heartbeat';
+
+type KangurSocialPipelineQueueState = SchedulerQueueState & {
+  heartbeatTimer: ReturnType<typeof setInterval> | null;
+};
+
 const globalWithQueueState = globalThis as typeof globalThis & {
-  __kangurSocialPipelineQueueState__?: SchedulerQueueState;
+  __kangurSocialPipelineQueueState__?: KangurSocialPipelineQueueState;
 };
 
 const queueState =
@@ -71,7 +90,62 @@ const queueState =
   (globalWithQueueState.__kangurSocialPipelineQueueState__ = {
     workerStarted: false,
     schedulerRegistered: false,
+    heartbeatTimer: null,
   });
+
+const writeKangurSocialPipelineWorkerHeartbeat = async (): Promise<void> => {
+  const redis = getRedisConnection();
+  if (!redis) return;
+
+  const payload = JSON.stringify({
+    heartbeatAt: Date.now(),
+    pid: process.pid,
+  });
+
+  await redis.set(
+    KANGUR_SOCIAL_PIPELINE_WORKER_HEARTBEAT_KEY,
+    payload,
+    'EX',
+    Math.ceil(KANGUR_SOCIAL_PIPELINE_WORKER_HEARTBEAT_TTL_MS / 1000)
+  );
+};
+
+export const getKangurSocialPipelineWorkerHeartbeat = async (): Promise<number | null> => {
+  const redis = getRedisConnection();
+  if (!redis) return null;
+
+  try {
+    const raw = await redis.get(KANGUR_SOCIAL_PIPELINE_WORKER_HEARTBEAT_KEY);
+    if (!raw) return null;
+
+    if (/^\d+$/.test(raw)) {
+      const parsed = Number(raw);
+      return Number.isFinite(parsed) ? parsed : null;
+    }
+
+    const parsed = JSON.parse(raw) as { heartbeatAt?: unknown };
+    const heartbeatAt = parsed.heartbeatAt;
+    return typeof heartbeatAt === 'number' && Number.isFinite(heartbeatAt)
+      ? heartbeatAt
+      : null;
+  } catch (error) {
+    await ErrorSystem.captureException(error, {
+      service: 'kangur-social-pipeline-queue',
+      action: 'readWorkerHeartbeat',
+    });
+    return null;
+  }
+};
+
+const startKangurSocialPipelineWorkerHeartbeat = (): void => {
+  if (queueState.heartbeatTimer) return;
+
+  void writeKangurSocialPipelineWorkerHeartbeat();
+  queueState.heartbeatTimer = setInterval(() => {
+    void writeKangurSocialPipelineWorkerHeartbeat();
+  }, KANGUR_SOCIAL_PIPELINE_WORKER_HEARTBEAT_INTERVAL_MS);
+  queueState.heartbeatTimer.unref?.();
+};
 
 const queue = createManagedQueue<KangurSocialPipelineJobData>({
   name: 'kangur-social-pipeline',
@@ -204,6 +278,7 @@ export const startKangurSocialPipelineQueue = (): void => {
   if (!queueState.workerStarted) {
     queueState.workerStarted = true;
     queue.startWorker();
+    startKangurSocialPipelineWorkerHeartbeat();
     void ErrorSystem.logInfo('Kangur social pipeline worker started', {
       service: 'kangur-social-pipeline-queue',
       action: 'startWorker',

@@ -156,6 +156,7 @@ describe('queue-factory', () => {
     await expect(managed.getHealthStatus()).resolves.toEqual({
       deliveryMode: 'inline',
       workerState: 'inline',
+      statusReason: 'missing_redis',
       redisAvailable: false,
       workerLocal: false,
       running: false,
@@ -413,6 +414,7 @@ describe('queue-factory', () => {
       processor: vi.fn(async () => null),
     });
 
+    await managed.enqueue({ value: 'seed' });
     const queue = queueInstances[0];
     queue.getJobCounts.mockResolvedValue({
       active: 0,
@@ -424,6 +426,7 @@ describe('queue-factory', () => {
     await expect(managed.getHealthStatus()).resolves.toEqual({
       deliveryMode: 'queue',
       workerState: 'idle',
+      statusReason: undefined,
       redisAvailable: true,
       workerLocal: false,
       running: false,

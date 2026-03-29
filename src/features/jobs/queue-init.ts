@@ -1,15 +1,12 @@
 import 'server-only';
 
-import { Redis } from 'ioredis';
-
 import { logSystemEvent } from '@/shared/lib/observability/system-logger';
-import { isRedisAvailable } from '@/shared/lib/queue/redis-connection';
+import { isRedisAvailable, isRedisReachable } from '@/shared/lib/queue/redis-connection';
 import { startAllWorkers } from '@/shared/lib/queue/registry';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
 
 let initialized = false;
-const REDIS_PING_TIMEOUT_MS = 1500;
 const LOG_SOURCE = 'queue-init';
 const STARTUP_GATED_QUEUE_NAMES = [
   'product-ai',
@@ -66,32 +63,6 @@ const runStartupBackupSchedulerCatchup = (): void => {
       });
     }
   })();
-};
-
-const isRedisReachable = async (): Promise<boolean> => {
-  const url = process.env['REDIS_URL'];
-  if (!url) return false;
-  const probe = new Redis(url, {
-    maxRetriesPerRequest: 1,
-    enableReadyCheck: false,
-    lazyConnect: true,
-    connectTimeout: REDIS_PING_TIMEOUT_MS,
-    retryStrategy: () => null,
-    ...(process.env['REDIS_TLS'] === 'true' ? { tls: {} } : {}),
-  });
-  probe.on('error', () => {
-    // Expected when Redis is unavailable; handled by returning false from this probe.
-  });
-  try {
-    await probe.connect();
-    const response = await probe.ping();
-    return response === 'PONG';
-  } catch (error) {
-    void ErrorSystem.captureException(error);
-    return false;
-  } finally {
-    probe.disconnect();
-  }
 };
 
 export const initializeQueues = (): void => {

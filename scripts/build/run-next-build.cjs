@@ -24,10 +24,9 @@ const getDefaultHeapMb = () => {
     return String(Math.max(1024, explicitHeapMb));
   }
 
-  // Vercel's default build machine currently provides 8 GB of memory. A 6 GB
-  // Node heap leaves enough headroom for webpack/native overhead while avoiding
-  // the 4 GB V8 ceiling that this repo now exceeds during production builds.
-  return process.env.VERCEL ? '6144' : '8192';
+  // Vercel's default build machine provides 8 GB of system RAM. A 4 GB Node
+  // heap leaves enough headroom for webpack workers and OS overhead.
+  return process.env.VERCEL ? '4096' : '8192';
 };
 
 const buildEnv = {

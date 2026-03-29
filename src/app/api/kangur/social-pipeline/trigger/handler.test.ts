@@ -9,12 +9,14 @@ const {
   resolveKangurActorMock,
   startKangurSocialPipelineQueueMock,
   isRedisAvailableMock,
+  isRedisReachableMock,
 } = vi.hoisted(() => ({
   enqueueKangurSocialPipelineJobMock: vi.fn(),
   recoverKangurSocialPipelineQueueMock: vi.fn(),
   resolveKangurActorMock: vi.fn(),
   startKangurSocialPipelineQueueMock: vi.fn(),
   isRedisAvailableMock: vi.fn(),
+  isRedisReachableMock: vi.fn(),
 }));
 
 vi.mock('@/features/kangur/services/kangur-actor', () => ({
@@ -32,6 +34,7 @@ vi.mock('@/features/kangur/workers/kangurSocialPipelineQueue', () => ({
 
 vi.mock('@/shared/lib/queue', () => ({
   isRedisAvailable: (...args: unknown[]) => isRedisAvailableMock(...args),
+  isRedisReachable: (...args: unknown[]) => isRedisReachableMock(...args),
 }));
 
 import { POST_handler } from './handler';
@@ -56,6 +59,7 @@ describe('social pipeline trigger handler', () => {
     recoverKangurSocialPipelineQueueMock.mockResolvedValue([]);
     enqueueKangurSocialPipelineJobMock.mockResolvedValue('job-123');
     isRedisAvailableMock.mockReturnValue(true);
+    isRedisReachableMock.mockResolvedValue(true);
   });
 
   it('recovers stale jobs, starts the worker, and enqueues the scheduled tick job by default', async () => {
@@ -128,5 +132,24 @@ describe('social pipeline trigger handler', () => {
       jobId: 'job-123',
       jobType: 'manual-post-pipeline',
     });
+  });
+
+  it('fails fast when Redis is configured but unreachable', async () => {
+    isRedisReachableMock.mockResolvedValueOnce(false);
+
+    await expect(
+      POST_handler(
+        new NextRequest('http://localhost/api/kangur/social-pipeline/trigger', {
+          method: 'POST',
+        }),
+        createContext()
+      )
+    ).rejects.toMatchObject({
+      message: 'Social pipeline queue is not available. Redis is configured but unreachable.',
+    });
+
+    expect(recoverKangurSocialPipelineQueueMock).not.toHaveBeenCalled();
+    expect(startKangurSocialPipelineQueueMock).not.toHaveBeenCalled();
+    expect(enqueueKangurSocialPipelineJobMock).not.toHaveBeenCalled();
   });
 });

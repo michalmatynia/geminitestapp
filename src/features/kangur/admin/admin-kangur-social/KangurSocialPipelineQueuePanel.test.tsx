@@ -67,6 +67,10 @@ describe('KangurSocialPipelineQueuePanel', () => {
   it('hides run now while the full queue panel already has active pipeline work', async () => {
     apiGetMock
       .mockResolvedValueOnce({
+        deliveryMode: 'queue',
+        workerState: 'running',
+        redisAvailable: true,
+        workerLocal: false,
         running: true,
         healthy: true,
         processing: true,
@@ -96,6 +100,10 @@ describe('KangurSocialPipelineQueuePanel', () => {
 
   it('keeps run now visible in compact mode when the queue is only waiting', async () => {
     apiGetMock.mockResolvedValueOnce({
+      deliveryMode: 'queue',
+      workerState: 'idle',
+      redisAvailable: true,
+      workerLocal: false,
       running: true,
       healthy: true,
       processing: false,
@@ -122,6 +130,10 @@ describe('KangurSocialPipelineQueuePanel', () => {
   it('keeps run now visible when the worker is offline but a stale active job is still reported', async () => {
     apiGetMock
       .mockResolvedValueOnce({
+        deliveryMode: 'queue',
+        workerState: 'offline',
+        redisAvailable: true,
+        workerLocal: false,
         running: false,
         healthy: false,
         processing: true,
@@ -152,6 +164,10 @@ describe('KangurSocialPipelineQueuePanel', () => {
   it('shows delete for terminal jobs, hides it for active jobs, and refreshes after delete', async () => {
     apiGetMock
       .mockResolvedValueOnce({
+        deliveryMode: 'queue',
+        workerState: 'idle',
+        redisAvailable: true,
+        workerLocal: true,
         running: true,
         healthy: true,
         processing: false,
@@ -205,6 +221,10 @@ describe('KangurSocialPipelineQueuePanel', () => {
         },
       ])
       .mockResolvedValueOnce({
+        deliveryMode: 'queue',
+        workerState: 'idle',
+        redisAvailable: true,
+        workerLocal: true,
         running: true,
         healthy: true,
         processing: false,
@@ -239,5 +259,93 @@ describe('KangurSocialPipelineQueuePanel', () => {
     await waitFor(() => {
       expect(screen.queryByRole('button', { name: 'Delete pipeline job job-completed' })).toBeNull();
     });
+  });
+
+  it('shows idle queue state without the redis warning when recent jobs exist', async () => {
+    apiGetMock
+      .mockResolvedValueOnce({
+        deliveryMode: 'queue',
+        workerState: 'idle',
+        redisAvailable: true,
+        workerLocal: false,
+        running: false,
+        healthy: true,
+        processing: false,
+        activeCount: 0,
+        waitingCount: 0,
+        failedCount: 0,
+        completedCount: 5,
+        lastPollTime: 0,
+        timeSinceLastPoll: 0,
+        isPaused: false,
+      })
+      .mockResolvedValueOnce([]);
+
+    render(<KangurSocialPipelineQueuePanel />);
+
+    expect(await screen.findByText('Idle')).toBeInTheDocument();
+    expect(
+      screen.queryByText(
+        'Capture queue worker is not running. Ensure Redis is available and REDIS_URL is configured.'
+      )
+    ).toBeNull();
+  });
+
+  it('shows a dedicated redis warning when Redis is configured but unreachable', async () => {
+    apiGetMock
+      .mockResolvedValueOnce({
+        deliveryMode: 'queue',
+        workerState: 'offline',
+        statusReason: 'redis_unreachable',
+        redisAvailable: false,
+        workerLocal: false,
+        running: false,
+        healthy: false,
+        processing: false,
+        activeCount: 0,
+        waitingCount: 0,
+        failedCount: 0,
+        completedCount: 0,
+        lastPollTime: 0,
+        timeSinceLastPoll: 0,
+        isPaused: false,
+      })
+      .mockResolvedValueOnce([]);
+
+    render(<KangurSocialPipelineQueuePanel />);
+
+    expect(await screen.findByText('Redis Down')).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        'Capture queue cannot reach Redis. Verify the Redis service is online and the REDIS_URL connection settings are correct.'
+      )
+    ).toBeInTheDocument();
+  });
+
+  it('shows shared worker heartbeat timing for cross-instance idle workers', async () => {
+    apiGetMock
+      .mockResolvedValueOnce({
+        deliveryMode: 'queue',
+        workerState: 'idle',
+        redisAvailable: true,
+        workerLocal: false,
+        workerHeartbeatTime: Date.now() - 10_000,
+        timeSinceWorkerHeartbeat: 10_000,
+        running: false,
+        healthy: true,
+        processing: false,
+        activeCount: 0,
+        waitingCount: 0,
+        failedCount: 0,
+        completedCount: 2,
+        lastPollTime: 0,
+        timeSinceLastPoll: 0,
+        isPaused: false,
+      })
+      .mockResolvedValueOnce([]);
+
+    render(<KangurSocialPipelineQueuePanel />);
+
+    expect(await screen.findByText('Worker heartbeat: 10s ago')).toBeInTheDocument();
   });
 });

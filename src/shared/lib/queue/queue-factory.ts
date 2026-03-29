@@ -272,6 +272,7 @@ export function createManagedQueue<TJobData>(
       return {
         deliveryMode: 'inline',
         workerState: 'inline',
+        statusReason: 'missing_redis',
         redisAvailable: false,
         workerLocal: false,
         running: false,
@@ -307,6 +308,7 @@ export function createManagedQueue<TJobData>(
     return {
       deliveryMode: 'queue',
       workerState,
+      statusReason: workerState === 'offline' ? 'worker_inactive' : undefined,
       redisAvailable: true,
       workerLocal: workerStarted,
       running: workerStarted || processing,

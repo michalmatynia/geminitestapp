@@ -95,8 +95,8 @@ const buildQueuedProgress = (totalCount: number): KangurSocialImageAddonsBatchPr
     lastCaptureStatus: null,
     message:
       totalCount === 1
-        ? 'Queued Playwright capture for 1 preset.'
-        : `Queued Playwright capture for ${totalCount} presets.`,
+        ? 'Queued Playwright capture for 1 target.'
+        : `Queued Playwright capture for ${totalCount} targets.`,
   });
 
 const buildCompletedProgress = (
@@ -117,7 +117,7 @@ const buildCompletedProgress = (
     lastCaptureStatus: result.failures.length > 0 ? 'failed' : 'ok',
     message:
       result.addons.length > 0
-        ? `Captured ${result.addons.length} screenshot${result.addons.length === 1 ? '' : 's'} across ${totalCount} preset${totalCount === 1 ? '' : 's'}.`
+        ? `Captured ${result.addons.length} screenshot${result.addons.length === 1 ? '' : 's'} across ${totalCount} target${totalCount === 1 ? '' : 's'}.`
         : `Capture finished with ${result.failures.length} failure${result.failures.length === 1 ? '' : 's'}.`,
   });
 };
@@ -169,7 +169,7 @@ export const startKangurSocialImageAddonsBatchJob = async (
     id: jobId,
     runId: started.run.runId,
     status: 'queued',
-    progress: buildQueuedProgress(started.presets.length),
+    progress: buildQueuedProgress(started.targets.length),
     result: null,
     error: null,
     createdAt: nowIso(),

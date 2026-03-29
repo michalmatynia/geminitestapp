@@ -75,31 +75,30 @@ vi.mock('@/features/kangur/shared/utils/observability/error-system-client', () =
 }));
 
 import {
-  KANGUR_AI_TUTOR_APP_SETTINGS_KEY,
-  KANGUR_AI_TUTOR_SETTINGS_KEY,
+  KANGUR_AI_TUTOR_APP_SETTINGS_KEY as importedKangurAiTutorAppSettingsKey,
+  KANGUR_AI_TUTOR_SETTINGS_KEY as importedKangurAiTutorSettingsKey,
 } from '@/features/kangur/settings-ai-tutor';
-import { DEFAULT_KANGUR_AI_TUTOR_CONTENT } from '@/shared/contracts/kangur-ai-tutor-content';
-import { ApiError } from '@/shared/lib/api-client';
+import { DEFAULT_KANGUR_AI_TUTOR_CONTENT as importedDefaultKangurAiTutorContent } from '@/shared/contracts/kangur-ai-tutor-content';
+import { ApiError as ImportedApiError } from '@/shared/lib/api-client';
 import {
-  KangurAiTutorProvider,
-  KangurAiTutorSessionSync,
-  useKangurAiTutor,
+  KangurAiTutorProvider as importedKangurAiTutorProvider,
+  KangurAiTutorSessionSync as importedKangurAiTutorSessionSync,
+  useKangurAiTutor as importedUseKangurAiTutor,
 } from '@/features/kangur/ui/context/KangurAiTutorContext';
 
-export {
-  DEFAULT_KANGUR_AI_TUTOR_CONTENT,
-  KANGUR_AI_TUTOR_APP_SETTINGS_KEY,
-  KANGUR_AI_TUTOR_SETTINGS_KEY,
-  KangurAiTutorProvider,
-  KangurAiTutorSessionSync,
-  logKangurClientErrorMock,
-  trackKangurClientEventMock,
-  withKangurClientError,
-  withKangurClientErrorSync,
-};
+export const DEFAULT_KANGUR_AI_TUTOR_CONTENT = importedDefaultKangurAiTutorContent;
+export const KANGUR_AI_TUTOR_APP_SETTINGS_KEY = importedKangurAiTutorAppSettingsKey;
+export const KANGUR_AI_TUTOR_SETTINGS_KEY = importedKangurAiTutorSettingsKey;
+export const KangurAiTutorProvider = importedKangurAiTutorProvider;
+export const KangurAiTutorSessionSync = importedKangurAiTutorSessionSync;
+export const trackKangurClientEvent = trackKangurClientEventMock;
+export const logKangurClientError = logKangurClientErrorMock;
+export const withTrackedKangurClientError = withKangurClientError;
+export const withTrackedKangurClientErrorSync = withKangurClientErrorSync;
+export { trackKangurClientEventMock, logKangurClientErrorMock };
 
-export function createApiError(message: string, status: number): ApiError {
-  return new ApiError(message, status);
+export function createApiError(message: string, status: number): ImportedApiError {
+  return new ImportedApiError(message, status);
 }
 
 export const captureExceptionMock = kangurAiTutorContextTestHoisted.captureExceptionMock;
@@ -192,7 +191,7 @@ export function Harness(): React.JSX.Element {
     isUsageLoading,
     openChat,
     recordFollowUpCompletion,
-  } = useKangurAiTutor();
+  } = importedUseKangurAiTutor();
   const followUpSummary = messages
     .flatMap((message) =>
       (message.followUpActions ?? []).map((action) => `${action.reason ?? action.id}:${action.label}`)
@@ -269,7 +268,7 @@ export function Harness(): React.JSX.Element {
 }
 
 export function SelectedTextHarness(): React.JSX.Element {
-  const { messages, sendMessage } = useKangurAiTutor();
+  const { messages, sendMessage } = importedUseKangurAiTutor();
 
   return (
     <div>
@@ -292,7 +291,7 @@ export function SelectedTextHarness(): React.JSX.Element {
 }
 
 export function DrawingHarness(): React.JSX.Element {
-  const { messages, sendMessage } = useKangurAiTutor();
+  const { messages, sendMessage } = importedUseKangurAiTutor();
 
   return (
     <div>
@@ -318,7 +317,7 @@ export function DrawingHarness(): React.JSX.Element {
 }
 
 export function SurfaceOverrideHarness(): React.JSX.Element {
-  const { messages, sendMessage } = useKangurAiTutor();
+  const { messages, sendMessage } = importedUseKangurAiTutor();
 
   return (
     <div>
@@ -345,7 +344,7 @@ export function SurfaceOverrideHarness(): React.JSX.Element {
 }
 
 export function TutorAvailabilityHarness(): React.JSX.Element {
-  const { enabled, tutorSettings, sessionContext } = useKangurAiTutor();
+  const { enabled, tutorSettings, sessionContext } = importedUseKangurAiTutor();
 
   return (
     <div>

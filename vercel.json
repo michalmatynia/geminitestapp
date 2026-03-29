@@ -2,5 +2,5 @@
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "framework": "nextjs",
   "installCommand": "npm ci --workspaces=false --include=dev --no-audit --no-fund",
-  "buildCommand": "NEXT_BUILD_BUNDLER=webpack npm run build"
+  "buildCommand": "npm run build"
 }

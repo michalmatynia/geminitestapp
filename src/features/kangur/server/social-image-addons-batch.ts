@@ -132,10 +132,17 @@ const toImageSelection = (params: {
   height: params.height ?? null,
 });
 
+const normalizeOptionalTrimmedString = (value: string | null | undefined): string | null => {
+  const normalized = value?.trim() ?? '';
+  return normalized || null;
+};
+
 const buildCaptureUrl = (baseUrl: string, pathValue: string): string => {
   const trimmedBase = baseUrl.trim().replace(/\/+$/, '');
-  const normalizedPath = pathValue.startsWith('/') ? pathValue : `/${pathValue}`;
-  const href = `${trimmedBase}${normalizedPath}`;
+  const trimmedPath = pathValue.trim();
+  const href = /^https?:\/\//i.test(trimmedPath)
+    ? trimmedPath
+    : `${trimmedBase}${trimmedPath.startsWith('/') ? trimmedPath : `/${trimmedPath}`}`;
 
   try {
     const parsed = new URL(href);
@@ -151,6 +158,36 @@ const buildCaptureUrl = (baseUrl: string, pathValue: string): string => {
     )}`;
   }
 };
+
+const buildTargetFromPreset = (preset: BatchCapturePreset): BatchCaptureTarget => ({
+  id: preset.id,
+  title: preset.title,
+  path: preset.path,
+  description: preset.description ?? '',
+  selector: normalizeOptionalTrimmedString(preset.selector ?? null),
+  waitForMs: preset.waitForMs ?? null,
+  waitForSelectorMs: preset.waitForSelectorMs ?? null,
+  presetId: preset.id,
+  sourceLabel: 'Playwright batch capture',
+  captureRouteId: null,
+  captureRouteTitle: null,
+});
+
+const buildTargetFromProgrammableRoute = (
+  route: KangurSocialProgrammableCaptureRoute
+): BatchCaptureTarget => ({
+  id: route.id,
+  title: route.title.trim() || route.id,
+  path: route.path,
+  description: route.description?.trim() || '',
+  selector: normalizeOptionalTrimmedString(route.selector ?? null),
+  waitForMs: route.waitForMs ?? null,
+  waitForSelectorMs: route.waitForSelectorMs ?? null,
+  presetId: null,
+  sourceLabel: 'Programmable Playwright capture',
+  captureRouteId: route.id,
+  captureRouteTitle: route.title.trim() || route.id,
+});
 
 const parseCookiesForPlaywright = (
   cookieHeader: string,
@@ -288,21 +325,42 @@ const resolveBatchCaptureRequest = (
     presetIds.length > 0
       ? KANGUR_SOCIAL_CAPTURE_PRESETS.filter((preset) => presetIds.includes(preset.id))
       : KANGUR_SOCIAL_CAPTURE_PRESETS;
+  const requestedTargets =
+    Array.isArray(input.playwrightRoutes) && input.playwrightRoutes.length > 0
+      ? input.playwrightRoutes
+          .map((route) => ({
+            ...route,
+            id: route.id.trim(),
+            title: route.title.trim(),
+            path: route.path.trim(),
+            description: route.description?.trim() ?? '',
+            selector: normalizeOptionalTrimmedString(route.selector ?? null),
+          }))
+          .filter((route) => route.id.length > 0 && route.path.length > 0)
+          .map((route) => buildTargetFromProgrammableRoute(route))
+      : requestedPresets.map((preset) => buildTargetFromPreset(preset));
   const normalizedPresetLimit =
     typeof input.presetLimit === 'number' && Number.isFinite(input.presetLimit)
       ? Math.max(1, Math.floor(input.presetLimit))
       : null;
-  const presets =
+  const targets =
     normalizedPresetLimit == null
-      ? requestedPresets
-      : requestedPresets.slice(0, normalizedPresetLimit);
+      ? requestedTargets
+      : requestedTargets.slice(0, normalizedPresetLimit);
+  const playwrightPersonaId = normalizeOptionalTrimmedString(input.playwrightPersonaId ?? null);
+  const playwrightScript =
+    input.playwrightScript?.trim() || KANGUR_SOCIAL_DEFAULT_PLAYWRIGHT_CAPTURE_SCRIPT;
 
   if (!baseUrl) {
     throw operationFailedError('Base URL is required for batch capture.');
   }
 
-  if (presets.length === 0) {
-    throw operationFailedError('No capture presets selected.');
+  if (targets.length === 0) {
+    throw operationFailedError(
+      requestedTargets.length === 0 && Array.isArray(input.playwrightRoutes)
+        ? 'No programmable capture routes selected.'
+        : 'No capture presets selected.'
+    );
   }
 
   const contextOptions: Record<string, unknown> = {};
@@ -320,8 +378,10 @@ const resolveBatchCaptureRequest = (
     baseUrl,
     createdBy: input.createdBy ?? null,
     contextOptions: Object.keys(contextOptions).length > 0 ? contextOptions : undefined,
-    requestedPresets,
-    presets,
+    requestedTargets,
+    targets,
+    playwrightPersonaId,
+    playwrightScript,
   };
 };
 
@@ -329,24 +389,25 @@ export const startPlaywrightBatchCapture = async (
   input: Omit<BatchCaptureInput, 'onProgress'>
 ): Promise<StartedPlaywrightBatchCapture> => {
   const resolved = resolveBatchCaptureRequest(input);
-  const captures = resolved.presets.map((preset) => ({
-    id: preset.id,
-    title: preset.title,
-    url: buildCaptureUrl(resolved.baseUrl, preset.path),
-    selector: preset.selector,
-    waitForMs: preset.waitForMs ?? 0,
-    waitForSelectorMs: preset.waitForSelectorMs ?? 10000,
+  const captures = resolved.targets.map((target) => ({
+    id: target.id,
+    title: target.title,
+    url: buildCaptureUrl(resolved.baseUrl, target.path),
+    selector: target.selector,
+    waitForMs: target.waitForMs ?? 0,
+    waitForSelectorMs: target.waitForSelectorMs ?? 10000,
   }));
 
   logger.info('[BATCH] Enqueueing Playwright run', { captureCount: captures.length });
   const run = await enqueuePlaywrightNodeRun({
     request: {
-      script: SOCIAL_BATCH_PLAYWRIGHT_SCRIPT,
+      script: resolved.playwrightScript,
       input: {
         captures,
       },
       timeoutMs: 180_000,
       browserEngine: 'chromium',
+      personaId: resolved.playwrightPersonaId ?? undefined,
       contextOptions: resolved.contextOptions,
     },
     waitForResult: false,
@@ -363,7 +424,7 @@ export const finalizePlaywrightBatchCapture = async (
   input: StartedPlaywrightBatchCapture & { run: PlaywrightNodeRunRecord }
 ): Promise<KangurSocialImageAddonsBatchResult> => {
   const startedAt = Date.now();
-  const { run, requestedPresets, presets, baseUrl, createdBy } = input;
+  const { run, requestedTargets, targets, baseUrl, createdBy, playwrightPersonaId } = input;
 
   logger.info('[BATCH] Playwright run finished', {
     status: run.status,
@@ -393,14 +454,14 @@ export const finalizePlaywrightBatchCapture = async (
   const addons: KangurSocialImageAddon[] = [];
   const failures: Array<{ id: string; reason: string }> = [];
 
-  logger.info('[BATCH] Processing presets', { presetCount: presets.length });
-  for (const preset of presets) {
-    logger.info('[BATCH] Finding artifact', { presetId: preset.id });
-    const artifact = resolveArtifactByName(run.artifacts, preset.id);
-    const resultStatus = resultMap.get(preset.id);
+  logger.info('[BATCH] Processing targets', { targetCount: targets.length });
+  for (const target of targets) {
+    logger.info('[BATCH] Finding artifact', { targetId: target.id });
+    const artifact = resolveArtifactByName(run.artifacts, target.id);
+    const resultStatus = resultMap.get(target.id);
     if (!artifact) {
       failures.push({
-        id: preset.id,
+        id: target.id,
         reason: resultStatus?.reason || 'artifact_missing',
       });
       continue;
@@ -408,21 +469,21 @@ export const finalizePlaywrightBatchCapture = async (
 
     const artifactFile = artifact.path.split('/').pop();
     if (!artifactFile) {
-      failures.push({ id: preset.id, reason: 'artifact_missing' });
+      failures.push({ id: target.id, reason: 'artifact_missing' });
       continue;
     }
 
-    logger.info('[BATCH] Reading artifact file', { presetId: preset.id });
+    logger.info('[BATCH] Reading artifact file', { targetId: target.id });
     const artifactData = await readPlaywrightNodeArtifact({
       runId: run.runId,
       fileName: artifactFile,
     });
     if (!artifactData) {
-      failures.push({ id: preset.id, reason: 'artifact_read_failed' });
+      failures.push({ id: target.id, reason: 'artifact_read_failed' });
       continue;
     }
 
-    logger.info('[BATCH] Reading image metadata', { presetId: preset.id });
+    logger.info('[BATCH] Reading image metadata', { targetId: target.id });
     const buffer = artifactData.content;
     const metadata = await sharp(buffer, { failOnError: false }).metadata();
     const width = typeof metadata.width === 'number' ? metadata.width : null;
@@ -431,10 +492,10 @@ export const finalizePlaywrightBatchCapture = async (
     const filename = `${randomUUID()}.png`;
     const publicPath = buildAddonPublicPath(filename);
 
-    logger.info('[BATCH] Writing temp copy', { presetId: preset.id });
+    logger.info('[BATCH] Writing temp copy', { targetId: target.id });
     const tempDiskPath = await writeTempCopy(filename, buffer);
 
-    logger.info('[BATCH] Uploading to storage', { presetId: preset.id });
+    logger.info('[BATCH] Uploading to storage', { targetId: target.id });
     const stored = await uploadToConfiguredStorage({
       buffer,
       filename,
@@ -448,7 +509,7 @@ export const finalizePlaywrightBatchCapture = async (
       },
     });
     logger.info('[BATCH] Upload completed', {
-      presetId: preset.id,
+      targetId: target.id,
       source: stored.source,
     });
 
@@ -465,28 +526,33 @@ export const finalizePlaywrightBatchCapture = async (
       height,
     });
 
-    logger.info('[BATCH] Finding previous addon', { presetId: preset.id });
-    const previousAddon = await findLatestAddonByPresetId(preset.id);
+    logger.info('[BATCH] Finding previous addon', { targetId: target.id });
+    const previousAddon = target.presetId
+      ? await findLatestAddonByPresetId(target.presetId)
+      : null;
 
     const addon = normalizeKangurSocialImageAddon({
       id: randomUUID(),
-      title: preset.title,
-      description: preset.description ?? '',
-      sourceUrl: buildCaptureUrl(baseUrl, preset.path),
-      sourceLabel: 'Playwright batch capture',
+      title: target.title,
+      description: target.description,
+      sourceUrl: buildCaptureUrl(baseUrl, target.path),
+      sourceLabel: target.sourceLabel,
       imageAsset,
-      presetId: preset.id,
+      presetId: target.presetId,
       previousAddonId: previousAddon?.id ?? null,
       playwrightRunId: run.runId,
       playwrightArtifact: artifact.path,
+      playwrightPersonaId,
+      playwrightCaptureRouteId: target.captureRouteId,
+      playwrightCaptureRouteTitle: target.captureRouteTitle,
       createdBy,
       updatedBy: createdBy,
     });
 
-    logger.info('[BATCH] Upserting addon', { presetId: preset.id });
+    logger.info('[BATCH] Upserting addon', { targetId: target.id });
     const saved = await upsertKangurSocialImageAddon(addon);
     addons.push(saved);
-    logger.info('[BATCH] Addon capture finished', { presetId: preset.id });
+    logger.info('[BATCH] Addon capture finished', { targetId: target.id });
   }
 
   void ErrorSystem.logInfo('Kangur social image add-on batch capture completed', {
@@ -494,7 +560,7 @@ export const finalizePlaywrightBatchCapture = async (
     action: 'batch',
     durationMs: Date.now() - startedAt,
     runId: run.runId,
-    presetCount: presets.length,
+    presetCount: targets.length,
     addonCount: addons.length,
     failureCount: failures.length,
   });
@@ -503,9 +569,9 @@ export const finalizePlaywrightBatchCapture = async (
     addons,
     failures,
     runId: run.runId,
-    requestedPresetCount: requestedPresets.length,
-    usedPresetCount: presets.length,
-    usedPresetIds: presets.map((preset) => preset.id),
+    requestedPresetCount: requestedTargets.length,
+    usedPresetCount: targets.length,
+    usedPresetIds: targets.map((target) => target.id),
   };
 };
 

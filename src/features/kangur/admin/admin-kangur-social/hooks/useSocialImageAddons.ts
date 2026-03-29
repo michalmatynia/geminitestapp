@@ -3,7 +3,10 @@
 import { useState } from 'react';
 
 import { useToast } from '@/features/kangur/shared/ui';
-import type { KangurSocialImageAddonsBatchResult } from '@/shared/contracts/kangur-social-image-addons';
+import type {
+  KangurSocialImageAddonsBatchResult,
+  KangurSocialProgrammableCaptureRoute,
+} from '@/shared/contracts/kangur-social-image-addons';
 import {
   useBatchCaptureKangurSocialImageAddons,
   useCreateKangurSocialImageAddon,
@@ -40,16 +43,22 @@ const validateBatchCaptureRequest = ({
   toast,
   baseUrl,
   presetIds,
+  playwrightRoutes,
 }: {
   toast: ToastFn;
   baseUrl: string;
   presetIds: string[];
+  playwrightRoutes?: KangurSocialProgrammableCaptureRoute[];
 }): void => {
   if (!baseUrl) {
     throwBatchCaptureValidationError(toast, 'Base URL is required for batch capture', 'error');
   }
-  if (presetIds.length === 0) {
-    throwBatchCaptureValidationError(toast, 'Select at least one capture preset', 'warning');
+  if (presetIds.length === 0 && (playwrightRoutes?.length ?? 0) === 0) {
+    throwBatchCaptureValidationError(
+      toast,
+      'Select at least one capture preset or programmable route',
+      'warning'
+    );
   }
 };
 
@@ -92,6 +101,9 @@ const resolveBatchCaptureRequest = ({
         baseUrl?: string;
         presetIds?: string[];
         presetLimit?: number | null;
+        playwrightPersonaId?: string | null;
+        playwrightScript?: string;
+        playwrightRoutes?: KangurSocialProgrammableCaptureRoute[];
       }
     | undefined;
   toast: ToastFn;
@@ -99,8 +111,16 @@ const resolveBatchCaptureRequest = ({
   const baseUrl = (options?.baseUrl ?? deps.batchCaptureBaseUrl).trim();
   const presetIds = options?.presetIds ?? deps.batchCapturePresetIds;
   const presetLimit = options?.presetLimit ?? deps.batchCapturePresetLimit;
-  validateBatchCaptureRequest({ toast, baseUrl, presetIds });
-  return { baseUrl, presetIds, presetLimit };
+  const playwrightRoutes = options?.playwrightRoutes;
+  validateBatchCaptureRequest({ toast, baseUrl, presetIds, playwrightRoutes });
+  return {
+    baseUrl,
+    presetIds,
+    presetLimit,
+    playwrightPersonaId: options?.playwrightPersonaId ?? null,
+    playwrightScript: options?.playwrightScript,
+    playwrightRoutes,
+  };
 };
 
 const handleBatchCaptureSuccess = ({
@@ -199,14 +219,21 @@ export function useSocialImageAddons(deps: SocialImageAddonsDeps) {
     baseUrl?: string;
     presetIds?: string[];
     presetLimit?: number | null;
+    playwrightPersonaId?: string | null;
+    playwrightScript?: string;
+    playwrightRoutes?: KangurSocialProgrammableCaptureRoute[];
   }): Promise<KangurSocialImageAddonsBatchResult> => {
     const request = resolveBatchCaptureRequest({ deps, options, toast });
+    const routeCount = request.playwrightRoutes?.length ?? 0;
     trackKangurClientEvent(
       'kangur_social_batch_capture_attempt',
       deps.buildSocialContext({
         baseUrl: request.baseUrl,
         presetCount: request.presetIds.length,
         presetLimit: request.presetLimit,
+        programmableRouteCount: routeCount,
+        playwrightPersonaId: request.playwrightPersonaId,
+        isProgrammableCapture: routeCount > 0,
       })
     );
     try {

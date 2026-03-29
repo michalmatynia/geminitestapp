@@ -105,8 +105,14 @@ const shouldRetryWebpackServerManifestRace = (result) =>
   !result.signal &&
   webpackServerManifestRacePattern.test(result.output);
 
-const getPreferredBundler = (bundler) =>
-  bundler === 'webpack' || bundler === 'turbopack' ? bundler : 'turbopack';
+const getPreferredBundler = (bundler) => {
+  if (bundler === 'webpack' || bundler === 'turbopack') return bundler;
+  // Turbopack cold builds exceed Vercel's 45-minute limit on this codebase.
+  // Default to webpack on Vercel until the project is small enough for a
+  // cold turbopack build to complete in time, or Vercel caches a warm build.
+  if (process.env.VERCEL) return 'webpack';
+  return 'turbopack';
+};
 
 const main = async () => {
   // Turbopack is the default production path again. Explicit bundler selection

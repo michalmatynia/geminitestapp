@@ -80,6 +80,9 @@ export async function postKangurSocialImageAddonsBatchHandler(
         baseUrl,
         presetIds: parsed.presetIds ?? null,
         presetLimit: parsed.presetLimit ?? null,
+        playwrightPersonaId: parsed.playwrightPersonaId ?? null,
+        playwrightScript: parsed.playwrightScript,
+        playwrightRoutes: parsed.playwrightRoutes ?? null,
         createdBy: actor.actorId,
         forwardCookies: requestCookies || null,
       });
@@ -109,6 +112,9 @@ export async function postKangurSocialImageAddonsBatchHandler(
       baseUrl,
       presetIds: parsed.presetIds ?? null,
       presetLimit: parsed.presetLimit ?? null,
+      playwrightPersonaId: parsed.playwrightPersonaId ?? null,
+      playwrightScript: parsed.playwrightScript,
+      playwrightRoutes: parsed.playwrightRoutes ?? null,
       createdBy: actor.actorId,
       forwardCookies: requestCookies || null,
     });

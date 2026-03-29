@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-const { authMock, notFoundMock } = vi.hoisted(() => ({
-  authMock: vi.fn(),
+const { readOptionalServerAuthSessionMock, notFoundMock } = vi.hoisted(() => ({
+  readOptionalServerAuthSessionMock: vi.fn(),
   notFoundMock: vi.fn(),
 }));
 
@@ -10,7 +10,7 @@ vi.mock('next/navigation', () => ({
 }));
 
 vi.mock('@/features/auth/server', () => ({
-  auth: authMock,
+  readOptionalServerAuthSession: readOptionalServerAuthSessionMock,
 }));
 
 import {
@@ -29,7 +29,7 @@ describe('kangur server route access', () => {
   });
 
   it('allows GamesLibrary for exact super-admin sessions', async () => {
-    authMock.mockResolvedValue({
+    readOptionalServerAuthSessionMock.mockResolvedValue({
       expires: '2099-01-01T00:00:00.000Z',
       user: {
         email: 'owner@example.com',
@@ -42,11 +42,11 @@ describe('kangur server route access', () => {
 
   it('allows unrestricted pages without reading auth', async () => {
     await expect(readCanAccessKangurPage('Lessons')).resolves.toBe(true);
-    expect(authMock).not.toHaveBeenCalled();
+    expect(readOptionalServerAuthSessionMock).not.toHaveBeenCalled();
   });
 
   it('blocks GamesLibrary for non-super-admin sessions', async () => {
-    authMock.mockResolvedValue({
+    readOptionalServerAuthSessionMock.mockResolvedValue({
       expires: '2099-01-01T00:00:00.000Z',
       user: {
         email: 'admin@example.com',
@@ -58,7 +58,7 @@ describe('kangur server route access', () => {
   });
 
   it('throws notFound for blocked slug routes', async () => {
-    authMock.mockResolvedValue({
+    readOptionalServerAuthSessionMock.mockResolvedValue({
       expires: '2099-01-01T00:00:00.000Z',
       user: {
         email: 'admin@example.com',
@@ -72,7 +72,7 @@ describe('kangur server route access', () => {
 
   it('allows unrestricted slug routes without reading auth', async () => {
     await expect(requireAccessibleKangurSlugRoute(['lessons'])).resolves.toBeUndefined();
-    expect(authMock).not.toHaveBeenCalled();
+    expect(readOptionalServerAuthSessionMock).not.toHaveBeenCalled();
   });
 
   it('returns a private not-found api response', async () => {
@@ -84,7 +84,7 @@ describe('kangur server route access', () => {
   });
 
   it('sanitizes blocked games callbacks in alias login params for non-super-admin sessions', async () => {
-    authMock.mockResolvedValue({
+    readOptionalServerAuthSessionMock.mockResolvedValue({
       expires: '2099-01-01T00:00:00.000Z',
       user: {
         email: 'admin@example.com',
@@ -106,7 +106,7 @@ describe('kangur server route access', () => {
   });
 
   it('preserves games callbacks in alias login params for exact super admins', async () => {
-    authMock.mockResolvedValue({
+    readOptionalServerAuthSessionMock.mockResolvedValue({
       expires: '2099-01-01T00:00:00.000Z',
       user: {
         email: 'owner@example.com',
@@ -139,6 +139,6 @@ describe('kangur server route access', () => {
     ).resolves.toEqual({
       callbackUrl: '/lessons',
     });
-    expect(authMock).not.toHaveBeenCalled();
+    expect(readOptionalServerAuthSessionMock).not.toHaveBeenCalled();
   });
 });

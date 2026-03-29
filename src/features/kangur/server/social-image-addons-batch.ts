@@ -427,7 +427,7 @@ const readLiveCaptureProgress = (
   };
 };
 
-const waitForPlaywrightBatchRun = async (params: {
+export const waitForPlaywrightBatchRun = async (params: {
   runId: string;
   onProgress: (progress: BatchCaptureProgressSnapshot) => Promise<void> | void;
 }): Promise<PlaywrightNodeRunRecord> => {
@@ -707,213 +707,17 @@ export const finalizePlaywrightBatchCapture = async (
 export async function createKangurSocialImageAddonsBatch(
   input: BatchCaptureInput
 ): Promise<KangurSocialImageAddonsBatchResult> {
-  const startedAt = Date.now();
-  const baseUrl = input.baseUrl.trim().replace(/\/+$/, '');
-  const presetIds = (input.presetIds ?? []).map((id) => id.trim()).filter(Boolean);
-  const requestedPresets =
-    presetIds.length > 0
-      ? KANGUR_SOCIAL_CAPTURE_PRESETS.filter((preset) => presetIds.includes(preset.id))
-      : KANGUR_SOCIAL_CAPTURE_PRESETS;
-  const normalizedPresetLimit =
-    typeof input.presetLimit === 'number' && Number.isFinite(input.presetLimit)
-      ? Math.max(1, Math.floor(input.presetLimit))
-      : null;
-  const presets =
-    normalizedPresetLimit == null
-      ? requestedPresets
-      : requestedPresets.slice(0, normalizedPresetLimit);
-
-  if (!baseUrl) {
-    throw operationFailedError('Base URL is required for batch capture.');
-  }
-
-  if (presets.length === 0) {
-    throw operationFailedError('No capture presets selected.');
-  }
-
-  const captures = presets.map((preset) => ({
-    id: preset.id,
-    title: preset.title,
-    url: buildCaptureUrl(baseUrl, preset.path),
-    selector: preset.selector,
-    waitForMs: preset.waitForMs ?? 0,
-    waitForSelectorMs: preset.waitForSelectorMs ?? 10000,
-  }));
-
-  const contextOptions: Record<string, unknown> = {};
-  if (input.forwardCookies) {
-    const cookies = parseCookiesForPlaywright(input.forwardCookies, baseUrl);
-    if (cookies.length > 0) {
-      contextOptions['storageState'] = {
-        cookies,
-        origins: [],
-      };
-    }
-  }
-
-  logger.info('[BATCH] Enqueueing Playwright run', { captureCount: captures.length });
-  const initialRun = await enqueuePlaywrightNodeRun({
-    request: {
-      script: SOCIAL_BATCH_PLAYWRIGHT_SCRIPT,
-      input: {
-        captures,
-      },
-      timeoutMs: 180_000,
-      browserEngine: 'chromium',
-      contextOptions: Object.keys(contextOptions).length > 0 ? contextOptions : undefined,
-    },
-    waitForResult: !input.onProgress,
-    ownerUserId: input.createdBy ?? null,
-  });
+  const started = await startPlaywrightBatchCapture(input);
   const run =
-    typeof input.onProgress === 'function'
-      ? await waitForPlaywrightBatchRun({
-        runId: initialRun.runId,
-        onProgress: input.onProgress,
-      })
-      : initialRun;
+    started.run.status === 'completed' || started.run.status === 'failed'
+      ? started.run
+      : await waitForPlaywrightBatchRun({
+          runId: started.run.runId,
+          onProgress: input.onProgress ?? (() => undefined),
+        });
 
-  logger.info('[BATCH] Playwright run finished', {
-    status: run.status,
-    runId: run.runId,
+  return await finalizePlaywrightBatchCapture({
+    ...started,
+    run,
   });
-  if (run.status !== 'completed') {
-    const reason = run.error?.trim() || 'Playwright batch capture failed.';
-    throw operationFailedError(reason);
-  }
-
-  const resultsRaw = (run.result as { outputs?: Record<string, unknown> } | null)?.outputs?.[
-    'capture_results'
-  ];
-  const resultMap = Array.isArray(resultsRaw)
-    ? new Map<string, { status: string; reason?: string }>(
-      resultsRaw.map((entry: unknown) => {
-        if (!entry || typeof entry !== 'object') return ['unknown', { status: 'failed' }];
-        const record = entry as { id?: string; status?: string; reason?: string };
-        return [record.id ?? 'unknown', { status: record.status ?? 'failed', reason: record.reason }];
-      })
-    )
-    : new Map<string, { status: string; reason?: string }>();
-
-  const addons: KangurSocialImageAddon[] = [];
-  const failures: Array<{ id: string; reason: string }> = [];
-
-  logger.info('[BATCH] Processing presets', { presetCount: presets.length });
-  for (const preset of presets) {
-    logger.info('[BATCH] Finding artifact', { presetId: preset.id });
-    const artifact = resolveArtifactByName(run.artifacts, preset.id);
-    const resultStatus = resultMap.get(preset.id);
-    if (!artifact) {
-      failures.push({
-        id: preset.id,
-        reason: resultStatus?.reason || 'artifact_missing',
-      });
-      continue;
-    }
-
-    const artifactFile = artifact.path.split('/').pop();
-    if (!artifactFile) {
-      failures.push({ id: preset.id, reason: 'artifact_missing' });
-      continue;
-    }
-
-    logger.info('[BATCH] Reading artifact file', { presetId: preset.id });
-    const artifactData = await readPlaywrightNodeArtifact({
-      runId: run.runId,
-      fileName: artifactFile,
-    });
-    if (!artifactData) {
-      failures.push({ id: preset.id, reason: 'artifact_read_failed' });
-      continue;
-    }
-
-    logger.info('[BATCH] Reading image metadata', { presetId: preset.id });
-    const buffer = artifactData.content;
-    const metadata = await sharp(buffer, { failOnError: false }).metadata();
-    const width = typeof metadata.width === 'number' ? metadata.width : null;
-    const height = typeof metadata.height === 'number' ? metadata.height : null;
-
-    const filename = `${randomUUID()}.png`;
-    const publicPath = buildAddonPublicPath(filename);
-
-    // Write to temp dir (outside public/) to avoid Turbopack HMR during pipeline
-    logger.info('[BATCH] Writing temp copy', { presetId: preset.id });
-    const tempDiskPath = await writeTempCopy(filename, buffer);
-
-    logger.info('[BATCH] Uploading to storage', { presetId: preset.id });
-    const stored = await uploadToConfiguredStorage({
-      buffer,
-      filename,
-      mimetype: 'image/png',
-      publicPath,
-      category: 'kangur_social',
-      projectId: null,
-      folder: 'social-addons',
-      writeLocalCopy: async () => {
-        // Already written to temp dir — skip public/ write to prevent Turbopack HMR
-      },
-    });
-    logger.info('[BATCH] Upload completed', {
-      presetId: preset.id,
-      source: stored.source,
-    });
-
-    // For local storage, use temp disk path so the vision handler can read
-    // without files being in public/uploads/ (which triggers Turbopack rebuilds).
-    // For cloud storage, use the remote URL returned by the storage service.
-    const effectiveFilepath = stored.source === 'local' ? tempDiskPath : stored.filepath;
-    const effectiveUrl = stored.source === 'local' ? buildServeUrl(filename) : stored.filepath;
-
-    const imageAssetId = randomUUID();
-    const imageAsset = toImageSelection({
-      id: imageAssetId,
-      filename,
-      filepath: effectiveFilepath,
-      url: effectiveUrl,
-      width,
-      height,
-    });
-
-    logger.info('[BATCH] Finding previous addon', { presetId: preset.id });
-    const previousAddon = await findLatestAddonByPresetId(preset.id);
-
-    const addon = normalizeKangurSocialImageAddon({
-      id: randomUUID(),
-      title: preset.title,
-      description: preset.description ?? '',
-      sourceUrl: buildCaptureUrl(baseUrl, preset.path),
-      sourceLabel: 'Playwright batch capture',
-      imageAsset,
-      presetId: preset.id,
-      previousAddonId: previousAddon?.id ?? null,
-      playwrightRunId: run.runId,
-      playwrightArtifact: artifact.path,
-      createdBy: input.createdBy ?? null,
-      updatedBy: input.createdBy ?? null,
-    });
-
-    logger.info('[BATCH] Upserting addon', { presetId: preset.id });
-    const saved = await upsertKangurSocialImageAddon(addon);
-    addons.push(saved);
-    logger.info('[BATCH] Addon capture finished', { presetId: preset.id });
-  }
-
-  void ErrorSystem.logInfo('Kangur social image add-on batch capture completed', {
-    service: 'kangur.social-image-addons',
-    action: 'batch',
-    durationMs: Date.now() - startedAt,
-    runId: run.runId,
-    presetCount: presets.length,
-    addonCount: addons.length,
-    failureCount: failures.length,
-  });
-
-  return {
-    addons,
-    failures,
-    runId: run.runId,
-    requestedPresetCount: requestedPresets.length,
-    usedPresetCount: presets.length,
-    usedPresetIds: presets.map((preset) => preset.id),
-  };
 }

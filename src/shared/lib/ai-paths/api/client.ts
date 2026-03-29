@@ -250,6 +250,89 @@ const readEnqueueRunCandidates = (
   return { runCandidates, wrapperCandidates, hasPrimaryRunValue };
 };
 
+const selectRunCandidateRecord = (
+  runCandidates: unknown[]
+): { selectedRecord: Record<string, unknown> | null; runId: string | null } => {
+  for (const candidate of runCandidates) {
+    const candidateRecord = asRecord(candidate);
+    const candidateRunId = extractRunIdFromValue(candidate);
+    if (!candidateRunId) continue;
+    return {
+      selectedRecord: candidateRecord,
+      runId: candidateRunId,
+    };
+  }
+  return {
+    selectedRecord: null,
+    runId: null,
+  };
+};
+
+const selectWrapperRunRecord = (
+  wrapperCandidates: Record<string, unknown>[]
+): { selectedRecord: Record<string, unknown> | null; runId: string | null } => {
+  for (const candidate of wrapperCandidates) {
+    const candidateRunId = extractRunIdFromWrapperRecord(candidate);
+    if (!candidateRunId) continue;
+    return {
+      selectedRecord: candidate,
+      runId: candidateRunId,
+    };
+  }
+  return {
+    selectedRecord: null,
+    runId: null,
+  };
+};
+
+const shouldPreferPrimaryRunRecord = (input: {
+  runId: string | null;
+  selectedRecord: Record<string, unknown> | null;
+  primaryRunRecord: Record<string, unknown> | null;
+}): boolean =>
+  Boolean(
+    input.runId &&
+      input.selectedRecord &&
+      input.primaryRunRecord &&
+      input.selectedRecord !== input.primaryRunRecord &&
+      !extractRunIdFromValue(input.primaryRunRecord)
+  );
+
+const resolveFallbackRunSelection = (input: {
+  data: unknown;
+  runId: string | null;
+  primaryRunRecord: Record<string, unknown> | null;
+  selectedRecord: Record<string, unknown> | null;
+}): { runId: string | null; selectedRecord: Record<string, unknown> | null } => {
+  if (input.runId) {
+    return {
+      runId: input.runId,
+      selectedRecord: input.selectedRecord,
+    };
+  }
+  const fallbackRunId = extractAiPathRunIdFromEnqueueResponseData(input.data);
+  if (fallbackRunId && input.primaryRunRecord) {
+    return {
+      runId: fallbackRunId,
+      selectedRecord: input.primaryRunRecord,
+    };
+  }
+  return {
+    runId: fallbackRunId,
+    selectedRecord: input.selectedRecord,
+  };
+};
+
+const normalizeEnqueueRunRecord = (
+  selectedRecord: Record<string, unknown>,
+  runId: string
+): AiPathRunRecord =>
+  ({
+    ...selectedRecord,
+    id: runId,
+    status: asNonEmptyString(selectedRecord['status']) ?? 'queued',
+  }) as AiPathRunRecord;
+
 export const extractAiPathRunIdFromEnqueueResponseData = (data: unknown): string | null => {
   const { runCandidates, wrapperCandidates } = readEnqueueRunCandidates(data);
   for (const candidate of runCandidates) {
@@ -269,44 +352,30 @@ export const extractAiPathRunRecordFromEnqueueResponseData = (
   const { runCandidates, wrapperCandidates, hasPrimaryRunValue } = readEnqueueRunCandidates(data);
   const primaryRunRecord = hasPrimaryRunValue ? asRecord(runCandidates[0] ?? null) : null;
 
-  let selectedRecord: Record<string, unknown> | null = null;
-  let runId: string | null = null;
-  for (const candidate of runCandidates) {
-    const candidateRecord = asRecord(candidate);
-    const candidateRunId = extractRunIdFromValue(candidate);
-    if (!candidateRunId) continue;
-    selectedRecord = candidateRecord;
-    runId = candidateRunId;
-    break;
-  }
-  if (!runId) {
-    for (const candidate of wrapperCandidates) {
-      const candidateRunId = extractRunIdFromWrapperRecord(candidate);
-      if (!candidateRunId) continue;
-      selectedRecord = candidate;
-      runId = candidateRunId;
-      break;
-    }
-  }
+  const selectedRunCandidate = selectRunCandidateRecord(runCandidates);
+  const selectedWrapperCandidate = selectedRunCandidate.runId
+    ? null
+    : selectWrapperRunRecord(wrapperCandidates);
+  let selectedRecord = selectedRunCandidate.selectedRecord ?? selectedWrapperCandidate?.selectedRecord ?? null;
+  let runId = selectedRunCandidate.runId ?? selectedWrapperCandidate?.runId ?? null;
 
   if (
-    runId &&
-    selectedRecord &&
-    primaryRunRecord &&
-    selectedRecord !== primaryRunRecord &&
-    !extractRunIdFromValue(primaryRunRecord)
+    shouldPreferPrimaryRunRecord({
+      runId,
+      selectedRecord,
+      primaryRunRecord,
+    })
   ) {
     // Prefer the primary `run` object payload body when id lives on wrapper fields.
     selectedRecord = primaryRunRecord;
   }
 
-  if (!runId) {
-    // Mixed legacy payloads can expose id outside `run`, e.g. { run: { status }, runId: "..." }.
-    runId = extractAiPathRunIdFromEnqueueResponseData(data);
-    if (runId && primaryRunRecord) {
-      selectedRecord = primaryRunRecord;
-    }
-  }
+  ({ runId, selectedRecord } = resolveFallbackRunSelection({
+    data,
+    runId,
+    primaryRunRecord,
+    selectedRecord,
+  }));
 
   if (!runId) return null;
   if (!selectedRecord) {
@@ -314,12 +383,7 @@ export const extractAiPathRunRecordFromEnqueueResponseData = (
     return null;
   }
 
-  const normalizedStatus = asNonEmptyString(selectedRecord?.['status']) ?? 'queued';
-  return {
-    ...(selectedRecord ?? {}),
-    id: runId,
-    status: normalizedStatus,
-  } as AiPathRunRecord;
+  return normalizeEnqueueRunRecord(selectedRecord, runId);
 };
 
 export const resolveAiPathRunFromEnqueueResponseData = (

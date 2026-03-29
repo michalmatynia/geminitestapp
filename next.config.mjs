@@ -134,7 +134,10 @@ const nextConfig = {
   // Saves ~5-10 minutes on a 5926-file project.
   typescript: { ignoreBuildErrors: true },
   compiler: {
-    removeConsole: process.env.NODE_ENV === 'production',
+    // On Vercel, skip the SWC removeConsole transform to save build time on the
+    // initial cold build. Console calls are harmless in serverless logs and the
+    // transform touches every file in the compilation graph.
+    removeConsole: process.env.NODE_ENV === 'production' && !isVercel,
   },
   experimental: {
     // Webpack page-data workers fan out aggressively and trigger OOM on Vercel;
@@ -197,6 +200,9 @@ const nextConfig = {
     // Auth packages — server-only (auth.ts with 'server-only' import).
     '@auth/core',
     '@auth/mongodb-adapter',
+    // OpenTelemetry API surface — server-only (observability/otel-context, otel-log-bridge).
+    '@opentelemetry/api',
+    '@opentelemetry/api-logs',
   ],
   turbopack: {
     root: __dirname,

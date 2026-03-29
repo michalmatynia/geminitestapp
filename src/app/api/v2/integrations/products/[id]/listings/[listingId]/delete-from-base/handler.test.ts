@@ -2,7 +2,7 @@ import { NextRequest } from 'next/server';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const mocks = vi.hoisted(() => ({
-  authMock: vi.fn(),
+  readOptionalServerAuthSessionMock: vi.fn(),
   findProductListingByIdAcrossProvidersMock: vi.fn(),
   getConnectionByIdMock: vi.fn(),
   deleteBaseProductMock: vi.fn(),
@@ -15,7 +15,8 @@ const mocks = vi.hoisted(() => ({
 }));
 
 vi.mock('@/features/auth/server', () => ({
-  auth: (...args: unknown[]) => mocks.authMock(...args),
+  readOptionalServerAuthSession: (...args: unknown[]) =>
+    mocks.readOptionalServerAuthSessionMock(...args),
 }));
 
 vi.mock('@/features/integrations/server', () => ({
@@ -46,7 +47,7 @@ import { POST_handler } from './handler';
 describe('integration listing delete-from-base handler', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    mocks.authMock.mockResolvedValue({ user: { id: 'user-1' } });
+    mocks.readOptionalServerAuthSessionMock.mockResolvedValue({ user: { id: 'user-1' } });
     mocks.parseJsonBodyMock.mockResolvedValue({
       ok: true,
       data: { inventoryId: 'inv-main' },

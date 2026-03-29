@@ -2,8 +2,10 @@
 
 import type { ListQuery, MutationResult } from '@/shared/contracts/ui';
 import {
+  kangurSocialImageAddonsBatchJobSchema,
   kangurSocialImageAddonsBatchResultSchema,
   kangurSocialImageAddonsSchema,
+  type KangurSocialImageAddonsBatchJob,
   type KangurSocialImageAddonsBatchPayload,
   type KangurSocialImageAddonsBatchResult,
   type KangurSocialImageAddon,
@@ -119,5 +121,44 @@ export const useBatchCaptureKangurSocialImageAddons = (): MutationResult<
       domain: 'kangur',
       tags: ['kangur', 'social-image-addons', 'batch'],
       description: 'Captures Kangur social image add-ons via Playwright batch.',
+    },
+  });
+
+export const fetchKangurSocialImageAddonsBatchJob = async (
+  id: string
+): Promise<KangurSocialImageAddonsBatchJob | null> => {
+  const payload = await api.get<KangurSocialImageAddonsBatchJob | null>(
+    '/api/kangur/social-image-addons/batch',
+    {
+      params: { id },
+      timeout: SOCIAL_IMAGE_ADDONS_QUERY_TIMEOUT_MS,
+    }
+  );
+  return payload ? kangurSocialImageAddonsBatchJobSchema.parse(payload) : null;
+};
+
+export const useStartBatchCaptureKangurSocialImageAddons = (): MutationResult<
+  KangurSocialImageAddonsBatchJob,
+  KangurSocialImageAddonsBatchPayload
+> =>
+  createUpdateMutationV2<KangurSocialImageAddonsBatchJob, KangurSocialImageAddonsBatchPayload>({
+    mutationKey: [...QUERY_KEYS.kangur.socialImageAddons({ limit: null }), 'batch-start'],
+    mutationFn: async (
+      payload: KangurSocialImageAddonsBatchPayload
+    ): Promise<KangurSocialImageAddonsBatchJob> =>
+      kangurSocialImageAddonsBatchJobSchema.parse(
+        await api.post<KangurSocialImageAddonsBatchJob>(
+          '/api/kangur/social-image-addons/batch',
+          { ...payload, async: true },
+          { timeout: 30_000 }
+        )
+      ),
+    meta: {
+      source: 'kangur.hooks.useStartBatchCaptureKangurSocialImageAddons',
+      operation: 'update',
+      resource: 'kangur.social-image-addons.batch',
+      domain: 'kangur',
+      tags: ['kangur', 'social-image-addons', 'batch', 'async'],
+      description: 'Starts Kangur social image add-on batch captures and returns a pollable job.',
     },
   });

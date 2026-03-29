@@ -1,4 +1,4 @@
-import type { KangurDuelLeaderboardEntry } from '@kangur/contracts-duels';
+import type { KangurDuelLeaderboardEntry } from '@kangur/contracts';
 import { Text, View } from 'react-native';
 
 import { createKangurDuelsHref } from '../duels/duelsHref';

@@ -75,9 +75,6 @@ import {
   getLocalizedKangurSubjectLabel,
 } from '@/features/kangur/lessons/lesson-catalog-i18n';
 import {
-  DEFAULT_KANGUR_AI_TUTOR_CONTENT,
-} from '@/features/kangur/shared/contracts/kangur-ai-tutor-content';
-import {
   getKangurSixYearOldAgeGroupVisual,
   getKangurSixYearOldSubjectVisual,
 } from '@/features/kangur/ui/constants/six-year-old-visuals';
@@ -123,16 +120,10 @@ const KangurLanguageSwitcher = dynamic(() =>
 );
 
 const resolveTutorFallbackCopy = (
-  locale: ReturnType<typeof normalizeSiteLocale>,
   value: string | null | undefined,
-  polishDefault: string,
   fallback: string
 ): string => {
   if (typeof value !== 'string' || value.trim().length === 0) {
-    return fallback;
-  }
-
-  if (locale !== 'pl' && value === polishDefault) {
     return fallback;
   }
 
@@ -226,15 +217,11 @@ export function KangurPrimaryNavigation({
   const { subject, setSubject } = useKangurSubjectFocus();
   const { ageGroup, setAgeGroup } = useKangurAgeGroupFocus();
   const enableTutorLabel = resolveTutorFallbackCopy(
-    normalizedLocale,
     tutorContent.common.enableTutorLabel ?? tutorContent.navigation.restoreTutorLabel,
-    DEFAULT_KANGUR_AI_TUTOR_CONTENT.common.enableTutorLabel,
     fallbackCopy.enableTutorLabel
   );
   const disableTutorLabel = resolveTutorFallbackCopy(
-    normalizedLocale,
     tutorContent.common.disableTutorAria,
-    DEFAULT_KANGUR_AI_TUTOR_CONTENT.common.disableTutorAria,
     fallbackCopy.disableTutorLabel
   );
   const [isEditingGuestPlayerName, setIsEditingGuestPlayerName] = useState(

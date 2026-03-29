@@ -32,7 +32,7 @@ vi.mock('@/features/observability/entry-server', () => ({
   hydrateSystemLogRecordRuntimeContext: hydrateSystemLogRecordRuntimeContextMock,
 }));
 
-vi.mock('@/shared/lib/auth/settings-manage-access', () => ({
+vi.mock('@/features/auth/server', () => ({
   assertSettingsManageAccess: assertSettingsManageAccessMock,
 }));
 

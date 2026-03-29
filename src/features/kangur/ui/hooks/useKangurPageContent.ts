@@ -1,5 +1,6 @@
 'use client';
 
+import { useMemo } from 'react';
 import { useLocale } from 'next-intl';
 import { useQuery, type QueryClient, type UseQueryResult } from '@tanstack/react-query';
 

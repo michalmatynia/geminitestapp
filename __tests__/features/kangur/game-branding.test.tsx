@@ -217,12 +217,16 @@ const baseProgress: KangurProgressState = {
 };
 
 const getFeaturedHomeAction = (label: string): HTMLElement => {
-  const action = screen
-    .getAllByText(label)
-    .map((node) => node.closest('a, button'))
-    .find((node) => node?.classList.contains('home-action-featured'));
+  const action =
+    screen.queryByRole('link', { name: label }) ?? screen.queryByRole('button', { name: label });
 
-  expect(action).toBeTruthy();
+  if (!action) {
+    const availableActions = [...screen.queryAllByRole('link'), ...screen.queryAllByRole('button')]
+      .map((node) => node.getAttribute('aria-label') ?? node.textContent?.trim() ?? '')
+      .filter(Boolean);
+    throw new Error(`Missing home action "${label}". Available actions: ${availableActions.join(', ')}`);
+  }
+  expect(action).toHaveClass('home-action-featured');
 
   return action as HTMLElement;
 };
@@ -317,10 +321,7 @@ describe('Game branding', () => {
     expect(screen.queryByText('Trening figur')).not.toBeInTheDocument();
 
     for (const label of actionLabels) {
-      const action = screen
-        .getAllByText(label)
-        .map((node) => node.closest('a, button'))
-        .find((node) => node?.classList.contains('home-action-featured'));
+      const action = getFeaturedHomeAction(label);
 
       expect(action).toHaveClass('home-action-featured');
       expect(action).not.toHaveClass('home-action-active');

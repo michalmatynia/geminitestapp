@@ -3,7 +3,6 @@
 import { X } from 'lucide-react';
 import { useCallback, useRef } from 'react';
 
-import { DEFAULT_KANGUR_AI_TUTOR_CONTENT } from '@/features/kangur/shared/contracts/kangur-ai-tutor-content';
 import { useKangurAiTutorContent } from '@/features/kangur/ui/context/KangurAiTutorContentContext';
 import { useKangurCoarsePointer } from '@/features/kangur/ui/hooks/useKangurCoarsePointer';
 import { KangurDrawingCanvasSurface } from '@/features/kangur/ui/components/drawing-engine/KangurDrawingCanvasSurface';
@@ -127,16 +126,10 @@ const getTutorDrawingFallbackCopy = (
 };
 
 const resolveTutorDrawingFallback = (
-  locale: ReturnType<typeof normalizeSiteLocale>,
   value: string | null | undefined,
-  polishDefault: string | undefined,
   fallback: string
 ): string => {
   if (typeof value !== 'string' || value.trim().length === 0) {
-    return fallback;
-  }
-
-  if (locale !== 'pl' && typeof polishDefault === 'string' && value === polishDefault) {
     return fallback;
   }
 
@@ -153,15 +146,11 @@ export function KangurAiTutorDrawingCanvas({
   const locale = normalizeSiteLocale(tutorContent.locale);
   const fallbackCopy = getTutorDrawingFallbackCopy(locale);
   const closeAria = resolveTutorDrawingFallback(
-    locale,
     tutorContent.common.closeAria,
-    DEFAULT_KANGUR_AI_TUTOR_CONTENT.common.closeAria,
     fallbackCopy.closeAria
   );
   const drawingTitle = resolveTutorDrawingFallback(
-    locale,
     drawingContent?.title,
-    DEFAULT_KANGUR_AI_TUTOR_CONTENT.drawing?.title,
     fallbackCopy.title
   );
   const canvasLabel =
@@ -169,51 +158,35 @@ export function KangurAiTutorDrawingCanvas({
       ? drawingContent.canvasLabel
       : fallbackCopy.canvasLabel;
   const clearLabel = resolveTutorDrawingFallback(
-    locale,
     drawingContent?.clearLabel,
-    DEFAULT_KANGUR_AI_TUTOR_CONTENT.drawing?.clearLabel,
     fallbackCopy.clearLabel
   );
   const eraserLabel = resolveTutorDrawingFallback(
-    locale,
     drawingContent?.eraserLabel,
-    DEFAULT_KANGUR_AI_TUTOR_CONTENT.drawing?.eraserLabel,
     fallbackCopy.eraserLabel ?? 'Gumka'
   );
   const exportLabel = resolveTutorDrawingFallback(
-    locale,
     drawingContent?.exportLabel,
-    DEFAULT_KANGUR_AI_TUTOR_CONTENT.drawing?.exportLabel,
     fallbackCopy.exportLabel ?? 'Eksportuj PNG'
   );
   const penLabel = resolveTutorDrawingFallback(
-    locale,
     drawingContent?.penLabel,
-    DEFAULT_KANGUR_AI_TUTOR_CONTENT.drawing?.penLabel,
     fallbackCopy.penLabel ?? 'Pióro'
   );
   const redoLabel = resolveTutorDrawingFallback(
-    locale,
     drawingContent?.redoLabel,
-    DEFAULT_KANGUR_AI_TUTOR_CONTENT.drawing?.redoLabel,
     fallbackCopy.redoLabel ?? 'Ponów'
   );
   const undoLabel = resolveTutorDrawingFallback(
-    locale,
     drawingContent?.undoLabel,
-    DEFAULT_KANGUR_AI_TUTOR_CONTENT.drawing?.undoLabel,
     fallbackCopy.undoLabel ?? 'Cofnij'
   );
   const cancelLabel = resolveTutorDrawingFallback(
-    locale,
     drawingContent?.cancelLabel,
-    DEFAULT_KANGUR_AI_TUTOR_CONTENT.drawing?.cancelLabel,
     fallbackCopy.cancelLabel
   );
   const doneLabel = resolveTutorDrawingFallback(
-    locale,
     drawingContent?.doneLabel,
-    DEFAULT_KANGUR_AI_TUTOR_CONTENT.drawing?.doneLabel,
     fallbackCopy.doneLabel
   );
   const canvasRef = useRef<HTMLCanvasElement | null>(null);

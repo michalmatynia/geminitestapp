@@ -43,6 +43,7 @@ vi.mock('next/navigation', () => ({
     get: vi.fn(),
   }),
   usePathname: () => '/',
+  permanentRedirect: vi.fn(),
   redirect: vi.fn(),
 }));
 

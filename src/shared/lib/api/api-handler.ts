@@ -146,32 +146,72 @@ const shouldSkipCsrfInTestEnv = (request: NextRequest): boolean => {
   }
 };
 
-const enforceCsrf = (request: NextRequest, options: ApiHandlerOptions): void => {
-  const method = request.method.toUpperCase();
-  if (CSRF_SAFE_METHODS.has(method)) return;
-  const shouldRequire = options.requireCsrf !== false;
-  if (!shouldRequire) return;
-  if (shouldSkipCsrfInTestEnv(request)) return;
-  const isAllowedRequestOrigin =
-    isSameOriginRequest(request) || isTrustedOriginRequest(request, options.corsOrigins);
-  if (!isAllowedRequestOrigin) {
-    throw forbiddenError('Invalid request origin.');
+const shouldEnforceCsrfProtection = (
+  request: NextRequest,
+  options: ApiHandlerOptions
+): boolean => {
+  if (CSRF_SAFE_METHODS.has(request.method.toUpperCase())) return false;
+  if (options.requireCsrf === false) return false;
+  if (shouldSkipCsrfInTestEnv(request)) return false;
+  return true;
+};
+
+const hasAllowedCsrfOrigin = (request: NextRequest, options: ApiHandlerOptions): boolean =>
+  isSameOriginRequest(request) || isTrustedOriginRequest(request, options.corsOrigins);
+
+const readCsrfHeaderToken = (request: NextRequest): string | null =>
+  getCsrfTokenFromHeaders(request)?.trim() || null;
+
+const parseCookieHeaderTokens = (cookieHeader: string | null): string[] => {
+  if (!cookieHeader) return [];
+  return cookieHeader
+    .split(';')
+    .map((entry) => entry.trim())
+    .filter((entry) => entry.startsWith(`${CSRF_COOKIE_NAME}=`))
+    .map((entry) => entry.slice(CSRF_COOKIE_NAME.length + 1).trim())
+    .filter(Boolean);
+};
+
+const readCsrfCookieTokens = (request: NextRequest): string[] => {
+  try {
+    const cookies = request.cookies?.getAll?.(CSRF_COOKIE_NAME) ?? [];
+    if (cookies.length > 0) {
+      return cookies
+        .map((cookie: { value: string }) => cookie.value?.trim())
+        .filter((token: string | undefined): token is string => Boolean(token));
+    }
+  } catch (error) {
+    void ErrorSystem.captureException(error);
   }
-  const headerToken = getCsrfTokenFromHeaders(request)?.trim() || null;
+  return parseCookieHeaderTokens(request.headers.get('cookie'));
+};
+
+const assertValidCsrfHeaderToken = (request: NextRequest): string => {
+  const headerToken = readCsrfHeaderToken(request);
   if (!headerToken) {
     throw forbiddenError('Invalid CSRF token.');
   }
-  const cookieTokens = request.cookies
-    .getAll(CSRF_COOKIE_NAME)
-    .map((cookie: { value: string }) => cookie.value?.trim())
-    .filter((token: string | undefined): token is string => Boolean(token));
+  return headerToken;
+};
+
+const assertMatchingCsrfCookieToken = (cookieTokens: string[], headerToken: string): void => {
+  if (cookieTokens.length > 0 && !cookieTokens.includes(headerToken)) {
+    throw forbiddenError('Invalid CSRF token.');
+  }
+};
+
+const enforceCsrf = (request: NextRequest, options: ApiHandlerOptions): void => {
+  if (!shouldEnforceCsrfProtection(request, options)) return;
+  if (!hasAllowedCsrfOrigin(request, options)) {
+    throw forbiddenError('Invalid request origin.');
+  }
+  const headerToken = assertValidCsrfHeaderToken(request);
+  const cookieTokens = readCsrfCookieTokens(request);
 
   // Prefer strict double-submit validation when cookie exists.
   // If cookie is temporarily absent but request is same-origin and header is present,
   // accept to avoid false negatives in dev/proxy edge cases.
-  if (cookieTokens.length > 0 && !cookieTokens.includes(headerToken)) {
-    throw forbiddenError('Invalid CSRF token.');
-  }
+  assertMatchingCsrfCookieToken(cookieTokens, headerToken);
 };
 
 const appendVaryHeader = (response: Response, value: string): void => {
@@ -332,6 +372,14 @@ const parseJsonBody = async (
   return { body: parsed };
 };
 
+const parseWithSchema = <T>(schema: ZodSchema<T>, value: unknown, message: string): T => {
+  const validation = schema.safeParse(value);
+  if (!validation.success) {
+    throw validationError(message, { issues: validation.error.flatten() });
+  }
+  return validation.data;
+};
+
 const applySecurityHeaders = (response: Response): void => {
   response.headers.set('X-Content-Type-Options', 'nosniff');
   response.headers.set('X-Frame-Options', 'DENY');
@@ -432,13 +480,11 @@ export function apiHandler(
 
           if (options.querySchema) {
             const queryParams = Object.fromEntries(new URL(request.url).searchParams.entries());
-            const validation = options.querySchema.safeParse(queryParams);
-            if (!validation.success) {
-              throw validationError('Query validation failed', {
-                issues: validation.error.flatten(),
-              });
-            }
-            context.query = validation.data;
+            context.query = parseWithSchema(
+              options.querySchema,
+              queryParams,
+              'Query validation failed'
+            );
           }
 
           const response = await handler(request, context);
@@ -598,12 +644,7 @@ export function apiHandlerWithParams<P extends Record<string, string | string[]>
           handlerContext.params = params as Record<string, string | string[]>;
 
           if (options.paramsSchema) {
-            const validation = options.paramsSchema.safeParse(params);
-            if (!validation.success) {
-              throw validationError('Parameter validation failed', {
-                issues: validation.error.flatten(),
-              });
-            }
+            parseWithSchema(options.paramsSchema, params, 'Parameter validation failed');
           }
 
           const response = await handler(request, handlerContext, params);

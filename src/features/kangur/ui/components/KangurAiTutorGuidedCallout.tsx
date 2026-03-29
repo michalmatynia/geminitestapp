@@ -4,7 +4,6 @@ import { useEffect, useId, useMemo, useState } from 'react';
 import { AnimatePresence, motion, type Transition } from 'framer-motion';
 
 import { resolveKangurPageContentFragment } from '@/features/kangur/page-content-fragments';
-import { DEFAULT_KANGUR_AI_TUTOR_CONTENT } from '@/features/kangur/shared/contracts/kangur-ai-tutor-content';
 import { useKangurAiTutorContent } from '@/features/kangur/ui/context/KangurAiTutorContentContext';
 import { KangurButton, KangurPanelRow } from '@/features/kangur/ui/design/primitives';
 import { useKangurCoarsePointer } from '@/features/kangur/ui/hooks/useKangurCoarsePointer';
@@ -146,16 +145,10 @@ const getGuidedCalloutFallbackCopy = (
 };
 
 const resolveTutorGuidedFallback = (
-  locale: ReturnType<typeof normalizeSiteLocale>,
   value: string | null | undefined,
-  polishDefault: string,
   fallback: string
 ): string => {
   if (typeof value !== 'string' || value.trim().length === 0) {
-    return fallback;
-  }
-
-  if (locale !== 'pl' && value === polishDefault) {
     return fallback;
   }
 
@@ -553,18 +546,14 @@ export function KangurAiTutorGuidedCallout(props: Props): JSX.Element {
                           onClick={handleSketchRequest}
                         >
                           {resolveTutorGuidedFallback(
-                            normalizedLocale,
                             tutorContent.guidedCallout.selectionSketchCtaLabel,
-                            DEFAULT_KANGUR_AI_TUTOR_CONTENT.guidedCallout.selectionSketchCtaLabel,
                             fallbackCopy.selectionSketchCtaLabel
                           )}
                         </KangurButton>
                         {shouldShowSketchHint ? (
                           <div className='text-xs leading-relaxed [color:var(--kangur-chat-muted-text,var(--kangur-page-muted-text))]'>
                             {resolveTutorGuidedFallback(
-                              normalizedLocale,
                               tutorContent.guidedCallout.selectionSketchHint,
-                              DEFAULT_KANGUR_AI_TUTOR_CONTENT.guidedCallout.selectionSketchHint,
                               fallbackCopy.selectionSketchHint
                             )}
                           </div>

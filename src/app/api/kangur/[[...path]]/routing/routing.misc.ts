@@ -66,7 +66,11 @@ import {
   postKangurSocialImageAddonsHandler,
   querySchema as socialImageAddonsQuerySchema,
 } from '../../social-image-addons/handler';
-import { postKangurSocialImageAddonsBatchHandler } from '../../social-image-addons/batch/handler';
+import {
+  getKangurSocialImageAddonsBatchHandler,
+  postKangurSocialImageAddonsBatchHandler,
+  querySchema as socialImageAddonsBatchQuerySchema,
+} from '../../social-image-addons/batch/handler';
 import {
   GET_handler as getKangurSocialImageAddonsServeHandler,
   querySchema as socialImageAddonsServeQuerySchema,
@@ -331,6 +335,15 @@ export const socialImageAddonsBatchHandler: SimpleRouteHandler = apiHandler(
     source: 'kangur.social-image-addons.batch.POST',
     service: 'kangur.api',
     parseJsonBody: true,
+  }
+);
+
+export const socialImageAddonsBatchGetHandler: SimpleRouteHandler = apiHandler(
+  getKangurSocialImageAddonsBatchHandler,
+  {
+    source: 'kangur.social-image-addons.batch.GET',
+    service: 'kangur.api',
+    querySchema: socialImageAddonsBatchQuerySchema,
   }
 );
 
@@ -624,8 +637,13 @@ export const handleMiscRouting = (request: NextRequest, segments: string[]): Pro
       return handleGetPost(request, socialImageAddonsGetHandler, socialImageAddonsPostHandler);
     }
     if (segments[1] === 'batch' && segments.length === 2) {
-      if (request.method !== 'POST') return methodNotAllowed(request, ['POST'], request.method);
-      return socialImageAddonsBatchHandler(request);
+      if (request.method === 'GET') {
+        return socialImageAddonsBatchGetHandler(request);
+      }
+      if (request.method === 'POST') {
+        return socialImageAddonsBatchHandler(request);
+      }
+      return methodNotAllowed(request, ['GET', 'POST'], request.method);
     }
     if (segments[1] === 'serve' && segments.length === 2) {
       if (request.method !== 'GET') return methodNotAllowed(request, ['GET'], request.method);

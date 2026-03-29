@@ -4,7 +4,7 @@ import { GET_handler } from './handler';
 import { assertSettingsManageAccess } from '@/features/auth/server';
 import { getSettingsCacheStats, isSettingsCacheDebugEnabled } from '@/shared/lib/settings-cache';
 
-vi.mock('@/shared/lib/auth/settings-manage-access', () => ({
+vi.mock('@/features/auth/server', () => ({
   assertSettingsManageAccess: vi.fn().mockResolvedValue(undefined),
 }));
 

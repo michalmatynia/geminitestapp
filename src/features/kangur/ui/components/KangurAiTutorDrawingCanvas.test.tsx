@@ -14,6 +14,9 @@ import { DEFAULT_KANGUR_AI_TUTOR_CONTENT } from '@/features/kangur/shared/contra
 const { downloadKangurDataUrl } = vi.hoisted(() => ({
   downloadKangurDataUrl: vi.fn(),
 }));
+const { useKangurAiTutorContentMock } = vi.hoisted(() => ({
+  useKangurAiTutorContentMock: vi.fn(),
+}));
 vi.mock('@/features/kangur/ui/components/drawing-engine/canvas-export', async () => {
   const actual = await vi.importActual<
     typeof import('@/features/kangur/ui/components/drawing-engine/canvas-export')
@@ -24,6 +27,9 @@ vi.mock('@/features/kangur/ui/components/drawing-engine/canvas-export', async ()
     downloadKangurDataUrl,
   };
 });
+vi.mock('@/features/kangur/ui/context/KangurAiTutorContentContext', () => ({
+  useKangurAiTutorContent: useKangurAiTutorContentMock,
+}));
 import { KangurAiTutorDrawingCanvas } from './KangurAiTutorDrawingCanvas';
 
 const canvasContextStub = {
@@ -74,6 +80,7 @@ describe('KangurAiTutorDrawingCanvas', () => {
 
   beforeEach(() => {
     downloadKangurDataUrl.mockReset();
+    useKangurAiTutorContentMock.mockReturnValue(DEFAULT_KANGUR_AI_TUTOR_CONTENT);
     DEFAULT_KANGUR_AI_TUTOR_CONTENT.locale = defaultTutorContentSnapshot.locale;
     DEFAULT_KANGUR_AI_TUTOR_CONTENT.common.closeAria =
       defaultTutorContentSnapshot.common.closeAria;
@@ -163,8 +170,27 @@ describe('KangurAiTutorDrawingCanvas', () => {
     expect(screen.getByRole('button', { name: 'Eksportuj PNG' })).toBeDisabled();
   });
 
-  it('falls back to English drawing controls when tutor content still uses Polish defaults', () => {
-    DEFAULT_KANGUR_AI_TUTOR_CONTENT.locale = 'en';
+  it('falls back to English drawing controls when English tutor content is missing drawing copy', () => {
+    useKangurAiTutorContentMock.mockReturnValue({
+      ...DEFAULT_KANGUR_AI_TUTOR_CONTENT,
+      locale: 'en',
+      common: {
+        ...DEFAULT_KANGUR_AI_TUTOR_CONTENT.common,
+        closeAria: '   ',
+      },
+      drawing: {
+        ...DEFAULT_KANGUR_AI_TUTOR_CONTENT.drawing,
+        title: '   ',
+        penLabel: '   ',
+        eraserLabel: '   ',
+        undoLabel: '   ',
+        redoLabel: '   ',
+        exportLabel: '   ',
+        clearLabel: '   ',
+        cancelLabel: '   ',
+        doneLabel: '   ',
+      },
+    });
 
     render(<KangurAiTutorDrawingCanvas onCancel={vi.fn()} onComplete={vi.fn()} />);
 

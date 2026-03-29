@@ -14,7 +14,4 @@ export {
   useAsset3DTags,
   useAssets3D,
 } from './hooks/useAsset3dQueries';
-
-export { Admin3DAssetsPage } from './pages/Admin3DAssetsPage';
-export { Asset3DListPage } from './pages/Asset3DListPage';
 export type { Asset3DRecord } from '@/shared/contracts/viewer3d';

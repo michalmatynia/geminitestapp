@@ -3,7 +3,7 @@ import type {
   KangurDuelLobbyEntry,
   KangurDuelLobbyPresenceEntry,
   KangurDuelOpponentEntry,
-} from '@kangur/contracts-duels';
+} from '@kangur/contracts';
 import { Text, View } from 'react-native';
 
 import { createKangurDuelsHref } from '../duels/duelsHref';

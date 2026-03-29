@@ -32,25 +32,23 @@ export const createDefaultPlaywrightConfig = (): PlaywrightConfig => ({
   },
 });
 
+const mergePlaywrightCaptureConfig = (
+  capture: PlaywrightConfig['capture'] | undefined,
+  defaults: NonNullable<PlaywrightConfig['capture']>
+): NonNullable<PlaywrightConfig['capture']> => ({
+  screenshot: capture?.screenshot ?? defaults.screenshot,
+  html: capture?.html ?? defaults.html,
+  video: capture?.video ?? defaults.video,
+  trace: capture?.trace ?? defaults.trace,
+});
+
 export const normalizePlaywrightConfig = (
   config: PlaywrightConfig | undefined | null
 ): PlaywrightConfig => {
   const defaults = createDefaultPlaywrightConfig();
   return {
-    personaId: config?.personaId ?? defaults.personaId,
-    script: config?.script ?? defaults.script,
-    waitForResult: config?.waitForResult ?? defaults.waitForResult,
-    timeoutMs: config?.timeoutMs ?? defaults.timeoutMs,
-    browserEngine: config?.browserEngine ?? defaults.browserEngine,
-    startUrlTemplate: config?.startUrlTemplate ?? defaults.startUrlTemplate,
-    launchOptionsJson: config?.launchOptionsJson ?? defaults.launchOptionsJson,
-    contextOptionsJson: config?.contextOptionsJson ?? defaults.contextOptionsJson,
-    settingsOverrides: config?.settingsOverrides ?? defaults.settingsOverrides,
-    capture: {
-      screenshot: config?.capture?.screenshot ?? defaults.capture?.screenshot ?? true,
-      html: config?.capture?.html ?? defaults.capture?.html ?? false,
-      video: config?.capture?.video ?? defaults.capture?.video ?? false,
-      trace: config?.capture?.trace ?? defaults.capture?.trace ?? false,
-    },
+    ...defaults,
+    ...(config ?? {}),
+    capture: mergePlaywrightCaptureConfig(config?.capture, defaults.capture),
   };
 };

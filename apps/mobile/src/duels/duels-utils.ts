@@ -8,7 +8,7 @@ import type {
   KangurDuelSeries,
   KangurDuelSession,
   KangurDuelStatus,
-} from '@kangur/contracts-duels';
+} from '@kangur/contracts';
 import type { KangurDuelLobbyChatMessage } from '@kangur/contracts';
 import type { Href } from 'expo-router';
 

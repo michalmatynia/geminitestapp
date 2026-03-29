@@ -79,6 +79,7 @@ export function NotesAppProvider({ children }: { children: React.ReactNode }): R
 
   const {
     notes,
+    setNotes,
     tags,
     themes,
     notebook,
@@ -160,6 +161,7 @@ export function NotesAppProvider({ children }: { children: React.ReactNode }): R
     filters,
     queryClient,
     selectedNote,
+    setNotes,
     setIsCreating,
     setIsEditing,
     setSelectedFolderId,

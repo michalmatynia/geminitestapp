@@ -23,7 +23,7 @@ const mocks = vi.hoisted(() => ({
   logSystemEventMock: vi.fn(),
 }));
 
-vi.mock('@/shared/lib/auth/settings-manage-access', () => ({
+vi.mock('@/features/auth/server', () => ({
   assertSettingsManageAccess: mocks.assertSettingsManageAccessMock,
 }));
 

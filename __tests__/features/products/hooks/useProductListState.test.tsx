@@ -29,6 +29,13 @@ vi.mock('@tanstack/react-query', () => ({
 
 vi.mock('next/navigation', () => ({
   useSearchParams: () => ({ get: () => null }),
+  usePathname: () => '/',
+  useRouter: () => ({
+    push: vi.fn(),
+    refresh: vi.fn(),
+  }),
+  redirect: vi.fn(),
+  permanentRedirect: vi.fn(),
 }));
 
 vi.mock('@/features/drafter/hooks/useDraftQueries', () => ({

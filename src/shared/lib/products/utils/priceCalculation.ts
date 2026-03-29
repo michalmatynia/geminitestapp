@@ -7,6 +7,14 @@ function normalizeCurrencyCode(code?: string | null): string {
 const getPriceGroupKey = (group: PriceGroupForCalculation | undefined): string | null =>
   group?.id || group?.groupId || null;
 
+const findPriceGroupById = (
+  priceGroups: PriceGroupForCalculation[],
+  id?: string | null
+): PriceGroupForCalculation | undefined =>
+  id
+    ? priceGroups.find((g: PriceGroupForCalculation): boolean => g.id === id || g.groupId === id)
+    : undefined;
+
 const isSamePriceGroup = (
   left: PriceGroupForCalculation | undefined,
   right: PriceGroupForCalculation | undefined
@@ -48,6 +56,54 @@ function getGroupCurrencyCode(group: PriceGroupForCalculation): string {
   );
 }
 
+const matchesTargetCurrency = (
+  group: PriceGroupForCalculation,
+  normalizedTarget: string
+): boolean => {
+  const groupCode: string = getGroupCurrencyCode(group);
+  const groupIdCode = normalizeCurrencyCode(group.groupId);
+  const currencyIdCode =
+    typeof group.currencyId === 'string' ? normalizeCurrencyCode(group.currencyId) : '';
+  return (
+    groupCode === normalizedTarget ||
+    groupIdCode === normalizedTarget ||
+    Boolean(currencyIdCode && currencyIdCode === normalizedTarget)
+  );
+};
+
+const resolvePriceForGroup = (input: {
+  group: PriceGroupForCalculation | undefined;
+  defaultGroup: PriceGroupForCalculation;
+  basePrice: number;
+  priceGroups: PriceGroupForCalculation[];
+  visited?: Set<string>;
+}): number | null => {
+  const visited = input.visited ?? new Set<string>();
+  const group = input.group;
+  if (!group) return null;
+  if (!markVisitedPriceGroup(group, visited)) return null;
+  if (isSamePriceGroup(group, input.defaultGroup)) {
+    return input.basePrice;
+  }
+  if (group.type === 'standard') {
+    return applyPriceGroupAdjustment(input.basePrice, group);
+  }
+  if (group.type !== 'dependent' || !group.sourceGroupId) {
+    return null;
+  }
+  const sourcePrice = resolvePriceForGroup({
+    group: findPriceGroupById(input.priceGroups, group.sourceGroupId),
+    defaultGroup: input.defaultGroup,
+    basePrice: input.basePrice,
+    priceGroups: input.priceGroups,
+    visited,
+  });
+  if (sourcePrice === null) {
+    return null;
+  }
+  return applyPriceGroupAdjustment(sourcePrice, group);
+};
+
 export { normalizeCurrencyCode };
 
 export function calculatePriceForCurrency(
@@ -87,44 +143,18 @@ export function calculatePriceForCurrency(
     return { price: basePrice, currencyCode: targetCurrencyCode, baseCurrencyCode };
   }
 
-  const findGroupById = (id?: string | null): PriceGroupForCalculation | undefined =>
-    id
-      ? priceGroups.find((g: PriceGroupForCalculation): boolean => g.id === id || g.groupId === id)
-      : undefined;
-
-  const resolvePriceForGroup = (
-    group: PriceGroupForCalculation | undefined,
-    visited: Set<string> = new Set<string>()
-  ): number | null => {
-    if (!group) return null;
-    if (!markVisitedPriceGroup(group, visited)) return null;
-    if (isSamePriceGroup(group, defaultGroup)) {
-      return basePrice;
-    }
-    if (group.type === 'standard') return applyPriceGroupAdjustment(basePrice, group);
-    if (group.type !== 'dependent' || !group.sourceGroupId) return null;
-    const sourcePrice = resolvePriceForGroup(findGroupById(group.sourceGroupId), visited);
-    if (sourcePrice === null) return null;
-    return applyPriceGroupAdjustment(sourcePrice, group);
-  };
-
   const targetCandidates: PriceGroupForCalculation[] = priceGroups.filter(
-    (group: PriceGroupForCalculation): boolean => {
-      const groupCode: string = getGroupCurrencyCode(group);
-      const groupIdCode = normalizeCurrencyCode(group.groupId);
-      const currencyIdCode =
-        typeof group.currencyId === 'string' ? normalizeCurrencyCode(group.currencyId) : '';
-      return (
-        groupCode === normalizedTarget ||
-        groupIdCode === normalizedTarget ||
-        Boolean(currencyIdCode && currencyIdCode === normalizedTarget)
-      );
-    }
+    (group: PriceGroupForCalculation): boolean => matchesTargetCurrency(group, normalizedTarget)
   );
 
   let resolved: number | null = null;
   for (const candidate of targetCandidates) {
-    const candidateResolved = resolvePriceForGroup(candidate);
+    const candidateResolved = resolvePriceForGroup({
+      group: candidate,
+      defaultGroup,
+      basePrice,
+      priceGroups,
+    });
     if (candidateResolved !== null) {
       resolved = candidateResolved;
       break;

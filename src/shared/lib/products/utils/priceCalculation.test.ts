@@ -102,6 +102,34 @@ describe('products priceCalculation utils', () => {
     });
   });
 
+  it('matches target groups through fallback currency identifiers when currency.code is absent', () => {
+    const groups = [
+      createGroup({
+        id: 'group-usd',
+        groupId: 'USD',
+        currencyId: 'USD',
+        currency: { code: 'USD' },
+        currencyCode: 'USD',
+        isDefault: true,
+      }),
+      createGroup({
+        id: 'group-pln',
+        groupId: 'group-pln',
+        currencyId: 'PLN',
+        currency: undefined,
+        currencyCode: undefined,
+        priceMultiplier: 1.5,
+        addToPrice: 0,
+      }),
+    ];
+
+    expect(calculatePriceForCurrency(100, 'group-usd', 'PLN', groups)).toEqual({
+      price: 150,
+      currencyCode: 'PLN',
+      baseCurrencyCode: 'USD',
+    });
+  });
+
   it('falls back to the base currency when the target group cannot be resolved safely', () => {
     const groups = [
       createGroup({

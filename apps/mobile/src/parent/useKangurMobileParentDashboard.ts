@@ -3,12 +3,12 @@ import {
   type KangurLearnerProfileSnapshot,
 } from '@kangur/core';
 import type {
+  KangurAssignmentSnapshot,
   KangurLearnerProfile,
   KangurProgressState,
   KangurScore,
 } from '@kangur/contracts';
 import { createDefaultKangurProgressState } from '@kangur/contracts';
-import type { KangurAssignmentSnapshot } from '@kangur/contracts-assignments';
 import { useQuery } from '@tanstack/react-query';
 import type { Href } from 'expo-router';
 import { useMemo, useState } from 'react';

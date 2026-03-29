@@ -30,6 +30,7 @@ export function useNotesAppEntityHandlers({
   filters,
   queryClient,
   selectedNote,
+  setNotes,
   setIsCreating,
   setIsEditing,
   setSelectedFolderId,
@@ -46,6 +47,7 @@ export function useNotesAppEntityHandlers({
   filters: NotesAppStateValue['filters'];
   queryClient: QueryClient;
   selectedNote: NotesAppStateValue['selectedNote'];
+  setNotes: UseNoteDataResult['setNotes'];
   setIsCreating: NotesAppActionsValue['setIsCreating'];
   setIsEditing: NotesAppActionsValue['setIsEditing'];
   setSelectedFolderId: NotesAppActionsValue['setSelectedFolderId'];
@@ -124,6 +126,14 @@ export function useNotesAppEntityHandlers({
           isFavorite: nextFavorite,
         });
 
+        setNotes((prev): NoteWithRelations[] => {
+          return (
+            prev?.map((item: NoteWithRelations): NoteWithRelations =>
+              item.id === note.id ? { ...item, isFavorite: nextFavorite } : item
+            ) ?? []
+          );
+        });
+
         queryClient.setQueriesData<NoteWithRelations[]>(
           { queryKey: QUERY_KEYS.notes.lists() },
           (prev): NoteWithRelations[] | undefined =>
@@ -150,7 +160,7 @@ export function useNotesAppEntityHandlers({
         toast('Failed to update favorite', { variant: 'error' });
       }
     },
-    [queryClient, selectedNote, setSelectedNote, toast, updateNote]
+    [queryClient, selectedNote, setNotes, setSelectedNote, toast, updateNote]
   );
 
   const handleUnlinkRelatedNote = useCallback(

@@ -4,7 +4,7 @@ const { readOptionalServerAuthSessionMock } = vi.hoisted(() => ({
   readOptionalServerAuthSessionMock: vi.fn(),
 }));
 
-vi.mock('@/shared/lib/auth/optional-server-auth', () => ({
+vi.mock('@/features/auth/server', () => ({
   readOptionalServerAuthSession: readOptionalServerAuthSessionMock,
 }));
 

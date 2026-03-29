@@ -8,8 +8,8 @@ import { useEffect, useMemo, useRef, type RefObject } from 'react';
 import { getKangurPageHref as createPageUrl } from '@/features/kangur/config/routing';
 import {
   getKangurGameDefinition,
+  resolveKangurLaunchableGameRuntimeForPersistedInstance,
 } from '@/features/kangur/games';
-import { getKangurGameContentSetForGame } from '@/features/kangur/games/content-sets';
 import { useKangurDocsTooltips } from '@/features/kangur/docs/tooltips';
 import { KangurGameHomeActionsWidget } from '@/features/kangur/ui/components/KangurGameHomeActionsWidget';
 import { KangurGameHomeDuelsInvitesWidget } from '@/features/kangur/ui/components/KangurGameHomeDuelsInvitesWidget';
@@ -27,7 +27,6 @@ import {
 import {
   createLaunchableGameScreenComponentConfigFromRuntime,
   getKangurLaunchableGameScreenComponentConfig,
-  mergeKangurLaunchableGameRuntimeSpec,
 } from '@/features/kangur/ui/pages/Game.launchable-screens';
 import { useKangurMusicPianoRollLaunchableScreenRefs } from '@/features/kangur/ui/pages/music-piano-roll-launchable-screen-refs';
 import {
@@ -280,32 +279,47 @@ function GameContent(): React.JSX.Element {
   });
   const activeLaunchableGameInstance = launchableGameInstanceQuery.data?.[0] ?? null;
   const launchableGameContentSetsQuery = useKangurGameContentSets({
-    enabled: isKangurLaunchableGameScreen(screen) && Boolean(activeLaunchableGameInstance?.gameId),
+    contentSetId: activeLaunchableGameInstance?.contentSetId ?? undefined,
+    enabled:
+      isKangurLaunchableGameScreen(screen) && Boolean(activeLaunchableGameInstance?.contentSetId),
     gameId: activeLaunchableGameInstance?.gameId,
   });
+  const launchableGameRuntimeLoading =
+    isKangurLaunchableGameScreen(screen) &&
+    Boolean(launchableGameInstanceId) &&
+    (launchableGameInstanceQuery.isPending ||
+      (Boolean(activeLaunchableGameInstance?.contentSetId) &&
+        launchableGameContentSetsQuery.isPending));
   const activeLaunchableGameRuntime = useMemo(() => {
     if (!isKangurLaunchableGameScreen(screen)) {
       return null;
     }
 
     const defaultRuntime = getKangurLaunchableGameScreenComponentConfig(screen).runtime;
-    if (activeLaunchableGameInstance?.launchableRuntimeId !== screen) {
+    if (!launchableGameInstanceId) {
       return defaultRuntime;
     }
 
+    if (!activeLaunchableGameInstance) {
+      return null;
+    }
+
+    if (activeLaunchableGameInstance.launchableRuntimeId !== screen) {
+      return null;
+    }
+
     const game = getKangurGameDefinition(activeLaunchableGameInstance.gameId);
-    const contentSet = getKangurGameContentSetForGame(
+    return resolveKangurLaunchableGameRuntimeForPersistedInstance(
       game,
-      activeLaunchableGameInstance.contentSetId,
+      activeLaunchableGameInstance,
       launchableGameContentSetsQuery.data
     );
-
-    return mergeKangurLaunchableGameRuntimeSpec(
-      defaultRuntime,
-      contentSet?.rendererProps,
-      activeLaunchableGameInstance.engineOverrides
-    );
-  }, [activeLaunchableGameInstance, launchableGameContentSetsQuery.data, screen]);
+  }, [
+    activeLaunchableGameInstance,
+    launchableGameContentSetsQuery.data,
+    launchableGameInstanceId,
+    screen,
+  ]);
   const activeGameAssignment = runtime.activePracticeAssignment ?? runtime.resultPracticeAssignment;
   const tutorActivityContentId = useMemo(() => {
     if (activeGameAssignment?.id) {
@@ -510,6 +524,24 @@ function GameContent(): React.JSX.Element {
 
   const renderCurrentScreen = (): React.JSX.Element | null => {
     if (isKangurLaunchableGameScreen(screen)) {
+      if (launchableGameRuntimeLoading) {
+        return renderScreen(
+          screen,
+          'w-full flex flex-col items-center',
+          <div data-testid='kangur-game-launchable-runtime-loading' />,
+          launchableGameScreenRefs[screen]
+        );
+      }
+
+      if (launchableGameInstanceId && !activeLaunchableGameRuntime) {
+        return renderScreen(
+          screen,
+          'w-full flex flex-col items-center',
+          <div data-testid='kangur-game-launchable-runtime-missing' />,
+          launchableGameScreenRefs[screen]
+        );
+      }
+
       const config = activeLaunchableGameRuntime
         ? createLaunchableGameScreenComponentConfigFromRuntime(activeLaunchableGameRuntime)
         : getKangurLaunchableGameScreenComponentConfig(screen);

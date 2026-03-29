@@ -27,6 +27,11 @@ export const querySchema = z.object({
   ),
 });
 
+const cmsSlugCreateRequestSchema = cmsSlugCreateSchema.extend({
+  pageId: cmsSlugCreateSchema.shape.pageId.optional().default(null),
+  isDefault: cmsSlugCreateSchema.shape.isDefault.optional().default(false),
+});
+
 const resolveDomainFromRequest = async (
   req: NextRequest,
   query?: z.infer<typeof querySchema>
@@ -46,10 +51,11 @@ const parseBody = async (
   req: NextRequest,
   ctx: ApiHandlerContext
 ): Promise<
-  { ok: true; data: z.infer<typeof cmsSlugCreateSchema> } | { ok: false; response: Response }
+  | { ok: true; data: z.infer<typeof cmsSlugCreateRequestSchema> }
+  | { ok: false; response: Response }
 > => {
   if (ctx.body !== undefined) {
-    const parsed = cmsSlugCreateSchema.safeParse(ctx.body);
+    const parsed = cmsSlugCreateRequestSchema.safeParse(ctx.body);
     if (parsed.success) {
       return { ok: true, data: parsed.data };
     }
@@ -61,7 +67,7 @@ const parseBody = async (
       ),
     };
   }
-  return parseJsonBody(req, cmsSlugCreateSchema, { logPrefix: 'cms-slugs' });
+  return parseJsonBody(req, cmsSlugCreateRequestSchema, { logPrefix: 'cms-slugs' });
 };
 
 /**
@@ -94,11 +100,24 @@ export async function POST_handler(req: NextRequest, ctx: ApiHandlerContext): Pr
   if (!parsed.ok) {
     return parsed.response;
   }
-  const { slug } = parsed.data;
+  const { isDefault, locale, pageId, slug, translationGroupId } = parsed.data;
   const cmsRepository = await getCmsRepository();
   const domain = await resolveDomainFromRequest(req, query);
   const existing = await cmsRepository.getSlugByValue(slug);
-  const record = existing ?? (await cmsRepository.createSlug({ slug, isDefault: false }));
+  const createSlugInput: Parameters<typeof cmsRepository.createSlug>[0] = {
+    slug,
+    isDefault,
+  };
+  if (pageId) {
+    createSlugInput.pageId = pageId;
+  }
+  if (locale !== 'pl') {
+    createSlugInput.locale = locale;
+  }
+  if (translationGroupId) {
+    createSlugInput.translationGroupId = translationGroupId;
+  }
+  const record = existing ?? (await cmsRepository.createSlug(createSlugInput));
   if (typeof ensureDomainSlug === 'function') {
     await ensureDomainSlug(domain.id, record.id);
   }

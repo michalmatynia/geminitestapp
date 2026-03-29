@@ -4,13 +4,13 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { authError, badRequestError } from '@/shared/errors/app-error';
 
-const { authMock, getKangurKnowledgeGraphStatusSnapshotMock } = vi.hoisted(() => ({
-  authMock: vi.fn(),
+const { assertSettingsManageAccessMock, getKangurKnowledgeGraphStatusSnapshotMock } = vi.hoisted(() => ({
+  assertSettingsManageAccessMock: vi.fn(),
   getKangurKnowledgeGraphStatusSnapshotMock: vi.fn(),
 }));
 
 vi.mock('@/features/auth/server', () => ({
-  auth: authMock,
+  assertSettingsManageAccess: assertSettingsManageAccessMock,
 }));
 
 vi.mock('@/features/kangur/server/knowledge-graph/status-loader', () => ({
@@ -35,13 +35,7 @@ describe('kangur knowledge graph status handler', () => {
   });
 
   it('rejects unauthorized users', async () => {
-    authMock.mockResolvedValue({
-      user: {
-        id: 'user-1',
-        isElevated: false,
-        permissions: [],
-      },
-    });
+    assertSettingsManageAccessMock.mockRejectedValue(authError('Unauthorized.'));
 
     await expect(
       GET_handler(
@@ -52,13 +46,7 @@ describe('kangur knowledge graph status handler', () => {
   });
 
   it('returns the Kangur knowledge graph status for elevated users', async () => {
-    authMock.mockResolvedValue({
-      user: {
-        id: 'admin-1',
-        isElevated: true,
-        permissions: [],
-      },
-    });
+    assertSettingsManageAccessMock.mockResolvedValue(undefined);
     getKangurKnowledgeGraphStatusSnapshotMock.mockResolvedValue({
       mode: 'status',
       graphKey: 'kangur-website-help-v1',
@@ -107,13 +95,7 @@ describe('kangur knowledge graph status handler', () => {
   });
 
   it('rejects invalid graph keys', async () => {
-    authMock.mockResolvedValue({
-      user: {
-        id: 'admin-1',
-        isElevated: true,
-        permissions: [],
-      },
-    });
+    assertSettingsManageAccessMock.mockResolvedValue(undefined);
     const invalidGraphKey = 'x'.repeat(161);
 
     await expect(
@@ -127,13 +109,7 @@ describe('kangur knowledge graph status handler', () => {
   });
 
   it('rejects invalid status payloads that do not match the shared contract', async () => {
-    authMock.mockResolvedValue({
-      user: {
-        id: 'admin-1',
-        isElevated: true,
-        permissions: [],
-      },
-    });
+    assertSettingsManageAccessMock.mockResolvedValue(undefined);
     getKangurKnowledgeGraphStatusSnapshotMock.mockResolvedValue({
       mode: 'status',
       graphKey: 'kangur-website-help-v1',

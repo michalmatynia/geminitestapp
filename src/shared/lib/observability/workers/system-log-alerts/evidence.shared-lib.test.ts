@@ -1,10 +1,10 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-const hydrateLogRuntimeContextMock = vi.hoisted(() => vi.fn());
+const hydrateLogContextMock = vi.hoisted(() => vi.fn());
 const listAlertEvidenceLogsMock = vi.hoisted(() => vi.fn());
 
-vi.mock('@/features/observability/entry-server', () => ({
-  hydrateLogRuntimeContext: hydrateLogRuntimeContextMock,
+vi.mock('@/shared/lib/observability/log-hydration-registry', () => ({
+  hydrateLogContext: hydrateLogContextMock,
 }));
 
 vi.mock('@/shared/lib/observability/workers/system-log-alerts/repository', () => ({
@@ -24,7 +24,7 @@ describe('system-log-alerts evidence shared-lib coverage', () => {
   beforeEach(() => {
     vi.useFakeTimers();
     vi.setSystemTime(new Date('2026-03-25T16:00:00.000Z'));
-    hydrateLogRuntimeContextMock.mockReset();
+    hydrateLogContextMock.mockReset();
     listAlertEvidenceLogsMock.mockReset();
   });
 
@@ -68,7 +68,7 @@ describe('system-log-alerts evidence shared-lib coverage', () => {
   });
 
   it('summarizes log evidence with hydrated runtime context and registry refs', async () => {
-    hydrateLogRuntimeContextMock.mockResolvedValue({
+    hydrateLogContextMock.mockResolvedValue({
       fingerprint: 'fp-1',
       contextRegistry: {
         refs: [{ id: 'runtime-1', kind: 'runtime_document', providerId: 'provider-1' }],
@@ -106,7 +106,7 @@ describe('system-log-alerts evidence shared-lib coverage', () => {
   });
 
   it('builds alert evidence context from sampled logs', async () => {
-    hydrateLogRuntimeContextMock.mockResolvedValue({});
+    hydrateLogContextMock.mockResolvedValue({});
     listAlertEvidenceLogsMock.mockResolvedValue([
       {
         id: 'log-1',
@@ -174,7 +174,7 @@ describe('system-log-alerts evidence shared-lib coverage', () => {
   });
 
   it('builds log silence evidence with the latest observed log when present', async () => {
-    hydrateLogRuntimeContextMock.mockResolvedValue({});
+    hydrateLogContextMock.mockResolvedValue({});
     listAlertEvidenceLogsMock.mockResolvedValueOnce([
       {
         id: 'last-log',

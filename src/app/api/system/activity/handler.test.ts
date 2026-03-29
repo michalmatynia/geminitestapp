@@ -17,7 +17,7 @@ const {
   countActivityMock: vi.fn(),
 }));
 
-vi.mock('@/shared/lib/auth/settings-manage-access', () => ({
+vi.mock('@/features/auth/server', () => ({
   assertSettingsManageAccess: assertSettingsManageAccessMock,
 }));
 

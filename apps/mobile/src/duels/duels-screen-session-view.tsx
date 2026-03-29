@@ -1,4 +1,4 @@
-import type { KangurDuelChoice } from '@kangur/contracts-duels';
+import type { KangurDuelChoice } from '@kangur/contracts';
 import { Text, View } from 'react-native';
 
 import {

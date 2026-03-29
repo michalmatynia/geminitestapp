@@ -190,6 +190,43 @@ describe('resolveDatabaseQuery guardrails', () => {
     expect(result.querySource).toBe('input');
   });
 
+  it('unwraps aiQuery payloads with nested query and collection overrides', () => {
+    const toast = vi.fn();
+
+    const result = resolveDatabaseQuery({
+      nodeInputs: {
+        aiQuery: {
+          query: {
+            sku: 'SKU-1',
+          },
+          collection: 'product_variants',
+        },
+      },
+      toast,
+      simulationEntityType: null,
+      simulationEntityId: null,
+      resolvedInputs: {},
+      queryConfig: {
+        ...baseQueryConfig,
+        collection: 'products',
+      },
+      templateInputValue: 'ignored',
+      templateContext: {},
+      aiPrompt: 'test',
+    });
+
+    expect('output' in result).toBe(false);
+    if ('output' in result) {
+      throw new Error('Expected parsed AI query result.');
+    }
+
+    expect(result.query).toEqual({
+      sku: 'SKU-1',
+    });
+    expect(result.queryConfig.collection).toBe('product_variants');
+    expect(result.querySource).toBe('aiQuery');
+  });
+
   it('does not treat JSON array syntax in templates as missing input ports', () => {
     const toast = vi.fn();
 

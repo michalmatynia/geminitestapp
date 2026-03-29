@@ -16,6 +16,13 @@ import {
 } from './subtracting-lesson-content';
 import type { KangurSubtractingLessonTemplateContent } from '@/shared/contracts/kangur-lesson-templates';
 import { buildSubtractingLessonSlides } from './SubtractingLesson.slides';
+export {
+  SubtractingAbacusAnimation,
+  SubtractingDifferenceBarAnimation,
+  SubtractingNumberLineAnimation,
+  SubtractingSvgAnimation,
+  SubtractingTenFrameAnimation,
+} from './animations/SubtractingAnimations';
 
 const SUBTRACTING_GARDEN_INSTANCE_ID = getKangurBuiltInGameInstanceId('subtracting_garden');
 const SUBTRACTING_LESSON_COPY_PL = SUBTRACTING_LESSON_COMPONENT_CONTENT;

@@ -242,8 +242,13 @@ describe('KangurAiTutorPanelAuxiliaryControls', () => {
     );
   });
 
-  it('falls back to English toolbox copy when the tutor content still holds Polish defaults', () => {
+  it('falls back to English toolbox copy when the English tutor content is missing toolbox labels', () => {
     DEFAULT_KANGUR_AI_TUTOR_CONTENT.locale = 'en';
+    DEFAULT_KANGUR_AI_TUTOR_CONTENT.auxiliaryControls.toolboxTitle = '';
+    DEFAULT_KANGUR_AI_TUTOR_CONTENT.auxiliaryControls.toolboxDescription = '';
+    if (DEFAULT_KANGUR_AI_TUTOR_CONTENT.drawing) {
+      DEFAULT_KANGUR_AI_TUTOR_CONTENT.drawing.toggleLabel = '';
+    }
 
     render(
       <KangurAiTutorPanelBodyProvider

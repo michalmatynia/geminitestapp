@@ -5,7 +5,7 @@ vi.mock('@/server/auth', () => ({
   normalizeAuthEmail: (value: string) => value.trim().toLowerCase(),
 }));
 
-vi.mock('@/shared/lib/auth/optional-server-auth', () => ({
+vi.mock('@/features/auth/server', () => ({
   readOptionalServerAuthSession: vi.fn(),
 }));
 

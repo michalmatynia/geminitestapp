@@ -9,8 +9,8 @@ const { listKangurGamesMock, captureExceptionMock } = vi.hoisted(() => ({
   captureExceptionMock: vi.fn(),
 }));
 
-const { authMock } = vi.hoisted(() => ({
-  authMock: vi.fn(),
+const { readOptionalServerAuthSessionMock } = vi.hoisted(() => ({
+  readOptionalServerAuthSessionMock: vi.fn(),
 }));
 
 vi.mock('@/features/kangur/services/kangur-game-repository/mongo-kangur-game-repository', () => ({
@@ -18,7 +18,7 @@ vi.mock('@/features/kangur/services/kangur-game-repository/mongo-kangur-game-rep
 }));
 
 vi.mock('@/features/auth/server', () => ({
-  auth: authMock,
+  readOptionalServerAuthSession: readOptionalServerAuthSessionMock,
 }));
 
 vi.mock('@/features/kangur/shared/utils/observability/error-system', () => ({
@@ -42,7 +42,7 @@ const createRequestContext = (query?: Record<string, unknown>): ApiHandlerContex
 describe('kangur game library page handler', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    authMock.mockResolvedValue({
+    readOptionalServerAuthSessionMock.mockResolvedValue({
       expires: '2026-12-31T23:59:59.000Z',
       user: {
         email: 'admin@example.com',
@@ -96,7 +96,7 @@ describe('kangur game library page handler', () => {
   });
 
   it('returns not found for non-super-admin sessions and skips loading games', async () => {
-    authMock.mockResolvedValueOnce({
+    readOptionalServerAuthSessionMock.mockResolvedValueOnce({
       expires: '2026-12-31T23:59:59.000Z',
       user: {
         email: 'admin@example.com',

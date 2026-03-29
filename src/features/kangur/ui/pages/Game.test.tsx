@@ -759,6 +759,24 @@ describe('Game page', () => {
       ],
       isPending: false,
     });
+    useKangurGameContentSetsMock.mockReturnValue({
+      data: [
+        {
+          id: 'clock_training:clock-minutes',
+          gameId: 'clock_training',
+          engineId: 'clock_training_engine',
+          launchableRuntimeId: 'clock_quiz',
+          label: 'Minutes only',
+          description: 'Persisted minute-reading content set.',
+          contentKind: 'clock_section',
+          rendererProps: {
+            clockSection: 'minutes',
+          },
+          sortOrder: 3,
+        },
+      ],
+      isPending: false,
+    });
 
     render(<Game />);
 
@@ -773,6 +791,92 @@ describe('Game page', () => {
         })
       );
     });
+  });
+
+  it('shows the missing launchable runtime state when the persisted content set is absent', async () => {
+    useKangurGameRuntimeMock.mockReturnValue({
+      ...buildGameRuntime('clock_quiz'),
+      launchableGameInstanceId: 'clock-instance-minutes',
+    });
+    useKangurGameInstancesMock.mockReturnValue({
+      data: [
+        {
+          id: 'clock-instance-minutes',
+          gameId: 'clock_training',
+          launchableRuntimeId: 'clock_quiz',
+          contentSetId: 'clock_training:clock-minutes',
+          title: 'Minutes only',
+          description: 'Custom minute-reading run.',
+          emoji: '🕒',
+          enabled: true,
+          sortOrder: 1,
+          engineOverrides: {
+            clockInitialMode: 'challenge',
+          },
+        },
+      ],
+      isPending: false,
+    });
+
+    render(<Game />);
+
+    await waitFor(() => {
+      expect(
+        screen.getByTestId('kangur-game-launchable-runtime-missing')
+      ).toBeInTheDocument();
+    });
+    expect(clockTrainingGamePropsMock).not.toHaveBeenCalled();
+  });
+
+  it('shows the missing launchable runtime state when the persisted instance points to a different launchable screen', async () => {
+    useKangurGameRuntimeMock.mockReturnValue({
+      ...buildGameRuntime('clock_quiz'),
+      launchableGameInstanceId: 'clock-instance-mismatch',
+    });
+    useKangurGameInstancesMock.mockReturnValue({
+      data: [
+        {
+          id: 'clock-instance-mismatch',
+          gameId: 'clock_training',
+          launchableRuntimeId: 'calendar_quiz',
+          contentSetId: 'clock_training:clock-minutes',
+          title: 'Broken instance',
+          description: 'Mismatched runtime id.',
+          emoji: '🕒',
+          enabled: true,
+          sortOrder: 1,
+          engineOverrides: {},
+        },
+      ],
+      isPending: false,
+    });
+    useKangurGameContentSetsMock.mockReturnValue({
+      data: [
+        {
+          id: 'clock_training:clock-minutes',
+          gameId: 'clock_training',
+          engineId: 'clock_training_engine',
+          launchableRuntimeId: 'clock_quiz',
+          label: 'Minutes only',
+          description: 'Persisted minute-reading content set.',
+          contentKind: 'clock_section',
+          rendererProps: {
+            clockSection: 'minutes',
+          },
+          sortOrder: 3,
+        },
+      ],
+      isPending: false,
+    });
+
+    render(<Game />);
+
+    await waitFor(() => {
+      expect(
+        screen.getByTestId('kangur-game-launchable-runtime-missing')
+      ).toBeInTheDocument();
+    });
+    expect(clockTrainingGamePropsMock).not.toHaveBeenCalled();
   });
 
   it('merges persisted custom content sets with saved engine overrides for launchable game instances', async () => {

@@ -426,6 +426,39 @@ describe('api-handler behavior', () => {
       code: 'FORBIDDEN',
       error: 'Invalid CSRF token.',
     });
+
+    const headerOnlySameOriginResponse = await sameOriginHandler(
+      new NextRequest('http://localhost/test', {
+        method: 'POST',
+        headers: new Headers({
+          origin: 'http://localhost',
+          'content-type': 'application/json',
+          [CSRF_HEADER_NAME]: 'token-a',
+        }),
+        body: JSON.stringify({ ok: true }),
+      })
+    );
+
+    expect(headerOnlySameOriginResponse.status).toBe(200);
+
+    const mismatchedCookieResponse = await sameOriginHandler(
+      new NextRequest('http://localhost/test', {
+        method: 'POST',
+        headers: new Headers({
+          origin: 'http://localhost',
+          'content-type': 'application/json',
+          [CSRF_HEADER_NAME]: 'token-a',
+          cookie: 'csrf-token=token-b',
+        }),
+        body: JSON.stringify({ ok: true }),
+      })
+    );
+
+    expect(mismatchedCookieResponse.status).toBe(403);
+    expect(await mismatchedCookieResponse.json()).toMatchObject({
+      code: 'FORBIDDEN',
+      error: 'Invalid CSRF token.',
+    });
   });
 
   it('includes expected and opt-in details in error payloads and supports retryable errors without retry-after', async () => {

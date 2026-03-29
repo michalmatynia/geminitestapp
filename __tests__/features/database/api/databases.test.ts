@@ -14,7 +14,7 @@ import { POST as POST_DELETE } from '@/app/api/databases/delete/route';
 import { POST as POST_RESTORE } from '@/app/api/databases/restore/route';
 import { POST as POST_UPLOAD } from '@/app/api/databases/upload/route';
 import { auth } from '@/features/auth/server';
-import { mongoExecFileAsync } from '@/features/database/server';
+import { assertDatabaseEngineManageAccess, mongoExecFileAsync } from '@/features/database/server';
 import {
   enqueueProductAiJob,
   enqueueProductAiJobToQueue,
@@ -27,6 +27,7 @@ vi.mock('@/features/database/server', async (importOriginal) => {
   const actual = await importOriginal<typeof import('@/features/database/server')>();
   return {
     ...actual,
+    assertDatabaseEngineManageAccess: vi.fn().mockResolvedValue(undefined),
     mongoExecFileAsync: vi.fn().mockResolvedValue({ stdout: 'stdout', stderr: 'stderr' }),
   };
 });
@@ -65,6 +66,7 @@ describe('Databases API', () => {
       allowBackupSchedulerTick: true,
       allowOperationJobCancellation: true,
     });
+    vi.mocked(assertDatabaseEngineManageAccess).mockResolvedValue(undefined);
     (mongoExecFileAsync as Mock).mockResolvedValue({ stdout: 'stdout', stderr: 'stderr' });
     vi.mocked(enqueueProductAiJob).mockResolvedValue({
       id: 'job-backup-1',

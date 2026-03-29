@@ -4,10 +4,11 @@ import { useMemo } from 'react';
 
 import {
   getKangurGameDefinition,
-  getKangurGameInstanceForGame,
   mergeKangurLaunchableGameRuntimeSpec,
-  resolveKangurLaunchableGameRuntimeForInstance,
+  resolveKangurLaunchableGameRuntimeForPersistedInstance,
 } from '@/features/kangur/games';
+import { useKangurGameContentSets } from '@/features/kangur/ui/hooks/useKangurGameContentSets';
+import { useKangurGameInstances } from '@/features/kangur/ui/hooks/useKangurGameInstances';
 import type { KangurGameRuntimeRendererProps } from '@/shared/contracts/kangur-game-runtime-renderer-props';
 import type { KangurGameInstanceId } from '@/shared/contracts/kangur-game-instances';
 import type { KangurGameId } from '@/shared/contracts/kangur-games';
@@ -25,17 +26,38 @@ export function KangurLaunchableGameInstanceRuntime({
   instanceId: KangurGameInstanceId;
   onFinish: () => void;
 }): React.JSX.Element {
+  const gameInstanceQuery = useKangurGameInstances({
+    enabledOnly: true,
+    gameId,
+    instanceId,
+  });
+  const activeInstance = gameInstanceQuery.data?.[0] ?? null;
+  const gameContentSetQuery = useKangurGameContentSets({
+    contentSetId: activeInstance?.contentSetId ?? undefined,
+    enabled: Boolean(activeInstance?.contentSetId),
+    gameId,
+  });
   const runtime = useMemo(() => {
     const game = getKangurGameDefinition(gameId);
-    const instance = getKangurGameInstanceForGame(game, instanceId);
-    const resolvedRuntime = instance
-      ? resolveKangurLaunchableGameRuntimeForInstance(game, instance)
+    const resolvedRuntime = activeInstance
+      ? resolveKangurLaunchableGameRuntimeForPersistedInstance(
+          game,
+          activeInstance,
+          gameContentSetQuery.data
+        )
       : null;
 
     return resolvedRuntime
       ? mergeKangurLaunchableGameRuntimeSpec(resolvedRuntime, engineOverrides)
       : null;
-  }, [engineOverrides, gameId, instanceId]);
+  }, [activeInstance, engineOverrides, gameContentSetQuery.data, gameId]);
+
+  if (
+    gameInstanceQuery.isPending ||
+    (Boolean(activeInstance?.contentSetId) && gameContentSetQuery.isPending)
+  ) {
+    return <div data-testid='kangur-launchable-game-instance-runtime-loading' />;
+  }
 
   if (!runtime) {
     return <div data-testid='kangur-launchable-game-instance-runtime-missing' />;

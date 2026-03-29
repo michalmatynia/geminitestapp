@@ -568,8 +568,10 @@ describe('KangurAiTutorGuidedCallout', () => {
     ).not.toBeInTheDocument();
   });
 
-  it('uses English fallback labels when the tutor content locale is English but the built-in defaults are still Polish', () => {
+  it('uses English fallback labels when the English tutor content is missing sketch copy', () => {
     DEFAULT_KANGUR_AI_TUTOR_CONTENT.locale = 'en';
+    DEFAULT_KANGUR_AI_TUTOR_CONTENT.guidedCallout.selectionSketchCtaLabel = '';
+    DEFAULT_KANGUR_AI_TUTOR_CONTENT.guidedCallout.selectionSketchHint = '';
 
     pageContentQueryMock.entry = {
       fragments: [

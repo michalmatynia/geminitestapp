@@ -45,3 +45,47 @@ export const resolveKangurLaunchableGameRuntimeForInstance = (
     instance.engineOverrides
   );
 };
+
+export const resolvePersistedKangurGameContentSetForInstance = (
+  instance: Pick<KangurGameInstance, 'contentSetId' | 'gameId'>,
+  persistedContentSets?: readonly KangurGameContentSet[] | null
+): KangurGameContentSet | null => {
+  if (!instance.contentSetId) {
+    return null;
+  }
+
+  return (
+    persistedContentSets?.find(
+      (contentSet) =>
+        contentSet.id === instance.contentSetId && contentSet.gameId === instance.gameId
+    ) ?? null
+  );
+};
+
+export const resolveKangurLaunchableGameRuntimeForPersistedInstance = (
+  game: KangurGameDefinition,
+  instance: Pick<
+    KangurGameInstance,
+    'contentSetId' | 'engineOverrides' | 'gameId' | 'launchableRuntimeId'
+  >,
+  persistedContentSets?: readonly KangurGameContentSet[] | null
+): KangurLaunchableGameRuntimeSpec | null => {
+  const defaultRuntime = getKangurLaunchableGameRuntimeSpecForGame(game);
+  if (defaultRuntime?.screen !== instance.launchableRuntimeId) {
+    return null;
+  }
+
+  const contentSet = resolvePersistedKangurGameContentSetForInstance(
+    instance,
+    persistedContentSets
+  );
+  if (instance.contentSetId && !contentSet) {
+    return null;
+  }
+
+  return mergeKangurLaunchableGameRuntimeSpec(
+    defaultRuntime,
+    contentSet?.rendererProps,
+    instance.engineOverrides
+  );
+};

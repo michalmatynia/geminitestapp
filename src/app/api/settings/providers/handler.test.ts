@@ -8,10 +8,6 @@ import { getProductDataProvider } from '@/shared/lib/products/services/product-p
 import { getIntegrationDataProvider } from '@/shared/lib/integrations/services/integration-provider';
 import { getCmsDataProvider } from '@/shared/lib/cms/services/cms-provider';
 
-vi.mock('@/shared/lib/auth/settings-manage-access', () => ({
-  assertSettingsManageAccess: vi.fn().mockResolvedValue(undefined),
-}));
-
 vi.mock('@/shared/lib/db/app-db-provider', () => ({
   getAppDbProvider: vi.fn().mockResolvedValue('mongodb'),
   APP_DB_PROVIDER_SETTING_KEY: 'app_db_provider',
@@ -21,6 +17,7 @@ vi.mock('@/features/auth/server', () => ({
   getAuthDataProvider: vi.fn().mockResolvedValue('mongodb'),
   requireAuthProvider: vi.fn((v) => v),
   AUTH_SETTINGS_KEYS: { provider: 'auth_provider' },
+  assertSettingsManageAccess: vi.fn().mockResolvedValue(undefined),
 }));
 
 vi.mock('@/shared/lib/products/services/product-provider', () => ({

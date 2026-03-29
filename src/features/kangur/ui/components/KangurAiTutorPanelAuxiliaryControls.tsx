@@ -1,4 +1,3 @@
-import { DEFAULT_KANGUR_AI_TUTOR_CONTENT } from '@/features/kangur/shared/contracts/kangur-ai-tutor-content';
 import { useKangurAiTutorContent } from '@/features/kangur/ui/context/KangurAiTutorContentContext';
 import { KangurButton, KangurPanelRow } from '@/features/kangur/ui/design/primitives';
 import { KANGUR_WRAP_ROW_CLASSNAME } from '@/features/kangur/ui/design/tokens';
@@ -54,16 +53,10 @@ const getAuxiliaryFallbackCopy = (
 };
 
 const resolveTutorAuxiliaryFallback = (
-  locale: ReturnType<typeof normalizeSiteLocale>,
   value: string | null | undefined,
-  polishDefault: string,
   fallback: string
 ): string => {
   if (typeof value !== 'string' || value.trim().length === 0) {
-    return fallback;
-  }
-
-  if (locale !== 'pl' && value === polishDefault) {
     return fallback;
   }
 
@@ -120,17 +113,13 @@ export function KangurAiTutorPanelAuxiliaryControls(): JSX.Element | null {
         >
           <div className='text-[10px] font-semibold uppercase tracking-[0.16em] [color:var(--kangur-chat-kicker-text,var(--kangur-chat-panel-text,var(--kangur-page-text)))]'>
             {resolveTutorAuxiliaryFallback(
-              locale,
               auxiliaryContent?.toolboxTitle,
-              DEFAULT_KANGUR_AI_TUTOR_CONTENT.auxiliaryControls.toolboxTitle,
               fallbackCopy.toolboxTitle
             )}
           </div>
           <div className='mt-1 text-[11px] leading-relaxed [color:var(--kangur-chat-muted-text,var(--kangur-page-muted-text))]'>
             {resolveTutorAuxiliaryFallback(
-              locale,
               auxiliaryContent?.toolboxDescription,
-              DEFAULT_KANGUR_AI_TUTOR_CONTENT.auxiliaryControls.toolboxDescription,
               fallbackCopy.toolboxDescription
             )}
           </div>
@@ -159,9 +148,7 @@ export function KangurAiTutorPanelAuxiliaryControls(): JSX.Element | null {
                 aria-pressed={drawingMode}
               >
                 {resolveTutorAuxiliaryFallback(
-                  locale,
                   drawingContent?.toggleLabel,
-                  DEFAULT_KANGUR_AI_TUTOR_CONTENT.drawing?.toggleLabel ?? 'Rysuj',
                   fallbackCopy.drawingToggleLabel
                 )}
               </KangurButton>

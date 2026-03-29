@@ -6,7 +6,7 @@ import {
   createBrainCatalogNodeEntryMap,
   resolveBrainCatalogOrderFromNodes,
   toBrainCatalogNodeId,
-} from '@/shared/lib/ai-brain/components/brain-catalog-master-tree';
+} from '@/features/ai/brain/components/brain-catalog-master-tree';
 
 describe('brain catalog master tree mapping', () => {
   const entries: AiBrainCatalogEntry[] = [

@@ -47,7 +47,12 @@ vi.mock('./SocialPostContext', () => ({
 
 import { SocialPostVisuals } from './SocialPost.Visuals';
 
-const buildPost = () => ({
+const buildPost = (overrides: Partial<ReturnType<typeof buildPostBase>> = {}) => ({
+  ...buildPostBase(),
+  ...overrides,
+});
+
+const buildPostBase = () => ({
   id: 'post-1',
   titlePl: 'StudiQ Weekly Update',
   titleEn: 'StudiQ Weekly Update',
@@ -82,6 +87,7 @@ const buildPost = () => ({
 describe('SocialPostVisuals', () => {
   it('keeps only post-scoped add-on selection controls in the editor surface', () => {
     useSocialPostContextMock.mockReturnValue({
+      activePost: buildPost(),
       recentAddons: [],
       addonsQuery: { isLoading: false },
       imageAddonIds: [],
@@ -112,6 +118,7 @@ describe('SocialPostVisuals', () => {
 
   it('renders the shared add-ons loader when recent add-ons are loading', () => {
     useSocialPostContextMock.mockReturnValue({
+      activePost: buildPost(),
       recentAddons: [],
       addonsQuery: { isLoading: true },
       imageAddonIds: [],
@@ -128,5 +135,46 @@ describe('SocialPostVisuals', () => {
 
     expect(screen.getByRole('status')).toHaveTextContent('Loading image add-ons...');
     expect(screen.queryByText('No image add-ons yet.')).not.toBeInTheDocument();
+  });
+
+  it('shows the stored image analysis summary and highlights when the post has visual analysis data', () => {
+    useSocialPostContextMock.mockReturnValue({
+      activePost: buildPost({
+        visualSummary: 'The hero now highlights the classroom card and a stronger CTA.',
+        visualHighlights: ['Classroom card is larger', 'CTA is more prominent'],
+        visualDocUpdates: [
+          {
+            docPath: 'docs/social/teacher-launch.md',
+            section: 'Hero',
+            proposedText: 'Use the classroom card variation in the launch section.',
+            reason: 'The analyzed visuals now emphasize the larger classroom CTA.',
+          },
+        ],
+      }),
+      recentAddons: [],
+      addonsQuery: { isLoading: false },
+      imageAddonIds: [],
+      handleSelectAddon: vi.fn(),
+      handleRemoveAddon: vi.fn(),
+      imageAssets: [],
+      handleRemoveImage: vi.fn(),
+      setShowMediaLibrary: vi.fn(),
+      showMediaLibrary: false,
+      handleAddImages: vi.fn(),
+    });
+
+    render(<SocialPostVisuals showImagesPanel={false} />);
+
+    expect(screen.getByText('Image analysis result')).toBeInTheDocument();
+    expect(
+      screen.getByText('The hero now highlights the classroom card and a stronger CTA.')
+    ).toBeInTheDocument();
+    expect(screen.getByText('- Classroom card is larger')).toBeInTheDocument();
+    expect(screen.getByText('- CTA is more prominent')).toBeInTheDocument();
+    expect(screen.getByText('Suggested documentation updates')).toBeInTheDocument();
+    expect(screen.getByText('docs/social/teacher-launch.md · Hero')).toBeInTheDocument();
+    expect(
+      screen.getByText('The analyzed visuals now emphasize the larger classroom CTA.')
+    ).toBeInTheDocument();
   });
 });

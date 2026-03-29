@@ -9,6 +9,10 @@ import {
 import { updateKangurSocialPost } from '@/features/kangur/server/social-posts-repository';
 import { findKangurSocialImageAddonsByIds } from '@/features/kangur/server/social-image-addons-repository';
 import { ErrorSystem } from '@/features/kangur/shared/utils/observability/error-system';
+import {
+  kangurSocialVisualAnalysisSchema,
+  type KangurSocialVisualAnalysis,
+} from '@/shared/contracts/kangur-social-posts';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { forbiddenError, notFoundError } from '@/shared/errors/app-error';
 
@@ -20,6 +24,8 @@ const bodySchema = z.object({
   visionModelId: z.string().trim().optional(),
   imageAddonIds: z.array(z.string().trim().min(1)).optional(),
   projectUrl: z.string().trim().optional(),
+  prefetchedVisualAnalysis: kangurSocialVisualAnalysisSchema.optional(),
+  requireVisualAnalysisInBody: z.boolean().optional(),
 });
 
 export async function postKangurSocialPostGenerateHandler(
@@ -46,6 +52,9 @@ export async function postKangurSocialPostGenerateHandler(
       visionModelId: parsed.visionModelId,
       imageAddons,
       projectUrl: parsed.projectUrl,
+      prefetchedVisualAnalysis:
+        parsed.prefetchedVisualAnalysis as KangurSocialVisualAnalysis | undefined,
+      requireVisualAnalysisInBody: parsed.requireVisualAnalysisInBody,
     });
 
     if (parsed.postId) {

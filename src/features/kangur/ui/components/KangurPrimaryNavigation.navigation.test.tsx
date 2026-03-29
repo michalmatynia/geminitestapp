@@ -523,9 +523,7 @@ it('shows the elevated avatar menu for super admins without an active learner', 
   expect(screen.getByRole('menuitem', { name: 'Admin' })).toHaveAttribute('href', '/admin');
 });
 
-it('keeps the learner profile entry inside the elevated avatar menu when an elevated admin has an active learner', async () => {
-  const user = userEvent.setup();
-
+it('restores the direct learner profile link when an elevated admin has an active learner', async () => {
   optionalAuthMock.mockReturnValue({
     authError: null,
     appPublicSettings: null,
@@ -583,12 +581,12 @@ it('keeps the learner profile entry inside the elevated avatar menu when an elev
     />
   );
 
-  await user.click(await screen.findByTestId('kangur-elevated-user-menu-trigger'));
-
-  expect(screen.getByRole('menuitem', { name: 'Profil Maja' })).toHaveAttribute(
+  expect(screen.queryByTestId('kangur-elevated-user-menu-trigger')).toBeNull();
+  expect(await screen.findByRole('link', { name: 'Profil Maja' })).toHaveAttribute(
     'href',
     '/kangur/profile'
   );
+  expect(screen.queryByRole('menuitem', { name: 'Profil Maja' })).toBeNull();
 });
 
 it('navigates to lessons on the first tap from the mobile menu', async () => {

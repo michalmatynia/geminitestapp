@@ -185,6 +185,51 @@ describe('SocialPostList', () => {
     ).toBeInTheDocument();
   });
 
+  it('marks posts with image analysis and lets search match visual-analysis text', () => {
+    useSocialPostContextMock.mockReturnValue(
+      buildSocialPostContextState({
+        posts: [
+          {
+            ...buildPost(),
+            id: 'post-visual',
+            titlePl: 'Visual refresh',
+            titleEn: 'Visual refresh',
+            visualSummary: 'The hero now focuses on a larger CTA card for teachers.',
+            visualHighlights: ['Larger CTA card', 'Teacher illustration is more central'],
+            visualDocUpdates: [
+              {
+                docPath: 'docs/social/teacher-launch.md',
+                section: 'Hero',
+                proposedText: 'Use the classroom CTA variation.',
+                reason: 'Keep the teacher-facing CTA in the launch docs.',
+              },
+            ],
+          },
+          {
+            ...buildPost(),
+            id: 'post-plain',
+            titlePl: 'Plain draft',
+            titleEn: 'Plain draft',
+          },
+        ],
+        activePostId: 'post-visual',
+      })
+    );
+
+    render(<SocialPostList />);
+
+    expect(screen.getByText('Image analysis')).toBeInTheDocument();
+    expect(screen.getByText('2 highlights')).toBeInTheDocument();
+    expect(screen.getByText('1 doc update')).toBeInTheDocument();
+
+    fireEvent.change(screen.getByLabelText('Search social posts'), {
+      target: { value: 'teacher-facing' },
+    });
+
+    expect(screen.getByText('Visual refresh')).toBeInTheDocument();
+    expect(screen.queryByText('Plain draft')).not.toBeInTheDocument();
+  });
+
   it('opens the modal from the post name without row hover zoom treatment', () => {
     const setActivePostId = vi.fn();
     const handleOpenPostEditor = vi.fn();

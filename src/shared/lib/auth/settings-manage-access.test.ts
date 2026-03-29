@@ -4,11 +4,11 @@ const { readOptionalServerAuthSessionMock } = vi.hoisted(() => ({
   readOptionalServerAuthSessionMock: vi.fn(),
 }));
 
-vi.mock('@/shared/lib/auth/optional-server-auth', () => ({
+vi.mock('@/features/auth/optional-server-auth', () => ({
   readOptionalServerAuthSession: readOptionalServerAuthSessionMock,
 }));
 
-import { assertSettingsManageAccess } from './settings-manage-access';
+import { assertSettingsManageAccess } from '@/features/auth/settings-manage-access';
 
 describe('assertSettingsManageAccess', () => {
   beforeEach(() => {

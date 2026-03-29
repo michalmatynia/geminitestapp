@@ -8,11 +8,20 @@ import {
   type RunKangurSocialPostPipelineInput,
   type KangurSocialManualPipelineJobResult,
 } from '@/features/kangur/server/social-posts-pipeline';
+import {
+  runKangurSocialPostGenerationJob,
+  runKangurSocialPostVisualAnalysisJob,
+} from '@/features/kangur/server/social-posts-runtime';
 import { readKangurSettingValue } from '@/features/kangur/services/kangur-settings-repository';
 import {
   KANGUR_SOCIAL_SETTINGS_KEY,
   parseKangurSocialSettings,
 } from '@/features/kangur/settings-social';
+import type {
+  KangurSocialManualGenerationJobResult,
+  KangurSocialManualVisualAnalysisJobResult,
+} from '@/shared/contracts/kangur-social-pipeline';
+import { kangurSocialVisualAnalysisSchema } from '@/shared/contracts/kangur-social-posts';
 import { createManagedQueue, getRedisConnection, type ManagedQueue } from '@/shared/lib/queue';
 import type { SchedulerQueueState } from '@/shared/lib/queue/scheduler-queue-types';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
@@ -24,6 +33,32 @@ export type KangurSocialPipelineJobData =
   | {
       type: 'manual-post-pipeline';
       input: RunKangurSocialPostPipelineInput;
+    }
+  | {
+      type: 'manual-post-visual-analysis';
+      input: {
+        postId?: string | null;
+        docReferences?: string[];
+        notes?: string;
+        visionModelId?: string | null;
+        imageAddonIds?: string[];
+        actorId: string;
+      };
+    }
+  | {
+      type: 'manual-post-generation';
+      input: {
+        postId?: string | null;
+        docReferences?: string[];
+        notes?: string;
+        modelId?: string | null;
+        visionModelId?: string | null;
+        imageAddonIds?: string[];
+        projectUrl?: string;
+        prefetchedVisualAnalysis?: ReturnType<typeof kangurSocialVisualAnalysisSchema.parse>;
+        requireVisualAnalysisInBody?: boolean;
+        actorId: string;
+      };
     };
 
 export type KangurSocialPipelineTickJobResult = {
@@ -37,7 +72,9 @@ export type KangurSocialPipelineTickJobResult = {
 
 export type KangurSocialPipelineJobResult =
   | KangurSocialPipelineTickJobResult
-  | KangurSocialManualPipelineJobResult;
+  | KangurSocialManualPipelineJobResult
+  | KangurSocialManualVisualAnalysisJobResult
+  | KangurSocialManualGenerationJobResult;
 
 const isPipelineTickResult = (
   result: KangurSocialPipelineJobResult | null
@@ -173,6 +210,112 @@ const queue = createManagedQueue<KangurSocialPipelineJobData>({
         addonsCreated: result.addonsCreated,
         failures: result.failures,
         runId: result.runId,
+        durationMs: Date.now() - startedAt,
+      });
+      return result satisfies KangurSocialPipelineJobResult;
+    }
+
+    if (data.type === 'manual-post-visual-analysis') {
+      await helpers?.updateProgress({
+        type: 'manual-post-visual-analysis',
+        step: 'loading_assets',
+        message: 'Loading selected visuals for analysis...',
+        updatedAt: Date.now(),
+        postId: data.input.postId?.trim() || null,
+        imageAddonCount: data.input.imageAddonIds?.length ?? 0,
+        docReferenceCount: data.input.docReferences?.length ?? 0,
+        highlightCount: null,
+        docUpdateCount: null,
+      });
+      await helpers?.updateProgress({
+        type: 'manual-post-visual-analysis',
+        step: 'analyzing',
+        message: 'Running Redis-backed image analysis...',
+        updatedAt: Date.now(),
+        postId: data.input.postId?.trim() || null,
+        imageAddonCount: data.input.imageAddonIds?.length ?? 0,
+        docReferenceCount: data.input.docReferences?.length ?? 0,
+        highlightCount: null,
+        docUpdateCount: null,
+      });
+      const result = await runKangurSocialPostVisualAnalysisJob({
+        ...data.input,
+        jobId: _jobId,
+      });
+      await helpers?.updateProgress({
+        type: 'manual-post-visual-analysis',
+        step: 'saving',
+        message: 'Image analysis saved on the post.',
+        updatedAt: Date.now(),
+        postId: result.postId,
+        imageAddonCount: result.imageAddonIds.length,
+        docReferenceCount: result.docReferences.length,
+        highlightCount: result.analysis.highlights.length,
+        docUpdateCount: result.analysis.docUpdates.length,
+      });
+      void ErrorSystem.logInfo('Kangur social visual analysis job completed', {
+        service: 'kangur-social-pipeline-queue',
+        postId: result.postId,
+        imageAddonCount: result.imageAddonIds.length,
+        highlightCount: result.analysis.highlights.length,
+        docUpdateCount: result.analysis.docUpdates.length,
+        durationMs: Date.now() - startedAt,
+      });
+      return result satisfies KangurSocialPipelineJobResult;
+    }
+
+    if (data.type === 'manual-post-generation') {
+      await helpers?.updateProgress({
+        type: 'manual-post-generation',
+        step: 'loading_assets',
+        message: 'Loading selected visuals and context...',
+        updatedAt: Date.now(),
+        postId: data.input.postId?.trim() || null,
+        imageAddonCount: data.input.imageAddonIds?.length ?? 0,
+        docReferenceCount: data.input.docReferences?.length ?? 0,
+        visualSummaryPresent: Boolean(data.input.prefetchedVisualAnalysis?.summary?.trim()),
+        highlightCount: data.input.prefetchedVisualAnalysis?.highlights.length ?? null,
+        docUpdateCount: data.input.prefetchedVisualAnalysis?.docUpdates.length ?? null,
+      });
+      await helpers?.updateProgress({
+        type: 'manual-post-generation',
+        step: 'generating',
+        message: 'Running Redis-backed post generation...',
+        updatedAt: Date.now(),
+        postId: data.input.postId?.trim() || null,
+        imageAddonCount: data.input.imageAddonIds?.length ?? 0,
+        docReferenceCount: data.input.docReferences?.length ?? 0,
+        visualSummaryPresent: Boolean(data.input.prefetchedVisualAnalysis?.summary?.trim()),
+        highlightCount: data.input.prefetchedVisualAnalysis?.highlights.length ?? null,
+        docUpdateCount: data.input.prefetchedVisualAnalysis?.docUpdates.length ?? null,
+      });
+      const result = await runKangurSocialPostGenerationJob(data.input);
+      await helpers?.updateProgress({
+        type: 'manual-post-generation',
+        step: result.generatedPost ? 'previewing' : 'saving',
+        message: result.generatedPost
+          ? 'Draft generated and saved on the post.'
+          : 'Draft generated.',
+        updatedAt: Date.now(),
+        postId: result.postId,
+        imageAddonCount: result.imageAddonIds.length,
+        docReferenceCount: result.docReferences.length,
+        visualSummaryPresent: Boolean(
+          (result.generatedPost?.visualSummary ?? result.draft?.visualSummary ?? '').trim()
+        ),
+        highlightCount:
+          result.generatedPost?.visualHighlights.length ??
+          result.draft?.visualHighlights?.length ??
+          null,
+        docUpdateCount:
+          result.generatedPost?.visualDocUpdates.length ??
+          result.draft?.visualDocUpdates?.length ??
+          null,
+      });
+      void ErrorSystem.logInfo('Kangur social generation job completed', {
+        service: 'kangur-social-pipeline-queue',
+        postId: result.postId,
+        imageAddonCount: result.imageAddonIds.length,
         durationMs: Date.now() - startedAt,
       });
       return result satisfies KangurSocialPipelineJobResult;

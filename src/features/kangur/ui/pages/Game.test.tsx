@@ -6,7 +6,7 @@ import React from 'react';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { buildGameRuntime } from './Game.test-support';
+import { buildGameRuntime, buildLaunchableGameContentSet, buildLaunchableGameInstance, expectStandardMobileGameLayout } from './Game.test-support';
 
 const {
   useKangurGameRuntimeMock,
@@ -515,21 +515,7 @@ describe('Game page', () => {
 
     const gameMain = document.getElementById('kangur-game-main');
 
-    expect(gameMain).not.toBeNull();
-    expect(gameMain?.className).toContain('w-full');
-    expect(gameMain?.className).toContain('min-w-0');
-    expect(gameMain?.className).toContain('overflow-x-clip');
-    expect(gameMain?.className).toContain(
-      'var(--kangur-mobile-bottom-clearance,env(safe-area-inset-bottom))+32px'
-    );
-    expect(gameMain?.className).toContain('overflow-y-auto');
-    expect(gameMain?.className).not.toContain(
-      'var(--kangur-shell-viewport-height,100dvh)-var(--kangur-top-bar-height,88px)'
-    );
-    expect(screen.queryByTestId('kangur-game-phone-simulation-scroll-container')).toBeNull();
-    expect(screen.queryByTestId('kangur-game-phone-simulation-scroll-up')).toBeNull();
-    expect(screen.queryByTestId('kangur-game-phone-simulation-scroll-down')).toBeNull();
-    expect(screen.queryByRole('button', { name: 'Przewiń w dół' })).toBeNull();
+    expectStandardMobileGameLayout(gameMain, { expectFullWidth: true });
   });
 
   it('keeps the operation screen on the standard mobile layout', () => {
@@ -543,14 +529,7 @@ describe('Game page', () => {
 
     const gameMain = document.getElementById('kangur-game-main');
 
-    expect(gameMain).not.toBeNull();
-    expect(gameMain?.className).toContain('min-w-0');
-    expect(gameMain?.className).toContain('overflow-x-clip');
-    expect(gameMain?.className).toContain('overflow-y-auto');
-    expect(screen.queryByTestId('kangur-game-phone-simulation-scroll-container')).toBeNull();
-    expect(screen.queryByTestId('kangur-game-phone-simulation-scroll-up')).toBeNull();
-    expect(screen.queryByTestId('kangur-game-phone-simulation-scroll-down')).toBeNull();
-    expect(screen.queryByRole('button', { name: 'Przewiń w dół' })).toBeNull();
+    expectStandardMobileGameLayout(gameMain, { expectBottomClearance: false });
     expect(screen.queryByRole('button', { name: 'Wróć do lekcji' })).not.toBeInTheDocument();
   });
 
@@ -565,22 +544,9 @@ describe('Game page', () => {
 
     const gameMain = document.getElementById('kangur-game-main');
 
-    expect(gameMain).not.toBeNull();
-    expect(gameMain?.className).toContain('min-w-0');
-    expect(gameMain?.className).toContain('overflow-x-clip');
-    expect(gameMain?.className).toContain('overflow-y-auto');
-    expect(gameMain?.className).toContain(
-      'var(--kangur-mobile-bottom-clearance,env(safe-area-inset-bottom))+32px'
-    );
-    expect(gameMain?.className).not.toContain(
-      'var(--kangur-shell-viewport-height,100dvh)-var(--kangur-top-bar-height,88px)'
-    );
+    expectStandardMobileGameLayout(gameMain);
     expect(screen.getByTestId('kangur-game-navigation-widget')).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Wróć do lekcji' })).not.toBeInTheDocument();
-    expect(screen.queryByTestId('kangur-game-phone-simulation-scroll-container')).toBeNull();
-    expect(screen.queryByTestId('kangur-game-phone-simulation-scroll-up')).toBeNull();
-    expect(screen.queryByTestId('kangur-game-phone-simulation-scroll-down')).toBeNull();
-    expect(screen.queryByRole('button', { name: 'Przewiń w dół' })).toBeNull();
   });
 
   it('scrolls back to the top and focuses the next screen heading without re-scrolling when entering a quiz', () => {
@@ -740,40 +706,26 @@ describe('Game page', () => {
     });
     useKangurGameInstancesMock.mockReturnValue({
       data: [
-        {
+        buildLaunchableGameInstance({
           id: 'clock-instance-minutes',
-          gameId: 'clock_training',
-          launchableRuntimeId: 'clock_quiz',
-          contentSetId: 'clock_training:clock-minutes',
           title: 'Minutes only',
           description: 'Custom minute-reading run.',
-          emoji: '🕒',
-          enabled: true,
-          sortOrder: 1,
           engineOverrides: {
             clockInitialMode: 'challenge',
             showClockMinuteHand: false,
             showClockTaskTitle: false,
           },
-        },
+        }),
       ],
       isPending: false,
     });
     useKangurGameContentSetsMock.mockReturnValue({
       data: [
-        {
-          id: 'clock_training:clock-minutes',
-          gameId: 'clock_training',
-          engineId: 'clock_training_engine',
-          launchableRuntimeId: 'clock_quiz',
+        buildLaunchableGameContentSet({
           label: 'Minutes only',
           description: 'Persisted minute-reading content set.',
-          contentKind: 'clock_section',
-          rendererProps: {
-            clockSection: 'minutes',
-          },
           sortOrder: 3,
-        },
+        }),
       ],
       isPending: false,
     });
@@ -800,20 +752,14 @@ describe('Game page', () => {
     });
     useKangurGameInstancesMock.mockReturnValue({
       data: [
-        {
+        buildLaunchableGameInstance({
           id: 'clock-instance-minutes',
-          gameId: 'clock_training',
-          launchableRuntimeId: 'clock_quiz',
-          contentSetId: 'clock_training:clock-minutes',
           title: 'Minutes only',
           description: 'Custom minute-reading run.',
-          emoji: '🕒',
-          enabled: true,
-          sortOrder: 1,
           engineOverrides: {
             clockInitialMode: 'challenge',
           },
-        },
+        }),
       ],
       isPending: false,
     });
@@ -835,36 +781,22 @@ describe('Game page', () => {
     });
     useKangurGameInstancesMock.mockReturnValue({
       data: [
-        {
+        buildLaunchableGameInstance({
           id: 'clock-instance-mismatch',
-          gameId: 'clock_training',
           launchableRuntimeId: 'calendar_quiz',
-          contentSetId: 'clock_training:clock-minutes',
           title: 'Broken instance',
           description: 'Mismatched runtime id.',
-          emoji: '🕒',
-          enabled: true,
-          sortOrder: 1,
-          engineOverrides: {},
-        },
+        }),
       ],
       isPending: false,
     });
     useKangurGameContentSetsMock.mockReturnValue({
       data: [
-        {
-          id: 'clock_training:clock-minutes',
-          gameId: 'clock_training',
-          engineId: 'clock_training_engine',
-          launchableRuntimeId: 'clock_quiz',
+        buildLaunchableGameContentSet({
           label: 'Minutes only',
           description: 'Persisted minute-reading content set.',
-          contentKind: 'clock_section',
-          rendererProps: {
-            clockSection: 'minutes',
-          },
           sortOrder: 3,
-        },
+        }),
       ],
       isPending: false,
     });
@@ -886,39 +818,31 @@ describe('Game page', () => {
     });
     useKangurGameInstancesMock.mockReturnValue({
       data: [
-        {
+        buildLaunchableGameInstance({
           id: 'clock-instance-custom-hours',
-          gameId: 'clock_training',
-          launchableRuntimeId: 'clock_quiz',
           contentSetId: 'clock_training:custom:hours-review',
           title: 'Hours review',
           description: 'Custom hour-reading run.',
           emoji: '🕐',
-          enabled: true,
-          sortOrder: 1,
           engineOverrides: {
             clockInitialMode: 'challenge',
             showClockTaskTitle: false,
           },
-        },
+        }),
       ],
       isPending: false,
     });
     useKangurGameContentSetsMock.mockReturnValue({
       data: [
-        {
+        buildLaunchableGameContentSet({
           id: 'clock_training:custom:hours-review',
-          gameId: 'clock_training',
-          engineId: 'clock_training_engine',
-          launchableRuntimeId: 'clock_quiz',
           label: 'Hours review',
           description: 'Custom persisted hour-reading content set.',
-          contentKind: 'clock_section',
           rendererProps: {
             clockSection: 'hours',
           },
           sortOrder: 10,
-        },
+        }),
       ],
       isPending: false,
     });
@@ -943,7 +867,7 @@ describe('Game page', () => {
     });
     useKangurGameInstancesMock.mockReturnValue({
       data: [
-        {
+        buildLaunchableGameInstance({
           id: 'logical-pattern-instance-custom',
           gameId: 'logical_patterns_workshop',
           launchableRuntimeId: 'logical_patterns_quiz',
@@ -951,16 +875,13 @@ describe('Game page', () => {
           title: 'Alphabet warmup',
           description: 'Custom alphabet-order session.',
           emoji: '🔢',
-          enabled: true,
-          sortOrder: 1,
-          engineOverrides: {},
-        },
+        }),
       ],
       isPending: false,
     });
     useKangurGameContentSetsMock.mockReturnValue({
       data: [
-        {
+        buildLaunchableGameContentSet({
           id: 'logical_patterns_workshop:custom:alphabet-warmup',
           gameId: 'logical_patterns_workshop',
           engineId: 'pattern-sequence-engine',
@@ -972,7 +893,7 @@ describe('Game page', () => {
             patternSetId: 'alphabet_letter_order',
           },
           sortOrder: 10,
-        },
+        }),
       ],
       isPending: false,
     });
@@ -995,7 +916,7 @@ describe('Game page', () => {
     });
     useKangurGameInstancesMock.mockReturnValue({
       data: [
-        {
+        buildLaunchableGameInstance({
           id: 'calendar-instance-months',
           gameId: 'calendar_interactive',
           launchableRuntimeId: 'calendar_quiz',
@@ -1003,16 +924,13 @@ describe('Game page', () => {
           title: 'Months focus',
           description: 'Custom calendar months session.',
           emoji: '📅',
-          enabled: true,
-          sortOrder: 1,
-          engineOverrides: {},
-        },
+        }),
       ],
       isPending: false,
     });
     useKangurGameContentSetsMock.mockReturnValue({
       data: [
-        {
+        buildLaunchableGameContentSet({
           id: 'calendar_interactive:custom:months-focus',
           gameId: 'calendar_interactive',
           engineId: 'calendar-grid-engine',
@@ -1024,7 +942,7 @@ describe('Game page', () => {
             calendarSection: 'miesiace',
           },
           sortOrder: 10,
-        },
+        }),
       ],
       isPending: false,
     });

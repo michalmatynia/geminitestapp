@@ -239,8 +239,16 @@ describe('useAdminKangurSocialPage', () => {
       pipelineStep: 'idle',
       pipelineProgress: null,
       pipelineErrorMessage: null,
+      isVisualAnalysisModalOpen: false,
+      visualAnalysisResult: null,
+      visualAnalysisErrorMessage: null,
+      visualAnalysisPending: false,
       handleRunFullPipeline: pipelineRunMock,
       handleRunFullPipelineWithFreshCapture: pipelineRunFreshMock,
+      handleOpenVisualAnalysisModal: vi.fn(),
+      handleCloseVisualAnalysisModal: vi.fn(),
+      handleAnalyzeSelectedVisuals: vi.fn(),
+      handleRunFullPipelineWithVisualAnalysis: vi.fn(),
     });
   });
 
@@ -288,6 +296,7 @@ describe('useAdminKangurSocialPage', () => {
     const { result } = renderHook(() => useAdminKangurSocialPage());
 
     expect(result.current.canGenerateSocialDraft).toBe(false);
+    expect(result.current.canRunVisualAnalysisPipeline).toBe(false);
     expect(result.current.socialDraftBlockedReason).toContain('Choose a StudiQ Social post model');
     expect(result.current.socialVisionWarning).toContain('Visual analysis is not configured');
 

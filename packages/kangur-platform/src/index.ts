@@ -32,13 +32,13 @@ import type {
   KangurDuelSpectatorStateResponse as KangurDuelSpectatorStateResponseContract,
   KangurDuelLeaveInput as KangurDuelLeaveInputContract,
   KangurDuelStateResponse as KangurDuelStateResponseContract,
-} from '@kangur/contracts/kangur-duels';
+} from '@kangur/contracts';
 import type {
   KangurDuelLobbyChatCreateInput as KangurDuelLobbyChatCreateInputContract,
   KangurDuelLobbyChatListResponse as KangurDuelLobbyChatListResponseContract,
   KangurDuelLobbyChatMessage as KangurDuelLobbyChatMessageContract,
   KangurDuelLobbyChatSendResponse as KangurDuelLobbyChatSendResponseContract,
-} from '@kangur/contracts/kangur-duels-chat';
+} from '@kangur/contracts';
 
 export type KangurRole = 'admin' | 'user';
 

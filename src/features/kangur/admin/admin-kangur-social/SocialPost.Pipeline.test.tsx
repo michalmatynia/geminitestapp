@@ -64,14 +64,18 @@ describe('SocialPostPipeline', () => {
       pipelineErrorMessage: null,
       handleRunFullPipeline,
       handleRunFullPipelineWithFreshCapture,
+      handleOpenVisualAnalysisModal: vi.fn(),
       handleCaptureImagesOnly,
       canGenerateSocialDraft: false,
+      canRunVisualAnalysisPipeline: false,
       canRunFreshCapturePipeline: false,
       batchCaptureBaseUrl: '',
       batchCapturePresetIds: ['home', 'pricing', 'faq'],
       socialDraftBlockedReason:
         'Choose a StudiQ Social post model in Settings or assign AI Brain routing in /admin/brain?tab=routing.',
       socialBatchCaptureBlockedReason: 'Set a batch capture base URL in Social Settings first.',
+      socialVisualAnalysisBlockedReason:
+        'Select at least one image add-on before running image analysis.',
       captureOnlyPending: false,
       captureOnlyMessage: null,
       captureOnlyErrorMessage: null,
@@ -83,6 +87,11 @@ describe('SocialPostPipeline', () => {
 
     const button = screen.getByRole('button', { name: 'Run full pipeline' });
     expect(button).toBeDisabled();
+    expect(button).toHaveAttribute(
+      'title',
+      'Choose a StudiQ Social post model in Settings or assign AI Brain routing in /admin/brain?tab=routing.'
+    );
+    expect(screen.getByRole('button', { name: 'Pipeline + image analysis' })).toBeDisabled();
     expect(screen.getByRole('button', { name: 'Fresh capture & pipeline' })).toBeDisabled();
     expect(screen.getByRole('button', { name: 'Capture images only' })).toBeDisabled();
     expect(
@@ -126,13 +135,16 @@ describe('SocialPostPipeline', () => {
       pipelineErrorMessage: 'Pipeline stopped: no screenshots captured.',
       handleRunFullPipeline: vi.fn(),
       handleRunFullPipelineWithFreshCapture: vi.fn(),
+      handleOpenVisualAnalysisModal: vi.fn(),
       handleCaptureImagesOnly: vi.fn(),
       canGenerateSocialDraft: true,
+      canRunVisualAnalysisPipeline: true,
       canRunFreshCapturePipeline: true,
       batchCaptureBaseUrl: 'https://kangur.app',
       batchCapturePresetIds: ['home', 'pricing', 'faq', 'pricing-mobile'],
       socialDraftBlockedReason: null,
       socialBatchCaptureBlockedReason: null,
+      socialVisualAnalysisBlockedReason: null,
       captureOnlyPending: false,
       captureOnlyMessage: 'Captured 2 screenshots from 2 presets and linked them to the draft.',
       captureOnlyErrorMessage: null,
@@ -181,13 +193,16 @@ describe('SocialPostPipeline', () => {
       pipelineErrorMessage: null,
       handleRunFullPipeline: vi.fn(),
       handleRunFullPipelineWithFreshCapture: vi.fn(),
+      handleOpenVisualAnalysisModal: vi.fn(),
       handleCaptureImagesOnly: vi.fn(),
       canGenerateSocialDraft: true,
+      canRunVisualAnalysisPipeline: true,
       canRunFreshCapturePipeline: true,
       batchCaptureBaseUrl: 'https://kangur.app',
       batchCapturePresetIds: ['home', 'lessons', 'profile'],
       socialDraftBlockedReason: null,
       socialBatchCaptureBlockedReason: null,
+      socialVisualAnalysisBlockedReason: null,
       captureOnlyPending: false,
       captureOnlyMessage: null,
       captureOnlyErrorMessage: null,
@@ -222,13 +237,16 @@ describe('SocialPostPipeline', () => {
       pipelineErrorMessage: null,
       handleRunFullPipeline,
       handleRunFullPipelineWithFreshCapture,
+      handleOpenVisualAnalysisModal: vi.fn(),
       handleCaptureImagesOnly,
       canGenerateSocialDraft: true,
+      canRunVisualAnalysisPipeline: true,
       canRunFreshCapturePipeline: true,
       batchCaptureBaseUrl: 'https://kangur.app',
       batchCapturePresetIds: ['home'],
       socialDraftBlockedReason: null,
       socialBatchCaptureBlockedReason: null,
+      socialVisualAnalysisBlockedReason: null,
       captureOnlyPending: false,
       captureOnlyMessage: null,
       captureOnlyErrorMessage: null,
@@ -240,6 +258,7 @@ describe('SocialPostPipeline', () => {
     render(<SocialPostPipeline />);
 
     expect(screen.getByRole('button', { name: 'Run full pipeline' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Pipeline + image analysis' })).toBeDisabled();
     expect(screen.getByRole('button', { name: 'Fresh capture & pipeline' })).toBeDisabled();
     expect(screen.getByRole('button', { name: 'Capture images only' })).toBeDisabled();
     expect(
@@ -264,13 +283,16 @@ describe('SocialPostPipeline', () => {
       pipelineErrorMessage: null,
       handleRunFullPipeline: vi.fn(),
       handleRunFullPipelineWithFreshCapture: vi.fn(),
+      handleOpenVisualAnalysisModal: vi.fn(),
       handleCaptureImagesOnly: vi.fn(),
       canGenerateSocialDraft: true,
+      canRunVisualAnalysisPipeline: true,
       canRunFreshCapturePipeline: true,
       batchCaptureBaseUrl: 'https://kangur.app',
       batchCapturePresetIds: ['home'],
       socialDraftBlockedReason: null,
       socialBatchCaptureBlockedReason: null,
+      socialVisualAnalysisBlockedReason: null,
       captureOnlyPending: false,
       captureOnlyMessage: null,
       captureOnlyErrorMessage: null,
@@ -283,6 +305,100 @@ describe('SocialPostPipeline', () => {
 
     expect(screen.getByText('Active draft:')).toBeInTheDocument();
     expect(screen.getByText('Selected pipeline target')).toBeInTheDocument();
+  });
+
+  it('opens the visual-analysis flow from the dedicated pipeline button', () => {
+    const handleOpenVisualAnalysisModal = vi.fn();
+
+    useSocialPostContextMock.mockReturnValue({
+      activePostId: 'post-1',
+      editorState: {
+        titlePl: 'Selected pipeline target',
+        titleEn: '',
+      },
+      pipelineStep: 'idle',
+      pipelineProgress: null,
+      pipelineErrorMessage: null,
+      handleRunFullPipeline: vi.fn(),
+      handleRunFullPipelineWithFreshCapture: vi.fn(),
+      handleOpenVisualAnalysisModal,
+      handleCaptureImagesOnly: vi.fn(),
+      canGenerateSocialDraft: true,
+      canRunVisualAnalysisPipeline: true,
+      canRunFreshCapturePipeline: true,
+      batchCaptureBaseUrl: 'https://kangur.app',
+      batchCapturePresetIds: ['home'],
+      socialDraftBlockedReason: null,
+      socialBatchCaptureBlockedReason: null,
+      socialVisualAnalysisBlockedReason: null,
+      captureOnlyPending: false,
+      captureOnlyMessage: null,
+      captureOnlyErrorMessage: null,
+      batchCapturePresetLimit: 1,
+      hasBatchCaptureConfig: true,
+      setIsPostEditorModalOpen: vi.fn(),
+    });
+
+    render(<SocialPostPipeline />);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Pipeline + image analysis' }));
+
+    expect(handleOpenVisualAnalysisModal).toHaveBeenCalledTimes(1);
+    expect(screen.getByRole('button', { name: 'Pipeline + image analysis' })).toHaveAttribute(
+      'title',
+      'Analyze the selected visuals first, then generate a post that mentions the findings.'
+    );
+  });
+
+  it('shows when a cached image-analysis result is already ready for the draft', () => {
+    useSocialPostContextMock.mockReturnValue({
+      activePostId: 'post-1',
+      editorState: {
+        titlePl: 'Selected pipeline target',
+        titleEn: '',
+      },
+      pipelineStep: 'idle',
+      pipelineProgress: null,
+      pipelineErrorMessage: null,
+      visualAnalysisResult: {
+        summary: 'The hero now emphasizes the teacher CTA.',
+        highlights: ['Larger teacher CTA', 'Cleaner hero composition'],
+        docUpdates: [
+          {
+            docPath: 'docs/social/teacher-launch.md',
+            section: 'Hero',
+            proposedText: 'Use the teacher CTA variant.',
+            reason: 'Keep launch docs aligned with the analyzed visual.',
+          },
+        ],
+      },
+      handleRunFullPipeline: vi.fn(),
+      handleRunFullPipelineWithFreshCapture: vi.fn(),
+      handleOpenVisualAnalysisModal: vi.fn(),
+      handleCaptureImagesOnly: vi.fn(),
+      canGenerateSocialDraft: true,
+      canRunVisualAnalysisPipeline: true,
+      canRunFreshCapturePipeline: true,
+      batchCaptureBaseUrl: 'https://kangur.app',
+      batchCapturePresetIds: ['home'],
+      socialDraftBlockedReason: null,
+      socialBatchCaptureBlockedReason: null,
+      socialVisualAnalysisBlockedReason: null,
+      captureOnlyPending: false,
+      captureOnlyMessage: null,
+      captureOnlyErrorMessage: null,
+      batchCapturePresetLimit: 1,
+      hasBatchCaptureConfig: true,
+      setIsPostEditorModalOpen: vi.fn(),
+    });
+
+    render(<SocialPostPipeline />);
+
+    expect(screen.getByText('Image analysis ready for this draft. 2 highlights. 1 doc update. Open the modal to review or generate.')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Review image analysis' })).toHaveAttribute(
+      'title',
+      'Review the saved image analysis or generate from it without rerunning vision analysis.'
+    );
   });
 
   it('surfaces a completed pipeline by opening the draft editor', () => {
@@ -302,13 +418,16 @@ describe('SocialPostPipeline', () => {
       pipelineErrorMessage: null,
       handleRunFullPipeline,
       handleRunFullPipelineWithFreshCapture,
+      handleOpenVisualAnalysisModal: vi.fn(),
       handleCaptureImagesOnly,
       canGenerateSocialDraft: true,
+      canRunVisualAnalysisPipeline: true,
       canRunFreshCapturePipeline: true,
       batchCaptureBaseUrl: 'https://kangur.app',
       batchCapturePresetIds: ['home'],
       socialDraftBlockedReason: null,
       socialBatchCaptureBlockedReason: null,
+      socialVisualAnalysisBlockedReason: null,
       captureOnlyPending: false,
       captureOnlyMessage: null,
       captureOnlyErrorMessage: null,
@@ -375,13 +494,16 @@ describe('SocialPostPipeline', () => {
       pipelineErrorMessage: 'Pipeline stopped: no screenshots captured.',
       handleRunFullPipeline,
       handleRunFullPipelineWithFreshCapture,
+      handleOpenVisualAnalysisModal: vi.fn(),
       handleCaptureImagesOnly: vi.fn(),
       canGenerateSocialDraft: true,
+      canRunVisualAnalysisPipeline: true,
       canRunFreshCapturePipeline: true,
       batchCaptureBaseUrl: 'https://kangur.app',
       batchCapturePresetIds: ['home'],
       socialDraftBlockedReason: null,
       socialBatchCaptureBlockedReason: null,
+      socialVisualAnalysisBlockedReason: null,
       captureOnlyPending: false,
       captureOnlyMessage: null,
       captureOnlyErrorMessage: null,

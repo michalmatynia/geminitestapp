@@ -5,8 +5,9 @@ import { createDefaultKangurLessons } from '@/features/kangur/settings';
 import { createDefaultKangurSections } from '@/features/kangur/lessons/lesson-section-defaults';
 
 const {
-  authMock,
+  readOptionalServerAuthSessionMock,
   getKangurAuthMeHandlerMock,
+  postKangurSocialPostAnalyzeVisualsHandlerMock,
   listKangurGamesMock,
   getKangurLessonRepositoryMock,
   listLessonsMock,
@@ -15,8 +16,9 @@ const {
   getKangurGameInstanceRepositoryMock,
   listInstancesMock,
 } = vi.hoisted(() => ({
-  authMock: vi.fn(),
+  readOptionalServerAuthSessionMock: vi.fn(),
   getKangurAuthMeHandlerMock: vi.fn(),
+  postKangurSocialPostAnalyzeVisualsHandlerMock: vi.fn(),
   listKangurGamesMock: vi.fn(),
   getKangurLessonRepositoryMock: vi.fn(),
   listLessonsMock: vi.fn(),
@@ -27,11 +29,20 @@ const {
 }));
 
 vi.mock('@/features/auth/server', () => ({
-  auth: authMock,
+  readOptionalServerAuthSession: readOptionalServerAuthSessionMock,
+}));
+
+vi.mock('next/dynamic', () => ({
+  default: () => () => null,
 }));
 
 vi.mock('./auth/me/handler', () => ({
   getKangurAuthMeHandler: getKangurAuthMeHandlerMock,
+}));
+
+vi.mock('./social-posts/analyze-visuals/handler', () => ({
+  postKangurSocialPostAnalyzeVisualsHandler: (...args: unknown[]) =>
+    postKangurSocialPostAnalyzeVisualsHandlerMock(...args),
 }));
 
 vi.mock('@/features/kangur/services/kangur-game-repository/mongo-kangur-game-repository', () => ({
@@ -50,12 +61,12 @@ vi.mock('@/features/kangur/services/kangur-game-instance-repository', () => ({
   getKangurGameInstanceRepository: getKangurGameInstanceRepositoryMock,
 }));
 
-import { GET } from './[[...path]]/route';
+import { GET, POST } from './[[...path]]/route';
 
 describe('kangur route routing', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    authMock.mockResolvedValue({
+    readOptionalServerAuthSessionMock.mockResolvedValue({
       expires: '2026-12-31T23:59:59.000Z',
       user: {
         email: 'admin@example.com',
@@ -79,6 +90,19 @@ describe('kangur route routing', () => {
       listInstances: listInstancesMock,
       replaceInstancesForGame: vi.fn(),
     });
+    postKangurSocialPostAnalyzeVisualsHandlerMock.mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          summary: 'Visual summary',
+          highlights: ['Highlight'],
+          docUpdates: [],
+        }),
+        {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' },
+        }
+      )
+    );
   });
 
   it('routes using the request URL when params.path is missing', async () => {
@@ -186,5 +210,34 @@ describe('kangur route routing', () => {
     expect(payload).toEqual([
       expect.objectContaining({ id: 'clock_instance_saved' }),
     ]);
+  });
+
+  it('routes social-posts/analyze-visuals through misc POST routing', async () => {
+    const url = 'http://localhost/api/kangur/social-posts/analyze-visuals';
+    const request = Object.assign(
+      new Request(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          postId: 'post-1',
+          imageAddonIds: ['addon-1'],
+        }),
+      }),
+      {
+        nextUrl: new URL(url),
+      }
+    ) as Request;
+
+    const response = await POST(request as unknown as Parameters<typeof POST>[0], {
+      params: { path: ['social-posts', 'analyze-visuals'] },
+    });
+
+    expect(postKangurSocialPostAnalyzeVisualsHandlerMock).toHaveBeenCalledTimes(1);
+    expect(response.status).toBe(200);
+    await expect(response.json()).resolves.toEqual({
+      summary: 'Visual summary',
+      highlights: ['Highlight'],
+      docUpdates: [],
+    });
   });
 });

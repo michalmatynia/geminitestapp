@@ -25,6 +25,34 @@ vi.mock('@/features/kangur/ui/components/AddingSynthesisGame', () => ({
   default: () => <div>Mock Adding Synthesis Game</div>,
 }));
 
+vi.mock('@/features/kangur/ui/components/KangurLaunchableGameInstanceRuntime', () => ({
+  __esModule: true,
+  KangurLaunchableGameInstanceRuntime: ({
+    gameId,
+    instanceId,
+  }: {
+    gameId: string;
+    instanceId: string;
+  }) => (
+    <div data-testid='mock-adding-instance-runtime'>
+      <span data-testid='mock-adding-game-id'>{gameId}</span>
+      <span data-testid='mock-adding-instance-id'>{instanceId}</span>
+    </div>
+  ),
+  default: ({
+    gameId,
+    instanceId,
+  }: {
+    gameId: string;
+    instanceId: string;
+  }) => (
+    <div data-testid='mock-adding-instance-runtime'>
+      <span data-testid='mock-adding-game-id'>{gameId}</span>
+      <span data-testid='mock-adding-instance-id'>{instanceId}</span>
+    </div>
+  ),
+}));
+
 import enMessages from '@/i18n/messages/en.json';
 import deMessages from '@/i18n/messages/de.json';
 import AddingLesson from '@/features/kangur/ui/components/AddingLesson';

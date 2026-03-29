@@ -83,13 +83,13 @@ vi.mock('@/shared/ui', async () => {
 import {
   BrainCatalogNodeItem,
   BrainCatalogNodeItemRuntimeContext,
-} from './BrainCatalogNodeItem';
+} from '../BrainCatalogNodeItem';
 import {
   BrainRoutingCapabilityNodeItem,
   BrainRoutingCapabilityNodeItemRuntimeContext,
-} from './BrainRoutingCapabilityNodeItem';
-import { BrainRoutingFeatureNodeItem } from './BrainRoutingFeatureNodeItem';
-import { ROUTING_GROUPS } from './brain-routing-master-tree';
+} from '../BrainRoutingCapabilityNodeItem';
+import { BrainRoutingFeatureNodeItem } from '../BrainRoutingFeatureNodeItem';
+import { ROUTING_GROUPS } from '../brain-routing-master-tree';
 import { BRAIN_CAPABILITY_KEYS, getBrainCapabilityDefinition } from '@/shared/lib/ai-brain/settings';
 
 describe('AI Brain tree accessibility', () => {

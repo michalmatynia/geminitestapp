@@ -9,7 +9,7 @@ import {
   ROUTING_GROUPS,
   toBrainRoutingCapabilityNodeId,
   toBrainRoutingFeatureNodeId,
-} from '@/shared/lib/ai-brain/components/brain-routing-master-tree';
+} from '@/features/ai/brain/components/brain-routing-master-tree';
 
 describe('brain routing master tree mapping', () => {
   it('maps feature groups to root folder nodes and capabilities to child file nodes', () => {

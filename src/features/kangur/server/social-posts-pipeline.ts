@@ -11,6 +11,7 @@ import {
 import {
   buildKangurSocialPostCombinedBody,
   kangurSocialPostSchema,
+  type KangurSocialVisualAnalysis,
   type KangurSocialDocUpdatesResponse,
   type KangurSocialPostEditorStateDto,
   type KangurSocialPost,
@@ -54,6 +55,8 @@ export type RunKangurSocialPostPipelineInput = {
   projectUrl: string;
   generationNotes: string;
   docReferences: string[];
+  prefetchedVisualAnalysis?: KangurSocialVisualAnalysis;
+  requireVisualAnalysisInBody?: boolean;
   actorId: string;
   forwardCookies?: string | null;
 };
@@ -429,6 +432,8 @@ export async function runKangurSocialPostPipeline(
       visionModelId: input.visionModelId ?? undefined,
       imageAddons,
       projectUrl: input.projectUrl || undefined,
+      prefetchedVisualAnalysis: input.prefetchedVisualAnalysis,
+      requireVisualAnalysisInBody: input.requireVisualAnalysisInBody,
     });
 
     const generatedPost = await updateKangurSocialPost(savedPost.id, {

@@ -13,6 +13,15 @@ export const kangurSocialDocUpdateSchema = z.object({
 });
 export type KangurSocialDocUpdate = z.infer<typeof kangurSocialDocUpdateSchema>;
 
+export const kangurSocialVisualAnalysisSchema = z.object({
+  summary: optionalText(8000),
+  highlights: z.array(trimmedString.max(400)).max(24).default([]),
+  docUpdates: z.array(kangurSocialDocUpdateSchema).max(50).default([]),
+});
+export type KangurSocialVisualAnalysis = z.infer<
+  typeof kangurSocialVisualAnalysisSchema
+>;
+
 export type KangurSocialDocUpdateItemPlan = {
   docPath: string;
   section: string | null;
@@ -73,6 +82,9 @@ export const kangurSocialPostSchema = z.object({
   visualSummary: trimmedString.max(8000).nullable().default(null),
   visualHighlights: z.array(trimmedString.max(400)).max(24).default([]),
   visualDocUpdates: z.array(kangurSocialDocUpdateSchema).max(50).default([]),
+  visualAnalysisUpdatedAt: z.string().datetime().nullable().default(null),
+  visualAnalysisJobId: trimmedString.max(160).nullable().default(null),
+  visualAnalysisModelId: trimmedString.max(160).nullable().default(null),
   docUpdatesAppliedAt: z.string().datetime().nullable().default(null),
   docUpdatesAppliedBy: trimmedString.max(120).nullable().default(null),
   createdBy: trimmedString.max(120).nullable().default(null),
@@ -81,6 +93,19 @@ export const kangurSocialPostSchema = z.object({
   updatedAt: z.string().datetime().optional(),
 });
 export type KangurSocialPost = z.infer<typeof kangurSocialPostSchema>;
+
+export type KangurSocialGeneratedDraft = {
+  titlePl: string;
+  titleEn: string;
+  bodyPl: string;
+  bodyEn: string;
+  combinedBody: string;
+  summary?: string;
+  docReferences?: string[];
+  visualSummary?: string | null;
+  visualHighlights?: KangurSocialVisualAnalysis['highlights'];
+  visualDocUpdates?: KangurSocialVisualAnalysis['docUpdates'];
+};
 
 export const kangurSocialPostEditorStateSchema = kangurSocialPostSchema.pick({
   titlePl: true,

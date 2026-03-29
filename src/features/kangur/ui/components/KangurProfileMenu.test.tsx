@@ -74,4 +74,22 @@ describe('KangurProfileMenu', () => {
 
     expect(screen.getByRole('link', { name: 'Profile' })).toBeInTheDocument();
   });
+
+  it('renders the learner avatar inside the direct profile link when an avatar is provided', () => {
+    localeMock.mockReturnValue('pl');
+
+    render(
+      <KangurProfileMenu
+        avatar={{ label: 'Lisek', src: '/avatars/kangur/star-fox.svg' }}
+        label='Profil Maja'
+        profile={{ href: '/kangur/profile' }}
+      />
+    );
+
+    const profileLink = screen.getByRole('link', { name: 'Profil Maja' });
+    const avatarImage = profileLink.querySelector('img');
+
+    expect(avatarImage).not.toBeNull();
+    expect(avatarImage).toHaveAttribute('src', '/avatars/kangur/star-fox.svg');
+  });
 });

@@ -18,6 +18,7 @@ import { AdminKangurSocialSettingsModal } from './admin-kangur-social/AdminKangu
 import { SocialPostList } from './admin-kangur-social/SocialPost.List';
 import { SocialPostEditorModal } from './admin-kangur-social/SocialPost.EditorModal';
 import { SocialPostPipeline } from './admin-kangur-social/SocialPost.Pipeline';
+import { SocialPostVisualAnalysisModal } from './admin-kangur-social/SocialPost.VisualAnalysisModal';
 import { KangurSocialPipelineQueuePanel } from './admin-kangur-social/KangurSocialPipelineQueuePanel';
 import { KangurAdminCard } from './components/KangurAdminCard';
 import { SocialPostProvider, useSocialPostContext } from './admin-kangur-social/SocialPostContext';
@@ -181,6 +182,7 @@ function AdminKangurSocialPageContent(): React.JSX.Element {
         isOpen={isPostEditorModalOpen}
         onClose={() => setIsPostEditorModalOpen(false)}
       />
+      <SocialPostVisualAnalysisModal />
 
       <ConfirmModal
         isOpen={Boolean(postToUnpublish)}

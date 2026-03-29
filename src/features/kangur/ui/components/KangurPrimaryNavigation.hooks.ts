@@ -72,9 +72,12 @@ export function useKangurPrimaryNavigationState({
   }, [authUser?.email, authUser?.full_name, elevatedSessionSnapshot]);
 
   const profileAvatar = getKangurAvatarById(activeLearner?.avatarId);
-  const shouldRenderElevatedUserMenu = effectiveIsAuthenticated && Boolean(elevatedSessionUser);
+  const shouldRenderElevatedUserMenu =
+    effectiveIsAuthenticated && Boolean(elevatedSessionUser) && !hasActiveLearner;
   const shouldRenderProfileMenu =
-    effectiveIsAuthenticated && !shouldRenderElevatedUserMenu && (!isParentAccount || hasActiveLearner);
+    effectiveIsAuthenticated &&
+    (!isParentAccount || hasActiveLearner) &&
+    (!elevatedSessionUser || hasActiveLearner);
 
   const [isTutorHidden, setIsTutorHidden] = useState(() => loadPersistedTutorVisibilityHidden());
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -102,10 +105,13 @@ export function useKangurPrimaryNavigationState({
   return {
     auth,
     authUser,
+    activeLearner,
     elevatedSessionUser,
     isSuperAdmin,
     isLoggingOut,
     effectiveIsAuthenticated,
+    hasActiveLearner,
+    isParentAccount,
     profileAvatar,
     shouldRenderElevatedUserMenu,
     shouldRenderProfileMenu,

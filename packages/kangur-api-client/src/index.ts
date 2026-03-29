@@ -35,12 +35,12 @@ import type {
   KangurDuelSpectatorStateResponse,
   KangurDuelStateResponse,
   KangurDuelLeaveInput,
-} from '@kangur/contracts/kangur-duels';
+} from '@kangur/contracts';
 import type {
   KangurDuelLobbyChatCreateInput,
   KangurDuelLobbyChatListResponse,
   KangurDuelLobbyChatSendResponse,
-} from '@kangur/contracts/kangur-duels-chat';
+} from '@kangur/contracts';
 
 export type KangurApiClientOptions = {
   baseUrl?: string;

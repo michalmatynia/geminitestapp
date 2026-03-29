@@ -83,13 +83,29 @@ vi.mock('next-intl', () => ({
 }));
 
 vi.mock('next/navigation', () => ({
+  permanentRedirect: vi.fn(),
+  redirect: vi.fn(),
+  usePathname: () => '/games',
+  useRouter: () => ({
+    back: vi.fn(),
+    forward: vi.fn(),
+    prefetch: vi.fn(),
+    push: vi.fn(),
+    refresh: vi.fn(),
+    replace: vi.fn(),
+  }),
   useSearchParams: () => searchParamsState.value,
 }));
 
-vi.mock('@/features/kangur/config/routing', () => ({
-  getKangurCanonicalPublicHref: () => '/games',
-  getKangurPageSlug: () => 'games',
-}));
+vi.mock('@/features/kangur/config/routing', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@/features/kangur/config/routing')>();
+
+  return {
+    ...actual,
+    getKangurCanonicalPublicHref: () => '/games',
+    getKangurPageSlug: () => 'games',
+  };
+});
 
 vi.mock('@/features/kangur/ui/hooks/useKangurRouteNavigator', () => ({
   useKangurRouteNavigator: () => ({
@@ -108,12 +124,26 @@ vi.mock('@/features/kangur/ui/hooks/useKangurPageAccess', () => ({
 vi.mock('@/features/kangur/ui/context/KangurRoutingContext', () => ({
   useKangurRouting: () => ({
     basePath: '/kangur',
+    embedded: false,
+    requestedHref: '/games',
+  }),
+  useOptionalKangurRouting: () => ({
+    basePath: '/kangur',
+    embedded: false,
     requestedHref: '/games',
   }),
 }));
 
 vi.mock('@/features/kangur/ui/context/KangurAuthContext', () => ({
   useKangurAuth: () => ({
+    user: {
+      id: 'admin-1',
+      role: 'super_admin',
+      canManageLearners: true,
+    },
+    logout: vi.fn(),
+  }),
+  useOptionalKangurAuth: () => ({
     user: {
       id: 'admin-1',
       role: 'super_admin',
@@ -150,15 +180,40 @@ vi.mock('@/features/kangur/ui/components/PageNotFound', () => ({
   PageNotFound: () => <div data-testid='kangur-page-not-found' />,
 }));
 
-vi.mock('@/features/kangur/ui/design/primitives', () => ({
-  KangurButton: ({
-    children,
-    ...props
-  }: React.ButtonHTMLAttributes<HTMLButtonElement>) => <button {...props}>{children}</button>,
-  KangurInfoCard: ({
-    children,
-    ...props
-  }: React.HTMLAttributes<HTMLElement>) => <section {...props}>{children}</section>,
+vi.mock('@/features/kangur/ui/design/primitives', async (importOriginal) => {
+  const actual =
+    await importOriginal<typeof import('@/features/kangur/ui/design/primitives')>();
+
+  return {
+    ...actual,
+    KangurButton: ({
+      children,
+      ...props
+    }: React.ButtonHTMLAttributes<HTMLButtonElement>) => <button {...props}>{children}</button>,
+    KangurGlassPanel: ({
+      children,
+      ...props
+    }: React.HTMLAttributes<HTMLElement>) => <section {...props}>{children}</section>,
+    KangurInfoCard: ({
+      children,
+      ...props
+    }: React.HTMLAttributes<HTMLElement>) => <section {...props}>{children}</section>,
+    KangurSelectField: ({
+      children,
+      ...props
+    }: React.SelectHTMLAttributes<HTMLSelectElement>) => <select {...props}>{children}</select>,
+    KangurStatusChip: ({
+      children,
+      ...props
+    }: React.HTMLAttributes<HTMLSpanElement>) => <span {...props}>{children}</span>,
+  };
+});
+
+vi.mock('@/features/kangur/ui/components/KangurTopNavigationController', () => ({
+  KangurTopNavigationController: () => <div data-testid='games-library-top-nav' />,
+}));
+
+vi.mock('@/features/kangur/ui/components/KangurPageIntroCard', () => ({
   KangurPageIntroCard: ({
     children,
     title,
@@ -174,18 +229,12 @@ vi.mock('@/features/kangur/ui/design/primitives', () => ({
       {description ? <p>{description}</p> : null}
     </section>
   ),
-  KangurSelectField: ({
-    children,
-    ...props
-  }: React.SelectHTMLAttributes<HTMLSelectElement>) => <select {...props}>{children}</select>,
+}));
+
+vi.mock('@/features/kangur/ui/components/KangurStandardPageLayout', () => ({
   KangurStandardPageLayout: ({ children }: { children: React.ReactNode }) => (
     <div data-testid='games-library-layout'>{children}</div>
   ),
-  KangurStatusChip: ({
-    children,
-    ...props
-  }: React.HTMLAttributes<HTMLSpanElement>) => <span {...props}>{children}</span>,
-  KangurTopNavigationController: () => <div data-testid='games-library-top-nav' />,
 }));
 
 vi.mock('@/features/kangur/ui/pages/GamesLibrary.tabs', () => ({

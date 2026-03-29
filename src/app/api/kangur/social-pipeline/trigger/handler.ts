@@ -10,6 +10,7 @@ import {
 } from '@/features/kangur/workers/kangurSocialPipelineQueue';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { imageFileSelectionSchema } from '@/shared/contracts/files';
+import { kangurSocialVisualAnalysisSchema } from '@/shared/contracts/kangur-social-posts';
 import { forbiddenError, operationFailedError } from '@/shared/errors/app-error';
 import { isRedisAvailable, isRedisReachable } from '@/shared/lib/queue';
 
@@ -35,6 +36,8 @@ const manualPipelineInputSchema = z.object({
   projectUrl: z.string().trim().optional().default(''),
   generationNotes: z.string().trim().optional().default(''),
   docReferences: z.array(z.string().trim().min(1)).max(80).default([]),
+  prefetchedVisualAnalysis: kangurSocialVisualAnalysisSchema.optional(),
+  requireVisualAnalysisInBody: z.boolean().optional().default(false),
 }).superRefine((value, ctx) => {
   if (value.captureMode === 'fresh_capture') {
     if (!value.batchCaptureBaseUrl) {

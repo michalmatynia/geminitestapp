@@ -116,4 +116,34 @@ describe('social post generate handler', () => {
       })
     );
   });
+
+  it('passes prefetched visual analysis through to draft generation when provided', async () => {
+    await postKangurSocialPostGenerateHandler(
+      new NextRequest('http://localhost/api/kangur/social-posts/generate', {
+        method: 'POST',
+      }),
+      createContext({
+        postId: 'post-1',
+        docReferences: ['overview'],
+        imageAddonIds: ['addon-1'],
+        prefetchedVisualAnalysis: {
+          summary: 'The hero now shows a larger classroom card.',
+          highlights: ['Larger classroom card'],
+          docUpdates: [],
+        },
+        requireVisualAnalysisInBody: true,
+      })
+    );
+
+    expect(mocks.generateKangurSocialPostDraftMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        prefetchedVisualAnalysis: {
+          summary: 'The hero now shows a larger classroom card.',
+          highlights: ['Larger classroom card'],
+          docUpdates: [],
+        },
+        requireVisualAnalysisInBody: true,
+      })
+    );
+  });
 });

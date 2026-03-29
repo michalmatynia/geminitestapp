@@ -344,4 +344,43 @@ describe('runKangurSocialPostPipeline', () => {
       })
     );
   });
+
+  it('passes prefetched visual analysis into draft generation when provided', async () => {
+    await runKangurSocialPostPipeline({
+      postId: 'post-1',
+      editorState: {
+        titlePl: 'Draft PL',
+        titleEn: 'Draft EN',
+        bodyPl: 'Body PL',
+        bodyEn: 'Body EN',
+      },
+      imageAssets: [],
+      imageAddonIds: ['addon-1'],
+      captureMode: 'existing_assets',
+      linkedinConnectionId: null,
+      brainModelId: 'brain-model',
+      visionModelId: 'vision-model',
+      projectUrl: 'https://studiq.example.com',
+      generationNotes: 'Focus on the updated hero.',
+      docReferences: ['overview'],
+      prefetchedVisualAnalysis: {
+        summary: 'The hero now shows a larger classroom card.',
+        highlights: ['Larger classroom card'],
+        docUpdates: [],
+      },
+      requireVisualAnalysisInBody: true,
+      actorId: 'user-1',
+    });
+
+    expect(mocks.generateKangurSocialPostDraftMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        prefetchedVisualAnalysis: {
+          summary: 'The hero now shows a larger classroom card.',
+          highlights: ['Larger classroom card'],
+          docUpdates: [],
+        },
+        requireVisualAnalysisInBody: true,
+      })
+    );
+  });
 });

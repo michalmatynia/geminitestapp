@@ -26,15 +26,19 @@ export function SocialPostPipeline(): React.JSX.Element {
     pipelineStep,
     pipelineProgress,
     pipelineErrorMessage,
+    visualAnalysisResult,
     handleRunFullPipeline,
     handleRunFullPipelineWithFreshCapture,
+    handleOpenVisualAnalysisModal,
     handleCaptureImagesOnly,
     canGenerateSocialDraft,
+    canRunVisualAnalysisPipeline,
     canRunFreshCapturePipeline,
     batchCaptureBaseUrl,
     batchCapturePresetIds,
     socialDraftBlockedReason,
     socialBatchCaptureBlockedReason,
+    socialVisualAnalysisBlockedReason,
     captureOnlyPending,
     captureOnlyMessage,
     captureOnlyErrorMessage,
@@ -46,6 +50,7 @@ export function SocialPostPipeline(): React.JSX.Element {
   const hasActivePost = Boolean(activePostId);
   const canRunTextPipeline = hasActivePost && canGenerateSocialDraft;
   const canRunFreshCapture = hasActivePost && canRunFreshCapturePipeline;
+  const canRunVisualAnalysis = hasActivePost && canRunVisualAnalysisPipeline;
   const canCaptureImagesOnly =
     hasActivePost &&
     Boolean((batchCaptureBaseUrl ?? '').trim()) &&
@@ -69,6 +74,46 @@ export function SocialPostPipeline(): React.JSX.Element {
   const captureRemainingCount = pipelineProgress?.captureRemainingCount ?? 0;
   const captureTotalCount = pipelineProgress?.captureTotalCount ?? 0;
   const captureFailureCount = pipelineProgress?.captureFailureCount ?? 0;
+  const readyVisualHighlightCount = visualAnalysisResult?.highlights.length ?? 0;
+  const readyVisualDocUpdateCount = visualAnalysisResult?.docUpdates.length ?? 0;
+  const hasReadyVisualAnalysis =
+    Boolean(visualAnalysisResult?.summary.trim()) ||
+    readyVisualHighlightCount > 0 ||
+    readyVisualDocUpdateCount > 0;
+  const textPipelineButtonTitle = !hasActivePost
+    ? 'Create or select a draft before running the pipeline.'
+    : !canGenerateSocialDraft
+      ? socialDraftBlockedReason ?? 'Choose a Social post model first.'
+      : isPipelineBusy
+        ? 'Wait for the current pipeline run to finish.'
+        : 'Generate a post from the current draft and selected visuals.';
+  const visualAnalysisButtonTitle = !hasActivePost
+    ? 'Create or select a draft before running image analysis.'
+    : !canRunVisualAnalysis
+      ? socialVisualAnalysisBlockedReason ??
+        'Select at least one image add-on and configure a vision model first.'
+      : isPipelineBusy
+        ? 'Wait for the current pipeline run to finish.'
+        : hasReadyVisualAnalysis
+          ? 'Review the saved image analysis or generate from it without rerunning vision analysis.'
+          : 'Analyze the selected visuals first, then generate a post that mentions the findings.';
+  const visualAnalysisButtonLabel = hasReadyVisualAnalysis
+    ? 'Review image analysis'
+    : 'Pipeline + image analysis';
+  const freshCaptureButtonTitle = !hasActivePost
+    ? 'Create or select a draft before running fresh capture.'
+    : !canRunFreshCapture
+      ? socialBatchCaptureBlockedReason ?? 'Configure fresh capture before using this flow.'
+      : isPipelineBusy
+        ? 'Wait for the current pipeline run to finish.'
+        : 'Capture fresh screenshots first, then generate a post from them.';
+  const captureImagesOnlyButtonTitle = !hasActivePost
+    ? 'Create or select a draft before capturing images.'
+    : !canCaptureImagesOnly
+      ? socialBatchCaptureBlockedReason ?? 'Configure fresh capture before capturing images.'
+      : captureOnlyPending || isPipelineBusy
+        ? 'Wait for the current capture or pipeline run to finish.'
+        : 'Capture screenshots and attach them to the active draft without generating copy.';
 
   React.useEffect(() => {
     if (
@@ -113,8 +158,19 @@ export function SocialPostPipeline(): React.JSX.Element {
               size='sm'
               onClick={() => void handleRunFullPipeline()}
               disabled={!canRunTextPipeline || isPipelineBusy}
+              title={textPipelineButtonTitle}
             >
               Run full pipeline
+            </Button>
+            <Button
+              type='button'
+              variant={hasReadyVisualAnalysis ? 'secondary' : 'outline'}
+              size='sm'
+              onClick={handleOpenVisualAnalysisModal}
+              disabled={!canRunVisualAnalysis || isPipelineBusy}
+              title={visualAnalysisButtonTitle}
+            >
+              {visualAnalysisButtonLabel}
             </Button>
             <Button
               type='button'
@@ -122,6 +178,7 @@ export function SocialPostPipeline(): React.JSX.Element {
               size='sm'
               onClick={() => void handleRunFullPipelineWithFreshCapture()}
               disabled={!canRunFreshCapture || isPipelineBusy}
+              title={freshCaptureButtonTitle}
             >
               Fresh capture & pipeline
             </Button>
@@ -131,6 +188,7 @@ export function SocialPostPipeline(): React.JSX.Element {
               size='sm'
               onClick={() => void handleCaptureImagesOnly()}
               disabled={!canCaptureImagesOnly || captureOnlyPending || isPipelineBusy}
+              title={captureImagesOnlyButtonTitle}
             >
               Capture images only
             </Button>
@@ -148,9 +206,28 @@ export function SocialPostPipeline(): React.JSX.Element {
             </div>
           )}
 
+          {!canRunVisualAnalysis && hasActivePost && socialVisualAnalysisBlockedReason && (
+            <div className='rounded-xl border border-border/60 bg-background/40 px-3 py-2 text-xs text-muted-foreground'>
+              {socialVisualAnalysisBlockedReason}
+            </div>
+          )}
+
           {!hasBatchCaptureConfig && !canGenerateSocialDraft && socialBatchCaptureBlockedReason && (
             <div className='rounded-xl border border-border/60 bg-background/40 px-3 py-2 text-xs text-muted-foreground'>
               {socialBatchCaptureBlockedReason}
+            </div>
+          )}
+
+          {hasReadyVisualAnalysis && !isPipelineBusy && (
+            <div className='rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-3 py-2 text-xs text-emerald-900 dark:text-emerald-200'>
+              Image analysis ready for this draft.
+              {readyVisualHighlightCount > 0
+                ? ` ${readyVisualHighlightCount} highlight${readyVisualHighlightCount === 1 ? '' : 's'}.`
+                : ''}
+              {readyVisualDocUpdateCount > 0
+                ? ` ${readyVisualDocUpdateCount} doc update${readyVisualDocUpdateCount === 1 ? '' : 's'}.`
+                : ''}
+              {' '}Open the modal to review or generate.
             </div>
           )}
 

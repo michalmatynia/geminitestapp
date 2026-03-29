@@ -366,6 +366,51 @@ const resolvePanelSurfaceStyle = ({
           : '70vh',
 });
 
+const resolvePanelHeaderPaddingClassName = ({
+  isCompactDockedTutorPanel,
+  shouldUseMinimalPanelShell,
+}: {
+  isCompactDockedTutorPanel: boolean;
+  shouldUseMinimalPanelShell: boolean;
+}): string =>
+  isCompactDockedTutorPanel
+    ? 'kangur-chat-header-padding-sm'
+    : shouldUseMinimalPanelShell
+      ? 'kangur-chat-header-padding-lg'
+      : 'kangur-chat-header-padding-md';
+
+const resolvePanelHeaderAttachmentClassName = ({
+  avatarAttachmentSide,
+  showAttachedAvatarShell,
+}: {
+  avatarAttachmentSide: TutorHorizontalSide;
+  showAttachedAvatarShell: boolean;
+}): string | null => {
+  if (!showAttachedAvatarShell) {
+    return null;
+  }
+
+  if (avatarAttachmentSide === 'left') {
+    return 'pl-16';
+  }
+
+  return avatarAttachmentSide === 'right' ? 'pr-16' : null;
+};
+
+const resolvePanelHeaderDragClassName = ({
+  isPanelDragging,
+  isPanelDraggable,
+}: {
+  isPanelDragging: boolean;
+  isPanelDraggable: boolean;
+}): string | null => {
+  if (!isPanelDraggable) {
+    return null;
+  }
+
+  return cn('touch-none select-none cursor-grab', isPanelDragging ? 'cursor-grabbing' : null);
+};
+
 const resolvePanelHeaderClassName = ({
   avatarAttachmentSide,
   hasSnapPreview,
@@ -384,38 +429,26 @@ const resolvePanelHeaderClassName = ({
   isPanelDraggable: boolean;
   shouldUseMinimalPanelShell: boolean;
   showAttachedAvatarShell: boolean;
-}): string => {
-  const classNames = [
+}): string =>
+  cn(
     'relative',
     KANGUR_PANEL_ROW_CLASSNAME,
     'items-start border-b kangur-chat-header-surface sm:justify-between',
-    shouldUseMinimalPanelShell ? 'kangur-chat-header-padding-lg' : 'kangur-chat-header-padding-md',
-  ];
-
-  if (isAskModalMode) {
-    classNames.push('pt-5');
-  }
-  if (isCompactDockedTutorPanel) {
-    classNames.push('kangur-chat-header-padding-sm');
-  }
-  if (showAttachedAvatarShell && avatarAttachmentSide === 'left') {
-    classNames.push('pl-16');
-  }
-  if (showAttachedAvatarShell && avatarAttachmentSide === 'right') {
-    classNames.push('pr-16');
-  }
-  if (isPanelDraggable) {
-    classNames.push('touch-none select-none cursor-grab');
-  }
-  if (isPanelDraggable && isPanelDragging) {
-    classNames.push('cursor-grabbing');
-  }
-  if (hasSnapPreview) {
-    classNames.push('kangur-chat-header-surface-snap');
-  }
-
-  return cn(classNames);
-};
+    resolvePanelHeaderPaddingClassName({
+      isCompactDockedTutorPanel,
+      shouldUseMinimalPanelShell,
+    }),
+    resolvePanelHeaderAttachmentClassName({
+      avatarAttachmentSide,
+      showAttachedAvatarShell,
+    }),
+    resolvePanelHeaderDragClassName({
+      isPanelDragging,
+      isPanelDraggable,
+    }),
+    isAskModalMode ? 'pt-5' : null,
+    hasSnapPreview ? 'kangur-chat-header-surface-snap' : null
+  );
 
 const resolvePanelContainerStyle = ({
   bubbleStyle,
@@ -619,6 +652,324 @@ const resolvePanelTransitionValue = ({
 }): Transition =>
   isAskModalMode || shouldUseMinimalPanelShell ? motionProfile.bubbleTransition : panelTransition;
 
+const isPresentNode = (node: ReactNode | null): node is ReactNode => node !== null;
+
+const resolveHeaderDisplayNameClassName = (isContextualResultChrome: boolean): string =>
+  cn(
+    'text-sm font-semibold leading-relaxed',
+    isContextualResultChrome
+      ? '[color:var(--kangur-chat-kicker-text,var(--kangur-chat-accent-border,#f59e0b))]'
+      : '[color:var(--kangur-chat-panel-text,var(--kangur-page-text,#1e293b))]'
+  );
+
+const resolvePanelHeaderMoodNode = ({
+  isContextualResultChrome,
+  tutorBehaviorMoodId,
+  tutorBehaviorMoodLabel,
+  tutorContent,
+}: {
+  isContextualResultChrome: boolean;
+  tutorBehaviorMoodId: string;
+  tutorBehaviorMoodLabel: string;
+  tutorContent: ReturnType<typeof useKangurAiTutorContent>;
+}): JSX.Element | null =>
+  isContextualResultChrome ? null : (
+    <KangurAiTutorChromeBadge
+      key='mood-chip'
+      data-testid='kangur-ai-tutor-mood-chip'
+      data-mood-id={tutorBehaviorMoodId}
+      className='mt-2 tracking-[0.1em] shadow-[0_4px_12px_-8px_rgba(245,158,11,0.18)] [border-color:var(--kangur-chat-chip-border,var(--kangur-chat-header-border,var(--kangur-chat-panel-border,rgba(253,186,116,0.52))))] [background:var(--kangur-chat-chip-background,linear-gradient(135deg,color-mix(in_srgb,var(--kangur-soft-card-background)_88%,#fef3c7),color-mix(in_srgb,var(--kangur-soft-card-background)_80%,#fff7ed)))] [color:var(--kangur-chat-chip-text,var(--kangur-page-text))]'
+    >
+      {tutorContent.panelChrome.moodPrefix}: {tutorBehaviorMoodLabel}
+    </KangurAiTutorChromeBadge>
+  );
+
+const resolvePanelHeaderMoodDescriptionNode = ({
+  isContextualResultChrome,
+  panelMoodDescription,
+  shouldRenderPanelMoodDescription,
+}: {
+  isContextualResultChrome: boolean;
+  panelMoodDescription: string;
+  shouldRenderPanelMoodDescription: boolean;
+}): JSX.Element | null =>
+  shouldRenderPanelMoodDescription && !isContextualResultChrome ? (
+    <span
+      key='mood-description'
+      data-testid='kangur-ai-tutor-mood-description'
+      className='mt-2 text-xs leading-relaxed [color:var(--kangur-chat-muted-text,var(--kangur-page-muted-text))]'
+    >
+      {panelMoodDescription}
+    </span>
+  ) : null;
+
+const resolvePanelHeaderFollowingContextNode = ({
+  isFollowingContext,
+  tutorContent,
+  uiMode,
+}: {
+  isFollowingContext: boolean;
+  tutorContent: ReturnType<typeof useKangurAiTutorContent>;
+  uiMode: string;
+}): JSX.Element | null =>
+  isFollowingContext && uiMode === 'freeform' ? (
+    <KangurAiTutorChromeBadge
+      key='following-context'
+      data-testid='kangur-ai-tutor-following-context-badge'
+      className='mt-2 tracking-[0.08em] [border-color:var(--kangur-chat-chip-border,var(--kangur-chat-header-border,var(--kangur-chat-panel-border,rgba(253,186,116,0.52))))] [background:var(--kangur-chat-chip-background,color-mix(in_srgb,var(--kangur-soft-card-background)_84%,#fef3c7))] [color:var(--kangur-chat-chip-text,var(--kangur-page-text))]'
+    >
+      {tutorContent.panelChrome.followingContextLabel}
+    </KangurAiTutorChromeBadge>
+  ) : null;
+
+const resolvePanelHeaderSessionSurfaceNode = (sessionSurfaceLabel: string | null): JSX.Element | null =>
+  sessionSurfaceLabel ? (
+    <span
+      key='session-surface'
+      className='mt-2 text-[11px] [color:var(--kangur-chat-muted-text,var(--kangur-page-muted-text))]'
+    >
+      {sessionSurfaceLabel}
+    </span>
+  ) : null;
+
+const resolvePanelHeaderSnapPreviewNode = ({
+  snapPreviewTargetLabel,
+  tutorContent,
+}: {
+  snapPreviewTargetLabel: string | null;
+  tutorContent: ReturnType<typeof useKangurAiTutorContent>;
+}): JSX.Element | null =>
+  snapPreviewTargetLabel ? (
+    <KangurAiTutorChromeBadge
+      key='snap-preview'
+      data-testid='kangur-ai-tutor-snap-preview'
+      className='mt-2 tracking-[0.08em] [border-color:var(--kangur-chat-control-border,var(--kangur-chat-chip-border,var(--kangur-chat-panel-border,rgba(253,186,116,0.52))))] [background:var(--kangur-chat-control-background,color-mix(in_srgb,var(--kangur-soft-card-background)_84%,#fef3c7))] [color:var(--kangur-chat-control-text,var(--kangur-page-text))]'
+    >
+      {`${tutorContent.panelChrome.snapPreviewPrefix}: ${snapPreviewTargetLabel}`}
+    </KangurAiTutorChromeBadge>
+  ) : null;
+
+const resolvePanelHeaderMetaNodes = ({
+  isContextualResultChrome,
+  isFollowingContext,
+  panelMoodDescription,
+  sessionSurfaceLabel,
+  shouldRenderPanelMoodDescription,
+  snapPreviewTargetLabel,
+  tutorBehaviorMoodId,
+  tutorBehaviorMoodLabel,
+  tutorContent,
+  uiMode,
+}: {
+  isContextualResultChrome: boolean;
+  isFollowingContext: boolean;
+  panelMoodDescription: string;
+  sessionSurfaceLabel: string | null;
+  shouldRenderPanelMoodDescription: boolean;
+  snapPreviewTargetLabel: string | null;
+  tutorBehaviorMoodId: string;
+  tutorBehaviorMoodLabel: string;
+  tutorContent: ReturnType<typeof useKangurAiTutorContent>;
+  uiMode: string;
+}): ReactNode[] =>
+  [
+    resolvePanelHeaderMoodNode({
+      isContextualResultChrome,
+      tutorBehaviorMoodId,
+      tutorBehaviorMoodLabel,
+      tutorContent,
+    }),
+    resolvePanelHeaderMoodDescriptionNode({
+      isContextualResultChrome,
+      panelMoodDescription,
+      shouldRenderPanelMoodDescription,
+    }),
+    resolvePanelHeaderFollowingContextNode({
+      isFollowingContext,
+      tutorContent,
+      uiMode,
+    }),
+    resolvePanelHeaderSessionSurfaceNode(sessionSurfaceLabel),
+    resolvePanelHeaderSnapPreviewNode({
+      snapPreviewTargetLabel,
+      tutorContent,
+    }),
+  ].filter(isPresentNode);
+
+const resolveDetachContextActionNode = ({
+  canDetachPanelFromContext,
+  handleDetachPanelFromContext,
+  isFreeformMode,
+  tutorContent,
+}: {
+  canDetachPanelFromContext: boolean;
+  handleDetachPanelFromContext: () => void;
+  isFreeformMode: boolean;
+  tutorContent: ReturnType<typeof useKangurAiTutorContent>;
+}): JSX.Element | null =>
+  canDetachPanelFromContext && isFreeformMode ? (
+    <KangurAiTutorChromeTextButton
+      key='detach'
+      data-testid='kangur-ai-tutor-detach-from-context'
+      onClick={handleDetachPanelFromContext}
+      aria-label={tutorContent.panelChrome.detachFromContextAria}
+    >
+      {tutorContent.panelChrome.detachFromContextLabel}
+    </KangurAiTutorChromeTextButton>
+  ) : null;
+
+const resolveMoveContextActionNode = ({
+  canMovePanelToContext,
+  handleMovePanelToContext,
+  isFreeformMode,
+  tutorContent,
+}: {
+  canMovePanelToContext: boolean;
+  handleMovePanelToContext: () => void;
+  isFreeformMode: boolean;
+  tutorContent: ReturnType<typeof useKangurAiTutorContent>;
+}): JSX.Element | null =>
+  canMovePanelToContext && isFreeformMode ? (
+    <KangurAiTutorChromeTextButton
+      key='move'
+      data-testid='kangur-ai-tutor-move-to-context'
+      onClick={handleMovePanelToContext}
+      aria-label={tutorContent.panelChrome.moveToContextAria}
+    >
+      {tutorContent.panelChrome.moveToContextLabel}
+    </KangurAiTutorChromeTextButton>
+  ) : null;
+
+const resolveResetContextActionNode = ({
+  canResetPanelPosition,
+  handleResetPanelPosition,
+  isFreeformMode,
+  tutorContent,
+}: {
+  canResetPanelPosition: boolean;
+  handleResetPanelPosition: () => void;
+  isFreeformMode: boolean;
+  tutorContent: ReturnType<typeof useKangurAiTutorContent>;
+}): JSX.Element | null =>
+  canResetPanelPosition && isFreeformMode ? (
+    <KangurAiTutorChromeTextButton
+      key='reset'
+      data-testid='kangur-ai-tutor-reset-position'
+      onClick={handleResetPanelPosition}
+      aria-label={tutorContent.panelChrome.resetPositionAria}
+    >
+      {tutorContent.panelChrome.resetPositionLabel}
+    </KangurAiTutorChromeTextButton>
+  ) : null;
+
+const resolveDisableTutorActionNode = ({
+  handleDisableTutor,
+  isContextualResultChrome,
+  tutorContent,
+}: {
+  handleDisableTutor: () => void;
+  isContextualResultChrome: boolean;
+  tutorContent: ReturnType<typeof useKangurAiTutorContent>;
+}): JSX.Element | null =>
+  isContextualResultChrome ? null : (
+    <KangurAiTutorChromeTextButton
+      key='disable'
+      onClick={handleDisableTutor}
+      aria-label={tutorContent.common.disableTutorAria}
+    >
+      {tutorContent.common.disableTutorLabel}
+    </KangurAiTutorChromeTextButton>
+  );
+
+const resolveClosePanelActionNode = ({
+  handleClosePanel,
+  tutorContent,
+}: {
+  handleClosePanel: () => void;
+  tutorContent: ReturnType<typeof useKangurAiTutorContent>;
+}): JSX.Element => (
+  <KangurAiTutorChromeCloseButton
+    key='close'
+    onClick={handleClosePanel}
+    iconClassName='h-4 w-4'
+    aria-label={tutorContent.common.closeAria}
+  />
+);
+
+const resolvePanelHeaderActionNodes = ({
+  canDetachPanelFromContext,
+  canMovePanelToContext,
+  canResetPanelPosition,
+  handleClosePanel,
+  handleDetachPanelFromContext,
+  handleDisableTutor,
+  handleMovePanelToContext,
+  handleResetPanelPosition,
+  isContextualResultChrome,
+  narratorControl,
+  shouldUseMinimalPanelShell,
+  tutorContent,
+  uiMode,
+}: {
+  canDetachPanelFromContext: boolean;
+  canMovePanelToContext: boolean;
+  canResetPanelPosition: boolean;
+  handleClosePanel: () => void;
+  handleDetachPanelFromContext: () => void;
+  handleDisableTutor: () => void;
+  handleMovePanelToContext: () => void;
+  handleResetPanelPosition: () => void;
+  isContextualResultChrome: boolean;
+  narratorControl: KangurAiTutorNarratorControlView;
+  shouldUseMinimalPanelShell: boolean;
+  tutorContent: ReturnType<typeof useKangurAiTutorContent>;
+  uiMode: string;
+}): ReactNode[] => {
+  const isFreeformMode = uiMode === 'freeform';
+  const baseNodes = shouldUseMinimalPanelShell
+    ? [<KangurAiTutorPanelNarratorIcon key='narrator' narratorControl={narratorControl} />]
+    : [];
+
+  return [
+    ...baseNodes,
+    !shouldUseMinimalPanelShell
+      ? resolveDetachContextActionNode({
+          canDetachPanelFromContext,
+          handleDetachPanelFromContext,
+          isFreeformMode,
+          tutorContent,
+        })
+      : null,
+    !shouldUseMinimalPanelShell
+      ? resolveMoveContextActionNode({
+          canMovePanelToContext,
+          handleMovePanelToContext,
+          isFreeformMode,
+          tutorContent,
+        })
+      : null,
+    !shouldUseMinimalPanelShell
+      ? resolveResetContextActionNode({
+          canResetPanelPosition,
+          handleResetPanelPosition,
+          isFreeformMode,
+          tutorContent,
+        })
+      : null,
+    !shouldUseMinimalPanelShell
+      ? resolveDisableTutorActionNode({
+          handleDisableTutor,
+          isContextualResultChrome,
+          tutorContent,
+        })
+      : null,
+    resolveClosePanelActionNode({
+      handleClosePanel,
+      tutorContent,
+    }),
+  ].filter(isPresentNode);
+};
+
 const focusPanelFallbackTarget = (container: HTMLElement): HTMLElement => {
   const focusables = getFocusableElements(container);
   return focusables[0] ?? container;
@@ -797,62 +1148,18 @@ function KangurAiTutorPanelHeaderInfo(props: KangurAiTutorPanelHeaderInfoProps):
     return null;
   }
 
-  const metaNodes: ReactNode[] = [];
-  if (!isContextualResultChrome) {
-    metaNodes.push(
-      <KangurAiTutorChromeBadge
-        key='mood-chip'
-        data-testid='kangur-ai-tutor-mood-chip'
-        data-mood-id={tutorBehaviorMoodId}
-        className='mt-2 tracking-[0.1em] shadow-[0_4px_12px_-8px_rgba(245,158,11,0.18)] [border-color:var(--kangur-chat-chip-border,var(--kangur-chat-header-border,var(--kangur-chat-panel-border,rgba(253,186,116,0.52))))] [background:var(--kangur-chat-chip-background,linear-gradient(135deg,color-mix(in_srgb,var(--kangur-soft-card-background)_88%,#fef3c7),color-mix(in_srgb,var(--kangur-soft-card-background)_80%,#fff7ed)))] [color:var(--kangur-chat-chip-text,var(--kangur-page-text))]'
-      >
-        {tutorContent.panelChrome.moodPrefix}: {tutorBehaviorMoodLabel}
-      </KangurAiTutorChromeBadge>
-    );
-  }
-  if (shouldRenderPanelMoodDescription && !isContextualResultChrome) {
-    metaNodes.push(
-      <span
-        key='mood-description'
-        data-testid='kangur-ai-tutor-mood-description'
-        className='mt-2 text-xs leading-relaxed [color:var(--kangur-chat-muted-text,var(--kangur-page-muted-text))]'
-      >
-        {panelMoodDescription}
-      </span>
-    );
-  }
-  if (isFollowingContext && uiMode === 'freeform') {
-    metaNodes.push(
-      <KangurAiTutorChromeBadge
-        key='following-context'
-        data-testid='kangur-ai-tutor-following-context-badge'
-        className='mt-2 tracking-[0.08em] [border-color:var(--kangur-chat-chip-border,var(--kangur-chat-header-border,var(--kangur-chat-panel-border,rgba(253,186,116,0.52))))] [background:var(--kangur-chat-chip-background,color-mix(in_srgb,var(--kangur-soft-card-background)_84%,#fef3c7))] [color:var(--kangur-chat-chip-text,var(--kangur-page-text))]'
-      >
-        {tutorContent.panelChrome.followingContextLabel}
-      </KangurAiTutorChromeBadge>
-    );
-  }
-  if (sessionSurfaceLabel) {
-    metaNodes.push(
-      <span
-        key='session-surface'
-        className='mt-2 text-[11px] [color:var(--kangur-chat-muted-text,var(--kangur-page-muted-text))]'
-      >
-        {sessionSurfaceLabel}
-      </span>
-    );
-  }
-  if (snapPreviewTargetLabel) {
-    metaNodes.push(
-      <KangurAiTutorChromeBadge
-        key='snap-preview'
-        data-testid='kangur-ai-tutor-snap-preview'
-        className='mt-2 tracking-[0.08em] [border-color:var(--kangur-chat-control-border,var(--kangur-chat-chip-border,var(--kangur-chat-panel-border,rgba(253,186,116,0.52))))] [background:var(--kangur-chat-control-background,color-mix(in_srgb,var(--kangur-soft-card-background)_84%,#fef3c7))] [color:var(--kangur-chat-control-text,var(--kangur-page-text))]'
-      >
-        {`${tutorContent.panelChrome.snapPreviewPrefix}: ${snapPreviewTargetLabel}`}
-      </KangurAiTutorChromeBadge>
-    );
-  }
+  const metaNodes = resolvePanelHeaderMetaNodes({
+    isContextualResultChrome,
+    isFollowingContext,
+    panelMoodDescription,
+    sessionSurfaceLabel,
+    shouldRenderPanelMoodDescription,
+    snapPreviewTargetLabel,
+    tutorBehaviorMoodId,
+    tutorBehaviorMoodLabel,
+    tutorContent,
+    uiMode,
+  });
 
   return (
     <div className='min-w-0 flex flex-1 flex-col'>
@@ -869,12 +1176,7 @@ function KangurAiTutorPanelHeaderInfo(props: KangurAiTutorPanelHeaderInfoProps):
       <div className={`mt-1 ${KANGUR_WRAP_CENTER_ROW_CLASSNAME} sm:flex-nowrap`}>
         <span
           data-testid='kangur-ai-tutor-display-name'
-          className={cn(
-            'text-sm font-semibold leading-relaxed',
-            isContextualResultChrome
-              ? '[color:var(--kangur-chat-kicker-text,var(--kangur-chat-accent-border,#f59e0b))]'
-              : '[color:var(--kangur-chat-panel-text,var(--kangur-page-text,#1e293b))]'
-          )}
+          className={resolveHeaderDisplayNameClassName(isContextualResultChrome)}
         >
           {tutorDisplayName}
         </span>
@@ -903,67 +1205,21 @@ function KangurAiTutorPanelHeaderActions(
     tutorContent,
     uiMode,
   } = props;
-  const isFreeformMode = uiMode === 'freeform';
-  const actionNodes: ReactNode[] = [];
-
-  if (shouldUseMinimalPanelShell) {
-    actionNodes.push(<KangurAiTutorPanelNarratorIcon key='narrator' narratorControl={narratorControl} />);
-  }
-  if (!shouldUseMinimalPanelShell && canDetachPanelFromContext && isFreeformMode) {
-    actionNodes.push(
-      <KangurAiTutorChromeTextButton
-        key='detach'
-        data-testid='kangur-ai-tutor-detach-from-context'
-        onClick={handleDetachPanelFromContext}
-        aria-label={tutorContent.panelChrome.detachFromContextAria}
-      >
-        {tutorContent.panelChrome.detachFromContextLabel}
-      </KangurAiTutorChromeTextButton>
-    );
-  }
-  if (!shouldUseMinimalPanelShell && canMovePanelToContext && isFreeformMode) {
-    actionNodes.push(
-      <KangurAiTutorChromeTextButton
-        key='move'
-        data-testid='kangur-ai-tutor-move-to-context'
-        onClick={handleMovePanelToContext}
-        aria-label={tutorContent.panelChrome.moveToContextAria}
-      >
-        {tutorContent.panelChrome.moveToContextLabel}
-      </KangurAiTutorChromeTextButton>
-    );
-  }
-  if (!shouldUseMinimalPanelShell && canResetPanelPosition && isFreeformMode) {
-    actionNodes.push(
-      <KangurAiTutorChromeTextButton
-        key='reset'
-        data-testid='kangur-ai-tutor-reset-position'
-        onClick={handleResetPanelPosition}
-        aria-label={tutorContent.panelChrome.resetPositionAria}
-      >
-        {tutorContent.panelChrome.resetPositionLabel}
-      </KangurAiTutorChromeTextButton>
-    );
-  }
-  if (!shouldUseMinimalPanelShell && !isContextualResultChrome) {
-    actionNodes.push(
-      <KangurAiTutorChromeTextButton
-        key='disable'
-        onClick={handleDisableTutor}
-        aria-label={tutorContent.common.disableTutorAria}
-      >
-        {tutorContent.common.disableTutorLabel}
-      </KangurAiTutorChromeTextButton>
-    );
-  }
-  actionNodes.push(
-    <KangurAiTutorChromeCloseButton
-      key='close'
-      onClick={handleClosePanel}
-      iconClassName='h-4 w-4'
-      aria-label={tutorContent.common.closeAria}
-    />
-  );
+  const actionNodes = resolvePanelHeaderActionNodes({
+    canDetachPanelFromContext,
+    canMovePanelToContext,
+    canResetPanelPosition,
+    handleClosePanel,
+    handleDetachPanelFromContext,
+    handleDisableTutor,
+    handleMovePanelToContext,
+    handleResetPanelPosition,
+    isContextualResultChrome,
+    narratorControl,
+    shouldUseMinimalPanelShell,
+    tutorContent,
+    uiMode,
+  });
 
   return (
     <div
@@ -1169,6 +1425,46 @@ function KangurAiTutorPanelBodySection(props: {
   );
 }
 
+const resolveShouldRenderPanelTail = ({
+  avatarPointer,
+  bubbleTailPlacement,
+  isAskModalMode,
+  shouldUseMinimalPanelShell,
+}: {
+  avatarPointer: TutorAvatarPointer | null;
+  bubbleTailPlacement: 'bottom' | 'dock' | 'top';
+  isAskModalMode: boolean;
+  shouldUseMinimalPanelShell: boolean;
+}): boolean =>
+  !isAskModalMode && !shouldUseMinimalPanelShell && !avatarPointer && bubbleTailPlacement !== 'dock';
+
+const resolveShouldRenderPanelSheetHandle = ({
+  bubbleMode,
+  isAskModalMode,
+  shouldUseMinimalPanelShell,
+}: {
+  bubbleMode: 'bubble' | 'sheet';
+  isAskModalMode: boolean;
+  shouldUseMinimalPanelShell: boolean;
+}): boolean => !isAskModalMode && !shouldUseMinimalPanelShell && bubbleMode === 'sheet';
+
+const renderPanelTailNode = (input: {
+  avatarPointer: TutorAvatarPointer | null;
+  bubbleTailPlacement: 'bottom' | 'dock' | 'top';
+  isAskModalMode: boolean;
+  shouldUseMinimalPanelShell: boolean;
+}): JSX.Element | null =>
+  resolveShouldRenderPanelTail(input) ? (
+    <KangurAiTutorPanelTail bubbleTailPlacement={input.bubbleTailPlacement} />
+  ) : null;
+
+const renderPanelSheetHandleNode = (input: {
+  bubbleMode: 'bubble' | 'sheet';
+  isAskModalMode: boolean;
+  shouldUseMinimalPanelShell: boolean;
+}): JSX.Element | null =>
+  resolveShouldRenderPanelSheetHandle(input) ? <KangurAiTutorPanelSheetHandle /> : null;
+
 function KangurAiTutorPanelSurface(props: KangurAiTutorPanelSurfaceProps): JSX.Element {
   const {
     avatarPointer,
@@ -1219,10 +1515,6 @@ function KangurAiTutorPanelSurface(props: KangurAiTutorPanelSurfaceProps): JSX.E
     tutorNarrationRootRef,
     uiMode,
   } = props;
-  const shouldRenderTail =
-    !isAskModalMode && !shouldUseMinimalPanelShell && !avatarPointer && bubbleTailPlacement !== 'dock';
-  const shouldRenderSheetHandle =
-    !isAskModalMode && !shouldUseMinimalPanelShell && bubbleMode === 'sheet';
 
   return (
     <KangurGlassPanel
@@ -1235,8 +1527,17 @@ function KangurAiTutorPanelSurface(props: KangurAiTutorPanelSurfaceProps): JSX.E
       className={panelSurfaceClassName}
       style={panelSurfaceStyle}
     >
-      {shouldRenderTail ? <KangurAiTutorPanelTail bubbleTailPlacement={bubbleTailPlacement} /> : null}
-      {shouldRenderSheetHandle ? <KangurAiTutorPanelSheetHandle /> : null}
+      {renderPanelTailNode({
+        avatarPointer,
+        bubbleTailPlacement,
+        isAskModalMode,
+        shouldUseMinimalPanelShell,
+      })}
+      {renderPanelSheetHandleNode({
+        bubbleMode,
+        isAskModalMode,
+        shouldUseMinimalPanelShell,
+      })}
       <KangurAiTutorPanelHeaderSection
         canDetachPanelFromContext={canDetachPanelFromContext}
         canMovePanelToContext={canMovePanelToContext}
@@ -1465,22 +1766,103 @@ function KangurAiTutorAttachedAvatarButton(props: {
   );
 }
 
-function KangurAiTutorPanelMotionFrame(props: {
-  animateTarget: TargetAndTransition;
+type KangurAiTutorPanelFrameResolvedProps = {
+  ariaModal?: 'true';
+  hasPointerValue: 'true' | 'false';
+  keyValue: string;
+  layout: 'modal' | 'bubble' | 'sheet';
+  motionBehavior: 'animated' | 'reduced';
+  panelDraggingValue: 'true' | 'false';
+  panelDraggableValue: 'true' | 'false';
+  panelSnapPreviewValue: 'true' | 'false';
+  pointerSide: string;
+  role: 'dialog' | 'region';
+  testId: string;
+};
+
+const toDataBoolean = (value: boolean): 'true' | 'false' => (value ? 'true' : 'false');
+
+const resolvePanelFrameKey = (isAskModalMode: boolean): string =>
+  isAskModalMode ? 'ask-modal' : 'chat-panel';
+
+const resolvePanelFrameTestId = (isAskModalMode: boolean): string =>
+  isAskModalMode ? 'kangur-ai-tutor-ask-modal' : 'kangur-ai-tutor-panel';
+
+const resolvePanelFrameLayout = ({
+  bubbleMode,
+  isAskModalMode,
+}: {
+  bubbleMode: 'bubble' | 'sheet';
+  isAskModalMode: boolean;
+}): 'modal' | 'bubble' | 'sheet' => (isAskModalMode ? 'modal' : bubbleMode);
+
+const resolvePanelFrameMotionBehavior = (
+  prefersReducedMotion: boolean
+): 'animated' | 'reduced' => (prefersReducedMotion ? 'reduced' : 'animated');
+
+const resolvePanelFrameRole = (isAskModalMode: boolean): 'dialog' | 'region' =>
+  isAskModalMode ? 'dialog' : 'region';
+
+const resolvePanelFrameAriaModal = (isAskModalMode: boolean): 'true' | undefined =>
+  isAskModalMode ? 'true' : undefined;
+
+const resolvePanelFramePointerSide = ({
+  avatarPointer,
+  shouldRenderPointer,
+}: {
   avatarPointer: TutorAvatarPointer | null;
+  shouldRenderPointer: boolean;
+}): string => (shouldRenderPointer ? avatarPointer?.side ?? 'none' : 'none');
+
+const resolvePanelFrameResolvedProps = ({
+  avatarPointer,
+  bubbleMode,
+  hasSnapPreview,
+  isAskModalMode,
+  isPanelDraggable,
+  isPanelDragging,
+  prefersReducedMotion,
+  shouldRenderPointer,
+}: {
+  avatarPointer: TutorAvatarPointer | null;
+  bubbleMode: 'bubble' | 'sheet';
+  hasSnapPreview: boolean;
+  isAskModalMode: boolean;
+  isPanelDraggable: boolean;
+  isPanelDragging: boolean;
+  prefersReducedMotion: boolean;
+  shouldRenderPointer: boolean;
+}): KangurAiTutorPanelFrameResolvedProps => ({
+  ariaModal: resolvePanelFrameAriaModal(isAskModalMode),
+  hasPointerValue: toDataBoolean(shouldRenderPointer),
+  keyValue: resolvePanelFrameKey(isAskModalMode),
+  layout: resolvePanelFrameLayout({
+    bubbleMode,
+    isAskModalMode,
+  }),
+  motionBehavior: resolvePanelFrameMotionBehavior(prefersReducedMotion),
+  panelDraggingValue: toDataBoolean(isPanelDragging),
+  panelDraggableValue: toDataBoolean(isPanelDraggable),
+  panelSnapPreviewValue: toDataBoolean(hasSnapPreview),
+  pointerSide: resolvePanelFramePointerSide({
+    avatarPointer,
+    shouldRenderPointer,
+  }),
+  role: resolvePanelFrameRole(isAskModalMode),
+  testId: resolvePanelFrameTestId(isAskModalMode),
+});
+
+function KangurAiTutorPanelFrame(props: {
+  animateTarget: TargetAndTransition;
   bubbleEntryDirection: TutorHorizontalSide;
   bubbleLaunchOrigin: 'dock-bottom-right' | 'sheet';
-  bubbleMode: 'bubble' | 'sheet';
   bubbleStrategy: string;
   children: ReactNode;
   className: string;
   dialogLabel: string;
-  hasSnapPreview: boolean;
+  frame: KangurAiTutorPanelFrameResolvedProps;
   initialTarget: TargetAndTransition;
-  isAskModalMode: boolean;
   isBusy: boolean;
-  isPanelDraggable: boolean;
-  isPanelDragging: boolean;
   motionProfile: TutorMotionProfile;
   panelMotionState: string;
   panelOpenAnimation: 'dock-launch' | 'fade' | 'sheet';
@@ -1495,20 +1877,15 @@ function KangurAiTutorPanelMotionFrame(props: {
 }): JSX.Element {
   const {
     animateTarget,
-    avatarPointer,
     bubbleEntryDirection,
     bubbleLaunchOrigin,
-    bubbleMode,
     bubbleStrategy,
     children,
     className,
     dialogLabel,
-    hasSnapPreview,
+    frame,
     initialTarget,
-    isAskModalMode,
     isBusy,
-    isPanelDraggable,
-    isPanelDragging,
     motionProfile,
     panelMotionState,
     panelOpenAnimation,
@@ -1517,6 +1894,7 @@ function KangurAiTutorPanelMotionFrame(props: {
     panelStyleName,
     prefersReducedMotion,
     resolvedPanelAvatarPlacement,
+    style,
     transitionValue,
     uiMode,
   } = props;
@@ -1524,28 +1902,28 @@ function KangurAiTutorPanelMotionFrame(props: {
   return (
     <motion.div
       data-kangur-ai-tutor-root='true'
-      key={isAskModalMode ? 'ask-modal' : 'chat-panel'}
+      key={frame.keyValue}
       ref={panelRef}
-      data-testid={isAskModalMode ? 'kangur-ai-tutor-ask-modal' : 'kangur-ai-tutor-panel'}
-      data-layout={isAskModalMode ? 'modal' : bubbleMode}
+      data-testid={frame.testId}
+      data-layout={frame.layout}
       data-avatar-placement={resolvedPanelAvatarPlacement}
-      data-motion-behavior={prefersReducedMotion ? 'reduced' : 'animated'}
+      data-motion-behavior={frame.motionBehavior}
       data-motion-preset={motionProfile.kind}
       data-motion-state={panelMotionState}
       data-open-animation={panelOpenAnimation}
       data-entry-direction={bubbleEntryDirection}
-      data-panel-draggable={isPanelDraggable ? 'true' : 'false'}
-      data-panel-dragging={isPanelDragging ? 'true' : 'false'}
+      data-panel-draggable={frame.panelDraggableValue}
+      data-panel-dragging={frame.panelDraggingValue}
       data-panel-snap={panelSnapState}
-      data-panel-snap-preview={hasSnapPreview ? 'true' : 'false'}
+      data-panel-snap-preview={frame.panelSnapPreviewValue}
       data-placement-strategy={bubbleStrategy}
       data-launch-origin={bubbleLaunchOrigin}
       data-panel-style={panelStyleName}
-      data-has-pointer={avatarPointer ? 'true' : 'false'}
-      data-pointer-side={avatarPointer?.side ?? 'none'}
+      data-has-pointer={frame.hasPointerValue}
+      data-pointer-side={frame.pointerSide}
       data-ui-mode={uiMode}
-      role={isAskModalMode ? 'dialog' : 'region'}
-      aria-modal={isAskModalMode ? 'true' : undefined}
+      role={frame.role}
+      aria-modal={frame.ariaModal}
       aria-label={dialogLabel}
       aria-busy={isBusy ? 'true' : undefined}
       initial={initialTarget}
@@ -1553,12 +1931,219 @@ function KangurAiTutorPanelMotionFrame(props: {
       exit={prefersReducedMotion ? { opacity: 1 } : { opacity: 0 }}
       transition={transitionValue}
       className={className}
-      style={props.style}
+      style={style}
     >
       {children}
     </motion.div>
   );
 }
+
+const renderPanelBackdropNode = (props: {
+  isAskModalMode: boolean;
+  onBackdropClose: () => void;
+  prefersReducedMotion: boolean;
+  reducedMotionTransitions: TutorReducedMotionPanelTransitions;
+  shouldRenderBackdrop: boolean;
+  tutorContent: ReturnType<typeof useKangurAiTutorContent>;
+}): JSX.Element | null =>
+  props.shouldRenderBackdrop ? (
+    <KangurAiTutorPanelBackdrop
+      isAskModalMode={props.isAskModalMode}
+      onBackdropClose={props.onBackdropClose}
+      prefersReducedMotion={props.prefersReducedMotion}
+      reducedMotionTransitions={props.reducedMotionTransitions}
+      tutorContent={props.tutorContent}
+    />
+  ) : null;
+
+const renderPanelPointerNode = (props: {
+  avatarPointer: TutorAvatarPointer | null;
+  pointerMarkerId: string;
+  shouldRenderPointer: boolean;
+}): JSX.Element | null =>
+  props.shouldRenderPointer && props.avatarPointer ? (
+    <KangurAiTutorPanelPointer
+      avatarPointer={props.avatarPointer}
+      pointerMarkerId={props.pointerMarkerId}
+    />
+  ) : null;
+
+const renderAttachedAvatarNode = (props: {
+  attachedAvatarStyle: CSSProperties;
+  avatarAnchorKind: string;
+  avatarAttachmentSide: TutorHorizontalSide;
+  avatarButtonClassName: string;
+  motionProfile: TutorMotionProfile;
+  onAttachedAvatarClick: () => void;
+  onAttachedAvatarPointerCancel: (event: PointerEvent<HTMLButtonElement>) => void;
+  onAttachedAvatarPointerDown: (event: PointerEvent<HTMLButtonElement>) => void;
+  onAttachedAvatarPointerMove: (event: PointerEvent<HTMLButtonElement>) => void;
+  onAttachedAvatarPointerUp: (event: PointerEvent<HTMLButtonElement>) => void;
+  prefersReducedMotion: boolean;
+  shouldRenderAttachedAvatar: boolean;
+  tutor: ReturnType<typeof useKangurAiTutor>;
+  tutorContent: ReturnType<typeof useKangurAiTutorContent>;
+  tutorDisplayName: string;
+  tutorMoodId: string;
+  uiMode: string;
+}): JSX.Element | null =>
+  props.shouldRenderAttachedAvatar ? (
+    <KangurAiTutorAttachedAvatarButton
+      attachedAvatarStyle={props.attachedAvatarStyle}
+      avatarAnchorKind={props.avatarAnchorKind}
+      avatarAttachmentSide={props.avatarAttachmentSide}
+      avatarButtonClassName={props.avatarButtonClassName}
+      motionProfile={props.motionProfile}
+      onAttachedAvatarClick={props.onAttachedAvatarClick}
+      onAttachedAvatarPointerCancel={props.onAttachedAvatarPointerCancel}
+      onAttachedAvatarPointerDown={props.onAttachedAvatarPointerDown}
+      onAttachedAvatarPointerMove={props.onAttachedAvatarPointerMove}
+      onAttachedAvatarPointerUp={props.onAttachedAvatarPointerUp}
+      prefersReducedMotion={props.prefersReducedMotion}
+      tutor={props.tutor}
+      tutorContent={props.tutorContent}
+      tutorDisplayName={props.tutorDisplayName}
+      tutorMoodId={props.tutorMoodId}
+      uiMode={props.uiMode}
+    />
+  ) : null;
+
+const resolveShouldUseMinimalPanelShell = ({
+  isAskModalMode,
+  isMinimalPanelMode,
+}: {
+  isAskModalMode: boolean;
+  isMinimalPanelMode: boolean;
+}): boolean => isMinimalPanelMode && !isAskModalMode;
+
+const resolveIsContextualResultChrome = (chromeVariant: TutorPanelChromeVariant): boolean =>
+  chromeVariant === 'contextual_result';
+
+const resolveTutorDisplayName = ({
+  tutor,
+  tutorContent,
+}: {
+  tutor: ReturnType<typeof useKangurAiTutor>;
+  tutorContent: ReturnType<typeof useKangurAiTutorContent>;
+}): string => tutor?.tutorName ?? tutorContent.common.defaultTutorName;
+
+const resolveTutorChatTitleSuffix = (
+  tutorContent: ReturnType<typeof useKangurAiTutorContent>
+): string => tutorContent.narrator?.chatTitleSuffix ?? '';
+
+const resolveTutorMoodId = (tutor: ReturnType<typeof useKangurAiTutor>): string =>
+  tutor?.tutorMoodId ?? 'default';
+
+const resolveTutorBehaviorMoodId = ({
+  tutor,
+  tutorMoodId,
+}: {
+  tutor: ReturnType<typeof useKangurAiTutor>;
+  tutorMoodId: string;
+}): string => tutor?.tutorBehaviorMoodId ?? tutorMoodId;
+
+const resolveTutorBehaviorMoodLabel = ({
+  tutor,
+  tutorBehaviorMoodId,
+}: {
+  tutor: ReturnType<typeof useKangurAiTutor>;
+  tutorBehaviorMoodId: string;
+}): string => repairKangurPolishCopy(tutor?.tutorBehaviorMoodLabel ?? tutorBehaviorMoodId);
+
+const resolveTutorDialogLabel = ({
+  chatTitleSuffix,
+  tutorDisplayName,
+}: {
+  chatTitleSuffix: string;
+  tutorDisplayName: string;
+}): string => `${tutorDisplayName} ${chatTitleSuffix}`.trim();
+
+const resolveTutorPanelIdentity = ({
+  tutor,
+  tutorContent,
+}: {
+  tutor: ReturnType<typeof useKangurAiTutor>;
+  tutorContent: ReturnType<typeof useKangurAiTutorContent>;
+}): {
+  dialogLabel: string;
+  tutorBehaviorMoodId: string;
+  tutorBehaviorMoodLabel: string;
+  tutorDisplayName: string;
+  tutorMoodId: string;
+} => {
+  const tutorDisplayName = resolveTutorDisplayName({
+    tutor,
+    tutorContent,
+  });
+  const chatTitleSuffix = resolveTutorChatTitleSuffix(tutorContent);
+  const tutorMoodId = resolveTutorMoodId(tutor);
+  const tutorBehaviorMoodId = resolveTutorBehaviorMoodId({
+    tutor,
+    tutorMoodId,
+  });
+
+  return {
+    dialogLabel: resolveTutorDialogLabel({
+      chatTitleSuffix,
+      tutorDisplayName,
+    }),
+    tutorBehaviorMoodId,
+    tutorBehaviorMoodLabel: resolveTutorBehaviorMoodLabel({
+      tutor,
+      tutorBehaviorMoodId,
+    }),
+    tutorDisplayName,
+    tutorMoodId,
+  };
+};
+
+const resolveIsGenericEmptyStateMessage = ({
+  panelEmptyStateMessage,
+  tutorContent,
+}: {
+  panelEmptyStateMessage: string;
+  tutorContent: ReturnType<typeof useKangurAiTutorContent>;
+}): boolean =>
+  panelEmptyStateMessage === tutorContent.emptyStates.lesson ||
+  panelEmptyStateMessage === tutorContent.emptyStates.game;
+
+const resolveHasSnapPreview = (snapPreviewTargetLabel: string | null): boolean =>
+  snapPreviewTargetLabel !== null;
+
+const resolveBubbleMotionTarget = ({
+  bubbleMode,
+  bubbleStyle,
+}: {
+  bubbleMode: 'bubble' | 'sheet';
+  bubbleStyle: Record<string, number | string | undefined>;
+}): TargetAndTransition =>
+  ({
+    ...toMotionTarget(bubbleStyle),
+    opacity: 1,
+    x: 0,
+    y: 0,
+    ...(bubbleMode === 'sheet' ? {} : { scale: 1 }),
+  }) satisfies TargetAndTransition;
+
+const resolveNarratorControlView = ({
+  narratorSettings,
+  tutorContent,
+  tutorNarrationScript,
+  tutorNarratorContextRegistry,
+}: {
+  narratorSettings: KangurAiTutorPanelBodyContextValue['narratorSettings'];
+  tutorContent: ReturnType<typeof useKangurAiTutorContent>;
+  tutorNarrationScript: KangurAiTutorPanelBodyContextValue['tutorNarrationScript'];
+  tutorNarratorContextRegistry: KangurAiTutorPanelBodyContextValue['tutorNarratorContextRegistry'];
+}): KangurAiTutorNarratorControlView => ({
+  contextRegistry: tutorNarratorContextRegistry,
+  engine: narratorSettings.engine,
+  pauseLabel: tutorContent.narrator.pauseLabel,
+  readLabel: tutorContent.narrator.readLabel,
+  resumeLabel: tutorContent.narrator.resumeLabel,
+  script: tutorNarrationScript,
+  voice: narratorSettings.voice,
+});
 
 function KangurAiTutorRenderedPanel(props: KangurAiTutorRenderedPanelProps): JSX.Element {
   const {
@@ -1608,82 +2193,76 @@ function KangurAiTutorRenderedPanel(props: KangurAiTutorRenderedPanelProps): JSX
     tutorMoodId,
     uiMode,
   } = props;
+  const frame = resolvePanelFrameResolvedProps({
+    avatarPointer,
+    bubbleMode,
+    hasSnapPreview,
+    isAskModalMode,
+    isPanelDraggable,
+    isPanelDragging,
+    prefersReducedMotion,
+    shouldRenderPointer,
+  });
 
   return (
     <>
-      {shouldRenderBackdrop ? (
-        <KangurAiTutorPanelBackdrop
-          isAskModalMode={isAskModalMode}
-          onBackdropClose={onBackdropClose}
-          prefersReducedMotion={prefersReducedMotion}
-          reducedMotionTransitions={reducedMotionTransitions}
-          tutorContent={tutorContent}
-        />
-      ) : null}
+      {renderPanelBackdropNode({
+        isAskModalMode,
+        onBackdropClose,
+        prefersReducedMotion,
+        reducedMotionTransitions,
+        shouldRenderBackdrop,
+        tutorContent,
+      })}
 
-      <motion.div
-        data-kangur-ai-tutor-root='true'
-        key={isAskModalMode ? 'ask-modal' : 'chat-panel'}
-        ref={panelRef}
-        data-testid={isAskModalMode ? 'kangur-ai-tutor-ask-modal' : 'kangur-ai-tutor-panel'}
-        data-layout={isAskModalMode ? 'modal' : bubbleMode}
-        data-avatar-placement={resolvedPanelAvatarPlacement}
-        data-motion-behavior={prefersReducedMotion ? 'reduced' : 'animated'}
-        data-motion-preset={motionProfile.kind}
-        data-motion-state={panelMotionState}
-        data-open-animation={panelOpenAnimation}
-        data-entry-direction={bubbleEntryDirection}
-        data-panel-draggable={isPanelDraggable ? 'true' : 'false'}
-        data-panel-dragging={isPanelDragging ? 'true' : 'false'}
-        data-panel-snap={panelSnapState}
-        data-panel-snap-preview={hasSnapPreview ? 'true' : 'false'}
-        data-placement-strategy={bubbleStrategy}
-        data-launch-origin={bubbleLaunchOrigin}
-        data-panel-style={panelStyleName}
-        data-has-pointer={shouldRenderPointer ? 'true' : 'false'}
-        data-pointer-side={shouldRenderPointer ? avatarPointer?.side ?? 'none' : 'none'}
-        data-ui-mode={uiMode}
-        role={isAskModalMode ? 'dialog' : 'region'}
-        aria-modal={isAskModalMode ? 'true' : undefined}
-        aria-label={dialogLabel}
-        aria-busy={isBusy ? 'true' : undefined}
-        initial={directionalPanelInitialState}
-        animate={panelAnimateTarget}
-        exit={prefersReducedMotion ? { opacity: 1 } : { opacity: 0 }}
-        transition={panelTransitionValue}
+      <KangurAiTutorPanelFrame
+        animateTarget={panelAnimateTarget}
+        bubbleEntryDirection={bubbleEntryDirection}
+        bubbleLaunchOrigin={bubbleLaunchOrigin}
+        bubbleStrategy={bubbleStrategy}
         className={panelContainerClassName}
+        dialogLabel={dialogLabel}
+        frame={frame}
+        initialTarget={directionalPanelInitialState}
+        isBusy={isBusy}
+        motionProfile={motionProfile}
+        panelMotionState={panelMotionState}
+        panelOpenAnimation={panelOpenAnimation}
+        panelRef={panelRef}
+        panelSnapState={panelSnapState}
+        panelStyleName={panelStyleName}
+        prefersReducedMotion={prefersReducedMotion}
+        resolvedPanelAvatarPlacement={resolvedPanelAvatarPlacement}
         style={panelContainerStyle}
+        transitionValue={panelTransitionValue}
+        uiMode={uiMode}
       >
-        {shouldRenderPointer && avatarPointer ? (
-          <KangurAiTutorPanelPointer
-            avatarPointer={avatarPointer}
-            pointerMarkerId={pointerMarkerId}
-          />
-        ) : null}
-
-        {shouldRenderAttachedAvatar ? (
-          <KangurAiTutorAttachedAvatarButton
-            attachedAvatarStyle={attachedAvatarStyle}
-            avatarAnchorKind={avatarAnchorKind}
-            avatarAttachmentSide={avatarAttachmentSide}
-            avatarButtonClassName={avatarButtonClassName}
-            motionProfile={motionProfile}
-            onAttachedAvatarClick={onAttachedAvatarClick}
-            onAttachedAvatarPointerCancel={onAttachedAvatarPointerCancel}
-            onAttachedAvatarPointerDown={onAttachedAvatarPointerDown}
-            onAttachedAvatarPointerMove={onAttachedAvatarPointerMove}
-            onAttachedAvatarPointerUp={onAttachedAvatarPointerUp}
-            prefersReducedMotion={prefersReducedMotion}
-            tutor={tutor}
-            tutorContent={tutorContent}
-            tutorDisplayName={tutorDisplayName}
-            tutorMoodId={tutorMoodId}
-            uiMode={uiMode}
-          />
-        ) : null}
-
+        {renderPanelPointerNode({
+          avatarPointer,
+          pointerMarkerId,
+          shouldRenderPointer,
+        })}
+        {renderAttachedAvatarNode({
+          attachedAvatarStyle,
+          avatarAnchorKind,
+          avatarAttachmentSide,
+          avatarButtonClassName,
+          motionProfile,
+          onAttachedAvatarClick,
+          onAttachedAvatarPointerCancel,
+          onAttachedAvatarPointerDown,
+          onAttachedAvatarPointerMove,
+          onAttachedAvatarPointerUp,
+          prefersReducedMotion,
+          shouldRenderAttachedAvatar,
+          tutor,
+          tutorContent,
+          tutorDisplayName,
+          tutorMoodId,
+          uiMode,
+        })}
         {panelSurface}
-      </motion.div>
+      </KangurAiTutorPanelFrame>
     </>
   );
 }
@@ -1758,8 +2337,11 @@ export function KangurAiTutorPanelChrome({
     tutorNarrationScript,
     tutorNarratorContextRegistry,
   } = panelBodyContextValue;
-  const shouldUseMinimalPanelShell = isMinimalPanelMode && !isAskModalMode;
-  const isContextualResultChrome = chromeVariant === 'contextual_result';
+  const shouldUseMinimalPanelShell = resolveShouldUseMinimalPanelShell({
+    isAskModalMode,
+    isMinimalPanelMode,
+  });
+  const isContextualResultChrome = resolveIsContextualResultChrome(chromeVariant);
   const shouldRenderPanel = resolveShouldRenderPanel({
     isGuidedTutorMode,
     isMinimalPanelMode,
@@ -1767,22 +2349,25 @@ export function KangurAiTutorPanelChrome({
     isTutorHidden,
     suppressPanelSurface,
   });
-  const tutorDisplayName = tutor?.tutorName ?? tutorContent.common.defaultTutorName;
-  const chatTitleSuffix = tutorContent.narrator?.chatTitleSuffix ?? '';
-  const dialogLabel = `${tutorDisplayName} ${chatTitleSuffix}`.trim();
-  const tutorMoodId = tutor?.tutorMoodId ?? 'default';
+  const {
+    dialogLabel,
+    tutorBehaviorMoodId,
+    tutorBehaviorMoodLabel,
+    tutorDisplayName,
+    tutorMoodId,
+  } = resolveTutorPanelIdentity({
+    tutor,
+    tutorContent,
+  });
   const handleDetachPanelFromContext = onDetachPanelFromContext;
   const handleMovePanelToContext = onMovePanelToContext;
   const handleResetPanelPosition = onResetPanelPosition;
   const handleDisableTutor = onDisableTutor;
   const handleClosePanel = onClose;
-  const tutorBehaviorMoodId = tutor?.tutorBehaviorMoodId ?? tutorMoodId;
-  const tutorBehaviorMoodLabel = repairKangurPolishCopy(
-    tutor?.tutorBehaviorMoodLabel ?? tutorBehaviorMoodId
-  );
-  const isGenericEmptyStateMessage =
-    panelEmptyStateMessage === tutorContent.emptyStates.lesson ||
-    panelEmptyStateMessage === tutorContent.emptyStates.game;
+  const isGenericEmptyStateMessage = resolveIsGenericEmptyStateMessage({
+    panelEmptyStateMessage,
+    tutorContent,
+  });
   const panelMoodDescription = resolvePanelMoodDescription({
     isGenericEmptyStateMessage,
     panelEmptyStateMessage,
@@ -1793,7 +2378,7 @@ export function KangurAiTutorPanelChrome({
     panelSnapState,
     tutorContent,
   });
-  const hasSnapPreview = snapPreviewTargetLabel !== null;
+  const hasSnapPreview = resolveHasSnapPreview(snapPreviewTargetLabel);
   const panelSurfaceTestId = resolvePanelSurfaceTestId(isAskModalMode);
   const panelSurfaceClassName = resolvePanelSurfaceClassName({
     bubbleMode,
@@ -1833,13 +2418,10 @@ export function KangurAiTutorPanelChrome({
     panelMoodDescription,
     shouldUseMinimalPanelShell,
   });
-  const bubbleMotionTarget = {
-    ...toMotionTarget(bubbleStyle),
-    opacity: 1,
-    x: 0,
-    y: 0,
-    ...(bubbleMode === 'sheet' ? {} : { scale: 1 }),
-  } satisfies TargetAndTransition;
+  const bubbleMotionTarget = resolveBubbleMotionTarget({
+    bubbleMode,
+    bubbleStyle,
+  });
   const panelContainerStyle = resolvePanelContainerStyle({
     bubbleStyle,
     bubbleWidth,
@@ -1865,15 +2447,12 @@ export function KangurAiTutorPanelChrome({
     isTutorHidden,
     shouldUseMinimalPanelShell,
   });
-  const narratorControl = {
-    contextRegistry: tutorNarratorContextRegistry,
-    engine: narratorSettings.engine,
-    pauseLabel: tutorContent.narrator.pauseLabel,
-    readLabel: tutorContent.narrator.readLabel,
-    resumeLabel: tutorContent.narrator.resumeLabel,
-    script: tutorNarrationScript,
-    voice: narratorSettings.voice,
-  } satisfies KangurAiTutorNarratorControlView;
+  const narratorControl = resolveNarratorControlView({
+    narratorSettings,
+    tutorContent,
+    tutorNarrationScript,
+    tutorNarratorContextRegistry,
+  });
   const shouldRenderBackdrop = resolveShouldRenderBackdrop({
     bubbleMode,
     isAskModalMode,

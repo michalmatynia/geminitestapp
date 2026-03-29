@@ -49,6 +49,17 @@ export function useAdminKangurSocialPage() {
     brainModelId: resolvedBrainModelId,
     visionModelId: resolvedVisionModelId,
   });
+  const canRunVisualAnalysisPipeline =
+    canGenerateSocialDraft &&
+    Boolean(resolvedVisionModelId) &&
+    editor.imageAddonIds.length > 0;
+  const socialVisualAnalysisBlockedReason = !canGenerateSocialDraft
+    ? socialDraftBlockedReason
+    : !resolvedVisionModelId
+      ? socialVisionWarning
+      : editor.imageAddonIds.length === 0
+        ? 'Select at least one image add-on before running image analysis.'
+        : null;
 
   const buildSocialContext = useCallback((overrides?: Record<string, unknown>): Record<string, unknown> => ({
     postId: editor.activePost?.id ?? null,
@@ -156,6 +167,8 @@ export function useAdminKangurSocialPage() {
     visionModelId: settings.visionModelId,
     canRunServerPipeline: canGenerateSocialDraft,
     pipelineBlockedReason: socialDraftBlockedReason,
+    canRunVisualAnalysisPipeline,
+    visualAnalysisBlockedReason: socialVisualAnalysisBlockedReason,
     projectUrl: settings.projectUrl,
     generationNotes: editor.generationNotes,
     resolveDocReferences: editor.resolveDocReferences,
@@ -326,7 +339,9 @@ export function useAdminKangurSocialPage() {
     brainModelId: settings.brainModelId,
     visionModelId: settings.visionModelId,
     canGenerateSocialDraft,
+    canRunVisualAnalysisPipeline,
     socialDraftBlockedReason,
+    socialVisualAnalysisBlockedReason,
     hasBatchCaptureConfig,
     canRunFreshCapturePipeline: canGenerateSocialDraft && hasBatchCaptureConfig,
     socialBatchCaptureBlockedReason,
@@ -397,8 +412,17 @@ export function useAdminKangurSocialPage() {
     pipelineStep: pipeline.pipelineStep,
     pipelineProgress: pipeline.pipelineProgress,
     pipelineErrorMessage: pipeline.pipelineErrorMessage,
+    isVisualAnalysisModalOpen: pipeline.isVisualAnalysisModalOpen,
+    visualAnalysisResult: pipeline.visualAnalysisResult,
+    visualAnalysisErrorMessage: pipeline.visualAnalysisErrorMessage,
+    visualAnalysisPending: pipeline.visualAnalysisPending,
     handleRunFullPipeline,
     handleRunFullPipelineWithFreshCapture,
+    handleOpenVisualAnalysisModal: pipeline.handleOpenVisualAnalysisModal,
+    handleCloseVisualAnalysisModal: pipeline.handleCloseVisualAnalysisModal,
+    handleAnalyzeSelectedVisuals: pipeline.handleAnalyzeSelectedVisuals,
+    handleRunFullPipelineWithVisualAnalysis:
+      pipeline.handleRunFullPipelineWithVisualAnalysis,
     captureOnlyPending,
     captureOnlyMessage,
     captureOnlyErrorMessage,

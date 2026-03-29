@@ -55,7 +55,7 @@ describe('KangurElevatedUserMenu', () => {
     expect(onLogout).toHaveBeenCalledTimes(1);
   });
 
-  it('renders the learner profile entry when a profile target is provided', async () => {
+  it('keeps the menu limited to admin and logout actions', async () => {
     const user = userEvent.setup();
 
     render(
@@ -63,10 +63,6 @@ describe('KangurElevatedUserMenu', () => {
         adminLabel='Admin'
         logoutLabel='Wyloguj'
         onLogout={vi.fn()}
-        profile={{
-          href: '/kangur/profile',
-          label: 'Profil Mai',
-        }}
         triggerAriaLabel='Awatar administratora'
         user={{
           email: 'admin@example.com',
@@ -79,9 +75,8 @@ describe('KangurElevatedUserMenu', () => {
 
     await user.click(screen.getByTestId('kangur-elevated-user-menu-trigger'));
 
-    expect(screen.getByRole('menuitem', { name: 'Profil Mai' })).toHaveAttribute(
-      'href',
-      '/kangur/profile'
-    );
+    expect(screen.queryByRole('menuitem', { name: /profil/i })).toBeNull();
+    expect(screen.getByRole('menuitem', { name: 'Admin' })).toHaveAttribute('href', '/admin');
+    expect(screen.getByRole('menuitem', { name: 'Wyloguj' })).toBeInTheDocument();
   });
 });

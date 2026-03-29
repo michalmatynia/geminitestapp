@@ -5,7 +5,7 @@ const { authMock, onErrorMock } = vi.hoisted(() => ({
   onErrorMock: vi.fn(),
 }));
 
-vi.mock('@/features/auth/server', () => ({
+vi.mock('@/features/auth/auth', () => ({
   auth: authMock,
 }));
 
@@ -13,7 +13,7 @@ import {
   isMissingRequestScopeError,
   readOptionalServerAuthSession,
   readTolerantServerAuthSession,
-} from './optional-server-auth';
+} from '@/features/auth/optional-server-auth';
 
 describe('optional server auth helpers', () => {
   beforeEach(() => {

@@ -1,6 +1,5 @@
 'use client';
 
-import { QueryClientContext } from '@tanstack/react-query';
 import {
   BookCheck,
   BrainCircuit,
@@ -12,42 +11,14 @@ import {
   X,
 } from 'lucide-react';
 import dynamic from 'next/dynamic';
-import { useLocale, useTranslations } from 'next-intl';
-import React, {
-  Suspense,
-  useCallback,
-  useContext,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
-import {
-  CmsStorefrontAppearanceButtons,
-  useOptionalCmsStorefrontAppearance,
-} from '@/features/cms/public';
-import {
-  getKangurHomeHref,
-  getKangurPageHref as createPageUrl,
-  isKangurEmbeddedBasePath,
-} from '@/features/kangur/config/routing';
-import {
-  loadPersistedTutorVisibilityHidden,
-  persistTutorVisibilityHidden,
-  subscribeToTutorVisibilityChanges,
-} from '@/features/kangur/ui/components/KangurAiTutorWidget.storage';
-import { KangurDialogMeta } from '@/features/kangur/ui/components/KangurDialogMeta';
+import { CmsStorefrontAppearanceButtons, useOptionalCmsStorefrontAppearance } from '@/features/cms/public';
+import { getKangurHomeHref, getKangurPageHref as createPageUrl, isKangurEmbeddedBasePath } from '@/features/kangur/config/routing';
+import { persistTutorVisibilityHidden } from '@/features/kangur/ui/components/KangurAiTutorWidget.storage';
 import { KangurElevatedUserMenu } from '@/features/kangur/ui/components/KangurElevatedUserMenu';
 import { KangurHomeLogo } from '@/features/kangur/ui/components/KangurHomeLogo';
-import { KangurPanelCloseButton } from '@/features/kangur/ui/components/KangurPanelCloseButton';
 import { KangurProfileMenu } from '@/features/kangur/ui/components/KangurProfileMenu';
-import { useKangurAiTutorContent } from '@/features/kangur/ui/context/KangurAiTutorContentContext';
-import { useKangurAgeGroupFocus } from '@/features/kangur/ui/context/KangurAgeGroupFocusContext';
-import { useOptionalKangurAiTutor } from '@/features/kangur/ui/context/KangurAiTutorContext';
-import { useOptionalKangurAuth } from '@/features/kangur/ui/context/KangurAuthContext';
-import { useOptionalKangurRouteTransitionState } from '@/features/kangur/ui/context/KangurRouteTransitionContext';
-import { useKangurSubjectFocus } from '@/features/kangur/ui/context/KangurSubjectFocusContext';
 import {
   KangurButton,
   KangurPageTopBar,
@@ -55,15 +26,8 @@ import {
   KangurTopNavGroup,
 } from '@/features/kangur/ui/design/primitives';
 import { KANGUR_TIGHT_ROW_CLASSNAME } from '@/features/kangur/ui/design/tokens';
-import { useKangurCoarsePointer } from '@/features/kangur/ui/hooks/useKangurCoarsePointer';
-import { useKangurElevatedSession } from '@/features/kangur/ui/hooks/useKangurElevatedSession';
-import {
-  prefetchKangurLessonsCatalog,
-} from '@/features/kangur/ui/hooks/useKangurLessonsCatalog';
-import { useKangurMobileBreakpoint } from '@/features/kangur/ui/hooks/useKangurMobileBreakpoint';
+import { prefetchKangurLessonsCatalog } from '@/features/kangur/ui/hooks/useKangurLessonsCatalog';
 import { useKangurTutorAnchor } from '@/features/kangur/ui/hooks/useKangurTutorAnchor';
-import { useKangurStorefrontAppearance } from '@/features/kangur/ui/useKangurStorefrontAppearance';
-import { getKangurAvatarById } from '@/features/kangur/ui/avatars/catalog';
 import {
   DEFAULT_KANGUR_AGE_GROUP,
   KANGUR_AGE_GROUPS,
@@ -79,21 +43,16 @@ import {
   getKangurSixYearOldSubjectVisual,
 } from '@/features/kangur/ui/constants/six-year-old-visuals';
 import { DEFAULT_SITE_I18N_CONFIG } from '@/shared/contracts/site-i18n';
-import { normalizeSiteLocale } from '@/shared/lib/i18n/site-locale';
 
 import {
   KangurHomeBetaBadge,
   KangurPrimaryNavigationLoginAction,
 } from './KangurPrimaryNavigation.components';
-import type {
-  KangurNavActionConfig,
-  KangurPrimaryNavigationProps,
-} from './KangurPrimaryNavigation.types';
-export type {
-  KangurPrimaryNavigationProps,
-} from './KangurPrimaryNavigation.types';
+import { useKangurPrimaryNavigationState } from './KangurPrimaryNavigation.hooks';
+import { buildKangurPrimaryNavigationAgeGroupDialog, buildKangurPrimaryNavigationSubjectDialog, KangurPrimaryNavigationChoiceDialogs, KangurPrimaryNavigationMobileMenuOverlay } from './KangurPrimaryNavigation.overlays';
+import type { KangurNavActionConfig, KangurPrimaryNavigationProps } from './KangurPrimaryNavigation.types';
+export type { KangurPrimaryNavigationProps } from './KangurPrimaryNavigation.types';
 import {
-  getPrimaryNavigationFallbackCopy,
   ICON_CLASSNAME,
   isTransitionSourceActive,
   PRIMARY_NAV_ROUTE_ACKNOWLEDGE_MS,
@@ -102,16 +61,6 @@ import {
   renderNavAction,
 } from './KangurPrimaryNavigation.utils';
 import KangurVisualCueContent from '@/features/kangur/ui/components/KangurVisualCueContent';
-
-const KangurChoiceDialog = dynamic(() =>
-  import('@/features/kangur/ui/components/KangurChoiceDialog').then((m) => ({
-    default: function KangurChoiceDialogEntry(
-      props: import('@/features/kangur/ui/components/KangurChoiceDialog').KangurChoiceDialogProps
-    ) {
-      return m.renderKangurChoiceDialog(props);
-    },
-  }))
-);
 
 const KangurLanguageSwitcher = dynamic(() =>
   import('@/features/kangur/ui/components/KangurLanguageSwitcher').then((m) => ({
@@ -149,73 +98,28 @@ export function KangurPrimaryNavigation({
   rightAccessory,
   showParentDashboard = canManageLearners,
 }: KangurPrimaryNavigationProps): React.JSX.Element {
-  const tutorContent = useKangurAiTutorContent();
-  const tutor = useOptionalKangurAiTutor();
-  const auth = useOptionalKangurAuth();
-  const { elevatedUser: elevatedSessionSnapshot, isSuperAdmin } = useKangurElevatedSession();
+  const { activeLearner, ageGroup, authUser, closeMobileMenu, effectiveIsAuthenticated, effectiveShowParentDashboard, elevatedSessionUser, fallbackCopy, hasActiveLearner, isAgeGroupModalOpen, isCoarsePointer, isLoggingOut, isMobileMenuOpen, isMobileViewport, isParentAccount, isSubjectModalOpen, isSuperAdmin, isTutorHidden, kangurAppearance, navTranslations, navigationLabel, normalizedLocale, profileAvatar, queryClient, routeTransitionState, setAgeGroup, setIsAgeGroupModalOpen, setIsMobileMenuOpen, setIsSubjectModalOpen, setSubject, shouldRenderElevatedUserMenu, shouldRenderProfileMenu, subject, toggleMobileMenu, tutor, tutorContent } = useKangurPrimaryNavigationState({
+    canManageLearners,
+    currentPage,
+    isAuthenticated,
+    navLabel,
+    showParentDashboard,
+  });
   const storefrontAppearance = useOptionalCmsStorefrontAppearance();
-  const kangurAppearance = useKangurStorefrontAppearance();
-  const routeTransitionState = useOptionalKangurRouteTransitionState();
-  const queryClient = useContext(QueryClientContext);
-  const locale = useLocale();
-  const navTranslations = useTranslations('KangurNavigation');
-  const normalizedLocale = normalizeSiteLocale(locale);
-  const fallbackCopy = useMemo(
-    () => getPrimaryNavigationFallbackCopy(normalizedLocale),
-    [normalizedLocale]
-  );
   const guestPlayerNameValue = typeof guestPlayerName === 'string' ? guestPlayerName : '';
-  const guestPlayerPlaceholderText =
-    guestPlayerNamePlaceholder ?? fallbackCopy.guestPlayerNamePlaceholder;
-  const navigationLabel = navLabel ?? fallbackCopy.navLabel;
-  const effectiveIsAuthenticated = auth?.isAuthenticated ?? isAuthenticated;
-  const effectiveCanManageLearners = auth?.user
-    ? Boolean(auth.user.canManageLearners)
-    : canManageLearners;
-  const effectiveShowParentDashboard = effectiveCanManageLearners && showParentDashboard;
-  const authUser = auth?.user ?? null;
-  const isLoggingOut = auth?.isLoggingOut ?? false;
-  const isParentAccount = authUser?.actorType === 'parent';
-  const activeLearner = authUser?.activeLearner ?? null;
+  const guestPlayerPlaceholderText = guestPlayerNamePlaceholder ?? fallbackCopy.guestPlayerNamePlaceholder;
   const activeLearnerId = activeLearner?.id?.trim() ?? '';
-  const hasActiveLearner = activeLearnerId.length > 0;
-  const activeLearnerName =
-    activeLearner?.displayName?.trim() || activeLearner?.loginName?.trim() || null;
-  const elevatedSessionUser = useMemo(() => {
-    if (!elevatedSessionSnapshot) {
-      return null;
-    }
-
-    return {
-      ...elevatedSessionSnapshot,
-      email: elevatedSessionSnapshot.email ?? authUser?.email?.trim() ?? null,
-      name: elevatedSessionSnapshot.name ?? authUser?.full_name?.trim() ?? null,
-    };
-  }, [authUser?.email, authUser?.full_name, elevatedSessionSnapshot]);
+  const activeLearnerName = activeLearner?.displayName?.trim() || activeLearner?.loginName?.trim() || null;
   const profileDisplayName = activeLearnerName || authUser?.full_name?.trim() || null;
-  const profileLabel = profileDisplayName
-    ? fallbackCopy.profileLabelWithName(profileDisplayName)
-    : fallbackCopy.profileLabel;
-  const profileAvatar = getKangurAvatarById(activeLearner?.avatarId);
-  const shouldRenderElevatedUserMenu = effectiveIsAuthenticated && Boolean(elevatedSessionUser);
-  const shouldRenderProfileMenu =
-    effectiveIsAuthenticated && !shouldRenderElevatedUserMenu && (!isParentAccount || hasActiveLearner);
+  const profileLabel = profileDisplayName ? fallbackCopy.profileLabelWithName(profileDisplayName) : fallbackCopy.profileLabel;
   const canAccessGamesLibrary = effectiveIsAuthenticated && isSuperAdmin;
   const accessibleCurrentPage = currentPage;
   const effectiveHomeActive = homeActive ?? accessibleCurrentPage === 'Game';
   const learnerProfileIsActive = accessibleCurrentPage === 'LearnerProfile';
-  const isCoarsePointer = useKangurCoarsePointer();
-  const isMobileViewport = useKangurMobileBreakpoint();
   const loginActionRef = useRef<HTMLButtonElement | null>(null);
   const mobileMenuRef = useRef<HTMLDivElement | null>(null);
   const mobileMenuPreviousFocusRef = useRef<HTMLElement | null>(null);
   const lessonsPrefetchTriggeredRef = useRef(false);
-  const [isTutorHidden, setIsTutorHidden] = useState(() => loadPersistedTutorVisibilityHidden());
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [isSubjectModalOpen, setIsSubjectModalOpen] = useState(false);
-  const [isAgeGroupModalOpen, setIsAgeGroupModalOpen] = useState(false);
-  const { subject, setSubject } = useKangurSubjectFocus();
-  const { ageGroup, setAgeGroup } = useKangurAgeGroupFocus();
   const enableTutorLabel = resolveTutorFallbackCopy(
     tutorContent.common.enableTutorLabel ?? tutorContent.navigation.restoreTutorLabel,
     fallbackCopy.enableTutorLabel
@@ -224,9 +128,7 @@ export function KangurPrimaryNavigation({
     tutorContent.common.disableTutorAria,
     fallbackCopy.disableTutorLabel
   );
-  const [isEditingGuestPlayerName, setIsEditingGuestPlayerName] = useState(
-    !(guestPlayerName?.trim() ?? '')
-  );
+  const [isEditingGuestPlayerName, setIsEditingGuestPlayerName] = useState(!(guestPlayerName?.trim() ?? ''));
   const showGuestPlayerNameInput =
     !effectiveIsAuthenticated &&
     typeof guestPlayerName === 'string' &&
@@ -312,8 +214,6 @@ export function KangurPrimaryNavigation({
   const mobileWideNavItemClassName = `max-sm:col-span-2 max-sm:min-w-0 max-sm:w-full max-sm:justify-center ${isCoarsePointer ? 'max-sm:min-h-12 max-sm:px-4' : 'max-sm:px-3'}`;
   const yellowPillActionClassName = `border-amber-200/90 bg-[linear-gradient(180deg,rgba(255,251,235,0.98)_0%,rgba(254,243,199,0.94)_100%)] px-4 text-amber-700 shadow-[0_14px_24px_-18px_rgba(245,158,11,0.55)] ring-1 ring-amber-100/90 hover:border-amber-200 hover:bg-[linear-gradient(180deg,rgba(255,255,255,0.98)_0%,rgba(254,243,199,0.96)_100%)] hover:text-amber-800 ${mobileWideNavItemClassName}`;
   const amberPillActionClassName = `border-amber-300/90 bg-[linear-gradient(180deg,rgba(254,243,199,0.96)_0%,rgba(253,230,138,0.92)_100%)] px-4 text-amber-800 shadow-[0_14px_24px_-18px_rgba(245,158,11,0.58)] ring-1 ring-amber-200/90 hover:border-amber-300 hover:bg-[linear-gradient(180deg,rgba(255,255,255,0.96)_0%,rgba(253,230,138,0.94)_100%)] hover:text-amber-900 ${mobileWideNavItemClassName}`;
-  const closeMobileMenu = useCallback((): void => setIsMobileMenuOpen(false), []);
-  const toggleMobileMenu = useCallback((): void => setIsMobileMenuOpen((prev) => !prev), []);
   const prefetchLessonsCatalogOnIntent = useCallback((): void => {
     if (accessibleCurrentPage === 'Lessons' || lessonsPrefetchTriggeredRef.current) {
       return;
@@ -326,18 +226,6 @@ export function KangurPrimaryNavigation({
       subject,
     });
   }, [accessibleCurrentPage, ageGroup, queryClient, subject]);
-
-  useEffect(() => subscribeToTutorVisibilityChanges(setIsTutorHidden), []);
-
-  useEffect(() => {
-    if (!isMobileViewport) {
-      setIsMobileMenuOpen(false);
-    }
-  }, [isMobileViewport]);
-
-  useEffect(() => {
-    setIsMobileMenuOpen(false);
-  }, [accessibleCurrentPage]);
 
   useEffect(() => {
     lessonsPrefetchTriggeredRef.current = false;
@@ -934,14 +822,6 @@ export function KangurPrimaryNavigation({
             adminLabel={fallbackCopy.adminLabel}
             logoutLabel={fallbackCopy.logoutLabel}
             onLogout={onLogout}
-            profile={
-              !isParentAccount || hasActiveLearner
-                ? {
-                    href: profileHref,
-                    label: profileLabel,
-                  }
-                : null
-            }
             triggerAriaLabel={fallbackCopy.avatarLabel}
             triggerClassName={
               isCoarsePointer
@@ -969,16 +849,6 @@ export function KangurPrimaryNavigation({
     ? navTranslations('mobileMenu.close')
     : navTranslations('mobileMenu.open');
   const mobileMenuId = 'kangur-mobile-menu';
-  const mobileMenuTitleId = 'kangur-mobile-menu-title';
-  const mobileMenuDescriptionId = 'kangur-mobile-menu-description';
-  const mobileMenuCloseButton = (
-    <KangurPanelCloseButton
-      aria-label={navTranslations('mobileMenu.close')}
-      id='kangur-mobile-menu-close'
-      onClick={closeMobileMenu}
-      variant='chat'
-    />
-  );
   const mobileNav = (
     <KangurTopNavGroup label={navigationLabel}>
       <KangurButton
@@ -1023,229 +893,21 @@ export function KangurPrimaryNavigation({
   const shouldRenderMobileLanguageHeader = shouldRenderLanguageSwitcher;
   const shouldHideMobileAppearanceControls = shouldRenderMobileAppearanceHeader;
   const shouldHideMobileLanguageSwitcher = shouldRenderMobileLanguageHeader;
-  const mobileMenuOverlay = isMobileViewport || isMobileMenuOpen ? (
-    <div
-      aria-hidden={!isMobileMenuOpen}
-      className={`fixed inset-0 z-50 transition-opacity duration-200 sm:hidden ${
-        isMobileMenuOpen ? 'opacity-100' : 'pointer-events-none opacity-0'
-      }`}
-    >
-      <button
-        aria-hidden='true'
-        className='absolute inset-0 cursor-pointer border-0 bg-[radial-gradient(circle_at_top,rgba(15,23,42,0.4)_0%,rgba(15,23,42,0.72)_100%)] p-0 touch-manipulation active:opacity-95'
-        onClick={closeMobileMenu}
-        tabIndex={-1}
-        type='button'
-      />
-      <div
-        aria-describedby={mobileMenuDescriptionId}
-        aria-labelledby={mobileMenuTitleId}
-        aria-modal='true'
-        className={`relative flex h-full w-full flex-col kangur-panel-gap overflow-y-auto px-4 pb-[calc(var(--kangur-mobile-bottom-clearance,env(safe-area-inset-bottom))+32px)] pt-[calc(env(safe-area-inset-top)+20px)] transition-transform duration-200 min-[420px]:px-5 ${
-          isMobileMenuOpen ? 'translate-y-0' : 'translate-y-4'
-        }`}
-        id={mobileMenuId}
-        onClick={(event) => event.stopPropagation()}
-        ref={mobileMenuRef}
-        role='dialog'
-        style={{
-          backgroundColor: kangurAppearance.tone.background,
-          color: kangurAppearance.tone.text,
-        }}
-      >
-        <h2 className='sr-only' id={mobileMenuTitleId}>
-          {navTranslations('mobileMenu.title')}
-        </h2>
-        <p className='sr-only' id={mobileMenuDescriptionId}>
-          {navTranslations('mobileMenu.description')}
-        </p>
-        <KangurTopNavGroup className='w-full flex-col' label={navigationLabel}>
-          <div className='flex w-full items-center gap-2' data-testid='kangur-primary-nav-mobile-header'>
-            {shouldRenderMobileLanguageHeader || shouldRenderMobileAppearanceHeader ? (
-              <div
-                className='flex min-w-0 items-center gap-2'
-                data-testid='kangur-primary-nav-mobile-header-actions'
-              >
-                {shouldRenderMobileLanguageHeader ? (
-                  <KangurLanguageSwitcher
-                    basePath={basePath}
-                    currentPage={accessibleCurrentPage}
-                    forceFallbackPath={forceLanguageSwitcherFallbackPath}
-                  />
-                ) : null}
-                {shouldRenderMobileAppearanceHeader ? (
-                  <div className='flex shrink-0 items-center'>{appearanceControlsInline}</div>
-                ) : null}
-              </div>
-            ) : null}
-            <div className='ml-auto flex shrink-0 items-center'>{mobileMenuCloseButton}</div>
-          </div>
-          {renderPrimaryActions({
-            inlineAppearanceWithTutor: false,
-            onActionClick: closeMobileMenu,
-            wrapperClassName: 'flex w-full flex-col gap-2',
-          })}
-          {renderUtilityActions({
-            hideAppearanceControls: shouldHideMobileAppearanceControls,
-            hideLanguageSwitcher: shouldHideMobileLanguageSwitcher,
-            onActionClick: closeMobileMenu,
-            testId: 'kangur-primary-nav-mobile-utility-actions',
-            wrapperClassName: 'flex w-full flex-col gap-2',
-          })}
-        </KangurTopNavGroup>
-      </div>
-    </div>
-  ) : null;
-
-  const subjectModal = (
-    <KangurChoiceDialog
-      closeAriaLabel={navTranslations('subject.closeAriaLabel')}
-      contentId={subjectDialogId}
-      currentChoiceLabel={
-        isSixYearOld ? (
-          <KangurVisualCueContent
-            detail={subjectVisual.detail}
-            detailClassName='text-sm font-bold'
-            detailTestId='kangur-primary-nav-subject-modal-current-detail'
-            icon={subjectVisual.icon}
-            iconClassName='text-lg'
-            iconTestId='kangur-primary-nav-subject-modal-current-icon'
-            label={subjectChoiceLabel}
+  const mobileMenuHeaderActions =
+    shouldRenderMobileLanguageHeader || shouldRenderMobileAppearanceHeader ? (
+      <>
+        {shouldRenderMobileLanguageHeader ? (
+          <KangurLanguageSwitcher
+            basePath={basePath}
+            currentPage={accessibleCurrentPage}
+            forceFallbackPath={forceLanguageSwitcherFallbackPath}
           />
-        ) : (
-          subjectChoiceLabel
-        )
-      }
-      defaultChoiceLabel={
-        isSixYearOld ? (
-          <KangurVisualCueContent
-            detail={getKangurSixYearOldSubjectVisual(getKangurDefaultSubjectForAgeGroup(ageGroup)).detail}
-            detailClassName='text-sm font-bold'
-            detailTestId='kangur-primary-nav-subject-modal-default-detail'
-            icon={getKangurSixYearOldSubjectVisual(getKangurDefaultSubjectForAgeGroup(ageGroup)).icon}
-            iconClassName='text-lg'
-            iconTestId='kangur-primary-nav-subject-modal-default-icon'
-            label={defaultSubjectLabel}
-          />
-        ) : (
-          defaultSubjectLabel
-        )
-      }
-      doneAriaLabel='Gotowe'
-      doneLabel={
-        isSixYearOld ? (
-          <KangurVisualCueContent
-            icon='✅'
-            iconClassName='text-lg'
-            iconTestId='kangur-primary-nav-subject-modal-done-icon'
-            label='Gotowe'
-          />
-        ) : undefined
-      }
-      groupAriaLabel={navTranslations('subject.groupAriaLabel')}
-      header={
-        <KangurDialogMeta
-          description={navTranslations('subject.dialogDescription')}
-          title={navTranslations('subject.label')}
-        />
-      }
-      onOpenChange={setIsSubjectModalOpen}
-      open={isSubjectModalOpen}
-      options={subjectOptions}
-      title={
-        isSixYearOld ? (
-          <KangurVisualCueContent
-            detail='👆'
-            detailClassName='text-sm'
-            detailTestId='kangur-primary-nav-subject-modal-title-detail'
-            icon='📚'
-            iconClassName='text-lg'
-            iconTestId='kangur-primary-nav-subject-modal-title-icon'
-            label={navTranslations('subject.label')}
-          />
-        ) : (
-          navTranslations('subject.label')
-        )
-      }
-    />
-  );
-
-  const ageGroupModal = (
-    <KangurChoiceDialog
-      closeAriaLabel={navTranslations('ageGroup.closeAriaLabel')}
-      contentId={ageGroupDialogId}
-      currentChoiceLabel={
-        isSixYearOld ? (
-          <KangurVisualCueContent
-            detail={ageGroupVisual.detail}
-            detailClassName='text-sm font-bold'
-            detailTestId='kangur-primary-nav-age-group-modal-current-detail'
-            icon={ageGroupVisual.icon}
-            iconClassName='text-lg'
-            iconTestId='kangur-primary-nav-age-group-modal-current-icon'
-            label={ageGroupChoiceLabel}
-          />
-        ) : (
-          ageGroupChoiceLabel
-        )
-      }
-      defaultChoiceLabel={
-        isSixYearOld ? (
-          <KangurVisualCueContent
-            detail={getKangurSixYearOldAgeGroupVisual(
-              KANGUR_AGE_GROUPS.find((group) => group.default)?.id ?? DEFAULT_KANGUR_AGE_GROUP
-            ).detail}
-            detailClassName='text-sm font-bold'
-            detailTestId='kangur-primary-nav-age-group-modal-default-detail'
-            icon={getKangurSixYearOldAgeGroupVisual(
-              KANGUR_AGE_GROUPS.find((group) => group.default)?.id ?? DEFAULT_KANGUR_AGE_GROUP
-            ).icon}
-            iconClassName='text-lg'
-            iconTestId='kangur-primary-nav-age-group-modal-default-icon'
-            label={defaultAgeGroupLabel}
-          />
-        ) : (
-          defaultAgeGroupLabel
-        )
-      }
-      doneAriaLabel='Gotowe'
-      doneLabel={
-        isSixYearOld ? (
-          <KangurVisualCueContent
-            icon='✅'
-            iconClassName='text-lg'
-            iconTestId='kangur-primary-nav-age-group-modal-done-icon'
-            label='Gotowe'
-          />
-        ) : undefined
-      }
-      groupAriaLabel={navTranslations('ageGroup.groupAriaLabel')}
-      header={
-        <KangurDialogMeta
-          description={navTranslations('ageGroup.dialogDescription')}
-          title={navTranslations('ageGroup.label')}
-        />
-      }
-      onOpenChange={setIsAgeGroupModalOpen}
-      open={isAgeGroupModalOpen}
-      options={ageGroupOptions}
-      title={
-        isSixYearOld ? (
-          <KangurVisualCueContent
-            detail='👆'
-            detailClassName='text-sm'
-            detailTestId='kangur-primary-nav-age-group-modal-title-detail'
-            icon='👥'
-            iconClassName='text-lg'
-            iconTestId='kangur-primary-nav-age-group-modal-title-icon'
-            label={navTranslations('ageGroup.label')}
-          />
-        ) : (
-          navTranslations('ageGroup.label')
-        )
-      }
-    />
-  );
+        ) : null}
+        {shouldRenderMobileAppearanceHeader ? (
+          <div className='flex shrink-0 items-center'>{appearanceControlsInline}</div>
+        ) : null}
+      </>
+    ) : null;
 
   return (
     <>
@@ -1254,11 +916,55 @@ export function KangurPrimaryNavigation({
         contentClassName={contentClassName}
         left={leftContent}
       />
-      {mobileMenuOverlay}
-      <Suspense fallback={null}>
-        {isSubjectModalOpen ? subjectModal : null}
-        {isAgeGroupModalOpen ? ageGroupModal : null}
-      </Suspense>
+      <KangurPrimaryNavigationMobileMenuOverlay
+        closeMobileMenu={closeMobileMenu}
+        closeMobileMenuLabel={navTranslations('mobileMenu.close')}
+        headerActions={mobileMenuHeaderActions}
+        isMobileMenuOpen={isMobileMenuOpen}
+        isMobileViewport={isMobileViewport}
+        menuDescription={navTranslations('mobileMenu.description')}
+        menuId={mobileMenuId}
+        menuRef={mobileMenuRef}
+        menuTitle={navTranslations('mobileMenu.title')}
+        navigationLabel={navigationLabel}
+        primaryActions={renderPrimaryActions({
+          inlineAppearanceWithTutor: false,
+          onActionClick: closeMobileMenu,
+          wrapperClassName: 'flex w-full flex-col gap-2',
+        })}
+        textColor={kangurAppearance.tone.text}
+        toneBackground={kangurAppearance.tone.background}
+        utilityActions={renderUtilityActions({
+          hideAppearanceControls: shouldHideMobileAppearanceControls,
+          hideLanguageSwitcher: shouldHideMobileLanguageSwitcher,
+          onActionClick: closeMobileMenu,
+          testId: 'kangur-primary-nav-mobile-utility-actions',
+          wrapperClassName: 'flex w-full flex-col gap-2',
+        })}
+      />
+      <KangurPrimaryNavigationChoiceDialogs
+        ageGroupDialog={buildKangurPrimaryNavigationAgeGroupDialog({
+          ageGroupChoiceLabel,
+          ageGroupVisual,
+          defaultAgeGroupLabel,
+          isSixYearOld,
+          navTranslations,
+          onOpenChange: setIsAgeGroupModalOpen,
+          open: isAgeGroupModalOpen,
+          options: ageGroupOptions,
+        })}
+        subjectDialog={buildKangurPrimaryNavigationSubjectDialog({
+          ageGroup,
+          defaultSubjectLabel,
+          isSixYearOld,
+          navTranslations,
+          onOpenChange: setIsSubjectModalOpen,
+          open: isSubjectModalOpen,
+          options: subjectOptions,
+          subjectChoiceLabel,
+          subjectVisual,
+        })}
+      />
     </>
   );
 }

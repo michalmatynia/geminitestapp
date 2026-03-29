@@ -220,12 +220,7 @@ const getFeaturedHomeAction = (label: string): HTMLElement => {
   const action =
     screen.queryByRole('link', { name: label }) ?? screen.queryByRole('button', { name: label });
 
-  if (!action) {
-    const availableActions = [...screen.queryAllByRole('link'), ...screen.queryAllByRole('button')]
-      .map((node) => node.getAttribute('aria-label') ?? node.textContent?.trim() ?? '')
-      .filter(Boolean);
-    throw new Error(`Missing home action "${label}". Available actions: ${availableActions.join(', ')}`);
-  }
+  expect(action).toBeTruthy();
   expect(action).toHaveClass('home-action-featured');
 
   return action as HTMLElement;
@@ -316,7 +311,7 @@ describe('Game branding', () => {
       'kangur-glass-surface-mist',
       'kangur-panel-shell'
     );
-    const actionLabels = ['Lekcje', 'Grajmy!', 'Pojedynki', 'Kangur Matematyczny'];
+    const actionLabels = ['Lekcje', 'Grajmy!', 'Pojedynki', 'StudiQ Matematyczny'];
 
     expect(screen.queryByText('Trening figur')).not.toBeInTheDocument();
 
@@ -341,12 +336,12 @@ describe('Game branding', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Wróć do poprzedniej strony' }));
     expect(await screen.findByTestId('kangur-home-actions-shell')).toBeInTheDocument();
 
-    fireEvent.click(getFeaturedHomeAction('Kangur Matematyczny'));
+    fireEvent.click(getFeaturedHomeAction('StudiQ Matematyczny'));
     const kangurSetupTopSection = await screen.findByTestId('kangur-game-kangur-setup-top-section');
     expect(kangurSetupTopSection).toBeInTheDocument();
     expect(
       within(kangurSetupTopSection).getByRole('heading', {
-        name: 'Konfiguracja sesji Kangura Matematycznego',
+        name: 'Konfiguracja sesji StudiQ Matematycznego',
       })
     ).toBeInTheDocument();
   });

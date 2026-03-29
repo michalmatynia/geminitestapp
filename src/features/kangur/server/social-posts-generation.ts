@@ -9,6 +9,7 @@ import {
 import {
   buildKangurSocialPostCombinedBody,
   type KangurSocialDocUpdate,
+  type KangurSocialVisualAnalysis,
 } from '@/shared/contracts/kangur-social-posts';
 import type { KangurSocialImageAddon } from '@/shared/contracts/kangur-social-image-addons';
 import { ErrorSystem } from '@/features/kangur/shared/utils/observability/error-system';
@@ -40,6 +41,8 @@ type GenerationInput = {
   visionModelId?: string;
   imageAddons?: KangurSocialImageAddon[];
   projectUrl?: string;
+  prefetchedVisualAnalysis?: KangurSocialVisualAnalysis;
+  requireVisualAnalysisInBody?: boolean;
 };
 
 type GenerationContext = {
@@ -50,6 +53,7 @@ type GenerationContext = {
   imageAddons: KangurSocialImageAddon[];
   imageAddonSummary: string;
   visionModelId: string;
+  requireVisualAnalysisInBody: boolean;
 };
 
 type VisualAnalysisSnapshot = {
@@ -108,6 +112,7 @@ const normalizeGenerationInput = (input: GenerationInput): GenerationContext => 
     imageAddons,
     imageAddonSummary: buildImageAddonSummary(imageAddons),
     visionModelId: normalizeOptionalText(input.visionModelId),
+    requireVisualAnalysisInBody: Boolean(input.requireVisualAnalysisInBody),
   };
 };
 
@@ -115,6 +120,14 @@ const createEmptyVisualAnalysisSnapshot = (): VisualAnalysisSnapshot => ({
   visualSummary: null,
   visualHighlights: [],
   visualDocUpdates: [],
+});
+
+const normalizePrefetchedVisualAnalysis = (
+  analysis: KangurSocialVisualAnalysis
+): VisualAnalysisSnapshot => ({
+  visualSummary: analysis.summary.trim() || null,
+  visualHighlights: analysis.highlights,
+  visualDocUpdates: analysis.docUpdates,
 });
 
 const runVisualAnalysisSafely = async ({
@@ -198,6 +211,16 @@ const buildUserPromptLines = ({
     'Documentation updates suggested from visuals:',
     visualAnalysis.visualDocUpdates.map(formatVisualDocUpdate)
   );
+  if (
+    context.requireVisualAnalysisInBody &&
+    (visualAnalysis.visualSummary || visualAnalysis.visualHighlights.length > 0)
+  ) {
+    pushPromptSection(
+      userPromptLines,
+      'Important requirement:',
+      'Both the Polish and English post bodies must explicitly mention the visual analysis findings or visible UI changes.'
+    );
+  }
   pushPromptSection(
     userPromptLines,
     'Visual add-ons available for the post:',
@@ -321,10 +344,12 @@ export async function generateKangurSocialPostDraft(
 
   try {
     const overrideModelId = input.modelId?.trim() ?? '';
-    const visualAnalysis = await runVisualAnalysisSafely({
-      context: generationContext,
-      startedAt,
-    });
+    const visualAnalysis = input.prefetchedVisualAnalysis
+      ? normalizePrefetchedVisualAnalysis(input.prefetchedVisualAnalysis)
+      : await runVisualAnalysisSafely({
+          context: generationContext,
+          startedAt,
+        });
     const brainConfig = await resolveBrainExecutionConfigForCapability(
       'kangur_social.post_generation',
       {

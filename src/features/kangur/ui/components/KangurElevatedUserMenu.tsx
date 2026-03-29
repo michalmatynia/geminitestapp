@@ -1,6 +1,6 @@
 'use client';
 
-import { LayoutGrid, LogOut, User } from 'lucide-react';
+import { LayoutGrid, LogOut } from 'lucide-react';
 import Link from 'next/link';
 
 import { KangurButton } from '@/features/kangur/ui/design/primitives';
@@ -20,10 +20,6 @@ type KangurElevatedUserMenuProps = {
   adminLabel: string;
   logoutLabel: string;
   onLogout: () => void;
-  profile?: {
-    href: string;
-    label: string;
-  } | null;
   triggerAriaLabel: string;
   triggerClassName?: string;
   user: ElevatedSessionUserSnapshot;
@@ -66,7 +62,6 @@ export function KangurElevatedUserMenu({
   adminLabel,
   logoutLabel,
   onLogout,
-  profile,
   triggerAriaLabel,
   triggerClassName,
   user,
@@ -78,7 +73,6 @@ export function KangurElevatedUserMenu({
       adminLabel,
       logoutLabel,
       onLogout,
-      profile,
       triggerAriaLabel,
       triggerClassName,
       user,
@@ -108,7 +102,6 @@ function renderKangurElevatedUserMenu(
     adminLabel,
     logoutLabel,
     onLogout,
-    profile,
     triggerAriaLabel,
     triggerClassName,
     user,
@@ -142,17 +135,6 @@ function renderKangurElevatedUserMenu(
             ) : null}
           </div>
         </DropdownMenuLabel>
-        {profile ? (
-          <>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem asChild>
-              <Link href={profile.href}>
-                <User className='mr-2 h-4 w-4' />
-                <span>{profile.label}</span>
-              </Link>
-            </DropdownMenuItem>
-          </>
-        ) : null}
         <DropdownMenuSeparator />
         <DropdownMenuItem asChild>
           <Link href={adminHref}>

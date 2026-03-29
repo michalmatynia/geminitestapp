@@ -4,6 +4,7 @@ const mocks = vi.hoisted(() => ({
   resolveBrainExecutionConfigMock: vi.fn(),
   runBrainChatCompletionMock: vi.fn(),
   supportsBrainJsonModeMock: vi.fn(),
+  analyzeKangurSocialVisualsMock: vi.fn(),
 }));
 
 vi.mock('@/shared/lib/ai-brain/server', () => ({
@@ -14,6 +15,11 @@ vi.mock('@/shared/lib/ai-brain/server', () => ({
 vi.mock('@/shared/lib/ai-brain/server-runtime-client', () => ({
   runBrainChatCompletion: (...args: unknown[]) => mocks.runBrainChatCompletionMock(...args),
   supportsBrainJsonMode: (...args: unknown[]) => mocks.supportsBrainJsonModeMock(...args),
+}));
+
+vi.mock('./social-posts-vision', () => ({
+  analyzeKangurSocialVisuals: (...args: unknown[]) =>
+    mocks.analyzeKangurSocialVisualsMock(...args),
 }));
 
 import { generateKangurSocialPostDraft } from './social-posts-generation';
@@ -28,6 +34,11 @@ describe('generateKangurSocialPostDraft', () => {
       systemPrompt: '',
     });
     mocks.supportsBrainJsonModeMock.mockReturnValue(true);
+    mocks.analyzeKangurSocialVisualsMock.mockResolvedValue({
+      summary: 'Visual summary',
+      highlights: ['Highlight'],
+      docUpdates: [],
+    });
     mocks.runBrainChatCompletionMock.mockResolvedValue({
       text: JSON.stringify({
         titlePl: 'Tytul',
@@ -81,5 +92,31 @@ describe('generateKangurSocialPostDraft', () => {
     expect(result.titleEn).toBe('Fence');
     expect(result.bodyPl).toBe('Polski wpis');
     expect(result.bodyEn).toBe('English post');
+  });
+
+  it('reuses prefetched visual analysis and requires it to be mentioned in the prompt', async () => {
+    await generateKangurSocialPostDraft({
+      docReferences: ['overview'],
+      prefetchedVisualAnalysis: {
+        summary: 'The hero now shows a larger classroom card.',
+        highlights: ['Larger classroom card'],
+        docUpdates: [],
+      },
+      requireVisualAnalysisInBody: true,
+    });
+
+    expect(mocks.analyzeKangurSocialVisualsMock).not.toHaveBeenCalled();
+    expect(mocks.runBrainChatCompletionMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        messages: expect.arrayContaining([
+          expect.objectContaining({
+            role: 'user',
+            content: expect.stringContaining(
+              'Both the Polish and English post bodies must explicitly mention the visual analysis findings or visible UI changes.'
+            ),
+          }),
+        ]),
+      })
+    );
   });
 });

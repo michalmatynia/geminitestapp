@@ -18,6 +18,7 @@ import { safeClearTimeout, safeSetTimeout, type SafeTimerId } from '@/shared/lib
 import type {
   KangurSocialDocUpdatesResponse,
   KangurSocialPost,
+  KangurSocialVisualAnalysis,
 } from '@/shared/contracts/kangur-social-posts';
 import type { ImageFileSelection } from '@/shared/contracts/files';
 import type {
@@ -45,6 +46,8 @@ type SocialPipelineRunnerDeps = {
   visionModelId: string | null;
   canRunServerPipeline: boolean;
   pipelineBlockedReason: string | null;
+  canRunVisualAnalysisPipeline: boolean;
+  visualAnalysisBlockedReason: string | null;
   projectUrl: string;
   generationNotes: string;
   resolveDocReferences: () => string[];
@@ -94,6 +97,11 @@ type PipelineJobRecord = {
   failedReason: string | null;
 };
 
+type RunPipelineOptions = {
+  prefetchedVisualAnalysis?: KangurSocialVisualAnalysis;
+  requireVisualAnalysisInBody?: boolean;
+};
+
 const PIPELINE_POLL_INTERVAL_MS = 2_000;
 const PIPELINE_TIMEOUT_MS = 10 * 60 * 1000;
 const PIPELINE_REQUEST_TIMEOUT_MS = 60_000;
@@ -121,10 +129,25 @@ export function useSocialPipelineRunner(deps: SocialPipelineRunnerDeps) {
   const [pipelineProgress, setPipelineProgress] =
     useState<KangurSocialManualPipelineProgress | null>(null);
   const [pipelineErrorMessage, setPipelineErrorMessage] = useState<string | null>(null);
+  const [isVisualAnalysisModalOpen, setIsVisualAnalysisModalOpen] = useState(false);
+  const [visualAnalysisResult, setVisualAnalysisResult] =
+    useState<KangurSocialVisualAnalysis | null>(null);
+  const [visualAnalysisErrorMessage, setVisualAnalysisErrorMessage] = useState<string | null>(
+    null
+  );
+  const [visualAnalysisPending, setVisualAnalysisPending] = useState(false);
+  const visualAnalysisScope = JSON.stringify({
+    postId: deps.activePostId ?? null,
+    imageAddonIds: deps.imageAddonIds,
+    visionModelId: deps.visionModelId ?? null,
+    generationNotes: deps.generationNotes.trim(),
+    docReferences: deps.resolveDocReferences(),
+  });
 
   const depsRef = useRef(deps);
   const pollDelayTimeoutRef = useRef<SafeTimerId | null>(null);
   const isUnmountedRef = useRef(false);
+  const previousVisualAnalysisScopeRef = useRef<string | null>(null);
   depsRef.current = deps;
 
   useEffect(() => {
@@ -141,7 +164,22 @@ export function useSocialPipelineRunner(deps: SocialPipelineRunnerDeps) {
     deps.setBatchCaptureResult(null);
     setPipelineProgress(null);
     setPipelineErrorMessage(null);
+    setVisualAnalysisResult(null);
+    setVisualAnalysisErrorMessage(null);
+    setIsVisualAnalysisModalOpen(false);
   }, [deps.activePostId]);
+
+  useEffect(() => {
+    const previousScope = previousVisualAnalysisScopeRef.current;
+    previousVisualAnalysisScopeRef.current = visualAnalysisScope;
+
+    if (previousScope === null || previousScope === visualAnalysisScope) {
+      return;
+    }
+
+    setVisualAnalysisResult(null);
+    setVisualAnalysisErrorMessage(null);
+  }, [visualAnalysisScope]);
 
   const syncProgress = useCallback((progress: KangurSocialManualPipelineProgress | null): void => {
     if (!progress) return;
@@ -163,7 +201,8 @@ export function useSocialPipelineRunner(deps: SocialPipelineRunnerDeps) {
   }, []);
 
   const runPipeline = useCallback(async (
-    captureMode: Extract<KangurSocialPipelineCaptureMode, 'existing_assets' | 'fresh_capture'>
+    captureMode: Extract<KangurSocialPipelineCaptureMode, 'existing_assets' | 'fresh_capture'>,
+    options?: RunPipelineOptions
   ): Promise<void> => {
     const d = depsRef.current;
     if (!d.canRunServerPipeline) {
@@ -180,9 +219,10 @@ export function useSocialPipelineRunner(deps: SocialPipelineRunnerDeps) {
     }
 
     const activePostId = d.activePost.id;
+    const usesPrefetchedVisualAnalysis = Boolean(options?.prefetchedVisualAnalysis);
     trackKangurClientEvent(
       'kangur_social_pipeline_attempt',
-      d.buildSocialContext({ captureMode })
+      d.buildSocialContext({ captureMode, usesPrefetchedVisualAnalysis })
     );
 
     try {
@@ -201,7 +241,9 @@ export function useSocialPipelineRunner(deps: SocialPipelineRunnerDeps) {
           message:
             captureMode === 'fresh_capture'
               ? 'Queued on the server. Waiting to start a fresh Playwright capture...'
-              : 'Queued on the server. Waiting to generate from the attached visuals...',
+              : usesPrefetchedVisualAnalysis
+                ? 'Queued on the server. Waiting to generate from the analyzed visuals...'
+                : 'Queued on the server. Waiting to generate from the attached visuals...',
           updatedAt: Date.now(),
           requestedPresetCount,
           captureCompletedCount: 0,
@@ -213,7 +255,9 @@ export function useSocialPipelineRunner(deps: SocialPipelineRunnerDeps) {
       toast(
         captureMode === 'fresh_capture'
           ? 'Pipeline: queueing fresh-capture server run...'
-          : 'Pipeline: queueing server run from current visuals...',
+          : usesPrefetchedVisualAnalysis
+            ? 'Pipeline: queueing server run with image analysis...'
+            : 'Pipeline: queueing server run from current visuals...',
         { variant: 'default' }
       );
 
@@ -229,6 +273,8 @@ export function useSocialPipelineRunner(deps: SocialPipelineRunnerDeps) {
         projectUrl: d.projectUrl || '',
         generationNotes: d.generationNotes,
         docReferences: d.resolveDocReferences(),
+        prefetchedVisualAnalysis: options?.prefetchedVisualAnalysis,
+        requireVisualAnalysisInBody: options?.requireVisualAnalysisInBody ?? false,
       };
 
       if (captureMode === 'fresh_capture') {
@@ -254,7 +300,9 @@ export function useSocialPipelineRunner(deps: SocialPipelineRunnerDeps) {
       toast(
         captureMode === 'fresh_capture'
           ? 'Pipeline: queued on the server. Waiting for fresh capture and generation...'
-          : 'Pipeline: queued on the server. Waiting for generation...',
+          : usesPrefetchedVisualAnalysis
+            ? 'Pipeline: queued on the server. Waiting for visual-aware generation...'
+            : 'Pipeline: queued on the server. Waiting for generation...',
         { variant: 'default' }
       );
 
@@ -347,7 +395,7 @@ export function useSocialPipelineRunner(deps: SocialPipelineRunnerDeps) {
       );
       trackKangurClientEvent(
         'kangur_social_pipeline_success',
-        latestDeps.buildSocialContext({ captureMode })
+        latestDeps.buildSocialContext({ captureMode, usesPrefetchedVisualAnalysis })
       );
     } catch (error) {
       setPipelineStep('error');
@@ -359,11 +407,19 @@ export function useSocialPipelineRunner(deps: SocialPipelineRunnerDeps) {
       logKangurClientError(error, {
         source: 'AdminKangurSocialPage',
         action: 'runFullPipeline',
-        ...depsRef.current.buildSocialContext({ error: true, captureMode }),
+        ...depsRef.current.buildSocialContext({
+          error: true,
+          captureMode,
+          usesPrefetchedVisualAnalysis,
+        }),
       });
       trackKangurClientEvent(
         'kangur_social_pipeline_failed',
-        depsRef.current.buildSocialContext({ error: true, captureMode })
+        depsRef.current.buildSocialContext({
+          error: true,
+          captureMode,
+          usesPrefetchedVisualAnalysis,
+        })
       );
     }
   }, [queryClient, syncProgress, toast, waitForNextPoll]);
@@ -378,11 +434,123 @@ export function useSocialPipelineRunner(deps: SocialPipelineRunnerDeps) {
     [runPipeline]
   );
 
+  const handleOpenVisualAnalysisModal = useCallback((): void => {
+    const d = depsRef.current;
+    if (!d.activePost) {
+      toast('Create or select a post first', { variant: 'warning' });
+      return;
+    }
+    if (!d.canRunVisualAnalysisPipeline) {
+      toast(
+        d.visualAnalysisBlockedReason ??
+          'Select at least one image add-on and configure a vision model first.',
+        { variant: 'warning' }
+      );
+      return;
+    }
+    setVisualAnalysisErrorMessage(null);
+    setIsVisualAnalysisModalOpen(true);
+  }, [toast]);
+
+  const handleCloseVisualAnalysisModal = useCallback((): void => {
+    setIsVisualAnalysisModalOpen(false);
+    setVisualAnalysisErrorMessage(null);
+    setVisualAnalysisPending(false);
+  }, []);
+
+  const handleAnalyzeSelectedVisuals = useCallback(async (): Promise<void> => {
+    const d = depsRef.current;
+    if (!d.activePost) {
+      toast('Create or select a post first', { variant: 'warning' });
+      return;
+    }
+    if (!d.canRunVisualAnalysisPipeline) {
+      toast(
+        d.visualAnalysisBlockedReason ??
+          'Select at least one image add-on and configure a vision model first.',
+        { variant: 'warning' }
+      );
+      return;
+    }
+
+    trackKangurClientEvent(
+      'kangur_social_visual_analysis_attempt',
+      d.buildSocialContext()
+    );
+
+    try {
+      setVisualAnalysisPending(true);
+      setVisualAnalysisErrorMessage(null);
+      setVisualAnalysisResult(null);
+      const analysis = await api.post<KangurSocialVisualAnalysis>(
+        '/api/kangur/social-posts/analyze-visuals',
+        {
+          postId: d.activePost.id,
+          docReferences: d.resolveDocReferences(),
+          notes: d.generationNotes,
+          visionModelId: d.visionModelId ?? undefined,
+          imageAddonIds: d.imageAddonIds,
+        },
+        { timeout: PIPELINE_REQUEST_TIMEOUT_MS }
+      );
+      setVisualAnalysisResult(analysis);
+      toast('Image analysis complete — review the summary and generate the post.', {
+        variant: 'success',
+      });
+      trackKangurClientEvent(
+        'kangur_social_visual_analysis_success',
+        d.buildSocialContext({
+          visualHighlightCount: analysis.highlights.length,
+          visualDocUpdateCount: analysis.docUpdates.length,
+        })
+      );
+    } catch (error) {
+      const errorMessage =
+        error instanceof Error ? error.message : 'Image analysis failed.';
+      setVisualAnalysisErrorMessage(errorMessage);
+      toast(`Image analysis failed: ${errorMessage}`, { variant: 'error' });
+      logKangurClientError(error, {
+        source: 'AdminKangurSocialPage',
+        action: 'analyzeVisuals',
+        ...d.buildSocialContext({ error: true }),
+      });
+      trackKangurClientEvent(
+        'kangur_social_visual_analysis_failed',
+        d.buildSocialContext({ error: true })
+      );
+    } finally {
+      setVisualAnalysisPending(false);
+    }
+  }, [toast]);
+
+  const handleRunFullPipelineWithVisualAnalysis = useCallback(async (): Promise<void> => {
+    if (!visualAnalysisResult) {
+      toast('Run image analysis first to generate the post with visual context.', {
+        variant: 'warning',
+      });
+      return;
+    }
+
+    setIsVisualAnalysisModalOpen(false);
+    await runPipeline('existing_assets', {
+      prefetchedVisualAnalysis: visualAnalysisResult,
+      requireVisualAnalysisInBody: true,
+    });
+  }, [runPipeline, toast, visualAnalysisResult]);
+
   return {
     pipelineStep,
     pipelineProgress,
     pipelineErrorMessage,
+    isVisualAnalysisModalOpen,
+    visualAnalysisResult,
+    visualAnalysisErrorMessage,
+    visualAnalysisPending,
     handleRunFullPipeline,
     handleRunFullPipelineWithFreshCapture,
+    handleOpenVisualAnalysisModal,
+    handleCloseVisualAnalysisModal,
+    handleAnalyzeSelectedVisuals,
+    handleRunFullPipelineWithVisualAnalysis,
   };
 }

@@ -17,6 +17,7 @@ type SocialPostVisualsProps = {
 export function SocialPostVisuals(props: SocialPostVisualsProps): React.JSX.Element {
   const { showImagesPanel = true } = props;
   const {
+    activePost,
     recentAddons,
     addonsQuery,
     imageAddonIds,
@@ -31,9 +32,54 @@ export function SocialPostVisuals(props: SocialPostVisualsProps): React.JSX.Elem
 
   const selectedAddonSet = useMemo(() => new Set(imageAddonIds), [imageAddonIds]);
   const recentAddonsLoading = addonsQuery.isLoading;
+  const visualSummary = activePost?.visualSummary?.trim() ?? '';
+  const visualHighlights = activePost?.visualHighlights ?? [];
+  const visualDocUpdates = activePost?.visualDocUpdates ?? [];
+  const hasVisualAnalysis =
+    visualSummary.length > 0 || visualHighlights.length > 0 || visualDocUpdates.length > 0;
 
   return (
     <>
+      {hasVisualAnalysis ? (
+        <FormSection title='Image analysis result' className='space-y-3'>
+          {visualSummary ? (
+            <div className='rounded-xl border border-border/60 bg-background/40 px-3 py-2 text-sm text-muted-foreground'>
+              {visualSummary}
+            </div>
+          ) : null}
+          {visualHighlights.length > 0 ? (
+            <div className='rounded-xl border border-border/60 bg-background/40 px-3 py-2'>
+              <div className='text-xs font-medium uppercase tracking-wide text-muted-foreground'>
+                Highlights
+              </div>
+              <ul className='mt-2 space-y-1 text-sm text-muted-foreground'>
+                {visualHighlights.map((highlight) => (
+                  <li key={highlight}>- {highlight}</li>
+                ))}
+              </ul>
+            </div>
+          ) : null}
+          {visualDocUpdates.length > 0 ? (
+            <div className='rounded-xl border border-border/60 bg-background/40 px-3 py-2'>
+              <div className='text-xs font-medium uppercase tracking-wide text-muted-foreground'>
+                Suggested documentation updates
+              </div>
+              <div className='mt-2 space-y-2 text-sm text-muted-foreground'>
+                {visualDocUpdates.map((update, index) => (
+                  <div key={`${update.docPath}-${update.section ?? 'root'}-${index}`}>
+                    <div className='font-medium text-foreground/90'>
+                      {update.docPath}
+                      {update.section ? ` · ${update.section}` : ''}
+                    </div>
+                    {update.reason ? <div>{update.reason}</div> : null}
+                  </div>
+                ))}
+              </div>
+            </div>
+          ) : null}
+        </FormSection>
+      ) : null}
+
       <FormSection title='Image add-ons' className='space-y-3'>
         <div className='text-xs text-muted-foreground'>
           Select existing visual add-ons for this post. Create new captures from the Settings modal.

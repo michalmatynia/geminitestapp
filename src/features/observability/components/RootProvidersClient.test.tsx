@@ -8,6 +8,7 @@ const sessionProviderPropsMock = vi.fn();
 const settingsStoreProviderPropsMock = vi.fn();
 
 vi.mock('next/navigation', () => ({
+  usePathname: () => '/',
   useSearchParams: () => searchParamsRef.current,
 }));
 
@@ -23,9 +24,13 @@ vi.mock('next-auth/react', () => ({
     sessionProviderPropsMock(props);
     return <>{children}</>;
   },
+  useSession: () => ({
+    data: null,
+    status: 'unauthenticated' as const,
+  }),
 }));
 
-vi.mock('@/features/observability/components/ClientErrorReporter', () => ({
+vi.mock('@/shared/lib/observability/components/ClientErrorReporter', () => ({
   default: () => <div data-testid='client-error-reporter' />,
 }));
 
@@ -98,7 +103,7 @@ vi.mock('@/shared/ui/toast', () => ({
   ToastProvider: ({ children }: { children: React.ReactNode }) => <>{children}</>,
 }));
 
-import { RootProvidersClient } from './RootProvidersClient';
+import { RootProvidersClient } from '@/shared/providers/RootProvidersClient';
 
 async function renderRootProvidersClient(
   searchParams?: URLSearchParams,

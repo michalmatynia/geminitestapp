@@ -46,6 +46,14 @@ const buildSearchText = (post: KangurSocialPost): string =>
     post.bodyPl,
     post.bodyEn,
     post.combinedBody,
+    post.visualSummary,
+    ...(post.visualHighlights ?? []),
+    ...(post.visualDocUpdates ?? []).flatMap((update) => [
+      update.docPath,
+      update.section,
+      update.proposedText,
+      update.reason,
+    ]),
     post.linkedinPostId,
     post.linkedinUrl,
   ]
@@ -184,6 +192,10 @@ export function SocialPostList(): React.JSX.Element {
           {paginatedPosts.map((post) => {
           const title = post.titlePl || post.titleEn || 'Untitled update';
           const isActive = activePostId === post.id;
+          const hasVisualAnalysis =
+            Boolean(post.visualSummary?.trim()) || (post.visualHighlights?.length ?? 0) > 0;
+          const visualHighlightCount = post.visualHighlights?.length ?? 0;
+          const visualDocUpdateCount = post.visualDocUpdates?.length ?? 0;
           const pipelineSelectionLabel = isActive
             ? `${title} is active for pipeline`
             : `Select ${title} for pipeline`;
@@ -244,6 +256,23 @@ export function SocialPostList(): React.JSX.Element {
                         formatDatetimeDisplay(post.publishedAt) || '—'
                       }`}
                     </div>
+                    {hasVisualAnalysis ? (
+                      <div className='mt-1 flex flex-wrap items-center gap-2'>
+                        <Badge variant='outline'>Image analysis</Badge>
+                        {visualHighlightCount > 0 ? (
+                          <span>
+                            {visualHighlightCount} highlight
+                            {visualHighlightCount === 1 ? '' : 's'}
+                          </span>
+                        ) : null}
+                        {visualDocUpdateCount > 0 ? (
+                          <span>
+                            {visualDocUpdateCount} doc update
+                            {visualDocUpdateCount === 1 ? '' : 's'}
+                          </span>
+                        ) : null}
+                      </div>
+                    ) : null}
                   </div>
                 </div>
                 {post.status !== 'draft' ? (

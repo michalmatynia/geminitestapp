@@ -8,6 +8,7 @@ import {
   type KangurSocialDocUpdatesResponse,
   type KangurSocialPost,
   type KangurSocialPublishMode,
+  type KangurSocialVisualAnalysis,
 } from '@/shared/contracts/kangur-social-posts';
 import { ApiError, api } from '@/shared/lib/api-client';
 import { createListQueryV2, createUpdateMutationV2 } from '@/shared/lib/query-factories-v2';
@@ -155,6 +156,8 @@ export type KangurSocialPostGenerationPayload = {
   visionModelId?: string;
   imageAddonIds?: string[];
   projectUrl?: string;
+  prefetchedVisualAnalysis?: KangurSocialVisualAnalysis;
+  requireVisualAnalysisInBody?: boolean;
 };
 
 export type KangurSocialPostGenerationResult =

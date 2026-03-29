@@ -53,6 +53,32 @@ vi.mock('@/features/kangur/ui/components/ClockTrainingGame', () => ({
   ),
 }));
 
+vi.mock('@/features/kangur/ui/components/KangurLaunchableGameInstanceRuntime', () => ({
+  __esModule: true,
+  KangurLaunchableGameInstanceRuntime: ({
+    gameId,
+    instanceId,
+  }: {
+    gameId: string;
+    instanceId: string;
+  }) => (
+    <div data-testid='mock-kangur-launchable-game-instance-runtime'>
+      {gameId}:{instanceId}
+    </div>
+  ),
+  default: ({
+    gameId,
+    instanceId,
+  }: {
+    gameId: string;
+    instanceId: string;
+  }) => (
+    <div data-testid='mock-kangur-launchable-game-instance-runtime'>
+      {gameId}:{instanceId}
+    </div>
+  ),
+}));
+
 vi.mock('@/features/kangur/ui/components/KangurLessonNarrator', () => ({
   KangurLessonNarrator: () => <div data-testid='kangur-lesson-narrator' />,
 }));
@@ -151,7 +177,9 @@ describe('ClockLesson i18n', () => {
     });
 
     expect(screen.getByRole('button', { name: /Back to topics/i })).toBeInTheDocument();
-    expect(screen.getByTestId('mock-clock-training-game')).toHaveTextContent('hours');
+    expect(
+      screen.getByTestId('mock-kangur-launchable-game-instance-runtime')
+    ).toHaveTextContent('clock_training:clock_training:instance:clock-hours');
   });
 
   it('renders German hub labels and lesson copy', async () => {
@@ -208,6 +236,8 @@ describe('ClockLesson i18n', () => {
     });
 
     expect(screen.getByRole('button', { name: /Zurück zu den Themen/i })).toBeInTheDocument();
-    expect(screen.getByTestId('mock-clock-training-game')).toHaveTextContent('hours');
+    expect(
+      screen.getByTestId('mock-kangur-launchable-game-instance-runtime')
+    ).toHaveTextContent('clock_training:clock_training:instance:clock-hours');
   });
 });

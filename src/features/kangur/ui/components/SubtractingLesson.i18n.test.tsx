@@ -57,6 +57,34 @@ vi.mock('@/features/kangur/ui/components/SubtractingGardenGame', () => ({
   default: () => <div>Mock Subtracting Garden Game</div>,
 }));
 
+vi.mock('@/features/kangur/ui/components/KangurLaunchableGameInstanceRuntime', () => ({
+  __esModule: true,
+  KangurLaunchableGameInstanceRuntime: ({
+    gameId,
+    instanceId,
+  }: {
+    gameId: string;
+    instanceId: string;
+  }) => (
+    <div data-testid='mock-subtracting-instance-runtime'>
+      <span data-testid='mock-subtracting-game-id'>{gameId}</span>
+      <span data-testid='mock-subtracting-instance-id'>{instanceId}</span>
+    </div>
+  ),
+  default: ({
+    gameId,
+    instanceId,
+  }: {
+    gameId: string;
+    instanceId: string;
+  }) => (
+    <div data-testid='mock-subtracting-instance-runtime'>
+      <span data-testid='mock-subtracting-game-id'>{gameId}</span>
+      <span data-testid='mock-subtracting-instance-id'>{instanceId}</span>
+    </div>
+  ),
+}));
+
 import { createDefaultKangurProgressState } from '@/features/kangur/shared/contracts/kangur';
 
 vi.mock('@/features/kangur/ui/services/progress', async (importOriginal) => {

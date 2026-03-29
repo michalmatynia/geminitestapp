@@ -83,6 +83,7 @@ import {
 import { postKangurSocialPostPublishHandler } from '../../social-posts/[id]/publish/handler';
 import { postKangurSocialPostUnpublishHandler } from '../../social-posts/[id]/unpublish/handler';
 import { postKangurSocialPostDocUpdatesHandler } from '../../social-posts/[id]/doc-updates/handler';
+import { postKangurSocialPostAnalyzeVisualsHandler } from '../../social-posts/analyze-visuals/handler';
 import { postKangurSocialPostGenerateHandler } from '../../social-posts/generate/handler';
 import {
   getKangurSocialPostContextHandler,
@@ -407,6 +408,15 @@ export const socialPostGenerateHandler: SimpleRouteHandler = apiHandler(
   }
 );
 
+export const socialPostAnalyzeVisualsHandler: SimpleRouteHandler = apiHandler(
+  postKangurSocialPostAnalyzeVisualsHandler,
+  {
+    source: 'kangur.social-posts.analyze-visuals.POST',
+    service: 'kangur.api',
+    parseJsonBody: true,
+  }
+);
+
 export const socialPostsPublishScheduledHandler: SimpleRouteHandler = apiHandler(
   postKangurSocialPostsPublishScheduledHandler,
   {
@@ -606,6 +616,10 @@ export const handleMiscRouting = (request: NextRequest, segments: string[]): Pro
     if (segments[1] === 'generate' && segments.length === 2) {
       if (request.method !== 'POST') return methodNotAllowed(request, ['POST'], request.method);
       return socialPostGenerateHandler(request);
+    }
+    if (segments[1] === 'analyze-visuals' && segments.length === 2) {
+      if (request.method !== 'POST') return methodNotAllowed(request, ['POST'], request.method);
+      return socialPostAnalyzeVisualsHandler(request);
     }
     if (segments[1] === 'publish-scheduled' && segments.length === 2) {
       if (request.method !== 'POST') return methodNotAllowed(request, ['POST'], request.method);

@@ -24,9 +24,9 @@ const getDefaultHeapMb = () => {
     return String(Math.max(1024, explicitHeapMb));
   }
 
-  // Vercel's default build machine provides 8 GB of system RAM. A 4 GB Node
-  // heap leaves enough headroom for webpack workers and OS overhead.
-  return process.env.VERCEL ? '4096' : '8192';
+  // Vercel's default build machine provides 8 GB of system RAM. A 6 GB Node
+  // heap still leaves headroom for the OS while avoiding the earlier OOM path.
+  return process.env.VERCEL ? '6144' : '8192';
 };
 
 const buildEnv = {
@@ -39,7 +39,7 @@ const resolveBundlerArgs = (bundler) => {
     return ['build', '--webpack'];
   }
   if (bundler === 'turbopack') {
-    return ['build', '--turbopack'];
+    return ['build'];
   }
   return ['build'];
 };

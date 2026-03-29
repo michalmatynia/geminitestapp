@@ -23,7 +23,7 @@ import {
   generateTask,
 } from './CalendarInteractiveGame.utils';
 
-const TOTAL_ROUNDS = 10;
+const TOTAL_ROUNDS = 6;
 
 export function useCalendarInteractiveGameState(props: CalendarInteractiveGameProps) {
   const ownerKey = useKangurProgressOwnerKey();

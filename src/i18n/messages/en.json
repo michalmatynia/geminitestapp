@@ -2156,6 +2156,8 @@
   "KangurMiniGames": {
     "shared": {
       "restart": "Try again",
+      "check": "Check",
+      "next": "Next",
       "scoreLabel": "Score",
       "pointsShort": "pts",
       "correctAnswersSuffix": "correct answers",
@@ -2358,7 +2360,13 @@
     },
     "division": {
       "inRound": {
-        "touchHint": "Tap an answer, then tap Check."
+        "touchHint": "Tap an answer, then tap Check.",
+        "prompt": "Split the items into equal groups.",
+        "roundLabel": "Round {current}/{total}",
+        "groupLabel": "Group {index}",
+        "remainderLabel": "Remainder",
+        "poolLabel": "Pool",
+        "tokenAria": "Move item"
       },
       "summary": {
         "perfect": "Perfect! Division master!",
@@ -2438,6 +2446,7 @@
         }
       },
       "inRound": {
+        "taskLabel": "Task",
         "previousMonth": "Previous month",
         "nextMonth": "Next month",
         "tryAgain": "Oops, not that one. Try again!",

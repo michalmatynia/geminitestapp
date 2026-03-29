@@ -4,6 +4,8 @@ import { Draggable, Droppable } from '@hello-pangea/dnd';
 import React from 'react';
 import {
   KangurDragDropContext,
+  getKangurMobileDragHandleStyle,
+  renderKangurDragPreview,
 } from '@/features/kangur/ui/components/KangurDragDropContext';
 
 import {
@@ -21,6 +23,7 @@ import {
 import {
   getKangurMiniGameFinishLabel,
   getKangurMiniGameScoreLabel,
+  translateKangurMiniGameWithFallback,
 } from '@/features/kangur/ui/constants/mini-game-i18n';
 import {
   KangurButton,
@@ -74,27 +77,47 @@ function PartsOfSpeechToken({
   const isCorrect = showStatus ? true : false; // Simplified logic for display
   return (
     <Draggable draggableId={token.id} index={index} isDragDisabled={isLocked}>
-      {(provided, snapshot) => (
-        <div
-          ref={provided.innerRef}
-          {...provided.draggableProps}
-          {...provided.dragHandleProps}
-          className={buildTokenClassName({
-            isDragging: snapshot.isDragging,
-            showStatus: Boolean(showStatus),
-            isCorrect,
-            isSelected,
-            isCoarsePointer,
-          })}
-          onClick={(e) => {
-            e.stopPropagation();
-            if (!isLocked) onSelect();
-          }}
-        >
-          <span className='mr-2 select-none'>{token.emoji}</span>
-          <span>{token.label}</span>
-        </div>
-      )}
+      {(provided, snapshot) => {
+        const content = (
+          <div
+            ref={provided.innerRef}
+            {...provided.draggableProps}
+            {...provided.dragHandleProps}
+            style={getKangurMobileDragHandleStyle(
+              provided.draggableProps.style,
+              isCoarsePointer
+            )}
+            className={buildTokenClassName({
+              isDragging: snapshot.isDragging,
+              showStatus: Boolean(showStatus),
+              isCorrect,
+              isSelected,
+              isCoarsePointer,
+            })}
+            onClick={(e) => {
+              e.stopPropagation();
+              if (!isLocked) onSelect();
+            }}
+            role='button'
+            aria-label={token.label}
+            aria-pressed={isSelected}
+            aria-disabled={isLocked}
+            tabIndex={isLocked ? -1 : 0}
+            onKeyDown={(event) => {
+              if (isLocked) return;
+              if (event.key === 'Enter' || event.key === ' ') {
+                event.preventDefault();
+                onSelect();
+              }
+            }}
+          >
+            <span className='mr-2 select-none'>{token.emoji}</span>
+            <span>{token.label}</span>
+          </div>
+        );
+
+        return renderKangurDragPreview(content, snapshot.isDragging);
+      }}
     </Draggable>
   );
 }
@@ -170,6 +193,15 @@ export function EnglishPartsOfSpeechGame({
   const roundTitle = getPartsOfSpeechRoundMessage(translations, round.id, 'title', round.title);
   const roundPrompt = getPartsOfSpeechRoundMessage(translations, round.id, 'prompt', round.prompt);
   const roundHint = getPartsOfSpeechRoundMessage(translations, round.id, 'hint', round.hint);
+  const modeLabel = translations(
+    isCoarsePointer
+      ? 'englishPartsOfSpeech.inRound.modeLabelTouch'
+      : 'englishPartsOfSpeech.inRound.modeLabel'
+  );
+  const selectedToken = roundState.pool
+    .concat(...Object.values(roundState.bins).flat())
+    .find((token) => token.id === selectedTokenId);
+  const finishActionLabel = finishLabel ?? getKangurMiniGameFinishLabel(translations, finishLabelVariant);
 
   return (
     <KangurPracticeGameShell className='w-full max-w-4xl'>
@@ -191,6 +223,9 @@ export function EnglishPartsOfSpeechGame({
                       total: TOTAL_ROUNDS,
                     })}
                   </KangurStatusChip>
+                  <span className='text-xs font-black uppercase tracking-[0.16em] text-slate-500'>
+                    {modeLabel}
+                  </span>
                 </div>
                 <h3 className='text-lg font-black text-slate-900'>{roundTitle}</h3>
                 <p className='text-sm font-medium text-slate-600'>{roundPrompt}</p>
@@ -218,10 +253,21 @@ export function EnglishPartsOfSpeechGame({
                     <div
                       ref={provided.innerRef}
                       {...provided.droppableProps}
+                      role='button'
+                      tabIndex={isLocked ? -1 : 0}
+                      aria-disabled={isLocked}
+                      aria-label={translations('englishPartsOfSpeech.inRound.poolAria')}
                       className={cn(
                         'flex min-h-[100px] flex-wrap items-center justify-center gap-2 rounded-[28px] border-2 border-dashed p-4 transition-all',
                         snapshot.isDraggingOver ? 'border-sky-300 bg-sky-50/50' : 'border-slate-200 bg-white/40'
                       )}
+                      onClick={() => moveSelectedTokenTo('pool')}
+                      onKeyDown={(event) => {
+                        if (event.key === 'Enter' || event.key === ' ') {
+                          event.preventDefault();
+                          moveSelectedTokenTo('pool');
+                        }
+                      }}
                     >
                       {roundState.pool.map((token, i) => (
                         <PartsOfSpeechToken
@@ -272,12 +318,25 @@ export function EnglishPartsOfSpeechGame({
                             <div
                               ref={provided.innerRef}
                               {...provided.droppableProps}
+                              role='button'
+                              tabIndex={isLocked ? -1 : 0}
+                              aria-disabled={isLocked}
+                              aria-label={translations('englishPartsOfSpeech.inRound.binAria', {
+                                label,
+                              })}
                               className={cn(
                                 'flex min-h-[140px] flex-col gap-2 rounded-[24px] border-2 border-dashed p-3 transition-all',
                                 snapshot.isDraggingOver
                                   ? `border-${meta.accent}-400 bg-${meta.accent}-50/50`
                                   : 'border-slate-200 bg-white/60'
                               )}
+                              onClick={() => moveSelectedTokenTo(droppableId)}
+                              onKeyDown={(event) => {
+                                if (event.key === 'Enter' || event.key === ' ') {
+                                  event.preventDefault();
+                                  moveSelectedTokenTo(droppableId);
+                                }
+                              }}
                             >
                               {tokens.map((token, i) => (
                                 <PartsOfSpeechToken
@@ -317,6 +376,24 @@ export function EnglishPartsOfSpeechGame({
           </div>
         </div>
 
+        {(isCoarsePointer || selectedToken) && (
+          <KangurInfoCard accent='slate' className='w-full' padding='sm' tone='neutral'>
+            <p
+              className='text-xs font-semibold uppercase tracking-[0.16em] text-slate-500'
+              role='status'
+              aria-live='polite'
+              aria-atomic='true'
+              data-testid='english-parts-of-speech-selection-hint'
+            >
+              {selectedToken
+                ? translations('englishPartsOfSpeech.inRound.touchSelected', {
+                    label: selectedToken.label,
+                  })
+                : translations('englishPartsOfSpeech.inRound.touchIdle')}
+            </p>
+          </KangurInfoCard>
+        )}
+
         {feedback && (
           <KangurInfoCard
             accent={
@@ -340,16 +417,27 @@ export function EnglishPartsOfSpeechGame({
               variant='primary'
               size='lg'
               onClick={handleCheck}
+              disabled={roundState.pool.length > 0}
               className={getKangurCheckButtonClassName(
                 undefined,
                 feedback?.kind === 'info' ? null : feedback?.kind ?? null
               )}
             >
-              {translations('shared.check')}
+              {translateKangurMiniGameWithFallback(
+                translations,
+                'shared.check',
+                translations('englishPartsOfSpeech.inRound.check')
+              )}
             </KangurButton>
           ) : (
             <KangurButton variant='primary' size='lg' onClick={handleNext}>
-              {roundIndex + 1 >= TOTAL_ROUNDS ? translations('shared.finish') : translations('shared.next')}
+              {roundIndex + 1 >= TOTAL_ROUNDS
+                ? finishActionLabel
+                : translateKangurMiniGameWithFallback(
+                    translations,
+                    'shared.next',
+                    translations('englishPartsOfSpeech.inRound.next')
+                  )}
             </KangurButton>
           )}
         </div>

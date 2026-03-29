@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-03-28T17:08:12.604Z",
+  "generatedAt": "2026-03-29T10:34:18.787Z",
   "status": "ok",
   "scanner": {
     "name": "scan-type-clusters",
@@ -16,16 +16,388 @@
     "minClusterSize": 2
   },
   "summary": {
-    "filesScanned": 8316,
-    "exportedDeclarationsScanned": 5505,
-    "candidateDeclarationsScanned": 5480,
-    "exactShapeClusters": 0,
-    "nearShapeClusters": 0,
-    "clustersAfterFilters": 0,
-    "declarationsInClusters": 0,
-    "highestRiskScore": 0
+    "filesScanned": 8472,
+    "exportedDeclarationsScanned": 5538,
+    "candidateDeclarationsScanned": 5517,
+    "exactShapeClusters": 5,
+    "nearShapeClusters": 5,
+    "clustersAfterFilters": 10,
+    "declarationsInClusters": 20,
+    "highestRiskScore": 30
   },
-  "clusters": [],
+  "clusters": [
+    {
+      "clusterId": "exact-0001",
+      "clusterKind": "exact-shape",
+      "canonicalDtoCandidate": null,
+      "riskScore": 30,
+      "declarationCount": 2,
+      "domains": [
+        "feature:cms",
+        "feature:kangur"
+      ],
+      "signature": {
+        "shapeKind": "type-expression",
+        "normalizedShapeHash": "2d56615b8d41",
+        "memberCount": 1,
+        "preview": "| 'indigo' | 'violet' | 'emerald' | 'sky' | 'amber' | 'rose' | 'teal' | 'slate'"
+      },
+      "declarations": [
+        {
+          "name": "KangurAccent",
+          "kind": "type",
+          "path": "src/features/kangur/ui/design/tokens.ts",
+          "line": 107,
+          "domain": "feature:kangur",
+          "usageCount": 100
+        },
+        {
+          "name": "KangurAccentThemeName",
+          "kind": "type",
+          "path": "src/features/cms/components/frontend/appearance-logic/CmsStorefrontAppearance.accent-vars.ts",
+          "line": 10,
+          "domain": "feature:cms",
+          "usageCount": 2
+        }
+      ],
+      "notes": [
+        "Review semantics before consolidating structurally similar declarations into one DTO."
+      ]
+    },
+    {
+      "clusterId": "near-0005",
+      "clusterKind": "near-shape",
+      "canonicalDtoCandidate": null,
+      "riskScore": 13,
+      "declarationCount": 2,
+      "domains": [
+        "shared:contracts"
+      ],
+      "signature": {
+        "shapeKind": "structural-members",
+        "normalizedShapeHash": "00ee07741e7d",
+        "memberCount": 7,
+        "preview": "index:[key:string]=>unknown; prop:allowedBlockTypes?:string[]; prop:defaultSettings:Record<string, unknown>; prop:icon?:string; prop:label:string; prop:settingsSchema:SettingsField[]; prop:type:string"
+      },
+      "declarations": [
+        {
+          "name": "SectionDefinition",
+          "kind": "type",
+          "path": "src/shared/contracts/cms.ts",
+          "line": 302,
+          "domain": "shared:contracts",
+          "usageCount": 3
+        },
+        {
+          "name": "BlockDefinition",
+          "kind": "type",
+          "path": "src/shared/contracts/cms.ts",
+          "line": 292,
+          "domain": "shared:contracts",
+          "usageCount": 2
+        }
+      ],
+      "notes": [
+        "Review semantics before consolidating structurally similar declarations into one DTO."
+      ]
+    },
+    {
+      "clusterId": "exact-0003",
+      "clusterKind": "exact-shape",
+      "canonicalDtoCandidate": null,
+      "riskScore": 11,
+      "declarationCount": 2,
+      "domains": [
+        "feature:kangur"
+      ],
+      "signature": {
+        "shapeKind": "type-expression",
+        "normalizedShapeHash": "95608cea8846",
+        "memberCount": 1,
+        "preview": "KangurMiniGameTranslate"
+      },
+      "declarations": [
+        {
+          "name": "ClockTrainingTranslate",
+          "kind": "type",
+          "path": "src/features/kangur/ui/components/clock-training-i18n.ts",
+          "line": 8,
+          "domain": "feature:kangur",
+          "usageCount": 2
+        },
+        {
+          "name": "CalendarInteractiveTranslate",
+          "kind": "type",
+          "path": "src/features/kangur/ui/components/CalendarInteractiveGame.types.ts",
+          "line": 6,
+          "domain": "feature:kangur",
+          "usageCount": 1
+        }
+      ],
+      "notes": [
+        "Review semantics before consolidating structurally similar declarations into one DTO."
+      ]
+    },
+    {
+      "clusterId": "near-0001",
+      "clusterKind": "near-shape",
+      "canonicalDtoCandidate": null,
+      "riskScore": 10,
+      "declarationCount": 2,
+      "domains": [
+        "feature:kangur"
+      ],
+      "signature": {
+        "shapeKind": "structural-members",
+        "normalizedShapeHash": "261912f28413",
+        "memberCount": 4,
+        "preview": "prop:accent:KangurAccent; prop:actions:readonly [ EnglishAdverbsActionStudioAction, EnglishAdverbsActionStudioAction, EnglishAdverbsActionStudioAction, ]; prop:id:| 'race-day' | 'school-studio' | 'talent-corner' | 'playground-show' | 'homework-club'; prop:tokens:readonly EnglishAdverbId[]"
+      },
+      "declarations": [
+        {
+          "name": "EnglishAdverbsActionStudioRound",
+          "kind": "type",
+          "path": "src/features/kangur/ui/components/EnglishAdverbsActionStudioGame.data.ts",
+          "line": 26,
+          "domain": "feature:kangur",
+          "usageCount": 1
+        },
+        {
+          "name": "EnglishCompareAndCrownRound",
+          "kind": "type",
+          "path": "src/features/kangur/ui/components/EnglishComparativesSuperlativesCrownGame.data.ts",
+          "line": 37,
+          "domain": "feature:kangur",
+          "usageCount": 1
+        }
+      ],
+      "notes": [
+        "Review semantics before consolidating structurally similar declarations into one DTO."
+      ]
+    },
+    {
+      "clusterId": "near-0004",
+      "clusterKind": "near-shape",
+      "canonicalDtoCandidate": null,
+      "riskScore": 10,
+      "declarationCount": 2,
+      "domains": [
+        "shared:contracts"
+      ],
+      "signature": {
+        "shapeKind": "structural-members",
+        "normalizedShapeHash": "559f7351cbfa",
+        "memberCount": 15,
+        "preview": "prop:capabilities?:string[]; prop:contextWindow?:number; prop:id?:string; prop:isChat?:boolean; prop:isCode?:boolean; prop:isEmbedding?:boolean; prop:isInstruct?:boolean; prop:isReasoning?:boolean"
+      },
+      "declarations": [
+        {
+          "name": "ModelProfileDto",
+          "kind": "type",
+          "path": "src/shared/contracts/chatbot.ts",
+          "line": 212,
+          "domain": "shared:contracts",
+          "usageCount": 1
+        },
+        {
+          "name": "ExtendedModelProfile",
+          "kind": "type",
+          "path": "src/shared/contracts/chatbot.ts",
+          "line": 230,
+          "domain": "shared:contracts",
+          "usageCount": 1
+        }
+      ],
+      "notes": [
+        "Review semantics before consolidating structurally similar declarations into one DTO."
+      ]
+    },
+    {
+      "clusterId": "exact-0004",
+      "clusterKind": "exact-shape",
+      "canonicalDtoCandidate": null,
+      "riskScore": 9,
+      "declarationCount": 2,
+      "domains": [
+        "feature:kangur"
+      ],
+      "signature": {
+        "shapeKind": "structural-members",
+        "normalizedShapeHash": "b39366cdb0f5",
+        "memberCount": 7,
+        "preview": "prop:accuracy:number; prop:bestStreak:number; prop:breakdown:KangurRewardBreakdownEntry[]; prop:perfectHits:number; prop:score:number; prop:totalNotes:number; prop:xpEarned:number"
+      },
+      "declarations": [
+        {
+          "name": "GameSummary",
+          "kind": "type",
+          "path": "src/features/kangur/ui/components/adding-synthesis/AddingSynthesisGame.types.ts",
+          "line": 18,
+          "domain": "feature:kangur",
+          "usageCount": 1
+        },
+        {
+          "name": "GameSummary",
+          "kind": "type",
+          "path": "src/features/kangur/ui/components/logical-patterns/LogicalPatternsGame.types.ts",
+          "line": 10,
+          "domain": "feature:kangur",
+          "usageCount": 0
+        }
+      ],
+      "notes": [
+        "Review semantics before consolidating structurally similar declarations into one DTO."
+      ]
+    },
+    {
+      "clusterId": "exact-0005",
+      "clusterKind": "exact-shape",
+      "canonicalDtoCandidate": null,
+      "riskScore": 9,
+      "declarationCount": 2,
+      "domains": [
+        "shared:contracts"
+      ],
+      "signature": {
+        "shapeKind": "type-expression",
+        "normalizedShapeHash": "ddde0ce7dd64",
+        "memberCount": 1,
+        "preview": "ChatbotSettingsPayload"
+      },
+      "declarations": [
+        {
+          "name": "AgentSettingsPayload",
+          "kind": "type",
+          "path": "src/shared/contracts/chatbot.ts",
+          "line": 200,
+          "domain": "shared:contracts",
+          "usageCount": 1
+        },
+        {
+          "name": "UpdateChatbotSettingsDto",
+          "kind": "type",
+          "path": "src/shared/contracts/chatbot-contracts/chatbot-settings.ts",
+          "line": 56,
+          "domain": "shared:contracts",
+          "usageCount": 0
+        }
+      ],
+      "notes": [
+        "Review semantics before consolidating structurally similar declarations into one DTO."
+      ]
+    },
+    {
+      "clusterId": "near-0002",
+      "clusterKind": "near-shape",
+      "canonicalDtoCandidate": null,
+      "riskScore": 9,
+      "declarationCount": 2,
+      "domains": [
+        "feature:kangur"
+      ],
+      "signature": {
+        "shapeKind": "structural-members",
+        "normalizedShapeHash": "7a4ef9abed55",
+        "memberCount": 2,
+        "preview": "prop:locale?:string; prop:translate?:(key: string, values?: TranslationValues) => string"
+      },
+      "declarations": [
+        {
+          "name": "KangurAssignmentsRuntimeLocalizer",
+          "kind": "type",
+          "path": "src/features/kangur/ui/services/delegated-assignments/delegated-assignments.types.ts",
+          "line": 13,
+          "domain": "feature:kangur",
+          "usageCount": 1
+        },
+        {
+          "name": "KangurLearnerProfileLocalizer",
+          "kind": "type",
+          "path": "src/features/kangur/ui/services/profile/profile-types.ts",
+          "line": 28,
+          "domain": "feature:kangur",
+          "usageCount": 0
+        }
+      ],
+      "notes": [
+        "Review semantics before consolidating structurally similar declarations into one DTO."
+      ]
+    },
+    {
+      "clusterId": "near-0003",
+      "clusterKind": "near-shape",
+      "canonicalDtoCandidate": null,
+      "riskScore": 9,
+      "declarationCount": 2,
+      "domains": [
+        "shared:contracts"
+      ],
+      "signature": {
+        "shapeKind": "structural-members",
+        "normalizedShapeHash": "75fb08106fc2",
+        "memberCount": 7,
+        "preview": "prop:createdAt:string; prop:id:string; prop:level:string; prop:message:string; prop:metadata:unknown; prop:runId:string | null; prop:updatedAt:string | null"
+      },
+      "declarations": [
+        {
+          "name": "AgentAuditLogDto",
+          "kind": "type",
+          "path": "src/shared/contracts/chatbot.ts",
+          "line": 257,
+          "domain": "shared:contracts",
+          "usageCount": 1
+        },
+        {
+          "name": "AgentAuditLogRecordDtoBase",
+          "kind": "interface",
+          "path": "src/shared/contracts/agent-runtime.ts",
+          "line": 447,
+          "domain": "shared:contracts",
+          "usageCount": 0
+        }
+      ],
+      "notes": [
+        "Review semantics before consolidating structurally similar declarations into one DTO."
+      ]
+    },
+    {
+      "clusterId": "exact-0002",
+      "clusterKind": "exact-shape",
+      "canonicalDtoCandidate": null,
+      "riskScore": 8,
+      "declarationCount": 2,
+      "domains": [
+        "feature:kangur"
+      ],
+      "signature": {
+        "shapeKind": "structural-members",
+        "normalizedShapeHash": "6b3b9f9a30b7",
+        "memberCount": 1,
+        "preview": "prop:showImagesPanel?:boolean"
+      },
+      "declarations": [
+        {
+          "name": "SocialPostEditorProps",
+          "kind": "type",
+          "path": "src/features/kangur/admin/admin-kangur-social/SocialPost.Editor.tsx",
+          "line": 10,
+          "domain": "feature:kangur",
+          "usageCount": 0
+        },
+        {
+          "name": "SocialPostVisualsProps",
+          "kind": "type",
+          "path": "src/features/kangur/admin/admin-kangur-social/SocialPost.Visuals.tsx",
+          "line": 13,
+          "domain": "feature:kangur",
+          "usageCount": 0
+        }
+      ],
+      "notes": [
+        "Review semantics before consolidating structurally similar declarations into one DTO."
+      ]
+    }
+  ],
   "notes": [
     "This is a scanner scaffold output. Risk and clustering heuristics are intentionally conservative.",
     "Use clusters as review candidates before moving declarations to canonical DTO modules."

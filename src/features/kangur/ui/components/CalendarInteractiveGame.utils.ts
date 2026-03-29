@@ -114,8 +114,8 @@ export function generateTask(
     return {
       type: 'click_weekday_name',
       targetIdx,
-      label: translate('calendarInteractive.inRound.tasks.clickWeekday', {
-        name: getCalendarInteractiveWeekdayLookup(translate, targetIdx),
+      label: translate('calendarInteractive.tasks.clickWeekday', {
+        dayLabel: getCalendarInteractiveWeekdayLookup(translate, targetIdx),
       }),
     };
   }
@@ -129,8 +129,8 @@ export function generateTask(
       type: 'click_all_weekends',
       targets,
       dayIdx,
-      label: translate('calendarInteractive.inRound.tasks.clickAllWeekends', {
-        name: getCalendarInteractiveWeekdayLookup(translate, dayIdx),
+      label: translate('calendarInteractive.tasks.clickAllWeekends', {
+        dayName: getCalendarInteractiveWeekdayLookup(translate, dayIdx),
       }),
     };
   }
@@ -141,8 +141,8 @@ export function generateTask(
       type: 'drag_season',
       monthName: getCalendarInteractiveMonthName(translate, month),
       correctSeason: monthData.season,
-      label: translate('calendarInteractive.inRound.tasks.dragSeason', {
-        name: getCalendarInteractiveMonthName(translate, month),
+      label: translate('calendarInteractive.tasks.dragSeason', {
+        monthName: getCalendarInteractiveMonthName(translate, month),
       }),
     };
   }
@@ -152,8 +152,9 @@ export function generateTask(
     return {
       type: 'flip_month',
       targetMonth,
-      label: translate('calendarInteractive.inRound.tasks.flipMonth', {
-        name: getCalendarInteractiveMonthName(translate, targetMonth),
+      label: translate('calendarInteractive.tasks.flipMonth', {
+        monthNumber: targetMonth + 1,
+        monthName: getCalendarInteractiveMonthName(translate, targetMonth),
       }),
     };
   }
@@ -164,9 +165,11 @@ export function generateTask(
     targetDay,
     month,
     year,
-    label: translate('calendarInteractive.inRound.tasks.clickDate', {
-      day: targetDay,
-      month: getCalendarInteractiveMonthName(translate, month),
+    label: translate('calendarInteractive.tasks.clickDate', {
+      weekdayName: getCalendarInteractiveWeekdayFull(
+        translate,
+        getDayOfWeek(year, month, targetDay)
+      ),
     }),
   };
 }

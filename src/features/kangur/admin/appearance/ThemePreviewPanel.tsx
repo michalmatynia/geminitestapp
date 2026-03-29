@@ -167,7 +167,12 @@ export function ThemePreviewPanel({
         </div>
       </div>
 
-      <div style={sceneStyle} className='space-y-2 p-3'>
+      <div
+        style={sceneStyle}
+        className='space-y-2 p-3'
+        role='group'
+        aria-label={copy.groupAriaLabel}
+      >
         <SectionToggle label={copy.sectionLabels.page} section='page' />
         {!collapsed.has('page') && (
           <>
@@ -240,7 +245,7 @@ export function ThemePreviewPanel({
               tabIndex={-1}
               placeholder={copy.searchPlaceholder}
               style={inputStyle}
-              aria-label='Search preview'
+              aria-label={copy.previewInputAria}
             />
 
             <div style={glassStyle}>
@@ -268,6 +273,68 @@ export function ThemePreviewPanel({
               ))}
             </div>
           </>
+        )}
+
+        <SectionToggle label={copy.sectionLabels.chat} section='chat' />
+        {!collapsed.has('chat') && (
+          <div style={cardStyle}>
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 8,
+                marginBottom: 8,
+              }}
+            >
+              <div
+                style={{
+                  width: 28,
+                  height: 28,
+                  borderRadius: '50%',
+                  background:
+                    'linear-gradient(135deg, var(--kangur-accent-violet-start) 0%, var(--kangur-accent-violet-end) 100%)',
+                  flexShrink: 0,
+                }}
+              />
+              <div style={{ minWidth: 0 }}>
+                <p style={{ fontSize: 11, fontWeight: 700, margin: 0 }}>{copy.assistantName}</p>
+                <p style={{ color: 'var(--kangur-page-muted-text)', fontSize: 9, margin: 0 }}>
+                  {copy.assistantStatus}
+                </p>
+              </div>
+            </div>
+            <div
+              style={{
+                background: 'var(--kangur-soft-card-background)',
+                border: '1px solid var(--kangur-soft-card-border)',
+                borderRadius: 'var(--kangur-chat-bubble-radius, 22px)',
+                boxShadow: 'var(--kangur-soft-card-shadow)',
+                padding: '10px 12px',
+                marginBottom: 8,
+              }}
+            >
+              <p style={{ fontSize: 10, fontWeight: 600, margin: 0 }}>{copy.assistantGreeting}</p>
+              <p
+                style={{
+                  color: 'var(--kangur-page-muted-text)',
+                  fontSize: 9,
+                  margin: '4px 0 0',
+                }}
+              >
+                {copy.assistantHint}
+              </p>
+            </div>
+            <div
+              aria-label={copy.composerPlaceholder}
+              style={{
+                ...inputStyle,
+                display: 'flex',
+                alignItems: 'center',
+              }}
+            >
+              {copy.composerPlaceholder}
+            </div>
+          </div>
         )}
       </div>
     </div>

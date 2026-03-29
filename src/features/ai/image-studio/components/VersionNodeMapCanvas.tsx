@@ -254,7 +254,9 @@ export const VersionNodeMapCanvas = React.forwardRef<
             
             const isMergeSelected = mergeSelectedSet.has(node.id);
             const isCompositeSelected = compositeSelectedSet.has(node.id);
-            const isCompareSelected = compareNodeIds?.includes(node.id) ?? false;
+            const isCompareSelected = compareNodeIds
+              ? compareNodeIds[0] === node.id || compareNodeIds[1] === node.id
+              : false;
             resolveNodeOperationVisual(node);
 
             return (

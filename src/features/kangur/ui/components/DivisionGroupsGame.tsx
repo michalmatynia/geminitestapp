@@ -155,6 +155,31 @@ export default function DivisionGroupsGame(
     });
   };
 
+  const selectedToken = [...pool, ...remainder, ...groups.flat()].find(
+    (token) => token.id === selectedTokenId
+  );
+  const selectionHint = selectedToken
+    ? translations(
+        isCoarsePointer
+          ? 'divisionGroups.feedback.touchSelected'
+          : 'divisionGroups.feedback.keyboardSelected',
+        { emoji: selectedToken.emoji }
+      )
+    : translations(
+        isCoarsePointer
+          ? 'divisionGroups.feedback.touchIdle'
+          : 'divisionGroups.feedback.keyboardIdle'
+      );
+  const handleZoneKeyDown = (
+    event: React.KeyboardEvent<HTMLElement>,
+    destination: GroupZoneId | 'pool' | 'remainder'
+  ): void => {
+    if (event.key === 'Enter' || event.key === ' ') {
+      event.preventDefault();
+      moveToZone(destination);
+    }
+  };
+
   return (
     <KangurPracticeGameShell className='mx-auto max-w-4xl'>
       <KangurPracticeGameProgress
@@ -202,14 +227,22 @@ export default function DivisionGroupsGame(
                           <div
                             ref={provided.innerRef}
                             {...provided.droppableProps}
+                            data-testid={`division-groups-group-zone-${idx}`}
+                            role='button'
+                            tabIndex={isLocked ? -1 : 0}
+                            aria-disabled={isLocked}
+                            aria-label={translations('divisionGroups.aria.group', {
+                              group: idx + 1,
+                            })}
                             className={cn(
-                              'relative flex min-h-[140px] flex-col rounded-[28px] border-2 border-dashed p-4 transition-all',
+                              'relative flex min-h-[140px] flex-col rounded-[28px] border-2 border-dashed p-4 transition-all touch-manipulation',
                               snapshot.isDraggingOver
                                 ? 'border-sky-400 bg-sky-50 shadow-inner'
                                 : 'border-slate-200 bg-white/60',
                               isCoarsePointer && selectedTokenId && 'ring-2 ring-sky-300 ring-offset-2'
                             )}
                             onClick={() => moveToZone(zoneId)}
+                            onKeyDown={(event) => handleZoneKeyDown(event, zoneId)}
                           >
                             <span className='mb-3 text-[10px] font-black uppercase tracking-[0.18em] text-slate-400'>
                               {translations('division.inRound.groupLabel', { index: idx + 1 })}
@@ -243,14 +276,20 @@ export default function DivisionGroupsGame(
                       <div
                         ref={provided.innerRef}
                         {...provided.droppableProps}
+                        data-testid='division-groups-remainder-zone'
+                        role='button'
+                        tabIndex={isLocked ? -1 : 0}
+                        aria-disabled={isLocked}
+                        aria-label={translations('divisionGroups.aria.remainder')}
                         className={cn(
-                          'relative flex min-h-[120px] flex-col rounded-[28px] border-2 border-dashed p-4 transition-all',
+                          'relative flex min-h-[120px] flex-col rounded-[28px] border-2 border-dashed p-4 transition-all touch-manipulation',
                           snapshot.isDraggingOver
                             ? 'border-amber-400 bg-amber-50 shadow-inner'
                             : 'border-slate-200 bg-white/60',
                           isCoarsePointer && selectedTokenId && 'ring-2 ring-amber-300 ring-offset-2'
                         )}
                         onClick={() => moveToZone('remainder')}
+                        onKeyDown={(event) => handleZoneKeyDown(event, 'remainder')}
                       >
                         <span className='mb-3 text-[10px] font-black uppercase tracking-[0.18em] text-slate-400'>
                           {translations('division.inRound.remainderLabel')}
@@ -286,12 +325,18 @@ export default function DivisionGroupsGame(
                     <div
                       ref={provided.innerRef}
                       {...provided.droppableProps}
+                      data-testid='division-groups-pool-zone'
+                      role='button'
+                      tabIndex={isLocked ? -1 : 0}
+                      aria-disabled={isLocked}
+                      aria-label={translations('divisionGroups.aria.pool')}
                       className={cn(
-                        'flex min-h-[100px] flex-wrap items-center justify-center gap-2 rounded-[32px] border-2 border-dashed p-4 transition-all',
+                        'flex min-h-[100px] flex-wrap items-center justify-center gap-2 rounded-[32px] border-2 border-dashed p-4 transition-all touch-manipulation',
                         snapshot.isDraggingOver ? 'border-sky-300 bg-sky-50/80' : 'border-slate-200 bg-white/40',
                         isCoarsePointer && selectedTokenId && 'ring-2 ring-slate-300 ring-offset-2'
                       )}
                       onClick={() => moveToZone('pool')}
+                      onKeyDown={(event) => handleZoneKeyDown(event, 'pool')}
                     >
                       {pool.map((token, tIdx) => (
                         <DraggableToken
@@ -311,6 +356,18 @@ export default function DivisionGroupsGame(
                   )}
                 </Droppable>
               </div>
+
+              <KangurInfoCard accent='slate' className='w-full' padding='sm' tone='neutral'>
+                <p
+                  className='text-xs font-semibold uppercase tracking-[0.16em] text-slate-500'
+                  role='status'
+                  aria-live='polite'
+                  aria-atomic='true'
+                  data-testid='division-groups-selection-hint'
+                >
+                  {selectionHint}
+                </p>
+              </KangurInfoCard>
             </motion.div>
           </AnimatePresence>
 

@@ -13,6 +13,38 @@ export type KangurEmptyStateProps = React.HTMLAttributes<HTMLDivElement> &
     title?: React.ReactNode;
   };
 
+function KangurEmptyStateIcon(props: {
+  accent: NonNullable<KangurEmptyStateProps['accent']>;
+  centered: boolean;
+  icon: React.ReactNode;
+}): React.JSX.Element {
+  const { accent, centered, icon } = props;
+
+  return (
+    <div
+      className={cn(
+        'flex h-12 w-12 items-center justify-center rounded-2xl',
+        KANGUR_ACCENT_STYLES[accent].icon,
+        centered && 'mx-auto'
+      )}
+    >
+      {icon}
+    </div>
+  );
+}
+
+function KangurEmptyStateTitle(props: { title: React.ReactNode }): React.JSX.Element {
+  return <div className='break-words text-base font-bold [color:var(--kangur-page-text)]'>{props.title}</div>;
+}
+
+function KangurEmptyStateDescription(props: { description: React.ReactNode }): React.JSX.Element {
+  return (
+    <p className='break-words text-sm leading-6 [color:var(--kangur-page-muted-text)]'>
+      {props.description}
+    </p>
+  );
+}
+
 export function KangurEmptyState(input: KangurEmptyStateProps): React.JSX.Element {
   const {
     accent = 'slate',
@@ -45,25 +77,11 @@ export function KangurEmptyState(input: KangurEmptyStateProps): React.JSX.Elemen
       {...props}
     >
       {emptyStateIcon ? (
-        <div
-          className={cn(
-            'flex h-12 w-12 items-center justify-center rounded-2xl',
-            KANGUR_ACCENT_STYLES[emptyStateAccent].icon,
-            centered && 'mx-auto'
-          )}
-        >
-          {emptyStateIcon}
-        </div>
+        <KangurEmptyStateIcon accent={emptyStateAccent} centered={centered} icon={emptyStateIcon} />
       ) : null}
-      {emptyStateTitle ? (
-        <div className='break-words text-base font-bold [color:var(--kangur-page-text)]'>
-          {emptyStateTitle}
-        </div>
-      ) : null}
+      {emptyStateTitle ? <KangurEmptyStateTitle title={emptyStateTitle} /> : null}
       {emptyStateDescription ? (
-        <p className='break-words text-sm leading-6 [color:var(--kangur-page-muted-text)]'>
-          {emptyStateDescription}
-        </p>
+        <KangurEmptyStateDescription description={emptyStateDescription} />
       ) : null}
       {children}
     </div>

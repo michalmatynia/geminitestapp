@@ -39,12 +39,12 @@ vi.mock('next-intl', () => ({
               'KangurGamePage.screens.kangur_setup.description': {
                 de: 'Bereite eine Mathe-Kanguru-Sitzung vor.',
                 en: 'Prepare a Mathematical Kangaroo session.',
-                pl: 'Przygotuj sesje Kangura Matematycznego.',
+                pl: 'Przygotuj sesje StudiQ Matematycznego.',
               },
               'KangurGamePage.screens.kangur_setup.label': {
                 de: 'Mathe-Kanguru-Sitzung einrichten',
                 en: 'Mathematical Kangaroo session setup',
-                pl: 'Konfiguracja sesji Kangura Matematycznego',
+                pl: 'Konfiguracja sesji StudiQ Matematycznego',
               },
             } as const
           )[`${namespace}.${key}`]?.[localeState.value] ?? key,

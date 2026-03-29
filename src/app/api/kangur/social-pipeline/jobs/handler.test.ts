@@ -384,4 +384,215 @@ describe('social pipeline jobs handler', () => {
       )
     ).rejects.toThrow('Job not found.');
   });
+
+  it('returns compact visual-analysis and generation job summaries in list mode', async () => {
+    getJobsMock.mockResolvedValue([
+      buildJob({
+        id: 'job-analysis-1',
+        data: {
+          type: 'manual-post-visual-analysis',
+          input: {
+            postId: 'post-1',
+            docReferences: ['overview'],
+            imageAddonIds: ['addon-1', 'addon-2'],
+          },
+        },
+        progress: {
+          type: 'manual-post-visual-analysis',
+          step: 'saving',
+          message: 'Image analysis saved on the post.',
+          updatedAt: 1_700_000_002_000,
+          postId: 'post-1',
+          imageAddonCount: 2,
+          docReferenceCount: 1,
+          highlightCount: 2,
+          docUpdateCount: 1,
+        },
+        returnvalue: {
+          type: 'manual-post-visual-analysis',
+          postId: 'post-1',
+          imageAddonIds: ['addon-1', 'addon-2'],
+          analysis: {
+            summary: 'Updated hero',
+            highlights: ['Updated hero', 'New CTA'],
+            docUpdates: [{ docPath: 'docs/kangur/overview.mdx', section: null }],
+          },
+        },
+      }),
+      buildJob({
+        id: 'job-generate-1',
+        data: {
+          type: 'manual-post-generation',
+          input: {
+            postId: 'post-2',
+            docReferences: ['overview'],
+            imageAddonIds: ['addon-3'],
+          },
+        },
+        progress: {
+          type: 'manual-post-generation',
+          step: 'previewing',
+          message: 'Draft generated and saved on the post.',
+          updatedAt: 1_700_000_002_100,
+          postId: 'post-2',
+          imageAddonCount: 1,
+          docReferenceCount: 1,
+          visualSummaryPresent: true,
+          highlightCount: 1,
+          docUpdateCount: 0,
+        },
+        returnvalue: {
+          type: 'manual-post-generation',
+          postId: 'post-2',
+          imageAddonIds: ['addon-3'],
+          generatedPost: { id: 'post-2', titlePl: 'Generated title' },
+          draft: null,
+        },
+      }),
+    ]);
+
+    const response = await GET_handler(
+      new NextRequest('http://localhost/api/kangur/social-pipeline/jobs', {
+        method: 'GET',
+      }),
+      createContext({})
+    );
+
+    await expect(response.json()).resolves.toEqual([
+      expect.objectContaining({
+        id: 'job-analysis-1',
+        data: {
+          type: 'manual-post-visual-analysis',
+          input: {
+            postId: 'post-1',
+            docReferenceCount: 1,
+            imageAddonCount: 2,
+          },
+        },
+        progress: {
+          type: 'manual-post-visual-analysis',
+          step: 'saving',
+          message: 'Image analysis saved on the post.',
+          updatedAt: 1_700_000_002_000,
+          postId: 'post-1',
+          imageAddonCount: 2,
+          docReferenceCount: 1,
+          highlightCount: 2,
+          docUpdateCount: 1,
+        },
+        result: {
+          type: 'manual-post-visual-analysis',
+          postId: 'post-1',
+          imageAddonCount: 2,
+          highlightCount: 2,
+          docUpdateCount: 1,
+        },
+      }),
+      expect.objectContaining({
+        id: 'job-generate-1',
+        data: {
+          type: 'manual-post-generation',
+          input: {
+            postId: 'post-2',
+            docReferenceCount: 1,
+            imageAddonCount: 1,
+          },
+        },
+        progress: {
+          type: 'manual-post-generation',
+          step: 'previewing',
+          message: 'Draft generated and saved on the post.',
+          updatedAt: 1_700_000_002_100,
+          postId: 'post-2',
+          imageAddonCount: 1,
+          docReferenceCount: 1,
+          visualSummaryPresent: true,
+          highlightCount: 1,
+          docUpdateCount: 0,
+        },
+        result: {
+          type: 'manual-post-generation',
+          postId: 'post-2',
+          imageAddonCount: 1,
+          saved: true,
+        },
+      }),
+    ]);
+  });
+
+  it('returns the full visual-analysis job payload when requesting a specific job id', async () => {
+    getJobMock.mockResolvedValue(
+      buildJob({
+        data: {
+          type: 'manual-post-visual-analysis',
+          input: {
+            postId: 'post-1',
+            docReferences: ['overview'],
+            imageAddonIds: ['addon-1'],
+          },
+        },
+        progress: {
+          type: 'manual-post-visual-analysis',
+          step: 'saving',
+          message: 'Image analysis saved on the post.',
+          updatedAt: 1_700_000_002_000,
+          postId: 'post-1',
+          imageAddonCount: 1,
+          docReferenceCount: 1,
+          highlightCount: 2,
+          docUpdateCount: 1,
+        },
+        returnvalue: {
+          type: 'manual-post-visual-analysis',
+          postId: 'post-1',
+          imageAddonIds: ['addon-1'],
+          analysis: {
+            summary: 'Updated hero',
+            highlights: ['Updated hero', 'New CTA'],
+            docUpdates: [{ docPath: 'docs/kangur/overview.mdx', section: null }],
+          },
+          savedPost: {
+            id: 'post-1',
+            visualSummary: 'Updated hero',
+          },
+        },
+      })
+    );
+
+    const response = await GET_handler(
+      new NextRequest('http://localhost/api/kangur/social-pipeline/jobs?id=job-1', {
+        method: 'GET',
+      }),
+      createContext({ id: 'job-1' })
+    );
+
+    await expect(response.json()).resolves.toEqual(
+      expect.objectContaining({
+        data: {
+          type: 'manual-post-visual-analysis',
+          input: {
+            postId: 'post-1',
+            docReferenceCount: 1,
+            imageAddonCount: 1,
+          },
+        },
+        result: {
+          type: 'manual-post-visual-analysis',
+          postId: 'post-1',
+          imageAddonCount: 1,
+          highlightCount: 2,
+          docUpdateCount: 1,
+          analysis: {
+            summary: 'Updated hero',
+            highlights: ['Updated hero', 'New CTA'],
+            docUpdates: [{ docPath: 'docs/kangur/overview.mdx', section: null }],
+          },
+          savedPost: {
+            id: 'post-1',
+            visualSummary: 'Updated hero',
+          },
+        },
+      })
+    );
+  });
 });

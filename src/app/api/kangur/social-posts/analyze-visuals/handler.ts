@@ -3,12 +3,16 @@ import { z } from 'zod';
 
 import { resolveKangurActor } from '@/features/kangur/services/kangur-actor';
 import { logKangurServerEvent } from '@/features/kangur/observability/server';
-import { analyzeKangurSocialVisuals } from '@/features/kangur/server/social-posts-vision';
-import { findKangurSocialImageAddonsByIds } from '@/features/kangur/server/social-image-addons-repository';
+import { updateKangurSocialPost } from '@/features/kangur/server/social-posts-repository';
+import {
+  enqueueKangurSocialPipelineJob,
+  recoverKangurSocialPipelineQueue,
+  startKangurSocialPipelineQueue,
+} from '@/features/kangur/workers/kangurSocialPipelineQueue';
 import { ErrorSystem } from '@/features/kangur/shared/utils/observability/error-system';
-import { kangurSocialVisualAnalysisSchema } from '@/shared/contracts/kangur-social-posts';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
-import { forbiddenError } from '@/shared/errors/app-error';
+import { forbiddenError, operationFailedError } from '@/shared/errors/app-error';
+import { isRedisAvailable, isRedisReachable } from '@/shared/lib/queue';
 
 const bodySchema = z.object({
   postId: z.string().trim().optional(),
@@ -30,43 +34,80 @@ export async function postKangurSocialPostAnalyzeVisualsHandler(
   const parsed = bodySchema.parse(ctx.body ?? {});
   const startedAt = Date.now();
   const imageAddonIds = parsed.imageAddonIds.map((id) => id.trim()).filter(Boolean);
-  const imageAddons =
-    imageAddonIds.length > 0 ? await findKangurSocialImageAddonsByIds(imageAddonIds) : [];
+  const normalizedPostId = parsed.postId?.trim() || null;
 
   try {
-    const analysis = kangurSocialVisualAnalysisSchema.parse(
-      await analyzeKangurSocialVisuals({
-        docReferences: parsed.docReferences,
-        notes: parsed.notes,
-        modelId: parsed.visionModelId,
-        imageAddons,
-      })
-    );
+    if (!isRedisAvailable()) {
+      throw operationFailedError(
+        'Social pipeline queue is not available. Configure REDIS_URL and start Redis.'
+      );
+    }
+
+    const redisReachable = await isRedisReachable();
+    if (!redisReachable) {
+      throw operationFailedError(
+        'Social pipeline queue is not available. Redis is configured but unreachable.'
+      );
+    }
+
+    await recoverKangurSocialPipelineQueue();
+    startKangurSocialPipelineQueue();
+
+    const jobId = await enqueueKangurSocialPipelineJob({
+      type: 'manual-post-visual-analysis',
+      input: {
+        postId: normalizedPostId,
+        docReferences: parsed.docReferences ?? [],
+        notes: parsed.notes ?? '',
+        visionModelId: parsed.visionModelId?.trim() || null,
+        imageAddonIds,
+        actorId: actor.actorId,
+      },
+    });
+
+    if (normalizedPostId) {
+      await updateKangurSocialPost(normalizedPostId, {
+        visualAnalysisStatus: 'queued',
+        visualAnalysisJobId: jobId,
+        visualAnalysisModelId: parsed.visionModelId?.trim() || null,
+        updatedBy: actor.actorId,
+      }).catch(() => null);
+    }
 
     void logKangurServerEvent({
       source: 'kangur.social-posts.analyze-visuals',
-      message: 'Kangur social visual analysis completed',
+      message: 'Kangur social visual analysis queued',
       request: req,
       requestContext: ctx,
       actor,
-      statusCode: 200,
+      statusCode: 202,
       context: {
         postId: parsed.postId ?? null,
+        normalizedPostId,
         imageAddonCount: imageAddonIds.length,
         docReferenceCount: parsed.docReferences?.length ?? 0,
         notesLength: parsed.notes?.trim().length ?? 0,
         durationMs: Date.now() - startedAt,
-        highlightCount: analysis.highlights.length,
-        docUpdateCount: analysis.docUpdates.length,
+        jobId,
       },
     });
 
-    return NextResponse.json(analysis, { headers: { 'Cache-Control': 'no-store' } });
+    return NextResponse.json(
+      {
+        success: true,
+        jobId,
+        jobType: 'manual-post-visual-analysis',
+      },
+      {
+        status: 202,
+        headers: { 'Cache-Control': 'no-store' },
+      }
+    );
   } catch (error) {
     void ErrorSystem.captureException(error, {
       service: 'kangur.social-posts.analyze-visuals',
       action: 'apiAnalyzeVisuals',
-      postId: parsed.postId ?? null,
+      postId: normalizedPostId,
       imageAddonCount: imageAddonIds.length,
       docReferenceCount: parsed.docReferences?.length ?? 0,
       notesLength: parsed.notes?.trim().length ?? 0,

@@ -66,6 +66,7 @@ const buildVisualAnalysisPatch = ({
   visualSummary: analysis.summary.trim() || null,
   visualHighlights: analysis.highlights,
   visualDocUpdates: analysis.docUpdates,
+  visualAnalysisStatus: 'completed' as const,
   visualAnalysisUpdatedAt: new Date().toISOString(),
   visualAnalysisJobId: jobId,
   visualAnalysisModelId: visionModelId,

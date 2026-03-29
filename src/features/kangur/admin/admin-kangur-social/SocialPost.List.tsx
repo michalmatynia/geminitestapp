@@ -193,7 +193,18 @@ export function SocialPostList(): React.JSX.Element {
           const title = post.titlePl || post.titleEn || 'Untitled update';
           const isActive = activePostId === post.id;
           const hasVisualAnalysis =
-            Boolean(post.visualSummary?.trim()) || (post.visualHighlights?.length ?? 0) > 0;
+            Boolean(post.visualSummary?.trim()) ||
+            (post.visualHighlights?.length ?? 0) > 0 ||
+            Boolean(post.visualAnalysisStatus);
+          const visualAnalysisStatus = post.visualAnalysisStatus ?? null;
+          const visualAnalysisStatusLabel =
+            visualAnalysisStatus === 'queued'
+              ? 'Analysis queued'
+              : visualAnalysisStatus === 'running'
+                ? 'Analysis running'
+                : visualAnalysisStatus === 'failed'
+                  ? 'Analysis failed'
+                  : 'Image analysis';
           const visualHighlightCount = post.visualHighlights?.length ?? 0;
           const visualDocUpdateCount = post.visualDocUpdates?.length ?? 0;
           const pipelineSelectionLabel = isActive
@@ -258,7 +269,15 @@ export function SocialPostList(): React.JSX.Element {
                     </div>
                     {hasVisualAnalysis ? (
                       <div className='mt-1 flex flex-wrap items-center gap-2'>
-                        <Badge variant='outline'>Image analysis</Badge>
+                        <Badge variant='outline'>{visualAnalysisStatusLabel}</Badge>
+                        {post.visualAnalysisUpdatedAt ? (
+                          <span>
+                            Analyzed {formatDatetimeDisplay(post.visualAnalysisUpdatedAt) || '—'}
+                          </span>
+                        ) : null}
+                        {post.visualAnalysisModelId ? (
+                          <span>Model: {post.visualAnalysisModelId}</span>
+                        ) : null}
                         {visualHighlightCount > 0 ? (
                           <span>
                             {visualHighlightCount} highlight

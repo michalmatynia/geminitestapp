@@ -57,17 +57,48 @@ const manualPipelineInputSchema = z.object({
   }
 });
 
+const manualVisualAnalysisInputSchema = z.object({
+  postId: z.string().trim().optional(),
+  docReferences: z.array(z.string().trim().min(1)).max(80).default([]),
+  notes: z.string().trim().optional().default(''),
+  visionModelId: z.string().trim().nullable().optional(),
+  imageAddonIds: z.array(z.string().trim().min(1)).max(30).default([]),
+});
+
+const manualGenerationInputSchema = z.object({
+  postId: z.string().trim().optional(),
+  docReferences: z.array(z.string().trim().min(1)).max(80).default([]),
+  notes: z.string().trim().optional().default(''),
+  modelId: z.string().trim().nullable().optional(),
+  visionModelId: z.string().trim().nullable().optional(),
+  imageAddonIds: z.array(z.string().trim().min(1)).max(30).default([]),
+  projectUrl: z.string().trim().optional().default(''),
+  prefetchedVisualAnalysis: kangurSocialVisualAnalysisSchema.optional(),
+  requireVisualAnalysisInBody: z.boolean().optional().default(false),
+});
+
 const bodySchema = z
   .object({
-    jobType: z.enum(['pipeline-tick', 'manual-post-pipeline']).optional(),
-    input: manualPipelineInputSchema.optional(),
+    jobType: z
+      .enum([
+        'pipeline-tick',
+        'manual-post-pipeline',
+        'manual-post-visual-analysis',
+        'manual-post-generation',
+      ])
+      .optional(),
+    input: z.unknown().optional(),
   })
   .superRefine((value, ctx) => {
-    if (value.jobType === 'manual-post-pipeline' && !value.input) {
+    if (
+      value.jobType &&
+      value.jobType !== 'pipeline-tick' &&
+      !value.input
+    ) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         path: ['input'],
-        message: 'Manual pipeline input is required.',
+        message: 'Manual queue input is required.',
       });
     }
   });
@@ -85,6 +116,18 @@ export async function POST_handler(
   const jobType =
     parsed.jobType ??
     (parsed.input ? 'manual-post-pipeline' : 'pipeline-tick');
+  const manualPipelineInput =
+    jobType === 'manual-post-pipeline'
+      ? manualPipelineInputSchema.parse(parsed.input ?? {})
+      : null;
+  const manualVisualAnalysisInput =
+    jobType === 'manual-post-visual-analysis'
+      ? manualVisualAnalysisInputSchema.parse(parsed.input ?? {})
+      : null;
+  const manualGenerationInput =
+    jobType === 'manual-post-generation'
+      ? manualGenerationInputSchema.parse(parsed.input ?? {})
+      : null;
 
   if (!isRedisAvailable()) {
     throw operationFailedError(
@@ -107,14 +150,30 @@ export async function POST_handler(
       ? await enqueueKangurSocialPipelineJob({
           type: 'manual-post-pipeline',
           input: {
-            ...parsed.input!,
+            ...manualPipelineInput!,
             actorId: actor.actorId,
-            linkedinConnectionId: parsed.input?.linkedinConnectionId ?? null,
-            brainModelId: parsed.input?.brainModelId ?? null,
-            visionModelId: parsed.input?.visionModelId ?? null,
+            linkedinConnectionId: manualPipelineInput?.linkedinConnectionId ?? null,
+            brainModelId: manualPipelineInput?.brainModelId ?? null,
+            visionModelId: manualPipelineInput?.visionModelId ?? null,
             forwardCookies: req.headers.get('cookie') ?? '',
           },
         })
+      : jobType === 'manual-post-visual-analysis'
+        ? await enqueueKangurSocialPipelineJob({
+            type: 'manual-post-visual-analysis',
+            input: {
+              ...manualVisualAnalysisInput!,
+              actorId: actor.actorId,
+            },
+          })
+        : jobType === 'manual-post-generation'
+          ? await enqueueKangurSocialPipelineJob({
+              type: 'manual-post-generation',
+              input: {
+                ...manualGenerationInput!,
+                actorId: actor.actorId,
+              },
+            })
       : await enqueueKangurSocialPipelineJob({ type: 'pipeline-tick' });
 
   return NextResponse.json(

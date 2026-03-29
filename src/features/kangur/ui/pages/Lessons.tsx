@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState, type ComponentProps } from 'react';
 import { useTranslations } from 'next-intl';
 import type { KangurPrimaryNavigationProps } from '@/features/kangur/ui/components/KangurPrimaryNavigation';
 import { KangurTopNavigationController } from '@/features/kangur/ui/components/KangurTopNavigationController';
@@ -15,6 +15,9 @@ import { LazyActiveLessonView } from './lessons/LazyActiveLessonView';
 import { LazyLessonsDeferredEnhancements } from './lessons/LazyLessonsDeferredEnhancements';
 
 const LESSONS_DEFERRED_ENHANCEMENTS_IDLE_TIMEOUT_MS = 120;
+
+type LessonsTutorSessionContext = ComponentProps<typeof LazyLessonsDeferredEnhancements>['sessionContext'];
+type LessonsActiveLessonSnapshot = ComponentProps<typeof LazyActiveLessonView>['snapshot'];
 
 function LessonsRouteShellReadyReporter() {
   const routeTransitionState = useOptionalKangurRouteTransitionState();
@@ -31,55 +34,77 @@ function LessonsRouteShellReadyReporter() {
   return null;
 }
 
-function LessonsContent() {
-  const pageTranslations = useTranslations('KangurLessonsPage');
-  const routeTransitionState = useOptionalKangurRouteTransitionState();
+const resolveLessonsIsRouteTransitionIdle = (
+  routeTransitionState: ReturnType<typeof useOptionalKangurRouteTransitionState>
+): boolean =>
+  routeTransitionState?.transitionPhase == null || routeTransitionState.transitionPhase === 'idle';
+
+const resolveLessonsActiveLessonAssignments = ({
+  activeLesson,
+  completedLessonAssignmentsByComponent,
+  lessonAssignmentsByComponent,
+}: {
+  activeLesson: ReturnType<typeof useLessons>['activeLesson'];
+  completedLessonAssignmentsByComponent: ReturnType<typeof useLessons>['completedLessonAssignmentsByComponent'];
+  lessonAssignmentsByComponent: ReturnType<typeof useLessons>['lessonAssignmentsByComponent'];
+}): {
+  activeLessonAssignment: { id?: string | null } | null;
+  completedActiveLessonAssignment: { id?: string | null } | null;
+} => {
+  if (!activeLesson) {
+    return {
+      activeLessonAssignment: null,
+      completedActiveLessonAssignment: null,
+    };
+  }
+
+  const activeLessonAssignment = lessonAssignmentsByComponent.get(activeLesson.componentId) ?? null;
+
+  return {
+    activeLessonAssignment,
+    completedActiveLessonAssignment: activeLessonAssignment
+      ? null
+      : (completedLessonAssignmentsByComponent.get(activeLesson.componentId) ?? null),
+  };
+};
+
+const resolveLessonsTutorContext = ({
+  activeLesson,
+  activeLessonAssignment,
+  completedActiveLessonAssignment,
+  pageTitle,
+}: {
+  activeLesson: ReturnType<typeof useLessons>['activeLesson'];
+  activeLessonAssignment: { id?: string | null } | null;
+  completedActiveLessonAssignment: { id?: string | null } | null;
+  pageTitle: string;
+}): LessonsTutorSessionContext => ({
+  surface: 'lesson',
+  contentId: activeLesson?.id ?? 'lesson:list',
+  title: activeLesson?.title ?? pageTitle,
+  assignmentId: activeLessonAssignment?.id ?? completedActiveLessonAssignment?.id,
+});
+
+function useLessonsActiveLessonRenderSnapshot(input: {
+  activeLesson: ReturnType<typeof useLessons>['activeLesson'];
+  activeLessonId: ReturnType<typeof useLessons>['activeLessonId'];
+  completedLessonAssignmentsByComponent: ReturnType<typeof useLessons>['completedLessonAssignmentsByComponent'];
+  isSecretLessonActive: ReturnType<typeof useLessons>['isSecretLessonActive'];
+  lessonAssignmentsByComponent: ReturnType<typeof useLessons>['lessonAssignmentsByComponent'];
+  orderedLessons: ReturnType<typeof useLessons>['orderedLessons'];
+  progress: ReturnType<typeof useLessons>['progress'];
+}): LessonsActiveLessonSnapshot {
   const {
-    auth,
-    basePath,
     activeLesson,
     activeLessonId,
-    lessonAssignmentsByComponent,
     completedLessonAssignmentsByComponent,
-    orderedLessons,
     isSecretLessonActive,
+    lessonAssignmentsByComponent,
+    orderedLessons,
     progress,
-    guestPlayerName,
-    setGuestPlayerName,
-  } = useLessons();
-  const { openLoginModal } = useKangurLoginModal();
-  const [isDeferredEnhancementsReady, setIsDeferredEnhancementsReady] = useState(
-    Boolean(activeLesson)
-  );
-  const [docsTooltipsEnabled, setDocsTooltipsEnabled] = useState(false);
+  } = input;
 
-  const { user, logout } = auth;
-  const isRouteTransitionIdle =
-    routeTransitionState?.transitionPhase == null ||
-    routeTransitionState.transitionPhase === 'idle';
-  const handleLogout = useCallback(() => {
-    logout(false);
-  }, [logout]);
-  const handleDeferredDocsTooltipsResolved = useCallback((enabled: boolean) => {
-    setDocsTooltipsEnabled((current) => (current === enabled ? current : enabled));
-  }, []);
-
-  const activeLessonAssignment = activeLesson
-    ? (lessonAssignmentsByComponent.get(activeLesson.componentId) ?? null)
-    : null;
-  const completedActiveLessonAssignment =
-    activeLesson && !activeLessonAssignment
-      ? (completedLessonAssignmentsByComponent.get(activeLesson.componentId) ?? null)
-      : null;
-
-  const lessonTutorContext = {
-    surface: 'lesson' as const,
-    contentId: activeLesson?.id ?? 'lesson:list',
-    title: activeLesson?.title ?? pageTranslations('pageTitle'),
-    assignmentId: activeLessonAssignment?.id ?? completedActiveLessonAssignment?.id,
-  };
-
-  const activeLessonRenderSnapshot = useMemo(
+  return useMemo(
     () =>
       activeLesson
         ? {
@@ -102,8 +127,22 @@ function LessonsContent() {
       progress,
     ]
   );
+}
 
-  const navigation = useMemo<KangurPrimaryNavigationProps>(
+function useLessonsPageNavigation(input: {
+  basePath: string;
+  guestPlayerName: string;
+  logout: (redirect?: boolean) => void;
+  openLoginModal: () => void;
+  setGuestPlayerName: (value: string) => void;
+  user: ReturnType<typeof useLessons>['auth']['user'];
+}): KangurPrimaryNavigationProps {
+  const { basePath, guestPlayerName, logout, openLoginModal, setGuestPlayerName, user } = input;
+  const handleLogout = useCallback(() => {
+    logout(false);
+  }, [logout]);
+
+  return useMemo(
     () => ({
       basePath,
       canManageLearners: Boolean(user?.canManageLearners),
@@ -114,27 +153,31 @@ function LessonsContent() {
       onLogin: openLoginModal,
       onLogout: handleLogout,
     }),
-    [
-      basePath,
-      guestPlayerName,
-      handleLogout,
-      openLoginModal,
-      setGuestPlayerName,
-      user,
-    ]
+    [basePath, guestPlayerName, handleLogout, openLoginModal, setGuestPlayerName, user]
   );
+}
+
+function useLessonsDeferredEnhancementsState(input: {
+  activeLesson: ReturnType<typeof useLessons>['activeLesson'];
+  isRouteTransitionIdle: boolean;
+}): {
+  docsTooltipsEnabled: boolean;
+  isDeferredEnhancementsReady: boolean;
+  onDocsTooltipsResolved: (enabled: boolean) => void;
+} {
+  const { activeLesson, isRouteTransitionIdle } = input;
+  const [isDeferredEnhancementsReady, setIsDeferredEnhancementsReady] = useState(Boolean(activeLesson));
+  const [docsTooltipsEnabled, setDocsTooltipsEnabled] = useState(false);
+  const onDocsTooltipsResolved = useCallback((enabled: boolean) => {
+    setDocsTooltipsEnabled((current) => (current === enabled ? current : enabled));
+  }, []);
 
   useEffect(() => {
     if (isDeferredEnhancementsReady) {
       return;
     }
 
-    if (typeof window === 'undefined') {
-      setIsDeferredEnhancementsReady(true);
-      return;
-    }
-
-    if (activeLesson) {
+    if (typeof window === 'undefined' || activeLesson) {
       setIsDeferredEnhancementsReady(true);
       return;
     }
@@ -144,14 +187,9 @@ function LessonsContent() {
     }
 
     if (typeof window.requestIdleCallback === 'function') {
-      const idleId = window.requestIdleCallback(
-        () => {
-          setIsDeferredEnhancementsReady(true);
-        },
-        {
-          timeout: LESSONS_DEFERRED_ENHANCEMENTS_IDLE_TIMEOUT_MS,
-        }
-      );
+      const idleId = window.requestIdleCallback(() => {
+        setIsDeferredEnhancementsReady(true);
+      }, { timeout: LESSONS_DEFERRED_ENHANCEMENTS_IDLE_TIMEOUT_MS });
 
       return () => {
         window.cancelIdleCallback?.(idleId);
@@ -167,15 +205,113 @@ function LessonsContent() {
     };
   }, [activeLesson, isDeferredEnhancementsReady, isRouteTransitionIdle]);
 
+  return {
+    docsTooltipsEnabled,
+    isDeferredEnhancementsReady,
+    onDocsTooltipsResolved,
+  };
+}
+
+function LessonsDeferredEnhancementsGate(props: {
+  isReady: boolean;
+  learnerId: string | null;
+  onDocsTooltipsResolved: (enabled: boolean) => void;
+  sessionContext: LessonsTutorSessionContext;
+}): React.JSX.Element | null {
+  const { isReady, learnerId, onDocsTooltipsResolved, sessionContext } = props;
+  if (!isReady) {
+    return null;
+  }
+
+  return (
+    <LazyLessonsDeferredEnhancements
+      learnerId={learnerId}
+      onDocsTooltipsResolved={onDocsTooltipsResolved}
+      sessionContext={sessionContext}
+    />
+  );
+}
+
+function LessonsPageBody(props: {
+  activeLesson: ReturnType<typeof useLessons>['activeLesson'];
+  activeLessonId: ReturnType<typeof useLessons>['activeLessonId'];
+  snapshot: LessonsActiveLessonSnapshot;
+}): React.JSX.Element {
+  const { activeLesson, activeLessonId, snapshot } = props;
+
+  if (!activeLesson) {
+    return <LessonsCatalog />;
+  }
+
+  return (
+    <LazyAnimatePresence mode='wait'>
+      <LazyActiveLessonView key={activeLessonId ?? activeLesson.id} snapshot={snapshot} />
+    </LazyAnimatePresence>
+  );
+}
+
+function LessonsContent() {
+  const pageTranslations = useTranslations('KangurLessonsPage');
+  const routeTransitionState = useOptionalKangurRouteTransitionState();
+  const {
+    auth,
+    basePath,
+    activeLesson,
+    activeLessonId,
+    lessonAssignmentsByComponent,
+    completedLessonAssignmentsByComponent,
+    orderedLessons,
+    isSecretLessonActive,
+    progress,
+    guestPlayerName,
+    setGuestPlayerName,
+  } = useLessons();
+  const { openLoginModal } = useKangurLoginModal();
+  const { user, logout } = auth;
+  const isRouteTransitionIdle = resolveLessonsIsRouteTransitionIdle(routeTransitionState);
+  const { activeLessonAssignment, completedActiveLessonAssignment } =
+    resolveLessonsActiveLessonAssignments({
+      activeLesson,
+      completedLessonAssignmentsByComponent,
+      lessonAssignmentsByComponent,
+    });
+  const lessonTutorContext = resolveLessonsTutorContext({
+    activeLesson,
+    activeLessonAssignment,
+    completedActiveLessonAssignment,
+    pageTitle: pageTranslations('pageTitle'),
+  });
+  const activeLessonRenderSnapshot = useLessonsActiveLessonRenderSnapshot({
+    activeLesson,
+    activeLessonId,
+    completedLessonAssignmentsByComponent,
+    isSecretLessonActive,
+    lessonAssignmentsByComponent,
+    orderedLessons,
+    progress,
+  });
+  const navigation = useLessonsPageNavigation({
+    basePath,
+    guestPlayerName,
+    logout,
+    openLoginModal,
+    setGuestPlayerName,
+    user,
+  });
+  const { docsTooltipsEnabled, isDeferredEnhancementsReady, onDocsTooltipsResolved } =
+    useLessonsDeferredEnhancementsState({
+      activeLesson,
+      isRouteTransitionIdle,
+    });
+
   return (
     <>
-      {isDeferredEnhancementsReady ? (
-        <LazyLessonsDeferredEnhancements
-          learnerId={user?.activeLearner?.id ?? null}
-          onDocsTooltipsResolved={handleDeferredDocsTooltipsResolved}
-          sessionContext={lessonTutorContext}
-        />
-      ) : null}
+      <LessonsDeferredEnhancementsGate
+        isReady={isDeferredEnhancementsReady}
+        learnerId={user?.activeLearner?.id ?? null}
+        onDocsTooltipsResolved={onDocsTooltipsResolved}
+        sessionContext={lessonTutorContext}
+      />
       <KangurStandardPageLayout
         tone='learn'
         id='kangur-lessons-page'
@@ -190,16 +326,11 @@ function LessonsContent() {
           className: 'flex flex-col items-center',
         }}
       >
-        {activeLesson ? (
-          <LazyAnimatePresence mode='wait'>
-            <LazyActiveLessonView
-              key={activeLessonId ?? activeLesson.id}
-              snapshot={activeLessonRenderSnapshot}
-            />
-          </LazyAnimatePresence>
-        ) : (
-          <LessonsCatalog />
-        )}
+        <LessonsPageBody
+          activeLesson={activeLesson}
+          activeLessonId={activeLessonId}
+          snapshot={activeLessonRenderSnapshot}
+        />
       </KangurStandardPageLayout>
     </>
   );

@@ -73,6 +73,12 @@ type PipelineTriggerResponse = {
   jobType: 'pipeline-tick' | 'manual-post-pipeline';
 };
 
+type VisualAnalysisTriggerResponse = {
+  success: boolean;
+  jobId: string;
+  jobType: 'manual-post-visual-analysis';
+};
+
 type ManualPipelineJobResult = {
   type: 'manual-post-pipeline';
   postId: string;
@@ -97,6 +103,19 @@ type PipelineJobRecord = {
   failedReason: string | null;
 };
 
+type VisualAnalysisJobResult = {
+  type: 'manual-post-visual-analysis';
+  analysis: KangurSocialVisualAnalysis;
+  savedPost: KangurSocialPost | null;
+};
+
+type VisualAnalysisJobRecord = {
+  id: string;
+  status: string;
+  result: VisualAnalysisJobResult | null;
+  failedReason: string | null;
+};
+
 type RunPipelineOptions = {
   prefetchedVisualAnalysis?: KangurSocialVisualAnalysis;
   requireVisualAnalysisInBody?: boolean;
@@ -113,6 +132,13 @@ const isManualPipelineResult = (value: unknown): value is ManualPipelineJobResul
     value &&
       typeof value === 'object' &&
       (value as { type?: string }).type === 'manual-post-pipeline'
+  );
+
+const isVisualAnalysisJobResult = (value: unknown): value is VisualAnalysisJobResult =>
+  Boolean(
+    value &&
+      typeof value === 'object' &&
+      (value as { type?: string }).type === 'manual-post-visual-analysis'
   );
 
 const invalidateSocialQueries = (queryClient: {
@@ -164,10 +190,27 @@ export function useSocialPipelineRunner(deps: SocialPipelineRunnerDeps) {
     deps.setBatchCaptureResult(null);
     setPipelineProgress(null);
     setPipelineErrorMessage(null);
-    setVisualAnalysisResult(null);
+    if (
+      deps.activePost?.visualSummary?.trim() ||
+      (deps.activePost?.visualHighlights?.length ?? 0) > 0 ||
+      (deps.activePost?.visualDocUpdates?.length ?? 0) > 0
+    ) {
+      setVisualAnalysisResult({
+        summary: deps.activePost.visualSummary ?? '',
+        highlights: deps.activePost.visualHighlights ?? [],
+        docUpdates: deps.activePost.visualDocUpdates ?? [],
+      });
+    } else {
+      setVisualAnalysisResult(null);
+    }
     setVisualAnalysisErrorMessage(null);
     setIsVisualAnalysisModalOpen(false);
-  }, [deps.activePostId]);
+  }, [
+    deps.activePostId,
+    deps.activePost?.visualSummary,
+    deps.activePost?.visualHighlights,
+    deps.activePost?.visualDocUpdates,
+  ]);
 
   useEffect(() => {
     const previousScope = previousVisualAnalysisScopeRef.current;
@@ -482,7 +525,7 @@ export function useSocialPipelineRunner(deps: SocialPipelineRunnerDeps) {
       setVisualAnalysisPending(true);
       setVisualAnalysisErrorMessage(null);
       setVisualAnalysisResult(null);
-      const analysis = await api.post<KangurSocialVisualAnalysis>(
+      const response = await api.post<VisualAnalysisTriggerResponse>(
         '/api/kangur/social-posts/analyze-visuals',
         {
           postId: d.activePost.id,
@@ -493,7 +536,68 @@ export function useSocialPipelineRunner(deps: SocialPipelineRunnerDeps) {
         },
         { timeout: PIPELINE_REQUEST_TIMEOUT_MS }
       );
+
+      if (response.jobType !== 'manual-post-visual-analysis') {
+        throw new Error('Visual analysis queue returned an unexpected job type.');
+      }
+
+      const pollStartedAt = Date.now();
+      let finalJob: VisualAnalysisJobRecord | null = null;
+
+      while (Date.now() - pollStartedAt < PIPELINE_TIMEOUT_MS) {
+        const job = await api.get<VisualAnalysisJobRecord | null>(
+          '/api/kangur/social-pipeline/jobs',
+          {
+            params: { id: response.jobId },
+            timeout: PIPELINE_REQUEST_TIMEOUT_MS,
+          }
+        );
+
+        if (!job) {
+          if (!(await waitForNextPoll(PIPELINE_POLL_INTERVAL_MS))) {
+            return;
+          }
+          continue;
+        }
+
+        finalJob = job;
+        if (job.status === 'completed') {
+          break;
+        }
+
+        if (job.status === 'failed') {
+          throw new Error(job.failedReason ?? 'Server visual analysis job failed.');
+        }
+
+        if (!(await waitForNextPoll(PIPELINE_POLL_INTERVAL_MS))) {
+          return;
+        }
+      }
+
+      if (finalJob?.status !== 'completed') {
+        throw new Error('Image analysis timed out while waiting for the server job.');
+      }
+
+      if (!isVisualAnalysisJobResult(finalJob.result)) {
+        throw new Error('Image analysis completed without a usable result payload.');
+      }
+
+      const analysis = finalJob.result.analysis;
       setVisualAnalysisResult(analysis);
+
+      if (finalJob.result.savedPost) {
+        const postsQueryKey = QUERY_KEYS.kangur.socialPosts({
+          scope: 'admin',
+          limit: null,
+        });
+        queryClient.setQueryData<KangurSocialPost[]>(postsQueryKey, (current) =>
+          (current ?? []).map((post) =>
+            post.id === finalJob.result?.savedPost?.id ? finalJob.result.savedPost : post
+          )
+        );
+      }
+      invalidateSocialQueries(queryClient);
+
       toast('Image analysis complete — review the summary and generate the post.', {
         variant: 'success',
       });
@@ -521,7 +625,7 @@ export function useSocialPipelineRunner(deps: SocialPipelineRunnerDeps) {
     } finally {
       setVisualAnalysisPending(false);
     }
-  }, [toast]);
+  }, [queryClient, toast, waitForNextPoll]);
 
   const handleRunFullPipelineWithVisualAnalysis = useCallback(async (): Promise<void> => {
     if (!visualAnalysisResult) {

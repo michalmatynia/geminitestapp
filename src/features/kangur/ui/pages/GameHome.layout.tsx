@@ -65,11 +65,32 @@ export type KangurGameHomeSectionsProps = {
   visibility: KangurGameHomeVisibility;
 };
 
+const GAME_HOME_PROGRESS_KEYS = [
+  'totalXp',
+  'gamesPlayed',
+  'lessonsCompleted',
+  'dailyQuestsCompleted',
+] as const satisfies readonly (keyof NonNullable<GameHomeProgressLike>)[];
+
 export const hasMeaningfulGameHomeProgress = (progress: GameHomeProgressLike): boolean =>
-  (progress?.totalXp ?? 0) > 0 ||
-  (progress?.gamesPlayed ?? 0) > 0 ||
-  (progress?.lessonsCompleted ?? 0) > 0 ||
-  (progress?.dailyQuestsCompleted ?? 0) > 0;
+  GAME_HOME_PROGRESS_KEYS.some((key) => (progress?.[key] ?? 0) > 0);
+
+const resolveHideLearnerWidgetsForParent = (
+  user: KangurUser | null | undefined
+): boolean => user?.actorType === 'parent' && !user?.activeLearner?.id;
+
+const resolveCanShowLearnerWidgets = (
+  hideLearnerWidgetsForParent: boolean
+): boolean => !hideLearnerWidgetsForParent;
+
+const resolveShouldShowGameHomeSummary = ({
+  hasMeaningfulProgress,
+  hideLearnerWidgetsForParent,
+}: {
+  hasMeaningfulProgress: boolean;
+  hideLearnerWidgetsForParent: boolean;
+}): boolean =>
+  resolveCanShowLearnerWidgets(hideLearnerWidgetsForParent) && hasMeaningfulProgress;
 
 export const resolveKangurGameHomeVisibility = ({
   canAccessParentAssignments,
@@ -80,8 +101,9 @@ export const resolveKangurGameHomeVisibility = ({
   progress: GameHomeProgressLike;
   user: KangurUser | null | undefined;
 }): KangurGameHomeVisibility => {
-  const hideLearnerWidgetsForParent = user?.actorType === 'parent' && !user?.activeLearner?.id;
+  const hideLearnerWidgetsForParent = resolveHideLearnerWidgetsForParent(user);
   const hasMeaningfulProgress = hasMeaningfulGameHomeProgress(progress);
+  const canShowLearnerWidgets = resolveCanShowLearnerWidgets(hideLearnerWidgetsForParent);
 
   return {
     canAccessParentAssignments,
@@ -89,11 +111,132 @@ export const resolveKangurGameHomeVisibility = ({
     hideLearnerWidgetsForParent,
     showAssignments: canAccessParentAssignments,
     showParentSpotlight: canAccessParentAssignments,
-    showProgressGrid: !hideLearnerWidgetsForParent,
-    showQuest: !hideLearnerWidgetsForParent,
-    showSummary: !hideLearnerWidgetsForParent && hasMeaningfulProgress,
+    showProgressGrid: canShowLearnerWidgets,
+    showQuest: canShowLearnerWidgets,
+    showSummary: resolveShouldShowGameHomeSummary({
+      hasMeaningfulProgress,
+      hideLearnerWidgetsForParent,
+    }),
   };
 };
+
+function GameHomeSectionHeading(props: {
+  slotProps?: SectionSlotProps;
+}): React.JSX.Element | null {
+  const { slotProps } = props;
+
+  if (!slotProps?.headingId || !slotProps.headingLabel) {
+    return null;
+  }
+
+  return (
+    <h3 id={slotProps.headingId} className='sr-only'>
+      {slotProps.headingLabel}
+    </h3>
+  );
+}
+
+function GameHomeSectionSlot(props: {
+  children?: ReactNode;
+  className: string;
+  enabled: boolean;
+  slotProps?: SectionSlotProps;
+}): React.JSX.Element | null {
+  const { children, className, enabled, slotProps } = props;
+
+  if (!enabled || children == null) {
+    return null;
+  }
+
+  return (
+    <section
+      className={className}
+      data-testid={slotProps?.testId}
+      id={slotProps?.id}
+      ref={slotProps?.ref}
+      aria-labelledby={slotProps?.headingId}
+    >
+      <GameHomeSectionHeading slotProps={slotProps} />
+      {children}
+    </section>
+  );
+}
+
+function GameHomeColumnSlot(props: {
+  children?: ReactNode;
+  className: string;
+  slotProps?: ColumnSlotProps;
+}): React.JSX.Element {
+  const { children, className, slotProps } = props;
+
+  return (
+    <div
+      className={className}
+      data-testid={slotProps?.testId}
+      id={slotProps?.id}
+      ref={slotProps?.ref}
+    >
+      {children}
+    </div>
+  );
+}
+
+const resolveShouldRenderGameHomeProgressGrid = ({
+  leaderboard,
+  playerProgress,
+  visibility,
+}: {
+  leaderboard: ReactNode;
+  playerProgress: ReactNode;
+  visibility: KangurGameHomeVisibility;
+}): boolean =>
+  visibility.showProgressGrid && (leaderboard !== undefined || playerProgress !== undefined);
+
+function GameHomeProgressGrid(props: {
+  enabled: boolean;
+  leaderboard?: ReactNode;
+  leaderboardColumnProps?: ColumnSlotProps;
+  playerProgress?: ReactNode;
+  playerProgressColumnProps?: ColumnSlotProps;
+  progressSectionProps?: SectionSlotProps;
+}): React.JSX.Element | null {
+  const {
+    enabled,
+    leaderboard,
+    leaderboardColumnProps,
+    playerProgress,
+    playerProgressColumnProps,
+    progressSectionProps,
+  } = props;
+
+  if (!enabled) {
+    return null;
+  }
+
+  return (
+    <section
+      className={GAME_HOME_PROGRESS_GRID_CLASSNAME}
+      data-testid={progressSectionProps?.testId}
+      id={progressSectionProps?.id}
+      ref={progressSectionProps?.ref}
+      aria-labelledby={progressSectionProps?.headingId}
+    >
+      <GameHomeSectionHeading slotProps={progressSectionProps} />
+      <GameHomeColumnSlot
+        className={GAME_HOME_LEADERBOARD_COLUMN_CLASSNAME}
+        slotProps={leaderboardColumnProps}
+      >
+        {leaderboard}
+      </GameHomeColumnSlot>
+      <GameHomeColumnSlot
+        className={GAME_HOME_PLAYER_PROGRESS_COLUMN_CLASSNAME}
+        slotProps={playerProgressColumnProps}
+      >
+        {playerProgress}
+      </GameHomeColumnSlot>
+    </section>
+  );
+}
 
 export function KangurGameHomeSections(
   props: KangurGameHomeSectionsProps
@@ -117,119 +260,56 @@ export function KangurGameHomeSections(
     visibility,
   } = props;
 
-  const shouldRenderProgressGrid =
-    visibility.showProgressGrid && (leaderboard !== undefined || playerProgress !== undefined);
-
   return (
     <>
-      {visibility.showParentSpotlight && parentSpotlight ? (
-        <section
-          className={GAME_HOME_SECTION_CLASSNAME}
-          data-testid={parentSpotlightSectionProps?.testId}
-          id={parentSpotlightSectionProps?.id}
-          ref={parentSpotlightSectionProps?.ref}
-          aria-labelledby={parentSpotlightSectionProps?.headingId}
-        >
-          {parentSpotlightSectionProps?.headingId && parentSpotlightSectionProps.headingLabel ? (
-            <h3 id={parentSpotlightSectionProps.headingId} className='sr-only'>
-              {parentSpotlightSectionProps.headingLabel}
-            </h3>
-          ) : null}
-          {parentSpotlight}
-        </section>
-      ) : null}
-
-      <div
-        className={GAME_HOME_ACTIONS_COLUMN_CLASSNAME}
-        data-testid={actionsColumnProps?.testId}
-        id={actionsColumnProps?.id}
-        ref={actionsColumnProps?.ref}
+      <GameHomeSectionSlot
+        className={GAME_HOME_SECTION_CLASSNAME}
+        enabled={visibility.showParentSpotlight}
+        slotProps={parentSpotlightSectionProps}
       >
+        {parentSpotlight}
+      </GameHomeSectionSlot>
+
+      <GameHomeColumnSlot className={GAME_HOME_ACTIONS_COLUMN_CLASSNAME} slotProps={actionsColumnProps}>
         {actionsColumn}
-      </div>
+      </GameHomeColumnSlot>
 
-      {visibility.showQuest && quest ? (
-        <section
-          className={GAME_HOME_CENTERED_SECTION_CLASSNAME}
-          data-testid={questSectionProps?.testId}
-          id={questSectionProps?.id}
-          ref={questSectionProps?.ref}
-          aria-labelledby={questSectionProps?.headingId}
-        >
-          {questSectionProps?.headingId && questSectionProps.headingLabel ? (
-            <h3 id={questSectionProps.headingId} className='sr-only'>
-              {questSectionProps.headingLabel}
-            </h3>
-          ) : null}
-          {quest}
-        </section>
-      ) : null}
+      <GameHomeSectionSlot
+        className={GAME_HOME_CENTERED_SECTION_CLASSNAME}
+        enabled={visibility.showQuest}
+        slotProps={questSectionProps}
+      >
+        {quest}
+      </GameHomeSectionSlot>
 
-      {visibility.showSummary && summary ? (
-        <section
-          className={GAME_HOME_SECTION_CLASSNAME}
-          data-testid={summarySectionProps?.testId}
-          id={summarySectionProps?.id}
-          ref={summarySectionProps?.ref}
-          aria-labelledby={summarySectionProps?.headingId}
-        >
-          {summarySectionProps?.headingId && summarySectionProps.headingLabel ? (
-            <h3 id={summarySectionProps.headingId} className='sr-only'>
-              {summarySectionProps.headingLabel}
-            </h3>
-          ) : null}
-          {summary}
-        </section>
-      ) : null}
+      <GameHomeSectionSlot
+        className={GAME_HOME_SECTION_CLASSNAME}
+        enabled={visibility.showSummary}
+        slotProps={summarySectionProps}
+      >
+        {summary}
+      </GameHomeSectionSlot>
 
-      {visibility.showAssignments && assignments ? (
-        <section
-          className={GAME_HOME_CENTERED_SECTION_CLASSNAME}
-          data-testid={assignmentsSectionProps?.testId}
-          id={assignmentsSectionProps?.id}
-          ref={assignmentsSectionProps?.ref}
-          aria-labelledby={assignmentsSectionProps?.headingId}
-        >
-          {assignmentsSectionProps?.headingId && assignmentsSectionProps.headingLabel ? (
-            <h3 id={assignmentsSectionProps.headingId} className='sr-only'>
-              {assignmentsSectionProps.headingLabel}
-            </h3>
-          ) : null}
-          {assignments}
-        </section>
-      ) : null}
+      <GameHomeSectionSlot
+        className={GAME_HOME_CENTERED_SECTION_CLASSNAME}
+        enabled={visibility.showAssignments}
+        slotProps={assignmentsSectionProps}
+      >
+        {assignments}
+      </GameHomeSectionSlot>
 
-      {shouldRenderProgressGrid ? (
-        <section
-          className={GAME_HOME_PROGRESS_GRID_CLASSNAME}
-          data-testid={progressSectionProps?.testId}
-          id={progressSectionProps?.id}
-          ref={progressSectionProps?.ref}
-          aria-labelledby={progressSectionProps?.headingId}
-        >
-          {progressSectionProps?.headingId && progressSectionProps.headingLabel ? (
-            <h3 id={progressSectionProps.headingId} className='sr-only'>
-              {progressSectionProps.headingLabel}
-            </h3>
-          ) : null}
-          <div
-            className={GAME_HOME_LEADERBOARD_COLUMN_CLASSNAME}
-            data-testid={leaderboardColumnProps?.testId}
-            id={leaderboardColumnProps?.id}
-            ref={leaderboardColumnProps?.ref}
-          >
-            {leaderboard}
-          </div>
-          <div
-            className={GAME_HOME_PLAYER_PROGRESS_COLUMN_CLASSNAME}
-            data-testid={playerProgressColumnProps?.testId}
-            id={playerProgressColumnProps?.id}
-            ref={playerProgressColumnProps?.ref}
-          >
-            {playerProgress}
-          </div>
-        </section>
-      ) : null}
+      <GameHomeProgressGrid
+        enabled={resolveShouldRenderGameHomeProgressGrid({
+          leaderboard,
+          playerProgress,
+          visibility,
+        })}
+        leaderboard={leaderboard}
+        leaderboardColumnProps={leaderboardColumnProps}
+        playerProgress={playerProgress}
+        playerProgressColumnProps={playerProgressColumnProps}
+        progressSectionProps={progressSectionProps}
+      />
     </>
   );
 }

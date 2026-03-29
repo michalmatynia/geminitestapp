@@ -18,6 +18,9 @@ export const kangurSocialImageAddonSchema = z.object({
   previousAddonId: trimmedString.max(160).nullable().default(null),
   playwrightRunId: trimmedString.max(160).nullable().default(null),
   playwrightArtifact: trimmedString.max(240).nullable().default(null),
+  playwrightPersonaId: trimmedString.max(160).nullable().default(null),
+  playwrightCaptureRouteId: trimmedString.max(160).nullable().default(null),
+  playwrightCaptureRouteTitle: trimmedString.max(200).nullable().default(null),
   createdBy: trimmedString.max(120).nullable().default(null),
   updatedBy: trimmedString.max(120).nullable().default(null),
   createdAt: z.string().datetime().optional(),
@@ -29,10 +32,26 @@ export type KangurSocialImageAddon = z.infer<typeof kangurSocialImageAddonSchema
 export const kangurSocialImageAddonsSchema = z.array(kangurSocialImageAddonSchema);
 export type KangurSocialImageAddons = z.infer<typeof kangurSocialImageAddonsSchema>;
 
+export const kangurSocialProgrammableCaptureRouteSchema = z.object({
+  id: trimmedString.min(1).max(160),
+  title: trimmedString.max(200).default(''),
+  path: trimmedString.min(1).max(2000),
+  description: optionalText(1000),
+  selector: trimmedString.max(500).nullable().default(null),
+  waitForMs: z.number().int().nonnegative().nullable().default(null),
+  waitForSelectorMs: z.number().int().positive().nullable().default(null),
+});
+export type KangurSocialProgrammableCaptureRoute = z.infer<
+  typeof kangurSocialProgrammableCaptureRouteSchema
+>;
+
 export const kangurSocialImageAddonsBatchPayloadSchema = z.object({
   baseUrl: z.string().trim().url().optional(),
   presetIds: z.array(trimmedString.min(1).max(160)).optional(),
   presetLimit: z.number().int().positive().nullable().optional(),
+  playwrightPersonaId: trimmedString.max(160).nullable().optional(),
+  playwrightScript: trimmedString.max(120_000).optional(),
+  playwrightRoutes: z.array(kangurSocialProgrammableCaptureRouteSchema).max(50).optional(),
 });
 export type KangurSocialImageAddonsBatchPayload = z.infer<
   typeof kangurSocialImageAddonsBatchPayloadSchema

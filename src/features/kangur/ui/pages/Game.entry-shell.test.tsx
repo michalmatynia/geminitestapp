@@ -170,7 +170,7 @@ const ENTRY_SCREEN_CASES: EntryScreenCase[] = [
   },
   {
     artTestId: 'kangur-kangur-heading-art',
-    heading: 'Konfiguracja sesji Kangura Matematycznego',
+    heading: 'Konfiguracja sesji StudiQ Matematycznego',
     screen: 'kangur_setup',
     topSectionTestId: 'kangur-game-kangur-setup-top-section',
     widgetTestId: 'mock-kangur-setup',

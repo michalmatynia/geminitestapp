@@ -35,13 +35,54 @@ export function SocialPostVisuals(props: SocialPostVisualsProps): React.JSX.Elem
   const visualSummary = activePost?.visualSummary?.trim() ?? '';
   const visualHighlights = activePost?.visualHighlights ?? [];
   const visualDocUpdates = activePost?.visualDocUpdates ?? [];
+  const visualAnalysisStatus = activePost?.visualAnalysisStatus ?? null;
+  const visualAnalysisUpdatedAt = activePost?.visualAnalysisUpdatedAt ?? null;
+  const visualAnalysisModelId = activePost?.visualAnalysisModelId?.trim() ?? '';
+  const visualAnalysisJobId = activePost?.visualAnalysisJobId?.trim() ?? '';
   const hasVisualAnalysis =
     visualSummary.length > 0 || visualHighlights.length > 0 || visualDocUpdates.length > 0;
+  const hasVisualAnalysisSection =
+    hasVisualAnalysis ||
+    Boolean(
+      visualAnalysisStatus || visualAnalysisUpdatedAt || visualAnalysisModelId || visualAnalysisJobId
+    );
+  const visualAnalysisStatusLabel =
+    visualAnalysisStatus === 'queued'
+      ? 'Queued'
+      : visualAnalysisStatus === 'running'
+        ? 'Running'
+        : visualAnalysisStatus === 'completed'
+          ? 'Completed'
+          : visualAnalysisStatus === 'failed'
+            ? 'Failed'
+            : null;
 
   return (
     <>
-      {hasVisualAnalysis ? (
+      {hasVisualAnalysisSection ? (
         <FormSection title='Image analysis result' className='space-y-3'>
+          {visualAnalysisStatusLabel ||
+          visualAnalysisUpdatedAt ||
+          visualAnalysisModelId ||
+          visualAnalysisJobId ? (
+            <div className='rounded-xl border border-border/60 bg-background/40 px-3 py-2 text-xs text-muted-foreground'>
+              {visualAnalysisStatusLabel ? <div>Status: {visualAnalysisStatusLabel}</div> : null}
+              {visualAnalysisUpdatedAt ? (
+                <div>Analyzed: {new Date(visualAnalysisUpdatedAt).toLocaleString()}</div>
+              ) : null}
+              {visualAnalysisModelId ? (
+                <div>Model: {visualAnalysisModelId}</div>
+              ) : null}
+              {visualAnalysisJobId ? (
+                <div>Queue job: {visualAnalysisJobId}</div>
+              ) : null}
+            </div>
+          ) : null}
+          {!hasVisualAnalysis ? (
+            <div className='rounded-xl border border-border/60 bg-background/40 px-3 py-2 text-sm text-muted-foreground'>
+              No saved analysis summary yet. The queue metadata above reflects the latest image-analysis run for this post.
+            </div>
+          ) : null}
           {visualSummary ? (
             <div className='rounded-xl border border-border/60 bg-background/40 px-3 py-2 text-sm text-muted-foreground'>
               {visualSummary}

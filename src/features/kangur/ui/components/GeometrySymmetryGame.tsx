@@ -11,19 +11,6 @@ import {
   type KeyboardEvent as ReactKeyboardEvent,
 } from 'react';
 
-import {
-  KangurPracticeGameSummary,
-  KangurPracticeGameSummaryActions,
-  KangurPracticeGameSummaryBreakdown,
-  KangurPracticeGameSummaryEmoji,
-  KangurPracticeGameSummaryMessage,
-  KangurPracticeGameSummaryProgress,
-  KangurPracticeGameSummaryTitle,
-  KangurPracticeGameSummaryXP,
-} from '@/features/kangur/ui/components/KangurPracticeGameChrome';
-import {
-  getKangurMiniGameScoreLabel,
-} from '@/features/kangur/ui/constants/mini-game-i18n';
 import { KangurDrawingActionRow } from '@/features/kangur/ui/components/drawing-engine/KangurDrawingActionRow';
 import { KangurDrawingKeyboardCursorOverlay } from '@/features/kangur/ui/components/drawing-engine/KangurDrawingOverlays';
 import { KangurDrawingPracticeBoard } from '@/features/kangur/ui/components/drawing-engine/KangurDrawingPracticeBoard';
@@ -70,26 +57,19 @@ import {
   resolveGeometrySymmetryBoardAccent,
   resolveGeometrySymmetryCheckResult,
   resolveGeometrySymmetryFallbackCopy,
-  resolveGeometrySymmetryFinishLabel,
   resolveGeometrySymmetryMinimumDrawingPoints,
   resolveGeometrySymmetryResultLocked,
   resolveGeometrySymmetryRounds,
-  resolveGeometrySymmetrySummaryEmoji,
-  resolveGeometrySymmetrySummaryMessage,
-  resolveGeometrySymmetrySummaryPercent,
   resolveGeometrySymmetryTranslateWithFallback,
   type GeometrySymmetryFallbackCopy,
   type GeometrySymmetryFinishProps,
+  type GeometrySymmetryTranslateWithFallback,
   type GeometrySymmetryTranslations,
 } from './GeometrySymmetryGame.logic';
+import { GeometrySymmetrySummaryView } from './GeometrySymmetryGame.summary';
 import type { SymmetryRound } from './GeometrySymmetryGame.types';
 
-function useGeometrySymmetryGameRuntime(input: {
-  isCoarsePointer: boolean;
-  locale: string;
-  ownerKey: string;
-  translations: GeometrySymmetryTranslations;
-}): {
+type GeometrySymmetryGameRuntime = {
   baseLayerCacheKey: string;
   boardAccent: 'amber' | 'emerald' | 'rose';
   canRedo: boolean;
@@ -107,7 +87,9 @@ function useGeometrySymmetryGameRuntime(input: {
   handlePointerDown: (event: React.PointerEvent<HTMLCanvasElement>) => void;
   handlePointerMove: (event: React.PointerEvent<HTMLCanvasElement>) => void;
   handlePointerUp: (event?: React.PointerEvent<HTMLCanvasElement>) => void;
+  handleRestart: () => void;
   hasDrawableContent: boolean;
+  isCoarsePointer: boolean;
   isPointerDrawing: boolean;
   isResultLocked: boolean;
   keyboardCursor: ReturnType<typeof useKangurKeyboardPointDrawing>['keyboardCursor'];
@@ -124,13 +106,194 @@ function useGeometrySymmetryGameRuntime(input: {
   showMirrorHint: boolean;
   strokeWidth: number;
   totalRounds: number;
-  translateWithFallback: ReturnType<typeof resolveGeometrySymmetryTranslateWithFallback>;
+  translateWithFallback: GeometrySymmetryTranslateWithFallback;
   translations: GeometrySymmetryTranslations;
   undoDrawing: () => void;
   xpBreakdown: KangurRewardBreakdownEntry[];
   xpEarned: number;
-  handleRestart: () => void;
-} {
+};
+
+type GeometrySymmetryPromptCardProps = {
+  currentRound: SymmetryRound | undefined;
+  fallbackCopy: GeometrySymmetryFallbackCopy;
+  isResultLocked: boolean;
+  setShowMirrorHint: React.Dispatch<React.SetStateAction<boolean>>;
+  showMirrorHint: boolean;
+  translateWithFallback: GeometrySymmetryTranslateWithFallback;
+};
+
+const resolveGeometrySymmetryMinimumPointDistance = (isCoarsePointer: boolean): number =>
+  isCoarsePointer ? 5 : 2;
+
+const resolveGeometrySymmetryStrokeWidth = (isCoarsePointer: boolean): number =>
+  isCoarsePointer ? 7 : 5;
+
+const resolveGeometrySymmetryBaseLayerCacheKey = (
+  currentRound: SymmetryRound | undefined,
+  showMirrorHint: boolean
+): string =>
+  currentRound ? `geometry-symmetry:${currentRound.id}:${showMirrorHint ? 'hint' : 'plain'}` : 'geometry-symmetry:empty';
+
+function useGeometrySymmetryRoundAdvance(input: {
+  clearDrawing: () => void;
+  nextRoundTimeoutRef: React.RefObject<number | null>;
+  ownerKey: string;
+  roundIndex: number;
+  score: number;
+  sessionStartedAtRef: React.RefObject<number>;
+  setDone: React.Dispatch<React.SetStateAction<boolean>>;
+  setFeedback: React.Dispatch<React.SetStateAction<KangurMiniGameInformationalFeedback | null>>;
+  setRoundIndex: React.Dispatch<React.SetStateAction<number>>;
+  setScore: React.Dispatch<React.SetStateAction<number>>;
+  setShowMirrorHint: React.Dispatch<React.SetStateAction<boolean>>;
+  setXpBreakdown: React.Dispatch<React.SetStateAction<KangurRewardBreakdownEntry[]>>;
+  setXpEarned: React.Dispatch<React.SetStateAction<number>>;
+  totalRounds: number;
+}): (wasCorrect: boolean) => void {
+  const {
+    clearDrawing,
+    nextRoundTimeoutRef,
+    ownerKey,
+    roundIndex,
+    score,
+    sessionStartedAtRef,
+    setDone,
+    setFeedback,
+    setRoundIndex,
+    setScore,
+    setShowMirrorHint,
+    setXpBreakdown,
+    setXpEarned,
+    totalRounds,
+  } = input;
+
+  return useCallback(
+    (wasCorrect: boolean): void => {
+      const nextScore = wasCorrect ? score + 1 : score;
+
+      if (wasCorrect) {
+        setScore(nextScore);
+      }
+
+      if (nextRoundTimeoutRef.current !== null) {
+        window.clearTimeout(nextRoundTimeoutRef.current);
+      }
+
+      const isLastRound = roundIndex + 1 >= totalRounds;
+      nextRoundTimeoutRef.current = window.setTimeout((): void => {
+        nextRoundTimeoutRef.current = null;
+        setFeedback(null);
+        clearDrawing();
+        setShowMirrorHint(false);
+
+        if (isLastRound) {
+          persistGeometrySymmetryCompletion({
+            nextScore,
+            ownerKey,
+            sessionStartedAtRef,
+            setDone,
+            setXpBreakdown,
+            setXpEarned,
+            totalRounds,
+          });
+          return;
+        }
+
+        setRoundIndex((current) => current + 1);
+      }, 1200);
+    },
+    [
+      clearDrawing,
+      nextRoundTimeoutRef,
+      ownerKey,
+      roundIndex,
+      score,
+      sessionStartedAtRef,
+      setDone,
+      setFeedback,
+      setRoundIndex,
+      setScore,
+      setShowMirrorHint,
+      setXpBreakdown,
+      setXpEarned,
+      totalRounds,
+    ]
+  );
+}
+
+function useGeometrySymmetryCheckHandler(input: {
+  currentRound: SymmetryRound | undefined;
+  done: boolean;
+  fallbackCopy: GeometrySymmetryFallbackCopy;
+  feedback: KangurMiniGameInformationalFeedback | null;
+  locale: string;
+  minDrawingPoints: number;
+  moveToNextRound: (wasCorrect: boolean) => void;
+  points: ReturnType<typeof flattenKangurStrokePoints>;
+  setFeedback: React.Dispatch<React.SetStateAction<KangurMiniGameInformationalFeedback | null>>;
+  translateWithFallback: GeometrySymmetryTranslateWithFallback;
+  translations: GeometrySymmetryTranslations;
+}): () => void {
+  const {
+    currentRound,
+    done,
+    fallbackCopy,
+    feedback,
+    locale,
+    minDrawingPoints,
+    moveToNextRound,
+    points,
+    setFeedback,
+    translateWithFallback,
+    translations,
+  } = input;
+
+  return useCallback((): void => {
+    if (done || feedback) {
+      return;
+    }
+
+    const result = resolveGeometrySymmetryCheckResult({
+      currentRound,
+      fallbackCopy,
+      locale,
+      minDrawingPoints,
+      points,
+      translateWithFallback,
+      translations,
+    });
+
+    if (!result) {
+      return;
+    }
+
+    setFeedback(result.feedback);
+    if (result.feedback.kind === 'info') {
+      return;
+    }
+
+    moveToNextRound(result.accepted);
+  }, [
+    currentRound,
+    done,
+    fallbackCopy,
+    feedback,
+    locale,
+    minDrawingPoints,
+    moveToNextRound,
+    points,
+    setFeedback,
+    translateWithFallback,
+    translations,
+  ]);
+}
+
+function useGeometrySymmetryGameRuntime(input: {
+  isCoarsePointer: boolean;
+  locale: string;
+  ownerKey: string;
+  translations: GeometrySymmetryTranslations;
+}): GeometrySymmetryGameRuntime {
   const { isCoarsePointer, locale, ownerKey, translations } = input;
   const fallbackCopy = useMemo(() => resolveGeometrySymmetryFallbackCopy(locale), [locale]);
   const translateWithFallback = useCallback(
@@ -161,12 +324,10 @@ function useGeometrySymmetryGameRuntime(input: {
 
   const totalRounds = resolvedRounds.length;
   const currentRound = resolvedRounds[roundIndex];
-  const minPointDistance = isCoarsePointer ? 5 : 2;
+  const minPointDistance = resolveGeometrySymmetryMinimumPointDistance(isCoarsePointer);
   const minDrawingPoints = resolveGeometrySymmetryMinimumDrawingPoints(isCoarsePointer);
-  const strokeWidth = isCoarsePointer ? 7 : 5;
-  const baseLayerCacheKey = currentRound
-    ? `geometry-symmetry:${currentRound.id}:${showMirrorHint ? 'hint' : 'plain'}`
-    : 'geometry-symmetry:empty';
+  const strokeWidth = resolveGeometrySymmetryStrokeWidth(isCoarsePointer);
+  const baseLayerCacheKey = resolveGeometrySymmetryBaseLayerCacheKey(currentRound, showMirrorHint);
   const exportFileName = useMemo(
     () => createKangurDrawingExportFilename('geometry-symmetry', currentRound?.id ?? 'drawing'),
     [currentRound?.id]
@@ -244,7 +405,7 @@ function useGeometrySymmetryGameRuntime(input: {
           currentRound,
           showMirrorHint,
         }),
-      enabled: !done && feedback?.kind !== 'success' && feedback?.kind !== 'error',
+      enabled: !(done || resolveGeometrySymmetryResultLocked(feedback)),
       logicalHeight: CANVAS_HEIGHT,
       logicalWidth: CANVAS_WIDTH,
       minPointDistance,
@@ -280,7 +441,7 @@ function useGeometrySymmetryGameRuntime(input: {
     resetKeyboard,
   } = useKangurKeyboardPointDrawing({
     clearedStatus: keyboardClearedStatus,
-    disabled: done || feedback?.kind === 'success' || feedback?.kind === 'error',
+    disabled: done || resolveGeometrySymmetryResultLocked(feedback),
     finishedStatus: keyboardFinishedStatus,
     height: CANVAS_HEIGHT,
     initialCursor: KEYBOARD_CURSOR_START,
@@ -295,64 +456,36 @@ function useGeometrySymmetryGameRuntime(input: {
   keyboardCanvasKeyDownRef.current = handleKeyboardCanvasKeyDown;
   resetKeyboardRef.current = resetKeyboard;
 
-  const moveToNextRound = useCallback(
-    (wasCorrect: boolean): void => {
-      const nextScore = wasCorrect ? score + 1 : score;
-      if (wasCorrect) {
-        setScore(nextScore);
-      }
+  const moveToNextRound = useGeometrySymmetryRoundAdvance({
+    clearDrawing,
+    nextRoundTimeoutRef,
+    ownerKey,
+    roundIndex,
+    score,
+    sessionStartedAtRef,
+    setDone,
+    setFeedback,
+    setRoundIndex,
+    setScore,
+    setShowMirrorHint,
+    setXpBreakdown,
+    setXpEarned,
+    totalRounds,
+  });
 
-      const isLastRound = roundIndex + 1 >= totalRounds;
-      if (nextRoundTimeoutRef.current !== null) {
-        window.clearTimeout(nextRoundTimeoutRef.current);
-      }
-      nextRoundTimeoutRef.current = window.setTimeout((): void => {
-        nextRoundTimeoutRef.current = null;
-        setFeedback(null);
-        clearDrawing();
-        setShowMirrorHint(false);
-        if (isLastRound) {
-          persistGeometrySymmetryCompletion({
-            nextScore,
-            ownerKey,
-            sessionStartedAtRef,
-            setDone,
-            setXpBreakdown,
-            setXpEarned,
-            totalRounds,
-          });
-          return;
-        }
-        setRoundIndex((current) => current + 1);
-      }, 1200);
-    },
-    [clearDrawing, ownerKey, roundIndex, score, totalRounds]
-  );
-
-  const handleCheck = (): void => {
-    if (done || feedback) {
-      return;
-    }
-
-    const result = resolveGeometrySymmetryCheckResult({
-      currentRound,
-      fallbackCopy,
-      locale,
-      minDrawingPoints,
-      points,
-      translateWithFallback,
-      translations,
-    });
-    if (!result) {
-      return;
-    }
-
-    setFeedback(result.feedback);
-    if (result.feedback.kind === 'info') {
-      return;
-    }
-    moveToNextRound(result.accepted);
-  };
+  const handleCheck = useGeometrySymmetryCheckHandler({
+    currentRound,
+    done,
+    fallbackCopy,
+    feedback,
+    locale,
+    minDrawingPoints,
+    moveToNextRound,
+    points,
+    setFeedback,
+    translateWithFallback,
+    translations,
+  });
 
   const handleRestart = (): void => {
     setRoundIndex(0);
@@ -412,61 +545,6 @@ function useGeometrySymmetryGameRuntime(input: {
   };
 }
 
-function GeometrySymmetrySummaryView(props: {
-  handleFinish: KangurMiniGameFinishActionProps['onFinish'];
-  handleRestart: () => void;
-  score: number;
-  totalRounds: number;
-  translations: GeometrySymmetryTranslations;
-  xpBreakdown: KangurRewardBreakdownEntry[];
-  xpEarned: number;
-}): React.JSX.Element {
-  const { handleFinish, handleRestart, score, totalRounds, translations, xpBreakdown, xpEarned } =
-    props;
-  const percent = resolveGeometrySymmetrySummaryPercent(score, totalRounds);
-
-  return (
-    <KangurPracticeGameSummary dataTestId='geometry-symmetry-summary-shell'>
-      <KangurPracticeGameSummaryEmoji
-        ariaHidden
-        dataTestId='geometry-symmetry-summary-emoji'
-        emoji={resolveGeometrySymmetrySummaryEmoji(score, totalRounds)}
-      />
-      <KangurPracticeGameSummaryTitle unwrapped>
-        <KangurHeadline accent='emerald' as='h3' data-testid='geometry-symmetry-summary-title'>
-          {getKangurMiniGameScoreLabel(translations, score, totalRounds)}
-        </KangurHeadline>
-      </KangurPracticeGameSummaryTitle>
-      <KangurPracticeGameSummaryXP accent='indigo' xpEarned={xpEarned} />
-      <KangurPracticeGameSummaryBreakdown
-        breakdown={xpBreakdown}
-        dataTestId='geometry-symmetry-summary-breakdown'
-        itemDataTestIdPrefix='geometry-symmetry-summary-breakdown'
-      />
-      <KangurPracticeGameSummaryProgress
-        accent='emerald'
-        ariaLabel={translations('geometrySymmetry.progressAriaLabel')}
-        ariaValueText={`${percent}% ${translations('shared.correctAnswersSuffix')}`}
-        dataTestId='geometry-symmetry-summary-progress-bar'
-        percent={percent}
-      />
-      <KangurPracticeGameSummaryMessage className='max-w-xs text-center'>
-        {resolveGeometrySymmetrySummaryMessage({
-          score,
-          totalRounds,
-          translations,
-        })}
-      </KangurPracticeGameSummaryMessage>
-      <KangurPracticeGameSummaryActions
-        finishLabel={getKangurMiniGameFinishLabel(translations, 'back')}
-        onFinish={handleFinish}
-        restartLabel={translations('shared.restart')}
-        onRestart={handleRestart}
-      />
-    </KangurPracticeGameSummary>
-  );
-}
-
 function GeometrySymmetryProgressHeader(props: {
   currentRound: SymmetryRound | undefined;
   fallbackCopy: GeometrySymmetryFallbackCopy;
@@ -520,14 +598,31 @@ function GeometrySymmetryProgressHeader(props: {
   );
 }
 
-function GeometrySymmetryPromptCard(props: {
+function GeometrySymmetryModeChip(props: {
   currentRound: SymmetryRound | undefined;
   fallbackCopy: GeometrySymmetryFallbackCopy;
-  isResultLocked: boolean;
-  setShowMirrorHint: React.Dispatch<React.SetStateAction<boolean>>;
-  showMirrorHint: boolean;
-  translateWithFallback: ReturnType<typeof resolveGeometrySymmetryTranslateWithFallback>;
+  translateWithFallback: GeometrySymmetryTranslateWithFallback;
 }): React.JSX.Element {
+  const { currentRound, fallbackCopy, translateWithFallback } = props;
+  const modeKey =
+    currentRound?.type === 'axis'
+      ? 'geometrySymmetry.inRound.mode.axis'
+      : 'geometrySymmetry.inRound.mode.mirror';
+  const fallbackModeLabel =
+    currentRound?.type === 'axis' ? fallbackCopy.mode.axis : fallbackCopy.mode.mirror;
+
+  return (
+    <KangurStatusChip accent='emerald' size='sm'>
+      {translateWithFallback('geometrySymmetry.inRound.modeLabel', fallbackCopy.modeLabel, {
+        mode: translateWithFallback(modeKey, fallbackModeLabel),
+      })}
+    </KangurStatusChip>
+  );
+}
+
+function GeometrySymmetryMirrorHintControls(
+  props: GeometrySymmetryPromptCardProps
+): React.JSX.Element | null {
   const {
     currentRound,
     fallbackCopy,
@@ -537,6 +632,48 @@ function GeometrySymmetryPromptCard(props: {
     translateWithFallback,
   } = props;
 
+  if (currentRound?.type !== 'mirror') {
+    return null;
+  }
+
+  const toggleLabel = showMirrorHint
+    ? translateWithFallback('geometrySymmetry.inRound.mirror.hideHint', fallbackCopy.mirror.hideHint)
+    : translateWithFallback('geometrySymmetry.inRound.mirror.showHint', fallbackCopy.mirror.showHint);
+
+  return (
+    <>
+      <p className='text-[11px] text-center text-emerald-700/80'>
+        {translateWithFallback(
+          'geometrySymmetry.inRound.mirror.zoneHint',
+          fallbackCopy.mirror.zoneHint
+        )}
+      </p>
+      <div className='mt-1 flex flex-wrap items-center justify-center gap-2'>
+        <KangurButton
+          size='sm'
+          type='button'
+          variant='surface'
+          disabled={isResultLocked}
+          onClick={() => setShowMirrorHint((current) => !current)}
+        >
+          {toggleLabel}
+        </KangurButton>
+        {showMirrorHint ? (
+          <span className='text-[11px] font-semibold text-emerald-700'>
+            {translateWithFallback(
+              'geometrySymmetry.inRound.mirror.ghostHint',
+              fallbackCopy.mirror.ghostHint
+            )}
+          </span>
+        ) : null}
+      </div>
+    </>
+  );
+}
+
+function GeometrySymmetryPromptCard(props: GeometrySymmetryPromptCardProps): React.JSX.Element {
+  const { currentRound, fallbackCopy, translateWithFallback } = props;
+
   return (
     <KangurInfoCard
       accent='emerald'
@@ -545,24 +682,11 @@ function GeometrySymmetryPromptCard(props: {
       padding='md'
       tone='accent'
     >
-      <KangurStatusChip accent='emerald' size='sm'>
-        {translateWithFallback(
-          'geometrySymmetry.inRound.modeLabel',
-          fallbackCopy.modeLabel,
-          {
-            mode:
-              currentRound?.type === 'axis'
-                ? translateWithFallback(
-                    'geometrySymmetry.inRound.mode.axis',
-                    fallbackCopy.mode.axis
-                  )
-                : translateWithFallback(
-                    'geometrySymmetry.inRound.mode.mirror',
-                    fallbackCopy.mode.mirror
-                  ),
-          }
-        )}
-      </KangurStatusChip>
+      <GeometrySymmetryModeChip
+        currentRound={currentRound}
+        fallbackCopy={fallbackCopy}
+        translateWithFallback={translateWithFallback}
+      />
       <KangurDisplayEmoji size='md'>{currentRound?.emoji}</KangurDisplayEmoji>
       <KangurHeadline accent='emerald' as='h3' id='geometry-symmetry-heading' size='sm'>
         {currentRound?.title}
@@ -571,43 +695,7 @@ function GeometrySymmetryPromptCard(props: {
         {currentRound?.prompt}
       </p>
       <p className='text-xs text-center text-emerald-700'>{currentRound?.hint}</p>
-      {currentRound?.type === 'mirror' ? (
-        <p className='text-[11px] text-center text-emerald-700/80'>
-          {translateWithFallback(
-            'geometrySymmetry.inRound.mirror.zoneHint',
-            fallbackCopy.mirror.zoneHint
-          )}
-        </p>
-      ) : null}
-      {currentRound?.type === 'mirror' ? (
-        <div className='mt-1 flex flex-wrap items-center justify-center gap-2'>
-          <KangurButton
-            size='sm'
-            type='button'
-            variant='surface'
-            disabled={isResultLocked}
-            onClick={() => setShowMirrorHint((current) => !current)}
-          >
-            {showMirrorHint
-              ? translateWithFallback(
-                  'geometrySymmetry.inRound.mirror.hideHint',
-                  fallbackCopy.mirror.hideHint
-                )
-              : translateWithFallback(
-                  'geometrySymmetry.inRound.mirror.showHint',
-                  fallbackCopy.mirror.showHint
-                )}
-          </KangurButton>
-          {showMirrorHint ? (
-            <span className='text-[11px] font-semibold text-emerald-700'>
-              {translateWithFallback(
-                'geometrySymmetry.inRound.mirror.ghostHint',
-                fallbackCopy.mirror.ghostHint
-              )}
-            </span>
-          ) : null}
-        </div>
-      ) : null}
+      <GeometrySymmetryMirrorHintControls {...props} />
     </KangurInfoCard>
   );
 }
@@ -753,9 +841,7 @@ function GeometrySymmetryPracticeBoardPanel(props: {
   );
 }
 
-function GeometrySymmetryRoundView(
-  props: ReturnType<typeof useGeometrySymmetryGameRuntime>
-): React.JSX.Element {
+function GeometrySymmetryRoundView(props: GeometrySymmetryGameRuntime): React.JSX.Element {
   const {
     boardAccent,
     canRedo,
@@ -852,7 +938,7 @@ function GeometrySymmetryRoundView(
 
 export default function GeometrySymmetryGame({
   onFinish,
-}: KangurMiniGameFinishActionProps): React.JSX.Element {
+}: GeometrySymmetryFinishProps): React.JSX.Element {
   const ownerKey = useKangurProgressOwnerKey();
   const locale = useLocale();
   const translations = useTranslations('KangurMiniGames');

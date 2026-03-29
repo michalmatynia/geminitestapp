@@ -152,4 +152,90 @@ describe('social pipeline trigger handler', () => {
     expect(startKangurSocialPipelineQueueMock).not.toHaveBeenCalled();
     expect(enqueueKangurSocialPipelineJobMock).not.toHaveBeenCalled();
   });
+
+  it('enqueues a manual visual analysis job', async () => {
+    const response = await POST_handler(
+      new NextRequest('http://localhost/api/kangur/social-pipeline/trigger', {
+        method: 'POST',
+      }),
+      createContext({
+        jobType: 'manual-post-visual-analysis',
+        input: {
+          postId: 'post-1',
+          docReferences: ['overview'],
+          notes: 'Focus on the updated hero.',
+          visionModelId: 'vision-1',
+          imageAddonIds: ['addon-1'],
+        },
+      })
+    );
+
+    expect(enqueueKangurSocialPipelineJobMock).toHaveBeenCalledWith({
+      type: 'manual-post-visual-analysis',
+      input: {
+        postId: 'post-1',
+        docReferences: ['overview'],
+        notes: 'Focus on the updated hero.',
+        visionModelId: 'vision-1',
+        imageAddonIds: ['addon-1'],
+        actorId: 'admin-1',
+      },
+    });
+    await expect(response.json()).resolves.toEqual({
+      success: true,
+      jobId: 'job-123',
+      jobType: 'manual-post-visual-analysis',
+    });
+  });
+
+  it('enqueues a manual post generation job', async () => {
+    const response = await POST_handler(
+      new NextRequest('http://localhost/api/kangur/social-pipeline/trigger', {
+        method: 'POST',
+      }),
+      createContext({
+        jobType: 'manual-post-generation',
+        input: {
+          postId: 'post-1',
+          docReferences: ['overview'],
+          notes: 'Focus on the updated hero.',
+          modelId: 'brain-1',
+          visionModelId: 'vision-1',
+          imageAddonIds: ['addon-1'],
+          projectUrl: 'https://studiq.example.com/project',
+          prefetchedVisualAnalysis: {
+            summary: 'Updated hero card',
+            highlights: ['Updated hero card'],
+            docUpdates: [],
+          },
+          requireVisualAnalysisInBody: true,
+        },
+      })
+    );
+
+    expect(enqueueKangurSocialPipelineJobMock).toHaveBeenCalledWith({
+      type: 'manual-post-generation',
+      input: {
+        postId: 'post-1',
+        docReferences: ['overview'],
+        notes: 'Focus on the updated hero.',
+        modelId: 'brain-1',
+        visionModelId: 'vision-1',
+        imageAddonIds: ['addon-1'],
+        projectUrl: 'https://studiq.example.com/project',
+        prefetchedVisualAnalysis: {
+          summary: 'Updated hero card',
+          highlights: ['Updated hero card'],
+          docUpdates: [],
+        },
+        requireVisualAnalysisInBody: true,
+        actorId: 'admin-1',
+      },
+    });
+    await expect(response.json()).resolves.toEqual({
+      success: true,
+      jobId: 'job-123',
+      jobType: 'manual-post-generation',
+    });
+  });
 });

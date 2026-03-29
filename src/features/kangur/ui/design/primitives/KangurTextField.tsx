@@ -35,6 +35,70 @@ export type KangurTextFieldProps = Omit<React.InputHTMLAttributes<HTMLInputEleme
   VariantProps<typeof kangurTextFieldVariants> &
   DataAttributesDto;
 
+const resolveKangurFieldFallbackLabel = ({
+  allowFallbackLabel,
+  name,
+  placeholder,
+  dataDocAlias,
+  dataDocId,
+  dataTestId,
+}: {
+  allowFallbackLabel: boolean;
+  name?: string;
+  placeholder?: string;
+  dataDocAlias?: string;
+  dataDocId?: string;
+  dataTestId?: string;
+}): string | undefined => {
+  if (!allowFallbackLabel) {
+    return undefined;
+  }
+
+  return placeholder ?? name ?? dataDocAlias ?? dataDocId ?? dataTestId;
+};
+
+const resolveKangurFieldAccessibility = ({
+  allowFallbackLabel,
+  ariaLabel,
+  ariaLabelledBy,
+  fallbackLabel,
+  title,
+}: {
+  allowFallbackLabel: boolean;
+  ariaLabel?: string;
+  ariaLabelledBy?: string;
+  fallbackLabel?: string;
+  title?: string;
+}): {
+  ariaLabel: string | undefined;
+  hasLabel: boolean;
+} => {
+  const { ariaLabel: resolvedAriaLabel, hasAccessibleLabel } = resolveAccessibleLabel({
+    children: null,
+    ariaLabel,
+    ariaLabelledBy,
+    title: allowFallbackLabel ? title : undefined,
+    fallbackLabel,
+  });
+
+  return {
+    ariaLabel: resolvedAriaLabel,
+    hasLabel: hasAccessibleLabel,
+  };
+};
+
+const warnMissingKangurFieldLabel = ({
+  componentName,
+  hasLabel,
+}: {
+  componentName: 'KangurSelectField' | 'KangurTextField';
+  hasLabel: boolean;
+}): void => {
+  if (!hasLabel) {
+    warnMissingAccessibleLabel({ componentName, hasAccessibleLabel: hasLabel });
+  }
+};
+
 export const KangurTextField = React.forwardRef<HTMLInputElement, KangurTextFieldProps>(
   (
     {
@@ -56,23 +120,26 @@ export const KangurTextField = React.forwardRef<HTMLInputElement, KangurTextFiel
     ref
   ) => {
     const allowFallbackLabel = !ariaLabelledByProp && !id;
-    const { ariaLabel: resolvedAriaLabel, hasAccessibleLabel } = resolveAccessibleLabel({
-      children: null,
-      ariaLabel: ariaLabelProp,
-      ariaLabelledBy: ariaLabelledByProp,
-      title: allowFallbackLabel ? title : undefined,
-      fallbackLabel: allowFallbackLabel
-        ? placeholder ??
-          name ??
-          (typeof dataDocAlias === 'string' ? dataDocAlias : undefined) ??
-          (typeof dataDocId === 'string' ? dataDocId : undefined) ??
-          (typeof dataTestId === 'string' ? dataTestId : undefined)
-        : undefined,
-    });
+    const { ariaLabel: resolvedAriaLabel, hasLabel: hasAccessibleLabel } =
+      resolveKangurFieldAccessibility({
+        allowFallbackLabel,
+        ariaLabel: ariaLabelProp,
+        ariaLabelledBy: ariaLabelledByProp,
+        fallbackLabel: resolveKangurFieldFallbackLabel({
+          allowFallbackLabel,
+          dataDocAlias: typeof dataDocAlias === 'string' ? dataDocAlias : undefined,
+          dataDocId: typeof dataDocId === 'string' ? dataDocId : undefined,
+          dataTestId: typeof dataTestId === 'string' ? dataTestId : undefined,
+          name,
+          placeholder,
+        }),
+        title,
+      });
     const hasLabel = hasAccessibleLabel || Boolean(id);
-    if (!hasLabel) {
-      warnMissingAccessibleLabel({ componentName: 'KangurTextField', hasAccessibleLabel: hasLabel });
-    }
+    warnMissingKangurFieldLabel({
+      componentName: 'KangurTextField',
+      hasLabel,
+    });
 
     return (
       <input
@@ -121,25 +188,25 @@ export const KangurSelectField = React.forwardRef<HTMLSelectElement, KangurSelec
     ref
   ) => {
     const allowFallbackLabel = !ariaLabelledByProp && !id;
-    const { ariaLabel: resolvedAriaLabel, hasAccessibleLabel } = resolveAccessibleLabel({
-      children: null,
-      ariaLabel: ariaLabelProp,
-      ariaLabelledBy: ariaLabelledByProp,
-      title: allowFallbackLabel ? title : undefined,
-      fallbackLabel: allowFallbackLabel
-        ? name ??
-          (typeof dataDocAlias === 'string' ? dataDocAlias : undefined) ??
-          (typeof dataDocId === 'string' ? dataDocId : undefined) ??
-          (typeof dataTestId === 'string' ? dataTestId : undefined)
-        : undefined,
-    });
-    const hasLabel = hasAccessibleLabel || Boolean(id);
-    if (!hasLabel) {
-      warnMissingAccessibleLabel({
-        componentName: 'KangurSelectField',
-        hasAccessibleLabel: hasLabel,
+    const { ariaLabel: resolvedAriaLabel, hasLabel: hasAccessibleLabel } =
+      resolveKangurFieldAccessibility({
+        allowFallbackLabel,
+        ariaLabel: ariaLabelProp,
+        ariaLabelledBy: ariaLabelledByProp,
+        fallbackLabel: resolveKangurFieldFallbackLabel({
+          allowFallbackLabel,
+          dataDocAlias: typeof dataDocAlias === 'string' ? dataDocAlias : undefined,
+          dataDocId: typeof dataDocId === 'string' ? dataDocId : undefined,
+          dataTestId: typeof dataTestId === 'string' ? dataTestId : undefined,
+          name,
+        }),
+        title,
       });
-    }
+    const hasLabel = hasAccessibleLabel || Boolean(id);
+    warnMissingKangurFieldLabel({
+      componentName: 'KangurSelectField',
+      hasLabel,
+    });
 
     return (
       <select

@@ -70,6 +70,69 @@ export type KangurButtonProps = React.ButtonHTMLAttributes<HTMLButtonElement> &
     asChild?: boolean;
   };
 
+const resolveKangurButtonFallbackLabel = ({
+  dataDocAlias,
+  dataDocId,
+  dataTestId,
+}: {
+  dataDocAlias?: string;
+  dataDocId?: string;
+  dataTestId?: string;
+}): string | undefined => dataDocAlias || dataDocId || dataTestId;
+
+const resolveKangurButtonTabIndex = ({
+  asChild,
+  isDisabled,
+  tabIndex,
+}: {
+  asChild: boolean;
+  isDisabled: boolean;
+  tabIndex?: number;
+}): number | undefined => (isDisabled && asChild ? -1 : tabIndex);
+
+const resolveKangurButtonDisabledClassName = ({
+  asChild,
+  isDisabled,
+}: {
+  asChild: boolean;
+  isDisabled: boolean;
+}): string | null =>
+  isDisabled && asChild ? 'pointer-events-none cursor-not-allowed opacity-40' : null;
+
+const resolveKangurButtonClickHandler = ({
+  isDisabled,
+  onClick,
+}: {
+  isDisabled: boolean;
+  onClick?: React.MouseEventHandler<HTMLButtonElement>;
+}): React.MouseEventHandler<HTMLElement> | undefined => {
+  if (!isDisabled && !onClick) {
+    return undefined;
+  }
+
+  return (event) => {
+    if (isDisabled) {
+      event.preventDefault();
+      event.stopPropagation();
+      return;
+    }
+
+    onClick?.(event as React.MouseEvent<HTMLButtonElement>);
+  };
+};
+
+const warnMissingKangurButtonLabel = ({
+  hasAccessibleLabel,
+  hasText,
+}: {
+  hasAccessibleLabel: boolean;
+  hasText: boolean;
+}): void => {
+  if (!hasAccessibleLabel && !hasText) {
+    warnMissingAccessibleLabel({ componentName: 'KangurButton', hasAccessibleLabel });
+  }
+};
+
 export const KangurButton = React.forwardRef<HTMLButtonElement, KangurButtonProps>(
   (
     {
@@ -94,33 +157,36 @@ export const KangurButton = React.forwardRef<HTMLButtonElement, KangurButtonProp
   ) => {
     const Comp = asChild ? Slot : 'button';
     const isDisabled = Boolean(disabled);
-    const handleClick: React.MouseEventHandler<HTMLElement> = (event) => {
-      if (isDisabled) {
-        event.preventDefault();
-        event.stopPropagation();
-        return;
-      }
-      onClick?.(event as React.MouseEvent<HTMLButtonElement>);
-    };
-    const resolvedTabIndex = isDisabled && asChild ? -1 : tabIndex;
-    const disabledClassName = isDisabled && asChild ? 'pointer-events-none cursor-not-allowed opacity-40' : null;
+    const handleClick = resolveKangurButtonClickHandler({
+      isDisabled,
+      onClick,
+    });
+    const resolvedTabIndex = resolveKangurButtonTabIndex({
+      asChild,
+      isDisabled,
+      tabIndex,
+    });
+    const disabledClassName = resolveKangurButtonDisabledClassName({
+      asChild,
+      isDisabled,
+    });
     const { hasText, ariaLabel: resolvedAriaLabel, hasAccessibleLabel } = resolveAccessibleLabel({
       children,
       ariaLabel: ariaLabelProp,
       ariaLabelledBy: ariaLabelledByProp,
       title,
-      fallbackLabel:
-        (typeof dataDocAlias === 'string' ? dataDocAlias : undefined) ||
-        (typeof dataDocId === 'string' ? dataDocId : undefined) ||
-        (typeof dataTestId === 'string' ? dataTestId : undefined),
+      fallbackLabel: resolveKangurButtonFallbackLabel({
+        dataDocAlias: typeof dataDocAlias === 'string' ? dataDocAlias : undefined,
+        dataDocId: typeof dataDocId === 'string' ? dataDocId : undefined,
+        dataTestId: typeof dataTestId === 'string' ? dataTestId : undefined,
+      }),
     });
-    if (!hasAccessibleLabel && !hasText) {
-      warnMissingAccessibleLabel({ componentName: 'KangurButton', hasAccessibleLabel });
-    }
+    warnMissingKangurButtonLabel({ hasAccessibleLabel, hasText });
+
     return (
       <Comp
         {...props}
-        onClick={isDisabled || onClick ? handleClick : undefined}
+        onClick={handleClick}
         tabIndex={resolvedTabIndex}
         className={cn(kangurButtonVariants({ variant, size, fullWidth, className }), disabledClassName)}
         disabled={isDisabled}

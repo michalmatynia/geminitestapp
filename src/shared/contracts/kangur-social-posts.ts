@@ -22,6 +22,16 @@ export type KangurSocialVisualAnalysis = z.infer<
   typeof kangurSocialVisualAnalysisSchema
 >;
 
+export const kangurSocialVisualAnalysisStatusSchema = z.enum([
+  'queued',
+  'running',
+  'completed',
+  'failed',
+]);
+export type KangurSocialVisualAnalysisStatus = z.infer<
+  typeof kangurSocialVisualAnalysisStatusSchema
+>;
+
 export type KangurSocialDocUpdateItemPlan = {
   docPath: string;
   section: string | null;
@@ -82,6 +92,7 @@ export const kangurSocialPostSchema = z.object({
   visualSummary: trimmedString.max(8000).nullable().default(null),
   visualHighlights: z.array(trimmedString.max(400)).max(24).default([]),
   visualDocUpdates: z.array(kangurSocialDocUpdateSchema).max(50).default([]),
+  visualAnalysisStatus: kangurSocialVisualAnalysisStatusSchema.nullable().default(null),
   visualAnalysisUpdatedAt: z.string().datetime().nullable().default(null),
   visualAnalysisJobId: trimmedString.max(160).nullable().default(null),
   visualAnalysisModelId: trimmedString.max(160).nullable().default(null),

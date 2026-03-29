@@ -29,77 +29,74 @@ import { KANGUR_PANEL_GAP_CLASSNAME } from '@/features/kangur/ui/design/tokens';
 import { useKangurRoutePageReady } from '@/features/kangur/ui/hooks/useKangurRoutePageReady';
 import { useKangurTutorAnchor } from '@/features/kangur/ui/hooks/useKangurTutorAnchor';
 
-function ParentDashboardResolvedContent({
-  docsTooltipsEnabled,
+type ParentDashboardTranslations = ReturnType<typeof useTranslations>;
+
+type ParentDashboardAnchorRefs = {
+  aiTutorAnchorRef: React.RefObject<HTMLDivElement | null>;
+  assignmentsAnchorRef: React.RefObject<HTMLDivElement | null>;
+  guestHeroAnchorRef: React.RefObject<HTMLDivElement | null>;
+  heroAnchorRef: React.RefObject<HTMLDivElement | null>;
+  learnerManagementAnchorRef: React.RefObject<HTMLDivElement | null>;
+  monitoringAnchorRef: React.RefObject<HTMLDivElement | null>;
+  progressAnchorRef: React.RefObject<HTMLDivElement | null>;
+  tabsAnchorRef: React.RefObject<HTMLDivElement | null>;
+};
+
+type ParentDashboardPanelRefs = {
+  tabPanelsContentRef: React.RefObject<HTMLDivElement | null>;
+  tabPanelsRef: React.RefObject<HTMLDivElement | null>;
+};
+
+const resolveParentDashboardActiveLearnerId = (
+  activeLearner: { id?: string | null } | null | undefined
+): string | null => activeLearner?.id?.trim() || null;
+
+const resolveParentDashboardSessionContentId = ({
+  activeLearnerId,
+  activeTab,
+  canAccessDashboard,
 }: {
-  docsTooltipsEnabled: boolean;
-}): React.JSX.Element {
-  const translations = useTranslations('KangurParentDashboard');
-  const {
-    activeLearner,
-    activeTab,
-    basePath,
-    canAccessDashboard,
-    canManageLearners,
-    isAuthenticated,
-  } = useKangurParentDashboardRuntimeShellState();
-  const { logout } = useKangurParentDashboardRuntimeShellActions();
-  const { openLoginModal } = useKangurLoginModal();
-  const { guestPlayerName, setGuestPlayerName } = useKangurGuestPlayer();
-  const tabPanelsRef = useRef<HTMLDivElement | null>(null);
-  const tabPanelsContentRef = useRef<HTMLDivElement | null>(null);
-  const guestHeroAnchorRef = useRef<HTMLDivElement | null>(null);
-  const heroAnchorRef = useRef<HTMLDivElement | null>(null);
-  const learnerManagementAnchorRef = useRef<HTMLDivElement | null>(null);
-  const tabsAnchorRef = useRef<HTMLDivElement | null>(null);
-  const progressAnchorRef = useRef<HTMLDivElement | null>(null);
-  const assignmentsAnchorRef = useRef<HTMLDivElement | null>(null);
-  const monitoringAnchorRef = useRef<HTMLDivElement | null>(null);
-  const aiTutorAnchorRef = useRef<HTMLDivElement | null>(null);
-  const knownTabPanelHeightsRef = useRef<Partial<Record<KangurParentDashboardTabId, number>>>({});
-  const pendingScrollSnapshotRef = useRef<number | null>(null);
-  const restoreScrollAnimationFrameRef = useRef<number | null>(null);
-  const [reservedTabPanelHeight, setReservedTabPanelHeight] = useState<number | null>(null);
-  const activeLearnerId = activeLearner?.id?.trim() || null;
-  const hasActiveLearner = Boolean(activeLearnerId);
-  const isAiTutorTabActive = canAccessDashboard && hasActiveLearner && activeTab === 'ai-tutor';
-  const progressTabIds = getParentDashboardTabIds('progress');
-  const assignmentsTabIds = getParentDashboardTabIds('assign');
-  const monitoringTabIds = getParentDashboardTabIds('monitoring');
-  const aiTutorTabIds = getParentDashboardTabIds('ai-tutor');
-  const parentTabLabels = useMemo<Record<KangurParentDashboardTabId, string>>(
-    () => ({
-      progress: translations('page.tabs.progress'),
-      assign: translations('page.tabs.assign'),
-      monitoring: translations('page.tabs.monitoring'),
-      'ai-tutor': translations('page.tabs.aiTutor'),
-    }),
-    [translations]
-  );
-  const dashboardContentId = canAccessDashboard
-    ? `parent-dashboard:${activeLearnerId ?? 'none'}:${activeTab}`
-    : 'parent-dashboard:guest';
-  const dashboardTitle = canAccessDashboard
+  activeLearnerId: string | null;
+  activeTab: KangurParentDashboardTabId;
+  canAccessDashboard: boolean;
+}): string =>
+  canAccessDashboard ? `parent-dashboard:${activeLearnerId ?? 'none'}:${activeTab}` : 'parent-dashboard:guest';
+
+const resolveParentDashboardSessionTitle = ({
+  activeTab,
+  canAccessDashboard,
+  parentTabLabels,
+  translations,
+}: {
+  activeTab: KangurParentDashboardTabId;
+  canAccessDashboard: boolean;
+  parentTabLabels: Record<KangurParentDashboardTabId, string>;
+  translations: ParentDashboardTranslations;
+}): string =>
+  canAccessDashboard
     ? translations('page.dashboardTitle', { tab: parentTabLabels[activeTab] })
     : translations('page.dashboardTitleRestricted');
-  const progressPanelContent =
-    activeTab === 'progress' ? (
-      <KangurParentDashboardProgressWidget displayMode='active-tab' />
-    ) : null;
-  const assignmentsPanelContent =
-    activeTab === 'assign' ? (
-      <KangurParentDashboardAssignmentsWidget displayMode='active-tab' />
-    ) : null;
-  const monitoringPanelContent =
-    activeTab === 'monitoring' ? (
-      <KangurParentDashboardAssignmentsMonitoringWidget displayMode='active-tab' />
-    ) : null;
-  const aiTutorPanelContent =
-    activeTab === 'ai-tutor' ? (
-      <KangurParentDashboardAiTutorWidget displayMode='active-tab' />
-    ) : null;
 
-  useKangurAiTutorSessionSync({
+const resolveParentDashboardSessionSyncInput = ({
+  activeLearnerId,
+  activeTab,
+  canAccessDashboard,
+  dashboardContentId,
+  dashboardTitle,
+  hasActiveLearner,
+  translations,
+}: {
+  activeLearnerId: string | null;
+  activeTab: KangurParentDashboardTabId;
+  canAccessDashboard: boolean;
+  dashboardContentId: string;
+  dashboardTitle: string;
+  hasActiveLearner: boolean;
+  translations: ParentDashboardTranslations;
+}): Parameters<typeof useKangurAiTutorSessionSync>[0] => {
+  const isAiTutorTabActive = canAccessDashboard && hasActiveLearner && activeTab === 'ai-tutor';
+
+  return {
     learnerId: isAiTutorTabActive ? activeLearnerId : null,
     sessionContext: isAiTutorTabActive
       ? {
@@ -111,110 +108,254 @@ function ParentDashboardResolvedContent({
             : translations('page.sessionDescriptionRestricted'),
         }
       : null,
+  };
+};
+
+const createParentDashboardAnchorConfig = ({
+  dashboardContentId,
+  enabled,
+  id,
+  kind,
+  label,
+  priority,
+}: {
+  dashboardContentId: string;
+  enabled: boolean;
+  id: string;
+  kind: 'assignment' | 'hero' | 'navigation' | 'progress' | 'screen';
+  label: string;
+  priority: number;
+}) => ({
+  enabled,
+  id,
+  kind,
+  label,
+  metadata: {
+    contentId: dashboardContentId,
+    label,
+  },
+  priority,
+  surface: 'parent_dashboard' as const,
+});
+
+const resolveParentDashboardHasLearnerAccess = ({
+  canAccessDashboard,
+  hasActiveLearner,
+}: {
+  canAccessDashboard: boolean;
+  hasActiveLearner: boolean;
+}): boolean => canAccessDashboard && hasActiveLearner;
+
+const resolveParentDashboardActiveTabAnchorEnabled = ({
+  activeTab,
+  canAccessDashboard,
+  hasActiveLearner,
+  tabId,
+}: {
+  activeTab: KangurParentDashboardTabId;
+  canAccessDashboard: boolean;
+  hasActiveLearner: boolean;
+  tabId: KangurParentDashboardTabId;
+}): boolean =>
+  resolveParentDashboardHasLearnerAccess({
+    canAccessDashboard,
+    hasActiveLearner,
+  }) && activeTab === tabId;
+
+function useParentDashboardAnchors(input: {
+  activeTab: KangurParentDashboardTabId;
+  canAccessDashboard: boolean;
+  dashboardContentId: string;
+  hasActiveLearner: boolean;
+  refs: ParentDashboardAnchorRefs;
+  translations: ParentDashboardTranslations;
+}): void {
+  useKangurTutorAnchor({
+    ...createParentDashboardAnchorConfig({
+      dashboardContentId: input.dashboardContentId,
+      enabled: !input.canAccessDashboard,
+      id: 'kangur-parent-dashboard-guest-hero',
+      kind: 'hero',
+      label: input.translations('page.anchors.heroGuest'),
+      priority: 90,
+    }),
+    ref: input.refs.guestHeroAnchorRef,
   });
   useKangurTutorAnchor({
-    id: 'kangur-parent-dashboard-guest-hero',
-    kind: 'hero',
-    ref: guestHeroAnchorRef,
-    surface: 'parent_dashboard',
-    enabled: !canAccessDashboard,
-    priority: 90,
-    metadata: {
-      contentId: dashboardContentId,
-      label: translations('page.anchors.heroGuest'),
-    },
+    ...createParentDashboardAnchorConfig({
+      dashboardContentId: input.dashboardContentId,
+      enabled: input.canAccessDashboard,
+      id: 'kangur-parent-dashboard-hero',
+      kind: 'hero',
+      label: input.translations('page.anchors.hero'),
+      priority: 88,
+    }),
+    ref: input.refs.heroAnchorRef,
   });
   useKangurTutorAnchor({
-    id: 'kangur-parent-dashboard-hero',
-    kind: 'hero',
-    ref: heroAnchorRef,
-    surface: 'parent_dashboard',
-    enabled: canAccessDashboard,
-    priority: 88,
-    metadata: {
-      contentId: dashboardContentId,
-      label: translations('page.anchors.hero'),
-    },
+    ...createParentDashboardAnchorConfig({
+      dashboardContentId: input.dashboardContentId,
+      enabled: input.canAccessDashboard,
+      id: 'kangur-parent-dashboard-learner-management',
+      kind: 'screen',
+      label: input.translations('page.anchors.learnerManagement'),
+      priority: 86,
+    }),
+    ref: input.refs.learnerManagementAnchorRef,
   });
   useKangurTutorAnchor({
-    id: 'kangur-parent-dashboard-learner-management',
-    kind: 'screen',
-    ref: learnerManagementAnchorRef,
-    surface: 'parent_dashboard',
-    enabled: canAccessDashboard,
-    priority: 86,
-    metadata: {
-      contentId: dashboardContentId,
-      label: translations('page.anchors.learnerManagement'),
-    },
+    ...createParentDashboardAnchorConfig({
+      dashboardContentId: input.dashboardContentId,
+      enabled: resolveParentDashboardHasLearnerAccess({
+        canAccessDashboard: input.canAccessDashboard,
+        hasActiveLearner: input.hasActiveLearner,
+      }),
+      id: 'kangur-parent-dashboard-tabs',
+      kind: 'navigation',
+      label: input.translations('page.anchors.tabs'),
+      priority: 84,
+    }),
+    ref: input.refs.tabsAnchorRef,
   });
   useKangurTutorAnchor({
-    id: 'kangur-parent-dashboard-tabs',
-    kind: 'navigation',
-    ref: tabsAnchorRef,
-    surface: 'parent_dashboard',
-    enabled: canAccessDashboard && hasActiveLearner,
-    priority: 84,
-    metadata: {
-      contentId: dashboardContentId,
-      label: translations('page.anchors.tabs'),
-    },
+    ...createParentDashboardAnchorConfig({
+      dashboardContentId: input.dashboardContentId,
+      enabled: resolveParentDashboardActiveTabAnchorEnabled({
+        activeTab: input.activeTab,
+        canAccessDashboard: input.canAccessDashboard,
+        hasActiveLearner: input.hasActiveLearner,
+        tabId: 'progress',
+      }),
+      id: 'kangur-parent-dashboard-progress',
+      kind: 'progress',
+      label: input.translations('page.anchors.progress'),
+      priority: 82,
+    }),
+    ref: input.refs.progressAnchorRef,
   });
   useKangurTutorAnchor({
-    id: 'kangur-parent-dashboard-progress',
-    kind: 'progress',
-    ref: progressAnchorRef,
-    surface: 'parent_dashboard',
-    enabled: canAccessDashboard && hasActiveLearner && activeTab === 'progress',
-    priority: 82,
-    metadata: {
-      contentId: dashboardContentId,
-      label: translations('page.anchors.progress'),
-    },
+    ...createParentDashboardAnchorConfig({
+      dashboardContentId: input.dashboardContentId,
+      enabled: resolveParentDashboardActiveTabAnchorEnabled({
+        activeTab: input.activeTab,
+        canAccessDashboard: input.canAccessDashboard,
+        hasActiveLearner: input.hasActiveLearner,
+        tabId: 'assign',
+      }),
+      id: 'kangur-parent-dashboard-assignments',
+      kind: 'assignment',
+      label: input.translations('page.anchors.assignments'),
+      priority: 78,
+    }),
+    ref: input.refs.assignmentsAnchorRef,
   });
   useKangurTutorAnchor({
-    id: 'kangur-parent-dashboard-assignments',
-    kind: 'assignment',
-    ref: assignmentsAnchorRef,
-    surface: 'parent_dashboard',
-    enabled: canAccessDashboard && hasActiveLearner && activeTab === 'assign',
-    priority: 78,
-    metadata: {
-      contentId: dashboardContentId,
-      label: translations('page.anchors.assignments'),
-    },
+    ...createParentDashboardAnchorConfig({
+      dashboardContentId: input.dashboardContentId,
+      enabled: resolveParentDashboardActiveTabAnchorEnabled({
+        activeTab: input.activeTab,
+        canAccessDashboard: input.canAccessDashboard,
+        hasActiveLearner: input.hasActiveLearner,
+        tabId: 'monitoring',
+      }),
+      id: 'kangur-parent-dashboard-monitoring',
+      kind: 'assignment',
+      label: input.translations('page.anchors.monitoring'),
+      priority: 77,
+    }),
+    ref: input.refs.monitoringAnchorRef,
   });
   useKangurTutorAnchor({
-    id: 'kangur-parent-dashboard-monitoring',
-    kind: 'assignment',
-    ref: monitoringAnchorRef,
-    surface: 'parent_dashboard',
-    enabled: canAccessDashboard && hasActiveLearner && activeTab === 'monitoring',
-    priority: 77,
-    metadata: {
-      contentId: dashboardContentId,
-      label: translations('page.anchors.monitoring'),
-    },
+    ...createParentDashboardAnchorConfig({
+      dashboardContentId: input.dashboardContentId,
+      enabled: resolveParentDashboardActiveTabAnchorEnabled({
+        activeTab: input.activeTab,
+        canAccessDashboard: input.canAccessDashboard,
+        hasActiveLearner: input.hasActiveLearner,
+        tabId: 'ai-tutor',
+      }),
+      id: 'kangur-parent-dashboard-ai-tutor',
+      kind: 'screen',
+      label: input.translations('page.anchors.aiTutor'),
+      priority: 76,
+    }),
+    ref: input.refs.aiTutorAnchorRef,
   });
-  useKangurTutorAnchor({
-    id: 'kangur-parent-dashboard-ai-tutor',
-    kind: 'screen',
-    ref: aiTutorAnchorRef,
-    surface: 'parent_dashboard',
-    enabled: canAccessDashboard && hasActiveLearner && activeTab === 'ai-tutor',
-    priority: 76,
-    metadata: {
-      contentId: dashboardContentId,
-      label: translations('page.anchors.aiTutor'),
-    },
-  });
+}
+
+const resolveParentDashboardCurrentPanelHeight = ({
+  panelRectHeight,
+  tabPanelsContentHeight,
+}: {
+  panelRectHeight: number | null;
+  tabPanelsContentHeight: number | null;
+}): number => Math.ceil(tabPanelsContentHeight ?? panelRectHeight ?? 0);
+
+const resolveParentDashboardReservedPanelHeight = ({
+  currentHeight,
+  nextKnownHeight,
+  viewportSupportHeight,
+}: {
+  currentHeight: number;
+  nextKnownHeight: number;
+  viewportSupportHeight: number;
+}): number => Math.max(currentHeight, nextKnownHeight, viewportSupportHeight);
+
+const shouldReleaseParentDashboardPanelReserve = ({
+  actualContentHeight,
+  reservedTabPanelHeight,
+}: {
+  actualContentHeight: number;
+  reservedTabPanelHeight: number;
+}): boolean => reservedTabPanelHeight <= actualContentHeight;
+
+const resolveParentDashboardViewportSupportHeight = (panelRect: DOMRect | null): number =>
+  panelRect ? Math.ceil(Math.max(0, window.innerHeight - panelRect.top)) : 0;
+
+const resolveParentDashboardReserveMetrics = ({
+  nextTab,
+  refs,
+  knownTabPanelHeights,
+}: {
+  nextTab: KangurParentDashboardTabId;
+  refs: ParentDashboardPanelRefs;
+  knownTabPanelHeights: Partial<Record<KangurParentDashboardTabId, number>>;
+}): {
+  currentHeight: number;
+  nextKnownHeight: number;
+  viewportSupportHeight: number;
+} => {
+  const panelRect = refs.tabPanelsRef.current?.getBoundingClientRect() ?? null;
+
+  return {
+    currentHeight: resolveParentDashboardCurrentPanelHeight({
+      panelRectHeight: panelRect?.height ?? null,
+      tabPanelsContentHeight: refs.tabPanelsContentRef.current?.getBoundingClientRect().height ?? null,
+    }),
+    nextKnownHeight: knownTabPanelHeights[nextTab] ?? 0,
+    viewportSupportHeight: resolveParentDashboardViewportSupportHeight(panelRect),
+  };
+};
+
+function useParentDashboardPanelReserve(input: {
+  activeTab: KangurParentDashboardTabId;
+  refs: ParentDashboardPanelRefs;
+}): {
+  reservePanelHeightBeforeTabChange: (nextTab: KangurParentDashboardTabId) => void;
+  reservedTabPanelHeight: number | null;
+} {
+  const { activeTab, refs } = input;
+  const knownTabPanelHeightsRef = useRef<Partial<Record<KangurParentDashboardTabId, number>>>({});
+  const pendingScrollSnapshotRef = useRef<number | null>(null);
+  const restoreScrollAnimationFrameRef = useRef<number | null>(null);
+  const [reservedTabPanelHeight, setReservedTabPanelHeight] = useState<number | null>(null);
 
   useEffect(() => {
     if (typeof ResizeObserver === 'undefined') {
       return;
     }
 
-    const tabPanelsContent = tabPanelsContentRef.current;
+    const tabPanelsContent = refs.tabPanelsContentRef.current;
     if (!tabPanelsContent) {
       return;
     }
@@ -237,14 +378,14 @@ function ParentDashboardResolvedContent({
     return () => {
       observer.disconnect();
     };
-  }, [activeTab]);
+  }, [activeTab, refs.tabPanelsContentRef]);
 
   useEffect(() => {
     if (reservedTabPanelHeight === null) {
       return;
     }
 
-    const tabPanelsContent = tabPanelsContentRef.current;
+    const tabPanelsContent = refs.tabPanelsContentRef.current;
     if (!tabPanelsContent) {
       return;
     }
@@ -255,7 +396,12 @@ function ParentDashboardResolvedContent({
         return;
       }
 
-      if (reservedTabPanelHeight <= actualContentHeight) {
+      if (
+        shouldReleaseParentDashboardPanelReserve({
+          actualContentHeight,
+          reservedTabPanelHeight,
+        })
+      ) {
         setReservedTabPanelHeight(null);
         return;
       }
@@ -276,8 +422,8 @@ function ParentDashboardResolvedContent({
       typeof ResizeObserver === 'undefined'
         ? null
         : new ResizeObserver(() => {
-          releaseReserveIfSafe();
-        });
+            releaseReserveIfSafe();
+          });
     observer?.observe(tabPanelsContent);
 
     return () => {
@@ -285,7 +431,7 @@ function ParentDashboardResolvedContent({
       window.removeEventListener('resize', releaseReserveIfSafe);
       observer?.disconnect();
     };
-  }, [reservedTabPanelHeight]);
+  }, [refs.tabPanelsContentRef, reservedTabPanelHeight]);
 
   useLayoutEffect(() => {
     const previousScrollY = pendingScrollSnapshotRef.current;
@@ -315,71 +461,165 @@ function ParentDashboardResolvedContent({
     []
   );
 
-  const reservePanelHeightBeforeTabChange = useCallback(
-    (nextTab: KangurParentDashboardTabId): void => {
-      pendingScrollSnapshotRef.current = window.scrollY;
-      const panelRect = tabPanelsRef.current?.getBoundingClientRect() ?? null;
-      const currentHeight = Math.ceil(
-        tabPanelsContentRef.current?.getBoundingClientRect().height ?? panelRect?.height ?? 0
-      );
-      const nextKnownHeight = knownTabPanelHeightsRef.current[nextTab] ?? 0;
-      const viewportSupportHeight = panelRect
-        ? Math.ceil(Math.max(0, window.innerHeight - panelRect.top))
-        : 0;
-      const reservedHeight = Math.max(currentHeight, nextKnownHeight, viewportSupportHeight);
+  const reservePanelHeightBeforeTabChange = useCallback((nextTab: KangurParentDashboardTabId): void => {
+    const { currentHeight, nextKnownHeight, viewportSupportHeight } =
+      resolveParentDashboardReserveMetrics({
+        nextTab,
+        refs,
+        knownTabPanelHeights: knownTabPanelHeightsRef.current,
+      });
 
-      if (reservedHeight > 0) {
-        setReservedTabPanelHeight(reservedHeight);
-      }
-    },
-    []
-  );
-  const navigation = useMemo(
-    () => ({
-      basePath,
-      canManageLearners,
-      currentPage: 'ParentDashboard' as const,
-      guestPlayerName: isAuthenticated ? undefined : guestPlayerName,
-      isAuthenticated,
-      onGuestPlayerNameChange: isAuthenticated ? undefined : setGuestPlayerName,
-      onLogin: openLoginModal,
-      onLogout: () => logout(false),
-    }),
-    [
-      basePath,
-      canManageLearners,
-      guestPlayerName,
-      isAuthenticated,
-      logout,
-      openLoginModal,
-      setGuestPlayerName,
-    ]
-  );
+    pendingScrollSnapshotRef.current = window.scrollY;
+    const reservedHeight = resolveParentDashboardReservedPanelHeight({
+      currentHeight,
+      nextKnownHeight,
+      viewportSupportHeight,
+    });
 
-  if (!canAccessDashboard) {
-    return (
-      <KangurStandardPageLayout
-        tone='dashboard'
-        id='kangur-parent-dashboard-page'
-        shellClassName='justify-center px-4'
-        skipLinkTargetId='kangur-parent-dashboard-guest-main'
-        docsRootId='kangur-parent-dashboard-page'
-        docsTooltipsEnabled={docsTooltipsEnabled}
-        containerProps={{
-          as: 'section',
-          id: 'kangur-parent-dashboard-guest-main',
-          className: 'flex w-full flex-1 items-center justify-center py-12',
-        }}
+    if (reservedHeight > 0) {
+      setReservedTabPanelHeight(reservedHeight);
+    }
+  }, [refs.tabPanelsContentRef, refs.tabPanelsRef]);
+
+  return {
+    reservePanelHeightBeforeTabChange,
+    reservedTabPanelHeight,
+  };
+}
+
+function ParentDashboardTabPanel(props: {
+  activeTab: KangurParentDashboardTabId;
+  anchorRef: React.RefObject<HTMLDivElement | null>;
+  children: React.ReactNode;
+  tabId: KangurParentDashboardTabId;
+}): React.JSX.Element {
+  const { activeTab, anchorRef, children, tabId } = props;
+  const tabIds = getParentDashboardTabIds(tabId);
+  const isActive = activeTab === tabId;
+
+  return (
+    <div
+      ref={anchorRef}
+      id={tabIds.panelId}
+      role='tabpanel'
+      aria-labelledby={tabIds.tabId}
+      hidden={!isActive}
+      tabIndex={isActive ? 0 : -1}
+    >
+      {isActive ? children : null}
+    </div>
+  );
+}
+
+function ParentDashboardGuestShell(props: {
+  docsTooltipsEnabled: boolean;
+  guestHeroAnchorRef: React.RefObject<HTMLDivElement | null>;
+}): React.JSX.Element {
+  const { docsTooltipsEnabled, guestHeroAnchorRef } = props;
+
+  return (
+    <KangurStandardPageLayout
+      tone='dashboard'
+      id='kangur-parent-dashboard-page'
+      shellClassName='justify-center px-4'
+      skipLinkTargetId='kangur-parent-dashboard-guest-main'
+      docsRootId='kangur-parent-dashboard-page'
+      docsTooltipsEnabled={docsTooltipsEnabled}
+      containerProps={{
+        as: 'section',
+        id: 'kangur-parent-dashboard-guest-main',
+        className: 'flex w-full flex-1 items-center justify-center py-12',
+      }}
+    >
+      <div ref={guestHeroAnchorRef} className='w-full max-w-lg'>
+        <KangurParentDashboardHeroWidget />
+      </div>
+    </KangurStandardPageLayout>
+  );
+}
+
+function ParentDashboardActivePanels(props: {
+  activeTab: KangurParentDashboardTabId;
+  aiTutorAnchorRef: React.RefObject<HTMLDivElement | null>;
+  assignmentsAnchorRef: React.RefObject<HTMLDivElement | null>;
+  monitoringAnchorRef: React.RefObject<HTMLDivElement | null>;
+  progressAnchorRef: React.RefObject<HTMLDivElement | null>;
+  tabPanelsContentRef: React.RefObject<HTMLDivElement | null>;
+}): React.JSX.Element {
+  const {
+    activeTab,
+    aiTutorAnchorRef,
+    assignmentsAnchorRef,
+    monitoringAnchorRef,
+    progressAnchorRef,
+    tabPanelsContentRef,
+  } = props;
+
+  return (
+    <div ref={tabPanelsContentRef}>
+      <ParentDashboardTabPanel activeTab={activeTab} anchorRef={progressAnchorRef} tabId='progress'>
+        <KangurParentDashboardProgressWidget displayMode='active-tab' />
+      </ParentDashboardTabPanel>
+      <ParentDashboardTabPanel activeTab={activeTab} anchorRef={assignmentsAnchorRef} tabId='assign'>
+        <KangurParentDashboardAssignmentsWidget displayMode='active-tab' />
+      </ParentDashboardTabPanel>
+      <ParentDashboardTabPanel
+        activeTab={activeTab}
+        anchorRef={monitoringAnchorRef}
+        tabId='monitoring'
       >
-        <div
-          ref={guestHeroAnchorRef}
-          className='w-full max-w-lg'
-        >
-          <KangurParentDashboardHeroWidget />
-        </div>
-      </KangurStandardPageLayout>
-    );
-  }
+        <KangurParentDashboardAssignmentsMonitoringWidget displayMode='active-tab' />
+      </ParentDashboardTabPanel>
+      <ParentDashboardTabPanel activeTab={activeTab} anchorRef={aiTutorAnchorRef} tabId='ai-tutor'>
+        <KangurParentDashboardAiTutorWidget displayMode='active-tab' />
+      </ParentDashboardTabPanel>
+    </div>
+  );
+}
+
+function ParentDashboardAuthenticatedShell(props: {
+  aiTutorAnchorRef: React.RefObject<HTMLDivElement | null>;
+  assignmentsAnchorRef: React.RefObject<HTMLDivElement | null>;
+  docsTooltipsEnabled: boolean;
+  hasActiveLearner: boolean;
+  heroAnchorRef: React.RefObject<HTMLDivElement | null>;
+  learnerManagementAnchorRef: React.RefObject<HTMLDivElement | null>;
+  monitoringAnchorRef: React.RefObject<HTMLDivElement | null>;
+  navigation: {
+    basePath: string;
+    canManageLearners: boolean;
+    currentPage: 'ParentDashboard';
+    guestPlayerName?: string;
+    isAuthenticated: boolean;
+    onGuestPlayerNameChange?: (value: string) => void;
+    onLogin: () => void;
+    onLogout: () => void;
+  };
+  progressAnchorRef: React.RefObject<HTMLDivElement | null>;
+  reservePanelHeightBeforeTabChange: (nextTab: KangurParentDashboardTabId) => void;
+  reservedTabPanelHeight: number | null;
+  tabPanelsContentRef: React.RefObject<HTMLDivElement | null>;
+  tabPanelsRef: React.RefObject<HTMLDivElement | null>;
+  tabsAnchorRef: React.RefObject<HTMLDivElement | null>;
+  activeTab: KangurParentDashboardTabId;
+}): React.JSX.Element {
+  const {
+    activeTab,
+    aiTutorAnchorRef,
+    assignmentsAnchorRef,
+    docsTooltipsEnabled,
+    hasActiveLearner,
+    heroAnchorRef,
+    learnerManagementAnchorRef,
+    monitoringAnchorRef,
+    navigation,
+    progressAnchorRef,
+    reservePanelHeightBeforeTabChange,
+    reservedTabPanelHeight,
+    tabPanelsContentRef,
+    tabPanelsRef,
+    tabsAnchorRef,
+  } = props;
 
   return (
     <KangurStandardPageLayout
@@ -405,65 +645,163 @@ function ParentDashboardResolvedContent({
       {hasActiveLearner ? (
         <>
           <div ref={tabsAnchorRef}>
-            <KangurParentDashboardTabsWidget
-              onBeforeTabChange={reservePanelHeightBeforeTabChange}
-            />
+            <KangurParentDashboardTabsWidget onBeforeTabChange={reservePanelHeightBeforeTabChange} />
           </div>
 
           <div
             ref={tabPanelsRef}
-            style={
-              reservedTabPanelHeight !== null
-                ? { minHeight: `${reservedTabPanelHeight}px` }
-                : undefined
-            }
+            style={reservedTabPanelHeight !== null ? { minHeight: `${reservedTabPanelHeight}px` } : undefined}
           >
-            <div ref={tabPanelsContentRef}>
-              <div
-                ref={progressAnchorRef}
-                id={progressTabIds.panelId}
-                role='tabpanel'
-                aria-labelledby={progressTabIds.tabId}
-                hidden={activeTab !== 'progress'}
-                tabIndex={activeTab === 'progress' ? 0 : -1}
-              >
-                {progressPanelContent}
-              </div>
-              <div
-                ref={assignmentsAnchorRef}
-                id={assignmentsTabIds.panelId}
-                role='tabpanel'
-                aria-labelledby={assignmentsTabIds.tabId}
-                hidden={activeTab !== 'assign'}
-                tabIndex={activeTab === 'assign' ? 0 : -1}
-              >
-                {assignmentsPanelContent}
-              </div>
-              <div
-                ref={monitoringAnchorRef}
-                id={monitoringTabIds.panelId}
-                role='tabpanel'
-                aria-labelledby={monitoringTabIds.tabId}
-                hidden={activeTab !== 'monitoring'}
-                tabIndex={activeTab === 'monitoring' ? 0 : -1}
-              >
-                {monitoringPanelContent}
-              </div>
-              <div
-                ref={aiTutorAnchorRef}
-                id={aiTutorTabIds.panelId}
-                role='tabpanel'
-                aria-labelledby={aiTutorTabIds.tabId}
-                hidden={activeTab !== 'ai-tutor'}
-                tabIndex={activeTab === 'ai-tutor' ? 0 : -1}
-              >
-                {aiTutorPanelContent}
-              </div>
-            </div>
+            <ParentDashboardActivePanels
+              activeTab={activeTab}
+              aiTutorAnchorRef={aiTutorAnchorRef}
+              assignmentsAnchorRef={assignmentsAnchorRef}
+              monitoringAnchorRef={monitoringAnchorRef}
+              progressAnchorRef={progressAnchorRef}
+              tabPanelsContentRef={tabPanelsContentRef}
+            />
           </div>
         </>
       ) : null}
     </KangurStandardPageLayout>
+  );
+}
+
+function ParentDashboardResolvedContent({
+  docsTooltipsEnabled,
+}: {
+  docsTooltipsEnabled: boolean;
+}): React.JSX.Element {
+  const translations = useTranslations('KangurParentDashboard');
+  const {
+    activeLearner,
+    activeTab,
+    basePath,
+    canAccessDashboard,
+    canManageLearners,
+    isAuthenticated,
+  } = useKangurParentDashboardRuntimeShellState();
+  const { logout } = useKangurParentDashboardRuntimeShellActions();
+  const { openLoginModal } = useKangurLoginModal();
+  const { guestPlayerName, setGuestPlayerName } = useKangurGuestPlayer();
+  const tabPanelsRef = useRef<HTMLDivElement | null>(null);
+  const tabPanelsContentRef = useRef<HTMLDivElement | null>(null);
+  const guestHeroAnchorRef = useRef<HTMLDivElement | null>(null);
+  const heroAnchorRef = useRef<HTMLDivElement | null>(null);
+  const learnerManagementAnchorRef = useRef<HTMLDivElement | null>(null);
+  const tabsAnchorRef = useRef<HTMLDivElement | null>(null);
+  const progressAnchorRef = useRef<HTMLDivElement | null>(null);
+  const assignmentsAnchorRef = useRef<HTMLDivElement | null>(null);
+  const monitoringAnchorRef = useRef<HTMLDivElement | null>(null);
+  const aiTutorAnchorRef = useRef<HTMLDivElement | null>(null);
+  const activeLearnerId = resolveParentDashboardActiveLearnerId(activeLearner);
+  const hasActiveLearner = Boolean(activeLearnerId);
+  const parentTabLabels = useMemo<Record<KangurParentDashboardTabId, string>>(
+    () => ({
+      progress: translations('page.tabs.progress'),
+      assign: translations('page.tabs.assign'),
+      monitoring: translations('page.tabs.monitoring'),
+      'ai-tutor': translations('page.tabs.aiTutor'),
+    }),
+    [translations]
+  );
+  const dashboardContentId = resolveParentDashboardSessionContentId({
+    activeLearnerId,
+    activeTab,
+    canAccessDashboard,
+  });
+  const dashboardTitle = resolveParentDashboardSessionTitle({
+    activeTab,
+    canAccessDashboard,
+    parentTabLabels,
+    translations,
+  });
+  const { reservePanelHeightBeforeTabChange, reservedTabPanelHeight } =
+    useParentDashboardPanelReserve({
+      activeTab,
+      refs: {
+        tabPanelsContentRef,
+        tabPanelsRef,
+      },
+    });
+
+  useKangurAiTutorSessionSync(
+    resolveParentDashboardSessionSyncInput({
+      activeLearnerId,
+      activeTab,
+      canAccessDashboard,
+      dashboardContentId,
+      dashboardTitle,
+      hasActiveLearner,
+      translations,
+    })
+  );
+  useParentDashboardAnchors({
+    activeTab,
+    canAccessDashboard,
+    dashboardContentId,
+    hasActiveLearner,
+    refs: {
+      aiTutorAnchorRef,
+      assignmentsAnchorRef,
+      guestHeroAnchorRef,
+      heroAnchorRef,
+      learnerManagementAnchorRef,
+      monitoringAnchorRef,
+      progressAnchorRef,
+      tabsAnchorRef,
+    },
+    translations,
+  });
+  const navigation = useMemo(
+    () => ({
+      basePath,
+      canManageLearners,
+      currentPage: 'ParentDashboard' as const,
+      guestPlayerName: isAuthenticated ? undefined : guestPlayerName,
+      isAuthenticated,
+      onGuestPlayerNameChange: isAuthenticated ? undefined : setGuestPlayerName,
+      onLogin: openLoginModal,
+      onLogout: () => logout(false),
+    }),
+    [
+      basePath,
+      canManageLearners,
+      guestPlayerName,
+      isAuthenticated,
+      logout,
+      openLoginModal,
+      setGuestPlayerName,
+    ]
+  );
+
+  if (!canAccessDashboard) {
+    return (
+      <ParentDashboardGuestShell
+        docsTooltipsEnabled={docsTooltipsEnabled}
+        guestHeroAnchorRef={guestHeroAnchorRef}
+      />
+    );
+  }
+
+  return (
+    <ParentDashboardAuthenticatedShell
+      activeTab={activeTab}
+      aiTutorAnchorRef={aiTutorAnchorRef}
+      assignmentsAnchorRef={assignmentsAnchorRef}
+      docsTooltipsEnabled={docsTooltipsEnabled}
+      hasActiveLearner={hasActiveLearner}
+      heroAnchorRef={heroAnchorRef}
+      learnerManagementAnchorRef={learnerManagementAnchorRef}
+      monitoringAnchorRef={monitoringAnchorRef}
+      navigation={navigation}
+      progressAnchorRef={progressAnchorRef}
+      reservePanelHeightBeforeTabChange={reservePanelHeightBeforeTabChange}
+      reservedTabPanelHeight={reservedTabPanelHeight}
+      tabPanelsContentRef={tabPanelsContentRef}
+      tabPanelsRef={tabPanelsRef}
+      tabsAnchorRef={tabsAnchorRef}
+    />
   );
 }
 

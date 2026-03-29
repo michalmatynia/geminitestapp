@@ -247,6 +247,14 @@ export const resolveImplementationOwnershipAccent = (
   }
 };
 
+const SERIALIZATION_AUDIT_ISSUE_COUNT_FIELDS = [
+  'compatibilityFallbackVariantCount',
+  'duplicatedLegacyVariantCount',
+  'legacyLaunchFallbackGameCount',
+  'missingRuntimeVariantCount',
+  'nonSharedRuntimeEngineCount',
+] as const;
+
 export const getSerializationAuditIssueCount = (
   audit:
     | Pick<
@@ -260,11 +268,10 @@ export const getSerializationAuditIssueCount = (
     | null
     | undefined
 ): number =>
-  (audit?.compatibilityFallbackVariantCount ?? 0) +
-  (audit?.duplicatedLegacyVariantCount ?? 0) +
-  (audit?.legacyLaunchFallbackGameCount ?? 0) +
-  (audit?.missingRuntimeVariantCount ?? 0) +
-  (audit?.nonSharedRuntimeEngineCount ?? 0);
+  SERIALIZATION_AUDIT_ISSUE_COUNT_FIELDS.reduce(
+    (total, field) => total + (audit?.[field] ?? 0),
+    0
+  );
 
 export const getSerializationSurfaceIssueCount = (
   surface: Pick<

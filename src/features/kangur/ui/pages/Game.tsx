@@ -112,7 +112,7 @@ import {
 } from '@/features/kangur/ui/services/game-launch';
 import { useKangurTutorAnchors, type KangurTutorAnchorConfig } from '@/features/kangur/ui/hooks/useKangurTutorAnchors';
 import { createKangurPageTransitionMotionProps } from '@/features/kangur/ui/motion/page-transition';
-import type { KangurGameScreen } from '@/features/kangur/ui/types';
+import type { KangurGameScreen, KangurProgressState } from '@/features/kangur/ui/types';
 import type { KangurAiTutorConversationContext } from '@/features/kangur/shared/contracts/kangur-ai-tutor';
 import { cn } from '@/features/kangur/shared/utils';
 import { withKangurClientErrorSync } from '@/features/kangur/observability/client';
@@ -152,33 +152,942 @@ const focusGameScreenHeading = (heading: HTMLHeadingElement | null): void => {
   );
 };
 
-function GameContent(): React.JSX.Element {
-  const translations = useTranslations('KangurGamePage');
-  const runtime = useKangurGameRuntime();
+type GameTranslations = ReturnType<typeof useTranslations>;
+type GameMotionProps = ReturnType<typeof createKangurPageTransitionMotionProps>;
+type GameLaunchableRuntime = ReturnType<typeof getKangurLaunchableGameScreenComponentConfig>['runtime'];
+type GameAssignmentLike =
+  | {
+      id?: string | null;
+      progress: {
+        summary?: string | null;
+      };
+      title?: string | null;
+    }
+  | null
+  | undefined;
+type GameQuestionLike =
+  | {
+      question?: string | null;
+    }
+  | null
+  | undefined;
+type GameLaunchableScreenRefs = Record<KangurLaunchableGameScreen, RefObject<HTMLDivElement | null>>;
+type GameHomeScreenRefs = {
+  homeActionsRef: RefObject<HTMLDivElement | null>;
+  homeAssignmentsRef: RefObject<HTMLElement | null>;
+  homeLeaderboardRef: RefObject<HTMLDivElement | null>;
+  homeProgressRef: RefObject<HTMLDivElement | null>;
+  homeQuestRef: RefObject<HTMLElement | null>;
+};
+type GameSessionScreenRefs = {
+  kangurSessionRef: RefObject<HTMLDivElement | null>;
+  kangurSetupRef: RefObject<HTMLDivElement | null>;
+  launchableGameScreenRefs: GameLaunchableScreenRefs;
+  operationSelectorRef: RefObject<HTMLDivElement | null>;
+  resultLeaderboardRef: RefObject<HTMLDivElement | null>;
+  resultSummaryRef: RefObject<HTMLDivElement | null>;
+  trainingSetupRef: RefObject<HTMLDivElement | null>;
+};
+type GameTutorAnchorRefs = GameHomeScreenRefs & GameSessionScreenRefs;
+
+const getGameScreenLabel = (
+  translations: GameTranslations,
+  screenKey: KangurGameScreen
+): string => translations(`screens.${screenKey}.label`);
+
+const getGameScreenDescription = (
+  translations: GameTranslations,
+  screenKey: KangurGameScreen
+): string => translations(`screens.${screenKey}.description`);
+
+const resolveGameTutorActivityContentId = ({
+  activeGameAssignmentId,
+  difficulty,
+  kangurMode,
+  operation,
+  screen,
+}: {
+  activeGameAssignmentId?: string | null;
+  difficulty?: string | null;
+  kangurMode?: string | null;
+  operation?: string | null;
+  screen: KangurGameScreen;
+}): string => {
+  if (activeGameAssignmentId) {
+    return `game:assignment:${activeGameAssignmentId}`;
+  }
+
+  if ((screen === 'playing' || screen === 'result') && operation) {
+    return `game:practice:${operation}:${difficulty}`;
+  }
+
+  if (isKangurLaunchableGameScreen(screen)) {
+    return getKangurLaunchableGameContentId(screen);
+  }
+
+  switch (screen) {
+    case 'kangur':
+    case 'kangur_setup':
+      return `game:kangur:${kangurMode ?? 'setup'}`;
+    case 'training':
+      return 'game:training-setup';
+    case 'operation':
+      return 'game:operation-selector';
+    case 'home':
+      return 'game:home';
+    default:
+      return `game:${screen}`;
+  }
+};
+
+const resolveGameQuestionText = (question: GameQuestionLike): string | null =>
+  question?.question?.trim() || null;
+
+const resolveGameAssignmentSummary = (assignment: GameAssignmentLike): string | null =>
+  assignment
+    ? [assignment.title, assignment.progress.summary].filter(Boolean).join(' - ')
+    : null;
+
+const resolveGameQuestionProgressLabel = ({
+  currentQuestionIndex,
+  score,
+  screen,
+  totalQuestions,
+  translations,
+}: {
+  currentQuestionIndex: number;
+  score: number;
+  screen: KangurGameScreen;
+  totalQuestions: number;
+  translations: GameTranslations;
+}): string | null => {
+  if (screen === 'playing') {
+    return translations('questionProgress', {
+      current: currentQuestionIndex + 1,
+      total: totalQuestions,
+    });
+  }
+
+  if (screen === 'result') {
+    return translations('resultProgress', {
+      score,
+      total: totalQuestions,
+    });
+  }
+
+  return null;
+};
+
+const resolveGameTutorFocusKind = ({
+  assignment,
+  screen,
+}: {
+  assignment: GameAssignmentLike;
+  screen: KangurGameScreen;
+}): 'assignment' | 'question' | 'review' | undefined => {
+  if (screen === 'playing') {
+    return 'question';
+  }
+
+  if (screen === 'result') {
+    return 'review';
+  }
+
+  return assignment ? 'assignment' : undefined;
+};
+
+const resolveGameTutorFocusLabel = ({
+  assignment,
+  currentScreenLabel,
+  questionText,
+  screen,
+}: {
+  assignment: GameAssignmentLike;
+  currentScreenLabel: string;
+  questionText: string | null;
+  screen: KangurGameScreen;
+}): string | undefined => {
+  if (screen === 'playing') {
+    return questionText ?? undefined;
+  }
+
+  return assignment?.title?.trim() || currentScreenLabel;
+};
+
+const resolveGameTutorQuestionId = ({
+  currentQuestionIndex,
+  screen,
+}: {
+  currentQuestionIndex: number;
+  screen: KangurGameScreen;
+}): string | undefined =>
+  screen === 'playing' ? `game-question-${currentQuestionIndex + 1}` : undefined;
+
+const resolveGameTutorAnswerRevealed = (
+  screen: KangurGameScreen
+): true | undefined => (screen === 'result' ? true : undefined);
+
+const createGameTutorSessionContext = ({
+  activeGameAssignment,
+  currentQuestion,
+  currentQuestionIndex,
+  currentScreenLabel,
+  screen,
+  score,
+  totalQuestions,
+  translations,
+  tutorActivityContentId,
+}: {
+  activeGameAssignment: GameAssignmentLike;
+  currentQuestion: GameQuestionLike;
+  currentQuestionIndex: number;
+  currentScreenLabel: string;
+  screen: KangurGameScreen;
+  score: number;
+  totalQuestions: number;
+  translations: GameTranslations;
+  tutorActivityContentId: string;
+}): KangurAiTutorConversationContext => {
+  const questionText = resolveGameQuestionText(currentQuestion);
+
+  return {
+    surface: 'game',
+    contentId: tutorActivityContentId,
+    title: currentScreenLabel,
+    description: getGameScreenDescription(translations, screen),
+    assignmentSummary: resolveGameAssignmentSummary(activeGameAssignment) ?? undefined,
+    assignmentId: activeGameAssignment?.id ?? undefined,
+    currentQuestion: questionText ?? undefined,
+    questionProgressLabel: resolveGameQuestionProgressLabel({
+      currentQuestionIndex,
+      score,
+      screen,
+      totalQuestions,
+      translations,
+    }) ?? undefined,
+    questionId: resolveGameTutorQuestionId({
+      currentQuestionIndex,
+      screen,
+    }),
+    answerRevealed: resolveGameTutorAnswerRevealed(screen),
+    focusKind: resolveGameTutorFocusKind({
+      assignment: activeGameAssignment,
+      screen,
+    }),
+    focusLabel: resolveGameTutorFocusLabel({
+      assignment: activeGameAssignment,
+      currentScreenLabel,
+      questionText,
+      screen,
+    }),
+  };
+};
+
+const resolveGamePageReady = ({
+  routeTransitionState,
+  screen,
+}: {
+  routeTransitionState: ReturnType<typeof useOptionalKangurRouteTransitionState>;
+  screen: KangurGameScreen;
+}): boolean => {
+  if (routeTransitionState?.activeTransitionKind === 'locale-switch') {
+    return true;
+  }
+
+  if (
+    routeTransitionState?.transitionPhase === 'waiting_for_ready' &&
+    routeTransitionState.activeTransitionSkeletonVariant === 'game-session'
+  ) {
+    return screen !== 'home';
+  }
+
+  return true;
+};
+
+function useGameScreenFocusReset(
+  screen: KangurGameScreen,
+  screenHeadingRef: RefObject<HTMLHeadingElement | null>
+): void {
+  const previousScreenRef = useRef<KangurGameScreen | null>(null);
+
+  useEffect(() => {
+    if (previousScreenRef.current === null) {
+      previousScreenRef.current = screen;
+      return;
+    }
+
+    if (previousScreenRef.current === screen || typeof window === 'undefined') {
+      previousScreenRef.current = screen;
+      return;
+    }
+
+    const frameId = window.requestAnimationFrame(() => {
+      if (GAME_TOP_RESET_SCREENS.has(screen)) {
+        window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
+      }
+
+      focusGameScreenHeading(screenHeadingRef.current);
+    });
+
+    previousScreenRef.current = screen;
+    return () => window.cancelAnimationFrame(frameId);
+  }, [screen, screenHeadingRef]);
+}
+
+const createGameTutorAnchor = (
+  anchor: Omit<KangurTutorAnchorConfig, 'surface'>
+): KangurTutorAnchorConfig => ({
+  ...anchor,
+  surface: 'game',
+});
+
+const createGameScreenTutorAnchor = ({
+  contentId,
+  enabled,
+  id,
+  label,
+  priority,
+  ref,
+}: {
+  contentId: string;
+  enabled: boolean;
+  id: string;
+  label: string;
+  priority: number;
+  ref: RefObject<HTMLDivElement | null>;
+}): KangurTutorAnchorConfig =>
+  createGameTutorAnchor({
+    contentId: enabled ? contentId : null,
+    enabled,
+    id,
+    kind: 'screen',
+    label,
+    priority,
+    ref,
+  });
+
+const buildGameHomeTutorAnchors = ({
+  canAccessParentAssignments,
+  refs,
+  screen,
+  translations,
+}: {
+  canAccessParentAssignments: boolean;
+  refs: GameTutorAnchorRefs;
+  screen: KangurGameScreen;
+  translations: GameTranslations;
+}): KangurTutorAnchorConfig[] => [
+  createGameTutorAnchor({
+    contentId: 'game:home',
+    enabled: screen === 'home',
+    id: 'kangur-game-home-actions',
+    kind: 'home_actions',
+    label: translations('home.actionsLabel'),
+    priority: 120,
+    ref: refs.homeActionsRef,
+  }),
+  createGameTutorAnchor({
+    contentId: 'game:home',
+    enabled: screen === 'home',
+    id: 'kangur-game-home-quest',
+    kind: 'home_quest',
+    label: translations('home.questHeading'),
+    priority: 110,
+    ref: refs.homeQuestRef,
+  }),
+  createGameTutorAnchor({
+    contentId: 'game:home',
+    enabled: screen === 'home' && canAccessParentAssignments,
+    id: 'kangur-game-home-assignments',
+    kind: 'priority_assignments',
+    label: translations('home.priorityAssignmentsHeading'),
+    priority: 100,
+    ref: refs.homeAssignmentsRef,
+  }),
+  createGameTutorAnchor({
+    contentId: 'game:home',
+    enabled: screen === 'home',
+    id: 'kangur-game-home-leaderboard',
+    kind: 'leaderboard',
+    label: translations('home.leaderboardLabel'),
+    priority: 90,
+    ref: refs.homeLeaderboardRef,
+  }),
+  createGameTutorAnchor({
+    contentId: 'game:home',
+    enabled: screen === 'home',
+    id: 'kangur-game-home-progress',
+    kind: 'progress',
+    label: translations('home.progressLabel'),
+    priority: 80,
+    ref: refs.homeProgressRef,
+  }),
+];
+
+const buildGameLaunchableTutorAnchors = ({
+  launchableGameScreenRefs,
+  screen,
+  translations,
+  tutorActivityContentId,
+}: {
+  launchableGameScreenRefs: GameLaunchableScreenRefs;
+  screen: KangurGameScreen;
+  translations: GameTranslations;
+  tutorActivityContentId: string;
+}): KangurTutorAnchorConfig[] =>
+  KANGUR_LAUNCHABLE_GAME_SCREENS.map((screenKey) =>
+    createGameScreenTutorAnchor({
+      contentId: tutorActivityContentId,
+      enabled: screen === screenKey,
+      id: `kangur-game-${screenKey.replaceAll('_', '-')}`,
+      label: getGameScreenLabel(translations, screenKey),
+      priority: 120,
+      ref: launchableGameScreenRefs[screenKey],
+    })
+  );
+
+function useGameTutorAnchorsRuntime(input: {
+  activeGameAssignmentId?: string | null;
+  canAccessParentAssignments: boolean;
+  refs: GameTutorAnchorRefs;
+  screen: KangurGameScreen;
+  translations: GameTranslations;
+  tutorActivityContentId: string;
+}): void {
+  const { activeGameAssignmentId, canAccessParentAssignments, refs, screen, translations, tutorActivityContentId } =
+    input;
+  const tutorAnchors = useMemo(
+    () => [
+      ...buildGameHomeTutorAnchors({
+        canAccessParentAssignments,
+        refs,
+        screen,
+        translations,
+      }),
+      createGameScreenTutorAnchor({
+        contentId: tutorActivityContentId,
+        enabled: screen === 'training',
+        id: 'kangur-game-training-setup',
+        label: getGameScreenLabel(translations, 'training'),
+        priority: 120,
+        ref: refs.trainingSetupRef,
+      }),
+      createGameScreenTutorAnchor({
+        contentId: tutorActivityContentId,
+        enabled: screen === 'kangur_setup',
+        id: 'kangur-game-kangur-setup',
+        label: getGameScreenLabel(translations, 'kangur_setup'),
+        priority: 120,
+        ref: refs.kangurSetupRef,
+      }),
+      createGameScreenTutorAnchor({
+        contentId: tutorActivityContentId,
+        enabled: screen === 'kangur',
+        id: 'kangur-game-kangur-session',
+        label: getGameScreenLabel(translations, 'kangur'),
+        priority: 120,
+        ref: refs.kangurSessionRef,
+      }),
+      ...buildGameLaunchableTutorAnchors({
+        launchableGameScreenRefs: refs.launchableGameScreenRefs,
+        screen,
+        translations,
+        tutorActivityContentId,
+      }),
+      createGameScreenTutorAnchor({
+        contentId: tutorActivityContentId,
+        enabled: screen === 'operation',
+        id: 'kangur-game-operation-selector',
+        label: getGameScreenLabel(translations, 'operation'),
+        priority: 120,
+        ref: refs.operationSelectorRef,
+      }),
+      createGameTutorAnchor({
+        assignmentId: activeGameAssignmentId ?? null,
+        contentId: screen === 'result' ? tutorActivityContentId : null,
+        enabled: screen === 'result',
+        id: 'kangur-game-result-summary',
+        kind: 'review',
+        label: getGameScreenLabel(translations, 'result'),
+        priority: 110,
+        ref: refs.resultSummaryRef,
+      }),
+      createGameTutorAnchor({
+        contentId: screen === 'result' ? tutorActivityContentId : null,
+        enabled: screen === 'result',
+        id: 'kangur-game-result-leaderboard',
+        kind: 'leaderboard',
+        label: translations('result.leaderboardLabel'),
+        priority: 100,
+        ref: refs.resultLeaderboardRef,
+      }),
+    ],
+    [
+      activeGameAssignmentId,
+      canAccessParentAssignments,
+      refs,
+      screen,
+      translations,
+      tutorActivityContentId,
+    ]
+  );
+
+  useKangurTutorAnchors(tutorAnchors);
+}
+
+function GameScreenFrame(props: {
+  children: React.ReactNode;
+  className: string;
+  motionProps: GameMotionProps;
+  screenHeadingRef: RefObject<HTMLHeadingElement | null>;
+  screenKey: KangurGameScreen;
+  screenLabel: string;
+  screenRef?: RefObject<HTMLDivElement | null>;
+  testId?: string;
+}): React.JSX.Element {
+  const { children, className, motionProps, screenHeadingRef, screenKey, screenLabel, screenRef, testId } =
+    props;
+
+  return (
+    <motion.div
+      key={screenKey}
+      {...motionProps}
+      className={cn('w-full min-w-0 max-w-full', className)}
+      data-testid={testId}
+      ref={screenRef}
+    >
+      <h2 id={GAME_SCREEN_TITLE_ID} ref={screenHeadingRef} tabIndex={-1} className='sr-only'>
+        {screenLabel}
+      </h2>
+      {children}
+    </motion.div>
+  );
+}
+
+function GameHomeMissingLearnerState(props: {
+  basePath: string;
+  translations: GameTranslations;
+}): React.JSX.Element {
+  const { basePath, translations } = props;
+
+  return (
+    <KangurEmptyState
+      align='left'
+      className='text-left'
+      padding='md'
+      title={translations('home.missingLearnerTitle')}
+      description={translations('home.missingLearnerDescription')}
+    >
+      <div className={`${KANGUR_TIGHT_ROW_CLASSNAME} w-full sm:items-center`}>
+        <KangurButton
+          asChild
+          className='w-full sm:w-auto'
+          size='sm'
+          variant='primary'
+          data-doc-id='home_parent_add_learner'
+        >
+          <Link
+            href={createPageUrl('ParentDashboard', basePath)}
+            targetPageKey='ParentDashboard'
+            transitionSourceId='game-home-parent-add-learner'
+          >
+            {translations('home.addLearner')}
+          </Link>
+        </KangurButton>
+      </div>
+    </KangurEmptyState>
+  );
+}
+
+function GameHomeActionsColumn(props: {
+  basePath: string;
+  homeActionsRef: RefObject<HTMLDivElement | null>;
+  homeVisibility: ReturnType<typeof resolveKangurGameHomeVisibility>;
+  translations: GameTranslations;
+}): React.JSX.Element {
+  const { basePath, homeActionsRef, homeVisibility, translations } = props;
+
+  return (
+    <>
+      <div id='kangur-home-actions' ref={homeActionsRef}>
+        <KangurGameHomeActionsWidget hideWhenScreenMismatch={false} />
+      </div>
+      <KangurGameHomeDuelsInvitesWidget hideWhenScreenMismatch={false} />
+      {homeVisibility.hideLearnerWidgetsForParent ? (
+        <GameHomeMissingLearnerState basePath={basePath} translations={translations} />
+      ) : null}
+    </>
+  );
+}
+
+function GameHomeScreen(props: {
+  basePath: string;
+  canAccessParentAssignments: boolean;
+  homeMotionProps: GameMotionProps;
+  homeRefs: GameHomeScreenRefs;
+  homeVisibility: ReturnType<typeof resolveKangurGameHomeVisibility>;
+  progress: KangurProgressState | null | undefined;
+  screenHeadingRef: RefObject<HTMLHeadingElement | null>;
+  translations: GameTranslations;
+}): React.JSX.Element {
   const {
     basePath,
+    canAccessParentAssignments,
+    homeMotionProps,
+    homeRefs,
+    homeVisibility,
+    progress,
+    screenHeadingRef,
+    translations,
+  } = props;
+
+  return (
+    <GameScreenFrame
+      className={GAME_HOME_LAYOUT_CLASSNAME}
+      motionProps={homeMotionProps}
+      screenHeadingRef={screenHeadingRef}
+      screenKey='home'
+      screenLabel={getGameScreenLabel(translations, 'home')}
+      testId='kangur-game-home-layout'
+    >
+      <KangurGameHomeSections
+        visibility={homeVisibility}
+        parentSpotlight={<KangurAssignmentSpotlight basePath={basePath} enabled={canAccessParentAssignments} />}
+        parentSpotlightSectionProps={{
+          headingId: 'kangur-home-parent-assignment-heading',
+          headingLabel: translations('home.parentSuggestionsHeading'),
+          id: 'kangur-home-parent-spotlight',
+        }}
+        actionsColumn={
+          <GameHomeActionsColumn
+            basePath={basePath}
+            homeActionsRef={homeRefs.homeActionsRef}
+            homeVisibility={homeVisibility}
+            translations={translations}
+          />
+        }
+        actionsColumnProps={{ testId: 'kangur-home-actions-column' }}
+        quest={<KangurGameHomeQuestWidget hideWhenScreenMismatch={false} />}
+        questSectionProps={{
+          headingId: 'kangur-home-quest-heading',
+          headingLabel: translations('home.questHeading'),
+          id: 'kangur-home-quest',
+          ref: homeRefs.homeQuestRef,
+        }}
+        summary={
+          <KangurGameHomeHeroWidget
+            hideWhenScreenMismatch={false}
+            showIntro={false}
+            showAssignmentSpotlight={false}
+          />
+        }
+        summarySectionProps={{
+          headingId: 'kangur-home-hero-heading',
+          headingLabel: translations('home.summaryHeading'),
+          id: 'kangur-home-summary',
+        }}
+        assignments={
+          <KangurPriorityAssignments
+            basePath={basePath}
+            enabled={canAccessParentAssignments}
+            title={translations('home.priorityAssignmentsTitle')}
+            emptyLabel={translations('home.priorityAssignmentsEmpty')}
+          />
+        }
+        assignmentsSectionProps={{
+          headingId: 'kangur-home-assignments-heading',
+          headingLabel: translations('home.priorityAssignmentsHeading'),
+          id: 'kangur-home-priority-assignments',
+          ref: homeRefs.homeAssignmentsRef,
+        }}
+        leaderboard={<Leaderboard />}
+        leaderboardColumnProps={{
+          id: 'kangur-home-leaderboard',
+          ref: homeRefs.homeLeaderboardRef,
+        }}
+        playerProgress={<PlayerProgressCard progress={progress} />}
+        playerProgressColumnProps={{
+          id: 'kangur-home-player-progress',
+          ref: homeRefs.homeProgressRef,
+        }}
+        progressSectionProps={{
+          headingId: 'kangur-home-progress-heading',
+          headingLabel: translations('home.progressHeading'),
+          id: 'kangur-home-progress',
+        }}
+      />
+    </GameScreenFrame>
+  );
+}
+
+function GameLaunchableScreen(props: {
+  activeLaunchableGameRuntime: GameLaunchableRuntime | null;
+  launchableGameInstanceId?: string | null;
+  launchableGameRuntimeLoading: boolean;
+  launchableGameScreenRefs: GameLaunchableScreenRefs;
+  screen: KangurLaunchableGameScreen;
+  screenHeadingRef: RefObject<HTMLHeadingElement | null>;
+  screenMotionProps: GameMotionProps;
+  translations: GameTranslations;
+}): React.JSX.Element {
+  const {
+    activeLaunchableGameRuntime,
+    launchableGameInstanceId,
+    launchableGameRuntimeLoading,
+    launchableGameScreenRefs,
+    screen,
+    screenHeadingRef,
+    screenMotionProps,
+    translations,
+  } = props;
+  const screenLabel = getGameScreenLabel(translations, screen);
+
+  if (launchableGameRuntimeLoading) {
+    return (
+      <GameScreenFrame
+        className='w-full flex flex-col items-center'
+        motionProps={screenMotionProps}
+        screenHeadingRef={screenHeadingRef}
+        screenKey={screen}
+        screenLabel={screenLabel}
+        screenRef={launchableGameScreenRefs[screen]}
+      >
+        <div data-testid='kangur-game-launchable-runtime-loading' />
+      </GameScreenFrame>
+    );
+  }
+
+  if (launchableGameInstanceId && !activeLaunchableGameRuntime) {
+    return (
+      <GameScreenFrame
+        className='w-full flex flex-col items-center'
+        motionProps={screenMotionProps}
+        screenHeadingRef={screenHeadingRef}
+        screenKey={screen}
+        screenLabel={screenLabel}
+        screenRef={launchableGameScreenRefs[screen]}
+      >
+        <div data-testid='kangur-game-launchable-runtime-missing' />
+      </GameScreenFrame>
+    );
+  }
+
+  const config = activeLaunchableGameRuntime
+    ? createLaunchableGameScreenComponentConfigFromRuntime(activeLaunchableGameRuntime)
+    : getKangurLaunchableGameScreenComponentConfig(screen);
+  const ScreenComponent = config.Component;
+
+  return (
+    <GameScreenFrame
+      className={config.className}
+      motionProps={screenMotionProps}
+      screenHeadingRef={screenHeadingRef}
+      screenKey={screen}
+      screenLabel={screenLabel}
+      screenRef={launchableGameScreenRefs[screen]}
+    >
+      <ScreenComponent />
+    </GameScreenFrame>
+  );
+}
+
+function GameNonLaunchableScreen(props: {
+  basePath: string;
+  canAccessParentAssignments: boolean;
+  homeMotionProps: GameMotionProps;
+  homeRefs: GameHomeScreenRefs;
+  homeVisibility: ReturnType<typeof resolveKangurGameHomeVisibility>;
+  progress: KangurProgressState | null | undefined;
+  screen: Exclude<KangurGameScreen, KangurLaunchableGameScreen>;
+  screenHeadingRef: RefObject<HTMLHeadingElement | null>;
+  screenMotionProps: GameMotionProps;
+  sessionRefs: Omit<GameSessionScreenRefs, 'launchableGameScreenRefs'>;
+  translations: GameTranslations;
+}): React.JSX.Element | null {
+  const {
+    basePath,
+    canAccessParentAssignments,
+    homeMotionProps,
+    homeRefs,
+    homeVisibility,
     progress,
     screen,
-    user,
-    xpToast,
+    screenHeadingRef,
+    screenMotionProps,
+    sessionRefs,
+    translations,
+  } = props;
+
+  switch (screen) {
+    case 'home':
+      return (
+        <GameHomeScreen
+          basePath={basePath}
+          canAccessParentAssignments={canAccessParentAssignments}
+          homeMotionProps={homeMotionProps}
+          homeRefs={homeRefs}
+          homeVisibility={homeVisibility}
+          progress={progress}
+          screenHeadingRef={screenHeadingRef}
+          translations={translations}
+        />
+      );
+    case 'kangur_setup':
+      return (
+        <GameScreenFrame
+          className='w-full flex flex-col items-center'
+          motionProps={screenMotionProps}
+          screenHeadingRef={screenHeadingRef}
+          screenKey='kangur_setup'
+          screenLabel={getGameScreenLabel(translations, 'kangur_setup')}
+          screenRef={sessionRefs.kangurSetupRef}
+        >
+          <KangurGameKangurSetupWidget />
+        </GameScreenFrame>
+      );
+    case 'kangur':
+      return (
+        <GameScreenFrame
+          className='w-full max-w-lg flex flex-col items-center'
+          motionProps={screenMotionProps}
+          screenHeadingRef={screenHeadingRef}
+          screenKey='kangur'
+          screenLabel={getGameScreenLabel(translations, 'kangur')}
+          screenRef={sessionRefs.kangurSessionRef}
+        >
+          <KangurGameKangurSessionWidget />
+        </GameScreenFrame>
+      );
+    case 'operation':
+    case 'training':
+      return (
+        <GameScreenFrame
+          className='w-full flex flex-col items-center'
+          motionProps={screenMotionProps}
+          screenHeadingRef={screenHeadingRef}
+          screenKey={screen}
+          screenLabel={getGameScreenLabel(translations, screen)}
+          screenRef={screen === 'training' ? sessionRefs.trainingSetupRef : sessionRefs.operationSelectorRef}
+        >
+          <KangurGameOperationSelectorWidget />
+        </GameScreenFrame>
+      );
+    case 'playing':
+      return (
+        <GameScreenFrame
+          className='flex w-full flex-col items-center'
+          motionProps={screenMotionProps}
+          screenHeadingRef={screenHeadingRef}
+          screenKey='playing'
+          screenLabel={getGameScreenLabel(translations, 'playing')}
+        >
+          <KangurGameQuestionWidget />
+        </GameScreenFrame>
+      );
+    case 'result':
+      return (
+        <GameScreenFrame
+          className={`flex w-full flex-col items-center ${KANGUR_PANEL_GAP_CLASSNAME}`}
+          motionProps={screenMotionProps}
+          screenHeadingRef={screenHeadingRef}
+          screenKey='result'
+          screenLabel={getGameScreenLabel(translations, 'result')}
+        >
+          <>
+            <div ref={sessionRefs.resultSummaryRef} className='w-full flex flex-col items-center'>
+              <KangurGameResultWidget />
+            </div>
+            <div ref={sessionRefs.resultLeaderboardRef} className='w-full'>
+              <Leaderboard />
+            </div>
+          </>
+        </GameScreenFrame>
+      );
+    default:
+      return null;
+  }
+}
+
+function GameCurrentScreen(props: {
+  activeLaunchableGameRuntime: GameLaunchableRuntime | null;
+  basePath: string;
+  canAccessParentAssignments: boolean;
+  homeMotionProps: GameMotionProps;
+  homeRefs: GameHomeScreenRefs;
+  homeVisibility: ReturnType<typeof resolveKangurGameHomeVisibility>;
+  launchableGameInstanceId?: string | null;
+  launchableGameRuntimeLoading: boolean;
+  progress: KangurProgressState | null | undefined;
+  screen: KangurGameScreen;
+  screenHeadingRef: RefObject<HTMLHeadingElement | null>;
+  screenMotionProps: GameMotionProps;
+  sessionRefs: GameSessionScreenRefs;
+  translations: GameTranslations;
+}): React.JSX.Element | null {
+  const {
+    activeLaunchableGameRuntime,
+    basePath,
+    canAccessParentAssignments,
+    homeMotionProps,
+    homeRefs,
+    homeVisibility,
     launchableGameInstanceId,
-  } = runtime;
-  const routeTransitionState = useOptionalKangurRouteTransitionState();
-  const canAccessParentAssignments =
-    runtime.canAccessParentAssignments ?? Boolean(user?.activeLearner?.id);
-  const homeVisibility = useMemo(
-    () =>
-      resolveKangurGameHomeVisibility({
-        canAccessParentAssignments,
-        progress,
-        user,
-      }),
-    [canAccessParentAssignments, progress, user]
+    launchableGameRuntimeLoading,
+    progress,
+    screen,
+    screenHeadingRef,
+    screenMotionProps,
+    sessionRefs,
+    translations,
+  } = props;
+
+  if (isKangurLaunchableGameScreen(screen)) {
+    return (
+      <GameLaunchableScreen
+        activeLaunchableGameRuntime={activeLaunchableGameRuntime}
+        launchableGameInstanceId={launchableGameInstanceId}
+        launchableGameRuntimeLoading={launchableGameRuntimeLoading}
+        launchableGameScreenRefs={sessionRefs.launchableGameScreenRefs}
+        screen={screen}
+        screenHeadingRef={screenHeadingRef}
+        screenMotionProps={screenMotionProps}
+        translations={translations}
+      />
+    );
+  }
+
+  return (
+    <GameNonLaunchableScreen
+      basePath={basePath}
+      canAccessParentAssignments={canAccessParentAssignments}
+      homeMotionProps={homeMotionProps}
+      homeRefs={homeRefs}
+      homeVisibility={homeVisibility}
+      progress={progress}
+      screen={screen}
+      screenHeadingRef={screenHeadingRef}
+      screenMotionProps={screenMotionProps}
+      sessionRefs={{
+        kangurSessionRef: sessionRefs.kangurSessionRef,
+        kangurSetupRef: sessionRefs.kangurSetupRef,
+        operationSelectorRef: sessionRefs.operationSelectorRef,
+        resultLeaderboardRef: sessionRefs.resultLeaderboardRef,
+        resultSummaryRef: sessionRefs.resultSummaryRef,
+        trainingSetupRef: sessionRefs.trainingSetupRef,
+      }}
+      translations={translations}
+    />
   );
-  const { enabled: docsTooltipsEnabled } = useKangurDocsTooltips('home');
-  const prefersReducedMotion = useReducedMotion();
+}
+
+type GameScreenRefsState = {
+  homeRefs: GameHomeScreenRefs;
+  screenHeadingRef: RefObject<HTMLHeadingElement | null>;
+  sessionRefs: GameSessionScreenRefs;
+};
+
+function useGameScreenRefs(): GameScreenRefsState {
   const screenHeadingRef = useRef<HTMLHeadingElement>(null);
-  const previousScreenRef = useRef<KangurGameScreen | null>(null);
   const homeActionsRef = useRef<HTMLDivElement | null>(null);
   const homeQuestRef = useRef<HTMLElement | null>(null);
   const homeAssignmentsRef = useRef<HTMLElement | null>(null);
@@ -224,10 +1133,7 @@ function GameContent(): React.JSX.Element {
   const operationSelectorRef = useRef<HTMLDivElement | null>(null);
   const resultSummaryRef = useRef<HTMLDivElement | null>(null);
   const resultLeaderboardRef = useRef<HTMLDivElement | null>(null);
-  const launchableGameScreenRefs: Record<
-    KangurLaunchableGameScreen,
-    RefObject<HTMLDivElement | null>
-  > = {
+  const launchableGameScreenRefs: GameLaunchableScreenRefs = {
     agentic_approval_gate_quiz: agenticApprovalGateQuizRef,
     agentic_prompt_trim_quiz: agenticPromptTrimQuizRef,
     agentic_reasoning_router_quiz: agenticReasoningRouterQuizRef,
@@ -264,174 +1170,282 @@ function GameContent(): React.JSX.Element {
     english_sentence_quiz: englishSentenceQuizRef,
     english_parts_of_speech_quiz: englishPartsOfSpeechQuizRef,
   };
-  const isMobile = useKangurMobileBreakpoint();
-  const shouldUseStandardMobileScroll = isMobile;
-  const getScreenLabel = (screenKey: KangurGameScreen): string =>
-    translations(`screens.${screenKey}.label`);
-  const getScreenDescription = (screenKey: KangurGameScreen): string =>
-    translations(`screens.${screenKey}.description`);
-  const currentScreenLabel = getScreenLabel(screen);
-  const learnerId = user?.activeLearner?.id ?? null;
+
+  return {
+    homeRefs: {
+      homeActionsRef,
+      homeAssignmentsRef,
+      homeLeaderboardRef,
+      homeProgressRef,
+      homeQuestRef,
+    },
+    screenHeadingRef,
+    sessionRefs: {
+      kangurSessionRef,
+      kangurSetupRef,
+      launchableGameScreenRefs,
+      operationSelectorRef,
+      resultLeaderboardRef,
+      resultSummaryRef,
+      trainingSetupRef,
+    },
+  };
+}
+
+const resolveLaunchableGameInstanceQueryEnabled = ({
+  launchableGameInstanceId,
+  screen,
+}: {
+  launchableGameInstanceId?: string | null;
+  screen: KangurGameScreen;
+}): boolean => isKangurLaunchableGameScreen(screen) && Boolean(launchableGameInstanceId);
+
+const resolveLaunchableGameContentSetsQueryEnabled = ({
+  contentSetId,
+  screen,
+}: {
+  contentSetId?: string | null;
+  screen: KangurGameScreen;
+}): boolean => isKangurLaunchableGameScreen(screen) && Boolean(contentSetId);
+
+const resolveLaunchableGameRuntimeLoading = ({
+  activeLaunchableGameInstance,
+  launchableGameContentSetsPending,
+  launchableGameInstanceId,
+  launchableGameInstancePending,
+  screen,
+}: {
+  activeLaunchableGameInstance: { contentSetId?: string | null } | null;
+  launchableGameContentSetsPending: boolean;
+  launchableGameInstanceId?: string | null;
+  launchableGameInstancePending: boolean;
+  screen: KangurGameScreen;
+}): boolean =>
+  isKangurLaunchableGameScreen(screen) &&
+  Boolean(launchableGameInstanceId) &&
+  (launchableGameInstancePending ||
+    (Boolean(activeLaunchableGameInstance?.contentSetId) && launchableGameContentSetsPending));
+
+const resolveActiveLaunchableGameRuntime = ({
+  activeLaunchableGameInstance,
+  contentSets,
+  launchableGameInstanceId,
+  screen,
+}: {
+  activeLaunchableGameInstance: {
+    contentSetId?: string | null;
+    gameId: string;
+    launchableRuntimeId?: string | null;
+  } | null;
+  contentSets: unknown;
+  launchableGameInstanceId?: string | null;
+  screen: KangurGameScreen;
+}): GameLaunchableRuntime | null => {
+  if (!isKangurLaunchableGameScreen(screen)) {
+    return null;
+  }
+
+  const defaultRuntime = getKangurLaunchableGameScreenComponentConfig(screen).runtime;
+  if (!launchableGameInstanceId) {
+    return defaultRuntime;
+  }
+
+  if (!activeLaunchableGameInstance) {
+    return null;
+  }
+
+  if (activeLaunchableGameInstance.launchableRuntimeId !== screen) {
+    return null;
+  }
+
+  const game = getKangurGameDefinition(activeLaunchableGameInstance.gameId);
+  return resolveKangurLaunchableGameRuntimeForPersistedInstance(
+    game,
+    activeLaunchableGameInstance,
+    contentSets
+  );
+};
+
+function useGameLaunchableRuntime(input: {
+  launchableGameInstanceId?: string | null;
+  screen: KangurGameScreen;
+}): {
+  activeLaunchableGameRuntime: GameLaunchableRuntime | null;
+  launchableGameRuntimeLoading: boolean;
+} {
+  const { launchableGameInstanceId, screen } = input;
   const launchableGameInstanceQuery = useKangurGameInstances({
-    enabled: isKangurLaunchableGameScreen(screen) && Boolean(launchableGameInstanceId),
+    enabled: resolveLaunchableGameInstanceQueryEnabled({
+      launchableGameInstanceId,
+      screen,
+    }),
     enabledOnly: true,
     instanceId: launchableGameInstanceId ?? undefined,
   });
   const activeLaunchableGameInstance = launchableGameInstanceQuery.data?.[0] ?? null;
   const launchableGameContentSetsQuery = useKangurGameContentSets({
     contentSetId: activeLaunchableGameInstance?.contentSetId ?? undefined,
-    enabled:
-      isKangurLaunchableGameScreen(screen) && Boolean(activeLaunchableGameInstance?.contentSetId),
+    enabled: resolveLaunchableGameContentSetsQueryEnabled({
+      contentSetId: activeLaunchableGameInstance?.contentSetId,
+      screen,
+    }),
     gameId: activeLaunchableGameInstance?.gameId,
   });
-  const launchableGameRuntimeLoading =
-    isKangurLaunchableGameScreen(screen) &&
-    Boolean(launchableGameInstanceId) &&
-    (launchableGameInstanceQuery.isPending ||
-      (Boolean(activeLaunchableGameInstance?.contentSetId) &&
-        launchableGameContentSetsQuery.isPending));
-  const activeLaunchableGameRuntime = useMemo(() => {
-    if (!isKangurLaunchableGameScreen(screen)) {
-      return null;
-    }
-
-    const defaultRuntime = getKangurLaunchableGameScreenComponentConfig(screen).runtime;
-    if (!launchableGameInstanceId) {
-      return defaultRuntime;
-    }
-
-    if (!activeLaunchableGameInstance) {
-      return null;
-    }
-
-    if (activeLaunchableGameInstance.launchableRuntimeId !== screen) {
-      return null;
-    }
-
-    const game = getKangurGameDefinition(activeLaunchableGameInstance.gameId);
-    return resolveKangurLaunchableGameRuntimeForPersistedInstance(
-      game,
+  const activeLaunchableGameRuntime = useMemo(
+    () =>
+      resolveActiveLaunchableGameRuntime({
+        activeLaunchableGameInstance,
+        contentSets: launchableGameContentSetsQuery.data,
+        launchableGameInstanceId,
+        screen,
+      }),
+    [
       activeLaunchableGameInstance,
-      launchableGameContentSetsQuery.data
-    );
-  }, [
-    activeLaunchableGameInstance,
-    launchableGameContentSetsQuery.data,
-    launchableGameInstanceId,
-    screen,
-  ]);
+      launchableGameContentSetsQuery.data,
+      launchableGameInstanceId,
+      screen,
+    ]
+  );
+
+  return {
+    activeLaunchableGameRuntime,
+    launchableGameRuntimeLoading: resolveLaunchableGameRuntimeLoading({
+      activeLaunchableGameInstance,
+      launchableGameContentSetsPending: launchableGameContentSetsQuery.isPending,
+      launchableGameInstanceId,
+      launchableGameInstancePending: launchableGameInstanceQuery.isPending,
+      screen,
+    }),
+  };
+}
+
+const resolveGameLearnerActivityTitle = ({
+  activeGameAssignment,
+  currentScreenLabel,
+  translations,
+}: {
+  activeGameAssignment: GameAssignmentLike;
+  currentScreenLabel: string;
+  translations: GameTranslations;
+}): string => {
+  const assignmentTitle = activeGameAssignment?.title?.trim();
+  return translations('activityTitle', { title: assignmentTitle || currentScreenLabel });
+};
+
+function useGameTutorRuntime(input: {
+  currentScreenLabel: string;
+  runtime: ReturnType<typeof useKangurGameRuntime>;
+  screen: KangurGameScreen;
+  translations: GameTranslations;
+}): {
+  activeGameAssignment: typeof input.runtime.activePracticeAssignment | typeof input.runtime.resultPracticeAssignment;
+  learnerId: string | null;
+  tutorActivityContentId: string;
+  tutorSessionContext: KangurAiTutorConversationContext;
+} {
+  const { currentScreenLabel, runtime, screen, translations } = input;
   const activeGameAssignment = runtime.activePracticeAssignment ?? runtime.resultPracticeAssignment;
-  const tutorActivityContentId = useMemo(() => {
-    if (activeGameAssignment?.id) {
-      return `game:assignment:${activeGameAssignment.id}`;
-    }
+  const tutorActivityContentId = useMemo(
+    () =>
+      resolveGameTutorActivityContentId({
+        activeGameAssignmentId: activeGameAssignment?.id,
+        difficulty: runtime.difficulty,
+        kangurMode: runtime.kangurMode,
+        operation: runtime.operation,
+        screen,
+      }),
+    [
+      activeGameAssignment?.id,
+      runtime.difficulty,
+      runtime.kangurMode,
+      runtime.operation,
+      screen,
+    ]
+  );
+  const tutorSessionContext = useMemo(
+    () =>
+      createGameTutorSessionContext({
+        activeGameAssignment,
+        currentQuestion: runtime.currentQuestion,
+        currentQuestionIndex: runtime.currentQuestionIndex,
+        currentScreenLabel,
+        screen,
+        score: runtime.score,
+        totalQuestions: runtime.totalQuestions,
+        translations,
+        tutorActivityContentId,
+      }),
+    [
+      activeGameAssignment,
+      currentScreenLabel,
+      runtime.currentQuestion,
+      runtime.currentQuestionIndex,
+      runtime.score,
+      runtime.totalQuestions,
+      screen,
+      translations,
+      tutorActivityContentId,
+    ]
+  );
+  const learnerActivityTitle = useMemo(
+    () =>
+      resolveGameLearnerActivityTitle({
+        activeGameAssignment,
+        currentScreenLabel,
+        translations,
+      }),
+    [activeGameAssignment, currentScreenLabel, translations]
+  );
 
-    if ((screen === 'playing' || screen === 'result') && runtime.operation) {
-      return `game:practice:${runtime.operation}:${runtime.difficulty}`;
-    }
-
-    if (isKangurLaunchableGameScreen(screen)) {
-      return getKangurLaunchableGameContentId(screen);
-    }
-
-    if (screen === 'kangur' || screen === 'kangur_setup') {
-      return `game:kangur:${runtime.kangurMode ?? 'setup'}`;
-    }
-
-    if (screen === 'training') {
-      return 'game:training-setup';
-    }
-
-    if (screen === 'operation') {
-      return 'game:operation-selector';
-    }
-
-    if (screen === 'home') {
-      return 'game:home';
-    }
-
-    return `game:${screen}`;
-  }, [
-    activeGameAssignment?.id,
-    runtime.difficulty,
-    runtime.kangurMode,
-    runtime.operation,
-    screen,
-  ]);
-  const tutorSessionContext = useMemo<KangurAiTutorConversationContext | null>(() => {
-    const questionText = runtime.currentQuestion?.question?.trim() || null;
-    const assignmentSummary = activeGameAssignment
-      ? [activeGameAssignment.title, activeGameAssignment.progress.summary].filter(Boolean).join(' - ')
-      : null;
-    const questionProgressLabel =
-      screen === 'playing'
-        ? translations('questionProgress', {
-            current: runtime.currentQuestionIndex + 1,
-            total: runtime.totalQuestions,
-          })
-        : screen === 'result'
-          ? translations('resultProgress', {
-              score: runtime.score,
-              total: runtime.totalQuestions,
-            })
-          : null;
-    const focusKind =
-      screen === 'playing'
-        ? 'question'
-        : screen === 'result'
-          ? 'review'
-          : activeGameAssignment
-            ? 'assignment'
-            : undefined;
-    const focusLabel =
-      screen === 'playing'
-        ? questionText
-        : activeGameAssignment?.title?.trim() || currentScreenLabel;
-
-    return {
-      surface: 'game',
-      contentId: tutorActivityContentId,
-      title: currentScreenLabel,
-      description: getScreenDescription(screen),
-      ...(assignmentSummary ? { assignmentSummary } : {}),
-      ...(activeGameAssignment?.id ? { assignmentId: activeGameAssignment.id } : {}),
-      ...(questionText ? { currentQuestion: questionText } : {}),
-      ...(questionProgressLabel ? { questionProgressLabel } : {}),
-      ...(screen === 'playing'
-        ? { questionId: `game-question-${runtime.currentQuestionIndex + 1}` }
-        : {}),
-      ...(screen === 'result' ? { answerRevealed: true } : {}),
-      ...(focusKind ? { focusKind } : {}),
-      ...(focusLabel ? { focusLabel } : {}),
-    };
-  }, [
-    activeGameAssignment,
-    currentScreenLabel,
-    runtime.currentQuestion,
-    runtime.currentQuestionIndex,
-    runtime.difficulty,
-    runtime.kangurMode,
-    runtime.operation,
-    runtime.score,
-    runtime.totalQuestions,
-    screen,
-    tutorActivityContentId,
-    translations,
-  ]);
-  const learnerActivityTitle = useMemo(() => {
-    const assignmentTitle = activeGameAssignment?.title?.trim();
-    if (assignmentTitle) {
-      return translations('activityTitle', { title: assignmentTitle });
-    }
-    return translations('activityTitle', { title: currentScreenLabel });
-  }, [activeGameAssignment?.title, currentScreenLabel, translations]);
   useKangurLearnerActivityPing({
     activity: {
       kind: 'game',
       title: learnerActivityTitle,
     },
-    enabled: user?.actorType === 'learner',
+    enabled: runtime.user?.actorType === 'learner',
   });
+
+  return {
+    activeGameAssignment,
+    learnerId: runtime.user?.activeLearner?.id ?? null,
+    tutorActivityContentId,
+    tutorSessionContext,
+  };
+}
+
+function GameContent(): React.JSX.Element {
+  const translations = useTranslations('KangurGamePage');
+  const runtime = useKangurGameRuntime();
+  const { basePath, progress, screen, user, xpToast, launchableGameInstanceId } = runtime;
+  const routeTransitionState = useOptionalKangurRouteTransitionState();
+  const canAccessParentAssignments =
+    runtime.canAccessParentAssignments ?? Boolean(user?.activeLearner?.id);
+  const homeVisibility = useMemo(
+    () =>
+      resolveKangurGameHomeVisibility({
+        canAccessParentAssignments,
+        progress,
+        user,
+      }),
+    [canAccessParentAssignments, progress, user]
+  );
+  const { enabled: docsTooltipsEnabled } = useKangurDocsTooltips('home');
+  const prefersReducedMotion = useReducedMotion();
+  const { homeRefs, screenHeadingRef, sessionRefs } = useGameScreenRefs();
+  const isMobile = useKangurMobileBreakpoint();
+  const shouldUseStandardMobileScroll = isMobile;
+  const currentScreenLabel = getGameScreenLabel(translations, screen);
+  const { activeLaunchableGameRuntime, launchableGameRuntimeLoading } = useGameLaunchableRuntime({
+    launchableGameInstanceId,
+    screen,
+  });
+  const { activeGameAssignment, learnerId, tutorActivityContentId, tutorSessionContext } =
+    useGameTutorRuntime({
+      currentScreenLabel,
+      runtime,
+      screen,
+      translations,
+    });
   const homeScreenMotionProps = useMemo(
     () => createKangurPageTransitionMotionProps(true),
     []
@@ -440,272 +1454,27 @@ function GameContent(): React.JSX.Element {
     () => createKangurPageTransitionMotionProps(prefersReducedMotion),
     [prefersReducedMotion]
   );
-  const isGamePageReady =
-    routeTransitionState?.activeTransitionKind === 'locale-switch'
-      ? true
-      : routeTransitionState?.transitionPhase === 'waiting_for_ready' &&
-        routeTransitionState.activeTransitionSkeletonVariant === 'game-session'
-      ? screen !== 'home'
-      : true;
+  const isGamePageReady = resolveGamePageReady({
+    routeTransitionState,
+    screen,
+  });
 
   useKangurRoutePageReady({
     pageKey: 'Game',
     ready: isGamePageReady,
   });
-
-  const tutorAnchors = useMemo((): KangurTutorAnchorConfig[] => [
-    { id: 'kangur-game-home-actions', kind: 'home_actions', ref: homeActionsRef, surface: 'game', enabled: screen === 'home', priority: 120, contentId: 'game:home', label: translations('home.actionsLabel') },
-    { id: 'kangur-game-home-quest', kind: 'home_quest', ref: homeQuestRef, surface: 'game', enabled: screen === 'home', priority: 110, contentId: 'game:home', label: translations('home.questHeading') },
-    { id: 'kangur-game-home-assignments', kind: 'priority_assignments', ref: homeAssignmentsRef, surface: 'game', enabled: screen === 'home' && canAccessParentAssignments, priority: 100, contentId: 'game:home', label: translations('home.priorityAssignmentsHeading') },
-    { id: 'kangur-game-home-leaderboard', kind: 'leaderboard', ref: homeLeaderboardRef, surface: 'game', enabled: screen === 'home', priority: 90, contentId: 'game:home', label: translations('home.leaderboardLabel') },
-    { id: 'kangur-game-home-progress', kind: 'progress', ref: homeProgressRef, surface: 'game', enabled: screen === 'home', priority: 80, contentId: 'game:home', label: translations('home.progressLabel') },
-    { id: 'kangur-game-training-setup', kind: 'screen', ref: trainingSetupRef, surface: 'game', enabled: screen === 'training', priority: 120, contentId: screen === 'training' ? tutorActivityContentId : null, label: getScreenLabel('training') },
-    { id: 'kangur-game-kangur-setup', kind: 'screen', ref: kangurSetupRef, surface: 'game', enabled: screen === 'kangur_setup', priority: 120, contentId: screen === 'kangur_setup' ? tutorActivityContentId : null, label: getScreenLabel('kangur_setup') },
-    { id: 'kangur-game-kangur-session', kind: 'screen', ref: kangurSessionRef, surface: 'game', enabled: screen === 'kangur', priority: 120, contentId: screen === 'kangur' ? tutorActivityContentId : null, label: getScreenLabel('kangur') },
-    ...KANGUR_LAUNCHABLE_GAME_SCREENS.map((screenKey) => ({
-      ref: launchableGameScreenRefs[screenKey],
-      id: `kangur-game-${screenKey.replaceAll('_', '-')}`,
-      kind: 'screen' as const,
-      surface: 'game' as const,
-      enabled: screen === screenKey,
-      priority: 120,
-      contentId: screen === screenKey ? tutorActivityContentId : null,
-      label: getScreenLabel(screenKey),
-    })),
-    { id: 'kangur-game-operation-selector', kind: 'screen', ref: operationSelectorRef, surface: 'game', enabled: screen === 'operation', priority: 120, contentId: screen === 'operation' ? tutorActivityContentId : null, label: getScreenLabel('operation') },
-    { id: 'kangur-game-result-summary', kind: 'review', ref: resultSummaryRef, surface: 'game', enabled: screen === 'result', priority: 110, contentId: screen === 'result' ? tutorActivityContentId : null, label: getScreenLabel('result'), assignmentId: activeGameAssignment?.id ?? null },
-    { id: 'kangur-game-result-leaderboard', kind: 'leaderboard', ref: resultLeaderboardRef, surface: 'game', enabled: screen === 'result', priority: 100, contentId: screen === 'result' ? tutorActivityContentId : null, label: translations('result.leaderboardLabel') },
-  ], [activeGameAssignment?.id, canAccessParentAssignments, screen, translations, tutorActivityContentId]);
-  useKangurTutorAnchors(tutorAnchors);
-
-  useEffect(() => {
-    if (previousScreenRef.current === null) {
-      previousScreenRef.current = screen;
-      return;
-    }
-
-    if (previousScreenRef.current === screen || typeof window === 'undefined') {
-      previousScreenRef.current = screen;
-      return;
-    }
-
-    const frameId = window.requestAnimationFrame(() => {
-      if (GAME_TOP_RESET_SCREENS.has(screen)) {
-        window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
-      }
-
-      focusGameScreenHeading(screenHeadingRef.current);
-    });
-
-    previousScreenRef.current = screen;
-    return () => window.cancelAnimationFrame(frameId);
-  }, [screen]);
-
-  const renderScreen = (
-    screenKey: KangurGameScreen,
-    className: string,
-    children: React.ReactNode,
-    screenRef?: RefObject<HTMLDivElement | null>,
-    testId?: string
-  ): React.JSX.Element => (
-    <motion.div
-      key={screenKey}
-      {...(screenKey === 'home' ? homeScreenMotionProps : screenMotionProps)}
-      className={cn('w-full min-w-0 max-w-full', className)}
-      data-testid={testId}
-      ref={screenRef}
-    >
-      <h2 id={GAME_SCREEN_TITLE_ID} ref={screenHeadingRef} tabIndex={-1} className='sr-only'>
-        {getScreenLabel(screenKey)}
-      </h2>
-      {children}
-    </motion.div>
-  );
-
-  const renderCurrentScreen = (): React.JSX.Element | null => {
-    if (isKangurLaunchableGameScreen(screen)) {
-      if (launchableGameRuntimeLoading) {
-        return renderScreen(
-          screen,
-          'w-full flex flex-col items-center',
-          <div data-testid='kangur-game-launchable-runtime-loading' />,
-          launchableGameScreenRefs[screen]
-        );
-      }
-
-      if (launchableGameInstanceId && !activeLaunchableGameRuntime) {
-        return renderScreen(
-          screen,
-          'w-full flex flex-col items-center',
-          <div data-testid='kangur-game-launchable-runtime-missing' />,
-          launchableGameScreenRefs[screen]
-        );
-      }
-
-      const config = activeLaunchableGameRuntime
-        ? createLaunchableGameScreenComponentConfigFromRuntime(activeLaunchableGameRuntime)
-        : getKangurLaunchableGameScreenComponentConfig(screen);
-      const ScreenComponent = config.Component;
-
-      return renderScreen(
-        screen,
-        config.className,
-        <ScreenComponent />,
-        launchableGameScreenRefs[screen]
-      );
-    }
-
-    switch (screen) {
-      case 'home':
-        return renderScreen(
-          'home',
-          GAME_HOME_LAYOUT_CLASSNAME,
-          <KangurGameHomeSections
-            visibility={homeVisibility}
-            parentSpotlight={(
-              <KangurAssignmentSpotlight
-                basePath={basePath}
-                enabled={canAccessParentAssignments}
-              />
-            )}
-            parentSpotlightSectionProps={{
-              headingId: 'kangur-home-parent-assignment-heading',
-              headingLabel: translations('home.parentSuggestionsHeading'),
-              id: 'kangur-home-parent-spotlight',
-            }}
-            actionsColumn={(
-              <>
-                <div id='kangur-home-actions' ref={homeActionsRef}>
-                  <KangurGameHomeActionsWidget hideWhenScreenMismatch={false} />
-                </div>
-                <KangurGameHomeDuelsInvitesWidget hideWhenScreenMismatch={false} />
-                {homeVisibility.hideLearnerWidgetsForParent ? (
-                  <KangurEmptyState
-                    align='left'
-                    className='text-left'
-                    padding='md'
-                    title={translations('home.missingLearnerTitle')}
-                    description={translations('home.missingLearnerDescription')}
-                  >
-                    <div className={`${KANGUR_TIGHT_ROW_CLASSNAME} w-full sm:items-center`}>
-                      <KangurButton
-                        asChild
-                        className='w-full sm:w-auto'
-                        size='sm'
-                        variant='primary'
-                        data-doc-id='home_parent_add_learner'
-                      >
-                        <Link
-                          href={createPageUrl('ParentDashboard', basePath)}
-                          targetPageKey='ParentDashboard'
-                          transitionSourceId='game-home-parent-add-learner'
-                        >
-                          {translations('home.addLearner')}
-                        </Link>
-                      </KangurButton>
-                    </div>
-                  </KangurEmptyState>
-                ) : null}
-              </>
-            )}
-            actionsColumnProps={{ testId: 'kangur-home-actions-column' }}
-            quest={<KangurGameHomeQuestWidget hideWhenScreenMismatch={false} />}
-            questSectionProps={{
-              headingId: 'kangur-home-quest-heading',
-              headingLabel: translations('home.questHeading'),
-              id: 'kangur-home-quest',
-              ref: homeQuestRef,
-            }}
-            summary={(
-              <KangurGameHomeHeroWidget
-                hideWhenScreenMismatch={false}
-                showIntro={false}
-                showAssignmentSpotlight={false}
-              />
-            )}
-            summarySectionProps={{
-              headingId: 'kangur-home-hero-heading',
-              headingLabel: translations('home.summaryHeading'),
-              id: 'kangur-home-summary',
-            }}
-            assignments={(
-              <KangurPriorityAssignments
-                basePath={basePath}
-                enabled={canAccessParentAssignments}
-                title={translations('home.priorityAssignmentsTitle')}
-                emptyLabel={translations('home.priorityAssignmentsEmpty')}
-              />
-            )}
-            assignmentsSectionProps={{
-              headingId: 'kangur-home-assignments-heading',
-              headingLabel: translations('home.priorityAssignmentsHeading'),
-              id: 'kangur-home-priority-assignments',
-              ref: homeAssignmentsRef,
-            }}
-            leaderboard={<Leaderboard />}
-            leaderboardColumnProps={{
-              id: 'kangur-home-leaderboard',
-              ref: homeLeaderboardRef,
-            }}
-            playerProgress={<PlayerProgressCard progress={progress} />}
-            playerProgressColumnProps={{
-              id: 'kangur-home-player-progress',
-              ref: homeProgressRef,
-            }}
-            progressSectionProps={{
-              headingId: 'kangur-home-progress-heading',
-              headingLabel: translations('home.progressHeading'),
-              id: 'kangur-home-progress',
-            }}
-          />,
-          undefined,
-          'kangur-game-home-layout'
-        );
-      case 'kangur_setup':
-        return renderScreen(
-          'kangur_setup',
-          'w-full flex flex-col items-center',
-          <KangurGameKangurSetupWidget />,
-          kangurSetupRef
-        );
-      case 'kangur':
-        return renderScreen(
-          'kangur',
-          'w-full max-w-lg flex flex-col items-center',
-          <KangurGameKangurSessionWidget />,
-          kangurSessionRef
-        );
-      case 'operation':
-      case 'training':
-        return renderScreen(
-          screen,
-          'w-full flex flex-col items-center',
-          <KangurGameOperationSelectorWidget />,
-          screen === 'training' ? trainingSetupRef : operationSelectorRef
-        );
-      case 'playing':
-        return renderScreen(
-          'playing',
-          'flex w-full flex-col items-center',
-          <KangurGameQuestionWidget />
-        );
-      case 'result':
-        return renderScreen(
-          'result',
-          `flex w-full flex-col items-center ${KANGUR_PANEL_GAP_CLASSNAME}`,
-          <>
-            <div ref={resultSummaryRef} className='w-full flex flex-col items-center'>
-              <KangurGameResultWidget />
-            </div>
-            <div ref={resultLeaderboardRef} className='w-full'>
-              <Leaderboard />
-            </div>
-          </>
-        );
-      default:
-        return null;
-    }
-  };
+  useGameTutorAnchorsRuntime({
+    activeGameAssignmentId: activeGameAssignment?.id,
+    canAccessParentAssignments,
+    refs: {
+      ...homeRefs,
+      ...sessionRefs,
+    },
+    screen,
+    translations,
+    tutorActivityContentId,
+  });
+  useGameScreenFocusReset(screen, screenHeadingRef);
 
   return (
     <>
@@ -751,7 +1520,22 @@ function GameContent(): React.JSX.Element {
           <h1 id={GAME_TITLE_ID} className='sr-only'>
             {GAME_BRAND_NAME}
           </h1>
-          {renderCurrentScreen()}
+          <GameCurrentScreen
+            activeLaunchableGameRuntime={activeLaunchableGameRuntime}
+            basePath={basePath}
+            canAccessParentAssignments={canAccessParentAssignments}
+            homeMotionProps={homeScreenMotionProps}
+            homeRefs={homeRefs}
+            homeVisibility={homeVisibility}
+            launchableGameInstanceId={launchableGameInstanceId}
+            launchableGameRuntimeLoading={launchableGameRuntimeLoading}
+            progress={progress}
+            screen={screen}
+            screenHeadingRef={screenHeadingRef}
+            screenMotionProps={screenMotionProps}
+            sessionRefs={sessionRefs}
+            translations={translations}
+          />
         </div>
       </KangurStandardPageLayout>
     </>

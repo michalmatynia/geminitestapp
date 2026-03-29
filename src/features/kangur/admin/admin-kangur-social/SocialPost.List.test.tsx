@@ -135,6 +135,10 @@ const buildPost = () => ({
   visualSummary: null,
   visualHighlights: [],
   visualDocUpdates: [],
+  visualAnalysisStatus: null,
+  visualAnalysisUpdatedAt: null,
+  visualAnalysisJobId: null,
+  visualAnalysisModelId: null,
   docUpdatesAppliedAt: null,
   docUpdatesAppliedBy: null,
   createdBy: null,
@@ -204,6 +208,9 @@ describe('SocialPostList', () => {
                 reason: 'Keep the teacher-facing CTA in the launch docs.',
               },
             ],
+            visualAnalysisStatus: 'completed',
+            visualAnalysisUpdatedAt: '2026-03-20T12:00:00.000Z',
+            visualAnalysisModelId: 'vision-1',
           },
           {
             ...buildPost(),
@@ -219,6 +226,8 @@ describe('SocialPostList', () => {
     render(<SocialPostList />);
 
     expect(screen.getByText('Image analysis')).toBeInTheDocument();
+    expect(screen.getByText(/Analyzed /)).toBeInTheDocument();
+    expect(screen.getByText('Model: vision-1')).toBeInTheDocument();
     expect(screen.getByText('2 highlights')).toBeInTheDocument();
     expect(screen.getByText('1 doc update')).toBeInTheDocument();
 
@@ -228,6 +237,30 @@ describe('SocialPostList', () => {
 
     expect(screen.getByText('Visual refresh')).toBeInTheDocument();
     expect(screen.queryByText('Plain draft')).not.toBeInTheDocument();
+  });
+
+  it('shows queued analysis state even before saved results exist', () => {
+    useSocialPostContextMock.mockReturnValue(
+      buildSocialPostContextState({
+        posts: [
+          {
+            ...buildPost(),
+            id: 'post-queued',
+            titlePl: 'Queued visual analysis',
+            titleEn: 'Queued visual analysis',
+            visualAnalysisStatus: 'queued',
+            visualAnalysisJobId: 'job-analysis-queued-1',
+            visualAnalysisModelId: 'vision-queued',
+          },
+        ],
+        activePostId: 'post-queued',
+      })
+    );
+
+    render(<SocialPostList />);
+
+    expect(screen.getByText('Analysis queued')).toBeInTheDocument();
+    expect(screen.getByText('Model: vision-queued')).toBeInTheDocument();
   });
 
   it('opens the modal from the post name without row hover zoom treatment', () => {

@@ -4,8 +4,8 @@ import type { ListQuery, MutationResult } from '@/shared/contracts/ui';
 import {
   kangurSocialPublishModeSchema,
   kangurSocialPostsSchema,
-  type KangurSocialDocUpdate,
   type KangurSocialDocUpdatesResponse,
+  type KangurSocialGeneratedDraft,
   type KangurSocialPost,
   type KangurSocialPublishMode,
   type KangurSocialVisualAnalysis,
@@ -162,26 +162,21 @@ export type KangurSocialPostGenerationPayload = {
 
 export type KangurSocialPostGenerationResult =
   | KangurSocialPost
-  | {
-      titlePl: string;
-      titleEn: string;
-      bodyPl: string;
-      bodyEn: string;
-      combinedBody: string;
-      summary?: string;
-      docReferences?: string[];
-      visualSummary?: string | null;
-      visualHighlights?: string[];
-      visualDocUpdates?: KangurSocialDocUpdate[];
-    };
+  | KangurSocialGeneratedDraft;
+
+export type KangurSocialQueuedJobTriggerResponse = {
+  success: boolean;
+  jobId: string;
+  jobType: 'manual-post-generation';
+};
 
 export const useGenerateKangurSocialPost = (): MutationResult<
-  KangurSocialPostGenerationResult,
+  KangurSocialQueuedJobTriggerResponse,
   KangurSocialPostGenerationPayload
 > =>
-  createUpdateMutationV2<KangurSocialPostGenerationResult, KangurSocialPostGenerationPayload>({
+  createUpdateMutationV2<KangurSocialQueuedJobTriggerResponse, KangurSocialPostGenerationPayload>({
     mutationKey: [...QUERY_KEYS.kangur.socialPosts({ scope: 'admin', limit: null }), 'generate'],
-    mutationFn: async (payload): Promise<KangurSocialPostGenerationResult> =>
+    mutationFn: async (payload): Promise<KangurSocialQueuedJobTriggerResponse> =>
       await api.post('/api/kangur/social-posts/generate', payload, { timeout: 180_000 }),
     invalidate: invalidateSocialPosts,
     meta: {

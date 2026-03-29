@@ -5,7 +5,11 @@ import { z } from 'zod';
 
 import { resolveKangurActor } from '@/features/kangur/services/kangur-actor';
 import { getKangurSocialPipelineQueue } from '@/features/kangur/workers/kangurSocialPipelineQueue';
-import { kangurSocialManualPipelineProgressSchema } from '@/shared/contracts/kangur-social-pipeline';
+import {
+  kangurSocialManualGenerationProgressSchema,
+  kangurSocialManualPipelineProgressSchema,
+  kangurSocialManualVisualAnalysisProgressSchema,
+} from '@/shared/contracts/kangur-social-pipeline';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { conflictError, forbiddenError, notFoundError } from '@/shared/errors/app-error';
 import { optionalTrimmedQueryString } from '@/shared/lib/api/query-schema';
@@ -33,62 +37,117 @@ type PipelineJobRecord = {
 
 const sanitizeJobData = (data: unknown): unknown => {
   if (!data || typeof data !== 'object') return data;
-  if ((data as { type?: string }).type !== 'manual-post-pipeline') return data;
-
-  const manual = data as {
-    type: 'manual-post-pipeline';
-    input?: {
-      postId?: string;
-      docReferences?: string[];
-      imageAddonIds?: string[];
+  const typedData = data as { type?: string };
+  if (typedData.type === 'manual-post-pipeline') {
+    const manual = data as {
+      type: 'manual-post-pipeline';
+      input?: {
+        postId?: string;
+        docReferences?: string[];
+        imageAddonIds?: string[];
+      };
     };
-  };
 
-  return {
-    type: manual.type,
-    input: {
-      postId: manual.input?.postId ?? null,
-      docReferenceCount: manual.input?.docReferences?.length ?? 0,
-      imageAddonCount: manual.input?.imageAddonIds?.length ?? 0,
-    },
-  };
+    return {
+      type: manual.type,
+      input: {
+        postId: manual.input?.postId ?? null,
+        docReferenceCount: manual.input?.docReferences?.length ?? 0,
+        imageAddonCount: manual.input?.imageAddonIds?.length ?? 0,
+      },
+    };
+  }
+
+  if (typedData.type === 'manual-post-visual-analysis') {
+    const manual = data as {
+      type: 'manual-post-visual-analysis';
+      input?: {
+        postId?: string | null;
+        docReferences?: string[];
+        imageAddonIds?: string[];
+      };
+    };
+
+    return {
+      type: manual.type,
+      input: {
+        postId: manual.input?.postId ?? null,
+        docReferenceCount: manual.input?.docReferences?.length ?? 0,
+        imageAddonCount: manual.input?.imageAddonIds?.length ?? 0,
+      },
+    };
+  }
+
+  if (typedData.type === 'manual-post-generation') {
+    const manual = data as {
+      type: 'manual-post-generation';
+      input?: {
+        postId?: string | null;
+        docReferences?: string[];
+        imageAddonIds?: string[];
+      };
+    };
+
+    return {
+      type: manual.type,
+      input: {
+        postId: manual.input?.postId ?? null,
+        docReferenceCount: manual.input?.docReferences?.length ?? 0,
+        imageAddonCount: manual.input?.imageAddonIds?.length ?? 0,
+      },
+    };
+  }
+
+  return data;
 };
 
 const sanitizeJobProgress = (
   progress: unknown,
   options?: { full?: boolean }
 ): unknown => {
-  const parsed = kangurSocialManualPipelineProgressSchema.safeParse(progress);
-  if (!parsed.success) return null;
+  const manualPipeline = kangurSocialManualPipelineProgressSchema.safeParse(progress);
+  if (manualPipeline.success) {
+    const value = manualPipeline.data;
+    const summary = {
+      type: value.type,
+      step: value.step,
+      captureMode: value.captureMode,
+      message: value.message,
+      updatedAt: value.updatedAt,
+      contextDocCount: value.contextDocCount,
+      addonsCreated: value.addonsCreated,
+      captureFailureCount: value.captureFailureCount,
+      requestedPresetCount: value.requestedPresetCount,
+      usedPresetCount: value.usedPresetCount,
+      captureCompletedCount: value.captureCompletedCount,
+      captureRemainingCount: value.captureRemainingCount,
+      captureTotalCount: value.captureTotalCount,
+      runId: value.runId,
+    };
 
-  const value = parsed.data;
-  const summary = {
-    type: value.type,
-    step: value.step,
-    captureMode: value.captureMode,
-    message: value.message,
-    updatedAt: value.updatedAt,
-    contextDocCount: value.contextDocCount,
-    addonsCreated: value.addonsCreated,
-    captureFailureCount: value.captureFailureCount,
-    requestedPresetCount: value.requestedPresetCount,
-    usedPresetCount: value.usedPresetCount,
-    captureCompletedCount: value.captureCompletedCount,
-    captureRemainingCount: value.captureRemainingCount,
-    captureTotalCount: value.captureTotalCount,
-    runId: value.runId,
-  };
+    if (!options?.full) {
+      return summary;
+    }
 
-  if (!options?.full) {
-    return summary;
+    return {
+      ...summary,
+      contextSummary: value.contextSummary,
+      captureFailures: value.captureFailures,
+      usedPresetIds: value.usedPresetIds,
+    };
   }
 
-  return {
-    ...summary,
-    contextSummary: value.contextSummary,
-    captureFailures: value.captureFailures,
-    usedPresetIds: value.usedPresetIds,
-  };
+  const visualAnalysis = kangurSocialManualVisualAnalysisProgressSchema.safeParse(progress);
+  if (visualAnalysis.success) {
+    return visualAnalysis.data;
+  }
+
+  const manualGeneration = kangurSocialManualGenerationProgressSchema.safeParse(progress);
+  if (manualGeneration.success) {
+    return manualGeneration.data;
+  }
+
+  return null;
 };
 
 const sanitizeJobResult = (
@@ -96,47 +155,109 @@ const sanitizeJobResult = (
   options?: { full?: boolean }
 ): unknown => {
   if (!result || typeof result !== 'object') return result;
-  if ((result as { type?: string }).type !== 'manual-post-pipeline') return result;
+  const typedResult = result as { type?: string };
+  if (typedResult.type === 'manual-post-pipeline') {
+    const manual = result as {
+      type: 'manual-post-pipeline';
+      postId?: string;
+      captureMode?: string;
+      addonsCreated?: number;
+      failures?: number;
+      runId?: string;
+      contextSummary?: string | null;
+      contextDocCount?: number;
+      imageAddonIds?: string[];
+      imageAssets?: unknown[];
+      batchCaptureResult?: unknown;
+      generatedPost?: unknown;
+      docUpdates?: unknown;
+    };
 
-  const manual = result as {
-    type: 'manual-post-pipeline';
-    postId?: string;
-    captureMode?: string;
-    addonsCreated?: number;
-    failures?: number;
-    runId?: string;
-    contextSummary?: string | null;
-    contextDocCount?: number;
-    imageAddonIds?: string[];
-    imageAssets?: unknown[];
-    batchCaptureResult?: unknown;
-    generatedPost?: unknown;
-    docUpdates?: unknown;
-  };
+    const summary = {
+      type: manual.type,
+      postId: manual.postId ?? null,
+      captureMode: manual.captureMode ?? 'fresh_capture',
+      addonsCreated: manual.addonsCreated ?? 0,
+      failures: manual.failures ?? 0,
+      runId: manual.runId ?? null,
+    };
 
-  const summary = {
-    type: manual.type,
-    postId: manual.postId ?? null,
-    captureMode: manual.captureMode ?? 'fresh_capture',
-    addonsCreated: manual.addonsCreated ?? 0,
-    failures: manual.failures ?? 0,
-    runId: manual.runId ?? null,
-  };
+    if (!options?.full) {
+      return summary;
+    }
 
-  if (!options?.full) {
-    return summary;
+    return {
+      ...summary,
+      contextSummary: manual.contextSummary ?? null,
+      contextDocCount: manual.contextDocCount ?? 0,
+      imageAddonIds: manual.imageAddonIds ?? [],
+      imageAssets: manual.imageAssets ?? [],
+      batchCaptureResult: manual.batchCaptureResult ?? null,
+      generatedPost: manual.generatedPost ?? null,
+      docUpdates: manual.docUpdates ?? null,
+    };
   }
 
-  return {
-    ...summary,
-    contextSummary: manual.contextSummary ?? null,
-    contextDocCount: manual.contextDocCount ?? 0,
-    imageAddonIds: manual.imageAddonIds ?? [],
-    imageAssets: manual.imageAssets ?? [],
-    batchCaptureResult: manual.batchCaptureResult ?? null,
-    generatedPost: manual.generatedPost ?? null,
-    docUpdates: manual.docUpdates ?? null,
-  };
+  if (typedResult.type === 'manual-post-visual-analysis') {
+    const manual = result as {
+      type: 'manual-post-visual-analysis';
+      postId?: string | null;
+      imageAddonIds?: string[];
+      analysis?: {
+        summary?: string;
+        highlights?: unknown[];
+        docUpdates?: unknown[];
+      };
+      savedPost?: unknown;
+    };
+
+    const summary = {
+      type: manual.type,
+      postId: manual.postId ?? null,
+      imageAddonCount: manual.imageAddonIds?.length ?? 0,
+      highlightCount: manual.analysis?.highlights?.length ?? 0,
+      docUpdateCount: manual.analysis?.docUpdates?.length ?? 0,
+    };
+
+    if (!options?.full) {
+      return summary;
+    }
+
+    return {
+      ...summary,
+      analysis: manual.analysis ?? null,
+      savedPost: manual.savedPost ?? null,
+    };
+  }
+
+  if (typedResult.type === 'manual-post-generation') {
+    const manual = result as {
+      type: 'manual-post-generation';
+      postId?: string | null;
+      imageAddonIds?: string[];
+      generatedPost?: unknown;
+      draft?: unknown;
+    };
+
+    const summary = {
+      type: manual.type,
+      postId: manual.postId ?? null,
+      imageAddonCount: manual.imageAddonIds?.length ?? 0,
+      saved: Boolean(manual.generatedPost),
+    };
+
+    if (!options?.full) {
+      return summary;
+    }
+
+    return {
+      ...summary,
+      generatedPost: manual.generatedPost ?? null,
+      draft: manual.draft ?? null,
+    };
+  }
+
+  return result;
 };
 
 const serializeJob = async (

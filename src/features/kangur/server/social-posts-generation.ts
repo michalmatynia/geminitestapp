@@ -9,6 +9,7 @@ import {
 import {
   buildKangurSocialPostCombinedBody,
   type KangurSocialDocUpdate,
+  type KangurSocialGeneratedDraft,
   type KangurSocialVisualAnalysis,
 } from '@/shared/contracts/kangur-social-posts';
 import type { KangurSocialImageAddon } from '@/shared/contracts/kangur-social-image-addons';
@@ -20,19 +21,6 @@ import {
   type KangurDocEntry,
 } from './social-posts-docs';
 import { analyzeKangurSocialVisuals } from './social-posts-vision';
-
-export type KangurSocialPostDraft = {
-  titlePl: string;
-  titleEn: string;
-  bodyPl: string;
-  bodyEn: string;
-  combinedBody: string;
-  summary: string;
-  docReferences: string[];
-  visualSummary: string | null;
-  visualHighlights: string[];
-  visualDocUpdates: KangurSocialDocUpdate[];
-};
 
 type GenerationInput = {
   docReferences?: string[];
@@ -232,14 +220,14 @@ const buildUserPromptLines = ({
   return userPromptLines;
 };
 
-const parseBrainDraftResponse = (text: string): Partial<KangurSocialPostDraft> => {
+const parseBrainDraftResponse = (text: string): Partial<KangurSocialGeneratedDraft> => {
   try {
-    return JSON.parse(text) as Partial<KangurSocialPostDraft>;
+    return JSON.parse(text) as Partial<KangurSocialGeneratedDraft>;
   } catch {
     const jsonMatch = text.match(/```(?:json)?\s*([\s\S]*?)```/);
     if (jsonMatch?.[1]) {
       try {
-        return JSON.parse(jsonMatch[1].trim()) as Partial<KangurSocialPostDraft>;
+        return JSON.parse(jsonMatch[1].trim()) as Partial<KangurSocialGeneratedDraft>;
       } catch {
         return {};
       }
@@ -254,7 +242,7 @@ const parseBrainDraftResponse = (text: string): Partial<KangurSocialPostDraft> =
   }
 };
 
-const normalizeDraftFields = (parsed: Partial<KangurSocialPostDraft>) => ({
+const normalizeDraftFields = (parsed: Partial<KangurSocialGeneratedDraft>) => ({
   titlePl: (parsed.titlePl ?? '').trim(),
   titleEn: (parsed.titleEn ?? '').trim(),
   bodyPl: (parsed.bodyPl ?? '').trim(),
@@ -289,7 +277,7 @@ const logDraftGenerationSuccess = ({
   modelId: string;
   context: GenerationContext;
   docs: KangurDocEntry[];
-  draft: KangurSocialPostDraft;
+  draft: KangurSocialGeneratedDraft;
   visualAnalysis: VisualAnalysisSnapshot;
 }): void => {
   void ErrorSystem.logInfo('Kangur social post draft generated', {
@@ -335,7 +323,7 @@ const logDraftGenerationFailure = ({
 
 export async function generateKangurSocialPostDraft(
   input: GenerationInput
-): Promise<KangurSocialPostDraft> {
+): Promise<KangurSocialGeneratedDraft> {
   const startedAt = Date.now();
   const generationContext = normalizeGenerationInput(input);
   const docs = resolveKangurDocReferences(generationContext.docReferences);
@@ -390,7 +378,7 @@ export async function generateKangurSocialPostDraft(
 
     const combinedBody = buildKangurSocialPostCombinedBody(bodyPl, bodyEn);
 
-    const draft: KangurSocialPostDraft = {
+    const draft: KangurSocialGeneratedDraft = {
       titlePl,
       titleEn,
       bodyPl,

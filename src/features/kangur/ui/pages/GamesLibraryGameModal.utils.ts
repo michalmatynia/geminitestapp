@@ -126,32 +126,103 @@ export const CLOCK_TRAINING_INSTANCE_ID_BY_SECTION: Record<ClockTrainingSectionI
   combined: getKangurBuiltInGameInstanceId('clock_training'),
 };
 
+const CLOCK_TRAINING_SECTION_BY_INSTANCE_ID = Object.entries(
+  CLOCK_TRAINING_INSTANCE_ID_BY_SECTION
+).reduce<Partial<Record<string, ClockTrainingSectionId>>>((result, [sectionId, instanceId]) => {
+  result[instanceId] = sectionId as ClockTrainingSectionId;
+  return result;
+}, {});
+
+const resolveClockPreviewSection = (
+  section: KangurLessonGameSection | null | undefined
+): ClockTrainingSectionId =>
+  (section?.instanceId
+    ? CLOCK_TRAINING_SECTION_BY_INSTANCE_ID[section.instanceId]
+    : undefined) ??
+  section?.settings.clock?.clockSection ??
+  DEFAULT_CLOCK_PREVIEW_SETTINGS.clockSection;
+
+const resolveClockPreviewBooleanSetting = (
+  value: boolean | null | undefined,
+  fallback: boolean
+): boolean => value ?? fallback;
+
+const resolveClockPreviewInitialMode = (
+  section: KangurLessonGameSection | null | undefined
+): ClockPreviewSettings['initialMode'] =>
+  section?.settings.clock?.initialMode ?? DEFAULT_CLOCK_PREVIEW_SETTINGS.initialMode;
+
+const resolveClockPreviewShowHourHand = (
+  section: KangurLessonGameSection | null | undefined
+): boolean =>
+  resolveClockPreviewBooleanSetting(
+    section?.settings.clock?.showHourHand,
+    DEFAULT_CLOCK_PREVIEW_SETTINGS.showHourHand
+  );
+
+const resolveClockPreviewShowMinuteHand = (
+  section: KangurLessonGameSection | null | undefined
+): boolean =>
+  resolveClockPreviewBooleanSetting(
+    section?.settings.clock?.showMinuteHand,
+    DEFAULT_CLOCK_PREVIEW_SETTINGS.showMinuteHand
+  );
+
+const resolveClockPreviewShowModeSwitch = (
+  section: KangurLessonGameSection | null | undefined
+): boolean =>
+  resolveClockPreviewBooleanSetting(
+    section?.settings.clock?.showModeSwitch,
+    DEFAULT_CLOCK_PREVIEW_SETTINGS.showModeSwitch
+  );
+
+const resolveClockPreviewShowTaskTitle = (
+  section: KangurLessonGameSection | null | undefined
+): boolean =>
+  resolveClockPreviewBooleanSetting(
+    section?.settings.clock?.showTaskTitle,
+    DEFAULT_CLOCK_PREVIEW_SETTINGS.showTaskTitle
+  );
+
+const resolveClockPreviewShowTimeDisplay = (
+  section: KangurLessonGameSection | null | undefined
+): boolean =>
+  resolveClockPreviewBooleanSetting(
+    section?.settings.clock?.showTimeDisplay,
+    DEFAULT_CLOCK_PREVIEW_SETTINGS.showTimeDisplay
+  );
+
+const resolveEditorStateAttachedLessonId = (
+  section: KangurLessonGameSection | null,
+  nextGame: KangurGameDefinition
+): string | null => (section?.lessonComponentId ?? nextGame.lessonComponentIds[0]) ?? null;
+
+const resolveEditorStateIcon = (
+  section: KangurLessonGameSection | null,
+  nextGame: KangurGameDefinition
+): string => section?.emoji ?? nextGame.emoji ?? '🎮';
+
+const resolveEditorStateSubtext = (
+  section: KangurLessonGameSection | null,
+  nextGame: KangurGameDefinition
+): string | null | undefined => section?.description ?? nextGame.description;
+
+const resolveEditorStateTitle = (
+  section: KangurLessonGameSection | null,
+  nextGame: KangurGameDefinition
+): string => section?.title ?? nextGame.title;
+
 export const resolvePreviewSettingsFromPersistedSection = (
   section: KangurLessonGameSection | null | undefined
 ): ClockPreviewSettings => {
-  const resolvedClockSection =
-    section?.instanceId === CLOCK_TRAINING_INSTANCE_ID_BY_SECTION.hours
-      ? 'hours'
-      : section?.instanceId === CLOCK_TRAINING_INSTANCE_ID_BY_SECTION.minutes
-        ? 'minutes'
-        : section?.instanceId === CLOCK_TRAINING_INSTANCE_ID_BY_SECTION.combined
-          ? 'combined'
-          : section?.settings.clock?.clockSection ?? DEFAULT_CLOCK_PREVIEW_SETTINGS.clockSection;
-
   return {
-    clockSection: resolvedClockSection,
-    initialMode:
-      section?.settings.clock?.initialMode ?? DEFAULT_CLOCK_PREVIEW_SETTINGS.initialMode,
-    showHourHand:
-      section?.settings.clock?.showHourHand ?? DEFAULT_CLOCK_PREVIEW_SETTINGS.showHourHand,
-    showMinuteHand:
-      section?.settings.clock?.showMinuteHand ?? DEFAULT_CLOCK_PREVIEW_SETTINGS.showMinuteHand,
-    showModeSwitch:
-      section?.settings.clock?.showModeSwitch ?? DEFAULT_CLOCK_PREVIEW_SETTINGS.showModeSwitch,
-    showTaskTitle:
-      section?.settings.clock?.showTaskTitle ?? DEFAULT_CLOCK_PREVIEW_SETTINGS.showTaskTitle,
-    showTimeDisplay:
-      section?.settings.clock?.showTimeDisplay ?? DEFAULT_CLOCK_PREVIEW_SETTINGS.showTimeDisplay,
+    clockSection: resolveClockPreviewSection(section),
+    initialMode: resolveClockPreviewInitialMode(section),
+    showHourHand: resolveClockPreviewShowHourHand(section),
+    showMinuteHand: resolveClockPreviewShowMinuteHand(section),
+    showModeSwitch: resolveClockPreviewShowModeSwitch(section),
+    showTaskTitle: resolveClockPreviewShowTaskTitle(section),
+    showTimeDisplay: resolveClockPreviewShowTimeDisplay(section),
   };
 };
 
@@ -159,10 +230,10 @@ export const buildEditorStateFromSection = (
   section: KangurLessonGameSection | null,
   nextGame: KangurGameDefinition
 ): HubSectionEditorState => ({
-  attachedLessonId: (section?.lessonComponentId ?? nextGame.lessonComponentIds[0]) ?? null,
+  attachedLessonId: resolveEditorStateAttachedLessonId(section, nextGame),
   clockSettings: resolvePreviewSettingsFromPersistedSection(section),
   draftEnabled: section?.enabled ?? true,
-  draftIcon: section?.emoji ?? nextGame.emoji ?? '🎮',
-  draftSubtext: section?.description ?? nextGame.description,
-  draftTitle: section?.title ?? nextGame.title,
+  draftIcon: resolveEditorStateIcon(section, nextGame),
+  draftSubtext: resolveEditorStateSubtext(section, nextGame),
+  draftTitle: resolveEditorStateTitle(section, nextGame),
 });

@@ -41,6 +41,12 @@ vi.mock('@/features/kangur/observability/client', () => ({
 
 import { useSocialPipelineRunner } from './useSocialPipelineRunner';
 
+const completedVisualAnalysis = {
+  summary: 'The hero now shows a larger student card and clearer CTA.',
+  highlights: ['Larger student card', 'Clearer CTA'],
+  docUpdates: [],
+} as const;
+
 const createWrapper = (): React.ComponentType<{ children: ReactNode }> => {
   const queryClient = new QueryClient({
     defaultOptions: {
@@ -364,16 +370,27 @@ describe('useSocialPipelineRunner', () => {
   it('runs visual analysis first and then queues the pipeline with the prefetched analysis', async () => {
     apiPostMock
       .mockResolvedValueOnce({
-        summary: 'The hero now shows a larger student card and clearer CTA.',
-        highlights: ['Larger student card', 'Clearer CTA'],
-        docUpdates: [],
+        success: true,
+        jobId: 'job-visual-analysis-1',
+        jobType: 'manual-post-visual-analysis',
       })
       .mockResolvedValueOnce({
         success: true,
         jobId: 'job-visual-1',
         jobType: 'manual-post-pipeline',
       });
-    apiGetMock.mockResolvedValue({
+    apiGetMock
+      .mockResolvedValueOnce({
+        id: 'job-visual-analysis-1',
+        status: 'completed',
+        failedReason: null,
+        result: {
+          type: 'manual-post-visual-analysis',
+          analysis: completedVisualAnalysis,
+          savedPost: null,
+        },
+      })
+      .mockResolvedValueOnce({
       id: 'job-visual-1',
       status: 'completed',
       progress: {
@@ -417,7 +434,7 @@ describe('useSocialPipelineRunner', () => {
         },
         docUpdates: null,
       },
-    });
+      });
 
     const { result } = renderHook(
       () =>
@@ -465,6 +482,8 @@ describe('useSocialPipelineRunner', () => {
         }),
       { wrapper: createWrapper() }
     );
+
+    await act(async () => {});
 
     act(() => {
       result.current.handleOpenVisualAnalysisModal();
@@ -485,11 +504,7 @@ describe('useSocialPipelineRunner', () => {
       }),
       expect.any(Object)
     );
-    expect(result.current.visualAnalysisResult).toEqual({
-      summary: 'The hero now shows a larger student card and clearer CTA.',
-      highlights: ['Larger student card', 'Clearer CTA'],
-      docUpdates: [],
-    });
+    expect(result.current.visualAnalysisResult).toEqual(completedVisualAnalysis);
 
     await act(async () => {
       await result.current.handleRunFullPipelineWithVisualAnalysis();
@@ -501,11 +516,7 @@ describe('useSocialPipelineRunner', () => {
       expect.objectContaining({
         input: expect.objectContaining({
           captureMode: 'existing_assets',
-          prefetchedVisualAnalysis: {
-            summary: 'The hero now shows a larger student card and clearer CTA.',
-            highlights: ['Larger student card', 'Clearer CTA'],
-            docUpdates: [],
-          },
+          prefetchedVisualAnalysis: completedVisualAnalysis,
           requireVisualAnalysisInBody: true,
         }),
       }),
@@ -515,9 +526,19 @@ describe('useSocialPipelineRunner', () => {
 
   it('preserves the last analysis result when the modal is reopened for the same inputs', async () => {
     apiPostMock.mockResolvedValueOnce({
-      summary: 'The hero now shows a larger student card and clearer CTA.',
-      highlights: ['Larger student card', 'Clearer CTA'],
-      docUpdates: [],
+      success: true,
+      jobId: 'job-visual-analysis-2',
+      jobType: 'manual-post-visual-analysis',
+    });
+    apiGetMock.mockResolvedValueOnce({
+      id: 'job-visual-analysis-2',
+      status: 'completed',
+      failedReason: null,
+      result: {
+        type: 'manual-post-visual-analysis',
+        analysis: completedVisualAnalysis,
+        savedPost: null,
+      },
     });
 
     const { result } = renderHook(
@@ -567,6 +588,8 @@ describe('useSocialPipelineRunner', () => {
       { wrapper: createWrapper() }
     );
 
+    await act(async () => {});
+
     act(() => {
       result.current.handleOpenVisualAnalysisModal();
     });
@@ -575,11 +598,7 @@ describe('useSocialPipelineRunner', () => {
       await result.current.handleAnalyzeSelectedVisuals();
     });
 
-    expect(result.current.visualAnalysisResult).toEqual({
-      summary: 'The hero now shows a larger student card and clearer CTA.',
-      highlights: ['Larger student card', 'Clearer CTA'],
-      docUpdates: [],
-    });
+    expect(result.current.visualAnalysisResult).toEqual(completedVisualAnalysis);
 
     act(() => {
       result.current.handleCloseVisualAnalysisModal();
@@ -591,18 +610,24 @@ describe('useSocialPipelineRunner', () => {
       result.current.handleOpenVisualAnalysisModal();
     });
     expect(result.current.isVisualAnalysisModalOpen).toBe(true);
-    expect(result.current.visualAnalysisResult).toEqual({
-      summary: 'The hero now shows a larger student card and clearer CTA.',
-      highlights: ['Larger student card', 'Clearer CTA'],
-      docUpdates: [],
-    });
+    expect(result.current.visualAnalysisResult).toEqual(completedVisualAnalysis);
   });
 
   it('invalidates the saved analysis result when the analysis inputs change', async () => {
     apiPostMock.mockResolvedValueOnce({
-      summary: 'The hero now shows a larger student card and clearer CTA.',
-      highlights: ['Larger student card', 'Clearer CTA'],
-      docUpdates: [],
+      success: true,
+      jobId: 'job-visual-analysis-3',
+      jobType: 'manual-post-visual-analysis',
+    });
+    apiGetMock.mockResolvedValueOnce({
+      id: 'job-visual-analysis-3',
+      status: 'completed',
+      failedReason: null,
+      result: {
+        type: 'manual-post-visual-analysis',
+        analysis: completedVisualAnalysis,
+        savedPost: null,
+      },
     });
 
     const baseArgs = {
@@ -655,6 +680,8 @@ describe('useSocialPipelineRunner', () => {
         wrapper: createWrapper(),
       }
     );
+
+    await act(async () => {});
 
     await act(async () => {
       await result.current.handleAnalyzeSelectedVisuals();
@@ -719,6 +746,8 @@ describe('useSocialPipelineRunner', () => {
         }),
       { wrapper: createWrapper() }
     );
+
+    await act(async () => {});
 
     await act(async () => {
       await result.current.handleRunFullPipeline();

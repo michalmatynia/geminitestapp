@@ -36,6 +36,58 @@ const COMPETITION_SCREEN_DESCRIPTIONS: Partial<Record<KangurGameScreen, string>>
   kangur: 'Rozwiązuj zadania Kangura Matematycznego krok po kroku.',
 };
 
+function useCompetitionSetupScreenSync(
+  screen: KangurGameScreen,
+  setScreen: (nextScreen: KangurGameScreen) => void
+): void {
+  useEffect(() => {
+    if (screen === 'home') {
+      setScreen('kangur_setup');
+    }
+  }, [screen, setScreen]);
+}
+
+const resolveCompetitionPageReady = ({
+  routeTransitionState,
+  screen,
+}: {
+  routeTransitionState: ReturnType<typeof useOptionalKangurRouteTransitionState>;
+  screen: KangurGameScreen;
+}): boolean => {
+  if (routeTransitionState?.activeTransitionKind === 'locale-switch') {
+    return true;
+  }
+
+  if (
+    routeTransitionState?.transitionPhase === 'waiting_for_ready' &&
+    routeTransitionState.activeTransitionSkeletonVariant === 'game-session'
+  ) {
+    return screen !== 'home';
+  }
+
+  return true;
+};
+
+const resolveCompetitionTutorSessionContext = ({
+  currentScreenLabel,
+  screen,
+}: {
+  currentScreenLabel: string;
+  screen: KangurGameScreen;
+}): KangurAiTutorConversationContext | null => {
+  if (screen !== 'kangur_setup' && screen !== 'kangur') {
+    return null;
+  }
+
+  return {
+    surface: 'game',
+    contentId: screen === 'kangur' ? 'game:kangur:session' : 'game:kangur:setup',
+    title: currentScreenLabel,
+    description:
+      COMPETITION_SCREEN_DESCRIPTIONS[screen] ?? 'Przygotuj sesję Kangura Matematycznego.',
+  };
+};
+
 function CompetitionContent(): React.JSX.Element {
   const routeNavigator = useKangurRouteNavigator();
   const { basePath, logout, screen, setScreen, user } = useKangurGameRuntime();
@@ -44,11 +96,7 @@ function CompetitionContent(): React.JSX.Element {
   const routeTransitionState = useOptionalKangurRouteTransitionState();
   const { enabled: docsTooltipsEnabled } = useKangurDocsTooltips('home');
 
-  useEffect(() => {
-    if (screen === 'home') {
-      setScreen('kangur_setup');
-    }
-  }, [screen, setScreen]);
+  useCompetitionSetupScreenSync(screen, setScreen);
 
   const navigation = useMemo(
     () => ({
@@ -72,13 +120,10 @@ function CompetitionContent(): React.JSX.Element {
     });
   }, [basePath, routeNavigator]);
 
-  const isCompetitionPageReady =
-    routeTransitionState?.activeTransitionKind === 'locale-switch'
-      ? true
-      : routeTransitionState?.transitionPhase === 'waiting_for_ready' &&
-        routeTransitionState.activeTransitionSkeletonVariant === 'game-session'
-      ? screen !== 'home'
-      : true;
+  const isCompetitionPageReady = resolveCompetitionPageReady({
+    routeTransitionState,
+    screen,
+  });
 
   useKangurRoutePageReady({
     pageKey: 'Competition',
@@ -87,20 +132,14 @@ function CompetitionContent(): React.JSX.Element {
 
   const learnerId = user?.activeLearner?.id ?? null;
   const currentScreenLabel = COMPETITION_SCREEN_LABELS[screen] ?? 'Kangur Matematyczny';
-  const tutorSessionContext = useMemo<KangurAiTutorConversationContext | null>(() => {
-    if (screen !== 'kangur_setup' && screen !== 'kangur') {
-      return null;
-    }
-
-    return {
-      surface: 'game',
-      contentId: screen === 'kangur' ? 'game:kangur:session' : 'game:kangur:setup',
-      title: currentScreenLabel,
-      description:
-        COMPETITION_SCREEN_DESCRIPTIONS[screen] ??
-        'Przygotuj sesję Kangura Matematycznego.',
-    };
-  }, [currentScreenLabel, screen]);
+  const tutorSessionContext = useMemo(
+    () =>
+      resolveCompetitionTutorSessionContext({
+        currentScreenLabel,
+        screen,
+      }),
+    [currentScreenLabel, screen]
+  );
 
   return (
     <>

@@ -9,9 +9,12 @@ const {
   getRedisConnectionMock,
   getQueueMock,
   logInfoMock,
+  runKangurSocialPostGenerationJobMock,
   runKangurSocialPostPipelineMock,
+  runKangurSocialPostVisualAnalysisJobMock,
   setMock,
   startWorkerMock,
+  updateKangurSocialPostMock,
 } = vi.hoisted(() => ({
   cleanMock: vi.fn(),
   createManagedQueueMock: vi.fn(),
@@ -21,9 +24,12 @@ const {
   getRedisConnectionMock: vi.fn(),
   getQueueMock: vi.fn(),
   logInfoMock: vi.fn(),
+  runKangurSocialPostGenerationJobMock: vi.fn(),
   runKangurSocialPostPipelineMock: vi.fn(),
+  runKangurSocialPostVisualAnalysisJobMock: vi.fn(),
   setMock: vi.fn(),
   startWorkerMock: vi.fn(),
+  updateKangurSocialPostMock: vi.fn(),
 }));
 
 vi.mock('@/shared/lib/queue', () => ({
@@ -45,6 +51,17 @@ vi.mock('@/features/kangur/server/social-image-addons-batch', () => ({
 vi.mock('@/features/kangur/server/social-posts-pipeline', () => ({
   runKangurSocialPostPipeline: (...args: unknown[]) =>
     runKangurSocialPostPipelineMock(...args),
+}));
+
+vi.mock('@/features/kangur/server/social-posts-runtime', () => ({
+  runKangurSocialPostVisualAnalysisJob: (...args: unknown[]) =>
+    runKangurSocialPostVisualAnalysisJobMock(...args),
+  runKangurSocialPostGenerationJob: (...args: unknown[]) =>
+    runKangurSocialPostGenerationJobMock(...args),
+}));
+
+vi.mock('@/features/kangur/server/social-posts-repository', () => ({
+  updateKangurSocialPost: (...args: unknown[]) => updateKangurSocialPostMock(...args),
 }));
 
 vi.mock('@/features/kangur/services/kangur-settings-repository', () => ({
@@ -97,6 +114,7 @@ describe('kangurSocialPipelineQueue', () => {
       clean: cleanMock,
     });
     cleanMock.mockResolvedValue(['stale-job-1']);
+    updateKangurSocialPostMock.mockResolvedValue({ id: 'post-1' });
   });
 
   it('cleans stale active jobs when the worker is offline', async () => {
@@ -157,7 +175,7 @@ describe('kangurSocialPipelineQueue', () => {
 
     await import('./kangurSocialPipelineQueue');
 
-    const config = createManagedQueueMock.mock.calls[0]?.[0];
+    const config = createManagedQueueMock.mock.calls.at(-1)?.[0];
     expect(config).toBeTruthy();
 
     const result = await config.processor(
@@ -212,5 +230,151 @@ describe('kangurSocialPipelineQueue', () => {
     );
 
     await expect(getKangurSocialPipelineWorkerHeartbeat()).resolves.toBe(heartbeatAt);
+  });
+
+  it('delegates manual visual analysis jobs to the server runtime helper', async () => {
+    runKangurSocialPostVisualAnalysisJobMock.mockResolvedValue({
+      type: 'manual-post-visual-analysis',
+      postId: 'post-1',
+      imageAddonIds: ['addon-1'],
+      docReferences: ['overview'],
+      visionModelId: 'vision-1',
+      analysis: {
+        summary: 'Updated classroom card',
+        highlights: ['Updated classroom card'],
+        docUpdates: [],
+      },
+      savedPost: { id: 'post-1' },
+    });
+
+    await import('./kangurSocialPipelineQueue');
+    const config = createManagedQueueMock.mock.calls.at(-1)?.[0];
+    const updateProgressMock = vi.fn();
+
+    const result = await config.processor(
+      {
+        type: 'manual-post-visual-analysis',
+        input: {
+          postId: 'post-1',
+          imageAddonIds: ['addon-1'],
+          docReferences: ['overview'],
+          visionModelId: 'vision-1',
+          actorId: 'admin-1',
+        },
+      },
+      'job-analysis-1',
+      undefined,
+      {
+        updateProgress: updateProgressMock,
+      }
+    );
+
+    expect(runKangurSocialPostVisualAnalysisJobMock).toHaveBeenCalledWith({
+      postId: 'post-1',
+      imageAddonIds: ['addon-1'],
+      docReferences: ['overview'],
+      visionModelId: 'vision-1',
+      actorId: 'admin-1',
+      jobId: 'job-analysis-1',
+    });
+    expect(updateKangurSocialPostMock).toHaveBeenCalledWith('post-1', {
+      visualAnalysisStatus: 'running',
+      visualAnalysisJobId: 'job-analysis-1',
+      visualAnalysisModelId: 'vision-1',
+      updatedBy: 'admin-1',
+    });
+    expect(updateProgressMock).toHaveBeenCalled();
+    expect(result.type).toBe('manual-post-visual-analysis');
+  });
+
+  it('delegates manual post generation jobs to the server runtime helper', async () => {
+    runKangurSocialPostGenerationJobMock.mockResolvedValue({
+      type: 'manual-post-generation',
+      postId: 'post-1',
+      imageAddonIds: ['addon-1'],
+      docReferences: ['overview'],
+      brainModelId: 'brain-1',
+      visionModelId: 'vision-1',
+      generatedPost: { id: 'post-1', titlePl: 'Generated' },
+      draft: null,
+    });
+
+    await import('./kangurSocialPipelineQueue');
+    const config = createManagedQueueMock.mock.calls.at(-1)?.[0];
+    const updateProgressMock = vi.fn();
+
+    const result = await config.processor(
+      {
+        type: 'manual-post-generation',
+        input: {
+          postId: 'post-1',
+          imageAddonIds: ['addon-1'],
+          docReferences: ['overview'],
+          modelId: 'brain-1',
+          visionModelId: 'vision-1',
+          actorId: 'admin-1',
+          projectUrl: 'https://studiq.example.com/project',
+        },
+      },
+      'job-generate-1',
+      undefined,
+      {
+        updateProgress: updateProgressMock,
+      }
+    );
+
+    expect(runKangurSocialPostGenerationJobMock).toHaveBeenCalledWith({
+      postId: 'post-1',
+      imageAddonIds: ['addon-1'],
+      docReferences: ['overview'],
+      modelId: 'brain-1',
+      visionModelId: 'vision-1',
+      actorId: 'admin-1',
+      projectUrl: 'https://studiq.example.com/project',
+    });
+    expect(updateProgressMock).toHaveBeenCalled();
+    expect(result.type).toBe('manual-post-generation');
+  });
+
+  it('marks visual analysis as failed on the post when the runtime helper throws', async () => {
+    runKangurSocialPostVisualAnalysisJobMock.mockRejectedValue(
+      new Error('Vision runtime failed')
+    );
+
+    await import('./kangurSocialPipelineQueue');
+    const config = createManagedQueueMock.mock.calls.at(-1)?.[0];
+
+    await expect(
+      config.processor(
+        {
+          type: 'manual-post-visual-analysis',
+          input: {
+            postId: 'post-1',
+            imageAddonIds: ['addon-1'],
+            docReferences: ['overview'],
+            visionModelId: 'vision-1',
+            actorId: 'admin-1',
+          },
+        },
+        'job-analysis-failed-1',
+        undefined,
+        {
+          updateProgress: vi.fn(),
+        }
+      )
+    ).rejects.toThrow('Vision runtime failed');
+
+    expect(updateKangurSocialPostMock).toHaveBeenNthCalledWith(1, 'post-1', {
+      visualAnalysisStatus: 'running',
+      visualAnalysisJobId: 'job-analysis-failed-1',
+      visualAnalysisModelId: 'vision-1',
+      updatedBy: 'admin-1',
+    });
+    expect(updateKangurSocialPostMock).toHaveBeenNthCalledWith(2, 'post-1', {
+      visualAnalysisStatus: 'failed',
+      visualAnalysisJobId: 'job-analysis-failed-1',
+      visualAnalysisModelId: 'vision-1',
+      updatedBy: 'admin-1',
+    });
   });
 });

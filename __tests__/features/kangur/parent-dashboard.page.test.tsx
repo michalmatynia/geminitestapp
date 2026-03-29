@@ -121,6 +121,27 @@ vi.mock('@/features/kangur/ui/hooks/useKangurParentDashboardScores', () => ({
 vi.mock('@/features/kangur/ui/useKangurStorefrontAppearance', () => ({
   useKangurStorefrontAppearance: () => ({
     isAppearanceAvailable: false,
+    background: '#ffffff',
+    tone: {
+      text: '#111827',
+      border: '#d1d5db',
+      accent: '#3b82f6',
+      background: '#ffffff',
+    },
+    vars: {},
+    theme: {
+      backgroundColor: '#ffffff',
+      borderColor: '#d1d5db',
+      textColor: '#111827',
+      accentColor: '#3b82f6',
+      primaryColor: '#3b82f6',
+      surfaceColor: '#ffffff',
+      dropdownBg: '#ffffff',
+      dropdownBorder: '#d1d5db',
+      dropdownShadowBlur: 34,
+      dropdownShadowY: 14,
+      darkMode: false,
+    },
   }),
 }));
 

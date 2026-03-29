@@ -85,6 +85,21 @@ export const DEFAULT_GAMES_LIBRARY_FILTERS: GamesLibraryFilterState = {
   launchability: 'all',
 };
 
+const GAMES_LIBRARY_FILTER_KEYS = [
+  'gameId',
+  'subject',
+  'ageGroup',
+  'mechanic',
+  'surface',
+  'gameStatus',
+  'variantSurface',
+  'variantStatus',
+  'engineId',
+  'engineCategory',
+  'implementationOwnership',
+  'launchability',
+] as const satisfies readonly (keyof GamesLibraryFilterState)[];
+
 const readSearchParam = (
   searchParams: SearchParamReader,
   key: string
@@ -129,6 +144,34 @@ const parseVariantSurface = (value: string | undefined): KangurGameVariantSurfac
   return KANGUR_GAME_VARIANT_SURFACES.find((surface) => surface === value);
 };
 
+const readGamesLibraryFilterValue = <T extends string>(
+  searchParams: SearchParamReader,
+  key: string,
+  schema: ZodType<T>
+): GamesLibraryFilterValue<T> =>
+  parseOptionalQueryValue(schema, readSearchParam(searchParams, key)) ?? 'all';
+
+const readGamesLibraryVariantSurfaceFilter = (
+  searchParams: SearchParamReader
+): GamesLibraryFilterValue<KangurGameVariantSurface> =>
+  parseVariantSurface(readSearchParam(searchParams, 'variantSurface')) ?? 'all';
+
+const resolveGamesLibrarySearchParamValue = <T extends string>(
+  value: GamesLibraryFilterValue<T>
+): T | undefined => (value === 'all' ? undefined : value);
+
+const resolveGamesLibraryLaunchableOnlySearchParam = (
+  launchability: GamesLibraryFilterState['launchability']
+): 'true' | undefined => (launchability === 'launchable' ? 'true' : undefined);
+
+const resolveGamesLibraryCatalogLaunchableOnly = (
+  launchability: GamesLibraryFilterState['launchability']
+): true | undefined => (launchability === 'launchable' ? true : undefined);
+
+const resolveGamesLibraryTabSearchParam = (
+  tab?: GamesLibraryTabId | null
+): GamesLibraryTabId | undefined => (tab && tab !== 'catalog' ? tab : undefined);
+
 export const readGamesLibraryTabFromSearchParams = (
   searchParams: SearchParamReader
 ): GamesLibraryTabId | null => {
@@ -141,55 +184,31 @@ export const readGamesLibraryTabFromSearchParams = (
 export const readGamesLibraryFiltersFromSearchParams = (
   searchParams: SearchParamReader
 ): GamesLibraryFilterState => {
-  const launchableOnly = readSearchParam(searchParams, 'launchableOnly') === 'true';
-
   return {
-    gameId:
-      parseOptionalQueryValue(kangurGameIdSchema, readSearchParam(searchParams, 'gameId')) ??
-      'all',
-    subject:
-      parseOptionalQueryValue(kangurLessonSubjectSchema, readSearchParam(searchParams, 'subject')) ??
-      'all',
-    ageGroup:
-      parseOptionalQueryValue(
-        kangurLessonAgeGroupSchema,
-        readSearchParam(searchParams, 'ageGroup')
-      ) ?? 'all',
-    mechanic:
-      parseOptionalQueryValue(
-        kangurGameMechanicSchema,
-        readSearchParam(searchParams, 'mechanic')
-      ) ?? 'all',
-    surface:
-      parseOptionalQueryValue(kangurGameSurfaceSchema, readSearchParam(searchParams, 'surface')) ??
-      'all',
-    gameStatus:
-      parseOptionalQueryValue(
-        kangurGameStatusSchema,
-        readSearchParam(searchParams, 'gameStatus')
-      ) ?? 'all',
-    variantSurface: parseVariantSurface(readSearchParam(searchParams, 'variantSurface')) ?? 'all',
-    variantStatus:
-      parseOptionalQueryValue(
-        kangurGameStatusSchema,
-        readSearchParam(searchParams, 'variantStatus')
-      ) ?? 'all',
-    engineId:
-      parseOptionalQueryValue(
-        kangurGameEngineIdSchema,
-        readSearchParam(searchParams, 'engineId')
-      ) ?? 'all',
-    engineCategory:
-      parseOptionalQueryValue(
-        kangurGameEngineCategorySchema,
-        readSearchParam(searchParams, 'engineCategory')
-      ) ?? 'all',
-    implementationOwnership:
-      parseOptionalQueryValue(
-        kangurGameEngineImplementationOwnershipSchema,
-        readSearchParam(searchParams, 'implementationOwnership')
-      ) ?? 'all',
-    launchability: launchableOnly ? 'launchable' : 'all',
+    gameId: readGamesLibraryFilterValue(searchParams, 'gameId', kangurGameIdSchema),
+    subject: readGamesLibraryFilterValue(searchParams, 'subject', kangurLessonSubjectSchema),
+    ageGroup: readGamesLibraryFilterValue(searchParams, 'ageGroup', kangurLessonAgeGroupSchema),
+    mechanic: readGamesLibraryFilterValue(searchParams, 'mechanic', kangurGameMechanicSchema),
+    surface: readGamesLibraryFilterValue(searchParams, 'surface', kangurGameSurfaceSchema),
+    gameStatus: readGamesLibraryFilterValue(searchParams, 'gameStatus', kangurGameStatusSchema),
+    variantSurface: readGamesLibraryVariantSurfaceFilter(searchParams),
+    variantStatus: readGamesLibraryFilterValue(
+      searchParams,
+      'variantStatus',
+      kangurGameStatusSchema
+    ),
+    engineId: readGamesLibraryFilterValue(searchParams, 'engineId', kangurGameEngineIdSchema),
+    engineCategory: readGamesLibraryFilterValue(
+      searchParams,
+      'engineCategory',
+      kangurGameEngineCategorySchema
+    ),
+    implementationOwnership: readGamesLibraryFilterValue(
+      searchParams,
+      'implementationOwnership',
+      kangurGameEngineImplementationOwnershipSchema
+    ),
+    launchability: readSearchParam(searchParams, 'launchableOnly') === 'true' ? 'launchable' : 'all',
   };
 };
 
@@ -197,23 +216,20 @@ export const getGamesLibrarySearchParams = (
   filters: GamesLibraryFilterState,
   tab?: GamesLibraryTabId | null
 ): Record<string, string | undefined> => ({
-  gameId: filters.gameId === 'all' ? undefined : filters.gameId,
-  subject: filters.subject === 'all' ? undefined : filters.subject,
-  ageGroup: filters.ageGroup === 'all' ? undefined : filters.ageGroup,
+  gameId: resolveGamesLibrarySearchParamValue(filters.gameId),
+  subject: resolveGamesLibrarySearchParamValue(filters.subject),
+  ageGroup: resolveGamesLibrarySearchParamValue(filters.ageGroup),
   lessonComponentId: undefined,
-  mechanic: filters.mechanic === 'all' ? undefined : filters.mechanic,
-  surface: filters.surface === 'all' ? undefined : filters.surface,
-  gameStatus: filters.gameStatus === 'all' ? undefined : filters.gameStatus,
-  variantSurface: filters.variantSurface === 'all' ? undefined : filters.variantSurface,
-  variantStatus: filters.variantStatus === 'all' ? undefined : filters.variantStatus,
-  engineId: filters.engineId === 'all' ? undefined : filters.engineId,
-  engineCategory: filters.engineCategory === 'all' ? undefined : filters.engineCategory,
-  implementationOwnership:
-    filters.implementationOwnership === 'all'
-      ? undefined
-      : filters.implementationOwnership,
-  launchableOnly: filters.launchability === 'launchable' ? 'true' : undefined,
-  tab: tab && tab !== 'catalog' ? tab : undefined,
+  mechanic: resolveGamesLibrarySearchParamValue(filters.mechanic),
+  surface: resolveGamesLibrarySearchParamValue(filters.surface),
+  gameStatus: resolveGamesLibrarySearchParamValue(filters.gameStatus),
+  variantSurface: resolveGamesLibrarySearchParamValue(filters.variantSurface),
+  variantStatus: resolveGamesLibrarySearchParamValue(filters.variantStatus),
+  engineId: resolveGamesLibrarySearchParamValue(filters.engineId),
+  engineCategory: resolveGamesLibrarySearchParamValue(filters.engineCategory),
+  implementationOwnership: resolveGamesLibrarySearchParamValue(filters.implementationOwnership),
+  launchableOnly: resolveGamesLibraryLaunchableOnlySearchParam(filters.launchability),
+  tab: resolveGamesLibraryTabSearchParam(tab),
 });
 
 export const areGamesLibrarySearchParamsCanonical = (
@@ -238,21 +254,18 @@ export const areGamesLibrarySearchParamsCanonical = (
 export const buildGamesLibraryCatalogFilter = (
   filters: GamesLibraryFilterState
 ): KangurGameCatalogFilter => ({
-  gameId: filters.gameId === 'all' ? undefined : filters.gameId,
-  subject: filters.subject === 'all' ? undefined : filters.subject,
-  ageGroup: filters.ageGroup === 'all' ? undefined : filters.ageGroup,
-  mechanic: filters.mechanic === 'all' ? undefined : filters.mechanic,
-  surface: filters.surface === 'all' ? undefined : filters.surface,
-  gameStatus: filters.gameStatus === 'all' ? undefined : filters.gameStatus,
-  variantSurface: filters.variantSurface === 'all' ? undefined : filters.variantSurface,
-  variantStatus: filters.variantStatus === 'all' ? undefined : filters.variantStatus,
-  engineId: filters.engineId === 'all' ? undefined : filters.engineId,
-  engineCategory: filters.engineCategory === 'all' ? undefined : filters.engineCategory,
-  implementationOwnership:
-    filters.implementationOwnership === 'all'
-      ? undefined
-      : filters.implementationOwnership,
-  launchableOnly: filters.launchability === 'launchable' ? true : undefined,
+  gameId: resolveGamesLibrarySearchParamValue(filters.gameId),
+  subject: resolveGamesLibrarySearchParamValue(filters.subject),
+  ageGroup: resolveGamesLibrarySearchParamValue(filters.ageGroup),
+  mechanic: resolveGamesLibrarySearchParamValue(filters.mechanic),
+  surface: resolveGamesLibrarySearchParamValue(filters.surface),
+  gameStatus: resolveGamesLibrarySearchParamValue(filters.gameStatus),
+  variantSurface: resolveGamesLibrarySearchParamValue(filters.variantSurface),
+  variantStatus: resolveGamesLibrarySearchParamValue(filters.variantStatus),
+  engineId: resolveGamesLibrarySearchParamValue(filters.engineId),
+  engineCategory: resolveGamesLibrarySearchParamValue(filters.engineCategory),
+  implementationOwnership: resolveGamesLibrarySearchParamValue(filters.implementationOwnership),
+  launchableOnly: resolveGamesLibraryCatalogLaunchableOnly(filters.launchability),
 });
 
 export const hasActiveGamesLibraryFilters = (filters: GamesLibraryFilterState): boolean =>
@@ -261,16 +274,4 @@ export const hasActiveGamesLibraryFilters = (filters: GamesLibraryFilterState): 
 export const areGamesLibraryFiltersEqual = (
   left: GamesLibraryFilterState,
   right: GamesLibraryFilterState
-): boolean =>
-  left.gameId === right.gameId &&
-  left.subject === right.subject &&
-  left.ageGroup === right.ageGroup &&
-  left.mechanic === right.mechanic &&
-  left.surface === right.surface &&
-  left.gameStatus === right.gameStatus &&
-  left.variantSurface === right.variantSurface &&
-  left.variantStatus === right.variantStatus &&
-  left.engineId === right.engineId &&
-  left.engineCategory === right.engineCategory &&
-  left.implementationOwnership === right.implementationOwnership &&
-  left.launchability === right.launchability;
+): boolean => GAMES_LIBRARY_FILTER_KEYS.every((key) => left[key] === right[key]);

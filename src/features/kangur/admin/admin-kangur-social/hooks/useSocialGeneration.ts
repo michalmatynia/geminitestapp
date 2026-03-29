@@ -1,13 +1,13 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 
 import { useToast } from '@/features/kangur/shared/ui';
 import {
   useApplyKangurSocialDocUpdates,
   useGenerateKangurSocialPost,
   usePreviewKangurSocialDocUpdates,
-  type KangurSocialPostGenerationResult,
 } from '@/features/kangur/ui/hooks/useKangurSocialPosts';
 import {
   logKangurClientError,
@@ -16,8 +16,12 @@ import {
 import { ErrorSystem } from '@/features/kangur/shared/utils/observability/error-system-client';
 import type {
   KangurSocialDocUpdatesResponse,
+  KangurSocialGeneratedDraft,
   KangurSocialPost,
 } from '@/shared/contracts/kangur-social-posts';
+import { api } from '@/shared/lib/api-client';
+import { QUERY_KEYS } from '@/shared/lib/query-keys';
+import { safeClearTimeout, safeSetTimeout, type SafeTimerId } from '@/shared/lib/timers';
 
 type SocialGenerationDeps = {
   activePost: KangurSocialPost | null;
@@ -40,17 +44,64 @@ type SocialGenerationDeps = {
   buildSocialContext: (overrides?: Record<string, unknown>) => Record<string, unknown>;
 };
 
-const isSavedSocialPost = (
-  value: KangurSocialPostGenerationResult
-): value is KangurSocialPost => 'id' in value;
+type GenerationJobResult = {
+  type: 'manual-post-generation';
+  generatedPost: KangurSocialPost | null;
+  draft: KangurSocialGeneratedDraft | null;
+};
+
+type GenerationJobRecord = {
+  id: string;
+  status: string;
+  result: GenerationJobResult | null;
+  failedReason: string | null;
+};
+
+const GENERATION_POLL_INTERVAL_MS = 2_000;
+const GENERATION_TIMEOUT_MS = 10 * 60 * 1000;
+const GENERATION_REQUEST_TIMEOUT_MS = 60_000;
+const KANGUR_SOCIAL_POSTS_QUERY_KEY = ['kangur', 'social-posts'] as const;
+
+const isManualGenerationJobResult = (value: unknown): value is GenerationJobResult =>
+  Boolean(
+    value &&
+      typeof value === 'object' &&
+      (value as { type?: string }).type === 'manual-post-generation'
+  );
 
 export function useSocialGeneration(deps: SocialGenerationDeps) {
   const { toast } = useToast();
+  const queryClient = useQueryClient();
   const generateMutation = useGenerateKangurSocialPost();
   const previewDocUpdatesMutation = usePreviewKangurSocialDocUpdates();
   const applyDocUpdatesMutation = useApplyKangurSocialDocUpdates();
   const [docUpdatesResult, setDocUpdatesResult] =
     useState<KangurSocialDocUpdatesResponse | null>(null);
+  const [generatePending, setGeneratePending] = useState(false);
+  const generateDelayTimeoutRef = useRef<SafeTimerId | null>(null);
+  const isUnmountedRef = useRef(false);
+
+  useEffect(() => {
+    isUnmountedRef.current = false;
+    return () => {
+      isUnmountedRef.current = true;
+      safeClearTimeout(generateDelayTimeoutRef.current);
+      generateDelayTimeoutRef.current = null;
+    };
+  }, []);
+
+  const waitForNextPoll = async (ms: number): Promise<boolean> => {
+    if (isUnmountedRef.current) {
+      return false;
+    }
+
+    return new Promise((resolve) => {
+      generateDelayTimeoutRef.current = safeSetTimeout(() => {
+        generateDelayTimeoutRef.current = null;
+        resolve(!isUnmountedRef.current);
+      }, ms);
+    });
+  };
 
   const handleGenerate = async (): Promise<void> => {
     if (!deps.canGenerateDraft) {
@@ -62,12 +113,16 @@ export function useSocialGeneration(deps: SocialGenerationDeps) {
       return;
     }
     if (!deps.activePost) return;
+
     trackKangurClientEvent(
       'kangur_social_post_generate_attempt',
       deps.buildSocialContext()
     );
+
     try {
-      const generated = await generateMutation.mutateAsync({
+      setGeneratePending(true);
+
+      const response = await generateMutation.mutateAsync({
         postId: deps.activePost.id,
         docReferences: deps.resolveDocReferences(),
         notes: deps.generationNotes,
@@ -76,7 +131,52 @@ export function useSocialGeneration(deps: SocialGenerationDeps) {
         imageAddonIds: deps.imageAddonIds,
         projectUrl: deps.projectUrl || undefined,
       });
-      if (isSavedSocialPost(generated)) {
+
+      if (response.jobType !== 'manual-post-generation') {
+        throw new Error('Generation queue returned an unexpected job type.');
+      }
+
+      const pollStartedAt = Date.now();
+      let finalJob: GenerationJobRecord | null = null;
+
+      while (Date.now() - pollStartedAt < GENERATION_TIMEOUT_MS) {
+        const job = await api.get<GenerationJobRecord | null>(
+          '/api/kangur/social-pipeline/jobs',
+          {
+            params: { id: response.jobId },
+            timeout: GENERATION_REQUEST_TIMEOUT_MS,
+          }
+        );
+
+        if (!job) {
+          if (!(await waitForNextPoll(GENERATION_POLL_INTERVAL_MS))) {
+            return;
+          }
+          continue;
+        }
+
+        finalJob = job;
+        if (job.status === 'completed') {
+          break;
+        }
+        if (job.status === 'failed') {
+          throw new Error(job.failedReason ?? 'Server generation job failed.');
+        }
+        if (!(await waitForNextPoll(GENERATION_POLL_INTERVAL_MS))) {
+          return;
+        }
+      }
+
+      if (finalJob?.status !== 'completed') {
+        throw new Error('Generation timed out while waiting for the server job.');
+      }
+
+      if (!isManualGenerationJobResult(finalJob.result)) {
+        throw new Error('Generation completed without a usable result payload.');
+      }
+
+      const generated = finalJob.result.generatedPost;
+      if (generated) {
         deps.setActivePostId(generated.id);
         deps.setEditorState({
           titlePl: generated.titlePl ?? '',
@@ -85,9 +185,28 @@ export function useSocialGeneration(deps: SocialGenerationDeps) {
           bodyEn: generated.bodyEn ?? '',
         });
         deps.setContextSummary(generated.contextSummary ?? generated.generatedSummary ?? null);
-        toast('Draft updated — review the generated post.', { variant: 'success' });
+        const postsQueryKey = QUERY_KEYS.kangur.socialPosts({
+          scope: 'admin',
+          limit: null,
+        });
+        queryClient.setQueryData<KangurSocialPost[]>(postsQueryKey, (current) =>
+          (current ?? []).map((post) => (post.id === generated.id ? generated : post))
+        );
+      } else if (finalJob.result.draft) {
+        deps.setEditorState({
+          titlePl: finalJob.result.draft.titlePl ?? '',
+          titleEn: finalJob.result.draft.titleEn ?? '',
+          bodyPl: finalJob.result.draft.bodyPl ?? '',
+          bodyEn: finalJob.result.draft.bodyEn ?? '',
+        });
+        deps.setContextSummary(finalJob.result.draft.summary ?? null);
+      } else {
+        throw new Error('Generation completed without generated content.');
       }
+
+      void queryClient.invalidateQueries({ queryKey: KANGUR_SOCIAL_POSTS_QUERY_KEY });
       setDocUpdatesResult(null);
+      toast('Draft updated — review the generated post.', { variant: 'success' });
       trackKangurClientEvent(
         'kangur_social_post_generate_success',
         deps.buildSocialContext()
@@ -97,12 +216,18 @@ export function useSocialGeneration(deps: SocialGenerationDeps) {
       logKangurClientError(error, {
         source: 'AdminKangurSocialPage',
         action: 'generatePost',
-        ...deps.buildSocialContext(),
+        ...deps.buildSocialContext({ error: true }),
       });
+      toast(
+        error instanceof Error ? error.message : 'Failed to generate the social post draft.',
+        { variant: 'error' }
+      );
       trackKangurClientEvent(
         'kangur_social_post_generate_failed',
         deps.buildSocialContext({ error: true })
       );
+    } finally {
+      setGeneratePending(false);
     }
   };
 
@@ -175,7 +300,10 @@ export function useSocialGeneration(deps: SocialGenerationDeps) {
   };
 
   return {
-    generateMutation,
+    generateMutation: {
+      ...generateMutation,
+      isPending: generatePending || generateMutation.isPending,
+    } as typeof generateMutation,
     previewDocUpdatesMutation,
     applyDocUpdatesMutation,
     docUpdatesResult,

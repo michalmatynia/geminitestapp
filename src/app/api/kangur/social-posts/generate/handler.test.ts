@@ -4,30 +4,27 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 
 const mocks = vi.hoisted(() => ({
+  enqueueKangurSocialPipelineJobMock: vi.fn(),
+  recoverKangurSocialPipelineQueueMock: vi.fn(),
   resolveKangurActorMock: vi.fn(),
-  generateKangurSocialPostDraftMock: vi.fn(),
-  updateKangurSocialPostMock: vi.fn(),
-  findKangurSocialImageAddonsByIdsMock: vi.fn(),
+  startKangurSocialPipelineQueueMock: vi.fn(),
   logKangurServerEventMock: vi.fn(),
   captureExceptionMock: vi.fn(),
+  isRedisAvailableMock: vi.fn(),
+  isRedisReachableMock: vi.fn(),
 }));
 
 vi.mock('@/features/kangur/services/kangur-actor', () => ({
   resolveKangurActor: (...args: unknown[]) => mocks.resolveKangurActorMock(...args),
 }));
 
-vi.mock('@/features/kangur/server/social-posts-generation', () => ({
-  generateKangurSocialPostDraft: (...args: unknown[]) =>
-    mocks.generateKangurSocialPostDraftMock(...args),
-}));
-
-vi.mock('@/features/kangur/server/social-posts-repository', () => ({
-  updateKangurSocialPost: (...args: unknown[]) => mocks.updateKangurSocialPostMock(...args),
-}));
-
-vi.mock('@/features/kangur/server/social-image-addons-repository', () => ({
-  findKangurSocialImageAddonsByIds: (...args: unknown[]) =>
-    mocks.findKangurSocialImageAddonsByIdsMock(...args),
+vi.mock('@/features/kangur/workers/kangurSocialPipelineQueue', () => ({
+  enqueueKangurSocialPipelineJob: (...args: unknown[]) =>
+    mocks.enqueueKangurSocialPipelineJobMock(...args),
+  recoverKangurSocialPipelineQueue: (...args: unknown[]) =>
+    mocks.recoverKangurSocialPipelineQueueMock(...args),
+  startKangurSocialPipelineQueue: (...args: unknown[]) =>
+    mocks.startKangurSocialPipelineQueueMock(...args),
 }));
 
 vi.mock('@/features/kangur/observability/server', () => ({
@@ -38,6 +35,11 @@ vi.mock('@/features/kangur/shared/utils/observability/error-system', () => ({
   ErrorSystem: {
     captureException: (...args: unknown[]) => mocks.captureExceptionMock(...args),
   },
+}));
+
+vi.mock('@/shared/lib/queue', () => ({
+  isRedisAvailable: (...args: unknown[]) => mocks.isRedisAvailableMock(...args),
+  isRedisReachable: (...args: unknown[]) => mocks.isRedisReachableMock(...args),
 }));
 
 import { postKangurSocialPostGenerateHandler } from './handler';
@@ -59,28 +61,13 @@ describe('social post generate handler', () => {
       role: 'admin',
       actorId: 'admin-1',
     });
-    mocks.findKangurSocialImageAddonsByIdsMock.mockResolvedValue([]);
-    mocks.generateKangurSocialPostDraftMock.mockResolvedValue({
-      titlePl: 'Generated PL',
-      titleEn: 'Generated EN',
-      bodyPl: 'Generated body PL',
-      bodyEn: 'Generated body EN',
-      combinedBody: 'Generated body PL\n\n---\n\nGenerated body EN',
-      summary: 'Loaded context summary',
-      docReferences: ['overview'],
-      visualSummary: null,
-      visualHighlights: [],
-      visualDocUpdates: [],
-    });
-    mocks.updateKangurSocialPostMock.mockImplementation(
-      async (id: string, updates: Record<string, unknown>) => ({
-        id,
-        ...updates,
-      })
-    );
+    mocks.enqueueKangurSocialPipelineJobMock.mockResolvedValue('job-generate-1');
+    mocks.recoverKangurSocialPipelineQueueMock.mockResolvedValue([]);
+    mocks.isRedisAvailableMock.mockReturnValue(true);
+    mocks.isRedisReachableMock.mockResolvedValue(true);
   });
 
-  it('persists the generated context summary when updating an existing post', async () => {
+  it('queues post generation in the Redis runtime for an existing post', async () => {
     const response = await postKangurSocialPostGenerateHandler(
       new NextRequest('http://localhost/api/kangur/social-posts/generate', {
         method: 'POST',
@@ -96,28 +83,30 @@ describe('social post generate handler', () => {
       })
     );
 
-    expect(mocks.updateKangurSocialPostMock).toHaveBeenCalledWith(
-      'post-1',
-      expect.objectContaining({
-        titlePl: 'Generated PL',
-        titleEn: 'Generated EN',
-        generatedSummary: 'Loaded context summary',
-        contextSummary: 'Loaded context summary',
+    expect(mocks.recoverKangurSocialPipelineQueueMock).toHaveBeenCalledTimes(1);
+    expect(mocks.startKangurSocialPipelineQueueMock).toHaveBeenCalledTimes(1);
+    expect(mocks.enqueueKangurSocialPipelineJobMock).toHaveBeenCalledWith({
+      type: 'manual-post-generation',
+      input: expect.objectContaining({
+        postId: 'post-1',
         docReferences: ['overview'],
-        status: 'draft',
-      })
-    );
-    expect(response.status).toBe(200);
-    await expect(response.json()).resolves.toEqual(
-      expect.objectContaining({
-        id: 'post-1',
-        generatedSummary: 'Loaded context summary',
-        contextSummary: 'Loaded context summary',
-      })
-    );
+        notes: 'Focus on onboarding.',
+        modelId: 'brain-1',
+        visionModelId: 'vision-1',
+        imageAddonIds: [],
+        projectUrl: 'https://studiq.example.com/project',
+        actorId: 'admin-1',
+      }),
+    });
+    expect(response.status).toBe(202);
+    await expect(response.json()).resolves.toEqual({
+      success: true,
+      jobId: 'job-generate-1',
+      jobType: 'manual-post-generation',
+    });
   });
 
-  it('passes prefetched visual analysis through to draft generation when provided', async () => {
+  it('passes prefetched visual analysis through to the queued generation job when provided', async () => {
     await postKangurSocialPostGenerateHandler(
       new NextRequest('http://localhost/api/kangur/social-posts/generate', {
         method: 'POST',
@@ -135,15 +124,16 @@ describe('social post generate handler', () => {
       })
     );
 
-    expect(mocks.generateKangurSocialPostDraftMock).toHaveBeenCalledWith(
-      expect.objectContaining({
+    expect(mocks.enqueueKangurSocialPipelineJobMock).toHaveBeenCalledWith({
+      type: 'manual-post-generation',
+      input: expect.objectContaining({
         prefetchedVisualAnalysis: {
           summary: 'The hero now shows a larger classroom card.',
           highlights: ['Larger classroom card'],
           docUpdates: [],
         },
         requireVisualAnalysisInBody: true,
-      })
-    );
+      }),
+    });
   });
 });

@@ -151,10 +151,10 @@ describe('KangurAiTutorNativeGuideSettingsPanel', () => {
       name: new RegExp(repairKangurPolishCopy('Ekran logowania i zakladania konta'), 'i'),
     });
 
-    expect(within(authOverviewButton).getByText('EN scaffolded')).toBeInTheDocument();
-    expect(within(authOverviewButton).getByText('DE manual')).toBeInTheDocument();
-    expect(screen.getAllByText('38 source copy')).toHaveLength(2);
-    expect(screen.getAllByText('1 manual')).toHaveLength(1);
+    expect(await within(authOverviewButton).findByText('EN scaffolded')).toBeInTheDocument();
+    expect(await within(authOverviewButton).findByText('DE manual')).toBeInTheDocument();
+    expect(await screen.findAllByText('38 source copy')).toHaveLength(2);
+    expect(await screen.findAllByText('1 manual')).toHaveLength(1);
   });
 
   it('waits for Mongo native guides instead of prefilling the editor from static defaults', () => {

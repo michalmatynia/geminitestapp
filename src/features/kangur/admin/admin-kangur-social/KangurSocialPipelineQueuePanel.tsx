@@ -495,12 +495,20 @@ function renderJobRow({
   const statusLabel = job.result?.skipped
     ? `skipped (${job.result.reason ?? '?'})`
     : job.status;
-  const isManualRun = (job.data as { type?: string } | null)?.type === 'manual-post-pipeline';
+  const jobType = (job.data as { type?: string } | null)?.type ?? job.result?.type ?? null;
+  const isManualRun = jobType === 'manual-post-pipeline';
   const postId =
     (job.data as { input?: { postId?: string | null } } | null)?.input?.postId ??
     job.result?.postId ??
     null;
-  const jobLabel = isManualRun ? 'Manual post draft pipeline' : 'Scheduled capture tick';
+  const jobLabel =
+    jobType === 'manual-post-pipeline'
+      ? 'Manual post draft pipeline'
+      : jobType === 'manual-post-visual-analysis'
+        ? 'Manual image analysis'
+        : jobType === 'manual-post-generation'
+          ? 'Manual post generation'
+          : 'Scheduled capture tick';
   const captureMode = job.progress?.captureMode ?? job.result?.captureMode ?? null;
   const captureModeLabel =
     captureMode === 'fresh_capture'
@@ -530,7 +538,7 @@ function renderJobRow({
       ? `${job.progress.captureFailureCount} failed`
       : null;
   const jobMeta = [
-    isManualRun && postId ? `Post ${postId}` : null,
+    postId ? `Post ${postId}` : null,
     captureModeLabel,
     presetUsageLabel,
     liveCaptureLabel,

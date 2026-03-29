@@ -76,6 +76,10 @@ const buildPostBase = () => ({
   visualSummary: null,
   visualHighlights: [],
   visualDocUpdates: [],
+  visualAnalysisStatus: null,
+  visualAnalysisUpdatedAt: null,
+  visualAnalysisJobId: null,
+  visualAnalysisModelId: null,
   docUpdatesAppliedAt: null,
   docUpdatesAppliedBy: null,
   createdBy: null,
@@ -150,6 +154,10 @@ describe('SocialPostVisuals', () => {
             reason: 'The analyzed visuals now emphasize the larger classroom CTA.',
           },
         ],
+        visualAnalysisStatus: 'completed',
+        visualAnalysisUpdatedAt: '2026-03-20T12:00:00.000Z',
+        visualAnalysisJobId: 'job-analysis-7',
+        visualAnalysisModelId: 'vision-1',
       }),
       recentAddons: [],
       addonsQuery: { isLoading: false },
@@ -173,8 +181,43 @@ describe('SocialPostVisuals', () => {
     expect(screen.getByText('- CTA is more prominent')).toBeInTheDocument();
     expect(screen.getByText('Suggested documentation updates')).toBeInTheDocument();
     expect(screen.getByText('docs/social/teacher-launch.md · Hero')).toBeInTheDocument();
+    expect(screen.getByText('Status: Completed')).toBeInTheDocument();
+    expect(screen.getByText('Model: vision-1')).toBeInTheDocument();
+    expect(screen.getByText('Queue job: job-analysis-7')).toBeInTheDocument();
     expect(
       screen.getByText('The analyzed visuals now emphasize the larger classroom CTA.')
+    ).toBeInTheDocument();
+  });
+
+  it('shows pending analysis metadata even before a summary is saved', () => {
+    useSocialPostContextMock.mockReturnValue({
+      activePost: buildPost({
+        visualAnalysisStatus: 'queued',
+        visualAnalysisJobId: 'job-analysis-queued-1',
+        visualAnalysisModelId: 'vision-queued',
+      }),
+      recentAddons: [],
+      addonsQuery: { isLoading: false },
+      imageAddonIds: [],
+      handleSelectAddon: vi.fn(),
+      handleRemoveAddon: vi.fn(),
+      imageAssets: [],
+      handleRemoveImage: vi.fn(),
+      setShowMediaLibrary: vi.fn(),
+      showMediaLibrary: false,
+      handleAddImages: vi.fn(),
+    });
+
+    render(<SocialPostVisuals showImagesPanel={false} />);
+
+    expect(screen.getByText('Image analysis result')).toBeInTheDocument();
+    expect(screen.getByText('Status: Queued')).toBeInTheDocument();
+    expect(screen.getByText('Model: vision-queued')).toBeInTheDocument();
+    expect(screen.getByText('Queue job: job-analysis-queued-1')).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        'No saved analysis summary yet. The queue metadata above reflects the latest image-analysis run for this post.'
+      )
     ).toBeInTheDocument();
   });
 });

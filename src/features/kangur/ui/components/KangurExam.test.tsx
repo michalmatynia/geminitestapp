@@ -79,7 +79,7 @@ describe('KangurExam', () => {
       'Ile to jest 2 + 2?'
     );
     expect(screen.getByTestId('kangur-exam-print-summary')).toHaveTextContent(
-      'Otwórz tę lekcję na ekranie, aby odpowiedzieć na pytanie Kangura Matematycznego interaktywnie.'
+      'Otwórz tę lekcję na ekranie, aby odpowiedzieć na pytanie StudiQ Matematycznego interaktywnie.'
     );
     expect(screen.getByTestId('kangur-exam-print-choice-1')).toHaveTextContent('B. 4');
     expect(screen.getByTestId('kangur-exam-print-summary').nextElementSibling).toHaveAttribute(
@@ -154,7 +154,7 @@ describe('KangurExam', () => {
       '100% poprawnych odpowiedzi'
     );
     expect(screen.getByTestId('kangur-exam-print-summary')).toHaveTextContent(
-      'Otwórz tę lekcję na ekranie, aby przejrzeć odpowiedzi i rozwiązania Kangura Matematycznego.'
+      'Otwórz tę lekcję na ekranie, aby przejrzeć odpowiedzi i rozwiązania StudiQ Matematycznego.'
     );
     expect(
       await screen.findByRole('button', { name: 'Wróć do menu' })

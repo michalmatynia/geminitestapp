@@ -76,6 +76,197 @@ const resolvePostSections = (post: KangurSocialPost): Array<{ label?: string; bo
   }));
 };
 
+function useSocialUpdatesViewTracking(input: {
+  isLoading: boolean;
+  latestPost: KangurSocialPost | null;
+}): void {
+  const { isLoading, latestPost } = input;
+
+  useEffect(() => {
+    if (isLoading) {
+      return;
+    }
+
+    trackKangurClientEvent('kangur_social_updates_view', {
+      hasPost: Boolean(latestPost),
+      postId: latestPost?.id ?? null,
+      hasLinkedinUrl: Boolean(latestPost?.linkedinUrl),
+    });
+  }, [isLoading, latestPost]);
+}
+
+function SocialUpdatesLinkedInLink(props: {
+  postId: string;
+  url: string;
+}): React.JSX.Element {
+  const { postId, url } = props;
+
+  return (
+    <a
+      href={url}
+      target='_blank'
+      rel='noopener noreferrer'
+      className={`mt-auto ${KANGUR_INLINE_CENTER_ROW_CLASSNAME} text-sm font-semibold [color:var(--kangur-page-text)] hover:underline`}
+      onClick={() =>
+        trackKangurClientEvent('kangur_social_updates_link_click', {
+          postId,
+          url,
+        })
+      }
+    >
+      View on LinkedIn
+      <ExternalLink aria-hidden='true' className='h-4 w-4' />
+    </a>
+  );
+}
+
+function SocialUpdatesPostImage(props: {
+  imageAssets: KangurSocialPost['imageAssets'];
+  className: string;
+}): React.JSX.Element | null {
+  const firstImage = props.imageAssets?.[0];
+  if (!firstImage?.url) {
+    return null;
+  }
+
+  return (
+    <div className='overflow-hidden rounded-2xl border [border-color:color-mix(in_srgb,var(--kangur-soft-card-border)_72%,transparent)] [background:color-mix(in_srgb,var(--kangur-soft-card-background)_94%,var(--kangur-page-background))]'>
+      <img
+        src={firstImage.url}
+        alt={firstImage.filename ?? firstImage.id ?? 'Kangur update image'}
+        className={props.className}
+        loading='lazy'
+      />
+    </div>
+  );
+}
+
+function SocialUpdatesPostSections(props: {
+  post: KangurSocialPost;
+}): React.JSX.Element {
+  const sections = resolvePostSections(props.post);
+
+  return (
+    <div className='space-y-4 text-sm [color:var(--kangur-page-text)]'>
+      {sections.length === 0 ? (
+        <p>Latest product updates from Kangur and StudiQ.</p>
+      ) : (
+        sections.map((section, index, all) => (
+          <div key={`${section.label ?? 'section'}-${index}`} className='space-y-2'>
+            {section.label ? (
+              <div className='text-xs font-semibold uppercase tracking-[0.3em] [color:var(--kangur-page-muted-text)]'>
+                {section.label}
+              </div>
+            ) : null}
+            <p className='whitespace-pre-line'>{section.body}</p>
+            {index < all.length - 1 ? (
+              <div className='border-t border-dashed [border-color:color-mix(in_srgb,var(--kangur-soft-card-border)_72%,transparent)]' />
+            ) : null}
+          </div>
+        ))
+      )}
+    </div>
+  );
+}
+
+function SocialUpdatesLatestPostCard(props: {
+  post: KangurSocialPost;
+}): React.JSX.Element {
+  const { post } = props;
+
+  return (
+    <KangurInfoCard padding='lg' className={KANGUR_STACK_RELAXED_CLASSNAME}>
+      <SocialUpdatesPostImage imageAssets={post.imageAssets} className='h-52 w-full object-cover' />
+      <div className='text-xs uppercase tracking-[0.2em] [color:var(--kangur-page-muted-text)]'>
+        Latest update · {formatDate(post.publishedAt ?? post.updatedAt)}
+      </div>
+      <div className='text-xl font-semibold [color:var(--kangur-page-text)]'>
+        {getPostTitle(post)}
+      </div>
+      <SocialUpdatesPostSections post={post} />
+      {post.linkedinUrl ? <SocialUpdatesLinkedInLink postId={post.id} url={post.linkedinUrl} /> : null}
+    </KangurInfoCard>
+  );
+}
+
+function SocialUpdatesArchiveCard(props: {
+  post: KangurSocialPost;
+}): React.JSX.Element {
+  const { post } = props;
+
+  return (
+    <KangurInfoCard padding='md' className='flex h-full flex-col gap-4'>
+      <SocialUpdatesPostImage imageAssets={post.imageAssets} className='h-36 w-full object-cover' />
+      <div className='space-y-2'>
+        <div className='text-xs uppercase tracking-[0.2em] [color:var(--kangur-page-muted-text)]'>
+          {formatDate(post.publishedAt ?? post.updatedAt)}
+        </div>
+        <div className='text-lg font-semibold [color:var(--kangur-page-text)]'>
+          {getPostTitle(post)}
+        </div>
+        <p className='text-sm [color:var(--kangur-page-muted-text)]'>{getPostExcerpt(post)}</p>
+      </div>
+      {post.linkedinUrl ? <SocialUpdatesLinkedInLink postId={post.id} url={post.linkedinUrl} /> : null}
+    </KangurInfoCard>
+  );
+}
+
+function SocialUpdatesArchive(props: {
+  archivePosts: KangurSocialPost[];
+}): React.JSX.Element | null {
+  const { archivePosts } = props;
+  if (archivePosts.length === 0) {
+    return null;
+  }
+
+  return (
+    <div className='space-y-4'>
+      <div className='flex items-center justify-between gap-3'>
+        <div>
+          <div className='text-sm font-semibold [color:var(--kangur-page-text)]'>
+            Recent updates archive
+          </div>
+          <div className='text-xs [color:var(--kangur-page-muted-text)]'>
+            Earlier published StudiQ and Kangur posts.
+          </div>
+        </div>
+        <div className='text-xs uppercase tracking-[0.2em] [color:var(--kangur-page-muted-text)]'>
+          {archivePosts.length} more
+        </div>
+      </div>
+      <div className='grid gap-4 lg:grid-cols-2'>
+        {archivePosts.map((post) => (
+          <SocialUpdatesArchiveCard key={post.id} post={post} />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function SocialUpdatesBody(props: {
+  archivePosts: KangurSocialPost[];
+  latestPost: KangurSocialPost | null;
+}): React.JSX.Element {
+  const { archivePosts, latestPost } = props;
+
+  if (!latestPost) {
+    return (
+      <KangurEmptyState
+        title='No public updates yet'
+        description='Check back soon for the latest Kangur and StudiQ progress updates.'
+        icon={<CalendarClock aria-hidden='true' className='h-5 w-5' />}
+      />
+    );
+  }
+
+  return (
+    <div className={cn('flex w-full flex-col', KANGUR_PANEL_GAP_CLASSNAME)}>
+      <SocialUpdatesLatestPostCard post={latestPost} />
+      <SocialUpdatesArchive archivePosts={archivePosts} />
+    </div>
+  );
+}
+
 export default function SocialUpdates(): React.JSX.Element {
   const { basePath } = useKangurRouting();
   const auth = useKangurAuth();
@@ -87,7 +278,6 @@ export default function SocialUpdates(): React.JSX.Element {
   const posts = postsQuery.data ?? [];
   const latestPost = posts[0] ?? null;
   const archivePosts = posts.slice(1);
-  const latestPostSections = latestPost ? resolvePostSections(latestPost) : [];
 
   const navigation = useMemo(
     () => ({
@@ -103,19 +293,15 @@ export default function SocialUpdates(): React.JSX.Element {
     [basePath, guestPlayerName, logout, openLoginModal, setGuestPlayerName, user]
   );
 
+  useSocialUpdatesViewTracking({
+    isLoading: postsQuery.isLoading,
+    latestPost,
+  });
+
   useKangurRoutePageReady({
     pageKey: 'SocialUpdates',
     ready: true,
   });
-
-  useEffect(() => {
-    if (postsQuery.isLoading) return;
-    trackKangurClientEvent('kangur_social_updates_view', {
-      hasPost: Boolean(latestPost),
-      postId: latestPost?.id ?? null,
-      hasLinkedinUrl: Boolean(latestPost?.linkedinUrl),
-    });
-  }, [latestPost, postsQuery.isLoading]);
 
   return (
     <KangurStandardPageLayout
@@ -141,144 +327,7 @@ export default function SocialUpdates(): React.JSX.Element {
         }
       />
 
-      {!latestPost ? (
-        <KangurEmptyState
-          title='No public updates yet'
-          description='Check back soon for the latest Kangur and StudiQ progress updates.'
-          icon={<CalendarClock aria-hidden='true' className='h-5 w-5' />}
-        />
-      ) : (
-        <div className={cn('flex w-full flex-col', KANGUR_PANEL_GAP_CLASSNAME)}>
-          <KangurInfoCard padding='lg' className={KANGUR_STACK_RELAXED_CLASSNAME}>
-            {latestPost.imageAssets?.[0]?.url ? (
-              <div className='overflow-hidden rounded-2xl border [border-color:color-mix(in_srgb,var(--kangur-soft-card-border)_72%,transparent)] [background:color-mix(in_srgb,var(--kangur-soft-card-background)_94%,var(--kangur-page-background))]'>
-                <img
-                  src={latestPost.imageAssets[0].url}
-                  alt={
-                    latestPost.imageAssets[0].filename ??
-                    latestPost.imageAssets[0].id ??
-                    'Kangur update image'
-                  }
-                  className='h-52 w-full object-cover'
-                  loading='lazy'
-                />
-              </div>
-            ) : null}
-            <div className='text-xs uppercase tracking-[0.2em] [color:var(--kangur-page-muted-text)]'>
-              Latest update · {formatDate(latestPost.publishedAt ?? latestPost.updatedAt)}
-            </div>
-            <div className='text-xl font-semibold [color:var(--kangur-page-text)]'>
-              {getPostTitle(latestPost)}
-            </div>
-            <div className='space-y-4 text-sm [color:var(--kangur-page-text)]'>
-              {latestPostSections.length === 0 ? (
-                <p>Latest product updates from Kangur and StudiQ.</p>
-              ) : (
-                latestPostSections.map((section, index, all) => (
-                  <div key={`${section.label ?? 'section'}-${index}`} className='space-y-2'>
-                    {section.label ? (
-                      <div className='text-xs font-semibold uppercase tracking-[0.3em] [color:var(--kangur-page-muted-text)]'>
-                        {section.label}
-                      </div>
-                    ) : null}
-                    <p className='whitespace-pre-line'>{section.body}</p>
-                    {index < all.length - 1 ? (
-                      <div className='border-t border-dashed [border-color:color-mix(in_srgb,var(--kangur-soft-card-border)_72%,transparent)]' />
-                    ) : null}
-                  </div>
-                ))
-              )}
-            </div>
-            {latestPost.linkedinUrl ? (
-              <a
-                href={latestPost.linkedinUrl}
-                target='_blank'
-                rel='noopener noreferrer'
-                className={`mt-auto ${KANGUR_INLINE_CENTER_ROW_CLASSNAME} text-sm font-semibold [color:var(--kangur-page-text)] hover:underline`}
-                onClick={() =>
-                  trackKangurClientEvent('kangur_social_updates_link_click', {
-                    postId: latestPost.id,
-                    url: latestPost.linkedinUrl,
-                  })
-                }
-              >
-                View on LinkedIn
-                <ExternalLink aria-hidden='true' className='h-4 w-4' />
-              </a>
-            ) : null}
-          </KangurInfoCard>
-
-          {archivePosts.length > 0 ? (
-            <div className='space-y-4'>
-              <div className='flex items-center justify-between gap-3'>
-                <div>
-                  <div className='text-sm font-semibold [color:var(--kangur-page-text)]'>
-                    Recent updates archive
-                  </div>
-                  <div className='text-xs [color:var(--kangur-page-muted-text)]'>
-                    Earlier published StudiQ and Kangur posts.
-                  </div>
-                </div>
-                <div className='text-xs uppercase tracking-[0.2em] [color:var(--kangur-page-muted-text)]'>
-                  {archivePosts.length} more
-                </div>
-              </div>
-              <div className='grid gap-4 lg:grid-cols-2'>
-                {archivePosts.map((post) => (
-                  <KangurInfoCard
-                    key={post.id}
-                    padding='md'
-                    className='flex h-full flex-col gap-4'
-                  >
-                    {post.imageAssets?.[0]?.url ? (
-                      <div className='overflow-hidden rounded-xl border [border-color:color-mix(in_srgb,var(--kangur-soft-card-border)_72%,transparent)] [background:color-mix(in_srgb,var(--kangur-soft-card-background)_94%,var(--kangur-page-background))]'>
-                        <img
-                          src={post.imageAssets[0].url}
-                          alt={
-                            post.imageAssets[0].filename ??
-                            post.imageAssets[0].id ??
-                            'Kangur update image'
-                          }
-                          className='h-36 w-full object-cover'
-                          loading='lazy'
-                        />
-                      </div>
-                    ) : null}
-                    <div className='space-y-2'>
-                      <div className='text-xs uppercase tracking-[0.2em] [color:var(--kangur-page-muted-text)]'>
-                        {formatDate(post.publishedAt ?? post.updatedAt)}
-                      </div>
-                      <div className='text-lg font-semibold [color:var(--kangur-page-text)]'>
-                        {getPostTitle(post)}
-                      </div>
-                      <p className='text-sm [color:var(--kangur-page-muted-text)]'>
-                        {getPostExcerpt(post)}
-                      </p>
-                    </div>
-                    {post.linkedinUrl ? (
-                      <a
-                        href={post.linkedinUrl}
-                        target='_blank'
-                        rel='noopener noreferrer'
-                        className={`mt-auto ${KANGUR_INLINE_CENTER_ROW_CLASSNAME} text-sm font-semibold [color:var(--kangur-page-text)] hover:underline`}
-                        onClick={() =>
-                          trackKangurClientEvent('kangur_social_updates_link_click', {
-                            postId: post.id,
-                            url: post.linkedinUrl,
-                          })
-                        }
-                      >
-                        View on LinkedIn
-                        <ExternalLink aria-hidden='true' className='h-4 w-4' />
-                      </a>
-                    ) : null}
-                  </KangurInfoCard>
-                ))}
-              </div>
-            </div>
-          ) : null}
-        </div>
-      )}
+      <SocialUpdatesBody archivePosts={archivePosts} latestPost={latestPost} />
     </KangurStandardPageLayout>
   );
 }

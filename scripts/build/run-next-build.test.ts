@@ -4,6 +4,7 @@ import { describe, expect, it } from 'vitest';
 
 const require = createRequire(import.meta.url);
 const {
+  getDefaultHeapMb,
   getPreferredBundler,
   resolveBundlerArgs,
   shouldRetryWithWebpack,
@@ -11,6 +12,38 @@ const {
 } = require('./run-next-build.cjs');
 
 describe('run-next-build', () => {
+  it('uses a higher default heap on Vercel builds', () => {
+    const originalVercel = process.env.VERCEL;
+    const originalHeap = process.env.NEXT_BUILD_HEAP_MB;
+
+    try {
+      delete process.env.NEXT_BUILD_HEAP_MB;
+      process.env.VERCEL = '1';
+      expect(getDefaultHeapMb()).toBe('6144');
+
+      process.env.VERCEL = '';
+      expect(getDefaultHeapMb()).toBe('8192');
+
+      process.env.NEXT_BUILD_HEAP_MB = '3072';
+      expect(getDefaultHeapMb()).toBe('3072');
+
+      process.env.NEXT_BUILD_HEAP_MB = '256';
+      expect(getDefaultHeapMb()).toBe('1024');
+    } finally {
+      if (typeof originalVercel === 'string') {
+        process.env.VERCEL = originalVercel;
+      } else {
+        delete process.env.VERCEL;
+      }
+
+      if (typeof originalHeap === 'string') {
+        process.env.NEXT_BUILD_HEAP_MB = originalHeap;
+      } else {
+        delete process.env.NEXT_BUILD_HEAP_MB;
+      }
+    }
+  });
+
   it('defaults to Turbopack when no explicit bundler is forced', () => {
     expect(getPreferredBundler('')).toBe('turbopack');
     expect(getPreferredBundler('invalid')).toBe('turbopack');

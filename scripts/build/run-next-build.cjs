@@ -5,7 +5,6 @@ const path = require('node:path');
 const { spawn } = require('node:child_process');
 
 const nextBin = require.resolve('next/dist/bin/next');
-const defaultHeap = process.env.VERCEL ? '4096' : '8192';
 const forcedBundler =
   typeof process.env.NEXT_BUILD_BUNDLER === 'string'
     ? process.env.NEXT_BUILD_BUNDLER.trim().toLowerCase()
@@ -18,9 +17,22 @@ const turbopackTransientPanicPattern =
 const webpackServerManifestRacePattern =
   /(?:Cannot find module|ENOENT: no such file or directory, open) ['"].*\/\.next\/server\/[^'"]*manifest(?:\.[^'"]+)?['"]/i;
 
+const getDefaultHeapMb = () => {
+  const explicitHeapMb = Number.parseInt(process.env.NEXT_BUILD_HEAP_MB ?? '', 10);
+
+  if (Number.isFinite(explicitHeapMb)) {
+    return String(Math.max(1024, explicitHeapMb));
+  }
+
+  // Vercel's default build machine currently provides 8 GB of memory. A 6 GB
+  // Node heap leaves enough headroom for webpack/native overhead while avoiding
+  // the 4 GB V8 ceiling that this repo now exceeds during production builds.
+  return process.env.VERCEL ? '6144' : '8192';
+};
+
 const buildEnv = {
   ...process.env,
-  NODE_OPTIONS: process.env.NODE_OPTIONS || `--max-old-space-size=${defaultHeap}`,
+  NODE_OPTIONS: process.env.NODE_OPTIONS || `--max-old-space-size=${getDefaultHeapMb()}`,
 };
 
 const resolveBundlerArgs = (bundler) => {
@@ -155,6 +167,7 @@ if (require.main === module) {
 }
 
 module.exports = {
+  getDefaultHeapMb,
   getPreferredBundler,
   resolveBundlerArgs,
   shouldRetryWithWebpack,

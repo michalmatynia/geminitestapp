@@ -29,13 +29,12 @@ const isPlaywrightBrokerRuntime = Boolean(
   process.env.PLAYWRIGHT_RUNTIME_LEASE_KEY || process.env.PLAYWRIGHT_RUNTIME_AGENT_ID
 );
 const explicitBuildCpus = Number.parseInt(process.env.NEXT_BUILD_CPUS ?? '', 10);
+// Keep production builds on a single worker unless explicitly overridden.
+// This repo has crossed the point where webpack page-data generation becomes
+// unreliable on the default Vercel builder when it fans out work.
 const buildWorkerCpuLimit = Number.isFinite(explicitBuildCpus)
   ? Math.max(1, explicitBuildCpus)
-  : isTurbopack
-    ? 1
-    : isVercel
-      ? 2
-      : 1;
+  : 1;
 const optimizePackageImports = [
   'lucide-react',
   '@radix-ui/react-alert-dialog',

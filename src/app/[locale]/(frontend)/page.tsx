@@ -3,12 +3,9 @@ import { JSX } from 'react';
 
 import { getCmsRepository } from '@/features/cms/server';
 import { getSlugsForDomain, resolveCmsDomainFromHeaders } from '@/features/cms/server';
-import { getKangurPublicAliasHref } from '@/features/kangur/public';
 import { getKangurConfiguredLaunchTarget } from '@/features/kangur/server';
-import {
-  buildLocalizedPathname,
-  normalizeSiteLocale,
-} from '@/shared/lib/i18n/site-locale';
+import { getKangurPublicAliasHref } from '@/features/kangur/config/routing';
+import { buildLocalizedPathname, normalizeSiteLocale } from '@/shared/lib/i18n/site-locale';
 import { getFrontPagePublicOwner, getFrontPageRedirectPath } from '@/shared/lib/front-page-app';
 import { readOptionalRequestHeaders } from '@/shared/lib/request/optional-headers';
 

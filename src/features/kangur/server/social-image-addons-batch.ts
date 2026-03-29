@@ -64,6 +64,7 @@ type BatchCaptureInput = Omit<KangurSocialImageAddonsBatchPayload, 'baseUrl' | '
   playwrightRoutes?: KangurSocialProgrammableCaptureRoute[] | null;
   createdBy?: string | null;
   forwardCookies?: string | null;
+  trustedSelfOriginHost?: string | null;
   onProgress?: (progress: BatchCaptureProgressSnapshot) => Promise<void> | void;
 };
 
@@ -88,6 +89,7 @@ type ResolvedBatchCaptureRequest = {
   appearanceMode: KangurSocialCaptureAppearanceMode | null;
   createdBy: string | null;
   contextOptions: Record<string, unknown> | undefined;
+  trustedSelfOriginHost: string | null;
   requestedTargets: BatchCaptureTarget[];
   targets: BatchCaptureTarget[];
   playwrightPersonaId: string | null;
@@ -412,6 +414,7 @@ const resolveBatchCaptureRequest = (
     appearanceMode,
     createdBy: input.createdBy ?? null,
     contextOptions: Object.keys(contextOptions).length > 0 ? contextOptions : undefined,
+    trustedSelfOriginHost: normalizeOptionalTrimmedString(input.trustedSelfOriginHost ?? null),
     requestedTargets,
     targets,
     playwrightPersonaId,
@@ -444,6 +447,7 @@ export const startPlaywrightBatchCapture = async (
       browserEngine: 'chromium',
       personaId: resolved.playwrightPersonaId ?? undefined,
       contextOptions: resolved.contextOptions,
+      policyAllowedHosts: resolved.trustedSelfOriginHost ? [resolved.trustedSelfOriginHost] : undefined,
     },
     waitForResult: false,
     ownerUserId: resolved.createdBy,

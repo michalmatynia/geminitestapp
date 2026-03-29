@@ -115,6 +115,7 @@ type CreateSocialImageAddonInput = {
   appearanceMode?: KangurSocialCaptureAppearanceMode | null;
   createdBy?: string | null;
   forwardCookies?: string | null;
+  trustedSelfOriginHost?: string | null;
 };
 
 const toSourceHost = (sourceUrl: string): string | null => {
@@ -287,6 +288,7 @@ export async function createKangurSocialImageAddonFromPlaywright(
         timeoutMs: 90_000,
         browserEngine: 'chromium',
         contextOptions: Object.keys(contextOptions).length > 0 ? contextOptions : undefined,
+        policyAllowedHosts: input.trustedSelfOriginHost ? [input.trustedSelfOriginHost] : undefined,
       },
       waitForResult: true,
       ownerUserId: input.createdBy ?? null,

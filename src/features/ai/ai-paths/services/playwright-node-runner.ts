@@ -134,6 +134,7 @@ export type PlaywrightNodeRunRequest = {
   settingsOverrides?: Record<string, unknown> | undefined;
   launchOptions?: Record<string, unknown> | undefined;
   contextOptions?: Record<string, unknown> | undefined;
+  policyAllowedHosts?: string[] | undefined;
   contextRegistry?: ContextRegistryConsumerEnvelope | null | undefined;
   capture?:
     | {
@@ -355,9 +356,40 @@ const parseUserScript = (
   return resolved as (context: Record<string, unknown>) => Promise<unknown>;
 };
 
+const normalizePolicyAllowedHosts = (hosts: string[] | undefined): Set<string> => {
+  if (!Array.isArray(hosts) || hosts.length === 0) {
+    return new Set<string>();
+  }
+
+  return new Set(
+    hosts
+      .map((host) => host.trim().toLowerCase())
+      .filter((host) => host.length > 0)
+  );
+};
+
+const isPolicyAllowedHost = (requestUrl: string, allowedHosts: Set<string>): boolean => {
+  if (allowedHosts.size === 0) {
+    return false;
+  }
+
+  try {
+    const parsed = new URL(requestUrl);
+    const protocol = parsed.protocol.toLowerCase();
+    if (protocol !== 'http:' && protocol !== 'https:') {
+      return false;
+    }
+
+    return allowedHosts.has(parsed.host.toLowerCase());
+  } catch {
+    return false;
+  }
+};
+
 const registerOutboundPolicyRoute = async (
   context: BrowserContext,
-  logs: string[]
+  logs: string[],
+  allowedHosts: Set<string>
 ): Promise<void> => {
   await context.route('**/*', async (route) => {
     const requestUrl = route.request().url();
@@ -370,6 +402,10 @@ const registerOutboundPolicyRoute = async (
       return;
     }
     if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') {
+      await route.continue();
+      return;
+    }
+    if (allowedHosts.has(parsed.host.toLowerCase())) {
       await route.continue();
       return;
     }
@@ -464,6 +500,7 @@ const executePlaywrightNodeRun = async (
   );
   const timeoutMs = Math.max(1_000, request.timeoutMs ?? 120_000);
   const browserEngine = request.browserEngine ?? 'chromium';
+  const policyAllowedHosts = normalizePolicyAllowedHosts(request.policyAllowedHosts);
   const contextRegistry = request.contextRegistry ?? null;
   const contextRegistryPrompt = buildAiPathsContextRegistrySystemPrompt(
     contextRegistry?.resolved ?? null
@@ -478,7 +515,7 @@ const executePlaywrightNodeRun = async (
     context = await browser.newContext(contextOptions);
     context.setDefaultTimeout(effectiveSettings.timeout);
     context.setDefaultNavigationTimeout(effectiveSettings.navigationTimeout);
-    await registerOutboundPolicyRoute(context, logs);
+    await registerOutboundPolicyRoute(context, logs, policyAllowedHosts);
 
     if (request.capture?.trace) {
       await context.tracing.start({
@@ -492,7 +529,10 @@ const executePlaywrightNodeRun = async (
     page = await context.newPage();
 
     if (request.startUrl?.trim()) {
-      const decision = evaluateOutboundUrlPolicy(request.startUrl);
+      const allowedByPolicyOverride = isPolicyAllowedHost(request.startUrl, policyAllowedHosts);
+      const decision = allowedByPolicyOverride
+        ? { allowed: true, reason: null }
+        : evaluateOutboundUrlPolicy(request.startUrl);
       if (!decision.allowed) {
         throw new Error(
           `Blocked outbound URL (${decision.reason ?? 'policy_violation'}): ${request.startUrl}`

@@ -3,9 +3,11 @@
 import { useMemo } from 'react';
 
 import {
+  getKangurGameContentSetsForGame,
   getKangurGameDefinition,
+  getKangurGameBuiltInInstancesForGame,
+  getKangurLaunchableGameRuntimeSpecForGame,
   mergeKangurLaunchableGameRuntimeSpec,
-  resolveKangurLaunchableGameRuntimeForPersistedInstance,
 } from '@/features/kangur/games';
 import { useKangurGameContentSets } from '@/features/kangur/ui/hooks/useKangurGameContentSets';
 import { useKangurGameInstances } from '@/features/kangur/ui/hooks/useKangurGameInstances';
@@ -31,31 +33,78 @@ export function KangurLaunchableGameInstanceRuntime({
     gameId,
     instanceId,
   });
-  const activeInstance = gameInstanceQuery.data?.[0] ?? null;
+  const game = useMemo(() => getKangurGameDefinition(gameId), [gameId]);
+  const builtInInstance = useMemo(
+    () =>
+      getKangurGameBuiltInInstancesForGame(game).find((candidate) => candidate.id === instanceId) ?? null,
+    [game, instanceId]
+  );
+  const persistedInstance = useMemo(
+    () =>
+      gameInstanceQuery.data?.find(
+        (candidate) => candidate.id === instanceId && candidate.gameId === gameId
+      ) ?? null,
+    [gameId, gameInstanceQuery.data, instanceId]
+  );
+  const activeInstance = persistedInstance ?? builtInInstance;
   const gameContentSetQuery = useKangurGameContentSets({
     contentSetId: activeInstance?.contentSetId ?? undefined,
     enabled: Boolean(activeInstance?.contentSetId),
     gameId,
   });
+  const builtInContentSet = useMemo(
+    () =>
+      activeInstance?.contentSetId
+        ? getKangurGameContentSetsForGame(game).find(
+            (candidate) => candidate.id === activeInstance.contentSetId
+          ) ?? null
+        : null,
+    [activeInstance?.contentSetId, game]
+  );
+  const persistedContentSet = useMemo(
+    () =>
+      activeInstance?.contentSetId
+        ? gameContentSetQuery.data?.find(
+            (candidate) =>
+              candidate.id === activeInstance.contentSetId && candidate.gameId === gameId
+          ) ?? null
+        : null,
+    [activeInstance?.contentSetId, gameContentSetQuery.data, gameId]
+  );
   const runtime = useMemo(() => {
-    const game = getKangurGameDefinition(gameId);
-    const resolvedRuntime = activeInstance
-      ? resolveKangurLaunchableGameRuntimeForPersistedInstance(
-          game,
-          activeInstance,
-          gameContentSetQuery.data
-        )
-      : null;
+    if (!activeInstance) {
+      return null;
+    }
+
+    const defaultRuntime = getKangurLaunchableGameRuntimeSpecForGame(game);
+    if (defaultRuntime?.screen !== activeInstance.launchableRuntimeId) {
+      return null;
+    }
+
+    const contentSet = persistedContentSet ?? builtInContentSet;
+    if (activeInstance.contentSetId && !contentSet) {
+      return null;
+    }
+
+    const resolvedRuntime = mergeKangurLaunchableGameRuntimeSpec(
+      defaultRuntime,
+      contentSet?.rendererProps,
+      activeInstance.engineOverrides
+    );
 
     return resolvedRuntime
       ? mergeKangurLaunchableGameRuntimeSpec(resolvedRuntime, engineOverrides)
       : null;
-  }, [activeInstance, engineOverrides, gameContentSetQuery.data, gameId]);
+  }, [activeInstance, builtInContentSet, engineOverrides, game, persistedContentSet]);
 
-  if (
-    gameInstanceQuery.isPending ||
-    (Boolean(activeInstance?.contentSetId) && gameContentSetQuery.isPending)
-  ) {
+  const isWaitingForPersistedInstance = !activeInstance && gameInstanceQuery.isPending;
+  const isWaitingForPersistedContentSet =
+    Boolean(activeInstance?.contentSetId) &&
+    !builtInContentSet &&
+    !persistedContentSet &&
+    gameContentSetQuery.isPending;
+
+  if (isWaitingForPersistedInstance || isWaitingForPersistedContentSet) {
     return <div data-testid='kangur-launchable-game-instance-runtime-loading' />;
   }
 

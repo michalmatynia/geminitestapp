@@ -28,6 +28,27 @@ type LessonTemplatesQueryOptions = {
   locale?: string | null;
 };
 
+const resolveLessonTemplatesLocale = (
+  routeLocale: string,
+  locale?: string | null
+): string => normalizeSiteLocale(locale ?? routeLocale);
+
+const resolveLessonTemplatesQueryFilters = (
+  options: LessonTemplatesQueryOptions | undefined,
+  locale: string
+): {
+  locale: string;
+  subject: KangurLessonSubject | null;
+  ageGroup: KangurLessonAgeGroup | null;
+} => ({
+  locale,
+  subject: options?.subject ?? null,
+  ageGroup: options?.ageGroup ?? null,
+});
+
+const isLessonTemplatesQueryEnabled = (options?: LessonTemplatesQueryOptions): boolean =>
+  options?.enabled ?? true;
+
 const filterTemplates = (
   templates: KangurLessonTemplate[],
   options?: LessonTemplatesQueryOptions,
@@ -74,21 +95,14 @@ const fetchLessonTemplates = async (
     },
   );
 
-export const useKangurLessonTemplates = (
-  options?: LessonTemplatesQueryOptions,
+const createLessonTemplatesQuery = (
+  options: LessonTemplatesQueryOptions | undefined,
+  resolvedLocale: string
 ): ListQuery<KangurLessonTemplate, KangurLessonTemplate[]> =>
-  {
-    const routeLocale = useLocale();
-    const resolvedLocale = normalizeSiteLocale(options?.locale ?? routeLocale);
-
-    return createListQueryV2<KangurLessonTemplate, KangurLessonTemplate[]>({
+  createListQueryV2<KangurLessonTemplate, KangurLessonTemplate[]>({
     queryKey: [
       ...QUERY_KEYS.kangur.lessonTemplates(),
-      {
-        locale: resolvedLocale,
-        subject: options?.subject ?? null,
-        ageGroup: options?.ageGroup ?? null,
-      },
+      resolveLessonTemplatesQueryFilters(options, resolvedLocale),
     ],
     queryFn: async (): Promise<KangurLessonTemplate[]> =>
       await fetchLessonTemplates({
@@ -96,7 +110,7 @@ export const useKangurLessonTemplates = (
         locale: resolvedLocale,
       }),
     select: (templates) => filterTemplates(templates, options),
-    enabled: options?.enabled ?? true,
+    enabled: isLessonTemplatesQueryEnabled(options),
     staleTime: 1000 * 60 * 5,
     refetchOnMount: false,
     refetchOnWindowFocus: false,
@@ -110,8 +124,15 @@ export const useKangurLessonTemplates = (
       tags: ['kangur', 'lesson-templates'],
       description: 'Loads Kangur lesson templates from Mongo.',
     },
-    });
-  };
+  });
+
+export const useKangurLessonTemplates = (
+  options?: LessonTemplatesQueryOptions,
+): ListQuery<KangurLessonTemplate, KangurLessonTemplate[]> => {
+  const routeLocale = useLocale();
+  const resolvedLocale = resolveLessonTemplatesLocale(routeLocale, options?.locale);
+  return createLessonTemplatesQuery(options, resolvedLocale);
+};
 
 const invalidateKangurLessonTemplates = (queryClient: {
   invalidateQueries: (args: { queryKey: readonly unknown[] }) => void;
@@ -124,12 +145,11 @@ export const useUpdateKangurLessonTemplates = (
 ): MutationResult<
   KangurLessonTemplate[],
   KangurLessonTemplate[]
-> =>
-  {
-    const routeLocale = useLocale();
-    const resolvedLocale = normalizeSiteLocale(locale ?? routeLocale);
+> => {
+  const routeLocale = useLocale();
+  const resolvedLocale = resolveLessonTemplatesLocale(routeLocale, locale);
 
-    return createUpdateMutationV2<KangurLessonTemplate[], KangurLessonTemplate[]>({
+  return createUpdateMutationV2<KangurLessonTemplate[], KangurLessonTemplate[]>({
     mutationKey: [...QUERY_KEYS.kangur.lessonTemplates(), { locale: resolvedLocale }, 'update'],
     mutationFn: async (templates: KangurLessonTemplate[]): Promise<KangurLessonTemplate[]> =>
       await api.post<KangurLessonTemplate[]>('/api/kangur/lesson-templates', {
@@ -145,5 +165,5 @@ export const useUpdateKangurLessonTemplates = (
       tags: ['kangur', 'lesson-templates', 'update'],
       description: 'Replaces Kangur lesson templates in Mongo.',
     },
-    });
-  };
+  });
+};

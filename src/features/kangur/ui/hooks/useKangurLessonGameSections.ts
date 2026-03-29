@@ -23,6 +23,22 @@ type LessonGameSectionsQueryOptions = {
   lessonComponentId?: KangurLessonComponentId;
 };
 
+const resolveLessonGameSectionsQueryFilters = (
+  options?: LessonGameSectionsQueryOptions
+): {
+  enabledOnly: boolean | null;
+  gameId: KangurGameId | null;
+  lessonComponentId: KangurLessonComponentId | null;
+} => ({
+  enabledOnly: options?.enabledOnly ?? null,
+  gameId: options?.gameId ?? null,
+  lessonComponentId: options?.lessonComponentId ?? null,
+});
+
+const isLessonGameSectionsQueryEnabled = (
+  options?: LessonGameSectionsQueryOptions
+): boolean => options?.enabled ?? true;
+
 const fetchLessonGameSections = async (
   options?: LessonGameSectionsQueryOptions
 ): Promise<KangurLessonGameSection[]> =>
@@ -59,21 +75,17 @@ const fetchLessonGameSections = async (
     }
   );
 
-export const useKangurLessonGameSections = (
+const createLessonGameSectionsQuery = (
   options?: LessonGameSectionsQueryOptions
 ): ListQuery<KangurLessonGameSection, KangurLessonGameSection[]> =>
   createListQueryV2<KangurLessonGameSection, KangurLessonGameSection[]>({
     queryKey: [
       ...QUERY_KEYS.kangur.lessonGameSections(),
-      {
-        enabledOnly: options?.enabledOnly ?? null,
-        gameId: options?.gameId ?? null,
-        lessonComponentId: options?.lessonComponentId ?? null,
-      },
+      resolveLessonGameSectionsQueryFilters(options),
     ],
     queryFn: async (): Promise<KangurLessonGameSection[]> =>
       await fetchLessonGameSections(options),
-    enabled: options?.enabled ?? true,
+    enabled: isLessonGameSectionsQueryEnabled(options),
     placeholderData: () => [],
     staleTime: 1000 * 60 * 5,
     refetchOnMount: false,
@@ -89,6 +101,11 @@ export const useKangurLessonGameSections = (
       description: 'Loads persisted Kangur lesson hub game sections.',
     },
   });
+
+export const useKangurLessonGameSections = (
+  options?: LessonGameSectionsQueryOptions
+): ListQuery<KangurLessonGameSection, KangurLessonGameSection[]> =>
+  createLessonGameSectionsQuery(options);
 
 const invalidateLessonGameSections = (queryClient: {
   invalidateQueries: (args: { queryKey: readonly unknown[] }) => void;

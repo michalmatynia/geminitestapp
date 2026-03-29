@@ -528,7 +528,6 @@ export const normalizeKangurLessons = (value: unknown): KangurLesson[] => {
     return createDefaultKangurLessons();
   }
 
-  const usedIds = new Set<string>();
   const normalized = value
     .map((entry, index): KangurLesson | null => {
       if (!isRecord(entry)) return null;
@@ -539,8 +538,7 @@ export const normalizeKangurLessons = (value: unknown): KangurLesson[] => {
       if (!componentId) return null;
 
       const template = getKangurLessonTemplate(componentId);
-      const requestedId = normalizeText(entry['id'], `kangur-lesson-${componentId}`, 120);
-      const lessonId = ensureUniqueLessonId(requestedId, usedIds);
+      const lessonId = normalizeText(entry['id'], `kangur-lesson-${componentId}`, 120);
 
       return {
         id: lessonId,
@@ -595,10 +593,15 @@ export const normalizeKangurLessons = (value: unknown): KangurLesson[] => {
       if (orderDelta !== 0) return orderDelta;
       return left.id.localeCompare(right.id);
     })
-    .map((lesson, index) => ({
-      ...lesson,
-      sortOrder: (index + 1) * KANGUR_LESSON_SORT_ORDER_GAP,
-    }));
+    .reduce<KangurLesson[]>((acc, lesson, index) => {
+      const usedIds = new Set(acc.map((entry) => entry.id));
+      acc.push({
+        ...lesson,
+        id: ensureUniqueLessonId(lesson.id, usedIds),
+        sortOrder: (index + 1) * KANGUR_LESSON_SORT_ORDER_GAP,
+      });
+      return acc;
+    }, []);
 };
 
 export const canonicalizeKangurLessons = (lessons: KangurLesson[]): KangurLesson[] =>

@@ -416,6 +416,12 @@ describe('SocialPostPipeline', () => {
 
   it('shows when a cached image-analysis result is already ready for the draft', () => {
     useSocialPostContextMock.mockReturnValue({
+      activePost: {
+        visualAnalysisStatus: 'completed',
+        visualAnalysisUpdatedAt: '2026-03-20T12:00:00.000Z',
+        visualAnalysisModelId: 'vision-1',
+        visualAnalysisJobId: 'job-analysis-7',
+      },
       activePostId: 'post-1',
       editorState: {
         titlePl: 'Selected pipeline target',
@@ -427,7 +433,6 @@ describe('SocialPostPipeline', () => {
       visualAnalysisResult: {
         summary: 'The hero now emphasizes the teacher CTA.',
         highlights: ['Larger teacher CTA', 'Cleaner hero composition'],
-        docUpdates: [],
       },
       handleRunFullPipeline: vi.fn(),
       handleRunFullPipelineWithFreshCapture: vi.fn(),
@@ -456,14 +461,224 @@ describe('SocialPostPipeline', () => {
         'Image analysis ready for this draft. 2 highlights. Open the modal to review it or start the post-generation pass.'
       )
     ).toBeInTheDocument();
+    expect(
+      screen.getByText(/Saved run: Completed\./)
+    ).toBeInTheDocument();
+    expect(screen.getByText(/Analyzed:/)).toBeInTheDocument();
+    expect(screen.getByText(/Model: vision-1\./)).toBeInTheDocument();
+    expect(screen.getByText(/Queue job: job-analysis-7\./)).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Review image analysis' })).toHaveAttribute(
       'title',
       'Review the saved image analysis or start the separate Generate post with analysis step.'
     );
   });
 
+  it('does not treat an empty analysis payload as ready for review', () => {
+    useSocialPostContextMock.mockReturnValue({
+      activePostId: 'post-1',
+      editorState: {
+        titlePl: 'Selected pipeline target',
+        titleEn: '',
+      },
+      pipelineStep: 'idle',
+      pipelineProgress: null,
+      pipelineErrorMessage: null,
+      visualAnalysisResult: {
+        summary: '',
+        highlights: [],
+      },
+      hasSavedVisualAnalysis: true,
+      isSavedVisualAnalysisStale: false,
+      handleRunFullPipeline: vi.fn(),
+      handleRunFullPipelineWithFreshCapture: vi.fn(),
+      handleOpenVisualAnalysisModal: vi.fn(),
+      handleCaptureImagesOnly: vi.fn(),
+      canGenerateSocialDraft: true,
+      canRunVisualAnalysisPipeline: true,
+      canRunFreshCapturePipeline: true,
+      batchCaptureBaseUrl: 'https://kangur.app',
+      batchCapturePresetIds: ['home'],
+      socialDraftBlockedReason: null,
+      socialBatchCaptureBlockedReason: null,
+      socialVisualAnalysisBlockedReason: null,
+      captureOnlyPending: false,
+      captureOnlyMessage: null,
+      captureOnlyErrorMessage: null,
+      batchCapturePresetLimit: 1,
+      hasBatchCaptureConfig: true,
+      setIsPostEditorModalOpen: vi.fn(),
+    });
+
+    render(<SocialPostPipeline />);
+
+    expect(
+      screen.queryByText(/Image analysis ready for this draft\./)
+    ).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Image analysis' })).toBeEnabled();
+  });
+
+  it('shows the latest queued image-analysis run even before saved analysis content exists', () => {
+    useSocialPostContextMock.mockReturnValue({
+      activePost: {
+        visualAnalysisStatus: 'queued',
+        visualAnalysisUpdatedAt: '2026-03-20T12:00:00.000Z',
+        visualAnalysisModelId: 'vision-queued',
+        visualAnalysisJobId: 'job-analysis-queued-1',
+      },
+      activePostId: 'post-1',
+      editorState: {
+        titlePl: 'Selected pipeline target',
+        titleEn: '',
+      },
+      pipelineStep: 'idle',
+      pipelineProgress: null,
+      pipelineErrorMessage: null,
+      visualAnalysisResult: null,
+      hasSavedVisualAnalysis: false,
+      isSavedVisualAnalysisStale: false,
+      handleRunFullPipeline: vi.fn(),
+      handleRunFullPipelineWithFreshCapture: vi.fn(),
+      handleOpenVisualAnalysisModal: vi.fn(),
+      handleCaptureImagesOnly: vi.fn(),
+      canGenerateSocialDraft: true,
+      canRunVisualAnalysisPipeline: true,
+      canRunFreshCapturePipeline: true,
+      batchCaptureBaseUrl: 'https://kangur.app',
+      batchCapturePresetIds: ['home'],
+      socialDraftBlockedReason: null,
+      socialBatchCaptureBlockedReason: null,
+      socialVisualAnalysisBlockedReason: null,
+      captureOnlyPending: false,
+      captureOnlyMessage: null,
+      captureOnlyErrorMessage: null,
+      batchCapturePresetLimit: 1,
+      hasBatchCaptureConfig: true,
+      setIsPostEditorModalOpen: vi.fn(),
+    });
+
+    render(<SocialPostPipeline />);
+
+    expect(screen.getByText(/Latest image analysis status: Queued\./)).toBeInTheDocument();
+    expect(screen.getByText(/Analyzed:/)).toBeInTheDocument();
+    expect(screen.getByText(/Model: vision-queued\./)).toBeInTheDocument();
+    expect(screen.getByText(/Queue job: job-analysis-queued-1\./)).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Review image analysis' })).toBeEnabled();
+    expect(screen.getByRole('button', { name: 'Review image analysis' })).toHaveAttribute(
+      'title',
+      'Review the latest image-analysis run status or open the modal to wait for the saved result.'
+    );
+  });
+
+  it('treats a completed metadata-only analysis run as reviewable', () => {
+    useSocialPostContextMock.mockReturnValue({
+      activePost: {
+        visualAnalysisStatus: 'completed',
+        visualAnalysisUpdatedAt: '2026-03-20T12:00:00.000Z',
+        visualAnalysisModelId: 'vision-1',
+        visualAnalysisJobId: 'job-analysis-empty-1',
+      },
+      activePostId: 'post-1',
+      editorState: {
+        titlePl: 'Selected pipeline target',
+        titleEn: '',
+      },
+      pipelineStep: 'idle',
+      pipelineProgress: null,
+      pipelineErrorMessage: null,
+      visualAnalysisResult: {
+        summary: '',
+        highlights: [],
+      },
+      hasSavedVisualAnalysis: true,
+      isSavedVisualAnalysisStale: false,
+      handleRunFullPipeline: vi.fn(),
+      handleRunFullPipelineWithFreshCapture: vi.fn(),
+      handleOpenVisualAnalysisModal: vi.fn(),
+      handleCaptureImagesOnly: vi.fn(),
+      canGenerateSocialDraft: true,
+      canRunVisualAnalysisPipeline: true,
+      canRunFreshCapturePipeline: true,
+      batchCaptureBaseUrl: 'https://kangur.app',
+      batchCapturePresetIds: ['home'],
+      socialDraftBlockedReason: null,
+      socialBatchCaptureBlockedReason: null,
+      socialVisualAnalysisBlockedReason: null,
+      captureOnlyPending: false,
+      captureOnlyMessage: null,
+      captureOnlyErrorMessage: null,
+      batchCapturePresetLimit: 1,
+      hasBatchCaptureConfig: true,
+      setIsPostEditorModalOpen: vi.fn(),
+    });
+
+    render(<SocialPostPipeline />);
+
+    expect(screen.queryByText(/Image analysis ready for this draft\./)).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Review image analysis' })).toHaveAttribute(
+      'title',
+      'Review the latest saved image-analysis run status or rerun analysis from the modal.'
+    );
+  });
+
+  it('treats a failed metadata-only analysis run as reviewable with a rerun-focused title', () => {
+    useSocialPostContextMock.mockReturnValue({
+      activePost: {
+        visualAnalysisStatus: 'failed',
+        visualAnalysisUpdatedAt: '2026-03-20T12:00:00.000Z',
+        visualAnalysisModelId: 'vision-1',
+        visualAnalysisJobId: 'job-analysis-failed-1',
+      },
+      activePostId: 'post-1',
+      editorState: {
+        titlePl: 'Selected pipeline target',
+        titleEn: '',
+      },
+      pipelineStep: 'idle',
+      pipelineProgress: null,
+      pipelineErrorMessage: null,
+      visualAnalysisResult: {
+        summary: '',
+        highlights: [],
+      },
+      hasSavedVisualAnalysis: true,
+      isSavedVisualAnalysisStale: false,
+      handleRunFullPipeline: vi.fn(),
+      handleRunFullPipelineWithFreshCapture: vi.fn(),
+      handleOpenVisualAnalysisModal: vi.fn(),
+      handleCaptureImagesOnly: vi.fn(),
+      canGenerateSocialDraft: true,
+      canRunVisualAnalysisPipeline: true,
+      canRunFreshCapturePipeline: true,
+      batchCaptureBaseUrl: 'https://kangur.app',
+      batchCapturePresetIds: ['home'],
+      socialDraftBlockedReason: null,
+      socialBatchCaptureBlockedReason: null,
+      socialVisualAnalysisBlockedReason: null,
+      captureOnlyPending: false,
+      captureOnlyMessage: null,
+      captureOnlyErrorMessage: null,
+      batchCapturePresetLimit: 1,
+      hasBatchCaptureConfig: true,
+      setIsPostEditorModalOpen: vi.fn(),
+    });
+
+    render(<SocialPostPipeline />);
+
+    expect(screen.getByText(/Latest image analysis status: Failed\./)).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Review image analysis' })).toHaveAttribute(
+      'title',
+      'Review the failed image-analysis run or rerun analysis from the modal.'
+    );
+  });
+
   it('warns when saved image analysis exists but the draft changed since that analysis', () => {
     useSocialPostContextMock.mockReturnValue({
+      activePost: {
+        visualAnalysisStatus: 'completed',
+        visualAnalysisUpdatedAt: '2026-03-20T12:00:00.000Z',
+        visualAnalysisModelId: 'vision-1',
+        visualAnalysisJobId: 'job-analysis-stale-1',
+      },
       activePostId: 'post-1',
       editorState: {
         titlePl: 'Selected pipeline target',

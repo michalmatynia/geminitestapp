@@ -5,18 +5,9 @@ import { imageFileSelectionSchema } from './files';
 const trimmedString = z.string().trim();
 const optionalText = (max: number) => trimmedString.max(max).default('');
 
-export const kangurSocialDocUpdateSchema = z.object({
-  docPath: trimmedString.max(240),
-  section: trimmedString.max(200).nullable().default(null),
-  proposedText: optionalText(5000),
-  reason: optionalText(1000),
-});
-export type KangurSocialDocUpdate = z.infer<typeof kangurSocialDocUpdateSchema>;
-
 export const kangurSocialVisualAnalysisSchema = z.object({
   summary: optionalText(8000),
   highlights: z.array(trimmedString.max(400)).max(24).default([]),
-  docUpdates: z.array(kangurSocialDocUpdateSchema).max(50).default([]),
 });
 export type KangurSocialVisualAnalysis = z.infer<
   typeof kangurSocialVisualAnalysisSchema
@@ -69,16 +60,12 @@ export const kangurSocialPostSchema = z.object({
   generatedSummary: trimmedString.max(8000).nullable().default(null),
   visualSummary: trimmedString.max(8000).nullable().default(null),
   visualHighlights: z.array(trimmedString.max(400)).max(24).default([]),
-  visualDocUpdates: z.array(kangurSocialDocUpdateSchema).max(50).default([]),
   visualAnalysisSourceImageAddonIds: z.array(trimmedString.max(160)).max(30).default([]),
-  visualAnalysisSourceDocReferences: z.array(trimmedString.max(240)).max(80).default([]),
   visualAnalysisSourceVisionModelId: trimmedString.max(160).nullable().default(null),
   visualAnalysisStatus: kangurSocialVisualAnalysisStatusSchema.nullable().default(null),
   visualAnalysisUpdatedAt: z.string().datetime().nullable().default(null),
   visualAnalysisJobId: trimmedString.max(160).nullable().default(null),
   visualAnalysisModelId: trimmedString.max(160).nullable().default(null),
-  docUpdatesAppliedAt: z.string().datetime().nullable().default(null),
-  docUpdatesAppliedBy: trimmedString.max(120).nullable().default(null),
   createdBy: trimmedString.max(120).nullable().default(null),
   updatedBy: trimmedString.max(120).nullable().default(null),
   createdAt: z.string().datetime().optional(),
@@ -96,7 +83,6 @@ export type KangurSocialGeneratedDraft = {
   docReferences?: string[];
   visualSummary?: string | null;
   visualHighlights?: KangurSocialVisualAnalysis['highlights'];
-  visualDocUpdates?: KangurSocialVisualAnalysis['docUpdates'];
 };
 
 export const kangurSocialPostEditorStateSchema = kangurSocialPostSchema.pick({

@@ -82,6 +82,11 @@ type KangurActiveLessonRuntime = Pick<
   | 'shouldRenderLessonDocument'
 >;
 
+type KangurActiveLessonNeighbors = Pick<
+  KangurActiveLessonRuntime,
+  'activeLesson' | 'nextLesson' | 'prevLesson'
+>;
+
 const KangurLessonsRuntimeStateContext =
   createContext<KangurLessonsRuntimeStateContextValue | null>(null);
 const KangurLessonsRuntimeActionsContext =
@@ -425,6 +430,59 @@ const useKangurFocusedLessonSelection = ({
   ]);
 };
 
+const resolveKangurLessonsCanAccessParentAssignments = (
+  auth: ReturnType<typeof useKangurAuth>,
+  user: ReturnType<typeof useKangurAuth>['user']
+): boolean => auth.canAccessParentAssignments ?? Boolean(user?.activeLearner?.id);
+
+const resolveKangurActiveLessonNeighbors = ({
+  activeLessonId,
+  orderedLessons,
+}: {
+  activeLessonId: string | null;
+  orderedLessons: KangurLesson[];
+}): KangurActiveLessonNeighbors => {
+  const activeIdx = orderedLessons.findIndex((lesson) => lesson.id === activeLessonId);
+  const activeLesson = activeIdx >= 0 ? orderedLessons[activeIdx] ?? null : null;
+
+  return {
+    activeLesson,
+    prevLesson: activeIdx > 0 ? orderedLessons[activeIdx - 1] ?? null : null,
+    nextLesson:
+      activeIdx >= 0 && activeIdx < orderedLessons.length - 1
+        ? orderedLessons[activeIdx + 1] ?? null
+        : null,
+  };
+};
+
+const resolveKangurActiveLessonDocuments = ({
+  activeLessonDocument,
+  activeLessonId,
+}: {
+  activeLessonDocument: ReturnType<typeof useKangurLessonDocument>['data'] | null;
+  activeLessonId: string | null;
+}): KangurActiveLessonRuntime['lessonDocuments'] =>
+  activeLessonId && activeLessonDocument ? { [activeLessonId]: activeLessonDocument } : {};
+
+const resolveKangurCompletedActiveLessonAssignment = ({
+  activeLesson,
+  activeLessonAssignment,
+  completedLessonAssignmentsByComponent,
+}: {
+  activeLesson: KangurLesson | null;
+  activeLessonAssignment: KangurAssignmentSnapshot | null;
+  completedLessonAssignmentsByComponent: Map<
+    KangurLessonComponentId,
+    KangurAssignmentSnapshot
+  >;
+}): KangurAssignmentSnapshot | null => {
+  if (!activeLesson || activeLessonAssignment) {
+    return null;
+  }
+
+  return completedLessonAssignmentsByComponent.get(activeLesson.componentId) ?? null;
+};
+
 const resolveKangurActiveLessonRuntime = ({
   activeLessonDocument,
   activeLessonId,
@@ -441,18 +499,17 @@ const resolveKangurActiveLessonRuntime = ({
   lessonAssignmentsByComponent: Map<KangurLessonComponentId, KangurAssignmentSnapshot>;
   orderedLessons: KangurLesson[];
 }): KangurActiveLessonRuntime => {
-  const activeIdx = orderedLessons.findIndex((lesson) => lesson.id === activeLessonId);
-  const activeLesson = activeIdx >= 0 ? orderedLessons[activeIdx] ?? null : null;
-  const prevLesson = activeIdx > 0 ? orderedLessons[activeIdx - 1] ?? null : null;
-  const nextLesson =
-    activeIdx >= 0 && activeIdx < orderedLessons.length - 1
-      ? orderedLessons[activeIdx + 1] ?? null
-      : null;
+  const { activeLesson, nextLesson, prevLesson } = resolveKangurActiveLessonNeighbors({
+    activeLessonId,
+    orderedLessons,
+  });
   const ActiveLessonComponent = activeLesson
     ? LESSON_COMPONENTS[activeLesson.componentId]
     : null;
-  const lessonDocuments =
-    activeLessonId && activeLessonDocument ? { [activeLessonId]: activeLessonDocument } : {};
+  const lessonDocuments = resolveKangurActiveLessonDocuments({
+    activeLessonDocument,
+    activeLessonId,
+  });
   const hasActiveLessonDocumentContent =
     hasKangurLessonDocumentContent(activeLessonDocument);
   const shouldRenderLessonDocument =
@@ -460,10 +517,11 @@ const resolveKangurActiveLessonRuntime = ({
   const activeLessonAssignment = activeLesson
     ? lessonAssignmentsByComponent.get(activeLesson.componentId) ?? null
     : null;
-  const completedActiveLessonAssignment =
-    activeLesson && !activeLessonAssignment
-      ? completedLessonAssignmentsByComponent.get(activeLesson.componentId) ?? null
-      : null;
+  const completedActiveLessonAssignment = resolveKangurCompletedActiveLessonAssignment({
+    activeLesson,
+    activeLessonAssignment,
+    completedLessonAssignmentsByComponent,
+  });
 
   return {
     ActiveLessonComponent,
@@ -521,8 +579,10 @@ export function KangurLessonsRuntimeProvider({
   const { basePath } = useKangurRouting();
   const auth = useKangurAuth();
   const { user } = auth;
-  const canAccessParentAssignments =
-    auth.canAccessParentAssignments ?? Boolean(user?.activeLearner?.id);
+  const canAccessParentAssignments = resolveKangurLessonsCanAccessParentAssignments(
+    auth,
+    user
+  );
   const { subject, setSubject } = useKangurSubjectFocus();
   const { ageGroup, setAgeGroup } = useKangurAgeGroupFocus();
   const focusToken = useKangurFocusToken(basePath);

@@ -16,12 +16,15 @@ type MockCollection = {
 const buildDb = (docs: unknown[], count: number) => {
   const toArray = vi.fn().mockResolvedValue(docs);
   const sort = vi.fn().mockReturnValue({ toArray });
+  const find = vi.fn().mockImplementation((_filter?: unknown, options?: { projection?: unknown }) =>
+    options?.projection ? { toArray } : { sort }
+  );
   const collection: MockCollection = {
     bulkWrite: vi.fn().mockResolvedValue({ acknowledged: true }),
     createIndex: vi.fn().mockResolvedValue('ok'),
     indexes: vi.fn().mockResolvedValue([]),
     dropIndex: vi.fn().mockResolvedValue('ok'),
-    find: vi.fn().mockReturnValue({ sort }),
+    find,
     countDocuments: vi.fn().mockResolvedValue(count),
   };
   const db = {
@@ -112,12 +115,13 @@ describe('mongoKangurLessonRepository fallback', () => {
       (lesson) => lesson.subject === 'english' && lesson.enabled
     );
     const { db, collection } = buildDb([], 0);
-    const toArray = vi
-      .fn()
-      .mockResolvedValueOnce([])
-      .mockResolvedValueOnce(englishMergedLessons);
+    const toArray = vi.fn().mockImplementation(async () =>
+      collection.bulkWrite.mock.calls.length > 0 ? englishMergedLessons : []
+    );
     const sort = vi.fn().mockReturnValue({ toArray });
-    collection.find = vi.fn().mockReturnValue({ sort });
+    collection.find = vi.fn().mockImplementation((_filter?: unknown, options?: { projection?: unknown }) =>
+      options?.projection ? { toArray } : { sort }
+    );
     vi.doMock('@/shared/lib/db/mongo-client', () => ({
       getMongoDb: vi.fn().mockResolvedValue(db),
     }));
@@ -147,5 +151,54 @@ describe('mongoKangurLessonRepository fallback', () => {
       title: 'Custom adverbs',
       description: 'Legacy Mongo settings lesson',
     });
+  });
+
+  it('backfills missing default lessons when the collection is only partially populated', async () => {
+    vi.resetModules();
+    const { createDefaultKangurLessons } = await import('@/features/kangur/settings');
+    const englishDefaults = createDefaultKangurLessons().filter(
+      (lesson) => lesson.subject === 'english' && lesson.enabled
+    );
+    const partialEnglishLessons = englishDefaults.filter(
+      (lesson) => lesson.componentId !== 'english_comparatives_superlatives'
+    );
+    const toArray = vi.fn().mockImplementation(async () =>
+      collection.bulkWrite.mock.calls.length > 0 ? englishDefaults : partialEnglishLessons
+    );
+    const sort = vi.fn().mockReturnValue({ toArray });
+    const collection: MockCollection = {
+      bulkWrite: vi.fn().mockResolvedValue({ acknowledged: true }),
+      createIndex: vi.fn().mockResolvedValue('ok'),
+      indexes: vi.fn().mockResolvedValue([]),
+      dropIndex: vi.fn().mockResolvedValue('ok'),
+      find: vi.fn().mockImplementation((_filter?: unknown, options?: { projection?: unknown }) =>
+        options?.projection ? { toArray } : { sort }
+      ),
+      countDocuments: vi.fn().mockResolvedValue(partialEnglishLessons.length),
+    };
+    const db = {
+      collection: vi.fn().mockReturnValue(collection),
+    };
+    vi.doMock('@/shared/lib/db/mongo-client', () => ({
+      getMongoDb: vi.fn().mockResolvedValue(db),
+    }));
+    vi.doMock('@/features/kangur/services/kangur-settings-repository', () => ({
+      readKangurSettingValue: vi.fn().mockResolvedValue(null),
+    }));
+
+    const { mongoKangurLessonRepository } = await import(
+      './mongo-kangur-lesson-repository'
+    );
+
+    const result = await mongoKangurLessonRepository.listLessons({
+      subject: 'english',
+      enabledOnly: true,
+    });
+
+    expect(collection.bulkWrite).toHaveBeenCalledTimes(1);
+    expect(result).toEqual(englishDefaults);
+    expect(
+      result.some((lesson) => lesson.componentId === 'english_comparatives_superlatives')
+    ).toBe(true);
   });
 });

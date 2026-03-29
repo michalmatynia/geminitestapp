@@ -1,5 +1,3 @@
-'use client';
-
 import type { KangurAccent } from '@/shared/contracts/kangur-theme';
 
 import { applyTransparency, mixCssColor } from '../CmsStorefrontAppearance.utils';

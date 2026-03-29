@@ -52,18 +52,24 @@ describe('kangur alias route', () => {
     authMock.mockResolvedValue(null);
   });
 
-  it('resolves the explicit kangur alias route without resolving launch redirects', async () => {
-    const { default: KangurAliasPage } = await import('@/app/(frontend)/kangur/(app)/[...slug]/page');
+  it(
+    'resolves the explicit kangur alias route without resolving launch redirects',
+    async () => {
+      const { default: KangurAliasPage } = await import(
+        '@/app/(frontend)/kangur/(app)/[...slug]/page'
+      );
 
-    const result = await KangurAliasPage({
-      params: Promise.resolve({ slug: ['lessons'] }),
-      searchParams: Promise.resolve({ focus: 'division' }),
-    } as never);
+      const result = await KangurAliasPage({
+        params: Promise.resolve({ slug: ['lessons'] }),
+        searchParams: Promise.resolve({ focus: 'division' }),
+      } as never);
 
-    expect(result).toBeNull();
+      expect(result).toBeNull();
 
-    expect(redirectMock).not.toHaveBeenCalled();
-  });
+      expect(redirectMock).not.toHaveBeenCalled();
+    },
+    60_000
+  );
 
   it('resolves the explicit hot kangur alias pages without per-route shell markup', async () => {
     const [

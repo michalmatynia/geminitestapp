@@ -56,11 +56,7 @@ const resolveKangurStorefrontInitialThemeSettings = (
 
 const resolveKangurStorefrontPersistMode = (): boolean => {
   const raw = process.env['NEXT_PUBLIC_KANGUR_APPEARANCE_PERSIST'];
-  if (process.env['NODE_ENV'] !== 'production') {
-    return raw !== 'false';
-  }
-
-  return raw === 'true';
+  return raw !== 'false';
 };
 
 export function KangurStorefrontAppearanceProvider({

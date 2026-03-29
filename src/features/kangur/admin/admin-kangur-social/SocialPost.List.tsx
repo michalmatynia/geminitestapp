@@ -197,6 +197,7 @@ export function SocialPostList(): React.JSX.Element {
           const hasVisualAnalysis =
             Boolean(post.visualSummary?.trim()) ||
             (post.visualHighlights?.length ?? 0) > 0 ||
+            (post.visualDocUpdates?.length ?? 0) > 0 ||
             Boolean(post.visualAnalysisStatus);
           const visualAnalysisStatus = post.visualAnalysisStatus ?? null;
           const visualAnalysisStatusLabel =

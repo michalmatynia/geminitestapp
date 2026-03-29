@@ -33,6 +33,114 @@ type GameLibraryPageQueryOptions = KangurGameCatalogFilter & {
   enabled?: boolean;
 };
 
+const resolveGameLibraryPageCoreFilters = (options?: GameLibraryPageQueryOptions) => {
+  const {
+    ageGroup = null,
+    gameId = null,
+    gameStatus = null,
+    launchableOnly = false,
+    lessonComponentId = null,
+  } = options ?? {};
+  return {
+    ageGroup,
+    gameId,
+    gameStatus,
+    launchableOnly,
+    lessonComponentId,
+  };
+};
+
+const resolveGameLibraryPageCatalogFilters = (options?: GameLibraryPageQueryOptions) => {
+  const {
+    mechanic = null,
+    subject = null,
+  } = options ?? {};
+  return {
+    mechanic,
+    subject,
+  };
+};
+
+const resolveGameLibraryPageSecondaryFilters = (options?: GameLibraryPageQueryOptions) => {
+  const {
+    engineCategory = null,
+    engineId = null,
+    implementationOwnership = null,
+    surface = null,
+    variantStatus = null,
+    variantSurface = null,
+  } = options ?? {};
+  return {
+    engineCategory,
+    engineId,
+    implementationOwnership,
+    surface,
+    variantStatus,
+    variantSurface,
+  };
+};
+
+const resolveGameLibraryPageFilters = (
+  options?: GameLibraryPageQueryOptions
+): {
+  ageGroup: KangurLessonAgeGroup | null;
+  engineCategory: KangurGameEngineCategory | null;
+  engineId: KangurGameEngineId | null;
+  gameId: string | null;
+  gameStatus: KangurGameStatus | null;
+  implementationOwnership: KangurGameEngineImplementationOwnership | null;
+  launchableOnly: boolean;
+  lessonComponentId: KangurLessonComponentId | null;
+  mechanic: KangurGameMechanic | null;
+  subject: KangurLessonSubject | null;
+  surface: KangurGameSurface | null;
+  variantStatus: KangurGameStatus | null;
+  variantSurface: KangurGameVariantSurface | null;
+} => ({
+  ...resolveGameLibraryPageCoreFilters(options),
+  ...resolveGameLibraryPageCatalogFilters(options),
+  ...resolveGameLibraryPageSecondaryFilters(options),
+});
+
+const resolveGameLibraryPageParams = (
+  options?: GameLibraryPageQueryOptions
+): Record<string, string | boolean | undefined> => {
+  const {
+    ageGroup,
+    engineCategory,
+    engineId,
+    gameId,
+    gameStatus,
+    implementationOwnership,
+    launchableOnly,
+    lessonComponentId,
+    mechanic,
+    subject,
+    surface,
+    variantStatus,
+    variantSurface,
+  } = options ?? {};
+  return {
+    ageGroup,
+    engineCategory,
+    engineId,
+    gameId,
+    gameStatus,
+    implementationOwnership,
+    launchableOnly,
+    lessonComponentId,
+    mechanic,
+    subject,
+    surface,
+    variantStatus,
+    variantSurface,
+  };
+};
+
+const isGameLibraryPageQueryEnabled = (
+  options?: GameLibraryPageQueryOptions
+): boolean => options?.enabled ?? true;
+
 const buildGameLibraryPageFallback = (
   options?: GameLibraryPageQueryOptions
 ): KangurGameLibraryPageData => createKangurGameLibraryPageDataFromGames({ filter: options });
@@ -49,42 +157,13 @@ const fetchGameLibraryPage = async (
       source: 'kangur.hooks.useKangurGameLibraryPage',
       action: 'fetch-game-library-page',
       description: 'Loads consolidated Kangur games library page data from the API.',
-      context: {
-        gameId: options?.gameId ?? null,
-        subject: options?.subject ?? null,
-        ageGroup: options?.ageGroup ?? null,
-        gameStatus: options?.gameStatus ?? null,
-        surface: options?.surface ?? null,
-        lessonComponentId: options?.lessonComponentId ?? null,
-        mechanic: options?.mechanic ?? null,
-        engineId: options?.engineId ?? null,
-        engineCategory: options?.engineCategory ?? null,
-        implementationOwnership: options?.implementationOwnership ?? null,
-        variantSurface: options?.variantSurface ?? null,
-        variantStatus: options?.variantStatus ?? null,
-        launchableOnly: options?.launchableOnly ?? false,
-      },
+      context: resolveGameLibraryPageFilters(options),
     }),
     async () => {
-      const params: Record<string, string | boolean | undefined> = {
-        gameId: options?.gameId,
-        subject: options?.subject,
-        ageGroup: options?.ageGroup,
-        gameStatus: options?.gameStatus,
-        surface: options?.surface,
-        lessonComponentId: options?.lessonComponentId,
-        mechanic: options?.mechanic,
-        engineId: options?.engineId,
-        engineCategory: options?.engineCategory,
-        implementationOwnership: options?.implementationOwnership,
-        variantSurface: options?.variantSurface,
-        variantStatus: options?.variantStatus,
-        launchableOnly: options?.launchableOnly,
-      };
       const payload = await api.get<KangurGameLibraryPageData>(
         '/api/kangur/game-library-page',
         {
-          params,
+          params: resolveGameLibraryPageParams(options),
         }
       );
       return kangurGameLibraryPageDataSchema.parse(payload);
@@ -96,31 +175,17 @@ const fetchGameLibraryPage = async (
     }
   );
 
-export const useKangurGameLibraryPage = (
+const createKangurGameLibraryPageQuery = (
   options?: GameLibraryPageQueryOptions
 ): ListQuery<KangurGameLibraryPageData, KangurGameLibraryPageData> =>
   createListQueryV2<KangurGameLibraryPageData, KangurGameLibraryPageData>({
     queryKey: [
       ...QUERY_KEYS.kangur.gameLibraryPage(),
-      {
-        gameId: options?.gameId ?? null,
-        subject: options?.subject ?? null,
-        ageGroup: options?.ageGroup ?? null,
-        gameStatus: options?.gameStatus ?? null,
-        surface: options?.surface ?? null,
-        lessonComponentId: options?.lessonComponentId ?? null,
-        mechanic: options?.mechanic ?? null,
-        engineId: options?.engineId ?? null,
-        engineCategory: options?.engineCategory ?? null,
-        implementationOwnership: options?.implementationOwnership ?? null,
-        variantSurface: options?.variantSurface ?? null,
-        variantStatus: options?.variantStatus ?? null,
-        launchableOnly: options?.launchableOnly ?? false,
-      },
+      resolveGameLibraryPageFilters(options),
     ],
     queryFn: async (): Promise<KangurGameLibraryPageData> =>
       await fetchGameLibraryPage(options),
-    enabled: options?.enabled ?? true,
+    enabled: isGameLibraryPageQueryEnabled(options),
     staleTime: 1000 * 60 * 5,
     refetchOnMount: false,
     refetchOnWindowFocus: false,
@@ -135,6 +200,11 @@ export const useKangurGameLibraryPage = (
       description: 'Loads the consolidated Kangur games library page payload.',
     },
   });
+
+export const useKangurGameLibraryPage = (
+  options?: GameLibraryPageQueryOptions
+): ListQuery<KangurGameLibraryPageData, KangurGameLibraryPageData> =>
+  createKangurGameLibraryPageQuery(options);
 
 export type {
   GameLibraryPageQueryOptions as UseKangurGameLibraryPageOptions,

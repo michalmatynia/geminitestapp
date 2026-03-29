@@ -79,23 +79,56 @@ const resolveKangurRouteTransitionPendingPageKey = (
 ): string | null =>
   transitionState?.phase === 'pending' ? transitionState.pageKey ?? null : null;
 
+const resolveKangurRouteTransitionPhaseFlags = (
+  transitionPhase: KangurRouteTransitionStateContextValue['transitionPhase']
+): Pick<
+  KangurRouteTransitionStateContextValue,
+  | 'isRouteAcknowledging'
+  | 'isRoutePending'
+  | 'isRouteRevealing'
+  | 'isRouteWaitingForReady'
+> => ({
+  isRouteAcknowledging: transitionPhase === 'acknowledging',
+  isRoutePending: transitionPhase === 'pending',
+  isRouteWaitingForReady: transitionPhase === 'waiting_for_ready',
+  isRouteRevealing: transitionPhase === 'revealing',
+});
+
+const resolveKangurRouteTransitionIdentityMeta = (
+  transitionState: ReturnType<typeof useKangurRouteTransitionLogic>['transitionState']
+): Pick<
+  KangurRouteTransitionStateContextValue,
+  'activeTransitionKind' | 'activeTransitionSourceId'
+> => ({
+  activeTransitionSourceId: transitionState?.sourceId ?? null,
+  activeTransitionKind: transitionState?.kind ?? null,
+});
+
+const resolveKangurRouteTransitionPageMeta = (
+  transitionState: ReturnType<typeof useKangurRouteTransitionLogic>['transitionState']
+): Pick<
+  KangurRouteTransitionStateContextValue,
+  'activeTransitionPageKey' | 'activeTransitionSkeletonVariant'
+> => ({
+  activeTransitionPageKey: transitionState?.pageKey ?? null,
+  activeTransitionSkeletonVariant: transitionState?.skeletonVariant ?? null,
+});
+
 const resolveKangurRouteTransitionStateValue = (
   transitionState: ReturnType<typeof useKangurRouteTransitionLogic>['transitionState']
 ): KangurRouteTransitionStateContextValue => {
   const transitionPhase = resolveKangurRouteTransitionPhase(transitionState);
+  const phaseFlags = resolveKangurRouteTransitionPhaseFlags(transitionPhase);
+  const identityMeta = resolveKangurRouteTransitionIdentityMeta(transitionState);
+  const pageMeta = resolveKangurRouteTransitionPageMeta(transitionState);
 
   return {
-    isRouteAcknowledging: transitionPhase === 'acknowledging',
-    isRoutePending: transitionPhase === 'pending',
-    isRouteWaitingForReady: transitionPhase === 'waiting_for_ready',
-    isRouteRevealing: transitionPhase === 'revealing',
+    ...phaseFlags,
+    ...identityMeta,
+    ...pageMeta,
     transitionPhase,
-    activeTransitionSourceId: transitionState?.sourceId ?? null,
-    activeTransitionKind: transitionState?.kind ?? null,
-    activeTransitionPageKey: transitionState?.pageKey ?? null,
     activeTransitionRequestedHref:
       resolveKangurRouteTransitionRequestedHref(transitionState),
-    activeTransitionSkeletonVariant: transitionState?.skeletonVariant ?? null,
     pendingPageKey: resolveKangurRouteTransitionPendingPageKey(transitionState),
   };
 };

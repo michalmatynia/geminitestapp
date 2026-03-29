@@ -376,7 +376,6 @@ export async function generateKangurSocialPostDraft(
           : docs.map((doc) => doc.id),
       visualSummary: visualAnalysis.visualSummary,
       visualHighlights: visualAnalysis.visualHighlights,
-      visualDocUpdates: [],
     };
 
     logDraftGenerationSuccess({

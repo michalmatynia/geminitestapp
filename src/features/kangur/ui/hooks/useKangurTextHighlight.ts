@@ -3,7 +3,6 @@
 import { useCallback, useEffect, useRef, useState, type MutableRefObject } from 'react';
 import { withKangurClientErrorSync } from '@/features/kangur/observability/client';
 
-
 export type KangurTextHighlightResult = {
   activateSelectionGlow: () => boolean;
   clearSelectionGlow: () => void;
@@ -252,6 +251,76 @@ const clearSelectionTextEmphasis = (wrappers: HTMLElement[]): void => {
   });
 };
 
+const resolveSelectionCommonAncestor = (range: Range): Element | null => {
+  const commonAncestor = range.commonAncestorContainer;
+  return commonAncestor instanceof Element ? commonAncestor : commonAncestor.parentElement;
+};
+
+const isSelectionContainerCandidate = (testId: string | null): boolean => {
+  const isLessonBlock = testId?.startsWith('lesson-') && testId.includes('-block-');
+  const isQuestionCardShell = testId === 'question-card-shell';
+  const isQuestionAnchor =
+    testId === 'kangur-test-question-anchor' || testId === 'kangur-game-question-anchor';
+  return Boolean(isLessonBlock || isQuestionCardShell || isQuestionAnchor);
+};
+
+const resolveSelectionContainerRect = (range: Range | null): DOMRect | null => {
+  if (!range || typeof document === 'undefined') {
+    return null;
+  }
+
+  for (
+    let current = resolveSelectionCommonAncestor(range);
+    current;
+    current = current.parentElement
+  ) {
+    if (!isSelectionContainerCandidate(current.getAttribute('data-testid'))) {
+      continue;
+    }
+    return cloneDomRect(current.getBoundingClientRect());
+  }
+
+  return null;
+};
+
+const resolveActiveSelectionRange = (selection: Selection | null): Range | null => {
+  if (!selection || selection.rangeCount <= 0 || selection.isCollapsed) {
+    return null;
+  }
+  return selection.getRangeAt(0);
+};
+
+const resolveSelectionRangeRect = (range: Range | null): DOMRect | null =>
+  range && typeof range.getBoundingClientRect === 'function'
+    ? cloneDomRect(range.getBoundingClientRect())
+    : null;
+
+const resolveSelectionLineRects = (range: Range | null): DOMRect[] =>
+  range && typeof range.getClientRects === 'function' ? cloneDomRects(range.getClientRects()) : [];
+
+const hasSelectionSnapshot = (text: string, range: Range | null): boolean =>
+  text.length > 0 && range !== null;
+
+const resolveSelectionSnapshot = (): {
+  containerRect: DOMRect | null;
+  lineRects: DOMRect[];
+  range: Range | null;
+  rangeRect: DOMRect | null;
+  text: string;
+} => {
+  const selection = window.getSelection();
+  const text = selection?.toString().trim() ?? '';
+  const range = resolveActiveSelectionRange(selection);
+  const hasSelection = hasSelectionSnapshot(text, range);
+  return {
+    containerRect: hasSelection ? resolveSelectionContainerRect(range) : null,
+    lineRects: hasSelection ? resolveSelectionLineRects(range) : [],
+    range,
+    rangeRect: hasSelection ? resolveSelectionRangeRect(range) : null,
+    text,
+  };
+};
+
 export function useKangurTextHighlight(): KangurTextHighlightResult {
   const [selectedText, setSelectedText] = useState<string | null>(null);
   const [selectionLineRects, setSelectionLineRects] = useState<DOMRect[]>([]);
@@ -282,57 +351,24 @@ export function useKangurTextHighlight(): KangurTextHighlightResult {
   }, [clearSelectionGlow]);
 
   useEffect(() => {
-    const resolveSelectionContainerRect = (range: Range | null): DOMRect | null => {
-      if (!range || typeof document === 'undefined') {
-        return null;
-      }
-
-      const commonAncestor =
-        range.commonAncestorContainer instanceof Element
-          ? range.commonAncestorContainer
-          : range.commonAncestorContainer.parentElement;
-
-      for (let current = commonAncestor; current; current = current.parentElement) {
-        const testId = current.getAttribute('data-testid');
-        const isLessonBlock = testId?.startsWith('lesson-') && testId.includes('-block-');
-        const isQuestionCardShell = testId === 'question-card-shell';
-        const isQuestionAnchor =
-          testId === 'kangur-test-question-anchor' || testId === 'kangur-game-question-anchor';
-
-        if (isLessonBlock || isQuestionCardShell || isQuestionAnchor) {
-          return cloneDomRect(current.getBoundingClientRect());
-        }
-      }
-
-      return null;
-    };
-
     const handleSelectionChange = (): void => {
-      if (typeof window === 'undefined') return;
-      const selection = window.getSelection();
-      const text = selection?.toString().trim() ?? '';
-      const range =
-        selection && selection.rangeCount > 0 && !selection.isCollapsed
-          ? selection.getRangeAt(0)
-          : null;
-      const rangeRect =
-        range && typeof range.getBoundingClientRect === 'function'
-          ? cloneDomRect(range.getBoundingClientRect())
-          : null;
-      const lineRects =
-        range && typeof range.getClientRects === 'function'
-          ? cloneDomRects(range.getClientRects())
-          : [];
-      const containerRect = text.length > 0 ? resolveSelectionContainerRect(range) : null;
-      if (text.length > 0 && range) {
+      if (typeof window === 'undefined') {
+        return;
+      }
+
+      const snapshot = resolveSelectionSnapshot();
+      if (hasSelectionSnapshot(snapshot.text, snapshot.range)) {
         selectionClearTokenRef.current += 1;
         clearSelectionGlow();
       }
-      selectionRangeRef.current = text.length > 0 && range ? range.cloneRange() : null;
-      setSelectionLineRects(text.length > 0 ? lineRects : []);
-      setSelectedText(text.length > 0 ? text : null);
-      setSelectionRect(text.length > 0 ? rangeRect : null);
-      setSelectionContainerRect(containerRect);
+
+      selectionRangeRef.current = hasSelectionSnapshot(snapshot.text, snapshot.range)
+        ? snapshot.range.cloneRange()
+        : null;
+      setSelectionLineRects(snapshot.lineRects);
+      setSelectedText(snapshot.text.length > 0 ? snapshot.text : null);
+      setSelectionRect(snapshot.rangeRect);
+      setSelectionContainerRect(snapshot.containerRect);
     };
 
     document.addEventListener('selectionchange', handleSelectionChange);

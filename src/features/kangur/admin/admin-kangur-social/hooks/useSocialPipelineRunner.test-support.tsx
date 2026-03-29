@@ -48,7 +48,6 @@ export const trackKangurClientEventMock =
 export const completedVisualAnalysis = {
   summary: 'The hero now shows a larger student card and clearer CTA.',
   highlights: ['Larger student card', 'Clearer CTA'],
-  docUpdates: [],
 } as const;
 
 export const createWrapper = (): React.ComponentType<{ children: ReactNode }> => {

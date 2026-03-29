@@ -16,6 +16,7 @@ import { getSocialPostAddonCaptureDetailLabels } from './social-post-addon-captu
 
 export function SocialPostVisualAnalysisModal(): React.JSX.Element | null {
   const {
+    activePost,
     isVisualAnalysisModalOpen,
     handleCloseVisualAnalysisModal,
     handleAnalyzeSelectedVisuals,
@@ -51,6 +52,28 @@ export function SocialPostVisualAnalysisModal(): React.JSX.Element | null {
     visionModelId?.trim() ||
     visionModelOptions?.effectiveModelId?.trim() ||
     'Not configured';
+  const visualAnalysisStatus = activePost?.visualAnalysisStatus ?? null;
+  const visualAnalysisUpdatedAt = activePost?.visualAnalysisUpdatedAt ?? null;
+  const visualAnalysisModelId = activePost?.visualAnalysisModelId?.trim() ?? '';
+  const visualAnalysisJobId = activePost?.visualAnalysisJobId?.trim() ?? '';
+  const visualAnalysisStatusLabel =
+    visualAnalysisStatus === 'queued'
+      ? 'Queued'
+      : visualAnalysisStatus === 'running'
+        ? 'Running'
+        : visualAnalysisStatus === 'completed'
+          ? 'Completed'
+          : visualAnalysisStatus === 'failed'
+            ? 'Failed'
+            : null;
+  const hasSavedAnalysisMetadata = Boolean(
+    visualAnalysisStatusLabel ||
+      visualAnalysisUpdatedAt ||
+      visualAnalysisModelId ||
+      visualAnalysisJobId
+  );
+  const hasFailedSavedAnalysis = visualAnalysisStatus === 'failed';
+  const visualAnalysisHighlights = visualAnalysisResult?.highlights ?? [];
 
   return (
     <FormModal
@@ -149,10 +172,33 @@ export function SocialPostVisualAnalysisModal(): React.JSX.Element | null {
           </div>
         ) : null}
 
+        {hasSavedAnalysisMetadata ? (
+          <div
+            className={
+              hasFailedSavedAnalysis
+                ? 'rounded-xl border border-destructive/30 bg-destructive/10 px-3 py-2 text-xs text-destructive'
+                : 'rounded-xl border border-border/60 bg-background/40 px-3 py-2 text-xs text-muted-foreground'
+            }
+          >
+            {visualAnalysisStatusLabel ? <div>Status: {visualAnalysisStatusLabel}</div> : null}
+            {visualAnalysisUpdatedAt ? (
+              <div>Analyzed: {new Date(visualAnalysisUpdatedAt).toLocaleString()}</div>
+            ) : null}
+            {visualAnalysisModelId ? <div>Model: {visualAnalysisModelId}</div> : null}
+            {visualAnalysisJobId ? <div>Queue job: {visualAnalysisJobId}</div> : null}
+          </div>
+        ) : null}
+
         {isSavedVisualAnalysisStale && hasSavedVisualAnalysis && !visualAnalysisResult ? (
           <div className='rounded-xl border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-sm text-amber-900 dark:text-amber-200'>
             Saved image analysis exists for this draft, but the selected visuals changed.
             Rerun image analysis to refresh it before generating copy.
+          </div>
+        ) : null}
+
+        {hasFailedSavedAnalysis && !visualAnalysisResult && !visualAnalysisPending ? (
+          <div className='rounded-xl border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive'>
+            The latest saved image-analysis run failed. Review the status above, then rerun image analysis before generating copy from visuals.
           </div>
         ) : null}
 
@@ -167,9 +213,9 @@ export function SocialPostVisualAnalysisModal(): React.JSX.Element | null {
 
             <div className='space-y-2'>
               <div className='text-sm font-semibold text-foreground'>Highlights</div>
-              {visualAnalysisResult.highlights.length > 0 ? (
+              {visualAnalysisHighlights.length > 0 ? (
                 <ul className='space-y-1 text-sm text-muted-foreground'>
-                  {visualAnalysisResult.highlights.map((highlight) => (
+                  {visualAnalysisHighlights.map((highlight) => (
                     <li key={highlight}>- {highlight}</li>
                   ))}
                 </ul>
@@ -177,45 +223,13 @@ export function SocialPostVisualAnalysisModal(): React.JSX.Element | null {
                 <div className='text-sm text-muted-foreground'>No highlight bullets returned.</div>
               )}
             </div>
-            <div className='space-y-2'>
-              <div className='text-sm font-semibold text-foreground'>
-                Suggested documentation updates
-              </div>
-              {visualAnalysisResult.docUpdates.length > 0 ? (
-                <div className='space-y-2 text-sm text-muted-foreground'>
-                  {visualAnalysisResult.docUpdates.map((update, index) => {
-                    const target = update.section?.trim()
-                      ? `${update.docPath} -> ${update.section.trim()}`
-                      : update.docPath;
-                    return (
-                      <div
-                        key={`${target}-${index}`}
-                        className='rounded-lg border border-border/50 bg-background/60 px-3 py-2'
-                      >
-                        <div className='font-medium text-foreground/90'>{target}</div>
-                        {update.reason?.trim() ? (
-                          <div className='mt-1'>{update.reason.trim()}</div>
-                        ) : null}
-                        {update.proposedText?.trim() ? (
-                          <div className='mt-1 text-xs text-muted-foreground/90'>
-                            {update.proposedText.trim()}
-                          </div>
-                        ) : null}
-                      </div>
-                    );
-                  })}
-                </div>
-              ) : (
-                <div className='text-sm text-muted-foreground'>
-                  No documentation updates suggested.
-                </div>
-              )}
-            </div>
           </div>
         ) : (
           <div className='rounded-xl border border-border/60 bg-background/40 px-3 py-2 text-sm text-muted-foreground'>
             {isSavedVisualAnalysisStale && hasSavedVisualAnalysis
               ? 'Rerun image analysis first. After reviewing the refreshed visual description, use Generate post with analysis to create the LinkedIn update in the next AI pass.'
+              : hasFailedSavedAnalysis
+                ? 'Rerun image analysis first. The latest saved run failed, so there is no usable visual description to generate from yet.'
               : 'Run image analysis first. After reviewing the visual description, use Generate post with analysis to create the LinkedIn update in the next AI pass.'}
           </div>
         )}

@@ -73,4 +73,20 @@ describe('useKangurRoutePageReady', () => {
     });
     expect(requestAnimationFrameSpy).not.toHaveBeenCalled();
   });
+
+  it('fast-tracks locale-switch transitions even before the page is marked ready', () => {
+    routeTransitionStateMock.mockReturnValue({
+      transitionPhase: 'waiting_for_ready',
+      activeTransitionKind: 'locale-switch',
+      activeTransitionPageKey: 'Lessons',
+      activeTransitionRequestedHref: '/pl/kangur/lessons',
+    });
+
+    render(<RouteReadyProbe ready={false} />);
+
+    expect(markRouteTransitionReadyMock).toHaveBeenCalledWith({
+      pageKey: 'Lessons',
+      requestedHref: '/kangur/lessons',
+    });
+  });
 });

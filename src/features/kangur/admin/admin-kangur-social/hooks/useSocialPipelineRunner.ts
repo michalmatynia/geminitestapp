@@ -162,7 +162,6 @@ const buildVisualAnalysisFromPost = (
   return {
     summary,
     highlights,
-    docUpdates: [],
   };
 };
 

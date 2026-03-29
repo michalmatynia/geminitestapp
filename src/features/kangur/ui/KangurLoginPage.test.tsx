@@ -83,6 +83,18 @@ describe('KangurLoginPage', () => {
     });
   });
 
+  it('renders the mode hint with Kangur theme variables instead of light slate shell colors', () => {
+    renderWithIntl(<KangurLoginPage defaultCallbackUrl='/kangur' />);
+
+    const modeHint = screen.getByTestId('kangur-login-mode-hint');
+    const modeHintStyle = modeHint.getAttribute('style') ?? '';
+
+    expect(modeHintStyle).toContain('var(--kangur-soft-card-border');
+    expect(modeHintStyle).toContain('var(--kangur-page-muted-text');
+    expect(modeHintStyle).not.toContain('bg-slate-50');
+    expect(modeHintStyle).not.toContain('border-slate-200');
+  });
+
   it('keeps the sign-in flow Turnstile-free and surfaces inline captcha load errors from the create-account hook', async () => {
     renderWithIntl(<KangurLoginPage defaultCallbackUrl='/kangur' />);
 

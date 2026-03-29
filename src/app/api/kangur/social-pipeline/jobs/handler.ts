@@ -202,7 +202,6 @@ const sanitizeJobResult = (
       analysis?: {
         summary?: string;
         highlights?: unknown[];
-        docUpdates?: unknown[];
       };
       savedPost?: unknown;
     };

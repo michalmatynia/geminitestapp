@@ -139,8 +139,6 @@ const buildPost = () => ({
   visualAnalysisUpdatedAt: null,
   visualAnalysisJobId: null,
   visualAnalysisModelId: null,
-  docUpdatesAppliedAt: null,
-  docUpdatesAppliedBy: null,
   createdBy: null,
   updatedBy: null,
   createdAt: '2026-03-19T10:00:00.000Z',
@@ -204,8 +202,8 @@ describe('SocialPostList', () => {
               {
                 docPath: 'docs/homepage.md',
                 section: 'Hero',
-                reason: 'Document the larger teacher CTA card',
-                proposedText: 'Update the hero section docs with the new classroom CTA emphasis.',
+                reason: 'Document the stronger CTA emphasis for teachers.',
+                proposedText: 'Describe the larger CTA card in the homepage hero docs.',
               },
             ],
             visualAnalysisStatus: 'completed',
@@ -234,7 +232,14 @@ describe('SocialPostList', () => {
     expect(screen.getByText('1 doc update')).toBeInTheDocument();
 
     fireEvent.change(screen.getByLabelText('Search social posts'), {
-      target: { value: 'classroom cta emphasis' },
+      target: { value: 'teacher illustration is more central' },
+    });
+
+    expect(screen.getByText('Visual refresh')).toBeInTheDocument();
+    expect(screen.queryByText('Plain draft')).not.toBeInTheDocument();
+
+    fireEvent.change(screen.getByLabelText('Search social posts'), {
+      target: { value: 'larger CTA card in the homepage hero docs' },
     });
 
     expect(screen.getByText('Visual refresh')).toBeInTheDocument();

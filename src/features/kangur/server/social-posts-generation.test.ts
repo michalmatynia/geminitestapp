@@ -37,7 +37,6 @@ describe('generateKangurSocialPostDraft', () => {
     mocks.analyzeKangurSocialVisualsMock.mockResolvedValue({
       summary: 'Visual summary',
       highlights: ['Highlight'],
-      docUpdates: [],
     });
     mocks.runBrainChatCompletionMock.mockResolvedValue({
       text: JSON.stringify({
@@ -100,7 +99,6 @@ describe('generateKangurSocialPostDraft', () => {
       prefetchedVisualAnalysis: {
         summary: 'The hero now shows a larger classroom card.',
         highlights: ['Larger classroom card'],
-        docUpdates: [],
       },
       requireVisualAnalysisInBody: true,
     });

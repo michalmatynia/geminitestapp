@@ -21,6 +21,7 @@ const PIPELINE_PROGRESS_VALUE_BY_STEP = {
 
 export function SocialPostPipeline(): React.JSX.Element {
   const {
+    activePost,
     activePostId,
     editorState,
     pipelineStep,
@@ -81,10 +82,34 @@ export function SocialPostPipeline(): React.JSX.Element {
   const captureRemainingCount = pipelineProgress?.captureRemainingCount ?? 0;
   const captureTotalCount = pipelineProgress?.captureTotalCount ?? 0;
   const captureFailureCount = pipelineProgress?.captureFailureCount ?? 0;
-  const readyVisualHighlightCount = visualAnalysisResult?.highlights.length ?? 0;
+  const readyVisualHighlightCount = visualAnalysisResult?.highlights?.length ?? 0;
+  const readyVisualAnalysisStatus = activePost?.visualAnalysisStatus ?? null;
+  const readyVisualAnalysisUpdatedAt = activePost?.visualAnalysisUpdatedAt ?? null;
+  const readyVisualAnalysisModelId = activePost?.visualAnalysisModelId?.trim() ?? '';
+  const readyVisualAnalysisJobId = activePost?.visualAnalysisJobId?.trim() ?? '';
+  const readyVisualAnalysisStatusLabel =
+    readyVisualAnalysisStatus === 'queued'
+      ? 'Queued'
+      : readyVisualAnalysisStatus === 'running'
+        ? 'Running'
+        : readyVisualAnalysisStatus === 'completed'
+          ? 'Completed'
+          : readyVisualAnalysisStatus === 'failed'
+            ? 'Failed'
+            : null;
+  const hasInFlightVisualAnalysisStatus =
+    readyVisualAnalysisStatus === 'queued' || readyVisualAnalysisStatus === 'running';
+  const hasFailedVisualAnalysisStatus = readyVisualAnalysisStatus === 'failed';
+  const hasLatestVisualAnalysisMetadata = Boolean(
+    readyVisualAnalysisStatusLabel ||
+      readyVisualAnalysisUpdatedAt ||
+      readyVisualAnalysisModelId ||
+      readyVisualAnalysisJobId
+  );
   const hasReadyVisualAnalysis =
-    Boolean(visualAnalysisResult?.summary.trim()) ||
-    readyVisualHighlightCount > 0;
+    Boolean(visualAnalysisResult?.summary.trim()) || readyVisualHighlightCount > 0;
+  const shouldReviewVisualAnalysis =
+    !isSavedVisualAnalysisStale && (hasReadyVisualAnalysis || hasLatestVisualAnalysisMetadata);
   const textPipelineButtonTitle = !hasActivePost
     ? 'Create or select a draft before running the pipeline.'
     : !canGenerateSocialDraft
@@ -103,8 +128,14 @@ export function SocialPostPipeline(): React.JSX.Element {
           ? 'Saved image analysis exists for this draft, but the selected visuals changed. Rerun image analysis before generating.'
         : hasReadyVisualAnalysis
           ? 'Review the saved image analysis or start the separate Generate post with analysis step.'
-          : 'Analyze the selected visuals first, then use Generate post with analysis as the follow-up AI pass.';
-  const visualAnalysisButtonLabel = hasReadyVisualAnalysis
+        : hasFailedVisualAnalysisStatus
+          ? 'Review the failed image-analysis run or rerun analysis from the modal.'
+        : hasInFlightVisualAnalysisStatus
+          ? 'Review the latest image-analysis run status or open the modal to wait for the saved result.'
+        : hasLatestVisualAnalysisMetadata && !hasReadyVisualAnalysis
+          ? 'Review the latest saved image-analysis run status or rerun analysis from the modal.'
+        : 'Analyze the selected visuals first, then use Generate post with analysis as the follow-up AI pass.';
+  const visualAnalysisButtonLabel = shouldReviewVisualAnalysis
     ? 'Review image analysis'
     : 'Image analysis';
   const freshCaptureButtonTitle = !hasActivePost
@@ -176,7 +207,7 @@ export function SocialPostPipeline(): React.JSX.Element {
             </Button>
             <Button
               type='button'
-              variant={hasReadyVisualAnalysis ? 'secondary' : 'outline'}
+              variant={shouldReviewVisualAnalysis ? 'secondary' : 'outline'}
               size='sm'
               onClick={handleOpenVisualAnalysisModal}
               disabled={!canRunVisualAnalysis || isPipelineBusy}
@@ -253,6 +284,34 @@ export function SocialPostPipeline(): React.JSX.Element {
                 ? ` ${readyVisualHighlightCount} highlight${readyVisualHighlightCount === 1 ? '' : 's'}.`
                 : ''}
               {' '}Open the modal to review it or start the post-generation pass.
+              {readyVisualAnalysisStatusLabel || readyVisualAnalysisModelId || readyVisualAnalysisJobId ? (
+                <div className='mt-1 text-[11px] text-emerald-950/80 dark:text-emerald-100/80'>
+                  {readyVisualAnalysisStatusLabel ? `Saved run: ${readyVisualAnalysisStatusLabel}. ` : ''}
+                  {readyVisualAnalysisUpdatedAt
+                    ? `Analyzed: ${new Date(readyVisualAnalysisUpdatedAt).toLocaleString()}. `
+                    : ''}
+                  {readyVisualAnalysisModelId ? `Model: ${readyVisualAnalysisModelId}. ` : ''}
+                  {readyVisualAnalysisJobId ? `Queue job: ${readyVisualAnalysisJobId}.` : ''}
+                </div>
+              ) : null}
+            </div>
+          )}
+
+          {!hasReadyVisualAnalysis && hasLatestVisualAnalysisMetadata && !isPipelineBusy && (
+            <div
+              className={
+                hasFailedVisualAnalysisStatus
+                  ? 'rounded-xl border border-destructive/30 bg-destructive/10 px-3 py-2 text-xs text-destructive'
+                  : 'rounded-xl border border-border/60 bg-background/40 px-3 py-2 text-xs text-muted-foreground'
+              }
+            >
+              Latest image analysis status:
+              {readyVisualAnalysisStatusLabel ? ` ${readyVisualAnalysisStatusLabel}.` : ''}
+              {readyVisualAnalysisUpdatedAt
+                ? ` Analyzed: ${new Date(readyVisualAnalysisUpdatedAt).toLocaleString()}.`
+                : ''}
+              {readyVisualAnalysisModelId ? ` Model: ${readyVisualAnalysisModelId}.` : ''}
+              {readyVisualAnalysisJobId ? ` Queue job: ${readyVisualAnalysisJobId}.` : ''}
             </div>
           )}
 

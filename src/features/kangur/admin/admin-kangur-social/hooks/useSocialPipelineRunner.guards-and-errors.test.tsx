@@ -30,9 +30,7 @@ describe('useSocialPipelineRunner guard and error flows', () => {
         status: 'draft',
         visualSummary: completedVisualAnalysis.summary,
         visualHighlights: [...completedVisualAnalysis.highlights],
-        visualDocUpdates: [],
         visualAnalysisSourceImageAddonIds: ['addon-1'],
-        visualAnalysisSourceDocReferences: [],
         visualAnalysisSourceVisionModelId: 'vision-1',
       } as never,
       activePostId: 'post-1',
@@ -113,9 +111,7 @@ describe('useSocialPipelineRunner guard and error flows', () => {
         status: 'draft',
         visualSummary: completedVisualAnalysis.summary,
         visualHighlights: [...completedVisualAnalysis.highlights],
-        visualDocUpdates: [],
         visualAnalysisSourceImageAddonIds: ['addon-1'],
-        visualAnalysisSourceDocReferences: [],
         visualAnalysisSourceVisionModelId: 'vision-1',
       } as never,
       activePostId: 'post-1',
@@ -169,6 +165,64 @@ describe('useSocialPipelineRunner guard and error flows', () => {
 
     expect(result.current.visualAnalysisResult).toEqual(completedVisualAnalysis);
     expect(result.current.hasSavedVisualAnalysis).toBe(true);
+    expect(result.current.isSavedVisualAnalysisStale).toBe(false);
+  });
+
+  it('does not treat an empty saved analysis payload as persisted image analysis', async () => {
+    const { result } = renderHook(
+      () =>
+        useSocialPipelineRunner({
+          activePost: {
+            id: 'post-1',
+            titlePl: 'Draft',
+            titleEn: '',
+            bodyPl: '',
+            bodyEn: '',
+            status: 'draft',
+            visualSummary: '',
+            visualHighlights: [],
+            visualAnalysisSourceImageAddonIds: ['addon-1'],
+            visualAnalysisSourceVisionModelId: 'vision-1',
+          } as never,
+          activePostId: 'post-1',
+          editorState: {
+            titlePl: 'Draft',
+            titleEn: '',
+            bodyPl: '',
+            bodyEn: '',
+          },
+          imageAssets: [],
+          imageAddonIds: ['addon-1'],
+          batchCaptureBaseUrl: 'https://example.com',
+          batchCapturePresetIds: ['preset-1'],
+          batchCapturePresetLimit: 1,
+          linkedinConnectionId: null,
+          brainModelId: 'brain-1',
+          visionModelId: 'vision-1',
+          canRunServerPipeline: true,
+          pipelineBlockedReason: null,
+          canRunVisualAnalysisPipeline: true,
+          visualAnalysisBlockedReason: null,
+          projectUrl: 'https://example.com/project',
+          generationNotes: 'Call out the updated hero.',
+          resolveDocReferences: () => ['docs/kangur/example.mdx'],
+          buildSocialContext: () => ({ postId: 'post-1' }),
+          handleLoadContext: vi.fn(),
+          setContextSummary: vi.fn(),
+          setActivePostId: vi.fn(),
+          setEditorState: vi.fn(),
+          setImageAddonIds: vi.fn(),
+          setImageAssets: vi.fn(),
+          setBatchCaptureResult: vi.fn(),
+          handleSelectAddons: vi.fn(),
+        }),
+      { wrapper: createWrapper() }
+    );
+
+    await act(async () => {});
+
+    expect(result.current.visualAnalysisResult).toBeNull();
+    expect(result.current.hasSavedVisualAnalysis).toBe(false);
     expect(result.current.isSavedVisualAnalysisStale).toBe(false);
   });
 

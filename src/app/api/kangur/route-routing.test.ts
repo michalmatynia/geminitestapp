@@ -95,7 +95,6 @@ describe('kangur route routing', () => {
         JSON.stringify({
           summary: 'Visual summary',
           highlights: ['Highlight'],
-          docUpdates: [],
         }),
         {
           status: 200,
@@ -237,7 +236,6 @@ describe('kangur route routing', () => {
     await expect(response.json()).resolves.toEqual({
       summary: 'Visual summary',
       highlights: ['Highlight'],
-      docUpdates: [],
     });
   });
 });

@@ -25,6 +25,22 @@ type KangurGameInstancesQueryOptions = {
   instanceId?: KangurGameInstanceId;
 };
 
+const resolveGameInstancesQueryFilters = (
+  options?: KangurGameInstancesQueryOptions
+): {
+  enabledOnly: boolean | null;
+  gameId: KangurGameId | null;
+  instanceId: KangurGameInstanceId | null;
+} => ({
+  enabledOnly: options?.enabledOnly ?? null,
+  gameId: options?.gameId ?? null,
+  instanceId: options?.instanceId ?? null,
+});
+
+const isGameInstancesQueryEnabled = (
+  options?: KangurGameInstancesQueryOptions
+): boolean => options?.enabled ?? true;
+
 const fetchGameInstances = async (
   options?: KangurGameInstancesQueryOptions
 ): Promise<KangurGameInstance[]> =>
@@ -58,20 +74,16 @@ const fetchGameInstances = async (
     }
   );
 
-export const useKangurGameInstances = (
+const createKangurGameInstancesQuery = (
   options?: KangurGameInstancesQueryOptions
 ): ListQuery<KangurGameInstance, KangurGameInstance[]> =>
   createListQueryV2<KangurGameInstance, KangurGameInstance[]>({
     queryKey: [
       ...QUERY_KEYS.kangur.gameInstances(),
-      {
-        enabledOnly: options?.enabledOnly ?? null,
-        gameId: options?.gameId ?? null,
-        instanceId: options?.instanceId ?? null,
-      },
+      resolveGameInstancesQueryFilters(options),
     ],
     queryFn: async (): Promise<KangurGameInstance[]> => await fetchGameInstances(options),
-    enabled: options?.enabled ?? true,
+    enabled: isGameInstancesQueryEnabled(options),
     placeholderData: () => [],
     staleTime: 1000 * 60 * 5,
     refetchOnMount: false,
@@ -87,6 +99,11 @@ export const useKangurGameInstances = (
       description: 'Loads persisted Kangur launchable game instances.',
     },
   });
+
+export const useKangurGameInstances = (
+  options?: KangurGameInstancesQueryOptions
+): ListQuery<KangurGameInstance, KangurGameInstance[]> =>
+  createKangurGameInstancesQuery(options);
 
 const invalidateGameInstances = (queryClient: {
   invalidateQueries: (args: { queryKey: readonly unknown[] }) => void;

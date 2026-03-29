@@ -100,6 +100,27 @@ describe('KangurStorefrontAppearanceProvider', () => {
     });
   });
 
+  it('keeps local override enabled in production unless explicitly disabled', async () => {
+    vi.stubEnv('NODE_ENV', 'production');
+    settingsStoreGetMock.mockImplementation((key: string) => {
+      if (key === KANGUR_STOREFRONT_DEFAULT_MODE_SETTING_KEY) {
+        return 'default';
+      }
+      return undefined;
+    });
+    window.localStorage.setItem('kangur-storefront-appearance-mode', 'dark');
+
+    render(
+      <KangurStorefrontAppearanceProvider>
+        <ModeProbe />
+      </KangurStorefrontAppearanceProvider>
+    );
+
+    await waitFor(() => {
+      expect(screen.getByTestId('mode-probe')).toHaveTextContent('dark');
+    });
+  });
+
   it('ignores local override when persistence is disabled', async () => {
     setEnvValue('NEXT_PUBLIC_KANGUR_APPEARANCE_PERSIST', 'false');
     settingsStoreGetMock.mockImplementation((key: string) => {

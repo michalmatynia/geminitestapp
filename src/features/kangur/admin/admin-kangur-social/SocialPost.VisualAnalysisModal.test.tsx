@@ -98,6 +98,12 @@ describe('SocialPostVisualAnalysisModal', () => {
 
   it('renders selected visuals and the returned analysis result', () => {
     useSocialPostContextMock.mockReturnValue({
+      activePost: {
+        visualAnalysisStatus: 'completed',
+        visualAnalysisUpdatedAt: '2026-03-20T12:00:00.000Z',
+        visualAnalysisModelId: 'vision-1',
+        visualAnalysisJobId: 'job-analysis-7',
+      },
       isVisualAnalysisModalOpen: true,
       handleCloseVisualAnalysisModal: vi.fn(),
       handleAnalyzeSelectedVisuals: vi.fn(),
@@ -105,14 +111,6 @@ describe('SocialPostVisualAnalysisModal', () => {
       visualAnalysisResult: {
         summary: 'The hero now emphasizes the classroom card and stronger CTA.',
         highlights: ['Classroom card is larger', 'CTA is stronger'],
-        docUpdates: [
-          {
-            docPath: 'docs/homepage.md',
-            section: 'Hero',
-            reason: 'Document the stronger CTA emphasis for teachers.',
-            proposedText: 'Describe the larger CTA card in the homepage hero docs.',
-          },
-        ],
       },
       hasSavedVisualAnalysis: true,
       isSavedVisualAnalysisStale: false,
@@ -137,14 +135,10 @@ describe('SocialPostVisualAnalysisModal', () => {
     expect(screen.getByText('Run: playwright-run-4')).toBeInTheDocument();
     expect(screen.getByText('- Classroom card is larger')).toBeInTheDocument();
     expect(screen.getByText('- CTA is stronger')).toBeInTheDocument();
-    expect(screen.getByText('Suggested documentation updates')).toBeInTheDocument();
-    expect(screen.getByText('docs/homepage.md -> Hero')).toBeInTheDocument();
-    expect(
-      screen.getByText('Document the stronger CTA emphasis for teachers.')
-    ).toBeInTheDocument();
-    expect(
-      screen.getByText('Describe the larger CTA card in the homepage hero docs.')
-    ).toBeInTheDocument();
+    expect(screen.getByText('Status: Completed')).toBeInTheDocument();
+    expect(screen.getByText('Model: vision-1')).toBeInTheDocument();
+    expect(screen.getByText('Queue job: job-analysis-7')).toBeInTheDocument();
+    expect(screen.getByText(/Analyzed:/)).toBeInTheDocument();
     expect(
       screen.getByText(
         'Analyze the selected visuals to produce a visual description first. Then use Generate post with analysis to combine that description with the current context in a separate AI pass.'
@@ -217,6 +211,48 @@ describe('SocialPostVisualAnalysisModal', () => {
     expect(
       screen.getByText(
         'Rerun image analysis first. After reviewing the refreshed visual description, use Generate post with analysis to create the LinkedIn update in the next AI pass.'
+      )
+    ).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Generate post with analysis' })).toBeDisabled();
+  });
+
+  it('surfaces failed saved-analysis metadata and rerun guidance before a new result exists', () => {
+    useSocialPostContextMock.mockReturnValue({
+      activePost: {
+        visualAnalysisStatus: 'failed',
+        visualAnalysisUpdatedAt: '2026-03-20T12:00:00.000Z',
+        visualAnalysisModelId: 'vision-1',
+        visualAnalysisJobId: 'job-analysis-failed-1',
+      },
+      isVisualAnalysisModalOpen: true,
+      handleCloseVisualAnalysisModal: vi.fn(),
+      handleAnalyzeSelectedVisuals: vi.fn(),
+      handleRunFullPipelineWithVisualAnalysis: vi.fn(),
+      visualAnalysisResult: null,
+      hasSavedVisualAnalysis: false,
+      isSavedVisualAnalysisStale: false,
+      visualAnalysisErrorMessage: null,
+      visualAnalysisPending: false,
+      imageAddonIds: ['addon-1'],
+      recentAddons: [recentAddon],
+      visionModelId: 'vision-1',
+      visionModelOptions: { effectiveModelId: 'vision-routing' },
+    });
+
+    render(<SocialPostVisualAnalysisModal />);
+
+    expect(screen.getByText('Status: Failed')).toBeInTheDocument();
+    expect(screen.getByText(/Analyzed:/)).toBeInTheDocument();
+    expect(screen.getByText('Model: vision-1')).toBeInTheDocument();
+    expect(screen.getByText('Queue job: job-analysis-failed-1')).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        'The latest saved image-analysis run failed. Review the status above, then rerun image analysis before generating copy from visuals.'
+      )
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        'Rerun image analysis first. The latest saved run failed, so there is no usable visual description to generate from yet.'
       )
     ).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Generate post with analysis' })).toBeDisabled();

@@ -17,6 +17,7 @@ export { kangurLessonsQuerySchema as querySchema };
 export { kangurLessonsReplacePayloadSchema as bodySchema };
 
 const KANGUR_LESSONS_CACHE_TTL_MS = 30_000;
+const KANGUR_LESSONS_RESPONSE_CACHE_CONTROL = 'no-store';
 
 type KangurLessonsCacheEntry = {
   data: KangurLesson[];
@@ -63,7 +64,7 @@ export async function getKangurLessonsHandler(
   if (cached && now - cached.fetchedAt < KANGUR_LESSONS_CACHE_TTL_MS) {
     return NextResponse.json(cloneKangurLessons(cached.data), {
       headers: {
-        'Cache-Control': 'public, max-age=300, stale-while-revalidate=3600',
+        'Cache-Control': KANGUR_LESSONS_RESPONSE_CACHE_CONTROL,
       },
     });
   }
@@ -72,7 +73,7 @@ export async function getKangurLessonsHandler(
   if (inflight) {
     return NextResponse.json(cloneKangurLessons(await inflight), {
       headers: {
-        'Cache-Control': 'public, max-age=300, stale-while-revalidate=3600',
+        'Cache-Control': KANGUR_LESSONS_RESPONSE_CACHE_CONTROL,
       },
     });
   }
@@ -99,7 +100,7 @@ export async function getKangurLessonsHandler(
 
   return NextResponse.json(lessons, {
     headers: {
-      'Cache-Control': 'public, max-age=300, stale-while-revalidate=3600',
+      'Cache-Control': KANGUR_LESSONS_RESPONSE_CACHE_CONTROL,
     },
   });
 }

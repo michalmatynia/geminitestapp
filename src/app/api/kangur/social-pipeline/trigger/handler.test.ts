@@ -202,7 +202,6 @@ describe('social pipeline trigger handler', () => {
           prefetchedVisualAnalysis: {
             summary: 'Updated hero card',
             highlights: ['Updated hero card'],
-            docUpdates: [],
           },
           requireVisualAnalysisInBody: true,
         },
@@ -222,7 +221,6 @@ describe('social pipeline trigger handler', () => {
         prefetchedVisualAnalysis: {
           summary: 'Updated hero card',
           highlights: ['Updated hero card'],
-          docUpdates: [],
         },
         requireVisualAnalysisInBody: true,
         actorId: 'admin-1',

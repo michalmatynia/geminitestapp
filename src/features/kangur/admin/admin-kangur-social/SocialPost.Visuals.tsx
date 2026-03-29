@@ -50,13 +50,11 @@ export function SocialPostVisuals(props: SocialPostVisualsProps): React.JSX.Elem
   const recentAddonsLoading = addonsQuery.isLoading;
   const visualSummary = activePost?.visualSummary?.trim() ?? '';
   const visualHighlights = activePost?.visualHighlights ?? [];
-  const visualDocUpdates = activePost?.visualDocUpdates ?? [];
   const visualAnalysisStatus = activePost?.visualAnalysisStatus ?? null;
   const visualAnalysisUpdatedAt = activePost?.visualAnalysisUpdatedAt ?? null;
   const visualAnalysisModelId = activePost?.visualAnalysisModelId?.trim() ?? '';
   const visualAnalysisJobId = activePost?.visualAnalysisJobId?.trim() ?? '';
-  const hasVisualAnalysis =
-    visualSummary.length > 0 || visualHighlights.length > 0 || visualDocUpdates.length > 0;
+  const hasVisualAnalysis = visualSummary.length > 0 || visualHighlights.length > 0;
   const hasVisualAnalysisSection =
     hasVisualAnalysis ||
     Boolean(
@@ -120,37 +118,6 @@ export function SocialPostVisuals(props: SocialPostVisualsProps): React.JSX.Elem
                   <li key={highlight}>- {highlight}</li>
                 ))}
               </ul>
-            </div>
-          ) : null}
-          {visualDocUpdates.length > 0 ? (
-            <div className='rounded-xl border border-border/60 bg-background/40 px-3 py-2'>
-              <div className='text-xs font-medium uppercase tracking-wide text-muted-foreground'>
-                Suggested documentation updates
-              </div>
-              <div className='mt-2 space-y-2 text-sm text-muted-foreground'>
-                {visualDocUpdates.map((update, index) => {
-                  const target =
-                    update.section?.trim()
-                      ? `${update.docPath} -> ${update.section.trim()}`
-                      : update.docPath;
-                  return (
-                    <div
-                      key={`${target}-${index}`}
-                      className='rounded-lg border border-border/50 bg-background/50 px-2 py-2'
-                    >
-                      <div className='font-medium text-foreground/90'>{target}</div>
-                      {update.reason?.trim() ? (
-                        <div className='mt-1'>{update.reason.trim()}</div>
-                      ) : null}
-                      {update.proposedText?.trim() ? (
-                        <div className='mt-1 text-xs text-muted-foreground/90'>
-                          {update.proposedText.trim()}
-                        </div>
-                      ) : null}
-                    </div>
-                  );
-                })}
-              </div>
             </div>
           ) : null}
         </FormSection>

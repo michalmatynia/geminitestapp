@@ -71,6 +71,8 @@ describe('kangur lessons catalog handler', () => {
 
     expect(listLessonsMock).toHaveBeenCalledTimes(1);
     expect(listSectionsMock).toHaveBeenCalledTimes(1);
+    expect(first.headers.get('cache-control')).toBe('no-store');
+    expect(second.headers.get('cache-control')).toBe('no-store');
     await expect(first.json()).resolves.toEqual({
       lessons: [expect.objectContaining({ componentId: 'division' })],
       sections: [expect.objectContaining({ id: 'maths_arithmetic' })],

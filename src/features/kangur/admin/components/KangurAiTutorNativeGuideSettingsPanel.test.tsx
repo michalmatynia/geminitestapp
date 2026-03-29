@@ -37,11 +37,14 @@ import { buildKangurAiTutorNativeGuideLocaleScaffold } from '@/features/kangur/s
 
 import { KangurAiTutorNativeGuideSettingsPanel } from './KangurAiTutorNativeGuideSettingsPanel';
 
+const cloneNativeGuideStore = (): KangurAiTutorNativeGuideStore =>
+  JSON.parse(JSON.stringify(DEFAULT_KANGUR_AI_TUTOR_NATIVE_GUIDE_STORE)) as KangurAiTutorNativeGuideStore;
+
 describe('KangurAiTutorNativeGuideSettingsPanel', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    apiGetMock.mockResolvedValue(DEFAULT_KANGUR_AI_TUTOR_NATIVE_GUIDE_STORE);
-    apiPostMock.mockResolvedValue(DEFAULT_KANGUR_AI_TUTOR_NATIVE_GUIDE_STORE);
+    apiGetMock.mockResolvedValue(cloneNativeGuideStore());
+    apiPostMock.mockResolvedValue(cloneNativeGuideStore());
   });
 
   it('reorders the selected guide entry and keeps the structured editor in sync', async () => {
@@ -114,20 +117,21 @@ describe('KangurAiTutorNativeGuideSettingsPanel', () => {
   });
 
   it('shows scaffolded, manual, and source-copy translation badges for guide entries', async () => {
+    const sourceStore = cloneNativeGuideStore();
     const englishStore = buildKangurAiTutorNativeGuideLocaleScaffold({
       locale: 'en',
-      sourceStore: DEFAULT_KANGUR_AI_TUTOR_NATIVE_GUIDE_STORE,
+      sourceStore,
     });
     const germanStore = buildKangurAiTutorNativeGuideLocaleScaffold({
       locale: 'de',
-      sourceStore: DEFAULT_KANGUR_AI_TUTOR_NATIVE_GUIDE_STORE,
+      sourceStore,
       existingStore: {
         locale: 'de',
         entries: [
           {
             ...buildKangurAiTutorNativeGuideLocaleScaffold({
               locale: 'de',
-              sourceStore: DEFAULT_KANGUR_AI_TUTOR_NATIVE_GUIDE_STORE,
+              sourceStore,
             }).entries.find((entry) => entry.id === 'auth-overview')!,
             title: 'Eigene Auth Uebersicht',
           },

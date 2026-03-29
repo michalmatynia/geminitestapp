@@ -3,14 +3,12 @@
 import type { QueryClient } from '@tanstack/react-query';
 
 import type {
-  KangurLesson,
   KangurLessonCollectionFilterDto,
   KangurLessonsCatalog,
 } from '@/shared/contracts/kangur';
 import {
   kangurLessonsCatalogSchema,
 } from '@/shared/contracts/kangur';
-import type { KangurLessonSection } from '@/shared/contracts/kangur-lesson-sections';
 import type { ListQuery } from '@/shared/contracts/ui';
 import {
   isRecoverableKangurClientFetchError,
@@ -35,48 +33,6 @@ export const createKangurLessonsCatalogQueryKey = (options?: LessonsCatalogQuery
     ...QUERY_KEYS.kangur.lessonsCatalog(),
     resolveLessonsCatalogFilters(options),
   ] as const;
-
-const filterLessons = (
-  lessons: KangurLesson[],
-  options?: LessonsCatalogQueryOptions
-): KangurLesson[] => {
-  let next = lessons;
-  if (options?.enabledOnly) {
-    next = next.filter((lesson) => lesson.enabled);
-  }
-  if (options?.subject) {
-    next = next.filter((lesson) => lesson.subject === options.subject);
-  }
-  if (options?.ageGroup) {
-    next = next.filter((lesson) => lesson.ageGroup === options.ageGroup);
-  }
-  return next;
-};
-
-const filterSections = (
-  sections: KangurLessonSection[],
-  options?: LessonsCatalogQueryOptions
-): KangurLessonSection[] => {
-  let next = sections;
-  if (options?.enabledOnly) {
-    next = next.filter((section) => section.enabled);
-  }
-  if (options?.subject) {
-    next = next.filter((section) => section.subject === options.subject);
-  }
-  if (options?.ageGroup) {
-    next = next.filter((section) => section.ageGroup === options.ageGroup);
-  }
-  return next;
-};
-
-const filterLessonsCatalog = (
-  catalog: KangurLessonsCatalog,
-  options?: LessonsCatalogQueryOptions
-): KangurLessonsCatalog => ({
-  lessons: filterLessons(catalog.lessons, options),
-  sections: filterSections(catalog.sections, options),
-});
 
 export const fetchKangurLessonsCatalog = async (
   options?: LessonsCatalogQueryOptions

@@ -58,16 +58,12 @@ const basePost: KangurSocialPost = {
   generatedSummary: null,
   visualSummary: null,
   visualHighlights: [],
-  visualDocUpdates: [],
   visualAnalysisSourceImageAddonIds: [],
-  visualAnalysisSourceDocReferences: [],
   visualAnalysisSourceVisionModelId: null,
   visualAnalysisStatus: null,
   visualAnalysisUpdatedAt: null,
   visualAnalysisJobId: null,
   visualAnalysisModelId: null,
-  docUpdatesAppliedAt: null,
-  docUpdatesAppliedBy: null,
   createdBy: null,
   updatedBy: null,
   createdAt: '2026-03-29T12:00:00.000Z',
@@ -83,7 +79,6 @@ describe('runKangurSocialPostVisualAnalysisJob', () => {
     mocks.analyzeKangurSocialVisualsMock.mockResolvedValue({
       summary: 'The hero now shows a larger classroom card.',
       highlights: ['Larger classroom card'],
-      docUpdates: [],
     });
     mocks.updateKangurSocialPostMock.mockImplementation(
       async (id: string, updates: Partial<KangurSocialPost>) => ({

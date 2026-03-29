@@ -28,6 +28,8 @@ type MongoKangurLessonDocument = Document &
 
 let indexesInitialized = false;
 let indexesInFlight: Promise<void> | null = null;
+let defaultsInitialized = false;
+let defaultsInFlight: Promise<void> | null = null;
 
 const ensureIndexes = async (db: Db): Promise<void> => {
   if (indexesInitialized) return;
@@ -101,9 +103,32 @@ const seedMissingLessons = async (
     return false;
   }
 
+  const existingLessonKeys = new Set(
+    (
+      await collection
+        .find(
+          {},
+          {
+            projection: {
+              componentId: 1,
+              ageGroup: 1,
+            },
+          }
+        )
+        .toArray()
+    ).map((lesson) => `${lesson.componentId}:${lesson.ageGroup}`)
+  );
+  const missingLessons = lessons.filter(
+    (lesson) => !existingLessonKeys.has(`${lesson.componentId}:${lesson.ageGroup}`)
+  );
+
+  if (missingLessons.length === 0) {
+    return false;
+  }
+
   const now = new Date();
   await collection.bulkWrite(
-    lessons.map((lesson) => ({
+    missingLessons.map((lesson) => ({
       updateOne: {
         filter: { _id: lesson.id },
         update: {
@@ -139,16 +164,36 @@ const seedLessonsFromLegacySettingsOrDefaults = async (
   return await seedMissingLessons(collection, sourceLessons);
 };
 
+const ensureDefaultLessons = async (
+  collection: Collection<MongoKangurLessonDocument>
+): Promise<void> => {
+  if (defaultsInitialized) {
+    return;
+  }
+  if (defaultsInFlight) {
+    await defaultsInFlight;
+    return;
+  }
+
+  defaultsInFlight = (async (): Promise<void> => {
+    await seedLessonsFromLegacySettingsOrDefaults(collection);
+    defaultsInitialized = true;
+  })();
+
+  try {
+    await defaultsInFlight;
+  } finally {
+    defaultsInFlight = null;
+  }
+};
+
 export const mongoKangurLessonRepository: KangurLessonRepository = {
   async listLessons(input?: KangurLessonListInput): Promise<KangurLesson[]> {
     const db = await getMongoDb();
     await ensureIndexes(db);
     const collection = db.collection<MongoKangurLessonDocument>(COLLECTION);
-    let docs = await collection.find(buildFilter(input)).sort({ sortOrder: 1, id: 1 }).toArray();
-    if (docs.length === 0) {
-      await seedLessonsFromLegacySettingsOrDefaults(collection);
-      docs = await collection.find(buildFilter(input)).sort({ sortOrder: 1, id: 1 }).toArray();
-    }
+    await ensureDefaultLessons(collection);
+    const docs = await collection.find(buildFilter(input)).sort({ sortOrder: 1, id: 1 }).toArray();
     if (docs.length === 0) {
       const fallbackFilter: Filter<MongoKangurLessonDocument> = {};
       if (input?.subject) {

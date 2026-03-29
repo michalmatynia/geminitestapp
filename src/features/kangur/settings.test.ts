@@ -242,6 +242,33 @@ describe('kangur lesson settings', () => {
     });
   });
 
+  it('keeps the canonical lesson id when duplicate component entries share the same requested id', () => {
+    const parsed = normalizeKangurLessons([
+      {
+        id: 'kangur-lesson-clock',
+        componentId: 'clock',
+        ageGroup: 'ten_year_old',
+        title: 'Nauka zegara',
+        enabled: true,
+        sortOrder: 1000,
+      },
+      {
+        id: 'kangur-lesson-clock',
+        componentId: 'clock',
+        ageGroup: 'ten_year_old',
+        title: 'Nauka zegara',
+        enabled: true,
+        sortOrder: 2000,
+      },
+    ]);
+
+    expect(parsed).toHaveLength(1);
+    expect(parsed[0]).toMatchObject({
+      id: 'kangur-lesson-clock',
+      componentId: 'clock',
+    });
+  });
+
   it('preserves explicit document render mode when provided', () => {
     const parsed = normalizeKangurLessons([
       {

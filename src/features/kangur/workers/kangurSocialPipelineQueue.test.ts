@@ -169,7 +169,6 @@ describe('kangurSocialPipelineQueue', () => {
       },
       savedPost: { id: 'post-1' },
       generatedPost: { id: 'post-1', titlePl: 'Generated' },
-      docUpdates: null,
     };
     runKangurSocialPostPipelineMock.mockResolvedValue(manualResult);
 
@@ -241,7 +240,6 @@ describe('kangurSocialPipelineQueue', () => {
       analysis: {
         summary: 'Updated classroom card',
         highlights: ['Updated classroom card'],
-        docUpdates: [],
       },
       savedPost: { id: 'post-1' },
     });

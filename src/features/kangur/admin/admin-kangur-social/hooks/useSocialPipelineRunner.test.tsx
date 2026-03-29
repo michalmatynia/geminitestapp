@@ -247,7 +247,6 @@ describe('useSocialPipelineRunner', () => {
           bodyPl: 'Body PL',
           bodyEn: 'Body EN',
         },
-        docUpdates: null,
       },
     });
 
@@ -380,7 +379,6 @@ describe('useSocialPipelineRunner', () => {
           bodyPl: 'Body PL',
           bodyEn: 'Body EN',
         },
-        docUpdates: null,
       },
       });
 
@@ -690,7 +688,6 @@ describe('useSocialPipelineRunner', () => {
           bodyPl: 'Body PL',
           bodyEn: 'Body EN',
         },
-        docUpdates: null,
       },
     });
 
@@ -704,7 +701,6 @@ describe('useSocialPipelineRunner', () => {
         status: 'draft',
         visualSummary: completedVisualAnalysis.summary,
         visualHighlights: [...completedVisualAnalysis.highlights],
-        visualDocUpdates: [],
       } as never,
       activePostId: 'post-1',
       editorState: {

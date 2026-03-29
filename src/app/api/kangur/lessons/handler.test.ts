@@ -63,6 +63,8 @@ describe('kangur lessons handler', () => {
     );
 
     expect(listLessonsMock).toHaveBeenCalledTimes(1);
+    expect(first.headers.get('cache-control')).toBe('no-store');
+    expect(second.headers.get('cache-control')).toBe('no-store');
     await expect(first.json()).resolves.toEqual([expect.objectContaining({ componentId: 'division' })]);
     await expect(second.json()).resolves.toEqual([expect.objectContaining({ componentId: 'division' })]);
   });
@@ -95,6 +97,7 @@ describe('kangur lessons handler', () => {
     );
 
     expect(listLessonsMock).toHaveBeenCalledTimes(2);
+    expect(refreshed.headers.get('cache-control')).toBe('no-store');
     await expect(refreshed.json()).resolves.toEqual([
       expect.objectContaining({ componentId: 'multiplication' }),
     ]);

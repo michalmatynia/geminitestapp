@@ -118,7 +118,6 @@ describe('social post generate handler', () => {
         prefetchedVisualAnalysis: {
           summary: 'The hero now shows a larger classroom card.',
           highlights: ['Larger classroom card'],
-          docUpdates: [],
         },
         requireVisualAnalysisInBody: true,
       })
@@ -130,7 +129,6 @@ describe('social post generate handler', () => {
         prefetchedVisualAnalysis: {
           summary: 'The hero now shows a larger classroom card.',
           highlights: ['Larger classroom card'],
-          docUpdates: [],
         },
         requireVisualAnalysisInBody: true,
       }),

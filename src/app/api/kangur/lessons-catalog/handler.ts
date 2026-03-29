@@ -14,6 +14,7 @@ import type { ApiHandlerContext } from '@/shared/contracts/ui';
 export { kangurLessonsQuerySchema as querySchema };
 
 const KANGUR_LESSONS_CATALOG_CACHE_TTL_MS = 30_000;
+const KANGUR_LESSONS_CATALOG_RESPONSE_CACHE_CONTROL = 'no-store';
 
 type KangurLessonsCatalogCacheEntry = {
   data: KangurLessonsCatalog;
@@ -62,7 +63,7 @@ export async function getKangurLessonsCatalogHandler(
   if (cached && now - cached.fetchedAt < KANGUR_LESSONS_CATALOG_CACHE_TTL_MS) {
     return NextResponse.json(cloneKangurLessonsCatalog(cached.data), {
       headers: {
-        'Cache-Control': 'public, max-age=300, stale-while-revalidate=3600',
+        'Cache-Control': KANGUR_LESSONS_CATALOG_RESPONSE_CACHE_CONTROL,
       },
     });
   }
@@ -71,7 +72,7 @@ export async function getKangurLessonsCatalogHandler(
   if (inflight) {
     return NextResponse.json(cloneKangurLessonsCatalog(await inflight), {
       headers: {
-        'Cache-Control': 'public, max-age=300, stale-while-revalidate=3600',
+        'Cache-Control': KANGUR_LESSONS_CATALOG_RESPONSE_CACHE_CONTROL,
       },
     });
   }
@@ -107,7 +108,7 @@ export async function getKangurLessonsCatalogHandler(
 
   return NextResponse.json(catalog, {
     headers: {
-      'Cache-Control': 'public, max-age=300, stale-while-revalidate=3600',
+      'Cache-Control': KANGUR_LESSONS_CATALOG_RESPONSE_CACHE_CONTROL,
     },
   });
 }

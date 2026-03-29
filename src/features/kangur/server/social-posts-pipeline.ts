@@ -446,14 +446,10 @@ export async function runKangurSocialPostPipeline(
       docReferences: draft.docReferences,
       visualSummary: draft.visualSummary,
       visualHighlights: draft.visualHighlights,
-      visualDocUpdates: draft.visualDocUpdates,
       visualAnalysisSourceImageAddonIds: hasVisualAnalysisContent ? mergedImageAddonIds : [],
-      visualAnalysisSourceDocReferences: [],
       visualAnalysisSourceVisionModelId: hasVisualAnalysisContent
         ? (input.visionModelId ?? null)
         : null,
-      docUpdatesAppliedAt: null,
-      docUpdatesAppliedBy: null,
       imageAddonIds: mergedImageAddonIds,
       imageAssets: mergedImageAssets,
       contextSummary,

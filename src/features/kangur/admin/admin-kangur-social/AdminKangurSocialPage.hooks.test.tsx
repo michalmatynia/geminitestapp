@@ -100,7 +100,6 @@ import { useAdminKangurSocialPage } from './AdminKangurSocialPage.hooks';
 const basePost = {
   id: 'post-1',
   status: 'draft' as const,
-  visualDocUpdates: [],
 };
 
 const createSettingsState = (overrides?: Record<string, unknown>) => ({

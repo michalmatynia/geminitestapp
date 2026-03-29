@@ -28,6 +28,20 @@ type LessonsQueryOptions = KangurLessonCollectionFilterDto & {
   enabled?: boolean;
 };
 
+const resolveLessonsQueryFilters = (
+  options?: LessonsQueryOptions
+): KangurLessonCollectionFilterDto & { enabledOnly: boolean | null } => ({
+  subject: options?.subject ?? null,
+  ageGroup: options?.ageGroup ?? null,
+  enabledOnly: options?.enabledOnly ?? null,
+});
+
+const isLessonsQueryEnabled = (options?: LessonsQueryOptions): boolean =>
+  options?.enabled ?? true;
+
+const resolveLessonDocumentsLocale = (routeLocale: string, locale?: string | null): string =>
+  normalizeSiteLocale(locale ?? routeLocale);
+
 const filterLessons = (
   lessons: KangurLesson[],
   options?: LessonsQueryOptions
@@ -125,21 +139,14 @@ const fetchLessonDocument = async (
     }
   );
 
-export const useKangurLessons = (
+const createKangurLessonsQuery = (
   options?: LessonsQueryOptions
 ): ListQuery<KangurLesson, KangurLesson[]> =>
   createListQueryV2<KangurLesson, KangurLesson[]>({
-    queryKey: [
-      ...QUERY_KEYS.kangur.lessons(),
-      {
-        subject: options?.subject ?? null,
-        ageGroup: options?.ageGroup ?? null,
-        enabledOnly: options?.enabledOnly ?? null,
-      },
-    ],
+    queryKey: [...QUERY_KEYS.kangur.lessons(), resolveLessonsQueryFilters(options)],
     queryFn: async (): Promise<KangurLesson[]> => await fetchKangurLessons(options),
     select: (lessons) => filterLessons(lessons, options),
-    enabled: options?.enabled ?? true,
+    enabled: isLessonsQueryEnabled(options),
     staleTime: 1000 * 60 * 5,
     refetchOnMount: false,
     refetchOnWindowFocus: false,
@@ -155,18 +162,22 @@ export const useKangurLessons = (
     },
   });
 
+export const useKangurLessons = (
+  options?: LessonsQueryOptions
+): ListQuery<KangurLesson, KangurLesson[]> =>
+  createKangurLessonsQuery(options);
+
 export const useKangurLessonDocuments = (options?: {
   enabled?: boolean;
   locale?: string | null;
 }): ListQuery<
   KangurLessonDocumentStore,
   KangurLessonDocumentStore
-> =>
-  {
-    const routeLocale = useLocale();
-    const resolvedLocale = normalizeSiteLocale(options?.locale ?? routeLocale);
+> => {
+  const routeLocale = useLocale();
+  const resolvedLocale = resolveLessonDocumentsLocale(routeLocale, options?.locale);
 
-    return createListQueryV2<KangurLessonDocumentStore, KangurLessonDocumentStore>({
+  return createListQueryV2<KangurLessonDocumentStore, KangurLessonDocumentStore>({
     queryKey: [...QUERY_KEYS.kangur.lessonDocuments(), { locale: resolvedLocale }],
     queryFn: async () => await fetchLessonDocuments(resolvedLocale),
     placeholderData: () => ({}),
@@ -184,18 +195,17 @@ export const useKangurLessonDocuments = (options?: {
       tags: ['kangur', 'lesson-documents'],
       description: 'Loads Kangur lesson documents from Mongo.',
     },
-    });
-  };
+  });
+};
 
 export const useKangurLessonDocument = (
   lessonId: string | null,
   options?: { enabled?: boolean; locale?: string | null }
-): SingleQuery<KangurLessonDocument | null> =>
-  {
-    const routeLocale = useLocale();
-    const resolvedLocale = normalizeSiteLocale(options?.locale ?? routeLocale);
+): SingleQuery<KangurLessonDocument | null> => {
+  const routeLocale = useLocale();
+  const resolvedLocale = resolveLessonDocumentsLocale(routeLocale, options?.locale);
 
-    return createSingleQueryV2<KangurLessonDocument | null>({
+  return createSingleQueryV2<KangurLessonDocument | null>({
     queryKey: QUERY_KEYS.kangur.lessonDocument(lessonId, resolvedLocale),
     queryFn: async (): Promise<KangurLessonDocument | null> =>
       lessonId ? await fetchLessonDocument(lessonId, resolvedLocale) : null,
@@ -213,8 +223,8 @@ export const useKangurLessonDocument = (
       tags: ['kangur', 'lesson-document'],
       description: 'Loads a single Kangur lesson document from Mongo.',
     },
-    });
-  };
+  });
+};
 
 const invalidateKangurLessons = (queryClient: { invalidateQueries: (args: { queryKey: readonly unknown[] }) => void }): void => {
   queryClient.invalidateQueries({ queryKey: QUERY_KEYS.kangur.all });
@@ -241,12 +251,11 @@ export const useUpdateKangurLessonDocuments = (
 ): MutationResult<
   KangurLessonDocumentStore,
   KangurLessonDocumentStore
-> =>
-  {
-    const routeLocale = useLocale();
-    const resolvedLocale = normalizeSiteLocale(locale ?? routeLocale);
+> => {
+  const routeLocale = useLocale();
+  const resolvedLocale = resolveLessonDocumentsLocale(routeLocale, locale);
 
-    return createUpdateMutationV2<KangurLessonDocumentStore, KangurLessonDocumentStore>({
+  return createUpdateMutationV2<KangurLessonDocumentStore, KangurLessonDocumentStore>({
     mutationKey: [...QUERY_KEYS.kangur.lessonDocuments(), { locale: resolvedLocale }, 'update'],
     mutationFn: async (
       documents: KangurLessonDocumentStore
@@ -264,5 +273,5 @@ export const useUpdateKangurLessonDocuments = (
       tags: ['kangur', 'lesson-documents', 'update'],
       description: 'Replaces Kangur lesson documents in Mongo.',
     },
-    });
-  };
+  });
+};

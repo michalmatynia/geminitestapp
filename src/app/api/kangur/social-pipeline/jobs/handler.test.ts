@@ -402,7 +402,6 @@ describe('social pipeline jobs handler', () => {
           analysis: {
             summary: 'Updated hero',
             highlights: ['Updated hero', 'New CTA'],
-            docUpdates: [{ docPath: 'docs/kangur/overview.mdx', section: null }],
           },
         },
       }),
@@ -527,7 +526,6 @@ describe('social pipeline jobs handler', () => {
           analysis: {
             summary: 'Updated hero',
             highlights: ['Updated hero', 'New CTA'],
-            docUpdates: [{ docPath: 'docs/kangur/overview.mdx', section: null }],
           },
           savedPost: {
             id: 'post-1',
@@ -561,7 +559,6 @@ describe('social pipeline jobs handler', () => {
           analysis: {
             summary: 'Updated hero',
             highlights: ['Updated hero', 'New CTA'],
-            docUpdates: [{ docPath: 'docs/kangur/overview.mdx', section: null }],
           },
           savedPost: {
             id: 'post-1',

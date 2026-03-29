@@ -18,6 +18,17 @@ type LessonSectionsQueryOptions = KangurLessonCollectionFilterDto & {
   enabled?: boolean;
 };
 
+const resolveLessonSectionsQueryFilters = (
+  options?: LessonSectionsQueryOptions
+): KangurLessonCollectionFilterDto & { enabledOnly: boolean | null } => ({
+  subject: options?.subject ?? null,
+  ageGroup: options?.ageGroup ?? null,
+  enabledOnly: options?.enabledOnly ?? null,
+});
+
+const isLessonSectionsQueryEnabled = (options?: LessonSectionsQueryOptions): boolean =>
+  options?.enabled ?? true;
+
 const filterSections = (
   sections: KangurLessonSection[],
   options?: LessonSectionsQueryOptions
@@ -66,22 +77,18 @@ export const fetchKangurLessonSections = async (
     }
   );
 
-export const useKangurLessonSections = (
+const createLessonSectionsQuery = (
   options?: LessonSectionsQueryOptions
 ): ListQuery<KangurLessonSection, KangurLessonSection[]> =>
   createListQueryV2<KangurLessonSection, KangurLessonSection[]>({
     queryKey: [
       ...QUERY_KEYS.kangur.lessonSections(),
-      {
-        subject: options?.subject ?? null,
-        ageGroup: options?.ageGroup ?? null,
-        enabledOnly: options?.enabledOnly ?? null,
-      },
+      resolveLessonSectionsQueryFilters(options),
     ],
     queryFn: async (): Promise<KangurLessonSection[]> =>
       await fetchKangurLessonSections(options),
     select: (sections) => filterSections(sections, options),
-    enabled: options?.enabled ?? true,
+    enabled: isLessonSectionsQueryEnabled(options),
     staleTime: 1000 * 60 * 5,
     refetchOnMount: false,
     refetchOnWindowFocus: false,
@@ -96,6 +103,11 @@ export const useKangurLessonSections = (
       description: 'Loads Kangur lesson sections from Mongo.',
     },
   });
+
+export const useKangurLessonSections = (
+  options?: LessonSectionsQueryOptions
+): ListQuery<KangurLessonSection, KangurLessonSection[]> =>
+  createLessonSectionsQuery(options);
 
 const invalidateKangurLessonSections = (queryClient: {
   invalidateQueries: (args: { queryKey: readonly unknown[] }) => void;

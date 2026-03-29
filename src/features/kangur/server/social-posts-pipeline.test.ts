@@ -80,12 +80,8 @@ const basePost: KangurSocialPost = {
   generatedSummary: null,
   visualSummary: null,
   visualHighlights: [],
-  visualDocUpdates: [],
   visualAnalysisSourceImageAddonIds: [],
-  visualAnalysisSourceDocReferences: [],
   visualAnalysisSourceVisionModelId: null,
-  docUpdatesAppliedAt: null,
-  docUpdatesAppliedBy: null,
   createdBy: null,
   updatedBy: null,
   createdAt: '2026-03-19T10:00:00.000Z',
@@ -114,7 +110,6 @@ describe('runKangurSocialPostPipeline', () => {
       docReferences: ['overview'],
       visualSummary: null,
       visualHighlights: [],
-      visualDocUpdates: [],
     });
     mocks.updateKangurSocialPostMock.mockImplementation(
       async (id: string, updates: Partial<KangurSocialPost>) => ({
@@ -195,7 +190,6 @@ describe('runKangurSocialPostPipeline', () => {
       docReferences: ['overview'],
       visualSummary: 'The teacher CTA is larger in the hero.',
       visualHighlights: ['Larger teacher CTA'],
-      visualDocUpdates: [],
     });
 
     await runKangurSocialPostPipeline({
@@ -222,7 +216,6 @@ describe('runKangurSocialPostPipeline', () => {
       'post-1',
       expect.objectContaining({
         visualAnalysisSourceImageAddonIds: ['addon-1'],
-        visualAnalysisSourceDocReferences: [],
         visualAnalysisSourceVisionModelId: 'vision-model',
       })
     );
@@ -403,7 +396,6 @@ describe('runKangurSocialPostPipeline', () => {
       prefetchedVisualAnalysis: {
         summary: 'The hero now shows a larger classroom card.',
         highlights: ['Larger classroom card'],
-        docUpdates: [],
       },
       requireVisualAnalysisInBody: true,
       actorId: 'user-1',
@@ -414,7 +406,6 @@ describe('runKangurSocialPostPipeline', () => {
         prefetchedVisualAnalysis: {
           summary: 'The hero now shows a larger classroom card.',
           highlights: ['Larger classroom card'],
-          docUpdates: [],
         },
         requireVisualAnalysisInBody: true,
       })

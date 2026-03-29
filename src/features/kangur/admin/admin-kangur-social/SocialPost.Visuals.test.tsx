@@ -85,8 +85,6 @@ const buildPostBase = () => ({
   visualAnalysisUpdatedAt: null,
   visualAnalysisJobId: null,
   visualAnalysisModelId: null,
-  docUpdatesAppliedAt: null,
-  docUpdatesAppliedBy: null,
   createdBy: null,
   updatedBy: null,
   createdAt: '2026-03-19T10:00:00.000Z',
@@ -159,14 +157,6 @@ describe('SocialPostVisuals', () => {
       activePost: buildPost({
         visualSummary: 'The hero now highlights the classroom card and a stronger CTA.',
         visualHighlights: ['Classroom card is larger', 'CTA is more prominent'],
-        visualDocUpdates: [
-          {
-            docPath: 'docs/homepage.md',
-            section: 'Hero',
-            reason: 'Document the stronger CTA emphasis for teachers.',
-            proposedText: 'Note that the classroom CTA card is now larger and more prominent.',
-          },
-        ],
         visualAnalysisStatus: 'completed',
         visualAnalysisUpdatedAt: '2026-03-20T12:00:00.000Z',
         visualAnalysisJobId: 'job-analysis-7',
@@ -194,17 +184,43 @@ describe('SocialPostVisuals', () => {
     ).toBeInTheDocument();
     expect(screen.getByText('- Classroom card is larger')).toBeInTheDocument();
     expect(screen.getByText('- CTA is more prominent')).toBeInTheDocument();
-    expect(screen.getByText('Suggested documentation updates')).toBeInTheDocument();
-    expect(screen.getByText('docs/homepage.md -> Hero')).toBeInTheDocument();
-    expect(
-      screen.getByText('Document the stronger CTA emphasis for teachers.')
-    ).toBeInTheDocument();
-    expect(
-      screen.getByText('Note that the classroom CTA card is now larger and more prominent.')
-    ).toBeInTheDocument();
     expect(screen.getByText('Status: Completed')).toBeInTheDocument();
     expect(screen.getByText('Model: vision-1')).toBeInTheDocument();
     expect(screen.getByText('Queue job: job-analysis-7')).toBeInTheDocument();
+  });
+
+  it('shows saved run metadata even when no summary or highlights are present yet', () => {
+    useSocialPostContextMock.mockReturnValue({
+      activePost: buildPost({
+        visualAnalysisStatus: 'completed',
+        visualAnalysisJobId: 'job-analysis-docs-1',
+        visualAnalysisModelId: 'vision-1',
+      }),
+      recentAddons: [],
+      addonsQuery: { isLoading: false },
+      imageAddonIds: [],
+      handleSelectAddon: vi.fn(),
+      handleRemoveAddon: vi.fn(),
+      imageAssets: [],
+      handleRemoveImage: vi.fn(),
+      setShowMediaLibrary: vi.fn(),
+      showMediaLibrary: false,
+      handleAddImages: vi.fn(),
+      hasSavedVisualAnalysis: true,
+      isSavedVisualAnalysisStale: false,
+    });
+
+    render(<SocialPostVisuals showImagesPanel={false} />);
+
+    expect(screen.getByText('Image analysis result')).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        'No saved analysis summary yet. The queue metadata above reflects the latest image-analysis run for this post.'
+      )
+    ).toBeInTheDocument();
+    expect(screen.getByText('Status: Completed')).toBeInTheDocument();
+    expect(screen.getByText('Model: vision-1')).toBeInTheDocument();
+    expect(screen.getByText('Queue job: job-analysis-docs-1')).toBeInTheDocument();
   });
 
   it('shows pending analysis metadata even before a summary is saved', () => {

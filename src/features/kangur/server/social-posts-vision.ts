@@ -57,7 +57,22 @@ const buildBeforeAfterPairs = async (
 const OPENAI_MAX_IMAGES = 10;
 const OPENAI_MAX_IMAGE_BASE64_BYTES = 4 * 1024 * 1024;
 const OPENAI_MAX_TOTAL_IMAGE_BASE64_BYTES = 15 * 1024 * 1024;
-const MAX_SUMMARY_CHARS = 8000;
+const MAX_SUMMARY_CHARS = 1200;
+const NON_VISUAL_HIGHLIGHT_PATTERN =
+  /\b(linkedin|marketing|publish(?:ing)?|documentation|doc(?:umentation)? update|release note|blog post|feedback|future update|support email|call to action)\b/i;
+const NON_VISUAL_SECTION_BREAK_PATTERNS = [
+  /\bpotential documentation(?:\/communication)? narrative\b/i,
+  /\bpotential communication narrative\b/i,
+  /\bhere(?:'s| is) a draft\b/i,
+  /\bfor release notes\b/i,
+  /\bfor (?:internal )?documentation\b/i,
+  /\bwhat'?s new\b/i,
+  /\bhow to experience the changes\b/i,
+  /\bfeedback\b/i,
+  /\bkey takeaways for future updates\b/i,
+  /\blet me know if you'?d like me to\b/i,
+  /^[#*-]\s+/m,
+] as const;
 
 const truncateText = (value: string, maxChars: number): string =>
   value.length <= maxChars ? value : value.slice(0, maxChars).trimEnd();
@@ -177,17 +192,56 @@ const parseHighlights = (value: unknown): string[] => {
   return value
     .map((item) => (typeof item === 'string' ? item.trim() : ''))
     .filter((item) => item.length > 0)
+    .filter((item) => !NON_VISUAL_HIGHLIGHT_PATTERN.test(item))
     .slice(0, 24);
+};
+
+const sanitizeVisualSummary = (value: string): string => {
+  let sanitized = value
+    .replace(/\r\n?/g, '\n')
+    .replace(/\*\*/g, '')
+    .trim();
+
+  for (const pattern of NON_VISUAL_SECTION_BREAK_PATTERNS) {
+    const match = pattern.exec(sanitized);
+    if (typeof match?.index === 'number' && match.index >= 0) {
+      sanitized = sanitized.slice(0, match.index).trim();
+      break;
+    }
+  }
+
+  const firstParagraph = sanitized
+    .split(/\n\s*\n/)
+    .map((paragraph) => paragraph.trim())
+    .find((paragraph) => paragraph.length > 0);
+
+  sanitized = (firstParagraph ?? sanitized)
+    .replace(/\s+/g, ' ')
+    .replace(
+      /^(?:okay[,! ]*|sure[,! ]*|i(?:'ve| have) reviewed the provided (?:text and )?images\.?\s*)+/i,
+      ''
+    )
+    .replace(
+      /^here(?:'s| is) (?:a )?(?:summary|concise summary|visual summary)(?: of (?:the )?(?:key )?(?:information|changes))?[:.\s-]*/i,
+      ''
+    )
+    .trim();
+
+  return truncateText(sanitized, MAX_SUMMARY_CHARS);
 };
 
 const buildSystemPrompt = (basePrompt: string, hasBeforeAfter: boolean): string => {
   const lines = [
     basePrompt.trim(),
     'You analyze StudiQ UI screenshots only.',
-    'Do not write marketing copy, LinkedIn post drafts, publishing recommendations, or documentation update proposals.',
+    'Only describe what is directly visible in the screenshots.',
+    'Do not write marketing copy, LinkedIn post drafts, publishing recommendations, release notes, documentation update proposals, communication narratives, or future work suggestions.',
+    'Do not infer rollout plans, user feedback, testing advice, or accessibility recommendations unless they are explicitly visible in the UI.',
+    'If something is uncertain, describe the visible element instead of guessing intent.',
     'Return a JSON object with keys: summary and highlights.',
-    'summary: a concise visual analysis paragraph describing what is visible in the current screenshots.',
-    'highlights: an array of short factual bullet sentences about visible UI details or changes.',
+    'Return raw JSON only. Do not wrap the JSON in markdown fences.',
+    'summary: 2 to 4 factual sentences describing what is visible in the current screenshots.',
+    'highlights: an array of 3 to 8 short factual bullet sentences about visible UI details or changes.',
   ];
   if (hasBeforeAfter) {
     lines.push(
@@ -210,7 +264,7 @@ export async function analyzeKangurSocialVisuals(
 
   try {
     if (imageAddons.length === 0) {
-      return { summary: '', highlights: [], docUpdates: [] };
+      return { summary: '', highlights: [] };
     }
 
     const overrideModelId = input.modelId?.trim() ?? '';
@@ -284,23 +338,22 @@ export async function analyzeKangurSocialVisuals(
         }
       }
       if (!parsed.summary) {
-        // Use raw text as the summary so the pipeline still has visual context
+        // Keep only the usable visual description when models ignore JSON mode.
         const raw = res.text.trim();
         if (raw.length > 0) {
-          parsed = { summary: raw };
+          parsed = { summary: sanitizeVisualSummary(raw) };
         }
       }
     }
 
     const summaryText =
       typeof parsed.summary === 'string' && parsed.summary.trim().length > 0
-        ? parsed.summary.trim()
-        : res.text.trim();
+        ? sanitizeVisualSummary(parsed.summary)
+        : sanitizeVisualSummary(res.text);
 
     const analysis: KangurSocialVisualAnalysis = {
-      summary: truncateText(summaryText, MAX_SUMMARY_CHARS),
+      summary: summaryText,
       highlights: parseHighlights(parsed.highlights),
-      docUpdates: [],
     };
 
     const beforeAfterCount = pairs.filter((p) => p.previousAddon !== null).length;

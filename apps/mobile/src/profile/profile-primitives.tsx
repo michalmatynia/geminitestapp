@@ -1,6 +1,9 @@
-import { getLocalizedKangurCoreLessonTitle } from '@kangur/core/profile-i18n';
-import type { KangurAssignmentPlan, KangurAssignmentPriority } from '@kangur/core/assignments';
-import type { KangurLessonMasteryInsight } from '@kangur/core/profile';
+import {
+  getLocalizedKangurCoreLessonTitle,
+  type KangurAssignmentPlan,
+  type KangurAssignmentPriority,
+  type KangurLessonMasteryInsight,
+} from '@kangur/core';
 import type { Href } from 'expo-router';
 import { Text, View } from 'react-native';
 

@@ -1,7 +1,7 @@
 import type {
   KangurDuelDifficulty,
   KangurDuelOperation,
-} from '@kangur/contracts/kangur-duels';
+} from '@kangur/contracts-duels';
 
 export const MOBILE_DUEL_DEFAULT_OPERATION: KangurDuelOperation = 'addition';
 export const MOBILE_DUEL_DEFAULT_DIFFICULTY: KangurDuelDifficulty = 'easy';

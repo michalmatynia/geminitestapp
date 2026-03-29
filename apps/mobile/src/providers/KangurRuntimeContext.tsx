@@ -1,9 +1,9 @@
 import { createKangurApiClient } from '@kangur/api-client';
-import { KANGUR_PROFILE_DEFAULT_DAILY_GOAL_GAMES } from '@kangur/core/profile';
 import {
+  KANGUR_PROFILE_DEFAULT_DAILY_GOAL_GAMES,
   createKangurProgressStore,
   type KangurProgressStore,
-} from '@kangur/core/progress-store';
+} from '@kangur/core';
 import type { KangurClientStorageAdapter } from '@kangur/platform';
 import {
   createContext,

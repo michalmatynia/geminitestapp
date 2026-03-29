@@ -5,8 +5,6 @@ import {
   type KangurMiniGameTranslate,
 } from '@/features/kangur/ui/constants/mini-game-i18n';
 
-export type ClockTrainingTranslate = KangurMiniGameTranslate;
-
 const interpolateClockTrainingTemplate = (
   template: string,
   values?: TranslationValues
@@ -23,7 +21,7 @@ const interpolateClockTrainingTemplate = (
 };
 
 export const translateClockTrainingWithFallback = (
-  translate: ClockTrainingTranslate | undefined,
+  translate: KangurMiniGameTranslate | undefined,
   key: string,
   fallback: string,
   values?: TranslationValues

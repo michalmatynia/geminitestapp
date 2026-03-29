@@ -9,7 +9,9 @@ import sharp from 'sharp';
 import {
   enqueuePlaywrightNodeRun,
   readPlaywrightNodeArtifact,
+  readPlaywrightNodeRun,
   type PlaywrightNodeRunArtifact,
+  type PlaywrightNodeRunRecord,
 } from '@/features/ai/server';
 import { uploadToConfiguredStorage } from '@/features/files/server';
 import {
@@ -37,6 +39,22 @@ const SOCIAL_BATCH_PLAYWRIGHT_SCRIPT = `
 export default async function run({ page, input, artifacts, helpers, emit, log }) {
   const captures = Array.isArray(input.captures) ? input.captures : [];
   const results = [];
+  let successCount = 0;
+  let failureCount = 0;
+  const totalCount = captures.length;
+
+  const emitProgress = (lastCaptureId, lastCaptureStatus) => {
+    const processedCount = successCount + failureCount;
+    emit('capture_progress', {
+      processedCount,
+      completedCount: successCount,
+      failureCount,
+      remainingCount: Math.max(totalCount - processedCount, 0),
+      totalCount,
+      lastCaptureId,
+      lastCaptureStatus,
+    });
+  };
 
   for (let index = 0; index < captures.length; index += 1) {
     const capture = captures[index] || {};
@@ -49,7 +67,9 @@ export default async function run({ page, input, artifacts, helpers, emit, log }
       : 15000;
 
     if (!url) {
+      failureCount += 1;
       results.push({ id, status: 'skipped', reason: 'missing_url' });
+      emitProgress(id, 'skipped');
       continue;
     }
 
@@ -110,11 +130,15 @@ export default async function run({ page, input, artifacts, helpers, emit, log }
       });
 
       log(\`[\${id}] Captured successfully\`);
+      successCount += 1;
       results.push({ id, status: 'ok' });
+      emitProgress(id, 'ok');
     } catch (error) {
       const message = error instanceof Error ? error.message : 'capture_failed';
       log(\`Capture failed for \${id}: \${message}\`);
+      failureCount += 1;
       results.push({ id, status: 'failed', reason: message });
+      emitProgress(id, 'failed');
     }
   }
 
@@ -122,12 +146,24 @@ export default async function run({ page, input, artifacts, helpers, emit, log }
 }
 `;
 
+type BatchCaptureProgressSnapshot = {
+  processedCount: number;
+  completedCount: number;
+  failureCount: number;
+  remainingCount: number;
+  totalCount: number;
+};
+
 type BatchCaptureInput = Omit<KangurSocialImageAddonsBatchPayload, 'baseUrl' | 'presetIds'> & {
   baseUrl: string;
   presetIds?: string[] | null;
   createdBy?: string | null;
   forwardCookies?: string | null;
+  onProgress?: (progress: BatchCaptureProgressSnapshot) => Promise<void> | void;
 };
+
+const LIVE_PROGRESS_POLL_INTERVAL_MS = 250;
+const LIVE_PROGRESS_TIMEOUT_MS = 195_000;
 
 const resolveArtifactByName = (
   artifacts: PlaywrightNodeRunArtifact[],
@@ -216,6 +252,92 @@ const parseCookiesForPlaywright = (
     .filter((c): c is NonNullable<typeof c> => c !== null && c.name.length > 0);
 };
 
+const sleep = async (ms: number): Promise<void> =>
+  await new Promise((resolve) => setTimeout(resolve, ms));
+
+const toRecord = (value: unknown): Record<string, unknown> | null =>
+  value && typeof value === 'object' ? (value as Record<string, unknown>) : null;
+
+const readNonNegativeNumber = (value: unknown): number | null =>
+  typeof value === 'number' && Number.isFinite(value) && value >= 0
+    ? Math.floor(value)
+    : null;
+
+const readLiveCaptureProgress = (
+  run: Pick<PlaywrightNodeRunRecord, 'result'> | null
+): BatchCaptureProgressSnapshot | null => {
+  const result = toRecord(run?.result);
+  const outputs = toRecord(result?.['outputs']);
+  const progress = toRecord(outputs?.['capture_progress']);
+  if (!progress) return null;
+
+  const processedCount = readNonNegativeNumber(progress['processedCount']);
+  const completedCount = readNonNegativeNumber(progress['completedCount']);
+  const failureCount = readNonNegativeNumber(progress['failureCount']);
+  const remainingCount = readNonNegativeNumber(progress['remainingCount']);
+  const totalCount = readNonNegativeNumber(progress['totalCount']);
+
+  if (
+    processedCount == null ||
+    completedCount == null ||
+    failureCount == null ||
+    remainingCount == null ||
+    totalCount == null
+  ) {
+    return null;
+  }
+
+  return {
+    processedCount,
+    completedCount,
+    failureCount,
+    remainingCount,
+    totalCount,
+  };
+};
+
+const waitForPlaywrightBatchRun = async (params: {
+  runId: string;
+  onProgress: (progress: BatchCaptureProgressSnapshot) => Promise<void> | void;
+}): Promise<PlaywrightNodeRunRecord> => {
+  const startedAt = Date.now();
+  let latestRun: PlaywrightNodeRunRecord | null = null;
+  let lastProgressSignature: string | null = null;
+
+  while (Date.now() - startedAt <= LIVE_PROGRESS_TIMEOUT_MS) {
+    const currentRun = await readPlaywrightNodeRun(params.runId);
+    if (currentRun) {
+      latestRun = currentRun;
+      const progress = readLiveCaptureProgress(currentRun);
+      if (progress) {
+        const signature = [
+          progress.processedCount,
+          progress.completedCount,
+          progress.failureCount,
+          progress.remainingCount,
+          progress.totalCount,
+        ].join(':');
+        if (signature !== lastProgressSignature) {
+          lastProgressSignature = signature;
+          await params.onProgress(progress);
+        }
+      }
+
+      if (currentRun.status === 'completed' || currentRun.status === 'failed') {
+        return currentRun;
+      }
+    }
+
+    await sleep(LIVE_PROGRESS_POLL_INTERVAL_MS);
+  }
+
+  if (latestRun && (latestRun.status === 'completed' || latestRun.status === 'failed')) {
+    return latestRun;
+  }
+
+  throw operationFailedError('Playwright batch capture timed out.');
+};
+
 export async function createKangurSocialImageAddonsBatch(
   input: BatchCaptureInput
 ): Promise<KangurSocialImageAddonsBatchResult> {
@@ -263,7 +385,7 @@ export async function createKangurSocialImageAddonsBatch(
   }
 
   logger.info('[BATCH] Enqueueing Playwright run', { captureCount: captures.length });
-  const run = await enqueuePlaywrightNodeRun({
+  const initialRun = await enqueuePlaywrightNodeRun({
     request: {
       script: SOCIAL_BATCH_PLAYWRIGHT_SCRIPT,
       input: {
@@ -273,9 +395,16 @@ export async function createKangurSocialImageAddonsBatch(
       browserEngine: 'chromium',
       contextOptions: Object.keys(contextOptions).length > 0 ? contextOptions : undefined,
     },
-    waitForResult: true,
+    waitForResult: !input.onProgress,
     ownerUserId: input.createdBy ?? null,
   });
+  const run =
+    typeof input.onProgress === 'function'
+      ? await waitForPlaywrightBatchRun({
+        runId: initialRun.runId,
+        onProgress: input.onProgress,
+      })
+      : initialRun;
 
   logger.info('[BATCH] Playwright run finished', {
     status: run.status,

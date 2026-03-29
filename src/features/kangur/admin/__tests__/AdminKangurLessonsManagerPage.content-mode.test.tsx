@@ -254,6 +254,7 @@ vi.mock('@/features/kangur/shared/ui', () => ({
   SelectSimple: ({
     value,
     onValueChange,
+    onChange,
     options,
     id,
     ariaLabel,
@@ -261,6 +262,7 @@ vi.mock('@/features/kangur/shared/ui', () => ({
   }: {
     value?: string;
     onValueChange?: (value: string) => void;
+    onChange?: (value: string) => void;
     options: Array<LabeledOptionDto<string>>;
     id?: string;
     ariaLabel?: string;
@@ -271,7 +273,10 @@ vi.mock('@/features/kangur/shared/ui', () => ({
       aria-label={ariaLabel}
       title={title}
       value={value}
-      onChange={(event): void => onValueChange?.(event.target.value)}
+      onChange={(event): void => {
+        onValueChange?.(event.target.value);
+        onChange?.(event.target.value);
+      }}
     >
       {options.map((option) => (
         <option key={option.value} value={option.value}>
@@ -312,7 +317,18 @@ vi.mock('@/features/kangur/observability/client', () => ({
 }));
 
 vi.mock('@/features/kangur/admin/components/KangurAdminContentShell', () => ({
-  KangurAdminContentShell: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
+  KangurAdminContentShell: ({
+    children,
+    headerActions,
+  }: {
+    children: React.ReactNode;
+    headerActions?: React.ReactNode;
+  }) => (
+    <div>
+      {headerActions}
+      {children}
+    </div>
+  ),
 }));
 
 const baseLessons = [
@@ -598,7 +614,7 @@ describe('AdminKangurLessonsManagerPage content mode flow', () => {
     );
     expect(screen.getByTestId('mock-doc-editor-json')).toHaveTextContent('"type":"activity"');
     expect(toastMock).toHaveBeenCalledWith(
-      expect.stringContaining('Legacy lesson imported'),
+      expect.stringContaining('Legacy content imported'),
       expect.objectContaining({ variant: 'success' })
     );
   });

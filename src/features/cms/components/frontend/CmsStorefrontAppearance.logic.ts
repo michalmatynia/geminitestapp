@@ -1,6 +1,6 @@
 'use client';
 
-import { DEFAULT_THEME, type ThemeSettings } from '@/shared/contracts/cms-theme';
+import type { ThemeSettings } from '@/shared/contracts/cms-theme';
 import {
   CmsStorefrontAppearanceMode,
   CmsAppearanceTone,
@@ -45,17 +45,18 @@ const resolveThemedPageBackground = (args: {
   background: string;
   tone: string;
 } => {
-  const backgroundValue = args.backgroundColor?.trim();
+  const backgroundValue =
+    typeof args.backgroundColor === 'string' ? args.backgroundColor.trim() : '';
   if (isGradientValue(backgroundValue)) {
-    const gradient = backgroundValue.trim();
+    const gradient = backgroundValue;
     return {
       background: gradient,
       tone: resolveSolidColor(gradient, args.fallbackTone),
     };
   }
 
-  if (isNonEmptyString(backgroundValue)) {
-    const tone = backgroundValue.trim();
+  if (backgroundValue) {
+    const tone = backgroundValue;
     return {
       background: `radial-gradient(circle at top, ${mixCssColor(
         tone,

@@ -9,7 +9,10 @@ import {
   trackKangurClientEvent,
 } from '@/features/kangur/observability/client';
 import { api } from '@/shared/lib/api-client';
-import type { KangurSocialManualPipelineProgress } from '@/shared/contracts/kangur-social-pipeline';
+import {
+  createKangurSocialManualPipelineProgress,
+  type KangurSocialManualPipelineProgress,
+} from '@/shared/contracts/kangur-social-pipeline';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 import { safeClearTimeout, safeSetTimeout, type SafeTimerId } from '@/shared/lib/timers';
 import type {
@@ -185,30 +188,27 @@ export function useSocialPipelineRunner(deps: SocialPipelineRunnerDeps) {
     try {
       setPipelineErrorMessage(null);
       d.setBatchCaptureResult(null);
-      setPipelineProgress({
-        type: 'manual-post-pipeline',
-        step: 'loading_context',
-        captureMode,
-        message:
-          captureMode === 'fresh_capture'
-            ? 'Queued on the server. Waiting to start a fresh Playwright capture...'
-            : 'Queued on the server. Waiting to generate from the attached visuals...',
-        updatedAt: Date.now(),
-        contextDocCount: null,
-        contextSummary: null,
-        addonsCreated: null,
-        captureFailureCount: null,
-        captureFailures: [],
-        requestedPresetCount:
-          captureMode === 'fresh_capture'
-            ? d.batchCapturePresetLimit == null
-              ? d.batchCapturePresetIds.length
-              : Math.min(d.batchCapturePresetLimit, d.batchCapturePresetIds.length)
-            : 0,
-        usedPresetCount: null,
-        usedPresetIds: [],
-        runId: null,
-      });
+      const requestedPresetCount =
+        captureMode === 'fresh_capture'
+          ? d.batchCapturePresetLimit == null
+            ? d.batchCapturePresetIds.length
+            : Math.min(d.batchCapturePresetLimit, d.batchCapturePresetIds.length)
+          : 0;
+      setPipelineProgress(
+        createKangurSocialManualPipelineProgress({
+          step: 'loading_context',
+          captureMode,
+          message:
+            captureMode === 'fresh_capture'
+              ? 'Queued on the server. Waiting to start a fresh Playwright capture...'
+              : 'Queued on the server. Waiting to generate from the attached visuals...',
+          updatedAt: Date.now(),
+          requestedPresetCount,
+          captureCompletedCount: 0,
+          captureRemainingCount: requestedPresetCount,
+          captureTotalCount: requestedPresetCount,
+        })
+      );
       setPipelineStep('loading_context');
       toast(
         captureMode === 'fresh_capture'

@@ -73,6 +73,9 @@ const sanitizeJobProgress = (
     captureFailureCount: value.captureFailureCount,
     requestedPresetCount: value.requestedPresetCount,
     usedPresetCount: value.usedPresetCount,
+    captureCompletedCount: value.captureCompletedCount,
+    captureRemainingCount: value.captureRemainingCount,
+    captureTotalCount: value.captureTotalCount,
     runId: value.runId,
   };
 

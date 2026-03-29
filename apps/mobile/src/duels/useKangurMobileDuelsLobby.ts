@@ -7,7 +7,7 @@ import type {
   KangurDuelOpponentEntry,
   KangurDuelOperation,
   KangurDuelSearchEntry,
-} from '@kangur/contracts/kangur-duels';
+} from '@kangur/contracts-duels';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useMemo, useState } from 'react';
 

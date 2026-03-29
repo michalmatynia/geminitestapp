@@ -118,6 +118,9 @@ describe('SocialPostPipeline', () => {
         requestedPresetCount: 2,
         usedPresetCount: 2,
         usedPresetIds: ['home', 'pricing'],
+        captureCompletedCount: 0,
+        captureRemainingCount: 0,
+        captureTotalCount: 2,
         runId: null,
       },
       pipelineErrorMessage: 'Pipeline stopped: no screenshots captured.',
@@ -145,6 +148,61 @@ describe('SocialPostPipeline', () => {
     ).toBeInTheDocument();
     expect(
       screen.getByText(/Fresh capture: Triggers Playwright batch capture \(4 presets, limit: 2\) before generation\./)
+    ).toBeInTheDocument();
+  });
+
+  it('shows live Playwright capture counts in the pipeline info while screenshots are running', () => {
+    useSocialPostContextMock.mockReturnValue({
+      activePostId: 'post-1',
+      editorState: {
+        titlePl: 'Draft',
+        titleEn: '',
+      },
+      pipelineStep: 'capturing',
+      pipelineProgress: {
+        type: 'manual-post-pipeline',
+        step: 'capturing',
+        captureMode: 'fresh_capture',
+        message: 'Playwright capture in progress: 1 captured, 2 left of 3 presets. 1 failed.',
+        updatedAt: 1_700_000_001_500,
+        contextDocCount: 1,
+        contextSummary: 'summary',
+        addonsCreated: 1,
+        captureFailureCount: 1,
+        captureFailures: [{ id: 'profile', reason: 'Timeout' }],
+        requestedPresetCount: 3,
+        usedPresetCount: 3,
+        usedPresetIds: ['home', 'lessons', 'profile'],
+        captureCompletedCount: 1,
+        captureRemainingCount: 2,
+        captureTotalCount: 3,
+        runId: 'run-capture',
+      },
+      pipelineErrorMessage: null,
+      handleRunFullPipeline: vi.fn(),
+      handleRunFullPipelineWithFreshCapture: vi.fn(),
+      handleCaptureImagesOnly: vi.fn(),
+      canGenerateSocialDraft: true,
+      canRunFreshCapturePipeline: true,
+      batchCaptureBaseUrl: 'https://kangur.app',
+      batchCapturePresetIds: ['home', 'lessons', 'profile'],
+      socialDraftBlockedReason: null,
+      socialBatchCaptureBlockedReason: null,
+      captureOnlyPending: false,
+      captureOnlyMessage: null,
+      captureOnlyErrorMessage: null,
+      batchCapturePresetLimit: 3,
+      hasBatchCaptureConfig: true,
+      setIsPostEditorModalOpen: vi.fn(),
+    });
+
+    render(<SocialPostPipeline />);
+
+    expect(
+      screen.getByText('Playwright capture in progress: 1 captured, 2 left of 3 presets. 1 failed.')
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText('Live Playwright capture: 1 captured, 2 left. 1 failed.')
     ).toBeInTheDocument();
   });
 
@@ -309,6 +367,9 @@ describe('SocialPostPipeline', () => {
         requestedPresetCount: 1,
         usedPresetCount: 1,
         usedPresetIds: ['home'],
+        captureCompletedCount: 0,
+        captureRemainingCount: 0,
+        captureTotalCount: 1,
         runId: null,
       },
       pipelineErrorMessage: 'Pipeline stopped: no screenshots captured.',

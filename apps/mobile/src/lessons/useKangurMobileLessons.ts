@@ -4,13 +4,16 @@ import {
   resolveFocusedKangurLessonId,
   type KangurLessonMasteryPresentation,
   type KangurPortableLesson,
-} from '@kangur/core/lessons';
-import {
   buildKangurLessonMasteryUpdate,
+  checkKangurNewBadges,
+  getKangurLessonMasteryPresentation,
   getKangurPracticeOperationForLessonComponent,
-} from '@kangur/core/practice';
-import { checkKangurNewBadges } from '@kangur/core/progress-metadata';
-import { createDefaultKangurProgressState } from '@kangur/contracts/kangur';
+  getLocalizedKangurPortableLessons,
+  resolveFocusedKangurLessonId,
+  type KangurLessonMasteryPresentation,
+  type KangurPortableLesson,
+} from '@kangur/core';
+import { createDefaultKangurProgressState } from '@kangur/contracts';
 import type { Href } from 'expo-router';
 import { useMemo, useState, useSyncExternalStore } from 'react';
 

@@ -7,7 +7,7 @@ import {
 import {
   createDefaultKangurProgressState,
   type KangurProgressState,
-} from '@kangur/contracts/kangur';
+} from '@kangur/contracts';
 
 import { useKangurMobileRuntime } from '../providers/KangurRuntimeContext';
 

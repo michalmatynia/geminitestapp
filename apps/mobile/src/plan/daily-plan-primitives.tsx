@@ -1,5 +1,5 @@
-import type { KangurAssignmentPlan } from '@kangur/core/assignments';
-import type { KangurScore } from '@kangur/contracts/kangur';
+import type { KangurAssignmentPlan } from '@kangur/core';
+import type { KangurScore } from '@kangur/contracts';
 import { type Href } from 'expo-router';
 import { Text, View } from 'react-native';
 

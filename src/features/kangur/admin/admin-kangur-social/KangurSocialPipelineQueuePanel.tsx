@@ -41,6 +41,10 @@ type PipelineJobRecord = {
     captureMode?: 'existing_assets' | 'fresh_capture';
     requestedPresetCount?: number | null;
     usedPresetCount?: number | null;
+    captureCompletedCount?: number | null;
+    captureRemainingCount?: number | null;
+    captureTotalCount?: number | null;
+    captureFailureCount?: number | null;
   } | null;
   result: {
     type?: string;
@@ -510,7 +514,28 @@ function renderJobRow({
     job.progress?.requestedPresetCount != null
       ? `${job.progress.usedPresetCount}/${job.progress.requestedPresetCount} presets used`
       : null;
-  const jobMeta = [isManualRun && postId ? `Post ${postId}` : null, captureModeLabel, presetUsageLabel]
+  const liveCaptureLabel =
+    captureMode === 'fresh_capture' &&
+    job.status === 'active' &&
+    job.progress?.captureTotalCount != null &&
+    job.progress?.captureCompletedCount != null &&
+    job.progress?.captureRemainingCount != null
+      ? `${job.progress.captureCompletedCount} captured / ${job.progress.captureRemainingCount} left`
+      : null;
+  const liveFailureLabel =
+    captureMode === 'fresh_capture' &&
+    job.status === 'active' &&
+    typeof job.progress?.captureFailureCount === 'number' &&
+    job.progress.captureFailureCount > 0
+      ? `${job.progress.captureFailureCount} failed`
+      : null;
+  const jobMeta = [
+    isManualRun && postId ? `Post ${postId}` : null,
+    captureModeLabel,
+    presetUsageLabel,
+    liveCaptureLabel,
+    liveFailureLabel,
+  ]
     .filter((value): value is string => Boolean(value));
 
   const durationLabel =

@@ -18,11 +18,13 @@ const {
 
 vi.mock('next/navigation', () => ({
   notFound: notFoundMock,
+  permanentRedirect: redirectMock,
   redirect: redirectMock,
 }));
 
 vi.mock('@/features/auth/server', () => ({
   auth: authMock,
+  readOptionalServerAuthSession: authMock,
 }));
 
 vi.mock('@/app/(frontend)/home-helpers', () => ({

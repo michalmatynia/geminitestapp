@@ -1,7 +1,7 @@
 import type {
   KangurAssignmentAction,
   KangurAssignmentPlan,
-} from '@kangur/core/assignments';
+} from '@kangur/core';
 import type { Href } from 'expo-router';
 import { useMemo } from 'react';
 

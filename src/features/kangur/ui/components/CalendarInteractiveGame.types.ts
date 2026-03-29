@@ -1,9 +1,6 @@
 'use client';
 
 import type { KangurAccent } from '@/features/kangur/ui/design/tokens';
-import { type KangurMiniGameTranslate } from '@/features/kangur/ui/constants/mini-game-i18n';
-
-export type CalendarInteractiveTranslate = KangurMiniGameTranslate;
 
 export type Season = 'spring' | 'summer' | 'autumn' | 'winter';
 

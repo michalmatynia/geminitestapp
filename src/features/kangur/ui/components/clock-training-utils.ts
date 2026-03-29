@@ -1,10 +1,8 @@
 import type { KangurMiniGameBinaryFeedbackState } from '@/features/kangur/ui/types';
+import type { KangurMiniGameTranslate } from '@/features/kangur/ui/constants/mini-game-i18n';
 
 import { CLOCK_TRAINING_TASKS } from './clock-training-data';
-import {
-  translateClockTrainingWithFallback,
-  type ClockTrainingTranslate,
-} from './clock-training-i18n';
+import { translateClockTrainingWithFallback } from './clock-training-i18n';
 import type {
   ClockChallengeMedal,
   ClockGameMode,
@@ -37,7 +35,7 @@ function shuffle<T>(items: T[]): T[] {
 
 export function getClockTrainingSectionLabel(
   section: ClockTrainingTaskPoolId,
-  translate?: ClockTrainingTranslate
+  translate?: KangurMiniGameTranslate
 ): string {
   switch (section) {
     case 'hours':
@@ -81,7 +79,7 @@ function resolveClockChallengeMedal(
 
 function getClockChallengeMedalLabel(
   medal: ClockChallengeMedal,
-  translate?: ClockTrainingTranslate
+  translate?: KangurMiniGameTranslate
 ): string {
   switch (medal) {
     case 'gold':
@@ -219,7 +217,7 @@ export function buildClockWrongFeedback(
   expectedHours: number,
   expectedMinutes: number,
   section: ClockTrainingTaskPoolId = 'mixed',
-  translate?: ClockTrainingTranslate
+  translate?: KangurMiniGameTranslate
 ): ClockFeedback {
   const totalMinuteDistance = getClockDistanceInMinutes(
     actualHours,
@@ -381,7 +379,7 @@ export function taskToKey(task: ClockTask): string {
 export function buildClockTaskPrompt(
   task: ClockTask,
   section: ClockTrainingTaskPoolId = 'mixed',
-  translate?: ClockTrainingTranslate
+  translate?: KangurMiniGameTranslate
 ): string {
   if (section === 'hours') {
     return translateClockTrainingWithFallback(
@@ -463,7 +461,7 @@ export function buildClockCorrectFeedback(
   section: ClockTrainingTaskPoolId,
   task: ClockTask,
   options: { gameMode?: ClockGameMode; streak?: number } = {},
-  translate?: ClockTrainingTranslate
+  translate?: KangurMiniGameTranslate
 ): ClockFeedback {
   const gameMode = options.gameMode ?? 'practice';
   const streak = options.streak ?? 0;
@@ -539,7 +537,7 @@ export function buildClockCorrectFeedback(
 export function buildClockTimeoutFeedback(
   section: ClockTrainingTaskPoolId,
   task: ClockTask,
-  translate?: ClockTrainingTranslate
+  translate?: KangurMiniGameTranslate
 ): ClockFeedback {
   const time = `${task.hours}:${pad(task.minutes)}`;
   const title = translateClockTrainingWithFallback(
@@ -611,7 +609,7 @@ export function getClockTrainingSummaryMessage(
   section: ClockTrainingTaskPoolId,
   score: number,
   totalTasks: number,
-  translate?: ClockTrainingTranslate
+  translate?: KangurMiniGameTranslate
 ): string {
   const isPerfect = score === totalTasks;
 

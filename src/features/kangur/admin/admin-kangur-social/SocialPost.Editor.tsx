@@ -7,7 +7,7 @@ import {
 import { SocialPostVisuals } from './SocialPost.Visuals';
 import { useSocialPostContext } from './SocialPostContext';
 
-export type SocialPostEditorProps = {
+type SocialPostEditorProps = {
   showImagesPanel?: boolean;
 };
 

@@ -98,10 +98,12 @@ export function useKangurAiTutorLifecycleEffects(input: UseKangurAiTutorLifecycl
 
   const {
     askModalReturnStateRef,
+    contextSwitchNotice,
     drawingDraftSnapshot,
     mounted,
     selectionGuidanceRevealTimeoutRef,
     setAskModalVisible,
+    setContextSwitchNotice,
     setDismissedSelectedText,
     setDraggedAvatarPoint,
     setGuestAuthFormVisible,
@@ -112,6 +114,7 @@ export function useKangurAiTutorLifecycleEffects(input: UseKangurAiTutorLifecycl
     setHighlightedSection,
     setHomeOnboardingStepIndex,
     setHoveredSectionAnchorId,
+    setPanelAnchorMode,
     setPanelPosition,
     setPanelPositionMode,
     setPanelSnapPreference,
@@ -134,11 +137,42 @@ export function useKangurAiTutorLifecycleEffects(input: UseKangurAiTutorLifecycl
   useTutorPositionLifecycle({ contextualFreeformPanelPoint, hasContextualFreeformFocus, isOpen, uiMode, viewport, widgetState });
   useTutorNavigationLifecycle({ mounted, routingPageKey, shouldTrackViewportScroll: true, widgetState });
   useTutorSelectionLifecycle({ isOpen, suppressFocus, widgetState });
-  useTutorSessionLifecycle({ tutorSessionKey, widgetState });
+  useTutorSessionLifecycle({
+    allowCrossPagePersistence: input.allowCrossPagePersistence,
+    getContextSwitchNotice: input.getContextSwitchNotice,
+    isOpen,
+    sessionContext: input.sessionContext,
+    tutorContent: input.tutorContent,
+    tutorSessionKey,
+    widgetState,
+  });
 
   useEffect(() => {
     persistTutorDrawingDraftSnapshot(drawingDraftSnapshot);
   }, [drawingDraftSnapshot]);
+
+  useEffect(() => {
+    if (!isOpen) {
+      setPanelAnchorMode('dock');
+      setDismissedSelectedText(null);
+      setSelectionConversationContext(null);
+      setSelectionGuidanceHandoffText(null);
+      setPersistedSelectionRect(null);
+      setPersistedSelectionPageRect(null);
+      setPersistedSelectionContainerRect(null);
+      setContextSwitchNotice(null);
+    }
+  }, [
+    isOpen,
+    setContextSwitchNotice,
+    setDismissedSelectedText,
+    setPanelAnchorMode,
+    setPersistedSelectionContainerRect,
+    setPersistedSelectionPageRect,
+    setPersistedSelectionRect,
+    setSelectionConversationContext,
+    setSelectionGuidanceHandoffText,
+  ]);
 
   useEffect(() => {
     if (!isTutorHidden) return;
@@ -177,6 +211,21 @@ export function useKangurAiTutorLifecycleEffects(input: UseKangurAiTutorLifecycl
     setSelectionGuidanceHandoffText(null);
     setSectionResponsePending(null);
     setSectionResponseComplete(null);
+    setContextSwitchNotice(null);
     closeChat();
-  }, [askModalReturnStateRef, clearSelection, closeChat, isTutorHidden, setAskModalVisible, setDismissedSelectedText, setDraggedAvatarPoint, setGuestAuthFormVisible, setGuestIntroHelpVisible, setGuestIntroVisible, setGuidedTutorTarget, setHasNewMessage, setHighlightedSection, setHighlightedText, setHomeOnboardingStepIndex, setHoveredSectionAnchorId, setPanelPosition, setPanelPositionMode, setPanelSnapPreference, setPersistedSelectionContainerRect, setPersistedSelectionPageRect, setPersistedSelectionPageRects, setPersistedSelectionRect, selectionGuidanceRevealTimeoutRef, setSectionResponseComplete, setSectionResponsePending, setSelectionGuidanceCalloutVisibleText, setSelectionConversationContext, setSelectionGuidanceHandoffText, setSelectionResponseComplete, setSelectionResponsePending, setAskModalDockStyle]);
+  }, [askModalReturnStateRef, clearSelection, closeChat, isTutorHidden, setAskModalVisible, setContextSwitchNotice, setDismissedSelectedText, setDraggedAvatarPoint, setGuestAuthFormVisible, setGuestIntroHelpVisible, setGuestIntroVisible, setGuidedTutorTarget, setHasNewMessage, setHighlightedSection, setHighlightedText, setHomeOnboardingStepIndex, setHoveredSectionAnchorId, setPanelPosition, setPanelPositionMode, setPanelSnapPreference, setPersistedSelectionContainerRect, setPersistedSelectionPageRect, setPersistedSelectionPageRects, setPersistedSelectionRect, selectionGuidanceRevealTimeoutRef, setSectionResponseComplete, setSectionResponsePending, setSelectionGuidanceCalloutVisibleText, setSelectionConversationContext, setSelectionGuidanceHandoffText, setSelectionResponseComplete, setSelectionResponsePending, setAskModalDockStyle]);
+
+  useEffect(() => {
+    if (!contextSwitchNotice || !isOpen) {
+      return;
+    }
+
+    const timeoutId = window.setTimeout(() => {
+      setContextSwitchNotice(null);
+    }, 4_000);
+
+    return () => {
+      window.clearTimeout(timeoutId);
+    };
+  }, [contextSwitchNotice, isOpen, setContextSwitchNotice]);
 }

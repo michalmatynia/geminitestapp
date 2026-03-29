@@ -68,6 +68,7 @@ describe('queue-init', () => {
     process.env['REDIS_URL'] = 'redis://localhost:6379';
     delete process.env['REDIS_TLS'];
     __testOnly.resetInitialized();
+    vi.mocked(redisConnection.isRedisReachable).mockResolvedValue(false);
   });
 
   describe('initializeQueues', () => {
@@ -90,7 +91,7 @@ describe('queue-init', () => {
 
     it('should start workers if Redis is available', async () => {
       vi.mocked(redisConnection.isRedisAvailable).mockReturnValue(true);
-      redisPingMock.mockResolvedValue('PONG');
+      vi.mocked(redisConnection.isRedisReachable).mockResolvedValue(true);
 
       initializeQueues();
 
@@ -101,7 +102,7 @@ describe('queue-init', () => {
 
     it('should only initialize once', async () => {
       vi.mocked(redisConnection.isRedisAvailable).mockReturnValue(true);
-      redisPingMock.mockResolvedValue('PONG');
+      vi.mocked(redisConnection.isRedisReachable).mockResolvedValue(true);
 
       initializeQueues();
       initializeQueues();

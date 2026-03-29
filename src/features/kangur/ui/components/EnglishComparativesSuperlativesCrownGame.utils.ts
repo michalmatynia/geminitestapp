@@ -2,7 +2,6 @@ import type { KangurAccent } from '@/features/kangur/ui/design/tokens';
 
 import {
   ENGLISH_COMPARE_AND_CROWN_ROUNDS,
-  type EnglishCompareAndCrownRound,
   type EnglishComparisonActionId,
   type EnglishComparisonFormId,
 } from './EnglishComparativesSuperlativesCrownGame.data';
@@ -17,6 +16,7 @@ export type ComparisonToken = {
 };
 
 export type RoundState = SlottedRoundStateDto<ComparisonToken>;
+type EnglishCompareAndCrownRound = (typeof ENGLISH_COMPARE_AND_CROWN_ROUNDS)[number];
 
 export type ComparisonFormMeta = {
   accent: KangurAccent;

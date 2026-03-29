@@ -1,11 +1,1 @@
 clusterId,clusterKind,riskScore,declarationCount,domains,canonicalDtoCandidate,signatureHash,signatureKind
-exact-0001,exact-shape,30,2,feature:cms|feature:kangur,,2d56615b8d41,type-expression
-near-0005,near-shape,13,2,shared:contracts,,00ee07741e7d,structural-members
-exact-0003,exact-shape,11,2,feature:kangur,,95608cea8846,type-expression
-near-0001,near-shape,10,2,feature:kangur,,261912f28413,structural-members
-near-0004,near-shape,10,2,shared:contracts,,559f7351cbfa,structural-members
-exact-0004,exact-shape,9,2,feature:kangur,,b39366cdb0f5,structural-members
-exact-0005,exact-shape,9,2,shared:contracts,,ddde0ce7dd64,type-expression
-near-0002,near-shape,9,2,feature:kangur,,7a4ef9abed55,structural-members
-near-0003,near-shape,9,2,shared:contracts,,75fb08106fc2,structural-members
-exact-0002,exact-shape,8,2,feature:kangur,,6b3b9f9a30b7,structural-members

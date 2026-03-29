@@ -1,9 +1,10 @@
 'use client';
 
+import type { KangurMiniGameTranslate } from '@/features/kangur/ui/constants/mini-game-i18n';
+
 import type {
   CalendarInteractiveSectionContent,
   CalendarInteractiveTaskPoolId,
-  CalendarInteractiveTranslate,
   Season,
   Task,
 } from './CalendarInteractiveGame.types';
@@ -62,44 +63,44 @@ export function getDayOfWeek(year: number, month: number, day: number): number {
 }
 
 export const getCalendarInteractiveMonthName = (
-  translate: CalendarInteractiveTranslate,
+  translate: KangurMiniGameTranslate,
   month: number
 ): string =>
   translate(`calendarInteractive.months.${MONTHS_DATA[month]?.id ?? MONTHS_DATA[0].id}`);
 
 export const getCalendarInteractiveWeekdayFull = (
-  translate: CalendarInteractiveTranslate,
+  translate: KangurMiniGameTranslate,
   dayIdx: number
 ): string =>
   translate(`calendarInteractive.weekdays.full.${WEEKDAYS[dayIdx]?.full ?? WEEKDAYS[0].full}`);
 
 export const getCalendarInteractiveWeekdayShort = (
-  translate: CalendarInteractiveTranslate,
+  translate: KangurMiniGameTranslate,
   dayIdx: number
 ): string =>
   translate(`calendarInteractive.weekdays.short.${WEEKDAYS[dayIdx]?.short ?? WEEKDAYS[0].short}`);
 
 export const getCalendarInteractiveWeekdayAbbr = (
-  translate: CalendarInteractiveTranslate,
+  translate: KangurMiniGameTranslate,
   dayIdx: number
 ): string =>
   translate(`calendarInteractive.weekdays.abbr.${WEEKDAYS[dayIdx]?.abbr ?? WEEKDAYS[0].abbr}`);
 
 export const getCalendarInteractiveWeekdayLookup = (
-  translate: CalendarInteractiveTranslate,
+  translate: KangurMiniGameTranslate,
   dayIdx: number
 ): string =>
   translate(`calendarInteractive.weekdays.lookup.${WEEKDAYS[dayIdx]?.lookup ?? WEEKDAYS[0].lookup}`);
 
 export const getCalendarInteractiveSeasonLabel = (
-  translate: CalendarInteractiveTranslate,
+  translate: KangurMiniGameTranslate,
   season: Season
 ): string => translate(`calendarInteractive.seasons.${season}`);
 
 export function generateTask(
   month: number,
   year: number,
-  translate: CalendarInteractiveTranslate,
+  translate: KangurMiniGameTranslate,
   section: CalendarInteractiveTaskPoolId = 'mixed'
 ): Task {
   const taskTypes = CALENDAR_INTERACTIVE_TASK_TYPE_POOLS[section];

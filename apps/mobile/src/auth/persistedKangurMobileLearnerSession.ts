@@ -1,4 +1,4 @@
-import { kangurAuthUserSchema } from '@kangur/contracts/kangur';
+import { kangurAuthUserSchema } from '@kangur/contracts';
 import type {
   KangurAuthSession,
   KangurClientStorageAdapter,

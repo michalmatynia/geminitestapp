@@ -107,7 +107,41 @@ vi.mock('@/features/kangur/shared/ui', async (importOriginal) => {
   },
   Input: (props: React.InputHTMLAttributes<HTMLInputElement>) => <input {...props} />,
   SectionHeader: ({ title }: { title: string }) => <h1>{title}</h1>,
-  SelectSimple: () => <div data-testid='select-simple' />,
+  SelectSimple: ({
+    value,
+    onChange,
+    onValueChange,
+    options = [],
+    id,
+    ariaLabel,
+    title,
+  }: {
+    value?: string;
+    onChange?: (value: string) => void;
+    onValueChange?: (value: string) => void;
+    options?: Array<{ value: string; label: string }>;
+    id?: string;
+    ariaLabel?: string;
+    title?: string;
+  }) => (
+    <select
+      data-testid='select-simple'
+      id={id}
+      aria-label={ariaLabel}
+      title={title}
+      value={value}
+      onChange={(event): void => {
+        onChange?.(event.target.value);
+        onValueChange?.(event.target.value);
+      }}
+    >
+      {options.map((option) => (
+        <option key={option.value} value={option.value}>
+          {option.label}
+        </option>
+      ))}
+    </select>
+  ),
   Skeleton: () => <div data-testid='skeleton' />,
   Switch: ({ checked }: { checked: boolean }) => <div data-checked={checked} />,
   Textarea: (props: React.TextareaHTMLAttributes<HTMLTextAreaElement>) => <textarea {...props} />,
@@ -129,7 +163,18 @@ vi.mock('@/features/kangur/observability/client', () => ({
 }));
 
 vi.mock('@/features/kangur/admin/components/KangurAdminContentShell', () => ({
-  KangurAdminContentShell: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
+  KangurAdminContentShell: ({
+    children,
+    headerActions,
+  }: {
+    children: React.ReactNode;
+    headerActions?: React.ReactNode;
+  }) => (
+    <div>
+      {headerActions}
+      {children}
+    </div>
+  ),
 }));
 
 import { AdminKangurLessonsManagerPage } from '@/features/kangur/admin/AdminKangurLessonsManagerPage';

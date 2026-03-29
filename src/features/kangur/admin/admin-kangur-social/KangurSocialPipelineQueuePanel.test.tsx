@@ -210,8 +210,19 @@ describe('KangurSocialPipelineQueuePanel', () => {
         {
           id: 'job-active',
           status: 'active',
-          data: null,
-          progress: null,
+          data: {
+            type: 'manual-post-pipeline',
+            input: {
+              postId: 'post-43',
+            },
+          },
+          progress: {
+            captureMode: 'fresh_capture',
+            captureCompletedCount: 1,
+            captureRemainingCount: 2,
+            captureTotalCount: 3,
+            captureFailureCount: 1,
+          },
           result: null,
           failedReason: null,
           processedOn: null,
@@ -242,10 +253,12 @@ describe('KangurSocialPipelineQueuePanel', () => {
 
     expect(await screen.findByRole('button', { name: 'Delete pipeline job job-completed' })).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Delete pipeline job job-active' })).toBeNull();
-    expect(screen.getByText('Manual post draft pipeline')).toBeInTheDocument();
+    expect(screen.getAllByText('Manual post draft pipeline')).toHaveLength(2);
     expect(screen.getByText('Post post-42')).toBeInTheDocument();
-    expect(screen.getByText('Fresh Playwright capture')).toBeInTheDocument();
+    expect(screen.getAllByText('Fresh Playwright capture')).toHaveLength(2);
     expect(screen.getByText('2/3 presets used')).toBeInTheDocument();
+    expect(screen.getByText('1 captured / 2 left')).toBeInTheDocument();
+    expect(screen.getByText('1 failed')).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole('button', { name: 'Delete pipeline job job-completed' }));
 

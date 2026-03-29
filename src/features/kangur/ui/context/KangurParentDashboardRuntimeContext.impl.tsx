@@ -65,6 +65,9 @@ const KangurParentDashboardRuntimeActionsContext =
 type KangurParentDashboardRuntimeContextValue = KangurParentDashboardRuntimeStateContextValue &
   KangurParentDashboardRuntimeActionsContextValue;
 
+const isConflictStatusError = (error: unknown): error is { status: number } =>
+  typeof error === 'object' && error !== null && 'status' in error && error.status === 409;
+
 export function KangurParentDashboardRuntimeProvider({
   children,
 }: {
@@ -130,21 +133,28 @@ export function KangurParentDashboardRuntimeProvider({
   const assignmentsError = canAccessDashboard && activeLearnerId ? assignmentsQuery.error : null;
   const isLoadingAssignments = canAccessDashboard && activeLearnerId ? assignmentsQuery.isLoading : false;
   const viewerName = user?.email?.trim() || translations('account');
-  const scoreViewerName = activeLearner?.displayName?.trim() || null;
+  const scoreViewerName =
+    activeLearner?.displayName?.trim() || user?.full_name?.trim() || null;
   const scoreViewerEmail = user?.email?.trim() || null;
   const viewerRoleLabel = null;
+  const shouldEnableScoreAnalytics =
+    canAccessDashboard && Boolean(activeLearnerId) && isPrimaryQueriesReady && activeTab === 'progress';
 
   const {
     scores,
     scoresError,
-    isLoadingScores,
+    isLoadingScores: isLoadingScoresFromQuery,
   } = useKangurParentDashboardScores({
-    enabled: canAccessDashboard && Boolean(activeLearnerId) && isPrimaryQueriesReady,
+    enabled: shouldEnableScoreAnalytics,
     createdBy: user?.email?.trim() || null,
     learnerId: activeLearnerId,
-    playerName: activeLearner?.displayName?.trim() || null,
+    playerName: scoreViewerName,
     subject,
   });
+  const isLoadingScores =
+    canAccessDashboard && Boolean(activeLearnerId) && activeTab === 'progress'
+      ? !isPrimaryQueriesReady || isLoadingScoresFromQuery
+      : false;
 
   const actions = useMemo((): KangurParentDashboardRuntimeActionsContextValue => {
     const refreshAssignments = async (): Promise<void> => {
@@ -159,6 +169,15 @@ export function KangurParentDashboardRuntimeProvider({
       setIsSubmitting(true);
       setFeedback(null);
       try {
+        const normalizedLoginName = createForm.loginName.trim().toLowerCase();
+        const hasDuplicateLoginName = learners.some(
+          (learner) => learner.loginName.trim().toLowerCase() === normalizedLoginName
+        );
+        if (normalizedLoginName && hasDuplicateLoginName) {
+          setFeedback(translations('validation.duplicateNick'));
+          return false;
+        }
+
         const age = parseInt(createForm.age, 10);
         await withTimeout(kangurPlatform.learners.create({ displayName: createForm.displayName, age: isNaN(age) ? undefined : age, loginName: createForm.loginName, password: createForm.password }), ACTION_TIMEOUT_MS, translations('errors.createTimeout'));
         await checkAppState();
@@ -166,7 +185,13 @@ export function KangurParentDashboardRuntimeProvider({
         setCreateForm({ displayName: '', age: '', loginName: '', password: '' });
         return true;
       } catch (error) {
-        setFeedback(error instanceof Error ? error.message : translations('errors.createFailed'));
+        setFeedback(
+          isConflictStatusError(error)
+            ? translations('validation.duplicateNick')
+            : error instanceof Error
+              ? error.message
+              : translations('errors.createFailed')
+        );
         return false;
       } finally {
         setIsSubmitting(false);

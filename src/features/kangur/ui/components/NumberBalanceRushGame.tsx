@@ -202,7 +202,7 @@ export default function NumberBalanceRushGame(
           </div>
         )}
 
-        {isCoarsePointer && <div className='rounded-2xl border border-amber-200/80 bg-white/80 px-4 py-3 text-sm font-semibold text-amber-950 shadow-sm' aria-live='polite'>{touchHint}</div>}
+        {isCoarsePointer && <div data-testid='number-balance-touch-hint' className='rounded-2xl border border-amber-200/80 bg-white/80 px-4 py-3 text-sm font-semibold text-amber-950 shadow-sm' aria-live='polite'>{touchHint}</div>}
 
         <KangurGlassPanel className={cn('w-full rounded-[32px] p-6 transition', celebrating && 'ring-2 ring-amber-300 shadow-[0_0_0_4px_rgba(251,191,36,0.25)]')} surface='playField'>
           <div className={`${KANGUR_STACK_ROOMY_CLASSNAME} w-full`}>
@@ -211,7 +211,7 @@ export default function NumberBalanceRushGame(
                 <div className='text-sm font-semibold text-amber-900'>{translations('numberBalance.inRound.targetLabel', { target: puzzle.targets.left })}</div>
                 <Droppable droppableId='left'>
                   {(provided, snapshot) => (
-                    <div ref={provided.innerRef} {...provided.droppableProps} className={cn('flex min-h-[120px] w-full flex-wrap items-center justify-center gap-2 rounded-3xl border-2 border-dashed p-3 transition touch-manipulation', snapshot.isDraggingOver ? 'border-amber-300 bg-amber-50/80' : 'border-amber-200', isCoarsePointer && selectedTileId && 'ring-2 ring-amber-200/80 ring-offset-2 ring-offset-white')} onClick={() => moveSelectedTileTo('left')} role='button' tabIndex={canInteract ? 0 : -1} aria-disabled={!canInteract} aria-label={translations('numberBalance.inRound.aria.leftSide')}>
+                    <div data-testid='number-balance-left-zone' ref={provided.innerRef} {...provided.droppableProps} className={cn('flex min-h-[120px] w-full flex-wrap items-center justify-center gap-2 rounded-3xl border-2 border-dashed p-3 transition touch-manipulation', snapshot.isDraggingOver ? 'border-amber-300 bg-amber-50/80' : 'border-amber-200', isCoarsePointer && selectedTileId && 'ring-2 ring-amber-200/80 ring-offset-2 ring-offset-white')} onClick={() => moveSelectedTileTo('left')} role='button' tabIndex={canInteract ? 0 : -1} aria-disabled={!canInteract} aria-label={translations('numberBalance.inRound.aria.leftSide')}>
                       {leftTiles.map((tile, index) => <NumberTile key={tile.id} tile={tile} index={index} isDragDisabled={!canInteract} isSelected={selectedTileId === tile.id} isCoarsePointer={isCoarsePointer} onClick={() => canInteract && setSelectedTileId(curr => curr === tile.id ? null : tile.id)} />)}
                       {Array.from({ length: Math.max(0, puzzle.slots.left - leftTiles.length) }).map((_, i) => <div key={i} className='h-14 w-14 rounded-2xl border border-dashed border-amber-200/70' aria-hidden='true' />)}
                       {provided.placeholder}
@@ -225,7 +225,7 @@ export default function NumberBalanceRushGame(
                 <div className='text-sm font-semibold text-amber-900'>{translations('numberBalance.inRound.targetLabel', { target: puzzle.targets.right })}</div>
                 <Droppable droppableId='right'>
                   {(provided, snapshot) => (
-                    <div ref={provided.innerRef} {...provided.droppableProps} className={cn('flex min-h-[120px] w-full flex-wrap items-center justify-center gap-2 rounded-3xl border-2 border-dashed p-3 transition touch-manipulation', snapshot.isDraggingOver ? 'border-amber-300 bg-amber-50/80' : 'border-amber-200', isCoarsePointer && selectedTileId && 'ring-2 ring-amber-200/80 ring-offset-2 ring-offset-white')} onClick={() => moveSelectedTileTo('right')} role='button' tabIndex={canInteract ? 0 : -1} aria-disabled={!canInteract} aria-label={translations('numberBalance.inRound.aria.rightSide')}>
+                    <div data-testid='number-balance-right-zone' ref={provided.innerRef} {...provided.droppableProps} className={cn('flex min-h-[120px] w-full flex-wrap items-center justify-center gap-2 rounded-3xl border-2 border-dashed p-3 transition touch-manipulation', snapshot.isDraggingOver ? 'border-amber-300 bg-amber-50/80' : 'border-amber-200', isCoarsePointer && selectedTileId && 'ring-2 ring-amber-200/80 ring-offset-2 ring-offset-white')} onClick={() => moveSelectedTileTo('right')} role='button' tabIndex={canInteract ? 0 : -1} aria-disabled={!canInteract} aria-label={translations('numberBalance.inRound.aria.rightSide')}>
                       {rightTiles.map((tile, index) => <NumberTile key={tile.id} tile={tile} index={index} isDragDisabled={!canInteract} isSelected={selectedTileId === tile.id} isCoarsePointer={isCoarsePointer} onClick={() => canInteract && setSelectedTileId(curr => curr === tile.id ? null : tile.id)} />)}
                       {Array.from({ length: Math.max(0, puzzle.slots.right - rightTiles.length) }).map((_, i) => <div key={i} className='h-14 w-14 rounded-2xl border border-dashed border-amber-200/70' aria-hidden='true' />)}
                       {provided.placeholder}
@@ -239,7 +239,7 @@ export default function NumberBalanceRushGame(
               <div className='text-xs font-semibold text-amber-900/80'>{translations('numberBalance.inRound.instruction')}</div>
               <Droppable droppableId='tray' direction='horizontal'>
                 {(provided, snapshot) => (
-                  <div ref={provided.innerRef} {...provided.droppableProps} className={cn('flex min-h-[88px] flex-wrap items-center justify-center kangur-panel-gap rounded-[28px] border-2 border-dashed p-3 transition touch-manipulation', snapshot.isDraggingOver ? 'border-amber-300 bg-amber-50/80' : 'border-amber-200', isCoarsePointer && selectedTileId && 'ring-2 ring-amber-200/80 ring-offset-2 ring-offset-white')} onClick={() => moveSelectedTileTo('tray')} role='button' tabIndex={canInteract ? 0 : -1} aria-disabled={!canInteract} aria-label={translations('numberBalance.inRound.aria.tray')}>
+                  <div data-testid='number-balance-tray-zone' ref={provided.innerRef} {...provided.droppableProps} className={cn('flex min-h-[88px] flex-wrap items-center justify-center kangur-panel-gap rounded-[28px] border-2 border-dashed p-3 transition touch-manipulation', snapshot.isDraggingOver ? 'border-amber-300 bg-amber-50/80' : 'border-amber-200', isCoarsePointer && selectedTileId && 'ring-2 ring-amber-200/80 ring-offset-2 ring-offset-white')} onClick={() => moveSelectedTileTo('tray')} role='button' tabIndex={canInteract ? 0 : -1} aria-disabled={!canInteract} aria-label={translations('numberBalance.inRound.aria.tray')}>
                     {trayTiles.map((tile, index) => <NumberTile key={tile.id} tile={tile} index={index} isDragDisabled={!canInteract} isSelected={selectedTileId === tile.id} isCoarsePointer={isCoarsePointer} onClick={() => canInteract && setSelectedTileId(curr => curr === tile.id ? null : tile.id)} />)}
                     {provided.placeholder}
                   </div>

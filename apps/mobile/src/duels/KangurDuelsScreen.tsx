@@ -1,4 +1,4 @@
-import type { KangurDuelChoice } from '@kangur/contracts/kangur-duels';
+import type { KangurDuelChoice } from '@kangur/contracts-duels';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
 import { Text, TextInput, View } from 'react-native';

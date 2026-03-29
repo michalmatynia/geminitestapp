@@ -1,4 +1,4 @@
-import type { KangurDuelLobbyPresenceEntry } from '@kangur/contracts/kangur-duels';
+import type { KangurDuelLobbyPresenceEntry } from '@kangur/contracts-duels';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useMemo, useState } from 'react';
 

@@ -85,43 +85,38 @@ describe('KangurAiTutorContentSettingsPanel', () => {
       });
     });
 
-    expect(await screen.findByText('Translation status')).toBeInTheDocument();
-    expect(screen.getByText('2 locales tracked')).toBeInTheDocument();
+    expect(await screen.findByText('Translation Monitor')).toBeInTheDocument();
+    expect(screen.getByText('EN')).toBeInTheDocument();
+    expect(screen.getByText('DE')).toBeInTheDocument();
 
-    const guestIntroCard = screen.getByText('Structured onboarding editor').closest('.rounded-2xl');
+    const guestIntroCard = screen.getByText('Guest intro').closest('.rounded-2xl');
     if (!guestIntroCard) {
       throw new Error('Expected guest intro card to be rendered.');
     }
     expect(within(guestIntroCard).getByText('EN scaffolded')).toBeInTheDocument();
     expect(within(guestIntroCard).getByText('DE manual')).toBeInTheDocument();
 
-    const guidedCalloutCard = screen.getByText('Guided onboarding buttons').closest('.rounded-2xl');
+    const guidedCalloutCard = screen.getByText('Guided callout').closest('.rounded-2xl');
     if (!guidedCalloutCard) {
       throw new Error('Expected guided callout card to be rendered.');
     }
     expect(within(guidedCalloutCard).getByText('DE source copy')).toBeInTheDocument();
-    expect(screen.getAllByText('1 source copy').length).toBeGreaterThan(0);
 
-    fireEvent.click(
-      screen.getByRole('button', { name: 'Toggle manual sections filter' })
-    );
+    fireEvent.click(screen.getByRole('button', { name: 'Manual' }));
 
-    expect(screen.getByText('1 of 3 visible')).toBeInTheDocument();
-    expect(screen.getByText('Structured onboarding editor')).toBeInTheDocument();
-    expect(screen.queryByText('Home onboarding')).not.toBeInTheDocument();
-    expect(screen.queryByText('Guided onboarding buttons')).not.toBeInTheDocument();
+    expect(within(guestIntroCard).getByText('DE manual')).toBeInTheDocument();
+    expect(within(guestIntroCard).queryByText('EN scaffolded')).not.toBeInTheDocument();
+    expect(within(guidedCalloutCard).queryByText('DE source copy')).not.toBeInTheDocument();
 
-    fireEvent.click(
-      screen.getByRole('button', { name: 'Toggle source copy sections filter' })
-    );
+    fireEvent.click(screen.getByRole('button', { name: 'Source copy' }));
 
-    expect(screen.getByText('2 of 3 visible')).toBeInTheDocument();
-    expect(screen.getByText('Structured onboarding editor')).toBeInTheDocument();
-    expect(screen.getByText('Guided onboarding buttons')).toBeInTheDocument();
+    expect(within(guestIntroCard).getByText('DE manual')).toBeInTheDocument();
+    expect(within(guidedCalloutCard).getByText('DE source copy')).toBeInTheDocument();
+    expect(within(guestIntroCard).queryByText('EN scaffolded')).not.toBeInTheDocument();
 
-    fireEvent.click(screen.getByRole('button', { name: 'Show all structured sections' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Scaffolded' }));
 
-    expect(screen.getByText('3 of 3 visible')).toBeInTheDocument();
+    expect(within(guestIntroCard).getByText('EN scaffolded')).toBeInTheDocument();
     expect(screen.getByText('Home onboarding')).toBeInTheDocument();
   });
 });

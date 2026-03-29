@@ -1,5 +1,5 @@
-import { KANGUR_BADGES } from '@kangur/core/progress-metadata';
-import { getLocalizedKangurMetadataBadgeName } from '@kangur/core/progress-i18n';
+import { KANGUR_BADGES } from '@kangur/core';
+import { getLocalizedKangurMetadataBadgeName } from '@kangur/core';
 import { useMemo } from 'react';
 
 import { useKangurMobileI18n } from '../i18n/kangurMobileI18n';

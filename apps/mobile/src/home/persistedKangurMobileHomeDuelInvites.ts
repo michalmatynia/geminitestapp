@@ -1,7 +1,7 @@
 import {
   kangurDuelLobbyEntrySchema,
   type KangurDuelLobbyEntry,
-} from '@kangur/contracts/kangur-duels';
+} from '@kangur/contracts-duels';
 import type { KangurClientStorageAdapter } from '@kangur/platform';
 
 import { MOBILE_HOME_DUEL_LOBBY_QUERY_LIMIT } from './homeDuelLobbyQuery';

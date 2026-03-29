@@ -23,7 +23,7 @@ type EnglishAdverbsActionStudioAction = {
   answer: EnglishAdverbId;
 };
 
-export type EnglishAdverbsActionStudioRound = {
+type EnglishAdverbsActionStudioRound = {
   id:
     | 'race-day'
     | 'school-studio'

@@ -24,8 +24,3 @@ export type KangurLearnerProfileTranslate = (
   key: string,
   values?: Record<string, string | number>
 ) => string;
-
-export type KangurLearnerProfileLocalizer = {
-  locale: string;
-  translate?: KangurLearnerProfileTranslate;
-};

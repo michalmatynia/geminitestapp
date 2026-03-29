@@ -8,6 +8,10 @@ const storefrontAppearanceLogicPath = path.join(
   process.cwd(),
   'src/features/cms/components/frontend/CmsStorefrontAppearance.logic.ts'
 );
+const storefrontAccentVarsPath = path.join(
+  process.cwd(),
+  'src/features/cms/components/frontend/appearance-logic/CmsStorefrontAppearance.accent-vars.ts'
+);
 
 describe('Kangur storefront theme remap', () => {
   it('keeps the legacy storefront utility remap layer inside the extracted Kangur stylesheet', () => {
@@ -27,14 +31,20 @@ describe('Kangur storefront theme remap', () => {
     expect(source).toContain('--tw-ring-offset-color: var(--kangur-page-background, #ffffff)');
   });
 
-  it('keeps the storefront appearance resolver responsible for derived remap vars', () => {
-    const source = readFileSync(storefrontAppearanceLogicPath, 'utf8');
+  it('keeps the storefront appearance resolver composing derived remap vars through extracted helpers', () => {
+    const logicSource = readFileSync(storefrontAppearanceLogicPath, 'utf8');
+    const accentSource = readFileSync(storefrontAccentVarsPath, 'utf8');
 
-    expect(source).toContain('--kangur-accent-${name}-soft-fill');
-    expect(source).toContain('--kangur-accent-${name}-solid-fill');
-    expect(source).toContain('--kangur-accent-${name}-text');
-    expect(source).toContain('--kangur-accent-${name}-muted-text');
-    expect(source).toContain('--kangur-contrast-text');
-    expect(source).toContain('--kangur-overlay-backdrop');
+    expect(logicSource).toContain('buildKangurAccentThemeVars');
+    expect(logicSource).toContain('const accentVars = buildKangurAccentThemeVars');
+    expect(logicSource).toContain('...accentVars');
+    expect(logicSource).toContain('...glassVars');
+    expect(logicSource).toContain('...runtimeThemeVars');
+
+    expect(accentSource).toContain('--kangur-accent-${name}-soft-fill');
+    expect(accentSource).toContain('--kangur-accent-${name}-solid-fill');
+    expect(accentSource).toContain('--kangur-accent-${name}-text');
+    expect(accentSource).toContain('--kangur-accent-${name}-muted-text');
+    expect(accentSource).toContain('--kangur-accent-${name}-contrast-text');
   });
 });

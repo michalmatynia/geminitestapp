@@ -1,4 +1,4 @@
-import { resolveKangurLessonFocusForPracticeOperation } from '@kangur/core/practice';
+import { resolveKangurLessonFocusForPracticeOperation } from '@kangur/core';
 import type { Href } from 'expo-router';
 
 export const createKangurLessonsCatalogHref = (): Href =>

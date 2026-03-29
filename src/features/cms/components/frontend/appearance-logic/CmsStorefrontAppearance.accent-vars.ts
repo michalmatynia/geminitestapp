@@ -1,21 +1,15 @@
 'use client';
 
+import type { KangurAccent } from '@/shared/contracts/kangur-theme';
+
 import { applyTransparency, mixCssColor } from '../CmsStorefrontAppearance.utils';
+
+export type { KangurAccent as KangurAccentThemeName } from '@/shared/contracts/kangur-theme';
 
 export type KangurAccentThemeInput = {
   start: string;
   end: string;
 };
-
-export type KangurAccentThemeName =
-  | 'indigo'
-  | 'violet'
-  | 'emerald'
-  | 'sky'
-  | 'amber'
-  | 'rose'
-  | 'teal'
-  | 'slate';
 
 export const buildKangurAccentThemeVars = (args: {
   softCardBackground: string;
@@ -27,7 +21,7 @@ export const buildKangurAccentThemeVars = (args: {
   pageBackground: string;
   contrastText: string;
   isDark: boolean;
-  accents: Record<KangurAccentThemeName, KangurAccentThemeInput>;
+  accents: Record<KangurAccent, KangurAccentThemeInput>;
 }): Record<string, string> =>
   Object.entries(args.accents).reduce<Record<string, string>>((vars, [name, accent]) => {
     vars[`--kangur-accent-${name}-border`] = mixCssColor(args.softCardBorder, accent.end, 58);

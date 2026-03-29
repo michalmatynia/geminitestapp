@@ -153,7 +153,7 @@ const nextConfig = {
     ...(isTurbopack ? {} : { optimizePackageImports }),
   },
   serverExternalPackages: [
-    'bcrypt',
+    'bcryptjs',
     'bullmq',
     '@grpc/grpc-js',
     'ioredis',
@@ -186,6 +186,17 @@ const nextConfig = {
     'openai',
     // PDF parsing is server-only (API routes + OCR workers). 21MB dependency.
     'pdf-parse',
+    // SMTP/email transport — server-only (auth email delivery, campaign emails).
+    'nodemailer',
+    // CSV parsing — server-only (product import API route).
+    'papaparse',
+    // MIME type detection — server-only (file serving, social image handlers).
+    'mime-types',
+    // In-memory caching — server-only (settings cache, page content repository).
+    'lru-cache',
+    // Auth packages — server-only (auth.ts with 'server-only' import).
+    '@auth/core',
+    '@auth/mongodb-adapter',
   ],
   turbopack: {
     root: __dirname,

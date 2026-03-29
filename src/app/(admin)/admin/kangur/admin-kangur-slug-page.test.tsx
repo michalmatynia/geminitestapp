@@ -21,6 +21,10 @@ vi.mock('@/shared/lib/auth/optional-server-auth', () => ({
   readOptionalServerAuthSession: authMock,
 }));
 
+vi.mock('@/features/auth/server', () => ({
+  readOptionalServerAuthSession: authMock,
+}));
+
 vi.mock('@/features/kangur/public', () => ({
   AdminKangurPageShell: ({ slug }: { slug?: string[] }) => <div data-testid='admin-kangur-shell'>{JSON.stringify(slug ?? [])}</div>,
 }));

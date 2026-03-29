@@ -47,9 +47,11 @@ export {
 };
 
 export type {
+  ChatbotSettingsPayload as AgentSettingsPayload,
   ChatMessageDto,
   ChatbotSessionDto,
 };
+export type { AgentAuditLogRecordDtoBase as AgentAuditLogDto } from './agent-runtime';
 
 export const chatbotSessionMessageCreateRequestSchema = z.object({
   role: chatMessageRoleSchema,
@@ -197,8 +199,6 @@ export type ChatbotJobRepository = {
   delete(id: string): Promise<boolean>;
 };
 
-export type AgentSettingsPayload = ChatbotSettingsPayload;
-
 export type ModelTaskRuleDto = {
   preferLarge?: boolean;
   preferSmall?: boolean;
@@ -227,23 +227,24 @@ export type ModelProfileDto = {
   isReasoning?: boolean;
 };
 
-export type ExtendedModelProfile = {
-  id: string;
-  name: string;
-  provider: string;
-  capabilities: string[];
-  contextWindow: number;
-  maxOutputTokens: number;
-  normalized: string;
-  size: number | null;
-  isEmbedding: boolean;
-  isRerank: boolean;
-  isVision: boolean;
-  isCode: boolean;
-  isInstruct: boolean;
-  isChat: boolean;
-  isReasoning: boolean;
-};
+type ModelProfileBooleanFlags = Required<
+  Pick<
+    ModelProfileDto,
+    'isEmbedding' | 'isRerank' | 'isVision' | 'isCode' | 'isInstruct' | 'isChat' | 'isReasoning'
+  >
+>;
+
+type ModelProfileRequiredFields = Required<
+  Pick<ModelProfileDto, 'provider' | 'capabilities' | 'contextWindow' | 'maxOutputTokens'>
+>;
+
+export type ExtendedModelProfile = ModelProfileRequiredFields &
+  ModelProfileBooleanFlags & {
+    id: string;
+    name: ModelProfileDto['name'];
+    normalized: string;
+    size: number | null;
+  };
 
 export type ChatbotTimelineEntryDto = {
   id: string;
@@ -252,16 +253,6 @@ export type ChatbotTimelineEntryDto = {
   content: string;
   timestamp?: string | null;
   metadata?: unknown;
-};
-
-export type AgentAuditLogDto = {
-  id: string;
-  runId: string | null;
-  level: string;
-  message: string;
-  metadata: Record<string, unknown> | null;
-  createdAt?: string;
-  updatedAt?: string | null;
 };
 
 export type AgentBrowserLogDto = {
@@ -275,7 +266,7 @@ export type AgentBrowserLogDto = {
   updatedAt?: string | null;
 };
 
-export const DEFAULT_AGENT_SETTINGS: AgentSettingsPayload = {
+export const DEFAULT_AGENT_SETTINGS: ChatbotSettingsPayload = {
   agentBrowser: 'chromium',
   runHeadless: true,
   ignoreRobotsTxt: false,

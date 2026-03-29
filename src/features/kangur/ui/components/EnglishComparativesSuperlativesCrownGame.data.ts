@@ -34,7 +34,7 @@ type EnglishCompareAndCrownAction = {
   answer: EnglishComparisonFormId;
 };
 
-export type EnglishCompareAndCrownRound = {
+type EnglishCompareAndCrownRound = {
   id:
     | 'tower-track'
     | 'monster-stage'

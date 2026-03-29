@@ -1,4 +1,4 @@
-import type { KangurDuelLeaderboardEntry } from '@kangur/contracts/kangur-duels';
+import type { KangurDuelLeaderboardEntry } from '@kangur/contracts-duels';
 import { useQuery } from '@tanstack/react-query';
 
 import { useKangurMobileI18n } from '../i18n/kangurMobileI18n';

@@ -1,13 +1,15 @@
-import { KANGUR_LESSON_CATALOG } from '@kangur/core/lesson-catalog';
-import { getKangurPracticeOperationForLessonComponent } from '@kangur/core/practice';
-import { getLocalizedKangurCoreLessonTitle } from '@kangur/core/profile-i18n';
+import {
+  KANGUR_LESSON_CATALOG,
+  getKangurPracticeOperationForLessonComponent,
+  getLocalizedKangurCoreLessonTitle,
+} from '@kangur/core';
 import {
   createDefaultKangurProgressState,
   kangurLessonMasteryEntrySchema,
   type KangurLessonMastery,
   type KangurLessonMasteryEntry,
   type KangurProgressState,
-} from '@kangur/contracts/kangur';
+} from '@kangur/contracts';
 import type { Href } from 'expo-router';
 import type { KangurClientStorageAdapter } from '@kangur/platform';
 

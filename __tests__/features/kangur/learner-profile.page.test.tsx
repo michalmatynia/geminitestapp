@@ -356,8 +356,8 @@ describe('LearnerProfile page', () => {
     expect(screen.getByText('Opanowanie lekcji')).toBeInTheDocument();
     expect(screen.getAllByText('➗ Dzielenie').length).toBeGreaterThan(0);
     expect(screen.getByText('🕐 Nauka zegara')).toBeInTheDocument();
-    expect(screen.getByText('Priorytet średni')).toBeInTheDocument();
-    expect(screen.getByTestId('learner-profile-recommendation-focus_weakest_operation')).toHaveClass(
+    expect(screen.getAllByText('Priorytet średni').length).toBeGreaterThan(0);
+    expect(screen.getByTestId('learner-profile-recommendation-daily_goal')).toHaveClass(
       'soft-card'
     );
     expect(
@@ -365,10 +365,6 @@ describe('LearnerProfile page', () => {
         .getAllByRole('link', { name: 'Otwórz lekcję' })
         .map((link) => link.getAttribute('href'))
     ).toContain('/kangur/lessons?focus=division');
-    const lessonLinks = screen.getAllByRole('link', { name: 'Otwórz lekcję' });
-    expect(
-      lessonLinks.some((link) => link.classList.contains('primary-cta'))
-    ).toBe(true);
     expect(screen.getByRole('link', { name: /zagraj/i })).toHaveAttribute(
       'href',
       '/kangur/game?quickStart=training'

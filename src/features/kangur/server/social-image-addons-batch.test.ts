@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const mocks = vi.hoisted(() => ({
   enqueuePlaywrightNodeRunMock: vi.fn(),
+  readPlaywrightNodeRunMock: vi.fn(),
   readPlaywrightNodeArtifactMock: vi.fn(),
   getDiskPathFromPublicPathMock: vi.fn(),
   uploadToConfiguredStorageMock: vi.fn(),
@@ -20,6 +21,8 @@ vi.mock('sharp', () => ({
 vi.mock('@/features/ai/ai-paths/services/playwright-node-runner', () => ({
   enqueuePlaywrightNodeRun: (...args: unknown[]) =>
     mocks.enqueuePlaywrightNodeRunMock(...args),
+  readPlaywrightNodeRun: (...args: unknown[]) =>
+    mocks.readPlaywrightNodeRunMock(...args),
   readPlaywrightNodeArtifact: (...args: unknown[]) =>
     mocks.readPlaywrightNodeArtifactMock(...args),
 }));
@@ -201,6 +204,83 @@ describe('createKangurSocialImageAddonsBatch', () => {
         }),
       })
     );
+  });
+
+  it('reports live capture progress while the Playwright batch is running', async () => {
+    const onProgress = vi.fn();
+    mocks.enqueuePlaywrightNodeRunMock.mockResolvedValue({
+      runId: 'run-live',
+      status: 'queued',
+      result: null,
+      artifacts: [],
+      error: null,
+    });
+    mocks.readPlaywrightNodeRunMock
+      .mockResolvedValueOnce({
+        runId: 'run-live',
+        status: 'running',
+        result: {
+          outputs: {
+            capture_progress: {
+              processedCount: 1,
+              completedCount: 1,
+              failureCount: 0,
+              remainingCount: 1,
+              totalCount: 2,
+            },
+          },
+        },
+        artifacts: [],
+        error: null,
+      })
+      .mockResolvedValueOnce({
+        runId: 'run-live',
+        status: 'completed',
+        result: {
+          outputs: {
+            capture_progress: {
+              processedCount: 2,
+              completedCount: 2,
+              failureCount: 0,
+              remainingCount: 0,
+              totalCount: 2,
+            },
+            capture_results: [
+              { id: 'game', status: 'ok' },
+              { id: 'lessons', status: 'ok' },
+            ],
+          },
+        },
+        artifacts: [
+          { name: 'game', path: '/artifacts/game.png' },
+          { name: 'lessons', path: '/artifacts/lessons.png' },
+        ],
+        error: null,
+      });
+
+    const result = await createKangurSocialImageAddonsBatch({
+      baseUrl: 'https://kangur.app',
+      onProgress,
+    });
+
+    expect(mocks.enqueuePlaywrightNodeRunMock).toHaveBeenCalledWith(
+      expect.objectContaining({ waitForResult: false })
+    );
+    expect(onProgress).toHaveBeenNthCalledWith(1, {
+      processedCount: 1,
+      completedCount: 1,
+      failureCount: 0,
+      remainingCount: 1,
+      totalCount: 2,
+    });
+    expect(onProgress).toHaveBeenNthCalledWith(2, {
+      processedCount: 2,
+      completedCount: 2,
+      failureCount: 0,
+      remainingCount: 0,
+      totalCount: 2,
+    });
+    expect(result.addons).toHaveLength(2);
   });
 
   it('marks capture URLs as social-batch and waits for capture-ready state', async () => {

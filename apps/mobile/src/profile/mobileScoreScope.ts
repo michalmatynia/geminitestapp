@@ -1,4 +1,4 @@
-import type { KangurScoreListQuery } from '@kangur/contracts/kangur';
+import type { KangurScoreListQuery } from '@kangur/contracts';
 import type { KangurUser } from '@kangur/platform';
 
 export type KangurMobileScoreScope = {

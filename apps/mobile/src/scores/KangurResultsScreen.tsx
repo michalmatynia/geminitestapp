@@ -1,4 +1,4 @@
-import { resolveKangurLessonFocusForPracticeOperation } from '@kangur/core/practice';
+import { resolveKangurLessonFocusForPracticeOperation } from '@kangur/core';
 import { useLocalSearchParams, useRouter, type Href } from 'expo-router';
 import { Text, View } from 'react-native';
 

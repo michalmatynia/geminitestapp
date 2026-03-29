@@ -410,6 +410,24 @@ const executePlaywrightNodeRun = async (
     logs,
     artifacts,
   });
+  let liveStateWriteChain: Promise<void> = Promise.resolve();
+  let isFinalizingLiveState = false;
+  const queueLiveRunStateUpdate = (patchFactory: () => Partial<PlaywrightNodeRunRecord>): void => {
+    if (isFinalizingLiveState) return;
+    liveStateWriteChain = liveStateWriteChain
+      .then(async () => {
+        if (isFinalizingLiveState) return;
+        await updateRunState(runId, patchFactory());
+      })
+      .catch((error) => {
+        void ErrorSystem.captureException(error);
+      });
+  };
+  const flushLiveRunStateUpdates = async (): Promise<void> => {
+    await liveStateWriteChain.catch((error) => {
+      void ErrorSystem.captureException(error);
+    });
+  };
 
   const playwright = getPlaywright();
   const personaSettings = await resolvePersonaSettings(request.personaId);
@@ -483,6 +501,13 @@ const executePlaywrightNodeRun = async (
 
     const emittedOutputs: Record<string, unknown> = {};
     const inlineArtifacts: Array<{ name: string; value: unknown }> = [];
+    const buildLiveResultSnapshot = (): {
+      outputs: Record<string, unknown>;
+      inlineArtifacts: Array<{ name: string; value: unknown }>;
+    } => ({
+      outputs: { ...emittedOutputs },
+      inlineArtifacts: [...inlineArtifacts],
+    });
     const userScript = parseUserScript(request.script, logs);
     const userContext = {
       browser,
@@ -495,6 +520,9 @@ const executePlaywrightNodeRun = async (
         const normalizedPort = port.trim();
         if (!normalizedPort) return;
         emittedOutputs[normalizedPort] = value;
+        queueLiveRunStateUpdate(() => ({
+          result: buildLiveResultSnapshot(),
+        }));
       },
       artifacts: {
         screenshot: async (name: string = 'screenshot'): Promise<string> => {
@@ -556,6 +584,9 @@ const executePlaywrightNodeRun = async (
         },
         add: (name: string, value: unknown): void => {
           inlineArtifacts.push({ name: name.trim() || 'artifact', value });
+          queueLiveRunStateUpdate(() => ({
+            result: buildLiveResultSnapshot(),
+          }));
         },
       },
       log: (...args: unknown[]): void => {
@@ -611,6 +642,8 @@ const executePlaywrightNodeRun = async (
     }
 
     const completedAt = nowIso();
+    await flushLiveRunStateUpdates();
+    isFinalizingLiveState = true;
     const existingRun = await readPlaywrightNodeRun(runId);
     const result = {
       returnValue,
@@ -637,6 +670,8 @@ const executePlaywrightNodeRun = async (
   } catch (error) {
     void ErrorSystem.captureException(error);
     const completedAt = nowIso();
+    await flushLiveRunStateUpdates();
+    isFinalizingLiveState = true;
     const existingRun = await readPlaywrightNodeRun(runId);
     const message = error instanceof Error ? error.message : String(error);
     logs.push(`[runtime][error] ${message}`);

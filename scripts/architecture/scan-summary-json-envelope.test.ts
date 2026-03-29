@@ -24,6 +24,12 @@ const uiConsolidationScriptPath = path.join(
   'architecture',
   'scan-ui-consolidation.mjs'
 );
+const typeClustersScriptPath = path.join(
+  repoRoot,
+  'scripts',
+  'architecture',
+  'scan-type-clusters.mjs'
+);
 const collectMetricsScriptPath = path.join(repoRoot, 'scripts', 'architecture', 'collect-metrics.mjs');
 const guardrailsScriptPath = path.join(repoRoot, 'scripts', 'architecture', 'check-guardrails.mjs');
 const uiConsolidationGuardrailScriptPath = path.join(
@@ -173,6 +179,58 @@ const seedObservabilitySources = (root: string): void => {
     root,
     'src/good-log.ts',
     'import { logger } from \'@/shared/utils/logger\';\nlogger.info(\'[observability.check] startup complete\');\n'
+  );
+};
+
+const seedTypeClusterSources = (root: string): void => {
+  writeFile(
+    root,
+    'src/features/orders/types.ts',
+    [
+      'export interface SharedOptionDto {',
+      '  id: string;',
+      '  label: string;',
+      '}',
+      '',
+      'export interface ScopeFilterDto {',
+      '  id: string;',
+      '  label: string;',
+      '  scope?: string;',
+      '}',
+      '',
+    ].join('\n')
+  );
+  writeFile(
+    root,
+    'src/features/products/types.ts',
+    [
+      'export type LabeledOptionDto = {',
+      '  id: string;',
+      '  label: string;',
+      '};',
+      '',
+      'export type ScopeSelectionDto = {',
+      '  id: string;',
+      '  label: string;',
+      '  scope: "team" | "org";',
+      '};',
+      '',
+    ].join('\n')
+  );
+  writeFile(
+    root,
+    'src/features/products/consumer.ts',
+    [
+      'import type { SharedOptionDto } from \'../orders/types\';',
+      'import type { LabeledOptionDto, ScopeSelectionDto } from \'./types\';',
+      '',
+      'export type ProductConsumer = {',
+      '  options: SharedOptionDto[];',
+      '  selected: LabeledOptionDto | null;',
+      '  scope: ScopeSelectionDto;',
+      '};',
+      '',
+    ].join('\n')
   );
 };
 
@@ -722,6 +780,136 @@ describe('scanner summary-json envelope', () => {
       noWrite: true,
     });
     expect(uiConsolidation.notes).toContain('ui consolidation scan result');
+  });
+
+  it('wraps type-cluster scans in the shared scan envelope', () => {
+    const root = createTempRoot();
+    seedTypeClusterSources(root);
+
+    const typeClusters = runSummaryJson(root, typeClustersScriptPath, [
+      '--summary-json',
+      '--no-write',
+      '--no-history',
+    ]);
+
+    expect(typeClusters.scanner).toMatchObject({
+      name: 'scan-type-clusters',
+      version: '1.0.0',
+    });
+    expect(typeClusters.status).toBe('ok');
+    expect(typeClusters.summary).toMatchObject({
+      filesScanned: 3,
+      exportedDeclarationsScanned: 5,
+      candidateDeclarationsScanned: 5,
+      exactShapeClusters: 1,
+      nearShapeClusters: 1,
+      clustersAfterFilters: 2,
+      declarationsInClusters: 4,
+      highestRiskScore: expect.any(Number),
+    });
+    expect(typeClusters.details).toMatchObject({
+      status: 'ok',
+      clusters: [
+        expect.objectContaining({
+          clusterKind: 'exact-shape',
+          declarationCount: 2,
+          declarations: expect.arrayContaining([
+            expect.objectContaining({
+              name: 'SharedOptionDto',
+              path: 'src/features/orders/types.ts',
+            }),
+            expect.objectContaining({
+              name: 'LabeledOptionDto',
+              path: 'src/features/products/types.ts',
+            }),
+          ]),
+        }),
+        expect.objectContaining({
+          clusterKind: 'near-shape',
+          declarationCount: 2,
+          declarations: expect.arrayContaining([
+            expect.objectContaining({
+              name: 'ScopeFilterDto',
+              path: 'src/features/orders/types.ts',
+            }),
+            expect.objectContaining({
+              name: 'ScopeSelectionDto',
+              path: 'src/features/products/types.ts',
+            }),
+          ]),
+        }),
+      ],
+    });
+    expect(typeClusters.paths).toBeNull();
+    expect(typeClusters.filters).toMatchObject({
+      domains: [],
+      minRisk: 0,
+      historyDisabled: true,
+      noWrite: true,
+    });
+    expect(typeClusters.notes).toContain('type-clusters scan result');
+    expect(fs.existsSync(path.join(root, 'docs', 'metrics', 'type-clusters-latest.json'))).toBe(false);
+  });
+
+  it('applies type-cluster domain and risk filters after scanning', () => {
+    const root = createTempRoot();
+    seedTypeClusterSources(root);
+
+    const highRiskOnly = runSummaryJson(root, typeClustersScriptPath, [
+      '--summary-json',
+      '--no-write',
+      '--no-history',
+      '--min-risk',
+      '12',
+    ]);
+    const missingDomain = runSummaryJson(root, typeClustersScriptPath, [
+      '--summary-json',
+      '--no-write',
+      '--no-history',
+      '--domain',
+      'shared:contracts',
+    ]);
+
+    expect(highRiskOnly.summary).toMatchObject({
+      exactShapeClusters: 1,
+      nearShapeClusters: 1,
+      clustersAfterFilters: 1,
+      declarationsInClusters: 2,
+      highestRiskScore: 12,
+    });
+    expect(highRiskOnly.details).toMatchObject({
+      status: 'ok',
+      clusters: [
+        expect.objectContaining({
+          clusterKind: 'exact-shape',
+          declarationCount: 2,
+        }),
+      ],
+    });
+    expect(highRiskOnly.filters).toMatchObject({
+      domains: [],
+      minRisk: 12,
+      historyDisabled: true,
+      noWrite: true,
+    });
+
+    expect(missingDomain.summary).toMatchObject({
+      exactShapeClusters: 1,
+      nearShapeClusters: 1,
+      clustersAfterFilters: 0,
+      declarationsInClusters: 0,
+      highestRiskScore: 0,
+    });
+    expect(missingDomain.details).toMatchObject({
+      status: 'ok',
+      clusters: [],
+    });
+    expect(missingDomain.filters).toMatchObject({
+      domains: ['shared:contracts'],
+      minRisk: 0,
+      historyDisabled: true,
+      noWrite: true,
+    });
   });
 
   it('wraps architecture metrics collection in the shared scan envelope', () => {

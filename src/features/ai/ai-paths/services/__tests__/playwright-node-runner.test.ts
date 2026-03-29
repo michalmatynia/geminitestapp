@@ -467,4 +467,58 @@ describe('enqueuePlaywrightNodeRun', () => {
     expect(runtime.context.close).toHaveBeenCalledTimes(1);
     expect(runtime.browser.close).toHaveBeenCalledTimes(1);
   });
+
+  it('persists emitted outputs while a background run is still running', async () => {
+    const { enqueuePlaywrightNodeRun, readPlaywrightNodeRun } = await loadRunner();
+    const runtime = await createPlaywrightRuntime();
+    mocks.chromiumLaunchMock.mockResolvedValue(runtime.browser);
+
+    const queued = await enqueuePlaywrightNodeRun({
+      waitForResult: false,
+      request: {
+        script: `
+          export default async ({ emit, helpers }) => {
+            emit('capture_progress', {
+              processedCount: 1,
+              completedCount: 1,
+              failureCount: 0,
+              remainingCount: 1,
+              totalCount: 2,
+            });
+            await helpers.sleep(150);
+            emit('capture_progress', {
+              processedCount: 2,
+              completedCount: 2,
+              failureCount: 0,
+              remainingCount: 0,
+              totalCount: 2,
+            });
+            return { ok: true };
+          };
+        `,
+      },
+    });
+
+    await expect
+      .poll(async () => {
+        const current = await readPlaywrightNodeRun(queued.runId);
+        return (current?.result as { outputs?: { capture_progress?: unknown } } | undefined)
+          ?.outputs?.capture_progress;
+      })
+      .toEqual(
+        expect.objectContaining({
+          processedCount: 1,
+          completedCount: 1,
+          remainingCount: 1,
+          totalCount: 2,
+        })
+      );
+
+    await expect
+      .poll(async () => {
+        const current = await readPlaywrightNodeRun(queued.runId);
+        return current?.status ?? null;
+      })
+      .toBe('completed');
+  });
 });

@@ -107,6 +107,7 @@ vi.mock('@/features/kangur/shared/ui', async (importOriginal) => {
     ...actual,
     SelectSimple: ({
       value,
+      onChange,
       onValueChange,
       options,
       id,
@@ -114,6 +115,7 @@ vi.mock('@/features/kangur/shared/ui', async (importOriginal) => {
       title,
     }: {
       value?: string;
+      onChange?: (value: string) => void;
       onValueChange?: (value: string) => void;
       options: Array<{ value: string; label: string }>;
       id?: string;
@@ -125,7 +127,10 @@ vi.mock('@/features/kangur/shared/ui', async (importOriginal) => {
         aria-label={ariaLabel}
         title={title}
         value={value}
-        onChange={(event): void => onValueChange?.(event.target.value)}
+        onChange={(event): void => {
+          onChange?.(event.target.value);
+          onValueChange?.(event.target.value);
+        }}
       >
         {options.map((option) => (
           <option key={option.value} value={option.value}>
@@ -183,11 +188,11 @@ describe('AdminKangurLessonsManagerPage', () => {
   it('renders standalone Kangur lessons page with shared shell chrome', () => {
     render(<AdminKangurLessonsManagerPage />);
 
-    expect(screen.getByText('Kangur Lessons')).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Lessons Manager' })).toBeInTheDocument();
     expect(screen.getByText('Lessons workspace')).toBeInTheDocument();
     expect(screen.getByText('Library surface')).toBeInTheDocument();
     expect(screen.getByRole('navigation', { name: /breadcrumb/i })).toHaveTextContent(
-      'Admin/Kangur/Lessons'
+      'Admin/Kangur/Lessons Manager'
     );
     expect(screen.getByText('Lesson library')).toBeInTheDocument();
     expect(screen.getByText('Editorial filters')).toBeInTheDocument();

@@ -75,7 +75,7 @@ describe('AdminKangurAiTutorContentPage', () => {
       })
     );
 
-    const contentEditor = await screen.findByLabelText(/tutor content json/i);
+    const contentEditor = await screen.findByLabelText(/content json/i);
     expect((contentEditor as HTMLTextAreaElement).value).toContain('"locale": "pl"');
 
     const nextContent = {
@@ -92,28 +92,28 @@ describe('AdminKangurAiTutorContentPage', () => {
         value: `${JSON.stringify(nextContent, null, 2)}\n`,
       },
     });
-    fireEvent.click(screen.getByRole('button', { name: /save mongo content/i }));
+    fireEvent.click(screen.getByRole('button', { name: /save content/i }));
 
     await waitFor(() =>
       expect(apiPostMock).toHaveBeenCalledWith(
         '/api/kangur/ai-tutor/content',
-        nextContent,
-        { logError: false }
+        {
+          locale: 'pl',
+          content: nextContent,
+        }
       )
     );
 
-    expect(toastMock).toHaveBeenCalledWith('Kangur AI Tutor content saved.', {
+    expect(toastMock).toHaveBeenCalledWith('AI Tutor content saved successfully.', {
       variant: 'success',
     });
   });
 
-  it('edits onboarding copy through the structured AI Tutor content editor', async () => {
+  it('edits onboarding copy through the JSON AI Tutor content editor', async () => {
     render(<AdminKangurAiTutorContentPage />);
 
-    const headlineInput = await screen.findByLabelText(/ai tutor initial guest intro headline/i);
-    const saveButton = screen.getByRole('button', { name: /save mongo content/i });
-
-    expect(headlineInput).toHaveValue(DEFAULT_KANGUR_AI_TUTOR_CONTENT.guestIntro.initial.headline);
+    const contentEditor = await screen.findByLabelText(/content json/i);
+    const saveButton = screen.getByRole('button', { name: /save content/i });
 
     const nextContent = {
       ...DEFAULT_KANGUR_AI_TUTOR_CONTENT,
@@ -127,16 +127,20 @@ describe('AdminKangurAiTutorContentPage', () => {
     };
     apiPostMock.mockResolvedValueOnce(nextContent);
 
-    fireEvent.change(headlineInput, {
-      target: { value: 'Witaj w StudiQ' },
+    fireEvent.change(contentEditor, {
+      target: {
+        value: `${JSON.stringify(nextContent, null, 2)}\n`,
+      },
     });
     fireEvent.click(saveButton);
 
     await waitFor(() =>
       expect(apiPostMock).toHaveBeenCalledWith(
         '/api/kangur/ai-tutor/content',
-        nextContent,
-        { logError: false }
+        {
+          locale: 'pl',
+          content: nextContent,
+        }
       )
     );
   });
@@ -144,21 +148,31 @@ describe('AdminKangurAiTutorContentPage', () => {
   it('blocks saving AI Tutor content when structured onboarding validation finds placeholder copy', async () => {
     render(<AdminKangurAiTutorContentPage />);
 
-    const headlineInput = await screen.findByLabelText(/ai tutor initial guest intro headline/i);
-    const saveButton = screen.getByRole('button', { name: /save mongo content/i });
+    const contentEditor = await screen.findByLabelText(/content json/i);
+    const saveButton = screen.getByRole('button', { name: /save content/i });
 
-    fireEvent.change(headlineInput, {
-      target: { value: 'TODO uzupełnić nagłówek' },
+    const invalidContent = {
+      ...DEFAULT_KANGUR_AI_TUTOR_CONTENT,
+      guestIntro: {
+        ...DEFAULT_KANGUR_AI_TUTOR_CONTENT.guestIntro,
+        initial: {
+          ...DEFAULT_KANGUR_AI_TUTOR_CONTENT.guestIntro.initial,
+          headline: 'TODO uzupełnić nagłówek',
+        },
+      },
+    };
+
+    fireEvent.change(contentEditor, {
+      target: { value: `${JSON.stringify(invalidContent, null, 2)}\n` },
     });
 
     expect(
       await screen.findAllByText(/remove placeholder or unfinished onboarding copy/i)
-    ).toHaveLength(2);
+    ).toHaveLength(1);
     expect(saveButton).toBeDisabled();
     expect(apiPostMock).not.toHaveBeenCalledWith(
       '/api/kangur/ai-tutor/content',
-      expect.anything(),
-      { logError: false }
+      expect.anything()
     );
   });
 });

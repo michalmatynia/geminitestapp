@@ -10,7 +10,7 @@ import { resolveImagePreview } from './AdminKangurSocialPage.Constants';
 import { SocialPostImagesPanel } from './SocialPost.ImagesPanel';
 import { useSocialPostContext } from './SocialPostContext';
 
-export type SocialPostVisualsProps = {
+type SocialPostVisualsProps = {
   showImagesPanel?: boolean;
 };
 

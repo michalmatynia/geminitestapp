@@ -1,6 +1,6 @@
-import type { KangurLeaderboardItem } from '@kangur/core/leaderboard';
-import type { KangurPracticeOperation } from '@kangur/core/practice';
-import type { KangurProgressState, KangurScore } from '@kangur/contracts/kangur';
+import type { KangurLeaderboardItem } from '@kangur/core';
+import type { KangurPracticeOperation } from '@kangur/core';
+import type { KangurProgressState, KangurScore } from '@kangur/contracts';
 
 import type { KangurMobileLocale } from '../i18n/kangurMobileI18n';
 import {

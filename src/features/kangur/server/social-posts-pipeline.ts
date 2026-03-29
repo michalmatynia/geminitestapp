@@ -1,10 +1,12 @@
 import 'server-only';
 
 import type { ImageFileSelection } from '@/shared/contracts/files';
-import type {
-  KangurSocialPipelineCaptureMode,
-  KangurSocialManualPipelineProgress,
-  KangurSocialManualPipelineProgressStep,
+import {
+  createKangurSocialManualPipelineProgressBase,
+  type KangurSocialPipelineCaptureMode,
+  type KangurSocialManualPipelineProgress,
+  type KangurSocialManualPipelineProgressBase,
+  type KangurSocialManualPipelineProgressStep,
 } from '@/shared/contracts/kangur-social-pipeline';
 import {
   buildKangurSocialPostCombinedBody,
@@ -186,6 +188,20 @@ const buildNoScreenshotsCapturedMessage = (
   return `Pipeline stopped: no screenshots captured. Failures: ${failureReasons}`;
 };
 
+const buildLiveCaptureProgressMessage = (params: {
+  completedCount: number;
+  remainingCount: number;
+  failureCount: number;
+  totalCount: number;
+}): string => {
+  const totalLabel = params.totalCount === 1 ? 'preset' : 'presets';
+  const failureMessage =
+    params.failureCount > 0
+      ? ` ${params.failureCount} failed.`
+      : '';
+  return `Playwright capture in progress: ${params.completedCount} captured, ${params.remainingCount} left of ${params.totalCount} ${totalLabel}.${failureMessage}`;
+};
+
 export async function runKangurSocialPostPipeline(
   input: RunKangurSocialPostPipelineInput,
   options?: RunKangurSocialPostPipelineOptions
@@ -221,21 +237,12 @@ export async function runKangurSocialPostPipeline(
     .map((reference) => reference.trim())
     .filter(Boolean)
     .slice(0, 80);
-  const progressState: Omit<KangurSocialManualPipelineProgress, 'updatedAt'> = {
-    type: 'manual-post-pipeline',
-    step: 'loading_context',
-    captureMode,
-    message: null,
-    contextDocCount: null,
-    contextSummary: null,
-    addonsCreated: null,
-    captureFailureCount: null,
-    captureFailures: [],
-    requestedPresetCount: effectiveCapturePresetIds.length || null,
-    usedPresetCount: null,
-    usedPresetIds: [],
-    runId: null,
-  };
+  const progressState: KangurSocialManualPipelineProgressBase =
+    createKangurSocialManualPipelineProgressBase({
+      step: 'loading_context',
+      captureMode,
+      requestedPresetCount: effectiveCapturePresetIds.length || null,
+    });
   const publishProgress = async (
     step: KangurSocialManualPipelineProgressStep,
     updates?: Partial<
@@ -283,6 +290,10 @@ export async function runKangurSocialPostPipeline(
           effectiveCapturePresetIds.length === 1
             ? 'Capturing 1 selected screenshot preset...'
             : `Capturing ${effectiveCapturePresetIds.length} selected screenshot presets...`,
+        captureCompletedCount: 0,
+        captureFailureCount: 0,
+        captureRemainingCount: effectiveCapturePresetIds.length,
+        captureTotalCount: effectiveCapturePresetIds.length,
       });
       batchCaptureResult = await createKangurSocialImageAddonsBatch({
         baseUrl: batchCaptureBaseUrl,
@@ -290,6 +301,15 @@ export async function runKangurSocialPostPipeline(
         presetLimit: batchCapturePresetLimit,
         createdBy: input.actorId,
         forwardCookies: input.forwardCookies ?? null,
+        onProgress: async (progress) => {
+          await publishProgress('capturing', {
+            message: buildLiveCaptureProgressMessage(progress),
+            captureCompletedCount: progress.completedCount,
+            captureFailureCount: progress.failureCount,
+            captureRemainingCount: progress.remainingCount,
+            captureTotalCount: progress.totalCount,
+          });
+        },
       });
 
       await publishProgress('capturing', {
@@ -305,6 +325,10 @@ export async function runKangurSocialPostPipeline(
         usedPresetCount:
           batchCaptureResult.usedPresetCount ?? effectiveCapturePresetIds.length,
         usedPresetIds: batchCaptureResult.usedPresetIds ?? effectiveCapturePresetIds,
+        captureCompletedCount: batchCaptureResult.addons.length,
+        captureRemainingCount: 0,
+        captureTotalCount:
+          batchCaptureResult.usedPresetCount ?? effectiveCapturePresetIds.length,
         runId: batchCaptureResult.runId,
       });
 
@@ -345,6 +369,9 @@ export async function runKangurSocialPostPipeline(
         requestedPresetCount: 0,
         usedPresetCount: 0,
         usedPresetIds: [],
+        captureCompletedCount: 0,
+        captureRemainingCount: 0,
+        captureTotalCount: 0,
         runId: null,
       });
     }

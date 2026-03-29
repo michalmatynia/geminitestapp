@@ -63,6 +63,12 @@ export function SocialPostPipeline(): React.JSX.Element {
   const activeDraftLabel =
     editorState?.titlePl?.trim() || editorState?.titleEn?.trim() || 'Untitled draft';
   const previousPipelineStepRef = React.useRef<PipelineStep>('idle');
+  const isFreshCaptureInProgress =
+    pipelineStep === 'capturing' && pipelineProgress?.captureMode === 'fresh_capture';
+  const captureCompletedCount = pipelineProgress?.captureCompletedCount ?? 0;
+  const captureRemainingCount = pipelineProgress?.captureRemainingCount ?? 0;
+  const captureTotalCount = pipelineProgress?.captureTotalCount ?? 0;
+  const captureFailureCount = pipelineProgress?.captureFailureCount ?? 0;
 
   React.useEffect(() => {
     if (
@@ -157,6 +163,46 @@ export function SocialPostPipeline(): React.JSX.Element {
             </div>
           )}
 
+          {isPipelineBusy && pipelineProgress?.message && (
+            <div className='rounded-xl border border-border/60 bg-background/40 px-3 py-2 text-xs text-muted-foreground'>
+              {pipelineProgress.message}
+            </div>
+          )}
+
+          {isFreshCaptureInProgress && captureTotalCount > 0 && (
+            <div className='grid grid-cols-3 gap-2 text-xs'>
+              <div className='rounded-xl border border-border/60 bg-background/40 px-3 py-2'>
+                <div className='text-[10px] uppercase tracking-wide text-muted-foreground'>
+                  Captured
+                </div>
+                <div className='mt-1 font-semibold text-foreground'>
+                  {captureCompletedCount}
+                </div>
+              </div>
+              <div className='rounded-xl border border-border/60 bg-background/40 px-3 py-2'>
+                <div className='text-[10px] uppercase tracking-wide text-muted-foreground'>
+                  Left
+                </div>
+                <div className='mt-1 font-semibold text-foreground'>
+                  {captureRemainingCount}
+                </div>
+              </div>
+              <div className='rounded-xl border border-border/60 bg-background/40 px-3 py-2'>
+                <div className='text-[10px] uppercase tracking-wide text-muted-foreground'>
+                  Total
+                </div>
+                <div className='mt-1 font-semibold text-foreground'>
+                  {captureTotalCount}
+                  {captureFailureCount > 0 ? (
+                    <span className='ml-2 text-[10px] font-medium text-destructive'>
+                      {captureFailureCount} failed
+                    </span>
+                  ) : null}
+                </div>
+              </div>
+            </div>
+          )}
+
           {pipelineStep === 'error' && pipelineErrorMessage && (
             <div className='rounded-xl border border-destructive/30 bg-destructive/10 px-3 py-2 text-xs text-destructive'>
               {pipelineErrorMessage}
@@ -187,6 +233,12 @@ export function SocialPostPipeline(): React.JSX.Element {
 
           <div className='rounded-xl border border-border/60 bg-background/40 p-3 text-xs text-muted-foreground'>
             <div className='font-medium text-foreground/80 mb-1 uppercase tracking-tight text-[10px]'>Pipeline info</div>
+            {isFreshCaptureInProgress && captureTotalCount > 0 && (
+              <div className='mb-3 rounded-lg border border-border/50 bg-background/60 px-3 py-2 text-foreground/90'>
+                Live Playwright capture: {captureCompletedCount} captured, {captureRemainingCount} left.
+                {captureFailureCount > 0 ? ` ${captureFailureCount} failed.` : ''}
+              </div>
+            )}
             <ul className='list-inside list-disc space-y-1'>
               <li>
                 Full pipeline: Load context → Generate PL/EN draft → Attach screenshots.

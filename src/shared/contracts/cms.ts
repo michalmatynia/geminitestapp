@@ -289,25 +289,22 @@ export type SettingsField = {
   [key: string]: unknown;
 };
 
-export type BlockDefinition = {
+type CmsNodeDefinitionBase = {
   type: string;
   label: string;
   icon?: string;
-  allowedBlockTypes?: string[];
   defaultSettings: Record<string, unknown>;
   settingsSchema: SettingsField[];
   [key: string]: unknown;
 };
 
-export type SectionDefinition = {
-  type: string;
-  label: string;
-  icon?: string;
-  allowedBlockTypes: string[];
-  defaultSettings: Record<string, unknown>;
-  settingsSchema: SettingsField[];
-  [key: string]: unknown;
-};
+type CmsNodeDefinitionAllowedBlocks<TRequired extends boolean> = TRequired extends true
+  ? { allowedBlockTypes: string[] }
+  : { allowedBlockTypes?: string[] };
+
+export type BlockDefinition = CmsNodeDefinitionBase & CmsNodeDefinitionAllowedBlocks<false>;
+
+export type SectionDefinition = CmsNodeDefinitionBase & CmsNodeDefinitionAllowedBlocks<true>;
 
 export type PreviewBlockProps = {
   block: BlockInstance;

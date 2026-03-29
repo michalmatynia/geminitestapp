@@ -6,7 +6,7 @@ import type {
   KangurDuelSpectatorStateResponse,
   KangurDuelSession,
   KangurDuelStateResponse,
-} from '@kangur/contracts/kangur-duels';
+} from '@kangur/contracts-duels';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useEffect, useMemo, useState } from 'react';
 

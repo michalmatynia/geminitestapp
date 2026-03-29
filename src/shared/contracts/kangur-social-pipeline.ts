@@ -45,9 +45,56 @@ export const kangurSocialManualPipelineProgressSchema = z.object({
   requestedPresetCount: z.number().int().nonnegative().nullable().default(null),
   usedPresetCount: z.number().int().nonnegative().nullable().default(null),
   usedPresetIds: z.array(z.string().trim().min(1)).default([]),
+  captureCompletedCount: z.number().int().nonnegative().nullable().default(null),
+  captureRemainingCount: z.number().int().nonnegative().nullable().default(null),
+  captureTotalCount: z.number().int().nonnegative().nullable().default(null),
   runId: z.string().nullable().default(null),
 });
 
 export type KangurSocialManualPipelineProgress = z.infer<
   typeof kangurSocialManualPipelineProgressSchema
 >;
+
+export type KangurSocialManualPipelineProgressBase = Omit<
+  KangurSocialManualPipelineProgress,
+  'updatedAt'
+>;
+
+type KangurSocialManualPipelineProgressBaseInput = Pick<
+  KangurSocialManualPipelineProgressBase,
+  'step' | 'captureMode'
+> &
+  Partial<
+    Omit<KangurSocialManualPipelineProgressBase, 'type' | 'step' | 'captureMode'>
+  >;
+
+export const createKangurSocialManualPipelineProgressBase = (
+  input: KangurSocialManualPipelineProgressBaseInput
+): KangurSocialManualPipelineProgressBase => ({
+  type: 'manual-post-pipeline',
+  message: null,
+  contextDocCount: null,
+  contextSummary: null,
+  addonsCreated: null,
+  captureFailureCount: null,
+  captureFailures: [],
+  requestedPresetCount: null,
+  usedPresetCount: null,
+  usedPresetIds: [],
+  captureCompletedCount: null,
+  captureRemainingCount: null,
+  captureTotalCount: null,
+  runId: null,
+  ...input,
+  step: input.step,
+  captureMode: input.captureMode,
+});
+
+export const createKangurSocialManualPipelineProgress = (
+  input: KangurSocialManualPipelineProgressBaseInput & {
+    updatedAt: KangurSocialManualPipelineProgress['updatedAt'];
+  }
+): KangurSocialManualPipelineProgress => ({
+  ...createKangurSocialManualPipelineProgressBase(input),
+  updatedAt: input.updatedAt,
+});

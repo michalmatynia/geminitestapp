@@ -4,7 +4,6 @@ import {
   ENGLISH_ADVERBS_ACTION_STUDIO_ROUNDS,
   type EnglishAdverbActionId,
   type EnglishAdverbId,
-  type EnglishAdverbsActionStudioRound,
 } from './EnglishAdverbsActionStudioGame.data';
 import type {
   SlottedRoundStateDto,
@@ -17,6 +16,8 @@ export type AdverbToken = {
 };
 
 export type RoundState = SlottedRoundStateDto<AdverbToken>;
+type EnglishAdverbsActionStudioRound =
+  (typeof ENGLISH_ADVERBS_ACTION_STUDIO_ROUNDS)[number];
 
 export type AdverbTokenMeta = {
   accent: KangurAccent;

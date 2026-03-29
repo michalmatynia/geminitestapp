@@ -1,4 +1,4 @@
-import type { KangurScore } from '@kangur/contracts/kangur';
+import type { KangurScore } from '@kangur/contracts';
 import { useEffect, useMemo } from 'react';
 
 import { useKangurMobileAuth } from '../auth/KangurMobileAuthContext';

@@ -1,8 +1,8 @@
 import {
   getKangurCompetitionQuestions,
   type KangurCompetitionMode,
-} from '@kangur/core/competition';
-import type { KangurExamQuestion } from '@kangur/contracts/kangur';
+} from '@kangur/core';
+import type { KangurExamQuestion } from '@kangur/contracts';
 import { useMemo } from 'react';
 
 export type KangurMobileCompetitionMode = Exclude<

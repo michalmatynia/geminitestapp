@@ -4,7 +4,7 @@ import type {
   KangurDuelOperation,
   KangurDuelSeries,
   KangurDuelStatus,
-} from '@kangur/contracts/kangur-duels';
+} from '@kangur/contracts-duels';
 import type { Href } from 'expo-router';
 import { Text, View } from 'react-native';
 

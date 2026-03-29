@@ -27,6 +27,7 @@ import {
 } from './kangur-lessons-master-tree';
 import { importLegacyKangurLessonDocument } from '../legacy-lesson-imports';
 import {
+  hasKangurLessonDocumentContent,
   createDefaultKangurLessonDocument,
   createKangurLessonSvgBlock,
   createStarterKangurLessonDocument,
@@ -37,6 +38,8 @@ import {
 } from '../lesson-documents';
 import {
   appendMissingKangurLessonsByComponent,
+  appendMissingGeometryKangurLessons,
+  appendMissingLogicalThinkingKangurLessons,
   KANGUR_LESSON_COMPONENT_OPTIONS,
   KANGUR_LESSON_SORT_ORDER_GAP,
   canonicalizeKangurLessons,
@@ -353,6 +356,17 @@ export function AdminKangurLessonsManagerPage({
     [lessonDocuments, setContentDraft, setEditingContentLesson, setShowContentModal]
   );
 
+  const openLessonContentEditor = useCallback(
+    (lesson: KangurLesson, document?: typeof contentDraft): void => {
+      setContentDraft(
+        document ?? lessonDocuments[lesson.id] ?? createStarterKangurLessonDocument(lesson.componentId)
+      );
+      setEditingContentLesson(lesson);
+      setShowContentModal(true);
+    },
+    [lessonDocuments, setContentDraft, setEditingContentLesson, setShowContentModal]
+  );
+
   const handleComponentChange = useCallback(
     (componentId: string): void => {
       const nextComponentId = componentId as LessonFormData['componentId'];
@@ -383,20 +397,27 @@ export function AdminKangurLessonsManagerPage({
             : 0);
         const nextLesson = buildPersistedLessonRecord(lessonId, formData, sortOrder);
         const nextLessons = upsertLesson(lessons, nextLesson);
+        const shouldOpenContentEditor =
+          formData.contentMode === 'document' &&
+          (!editingLesson || editingLesson.contentMode !== 'document');
         await updateLessons.mutateAsync(nextLessons);
 
-        if (isPrimaryContentLocale) {
-          const componentContent = showComponentContentEditor
-            ? parseKangurLessonTemplateComponentContentJson(
-                formData.componentId,
-                componentContentJson,
-              )
-            : undefined;
-          await saveLocalizedLessonTemplate(formData, componentContent);
-        }
+        const componentContent = showComponentContentEditor
+          ? parseKangurLessonTemplateComponentContentJson(
+              formData.componentId,
+              componentContentJson,
+            )
+          : undefined;
+        await saveLocalizedLessonTemplate(formData, componentContent);
 
         toast('Lesson saved', { variant: 'success' });
         handleCloseModal();
+        if (shouldOpenContentEditor) {
+          openLessonContentEditor(
+            nextLesson,
+            lessonDocuments[lessonId] ?? createStarterKangurLessonDocument(nextLesson.componentId)
+          );
+        }
       }
     );
   };
@@ -431,12 +452,50 @@ export function AdminKangurLessonsManagerPage({
       async () => {
         const pages = resolveKangurLessonDocumentPages(contentDraft);
         const nextDocument = updateKangurLessonDocumentPages(contentDraft, pages);
+        const nextLesson = buildPersistedLessonRecord(
+          editingContentLesson.id,
+          editingContentLesson,
+          editingContentLesson.sortOrder
+        );
+        const nextLessons = upsertLesson(lessons, nextLesson);
+        await updateLessons.mutateAsync(nextLessons);
+        await saveLocalizedLessonTemplate(nextLesson);
         await updateLessonDocuments.mutateAsync({
           ...lessonDocuments,
           [editingContentLesson.id]: nextDocument,
         });
         clearLessonContentEditorDraft(editingContentLesson.id);
         toast('Content saved', { variant: 'success' });
+        setShowContentModal(false);
+        setEditingContentLesson(null);
+      }
+    );
+  };
+
+  const handleClearContent = async (): Promise<void> => {
+    if (!editingContentLesson) return;
+    await withKangurClientError(
+      buildLessonsManagerErrorReport(
+        'lesson-content-clear',
+        'Clears the lesson document and restores component mode.',
+        { lessonId: editingContentLesson.id },
+      ),
+      async () => {
+        const nextLesson = buildPersistedLessonRecord(
+          editingContentLesson.id,
+          {
+            ...editingContentLesson,
+            contentMode: 'component',
+          },
+          editingContentLesson.sortOrder
+        );
+        const nextLessons = upsertLesson(lessons, nextLesson);
+        const nextDocuments = removeKangurLessonDocument(lessonDocuments, editingContentLesson.id);
+        await updateLessons.mutateAsync(nextLessons);
+        await updateLessonDocuments.mutateAsync(nextDocuments);
+        clearLessonContentEditorDraft(editingContentLesson.id);
+        setContentDraft(createDefaultKangurLessonDocument());
+        toast('Content cleared', { variant: 'success' });
         setShowContentModal(false);
         setEditingContentLesson(null);
       }
@@ -551,6 +610,78 @@ export function AdminKangurLessonsManagerPage({
     );
   };
 
+  const handleAddGeometryPack = async (): Promise<void> => {
+    await withKangurClientError(
+      buildLessonsManagerErrorReport(
+        'lessons-append-geometry',
+        'Adds missing geometry lessons from the Kangur lesson catalog.',
+      ),
+      async () => {
+        const result = appendMissingGeometryKangurLessons(lessons);
+        await updateLessons.mutateAsync(result.lessons);
+        toast(`Added ${result.addedCount} geometry lessons`, { variant: 'success' });
+      }
+    );
+  };
+
+  const handleAddLogicalThinkingPack = async (): Promise<void> => {
+    await withKangurClientError(
+      buildLessonsManagerErrorReport(
+        'lessons-append-logical-thinking',
+        'Adds missing logical thinking lessons from the Kangur lesson catalog.',
+      ),
+      async () => {
+        const result = appendMissingLogicalThinkingKangurLessons(lessons);
+        await updateLessons.mutateAsync(result.lessons);
+        toast(`Added ${result.addedCount} logical thinking lessons`, { variant: 'success' });
+      }
+    );
+  };
+
+  const handleImportAllLessonsToEditor = async (): Promise<void> => {
+    await withKangurClientError(
+      buildLessonsManagerErrorReport(
+        'lessons-import-all',
+        'Imports all eligible lessons into modular editor drafts.',
+      ),
+      async () => {
+        const nextDocuments = { ...lessonDocuments };
+        const importedLessonIds = new Set<string>();
+
+        lessons.forEach((lesson) => {
+          const needsImport =
+            lesson.contentMode !== 'document' &&
+            !hasKangurLessonDocumentContent(lessonDocuments[lesson.id]);
+          if (!needsImport) return;
+          const result = importLegacyKangurLessonDocument(lesson.componentId);
+          if (!result) return;
+          nextDocuments[lesson.id] = result.document;
+          importedLessonIds.add(lesson.id);
+        });
+
+        if (importedLessonIds.size === 0) {
+          toast('No lessons need importing right now.', { variant: 'info' });
+          return;
+        }
+
+        const nextLessons = lessons.map((lesson) =>
+          importedLessonIds.has(lesson.id)
+            ? {
+                ...lesson,
+                contentMode: 'document' as const,
+              }
+            : lesson
+        );
+
+        await updateLessonDocuments.mutateAsync(nextDocuments);
+        await updateLessons.mutateAsync(nextLessons);
+        toast(`Imported ${importedLessonIds.size} lessons to modular editor.`, {
+          variant: 'success',
+        });
+      }
+    );
+  };
+
   const authoringFilteredLessons = useMemo(
     () =>
       lessons.filter((lesson) =>
@@ -620,6 +751,16 @@ export function AdminKangurLessonsManagerPage({
     [lessonDocuments, lessons]
   );
 
+  const geometryPackAddedCount = useMemo(
+    () => appendMissingGeometryKangurLessons(lessons).addedCount,
+    [lessons]
+  );
+
+  const logicPackAddedCount = useMemo(
+    () => appendMissingLogicalThinkingKangurLessons(lessons).addedCount,
+    [lessons]
+  );
+
   const breadcrumbs = useMemo(
     () => [
       { label: 'Admin', href: '/admin' },
@@ -681,6 +822,8 @@ export function AdminKangurLessonsManagerPage({
                 onChange={(value) => setContentLocale(value as 'en' | 'pl' | 'uk')}
                 options={contentLocaleOptions}
                 className='w-40'
+                ariaLabel='Content locale'
+                title='Content locale'
               />
               <Badge variant='outline'>{contentLocaleLabel}</Badge>
               <SelectSimple
@@ -698,6 +841,8 @@ export function AdminKangurLessonsManagerPage({
                   })),
                 ]}
                 className='w-40'
+                ariaLabel='Age group filter'
+                title='Age group filter'
               />
               <SelectSimple
                 value={authoringFilter}
@@ -707,9 +852,11 @@ export function AdminKangurLessonsManagerPage({
                   label: `${label} (${count})`,
                 }))}
                 className='w-52'
+                ariaLabel='Editorial state filter'
+                title='Editorial state filter'
               />
               <KangurButton variant='primary' onClick={handleCreate}>
-                Create Lesson
+                New lesson
               </KangurButton>
             </div>
           }
@@ -756,8 +903,8 @@ export function AdminKangurLessonsManagerPage({
                 isLoading={isLoading}
                 lessonsCount={lessons.length}
                 lessonsNeedingLegacyImport={legacyImportCount}
-                geometryPackAddedCount={0}
-                logicPackAddedCount={0}
+                geometryPackAddedCount={geometryPackAddedCount}
+                logicPackAddedCount={logicPackAddedCount}
                 filterCounts={authoringFilterCounts}
                 authoringFilter={authoringFilter}
                 onAuthoringFilterChange={setAuthoringFilter}
@@ -776,19 +923,13 @@ export function AdminKangurLessonsManagerPage({
                 rootDropUi={rootDropUi}
                 renderNode={renderTreeNode}
                 onAddGeometryPack={() => {
-                  toast('Geometry pack shortcuts are unavailable in this workspace.', {
-                    variant: 'warning',
-                  });
+                  void handleAddGeometryPack();
                 }}
                 onAddLogicalThinkingPack={() => {
-                  toast('Logical thinking pack shortcuts are unavailable in this workspace.', {
-                    variant: 'warning',
-                  });
+                  void handleAddLogicalThinkingPack();
                 }}
                 onImportAllLessonsToEditor={() => {
-                  toast('Bulk lesson import is unavailable in this workspace.', {
-                    variant: 'warning',
-                  });
+                  void handleImportAllLessonsToEditor();
                 }}
                 onAddLesson={handleCreate}
                 onSelectOrderedView={() => setTreeModeAndPersist('ordered')}
@@ -806,6 +947,7 @@ export function AdminKangurLessonsManagerPage({
               void handleSave();
             }}
             isSaving={isSaving}
+            saveText={editingLesson ? 'Save Lesson' : 'Create Lesson'}
           >
             <LessonMetadataForm
               formData={formData}
@@ -848,7 +990,7 @@ export function AdminKangurLessonsManagerPage({
                 void handleImportLegacy(editingContentLesson);
               }}
               onClearContent={() => {
-                setContentDraft(createDefaultKangurLessonDocument());
+                void handleClearContent();
               }}
             />
           ) : null}

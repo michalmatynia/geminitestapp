@@ -7,7 +7,6 @@ import {
   type KangurAiTutorContentTranslatableSectionKey,
 } from '@/features/kangur/server/ai-tutor-content-locale-scaffold';
 import {
-  DEFAULT_KANGUR_AI_TUTOR_CONTENT,
   parseKangurAiTutorContent,
   type KangurAiTutorContent,
 } from '@/features/kangur/shared/contracts/kangur-ai-tutor-content';
@@ -30,6 +29,7 @@ export const AI_TUTOR_CONTENT_EDITOR_LOCALE = 'pl';
 export const AI_TUTOR_CONTENT_TRANSLATION_LOCALES = getEnabledSiteLocaleCodes().filter(
   (locale) => locale !== AI_TUTOR_CONTENT_EDITOR_LOCALE
 );
+const EMPTY_AI_TUTOR_CONTENT_EDITOR_VALUE = '';
 
 export type SectionTranslationFilterStatus = Extract<
   KangurAiTutorTranslationStatusDto,
@@ -42,12 +42,12 @@ const stringifyAiTutorContent = (content: KangurAiTutorContent): string =>
 export function useKangurAiTutorContentSettingsState() {
   const settingsStore = useSettingsStore();
   const { toast } = useToast();
-  
-  const [aiTutorContentEditorValue, setAiTutorContentEditorValue] = useState<string>(() =>
-    stringifyAiTutorContent(DEFAULT_KANGUR_AI_TUTOR_CONTENT)
+
+  const [aiTutorContentEditorValue, setAiTutorContentEditorValue] = useState<string>(
+    () => EMPTY_AI_TUTOR_CONTENT_EDITOR_VALUE
   );
   const [persistedAiTutorContentEditorValue, setPersistedAiTutorContentEditorValue] =
-    useState<string>(() => stringifyAiTutorContent(DEFAULT_KANGUR_AI_TUTOR_CONTENT));
+    useState<string>(() => EMPTY_AI_TUTOR_CONTENT_EDITOR_VALUE);
   const [isAiTutorContentLoading, setIsAiTutorContentLoading] = useState(true);
   const [isAiTutorContentSaving, setIsAiTutorContentSaving] = useState(false);
   const [translationContentsByLocale, setTranslationContentsByLocale] = useState<
@@ -156,6 +156,13 @@ export function useKangurAiTutorContentSettingsState() {
   const parsedAiTutorContentState = useMemo<
     { content: KangurAiTutorContent | null; error: string | null }
   >(() => {
+    if (aiTutorContentEditorValue.trim().length === 0) {
+      return {
+        content: null,
+        error: null,
+      };
+    }
+
     return withKangurClientErrorSync(
       {
         source: 'kangur.admin.ai-tutor-content',

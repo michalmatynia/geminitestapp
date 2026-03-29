@@ -5,49 +5,31 @@ import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { authError, badRequestError } from '@/shared/errors/app-error';
 
 const {
-  authMock,
+  assertSettingsManageAccessMock,
   isNeo4jEnabledMock,
-  getKangurAiTutorContentMock,
-  getKangurAiTutorNativeGuideStoreMock,
-  getKangurPageContentStoreMock,
-  buildKangurKnowledgeGraphMock,
+  buildKangurKnowledgeGraphFromRepositoriesMock,
   enrichKangurKnowledgeGraphWithEmbeddingsMock,
   syncKangurKnowledgeGraphToNeo4jMock,
   getKangurKnowledgeGraphStatusSnapshotMock,
 } = vi.hoisted(() => ({
-  authMock: vi.fn(),
+  assertSettingsManageAccessMock: vi.fn(),
   isNeo4jEnabledMock: vi.fn(),
-  getKangurAiTutorContentMock: vi.fn(),
-  getKangurAiTutorNativeGuideStoreMock: vi.fn(),
-  getKangurPageContentStoreMock: vi.fn(),
-  buildKangurKnowledgeGraphMock: vi.fn(),
+  buildKangurKnowledgeGraphFromRepositoriesMock: vi.fn(),
   enrichKangurKnowledgeGraphWithEmbeddingsMock: vi.fn(),
   syncKangurKnowledgeGraphToNeo4jMock: vi.fn(),
   getKangurKnowledgeGraphStatusSnapshotMock: vi.fn(),
 }));
 
 vi.mock('@/features/auth/server', () => ({
-  auth: authMock,
+  assertSettingsManageAccess: assertSettingsManageAccessMock,
 }));
 
 vi.mock('@/shared/lib/neo4j/config', () => ({
   isNeo4jEnabled: isNeo4jEnabledMock,
 }));
 
-vi.mock('@/features/kangur/server/ai-tutor-content-repository', () => ({
-  getKangurAiTutorContent: getKangurAiTutorContentMock,
-}));
-
-vi.mock('@/features/kangur/server/ai-tutor-native-guide-repository', () => ({
-  getKangurAiTutorNativeGuideStore: getKangurAiTutorNativeGuideStoreMock,
-}));
-
-vi.mock('@/features/kangur/server/page-content-repository', () => ({
-  getKangurPageContentStore: getKangurPageContentStoreMock,
-}));
-
-vi.mock('@/features/kangur/server/knowledge-graph/build-kangur-knowledge-graph', () => ({
-  buildKangurKnowledgeGraph: buildKangurKnowledgeGraphMock,
+vi.mock('@/features/kangur/server/knowledge-graph/source-loader', () => ({
+  buildKangurKnowledgeGraphFromRepositories: buildKangurKnowledgeGraphFromRepositoriesMock,
 }));
 
 vi.mock('@/features/kangur/server/knowledge-graph/semantic', () => ({
@@ -78,10 +60,8 @@ describe('kangur knowledge graph sync handler', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     isNeo4jEnabledMock.mockReturnValue(true);
-    getKangurAiTutorContentMock.mockResolvedValue({ sections: [] });
-    getKangurAiTutorNativeGuideStoreMock.mockResolvedValue({ locale: 'pl', version: 1, entries: [] });
-    getKangurPageContentStoreMock.mockResolvedValue({ locale: 'pl', version: 1, entries: [] });
-    buildKangurKnowledgeGraphMock.mockReturnValue({
+    assertSettingsManageAccessMock.mockResolvedValue(undefined);
+    buildKangurKnowledgeGraphFromRepositoriesMock.mockResolvedValue({
       graphKey: 'kangur-website-help-v1',
       locale: 'pl',
       generatedAt: '2026-03-12T12:00:00.000Z',
@@ -122,13 +102,7 @@ describe('kangur knowledge graph sync handler', () => {
   });
 
   it('rejects unauthorized users', async () => {
-    authMock.mockResolvedValue({
-      user: {
-        id: 'user-1',
-        isElevated: false,
-        permissions: [],
-      },
-    });
+    assertSettingsManageAccessMock.mockRejectedValue(authError('Unauthorized.'));
 
     await expect(
       POST_handler(
@@ -139,13 +113,6 @@ describe('kangur knowledge graph sync handler', () => {
   });
 
   it('rejects sync when Neo4j is not enabled', async () => {
-    authMock.mockResolvedValue({
-      user: {
-        id: 'admin-1',
-        isElevated: true,
-        permissions: [],
-      },
-    });
     isNeo4jEnabledMock.mockReturnValue(false);
 
     await expect(
@@ -159,14 +126,6 @@ describe('kangur knowledge graph sync handler', () => {
   });
 
   it('syncs the Kangur knowledge graph and returns the refreshed status', async () => {
-    authMock.mockResolvedValue({
-      user: {
-        id: 'admin-1',
-        isElevated: true,
-        permissions: [],
-      },
-    });
-
     const response = await POST_handler(
       new NextRequest('http://localhost/api/kangur/knowledge-graph/sync', { method: 'POST' }),
       createRequestContext({
@@ -175,15 +134,8 @@ describe('kangur knowledge graph sync handler', () => {
       })
     );
 
-    expect(getKangurAiTutorContentMock).toHaveBeenCalledWith('pl');
-    expect(getKangurAiTutorNativeGuideStoreMock).toHaveBeenCalledWith('pl');
-    expect(getKangurPageContentStoreMock).toHaveBeenCalledWith('pl');
-    expect(buildKangurKnowledgeGraphMock).toHaveBeenCalledWith({
-      cmsPages: [],
+    expect(buildKangurKnowledgeGraphFromRepositoriesMock).toHaveBeenCalledWith({
       locale: 'pl',
-      tutorContent: { sections: [] },
-      nativeGuideStore: { locale: 'pl', version: 1, entries: [] },
-      pageContentStore: { locale: 'pl', version: 1, entries: [] },
     });
     expect(enrichKangurKnowledgeGraphWithEmbeddingsMock).toHaveBeenCalled();
     expect(syncKangurKnowledgeGraphToNeo4jMock).toHaveBeenCalledWith({

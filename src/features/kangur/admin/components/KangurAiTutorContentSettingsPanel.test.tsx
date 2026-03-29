@@ -119,4 +119,21 @@ describe('KangurAiTutorContentSettingsPanel', () => {
     expect(within(guestIntroCard).getByText('EN scaffolded')).toBeInTheDocument();
     expect(screen.getByText('Home onboarding')).toBeInTheDocument();
   });
+
+  it('stays blank and loading until Mongo-backed AI Tutor content resolves', () => {
+    apiGetMock.mockReturnValue(new Promise(() => {}));
+
+    render(<KangurAiTutorContentSettingsPanel />);
+
+    expect(screen.getByText('Loading content')).toBeInTheDocument();
+    expect(screen.queryByText('Validation Passed')).not.toBeInTheDocument();
+
+    const contentEditor = screen.getByLabelText(/content json/i);
+    if (!(contentEditor instanceof HTMLTextAreaElement)) {
+      throw new Error('Expected the AI Tutor content editor to be a textarea.');
+    }
+
+    expect(contentEditor.value).toBe('');
+    expect(screen.getByRole('button', { name: /save content/i })).toBeDisabled();
+  });
 });

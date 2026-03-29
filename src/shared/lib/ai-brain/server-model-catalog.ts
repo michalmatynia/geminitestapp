@@ -31,6 +31,33 @@ const OLLAMA_BASE_URL = resolveOllamaBaseUrl();
 const OLLAMA_MODELS_TIMEOUT_MS = 4_500;
 const OLLAMA_DISCOVERY_LOG_THROTTLE_MS = 5 * 60 * 1000;
 let lastOllamaDiscoveryLogAt = 0;
+const MODEL_FAMILY_MATCHERS: ReadonlyArray<{
+  family: BrainModelFamily;
+  matches: readonly string[];
+  startsWith?: readonly string[];
+}> = [
+  {
+    family: 'embedding',
+    matches: ['embed'],
+  },
+  {
+    family: 'image_generation',
+    matches: ['gpt-image', 'flux', 'sdxl', 'stable-diffusion'],
+    startsWith: ['dall-e'],
+  },
+  {
+    family: 'ocr',
+    matches: ['ocr', 'document', 'docling'],
+  },
+  {
+    family: 'vision_extract',
+    matches: ['vision', '-vl', 'llava', 'gemma3', 'multimodal'],
+  },
+  {
+    family: 'validation',
+    matches: ['validator', 'moderation', 'guard'],
+  },
+] as const;
 
 const shouldLogOllamaDiscoveryFailure = (): boolean => {
   const now = Date.now();
@@ -167,6 +194,22 @@ const fetchModelsFromUrl = async (
   }
 };
 
+const buildOllamaDiscoveryFailureError = (error: unknown): Error =>
+  new Error(`Ollama server unreachable at ${OLLAMA_BASE_URL}.`, {
+    cause: error instanceof Error ? error : new Error(String(error ?? 'Unknown error')),
+  });
+
+const reportOllamaDiscoveryFailure = (failure: { url: string; error: unknown }): void => {
+  if (!shouldLogOllamaDiscoveryFailure()) {
+    return;
+  }
+  void ErrorSystem.captureException(buildOllamaDiscoveryFailureError(failure.error), {
+    service: 'ai-brain-model-catalog',
+    baseUrl: OLLAMA_BASE_URL,
+    url: failure.url,
+  });
+};
+
 const fetchLiveOllamaModels = async (): Promise<string[] | null> => {
   const discoveryUrls = buildOllamaDiscoveryUrls(OLLAMA_BASE_URL);
   let lastFailure: { url: string; error: unknown } | null = null;
@@ -177,57 +220,25 @@ const fetchLiveOllamaModels = async (): Promise<string[] | null> => {
       lastFailure = { url, error: result.error };
     }
   }
-  if (lastFailure && shouldLogOllamaDiscoveryFailure()) {
-    const cause =
-      lastFailure.error instanceof Error
-        ? lastFailure.error
-        : new Error(String(lastFailure.error ?? 'Unknown error'));
-    const error = new Error(`Ollama server unreachable at ${OLLAMA_BASE_URL}.`, {
-      cause,
-    });
-    void ErrorSystem.captureException(error, {
-      service: 'ai-brain-model-catalog',
-      baseUrl: OLLAMA_BASE_URL,
-      url: lastFailure.url,
-    });
+  if (lastFailure) {
+    reportOllamaDiscoveryFailure(lastFailure);
   }
   return null;
 };
 
+const matchesModelFamily = (
+  normalizedModelId: string,
+  matcher: (typeof MODEL_FAMILY_MATCHERS)[number]
+): boolean =>
+  matcher.matches.some((token) => normalizedModelId.includes(token)) ||
+  (matcher.startsWith?.some((token) => normalizedModelId.startsWith(token)) ?? false);
+
 const classifyBrainModelFamily = (modelId: string): BrainModelFamily => {
   const normalized = normalizeBrainRuntimeModelId(modelId).toLowerCase();
-  if (normalized.includes('embed')) return 'embedding';
-  if (
-    normalized.includes('gpt-image') ||
-    normalized.startsWith('dall-e') ||
-    normalized.includes('flux') ||
-    normalized.includes('sdxl') ||
-    normalized.includes('stable-diffusion')
-  ) {
-    return 'image_generation';
-  }
-  if (
-    normalized.includes('ocr') ||
-    normalized.includes('document') ||
-    normalized.includes('docling')
-  ) {
-    return 'ocr';
-  }
-  if (
-    normalized.includes('vision') ||
-    normalized.includes('-vl') ||
-    normalized.includes('llava') ||
-    normalized.includes('gemma3') ||
-    normalized.includes('multimodal')
-  ) {
-    return 'vision_extract';
-  }
-  if (
-    normalized.includes('validator') ||
-    normalized.includes('moderation') ||
-    normalized.includes('guard')
-  ) {
-    return 'validation';
+  for (const matcher of MODEL_FAMILY_MATCHERS) {
+    if (matchesModelFamily(normalized, matcher)) {
+      return matcher.family;
+    }
   }
   return 'chat';
 };

@@ -175,4 +175,20 @@ describe('image-base64', () => {
     expect(mocks.readFile).toHaveBeenNthCalledWith(1, '/disk/uploads/local-slot.webp');
     expect(mocks.readFile).toHaveBeenNthCalledWith(2, '/disk/uploads/local-link.png');
   });
+
+  it('rethrows unexpected remote fetch failures', async () => {
+    const fetchError = new Error('upstream unavailable');
+    mocks.fetchWithOutboundUrlPolicy.mockRejectedValueOnce(fetchError);
+
+    await expect(
+      buildImageBase64Slots({
+        imageBase64s: [],
+        imageLinks: ['https://example.test/remote-link.jpg'],
+        images: [],
+      })
+    ).rejects.toThrow('upstream unavailable');
+
+    expect(mocks.logClientError).toHaveBeenCalledWith(fetchError);
+    expect(mocks.ErrorSystem.logWarning).not.toHaveBeenCalled();
+  });
 });

@@ -7,6 +7,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 const {
   createStarterKangurLessonDocumentMock,
   getKangurAiTutorContentMock,
+  getKangurAiTutorNativeGuideStoreMock,
   getKangurGameContentSetRepositoryMock,
   getKangurGameInstanceRepositoryMock,
   getKangurLessonDocumentRepositoryMock,
@@ -19,6 +20,7 @@ const {
 } = vi.hoisted(() => ({
   createStarterKangurLessonDocumentMock: vi.fn(),
   getKangurAiTutorContentMock: vi.fn(),
+  getKangurAiTutorNativeGuideStoreMock: vi.fn(),
   getKangurGameContentSetRepositoryMock: vi.fn(),
   getKangurGameInstanceRepositoryMock: vi.fn(),
   getKangurLessonDocumentRepositoryMock: vi.fn(),
@@ -40,6 +42,10 @@ vi.mock('@/features/kangur/legacy-lesson-imports', () => ({
 
 vi.mock('@/features/kangur/server/ai-tutor-content-repository', () => ({
   getKangurAiTutorContent: getKangurAiTutorContentMock,
+}));
+
+vi.mock('@/features/kangur/server/ai-tutor-native-guide-repository', () => ({
+  getKangurAiTutorNativeGuideStore: getKangurAiTutorNativeGuideStoreMock,
 }));
 
 vi.mock('@/features/kangur/server/page-content-repository', () => ({
@@ -150,6 +156,7 @@ describe('bootstrapKangurContentToMongo', () => {
     getKangurGameInstanceRepositoryMock.mockResolvedValue(gameInstanceRepository);
     getKangurPageContentStoreMock.mockResolvedValue({ entries: [] });
     getKangurAiTutorContentMock.mockImplementation(async (locale: string) => ({ locale }));
+    getKangurAiTutorNativeGuideStoreMock.mockImplementation(async (locale: string) => ({ locale }));
     listKangurGamesMock.mockResolvedValue([]);
     createStarterKangurLessonDocumentMock.mockReturnValue(starterDocument);
     importLegacyKangurLessonDocumentMock.mockImplementation((componentId: string) =>
@@ -220,6 +227,7 @@ describe('bootstrapKangurContentToMongo', () => {
     getKangurGameInstanceRepositoryMock.mockResolvedValue(gameInstanceRepository);
     getKangurPageContentStoreMock.mockResolvedValue({ entries: [] });
     getKangurAiTutorContentMock.mockImplementation(async (locale: string) => ({ locale }));
+    getKangurAiTutorNativeGuideStoreMock.mockImplementation(async (locale: string) => ({ locale }));
     listKangurGamesMock.mockResolvedValue([]);
     createStarterKangurLessonDocumentMock.mockReturnValue({
       version: 1,

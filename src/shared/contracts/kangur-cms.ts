@@ -53,9 +53,6 @@ export const kangurWidgetIdSchema = z.enum(KANGUR_WIDGET_IDS);
 export const KANGUR_HIDDEN_WIDGET_IDS = ['game-home-hero'] as const satisfies readonly KangurWidgetId[];
 export const KANGUR_LEGACY_WIDGET_IDS = ['parent-dashboard-scores'] as const satisfies readonly KangurWidgetId[];
 
-const KANGUR_HIDDEN_WIDGET_ID_SET = new Set<KangurWidgetId>(KANGUR_HIDDEN_WIDGET_IDS);
-const KANGUR_LEGACY_WIDGET_ID_SET = new Set<KangurWidgetId>(KANGUR_LEGACY_WIDGET_IDS);
-
 const KANGUR_WIDGET_LABELS_BY_ID: Record<KangurWidgetId, string> = {
   'game-screen': 'Game Screen',
   'game-navigation': 'Game Navigation',
@@ -98,21 +95,33 @@ const KANGUR_WIDGET_LABELS_BY_ID: Record<KangurWidgetId, string> = {
   'assignment-spotlight': 'Assignment Spotlight',
 };
 
+const formatKangurWidgetLabel = (label: string): string =>
+  label
+    .split(' ')
+    .map((word, index) => {
+      if (word.toUpperCase() === 'XP') {
+        return 'XP';
+      }
+      const normalized = word.toLowerCase();
+      return index === 0
+        ? normalized.charAt(0).toUpperCase() + normalized.slice(1)
+        : normalized;
+    })
+    .join(' ');
+
 export const KANGUR_WIDGET_LABELS = new Map<KangurWidgetId, string>(
-  KANGUR_WIDGET_IDS.map((widgetId) => [widgetId, KANGUR_WIDGET_LABELS_BY_ID[widgetId]])
+  KANGUR_WIDGET_IDS.map((widgetId) => [
+    widgetId,
+    formatKangurWidgetLabel(KANGUR_WIDGET_LABELS_BY_ID[widgetId]),
+  ])
 );
 
 /**
- * Options for the CMS block selector. Hidden and legacy widgets remain valid IDs
- * for persisted configs but are excluded from new selections.
+ * Options for the CMS block selector.
  */
 export const KANGUR_WIDGET_OPTIONS: ReadonlyArray<LabeledOptionDto<KangurWidgetId>> = KANGUR_WIDGET_IDS
-  .filter(
-    (widgetId) =>
-      !KANGUR_HIDDEN_WIDGET_ID_SET.has(widgetId) && !KANGUR_LEGACY_WIDGET_ID_SET.has(widgetId)
-  )
   .map((widgetId) => ({
-    label: KANGUR_WIDGET_LABELS_BY_ID[widgetId],
+    label: KANGUR_WIDGET_LABELS.get(widgetId) ?? formatKangurWidgetLabel(KANGUR_WIDGET_LABELS_BY_ID[widgetId]),
     value: widgetId,
   }));
 

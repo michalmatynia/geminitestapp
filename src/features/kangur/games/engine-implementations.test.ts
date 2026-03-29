@@ -89,6 +89,7 @@ describe('kangur game engine implementations', () => {
     ]);
     expect(getKangurGameEngineImplementation('sentence-builder-engine').runtimeIds).toEqual([
       'EnglishSubjectVerbAgreementGame',
+      'EnglishGoingToPlanParadeGame',
       'EnglishAdjectivesSceneGame',
       'EnglishComparativesSuperlativesCrownGame',
       'EnglishAdverbsActionStudioGame',

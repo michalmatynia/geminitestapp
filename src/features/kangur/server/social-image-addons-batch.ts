@@ -43,7 +43,24 @@ export default async function run({ page, input, artifacts, helpers, emit, log }
   let failureCount = 0;
   const totalCount = captures.length;
 
-  const emitProgress = (lastCaptureId, lastCaptureStatus) => {
+  const describeWaitReason = (reason) => {
+    switch (reason) {
+      case 'route_shell':
+        return 'Waiting for Kangur route shell.';
+      case 'transition_skeleton':
+        return 'Waiting for transition skeleton to finish.';
+      case 'transition_phase':
+        return 'Waiting for route transition to become idle.';
+      case 'route_content':
+        return 'Waiting for route content to mount.';
+      case 'capture_ready':
+        return 'Waiting for route capture-ready flag.';
+      default:
+        return 'Waiting for page readiness.';
+    }
+  };
+
+  const emitProgress = (payload = {}) => {
     const processedCount = successCount + failureCount;
     emit('capture_progress', {
       processedCount,
@@ -51,14 +68,17 @@ export default async function run({ page, input, artifacts, helpers, emit, log }
       failureCount,
       remainingCount: Math.max(totalCount - processedCount, 0),
       totalCount,
-      lastCaptureId,
-      lastCaptureStatus,
+      ...payload,
     });
   };
 
   for (let index = 0; index < captures.length; index += 1) {
     const capture = captures[index] || {};
     const id = typeof capture.id === 'string' ? capture.id : \`capture-\${index + 1}\`;
+    const title =
+      typeof capture.title === 'string' && capture.title.trim().length > 0
+        ? capture.title.trim()
+        : id;
     const url = typeof capture.url === 'string' ? capture.url : '';
     const selector = typeof capture.selector === 'string' ? capture.selector.trim() : '';
     const waitForMs = Number.isFinite(capture.waitForMs) ? Number(capture.waitForMs) : 2000;
@@ -66,10 +86,24 @@ export default async function run({ page, input, artifacts, helpers, emit, log }
       ? Number(capture.waitForSelectorMs)
       : 15000;
 
+    emitProgress({
+      currentCaptureId: id,
+      currentCaptureTitle: title,
+      currentCaptureStatus: 'starting',
+      message: \`[\${id}] Opening \${title}.\`,
+    });
+
     if (!url) {
       failureCount += 1;
       results.push({ id, status: 'skipped', reason: 'missing_url' });
-      emitProgress(id, 'skipped');
+      emitProgress({
+        currentCaptureId: id,
+        currentCaptureTitle: title,
+        currentCaptureStatus: 'failed',
+        lastCaptureId: id,
+        lastCaptureStatus: 'skipped',
+        message: \`[\${id}] Skipped because the capture URL is missing.\`,
+      });
       continue;
     }
 
@@ -84,39 +118,93 @@ export default async function run({ page, input, artifacts, helpers, emit, log }
       {
         const pollDeadline = Date.now() + waitForSelectorMs;
         let pageReady = false;
+        let lastWaitReason = '';
+        let lastWaitProgressAt = 0;
         log(\`[\${id}] Polling for page readiness (shell + no skeleton + transition idle + capture ready)\`);
         while (Date.now() < pollDeadline) {
+          let waitReason = '';
           const hasShell = await page.$('[data-testid="kangur-route-shell"]');
-          if (!hasShell) { await helpers.sleep(400); continue; }
-          const skeletonCount = await page.locator('[data-testid="kangur-page-transition-skeleton"]').count();
-          if (skeletonCount > 0) { await helpers.sleep(400); continue; }
-          const phaseEl = await page.$('[data-route-transition-phase]');
-          if (phaseEl) {
-            const phase = await phaseEl.getAttribute('data-route-transition-phase');
-            if (phase && phase !== 'idle') { await helpers.sleep(400); continue; }
-            const busy = await phaseEl.getAttribute('aria-busy');
-            if (busy === 'true') { await helpers.sleep(400); continue; }
+          if (!hasShell) {
+            waitReason = 'route_shell';
+          } else {
+            const skeletonCount = await page
+              .locator('[data-testid="kangur-page-transition-skeleton"]')
+              .count();
+            if (skeletonCount > 0) {
+              waitReason = 'transition_skeleton';
+            } else {
+              const phaseEl = await page.$('[data-route-transition-phase]');
+              if (phaseEl) {
+                const phase = await phaseEl.getAttribute('data-route-transition-phase');
+                const busy = await phaseEl.getAttribute('aria-busy');
+                if ((phase && phase !== 'idle') || busy === 'true') {
+                  waitReason = 'transition_phase';
+                }
+              }
+            }
           }
-          const routeContent = await page.$('[data-testid="kangur-route-content"]');
-          if (!routeContent) { await helpers.sleep(400); continue; }
-          const captureReady = await routeContent.getAttribute('data-route-capture-ready');
-          if (captureReady !== 'true') { await helpers.sleep(400); continue; }
-          pageReady = true;
-          break;
+
+          if (!waitReason) {
+            const routeContent = await page.$('[data-testid="kangur-route-content"]');
+            if (!routeContent) {
+              waitReason = 'route_content';
+            } else {
+              const captureReady = await routeContent.getAttribute('data-route-capture-ready');
+              if (captureReady !== 'true') {
+                waitReason = 'capture_ready';
+              } else {
+                pageReady = true;
+                break;
+              }
+            }
+          }
+
+          const now = Date.now();
+          if (waitReason !== lastWaitReason || now - lastWaitProgressAt >= 2000) {
+            lastWaitReason = waitReason;
+            lastWaitProgressAt = now;
+            emitProgress({
+              currentCaptureId: id,
+              currentCaptureTitle: title,
+              currentCaptureStatus: 'waiting_for_page_ready',
+              message: \`[\${id}] \${describeWaitReason(waitReason)}\`,
+            });
+          }
+          await helpers.sleep(400);
         }
         log(pageReady
           ? \`[\${id}] Page ready — shell stable and capture-ready\`
           : \`[\${id}] Page readiness timeout — capturing current state\`);
+        if (!pageReady) {
+          emitProgress({
+            currentCaptureId: id,
+            currentCaptureTitle: title,
+            currentCaptureStatus: 'capturing_fallback',
+            message: \`[\${id}] Page readiness timed out. Capturing the current state.\`,
+          });
+        }
       }
 
       if (selector) {
         log(\`[\${id}] Waiting for target selector: \${selector}\`);
+        emitProgress({
+          currentCaptureId: id,
+          currentCaptureTitle: title,
+          currentCaptureStatus: 'waiting_for_selector',
+          message: \`[\${id}] Waiting for selector \${selector}.\`,
+        });
         await page.waitForSelector(selector, { state: 'visible', timeout: waitForSelectorMs });
       }
 
       // Settling time for animations, lazy-loaded images, and late API responses
       const settleMs = Math.max(waitForMs, 3000);
       log(\`[\${id}] Waiting \${settleMs}ms for content to settle\`);
+      emitProgress({
+        currentCaptureId: id,
+        currentCaptureTitle: title,
+        currentCaptureStatus: 'settling',
+        message: \`[\${id}] Settling for \${settleMs}ms before capture.\`,
+      });
       await helpers.sleep(settleMs);
 
       const buffer = selector
@@ -132,13 +220,27 @@ export default async function run({ page, input, artifacts, helpers, emit, log }
       log(\`[\${id}] Captured successfully\`);
       successCount += 1;
       results.push({ id, status: 'ok' });
-      emitProgress(id, 'ok');
+      emitProgress({
+        currentCaptureId: id,
+        currentCaptureTitle: title,
+        currentCaptureStatus: 'captured',
+        lastCaptureId: id,
+        lastCaptureStatus: 'ok',
+        message: \`[\${id}] Captured \${title}.\`,
+      });
     } catch (error) {
       const message = error instanceof Error ? error.message : 'capture_failed';
       log(\`Capture failed for \${id}: \${message}\`);
       failureCount += 1;
       results.push({ id, status: 'failed', reason: message });
-      emitProgress(id, 'failed');
+      emitProgress({
+        currentCaptureId: id,
+        currentCaptureTitle: title,
+        currentCaptureStatus: 'failed',
+        lastCaptureId: id,
+        lastCaptureStatus: 'failed',
+        message: \`[\${id}] Capture failed: \${message}\`,
+      });
     }
   }
 
@@ -146,12 +248,18 @@ export default async function run({ page, input, artifacts, helpers, emit, log }
 }
 `;
 
-type BatchCaptureProgressSnapshot = {
+export type BatchCaptureProgressSnapshot = {
   processedCount: number;
   completedCount: number;
   failureCount: number;
   remainingCount: number;
   totalCount: number;
+  currentCaptureId?: string | null;
+  currentCaptureTitle?: string | null;
+  currentCaptureStatus?: string | null;
+  lastCaptureId?: string | null;
+  lastCaptureStatus?: string | null;
+  message?: string | null;
 };
 
 type BatchCaptureInput = Omit<KangurSocialImageAddonsBatchPayload, 'baseUrl' | 'presetIds'> & {
@@ -160,6 +268,20 @@ type BatchCaptureInput = Omit<KangurSocialImageAddonsBatchPayload, 'baseUrl' | '
   createdBy?: string | null;
   forwardCookies?: string | null;
   onProgress?: (progress: BatchCaptureProgressSnapshot) => Promise<void> | void;
+};
+
+type BatchCapturePreset = (typeof KANGUR_SOCIAL_CAPTURE_PRESETS)[number];
+
+type ResolvedBatchCaptureRequest = {
+  baseUrl: string;
+  createdBy: string | null;
+  contextOptions: Record<string, unknown> | undefined;
+  requestedPresets: BatchCapturePreset[];
+  presets: BatchCapturePreset[];
+};
+
+export type StartedPlaywrightBatchCapture = ResolvedBatchCaptureRequest & {
+  run: PlaywrightNodeRunRecord;
 };
 
 const LIVE_PROGRESS_POLL_INTERVAL_MS = 250;
@@ -263,6 +385,9 @@ const readNonNegativeNumber = (value: unknown): number | null =>
     ? Math.floor(value)
     : null;
 
+const readOptionalString = (value: unknown): string | null =>
+  typeof value === 'string' && value.trim().length > 0 ? value.trim() : null;
+
 const readLiveCaptureProgress = (
   run: Pick<PlaywrightNodeRunRecord, 'result'> | null
 ): BatchCaptureProgressSnapshot | null => {
@@ -293,6 +418,12 @@ const readLiveCaptureProgress = (
     failureCount,
     remainingCount,
     totalCount,
+    currentCaptureId: readOptionalString(progress['currentCaptureId']),
+    currentCaptureTitle: readOptionalString(progress['currentCaptureTitle']),
+    currentCaptureStatus: readOptionalString(progress['currentCaptureStatus']),
+    lastCaptureId: readOptionalString(progress['lastCaptureId']),
+    lastCaptureStatus: readOptionalString(progress['lastCaptureStatus']),
+    message: readOptionalString(progress['message']),
   };
 };
 
@@ -316,6 +447,11 @@ const waitForPlaywrightBatchRun = async (params: {
           progress.failureCount,
           progress.remainingCount,
           progress.totalCount,
+          progress.currentCaptureId ?? '',
+          progress.currentCaptureStatus ?? '',
+          progress.lastCaptureId ?? '',
+          progress.lastCaptureStatus ?? '',
+          progress.message ?? '',
         ].join(':');
         if (signature !== lastProgressSignature) {
           lastProgressSignature = signature;
@@ -336,6 +472,236 @@ const waitForPlaywrightBatchRun = async (params: {
   }
 
   throw operationFailedError('Playwright batch capture timed out.');
+};
+
+const resolveBatchCaptureRequest = (
+  input: Omit<BatchCaptureInput, 'onProgress'>
+): ResolvedBatchCaptureRequest => {
+  const baseUrl = input.baseUrl.trim().replace(/\/+$/, '');
+  const presetIds = (input.presetIds ?? []).map((id) => id.trim()).filter(Boolean);
+  const requestedPresets =
+    presetIds.length > 0
+      ? KANGUR_SOCIAL_CAPTURE_PRESETS.filter((preset) => presetIds.includes(preset.id))
+      : KANGUR_SOCIAL_CAPTURE_PRESETS;
+  const normalizedPresetLimit =
+    typeof input.presetLimit === 'number' && Number.isFinite(input.presetLimit)
+      ? Math.max(1, Math.floor(input.presetLimit))
+      : null;
+  const presets =
+    normalizedPresetLimit == null
+      ? requestedPresets
+      : requestedPresets.slice(0, normalizedPresetLimit);
+
+  if (!baseUrl) {
+    throw operationFailedError('Base URL is required for batch capture.');
+  }
+
+  if (presets.length === 0) {
+    throw operationFailedError('No capture presets selected.');
+  }
+
+  const contextOptions: Record<string, unknown> = {};
+  if (input.forwardCookies) {
+    const cookies = parseCookiesForPlaywright(input.forwardCookies, baseUrl);
+    if (cookies.length > 0) {
+      contextOptions['storageState'] = {
+        cookies,
+        origins: [],
+      };
+    }
+  }
+
+  return {
+    baseUrl,
+    createdBy: input.createdBy ?? null,
+    contextOptions: Object.keys(contextOptions).length > 0 ? contextOptions : undefined,
+    requestedPresets,
+    presets,
+  };
+};
+
+export const startPlaywrightBatchCapture = async (
+  input: Omit<BatchCaptureInput, 'onProgress'>
+): Promise<StartedPlaywrightBatchCapture> => {
+  const resolved = resolveBatchCaptureRequest(input);
+  const captures = resolved.presets.map((preset) => ({
+    id: preset.id,
+    title: preset.title,
+    url: buildCaptureUrl(resolved.baseUrl, preset.path),
+    selector: preset.selector,
+    waitForMs: preset.waitForMs ?? 0,
+    waitForSelectorMs: preset.waitForSelectorMs ?? 10000,
+  }));
+
+  logger.info('[BATCH] Enqueueing Playwright run', { captureCount: captures.length });
+  const run = await enqueuePlaywrightNodeRun({
+    request: {
+      script: SOCIAL_BATCH_PLAYWRIGHT_SCRIPT,
+      input: {
+        captures,
+      },
+      timeoutMs: 180_000,
+      browserEngine: 'chromium',
+      contextOptions: resolved.contextOptions,
+    },
+    waitForResult: false,
+    ownerUserId: resolved.createdBy,
+  });
+
+  return {
+    ...resolved,
+    run,
+  };
+};
+
+export const finalizePlaywrightBatchCapture = async (
+  input: StartedPlaywrightBatchCapture & { run: PlaywrightNodeRunRecord }
+): Promise<KangurSocialImageAddonsBatchResult> => {
+  const startedAt = Date.now();
+  const { run, requestedPresets, presets, baseUrl, createdBy } = input;
+
+  logger.info('[BATCH] Playwright run finished', {
+    status: run.status,
+    runId: run.runId,
+  });
+  if (run.status !== 'completed') {
+    const reason = run.error?.trim() || 'Playwright batch capture failed.';
+    throw operationFailedError(reason);
+  }
+
+  const resultsRaw = (run.result as { outputs?: Record<string, unknown> } | null)?.outputs?.[
+    'capture_results'
+  ];
+  const resultMap = Array.isArray(resultsRaw)
+    ? new Map<string, { status: string; reason?: string }>(
+        resultsRaw.map((entry: unknown) => {
+          if (!entry || typeof entry !== 'object') return ['unknown', { status: 'failed' }];
+          const record = entry as { id?: string; status?: string; reason?: string };
+          return [
+            record.id ?? 'unknown',
+            { status: record.status ?? 'failed', reason: record.reason },
+          ];
+        })
+      )
+    : new Map<string, { status: string; reason?: string }>();
+
+  const addons: KangurSocialImageAddon[] = [];
+  const failures: Array<{ id: string; reason: string }> = [];
+
+  logger.info('[BATCH] Processing presets', { presetCount: presets.length });
+  for (const preset of presets) {
+    logger.info('[BATCH] Finding artifact', { presetId: preset.id });
+    const artifact = resolveArtifactByName(run.artifacts, preset.id);
+    const resultStatus = resultMap.get(preset.id);
+    if (!artifact) {
+      failures.push({
+        id: preset.id,
+        reason: resultStatus?.reason || 'artifact_missing',
+      });
+      continue;
+    }
+
+    const artifactFile = artifact.path.split('/').pop();
+    if (!artifactFile) {
+      failures.push({ id: preset.id, reason: 'artifact_missing' });
+      continue;
+    }
+
+    logger.info('[BATCH] Reading artifact file', { presetId: preset.id });
+    const artifactData = await readPlaywrightNodeArtifact({
+      runId: run.runId,
+      fileName: artifactFile,
+    });
+    if (!artifactData) {
+      failures.push({ id: preset.id, reason: 'artifact_read_failed' });
+      continue;
+    }
+
+    logger.info('[BATCH] Reading image metadata', { presetId: preset.id });
+    const buffer = artifactData.content;
+    const metadata = await sharp(buffer, { failOnError: false }).metadata();
+    const width = typeof metadata.width === 'number' ? metadata.width : null;
+    const height = typeof metadata.height === 'number' ? metadata.height : null;
+
+    const filename = `${randomUUID()}.png`;
+    const publicPath = buildAddonPublicPath(filename);
+
+    logger.info('[BATCH] Writing temp copy', { presetId: preset.id });
+    const tempDiskPath = await writeTempCopy(filename, buffer);
+
+    logger.info('[BATCH] Uploading to storage', { presetId: preset.id });
+    const stored = await uploadToConfiguredStorage({
+      buffer,
+      filename,
+      mimetype: 'image/png',
+      publicPath,
+      category: 'kangur_social',
+      projectId: null,
+      folder: 'social-addons',
+      writeLocalCopy: async () => {
+        // Already written to temp dir — skip public/ write to prevent Turbopack HMR
+      },
+    });
+    logger.info('[BATCH] Upload completed', {
+      presetId: preset.id,
+      source: stored.source,
+    });
+
+    const effectiveFilepath = stored.source === 'local' ? tempDiskPath : stored.filepath;
+    const effectiveUrl = stored.source === 'local' ? buildServeUrl(filename) : stored.filepath;
+
+    const imageAssetId = randomUUID();
+    const imageAsset = toImageSelection({
+      id: imageAssetId,
+      filename,
+      filepath: effectiveFilepath,
+      url: effectiveUrl,
+      width,
+      height,
+    });
+
+    logger.info('[BATCH] Finding previous addon', { presetId: preset.id });
+    const previousAddon = await findLatestAddonByPresetId(preset.id);
+
+    const addon = normalizeKangurSocialImageAddon({
+      id: randomUUID(),
+      title: preset.title,
+      description: preset.description ?? '',
+      sourceUrl: buildCaptureUrl(baseUrl, preset.path),
+      sourceLabel: 'Playwright batch capture',
+      imageAsset,
+      presetId: preset.id,
+      previousAddonId: previousAddon?.id ?? null,
+      playwrightRunId: run.runId,
+      playwrightArtifact: artifact.path,
+      createdBy,
+      updatedBy: createdBy,
+    });
+
+    logger.info('[BATCH] Upserting addon', { presetId: preset.id });
+    const saved = await upsertKangurSocialImageAddon(addon);
+    addons.push(saved);
+    logger.info('[BATCH] Addon capture finished', { presetId: preset.id });
+  }
+
+  void ErrorSystem.logInfo('Kangur social image add-on batch capture completed', {
+    service: 'kangur.social-image-addons',
+    action: 'batch',
+    durationMs: Date.now() - startedAt,
+    runId: run.runId,
+    presetCount: presets.length,
+    addonCount: addons.length,
+    failureCount: failures.length,
+  });
+
+  return {
+    addons,
+    failures,
+    runId: run.runId,
+    requestedPresetCount: requestedPresets.length,
+    usedPresetCount: presets.length,
+    usedPresetIds: presets.map((preset) => preset.id),
+  };
 };
 
 export async function createKangurSocialImageAddonsBatch(
@@ -367,6 +733,7 @@ export async function createKangurSocialImageAddonsBatch(
 
   const captures = presets.map((preset) => ({
     id: preset.id,
+    title: preset.title,
     url: buildCaptureUrl(baseUrl, preset.path),
     selector: preset.selector,
     waitForMs: preset.waitForMs ?? 0,

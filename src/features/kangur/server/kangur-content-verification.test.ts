@@ -45,6 +45,9 @@ describe('verifyKangurContentInMongo', () => {
         if (name === 'kangur_ai_tutor_content') {
           return { countDocuments, distinct };
         }
+        if (name === 'kangur_ai_tutor_native_guides') {
+          return { countDocuments, distinct };
+        }
         return { countDocuments };
       }),
     });
@@ -54,9 +57,11 @@ describe('verifyKangurContentInMongo', () => {
     const result = await verifyKangurContentInMongo(['pl', 'en']);
 
     expect(result.aiTutorLocales.missing).toEqual(['en']);
+    expect(result.nativeGuideLocales.missing).toEqual(['en']);
     expect(result.pageContentEntriesByLocale['en']?.meetsMinimum).toBe(true);
     expect(result.lessonDocuments.meetsMinimum).toBe(false);
     expect(result.mismatches).toContain('aiTutorLocales missing en');
+    expect(result.mismatches).toContain('nativeGuideLocales missing en');
     expect(
       result.mismatches.some((entry) => entry.startsWith('gameInstances[english_adverbs_action_studio]'))
     ).toBe(true);

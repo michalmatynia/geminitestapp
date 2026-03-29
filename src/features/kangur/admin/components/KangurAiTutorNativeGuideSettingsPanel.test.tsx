@@ -156,4 +156,25 @@ describe('KangurAiTutorNativeGuideSettingsPanel', () => {
     expect(screen.getAllByText('38 source copy')).toHaveLength(2);
     expect(screen.getAllByText('1 manual')).toHaveLength(1);
   });
+
+  it('waits for Mongo native guides instead of prefilling the editor from static defaults', () => {
+    apiGetMock.mockReturnValue(new Promise(() => {}));
+
+    render(<KangurAiTutorNativeGuideSettingsPanel />);
+
+    expect(
+      screen.getByText(
+        'Structured editing will unlock after the Mongo-backed native guide store loads. You can also reload the store or reset to defaults.'
+      )
+    ).toBeInTheDocument();
+    expect(screen.queryByText('Invalid JSON')).not.toBeInTheDocument();
+
+    const jsonEditor = screen.getByLabelText('Native guide JSON');
+    if (!(jsonEditor instanceof HTMLTextAreaElement)) {
+      throw new Error('Expected the native guide JSON editor to be a textarea.');
+    }
+
+    expect(jsonEditor.value).toBe('');
+    expect(screen.getByRole('button', { name: /save native guides/i })).toBeDisabled();
+  });
 });

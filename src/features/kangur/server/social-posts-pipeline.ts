@@ -193,12 +193,18 @@ const buildLiveCaptureProgressMessage = (params: {
   remainingCount: number;
   failureCount: number;
   totalCount: number;
+  message?: string | null;
 }): string => {
   const totalLabel = params.totalCount === 1 ? 'preset' : 'presets';
   const failureMessage =
     params.failureCount > 0
       ? ` ${params.failureCount} failed.`
       : '';
+  const progressSummary = `${params.completedCount} captured, ${params.remainingCount} left of ${params.totalCount} ${totalLabel}.${failureMessage}`;
+  const detailedMessage = params.message?.trim();
+  if (detailedMessage) {
+    return `${detailedMessage} (${progressSummary})`;
+  }
   return `Playwright capture in progress: ${params.completedCount} captured, ${params.remainingCount} left of ${params.totalCount} ${totalLabel}.${failureMessage}`;
 };
 

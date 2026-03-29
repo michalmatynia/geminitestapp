@@ -148,7 +148,12 @@ export function KangurAiTutorContentSettingsPanel(): React.JSX.Element {
       headerActions={
         <Button
           onClick={() => void handleSaveAiTutorContent()}
-          disabled={isAiTutorContentSaving || !aiTutorContentDirty || hasAiTutorContentBlockingIssues}
+          disabled={
+            isAiTutorContentSaving ||
+            !aiTutorContentDirty ||
+            hasAiTutorContentBlockingIssues ||
+            !parsedAiTutorContentState.content
+          }
           loading={isAiTutorContentSaving}
           size='sm'
         >
@@ -203,7 +208,25 @@ export function KangurAiTutorContentSettingsPanel(): React.JSX.Element {
 
           <div className='space-y-6'>
             <FormSection title='Validation & Insights' description='Automated checks for the current content.' className={SETTINGS_SECTION_CLASS_NAME}>
-              {aiTutorContentBlockingIssues.length > 0 ? (
+              {isAiTutorContentLoading ? (
+                <Alert
+                  variant='info'
+                  title='Loading content'
+                  description='Waiting for the Mongo-backed AI Tutor content store.'
+                />
+              ) : parsedAiTutorContentState.error ? (
+                <Alert
+                  variant='error'
+                  title='Invalid content JSON'
+                  description={parsedAiTutorContentState.error}
+                />
+              ) : !parsedAiTutorContentState.content ? (
+                <Alert
+                  variant='info'
+                  title='No content loaded'
+                  description='Reload the Mongo-backed AI Tutor content store or paste JSON to begin editing.'
+                />
+              ) : aiTutorContentBlockingIssues.length > 0 ? (
                 <div className='space-y-3'>
                   {aiTutorContentBlockingIssues.map((issue, idx) => (
                     <Alert key={idx} variant='error' title={issue.title} description={issue.message} />

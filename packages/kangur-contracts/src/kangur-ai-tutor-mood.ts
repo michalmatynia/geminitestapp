@@ -65,12 +65,18 @@ export const kangurAiTutorLearnerMoodSchema = z.object({
 
 export type KangurAiTutorLearnerMood = z.infer<typeof kangurAiTutorLearnerMoodSchema>;
 
+const resolveMoodField = <T>(overrideValue: T | null | undefined, fallbackValue: T): T =>
+  overrideValue ?? fallbackValue;
+
 export const createDefaultKangurAiTutorLearnerMood = (
   overrides?: Partial<KangurAiTutorLearnerMood> | null
-): KangurAiTutorLearnerMood => ({
-  currentMoodId: overrides?.currentMoodId ?? DEFAULT_KANGUR_TUTOR_MOOD_ID,
-  baselineMoodId: overrides?.baselineMoodId ?? DEFAULT_KANGUR_TUTOR_MOOD_ID,
-  confidence: overrides?.confidence ?? 0.25,
-  lastComputedAt: overrides?.lastComputedAt ?? null,
-  lastReasonCode: overrides?.lastReasonCode ?? null,
-});
+): KangurAiTutorLearnerMood => {
+  const mood = overrides ?? {};
+  return {
+    currentMoodId: resolveMoodField(mood.currentMoodId, DEFAULT_KANGUR_TUTOR_MOOD_ID),
+    baselineMoodId: resolveMoodField(mood.baselineMoodId, DEFAULT_KANGUR_TUTOR_MOOD_ID),
+    confidence: resolveMoodField(mood.confidence, 0.25),
+    lastComputedAt: resolveMoodField(mood.lastComputedAt, null),
+    lastReasonCode: resolveMoodField(mood.lastReasonCode, null),
+  };
+};

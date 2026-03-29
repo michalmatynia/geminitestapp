@@ -45,6 +45,12 @@ const AI_TUTOR_NATIVE_GUIDE_TRANSLATION_LOCALES = getEnabledSiteLocaleCodes().fi
   (locale) => locale !== AI_TUTOR_NATIVE_GUIDE_EDITOR_LOCALE
 );
 const SETTINGS_SECTION_CLASS_NAME = 'border-border/60 bg-card/35 shadow-sm';
+const EMPTY_NATIVE_GUIDE_EDITOR_VALUE = '';
+const EMPTY_KANGUR_AI_TUTOR_NATIVE_GUIDE_STORE = parseKangurAiTutorNativeGuideStore({
+  locale: AI_TUTOR_NATIVE_GUIDE_EDITOR_LOCALE,
+  version: DEFAULT_KANGUR_AI_TUTOR_NATIVE_GUIDE_STORE.version,
+  entries: [],
+});
 
 const ROUTE_PAGE_OPTIONS = ['Game', 'Lessons', 'ParentDashboard', 'LearnerProfile'] as const;
 
@@ -100,11 +106,9 @@ type EntryTranslationStatusValue = KangurAiTutorLocaleTranslationStatusDto['stat
 export function KangurAiTutorNativeGuideSettingsPanel(): React.JSX.Element {
   const { toast } = useToast();
   const settingsStore = useSettingsStore();
-  const [editorValue, setEditorValue] = useState<string>(() =>
-    stringifyNativeGuideStore(DEFAULT_KANGUR_AI_TUTOR_NATIVE_GUIDE_STORE)
-  );
-  const [persistedEditorValue, setPersistedEditorValue] = useState<string>(() =>
-    stringifyNativeGuideStore(DEFAULT_KANGUR_AI_TUTOR_NATIVE_GUIDE_STORE)
+  const [editorValue, setEditorValue] = useState<string>(() => EMPTY_NATIVE_GUIDE_EDITOR_VALUE);
+  const [persistedEditorValue, setPersistedEditorValue] = useState<string>(
+    () => EMPTY_NATIVE_GUIDE_EDITOR_VALUE
   );
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
@@ -152,6 +156,13 @@ export function KangurAiTutorNativeGuideSettingsPanel(): React.JSX.Element {
   }, [editorValue]);
 
   const parsedState = useMemo<ParsedEditorState>(() => {
+    if (debouncedEditorValue.trim().length === 0) {
+      return {
+        store: null,
+        error: null,
+      };
+    }
+
     return withKangurClientErrorSync(
       {
         source: 'kangur.admin.native-guides',
@@ -434,8 +445,7 @@ export function KangurAiTutorNativeGuideSettingsPanel(): React.JSX.Element {
 
   const handleAddEntry = (): void => {
     const baseStore =
-      parsedState.store ??
-      parseKangurAiTutorNativeGuideStore(DEFAULT_KANGUR_AI_TUTOR_NATIVE_GUIDE_STORE);
+      parsedState.store ?? EMPTY_KANGUR_AI_TUTOR_NATIVE_GUIDE_STORE;
     const nextEntries = normalizeEntries([
       ...baseStore.entries,
       createEmptyEntry((baseStore.entries.length + 1) * 10),
@@ -630,8 +640,12 @@ export function KangurAiTutorNativeGuideSettingsPanel(): React.JSX.Element {
               <Badge variant='secondary'>Locale {AI_TUTOR_NATIVE_GUIDE_EDITOR_LOCALE}</Badge>
               {parsedState.store ? (
                 <Badge variant='outline'>{parsedState.store.entries.length} entries</Badge>
-              ) : (
+              ) : isLoading ? (
+                <Badge variant='outline'>Loading…</Badge>
+              ) : parsedState.error ? (
                 <Badge variant='warning'>Invalid JSON</Badge>
+              ) : (
+                <Badge variant='outline'>No store loaded</Badge>
               )}
             </div>
             <p className='mt-1 text-sm text-muted-foreground'>
@@ -672,7 +686,13 @@ export function KangurAiTutorNativeGuideSettingsPanel(): React.JSX.Element {
               onClick={() => {
                 void handleSave();
               }}
-              disabled={isLoading || isSaving || !isDirty || hasBlockingValidationIssues}
+              disabled={
+                isLoading ||
+                isSaving ||
+                !isDirty ||
+                hasBlockingValidationIssues ||
+                !parsedState.store
+              }
             >
               {isSaving ? 'Saving native guides...' : 'Save native guides'}
             </Button>
@@ -830,8 +850,9 @@ export function KangurAiTutorNativeGuideSettingsPanel(): React.JSX.Element {
           </div>
         ) : (
           <Card variant='subtle' padding='md' className='mt-4 rounded-2xl border-border/60 bg-amber-50/60 text-sm text-amber-900 shadow-sm'>
-            Structured editing is temporarily disabled because the raw guide JSON is invalid.
-            Fix the JSON below or reload the store from Mongo first.
+            {parsedState.error
+              ? 'Structured editing is temporarily disabled because the raw guide JSON is invalid. Fix the JSON below or reload the store from Mongo first.'
+              : 'Structured editing will unlock after the Mongo-backed native guide store loads. You can also reload the store or reset to defaults.'}
           </Card>
         )}
 

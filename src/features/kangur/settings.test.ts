@@ -140,6 +140,7 @@ describe('kangur lesson settings', () => {
       'english_grammar_pronouns',
       'english_grammar_sentence_structure',
       'english_grammar_subject_verb_agreement',
+      'english_grammar_going_to',
       'english_grammar_articles',
       'english_grammar_adjectives',
       'english_grammar_comparatives_superlatives',

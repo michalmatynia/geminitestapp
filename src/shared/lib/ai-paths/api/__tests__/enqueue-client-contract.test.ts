@@ -19,7 +19,11 @@ vi.mock('@/shared/lib/ai-paths/api/client/base', () => ({
   withApiCsrfHeaders: vi.fn(),
 }));
 
-import { enqueueAiPathRun, listAiPathRuns } from '@/shared/lib/ai-paths/api/client';
+import {
+  enqueueAiPathRun,
+  extractAiPathRunIdFromEnqueueResponseData,
+  listAiPathRuns,
+} from '@/shared/lib/ai-paths/api/client';
 
 const enqueuePayload = {
   pathId: 'path-contract-test',
@@ -156,6 +160,46 @@ describe('enqueueAiPathRun response contract boundary', () => {
 
     expect(apiFetchMock).toHaveBeenCalledWith(
       '/api/ai-paths/runs?pathId=path-contract-test&requestId=trigger%3Apath-contract-test%3Areq-1&includeTotal=0&fresh=1',
+      {}
+    );
+  });
+
+  it('extracts legacy wrapper run ids before non-run wrapper ids', () => {
+    expect(
+      extractAiPathRunIdFromEnqueueResponseData({
+        data: {
+          id: 'not-a-run-id',
+          runId: 'run-client-contract-wrapper',
+          run: {
+            status: 'queued',
+          },
+        },
+      })
+    ).toBe('run-client-contract-wrapper');
+  });
+
+  it('includes optional list filters when provided', async () => {
+    apiFetchMock.mockResolvedValueOnce({
+      ok: true,
+      data: {
+        runs: [],
+        total: 0,
+      },
+    });
+
+    await listAiPathRuns({
+      nodeId: 'node-1',
+      source: 'dashboard',
+      sourceMode: 'exclude',
+      visibility: 'global',
+      status: 'running',
+      query: 'trace',
+      limit: 25,
+      offset: 50,
+    });
+
+    expect(apiFetchMock).toHaveBeenCalledWith(
+      '/api/ai-paths/runs?nodeId=node-1&source=dashboard&sourceMode=exclude&visibility=global&status=running&query=trace&limit=25&offset=50',
       {}
     );
   });

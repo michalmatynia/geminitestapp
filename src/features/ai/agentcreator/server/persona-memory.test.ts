@@ -184,6 +184,22 @@ describe('persona memory service', () => {
     );
   });
 
+  it('normalizes topic filters from free-form phrases before querying memory entries', async () => {
+    await searchAgentPersonaMemory({
+      personaId: 'persona-1',
+      topic: 'Can you help me with fractions?',
+      limit: 5,
+    });
+
+    expect(agentLongTermMemoryFindManyMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: expect.objectContaining({
+          topicHints: { has: 'help' },
+        }),
+      }),
+    );
+  });
+
   it('builds a prompt-ready persona context from memory results', async () => {
     const result = await buildPersonaChatMemoryContext({
       personaId: 'persona-1',
@@ -231,5 +247,24 @@ describe('persona memory service', () => {
         }),
       })
     );
+  });
+
+  it('truncates persisted summary text after normalizing whitespace', async () => {
+    await persistAgentPersonaExchangeMemory({
+      personaId: 'persona-1',
+      sourceType: 'chat_message',
+      sourceId: 'chatbot:session-1:assistant',
+      assistantMessage:
+        '  This is a very long assistant reply that should be normalized and then truncated because it keeps going well beyond the summary budget for persisted persona memory entries.  ',
+      userMessage:
+        '  This is also a long user question with extra spacing that should be normalized before truncation happens.  ',
+    });
+
+    const summary = addAgentLongTermMemoryMock.mock.calls[0]?.[0]?.summary;
+    expect(summary).toContain('User asked: This is also a long user question with extra spacing');
+    expect(summary).toContain('Assistant replied: This is a very long assistant reply');
+    expect(summary).toContain('...');
+    expect(summary).not.toContain('  ');
+    expect(summary).not.toContain('\n');
   });
 });

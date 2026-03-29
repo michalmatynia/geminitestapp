@@ -210,29 +210,88 @@ const shouldBlockNativeGuideForSelectionIntent = (
 const hasPageHelpIntent = (normalizedMessage: string): boolean =>
   PAGE_HELP_PATTERNS.some((pattern) => pattern.test(normalizedMessage));
 
+const hasNativeGuidePriorityContext = (
+  context: KangurAiTutorConversationContext | undefined,
+): boolean =>
+  hasKnowledgeReferenceNativeExplainIntent(context) || hasAlwaysNativeExplainFocus(context);
+
+const shouldUseNativeGuideFromMessageIntent = (
+  normalizedMessage: string,
+  context: KangurAiTutorConversationContext | undefined,
+): boolean =>
+  normalizedMessage.length > 0 &&
+  !shouldBlockNativeGuideForSelectionIntent(normalizedMessage, context) &&
+  hasPageHelpIntent(normalizedMessage);
+
 const shouldUseNativeGuide = (input: {
   latestUserMessage: string | null;
   context: KangurAiTutorConversationContext | undefined;
 }): boolean => {
   const normalized = normalizeMessage(input.latestUserMessage);
 
-  if (hasKnowledgeReferenceNativeExplainIntent(input.context)) {
+  if (hasNativeGuidePriorityContext(input.context)) {
     return true;
   }
 
-  if (hasAlwaysNativeExplainFocus(input.context)) {
-    return true;
+  return shouldUseNativeGuideFromMessageIntent(normalized, input.context);
+};
+
+type RankedEntryAccumulator = {
+  matchedSignals: KangurAiTutorNativeGuideMatchSignal[];
+  score: number;
+};
+
+const createRankedEntryAccumulator = (): RankedEntryAccumulator => ({
+  matchedSignals: [],
+  score: 0,
+});
+
+const addRankedEntryScore = (
+  accumulator: RankedEntryAccumulator,
+  score: number,
+  signal?: KangurAiTutorNativeGuideMatchSignal | null,
+): void => {
+  accumulator.score += score;
+  if (signal) {
+    accumulator.matchedSignals.push(signal);
+  }
+};
+
+const applyNullableFieldMatchScore = (
+  accumulator: RankedEntryAccumulator,
+  entryValue: string | null,
+  contextValue: string | undefined,
+  matchScore: number,
+  fallbackScore: number,
+  signal: KangurAiTutorNativeGuideMatchSignal,
+): void => {
+  if (entryValue && entryValue === contextValue) {
+    addRankedEntryScore(accumulator, matchScore, signal);
+    return;
   }
 
-  if (!normalized) {
-    return false;
+  if (entryValue === null) {
+    addRankedEntryScore(accumulator, fallbackScore);
   }
+};
 
-  if (shouldBlockNativeGuideForSelectionIntent(normalized, input.context)) {
-    return false;
+const applyPrefixLookupScore = (
+  accumulator: RankedEntryAccumulator,
+  match: { score: number; signal: KangurAiTutorNativeGuideMatchSignal | null },
+): void => {
+  addRankedEntryScore(accumulator, match.score, match.signal);
+};
+
+const applyTriggerPhraseScore = (
+  accumulator: RankedEntryAccumulator,
+  entry: KangurAiTutorNativeGuideEntry,
+  value: string | null | undefined,
+  score: number,
+  signal: KangurAiTutorNativeGuideMatchSignal,
+): void => {
+  if (matchesTriggerPhrases(entry, value)) {
+    addRankedEntryScore(accumulator, score, signal);
   }
-
-  return hasPageHelpIntent(normalized);
 };
 
 const analyzeEntryMatch = (
@@ -242,66 +301,52 @@ const analyzeEntryMatch = (
     context: KangurAiTutorConversationContext | undefined;
   }
 ): RankedNativeGuideEntry => {
-  let score = 0;
-  const matchedSignals: KangurAiTutorNativeGuideMatchSignal[] = [];
+  const accumulator = createRankedEntryAccumulator();
 
-  if (entry.surface && entry.surface === input.context?.surface) {
-    score += 40;
-    matchedSignals.push('surface');
-  } else if (entry.surface === null) {
-    score += 10;
-  }
+  applyNullableFieldMatchScore(
+    accumulator,
+    entry.surface,
+    input.context?.surface,
+    40,
+    10,
+    'surface',
+  );
+  applyNullableFieldMatchScore(
+    accumulator,
+    entry.focusKind,
+    input.context?.focusKind,
+    60,
+    5,
+    'focus_kind',
+  );
 
-  if (entry.focusKind && entry.focusKind === input.context?.focusKind) {
-    score += 60;
-    matchedSignals.push('focus_kind');
-  } else if (entry.focusKind === null) {
-    score += 5;
-  }
+  applyPrefixLookupScore(
+    accumulator,
+    matchLookupPrefixes(entry.focusIdPrefixes, input.context?.focusId, {
+      exact: 80,
+      prefix: 45,
+      exactSignal: 'focus_id_exact',
+      prefixSignal: 'focus_id_prefix',
+    }),
+  );
+  applyPrefixLookupScore(
+    accumulator,
+    matchLookupPrefixes(entry.contentIdPrefixes, input.context?.contentId, {
+      exact: 70,
+      prefix: 35,
+      exactSignal: 'content_id_exact',
+      prefixSignal: 'content_id_prefix',
+    }),
+  );
 
-  const focusIdMatch = matchLookupPrefixes(entry.focusIdPrefixes, input.context?.focusId, {
-    exact: 80,
-    prefix: 45,
-    exactSignal: 'focus_id_exact',
-    prefixSignal: 'focus_id_prefix',
-  });
-  score += focusIdMatch.score;
-  if (focusIdMatch.signal) {
-    matchedSignals.push(focusIdMatch.signal);
-  }
-
-  const contentIdMatch = matchLookupPrefixes(entry.contentIdPrefixes, input.context?.contentId, {
-    exact: 70,
-    prefix: 35,
-    exactSignal: 'content_id_exact',
-    prefixSignal: 'content_id_prefix',
-  });
-  score += contentIdMatch.score;
-  if (contentIdMatch.signal) {
-    matchedSignals.push(contentIdMatch.signal);
-  }
-
-  if (
-    matchesTriggerPhrases(entry, input.normalizedMessage)
-  ) {
-    score += 30;
-    matchedSignals.push('message_trigger');
-  }
-
-  if (matchesTriggerPhrases(entry, input.context?.focusLabel)) {
-    score += 15;
-    matchedSignals.push('focus_label_trigger');
-  }
-
-  if (matchesTriggerPhrases(entry, input.context?.title)) {
-    score += 18;
-    matchedSignals.push('title_trigger');
-  }
+  applyTriggerPhraseScore(accumulator, entry, input.normalizedMessage, 30, 'message_trigger');
+  applyTriggerPhraseScore(accumulator, entry, input.context?.focusLabel, 15, 'focus_label_trigger');
+  applyTriggerPhraseScore(accumulator, entry, input.context?.title, 18, 'title_trigger');
 
   return {
     entry,
-    score,
-    matchedSignals,
+    score: accumulator.score,
+    matchedSignals: accumulator.matchedSignals,
   };
 };
 

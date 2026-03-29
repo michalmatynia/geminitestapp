@@ -8,7 +8,9 @@ import {
 } from '@/features/kangur/shared/contracts/kangur-ai-tutor-native-guide';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import { repairKangurPolishCopy } from '@/shared/lib/i18n/kangur-polish-diacritics';
+import { normalizeSiteLocale } from '@/shared/lib/i18n/site-locale';
 import { ErrorSystem } from '@/features/kangur/shared/utils/observability/error-system';
+import { buildKangurAiTutorNativeGuideLocaleScaffold } from './ai-tutor-native-guide-locale-scaffold';
 
 
 type KangurAiTutorNativeGuideDoc = {
@@ -23,10 +25,15 @@ const COLLECTION_NAME = 'kangur_ai_tutor_native_guides';
 let indexesEnsured: Promise<void> | null = null;
 
 const buildDefaultStore = (locale: string): KangurAiTutorNativeGuideStore =>
-  parseKangurAiTutorNativeGuideStore({
-    ...DEFAULT_KANGUR_AI_TUTOR_NATIVE_GUIDE_STORE,
-    locale,
+  buildKangurAiTutorNativeGuideLocaleScaffold({
+    locale: normalizeSiteLocale(locale),
+    sourceStore: DEFAULT_KANGUR_AI_TUTOR_NATIVE_GUIDE_STORE,
   });
+
+const storesDiffer = (
+  left: KangurAiTutorNativeGuideStore,
+  right: KangurAiTutorNativeGuideStore
+): boolean => JSON.stringify(left) !== JSON.stringify(right);
 
 const ensureIndexes = async (): Promise<void> => {
   if (!process.env['MONGODB_URI']) {
@@ -57,40 +64,48 @@ const readCollection = async () => {
 export async function getKangurAiTutorNativeGuideStore(
   locale = 'pl'
 ): Promise<KangurAiTutorNativeGuideStore> {
-  const defaults = buildDefaultStore(locale);
+  const normalizedLocale = normalizeSiteLocale(locale);
+  const defaults = buildDefaultStore(normalizedLocale);
 
   if (!process.env['MONGODB_URI']) {
     return defaults;
   }
 
-  await ensureIndexes();
-  const collection = await readCollection();
-  const existing = await collection.findOne({ locale });
-  if (!existing) {
-    const now = new Date();
-    await collection.updateOne(
-      { locale },
-      {
-        $setOnInsert: {
-          locale,
-          store: defaults,
-          createdAt: now,
-          updatedAt: now,
-        },
-      },
-      { upsert: true }
-    );
-    return defaults;
-  }
-
   try {
-    const merged = mergeKangurAiTutorNativeGuideStore(
-      defaults,
-      repairKangurPolishCopy(existing.store)
-    );
-    if (JSON.stringify(merged) !== JSON.stringify(existing.store)) {
+    await ensureIndexes();
+    const collection = await readCollection();
+    const existing = await collection.findOne({ locale: normalizedLocale });
+    if (!existing) {
+      const now = new Date();
       await collection.updateOne(
-        { locale },
+        { locale: normalizedLocale },
+        {
+          $setOnInsert: {
+            locale: normalizedLocale,
+            store: defaults,
+            createdAt: now,
+            updatedAt: now,
+          },
+        },
+        { upsert: true }
+      );
+      return defaults;
+    }
+
+    const repairedExisting = repairKangurPolishCopy(existing.store);
+    const merged = buildKangurAiTutorNativeGuideLocaleScaffold({
+      locale: normalizedLocale,
+      sourceStore: DEFAULT_KANGUR_AI_TUTOR_NATIVE_GUIDE_STORE,
+      existingStore: mergeKangurAiTutorNativeGuideStore(defaults, repairedExisting),
+    });
+    const parsedExisting = parseKangurAiTutorNativeGuideStore({
+      ...repairedExisting,
+      locale: normalizedLocale,
+    });
+
+    if (storesDiffer(parsedExisting, merged)) {
+      await collection.updateOne(
+        { locale: normalizedLocale },
         {
           $set: {
             store: merged,
@@ -99,18 +114,9 @@ export async function getKangurAiTutorNativeGuideStore(
         }
       );
     }
-    return parseKangurAiTutorNativeGuideStore(merged);
+    return merged;
   } catch (error) {
     void ErrorSystem.captureException(error);
-    await collection.updateOne(
-      { locale },
-      {
-        $set: {
-          store: defaults,
-          updatedAt: new Date(),
-        },
-      }
-    );
     return defaults;
   }
 }

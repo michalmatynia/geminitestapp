@@ -1,8 +1,9 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-const { readStoredSettingValueMock, upsertStoredSettingValueMock } = vi.hoisted(() => ({
+const { readStoredSettingValueMock, upsertStoredSettingValueMock, captureExceptionMock } = vi.hoisted(() => ({
   readStoredSettingValueMock: vi.fn(),
   upsertStoredSettingValueMock: vi.fn(),
+  captureExceptionMock: vi.fn(),
 }));
 
 vi.mock('../server', () => ({
@@ -14,12 +15,19 @@ vi.mock('../ollama-config', () => ({
   resolveOllamaBaseUrl: () => 'http://localhost:11434',
 }));
 
-import { listBrainModels } from '../server-model-catalog';
+vi.mock('@/shared/utils/observability/error-system', () => ({
+  ErrorSystem: {
+    captureException: captureExceptionMock,
+  },
+}));
+
+import { describeBrainModel, listBrainModels } from '../server-model-catalog';
 
 describe('server model catalog', () => {
   beforeEach(() => {
     readStoredSettingValueMock.mockReset();
     upsertStoredSettingValueMock.mockReset();
+    captureExceptionMock.mockReset();
     upsertStoredSettingValueMock.mockResolvedValue(true);
     vi.spyOn(globalThis, 'fetch').mockResolvedValue(new Response(null, { status: 503 }));
   });
@@ -77,6 +85,33 @@ describe('server model catalog', () => {
     expect(upsertStoredSettingValueMock).toHaveBeenCalledWith(
       'ai_brain_provider_catalog',
       expect.stringContaining('"entries"')
+    );
+  });
+
+  it('classifies brain model families from canonical model ids', () => {
+    expect(describeBrainModel('text-embedding-3-large').family).toBe('embedding');
+    expect(describeBrainModel('dall-e-3').family).toBe('image_generation');
+    expect(describeBrainModel('docling-ocr').family).toBe('ocr');
+    expect(describeBrainModel('llava:latest').family).toBe('vision_extract');
+    expect(describeBrainModel('guard-mini').family).toBe('validation');
+    expect(describeBrainModel('gpt-4o-mini').family).toBe('chat');
+  });
+
+  it('logs the last Ollama discovery failure once when every endpoint errors', async () => {
+    vi.spyOn(globalThis, 'fetch').mockRejectedValue(new Error('connection refused'));
+
+    const payload = await listBrainModels();
+
+    expect(payload.warning?.code).toContain('OLLAMA_UNAVAILABLE');
+    expect(captureExceptionMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        message: 'Ollama server unreachable at http://localhost:11434.',
+      }),
+      expect.objectContaining({
+        service: 'ai-brain-model-catalog',
+        baseUrl: 'http://localhost:11434',
+        url: expect.stringContaining('/v1/models'),
+      })
     );
   });
 });

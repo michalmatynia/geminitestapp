@@ -206,7 +206,15 @@ export default function LogicalThinkingLabGame(
                 return (
                   <Droppable key={slotId} droppableId={slotId} direction='horizontal'>
                     {(provided, snapshot) => (
-                      <div ref={provided.innerRef} {...provided.droppableProps} className={cn('flex items-center justify-center rounded-xl border-2 border-dashed text-xl transition touch-manipulation select-none', isCoarsePointer ? 'h-16 w-16 text-2xl' : 'h-12 w-12', snapshot.isDraggingOver ? 'border-indigo-400 bg-indigo-50' : patternSelectedTokenId ? 'border-indigo-300 bg-indigo-50/70' : 'border-slate-200')} role='button' tabIndex={patternChecked ? -1 : 0} onClick={() => !patternChecked && (patternSelectedTokenId ? movePatternSelectedTo(slotId) : (patternState[slotId][0] && setPatternSelectedTokenId(patternState[slotId][0].id)))}>
+                      <div
+                        ref={provided.innerRef}
+                        {...provided.droppableProps}
+                        className={cn('flex items-center justify-center rounded-xl border-2 border-dashed text-xl transition touch-manipulation select-none', isCoarsePointer ? 'h-16 w-16 text-2xl' : 'h-12 w-12', snapshot.isDraggingOver ? 'border-indigo-400 bg-indigo-50' : patternSelectedTokenId ? 'border-indigo-300 bg-indigo-50/70' : 'border-slate-200')}
+                        data-testid={`logical-thinking-${slotId}`}
+                        role='button'
+                        tabIndex={patternChecked ? -1 : 0}
+                        onClick={() => !patternChecked && (patternSelectedTokenId ? movePatternSelectedTo(slotId) : (patternState[slotId][0] && setPatternSelectedTokenId(patternState[slotId][0].id)))}
+                      >
                         {patternState[slotId].map((token, i) => <PatternTokenButton key={token.id} token={token} index={i} isDragDisabled={patternChecked} isSelected={patternSelectedTokenId === token.id} isCoarsePointer={isCoarsePointer} onClick={(e) => { e.preventDefault(); e.stopPropagation(); !patternChecked && setPatternSelectedTokenId(curr => curr === token.id ? null : token.id); }} ariaLabel={formatTemplate(copy.pattern.selectTokenAriaTemplate, { token: token.label })} />)}
                         {patternState[slotId].length === 0 ? '?' : null}{provided.placeholder}
                       </div>
@@ -224,7 +232,14 @@ export default function LogicalThinkingLabGame(
               )}
             </Droppable>
             <div className='flex flex-wrap items-center justify-center gap-2 text-xs'>
-              <span className='text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500' role='status' aria-live='polite'>{patternSelectedToken ? formatTemplate(isCoarsePointer ? copy.pattern.touchSelectedTemplate : copy.pattern.selectedTemplate, { token: patternSelectedToken.label }) : isCoarsePointer ? copy.pattern.touchIdle : copy.pattern.idle}</span>
+              <span
+                aria-live='polite'
+                className='text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500'
+                data-testid='logical-thinking-pattern-touch-hint'
+                role='status'
+              >
+                {patternSelectedToken ? formatTemplate(isCoarsePointer ? copy.pattern.touchSelectedTemplate : copy.pattern.selectedTemplate, { token: patternSelectedToken.label }) : isCoarsePointer ? copy.pattern.touchIdle : copy.pattern.idle}
+              </span>
               <KangurButton size='sm' type='button' variant='surface' onClick={() => movePatternSelectedTo('pattern-slot-1')} disabled={!patternSelectedToken || patternChecked}>{copy.pattern.moveToFirst}</KangurButton>
               <KangurButton size='sm' type='button' variant='surface' onClick={() => movePatternSelectedTo('pattern-slot-2')} disabled={!patternSelectedToken || patternChecked}>{copy.pattern.moveToSecond}</KangurButton>
               <KangurButton size='sm' type='button' variant='surface' onClick={() => movePatternSelectedTo('pattern-pool')} disabled={!patternSelectedToken || patternChecked}>{copy.pattern.moveToPool}</KangurButton>
@@ -241,7 +256,15 @@ export default function LogicalThinkingLabGame(
               {(['classify-yes', 'classify-no'] as ClassifyZoneId[]).map((zoneId) => (
                 <Droppable key={zoneId} droppableId={zoneId} direction='horizontal'>
                   {(provided, snapshot) => (
-                    <div ref={provided.innerRef} {...provided.droppableProps} className={cn('flex min-h-[120px] flex-col gap-2 rounded-2xl border px-3 py-3 transition touch-manipulation select-none', zoneId === 'classify-yes' ? 'border-emerald-200/70' : 'border-rose-200/70', snapshot.isDraggingOver && 'bg-amber-50/70', classifySelectedItem && !snapshot.isDraggingOver && (zoneId === 'classify-yes' ? 'bg-emerald-50/60' : 'bg-rose-50/50'))} role='button' tabIndex={classifyChecked ? -1 : 0} onClick={() => !classifyChecked && classifySelectedTokenId && moveClassifySelectedTo(zoneId)}>
+                    <div
+                      ref={provided.innerRef}
+                      {...provided.droppableProps}
+                      className={cn('flex min-h-[120px] flex-col gap-2 rounded-2xl border px-3 py-3 transition touch-manipulation select-none', zoneId === 'classify-yes' ? 'border-emerald-200/70' : 'border-rose-200/70', snapshot.isDraggingOver && 'bg-amber-50/70', classifySelectedItem && !snapshot.isDraggingOver && (zoneId === 'classify-yes' ? 'bg-emerald-50/60' : 'bg-rose-50/50'))}
+                      data-testid={`logical-thinking-${zoneId.replace('classify-', 'classify-zone-')}`}
+                      role='button'
+                      tabIndex={classifyChecked ? -1 : 0}
+                      onClick={() => !classifyChecked && classifySelectedTokenId && moveClassifySelectedTo(zoneId)}
+                    >
                       <span className='text-xs font-bold uppercase tracking-[0.18em] text-slate-500'>{zoneId === 'classify-yes' ? copy.classify.yesZoneLabel : copy.classify.noZoneLabel}</span>
                       <div className={`${KANGUR_WRAP_ROW_CLASSNAME} text-2xl`}>
                         {classifyState[zoneId].map((item, i) => <ClassifyItemButton key={item.id} item={item} index={i} isDragDisabled={classifyChecked} isSelected={classifySelectedTokenId === item.id} isCoarsePointer={isCoarsePointer} onClick={(e) => { e.preventDefault(); e.stopPropagation(); !classifyChecked && setClassifySelectedTokenId(curr => curr === item.id ? null : item.id); }} ariaLabel={formatTemplate(copy.classify.selectItemAriaTemplate, { item: item.label })} />)}
@@ -261,7 +284,14 @@ export default function LogicalThinkingLabGame(
               )}
             </Droppable>
             <div className='flex flex-wrap items-center justify-center gap-2 text-xs'>
-              <span className='text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500' role='status' aria-live='polite'>{classifySelectedItem ? formatTemplate(isCoarsePointer ? copy.classify.touchSelectedTemplate : copy.classify.selectedTemplate, { item: classifySelectedItem.label }) : isCoarsePointer ? copy.classify.touchIdle : copy.classify.idle}</span>
+              <span
+                aria-live='polite'
+                className='text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500'
+                data-testid='logical-thinking-classify-touch-hint'
+                role='status'
+              >
+                {classifySelectedItem ? formatTemplate(isCoarsePointer ? copy.classify.touchSelectedTemplate : copy.classify.selectedTemplate, { item: classifySelectedItem.label }) : isCoarsePointer ? copy.classify.touchIdle : copy.classify.idle}
+              </span>
               <KangurButton size='sm' type='button' variant='surface' onClick={() => moveClassifySelectedTo('classify-yes')} disabled={!classifySelectedItem || classifyChecked}>{copy.classify.moveToYes}</KangurButton>
               <KangurButton size='sm' type='button' variant='surface' onClick={() => moveClassifySelectedTo('classify-no')} disabled={!classifySelectedItem || classifyChecked}>{copy.classify.moveToNo}</KangurButton>
               <KangurButton size='sm' type='button' variant='surface' onClick={() => moveClassifySelectedTo('classify-pool')} disabled={!classifySelectedItem || classifyChecked}>{copy.classify.moveToPool}</KangurButton>

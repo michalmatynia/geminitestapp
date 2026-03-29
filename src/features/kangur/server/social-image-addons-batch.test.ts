@@ -223,10 +223,14 @@ describe('createKangurSocialImageAddonsBatch', () => {
           outputs: {
             capture_progress: {
               processedCount: 1,
-              completedCount: 1,
+              completedCount: 0,
               failureCount: 0,
-              remainingCount: 1,
+              remainingCount: 2,
               totalCount: 2,
+              currentCaptureId: 'game',
+              currentCaptureTitle: 'Kangur Game Home',
+              currentCaptureStatus: 'waiting_for_page_ready',
+              message: '[game] Waiting for route capture-ready flag.',
             },
           },
         },
@@ -244,6 +248,12 @@ describe('createKangurSocialImageAddonsBatch', () => {
               failureCount: 0,
               remainingCount: 0,
               totalCount: 2,
+              currentCaptureId: 'lessons',
+              currentCaptureTitle: 'Lessons Library',
+              currentCaptureStatus: 'captured',
+              lastCaptureId: 'lessons',
+              lastCaptureStatus: 'ok',
+              message: '[lessons] Captured Lessons Library.',
             },
             capture_results: [
               { id: 'game', status: 'ok' },
@@ -268,10 +278,16 @@ describe('createKangurSocialImageAddonsBatch', () => {
     );
     expect(onProgress).toHaveBeenNthCalledWith(1, {
       processedCount: 1,
-      completedCount: 1,
+      completedCount: 0,
       failureCount: 0,
-      remainingCount: 1,
+      remainingCount: 2,
       totalCount: 2,
+      currentCaptureId: 'game',
+      currentCaptureTitle: 'Kangur Game Home',
+      currentCaptureStatus: 'waiting_for_page_ready',
+      lastCaptureId: null,
+      lastCaptureStatus: null,
+      message: '[game] Waiting for route capture-ready flag.',
     });
     expect(onProgress).toHaveBeenNthCalledWith(2, {
       processedCount: 2,
@@ -279,6 +295,12 @@ describe('createKangurSocialImageAddonsBatch', () => {
       failureCount: 0,
       remainingCount: 0,
       totalCount: 2,
+      currentCaptureId: 'lessons',
+      currentCaptureTitle: 'Lessons Library',
+      currentCaptureStatus: 'captured',
+      lastCaptureId: 'lessons',
+      lastCaptureStatus: 'ok',
+      message: '[lessons] Captured Lessons Library.',
     });
     expect(result.addons).toHaveLength(2);
   });

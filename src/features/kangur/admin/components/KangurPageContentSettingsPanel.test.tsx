@@ -75,6 +75,24 @@ describe('KangurPageContentSettingsPanel', () => {
     ).toBeInTheDocument();
   });
 
+  it('waits for Mongo page content instead of prefilling the editor from static defaults', async () => {
+    apiGetMock.mockReturnValue(new Promise(() => {}));
+
+    render(<KangurPageContentSettingsPanel />);
+
+    expect(screen.getByText('Loading page content from Mongo')).toBeInTheDocument();
+    expect(screen.queryByText('Invalid page-content JSON')).not.toBeInTheDocument();
+    expect(screen.queryByText(coverageLabel)).not.toBeInTheDocument();
+
+    const jsonEditor = screen.getByLabelText('Page content JSON');
+    if (!(jsonEditor instanceof HTMLTextAreaElement)) {
+      throw new Error('Expected the page content JSON editor to be a textarea.');
+    }
+
+    expect(jsonEditor.value).toBe('');
+    expect(screen.getByRole('button', { name: /save page content/i })).toBeDisabled();
+  });
+
   it('keeps the raw JSON editor in sync with structured entry edits', async () => {
     render(<KangurPageContentSettingsPanel />);
 

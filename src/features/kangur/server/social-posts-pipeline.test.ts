@@ -194,13 +194,20 @@ describe('runKangurSocialPostPipeline', () => {
   it('reports live Playwright capture counters during fresh capture runs', async () => {
     const reportProgress = vi.fn();
     mocks.createKangurSocialImageAddonsBatchMock.mockImplementation(
-      async ({ onProgress }: { onProgress?: (progress: Record<string, number>) => Promise<void> }) => {
+      async ({
+        onProgress,
+      }: {
+        onProgress?: (progress: Record<string, number | string | null>) => Promise<void>;
+      }) => {
         await onProgress?.({
           processedCount: 1,
-          completedCount: 1,
+          completedCount: 0,
           failureCount: 0,
-          remainingCount: 1,
+          remainingCount: 2,
           totalCount: 2,
+          currentCaptureId: 'game',
+          currentCaptureStatus: 'waiting_for_page_ready',
+          message: '[game] Waiting for route capture-ready flag.',
         });
         return {
           addons: [
@@ -248,11 +255,12 @@ describe('runKangurSocialPostPipeline', () => {
     expect(reportProgress).toHaveBeenCalledWith(
       expect.objectContaining({
         step: 'capturing',
-        captureCompletedCount: 1,
+        captureCompletedCount: 0,
         captureFailureCount: 0,
-        captureRemainingCount: 1,
+        captureRemainingCount: 2,
         captureTotalCount: 2,
-        message: 'Playwright capture in progress: 1 captured, 1 left of 2 presets.',
+        message:
+          '[game] Waiting for route capture-ready flag. (0 captured, 2 left of 2 presets.)',
       })
     );
     expect(reportProgress).toHaveBeenCalledWith(
@@ -263,6 +271,76 @@ describe('runKangurSocialPostPipeline', () => {
         captureRemainingCount: 0,
         captureTotalCount: 2,
         runId: 'run-capture',
+      })
+    );
+  });
+
+  it('falls back to the aggregate capture summary when no detailed progress message is available', async () => {
+    const reportProgress = vi.fn();
+    mocks.createKangurSocialImageAddonsBatchMock.mockImplementation(
+      async ({
+        onProgress,
+      }: {
+        onProgress?: (progress: Record<string, number>) => Promise<void>;
+      }) => {
+        await onProgress?.({
+          processedCount: 1,
+          completedCount: 1,
+          failureCount: 0,
+          remainingCount: 1,
+          totalCount: 2,
+        });
+        return {
+          addons: [
+            {
+              id: 'addon-1',
+              presetId: 'game',
+              imageAsset: { id: 'asset-1', url: '/asset-1.png', filepath: '/asset-1.png' },
+            },
+          ],
+          failures: [],
+          runId: 'run-capture',
+          requestedPresetCount: 2,
+          usedPresetCount: 2,
+          usedPresetIds: ['game', 'lessons'],
+        };
+      }
+    );
+
+    await runKangurSocialPostPipeline(
+      {
+        postId: 'post-1',
+        editorState: {
+          titlePl: 'Draft PL',
+          titleEn: 'Draft EN',
+          bodyPl: 'Body PL',
+          bodyEn: 'Body EN',
+        },
+        imageAssets: [],
+        imageAddonIds: [],
+        captureMode: 'fresh_capture',
+        batchCaptureBaseUrl: 'https://studiq.example.com',
+        batchCapturePresetIds: ['game', 'lessons'],
+        batchCapturePresetLimit: 2,
+        linkedinConnectionId: null,
+        brainModelId: 'brain-model',
+        visionModelId: 'vision-model',
+        projectUrl: 'https://studiq.example.com',
+        generationNotes: 'Focus on visuals.',
+        docReferences: ['overview'],
+        actorId: 'user-1',
+      },
+      { reportProgress }
+    );
+
+    expect(reportProgress).toHaveBeenCalledWith(
+      expect.objectContaining({
+        step: 'capturing',
+        captureCompletedCount: 1,
+        captureFailureCount: 0,
+        captureRemainingCount: 1,
+        captureTotalCount: 2,
+        message: 'Playwright capture in progress: 1 captured, 1 left of 2 presets.',
       })
     );
   });

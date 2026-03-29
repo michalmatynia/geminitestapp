@@ -224,7 +224,7 @@ describe('buildKangurAiTutorAdaptiveGuidance', () => {
     expect(guidance.instructions).toContain(
       'Most recent practice: Dodawanie at 50% accuracy for +12 XP.'
     );
-    expect(guidance.instructions).toContain('Top adaptive recommendation: Skup się na: Dodawanie');
+    expect(guidance.instructions).toContain('Top adaptive recommendation: Domknij dzienny cel');
     expect(guidance.instructions).toContain('Relevant active assignment: Powtórka dodawania');
     expect(guidance.instructions).toContain('Progress: Powtórki po przydziale: 1/2.');
     expect(guidance.instructions).toContain(

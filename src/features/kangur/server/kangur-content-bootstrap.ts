@@ -4,6 +4,7 @@ import type { KangurLesson, KangurLessonDocumentStore } from '@kangur/contracts'
 import { createStarterKangurLessonDocument } from '@/features/kangur/lesson-documents';
 import { createDefaultKangurLessons } from '@/features/kangur/settings';
 import { getKangurAiTutorContent } from '@/features/kangur/server/ai-tutor-content-repository';
+import { getKangurAiTutorNativeGuideStore } from '@/features/kangur/server/ai-tutor-native-guide-repository';
 import { getKangurPageContentStore } from '@/features/kangur/server/page-content-repository';
 import { getKangurGameContentSetRepository } from '@/features/kangur/services/kangur-game-content-set-repository';
 import { getKangurGameInstanceRepository } from '@/features/kangur/services/kangur-game-instance-repository';
@@ -26,6 +27,7 @@ export type KangurContentBootstrapSummary = {
   lessonSections: number;
   lessons: number;
   locales: string[];
+  nativeGuideLocales: string[];
   pageContentEntriesByLocale: Record<string, number>;
   lessonTemplatesByLocale: Record<string, number>;
 };
@@ -126,7 +128,8 @@ export async function bootstrapKangurContentToMongo(
       ? initialLessonDocuments
       : await lessonDocumentRepository.replaceLessonDocuments(hydratedLessonDocuments, 'pl');
 
-  const [pageContentEntriesByLocale, lessonTemplatesByLocale, aiTutorLocales] = await Promise.all([
+  const [pageContentEntriesByLocale, lessonTemplatesByLocale, aiTutorLocales, nativeGuideLocales] =
+    await Promise.all([
     Promise.all(
       resolvedLocales.map(async (locale) => {
         const store = await getKangurPageContentStore(locale);
@@ -145,7 +148,13 @@ export async function bootstrapKangurContentToMongo(
         return content.locale;
       })
     ),
-  ]);
+    Promise.all(
+      resolvedLocales.map(async (locale) => {
+        const store = await getKangurAiTutorNativeGuideStore(locale);
+        return store.locale;
+      })
+    ),
+    ]);
 
   const gameContentSetsByGame = Object.fromEntries(
     await Promise.all(
@@ -174,6 +183,7 @@ export async function bootstrapKangurContentToMongo(
     lessonSections: lessonSections.length,
     lessons: lessons.length,
     locales: resolvedLocales,
+    nativeGuideLocales,
     pageContentEntriesByLocale,
     lessonTemplatesByLocale,
   };

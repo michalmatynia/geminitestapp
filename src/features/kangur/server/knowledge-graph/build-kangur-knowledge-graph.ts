@@ -34,7 +34,7 @@ import {
 
 import { buildKangurKnowledgeNodeSemanticText } from './semantic';
 
-type BuildKangurKnowledgeGraphOptions = {
+export type BuildKangurKnowledgeGraphOptions = {
   locale?: string;
   tutorContent?: KangurAiTutorContent;
   nativeGuideStore?: KangurAiTutorNativeGuideStore;

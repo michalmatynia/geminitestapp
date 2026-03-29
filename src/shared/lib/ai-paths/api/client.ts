@@ -179,17 +179,24 @@ const asRecord = (value: unknown): Record<string, unknown> | null => {
 const hasOwn = (record: Record<string, unknown>, key: string): boolean =>
   Object.prototype.hasOwnProperty.call(record, key);
 
+const RUN_ID_KEYS = ['id', 'runId', '_id'] as const;
+
+const extractRunIdFromRecord = (record: Record<string, unknown>): string | null => {
+  for (const key of RUN_ID_KEYS) {
+    const runId = asNonEmptyString(record[key]);
+    if (runId) {
+      return runId;
+    }
+  }
+  return null;
+};
+
 const extractRunIdFromValue = (value: unknown): string | null => {
   const directString = asNonEmptyString(value);
   if (directString) return directString;
   const record = asRecord(value);
   if (!record) return null;
-  return (
-    asNonEmptyString(record['id']) ??
-    asNonEmptyString(record['runId']) ??
-    asNonEmptyString(record['_id']) ??
-    null
-  );
+  return extractRunIdFromRecord(record);
 };
 
 const isIdOnlyEnvelopeRecord = (record: Record<string, unknown>): boolean => {
@@ -388,6 +395,71 @@ export const mergeEnqueuedAiPathRunForCache = (args: {
   };
 };
 
+const setListRunsStringParam = (
+  params: URLSearchParams,
+  key: string,
+  value: string | undefined
+): void => {
+  if (value) {
+    params.set(key, value);
+  }
+};
+
+const setListRunsNumberParam = (
+  params: URLSearchParams,
+  key: string,
+  value: number | undefined
+): void => {
+  if (typeof value === 'number') {
+    params.set(key, String(value));
+  }
+};
+
+const setListRunsBooleanParam = (
+  params: URLSearchParams,
+  key: string,
+  value: boolean | undefined,
+  formatter: (value: boolean) => string = (nextValue) => (nextValue ? '1' : '0')
+): void => {
+  if (typeof value === 'boolean') {
+    params.set(key, formatter(value));
+  }
+};
+
+const buildAiPathRunsListQuery = (
+  options:
+    | {
+        pathId?: string;
+        nodeId?: string;
+        requestId?: string;
+        source?: string;
+        sourceMode?: 'include' | 'exclude';
+        visibility?: 'scoped' | 'global';
+        status?: string;
+        query?: string;
+        limit?: number;
+        offset?: number;
+        includeTotal?: boolean;
+        fresh?: boolean;
+      }
+    | undefined
+): string => {
+  const params = new URLSearchParams();
+  setListRunsStringParam(params, 'pathId', options?.pathId);
+  setListRunsStringParam(params, 'nodeId', options?.nodeId);
+  setListRunsStringParam(params, 'requestId', options?.requestId);
+  setListRunsStringParam(params, 'source', options?.source);
+  setListRunsStringParam(params, 'sourceMode', options?.sourceMode);
+  setListRunsStringParam(params, 'visibility', options?.visibility);
+  setListRunsStringParam(params, 'status', options?.status);
+  setListRunsStringParam(params, 'query', options?.query);
+  setListRunsNumberParam(params, 'limit', options?.limit);
+  setListRunsNumberParam(params, 'offset', options?.offset);
+  setListRunsBooleanParam(params, 'includeTotal', options?.includeTotal);
+  setListRunsBooleanParam(params, 'fresh', options?.fresh, () => '1');
+  return params.toString();
+};
+
 export async function listAiPathRuns(options?: {
   pathId?: string;
   nodeId?: string;
@@ -404,23 +476,7 @@ export async function listAiPathRuns(options?: {
   timeoutMs?: number;
   signal?: AbortSignal;
 }): Promise<HttpResult<AiPathRunListResult>> {
-  const params = new URLSearchParams();
-  if (options?.pathId) params.set('pathId', options.pathId);
-  if (options?.nodeId) params.set('nodeId', options.nodeId);
-  if (options?.requestId) params.set('requestId', options.requestId);
-  if (options?.source) params.set('source', options.source);
-  if (options?.sourceMode) params.set('sourceMode', options.sourceMode);
-  if (options?.visibility) params.set('visibility', options.visibility);
-  if (options?.status) params.set('status', options.status);
-  if (options?.query) params.set('query', options.query);
-  if (typeof options?.limit === 'number') params.set('limit', String(options.limit));
-  if (typeof options?.offset === 'number') params.set('offset', String(options.offset));
-  if (typeof options?.includeTotal === 'boolean') {
-    params.set('includeTotal', options.includeTotal ? '1' : '0');
-  }
-  if (options?.fresh) params.set('fresh', '1');
-
-  const query = params.toString();
+  const query = buildAiPathRunsListQuery(options);
   const url = query ? `/api/ai-paths/runs?${query}` : '/api/ai-paths/runs';
   return apiFetch<AiPathRunListResult>(url, {
     ...(typeof options?.timeoutMs === 'number' ? { timeoutMs: options.timeoutMs } : {}),

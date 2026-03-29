@@ -17,6 +17,7 @@ import { KANGUR_CONTENT_BOOTSTRAP_LOCALES } from './kangur-content-bootstrap';
 
 const COLLECTIONS = {
   aiTutor: 'kangur_ai_tutor_content',
+  aiTutorNativeGuides: 'kangur_ai_tutor_native_guides',
   gameContentSets: 'kangur_game_content_sets',
   gameInstances: 'kangur_game_instances',
   games: 'kangur_games',
@@ -62,6 +63,13 @@ export type KangurContentVerificationResult = {
     matches: boolean;
     missing: string[];
   };
+  nativeGuideLocales: {
+    actual: string[];
+    expectedMinimum: string[];
+    extra: string[];
+    matches: boolean;
+    missing: string[];
+  };
   gameContentSetsByGame: Record<string, CountCheck>;
   gameInstancesByGame: Record<string, CountCheck>;
   games: CountCheck;
@@ -92,6 +100,7 @@ export async function verifyKangurContentInMongo(
     actualLessonSections,
     actualGames,
     actualAiTutorLocales,
+    actualNativeGuideLocales,
     pageContentEntriesByLocale,
     lessonTemplatesByLocale,
     gameContentSetsByGame,
@@ -102,6 +111,9 @@ export async function verifyKangurContentInMongo(
     db.collection(COLLECTIONS.lessonSections).countDocuments(),
     db.collection(COLLECTIONS.games).countDocuments(),
     db.collection(COLLECTIONS.aiTutor).distinct('locale').then((values) =>
+      values.filter((value): value is string => typeof value === 'string').sort()
+    ),
+    db.collection(COLLECTIONS.aiTutorNativeGuides).distinct('locale').then((values) =>
       values.filter((value): value is string => typeof value === 'string').sort()
     ),
     Promise.all(
@@ -159,6 +171,13 @@ export async function verifyKangurContentInMongo(
   const aiTutorMissing = resolvedLocales.filter((locale) => !actualAiTutorLocales.includes(locale));
   const aiTutorExtra = actualAiTutorLocales.filter((locale) => !resolvedLocales.includes(locale));
   const aiTutorMatches = aiTutorMissing.length === 0;
+  const nativeGuideMissing = resolvedLocales.filter(
+    (locale) => !actualNativeGuideLocales.includes(locale)
+  );
+  const nativeGuideExtra = actualNativeGuideLocales.filter(
+    (locale) => !resolvedLocales.includes(locale)
+  );
+  const nativeGuideMatches = nativeGuideMissing.length === 0;
 
   const lessons = buildCountCheck(expectedLessons.length, actualLessons);
   const lessonDocuments = buildCountCheck(expectedLessons.length, actualLessonDocuments);
@@ -181,6 +200,9 @@ export async function verifyKangurContentInMongo(
   }
   if (!aiTutorMatches) {
     mismatches.push(`aiTutorLocales missing ${aiTutorMissing.join(',')}`);
+  }
+  if (!nativeGuideMatches) {
+    mismatches.push(`nativeGuideLocales missing ${nativeGuideMissing.join(',')}`);
   }
 
   for (const [locale, check] of Object.entries(pageContentEntriesByLocale)) {
@@ -214,6 +236,13 @@ export async function verifyKangurContentInMongo(
       extra: aiTutorExtra,
       matches: aiTutorMatches,
       missing: aiTutorMissing,
+    },
+    nativeGuideLocales: {
+      actual: actualNativeGuideLocales,
+      expectedMinimum: resolvedLocales,
+      extra: nativeGuideExtra,
+      matches: nativeGuideMatches,
+      missing: nativeGuideMissing,
     },
     gameContentSetsByGame,
     gameInstancesByGame,

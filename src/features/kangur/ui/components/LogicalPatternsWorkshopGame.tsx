@@ -37,7 +37,10 @@ import type {
 } from '@/features/kangur/ui/types';
 import { cn } from '@/features/kangur/shared/utils';
 
-import type { LogicalPatternSetId } from './logical-patterns-workshop-data';
+import type {
+  LogicalPatternSetId,
+  LogicalPatternTile,
+} from './logical-patterns-workshop-data';
 import {
   buildTileClassName,
   getSlotSurface,
@@ -46,6 +49,16 @@ import {
 import { useLogicalPatternsGameState } from './logical-patterns/LogicalPatternsGame.hooks';
 
 const dragPortal = typeof document === 'undefined' ? null : document.body;
+
+const getTileNoun = (tile: LogicalPatternTile): string => {
+  if (tile.kind === 'number') {
+    return 'liczba';
+  }
+  if (tile.kind === 'letter') {
+    return 'litera';
+  }
+  return 'symbol';
+};
 
 export default function LogicalPatternsWorkshopGame({
   finishLabel = 'Wróć do tematów',
@@ -104,7 +117,15 @@ export default function LogicalPatternsWorkshopGame({
             <KangurStatusChip accent='violet' size='sm'>Runda {roundIndex + 1}/{state.totalRounds}</KangurStatusChip>
           </div>
           <p className='mt-2 text-[11px] text-slate-500'>{isCoarsePointer ? 'Dotknij kafelka, a potem pustego pola. Możesz też przeciągać.' : 'Przeciągnij kafelki do pustych pól.'}</p>
-          {isCoarsePointer && !checked && <div className='mt-3 rounded-2xl border border-violet-200 bg-white/80 px-4 py-3 text-sm font-semibold text-violet-950 shadow-sm'>{touchHint}</div>}
+          {isCoarsePointer && !checked && (
+            <div
+              aria-live='polite'
+              className='mt-3 rounded-2xl border border-violet-200 bg-white/80 px-4 py-3 text-sm font-semibold text-violet-950 shadow-sm'
+              data-testid='logical-patterns-touch-hint'
+            >
+              {touchHint}
+            </div>
+          )}
           <div className={`mt-2 ${KANGUR_WRAP_CENTER_ROW_CLASSNAME}`}>
             <KangurButton size='sm' variant='surface' onClick={() => { setShowHint(!showHint); setUsedHint(true); }} disabled={checked}>{showHint ? 'Ukryj podpowiedź' : 'Pokaż podpowiedź'}</KangurButton>
             {showHint && !checked && <span className='text-[11px] font-semibold text-violet-700'>{round.ruleHint}</span>}
@@ -126,7 +147,23 @@ export default function LogicalPatternsWorkshopGame({
                   {(provided, snapshot) => {
                     const surface = getSlotSurface({ checked, isDraggingOver: snapshot.isDraggingOver, isCorrect: slotted?.value === cell.correctValue, hasToken: !!slotted });
                     return (
-                      <div ref={provided.innerRef} {...provided.droppableProps} onClick={() => handleSlotClick(cell.id)} className={surface.className}>
+                      <div
+                        ref={provided.innerRef}
+                        {...provided.droppableProps}
+                        aria-disabled={checked}
+                        aria-label={slotted ? `Pole sekwencji: ${slotted.label}` : 'Puste pole sekwencji'}
+                        className={surface.className}
+                        data-testid={`logical-patterns-slot-${cell.id}`}
+                        onClick={() => handleSlotClick(cell.id)}
+                        onKeyDown={(event) => {
+                          if (event.key === 'Enter' || event.key === ' ') {
+                            event.preventDefault();
+                            handleSlotClick(cell.id);
+                          }
+                        }}
+                        role='button'
+                        tabIndex={checked ? -1 : 0}
+                      >
                         {slotted ? (
                           <Draggable draggableId={`slotted-${slotted.id}`} index={0} isDragDisabled={checked}>
                             {(p, s) => (
@@ -150,14 +187,29 @@ export default function LogicalPatternsWorkshopGame({
           <p className='text-xs font-semibold uppercase tracking-[0.16em] text-violet-700'>Twoje kafelki</p>
           <Droppable droppableId='pool' direction='horizontal' isDropDisabled={checked}>
             {(provided, snapshot) => (
-              <div ref={provided.innerRef} {...provided.droppableProps} className={cn('flex flex-wrap items-center justify-center gap-2 rounded-[24px] border border-dashed border-slate-200 p-6 transition-colors', snapshot.isDraggingOver && 'bg-slate-50 border-slate-300')}>
+              <div
+                ref={provided.innerRef}
+                {...provided.droppableProps}
+                className={cn('flex flex-wrap items-center justify-center gap-2 rounded-[24px] border border-dashed border-slate-200 p-6 transition-colors', snapshot.isDraggingOver && 'bg-slate-50 border-slate-300')}
+                data-testid='logical-patterns-pool'
+              >
                 {roundState.pool.map((tile, idx) => (
                   <Draggable key={tile.id} draggableId={tile.id} index={idx} isDragDisabled={checked}>
                     {(p, s) => {
                       const element = (
-                        <div ref={p.innerRef} {...p.draggableProps} {...p.dragHandleProps} onClick={() => !checked && setSelectedTokenId(tile.id === selectedTokenId ? null : tile.id)} className={buildTileClassName({ accent: tile.accent ?? 'violet', isSelected: tile.id === selectedTokenId, isDragging: s.isDragging, isCompact: false, isDisabled: checked, isCoarsePointer, isMuted: !!selectedTokenId && tile.id !== selectedTokenId })}>
+                        <button
+                          ref={p.innerRef}
+                          {...p.draggableProps}
+                          {...p.dragHandleProps}
+                          aria-label={`Kafelek: ${getTileNoun(tile)} ${tile.label}`}
+                          aria-pressed={selectedTokenId === tile.id}
+                          className={buildTileClassName({ accent: tile.accent ?? 'violet', isSelected: tile.id === selectedTokenId, isDragging: s.isDragging, isCompact: false, isDisabled: checked, isCoarsePointer, isMuted: !!selectedTokenId && tile.id !== selectedTokenId })}
+                          onClick={() => !checked && setSelectedTokenId(tile.id === selectedTokenId ? null : tile.id)}
+                          style={isCoarsePointer ? { touchAction: 'none' } : undefined}
+                          type='button'
+                        >
                           {tile.label}
-                        </div>
+                        </button>
                       );
                       return s.isDragging ? createPortal(element, dragPortal!) : element;
                     }}

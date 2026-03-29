@@ -58,6 +58,47 @@ export type KangurSocialImageAddonsBatchResult = z.infer<
   typeof kangurSocialImageAddonsBatchResultSchema
 >;
 
+export const kangurSocialImageAddonsBatchProgressSchema = z.object({
+  processedCount: z.number().int().nonnegative(),
+  completedCount: z.number().int().nonnegative(),
+  failureCount: z.number().int().nonnegative(),
+  remainingCount: z.number().int().nonnegative(),
+  totalCount: z.number().int().nonnegative(),
+  currentCaptureId: trimmedString.max(160).nullable().optional(),
+  currentCaptureTitle: trimmedString.max(200).nullable().optional(),
+  currentCaptureStatus: trimmedString.max(80).nullable().optional(),
+  lastCaptureId: trimmedString.max(160).nullable().optional(),
+  lastCaptureStatus: trimmedString.max(80).nullable().optional(),
+  message: trimmedString.max(1000).nullable().optional(),
+});
+export type KangurSocialImageAddonsBatchProgress = z.infer<
+  typeof kangurSocialImageAddonsBatchProgressSchema
+>;
+
+export const kangurSocialImageAddonsBatchJobStatusSchema = z.enum([
+  'queued',
+  'running',
+  'completed',
+  'failed',
+]);
+export type KangurSocialImageAddonsBatchJobStatus = z.infer<
+  typeof kangurSocialImageAddonsBatchJobStatusSchema
+>;
+
+export const kangurSocialImageAddonsBatchJobSchema = z.object({
+  id: trimmedString.min(1).max(160),
+  runId: trimmedString.min(1).max(160),
+  status: kangurSocialImageAddonsBatchJobStatusSchema,
+  progress: kangurSocialImageAddonsBatchProgressSchema.nullable().default(null),
+  result: kangurSocialImageAddonsBatchResultSchema.nullable().default(null),
+  error: trimmedString.max(1000).nullable().default(null),
+  createdAt: z.string().datetime(),
+  updatedAt: z.string().datetime(),
+});
+export type KangurSocialImageAddonsBatchJob = z.infer<
+  typeof kangurSocialImageAddonsBatchJobSchema
+>;
+
 export type CreateKangurSocialImageAddonInput = Omit<
   KangurSocialImageAddon,
   'createdAt' | 'updatedAt'

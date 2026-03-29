@@ -495,23 +495,24 @@ export function KangurPageTransitionSkeleton(
     `${KANGUR_TOP_BAR_DEFAULT_HEIGHT_PX}px`;
 
   const rootClassName = cn(
-    'z-40 overflow-hidden',
-    props.reason === 'locale-switch'
-      ? 'bg-[color:var(--kangur-page-background)]/90 backdrop-blur-md'
-      : 'bg-[color:var(--kangur-page-background)]',
+    'relative z-40 overflow-hidden',
     isInlineTopNavigationSkeleton
       ? 'fixed inset-0 flex flex-col'
       : isEmbedded
         ? 'absolute inset-0'
         : 'fixed inset-x-0 bottom-0'
   );
+  const rootBackgroundStyle: CSSProperties = {
+    background: 'var(--kangur-page-background)',
+  };
   const rootStyle: CSSProperties | undefined = isInlineTopNavigationSkeleton
     ? ({
+        ...rootBackgroundStyle,
         '--kangur-top-bar-height': topBarHeightCssValue,
       } as KangurTopBarHeightStyle)
     : isEmbedded
-      ? undefined
-      : { top: topBarHeightCssValue };
+      ? rootBackgroundStyle
+      : { ...rootBackgroundStyle, top: topBarHeightCssValue };
 
   const renderContent = (): React.JSX.Element => {
     switch (resolvedVariant) {
@@ -575,9 +576,20 @@ export function KangurPageTransitionSkeleton(
       data-testid='kangur-page-transition-skeleton'
       style={rootStyle}
     >
+      {props.reason === 'locale-switch' ? (
+        <div
+          aria-hidden='true'
+          className='pointer-events-none absolute inset-0 z-0 backdrop-blur-md'
+          data-testid='kangur-page-transition-skeleton-locale-overlay'
+          style={{
+            background:
+              'color-mix(in srgb, var(--kangur-soft-card-background) 74%, transparent)',
+          }}
+        />
+      ) : null}
       {isInlineTopNavigationSkeleton ? (
         <div
-          className='shrink-0 overflow-hidden'
+          className='relative z-10 shrink-0 overflow-hidden'
           data-testid='kangur-page-transition-skeleton-inline-top-navigation'
           style={props.topBarHeightCssValue ? { height: topBarHeightCssValue } : undefined}
         >
@@ -589,7 +601,7 @@ export function KangurPageTransitionSkeleton(
       ) : null}
       <div
         className={cn(
-          'min-h-0 overflow-auto px-4 sm:px-6 lg:px-8',
+          'relative z-10 min-h-0 overflow-auto px-4 sm:px-6 lg:px-8',
           isInlineTopNavigationSkeleton ? 'flex-1' : 'h-full'
         )}
         data-testid='kangur-page-transition-skeleton-body'

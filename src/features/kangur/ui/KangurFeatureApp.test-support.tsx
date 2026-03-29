@@ -35,6 +35,9 @@ const {
   topNavigationHostVisibleMock: vi.fn(),
 }));
 
+const serializeMotionProp = (value: unknown): string | undefined =>
+  value === undefined ? undefined : JSON.stringify(value);
+
 vi.mock('next/dynamic', () => ({
   default: (loader: unknown) => {
     const signature = typeof loader === 'function' ? loader.toString() : '';
@@ -59,10 +62,60 @@ vi.mock('next/dynamic', () => ({
   },
 }));
 
+vi.mock('@/features/kangur/ui/components/LazyAnimatePresence', () => ({
+  LazyAnimatePresence: ({ children }: { children: ReactNode }) => <>{children}</>,
+  LazyMotionDiv: ({
+    animate,
+    children,
+    exit,
+    initial,
+    transition,
+    ...props
+  }: React.ComponentProps<'div'> & {
+    animate?: unknown;
+    exit?: unknown;
+    initial?: unknown;
+    transition?: unknown;
+  }) => (
+    <div
+      data-motion-animate={serializeMotionProp(animate)}
+      data-motion-exit={serializeMotionProp(exit)}
+      data-motion-initial={serializeMotionProp(initial)}
+      data-motion-transition={serializeMotionProp(transition)}
+      {...props}
+    >
+      {children}
+    </div>
+  ),
+  usePrefersReducedMotion: () => false,
+}));
+
 vi.mock('framer-motion', () => ({
   AnimatePresence: ({ children }: { children: ReactNode }) => <>{children}</>,
   motion: {
-    div: ({ children, ...props }: React.ComponentProps<'div'>) => <div {...props}>{children}</div>,
+    div: ({
+      animate,
+      children,
+      exit,
+      initial,
+      transition,
+      ...props
+    }: React.ComponentProps<'div'> & {
+      animate?: unknown;
+      exit?: unknown;
+      initial?: unknown;
+      transition?: unknown;
+    }) => (
+      <div
+        data-motion-animate={serializeMotionProp(animate)}
+        data-motion-exit={serializeMotionProp(exit)}
+        data-motion-initial={serializeMotionProp(initial)}
+        data-motion-transition={serializeMotionProp(transition)}
+        {...props}
+      >
+        {children}
+      </div>
+    ),
   },
   useReducedMotion: () => false,
 }));

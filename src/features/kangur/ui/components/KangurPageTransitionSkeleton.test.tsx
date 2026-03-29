@@ -293,12 +293,12 @@ describe('KangurPageTransitionSkeleton', () => {
 
     renderWithIntl(<KangurPageTransitionSkeleton pageKey='Lessons' variant='lessons-library' />);
 
-    expect(screen.getByTestId('kangur-page-transition-skeleton')).toHaveClass(
-      'bg-[color:var(--kangur-page-background)]'
-    );
-    expect(screen.getByTestId('kangur-page-transition-skeleton')).not.toHaveClass(
-      'bg-[color:var(--kangur-page-background)]/90'
-    );
+    expect(screen.getByTestId('kangur-page-transition-skeleton')).toHaveStyle({
+      background: 'var(--kangur-page-background)',
+    });
+    expect(
+      screen.queryByTestId('kangur-page-transition-skeleton-locale-overlay')
+    ).toBeNull();
   });
 
   it('keeps standalone game-session overlays below the top bar without adding a second top-bar offset', () => {
@@ -571,7 +571,12 @@ describe('KangurPageTransitionSkeleton', () => {
       'data-kangur-skeleton-reason',
       'locale-switch'
     );
-    expect(screen.getByTestId('kangur-page-transition-skeleton')).toHaveClass('backdrop-blur-md');
+    expect(screen.getByTestId('kangur-page-transition-skeleton')).toHaveStyle({
+      background: 'var(--kangur-page-background)',
+    });
+    expect(screen.getByTestId('kangur-page-transition-skeleton-locale-overlay')).toHaveStyle({
+      background: 'color-mix(in srgb, var(--kangur-soft-card-background) 74%, transparent)',
+    });
     expect(screen.getByRole('status')).not.toHaveTextContent(/^$/);
   });
 });

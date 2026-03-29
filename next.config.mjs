@@ -181,6 +181,11 @@ const nextConfig = {
     // inflates webpack memory usage significantly on constrained builders.
     'imapflow',
     'mailparser',
+    // OpenAI SDK is server-only (used in AI Brain, image studio, TTS, OCR workers).
+    // Externalizing it saves ~13MB of compilation work per build.
+    'openai',
+    // PDF parsing is server-only (API routes + OCR workers). 21MB dependency.
+    'pdf-parse',
   ],
   turbopack: {
     root: __dirname,

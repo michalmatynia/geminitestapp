@@ -41,6 +41,10 @@ describe('KangurFeatureApp', () => {
 
     expect(screen.getByTestId('kangur-top-navigation-host')).toBeInTheDocument();
     expect(screen.getByTestId('kangur-route-content')).toBeInTheDocument();
+    expect(screen.getByTestId('kangur-route-content')).toHaveAttribute(
+      'data-route-capture-ready',
+      'true'
+    );
     expect(screen.getByTestId('kangur-page-lessons')).toBeInTheDocument();
     expect(screen.queryByTestId('kangur-page-transition-skeleton')).toBeNull();
     expect(screen.queryByTestId('kangur-login-modal')).toBeNull();
@@ -293,6 +297,7 @@ describe('KangurFeatureApp', () => {
     );
     expect(screen.getByTestId('kangur-route-content')).toHaveAttribute('aria-hidden', 'true');
     expect(screen.getByTestId('kangur-route-content')).toHaveAttribute('aria-busy', 'true');
+    expect(screen.getByTestId('kangur-route-content')).toHaveClass('overflow-hidden');
   });
 
   it('moves the navbar skeleton inline into the pending route skeleton while the shared host is unresolved', async () => {
@@ -348,7 +353,11 @@ describe('KangurFeatureApp', () => {
     expect(screen.getByTestId('kangur-page-transition-skeleton')).toHaveTextContent(
       'Lessons:lessons-focus'
     );
-    expect(screen.getByTestId('kangur-route-content')).toHaveClass('pointer-events-none', 'opacity-0');
+    expect(screen.getByTestId('kangur-route-content')).toHaveClass(
+      'pointer-events-none',
+      'opacity-0',
+      'overflow-hidden'
+    );
   });
 
   it('keeps the navigation skeleton visible through reveal after the destination becomes ready', async () => {
@@ -400,6 +409,7 @@ describe('KangurFeatureApp', () => {
       'Lessons:lessons-library'
     );
     expect(screen.getByTestId('kangur-route-content')).not.toHaveClass('pointer-events-none');
+    expect(screen.getByTestId('kangur-route-content')).toHaveClass('overflow-hidden');
     expect(screen.getByTestId('kangur-page-transition-skeleton').parentElement).toHaveClass(
       'pointer-events-none'
     );
@@ -487,6 +497,14 @@ describe('KangurFeatureApp', () => {
     expect(screen.getByTestId('kangur-page-transition-skeleton')).toHaveTextContent(
       'Lessons:lessons-library'
     );
+    expect(screen.getByTestId('kangur-page-transition-skeleton-motion')).toHaveAttribute(
+      'data-motion-initial',
+      JSON.stringify({ opacity: 1 })
+    );
+    expect(screen.getByTestId('kangur-page-transition-skeleton-motion')).toHaveAttribute(
+      'data-motion-animate',
+      JSON.stringify({ opacity: 1 })
+    );
     expect(screen.getByTestId('kangur-route-content')).toHaveClass(
       'pointer-events-none',
       'opacity-0'
@@ -572,8 +590,13 @@ describe('KangurFeatureApp', () => {
     );
     expect(screen.getByTestId('kangur-page-transition-skeleton-inline-top-navigation')).toBeInTheDocument();
     expect(screen.getByTestId('kangur-page-transition-skeleton')).toHaveTextContent('Lessons:lessons-library');
+    expect(screen.getByTestId('kangur-page-transition-skeleton-motion')).toHaveAttribute(
+      'data-motion-initial',
+      JSON.stringify({ opacity: 0 })
+    );
     expect(screen.getByTestId('kangur-route-content')).toHaveClass('pointer-events-none');
     expect(screen.getByTestId('kangur-route-content')).not.toHaveClass('opacity-0');
+    expect(screen.getByTestId('kangur-route-content')).not.toHaveClass('overflow-hidden');
   });
 
   it('shows the route skeleton with inline navbar immediately once a button-led handoff becomes pending', () => {
@@ -805,6 +828,10 @@ describe('KangurFeatureApp', () => {
     render(<KangurFeatureApp />);
 
     expect(screen.getByTestId('kangur-route-content')).toBeInTheDocument();
+    expect(screen.getByTestId('kangur-route-content')).toHaveAttribute(
+      'data-route-capture-ready',
+      'false'
+    );
     expect(screen.queryByTestId('kangur-app-loader')).toBeNull();
     expect(screen.queryByTestId('kangur-page-transition-skeleton')).toBeNull();
   });

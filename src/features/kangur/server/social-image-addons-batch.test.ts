@@ -165,6 +165,71 @@ describe('createKangurSocialImageAddonsBatch', () => {
     );
   });
 
+  it('forwards request cookies into Playwright storage state', async () => {
+    mocks.enqueuePlaywrightNodeRunMock.mockResolvedValue(
+      makeCompletedRun(['game'])
+    );
+
+    await createKangurSocialImageAddonsBatch({
+      baseUrl: 'https://kangur.app',
+      presetIds: ['game'],
+      forwardCookies: 'session=abc123; theme=light',
+    });
+
+    expect(mocks.enqueuePlaywrightNodeRunMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        request: expect.objectContaining({
+          contextOptions: {
+            storageState: {
+              cookies: [
+                {
+                  name: 'session',
+                  value: 'abc123',
+                  domain: 'kangur.app',
+                  path: '/',
+                },
+                {
+                  name: 'theme',
+                  value: 'light',
+                  domain: 'kangur.app',
+                  path: '/',
+                },
+              ],
+              origins: [],
+            },
+          },
+        }),
+      })
+    );
+  });
+
+  it('marks capture URLs as social-batch and waits for capture-ready state', async () => {
+    mocks.enqueuePlaywrightNodeRunMock.mockResolvedValue(
+      makeCompletedRun(['game'])
+    );
+
+    await createKangurSocialImageAddonsBatch({
+      baseUrl: 'https://kangur.app',
+      presetIds: ['game'],
+    });
+
+    expect(mocks.enqueuePlaywrightNodeRunMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        request: expect.objectContaining({
+          input: {
+            captures: [
+              expect.objectContaining({
+                id: 'game',
+                url: 'https://kangur.app/kangur/game?kangurCapture=social-batch',
+              }),
+            ],
+          },
+          script: expect.stringContaining('data-route-capture-ready'),
+        }),
+      })
+    );
+  });
+
   it('throws when no presets match the provided ids', async () => {
     await expect(
       createKangurSocialImageAddonsBatch({

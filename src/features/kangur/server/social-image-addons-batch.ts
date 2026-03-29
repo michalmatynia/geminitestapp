@@ -64,7 +64,7 @@ export default async function run({ page, input, artifacts, helpers, emit, log }
       {
         const pollDeadline = Date.now() + waitForSelectorMs;
         let pageReady = false;
-        log(\`[\${id}] Polling for page readiness (shell + no skeleton + transition idle)\`);
+        log(\`[\${id}] Polling for page readiness (shell + no skeleton + transition idle + capture ready)\`);
         while (Date.now() < pollDeadline) {
           const hasShell = await page.$('[data-testid="kangur-route-shell"]');
           if (!hasShell) { await helpers.sleep(400); continue; }
@@ -77,11 +77,15 @@ export default async function run({ page, input, artifacts, helpers, emit, log }
             const busy = await phaseEl.getAttribute('aria-busy');
             if (busy === 'true') { await helpers.sleep(400); continue; }
           }
+          const routeContent = await page.$('[data-testid="kangur-route-content"]');
+          if (!routeContent) { await helpers.sleep(400); continue; }
+          const captureReady = await routeContent.getAttribute('data-route-capture-ready');
+          if (captureReady !== 'true') { await helpers.sleep(400); continue; }
           pageReady = true;
           break;
         }
         log(pageReady
-          ? \`[\${id}] Page ready — skeleton gone, transition idle\`
+          ? \`[\${id}] Page ready — shell stable and capture-ready\`
           : \`[\${id}] Page readiness timeout — capturing current state\`);
       }
 

@@ -436,7 +436,7 @@ describe('KangurAuthContext', () => {
     expect(logKangurClientErrorMock).toHaveBeenCalledTimes(1);
   });
 
-  it('skips auth bootstrap during synthetic social batch captures', async () => {
+  it('still resolves auth during synthetic social batch captures', async () => {
     window.history.replaceState(
       {},
       '',
@@ -447,10 +447,10 @@ describe('KangurAuthContext', () => {
 
     await waitFor(() => {
       expect(screen.getByTestId('kangur-auth-loading')).toHaveTextContent('false');
-      expect(screen.getByTestId('kangur-parent-assignment-access')).toHaveTextContent('false');
+      expect(screen.getByTestId('kangur-parent-assignment-access')).toHaveTextContent('true');
     });
 
-    expect(meMock).not.toHaveBeenCalled();
+    expect(meMock).toHaveBeenCalledTimes(1);
     expect(logKangurClientErrorMock).not.toHaveBeenCalled();
   });
 

@@ -38,6 +38,9 @@ const resolveBundlerArgs = (bundler) => {
   if (bundler === 'webpack') {
     return ['build', '--webpack'];
   }
+  if (bundler === 'turbopack') {
+    return ['build', '--turbopack'];
+  }
   return ['build'];
 };
 

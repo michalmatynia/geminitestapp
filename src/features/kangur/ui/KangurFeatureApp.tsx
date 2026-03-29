@@ -266,6 +266,9 @@ const AuthenticatedApp = (): JSX.Element | null => {
     : null;
   const shouldKeepRouteContentVisibleDuringTransition =
     isLanguageSwitcherTransition && isRouteSkeletonVisible;
+  const shouldClipRouteContentDuringTransition =
+    isPendingRouteSnapshotVisible ||
+    (isRouteSkeletonVisible && !shouldKeepRouteContentVisibleDuringTransition);
   const isRouteContentVisuallyHidden =
     isPendingRouteSnapshotVisible ||
     (!shouldKeepRouteContentVisibleDuringTransition &&
@@ -279,6 +282,14 @@ const AuthenticatedApp = (): JSX.Element | null => {
     isPendingRouteSnapshotVisible ||
     (isRouteSkeletonVisible && transitionPhase !== 'revealing');
   const hasVisibleRouteContent = routeContent !== null && !isRouteContentVisuallyHidden;
+  const isRouteCaptureReady =
+    routeContent !== null &&
+    !isBootLoading &&
+    !isThemeBootLoading &&
+    !isNavigationTransitionActive &&
+    !isPendingRouteSnapshotVisible &&
+    !shouldRedirectToHome &&
+    authErrorType !== 'auth_required';
   const isBootLoaderBlockingNavigation =
     isBootSkeletonVisible && !isRouteSkeletonVisible && !hasVisibleRouteContent;
   const shouldHideTopNavigationDuringBoot = isBootLoaderBlockingNavigation;
@@ -288,6 +299,26 @@ const AuthenticatedApp = (): JSX.Element | null => {
     isRouteSkeletonVisible;
   const shouldHideTopNavigationHost =
     !shouldHideTopNavigationDuringBoot && isRouteSkeletonVisible;
+  const routeSkeletonMotionProps = prefersReducedMotion
+    ? {
+        initial: { opacity: 1 },
+        animate: { opacity: 1 },
+        exit: { opacity: 1 },
+        transition: { duration: 0 },
+      }
+    : isLanguageSwitcherTransition
+      ? {
+          initial: { opacity: 0 },
+          animate: { opacity: 1 },
+          exit: { opacity: 0 },
+          transition: { duration: 0.1, ease: 'easeOut' },
+        }
+      : {
+          initial: { opacity: 1 },
+          animate: { opacity: 1 },
+          exit: { opacity: 0 },
+          transition: { duration: 0.1, ease: 'easeOut' },
+        };
   const shouldSkipRouteContentPresence =
     isNavigationTransitionActive || isPendingRouteSnapshotVisible;
   const renderedRouteContent = routeContent ? (
@@ -299,11 +330,13 @@ const AuthenticatedApp = (): JSX.Element | null => {
       className={cn(
         'w-full min-w-0 kangur-shell-viewport-height',
         embedded ? 'min-h-full' : null,
+        shouldClipRouteContentDuringTransition ? 'overflow-hidden' : null,
         isRouteContentInteractionBlocked ? 'pointer-events-none' : null,
         isRouteContentVisuallyHidden ? 'pointer-events-none opacity-0' : null
       )}
       data-route-transition-phase={transitionPhase}
       data-route-interactive-ready={isRouteInteractionReady ? 'true' : 'false'}
+      data-route-capture-ready={isRouteCaptureReady ? 'true' : 'false'}
       data-route-transition-key={routeTransitionKey}
       data-route-transition-source-id={activeTransitionSourceId ?? undefined}
       data-testid='kangur-route-content'
@@ -606,11 +639,9 @@ const AuthenticatedApp = (): JSX.Element | null => {
         {isRouteSkeletonVisible ? (
           <LazyMotionDiv
             key='kangur-page-transition-skeleton:navigation'
-            animate={{ opacity: 1 }}
             className={transitionPhase === 'revealing' ? 'pointer-events-none' : undefined}
-            exit={prefersReducedMotion ? { opacity: 1 } : { opacity: 0 }}
-            initial={prefersReducedMotion ? { opacity: 1 } : { opacity: 0 }}
-            transition={prefersReducedMotion ? { duration: 0 } : { duration: 0.1, ease: 'easeOut' }}
+            data-testid='kangur-page-transition-skeleton-motion'
+            {...routeSkeletonMotionProps}
           >
             <KangurPageTransitionSkeleton
               embeddedOverride={visibleTransitionSkeletonEmbedded}

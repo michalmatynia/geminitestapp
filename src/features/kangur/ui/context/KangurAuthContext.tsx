@@ -18,7 +18,6 @@ import {
 import type { KangurUser } from '@kangur/platform';
 import { isKangurAuthStatusError } from '@/features/kangur/services/status-errors';
 import { getKangurLoginHref, KANGUR_BASE_PATH } from '@/features/kangur/config/routing';
-import { isKangurSocialBatchCaptureHref } from '@/features/kangur/shared/capture-mode';
 import { useOptionalKangurRouting } from '@/features/kangur/ui/context/KangurRoutingContext';
 import { useKangurRouteAccess } from '@/features/kangur/ui/routing/useKangurRouteAccess';
 import type { KangurAuthMode } from '@/features/kangur/shared/contracts/kangur-auth';
@@ -99,10 +98,6 @@ export const KangurAuthProvider = ({ children }: { children: ReactNode }): React
       basePath,
       fallbackHref: basePath,
     }) ?? basePath;
-  const requestedHref =
-    routing?.requestedHref ??
-    (typeof window !== 'undefined' ? window.location.href : fallbackCallbackUrl);
-  const skipAuthBootstrap = isKangurSocialBatchCaptureHref(requestedHref);
   const authRequestVersionRef = useRef(0);
   const logoutInFlightRef = useRef(false);
 
@@ -110,21 +105,17 @@ export const KangurAuthProvider = ({ children }: { children: ReactNode }): React
   // state when the SSR-injected __KANGUR_AUTH_BOOTSTRAP__ script is present.
   // This eliminates the extra render cycle that waiting for useEffect would cost.
   const [user, setUser] = useState<KangurUser | null>(() => {
-    if (skipAuthBootstrap) return null;
     const cached = readKangurAuthBootstrapCache();
     return typeof cached !== 'undefined' ? cached : null;
   });
   const [isAuthenticated, setIsAuthenticated] = useState(() => {
-    if (skipAuthBootstrap) return false;
     const cached = readKangurAuthBootstrapCache();
     return typeof cached !== 'undefined' ? cached !== null : false;
   });
   const [hasResolvedAuth, setHasResolvedAuth] = useState(() => {
-    if (skipAuthBootstrap) return false;
     return typeof readKangurAuthBootstrapCache() !== 'undefined';
   });
   const [isLoadingAuth, setIsLoadingAuth] = useState(() => {
-    if (skipAuthBootstrap) return false;
     return typeof readKangurAuthBootstrapCache() === 'undefined';
   });
   const [isLoggingOut, setIsLoggingOut] = useState(false);
@@ -240,16 +231,6 @@ export const KangurAuthProvider = ({ children }: { children: ReactNode }): React
   );
 
   useEffect(() => {
-    if (skipAuthBootstrap) {
-      authRequestVersionRef.current += 1;
-      setUser(null);
-      setIsAuthenticated(false);
-      setHasResolvedAuth(true);
-      setAuthError(null);
-      setIsLoadingAuth(false);
-      return;
-    }
-
     // When the bootstrap cache was consumed synchronously in useState
     // initialisers above, skip the blocking auth check and run a silent
     // background revalidation instead.  This avoids the extra render cycle
@@ -279,7 +260,7 @@ export const KangurAuthProvider = ({ children }: { children: ReactNode }): React
     }
 
     void checkAppState({ timeoutMs: AUTH_CHECK_TIMEOUT_MS, useBootstrapCache: true });
-  }, [checkAppState, skipAuthBootstrap]);
+  }, [checkAppState]);
 
   const logout = useCallback((shouldRedirect = true): void => {
     if (logoutInFlightRef.current) {

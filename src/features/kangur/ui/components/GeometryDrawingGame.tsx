@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useCallback } from 'react';
 
 import {
   KangurPracticeGameSummary,
@@ -14,10 +14,6 @@ import {
 } from '@/features/kangur/ui/components/KangurPracticeGameChrome';
 import { KANGUR_DRAWING_HISTORY_ARIA_SHORTCUTS } from '@/features/kangur/ui/components/drawing-engine/keyboard-shortcuts';
 import { KangurManagedDrawingUtilityActions } from '@/features/kangur/ui/components/drawing-engine/KangurManagedDrawingUtilityActions';
-import {
-  getKangurMiniGameFinishLabel,
-  getKangurMiniGameScoreLabel,
-} from '@/features/kangur/ui/constants/mini-game-i18n';
 import { KangurDrawingActionRow } from '@/features/kangur/ui/components/drawing-engine/KangurDrawingActionRow';
 import {
   KangurDrawingEmptyStateOverlay,
@@ -26,8 +22,16 @@ import {
 import { KangurDrawingPracticeBoard } from '@/features/kangur/ui/components/drawing-engine/KangurDrawingPracticeBoard';
 import { KangurDrawingStatusRegions } from '@/features/kangur/ui/components/drawing-engine/KangurDrawingStatusRegions';
 import {
+  getKangurMiniGameFinishLabel,
+  getKangurMiniGameScoreLabel,
+  translateKangurMiniGameWithFallback,
+} from '@/features/kangur/ui/constants/mini-game-i18n';
+import {
+  KangurDisplayEmoji,
   KangurGlassPanel,
-  KangurInfoCard,
+  KangurHeadline,
+  KangurProgressBar,
+  KangurStatusChip,
 } from '@/features/kangur/ui/design/primitives';
 import {
   KANGUR_ACCENT_STYLES,
@@ -59,15 +63,50 @@ const isFinishLabelVariant = (value: string | undefined): value is FinishLabelVa
 export default function GeometryDrawingGame(props: GeometryDrawingGameProps): React.JSX.Element {
   const state = useGeometryDrawingGameState(props);
   const {
-    translations, difficulty, roundIndex, score, done, xpEarned, xpBreakdown, feedback,
-    currentRound, totalRounds, canvasRef,
-    clearDrawing, exportDrawing, undoDrawing, redoDrawing, handlePointerDown, handlePointerMove, handlePointerUp,
-    hasDrawableContent, canUndo, canRedo, isCoarsePointer, isPointerDrawing,
-    keyboardCursor, keyboardDrawing, keyboardStatus, handleCanvasKeyDown,
-    handleCheck, resetRun,
+    canvasRef,
+    canRedo,
+    canUndo,
+    clearDrawing,
+    currentRound,
+    difficulty,
+    difficultyLabels,
+    done,
+    exportDrawing,
+    fallbackCopy,
+    feedback,
+    handleCanvasKeyDown,
+    handleCheck,
+    handleDifficultyChange,
+    handlePointerDown,
+    handlePointerMove,
+    handlePointerUp,
+    hasDrawableContent,
+    isCoarsePointer,
+    isPointerDrawing,
+    keyboardCursor,
+    keyboardDrawing,
+    keyboardStatus,
+    points,
+    redoDrawing,
+    resetRun,
+    resolvedDifficultyLabel,
+    roundIndex,
+    score,
+    shouldShowDifficultySelector,
+    totalRounds,
+    translations,
+    undoDrawing,
+    xpBreakdown,
+    xpEarned,
   } = state;
 
-  const { onFinish, finishLabel } = props;
+  const translateWithFallback = useCallback(
+    (key: string, fallback: string, values?: Record<string, string | number>): string =>
+      translateKangurMiniGameWithFallback(translations, key, fallback, values),
+    [translations]
+  );
+
+  const { finishLabel, onFinish } = props;
   const summaryAccent: KangurAccent = difficulty === 'pro' ? 'violet' : 'teal';
   const resolvedFinishLabel = isFinishLabelVariant(finishLabel)
     ? getKangurMiniGameFinishLabel(translations, finishLabel)
@@ -94,7 +133,10 @@ export default function GeometryDrawingGame(props: GeometryDrawingGameProps): Re
         />
         <KangurPracticeGameSummaryProgress
           accent={summaryAccent}
-          ariaLabel={translations('geometryDrawing.progressAriaLabel')}
+          ariaLabel={translateWithFallback(
+            'geometryDrawing.progressAriaLabel',
+            fallbackCopy.progressAriaLabel
+          )}
           percent={percent}
         />
         <KangurPracticeGameSummaryMessage>
@@ -114,61 +156,179 @@ export default function GeometryDrawingGame(props: GeometryDrawingGameProps): Re
     );
   }
 
-  if (roundIndex === 0 && !hasDrawableContent && !feedback) {
-    // This is simplified, original had a more complex intro view
-  }
+  const boardAccent: KangurAccent =
+    feedback?.kind === 'success'
+      ? 'emerald'
+      : feedback?.kind === 'error'
+        ? 'rose'
+        : feedback?.kind === 'info'
+          ? 'amber'
+          : 'teal';
+  const isResultLocked = feedback?.kind === 'success' || feedback?.kind === 'error';
 
   return (
-    <div className={`flex w-full flex-col ${KANGUR_PANEL_GAP_CLASSNAME}`}>
+    <section
+      aria-labelledby='geometry-drawing-heading'
+      className={`flex w-full max-w-sm flex-col items-center ${KANGUR_PANEL_GAP_CLASSNAME}`}
+    >
       <KangurDrawingStatusRegions
         keyboardStatus={keyboardStatus}
         keyboardStatusTestId='geometry-drawing-keyboard-status'
-        liveMessage={currentRound?.label}
+        liveMessage={translateWithFallback(
+          'geometryDrawing.inRound.liveRegion',
+          fallbackCopy.liveRegion,
+          {
+            current: roundIndex + 1,
+            difficulty: resolvedDifficultyLabel,
+            shape: currentRound?.label ?? '',
+            total: totalRounds,
+          }
+        )}
       />
 
-      <KangurGlassPanel data-testid='geometry-drawing-shell' padding='lg' surface='playField' variant='soft'>
-        <div className='flex flex-col kangur-panel-gap'>
-          <div className='flex items-center justify-between'>
-            <div className='flex items-center gap-3'>
-              <div className='text-3xl'>{currentRound?.emoji}</div>
-              <div>
-                <div className='text-xs font-black uppercase tracking-widest text-slate-400'>{translations('geometryDrawing.inRound.roundLabel', { current: roundIndex + 1, total: totalRounds })}</div>
-                <div className='text-sm font-bold text-slate-900'>{currentRound?.label}</div>
-              </div>
-            </div>
-            <div className='flex items-center gap-4'>
-              <div className='text-right'><div className='text-[10px] font-black uppercase tracking-widest text-slate-400'>Wynik</div><div className='text-sm font-bold text-slate-900'>{score}/{totalRounds}</div></div>
-            </div>
+      {shouldShowDifficultySelector ? (
+        <KangurGlassPanel
+          className='w-full rounded-[26px] !p-3'
+          data-testid='geometry-difficulty-shell'
+          surface='solid'
+          variant='soft'
+        >
+          <div className='mb-3 flex justify-center'>
+            <KangurStatusChip accent='teal' size='sm'>
+              {translateWithFallback(
+                'geometryDrawing.inRound.difficultyChip',
+                fallbackCopy.difficultyChip
+              )}
+            </KangurStatusChip>
+          </div>
+          <div
+            aria-label={translateWithFallback(
+              'geometryDrawing.inRound.difficultyGroupAria',
+              fallbackCopy.difficultyGroupAria
+            )}
+            className='grid grid-cols-1 gap-2 min-[420px]:grid-cols-2'
+            role='group'
+          >
+            {(['starter', 'pro'] as const).map((mode) => (
+              <button
+                key={mode}
+                aria-pressed={difficulty === mode}
+                className={cn(
+                  'inline-flex min-h-11 items-center justify-center rounded-full px-4 text-xs font-bold tracking-tight transition-all duration-200',
+                  'kangur-button-shell kangur-cta-pill border border-transparent',
+                  difficulty === mode ? 'surface-cta' : 'soft-cta'
+                )}
+                data-testid={`geometry-difficulty-${mode}`}
+                disabled={isResultLocked}
+                onClick={() => handleDifficultyChange(mode)}
+                type='button'
+              >
+                {difficultyLabels[mode]}
+              </button>
+            ))}
+          </div>
+        </KangurGlassPanel>
+      ) : null}
+
+      <div className='flex w-full items-center kangur-panel-gap'>
+        <KangurProgressBar
+          accent='emerald'
+          aria-label={translateWithFallback(
+            'geometryDrawing.progressAriaLabel',
+            fallbackCopy.progressAriaLabel
+          )}
+          aria-valuetext={translateWithFallback(
+            'geometryDrawing.inRound.progressValueText',
+            fallbackCopy.progressValueText,
+            { current: roundIndex + 1, total: totalRounds }
+          )}
+          className='flex-1'
+          data-testid='geometry-drawing-progress-bar'
+          size='sm'
+          value={(roundIndex / totalRounds) * 100}
+        />
+        <KangurStatusChip
+          accent='teal'
+          className='shrink-0'
+          data-testid='geometry-drawing-progress-label'
+          size='sm'
+        >
+          {roundIndex + 1}/{totalRounds}
+        </KangurStatusChip>
+      </div>
+
+      <div className='w-full'>
+        <KangurGlassPanel
+          className='flex flex-col items-center kangur-panel-gap'
+          data-testid='geometry-drawing-round-shell'
+          padding='lg'
+          surface='solid'
+          variant='soft'
+        >
+          <div
+            className='flex w-full flex-col items-center kangur-panel-gap rounded-[24px] border border-teal-200/70 bg-teal-50/80 p-4 text-center'
+            data-testid='geometry-drawing-prompt-card'
+          >
+            <KangurStatusChip accent='teal' size='sm'>
+              {translateWithFallback(
+                'geometryDrawing.inRound.modeLabel',
+                fallbackCopy.modeLabel,
+                { difficulty: resolvedDifficultyLabel }
+              )}
+            </KangurStatusChip>
+            <KangurDisplayEmoji size='md'>{currentRound?.emoji}</KangurDisplayEmoji>
+            <KangurHeadline accent='violet' as='h3' id='geometry-drawing-heading' size='sm'>
+              {translateWithFallback(
+                'geometryDrawing.inRound.prompt',
+                fallbackCopy.prompt,
+                { shape: currentRound?.label ?? '' }
+              )}
+            </KangurHeadline>
+            <p
+              className='text-sm text-center [color:var(--kangur-page-muted-text)]'
+              id='geometry-drawing-hint'
+            >
+              {currentRound?.hint ?? ''}
+            </p>
           </div>
 
           <KangurDrawingPracticeBoard
-            accent={summaryAccent}
+            accent={boardAccent}
             actionRow={
               <KangurDrawingActionRow
-                clearDisabled={feedback !== null || !hasDrawableContent}
-                clearLabel={translations('geometryDrawing.inRound.clear')}
+                clearDisabled={Boolean(isResultLocked || (points.length === 0 && feedback === null))}
+                clearLabel={translateWithFallback(
+                  'geometryDrawing.inRound.clear',
+                  fallbackCopy.clear
+                )}
                 feedback={feedback}
                 isCoarsePointer={isCoarsePointer}
                 onClear={clearDrawing}
                 onPrimary={handleCheck}
-                primaryDisabled={!hasDrawableContent || feedback !== null}
-                primaryLabel={translations('geometryDrawing.inRound.check')}
+                primaryDisabled={Boolean(isResultLocked)}
+                primaryLabel={translateWithFallback(
+                  'geometryDrawing.inRound.check',
+                  fallbackCopy.check
+                )}
                 utilityActions={
                   <KangurManagedDrawingUtilityActions
                     canExport={hasDrawableContent}
                     canRedo={canRedo}
                     canUndo={canUndo}
-                    exportLabel={translations('geometryDrawing.inRound.export')}
+                    exportLabel={translateWithFallback(
+                      'geometryDrawing.inRound.export',
+                      'Export PNG'
+                    )}
                     exportTestId='geometry-drawing-export'
-                    historyLocked={feedback !== null}
+                    historyLocked={Boolean(isResultLocked)}
                     isCoarsePointer={isCoarsePointer}
                     layoutPreset='practice-board'
                     onExport={exportDrawing}
                     onRedo={redoDrawing}
                     onUndo={undoDrawing}
-                    redoLabel={translations('geometryDrawing.inRound.redo')}
+                    redoLabel={translateWithFallback('geometryDrawing.inRound.redo', 'Ponow')}
                     redoTestId='geometry-drawing-redo'
-                    undoLabel={translations('geometryDrawing.inRound.undo')}
+                    undoLabel={translateWithFallback('geometryDrawing.inRound.undo', 'Cofnij')}
                     undoTestId='geometry-drawing-undo'
                   />
                 }
@@ -177,32 +337,35 @@ export default function GeometryDrawingGame(props: GeometryDrawingGameProps): Re
             afterCanvas={
               <>
                 <KangurDrawingKeyboardCursorOverlay
-                  accentClassName='border-teal-400/80 bg-teal-100/70 shadow-[0_0_0_3px_rgba(45,212,191,0.14)]'
+                  accentClassName='border-emerald-400/80 bg-emerald-100/70 shadow-[0_0_0_3px_rgba(16,185,129,0.12)]'
                   cursor={keyboardCursor}
                   height={CANVAS_HEIGHT}
                   isCoarsePointer={isCoarsePointer}
                   isDrawing={keyboardDrawing}
                   width={CANVAS_WIDTH}
                 />
-                {!hasDrawableContent && !feedback ? (
+                {points.length === 0 ? (
                   <KangurDrawingEmptyStateOverlay>
-                    {currentRound?.hint ?? ''}
+                    {translateWithFallback(
+                      'geometryDrawing.inRound.drawHere',
+                      fallbackCopy.drawHere
+                    )}
                   </KangurDrawingEmptyStateOverlay>
                 ) : null}
               </>
             }
-            ariaDescribedBy='geometry-drawing-input-help'
+            ariaDescribedBy='geometry-drawing-hint geometry-drawing-input-help'
             ariaKeyShortcuts={`Enter Space ArrowUp ArrowDown ArrowLeft ArrowRight Escape ${KANGUR_DRAWING_HISTORY_ARIA_SHORTCUTS}`}
-            ariaLabel={
-              currentRound
-                ? translations('geometryDrawing.inRound.canvasAria', { shape: currentRound.label })
-                : translations('geometryDrawing.inRound.canvasAriaFallback')
-            }
+            ariaLabel={translateWithFallback(
+              'geometryDrawing.inRound.canvasAria',
+              fallbackCopy.canvasAria,
+              { shape: currentRound?.label ?? '' }
+            )}
             boardClassName={cn(
               'relative w-full overflow-hidden rounded-[26px] p-0',
-              !feedback && KANGUR_ACCENT_STYLES[summaryAccent].hoverCard,
-              isCoarsePointer && 'shadow-[0_18px_38px_-30px_rgba(45,212,191,0.35)]',
-              isPointerDrawing && 'ring-2 ring-teal-300/70 ring-offset-2 ring-offset-white'
+              !feedback && KANGUR_ACCENT_STYLES.teal.hoverCard,
+              isCoarsePointer && 'shadow-[0_18px_38px_-30px_rgba(14,165,233,0.35)]',
+              isPointerDrawing && 'ring-2 ring-sky-300/70 ring-offset-2 ring-offset-white'
             )}
             boardDataTestId='geometry-drawing-board'
             canvasDataTestId='geometry-drawing-canvas'
@@ -213,26 +376,22 @@ export default function GeometryDrawingGame(props: GeometryDrawingGameProps): Re
             height={CANVAS_HEIGHT}
             helpId='geometry-drawing-input-help'
             helpTestId='geometry-drawing-input-help'
-            helpText={translations('geometryDrawing.inRound.inputHelp')}
+            helpText={translateWithFallback(
+              'geometryDrawing.inRound.inputHelp',
+              fallbackCopy.inputHelp
+            )}
             isCoarsePointer={isCoarsePointer}
             isPointerDrawing={isPointerDrawing}
             onKeyDown={handleCanvasKeyDown}
+            onPointerCancel={handlePointerUp}
             onPointerDown={handlePointerDown}
+            onPointerLeave={handlePointerUp}
             onPointerMove={handlePointerMove}
             onPointerUp={handlePointerUp}
             width={CANVAS_WIDTH}
           />
-        </div>
-      </KangurGlassPanel>
-      
-      {feedback && (
-        <KangurInfoCard accent={feedback.kind === 'success' ? 'emerald' : feedback.kind === 'error' ? 'rose' : 'amber'} tone='accent' padding='md'>
-          <div className='flex items-center gap-3'>
-            <div className='text-2xl'>{feedback.kind === 'success' ? '🎉' : feedback.kind === 'error' ? '💡' : 'ℹ️'}</div>
-            <div><div className='text-sm font-black text-slate-900'>{feedback.title}</div><div className='text-xs font-semibold text-slate-600'>{feedback.description}</div></div>
-          </div>
-        </KangurInfoCard>
-      )}
-    </div>
+        </KangurGlassPanel>
+      </div>
+    </section>
   );
 }

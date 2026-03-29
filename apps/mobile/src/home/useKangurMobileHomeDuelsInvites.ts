@@ -5,6 +5,7 @@ import { useEffect, useMemo } from 'react';
 import { useKangurMobileAuth } from '../auth/KangurMobileAuthContext';
 import { useKangurMobileI18n } from '../i18n/kangurMobileI18n';
 import { useKangurMobileRuntime } from '../providers/KangurRuntimeContext';
+import { resolveMobileDuelErrorMessage } from '../duels/mobileDuelErrorMessages';
 import {
   buildKangurMobileHomeDuelLobbyQueryKey,
   MOBILE_HOME_DUEL_LOBBY_POLL_MS,
@@ -30,55 +31,6 @@ type UseKangurMobileHomeDuelsInvitesResult = {
 
 type UseKangurMobileHomeDuelsInvitesOptions = {
   enabled?: boolean;
-};
-
-const toInviteErrorMessage = (
-  error: unknown,
-  copy: ReturnType<typeof useKangurMobileI18n>['copy'],
-): string | null => {
-  if (!error) {
-    return null;
-  }
-
-  if (typeof error === 'object' && error && 'status' in error) {
-    const status = (error as { status?: number }).status;
-
-    if (status === 401) {
-      return copy({
-        de: 'Melde dich an, um private Duelleinladungen zu laden.',
-        en: 'Sign in to load private duel invites.',
-        pl: 'Zaloguj się, aby pobrać prywatne zaproszenia do pojedynków.',
-      });
-    }
-  }
-
-  if (!(error instanceof Error)) {
-    return copy({
-      de: 'Die Duelleinladungen konnten nicht geladen werden.',
-      en: 'Could not load duel invites.',
-      pl: 'Nie udało się pobrać zaproszeń do pojedynków.',
-    });
-  }
-
-  const message = error.message.trim();
-  if (!message) {
-    return copy({
-      de: 'Die Duelleinladungen konnten nicht geladen werden.',
-      en: 'Could not load duel invites.',
-      pl: 'Nie udało się pobrać zaproszeń do pojedynków.',
-    });
-  }
-
-  const normalized = message.toLowerCase();
-  if (normalized === 'failed to fetch' || normalized.includes('networkerror')) {
-    return copy({
-      de: 'Die Duelleinladungen konnten nicht geladen werden.',
-      en: 'Could not load duel invites.',
-      pl: 'Nie udało się pobrać zaproszeń do pojedynków.',
-    });
-  }
-
-  return message;
 };
 
 export const useKangurMobileHomeDuelsInvites = ({
@@ -172,7 +124,20 @@ export const useKangurMobileHomeDuelsInvites = ({
   );
 
   return {
-    error: toInviteErrorMessage(invitesQuery.error, copy),
+    error: resolveMobileDuelErrorMessage({
+      error: invitesQuery.error,
+      copy,
+      fallback: {
+        de: 'Die Duelleinladungen konnten nicht geladen werden.',
+        en: 'Could not load duel invites.',
+        pl: 'Nie udało się pobrać zaproszeń do pojedynków.',
+      },
+      unauthorized: {
+        de: 'Melde dich an, um private Duelleinladungen zu laden.',
+        en: 'Sign in to load private duel invites.',
+        pl: 'Zaloguj się, aby pobrać prywatne zaproszenia do pojedynków.',
+      },
+    }),
     invites,
     isDeferred,
     isAuthenticated,

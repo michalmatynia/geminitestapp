@@ -94,25 +94,42 @@ const matchesHostRule = (hostname: string, rule: OutboundHostRule): boolean => {
 
 const IPV4_PATTERN = /^(\d{1,3})(\.\d{1,3}){3}$/;
 
-const isPrivateIpv4 = (hostname: string): boolean => {
-  if (!IPV4_PATTERN.test(hostname)) return false;
+type Ipv4Octets = [number, number, number, number];
+
+const parseIpv4Octets = (hostname: string): Ipv4Octets | null => {
+  if (!IPV4_PATTERN.test(hostname)) {
+    return null;
+  }
+
   const octets = hostname.split('.').map((entry: string): number => Number.parseInt(entry, 10));
-  if (octets.length !== 4) return false;
   if (
+    octets.length !== 4 ||
     octets.some((entry: number): boolean => !Number.isFinite(entry) || entry < 0 || entry > 255)
   ) {
-    return false;
+    return null;
   }
-  const [a, b] = octets;
-  if (a === undefined || b === undefined) return false;
-  if (a === 10) return true;
-  if (a === 127) return true;
-  if (a === 0) return true;
-  if (a === 169 && b === 254) return true;
-  if (a === 172 && b >= 16 && b <= 31) return true;
-  if (a === 192 && b === 168) return true;
-  if (a === 100 && b >= 64 && b <= 127) return true;
-  return false;
+
+  const [a, b, c, d] = octets;
+  if ([a, b, c, d].some((entry) => entry === undefined)) {
+    return null;
+  }
+
+  return [a, b, c, d];
+};
+
+const IPV4_PRIVATE_RANGE_MATCHERS: ReadonlyArray<(octets: Ipv4Octets) => boolean> = [
+  ([a]) => a === 10,
+  ([a]) => a === 127,
+  ([a]) => a === 0,
+  ([a, b]) => a === 169 && b === 254,
+  ([a, b]) => a === 172 && b >= 16 && b <= 31,
+  ([a, b]) => a === 192 && b === 168,
+  ([a, b]) => a === 100 && b >= 64 && b <= 127,
+];
+
+const isPrivateIpv4 = (hostname: string): boolean => {
+  const octets = parseIpv4Octets(hostname);
+  return octets ? IPV4_PRIVATE_RANGE_MATCHERS.some((matches) => matches(octets)) : false;
 };
 
 const isLoopbackIpv6 = (hostname: string): boolean =>
@@ -160,15 +177,15 @@ const isMappedPrivateIpv6 = (hostname: string): boolean => {
   return isPrivateIpv4(mapped) || isPrivateIpv4(decodeMappedIpv6HexToIpv4(mapped) ?? '');
 };
 
-const isPrivateIpv6 = (hostname: string): boolean => {
-  const normalized = hostname.toLowerCase();
-  return (
-    isLoopbackIpv6(normalized) ||
-    isLinkLocalIpv6(normalized) ||
-    isUniqueLocalIpv6(normalized) ||
-    isMappedPrivateIpv6(normalized)
-  );
-};
+const IPV6_PRIVATE_MATCHERS: ReadonlyArray<(hostname: string) => boolean> = [
+  isLoopbackIpv6,
+  isLinkLocalIpv6,
+  isUniqueLocalIpv6,
+  isMappedPrivateIpv6,
+];
+
+const isPrivateIpv6 = (hostname: string): boolean =>
+  IPV6_PRIVATE_MATCHERS.some((matches) => matches(hostname.toLowerCase()));
 
 const normalizeHostname = (hostname: string): string => {
   return hostname

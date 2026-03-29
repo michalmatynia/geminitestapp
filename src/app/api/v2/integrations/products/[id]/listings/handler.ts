@@ -33,6 +33,15 @@ type BaseListingLinkContext = {
   inventoryId: string | null;
 };
 
+type ProductListings = Awaited<ReturnType<typeof listProductListingsByProductIdAcrossProviders>>;
+
+const requireProductId = (productId: string | null | undefined): string => {
+  if (!productId) {
+    throw badRequestError('Product id is required');
+  }
+  return productId;
+};
+
 const resolveBaseListingLinkContext = async (): Promise<BaseListingLinkContext | null> => {
   const integrationRepo = await getIntegrationRepository();
   const integrations = await integrationRepo.listIntegrations();
@@ -66,6 +75,79 @@ const resolveBaseListingLinkContext = async (): Promise<BaseListingLinkContext |
   };
 };
 
+const syncBaseListingsWithProductId = async (
+  productId: string,
+  normalizedBaseProductId: string,
+  listings: ProductListings
+): Promise<ProductListings> => {
+  if (!normalizedBaseProductId) {
+    return listings;
+  }
+
+  const baseListingsWithoutExternalId = listings.filter(
+    (listing: ProductListings[number]) =>
+      isBaseIntegrationSlug(listing.integration.slug) && !listing.externalListingId?.trim()
+  );
+  if (baseListingsWithoutExternalId.length === 0) {
+    return listings;
+  }
+
+  await Promise.all(
+    baseListingsWithoutExternalId.map(async (listing) => {
+      const resolved = await findProductListingByIdAcrossProviders(listing.id);
+      if (!resolved) {
+        return;
+      }
+
+      await resolved.repository.updateListingExternalId(listing.id, normalizedBaseProductId);
+      if ((resolved.listing.status ?? '').trim().length === 0) {
+        await resolved.repository.updateListingStatus(listing.id, 'active');
+      }
+    })
+  );
+
+  return listProductListingsByProductIdAcrossProviders(productId);
+};
+
+const backfillBaseListingIfMissing = async (
+  productId: string,
+  normalizedBaseProductId: string,
+  listings: ProductListings
+): Promise<ProductListings> => {
+  if (!normalizedBaseProductId) {
+    return listings;
+  }
+  if (listings.some((listing: ProductListings[number]) => isBaseIntegrationSlug(listing.integration.slug))) {
+    return listings;
+  }
+
+  const linkContext = await resolveBaseListingLinkContext();
+  if (!linkContext) {
+    return listings;
+  }
+
+  const existsForConnection = await listingExistsAcrossProviders(productId, linkContext.connectionId);
+  if (existsForConnection) {
+    return listings;
+  }
+
+  const listingRepo = await getProductListingRepository();
+  await listingRepo.createListing({
+    productId,
+    integrationId: linkContext.integrationId,
+    connectionId: linkContext.connectionId,
+    status: 'active',
+    externalListingId: normalizedBaseProductId,
+    inventoryId: linkContext.inventoryId,
+    marketplaceData: {
+      source: 'base-import-backfill',
+      marketplace: 'base',
+    },
+  });
+
+  return listProductListingsByProductIdAcrossProviders(productId);
+};
+
 /**
  * GET /api/v2/integrations/products/[id]/listings
  * Fetches all listings for a specific product.
@@ -76,66 +158,18 @@ export async function GET_handler(
   params: { id: string }
 ): Promise<Response> {
   try {
-    const { id: productId } = params;
-    if (!productId) {
-      throw badRequestError('Product id is required');
-    }
+    const productId = requireProductId(params.id);
     let listings = await listProductListingsByProductIdAcrossProviders(productId);
     const productRepo = await getProductRepository();
     const product = await productRepo.getProductById(productId);
     const normalizedBaseProductId = product?.baseProductId?.trim() || '';
 
-    if (normalizedBaseProductId) {
-      const baseListingsWithoutExternalId = listings.filter(
-        (listing: (typeof listings)[number]) =>
-          isBaseIntegrationSlug(listing.integration.slug) && !listing.externalListingId?.trim()
-      );
-
-      if (baseListingsWithoutExternalId.length > 0) {
-        await Promise.all(
-          baseListingsWithoutExternalId.map(async (listing) => {
-            const resolved = await findProductListingByIdAcrossProviders(listing.id);
-            if (!resolved) return;
-            await resolved.repository.updateListingExternalId(listing.id, normalizedBaseProductId);
-            if ((resolved.listing.status ?? '').trim().length === 0) {
-              await resolved.repository.updateListingStatus(listing.id, 'active');
-            }
-          })
-        );
-        listings = await listProductListingsByProductIdAcrossProviders(productId);
-      }
-    }
-
-    const hasBaseListing = listings.some((listing: (typeof listings)[number]) =>
-      isBaseIntegrationSlug(listing.integration.slug)
+    listings = await syncBaseListingsWithProductId(
+      productId,
+      normalizedBaseProductId,
+      listings
     );
-    if (!hasBaseListing) {
-      if (normalizedBaseProductId) {
-        const linkContext = await resolveBaseListingLinkContext();
-        if (linkContext) {
-          const existsForConnection = await listingExistsAcrossProviders(
-            productId,
-            linkContext.connectionId
-          );
-          if (!existsForConnection) {
-            const listingRepo = await getProductListingRepository();
-            await listingRepo.createListing({
-              productId,
-              integrationId: linkContext.integrationId,
-              connectionId: linkContext.connectionId,
-              status: 'active',
-              externalListingId: normalizedBaseProductId,
-              inventoryId: linkContext.inventoryId,
-              marketplaceData: {
-                source: 'base-import-backfill',
-                marketplace: 'base',
-              },
-            });
-            listings = await listProductListingsByProductIdAcrossProviders(productId);
-          }
-        }
-      }
-    }
+    listings = await backfillBaseListingIfMissing(productId, normalizedBaseProductId, listings);
 
     return NextResponse.json(listings);
   } catch (error) {

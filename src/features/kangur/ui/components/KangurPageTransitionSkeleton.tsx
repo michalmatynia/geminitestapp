@@ -99,27 +99,20 @@ const resolveDefaultSkeletonVariant = (
 };
 
 const SkeletonStatusHeader = ({
-  loadingMessage,
   pageLabel,
   className,
 }: {
-  loadingMessage: string;
   pageLabel: string;
   className?: string;
 }): React.JSX.Element => (
-  <div className={cn('space-y-2 text-center', className)}>
+  <div className={cn('text-center', className)}>
     <p className='text-sm font-semibold tracking-[-0.02em] text-slate-600'>{pageLabel}</p>
-    <p role='status' className='text-sm text-slate-500'>
-      {loadingMessage}
-    </p>
   </div>
 );
 
 const LessonsLibraryTransitionSkeleton = ({
-  loadingMessage,
   pageLabel,
 }: {
-  loadingMessage: string;
   pageLabel: string;
 }): React.JSX.Element => (
   <div
@@ -143,7 +136,7 @@ const LessonsLibraryTransitionSkeleton = ({
           <SkeletonBlock className='absolute right-[10%] top-[14%] h-10 w-10 rounded-full bg-sky-100/80 sm:h-12 sm:w-12' />
         </div>
         <div className='mt-6'>
-          <SkeletonStatusHeader loadingMessage={loadingMessage} pageLabel={pageLabel} />
+          <SkeletonStatusHeader pageLabel={pageLabel} />
         </div>
         <div
           className='mt-6'
@@ -179,10 +172,8 @@ const LessonsLibraryTransitionSkeleton = ({
 );
 
 const LessonsFocusTransitionSkeleton = ({
-  loadingMessage,
   pageLabel,
 }: {
-  loadingMessage: string;
   pageLabel: string;
 }): React.JSX.Element => (
   <div
@@ -195,7 +186,7 @@ const LessonsFocusTransitionSkeleton = ({
     >
       <SkeletonGlassPanel padding='lg' surface='mist' variant='soft'>
         <div className='space-y-4'>
-          <SkeletonStatusHeader loadingMessage={loadingMessage} pageLabel={pageLabel} />
+          <SkeletonStatusHeader pageLabel={pageLabel} />
           <SkeletonLine className='mx-auto h-10 w-full max-w-[420px]' />
           <SkeletonLine className='mx-auto w-full max-w-[560px]' />
         </div>
@@ -229,10 +220,8 @@ const LessonsFocusTransitionSkeleton = ({
 );
 
 const GameHomeTransitionSkeleton = ({
-  loadingMessage,
   pageLabel,
 }: {
-  loadingMessage: string;
   pageLabel: string;
 }): React.JSX.Element => {
   const auth = useOptionalKangurAuth();
@@ -252,7 +241,7 @@ const GameHomeTransitionSkeleton = ({
       data-testid='kangur-page-transition-skeleton-game-home-layout'
     >
       <div className='w-full max-w-[900px]'>
-        <SkeletonStatusHeader loadingMessage={loadingMessage} pageLabel={pageLabel} />
+        <SkeletonStatusHeader pageLabel={pageLabel} />
       </div>
       <KangurGameHomeSections
         visibility={homeVisibility}
@@ -435,16 +424,14 @@ const GameHomeTransitionSkeleton = ({
 
 const StandardTransitionSkeleton = ({
   children,
-  loadingMessage,
   pageLabel,
 }: {
   children: React.ReactNode;
-  loadingMessage: string;
   pageLabel: string;
 }): React.JSX.Element => (
   <div className={cn('flex w-full flex-col items-center', KANGUR_PANEL_GAP_CLASSNAME)}>
     <div className='w-full max-w-5xl'>
-      <SkeletonStatusHeader loadingMessage={loadingMessage} pageLabel={pageLabel} />
+      <SkeletonStatusHeader pageLabel={pageLabel} />
     </div>
     <div className='w-full'>{children}</div>
   </div>
@@ -517,54 +504,30 @@ export function KangurPageTransitionSkeleton(
   const renderContent = (): React.JSX.Element => {
     switch (resolvedVariant) {
       case 'game-home':
-        return (
-          <GameHomeTransitionSkeleton
-            loadingMessage={loadingMessage}
-            pageLabel={pageLabel}
-          />
-        );
+        return <GameHomeTransitionSkeleton pageLabel={pageLabel} />;
       case 'game-session':
         return (
-          <StandardTransitionSkeleton
-            loadingMessage={loadingMessage}
-            pageLabel={pageLabel}
-          >
+          <StandardTransitionSkeleton pageLabel={pageLabel}>
             <GameSessionSkeleton />
           </StandardTransitionSkeleton>
         );
       case 'learner-profile':
         return (
-          <StandardTransitionSkeleton
-            loadingMessage={loadingMessage}
-            pageLabel={pageLabel}
-          >
+          <StandardTransitionSkeleton pageLabel={pageLabel}>
             <LearnerProfileSkeleton />
           </StandardTransitionSkeleton>
         );
       case 'parent-dashboard':
         return (
-          <StandardTransitionSkeleton
-            loadingMessage={loadingMessage}
-            pageLabel={pageLabel}
-          >
+          <StandardTransitionSkeleton pageLabel={pageLabel}>
             <ParentDashboardSkeleton />
           </StandardTransitionSkeleton>
         );
       case 'lessons-focus':
-        return (
-          <LessonsFocusTransitionSkeleton
-            loadingMessage={loadingMessage}
-            pageLabel={pageLabel}
-          />
-        );
+        return <LessonsFocusTransitionSkeleton pageLabel={pageLabel} />;
       case 'lessons-library':
       default:
-        return (
-          <LessonsLibraryTransitionSkeleton
-            loadingMessage={loadingMessage}
-            pageLabel={pageLabel}
-          />
-        );
+        return <LessonsLibraryTransitionSkeleton pageLabel={pageLabel} />;
     }
   };
 
@@ -576,6 +539,9 @@ export function KangurPageTransitionSkeleton(
       data-testid='kangur-page-transition-skeleton'
       style={rootStyle}
     >
+      <p className='sr-only' role='status'>
+        {loadingMessage}
+      </p>
       {props.reason === 'locale-switch' ? (
         <div
           aria-hidden='true'

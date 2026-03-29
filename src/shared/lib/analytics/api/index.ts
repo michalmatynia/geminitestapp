@@ -17,19 +17,12 @@ export type {
   AnalyticsSummary,
 };
 
-export async function fetchAnalyticsSummary(input?: {
+type FetchAnalyticsSummaryInput = {
   range?: AnalyticsRange;
   scope?: AnalyticsScope | 'all';
-}): Promise<AnalyticsSummary> {
-  const range = input?.range ?? '24h';
-  const scope = input?.scope ?? 'all';
+};
 
-  return api.get<AnalyticsSummary>('/api/analytics/summary', {
-    params: { range, scope },
-  });
-}
-
-export async function fetchAnalyticsEvents(input?: {
+type FetchAnalyticsEventsInput = {
   page?: number;
   pageSize?: number;
   range?: AnalyticsRange;
@@ -41,32 +34,51 @@ export async function fetchAnalyticsEvents(input?: {
   browser?: string;
   device?: string;
   bot?: AnalyticsEventFilterBot;
-}): Promise<AnalyticsEventsResponse> {
-  const page = input?.page ?? 1;
-  const pageSize = input?.pageSize ?? 25;
-  const range = input?.range ?? '24h';
-  const scope = input?.scope ?? 'all';
-  const type = input?.type ?? 'all';
-  const search = input?.search ?? '';
-  const country = input?.country ?? '';
-  const referrerHost = input?.referrerHost ?? '';
-  const browser = input?.browser ?? '';
-  const device = input?.device ?? '';
-  const bot = input?.bot ?? 'all';
+};
 
+const resolveAnalyticsSummaryParams = ({
+  range = '24h',
+  scope = 'all',
+}: FetchAnalyticsSummaryInput = {}) => ({ range, scope });
+
+const resolveAnalyticsEventParams = ({
+  page = 1,
+  pageSize = 25,
+  range = '24h',
+  scope = 'all',
+  type = 'all',
+  search = '',
+  country = '',
+  referrerHost = '',
+  browser = '',
+  device = '',
+  bot = 'all',
+}: FetchAnalyticsEventsInput = {}) => ({
+  page,
+  pageSize,
+  range,
+  scope,
+  type,
+  search,
+  country,
+  referrerHost,
+  browser,
+  device,
+  bot,
+});
+
+export async function fetchAnalyticsSummary(
+  input?: FetchAnalyticsSummaryInput
+): Promise<AnalyticsSummary> {
+  return api.get<AnalyticsSummary>('/api/analytics/summary', {
+    params: resolveAnalyticsSummaryParams(input),
+  });
+}
+
+export async function fetchAnalyticsEvents(
+  input?: FetchAnalyticsEventsInput
+): Promise<AnalyticsEventsResponse> {
   return api.get<AnalyticsEventsResponse>('/api/analytics/events', {
-    params: {
-      page,
-      pageSize,
-      range,
-      scope,
-      type,
-      search,
-      country,
-      referrerHost,
-      browser,
-      device,
-      bot,
-    },
+    params: resolveAnalyticsEventParams(input),
   });
 }

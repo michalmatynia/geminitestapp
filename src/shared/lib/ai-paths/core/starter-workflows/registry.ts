@@ -69,6 +69,16 @@ export type StarterWorkflowUpgradeResult = {
   resolution: StarterWorkflowResolution | null;
 };
 
+type MaterializeStarterWorkflowArgs = {
+  pathId?: string;
+  name?: string;
+  description?: string;
+  isActive?: boolean;
+  isLocked?: boolean;
+  seededDefault?: boolean;
+  updatedAt?: string;
+};
+
 type DeepValue = Record<string, unknown> | unknown[] | string | number | boolean | null;
 type CanonicalNodeShape = {
   id: string;
@@ -85,16 +95,19 @@ type CanonicalEdgeShape = {
 };
 
 const STARTER_PROVENANCE_KEY = 'aiPathsStarter';
+const DATABASE_OPERATIONS = new Set<DatabaseOperation>([
+  'query',
+  'update',
+  'insert',
+  'delete',
+  'action',
+  'distinct',
+]);
 
 const normalizeText = (value: unknown): string => (typeof value === 'string' ? value.trim() : '');
 const normalizeTextLower = (value: unknown): string => normalizeText(value).toLowerCase();
 const isDatabaseOperation = (value: unknown): value is DatabaseOperation =>
-  value === 'query' ||
-  value === 'update' ||
-  value === 'insert' ||
-  value === 'delete' ||
-  value === 'action' ||
-  value === 'distinct';
+  typeof value === 'string' && DATABASE_OPERATIONS.has(value as DatabaseOperation);
 
 const toRecord = (value: unknown): Record<string, unknown> | null => {
   if (!value || typeof value !== 'object' || Array.isArray(value)) return null;
@@ -242,6 +255,30 @@ const materializeSemanticAsset = (
   };
 };
 
+const hasAliasOrTriggerMatch = (
+  config: PathConfig,
+  names: string[],
+  triggers: string[]
+): boolean =>
+  hasAliasMatch(config.name ?? '', names) || hasAliasMatch(config.trigger ?? '', triggers);
+
+const hasNodeOfType = (
+  config: PathConfig,
+  type: string,
+  matcher: (node: NonNullable<PathConfig['nodes']>[number]) => boolean
+): boolean => (config.nodes ?? []).some((node) => node.type === type && matcher(node));
+
+const hasTranslationRepairDatabaseUpdateTemplate = (config: PathConfig): boolean =>
+  hasNodeOfType(config, 'database', (node) => {
+    const database = toRecord(toRecord(node.config)?.['database']);
+    const updateTemplate = normalizeText(database?.['updateTemplate']);
+    return (
+      updateTemplate.includes('"description_pl"') &&
+      updateTemplate.includes('"parameters"') &&
+      updateTemplate.includes('{{result.parameters}}')
+    );
+  });
+
 const hasCanonicalGraphHash = (entry: AiPathTemplateRegistryEntry, graphHash: string): boolean => {
   const normalizedHash = normalizeTextLower(graphHash);
   if (!normalizedHash) return false;
@@ -257,25 +294,19 @@ const hasAliasMatch = (value: string, aliases: string[]): boolean => {
 };
 
 const matchesLegacyTranslationRepairSignature = (config: PathConfig): boolean => {
-  const nameOrTriggerMatches =
-    hasAliasMatch(config.name ?? '', [
+  if (
+    !hasAliasOrTriggerMatch(
+      config,
+      [
       'Translation EN->PL Description + Parameters',
       'Translation EN->PL Description + Parameters v2',
-    ]) ||
-    hasAliasMatch(config.trigger ?? '', ['Product Modal - Translate EN->PL (Desc+Params)']);
-
-  if (!nameOrTriggerMatches) return false;
-
-  return (config.nodes ?? []).some((node) => {
-    if (node.type !== 'database') return false;
-    const database = toRecord(toRecord(node.config)?.['database']);
-    const updateTemplate = normalizeText(database?.['updateTemplate']);
-    return (
-      updateTemplate.includes('"description_pl"') &&
-      updateTemplate.includes('"parameters"') &&
-      updateTemplate.includes('{{result.parameters}}')
-    );
-  });
+      ],
+      ['Product Modal - Translate EN->PL (Desc+Params)']
+    )
+  ) {
+    return false;
+  }
+  return hasTranslationRepairDatabaseUpdateTemplate(config);
 };
 
 const hasParameterInferencePromptStructure = (config: PathConfig): boolean =>
@@ -317,11 +348,15 @@ const hasParameterInferenceLegacyMappingUpdate = (config: PathConfig): boolean =
   });
 
 const matchesLegacyParameterInferenceRepairSignature = (config: PathConfig): boolean => {
-  const nameOrTriggerMatches =
-    hasAliasMatch(config.name ?? '', ['Parameter Inference', 'Parameter Inference v2 No Param Add']) ||
-    hasAliasMatch(config.trigger ?? '', ['Product Modal - Infer Parameters']);
-
-  if (!nameOrTriggerMatches) return false;
+  if (
+    !hasAliasOrTriggerMatch(
+      config,
+      ['Parameter Inference', 'Parameter Inference v2 No Param Add'],
+      ['Product Modal - Infer Parameters']
+    )
+  ) {
+    return false;
+  }
 
   if (!hasParameterInferencePromptStructure(config)) return false;
 
@@ -516,32 +551,40 @@ export const getAutoSeedStarterWorkflowEntries = (): AiPathTemplateRegistryEntry
     (left, right) => (left.seedPolicy?.sortOrder ?? 0) - (right.seedPolicy?.sortOrder ?? 0)
   );
 
+const resolveMaterializedStarterWorkflowArgs = (
+  entry: AiPathTemplateRegistryEntry,
+  args: MaterializeStarterWorkflowArgs
+) => ({
+  pathId: args.pathId ?? entry.seedPolicy?.defaultPathId ?? entry.semanticAsset.path.id,
+  name: args.name ?? entry.name,
+  description: args.description ?? entry.description,
+  isActive: args.isActive ?? entry.seedPolicy?.isActive,
+  isLocked: args.isLocked ?? entry.seedPolicy?.isLocked,
+  updatedAt: args.updatedAt,
+});
+
+const buildStarterWorkflowProvenance = (
+  entry: AiPathTemplateRegistryEntry,
+  seededDefault: boolean
+): AiPathsStarterProvenance => ({
+  starterKey: entry.starterLineage.starterKey,
+  templateId: entry.templateId,
+  templateVersion: entry.starterLineage.templateVersion,
+  seededDefault,
+});
+
 export const materializeStarterWorkflowPathConfig = (
   entry: AiPathTemplateRegistryEntry,
-  args: {
-    pathId?: string;
-    name?: string;
-    description?: string;
-    isActive?: boolean;
-    isLocked?: boolean;
-    seededDefault?: boolean;
-    updatedAt?: string;
-  } = {}
+  args: MaterializeStarterWorkflowArgs = {}
 ): PathConfig => {
-  const materialized = materializeSemanticAsset(entry.semanticAsset, {
-    pathId: args.pathId ?? entry.seedPolicy?.defaultPathId ?? entry.semanticAsset.path.id,
-    name: args.name ?? entry.name,
-    description: args.description ?? entry.description,
-    isActive: args.isActive ?? entry.seedPolicy?.isActive,
-    isLocked: args.isLocked ?? entry.seedPolicy?.isLocked,
-    updatedAt: args.updatedAt,
-  });
-  return applyStarterProvenance(materialized, {
-    starterKey: entry.starterLineage.starterKey,
-    templateId: entry.templateId,
-    templateVersion: entry.starterLineage.templateVersion,
-    seededDefault: args.seededDefault === true,
-  });
+  const materialized = materializeSemanticAsset(
+    entry.semanticAsset,
+    resolveMaterializedStarterWorkflowArgs(entry, args)
+  );
+  return applyStarterProvenance(
+    materialized,
+    buildStarterWorkflowProvenance(entry, args.seededDefault === true)
+  );
 };
 
 const edgeSignature = (edge: unknown): string => {

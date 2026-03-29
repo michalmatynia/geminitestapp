@@ -1,12 +1,17 @@
 import 'server-only';
 
-import type { Db, Document, Filter } from 'mongodb';
+import type { Collection, Db, Document, Filter } from 'mongodb';
 
 import type {
   KangurLessonDocument,
   KangurLessonDocumentStore,
 } from '@kangur/contracts';
-import { normalizeKangurLessonDocument } from '@/features/kangur/lesson-documents';
+import {
+  KANGUR_LESSON_DOCUMENTS_SETTING_KEY,
+  normalizeKangurLessonDocument,
+  parseKangurLessonDocumentStore,
+} from '@/features/kangur/lesson-documents';
+import { readKangurSettingValue } from '@/features/kangur/services/kangur-settings-repository';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import { normalizeSiteLocale } from '@/shared/lib/i18n/site-locale';
 
@@ -69,23 +74,68 @@ const ensureIndexes = async (db: Db): Promise<void> => {
 const toNormalizedDocument = (document: KangurLessonDocument): KangurLessonDocument =>
   normalizeKangurLessonDocument(document);
 
+const seedMissingLessonDocumentsFromLegacySettings = async (
+  collection: Collection<MongoKangurLessonDocument>,
+  locale?: string | null
+): Promise<boolean> => {
+  const normalizedLocale = normalizeLessonDocumentLocale(locale);
+  if (normalizedLocale !== 'pl') {
+    return false;
+  }
+
+  const rawDocuments = await readKangurSettingValue(KANGUR_LESSON_DOCUMENTS_SETTING_KEY);
+  const store = parseKangurLessonDocumentStore(rawDocuments);
+  const entries = Object.entries(store);
+
+  if (entries.length === 0) {
+    return false;
+  }
+
+  const now = new Date();
+  await collection.bulkWrite(
+    entries.map(([lessonId, document]) => ({
+      updateOne: {
+        filter: { _id: buildLocalizedLessonDocumentId(lessonId, normalizedLocale) },
+        update: {
+          $setOnInsert: {
+            lessonId,
+            locale: normalizedLocale,
+            document: toNormalizedDocument(document),
+            createdAt: now,
+            updatedAt: now,
+          },
+        },
+        upsert: true,
+      },
+    })),
+    { ordered: false }
+  );
+
+  return true;
+};
+
 export const mongoKangurLessonDocumentRepository: KangurLessonDocumentRepository = {
   async getLessonDocument(lessonId: string, locale?: string): Promise<KangurLessonDocument | null> {
     const db = await getMongoDb();
     await ensureIndexes(db);
-    const doc = await db
-      .collection<MongoKangurLessonDocument>(COLLECTION)
-      .findOne({ _id: buildLocalizedLessonDocumentId(lessonId, locale) });
+    const collection = db.collection<MongoKangurLessonDocument>(COLLECTION);
+    let doc = await collection.findOne({ _id: buildLocalizedLessonDocumentId(lessonId, locale) });
+    if (!doc) {
+      await seedMissingLessonDocumentsFromLegacySettings(collection, locale);
+      doc = await collection.findOne({ _id: buildLocalizedLessonDocumentId(lessonId, locale) });
+    }
     return doc ? toNormalizedDocument(doc.document) : null;
   },
 
   async listLessonDocuments(locale?: string): Promise<KangurLessonDocumentStore> {
     const db = await getMongoDb();
     await ensureIndexes(db);
-    const docs = await db
-      .collection<MongoKangurLessonDocument>(COLLECTION)
-      .find(buildLessonDocumentFilter(locale))
-      .toArray();
+    const collection = db.collection<MongoKangurLessonDocument>(COLLECTION);
+    let docs = await collection.find(buildLessonDocumentFilter(locale)).toArray();
+    if (docs.length === 0) {
+      await seedMissingLessonDocumentsFromLegacySettings(collection, locale);
+      docs = await collection.find(buildLessonDocumentFilter(locale)).toArray();
+    }
     const store: KangurLessonDocumentStore = {};
     docs.forEach((doc) => {
       if (!doc.lessonId) return;

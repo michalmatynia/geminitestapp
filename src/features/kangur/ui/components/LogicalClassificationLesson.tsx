@@ -30,7 +30,10 @@ import {
   KangurLessonLead,
   KangurLessonStack,
 } from '@/features/kangur/ui/design/lesson-primitives';
-import type { LessonTranslate } from '@/features/kangur/ui/components/lesson-copy';
+import {
+  createLessonFallbackTranslate,
+  type LessonTranslate,
+} from '@/features/kangur/ui/components/lesson-copy';
 import { KangurUnifiedLesson } from '@/features/kangur/ui/lessons/lesson-components';
 import {
   createLogicalClassificationLessonTranslate,
@@ -609,12 +612,9 @@ export default function LogicalClassificationLesson({
   const runtimeTemplate = useOptionalKangurLessonTemplate('logical_classification');
   const resolvedTemplate = lessonTemplate ?? runtimeTemplate;
   const translations = useTranslations('KangurStaticLessons.logicalClassification');
-  const fallbackTranslate = Object.assign(
-    (key: string): string => translations(key as never),
-    {
-      has: (key: string): boolean => translations.has(key as never),
-    },
-  ) as LessonTranslate & { has: (key: string) => boolean };
+  const fallbackTranslate = createLessonFallbackTranslate(
+    translations as LessonTranslate & { has?: (key: string) => boolean }
+  );
   const resolvedContent = resolveLogicalClassificationLessonContent(
     resolvedTemplate,
     fallbackTranslate,

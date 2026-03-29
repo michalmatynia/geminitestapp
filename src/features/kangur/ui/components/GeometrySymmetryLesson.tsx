@@ -16,7 +16,10 @@ import {
   GeometrySymmetryRotationAnimation,
 } from './GeometryLessonAnimations';
 import { KangurLessonCallout } from '@/features/kangur/ui/design/lesson-primitives';
-import type { LessonTranslate } from '@/features/kangur/ui/components/lesson-copy';
+import {
+  createLessonFallbackTranslate,
+  type LessonTranslate,
+} from '@/features/kangur/ui/components/lesson-copy';
 import { KangurUnifiedLesson } from '@/features/kangur/ui/lessons/lesson-components';
 import {
   addXp,
@@ -319,12 +322,9 @@ export default function GeometrySymmetryLesson({ lessonTemplate }: LessonProps):
   const runtimeTemplate = useOptionalKangurLessonTemplate('geometry_symmetry');
   const resolvedTemplate = lessonTemplate ?? runtimeTemplate;
   const translations = useTranslations('KangurStaticLessons.geometrySymmetry');
-  const fallbackTranslate = Object.assign(
-    (key: string): string => translations(key as never),
-    {
-      has: (key: string): boolean => translations.has(key as never),
-    },
-  ) as LessonTranslate & { has: (key: string) => boolean };
+  const fallbackTranslate = createLessonFallbackTranslate(
+    translations as LessonTranslate & { has?: (key: string) => boolean }
+  );
   const resolvedContent = resolveGeometrySymmetryLessonContent(
     resolvedTemplate,
     fallbackTranslate,

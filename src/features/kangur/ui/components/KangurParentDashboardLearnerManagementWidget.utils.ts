@@ -107,7 +107,7 @@ export const getLearnerManagementCopy = (
     agePlaceholder: 'Wiek ucznia',
     ageValue: (age) => `${age} lat`,
     cancel: 'Anuluj',
-    confirmRemoval: 'Potwierź usunięcie',
+    confirmRemoval: 'Potwierdź usunięcie',
     createModalClose: 'Zamknij dodawanie profilu',
     createModalDescription: 'Dodaj dziecko i od razu ustaw jego login oraz hasło do gry.',
     createModalTitle: 'Nowy profil ucznia',

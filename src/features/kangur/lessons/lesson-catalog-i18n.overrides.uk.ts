@@ -141,6 +141,11 @@ export const UKRAINIAN_LESSON_COPY_OVERRIDES: Partial<
     description:
       'Описуй людей, місця й речі за допомогою прикметників і правильного порядку слів.',
   },
+  english_comparatives_superlatives: {
+    title: 'Англійська: вищий і найвищий ступені',
+    description:
+      'Порівнюй дві речі, обирай найкращу в групі й тренуй складні форми на кшталт better і the best.',
+  },
   english_adverbs: {
     title: 'Англійська: прислівники',
     description: 'Описуй, як відбуваються дії, за допомогою прислівників і виняткових форм.',

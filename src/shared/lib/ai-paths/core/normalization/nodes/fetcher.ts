@@ -56,26 +56,36 @@ const buildSimulationConfig = (
   };
 };
 
-export const normalizeFetcherNode = (node: AiNode): AiNode => {
-  return {
-    ...node,
+const normalizeEntityNode = <TConfigKey extends 'fetcher' | 'simulation'>(args: {
+  node: AiNode;
+  configKey: TConfigKey;
+  configValue: NonNullable<AiNode['config']>[TConfigKey];
+  inputs: AiNode['inputs'];
+  outputs: AiNode['outputs'];
+}): AiNode => ({
+  ...args.node,
+  inputs: args.inputs,
+  outputs: args.outputs,
+  config: {
+    ...args.node.config,
+    [args.configKey]: args.configValue,
+  },
+});
+
+export const normalizeFetcherNode = (node: AiNode): AiNode =>
+  normalizeEntityNode({
+    node,
+    configKey: 'fetcher',
+    configValue: buildFetcherConfig(node.config?.fetcher),
     inputs: FETCHER_INPUT_PORTS,
     outputs: FETCHER_OUTPUT_PORTS,
-    config: {
-      ...node.config,
-      fetcher: buildFetcherConfig(node.config?.fetcher),
-    },
-  };
-};
+  });
 
-export const normalizeSimulationNode = (node: AiNode): AiNode => {
-  return {
-    ...node,
+export const normalizeSimulationNode = (node: AiNode): AiNode =>
+  normalizeEntityNode({
+    node,
+    configKey: 'simulation',
+    configValue: buildSimulationConfig(node.config?.simulation),
     inputs: SIMULATION_INPUT_PORTS,
     outputs: SIMULATION_OUTPUT_PORTS,
-    config: {
-      ...node.config,
-      simulation: buildSimulationConfig(node.config?.simulation),
-    },
-  };
-};
+  });

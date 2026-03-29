@@ -45,6 +45,7 @@ export const ACTIVITY_PRIMARY_TO_OPERATION: Record<string, string> = {
   english_going_to_plan_parade: 'english_going_to',
   english_articles_drag_drop: 'english_articles',
   english_adjectives_scene_studio: 'english_adjectives',
+  english_compare_and_crown: 'english_comparatives_superlatives',
   english_adverbs_action_studio: 'english_adverbs',
   english_adverbs_frequency_routine_studio: 'english_adverbs_frequency',
   english_prepositions_quiz: 'english_prepositions_time_place',

@@ -50,6 +50,66 @@ const normalizeScoresDesc = (scores: KangurScoreRecord[]): KangurScoreRecord[] =
     return rightTs - leftTs;
   });
 
+const computeAverageAccuracyFromScores = (scores: KangurScoreRecord[]): number => {
+  if (scores.length === 0) {
+    return 0;
+  }
+
+  const totalAccuracy = scores.reduce((sum, score) => {
+    const totalQuestions = Math.max(1, score.total_questions || 1);
+    return sum + (score.correct_answers / totalQuestions) * 100;
+  }, 0);
+
+  return toPercent(totalAccuracy / scores.length);
+};
+
+const computeBestAccuracyFromScores = (scores: KangurScoreRecord[]): number =>
+  scores.reduce((best, score) => {
+    const totalQuestions = Math.max(1, score.total_questions || 1);
+    return Math.max(best, toPercent((score.correct_answers / totalQuestions) * 100));
+  }, 0);
+
+const resolveActivityStatsStreakFallback = (
+  progress: KangurProgressState
+): {
+  currentStreakDays: number;
+  longestStreakDays: number;
+  lastPlayedAt: string | null;
+} => {
+  const activityEntries = Object.values(progress.activityStats ?? {});
+  if (activityEntries.length === 0) {
+    return {
+      currentStreakDays: 0,
+      longestStreakDays: 0,
+      lastPlayedAt: null,
+    };
+  }
+
+  const latestPlayedAt = activityEntries.reduce<string | null>((latest, entry) => {
+    if (!entry.lastPlayedAt) {
+      return latest;
+    }
+
+    if (!latest) {
+      return entry.lastPlayedAt;
+    }
+
+    return entry.lastPlayedAt > latest ? entry.lastPlayedAt : latest;
+  }, null);
+
+  return {
+    currentStreakDays: activityEntries.reduce(
+      (best, entry) => Math.max(best, Math.max(0, entry.currentStreak ?? 0)),
+      0
+    ),
+    longestStreakDays: activityEntries.reduce(
+      (best, entry) => Math.max(best, Math.max(0, entry.bestStreak ?? 0)),
+      0
+    ),
+    lastPlayedAt: latestPlayedAt,
+  };
+};
+
 type BuildProfileSnapshotInput = {
   progress: KangurProgressState;
   scores: KangurScoreRecord[];
@@ -66,7 +126,19 @@ export const buildKangurLearnerProfileSnapshot = (
   const normalizedLocale = normalizeSiteLocale(input.locale);
   const sortedScores = normalizeScoresDesc(input.scores);
 
-  const streaks = computeStreaks(sortedScores, now);
+  const scoreStreaks = computeStreaks(sortedScores, now);
+  const activityStatsStreaks = resolveActivityStatsStreakFallback(input.progress);
+  const streaks = {
+    currentStreakDays:
+      scoreStreaks.currentStreakDays > 0
+        ? scoreStreaks.currentStreakDays
+        : activityStatsStreaks.currentStreakDays,
+    longestStreakDays:
+      scoreStreaks.longestStreakDays > 0
+        ? scoreStreaks.longestStreakDays
+        : activityStatsStreaks.longestStreakDays,
+    lastPlayedAt: scoreStreaks.lastPlayedAt ?? activityStatsStreaks.lastPlayedAt,
+  };
   const operationPerformance = computeOperationPerformance(
     sortedScores,
     input.progress,
@@ -93,7 +165,16 @@ export const buildKangurLearnerProfileSnapshot = (
     weeklyActivity.at(-1)?.games ??
     0;
   const dailyGoalGames = Math.max(1, Math.round(input.dailyGoalGames));
-  const averageAccuracy = getProgressAverageAccuracy(input.progress);
+  const progressAverageAccuracy = getProgressAverageAccuracy(input.progress);
+  const averageAccuracy =
+    progressAverageAccuracy > 0
+      ? progressAverageAccuracy
+      : computeAverageAccuracyFromScores(sortedScores);
+  const progressBestAccuracy = getProgressBestAccuracy(input.progress);
+  const bestAccuracy =
+    progressBestAccuracy > 0
+      ? progressBestAccuracy
+      : computeBestAccuracyFromScores(sortedScores);
 
   const rawMomentum = getRecommendedSessionMomentum(input.progress);
   const momentum = localizeRecommendedSessionMomentum(
@@ -133,7 +214,7 @@ export const buildKangurLearnerProfileSnapshot = (
     averageXpPerSession:
       xpAnalytics.averageXpPerSession || getProgressAverageXpPerSession(input.progress),
     averageAccuracy,
-    bestAccuracy: getProgressBestAccuracy(input.progress),
+    bestAccuracy,
     currentStreakDays: streaks.currentStreakDays,
     longestStreakDays: streaks.longestStreakDays,
     lastPlayedAt: streaks.lastPlayedAt,

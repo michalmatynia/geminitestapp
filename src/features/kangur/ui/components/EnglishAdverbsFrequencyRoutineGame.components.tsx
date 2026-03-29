@@ -192,7 +192,12 @@ export function RoutineWeekStrip({
         const isActive = meta?.activeDays[index] ?? false;
         const x = 28 + index * 28;
         return (
-          <g key={`${label}-${index}`} transform={`translate(${x}, 48)`}>
+          <g
+            key={`${label}-${index}`}
+            transform={`translate(${x}, 48)`}
+            data-testid={`${dataTestId}-day-${index}`}
+            data-active={isActive ? 'true' : 'false'}
+          >
             <text fill='#64748b' fontSize='10' fontWeight='700' x='0' y='-14' textAnchor='middle'>{label}</text>
             <circle cx='0' cy='0' r='10' fill={isActive ? meta?.fill : '#e2e8f0'} stroke={isActive ? 'none' : '#cbd5e1'} strokeWidth={isActive ? 0 : 2} />
             {isActive ? (
@@ -271,7 +276,7 @@ export function SummaryFrequencyGuideCard({
           {getFrequencyLabel(translate, frequency)}
         </p>
         <div className='rounded-full bg-white/60 px-2 py-0.5 text-[10px] font-bold text-slate-600'>
-          {countFrequencyActiveDays(frequency)}/7
+          {getFrequencyDaysLitLabel(translate, frequency)}
         </div>
       </div>
       <p className='mt-1 text-xs text-slate-600'>{getFrequencyDescription(translate, frequency)}</p>
@@ -283,6 +288,8 @@ export function SummaryFrequencyGuideCard({
               'h-2.5 w-2.5 rounded-full border border-white/80 shadow-sm transition',
               isActive ? 'opacity-100' : 'bg-white/70 opacity-60'
             )}
+            data-testid={`${dataTestId}-day-${index}`}
+            data-active={isActive ? 'true' : 'false'}
             style={isActive ? { backgroundColor: meta.fill } : undefined}
           />
         ))}

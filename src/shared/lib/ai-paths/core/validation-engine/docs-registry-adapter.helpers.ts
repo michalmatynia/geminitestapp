@@ -20,22 +20,25 @@ import {
 export const hashText = (value: string): string =>
   createHash('sha256').update(value, 'utf8').digest('hex');
 
-export const toModuleFromNodeType = (nodeType: string): AiPathsValidationModule => {
-  if (nodeType === 'trigger') return 'trigger';
-  if (nodeType === 'simulation') return 'simulation';
-  if (nodeType === 'fetcher') return 'simulation';
-  if (nodeType === 'context') return 'context';
-  if (nodeType === 'parser' || nodeType === 'regex') return 'parser';
-  if (nodeType === 'database') return 'database';
-  if (nodeType === 'model' || nodeType === 'agent' || nodeType === 'learner_agent') {
-    return 'model';
-  }
-  if (nodeType === 'poll') return 'poll';
-  if (nodeType === 'router') return 'router';
-  if (nodeType === 'gate') return 'gate';
-  if (nodeType === 'validation_pattern') return 'validation_pattern';
-  return 'custom';
+const NODE_TYPE_TO_MODULE: Partial<Record<string, AiPathsValidationModule>> = {
+  trigger: 'trigger',
+  simulation: 'simulation',
+  fetcher: 'simulation',
+  context: 'context',
+  parser: 'parser',
+  regex: 'parser',
+  database: 'database',
+  model: 'model',
+  agent: 'model',
+  learner_agent: 'model',
+  poll: 'poll',
+  router: 'router',
+  gate: 'gate',
+  validation_pattern: 'validation_pattern',
 };
+
+export const toModuleFromNodeType = (nodeType: string): AiPathsValidationModule =>
+  NODE_TYPE_TO_MODULE[nodeType] ?? 'custom';
 
 export const normalizeLabel = (value: string): string =>
   value.toLowerCase().replace(/[^a-z0-9]+/g, '');
@@ -49,6 +52,20 @@ export const uniqueStringList = (values: string[]): string[] =>
     )
   );
 
+const isEscapedCsvQuote = (
+  char: string,
+  next: string,
+  inQuotes: boolean
+): boolean => char === '"' && inQuotes && next === '"';
+
+const isCsvQuoteToggle = (char: string): boolean => char === '"';
+
+const isCsvSeparator = (char: string, inQuotes: boolean): boolean =>
+  char === ',' && !inQuotes;
+
+const unwrapQuotedCsvValue = (value: string): string =>
+  value.startsWith('"') && value.endsWith('"') ? value.slice(1, -1).trim() : value;
+
 export const parseCsvLine = (line: string): string[] => {
   const values: string[] = [];
   let current = '';
@@ -56,16 +73,16 @@ export const parseCsvLine = (line: string): string[] => {
   for (let index = 0; index < line.length; index += 1) {
     const char = line[index] ?? '';
     const next = line[index + 1] ?? '';
-    if (char === '"') {
-      if (inQuotes && next === '"') {
-        current += '"';
-        index += 1;
-      } else {
-        inQuotes = !inQuotes;
-      }
+    if (isEscapedCsvQuote(char, next, inQuotes)) {
+      current += '"';
+      index += 1;
       continue;
     }
-    if (char === ',' && !inQuotes) {
+    if (isCsvQuoteToggle(char)) {
+      inQuotes = !inQuotes;
+      continue;
+    }
+    if (isCsvSeparator(char, inQuotes)) {
       values.push(current.trim());
       current = '';
       continue;
@@ -73,9 +90,7 @@ export const parseCsvLine = (line: string): string[] => {
     current += char;
   }
   values.push(current.trim());
-  return values.map((value: string): string =>
-    value.startsWith('"') && value.endsWith('"') ? value.slice(1, -1).trim() : value
-  );
+  return values.map(unwrapQuotedCsvValue);
 };
 
 export const parseCsvRecords = (csvText: string): Array<Record<string, string>> => {

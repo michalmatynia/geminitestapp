@@ -228,22 +228,22 @@
     "siteAppearance": "Wyglad strony"
   },
   "KangurPublic": {
-    "routeLoading": "Ładowanie Kangura...",
-    "entryLoading": "Ładowanie Kangura...",
+    "routeLoading": "Ładowanie...",
+    "entryLoading": "Ładowanie...",
     "loaderStatus": "Ładowanie",
-    "loaderSrLabel": "Ładowanie aplikacji Kangur",
-    "errorTitle": "Wystąpił błąd w Kangurze",
-    "errorDescription": "Wystąpił problem podczas ładowania aplikacji Kangur.",
+    "loaderSrLabel": "Ładowanie aplikacji",
+    "errorTitle": "Wystąpił błąd w StudiQ",
+    "errorDescription": "Wystąpił problem podczas ładowania aplikacji StudiQ.",
     "tryAgain": "Spróbuj ponownie",
-    "backToHome": "Wróć do Kangura",
-    "loadingApp": "Ładowanie aplikacji Kangur",
-    "loadingPage": "Ładowanie strony Kangura",
-    "loadingLanguage": "Przełączanie języka Kangura",
+    "backToHome": "Wróć do StudiQ",
+    "loadingApp": "Ładowanie aplikacji",
+    "loadingPage": "Ładowanie strony",
+    "loadingLanguage": "Przełączanie języka",
     "accessibility": {
       "pageAnnouncement": "Widok: {label}",
       "languageSwitchAnnouncement": "Przełączanie języka: {label}",
       "pages": {
-        "Competition": "Kangur Matematyczny",
+        "Competition": "StudiQ Matematyczny",
         "Game": "Strona główna",
         "GamesLibrary": "Biblioteka gier",
         "Lessons": "Lekcje",
@@ -251,7 +251,7 @@
         "LearnerProfile": "Profil ucznia",
         "ParentDashboard": "Panel rodzica",
         "Duels": "Pojedynki",
-        "default": "Strona Kangur"
+        "default": "Strona StudiQ"
       }
     }
   },
@@ -311,12 +311,12 @@
         "description": "Skonfiguruj trening mieszany i dobierz zakres pytan."
       },
       "kangur_setup": {
-        "label": "Konfiguracja sesji Kangura Matematycznego",
-        "description": "Przygotuj sesje Kangura Matematycznego."
+        "label": "Konfiguracja sesji StudiQ Matematycznego",
+        "description": "Przygotuj sesje StudiQ Matematycznego."
       },
       "kangur": {
-        "label": "Sesja Kangura Matematycznego",
-        "description": "Rozwiazuj zadania Kangura Matematycznego krok po kroku."
+        "label": "Sesja StudiQ Matematycznego",
+        "description": "Rozwiazuj zadania StudiQ Matematycznego krok po kroku."
       },
       "agentic_approval_gate_quiz": {
         "label": "Quiz bramki zgody",
@@ -424,7 +424,7 @@
       },
       "english_compare_and_crown_quiz": {
         "label": "Studio porownan i korony",
-        "description": "Porownuj dwie rzeczy i wybieraj zwyciezce za pomoca comparatives i superlatives."
+        "description": "Porownuj dwie rzeczy i wybieraj zwyciezce za pomoca form stopniowania."
       },
       "english_adverbs_frequency_quiz": {
         "label": "Quiz przyslowkow czestotliwosci",
@@ -518,8 +518,8 @@
       },
       "confirm": "Zatwierdź odpowiedź ✓"
     },
-    "examPrintHint": "Otwórz tę lekcję na ekranie, aby odpowiedzieć na pytanie Kangura Matematycznego interaktywnie.",
-    "examResultPrintHint": "Otwórz tę lekcję na ekranie, aby przejrzeć odpowiedzi i rozwiązania Kangura Matematycznego.",
+    "examPrintHint": "Otwórz tę lekcję na ekranie, aby odpowiedzieć na pytanie StudiQ Matematycznego interaktywnie.",
+    "examResultPrintHint": "Otwórz tę lekcję na ekranie, aby przejrzeć odpowiedzi i rozwiązania StudiQ Matematycznego.",
     "operationSelector": {
       "title": "Grajmy!",
       "intro": {
@@ -838,7 +838,7 @@
   },
   "KangurUserAccess": {
     "restricted": "Dostep ograniczony",
-    "title": "To konto nie ma jeszcze dostepu do Kangura",
+    "title": "To konto nie ma jeszcze dostepu do StudiQ",
     "description": "Wyglada na to, ze Twoje konto nie zostalo jeszcze dodane do aplikacji. Skontaktuj sie z administratorem, aby poprosic o dostep.",
     "checkLabel": "Jesli to pomylka, sprawdz:",
     "checkCurrentAccount": "czy jestes zalogowany na wlasciwym koncie,",
@@ -847,7 +847,7 @@
   },
   "KangurLogin": {
     "defaultLoginTitle": "Zaloguj się",
-    "defaultSessionTitle": "Logowanie do Kangur",
+    "defaultSessionTitle": "Logowanie do StudiQ",
     "defaultSessionDescription": "Rodzic loguje się emailem i hasłem. Uczeń loguje się nickiem i hasłem.",
     "checkInboxLabel": "Sprawdź skrzynkę: {email}",
     "checkInboxTitle": "Sprawdź skrzynkę",
@@ -890,7 +890,7 @@
     "identifierLabel": "Email lub nick ucznia",
     "createAccountIdentifierPlaceholder": "rodzic@example.com",
     "identifierPlaceholder": "Wpisz email lub nick ucznia",
-    "signInModeHint": "Wpisz email rodzica albo nick ucznia. Kangur dopasuje odpowiedni sposób logowania.",
+    "signInModeHint": "Wpisz email rodzica albo nick ucznia. StudiQ dopasuje odpowiedni sposób logowania.",
     "parentLoginModeHint": "Wygląda na logowanie rodzica. Użyj emaila rodzica i hasła do konta.",
     "studentLoginModeHint": "Wygląda na logowanie ucznia. Użyj nicku ucznia, nie emaila.",
     "createAccountModeHint": "Załóż konto rodzica emailem, a potem potwierdź adres w wiadomości e-mail.",
@@ -911,7 +911,7 @@
     "loginFormAriaLabel": "Formularz logowania",
     "loginSubmit": "Zaloguj się",
     "loginSubmitting": "Logowanie...",
-    "openingSpaceButtonLabel": "Otwieram Kangur...",
+    "openingSpaceButtonLabel": "Otwieram StudiQ...",
     "continueWith": "Lub kontynuuj przez",
     "signupFormAriaLabel": "Formularz rejestracji rodzica",
     "parentEmailLabel": "Email rodzica",
@@ -1183,7 +1183,7 @@
     "mobileMenu": {
       "open": "Otwórz menu",
       "close": "Zamknij menu",
-      "title": "Menu Kangur",
+      "title": "Menu StudiQ",
       "description": "Użyj klawisza Tab, aby przechodzić między opcjami nawigacji, a Escape, aby zamknąć menu."
     },
     "subject": {
@@ -1204,7 +1204,7 @@
   "KangurGamesLibraryPage": {
     "introEyebrow": "Wspolna domena gier",
     "title": "Biblioteka gier",
-    "description": "Jeden wspolny katalog wszystkich gier Kangur, uporzadkowany wedlug silnikow, mechanik, wariantow i powiazan z lekcjami.",
+    "description": "Jeden wspolny katalog wszystkich gier StudiQ, uporzadkowany wedlug silnikow, mechanik, wariantow i powiazan z lekcjami.",
     "groupEyebrow": "Obszar nauki",
     "groupDescription": "{count, plural, one {# gra w tym obszarze.} few {# gry w tym obszarze.} many {# gier w tym obszarze.} other {# gier w tym obszarze.}}",
     "engineGroupsEyebrow": "Widok konsolidacji",
@@ -1768,7 +1768,7 @@
       "lessons": "Lekcje",
       "play": "Grajmy!",
       "duels": "Pojedynki",
-      "kangur": "Kangur Matematyczny"
+      "kangur": "StudiQ Matematyczny"
     }
   },
   "KangurTests": {
@@ -4043,7 +4043,7 @@
         "menu": "Menu"
       },
       "summary": {
-        "perfect": "Idealny wynik! Jesteś mistrzem Kangura! 🦘",
+        "perfect": "Idealny wynik! Jesteś mistrzem StudiQ! 🦘",
         "good": "Świetnie! Gotowy/a na konkurs!",
         "fair": "Dobra robota! Ćwicz dalej!",
         "retry": "Nie poddawaj się! Spróbuj jeszcze raz!"
@@ -4053,9 +4053,9 @@
       "actions": {
         "backToMenu": "Wróć do menu"
       },
-      "progressAriaLabel": "Dokładność odpowiedzi w teście Kangur",
+      "progressAriaLabel": "Dokładność odpowiedzi w teście StudiQ",
       "summary": {
-        "perfect": "Idealny wynik! Jesteś mistrzem Kangura! 🦘",
+        "perfect": "Idealny wynik! Jesteś mistrzem StudiQ! 🦘",
         "good": "Świetnie! Gotowy/a na konkurs!",
         "fair": "Dobra robota! Ćwicz dalej!",
         "retry": "Nie poddawaj się! Spróbuj jeszcze raz!"
@@ -4697,7 +4697,7 @@
       },
       "mode": {
         "gentle": {
-          "description": "Latwiejszy zestaw treningowy pozwoli wejsc w formule Kangura bez zbyt ostrego progu trudnosci.",
+          "description": "Latwiejszy zestaw treningowy pozwoli wejsc w formule StudiQ bez zbyt ostrego progu trudnosci.",
           "label": "Lagodny start",
           "title": "Polecamy zaczac od treningu 3-punktowego"
         },
@@ -8912,7 +8912,7 @@
         },
         "form": {
           "title": "Forma",
-          "description": "Buduj comparatives i superlatives"
+          "description": "Buduj formy stopniowania"
         },
         "repair": {
           "title": "Napraw",
@@ -8931,7 +8931,7 @@
           "description": "Najwazniejsze zasady w jednym miejscu"
         }
       },
-      "lessonTitle": "Angielski: Comparatives i Superlatives"
+      "lessonTitle": "Angielski: stopniowanie przymiotników"
     }
   },
   "KangurLessonChrome": {
@@ -9221,7 +9221,7 @@
         "showCanvasOnly": "Pokaz samo platno"
       },
       "toolbar": {
-        "backToKangur": "Powrot do Kangur",
+        "backToKangur": "Powrot do StudiQ",
         "status": {
           "saved": "Zapisano",
           "unsaved": "Niezapisane"
@@ -9245,7 +9245,7 @@
         "saveProject": "Zapisz projekt"
       },
       "empty": {
-        "selectScreen": "Wybierz ekran Kangur do edycji.",
+        "selectScreen": "Wybierz ekran StudiQ do edycji.",
         "noSections": "Brak sekcji. Uzyj panelu struktury, aby je dodac."
       }
     },
@@ -9333,7 +9333,7 @@
           "lessons": "Lekcje",
           "play": "Graj",
           "training": "Trening",
-          "kangur": "Kangur"
+          "kangur": "StudiQ"
         }
       },
       "inputs": {
@@ -9341,7 +9341,7 @@
         "ariaLabel": "Podglad pola"
       },
       "typography": {
-        "heading": "Naglowek Kangur",
+        "heading": "Naglowek StudiQ",
         "bodySample": "Przykladowy tekst z biezacym rozmiarem bazowym i wysokoscia linii.",
         "layout": "Uklad"
       },

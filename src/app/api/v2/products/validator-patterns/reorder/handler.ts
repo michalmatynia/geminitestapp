@@ -21,6 +21,8 @@ export const reorderPayloadSchema = z.object({
   updates: z.array(reorderUpdateSchema).min(1).max(500),
 });
 
+type ReorderUpdate = z.infer<typeof reorderUpdateSchema>;
+
 const normalizeNullableTrimmed = (value: string | null | undefined): string | null | undefined => {
   if (value === undefined) return undefined;
   if (value === null) return null;
@@ -28,21 +30,25 @@ const normalizeNullableTrimmed = (value: string | null | undefined): string | nu
   return trimmed.length > 0 ? trimmed : null;
 };
 
-export async function POST_handler(_req: NextRequest, ctx: ApiHandlerContext): Promise<Response> {
-  const body = ctx.body as z.infer<typeof reorderPayloadSchema>;
-  const updates = body.updates;
+const assertUniqueReorderUpdateIds = (updates: ReorderUpdate[]): void => {
   const ids = updates.map((update) => update.id);
   const uniqueIdCount = new Set(ids).size;
   if (uniqueIdCount !== ids.length) {
     throw conflictError('Duplicate pattern IDs in reorder payload.');
   }
+};
 
-  const repository = await getValidationPatternRepository();
-  const currentPatterns = await repository.listPatterns();
-  const currentById = new Map<string, ProductValidationPattern>(
-    currentPatterns.map((pattern: ProductValidationPattern) => [pattern.id, pattern])
+const mapPatternsById = (
+  patterns: ProductValidationPattern[]
+): Map<string, ProductValidationPattern> =>
+  new Map<string, ProductValidationPattern>(
+    patterns.map((pattern: ProductValidationPattern) => [pattern.id, pattern])
   );
 
+const assertReorderUpdatesAreFresh = (
+  updates: ReorderUpdate[],
+  currentById: Map<string, ProductValidationPattern>
+): void => {
   for (const update of updates) {
     const current = currentById.get(update.id);
     if (!current) {
@@ -57,25 +63,47 @@ export async function POST_handler(_req: NextRequest, ctx: ApiHandlerContext): P
       });
     }
   }
+};
 
+const buildReorderUpdateInput = (update: ReorderUpdate): UpdateProductValidationPatternInput => {
+  const input: UpdateProductValidationPatternInput = {
+    expectedUpdatedAt: normalizeNullableTrimmed(update.expectedUpdatedAt) ?? null,
+  };
+  if (update.sequence !== undefined) input.sequence = update.sequence;
+  if (update.sequenceGroupId !== undefined) {
+    input.sequenceGroupId = normalizeNullableTrimmed(update.sequenceGroupId) ?? null;
+  }
+  if (update.sequenceGroupLabel !== undefined) {
+    input.sequenceGroupLabel = normalizeNullableTrimmed(update.sequenceGroupLabel) ?? null;
+  }
+  if (update.sequenceGroupDebounceMs !== undefined) {
+    input.sequenceGroupDebounceMs = update.sequenceGroupDebounceMs;
+  }
+  return input;
+};
+
+const applyReorderUpdates = async (
+  repository: Awaited<ReturnType<typeof getValidationPatternRepository>>,
+  updates: ReorderUpdate[]
+): Promise<ProductValidationPattern[]> => {
   const updatedPatterns: ProductValidationPattern[] = [];
   for (const update of updates) {
-    const input: UpdateProductValidationPatternInput = {};
-    if (update.sequence !== undefined) input.sequence = update.sequence;
-    if (update.sequenceGroupId !== undefined) {
-      input.sequenceGroupId = normalizeNullableTrimmed(update.sequenceGroupId) ?? null;
-    }
-    if (update.sequenceGroupLabel !== undefined) {
-      input.sequenceGroupLabel = normalizeNullableTrimmed(update.sequenceGroupLabel) ?? null;
-    }
-    if (update.sequenceGroupDebounceMs !== undefined) {
-      input.sequenceGroupDebounceMs = update.sequenceGroupDebounceMs;
-    }
-    input.expectedUpdatedAt = normalizeNullableTrimmed(update.expectedUpdatedAt) ?? null;
-
-    const updated = await repository.updatePattern(update.id, input);
+    const updated = await repository.updatePattern(update.id, buildReorderUpdateInput(update));
     updatedPatterns.push(updated);
   }
+  return updatedPatterns;
+};
+
+export async function POST_handler(_req: NextRequest, ctx: ApiHandlerContext): Promise<Response> {
+  const body = ctx.body as z.infer<typeof reorderPayloadSchema>;
+  const updates = body.updates;
+  assertUniqueReorderUpdateIds(updates);
+
+  const repository = await getValidationPatternRepository();
+  const currentPatterns = await repository.listPatterns();
+  assertReorderUpdatesAreFresh(updates, mapPatternsById(currentPatterns));
+
+  const updatedPatterns = await applyReorderUpdates(repository, updates);
 
   invalidateValidationPatternRuntimeCache();
 

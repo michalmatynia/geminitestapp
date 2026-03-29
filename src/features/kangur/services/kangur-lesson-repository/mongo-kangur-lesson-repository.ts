@@ -1,8 +1,14 @@
 import 'server-only';
 
-import type { Db, Document, Filter } from 'mongodb';
+import type { Collection, Db, Document, Filter } from 'mongodb';
 
-import { canonicalizeKangurLessons, createDefaultKangurLessons } from '@/features/kangur/settings';
+import {
+  canonicalizeKangurLessons,
+  createDefaultKangurLessons,
+  KANGUR_LESSONS_SETTING_KEY,
+  parseKangurLessons,
+} from '@/features/kangur/settings';
+import { readKangurSettingValue } from '@/features/kangur/services/kangur-settings-repository';
 import type { KangurLesson } from '@kangur/contracts';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 
@@ -87,12 +93,56 @@ const toLesson = (doc: MongoKangurLessonDocument): KangurLesson => ({
   ...(doc.subsectionId ? { subsectionId: doc.subsectionId } : {}),
 });
 
+const seedMissingLessons = async (
+  collection: Collection<MongoKangurLessonDocument>,
+  lessons: readonly KangurLesson[]
+): Promise<boolean> => {
+  if (lessons.length === 0) {
+    return false;
+  }
+
+  const now = new Date();
+  await collection.bulkWrite(
+    lessons.map((lesson) => ({
+      updateOne: {
+        filter: { _id: lesson.id },
+        update: {
+          $setOnInsert: {
+            ...lesson,
+            id: lesson.id,
+            createdAt: now,
+            updatedAt: now,
+          },
+        },
+        upsert: true,
+      },
+    })),
+    { ordered: false }
+  );
+
+  return true;
+};
+
+const seedLessonsFromLegacySettingsOrDefaults = async (
+  collection: Collection<MongoKangurLessonDocument>
+): Promise<boolean> => {
+  const rawLessons = await readKangurSettingValue(KANGUR_LESSONS_SETTING_KEY);
+  const sourceLessons =
+    rawLessons !== null ? parseKangurLessons(rawLessons) : createDefaultKangurLessons();
+
+  return await seedMissingLessons(collection, sourceLessons);
+};
+
 export const mongoKangurLessonRepository: KangurLessonRepository = {
   async listLessons(input?: KangurLessonListInput): Promise<KangurLesson[]> {
     const db = await getMongoDb();
     await ensureIndexes(db);
     const collection = db.collection<MongoKangurLessonDocument>(COLLECTION);
-    const docs = await collection.find(buildFilter(input)).sort({ sortOrder: 1, id: 1 }).toArray();
+    let docs = await collection.find(buildFilter(input)).sort({ sortOrder: 1, id: 1 }).toArray();
+    if (docs.length === 0) {
+      await seedLessonsFromLegacySettingsOrDefaults(collection);
+      docs = await collection.find(buildFilter(input)).sort({ sortOrder: 1, id: 1 }).toArray();
+    }
     if (docs.length === 0) {
       const fallbackFilter: Filter<MongoKangurLessonDocument> = {};
       if (input?.subject) {

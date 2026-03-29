@@ -1,11 +1,13 @@
 import 'server-only';
 
-import type { Db, Document, Filter } from 'mongodb';
+import type { Collection, Db, Document, Filter } from 'mongodb';
 
+import { getKangurGameBuiltInInstancesForGame, getKangurGameDefinition } from '@/features/kangur/games';
 import type { KangurGameInstance } from '@/shared/contracts/kangur-game-instances';
 import {
   kangurGameInstanceSchema,
 } from '@/shared/contracts/kangur-game-instances';
+import type { KangurGameId } from '@/shared/contracts/kangur-games';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 
 import type {
@@ -101,16 +103,77 @@ const toGameInstance = (
   };
 };
 
+const resolveSeedGameId = (
+  input?: KangurGameInstanceListInput
+): string | null => {
+  if (input?.gameId) {
+    return input.gameId;
+  }
+
+  if (!input?.instanceId) {
+    return null;
+  }
+
+  const [candidate] = input.instanceId.split(':instance:');
+  return candidate?.trim() ? candidate.trim() : null;
+};
+
+const seedMissingBuiltInInstancesForGame = async (
+  collection: Collection<MongoKangurGameInstanceDocument>,
+  gameId?: string | null
+): Promise<boolean> => {
+  if (!gameId) {
+    return false;
+  }
+
+  const builtInInstances = getKangurGameBuiltInInstancesForGame(
+    getKangurGameDefinition(gameId as KangurGameId)
+  );
+  if (builtInInstances.length === 0) {
+    return false;
+  }
+
+  const now = new Date();
+  await collection.bulkWrite(
+    builtInInstances.map((instance) => ({
+      updateOne: {
+        filter: { _id: instance.id },
+        update: {
+          $setOnInsert: {
+            ...instance,
+            gameId,
+            id: instance.id,
+            createdAt: now,
+            updatedAt: now,
+          },
+        },
+        upsert: true,
+      },
+    })),
+    { ordered: false }
+  );
+
+  return true;
+};
+
 export const mongoKangurGameInstanceRepository: KangurGameInstanceRepository = {
   async listInstances(input?: KangurGameInstanceListInput): Promise<KangurGameInstance[]> {
     const db = await getMongoDb();
     await ensureIndexes(db);
 
     const collection = db.collection<MongoKangurGameInstanceDocument>(COLLECTION);
-    const docs = await collection
+    let docs = await collection
       .find(buildFilter(input))
       .sort({ sortOrder: 1, id: 1 })
       .toArray();
+
+    if (docs.length === 0) {
+      await seedMissingBuiltInInstancesForGame(collection, resolveSeedGameId(input));
+      docs = await collection
+        .find(buildFilter(input))
+        .sort({ sortOrder: 1, id: 1 })
+        .toArray();
+    }
 
     return docs.map(toGameInstance);
   },

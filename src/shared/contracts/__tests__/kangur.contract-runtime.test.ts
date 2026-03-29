@@ -125,6 +125,15 @@ describe('kangur contract runtime', () => {
     ).toBe('english');
   });
 
+  it('resolves English score subjects from comparatives and superlatives operations', () => {
+    expect(
+      resolveKangurScoreSubject({
+        operation: 'english_comparatives_superlatives',
+        subject: null,
+      })
+    ).toBe('english');
+  });
+
   it('resolves English score subjects from general adverb operations', () => {
     expect(
       resolveKangurScoreSubject({

@@ -1,6 +1,6 @@
 import 'server-only';
 
-import type { Db, Document } from 'mongodb';
+import type { Collection, Db, Document } from 'mongodb';
 
 import { createDefaultKangurGames } from '@/features/kangur/games';
 import type { KangurGameDefinition } from '@/shared/contracts/kangur-games';
@@ -74,15 +74,53 @@ const toGameDefinition = (doc: MongoKangurGameDocument): KangurGameDefinition =>
   };
 };
 
+const seedMissingGames = async (
+  collection: Collection<MongoKangurGameDocument>
+): Promise<boolean> => {
+  const defaults = createDefaultKangurGames();
+  if (defaults.length === 0) {
+    return false;
+  }
+
+  const now = new Date();
+  await collection.bulkWrite(
+    defaults.map((game) => ({
+      updateOne: {
+        filter: { _id: game.id },
+        update: {
+          $setOnInsert: {
+            ...game,
+            id: game.id,
+            createdAt: now,
+            updatedAt: now,
+          },
+        },
+        upsert: true,
+      },
+    })),
+    { ordered: false }
+  );
+
+  return true;
+};
+
 export const listKangurGames = async (): Promise<KangurGameDefinition[]> => {
   const db = await getMongoDb();
   await ensureIndexes(db);
 
   const collection = db.collection<MongoKangurGameDocument>(COLLECTION);
-  const docs = await collection
+  let docs = await collection
     .find({})
     .sort({ sortOrder: 1, title: 1, id: 1 })
     .toArray();
+
+  if (docs.length === 0) {
+    await seedMissingGames(collection);
+    docs = await collection
+      .find({})
+      .sort({ sortOrder: 1, title: 1, id: 1 })
+      .toArray();
+  }
 
   if (docs.length === 0) {
     return createDefaultKangurGames();

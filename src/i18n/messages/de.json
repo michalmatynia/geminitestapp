@@ -228,22 +228,22 @@
     "siteAppearance": "Seitendarstellung"
   },
   "KangurPublic": {
-    "routeLoading": "Kangur wird geladen...",
-    "entryLoading": "Kangur wird geladen...",
+    "routeLoading": "Wird geladen...",
+    "entryLoading": "Wird geladen...",
     "loaderStatus": "Wird geladen",
-    "loaderSrLabel": "Kangur-Anwendung wird geladen",
-    "errorTitle": "In Kangur ist ein Fehler aufgetreten",
-    "errorDescription": "Beim Laden der Kangur-Anwendung ist ein Fehler aufgetreten.",
+    "loaderSrLabel": "Anwendung wird geladen",
+    "errorTitle": "In StudiQ ist ein Fehler aufgetreten",
+    "errorDescription": "Beim Laden der StudiQ-Anwendung ist ein Fehler aufgetreten.",
     "tryAgain": "Erneut versuchen",
-    "backToHome": "Zuruck zu Kangur",
-    "loadingApp": "Kangur-App wird geladen",
-    "loadingPage": "Kangur-Seite wird geladen",
-    "loadingLanguage": "Kangur-Sprache wird gewechselt",
+    "backToHome": "Zuruck zu StudiQ",
+    "loadingApp": "Anwendung wird geladen",
+    "loadingPage": "Seite wird geladen",
+    "loadingLanguage": "Sprache wird gewechselt",
     "accessibility": {
       "pageAnnouncement": "Ansicht: {label}",
       "languageSwitchAnnouncement": "Sprache wird gewechselt: {label}",
       "pages": {
-        "Competition": "Mathe-Kanguru",
+        "Competition": "Mathe-StudiQ",
         "Game": "Startseite",
         "GamesLibrary": "Spielebibliothek",
         "Lessons": "Lektionen",
@@ -251,7 +251,7 @@
         "LearnerProfile": "Lernendenprofil",
         "ParentDashboard": "Elterndashboard",
         "Duels": "Duelle",
-        "default": "Kangur-Seite"
+        "default": "StudiQ-Seite"
       }
     }
   },
@@ -311,12 +311,12 @@
         "description": "Konfiguriere das gemischte Training und wahl den Fragenbereich."
       },
       "kangur_setup": {
-        "label": "Mathe-Kanguru-Sitzung einrichten",
-        "description": "Bereite eine Mathe-Kanguru-Sitzung vor."
+        "label": "Mathe-StudiQ-Sitzung einrichten",
+        "description": "Bereite eine Mathe-StudiQ-Sitzung vor."
       },
       "kangur": {
-        "label": "Mathe-Kanguru-Sitzung",
-        "description": "Lose Mathe-Kanguru-Aufgaben Schritt fur Schritt."
+        "label": "Mathe-StudiQ-Sitzung",
+        "description": "Lose Mathe-StudiQ-Aufgaben Schritt fur Schritt."
       },
       "agentic_approval_gate_quiz": {
         "label": "Freigabe-Quiz",
@@ -838,7 +838,7 @@
   },
   "KangurUserAccess": {
     "restricted": "Eingeschränkter Zugriff",
-    "title": "Dieses Konto hat noch keinen Zugriff auf Kangur",
+    "title": "Dieses Konto hat noch keinen Zugriff auf StudiQ",
     "description": "Es sieht so aus, als wäre dein Konto noch nicht zur App hinzugefügt worden. Kontaktiere einen Administrator, um Zugriff anzufordern.",
     "checkLabel": "Falls das ein Fehler ist, prüfe:",
     "checkCurrentAccount": "ob du mit dem richtigen Konto angemeldet bist,",
@@ -847,7 +847,7 @@
   },
   "KangurLogin": {
     "defaultLoginTitle": "Anmelden",
-    "defaultSessionTitle": "Anmeldung bei Kangur",
+    "defaultSessionTitle": "Anmeldung bei StudiQ",
     "defaultSessionDescription": "Eltern melden sich mit E-Mail und Passwort an. Schüler melden sich mit Nickname und Passwort an.",
     "checkInboxLabel": "Postfach prüfen: {email}",
     "checkInboxTitle": "Postfach prüfen",
@@ -890,7 +890,7 @@
     "identifierLabel": "E-Mail oder Nickname des Schülers",
     "createAccountIdentifierPlaceholder": "eltern@example.com",
     "identifierPlaceholder": "E-Mail oder Nickname eingeben",
-    "signInModeHint": "Geben Sie die E-Mail der Eltern oder den Nickname des Schülers ein. Kangur wählt den passenden Anmeldeweg.",
+    "signInModeHint": "Geben Sie die E-Mail der Eltern oder den Nickname des Schülers ein. StudiQ wählt den passenden Anmeldeweg.",
     "parentLoginModeHint": "Das sieht nach einer Eltern-Anmeldung aus. Verwenden Sie die E-Mail der Eltern und das Kontopasswort.",
     "studentLoginModeHint": "Das sieht nach einer Schüler-Anmeldung aus. Verwenden Sie den Nickname des Schülers, nicht die E-Mail.",
     "createAccountModeHint": "Erstellen Sie ein Elternkonto mit einer E-Mail-Adresse und bestätigen Sie die Adresse danach in der E-Mail.",
@@ -911,7 +911,7 @@
     "loginFormAriaLabel": "Anmeldeformular",
     "loginSubmit": "Anmelden",
     "loginSubmitting": "Anmeldung läuft...",
-    "openingSpaceButtonLabel": "Kangur wird geöffnet...",
+    "openingSpaceButtonLabel": "StudiQ wird geöffnet...",
     "continueWith": "Oder weiter mit",
     "signupFormAriaLabel": "Registrierungsformular für Eltern",
     "parentEmailLabel": "E-Mail der Eltern",
@@ -1183,7 +1183,7 @@
     "mobileMenu": {
       "open": "Menü öffnen",
       "close": "Menü schließen",
-      "title": "Kangur-Menü",
+      "title": "StudiQ-Menü",
       "description": "Verwende Tab, um durch die Navigationsoptionen zu wechseln, und Escape, um das Menü zu schließen."
     },
     "subject": {
@@ -1204,7 +1204,7 @@
   "KangurGamesLibraryPage": {
     "introEyebrow": "Gemeinsame Spiele-Domäne",
     "title": "Spielebibliothek",
-    "description": "Ein gemeinsamer Katalog für alle Kangur-Spiele, geordnet nach Engines, Mechaniken, Varianten und Lektion-Verknüpfungen.",
+    "description": "Ein gemeinsamer Katalog für alle StudiQ-Spiele, geordnet nach Engines, Mechaniken, Varianten und Lektion-Verknüpfungen.",
     "groupEyebrow": "Lernbereich",
     "groupDescription": "{count, plural, one {# Spiel in diesem Bereich.} other {# Spiele in diesem Bereich.}}",
     "engineGroupsEyebrow": "Konsolidierungsansicht",
@@ -1768,7 +1768,7 @@
       "lessons": "Lektionen",
       "play": "Los geht's!",
       "duels": "Duelle",
-      "kangur": "Mathe-Kanguru"
+      "kangur": "Mathe-StudiQ"
     }
   },
   "KangurTests": {
@@ -4052,7 +4052,7 @@
         "menu": "Menü"
       },
       "summary": {
-        "perfect": "Perfektes Ergebnis! Du bist ein Kangur-Champion! 🦘",
+        "perfect": "Perfektes Ergebnis! Du bist ein StudiQ-Champion! 🦘",
         "good": "Stark! Bereit für den Wettbewerb!",
         "fair": "Gute Arbeit! Übe weiter!",
         "retry": "Gib nicht auf! Versuch es noch einmal!"
@@ -4062,9 +4062,9 @@
       "actions": {
         "backToMenu": "Zurück zum Menü"
       },
-      "progressAriaLabel": "Genauigkeit im Kangur-Test",
+      "progressAriaLabel": "Genauigkeit im StudiQ-Test",
       "summary": {
-        "perfect": "Perfektes Ergebnis! Du bist ein Kangur-Champion! 🦘",
+        "perfect": "Perfektes Ergebnis! Du bist ein StudiQ-Champion! 🦘",
         "good": "Stark! Bereit für den Wettbewerb!",
         "fair": "Gute Arbeit! Übe weiter!",
         "retry": "Gib nicht auf! Versuch es noch einmal!"
@@ -4706,7 +4706,7 @@
       },
       "mode": {
         "gentle": {
-          "description": "Ein leichteres Trainingsset ist der sicherste Einstieg in den Kanguru-Modus ohne zu starken Schwierigkeitssprung.",
+          "description": "Ein leichteres Trainingsset ist der sicherste Einstieg in den StudiQ-Modus ohne zu starken Schwierigkeitssprung.",
           "label": "Sanfter Start",
           "title": "Wir empfehlen den Einstieg mit dem 3-Punkte-Trainingsset"
         },
@@ -9230,7 +9230,7 @@
         "showCanvasOnly": "Show canvas only"
       },
       "toolbar": {
-        "backToKangur": "Back to Kangur",
+        "backToKangur": "Back to StudiQ",
         "status": {
           "saved": "Saved",
           "unsaved": "Unsaved"
@@ -9254,7 +9254,7 @@
         "saveProject": "Save project"
       },
       "empty": {
-        "selectScreen": "Select a Kangur screen to edit.",
+        "selectScreen": "Select a StudiQ screen to edit.",
         "noSections": "No sections yet. Use the structure panel to add sections."
       }
     },
@@ -9342,7 +9342,7 @@
           "lessons": "Lessons",
           "play": "Play",
           "training": "Training",
-          "kangur": "Kangur"
+          "kangur": "StudiQ"
         }
       },
       "inputs": {
@@ -9350,7 +9350,7 @@
         "ariaLabel": "Input preview"
       },
       "typography": {
-        "heading": "Kangur Heading",
+        "heading": "StudiQ Heading",
         "bodySample": "Body text sample with the current base size and line height.",
         "layout": "Layout"
       },

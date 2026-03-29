@@ -98,14 +98,12 @@ vi.mock('@/shared/ui', () => ({
     ...props
   }: React.InputHTMLAttributes<HTMLInputElement> & {
     value?: string;
-    onChange?: ((value: string) => void) | React.ChangeEventHandler<HTMLInputElement>;
+    onChange?: React.ChangeEventHandler<HTMLInputElement>;
   }) => (
     <input
       value={value}
       onChange={(event) => {
-        if (typeof onChange === 'function') {
-          onChange(event.target.value as never);
-        }
+        onChange?.(event);
       }}
       {...props}
     />
@@ -146,6 +144,8 @@ vi.mock('@/shared/ui', () => ({
     headerActions,
     children,
     data,
+    renderRowDetails,
+    expanded,
     renderExpandedRow,
     isRowExpanded,
   }: {
@@ -153,6 +153,10 @@ vi.mock('@/shared/ui', () => ({
     headerActions?: React.ReactNode;
     children?: React.ReactNode;
     data?: Array<{ baseOrderId: string; buyerName?: string }>;
+    renderRowDetails?: (args: {
+      row: { original: { baseOrderId: string; buyerName?: string } };
+    }) => React.ReactNode;
+    expanded?: Record<string, boolean>;
     renderExpandedRow?: (row: { baseOrderId: string; buyerName?: string }) => React.ReactNode;
     isRowExpanded?: (row: { baseOrderId: string; buyerName?: string }) => boolean;
   }) => (
@@ -165,6 +169,9 @@ vi.mock('@/shared/ui', () => ({
         <div key={row.baseOrderId}>
           <span>{row.baseOrderId}</span>
           <span>{row.buyerName}</span>
+          {expanded?.[row.baseOrderId] && renderRowDetails
+            ? renderRowDetails({ row: { original: row } })
+            : null}
           {isRowExpanded?.(row) && renderExpandedRow ? renderExpandedRow(row) : null}
         </div>
       ))}
@@ -314,6 +321,7 @@ function createState(overrides: Partial<MockState> = {}) {
 
 describe('AdminProductOrdersImportPage', () => {
   beforeEach(() => {
+    buildColumns.mockReset();
     buildColumns.mockReturnValue([]);
   });
 
@@ -327,9 +335,15 @@ describe('AdminProductOrdersImportPage', () => {
     expect(screen.getByText('No preview loaded')).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole('button', { name: /quick import/i }));
-    expect(state.quickImportMutation.mutateAsync).toHaveBeenCalledWith({
-      connectionId: 'conn-1',
-    });
+    expect(state.quickImportMutation.mutateAsync).toHaveBeenCalledWith(
+      expect.objectContaining({
+        connectionId: 'conn-1',
+        dateFrom: undefined,
+        dateTo: undefined,
+        statusId: undefined,
+        limit: 50,
+      })
+    );
 
     fireEvent.click(screen.getByRole('button', { name: /load preview/i }));
     await waitFor(() => expect(state.handlePreview).toHaveBeenCalled());
@@ -451,10 +465,11 @@ describe('AdminProductOrdersImportPage', () => {
 
     render(<AdminProductOrdersImportPage />);
 
-    expect(buildColumns).toHaveBeenCalledWith(
+    expect(buildColumns).toHaveBeenLastCalledWith(
       expect.objectContaining({
         expanded: { '1001': true },
-        onToggleExpanded: state.handleToggleExpanded,
+        handleToggleExpanded: state.handleToggleExpanded,
+        isPreviewStale: false,
       })
     );
     expect(screen.getByTestId('order-details:1001')).toBeInTheDocument();

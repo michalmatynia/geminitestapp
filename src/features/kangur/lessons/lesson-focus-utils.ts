@@ -56,6 +56,16 @@ export type KangurFocusedLessonScope = {
   ageGroup: KangurLessonAgeGroup | null;
 };
 
+const resolveFocusedLessonTemplate = (
+  componentId: KangurLessonComponentId,
+  templateMap?: Map<string, KangurLessonTemplate>,
+): KangurLessonTemplate | null => {
+  if (templateMap) {
+    return templateMap.get(componentId) ?? null;
+  }
+  return KANGUR_LESSON_LIBRARY[componentId] ?? null;
+};
+
 export const resolveFocusedLessonScope = (
   focusToken: string,
   templateMap?: Map<string, KangurLessonTemplate>,
@@ -65,20 +75,7 @@ export const resolveFocusedLessonScope = (
     return null;
   }
 
-  if (templateMap) {
-    const template = templateMap.get(componentId);
-    if (!template) {
-      return null;
-    }
-
-    return {
-      componentId,
-      subject: template.subject,
-      ageGroup: template.ageGroup ?? null,
-    };
-  }
-
-  const template = KANGUR_LESSON_LIBRARY[componentId];
+  const template = resolveFocusedLessonTemplate(componentId, templateMap);
   if (!template) {
     return null;
   }

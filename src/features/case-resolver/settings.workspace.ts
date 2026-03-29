@@ -75,20 +75,37 @@ const resolveSafeCaseParentId = (
   parentCaseId: string | null,
   caseMap: Map<string, CaseResolverFile>
 ): string | null => {
+  const candidateParentId = resolveParentCaseCandidate(caseId, parentCaseId, caseMap);
+  if (!candidateParentId) return null;
+  if (caseType !== 'case') return candidateParentId;
+  return hasCircularCaseParentChain(caseId, candidateParentId, caseMap) ? null : candidateParentId;
+};
+
+const resolveParentCaseCandidate = (
+  caseId: string,
+  parentCaseId: string | null,
+  caseMap: Map<string, CaseResolverFile>
+): string | null => {
   if (!parentCaseId || parentCaseId === caseId) return null;
   const parentCase = caseMap.get(parentCaseId);
-  if (parentCase?.fileType !== 'case') return null;
-  if (caseType !== 'case') return parentCaseId;
+  return parentCase?.fileType === 'case' ? parentCaseId : null;
+};
+
+const hasCircularCaseParentChain = (
+  caseId: string,
+  parentCaseId: string,
+  caseMap: Map<string, CaseResolverFile>
+): boolean => {
   let current: string | null = parentCaseId;
   const visited = new Set<string>();
   while (current) {
-    if (current === caseId || visited.has(current)) return null;
+    if (current === caseId || visited.has(current)) return true;
     visited.add(current);
     const parent = caseMap.get(current);
-    if (parent?.fileType !== 'case') return null;
+    if (parent?.fileType !== 'case') return true;
     current = parent.parentCaseId ?? null;
   }
-  return parentCaseId;
+  return false;
 };
 
 export const createDefaultCaseResolverWorkspace = (): CaseResolverWorkspace => {

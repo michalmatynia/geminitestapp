@@ -30,9 +30,11 @@ import {
 } from './KangurAssignmentManager.cards';
 import {
   FILTER_OPTION_VALUES,
+  TIME_LIMIT_MINUTES_MAX,
+  TIME_LIMIT_MINUTES_MIN,
 } from './KangurAssignmentManager.helpers';
 import { useKangurAssignmentManagerState } from './KangurAssignmentManager.hooks';
-import { KangurAssignmentManagerTimeLimitModal } from './KangurAssignmentManager.modals';
+import { renderKangurAssignmentManagerTimeLimitModal } from './KangurAssignmentManagerTimeLimitModal';
 import type { KangurAssignmentManagerProps } from './KangurAssignmentManager.types';
 import { KangurAssignmentPriorityChip } from '@/features/kangur/ui/components/KangurAssignmentPriorityChip';
 
@@ -57,6 +59,7 @@ export function KangurAssignmentManager(
     setActiveListTab,
     timeLimitDraft,
     setTimeLimitDraft,
+    timeLimitTarget,
     isLoading,
     error,
     isTimeLimitModalOpen,
@@ -100,18 +103,25 @@ export function KangurAssignmentManager(
 
   return (
     <div className={`flex flex-col ${KANGUR_PANEL_GAP_CLASSNAME}`}>
-      <KangurAssignmentManagerTimeLimitModal
-        isOpen={isTimeLimitModalOpen}
-        onOpenChange={(open) => !open && handleCloseTimeLimitModal()}
-        title={translations('timeLimit.modalTitle')}
-        draftValue={timeLimitDraft}
-        onDraftChange={setTimeLimitDraft}
-        onSave={() => void handleSaveTimeLimit()}
-        saveLabel={timeLimitSaveLabel}
-        isDisabled={isTimeLimitSaveDisabled}
-        error={timeLimitParsedError}
-        preview={timeLimitPreview}
-      />
+      {renderKangurAssignmentManagerTimeLimitModal({
+        isOpen: isTimeLimitModalOpen,
+        onClose: handleCloseTimeLimitModal,
+        onSave: () => void handleSaveTimeLimit(),
+        timeLimitDraft,
+        onTimeLimitDraftChange: setTimeLimitDraft,
+        timeLimitTarget: timeLimitTarget
+          ? {
+              title: timeLimitTarget.title,
+              description: timeLimitTarget.description ?? null,
+            }
+          : null,
+        timeLimitPreview,
+        timeLimitParsedError,
+        isSaveDisabled: isTimeLimitSaveDisabled,
+        saveLabel: timeLimitSaveLabel,
+        minMinutes: TIME_LIMIT_MINUTES_MIN,
+        maxMinutes: TIME_LIMIT_MINUTES_MAX,
+      })}
 
       {shouldShowCatalog && (
         <KangurGlassPanel

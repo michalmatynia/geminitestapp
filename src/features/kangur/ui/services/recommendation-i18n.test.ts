@@ -11,6 +11,7 @@ describe('resolveLocalizedRecommendationActivityLabel', () => {
   const translate = createTranslator({
     'activityLabels.english_articles': 'Articles',
     'activityLabels.english_adjectives': 'Adjectives',
+    'activityLabels.english_comparatives_superlatives': 'Comparatives & superlatives',
     'activityLabels.english_adverbs': 'Adverbs',
     'activityLabels.english_adverbs_frequency': 'Adverbs of frequency',
     'activityLabels.english_prepositions_time_place': 'Time and place prepositions',
@@ -34,6 +35,16 @@ describe('resolveLocalizedRecommendationActivityLabel', () => {
         translate,
       })
     ).toBe('Adjectives');
+  });
+
+  it('maps bare compare-and-crown activity keys to the comparatives lesson label', () => {
+    expect(
+      resolveLocalizedRecommendationActivityLabel({
+        activityKey: 'english_compare_and_crown',
+        fallbackLabel: 'Compare and crown',
+        translate,
+      })
+    ).toBe('Comparatives & superlatives');
   });
 
   it('maps the prepositions order activity to the shared prepositions label', () => {

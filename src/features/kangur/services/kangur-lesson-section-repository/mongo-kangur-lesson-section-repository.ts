@@ -1,6 +1,6 @@
 import 'server-only';
 
-import type { Db, Document, Filter } from 'mongodb';
+import type { Collection, Db, Document, Filter } from 'mongodb';
 
 import { createDefaultKangurSections } from '@/features/kangur/lessons/lesson-section-defaults';
 import type { KangurLessonSection } from '@/shared/contracts/kangur-lesson-sections';
@@ -84,15 +84,53 @@ const toSection = (doc: MongoKangurLessonSectionDocument): KangurLessonSection =
   };
 };
 
+const seedMissingSections = async (
+  collection: Collection<MongoKangurLessonSectionDocument>
+): Promise<boolean> => {
+  const defaults = createDefaultKangurSections();
+  if (defaults.length === 0) {
+    return false;
+  }
+
+  const now = new Date();
+  await collection.bulkWrite(
+    defaults.map((section) => ({
+      updateOne: {
+        filter: { _id: section.id },
+        update: {
+          $setOnInsert: {
+            ...section,
+            id: section.id,
+            createdAt: now,
+            updatedAt: now,
+          },
+        },
+        upsert: true,
+      },
+    })),
+    { ordered: false }
+  );
+
+  return true;
+};
+
 export const mongoKangurLessonSectionRepository: KangurLessonSectionRepository = {
   async listSections(input?: KangurLessonSectionListInput): Promise<KangurLessonSection[]> {
     const db = await getMongoDb();
     await ensureIndexes(db);
     const collection = db.collection<MongoKangurLessonSectionDocument>(COLLECTION);
-    const docs = await collection
+    let docs = await collection
       .find(buildFilter(input))
       .sort({ sortOrder: 1, id: 1 })
       .toArray();
+
+    if (docs.length === 0) {
+      await seedMissingSections(collection);
+      docs = await collection
+        .find(buildFilter(input))
+        .sort({ sortOrder: 1, id: 1 })
+        .toArray();
+    }
 
     if (docs.length === 0) {
       const fallbackFilter: Filter<MongoKangurLessonSectionDocument> = {};

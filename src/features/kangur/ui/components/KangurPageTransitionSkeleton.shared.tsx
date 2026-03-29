@@ -38,27 +38,27 @@ const DEFAULT_SKELETON_LOCALE: KangurSkeletonLocale = 'pl';
 export const KANGUR_SKELETON_COPY_BY_LOCALE: Record<KangurSkeletonLocale, KangurSkeletonCopy> = {
   de: {
     lessonsPageTitle: 'Lektionen',
-    loadingApp: 'Kangur-App wird geladen',
-    loadingLanguage: 'Kangur-Sprache wird gewechselt',
-    loadingPage: 'Kangur-Seite wird geladen',
+    loadingApp: 'Anwendung wird geladen',
+    loadingLanguage: 'Sprache wird gewechselt',
+    loadingPage: 'Seite wird geladen',
   },
   en: {
     lessonsPageTitle: 'Lessons',
-    loadingApp: 'Loading Kangur app',
-    loadingLanguage: 'Switching Kangur language',
-    loadingPage: 'Loading Kangur page',
+    loadingApp: 'Loading application',
+    loadingLanguage: 'Switching language',
+    loadingPage: 'Loading page',
   },
   pl: {
     lessonsPageTitle: 'Lekcje',
-    loadingApp: 'Ładowanie aplikacji Kangur',
-    loadingLanguage: 'Przełączanie języka Kangura',
-    loadingPage: 'Ładowanie strony Kangura',
+    loadingApp: 'Ładowanie aplikacji',
+    loadingLanguage: 'Przełączanie języka',
+    loadingPage: 'Ładowanie strony',
   },
   uk: {
     lessonsPageTitle: 'Уроки',
-    loadingApp: 'Завантаження застосунку Kangur',
-    loadingLanguage: 'Перемикання мови Kangur',
-    loadingPage: 'Завантаження сторінки Kangur',
+    loadingApp: 'Завантаження застосунку',
+    loadingLanguage: 'Перемикання мови',
+    loadingPage: 'Завантаження сторінки',
   },
 };
 

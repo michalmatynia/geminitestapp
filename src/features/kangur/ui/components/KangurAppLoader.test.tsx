@@ -56,7 +56,7 @@ describe('KangurAppLoader', () => {
     expect(panel).toHaveAttribute('data-loader-layout', 'expanded-card');
     expect(screen.getByTestId('kangur-app-loader-copy')).toBeInTheDocument();
     expect(screen.getByText('StudiQ')).toBeInTheDocument();
-    expect(screen.getByTestId('kangur-app-loader-copy')).toHaveTextContent('Ładowanie');
+    expect(screen.getByTestId('kangur-app-loader-copy')).not.toHaveTextContent('Ładowanie');
     expect(loader).toHaveAttribute('data-loader-offset-top-bar', 'false');
   });
 

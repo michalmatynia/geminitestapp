@@ -28,7 +28,10 @@ import {
   createLessonCompletionReward,
   loadProgress,
 } from '@/features/kangur/ui/services/progress';
-import type { LessonTranslate } from '@/features/kangur/ui/components/lesson-copy';
+import {
+  createLessonFallbackTranslate,
+  type LessonTranslate,
+} from '@/features/kangur/ui/components/lesson-copy';
 import {
   createGeometryShapesLessonTranslate,
   resolveGeometryShapesLessonContent,
@@ -297,12 +300,9 @@ export default function GeometryShapesLesson({ lessonTemplate }: LessonProps): R
   const resolvedTemplate = lessonTemplate ?? runtimeTemplate;
   const translations = useTranslations('KangurStaticLessons.geometryShapes');
   const [rewarded, setRewarded] = useState(false);
-  const fallbackTranslate = Object.assign(
-    (key: string): string => translations(key as never),
-    {
-      has: (key: string): boolean => translations.has(key as never),
-    },
-  ) as LessonTranslate & { has: (key: string) => boolean };
+  const fallbackTranslate = createLessonFallbackTranslate(
+    translations as LessonTranslate & { has?: (key: string) => boolean }
+  );
   const resolvedContent = resolveGeometryShapesLessonContent(resolvedTemplate, fallbackTranslate);
   const translate = createGeometryShapesLessonTranslate(resolvedContent);
   const sections = buildGeometryShapesSections(translate);

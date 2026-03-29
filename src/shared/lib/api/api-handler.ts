@@ -31,6 +31,7 @@ import {
   isSameOriginRequest,
   isTrustedOriginRequest,
 } from '@/shared/lib/security/csrf';
+import { resolveServiceFromSource } from '@/shared/lib/api/source-service';
 import { logger } from '@/shared/utils/logger';
 
 import type { ZodSchema } from 'zod';
@@ -91,27 +92,6 @@ const readHeaderTrimmed = (request: NextRequest, key: string): string | null => 
   if (!value) return null;
   const trimmed = value.trim();
   return trimmed.length > 0 ? trimmed : null;
-};
-
-const resolveServiceFromSource = (source: string): string => {
-  const trimmed = source.trim();
-  if (!trimmed) return 'api.unknown';
-  const segments = trimmed.split('.').filter(Boolean);
-  const maybeMethod = segments[segments.length - 1];
-  const isMethod =
-    maybeMethod === 'GET' ||
-    maybeMethod === 'POST' ||
-    maybeMethod === 'PUT' ||
-    maybeMethod === 'PATCH' ||
-    maybeMethod === 'DELETE' ||
-    maybeMethod === 'HEAD' ||
-    maybeMethod === 'OPTIONS';
-  const base = isMethod ? segments.slice(0, -1) : segments;
-  const first = base[0];
-  const second = base[1];
-  if (first && second) return `${first}.${second}`;
-  if (first) return first;
-  return 'api.unknown';
 };
 
 const resolveSuccessLoggingPolicy = (options: ApiHandlerOptions): 'all' | 'slow' | 'off' => {
@@ -409,7 +389,8 @@ export function apiHandler(
     const requestId = readHeaderTrimmed(request, 'x-request-id') ?? randomUUID();
     const traceId = readHeaderTrimmed(request, 'x-trace-id') ?? randomUUID();
     const correlationId = readHeaderTrimmed(request, 'x-correlation-id') ?? requestId;
-    const service = options.service?.trim() || resolveServiceFromSource(options.source);
+    const service =
+      options.service?.trim() || resolveServiceFromSource(options.source, 'api.unknown');
     const startTime = performance.now();
     const user = options.resolveSessionUser === false ? null : await getSessionUser();
 
@@ -561,7 +542,8 @@ export function apiHandlerWithParams<P extends Record<string, string | string[]>
     const requestId = readHeaderTrimmed(request, 'x-request-id') ?? randomUUID();
     const traceId = readHeaderTrimmed(request, 'x-trace-id') ?? randomUUID();
     const correlationId = readHeaderTrimmed(request, 'x-correlation-id') ?? requestId;
-    const service = options.service?.trim() || resolveServiceFromSource(options.source);
+    const service =
+      options.service?.trim() || resolveServiceFromSource(options.source, 'api.unknown');
     const startTime = performance.now();
     const user = options.resolveSessionUser === false ? null : await getSessionUser();
 
@@ -791,7 +773,8 @@ async function createErrorResponseWithTiming(
   })();
   const queryKeys = getQueryKeys(request);
   const bodyShape = context.body !== undefined ? summarizeBodyShape(context.body) : null;
-  const service = options.service?.trim() || resolveServiceFromSource(options.source);
+  const service =
+    options.service?.trim() || resolveServiceFromSource(options.source, 'api.unknown');
   const { resolved, userMessage, fingerprint } = await reportError({
     error,
     source: options.source,

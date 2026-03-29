@@ -228,17 +228,17 @@
     "siteAppearance": "Site appearance"
   },
   "KangurPublic": {
-    "routeLoading": "Loading Kangur...",
-    "entryLoading": "Loading Kangur...",
+    "routeLoading": "Loading...",
+    "entryLoading": "Loading...",
     "loaderStatus": "Loading",
-    "loaderSrLabel": "Loading the Kangur app",
-    "errorTitle": "Kangur encountered an error",
-    "errorDescription": "Something went wrong while loading the Kangur application.",
+    "loaderSrLabel": "Loading application",
+    "errorTitle": "StudiQ encountered an error",
+    "errorDescription": "Something went wrong while loading the StudiQ application.",
     "tryAgain": "Try again",
-    "backToHome": "Back to Kangur",
-    "loadingApp": "Loading Kangur app",
-    "loadingPage": "Loading Kangur page",
-    "loadingLanguage": "Switching Kangur language",
+    "backToHome": "Back to StudiQ",
+    "loadingApp": "Loading application",
+    "loadingPage": "Loading page",
+    "loadingLanguage": "Switching language",
     "accessibility": {
       "pageAnnouncement": "View: {label}",
       "languageSwitchAnnouncement": "Switching language: {label}",
@@ -251,7 +251,7 @@
         "LearnerProfile": "Learner profile",
         "ParentDashboard": "Parent dashboard",
         "Duels": "Duels",
-        "default": "Kangur page"
+        "default": "StudiQ page"
       }
     }
   },
@@ -838,7 +838,7 @@
   },
   "KangurUserAccess": {
     "restricted": "Restricted access",
-    "title": "This account does not have access to Kangur yet",
+    "title": "This account does not have access to StudiQ yet",
     "description": "It looks like your account has not been added to the app yet. Contact an administrator to request access.",
     "checkLabel": "If this is a mistake, check:",
     "checkCurrentAccount": "that you are signed in with the correct account,",
@@ -847,7 +847,7 @@
   },
   "KangurLogin": {
     "defaultLoginTitle": "Sign in",
-    "defaultSessionTitle": "Kangur sign in",
+    "defaultSessionTitle": "StudiQ sign in",
     "defaultSessionDescription": "Parents sign in with email and password. Students sign in with their nickname and password.",
     "checkInboxLabel": "Check your inbox: {email}",
     "checkInboxTitle": "Check your inbox",
@@ -890,7 +890,7 @@
     "identifierLabel": "Email or student nickname",
     "createAccountIdentifierPlaceholder": "parent@example.com",
     "identifierPlaceholder": "Enter email or student nickname",
-    "signInModeHint": "Enter the parent email or the student nickname. Kangur will use the right sign-in flow.",
+    "signInModeHint": "Enter the parent email or the student nickname. StudiQ will use the right sign-in flow.",
     "parentLoginModeHint": "This looks like a parent sign-in. Use the parent email and account password.",
     "studentLoginModeHint": "This looks like a student sign-in. Use the student nickname, not an email.",
     "createAccountModeHint": "Create a parent account with an email, then confirm the address from the email message.",
@@ -911,7 +911,7 @@
     "loginFormAriaLabel": "Sign in form",
     "loginSubmit": "Sign in",
     "loginSubmitting": "Signing in...",
-    "openingSpaceButtonLabel": "Opening Kangur...",
+    "openingSpaceButtonLabel": "Opening StudiQ...",
     "continueWith": "Or continue with",
     "signupFormAriaLabel": "Parent registration form",
     "parentEmailLabel": "Parent email",
@@ -1183,7 +1183,7 @@
     "mobileMenu": {
       "open": "Open menu",
       "close": "Close menu",
-      "title": "Kangur menu",
+      "title": "StudiQ menu",
       "description": "Use Tab to move through the navigation options and Escape to close the menu."
     },
     "subject": {
@@ -1204,7 +1204,7 @@
   "KangurGamesLibraryPage": {
     "introEyebrow": "Shared games domain",
     "title": "Games library",
-    "description": "One shared catalog for every Kangur game, organized by engines, mechanics, variants, and lesson links.",
+    "description": "One shared catalog for every StudiQ game, organized by engines, mechanics, variants, and lesson links.",
     "groupEyebrow": "Learning area",
     "groupDescription": "{count, plural, one {# game in this area.} other {# games in this area.}}",
     "engineGroupsEyebrow": "Consolidation view",
@@ -4052,7 +4052,7 @@
         "menu": "Menu"
       },
       "summary": {
-        "perfect": "Perfect score! You are a Kangur champion! 🦘",
+        "perfect": "Perfect score! You are a StudiQ champion! 🦘",
         "good": "Great! Ready for the competition!",
         "fair": "Good job! Keep practising!",
         "retry": "Do not give up! Try again!"
@@ -4062,9 +4062,9 @@
       "actions": {
         "backToMenu": "Back to menu"
       },
-      "progressAriaLabel": "Accuracy in the Kangur exam",
+      "progressAriaLabel": "Accuracy in the StudiQ exam",
       "summary": {
-        "perfect": "Perfect score! You are a Kangur champion! 🦘",
+        "perfect": "Perfect score! You are a StudiQ champion! 🦘",
         "good": "Great! Ready for the competition!",
         "fair": "Good job! Keep practising!",
         "retry": "Do not give up! Try again!"
@@ -9093,7 +9093,7 @@
         "showCanvasOnly": "Show canvas only"
       },
       "toolbar": {
-        "backToKangur": "Back to Kangur",
+        "backToKangur": "Back to StudiQ",
         "status": {
           "saved": "Saved",
           "unsaved": "Unsaved"
@@ -9117,7 +9117,7 @@
         "saveProject": "Save project"
       },
       "empty": {
-        "selectScreen": "Select a Kangur screen to edit.",
+        "selectScreen": "Select a StudiQ screen to edit.",
         "noSections": "No sections yet. Use the structure panel to add sections."
       }
     },
@@ -9205,7 +9205,7 @@
           "lessons": "Lessons",
           "play": "Play",
           "training": "Training",
-          "kangur": "Kangur"
+          "kangur": "StudiQ"
         }
       },
       "inputs": {
@@ -9213,7 +9213,7 @@
         "ariaLabel": "Input preview"
       },
       "typography": {
-        "heading": "Kangur Heading",
+        "heading": "StudiQ Heading",
         "bodySample": "Body text sample with the current base size and line height.",
         "layout": "Layout"
       },

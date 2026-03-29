@@ -78,17 +78,18 @@ export const buildPracticeRecommendationAction = (
   operation: string | null,
   averageAccuracy: number,
   fallbackCopy: KangurLearnerProfileFallbackCopy,
-  translate?: KangurLearnerProfileTranslate
+  translate?: KangurLearnerProfileTranslate,
+  actionLabelKey: 'playNow' | 'startTraining' = 'startTraining'
 ): KangurRouteAction => {
-  const startTrainingLabel = translateKangurLearnerProfileWithFallback(
+  const actionLabel = translateKangurLearnerProfileWithFallback(
     translate,
-    'recommendations.actions.startTraining',
-    fallbackCopy.actions.startTraining
+    `recommendations.actions.${actionLabelKey}`,
+    fallbackCopy.actions[actionLabelKey]
   );
 
   if (!operation || !QUICK_START_OPERATIONS.has(operation)) {
     return {
-      label: startTrainingLabel,
+      label: actionLabel,
       page: 'Game',
       query: {
         quickStart: 'training',
@@ -97,7 +98,7 @@ export const buildPracticeRecommendationAction = (
   }
 
   return {
-    label: startTrainingLabel,
+    label: actionLabel,
     page: 'Game',
     query: {
       quickStart: 'operation',
@@ -183,6 +184,52 @@ export const buildRecommendations = (input: {
       action: buildPracticeRecommendationAction(
         weakestOperation?.operation ?? null,
         weakestOperation?.averageAccuracy ?? 50,
+        fallbackCopy,
+        input.translate,
+        'playNow'
+      ),
+    });
+  }
+
+  if (remainingDailyGames === 0 && input.todayXpEarned > 0 && input.todayXpEarned < input.averageXpPerSession) {
+    recommendations.push({
+      id: 'boost_xp_momentum',
+      title: translateKangurLearnerProfileWithFallback(
+        input.translate,
+        'recommendations.boostXpMomentum.title',
+        fallbackCopy.recommendations.boostXpMomentum.title
+      ),
+      description: strongestOperation
+        ? translateKangurLearnerProfileWithFallback(
+            input.translate,
+            'recommendations.boostXpMomentum.descriptionWithOperation',
+            fallbackCopy.recommendations.boostXpMomentum.descriptionWithOperation(
+              input.todayXpEarned,
+              strongestOperation.label,
+              strongestOperation.averageXpPerSession
+            ),
+            {
+              todayXpEarned: input.todayXpEarned,
+              operation: strongestOperation.label,
+              averageXpPerSession: strongestOperation.averageXpPerSession,
+            }
+          )
+        : translateKangurLearnerProfileWithFallback(
+            input.translate,
+            'recommendations.boostXpMomentum.descriptionFallback',
+            fallbackCopy.recommendations.boostXpMomentum.descriptionFallback(
+              input.todayXpEarned,
+              input.averageXpPerSession
+            ),
+            {
+              todayXpEarned: input.todayXpEarned,
+              xpMomentumTarget: input.averageXpPerSession,
+            }
+          ),
+      priority: 'medium',
+      action: buildPracticeRecommendationAction(
+        strongestOperation?.operation ?? weakestOperation?.operation ?? null,
+        strongestOperation?.averageAccuracy ?? weakestOperation?.averageAccuracy ?? 70,
         fallbackCopy,
         input.translate
       ),

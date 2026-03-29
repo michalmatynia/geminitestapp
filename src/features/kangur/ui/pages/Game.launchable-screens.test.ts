@@ -106,5 +106,11 @@ describe('Game launchable screen registry', () => {
       })
     );
     expect(enMessages.KangurGamePage.screens.english_compare_and_crown_quiz.label).toBeTruthy();
+    expect(plMessages.KangurGamePage.screens.english_compare_and_crown_quiz.description).toBe(
+      'Porownuj dwie rzeczy i wybieraj zwyciezce za pomoca form stopniowania.'
+    );
+    expect(ukMessages.KangurGamePage.screens.english_compare_and_crown_quiz.description).toBe(
+      'Порівнюй дві речі й обирай переможця за допомогою форм вищого й найвищого ступенів.'
+    );
   });
 });

@@ -24,7 +24,10 @@ import {
 } from '@/features/kangur/ui/design/lesson-primitives';
 import { KANGUR_STACK_TIGHT_CLASSNAME } from '@/features/kangur/ui/design/tokens';
 import { KangurUnifiedLesson } from '@/features/kangur/ui/lessons/lesson-components';
-import type { LessonTranslate } from './lesson-copy';
+import {
+  createLessonFallbackTranslate,
+  type LessonTranslate,
+} from './lesson-copy';
 import {
   createLogicalAnalogiesLessonContentFromTranslate,
   LOGICAL_ANALOGIES_LESSON_COMPONENT_CONTENT,
@@ -332,12 +335,9 @@ export default function LogicalAnalogiesLesson({
   const translations = useTranslations('KangurStaticLessons.logicalAnalogies');
   const copy = useMemo(
     () => {
-      const fallbackTranslate = Object.assign(
-        (key: string): string => translations(key as never),
-        {
-          has: (key: string): boolean => translations.has(key as never),
-        },
-      ) as LessonTranslate & { has: (key: string) => boolean };
+      const fallbackTranslate = createLessonFallbackTranslate(
+        translations as LessonTranslate & { has?: (key: string) => boolean }
+      );
 
       if (!resolvedTemplate?.componentContent) {
         return createLogicalAnalogiesLessonContentFromTranslate(fallbackTranslate);

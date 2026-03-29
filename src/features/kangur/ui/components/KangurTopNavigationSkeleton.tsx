@@ -98,7 +98,7 @@ export function KangurTopNavigationSkeleton({
           <div className='flex min-w-0 flex-1 items-center'>
             <nav
               aria-hidden='true'
-              aria-label='Loading Kangur navigation'
+              aria-label='Loading navigation'
               className={cn(KANGUR_TOP_NAV_GROUP_CLASSNAME, 'w-full')}
               data-testid='kangur-top-navigation-skeleton-group'
             >

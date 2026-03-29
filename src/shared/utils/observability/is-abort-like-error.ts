@@ -23,15 +23,26 @@ const readMessage = (value: unknown): string | null => {
   return typeof candidate === 'string' ? candidate : null;
 };
 
+const hasAbortLikeName = (name: string | null): boolean => Boolean(name && ABORT_ERROR_NAMES.has(name));
+
+const isAbortLikeObjectError = (error: unknown): boolean => {
+  const name = readName(error);
+  if (hasAbortLikeName(name)) {
+    return true;
+  }
+  const message = readMessage(error);
+  return typeof message === 'string' && hasAbortLikeMessage(message);
+};
+
 export const isAbortLikeError = (error: unknown, signal?: AbortSignal | null): boolean => {
   if (signal?.aborted) return true;
 
-  if (error instanceof DOMException && ABORT_ERROR_NAMES.has(error.name)) {
+  if (error instanceof DOMException && hasAbortLikeName(error.name)) {
     return true;
   }
 
   if (error instanceof Error) {
-    if (ABORT_ERROR_NAMES.has(error.name)) {
+    if (hasAbortLikeName(error.name)) {
       return true;
     }
     return hasAbortLikeMessage(error.message);
@@ -41,11 +52,5 @@ export const isAbortLikeError = (error: unknown, signal?: AbortSignal | null): b
     return hasAbortLikeMessage(error);
   }
 
-  const name = readName(error);
-  if (name && ABORT_ERROR_NAMES.has(name)) {
-    return true;
-  }
-
-  const message = readMessage(error);
-  return typeof message === 'string' && hasAbortLikeMessage(message);
+  return isAbortLikeObjectError(error);
 };

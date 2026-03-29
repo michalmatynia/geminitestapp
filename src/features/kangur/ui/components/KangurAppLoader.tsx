@@ -55,9 +55,16 @@ export function KangurAppLoader({
   const [isExiting, setIsExiting] = useState(false);
   const exitTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const copyTitle = title?.trim() || 'StudiQ';
-  const copyStatus = status?.trim() || translations('loaderStatus');
-  const copyDetail = detail?.trim() || null;
   const screenReaderLabel = srLabel?.trim() || translations('loaderSrLabel');
+  const screenReaderStatus = status?.trim() || null;
+  const screenReaderDetail = detail?.trim() || null;
+  const combinedScreenReaderLabel = [
+    screenReaderLabel,
+    screenReaderStatus,
+    screenReaderDetail,
+  ]
+    .filter((segment): segment is string => segment !== null && segment.length > 0)
+    .join('. ');
 
   useEffect(() => {
     setHasMounted(true);
@@ -326,19 +333,11 @@ export function KangurAppLoader({
                 <div className='text-[11px] font-semibold uppercase tracking-[0.32em] [color:var(--kangur-nav-item-active-text)]'>
                   {copyTitle}
                 </div>
-                <div className='mt-1 text-sm font-medium tracking-[0.08em] [color:var(--kangur-page-muted-text)]'>
-                  {copyStatus}
-                </div>
-                {copyDetail ? (
-                  <div className='mt-2 text-xs font-medium [color:var(--kangur-page-muted-text)]'>
-                    {copyDetail}
-                  </div>
-                ) : null}
               </div>
             </div>
           </div>
         </div>
-        <span className='sr-only'>{screenReaderLabel}</span>
+        <span className='sr-only'>{combinedScreenReaderLabel}</span>
       </div>
     </>
   );

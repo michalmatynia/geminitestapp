@@ -16,6 +16,8 @@ import { ErrorSystem } from '@/features/kangur/shared/utils/observability/error-
 
 import { emptyAddonForm, type AddonFormState } from '../AdminKangurSocialPage.Constants';
 
+type ToastFn = ReturnType<typeof useToast>['toast'];
+
 type SocialImageAddonsDeps = {
   addonForm: AddonFormState;
   setAddonForm: (value: AddonFormState) => void;
@@ -23,6 +25,130 @@ type SocialImageAddonsDeps = {
   batchCapturePresetIds: string[];
   batchCapturePresetLimit: number | null;
   buildSocialContext: (overrides?: Record<string, unknown>) => Record<string, unknown>;
+};
+
+const throwBatchCaptureValidationError = (
+  toast: ToastFn,
+  message: string,
+  variant: 'error' | 'warning'
+): never => {
+  toast(message, { variant });
+  throw new Error(message);
+};
+
+const validateBatchCaptureRequest = ({
+  toast,
+  baseUrl,
+  presetIds,
+}: {
+  toast: ToastFn;
+  baseUrl: string;
+  presetIds: string[];
+}): void => {
+  if (!baseUrl) {
+    throwBatchCaptureValidationError(toast, 'Base URL is required for batch capture', 'error');
+  }
+  if (presetIds.length === 0) {
+    throwBatchCaptureValidationError(toast, 'Select at least one capture preset', 'warning');
+  }
+};
+
+const resolveBatchCaptureSummary = (
+  result: KangurSocialImageAddonsBatchResult
+): {
+  successCount: number;
+  failureCount: number;
+  message: string;
+  variant: 'success' | 'warning';
+} => {
+  const successCount = result.addons.length;
+  const failureCount = result.failures.length;
+  const failureSummary = successCount === 0 && failureCount > 0
+    ? `. ${result.failures.slice(0, 3).map((failure) => `${failure.id}: ${failure.reason}`).join('; ')}`
+    : '';
+
+  return {
+    successCount,
+    failureCount,
+    message:
+      `${successCount > 0 ? 'Batch capture completed' : 'Batch capture finished with no assets'} ` +
+      `(${successCount} add-on${successCount === 1 ? '' : 's'}, ` +
+      `${failureCount} failure${failureCount === 1 ? '' : 's'})${failureSummary}`,
+    variant: successCount > 0 ? 'success' : 'warning',
+  };
+};
+
+const resolveBatchCaptureRequest = ({
+  deps,
+  options,
+  toast,
+}: {
+  deps: Pick<
+    SocialImageAddonsDeps,
+    'batchCaptureBaseUrl' | 'batchCapturePresetIds' | 'batchCapturePresetLimit'
+  >;
+  options:
+    | {
+        baseUrl?: string;
+        presetIds?: string[];
+        presetLimit?: number | null;
+      }
+    | undefined;
+  toast: ToastFn;
+}) => {
+  const baseUrl = (options?.baseUrl ?? deps.batchCaptureBaseUrl).trim();
+  const presetIds = options?.presetIds ?? deps.batchCapturePresetIds;
+  const presetLimit = options?.presetLimit ?? deps.batchCapturePresetLimit;
+  validateBatchCaptureRequest({ toast, baseUrl, presetIds });
+  return { baseUrl, presetIds, presetLimit };
+};
+
+const handleBatchCaptureSuccess = ({
+  result,
+  toast,
+  setBatchCaptureResult,
+  deps,
+  presetIds,
+}: {
+  result: KangurSocialImageAddonsBatchResult;
+  toast: ToastFn;
+  setBatchCaptureResult: (value: KangurSocialImageAddonsBatchResult | null) => void;
+  deps: Pick<SocialImageAddonsDeps, 'buildSocialContext'>;
+  presetIds: string[];
+}): void => {
+  setBatchCaptureResult(result);
+  const { successCount, failureCount, message, variant } = resolveBatchCaptureSummary(result);
+  toast(message, { variant });
+  trackKangurClientEvent(
+    'kangur_social_batch_capture_success',
+    deps.buildSocialContext({
+      successCount,
+      failureCount,
+      usedPresetCount: result.usedPresetCount ?? presetIds.length,
+    })
+  );
+};
+
+const handleBatchCaptureFailure = ({
+  error,
+  deps,
+  toast,
+}: {
+  error: unknown;
+  deps: Pick<SocialImageAddonsDeps, 'buildSocialContext'>;
+  toast: ToastFn;
+}): void => {
+  void ErrorSystem.captureException(error);
+  logKangurClientError(error, {
+    source: 'AdminKangurSocialPage',
+    action: 'batchCapture',
+    ...deps.buildSocialContext({ error: true }),
+  });
+  toast('Batch capture failed', { variant: 'error' });
+  trackKangurClientEvent(
+    'kangur_social_batch_capture_failed',
+    deps.buildSocialContext({ error: true })
+  );
 };
 
 export function useSocialImageAddons(deps: SocialImageAddonsDeps) {
@@ -74,62 +200,27 @@ export function useSocialImageAddons(deps: SocialImageAddonsDeps) {
     presetIds?: string[];
     presetLimit?: number | null;
   }): Promise<KangurSocialImageAddonsBatchResult> => {
-    const baseUrl = (options?.baseUrl ?? deps.batchCaptureBaseUrl).trim();
-    const presetIds = options?.presetIds ?? deps.batchCapturePresetIds;
-    const presetLimit = options?.presetLimit ?? deps.batchCapturePresetLimit;
-    if (!baseUrl) {
-      toast('Base URL is required for batch capture', { variant: 'error' });
-      throw new Error('Base URL is required for batch capture');
-    }
-    if (presetIds.length === 0) {
-      toast('Select at least one capture preset', { variant: 'warning' });
-      throw new Error('Select at least one capture preset');
-    }
+    const request = resolveBatchCaptureRequest({ deps, options, toast });
     trackKangurClientEvent(
       'kangur_social_batch_capture_attempt',
       deps.buildSocialContext({
-        baseUrl,
-        presetCount: presetIds.length,
-        presetLimit,
+        baseUrl: request.baseUrl,
+        presetCount: request.presetIds.length,
+        presetLimit: request.presetLimit,
       })
     );
     try {
-      const result = await batchCaptureMutation.mutateAsync({
-        baseUrl,
-        presetIds,
-        presetLimit,
+      const result = await batchCaptureMutation.mutateAsync(request);
+      handleBatchCaptureSuccess({
+        result,
+        toast,
+        setBatchCaptureResult,
+        deps,
+        presetIds: request.presetIds,
       });
-      setBatchCaptureResult(result);
-      const successCount = result.addons.length;
-      const failureCount = result.failures.length;
-      const failureSummary = successCount === 0 && failureCount > 0
-        ? `. ${result.failures.slice(0, 3).map((f) => `${f.id}: ${f.reason}`).join('; ')}`
-        : '';
-      toast(
-        `${successCount > 0 ? 'Batch capture completed' : 'Batch capture finished with no assets'} (${successCount} add-on${successCount === 1 ? '' : 's'}, ${failureCount} failure${failureCount === 1 ? '' : 's'})${failureSummary}`,
-        { variant: successCount > 0 ? 'success' : 'warning' }
-      );
-      trackKangurClientEvent(
-        'kangur_social_batch_capture_success',
-        deps.buildSocialContext({
-          successCount,
-          failureCount,
-          usedPresetCount: result.usedPresetCount ?? presetIds.length,
-        })
-      );
       return result;
     } catch (error) {
-      void ErrorSystem.captureException(error);
-      logKangurClientError(error, {
-        source: 'AdminKangurSocialPage',
-        action: 'batchCapture',
-        ...deps.buildSocialContext({ error: true }),
-      });
-      toast('Batch capture failed', { variant: 'error' });
-      trackKangurClientEvent(
-        'kangur_social_batch_capture_failed',
-        deps.buildSocialContext({ error: true })
-      );
+      handleBatchCaptureFailure({ error, deps, toast });
       throw error;
     }
   };

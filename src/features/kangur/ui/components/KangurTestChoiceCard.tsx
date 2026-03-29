@@ -26,27 +26,44 @@ export function KangurTestChoiceCardBadge({
   );
 }
 
+const renderChoiceSvg = (svgContent: string | undefined): React.JSX.Element | null => {
+  const trimmedSvgContent = svgContent?.trim();
+  if (!trimmedSvgContent) return null;
+
+  return (
+    <span className='flex items-center justify-center rounded-[18px] border p-2 [border-color:var(--kangur-soft-card-border)] [background:var(--kangur-soft-card-background)]'>
+      <span
+        className='block max-h-24 max-w-full'
+        dangerouslySetInnerHTML={{ __html: sanitizeSvg(trimmedSvgContent) }}
+      />
+    </span>
+  );
+};
+
+const renderChoiceDescription = (description: string | undefined): React.JSX.Element | null => {
+  const trimmedDescription = description?.trim();
+  if (!trimmedDescription) return null;
+
+  return (
+    <span className='text-xs font-medium leading-5 [color:var(--kangur-page-muted-text)]'>
+      {trimmedDescription}
+    </span>
+  );
+};
+
 export function KangurTestChoiceCardContent({
   choice,
 }: {
   choice: KangurTestQuestion['choices'][number];
 }): React.JSX.Element {
+  const svg = renderChoiceSvg(choice.svgContent);
+  const description = renderChoiceDescription(choice.description);
+
   return (
     <span className='flex flex-1 flex-col gap-2 [color:var(--kangur-page-text)]'>
-      {choice.svgContent?.trim() ? (
-        <span className='flex items-center justify-center rounded-[18px] border p-2 [border-color:var(--kangur-soft-card-border)] [background:var(--kangur-soft-card-background)]'>
-          <span
-            className='block max-h-24 max-w-full'
-            dangerouslySetInnerHTML={{ __html: sanitizeSvg(choice.svgContent) }}
-          />
-        </span>
-      ) : null}
+      {svg}
       <span>{choice.text}</span>
-      {choice.description?.trim() ? (
-        <span className='text-xs font-medium leading-5 [color:var(--kangur-page-muted-text)]'>
-          {choice.description.trim()}
-        </span>
-      ) : null}
+      {description}
     </span>
   );
 }
@@ -95,6 +112,67 @@ type KangurTestChoiceCardProps = {
   showAnswer?: boolean;
 };
 
+type KangurTestChoiceAnchorParams = Omit<KangurTestChoiceCardProps, 'children' | 'choiceGrid'>;
+
+const resolveChoiceContentId = (
+  contentId: string | null | undefined,
+  question: KangurTestQuestion | undefined
+): string => contentId ?? question?.suiteId ?? '';
+
+const resolveChoiceQuestionId = (question: KangurTestQuestion | undefined): string => question?.id ?? '';
+
+const resolveChoiceLabel = (
+  choice: KangurTestQuestion['choices'][number] | undefined
+): string => choice?.label ?? '';
+
+const resolveChoiceText = (
+  choice: KangurTestQuestion['choices'][number] | undefined
+): string => choice?.text ?? '';
+
+const resolveChoiceAnchorEnabled = (
+  isSelected: boolean | undefined,
+  showAnswer: boolean | undefined
+): boolean => isSelected === true && showAnswer !== true;
+
+const resolveChoiceSelectionAnchorConfig = ({
+  contentId,
+  choice,
+  question,
+  isSelected,
+  showAnswer,
+}: KangurTestChoiceAnchorParams) => {
+  const resolvedContentId = resolveChoiceContentId(contentId, question);
+  const resolvedQuestionId = resolveChoiceQuestionId(question);
+  const resolvedChoiceLabel = resolveChoiceLabel(choice);
+  const resolvedChoiceText = resolveChoiceText(choice);
+
+  return {
+    id: `kangur-test-selection:${resolvedContentId}:${resolvedQuestionId}:${resolvedChoiceLabel}`,
+    enabled: resolveChoiceAnchorEnabled(isSelected, showAnswer),
+    metadata: {
+      contentId: resolvedContentId,
+      label: `Odpowiedź ${resolvedChoiceLabel}: ${resolvedChoiceText}`,
+    },
+  };
+};
+
+const useChoiceSelectionAnchor = (params: KangurTestChoiceAnchorParams) => {
+  const selectionAnchorRef = React.useRef<HTMLDivElement | null>(null);
+  const anchorConfig = resolveChoiceSelectionAnchorConfig(params);
+
+  useKangurTutorAnchor({
+    id: anchorConfig.id,
+    kind: 'selection',
+    ref: selectionAnchorRef,
+    surface: 'test',
+    enabled: anchorConfig.enabled,
+    priority: 86,
+    metadata: anchorConfig.metadata,
+  });
+
+  return selectionAnchorRef;
+};
+
 export function KangurTestChoiceCard({
   children,
   choiceGrid,
@@ -104,19 +182,12 @@ export function KangurTestChoiceCard({
   isSelected,
   showAnswer,
 }: KangurTestChoiceCardProps): React.JSX.Element {
-  const selectionAnchorRef = React.useRef<HTMLDivElement | null>(null);
-
-  useKangurTutorAnchor({
-    id: `kangur-test-selection:${contentId ?? question?.suiteId}:${question?.id}:${choice?.label}`,
-    kind: 'selection',
-    ref: selectionAnchorRef,
-    surface: 'test',
-    enabled: Boolean(isSelected && !showAnswer),
-    priority: 86,
-    metadata: {
-      contentId: contentId ?? question?.suiteId ?? '',
-      label: `Odpowiedź ${choice?.label}: ${choice?.text}`,
-    },
+  const selectionAnchorRef = useChoiceSelectionAnchor({
+    contentId,
+    choice,
+    question,
+    isSelected,
+    showAnswer,
   });
 
   return (

@@ -11,6 +11,7 @@ import {
 } from '../duels/mobileDuelDefaults';
 import { useKangurMobileI18n } from '../i18n/kangurMobileI18n';
 import { useKangurMobileRuntime } from '../providers/KangurRuntimeContext';
+import { resolveMobileDuelErrorMessage } from '../duels/mobileDuelErrorMessages';
 
 const MOBILE_HOME_DUELS_REMATCH_LIMIT = 4;
 
@@ -28,100 +29,6 @@ type UseKangurMobileHomeDuelsRematchesResult = {
 
 type UseKangurMobileHomeDuelsRematchesOptions = {
   enabled?: boolean;
-};
-
-const toRematchesErrorMessage = (
-  error: unknown,
-  copy: ReturnType<typeof useKangurMobileI18n>['copy'],
-): string | null => {
-  if (!error) {
-    return null;
-  }
-
-  if (typeof error === 'object' && error && 'status' in error) {
-    const status = (error as { status?: number }).status;
-
-    if (status === 401) {
-      return copy({
-        de: 'Melde dich an, um letzte Rivalen zu laden.',
-        en: 'Sign in to load recent opponents.',
-        pl: 'Zaloguj się, aby pobrać ostatnich rywali.',
-      });
-    }
-  }
-
-  if (!(error instanceof Error)) {
-    return copy({
-      de: 'Die letzten Rivalen konnten nicht geladen werden.',
-      en: 'Could not load recent opponents.',
-      pl: 'Nie udało się pobrać ostatnich rywali.',
-    });
-  }
-
-  const message = error.message.trim();
-  if (!message) {
-    return copy({
-      de: 'Die letzten Rivalen konnten nicht geladen werden.',
-      en: 'Could not load recent opponents.',
-      pl: 'Nie udało się pobrać ostatnich rywali.',
-    });
-  }
-
-  const normalized = message.toLowerCase();
-  if (normalized === 'failed to fetch' || normalized.includes('networkerror')) {
-    return copy({
-      de: 'Die letzten Rivalen konnten nicht geladen werden.',
-      en: 'Could not load recent opponents.',
-      pl: 'Nie udało się pobrać ostatnich rywali.',
-    });
-  }
-
-  return message;
-};
-
-const toRematchActionErrorMessage = (
-  error: unknown,
-  copy: ReturnType<typeof useKangurMobileI18n>['copy'],
-): string => {
-  if (typeof error === 'object' && error && 'status' in error) {
-    const status = (error as { status?: number }).status;
-
-    if (status === 401) {
-      return copy({
-        de: 'Melde dich an, um ein privates Rückspiel zu senden.',
-        en: 'Sign in to send a private rematch.',
-        pl: 'Zaloguj się, aby wysłać prywatny rewanż.',
-      });
-    }
-  }
-
-  if (!(error instanceof Error)) {
-    return copy({
-      de: 'Der private Rückkampf konnte nicht erstellt werden.',
-      en: 'Could not create the private rematch.',
-      pl: 'Nie udało się utworzyć prywatnego rewanżu.',
-    });
-  }
-
-  const message = error.message.trim();
-  if (!message) {
-    return copy({
-      de: 'Der private Rückkampf konnte nicht erstellt werden.',
-      en: 'Could not create the private rematch.',
-      pl: 'Nie udało się utworzyć prywatnego rewanżu.',
-    });
-  }
-
-  const normalized = message.toLowerCase();
-  if (normalized === 'failed to fetch' || normalized.includes('networkerror')) {
-    return copy({
-      de: 'Der private Rückkampf konnte nicht erstellt werden.',
-      en: 'Could not create the private rematch.',
-      pl: 'Nie udało się utworzyć prywatnego rewanżu.',
-    });
-  }
-
-  return message;
 };
 
 export const useKangurMobileHomeDuelsRematches = ({
@@ -191,13 +98,45 @@ export const useKangurMobileHomeDuelsRematches = ({
         await queryClient.invalidateQueries({ queryKey: rematchesQueryKey });
         return response.session.id;
       } catch (error) {
-        setActionError(toRematchActionErrorMessage(error, copy));
+        setActionError(
+          resolveMobileDuelErrorMessage({
+            error,
+            copy,
+            fallback: {
+              de: 'Der private Rückkampf konnte nicht erstellt werden.',
+              en: 'Could not create the private rematch.',
+              pl: 'Nie udało się utworzyć prywatnego rewanżu.',
+            },
+            unauthorized: {
+              de: 'Melde dich an, um ein privates Rückspiel zu senden.',
+              en: 'Sign in to send a private rematch.',
+              pl: 'Zaloguj się, aby wysłać prywatny rewanż.',
+            },
+          }) ?? copy({
+            de: 'Der private Rückkampf konnte nicht erstellt werden.',
+            en: 'Could not create the private rematch.',
+            pl: 'Nie udało się utworzyć prywatnego rewanżu.',
+          }),
+        );
         return null;
       } finally {
         setIsActionPending(false);
       }
     },
-    error: toRematchesErrorMessage(rematchesQuery.error, copy),
+    error: resolveMobileDuelErrorMessage({
+      error: rematchesQuery.error,
+      copy,
+      fallback: {
+        de: 'Die letzten Rivalen konnten nicht geladen werden.',
+        en: 'Could not load recent opponents.',
+        pl: 'Nie udało się pobrać ostatnich rywali.',
+      },
+      unauthorized: {
+        de: 'Melde dich an, um letzte Rivalen zu laden.',
+        en: 'Sign in to load recent opponents.',
+        pl: 'Zaloguj się, aby pobrać ostatnich rywali.',
+      },
+    }),
     isActionPending,
     isAuthenticated,
     isLoading: isRestoringAuth || (isQueryEnabled && rematchesQuery.isLoading),

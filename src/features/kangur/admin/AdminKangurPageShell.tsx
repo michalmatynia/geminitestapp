@@ -35,7 +35,7 @@ export function AdminKangurPageShell({ slug = [] }: { slug?: string[] }): React.
         embedded
       >
         <React.Suspense
-          fallback={<LoadingPanel>Loading Kangur workspace...</LoadingPanel>}
+          fallback={<LoadingPanel>Loading workspace...</LoadingPanel>}
         >
           <LazyKangurFeaturePageShell />
         </React.Suspense>

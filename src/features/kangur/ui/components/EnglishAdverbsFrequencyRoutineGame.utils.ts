@@ -106,6 +106,30 @@ export const getFrequencyDescription = (
 export const countFrequencyActiveDays = (frequency: EnglishAdverbFrequencyId): number =>
   FREQUENCY_META[frequency].activeDays.filter(Boolean).length;
 
+export const countFrequencyChangedDays = (
+  current: EnglishAdverbFrequencyId,
+  target: EnglishAdverbFrequencyId
+): number =>
+  FREQUENCY_META[current].activeDays.reduce((sum, isActive, index) => {
+    return sum + (isActive !== FREQUENCY_META[target].activeDays[index] ? 1 : 0);
+  }, 0);
+
+export const countFrequencyTurnedOnDays = (
+  current: EnglishAdverbFrequencyId,
+  target: EnglishAdverbFrequencyId
+): number =>
+  FREQUENCY_META[target].activeDays.reduce((sum, isActive, index) => {
+    return sum + (!FREQUENCY_META[current].activeDays[index] && isActive ? 1 : 0);
+  }, 0);
+
+export const countFrequencyTurnedOffDays = (
+  current: EnglishAdverbFrequencyId,
+  target: EnglishAdverbFrequencyId
+): number =>
+  FREQUENCY_META[current].activeDays.reduce((sum, isActive, index) => {
+    return sum + (isActive && !FREQUENCY_META[target].activeDays[index] ? 1 : 0);
+  }, 0);
+
 export const getFrequencyDaysLitLabel = (
   translate: KangurMiniGameTranslate,
   frequency: EnglishAdverbFrequencyId

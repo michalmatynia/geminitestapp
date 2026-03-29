@@ -8,7 +8,7 @@ import type {
   KangurDuelStateResponse,
 } from '@kangur/contracts-duels';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 
 import { useKangurMobileAuth } from '../auth/KangurMobileAuthContext';
 import {
@@ -69,6 +69,26 @@ const isFallbackSessionErrorMessage = (message: string): boolean => {
   return normalized === 'failed to fetch' || normalized.includes('networkerror');
 };
 
+const getUnauthorizedSessionErrorMessage = (
+  copy: (value: KangurMobileLocalizedValue<string>) => string,
+): string =>
+  copy({
+    de: 'Melde dich an, um dieses Duell zu öffnen.',
+    en: 'Sign in to open this duel.',
+    pl: 'Zaloguj się, aby otworzyć ten pojedynek.',
+  });
+
+const resolveSessionMessageWithFallback = (
+  message: string | null,
+  fallback: string,
+): string => {
+  if (!message || isFallbackSessionErrorMessage(message)) {
+    return fallback;
+  }
+
+  return message;
+};
+
 const toSessionErrorMessage = (
   error: unknown,
   fallback: string,
@@ -79,23 +99,10 @@ const toSessionErrorMessage = (
   }
 
   if (readSessionErrorStatus(error) === 401) {
-    return copy({
-      de: 'Melde dich an, um dieses Duell zu öffnen.',
-      en: 'Sign in to open this duel.',
-      pl: 'Zaloguj się, aby otworzyć ten pojedynek.',
-    });
+    return getUnauthorizedSessionErrorMessage(copy);
   }
 
-  const message = readSessionErrorMessage(error);
-  if (!message) {
-    return fallback;
-  }
-
-  if (isFallbackSessionErrorMessage(message)) {
-    return fallback;
-  }
-
-  return message;
+  return resolveSessionMessageWithFallback(readSessionErrorMessage(error), fallback);
 };
 
 const resolveCurrentQuestionIndex = (
@@ -200,10 +207,7 @@ export const useKangurMobileDuelSession = (
     ? spectatorState?.session ?? null
     : sessionState?.session ?? null;
   const player = isSpectating ? null : sessionState?.player ?? null;
-  const currentQuestion = useMemo(
-    () => resolveCurrentQuestion(duelSession, isSpectating, player),
-    [duelSession, isSpectating, player],
-  );
+  const currentQuestion = resolveCurrentQuestion(duelSession, isSpectating, player);
 
   useEffect(() => {
     if (isSpectating || !hasSessionId || !isAuthenticated || !duelSession) {

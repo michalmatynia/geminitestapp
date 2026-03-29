@@ -184,7 +184,7 @@ const KANGUR_OPERATION_FALLBACKS: Record<string, KangurOperationFallbackInfo> = 
   english_comparatives_superlatives: {
     emoji: '👑',
     labels: {
-      pl: 'Comparatives i Superlatives',
+      pl: 'Stopniowanie przymiotników',
       en: 'Comparatives & Superlatives',
       de: 'Komparativ und Superlativ',
       uk: 'Вищий і найвищий ступені',

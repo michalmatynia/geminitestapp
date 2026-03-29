@@ -1,6 +1,6 @@
 import 'server-only';
 
-import type { Db, Document, Filter } from 'mongodb';
+import type { Collection, Db, Document, Filter } from 'mongodb';
 
 import { createDefaultKangurLessonTemplates } from '@/features/kangur/lessons/lesson-template-defaults';
 import type { KangurLessonTemplate } from '@/shared/contracts/kangur-lesson-templates';
@@ -13,6 +13,7 @@ import type { KangurLessonTemplateListInput, KangurLessonTemplateRepository } fr
 const COLLECTION = 'kangur_lesson_templates';
 const SUBJECT_SORT_INDEX = 'kangur_lesson_templates_subject_sort_idx';
 const COMPONENT_LOCALE_UNIQUE_INDEX = 'kangur_lesson_templates_componentId_locale_unique_idx';
+const LEGACY_COMPONENT_UNIQUE_INDEX = 'kangur_lesson_templates_componentId_unique_idx';
 
 type MongoKangurLessonTemplateDocument = Document &
   KangurLessonTemplate & {
@@ -32,6 +33,11 @@ const buildLocalizedTemplateId = (componentId: string, locale?: string | null): 
 let indexesInitialized = false;
 let indexesInFlight: Promise<void> | null = null;
 
+const hasExpectedIndexShape = (
+  index: { key?: Document } | undefined,
+  expectedKey: Document
+): boolean => JSON.stringify(index?.key ?? {}) === JSON.stringify(expectedKey);
+
 const ensureIndexes = async (db: Db): Promise<void> => {
   if (indexesInitialized) return;
   if (indexesInFlight) {
@@ -40,6 +46,25 @@ const ensureIndexes = async (db: Db): Promise<void> => {
   }
   indexesInFlight = (async (): Promise<void> => {
     const collection = db.collection<MongoKangurLessonTemplateDocument>(COLLECTION);
+    const existingIndexes = await collection.indexes();
+    const existingSubjectSortIndex = existingIndexes.find(
+      (index) => index.name === SUBJECT_SORT_INDEX
+    );
+    if (
+      existingSubjectSortIndex &&
+      !hasExpectedIndexShape(existingSubjectSortIndex, { locale: 1, subject: 1, sortOrder: 1 })
+    ) {
+      await collection.dropIndex(SUBJECT_SORT_INDEX);
+    }
+    const legacyComponentUniqueIndex = existingIndexes.find(
+      (index) =>
+        index.name === LEGACY_COMPONENT_UNIQUE_INDEX ||
+        (index.name !== COMPONENT_LOCALE_UNIQUE_INDEX &&
+          hasExpectedIndexShape(index, { componentId: 1 }))
+    );
+    if (legacyComponentUniqueIndex) {
+      await collection.dropIndex(legacyComponentUniqueIndex.name);
+    }
     await Promise.all([
       collection.createIndex(
         { locale: 1, subject: 1, sortOrder: 1 },
@@ -98,15 +123,57 @@ const toTemplate = (doc: MongoKangurLessonTemplateDocument): KangurLessonTemplat
   };
 };
 
+const seedMissingTemplatesForLocale = async (
+  collection: Collection<MongoKangurLessonTemplateDocument>,
+  locale?: string | null
+): Promise<boolean> => {
+  const normalizedLocale = normalizeTemplateLocale(locale);
+  const defaults = createDefaultKangurLessonTemplates(normalizedLocale);
+
+  if (defaults.length === 0) {
+    return false;
+  }
+
+  const now = new Date();
+  await collection.bulkWrite(
+    defaults.map((template) => ({
+      updateOne: {
+        filter: { _id: buildLocalizedTemplateId(template.componentId, normalizedLocale) },
+        update: {
+          $setOnInsert: {
+            ...template,
+            componentId: template.componentId,
+            locale: normalizedLocale,
+            createdAt: now,
+            updatedAt: now,
+          },
+        },
+        upsert: true,
+      },
+    })),
+    { ordered: false }
+  );
+
+  return true;
+};
+
 export const mongoKangurLessonTemplateRepository: KangurLessonTemplateRepository = {
   async listTemplates(input?: KangurLessonTemplateListInput): Promise<KangurLessonTemplate[]> {
     const db = await getMongoDb();
     await ensureIndexes(db);
     const collection = db.collection<MongoKangurLessonTemplateDocument>(COLLECTION);
-    const docs = await collection
+    let docs = await collection
       .find(buildFilter(input))
       .sort({ sortOrder: 1, componentId: 1 })
       .toArray();
+
+    if (docs.length === 0) {
+      await seedMissingTemplatesForLocale(collection, input?.locale);
+      docs = await collection
+        .find(buildFilter(input))
+        .sort({ sortOrder: 1, componentId: 1 })
+        .toArray();
+    }
 
     if (docs.length === 0) {
       const filter = buildFilter(input);

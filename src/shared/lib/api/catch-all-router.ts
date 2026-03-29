@@ -108,6 +108,23 @@ const shouldSkipOptionalLiteral = (
   optional: boolean,
 ): boolean => optional && key !== currentSegment;
 
+const shouldAbortPatternMatch = (
+  currentSegment: string | null,
+  optional: boolean,
+): boolean => isMissingRequiredToken(currentSegment, optional);
+
+const consumeLiteralToken = (args: {
+  key: string;
+  currentSegment: string;
+  optional: boolean;
+}): boolean => {
+  if (shouldSkipOptionalLiteral(args.key, args.currentSegment, args.optional)) {
+    return false;
+  }
+
+  return args.key === args.currentSegment;
+};
+
 export const matchCatchAllPattern = (
   pattern: CatchAllOptionalRoutePatternToken[],
   segments: string[]
@@ -118,7 +135,7 @@ export const matchCatchAllPattern = (
     const { isParam, key, optional } = normalizeToken(token);
     const currentSegment = resolveSegmentAt(segments, segmentIndex);
 
-    if (isMissingRequiredToken(currentSegment, optional)) {
+    if (shouldAbortPatternMatch(currentSegment, optional)) {
       return null;
     }
 
@@ -130,7 +147,7 @@ export const matchCatchAllPattern = (
       if (shouldSkipOptionalLiteral(key, currentSegment, optional)) {
         continue;
       }
-      if (key !== currentSegment) {
+      if (!consumeLiteralToken({ key, currentSegment, optional })) {
         return null;
       }
       segmentIndex += 1;

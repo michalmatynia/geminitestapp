@@ -365,14 +365,16 @@ describe('LearnerProfile page', () => {
         .getAllByRole('link', { name: 'Otwórz lekcję' })
         .map((link) => link.getAttribute('href'))
     ).toContain('/kangur/lessons?focus=division');
-    expect(screen.getByRole('link', { name: /zagraj/i })).toHaveAttribute(
-      'href',
-      '/kangur/game?quickStart=training'
-    );
-    expect(screen.getByRole('link', { name: /zagraj/i })).toHaveClass(
-      'kangur-cta-pill',
-      'primary-cta'
-    );
+    const recommendationActionLinks = screen.getAllByRole('link', { name: 'Uruchom trening' });
+    expect(
+      recommendationActionLinks.some(
+        (link) =>
+          link.getAttribute('href') ===
+            '/kangur/game?quickStart=operation&operation=division&difficulty=easy' &&
+          link.classList.contains('kangur-cta-pill') &&
+          link.classList.contains('primary-cta')
+      )
+    ).toBe(true);
     expect(screen.getByText('➕ Dodawanie')).toBeInTheDocument();
     expect(screen.getAllByText('➗ Dzielenie').length).toBeGreaterThan(0);
     const operationTrainingHrefs = screen

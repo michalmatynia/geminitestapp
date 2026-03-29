@@ -238,17 +238,17 @@
     "confidentDisplayDescription": "Підкреслює ціну, характеристики та наявність."
   },
   "KangurPublic": {
-    "routeLoading": "Завантаження Kangur...",
-    "entryLoading": "Завантаження Kangur...",
+    "routeLoading": "Завантаження...",
+    "entryLoading": "Завантаження...",
     "loaderStatus": "Завантаження",
-    "loaderSrLabel": "Завантаження застосунку Kangur",
-    "errorTitle": "У Kangur сталася помилка",
-    "errorDescription": "Під час завантаження застосунку Kangur щось пішло не так.",
+    "loaderSrLabel": "Завантаження застосунку",
+    "errorTitle": "У StudiQ сталася помилка",
+    "errorDescription": "Під час завантаження застосунку StudiQ щось пішло не так.",
     "tryAgain": "Спробувати ще раз",
-    "backToHome": "Назад до Kangur",
-    "loadingApp": "Завантаження застосунку Kangur",
-    "loadingPage": "Завантаження сторінки Kangur",
-    "loadingLanguage": "Перемикання мови Kangur",
+    "backToHome": "Назад до StudiQ",
+    "loadingApp": "Завантаження застосунку",
+    "loadingPage": "Завантаження сторінки",
+    "loadingLanguage": "Перемикання мови",
     "accessibility": {
       "pageAnnouncement": "Перегляд: {label}",
       "languageSwitchAnnouncement": "Перемикання мови: {label}",
@@ -261,7 +261,7 @@
         "LearnerProfile": "Профіль учня",
         "ParentDashboard": "Панель для батьків",
         "Duels": "Дуелі",
-        "default": "Сторінка Kangur"
+        "default": "Сторінка StudiQ"
       }
     }
   },
@@ -285,7 +285,7 @@
     "mobileMenu": {
       "open": "Відкрити меню",
       "close": "Закрити меню",
-      "title": "Меню Kangur",
+      "title": "Меню StudiQ",
       "description": "Використовуйте Tab, щоб переходити між параметрами навігації, і Escape, щоб закрити меню."
     },
     "subject": {
@@ -306,7 +306,7 @@
   "KangurGamesLibraryPage": {
     "introEyebrow": "Спільний домен ігор",
     "title": "Бібліотека ігор",
-    "description": "Єдиний спільний каталог для всіх ігор Kangur, упорядкований за рушіями, механіками, варіантами та зв’язками з уроками.",
+    "description": "Єдиний спільний каталог для всіх ігор StudiQ, упорядкований за рушіями, механіками, варіантами та зв’язками з уроками.",
     "groupEyebrow": "Навчальна область",
     "groupDescription": "{count, plural, one {# гра в цій області.} few {# гри в цій області.} many {# ігор у цій області.} other {# ігор у цій області.}}",
     "engineGroupsEyebrow": "Вид консолідації",
@@ -1006,7 +1006,7 @@
       },
       "english_compare_and_crown_quiz": {
         "label": "Студія порівнянь і корони",
-        "description": "Порівнюй дві речі й обирай переможця за допомогою comparatives і superlatives."
+        "description": "Порівнюй дві речі й обирай переможця за допомогою форм вищого й найвищого ступенів."
       },
       "english_adverbs_frequency_quiz": {
         "label": "Вікторина з прислівників частоти",
@@ -1442,7 +1442,7 @@
   },
   "KangurLogin": {
     "defaultLoginTitle": "Увійти",
-    "defaultSessionTitle": "Вхід до Kangur",
+    "defaultSessionTitle": "Вхід до StudiQ",
     "defaultSessionDescription": "Батьки входять за електронною поштою та паролем. Учні входять за своїм нікнеймом і паролем.",
     "checkInboxLabel": "Перевірте вхідні: {email}",
     "checkInboxTitle": "Перевірте вхідні",
@@ -1485,7 +1485,7 @@
     "identifierLabel": "Електронна пошта або нікнейм учня",
     "createAccountIdentifierPlaceholder": "parent@example.com",
     "identifierPlaceholder": "Введіть пошту або нікнейм учня",
-    "signInModeHint": "Введіть електронну пошту батьків або нікнейм учня. Kangur сам підбере правильний спосіб входу.",
+    "signInModeHint": "Введіть електронну пошту батьків або нікнейм учня. StudiQ сам підбере правильний спосіб входу.",
     "parentLoginModeHint": "Схоже, це вхід для батьків. Використайте електронну пошту батьків і пароль акаунта.",
     "studentLoginModeHint": "Схоже, це вхід для учня. Використайте нікнейм учня, а не електронну пошту.",
     "createAccountModeHint": "Створіть батьківський акаунт за електронною поштою, а потім підтвердьте адресу з листа.",
@@ -1506,7 +1506,7 @@
     "loginFormAriaLabel": "Форма входу",
     "loginSubmit": "Увійти",
     "loginSubmitting": "Вхід...",
-    "openingSpaceButtonLabel": "Відкриваємо Kangur...",
+    "openingSpaceButtonLabel": "Відкриваємо StudiQ...",
     "continueWith": "Або продовжити за допомогою",
     "signupFormAriaLabel": "Форма реєстрації для батьків",
     "parentEmailLabel": "Пошта батьків",
@@ -1883,7 +1883,7 @@
   },
   "KangurUserAccess": {
     "restricted": "Доступ обмежено",
-    "title": "Цей акаунт ще не має доступу до Kangur",
+    "title": "Цей акаунт ще не має доступу до StudiQ",
     "description": "Схоже, ваш акаунт ще не додано до застосунку. Зверніться до адміністратора, щоб отримати доступ.",
     "checkLabel": "Якщо це помилка, перевірте:",
     "checkCurrentAccount": "що ви увійшли з правильним акаунтом,",
@@ -3482,7 +3482,7 @@
         "menu": "Меню"
       },
       "summary": {
-        "perfect": "Ідеальний результат! Ви чемпіон Kangur! 🦘",
+        "perfect": "Ідеальний результат! Ви чемпіон StudiQ! 🦘",
         "good": "Чудово! Ви готові до конкурсу!",
         "fair": "Гарна робота! Практикуйтеся далі!",
         "retry": "Не здавайтеся! Спробуйте ще раз!"
@@ -3492,9 +3492,9 @@
       "actions": {
         "backToMenu": "Назад до меню"
       },
-      "progressAriaLabel": "Точність відповідей у тесті Kangur",
+      "progressAriaLabel": "Точність відповідей у тесті StudiQ",
       "summary": {
-        "perfect": "Ідеальний результат! Ви чемпіон Kangur! 🦘",
+        "perfect": "Ідеальний результат! Ви чемпіон StudiQ! 🦘",
         "good": "Чудово! Ви готові до конкурсу!",
         "fair": "Гарна робота! Практикуйтеся далі!",
         "retry": "Не здавайтеся! Спробуйте ще раз!"
@@ -5487,7 +5487,7 @@
         "showCanvasOnly": "Показати лише полотно"
       },
       "toolbar": {
-        "backToKangur": "Назад до Kangur",
+        "backToKangur": "Назад до StudiQ",
         "status": {
           "saved": "Збережено",
           "unsaved": "Незбережено"
@@ -5511,7 +5511,7 @@
         "saveProject": "Зберегти проєкт"
       },
       "empty": {
-        "selectScreen": "Виберіть екран Kangur для редагування.",
+        "selectScreen": "Виберіть екран StudiQ для редагування.",
         "noSections": "Поки що немає секцій. Скористайтеся панеллю структури, щоб додати їх."
       }
     },
@@ -5599,7 +5599,7 @@
           "lessons": "Уроки",
           "play": "Грати",
           "training": "Тренування",
-          "kangur": "Kangur"
+          "kangur": "StudiQ"
         }
       },
       "inputs": {
@@ -5607,7 +5607,7 @@
         "ariaLabel": "Попередній перегляд поля вводу"
       },
       "typography": {
-        "heading": "Заголовок Kangur",
+        "heading": "Заголовок StudiQ",
         "bodySample": "Зразок основного тексту з поточним базовим розміром і висотою рядка.",
         "layout": "Макет"
       },
@@ -9333,7 +9333,7 @@
         },
         "form": {
           "title": "Форма",
-          "description": "Будуй comparative і superlative форми"
+          "description": "Будуй форми вищого й найвищого ступенів"
         },
         "repair": {
           "title": "Виправлення",
@@ -9352,7 +9352,7 @@
           "description": "Головні правила в одному місці"
         }
       },
-      "lessonTitle": "Англійська: Comparatives і Superlatives"
+      "lessonTitle": "Англійська: вищий і найвищий ступені"
     }
   }
 }

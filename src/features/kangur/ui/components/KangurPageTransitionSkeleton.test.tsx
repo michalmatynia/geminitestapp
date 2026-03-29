@@ -273,7 +273,7 @@ describe('KangurPageTransitionSkeleton', () => {
     });
   });
 
-  it('renders with path-based fallback copy when next-intl context is unavailable', () => {
+  it('renders with path-based fallback page labels when next-intl context is unavailable', () => {
     useOptionalKangurRoutingMock.mockReturnValue({
       basePath: '/kangur',
       embedded: false,
@@ -281,7 +281,6 @@ describe('KangurPageTransitionSkeleton', () => {
 
     render(<KangurPageTransitionSkeleton pageKey='Lessons' variant='lessons-library' />);
 
-    expect(screen.getByText('Loading Kangur page')).toBeInTheDocument();
     expect(screen.getAllByText('Lessons')).not.toHaveLength(0);
   });
 

@@ -23,7 +23,10 @@ import {
   KangurLessonStack,
 } from '@/features/kangur/ui/design/lesson-primitives';
 import { useOptionalKangurLessonTemplate } from '@/features/kangur/ui/context/KangurLessonsRuntimeContext';
-import type { LessonTranslate } from '@/features/kangur/ui/components/lesson-copy';
+import {
+  createLessonFallbackTranslate,
+  type LessonTranslate,
+} from '@/features/kangur/ui/components/lesson-copy';
 import { KangurUnifiedLesson } from '@/features/kangur/ui/lessons/lesson-components';
 import { GEOMETRY_BASICS_LESSON_COMPONENT_CONTENT as CONTENT } from '@/features/kangur/lessons/lesson-template-component-content';
 import {
@@ -317,12 +320,9 @@ export { CONTENT };
 
 export default function GeometryBasicsLesson({ lessonTemplate }: LessonProps): React.JSX.Element {
   const translations = useTranslations('KangurStaticLessons.geometryBasics');
-  const fallbackTranslate = Object.assign(
-    (key: string): string => translations(key as never),
-    {
-      has: (key: string): boolean => translations.has(key as never),
-    },
-  ) as LessonTranslate & { has: (key: string) => boolean };
+  const fallbackTranslate = createLessonFallbackTranslate(
+    translations as LessonTranslate & { has?: (key: string) => boolean }
+  );
   const runtimeTemplate = useOptionalKangurLessonTemplate('geometry_basics');
   const resolvedTemplate = lessonTemplate ?? runtimeTemplate;
   const resolvedContent = useMemo(

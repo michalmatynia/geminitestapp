@@ -43,6 +43,7 @@ const ENGLISH_PROFILE_MESSAGES = {
     english_adjectives: 'Adjectives',
     english_adverbs: 'Adverbs',
     english_adverbs_frequency: 'Adverbs of frequency',
+    english_comparatives_superlatives: 'Comparatives & superlatives',
   },
   guidedMomentum: {
     badges: {
@@ -256,8 +257,9 @@ describe('buildKangurLearnerProfileSnapshot', () => {
         label: 'Zagraj teraz',
         page: 'Game',
         query: {
-          // operation: 'division',
-          quickStart: 'training',
+          quickStart: 'operation',
+          operation: 'division',
+          difficulty: 'easy',
         },
       },
     });
@@ -443,6 +445,45 @@ describe('buildKangurLearnerProfileSnapshot', () => {
         averageAccuracy: 67,
         totalXpEarned: 30,
         averageXpPerSession: 15,
+      }),
+    ]);
+  });
+
+  it('maps bare compare-and-crown activity keys to the comparatives operation label', () => {
+    const snapshot = buildKangurLearnerProfileSnapshot({
+      progress: {
+        ...progress,
+        totalCorrectAnswers: 11,
+        totalQuestionsAnswered: 15,
+        activityStats: {
+          english_compare_and_crown: {
+            sessionsPlayed: 2,
+            perfectSessions: 1,
+            totalCorrectAnswers: 11,
+            totalQuestionsAnswered: 15,
+            totalXpEarned: 44,
+            bestScorePercent: 100,
+            lastScorePercent: 73,
+            currentStreak: 1,
+            bestStreak: 1,
+            lastPlayedAt: '2026-03-14T09:00:00.000Z',
+          },
+        },
+      },
+      scores: [],
+      dailyGoalGames: 3,
+      now: new Date('2026-03-14T15:00:00.000Z'),
+      locale: 'en',
+      translate: createProfileTranslator(ENGLISH_PROFILE_MESSAGES),
+    });
+
+    expect(snapshot.operationPerformance).toEqual([
+      expect.objectContaining({
+        operation: 'english_comparatives_superlatives',
+        label: 'Comparatives & superlatives',
+        averageAccuracy: 73,
+        totalXpEarned: 44,
+        averageXpPerSession: 22,
       }),
     ]);
   });

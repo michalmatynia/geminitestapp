@@ -45,32 +45,49 @@ export type PortablePathEnvelopeSignatureVerificationOptions = Pick<
   | 'envelopeSignatureKeyResolver'
 >;
 
+const collectOptionalSecret = (candidates: string[], value: string | undefined): void => {
+  const normalized = normalizeOptionalSecret(value);
+  if (normalized) candidates.push(normalized);
+};
+
+const collectOptionalSecretList = (candidates: string[], value: string[] | undefined): void => {
+  candidates.push(...normalizeOptionalSecretList(value));
+};
+
+const collectResolverSecrets = (
+  candidates: string[],
+  options: PortablePathEnvelopeSignatureVerificationOptions | undefined,
+  context: PortablePathEnvelopeSignatureKeyResolverContext
+): void => {
+  if (!options?.envelopeSignatureKeyResolver) return;
+  const resolverResult = options.envelopeSignatureKeyResolver(context);
+  if (typeof resolverResult === 'string') {
+    collectOptionalSecret(candidates, resolverResult);
+    return;
+  }
+  if (Array.isArray(resolverResult)) {
+    collectOptionalSecretList(candidates, resolverResult);
+  }
+};
+
+const collectKeyIdSecret = (
+  candidates: string[],
+  options: PortablePathEnvelopeSignatureVerificationOptions | undefined,
+  keyId: string | null
+): void => {
+  if (!keyId || !options?.envelopeSignatureSecretsByKeyId) return;
+  collectOptionalSecret(candidates, options.envelopeSignatureSecretsByKeyId[keyId]);
+};
+
 export const resolveEnvelopeSignatureSecrets = (
   options: PortablePathEnvelopeSignatureVerificationOptions | undefined,
   context: PortablePathEnvelopeSignatureKeyResolverContext
 ): string[] => {
   const candidates: string[] = [];
-  if (options?.envelopeSignatureKeyResolver) {
-    const resolverResult = options.envelopeSignatureKeyResolver(context);
-    if (typeof resolverResult === 'string') {
-      const normalized = normalizeOptionalSecret(resolverResult);
-      if (normalized) candidates.push(normalized);
-    } else if (Array.isArray(resolverResult)) {
-      candidates.push(...normalizeOptionalSecretList(resolverResult));
-    }
-  }
-  const keyId = context.keyId ?? undefined;
-  if (
-    keyId &&
-    options?.envelopeSignatureSecretsByKeyId &&
-    typeof options.envelopeSignatureSecretsByKeyId[keyId] === 'string'
-  ) {
-    const normalized = normalizeOptionalSecret(options.envelopeSignatureSecretsByKeyId[keyId]);
-    if (normalized) candidates.push(normalized);
-  }
-  const primarySecret = normalizeOptionalSecret(options?.envelopeSignatureSecret);
-  if (primarySecret) candidates.push(primarySecret);
-  candidates.push(...normalizeOptionalSecretList(options?.envelopeSignatureFallbackSecrets));
+  collectResolverSecrets(candidates, options, context);
+  collectKeyIdSecret(candidates, options, context.keyId ?? null);
+  collectOptionalSecret(candidates, options?.envelopeSignatureSecret);
+  collectOptionalSecretList(candidates, options?.envelopeSignatureFallbackSecrets);
   return Array.from(new Set(candidates));
 };
 

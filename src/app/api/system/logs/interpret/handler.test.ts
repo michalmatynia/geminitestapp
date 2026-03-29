@@ -37,7 +37,7 @@ vi.mock('@/features/ai/insights/server', () => ({
   generateLogInterpretation: generateLogInterpretationMock,
 }));
 
-vi.mock('@/shared/lib/auth/settings-manage-access', () => ({
+vi.mock('@/features/auth/server', () => ({
   assertSettingsManageAccess: assertSettingsManageAccessMock,
 }));
 
@@ -159,6 +159,7 @@ describe('system logs interpret handler', () => {
     const response = await POST_handler(req, {} as never);
     const data = await response.json();
 
+    expect(assertSettingsManageAccessMock).toHaveBeenCalledTimes(1);
     expect(startAiInsightsQueueMock).toHaveBeenCalledTimes(1);
     expect(getSystemLogByIdMock).toHaveBeenCalledWith('log-1');
     expect(hydrateSystemLogRecordRuntimeContextMock).toHaveBeenCalledWith(

@@ -113,6 +113,7 @@
     "typecheck": "tsc --noEmit --incremental false",
     "typecheck:baseline": "rm -rf .next-dev && tsc --noEmit --incremental false",
     "seed:admin": "tsx scripts/db/seed-admin.ts",
+    "seed:kangur:content": "cross-env NODE_OPTIONS=--conditions=react-server node --import tsx scripts/db/bootstrap-kangur-content-to-mongo.ts",
     "seed:kangur:ai-tutor-knowledge-base": "cross-env NODE_OPTIONS=--conditions=react-server node --import tsx scripts/db/seed-kangur-ai-tutor-knowledge-base.ts",
     "backfill:kangur:ai-tutor-locales": "cross-env NODE_OPTIONS=--conditions=react-server node --import tsx scripts/db/backfill-kangur-ai-tutor-locales.ts",
     "backfill:kangur:ai-tutor-native-guide-locales": "cross-env NODE_OPTIONS=--conditions=react-server node --import tsx scripts/db/backfill-kangur-ai-tutor-native-guide-locales.ts",

@@ -20,6 +20,18 @@ type KangurClientErrorHandlingOptions<T> = {
   shouldRethrow?: (error: unknown) => boolean;
 };
 
+const resolveKangurClientErrorFallback = <T>(
+  options?: Partial<KangurClientErrorHandlingOptions<T>>
+): T => {
+  if (options && Object.prototype.hasOwnProperty.call(options, 'fallback')) {
+    return typeof options.fallback === 'function'
+      ? (options.fallback as () => T)()
+      : (options.fallback as T);
+  }
+
+  return undefined as T;
+};
+
 const KANGUR_CLIENT_CONTEXT = Object.freeze({
   feature: 'kangur',
   service: 'kangur.client',
@@ -164,9 +176,7 @@ export const withKangurClientError = async <T>(
     if (options?.shouldRethrow?.(error)) {
       throw error;
     }
-    return typeof options?.fallback === 'function'
-      ? (options.fallback as () => T)()
-      : (options?.fallback ?? (undefined as T)) as T;
+    return resolveKangurClientErrorFallback(options);
   }
 };
 
@@ -193,9 +203,7 @@ export const withKangurClientErrorSync = <T>(
     if (options?.shouldRethrow?.(error)) {
       throw error;
     }
-    return typeof options?.fallback === 'function'
-      ? (options.fallback as () => T)()
-      : (options?.fallback ?? (undefined as T)) as T;
+    return resolveKangurClientErrorFallback(options);
   }
 };
 

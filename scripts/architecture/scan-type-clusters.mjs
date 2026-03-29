@@ -347,6 +347,8 @@ const createBaseReport = () => ({
   filters: {
     domains: DOMAIN_FILTERS,
     minRisk: MIN_RISK,
+    topLimit: TOP_LIMIT,
+    planTopLimit: PLAN_TOP_LIMIT,
   },
   thresholds: {
     minClusterSize: 2,

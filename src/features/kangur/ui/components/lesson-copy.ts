@@ -15,6 +15,19 @@ export type LessonShellScope = 'game' | 'draw' | 'synthesis';
 
 type LessonTranslateWithHas = LessonTranslate & { has?: (messageKey: string) => boolean };
 
+export const createLessonFallbackTranslate = (
+  translate: LessonTranslateWithHas,
+): LessonTranslateWithHas => {
+  const fallbackTranslate = ((key: string, values?: TranslationValues): string =>
+    translate(key, values)) as LessonTranslateWithHas;
+
+  if (typeof translate.has === 'function') {
+    fallbackTranslate.has = (messageKey: string): boolean => translate.has?.(messageKey) ?? false;
+  }
+
+  return fallbackTranslate;
+};
+
 export const isResolvedLessonTranslation = (
   translated: string,
   key: string,

@@ -11,6 +11,7 @@ import {
 } from '../duels/mobileDuelDefaults';
 import { useKangurMobileI18n } from '../i18n/kangurMobileI18n';
 import { useKangurMobileRuntime } from '../providers/KangurRuntimeContext';
+import { resolveMobileDuelErrorMessage } from '../duels/mobileDuelErrorMessages';
 
 const MOBILE_HOME_DUELS_PRESENCE_DISPLAY_LIMIT = 4;
 const MOBILE_HOME_DUELS_PRESENCE_QUERY_LIMIT = 6;
@@ -31,100 +32,6 @@ type UseKangurMobileHomeDuelsPresenceResult = {
 
 type UseKangurMobileHomeDuelsPresenceOptions = {
   enabled?: boolean;
-};
-
-const toPresenceErrorMessage = (
-  error: unknown,
-  copy: ReturnType<typeof useKangurMobileI18n>['copy'],
-): string | null => {
-  if (!error) {
-    return null;
-  }
-
-  if (typeof error === 'object' && error && 'status' in error) {
-    const status = (error as { status?: number }).status;
-
-    if (status === 401) {
-      return copy({
-        de: 'Melde dich an, um aktive Rivalen aus der Duell-Lobby zu laden.',
-        en: 'Sign in to load active rivals in the duel lobby.',
-        pl: 'Zaloguj się, aby pobrać aktywnych rywali z lobby pojedynków.',
-      });
-    }
-  }
-
-  if (!(error instanceof Error)) {
-    return copy({
-      de: 'Die aktive Duell-Lobby konnte nicht geladen werden.',
-      en: 'Could not load the active duel lobby.',
-      pl: 'Nie udało się pobrać aktywnego lobby pojedynków.',
-    });
-  }
-
-  const message = error.message.trim();
-  if (!message) {
-    return copy({
-      de: 'Die aktive Duell-Lobby konnte nicht geladen werden.',
-      en: 'Could not load the active duel lobby.',
-      pl: 'Nie udało się pobrać aktywnego lobby pojedynków.',
-    });
-  }
-
-  const normalized = message.toLowerCase();
-  if (normalized === 'failed to fetch' || normalized.includes('networkerror')) {
-    return copy({
-      de: 'Die aktive Duell-Lobby konnte nicht geladen werden.',
-      en: 'Could not load the active duel lobby.',
-      pl: 'Nie udało się pobrać aktywnego lobby pojedynków.',
-    });
-  }
-
-  return message;
-};
-
-const toPresenceActionErrorMessage = (
-  error: unknown,
-  copy: ReturnType<typeof useKangurMobileI18n>['copy'],
-): string => {
-  if (typeof error === 'object' && error && 'status' in error) {
-    const status = (error as { status?: number }).status;
-
-    if (status === 401) {
-      return copy({
-        de: 'Melde dich an, um eine private Herausforderung zu senden.',
-        en: 'Sign in to send a private challenge.',
-        pl: 'Zaloguj się, aby wysłać prywatne wyzwanie.',
-      });
-    }
-  }
-
-  if (!(error instanceof Error)) {
-    return copy({
-      de: 'Die private Herausforderung konnte nicht erstellt werden.',
-      en: 'Could not create the private challenge.',
-      pl: 'Nie udało się utworzyć prywatnego wyzwania.',
-    });
-  }
-
-  const message = error.message.trim();
-  if (!message) {
-    return copy({
-      de: 'Die private Herausforderung konnte nicht erstellt werden.',
-      en: 'Could not create the private challenge.',
-      pl: 'Nie udało się utworzyć prywatnego wyzwania.',
-    });
-  }
-
-  const normalized = message.toLowerCase();
-  if (normalized === 'failed to fetch' || normalized.includes('networkerror')) {
-    return copy({
-      de: 'Die private Herausforderung konnte nicht erstellt werden.',
-      en: 'Could not create the private challenge.',
-      pl: 'Nie udało się utworzyć prywatnego wyzwania.',
-    });
-  }
-
-  return message;
 };
 
 export const useKangurMobileHomeDuelsPresence = ({
@@ -208,7 +115,26 @@ export const useKangurMobileHomeDuelsPresence = ({
 
         return response.session.id;
       } catch (error) {
-        setActionError(toPresenceActionErrorMessage(error, copy));
+        setActionError(
+          resolveMobileDuelErrorMessage({
+            error,
+            copy,
+            fallback: {
+              de: 'Die private Herausforderung konnte nicht erstellt werden.',
+              en: 'Could not create the private challenge.',
+              pl: 'Nie udało się utworzyć prywatnego wyzwania.',
+            },
+            unauthorized: {
+              de: 'Melde dich an, um eine private Herausforderung zu senden.',
+              en: 'Sign in to send a private challenge.',
+              pl: 'Zaloguj się, aby wysłać prywatne wyzwanie.',
+            },
+          }) ?? copy({
+            de: 'Die private Herausforderung konnte nicht erstellt werden.',
+            en: 'Could not create the private challenge.',
+            pl: 'Nie udało się utworzyć prywatnego wyzwania.',
+          }),
+        );
         return null;
       } finally {
         setIsActionPending(false);
@@ -216,7 +142,20 @@ export const useKangurMobileHomeDuelsPresence = ({
       }
     },
     entries,
-    error: toPresenceErrorMessage(presenceQuery.error, copy),
+    error: resolveMobileDuelErrorMessage({
+      error: presenceQuery.error,
+      copy,
+      fallback: {
+        de: 'Die aktive Duell-Lobby konnte nicht geladen werden.',
+        en: 'Could not load the active duel lobby.',
+        pl: 'Nie udało się pobrać aktywnego lobby pojedynków.',
+      },
+      unauthorized: {
+        de: 'Melde dich an, um aktive Rivalen aus der Duell-Lobby zu laden.',
+        en: 'Sign in to load active rivals in the duel lobby.',
+        pl: 'Zaloguj się, aby pobrać aktywnych rywali z lobby pojedynków.',
+      },
+    }),
     isActionPending,
     isAuthenticated,
     isLoading: isRestoringAuth || (isQueryEnabled && presenceQuery.isLoading),

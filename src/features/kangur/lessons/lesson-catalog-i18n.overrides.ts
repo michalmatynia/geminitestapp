@@ -442,6 +442,11 @@ export const GERMAN_LESSON_COPY_OVERRIDES: Partial<
     title: 'Englisch: Adjektive',
     description: 'Beschreibe Personen, Orte und Dinge mit Adjektiven und der richtigen Wortstellung.',
   },
+  english_comparatives_superlatives: {
+    title: 'Englisch: Komparativ und Superlativ',
+    description:
+      'Vergleiche zwei Dinge, waehle das staerkste aus einer Gruppe und uebe schwierige Formen wie better und the best.',
+  },
   english_adverbs: {
     title: 'Englisch: Adverbien',
     description: 'Beschreibe mit Adverbien, wie Handlungen passieren, und uebe Sonderformen.',

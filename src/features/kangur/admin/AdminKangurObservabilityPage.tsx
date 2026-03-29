@@ -398,7 +398,7 @@ export function AdminKangurObservabilityPage(): JSX.Element {
         {summaryQuery.error ? <Alert variant='error'>{summaryQuery.error.message}</Alert> : null}
 
         {summaryQuery.isLoading && !summary ? (
-          <LoadingState message='Loading Kangur observability...' className='min-h-[320px]' />
+          <LoadingState message='Loading observability...' className='min-h-[320px]' />
         ) : !summary || !knowledgeGraphStatus ? (
           <CompactEmptyState
             title='No observability summary available'

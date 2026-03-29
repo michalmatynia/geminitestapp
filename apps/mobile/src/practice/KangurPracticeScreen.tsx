@@ -16,7 +16,7 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Pressable, Text, View } from 'react-native';
 import { useEffect, useMemo, useRef, useState } from 'react';
 
-import type { KangurAiTutorConversationContext } from '../../../../src/shared/contracts-ai-tutor';
+import type { KangurAiTutorConversationContext } from '../../../../src/shared/contracts/kangur-ai-tutor';
 import { KangurMobileAiTutorCard } from '../ai-tutor/KangurMobileAiTutorCard';
 import { useKangurMobileAuth } from '../auth/KangurMobileAuthContext';
 import { createKangurDuelsHref } from '../duels/duelsHref';

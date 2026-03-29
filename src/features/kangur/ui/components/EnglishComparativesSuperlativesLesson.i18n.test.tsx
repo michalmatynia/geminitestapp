@@ -20,6 +20,8 @@ vi.mock('@/features/kangur/ui/lessons/lesson-components', () => ({
 }));
 
 import deMessages from '@/i18n/messages/de.json';
+import plMessages from '@/i18n/messages/pl.json';
+import ukMessages from '@/i18n/messages/uk.json';
 import EnglishComparativesSuperlativesLesson from '@/features/kangur/ui/components/EnglishComparativesSuperlativesLesson';
 
 describe('EnglishComparativesSuperlativesLesson i18n', () => {
@@ -57,6 +59,42 @@ describe('EnglishComparativesSuperlativesLesson i18n', () => {
         gameId: 'english_compare_and_crown',
         instanceId: 'english_compare_and_crown:instance:default',
       },
+    });
+  });
+
+  it('uses the localized Polish lesson title', () => {
+    render(
+      <NextIntlClientProvider locale='pl' messages={plMessages}>
+        <EnglishComparativesSuperlativesLesson />
+      </NextIntlClientProvider>
+    );
+
+    expect(screen.getByTestId('kangur-unified-lesson')).toHaveTextContent(
+      'Angielski: stopniowanie przymiotników'
+    );
+
+    const sections = (capturedProps?.sections as Array<Record<string, unknown>>) ?? [];
+    expect(sections.find((section) => section.id === 'form')).toMatchObject({
+      title: 'Forma',
+      description: 'Buduj formy stopniowania',
+    });
+  });
+
+  it('uses the localized Ukrainian lesson title', () => {
+    render(
+      <NextIntlClientProvider locale='uk' messages={ukMessages}>
+        <EnglishComparativesSuperlativesLesson />
+      </NextIntlClientProvider>
+    );
+
+    expect(screen.getByTestId('kangur-unified-lesson')).toHaveTextContent(
+      'Англійська: вищий і найвищий ступені'
+    );
+
+    const sections = (capturedProps?.sections as Array<Record<string, unknown>>) ?? [];
+    expect(sections.find((section) => section.id === 'form')).toMatchObject({
+      title: 'Форма',
+      description: 'Будуй форми вищого й найвищого ступенів',
     });
   });
 });

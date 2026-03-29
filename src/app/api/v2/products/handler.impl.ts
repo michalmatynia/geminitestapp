@@ -80,6 +80,44 @@ const buildProductPayload = (
   return payload;
 };
 
+const readProductCreateFormData = async (req: NextRequest): Promise<FormData> => {
+  try {
+    return await req.formData();
+  } catch (error) {
+    void ErrorSystem.captureException(error);
+    if (isLikelyPayloadTooLarge(error)) {
+      throw payloadTooLargeError(
+        'Upload payload too large. Reduce image sizes/count or increase proxyClientMaxBodySize.'
+      );
+    }
+    throw badRequestError('Invalid form data payload', { error });
+  }
+};
+
+const resolveProductCreateOptions = (userId: string | null | undefined): { userId: string } | {} =>
+  userId ? { userId } : {};
+
+const findIdempotentProductResponse = async (
+  req: NextRequest,
+  payload: z.infer<typeof productCreateInputSchema>
+): Promise<Response | null> => {
+  const idempotencyKey = req.headers.get('idempotency-key') ?? req.headers.get('x-idempotency-key');
+  const normalizedSku = payload.sku.trim();
+  if (!idempotencyKey || !normalizedSku) {
+    return null;
+  }
+
+  const existing: ProductWithImages | null = await CachedProductService.getProductBySku(normalizedSku);
+  if (!existing) {
+    return null;
+  }
+
+  return NextResponse.json({
+    ...existing,
+    idempotent: true,
+  });
+};
+
 export async function GET_handler(_req: NextRequest, ctx: ApiHandlerContext): Promise<Response> {
   const query = ctx.query as ProductFiltersParsed & { fresh?: boolean };
   const { fresh, ...filters } = query;
@@ -132,18 +170,7 @@ export async function GET_handler(_req: NextRequest, ctx: ApiHandlerContext): Pr
 
 /** POST /api/v2/products: create product with validation + cache invalidation. */
 export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
-  let formData: FormData;
-  try {
-    formData = await req.formData();
-  } catch (error) {
-    void ErrorSystem.captureException(error);
-    if (isLikelyPayloadTooLarge(error)) {
-      throw payloadTooLargeError(
-        'Upload payload too large. Reduce image sizes/count or increase proxyClientMaxBodySize.'
-      );
-    }
-    throw badRequestError('Invalid form data payload', { error });
-  }
+  const formData = await readProductCreateFormData(req);
 
   // Validate the form data
   const validation = await validateProductCreateMiddleware(formData);
@@ -153,22 +180,15 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): P
   const payload = buildProductPayload(formData);
   const validatedPayload = productCreateInputSchema.parse(payload);
 
-  const idempotencyKey = req.headers.get('idempotency-key') ?? req.headers.get('x-idempotency-key');
-  if (idempotencyKey && validatedPayload.sku.trim()) {
-    const existing: ProductWithImages | null = await CachedProductService.getProductBySku(
-      validatedPayload.sku.trim()
-    );
-    if (existing) {
-      return NextResponse.json({
-        ...existing,
-        idempotent: true,
-      });
-    }
+  const idempotentResponse = await findIdempotentProductResponse(req, validatedPayload);
+  if (idempotentResponse) {
+    return idempotentResponse;
   }
 
-  const options = _ctx.userId ? { userId: _ctx.userId } : {};
-
-  const product: ProductWithImages | null = await productService.createProduct(formData, options);
+  const product: ProductWithImages | null = await productService.createProduct(
+    formData,
+    resolveProductCreateOptions(_ctx.userId)
+  );
 
   // Invalidate relevant caches
   CachedProductService.invalidateAll();

@@ -234,6 +234,51 @@ const seedTypeClusterSources = (root: string): void => {
   );
 };
 
+const seedTypeClusterNoiseSources = (root: string): void => {
+  writeFile(
+    root,
+    'src/features/orders/types.ts',
+    [
+      'export type PrimitiveId = string;',
+      '',
+      'export interface EmptyMarker {}',
+      '',
+      'export interface SharedOptionDto {',
+      '  id: string;',
+      '  label: string;',
+      '}',
+      '',
+      'export interface ScopeFilterDto {',
+      '  id: string;',
+      '  label: string;',
+      '  scope?: string;',
+      '}',
+      '',
+    ].join('\n')
+  );
+  writeFile(
+    root,
+    'src/features/products/types.ts',
+    [
+      'export type AliasText = string;',
+      '',
+      'export interface AnotherEmpty {}',
+      '',
+      'export type LabeledOptionDto = {',
+      '  id: string;',
+      '  label: string;',
+      '};',
+      '',
+      'export type ScopeSelectionDto = {',
+      '  id: string;',
+      '  label: string;',
+      '  scope: "team" | "org";',
+      '};',
+      '',
+    ].join('\n')
+  );
+};
+
 const seedQualitySources = (root: string): void => {
   writeFile(root, 'src/features/products/index.ts', 'export const products = true;\n');
   writeFile(
@@ -851,6 +896,56 @@ describe('scanner summary-json envelope', () => {
     expect(fs.existsSync(path.join(root, 'docs', 'metrics', 'type-clusters-latest.json'))).toBe(false);
   });
 
+  it('ignores primitive aliases and empty exported shapes when clustering types', () => {
+    const root = createTempRoot();
+    seedTypeClusterNoiseSources(root);
+
+    const typeClusters = runSummaryJson(root, typeClustersScriptPath, [
+      '--summary-json',
+      '--no-write',
+      '--no-history',
+    ]);
+
+    expect(typeClusters.status).toBe('ok');
+    expect(typeClusters.summary).toMatchObject({
+      filesScanned: 2,
+      exportedDeclarationsScanned: 8,
+      candidateDeclarationsScanned: 4,
+      exactShapeClusters: 1,
+      nearShapeClusters: 1,
+      clustersAfterFilters: 2,
+      declarationsInClusters: 4,
+    });
+    expect(typeClusters.details).toMatchObject({
+      status: 'ok',
+      clusters: [
+        expect.objectContaining({
+          declarations: expect.arrayContaining([
+            expect.objectContaining({ name: 'SharedOptionDto' }),
+            expect.objectContaining({ name: 'LabeledOptionDto' }),
+          ]),
+        }),
+        expect.objectContaining({
+          declarations: expect.arrayContaining([
+            expect.objectContaining({ name: 'ScopeFilterDto' }),
+            expect.objectContaining({ name: 'ScopeSelectionDto' }),
+          ]),
+        }),
+      ],
+    });
+
+    const clusteredDeclarationNames = new Set(
+      (typeClusters.details?.clusters ?? []).flatMap((cluster) =>
+        (cluster.declarations ?? []).map((declaration: { name?: string }) => declaration.name)
+      )
+    );
+
+    expect(clusteredDeclarationNames.has('PrimitiveId')).toBe(false);
+    expect(clusteredDeclarationNames.has('AliasText')).toBe(false);
+    expect(clusteredDeclarationNames.has('EmptyMarker')).toBe(false);
+    expect(clusteredDeclarationNames.has('AnotherEmpty')).toBe(false);
+  });
+
   it('applies type-cluster domain and risk filters after scanning', () => {
     const root = createTempRoot();
     seedTypeClusterSources(root);
@@ -910,6 +1005,233 @@ describe('scanner summary-json envelope', () => {
       historyDisabled: true,
       noWrite: true,
     });
+  });
+
+  it('parses inline type-cluster flags and treats repeated domains as an OR filter', () => {
+    const root = createTempRoot();
+    seedTypeClusterSources(root);
+
+    const typeClusters = runSummaryJson(root, typeClustersScriptPath, [
+      '--summary-json',
+      '--no-write',
+      '--no-history',
+      '--domain=shared:contracts',
+      '--domain=feature:products',
+      '--min-risk=12',
+    ]);
+
+    expect(typeClusters.status).toBe('ok');
+    expect(typeClusters.summary).toMatchObject({
+      exactShapeClusters: 1,
+      nearShapeClusters: 1,
+      clustersAfterFilters: 1,
+      declarationsInClusters: 2,
+      highestRiskScore: 12,
+    });
+    expect(typeClusters.details).toMatchObject({
+      status: 'ok',
+      clusters: [
+        expect.objectContaining({
+          clusterKind: 'exact-shape',
+          domains: ['feature:orders', 'feature:products'],
+          declarationCount: 2,
+        }),
+      ],
+    });
+    expect(typeClusters.filters).toMatchObject({
+      domains: ['shared:contracts', 'feature:products'],
+      minRisk: 12,
+      topLimit: 25,
+      planTopLimit: 20,
+      historyDisabled: true,
+      noWrite: true,
+    });
+  });
+
+  it('limits type-cluster markdown artifacts without truncating structured cluster output', () => {
+    const root = createTempRoot();
+    seedTypeClusterSources(root);
+
+    const typeClusters = runSummaryJson(root, typeClustersScriptPath, [
+      '--summary-json',
+      '--top=1',
+      '--plan-top=1',
+    ]);
+
+    expect(typeClusters.status).toBe('ok');
+    expect(typeClusters.summary).toMatchObject({
+      exactShapeClusters: 1,
+      nearShapeClusters: 1,
+      clustersAfterFilters: 2,
+      declarationsInClusters: 4,
+    });
+    expect(typeClusters.details).toMatchObject({
+      status: 'ok',
+      clusters: [
+        expect.objectContaining({ clusterId: 'exact-0001' }),
+        expect.objectContaining({ clusterId: 'near-0001' }),
+      ],
+    });
+    expect(typeClusters.filters).toMatchObject({
+      domains: [],
+      minRisk: 0,
+      topLimit: 1,
+      planTopLimit: 1,
+      historyDisabled: true,
+      noWrite: false,
+    });
+
+    const latestMarkdownPath = path.join(root, String(typeClusters.paths?.latestMarkdown ?? ''));
+    const latestPlanMarkdownPath = path.join(root, String(typeClusters.paths?.latestPlanMarkdown ?? ''));
+    const latestCsvPath = path.join(root, String(typeClusters.paths?.latestCsv ?? ''));
+    const markdown = fs.readFileSync(latestMarkdownPath, 'utf8');
+    const planMarkdown = fs.readFileSync(latestPlanMarkdownPath, 'utf8');
+    const csv = fs.readFileSync(latestCsvPath, 'utf8');
+
+    expect(markdown).toContain('`exact-0001`');
+    expect(markdown).not.toContain('`near-0001`');
+    expect(planMarkdown).toContain('1. [ ] exact-0001 (exact-shape)');
+    expect(planMarkdown).not.toContain('near-0001');
+    expect(csv).toContain('exact-0001');
+    expect(csv).toContain('near-0001');
+  });
+
+  it('emits writable artifact paths for type-cluster scans when history is enabled', () => {
+    const root = createTempRoot();
+    seedTypeClusterSources(root);
+
+    const typeClusters = runSummaryJson(root, typeClustersScriptPath, [
+      '--summary-json',
+      '--write-history',
+    ]);
+
+    expect(typeClusters.status).toBe('ok');
+    expect(typeClusters.summary).toMatchObject({
+      exactShapeClusters: 1,
+      nearShapeClusters: 1,
+      clustersAfterFilters: 2,
+      declarationsInClusters: 4,
+    });
+    expect(typeClusters.paths).toMatchObject({
+      latestJson: 'docs/metrics/type-clusters-latest.json',
+      latestMarkdown: 'docs/metrics/type-clusters-latest.md',
+      latestCsv: 'docs/metrics/type-clusters-latest.csv',
+      latestPlanMarkdown: 'docs/metrics/type-clusters-plan-latest.md',
+      historyJson: expect.stringMatching(/^docs\/metrics\/type-clusters-.+\.json$/),
+    });
+    expect(typeClusters.filters).toMatchObject({
+      historyDisabled: false,
+      noWrite: false,
+    });
+
+    const latestJsonPath = path.join(root, String(typeClusters.paths?.latestJson ?? ''));
+    const latestMarkdownPath = path.join(root, String(typeClusters.paths?.latestMarkdown ?? ''));
+    const latestCsvPath = path.join(root, String(typeClusters.paths?.latestCsv ?? ''));
+    const latestPlanMarkdownPath = path.join(
+      root,
+      String(typeClusters.paths?.latestPlanMarkdown ?? '')
+    );
+    const historyJsonPath = path.join(root, String(typeClusters.paths?.historyJson ?? ''));
+
+    expect(fs.existsSync(latestJsonPath)).toBe(true);
+    expect(fs.existsSync(latestMarkdownPath)).toBe(true);
+    expect(fs.existsSync(latestCsvPath)).toBe(true);
+    expect(fs.existsSync(latestPlanMarkdownPath)).toBe(true);
+    expect(fs.existsSync(historyJsonPath)).toBe(true);
+  });
+
+  it('keeps type-cluster init mode scaffolded and history-free', () => {
+    const root = createTempRoot();
+    seedTypeClusterSources(root);
+
+    const typeClusters = runSummaryJson(root, typeClustersScriptPath, [
+      '--summary-json',
+      '--init',
+      '--write-history',
+    ]);
+
+    expect(typeClusters.status).toBe('ok');
+    expect(typeClusters.summary).toMatchObject({
+      filesScanned: 0,
+      exportedDeclarationsScanned: 0,
+      candidateDeclarationsScanned: 0,
+      exactShapeClusters: 0,
+      nearShapeClusters: 0,
+      clustersAfterFilters: 0,
+      declarationsInClusters: 0,
+      highestRiskScore: 0,
+    });
+    expect(typeClusters.details).toMatchObject({
+      status: 'scaffold',
+      clusters: [],
+    });
+    expect(typeClusters.paths).toMatchObject({
+      latestJson: 'docs/metrics/type-clusters-latest.json',
+      latestMarkdown: 'docs/metrics/type-clusters-latest.md',
+      latestCsv: 'docs/metrics/type-clusters-latest.csv',
+      latestPlanMarkdown: 'docs/metrics/type-clusters-plan-latest.md',
+      historyJson: null,
+    });
+    expect(typeClusters.filters).toMatchObject({
+      historyDisabled: false,
+      noWrite: false,
+    });
+
+    const latestJsonPath = path.join(root, String(typeClusters.paths?.latestJson ?? ''));
+    const latestJson = JSON.parse(fs.readFileSync(latestJsonPath, 'utf8')) as {
+      scanner?: { mode?: string };
+      status?: string;
+      summary?: { filesScanned?: number };
+    };
+
+    expect(latestJson.scanner?.mode).toBe('init');
+    expect(latestJson.status).toBe('scaffold');
+    expect(latestJson.summary?.filesScanned).toBe(0);
+  });
+
+  it('suppresses type-cluster history artifacts in ci mode', () => {
+    const root = createTempRoot();
+    seedTypeClusterSources(root);
+
+    const typeClusters = runSummaryJson(root, typeClustersScriptPath, [
+      '--summary-json',
+      '--write-history',
+      '--ci',
+    ]);
+
+    expect(typeClusters.status).toBe('ok');
+    expect(typeClusters.summary).toMatchObject({
+      exactShapeClusters: 1,
+      nearShapeClusters: 1,
+      clustersAfterFilters: 2,
+      declarationsInClusters: 4,
+    });
+    expect(typeClusters.paths).toMatchObject({
+      latestJson: 'docs/metrics/type-clusters-latest.json',
+      latestMarkdown: 'docs/metrics/type-clusters-latest.md',
+      latestCsv: 'docs/metrics/type-clusters-latest.csv',
+      latestPlanMarkdown: 'docs/metrics/type-clusters-plan-latest.md',
+      historyJson: null,
+    });
+    expect(typeClusters.filters).toMatchObject({
+      historyDisabled: true,
+      noWrite: false,
+    });
+
+    const metricsDirPath = path.join(root, 'docs', 'metrics');
+    const metricFiles = fs.readdirSync(metricsDirPath);
+
+    expect(metricFiles).toEqual(
+      expect.arrayContaining([
+        'type-clusters-latest.csv',
+        'type-clusters-latest.json',
+        'type-clusters-latest.md',
+        'type-clusters-plan-latest.md',
+      ])
+    );
+    expect(metricFiles.some((fileName) => /^type-clusters-(?!latest).+\.json$/.test(fileName))).toBe(
+      false
+    );
   });
 
   it('wraps architecture metrics collection in the shared scan envelope', () => {

@@ -1,21 +1,23 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { handlePlaywright } from '@/shared/lib/ai-paths/core/runtime/handlers/integration-playwright-handler';
+import {
+  artifactUrlFromPath,
+  handlePlaywright,
+  pollPlaywrightRun,
+} from '@/shared/lib/ai-paths/core/runtime/handlers/integration-playwright-handler';
 import type { ContextRegistryConsumerEnvelope } from '@/shared/contracts/ai-context-registry';
 import type { AiNode, RuntimePortValues } from '@/shared/contracts/ai-paths';
 import type { NodeHandlerContext } from '@/shared/contracts/ai-paths-runtime';
 
-const { enqueueMock, pollMock, artifactUrlFromPathMock } = vi.hoisted(() => ({
+const { enqueueMock, pollMock } = vi.hoisted(() => ({
   enqueueMock: vi.fn(),
   pollMock: vi.fn(),
-  artifactUrlFromPathMock: vi.fn(),
 }));
 
 vi.mock('@/shared/lib/ai-paths/api', () => ({
   playwrightNodeApi: {
     enqueue: enqueueMock,
     poll: pollMock,
-    artifactUrlFromPath: artifactUrlFromPathMock,
   },
 }));
 
@@ -106,11 +108,6 @@ describe('handlePlaywright', () => {
   beforeEach(() => {
     enqueueMock.mockReset();
     pollMock.mockReset();
-    artifactUrlFromPathMock.mockReset();
-    artifactUrlFromPathMock.mockImplementation(
-      (_relativePath: string) =>
-        `/api/ai-paths/playwright/${encodeURIComponent('run-100')}/artifacts/${encodeURIComponent('final.png')}`
-    );
   });
 
   afterEach(() => {
@@ -328,5 +325,71 @@ describe('handlePlaywright', () => {
       variant: 'error',
     });
     expect(context.executed.ai.has('node-playwright')).toBe(true);
+  });
+});
+
+describe('artifactUrlFromPath', () => {
+  it('builds a public artifact URL for a valid relative path', () => {
+    expect(artifactUrlFromPath('run-100/final.png')).toBe(
+      '/api/ai-paths/playwright/run-100/artifacts/final.png'
+    );
+  });
+
+  it('rejects empty, nested, and malformed paths', () => {
+    expect(artifactUrlFromPath('')).toBeNull();
+    expect(artifactUrlFromPath('run-100')).toBeNull();
+    expect(artifactUrlFromPath('run-100/nested/final.png')).toBeNull();
+    expect(artifactUrlFromPath('run-100\\final.png')).toBeNull();
+  });
+});
+
+describe('pollPlaywrightRun', () => {
+  beforeEach(() => {
+    pollMock.mockReset();
+  });
+
+  it('returns as soon as the run reaches a terminal status', async () => {
+    pollMock
+      .mockResolvedValueOnce({
+        ok: true,
+        data: {
+          run: {
+            runId: 'run-100',
+            status: 'queued',
+            artifacts: [],
+            logs: [],
+          },
+        },
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        data: {
+          run: {
+            runId: 'run-100',
+            status: 'completed',
+            artifacts: [],
+            logs: [],
+          },
+        },
+      });
+
+    await expect(pollPlaywrightRun('run-100', { intervalMs: 0, maxAttempts: 2 })).resolves.toEqual(
+      expect.objectContaining({
+        runId: 'run-100',
+        status: 'completed',
+      })
+    );
+    expect(pollMock).toHaveBeenCalledTimes(2);
+  });
+
+  it('throws when the poll API returns an error response', async () => {
+    pollMock.mockResolvedValueOnce({
+      ok: false,
+      error: 'poll failed',
+    });
+
+    await expect(pollPlaywrightRun('run-100', { intervalMs: 0, maxAttempts: 1 })).rejects.toThrow(
+      'poll failed'
+    );
   });
 });

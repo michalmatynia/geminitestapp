@@ -3,7 +3,7 @@
  */
 
 import React from 'react';
-import { renderHook } from '@testing-library/react';
+import { renderHook, waitFor } from '@testing-library/react';
 import {
   QueryClient,
   QueryClientProvider,
@@ -59,15 +59,29 @@ describe('useKangurPageContentStore', () => {
     focusManager.setFocused(undefined);
   });
 
-  it('does not refetch stale page content when Kangur widgets remount', () => {
-    vi.useFakeTimers();
+  it('fetches page content from the API instead of seeding it from the static catalog', async () => {
+    const { wrapper } = createWrapper();
+    const query = renderHook(() => useKangurPageContentStore(), { wrapper });
 
+    expect(query.result.current.data).toBeUndefined();
+
+    await waitFor(() => {
+      expect(query.result.current.data?.entries.length).toBeGreaterThan(0);
+    });
+
+    expect(apiGetMock).toHaveBeenCalledTimes(1);
+  });
+
+  it('does not refetch stale page content when Kangur widgets remount', async () => {
     const { wrapper } = createWrapper();
     const firstMount = renderHook(() => useKangurPageContentStore(), { wrapper });
 
-    expect(firstMount.result.current.data?.entries.length).toBeGreaterThan(0);
-    expect(apiGetMock).not.toHaveBeenCalled();
+    await waitFor(() => {
+      expect(firstMount.result.current.data?.entries.length).toBeGreaterThan(0);
+    });
+    expect(apiGetMock).toHaveBeenCalledTimes(1);
 
+    vi.useFakeTimers();
     firstMount.unmount();
 
     vi.advanceTimersByTime(STALE_TIME_MS + 1);
@@ -75,24 +89,39 @@ describe('useKangurPageContentStore', () => {
     const secondMount = renderHook(() => useKangurPageContentStore(), { wrapper });
 
     expect(secondMount.result.current.data?.entries.length).toBeGreaterThan(0);
-    expect(apiGetMock).not.toHaveBeenCalled();
+    expect(apiGetMock).toHaveBeenCalledTimes(1);
   });
 
-  it('does not refetch stale page content when the window regains focus', () => {
-    vi.useFakeTimers();
-
+  it('does not refetch stale page content when the window regains focus', async () => {
     const { wrapper } = createWrapper();
     const query = renderHook(() => useKangurPageContentStore(), { wrapper });
 
-    expect(query.result.current.data?.entries.length).toBeGreaterThan(0);
-    expect(apiGetMock).not.toHaveBeenCalled();
+    await waitFor(() => {
+      expect(query.result.current.data?.entries.length).toBeGreaterThan(0);
+    });
+    expect(apiGetMock).toHaveBeenCalledTimes(1);
 
+    vi.useFakeTimers();
     vi.advanceTimersByTime(STALE_TIME_MS + 1);
 
     focusManager.setFocused(false);
     focusManager.setFocused(true);
 
     expect(query.result.current.data?.entries.length).toBeGreaterThan(0);
-    expect(apiGetMock).not.toHaveBeenCalled();
+    expect(apiGetMock).toHaveBeenCalledTimes(1);
+  });
+
+  it('surfaces API failures instead of fabricating local page content', async () => {
+    apiGetMock.mockRejectedValueOnce(new Error('mongo unavailable'));
+
+    const { wrapper } = createWrapper();
+    const query = renderHook(() => useKangurPageContentStore(), { wrapper });
+
+    await waitFor(() => {
+      expect(query.result.current.isError).toBe(true);
+    });
+
+    expect(query.result.current.data).toBeUndefined();
+    expect(apiGetMock).toHaveBeenCalledTimes(1);
   });
 });

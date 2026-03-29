@@ -1,3 +1,7 @@
+import {
+  getLocalizedKangurMetadataBadgeName,
+  KANGUR_BADGES,
+} from '@kangur/core';
 import { useMemo } from 'react';
 
 import { useKangurMobileI18n } from '../i18n/kangurMobileI18n';
@@ -22,7 +26,6 @@ let badgeById: Map<string, { id: string; emoji: string; name: string }> | null =
 
 const getBadgeById = () => {
   if (!badgeById) {
-    const { KANGUR_BADGES } = require('@kangur/core/progress-metadata') as typeof import('@kangur/core/progress-metadata');
     badgeById = new Map(KANGUR_BADGES.map((badge) => [badge.id, badge]));
   }
   return badgeById;
@@ -34,8 +37,6 @@ export const useKangurMobileHomeBadges =
     const progress = useKangurMobileHomeProgressSnapshot();
 
     return useMemo(() => {
-      const { KANGUR_BADGES } = require('@kangur/core/progress-metadata') as typeof import('@kangur/core/progress-metadata');
-      const { getLocalizedKangurMetadataBadgeName } = require('@kangur/core/progress-i18n') as typeof import('@kangur/core/progress-i18n');
       const badges = getBadgeById();
 
       const unlockedBadgeIds = Array.from(

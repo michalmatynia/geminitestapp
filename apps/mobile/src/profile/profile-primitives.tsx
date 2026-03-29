@@ -25,6 +25,9 @@ import {
 } from '../shared/KangurMobileUi';
 import { translateKangurMobileActionLabel } from '../shared/translateKangurMobileActionLabel';
 import type { KangurMobileProfileRecentResultItem } from './useKangurMobileProfileRecentResults';
+import { getSessionAccentTone } from './profile-tones';
+
+export { getSessionAccentTone } from './profile-tones';
 
 export const formatProfileDate = (
   value: string | null,
@@ -173,77 +176,6 @@ export const getSessionScoreTone = (accuracyPercent: number): Tone => {
     backgroundColor: '#fef2f2',
     borderColor: '#fecaca',
     textColor: '#b91c1c',
-  };
-};
-
-export const getSessionAccentTone = (operation: string): Tone => {
-  if (operation === 'addition') {
-    return {
-      backgroundColor: '#fffbeb',
-      borderColor: '#fde68a',
-      textColor: '#b45309',
-    };
-  }
-  if (operation === 'division') {
-    return {
-      backgroundColor: '#eff6ff',
-      borderColor: '#bfdbfe',
-      textColor: '#1d4ed8',
-    };
-  }
-  if (operation === 'multiplication') {
-    return {
-      backgroundColor: '#f5f3ff',
-      borderColor: '#ddd6fe',
-      textColor: '#6d28d9',
-    };
-  }
-  if (operation === 'subtraction') {
-    return {
-      backgroundColor: '#fff1f2',
-      borderColor: '#fecdd3',
-      textColor: '#be123c',
-    };
-  }
-  if (operation === 'logical_thinking') {
-    return {
-      backgroundColor: '#f5f3ff',
-      borderColor: '#ddd6fe',
-      textColor: '#6d28d9',
-    };
-  }
-  if (operation === 'logical_patterns') {
-    return {
-      backgroundColor: '#eef2ff',
-      borderColor: '#c7d2fe',
-      textColor: '#4338ca',
-    };
-  }
-  if (operation === 'logical_classification') {
-    return {
-      backgroundColor: '#ecfeff',
-      borderColor: '#a5f3fc',
-      textColor: '#0f766e',
-    };
-  }
-  if (operation === 'logical_reasoning') {
-    return {
-      backgroundColor: '#fff7ed',
-      borderColor: '#fdba74',
-      textColor: '#c2410c',
-    };
-  }
-  if (operation === 'logical_analogies') {
-    return {
-      backgroundColor: '#fdf2f8',
-      borderColor: '#fbcfe8',
-      textColor: '#be185d',
-    };
-  }
-  return {
-    backgroundColor: '#eef2ff',
-    borderColor: '#c7d2fe',
-    textColor: '#4338ca',
   };
 };
 

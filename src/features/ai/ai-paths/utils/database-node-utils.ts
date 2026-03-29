@@ -24,15 +24,23 @@ export const singularize = (value: string): string => {
   return value;
 };
 
+const SCHEMA_TYPE_ALIASES = new Map<string, string>([
+  ['string', 'string'],
+  ['int', 'number'],
+  ['float', 'number'],
+  ['decimal', 'number'],
+  ['number', 'number'],
+  ['boolean', 'boolean'],
+  ['bool', 'boolean'],
+  ['datetime', 'string'],
+  ['date', 'string'],
+  ['json', 'Record<string, unknown>'],
+]);
+
 export const normalizeSchemaType = (value: string): string => {
   const normalized = value.trim();
-  const lower = normalized.toLowerCase();
-  if (lower === 'string') return 'string';
-  if (lower === 'int' || lower === 'float' || lower === 'decimal' || lower === 'number')
-    return 'number';
-  if (lower === 'boolean' || lower === 'bool') return 'boolean';
-  if (lower === 'datetime' || lower === 'date') return 'string';
-  if (lower === 'json') return 'Record<string, unknown>';
+  const mapped = SCHEMA_TYPE_ALIASES.get(normalized.toLowerCase());
+  if (mapped) return mapped;
   return normalized || 'unknown';
 };
 

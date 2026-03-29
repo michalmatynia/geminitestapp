@@ -15,47 +15,50 @@ export const getKangurLessonDocumentRepository =
     const repository = mongoKangurLessonDocumentRepository;
 
     return {
-      getLessonDocument: async (lessonId) => {
+      getLessonDocument: async (lessonId, locale) => {
         try {
-          return await repository.getLessonDocument(lessonId);
+          return await repository.getLessonDocument(lessonId, locale);
         } catch (error) {
           void ErrorSystem.captureException(error, {
             service: KANGUR_LESSON_DOCUMENT_REPOSITORY_SERVICE,
             action: 'getLessonDocument',
             provider,
             lessonId,
+            locale: locale ?? null,
           });
           throw error;
         }
       },
-      listLessonDocuments: async () => {
+      listLessonDocuments: async (locale) => {
         try {
-          return await repository.listLessonDocuments();
+          return await repository.listLessonDocuments(locale);
         } catch (error) {
           void ErrorSystem.captureException(error, {
             service: KANGUR_LESSON_DOCUMENT_REPOSITORY_SERVICE,
             action: 'listLessonDocuments',
             provider,
+            locale: locale ?? null,
           });
           throw error;
         }
       },
-      replaceLessonDocuments: async (store) => {
+      replaceLessonDocuments: async (store, locale) => {
         try {
-          return await repository.replaceLessonDocuments(store);
+          return await repository.replaceLessonDocuments(store, locale);
         } catch (error) {
           void ErrorSystem.captureException(error, {
             service: KANGUR_LESSON_DOCUMENT_REPOSITORY_SERVICE,
             action: 'replaceLessonDocuments',
             provider,
             count: Object.keys(store).length,
+            locale: locale ?? null,
           });
           throw error;
         }
       },
-      saveLessonDocument: async (lessonId, document) => {
+      saveLessonDocument: async (lessonId, document, locale) => {
         try {
-          await repository.saveLessonDocument(lessonId, document);
+          await repository.saveLessonDocument(lessonId, document, locale);
           return;
         } catch (error) {
           void ErrorSystem.captureException(error, {
@@ -63,13 +66,14 @@ export const getKangurLessonDocumentRepository =
             action: 'saveLessonDocument',
             provider,
             lessonId,
+            locale: locale ?? null,
           });
           throw error;
         }
       },
-      removeLessonDocument: async (lessonId) => {
+      removeLessonDocument: async (lessonId, locale) => {
         try {
-          await repository.removeLessonDocument(lessonId);
+          await repository.removeLessonDocument(lessonId, locale);
           return;
         } catch (error) {
           void ErrorSystem.captureException(error, {
@@ -77,6 +81,7 @@ export const getKangurLessonDocumentRepository =
             action: 'removeLessonDocument',
             provider,
             lessonId,
+            locale: locale ?? null,
           });
           throw error;
         }

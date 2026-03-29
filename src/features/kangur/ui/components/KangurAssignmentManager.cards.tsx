@@ -57,7 +57,7 @@ export function KangurAssignmentManagerItemCard({
 }): React.JSX.Element {
   return (
     <KangurGlassPanel
-      className={cn('flex h-full flex-col', className)}
+      className={cn('soft-card flex h-full flex-col', className)}
       padding='md'
       surface='solid'
       variant='soft'

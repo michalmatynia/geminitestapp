@@ -11,7 +11,6 @@ import { KANGUR_AGE_GROUPS } from '@/features/kangur/lessons/lesson-catalog-meta
 import type { KangurLesson } from '@/features/kangur/shared/contracts/kangur';
 import {
   ContextRegistryPageProvider,
-  useRegisterContextRegistryPageSource,
 } from '@/shared/lib/ai-context-registry/page-context';
 import { Badge, FormModal, SelectSimple, useToast } from '@/features/kangur/shared/ui';
 import { ConfirmModal } from '@/features/kangur/shared/ui/templates/modals';
@@ -60,10 +59,7 @@ import {
   type KangurLessonAuthoringFilter,
 } from './content-creator-insights';
 import { LessonSvgQuickAddRuntimeProvider } from './context/LessonSvgQuickAddRuntimeContext';
-import {
-  buildKangurAdminLessonsManagerContextBundle,
-  KANGUR_ADMIN_LESSONS_MANAGER_CONTEXT_ROOT_IDS,
-} from './context-registry/lessons-manager';
+import { buildKangurAdminLessonsManagerContextBundle } from './context-registry/lessons-manager';
 import { clearLessonContentEditorDraft } from './lesson-content-editor-drafts';
 import {
   countLessonsRequiringLegacyImport,
@@ -79,35 +75,11 @@ import { parseKangurLessonTemplateComponentContentJson } from '../lessons/lesson
 import type { KangurLessonTemplateComponentContent } from '@/shared/contracts/kangur-lesson-templates';
 import type { LessonFormData, LessonTreeMode } from './types';
 import { useAdminKangurLessonsManagerState } from './AdminKangurLessonsManagerPage.hooks';
-
-function AdminKangurLessonsManagerRegistrySource({
-  registrySource,
-}: {
-  registrySource:
-    | {
-        label: string;
-        resolved: ReturnType<typeof buildKangurAdminLessonsManagerContextBundle>;
-      }
-    | null;
-}): null {
-  useRegisterContextRegistryPageSource('kangur-admin-lessons-manager-workspace', registrySource);
-  return null;
-}
-
-const buildLessonsManagerErrorReport = (
-  action: string,
-  description: string,
-  context?: Record<string, unknown>,
-) => ({
-  source: 'kangur-admin',
-  action,
-  description,
-  ...(context ? { context } : {}),
-});
-
-const KANGUR_ADMIN_LESSONS_MANAGER_ROOT_IDS = [
-  ...KANGUR_ADMIN_LESSONS_MANAGER_CONTEXT_ROOT_IDS,
-];
+import {
+  AdminKangurLessonsManagerRegistrySource,
+  buildLessonsManagerErrorReport,
+  KANGUR_ADMIN_LESSONS_MANAGER_ROOT_IDS,
+} from './AdminKangurLessonsManagerPage.shared';
 
 export function AdminKangurLessonsManagerPage({
   standalone = true,

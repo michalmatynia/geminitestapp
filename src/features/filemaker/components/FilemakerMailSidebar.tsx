@@ -1,21 +1,6 @@
 'use client';
 
-import {
-  Archive,
-  CirclePause,
-  CirclePlay,
-  Clock3,
-  FilterX,
-  Folder,
-  Inbox,
-  Mail,
-  MailPlus,
-  RefreshCcw,
-  Send,
-  Settings2,
-  ShieldAlert,
-  Trash2,
-} from 'lucide-react';
+import { FilterX } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
@@ -41,6 +26,28 @@ import {
   toFilemakerMailNewAccountNodeId,
   toFilemakerMailThreadNodeId,
 } from '../mail-master-tree';
+import {
+  buildFilemakerMailSelectionHref as buildMailSelectionHref,
+  fetchFilemakerMailJson as fetchJson,
+} from '../mail-ui-helpers';
+import {
+  buildFilemakerMailComposeHref as buildComposeHref,
+  buildFilemakerMailThreadHref as buildThreadHref,
+  CirclePause,
+  CirclePlay,
+  Clock3,
+  formatFilemakerMailLastSyncedLabel as formatLastSyncedLabel,
+  formatFilemakerMailThreadParticipantsLabel as formatThreadParticipantsLabel,
+  getFilemakerMailFolderIcon as getFolderIcon,
+  Mail,
+  MailPlus,
+  matchesFilemakerMailRecentThreadFilters as matchesRecentThreadFilters,
+  RefreshCcw,
+  renderFilemakerMailCountBadge as renderCountBadge,
+  Settings2,
+  ShieldAlert,
+  toFilemakerAccountStatusToggleDraft as toAccountStatusToggleDraft,
+} from './FilemakerMailSidebar.helpers';
 
 import type {
   FilemakerMailAccount,
@@ -71,211 +78,6 @@ type FilemakerMailSidebarProps = {
   onSelectFolder?: (selection: { accountId: string; mailboxPath: string }) => void;
   onAccountUpdated?: (account: FilemakerMailAccount) => void | Promise<void>;
   onNewMailbox?: () => void;
-};
-
-const fetchJson = async <T,>(url: string, init?: RequestInit): Promise<T> => {
-  const response = await fetch(url, {
-    ...init,
-    headers: {
-      'content-type': 'application/json',
-      ...(init?.headers ?? {}),
-    },
-  });
-  if (!response.ok) {
-    throw new Error(`Request failed (${response.status})`);
-  }
-  return (await response.json()) as T;
-};
-
-const getFolderIcon = (
-  role: FilemakerMailFolderRole
-): React.ComponentType<{ className?: string }> => {
-  if (role === 'inbox') return Inbox;
-  if (role === 'sent') return Send;
-  if (role === 'archive') return Archive;
-  if (role === 'spam') return ShieldAlert;
-  if (role === 'trash') return Trash2;
-  return Folder;
-};
-
-const renderCountBadge = (
-  label: string,
-  value: number,
-  tone: 'default' | 'accent' = 'default'
-) => (
-  <span
-    className={cn(
-      'inline-flex min-w-5 items-center justify-center rounded-full px-1.5 py-0.5 text-[10px] font-medium',
-      tone === 'accent' ? 'bg-sky-500/20 text-sky-200' : 'bg-white/10 text-gray-300'
-    )}
-  >
-    {label}
-    {value}
-  </span>
-);
-
-const formatThreadParticipantsLabel = (value: unknown): string => {
-  if (!Array.isArray(value)) return '';
-  return value
-    .map((entry) => {
-      if (!entry || typeof entry !== 'object') return '';
-      const participant = entry as { name?: unknown; address?: unknown };
-      if (typeof participant.name === 'string' && participant.name.trim()) {
-        return participant.name.trim();
-      }
-      if (typeof participant.address === 'string' && participant.address.trim()) {
-        return participant.address.trim();
-      }
-      return '';
-    })
-    .filter(Boolean)
-    .slice(0, 2)
-    .join(', ');
-};
-
-const formatLastSyncedLabel = (value: unknown): string => {
-  if (typeof value !== 'string' || !value.trim()) {
-    return 'Last sync: Never';
-  }
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) {
-    return 'Last sync: Unknown';
-  }
-  return `Last sync: ${date.toLocaleString()}`;
-};
-
-const toAccountStatusToggleDraft = (
-  account: FilemakerMailAccount,
-  nextStatus: 'active' | 'paused'
-) => ({
-  id: account.id,
-  name: account.name,
-  emailAddress: account.emailAddress,
-  status: nextStatus,
-  imapHost: account.imapHost,
-  imapPort: account.imapPort,
-  imapSecure: account.imapSecure,
-  imapUser: account.imapUser,
-  imapPassword: '',
-  smtpHost: account.smtpHost,
-  smtpPort: account.smtpPort,
-  smtpSecure: account.smtpSecure,
-  smtpUser: account.smtpUser,
-  smtpPassword: '',
-  fromName: account.fromName ?? null,
-  replyToEmail: account.replyToEmail ?? null,
-  folderAllowlist: account.folderAllowlist,
-  initialSyncLookbackDays: account.initialSyncLookbackDays,
-  maxMessagesPerSync: account.maxMessagesPerSync,
-});
-
-const matchesRecentThreadFilters = (
-  thread: FilemakerMailThread,
-  input: {
-    recentMailboxFilter?: string | null;
-    recentUnreadOnly?: boolean;
-    recentQuery?: string | null;
-  }
-): boolean => {
-  if (input.recentMailboxFilter && thread.mailboxPath !== input.recentMailboxFilter) {
-    return false;
-  }
-  if (input.recentUnreadOnly && thread.unreadCount < 1) {
-    return false;
-  }
-  const query = input.recentQuery?.trim().toLowerCase();
-  if (!query) return true;
-  const haystack = [
-    thread.subject,
-    thread.snippet ?? '',
-    thread.mailboxPath,
-    ...thread.participantSummary.flatMap((participant) => [
-      participant.name ?? '',
-      participant.address,
-    ]),
-  ]
-    .join(' ')
-    .toLowerCase();
-  return haystack.includes(query);
-};
-
-const buildMailSelectionHref = (input: {
-  accountId?: string | null;
-  mailboxPath?: string | null;
-  panel?: 'account' | 'attention' | 'compose' | 'recent' | 'settings' | null;
-  recentMailboxFilter?: string | null;
-  recentUnreadOnly?: boolean;
-  recentQuery?: string | null;
-}): string => {
-  const search = new URLSearchParams();
-  if (input.panel !== 'attention' && input.accountId) search.set('accountId', input.accountId);
-  if (input.panel !== 'attention' && input.mailboxPath) search.set('mailboxPath', input.mailboxPath);
-  if (input.panel === 'attention') search.set('panel', 'attention');
-  if (input.accountId && input.panel === 'recent') search.set('panel', 'recent');
-  if (input.accountId && input.panel === 'settings') search.set('panel', 'settings');
-  if (input.accountId && input.recentMailboxFilter) {
-    search.set('recentMailbox', input.recentMailboxFilter);
-  }
-  if (input.accountId && input.recentUnreadOnly) {
-    search.set('recentUnread', '1');
-  }
-  if (input.accountId && input.panel === 'recent' && input.recentQuery) {
-    search.set('recentQuery', input.recentQuery);
-  }
-  const nextSearch = search.toString();
-  return nextSearch ? `/admin/filemaker/mail?${nextSearch}` : '/admin/filemaker/mail';
-};
-
-const buildComposeHref = (input: {
-  accountId?: string | null;
-  mailboxPath?: string | null;
-  originPanel?: 'recent' | null;
-  recentMailboxFilter?: string | null;
-  recentUnreadOnly?: boolean;
-  recentQuery?: string | null;
-}): string => {
-  const search = new URLSearchParams();
-  if (input.accountId) search.set('accountId', input.accountId);
-  if (input.mailboxPath) search.set('mailboxPath', input.mailboxPath);
-  if (input.accountId && input.originPanel === 'recent') search.set('panel', 'recent');
-  if (input.accountId && input.recentMailboxFilter) {
-    search.set('recentMailbox', input.recentMailboxFilter);
-  }
-  if (input.accountId && input.recentUnreadOnly) {
-    search.set('recentUnread', '1');
-  }
-  if (input.accountId && input.originPanel === 'recent' && input.recentQuery) {
-    search.set('recentQuery', input.recentQuery);
-  }
-  const nextSearch = search.toString();
-  return nextSearch ? `/admin/filemaker/mail/compose?${nextSearch}` : '/admin/filemaker/mail/compose';
-};
-
-const buildThreadHref = (input: {
-  threadId: string;
-  accountId?: string | null;
-  mailboxPath?: string | null;
-  originPanel?: 'recent' | null;
-  recentMailboxFilter?: string | null;
-  recentUnreadOnly?: boolean;
-  recentQuery?: string | null;
-}): string => {
-  const search = new URLSearchParams();
-  if (input.accountId) search.set('accountId', input.accountId);
-  if (input.mailboxPath) search.set('mailboxPath', input.mailboxPath);
-  if (input.accountId && input.originPanel === 'recent') search.set('panel', 'recent');
-  if (input.accountId && input.recentMailboxFilter) {
-    search.set('recentMailbox', input.recentMailboxFilter);
-  }
-  if (input.accountId && input.recentUnreadOnly) {
-    search.set('recentUnread', '1');
-  }
-  if (input.accountId && input.originPanel === 'recent' && input.recentQuery) {
-    search.set('recentQuery', input.recentQuery);
-  }
-  const nextSearch = search.toString();
-  const base = `/admin/filemaker/mail/threads/${encodeURIComponent(input.threadId)}`;
-  return nextSearch ? `${base}?${nextSearch}` : base;
 };
 
 export function FilemakerMailSidebar({

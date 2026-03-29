@@ -14,9 +14,10 @@ import {
 
 import {
   DEFAULT_KANGUR_AI_TUTOR_CONTENT,
-  parseKangurAiTutorContent,
   type KangurAiTutorContent,
 } from '@/features/kangur/shared/contracts/kangur-ai-tutor-content';
+import { buildKangurAiTutorContentLocaleScaffold } from '@/features/kangur/server/ai-tutor-content-locale-scaffold';
+import { parseKangurAiTutorContent } from '@/features/kangur/shared/contracts/kangur-ai-tutor-content';
 import { useKangurAuthState } from '@/features/kangur/ui/context/KangurAuthContext';
 import { api } from '@/shared/lib/api-client';
 import { withKangurClientError } from '@/features/kangur/observability/client';
@@ -48,7 +49,7 @@ export const clearKangurAiTutorContentClientCache = (): void => {
 /**
  * Activation context — the AI tutor content API call is deferred until a
  * consumer (typically the dynamically-loaded widget) calls `activate()`.
- * Until then, `DEFAULT_KANGUR_AI_TUTOR_CONTENT` is used synchronously.
+ * Until then, locale-scaffolded tutor content is used synchronously.
  */
 const KangurAiTutorContentActivationContext = createContext<(() => void) | null>(null);
 
@@ -60,10 +61,11 @@ export function KangurAiTutorContentProvider({
   const resolvedLocale = normalizeSiteLocale(locale ?? routeLocale);
   const { isAuthenticated } = useKangurAuthState();
   const defaultContent = useMemo<KangurAiTutorContent>(
-    () => ({
-      ...DEFAULT_KANGUR_AI_TUTOR_CONTENT,
-      locale: resolvedLocale,
-    }),
+    () =>
+      buildKangurAiTutorContentLocaleScaffold({
+        locale: resolvedLocale,
+        sourceContent: DEFAULT_KANGUR_AI_TUTOR_CONTENT,
+      }),
     [resolvedLocale]
   );
   const [content, setContent] = useState<KangurAiTutorContent>({
@@ -167,7 +169,18 @@ export function KangurAiTutorContentProvider({
 
 export function useKangurAiTutorContent(): KangurAiTutorContent {
   const ctx = useContext(KangurAiTutorContentContext);
-  return ctx?.content ?? DEFAULT_KANGUR_AI_TUTOR_CONTENT;
+  const routeLocale = useLocale();
+  const resolvedLocale = normalizeSiteLocale(routeLocale);
+  const defaultContent = useMemo(
+    () =>
+      buildKangurAiTutorContentLocaleScaffold({
+        locale: resolvedLocale,
+        sourceContent: DEFAULT_KANGUR_AI_TUTOR_CONTENT,
+      }),
+    [resolvedLocale]
+  );
+
+  return ctx?.content ?? defaultContent;
 }
 
 export function useOptionalKangurAiTutorContent():

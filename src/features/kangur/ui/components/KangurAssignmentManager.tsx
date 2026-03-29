@@ -312,9 +312,9 @@ export function KangurAssignmentManager(
           </div>
           <div className='mt-5 grid grid-cols-1 kangur-panel-gap min-[420px]:grid-cols-2 xl:grid-cols-4'>
             <KangurMetricCard accent='slate' label={translations('tracking.metrics.active.label')} value={trackerSummary.activeCount} />
-            <KangurMetricCard accent='emerald' label={translations('tracking.metrics.completed.label')} value={trackerSummary.completedCount} />
-            <KangurMetricCard accent='indigo' label={translations('tracking.metrics.totalXp.label')} value={trackerSummary.totalXp} />
-            <KangurMetricCard accent='amber' label={translations('tracking.metrics.mastery.label')} value={`${trackerSummary.averageMasteryPercent}%`} />
+            <KangurMetricCard accent='indigo' label={translations('tracking.metrics.notStarted.label')} value={trackerSummary.notStartedCount} />
+            <KangurMetricCard accent='amber' label={translations('tracking.metrics.inProgress.label')} value={trackerSummary.inProgressCount} />
+            <KangurMetricCard accent='emerald' label={translations('tracking.metrics.completionRate.label')} value={`${trackerSummary.completionRate}%`} />
           </div>
         </KangurGlassPanel>
       )}

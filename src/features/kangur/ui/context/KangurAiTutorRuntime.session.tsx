@@ -11,7 +11,6 @@ import {
 
 import { buildKangurAiTutorContextRegistryRefs } from '@/features/kangur/context-registry/refs';
 import type { KangurAiTutorConversationContext } from '@/features/kangur/shared/contracts/kangur-ai-tutor';
-import { DEFAULT_KANGUR_AI_TUTOR_CONTENT } from '@/features/kangur/shared/contracts/kangur-ai-tutor-content';
 import { useRegisterContextRegistryPageSource } from '@/shared/lib/ai-context-registry/page-context';
 
 import { useKangurAiTutorContent } from './KangurAiTutorContentContext';
@@ -41,7 +40,7 @@ export const useKangurAiTutorSessionSync = ({
   learnerId,
   sessionContext,
 }: KangurAiTutorSessionSyncProps): void => {
-  const tutorContent = useKangurAiTutorContent() ?? DEFAULT_KANGUR_AI_TUTOR_CONTENT;
+  const tutorContent = useKangurAiTutorContent();
   const registry = useContext(KangurAiTutorSessionRegistryContext);
   const tokenRef = useRef(Symbol('kangur-ai-tutor-session'));
   const setRegistration = registry?.setRegistration;

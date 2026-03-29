@@ -42,6 +42,65 @@ const toDateAtLocalMidnight = (value: string): Date => {
 
 const toPercent = (value: number): number => Math.max(0, Math.min(100, Math.round(value)));
 
+const compareDateKeysDesc = (left: string, right: string): number =>
+  toDateAtLocalMidnight(right).getTime() - toDateAtLocalMidnight(left).getTime();
+
+const toUniqueScoreDateKeys = (scores: KangurScore[]): string[] =>
+  Array.from(
+    new Set(
+      scores
+        .map((score) => parseDateOrNull(score.created_date))
+        .filter((date): date is Date => Boolean(date))
+        .map((date) => toLocalDateKey(date)),
+    ),
+  ).sort(compareDateKeysDesc);
+
+const computeLongestStreakDays = (dateKeys: string[]): number => {
+  let longestStreakDays = 1;
+  let rolling = 1;
+
+  for (let index = 1; index < dateKeys.length; index += 1) {
+    const prev = toDateAtLocalMidnight(dateKeys[index - 1]!);
+    const next = toDateAtLocalMidnight(dateKeys[index]!);
+    const diffDays = Math.round((prev.getTime() - next.getTime()) / DAY_IN_MS);
+
+    rolling = diffDays === 1 ? rolling + 1 : 1;
+    longestStreakDays = Math.max(longestStreakDays, rolling);
+  }
+
+  return longestStreakDays;
+};
+
+const canContinueCurrentStreak = (latestDateKey: string, now: Date): boolean => {
+  const todayDate = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const latestDate = toDateAtLocalMidnight(latestDateKey);
+  const latestDiffDays = Math.round((todayDate.getTime() - latestDate.getTime()) / DAY_IN_MS);
+
+  return latestDiffDays === 0 || latestDiffDays === 1;
+};
+
+const computeCurrentStreakDays = (dateKeys: string[], now: Date): number => {
+  if (dateKeys.length === 0 || !canContinueCurrentStreak(dateKeys[0]!, now)) {
+    return 0;
+  }
+
+  let currentStreakDays = 1;
+
+  for (let index = 1; index < dateKeys.length; index += 1) {
+    const prev = toDateAtLocalMidnight(dateKeys[index - 1]!);
+    const next = toDateAtLocalMidnight(dateKeys[index]!);
+    const diffDays = Math.round((prev.getTime() - next.getTime()) / DAY_IN_MS);
+
+    if (diffDays !== 1) {
+      break;
+    }
+
+    currentStreakDays += 1;
+  }
+
+  return currentStreakDays;
+};
+
 export type KangurOperationPerformance = {
   operation: string;
   label: string;
@@ -196,58 +255,15 @@ const computeStreaks = (
     return { currentStreakDays: 0, longestStreakDays: 0, lastPlayedAt: null };
   }
 
-  const uniqueDateKeys = Array.from(
-    new Set(
-      scores
-        .map((score) => parseDateOrNull(score.created_date))
-        .filter((date): date is Date => Boolean(date))
-        .map((date) => toLocalDateKey(date)),
-    ),
-  ).sort(
-    (left, right) =>
-      toDateAtLocalMidnight(right).getTime() - toDateAtLocalMidnight(left).getTime(),
-  );
+  const uniqueDateKeys = toUniqueScoreDateKeys(scores);
 
   if (uniqueDateKeys.length === 0) {
     return { currentStreakDays: 0, longestStreakDays: 0, lastPlayedAt: null };
   }
 
-  let longestStreakDays = 1;
-  let rolling = 1;
-  for (let index = 1; index < uniqueDateKeys.length; index += 1) {
-    const prev = toDateAtLocalMidnight(uniqueDateKeys[index - 1]!);
-    const next = toDateAtLocalMidnight(uniqueDateKeys[index]!);
-    const diffDays = Math.round((prev.getTime() - next.getTime()) / DAY_IN_MS);
-    if (diffDays === 1) {
-      rolling += 1;
-    } else {
-      rolling = 1;
-    }
-    if (rolling > longestStreakDays) {
-      longestStreakDays = rolling;
-    }
-  }
-
-  const todayDate = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-  const latestDate = toDateAtLocalMidnight(uniqueDateKeys[0]!);
-  const latestDiffDays = Math.round((todayDate.getTime() - latestDate.getTime()) / DAY_IN_MS);
-  let currentStreakDays = 0;
-  if (latestDiffDays === 0 || latestDiffDays === 1) {
-    currentStreakDays = 1;
-    for (let index = 1; index < uniqueDateKeys.length; index += 1) {
-      const prev = toDateAtLocalMidnight(uniqueDateKeys[index - 1]!);
-      const next = toDateAtLocalMidnight(uniqueDateKeys[index]!);
-      const diffDays = Math.round((prev.getTime() - next.getTime()) / DAY_IN_MS);
-      if (diffDays !== 1) {
-        break;
-      }
-      currentStreakDays += 1;
-    }
-  }
-
   return {
-    currentStreakDays,
-    longestStreakDays,
+    currentStreakDays: computeCurrentStreakDays(uniqueDateKeys, now),
+    longestStreakDays: computeLongestStreakDays(uniqueDateKeys),
     lastPlayedAt: scores[0]?.created_date ?? null,
   };
 };

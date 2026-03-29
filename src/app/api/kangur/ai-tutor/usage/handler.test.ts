@@ -8,6 +8,7 @@ import {
   KANGUR_AI_TUTOR_SETTINGS_KEY,
 } from '@/features/kangur/settings-ai-tutor';
 import { KANGUR_AI_TUTOR_USAGE_SETTINGS_KEY } from '@/features/kangur/server/ai-tutor-usage';
+import { buildKangurAiTutorContentLocaleScaffold } from '@/features/kangur/server/ai-tutor-content-locale-scaffold';
 
 const {
   resolveKangurActorMock,
@@ -108,6 +109,25 @@ describe('kangur ai tutor usage handler', () => {
         remainingMessages: 3,
       },
     });
+    expect(getKangurAiTutorContentMock).toHaveBeenCalledWith('pl');
+  });
+
+  it('uses the requested locale when resolving tutor copy', async () => {
+    const germanContent = buildKangurAiTutorContentLocaleScaffold({
+      locale: 'de',
+      sourceContent: DEFAULT_KANGUR_AI_TUTOR_CONTENT,
+    });
+    getKangurAiTutorContentMock.mockResolvedValue(germanContent);
+
+    await getKangurAiTutorUsageHandler(
+      new NextRequest('http://localhost/api/kangur/ai-tutor/usage?locale=de'),
+      {
+        ...createRequestContext(),
+        query: { locale: 'de' },
+      } as ApiHandlerContext
+    );
+
+    expect(getKangurAiTutorContentMock).toHaveBeenCalledWith('de');
   });
 
   it('rejects usage reads when the tutor is disabled for the learner', async () => {
@@ -138,20 +158,28 @@ describe('kangur ai tutor usage handler', () => {
   });
 
   it('rejects usage reads when the parent email is not verified yet', async () => {
+    const germanContent = buildKangurAiTutorContentLocaleScaffold({
+      locale: 'de',
+      sourceContent: DEFAULT_KANGUR_AI_TUTOR_CONTENT,
+    });
     resolveKangurActorMock.mockResolvedValue({
       activeLearner: {
         id: 'learner-1',
       },
       ownerEmailVerified: false,
     });
+    getKangurAiTutorContentMock.mockResolvedValue(germanContent);
 
     await expect(
       getKangurAiTutorUsageHandler(
-        new NextRequest('http://localhost/api/kangur/ai-tutor/usage'),
-        createRequestContext()
+        new NextRequest('http://localhost/api/kangur/ai-tutor/usage?locale=de'),
+        {
+          ...createRequestContext(),
+          query: { locale: 'de' },
+        } as ApiHandlerContext
       )
     ).rejects.toMatchObject({
-      message: DEFAULT_KANGUR_AI_TUTOR_CONTENT.usageApi.availabilityErrors.emailUnverified,
+      message: germanContent.usageApi.availabilityErrors.emailUnverified,
       httpStatus: 400,
     });
   });

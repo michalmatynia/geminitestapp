@@ -94,14 +94,31 @@ export const sleep = async (ms: number): Promise<void> => {
   });
 };
 
+const normalizeRetryDelayBase = (config: AdvancedApiConfig): number =>
+  Math.max(0, Math.trunc(config.retryBackoffMs ?? 0));
+
+const normalizeRetryDelayMax = (base: number, config: AdvancedApiConfig): number =>
+  Math.max(base, Math.trunc(config.retryMaxBackoffMs ?? base));
+
+const resolveRetryDelayStep = (
+  attempt: number,
+  base: number,
+  max: number,
+  strategy: AdvancedApiConfig['retryBackoff']
+): number => {
+  if (strategy !== 'exponential') return base;
+  return Math.min(max, base * Math.pow(2, Math.max(0, attempt - 1)));
+};
+
+const normalizeRetryJitterRatio = (config: AdvancedApiConfig): number =>
+  Math.max(0, Math.min(1, config.retryJitterRatio ?? 0));
+
 export const resolveRetryDelay = (attempt: number, config: AdvancedApiConfig): number => {
-  const base = Math.max(0, Math.trunc(config.retryBackoffMs ?? 0));
+  const base = normalizeRetryDelayBase(config);
   if (base <= 0) return 0;
-  const max = Math.max(base, Math.trunc(config.retryMaxBackoffMs ?? base));
-  const strategy = config.retryBackoff ?? 'fixed';
-  const step =
-    strategy === 'exponential' ? Math.min(max, base * Math.pow(2, Math.max(0, attempt - 1))) : base;
-  const jitterRatio = Math.max(0, Math.min(1, config.retryJitterRatio ?? 0));
+  const max = normalizeRetryDelayMax(base, config);
+  const step = resolveRetryDelayStep(attempt, base, max, config.retryBackoff ?? 'fixed');
+  const jitterRatio = normalizeRetryJitterRatio(config);
   if (jitterRatio <= 0) return step;
   const jitter = Math.round(step * jitterRatio * Math.random());
   return Math.min(max, step + jitter);

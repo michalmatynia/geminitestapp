@@ -5,6 +5,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { createDefaultKangurLessonDocument } from '@/features/kangur/lesson-documents';
+import { createDefaultKangurLessons } from '@/features/kangur/settings';
 
 const { getMongoDbMock, readKangurSettingValueMock } = vi.hoisted(() => ({
   getMongoDbMock: vi.fn(),
@@ -63,5 +64,50 @@ describe('mongoKangurLessonDocumentRepository legacy backfill', () => {
 
     expect(collection.bulkWrite).toHaveBeenCalledTimes(1);
     expect(document).toEqual(legacyDocument);
+  });
+
+  it('fills starter lesson documents for default lessons missing from the legacy store', async () => {
+    const legacyDocument = createDefaultKangurLessonDocument();
+    const defaultLessons = createDefaultKangurLessons();
+    const findToArrayMock = vi
+      .fn()
+      .mockResolvedValueOnce([])
+      .mockResolvedValueOnce(
+        defaultLessons.map((lesson, index) => ({
+          _id: lesson.id,
+          lessonId: lesson.id,
+          locale: 'pl',
+          document:
+            index === 0
+              ? legacyDocument
+              : createDefaultKangurLessonDocument(),
+        }))
+      );
+    const collection = {
+      bulkWrite: vi.fn().mockResolvedValue({ acknowledged: true }),
+      createIndex: vi.fn().mockResolvedValue('kangur_lesson_documents_updated_idx'),
+      find: vi.fn().mockReturnValue({
+        toArray: findToArrayMock,
+      }),
+      findOne: vi.fn(),
+    };
+    getMongoDbMock.mockResolvedValue({
+      collection: vi.fn().mockReturnValue(collection),
+    });
+    readKangurSettingValueMock.mockResolvedValue(
+      JSON.stringify({
+        [defaultLessons[0]?.id ?? 'kangur-lesson-english_adverbs']: legacyDocument,
+      })
+    );
+
+    const { mongoKangurLessonDocumentRepository } = await import(
+      './mongo-kangur-lesson-document-repository'
+    );
+
+    const store = await mongoKangurLessonDocumentRepository.listLessonDocuments('pl');
+
+    expect(collection.bulkWrite).toHaveBeenCalledTimes(1);
+    expect(Object.keys(store)).toHaveLength(defaultLessons.length);
+    expect(store[defaultLessons[0]?.id ?? '']).toEqual(legacyDocument);
   });
 });

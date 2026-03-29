@@ -32,6 +32,8 @@ const buildLocalizedTemplateId = (componentId: string, locale?: string | null): 
 
 let indexesInitialized = false;
 let indexesInFlight: Promise<void> | null = null;
+const defaultsInitializedForLocale = new Set<string>();
+const defaultsInFlightByLocale = new Map<string, Promise<void>>();
 
 const hasExpectedIndexShape = (
   index: { key?: Document } | undefined,
@@ -157,23 +159,47 @@ const seedMissingTemplatesForLocale = async (
   return true;
 };
 
+const ensureTemplatesForLocale = async (
+  collection: Collection<MongoKangurLessonTemplateDocument>,
+  locale?: string | null
+): Promise<void> => {
+  const normalizedLocale = normalizeTemplateLocale(locale);
+
+  if (defaultsInitializedForLocale.has(normalizedLocale)) {
+    return;
+  }
+
+  const inFlight = defaultsInFlightByLocale.get(normalizedLocale);
+  if (inFlight) {
+    await inFlight;
+    return;
+  }
+
+  const promise = (async (): Promise<void> => {
+    await seedMissingTemplatesForLocale(collection, normalizedLocale);
+    defaultsInitializedForLocale.add(normalizedLocale);
+  })();
+
+  defaultsInFlightByLocale.set(normalizedLocale, promise);
+
+  try {
+    await promise;
+  } finally {
+    defaultsInFlightByLocale.delete(normalizedLocale);
+  }
+};
+
 export const mongoKangurLessonTemplateRepository: KangurLessonTemplateRepository = {
   async listTemplates(input?: KangurLessonTemplateListInput): Promise<KangurLessonTemplate[]> {
     const db = await getMongoDb();
     await ensureIndexes(db);
     const collection = db.collection<MongoKangurLessonTemplateDocument>(COLLECTION);
-    let docs = await collection
+    await ensureTemplatesForLocale(collection, input?.locale);
+
+    const docs = await collection
       .find(buildFilter(input))
       .sort({ sortOrder: 1, componentId: 1 })
       .toArray();
-
-    if (docs.length === 0) {
-      await seedMissingTemplatesForLocale(collection, input?.locale);
-      docs = await collection
-        .find(buildFilter(input))
-        .sort({ sortOrder: 1, componentId: 1 })
-        .toArray();
-    }
 
     if (docs.length === 0) {
       const filter = buildFilter(input);

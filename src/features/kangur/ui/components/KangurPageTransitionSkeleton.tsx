@@ -482,7 +482,7 @@ export function KangurPageTransitionSkeleton(
     `${KANGUR_TOP_BAR_DEFAULT_HEIGHT_PX}px`;
 
   const rootClassName = cn(
-    'relative z-40 overflow-hidden',
+    'relative z-30 cursor-progress overflow-hidden',
     isInlineTopNavigationSkeleton
       ? 'fixed inset-0 flex flex-col'
       : isEmbedded
@@ -490,7 +490,8 @@ export function KangurPageTransitionSkeleton(
         : 'fixed inset-x-0 bottom-0'
   );
   const rootBackgroundStyle: CSSProperties = {
-    background: 'var(--kangur-page-background)',
+    background:
+      'var(--kangur-page-background, radial-gradient(circle at top, #fffdfd 0%, #f7f3f6 45%, #f3f1f8 100%))',
   };
   const rootStyle: CSSProperties | undefined = isInlineTopNavigationSkeleton
     ? ({

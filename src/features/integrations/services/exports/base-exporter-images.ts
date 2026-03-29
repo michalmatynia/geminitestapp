@@ -73,14 +73,20 @@ const BASE_IMAGE_MAX_BYTES = 1_900_000;
 const BASE_IMAGE_CLAMP_DIMENSIONS = [1600, 1400, 1200, 1000, 900, 800, 700, 600];
 const BASE_IMAGE_CLAMP_QUALITIES = [85, 75, 65, 55, 45];
 
+const MIME_TYPE_ALIASES = new Map<string, string>([
+  ['image/jpeg', 'image/jpeg'],
+  ['image/jpg', 'image/jpeg'],
+  ['image/pjpeg', 'image/jpeg'],
+  ['image/png', 'image/png'],
+  ['image/x-png', 'image/png'],
+]);
+
 const normalizeMimeType = (value?: string | null): string | null => {
   if (!value) return null;
   const trimmed = value.trim().toLowerCase();
   if (!trimmed) return null;
   const base = trimmed.split(';')[0]?.trim() ?? trimmed;
-  if (base === 'image/jpeg' || base === 'image/jpg' || base === 'image/pjpeg') return 'image/jpeg';
-  if (base === 'image/png' || base === 'image/x-png') return 'image/png';
-  return base;
+  return MIME_TYPE_ALIASES.get(base) ?? base;
 };
 
 const getUrlExtension = (value: string): string => {
@@ -94,21 +100,26 @@ const isSupportedImageMime = (value?: string | null): boolean => {
   return SUPPORTED_IMAGE_MIME_TYPES.has(normalized);
 };
 
+const EXTENSION_MIME_TYPES = new Map<string, string>([
+  ['.png', 'image/png'],
+  ['.gif', 'image/gif'],
+  ['.jpg', 'image/jpeg'],
+  ['.jpeg', 'image/jpeg'],
+  ['.jpe', 'image/jpeg'],
+  ['.jfif', 'image/jpeg'],
+  ['.webp', 'image/webp'],
+  ['.avif', 'image/avif'],
+  ['.heic', 'image/heic'],
+  ['.heif', 'image/heif'],
+  ['.tif', 'image/tiff'],
+  ['.tiff', 'image/tiff'],
+  ['.bmp', 'image/bmp'],
+  ['.svg', 'image/svg+xml'],
+]);
+
 const inferMimeFromExtension = (extension?: string | null): string | null => {
   if (!extension) return null;
-  if (SUPPORTED_IMAGE_EXTENSIONS.has(extension)) {
-    if (extension === '.png') return 'image/png';
-    if (extension === '.gif') return 'image/gif';
-    return 'image/jpeg';
-  }
-  if (extension === '.webp') return 'image/webp';
-  if (extension === '.avif') return 'image/avif';
-  if (extension === '.heic') return 'image/heic';
-  if (extension === '.heif') return 'image/heif';
-  if (extension === '.tif' || extension === '.tiff') return 'image/tiff';
-  if (extension === '.bmp') return 'image/bmp';
-  if (extension === '.svg') return 'image/svg+xml';
-  return null;
+  return EXTENSION_MIME_TYPES.get(extension) ?? null;
 };
 
 const getImageSupportStatus = (

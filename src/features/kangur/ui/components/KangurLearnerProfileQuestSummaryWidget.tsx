@@ -32,6 +32,102 @@ const buildAssignmentHref = (
   return action.query ? appendKangurUrlParams(href, action.query, basePath) : href;
 };
 
+type DailyQuestSnapshot = NonNullable<ReturnType<typeof getCurrentKangurDailyQuest>>;
+
+const resolveDailyQuestAccent = (
+  dailyQuest: DailyQuestSnapshot
+): 'emerald' | 'amber' | 'indigo' | 'slate' => {
+  if (dailyQuest.reward.status === 'claimed') return 'emerald';
+  if (dailyQuest.progress.status === 'completed') return 'amber';
+  if (dailyQuest.progress.status === 'in_progress') return 'indigo';
+  return 'slate';
+};
+
+const resolveQuestActionClassName = (isCoarsePointer: boolean): string =>
+  isCoarsePointer
+    ? 'w-full min-h-11 px-4 touch-manipulation select-none active:scale-[0.97] sm:w-auto sm:shrink-0'
+    : 'w-full sm:w-auto sm:shrink-0';
+
+const resolveDailyQuestTitle = ({
+  activeLearnerName,
+  assignmentTitle,
+}: {
+  activeLearnerName: string | null | undefined;
+  assignmentTitle: string;
+}): React.JSX.Element => (
+  <>
+    {activeLearnerName ? `${activeLearnerName}: ` : ''}
+    {assignmentTitle}
+  </>
+);
+
+function DailyQuestCard(props: {
+  dailyQuest: DailyQuestSnapshot;
+  basePath: string;
+  actionClassName: string;
+  activeLearnerName: string | null | undefined;
+  defaultQuestLabel: string;
+}): React.JSX.Element {
+  const dailyQuestAccent = resolveDailyQuestAccent(props.dailyQuest);
+
+  return (
+    <div
+      className='soft-card kangur-soft-surface-accent-indigo rounded-[28px] border px-4 py-4 text-left'
+      data-testid='kangur-learner-profile-daily-quest'
+    >
+      <KangurDailyQuestHighlightCardContent
+        action={
+          <KangurButton asChild className={props.actionClassName} size='sm' variant='surface'>
+            <Link
+              href={buildAssignmentHref(props.basePath, props.dailyQuest.assignment.action)}
+              targetPageKey={props.dailyQuest.assignment.action.page}
+              transitionAcknowledgeMs={PROFILE_ROUTE_ACKNOWLEDGE_MS}
+              transitionSourceId='learner-profile-daily-quest'
+            >
+              {props.dailyQuest.assignment.action.label}
+            </Link>
+          </KangurButton>
+        }
+        description={props.dailyQuest.progress.summary}
+        progressAccent={dailyQuestAccent}
+        progressLabel={`${props.dailyQuest.progress.percent}%`}
+        questLabel={props.dailyQuest.assignment.questLabel ?? props.defaultQuestLabel}
+        rewardAccent={
+          props.dailyQuest.reward.status === 'claimed' ? 'emerald' : dailyQuestAccent
+        }
+        rewardLabel={props.dailyQuest.reward.label}
+        title={resolveDailyQuestTitle({
+          activeLearnerName: props.activeLearnerName,
+          assignmentTitle: props.dailyQuest.assignment.title,
+        })}
+      />
+    </div>
+  );
+}
+
+function QuestTrackSummary(props: {
+  heading: string;
+  progress: ReturnType<typeof useKangurLearnerProfileRuntime>['progress'];
+}): React.JSX.Element {
+  return (
+    <div className='text-left' data-testid='kangur-learner-profile-track-summary'>
+      <KangurSectionEyebrow as='p' className='mb-2 tracking-[0.18em]'>
+        {props.heading}
+      </KangurSectionEyebrow>
+      <KangurHeroMilestoneSummary
+        className='mb-3'
+        dataTestIdPrefix='kangur-learner-profile-progress-milestone'
+        progress={props.progress}
+      />
+      <KangurBadgeTrackHighlights
+        dataTestIdPrefix='kangur-learner-profile-track'
+        limit={3}
+        progress={props.progress}
+      />
+    </div>
+  );
+}
+
 export function KangurLearnerProfileQuestSummaryWidget(): React.JSX.Element {
   const translations = useTranslations('KangurLearnerProfileWidgets.questSummary');
   const runtimeTranslations = useTranslations('KangurProgressRuntime');
@@ -48,74 +144,20 @@ export function KangurLearnerProfileQuestSummaryWidget(): React.JSX.Element {
       }),
     [progress, runtimeTranslations, subject, subjectKey]
   );
-  const dailyQuestAccent =
-    dailyQuest?.reward.status === 'claimed'
-      ? 'emerald'
-      : dailyQuest?.progress.status === 'completed'
-        ? 'amber'
-        : dailyQuest?.progress.status === 'in_progress'
-          ? 'indigo'
-          : 'slate';
-  const actionClassName = isCoarsePointer
-    ? 'w-full min-h-11 px-4 touch-manipulation select-none active:scale-[0.97] sm:w-auto sm:shrink-0'
-    : 'w-full sm:w-auto sm:shrink-0';
+  const actionClassName = resolveQuestActionClassName(isCoarsePointer);
 
   return (
     <section className={`flex flex-col ${KANGUR_PANEL_GAP_CLASSNAME}`}>
       {dailyQuest ? (
-        <div
-          className='soft-card kangur-soft-surface-accent-indigo rounded-[28px] border px-4 py-4 text-left'
-          data-testid='kangur-learner-profile-daily-quest'
-        >
-          <KangurDailyQuestHighlightCardContent
-            action={
-              <KangurButton
-                asChild
-                className={actionClassName}
-                size='sm'
-                variant='surface'
-              >
-                <Link
-                  href={buildAssignmentHref(basePath, dailyQuest.assignment.action)}
-                  targetPageKey={dailyQuest.assignment.action.page}
-                  transitionAcknowledgeMs={PROFILE_ROUTE_ACKNOWLEDGE_MS}
-                  transitionSourceId='learner-profile-daily-quest'
-                >
-                  {dailyQuest.assignment.action.label}
-                </Link>
-              </KangurButton>
-            }
-            description={dailyQuest.progress.summary}
-            progressAccent={dailyQuestAccent}
-            progressLabel={`${dailyQuest.progress.percent}%`}
-            questLabel={dailyQuest.assignment.questLabel ?? translations('defaultQuestLabel')}
-            rewardAccent={dailyQuest.reward.status === 'claimed' ? 'emerald' : dailyQuestAccent}
-            rewardLabel={dailyQuest.reward.label}
-            title={
-              <>
-                {activeLearner?.displayName ? `${activeLearner.displayName}: ` : ''}
-                {dailyQuest.assignment.title}
-              </>
-            }
-          />
-        </div>
+        <DailyQuestCard
+          dailyQuest={dailyQuest}
+          basePath={basePath}
+          actionClassName={actionClassName}
+          activeLearnerName={activeLearner?.displayName}
+          defaultQuestLabel={translations('defaultQuestLabel')}
+        />
       ) : null}
-
-      <div className='text-left' data-testid='kangur-learner-profile-track-summary'>
-        <KangurSectionEyebrow as='p' className='mb-2 tracking-[0.18em]'>
-          {translations('tracksHeading')}
-        </KangurSectionEyebrow>
-        <KangurHeroMilestoneSummary
-          className='mb-3'
-          dataTestIdPrefix='kangur-learner-profile-progress-milestone'
-          progress={progress}
-        />
-        <KangurBadgeTrackHighlights
-          dataTestIdPrefix='kangur-learner-profile-track'
-          limit={3}
-          progress={progress}
-        />
-      </div>
+      <QuestTrackSummary heading={translations('tracksHeading')} progress={progress} />
     </section>
   );
 }

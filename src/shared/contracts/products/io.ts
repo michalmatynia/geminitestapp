@@ -6,18 +6,24 @@ import { logClientCatch } from '@/shared/utils/observability/client-error-logger
 /**
  * Product Input Contracts (Modular/API)
  */
-const normalizeNumericFormValue = (value: unknown): unknown => {
-  if (value === undefined || value === null) return undefined;
-  if (typeof value === 'number') {
-    return Number.isFinite(value) ? value : undefined;
-  }
-  if (typeof value !== 'string') return value;
+const normalizeFiniteNumericValue = (value: number): number | undefined =>
+  Number.isFinite(value) ? value : undefined;
 
+const normalizeStringNumericFormValue = (value: string): number | string | undefined => {
   const trimmed = value.trim();
   if (!trimmed || trimmed.toLowerCase() === 'nan') return undefined;
 
   const parsed = Number(trimmed);
   return Number.isFinite(parsed) ? parsed : value;
+};
+
+const normalizeNumericFormValue = (value: unknown): unknown => {
+  if (value === undefined || value === null) return undefined;
+  if (typeof value === 'number') {
+    return normalizeFiniteNumericValue(value);
+  }
+  if (typeof value !== 'string') return value;
+  return normalizeStringNumericFormValue(value);
 };
 
 const optionalNonNegativeNumberFromFormSchema = z.preprocess(

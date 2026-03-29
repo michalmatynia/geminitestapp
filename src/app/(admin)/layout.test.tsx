@@ -32,9 +32,6 @@ vi.mock('@/features/admin/public', () => ({
 
 vi.mock('@/features/auth/server', () => ({
   getUserPreferences: getUserPreferencesMock,
-}));
-
-vi.mock('@/shared/lib/auth/optional-server-auth', () => ({
   readOptionalServerAuthSession: readOptionalServerAuthSessionMock,
 }));
 

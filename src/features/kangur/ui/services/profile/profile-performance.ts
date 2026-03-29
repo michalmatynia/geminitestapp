@@ -18,14 +18,21 @@ import {
   translateKangurLearnerProfileWithFallback,
 } from './profile-utils';
 
-export const resolveOperationFromActivityKey = (activityKey: string): string | null => {
-  const parts = activityKey.split(':');
-  const primary = (parts[1] ?? parts[0] ?? '').trim();
-  if (!primary) {
-    return null;
-  }
+const trimActivityToken = (value: string | undefined): string | null => {
+  const normalizedValue = value?.trim();
+  return normalizedValue ? normalizedValue : null;
+};
 
-  return ACTIVITY_PRIMARY_TO_OPERATION[primary] ?? primary;
+const resolveActivityPrimaryToken = (activityKey: string): string | null => {
+  const [fallbackPrimary, rawPrimary] = activityKey.split(':');
+  return activityKey.includes(':')
+    ? trimActivityToken(rawPrimary)
+    : trimActivityToken(fallbackPrimary);
+};
+
+export const resolveOperationFromActivityKey = (activityKey: string): string | null => {
+  const primary = resolveActivityPrimaryToken(activityKey);
+  return primary ? (ACTIVITY_PRIMARY_TO_OPERATION[primary] ?? primary) : null;
 };
 
 export const resolveOperationInfo = (

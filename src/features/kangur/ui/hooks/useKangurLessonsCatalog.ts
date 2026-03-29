@@ -12,8 +12,6 @@ import {
 } from '@/shared/contracts/kangur';
 import type { KangurLessonSection } from '@/shared/contracts/kangur-lesson-sections';
 import type { ListQuery } from '@/shared/contracts/ui';
-import { createDefaultKangurLessons } from '@/features/kangur/settings';
-import { createDefaultKangurSections } from '@/features/kangur/lessons/lesson-section-defaults';
 import {
   isRecoverableKangurClientFetchError,
   withKangurClientError,
@@ -80,17 +78,6 @@ const filterLessonsCatalog = (
   sections: filterSections(catalog.sections, options),
 });
 
-const buildLessonsCatalogFallback = (
-  options?: LessonsCatalogQueryOptions
-): KangurLessonsCatalog =>
-  filterLessonsCatalog(
-    {
-      lessons: createDefaultKangurLessons(),
-      sections: createDefaultKangurSections(),
-    },
-    options
-  );
-
 export const fetchKangurLessonsCatalog = async (
   options?: LessonsCatalogQueryOptions
 ): Promise<KangurLessonsCatalog> =>
@@ -117,7 +104,10 @@ export const fetchKangurLessonsCatalog = async (
       return kangurLessonsCatalogSchema.parse(payload);
     },
     {
-      fallback: () => buildLessonsCatalogFallback(options),
+      fallback: () => ({
+        lessons: [],
+        sections: [],
+      }),
       shouldReport: (error) => !isRecoverableKangurClientFetchError(error),
     }
   );

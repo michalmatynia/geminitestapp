@@ -52,48 +52,19 @@ type KangurLessonNarratorProps = {
   titleOverride?: string | undefined;
 };
 
-export function KangurLessonNarrator(props: KangurLessonNarratorProps): React.JSX.Element | null {
-  const {
-    lesson,
-    lessonDocument,
-    lessonContentRef,
-    className,
-    descriptionOverride,
-    displayMode = 'button',
-    readLabel = 'Read',
-    pauseLabel = 'Pause',
-    resumeLabel = 'Resume',
-    loadingLabel,
-    showFeedback,
-    titleOverride,
-  } = props;
-  const locale = useLocale();
-  const { isSuperAdmin } = useKangurElevatedSession();
-  const settingsStore = useSettingsStore();
-  const rawNarratorSettings = settingsStore.get(KANGUR_NARRATOR_SETTINGS_KEY);
-  const narratorSettings = useMemo(
-    () => parseKangurNarratorSettings(rawNarratorSettings),
-    [rawNarratorSettings]
-  );
-  const defaultVoice = narratorSettings.voice ?? KANGUR_TTS_DEFAULT_VOICE;
-  const isNarratorDiagnosticsVisible = isSuperAdmin;
-  const voice =
-    lesson.contentMode === 'document'
-      ? (lessonDocument?.narration?.voice ?? defaultVoice)
-      : defaultVoice;
+const buildNarratorContextRegistry = (
+  pageContextRegistry: ReturnType<typeof useOptionalContextRegistryPageEnvelope>
+) =>
+  pageContextRegistry
+    ? buildContextRegistryConsumerEnvelope({
+      refs: pageContextRegistry.refs,
+      resolved: pageContextRegistry.resolved ?? null,
+      rootNodeIds: [...KANGUR_LESSON_NARRATOR_CONTEXT_ROOT_IDS],
+    })
+    : null;
+
+const useNarratorContextRegistry = () => {
   const pageContextRegistry = useOptionalContextRegistryPageEnvelope();
-  const requestContextRegistry = useMemo(
-    () =>
-      pageContextRegistry
-        ? buildContextRegistryConsumerEnvelope({
-          refs: pageContextRegistry.refs,
-          resolved: pageContextRegistry.resolved ?? null,
-          rootNodeIds: [...KANGUR_LESSON_NARRATOR_CONTEXT_ROOT_IDS],
-        })
-        : null,
-    [pageContextRegistry]
-  );
-  const [observedText, setObservedText] = useState('');
 
   useRegisterContextRegistryPageSource(
     'kangur-lesson-narrator',
@@ -106,35 +77,75 @@ export function KangurLessonNarrator(props: KangurLessonNarratorProps): React.JS
     )
   );
 
-  const shouldObserveText = lesson.contentMode !== 'document' || !lessonDocument;
-  const localizedLessonTitle =
+  return useMemo(
+    () => buildNarratorContextRegistry(pageContextRegistry),
+    [pageContextRegistry]
+  );
+};
+
+const resolveNarratorVoice = ({
+  lesson,
+  lessonDocument,
+  defaultVoice,
+}: {
+  lesson: KangurLessonNarratorProps['lesson'];
+  lessonDocument: KangurLessonDocument | null;
+  defaultVoice: string;
+}): string =>
+  lesson.contentMode === 'document'
+    ? (lessonDocument?.narration?.voice ?? defaultVoice)
+    : defaultVoice;
+
+const resolveLocalizedLessonCopy = ({
+  lesson,
+  locale,
+  titleOverride,
+  descriptionOverride,
+}: {
+  lesson: KangurLessonNarratorProps['lesson'];
+  locale: string;
+  titleOverride: string | undefined;
+  descriptionOverride: string | undefined;
+}): { title: string; description: string } => ({
+  title:
     titleOverride?.trim() ||
     (typeof lesson.componentId === 'string'
       ? getLocalizedKangurLessonTitle(lesson.componentId, locale, lesson.title)
-      : lesson.title);
-  const localizedLessonDescription =
+      : lesson.title),
+  description:
     descriptionOverride?.trim() ||
     (typeof lesson.componentId === 'string'
       ? getLocalizedKangurLessonDescription(lesson.componentId, locale, lesson.description)
-      : lesson.description);
+      : lesson.description),
+});
+
+const shouldObserveNarrationText = (
+  lesson: KangurLessonNarratorProps['lesson'],
+  lessonDocument: KangurLessonDocument | null
+): boolean => lesson.contentMode !== 'document' || !lessonDocument;
+
+const useObservedNarrationText = ({
+  shouldObserveText,
+  lessonContentRef,
+  lessonId,
+  lessonContentMode,
+  lessonDocument,
+}: {
+  shouldObserveText: boolean;
+  lessonContentRef: KangurLessonNarratorProps['lessonContentRef'];
+  lessonId: string;
+  lessonContentMode: KangurLesson['contentMode'];
+  lessonDocument: KangurLessonDocument | null;
+}): string => {
+  const [observedText, setObservedText] = useState('');
 
   useEffect(() => {
-    if (!shouldObserveText) {
-      setObservedText('');
-      return;
-    }
-
-    if (!lessonContentRef) {
+    if (!shouldObserveText || !lessonContentRef?.current) {
       setObservedText('');
       return;
     }
 
     const root = lessonContentRef.current;
-    if (!root) {
-      setObservedText('');
-      return;
-    }
-
     let timeoutId: number | null = null;
     const updateText = (): void => {
       setObservedText(extractNarrationTextFromElement(root));
@@ -165,36 +176,96 @@ export function KangurLessonNarrator(props: KangurLessonNarratorProps): React.JS
         window.clearTimeout(timeoutId);
       }
     };
-  }, [lesson.contentMode, lesson.id, lessonContentRef, lessonDocument, shouldObserveText]);
+  }, [lessonContentMode, lessonId, lessonContentRef, lessonDocument, shouldObserveText]);
 
-  const script = useMemo(() => {
-    const documentScript =
-      lesson.contentMode === 'document' && lessonDocument
-        ? buildKangurLessonDocumentNarrationScript({
+  return observedText;
+};
+
+const buildNarrationScript = ({
+  lesson,
+  lessonDocument,
+  localizedLessonTitle,
+  localizedLessonDescription,
+  observedText,
+}: {
+  lesson: KangurLessonNarratorProps['lesson'];
+  lessonDocument: KangurLessonDocument | null;
+  localizedLessonTitle: string;
+  localizedLessonDescription: string;
+  observedText: string;
+}) => {
+  const documentScript =
+    lesson.contentMode === 'document' && lessonDocument
+      ? buildKangurLessonDocumentNarrationScript({
         lessonId: lesson.id,
         title: localizedLessonTitle,
         description: localizedLessonDescription,
         document: lessonDocument,
       })
-        : null;
-    const textScript = buildKangurLessonNarrationScriptFromText({
-      lessonId: lesson.id,
-      title: localizedLessonTitle,
-      description: localizedLessonDescription,
-      text: observedText,
-    });
-    if (documentScript && hasKangurLessonNarrationContent(documentScript)) {
-      return documentScript;
-    }
-    return textScript;
-  }, [
-    lesson.contentMode,
-    lesson.id,
+      : null;
+  const textScript = buildKangurLessonNarrationScriptFromText({
+    lessonId: lesson.id,
+    title: localizedLessonTitle,
+    description: localizedLessonDescription,
+    text: observedText,
+  });
+
+  return documentScript && hasKangurLessonNarrationContent(documentScript)
+    ? documentScript
+    : textScript;
+};
+
+export function KangurLessonNarrator(props: KangurLessonNarratorProps): React.JSX.Element | null {
+  const {
+    lesson,
     lessonDocument,
-    localizedLessonDescription,
-    localizedLessonTitle,
-    observedText,
-  ]);
+    lessonContentRef,
+    className,
+    descriptionOverride,
+    displayMode = 'button',
+    readLabel = 'Read',
+    pauseLabel = 'Pause',
+    resumeLabel = 'Resume',
+    loadingLabel,
+    showFeedback,
+    titleOverride,
+  } = props;
+  const locale = useLocale();
+  const { isSuperAdmin } = useKangurElevatedSession();
+  const settingsStore = useSettingsStore();
+  const rawNarratorSettings = settingsStore.get(KANGUR_NARRATOR_SETTINGS_KEY);
+  const narratorSettings = useMemo(
+    () => parseKangurNarratorSettings(rawNarratorSettings),
+    [rawNarratorSettings]
+  );
+  const defaultVoice = narratorSettings.voice ?? KANGUR_TTS_DEFAULT_VOICE;
+  const isNarratorDiagnosticsVisible = isSuperAdmin;
+  const voice = resolveNarratorVoice({ lesson, lessonDocument, defaultVoice });
+  const requestContextRegistry = useNarratorContextRegistry();
+  const shouldObserveText = shouldObserveNarrationText(lesson, lessonDocument);
+  const localizedLessonCopy = resolveLocalizedLessonCopy({
+    lesson,
+    locale,
+    titleOverride,
+    descriptionOverride,
+  });
+  const observedText = useObservedNarrationText({
+    shouldObserveText,
+    lessonContentRef,
+    lessonId: lesson.id,
+    lessonContentMode: lesson.contentMode,
+    lessonDocument,
+  });
+
+  const script = useMemo(() => {
+    return buildNarrationScript({
+      lesson,
+      lessonDocument,
+      localizedLessonTitle: localizedLessonCopy.title,
+      localizedLessonDescription: localizedLessonCopy.description,
+      observedText,
+    });
+  }, [lesson, lessonDocument, localizedLessonCopy.description, localizedLessonCopy.title, observedText]);
 
   if (!hasKangurLessonNarrationContent(script)) {
     return null;

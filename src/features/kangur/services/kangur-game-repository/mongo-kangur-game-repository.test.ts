@@ -16,15 +16,13 @@ vi.mock('@/shared/lib/db/mongo-client', () => ({
 
 describe('listKangurGames bootstrap', () => {
   beforeEach(() => {
+    vi.resetModules();
     vi.clearAllMocks();
   });
 
-  it('seeds default Kangur games into Mongo when the collection is empty', async () => {
+  it('seeds default Kangur games before reading the collection', async () => {
     const expected = createDefaultKangurGames();
-    const toArrayMock = vi
-      .fn()
-      .mockResolvedValueOnce([])
-      .mockResolvedValueOnce(expected);
+    const toArrayMock = vi.fn().mockResolvedValue(expected);
     const collection = {
       bulkWrite: vi.fn().mockResolvedValue({ acknowledged: true }),
       createIndex: vi.fn().mockResolvedValue('ok'),
@@ -44,5 +42,27 @@ describe('listKangurGames bootstrap', () => {
 
     expect(collection.bulkWrite).toHaveBeenCalledTimes(1);
     expect(result).toEqual(expected);
+  });
+
+  it('still upserts defaults when Mongo already returns some game rows', async () => {
+    const expected = createDefaultKangurGames();
+    const collection = {
+      bulkWrite: vi.fn().mockResolvedValue({ acknowledged: true }),
+      createIndex: vi.fn().mockResolvedValue('ok'),
+      find: vi.fn().mockReturnValue({
+        sort: vi.fn().mockReturnValue({
+          toArray: vi.fn().mockResolvedValue(expected),
+        }),
+      }),
+    };
+    getMongoDbMock.mockResolvedValue({
+      collection: vi.fn().mockReturnValue(collection),
+    });
+
+    const { listKangurGames } = await import('./mongo-kangur-game-repository');
+
+    await listKangurGames();
+
+    expect(collection.bulkWrite).toHaveBeenCalledTimes(1);
   });
 });

@@ -148,6 +148,13 @@ const toTrimmedNonEmptyString = (value: unknown): string | null => {
   return trimmed.length > 0 ? trimmed : null;
 };
 
+const toLocalizedTextRecord = (
+  value: LocalizedText | string | null | undefined,
+): Record<string, unknown> | null =>
+  value && typeof value === 'object' && !Array.isArray(value)
+    ? (value as Record<string, unknown>)
+    : null;
+
 const resolveLocalizedRecordValue = (
   record: Record<string, unknown>,
   keys: string[],
@@ -162,6 +169,14 @@ const resolveLocalizedRecordValue = (
   return null;
 };
 
+const resolveLocalizedTextFromRecord = (
+  record: Record<string, unknown>,
+  locale: string | null | undefined,
+  config?: SiteI18nConfig
+): string | null =>
+  resolveLocalizedRecordValue(record, getLocaleFallbackChain(locale, config)) ??
+  resolveLocalizedRecordValue(record, Object.keys(record));
+
 export const resolveLocalizedText = (
   value: LocalizedText | string | null | undefined,
   locale: string | null | undefined,
@@ -171,15 +186,12 @@ export const resolveLocalizedText = (
     return toTrimmedNonEmptyString(value);
   }
 
-  if (!value || typeof value !== 'object' || Array.isArray(value)) {
+  const record = toLocalizedTextRecord(value);
+  if (!record) {
     return null;
   }
 
-  const record = value;
-  return (
-    resolveLocalizedRecordValue(record, getLocaleFallbackChain(locale, config)) ??
-    resolveLocalizedRecordValue(record, Object.keys(record))
-  );
+  return resolveLocalizedTextFromRecord(record, locale, config);
 };
 
 export const getStaticSiteLocaleParams = (config?: SiteI18nConfig): Array<{ locale: string }> =>

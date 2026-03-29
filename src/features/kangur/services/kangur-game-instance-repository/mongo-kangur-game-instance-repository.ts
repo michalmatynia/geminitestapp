@@ -29,6 +29,8 @@ type MongoKangurGameInstanceDocument = Document &
 
 let indexesInitialized = false;
 let indexesInFlight: Promise<void> | null = null;
+const defaultsInitializedForGame = new Set<string>();
+const defaultsInFlightByGame = new Map<string, Promise<void>>();
 
 const ensureIndexes = async (db: Db): Promise<void> => {
   if (indexesInitialized) return;
@@ -156,24 +158,50 @@ const seedMissingBuiltInInstancesForGame = async (
   return true;
 };
 
+const ensureBuiltInInstancesForGame = async (
+  collection: Collection<MongoKangurGameInstanceDocument>,
+  gameId?: string | null
+): Promise<void> => {
+  if (!gameId) {
+    return;
+  }
+
+  if (defaultsInitializedForGame.has(gameId)) {
+    return;
+  }
+
+  const inFlight = defaultsInFlightByGame.get(gameId);
+  if (inFlight) {
+    await inFlight;
+    return;
+  }
+
+  const promise = (async (): Promise<void> => {
+    await seedMissingBuiltInInstancesForGame(collection, gameId);
+    defaultsInitializedForGame.add(gameId);
+  })();
+
+  defaultsInFlightByGame.set(gameId, promise);
+
+  try {
+    await promise;
+  } finally {
+    defaultsInFlightByGame.delete(gameId);
+  }
+};
+
 export const mongoKangurGameInstanceRepository: KangurGameInstanceRepository = {
   async listInstances(input?: KangurGameInstanceListInput): Promise<KangurGameInstance[]> {
     const db = await getMongoDb();
     await ensureIndexes(db);
 
     const collection = db.collection<MongoKangurGameInstanceDocument>(COLLECTION);
-    let docs = await collection
+    await ensureBuiltInInstancesForGame(collection, resolveSeedGameId(input));
+
+    const docs = await collection
       .find(buildFilter(input))
       .sort({ sortOrder: 1, id: 1 })
       .toArray();
-
-    if (docs.length === 0) {
-      await seedMissingBuiltInInstancesForGame(collection, resolveSeedGameId(input));
-      docs = await collection
-        .find(buildFilter(input))
-        .sort({ sortOrder: 1, id: 1 })
-        .toArray();
-    }
 
     return docs.map(toGameInstance);
   },

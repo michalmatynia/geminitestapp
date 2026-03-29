@@ -14,6 +14,7 @@ import {
   type Tone,
 } from '../shared/KangurAssessmentUi';
 import type { KangurMobileLocale } from '../i18n/kangurMobileI18n';
+import { formatKangurMobileQuestionCount } from '../shared/questionCountLabel';
 import type { KangurMobileTestSuiteItem } from './useKangurMobileTests';
 import { createKangurTestsHref } from './testsHref';
 
@@ -84,27 +85,7 @@ export const formatQuestionProgress = (
 export const formatQuestionCount = (
   count: number,
   locale: KangurMobileLocale,
-): string => {
-  if (locale === 'de') {
-    return count === 1 ? '1 Frage' : `${count} Fragen`;
-  }
-
-  if (locale === 'en') {
-    return count === 1 ? '1 question' : `${count} questions`;
-  }
-
-  if (count === 1) {
-    return '1 pytanie';
-  }
-
-  const lastDigit = count % 10;
-  const lastTwoDigits = count % 100;
-  if (lastDigit >= 2 && lastDigit <= 4 && (lastTwoDigits < 12 || lastTwoDigits > 14)) {
-    return `${count} pytania`;
-  }
-
-  return `${count} pytań`;
-};
+): string => formatKangurMobileQuestionCount(count, locale);
 
 export const formatPointsLabel = (
   value: number,

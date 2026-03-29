@@ -1,3 +1,5 @@
+import { createHmac } from 'crypto';
+
 import { NextResponse } from 'next/server';
 import { describe, expect, it } from 'vitest';
 
@@ -63,6 +65,24 @@ describe('kangur learner session', () => {
     const tamperedCookie = [`${cookieName}=${tamperedValue}`, ...attributes].join(';');
 
     expect(readKangurLearnerSession(createRequestWithCookie(tamperedCookie))).toBeNull();
+  });
+
+  it('rejects an expired learner session cookie', () => {
+    const expiredPayload = Buffer.from(
+      JSON.stringify({
+        learnerId: 'learner-1',
+        ownerUserId: 'parent-1',
+        exp: Date.now() - 1_000,
+      }),
+    ).toString('base64url');
+    const signingKey =
+      process.env.AUTH_SECRET ||
+      process.env.NEXTAUTH_SECRET ||
+      (process.env.NODE_ENV === 'development' ? 'kangur-dev-signing-key-change-me' : '');
+    const signature = createHmac('sha256', signingKey).update(expiredPayload).digest('base64url');
+    const expiredCookie = `kangur.learner-session=${expiredPayload}.${signature}`;
+
+    expect(readKangurLearnerSession(createRequestWithCookie(expiredCookie))).toBeNull();
   });
 
   it('clears the learner session cookie', () => {

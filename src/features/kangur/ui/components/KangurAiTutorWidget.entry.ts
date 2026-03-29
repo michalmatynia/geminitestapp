@@ -45,6 +45,242 @@ type LoginModalState = {
   isOpen: boolean;
 };
 
+type GuestIntroEntryAction =
+  | 'hide_guest_surfaces'
+  | 'hide_surfaces'
+  | 'mark_intro_check_started'
+  | 'show_repeat_badge'
+  | 'show_unseen_badge'
+  | 'wait';
+
+type HomeOnboardingEntryAction = 'start' | 'wait';
+
+const hideGuestIntroPanels = ({
+  setGuestAuthFormVisible,
+  setGuestIntroHelpVisible,
+  setGuestIntroVisible,
+}: {
+  setGuestAuthFormVisible: (value: boolean) => void;
+  setGuestIntroHelpVisible: (value: boolean) => void;
+  setGuestIntroVisible: (value: boolean) => void;
+}): void => {
+  setGuestIntroVisible(false);
+  setGuestIntroHelpVisible(false);
+  setGuestAuthFormVisible(false);
+};
+
+const hideGuestIntroSurfaces = ({
+  setCanonicalTutorModalVisible,
+  setGuestAuthFormVisible,
+  setGuestIntroHelpVisible,
+  setGuestIntroVisible,
+}: {
+  setCanonicalTutorModalVisible: (value: boolean) => void;
+  setGuestAuthFormVisible: (value: boolean) => void;
+  setGuestIntroHelpVisible: (value: boolean) => void;
+  setGuestIntroVisible: (value: boolean) => void;
+}): void => {
+  setCanonicalTutorModalVisible(false);
+  hideGuestIntroPanels({
+    setGuestAuthFormVisible,
+    setGuestIntroHelpVisible,
+    setGuestIntroVisible,
+  });
+};
+
+const isGuestIntroAuthPending = ({
+  authState,
+  mounted,
+}: {
+  authState: AuthState;
+  mounted: boolean;
+}): boolean => !mounted || !authState || authState.isLoadingAuth;
+
+const shouldHideGuestIntroPanels = ({
+  authState,
+  hasContextualTakeover,
+}: {
+  authState: AuthState;
+  hasContextualTakeover: boolean;
+}): boolean => Boolean(authState?.isAuthenticated) || hasContextualTakeover;
+
+const hasVisibleGuestIntroPanels = ({
+  guestAuthFormVisible,
+  guestIntroHelpVisible,
+  guestIntroVisible,
+}: {
+  guestAuthFormVisible: boolean;
+  guestIntroHelpVisible: boolean;
+  guestIntroVisible: boolean;
+}): boolean => guestIntroVisible || guestIntroHelpVisible || guestAuthFormVisible;
+
+const shouldShowUnseenGuestIntroBadge = ({
+  guestIntroCheckStarted,
+  guestIntroRecord,
+}: {
+  guestIntroCheckStarted: boolean;
+  guestIntroRecord: KangurAiTutorGuestIntroRecord | null;
+}): boolean => !guestIntroRecord && !guestIntroCheckStarted;
+
+const resolveGuestIntroPostAuthAction = ({
+  canonicalTutorModalVisible,
+  guestAuthFormVisible,
+  guestIntroCheckStarted,
+  guestIntroHelpVisible,
+  guestIntroRecord,
+  guestIntroVisible,
+  isOpen,
+  shouldRepeatGuestIntroOnEntry,
+}: {
+  canonicalTutorModalVisible: boolean;
+  guestAuthFormVisible: boolean;
+  guestIntroCheckStarted: boolean;
+  guestIntroHelpVisible: boolean;
+  guestIntroRecord: KangurAiTutorGuestIntroRecord | null;
+  guestIntroVisible: boolean;
+  isOpen: boolean;
+  shouldRepeatGuestIntroOnEntry: boolean;
+}): GuestIntroEntryAction => {
+  if (canonicalTutorModalVisible) {
+    return 'wait';
+  }
+  if (
+    hasVisibleGuestIntroPanels({
+      guestAuthFormVisible,
+      guestIntroHelpVisible,
+      guestIntroVisible,
+    })
+  ) {
+    return 'wait';
+  }
+  if (isOpen) {
+    return guestIntroRecord ? 'wait' : 'mark_intro_check_started';
+  }
+  if (shouldRepeatGuestIntroOnEntry) {
+    return 'show_repeat_badge';
+  }
+  return shouldShowUnseenGuestIntroBadge({
+    guestIntroCheckStarted,
+    guestIntroRecord,
+  })
+    ? 'show_unseen_badge'
+    : 'wait';
+};
+
+const resolveGuestIntroEntryAction = ({
+  authState,
+  canonicalTutorModalVisible,
+  guestAuthFormVisible,
+  guestIntroCheckStarted,
+  guestIntroHelpVisible,
+  guestIntroRecord,
+  guestIntroVisible,
+  hasContextualTakeover,
+  isOpen,
+  isTutorHidden,
+  mounted,
+  shouldRepeatGuestIntroOnEntry,
+}: {
+  authState: AuthState;
+  canonicalTutorModalVisible: boolean;
+  guestAuthFormVisible: boolean;
+  guestIntroCheckStarted: boolean;
+  guestIntroHelpVisible: boolean;
+  guestIntroRecord: KangurAiTutorGuestIntroRecord | null;
+  guestIntroVisible: boolean;
+  hasContextualTakeover: boolean;
+  isOpen: boolean;
+  isTutorHidden: boolean;
+  mounted: boolean;
+  shouldRepeatGuestIntroOnEntry: boolean;
+}): GuestIntroEntryAction => {
+  if (isTutorHidden) {
+    return 'hide_surfaces';
+  }
+  if (isGuestIntroAuthPending({ authState, mounted })) {
+    return 'wait';
+  }
+  if (shouldHideGuestIntroPanels({ authState, hasContextualTakeover })) {
+    return 'hide_guest_surfaces';
+  }
+  return resolveGuestIntroPostAuthAction({
+    canonicalTutorModalVisible,
+    guestAuthFormVisible,
+    guestIntroCheckStarted,
+    guestIntroHelpVisible,
+    guestIntroRecord,
+    guestIntroVisible,
+    isOpen,
+    shouldRepeatGuestIntroOnEntry,
+  });
+};
+
+const hasCompletedHomeOnboardingStatus = (
+  status: KangurAiTutorHomeOnboardingRecord['status'] | null | undefined
+): boolean => status === 'completed' || status === 'dismissed';
+
+const hasBlockedHomeOnboardingStep = ({
+  guidedTutorTarget,
+  homeOnboardingMode,
+  homeOnboardingStepIndex,
+}: {
+  guidedTutorTarget: GuidedTutorTarget | null;
+  homeOnboardingMode: string;
+  homeOnboardingStepIndex: number | null;
+}): boolean =>
+  homeOnboardingStepIndex !== null || guidedTutorTarget !== null || homeOnboardingMode === 'off';
+
+const shouldWaitForHomeOnboardingAutoStart = ({
+  homeOnboardingRecord,
+  shouldRepeatHomeOnboardingOnEntry,
+}: {
+  homeOnboardingRecord: KangurAiTutorHomeOnboardingRecord | null;
+  shouldRepeatHomeOnboardingOnEntry: boolean;
+}): boolean => {
+  if (!shouldRepeatHomeOnboardingOnEntry && !AUTO_START_HOME_ONBOARDING_ON_FIRST_VISIT) {
+    return true;
+  }
+  return (
+    !shouldRepeatHomeOnboardingOnEntry &&
+    hasCompletedHomeOnboardingStatus(homeOnboardingRecord?.status)
+  );
+};
+
+const resolveHomeOnboardingEntryAction = ({
+  guidedTutorTarget,
+  homeOnboardingMode,
+  homeOnboardingRecord,
+  homeOnboardingShownForCurrentEntry,
+  homeOnboardingStepIndex,
+  shouldRepeatHomeOnboardingOnEntry,
+}: {
+  guidedTutorTarget: GuidedTutorTarget | null;
+  homeOnboardingMode: string;
+  homeOnboardingRecord: KangurAiTutorHomeOnboardingRecord | null;
+  homeOnboardingShownForCurrentEntry: boolean;
+  homeOnboardingStepIndex: number | null;
+  shouldRepeatHomeOnboardingOnEntry: boolean;
+}): HomeOnboardingEntryAction => {
+  if (
+    hasBlockedHomeOnboardingStep({
+      guidedTutorTarget,
+      homeOnboardingMode,
+      homeOnboardingStepIndex,
+    })
+  ) {
+    return 'wait';
+  }
+  if (
+    shouldWaitForHomeOnboardingAutoStart({
+      homeOnboardingRecord,
+      shouldRepeatHomeOnboardingOnEntry,
+    })
+  ) {
+    return 'wait';
+  }
+  return homeOnboardingShownForCurrentEntry ? 'wait' : 'start';
+};
+
 export function useKangurAiTutorGuestIntroFlow(input: {
   authState: AuthState;
   canonicalTutorModalVisible: boolean;
@@ -83,7 +319,6 @@ export function useKangurAiTutorGuestIntroFlow(input: {
     guestIntroCheckStartedRef,
     guestAuthFormVisible,
     guestIntroHelpVisible,
-    guestIntroLocalSuppressionTrackedRef,
     guestIntroRecord,
     guestIntroShownForCurrentEntryRef,
     guestIntroVisible,
@@ -114,66 +349,64 @@ export function useKangurAiTutorGuestIntroFlow(input: {
     selectionResponsePending !== null;
 
   useEffect(() => {
-    if (isTutorHidden) {
-      setCanonicalTutorModalVisible(false);
-      setGuestIntroVisible(false);
-      setGuestIntroHelpVisible(false);
-      setGuestAuthFormVisible(false);
+    const entryAction = resolveGuestIntroEntryAction({
+      authState,
+      canonicalTutorModalVisible,
+      guestAuthFormVisible,
+      guestIntroCheckStarted: guestIntroCheckStartedRef.current,
+      guestIntroHelpVisible,
+      guestIntroRecord,
+      guestIntroVisible,
+      hasContextualTakeover,
+      isOpen,
+      isTutorHidden,
+      mounted,
+      shouldRepeatGuestIntroOnEntry,
+    });
+
+    if (entryAction === 'hide_surfaces') {
+      hideGuestIntroSurfaces({
+        setCanonicalTutorModalVisible,
+        setGuestAuthFormVisible,
+        setGuestIntroHelpVisible,
+        setGuestIntroVisible,
+      });
       return;
     }
 
-    if (!mounted || !authState || authState.isLoadingAuth) {
+    if (entryAction === 'hide_guest_surfaces') {
+      hideGuestIntroPanels({
+        setGuestAuthFormVisible,
+        setGuestIntroHelpVisible,
+        setGuestIntroVisible,
+      });
       return;
     }
 
-    if (authState.isAuthenticated) {
-      setGuestIntroVisible(false);
-      setGuestIntroHelpVisible(false);
-      setGuestAuthFormVisible(false);
+    if (entryAction === 'mark_intro_check_started') {
+      guestIntroCheckStartedRef.current = true;
       return;
     }
 
-    if (canonicalTutorModalVisible) {
-      return;
-    }
-
-    if (hasContextualTakeover) {
-      setGuestIntroVisible(false);
-      setGuestIntroHelpVisible(false);
-      setGuestAuthFormVisible(false);
-      return;
-    }
-
-    if (guestIntroVisible || guestIntroHelpVisible || guestAuthFormVisible) {
-      return;
-    }
-
-    if (isOpen) {
-      if (!guestIntroRecord) {
-        guestIntroCheckStartedRef.current = true;
+    if (entryAction === 'show_repeat_badge') {
+      if (guestIntroShownForCurrentEntryRef.current) {
+        return;
       }
+      guestIntroShownForCurrentEntryRef.current = true;
+      setHasNewMessage(true);
+      trackKangurClientEvent('kangur_ai_tutor_guest_intro_shown', {
+        reason: 'admin_every_visit_badge',
+      });
       return;
     }
 
-    if (shouldRepeatGuestIntroOnEntry) {
-      if (!guestIntroShownForCurrentEntryRef.current) {
-        guestIntroShownForCurrentEntryRef.current = true;
-        setHasNewMessage(true);
-        trackKangurClientEvent('kangur_ai_tutor_guest_intro_shown', {
-          reason: 'admin_every_visit_badge',
-        });
-      }
-      return;
-    }
-
-    if (!guestIntroRecord && !guestIntroCheckStartedRef.current) {
+    if (entryAction === 'show_unseen_badge') {
       setHasNewMessage(true);
     }
   }, [
     authState,
     guestIntroCheckStartedRef,
     guestIntroHelpVisible,
-    guestIntroLocalSuppressionTrackedRef,
     guestIntroRecord,
     guestIntroShownForCurrentEntryRef,
     guestIntroVisible,
@@ -189,8 +422,8 @@ export function useKangurAiTutorGuestIntroFlow(input: {
     setCanonicalTutorModalVisible,
     setGuestAuthFormVisible,
     setGuestIntroHelpVisible,
-    setGuestIntroRecord,
     setGuestIntroVisible,
+    setHasNewMessage,
     shouldRepeatGuestIntroOnEntry,
   ]);
 
@@ -382,26 +615,16 @@ export function useKangurAiTutorHomeOnboardingFlow(input: {
       return;
     }
 
-    if (homeOnboardingStepIndex !== null || guidedTutorTarget) {
-      return;
-    }
-
-    if (homeOnboardingMode === 'off') {
-      return;
-    }
-
-    if (!shouldRepeatHomeOnboardingOnEntry && !AUTO_START_HOME_ONBOARDING_ON_FIRST_VISIT) {
-      return;
-    }
-
     if (
-      !shouldRepeatHomeOnboardingOnEntry &&
-      (homeOnboardingRecord?.status === 'completed' || homeOnboardingRecord?.status === 'dismissed')
+      resolveHomeOnboardingEntryAction({
+        guidedTutorTarget,
+        homeOnboardingMode,
+        homeOnboardingRecord,
+        homeOnboardingShownForCurrentEntry: homeOnboardingShownForCurrentEntryRef.current,
+        homeOnboardingStepIndex,
+        shouldRepeatHomeOnboardingOnEntry,
+      }) !== 'start'
     ) {
-      return;
-    }
-
-    if (homeOnboardingShownForCurrentEntryRef.current) {
       return;
     }
 

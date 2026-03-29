@@ -22,6 +22,8 @@ type MongoKangurLessonSectionDocument = Document &
 
 let indexesInitialized = false;
 let indexesInFlight: Promise<void> | null = null;
+let defaultsInitialized = false;
+let defaultsInFlight: Promise<void> | null = null;
 
 const ensureIndexes = async (db: Db): Promise<void> => {
   if (indexesInitialized) return;
@@ -114,23 +116,37 @@ const seedMissingSections = async (
   return true;
 };
 
+const ensureDefaultSections = async (
+  collection: Collection<MongoKangurLessonSectionDocument>
+): Promise<void> => {
+  if (defaultsInitialized) return;
+  if (defaultsInFlight) {
+    await defaultsInFlight;
+    return;
+  }
+
+  defaultsInFlight = (async (): Promise<void> => {
+    await seedMissingSections(collection);
+    defaultsInitialized = true;
+  })();
+
+  try {
+    await defaultsInFlight;
+  } finally {
+    defaultsInFlight = null;
+  }
+};
+
 export const mongoKangurLessonSectionRepository: KangurLessonSectionRepository = {
   async listSections(input?: KangurLessonSectionListInput): Promise<KangurLessonSection[]> {
     const db = await getMongoDb();
     await ensureIndexes(db);
     const collection = db.collection<MongoKangurLessonSectionDocument>(COLLECTION);
-    let docs = await collection
+    await ensureDefaultSections(collection);
+    const docs = await collection
       .find(buildFilter(input))
       .sort({ sortOrder: 1, id: 1 })
       .toArray();
-
-    if (docs.length === 0) {
-      await seedMissingSections(collection);
-      docs = await collection
-        .find(buildFilter(input))
-        .sort({ sortOrder: 1, id: 1 })
-        .toArray();
-    }
 
     if (docs.length === 0) {
       const fallbackFilter: Filter<MongoKangurLessonSectionDocument> = {};

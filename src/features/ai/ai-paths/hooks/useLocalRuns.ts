@@ -8,14 +8,13 @@ import {
   useAiPathsSettingsQuery,
   useUpdateAiPathsSettingMutation,
 } from '@/shared/lib/ai-paths/hooks/useAiPathQueries';
-import { AI_PATHS_RUN_SOURCE_VALUES } from '@/shared/lib/ai-paths/run-sources';
 import { useToast } from '@/shared/ui';
 import { serializeSetting } from '@/shared/utils/settings-json';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
+import { shouldIncludeLocalRun } from './local-run-filters';
 
 
 
-const AI_PATHS_SOURCES = new Set<string>(AI_PATHS_RUN_SOURCE_VALUES);
 const TERMINAL_LOCAL_RUN_STATUSES = new Set(['success', 'error']);
 
 export type LocalRunsScope = 'terminal' | 'all';
@@ -24,25 +23,6 @@ interface UseLocalRunsOptions {
   sourceFilter?: string | null | undefined;
   sourceMode?: 'include' | 'exclude' | undefined;
 }
-
-const shouldIncludeRun = (
-  run: AiPathLocalRunRecord,
-  sourceFilter?: string | null | undefined,
-  sourceMode?: 'include' | 'exclude' | undefined
-): boolean => {
-  if (!sourceFilter) return true;
-  const sourceValue = run.source ?? null;
-  if (sourceMode === 'exclude') {
-    if (sourceFilter === 'ai_paths_ui') {
-      return sourceValue !== null && !AI_PATHS_SOURCES.has(sourceValue);
-    }
-    return sourceValue !== sourceFilter;
-  }
-  if (sourceFilter === 'ai_paths_ui') {
-    return sourceValue === null || (sourceValue !== null && AI_PATHS_SOURCES.has(sourceValue));
-  }
-  return sourceValue === sourceFilter;
-};
 
 export function useLocalRuns({ sourceFilter, sourceMode }: UseLocalRunsOptions = {}) {
   const { toast } = useToast();
@@ -58,7 +38,7 @@ export function useLocalRuns({ sourceFilter, sourceMode }: UseLocalRunsOptions =
 
   const runs = useMemo(() => {
     return allRuns.filter((run: AiPathLocalRunRecord) =>
-      shouldIncludeRun(run, sourceFilter, sourceMode)
+      shouldIncludeLocalRun(run, sourceFilter, sourceMode)
     );
   }, [allRuns, sourceFilter, sourceMode]);
 
@@ -87,7 +67,7 @@ export function useLocalRuns({ sourceFilter, sourceMode }: UseLocalRunsOptions =
   const clearRuns = useCallback(
     async (scope: LocalRunsScope): Promise<void> => {
       const nextRuns = allRuns.filter((run: AiPathLocalRunRecord) => {
-        const inPanel = shouldIncludeRun(run, sourceFilter, sourceMode);
+        const inPanel = shouldIncludeLocalRun(run, sourceFilter, sourceMode);
         if (!inPanel) return true;
         if (scope === 'all') return false;
         return !TERMINAL_LOCAL_RUN_STATUSES.has(run.status);

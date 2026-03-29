@@ -2,6 +2,7 @@ import type { KangurPracticeCompletionResult } from '@kangur/core';
 
 import type { KangurMobileLocale } from '../i18n/kangurMobileI18n';
 import type { KangurMobileTone as Tone } from '../shared/KangurMobileUi';
+import { formatKangurMobileQuestionCount } from '../shared/questionCountLabel';
 
 export const PRACTICE_QUESTION_COUNT = 8;
 export const PROFILE_ROUTE = '/profile' as const;
@@ -15,25 +16,36 @@ type PracticePlayerSession = {
   } | null;
 } | null | undefined;
 
+const PRACTICE_PLAYER_FALLBACK_NAMES = {
+  de: 'Lernender',
+  en: 'Learner',
+  pl: 'Uczeń',
+} as const;
+
+const resolveTrimmedPracticePlayerName = (
+  value: string | null | undefined,
+): string | null => {
+  const normalizedValue = value?.trim();
+  return normalizedValue ? normalizedValue : null;
+};
+
 export const resolvePracticePlayerName = (
   session: PracticePlayerSession,
   locale: KangurMobileLocale,
 ): string => {
-  const activeLearnerName = session?.user?.activeLearner?.displayName?.trim();
+  const activeLearnerName = resolveTrimmedPracticePlayerName(
+    session?.user?.activeLearner?.displayName,
+  );
   if (activeLearnerName) {
     return activeLearnerName;
   }
 
-  const fullName = session?.user?.full_name?.trim();
+  const fullName = resolveTrimmedPracticePlayerName(session?.user?.full_name);
   if (fullName) {
     return fullName;
   }
 
-  return {
-    de: 'Lernender',
-    en: 'Learner',
-    pl: 'Uczeń',
-  }[locale];
+  return PRACTICE_PLAYER_FALLBACK_NAMES[locale];
 };
 
 export const formatPracticeProgressLabel = (
@@ -180,31 +192,7 @@ export const formatPracticeDuelRecord = (
 export const formatPracticeQuestionCountLabel = (
   questionCount: number,
   locale: KangurMobileLocale,
-): string => {
-  if (locale === 'de') {
-    return questionCount === 1 ? '1 Frage' : `${questionCount} Fragen`;
-  }
-
-  if (locale === 'en') {
-    return questionCount === 1 ? '1 question' : `${questionCount} questions`;
-  }
-
-  if (questionCount === 1) {
-    return '1 pytanie';
-  }
-
-  const lastDigit = questionCount % 10;
-  const lastTwoDigits = questionCount % 100;
-  if (
-    lastDigit >= 2 &&
-    lastDigit <= 4 &&
-    (lastTwoDigits < 12 || lastTwoDigits > 14)
-  ) {
-    return `${questionCount} pytania`;
-  }
-
-  return `${questionCount} pytań`;
-};
+): string => formatKangurMobileQuestionCount(questionCount, locale);
 
 export const getPracticeKindChipLabel = (
   kind: 'arithmetic' | 'logic' | 'time',

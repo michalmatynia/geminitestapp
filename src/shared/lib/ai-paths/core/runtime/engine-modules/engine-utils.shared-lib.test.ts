@@ -276,6 +276,35 @@ describe('engine-utils shared-lib behavior', () => {
     );
     expect(promptStaticReadiness.ready).toBe(true);
 
+    const promptBracketReadiness = evaluateInputReadiness(
+      buildNode({
+        id: 'prompt-bracket',
+        type: 'prompt',
+        config: {
+          prompt: {
+            template:
+              'Value: [value.label] / Duplicate: [value.other] / Missing: {{ detached.id }}',
+          },
+        },
+      }),
+      {},
+      [
+        { id: 'edge-1', from: 'source-a', to: 'prompt-bracket', toPort: 'bundle' } as Edge,
+        { id: 'edge-2', from: 'source-b', to: 'prompt-bracket', toPort: 'value' } as Edge,
+      ],
+      new Map(),
+      () => 'pending',
+      () => ({})
+    );
+    expect(promptBracketReadiness).toEqual(
+      expect.objectContaining({
+        ready: false,
+        requiredPorts: ['value'],
+        optionalPorts: ['bundle'],
+        waitingOnPorts: ['value'],
+      })
+    );
+
     const noIncomingRequired = evaluateInputReadiness(
       buildNode({
         id: 'required-node',

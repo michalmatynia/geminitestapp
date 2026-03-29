@@ -33,6 +33,7 @@ import {
   PRACTICE_ASSIGNMENT_ITEMS,
   PRACTICE_ASSIGNMENT_RUNTIME_KEYS,
 } from './delegated-assignments/delegated-assignments.constants';
+import { buildKangurAssignments } from './assignments';
 
 export * from './delegated-assignments/delegated-assignments.types';
 
@@ -145,17 +146,158 @@ export const buildKangurAssignmentCatalog = (
 };
 
 export const buildRecommendedKangurAssignmentCatalog = (
-  _progress: KangurProgressState,
-  _localizer?: KangurAssignmentsRuntimeLocalizer
-): KangurAssignmentCatalogItem[] => {
-  // Logic to suggest assignments based on progress state
-  return [];
+  progress: KangurProgressState,
+  localizer?: KangurAssignmentsRuntimeLocalizer
+): KangurAssignmentCatalogItem[] =>
+  buildKangurAssignments(progress, 3, localizer)
+    .map((assignment): KangurAssignmentCatalogItem | null => {
+      if (assignment.action.page === 'Lessons' && assignment.action.query?.['focus']) {
+        const lessonComponentId = assignment.action.query['focus'] as KangurLessonComponentId;
+        const lessonEntry = KANGUR_LESSON_LIBRARY[lessonComponentId];
+        const group =
+          lessonComponentId === 'clock' || lessonComponentId === 'calendar'
+            ? 'time'
+            : lessonEntry?.subject === 'geometry'
+              ? 'geometry'
+              : lessonEntry?.subject === 'maths'
+                ? 'arithmetic'
+                : 'logic';
+
+        return {
+          id: `suggested-${assignment.id}`,
+          title: assignment.title,
+          description: assignment.description,
+          badge: translateAssignmentsRuntimeWithFallback(
+            localizer,
+            'suggested.badge',
+            'Podpowiedź'
+          ),
+          group,
+          priorityLabel: formatKangurAssignmentPriorityLabel(assignment.priority, localizer),
+          createInput: {
+            title: assignment.title,
+            description: assignment.description,
+            priority: assignment.priority,
+            target: {
+              type: 'lesson',
+              lessonComponentId,
+              requiredCompletions: 1,
+            },
+          },
+          keywords: [assignment.title, assignment.description, assignment.target, lessonComponentId]
+            .map((value) => value.toLowerCase()),
+        } satisfies KangurAssignmentCatalogItem;
+      }
+
+      if (
+        assignment.action.page === 'Game' &&
+        assignment.action.query?.['quickStart'] === 'training'
+      ) {
+        return {
+          id: `suggested-${assignment.id}`,
+          title: assignment.title,
+          description: assignment.description,
+          badge: translateAssignmentsRuntimeWithFallback(
+            localizer,
+            'suggested.badge',
+            'Podpowiedź'
+          ),
+          group: 'practice',
+          priorityLabel: formatKangurAssignmentPriorityLabel(assignment.priority, localizer),
+          createInput: {
+            title: assignment.title,
+            description: assignment.description,
+            priority: assignment.priority,
+            target: {
+              type: 'practice',
+              operation: 'mixed',
+              requiredAttempts: 1,
+              minAccuracyPercent: assignment.priority === 'high' ? 80 : 70,
+            },
+          },
+          keywords: [assignment.title, assignment.description, assignment.target, 'mixed', 'practice']
+            .map((value) => value.toLowerCase()),
+        } satisfies KangurAssignmentCatalogItem;
+      }
+
+      return null;
+    })
+    .filter((item): item is KangurAssignmentCatalogItem => item !== null);
+
+const TIME_PRACTICE_OPERATIONS = new Set<KangurPracticeAssignmentOperation>(['clock']);
+const ARITHMETIC_PRACTICE_OPERATIONS = new Set<KangurPracticeAssignmentOperation>([
+  'addition',
+  'subtraction',
+  'multiplication',
+  'division',
+  'decimals',
+  'powers',
+  'roots',
+  'mixed',
+]);
+const LOGIC_PRACTICE_OPERATIONS = new Set<KangurPracticeAssignmentOperation>([
+  'logical_thinking',
+  'logical_patterns',
+  'logical_classification',
+  'logical_reasoning',
+  'logical_analogies',
+]);
+
+const matchesCatalogFilter = (
+  item: KangurAssignmentCatalogItem,
+  filter:
+    | 'all'
+    | 'unassigned'
+    | 'assigned'
+    | 'time'
+    | 'arithmetic'
+    | 'geometry'
+    | 'logic'
+    | 'practice'
+): boolean => {
+  if (filter === 'all' || filter === 'assigned' || filter === 'unassigned') {
+    return true;
+  }
+
+  const target = item.createInput.target;
+  const lessonComponentId =
+    target.type === 'lesson' ? target.lessonComponentId ?? null : null;
+  const operation = target.type === 'practice' ? target.operation : null;
+
+  if (filter === 'practice') {
+    return item.group === 'practice';
+  }
+
+  if (filter === 'time') {
+    return (
+      lessonComponentId === 'clock' ||
+      lessonComponentId === 'calendar' ||
+      (operation !== null && TIME_PRACTICE_OPERATIONS.has(operation))
+    );
+  }
+
+  if (filter === 'geometry') {
+    return item.group === 'geometry';
+  }
+
+  if (filter === 'logic') {
+    return item.group === 'logic' || (operation !== null && LOGIC_PRACTICE_OPERATIONS.has(operation));
+  }
+
+  if (filter === 'arithmetic') {
+    return (
+      item.group === 'arithmetic' ||
+      (operation !== null && ARITHMETIC_PRACTICE_OPERATIONS.has(operation))
+    );
+  }
+
+  return true;
 };
 
 export const filterKangurAssignmentCatalog = (
   catalog: KangurAssignmentCatalogItem[],
   query: string,
-  _filter:
+  filter:
     | 'all'
     | 'unassigned'
     | 'assigned'
@@ -167,7 +309,21 @@ export const filterKangurAssignmentCatalog = (
 ): KangurAssignmentCatalogItem[] => {
   const normalizedQuery = query.trim().toLowerCase();
   return catalog.filter((item) => {
-    if (normalizedQuery && !item.keywords.some((k) => k.includes(normalizedQuery))) return false;
+    if (!matchesCatalogFilter(item, filter)) {
+      return false;
+    }
+
+    if (!normalizedQuery) {
+      return true;
+    }
+
+    const searchable = [item.title, item.description, item.badge, ...item.keywords]
+      .join(' ')
+      .toLowerCase();
+    if (!searchable.includes(normalizedQuery)) {
+      return false;
+    }
+
     return true;
   });
 };

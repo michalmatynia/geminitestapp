@@ -81,26 +81,58 @@ const isQuotaExceededStorageError = (error: unknown): boolean => {
   );
 };
 
+type AiPathsSettingsBackupPayload = {
+  records: unknown;
+  savedAt: number;
+};
+
+const parseBackupPayload = (raw: string): AiPathsSettingsBackupPayload | null => {
+  const parsed = JSON.parse(raw) as unknown;
+
+  if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
+    return null;
+  }
+
+  const parsedRecord = parsed as { records?: unknown; savedAt?: unknown };
+
+  if (!Array.isArray(parsedRecord.records) || typeof parsedRecord.savedAt !== 'number') {
+    return null;
+  }
+
+  return {
+    records: parsedRecord.records,
+    savedAt: parsedRecord.savedAt,
+  };
+};
+
+const isFreshBackupTimestamp = (savedAt: number): boolean =>
+  Date.now() - savedAt <= AI_PATHS_SETTINGS_BACKUP_MAX_AGE_MS;
+
+const parseBackupRecords = (records: unknown): AiPathsSettingRecord[] | null => {
+  const parsedSettings = aiPathsSettingRecordsSchema.safeParse(records);
+
+  if (!parsedSettings.success) {
+    return null;
+  }
+
+  return parsedSettings.data.length > 0 ? parsedSettings.data : null;
+};
+
 const readBackupSettings = (): AiPathsSettingRecord[] | null => {
   if (typeof window === 'undefined') return null;
+
   try {
     const raw = window.localStorage.getItem(AI_PATHS_SETTINGS_BACKUP_KEY);
+
     if (!raw) return null;
-    const parsed = JSON.parse(raw) as unknown;
-    const parsedRecord =
-      parsed && typeof parsed === 'object' && !Array.isArray(parsed)
-        ? (parsed as { records?: unknown; savedAt?: unknown })
-        : null;
-    if (!parsedRecord || !Array.isArray(parsedRecord.records)) return null;
-    if (typeof parsedRecord.savedAt !== 'number') return null;
-    const backupAgeMs = Date.now() - parsedRecord.savedAt;
-    if (backupAgeMs > AI_PATHS_SETTINGS_BACKUP_MAX_AGE_MS) {
+
+    const payload = parseBackupPayload(raw);
+
+    if (!payload || !isFreshBackupTimestamp(payload.savedAt)) {
       return null;
     }
-    const parsedSettings = aiPathsSettingRecordsSchema.safeParse(parsedRecord.records);
-    if (!parsedSettings.success) return null;
-    const normalized = parsedSettings.data;
-    return normalized.length > 0 ? normalized : null;
+
+    return parseBackupRecords(payload.records);
   } catch (error) {
     logClientCatch(error, {
       source: 'ai-paths-settings-client',
@@ -186,6 +218,46 @@ const buildAiPathsSettingsUrl = (keys?: string[]): string => {
   return `/api/ai-paths/settings?${params.toString()}`;
 };
 
+const createSettingsTimeoutError = (timeoutMs: number): Error =>
+  Object.assign(new Error(`AI Paths settings request timed out after ${timeoutMs}ms`), {
+    name: 'TimeoutError',
+  });
+
+const getSettingsRetryDelay = (attempt: number): number =>
+  AI_PATHS_SETTINGS_RETRY_DELAYS_MS[attempt] ?? 250;
+
+const shouldRetrySettingsResponse = (response: Response, attempt: number): boolean =>
+  response.status >= 500 && attempt < AI_PATHS_SETTINGS_RETRY_DELAYS_MS.length;
+
+const createSettingsAbortController = (timeoutMs: number): {
+  controller: AbortController;
+  timeoutId: ReturnType<typeof setTimeout>;
+} => {
+  const controller = new AbortController();
+  const timeoutError = createSettingsTimeoutError(timeoutMs);
+  const timeoutId = setTimeout(() => controller.abort(timeoutError), timeoutMs);
+
+  return { controller, timeoutId };
+};
+
+const fetchAiPathsSettingsAttempt = async (args: {
+  requestUrl: string;
+  timeoutMs: number;
+}): Promise<Response> => {
+  const { requestUrl, timeoutMs } = args;
+  const { controller, timeoutId } = createSettingsAbortController(timeoutMs);
+
+  try {
+    return await fetch(requestUrl, {
+      credentials: 'include',
+      cache: 'no-store',
+      signal: controller.signal,
+    });
+  } finally {
+    clearTimeout(timeoutId);
+  }
+};
+
 const fetchAiPathsSettingsResponse = async (options?: {
   keys?: string[] | undefined;
   timeoutMs?: number | undefined;
@@ -193,25 +265,18 @@ const fetchAiPathsSettingsResponse = async (options?: {
   const timeoutMs = options?.timeoutMs ?? AI_PATHS_SETTINGS_REQUEST_TIMEOUT_MS;
   const requestUrl = buildAiPathsSettingsUrl(options?.keys);
   let lastError: unknown;
+
   for (let attempt = 0; attempt <= AI_PATHS_SETTINGS_RETRY_DELAYS_MS.length; attempt += 1) {
-    const controller = new AbortController();
-    const timeoutError = Object.assign(
-      new Error(`AI Paths settings request timed out after ${timeoutMs}ms`),
-      { name: 'TimeoutError' }
-    );
-    const timeoutId = setTimeout(() => controller.abort(timeoutError), timeoutMs);
     try {
-      const response = await fetch(requestUrl, {
-        credentials: 'include',
-        cache: 'no-store',
-        signal: controller.signal,
-      });
-      clearTimeout(timeoutId);
+      const response = await fetchAiPathsSettingsAttempt({ requestUrl, timeoutMs });
+
       if (response.ok) return response;
-      if (response.status >= 500 && attempt < AI_PATHS_SETTINGS_RETRY_DELAYS_MS.length) {
-        await sleep(AI_PATHS_SETTINGS_RETRY_DELAYS_MS[attempt] ?? 250);
+
+      if (shouldRetrySettingsResponse(response, attempt)) {
+        await sleep(getSettingsRetryDelay(attempt));
         continue;
       }
+
       return response;
     } catch (error) {
       logClientCatch(error, {
@@ -221,14 +286,16 @@ const fetchAiPathsSettingsResponse = async (options?: {
         timeoutMs,
         attempt,
       });
-      clearTimeout(timeoutId);
       lastError = error;
+
       if (!shouldRetrySettingsFetch(error) || attempt >= AI_PATHS_SETTINGS_RETRY_DELAYS_MS.length) {
         break;
       }
-      await sleep(AI_PATHS_SETTINGS_RETRY_DELAYS_MS[attempt] ?? 250);
+
+      await sleep(getSettingsRetryDelay(attempt));
     }
   }
+
   throw lastError instanceof Error ? lastError : new Error('Failed to fetch AI Paths settings.');
 };
 

@@ -216,22 +216,33 @@ export const resolveConfiguredRequiredInputPorts = (
 
 const PROMPT_TEMPLATE_TOKEN_PATTERN = /{{\s*([^}]+)\s*}}|\[\s*([A-Za-z0-9_.$:-]+)\s*\]/g;
 
+const createPromptTemplateTokenPattern = (): RegExp =>
+  new RegExp(PROMPT_TEMPLATE_TOKEN_PATTERN.source, PROMPT_TEMPLATE_TOKEN_PATTERN.flags);
+
+const extractPromptTemplateTokens = (template: string): string[] =>
+  Array.from(template.matchAll(createPromptTemplateTokenPattern()))
+    .map((match) => String(match[1] ?? match[2] ?? '').trim())
+    .filter((token: string): boolean => token.length > 0);
+
+const resolvePromptTemplateTopLevelPort = (token: string): string =>
+  normalizePortName(token.split('.')[0] ?? token);
+
+const hasPromptTemplateTokens = (template: string): boolean =>
+  createPromptTemplateTokenPattern().test(template);
+
 const resolvePromptTemplateRequiredPorts = (
   template: string,
   connectedPorts: Set<string>
 ): string[] => {
   if (!template.trim()) return [];
 
-  const requiredPorts = new Set<string>();
-  for (const match of template.matchAll(PROMPT_TEMPLATE_TOKEN_PATTERN)) {
-    const rawToken = String(match[1] ?? match[2] ?? '').trim();
-    if (!rawToken) continue;
-    const topLevelToken = normalizePortName(rawToken.split('.')[0] ?? rawToken);
-    if (!topLevelToken || !connectedPorts.has(topLevelToken)) continue;
-    requiredPorts.add(topLevelToken);
-  }
-
-  return Array.from(requiredPorts);
+  return Array.from(
+    new Set<string>(
+      extractPromptTemplateTokens(template)
+        .map(resolvePromptTemplateTopLevelPort)
+        .filter((port: string): boolean => port.length > 0 && connectedPorts.has(port))
+    )
+  );
 };
 
 export const buildWaitingOnDetails = (
@@ -415,9 +426,7 @@ export const evaluateInputReadiness = (
       promptTemplate,
       connectedPorts
     );
-    const hasDynamicTemplateToken = /{{\s*([^}]+)\s*}}|\[\s*([A-Za-z0-9_.$:-]+)\s*\]/.test(
-      promptTemplate
-    );
+    const hasDynamicTemplateToken = hasPromptTemplateTokens(promptTemplate);
     if (templateRequiredPorts.length > 0) {
       const requiredPortSet = new Set<string>(templateRequiredPorts);
       const optionalPorts = connectedPortList.filter(

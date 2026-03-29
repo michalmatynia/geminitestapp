@@ -16,20 +16,17 @@ vi.mock('@/shared/lib/db/mongo-client', () => ({
 
 describe('mongoKangurLessonSectionRepository bootstrap', () => {
   beforeEach(() => {
+    vi.resetModules();
     vi.clearAllMocks();
   });
 
-  it('seeds default lesson sections into Mongo when the collection is empty', async () => {
+  it('seeds default lesson sections before reading enabled subject sections', async () => {
     const expected = createDefaultKangurSections().filter(
       (section) => section.subject === 'english' && section.enabled
     );
-    const toArrayMock = vi
-      .fn()
-      .mockResolvedValueOnce([])
-      .mockResolvedValueOnce(expected);
+    const toArrayMock = vi.fn().mockResolvedValue(expected);
     const collection = {
       bulkWrite: vi.fn().mockResolvedValue({ acknowledged: true }),
-      countDocuments: vi.fn().mockResolvedValue(0),
       createIndex: vi.fn().mockResolvedValue('ok'),
       find: vi.fn().mockReturnValue({
         sort: vi.fn().mockReturnValue({

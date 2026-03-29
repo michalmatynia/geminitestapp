@@ -332,34 +332,61 @@ export const assertOutboundUrlAllowed = (rawUrl: string): OutboundUrlPolicyDecis
   );
 };
 
+const buildOutboundFetchRequestInit = (
+  init?: Omit<RequestInit, 'redirect'> & { maxRedirects?: number; fetchImpl?: typeof fetch }
+): RequestInit => {
+  const requestInit: RequestInit = {
+    ...init,
+    redirect: 'manual',
+  };
+
+  delete (requestInit as Record<string, unknown>)['maxRedirects'];
+  delete (requestInit as Record<string, unknown>)['fetchImpl'];
+
+  return requestInit;
+};
+
+const resolveRedirectLocation = (response: Response): string | null =>
+  response.headers.get('location');
+
+const resolveNextOutboundRedirectUrl = (args: {
+  currentUrl: string;
+  location: string;
+}): string => new URL(args.location, args.currentUrl).toString();
+
+const assertRedirectLimitNotExceeded = (args: {
+  maxRedirects: number;
+  redirectCount: number;
+}): void => {
+  if (args.redirectCount === args.maxRedirects) {
+    throw new Error(`Outbound fetch exceeded redirect limit (${args.maxRedirects}).`);
+  }
+};
+
 export const fetchWithOutboundUrlPolicy = async (
   rawUrl: string,
   init?: Omit<RequestInit, 'redirect'> & { maxRedirects?: number; fetchImpl?: typeof fetch }
 ): Promise<Response> => {
   const maxRedirects = Math.max(0, Math.trunc(init?.maxRedirects ?? 5));
   const fetchImpl = init?.fetchImpl ?? fetch;
-  const requestInit: RequestInit = {
-    ...init,
-    redirect: 'manual',
-  };
-  delete (requestInit as Record<string, unknown>)['maxRedirects'];
-  delete (requestInit as Record<string, unknown>)['fetchImpl'];
+  const requestInit = buildOutboundFetchRequestInit(init);
 
   let currentUrl = rawUrl;
   for (let redirectCount = 0; redirectCount <= maxRedirects; redirectCount += 1) {
     assertOutboundUrlAllowed(currentUrl);
     const response = await fetchImpl(currentUrl, requestInit);
+
     if (!isRedirectStatus(response.status)) {
       return response;
     }
-    const location = response.headers.get('location');
+
+    const location = resolveRedirectLocation(response);
     if (!location) {
       return response;
     }
-    if (redirectCount === maxRedirects) {
-      throw new Error(`Outbound fetch exceeded redirect limit (${maxRedirects}).`);
-    }
-    currentUrl = new URL(location, currentUrl).toString();
+
+    assertRedirectLimitNotExceeded({ maxRedirects, redirectCount });
+    currentUrl = resolveNextOutboundRedirectUrl({ currentUrl, location });
   }
 
   throw new Error('Outbound fetch failed before completion.');

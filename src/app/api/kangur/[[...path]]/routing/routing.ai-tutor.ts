@@ -33,7 +33,10 @@ import {
   postKangurPageContentHandler,
   querySchema as pageContentQuerySchema,
 } from '@/app/api/kangur/ai-tutor/page-content/handler';
-import { getKangurAiTutorUsageHandler } from '@/app/api/kangur/ai-tutor/usage/handler';
+import {
+  getKangurAiTutorUsageHandler,
+  querySchema as usageQuerySchema,
+} from '@/app/api/kangur/ai-tutor/usage/handler';
 import { POST_handler as postKangurAiTutorFollowUpHandler } from '@/app/api/kangur/ai-tutor/follow-up/handler';
 import { POST_handler as postKangurNativeGuideGenerationHandler } from '@/app/api/kangur/ai-tutor/admin/native-guide-generation/handler';
 import { GET_handler as getKangurAiTutorExperimentsHandler, PUT_handler as putKangurAiTutorExperimentsHandler } from '@/app/api/kangur/ai-tutor/experiments/handler';
@@ -119,6 +122,7 @@ export const aiTutorKnowledgeGraphPreviewHandler: SimpleRouteHandler = apiHandle
 export const aiTutorUsageHandler: SimpleRouteHandler = apiHandler(getKangurAiTutorUsageHandler, {
   source: 'kangur.ai-tutor.usage.GET',
   service: 'kangur.api',
+  querySchema: usageQuerySchema,
 });
 
 export const aiTutorFollowUpHandler: SimpleRouteHandler = apiHandler(postKangurAiTutorFollowUpHandler, {

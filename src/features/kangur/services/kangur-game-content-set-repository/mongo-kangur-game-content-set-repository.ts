@@ -26,6 +26,8 @@ type MongoKangurGameContentSetDocument = Document &
 
 let indexesInitialized = false;
 let indexesInFlight: Promise<void> | null = null;
+const defaultsInitializedForGame = new Set<string>();
+const defaultsInFlightByGame = new Map<string, Promise<void>>();
 
 const ensureIndexes = async (db: Db): Promise<void> => {
   if (indexesInitialized) return;
@@ -129,24 +131,65 @@ const seedMissingBuiltInContentSetsForGame = async (
   return true;
 };
 
+const resolveSeedGameId = (
+  input?: KangurGameContentSetListInput
+): string | null => {
+  if (input?.gameId) {
+    return input.gameId;
+  }
+
+  if (!input?.contentSetId) {
+    return null;
+  }
+
+  const [candidate] = input.contentSetId.split(':');
+  return candidate?.trim() ? candidate.trim() : null;
+};
+
+const ensureBuiltInContentSetsForGame = async (
+  collection: Collection<MongoKangurGameContentSetDocument>,
+  gameId?: string | null
+): Promise<void> => {
+  if (!gameId) {
+    return;
+  }
+
+  if (defaultsInitializedForGame.has(gameId)) {
+    return;
+  }
+
+  const inFlight = defaultsInFlightByGame.get(gameId);
+  if (inFlight) {
+    await inFlight;
+    return;
+  }
+
+  const promise = (async (): Promise<void> => {
+    await seedMissingBuiltInContentSetsForGame(collection, gameId);
+    defaultsInitializedForGame.add(gameId);
+  })();
+
+  defaultsInFlightByGame.set(gameId, promise);
+
+  try {
+    await promise;
+  } finally {
+    defaultsInFlightByGame.delete(gameId);
+  }
+};
+
 export const mongoKangurGameContentSetRepository: KangurGameContentSetRepository = {
   async listContentSets(input?: KangurGameContentSetListInput): Promise<KangurGameContentSet[]> {
     const db = await getMongoDb();
     await ensureIndexes(db);
 
     const collection = db.collection<MongoKangurGameContentSetDocument>(COLLECTION);
-    let docs = await collection
+    await ensureBuiltInContentSetsForGame(collection, resolveSeedGameId(input));
+
+    const docs = await collection
       .find(buildFilter(input))
       .sort({ sortOrder: 1, id: 1 })
       .toArray();
-
-    if (docs.length === 0 && input?.gameId) {
-      await seedMissingBuiltInContentSetsForGame(collection, input.gameId);
-      docs = await collection
-        .find(buildFilter(input))
-        .sort({ sortOrder: 1, id: 1 })
-        .toArray();
-    }
 
     return docs.map(toGameContentSet);
   },

@@ -1,14 +1,51 @@
 import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
-export function sanitizeHtml(html: string): string {
-  if (!html) return '';
+const HTML_SCRIPT_FALLBACK_PATTERN = /<script\b[^>]*>[\s\S]*?<\/script>/gi;
+const DANGEROUS_HTML_TAG_NAMES = new Set(['SCRIPT', 'OBJECT', 'EMBED', 'IFRAME']);
 
-  if (
+const sanitizeHtmlFallback = (html: string): string =>
+  html.replace(HTML_SCRIPT_FALLBACK_PATTERN, '');
+
+const canUseDomHtmlSanitizer = (): boolean =>
+  !(
     typeof window === 'undefined' ||
     typeof document === 'undefined' ||
     typeof DOMParser === 'undefined'
-  ) {
-    // Basic SSR/test fallback: remove <script> tags at minimum
-    return html.replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi, '');
+  );
+
+const shouldRemoveHtmlAttribute = (attribute: Attr): boolean => {
+  const attrName = attribute.name.toUpperCase();
+  if (attrName.startsWith('ON')) {
+    return true;
+  }
+  return (
+    (attrName === 'HREF' || attrName === 'SRC') &&
+    attribute.value.trim().toLowerCase().startsWith('javascript:')
+  );
+};
+
+const sanitizeHtmlNode = (node: Node): void => {
+  if (node.nodeType === 1) {
+    const element = node as HTMLElement;
+    if (DANGEROUS_HTML_TAG_NAMES.has(element.tagName.toUpperCase())) {
+      element.remove();
+      return;
+    }
+
+    Array.from(element.attributes).forEach((attribute) => {
+      if (shouldRemoveHtmlAttribute(attribute)) {
+        element.removeAttribute(attribute.name);
+      }
+    });
+  }
+
+  Array.from(node.childNodes).forEach(sanitizeHtmlNode);
+};
+
+export function sanitizeHtml(html: string): string {
+  if (!html) return '';
+
+  if (!canUseDomHtmlSanitizer()) {
+    return sanitizeHtmlFallback(html);
   }
 
   try {
@@ -16,50 +53,10 @@ export function sanitizeHtml(html: string): string {
     const doc = parser.parseFromString(html, 'text/html');
 
     if (!doc?.body) {
-      return html.replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi, '');
+      return sanitizeHtmlFallback(html);
     }
 
-    const sanitizeNode = (node: Node): void => {
-      if (node.nodeType === 1) {
-        // Element
-        const el = node as HTMLElement;
-        const tagName = el.tagName.toUpperCase();
-
-        // Remove dangerous tags
-        if (
-          tagName === 'SCRIPT' ||
-          tagName === 'OBJECT' ||
-          tagName === 'EMBED' ||
-          tagName === 'IFRAME'
-        ) {
-          el.remove();
-          return;
-        }
-
-        // Remove on* attributes
-        const attrs = Array.from(el.attributes);
-        for (const attr of attrs) {
-          const attrName = attr.name.toUpperCase();
-          if (attrName.startsWith('ON')) {
-            el.removeAttribute(attr.name);
-          }
-
-          // Prevent javascript: URLs in href/src
-          if (
-            (attrName === 'HREF' || attrName === 'SRC') &&
-            attr.value.trim().toLowerCase().startsWith('javascript:')
-          ) {
-            el.removeAttribute(attr.name);
-          }
-        }
-      }
-
-      // Recurse through children
-      const children = Array.from(node.childNodes);
-      children.forEach(sanitizeNode);
-    };
-
-    sanitizeNode(doc.body);
+    sanitizeHtmlNode(doc.body);
     return doc.body.innerHTML;
   } catch (error) {
     logClientCatch(error instanceof Error ? error : new Error('HTML Sanitization failed'), {
@@ -68,8 +65,7 @@ export function sanitizeHtml(html: string): string {
       htmlLength: html.length,
       level: 'warn',
     });
-    // Return partially sanitized HTML as ultimate fallback instead of empty string
-    return html.replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi, '');
+    return sanitizeHtmlFallback(html);
   }
 }
 

@@ -2,6 +2,7 @@ import type {
   KangurAssignmentAction,
   KangurAssignmentPlan,
 } from '@kangur/core';
+import { buildKangurAssignments } from '@kangur/core';
 import type { Href } from 'expo-router';
 import { useMemo } from 'react';
 
@@ -26,10 +27,7 @@ export const useKangurMobileHomeAssignments =
     const { locale } = useKangurMobileI18n();
     const progress = useKangurMobileHomeProgressSnapshot();
     const assignments = useMemo(
-      () => {
-        const { buildKangurAssignments } = require('@kangur/core/assignments') as typeof import('@kangur/core/assignments');
-        return buildKangurAssignments(progress, 2, locale);
-      },
+      () => buildKangurAssignments(progress, 2, locale),
       [locale, progress],
     );
 

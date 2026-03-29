@@ -127,8 +127,14 @@ const seedLessonsFromLegacySettingsOrDefaults = async (
   collection: Collection<MongoKangurLessonDocument>
 ): Promise<boolean> => {
   const rawLessons = await readKangurSettingValue(KANGUR_LESSONS_SETTING_KEY);
+  const defaults = createDefaultKangurLessons();
   const sourceLessons =
-    rawLessons !== null ? parseKangurLessons(rawLessons) : createDefaultKangurLessons();
+    rawLessons !== null
+      ? canonicalizeKangurLessons([
+          ...defaults,
+          ...parseKangurLessons(rawLessons),
+        ])
+      : defaults;
 
   return await seedMissingLessons(collection, sourceLessons);
 };

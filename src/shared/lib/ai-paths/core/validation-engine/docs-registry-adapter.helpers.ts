@@ -66,31 +66,62 @@ const isCsvSeparator = (char: string, inQuotes: boolean): boolean =>
 const unwrapQuotedCsvValue = (value: string): string =>
   value.startsWith('"') && value.endsWith('"') ? value.slice(1, -1).trim() : value;
 
-export const parseCsvLine = (line: string): string[] => {
-  const values: string[] = [];
-  let current = '';
-  let inQuotes = false;
-  for (let index = 0; index < line.length; index += 1) {
-    const char = line[index] ?? '';
-    const next = line[index + 1] ?? '';
-    if (isEscapedCsvQuote(char, next, inQuotes)) {
-      current += '"';
-      index += 1;
-      continue;
-    }
-    if (isCsvQuoteToggle(char)) {
-      inQuotes = !inQuotes;
-      continue;
-    }
-    if (isCsvSeparator(char, inQuotes)) {
-      values.push(current.trim());
-      current = '';
-      continue;
-    }
-    current += char;
+type CsvParseState = {
+  current: string;
+  index: number;
+  inQuotes: boolean;
+  values: string[];
+};
+
+const createCsvParseState = (): CsvParseState => ({
+  current: '',
+  index: 0,
+  inQuotes: false,
+  values: [],
+});
+
+const pushCsvValue = (state: CsvParseState): CsvParseState => ({
+  ...state,
+  current: '',
+  values: [...state.values, state.current.trim()],
+});
+
+const advanceCsvParseState = (line: string, state: CsvParseState): CsvParseState => {
+  const char = line[state.index] ?? '';
+  const next = line[state.index + 1] ?? '';
+  if (isEscapedCsvQuote(char, next, state.inQuotes)) {
+    return {
+      ...state,
+      current: `${state.current}"`,
+      index: state.index + 2,
+    };
   }
-  values.push(current.trim());
-  return values.map(unwrapQuotedCsvValue);
+  if (isCsvQuoteToggle(char)) {
+    return {
+      ...state,
+      inQuotes: !state.inQuotes,
+      index: state.index + 1,
+    };
+  }
+  if (isCsvSeparator(char, state.inQuotes)) {
+    return {
+      ...pushCsvValue(state),
+      index: state.index + 1,
+    };
+  }
+  return {
+    ...state,
+    current: `${state.current}${char}`,
+    index: state.index + 1,
+  };
+};
+
+export const parseCsvLine = (line: string): string[] => {
+  let state = createCsvParseState();
+  while (state.index < line.length) {
+    state = advanceCsvParseState(line, state);
+  }
+  return [...state.values, state.current.trim()].map(unwrapQuotedCsvValue);
 };
 
 export const parseCsvRecords = (csvText: string): Array<Record<string, string>> => {

@@ -258,4 +258,44 @@ describe('ai-paths-slo-notifier shared-lib coverage', () => {
       })
     );
   });
+
+  it('prefers persisted notification settings over env defaults when Mongo is enabled', async () => {
+    process.env['MONGODB_URI'] = 'mongodb://localhost:27017/test';
+    process.env['AI_PATHS_SLO_NOTIFICATIONS_ENABLED'] = 'false';
+    process.env['AI_PATHS_SLO_WEBHOOK_URL'] = 'http://env-webhook.test';
+    process.env['AI_PATHS_SLO_MIN_LEVEL'] = 'critical';
+    process.env['AI_PATHS_SLO_COOLDOWN_SECONDS'] = '5';
+
+    const settingsByKey = new Map<string, string>([
+      ['ai_paths_slo_notifications_enabled', 'true'],
+      ['ai_paths_slo_notifications_webhook_url', 'http://mongo-webhook.test'],
+      ['ai_paths_slo_notifications_min_level', 'warning'],
+      ['ai_paths_slo_notifications_cooldown_seconds', '90'],
+    ]);
+    getMongoDbMock.mockResolvedValue({
+      collection: vi.fn().mockReturnValue({
+        findOne: vi.fn().mockImplementation(async (query: { $or?: Array<{ _id?: string; key?: string }> }) => {
+          const key = query.$or?.[0]?._id ?? query.$or?.[1]?.key ?? '';
+          const value = settingsByKey.get(key);
+          return value ? { value } : null;
+        }),
+      }),
+    });
+
+    const result = await notifyAiPathsSloBreach({
+      status: buildStatus('warning', {
+        indicator: 'queueLag',
+        level: 'warning',
+        message: 'Queue lag above warning threshold.',
+      }),
+    });
+
+    expect(result.delivered).toBe(true);
+    expect(fetch).toHaveBeenCalledWith(
+      'http://mongo-webhook.test',
+      expect.objectContaining({
+        method: 'POST',
+      })
+    );
+  });
 });

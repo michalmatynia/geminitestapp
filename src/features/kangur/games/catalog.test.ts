@@ -455,6 +455,7 @@ describe('kangur game catalog', () => {
 
     expect(filtered.map((entry) => entry.game.id)).toEqual([
       'english_subject_verb_agreement',
+      'english_going_to_plan_parade',
       'english_adjectives_scene',
       'english_compare_and_crown',
       'english_adverbs_action_studio',
@@ -527,6 +528,7 @@ describe('kangur game catalog', () => {
 
     expect(filtered.map((entry) => entry.game.id)).toEqual([
       'english_subject_verb_agreement',
+      'english_going_to_plan_parade',
       'english_adjectives_scene',
       'english_compare_and_crown',
       'english_adverbs_action_studio',

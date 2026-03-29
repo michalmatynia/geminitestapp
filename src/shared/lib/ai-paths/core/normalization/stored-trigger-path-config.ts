@@ -114,6 +114,32 @@ const createStoredPathConfigFallback = (pathId: string): PathConfig => {
   };
 };
 
+const toObjectRecord = (value: unknown): Record<string, unknown> | null =>
+  value && typeof value === 'object' && !Array.isArray(value) ? (value as Record<string, unknown>) : null;
+
+const resolveStoredUiStateRecord = (
+  parsedConfig: Record<string, unknown> | null
+): Record<string, unknown> | null => toObjectRecord(parsedConfig?.['uiState']);
+
+const resolveStoredSelectedNodeIdValue = (
+  rawUiState: Record<string, unknown> | null
+): string | null => {
+  if (!rawUiState) {
+    return null;
+  }
+
+  const rawSelectedNodeId = rawUiState['selectedNodeId'];
+  return typeof rawSelectedNodeId === 'string'
+    ? rawSelectedNodeId.trim() || null
+    : rawSelectedNodeId === null
+      ? null
+      : null;
+};
+
+const resolveStoredConfigOpenValue = (
+  rawUiState: Record<string, unknown> | null
+): boolean | undefined => (typeof rawUiState?.['configOpen'] === 'boolean' ? rawUiState['configOpen'] : undefined);
+
 const resolveStoredUiState = (args: {
   parsedConfig: Record<string, unknown> | null;
   resolvedUiState: PathConfig['uiState'] | undefined;
@@ -124,17 +150,9 @@ const resolveStoredUiState = (args: {
     selectedNodeId: null,
     configOpen: false,
   };
-  const rawUiState =
-    parsedConfig?.['uiState'] && typeof parsedConfig['uiState'] === 'object' && !Array.isArray(parsedConfig['uiState'])
-      ? (parsedConfig['uiState'] as Record<string, unknown>)
-      : null;
-  const rawSelectedNodeId =
-    typeof rawUiState?.['selectedNodeId'] === 'string'
-      ? rawUiState['selectedNodeId'].trim() || null
-      : rawUiState?.['selectedNodeId'] === null
-        ? null
-        : undefined;
-  const rawConfigOpen = typeof rawUiState?.['configOpen'] === 'boolean' ? rawUiState['configOpen'] : undefined;
+  const rawUiState = resolveStoredUiStateRecord(parsedConfig);
+  const rawSelectedNodeId = resolveStoredSelectedNodeIdValue(rawUiState);
+  const rawConfigOpen = resolveStoredConfigOpenValue(rawUiState);
 
   return {
     ...(resolvedUiState && typeof resolvedUiState === 'object' ? resolvedUiState : {}),
@@ -149,26 +167,51 @@ const normalizeOptionalText = (value: unknown): string | undefined => {
   return trimmed.length > 0 ? trimmed : undefined;
 };
 
+const hasNodeWithId = (nodes: AiNode[] | undefined, selectedNodeId: string | null | undefined): boolean =>
+  Boolean(selectedNodeId && (nodes ?? []).some((node: AiNode): boolean => node.id === selectedNodeId));
+
+const normalizeSelectedNodeIdOverrideValue = (
+  value: string | null | undefined,
+  nodes: AiNode[] | undefined
+): string | null | undefined => {
+  if (value === undefined) {
+    return undefined;
+  }
+
+  return hasNodeWithId(nodes, value) ? value : null;
+};
+
+const applySelectedNodeIdOverrideForSanitization = (args: {
+  config: PathConfig;
+  selectedNodeIdOverride?: string | null | undefined;
+}): PathConfig => {
+  const normalizedSelectedNodeId = normalizeSelectedNodeIdOverrideValue(
+    args.selectedNodeIdOverride,
+    args.config.nodes,
+  );
+  if (normalizedSelectedNodeId === undefined) {
+    return args.config;
+  }
+
+  return {
+    ...args.config,
+    uiState: {
+      ...(toObjectRecord(args.config.uiState) ?? {}),
+      selectedNodeId: normalizedSelectedNodeId,
+      configOpen:
+        typeof args.config.uiState?.configOpen === 'boolean' ? args.config.uiState.configOpen : false,
+    },
+  };
+};
+
 const resolveSelectedNodeIdOverride = (
   parsedConfig: Record<string, unknown> | null
 ): string | null | undefined => {
   if (!parsedConfig) {
     return undefined;
   }
-  const rawUiState =
-    parsedConfig['uiState'] && typeof parsedConfig['uiState'] === 'object' && !Array.isArray(parsedConfig['uiState'])
-      ? (parsedConfig['uiState'] as Record<string, unknown>)
-      : null;
-  if (!rawUiState) {
-    return null;
-  }
-  if (typeof rawUiState['selectedNodeId'] === 'string') {
-    return rawUiState['selectedNodeId'].trim() || null;
-  }
-  if (rawUiState['selectedNodeId'] === null) {
-    return null;
-  }
-  return null;
+
+  return resolveStoredSelectedNodeIdValue(resolveStoredUiStateRecord(parsedConfig));
 };
 
 const resolveSeededStarterFallbackConfig = (args: {
@@ -219,13 +262,23 @@ const normalizeResolvedTriggerConfig = (args: {
   config: PathConfig;
   selectedNodeIdOverride?: string | null | undefined;
 }): PathConfig => {
-  const resolvedConfig = resolvePortablePathInput(args.config, {
+  const selectedNodeIdOverride =
+    args.selectedNodeIdOverride === undefined
+      ? undefined
+      : typeof args.selectedNodeIdOverride === 'string'
+        ? args.selectedNodeIdOverride.trim() || null
+        : null;
+  const preSanitizedConfig = applySelectedNodeIdOverrideForSanitization({
+    config: args.config,
+    selectedNodeIdOverride,
+  });
+  const resolvedConfig = resolvePortablePathInput(preSanitizedConfig, {
     repairIdentities: true,
     includeConnections: false,
     signingPolicyTelemetrySurface: 'product',
     nodeCodeObjectHashVerificationMode: 'warn',
   });
-  const candidateConfig = resolvedConfig.ok ? resolvedConfig.value.pathConfig : args.config;
+  const candidateConfig = resolvedConfig.ok ? resolvedConfig.value.pathConfig : preSanitizedConfig;
   const normalizedConfig = sanitizeTriggerPathConfig(candidateConfig);
   const normalizedId = typeof normalizedConfig.id === 'string' ? normalizedConfig.id.trim() : '';
   if (!normalizedId || normalizedId !== args.pathId) {
@@ -248,19 +301,10 @@ const normalizeResolvedTriggerConfig = (args: {
     });
   }
 
-  const selectedNodeIdOverride =
-    args.selectedNodeIdOverride === undefined
-      ? undefined
-      : typeof args.selectedNodeIdOverride === 'string'
-        ? args.selectedNodeIdOverride.trim() || null
-        : null;
-  const normalizedSelectedNodeId =
-    selectedNodeIdOverride === undefined
-      ? undefined
-      : selectedNodeIdOverride &&
-          (normalizedConfig.nodes ?? []).some((node: AiNode): boolean => node.id === selectedNodeIdOverride)
-        ? selectedNodeIdOverride
-        : null;
+  const normalizedSelectedNodeId = normalizeSelectedNodeIdOverrideValue(
+    selectedNodeIdOverride,
+    normalizedConfig.nodes,
+  );
 
   return {
     ...normalizedConfig,

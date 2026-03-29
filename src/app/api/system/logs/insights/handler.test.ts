@@ -28,7 +28,7 @@ vi.mock('@/features/ai/insights/server', () => ({
   generateLogsInsight: generateLogsInsightMock,
 }));
 
-vi.mock('@/shared/lib/auth/settings-manage-access', () => ({
+vi.mock('@/features/auth/server', () => ({
   assertSettingsManageAccess: assertSettingsManageAccessMock,
 }));
 
@@ -105,6 +105,7 @@ describe('system logs insights handler', () => {
     const response = await POST_handler(req, {} as never);
     const data = await response.json();
 
+    expect(assertSettingsManageAccessMock).toHaveBeenCalledTimes(1);
     expect(startAiInsightsQueueMock).toHaveBeenCalledTimes(1);
     expect(resolveObservabilityContextRegistryEnvelopeMock).toHaveBeenCalledWith(
       {

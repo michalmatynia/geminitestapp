@@ -38,37 +38,85 @@ const normalizeCaptureConfig = (
   return Object.keys(normalized).length > 0 ? normalized : undefined;
 };
 
-const pollPlaywrightRun = async (
+const PLAYWRIGHT_TERMINAL_RUN_STATUSES = new Set(['completed', 'failed']);
+
+const isTerminalPlaywrightRun = (run: PlaywrightNodeRunSnapshot): boolean =>
+  PLAYWRIGHT_TERMINAL_RUN_STATUSES.has(run.status);
+
+const assertPlaywrightPollResponse = (
+  response: Awaited<ReturnType<typeof playwrightNodeApi.poll>>
+): PlaywrightNodeRunSnapshot => {
+  if (!response.ok) {
+    throw new Error(response.error || 'Failed to poll Playwright run.');
+  }
+
+  return response.data.run;
+};
+
+const shouldWaitForNextPollAttempt = (attempt: number, maxAttempts: number): boolean =>
+  attempt < maxAttempts - 1;
+
+const sleepForPlaywrightPoll = async (intervalMs: number): Promise<void> => {
+  await new Promise<void>((resolve) => setTimeout(resolve, intervalMs));
+};
+
+export const pollPlaywrightRun = async (
   runId: string,
   options?: { intervalMs?: number; maxAttempts?: number }
 ): Promise<PlaywrightNodeRunSnapshot> => {
   const maxAttempts = options?.maxAttempts ?? 90;
   const intervalMs = options?.intervalMs ?? 1000;
+
   for (let attempt = 0; attempt < maxAttempts; attempt += 1) {
-    const response = await playwrightNodeApi.poll(runId);
-    if (!response.ok) {
-      throw new Error(response.error || 'Failed to poll Playwright run.');
-    }
-    const run = response.data.run;
-    if (run.status === 'completed' || run.status === 'failed') {
+    const run = assertPlaywrightPollResponse(await playwrightNodeApi.poll(runId));
+
+    if (isTerminalPlaywrightRun(run)) {
       return run;
     }
-    if (attempt < maxAttempts - 1) {
-      await new Promise<void>((resolve) => setTimeout(resolve, intervalMs));
+
+    if (shouldWaitForNextPollAttempt(attempt, maxAttempts)) {
+      await sleepForPlaywrightPoll(intervalMs);
     }
   }
+
   throw new Error('Playwright run timed out while polling.');
 };
 
-const artifactUrlFromPath = (relativePath: string): string | null => {
-  const normalized = relativePath.trim().replace(/^\/+/, '');
+const normalizeArtifactRelativePath = (relativePath: string): string =>
+  relativePath.trim().replace(/^\/+/, '');
+
+const splitArtifactPath = (
+  relativePath: string
+): { file: string; runId: string } | null => {
+  const parts = relativePath.split('/');
+
+  if (parts.length < 2) {
+    return null;
+  }
+
+  return {
+    file: parts.slice(1).join('/').trim(),
+    runId: (parts[0] ?? '').trim(),
+  };
+};
+
+const isValidArtifactFile = (file: string): boolean =>
+  Boolean(file) && !file.includes('/') && !file.includes('\\');
+
+export const artifactUrlFromPath = (relativePath: string): string | null => {
+  const normalized = normalizeArtifactRelativePath(relativePath);
+
   if (!normalized) return null;
-  const parts = normalized.split('/');
-  if (parts.length < 2) return null;
-  const runId = (parts[0] ?? '').trim();
-  const file = parts.slice(1).join('/').trim();
-  if (!runId || !file || file.includes('/') || file.includes('\\')) return null;
-  return `/api/ai-paths/playwright/${encodeURIComponent(runId)}/artifacts/${encodeURIComponent(file)}`;
+
+  const resolved = splitArtifactPath(normalized);
+
+  if (!resolved?.runId || !isValidArtifactFile(resolved?.file ?? '')) {
+    return null;
+  }
+
+  return `/api/ai-paths/playwright/${encodeURIComponent(resolved.runId)}/artifacts/${encodeURIComponent(
+    resolved.file
+  )}`;
 };
 
 const mapArtifactsWithUrls = (

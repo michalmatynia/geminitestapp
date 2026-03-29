@@ -449,6 +449,7 @@ describe('kangur game variants', () => {
 
     expect(filtered.map((entry) => entry.variant.id)).toEqual([
       'english_subject_verb_agreement.game-screen',
+      'english_going_to_plan_parade.game-screen',
       'english_adjectives_scene.game-screen',
       'english_compare_and_crown.game-screen',
       'english_adverbs_action_studio.game-screen',

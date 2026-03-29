@@ -106,7 +106,8 @@ export function reduceSectionActions(
       return { ...state, sections: updatedSections };
     }
 
-    case 'REORDER_SECTION_IN_ZONE': {
+    case 'REORDER_SECTION_IN_ZONE':
+    case 'REORDER_SECTIONS': {
       const zone: PageZone = action.zone as PageZone;
       const rootSectionsInZone = state.sections.filter(
         (section: SectionInstance) => section.zone === zone && !section.parentSectionId

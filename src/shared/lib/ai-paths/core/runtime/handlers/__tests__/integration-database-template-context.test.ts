@@ -317,4 +317,36 @@ describe('prepareDatabaseTemplateContext catalogId canonical wiring', () => {
         '}'
     );
   });
+
+  it('falls back to trimmed schema types and unknown for blank fields', () => {
+    const { templateContext } = prepareDatabaseTemplateContext({
+      resolvedInputs: {},
+      dbConfig: {
+        operation: 'query',
+        entityType: 'product',
+      } as never,
+      aiPromptTemplate: '',
+      simulationEntityType: null,
+      fallbackEntityId: null,
+      fetchEntityCached: vi.fn(async () => null),
+      schemaData: {
+        collections: [
+          {
+            name: 'orders',
+            fields: [
+              { name: 'identifier', type: ' ObjectId ' },
+              { name: 'mystery', type: '   ' },
+            ],
+          },
+        ],
+      } as never,
+    });
+
+    expect(templateContext['Collection: orders']).toBe(
+      'interface Order {\n' +
+        '  identifier: ObjectId;\n' +
+        '  mystery: unknown;\n' +
+        '}'
+    );
+  });
 });

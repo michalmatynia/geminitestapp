@@ -6,6 +6,8 @@ import React from 'react';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { buildGameRuntime } from './Game.test-support';
+
 const {
   useKangurGameRuntimeMock,
   useKangurGameContentSetsMock,
@@ -267,33 +269,6 @@ vi.mock('@/features/kangur/docs/tooltips', () => ({
 import Game from '@/features/kangur/ui/pages/Game';
 
 describe('Game page', () => {
-  const buildRuntime = (screenKey: string) => ({
-    activePracticeAssignment: null,
-    basePath: '/kangur',
-    canAccessParentAssignments: false,
-    currentQuestion: null,
-    currentQuestionIndex: 0,
-    difficulty: 'medium',
-    kangurMode: null,
-    launchableGameInstanceId: null,
-    operation: null,
-    progress: {},
-    resultPracticeAssignment: null,
-    score: 0,
-    screen: screenKey,
-    totalQuestions: 0,
-    user: null,
-    xpToast: {
-      xpGained: 0,
-      newBadges: [],
-      breakdown: [],
-      nextBadge: null,
-      dailyQuest: null,
-      recommendation: null,
-      visible: false,
-    },
-  });
-
   beforeEach(() => {
     vi.clearAllMocks();
     getDisabledDocsTooltipsMock.mockReturnValue(disabledDocsTooltipsMock);
@@ -315,7 +290,7 @@ describe('Game page', () => {
 
   it('keeps the shared game navigation visible on the home screen', () => {
     useKangurGameRuntimeMock.mockReturnValue({
-      ...buildRuntime('home'),
+      ...buildGameRuntime('home'),
       canAccessParentAssignments: true,
       progress: { totalXp: 1 },
     });
@@ -344,7 +319,7 @@ describe('Game page', () => {
 
   it('does not prefetch other Kangur pages while the game shell mounts', () => {
     useKangurGameRuntimeMock.mockReturnValue({
-      ...buildRuntime('home'),
+      ...buildGameRuntime('home'),
       canAccessParentAssignments: true,
       progress: { totalXp: 1 },
     });
@@ -357,7 +332,7 @@ describe('Game page', () => {
   it('keeps mount behavior unchanged on mobile without route prefetch work', () => {
     useKangurMobileBreakpointMock.mockReturnValue(true);
     useKangurGameRuntimeMock.mockReturnValue({
-      ...buildRuntime('home'),
+      ...buildGameRuntime('home'),
       canAccessParentAssignments: true,
       progress: { totalXp: 1 },
     });
@@ -369,7 +344,7 @@ describe('Game page', () => {
 
   it('keeps the home screen motion static so the skeleton handoff does not jump vertically', () => {
     useKangurGameRuntimeMock.mockReturnValue({
-      ...buildRuntime('home'),
+      ...buildGameRuntime('home'),
       canAccessParentAssignments: true,
       progress: { totalXp: 1 },
     });
@@ -398,7 +373,7 @@ describe('Game page', () => {
 
   it('shows the parent add-learner prompt under the home actions when no learner is selected', () => {
     useKangurGameRuntimeMock.mockReturnValue({
-      ...buildRuntime('home'),
+      ...buildGameRuntime('home'),
       user: {
         actorType: 'parent',
         activeLearner: null,
@@ -424,7 +399,7 @@ describe('Game page', () => {
 
   it('keeps the home leaderboard and progress columns centered within the same 900px section', async () => {
     useKangurGameRuntimeMock.mockReturnValue({
-      ...buildRuntime('home'),
+      ...buildGameRuntime('home'),
       canAccessParentAssignments: true,
     });
 
@@ -457,7 +432,7 @@ describe('Game page', () => {
 
   it('keeps the home actions column aligned with the shared home shell contract', () => {
     useKangurGameRuntimeMock.mockReturnValue({
-      ...buildRuntime('home'),
+      ...buildGameRuntime('home'),
       canAccessParentAssignments: true,
       progress: { totalXp: 1 },
     });
@@ -480,7 +455,7 @@ describe('Game page', () => {
 
   it('forwards the full xp toast state on the live game page path', () => {
     useKangurGameRuntimeMock.mockReturnValue({
-      ...buildRuntime('home'),
+      ...buildGameRuntime('home'),
       xpToast: {
         xpGained: 44,
         newBadges: ['first_game'],
@@ -532,7 +507,7 @@ describe('Game page', () => {
   it('keeps the home screen on the standard mobile layout', () => {
     useKangurMobileBreakpointMock.mockReturnValue(true);
     useKangurGameRuntimeMock.mockReturnValue({
-      ...buildRuntime('home'),
+      ...buildGameRuntime('home'),
       progress: { totalXp: 1 },
     });
 
@@ -560,7 +535,7 @@ describe('Game page', () => {
   it('keeps the operation screen on the standard mobile layout', () => {
     useKangurMobileBreakpointMock.mockReturnValue(true);
     useKangurGameRuntimeMock.mockReturnValue({
-      ...buildRuntime('operation'),
+      ...buildGameRuntime('operation'),
       progress: { totalXp: 1 },
     });
 
@@ -582,7 +557,7 @@ describe('Game page', () => {
   it('keeps active gameplay screens on the standard mobile layout', () => {
     useKangurMobileBreakpointMock.mockReturnValue(true);
     useKangurGameRuntimeMock.mockReturnValue({
-      ...buildRuntime('playing'),
+      ...buildGameRuntime('playing'),
       progress: { totalXp: 1 },
     });
 
@@ -627,12 +602,12 @@ describe('Game page', () => {
       writable: true,
     });
 
-    let runtime = buildRuntime('home');
+    let runtime = buildGameRuntime('home');
     useKangurGameRuntimeMock.mockImplementation(() => runtime);
 
     const { rerender } = render(<Game />);
 
-    runtime = buildRuntime('calendar_quiz');
+    runtime = buildGameRuntime('calendar_quiz');
     rerender(<Game />);
 
     expect(scrollToMock).toHaveBeenCalledWith({ behavior: 'auto', left: 0, top: 0 });
@@ -644,7 +619,7 @@ describe('Game page', () => {
   });
 
   it('uses the canonical Lekcje transition preset for Gra screens', async () => {
-    useKangurGameRuntimeMock.mockReturnValue(buildRuntime('calendar_quiz'));
+    useKangurGameRuntimeMock.mockReturnValue(buildGameRuntime('calendar_quiz'));
 
     render(<Game />);
 
@@ -673,7 +648,7 @@ describe('Game page', () => {
 
   it('publishes activity-specific tutor context for Grajmy instead of one generic game scope', () => {
     useKangurGameRuntimeMock.mockReturnValue({
-      ...buildRuntime('calendar_quiz'),
+      ...buildGameRuntime('calendar_quiz'),
       user: {
         activeLearner: {
           id: 'learner-1',
@@ -696,7 +671,7 @@ describe('Game page', () => {
 
   it('renders the general adverbs launchable runtime on the dedicated game screen', async () => {
     useKangurGameRuntimeMock.mockReturnValue({
-      ...buildRuntime('english_adverbs_quiz'),
+      ...buildGameRuntime('english_adverbs_quiz'),
       user: {
         activeLearner: {
           id: 'learner-1',
@@ -728,7 +703,7 @@ describe('Game page', () => {
 
   it('renders the comparatives launchable runtime on the dedicated game screen', async () => {
     useKangurGameRuntimeMock.mockReturnValue({
-      ...buildRuntime('english_compare_and_crown_quiz'),
+      ...buildGameRuntime('english_compare_and_crown_quiz'),
       user: {
         activeLearner: {
           id: 'learner-1',
@@ -760,7 +735,7 @@ describe('Game page', () => {
 
   it('merges the selected content set with saved engine overrides for launchable game instances', async () => {
     useKangurGameRuntimeMock.mockReturnValue({
-      ...buildRuntime('clock_quiz'),
+      ...buildGameRuntime('clock_quiz'),
       launchableGameInstanceId: 'clock-instance-minutes',
     });
     useKangurGameInstancesMock.mockReturnValue({
@@ -802,7 +777,7 @@ describe('Game page', () => {
 
   it('merges persisted custom content sets with saved engine overrides for launchable game instances', async () => {
     useKangurGameRuntimeMock.mockReturnValue({
-      ...buildRuntime('clock_quiz'),
+      ...buildGameRuntime('clock_quiz'),
       launchableGameInstanceId: 'clock-instance-custom-hours',
     });
     useKangurGameInstancesMock.mockReturnValue({
@@ -859,7 +834,7 @@ describe('Game page', () => {
 
   it('resolves persisted logical-pattern content sets for launchable game instances', async () => {
     useKangurGameRuntimeMock.mockReturnValue({
-      ...buildRuntime('logical_patterns_quiz'),
+      ...buildGameRuntime('logical_patterns_quiz'),
       launchableGameInstanceId: 'logical-pattern-instance-custom',
     });
     useKangurGameInstancesMock.mockReturnValue({
@@ -911,7 +886,7 @@ describe('Game page', () => {
 
   it('resolves persisted calendar content sets for launchable game instances', async () => {
     useKangurGameRuntimeMock.mockReturnValue({
-      ...buildRuntime('calendar_quiz'),
+      ...buildGameRuntime('calendar_quiz'),
       launchableGameInstanceId: 'calendar-instance-months',
     });
     useKangurGameInstancesMock.mockReturnValue({
@@ -963,7 +938,7 @@ describe('Game page', () => {
 
   it('keeps gameplay tutor context stable per practice activity and assignment', () => {
     useKangurGameRuntimeMock.mockReturnValue({
-      ...buildRuntime('playing'),
+      ...buildGameRuntime('playing'),
       activePracticeAssignment: {
         id: 'assignment-division-easy',
         title: 'Dzielenie łatwe',

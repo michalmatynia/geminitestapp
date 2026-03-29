@@ -38,6 +38,23 @@ describe('site locale helpers', () => {
     expect(getLocaleFallbackChain('uk')).toEqual(['uk', 'en', 'pl']);
   });
 
+  it('falls back to the first non-empty localized value and ignores invalid inputs', () => {
+    expect(
+      resolveLocalizedText(
+        {
+          de: '   ',
+          custom: 'Custom copy',
+          en: 'English copy',
+        },
+        'de',
+      ),
+    ).toBe('Custom copy');
+    expect(resolveLocalizedText('  Plain value  ', 'en')).toBe('Plain value');
+    expect(resolveLocalizedText('   ', 'en')).toBeNull();
+    expect(resolveLocalizedText(null, 'en')).toBeNull();
+    expect(resolveLocalizedText([] as never, 'en')).toBeNull();
+  });
+
   it('prefers explicit and cookie locales before accept-language', () => {
     expect(
       resolvePreferredSiteLocale({

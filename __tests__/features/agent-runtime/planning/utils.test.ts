@@ -6,6 +6,7 @@ import {
   buildPlan,
   decideNextAction,
   isExtractionStep,
+  normalizeDecision,
 } from '@/features/ai/agent-runtime/planning/utils';
 
 describe('Agent Runtime Planning Utils', () => {
@@ -73,6 +74,46 @@ describe('Agent Runtime Planning Utils', () => {
 
     it('should choose respond when there is memory', () => {
       const decision = decideNextAction('Hello', ['previous context']);
+      expect(decision.action).toBe('respond');
+    });
+  });
+
+  describe('normalizeDecision', () => {
+    it('should keep explicit tool decisions and default the tool name', () => {
+      const decision = normalizeDecision(
+        {
+          action: 'tool',
+          reason: 'Use a browser',
+        },
+        [],
+        'Prompt',
+        [],
+      );
+
+      expect(decision).toEqual({
+        action: 'tool',
+        reason: 'Use a browser',
+        toolName: 'playwright',
+      });
+    });
+
+    it('should fall back to tool execution when plan steps already exist', () => {
+      const decision = normalizeDecision(
+        undefined,
+        [{ title: 'Open page' } as any],
+        'Prompt',
+        [],
+      );
+
+      expect(decision).toEqual({
+        action: 'tool',
+        reason: 'Plan generated; execute tool steps.',
+        toolName: 'playwright',
+      });
+    });
+
+    it('should delegate to next-action logic when no explicit decision or steps exist', () => {
+      const decision = normalizeDecision(undefined, [], 'Hello', ['memory']);
       expect(decision.action).toBe('respond');
     });
   });

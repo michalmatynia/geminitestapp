@@ -36,6 +36,22 @@ describe('extractJsonPathEntries', () => {
       'images',
     ]);
   });
+
+  it('skips nullish values and empty arrays while keeping sibling paths', () => {
+    const value = {
+      details: null,
+      variants: [],
+      metadata: {
+        status: 'ready',
+      },
+    };
+
+    expect(extractJsonPathEntries(value, 2)).toEqual([
+      { path: 'variants', type: 'array' },
+      { path: 'metadata', type: 'object' },
+      { path: 'metadata.status', type: 'value' },
+    ]);
+  });
 });
 
 describe('top-level mapping helpers', () => {
@@ -111,6 +127,16 @@ describe('getValueAtMappingPath', () => {
     };
 
     expect(getValueAtMappingPath(context, 'result.details.status')).toBe('ready');
+  });
+
+  it('returns undefined when array indexes are out of bounds or numeric tokens target objects', () => {
+    const context = {
+      result: [{ id: 'one' }],
+      details: { status: 'ready' },
+    };
+
+    expect(getValueAtMappingPath(context, 'result[4].id')).toBeUndefined();
+    expect(getValueAtMappingPath(context, 'details[0]')).toBeUndefined();
   });
 });
 

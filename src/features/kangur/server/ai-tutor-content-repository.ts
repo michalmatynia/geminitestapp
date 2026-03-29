@@ -5,6 +5,7 @@ import {
   parseKangurAiTutorContent,
   type KangurAiTutorContent,
 } from '@/features/kangur/shared/contracts/kangur-ai-tutor-content';
+import { buildKangurAiTutorContentLocaleScaffold } from '@/features/kangur/server/ai-tutor-content-locale-scaffold';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import { repairKangurPolishCopy } from '@/shared/lib/i18n/kangur-polish-diacritics';
 import { ErrorSystem } from '@/features/kangur/shared/utils/observability/error-system';
@@ -28,7 +29,10 @@ const aiTutorContentCache = new Map<
 const aiTutorContentInflight = new Map<string, Promise<KangurAiTutorContent>>();
 
 const buildDefaultContent = (locale: string): KangurAiTutorContent => ({
-  ...DEFAULT_KANGUR_AI_TUTOR_CONTENT,
+  ...buildKangurAiTutorContentLocaleScaffold({
+    locale,
+    sourceContent: DEFAULT_KANGUR_AI_TUTOR_CONTENT,
+  }),
   locale,
 });
 
@@ -114,7 +118,11 @@ export async function getKangurAiTutorContent(locale = 'pl'): Promise<KangurAiTu
       }
 
       try {
-        const repaired = parseKangurAiTutorContent(repairKangurPolishCopy(existing.content));
+        const repaired = buildKangurAiTutorContentLocaleScaffold({
+          locale,
+          sourceContent: DEFAULT_KANGUR_AI_TUTOR_CONTENT,
+          existingContent: repairKangurPolishCopy(existing.content),
+        });
 
         if (JSON.stringify(repaired) !== JSON.stringify(existing.content)) {
           await collection.updateOne(

@@ -23,19 +23,39 @@ const MAX_EXCERPT_CHARS = 1200;
 const MAX_CONTEXT_CHARS = 6000;
 const DOCS_ROOT = path.resolve(process.cwd(), 'docs', 'kangur');
 
-export const resolveKangurDocAbsolutePath = (docPath: string): string | null => {
+const normalizeDocRelativePath = (docPath: string): string | null => {
   const normalized = docPath.trim().replace(/^\/+/, '');
   if (!normalized) return null;
-  let relative = normalized.startsWith('docs/') ? normalized.slice('docs/'.length) : normalized;
-  if (relative.startsWith('kangur/')) {
-    relative = relative.slice('kangur/'.length);
-  }
+
+  const withoutDocsPrefix = normalized.startsWith('docs/')
+    ? normalized.slice('docs/'.length)
+    : normalized;
+  if (!withoutDocsPrefix) return null;
+
+  const relative = withoutDocsPrefix.startsWith('kangur/')
+    ? withoutDocsPrefix.slice('kangur/'.length)
+    : withoutDocsPrefix;
+
+  return relative || null;
+};
+
+const isSafeKangurDocPath = (absolutePath: string): boolean => {
+  const relativeToDocs = path.relative(DOCS_ROOT, absolutePath);
+  return !(relativeToDocs.startsWith('..') || path.isAbsolute(relativeToDocs));
+};
+
+const isSupportedKangurDocExtension = (absolutePath: string): boolean => {
+  const ext = path.extname(absolutePath).toLowerCase();
+  return !ext || ext === '.md' || ext === '.mdx';
+};
+
+export const resolveKangurDocAbsolutePath = (docPath: string): string | null => {
+  const relative = normalizeDocRelativePath(docPath);
   if (!relative) return null;
+
   const absolute = path.resolve(DOCS_ROOT, relative);
-  const relativeToDocs = path.relative(DOCS_ROOT, absolute);
-  if (relativeToDocs.startsWith('..') || path.isAbsolute(relativeToDocs)) return null;
-  const ext = path.extname(absolute).toLowerCase();
-  if (ext && ext !== '.md' && ext !== '.mdx') return null;
+  if (!isSafeKangurDocPath(absolute)) return null;
+  if (!isSupportedKangurDocExtension(absolute)) return null;
   return absolute;
 };
 
@@ -112,6 +132,54 @@ const truncateText = (value: string, maxChars: number): string => {
   return `${value.slice(0, Math.max(0, maxChars - 1)).trimEnd()}…`;
 };
 
+type MarkdownHeading = {
+  title: string;
+  start: number;
+  contentStart: number;
+};
+
+const readMarkdownHeadings = (content: string): MarkdownHeading[] => {
+  const headingRegex = /^#{1,6}\s+(.+)$/gm;
+  const headings: MarkdownHeading[] = [];
+  let match: RegExpExecArray | null;
+
+  while ((match = headingRegex.exec(content)) !== null) {
+    const lineEnd = content.indexOf('\n', match.index);
+    headings.push({
+      title: match[1]?.trim() ?? '',
+      start: match.index,
+      contentStart: lineEnd >= 0 ? lineEnd + 1 : content.length,
+    });
+  }
+
+  return headings;
+};
+
+const findMatchingHeadingIndex = (
+  headings: MarkdownHeading[],
+  normalizedKeywords: string[]
+): number =>
+  headings.findIndex((heading) =>
+    normalizedKeywords.some((keyword) => normalizeKey(heading.title).includes(keyword))
+  );
+
+const extractHeadingExcerpt = (
+  content: string,
+  headings: MarkdownHeading[],
+  matchIndex: number
+): string | null => {
+  if (matchIndex < 0) return null;
+
+  const start = headings[matchIndex]?.contentStart ?? 0;
+  const end =
+    matchIndex + 1 < headings.length
+      ? headings[matchIndex + 1]?.start ?? content.length
+      : content.length;
+  const excerpt = content.slice(start, end).trim();
+
+  return excerpt || null;
+};
+
 const extractMarkdownExcerpt = (content: string, keywords: string[]): string => {
   const normalizedKeywords = keywords.map(normalizeKey).filter(Boolean);
   const cleaned = stripFrontMatter(content);
@@ -119,35 +187,12 @@ const extractMarkdownExcerpt = (content: string, keywords: string[]): string => 
     return truncateText(cleaned.trim(), MAX_EXCERPT_CHARS);
   }
 
-  const headingRegex = /^#{1,6}\s+(.+)$/gm;
-  const headings: Array<{ title: string; start: number; contentStart: number }> = [];
-  let match: RegExpExecArray | null;
-  while ((match = headingRegex.exec(cleaned)) !== null) {
-    const lineEnd = cleaned.indexOf('\n', match.index);
-    headings.push({
-      title: match[1]?.trim() ?? '',
-      start: match.index,
-      contentStart: lineEnd >= 0 ? lineEnd + 1 : cleaned.length,
-    });
+  const headings = readMarkdownHeadings(cleaned);
+  const matchIndex = findMatchingHeadingIndex(headings, normalizedKeywords);
+  const excerpt = extractHeadingExcerpt(cleaned, headings, matchIndex);
+  if (excerpt) {
+    return truncateText(excerpt, MAX_EXCERPT_CHARS);
   }
-
-  const matchIndex = headings.findIndex((heading) =>
-    normalizedKeywords.some((keyword) => normalizeKey(heading.title).includes(keyword))
-  );
-
-  if (matchIndex >= 0) {
-    const start = headings[matchIndex]?.contentStart ?? 0;
-    const end =
-      matchIndex + 1 < headings.length
-        ? headings[matchIndex + 1]?.start ?? cleaned.length
-        : cleaned.length;
-    const excerpt = cleaned.slice(start, end).trim();
-
-    if (excerpt) {
-      return truncateText(excerpt, MAX_EXCERPT_CHARS);
-    }
-  }
-
   return truncateText(cleaned.trim(), MAX_EXCERPT_CHARS);
 };
 

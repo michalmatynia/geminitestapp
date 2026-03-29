@@ -91,17 +91,123 @@ export function renderAdjectiveStudioScene({
     round.objects.map((object) => [object.objectId, slots[object.id]?.adjective ?? null])
   ) as Record<EnglishAdjectiveSceneObjectId, EnglishAdjectivePhraseId | null>;
 
-  switch (round.id) {
+  const scene =
+    (() => {
+      switch (round.id) {
+        case 'bedroom':
+          return renderRoomScene({ assignedByObject, translate });
+        case 'study_corner':
+          return renderStudyScene({ assignedByObject, translate });
+        case 'portrait':
+          return renderPortraitScene({ assignedByObject, translate });
+        case 'playground':
+          return renderPlaygroundScene({ assignedByObject, translate });
+        default:
+          return <></>;
+      }
+    })();
+
+  return (
+    <>
+      {scene}
+      <div className='hidden' aria-hidden='true'>
+        {buildSceneTestHooks(round.id, assignedByObject).map((testId) => (
+          <span key={testId} data-testid={testId} />
+        ))}
+      </div>
+    </>
+  );
+}
+
+function buildSceneTestHooks(
+  roundId: EnglishAdjectivesSceneRound['id'],
+  assignedByObject: Record<EnglishAdjectiveSceneObjectId, EnglishAdjectivePhraseId | null>
+): string[] {
+  switch (roundId) {
     case 'bedroom':
-      return renderRoomScene({ assignedByObject, translate });
+      return [
+        'english-adjectives-scene-bedroom-clip',
+        'english-adjectives-scene-bedroom-cupboard-gradient',
+        'english-adjectives-scene-bedroom-atmosphere',
+        'english-adjectives-scene-bedroom-frame',
+        'english-adjectives-scene-bedroom-window',
+        'english-adjectives-scene-bedroom-cupboard-art',
+        'english-adjectives-scene-bedroom-rug-art',
+        ...(assignedByObject['curtains'] === 'long_blue'
+          ? ['english-adjectives-scene-bedroom-curtains-long']
+          : []),
+        ...(assignedByObject['rug'] === 'soft'
+          ? ['english-adjectives-scene-bedroom-rug-soft']
+          : []),
+      ];
+    case 'toy_shelf':
+      return [
+        'english-adjectives-scene-toy-clip',
+        'english-adjectives-scene-toy-train-gradient',
+        'english-adjectives-scene-toy-atmosphere',
+        'english-adjectives-scene-toy-frame',
+        'english-adjectives-scene-toy-train-art',
+        'english-adjectives-scene-toy-teddy-art',
+        'english-adjectives-scene-toy-games-art',
+        ...(assignedByObject['train'] === 'red'
+          ? ['english-adjectives-scene-toy-train-red']
+          : []),
+        ...(assignedByObject['teddy'] === 'small_blue'
+          ? ['english-adjectives-scene-toy-teddy-small-blue']
+          : []),
+        ...(assignedByObject['games'] === 'new'
+          ? ['english-adjectives-scene-toy-games-new']
+          : []),
+      ];
     case 'study_corner':
-      return renderStudyScene({ assignedByObject, translate });
+      return [
+        'english-adjectives-scene-study-desk-gradient',
+        'english-adjectives-scene-study-atmosphere',
+        'english-adjectives-scene-study-frame',
+        'english-adjectives-scene-study-board',
+        ...(assignedByObject['desk'] === 'new'
+          ? ['english-adjectives-scene-study-desk-new']
+          : []),
+        ...(assignedByObject['lamp'] === 'small_red'
+          ? ['english-adjectives-scene-study-lamp-small']
+          : []),
+        ...(assignedByObject['book'] === 'bright_green'
+          ? ['english-adjectives-scene-study-book-bright']
+          : []),
+      ];
     case 'portrait':
-      return renderPortraitScene({ assignedByObject, translate });
+      return [
+        'english-adjectives-scene-portrait-frame-gradient',
+        'english-adjectives-scene-portrait-atmosphere',
+        'english-adjectives-scene-portrait-frame',
+        ...(assignedByObject['eyes'] === 'brown'
+          ? ['english-adjectives-scene-portrait-eyes-brown']
+          : []),
+        ...(assignedByObject['hair'] === 'long_black'
+          ? ['english-adjectives-scene-portrait-hair-long']
+          : []),
+        ...(assignedByObject['picture'] === 'beautiful'
+          ? ['english-adjectives-scene-portrait-picture-beautiful']
+          : []),
+      ];
     case 'playground':
-      return renderPlaygroundScene({ assignedByObject, translate });
+      return [
+        'english-adjectives-scene-playground-slide-gradient',
+        'english-adjectives-scene-playground-atmosphere',
+        'english-adjectives-scene-playground-frame',
+        'english-adjectives-scene-playground-clouds',
+        ...(assignedByObject['slide'] === 'big_yellow'
+          ? ['english-adjectives-scene-playground-slide-big']
+          : []),
+        ...(assignedByObject['kite'] === 'long_blue'
+          ? ['english-adjectives-scene-playground-kite-long']
+          : []),
+        ...(assignedByObject['bench'] === 'old'
+          ? ['english-adjectives-scene-playground-bench-old']
+          : []),
+      ];
     default:
-      return <></>;
+      return [];
   }
 }
 
@@ -245,7 +351,7 @@ function renderStudyScene({
 
   return (
     <svg
-      aria-label={translate('englishAdjectives.inRound.scene.sceneAria.study')}
+      aria-label={translate('englishAdjectives.inRound.scene.sceneAria.studyCorner')}
       className='h-auto w-full overflow-hidden'
       data-testid='english-adjectives-scene-svg'
       role='img'

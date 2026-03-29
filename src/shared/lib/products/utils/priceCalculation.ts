@@ -4,6 +4,41 @@ function normalizeCurrencyCode(code?: string | null): string {
   return (code ?? '').trim().toUpperCase();
 }
 
+const getPriceGroupKey = (group: PriceGroupForCalculation | undefined): string | null =>
+  group?.id || group?.groupId || null;
+
+const isSamePriceGroup = (
+  left: PriceGroupForCalculation | undefined,
+  right: PriceGroupForCalculation | undefined
+): boolean =>
+  Boolean(left && right) && (left.id === right.id || left.groupId === right.groupId);
+
+const resolvePriceGroupAdjustment = (
+  group: PriceGroupForCalculation
+): { multiplier: number; addToPrice: number } => ({
+  multiplier: Number.isFinite(group.priceMultiplier) ? group.priceMultiplier : 1,
+  addToPrice: Number.isFinite(group.addToPrice) ? group.addToPrice : 0,
+});
+
+const applyPriceGroupAdjustment = (
+  price: number,
+  group: PriceGroupForCalculation
+): number => {
+  const { multiplier, addToPrice } = resolvePriceGroupAdjustment(group);
+  return price * multiplier + addToPrice;
+};
+
+const markVisitedPriceGroup = (
+  group: PriceGroupForCalculation,
+  visited: Set<string>
+): boolean => {
+  const key = getPriceGroupKey(group);
+  if (!key) return true;
+  if (visited.has(key)) return false;
+  visited.add(key);
+  return true;
+};
+
 function getGroupCurrencyCode(group: PriceGroupForCalculation): string {
   return normalizeCurrencyCode(
     group.currency?.code ||
@@ -62,32 +97,15 @@ export function calculatePriceForCurrency(
     visited: Set<string> = new Set<string>()
   ): number | null => {
     if (!group) return null;
-    const key: string | undefined = group.id || group.groupId;
-    if (key) {
-      if (visited.has(key)) return null;
-      visited.add(key);
-    }
-
-    if (group.id === defaultGroup.id || group.groupId === defaultGroup.groupId) {
+    if (!markVisitedPriceGroup(group, visited)) return null;
+    if (isSamePriceGroup(group, defaultGroup)) {
       return basePrice;
     }
-
-    if (group.type === 'standard') {
-      const multiplier: number = Number.isFinite(group.priceMultiplier) ? group.priceMultiplier : 1;
-      const addToPrice: number = Number.isFinite(group.addToPrice) ? group.addToPrice : 0;
-      return basePrice * multiplier + addToPrice;
-    }
-
-    if (group.type === 'dependent' && group.sourceGroupId) {
-      const source: PriceGroupForCalculation | undefined = findGroupById(group.sourceGroupId);
-      const sourcePrice: number | null = resolvePriceForGroup(source, visited);
-      if (sourcePrice === null) return null;
-      const multiplier: number = Number.isFinite(group.priceMultiplier) ? group.priceMultiplier : 1;
-      const addToPrice: number = Number.isFinite(group.addToPrice) ? group.addToPrice : 0;
-      return sourcePrice * multiplier + addToPrice;
-    }
-
-    return null;
+    if (group.type === 'standard') return applyPriceGroupAdjustment(basePrice, group);
+    if (group.type !== 'dependent' || !group.sourceGroupId) return null;
+    const sourcePrice = resolvePriceForGroup(findGroupById(group.sourceGroupId), visited);
+    if (sourcePrice === null) return null;
+    return applyPriceGroupAdjustment(sourcePrice, group);
   };
 
   const targetCandidates: PriceGroupForCalculation[] = priceGroups.filter(

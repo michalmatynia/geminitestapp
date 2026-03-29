@@ -147,4 +147,31 @@ describe('handleRegex json integrity policy', () => {
       ])
     );
   });
+
+  it('supports captures and named-group selectors after normalization', async () => {
+    const node = {
+      ...buildRegexNode('repair'),
+      config: {
+        regex: {
+          pattern: '^(?<kind>[^:]+):(?<value>.+)$',
+          flags: '',
+          mode: 'extract',
+          matchMode: 'first',
+          groupBy: 'groups',
+          outputMode: 'object',
+          includeUnmatched: false,
+          unmatchedKey: '__unmatched__',
+          splitLines: false,
+          jsonIntegrityPolicy: 'repair',
+        },
+      },
+    } as AiNode;
+
+    const output = await handleRegex(buildContext(node, 'tag:alpha'));
+    const [record] = output['matches'] as Array<Record<string, unknown>>;
+
+    expect(output['value']).toEqual({ kind: 'tag', value: 'alpha' });
+    expect(record?.['groups']).toEqual({ kind: 'tag', value: 'alpha' });
+    expect(record?.['captures']).toEqual(['tag', 'alpha']);
+  });
 });

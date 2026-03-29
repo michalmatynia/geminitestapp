@@ -5,7 +5,6 @@ import {
   kangurLessonSectionsSchema,
   type KangurLessonSection,
 } from '@/shared/contracts/kangur-lesson-sections';
-import { createDefaultKangurSections } from '@/features/kangur/lessons/lesson-section-defaults';
 import {
   isRecoverableKangurClientFetchError,
   withKangurClientError,
@@ -36,10 +35,7 @@ const filterSections = (
   return next;
 };
 
-const buildSectionsFallback = (options?: LessonSectionsQueryOptions): KangurLessonSection[] =>
-  filterSections(createDefaultKangurSections(), options);
-
-const fetchLessonSections = async (
+export const fetchKangurLessonSections = async (
   options?: LessonSectionsQueryOptions
 ): Promise<KangurLessonSection[]> =>
   await withKangurClientError(
@@ -65,7 +61,7 @@ const fetchLessonSections = async (
       return kangurLessonSectionsSchema.parse(payload);
     },
     {
-      fallback: () => buildSectionsFallback(options),
+      fallback: () => [],
       shouldReport: (error) => !isRecoverableKangurClientFetchError(error),
     }
   );
@@ -82,9 +78,9 @@ export const useKangurLessonSections = (
         enabledOnly: options?.enabledOnly ?? null,
       },
     ],
-    queryFn: async (): Promise<KangurLessonSection[]> => await fetchLessonSections(options),
+    queryFn: async (): Promise<KangurLessonSection[]> =>
+      await fetchKangurLessonSections(options),
     select: (sections) => filterSections(sections, options),
-    placeholderData: () => buildSectionsFallback(options),
     enabled: options?.enabled ?? true,
     staleTime: 1000 * 60 * 5,
     refetchOnMount: false,

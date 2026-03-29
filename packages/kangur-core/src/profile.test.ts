@@ -122,4 +122,35 @@ describe('kangur-core profile localization', () => {
       }),
     ]);
   });
+
+  it('keeps longest streaks while dropping current streak when the latest session is too old', () => {
+    const snapshot = buildKangurLearnerProfileSnapshot({
+      dailyGoalGames: 3,
+      locale: 'en',
+      now: new Date('2026-03-10T15:00:00.000Z'),
+      progress: createProgressWithMastery(),
+      scores: [
+        createScore({
+          id: 's1',
+          created_date: '2026-03-07T12:00:00.000Z',
+        }),
+        createScore({
+          id: 's2',
+          created_date: '2026-03-05T12:00:00.000Z',
+        }),
+        createScore({
+          id: 's3',
+          created_date: '2026-03-04T12:00:00.000Z',
+        }),
+        createScore({
+          id: 's4',
+          created_date: '2026-03-03T12:00:00.000Z',
+        }),
+      ],
+    });
+
+    expect(snapshot.currentStreakDays).toBe(0);
+    expect(snapshot.longestStreakDays).toBe(3);
+    expect(snapshot.lastPlayedAt).toBe('2026-03-07T12:00:00.000Z');
+  });
 });

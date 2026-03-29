@@ -29,7 +29,12 @@ import { FilemakerMailSidebar } from '../components/FilemakerMailSidebar';
 import { buildFilemakerNavActions } from '../components/shared/filemaker-nav-actions';
 import { FilemakerEntityTablePage } from '../components/shared/FilemakerEntityTablePage';
 import { formatFilemakerMailFolderLabel } from '../mail-master-tree';
+import { buildFilemakerMailSelectionHref as buildMailSelectionHref, fetchFilemakerMailJson as fetchJson } from '../mail-ui-helpers';
 import { formatFilemakerMailboxAllowlist } from '../mail-utils';
+import {
+  createDefaultFilemakerMailDraft as defaultDraft,
+  toDraftFromFilemakerMailAccount as toDraftFromAccount,
+} from './AdminFilemakerMailPage.helpers';
 
 import type {
   FilemakerMailAccount,
@@ -41,90 +46,6 @@ import type {
 type AccountsResponse = { accounts: FilemakerMailAccount[] };
 type FoldersResponse = { folders: FilemakerMailFolderSummary[] };
 type ThreadsResponse = { threads: FilemakerMailThread[] };
-
-const defaultDraft = (): FilemakerMailAccountDraft => ({
-  name: '',
-  emailAddress: '',
-  status: 'active',
-  imapHost: '',
-  imapPort: 993,
-  imapSecure: true,
-  imapUser: '',
-  imapPassword: '',
-  smtpHost: '',
-  smtpPort: 465,
-  smtpSecure: true,
-  smtpUser: '',
-  smtpPassword: '',
-  fromName: null,
-  replyToEmail: null,
-  folderAllowlist: [],
-  initialSyncLookbackDays: 30,
-  maxMessagesPerSync: 100,
-});
-
-const toDraftFromAccount = (account: FilemakerMailAccount): FilemakerMailAccountDraft => ({
-  id: account.id,
-  name: account.name,
-  emailAddress: account.emailAddress,
-  status: account.status,
-  imapHost: account.imapHost,
-  imapPort: account.imapPort,
-  imapSecure: account.imapSecure,
-  imapUser: account.imapUser,
-  imapPassword: '',
-  smtpHost: account.smtpHost,
-  smtpPort: account.smtpPort,
-  smtpSecure: account.smtpSecure,
-  smtpUser: account.smtpUser,
-  smtpPassword: '',
-  fromName: account.fromName ?? null,
-  replyToEmail: account.replyToEmail ?? null,
-  folderAllowlist: account.folderAllowlist,
-  initialSyncLookbackDays: account.initialSyncLookbackDays,
-  maxMessagesPerSync: account.maxMessagesPerSync,
-});
-
-const fetchJson = async <T,>(url: string, init?: RequestInit): Promise<T> => {
-  const response = await fetch(url, {
-    ...init,
-    headers: {
-      'content-type': 'application/json',
-      ...(init?.headers ?? {}),
-    },
-  });
-  if (!response.ok) {
-    throw new Error(`Request failed (${response.status})`);
-  }
-  return (await response.json()) as T;
-};
-
-const buildMailSelectionHref = (input: {
-  accountId?: string | null;
-  mailboxPath?: string | null;
-  panel?: 'account' | 'attention' | 'recent' | 'settings' | null;
-  recentMailboxFilter?: string | null;
-  recentUnreadOnly?: boolean;
-  recentQuery?: string | null;
-}): string => {
-  const search = new URLSearchParams();
-  if (input.panel !== 'attention' && input.accountId) search.set('accountId', input.accountId);
-  if (input.panel !== 'attention' && input.mailboxPath) search.set('mailboxPath', input.mailboxPath);
-  if (input.panel === 'attention') search.set('panel', 'attention');
-  if (input.accountId && input.panel === 'recent') search.set('panel', 'recent');
-  if (input.accountId && input.panel === 'settings') search.set('panel', 'settings');
-  if (input.accountId && input.recentMailboxFilter) {
-    search.set('recentMailbox', input.recentMailboxFilter);
-  }
-  if (input.accountId && input.recentUnreadOnly) {
-    search.set('recentUnread', '1');
-  }
-  if (input.accountId && input.panel === 'recent' && input.recentQuery) {
-    search.set('recentQuery', input.recentQuery);
-  }
-  const nextSearch = search.toString();
-  return nextSearch ? `/admin/filemaker/mail?${nextSearch}` : '/admin/filemaker/mail';
-};
 
 export function AdminFilemakerMailPage(): React.JSX.Element {
   const router = useRouter();

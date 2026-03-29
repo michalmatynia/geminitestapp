@@ -1,13 +1,8 @@
 'use client';
 
-import { useMemo } from 'react';
 import { useLocale } from 'next-intl';
 import { useQuery, type QueryClient, type UseQueryResult } from '@tanstack/react-query';
 
-import {
-  buildDefaultKangurPageContentStore,
-  DEFAULT_KANGUR_PAGE_CONTENT_STORE,
-} from '@/features/kangur/page-content-catalog';
 import {
   parseKangurPageContentStore,
   type KangurPageContentEntry,
@@ -69,19 +64,11 @@ export const useKangurPageContentStore = (
 ): UseQueryResult<KangurPageContentStore, Error> => {
   const routeLocale = useLocale();
   const resolvedLocale = resolveKangurPageContentLocale(locale, routeLocale);
-  const initialData = useMemo(
-    () =>
-      resolvedLocale === 'pl'
-        ? DEFAULT_KANGUR_PAGE_CONTENT_STORE
-        : buildDefaultKangurPageContentStore(resolvedLocale),
-    [resolvedLocale]
-  );
 
   return useQuery<KangurPageContentStore, Error>({
     queryKey: createKangurPageContentQueryKey(resolvedLocale),
     queryFn: () => fetchKangurPageContentStore(resolvedLocale),
     gcTime: KANGUR_PAGE_CONTENT_GC_TIME_MS,
-    initialData,
     staleTime: KANGUR_PAGE_CONTENT_STALE_TIME_MS,
     refetchOnMount: false,
     refetchOnReconnect: false,

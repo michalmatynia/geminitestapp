@@ -43,32 +43,49 @@ const serializePayload = (payload: KangurLearnerSessionPayload): string => {
   return `${body}.${signature}`;
 };
 
-const parsePayload = (raw: string | undefined): KangurLearnerSessionPayload | null => {
+const readSignedPayloadBody = (raw: string | undefined): string | null => {
   if (!raw) {
     return null;
   }
   const [body, signature] = raw.split('.');
-  if (!body || !signature || !safeEqual(signValue(body), signature)) {
+  if (!body || !signature) {
+    return null;
+  }
+  if (!safeEqual(signValue(body), signature)) {
+    return null;
+  }
+  return body;
+};
+
+const normalizePayload = (
+  parsed: Partial<KangurLearnerSessionPayload>
+): KangurLearnerSessionPayload | null => {
+  if (
+    typeof parsed.learnerId !== 'string' ||
+    typeof parsed.ownerUserId !== 'string' ||
+    typeof parsed.exp !== 'number'
+  ) {
+    return null;
+  }
+  if (parsed.exp <= Date.now()) {
+    return null;
+  }
+  return {
+    learnerId: parsed.learnerId,
+    ownerUserId: parsed.ownerUserId,
+    exp: parsed.exp,
+  };
+};
+
+const parsePayload = (raw: string | undefined): KangurLearnerSessionPayload | null => {
+  const body = readSignedPayloadBody(raw);
+  if (!body) {
     return null;
   }
 
   try {
     const parsed = JSON.parse(base64UrlDecode(body)) as Partial<KangurLearnerSessionPayload>;
-    if (
-      typeof parsed.learnerId !== 'string' ||
-      typeof parsed.ownerUserId !== 'string' ||
-      typeof parsed.exp !== 'number'
-    ) {
-      return null;
-    }
-    if (parsed.exp <= Date.now()) {
-      return null;
-    }
-    return {
-      learnerId: parsed.learnerId,
-      ownerUserId: parsed.ownerUserId,
-      exp: parsed.exp,
-    };
+    return normalizePayload(parsed);
   } catch (error) {
     void ErrorSystem.captureException(error);
     return null;

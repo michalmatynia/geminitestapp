@@ -49,14 +49,14 @@ const DATABASE_SCHEMA_TYPE_ALIASES: Record<string, string> = {
   json: 'Record<string, unknown>',
 };
 
+const resolveSchemaTypeAlias = (value: string): string | null => {
+  const normalizedValue = value.trim().toLowerCase();
+  return DATABASE_SCHEMA_TYPE_ALIASES[normalizedValue] ?? null;
+};
+
 const normalizeSchemaType = (value: string): string => {
   const normalized = value.trim();
-  const lower = normalized.toLowerCase();
-  const alias = DATABASE_SCHEMA_TYPE_ALIASES[lower];
-  if (alias) {
-    return alias;
-  }
-  return normalized || 'unknown';
+  return (resolveSchemaTypeAlias(normalized) ?? normalized) || 'unknown';
 };
 
 const formatCollectionSchema = (

@@ -64,6 +64,21 @@ export const CLOCK_TRAINING_SECTION_LABELS: Record<string, string> = {
   mixed: 'Mieszany trening',
 };
 
+const trimOperationToken = (value?: string | null): string | null => {
+  const normalizedValue = value?.trim();
+  return normalizedValue ? normalizedValue : null;
+};
+
+const resolveMappedOperationToken = (value: string): string =>
+  LESSON_KEY_TO_OPERATION[value] ?? value;
+
+const resolveActivityPrimaryToken = (activityKey: string): string | null => {
+  const [fallbackPrimary, rawPrimary] = activityKey.split(':');
+  return activityKey.includes(':')
+    ? trimOperationToken(rawPrimary)
+    : trimOperationToken(fallbackPrimary);
+};
+
 export const resolveRewardOperation = ({
   operation,
   lessonKey,
@@ -73,26 +88,21 @@ export const resolveRewardOperation = ({
   lessonKey?: string | null;
   activityKey?: string | null;
 }): string | null => {
-  const normalizedOperation = operation?.trim();
+  const normalizedOperation = trimOperationToken(operation);
   if (normalizedOperation) {
     return normalizedOperation;
   }
 
-  const normalizedLessonKey = lessonKey?.trim();
+  const normalizedLessonKey = trimOperationToken(lessonKey);
   if (normalizedLessonKey) {
-    return LESSON_KEY_TO_OPERATION[normalizedLessonKey] ?? normalizedLessonKey;
+    return resolveMappedOperationToken(normalizedLessonKey);
   }
 
-  const normalizedActivityKey = activityKey?.trim();
+  const normalizedActivityKey = trimOperationToken(activityKey);
   if (!normalizedActivityKey) {
     return null;
   }
 
-  const [, rawPrimary = ''] = normalizedActivityKey.split(':');
-  const normalizedPrimary = rawPrimary.trim();
-  if (!normalizedPrimary) {
-    return null;
-  }
-
-  return LESSON_KEY_TO_OPERATION[normalizedPrimary] ?? normalizedPrimary;
+  const normalizedPrimary = resolveActivityPrimaryToken(normalizedActivityKey);
+  return normalizedPrimary ? resolveMappedOperationToken(normalizedPrimary) : null;
 };

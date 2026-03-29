@@ -6,31 +6,44 @@ import {
   type JsonIntegrityPolicy,
 } from '../runtime/handlers/json-integrity';
 
+const buildJsonPathEntry = (prefix: string, node: unknown): JsonPathEntry => {
+  const isArray = Array.isArray(node);
+  const isObject = !isArray && typeof node === 'object';
+  return {
+    path: prefix,
+    type: isArray ? 'array' : isObject ? 'object' : 'value',
+  };
+};
+
+const isJsonObjectLike = (value: unknown): value is Record<string, unknown> =>
+  value !== null && !Array.isArray(value) && typeof value === 'object';
+
+const walkJsonPathEntries = (
+  node: unknown,
+  prefix: string,
+  depth: number,
+  entries: JsonPathEntry[]
+): void => {
+  if (node === null || node === undefined || depth < 0) return;
+  if (prefix) {
+    entries.push(buildJsonPathEntry(prefix, node));
+  }
+  if (Array.isArray(node)) {
+    if (node.length === 0) return;
+    const arrayPrefix = prefix ? `${prefix}[0]` : '[0]';
+    walkJsonPathEntries(node[0], arrayPrefix, depth - 1, entries);
+    return;
+  }
+  if (!isJsonObjectLike(node)) return;
+  Object.entries(node).forEach(([key, child]: [string, unknown]) => {
+    const nextPrefix = prefix ? `${prefix}.${key}` : key;
+    walkJsonPathEntries(child, nextPrefix, depth - 1, entries);
+  });
+};
+
 export const extractJsonPathEntries = (value: unknown, maxDepth: number = 2): JsonPathEntry[] => {
   const entries: JsonPathEntry[] = [];
-  const walk = (node: unknown, prefix: string, depth: number): void => {
-    if (node === null || node === undefined || depth < 0) return;
-    const isArray = Array.isArray(node);
-    const isObject = !isArray && typeof node === 'object';
-    if (prefix) {
-      entries.push({
-        path: prefix,
-        type: isArray ? 'array' : isObject ? 'object' : 'value',
-      });
-    }
-    if (isArray) {
-      if ((node as unknown[]).length === 0) return;
-      const arrayPrefix = prefix ? `${prefix}[0]` : '[0]';
-      walk((node as unknown[])[0], arrayPrefix, depth - 1);
-      return;
-    }
-    if (!isObject) return;
-    Object.entries(node as Record<string, unknown>).forEach(([key, child]: [string, unknown]) => {
-      const nextPrefix = prefix ? `${prefix}.${key}` : key;
-      walk(child, nextPrefix, depth - 1);
-    });
-  };
-  walk(value, '', maxDepth);
+  walkJsonPathEntries(value, '', maxDepth, entries);
   return entries;
 };
 
@@ -98,6 +111,22 @@ export const getValueAtMappingPath = (
   const jsonIntegrityPolicy: JsonIntegrityPolicy =
     options?.jsonIntegrityPolicy === 'strict' ? 'strict' : 'repair';
   const tokens = parsePathTokens(normalized);
+
+  const readArrayToken = (
+    source: unknown[],
+    token: string | number,
+    index: number
+  ): unknown => {
+    if (typeof token === 'number') {
+      if (token < 0 || token >= source.length) return undefined;
+      return readByTokens(source[token], index + 1);
+    }
+    return source.reduce<unknown>((found: unknown, item: unknown) => {
+      if (found !== undefined) return found;
+      return readByTokens(item, index);
+    }, undefined);
+  };
+
   const readByTokens = (source: unknown, index: number): unknown => {
     if (index >= tokens.length) return source;
     if (source === null || source === undefined) return undefined;
@@ -107,20 +136,11 @@ export const getValueAtMappingPath = (
     if (token === undefined) return undefined;
 
     if (Array.isArray(normalizedSource)) {
-      if (typeof token === 'number') {
-        if (token < 0 || token >= normalizedSource.length) return undefined;
-        return readByTokens(normalizedSource[token], index + 1);
-      }
-      for (const item of normalizedSource) {
-        const candidate = readByTokens(item, index);
-        if (candidate !== undefined) return candidate;
-      }
-      return undefined;
+      return readArrayToken(normalizedSource, token, index);
     }
 
-    if (typeof token === 'number') return undefined;
-    if (typeof normalizedSource !== 'object') return undefined;
-    return readByTokens((normalizedSource as Record<string, unknown>)[token], index + 1);
+    if (typeof token === 'number' || !isJsonObjectLike(normalizedSource)) return undefined;
+    return readByTokens(normalizedSource[token], index + 1);
   };
 
   return readByTokens(obj, 0);

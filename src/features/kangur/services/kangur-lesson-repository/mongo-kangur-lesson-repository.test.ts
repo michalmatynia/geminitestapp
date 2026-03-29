@@ -78,8 +78,9 @@ describe('mongoKangurLessonRepository fallback', () => {
     expect(result).toEqual([]);
   });
 
-  it('backfills lessons from the legacy Kangur settings key before using defaults', async () => {
+  it('merges legacy Kangur settings entries into the full default lesson catalog', async () => {
     vi.resetModules();
+    const { createDefaultKangurLessons } = await import('@/features/kangur/settings');
     const legacyLessons = [
       {
         id: 'kangur-lesson-english_adverbs',
@@ -96,11 +97,25 @@ describe('mongoKangurLessonRepository fallback', () => {
         enabled: true,
       },
     ];
+    const mergedLessons = createDefaultKangurLessons().map((lesson) =>
+      lesson.id === 'kangur-lesson-english_adverbs'
+        ? {
+            ...lesson,
+            title: 'Custom adverbs',
+            description: 'Legacy Mongo settings lesson',
+            color: 'from-sky-500 to-cyan-500',
+            activeBg: 'from-sky-500/20 via-cyan-500/15 to-white',
+          }
+        : lesson
+    );
+    const englishMergedLessons = mergedLessons.filter(
+      (lesson) => lesson.subject === 'english' && lesson.enabled
+    );
     const { db, collection } = buildDb([], 0);
     const toArray = vi
       .fn()
       .mockResolvedValueOnce([])
-      .mockResolvedValueOnce(legacyLessons);
+      .mockResolvedValueOnce(englishMergedLessons);
     const sort = vi.fn().mockReturnValue({ toArray });
     collection.find = vi.fn().mockReturnValue({ sort });
     vi.doMock('@/shared/lib/db/mongo-client', () => ({
@@ -120,6 +135,17 @@ describe('mongoKangurLessonRepository fallback', () => {
     });
 
     expect(collection.bulkWrite).toHaveBeenCalledTimes(1);
-    expect(result).toEqual(legacyLessons);
+    expect(result.length).toBeGreaterThan(legacyLessons.length);
+    expect(result).toHaveLength(
+      createDefaultKangurLessons().filter(
+        (lesson) => lesson.subject === 'english' && lesson.enabled
+      ).length
+    );
+    expect(
+      result.find((lesson) => lesson.id === 'kangur-lesson-english_adverbs')
+    ).toMatchObject({
+      title: 'Custom adverbs',
+      description: 'Legacy Mongo settings lesson',
+    });
   });
 });

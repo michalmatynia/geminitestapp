@@ -143,22 +143,246 @@ const resolveTranslatedParameterValue = (
   languageCode: string
 ): string | null => {
   const valuesByLanguage = toRecord(record['valuesByLanguage']);
+
   if (valuesByLanguage) {
     const localized = resolveLocalizedValueByLanguage(valuesByLanguage, languageCode);
     if (localized) return localized;
   }
 
-  const directLocalized =
-    normalizeNonEmptyString(record[languageCode]) ??
-    normalizeNonEmptyString(record[languageCode.toLowerCase()]) ??
-    normalizeNonEmptyString(record[languageCode.toUpperCase()]);
+  const directLocalized = [
+    record[languageCode],
+    record[languageCode.toLowerCase()],
+    record[languageCode.toUpperCase()],
+  ]
+    .map((value) => normalizeNonEmptyString(value))
+    .find(Boolean);
+
   if (directLocalized) return directLocalized;
 
-  return (
-    resolveParameterValue(record['value']) ??
-    resolveParameterValue(record['translatedValue']) ??
-    null
-  );
+  return [record['value'], record['translatedValue']]
+    .map((value) => resolveParameterValue(value))
+    .find(Boolean) ?? null;
+};
+
+type ParameterInferenceCandidateStats = {
+  duplicateCount: number;
+  emptyValueCount: number;
+  invalidOptionCount: number;
+  invalidShapeCount: number;
+  unknownParameterIdCount: number;
+};
+
+const createInitialParameterInferenceCandidateStats =
+  (): ParameterInferenceCandidateStats => ({
+    duplicateCount: 0,
+    emptyValueCount: 0,
+    invalidOptionCount: 0,
+    invalidShapeCount: 0,
+    unknownParameterIdCount: 0,
+  });
+
+const createBlockedParameterInferenceResult = (args: {
+  targetPath: string;
+  definitionsPort?: string;
+  definitionsPath?: string;
+  candidates?: number;
+  definitions?: number;
+  repairedCandidates?: boolean;
+  updates: Record<string, unknown>;
+  blockedReason: string;
+  errorMessage: string;
+}): {
+  updates: Record<string, unknown>;
+  applied: boolean;
+  blocked: boolean;
+  errorMessage: string;
+  meta: Record<string, unknown>;
+} => ({
+  updates: args.updates,
+  applied: true,
+  blocked: true,
+  errorMessage: args.errorMessage,
+  meta: {
+    targetPath: args.targetPath,
+    ...(args.definitionsPort ? { definitionsPort: args.definitionsPort } : {}),
+    ...(args.definitionsPath !== undefined ? { definitionsPath: args.definitionsPath } : {}),
+    ...(args.candidates !== undefined ? { candidates: args.candidates } : {}),
+    ...(args.definitions !== undefined ? { definitions: args.definitions } : {}),
+    ...(args.repairedCandidates !== undefined
+      ? { repairedCandidates: args.repairedCandidates }
+      : {}),
+    blocked: {
+      reason: args.blockedReason,
+      message: args.errorMessage,
+    },
+  },
+});
+
+const normalizeParameterInferenceTargetPath = (
+  dbConfig: DatabaseConfig
+): string => normalizeNonEmptyString(dbConfig.parameterInferenceGuard?.targetPath) ?? 'parameters';
+
+const createOptionLookup = (definition: ParameterDefinitionRecord): Map<string, string> => {
+  const lookup = new Map<string, string>();
+  definition.optionLabels.forEach((option: string) => {
+    lookup.set(option.trim().toLowerCase(), option);
+  });
+  return lookup;
+};
+
+const normalizeChecklistCandidateValue = (args: {
+  lookup: Map<string, string>;
+  value: string;
+}): string | null => {
+  const entries = parseChecklistValues(args.value);
+
+  if (entries.length === 0) {
+    return null;
+  }
+
+  const canonicalEntries: string[] = [];
+  const seen = new Set<string>();
+
+  for (const entry of entries) {
+    const canonical = args.lookup.get(entry.trim().toLowerCase());
+
+    if (!canonical) {
+      return null;
+    }
+
+    const key = canonical.trim().toLowerCase();
+
+    if (seen.has(key)) {
+      continue;
+    }
+
+    seen.add(key);
+    canonicalEntries.push(canonical);
+  }
+
+  return canonicalEntries.join(MULTI_VALUE_DELIMITER);
+};
+
+const normalizeDefinitionCandidateValue = (args: {
+  definition: ParameterDefinitionRecord;
+  enforceOptionLabels: boolean;
+  rawValue: unknown;
+}): { reason: 'empty' | 'invalid_option'; value: string | null } => {
+  let value =
+    args.definition.selectorType === 'checklist'
+      ? resolveChecklistValue(args.rawValue)
+      : resolveParameterValue(args.rawValue);
+
+  if (!value) {
+    return { reason: 'empty', value: null };
+  }
+
+  if (
+    !args.enforceOptionLabels ||
+    !SELECTOR_TYPES_REQUIRING_OPTIONS.has(args.definition.selectorType) ||
+    args.definition.optionLabels.length === 0
+  ) {
+    return { reason: 'invalid_option', value: normalizeMultiValueDelimiter(value) };
+  }
+
+  const lookup = createOptionLookup(args.definition);
+
+  if (args.definition.selectorType === 'checklist') {
+    return {
+      reason: 'invalid_option',
+      value: normalizeChecklistCandidateValue({ lookup, value }),
+    };
+  }
+
+  const canonical = lookup.get(value.trim().toLowerCase());
+  return {
+    reason: 'invalid_option',
+    value: canonical ? normalizeMultiValueDelimiter(canonical) : null,
+  };
+};
+
+const resolveUnknownGuardParameterId = (
+  record: Record<string, unknown>,
+  definitions: Map<string, ParameterDefinitionRecord>,
+  allowUnknownParameterIds: boolean
+): string | null => {
+  const parameterId =
+    normalizeNonEmptyString(record['parameterId']) ?? normalizeNonEmptyString(record['id']);
+
+  if (!parameterId) {
+    return null;
+  }
+
+  if (!definitions.has(parameterId) && !allowUnknownParameterIds) {
+    return null;
+  }
+
+  return parameterId;
+};
+
+const collectAcceptedParameterInferenceCandidates = (args: {
+  allowUnknownParameterIds: boolean;
+  candidates: unknown[];
+  definitions: Map<string, ParameterDefinitionRecord>;
+  enforceOptionLabels: boolean;
+}): {
+  accepted: Array<{ parameterId: string; value: string }>;
+  stats: ParameterInferenceCandidateStats;
+} => {
+  const accepted: Array<{ parameterId: string; value: string }> = [];
+  const acceptedIds = new Set<string>();
+  const stats = createInitialParameterInferenceCandidateStats();
+
+  args.candidates.forEach((entry: unknown) => {
+    const record = toRecord(entry);
+
+    if (!record) {
+      stats.invalidShapeCount += 1;
+      return;
+    }
+
+    const parameterId = resolveUnknownGuardParameterId(
+      record,
+      args.definitions,
+      args.allowUnknownParameterIds
+    );
+
+    if (!parameterId) {
+      stats.unknownParameterIdCount += 1;
+      return;
+    }
+
+    if (acceptedIds.has(parameterId)) {
+      stats.duplicateCount += 1;
+      return;
+    }
+
+    const definition = args.definitions.get(parameterId);
+    const normalizedDefinitionValue = definition
+      ? normalizeDefinitionCandidateValue({
+          definition,
+          enforceOptionLabels: args.enforceOptionLabels,
+          rawValue: record['value'],
+        })
+      : null;
+    const value =
+      normalizedDefinitionValue?.value ??
+      normalizeMultiValueDelimiter(resolveParameterValue(record['value']) ?? '');
+
+    if (!value) {
+      if (normalizedDefinitionValue?.reason === 'empty' || !definition) {
+        stats.emptyValueCount += 1;
+      } else {
+        stats.invalidOptionCount += 1;
+      }
+      return;
+    }
+
+    accepted.push({ parameterId, value });
+    acceptedIds.add(parameterId);
+  });
+
+  return { accepted, stats };
 };
 
 export const mergeTranslatedParameterUpdates = (args: {
@@ -557,25 +781,18 @@ export const applyParameterInferenceGuard = (args: {
     return { updates: args.updates, applied: false };
   }
 
-  const targetPath = normalizeNonEmptyString(guard.targetPath) ?? 'parameters';
+  const targetPath = normalizeParameterInferenceTargetPath(args.dbConfig);
   if (targetPath !== 'parameters') {
     const nextUpdates: Record<string, unknown> = { ...args.updates };
     delete nextUpdates[targetPath];
     const errorMessage =
       'Parameter inference guard targetPath must use canonical "parameters" path.';
-    return {
+    return createBlockedParameterInferenceResult({
+      targetPath,
       updates: nextUpdates,
-      applied: true,
-      blocked: true,
+      blockedReason: 'unsupported_target_path',
       errorMessage,
-      meta: {
-        targetPath,
-        blocked: {
-          reason: 'unsupported_target_path',
-          message: errorMessage,
-        },
-      },
-    };
+    });
   }
 
   const rawCandidate = args.updates[targetPath];
@@ -594,114 +811,29 @@ export const applyParameterInferenceGuard = (args: {
 
   const { candidates, repaired: candidateRepairApplied } =
     coerceParameterInferenceCandidates(rawCandidate);
-  const accepted: Array<{ parameterId: string; value: string }> = [];
-  const acceptedIds = new Set<string>();
-  let unknownParameterIdCount = 0;
-  let invalidOptionCount = 0;
-  let emptyValueCount = 0;
-  let duplicateCount = 0;
-  let invalidShapeCount = 0;
 
   if (definitions.size === 0 && !allowUnknownParameterIds) {
     const nextUpdates: Record<string, unknown> = { ...args.updates };
     delete nextUpdates[targetPath];
     const errorMessage = 'No parameter definitions resolved for parameter inference.';
-    return {
+    return createBlockedParameterInferenceResult({
+      targetPath,
+      definitionsPort,
+      definitionsPath,
+      candidates: candidates.length,
+      definitions: 0,
+      repairedCandidates: candidateRepairApplied,
       updates: nextUpdates,
-      applied: true,
-      blocked: true,
+      blockedReason: 'missing_definitions',
       errorMessage,
-      meta: {
-        targetPath,
-        definitionsPort,
-        definitionsPath,
-        candidates: candidates.length,
-        accepted: 0,
-        definitions: 0,
-        repairedCandidates: candidateRepairApplied,
-        blocked: {
-          reason: 'missing_definitions',
-          message: errorMessage,
-        },
-      },
-    };
+    });
   }
 
-  candidates.forEach((entry: unknown) => {
-    const record = toRecord(entry);
-    if (!record) {
-      invalidShapeCount += 1;
-      return;
-    }
-    const parameterId =
-      normalizeNonEmptyString(record['parameterId']) ?? normalizeNonEmptyString(record['id']);
-    if (!parameterId) {
-      unknownParameterIdCount += 1;
-      return;
-    }
-    if (acceptedIds.has(parameterId)) {
-      duplicateCount += 1;
-      return;
-    }
-
-    const definition = definitions.get(parameterId);
-    if (!definition && !allowUnknownParameterIds) {
-      unknownParameterIdCount += 1;
-      return;
-    }
-
-    let value =
-      definition?.selectorType === 'checklist'
-        ? resolveChecklistValue(record['value'])
-        : resolveParameterValue(record['value']);
-    if (!value) {
-      emptyValueCount += 1;
-      return;
-    }
-
-    if (
-      definition &&
-      enforceOptionLabels &&
-      SELECTOR_TYPES_REQUIRING_OPTIONS.has(definition.selectorType) &&
-      definition.optionLabels.length > 0
-    ) {
-      const lookup = new Map<string, string>();
-      definition.optionLabels.forEach((option: string) => {
-        lookup.set(option.trim().toLowerCase(), option);
-      });
-      if (definition.selectorType === 'checklist') {
-        const entries = parseChecklistValues(value);
-        if (entries.length === 0) {
-          invalidOptionCount += 1;
-          return;
-        }
-        const canonicalEntries: string[] = [];
-        const seen = new Set<string>();
-        for (const entry of entries) {
-          const canonical = lookup.get(entry.trim().toLowerCase());
-          if (!canonical) {
-            invalidOptionCount += 1;
-            return;
-          }
-          const key = canonical.trim().toLowerCase();
-          if (seen.has(key)) continue;
-          seen.add(key);
-          canonicalEntries.push(canonical);
-        }
-        value = canonicalEntries.join(MULTI_VALUE_DELIMITER);
-      } else {
-        const canonical = lookup.get(value.trim().toLowerCase());
-        if (!canonical) {
-          invalidOptionCount += 1;
-          return;
-        }
-        value = canonical;
-      }
-    }
-
-    value = normalizeMultiValueDelimiter(value);
-    accepted.push({ parameterId, value });
-    acceptedIds.add(parameterId);
+  const { accepted, stats } = collectAcceptedParameterInferenceCandidates({
+    allowUnknownParameterIds,
+    candidates,
+    definitions,
+    enforceOptionLabels,
   });
 
   const nextUpdates: Record<string, unknown> = { ...args.updates };
@@ -723,11 +855,11 @@ export const applyParameterInferenceGuard = (args: {
       definitions: definitions.size,
       repairedCandidates: candidateRepairApplied,
       dropped: {
-        unknownParameterId: unknownParameterIdCount,
-        invalidOption: invalidOptionCount,
-        emptyValue: emptyValueCount,
-        duplicate: duplicateCount,
-        invalidShape: invalidShapeCount,
+        unknownParameterId: stats.unknownParameterIdCount,
+        invalidOption: stats.invalidOptionCount,
+        emptyValue: stats.emptyValueCount,
+        duplicate: stats.duplicateCount,
+        invalidShape: stats.invalidShapeCount,
       },
     },
   };

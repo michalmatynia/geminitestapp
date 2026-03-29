@@ -20,17 +20,14 @@ describe('mongoKangurLessonTemplateRepository bootstrap', () => {
     vi.clearAllMocks();
   });
 
-  it('seeds localized lesson templates into Mongo when a locale collection is empty', async () => {
+  it('seeds localized lesson templates before reading a locale collection', async () => {
     const expected = createDefaultKangurLessonTemplates('en').filter(
       (template) => template.subject === 'english'
     );
-    const toArrayMock = vi
-      .fn()
-      .mockResolvedValueOnce([])
-      .mockResolvedValueOnce(expected);
+    const toArrayMock = vi.fn().mockResolvedValue(expected);
     const collection = {
       bulkWrite: vi.fn().mockResolvedValue({ acknowledged: true }),
-      countDocuments: vi.fn().mockResolvedValue(0),
+      countDocuments: vi.fn().mockResolvedValue(1),
       createIndex: vi.fn().mockResolvedValue('ok'),
       dropIndex: vi.fn().mockResolvedValue('ok'),
       find: vi.fn().mockReturnValue({
@@ -55,6 +52,33 @@ describe('mongoKangurLessonTemplateRepository bootstrap', () => {
 
     expect(collection.bulkWrite).toHaveBeenCalledTimes(1);
     expect(result).toEqual(expected);
+  });
+
+  it('still upserts localized defaults when Mongo already has some locale rows', async () => {
+    const expected = createDefaultKangurLessonTemplates('en');
+    const collection = {
+      bulkWrite: vi.fn().mockResolvedValue({ acknowledged: true }),
+      countDocuments: vi.fn().mockResolvedValue(1),
+      createIndex: vi.fn().mockResolvedValue('ok'),
+      dropIndex: vi.fn().mockResolvedValue('ok'),
+      find: vi.fn().mockReturnValue({
+        sort: vi.fn().mockReturnValue({
+          toArray: vi.fn().mockResolvedValue(expected),
+        }),
+      }),
+      indexes: vi.fn().mockResolvedValue([]),
+    };
+    getMongoDbMock.mockResolvedValue({
+      collection: vi.fn().mockReturnValue(collection),
+    });
+
+    const { mongoKangurLessonTemplateRepository } = await import(
+      './mongo-kangur-lesson-template-repository'
+    );
+
+    await mongoKangurLessonTemplateRepository.listTemplates({ locale: 'en' });
+
+    expect(collection.bulkWrite).toHaveBeenCalledTimes(1);
   });
 
   it('drops legacy lesson-template indexes before creating the localized replacements', async () => {

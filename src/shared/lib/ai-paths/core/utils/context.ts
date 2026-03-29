@@ -49,13 +49,9 @@ export const applyContextScope = (
   config?: ContextConfig
 ): Record<string, unknown> => {
   const scopeMode = config?.scopeMode ?? 'full';
-  const includePaths = config?.includePaths ?? [];
-  const excludePaths = config?.excludePaths ?? [];
-  if (scopeMode === 'include' && includePaths.length > 0) {
-    return pickByPaths(payload, includePaths);
-  }
-  if (scopeMode === 'exclude' && excludePaths.length > 0) {
-    return omitByPaths(payload, excludePaths);
-  }
+  const scopedPaths = scopeMode === 'include' ? config?.includePaths ?? [] : config?.excludePaths ?? [];
+  if (scopedPaths.length === 0) return payload;
+  if (scopeMode === 'include') return pickByPaths(payload, scopedPaths);
+  if (scopeMode === 'exclude') return omitByPaths(payload, scopedPaths);
   return payload;
 };

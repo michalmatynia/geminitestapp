@@ -125,6 +125,54 @@ const consumeLiteralToken = (args: {
   return args.key === args.currentSegment;
 };
 
+const matchLiteralToken = (args: {
+  currentSegment: string | null;
+  key: string;
+  optional: boolean;
+  segmentIndex: number;
+}): number | null => {
+  if (shouldAbortPatternMatch(args.currentSegment, args.optional)) {
+    return null;
+  }
+
+  if (args.currentSegment === null) {
+    return args.segmentIndex;
+  }
+
+  if (shouldSkipOptionalLiteral(args.key, args.currentSegment, args.optional)) {
+    return args.segmentIndex;
+  }
+
+  if (!consumeLiteralToken({
+    key: args.key,
+    currentSegment: args.currentSegment,
+    optional: args.optional,
+  })) {
+    return null;
+  }
+
+  return args.segmentIndex + 1;
+};
+
+const matchParamToken = (args: {
+  currentSegment: string | null;
+  key: string;
+  optional: boolean;
+  params: CatchAllRouteParams;
+  segmentIndex: number;
+}): number | null => {
+  if (shouldAbortPatternMatch(args.currentSegment, args.optional)) {
+    return null;
+  }
+
+  if (args.currentSegment === null) {
+    return args.segmentIndex;
+  }
+
+  args.params[args.key] = args.currentSegment;
+  return args.segmentIndex + 1;
+};
+
 export const matchCatchAllPattern = (
   pattern: CatchAllOptionalRoutePatternToken[],
   segments: string[]
@@ -134,28 +182,26 @@ export const matchCatchAllPattern = (
   for (const token of pattern) {
     const { isParam, key, optional } = normalizeToken(token);
     const currentSegment = resolveSegmentAt(segments, segmentIndex);
+    const nextSegmentIndex = isParam
+      ? matchParamToken({
+          currentSegment,
+          key,
+          optional,
+          params,
+          segmentIndex,
+        })
+      : matchLiteralToken({
+          currentSegment,
+          key,
+          optional,
+          segmentIndex,
+        });
 
-    if (shouldAbortPatternMatch(currentSegment, optional)) {
+    if (nextSegmentIndex === null) {
       return null;
     }
 
-    if (currentSegment === null) {
-      continue;
-    }
-
-    if (!isParam) {
-      if (shouldSkipOptionalLiteral(key, currentSegment, optional)) {
-        continue;
-      }
-      if (!consumeLiteralToken({ key, currentSegment, optional })) {
-        return null;
-      }
-      segmentIndex += 1;
-      continue;
-    }
-
-    params[key] = currentSegment;
-    segmentIndex += 1;
+    segmentIndex = nextSegmentIndex;
   }
 
   if (segmentIndex !== segments.length) {

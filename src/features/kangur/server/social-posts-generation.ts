@@ -13,7 +13,11 @@ import {
 import type { KangurSocialImageAddon } from '@/shared/contracts/kangur-social-image-addons';
 import { ErrorSystem } from '@/features/kangur/shared/utils/observability/error-system';
 
-import { buildKangurDocContext, resolveKangurDocReferences } from './social-posts-docs';
+import {
+  buildKangurDocContext,
+  resolveKangurDocReferences,
+  type KangurDocEntry,
+} from './social-posts-docs';
 import { analyzeKangurSocialVisuals } from './social-posts-vision';
 
 export type KangurSocialPostDraft = {
@@ -36,6 +40,22 @@ type GenerationInput = {
   visionModelId?: string;
   imageAddons?: KangurSocialImageAddon[];
   projectUrl?: string;
+};
+
+type GenerationContext = {
+  docReferences: string[];
+  notes: string;
+  notesLength: number;
+  projectUrl: string;
+  imageAddons: KangurSocialImageAddon[];
+  imageAddonSummary: string;
+  visionModelId: string;
+};
+
+type VisualAnalysisSnapshot = {
+  visualSummary: string | null;
+  visualHighlights: string[];
+  visualDocUpdates: KangurSocialDocUpdate[];
 };
 
 const buildImageAddonSummary = (addons: KangurSocialImageAddon[]): string => {
@@ -65,49 +85,246 @@ const buildSystemPrompt = (basePrompt: string): string => {
   return lines.join('\n');
 };
 
+const normalizeDocReferences = (docReferences: string[] | undefined): string[] =>
+  (docReferences ?? []).map((ref) => ref.trim()).filter(Boolean);
+
+const normalizeOptionalText = (value: string | undefined): string => value?.trim() ?? '';
+
+const resolveImageAddons = (
+  imageAddons: KangurSocialImageAddon[] | undefined
+): KangurSocialImageAddon[] => imageAddons ?? [];
+
+const normalizeGenerationInput = (input: GenerationInput): GenerationContext => {
+  const docReferences = normalizeDocReferences(input.docReferences);
+  const notes = normalizeOptionalText(input.notes);
+  const projectUrl = normalizeOptionalText(input.projectUrl);
+  const imageAddons = resolveImageAddons(input.imageAddons);
+
+  return {
+    docReferences,
+    notes,
+    notesLength: notes.length,
+    projectUrl,
+    imageAddons,
+    imageAddonSummary: buildImageAddonSummary(imageAddons),
+    visionModelId: normalizeOptionalText(input.visionModelId),
+  };
+};
+
+const createEmptyVisualAnalysisSnapshot = (): VisualAnalysisSnapshot => ({
+  visualSummary: null,
+  visualHighlights: [],
+  visualDocUpdates: [],
+});
+
+const runVisualAnalysisSafely = async ({
+  context,
+  startedAt,
+}: {
+  context: GenerationContext;
+  startedAt: number;
+}): Promise<VisualAnalysisSnapshot> => {
+  if (context.imageAddons.length === 0) {
+    return createEmptyVisualAnalysisSnapshot();
+  }
+
+  try {
+    const analysis = await analyzeKangurSocialVisuals({
+      docReferences: context.docReferences,
+      notes: context.notes,
+      modelId: context.visionModelId || undefined,
+      imageAddons: context.imageAddons,
+    });
+
+    return {
+      visualSummary: analysis.summary || null,
+      visualHighlights: analysis.highlights,
+      visualDocUpdates: analysis.docUpdates,
+    };
+  } catch (error) {
+    void ErrorSystem.captureException(error, {
+      service: 'kangur.social-posts.generate',
+      action: 'visualAnalysis',
+      durationMs: Date.now() - startedAt,
+      modelId: context.visionModelId || null,
+      imageAddonCount: context.imageAddons.length,
+    });
+    return createEmptyVisualAnalysisSnapshot();
+  }
+};
+
+const formatVisualDocUpdate = (update: KangurSocialDocUpdate): string => {
+  const section = update.section?.trim();
+  const header = section ? `${update.docPath} (${section})` : update.docPath;
+  const proposed = update.proposedText?.trim();
+  return `- ${header}${proposed ? `: ${proposed}` : ''}`;
+};
+
+const pushPromptSection = (
+  userPromptLines: string[],
+  heading: string,
+  value: string | string[] | null | undefined
+): void => {
+  if (!value) return;
+
+  const lines = Array.isArray(value) ? value.filter(Boolean) : [value];
+  if (lines.length === 0) return;
+  userPromptLines.push('', heading, ...lines);
+};
+
+const buildUserPromptLines = ({
+  context,
+  docsContext,
+  visualAnalysis,
+}: {
+  context: GenerationContext;
+  docsContext: string;
+  visualAnalysis: VisualAnalysisSnapshot;
+}): string[] => {
+  const userPromptLines = [
+    'Use the following documentation summary and excerpts to craft the post:',
+    '',
+    docsContext,
+  ];
+
+  pushPromptSection(userPromptLines, 'Visual analysis summary:', visualAnalysis.visualSummary);
+  pushPromptSection(
+    userPromptLines,
+    'Visual highlights:',
+    visualAnalysis.visualHighlights.map((item) => `- ${item}`)
+  );
+  pushPromptSection(
+    userPromptLines,
+    'Documentation updates suggested from visuals:',
+    visualAnalysis.visualDocUpdates.map(formatVisualDocUpdate)
+  );
+  pushPromptSection(
+    userPromptLines,
+    'Visual add-ons available for the post:',
+    context.imageAddonSummary
+  );
+  pushPromptSection(userPromptLines, 'Project URL to reference in the post:', context.projectUrl);
+  pushPromptSection(userPromptLines, 'Additional notes:', context.notes);
+
+  return userPromptLines;
+};
+
+const parseBrainDraftResponse = (text: string): Partial<KangurSocialPostDraft> => {
+  try {
+    return JSON.parse(text) as Partial<KangurSocialPostDraft>;
+  } catch {
+    const jsonMatch = text.match(/```(?:json)?\s*([\s\S]*?)```/);
+    if (jsonMatch?.[1]) {
+      try {
+        return JSON.parse(jsonMatch[1].trim()) as Partial<KangurSocialPostDraft>;
+      } catch {
+        return {};
+      }
+    }
+
+    const raw = text.trim();
+    if (!raw) {
+      return {};
+    }
+
+    return { bodyPl: raw, bodyEn: raw };
+  }
+};
+
+const normalizeDraftFields = (parsed: Partial<KangurSocialPostDraft>) => ({
+  titlePl: (parsed.titlePl ?? '').trim(),
+  titleEn: (parsed.titleEn ?? '').trim(),
+  bodyPl: (parsed.bodyPl ?? '').trim(),
+  bodyEn: (parsed.bodyEn ?? '').trim(),
+});
+
+const assertDraftBodyExists = ({
+  bodyPl,
+  bodyEn,
+}: {
+  bodyPl: string;
+  bodyEn: string;
+}): void => {
+  if (bodyPl || bodyEn) return;
+  throw operationFailedError(
+    'The model returned an empty draft. Check your AI Brain routing for kangur_social.post_generation or try a different model.'
+  );
+};
+
+const resolveRequestedModelId = (overrideModelId: string, fallbackModelId: string): string =>
+  overrideModelId || fallbackModelId.trim();
+
+const logDraftGenerationSuccess = ({
+  startedAt,
+  modelId,
+  context,
+  docs,
+  draft,
+  visualAnalysis,
+}: {
+  startedAt: number;
+  modelId: string;
+  context: GenerationContext;
+  docs: KangurDocEntry[];
+  draft: KangurSocialPostDraft;
+  visualAnalysis: VisualAnalysisSnapshot;
+}): void => {
+  void ErrorSystem.logInfo('Kangur social post draft generated', {
+    service: 'kangur.social-posts.generate',
+    durationMs: Date.now() - startedAt,
+    modelId,
+    visionModelId: context.visionModelId || null,
+    docReferenceCount: context.docReferences.length,
+    resolvedDocCount: docs.length,
+    usedDocReferenceCount: draft.docReferences.length,
+    imageAddonCount: context.imageAddons.length,
+    visualHighlightCount: visualAnalysis.visualHighlights.length,
+    visualDocUpdateCount: visualAnalysis.visualDocUpdates.length,
+    notesLength: context.notesLength,
+  });
+};
+
+const logDraftGenerationFailure = ({
+  error,
+  startedAt,
+  modelId,
+  context,
+  docs,
+}: {
+  error: unknown;
+  startedAt: number;
+  modelId: string;
+  context: GenerationContext;
+  docs: KangurDocEntry[];
+}): void => {
+  void ErrorSystem.captureException(error, {
+    service: 'kangur.social-posts.generate',
+    action: 'generateDraft',
+    durationMs: Date.now() - startedAt,
+    modelId: modelId || null,
+    visionModelId: context.visionModelId || null,
+    docReferenceCount: context.docReferences.length,
+    resolvedDocCount: docs.length,
+    imageAddonCount: context.imageAddons.length,
+    notesLength: context.notesLength,
+  });
+};
+
 export async function generateKangurSocialPostDraft(
   input: GenerationInput
 ): Promise<KangurSocialPostDraft> {
   const startedAt = Date.now();
-  const docReferences = (input.docReferences ?? []).map((ref) => ref.trim()).filter(Boolean);
-  const docs = resolveKangurDocReferences(docReferences);
-  const { summary, context } = await buildKangurDocContext(docs);
-  const notes = input.notes?.trim() ?? '';
-  const projectUrl = input.projectUrl?.trim() ?? '';
-  const imageAddons = input.imageAddons ?? [];
-  const imageAddonSummary = buildImageAddonSummary(imageAddons);
-  const notesLength = notes.length;
-  const visionModelId = input.visionModelId?.trim() ?? '';
+  const generationContext = normalizeGenerationInput(input);
+  const docs = resolveKangurDocReferences(generationContext.docReferences);
+  const { summary, context: docsContext } = await buildKangurDocContext(docs);
   let modelId = '';
 
   try {
-    let visualSummary: string | null = null;
-    let visualHighlights: string[] = [];
-    let visualDocUpdates: KangurSocialDocUpdate[] = [];
-
-    if (imageAddons.length > 0) {
-      try {
-        const analysis = await analyzeKangurSocialVisuals({
-          docReferences,
-          notes,
-          modelId: visionModelId || undefined,
-          imageAddons,
-        });
-        visualSummary = analysis.summary || null;
-        visualHighlights = analysis.highlights;
-        visualDocUpdates = analysis.docUpdates;
-      } catch (error) {
-        void ErrorSystem.captureException(error, {
-          service: 'kangur.social-posts.generate',
-          action: 'visualAnalysis',
-          durationMs: Date.now() - startedAt,
-          modelId: visionModelId || null,
-          imageAddonCount: imageAddons.length,
-        });
-      }
-    }
-
     const overrideModelId = input.modelId?.trim() ?? '';
+    const visualAnalysis = await runVisualAnalysisSafely({
+      context: generationContext,
+      startedAt,
+    });
     const brainConfig = await resolveBrainExecutionConfigForCapability(
       'kangur_social.post_generation',
       {
@@ -117,7 +334,7 @@ export async function generateKangurSocialPostDraft(
         runtimeKind: 'chat',
       }
     );
-    modelId = overrideModelId || brainConfig.modelId.trim();
+    modelId = resolveRequestedModelId(overrideModelId, brainConfig.modelId);
     if (!modelId) {
       throw configurationError(
         'StudiQ Social Post Generation model is missing. Configure it in AI Brain.'
@@ -125,44 +342,11 @@ export async function generateKangurSocialPostDraft(
     }
 
     const systemPrompt = buildSystemPrompt(brainConfig.systemPrompt ?? '');
-    const userPromptLines = [
-      'Use the following documentation summary and excerpts to craft the post:',
-      '',
-      context,
-    ];
-    if (visualSummary) {
-      userPromptLines.push('', 'Visual analysis summary:', visualSummary);
-    }
-    if (visualHighlights.length > 0) {
-      userPromptLines.push(
-        '',
-        'Visual highlights:',
-        visualHighlights.map((item) => `- ${item}`).join('\n')
-      );
-    }
-    if (visualDocUpdates.length > 0) {
-      userPromptLines.push(
-        '',
-        'Documentation updates suggested from visuals:',
-        visualDocUpdates
-          .map((update) => {
-            const section = update.section?.trim();
-            const header = section ? `${update.docPath} (${section})` : update.docPath;
-            const proposed = update.proposedText?.trim();
-            return `- ${header}${proposed ? `: ${proposed}` : ''}`;
-          })
-          .join('\n')
-      );
-    }
-    if (imageAddonSummary) {
-      userPromptLines.push('', 'Visual add-ons available for the post:', imageAddonSummary);
-    }
-    if (projectUrl) {
-      userPromptLines.push('', 'Project URL to reference in the post:', projectUrl);
-    }
-    if (notes) {
-      userPromptLines.push('', 'Additional notes:', notes);
-    }
+    const userPromptLines = buildUserPromptLines({
+      context: generationContext,
+      docsContext,
+      visualAnalysis,
+    });
 
     const res = await runBrainChatCompletion({
       modelId,
@@ -175,41 +359,9 @@ export async function generateKangurSocialPostDraft(
       ],
     });
 
-    let parsed: Partial<KangurSocialPostDraft> = {};
-    try {
-      parsed = JSON.parse(res.text) as Partial<KangurSocialPostDraft>;
-    } catch {
-      // Models (especially Ollama) often wrap JSON in markdown fences or
-      // return free-form text. Try to extract JSON from the response first,
-      // then fall back to using the raw text as body content.
-      const jsonMatch = res.text.match(/```(?:json)?\s*([\s\S]*?)```/);
-      if (jsonMatch?.[1]) {
-        try {
-          parsed = JSON.parse(jsonMatch[1].trim()) as Partial<KangurSocialPostDraft>;
-        } catch {
-          parsed = {};
-        }
-      }
-      // If still empty, use the raw response as body content so the user
-      // gets something to edit rather than completely empty fields.
-      if (!parsed.titlePl && !parsed.bodyPl && !parsed.bodyEn) {
-        const raw = res.text.trim();
-        if (raw.length > 0) {
-          parsed = { bodyPl: raw, bodyEn: raw };
-        }
-      }
-    }
-
-    const titlePl = (parsed.titlePl ?? '').trim();
-    const titleEn = (parsed.titleEn ?? '').trim();
-    const bodyPl = (parsed.bodyPl ?? '').trim();
-    const bodyEn = (parsed.bodyEn ?? '').trim();
-
-    if (!bodyPl && !bodyEn) {
-      throw operationFailedError(
-        'The model returned an empty draft. Check your AI Brain routing for kangur_social.post_generation or try a different model.'
-      );
-    }
+    const parsed = parseBrainDraftResponse(res.text);
+    const { titlePl, titleEn, bodyPl, bodyEn } = normalizeDraftFields(parsed);
+    assertDraftBodyExists({ bodyPl, bodyEn });
 
     const combinedBody = buildKangurSocialPostCombinedBody(bodyPl, bodyEn);
 
@@ -220,38 +372,32 @@ export async function generateKangurSocialPostDraft(
       bodyEn,
       combinedBody,
       summary,
-      docReferences: docReferences.length > 0 ? docReferences : docs.map((doc) => doc.id),
-      visualSummary,
-      visualHighlights,
-      visualDocUpdates,
+      docReferences:
+        generationContext.docReferences.length > 0
+          ? generationContext.docReferences
+          : docs.map((doc) => doc.id),
+      visualSummary: visualAnalysis.visualSummary,
+      visualHighlights: visualAnalysis.visualHighlights,
+      visualDocUpdates: visualAnalysis.visualDocUpdates,
     };
 
-    void ErrorSystem.logInfo('Kangur social post draft generated', {
-      service: 'kangur.social-posts.generate',
-      durationMs: Date.now() - startedAt,
+    logDraftGenerationSuccess({
+      startedAt,
       modelId,
-      visionModelId: visionModelId || null,
-      docReferenceCount: docReferences.length,
-      resolvedDocCount: docs.length,
-      usedDocReferenceCount: draft.docReferences.length,
-      imageAddonCount: imageAddons.length,
-      visualHighlightCount: visualHighlights.length,
-      visualDocUpdateCount: visualDocUpdates.length,
-      notesLength,
+      context: generationContext,
+      docs,
+      draft,
+      visualAnalysis,
     });
 
     return draft;
   } catch (error) {
-    void ErrorSystem.captureException(error, {
-      service: 'kangur.social-posts.generate',
-      action: 'generateDraft',
-      durationMs: Date.now() - startedAt,
-      modelId: modelId || null,
-      visionModelId: visionModelId || null,
-      docReferenceCount: docReferences.length,
-      resolvedDocCount: docs.length,
-      imageAddonCount: imageAddons.length,
-      notesLength,
+    logDraftGenerationFailure({
+      error,
+      startedAt,
+      modelId,
+      context: generationContext,
+      docs,
     });
     throw error;
   }

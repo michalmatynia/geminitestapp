@@ -17,7 +17,6 @@ import type { ListQuery, MutationResult, SingleQuery } from '@/shared/contracts/
 import { api } from '@/shared/lib/api-client';
 import { createListQueryV2, createSingleQueryV2, createUpdateMutationV2 } from '@/shared/lib/query-factories-v2';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
-import { createDefaultKangurLessons } from '@/features/kangur/settings';
 import { normalizeKangurLessonDocumentStore } from '@/features/kangur/lesson-documents';
 import { normalizeSiteLocale } from '@/shared/lib/i18n/site-locale';
 import {
@@ -46,10 +45,9 @@ const filterLessons = (
   return next;
 };
 
-const buildLessonsFallback = (options?: LessonsQueryOptions): KangurLesson[] =>
-  filterLessons(createDefaultKangurLessons(), options);
-
-const fetchLessons = async (options?: LessonsQueryOptions): Promise<KangurLesson[]> =>
+export const fetchKangurLessons = async (
+  options?: LessonsQueryOptions
+): Promise<KangurLesson[]> =>
   await withKangurClientError(
     () => ({
       source: 'kangur.hooks.useKangurLessons',
@@ -71,7 +69,7 @@ const fetchLessons = async (options?: LessonsQueryOptions): Promise<KangurLesson
       return kangurLessonsSchema.parse(payload);
     },
     {
-      fallback: () => buildLessonsFallback(options),
+      fallback: () => [],
       shouldReport: (error) => !isRecoverableKangurClientFetchError(error),
     }
   );
@@ -139,9 +137,8 @@ export const useKangurLessons = (
         enabledOnly: options?.enabledOnly ?? null,
       },
     ],
-    queryFn: async (): Promise<KangurLesson[]> => await fetchLessons(options),
+    queryFn: async (): Promise<KangurLesson[]> => await fetchKangurLessons(options),
     select: (lessons) => filterLessons(lessons, options),
-    placeholderData: () => buildLessonsFallback(options),
     enabled: options?.enabled ?? true,
     staleTime: 1000 * 60 * 5,
     refetchOnMount: false,

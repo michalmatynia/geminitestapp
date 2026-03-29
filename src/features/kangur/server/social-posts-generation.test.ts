@@ -56,4 +56,30 @@ describe('generateKangurSocialPostDraft', () => {
     expect(result.titlePl).toBe('Tytul');
     expect(result.titleEn).toBe('Title');
   });
+
+  it('extracts JSON drafts wrapped in markdown fences', async () => {
+    mocks.runBrainChatCompletionMock.mockResolvedValue({
+      text: [
+        '```json',
+        JSON.stringify({
+          titlePl: 'Ogrodzenie',
+          titleEn: 'Fence',
+          bodyPl: 'Polski wpis',
+          bodyEn: 'English post',
+        }),
+        '```',
+      ].join('\n'),
+      vendor: 'openai',
+      modelId: 'brain-default-model',
+    });
+
+    const result = await generateKangurSocialPostDraft({
+      docReferences: ['overview'],
+    });
+
+    expect(result.titlePl).toBe('Ogrodzenie');
+    expect(result.titleEn).toBe('Fence');
+    expect(result.bodyPl).toBe('Polski wpis');
+    expect(result.bodyEn).toBe('English post');
+  });
 });

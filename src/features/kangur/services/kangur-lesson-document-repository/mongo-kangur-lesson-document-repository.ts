@@ -8,9 +8,11 @@ import type {
 } from '@kangur/contracts';
 import {
   KANGUR_LESSON_DOCUMENTS_SETTING_KEY,
+  createStarterKangurLessonDocument,
   normalizeKangurLessonDocument,
   parseKangurLessonDocumentStore,
 } from '@/features/kangur/lesson-documents';
+import { createDefaultKangurLessons } from '@/features/kangur/settings';
 import { readKangurSettingValue } from '@/features/kangur/services/kangur-settings-repository';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import { normalizeSiteLocale } from '@/shared/lib/i18n/site-locale';
@@ -84,8 +86,17 @@ const seedMissingLessonDocumentsFromLegacySettings = async (
   }
 
   const rawDocuments = await readKangurSettingValue(KANGUR_LESSON_DOCUMENTS_SETTING_KEY);
-  const store = parseKangurLessonDocumentStore(rawDocuments);
-  const entries = Object.entries(store);
+  const legacyStore = parseKangurLessonDocumentStore(rawDocuments);
+  const mergedStore = { ...legacyStore };
+
+  for (const lesson of createDefaultKangurLessons()) {
+    if (mergedStore[lesson.id]) {
+      continue;
+    }
+    mergedStore[lesson.id] = createStarterKangurLessonDocument(lesson.componentId);
+  }
+
+  const entries = Object.entries(mergedStore);
 
   if (entries.length === 0) {
     return false;

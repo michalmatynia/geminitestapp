@@ -21,6 +21,8 @@ type MongoKangurGameDocument = Document &
 
 let indexesInitialized = false;
 let indexesInFlight: Promise<void> | null = null;
+let defaultsInitialized = false;
+let defaultsInFlight: Promise<void> | null = null;
 
 const ensureIndexes = async (db: Db): Promise<void> => {
   if (indexesInitialized) return;
@@ -104,23 +106,38 @@ const seedMissingGames = async (
   return true;
 };
 
+const ensureDefaultGames = async (
+  collection: Collection<MongoKangurGameDocument>
+): Promise<void> => {
+  if (defaultsInitialized) return;
+  if (defaultsInFlight) {
+    await defaultsInFlight;
+    return;
+  }
+
+  defaultsInFlight = (async (): Promise<void> => {
+    await seedMissingGames(collection);
+    defaultsInitialized = true;
+  })();
+
+  try {
+    await defaultsInFlight;
+  } finally {
+    defaultsInFlight = null;
+  }
+};
+
 export const listKangurGames = async (): Promise<KangurGameDefinition[]> => {
   const db = await getMongoDb();
   await ensureIndexes(db);
 
   const collection = db.collection<MongoKangurGameDocument>(COLLECTION);
-  let docs = await collection
+  await ensureDefaultGames(collection);
+
+  const docs = await collection
     .find({})
     .sort({ sortOrder: 1, title: 1, id: 1 })
     .toArray();
-
-  if (docs.length === 0) {
-    await seedMissingGames(collection);
-    docs = await collection
-      .find({})
-      .sort({ sortOrder: 1, title: 1, id: 1 })
-      .toArray();
-  }
 
   if (docs.length === 0) {
     return createDefaultKangurGames();

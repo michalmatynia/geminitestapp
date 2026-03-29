@@ -16,15 +16,13 @@ vi.mock('@/shared/lib/db/mongo-client', () => ({
 
 describe('mongoKangurGameInstanceRepository bootstrap', () => {
   beforeEach(() => {
+    vi.resetModules();
     vi.clearAllMocks();
   });
 
-  it('seeds built-in game instances into Mongo when a game has none yet', async () => {
+  it('seeds built-in game instances before reading a game', async () => {
     const expected = getKangurGameBuiltInInstancesForGame(getKangurGameDefinition('clock_training'));
-    const toArrayMock = vi
-      .fn()
-      .mockResolvedValueOnce([])
-      .mockResolvedValueOnce(expected);
+    const toArrayMock = vi.fn().mockResolvedValue(expected);
     const collection = {
       bulkWrite: vi.fn().mockResolvedValue({ acknowledged: true }),
       createIndex: vi.fn().mockResolvedValue('ok'),
@@ -48,5 +46,31 @@ describe('mongoKangurGameInstanceRepository bootstrap', () => {
 
     expect(collection.bulkWrite).toHaveBeenCalledTimes(1);
     expect(result).toEqual(expected);
+  });
+
+  it('can derive the game id from an instance id and still backfill built-ins', async () => {
+    const expected = getKangurGameBuiltInInstancesForGame(getKangurGameDefinition('clock_training'));
+    const collection = {
+      bulkWrite: vi.fn().mockResolvedValue({ acknowledged: true }),
+      createIndex: vi.fn().mockResolvedValue('ok'),
+      find: vi.fn().mockReturnValue({
+        sort: vi.fn().mockReturnValue({
+          toArray: vi.fn().mockResolvedValue(expected),
+        }),
+      }),
+    };
+    getMongoDbMock.mockResolvedValue({
+      collection: vi.fn().mockReturnValue(collection),
+    });
+
+    const { mongoKangurGameInstanceRepository } = await import(
+      './mongo-kangur-game-instance-repository'
+    );
+
+    await mongoKangurGameInstanceRepository.listInstances({
+      instanceId: 'clock_training:instance:default',
+    });
+
+    expect(collection.bulkWrite).toHaveBeenCalledTimes(1);
   });
 });

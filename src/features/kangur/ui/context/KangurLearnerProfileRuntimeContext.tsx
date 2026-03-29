@@ -197,6 +197,209 @@ type KangurLearnerProfileRuntimeActionsContextValue = Pick<
   'navigateToLogin'
 >;
 
+type KangurLearnerProfileScoreIdentity = {
+  learnerId: string;
+  userName: string;
+  userEmail: string;
+};
+
+type KangurLearnerProfileScoreState = {
+  scores: KangurScoreRecord[];
+  isLoadingScores: boolean;
+  scoresError: string | null;
+};
+
+const trimKangurText = (value: string | null | undefined): string => value?.trim() ?? '';
+
+const resolveLearnerProfileScoreIdentity = (
+  user: KangurUser | null
+): KangurLearnerProfileScoreIdentity => ({
+  learnerId: trimKangurText(user?.activeLearner?.id),
+  userName: trimKangurText(user?.full_name),
+  userEmail: trimKangurText(user?.email),
+});
+
+const hasLearnerProfileScoreIdentity = ({
+  learnerId,
+  userEmail,
+  userName,
+}: KangurLearnerProfileScoreIdentity): boolean =>
+  learnerId.length > 0 || userName.length > 0 || userEmail.length > 0;
+
+const resolveLearnerProfileScoreLoadMode = ({
+  cachedScores,
+  scoreIdentity,
+}: {
+  cachedScores: KangurScoreRecord[] | null;
+  scoreIdentity: KangurLearnerProfileScoreIdentity;
+}): 'empty' | 'cached' | 'load' => {
+  if (!hasLearnerProfileScoreIdentity(scoreIdentity)) {
+    return 'empty';
+  }
+  return cachedScores === null ? 'load' : 'cached';
+};
+
+const applyLearnerProfileScoreState = (
+  setState: React.Dispatch<React.SetStateAction<KangurLearnerProfileScoreState>>,
+  nextState: Partial<KangurLearnerProfileScoreState>
+): void => {
+  setState((current) => ({
+    ...current,
+    ...nextState,
+  }));
+};
+
+const loadDeferredLearnerProfileScores = async ({
+  hasUser,
+  isActive,
+  loadScoresErrorLabel,
+  scoreIdentity,
+  setState,
+  subject,
+}: {
+  hasUser: boolean;
+  isActive: () => boolean;
+  loadScoresErrorLabel: string;
+  scoreIdentity: KangurLearnerProfileScoreIdentity;
+  setState: React.Dispatch<React.SetStateAction<KangurLearnerProfileScoreState>>;
+  subject: string;
+}): Promise<void> => {
+  const { learnerId, userEmail, userName } = scoreIdentity;
+  try {
+    const loadedScores = await withKangurClientError(
+      {
+        source: 'kangur.learner-profile',
+        action: 'load-scores',
+        description: 'Loads learner score history for the profile view.',
+        context: {
+          hasUser,
+          subject,
+        },
+      },
+      async () =>
+        await loadLearnerProfileScores(kangurPlatform.score, {
+          learnerId,
+          userName,
+          userEmail,
+          subject,
+          limit: LEARNER_PROFILE_SCORE_FETCH_LIMIT,
+        }),
+      {
+        fallback: [],
+        onError: (error) => {
+          if (!isActive()) {
+            return;
+          }
+
+          if (isKangurAuthStatusError(error)) {
+            applyLearnerProfileScoreState(setState, {
+              scores: [],
+              scoresError: null,
+            });
+            return;
+          }
+
+          applyLearnerProfileScoreState(setState, {
+            scoresError: loadScoresErrorLabel,
+          });
+          logKangurClientError(error, {
+            source: 'kangur.learner-profile',
+            action: 'load-scores',
+            hasUser,
+            subject,
+          });
+        },
+        shouldReport: () => false,
+      }
+    );
+    if (!isActive()) {
+      return;
+    }
+    applyLearnerProfileScoreState(setState, {
+      scores: loadedScores,
+    });
+  } finally {
+    if (isActive()) {
+      applyLearnerProfileScoreState(setState, {
+        isLoadingScores: false,
+      });
+    }
+  }
+};
+
+const useLearnerProfileScores = ({
+  cachedScores,
+  hasUser,
+  loadScoresErrorLabel,
+  scoreIdentity,
+  subject,
+}: {
+  cachedScores: KangurScoreRecord[] | null;
+  hasUser: boolean;
+  loadScoresErrorLabel: string;
+  scoreIdentity: KangurLearnerProfileScoreIdentity;
+  subject: string;
+}): KangurLearnerProfileScoreState => {
+  const hasScoreIdentity = hasLearnerProfileScoreIdentity(scoreIdentity);
+  const [scoreState, setScoreState] = useState<KangurLearnerProfileScoreState>(() => ({
+    scores: cachedScores ?? [],
+    isLoadingScores: hasScoreIdentity && cachedScores === null,
+    scoresError: null,
+  }));
+
+  useEffect(() => {
+    let isActive = true;
+    let timeoutId: ReturnType<typeof setTimeout> | null = null;
+    const stop = (): void => {
+      isActive = false;
+      if (timeoutId !== null) {
+        globalThis.clearTimeout(timeoutId);
+      }
+    };
+    const mode = resolveLearnerProfileScoreLoadMode({
+      cachedScores,
+      scoreIdentity,
+    });
+
+    if (mode === 'empty') {
+      applyLearnerProfileScoreState(setScoreState, {
+        scores: [],
+        isLoadingScores: false,
+        scoresError: null,
+      });
+      return stop;
+    }
+
+    if (mode === 'cached') {
+      applyLearnerProfileScoreState(setScoreState, {
+        scores: cachedScores ?? [],
+        isLoadingScores: false,
+        scoresError: null,
+      });
+      return stop;
+    }
+
+    applyLearnerProfileScoreState(setScoreState, {
+      isLoadingScores: true,
+      scoresError: null,
+    });
+    timeoutId = globalThis.setTimeout(() => {
+      void loadDeferredLearnerProfileScores({
+        hasUser,
+        isActive: () => isActive,
+        loadScoresErrorLabel,
+        scoreIdentity,
+        setState: setScoreState,
+        subject,
+      });
+    }, LEARNER_PROFILE_SCORES_LOAD_DEFER_MS);
+
+    return stop;
+  }, [cachedScores, hasUser, loadScoresErrorLabel, scoreIdentity, subject]);
+
+  return scoreState;
+};
+
 const KangurLearnerProfileRuntimeStateContext =
   createContext<KangurLearnerProfileRuntimeStateContextValue | null>(null);
 const KangurLearnerProfileRuntimeActionsContext =
@@ -216,18 +419,8 @@ export function KangurLearnerProfileRuntimeProvider({
   const { subject } = useKangurSubjectFocus();
   const progress = useKangurProgressState();
   const hasUser = Boolean(user);
-  const scoreIdentity = useMemo(
-    () => ({
-      learnerId: user?.activeLearner?.id?.trim() ?? '',
-      userName: user?.full_name?.trim() ?? '',
-      userEmail: user?.email?.trim() ?? '',
-    }),
-    [user?.activeLearner?.id, user?.email, user?.full_name]
-  );
-  const hasScoreIdentity =
-    scoreIdentity.learnerId.length > 0 ||
-    scoreIdentity.userName.length > 0 ||
-    scoreIdentity.userEmail.length > 0;
+  const scoreIdentity = useMemo(() => resolveLearnerProfileScoreIdentity(user), [user]);
+  const hasScoreIdentity = hasLearnerProfileScoreIdentity(scoreIdentity);
   const cachedScores = useMemo(() => {
     if (!hasScoreIdentity) {
       return null;
@@ -241,11 +434,6 @@ export function KangurLearnerProfileRuntimeProvider({
       limit: LEARNER_PROFILE_SCORE_FETCH_LIMIT,
     });
   }, [hasScoreIdentity, scoreIdentity.learnerId, scoreIdentity.userEmail, scoreIdentity.userName, subject]);
-  const [scores, setScores] = useState<KangurScoreRecord[]>(() => cachedScores ?? []);
-  const [isLoadingScores, setIsLoadingScores] = useState(
-    () => hasScoreIdentity && cachedScores === null
-  );
-  const [scoresError, setScoresError] = useState<string | null>(null);
   const translateRuntime = useCallback(
     (key: string, values?: Record<string, string | number>) => {
       if (hasScopedMessage(messages, 'KangurLearnerProfileRuntime', key)) {
@@ -265,117 +453,13 @@ export function KangurLearnerProfileRuntimeProvider({
     'errors.loadScores',
     'Nie udało się pobrać historii wyników.'
   );
-
-  useEffect(() => {
-    let isActive = true;
-    let timeoutId: ReturnType<typeof setTimeout> | null = null;
-
-    const loadScores = async (): Promise<void> => {
-      const learnerId = scoreIdentity.learnerId;
-      const userName = scoreIdentity.userName;
-      const userEmail = scoreIdentity.userEmail;
-      if (!learnerId && !userName && !userEmail) {
-        if (isActive) {
-          setScores([]);
-          setIsLoadingScores(false);
-          setScoresError(null);
-        }
-        return;
-      }
-
-      try {
-        const loadedScores = await withKangurClientError(
-          {
-            source: 'kangur.learner-profile',
-            action: 'load-scores',
-            description: 'Loads learner score history for the profile view.',
-            context: {
-              hasUser,
-              subject,
-            },
-          },
-          async () =>
-            await loadLearnerProfileScores(kangurPlatform.score, {
-              learnerId,
-              userName,
-              userEmail,
-              subject,
-              limit: LEARNER_PROFILE_SCORE_FETCH_LIMIT,
-            }),
-          {
-            fallback: [],
-            onError: (error) => {
-              if (!isActive) {
-                return;
-              }
-
-              if (isKangurAuthStatusError(error)) {
-                setScores([]);
-                setScoresError(null);
-              } else {
-                setScoresError(loadScoresErrorLabel);
-                logKangurClientError(error, {
-                  source: 'kangur.learner-profile',
-                  action: 'load-scores',
-                  hasUser,
-                  subject,
-                });
-              }
-            },
-            shouldReport: () => false,
-          }
-        );
-        if (!isActive) {
-          return;
-        }
-        setScores(loadedScores);
-      } finally {
-        if (isActive) {
-          setIsLoadingScores(false);
-        }
-      }
-    };
-
-    const learnerId = scoreIdentity.learnerId;
-    const userName = scoreIdentity.userName;
-    const userEmail = scoreIdentity.userEmail;
-    if (!learnerId && !userName && !userEmail) {
-      void loadScores();
-      return () => {
-        isActive = false;
-      };
-    }
-
-    if (cachedScores !== null) {
-      setScores(cachedScores);
-      setIsLoadingScores(false);
-      setScoresError(null);
-      return () => {
-        isActive = false;
-      };
-    }
-
-    setIsLoadingScores(true);
-    setScoresError(null);
-    timeoutId = globalThis.setTimeout(() => {
-      void loadScores();
-    }, LEARNER_PROFILE_SCORES_LOAD_DEFER_MS);
-
-    return () => {
-      isActive = false;
-      if (timeoutId !== null) {
-        globalThis.clearTimeout(timeoutId);
-      }
-    };
-  }, [
-    hasUser,
+  const { scores, isLoadingScores, scoresError } = useLearnerProfileScores({
     cachedScores,
+    hasUser,
     loadScoresErrorLabel,
-    scoreIdentity.learnerId,
-    scoreIdentity.userEmail,
-    scoreIdentity.userName,
+    scoreIdentity,
     subject,
-  ]);
+  });
 
   const snapshot = useMemo(
     () =>

@@ -54,6 +54,9 @@ export type BatchCaptureProgressSnapshot = {
 type BatchCaptureInput = Omit<KangurSocialImageAddonsBatchPayload, 'baseUrl' | 'presetIds'> & {
   baseUrl: string;
   presetIds?: string[] | null;
+  playwrightPersonaId?: string | null;
+  playwrightScript?: string | null;
+  playwrightRoutes?: KangurSocialProgrammableCaptureRoute[] | null;
   createdBy?: string | null;
   forwardCookies?: string | null;
   onProgress?: (progress: BatchCaptureProgressSnapshot) => Promise<void> | void;

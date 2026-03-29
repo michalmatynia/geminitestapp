@@ -65,6 +65,7 @@ describe('SocialPostPipeline', () => {
       handleRunFullPipeline,
       handleRunFullPipelineWithFreshCapture,
       handleOpenVisualAnalysisModal: vi.fn(),
+      handleOpenProgrammablePlaywrightModal: vi.fn(),
       handleCaptureImagesOnly,
       canGenerateSocialDraft: false,
       canRunVisualAnalysisPipeline: false,
@@ -92,6 +93,7 @@ describe('SocialPostPipeline', () => {
       'Choose a StudiQ Social post model in Settings or assign AI Brain routing in /admin/brain?tab=routing.'
     );
     expect(screen.getByRole('button', { name: 'Pipeline + image analysis' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Programmable Playwright' })).toBeEnabled();
     expect(screen.getByRole('button', { name: 'Fresh capture & pipeline' })).toBeDisabled();
     expect(screen.getByRole('button', { name: 'Capture images only' })).toBeDisabled();
     expect(
@@ -136,6 +138,7 @@ describe('SocialPostPipeline', () => {
       handleRunFullPipeline: vi.fn(),
       handleRunFullPipelineWithFreshCapture: vi.fn(),
       handleOpenVisualAnalysisModal: vi.fn(),
+      handleOpenProgrammablePlaywrightModal: vi.fn(),
       handleCaptureImagesOnly: vi.fn(),
       canGenerateSocialDraft: true,
       canRunVisualAnalysisPipeline: true,
@@ -194,6 +197,7 @@ describe('SocialPostPipeline', () => {
       handleRunFullPipeline: vi.fn(),
       handleRunFullPipelineWithFreshCapture: vi.fn(),
       handleOpenVisualAnalysisModal: vi.fn(),
+      handleOpenProgrammablePlaywrightModal: vi.fn(),
       handleCaptureImagesOnly: vi.fn(),
       canGenerateSocialDraft: true,
       canRunVisualAnalysisPipeline: true,
@@ -238,6 +242,7 @@ describe('SocialPostPipeline', () => {
       handleRunFullPipeline,
       handleRunFullPipelineWithFreshCapture,
       handleOpenVisualAnalysisModal: vi.fn(),
+      handleOpenProgrammablePlaywrightModal: vi.fn(),
       handleCaptureImagesOnly,
       canGenerateSocialDraft: true,
       canRunVisualAnalysisPipeline: true,
@@ -259,6 +264,7 @@ describe('SocialPostPipeline', () => {
 
     expect(screen.getByRole('button', { name: 'Run full pipeline' })).toBeDisabled();
     expect(screen.getByRole('button', { name: 'Pipeline + image analysis' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Programmable Playwright' })).toBeDisabled();
     expect(screen.getByRole('button', { name: 'Fresh capture & pipeline' })).toBeDisabled();
     expect(screen.getByRole('button', { name: 'Capture images only' })).toBeDisabled();
     expect(
@@ -284,6 +290,7 @@ describe('SocialPostPipeline', () => {
       handleRunFullPipeline: vi.fn(),
       handleRunFullPipelineWithFreshCapture: vi.fn(),
       handleOpenVisualAnalysisModal: vi.fn(),
+      handleOpenProgrammablePlaywrightModal: vi.fn(),
       handleCaptureImagesOnly: vi.fn(),
       canGenerateSocialDraft: true,
       canRunVisualAnalysisPipeline: true,
@@ -322,6 +329,7 @@ describe('SocialPostPipeline', () => {
       handleRunFullPipeline: vi.fn(),
       handleRunFullPipelineWithFreshCapture: vi.fn(),
       handleOpenVisualAnalysisModal,
+      handleOpenProgrammablePlaywrightModal: vi.fn(),
       handleCaptureImagesOnly: vi.fn(),
       canGenerateSocialDraft: true,
       canRunVisualAnalysisPipeline: true,
@@ -347,6 +355,53 @@ describe('SocialPostPipeline', () => {
     expect(screen.getByRole('button', { name: 'Pipeline + image analysis' })).toHaveAttribute(
       'title',
       'Analyze the selected visuals first, then generate a post that mentions the findings.'
+    );
+  });
+
+  it('opens the programmable Playwright modal from the dedicated pipeline button', () => {
+    const handleOpenProgrammablePlaywrightModal = vi.fn();
+
+    useSocialPostContextMock.mockReturnValue({
+      activePostId: 'post-1',
+      editorState: {
+        titlePl: 'Selected pipeline target',
+        titleEn: '',
+      },
+      pipelineStep: 'idle',
+      pipelineProgress: null,
+      pipelineErrorMessage: null,
+      handleRunFullPipeline: vi.fn(),
+      handleRunFullPipelineWithFreshCapture: vi.fn(),
+      handleOpenVisualAnalysisModal: vi.fn(),
+      handleOpenProgrammablePlaywrightModal,
+      handleCaptureImagesOnly: vi.fn(),
+      canGenerateSocialDraft: true,
+      canRunVisualAnalysisPipeline: true,
+      canRunFreshCapturePipeline: true,
+      batchCaptureBaseUrl: 'https://kangur.app',
+      batchCapturePresetIds: ['home'],
+      socialDraftBlockedReason: null,
+      socialBatchCaptureBlockedReason: null,
+      socialVisualAnalysisBlockedReason: null,
+      captureOnlyPending: false,
+      captureOnlyMessage: null,
+      captureOnlyErrorMessage: null,
+      programmableCapturePending: false,
+      programmableCaptureMessage: null,
+      programmableCaptureErrorMessage: null,
+      batchCapturePresetLimit: 1,
+      hasBatchCaptureConfig: true,
+      setIsPostEditorModalOpen: vi.fn(),
+    });
+
+    render(<SocialPostPipeline />);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Programmable Playwright' }));
+
+    expect(handleOpenProgrammablePlaywrightModal).toHaveBeenCalledTimes(1);
+    expect(screen.getByRole('button', { name: 'Programmable Playwright' })).toHaveAttribute(
+      'title',
+      'Choose a Playwright persona, edit the script, and define custom routes for fresh screenshots.'
     );
   });
 
@@ -419,6 +474,7 @@ describe('SocialPostPipeline', () => {
       handleRunFullPipeline,
       handleRunFullPipelineWithFreshCapture,
       handleOpenVisualAnalysisModal: vi.fn(),
+      handleOpenProgrammablePlaywrightModal: vi.fn(),
       handleCaptureImagesOnly,
       canGenerateSocialDraft: true,
       canRunVisualAnalysisPipeline: true,
@@ -495,6 +551,7 @@ describe('SocialPostPipeline', () => {
       handleRunFullPipeline,
       handleRunFullPipelineWithFreshCapture,
       handleOpenVisualAnalysisModal: vi.fn(),
+      handleOpenProgrammablePlaywrightModal: vi.fn(),
       handleCaptureImagesOnly: vi.fn(),
       canGenerateSocialDraft: true,
       canRunVisualAnalysisPipeline: true,

@@ -148,6 +148,26 @@ const invalidateSocialQueries = (queryClient: {
   void queryClient.invalidateQueries({ queryKey: KANGUR_SOCIAL_IMAGE_ADDONS_QUERY_KEY });
 };
 
+const buildVisualAnalysisFromPost = (
+  post: KangurSocialPost | null
+): KangurSocialVisualAnalysis | null => {
+  if (!post) return null;
+
+  const summary = post.visualSummary ?? '';
+  const highlights = post.visualHighlights ?? [];
+  const docUpdates = post.visualDocUpdates ?? [];
+
+  if (!summary.trim() && highlights.length === 0 && docUpdates.length === 0) {
+    return null;
+  }
+
+  return {
+    summary,
+    highlights,
+    docUpdates,
+  };
+};
+
 export function useSocialPipelineRunner(deps: SocialPipelineRunnerDeps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -156,12 +176,19 @@ export function useSocialPipelineRunner(deps: SocialPipelineRunnerDeps) {
     useState<KangurSocialManualPipelineProgress | null>(null);
   const [pipelineErrorMessage, setPipelineErrorMessage] = useState<string | null>(null);
   const [isVisualAnalysisModalOpen, setIsVisualAnalysisModalOpen] = useState(false);
-  const [visualAnalysisResult, setVisualAnalysisResult] =
-    useState<KangurSocialVisualAnalysis | null>(null);
+  const [transientVisualAnalysisResult, setTransientVisualAnalysisResult] = useState<{
+    postId: string;
+    result: KangurSocialVisualAnalysis;
+  } | null>(null);
   const [visualAnalysisErrorMessage, setVisualAnalysisErrorMessage] = useState<string | null>(
     null
   );
   const [visualAnalysisPending, setVisualAnalysisPending] = useState(false);
+  const savedVisualAnalysisResult = buildVisualAnalysisFromPost(deps.activePost);
+  const visualAnalysisResult =
+    transientVisualAnalysisResult?.postId === deps.activePostId
+      ? transientVisualAnalysisResult.result
+      : savedVisualAnalysisResult;
   const visualAnalysisScope = JSON.stringify({
     postId: deps.activePostId ?? null,
     imageAddonIds: deps.imageAddonIds,
@@ -174,6 +201,7 @@ export function useSocialPipelineRunner(deps: SocialPipelineRunnerDeps) {
   const pollDelayTimeoutRef = useRef<SafeTimerId | null>(null);
   const isUnmountedRef = useRef(false);
   const previousVisualAnalysisScopeRef = useRef<string | null>(null);
+  const previousVisualAnalysisPostIdRef = useRef<string | null>(null);
   depsRef.current = deps;
 
   useEffect(() => {
@@ -190,39 +218,35 @@ export function useSocialPipelineRunner(deps: SocialPipelineRunnerDeps) {
     deps.setBatchCaptureResult(null);
     setPipelineProgress(null);
     setPipelineErrorMessage(null);
-    if (
-      deps.activePost?.visualSummary?.trim() ||
-      (deps.activePost?.visualHighlights?.length ?? 0) > 0 ||
-      (deps.activePost?.visualDocUpdates?.length ?? 0) > 0
-    ) {
-      setVisualAnalysisResult({
-        summary: deps.activePost.visualSummary ?? '',
-        highlights: deps.activePost.visualHighlights ?? [],
-        docUpdates: deps.activePost.visualDocUpdates ?? [],
-      });
-    } else {
-      setVisualAnalysisResult(null);
-    }
     setVisualAnalysisErrorMessage(null);
     setIsVisualAnalysisModalOpen(false);
   }, [
     deps.activePostId,
-    deps.activePost?.visualSummary,
-    deps.activePost?.visualHighlights,
-    deps.activePost?.visualDocUpdates,
+    deps.setBatchCaptureResult,
+    deps.setDocUpdatesResult,
   ]);
 
   useEffect(() => {
     const previousScope = previousVisualAnalysisScopeRef.current;
+    const previousPostId = previousVisualAnalysisPostIdRef.current;
     previousVisualAnalysisScopeRef.current = visualAnalysisScope;
+    previousVisualAnalysisPostIdRef.current = deps.activePostId;
 
     if (previousScope === null || previousScope === visualAnalysisScope) {
       return;
     }
 
-    setVisualAnalysisResult(null);
+    if (previousPostId !== deps.activePostId) {
+      return;
+    }
+
+    if (transientVisualAnalysisResult?.postId !== deps.activePostId) {
+      return;
+    }
+
+    setTransientVisualAnalysisResult(null);
     setVisualAnalysisErrorMessage(null);
-  }, [visualAnalysisScope]);
+  }, [deps.activePostId, transientVisualAnalysisResult?.postId, visualAnalysisScope]);
 
   const syncProgress = useCallback((progress: KangurSocialManualPipelineProgress | null): void => {
     if (!progress) return;
@@ -524,7 +548,7 @@ export function useSocialPipelineRunner(deps: SocialPipelineRunnerDeps) {
     try {
       setVisualAnalysisPending(true);
       setVisualAnalysisErrorMessage(null);
-      setVisualAnalysisResult(null);
+      setTransientVisualAnalysisResult(null);
       const response = await api.post<VisualAnalysisTriggerResponse>(
         '/api/kangur/social-posts/analyze-visuals',
         {
@@ -583,7 +607,10 @@ export function useSocialPipelineRunner(deps: SocialPipelineRunnerDeps) {
       }
 
       const analysis = finalJob.result.analysis;
-      setVisualAnalysisResult(analysis);
+      setTransientVisualAnalysisResult({
+        postId: d.activePost.id,
+        result: analysis,
+      });
 
       if (finalJob.result.savedPost) {
         const postsQueryKey = QUERY_KEYS.kangur.socialPosts({

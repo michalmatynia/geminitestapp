@@ -17,6 +17,12 @@ import { useSocialContext } from './hooks/useSocialContext';
 import { useSocialGeneration } from './hooks/useSocialGeneration';
 import { useSocialPipelineRunner } from './hooks/useSocialPipelineRunner';
 import type { ImageFileSelection } from '@/shared/contracts/files';
+import type { KangurSocialImageAddonsBatchResult, KangurSocialProgrammableCaptureRoute } from '@/shared/contracts/kangur-social-image-addons';
+import {
+  buildKangurSocialProgrammableCaptureRoutesFromPresetIds,
+  createEmptyKangurSocialProgrammableCaptureRoute,
+  KANGUR_SOCIAL_DEFAULT_PLAYWRIGHT_CAPTURE_SCRIPT,
+} from '@/features/kangur/shared/social-playwright-capture';
 
 export function useAdminKangurSocialPage() {
   const settings = useSocialSettings();
@@ -187,6 +193,60 @@ export function useAdminKangurSocialPage() {
   const [captureOnlyPending, setCaptureOnlyPending] = useState(false);
   const [captureOnlyMessage, setCaptureOnlyMessage] = useState<string | null>(null);
   const [captureOnlyErrorMessage, setCaptureOnlyErrorMessage] = useState<string | null>(null);
+  const [isProgrammablePlaywrightModalOpen, setIsProgrammablePlaywrightModalOpen] = useState(false);
+  const [programmableCaptureBaseUrl, setProgrammableCaptureBaseUrl] = useState(
+    settings.batchCaptureBaseUrl
+  );
+  const [programmableCapturePersonaId, setProgrammableCapturePersonaId] = useState('');
+  const [programmableCaptureScript, setProgrammableCaptureScript] = useState(
+    KANGUR_SOCIAL_DEFAULT_PLAYWRIGHT_CAPTURE_SCRIPT
+  );
+  const [programmableCaptureRoutes, setProgrammableCaptureRoutes] = useState<
+    KangurSocialProgrammableCaptureRoute[]
+  >(() =>
+    buildKangurSocialProgrammableCaptureRoutesFromPresetIds(settings.batchCapturePresetIds)
+  );
+  const [programmableCapturePending, setProgrammableCapturePending] = useState(false);
+  const [programmableCaptureMessage, setProgrammableCaptureMessage] = useState<string | null>(null);
+  const [programmableCaptureErrorMessage, setProgrammableCaptureErrorMessage] =
+    useState<string | null>(null);
+
+  const attachBatchCaptureResultToActiveDraft = useCallback(
+    async (result: KangurSocialImageAddonsBatchResult): Promise<void> => {
+      if (!editor.activePost || result.addons.length === 0) {
+        return;
+      }
+
+      const nextImageAddonIds = Array.from(
+        new Set([...editor.imageAddonIds, ...result.addons.map((addon) => addon.id)])
+      );
+      const nextImageAssets = mergeImageAssets(
+        editor.imageAssets,
+        result.addons
+          .map((addon) => addon.imageAsset)
+          .filter((asset): asset is ImageFileSelection => Boolean(asset))
+      );
+
+      const patched = await crud.patchMutation.mutateAsync({
+        id: editor.activePost.id,
+        updates: {
+          imageAddonIds: nextImageAddonIds,
+          imageAssets: nextImageAssets,
+        },
+      });
+
+      editor.setImageAddonIds(patched.imageAddonIds ?? nextImageAddonIds);
+      editor.setImageAssets(patched.imageAssets ?? nextImageAssets);
+    },
+    [
+      crud.patchMutation,
+      editor.activePost,
+      editor.imageAddonIds,
+      editor.imageAssets,
+      editor.setImageAddonIds,
+      editor.setImageAssets,
+    ]
+  );
 
   const handleCaptureImagesOnly = useCallback(async (): Promise<void> => {
     if (!editor.activePost) {
@@ -204,28 +264,7 @@ export function useAdminKangurSocialPage() {
 
     try {
       const result = await imageAddons.runBatchCapture();
-      const nextImageAddonIds = Array.from(
-        new Set([...editor.imageAddonIds, ...result.addons.map((addon) => addon.id)])
-      );
-      const nextImageAssets = mergeImageAssets(
-        editor.imageAssets,
-        result.addons
-          .map((addon) => addon.imageAsset)
-          .filter((asset): asset is ImageFileSelection => Boolean(asset))
-      );
-
-      if (result.addons.length > 0) {
-        const patched = await crud.patchMutation.mutateAsync({
-          id: editor.activePost.id,
-          updates: {
-            imageAddonIds: nextImageAddonIds,
-            imageAssets: nextImageAssets,
-          },
-        });
-
-        editor.setImageAddonIds(patched.imageAddonIds ?? nextImageAddonIds);
-        editor.setImageAssets(patched.imageAssets ?? nextImageAssets);
-      }
+      await attachBatchCaptureResultToActiveDraft(result);
 
       const usedPresetCount = result.usedPresetCount ?? effectiveBatchCapturePresetCount;
       setCaptureOnlyMessage(
@@ -259,6 +298,113 @@ export function useAdminKangurSocialPage() {
     hasBatchCaptureConfig,
     imageAddons,
     socialBatchCaptureBlockedReason,
+    attachBatchCaptureResultToActiveDraft,
+  ]);
+
+  const handleOpenProgrammablePlaywrightModal = useCallback((): void => {
+    setCaptureOnlyMessage(null);
+    setCaptureOnlyErrorMessage(null);
+    setProgrammableCaptureMessage(null);
+    setProgrammableCaptureErrorMessage(null);
+    setProgrammableCaptureBaseUrl((current) => current.trim() || settings.batchCaptureBaseUrl);
+    setProgrammableCaptureRoutes((current) =>
+      current.length > 0
+        ? current
+        : buildKangurSocialProgrammableCaptureRoutesFromPresetIds(settings.batchCapturePresetIds)
+    );
+    setIsProgrammablePlaywrightModalOpen(true);
+  }, [settings.batchCaptureBaseUrl, settings.batchCapturePresetIds]);
+
+  const handleCloseProgrammablePlaywrightModal = useCallback((): void => {
+    if (programmableCapturePending) {
+      return;
+    }
+    setIsProgrammablePlaywrightModalOpen(false);
+  }, [programmableCapturePending]);
+
+  const handleAddProgrammableCaptureRoute = useCallback((): void => {
+    setProgrammableCaptureRoutes((current) => [
+      ...current,
+      createEmptyKangurSocialProgrammableCaptureRoute(current.length + 1),
+    ]);
+  }, []);
+
+  const handleUpdateProgrammableCaptureRoute = useCallback(
+    (
+      routeId: string,
+      patch: Partial<KangurSocialProgrammableCaptureRoute>
+    ): void => {
+      setProgrammableCaptureRoutes((current) =>
+        current.map((route) => (route.id === routeId ? { ...route, ...patch } : route))
+      );
+    },
+    []
+  );
+
+  const handleRemoveProgrammableCaptureRoute = useCallback((routeId: string): void => {
+    setProgrammableCaptureRoutes((current) => current.filter((route) => route.id !== routeId));
+  }, []);
+
+  const handleSeedProgrammableCaptureRoutesFromPresets = useCallback((): void => {
+    setProgrammableCaptureRoutes(
+      buildKangurSocialProgrammableCaptureRoutesFromPresetIds(settings.batchCapturePresetIds)
+    );
+  }, [settings.batchCapturePresetIds]);
+
+  const handleResetProgrammableCaptureScript = useCallback((): void => {
+    setProgrammableCaptureScript(KANGUR_SOCIAL_DEFAULT_PLAYWRIGHT_CAPTURE_SCRIPT);
+  }, []);
+
+  const handleRunProgrammablePlaywrightCapture = useCallback(async (): Promise<void> => {
+    if (!editor.activePost) {
+      setProgrammableCaptureMessage(null);
+      setProgrammableCaptureErrorMessage('Create or select a draft before capturing images.');
+      return;
+    }
+
+    setProgrammableCapturePending(true);
+    setProgrammableCaptureMessage('Running programmable Playwright capture and linking the images to the active draft...');
+    setProgrammableCaptureErrorMessage(null);
+
+    try {
+      const result = await imageAddons.runBatchCapture({
+        baseUrl: programmableCaptureBaseUrl,
+        presetIds: [],
+        presetLimit: null,
+        playwrightPersonaId: programmableCapturePersonaId || null,
+        playwrightScript: programmableCaptureScript,
+        playwrightRoutes: programmableCaptureRoutes,
+      });
+      await attachBatchCaptureResultToActiveDraft(result);
+      const routeCount = programmableCaptureRoutes.length;
+      setProgrammableCaptureMessage(
+        result.addons.length > 0
+          ? `Captured ${result.addons.length} screenshot${result.addons.length === 1 ? '' : 's'} from ${routeCount} programmable route${routeCount === 1 ? '' : 's'} and linked them to the draft.`
+          : 'Programmable capture finished with no new screenshots to attach.'
+      );
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : 'Failed to run programmable Playwright capture.';
+      setProgrammableCaptureMessage(null);
+      setProgrammableCaptureErrorMessage(message);
+      void ErrorSystem.captureException(error);
+      logKangurClientError(error, {
+        source: 'AdminKangurSocialPage',
+        action: 'programmablePlaywrightCapture',
+        ...buildSocialContext({ error: true }),
+      });
+    } finally {
+      setProgrammableCapturePending(false);
+    }
+  }, [
+    attachBatchCaptureResultToActiveDraft,
+    buildSocialContext,
+    editor.activePost,
+    imageAddons,
+    programmableCaptureBaseUrl,
+    programmableCapturePersonaId,
+    programmableCaptureRoutes,
+    programmableCaptureScript,
   ]);
 
   const handleRunFullPipeline = useCallback(async (): Promise<void> => {
@@ -427,6 +573,25 @@ export function useAdminKangurSocialPage() {
     captureOnlyMessage,
     captureOnlyErrorMessage,
     handleCaptureImagesOnly,
+    isProgrammablePlaywrightModalOpen,
+    programmableCaptureBaseUrl,
+    setProgrammableCaptureBaseUrl,
+    programmableCapturePersonaId,
+    setProgrammableCapturePersonaId,
+    programmableCaptureScript,
+    setProgrammableCaptureScript,
+    programmableCaptureRoutes,
+    programmableCapturePending,
+    programmableCaptureMessage,
+    programmableCaptureErrorMessage,
+    handleOpenProgrammablePlaywrightModal,
+    handleCloseProgrammablePlaywrightModal,
+    handleAddProgrammableCaptureRoute,
+    handleUpdateProgrammableCaptureRoute,
+    handleRemoveProgrammableCaptureRoute,
+    handleSeedProgrammableCaptureRoutesFromPresets,
+    handleResetProgrammableCaptureScript,
+    handleRunProgrammablePlaywrightCapture,
 
     // Queries (for isPending checks in consumer)
     postsQuery: editor.postsQuery,

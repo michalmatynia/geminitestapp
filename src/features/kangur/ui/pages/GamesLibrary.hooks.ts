@@ -4,6 +4,12 @@ import React from 'react';
 import { useLocale, useTranslations } from 'next-intl';
 import { useSearchParams } from 'next/navigation';
 import { useCallback, useDeferredValue, useEffect, useMemo, useRef, useState } from 'react';
+
+import {
+  createKangurGameLibraryPageDataFromGames,
+  type KangurGameCatalogEntry,
+  type KangurGameLibraryPageData,
+} from '@/features/kangur/games';
 import {
   getKangurCanonicalPublicHref,
   getKangurPageSlug,
@@ -22,6 +28,7 @@ import { useKangurLoginModal } from '@/features/kangur/ui/context/KangurLoginMod
 import { useKangurRouting } from '@/features/kangur/ui/context/KangurRoutingContext';
 import { useKangurGameLibraryPage } from '@/features/kangur/ui/hooks/useKangurGameLibraryPage';
 import { useKangurRouteNavigator } from '@/features/kangur/ui/hooks/useKangurRouteNavigator';
+
 import {
   buildGamesLibraryCatalogFilter,
   getGamesLibrarySearchParams,
@@ -41,6 +48,32 @@ import {
   withGamesLibrarySearchParams,
 } from './GamesLibrary.utils';
 import { GamesLibrarySidebarSection } from './GamesLibrary.components';
+
+type GamesLibraryTranslations = ReturnType<typeof useTranslations>;
+type GamesLibrarySearchParams = ReturnType<typeof useSearchParams>;
+type GamesLibrarySelectedGame = KangurGameCatalogEntry['game'];
+type GamesLibraryAvailableTab = (typeof GAMES_LIBRARY_TABS)[number];
+type GamesLibraryActiveFilterBadge = {
+  accent: 'amber' | 'emerald' | 'rose' | 'sky' | 'slate' | 'violet';
+  id: string;
+  label: string;
+  value: string;
+};
+type GamesLibraryOverviewSection = {
+  id: GamesLibraryTabId;
+  isActive: boolean;
+  node: React.ReactElement;
+};
+type GamesLibraryLoginModalState = {
+  openLoginModal: () => void;
+};
+type GamesLibraryGuestPlayerState = {
+  guestPlayerName: string;
+  setGuestPlayerName: (value: string) => void;
+};
+
+const DEFAULT_GAMES_LIBRARY_PAGE_DATA: KangurGameLibraryPageData =
+  createKangurGameLibraryPageDataFromGames();
 
 const buildGamesLibraryHref = (
   hrefBase: string,
@@ -67,7 +100,219 @@ const buildGamesLibraryHref = (
   return search ? `${withoutQuery}?${search}` : withoutQuery;
 };
 
-export function useGamesLibraryState() {
+const resolveGamesLibraryCanonicalHrefBase = (
+  requestedHref: string | null | undefined
+): string =>
+  requestedHref ?? getKangurCanonicalPublicHref([getKangurPageSlug('GamesLibrary')]);
+
+const resolveGamesLibrarySerializationAuditVisible = (
+  serializationAudit: KangurGameLibraryPageData['serializationAudit']
+): boolean =>
+  serializationAudit.runtimeBearingVariantCount > 0 || serializationAudit.engineCount > 0;
+
+const resolveGamesLibraryHasStructureSections = ({
+  cohortGroups,
+  coverageGroups,
+  drawingGroups,
+  engineGroups,
+  implementationGroups,
+  variantGroups,
+}: {
+  cohortGroups: KangurGameLibraryPageData['overview']['cohortGroups'];
+  coverageGroups: KangurGameLibraryPageData['coverage']['groups'];
+  drawingGroups: KangurGameLibraryPageData['engineOverview']['drawingGroups'];
+  engineGroups: KangurGameLibraryPageData['engineOverview']['engineGroups'];
+  implementationGroups: KangurGameLibraryPageData['engineOverview']['implementationGroups'];
+  variantGroups: KangurGameLibraryPageData['overview']['variantGroups'];
+}): boolean =>
+  implementationGroups.length > 0 ||
+  coverageGroups.length > 0 ||
+  cohortGroups.length > 0 ||
+  drawingGroups.length > 0 ||
+  engineGroups.length > 0 ||
+  variantGroups.length > 0;
+
+const resolveGamesLibraryTabDescription = ({
+  hasActiveFilters,
+  tab,
+  totalGameCount,
+  translations,
+  visibleGameCount,
+}: {
+  hasActiveFilters: boolean;
+  tab: GamesLibraryAvailableTab;
+  totalGameCount: number;
+  translations: GamesLibraryTranslations;
+  visibleGameCount: number;
+}): string => {
+  if (tab.id === 'catalog') {
+    return hasActiveFilters
+      ? translations('filters.summaryFiltered', {
+          visible: visibleGameCount,
+          total: totalGameCount,
+        })
+      : translations('filters.summaryAll', { count: totalGameCount });
+  }
+
+  if (tab.id === 'structure') {
+    return translations('tabs.description');
+  }
+
+  return translations('serializationAuditDescription');
+};
+
+const resolveGamesLibraryOverviewTitle = (
+  tab: GamesLibraryAvailableTab,
+  translations: GamesLibraryTranslations
+): string =>
+  tab.id === 'runtime' ? translations('serializationAuditTitle') : translations(tab.labelKey);
+
+const createGamesLibraryOverviewSection = ({
+  activeTab,
+  hasActiveFilters,
+  tab,
+  totalGameCount,
+  translations,
+  visibleGameCount,
+}: {
+  activeTab: GamesLibraryTabId;
+  hasActiveFilters: boolean;
+  tab: GamesLibraryAvailableTab;
+  totalGameCount: number;
+  translations: GamesLibraryTranslations;
+  visibleGameCount: number;
+}): GamesLibraryOverviewSection => {
+  const isActive = activeTab === tab.id;
+  const description = resolveGamesLibraryTabDescription({
+    hasActiveFilters,
+    tab,
+    totalGameCount,
+    translations,
+    visibleGameCount,
+  });
+
+  return {
+    id: tab.id,
+    isActive,
+    node: React.createElement(
+      GamesLibrarySidebarSection,
+      {
+        dataTestId: `games-library-overview-${tab.id}`,
+        children: React.createElement(
+          'div',
+          {
+            className: 'text-xs [color:var(--kangur-page-muted-text)]',
+          },
+          description
+        ),
+        eyebrow: translations('tabs.eyebrow'),
+        isActive,
+        key: tab.id,
+        title: resolveGamesLibraryOverviewTitle(tab, translations),
+        description,
+      }
+    ),
+  };
+};
+
+const resolveGamesLibrarySubjectBadge = ({
+  filters,
+  locale,
+  translations,
+}: {
+  filters: GamesLibraryFilterState;
+  locale: string;
+  translations: GamesLibraryTranslations;
+}): GamesLibraryActiveFilterBadge | null => {
+  if (filters.subject === 'all') {
+    return null;
+  }
+
+  return {
+    accent: 'sky',
+    id: 'subject',
+    label: translations('filters.subject.label'),
+    value: getLocalizedKangurSubjectLabel(
+      filters.subject,
+      locale,
+      KANGUR_SUBJECTS.find((entry) => entry.id === filters.subject)?.label ??
+        filters.subject
+    ),
+  };
+};
+
+const resolveGamesLibraryAgeGroupBadge = ({
+  filters,
+  locale,
+  translations,
+}: {
+  filters: GamesLibraryFilterState;
+  locale: string;
+  translations: GamesLibraryTranslations;
+}): GamesLibraryActiveFilterBadge | null => {
+  if (filters.ageGroup === 'all') {
+    return null;
+  }
+
+  return {
+    accent: resolveAgeGroupAccent(filters.ageGroup),
+    id: 'ageGroup',
+    label: translations('filters.ageGroup.label'),
+    value: getLocalizedKangurAgeGroupLabel(
+      filters.ageGroup,
+      locale,
+      KANGUR_AGE_GROUPS.find((entry) => entry.id === filters.ageGroup)?.label ??
+        filters.ageGroup
+    ),
+  };
+};
+
+const resolveGamesLibraryMechanicBadge = ({
+  filters,
+  translations,
+}: {
+  filters: GamesLibraryFilterState;
+  translations: GamesLibraryTranslations;
+}): GamesLibraryActiveFilterBadge | null => {
+  if (filters.mechanic === 'all') {
+    return null;
+  }
+
+  return {
+    accent: 'sky',
+    id: 'mechanic',
+    label: translations('filters.mechanic.label'),
+    value: formatMechanicLabel(filters.mechanic, translations),
+  };
+};
+
+const resolveGamesLibrarySurfaceBadge = ({
+  filters,
+  translations,
+}: {
+  filters: GamesLibraryFilterState;
+  translations: GamesLibraryTranslations;
+}): GamesLibraryActiveFilterBadge | null => {
+  if (filters.surface === 'all') {
+    return null;
+  }
+
+  return {
+    accent: resolveSurfaceAccent(filters.surface),
+    id: 'surface',
+    label: translations('filters.surface.label'),
+    value: translations(`surfaces.${filters.surface}`),
+  };
+};
+
+const compactGamesLibraryActiveFilterBadges = (
+  badges: Array<GamesLibraryActiveFilterBadge | null>
+): GamesLibraryActiveFilterBadge[] =>
+  badges.filter(
+    (badge): badge is GamesLibraryActiveFilterBadge => badge !== null
+  );
+
+function useGamesLibraryContextState() {
   const locale = useLocale();
   const translations = useTranslations('KangurGamesLibraryPage');
   const searchParams = useSearchParams();
@@ -79,90 +324,200 @@ export function useGamesLibraryState() {
   const { guestPlayerName, setGuestPlayerName } = useGuestPlayerSafe();
   const tabRefs = useRef<Array<HTMLButtonElement | null>>([]);
 
-  const [filters, setFilters] = useState<GamesLibraryFilterState>(() =>
-    readGamesLibraryFiltersFromSearchParams(searchParams)
-  );
-  const [selectedGame, setSelectedGame] = useState<any | null>(null);
+  return {
+    basePath,
+    guestPlayerName,
+    locale,
+    logout,
+    openLoginModal,
+    replaceRoute,
+    requestedHref,
+    searchParams,
+    setGuestPlayerName,
+    tabRefs,
+    translations,
+    user,
+  };
+}
+
+function useGamesLibraryPageDataState(input: {
+  filters: GamesLibraryFilterState;
+  requestedHref: string | null | undefined;
+  searchParams: GamesLibrarySearchParams;
+}) {
+  const { filters, requestedHref, searchParams } = input;
   const deferredFilters = useDeferredValue(filters);
-  const catalogFilter = useMemo(() => buildGamesLibraryCatalogFilter(deferredFilters), [deferredFilters]);
+  const catalogFilter = useMemo(
+    () => buildGamesLibraryCatalogFilter(deferredFilters),
+    [deferredFilters]
+  );
   const pageDataQuery = useKangurGameLibraryPage(catalogFilter);
-  const pageData = pageDataQuery.data;
-
-  const overview = pageData?.overview;
-  const engineOverview = pageData?.engineOverview;
-  const coverageResource = pageData?.coverage;
-  const coverageGroups = coverageResource?.groups ?? [];
-  const coverageStatusMap = coverageResource?.statusMap ?? {};
-  const engineGroups = engineOverview?.engineGroups ?? [];
-  const drawingGroups = engineOverview?.drawingGroups ?? [];
-  const implementationGroups = engineOverview?.implementationGroups ?? [];
-  const engineCatalogFacets = engineOverview?.facets;
-  const engineCatalogFilterOptions = pageData?.engineFilterOptions;
-  const catalogFacets = pageData?.catalogFacets;
-  
-  const serializationAudit = pageData?.serializationAudit ?? {
-    surfaces: [],
-    runtimeBearingVariantCount: 0,
-    explicitRuntimeVariantCount: 0,
-    compatibilityFallbackVariantCount: 0,
-    duplicatedLegacyVariantCount: 0,
-    missingRuntimeVariantCount: 0,
-    legacyLaunchFallbackGameCount: 0,
-    issues: [],
-    engineCount: 0,
-    sharedRuntimeEngineCount: 0,
-    nonSharedRuntimeEngineCount: 0,
-    allEnginesSharedRuntime: false,
-  };
-
-  const metrics = overview?.metrics ?? {
-    engineCount: 0,
-    lessonLinkedCount: 0,
-    variantCount: 0,
-    visibleGameCount: 0,
-  };
-
-  const groupedGames = overview?.subjectGroups ?? [];
-  const cohortGroups = overview?.cohortGroups ?? [];
-  const variantGroups = overview?.variantGroups ?? [];
-  const gameFilterOptions = catalogFacets?.games ?? [];
-
-  const hasActiveFilters = hasActiveGamesLibraryFilters(filters);
-  const visibleGameCount = metrics.visibleGameCount;
-  const totalGameCount = catalogFacets?.gameCount ?? visibleGameCount;
-  const serializationAuditVisible =
-    serializationAudit.runtimeBearingVariantCount > 0 || serializationAudit.engineCount > 0;
-  
-  const hasStructureSections =
-    implementationGroups.length > 0 ||
-    coverageGroups.length > 0 ||
-    cohortGroups.length > 0 ||
-    drawingGroups.length > 0 ||
-    engineGroups.length > 0 ||
-    variantGroups.length > 0;
-
+  const pageData = pageDataQuery.data ?? DEFAULT_GAMES_LIBRARY_PAGE_DATA;
+  const {
+    catalogFacets,
+    coverage,
+    engineFilterOptions,
+    engineOverview,
+    overview,
+    serializationAudit,
+  } = pageData;
+  const canonicalGamesLibraryHrefBase = resolveGamesLibraryCanonicalHrefBase(requestedHref);
   const currentGamesLibraryHref = withGamesLibrarySearchParams(
-    requestedHref ?? getKangurCanonicalPublicHref([getKangurPageSlug('GamesLibrary')]),
+    canonicalGamesLibraryHrefBase,
     searchParams
   );
-  const canonicalGamesLibraryHrefBase =
-    requestedHref ?? getKangurCanonicalPublicHref([getKangurPageSlug('GamesLibrary')]);
 
+  return {
+    canonicalGamesLibraryHrefBase,
+    catalogFacets,
+    cohortGroups: overview.cohortGroups,
+    coverageGroups: coverage.groups,
+    coverageStatusMap: coverage.statusMap,
+    currentGamesLibraryHref,
+    drawingGroups: engineOverview.drawingGroups,
+    engineCatalogFacets: engineOverview.facets,
+    engineCatalogFilterOptions: engineFilterOptions,
+    engineGroups: engineOverview.engineGroups,
+    engineOverview,
+    gameFilterOptions: catalogFacets.games,
+    groupedGames: overview.subjectGroups,
+    hasActiveFilters: hasActiveGamesLibraryFilters(filters),
+    hasStructureSections: resolveGamesLibraryHasStructureSections({
+      cohortGroups: overview.cohortGroups,
+      coverageGroups: coverage.groups,
+      drawingGroups: engineOverview.drawingGroups,
+      engineGroups: engineOverview.engineGroups,
+      implementationGroups: engineOverview.implementationGroups,
+      variantGroups: overview.variantGroups,
+    }),
+    implementationGroups: engineOverview.implementationGroups,
+    metrics: overview.metrics,
+    overview,
+    pageData,
+    pageDataQuery,
+    serializationAudit,
+    serializationAuditVisible: resolveGamesLibrarySerializationAuditVisible(
+      serializationAudit
+    ),
+    totalGameCount: catalogFacets.gameCount,
+    variantGroups: overview.variantGroups,
+    visibleGameCount: overview.metrics.visibleGameCount,
+  };
+}
+
+function useGamesLibraryActiveFilterBadges(input: {
+  filters: GamesLibraryFilterState;
+  locale: string;
+  translations: GamesLibraryTranslations;
+}): GamesLibraryActiveFilterBadge[] {
+  const { filters, locale, translations } = input;
+
+  return useMemo(() => {
+    return compactGamesLibraryActiveFilterBadges([
+      resolveGamesLibrarySubjectBadge({
+        filters,
+        locale,
+        translations,
+      }),
+      resolveGamesLibraryAgeGroupBadge({
+        filters,
+        locale,
+        translations,
+      }),
+      resolveGamesLibraryMechanicBadge({
+        filters,
+        translations,
+      }),
+      resolveGamesLibrarySurfaceBadge({
+        filters,
+        translations,
+      }),
+    ]);
+  }, [filters, locale, translations]);
+}
+
+function useGamesLibraryOverviewSections(input: {
+  activeTab: GamesLibraryTabId;
+  availableTabs: GamesLibraryAvailableTab[];
+  hasActiveFilters: boolean;
+  totalGameCount: number;
+  translations: GamesLibraryTranslations;
+  visibleGameCount: number;
+}): GamesLibraryOverviewSection[] {
+  const {
+    activeTab,
+    availableTabs,
+    hasActiveFilters,
+    totalGameCount,
+    translations,
+    visibleGameCount,
+  } = input;
+
+  return useMemo(
+    () =>
+      availableTabs
+        .map((tab) =>
+          createGamesLibraryOverviewSection({
+            activeTab,
+            hasActiveFilters,
+            tab,
+            totalGameCount,
+            translations,
+            visibleGameCount,
+          })
+        )
+        .sort((left, right) => Number(right.isActive) - Number(left.isActive)),
+    [
+      activeTab,
+      availableTabs,
+      hasActiveFilters,
+      totalGameCount,
+      translations,
+      visibleGameCount,
+    ]
+  );
+}
+
+function useGamesLibraryTabState(input: {
+  availableStructureState: {
+    hasStructureSections: boolean;
+    serializationAuditVisible: boolean;
+  };
+  canonicalGamesLibraryHrefBase: string;
+  filters: GamesLibraryFilterState;
+  replaceRoute: ReturnType<typeof useKangurRouteNavigator>['replace'];
+  searchParams: GamesLibrarySearchParams;
+  setFilters: React.Dispatch<React.SetStateAction<GamesLibraryFilterState>>;
+  tabRefs: React.MutableRefObject<Array<HTMLButtonElement | null>>;
+}) {
+  const {
+    availableStructureState,
+    canonicalGamesLibraryHrefBase,
+    filters,
+    replaceRoute,
+    searchParams,
+    setFilters,
+    tabRefs,
+  } = input;
+  const requestedTab = readGamesLibraryTabFromSearchParams(searchParams);
   const availableTabIds = useMemo(
     () =>
       resolveGamesLibraryAvailableTabIds({
         engineId: filters.engineId,
-        hasStructureSections,
-        serializationAuditVisible,
+        hasStructureSections: availableStructureState.hasStructureSections,
+        serializationAuditVisible:
+          availableStructureState.serializationAuditVisible,
       }),
-    [filters.engineId, hasStructureSections, serializationAuditVisible]
+    [
+      availableStructureState.hasStructureSections,
+      availableStructureState.serializationAuditVisible,
+      filters.engineId,
+    ]
   );
-
   const availableTabs = useMemo(
     () => GAMES_LIBRARY_TABS.filter((tab) => availableTabIds.includes(tab.id)),
     [availableTabIds]
   );
-  const requestedTab = readGamesLibraryTabFromSearchParams(searchParams);
   const resolvedActiveTab = useMemo(
     () =>
       resolveGamesLibraryActiveTab({
@@ -175,78 +530,23 @@ export function useGamesLibraryState() {
   );
   const [activeTab, setActiveTab] = useState<GamesLibraryTabId>(resolvedActiveTab);
 
-  const activeFilterBadges = useMemo(() => {
-    const badges: Array<{
-      accent: 'amber' | 'emerald' | 'rose' | 'sky' | 'slate' | 'violet';
-      id: string;
-      label: string;
-      value: string;
-    }> = [];
-    const addBadge = (
-      id: string,
-      label: string,
-      value: string,
-      accent: 'amber' | 'emerald' | 'rose' | 'sky' | 'slate' | 'violet' = 'slate'
-    ): void => {
-      badges.push({ accent, id, label, value });
-    };
-
-    if (filters.subject !== 'all') {
-      addBadge(
-        'subject',
-        translations('filters.subject.label'),
-        getLocalizedKangurSubjectLabel(
-          filters.subject,
-          locale,
-          KANGUR_SUBJECTS.find((entry) => entry.id === filters.subject)?.label ?? filters.subject
-        ),
-        'sky'
-      );
-    }
-
-    if (filters.ageGroup !== 'all') {
-      addBadge(
-        'ageGroup',
-        translations('filters.ageGroup.label'),
-        getLocalizedKangurAgeGroupLabel(
-          filters.ageGroup,
-          locale,
-          KANGUR_AGE_GROUPS.find((entry) => entry.id === filters.ageGroup)?.label ?? filters.ageGroup
-        ),
-        resolveAgeGroupAccent(filters.ageGroup)
-      );
-    }
-
-    if (filters.mechanic !== 'all') {
-      addBadge(
-        'mechanic',
-        translations('filters.mechanic.label'),
-        formatMechanicLabel(filters.mechanic, translations),
-        'sky'
-      );
-    }
-
-    if (filters.surface !== 'all') {
-      addBadge(
-        'surface',
-        translations('filters.surface.label'),
-        translations(`surfaces.${filters.surface}`),
-        resolveSurfaceAccent(filters.surface)
-      );
-    }
-
-    // ... (rest of badges)
-    return badges;
-  }, [filters, locale, translations]);
-
   useEffect(() => {
     setActiveTab(resolvedActiveTab);
   }, [resolvedActiveTab]);
 
   const replaceGamesLibraryRoute = useCallback(
-    (nextFilters: GamesLibraryFilterState, nextTab: GamesLibraryTabId, sourceId: string) => {
+    (
+      nextFilters: GamesLibraryFilterState,
+      nextTab: GamesLibraryTabId,
+      sourceId: string
+    ) => {
       replaceRoute(
-        buildGamesLibraryHref(canonicalGamesLibraryHrefBase, searchParams, nextFilters, nextTab),
+        buildGamesLibraryHref(
+          canonicalGamesLibraryHrefBase,
+          searchParams,
+          nextFilters,
+          nextTab
+        ),
         {
           pageKey: 'GamesLibrary',
           scroll: false,
@@ -261,8 +561,9 @@ export function useGamesLibraryState() {
     (nextFilters: GamesLibraryFilterState, sourceId: string) => {
       const nextAvailableTabIds = resolveGamesLibraryAvailableTabIds({
         engineId: nextFilters.engineId,
-        hasStructureSections,
-        serializationAuditVisible,
+        hasStructureSections: availableStructureState.hasStructureSections,
+        serializationAuditVisible:
+          availableStructureState.serializationAuditVisible,
       });
       const nextTab = resolveGamesLibraryActiveTab({
         availableTabIds: nextAvailableTabIds,
@@ -277,9 +578,10 @@ export function useGamesLibraryState() {
     },
     [
       activeTab,
-      hasStructureSections,
+      availableStructureState.hasStructureSections,
+      availableStructureState.serializationAuditVisible,
       replaceGamesLibraryRoute,
-      serializationAuditVisible,
+      setFilters,
     ]
   );
 
@@ -306,7 +608,11 @@ export function useGamesLibraryState() {
       }
 
       setActiveTab(nextTab);
-      replaceGamesLibraryRoute(filters, nextTab, `kangur-games-library:tab:${nextTab}`);
+      replaceGamesLibraryRoute(
+        filters,
+        nextTab,
+        `kangur-games-library:tab:${nextTab}`
+      );
     },
     [availableTabIds, filters, replaceGamesLibraryRoute]
   );
@@ -337,139 +643,76 @@ export function useGamesLibraryState() {
       tabRefs.current[nextIndex]?.focus();
       handleTabChange(nextTab.id);
     },
-    [availableTabs, handleTabChange]
+    [availableTabs, handleTabChange, tabRefs]
   );
 
-  const activeTabSummaryDescription = useMemo(() => {
-    switch (activeTab) {
-      case 'runtime':
-        return translations('serializationAuditDescription');
-      case 'structure':
-        return translations('tabs.description');
-      case 'catalog':
-      default:
-        return hasActiveFilters
-          ? translations('filters.summaryFiltered', {
-              visible: visibleGameCount,
-              total: totalGameCount,
-            })
-          : translations('filters.summaryAll', { count: totalGameCount });
-    }
-  }, [
-    activeTab,
-    hasActiveFilters,
-    totalGameCount,
-    translations,
-    visibleGameCount,
-  ]);
-
-  const orderedOverviewSections = useMemo(() => {
-    const overviewSections = availableTabs.map((tab) => {
-      const isActive = activeTab === tab.id;
-      const title =
-        tab.id === 'runtime'
-          ? translations('serializationAuditTitle')
-          : translations(tab.labelKey);
-      const description =
-        tab.id === 'catalog'
-          ? hasActiveFilters
-            ? translations('filters.summaryFiltered', {
-                visible: visibleGameCount,
-                total: totalGameCount,
-              })
-            : translations('filters.summaryAll', { count: totalGameCount })
-          : tab.id === 'structure'
-            ? translations('tabs.description')
-            : translations('serializationAuditDescription');
-
-      return {
-        id: tab.id,
-        isActive,
-        node: React.createElement(
-          GamesLibrarySidebarSection,
-          {
-            dataTestId: `games-library-overview-${tab.id}`,
-            children: React.createElement('div', {
-              className: 'text-xs [color:var(--kangur-page-muted-text)]',
-            }, description),
-            eyebrow: translations('tabs.eyebrow'),
-            isActive,
-            key: tab.id,
-            title,
-            description,
-          }
-        ),
-      };
-    });
-
-    return overviewSections.sort((left, right) => Number(right.isActive) - Number(left.isActive));
-  }, [
-    activeTab,
-    availableTabs,
-    hasActiveFilters,
-    totalGameCount,
-    translations,
-    visibleGameCount,
-  ]);
-
   return {
-    locale,
-    translations,
-    searchParams,
-    replaceRoute,
-    basePath,
-    requestedHref,
-    user,
-    logout,
-    openLoginModal,
-    guestPlayerName,
-    setGuestPlayerName,
-    filters,
-    setFilters,
-    pageDataQuery,
-    pageData,
-    overview,
-    engineOverview,
-    coverageGroups,
-    coverageStatusMap,
-    engineGroups,
-    drawingGroups,
-    implementationGroups,
-    engineCatalogFacets,
-    engineCatalogFilterOptions,
-    catalogFacets,
-    serializationAudit,
-    metrics,
-    groupedGames,
-    cohortGroups,
-    variantGroups,
-    gameFilterOptions,
-    hasActiveFilters,
-    visibleGameCount,
-    totalGameCount,
-    serializationAuditVisible,
-    hasStructureSections,
-    currentGamesLibraryHref,
+    activeTab,
+    applyFilters,
     availableTabIds,
     availableTabs,
-    activeFilterBadges,
-    activeTab,
-    setActiveTab,
+    handlePointerTabMouseDown,
     handleTabChange,
     handleTabKeyDown,
-    handlePointerTabMouseDown,
-    tabRefs,
-    selectedGame,
-    setSelectedGame,
+    setActiveTab,
     updateFilter,
-    applyFilters,
-    activeTabSummaryDescription,
-    orderedOverviewSections,
   };
 }
 
-// Helper to avoid issues if contexts are not yet available or optional
-function useLoginModalSafe() {
+export function useGamesLibraryState() {
+  const context = useGamesLibraryContextState();
+  const [filters, setFilters] = useState<GamesLibraryFilterState>(() =>
+    readGamesLibraryFiltersFromSearchParams(context.searchParams)
+  );
+  const [selectedGame, setSelectedGame] = useState<GamesLibrarySelectedGame | null>(
+    null
+  );
+  const pageDataState = useGamesLibraryPageDataState({
+    filters,
+    requestedHref: context.requestedHref,
+    searchParams: context.searchParams,
+  });
+  const tabState = useGamesLibraryTabState({
+    availableStructureState: {
+      hasStructureSections: pageDataState.hasStructureSections,
+      serializationAuditVisible: pageDataState.serializationAuditVisible,
+    },
+    canonicalGamesLibraryHrefBase: pageDataState.canonicalGamesLibraryHrefBase,
+    filters,
+    replaceRoute: context.replaceRoute,
+    searchParams: context.searchParams,
+    setFilters,
+    tabRefs: context.tabRefs,
+  });
+  const activeFilterBadges = useGamesLibraryActiveFilterBadges({
+    filters,
+    locale: context.locale,
+    translations: context.translations,
+  });
+  const orderedOverviewSections = useGamesLibraryOverviewSections({
+    activeTab: tabState.activeTab,
+    availableTabs: tabState.availableTabs,
+    hasActiveFilters: pageDataState.hasActiveFilters,
+    totalGameCount: pageDataState.totalGameCount,
+    translations: context.translations,
+    visibleGameCount: pageDataState.visibleGameCount,
+  });
+
+  return {
+    ...context,
+    ...pageDataState,
+    ...tabState,
+    activeFilterBadges,
+    filters,
+    orderedOverviewSections,
+    selectedGame,
+    setActiveTab: tabState.setActiveTab,
+    setFilters,
+    setSelectedGame,
+  };
+}
+
+function useLoginModalSafe(): GamesLibraryLoginModalState {
   try {
     return useKangurLoginModal();
   } catch {
@@ -477,7 +720,7 @@ function useLoginModalSafe() {
   }
 }
 
-function useGuestPlayerSafe() {
+function useGuestPlayerSafe(): GamesLibraryGuestPlayerState {
   try {
     return useKangurGuestPlayer();
   } catch {

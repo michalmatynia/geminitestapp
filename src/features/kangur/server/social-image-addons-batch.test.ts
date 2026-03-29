@@ -421,4 +421,62 @@ describe('createKangurSocialImageAddonsBatch', () => {
     expect(result.failures).toHaveLength(1);
     expect(result.failures[0]?.reason).toBe('artifact_read_failed');
   });
+
+  it('supports programmable Playwright routes, custom script, and persona selection', async () => {
+    mocks.enqueuePlaywrightNodeRunMock.mockResolvedValue(
+      makeCompletedRun(['route-1'])
+    );
+
+    const result = await createKangurSocialImageAddonsBatch({
+      baseUrl: 'https://kangur.app',
+      presetIds: [],
+      playwrightPersonaId: 'persona-1',
+      playwrightScript: 'return input.captures;',
+      playwrightRoutes: [
+        {
+          id: 'route-1',
+          title: 'Pricing page',
+          path: '/pricing',
+          description: 'Capture the pricing hero.',
+          selector: '[data-pricing]',
+          waitForMs: 200,
+          waitForSelectorMs: 3000,
+        },
+      ],
+    });
+
+    expect(mocks.enqueuePlaywrightNodeRunMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        request: expect.objectContaining({
+          personaId: 'persona-1',
+          script: 'return input.captures;',
+          input: {
+            captures: [
+              {
+                id: 'route-1',
+                title: 'Pricing page',
+                url: 'https://kangur.app/pricing?kangurCapture=social-batch',
+                selector: '[data-pricing]',
+                waitForMs: 200,
+                waitForSelectorMs: 3000,
+              },
+            ],
+          },
+        }),
+      })
+    );
+    expect(result.usedPresetCount).toBe(1);
+    expect(result.usedPresetIds).toEqual(['route-1']);
+    expect(result.addons[0]).toEqual(
+      expect.objectContaining({
+        title: 'Pricing page',
+        description: 'Capture the pricing hero.',
+        sourceLabel: 'Programmable Playwright capture',
+        presetId: null,
+        playwrightPersonaId: 'persona-1',
+        playwrightCaptureRouteId: 'route-1',
+        playwrightCaptureRouteTitle: 'Pricing page',
+      })
+    );
+  });
 });

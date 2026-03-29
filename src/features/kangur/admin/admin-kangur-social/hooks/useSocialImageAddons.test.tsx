@@ -129,7 +129,10 @@ describe('useSocialImageAddons', () => {
         batchCaptureBaseUrl: 'https://example.com',
         batchCapturePresetIds: ['preset-1'],
         batchCapturePresetLimit: 2,
-        buildSocialContext: () => ({ postId: 'post-1' }),
+        buildSocialContext: (overrides?: Record<string, unknown>) => ({
+          postId: 'post-1',
+          ...overrides,
+        }),
       })
     );
 
@@ -154,5 +157,69 @@ describe('useSocialImageAddons', () => {
     expect(toastMock).toHaveBeenCalledWith('Batch capture completed (1 add-on, 0 failures)', {
       variant: 'success',
     });
+  });
+
+  it('forwards programmable Playwright capture options to the batch API', async () => {
+    const { result } = renderHook(() =>
+      useSocialImageAddons({
+        addonForm: emptyAddonForm,
+        setAddonForm: vi.fn(),
+        batchCaptureBaseUrl: 'https://example.com',
+        batchCapturePresetIds: ['preset-1'],
+        batchCapturePresetLimit: 2,
+        buildSocialContext: (overrides?: Record<string, unknown>) => ({
+          postId: 'post-1',
+          ...overrides,
+        }),
+      })
+    );
+
+    await act(async () => {
+      await result.current.runBatchCapture({
+        baseUrl: 'https://preview.example.com',
+        presetIds: [],
+        presetLimit: null,
+        playwrightPersonaId: 'persona-1',
+        playwrightScript: 'return input.captures;',
+        playwrightRoutes: [
+          {
+            id: 'route-1',
+            title: 'Pricing',
+            path: '/pricing',
+            description: '',
+            selector: '',
+            waitForMs: 0,
+            waitForSelectorMs: 10000,
+          },
+        ],
+      });
+    });
+
+    expect(batchCaptureMutateAsyncMock).toHaveBeenCalledWith({
+      baseUrl: 'https://preview.example.com',
+      presetIds: [],
+      presetLimit: null,
+      playwrightPersonaId: 'persona-1',
+      playwrightScript: 'return input.captures;',
+      playwrightRoutes: [
+        {
+          id: 'route-1',
+          title: 'Pricing',
+          path: '/pricing',
+          description: '',
+          selector: '',
+          waitForMs: 0,
+          waitForSelectorMs: 10000,
+        },
+      ],
+    });
+    expect(trackKangurClientEventMock).toHaveBeenCalledWith(
+      'kangur_social_batch_capture_attempt',
+      expect.objectContaining({
+        programmableRouteCount: 1,
+        playwrightPersonaId: 'persona-1',
+        isProgrammableCapture: true,
+      })
+    );
   });
 });

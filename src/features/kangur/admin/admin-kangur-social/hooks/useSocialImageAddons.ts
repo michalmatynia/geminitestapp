@@ -110,17 +110,34 @@ const resolveBatchCaptureRequest = ({
 }) => {
   const baseUrl = (options?.baseUrl ?? deps.batchCaptureBaseUrl).trim();
   const presetIds = options?.presetIds ?? deps.batchCapturePresetIds;
-  const presetLimit = options?.presetLimit ?? deps.batchCapturePresetLimit;
+  const presetLimit =
+    options && Object.prototype.hasOwnProperty.call(options, 'presetLimit')
+      ? options.presetLimit ?? null
+      : deps.batchCapturePresetLimit;
   const playwrightRoutes = options?.playwrightRoutes;
   validateBatchCaptureRequest({ toast, baseUrl, presetIds, playwrightRoutes });
-  return {
+  const request: {
+    baseUrl: string;
+    presetIds: string[];
+    presetLimit: number | null;
+    playwrightPersonaId?: string | null;
+    playwrightScript?: string;
+    playwrightRoutes?: KangurSocialProgrammableCaptureRoute[];
+  } = {
     baseUrl,
     presetIds,
     presetLimit,
-    playwrightPersonaId: options?.playwrightPersonaId ?? null,
-    playwrightScript: options?.playwrightScript,
-    playwrightRoutes,
   };
+  if (options && Object.prototype.hasOwnProperty.call(options, 'playwrightPersonaId')) {
+    request.playwrightPersonaId = options.playwrightPersonaId ?? null;
+  }
+  if (options && Object.prototype.hasOwnProperty.call(options, 'playwrightScript')) {
+    request.playwrightScript = options.playwrightScript;
+  }
+  if (options && Object.prototype.hasOwnProperty.call(options, 'playwrightRoutes')) {
+    request.playwrightRoutes = playwrightRoutes;
+  }
+  return request;
 };
 
 const handleBatchCaptureSuccess = ({

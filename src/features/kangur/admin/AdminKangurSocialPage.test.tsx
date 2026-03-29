@@ -231,6 +231,14 @@ vi.mock('./admin-kangur-social/SocialPost.VisualAnalysisModal', () => ({
   ),
 }));
 
+vi.mock('./admin-kangur-social/SocialPost.PlaywrightCaptureModal', () => ({
+  SocialPostPlaywrightCaptureModal: () => (
+    <div data-testid='social-post-playwright-capture-modal'>
+      social-post-playwright-capture-modal
+    </div>
+  ),
+}));
+
 vi.mock('./admin-kangur-social/KangurSocialPipelineQueuePanel', () => ({
   KangurSocialPipelineQueuePanel: () => (
     <div data-testid='kangur-social-pipeline-queue'>kangur-social-pipeline-queue</div>

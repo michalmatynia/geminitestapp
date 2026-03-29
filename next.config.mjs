@@ -62,7 +62,6 @@ const optimizePackageImports = [
   '@react-three/fiber',
   '@react-three/postprocessing',
   'postprocessing',
-  'papaparse',
   'gsap',
   'zod',
   'framer-motion',

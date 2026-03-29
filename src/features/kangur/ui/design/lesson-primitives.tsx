@@ -227,20 +227,20 @@ export function KangurLessonVisual({
       >
         <div className='min-w-0'>
           {children}
-          {caption && (
+          {caption ? (
             <KangurLessonVisualCaptionSlot
               caption={caption}
               className={resolvedCaptionClassName}
             />
-          )}
+          ) : null}
         </div>
-        {supportingContent && (
+        {hasSupportingContent ? (
           <KangurLessonVisualSupportingSlot
             accent={accent}
             supportingClassName={supportingClassName}
             supportingContent={supportingContent}
           />
-        )}
+        ) : null}
       </div>
     </div>
   );

@@ -96,7 +96,6 @@ export function AdminKangurSocialSettingsModal({
     setProjectUrl,
     socialDraftBlockedReason,
     socialVisionWarning,
-    handleOpenProgrammablePlaywrightModal,
     handleOpenProgrammablePlaywrightModalFromDefaults,
     handleResetProgrammableCaptureDefaults,
     hasSavedProgrammableCaptureDefaults,

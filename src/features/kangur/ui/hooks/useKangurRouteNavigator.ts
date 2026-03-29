@@ -351,6 +351,17 @@ export function useKangurRouteNavigator(): {
     [locale, pathname, publicOwner]
   );
 
+  const prefetchManagedHref = useCallback(
+    (href: string | null): void => {
+      if (!href || !isManagedLocalHref(href) || typeof router.prefetch !== 'function') {
+        return;
+      }
+
+      router.prefetch(href);
+    },
+    [router]
+  );
+
   const startManagedTransition = useCallback(
     (
       href: string | null,
@@ -446,6 +457,7 @@ export function useKangurRouteNavigator(): {
   const push = useCallback(
     (href: string, options: KangurRouteNavigationOptions = {}): void => {
       const resolvedHref = resolveManagedHref(href, options.transitionKind);
+      prefetchManagedHref(resolvedHref);
       const transitionResult = startManagedTransition(resolvedHref, options);
       if (!transitionResult.started) {
         return;
@@ -461,12 +473,19 @@ export function useKangurRouteNavigator(): {
       }
       performPush();
     },
-    [resolveManagedHref, router, scheduleManagedNavigation, startManagedTransition]
+    [
+      prefetchManagedHref,
+      resolveManagedHref,
+      router,
+      scheduleManagedNavigation,
+      startManagedTransition,
+    ]
   );
 
   const replace = useCallback(
     (href: string, options: KangurRouteNavigationOptions = {}): void => {
       const resolvedHref = resolveManagedHref(href, options.transitionKind);
+      prefetchManagedHref(resolvedHref);
       const transitionResult = startManagedTransition(resolvedHref, options);
       if (!transitionResult.started) {
         return;
@@ -482,7 +501,13 @@ export function useKangurRouteNavigator(): {
       }
       performReplace();
     },
-    [resolveManagedHref, router, scheduleManagedNavigation, startManagedTransition]
+    [
+      prefetchManagedHref,
+      resolveManagedHref,
+      router,
+      scheduleManagedNavigation,
+      startManagedTransition,
+    ]
   );
 
   const back = useCallback(

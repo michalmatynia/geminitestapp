@@ -58,3 +58,11 @@ export const KANGUR_MAIN_PAGE = 'Game';
 export const preloadKangurPage = (pageKey: keyof typeof kangurPageLoaders): void => {
   void kangurPageLoaders[pageKey]();
 };
+
+// Eagerly preload the main page module (Game) so it's available before the
+// boot skeleton dismisses. This preserves code splitting while eliminating
+// the loading flash that would otherwise occur when the dynamic() fallback
+// is swapped for the real page content.
+if (typeof window !== 'undefined') {
+  void kangurPageLoaders[KANGUR_MAIN_PAGE]();
+}

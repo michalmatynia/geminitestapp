@@ -510,6 +510,51 @@ describe('KangurRouteTransitionProvider', () => {
     expect(screen.getByTestId('route-transition-revealing')).toHaveTextContent('true');
   });
 
+  it('reveals standard navigation transitions sooner when page ready is delayed', async () => {
+    const { rerender } = renderRouteTransitionHarness({
+      pageKey: 'Game',
+      requestedPath: '/kangur',
+      requestedHref: '/kangur',
+      targetHref: '/kangur/lessons',
+      targetPageKey: 'Lessons',
+    });
+
+    await act(async () => {
+      fireEvent.click(screen.getByRole('button', { name: 'Start transition' }));
+    });
+
+    await act(async () => {
+      rerender(
+        <KangurRoutingProvider
+          basePath='/kangur'
+          pageKey='Lessons'
+          requestedPath='/kangur/lessons'
+          requestedHref='/kangur/lessons'
+        >
+          <KangurRouteTransitionProvider>
+            <RouteTransitionProbe targetHref='/kangur/lessons' targetPageKey='Lessons' />
+          </KangurRouteTransitionProvider>
+        </KangurRoutingProvider>
+      );
+    });
+
+    expect(screen.getByTestId('route-transition-waiting')).toHaveTextContent('true');
+
+    act(() => {
+      vi.advanceTimersByTime(1_199);
+    });
+
+    expect(screen.getByTestId('route-transition-waiting')).toHaveTextContent('true');
+    expect(screen.getByTestId('route-transition-revealing')).toHaveTextContent('false');
+
+    act(() => {
+      vi.advanceTimersByTime(1);
+    });
+
+    expect(screen.getByTestId('route-transition-waiting')).toHaveTextContent('false');
+    expect(screen.getByTestId('route-transition-revealing')).toHaveTextContent('true');
+  });
+
   it('uses a shorter reveal window for locale-switch transitions', async () => {
     const { rerender } = renderRouteTransitionHarness({
       pageKey: 'Lessons',

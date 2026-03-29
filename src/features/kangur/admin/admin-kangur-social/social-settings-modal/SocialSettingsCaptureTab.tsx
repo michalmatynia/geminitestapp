@@ -19,6 +19,12 @@ import type { AddonFormState } from '../AdminKangurSocialPage.Constants';
 import { usePlaywrightPersonas } from '@/shared/hooks/usePlaywrightPersonas';
 import { SocialJobStatusPill } from '../SocialJobStatusPill';
 
+const isSocialRuntimeJobInFlight = (status: string | null | undefined): boolean => {
+  const normalized = status?.trim().toLowerCase();
+  if (!normalized) return false;
+  return normalized !== 'completed' && normalized !== 'failed';
+};
+
 export function SocialSettingsCaptureTab({
   addonForm,
   setAddonForm,
@@ -158,6 +164,13 @@ export function SocialSettingsCaptureTab({
   ]
     .filter((value): value is string => Boolean(value))
     .join(' · ');
+  const hasBlockingRuntimeJob =
+    isSocialRuntimeJobInFlight(currentVisualAnalysisJob?.status) ||
+    isSocialRuntimeJobInFlight(currentGenerationJob?.status) ||
+    isSocialRuntimeJobInFlight(currentPipelineJob?.status);
+  const captureActionTitle = hasBlockingRuntimeJob
+    ? 'Wait for the current Social runtime job to finish.'
+    : undefined;
 
   return (
     <div className='space-y-4'>
@@ -248,7 +261,13 @@ export function SocialSettingsCaptureTab({
             type='button'
             size='sm'
             onClick={handleCreateAddon}
-            disabled={!addonForm.title.trim() || !addonForm.sourceUrl.trim() || createAddonMutationPending}
+            disabled={
+              !addonForm.title.trim() ||
+              !addonForm.sourceUrl.trim() ||
+              createAddonMutationPending ||
+              hasBlockingRuntimeJob
+            }
+            title={captureActionTitle}
           >
             {createAddonMutationPending ? 'Creating...' : 'Create single add-on'}
           </Button>
@@ -409,7 +428,17 @@ export function SocialSettingsCaptureTab({
             </div>
           </div>
           <div className='flex flex-wrap items-center gap-3'>
-            <Button type='button' size='sm' onClick={handleBatchCapture} disabled={batchCapturePresetIds.length === 0 || batchCaptureMutationPending}>
+            <Button
+              type='button'
+              size='sm'
+              onClick={handleBatchCapture}
+              disabled={
+                batchCapturePresetIds.length === 0 ||
+                batchCaptureMutationPending ||
+                hasBlockingRuntimeJob
+              }
+              title={captureActionTitle}
+            >
               {batchCaptureMutationPending ? 'Capturing...' : 'Launch batch capture'}
             </Button>
             <div className='text-xs text-muted-foreground'>{batchCaptureLimitSummary}</div>

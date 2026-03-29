@@ -114,7 +114,7 @@ describe('KangurFeatureApp auth and theme loading', () => {
     expect(screen.getByTestId('kangur-route-content')).toBeInTheDocument();
   });
 
-  it('does not render the app loader over visible route content during theme loading', () => {
+  it('does not render the app loader over visible route content during theme loading', async () => {
     settingsStoreStateMock.mockReturnValue({
       map: new Map(),
       isLoading: true,
@@ -128,6 +128,11 @@ describe('KangurFeatureApp auth and theme loading', () => {
 
     render(<KangurFeatureApp />);
 
+    // Advance past the initial mount settling frame
+    await act(async () => {
+      vi.runAllTimers();
+    });
+
     expect(screen.queryByTestId('kangur-app-loader')).toBeNull();
     expect(screen.queryByTestId('kangur-top-navigation-skeleton')).toBeNull();
     expect(screen.getByTestId('kangur-top-navigation-host')).toBeInTheDocument();
@@ -135,7 +140,7 @@ describe('KangurFeatureApp auth and theme loading', () => {
     expect(screen.getByTestId('kangur-page-lessons')).toBeInTheDocument();
   });
 
-  it('renders the navbar skeleton instead of the app loader when top navigation is still unregistered during theme loading', () => {
+  it('renders the navbar skeleton instead of the app loader when top navigation is still unregistered during theme loading', async () => {
     topNavigationHostVisibleMock.mockReturnValue(false);
     settingsStoreStateMock.mockReturnValue({
       map: new Map(),
@@ -149,6 +154,11 @@ describe('KangurFeatureApp auth and theme loading', () => {
     });
 
     render(<KangurFeatureApp />);
+
+    // Advance past the initial mount settling frame
+    await act(async () => {
+      vi.runAllTimers();
+    });
 
     expect(screen.getByTestId('kangur-top-navigation-skeleton')).toBeInTheDocument();
     expect(screen.queryByTestId('kangur-top-navigation-host')).toBeNull();
@@ -241,6 +251,11 @@ describe('KangurFeatureApp auth and theme loading', () => {
     topNavigationHostVisibleMock.mockReturnValue(false);
 
     const { rerender } = render(<KangurFeatureApp />);
+
+    // Advance past the initial mount settling frame so boot loader can appear
+    await act(async () => {
+      vi.runAllTimers();
+    });
 
     // Boot loader should be visible: theme loading + no visible route content
     expect(screen.getByTestId('kangur-app-loader')).toBeInTheDocument();

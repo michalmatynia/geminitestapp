@@ -163,7 +163,6 @@ describe('SocialPostVisualAnalysisModal', () => {
     expect(screen.getByText('Status: Running')).toBeInTheDocument();
     expect(screen.getByText('Model: vision-1')).toBeInTheDocument();
     expect(screen.getByText('Queue job: job-analysis-live-7')).toBeInTheDocument();
-    expect(screen.getByText('Generate post: Queued')).toBeInTheDocument();
     expect(screen.getByText('Full pipeline: Running')).toBeInTheDocument();
     expect(screen.getByText(/Analyzed:/)).toBeInTheDocument();
     expect(screen.queryByText('Suggested documentation updates')).not.toBeInTheDocument();

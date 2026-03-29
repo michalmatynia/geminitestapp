@@ -40,6 +40,12 @@ type SocialPostStatusFilter = (typeof STATUS_FILTER_OPTIONS)[number]['value'];
 const isSocialPostStatusFilter = (value: string): value is SocialPostStatusFilter =>
   STATUS_FILTER_OPTIONS.some((option) => option.value === value);
 
+const isSocialRuntimeJobInFlight = (status: string | null | undefined): boolean => {
+  const normalized = status?.trim().toLowerCase();
+  if (!normalized) return false;
+  return normalized !== 'completed' && normalized !== 'failed';
+};
+
 const buildSearchText = (post: KangurSocialPost): string =>
   [
     post.titlePl,
@@ -364,15 +370,28 @@ export function SocialPostList(): React.JSX.Element {
                 const canPublish = post.status === 'draft' || post.status === 'failed';
                 const publishPending = publishingPostId === post.id;
                 const unpublishPending = unpublishingPostId === post.id;
+                const hasBlockingRuntimeJob =
+                  isActive &&
+                  (isSocialRuntimeJobInFlight(currentGenerationJob?.status) ||
+                    isSocialRuntimeJobInFlight(currentPipelineJob?.status));
                 const publishLabel = isPublished
-                  ? 'LinkedIn publication details'
-                  : 'Publish options';
+                  ? hasBlockingRuntimeJob
+                    ? 'Wait for the current Social runtime job to finish.'
+                    : 'LinkedIn publication details'
+                  : hasBlockingRuntimeJob
+                    ? 'Wait for the current Social runtime job to finish.'
+                    : 'Publish options';
                 const button = (
                   <Button
                     type='button'
                     variant='ghost'
                     size='icon'
-                    disabled={publishPending || unpublishPending || (!isPublished && !canPublish)}
+                    disabled={
+                      publishPending ||
+                      unpublishPending ||
+                      hasBlockingRuntimeJob ||
+                      (!isPublished && !canPublish)
+                    }
                     aria-label={publishLabel}
                     title={publishLabel}
                     className={cn(
@@ -402,7 +421,12 @@ export function SocialPostList(): React.JSX.Element {
                           onSelect={() => {
                             void handleQuickPublishPost(post.id, 'published');
                           }}
-                          disabled={publishPending || unpublishPending || !canPublish}
+                          disabled={
+                            publishPending ||
+                            unpublishPending ||
+                            hasBlockingRuntimeJob ||
+                            !canPublish
+                          }
                         >
                           Publish to LinkedIn
                         </DropdownMenuItem>
@@ -411,7 +435,12 @@ export function SocialPostList(): React.JSX.Element {
                           onSelect={() => {
                             void handleQuickPublishPost(post.id, 'published', { skipImages: true });
                           }}
-                          disabled={publishPending || unpublishPending || !canPublish}
+                          disabled={
+                            publishPending ||
+                            unpublishPending ||
+                            hasBlockingRuntimeJob ||
+                            !canPublish
+                          }
                         >
                           Publish without images
                         </DropdownMenuItem>
@@ -452,14 +481,14 @@ export function SocialPostList(): React.JSX.Element {
                         onSelect={() => {
                           void handleUnpublishPost(post.id, { keepLocal: true });
                         }}
-                        disabled={unpublishPending || !post.linkedinPostId}
+                        disabled={unpublishPending || hasBlockingRuntimeJob || !post.linkedinPostId}
                       >
                         Unpublish from LinkedIn
                       </DropdownMenuItem>
                       <DropdownMenuItem
                         onSelect={() => setPostToUnpublish(post)}
                         className='text-destructive focus:text-destructive'
-                        disabled={unpublishPending || !post.linkedinPostId}
+                        disabled={unpublishPending || hasBlockingRuntimeJob || !post.linkedinPostId}
                       >
                         Unpublish and delete
                       </DropdownMenuItem>

@@ -23,6 +23,12 @@ const PIPELINE_PROGRESS_VALUE_BY_STEP = {
   previewing: 96,
 } as const;
 
+const isSocialRuntimeJobInFlight = (status: string | null | undefined): boolean => {
+  const normalized = status?.trim().toLowerCase();
+  if (!normalized) return false;
+  return normalized !== 'completed' && normalized !== 'failed';
+};
+
 export function SocialPostPipeline(): React.JSX.Element {
   const {
     activePost,
@@ -85,6 +91,10 @@ export function SocialPostPipeline(): React.JSX.Element {
   const previousPipelineStepRef = React.useRef<PipelineStep>('idle');
   const isFreshCaptureInProgress =
     pipelineStep === 'capturing' && pipelineProgress?.captureMode === 'fresh_capture';
+  const hasBlockingRuntimeJob =
+    isSocialRuntimeJobInFlight(currentVisualAnalysisJob?.status) ||
+    isSocialRuntimeJobInFlight(currentGenerationJob?.status) ||
+    isSocialRuntimeJobInFlight(currentPipelineJob?.status);
   const captureCompletedCount = pipelineProgress?.captureCompletedCount ?? 0;
   const captureRemainingCount = pipelineProgress?.captureRemainingCount ?? 0;
   const captureTotalCount = pipelineProgress?.captureTotalCount ?? 0;
@@ -152,8 +162,8 @@ export function SocialPostPipeline(): React.JSX.Element {
     ? 'Create or select a draft before running the pipeline.'
     : !canGenerateSocialDraft
       ? socialDraftBlockedReason ?? 'Choose a Social post model first.'
-      : isPipelineBusy
-        ? 'Wait for the current pipeline run to finish.'
+      : isPipelineBusy || hasBlockingRuntimeJob
+        ? 'Wait for the current Social runtime job to finish.'
         : 'Generate a post from the current draft and selected visuals.';
   const visualAnalysisButtonTitle = !hasActivePost
     ? 'Create or select a draft before running image analysis.'
@@ -180,15 +190,15 @@ export function SocialPostPipeline(): React.JSX.Element {
     ? 'Create or select a draft before running fresh capture.'
     : !canRunFreshCapture
       ? socialBatchCaptureBlockedReason ?? 'Configure fresh capture before using this flow.'
-      : isPipelineBusy
-        ? 'Wait for the current pipeline run to finish.'
+      : isPipelineBusy || hasBlockingRuntimeJob
+        ? 'Wait for the current Social runtime job to finish.'
         : 'Capture fresh screenshots first, then generate a post from them.';
   const captureImagesOnlyButtonTitle = !hasActivePost
     ? 'Create or select a draft before capturing images.'
     : !canCaptureImagesOnly
       ? socialBatchCaptureBlockedReason ?? 'Configure fresh capture before capturing images.'
-      : captureOnlyPending || isPipelineBusy
-        ? 'Wait for the current capture or pipeline run to finish.'
+      : captureOnlyPending || isPipelineBusy || hasBlockingRuntimeJob
+        ? 'Wait for the current Social runtime job to finish.'
         : 'Capture screenshots and attach them to the active draft without generating copy.';
   const programmableCaptureButtonTitle = !hasActivePost
     ? 'Create or select a draft before opening programmable Playwright capture.'
@@ -238,7 +248,7 @@ export function SocialPostPipeline(): React.JSX.Element {
               type='button'
               size='sm'
               onClick={() => void handleRunFullPipeline()}
-              disabled={!canRunTextPipeline || isPipelineBusy}
+              disabled={!canRunTextPipeline || isPipelineBusy || hasBlockingRuntimeJob}
               title={textPipelineButtonTitle}
             >
               Run full pipeline
@@ -258,7 +268,7 @@ export function SocialPostPipeline(): React.JSX.Element {
               variant='outline'
               size='sm'
               onClick={() => void handleRunFullPipelineWithFreshCapture()}
-              disabled={!canRunFreshCapture || isPipelineBusy}
+              disabled={!canRunFreshCapture || isPipelineBusy || hasBlockingRuntimeJob}
               title={freshCaptureButtonTitle}
             >
               Fresh capture & pipeline
@@ -278,7 +288,12 @@ export function SocialPostPipeline(): React.JSX.Element {
               variant='ghost'
               size='sm'
               onClick={() => void handleCaptureImagesOnly()}
-              disabled={!canCaptureImagesOnly || captureOnlyPending || isPipelineBusy}
+              disabled={
+                !canCaptureImagesOnly ||
+                captureOnlyPending ||
+                isPipelineBusy ||
+                hasBlockingRuntimeJob
+              }
               title={captureImagesOnlyButtonTitle}
             >
               Capture images only

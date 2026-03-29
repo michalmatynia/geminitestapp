@@ -23,6 +23,32 @@ type KangurDrawingHistoryActionsProps = {
   variant?: KangurButtonProps['variant'];
 };
 
+type ResolvedKangurDrawingHistoryActionsProps = Omit<
+  KangurDrawingHistoryActionsProps,
+  'display' | 'iconClassName' | 'isCoarsePointer' | 'redoDisabled' | 'size' | 'undoDisabled' | 'variant'
+> & {
+  display: 'icon' | 'label';
+  iconClassName: string;
+  isCoarsePointer: boolean;
+  redoDisabled: boolean;
+  size: 'lg' | 'sm';
+  undoDisabled: boolean;
+  variant: KangurButtonProps['variant'];
+};
+
+const resolveKangurDrawingHistoryActionsProps = (
+  props: KangurDrawingHistoryActionsProps
+): ResolvedKangurDrawingHistoryActionsProps => ({
+  ...props,
+  display: props.display ?? 'label',
+  iconClassName: props.iconClassName ?? 'h-4 w-4',
+  isCoarsePointer: props.isCoarsePointer ?? false,
+  redoDisabled: props.redoDisabled ?? false,
+  size: props.size ?? 'lg',
+  undoDisabled: props.undoDisabled ?? false,
+  variant: props.variant ?? 'surface',
+});
+
 const renderKangurDrawingHistoryButton = ({
   ariaLabel,
   buttonClassName,
@@ -56,6 +82,12 @@ const renderKangurDrawingHistoryButton = ({
   </KangurButton>
 );
 
+const renderKangurDrawingHistoryButtonLabel = (
+  display: 'icon' | 'label',
+  label: string
+): React.ReactNode =>
+  display === 'icon' ? <span className='sr-only'>{label}</span> : label;
+
 const renderKangurDrawingHistoryActions = ({
   className,
   display,
@@ -87,8 +119,6 @@ const renderKangurDrawingHistoryActions = ({
   undoTestId?: string;
   variant: KangurButtonProps['variant'];
 }): React.JSX.Element => {
-  const isIconOnly = display === 'icon';
-
   return (
     <div className={cn('flex flex-wrap gap-2', className)}>
       {renderKangurDrawingHistoryButton({
@@ -97,7 +127,7 @@ const renderKangurDrawingHistoryActions = ({
         children: (
           <>
             <RotateCcw aria-hidden='true' className={iconClassName} />
-            {isIconOnly ? <span className='sr-only'>{undoLabel}</span> : undoLabel}
+            {renderKangurDrawingHistoryButtonLabel(display, undoLabel)}
           </>
         ),
         disabled: undoDisabled,
@@ -112,7 +142,7 @@ const renderKangurDrawingHistoryActions = ({
         children: (
           <>
             <Redo2 aria-hidden='true' className={iconClassName} />
-            {isIconOnly ? <span className='sr-only'>{redoLabel}</span> : redoLabel}
+            {renderKangurDrawingHistoryButtonLabel(display, redoLabel)}
           </>
         ),
         disabled: redoDisabled,
@@ -126,37 +156,27 @@ const renderKangurDrawingHistoryActions = ({
 };
 
 export function KangurDrawingHistoryActions({
-  buttonClassName,
-  className,
-  display = 'label',
-  iconClassName = 'h-4 w-4',
-  isCoarsePointer = false,
-  onRedo,
-  onUndo,
-  redoDisabled = false,
-  redoLabel,
-  redoTestId,
-  size = 'lg',
-  undoDisabled = false,
-  undoLabel,
-  undoTestId,
-  variant = 'surface',
+  ...props
 }: KangurDrawingHistoryActionsProps): React.JSX.Element {
-  const resolvedButtonClassName = cn(buttonClassName, isCoarsePointer && 'min-h-11');
+  const resolvedProps = resolveKangurDrawingHistoryActionsProps(props);
+  const resolvedButtonClassName = cn(
+    resolvedProps.buttonClassName,
+    resolvedProps.isCoarsePointer && 'min-h-11'
+  );
   return renderKangurDrawingHistoryActions({
-    className,
-    display,
-    iconClassName,
-    onRedo,
-    onUndo,
-    redoDisabled,
-    redoLabel,
-    redoTestId,
+    className: resolvedProps.className,
+    display: resolvedProps.display,
+    iconClassName: resolvedProps.iconClassName,
+    onRedo: resolvedProps.onRedo,
+    onUndo: resolvedProps.onUndo,
+    redoDisabled: resolvedProps.redoDisabled,
+    redoLabel: resolvedProps.redoLabel,
+    redoTestId: resolvedProps.redoTestId,
     resolvedButtonClassName,
-    size,
-    undoDisabled,
-    undoLabel,
-    undoTestId,
-    variant,
+    size: resolvedProps.size,
+    undoDisabled: resolvedProps.undoDisabled,
+    undoLabel: resolvedProps.undoLabel,
+    undoTestId: resolvedProps.undoTestId,
+    variant: resolvedProps.variant,
   });
 }

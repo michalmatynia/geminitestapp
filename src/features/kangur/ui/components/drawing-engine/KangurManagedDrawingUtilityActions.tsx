@@ -24,74 +24,97 @@ type KangurManagedDrawingUtilityActionsProps = Omit<
   layoutPreset?: KangurDrawingUtilityLayoutPreset;
 };
 
+type ResolvedKangurManagedDrawingUtilityActionsProps = Omit<
+  KangurManagedDrawingUtilityActionsProps,
+  'canExport' | 'canRedo' | 'canUndo' | 'exportLocked' | 'historyLocked'
+> & {
+  canExport: boolean;
+  canRedo: boolean;
+  canUndo: boolean;
+  exportLocked: boolean;
+  historyLocked: boolean;
+};
+
+const resolveManagedDrawingUtilityActionProps = (
+  props: KangurManagedDrawingUtilityActionsProps
+): ResolvedKangurManagedDrawingUtilityActionsProps => ({
+  ...props,
+  canExport: props.canExport ?? true,
+  canRedo: props.canRedo ?? true,
+  canUndo: props.canUndo ?? true,
+  exportLocked: props.exportLocked ?? false,
+  historyLocked: props.historyLocked ?? false,
+});
+
+const resolveFooterPresetProps = (
+  isCoarsePointer: boolean
+): Partial<KangurDrawingUtilityActionsProps> => ({
+  exportButtonClassName: isCoarsePointer ? 'px-4' : undefined,
+  historyButtonClassName: isCoarsePointer ? 'px-4' : undefined,
+  size: 'sm',
+});
+
+const resolveFreeformToolbarPresetProps = (
+  isCoarsePointer: boolean
+): Partial<KangurDrawingUtilityActionsProps> => {
+  const buttonClassName = [
+    '!min-w-0 !gap-0 rounded-full',
+    '[color:var(--kangur-chat-muted-text,var(--kangur-page-muted-text))]',
+    'hover:[background:color-mix(in_srgb,var(--kangur-soft-card-background)_82%,var(--kangur-page-background))]',
+    'hover:[color:var(--kangur-chat-panel-text,var(--kangur-page-text))]',
+    isCoarsePointer ? 'h-11 w-11' : 'h-6 w-6',
+  ].join(' ');
+
+  return {
+    display: 'icon',
+    exportButtonClassName: buttonClassName,
+    exportClassName: 'flex items-center',
+    historyButtonClassName: buttonClassName,
+    historyClassName: 'flex items-center gap-1',
+    iconClassName: 'h-3 w-3',
+    size: 'sm',
+    variant: 'ghost',
+  };
+};
+
+const PRESET_PROP_RESOLVERS: Record<
+  KangurDrawingUtilityLayoutPreset,
+  (isCoarsePointer: boolean) => Partial<KangurDrawingUtilityActionsProps>
+> = {
+  footer: resolveFooterPresetProps,
+  'freeform-toolbar': resolveFreeformToolbarPresetProps,
+  'practice-board': () => ({
+    exportButtonClassName: 'w-full',
+    exportClassName: 'w-full sm:flex-1',
+    historyButtonClassName: 'w-full sm:flex-1',
+    historyClassName: 'w-full sm:flex-1',
+  }),
+  'inline-board': () => ({
+    exportButtonClassName: 'w-full sm:flex-1',
+    historyButtonClassName: 'w-full sm:flex-1',
+  }),
+};
+
 const getPresetProps = (
   layoutPreset: KangurDrawingUtilityLayoutPreset | undefined,
   isCoarsePointer: boolean
-): Partial<KangurDrawingUtilityActionsProps> => {
-  if (layoutPreset === 'footer') {
-    return {
-      exportButtonClassName: isCoarsePointer ? 'px-4' : undefined,
-      historyButtonClassName: isCoarsePointer ? 'px-4' : undefined,
-      size: 'sm',
-    };
-  }
+): Partial<KangurDrawingUtilityActionsProps> =>
+  layoutPreset ? PRESET_PROP_RESOLVERS[layoutPreset](isCoarsePointer) : {};
 
-  if (layoutPreset === 'freeform-toolbar') {
-    const buttonClassName = [
-      '!min-w-0 !gap-0 rounded-full',
-      '[color:var(--kangur-chat-muted-text,var(--kangur-page-muted-text))]',
-      'hover:[background:color-mix(in_srgb,var(--kangur-soft-card-background)_82%,var(--kangur-page-background))]',
-      'hover:[color:var(--kangur-chat-panel-text,var(--kangur-page-text))]',
-      isCoarsePointer ? 'h-11 w-11' : 'h-6 w-6',
-    ].join(' ');
-
-    return {
-      display: 'icon',
-      exportButtonClassName: buttonClassName,
-      exportClassName: 'flex items-center',
-      historyButtonClassName: buttonClassName,
-      historyClassName: 'flex items-center gap-1',
-      iconClassName: 'h-3 w-3',
-      size: 'sm',
-      variant: 'ghost',
-    };
-  }
-
-  if (layoutPreset === 'practice-board') {
-    return {
-      exportButtonClassName: 'w-full',
-      exportClassName: 'w-full sm:flex-1',
-      historyButtonClassName: 'w-full sm:flex-1',
-      historyClassName: 'w-full sm:flex-1',
-    };
-  }
-
-  if (layoutPreset === 'inline-board') {
-    return {
-      exportButtonClassName: 'w-full sm:flex-1',
-      historyButtonClassName: 'w-full sm:flex-1',
-    };
-  }
-
-  return {};
-};
-
-export function KangurManagedDrawingUtilityActions({
-  canExport = true,
-  canRedo = true,
-  canUndo = true,
-  exportLocked = false,
-  historyLocked = false,
-  layoutPreset,
-  ...props
-}: KangurManagedDrawingUtilityActionsProps): React.JSX.Element {
-  const presetProps = getPresetProps(layoutPreset, props.isCoarsePointer ?? false);
+export function KangurManagedDrawingUtilityActions(
+  props: KangurManagedDrawingUtilityActionsProps
+): React.JSX.Element {
+  const resolvedManagedProps = resolveManagedDrawingUtilityActionProps(props);
+  const presetProps = getPresetProps(
+    resolvedManagedProps.layoutPreset,
+    resolvedManagedProps.isCoarsePointer ?? false
+  );
   const resolvedProps: KangurDrawingUtilityActionsProps = {
     ...presetProps,
-    ...props,
-    exportDisabled: exportLocked || !canExport,
-    redoDisabled: historyLocked || !canRedo,
-    undoDisabled: historyLocked || !canUndo,
+    ...resolvedManagedProps,
+    exportDisabled: resolvedManagedProps.exportLocked || !resolvedManagedProps.canExport,
+    redoDisabled: resolvedManagedProps.historyLocked || !resolvedManagedProps.canRedo,
+    undoDisabled: resolvedManagedProps.historyLocked || !resolvedManagedProps.canUndo,
   };
 
   return (

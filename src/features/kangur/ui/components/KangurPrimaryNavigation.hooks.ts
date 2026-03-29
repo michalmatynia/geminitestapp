@@ -26,13 +26,22 @@ import type {
   KangurPrimaryNavigationProps,
 } from './KangurPrimaryNavigation.types';
 
+type KangurPrimaryNavigationStateInput = Pick<
+  KangurPrimaryNavigationProps,
+  | 'canManageLearners'
+  | 'currentPage'
+  | 'isAuthenticated'
+  | 'navLabel'
+  | 'showParentDashboard'
+>;
+
 export function useKangurPrimaryNavigationState({
   canManageLearners,
   currentPage,
   isAuthenticated,
   navLabel,
   showParentDashboard,
-}: KangurPrimaryNavigationProps) {
+}: KangurPrimaryNavigationStateInput) {
   const tutorContent = useKangurAiTutorContent();
   const tutor = useOptionalKangurAiTutor();
   const auth = useOptionalKangurAuth();

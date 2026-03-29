@@ -24,6 +24,12 @@ import { SocialPostImagesPanel } from './SocialPost.ImagesPanel';
 import { SocialJobStatusPill } from './SocialJobStatusPill';
 import { useSocialPostContext } from './SocialPostContext';
 
+const isSocialRuntimeJobInFlight = (status: string | null | undefined): boolean => {
+  const normalized = status?.trim().toLowerCase();
+  if (!normalized) return false;
+  return normalized !== 'completed' && normalized !== 'failed';
+};
+
 const resolvePostTitle = (
   post: Pick<KangurSocialPost, 'titlePl' | 'titleEn'> | null
 ): string =>
@@ -78,6 +84,12 @@ export function SocialPostEditorModal({
 
   const isSavingDraft = patchMutation.isPending && !publishMutation.isPending;
   const isSubmitting = patchMutation.isPending || publishMutation.isPending;
+  const hasBlockingRuntimeJob =
+    isSocialRuntimeJobInFlight(currentGenerationJob?.status) ||
+    isSocialRuntimeJobInFlight(currentPipelineJob?.status);
+  const editorActionTitle = hasBlockingRuntimeJob
+    ? 'Wait for the current Social runtime job to finish.'
+    : undefined;
   const currentVisualAnalysisJobTitle = [
     currentVisualAnalysisJob?.progress?.message ?? null,
     currentVisualAnalysisJob?.failedReason ?? null,
@@ -138,7 +150,8 @@ export function SocialPostEditorModal({
         onClick={() => {
           void handlePublish();
         }}
-        disabled={!activePost || isSubmitting}
+        disabled={!activePost || isSubmitting || hasBlockingRuntimeJob}
+        title={editorActionTitle}
       >
         {publishMutation.isPending ? 'Publishing...' : 'Publish to LinkedIn'}
       </Button>
@@ -163,7 +176,7 @@ export function SocialPostEditorModal({
       }}
       isSaving={isSubmitting}
       disableCloseWhileSaving
-      isSaveDisabled={!activePost || isSubmitting || !hasUnsavedChanges}
+      isSaveDisabled={!activePost || isSubmitting || !hasUnsavedChanges || hasBlockingRuntimeJob}
       hasUnsavedChanges={hasUnsavedChanges}
       saveText={isSavingDraft ? 'Saving...' : 'Save draft'}
       cancelText='Close'
@@ -214,8 +227,12 @@ export function SocialPostEditorModal({
                       void handleSave('scheduled');
                     }}
                     disabled={
-                      !activePost || !scheduledAt || patchMutation.isPending
+                      !activePost ||
+                      !scheduledAt ||
+                      patchMutation.isPending ||
+                      hasBlockingRuntimeJob
                     }
+                    title={editorActionTitle}
                   >
                     {patchMutation.isPending ? 'Scheduling...' : 'Schedule'}
                   </Button>

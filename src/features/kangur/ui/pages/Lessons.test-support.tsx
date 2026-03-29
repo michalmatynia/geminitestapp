@@ -144,6 +144,74 @@ export function createLessonsTranslationsMock(namespace?: string): (key: string)
     ] ?? key;
 }
 
+type LessonsCatalogMockOptions = {
+  subject?: string;
+  ageGroup?: string;
+  enabledOnly?: boolean;
+};
+
+type LessonsCatalogRecord = Array<Record<string, unknown>>[number];
+
+const filterEnabledCatalogRecords = (
+  records: LessonsCatalogRecord[],
+  enabledOnly: boolean | undefined
+): LessonsCatalogRecord[] =>
+  enabledOnly ? records.filter((record) => record['enabled'] !== false) : records;
+
+const filterSubjectCatalogRecords = (
+  records: LessonsCatalogRecord[],
+  subject: string | undefined
+): LessonsCatalogRecord[] =>
+  subject
+    ? records.filter((record) => (record['subject'] ?? 'maths') === subject)
+    : records;
+
+const filterAgeGroupCatalogRecords = (
+  records: LessonsCatalogRecord[],
+  ageGroup: string | undefined
+): LessonsCatalogRecord[] =>
+  ageGroup
+    ? records.filter((record) => (record['ageGroup'] ?? DEFAULT_KANGUR_AGE_GROUP) === ageGroup)
+    : records;
+
+const resolveFilteredCatalogRecords = (
+  records: LessonsCatalogRecord[],
+  options: LessonsCatalogMockOptions
+): LessonsCatalogRecord[] =>
+  filterAgeGroupCatalogRecords(
+    filterSubjectCatalogRecords(
+      filterEnabledCatalogRecords(records, options.enabledOnly),
+      options.subject
+    ),
+    options.ageGroup
+  );
+
+const resolveLessonsCatalogMockData = (options: LessonsCatalogMockOptions): {
+  lessons: LessonsCatalogRecord[];
+  sections: LessonsCatalogRecord[];
+} => ({
+  lessons: resolveFilteredCatalogRecords(lessonsState.value, options),
+  sections: resolveFilteredCatalogRecords(lessonSectionsState.value, options),
+});
+
+const resolveLessonsCatalogLoadingMeta = (): {
+  hasRetainedData: boolean;
+  isLoading: boolean;
+  isPlaceholderData: boolean;
+} => {
+  const hasRetainedData =
+    (lessonsLoadingState.value && lessonsRetainDataWhileLoadingState.value) ||
+    (lessonSectionsLoadingState.value && lessonSectionsRetainDataWhileLoadingState.value);
+  const isLoading = lessonsLoadingState.value || lessonSectionsLoadingState.value;
+
+  return {
+    hasRetainedData,
+    isLoading,
+    isPlaceholderData:
+      lessonsPlaceholderDataState.value || lessonSectionsPlaceholderDataState.value,
+  };
+};
+
 vi.mock('next-intl', () => ({
   useLocale: () => localeState.value,
   useTranslations: createLessonsTranslationsMock,
@@ -432,33 +500,11 @@ vi.mock('@/features/kangur/ui/hooks/useKangurLessons', () => ({
 }));
 
 vi.mock('@/features/kangur/ui/hooks/useKangurLessonsCatalog', () => ({
-  useKangurLessonsCatalog: (
-    options: { subject?: string; ageGroup?: string; enabledOnly?: boolean } = {}
-  ) => {
-    let lessons = lessonsState.value;
-    let sections = lessonSectionsState.value;
-    const hasRetainedData =
-      (lessonsLoadingState.value && lessonsRetainDataWhileLoadingState.value) ||
-      (lessonSectionsLoadingState.value && lessonSectionsRetainDataWhileLoadingState.value);
-    if (options.enabledOnly) {
-      lessons = lessons.filter((lesson) => lesson['enabled'] !== false);
-      sections = sections.filter((section) => section['enabled'] !== false);
-    }
-    if (options.subject) {
-      lessons = lessons.filter((lesson) => (lesson['subject'] ?? 'maths') === options.subject);
-      sections = sections.filter((section) => (section['subject'] ?? 'maths') === options.subject);
-    }
-    if (options.ageGroup) {
-      lessons = lessons.filter(
-        (lesson) => (lesson['ageGroup'] ?? DEFAULT_KANGUR_AGE_GROUP) === options.ageGroup
-      );
-      sections = sections.filter(
-        (section) => (section['ageGroup'] ?? DEFAULT_KANGUR_AGE_GROUP) === options.ageGroup
-      );
-    }
-    const isLoading = lessonsLoadingState.value || lessonSectionsLoadingState.value;
-    const isPlaceholderData =
-      lessonsPlaceholderDataState.value || lessonSectionsPlaceholderDataState.value;
+  useKangurLessonsCatalog: (options: LessonsCatalogMockOptions = {}) => {
+    const { lessons, sections } = resolveLessonsCatalogMockData(options);
+    const { hasRetainedData, isLoading, isPlaceholderData } =
+      resolveLessonsCatalogLoadingMeta();
+
     return {
       data: isLoading && !hasRetainedData ? undefined : { lessons, sections },
       isFetching: isLoading,

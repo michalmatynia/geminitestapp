@@ -5,6 +5,12 @@ import { KangurAdminCard } from '../../components/KangurAdminCard';
 import type { KangurSocialPost } from '@/shared/contracts/kangur-social-posts';
 import { SocialJobStatusPill } from '../SocialJobStatusPill';
 
+const isSocialRuntimeJobInFlight = (status: string | null | undefined): boolean => {
+  const normalized = status?.trim().toLowerCase();
+  if (!normalized) return false;
+  return normalized !== 'completed' && normalized !== 'failed';
+};
+
 export function SocialSettingsDocumentationTab({
   activePost,
   canGenerateSocialDraft,
@@ -52,6 +58,10 @@ export function SocialSettingsDocumentationTab({
   ]
     .filter((value): value is string => Boolean(value))
     .join(' · ');
+  const isGenerationJobInFlight = isSocialRuntimeJobInFlight(currentGenerationJob?.status);
+  const generateButtonLabel = isGenerationJobInFlight
+    ? 'Generate draft in progress...'
+    : 'Generate PL/EN draft';
 
   return (
     <div className='space-y-4'>
@@ -91,9 +101,14 @@ export function SocialSettingsDocumentationTab({
               variant='outline'
               size='sm'
               onClick={() => handleGenerate()}
-              disabled={!activePost || !canGenerateSocialDraft}
+              disabled={!activePost || !canGenerateSocialDraft || isGenerationJobInFlight}
+              title={
+                isGenerationJobInFlight
+                  ? 'Wait for the current Social runtime job to finish.'
+                  : undefined
+              }
             >
-              Generate PL/EN draft
+              {generateButtonLabel}
             </Button>
             {currentGenerationJob?.status ? (
               <SocialJobStatusPill

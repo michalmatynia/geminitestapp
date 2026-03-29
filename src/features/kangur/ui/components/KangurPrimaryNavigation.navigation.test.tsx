@@ -5,7 +5,7 @@
 
 import { QueryClientContext } from '@tanstack/react-query';
 import React from 'react';
-import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 
@@ -131,6 +131,51 @@ it('prefetches the lessons catalog on lessons-nav intent', () => {
     enabledOnly: true,
     subject: 'maths',
   });
+  expect(prefetchKangurPageContentStoreMock).toHaveBeenCalledTimes(1);
+  expect(prefetchKangurPageContentStoreMock).toHaveBeenCalledWith(queryClient, 'pl');
+});
+
+it('idle-prefetches hot lessons data from the home route', () => {
+  vi.useFakeTimers();
+  const queryClient = { prefetchQuery: vi.fn() };
+
+  try {
+    render(
+      <QueryClientContext.Provider value={queryClient as never}>
+        <KangurPrimaryNavigation
+          basePath='/kangur'
+          currentPage='Game'
+          isAuthenticated
+          onLogout={vi.fn()}
+        />
+      </QueryClientContext.Provider>
+    );
+
+    expect(prefetchKangurLessonsCatalogMock).not.toHaveBeenCalled();
+    expect(prefetchKangurPageContentStoreMock).not.toHaveBeenCalled();
+
+    act(() => {
+      vi.advanceTimersByTime(249);
+    });
+
+    expect(prefetchKangurLessonsCatalogMock).not.toHaveBeenCalled();
+    expect(prefetchKangurPageContentStoreMock).not.toHaveBeenCalled();
+
+    act(() => {
+      vi.advanceTimersByTime(1);
+    });
+
+    expect(prefetchKangurLessonsCatalogMock).toHaveBeenCalledTimes(1);
+    expect(prefetchKangurLessonsCatalogMock).toHaveBeenCalledWith(queryClient, {
+      ageGroup: 'ten_year_old',
+      enabledOnly: true,
+      subject: 'maths',
+    });
+    expect(prefetchKangurPageContentStoreMock).toHaveBeenCalledTimes(1);
+    expect(prefetchKangurPageContentStoreMock).toHaveBeenCalledWith(queryClient, 'pl');
+  } finally {
+    vi.useRealTimers();
+  }
 });
 
 it('does not prefetch the lessons catalog when lessons is already active', () => {

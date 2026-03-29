@@ -195,6 +195,7 @@ const AuthenticatedApp = (): JSX.Element | null => {
   }, [authErrorType, resolvedPageKey, shouldBlockRouteContent, shouldUseCmsRuntimeScreen]);
   const [hasPresentedInteractiveShell, setHasPresentedInteractiveShell] = useState(false);
   const [isRouteInteractionReady, setIsRouteInteractionReady] = useState(false);
+  const [hasInitialContentSettled, setHasInitialContentSettled] = useState(false);
   const shouldShowBootLoader = isThemeBootLoading && !hasPresentedInteractiveShell;
   const [isBootSkeletonVisible, setIsBootSkeletonVisible] = useState<boolean>(shouldShowBootLoader);
   const [isNavigationSkeletonVisible, setIsNavigationSkeletonVisible] = useState<boolean>(false);
@@ -234,10 +235,13 @@ const AuthenticatedApp = (): JSX.Element | null => {
     }) ?? embedded;
   const snapshotTransitionTopBarHeightCssValue =
     pendingRouteLoadingSnapshot?.topBarHeightCssValue ?? null;
+  const isInitialMountSkeletonVisible =
+    !hasInitialContentSettled && !hasPresentedInteractiveShell;
   const isRouteSkeletonVisible =
     shouldShowAcknowledgingNavigationSkeleton ||
     isNavigationSkeletonVisible ||
-    isPendingRouteSnapshotVisible;
+    isPendingRouteSnapshotVisible ||
+    isInitialMountSkeletonVisible;
   const visibleTransitionSkeletonPageKey =
     isPendingRouteSnapshotVisible
       ? snapshotTransitionPageKey
@@ -264,19 +268,23 @@ const AuthenticatedApp = (): JSX.Element | null => {
     : isRouteSkeletonVisible
     ? latchedNavigationTopBarHeightCssValue ?? currentNavigationTopBarHeightCssValue
     : null;
+  const shouldPreserveOutgoingRouteContent =
+    isPendingRouteSnapshotVisible ||
+    (isRouteSkeletonVisible &&
+      (transitionPhase === 'acknowledging' || transitionPhase === 'pending'));
   const shouldKeepRouteContentVisibleDuringTransition =
-    isLanguageSwitcherTransition && isRouteSkeletonVisible;
+    shouldPreserveOutgoingRouteContent ||
+    (isLanguageSwitcherTransition && isRouteSkeletonVisible);
   const shouldClipRouteContentDuringTransition =
-    isPendingRouteSnapshotVisible ||
-    (isRouteSkeletonVisible && !shouldKeepRouteContentVisibleDuringTransition);
-  const isRouteContentVisuallyHidden =
-    isPendingRouteSnapshotVisible ||
-    (!shouldKeepRouteContentVisibleDuringTransition &&
+    !shouldKeepRouteContentVisibleDuringTransition &&
+    (isPendingRouteSnapshotVisible || isRouteSkeletonVisible);
+  const isRouteContentVisuallyHidden = !shouldKeepRouteContentVisibleDuringTransition &&
     (transitionPhase === 'waiting_for_ready' ||
       ((transitionPhase === 'pending' ||
         (transitionPhase === 'acknowledging' &&
           shouldShowAcknowledgingNavigationSkeleton)) &&
-        isRouteSkeletonVisible)));
+        isRouteSkeletonVisible) ||
+      isPendingRouteSnapshotVisible);
   const isRouteContentInteractionBlocked =
     !isRouteInteractionReady ||
     isPendingRouteSnapshotVisible ||
@@ -352,6 +360,17 @@ const AuthenticatedApp = (): JSX.Element | null => {
   useEffect(() => {
     setIsRouteInteractionReady(true);
   }, []);
+
+  // Wait one animation frame after mount before marking initial content as
+  // settled. This ensures the lazy-loaded main page (Game) has rendered its
+  // first meaningful frame before the skeleton overlay is removed.
+  useEffect(() => {
+    if (hasInitialContentSettled) return;
+    const frameId = requestAnimationFrame(() => {
+      setHasInitialContentSettled(true);
+    });
+    return () => cancelAnimationFrame(frameId);
+  }, [hasInitialContentSettled]);
 
   useEffect(() => {
     if (

@@ -29,7 +29,7 @@ import type {
   TutorPanelChromeVariant,
   TutorPanelSnapState,
 } from './KangurAiTutorWidget.shared';
-import type { JSX, MotionStyle, PointerEvent, ReactNode } from 'react';
+import type { JSX, PointerEvent, ReactNode } from 'react';
 import type { useKangurAiTutorContent } from '@/features/kangur/ui/context/KangurAiTutorContentContext';
 
 const KANGUR_AI_TUTOR_PANEL_SURFACE_ID = 'kangur-ai-tutor-panel-surface';

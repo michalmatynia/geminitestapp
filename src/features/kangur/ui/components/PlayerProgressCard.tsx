@@ -40,6 +40,147 @@ type PlayerProgressCardProps = {
   progress: KangurProgressState;
 };
 
+const resolvePlayerProgressSummary = (
+  progressContent: { summary?: string | null; title?: string | null } | null | undefined,
+  translations: ReturnType<typeof useTranslations<'KangurPlayerProgress'>>
+): { progressSummary: string; progressTitle: string } => ({
+  progressTitle: progressContent?.title ?? translations('fallbackTitle'),
+  progressSummary: progressContent?.summary ?? translations('fallbackSummary'),
+});
+
+function PlayerProgressLevelMeta(props: {
+  nextLevel: ReturnType<typeof getNextLevel>;
+  translations: ReturnType<typeof useTranslations<'KangurPlayerProgress'>>;
+  xpIntoLevel: number;
+  xpNeeded: number;
+}): React.JSX.Element {
+  return (
+    <KangurMetaText
+      as='div'
+      className={`mb-1 ${KANGUR_STACK_COMPACT_CLASSNAME} min-[420px]:flex-row min-[420px]:items-center min-[420px]:justify-between`}
+      size='xs'
+    >
+      <span>{props.xpIntoLevel} XP</span>
+      {props.nextLevel ? (
+        <span>
+          {props.translations('nextLevel', {
+            level: props.nextLevel.level,
+            xp: props.xpNeeded - props.xpIntoLevel,
+          })}
+        </span>
+      ) : (
+        <span>{props.translations('maxLevel')}</span>
+      )}
+    </KangurMetaText>
+  );
+}
+
+function PlayerProgressTopActivitySection(props: {
+  topActivity: ReturnType<typeof getProgressTopActivities>[number] | null;
+  translations: ReturnType<typeof useTranslations<'KangurPlayerProgress'>>;
+}): React.JSX.Element | null {
+  if (!props.topActivity) {
+    return null;
+  }
+
+  return (
+    <KangurActivitySummaryCard
+      activity={props.topActivity}
+      dataTestId='player-progress-top-activity'
+      description={props.translations('topActivityDescription', {
+        sessions: props.topActivity.sessionsPlayed,
+        xp: props.topActivity.averageXpPerSession,
+      })}
+      eyebrow={props.translations('topActivityEyebrow')}
+    />
+  );
+}
+
+function PlayerProgressNextBadgeSection(props: {
+  nextBadge: ReturnType<typeof getNextLockedBadge>;
+  translations: ReturnType<typeof useTranslations<'KangurPlayerProgress'>>;
+}): React.JSX.Element | null {
+  if (!props.nextBadge) {
+    return null;
+  }
+
+  return (
+    <div
+      className='rounded-[28px] border border-amber-200/80 px-4 py-4'
+      data-testid='player-progress-next-badge'
+      style={{
+        background: 'color-mix(in srgb, var(--kangur-soft-card-background) 82%, #fde68a)',
+      }}
+    >
+      <KangurProgressHighlightCardContent>
+        <KangurPanelRow className='items-start sm:justify-between'>
+          <KangurProgressHighlightHeader
+            description={props.nextBadge.desc}
+            eyebrow={props.translations('nextBadgeEyebrow')}
+            eyebrowClassName='text-amber-700/80'
+            title={
+              <>
+                {props.nextBadge.emoji} {props.nextBadge.name}
+              </>
+            }
+          />
+          <KangurProgressHighlightChip accent='amber' label={props.nextBadge.summary} />
+        </KangurPanelRow>
+        <KangurProgressHighlightBar
+          accent='amber'
+          testId='player-progress-next-badge-bar'
+          value={props.nextBadge.progressPercent}
+        />
+      </KangurProgressHighlightCardContent>
+    </div>
+  );
+}
+
+function PlayerProgressGuidedMomentumSection(props: {
+  guidedMomentum: ReturnType<typeof getRecommendedSessionMomentum>;
+  translations: ReturnType<typeof useTranslations<'KangurPlayerProgress'>>;
+}): React.JSX.Element | null {
+  if (props.guidedMomentum.completedSessions <= 0) {
+    return null;
+  }
+
+  return (
+    <div
+      className='rounded-[28px] border border-sky-200/80 px-4 py-4'
+      data-testid='player-progress-guided-momentum'
+      style={{
+        background: 'color-mix(in srgb, var(--kangur-soft-card-background) 82%, #dbeafe)',
+      }}
+    >
+      <KangurProgressHighlightCardContent>
+        <KangurPanelRow className='items-start sm:justify-between'>
+          <KangurProgressHighlightHeader
+            description={
+              props.guidedMomentum.nextBadgeName
+                ? props.translations('guidedMomentumDescriptionWithBadge', {
+                    badge: props.guidedMomentum.nextBadgeName,
+                    summary: props.guidedMomentum.summary,
+                  })
+                : props.translations('guidedMomentumDescriptionUnlocked')
+            }
+            eyebrow={props.translations('guidedMomentumEyebrow')}
+            eyebrowClassName='text-sky-700/80'
+            title={props.translations('guidedMomentumTitle', {
+              count: props.guidedMomentum.completedSessions,
+            })}
+          />
+          <KangurProgressHighlightChip accent='sky' label={props.guidedMomentum.summary} />
+        </KangurPanelRow>
+        <KangurProgressHighlightBar
+          accent='sky'
+          testId='player-progress-guided-momentum-bar'
+          value={props.guidedMomentum.progressPercent}
+        />
+      </KangurProgressHighlightCardContent>
+    </div>
+  );
+}
+
 export default function PlayerProgressCard({
   progress,
 }: PlayerProgressCardProps): React.JSX.Element {
@@ -60,10 +201,10 @@ export default function PlayerProgressCard({
   const topActivity = getProgressTopActivities(progress, 1, progressLocalizer)[0] ?? null;
   const nextBadge = getNextLockedBadge(progress, progressLocalizer);
   const guidedMomentum = getRecommendedSessionMomentum(progress, progressLocalizer);
-  const progressTitle = progressContent?.title ?? translations('fallbackTitle');
-  const progressSummary =
-    progressContent?.summary ??
-    translations('fallbackSummary');
+  const { progressSummary, progressTitle } = resolvePlayerProgressSummary(
+    progressContent,
+    translations
+  );
 
   return (
     <motion.div
@@ -100,23 +241,12 @@ export default function PlayerProgressCard({
         </div>
 
         <div>
-          <KangurMetaText
-            as='div'
-            className={`mb-1 ${KANGUR_STACK_COMPACT_CLASSNAME} min-[420px]:flex-row min-[420px]:items-center min-[420px]:justify-between`}
-            size='xs'
-          >
-            <span>{xpIntoLevel} XP</span>
-            {nextLevel ? (
-              <span>
-                {translations('nextLevel', {
-                  level: nextLevel.level,
-                  xp: xpNeeded - xpIntoLevel,
-                })}
-              </span>
-            ) : (
-              <span>{translations('maxLevel')}</span>
-            )}
-          </KangurMetaText>
+          <PlayerProgressLevelMeta
+            nextLevel={nextLevel}
+            translations={translations}
+            xpIntoLevel={xpIntoLevel}
+            xpNeeded={xpNeeded}
+          />
           <KangurProgressBar
             accent='indigo'
             animated
@@ -159,86 +289,12 @@ export default function PlayerProgressCard({
           />
         </div>
 
-        {topActivity && (
-          <KangurActivitySummaryCard
-            activity={topActivity}
-            dataTestId='player-progress-top-activity'
-            description={translations('topActivityDescription', {
-              sessions: topActivity.sessionsPlayed,
-              xp: topActivity.averageXpPerSession,
-            })}
-            eyebrow={translations('topActivityEyebrow')}
-          />
-        )}
-
-        {nextBadge ? (
-          <div
-            className='rounded-[28px] border border-amber-200/80 px-4 py-4'
-            data-testid='player-progress-next-badge'
-            style={{
-              background:
-                'color-mix(in srgb, var(--kangur-soft-card-background) 82%, #fde68a)',
-            }}
-          >
-            <KangurProgressHighlightCardContent>
-              <KangurPanelRow className='items-start sm:justify-between'>
-                <KangurProgressHighlightHeader
-                  description={nextBadge.desc}
-                  eyebrow={translations('nextBadgeEyebrow')}
-                  eyebrowClassName='text-amber-700/80'
-                  title={
-                    <>
-                      {nextBadge.emoji} {nextBadge.name}
-                    </>
-                  }
-                />
-                <KangurProgressHighlightChip accent='amber' label={nextBadge.summary} />
-              </KangurPanelRow>
-              <KangurProgressHighlightBar
-                accent='amber'
-                testId='player-progress-next-badge-bar'
-                value={nextBadge.progressPercent}
-              />
-            </KangurProgressHighlightCardContent>
-          </div>
-        ) : null}
-
-        {guidedMomentum.completedSessions > 0 ? (
-          <div
-            className='rounded-[28px] border border-sky-200/80 px-4 py-4'
-            data-testid='player-progress-guided-momentum'
-            style={{
-              background:
-                'color-mix(in srgb, var(--kangur-soft-card-background) 82%, #dbeafe)',
-            }}
-          >
-            <KangurProgressHighlightCardContent>
-              <KangurPanelRow className='items-start sm:justify-between'>
-                <KangurProgressHighlightHeader
-                  description={
-                    guidedMomentum.nextBadgeName
-                      ? translations('guidedMomentumDescriptionWithBadge', {
-                          badge: guidedMomentum.nextBadgeName,
-                          summary: guidedMomentum.summary,
-                        })
-                      : translations('guidedMomentumDescriptionUnlocked')
-                  }
-                  eyebrow={translations('guidedMomentumEyebrow')}
-                  eyebrowClassName='text-sky-700/80'
-                  title={translations('guidedMomentumTitle', {
-                    count: guidedMomentum.completedSessions,
-                  })}
-                />
-                <KangurProgressHighlightChip accent='sky' label={guidedMomentum.summary} />
-              </KangurPanelRow>
-              <KangurProgressHighlightBar
-                accent='sky'
-                testId='player-progress-guided-momentum-bar'
-                value={guidedMomentum.progressPercent}
-              />
-            </KangurProgressHighlightCardContent>
-          </div>
-        ) : null}
+        <PlayerProgressTopActivitySection topActivity={topActivity} translations={translations} />
+        <PlayerProgressNextBadgeSection nextBadge={nextBadge} translations={translations} />
+        <PlayerProgressGuidedMomentumSection
+          guidedMomentum={guidedMomentum}
+          translations={translations}
+        />
 
         <KangurBadgeTrackSection
           dataTestIdPrefix='player-progress-badge-track'

@@ -3,78 +3,23 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
 
 import { internalError } from '@/features/kangur/shared/errors/app-error';
+import {
+  resolveLessonNavigationActionsValue,
+  resolveLessonNavigationStateValue,
+  type KangurLessonBackAction,
+  type KangurLessonNavigationActionsValue,
+  type KangurLessonNavigationContextValue,
+  type KangurLessonNavigationStateValue,
+  type KangurLessonSecretPill,
+  type KangurLessonSubsectionSummary,
+} from '@/features/kangur/ui/context/KangurLessonNavigationContext.shared';
 
-type KangurLessonBackAction = () => void;
-
-export type KangurLessonSubsectionSummary = {
-  emoji: string;
-  title: string;
-  description: string;
-  isGame?: boolean;
-};
-
-export type KangurLessonSecretPill = {
-  isUnlocked: boolean;
-  onOpen: () => void;
-};
-
-type KangurLessonNavigationContextValue = {
-  onBack: KangurLessonBackAction;
-  isSubsectionNavigationActive: boolean;
-  registerSubsectionNavigation: () => () => void;
-  subsectionSummary: KangurLessonSubsectionSummary | null;
-  setSubsectionSummary: (summary: KangurLessonSubsectionSummary | null) => void;
-  secretLessonPill: KangurLessonSecretPill | null;
-};
-
-type KangurLessonNavigationStateValue = Pick<
-  KangurLessonNavigationContextValue,
-  'isSubsectionNavigationActive' | 'onBack' | 'secretLessonPill' | 'subsectionSummary'
->;
-
-type KangurLessonNavigationActionsValue = Pick<
-  KangurLessonNavigationContextValue,
-  'registerSubsectionNavigation' | 'setSubsectionSummary'
->;
+export type {
+  KangurLessonSecretPill,
+  KangurLessonSubsectionSummary,
+} from '@/features/kangur/ui/context/KangurLessonNavigationContext.shared';
 
 const KangurLessonNavigationContext = createContext<KangurLessonNavigationContextValue | null>(null);
-const DEFAULT_LESSON_BACK_ACTION = (): void => undefined;
-const DEFAULT_REGISTER_SUBSECTION_NAVIGATION = (): (() => void) => () => undefined;
-const DEFAULT_SET_SUBSECTION_SUMMARY = (): void => undefined;
-
-const DEFAULT_LESSON_NAVIGATION_STATE: KangurLessonNavigationStateValue = {
-  isSubsectionNavigationActive: false,
-  onBack: DEFAULT_LESSON_BACK_ACTION,
-  secretLessonPill: null,
-  subsectionSummary: null,
-};
-
-const DEFAULT_LESSON_NAVIGATION_ACTIONS: KangurLessonNavigationActionsValue = {
-  registerSubsectionNavigation: DEFAULT_REGISTER_SUBSECTION_NAVIGATION,
-  setSubsectionSummary: DEFAULT_SET_SUBSECTION_SUMMARY,
-};
-
-const resolveLessonNavigationStateValue = (
-  context: KangurLessonNavigationContextValue | null
-): KangurLessonNavigationStateValue =>
-  context
-    ? {
-        isSubsectionNavigationActive: context.isSubsectionNavigationActive,
-        onBack: context.onBack,
-        secretLessonPill: context.secretLessonPill,
-        subsectionSummary: context.subsectionSummary,
-      }
-    : DEFAULT_LESSON_NAVIGATION_STATE;
-
-const resolveLessonNavigationActionsValue = (
-  context: KangurLessonNavigationContextValue | null
-): KangurLessonNavigationActionsValue =>
-  context
-    ? {
-        registerSubsectionNavigation: context.registerSubsectionNavigation,
-        setSubsectionSummary: context.setSubsectionSummary,
-      }
-    : DEFAULT_LESSON_NAVIGATION_ACTIONS;
 
 export function KangurLessonNavigationProvider({
   onBack,

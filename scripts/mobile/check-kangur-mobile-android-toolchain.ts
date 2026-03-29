@@ -36,6 +36,47 @@ const addIssue = (
   issues.push({ level, message });
 };
 
+const resolveAndroidToolchainNextSteps = (
+  state: KangurMobileAndroidToolchainState,
+  hasErrors: boolean,
+): string[] => {
+  if (!hasErrors) {
+    return [];
+  }
+
+  const nextSteps: string[] = [];
+  if (!state.androidSdkRoot && !state.androidHome) {
+    nextSteps.push(
+      'Install Android Studio, then download Android platform-tools and the Android Emulator from the SDK Manager.',
+    );
+    nextSteps.push(
+      `export ANDROID_SDK_ROOT="${DEFAULT_MACOS_ANDROID_SDK_ROOT}"`,
+    );
+    nextSteps.push(
+      'export PATH="$ANDROID_SDK_ROOT/platform-tools:$ANDROID_SDK_ROOT/emulator:$PATH"',
+    );
+  } else if (!state.androidSdkRoot && state.androidHome) {
+    nextSteps.push(`export ANDROID_SDK_ROOT="${state.androidHome}"`);
+    nextSteps.push(
+      'export PATH="$ANDROID_SDK_ROOT/platform-tools:$ANDROID_SDK_ROOT/emulator:$PATH"',
+    );
+  } else if (state.androidSdkRoot && !state.androidHome) {
+    nextSteps.push(`export ANDROID_HOME="${state.androidSdkRoot}"`);
+    nextSteps.push(
+      'export PATH="$ANDROID_SDK_ROOT/platform-tools:$ANDROID_SDK_ROOT/emulator:$PATH"',
+    );
+  } else if (state.androidSdkRoot) {
+    nextSteps.push(
+      'export PATH="$ANDROID_SDK_ROOT/platform-tools:$ANDROID_SDK_ROOT/emulator:$PATH"',
+    );
+  }
+
+  nextSteps.push('Re-run npm run check:mobile:android:toolchain.');
+  nextSteps.push('Then run npm run check:mobile:native:runtime:android.');
+  nextSteps.push('Then run npm run dev:mobile:android:local.');
+  return nextSteps;
+};
+
 export const analyzeKangurMobileAndroidToolchain = (
   state: KangurMobileAndroidToolchainState,
 ): KangurMobileAndroidToolchainReport => {
@@ -77,47 +118,16 @@ export const analyzeKangurMobileAndroidToolchain = (
     );
   }
 
-  const nextSteps: string[] = [];
-  if (issues.some((issue) => issue.level === 'error')) {
-    if (!state.androidSdkRoot && !state.androidHome) {
-      nextSteps.push(
-        'Install Android Studio, then download Android platform-tools and the Android Emulator from the SDK Manager.',
-      );
-      nextSteps.push(
-        `export ANDROID_SDK_ROOT="${DEFAULT_MACOS_ANDROID_SDK_ROOT}"`,
-      );
-      nextSteps.push(
-        'export PATH="$ANDROID_SDK_ROOT/platform-tools:$ANDROID_SDK_ROOT/emulator:$PATH"',
-      );
-    } else if (!state.androidSdkRoot && state.androidHome) {
-      nextSteps.push(`export ANDROID_SDK_ROOT="${state.androidHome}"`);
-      nextSteps.push(
-        'export PATH="$ANDROID_SDK_ROOT/platform-tools:$ANDROID_SDK_ROOT/emulator:$PATH"',
-      );
-    } else if (state.androidSdkRoot && !state.androidHome) {
-      nextSteps.push(`export ANDROID_HOME="${state.androidSdkRoot}"`);
-      nextSteps.push(
-        'export PATH="$ANDROID_SDK_ROOT/platform-tools:$ANDROID_SDK_ROOT/emulator:$PATH"',
-      );
-    } else if (state.androidSdkRoot) {
-      nextSteps.push(
-        'export PATH="$ANDROID_SDK_ROOT/platform-tools:$ANDROID_SDK_ROOT/emulator:$PATH"',
-      );
-    }
-
-    nextSteps.push('Re-run npm run check:mobile:android:toolchain.');
-    nextSteps.push('Then run npm run check:mobile:native:runtime:android.');
-    nextSteps.push('Then run npm run dev:mobile:android:local.');
-  }
+  const hasErrors = issues.some((issue) => issue.level === 'error');
 
   return {
     issues,
-    nextSteps,
+    nextSteps: resolveAndroidToolchainNextSteps(state, hasErrors),
     resolved: {
       androidHome: state.androidHome,
       androidSdkRoot: state.androidSdkRoot,
     },
-    status: issues.some((issue) => issue.level === 'error') ? 'error' : 'ok',
+    status: hasErrors ? 'error' : 'ok',
   };
 };
 

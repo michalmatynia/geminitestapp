@@ -473,6 +473,75 @@ describe('SocialPostPipeline', () => {
     expect(screen.getByText('Full pipeline: Running')).toBeInTheDocument();
   });
 
+  it('blocks new launch actions while Redis Social jobs are still in flight', () => {
+    mockSocialPostContextReturnValue({
+      activePostId: 'post-1',
+      editorState: {
+        titlePl: 'Selected pipeline target',
+        titleEn: '',
+      },
+      pipelineStep: 'idle',
+      pipelineProgress: null,
+      pipelineErrorMessage: null,
+      currentVisualAnalysisJob: {
+        id: 'job-analysis-live-7',
+        status: 'active',
+        progress: {
+          type: 'manual-post-visual-analysis',
+          step: 'analyzing',
+          message: 'Running Redis-backed image analysis...',
+          updatedAt: 1_700_000_000_500,
+          postId: 'post-1',
+          imageAddonCount: 2,
+          highlightCount: null,
+        },
+        result: null,
+        failedReason: null,
+      },
+      currentGenerationJob: {
+        id: 'job-generate-3',
+        status: 'waiting',
+        progress: null,
+        result: null,
+        failedReason: null,
+      },
+      handleRunFullPipeline: vi.fn(),
+      handleRunFullPipelineWithFreshCapture: vi.fn(),
+      handleOpenVisualAnalysisModal: vi.fn(),
+      handleOpenProgrammablePlaywrightModal: vi.fn(),
+      handleCaptureImagesOnly: vi.fn(),
+      canGenerateSocialDraft: true,
+      canRunVisualAnalysisPipeline: true,
+      canRunFreshCapturePipeline: true,
+      batchCaptureBaseUrl: 'https://kangur.app',
+      batchCapturePresetIds: ['home'],
+      socialDraftBlockedReason: null,
+      socialBatchCaptureBlockedReason: null,
+      socialVisualAnalysisBlockedReason: null,
+      captureOnlyPending: false,
+      captureOnlyMessage: null,
+      captureOnlyErrorMessage: null,
+      programmableCapturePending: false,
+      programmableCaptureMessage: null,
+      programmableCaptureErrorMessage: null,
+      batchCapturePresetLimit: 1,
+      hasBatchCaptureConfig: true,
+      setIsPostEditorModalOpen: vi.fn(),
+    });
+
+    render(<SocialPostPipeline />);
+
+    expect(screen.getByRole('button', { name: 'Run full pipeline' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Run full pipeline' })).toHaveAttribute(
+      'title',
+      'Wait for the current Social runtime job to finish.'
+    );
+    expect(screen.getByRole('button', { name: 'Fresh capture & pipeline' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Capture images only' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Review image analysis' })).toBeEnabled();
+    expect(screen.getByRole('button', { name: 'Programmable Playwright' })).toBeEnabled();
+  });
+
   it('shows when a cached image-analysis result is already ready for the draft', () => {
     mockSocialPostContextReturnValue({
       activePost: {

@@ -3,7 +3,7 @@
 import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { PauseIcon, PlayIcon, RefreshCwIcon } from 'lucide-react';
 
-import { Badge, Button, Card, ListPanel, LoadingState } from '@/features/kangur/shared/ui';
+import { Button, Card, ListPanel, LoadingState } from '@/features/kangur/shared/ui';
 import { api } from '@/shared/lib/api-client';
 import type { QueueHealthStatus } from '@/shared/contracts/jobs';
 import { safeClearTimeout, safeSetInterval, safeSetTimeout, type SafeTimerId } from '@/shared/lib/timers';
@@ -193,7 +193,6 @@ export function KangurSocialPipelineQueuePanel({
     [fetchData]
   );
 
-  const isHealthy = status?.healthy ?? false;
   const isPaused = status?.isPaused ?? false;
   const workerState = status?.workerState ?? (isPaused ? 'paused' : status?.running ? 'running' : 'offline');
   const isRunning = workerState === 'running';
@@ -489,20 +488,10 @@ function renderJobRow({
   deleting: boolean;
   onDeleteJob: (jobId: string) => Promise<void>;
 }): React.JSX.Element {
-  const statusVariant =
-    job.status === 'completed'
-      ? 'secondary'
-      : job.status === 'failed'
-        ? 'destructive'
-        : job.status === 'active'
-          ? 'default'
-          : 'outline';
-
   const statusLabel = job.result?.skipped
     ? `skipped (${job.result.reason ?? '?'})`
     : job.status;
   const jobType = (job.data as { type?: string } | null)?.type ?? job.result?.type ?? null;
-  const isManualRun = jobType === 'manual-post-pipeline';
   const postId =
     (job.data as { input?: { postId?: string | null } } | null)?.input?.postId ??
     job.result?.postId ??

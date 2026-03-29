@@ -141,57 +141,58 @@ const withMotionCompletionDelay = (
   motionCompletedDelayMs: Math.ceil(profile.guidedAvatarTransition.duration * 1000),
 });
 
+const TUTOR_MOTION_PROFILE_PRESETS: Record<
+  KangurAiTutorMotionPresetKind,
+  Omit<TutorMotionProfile, 'motionCompletedDelayMs'>
+> = {
+  default: {
+    kind: 'default',
+    sheetBreakpoint: 640,
+    avatarTransition: { type: 'spring', stiffness: 320, damping: 28 },
+    guidedAvatarTransition: { type: 'tween', duration: 0.58, ease: [0.22, 1, 0.36, 1] },
+    bubbleTransition: { type: 'spring', stiffness: 300, damping: 28 },
+    hoverScale: 1.06,
+    tapScale: 0.94,
+    desktopBubbleWidth: DESKTOP_BUBBLE_WIDTH,
+    mobileBubbleWidth: MOBILE_BUBBLE_WIDTH,
+  },
+  desktop: {
+    kind: 'desktop',
+    sheetBreakpoint: 680,
+    avatarTransition: { type: 'spring', stiffness: 320, damping: 28 },
+    guidedAvatarTransition: { type: 'tween', duration: 0.58, ease: [0.22, 1, 0.36, 1] },
+    bubbleTransition: { type: 'spring', stiffness: 300, damping: 28 },
+    hoverScale: 1.06,
+    tapScale: 0.94,
+    desktopBubbleWidth: 392,
+    mobileBubbleWidth: 320,
+  },
+  tablet: {
+    kind: 'tablet',
+    sheetBreakpoint: 960,
+    avatarTransition: { type: 'spring', stiffness: 280, damping: 30 },
+    guidedAvatarTransition: { type: 'tween', duration: 0.66, ease: [0.22, 1, 0.36, 1] },
+    bubbleTransition: { type: 'spring', stiffness: 250, damping: 30 },
+    hoverScale: 1.04,
+    tapScale: 0.96,
+    desktopBubbleWidth: 408,
+    mobileBubbleWidth: 336,
+  },
+  mobile: {
+    kind: 'mobile',
+    sheetBreakpoint: 840,
+    avatarTransition: { type: 'spring', stiffness: 250, damping: 30 },
+    guidedAvatarTransition: { type: 'tween', duration: 0.72, ease: [0.22, 1, 0.36, 1] },
+    bubbleTransition: { type: 'spring', stiffness: 235, damping: 30 },
+    hoverScale: 1.03,
+    tapScale: 0.97,
+    desktopBubbleWidth: 360,
+    mobileBubbleWidth: 320,
+  },
+};
+
 const getTutorMotionProfile = (motionPresetId: string | null | undefined): TutorMotionProfile => {
-  switch (getMotionPresetKind(motionPresetId)) {
-    case 'mobile':
-      return withMotionCompletionDelay({
-        kind: 'mobile',
-        sheetBreakpoint: 840,
-        avatarTransition: { type: 'spring', stiffness: 250, damping: 30 },
-        guidedAvatarTransition: { type: 'tween', duration: 0.72, ease: [0.22, 1, 0.36, 1] },
-        bubbleTransition: { type: 'spring', stiffness: 235, damping: 30 },
-        hoverScale: 1.03,
-        tapScale: 0.97,
-        desktopBubbleWidth: 360,
-        mobileBubbleWidth: 320,
-      });
-    case 'tablet':
-      return withMotionCompletionDelay({
-        kind: 'tablet',
-        sheetBreakpoint: 960,
-        avatarTransition: { type: 'spring', stiffness: 280, damping: 30 },
-        guidedAvatarTransition: { type: 'tween', duration: 0.66, ease: [0.22, 1, 0.36, 1] },
-        bubbleTransition: { type: 'spring', stiffness: 250, damping: 30 },
-        hoverScale: 1.04,
-        tapScale: 0.96,
-        desktopBubbleWidth: 408,
-        mobileBubbleWidth: 336,
-      });
-    case 'desktop':
-      return withMotionCompletionDelay({
-        kind: 'desktop',
-        sheetBreakpoint: 680,
-        avatarTransition: { type: 'spring', stiffness: 320, damping: 28 },
-        guidedAvatarTransition: { type: 'tween', duration: 0.58, ease: [0.22, 1, 0.36, 1] },
-        bubbleTransition: { type: 'spring', stiffness: 300, damping: 28 },
-        hoverScale: 1.06,
-        tapScale: 0.94,
-        desktopBubbleWidth: 392,
-        mobileBubbleWidth: 320,
-      });
-    default:
-      return withMotionCompletionDelay({
-        kind: 'default',
-        sheetBreakpoint: 640,
-        avatarTransition: { type: 'spring', stiffness: 320, damping: 28 },
-        guidedAvatarTransition: { type: 'tween', duration: 0.58, ease: [0.22, 1, 0.36, 1] },
-        bubbleTransition: { type: 'spring', stiffness: 300, damping: 28 },
-        hoverScale: 1.06,
-        tapScale: 0.94,
-        desktopBubbleWidth: DESKTOP_BUBBLE_WIDTH,
-        mobileBubbleWidth: MOBILE_BUBBLE_WIDTH,
-      });
-  }
+  return withMotionCompletionDelay(TUTOR_MOTION_PROFILE_PRESETS[getMotionPresetKind(motionPresetId)]);
 };
 
 const getTutorSessionKey = (

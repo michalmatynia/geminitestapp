@@ -102,7 +102,7 @@ it('switches to a non-default locale while preserving search params', async () =
     });
   });
   expect(locationAssignSpy).not.toHaveBeenCalled();
-  expect(prefetchMock).not.toHaveBeenCalled();
+  expect(prefetchMock).toHaveBeenCalledWith('/en/lessons?mode=solo&difficulty=hard');
   expect(document.cookie).toContain('NEXT_LOCALE=en');
 });
 
@@ -138,7 +138,7 @@ it('canonicalizes /kangur alias routes when Kangur owns the public frontend', as
     });
   });
   expect(locationAssignSpy).not.toHaveBeenCalled();
-  expect(prefetchMock).not.toHaveBeenCalled();
+  expect(prefetchMock).toHaveBeenCalledWith('/en/lessons?mode=solo');
 });
 
 it('does not preserve the blocked GamesLibrary pathname in locale-switch links for non-super-admin users', async () => {
@@ -218,7 +218,7 @@ it('drops the locale prefix when switching back to the default locale', async ()
     });
   });
   expect(locationAssignSpy).not.toHaveBeenCalled();
-  expect(prefetchMock).not.toHaveBeenCalled();
+  expect(prefetchMock).toHaveBeenCalledWith('/duels');
 });
 
 it('uses managed locale switching when returning to Polish from an unprefixed English lessons route', async () => {
@@ -252,7 +252,7 @@ it('uses managed locale switching when returning to Polish from an unprefixed En
     });
   });
   expect(locationAssignSpy).not.toHaveBeenCalled();
-  expect(prefetchMock).not.toHaveBeenCalled();
+  expect(prefetchMock).toHaveBeenCalledWith('/lessons');
   expect(document.cookie).toContain('NEXT_LOCALE=pl');
 });
 
@@ -321,7 +321,7 @@ it('does not warm the locale route or page content before switching', async () =
     });
   });
   expect(locationAssignSpy).not.toHaveBeenCalled();
-  expect(prefetchMock).not.toHaveBeenCalled();
+  expect(prefetchMock).toHaveBeenCalledWith('/en/lessons');
   expect(prefetchKangurPageContentStoreMock).not.toHaveBeenCalled();
 });
 

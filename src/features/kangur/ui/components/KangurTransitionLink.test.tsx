@@ -329,6 +329,22 @@ describe('KangurTransitionLink', () => {
     expect(routerPrefetchMock).not.toHaveBeenCalled();
   });
 
+  it('triggers manual router prefetch on managed-link intent for fine-pointer devices', () => {
+    render(
+      <KangurTransitionLink href='/kangur/lessons' targetPageKey='Lessons'>
+        Lekcje
+      </KangurTransitionLink>
+    );
+
+    const link = screen.getByRole('link', { name: 'Lekcje' });
+    fireEvent.mouseEnter(link);
+    fireEvent.focus(link);
+    fireEvent.pointerDown(link, { button: 0 });
+
+    expect(routerPrefetchMock).toHaveBeenCalledTimes(1);
+    expect(routerPrefetchMock).toHaveBeenCalledWith('/kangur/lessons');
+  });
+
   it('applies disabled semantics and blocks route transitions when disabled', () => {
     render(
       <KangurTransitionLink disabled href='/kangur/lessons' targetPageKey='Lessons'>
@@ -379,6 +395,11 @@ describe('KangurTransitionLink', () => {
         Lekcje
       </KangurTransitionLink>
     );
+
+    const link = screen.getByRole('link', { name: 'Lekcje' });
+    fireEvent.mouseEnter(link);
+    fireEvent.focus(link);
+    fireEvent.pointerDown(link, { button: 0 });
 
     expect(routerPrefetchMock).not.toHaveBeenCalled();
   });
@@ -463,6 +484,9 @@ describe('KangurTransitionLink', () => {
         prefetch: false,
       })
     );
+
+    fireEvent.mouseEnter(screen.getByRole('link', { name: 'Pojedynki' }));
+
     expect(routerPrefetchMock).not.toHaveBeenCalled();
   });
 

@@ -207,8 +207,16 @@ describe('SocialPostPlaywrightCaptureModal', () => {
     ).toBeInTheDocument();
     expect(screen.getByText('Generate post: Queued')).toBeInTheDocument();
     expect(screen.getByText('Full pipeline: Running')).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Capture programmable images' })).toBeEnabled();
-    expect(screen.getByRole('button', { name: 'Capture + run pipeline' })).toBeEnabled();
+    expect(screen.getByRole('button', { name: 'Capture programmable images' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Capture + run pipeline' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Capture + run pipeline' })).toHaveAttribute(
+      'title',
+      'Wait for the current Social runtime job to finish.'
+    );
+    expect(screen.getByRole('button', { name: 'Add route' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Seed from presets' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Reset script' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Save as defaults' })).toBeDisabled();
   });
 
   it('delegates modal actions to the Social page context', () => {

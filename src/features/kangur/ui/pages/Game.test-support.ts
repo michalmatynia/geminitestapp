@@ -95,20 +95,26 @@ const expectStandardMobileGameLayout = (
   if (expectFullWidth) {
     expect(gameMain?.className).toContain('w-full');
   }
-  expect(gameMain?.className).toContain('min-w-0');
-  expect(gameMain?.className).toContain('overflow-x-clip');
-  expect(gameMain?.className).toContain('overflow-y-auto');
+  ['min-w-0', 'overflow-x-clip', 'overflow-y-auto'].forEach((className) => {
+    expect(gameMain?.className).toContain(className);
+  });
   if (expectBottomClearance) {
     expect(gameMain?.className).toContain(
       'var(--kangur-mobile-bottom-clearance,env(safe-area-inset-bottom))+32px'
     );
   }
-  expect(gameMain?.className).not.toContain(
-    'var(--kangur-shell-viewport-height,100dvh)-var(--kangur-top-bar-height,88px)'
-  );
-  expect(screen.queryByTestId('kangur-game-phone-simulation-scroll-container')).toBeNull();
-  expect(screen.queryByTestId('kangur-game-phone-simulation-scroll-up')).toBeNull();
-  expect(screen.queryByTestId('kangur-game-phone-simulation-scroll-down')).toBeNull();
+  [
+    'var(--kangur-shell-viewport-height,100dvh)-var(--kangur-top-bar-height,88px)',
+  ].forEach((className) => {
+    expect(gameMain?.className).not.toContain(className);
+  });
+  [
+    'kangur-game-phone-simulation-scroll-container',
+    'kangur-game-phone-simulation-scroll-up',
+    'kangur-game-phone-simulation-scroll-down',
+  ].forEach((testId) => {
+    expect(screen.queryByTestId(testId)).toBeNull();
+  });
   expect(screen.queryByRole('button', { name: 'Przewiń w dół' })).toBeNull();
 };
 

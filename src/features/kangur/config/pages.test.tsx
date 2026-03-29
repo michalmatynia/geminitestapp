@@ -89,18 +89,18 @@ describe('kangur page config', () => {
     expect(competitionPageImportMock).toHaveBeenCalledTimes(1);
   });
 
-  it('preloads Game page module on demand via dynamic import', async () => {
-    preloadKangurPage('Game');
-    await vi.dynamicImportSettled();
-
-    expect(gamePageImportMock).toHaveBeenCalledTimes(1);
-  });
-
   it('preloads Lessons page module on demand via dynamic import', async () => {
     preloadKangurPage('Lessons');
     await vi.dynamicImportSettled();
 
     expect(lessonsPageImportMock).toHaveBeenCalledTimes(1);
+  });
+
+  it('includes Game and Lessons as preloadable page keys', () => {
+    // Game is eagerly preloaded at module scope for fast boot, but both
+    // Game and Lessons remain preloadable via the preloadKangurPage API.
+    expect(() => preloadKangurPage('Game')).not.toThrow();
+    expect(() => preloadKangurPage('Lessons')).not.toThrow();
   });
 
   it('lazy-loads all Kangur pages including Game and Lessons via dynamic()', () => {

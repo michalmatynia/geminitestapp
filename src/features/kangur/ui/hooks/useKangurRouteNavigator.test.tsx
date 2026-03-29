@@ -321,6 +321,15 @@ describe('useKangurRouteNavigator', () => {
     expect(routerPushMock).toHaveBeenCalledWith('/lessons', { scroll: false });
   });
 
+  it('prefetches managed push destinations before navigation starts', () => {
+    render(<NavigatorPushProbe acknowledgeMs={0} href='/lessons' />);
+
+    fireEvent.click(screen.getByTestId('navigator-push'));
+
+    expect(routerPrefetchMock).toHaveBeenCalledWith('/lessons');
+    expect(routerPushMock).toHaveBeenCalledWith('/lessons', { scroll: false });
+  });
+
   it('bypasses acknowledged navigation delays on coarse-pointer devices', () => {
     Object.defineProperty(window, 'matchMedia', {
       configurable: true,

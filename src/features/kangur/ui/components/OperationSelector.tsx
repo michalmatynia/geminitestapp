@@ -34,6 +34,155 @@ export type OperationSelectorProps = {
   recommendedOperation?: KangurOperation | null;
 };
 
+type OperationSelectorState = ReturnType<typeof useKangurOperationSelectorState>;
+type OperationSelectorEntry = OperationSelectorState['operations'][number];
+
+const resolveOperationCardAriaDescribedBy = (input: {
+  descriptionElementId: string;
+  priorityElementId: string | null;
+  recommendedElementId: string | null;
+  statusElementId: string;
+}): string =>
+  [
+    input.statusElementId,
+    input.priorityElementId,
+    input.recommendedElementId,
+    input.descriptionElementId,
+  ]
+    .filter(Boolean)
+    .join(' ');
+
+const resolveOperationCardButtonClassName = (isCoarsePointer: boolean): string =>
+  cn(
+    'flex min-h-[160px] flex-col kangur-panel-gap rounded-[26px] p-4 sm:min-h-[180px] sm:rounded-[30px] sm:p-5',
+    isCoarsePointer && 'min-h-[176px] px-5 py-5 active:scale-[0.98] sm:min-h-[196px]'
+  );
+
+const resolveOperationCardEmphasis = (
+  operation: OperationSelectorEntry
+): React.ComponentProps<typeof KangurAnswerChoiceCard>['emphasis'] =>
+  operation.hasPriorityAssignment || operation.isRecommended ? 'accent' : 'neutral';
+
+function OperationSelectorPriorityChip(props: {
+  operation: OperationSelectorEntry;
+  priorityElementId: string | null;
+}): React.JSX.Element | null {
+  if (!props.operation.priority) {
+    return null;
+  }
+
+  return (
+    <KangurAssignmentPriorityChip
+      accent='rose'
+      className='self-start text-[10px] uppercase tracking-[0.16em] sm:absolute sm:right-3 sm:top-3'
+      id={props.priorityElementId ?? undefined}
+      priority={props.operation.priority}
+      size='sm'
+    />
+  );
+}
+
+function OperationSelectorRecommendationChip(props: {
+  operation: OperationSelectorEntry;
+  recommendedElementId: string | null;
+}): React.JSX.Element | null {
+  if (!props.operation.isRecommended) {
+    return null;
+  }
+
+  return (
+    <KangurStatusChip
+      accent={props.operation.accent}
+      className='text-[11px] font-semibold'
+      data-testid={`operation-card-recommendation-${props.operation.id}`}
+      id={props.recommendedElementId ?? undefined}
+      size='sm'
+    >
+      {props.operation.recommendedLabel}
+    </KangurStatusChip>
+  );
+}
+
+function OperationSelectorCard(props: {
+  animationIndex: number;
+  isCoarsePointer: boolean;
+  operation: OperationSelectorEntry;
+}): React.JSX.Element {
+  const { operation } = props;
+  const accent = KANGUR_ACCENT_STYLES[operation.accent];
+  const descriptionElementId = `operation-card-description-${operation.id}`;
+  const statusElementId = `operation-card-status-${operation.id}`;
+  const priorityElementId = operation.priority ? `operation-card-priority-${operation.id}` : null;
+  const recommendedElementId = operation.isRecommended
+    ? `operation-card-recommendation-${operation.id}`
+    : null;
+
+  return (
+    <KangurAnswerChoiceCard
+      accent={operation.accent}
+      animate={{ opacity: 1, y: 0 }}
+      aria-describedby={resolveOperationCardAriaDescribedBy({
+        statusElementId,
+        priorityElementId,
+        recommendedElementId,
+        descriptionElementId,
+      })}
+      buttonClassName={resolveOperationCardButtonClassName(props.isCoarsePointer)}
+      data-testid={`operation-card-${operation.id}`}
+      emphasis={resolveOperationCardEmphasis(operation)}
+      initial={{ opacity: 0, y: 20 }}
+      onClick={operation.select}
+      transition={{ delay: props.animationIndex * 0.08 }}
+      whileHover={{ scale: 1.07 }}
+      whileTap={{ scale: 0.95 }}
+      wrapperRole='listitem'
+    >
+      <OperationSelectorPriorityChip
+        operation={operation}
+        priorityElementId={priorityElementId}
+      />
+      <KangurPanelRow className='sm:items-start sm:justify-between'>
+        <KangurIconBadge accent={operation.accent} data-testid={`operation-icon-${operation.id}`} size='xl'>
+          {operation.emoji}
+        </KangurIconBadge>
+        <div
+          className={cn(
+            KANGUR_WRAP_START_ROW_CLASSNAME,
+            'w-full flex-row sm:w-auto sm:flex-col sm:items-end'
+          )}
+        >
+          <KangurStatusChip
+            accent={operation.hasPriorityAssignment ? operation.accent : 'slate'}
+            className='text-[11px] font-semibold'
+            id={statusElementId}
+            size='sm'
+          >
+            {operation.statusLabel}
+          </KangurStatusChip>
+          <OperationSelectorRecommendationChip
+            operation={operation}
+            recommendedElementId={recommendedElementId}
+          />
+        </div>
+      </KangurPanelRow>
+      <div className='space-y-1 text-left'>
+        <span className='block text-lg font-extrabold [color:var(--kangur-page-text)]'>
+          {operation.label}
+        </span>
+        <span
+          id={descriptionElementId}
+          className='block text-sm [color:var(--kangur-page-muted-text)]'
+        >
+          {operation.description}
+        </span>
+      </div>
+      <span className={cn('mt-auto text-sm font-semibold', accent.activeText)}>
+        {operation.actionLabel}
+      </span>
+    </KangurAnswerChoiceCard>
+  );
+}
+
 export default function OperationSelector({
   onSelect,
   priorityAssignmentsByOperation = {},
@@ -99,111 +248,16 @@ export default function OperationSelector({
                 role='list'
               >
                 {groupOperations.map((operation) => {
-                  const accent = KANGUR_ACCENT_STYLES[operation.accent];
-                  const descriptionElementId = `operation-card-description-${operation.id}`;
-                  const statusElementId = `operation-card-status-${operation.id}`;
-                  const priorityElementId = operation.priority
-                    ? `operation-card-priority-${operation.id}`
-                    : null;
-                  const recommendedElementId = operation.isRecommended
-                    ? `operation-card-recommendation-${operation.id}`
-                    : null;
-                  const transitionDelay = animationIndex * 0.08;
-
+                  const nextAnimationIndex = animationIndex;
                   animationIndex += 1;
 
                   return (
-                    <KangurAnswerChoiceCard
+                    <OperationSelectorCard
                       key={operation.id}
-                      accent={operation.accent}
-                      animate={{ opacity: 1, y: 0 }}
-                      aria-describedby={
-                        [
-                          statusElementId,
-                          priorityElementId,
-                          recommendedElementId,
-                          descriptionElementId,
-                        ]
-                          .filter(Boolean)
-                          .join(' ')
-                      }
-                      buttonClassName={cn(
-                        'flex min-h-[160px] flex-col kangur-panel-gap rounded-[26px] p-4 sm:min-h-[180px] sm:rounded-[30px] sm:p-5',
-                        isCoarsePointer &&
-                          'min-h-[176px] px-5 py-5 active:scale-[0.98] sm:min-h-[196px]'
-                      )}
-                      data-testid={`operation-card-${operation.id}`}
-                      emphasis={
-                        operation.hasPriorityAssignment || operation.isRecommended
-                          ? 'accent'
-                          : 'neutral'
-                      }
-                      initial={{ opacity: 0, y: 20 }}
-                      onClick={operation.select}
-                      wrapperRole='listitem'
-                      transition={{ delay: transitionDelay }}
-                      whileHover={{ scale: 1.07 }}
-                      whileTap={{ scale: 0.95 }}
-                    >
-                      {operation.priority ? (
-                        <KangurAssignmentPriorityChip
-                          accent='rose'
-                          className='self-start text-[10px] uppercase tracking-[0.16em] sm:absolute sm:right-3 sm:top-3'
-                          id={priorityElementId ?? undefined}
-                          priority={operation.priority}
-                          size='sm'
-                        />
-                      ) : null}
-                      <KangurPanelRow className='sm:items-start sm:justify-between'>
-                        <KangurIconBadge
-                          accent={operation.accent}
-                          data-testid={`operation-icon-${operation.id}`}
-                          size='xl'
-                        >
-                          {operation.emoji}
-                        </KangurIconBadge>
-                        <div
-                          className={cn(
-                            KANGUR_WRAP_START_ROW_CLASSNAME,
-                            'w-full flex-row sm:w-auto sm:flex-col sm:items-end'
-                          )}
-                        >
-                          <KangurStatusChip
-                            accent={operation.hasPriorityAssignment ? operation.accent : 'slate'}
-                            className='text-[11px] font-semibold'
-                            id={statusElementId}
-                            size='sm'
-                          >
-                            {operation.statusLabel}
-                          </KangurStatusChip>
-                          {operation.isRecommended ? (
-                            <KangurStatusChip
-                              accent={operation.accent}
-                              className='text-[11px] font-semibold'
-                              data-testid={`operation-card-recommendation-${operation.id}`}
-                              id={recommendedElementId ?? undefined}
-                              size='sm'
-                            >
-                            {operation.recommendedLabel}
-                          </KangurStatusChip>
-                        ) : null}
-                      </div>
-                      </KangurPanelRow>
-                      <div className='space-y-1 text-left'>
-                        <span className='block text-lg font-extrabold [color:var(--kangur-page-text)]'>
-                          {operation.label}
-                        </span>
-                        <span
-                          id={descriptionElementId}
-                          className='block text-sm [color:var(--kangur-page-muted-text)]'
-                        >
-                          {operation.description}
-                        </span>
-                      </div>
-                      <span className={cn('mt-auto text-sm font-semibold', accent.activeText)}>
-                        {operation.actionLabel}
-                      </span>
-                    </KangurAnswerChoiceCard>
+                      animationIndex={nextAnimationIndex}
+                      isCoarsePointer={isCoarsePointer}
+                      operation={operation}
+                    />
                   );
                 })}
               </div>

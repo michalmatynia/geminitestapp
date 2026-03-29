@@ -27,6 +27,7 @@ import {
 } from '@/features/kangur/ui/design/primitives';
 import { KANGUR_TIGHT_ROW_CLASSNAME } from '@/features/kangur/ui/design/tokens';
 import { prefetchKangurLessonsCatalog } from '@/features/kangur/ui/hooks/useKangurLessonsCatalog';
+import { prefetchKangurPageContentStore } from '@/features/kangur/ui/hooks/useKangurPageContent';
 import { useKangurTutorAnchor } from '@/features/kangur/ui/hooks/useKangurTutorAnchor';
 import {
   DEFAULT_KANGUR_AGE_GROUP,
@@ -68,6 +69,8 @@ const KangurLanguageSwitcher = dynamic(() =>
   }))
 );
 
+const HOT_LESSONS_DATA_PREFETCH_TIMEOUT_MS = 250;
+
 const resolveTutorFallbackCopy = (
   value: string | null | undefined,
   fallback: string
@@ -98,7 +101,7 @@ export function KangurPrimaryNavigation({
   rightAccessory,
   showParentDashboard = canManageLearners,
 }: KangurPrimaryNavigationProps): React.JSX.Element {
-  const { activeLearner, ageGroup, authUser, closeMobileMenu, effectiveIsAuthenticated, effectiveShowParentDashboard, elevatedSessionUser, fallbackCopy, hasActiveLearner, isAgeGroupModalOpen, isCoarsePointer, isLoggingOut, isMobileMenuOpen, isMobileViewport, isParentAccount, isSubjectModalOpen, isSuperAdmin, isTutorHidden, kangurAppearance, navTranslations, navigationLabel, normalizedLocale, profileAvatar, queryClient, routeTransitionState, setAgeGroup, setIsAgeGroupModalOpen, setIsMobileMenuOpen, setIsSubjectModalOpen, setSubject, shouldRenderElevatedUserMenu, shouldRenderProfileMenu, subject, toggleMobileMenu, tutor, tutorContent } = useKangurPrimaryNavigationState({
+  const { activeLearner, ageGroup, authUser, closeMobileMenu, effectiveIsAuthenticated, effectiveShowParentDashboard, elevatedSessionUser, fallbackCopy, isAgeGroupModalOpen, isCoarsePointer, isLoggingOut, isMobileMenuOpen, isMobileViewport, isSubjectModalOpen, isSuperAdmin, isTutorHidden, kangurAppearance, navTranslations, navigationLabel, normalizedLocale, profileAvatar, queryClient, routeTransitionState, setAgeGroup, setIsAgeGroupModalOpen, setIsMobileMenuOpen, setIsSubjectModalOpen, setSubject, shouldRenderElevatedUserMenu, shouldRenderProfileMenu, subject, toggleMobileMenu, tutor, tutorContent } = useKangurPrimaryNavigationState({
     canManageLearners,
     currentPage,
     isAuthenticated,
@@ -108,7 +111,6 @@ export function KangurPrimaryNavigation({
   const storefrontAppearance = useOptionalCmsStorefrontAppearance();
   const guestPlayerNameValue = typeof guestPlayerName === 'string' ? guestPlayerName : '';
   const guestPlayerPlaceholderText = guestPlayerNamePlaceholder ?? fallbackCopy.guestPlayerNamePlaceholder;
-  const activeLearnerId = activeLearner?.id?.trim() ?? '';
   const activeLearnerName = activeLearner?.displayName?.trim() || activeLearner?.loginName?.trim() || null;
   const profileDisplayName = activeLearnerName || authUser?.full_name?.trim() || null;
   const profileLabel = profileDisplayName ? fallbackCopy.profileLabelWithName(profileDisplayName) : fallbackCopy.profileLabel;
@@ -120,6 +122,7 @@ export function KangurPrimaryNavigation({
   const mobileMenuRef = useRef<HTMLDivElement | null>(null);
   const mobileMenuPreviousFocusRef = useRef<HTMLElement | null>(null);
   const lessonsPrefetchTriggeredRef = useRef(false);
+  const pageContentPrefetchTriggeredRef = useRef(false);
   const enableTutorLabel = resolveTutorFallbackCopy(
     tutorContent.common.enableTutorLabel ?? tutorContent.navigation.restoreTutorLabel,
     fallbackCopy.enableTutorLabel
@@ -214,22 +217,74 @@ export function KangurPrimaryNavigation({
   const mobileWideNavItemClassName = `max-sm:col-span-2 max-sm:min-w-0 max-sm:w-full max-sm:justify-center ${isCoarsePointer ? 'max-sm:min-h-12 max-sm:px-4' : 'max-sm:px-3'}`;
   const yellowPillActionClassName = `border-amber-200/90 bg-[linear-gradient(180deg,rgba(255,251,235,0.98)_0%,rgba(254,243,199,0.94)_100%)] px-4 text-amber-700 shadow-[0_14px_24px_-18px_rgba(245,158,11,0.55)] ring-1 ring-amber-100/90 hover:border-amber-200 hover:bg-[linear-gradient(180deg,rgba(255,255,255,0.98)_0%,rgba(254,243,199,0.96)_100%)] hover:text-amber-800 ${mobileWideNavItemClassName}`;
   const amberPillActionClassName = `border-amber-300/90 bg-[linear-gradient(180deg,rgba(254,243,199,0.96)_0%,rgba(253,230,138,0.92)_100%)] px-4 text-amber-800 shadow-[0_14px_24px_-18px_rgba(245,158,11,0.58)] ring-1 ring-amber-200/90 hover:border-amber-300 hover:bg-[linear-gradient(180deg,rgba(255,255,255,0.96)_0%,rgba(253,230,138,0.94)_100%)] hover:text-amber-900 ${mobileWideNavItemClassName}`;
+  const prefetchSharedRouteContentOnIntent = useCallback((): void => {
+    if (pageContentPrefetchTriggeredRef.current) {
+      return;
+    }
+
+    pageContentPrefetchTriggeredRef.current = true;
+    void prefetchKangurPageContentStore(queryClient, normalizedLocale);
+  }, [normalizedLocale, queryClient]);
+
   const prefetchLessonsCatalogOnIntent = useCallback((): void => {
     if (accessibleCurrentPage === 'Lessons' || lessonsPrefetchTriggeredRef.current) {
       return;
     }
 
+    prefetchSharedRouteContentOnIntent();
     lessonsPrefetchTriggeredRef.current = true;
     void prefetchKangurLessonsCatalog(queryClient, {
       ageGroup,
       enabledOnly: true,
       subject,
     });
-  }, [accessibleCurrentPage, ageGroup, queryClient, subject]);
+  }, [
+    accessibleCurrentPage,
+    ageGroup,
+    prefetchSharedRouteContentOnIntent,
+    queryClient,
+    subject,
+  ]);
 
   useEffect(() => {
     lessonsPrefetchTriggeredRef.current = false;
-  }, [accessibleCurrentPage, ageGroup, subject]);
+    pageContentPrefetchTriggeredRef.current = false;
+  }, [accessibleCurrentPage, ageGroup, normalizedLocale, subject]);
+
+  useEffect(() => {
+    if (
+      accessibleCurrentPage !== 'Game' ||
+      lessonsPrefetchTriggeredRef.current ||
+      typeof window === 'undefined'
+    ) {
+      return;
+    }
+
+    const prefetchHotLessonsRouteData = (): void => {
+      if (lessonsPrefetchTriggeredRef.current) {
+        return;
+      }
+
+      prefetchLessonsCatalogOnIntent();
+    };
+
+    if (typeof window.requestIdleCallback === 'function') {
+      const idleId = window.requestIdleCallback(prefetchHotLessonsRouteData, {
+        timeout: HOT_LESSONS_DATA_PREFETCH_TIMEOUT_MS,
+      });
+      return () => {
+        window.cancelIdleCallback?.(idleId);
+      };
+    }
+
+    const timeoutId = window.setTimeout(
+      prefetchHotLessonsRouteData,
+      HOT_LESSONS_DATA_PREFETCH_TIMEOUT_MS
+    );
+    return () => {
+      window.clearTimeout(timeoutId);
+    };
+  }, [accessibleCurrentPage, prefetchLessonsCatalogOnIntent]);
 
   useEffect(() => {
     if (!isMobileMenuOpen || typeof document === 'undefined') return;

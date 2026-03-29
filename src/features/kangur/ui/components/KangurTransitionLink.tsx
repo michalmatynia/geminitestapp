@@ -3,10 +3,11 @@
 import NextLink from 'next/link';
 import { useLocale } from 'next-intl';
 import { usePathname } from 'next/navigation';
-import { useCallback } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
 
 import { useOptionalFrontendPublicOwner } from '@/features/kangur/ui/FrontendPublicOwnerContext';
 import { useKangurRouteNavigator } from '@/features/kangur/ui/hooks/useKangurRouteNavigator';
+import { useKangurCoarsePointer } from '@/features/kangur/ui/hooks/useKangurCoarsePointer';
 import { useOptionalKangurRouting } from '@/features/kangur/ui/context/KangurRoutingContext';
 import {
   canonicalizeKangurPublicAliasHref,
@@ -58,6 +59,8 @@ export function KangurTransitionLink({
   className,
   disabled = false,
   onClick,
+  onFocus,
+  onMouseEnter,
   prefetch,
   scroll,
   tabIndex,
@@ -69,6 +72,7 @@ export function KangurTransitionLink({
   ...props
 }: KangurTransitionLinkProps): React.JSX.Element {
   const routeNavigator = useKangurRouteNavigator();
+  const isCoarsePointer = useKangurCoarsePointer();
   const routing = useOptionalKangurRouting();
   const { resolveManagedTargetPageKey, resolveTransitionSkeletonVariant } = useKangurRouteAccess();
   const frontendPublicOwner = useOptionalFrontendPublicOwner();
@@ -83,6 +87,9 @@ export function KangurTransitionLink({
   const resolvedScroll = scroll ?? (shouldUseManagedScroll ? false : undefined);
   const resolvedTabIndex = disabled ? -1 : tabIndex;
   const resolvedAriaDisabled = disabled ? 'true' : ariaDisabledProp;
+  const hasIntentPrefetchedRef = useRef(false);
+  const shouldManualPrefetchManagedHref =
+    managedLocalHref !== null && prefetch !== false && !disabled && !isCoarsePointer;
   const renderedHref =
     managedLocalHref === null
       ? href
@@ -97,6 +104,19 @@ export function KangurTransitionLink({
           ? canonicalizeKangurPublicAliasHref(localizedHref)
           : localizedHref;
       })();
+  const prefetchManagedHrefOnIntent = useCallback((): void => {
+    if (!shouldManualPrefetchManagedHref || hasIntentPrefetchedRef.current || managedLocalHref === null) {
+      return;
+    }
+
+    hasIntentPrefetchedRef.current = true;
+    routeNavigator.prefetch(managedLocalHref);
+  }, [managedLocalHref, routeNavigator, shouldManualPrefetchManagedHref]);
+
+  useEffect(() => {
+    hasIntentPrefetchedRef.current = false;
+  }, [disabled, href, isCoarsePointer, prefetch, renderedHref]);
+
   const publishPendingSnapshot = useCallback((): void => {
     if (managedLocalHref === null || typeof renderedHref !== 'string') {
       return;
@@ -145,6 +165,21 @@ export function KangurTransitionLink({
       scroll={resolvedScroll}
       tabIndex={resolvedTabIndex}
       target={target}
+      onFocus={(event) => {
+        prefetchManagedHrefOnIntent();
+        onFocus?.(event);
+      }}
+      onMouseEnter={(event) => {
+        prefetchManagedHrefOnIntent();
+        onMouseEnter?.(event);
+      }}
+      onPointerDownCapture={(event) => {
+        if (event.button !== 0) {
+          return;
+        }
+
+        prefetchManagedHrefOnIntent();
+      }}
       onClickCapture={(event) => {
         if (disabled) {
           event.preventDefault();

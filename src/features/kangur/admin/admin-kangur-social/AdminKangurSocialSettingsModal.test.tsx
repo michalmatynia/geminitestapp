@@ -455,6 +455,11 @@ describe('AdminKangurSocialSettingsModal', () => {
     fireEvent.click(screen.getByRole('tab', { name: 'Documentation' }));
 
     expect(screen.getByText('Generate draft: Running')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Generate draft in progress...' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Generate draft in progress...' })).toHaveAttribute(
+      'title',
+      'Wait for the current Social runtime job to finish.'
+    );
   });
 
   it('shows live runtime job pills in the capture tab', () => {
@@ -508,6 +513,57 @@ describe('AdminKangurSocialSettingsModal', () => {
     expect(screen.getByText('Image analysis: Running')).toBeInTheDocument();
     expect(screen.getByText('Generate post: Queued')).toBeInTheDocument();
     expect(screen.getByText('Full pipeline: Completed')).toBeInTheDocument();
+  });
+
+  it('blocks capture launch actions while Social runtime jobs are still in flight', () => {
+    usePlaywrightPersonasMock.mockReturnValue({
+      data: [],
+      isLoading: false,
+      error: null,
+    });
+    useSocialPostContextMock.mockReturnValue(
+      buildSocialPostContextState({
+        currentVisualAnalysisJob: {
+          id: 'job-analysis-4',
+          status: 'active',
+          progress: {
+            message: 'Analyzing the latest selected visuals.',
+          },
+          failedReason: null,
+        },
+        currentGenerationJob: {
+          id: 'job-generate-4',
+          status: 'waiting',
+          progress: {
+            message: 'Waiting for generation worker capacity.',
+          },
+          failedReason: null,
+        },
+      })
+    );
+
+    render(
+      <AdminKangurSocialSettingsModal
+        open={true}
+        onClose={vi.fn()}
+        onSave={vi.fn()}
+        isSaving={false}
+        hasUnsavedChanges={false}
+      />
+    );
+
+    fireEvent.click(screen.getByRole('tab', { name: 'Capture' }));
+
+    expect(screen.getByRole('button', { name: 'Create single add-on' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Create single add-on' })).toHaveAttribute(
+      'title',
+      'Wait for the current Social runtime job to finish.'
+    );
+    expect(screen.getByRole('button', { name: 'Launch batch capture' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Launch batch capture' })).toHaveAttribute(
+      'title',
+      'Wait for the current Social runtime job to finish.'
+    );
   });
 });
 

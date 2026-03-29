@@ -23,6 +23,80 @@ import { translateScoreHistoryWithFallback } from './ScoreHistory.utils';
 
 const kangurPlatform = getKangurPlatform();
 
+type NormalizedScoreHistoryScope = {
+  createdBy: string;
+  learnerId: string;
+  playerName: string;
+};
+
+const normalizeScoreHistoryScope = (input: {
+  createdBy: string | null;
+  learnerId: string | null;
+  playerName: string | null;
+}): NormalizedScoreHistoryScope => ({
+  learnerId: input.learnerId?.trim() || '',
+  playerName: input.playerName?.trim() || '',
+  createdBy: input.createdBy?.trim() || '',
+});
+
+const resolveScoreHistoryLoadContext = (
+  normalizedScope: NormalizedScoreHistoryScope,
+  subject: string
+) => ({
+  learnerIdProvided: normalizedScope.learnerId.length > 0,
+  playerNameProvided: normalizedScope.playerName.length > 0,
+  createdByProvided: normalizedScope.createdBy.length > 0,
+  subject,
+});
+
+const setScoreHistoryLoadingState = (
+  isActive: boolean,
+  setLoading: React.Dispatch<React.SetStateAction<boolean>>,
+  nextValue: boolean
+): void => {
+  if (isActive) {
+    setLoading(nextValue);
+  }
+};
+
+const setScoreHistoryRecordsIfActive = (
+  isActive: boolean,
+  setRecords: React.Dispatch<React.SetStateAction<KangurScoreRecord[]>>,
+  nextRecords: KangurScoreRecord[]
+): void => {
+  if (isActive) {
+    setRecords(nextRecords);
+  }
+};
+
+const loadScoreHistoryRecords = async (input: {
+  normalizedScope: NormalizedScoreHistoryScope;
+  onError: () => void;
+  subject: string;
+}): Promise<KangurScoreRecord[]> =>
+  withKangurClientError(
+    {
+      source: 'kangur.score-history',
+      action: 'load-scores',
+      description: 'Loads scoped Kangur scores for the learner history panel.',
+      context: resolveScoreHistoryLoadContext(input.normalizedScope, input.subject),
+    },
+    async () =>
+      await loadScopedKangurScores(kangurPlatform.score, {
+        learnerId: input.normalizedScope.learnerId,
+        playerName: input.normalizedScope.playerName,
+        createdBy: input.normalizedScope.createdBy,
+        limit: SCORE_FETCH_LIMIT,
+        fallbackToAll: true,
+        subject: input.subject,
+      }),
+    {
+      fallback: [],
+      shouldReport: (error) => !isRecoverableKangurClientFetchError(error),
+      onError: input.onError,
+    }
+  );
+
 export function useScoreHistoryState(props: ScoreHistoryProps) {
   const {
     learnerId = null,
@@ -53,47 +127,29 @@ export function useScoreHistoryState(props: ScoreHistoryProps) {
 
     let isActive = true;
     const loadScores = async (): Promise<void> => {
-      const normalizedLearnerId = learnerId?.trim() || '';
-      const normalizedPlayerName = playerName?.trim() || '';
-      const normalizedCreatedBy = createdBy?.trim() || '';
-      if (isActive) setIsInternalLoading(true);
+      const normalizedScope = normalizeScoreHistoryScope({
+        learnerId,
+        playerName,
+        createdBy,
+      });
+      setScoreHistoryLoadingState(isActive, setIsInternalLoading, true);
 
       try {
-        const loadedScores = await withKangurClientError(
-          {
-            source: 'kangur.score-history',
-            action: 'load-scores',
-            description: 'Loads scoped Kangur scores for the learner history panel.',
-            context: {
-              learnerIdProvided: normalizedLearnerId.length > 0,
-              playerNameProvided: normalizedPlayerName.length > 0,
-              createdByProvided: normalizedCreatedBy.length > 0,
-              subject,
-            },
-          },
-          async () =>
-            await loadScopedKangurScores(kangurPlatform.score, {
-              learnerId: normalizedLearnerId,
-              playerName: normalizedPlayerName,
-              createdBy: normalizedCreatedBy,
-              limit: SCORE_FETCH_LIMIT,
-              fallbackToAll: true,
-              subject,
-            }),
-          {
-            fallback: [],
-            shouldReport: (error) => !isRecoverableKangurClientFetchError(error),
-            onError: () => { if (isActive) setScores([]); },
-          }
-        );
-        if (isActive) setScores(loadedScores);
+        const loadedScores = await loadScoreHistoryRecords({
+          normalizedScope,
+          subject,
+          onError: () => setScoreHistoryRecordsIfActive(isActive, setScores, []),
+        });
+        setScoreHistoryRecordsIfActive(isActive, setScores, loadedScores);
       } finally {
-        if (isActive) setIsInternalLoading(false);
+        setScoreHistoryLoadingState(isActive, setIsInternalLoading, false);
       }
     };
 
     void loadScores();
-    return () => { isActive = false; };
+    return () => {
+      isActive = false;
+    };
   }, [createdBy, learnerId, playerName, subject, usesPrefetchedScores]);
 
   const subjectScores = useMemo(

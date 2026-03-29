@@ -22,6 +22,12 @@ import { useSocialPostContext } from './SocialPostContext';
 
 const PLAYWRIGHT_RUNTIME_PERSONA_VALUE = '';
 
+const isSocialRuntimeJobInFlight = (status: string | null | undefined): boolean => {
+  const normalized = status?.trim().toLowerCase();
+  if (!normalized) return false;
+  return normalized !== 'completed' && normalized !== 'failed';
+};
+
 export function SocialPostPlaywrightCaptureModal(): React.JSX.Element {
   const personasQuery = usePlaywrightPersonas({
     enabled: true,
@@ -72,9 +78,14 @@ export function SocialPostPlaywrightCaptureModal(): React.JSX.Element {
     programmableCaptureRoutes.some((route) => route.path.trim().length > 0) &&
     programmableCaptureScript.trim().length > 0 &&
     !programmableCapturePending;
+  const isFollowUpRuntimeJobInFlight =
+    isSocialRuntimeJobInFlight(currentGenerationJob?.status) ||
+    isSocialRuntimeJobInFlight(currentPipelineJob?.status);
   const canCaptureAndRunPipeline = canSave && canGenerateSocialDraft;
   const captureAndRunPipelineTitle = !canSave
     ? 'Add a base URL, at least one route, and a script before starting capture and pipeline.'
+    : isFollowUpRuntimeJobInFlight
+      ? 'Wait for the current Social runtime job to finish.'
     : !canGenerateSocialDraft
       ? socialDraftBlockedReason ??
         'Choose a StudiQ Social post model before running capture and pipeline.'
@@ -128,7 +139,7 @@ export function SocialPostPlaywrightCaptureModal(): React.JSX.Element {
         void handleRunProgrammablePlaywrightCapture();
       }}
       saveText={programmableCapturePending ? 'Capturing...' : 'Capture programmable images'}
-      isSaveDisabled={!canSave}
+      isSaveDisabled={!canSave || isFollowUpRuntimeJobInFlight}
       showSaveButton={true}
       cancelText='Close'
       size='xl'
@@ -139,7 +150,7 @@ export function SocialPostPlaywrightCaptureModal(): React.JSX.Element {
             variant='outline'
             size='sm'
             onClick={handleAddProgrammableCaptureRoute}
-            disabled={programmableCapturePending}
+            disabled={programmableCapturePending || isFollowUpRuntimeJobInFlight}
           >
             Add route
           </Button>
@@ -148,7 +159,7 @@ export function SocialPostPlaywrightCaptureModal(): React.JSX.Element {
             variant='outline'
             size='sm'
             onClick={handleSeedProgrammableCaptureRoutesFromPresets}
-            disabled={programmableCapturePending}
+            disabled={programmableCapturePending || isFollowUpRuntimeJobInFlight}
           >
             Seed from presets
           </Button>
@@ -157,7 +168,7 @@ export function SocialPostPlaywrightCaptureModal(): React.JSX.Element {
             variant='ghost'
             size='sm'
             onClick={handleResetProgrammableCaptureScript}
-            disabled={programmableCapturePending}
+            disabled={programmableCapturePending || isFollowUpRuntimeJobInFlight}
           >
             Reset script
           </Button>
@@ -168,7 +179,7 @@ export function SocialPostPlaywrightCaptureModal(): React.JSX.Element {
             onClick={() => {
               void handleSaveProgrammableCaptureDefaults();
             }}
-            disabled={programmableCapturePending}
+            disabled={programmableCapturePending || isFollowUpRuntimeJobInFlight}
           >
             Save as defaults
           </Button>
@@ -416,7 +427,7 @@ export function SocialPostPlaywrightCaptureModal(): React.JSX.Element {
             onClick={() => {
               void handleRunProgrammablePlaywrightCaptureAndPipeline();
             }}
-            disabled={!canCaptureAndRunPipeline}
+            disabled={!canCaptureAndRunPipeline || isFollowUpRuntimeJobInFlight}
             title={captureAndRunPipelineTitle}
           >
             Capture + run pipeline

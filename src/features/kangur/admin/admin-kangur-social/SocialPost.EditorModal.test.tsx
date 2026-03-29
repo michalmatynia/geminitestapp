@@ -145,8 +145,8 @@ describe('SocialPostEditorModal', () => {
       },
       currentGenerationJob: {
         id: 'job-generate-1',
-        status: 'waiting',
-        progress: { message: 'Waiting for the draft generation worker.' },
+        status: 'completed',
+        progress: { message: 'Draft generation finished.' },
         failedReason: null,
       },
       currentPipelineJob: {
@@ -170,7 +170,7 @@ describe('SocialPostEditorModal', () => {
     expect(screen.getByTestId('social-post-editor')).toBeInTheDocument();
     expect(screen.getByText('1 image')).toBeInTheDocument();
     expect(screen.getByText('Image analysis: Running')).toBeInTheDocument();
-    expect(screen.getByText('Generate post: Queued')).toBeInTheDocument();
+    expect(screen.getByText('Generate post: Completed')).toBeInTheDocument();
     expect(screen.getByText('Full pipeline: Completed')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Save draft' })).toHaveAttribute(
       'data-variant',
@@ -195,6 +195,54 @@ describe('SocialPostEditorModal', () => {
     fireEvent.click(screen.getByRole('tab', { name: 'Images' }));
 
     expect(screen.getByTestId('social-post-images-panel')).toBeInTheDocument();
+  });
+
+  it('blocks draft-changing actions while Social generation or pipeline jobs are in flight', () => {
+    useSocialPostContextMock.mockReturnValue({
+      activePost: buildPost(),
+      scheduledAt: '2026-03-21T10:30',
+      setScheduledAt: vi.fn(),
+      hasUnsavedChanges: true,
+      handleSave: vi.fn(async () => {}),
+      handlePublish: vi.fn(async () => {}),
+      patchMutation: { isPending: false },
+      publishMutation: { isPending: false },
+      currentVisualAnalysisJob: null,
+      currentGenerationJob: {
+        id: 'job-generate-1',
+        status: 'waiting',
+        progress: { message: 'Waiting for the draft generation worker.' },
+        failedReason: null,
+      },
+      currentPipelineJob: {
+        id: 'job-pipeline-1',
+        status: 'active',
+        progress: { message: 'Pipeline is still updating the draft.' },
+        failedReason: null,
+      },
+      imageAssets: buildPost().imageAssets,
+      handleRemoveImage: vi.fn(),
+      setShowMediaLibrary: vi.fn(),
+      showMediaLibrary: false,
+      handleAddImages: vi.fn(),
+    });
+
+    render(<SocialPostEditorModal isOpen={true} onClose={vi.fn()} />);
+
+    expect(screen.getByRole('button', { name: 'Save draft' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Publish to LinkedIn' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Publish to LinkedIn' })).toHaveAttribute(
+      'title',
+      'Wait for the current Social runtime job to finish.'
+    );
+
+    fireEvent.click(screen.getByRole('tab', { name: 'Schedule' }));
+
+    expect(screen.getByRole('button', { name: 'Schedule' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Schedule' })).toHaveAttribute(
+      'title',
+      'Wait for the current Social runtime job to finish.'
+    );
   });
 
   it('keeps the save action muted when there are no unsaved changes', () => {

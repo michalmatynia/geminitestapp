@@ -295,9 +295,11 @@ describe('KangurFeatureApp', () => {
       'data-inline-top-navigation-skeleton',
       'true'
     );
-    expect(screen.getByTestId('kangur-route-content')).toHaveAttribute('aria-hidden', 'true');
     expect(screen.getByTestId('kangur-route-content')).toHaveAttribute('aria-busy', 'true');
-    expect(screen.getByTestId('kangur-route-content')).toHaveClass('overflow-hidden');
+    expect(screen.getByTestId('kangur-route-content')).toHaveClass('pointer-events-none');
+    expect(screen.getByTestId('kangur-route-content')).not.toHaveAttribute('aria-hidden');
+    expect(screen.getByTestId('kangur-route-content')).not.toHaveClass('opacity-0');
+    expect(screen.getByTestId('kangur-route-content')).not.toHaveClass('overflow-hidden');
   });
 
   it('lets the pending route skeleton own the navbar while the shared host is unresolved', async () => {
@@ -355,6 +357,36 @@ describe('KangurFeatureApp', () => {
     );
     expect(screen.getByTestId('kangur-route-content')).toHaveClass(
       'pointer-events-none',
+      'opacity-0',
+      'overflow-hidden'
+    );
+  });
+
+  it('keeps the outgoing route visible while a navigation is still pending before commit', () => {
+    routeTransitionStateMock.mockReturnValue({
+      isRouteAcknowledging: false,
+      isRoutePending: true,
+      isRouteWaitingForReady: false,
+      isRouteRevealing: false,
+      transitionPhase: 'pending',
+      activeTransitionSourceId: 'kangur-primary-nav:lessons',
+      activeTransitionKind: 'navigation',
+      activeTransitionPageKey: 'Lessons',
+      activeTransitionRequestedHref: '/kangur/lessons',
+      activeTransitionSkeletonVariant: 'lessons-library',
+      pendingPageKey: 'Lessons',
+      startRouteTransition: vi.fn(),
+      markRouteTransitionReady: vi.fn(),
+    });
+
+    render(<KangurFeatureApp />);
+
+    expect(screen.getByTestId('kangur-page-transition-skeleton')).toHaveTextContent(
+      'Lessons:lessons-library'
+    );
+    expect(screen.getByTestId('kangur-route-content')).toHaveClass('pointer-events-none');
+    expect(screen.getByTestId('kangur-route-content')).not.toHaveAttribute('aria-hidden');
+    expect(screen.getByTestId('kangur-route-content')).not.toHaveClass(
       'opacity-0',
       'overflow-hidden'
     );
@@ -505,10 +537,9 @@ describe('KangurFeatureApp', () => {
       'data-motion-animate',
       JSON.stringify({ opacity: 1 })
     );
-    expect(screen.getByTestId('kangur-route-content')).toHaveClass(
-      'pointer-events-none',
-      'opacity-0'
-    );
+    expect(screen.getByTestId('kangur-route-content')).toHaveClass('pointer-events-none');
+    expect(screen.getByTestId('kangur-route-content')).not.toHaveAttribute('aria-hidden');
+    expect(screen.getByTestId('kangur-route-content')).not.toHaveClass('opacity-0');
   });
 
   it('keeps the lessons skeleton latched when the first-click handoff moves into acknowledgement', async () => {
@@ -533,7 +564,9 @@ describe('KangurFeatureApp', () => {
     expect(screen.getByTestId('kangur-page-transition-skeleton')).toHaveTextContent(
       'Lessons:lessons-library'
     );
-    expect(screen.getByTestId('kangur-route-content')).toHaveAttribute('aria-hidden', 'true');
+    expect(screen.getByTestId('kangur-route-content')).not.toHaveAttribute('aria-hidden');
+    expect(screen.getByTestId('kangur-route-content')).toHaveClass('pointer-events-none');
+    expect(screen.getByTestId('kangur-route-content')).not.toHaveClass('opacity-0');
 
     routeTransitionStateMock.mockReturnValue({
       isRouteAcknowledging: true,
@@ -557,10 +590,9 @@ describe('KangurFeatureApp', () => {
     expect(screen.getByTestId('kangur-page-transition-skeleton')).toHaveTextContent(
       'Lessons:lessons-library'
     );
-    expect(screen.getByTestId('kangur-route-content')).toHaveClass(
-      'pointer-events-none',
-      'opacity-0'
-    );
+    expect(screen.getByTestId('kangur-route-content')).toHaveClass('pointer-events-none');
+    expect(screen.getByTestId('kangur-route-content')).not.toHaveAttribute('aria-hidden');
+    expect(screen.getByTestId('kangur-route-content')).not.toHaveClass('opacity-0');
   });
 
   it('keeps the shared navbar host visible during the language-switch acknowledgement phase', () => {

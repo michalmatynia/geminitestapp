@@ -756,6 +756,8 @@ export function useAdminKangurSocialPage() {
     currentVisualAnalysisJob: pipeline.currentVisualAnalysisJob,
     isVisualAnalysisModalOpen: pipeline.isVisualAnalysisModalOpen,
     visualAnalysisResult: pipeline.visualAnalysisResult,
+    hasSavedVisualAnalysis: pipeline.hasSavedVisualAnalysis,
+    isSavedVisualAnalysisStale: pipeline.isSavedVisualAnalysisStale,
     visualAnalysisErrorMessage: pipeline.visualAnalysisErrorMessage,
     visualAnalysisPending: pipeline.visualAnalysisPending,
     handleRunFullPipeline,

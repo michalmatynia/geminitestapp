@@ -19,6 +19,8 @@ export type KangurLoginPageComponentProps = Omit<
   defaultCallbackUrl?: string;
 };
 
+type KangurLoginPageSearchParamsLike = Pick<URLSearchParams, 'get'> | null;
+
 type KangurLoginPageRouting = {
   basePath?: string | null | undefined;
 } | null | undefined;
@@ -34,6 +36,10 @@ type KangurLoginPageSanitizeManagedHref = (input: {
 const resolveKangurLoginPageCurrentOrigin = (): string | null =>
   typeof window === 'undefined' ? null : window.location.origin;
 
+const resolveKangurLoginPageBasePath = (
+  routing: KangurLoginPageRouting
+): string | undefined => routing?.basePath ?? undefined;
+
 export const resolveKangurLoginPageRouteAwareDefaultCallbackUrl = ({
   canonicalizePublicAlias,
   pathname,
@@ -44,11 +50,11 @@ export const resolveKangurLoginPageRouteAwareDefaultCallbackUrl = ({
   routing: KangurLoginPageRouting;
 }): string =>
   resolveRouteAwareManagedKangurHref({
-    href: getKangurHomeHref(routing?.basePath),
+    href: getKangurHomeHref(resolveKangurLoginPageBasePath(routing)),
     pathname,
     currentOrigin: resolveKangurLoginPageCurrentOrigin(),
     canonicalizePublicAlias,
-  }) ?? getKangurHomeHref(routing?.basePath);
+  }) ?? getKangurHomeHref(resolveKangurLoginPageBasePath(routing));
 
 const resolveKangurLoginPageDefaultCallbackUrl = ({
   pathname,
@@ -67,7 +73,7 @@ const resolveKangurLoginPageDefaultCallbackUrl = ({
     href: props.defaultCallbackUrl ?? routeAwareDefaultCallbackUrl,
     pathname,
     currentOrigin: null,
-    basePath: routing?.basePath,
+    basePath: resolveKangurLoginPageBasePath(routing),
     fallbackHref: routeAwareDefaultCallbackUrl,
   }) ?? routeAwareDefaultCallbackUrl;
 
@@ -76,7 +82,7 @@ const resolveKangurLoginPageCallbackUrl = ({
   searchParams,
 }: {
   props: KangurLoginPageComponentProps;
-  searchParams: URLSearchParams | ReadonlyURLSearchParams | null;
+  searchParams: KangurLoginPageSearchParamsLike;
 }): string | undefined => props.callbackUrl ?? searchParams?.get('callbackUrl') ?? undefined;
 
 const resolveKangurLoginPageParentAuthMode = ({
@@ -84,7 +90,7 @@ const resolveKangurLoginPageParentAuthMode = ({
   searchParams,
 }: {
   props: KangurLoginPageComponentProps;
-  searchParams: URLSearchParams | ReadonlyURLSearchParams | null;
+  searchParams: KangurLoginPageSearchParamsLike;
 }): KangurLoginPageProps['parentAuthMode'] =>
   props.parentAuthMode ??
   parseKangurAuthMode(searchParams?.get(KANGUR_PARENT_AUTH_MODE_PARAM), 'sign-in');
@@ -102,7 +108,7 @@ export const resolveKangurLoginPageContextValue = ({
   routeAwareDefaultCallbackUrl: string;
   routing: KangurLoginPageRouting;
   sanitizeManagedHref: KangurLoginPageSanitizeManagedHref;
-  searchParams: URLSearchParams | ReadonlyURLSearchParams | null;
+  searchParams: KangurLoginPageSearchParamsLike;
 }) => {
   const defaultCallbackUrl = resolveKangurLoginPageDefaultCallbackUrl({
     pathname,

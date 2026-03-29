@@ -341,6 +341,42 @@ describe('SocialPostList', () => {
     expect(screen.getByText('Model: vision-1')).toBeInTheDocument();
   });
 
+  it('blocks quick publish controls for the active row while Social runtime jobs are in flight', () => {
+    useSocialPostContextMock.mockReturnValue(
+      buildSocialPostContextState({
+        posts: [
+          {
+            ...buildPost(),
+            id: 'post-active',
+            titlePl: 'Active runtime draft',
+            titleEn: 'Active runtime draft',
+          },
+        ],
+        activePostId: 'post-active',
+        currentGenerationJob: {
+          id: 'job-generate-live-1',
+          status: 'waiting',
+          progress: { message: 'Waiting for the generation worker.' },
+          failedReason: null,
+        },
+        currentPipelineJob: {
+          id: 'job-pipeline-live-1',
+          status: 'active',
+          progress: { message: 'Pipeline is still updating the draft.' },
+          failedReason: null,
+        },
+      })
+    );
+
+    render(<SocialPostList />);
+
+    expect(screen.getByText('Runtime jobs:')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Wait for the current Social runtime job to finish.' })).toBeDisabled();
+    expect(
+      screen.getByRole('button', { name: 'Wait for the current Social runtime job to finish.' })
+    ).toHaveAttribute('title', 'Wait for the current Social runtime job to finish.');
+  });
+
   it('opens the modal from the post name without row hover zoom treatment', () => {
     const setActivePostId = vi.fn();
     const handleOpenPostEditor = vi.fn();

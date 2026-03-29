@@ -136,7 +136,7 @@ export const PIPELINE_STEP_LABELS: Record<PipelineStep, string> = {
   capturing: 'Capturing screenshots...',
   saving: 'Saving post...',
   generating: 'Generating draft...',
-  previewing: 'Previewing doc updates...',
+  previewing: 'Preparing post draft...',
   done: 'Pipeline complete',
   error: 'Pipeline failed',
 };

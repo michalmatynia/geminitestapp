@@ -36,7 +36,7 @@ export const getSocialJobStatusLabel = (status: SocialJobStatusValue): string | 
     case 'offline':
       return 'Offline';
     default:
-      return normalized.charAt(0).toUpperCase() + normalized.slice(1);
+      return normalized.replace(/\b\w/g, (match) => match.toUpperCase());
   }
 };
 

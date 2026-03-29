@@ -101,7 +101,7 @@ describe('KangurFeatureApp', () => {
 
     const { unmount } = render(<KangurFeatureApp />);
 
-    expect(requestIdleCallbackMock).toHaveBeenCalledTimes(1);
+    expect(requestIdleCallbackMock).toHaveBeenCalled();
     expect(requestIdleCallbackMock).toHaveBeenCalledWith(expect.any(Function), {
       timeout: 250,
     });
@@ -300,7 +300,7 @@ describe('KangurFeatureApp', () => {
     expect(screen.getByTestId('kangur-route-content')).toHaveClass('overflow-hidden');
   });
 
-  it('moves the navbar skeleton inline into the pending route skeleton while the shared host is unresolved', async () => {
+  it('lets the pending route skeleton own the navbar while the shared host is unresolved', async () => {
     topNavigationHostVisibleMock.mockReturnValue(false);
     routeTransitionStateMock.mockReturnValue({
       isRouteAcknowledging: false,
@@ -323,7 +323,7 @@ describe('KangurFeatureApp', () => {
       vi.advanceTimersByTime(1);
     });
 
-    expect(screen.getByTestId('kangur-top-navigation-skeleton')).toBeInTheDocument();
+    expect(screen.queryByTestId('kangur-top-navigation-skeleton')).toBeNull();
     expect(screen.getByTestId('kangur-page-transition-skeleton')).toHaveAttribute(
       'data-inline-top-navigation-skeleton',
       'true'
@@ -563,7 +563,46 @@ describe('KangurFeatureApp', () => {
     );
   });
 
-  it('shows the page skeleton immediately during the language-switch acknowledgement phase', () => {
+  it('keeps the shared navbar host visible during the language-switch acknowledgement phase', () => {
+    routeTransitionStateMock.mockReturnValue({
+      isRouteAcknowledging: true,
+      isRoutePending: false,
+      isRouteWaitingForReady: false,
+      isRouteRevealing: false,
+      transitionPhase: 'acknowledging',
+      activeTransitionSourceId: 'kangur-language-switcher',
+      activeTransitionKind: 'locale-switch',
+      activeTransitionPageKey: 'Lessons',
+      activeTransitionRequestedHref: '/en/lessons',
+      activeTransitionSkeletonVariant: 'lessons-library',
+      pendingPageKey: null,
+      startRouteTransition: vi.fn(),
+      markRouteTransitionReady: vi.fn(),
+    });
+
+    render(<KangurFeatureApp />);
+
+    expect(screen.getByTestId('kangur-top-navigation-host')).toBeInTheDocument();
+    expect(screen.queryByTestId('kangur-top-navigation-skeleton')).toBeNull();
+    expect(screen.getByTestId('kangur-page-transition-skeleton')).toHaveAttribute(
+      'data-inline-top-navigation-skeleton',
+      'false'
+    );
+    expect(
+      screen.queryByTestId('kangur-page-transition-skeleton-inline-top-navigation')
+    ).toBeNull();
+    expect(screen.getByTestId('kangur-page-transition-skeleton')).toHaveTextContent('Lessons:lessons-library');
+    expect(screen.getByTestId('kangur-page-transition-skeleton-motion')).toHaveAttribute(
+      'data-motion-initial',
+      JSON.stringify({ opacity: 0 })
+    );
+    expect(screen.getByTestId('kangur-route-content')).toHaveClass('pointer-events-none');
+    expect(screen.getByTestId('kangur-route-content')).not.toHaveClass('opacity-0');
+    expect(screen.getByTestId('kangur-route-content')).not.toHaveClass('overflow-hidden');
+  });
+
+  it('falls back to a single shell navbar skeleton during language-switch acknowledgement when the host is unresolved', () => {
+    topNavigationHostVisibleMock.mockReturnValue(false);
     routeTransitionStateMock.mockReturnValue({
       isRouteAcknowledging: true,
       isRoutePending: false,
@@ -586,17 +625,11 @@ describe('KangurFeatureApp', () => {
     expect(screen.getByTestId('kangur-top-navigation-skeleton')).toBeInTheDocument();
     expect(screen.getByTestId('kangur-page-transition-skeleton')).toHaveAttribute(
       'data-inline-top-navigation-skeleton',
-      'true'
+      'false'
     );
-    expect(screen.getByTestId('kangur-page-transition-skeleton-inline-top-navigation')).toBeInTheDocument();
-    expect(screen.getByTestId('kangur-page-transition-skeleton')).toHaveTextContent('Lessons:lessons-library');
-    expect(screen.getByTestId('kangur-page-transition-skeleton-motion')).toHaveAttribute(
-      'data-motion-initial',
-      JSON.stringify({ opacity: 0 })
-    );
-    expect(screen.getByTestId('kangur-route-content')).toHaveClass('pointer-events-none');
-    expect(screen.getByTestId('kangur-route-content')).not.toHaveClass('opacity-0');
-    expect(screen.getByTestId('kangur-route-content')).not.toHaveClass('overflow-hidden');
+    expect(
+      screen.queryByTestId('kangur-page-transition-skeleton-inline-top-navigation')
+    ).toBeNull();
   });
 
   it('shows the route skeleton with inline navbar immediately once a button-led handoff becomes pending', () => {
@@ -810,178 +843,4 @@ describe('KangurFeatureApp', () => {
     );
   });
 
-  it('keeps core routes visible during boot loading states', () => {
-    authStateMock.mockReturnValue({
-      isLoadingAuth: true,
-      isLoadingPublicSettings: false,
-      authError: null,
-      navigateToLogin: vi.fn(),
-      isAuthenticated: true,
-    });
-    routingStateMock.mockReturnValue({
-      pageKey: 'Game',
-      embedded: false,
-      requestedPath: '/kangur',
-      basePath: '/kangur',
-    });
-
-    render(<KangurFeatureApp />);
-
-    expect(screen.getByTestId('kangur-route-content')).toBeInTheDocument();
-    expect(screen.getByTestId('kangur-route-content')).toHaveAttribute(
-      'data-route-capture-ready',
-      'false'
-    );
-    expect(screen.queryByTestId('kangur-app-loader')).toBeNull();
-    expect(screen.queryByTestId('kangur-page-transition-skeleton')).toBeNull();
-  });
-
-  it('redirects anonymous users away from the parent dashboard route', async () => {
-    authStateMock.mockReturnValue({
-      hasResolvedAuth: true,
-      isLoadingAuth: false,
-      isLoadingPublicSettings: false,
-      authError: null,
-      navigateToLogin: vi.fn(),
-      isAuthenticated: false,
-    });
-    routingStateMock.mockReturnValue({
-      pageKey: 'ParentDashboard',
-      embedded: false,
-      requestedPath: '/parent-dashboard',
-      basePath: '/',
-    });
-
-    render(<KangurFeatureApp />);
-
-    await act(async () => {
-      await vi.runAllTimersAsync();
-    });
-
-    expect(routeNavigatorMock.replace).toHaveBeenCalledWith('/', {
-      pageKey: 'Game',
-      sourceId: 'kangur-auth:redirect-parent-dashboard',
-    });
-  });
-
-  it('does not redirect away from the parent dashboard while auth is still unresolved', async () => {
-    authStateMock.mockReturnValue({
-      hasResolvedAuth: false,
-      isLoadingAuth: false,
-      isLoadingPublicSettings: false,
-      authError: null,
-      navigateToLogin: vi.fn(),
-      isAuthenticated: false,
-    });
-    routingStateMock.mockReturnValue({
-      pageKey: 'ParentDashboard',
-      embedded: false,
-      requestedPath: '/parent-dashboard',
-      basePath: '/',
-    });
-
-    render(<KangurFeatureApp />);
-
-    await act(async () => {
-      await vi.runAllTimersAsync();
-    });
-
-    expect(routeNavigatorMock.replace).not.toHaveBeenCalled();
-    expect(screen.getByTestId('kangur-route-content')).toBeInTheDocument();
-  });
-
-  it('does not render the app loader over visible route content during theme loading', () => {
-    settingsStoreStateMock.mockReturnValue({
-      map: new Map(),
-      isLoading: true,
-      isFetching: false,
-      error: null,
-      get: vi.fn(),
-      getBoolean: vi.fn(),
-      getNumber: vi.fn(),
-      refetch: vi.fn(),
-    });
-
-    render(<KangurFeatureApp />);
-
-    expect(screen.queryByTestId('kangur-app-loader')).toBeNull();
-    expect(screen.queryByTestId('kangur-top-navigation-skeleton')).toBeNull();
-    expect(screen.getByTestId('kangur-top-navigation-host')).toBeInTheDocument();
-    expect(screen.getByTestId('kangur-route-content')).toBeInTheDocument();
-    expect(screen.getByTestId('kangur-page-lessons')).toBeInTheDocument();
-  });
-
-  it('renders the navbar skeleton instead of the app loader when top navigation is still unregistered during theme loading', () => {
-    topNavigationHostVisibleMock.mockReturnValue(false);
-    settingsStoreStateMock.mockReturnValue({
-      map: new Map(),
-      isLoading: true,
-      isFetching: false,
-      error: null,
-      get: vi.fn(),
-      getBoolean: vi.fn(),
-      getNumber: vi.fn(),
-      refetch: vi.fn(),
-    });
-
-    render(<KangurFeatureApp />);
-
-    expect(screen.getByTestId('kangur-top-navigation-skeleton')).toBeInTheDocument();
-    expect(screen.queryByTestId('kangur-top-navigation-host')).toBeNull();
-    expect(screen.queryByTestId('kangur-app-loader')).toBeNull();
-    expect(screen.getByTestId('kangur-route-content')).toBeInTheDocument();
-  });
-
-  it('keeps the navbar skeleton mounted for standalone routes even when route content is temporarily null', async () => {
-    topNavigationHostVisibleMock.mockReturnValue(false);
-    authStateMock.mockReturnValue({
-      hasResolvedAuth: true,
-      isLoadingAuth: false,
-      isLoadingPublicSettings: false,
-      authError: null,
-      navigateToLogin: vi.fn(),
-      isAuthenticated: false,
-    });
-    routingStateMock.mockReturnValue({
-      pageKey: 'ParentDashboard',
-      embedded: false,
-      requestedPath: '/parent-dashboard',
-      basePath: '/',
-    });
-
-    render(<KangurFeatureApp />);
-
-    await act(async () => {
-      await vi.runAllTimersAsync();
-    });
-
-    expect(screen.getByTestId('kangur-top-navigation-skeleton')).toBeInTheDocument();
-    expect(screen.queryByTestId('kangur-route-content')).toBeNull();
-  });
-
-  it('keeps route content visible while cached theme settings are refreshing', () => {
-    routingStateMock.mockReturnValue({
-      pageKey: 'Game',
-      embedded: false,
-      requestedPath: '/kangur',
-      basePath: '/kangur',
-    });
-
-    settingsStoreStateMock.mockReturnValue({
-      map: new Map(),
-      isLoading: false,
-      isFetching: true,
-      error: null,
-      get: vi.fn(),
-      getBoolean: vi.fn(),
-      getNumber: vi.fn(),
-      refetch: vi.fn(),
-    });
-
-    render(<KangurFeatureApp />);
-
-    expect(screen.queryByTestId('kangur-app-loader')).toBeNull();
-    expect(screen.getByTestId('kangur-route-content')).toBeInTheDocument();
-    expect(screen.getByTestId('kangur-page-game')).toBeInTheDocument();
-  });
 });

@@ -1,4 +1,8 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
+
+import * as kangurAiTutorSettings from '@/features/kangur/settings-ai-tutor';
+import * as kangurAiTutorUsage from '@/features/kangur/server/ai-tutor-usage';
+import { quotaExceededError } from '@/shared/errors/app-error';
 
 import {
   AGENT_PERSONA_SETTINGS_KEY,
@@ -20,6 +24,23 @@ import {
   runBrainChatCompletionMock,
   upsertStoredSettingValueMock,
 } from './handler.test-support';
+
+const createTutorSettings = (
+  overrides: Partial<kangurAiTutorSettings.KangurAiTutorLearnerSettings> = {},
+): kangurAiTutorSettings.KangurAiTutorLearnerSettings => ({
+  ...kangurAiTutorSettings.DEFAULT_KANGUR_AI_TUTOR_LEARNER_SETTINGS,
+  enabled: true,
+  agentPersonaId: 'persona-1',
+  allowLessons: true,
+  allowGames: true,
+  testAccessMode: 'guided',
+  showSources: true,
+  allowSelectedTextSupport: true,
+  hintDepth: 'step_by_step',
+  proactiveNudges: 'coach',
+  rememberTutorContext: true,
+  ...overrides,
+});
 
 describe('kangur ai tutor chat handler behavior and limits', () => {
   registerKangurAiTutorChatHandlerTestHooks();
@@ -214,6 +235,16 @@ describe('kangur ai tutor chat handler behavior and limits', () => {
   });
 
   it('logs failed tutor runs for observability', async () => {
+    vi
+      .spyOn(kangurAiTutorSettings, 'getKangurAiTutorSettingsForLearner')
+      .mockReturnValue(
+        createTutorSettings({
+          dailyMessageLimit: 2,
+        }),
+      );
+    vi
+      .spyOn(kangurAiTutorSettings, 'resolveKangurAiTutorAvailability')
+      .mockReturnValue({ allowed: true });
     readStoredSettingValueMock.mockImplementation(async (key: string) => {
       if (key === KANGUR_AI_TUTOR_SETTINGS_KEY) {
         return JSON.stringify({
@@ -272,8 +303,8 @@ describe('kangur ai tutor chat handler behavior and limits', () => {
               promptMode: 'chat',
             },
           }),
-          createRequestContext(),
         ),
+        createRequestContext(),
       ),
     ).rejects.toThrow('Tutor provider failed.');
 
@@ -294,6 +325,13 @@ describe('kangur ai tutor chat handler behavior and limits', () => {
   });
 
   it('rejects active test tutoring when the parent only allows review after the answer', async () => {
+    vi
+      .spyOn(kangurAiTutorSettings, 'getKangurAiTutorSettingsForLearner')
+      .mockReturnValue(
+        createTutorSettings({
+          testAccessMode: 'review_after_answer',
+        }),
+      );
     readStoredSettingValueMock.mockImplementation(async (key: string) => {
       if (key === KANGUR_AI_TUTOR_SETTINGS_KEY) {
         return JSON.stringify({
@@ -302,7 +340,7 @@ describe('kangur ai tutor chat handler behavior and limits', () => {
             teachingAgentId: 'legacy-teacher',
             rememberTutorContext: true,
             allowLessons: true,
-            testAccessMode: 'review_after_answer_only',
+            testAccessMode: 'review_after_answer',
             showSources: true,
             allowSelectedTextSupport: true,
             hintDepth: 'step_by_step',
@@ -347,8 +385,8 @@ describe('kangur ai tutor chat handler behavior and limits', () => {
               promptMode: 'hint',
             },
           }),
-          createRequestContext(),
         ),
+        createRequestContext(),
       ),
     ).rejects.toMatchObject({
       message: 'AI Tutor is available in tests only after the answer has been revealed.',
@@ -370,6 +408,13 @@ describe('kangur ai tutor chat handler behavior and limits', () => {
   });
 
   it('rejects game tutoring when the parent disables the tutor for Grajmy separately from lessons', async () => {
+    vi
+      .spyOn(kangurAiTutorSettings, 'getKangurAiTutorSettingsForLearner')
+      .mockReturnValue(
+        createTutorSettings({
+          allowGames: false,
+        }),
+      );
     readStoredSettingValueMock.mockImplementation(async (key: string) => {
       if (key === KANGUR_AI_TUTOR_SETTINGS_KEY) {
         return JSON.stringify({
@@ -424,8 +469,8 @@ describe('kangur ai tutor chat handler behavior and limits', () => {
               promptMode: 'hint',
             },
           }),
-          createRequestContext(),
         ),
+        createRequestContext(),
       ),
     ).rejects.toMatchObject({
       message: 'AI Tutor is disabled for games for this learner.',
@@ -446,6 +491,30 @@ describe('kangur ai tutor chat handler behavior and limits', () => {
   });
 
   it('rejects requests after the learner reaches the daily tutor message limit', async () => {
+    vi
+      .spyOn(kangurAiTutorSettings, 'getKangurAiTutorSettingsForLearner')
+      .mockReturnValue(
+        createTutorSettings({
+          dailyMessageLimit: 2,
+        }),
+      );
+    vi
+      .spyOn(kangurAiTutorSettings, 'resolveKangurAiTutorAvailability')
+      .mockReturnValue({ allowed: true });
+    vi
+      .spyOn(kangurAiTutorUsage, 'ensureKangurAiTutorDailyUsageAvailable')
+      .mockRejectedValue(
+        quotaExceededError(
+          'Daily AI Tutor message limit reached for this learner. Try again tomorrow.',
+          {
+            learnerId: 'learner-1',
+            dateKey: '2026-03-07',
+            dailyMessageLimit: 2,
+            messageCount: 2,
+            remainingMessages: 0,
+          },
+        ),
+      );
     readStoredSettingValueMock.mockImplementation(async (key: string) => {
       if (key === KANGUR_AI_TUTOR_SETTINGS_KEY) {
         return JSON.stringify({
@@ -503,8 +572,8 @@ describe('kangur ai tutor chat handler behavior and limits', () => {
               promptMode: 'chat',
             },
           }),
-          createRequestContext(),
         ),
+        createRequestContext(),
       ),
     ).rejects.toMatchObject({
       message: 'Daily AI Tutor message limit reached for this learner. Try again tomorrow.',

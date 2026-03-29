@@ -3,6 +3,7 @@ import 'server-only';
 import {
   notFoundError,
 } from '@/shared/errors/app-error';
+import { normalizeKangurSocialVisualAnalysis } from '@/shared/lib/kangur-social-visual-analysis';
 import {
   kangurSocialVisualAnalysisSchema,
   type KangurSocialGeneratedDraft,
@@ -63,19 +64,23 @@ const buildVisualAnalysisPatch = ({
   imageAddonIds: string[];
   jobId: string | null;
   visionModelId: string | null;
-}) => ({
-  visualSummary: analysis.summary.trim() || null,
-  visualHighlights: analysis.highlights,
-  visualAnalysisSourceImageAddonIds: imageAddonIds,
-  visualAnalysisSourceVisionModelId: visionModelId,
-  visualAnalysisStatus: 'completed' as const,
-  visualAnalysisUpdatedAt: new Date().toISOString(),
-  visualAnalysisJobId: jobId,
-  visualAnalysisModelId: visionModelId,
-  imageAddonIds,
-  ...(visionModelId ? { visionModelId } : {}),
-  ...(actorId ? { updatedBy: actorId } : {}),
-});
+}) => {
+  const normalized = normalizeKangurSocialVisualAnalysis(analysis);
+
+  return {
+    visualSummary: normalized.summary || null,
+    visualHighlights: normalized.highlights,
+    visualAnalysisSourceImageAddonIds: imageAddonIds,
+    visualAnalysisSourceVisionModelId: visionModelId,
+    visualAnalysisStatus: 'completed' as const,
+    visualAnalysisUpdatedAt: new Date().toISOString(),
+    visualAnalysisJobId: jobId,
+    visualAnalysisModelId: visionModelId,
+    imageAddonIds,
+    ...(visionModelId ? { visionModelId } : {}),
+    ...(actorId ? { updatedBy: actorId } : {}),
+  };
+};
 
 const persistVisualAnalysisOnPost = async ({
   postId,

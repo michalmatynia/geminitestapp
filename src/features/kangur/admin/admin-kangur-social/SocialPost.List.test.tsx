@@ -134,7 +134,6 @@ const buildPost = () => ({
   generatedSummary: null,
   visualSummary: null,
   visualHighlights: [],
-  visualDocUpdates: [],
   visualAnalysisStatus: null,
   visualAnalysisUpdatedAt: null,
   visualAnalysisJobId: null,
@@ -198,14 +197,6 @@ describe('SocialPostList', () => {
             titleEn: 'Visual refresh',
             visualSummary: 'The hero now focuses on a larger CTA card for teachers.',
             visualHighlights: ['Larger CTA card', 'Teacher illustration is more central'],
-            visualDocUpdates: [
-              {
-                docPath: 'docs/homepage.md',
-                section: 'Hero',
-                reason: 'Document the stronger CTA emphasis for teachers.',
-                proposedText: 'Describe the larger CTA card in the homepage hero docs.',
-              },
-            ],
             visualAnalysisStatus: 'completed',
             visualAnalysisUpdatedAt: '2026-03-20T12:00:00.000Z',
             visualAnalysisModelId: 'vision-1',
@@ -224,12 +215,11 @@ describe('SocialPostList', () => {
 
     render(<SocialPostList />);
 
-    expect(screen.getByText('Image analysis')).toBeInTheDocument();
+    expect(screen.getByText('Image analysis: Completed')).toBeInTheDocument();
     expect(screen.getByText(/Analyzed /)).toBeInTheDocument();
     expect(screen.getByText('Model: vision-1')).toBeInTheDocument();
     expect(screen.getByText('Job: job-analysis-1')).toBeInTheDocument();
     expect(screen.getByText('2 highlights')).toBeInTheDocument();
-    expect(screen.getByText('1 doc update')).toBeInTheDocument();
 
     fireEvent.change(screen.getByLabelText('Search social posts'), {
       target: { value: 'teacher illustration is more central' },
@@ -239,7 +229,7 @@ describe('SocialPostList', () => {
     expect(screen.queryByText('Plain draft')).not.toBeInTheDocument();
 
     fireEvent.change(screen.getByLabelText('Search social posts'), {
-      target: { value: 'larger CTA card in the homepage hero docs' },
+      target: { value: 'larger CTA card' },
     });
 
     expect(screen.getByText('Visual refresh')).toBeInTheDocument();
@@ -266,9 +256,89 @@ describe('SocialPostList', () => {
 
     render(<SocialPostList />);
 
-    expect(screen.getByText('Analysis queued')).toBeInTheDocument();
+    expect(screen.getByText('Image analysis: Queued')).toBeInTheDocument();
     expect(screen.getByText('Model: vision-queued')).toBeInTheDocument();
     expect(screen.getByText('Job: job-analysis-queued-1')).toBeInTheDocument();
+  });
+
+  it('shows live runtime job pills for the active post row', () => {
+    useSocialPostContextMock.mockReturnValue(
+      buildSocialPostContextState({
+        posts: [
+          {
+            ...buildPost(),
+            id: 'post-active',
+            titlePl: 'Active runtime draft',
+            titleEn: 'Active runtime draft',
+          },
+          {
+            ...buildPost(),
+            id: 'post-other',
+            titlePl: 'Other draft',
+            titleEn: 'Other draft',
+          },
+        ],
+        activePostId: 'post-active',
+        currentVisualAnalysisJob: {
+          id: 'job-analysis-live-1',
+          status: 'active',
+          progress: { message: 'Analyzing visuals for the active draft.' },
+          failedReason: null,
+        },
+        currentGenerationJob: {
+          id: 'job-generate-live-1',
+          status: 'waiting',
+          progress: { message: 'Waiting for the generation worker.' },
+          failedReason: null,
+        },
+        currentPipelineJob: {
+          id: 'job-pipeline-live-1',
+          status: 'completed',
+          progress: { message: 'Pipeline finished for the active draft.' },
+          failedReason: null,
+        },
+      })
+    );
+
+    render(<SocialPostList />);
+
+    expect(screen.getByText('Runtime jobs:')).toBeInTheDocument();
+    expect(screen.getByText('Image analysis: Running')).toBeInTheDocument();
+    expect(screen.getByText('Generate post: Queued')).toBeInTheDocument();
+    expect(screen.getByText('Full pipeline: Completed')).toBeInTheDocument();
+  });
+
+  it('prefers the live analysis job over saved analysis metadata for the active row badge', () => {
+    useSocialPostContextMock.mockReturnValue(
+      buildSocialPostContextState({
+        posts: [
+          {
+            ...buildPost(),
+            id: 'post-active',
+            titlePl: 'Active analyzed draft',
+            titleEn: 'Active analyzed draft',
+            visualAnalysisStatus: 'completed',
+            visualAnalysisUpdatedAt: '2026-03-20T12:00:00.000Z',
+            visualAnalysisModelId: 'vision-1',
+            visualAnalysisJobId: 'job-analysis-saved-1',
+          },
+        ],
+        activePostId: 'post-active',
+        currentVisualAnalysisJob: {
+          id: 'job-analysis-live-2',
+          status: 'active',
+          progress: { message: 'Refreshing the analysis for the active draft.' },
+          failedReason: null,
+        },
+      })
+    );
+
+    render(<SocialPostList />);
+
+    expect(screen.getAllByText('Image analysis: Running')).toHaveLength(2);
+    expect(screen.getByText('Job: job-analysis-live-2')).toBeInTheDocument();
+    expect(screen.queryByText('Job: job-analysis-saved-1')).not.toBeInTheDocument();
+    expect(screen.getByText('Model: vision-1')).toBeInTheDocument();
   });
 
   it('opens the modal from the post name without row hover zoom treatment', () => {
@@ -412,6 +482,9 @@ function buildSocialPostContextState(
     handleUnpublishPost: vi.fn(),
     publishingPostId: null,
     unpublishingPostId: null,
+    currentVisualAnalysisJob: null,
+    currentGenerationJob: null,
+    currentPipelineJob: null,
     setPostToDelete: vi.fn(),
     setPostToUnpublish: vi.fn(),
     clearDeleteError: vi.fn(),

@@ -1,7 +1,7 @@
 'use client';
 
 import dynamic from 'next/dynamic';
-import { Suspense, useEffect, useMemo, useRef, useState } from 'react';
+import { Suspense, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 
 import {
   LazyAnimatePresence,
@@ -67,7 +67,7 @@ import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
 
 import type { JSX } from 'react';
 
-const BOOT_SKELETON_MIN_VISIBLE_MS = 120;
+const BOOT_SKELETON_MIN_VISIBLE_MS = 50;
 const NAVIGATION_SKELETON_DELAY_MS = 0;
 const LANGUAGE_SWITCHER_TRANSITION_SOURCE_ID = 'kangur-language-switcher';
 const HOT_ROUTE_PRELOAD_TIMEOUT_MS = 1_500;
@@ -293,12 +293,16 @@ const AuthenticatedApp = (): JSX.Element | null => {
   const isBootLoaderBlockingNavigation =
     isBootSkeletonVisible && !isRouteSkeletonVisible && !hasVisibleRouteContent;
   const shouldHideTopNavigationDuringBoot = isBootLoaderBlockingNavigation;
+  const shouldKeepShellTopNavigationDuringTransition =
+    isRouteSkeletonVisible && isLanguageSwitcherTransition;
   const shouldRenderInlineRouteSkeletonTopNavigation =
     !visibleTransitionSkeletonEmbedded &&
     !shouldHideTopNavigationDuringBoot &&
-    isRouteSkeletonVisible;
-  const shouldHideTopNavigationHost =
-    !shouldHideTopNavigationDuringBoot && isRouteSkeletonVisible;
+    isRouteSkeletonVisible &&
+    !shouldKeepShellTopNavigationDuringTransition;
+  const shouldRenderTopNavigationHost =
+    !shouldHideTopNavigationDuringBoot &&
+    (!isRouteSkeletonVisible || shouldKeepShellTopNavigationDuringTransition);
   const routeSkeletonMotionProps = prefersReducedMotion
     ? {
         initial: { opacity: 1 },
@@ -615,11 +619,9 @@ const AuthenticatedApp = (): JSX.Element | null => {
       <KangurRouteAccessibilityAnnouncer />
       {shouldHideTopNavigationDuringBoot ? (
         topNavigationFallback
-      ) : shouldHideTopNavigationHost ? (
-        topNavigationFallback
-      ) : (
+      ) : shouldRenderTopNavigationHost ? (
         <KangurTopNavigationHost fallback={topNavigationFallback} />
-      )}
+      ) : null}
       <KangurAppLoader
         offsetTopBar={shouldReserveTopBarOffset}
         visible={isBootLoaderBlockingNavigation}
@@ -658,6 +660,23 @@ const AuthenticatedApp = (): JSX.Element | null => {
   );
 };
 
+const DeferredAiTutorProviders = ({ children }: { children: ReactNode }): JSX.Element => {
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => { setMounted(true); }, []);
+
+  if (!mounted) return <>{children}</>;
+
+  return (
+    <KangurAiTutorContentProvider>
+      <KangurAiTutorDeferredProvider>
+        <KangurTutorAnchorProvider>
+          {children}
+        </KangurTutorAnchorProvider>
+      </KangurAiTutorDeferredProvider>
+    </KangurAiTutorContentProvider>
+  );
+};
+
 export function KangurFeatureApp(): JSX.Element {
   return (
     <KangurRouteTransitionProvider>
@@ -671,15 +690,11 @@ export function KangurFeatureApp(): JSX.Element {
                   <KangurProgressSyncProvider />
                   <KangurScoreSyncProvider />
                   <KangurContextRegistryPageBoundary>
-                    <KangurAiTutorContentProvider>
-                      <KangurAiTutorDeferredProvider>
-                        <KangurTutorAnchorProvider>
-                          <AuthenticatedApp />
-                          <KangurAiTutorWidget />
-                          <KangurLoginModalMount />
-                        </KangurTutorAnchorProvider>
-                      </KangurAiTutorDeferredProvider>
-                    </KangurAiTutorContentProvider>
+                    <DeferredAiTutorProviders>
+                      <AuthenticatedApp />
+                      <KangurAiTutorWidget />
+                      <KangurLoginModalMount />
+                    </DeferredAiTutorProviders>
                   </KangurContextRegistryPageBoundary>
                 </KangurAgeGroupFocusProvider>
               </KangurSubjectFocusProvider>

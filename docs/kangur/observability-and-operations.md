@@ -1,6 +1,6 @@
 ---
 owner: 'Kangur Team'
-last_reviewed: '2026-03-26'
+last_reviewed: '2026-03-29'
 status: 'active'
 doc_type: 'runbook'
 scope: 'feature:kangur'
@@ -89,6 +89,10 @@ because they share the same `/api/kangur/*` backend and observability sources.
    - apply the `Kangur TTS` preset
    - verify `POST /api/kangur/tts/status` still returns expected states for affected lessons
 6. Check `performanceBaseline` to rule out a broader feature regression or missing local stack.
+7. If lessons or sections are missing in production but present locally:
+   - verify the content baseline with `npm run verify:kangur:content -- --strict`
+   - repair the Mongo-backed Kangur catalog with `npm run repair:kangur:content`
+   - re-check `/api/kangur/lessons-catalog?subject=<subject>&enabledOnly=true` after the command completes
 
 ## Signal Map
 
@@ -181,6 +185,19 @@ stage opens.
   - `/api/kangur/social-pipeline/status`
   - `/api/kangur/social-posts/*`
 
+### Lessons and content catalog
+
+- Operational surfaces:
+  - `/api/kangur/lessons?subject=<subject>&enabledOnly=true`
+  - `/api/kangur/lessons-catalog?subject=<subject>&enabledOnly=true`
+  - `npm run verify:kangur:content -- --strict`
+  - `npm run repair:kangur:content`
+- Primary data stores:
+  - `kangur_lessons`
+  - `kangur_lesson_sections`
+  - `kangur_lesson_documents`
+  - `kangur_lesson_templates`
+
 ## Mitigation Paths
 
 ### Learner sign-in failures spike
@@ -224,6 +241,14 @@ stage opens.
 2. Distinguish real test failures from infra failures such as a missing local server on `http://localhost:3000`.
 3. If the regression is mobile-startup-specific, compare the change against the staged home/bootstrap path before blaming the backend.
 4. If unit status regresses after a release, treat it as a feature stability incident rather than a telemetry-only issue.
+
+### Lessons or sections are missing in production
+
+1. Confirm the gap through `/api/kangur/lessons-catalog` for the affected subject and age group instead of relying only on UI screenshots.
+2. Run `npm run verify:kangur:content -- --strict` in the production environment.
+3. If verification reports missing lessons, sections, templates, or lesson documents, run `npm run repair:kangur:content`.
+4. Recheck the lessons-catalog API and confirm the missing lesson now appears under the expected section/subsection.
+5. If the API is correct but the UI is still stale, restart the app process or wait for the short in-process cache to expire.
 
 ## Escalation
 

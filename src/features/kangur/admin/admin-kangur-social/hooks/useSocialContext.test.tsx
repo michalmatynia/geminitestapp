@@ -147,4 +147,74 @@ describe('useSocialContext', () => {
     expect(patchMutateAsyncMock).not.toHaveBeenCalled();
     expect(toastMock).not.toHaveBeenCalled();
   });
+
+  it('prefers the summarized context payload when both summary and raw context are returned', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue({
+        ok: true,
+        json: async () => ({
+          context: 'Very long raw documentation context that should not be persisted directly.',
+          summary: 'Concise summary for the selected docs',
+          docCount: 3,
+        }),
+      })
+    );
+    const setContextSummary = vi.fn();
+
+    const { result } = renderHook(() =>
+      useSocialContext({
+        activePost: { id: 'post-3' } as never,
+        resolveDocReferences: () => ['docs/overview.mdx'],
+        setContextSummary,
+        buildSocialContext: () => ({ postId: 'post-3' }),
+      })
+    );
+
+    await act(async () => {
+      await result.current.handleLoadContext({ notify: false });
+    });
+
+    expect(setContextSummary).toHaveBeenCalledWith('Concise summary for the selected docs');
+    expect(patchMutateAsyncMock).toHaveBeenCalledWith({
+      id: 'post-3',
+      updates: { contextSummary: 'Concise summary for the selected docs' },
+    });
+  });
+
+  it('truncates oversized fallback context before persisting it on the draft', async () => {
+    const oversizedContext = 'A'.repeat(8105);
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue({
+        ok: true,
+        json: async () => ({
+          context: oversizedContext,
+          docCount: 1,
+        }),
+      })
+    );
+    const setContextSummary = vi.fn();
+
+    const { result } = renderHook(() =>
+      useSocialContext({
+        activePost: { id: 'post-4' } as never,
+        resolveDocReferences: () => ['docs/overview.mdx'],
+        setContextSummary,
+        buildSocialContext: () => ({ postId: 'post-4' }),
+      })
+    );
+
+    await act(async () => {
+      await result.current.handleLoadContext({ notify: false });
+    });
+
+    const persistedSummary = setContextSummary.mock.calls[0]?.[0];
+    expect(typeof persistedSummary).toBe('string');
+    expect((persistedSummary as string).length).toBe(8000);
+    expect(patchMutateAsyncMock).toHaveBeenCalledWith({
+      id: 'post-4',
+      updates: { contextSummary: persistedSummary },
+    });
+  });
 });

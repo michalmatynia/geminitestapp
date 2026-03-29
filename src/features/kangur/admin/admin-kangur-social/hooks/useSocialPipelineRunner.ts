@@ -14,6 +14,7 @@ import {
   type KangurSocialManualPipelineProgress,
 } from '@/shared/contracts/kangur-social-pipeline';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
+import { normalizeKangurSocialVisualAnalysis } from '@/shared/lib/kangur-social-visual-analysis';
 import { safeClearTimeout, safeSetTimeout, type SafeTimerId } from '@/shared/lib/timers';
 import type {
   KangurSocialPost,
@@ -109,6 +110,15 @@ type VisualAnalysisJobResult = {
 type VisualAnalysisJobRecord = {
   id: string;
   status: string;
+  progress: {
+    type: 'manual-post-visual-analysis';
+    step: 'loading_assets' | 'analyzing' | 'saving';
+    message: string | null;
+    updatedAt: number;
+    postId: string | null;
+    imageAddonCount: number;
+    highlightCount: number | null;
+  } | null;
   result: VisualAnalysisJobResult | null;
   failedReason: string | null;
 };
@@ -152,8 +162,10 @@ const buildVisualAnalysisFromPost = (
 ): KangurSocialVisualAnalysis | null => {
   if (!post) return null;
 
-  const summary = post.visualSummary ?? '';
-  const highlights = post.visualHighlights ?? [];
+  const { summary, highlights } = normalizeKangurSocialVisualAnalysis({
+    summary: post.visualSummary,
+    highlights: post.visualHighlights,
+  });
 
   if (!summary.trim() && highlights.length === 0) {
     return null;
@@ -216,6 +228,9 @@ export function useSocialPipelineRunner(deps: SocialPipelineRunnerDeps) {
     null
   );
   const [visualAnalysisPending, setVisualAnalysisPending] = useState(false);
+  const [currentPipelineJob, setCurrentPipelineJob] = useState<PipelineJobRecord | null>(null);
+  const [currentVisualAnalysisJob, setCurrentVisualAnalysisJob] =
+    useState<VisualAnalysisJobRecord | null>(null);
   const persistedVisualAnalysisResult = buildVisualAnalysisFromPost(deps.activePost);
   const hasSavedVisualAnalysis = Boolean(persistedVisualAnalysisResult);
   const isSavedVisualAnalysisStale =
@@ -260,6 +275,8 @@ export function useSocialPipelineRunner(deps: SocialPipelineRunnerDeps) {
     setPipelineErrorMessage(null);
     setVisualAnalysisErrorMessage(null);
     setIsVisualAnalysisModalOpen(false);
+    setCurrentPipelineJob(null);
+    setCurrentVisualAnalysisJob(null);
   }, [deps.activePostId]);
 
   useEffect(() => {
@@ -406,6 +423,14 @@ export function useSocialPipelineRunner(deps: SocialPipelineRunnerDeps) {
         throw new Error('Pipeline queue returned an unexpected job type.');
       }
 
+      setCurrentPipelineJob({
+        id: response.jobId,
+        status: 'waiting',
+        progress: null,
+        result: null,
+        failedReason: null,
+      });
+
       setPipelineStep('capturing');
       toast(
         captureMode === 'fresh_capture'
@@ -436,6 +461,7 @@ export function useSocialPipelineRunner(deps: SocialPipelineRunnerDeps) {
         }
 
         finalJob = job;
+        setCurrentPipelineJob(job);
         syncProgress(job.progress);
 
         if (job.status === 'completed') {
@@ -617,6 +643,14 @@ export function useSocialPipelineRunner(deps: SocialPipelineRunnerDeps) {
         throw new Error('Visual analysis queue returned an unexpected job type.');
       }
 
+      setCurrentVisualAnalysisJob({
+        id: response.jobId,
+        status: 'waiting',
+        progress: null,
+        result: null,
+        failedReason: null,
+      });
+
       const pollStartedAt = Date.now();
       let finalJob: VisualAnalysisJobRecord | null = null;
 
@@ -637,6 +671,7 @@ export function useSocialPipelineRunner(deps: SocialPipelineRunnerDeps) {
         }
 
         finalJob = job;
+        setCurrentVisualAnalysisJob(job);
         if (job.status === 'completed') {
           break;
         }
@@ -735,6 +770,8 @@ export function useSocialPipelineRunner(deps: SocialPipelineRunnerDeps) {
     isSavedVisualAnalysisStale,
     visualAnalysisErrorMessage,
     visualAnalysisPending,
+    currentPipelineJob,
+    currentVisualAnalysisJob,
     handleRunFullPipeline,
     handleRunFullPipelineWithOverrides,
     handleRunFullPipelineWithFreshCapture,

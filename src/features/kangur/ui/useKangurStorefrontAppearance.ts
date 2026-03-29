@@ -18,24 +18,50 @@ import {
   useKangurStorefrontInitialThemeSettings,
 } from '@/features/kangur/ui/KangurStorefrontAppearanceProvider';
 
+const readHydratedThemeSetting = ({
+  hydrated,
+  initialValue,
+  mode,
+  settingsStore,
+}: {
+  hydrated: boolean;
+  initialValue: string | null | undefined;
+  mode: 'default' | 'dawn' | 'sunset' | 'dark';
+  settingsStore: ReturnType<typeof useSettingsStore>;
+}): string | null | undefined =>
+  (hydrated ? settingsStore.get(getKangurThemeSettingsKeyForAppearanceMode(mode)) : null) ??
+  initialValue;
+
 export const useKangurStorefrontAppearance = () => {
   const settingsStore = useSettingsStore();
   const appearance = useOptionalCmsStorefrontAppearance();
   const hydrated = useKangurStorefrontAppearanceHydrated();
   const initialThemeSettings = useKangurStorefrontInitialThemeSettings();
   const mode = appearance?.mode ?? 'default';
-  const dailyThemeRaw =
-    (hydrated ? settingsStore.get(getKangurThemeSettingsKeyForAppearanceMode('default')) : null) ??
-    initialThemeSettings.default;
-  const dawnThemeRaw =
-    (hydrated ? settingsStore.get(getKangurThemeSettingsKeyForAppearanceMode('dawn')) : null) ??
-    initialThemeSettings.dawn;
-  const sunsetThemeRaw =
-    (hydrated ? settingsStore.get(getKangurThemeSettingsKeyForAppearanceMode('sunset')) : null) ??
-    initialThemeSettings.sunset;
-  const nightlyThemeRaw =
-    (hydrated ? settingsStore.get(getKangurThemeSettingsKeyForAppearanceMode('dark')) : null) ??
-    initialThemeSettings.dark;
+  const dailyThemeRaw = readHydratedThemeSetting({
+    hydrated,
+    initialValue: initialThemeSettings.default,
+    mode: 'default',
+    settingsStore,
+  });
+  const dawnThemeRaw = readHydratedThemeSetting({
+    hydrated,
+    initialValue: initialThemeSettings.dawn,
+    mode: 'dawn',
+    settingsStore,
+  });
+  const sunsetThemeRaw = readHydratedThemeSetting({
+    hydrated,
+    initialValue: initialThemeSettings.sunset,
+    mode: 'sunset',
+    settingsStore,
+  });
+  const nightlyThemeRaw = readHydratedThemeSetting({
+    hydrated,
+    initialValue: initialThemeSettings.dark,
+    mode: 'dark',
+    settingsStore,
+  });
   const rawTheme = resolveKangurThemeSettingsRawForMode({
     mode,
     dailyThemeRaw,
@@ -48,12 +74,16 @@ export const useKangurStorefrontAppearance = () => {
     () => parseKangurThemeSettings(rawTheme, fallbackTheme) ?? fallbackTheme,
     [fallbackTheme, rawTheme]
   );
+  const resolvedAppearance = useMemo(
+    () => resolveKangurStorefrontAppearance(mode, theme),
+    [mode, theme]
+  );
 
   return useMemo(
     () => ({
-      ...resolveKangurStorefrontAppearance(mode, theme),
+      ...resolvedAppearance,
       theme,
     }),
-    [mode, theme]
+    [resolvedAppearance, theme]
   );
 };

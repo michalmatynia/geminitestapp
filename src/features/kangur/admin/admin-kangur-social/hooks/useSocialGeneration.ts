@@ -48,6 +48,17 @@ type GenerationJobResult = {
 type GenerationJobRecord = {
   id: string;
   status: string;
+  progress: {
+    type: 'manual-post-generation';
+    step: 'loading_assets' | 'generating' | 'saving' | 'previewing';
+    message: string | null;
+    updatedAt: number;
+    postId: string | null;
+    imageAddonCount: number;
+    docReferenceCount: number;
+    visualSummaryPresent: boolean;
+    highlightCount: number | null;
+  } | null;
   result: GenerationJobResult | null;
   failedReason: string | null;
 };
@@ -69,6 +80,9 @@ export function useSocialGeneration(deps: SocialGenerationDeps) {
   const queryClient = useQueryClient();
   const generateMutation = useGenerateKangurSocialPost();
   const [generatePending, setGeneratePending] = useState(false);
+  const [currentGenerationJob, setCurrentGenerationJob] = useState<GenerationJobRecord | null>(
+    null
+  );
   const generateDelayTimeoutRef = useRef<SafeTimerId | null>(null);
   const isUnmountedRef = useRef(false);
 
@@ -80,6 +94,10 @@ export function useSocialGeneration(deps: SocialGenerationDeps) {
       generateDelayTimeoutRef.current = null;
     };
   }, []);
+
+  useEffect(() => {
+    setCurrentGenerationJob(null);
+  }, [deps.activePost?.id]);
 
   const waitForNextPoll = async (ms: number): Promise<boolean> => {
     if (isUnmountedRef.current) {
@@ -127,6 +145,14 @@ export function useSocialGeneration(deps: SocialGenerationDeps) {
         throw new Error('Generation queue returned an unexpected job type.');
       }
 
+      setCurrentGenerationJob({
+        id: response.jobId,
+        status: 'waiting',
+        progress: null,
+        result: null,
+        failedReason: null,
+      });
+
       const pollStartedAt = Date.now();
       let finalJob: GenerationJobRecord | null = null;
 
@@ -147,6 +173,7 @@ export function useSocialGeneration(deps: SocialGenerationDeps) {
         }
 
         finalJob = job;
+        setCurrentGenerationJob(job);
         if (job.status === 'completed') {
           break;
         }
@@ -226,6 +253,7 @@ export function useSocialGeneration(deps: SocialGenerationDeps) {
       ...generateMutation,
       isPending: generatePending || generateMutation.isPending,
     } as typeof generateMutation,
+    currentGenerationJob,
     handleGenerate,
   };
 }

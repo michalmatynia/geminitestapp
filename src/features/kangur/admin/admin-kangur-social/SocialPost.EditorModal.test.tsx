@@ -137,6 +137,24 @@ describe('SocialPostEditorModal', () => {
       handlePublish,
       patchMutation: { isPending: false },
       publishMutation: { isPending: false },
+      currentVisualAnalysisJob: {
+        id: 'job-analysis-1',
+        status: 'active',
+        progress: { message: 'Analyzing the selected screenshots.' },
+        failedReason: null,
+      },
+      currentGenerationJob: {
+        id: 'job-generate-1',
+        status: 'waiting',
+        progress: { message: 'Waiting for the draft generation worker.' },
+        failedReason: null,
+      },
+      currentPipelineJob: {
+        id: 'job-pipeline-1',
+        status: 'completed',
+        progress: { message: 'Pipeline finished and saved the updated draft.' },
+        failedReason: null,
+      },
       imageAssets: buildPost().imageAssets,
       handleRemoveImage: vi.fn(),
       setShowMediaLibrary: vi.fn(),
@@ -151,6 +169,9 @@ describe('SocialPostEditorModal', () => {
     expect(screen.getByRole('dialog', { name: 'StudiQ Weekly Update' })).toBeInTheDocument();
     expect(screen.getByTestId('social-post-editor')).toBeInTheDocument();
     expect(screen.getByText('1 image')).toBeInTheDocument();
+    expect(screen.getByText('Image analysis: Running')).toBeInTheDocument();
+    expect(screen.getByText('Generate post: Queued')).toBeInTheDocument();
+    expect(screen.getByText('Full pipeline: Completed')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Save draft' })).toHaveAttribute(
       'data-variant',
       'success'
@@ -186,6 +207,9 @@ describe('SocialPostEditorModal', () => {
       handlePublish: vi.fn(async () => {}),
       patchMutation: { isPending: false },
       publishMutation: { isPending: false },
+      currentVisualAnalysisJob: null,
+      currentGenerationJob: null,
+      currentPipelineJob: null,
       imageAssets: buildPost().imageAssets,
       handleRemoveImage: vi.fn(),
       setShowMediaLibrary: vi.fn(),

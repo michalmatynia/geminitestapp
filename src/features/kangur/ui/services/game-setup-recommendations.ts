@@ -34,6 +34,23 @@ type KangurModeSetupRecommendation = {
   title: string;
 };
 
+type KangurRecommendationTranslate = KangurRecommendationLocalizer['translate'];
+
+type KangurTrainingRecommendationContext = {
+  averageAccuracy: number;
+  fallbackCopy: KangurGameSetupRecommendationFallbackCopy;
+  localizer?: KangurRecommendationLocalizer;
+  progress: KangurProgressState;
+  translate?: KangurRecommendationTranslate;
+};
+
+type KangurModeRecommendationVariant =
+  | 'gentle'
+  | 'competitionReady'
+  | 'challenge'
+  | 'strongStep'
+  | 'steadyStep';
+
 type KangurGameSetupRecommendationFallbackCopy = {
   training: {
     starter: {
@@ -411,6 +428,276 @@ const resolveTrainingCategoryFromActivity = (activityKey: string | null | undefi
   return TRAINING_CATEGORY_SET.has(primary as KangurOperation) ? (primary as KangurOperation) : null;
 };
 
+const buildStarterTrainingRecommendation = (
+  translate: KangurRecommendationTranslate | undefined,
+  fallbackCopy: KangurGameSetupRecommendationFallbackCopy
+): KangurTrainingSetupRecommendation => ({
+  description: translateRecommendationWithFallback(
+    translate,
+    'training.starter.description',
+    fallbackCopy.training.starter.description
+  ),
+  label: translateRecommendationWithFallback(
+    translate,
+    'training.starter.label',
+    fallbackCopy.training.starter.label
+  ),
+  selection: {
+    categories: ['addition', 'subtraction'],
+    count: 5,
+    difficulty: 'easy',
+  },
+  title: translateRecommendationWithFallback(
+    translate,
+    'training.starter.title',
+    fallbackCopy.training.starter.title
+  ),
+});
+
+const resolveWeakestLessonEntry = (
+  progress: KangurProgressState
+): [string, KangurProgressState['lessonMastery'][string]] | null =>
+  Object.entries(progress.lessonMastery)
+    .filter(([, entry]) => entry.attempts > 0 && entry.masteryPercent < 80)
+    .sort((left, right) => left[1].masteryPercent - right[1].masteryPercent)[0] ?? null;
+
+const buildWeakestLessonTrainingRecommendation = (
+  context: KangurTrainingRecommendationContext
+): KangurTrainingSetupRecommendation | null => {
+  const weakestLesson = resolveWeakestLessonEntry(context.progress);
+  if (!weakestLesson) {
+    return null;
+  }
+
+  const [componentId, entry] = weakestLesson;
+  const category = LESSON_TO_TRAINING_CATEGORY[componentId as KangurLessonComponentId];
+  if (!category) {
+    return null;
+  }
+
+  const lesson = KANGUR_LESSON_LIBRARY[componentId as KangurLessonComponentId];
+  const lessonTitle = getLocalizedKangurLessonTitle(
+    componentId,
+    context.localizer?.locale,
+    lesson.title
+  );
+  const lessonTitleLower = lessonTitle.toLowerCase();
+  return {
+    description: translateRecommendationWithFallback(
+      context.translate,
+      'training.weakestLesson.description',
+      context.fallbackCopy.training.weakestLesson.description(
+        lessonTitleLower,
+        entry.masteryPercent
+      ),
+      {
+        masteryPercent: entry.masteryPercent,
+        title: lessonTitleLower,
+      }
+    ),
+    label: translateRecommendationWithFallback(
+      context.translate,
+      'training.weakestLesson.label',
+      context.fallbackCopy.training.weakestLesson.label
+    ),
+    selection: {
+      categories: [category],
+      count: entry.masteryPercent < 60 ? 10 : 5,
+      difficulty: resolveRecommendedDifficulty(
+        Math.min(context.averageAccuracy, entry.lastScorePercent)
+      ),
+    },
+    title: translateRecommendationWithFallback(
+      context.translate,
+      'training.weakestLesson.title',
+      context.fallbackCopy.training.weakestLesson.title(lessonTitle),
+      {
+        title: lessonTitle,
+      }
+    ),
+  };
+};
+
+const resolveProgressActivityLocalizer = (
+  localizer: KangurRecommendationLocalizer | undefined
+): Pick<KangurRecommendationLocalizer, 'translate'> => ({
+  translate: localizer?.progressTranslate,
+});
+
+const buildTopActivityTrainingRecommendation = (
+  context: KangurTrainingRecommendationContext
+): KangurTrainingSetupRecommendation | null => {
+  const progressLocalizer = resolveProgressActivityLocalizer(context.localizer);
+  const topActivity = getProgressTopActivities(context.progress, 1, progressLocalizer)[0] ?? null;
+  const topActivityCategory = resolveTrainingCategoryFromActivity(topActivity?.key);
+  if (!topActivity || !topActivityCategory) {
+    return null;
+  }
+
+  const activityLabel = resolveLocalizedRecommendationActivityLabel({
+    activityKey: topActivity.key,
+    fallbackLabel: topActivity.label,
+    translate: context.translate,
+  });
+  return {
+    description: translateRecommendationWithFallback(
+      context.translate,
+      'training.topActivity.description',
+      context.fallbackCopy.training.topActivity.description(
+        activityLabel,
+        topActivity.averageXpPerSession
+      ),
+      {
+        activity: activityLabel,
+        averageXpPerSession: topActivity.averageXpPerSession,
+      }
+    ),
+    label: translateRecommendationWithFallback(
+      context.translate,
+      'training.topActivity.label',
+      context.fallbackCopy.training.topActivity.label
+    ),
+    selection: {
+      categories: [topActivityCategory],
+      count: topActivity.averageAccuracy >= 85 ? 15 : 10,
+      difficulty: resolveRecommendedDifficulty(topActivity.averageAccuracy),
+    },
+    title: translateRecommendationWithFallback(
+      context.translate,
+      'training.topActivity.title',
+      context.fallbackCopy.training.topActivity.title(activityLabel),
+      {
+        activity: activityLabel,
+      }
+    ),
+  };
+};
+
+const buildMixedTrainingRecommendation = (
+  context: KangurTrainingRecommendationContext
+): KangurTrainingSetupRecommendation => {
+  const progressLocalizer = resolveProgressActivityLocalizer(context.localizer);
+  const topTrack = getProgressBadgeTrackSummaries(
+    context.progress,
+    { maxTracks: 1 },
+    progressLocalizer
+  )[0] ?? null;
+  const hasTrackBadgeTarget = Boolean(topTrack?.nextBadge);
+  return {
+    description: hasTrackBadgeTarget
+      ? translateRecommendationWithFallback(
+          context.translate,
+          'training.mixed.descriptionWithTrack',
+          context.fallbackCopy.training.mixed.descriptionWithTrack(topTrack.label),
+          {
+            track: topTrack.label,
+          }
+        )
+      : translateRecommendationWithFallback(
+          context.translate,
+          'training.mixed.descriptionDefault',
+          context.fallbackCopy.training.mixed.descriptionDefault
+        ),
+    label: topTrack
+      ? translateRecommendationWithFallback(
+          context.translate,
+          'training.mixed.labelTrack',
+          context.fallbackCopy.training.mixed.labelTrack
+        )
+      : translateRecommendationWithFallback(
+          context.translate,
+          'training.mixed.labelDefault',
+          context.fallbackCopy.training.mixed.labelDefault
+        ),
+    selection: {
+      categories: ['addition', 'subtraction', 'multiplication', 'division'],
+      count: 10,
+      difficulty: resolveRecommendedDifficulty(context.averageAccuracy),
+    },
+    title: translateRecommendationWithFallback(
+      context.translate,
+      'training.mixed.title',
+      context.fallbackCopy.training.mixed.title
+    ),
+  };
+};
+
+const isGentleModeRecommendation = (input: {
+  averageAccuracy: number;
+  gamesPlayed: number;
+}): boolean => input.gamesPlayed <= 2 || input.averageAccuracy < 60;
+
+const isCompetitionReadyModeRecommendation = (input: {
+  averageAccuracy: number;
+  currentWinStreak: number;
+  gamesPlayed: number;
+  perfectGames: number;
+}): boolean =>
+  input.gamesPlayed >= 12 &&
+  input.averageAccuracy >= 90 &&
+  input.currentWinStreak >= 3 &&
+  input.perfectGames >= 2;
+
+const resolveModeRecommendationVariant = (input: {
+  averageAccuracy: number;
+  currentWinStreak: number;
+  gamesPlayed: number;
+  perfectGames: number;
+}): KangurModeRecommendationVariant => {
+  if (isGentleModeRecommendation(input)) {
+    return 'gentle';
+  }
+  if (isCompetitionReadyModeRecommendation(input)) {
+    return 'competitionReady';
+  }
+  if (input.averageAccuracy >= 86) {
+    return 'challenge';
+  }
+  if (input.averageAccuracy >= 72) {
+    return 'strongStep';
+  }
+  return 'steadyStep';
+};
+
+const resolveModeType = (variant: KangurModeRecommendationVariant): KangurMode => {
+  switch (variant) {
+    case 'gentle':
+      return 'training_3pt';
+    case 'competitionReady':
+      return 'full_test_2024';
+    case 'challenge':
+      return 'original_5pt_2024';
+    case 'strongStep':
+      return 'original_4pt_2024';
+    case 'steadyStep':
+    default:
+      return 'original_2024';
+  }
+};
+
+const buildModeSetupRecommendation = (input: {
+  fallbackCopy: KangurGameSetupRecommendationFallbackCopy;
+  translate?: KangurRecommendationTranslate;
+  variant: KangurModeRecommendationVariant;
+}): KangurModeSetupRecommendation => ({
+  description: translateRecommendationWithFallback(
+    input.translate,
+    `mode.${input.variant}.description`,
+    input.fallbackCopy.mode[input.variant].description
+  ),
+  label: translateRecommendationWithFallback(
+    input.translate,
+    `mode.${input.variant}.label`,
+    input.fallbackCopy.mode[input.variant].label
+  ),
+  mode: resolveModeType(input.variant),
+  title: translateRecommendationWithFallback(
+    input.translate,
+    `mode.${input.variant}.title`,
+    input.fallbackCopy.mode[input.variant].title
+  ),
+});
+
 export const getRecommendedTrainingSetup = (
   progress: KangurProgressState,
   localizer?: KangurRecommendationLocalizer
@@ -419,167 +706,23 @@ export const getRecommendedTrainingSetup = (
   const fallbackCopy = getGameSetupRecommendationFallbackCopy(localizer?.locale);
   const averageAccuracy = getProgressAverageAccuracy(progress);
   const gamesPlayed = progress.gamesPlayed ?? 0;
+  const context = {
+    averageAccuracy,
+    fallbackCopy,
+    localizer,
+    progress,
+    translate,
+  } satisfies KangurTrainingRecommendationContext;
 
   if (gamesPlayed <= 0) {
-    return {
-      description: translateRecommendationWithFallback(
-        translate,
-        'training.starter.description',
-        fallbackCopy.training.starter.description
-      ),
-      label: translateRecommendationWithFallback(
-        translate,
-        'training.starter.label',
-        fallbackCopy.training.starter.label
-      ),
-      selection: {
-        categories: ['addition', 'subtraction'],
-        count: 5,
-        difficulty: 'easy',
-      },
-      title: translateRecommendationWithFallback(
-        translate,
-        'training.starter.title',
-        fallbackCopy.training.starter.title
-      ),
-    };
+    return buildStarterTrainingRecommendation(translate, fallbackCopy);
   }
 
-  const weakestLesson = Object.entries(progress.lessonMastery)
-    .filter(([, entry]) => entry.attempts > 0 && entry.masteryPercent < 80)
-    .sort((left, right) => left[1].masteryPercent - right[1].masteryPercent)[0];
-
-  if (weakestLesson) {
-    const [componentId, entry] = weakestLesson;
-    const category = LESSON_TO_TRAINING_CATEGORY[componentId as KangurLessonComponentId];
-
-    if (category) {
-      const lesson = KANGUR_LESSON_LIBRARY[componentId as KangurLessonComponentId];
-      const lessonTitle = getLocalizedKangurLessonTitle(
-        componentId,
-        localizer?.locale,
-        lesson.title
-      );
-      return {
-        description: translateRecommendationWithFallback(
-          translate,
-          'training.weakestLesson.description',
-          fallbackCopy.training.weakestLesson.description(
-            lessonTitle.toLowerCase(),
-            entry.masteryPercent
-          ),
-          {
-            masteryPercent: entry.masteryPercent,
-            title: lessonTitle.toLowerCase(),
-          }
-        ),
-        label: translateRecommendationWithFallback(
-          translate,
-          'training.weakestLesson.label',
-          fallbackCopy.training.weakestLesson.label
-        ),
-        selection: {
-          categories: [category],
-          count: entry.masteryPercent < 60 ? 10 : 5,
-          difficulty: resolveRecommendedDifficulty(Math.min(averageAccuracy, entry.lastScorePercent)),
-        },
-        title: translateRecommendationWithFallback(
-          translate,
-          'training.weakestLesson.title',
-          fallbackCopy.training.weakestLesson.title(lessonTitle),
-          {
-            title: lessonTitle,
-          }
-        ),
-      };
-    }
-  }
-
-  const progressLocalizer = { translate: localizer?.progressTranslate };
-  const topActivity = getProgressTopActivities(progress, 1, progressLocalizer)[0] ?? null;
-  const topActivityCategory = resolveTrainingCategoryFromActivity(topActivity?.key);
-  if (topActivity && topActivityCategory) {
-    const activityLabel = resolveLocalizedRecommendationActivityLabel({
-      activityKey: topActivity.key,
-      fallbackLabel: topActivity.label,
-      translate,
-    });
-    return {
-      description: translateRecommendationWithFallback(
-        translate,
-        'training.topActivity.description',
-        fallbackCopy.training.topActivity.description(
-          activityLabel,
-          topActivity.averageXpPerSession
-        ),
-        {
-          activity: activityLabel,
-          averageXpPerSession: topActivity.averageXpPerSession,
-        }
-      ),
-      label: translateRecommendationWithFallback(
-        translate,
-        'training.topActivity.label',
-        fallbackCopy.training.topActivity.label
-      ),
-      selection: {
-        categories: [topActivityCategory],
-        count: topActivity.averageAccuracy >= 85 ? 15 : 10,
-        difficulty: resolveRecommendedDifficulty(topActivity.averageAccuracy),
-      },
-      title: translateRecommendationWithFallback(
-        translate,
-        'training.topActivity.title',
-        fallbackCopy.training.topActivity.title(activityLabel),
-        {
-          activity: activityLabel,
-        }
-      ),
-    };
-  }
-
-  const topTrack = getProgressBadgeTrackSummaries(
-    progress,
-    { maxTracks: 1 },
-    progressLocalizer
-  )[0] ?? null;
-  return {
-    description: topTrack?.nextBadge
-      ? translateRecommendationWithFallback(
-          translate,
-          'training.mixed.descriptionWithTrack',
-          fallbackCopy.training.mixed.descriptionWithTrack(topTrack.label),
-          {
-            track: topTrack.label,
-          }
-        )
-      : translateRecommendationWithFallback(
-          translate,
-          'training.mixed.descriptionDefault',
-          fallbackCopy.training.mixed.descriptionDefault
-        ),
-    label: topTrack
-      ? translateRecommendationWithFallback(
-          translate,
-          'training.mixed.labelTrack',
-          fallbackCopy.training.mixed.labelTrack
-        )
-      : translateRecommendationWithFallback(
-          translate,
-          'training.mixed.labelDefault',
-          fallbackCopy.training.mixed.labelDefault
-        ),
-    selection: {
-      categories: ['addition', 'subtraction', 'multiplication', 'division'],
-      count: 10,
-      difficulty: resolveRecommendedDifficulty(averageAccuracy),
-    },
-    title: translateRecommendationWithFallback(
-      translate,
-      'training.mixed.title',
-      fallbackCopy.training.mixed.title
-    ),
-  };
+  return (
+    buildWeakestLessonTrainingRecommendation(context) ??
+    buildTopActivityTrainingRecommendation(context) ??
+    buildMixedTrainingRecommendation(context)
+  );
 };
 
 export const getRecommendedKangurMode = (
@@ -592,107 +735,15 @@ export const getRecommendedKangurMode = (
   const gamesPlayed = progress.gamesPlayed ?? 0;
   const currentWinStreak = progress.currentWinStreak ?? 0;
   const perfectGames = progress.perfectGames ?? 0;
-
-  if (gamesPlayed <= 2 || averageAccuracy < 60) {
-    return {
-      description: translateRecommendationWithFallback(
-        translate,
-        'mode.gentle.description',
-        fallbackCopy.mode.gentle.description
-      ),
-      label: translateRecommendationWithFallback(
-        translate,
-        'mode.gentle.label',
-        fallbackCopy.mode.gentle.label
-      ),
-      mode: 'training_3pt',
-      title: translateRecommendationWithFallback(
-        translate,
-        'mode.gentle.title',
-        fallbackCopy.mode.gentle.title
-      ),
-    };
-  }
-
-  if (gamesPlayed >= 12 && averageAccuracy >= 90 && currentWinStreak >= 3 && perfectGames >= 2) {
-    return {
-      description: translateRecommendationWithFallback(
-        translate,
-        'mode.competitionReady.description',
-        fallbackCopy.mode.competitionReady.description
-      ),
-      label: translateRecommendationWithFallback(
-        translate,
-        'mode.competitionReady.label',
-        fallbackCopy.mode.competitionReady.label
-      ),
-      mode: 'full_test_2024',
-      title: translateRecommendationWithFallback(
-        translate,
-        'mode.competitionReady.title',
-        fallbackCopy.mode.competitionReady.title
-      ),
-    };
-  }
-
-  if (averageAccuracy >= 86) {
-    return {
-      description: translateRecommendationWithFallback(
-        translate,
-        'mode.challenge.description',
-        fallbackCopy.mode.challenge.description
-      ),
-      label: translateRecommendationWithFallback(
-        translate,
-        'mode.challenge.label',
-        fallbackCopy.mode.challenge.label
-      ),
-      mode: 'original_5pt_2024',
-      title: translateRecommendationWithFallback(
-        translate,
-        'mode.challenge.title',
-        fallbackCopy.mode.challenge.title
-      ),
-    };
-  }
-
-  if (averageAccuracy >= 72) {
-    return {
-      description: translateRecommendationWithFallback(
-        translate,
-        'mode.strongStep.description',
-        fallbackCopy.mode.strongStep.description
-      ),
-      label: translateRecommendationWithFallback(
-        translate,
-        'mode.strongStep.label',
-        fallbackCopy.mode.strongStep.label
-      ),
-      mode: 'original_4pt_2024',
-      title: translateRecommendationWithFallback(
-        translate,
-        'mode.strongStep.title',
-        fallbackCopy.mode.strongStep.title
-      ),
-    };
-  }
-
-  return {
-    description: translateRecommendationWithFallback(
-      translate,
-      'mode.steadyStep.description',
-      fallbackCopy.mode.steadyStep.description
-    ),
-    label: translateRecommendationWithFallback(
-      translate,
-      'mode.steadyStep.label',
-      fallbackCopy.mode.steadyStep.label
-    ),
-    mode: 'original_2024',
-    title: translateRecommendationWithFallback(
-      translate,
-      'mode.steadyStep.title',
-      fallbackCopy.mode.steadyStep.title
-    ),
-  };
+  const variant = resolveModeRecommendationVariant({
+    averageAccuracy,
+    currentWinStreak,
+    gamesPlayed,
+    perfectGames,
+  });
+  return buildModeSetupRecommendation({
+    fallbackCopy,
+    translate,
+    variant,
+  });
 };

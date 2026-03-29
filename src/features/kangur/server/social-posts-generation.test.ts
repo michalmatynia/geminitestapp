@@ -127,4 +127,31 @@ describe('generateKangurSocialPostDraft', () => {
     expect(userMessage?.content).toContain('Visual analysis summary from the prior image-only pass:');
     expect(userMessage?.content).not.toContain('Documentation updates suggested from visuals:');
   });
+
+  it('sanitizes legacy prefetched visual analysis before building the generation prompt', async () => {
+    await generateKangurSocialPostDraft({
+      docReferences: ['overview'],
+      prefetchedVisualAnalysis: {
+        summary: `Okay, I've reviewed the provided text and images. Here's a summary of the key information. The screenshots show a Polish-localized navigation and refreshed lesson cards.
+
+**Potential Documentation/Communication Narrative**
+Here's a draft you could use for release notes.
+`,
+        highlights: [
+          'Polish-localized navigation labels',
+          'Documentation update proposal for the homepage docs',
+        ],
+      },
+    });
+
+    const callArgs = mocks.runBrainChatCompletionMock.mock.calls[0]?.[0];
+    const userMessage = callArgs?.messages?.find((entry: { role?: string }) => entry.role === 'user');
+    expect(userMessage?.content).toContain(
+      'The screenshots show a Polish-localized navigation and refreshed lesson cards.'
+    );
+    expect(userMessage?.content).toContain('- Polish-localized navigation labels');
+    expect(userMessage?.content).not.toContain('Potential Documentation/Communication Narrative');
+    expect(userMessage?.content).not.toContain("Here's a draft you could use");
+    expect(userMessage?.content).not.toContain('Documentation update proposal');
+  });
 });

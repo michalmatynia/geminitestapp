@@ -73,6 +73,9 @@ export function AdminKangurSocialSettingsModal({
     createAddonMutation,
     captureAppearanceMode,
     docReferenceInput,
+    currentGenerationJob,
+    currentPipelineJob,
+    currentVisualAnalysisJob,
     generationNotes,
     handleBatchCapture,
     handleBrainModelChange,
@@ -162,6 +165,7 @@ export function AdminKangurSocialSettingsModal({
             activePost={activePost}
             canGenerateSocialDraft={canGenerateSocialDraft}
             contextLoading={contextLoading}
+            currentGenerationJob={currentGenerationJob}
             docReferenceInput={docReferenceInput}
             docsUsed={docsUsed}
             generationNotes={generationNotes}
@@ -211,6 +215,9 @@ export function AdminKangurSocialSettingsModal({
             batchCaptureMutationPending={batchCaptureMutation.isPending}
             batchCaptureResult={batchCaptureResult}
             batchCaptureLimitSummary={batchCaptureLimitSummary}
+            currentVisualAnalysisJob={currentVisualAnalysisJob}
+            currentGenerationJob={currentGenerationJob}
+            currentPipelineJob={currentPipelineJob}
             hasSavedProgrammableCaptureDefaults={hasSavedProgrammableCaptureDefaults}
             programmableCaptureDefaultsBaseUrl={persistedProgrammableCaptureBaseUrl}
             programmableCaptureDefaultsPersonaId={persistedProgrammableCapturePersonaId}

@@ -1,6 +1,7 @@
 import 'server-only';
 
 import { configurationError, operationFailedError } from '@/shared/errors/app-error';
+import { normalizeKangurSocialVisualAnalysis } from '@/shared/lib/kangur-social-visual-analysis';
 import { resolveBrainExecutionConfigForCapability } from '@/shared/lib/ai-brain/server';
 import {
   runBrainChatCompletion,
@@ -110,10 +111,13 @@ const createEmptyVisualAnalysisSnapshot = (): VisualAnalysisSnapshot => ({
 
 const normalizePrefetchedVisualAnalysis = (
   analysis: KangurSocialVisualAnalysis
-): VisualAnalysisSnapshot => ({
-  visualSummary: analysis.summary.trim() || null,
-  visualHighlights: analysis.highlights,
-});
+): VisualAnalysisSnapshot => {
+  const normalized = normalizeKangurSocialVisualAnalysis(analysis);
+  return {
+    visualSummary: normalized.summary || null,
+    visualHighlights: normalized.highlights,
+  };
+};
 
 const runVisualAnalysisSafely = async ({
   context,
@@ -131,10 +135,11 @@ const runVisualAnalysisSafely = async ({
       modelId: context.visionModelId || undefined,
       imageAddons: context.imageAddons,
     });
+    const normalized = normalizeKangurSocialVisualAnalysis(analysis);
 
     return {
-      visualSummary: analysis.summary || null,
-      visualHighlights: analysis.highlights,
+      visualSummary: normalized.summary || null,
+      visualHighlights: normalized.highlights,
     };
   } catch (error) {
     void ErrorSystem.captureException(error, {

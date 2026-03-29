@@ -329,7 +329,7 @@ describe('LessonSlideSection', () => {
     expect(transitionShell).not.toBeNull();
     expect(transitionShell).toHaveAttribute(
       'data-motion-initial',
-      JSON.stringify({ opacity: 0.94, y: 8 })
+      JSON.stringify({ opacity: 0, y: 12 })
     );
     expect(transitionShell).toHaveAttribute(
       'data-motion-animate',
@@ -337,11 +337,11 @@ describe('LessonSlideSection', () => {
     );
     expect(transitionShell).toHaveAttribute(
       'data-motion-exit',
-      JSON.stringify({ opacity: 0.98, y: -3 })
+      JSON.stringify({ opacity: 0, y: -6 })
     );
     expect(transitionShell).toHaveAttribute(
       'data-motion-transition',
-      JSON.stringify({ duration: 0.2, ease: [0.22, 1, 0.36, 1] })
+      JSON.stringify({ duration: 0.28, ease: [0.22, 1, 0.36, 1] })
     );
   });
 });

@@ -74,7 +74,7 @@ describe('useKangurLobbyChat', () => {
     eventSources.length = 0;
     lobbyChatListMock.mockResolvedValue({
       messages: [createMessage()],
-      nextCursor: 'cursor-1',
+      nextCursor: '2026-03-16T11:59:00.000Z',
       serverTime: '2026-03-16T12:00:00.000Z',
     });
     lobbyChatSendMock.mockResolvedValue({
@@ -105,7 +105,7 @@ describe('useKangurLobbyChat', () => {
 
     expect(result.current.messages[0]?.message).toBe('Czesc!');
     expect(result.current.lastUpdatedAt).toBe('2026-03-16T12:00:00.000Z');
-    expect(result.current.nextCursor).toBe('cursor-1');
+    expect(result.current.nextCursor).toBe('2026-03-16T11:59:00.000Z');
     expect(eventSourceCtor).not.toHaveBeenCalled();
   });
 
@@ -139,7 +139,7 @@ describe('useKangurLobbyChat', () => {
                 message: 'Nowa wiadomosc',
               }),
             ],
-            nextCursor: 'cursor-stream',
+            nextCursor: '2026-03-16T12:04:00.000Z',
             serverTime: '2026-03-16T12:05:00.000Z',
           },
         }),
@@ -153,6 +153,6 @@ describe('useKangurLobbyChat', () => {
     });
 
     expect(result.current.lastUpdatedAt).toBe('2026-03-16T12:05:00.000Z');
-    expect(result.current.nextCursor).toBe('cursor-stream');
+    expect(result.current.nextCursor).toBe('2026-03-16T12:04:00.000Z');
   });
 });

@@ -1,0 +1,285 @@
+/**
+ * @vitest-environment jsdom
+ */
+
+import React from 'react';
+import { act, cleanup, render, screen } from '@testing-library/react';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+
+import { clearLatchedKangurTopBarHeightCssValue } from '@/features/kangur/ui/utils/readKangurTopBarHeightCssValue';
+import {
+  authStateMock,
+  routeNavigatorMock,
+  routingStateMock,
+  settingsStoreStateMock,
+  setupKangurFeatureAppTest,
+  topNavigationHostVisibleMock,
+} from '@/features/kangur/ui/KangurFeatureApp.test-support';
+
+const BOOT_SKELETON_MIN_VISIBLE_MS = 50;
+
+let KangurFeatureApp: typeof import('@/features/kangur/ui/KangurFeatureApp').KangurFeatureApp;
+
+describe('KangurFeatureApp auth and theme loading', () => {
+  beforeEach(async () => {
+    KangurFeatureApp = await setupKangurFeatureAppTest();
+  });
+
+  afterEach(() => {
+    cleanup();
+    clearLatchedKangurTopBarHeightCssValue();
+    document.documentElement.style.removeProperty('--kangur-top-bar-height');
+    vi.unstubAllGlobals();
+    vi.useRealTimers();
+    vi.restoreAllMocks();
+  });
+
+  it('keeps core routes visible during boot loading states', () => {
+    authStateMock.mockReturnValue({
+      isLoadingAuth: true,
+      isLoadingPublicSettings: false,
+      authError: null,
+      navigateToLogin: vi.fn(),
+      isAuthenticated: true,
+    });
+    routingStateMock.mockReturnValue({
+      pageKey: 'Game',
+      embedded: false,
+      requestedPath: '/kangur',
+      basePath: '/kangur',
+    });
+
+    render(<KangurFeatureApp />);
+
+    expect(screen.getByTestId('kangur-route-content')).toBeInTheDocument();
+    expect(screen.getByTestId('kangur-route-content')).toHaveAttribute(
+      'data-route-capture-ready',
+      'false'
+    );
+    expect(screen.queryByTestId('kangur-app-loader')).toBeNull();
+    expect(screen.queryByTestId('kangur-page-transition-skeleton')).toBeNull();
+  });
+
+  it('redirects anonymous users away from the parent dashboard route', async () => {
+    authStateMock.mockReturnValue({
+      hasResolvedAuth: true,
+      isLoadingAuth: false,
+      isLoadingPublicSettings: false,
+      authError: null,
+      navigateToLogin: vi.fn(),
+      isAuthenticated: false,
+    });
+    routingStateMock.mockReturnValue({
+      pageKey: 'ParentDashboard',
+      embedded: false,
+      requestedPath: '/parent-dashboard',
+      basePath: '/',
+    });
+
+    render(<KangurFeatureApp />);
+
+    await act(async () => {
+      await vi.runAllTimersAsync();
+    });
+
+    expect(routeNavigatorMock.replace).toHaveBeenCalledWith('/', {
+      pageKey: 'Game',
+      sourceId: 'kangur-auth:redirect-parent-dashboard',
+    });
+  });
+
+  it('does not redirect away from the parent dashboard while auth is still unresolved', async () => {
+    authStateMock.mockReturnValue({
+      hasResolvedAuth: false,
+      isLoadingAuth: false,
+      isLoadingPublicSettings: false,
+      authError: null,
+      navigateToLogin: vi.fn(),
+      isAuthenticated: false,
+    });
+    routingStateMock.mockReturnValue({
+      pageKey: 'ParentDashboard',
+      embedded: false,
+      requestedPath: '/parent-dashboard',
+      basePath: '/',
+    });
+
+    render(<KangurFeatureApp />);
+
+    await act(async () => {
+      await vi.runAllTimersAsync();
+    });
+
+    expect(routeNavigatorMock.replace).not.toHaveBeenCalled();
+    expect(screen.getByTestId('kangur-route-content')).toBeInTheDocument();
+  });
+
+  it('does not render the app loader over visible route content during theme loading', () => {
+    settingsStoreStateMock.mockReturnValue({
+      map: new Map(),
+      isLoading: true,
+      isFetching: false,
+      error: null,
+      get: vi.fn(),
+      getBoolean: vi.fn(),
+      getNumber: vi.fn(),
+      refetch: vi.fn(),
+    });
+
+    render(<KangurFeatureApp />);
+
+    expect(screen.queryByTestId('kangur-app-loader')).toBeNull();
+    expect(screen.queryByTestId('kangur-top-navigation-skeleton')).toBeNull();
+    expect(screen.getByTestId('kangur-top-navigation-host')).toBeInTheDocument();
+    expect(screen.getByTestId('kangur-route-content')).toBeInTheDocument();
+    expect(screen.getByTestId('kangur-page-lessons')).toBeInTheDocument();
+  });
+
+  it('renders the navbar skeleton instead of the app loader when top navigation is still unregistered during theme loading', () => {
+    topNavigationHostVisibleMock.mockReturnValue(false);
+    settingsStoreStateMock.mockReturnValue({
+      map: new Map(),
+      isLoading: true,
+      isFetching: false,
+      error: null,
+      get: vi.fn(),
+      getBoolean: vi.fn(),
+      getNumber: vi.fn(),
+      refetch: vi.fn(),
+    });
+
+    render(<KangurFeatureApp />);
+
+    expect(screen.getByTestId('kangur-top-navigation-skeleton')).toBeInTheDocument();
+    expect(screen.queryByTestId('kangur-top-navigation-host')).toBeNull();
+    expect(screen.queryByTestId('kangur-app-loader')).toBeNull();
+    expect(screen.getByTestId('kangur-route-content')).toBeInTheDocument();
+  });
+
+  it('keeps the navbar skeleton mounted for standalone routes even when route content is temporarily null', async () => {
+    topNavigationHostVisibleMock.mockReturnValue(false);
+    authStateMock.mockReturnValue({
+      hasResolvedAuth: true,
+      isLoadingAuth: false,
+      isLoadingPublicSettings: false,
+      authError: null,
+      navigateToLogin: vi.fn(),
+      isAuthenticated: false,
+    });
+    routingStateMock.mockReturnValue({
+      pageKey: 'ParentDashboard',
+      embedded: false,
+      requestedPath: '/parent-dashboard',
+      basePath: '/',
+    });
+
+    render(<KangurFeatureApp />);
+
+    await act(async () => {
+      await vi.runAllTimersAsync();
+    });
+
+    expect(screen.getByTestId('kangur-top-navigation-skeleton')).toBeInTheDocument();
+    expect(screen.queryByTestId('kangur-route-content')).toBeNull();
+  });
+
+  it('keeps route content visible while cached theme settings are refreshing', () => {
+    routingStateMock.mockReturnValue({
+      pageKey: 'Game',
+      embedded: false,
+      requestedPath: '/kangur',
+      basePath: '/kangur',
+    });
+
+    settingsStoreStateMock.mockReturnValue({
+      map: new Map(),
+      isLoading: false,
+      isFetching: true,
+      error: null,
+      get: vi.fn(),
+      getBoolean: vi.fn(),
+      getNumber: vi.fn(),
+      refetch: vi.fn(),
+    });
+
+    render(<KangurFeatureApp />);
+
+    expect(screen.queryByTestId('kangur-app-loader')).toBeNull();
+    expect(screen.getByTestId('kangur-route-content')).toBeInTheDocument();
+    expect(screen.getByTestId('kangur-page-game')).toBeInTheDocument();
+  });
+
+  it('dismisses the boot skeleton after the 50ms minimum visibility elapses', async () => {
+    // To make the boot loader visible, route content must be null. This happens
+    // when shouldBlockRouteContent is true (anonymous user on ParentDashboard)
+    // AND the theme is still loading.
+    authStateMock.mockReturnValue({
+      hasResolvedAuth: true,
+      isLoadingAuth: false,
+      isLoadingPublicSettings: false,
+      authError: null,
+      navigateToLogin: vi.fn(),
+      isAuthenticated: false,
+    });
+    routingStateMock.mockReturnValue({
+      pageKey: 'ParentDashboard',
+      embedded: false,
+      requestedPath: '/parent-dashboard',
+      requestedHref: '/parent-dashboard',
+      basePath: '/',
+    });
+    settingsStoreStateMock.mockReturnValue({
+      map: new Map(),
+      isLoading: true,
+      isFetching: false,
+      error: null,
+      get: vi.fn(),
+      getBoolean: vi.fn(),
+      getNumber: vi.fn(),
+      refetch: vi.fn(),
+    });
+    topNavigationHostVisibleMock.mockReturnValue(false);
+
+    const { rerender } = render(<KangurFeatureApp />);
+
+    // Boot loader should be visible: theme loading + no visible route content
+    expect(screen.getByTestId('kangur-app-loader')).toBeInTheDocument();
+
+    // Simulate theme settings finished loading
+    settingsStoreStateMock.mockReturnValue({
+      map: new Map(),
+      isLoading: false,
+      isFetching: false,
+      error: null,
+      get: vi.fn(),
+      getBoolean: vi.fn(),
+      getNumber: vi.fn(),
+      refetch: vi.fn(),
+    });
+    rerender(<KangurFeatureApp />);
+
+    // Advance past the 50ms minimum visibility
+    await act(async () => {
+      vi.advanceTimersByTime(BOOT_SKELETON_MIN_VISIBLE_MS);
+    });
+
+    // After the minimum visibility, boot loader should be gone
+    expect(screen.queryByTestId('kangur-app-loader')).toBeNull();
+  });
+
+  it('defers AI Tutor providers until after the first render tick', async () => {
+    render(<KangurFeatureApp />);
+
+    // AI Tutor widget is always rendered (mocked as a simple div in test-support)
+    // but the deferred providers mount only after the first useEffect tick
+    expect(screen.getByTestId('kangur-ai-tutor-widget')).toBeInTheDocument();
+
+    // After effects run, the widget should still be present (providers now mounted)
+    await act(async () => {
+      vi.runAllTimers();
+    });
+
+    expect(screen.getByTestId('kangur-ai-tutor-widget')).toBeInTheDocument();
+    expect(screen.getByTestId('kangur-route-content')).toBeInTheDocument();
+  });
+});

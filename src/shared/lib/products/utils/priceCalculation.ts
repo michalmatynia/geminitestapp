@@ -18,8 +18,12 @@ const findPriceGroupById = (
 const isSamePriceGroup = (
   left: PriceGroupForCalculation | undefined,
   right: PriceGroupForCalculation | undefined
-): boolean =>
-  Boolean(left && right) && (left.id === right.id || left.groupId === right.groupId);
+): boolean => {
+  if (!left || !right) {
+    return false;
+  }
+  return left.id === right.id || left.groupId === right.groupId;
+};
 
 const resolvePriceGroupAdjustment = (
   group: PriceGroupForCalculation

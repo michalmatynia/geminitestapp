@@ -453,44 +453,69 @@ const sanitizePoints = (points: Point2d[]): Point2d[] => {
   return sanitized;
 };
 
+type SampledPathSegments = {
+  lengths: number[];
+  total: number;
+};
+
+const buildSampledPathSegments = (points: Point2d[]): SampledPathSegments => {
+  const lengths: number[] = [];
+  let total = 0;
+
+  for (let i = 1; i < points.length; i += 1) {
+    const start = points[i - 1];
+    const end = points[i];
+    if (!start || !end) {
+      continue;
+    }
+
+    const length = distance(start, end);
+    lengths.push(length);
+    total += length;
+  }
+
+  return { lengths, total };
+};
+
+const resolvePointAtDistance = (
+  points: Point2d[],
+  segmentLengths: number[],
+  targetDist: number
+): Point2d | null => {
+  let traversed = 0;
+
+  for (let i = 1; i < points.length; i += 1) {
+    const segmentLength = segmentLengths[i - 1] ?? 0;
+    const start = points[i - 1];
+    const end = points[i];
+    if (!start || !end) {
+      continue;
+    }
+
+    if (traversed + segmentLength >= targetDist) {
+      const local = segmentLength > 0 ? (targetDist - traversed) / segmentLength : 0;
+      return {
+        x: start.x + (end.x - start.x) * local,
+        y: start.y + (end.y - start.y) * local,
+      };
+    }
+
+    traversed += segmentLength;
+  }
+
+  return null;
+};
+
 const samplePath = (points: Point2d[], sampleCount = 120): Point2d[] => {
   if (points.length <= 2) return points;
 
-  const segments: number[] = [];
-  let total = 0;
-  for (let i = 1; i < points.length; i += 1) {
-    const a = points[i - 1];
-    const b = points[i];
-    if (!a || !b) continue;
-    const len = distance(a, b);
-    segments.push(len);
-    total += len;
-  }
+  const { lengths, total } = buildSampledPathSegments(points);
   if (total < 1) return points;
 
   const sampled: Point2d[] = [points[0]!];
   for (let step = 1; step < sampleCount - 1; step += 1) {
     const targetDist = (total * step) / (sampleCount - 1);
-    let traversed = 0;
-    let found: Point2d | null = null;
-
-    for (let i = 1; i < points.length; i += 1) {
-      const segLen = segments[i - 1] ?? 0;
-      const start = points[i - 1];
-      const end = points[i];
-      if (!start || !end) continue;
-
-      if (traversed + segLen >= targetDist) {
-        const local = segLen > 0 ? (targetDist - traversed) / segLen : 0;
-        found = {
-          x: start.x + (end.x - start.x) * local,
-          y: start.y + (end.y - start.y) * local,
-        };
-        break;
-      }
-      traversed += segLen;
-    }
-
+    const found = resolvePointAtDistance(points, lengths, targetDist);
     if (found) sampled.push(found);
   }
 
@@ -538,14 +563,52 @@ const applyDrawingLeniency = (rule: GeometryShapeRule): GeometryShapeRule => ({
     typeof rule.aspectTolerance === 'number' ? loosenMax(rule.aspectTolerance) : undefined,
 });
 
-const countCorners = (points: Point2d[]): number => {
-  if (points.length < 7) return 0;
+const closeCornerPath = (points: Point2d[]): Point2d[] => {
   const closed = [...points];
   const first = points[0];
   const last = points[points.length - 1];
+
   if (first && last && distance(first, last) > 1) {
     closed.push(first);
   }
+
+  return closed;
+};
+
+const resolveTurnDegrees = (a: Point2d, b: Point2d, c: Point2d): number | null => {
+  const v1x = a.x - b.x;
+  const v1y = a.y - b.y;
+  const v2x = c.x - b.x;
+  const v2y = c.y - b.y;
+  const mag1 = Math.hypot(v1x, v1y);
+  const mag2 = Math.hypot(v2x, v2y);
+  if (mag1 < 0.01 || mag2 < 0.01) {
+    return null;
+  }
+
+  const dot = (v1x * v2x + v1y * v2y) / (mag1 * mag2);
+  const angleDeg = (Math.acos(Math.max(-1, Math.min(1, dot))) * 180) / Math.PI;
+  return 180 - angleDeg;
+};
+
+const shouldRecordCorner = (
+  turnDeg: number | null,
+  index: number,
+  corners: number[],
+  thresholdDeg: number,
+  minCornerSpacing: number
+): boolean => {
+  if (turnDeg === null || turnDeg < thresholdDeg) {
+    return false;
+  }
+
+  const previousCorner = corners[corners.length - 1];
+  return typeof previousCorner !== 'number' || index - previousCorner >= minCornerSpacing;
+};
+
+const countCorners = (points: Point2d[]): number => {
+  if (points.length < 7) return 0;
+  const closed = closeCornerPath(points);
 
   const minCornerSpacing = 7;
   const thresholdDeg = 48;
@@ -557,22 +620,10 @@ const countCorners = (points: Point2d[]): number => {
     const c = closed[i + 2];
     if (!a || !b || !c) continue;
 
-    const v1x = a.x - b.x;
-    const v1y = a.y - b.y;
-    const v2x = c.x - b.x;
-    const v2y = c.y - b.y;
-    const mag1 = Math.hypot(v1x, v1y);
-    const mag2 = Math.hypot(v2x, v2y);
-    if (mag1 < 0.01 || mag2 < 0.01) continue;
-
-    const dot = (v1x * v2x + v1y * v2y) / (mag1 * mag2);
-    const angleDeg = (Math.acos(Math.max(-1, Math.min(1, dot))) * 180) / Math.PI;
-    const turnDeg = 180 - angleDeg;
-
-    if (turnDeg < thresholdDeg) continue;
-    const previousCorner = corners[corners.length - 1];
-    if (typeof previousCorner === 'number' && i - previousCorner < minCornerSpacing) continue;
-    corners.push(i);
+    const turnDeg = resolveTurnDegrees(a, b, c);
+    if (shouldRecordCorner(turnDeg, i, corners, thresholdDeg, minCornerSpacing)) {
+      corners.push(i);
+    }
   }
 
   return corners.length;
@@ -654,6 +705,51 @@ const toRejected = (
   message: translateGeometryDrawing(translate, key, fallback, values),
 });
 
+const ASPECT_FAILURE_MESSAGES: Partial<
+  Record<
+    GeometryShapeId,
+    { fallback: keyof GeometryDrawingFallbackCopy['aspect']; key: string }
+  >
+> = {
+  square: {
+    key: 'geometryDrawing.feedback.failure.aspect.square',
+    fallback: 'square',
+  },
+  rectangle: {
+    key: 'geometryDrawing.feedback.failure.aspect.rectangle',
+    fallback: 'rectangle',
+  },
+  circle: {
+    key: 'geometryDrawing.feedback.failure.aspect.circle',
+    fallback: 'circle',
+  },
+  oval: {
+    key: 'geometryDrawing.feedback.failure.aspect.oval',
+    fallback: 'oval',
+  },
+  diamond: {
+    key: 'geometryDrawing.feedback.failure.aspect.diamond',
+    fallback: 'diamond',
+  },
+};
+
+const resolveAspectFailureMessage = (
+  target: GeometryShapeId,
+  fallbackCopy: GeometryDrawingFallbackCopy,
+  translate?: KangurMiniGameTranslate
+): string | null => {
+  const config = ASPECT_FAILURE_MESSAGES[target];
+  if (!config) {
+    return null;
+  }
+
+  return translateGeometryDrawing(
+    translate,
+    config.key,
+    fallbackCopy.aspect[config.fallback]
+  );
+};
+
 const resolveFailureMessage = (
   target: GeometryShapeId,
   rule: GeometryShapeRule,
@@ -710,40 +806,13 @@ const resolveFailureMessage = (
   }
 
   if (!isAspectInRange(aspectRatio, rule)) {
-    if (target === 'square') {
-      return translateGeometryDrawing(
-        translate,
-        'geometryDrawing.feedback.failure.aspect.square',
-        fallbackCopy.aspect.square
-      );
-    }
-    if (target === 'rectangle') {
-      return translateGeometryDrawing(
-        translate,
-        'geometryDrawing.feedback.failure.aspect.rectangle',
-        fallbackCopy.aspect.rectangle
-      );
-    }
-    if (target === 'circle') {
-      return translateGeometryDrawing(
-        translate,
-        'geometryDrawing.feedback.failure.aspect.circle',
-        fallbackCopy.aspect.circle
-      );
-    }
-    if (target === 'oval') {
-      return translateGeometryDrawing(
-        translate,
-        'geometryDrawing.feedback.failure.aspect.oval',
-        fallbackCopy.aspect.oval
-      );
-    }
-    if (target === 'diamond') {
-      return translateGeometryDrawing(
-        translate,
-        'geometryDrawing.feedback.failure.aspect.diamond',
-        fallbackCopy.aspect.diamond
-      );
+    const aspectFailureMessage = resolveAspectFailureMessage(
+      target,
+      fallbackCopy,
+      translate
+    );
+    if (aspectFailureMessage) {
+      return aspectFailureMessage;
     }
   }
 
@@ -751,6 +820,107 @@ const resolveFailureMessage = (
     translate,
     rule.failureMessageKey,
     fallbackCopy.failureDefault[target]
+  );
+};
+
+type GeometryDrawingMetrics = {
+  aspectRatio: number;
+  box: BoundingBox;
+  closureLimit: number;
+  closureRatio: number;
+  closureScore: number;
+  corners: number;
+  first: Point2d | undefined;
+  last: Point2d | undefined;
+  lengthRatio: number;
+  maxLengthRatio: number;
+  minLengthRatio: number;
+  sampled: Point2d[];
+  score: number;
+};
+
+const computeGeometryDrawingMetrics = (
+  target: GeometryShapeId,
+  sanitized: Point2d[],
+  rule: GeometryShapeRule
+): GeometryDrawingMetrics => {
+  const sampled = samplePath(sanitized);
+  const box = computeBoundingBox(sampled);
+  const first = sampled[0];
+  const last = sampled[sampled.length - 1];
+  const closureRatio = first && last ? distance(first, last) / box.diagonal : 1;
+  const closureLimit = rule.maxClosureRatio ?? DEFAULT_MAX_CLOSURE_RATIO;
+  const closureScore = clamp01(1 - closureRatio / closureLimit);
+  const drawingPathLength = computePathLength(sanitized);
+  const perimeter = Math.max(1, 2 * (box.width + box.height));
+  const lengthRatio = drawingPathLength / perimeter;
+  const minLengthRatio = rule.minLengthRatio ?? DEFAULT_MIN_LENGTH_RATIO;
+  const maxLengthRatio = rule.maxLengthRatio ?? DEFAULT_MAX_LENGTH_RATIO;
+  const corners = countCorners(target === 'hexagon' ? sampled : smoothPath(sampled, 1));
+  const aspectRatio =
+    Math.max(box.width, box.height) / Math.max(1, Math.min(box.width, box.height));
+  const shapeScore =
+    target === 'circle'
+      ? evaluateCircleScore(sampled, box)
+      : evaluatePolygonScore(rule, corners, aspectRatio);
+
+  return {
+    sampled,
+    box,
+    first,
+    last,
+    closureRatio,
+    closureLimit,
+    closureScore,
+    lengthRatio,
+    minLengthRatio,
+    maxLengthRatio,
+    corners,
+    aspectRatio,
+    score: shapeScore * 0.78 + closureScore * 0.22,
+  };
+};
+
+const isAcceptedGeometryDrawing = (
+  metrics: GeometryDrawingMetrics,
+  rule: GeometryShapeRule
+): boolean =>
+  metrics.score >= rule.minScore &&
+  metrics.closureRatio <= metrics.closureLimit &&
+  metrics.lengthRatio >= metrics.minLengthRatio &&
+  metrics.lengthRatio <= metrics.maxLengthRatio &&
+  metrics.corners >= rule.minCorners &&
+  metrics.corners <= rule.maxCorners &&
+  isAspectInRange(metrics.aspectRatio, rule);
+
+const buildGeometryDrawingMessage = (input: {
+  accepted: boolean;
+  fallbackCopy: GeometryDrawingFallbackCopy;
+  metrics: GeometryDrawingMetrics;
+  target: GeometryShapeId;
+  translate?: KangurMiniGameTranslate;
+  rule: GeometryShapeRule;
+}): string => {
+  if (input.accepted) {
+    return translateGeometryDrawing(
+      input.translate,
+      input.rule.successMessageKey,
+      input.fallbackCopy.success[input.target]
+    );
+  }
+
+  return resolveFailureMessage(
+    input.target,
+    input.rule,
+    input.fallbackCopy,
+    input.metrics.corners,
+    input.metrics.closureRatio,
+    input.metrics.aspectRatio,
+    input.metrics.closureLimit,
+    input.metrics.lengthRatio,
+    input.metrics.minLengthRatio,
+    input.metrics.maxLengthRatio,
+    input.translate
   );
 };
 
@@ -772,9 +942,8 @@ export const evaluateGeometryDrawing = (
     );
   }
 
-  const sampled = samplePath(sanitized);
-  const box = computeBoundingBox(sampled);
-  if (box.width < MIN_DRAWING_SIZE || box.height < MIN_DRAWING_SIZE) {
+  const metrics = computeGeometryDrawingMetrics(target, sanitized, lenientRule);
+  if (metrics.box.width < MIN_DRAWING_SIZE || metrics.box.height < MIN_DRAWING_SIZE) {
     return toRejected(
       translate,
       'geometryDrawing.feedback.failure.tooSmall',
@@ -782,9 +951,7 @@ export const evaluateGeometryDrawing = (
     );
   }
 
-  const first = sampled[0];
-  const last = sampled[sampled.length - 1];
-  if (!first || !last) {
+  if (!metrics.first || !metrics.last) {
     return toRejected(
       translate,
       'geometryDrawing.feedback.failure.unreadable',
@@ -792,58 +959,22 @@ export const evaluateGeometryDrawing = (
     );
   }
 
-  const closureRatio = distance(first, last) / box.diagonal;
-  const closureLimit = lenientRule.maxClosureRatio ?? DEFAULT_MAX_CLOSURE_RATIO;
-  const closureScore = clamp01(1 - closureRatio / closureLimit);
-  const pathLength = computePathLength(sanitized);
-  const perimeter = Math.max(1, 2 * (box.width + box.height));
-  const lengthRatio = pathLength / perimeter;
-  const minLengthRatio = lenientRule.minLengthRatio ?? DEFAULT_MIN_LENGTH_RATIO;
-  const maxLengthRatio = lenientRule.maxLengthRatio ?? DEFAULT_MAX_LENGTH_RATIO;
-  const corners = countCorners(target === 'hexagon' ? sampled : smoothPath(sampled, 1));
-  const aspectRatio =
-    Math.max(box.width, box.height) / Math.max(1, Math.min(box.width, box.height));
-
-  const shapeScore =
-    target === 'circle'
-      ? evaluateCircleScore(sampled, box)
-      : evaluatePolygonScore(lenientRule, corners, aspectRatio);
-  const score = shapeScore * 0.78 + closureScore * 0.22;
-
-  const accepted =
-    score >= lenientRule.minScore &&
-    closureRatio <= closureLimit &&
-    lengthRatio >= minLengthRatio &&
-    lengthRatio <= maxLengthRatio &&
-    corners >= rule.minCorners &&
-    corners <= rule.maxCorners &&
-    isAspectInRange(aspectRatio, lenientRule);
+  const accepted = isAcceptedGeometryDrawing(metrics, lenientRule);
 
   return {
     accepted,
-    score: Number(score.toFixed(3)),
-    corners,
-    closureRatio: Number(closureRatio.toFixed(3)),
-    aspectRatio: Number(aspectRatio.toFixed(3)),
-    lengthRatio: Number(lengthRatio.toFixed(3)),
-    message: accepted
-      ? translateGeometryDrawing(
-          translate,
-          rule.successMessageKey,
-          fallbackCopy.success[target]
-        )
-      : resolveFailureMessage(
-          target,
-          lenientRule,
-          fallbackCopy,
-          corners,
-          closureRatio,
-          aspectRatio,
-          closureLimit,
-          lengthRatio,
-          minLengthRatio,
-          maxLengthRatio,
-          translate
-        ),
+    score: Number(metrics.score.toFixed(3)),
+    corners: metrics.corners,
+    closureRatio: Number(metrics.closureRatio.toFixed(3)),
+    aspectRatio: Number(metrics.aspectRatio.toFixed(3)),
+    lengthRatio: Number(metrics.lengthRatio.toFixed(3)),
+    message: buildGeometryDrawingMessage({
+      accepted,
+      fallbackCopy,
+      metrics,
+      target,
+      translate,
+      rule: lenientRule,
+    }),
   };
 };

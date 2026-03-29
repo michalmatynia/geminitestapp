@@ -17,6 +17,7 @@ import type {
 } from '@/shared/contracts/kangur-social-image-addons';
 import type { AddonFormState } from '../AdminKangurSocialPage.Constants';
 import { usePlaywrightPersonas } from '@/shared/hooks/usePlaywrightPersonas';
+import { SocialJobStatusPill } from '../SocialJobStatusPill';
 
 export function SocialSettingsCaptureTab({
   addonForm,
@@ -35,6 +36,9 @@ export function SocialSettingsCaptureTab({
   batchCaptureMutationPending,
   batchCaptureResult,
   batchCaptureLimitSummary,
+  currentVisualAnalysisJob,
+  currentGenerationJob,
+  currentPipelineJob,
   hasSavedProgrammableCaptureDefaults,
   programmableCaptureDefaultsBaseUrl,
   programmableCaptureDefaultsPersonaId,
@@ -60,6 +64,30 @@ export function SocialSettingsCaptureTab({
   batchCaptureMutationPending: boolean;
   batchCaptureResult: KangurSocialImageAddonsBatchResult | null;
   batchCaptureLimitSummary: string;
+  currentVisualAnalysisJob: {
+    id: string;
+    status: string;
+    progress: {
+      message: string | null;
+    } | null;
+    failedReason: string | null;
+  } | null;
+  currentGenerationJob: {
+    id: string;
+    status: string;
+    progress: {
+      message: string | null;
+    } | null;
+    failedReason: string | null;
+  } | null;
+  currentPipelineJob: {
+    id: string;
+    status: string;
+    progress: {
+      message: string | null;
+    } | null;
+    failedReason: string | null;
+  } | null;
   hasSavedProgrammableCaptureDefaults: boolean;
   programmableCaptureDefaultsBaseUrl: string | null;
   programmableCaptureDefaultsPersonaId: string | null;
@@ -109,9 +137,71 @@ export function SocialSettingsCaptureTab({
       programmableCaptureDefaultsRoutes,
     ]
   );
+  const currentVisualAnalysisJobTitle = [
+    currentVisualAnalysisJob?.progress?.message ?? null,
+    currentVisualAnalysisJob?.failedReason ?? null,
+    currentVisualAnalysisJob?.id ? `Queue job: ${currentVisualAnalysisJob.id}` : null,
+  ]
+    .filter((value): value is string => Boolean(value))
+    .join(' · ');
+  const currentGenerationJobTitle = [
+    currentGenerationJob?.progress?.message ?? null,
+    currentGenerationJob?.failedReason ?? null,
+    currentGenerationJob?.id ? `Queue job: ${currentGenerationJob.id}` : null,
+  ]
+    .filter((value): value is string => Boolean(value))
+    .join(' · ');
+  const currentPipelineJobTitle = [
+    currentPipelineJob?.progress?.message ?? null,
+    currentPipelineJob?.failedReason ?? null,
+    currentPipelineJob?.id ? `Queue job: ${currentPipelineJob.id}` : null,
+  ]
+    .filter((value): value is string => Boolean(value))
+    .join(' · ');
 
   return (
     <div className='space-y-4'>
+      {(currentVisualAnalysisJob?.status ||
+        currentGenerationJob?.status ||
+        currentPipelineJob?.status) ? (
+        <KangurAdminCard>
+          <div className='space-y-2'>
+            <div>
+              <div className='text-sm font-semibold text-foreground'>Runtime jobs</div>
+              <div className='text-sm text-muted-foreground'>
+                Live queue status for the active StudiQ Social draft.
+              </div>
+            </div>
+            <div className='flex flex-wrap items-center gap-2 text-xs text-muted-foreground'>
+              {currentVisualAnalysisJob?.status ? (
+                <SocialJobStatusPill
+                  status={currentVisualAnalysisJob.status}
+                  label='Image analysis'
+                  title={currentVisualAnalysisJobTitle || undefined}
+                  className='text-[10px]'
+                />
+              ) : null}
+              {currentGenerationJob?.status ? (
+                <SocialJobStatusPill
+                  status={currentGenerationJob.status}
+                  label='Generate post'
+                  title={currentGenerationJobTitle || undefined}
+                  className='text-[10px]'
+                />
+              ) : null}
+              {currentPipelineJob?.status ? (
+                <SocialJobStatusPill
+                  status={currentPipelineJob.status}
+                  label='Full pipeline'
+                  title={currentPipelineJobTitle || undefined}
+                  className='text-[10px]'
+                />
+              ) : null}
+            </div>
+          </div>
+        </KangurAdminCard>
+      ) : null}
+
       <KangurAdminCard>
         <div className='space-y-3'>
           <div>

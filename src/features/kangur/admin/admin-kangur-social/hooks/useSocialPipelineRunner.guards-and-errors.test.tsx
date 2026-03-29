@@ -226,6 +226,74 @@ describe('useSocialPipelineRunner guard and error flows', () => {
     expect(result.current.isSavedVisualAnalysisStale).toBe(false);
   });
 
+  it('sanitizes legacy saved image analysis when hydrating it from the draft', async () => {
+    const { result } = renderHook(
+      () =>
+        useSocialPipelineRunner({
+          activePost: {
+            id: 'post-1',
+            titlePl: 'Draft',
+            titleEn: '',
+            bodyPl: '',
+            bodyEn: '',
+            status: 'draft',
+            visualSummary: `Okay, I've reviewed the provided text and images. Here's a summary of the key information. The screenshots show a larger hero card and refreshed navigation labels.
+
+**Potential Documentation/Communication Narrative**
+Here's a draft you could use for release notes.
+`,
+            visualHighlights: [
+              'Larger hero card',
+              'Documentation update proposal for the homepage docs',
+            ],
+            visualAnalysisSourceImageAddonIds: ['addon-1'],
+            visualAnalysisSourceVisionModelId: 'vision-1',
+          } as never,
+          activePostId: 'post-1',
+          editorState: {
+            titlePl: 'Draft',
+            titleEn: '',
+            bodyPl: '',
+            bodyEn: '',
+          },
+          imageAssets: [],
+          imageAddonIds: ['addon-1'],
+          batchCaptureBaseUrl: 'https://example.com',
+          batchCapturePresetIds: ['preset-1'],
+          batchCapturePresetLimit: 1,
+          linkedinConnectionId: null,
+          brainModelId: 'brain-1',
+          visionModelId: 'vision-1',
+          canRunServerPipeline: true,
+          pipelineBlockedReason: null,
+          canRunVisualAnalysisPipeline: true,
+          visualAnalysisBlockedReason: null,
+          projectUrl: 'https://example.com/project',
+          generationNotes: 'Call out the updated hero.',
+          resolveDocReferences: () => ['docs/kangur/example.mdx'],
+          buildSocialContext: () => ({ postId: 'post-1' }),
+          handleLoadContext: vi.fn(),
+          setContextSummary: vi.fn(),
+          setActivePostId: vi.fn(),
+          setEditorState: vi.fn(),
+          setImageAddonIds: vi.fn(),
+          setImageAssets: vi.fn(),
+          setBatchCaptureResult: vi.fn(),
+          handleSelectAddons: vi.fn(),
+        }),
+      { wrapper: createWrapper() }
+    );
+
+    await act(async () => {});
+
+    expect(result.current.visualAnalysisResult).toEqual({
+      summary: 'The screenshots show a larger hero card and refreshed navigation labels.',
+      highlights: ['Larger hero card'],
+    });
+    expect(result.current.hasSavedVisualAnalysis).toBe(true);
+    expect(result.current.isSavedVisualAnalysisStale).toBe(false);
+  });
+
   it('does not queue a server job when no social or AI Brain post model is configured', async () => {
     const { result } = renderHook(
       () =>

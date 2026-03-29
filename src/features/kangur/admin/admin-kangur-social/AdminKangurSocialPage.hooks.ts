@@ -745,12 +745,15 @@ export function useAdminKangurSocialPage() {
 
     // Generation
     generateMutation: generation.generateMutation,
+    currentGenerationJob: generation.currentGenerationJob,
     handleGenerate: generation.handleGenerate,
 
     // Pipeline
     pipelineStep: pipeline.pipelineStep,
     pipelineProgress: pipeline.pipelineProgress,
     pipelineErrorMessage: pipeline.pipelineErrorMessage,
+    currentPipelineJob: pipeline.currentPipelineJob,
+    currentVisualAnalysisJob: pipeline.currentVisualAnalysisJob,
     isVisualAnalysisModalOpen: pipeline.isVisualAnalysisModalOpen,
     visualAnalysisResult: pipeline.visualAnalysisResult,
     visualAnalysisErrorMessage: pipeline.visualAnalysisErrorMessage,

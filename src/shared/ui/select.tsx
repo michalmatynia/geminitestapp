@@ -42,10 +42,7 @@ const isTextNode = (node: React.ReactNode): boolean =>
 const hasElementChildren = (
   node: React.ReactNode
 ): node is React.ReactElement<{ children?: React.ReactNode }> =>
-  React.isValidElement(node) &&
-  node.props &&
-  typeof node.props === 'object' &&
-  'children' in node.props;
+  React.isValidElement<{ children?: React.ReactNode }>(node);
 
 const getNodeText = (node: React.ReactNode): string => {
   if (node === null || node === undefined || typeof node === 'boolean') return '';

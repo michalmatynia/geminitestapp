@@ -1,6 +1,7 @@
 import { z } from 'zod';
 
 import { imageFileSelectionSchema } from './files';
+import { normalizeKangurSocialVisualAnalysis } from '@/shared/lib/kangur-social-visual-analysis';
 
 const trimmedString = z.string().trim();
 const optionalText = (max: number) => trimmedString.max(max).default('');
@@ -132,6 +133,10 @@ export const buildKangurSocialPostCombinedBody = (
 
 export const normalizeKangurSocialPost = (value: KangurSocialPost): KangurSocialPost => {
   const parsed = kangurSocialPostSchema.parse(value);
+  const visualAnalysis = normalizeKangurSocialVisualAnalysis({
+    summary: parsed.visualSummary,
+    highlights: parsed.visualHighlights,
+  });
   const combinedBody =
     parsed.combinedBody.trim().length > 0
       ? parsed.combinedBody
@@ -139,8 +144,15 @@ export const normalizeKangurSocialPost = (value: KangurSocialPost): KangurSocial
   return {
     ...parsed,
     combinedBody,
+    visualSummary: visualAnalysis.summary || null,
+    visualHighlights: visualAnalysis.highlights,
   };
 };
 
-export const parseKangurSocialPostStore = (value: unknown): KangurSocialPostStore =>
-  kangurSocialPostStoreSchema.parse(value);
+export const parseKangurSocialPostStore = (value: unknown): KangurSocialPostStore => {
+  const parsed = kangurSocialPostStoreSchema.parse(value);
+  return {
+    ...parsed,
+    posts: parsed.posts.map((post) => normalizeKangurSocialPost(post)),
+  };
+};

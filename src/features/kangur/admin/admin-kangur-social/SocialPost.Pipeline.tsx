@@ -9,6 +9,10 @@ import {
 import { KangurProgressBar } from '@/features/kangur/ui/design/primitives';
 import { KangurAdminCard } from '../components/KangurAdminCard';
 import { useSocialPostContext } from './SocialPostContext';
+import {
+  getSocialJobStatusLabel,
+  SocialJobStatusPill,
+} from './SocialJobStatusPill';
 import type { PipelineStep } from './AdminKangurSocialPage.Constants';
 
 const PIPELINE_PROGRESS_VALUE_BY_STEP = {
@@ -27,6 +31,9 @@ export function SocialPostPipeline(): React.JSX.Element {
     pipelineStep,
     pipelineProgress,
     pipelineErrorMessage,
+    currentPipelineJob,
+    currentVisualAnalysisJob,
+    currentGenerationJob,
     visualAnalysisResult,
     hasSavedVisualAnalysis,
     isSavedVisualAnalysisStale,
@@ -83,33 +90,64 @@ export function SocialPostPipeline(): React.JSX.Element {
   const captureTotalCount = pipelineProgress?.captureTotalCount ?? 0;
   const captureFailureCount = pipelineProgress?.captureFailureCount ?? 0;
   const readyVisualHighlightCount = visualAnalysisResult?.highlights?.length ?? 0;
-  const readyVisualAnalysisStatus = activePost?.visualAnalysisStatus ?? null;
+  const savedVisualAnalysisStatus = activePost?.visualAnalysisStatus ?? null;
   const readyVisualAnalysisUpdatedAt = activePost?.visualAnalysisUpdatedAt ?? null;
   const readyVisualAnalysisModelId = activePost?.visualAnalysisModelId?.trim() ?? '';
-  const readyVisualAnalysisJobId = activePost?.visualAnalysisJobId?.trim() ?? '';
-  const readyVisualAnalysisStatusLabel =
-    readyVisualAnalysisStatus === 'queued'
-      ? 'Queued'
-      : readyVisualAnalysisStatus === 'running'
-        ? 'Running'
-        : readyVisualAnalysisStatus === 'completed'
-          ? 'Completed'
-          : readyVisualAnalysisStatus === 'failed'
-            ? 'Failed'
-            : null;
+  const savedVisualAnalysisJobId = activePost?.visualAnalysisJobId?.trim() ?? '';
+  const latestVisualAnalysisJobStatus =
+    currentVisualAnalysisJob?.status ?? savedVisualAnalysisStatus ?? null;
+  const latestVisualAnalysisStatusLabel = getSocialJobStatusLabel(
+    latestVisualAnalysisJobStatus
+  );
+  const latestVisualAnalysisJobId =
+    currentVisualAnalysisJob?.id?.trim() ?? savedVisualAnalysisJobId;
+  const latestVisualAnalysisStatusKey =
+    latestVisualAnalysisJobStatus?.trim().toLowerCase() ?? null;
   const hasInFlightVisualAnalysisStatus =
-    readyVisualAnalysisStatus === 'queued' || readyVisualAnalysisStatus === 'running';
-  const hasFailedVisualAnalysisStatus = readyVisualAnalysisStatus === 'failed';
+    latestVisualAnalysisStatusKey === 'queued' ||
+    latestVisualAnalysisStatusKey === 'waiting' ||
+    latestVisualAnalysisStatusKey === 'running' ||
+    latestVisualAnalysisStatusKey === 'active';
+  const hasFailedVisualAnalysisStatus = latestVisualAnalysisStatusKey === 'failed';
   const hasLatestVisualAnalysisMetadata = Boolean(
-    readyVisualAnalysisStatusLabel ||
+    latestVisualAnalysisStatusLabel ||
       readyVisualAnalysisUpdatedAt ||
       readyVisualAnalysisModelId ||
-      readyVisualAnalysisJobId
+      latestVisualAnalysisJobId
   );
+  const hasLiveVisualAnalysisJob = Boolean(currentVisualAnalysisJob?.status);
   const hasReadyVisualAnalysis =
     Boolean(visualAnalysisResult?.summary.trim()) || readyVisualHighlightCount > 0;
+  const shouldWarnSavedAnalysisStale =
+    isSavedVisualAnalysisStale && hasSavedVisualAnalysis && !hasLiveVisualAnalysisJob;
   const shouldReviewVisualAnalysis =
-    !isSavedVisualAnalysisStale && (hasReadyVisualAnalysis || hasLatestVisualAnalysisMetadata);
+    hasLiveVisualAnalysisJob ||
+    (!isSavedVisualAnalysisStale && (hasReadyVisualAnalysis || hasLatestVisualAnalysisMetadata));
+  const latestVisualAnalysisJobTitle = [
+    currentVisualAnalysisJob?.progress?.message ?? null,
+    currentVisualAnalysisJob?.failedReason ?? null,
+    currentVisualAnalysisJob?.id
+      ? `Queue job: ${currentVisualAnalysisJob.id}`
+      : latestVisualAnalysisJobId
+        ? `Queue job: ${latestVisualAnalysisJobId}`
+        : null,
+  ]
+    .filter((value): value is string => Boolean(value))
+    .join(' · ');
+  const latestPipelineJobTitle = [
+    currentPipelineJob?.progress?.message ?? null,
+    currentPipelineJob?.failedReason ?? null,
+    currentPipelineJob?.id ? `Queue job: ${currentPipelineJob.id}` : null,
+  ]
+    .filter((value): value is string => Boolean(value))
+    .join(' · ');
+  const latestGenerationJobTitle = [
+    currentGenerationJob?.progress?.message ?? null,
+    currentGenerationJob?.failedReason ?? null,
+    currentGenerationJob?.id ? `Queue job: ${currentGenerationJob.id}` : null,
+  ]
+    .filter((value): value is string => Boolean(value))
+    .join(' · ');
   const textPipelineButtonTitle = !hasActivePost
     ? 'Create or select a draft before running the pipeline.'
     : !canGenerateSocialDraft
@@ -124,7 +162,7 @@ export function SocialPostPipeline(): React.JSX.Element {
         'Select at least one image add-on and configure a vision model first.'
       : isPipelineBusy
         ? 'Wait for the current pipeline run to finish.'
-        : isSavedVisualAnalysisStale && hasSavedVisualAnalysis
+        : shouldWarnSavedAnalysisStale
           ? 'Saved image analysis exists for this draft, but the selected visuals changed. Rerun image analysis before generating.'
         : hasReadyVisualAnalysis
           ? 'Review the saved image analysis or start the separate Generate post with analysis step.'
@@ -247,6 +285,38 @@ export function SocialPostPipeline(): React.JSX.Element {
             </Button>
           </div>
 
+          {(latestVisualAnalysisJobStatus ||
+            currentPipelineJob?.status ||
+            currentGenerationJob?.status) && (
+            <div className='flex flex-wrap items-center gap-2 text-xs text-muted-foreground'>
+              <span className='font-medium text-foreground/80'>Runtime jobs:</span>
+              {latestVisualAnalysisJobStatus ? (
+                <SocialJobStatusPill
+                  status={latestVisualAnalysisJobStatus}
+                  label='Image analysis'
+                  title={latestVisualAnalysisJobTitle || undefined}
+                  className='text-[10px]'
+                />
+              ) : null}
+              {currentGenerationJob?.status ? (
+                <SocialJobStatusPill
+                  status={currentGenerationJob.status}
+                  label='Generate post'
+                  title={latestGenerationJobTitle || undefined}
+                  className='text-[10px]'
+                />
+              ) : null}
+              {currentPipelineJob?.status ? (
+                <SocialJobStatusPill
+                  status={currentPipelineJob.status}
+                  label='Full pipeline'
+                  title={latestPipelineJobTitle || undefined}
+                  className='text-[10px]'
+                />
+              ) : null}
+            </div>
+          )}
+
           {!hasActivePost && (
             <div className='rounded-xl border border-border/60 bg-background/40 px-3 py-2 text-xs text-muted-foreground'>
               Create or select a draft before running the social pipeline.
@@ -271,7 +341,7 @@ export function SocialPostPipeline(): React.JSX.Element {
             </div>
           )}
 
-          {isSavedVisualAnalysisStale && hasSavedVisualAnalysis && !isPipelineBusy && (
+          {shouldWarnSavedAnalysisStale && !isPipelineBusy && (
             <div className='rounded-xl border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-xs text-amber-900 dark:text-amber-200'>
               Saved image analysis exists for this draft, but the selected visuals changed. Rerun image analysis before generating.
             </div>
@@ -284,14 +354,18 @@ export function SocialPostPipeline(): React.JSX.Element {
                 ? ` ${readyVisualHighlightCount} highlight${readyVisualHighlightCount === 1 ? '' : 's'}.`
                 : ''}
               {' '}Open the modal to review it or start the post-generation pass.
-              {readyVisualAnalysisStatusLabel || readyVisualAnalysisModelId || readyVisualAnalysisJobId ? (
+              {latestVisualAnalysisStatusLabel ||
+              readyVisualAnalysisModelId ||
+              latestVisualAnalysisJobId ? (
                 <div className='mt-1 text-[11px] text-emerald-950/80 dark:text-emerald-100/80'>
-                  {readyVisualAnalysisStatusLabel ? `Saved run: ${readyVisualAnalysisStatusLabel}. ` : ''}
+                  {latestVisualAnalysisStatusLabel
+                    ? `${currentVisualAnalysisJob?.status ? 'Latest run' : 'Saved run'}: ${latestVisualAnalysisStatusLabel}. `
+                    : ''}
                   {readyVisualAnalysisUpdatedAt
                     ? `Analyzed: ${new Date(readyVisualAnalysisUpdatedAt).toLocaleString()}. `
                     : ''}
                   {readyVisualAnalysisModelId ? `Model: ${readyVisualAnalysisModelId}. ` : ''}
-                  {readyVisualAnalysisJobId ? `Queue job: ${readyVisualAnalysisJobId}.` : ''}
+                  {latestVisualAnalysisJobId ? `Queue job: ${latestVisualAnalysisJobId}.` : ''}
                 </div>
               ) : null}
             </div>
@@ -306,12 +380,12 @@ export function SocialPostPipeline(): React.JSX.Element {
               }
             >
               Latest image analysis status:
-              {readyVisualAnalysisStatusLabel ? ` ${readyVisualAnalysisStatusLabel}.` : ''}
+              {latestVisualAnalysisStatusLabel ? ` ${latestVisualAnalysisStatusLabel}.` : ''}
               {readyVisualAnalysisUpdatedAt
                 ? ` Analyzed: ${new Date(readyVisualAnalysisUpdatedAt).toLocaleString()}.`
                 : ''}
               {readyVisualAnalysisModelId ? ` Model: ${readyVisualAnalysisModelId}.` : ''}
-              {readyVisualAnalysisJobId ? ` Queue job: ${readyVisualAnalysisJobId}.` : ''}
+              {latestVisualAnalysisJobId ? ` Queue job: ${latestVisualAnalysisJobId}.` : ''}
             </div>
           )}
 

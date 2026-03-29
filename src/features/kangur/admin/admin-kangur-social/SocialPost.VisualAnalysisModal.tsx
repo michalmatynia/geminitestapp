@@ -12,7 +12,14 @@ import { usePlaywrightPersonas } from '@/shared/hooks/usePlaywrightPersonas';
 
 import { resolveImagePreview } from './AdminKangurSocialPage.Constants';
 import { useSocialPostContext } from './SocialPostContext';
+import { getSocialJobStatusLabel, SocialJobStatusPill } from './SocialJobStatusPill';
 import { getSocialPostAddonCaptureDetailLabels } from './social-post-addon-capture-details';
+
+const isSocialRuntimeJobInFlight = (status: string | null | undefined): boolean => {
+  const normalized = status?.trim().toLowerCase();
+  if (!normalized) return false;
+  return normalized !== 'completed' && normalized !== 'failed';
+};
 
 export function SocialPostVisualAnalysisModal(): React.JSX.Element | null {
   const {
@@ -24,6 +31,9 @@ export function SocialPostVisualAnalysisModal(): React.JSX.Element | null {
     visualAnalysisResult,
     visualAnalysisErrorMessage,
     visualAnalysisPending,
+    currentGenerationJob,
+    currentPipelineJob,
+    currentVisualAnalysisJob,
     imageAddonIds,
     recentAddons,
     hasSavedVisualAnalysis,
@@ -52,20 +62,13 @@ export function SocialPostVisualAnalysisModal(): React.JSX.Element | null {
     visionModelId?.trim() ||
     visionModelOptions?.effectiveModelId?.trim() ||
     'Not configured';
-  const visualAnalysisStatus = activePost?.visualAnalysisStatus ?? null;
+  const savedVisualAnalysisStatus = activePost?.visualAnalysisStatus ?? null;
   const visualAnalysisUpdatedAt = activePost?.visualAnalysisUpdatedAt ?? null;
   const visualAnalysisModelId = activePost?.visualAnalysisModelId?.trim() ?? '';
-  const visualAnalysisJobId = activePost?.visualAnalysisJobId?.trim() ?? '';
-  const visualAnalysisStatusLabel =
-    visualAnalysisStatus === 'queued'
-      ? 'Queued'
-      : visualAnalysisStatus === 'running'
-        ? 'Running'
-        : visualAnalysisStatus === 'completed'
-          ? 'Completed'
-          : visualAnalysisStatus === 'failed'
-            ? 'Failed'
-            : null;
+  const savedVisualAnalysisJobId = activePost?.visualAnalysisJobId?.trim() ?? '';
+  const visualAnalysisStatus = currentVisualAnalysisJob?.status ?? savedVisualAnalysisStatus;
+  const visualAnalysisJobId = currentVisualAnalysisJob?.id?.trim() ?? savedVisualAnalysisJobId;
+  const visualAnalysisStatusLabel = getSocialJobStatusLabel(visualAnalysisStatus);
   const hasSavedAnalysisMetadata = Boolean(
     visualAnalysisStatusLabel ||
       visualAnalysisUpdatedAt ||
@@ -73,7 +76,37 @@ export function SocialPostVisualAnalysisModal(): React.JSX.Element | null {
       visualAnalysisJobId
   );
   const hasFailedSavedAnalysis = visualAnalysisStatus === 'failed';
+  const runtimeVisualAnalysisStatus = visualAnalysisStatus;
+  const runtimeVisualAnalysisTitle = [
+    currentVisualAnalysisJob?.progress?.message ?? null,
+    currentVisualAnalysisJob?.failedReason ?? null,
+    visualAnalysisJobId ? `Queue job: ${visualAnalysisJobId}` : null,
+  ]
+    .filter((value): value is string => Boolean(value))
+    .join(' · ');
+  const currentPipelineJobTitle = [
+    currentPipelineJob?.progress?.message ?? null,
+    currentPipelineJob?.failedReason ?? null,
+    currentPipelineJob?.id ? `Queue job: ${currentPipelineJob.id}` : null,
+  ]
+    .filter((value): value is string => Boolean(value))
+    .join(' · ');
+  const currentGenerationJobTitle = [
+    currentGenerationJob?.progress?.message ?? null,
+    currentGenerationJob?.failedReason ?? null,
+    currentGenerationJob?.id ? `Queue job: ${currentGenerationJob.id}` : null,
+  ]
+    .filter((value): value is string => Boolean(value))
+    .join(' · ');
   const visualAnalysisHighlights = visualAnalysisResult?.highlights ?? [];
+  const isVisualAnalysisJobInFlight =
+    visualAnalysisPending || isSocialRuntimeJobInFlight(currentVisualAnalysisJob?.status);
+  const isFollowUpGenerationInFlight =
+    isSocialRuntimeJobInFlight(currentGenerationJob?.status) ||
+    isSocialRuntimeJobInFlight(currentPipelineJob?.status);
+  const saveText = isFollowUpGenerationInFlight
+    ? 'Generate post in progress...'
+    : 'Generate post with analysis';
 
   return (
     <FormModal
@@ -84,8 +117,8 @@ export function SocialPostVisualAnalysisModal(): React.JSX.Element | null {
       onSave={() => {
         void handleRunFullPipelineWithVisualAnalysis();
       }}
-      saveText='Generate post with analysis'
-      isSaveDisabled={!visualAnalysisResult || visualAnalysisPending}
+      saveText={saveText}
+      isSaveDisabled={!visualAnalysisResult || isVisualAnalysisJobInFlight || isFollowUpGenerationInFlight}
       showSaveButton={true}
       cancelText='Close'
       size='xl'
@@ -97,9 +130,9 @@ export function SocialPostVisualAnalysisModal(): React.JSX.Element | null {
           onClick={() => {
             void handleAnalyzeSelectedVisuals();
           }}
-          disabled={visualAnalysisPending || selectedAddons.length === 0}
+          disabled={isVisualAnalysisJobInFlight || selectedAddons.length === 0}
         >
-          {visualAnalysisPending ? 'Analyzing visuals...' : 'Analyze selected visuals'}
+          {isVisualAnalysisJobInFlight ? 'Analyzing visuals...' : 'Analyze selected visuals'}
         </Button>
       }
     >
@@ -109,6 +142,30 @@ export function SocialPostVisualAnalysisModal(): React.JSX.Element | null {
           <Badge variant='outline'>
             {selectedAddons.length} selected visual{selectedAddons.length === 1 ? '' : 's'}
           </Badge>
+          {runtimeVisualAnalysisStatus ? (
+            <SocialJobStatusPill
+              status={runtimeVisualAnalysisStatus}
+              label='Image analysis'
+              title={runtimeVisualAnalysisTitle || undefined}
+              className='text-[10px]'
+            />
+          ) : null}
+          {currentGenerationJob?.status ? (
+            <SocialJobStatusPill
+              status={currentGenerationJob.status}
+              label='Generate post'
+              title={currentGenerationJobTitle || undefined}
+              className='text-[10px]'
+            />
+          ) : null}
+          {currentPipelineJob?.status ? (
+            <SocialJobStatusPill
+              status={currentPipelineJob.status}
+              label='Full pipeline'
+              title={currentPipelineJobTitle || undefined}
+              className='text-[10px]'
+            />
+          ) : null}
         </div>
 
         {selectedAddons.length === 0 ? (

@@ -358,6 +358,32 @@ export const resolveManagedKangurEmbeddedFromHref = ({
   );
 };
 
+const shouldPreserveAccessibleManagedKangurHref = ({
+  accessibleResolvedPageKey,
+  resolvedPageKey,
+}: {
+  accessibleResolvedPageKey: string;
+  resolvedPageKey: string | null;
+}): boolean => !resolvedPageKey || accessibleResolvedPageKey === resolvedPageKey;
+
+const resolveAccessibleManagedKangurFallbackHref = ({
+  canonicalizePublicAlias,
+  currentOrigin,
+  fallbackHref,
+  pathname,
+}: {
+  canonicalizePublicAlias: boolean;
+  currentOrigin?: string | null;
+  fallbackHref: string;
+  pathname: string | null;
+}): string =>
+  resolveRouteAwareManagedKangurHref({
+    href: fallbackHref,
+    pathname,
+    currentOrigin,
+    canonicalizePublicAlias,
+  }) ?? fallbackHref;
+
 export const sanitizeAccessibleManagedKangurHref = ({
   href,
   pathname,
@@ -397,18 +423,16 @@ export const sanitizeAccessibleManagedKangurHref = ({
     session,
   });
 
-  if (!resolvedPageKey || accessibleResolvedPageKey === resolvedPageKey) {
+  if (shouldPreserveAccessibleManagedKangurHref({ accessibleResolvedPageKey, resolvedPageKey })) {
     return resolvedHref;
   }
 
-  return (
-    resolveRouteAwareManagedKangurHref({
-      href: fallbackHref,
-      pathname,
-      currentOrigin,
-      canonicalizePublicAlias,
-    }) ?? fallbackHref
-  );
+  return resolveAccessibleManagedKangurFallbackHref({
+    fallbackHref,
+    pathname,
+    currentOrigin,
+    canonicalizePublicAlias,
+  });
 };
 
 export const localizeManagedKangurHref = ({

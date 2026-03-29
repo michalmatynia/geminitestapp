@@ -78,7 +78,7 @@ export function KangurAppLoader({
       setIsExiting(true);
       exitTimeoutRef.current = globalThis.setTimeout(() => {
         setIsExiting(false);
-      }, prefersReducedMotion ? 0 : 200);
+      }, prefersReducedMotion ? 0 : 120);
     }
     prevVisibleRef.current = visible;
 
@@ -109,7 +109,7 @@ export function KangurAppLoader({
       typeof performance !== 'undefined' && typeof performance.now === 'function'
         ? performance.now()
         : Date.now();
-    const maxWaitMs = 100;
+    const maxWaitMs = 60;
     const probeVars = [
       '--kangur-logo-accent-start',
       '--kangur-nav-item-active-text',
@@ -148,7 +148,7 @@ export function KangurAppLoader({
       setColorPhase((prev) => (prev === 'color' ? prev : 'paint'));
       paintTimeoutId = globalThis.setTimeout(() => {
         setColorPhase('color');
-      }, 150);
+      }, 80);
     };
 
     // Fast path: theme class or CSS vars already present
@@ -245,7 +245,7 @@ export function KangurAppLoader({
   const outerStyle: CSSProperties = {
     isolation: 'isolate',
     opacity: isExiting ? 0 : 1,
-    transition: prefersReducedMotion ? undefined : 'opacity 0.2s ease-out',
+    transition: prefersReducedMotion ? undefined : 'opacity 0.12s ease-out',
     ...(allowIntroAnimation && !isExiting ? {} : {}),
   };
 

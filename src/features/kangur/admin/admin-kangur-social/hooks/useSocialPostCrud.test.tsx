@@ -189,6 +189,32 @@ describe('useSocialPostCrud', () => {
     );
   });
 
+  it('blocks invalid save payloads on the client and shows a field-specific toast', async () => {
+    const deps = createDeps();
+    deps.editorState = {
+      ...deps.editorState,
+      titlePl: 'x'.repeat(201),
+    };
+
+    const { result } = renderHook(() => useSocialPostCrud(deps), {
+      wrapper: createWrapper(),
+    });
+
+    await act(async () => {
+      await result.current.handleSave('draft');
+    });
+
+    expect(patchMutateAsyncMock).not.toHaveBeenCalled();
+    expect(toastMock).toHaveBeenCalledWith(
+      'Polish title: Too big: expected string to have <=200 characters',
+      { variant: 'error' }
+    );
+    expect(trackKangurClientEventMock).toHaveBeenCalledWith(
+      'kangur_social_post_save_failed',
+      { postId: 'post-1', nextStatus: 'draft', error: true, validationError: true }
+    );
+  });
+
   it('unpublishes a post and reports a success toast', async () => {
     const deps = createDeps();
     const { result } = renderHook(() => useSocialPostCrud(deps), {

@@ -31,6 +31,16 @@ type ScopedScoresCacheEntry = {
   fetchedAt: number;
 };
 
+type ResolvedScopedScoreQuery = {
+  learnerId: string;
+  playerName: string;
+  createdBy: string;
+  subject?: KangurLessonSubject;
+  limit: number;
+  fallbackToAll?: boolean;
+  cacheKey: string;
+};
+
 const sortScoresByCreatedDateDesc = (left: KangurScoreRecord, right: KangurScoreRecord): number =>
   new Date(right.created_date).getTime() - new Date(left.created_date).getTime();
 
@@ -132,23 +142,36 @@ export const clearKangurScopedScoresCache = (): void => {
   leaderboardScoresInflight.clear();
 };
 
-export const peekCachedScopedKangurScores = (
-  scorePort: KangurScorePort,
+const resolveScopedScoreQuery = (
   input: LoadScopedKangurScoresInput
-): KangurScoreRecord[] | null => {
+): ResolvedScopedScoreQuery => {
   const learnerId = input.learnerId?.trim() ?? '';
   const playerName = input.playerName?.trim() ?? '';
   const createdBy = input.createdBy?.trim() ?? '';
   const limit = input.limit ?? LEARNER_PROFILE_SCORE_FETCH_LIMIT;
-  const cacheKey = buildScopedScoresCacheKey({
+
+  return {
     learnerId,
     playerName,
     createdBy,
     subject: input.subject,
     limit,
     fallbackToAll: input.fallbackToAll,
-  });
-  const cacheStore = getScopedScoresCacheStore(scorePort);
+    cacheKey: buildScopedScoresCacheKey({
+      learnerId,
+      playerName,
+      createdBy,
+      subject: input.subject,
+      limit,
+      fallbackToAll: input.fallbackToAll,
+    }),
+  };
+};
+
+const readCachedScopedScores = (
+  cacheStore: Map<string, ScopedScoresCacheEntry>,
+  cacheKey: string
+): KangurScoreRecord[] | null => {
   const cached = cacheStore.get(cacheKey);
   if (!cached) {
     return null;
@@ -162,111 +185,143 @@ export const peekCachedScopedKangurScores = (
   return cloneScopedScores(cached.data);
 };
 
+const cacheScopedScores = (
+  cacheStore: Map<string, ScopedScoresCacheEntry>,
+  cacheKey: string,
+  scores: KangurScoreRecord[]
+): KangurScoreRecord[] => {
+  cacheStore.set(cacheKey, {
+    data: cloneScopedScores(scores),
+    fetchedAt: Date.now(),
+  });
+  return scores;
+};
+
+const hasScopedScoreIdentity = (query: ResolvedScopedScoreQuery): boolean =>
+  query.learnerId.length > 0 || query.playerName.length > 0 || query.createdBy.length > 0;
+
+const buildScopedScoreSubjectCriteria = (
+  subject?: KangurLessonSubject
+): { subject?: KangurLessonSubject } => (subject ? { subject } : {});
+
+const loadFallbackScopedScores = async ({
+  cacheStore,
+  inflightStore,
+  query,
+  scorePort,
+}: {
+  cacheStore: Map<string, ScopedScoresCacheEntry>;
+  inflightStore: Map<string, Promise<KangurScoreRecord[]>>;
+  query: ResolvedScopedScoreQuery;
+  scorePort: KangurScorePort;
+}): Promise<KangurScoreRecord[]> => {
+  const inflightPromise = scorePort
+    .filter(buildScopedScoreSubjectCriteria(query.subject), '-created_date', query.limit)
+    .then((rows) =>
+      cacheScopedScores(
+        cacheStore,
+        query.cacheKey,
+        [...rows]
+          .filter((score) => (query.subject ? resolveKangurScoreSubject(score) === query.subject : true))
+          .sort(sortScoresByCreatedDateDesc)
+      )
+    )
+    .finally(() => {
+      inflightStore.delete(query.cacheKey);
+    });
+
+  inflightStore.set(query.cacheKey, inflightPromise);
+  return cloneScopedScores(await inflightPromise);
+};
+
+const loadIdentityScopedScores = async ({
+  cacheStore,
+  inflightStore,
+  query,
+  scorePort,
+}: {
+  cacheStore: Map<string, ScopedScoresCacheEntry>;
+  inflightStore: Map<string, Promise<KangurScoreRecord[]>>;
+  query: ResolvedScopedScoreQuery;
+  scorePort: KangurScorePort;
+}): Promise<KangurScoreRecord[]> => {
+  const subjectCriteria = buildScopedScoreSubjectCriteria(query.subject);
+  const inflightPromise = Promise.all([
+    query.learnerId.length > 0
+      ? scorePort.filter({ learner_id: query.learnerId, ...subjectCriteria }, '-created_date', query.limit)
+      : Promise.resolve([]),
+    query.createdBy.length > 0
+      ? scorePort.filter({ created_by: query.createdBy, ...subjectCriteria }, '-created_date', query.limit)
+      : Promise.resolve([]),
+    query.playerName.length > 0
+      ? scorePort.filter({ player_name: query.playerName, ...subjectCriteria }, '-created_date', query.limit)
+      : Promise.resolve([]),
+  ])
+    .then(([rowsByLearner, rowsByEmail, rowsByName]) =>
+      cacheScopedScores(
+        cacheStore,
+        query.cacheKey,
+        dedupeScoresById(
+          query.subject
+            ? [...rowsByLearner, ...rowsByEmail, ...rowsByName].filter(
+                (score) => resolveKangurScoreSubject(score) === query.subject
+              )
+            : [...rowsByLearner, ...rowsByEmail, ...rowsByName]
+        )
+      )
+    )
+    .finally(() => {
+      inflightStore.delete(query.cacheKey);
+    });
+
+  inflightStore.set(query.cacheKey, inflightPromise);
+  return cloneScopedScores(await inflightPromise);
+};
+
+export const peekCachedScopedKangurScores = (
+  scorePort: KangurScorePort,
+  input: LoadScopedKangurScoresInput
+): KangurScoreRecord[] | null => {
+  const query = resolveScopedScoreQuery(input);
+  return readCachedScopedScores(getScopedScoresCacheStore(scorePort), query.cacheKey);
+};
+
 export const loadScopedKangurScores = async (
   scorePort: KangurScorePort,
   input: LoadScopedKangurScoresInput
 ): Promise<KangurScoreRecord[]> => {
-  const learnerId = input.learnerId?.trim() ?? '';
-  const playerName = input.playerName?.trim() ?? '';
-  const createdBy = input.createdBy?.trim() ?? '';
-  const subject = input.subject;
-  const limit = input.limit ?? LEARNER_PROFILE_SCORE_FETCH_LIMIT;
-  const cacheKey = buildScopedScoresCacheKey({
-    learnerId,
-    playerName,
-    createdBy,
-    subject,
-    limit,
-    fallbackToAll: input.fallbackToAll,
-  });
+  const query = resolveScopedScoreQuery(input);
   const cacheStore = getScopedScoresCacheStore(scorePort);
   const inflightStore = getScopedScoresInflightStore(scorePort);
-  const cached = peekCachedScopedKangurScores(scorePort, {
-    learnerId,
-    playerName,
-    createdBy,
-    subject,
-    limit,
-    fallbackToAll: input.fallbackToAll,
-  });
+  const cached = readCachedScopedScores(cacheStore, query.cacheKey);
   if (cached !== null) {
     return cached;
   }
 
-  const inflight = inflightStore.get(cacheKey);
+  const inflight = inflightStore.get(query.cacheKey);
   if (inflight) {
     return cloneScopedScores(await inflight);
   }
 
-  if (learnerId.length === 0 && playerName.length === 0 && createdBy.length === 0) {
-    if (!input.fallbackToAll) {
+  if (!hasScopedScoreIdentity(query)) {
+    if (!query.fallbackToAll) {
       return [];
     }
 
-    const inflightPromise = scorePort
-      .filter(subject ? { subject } : {}, '-created_date', limit)
-      .then((rows) => {
-        const resolvedRows = [...rows]
-          .filter((score) =>
-            subject ? resolveKangurScoreSubject(score) === subject : true
-          )
-          .sort(sortScoresByCreatedDateDesc);
-        cacheStore.set(cacheKey, {
-          data: cloneScopedScores(resolvedRows),
-          fetchedAt: Date.now(),
-        });
-        return resolvedRows;
-      })
-      .finally(() => {
-        inflightStore.delete(cacheKey);
-      });
-
-    inflightStore.set(cacheKey, inflightPromise);
-    return cloneScopedScores(await inflightPromise);
+    return loadFallbackScopedScores({
+      scorePort,
+      query,
+      cacheStore,
+      inflightStore,
+    });
   }
 
-  const inflightPromise = Promise.all([
-    learnerId.length > 0
-      ? scorePort.filter(
-          { learner_id: learnerId, ...(subject ? { subject } : {}) },
-          '-created_date',
-          limit
-        )
-      : Promise.resolve([]),
-    createdBy.length > 0
-      ? scorePort.filter(
-          { created_by: createdBy, ...(subject ? { subject } : {}) },
-          '-created_date',
-          limit
-        )
-      : Promise.resolve([]),
-    playerName.length > 0
-      ? scorePort.filter(
-          { player_name: playerName, ...(subject ? { subject } : {}) },
-          '-created_date',
-          limit
-        )
-      : Promise.resolve([]),
-  ])
-    .then(([rowsByLearner, rowsByEmail, rowsByName]) => {
-      const filtered = subject
-        ? [...rowsByLearner, ...rowsByEmail, ...rowsByName].filter(
-            (score) => resolveKangurScoreSubject(score) === subject
-          )
-        : [...rowsByLearner, ...rowsByEmail, ...rowsByName];
-      const resolvedRows = dedupeScoresById(filtered);
-      cacheStore.set(cacheKey, {
-        data: cloneScopedScores(resolvedRows),
-        fetchedAt: Date.now(),
-      });
-      return resolvedRows;
-    })
-    .finally(() => {
-      inflightStore.delete(cacheKey);
-    });
-
-  inflightStore.set(cacheKey, inflightPromise);
-  return cloneScopedScores(await inflightPromise);
+  return loadIdentityScopedScores({
+    scorePort,
+    query,
+    cacheStore,
+    inflightStore,
+  });
 };
 
 export const peekCachedKangurLeaderboardScores = (

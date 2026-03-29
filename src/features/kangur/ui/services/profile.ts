@@ -110,6 +110,69 @@ const resolveActivityStatsStreakFallback = (
   };
 };
 
+const resolveProfileSnapshotStreaks = (
+  progress: KangurProgressState,
+  sortedScores: KangurScoreRecord[],
+  now: Date
+): {
+  currentStreakDays: number;
+  longestStreakDays: number;
+  lastPlayedAt: string | null;
+} => {
+  const scoreStreaks = computeStreaks(sortedScores, now);
+  const activityStatsStreaks = resolveActivityStatsStreakFallback(progress);
+  return {
+    currentStreakDays:
+      scoreStreaks.currentStreakDays > 0
+        ? scoreStreaks.currentStreakDays
+        : activityStatsStreaks.currentStreakDays,
+    longestStreakDays:
+      scoreStreaks.longestStreakDays > 0
+        ? scoreStreaks.longestStreakDays
+        : activityStatsStreaks.longestStreakDays,
+    lastPlayedAt: scoreStreaks.lastPlayedAt ?? activityStatsStreaks.lastPlayedAt,
+  };
+};
+
+const resolveProfileSnapshotAccuracies = (
+  progress: KangurProgressState,
+  sortedScores: KangurScoreRecord[]
+): { averageAccuracy: number; bestAccuracy: number } => {
+  const progressAverageAccuracy = getProgressAverageAccuracy(progress);
+  const progressBestAccuracy = getProgressBestAccuracy(progress);
+
+  return {
+    averageAccuracy:
+      progressAverageAccuracy > 0
+        ? progressAverageAccuracy
+        : computeAverageAccuracyFromScores(sortedScores),
+    bestAccuracy:
+      progressBestAccuracy > 0 ? progressBestAccuracy : computeBestAccuracyFromScores(sortedScores),
+  };
+};
+
+const resolveTodayGames = (
+  weeklyActivity: KangurLearnerProfileSnapshot['weeklyActivity'],
+  now: Date
+): number => {
+  const todayDateKey = toLocalDateKey(now);
+  return (
+    weeklyActivity.find((entry) => entry.dateKey === todayDateKey)?.games ??
+    weeklyActivity.at(-1)?.games ??
+    0
+  );
+};
+
+const resolveUnlockedBadgeSnapshot = (
+  badges: ReturnType<typeof getProgressBadges>
+): { unlockedBadges: number; unlockedBadgeIds: string[] } => {
+  const unlockedBadgeIds = badges.filter((badge) => badge.isUnlocked).map((badge) => badge.id);
+  return {
+    unlockedBadges: unlockedBadgeIds.length,
+    unlockedBadgeIds,
+  };
+};
+
 type BuildProfileSnapshotInput = {
   progress: KangurProgressState;
   scores: KangurScoreRecord[];
@@ -125,20 +188,7 @@ export const buildKangurLearnerProfileSnapshot = (
   const now = input.now ?? new Date();
   const normalizedLocale = normalizeSiteLocale(input.locale);
   const sortedScores = normalizeScoresDesc(input.scores);
-
-  const scoreStreaks = computeStreaks(sortedScores, now);
-  const activityStatsStreaks = resolveActivityStatsStreakFallback(input.progress);
-  const streaks = {
-    currentStreakDays:
-      scoreStreaks.currentStreakDays > 0
-        ? scoreStreaks.currentStreakDays
-        : activityStatsStreaks.currentStreakDays,
-    longestStreakDays:
-      scoreStreaks.longestStreakDays > 0
-        ? scoreStreaks.longestStreakDays
-        : activityStatsStreaks.longestStreakDays,
-    lastPlayedAt: scoreStreaks.lastPlayedAt ?? activityStatsStreaks.lastPlayedAt,
-  };
+  const streaks = resolveProfileSnapshotStreaks(input.progress, sortedScores, now);
   const operationPerformance = computeOperationPerformance(
     sortedScores,
     input.progress,
@@ -154,27 +204,17 @@ export const buildKangurLearnerProfileSnapshot = (
   const recentSessions = computeRecentSessions(sortedScores, normalizedLocale, input.translate);
   const xpAnalytics = computeXpAnalytics(sortedScores, input.progress, now);
   const badges = getProgressBadges(input.progress);
+  const unlockedBadgeSnapshot = resolveUnlockedBadgeSnapshot(badges);
   const level = getCurrentLevel(input.progress.totalXp);
   const nextLevel = getNextLevel(input.progress.totalXp);
   const xpIntoLevel = input.progress.totalXp - level.minXp;
   const xpNeeded = nextLevel ? Math.max(1, nextLevel.minXp - level.minXp) : 1;
-  const todayDateKey = toLocalDateKey(now);
-
-  const todayGames =
-    weeklyActivity.find((entry) => entry.dateKey === todayDateKey)?.games ??
-    weeklyActivity.at(-1)?.games ??
-    0;
+  const todayGames = resolveTodayGames(weeklyActivity, now);
   const dailyGoalGames = Math.max(1, Math.round(input.dailyGoalGames));
-  const progressAverageAccuracy = getProgressAverageAccuracy(input.progress);
-  const averageAccuracy =
-    progressAverageAccuracy > 0
-      ? progressAverageAccuracy
-      : computeAverageAccuracyFromScores(sortedScores);
-  const progressBestAccuracy = getProgressBestAccuracy(input.progress);
-  const bestAccuracy =
-    progressBestAccuracy > 0
-      ? progressBestAccuracy
-      : computeBestAccuracyFromScores(sortedScores);
+  const { averageAccuracy, bestAccuracy } = resolveProfileSnapshotAccuracies(
+    input.progress,
+    sortedScores
+  );
 
   const rawMomentum = getRecommendedSessionMomentum(input.progress);
   const momentum = localizeRecommendedSessionMomentum(
@@ -204,8 +244,8 @@ export const buildKangurLearnerProfileSnapshot = (
     lessonsCompleted: input.progress.lessonsCompleted,
     perfectGames: input.progress.perfectGames,
     totalBadges: badges.length,
-    unlockedBadges: badges.filter((badge) => badge.isUnlocked).length,
-    unlockedBadgeIds: badges.filter((badge) => badge.isUnlocked).map((badge) => badge.id),
+    unlockedBadges: unlockedBadgeSnapshot.unlockedBadges,
+    unlockedBadgeIds: unlockedBadgeSnapshot.unlockedBadgeIds,
     level,
     nextLevel,
     levelProgressPercent: nextLevel ? toPercent((xpIntoLevel / xpNeeded) * 100) : 100,

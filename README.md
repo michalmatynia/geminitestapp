@@ -31,6 +31,7 @@ packages for contracts, domain logic, transport, and platform ports.
 - `npm run lint`: run the main ESLint lane.
 - `npm run test:unit`: run the main unit Vitest project.
 - `npm run docs:structure:check`: validate docs structure, hubs, and canonical metadata.
+- `npm run repair:kangur:content`: backfill built-in Kangur lessons/content into MongoDB and verify the result strictly.
 
 ## Documentation
 

@@ -27,6 +27,48 @@ export type ResultScreenProps = {
   onHome: () => void;
 };
 
+const resolveResultPercent = (score: number, total: number): number =>
+  total > 0 ? Math.round((score / total) * 100) : 0;
+
+const resolveResultStars = (percent: number): number => {
+  if (percent >= 90) {
+    return 3;
+  }
+  if (percent >= 60) {
+    return 2;
+  }
+  return 1;
+};
+
+const resolveResultOperationLabel = (
+  operation: KangurOperation | null,
+  translations: ReturnType<typeof useTranslations<'KangurMiniGames'>>
+): string =>
+  operation
+    ? translations(`resultScreen.operations.${operation}`)
+    : translations('resultScreen.operations.mixed');
+
+const resolveResultSummaryMessage = (
+  percent: number,
+  translations: ReturnType<typeof useTranslations<'KangurMiniGames'>>
+): string => {
+  if (percent === 100) {
+    return translations('resultScreen.summary.perfect');
+  }
+  if (percent >= 80) {
+    return translations('resultScreen.summary.excellent');
+  }
+  if (percent >= 60) {
+    return translations('resultScreen.summary.good');
+  }
+  return translations('resultScreen.summary.retry');
+};
+
+const resolveResultActionClassName = (isCoarsePointer: boolean): string =>
+  isCoarsePointer
+    ? 'w-full min-h-11 px-4 touch-manipulation select-none active:scale-[0.97] sm:w-auto'
+    : 'w-full sm:w-auto';
+
 export default function ResultScreen({
   score,
   total,
@@ -38,26 +80,17 @@ export default function ResultScreen({
 }: ResultScreenProps): React.JSX.Element {
   const translations = useTranslations('KangurMiniGames');
   const isCoarsePointer = useKangurCoarsePointer();
-  const percent = total > 0 ? Math.round((score / total) * 100) : 0;
-  const stars = percent >= 90 ? 3 : percent >= 60 ? 2 : 1;
-  const operationLabel = operation
-    ? translations(`resultScreen.operations.${operation}`)
-    : translations('resultScreen.operations.mixed');
+  const percent = resolveResultPercent(score, total);
+  const stars = resolveResultStars(percent);
+  const operationLabel = resolveResultOperationLabel(operation, translations);
+  const actionClassName = resolveResultActionClassName(isCoarsePointer);
   const handleRestartGame = (): void => {
     onRestart();
   };
   const handleGoHome = (): void => {
     onHome();
   };
-
-  const message =
-    percent === 100
-      ? translations('resultScreen.summary.perfect')
-      : percent >= 80
-        ? translations('resultScreen.summary.excellent')
-        : percent >= 60
-          ? translations('resultScreen.summary.good')
-          : translations('resultScreen.summary.retry');
+  const message = resolveResultSummaryMessage(percent, translations);
 
   return (
     <motion.div
@@ -136,11 +169,7 @@ export default function ResultScreen({
 
       <KangurPanelRow className='w-full sm:justify-center'>
         <KangurButton
-          className={
-            isCoarsePointer
-              ? 'w-full min-h-11 px-4 touch-manipulation select-none active:scale-[0.97] sm:w-auto'
-              : 'w-full sm:w-auto'
-          }
+          className={actionClassName}
           onClick={handleRestartGame}
           size='lg'
           variant='primary'
@@ -148,11 +177,7 @@ export default function ResultScreen({
           <RotateCcw aria-hidden='true' className='w-5 h-5' /> {translations('resultScreen.actions.restart')}
         </KangurButton>
         <KangurButton
-          className={
-            isCoarsePointer
-              ? 'w-full min-h-11 px-4 touch-manipulation select-none active:scale-[0.97] sm:w-auto'
-              : 'w-full sm:w-auto'
-          }
+          className={actionClassName}
           onClick={handleGoHome}
           size='lg'
           variant='surface'

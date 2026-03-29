@@ -80,7 +80,6 @@ const buildPostBase = () => ({
   generatedSummary: null,
   visualSummary: null,
   visualHighlights: [],
-  visualDocUpdates: [],
   visualAnalysisStatus: null,
   visualAnalysisUpdatedAt: null,
   visualAnalysisJobId: null,
@@ -174,6 +173,12 @@ describe('SocialPostVisuals', () => {
       handleAddImages: vi.fn(),
       hasSavedVisualAnalysis: true,
       isSavedVisualAnalysisStale: false,
+      currentVisualAnalysisJob: {
+        id: 'job-analysis-live-7',
+        status: 'active',
+        progress: { message: 'Refreshing the image analysis.' },
+        failedReason: null,
+      },
     });
 
     render(<SocialPostVisuals showImagesPanel={false} />);
@@ -182,11 +187,12 @@ describe('SocialPostVisuals', () => {
     expect(
       screen.getByText('The hero now highlights the classroom card and a stronger CTA.')
     ).toBeInTheDocument();
+    expect(screen.getAllByText('Image analysis: Running')).toHaveLength(2);
     expect(screen.getByText('- Classroom card is larger')).toBeInTheDocument();
     expect(screen.getByText('- CTA is more prominent')).toBeInTheDocument();
-    expect(screen.getByText('Status: Completed')).toBeInTheDocument();
+    expect(screen.getByText('Status: Running')).toBeInTheDocument();
     expect(screen.getByText('Model: vision-1')).toBeInTheDocument();
-    expect(screen.getByText('Queue job: job-analysis-7')).toBeInTheDocument();
+    expect(screen.getByText('Queue job: job-analysis-live-7')).toBeInTheDocument();
   });
 
   it('shows saved run metadata even when no summary or highlights are present yet', () => {
@@ -213,6 +219,7 @@ describe('SocialPostVisuals', () => {
     render(<SocialPostVisuals showImagesPanel={false} />);
 
     expect(screen.getByText('Image analysis result')).toBeInTheDocument();
+    expect(screen.getByText('Image analysis: Completed')).toBeInTheDocument();
     expect(
       screen.getByText(
         'No saved analysis summary yet. The queue metadata above reflects the latest image-analysis run for this post.'
@@ -247,6 +254,7 @@ describe('SocialPostVisuals', () => {
     render(<SocialPostVisuals showImagesPanel={false} />);
 
     expect(screen.getByText('Image analysis result')).toBeInTheDocument();
+    expect(screen.getByText('Image analysis: Queued')).toBeInTheDocument();
     expect(screen.getByText('Status: Queued')).toBeInTheDocument();
     expect(screen.getByText('Model: vision-queued')).toBeInTheDocument();
     expect(screen.getByText('Queue job: job-analysis-queued-1')).toBeInTheDocument();
@@ -255,6 +263,53 @@ describe('SocialPostVisuals', () => {
         'No saved analysis summary yet. The queue metadata above reflects the latest image-analysis run for this post.'
       )
     ).toBeInTheDocument();
+  });
+
+  it('shows live runtime job pills alongside the saved image-analysis metadata', () => {
+    useSocialPostContextMock.mockReturnValue({
+      activePost: buildPost({
+        visualAnalysisStatus: 'queued',
+        visualAnalysisJobId: 'job-analysis-queued-1',
+        visualAnalysisModelId: 'vision-queued',
+      }),
+      recentAddons: [],
+      addonsQuery: { isLoading: false },
+      imageAddonIds: [],
+      handleSelectAddon: vi.fn(),
+      handleRemoveAddon: vi.fn(),
+      imageAssets: [],
+      handleRemoveImage: vi.fn(),
+      setShowMediaLibrary: vi.fn(),
+      showMediaLibrary: false,
+      handleAddImages: vi.fn(),
+      hasSavedVisualAnalysis: false,
+      isSavedVisualAnalysisStale: false,
+      currentVisualAnalysisJob: {
+        id: 'job-analysis-live-2',
+        status: 'active',
+        progress: { message: 'Analyzing the refreshed screenshots.' },
+        failedReason: null,
+      },
+      currentGenerationJob: {
+        id: 'job-generate-live-2',
+        status: 'waiting',
+        progress: { message: 'Waiting for generation worker capacity.' },
+        failedReason: null,
+      },
+      currentPipelineJob: {
+        id: 'job-pipeline-live-2',
+        status: 'completed',
+        progress: { message: 'Pipeline finished for this draft.' },
+        failedReason: null,
+      },
+    });
+
+    render(<SocialPostVisuals showImagesPanel={false} />);
+
+    expect(screen.getByText('Runtime jobs:')).toBeInTheDocument();
+    expect(screen.getAllByText('Image analysis: Running')).toHaveLength(2);
+    expect(screen.getByText('Generate post: Queued')).toBeInTheDocument();
+    expect(screen.getByText('Full pipeline: Completed')).toBeInTheDocument();
   });
 
   it('warns when the saved image analysis is outdated for the current draft scope', () => {

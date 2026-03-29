@@ -3,11 +3,13 @@
 import { Badge, Button, Input, Textarea } from '@/features/kangur/shared/ui';
 import { KangurAdminCard } from '../../components/KangurAdminCard';
 import type { KangurSocialPost } from '@/shared/contracts/kangur-social-posts';
+import { SocialJobStatusPill } from '../SocialJobStatusPill';
 
 export function SocialSettingsDocumentationTab({
   activePost,
   canGenerateSocialDraft,
   contextLoading,
+  currentGenerationJob,
   docReferenceInput,
   docsUsed,
   generationNotes,
@@ -23,6 +25,14 @@ export function SocialSettingsDocumentationTab({
   activePost: KangurSocialPost | null;
   canGenerateSocialDraft: boolean;
   contextLoading: boolean;
+  currentGenerationJob: {
+    id: string;
+    status: string;
+    progress: {
+      message: string | null;
+    } | null;
+    failedReason: string | null;
+  } | null;
   docReferenceInput: string;
   docsUsed: string[];
   generationNotes: string;
@@ -35,6 +45,14 @@ export function SocialSettingsDocumentationTab({
   socialDraftBlockedReason: string | null;
   socialVisionWarning: string | null;
 }) {
+  const currentGenerationJobTitle = [
+    currentGenerationJob?.progress?.message ?? null,
+    currentGenerationJob?.failedReason ?? null,
+    currentGenerationJob?.id ? `Queue job: ${currentGenerationJob.id}` : null,
+  ]
+    .filter((value): value is string => Boolean(value))
+    .join(' · ');
+
   return (
     <div className='space-y-4'>
       <KangurAdminCard>
@@ -77,6 +95,14 @@ export function SocialSettingsDocumentationTab({
             >
               Generate PL/EN draft
             </Button>
+            {currentGenerationJob?.status ? (
+              <SocialJobStatusPill
+                status={currentGenerationJob.status}
+                label='Generate draft'
+                title={currentGenerationJobTitle || undefined}
+                className='text-[10px]'
+              />
+            ) : null}
             <div className='text-xs text-muted-foreground'>
               {activePost
                 ? `Applies to ${selectedPostTitle}.`

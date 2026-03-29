@@ -8,6 +8,11 @@ import type { ChatCompletionContentPart } from 'openai/resources/chat/completion
 
 import { getDiskPathFromPublicPath, isHttpFilepath } from '@/features/files/server';
 import type { KangurSocialImageAddon } from '@/shared/contracts/kangur-social-image-addons';
+import {
+  MAX_KANGUR_SOCIAL_VISUAL_SUMMARY_CHARS,
+  sanitizeKangurSocialVisualHighlights,
+  sanitizeKangurSocialVisualSummary,
+} from '@/shared/lib/kangur-social-visual-analysis';
 import { findKangurSocialImageAddonsByIds } from './social-image-addons-repository';
 import {
   type KangurSocialVisualAnalysis,
@@ -57,22 +62,6 @@ const buildBeforeAfterPairs = async (
 const OPENAI_MAX_IMAGES = 10;
 const OPENAI_MAX_IMAGE_BASE64_BYTES = 4 * 1024 * 1024;
 const OPENAI_MAX_TOTAL_IMAGE_BASE64_BYTES = 15 * 1024 * 1024;
-const MAX_SUMMARY_CHARS = 1200;
-const NON_VISUAL_HIGHLIGHT_PATTERN =
-  /\b(linkedin|marketing|publish(?:ing)?|documentation|doc(?:umentation)? update|release note|blog post|feedback|future update|support email|call to action)\b/i;
-const NON_VISUAL_SECTION_BREAK_PATTERNS = [
-  /\bpotential documentation(?:\/communication)? narrative\b/i,
-  /\bpotential communication narrative\b/i,
-  /\bhere(?:'s| is) a draft\b/i,
-  /\bfor release notes\b/i,
-  /\bfor (?:internal )?documentation\b/i,
-  /\bwhat'?s new\b/i,
-  /\bhow to experience the changes\b/i,
-  /\bfeedback\b/i,
-  /\bkey takeaways for future updates\b/i,
-  /\blet me know if you'?d like me to\b/i,
-  /^[#*-]\s+/m,
-] as const;
 
 const truncateText = (value: string, maxChars: number): string =>
   value.length <= maxChars ? value : value.slice(0, maxChars).trimEnd();
@@ -189,45 +178,9 @@ const buildImageParts = async (
 
 const parseHighlights = (value: unknown): string[] => {
   if (!Array.isArray(value)) return [];
-  return value
-    .map((item) => (typeof item === 'string' ? item.trim() : ''))
-    .filter((item) => item.length > 0)
-    .filter((item) => !NON_VISUAL_HIGHLIGHT_PATTERN.test(item))
-    .slice(0, 24);
-};
-
-const sanitizeVisualSummary = (value: string): string => {
-  let sanitized = value
-    .replace(/\r\n?/g, '\n')
-    .replace(/\*\*/g, '')
-    .trim();
-
-  for (const pattern of NON_VISUAL_SECTION_BREAK_PATTERNS) {
-    const match = pattern.exec(sanitized);
-    if (typeof match?.index === 'number' && match.index >= 0) {
-      sanitized = sanitized.slice(0, match.index).trim();
-      break;
-    }
-  }
-
-  const firstParagraph = sanitized
-    .split(/\n\s*\n/)
-    .map((paragraph) => paragraph.trim())
-    .find((paragraph) => paragraph.length > 0);
-
-  sanitized = (firstParagraph ?? sanitized)
-    .replace(/\s+/g, ' ')
-    .replace(
-      /^(?:okay[,! ]*|sure[,! ]*|i(?:'ve| have) reviewed the provided (?:text and )?images\.?\s*)+/i,
-      ''
-    )
-    .replace(
-      /^here(?:'s| is) (?:a )?(?:summary|concise summary|visual summary)(?: of (?:the )?(?:key )?(?:information|changes))?[:.\s-]*/i,
-      ''
-    )
-    .trim();
-
-  return truncateText(sanitized, MAX_SUMMARY_CHARS);
+  return sanitizeKangurSocialVisualHighlights(
+    value.map((item) => (typeof item === 'string' ? item : '')).filter(Boolean)
+  );
 };
 
 const buildSystemPrompt = (basePrompt: string, hasBeforeAfter: boolean): string => {
@@ -341,18 +294,18 @@ export async function analyzeKangurSocialVisuals(
         // Keep only the usable visual description when models ignore JSON mode.
         const raw = res.text.trim();
         if (raw.length > 0) {
-          parsed = { summary: sanitizeVisualSummary(raw) };
+          parsed = { summary: sanitizeKangurSocialVisualSummary(raw) };
         }
       }
     }
 
     const summaryText =
       typeof parsed.summary === 'string' && parsed.summary.trim().length > 0
-        ? sanitizeVisualSummary(parsed.summary)
-        : sanitizeVisualSummary(res.text);
+        ? sanitizeKangurSocialVisualSummary(parsed.summary)
+        : sanitizeKangurSocialVisualSummary(res.text);
 
     const analysis: KangurSocialVisualAnalysis = {
-      summary: summaryText,
+      summary: truncateText(summaryText, MAX_KANGUR_SOCIAL_VISUAL_SUMMARY_CHARS),
       highlights: parseHighlights(parsed.highlights),
     };
 

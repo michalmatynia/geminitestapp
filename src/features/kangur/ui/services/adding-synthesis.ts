@@ -345,43 +345,8 @@ const buildChoices = (
   stageId: AddingSynthesisStageId,
   random: RandomSource
 ): [number, number, number, number] => {
-  const offsets =
-    stageId === 'double_digits'
-      ? [-10, -1, 1, 10, -11, 11, -9, 9, -20, 20]
-      : stageId === 'bridge_ten'
-        ? [-3, -2, -1, 1, 2, 3, -10, 10]
-        : [-4, -3, -2, -1, 1, 2, 3, 4];
-
-  const candidates = shuffle(offsets, random);
-  const values = new Set<number>([answer]);
-
-  for (const offset of candidates) {
-    const candidate = answer + offset;
-    if (candidate > 0) {
-      values.add(candidate);
-    }
-    if (values.size >= 4) {
-      break;
-    }
-  }
-
-  let fallbackDelta = stageId === 'double_digits' ? 5 : 1;
-  while (values.size < 4) {
-    const nextCandidate = answer + fallbackDelta;
-    if (nextCandidate > 0) {
-      values.add(nextCandidate);
-    }
-
-    if (values.size < 4) {
-      const mirroredCandidate = answer - fallbackDelta;
-      if (mirroredCandidate > 0) {
-        values.add(mirroredCandidate);
-      }
-    }
-
-    fallbackDelta += stageId === 'double_digits' ? 5 : 1;
-  }
-
+  const values = seedChoiceValues(answer, stageId, random);
+  fillFallbackChoiceValues(values, answer, stageId);
   const shuffledChoices = shuffle(Array.from(values).slice(0, 4), random);
   return [
     shuffledChoices[0] ?? answer,
@@ -389,6 +354,62 @@ const buildChoices = (
     shuffledChoices[2] ?? answer + 2,
     shuffledChoices[3] ?? answer + 3,
   ];
+};
+
+const resolveChoiceOffsets = (stageId: AddingSynthesisStageId): readonly number[] => {
+  switch (stageId) {
+    case 'double_digits':
+      return [-10, -1, 1, 10, -11, 11, -9, 9, -20, 20];
+    case 'bridge_ten':
+      return [-3, -2, -1, 1, 2, 3, -10, 10];
+    case 'warmup':
+    default:
+      return [-4, -3, -2, -1, 1, 2, 3, 4];
+  }
+};
+
+const resolveChoiceFallbackStep = (stageId: AddingSynthesisStageId): number =>
+  stageId === 'double_digits' ? 5 : 1;
+
+const addPositiveChoiceCandidate = (values: Set<number>, candidate: number): void => {
+  if (candidate > 0) {
+    values.add(candidate);
+  }
+};
+
+const seedChoiceValues = (
+  answer: number,
+  stageId: AddingSynthesisStageId,
+  random: RandomSource
+): Set<number> => {
+  const values = new Set<number>([answer]);
+  const candidates = shuffle(resolveChoiceOffsets(stageId), random);
+
+  for (const offset of candidates) {
+    addPositiveChoiceCandidate(values, answer + offset);
+    if (values.size >= 4) {
+      break;
+    }
+  }
+
+  return values;
+};
+
+const fillFallbackChoiceValues = (
+  values: Set<number>,
+  answer: number,
+  stageId: AddingSynthesisStageId
+): void => {
+  const step = resolveChoiceFallbackStep(stageId);
+  let fallbackDelta = step;
+
+  while (values.size < 4) {
+    addPositiveChoiceCandidate(values, answer + fallbackDelta);
+    if (values.size < 4) {
+      addPositiveChoiceCandidate(values, answer - fallbackDelta);
+    }
+    fallbackDelta += step;
+  }
 };
 
 const createWarmupNote = (index: number, random: RandomSource): AddingSynthesisNote => {

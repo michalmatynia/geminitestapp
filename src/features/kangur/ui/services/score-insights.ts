@@ -65,6 +65,108 @@ const sortScoresByCreatedDateDesc = (left: KangurScoreRecord, right: KangurScore
   (parseDateOrNull(right.created_date)?.getTime() ?? 0) -
   (parseDateOrNull(left.created_date)?.getTime() ?? 0);
 
+const createEmptyKangurScoreInsights = (): KangurScoreInsights => ({
+  recentGames: 0,
+  recentAverageAccuracy: 0,
+  recentPerfectGames: 0,
+  recentXpEarned: 0,
+  averageXpPerRecentGame: 0,
+  lastPlayedAt: null,
+  trend: {
+    direction: 'insufficient_data',
+    deltaAccuracy: null,
+    recentAverageAccuracy: 0,
+    previousAverageAccuracy: null,
+  },
+  strongestOperation: null,
+  weakestOperation: null,
+});
+
+const resolveScoreInsightWindows = (
+  now: Date
+): { recentWindowStart: Date; previousWindowStart: Date } => {
+  const today = startOfLocalDay(now);
+  const recentWindowStart = new Date(
+    today.getFullYear(),
+    today.getMonth(),
+    today.getDate() - (SCORE_INSIGHT_WINDOW_DAYS - 1)
+  );
+  const previousWindowStart = new Date(
+    recentWindowStart.getFullYear(),
+    recentWindowStart.getMonth(),
+    recentWindowStart.getDate() - SCORE_INSIGHT_WINDOW_DAYS
+  );
+
+  return { recentWindowStart, previousWindowStart };
+};
+
+const isScoreWithinDateWindow = (
+  score: KangurScoreRecord,
+  startMs: number,
+  endMs: number = Number.POSITIVE_INFINITY
+): boolean => {
+  const parsed = parseDateOrNull(score.created_date);
+  if (parsed === null) {
+    return false;
+  }
+
+  const timestamp = parsed.getTime();
+  return timestamp >= startMs && timestamp < endMs;
+};
+
+const filterScoresWithinDateWindow = (
+  scores: KangurScoreRecord[],
+  startMs: number,
+  endMs?: number
+): KangurScoreRecord[] =>
+  scores.filter((score) => isScoreWithinDateWindow(score, startMs, endMs));
+
+const resolveScoreTrendDirection = (
+  deltaAccuracy: number | null
+): KangurScoreTrendDirection => {
+  if (deltaAccuracy === null) {
+    return 'insufficient_data';
+  }
+  if (deltaAccuracy >= 5) {
+    return 'up';
+  }
+  if (deltaAccuracy <= -5) {
+    return 'down';
+  }
+  return 'flat';
+};
+
+const buildScoreTrend = ({
+  previousAverageAccuracy,
+  recentAverageAccuracy,
+}: {
+  previousAverageAccuracy: number | null;
+  recentAverageAccuracy: number;
+}): KangurScoreInsights['trend'] => {
+  const deltaAccuracy =
+    previousAverageAccuracy === null ? null : recentAverageAccuracy - previousAverageAccuracy;
+  return {
+    direction: resolveScoreTrendDirection(deltaAccuracy),
+    deltaAccuracy,
+    recentAverageAccuracy,
+    previousAverageAccuracy,
+  };
+};
+
+const countPerfectScores = (scores: KangurScoreRecord[]): number =>
+  scores.filter((score) => score.correct_answers === score.total_questions).length;
+
+const sumScoreXpEarned = (scores: KangurScoreRecord[]): number =>
+  scores.reduce((sum, score) => sum + normalizeXpEarned(score.xp_earned), 0);
+
+const resolveAverageXpPerGame = (xpEarned: number, totalGames: number): number =>
+  totalGames > 0 ? Math.round(xpEarned / totalGames) : 0;
+
+const resolveOperationInsightScores = (
+  recentScores: KangurScoreRecord[],
+  normalizedScores: KangurScoreRecord[]
+): KangurScoreRecord[] => (recentScores.length > 0 ? recentScores : normalizedScores);
+
 export const resolveKangurScoreOperationInfo = (
   operation: string,
   localizer?: KangurScoreInsightsLocalizer
@@ -163,81 +265,36 @@ export const buildKangurScoreInsights = (
 ): KangurScoreInsights => {
   const normalizedScores = [...scores].sort(sortScoresByCreatedDateDesc);
   if (normalizedScores.length === 0) {
-    return {
-      recentGames: 0,
-      recentAverageAccuracy: 0,
-      recentPerfectGames: 0,
-      recentXpEarned: 0,
-      averageXpPerRecentGame: 0,
-      lastPlayedAt: null,
-      trend: {
-        direction: 'insufficient_data',
-        deltaAccuracy: null,
-        recentAverageAccuracy: 0,
-        previousAverageAccuracy: null,
-      },
-      strongestOperation: null,
-      weakestOperation: null,
-    };
+    return createEmptyKangurScoreInsights();
   }
 
-  const today = startOfLocalDay(now);
-  const recentWindowStart = new Date(
-    today.getFullYear(),
-    today.getMonth(),
-    today.getDate() - (SCORE_INSIGHT_WINDOW_DAYS - 1)
+  const { recentWindowStart, previousWindowStart } = resolveScoreInsightWindows(now);
+  const recentScores = filterScoresWithinDateWindow(normalizedScores, recentWindowStart.getTime());
+  const previousScores = filterScoresWithinDateWindow(
+    normalizedScores,
+    previousWindowStart.getTime(),
+    recentWindowStart.getTime()
   );
-  const previousWindowStart = new Date(
-    recentWindowStart.getFullYear(),
-    recentWindowStart.getMonth(),
-    recentWindowStart.getDate() - SCORE_INSIGHT_WINDOW_DAYS
-  );
-
-  const recentScores = normalizedScores.filter((score) => {
-    const parsed = parseDateOrNull(score.created_date);
-    return parsed !== null && parsed.getTime() >= recentWindowStart.getTime();
-  });
-  const previousScores = normalizedScores.filter((score) => {
-    const parsed = parseDateOrNull(score.created_date);
-    if (parsed === null) {
-      return false;
-    }
-    const timestamp = parsed.getTime();
-    return timestamp >= previousWindowStart.getTime() && timestamp < recentWindowStart.getTime();
-  });
 
   const recentAverageAccuracy = averageAccuracyForScores(recentScores);
   const previousAverageAccuracy =
     previousScores.length > 0 ? averageAccuracyForScores(previousScores) : null;
-  const deltaAccuracy =
-    previousAverageAccuracy === null ? null : recentAverageAccuracy - previousAverageAccuracy;
-  const trendDirection: KangurScoreTrendDirection =
-    deltaAccuracy === null
-      ? 'insufficient_data'
-      : deltaAccuracy >= 5
-        ? 'up'
-        : deltaAccuracy <= -5
-          ? 'down'
-          : 'flat';
-  const insightScores = recentScores.length > 0 ? recentScores : normalizedScores;
+  const trend = buildScoreTrend({
+    previousAverageAccuracy,
+    recentAverageAccuracy,
+  });
+  const insightScores = resolveOperationInsightScores(recentScores, normalizedScores);
   const operationInsights = buildOperationInsights(insightScores, localizer);
-  const recentXpEarned = recentScores.reduce((sum, score) => sum + normalizeXpEarned(score.xp_earned), 0);
+  const recentXpEarned = sumScoreXpEarned(recentScores);
 
   return {
     recentGames: recentScores.length,
     recentAverageAccuracy,
-    recentPerfectGames: recentScores.filter(
-      (score) => score.correct_answers === score.total_questions
-    ).length,
+    recentPerfectGames: countPerfectScores(recentScores),
     recentXpEarned,
-    averageXpPerRecentGame: recentScores.length > 0 ? Math.round(recentXpEarned / recentScores.length) : 0,
+    averageXpPerRecentGame: resolveAverageXpPerGame(recentXpEarned, recentScores.length),
     lastPlayedAt: normalizedScores[0]?.created_date ?? null,
-    trend: {
-      direction: trendDirection,
-      deltaAccuracy,
-      recentAverageAccuracy,
-      previousAverageAccuracy,
-    },
+    trend,
     strongestOperation: operationInsights.strongestOperation,
     weakestOperation: operationInsights.weakestOperation,
   };

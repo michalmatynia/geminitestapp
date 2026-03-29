@@ -46,9 +46,10 @@ export const normalizePlaywrightConfig = (
   config: PlaywrightConfig | undefined | null
 ): PlaywrightConfig => {
   const defaults = createDefaultPlaywrightConfig();
+  const defaultCapture = defaults.capture ?? DEFAULT_PLAYWRIGHT_CAPTURE_CONFIG;
   return {
     ...defaults,
     ...(config ?? {}),
-    capture: mergePlaywrightCaptureConfig(config?.capture, defaults.capture),
+    capture: mergePlaywrightCaptureConfig(config?.capture, defaultCapture),
   };
 };

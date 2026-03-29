@@ -413,6 +413,9 @@ const buildHookState = () => ({
   contextSummary: null,
   contextLoading: false,
   handleLoadContext: vi.fn(),
+  currentVisualAnalysisJob: null,
+  currentGenerationJob: null,
+  currentPipelineJob: null,
 });
 
 describe('AdminKangurSocialPage', () => {
@@ -508,5 +511,36 @@ describe('AdminKangurSocialPage', () => {
       'data-title',
       'StudiQ Weekly Update'
     );
+  });
+
+  it('shows header-level runtime job pills for the active Social draft', () => {
+    useAdminKangurSocialPageMock.mockReturnValue({
+      ...buildHookState(),
+      currentVisualAnalysisJob: {
+        id: 'job-analysis-3',
+        status: 'active',
+        progress: { message: 'Analyzing the selected visuals.' },
+        failedReason: null,
+      },
+      currentGenerationJob: {
+        id: 'job-generate-3',
+        status: 'waiting',
+        progress: { message: 'Waiting for generation worker capacity.' },
+        failedReason: null,
+      },
+      currentPipelineJob: {
+        id: 'job-pipeline-3',
+        status: 'completed',
+        progress: { message: 'Pipeline run finished.' },
+        failedReason: null,
+      },
+    });
+
+    render(<AdminKangurSocialPage />);
+
+    expect(screen.getByText('Runtime jobs:')).toBeInTheDocument();
+    expect(screen.getByText('Image analysis: Running')).toBeInTheDocument();
+    expect(screen.getByText('Generate post: Queued')).toBeInTheDocument();
+    expect(screen.getByText('Full pipeline: Completed')).toBeInTheDocument();
   });
 });

@@ -87,20 +87,23 @@ describe('kangur page config', () => {
     await vi.dynamicImportSettled();
 
     expect(competitionPageImportMock).toHaveBeenCalledTimes(1);
+  });
+
+  it('preloads Game page module on demand via dynamic import', async () => {
     preloadKangurPage('Game');
     await vi.dynamicImportSettled();
 
-    expect(gamePageImportMock).not.toHaveBeenCalled();
-    expect(lessonsPageImportMock).not.toHaveBeenCalled();
+    expect(gamePageImportMock).toHaveBeenCalledTimes(1);
+  });
 
+  it('preloads Lessons page module on demand via dynamic import', async () => {
     preloadKangurPage('Lessons');
     await vi.dynamicImportSettled();
 
-    expect(gamePageImportMock).not.toHaveBeenCalled();
-    expect(lessonsPageImportMock).not.toHaveBeenCalled();
+    expect(lessonsPageImportMock).toHaveBeenCalledTimes(1);
   });
 
-  it('uses shared lazy route fallbacks for lazy Kangur pages while keeping Game and Lessons eager', () => {
+  it('lazy-loads all Kangur pages including Game and Lessons via dynamic()', () => {
     expect(Object.keys(kangurPages)).toEqual([
       'Competition',
       'Game',
@@ -112,10 +115,10 @@ describe('kangur page config', () => {
       'SocialUpdates',
       'Tests',
     ]);
-    expect(dynamicCalls).toHaveLength(7);
+    expect(dynamicCalls).toHaveLength(9);
 
     const competitionLoadingFallback = dynamicCalls[0]?.loading;
-    const socialUpdatesLoadingFallback = dynamicCalls[5]?.loading;
+    const socialUpdatesLoadingFallback = dynamicCalls[7]?.loading;
 
     expect(competitionLoadingFallback).toBeTypeOf('function');
     expect(socialUpdatesLoadingFallback).toBeTypeOf('function');
@@ -136,5 +139,25 @@ describe('kangur page config', () => {
     expect(socialUpdatesLoadingFallback).toBe(competitionLoadingFallback);
     expect(kangurPages['Game']).toBeTypeOf('function');
     expect(kangurPages['Lessons']).toBeTypeOf('function');
+  });
+
+  it('uses a loading fallback without top navigation skeleton for the Game page', () => {
+    // Game is at index 1 in dynamicCalls (after Competition)
+    const gameLoadingFallback = dynamicCalls[1]?.loading;
+
+    expect(gameLoadingFallback).toBeTypeOf('function');
+
+    const GameLoadingFallback = gameLoadingFallback;
+    if (!GameLoadingFallback) {
+      throw new Error('Expected the Game loading fallback component.');
+    }
+
+    cleanup();
+    render(<GameLoadingFallback />);
+
+    expect(screen.getByTestId('kangur-route-loading-fallback-probe')).toBeInTheDocument();
+    expect(routeLoadingFallbackMock).toHaveBeenCalledWith({
+      includeTopNavigationSkeleton: false,
+    });
   });
 });

@@ -2,9 +2,10 @@ import { parseAndDeserializeSemanticCanvas } from '@/shared/lib/ai-paths/core/se
 
 import { verifyPortableNodeCodeObjectManifest } from './node-code-objects-v2-manifest';
 import {
-  AI_PATH_PORTABLE_PACKAGE_SPEC_VERSION,
+  type AiPathPortablePackage,
   type AiPathPortablePackageEnvelope,
   type PortablePathInputSource,
+  aiPathPortablePackageEnvelopeSchema,
   aiPathPortablePackageEnvelopeVersionedSchema,
 } from './portable-engine-contract';
 import { verifyPortablePathPackageEnvelopeSignatureAsync } from './portable-engine-envelope-verification-async';
@@ -126,13 +127,29 @@ const resolveVerifiedEnvelopePayload = (
     return { ok: false, error: envelopeVerification.error };
   }
 
+  const signature = envelopeParsed.data.signature;
+  const canonicalEnvelope =
+    signature && (signature.algorithm === 'hmac_sha256' || signature.algorithm === 'stable_hash_v1')
+      ? aiPathPortablePackageEnvelopeSchema.parse({
+          ...envelopeParsed.data,
+          specVersion: 'ai-paths.portable-engine.v1',
+          kind: 'path_package_envelope',
+          package: {
+            ...envelopeParsed.data.package,
+            specVersion: 'ai-paths.portable-engine.v1',
+            kind: 'path_package',
+          },
+          signature,
+        })
+      : null;
+
   return {
     ok: true,
     value: {
-      envelopePayload: envelopeParsed.data.package,
+      envelopePayload: canonicalEnvelope?.package ?? envelopeParsed.data.package,
       envelopeWarnings: envelopeVerification.warnings,
       resolvedSourceFromEnvelope: true,
-      envelopeData: envelopeParsed.data,
+      envelopeData: canonicalEnvelope,
     },
   };
 };
@@ -160,18 +177,23 @@ const buildPortableEnvelopeForResult = (input: {
   ) {
     return null;
   }
-  return {
-    specVersion: AI_PATH_PORTABLE_PACKAGE_SPEC_VERSION,
+  const portablePackage: AiPathPortablePackage = {
+    ...input.portablePackage,
+    specVersion: 'ai-paths.portable-engine.v1',
+    kind: 'path_package',
+  };
+  return aiPathPortablePackageEnvelopeSchema.parse({
+    specVersion: 'ai-paths.portable-engine.v1',
     kind: 'path_package_envelope',
     signedAt: input.envelopeData.signedAt,
-    package: input.portablePackage,
+    package: portablePackage,
     signature: {
       algorithm: signature.algorithm,
       value: signature.value,
       ...(signature.keyId ? { keyId: signature.keyId } : {}),
     },
     ...(input.envelopeData.metadata ? { metadata: input.envelopeData.metadata } : {}),
-  };
+  });
 };
 
 const verifyPortablePackageFingerprintSyncIfNeeded = (input: {

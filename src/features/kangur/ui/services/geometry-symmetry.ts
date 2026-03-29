@@ -188,44 +188,69 @@ const sanitizePoints = (points: Point2d[]): Point2d[] => {
   return sanitized;
 };
 
+type SampledPathSegments = {
+  lengths: number[];
+  total: number;
+};
+
+const buildSampledPathSegments = (points: Point2d[]): SampledPathSegments => {
+  const lengths: number[] = [];
+  let total = 0;
+
+  for (let i = 1; i < points.length; i += 1) {
+    const start = points[i - 1];
+    const end = points[i];
+    if (!start || !end) {
+      continue;
+    }
+
+    const length = distance(start, end);
+    lengths.push(length);
+    total += length;
+  }
+
+  return { lengths, total };
+};
+
+const resolvePointAtDistance = (
+  points: Point2d[],
+  segmentLengths: number[],
+  targetDist: number
+): Point2d | null => {
+  let traversed = 0;
+
+  for (let i = 1; i < points.length; i += 1) {
+    const segmentLength = segmentLengths[i - 1] ?? 0;
+    const start = points[i - 1];
+    const end = points[i];
+    if (!start || !end) {
+      continue;
+    }
+
+    if (traversed + segmentLength >= targetDist) {
+      const local = segmentLength > 0 ? (targetDist - traversed) / segmentLength : 0;
+      return {
+        x: start.x + (end.x - start.x) * local,
+        y: start.y + (end.y - start.y) * local,
+      };
+    }
+
+    traversed += segmentLength;
+  }
+
+  return null;
+};
+
 const samplePath = (points: Point2d[], sampleCount = 120): Point2d[] => {
   if (points.length <= 2) return points;
 
-  const segments: number[] = [];
-  let total = 0;
-  for (let i = 1; i < points.length; i += 1) {
-    const a = points[i - 1];
-    const b = points[i];
-    if (!a || !b) continue;
-    const len = distance(a, b);
-    segments.push(len);
-    total += len;
-  }
+  const { lengths, total } = buildSampledPathSegments(points);
   if (total < 1) return points;
 
   const sampled: Point2d[] = [points[0]!];
   for (let step = 1; step < sampleCount - 1; step += 1) {
     const targetDist = (total * step) / (sampleCount - 1);
-    let traversed = 0;
-    let found: Point2d | null = null;
-
-    for (let i = 1; i < points.length; i += 1) {
-      const segLen = segments[i - 1] ?? 0;
-      const start = points[i - 1];
-      const end = points[i];
-      if (!start || !end) continue;
-
-      if (traversed + segLen >= targetDist) {
-        const local = segLen > 0 ? (targetDist - traversed) / segLen : 0;
-        found = {
-          x: start.x + (end.x - start.x) * local,
-          y: start.y + (end.y - start.y) * local,
-        };
-        break;
-      }
-      traversed += segLen;
-    }
-
+    const found = resolvePointAtDistance(points, lengths, targetDist);
     if (found) sampled.push(found);
   }
 
@@ -303,6 +328,114 @@ const translateGeometrySymmetry = (
   key: string,
   fallback: string
 ): string => translateKangurMiniGameWithFallback(translate, key, fallback);
+
+type GeometrySymmetryMirrorContext = {
+  fallbackCopy: GeometrySymmetryFallbackCopy;
+  translate?: KangurMiniGameTranslate;
+};
+
+type GeometryMirrorMetrics = {
+  avgDistance: number;
+  coverage: number;
+  offsideRatio: number;
+  sampledUser: Point2d[];
+  sanitized: Point2d[];
+};
+
+const buildMirrorEvaluation = (
+  input: {
+    kind: SymmetryEvaluationKind;
+    accepted: boolean;
+    messageKey: string;
+    messageFallback: keyof GeometrySymmetryFallbackCopy['mirror'];
+  } & Partial<Pick<SymmetryMirrorEvaluation, 'avgDistance' | 'coverage' | 'offsideRatio'>>,
+  context: GeometrySymmetryMirrorContext
+): SymmetryMirrorEvaluation => ({
+  accepted: input.accepted,
+  kind: input.kind,
+  coverage: input.coverage ?? 0,
+  avgDistance: input.avgDistance ?? 0,
+  offsideRatio: input.offsideRatio ?? 0,
+  message: translateGeometrySymmetry(
+    context.translate,
+    input.messageKey,
+    context.fallbackCopy.mirror[input.messageFallback]
+  ),
+});
+
+const computeOffsideRatio = (
+  sampledUser: Point2d[],
+  axis: SymmetryAxis,
+  expectedSide: SymmetryExpectedSide
+): number => {
+  const offsideCount = sampledUser.filter(
+    (point) => !isOnExpectedSide(point, axis, expectedSide)
+  ).length;
+  return sampledUser.length > 0 ? offsideCount / sampledUser.length : 1;
+};
+
+const computeClosestDistance = (point: Point2d, userPoints: Point2d[]): number => {
+  let minDistance = Number.POSITIVE_INFINITY;
+
+  for (const userPoint of userPoints) {
+    const dist = distance(point, userPoint);
+    if (dist < minDistance) {
+      minDistance = dist;
+    }
+  }
+
+  return minDistance;
+};
+
+const computeCoverageMetrics = (
+  expected: Point2d[],
+  sampledUser: Point2d[]
+): Pick<GeometryMirrorMetrics, 'avgDistance' | 'coverage'> => {
+  let within = 0;
+  let totalDistance = 0;
+
+  for (const point of expected) {
+    const minDistance = computeClosestDistance(point, sampledUser);
+    totalDistance += minDistance;
+    if (minDistance <= MIRROR_DISTANCE_TOLERANCE) {
+      within += 1;
+    }
+  }
+
+  return {
+    coverage: expected.length > 0 ? within / expected.length : 0,
+    avgDistance: expected.length > 0 ? totalDistance / expected.length : 999,
+  };
+};
+
+const computeMirrorMetrics = (input: {
+  axis: SymmetryAxis;
+  expectedSide: SymmetryExpectedSide;
+  points: Point2d[];
+  template: Point2d[];
+}): GeometryMirrorMetrics => {
+  const sanitized = sanitizePoints(input.points);
+  const sampledUser = samplePath(sanitized, 160);
+  const expected = samplePath(mirrorPoints(input.template, input.axis), 140);
+  const { coverage, avgDistance } = computeCoverageMetrics(expected, sampledUser);
+
+  return {
+    sanitized,
+    sampledUser,
+    coverage,
+    avgDistance,
+    offsideRatio: computeOffsideRatio(sampledUser, input.axis, input.expectedSide),
+  };
+};
+
+const isMirrorDrawingTooShort = (template: Point2d[], sanitized: Point2d[]): boolean => {
+  const expectedLength = pathLength(template);
+  const userLength = pathLength(sanitized);
+  return expectedLength > 0 && userLength < expectedLength * MIN_MIRROR_LENGTH_RATIO;
+};
+
+const isMirrorDrawingMisaligned = (metrics: GeometryMirrorMetrics): boolean =>
+  metrics.coverage < MIN_MIRROR_COVERAGE || metrics.avgDistance > MAX_MIRROR_AVG_DISTANCE;
 
 export const evaluateAxisDrawing = (
   points: Point2d[],
@@ -410,106 +543,75 @@ export const evaluateMirrorDrawing = ({
     locale,
     translate: localizerTranslate,
   });
-  const sanitized = sanitizePoints(points);
-  if (sanitized.length < MIN_POINTS) {
-    return {
-      accepted: false,
-      kind: 'info',
-      coverage: 0,
-      avgDistance: 0,
-      offsideRatio: 1,
-      message: translateGeometrySymmetry(
-        resolvedTranslate,
-        'geometrySymmetry.feedback.mirror.drawMissingHalf',
-        fallbackCopy.mirror.drawMissingHalf
-      ),
-    };
+  const context = {
+    fallbackCopy,
+    translate: resolvedTranslate,
+  } satisfies GeometrySymmetryMirrorContext;
+  const metrics = computeMirrorMetrics({ axis, expectedSide, points, template });
+
+  if (metrics.sanitized.length < MIN_POINTS) {
+    return buildMirrorEvaluation(
+      {
+        accepted: false,
+        kind: 'info',
+        offsideRatio: 1,
+        messageKey: 'geometrySymmetry.feedback.mirror.drawMissingHalf',
+        messageFallback: 'drawMissingHalf',
+      },
+      context
+    );
   }
 
-  const sampledUser = samplePath(sanitized, 160);
-  const expected = samplePath(mirrorPoints(template, axis), 140);
-  const expectedLength = pathLength(template);
-  const userLength = pathLength(sanitized);
-
-  if (expectedLength > 0 && userLength < expectedLength * MIN_MIRROR_LENGTH_RATIO) {
-    return {
-      accepted: false,
-      kind: 'info',
-      coverage: 0,
-      avgDistance: 0,
-      offsideRatio: 0,
-      message: translateGeometrySymmetry(
-        resolvedTranslate,
-        'geometrySymmetry.feedback.mirror.drawMore',
-        fallbackCopy.mirror.drawMore
-      ),
-    };
+  if (isMirrorDrawingTooShort(template, metrics.sanitized)) {
+    return buildMirrorEvaluation(
+      {
+        accepted: false,
+        kind: 'info',
+        messageKey: 'geometrySymmetry.feedback.mirror.drawMore',
+        messageFallback: 'drawMore',
+      },
+      context
+    );
   }
 
-  const offsideCount = sampledUser.filter(
-    (point) => !isOnExpectedSide(point, axis, expectedSide)
-  ).length;
-  const offsideRatio = sampledUser.length > 0 ? offsideCount / sampledUser.length : 1;
-
-  if (offsideRatio > MAX_OFFSIDE_RATIO) {
-    return {
-      accepted: false,
-      kind: 'error',
-      coverage: 0,
-      avgDistance: 0,
-      offsideRatio,
-      message: translateGeometrySymmetry(
-        resolvedTranslate,
-        'geometrySymmetry.feedback.mirror.expectedSide',
-        fallbackCopy.mirror.expectedSide
-      ),
-    };
+  if (metrics.offsideRatio > MAX_OFFSIDE_RATIO) {
+    return buildMirrorEvaluation(
+      {
+        accepted: false,
+        kind: 'error',
+        offsideRatio: metrics.offsideRatio,
+        messageKey: 'geometrySymmetry.feedback.mirror.expectedSide',
+        messageFallback: 'expectedSide',
+      },
+      context
+    );
   }
 
-  let within = 0;
-  let totalDistance = 0;
-  for (const point of expected) {
-    let minDistance = Number.POSITIVE_INFINITY;
-    for (const userPoint of sampledUser) {
-      const dist = distance(point, userPoint);
-      if (dist < minDistance) {
-        minDistance = dist;
-      }
-    }
-    totalDistance += minDistance;
-    if (minDistance <= MIRROR_DISTANCE_TOLERANCE) {
-      within += 1;
-    }
+  if (isMirrorDrawingMisaligned(metrics)) {
+    return buildMirrorEvaluation(
+      {
+        accepted: false,
+        kind: 'error',
+        coverage: metrics.coverage,
+        avgDistance: metrics.avgDistance,
+        offsideRatio: metrics.offsideRatio,
+        messageKey: 'geometrySymmetry.feedback.mirror.alignToGhost',
+        messageFallback: 'alignToGhost',
+      },
+      context
+    );
   }
 
-  const coverage = expected.length > 0 ? within / expected.length : 0;
-  const avgDistance = expected.length > 0 ? totalDistance / expected.length : 999;
-
-  if (coverage < MIN_MIRROR_COVERAGE || avgDistance > MAX_MIRROR_AVG_DISTANCE) {
-    return {
-      accepted: false,
-      kind: 'error',
-      coverage,
-      avgDistance,
-      offsideRatio,
-      message: translateGeometrySymmetry(
-        resolvedTranslate,
-        'geometrySymmetry.feedback.mirror.alignToGhost',
-        fallbackCopy.mirror.alignToGhost
-      ),
-    };
-  }
-
-  return {
-    accepted: true,
-    kind: 'success',
-    coverage,
-    avgDistance,
-    offsideRatio,
-    message: translateGeometrySymmetry(
-      resolvedTranslate,
-      'geometrySymmetry.feedback.mirror.success',
-      fallbackCopy.mirror.success
-    ),
-  };
+  return buildMirrorEvaluation(
+    {
+      accepted: true,
+      kind: 'success',
+      coverage: metrics.coverage,
+      avgDistance: metrics.avgDistance,
+      offsideRatio: metrics.offsideRatio,
+      messageKey: 'geometrySymmetry.feedback.mirror.success',
+      messageFallback: 'success',
+    },
+    context
+  );
 };

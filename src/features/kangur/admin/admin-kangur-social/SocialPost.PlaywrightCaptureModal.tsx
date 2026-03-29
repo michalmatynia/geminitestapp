@@ -17,6 +17,7 @@ import {
 } from '@/features/kangur/shared/ui';
 import { usePlaywrightPersonas } from '@/shared/hooks/usePlaywrightPersonas';
 
+import { SocialJobStatusPill } from './SocialJobStatusPill';
 import { useSocialPostContext } from './SocialPostContext';
 
 const PLAYWRIGHT_RUNTIME_PERSONA_VALUE = '';
@@ -49,6 +50,8 @@ export function SocialPostPlaywrightCaptureModal(): React.JSX.Element {
     handleRunProgrammablePlaywrightCapture,
     handleRunProgrammablePlaywrightCaptureAndPipeline,
     canGenerateSocialDraft,
+    currentGenerationJob,
+    currentPipelineJob,
     socialDraftBlockedReason,
   } = useSocialPostContext();
 
@@ -100,6 +103,20 @@ export function SocialPostPlaywrightCaptureModal(): React.JSX.Element {
       programmableCaptureRoutes,
     ]
   );
+  const currentGenerationJobTitle = [
+    currentGenerationJob?.progress?.message ?? null,
+    currentGenerationJob?.failedReason ?? null,
+    currentGenerationJob?.id ? `Queue job: ${currentGenerationJob.id}` : null,
+  ]
+    .filter((value): value is string => Boolean(value))
+    .join(' · ');
+  const currentPipelineJobTitle = [
+    currentPipelineJob?.progress?.message ?? null,
+    currentPipelineJob?.failedReason ?? null,
+    currentPipelineJob?.id ? `Queue job: ${currentPipelineJob.id}` : null,
+  ]
+    .filter((value): value is string => Boolean(value))
+    .join(' · ');
 
   return (
     <FormModal
@@ -198,6 +215,28 @@ export function SocialPostPlaywrightCaptureModal(): React.JSX.Element {
         {personasQuery.error ? (
           <div className='rounded-xl border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-sm text-amber-900 dark:text-amber-200'>
             Failed to load Playwright personas. The default runtime persona will still work.
+          </div>
+        ) : null}
+
+        {(currentGenerationJob?.status || currentPipelineJob?.status) ? (
+          <div className='flex flex-wrap items-center gap-2 text-xs text-muted-foreground'>
+            <span className='font-medium text-foreground/80'>Runtime jobs:</span>
+            {currentGenerationJob?.status ? (
+              <SocialJobStatusPill
+                status={currentGenerationJob.status}
+                label='Generate post'
+                title={currentGenerationJobTitle || undefined}
+                className='text-[10px]'
+              />
+            ) : null}
+            {currentPipelineJob?.status ? (
+              <SocialJobStatusPill
+                status={currentPipelineJob.status}
+                label='Full pipeline'
+                title={currentPipelineJobTitle || undefined}
+                className='text-[10px]'
+              />
+            ) : null}
           </div>
         ) : null}
 

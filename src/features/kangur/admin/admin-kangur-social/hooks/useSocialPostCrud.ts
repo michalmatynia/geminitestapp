@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
+import { z } from 'zod';
 
 import { useToast } from '@/features/kangur/shared/ui';
 import {
@@ -19,6 +20,7 @@ import {
 import { ErrorSystem } from '@/features/kangur/shared/utils/observability/error-system-client';
 import {
   buildKangurSocialPostCombinedBody,
+  kangurSocialPostSchema,
   type KangurSocialPost,
   type KangurSocialPublishMode,
 } from '@/shared/contracts/kangur-social-posts';
@@ -45,6 +47,44 @@ type SocialPostCrudDeps = {
   buildSocialContext: (overrides?: Record<string, unknown>) => Record<string, unknown>;
 };
 
+const socialPostUpdateSchema = kangurSocialPostSchema.partial();
+
+const SOCIAL_POST_FIELD_LABELS: Record<string, string> = {
+  titlePl: 'Polish title',
+  titleEn: 'English title',
+  bodyPl: 'Polish body',
+  bodyEn: 'English body',
+  combinedBody: 'Combined body',
+  scheduledAt: 'Scheduled publish time',
+  imageAssets: 'Attached images',
+  imageAddonIds: 'Image add-ons',
+  docReferences: 'Documentation references',
+  linkedinConnectionId: 'LinkedIn connection',
+  brainModelId: 'Post model',
+  visionModelId: 'Vision model',
+};
+
+const formatSocialPostValidationError = (error: z.ZodError): string => {
+  const firstIssue = error.issues[0];
+  if (!firstIssue) {
+    return 'Review the post fields and try again.';
+  }
+
+  const firstPathSegment = firstIssue.path[0];
+  const fieldKey =
+    typeof firstPathSegment === 'string' || typeof firstPathSegment === 'number'
+      ? String(firstPathSegment)
+      : '';
+  const fieldLabel = SOCIAL_POST_FIELD_LABELS[fieldKey];
+  const issueMessage = firstIssue.message.trim();
+
+  if (!fieldLabel) {
+    return issueMessage || 'Review the post fields and try again.';
+  }
+
+  return issueMessage ? `${fieldLabel}: ${issueMessage}` : `${fieldLabel} is invalid.`;
+};
+
 export function useSocialPostCrud(deps: SocialPostCrudDeps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -57,6 +97,35 @@ export function useSocialPostCrud(deps: SocialPostCrudDeps) {
   const [deleteError, setDeleteError] = useState<string | null>(null);
   const [publishingPostId, setPublishingPostId] = useState<string | null>(null);
   const [unpublishingPostId, setUnpublishingPostId] = useState<string | null>(null);
+
+  const buildValidatedPostUpdates = (
+    nextStatus: KangurSocialPost['status']
+  ): Partial<KangurSocialPost> | null => {
+    const updates: Partial<KangurSocialPost> = {
+      ...deps.editorState,
+      combinedBody: buildKangurSocialPostCombinedBody(
+        deps.editorState.bodyPl,
+        deps.editorState.bodyEn
+      ),
+      status: nextStatus,
+      scheduledAt: nextStatus === 'scheduled' ? parseDatetimeLocal(deps.scheduledAt) : null,
+      imageAssets: deps.imageAssets,
+      imageAddonIds: deps.imageAddonIds,
+      docReferences: deps.resolveDocReferences(),
+      linkedinConnectionId: deps.linkedinConnectionId ?? null,
+      brainModelId: deps.brainModelId ?? null,
+      visionModelId: deps.visionModelId ?? null,
+      publishError: null,
+    };
+
+    const parsed = socialPostUpdateSchema.safeParse(updates);
+    if (parsed.success) {
+      return parsed.data;
+    }
+
+    toast(formatSocialPostValidationError(parsed.error), { variant: 'error' });
+    return null;
+  };
 
   const clearDeleteError = (): void => {
     setDeleteError(null);
@@ -268,10 +337,14 @@ export function useSocialPostCrud(deps: SocialPostCrudDeps) {
 
   const handleSave = async (nextStatus: KangurSocialPost['status']): Promise<void> => {
     if (!deps.activePost) return;
-    const combinedBody = buildKangurSocialPostCombinedBody(
-      deps.editorState.bodyPl,
-      deps.editorState.bodyEn
-    );
+    const updates = buildValidatedPostUpdates(nextStatus);
+    if (!updates) {
+      trackKangurClientEvent(
+        'kangur_social_post_save_failed',
+        deps.buildSocialContext({ nextStatus, error: true, validationError: true })
+      );
+      return;
+    }
     trackKangurClientEvent(
       'kangur_social_post_save_attempt',
       deps.buildSocialContext({ nextStatus })
@@ -279,19 +352,7 @@ export function useSocialPostCrud(deps: SocialPostCrudDeps) {
     try {
       await patchMutation.mutateAsync({
         id: deps.activePost.id,
-        updates: {
-          ...deps.editorState,
-          combinedBody,
-          status: nextStatus,
-          scheduledAt: nextStatus === 'scheduled' ? parseDatetimeLocal(deps.scheduledAt) : null,
-          imageAssets: deps.imageAssets,
-          imageAddonIds: deps.imageAddonIds,
-          docReferences: deps.resolveDocReferences(),
-          linkedinConnectionId: deps.linkedinConnectionId ?? null,
-          brainModelId: deps.brainModelId ?? null,
-          visionModelId: deps.visionModelId ?? null,
-          publishError: null,
-        },
+        updates,
       });
       trackKangurClientEvent(
         'kangur_social_post_save_success',
@@ -304,6 +365,9 @@ export function useSocialPostCrud(deps: SocialPostCrudDeps) {
         action: 'savePost',
         ...deps.buildSocialContext({ nextStatus }),
       });
+      toast(error instanceof Error ? error.message : 'Failed to save draft.', {
+        variant: 'error',
+      });
       trackKangurClientEvent(
         'kangur_social_post_save_failed',
         deps.buildSocialContext({ nextStatus, error: true })
@@ -313,10 +377,14 @@ export function useSocialPostCrud(deps: SocialPostCrudDeps) {
 
   const handlePublish = async (): Promise<void> => {
     if (!deps.activePost) return;
-    const combinedBody = buildKangurSocialPostCombinedBody(
-      deps.editorState.bodyPl,
-      deps.editorState.bodyEn
-    );
+    const updates = buildValidatedPostUpdates('scheduled');
+    if (!updates) {
+      trackKangurClientEvent(
+        'kangur_social_post_publish_failed',
+        deps.buildSocialContext({ stage: 'prepare', error: true, validationError: true })
+      );
+      return;
+    }
     trackKangurClientEvent(
       'kangur_social_post_publish_attempt',
       deps.buildSocialContext()
@@ -325,18 +393,7 @@ export function useSocialPostCrud(deps: SocialPostCrudDeps) {
     try {
       await patchMutation.mutateAsync({
         id: deps.activePost.id,
-        updates: {
-          ...deps.editorState,
-          combinedBody,
-          scheduledAt: parseDatetimeLocal(deps.scheduledAt),
-          imageAssets: deps.imageAssets,
-          imageAddonIds: deps.imageAddonIds,
-          docReferences: deps.resolveDocReferences(),
-          linkedinConnectionId: deps.linkedinConnectionId ?? null,
-          brainModelId: deps.brainModelId ?? null,
-          visionModelId: deps.visionModelId ?? null,
-          publishError: null,
-        },
+        updates,
       });
       stage = 'publish';
       await publishMutation.mutateAsync({ id: deps.activePost.id, mode: 'published' });
@@ -352,6 +409,14 @@ export function useSocialPostCrud(deps: SocialPostCrudDeps) {
         stage,
         ...deps.buildSocialContext(),
       });
+      toast(
+        error instanceof Error
+          ? error.message
+          : stage === 'prepare'
+            ? 'Failed to prepare the post for publishing.'
+            : 'Failed to publish post.',
+        { variant: 'error' }
+      );
       trackKangurClientEvent(
         'kangur_social_post_publish_failed',
         deps.buildSocialContext({ stage, error: true })

@@ -463,7 +463,8 @@ export function KangurPageTransitionSkeleton(
     requestedPageKey === 'GamesLibrary' && !isSuperAdmin
       ? 'game-home'
       : props.variant ?? resolveDefaultSkeletonVariant(resolvedPageKey);
-  const isInlineTopNavigationSkeleton = Boolean(props.renderInlineTopNavigationSkeleton);
+  const isInlineTopNavigationSkeleton =
+    Boolean(props.renderInlineTopNavigationSkeleton) && props.reason !== 'locale-switch';
   const isEmbedded = props.embeddedOverride ?? routing?.embedded ?? false;
   const skeletonLocale = resolveSkeletonLocale(pathname);
   const skeletonCopy = KANGUR_SKELETON_COPY_BY_LOCALE[skeletonLocale];

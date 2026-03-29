@@ -44,6 +44,53 @@ const normalizePendingRouteLoadingSnapshot = (
   return snapshot;
 };
 
+const resolvePendingRouteLoadingFallbackPageKey = (
+  fallbackPageKey: string | null | undefined
+): string => fallbackPageKey?.trim() || 'Game';
+
+const resolvePendingRouteLoadingTargetHref = ({
+  currentHref,
+  snapshot,
+}: {
+  currentHref: string | null;
+  snapshot: KangurPendingRouteLoadingSnapshot;
+}): string => snapshot.href?.trim() || currentHref?.trim() || '/';
+
+const resolveAccessiblePendingRouteLoadingTarget = ({
+  currentHref,
+  fallbackPageKey,
+  session,
+  snapshot,
+}: {
+  currentHref: string | null;
+  fallbackPageKey: string | null | undefined;
+  session: Session | null;
+  snapshot: KangurPendingRouteLoadingSnapshot;
+}): {
+  pageKey: string;
+  skeletonVariant: KangurRouteTransitionSkeletonVariant;
+} => {
+  const targetHref = resolvePendingRouteLoadingTargetHref({ currentHref, snapshot });
+  return resolveAccessibleKangurRouteTransitionTarget({
+    basePath: resolveManagedKangurBasePath(targetHref),
+    fallbackPageKey: resolvePendingRouteLoadingFallbackPageKey(fallbackPageKey),
+    href: targetHref,
+    pageKey: snapshot.pageKey?.trim() || null,
+    session,
+  });
+};
+
+const shouldUpdatePendingRouteLoadingSnapshot = ({
+  resolvedPageKey,
+  resolvedSkeletonVariant,
+  snapshot,
+}: {
+  resolvedPageKey: string;
+  resolvedSkeletonVariant: KangurRouteTransitionSkeletonVariant;
+  snapshot: KangurPendingRouteLoadingSnapshot;
+}): boolean =>
+  resolvedPageKey !== snapshot.pageKey || resolvedSkeletonVariant !== snapshot.skeletonVariant;
+
 export const resolveAccessibleKangurPendingRouteLoadingSnapshot = ({
   currentHref = null,
   fallbackPageKey = 'Game',
@@ -61,27 +108,24 @@ export const resolveAccessibleKangurPendingRouteLoadingSnapshot = ({
     return null;
   }
 
-  const normalizedFallbackPageKey = fallbackPageKey?.trim() || 'Game';
-  const targetHref = normalizedSnapshot.href?.trim() || currentHref?.trim() || '/';
-  const basePath = resolveManagedKangurBasePath(targetHref);
-  const resolvedTarget = resolveAccessibleKangurRouteTransitionTarget({
-    basePath,
-    fallbackPageKey: normalizedFallbackPageKey,
-    href: targetHref,
-    pageKey: normalizedSnapshot.pageKey?.trim() || null,
+  const resolvedTarget = resolveAccessiblePendingRouteLoadingTarget({
+    currentHref,
+    fallbackPageKey,
     session,
+    snapshot: normalizedSnapshot,
   });
-  const resolvedPageKey = resolvedTarget.pageKey;
-  const resolvedSkeletonVariant = resolvedTarget.skeletonVariant;
 
-  return resolvedPageKey === normalizedSnapshot.pageKey &&
-    resolvedSkeletonVariant === normalizedSnapshot.skeletonVariant
-    ? normalizedSnapshot
-    : {
+  return shouldUpdatePendingRouteLoadingSnapshot({
+    resolvedPageKey: resolvedTarget.pageKey,
+    resolvedSkeletonVariant: resolvedTarget.skeletonVariant,
+    snapshot: normalizedSnapshot,
+  })
+    ? {
         ...normalizedSnapshot,
-        pageKey: resolvedPageKey,
-        skeletonVariant: resolvedSkeletonVariant,
-      };
+        pageKey: resolvedTarget.pageKey,
+        skeletonVariant: resolvedTarget.skeletonVariant,
+      }
+    : normalizedSnapshot;
 };
 
 export const setKangurPendingRouteLoadingSnapshot = (

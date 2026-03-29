@@ -273,7 +273,7 @@ describe('KangurPageTransitionSkeleton', () => {
     });
   });
 
-  it('renders with path-based fallback page labels when next-intl context is unavailable', () => {
+  it('renders fallback skeleton copy when next-intl context is unavailable', () => {
     useOptionalKangurRoutingMock.mockReturnValue({
       basePath: '/kangur',
       embedded: false,
@@ -281,7 +281,10 @@ describe('KangurPageTransitionSkeleton', () => {
 
     render(<KangurPageTransitionSkeleton pageKey='Lessons' variant='lessons-library' />);
 
-    expect(screen.getAllByText('Lessons')).not.toHaveLength(0);
+    expect(screen.getByRole('status')).toHaveTextContent('Loading page');
+    expect(
+      screen.getByTestId('kangur-page-transition-skeleton-lessons-library-layout')
+    ).toBeInTheDocument();
   });
 
   it('uses an opaque page background for navigation skeletons so the previous route does not ghost through', () => {
@@ -293,7 +296,8 @@ describe('KangurPageTransitionSkeleton', () => {
     renderWithIntl(<KangurPageTransitionSkeleton pageKey='Lessons' variant='lessons-library' />);
 
     expect(screen.getByTestId('kangur-page-transition-skeleton')).toHaveStyle({
-      background: 'var(--kangur-page-background)',
+      background:
+        'var(--kangur-page-background, radial-gradient(circle at top, #fffdfd 0%, #f7f3f6 45%, #f3f1f8 100%))',
     });
     expect(
       screen.queryByTestId('kangur-page-transition-skeleton-locale-overlay')
@@ -552,7 +556,7 @@ describe('KangurPageTransitionSkeleton', () => {
     ).toBeNull();
   });
 
-  it('uses a softer blurred overlay for locale-switch skeletons', () => {
+  it('uses a softer blurred overlay for locale-switch skeletons without rendering an inline navbar', () => {
     useOptionalKangurRoutingMock.mockReturnValue({
       basePath: '/kangur',
       embedded: false,
@@ -562,6 +566,7 @@ describe('KangurPageTransitionSkeleton', () => {
       <KangurPageTransitionSkeleton
         pageKey='Lessons'
         reason='locale-switch'
+        renderInlineTopNavigationSkeleton
         variant='lessons-library'
       />
     );
@@ -571,11 +576,16 @@ describe('KangurPageTransitionSkeleton', () => {
       'locale-switch'
     );
     expect(screen.getByTestId('kangur-page-transition-skeleton')).toHaveStyle({
-      background: 'var(--kangur-page-background)',
+      background:
+        'var(--kangur-page-background, radial-gradient(circle at top, #fffdfd 0%, #f7f3f6 45%, #f3f1f8 100%))',
     });
     expect(screen.getByTestId('kangur-page-transition-skeleton-locale-overlay')).toHaveStyle({
       background: 'color-mix(in srgb, var(--kangur-soft-card-background) 74%, transparent)',
     });
+    expect(
+      screen.queryByTestId('kangur-page-transition-skeleton-inline-top-navigation')
+    ).toBeNull();
+    expect(screen.queryByTestId('kangur-top-navigation-skeleton')).toBeNull();
     expect(screen.getByRole('status')).not.toHaveTextContent(/^$/);
   });
 });

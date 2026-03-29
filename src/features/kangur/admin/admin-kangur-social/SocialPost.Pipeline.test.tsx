@@ -3,62 +3,23 @@
  */
 
 import React from 'react';
-import { cleanup, fireEvent, render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-
-const { useSocialPostContextMock } = vi.hoisted(() => ({
-  useSocialPostContextMock: vi.fn(),
-}));
-
-vi.mock('@/features/kangur/shared/ui', () => ({
-  Badge: ({ children }: { children: React.ReactNode }) => <span>{children}</span>,
-  Button: ({
-    children,
-    ...rest
-  }: React.ButtonHTMLAttributes<HTMLButtonElement> & { children: React.ReactNode }) => (
-    <button {...rest}>{children}</button>
-  ),
-  Card: ({
-    children,
-    ...rest
-  }: React.HTMLAttributes<HTMLDivElement> & { children: React.ReactNode }) => (
-    <div {...rest}>{children}</div>
-  ),
-  FormSection: ({
-    title,
-    description,
-    actions,
-    children,
-  }: {
-    title: string;
-    description?: string;
-    actions?: React.ReactNode;
-    children: React.ReactNode;
-  }) => (
-    <section>
-      <h2>{title}</h2>
-      {description ? <p>{description}</p> : null}
-      {actions}
-      {children}
-    </section>
-  ),
-  LoadingState: ({ message }: { message?: string }) => <div role='status'>{message ?? 'Loading...'}</div>,
-}));
-
-vi.mock('./SocialPostContext', () => ({
-  useSocialPostContext: () => useSocialPostContextMock(),
-}));
+import {
+  cleanupSocialPostPipelineTestHarness,
+  resetSocialPostPipelineTestHarness,
+  mockSocialPostContextReturnValue,
+} from './SocialPost.Pipeline.test-support';
 
 import { SocialPostPipeline } from './SocialPost.Pipeline';
 
 describe('SocialPostPipeline', () => {
   beforeEach(() => {
-    useSocialPostContextMock.mockReset();
+    resetSocialPostPipelineTestHarness();
   });
 
   afterEach(() => {
-    cleanup();
-    vi.clearAllMocks();
+    cleanupSocialPostPipelineTestHarness();
   });
 
   it('disables the pipeline when no social or AI Brain post model is configured', () => {
@@ -66,7 +27,7 @@ describe('SocialPostPipeline', () => {
     const handleRunFullPipelineWithFreshCapture = vi.fn();
     const handleCaptureImagesOnly = vi.fn();
 
-    useSocialPostContextMock.mockReturnValue({
+    mockSocialPostContextReturnValue({
       activePostId: 'post-1',
       pipelineStep: 'idle',
       pipelineProgress: null,
@@ -118,7 +79,7 @@ describe('SocialPostPipeline', () => {
   });
 
   it('shows capture progress details and screenshot failure reasons', () => {
-    useSocialPostContextMock.mockReturnValue({
+    mockSocialPostContextReturnValue({
       activePostId: 'post-1',
       pipelineStep: 'error',
       pipelineProgress: {
@@ -176,7 +137,7 @@ describe('SocialPostPipeline', () => {
   });
 
   it('shows live Playwright capture counts in the pipeline info while screenshots are running', () => {
-    useSocialPostContextMock.mockReturnValue({
+    mockSocialPostContextReturnValue({
       activePostId: 'post-1',
       editorState: {
         titlePl: 'Draft',
@@ -239,7 +200,7 @@ describe('SocialPostPipeline', () => {
     const handleRunFullPipelineWithFreshCapture = vi.fn();
     const handleCaptureImagesOnly = vi.fn();
 
-    useSocialPostContextMock.mockReturnValue({
+    mockSocialPostContextReturnValue({
       activePostId: null,
       editorState: {
         titlePl: '',
@@ -287,7 +248,7 @@ describe('SocialPostPipeline', () => {
   });
 
   it('shows the active draft target when a post is selected for the pipeline', () => {
-    useSocialPostContextMock.mockReturnValue({
+    mockSocialPostContextReturnValue({
       activePostId: 'post-1',
       editorState: {
         titlePl: 'Selected pipeline target',
@@ -326,7 +287,7 @@ describe('SocialPostPipeline', () => {
   it('opens the visual-analysis flow from the dedicated pipeline button', () => {
     const handleOpenVisualAnalysisModal = vi.fn();
 
-    useSocialPostContextMock.mockReturnValue({
+    mockSocialPostContextReturnValue({
       activePostId: 'post-1',
       editorState: {
         titlePl: 'Selected pipeline target',
@@ -370,7 +331,7 @@ describe('SocialPostPipeline', () => {
   it('opens the programmable Playwright modal from the dedicated pipeline button', () => {
     const handleOpenProgrammablePlaywrightModal = vi.fn();
 
-    useSocialPostContextMock.mockReturnValue({
+    mockSocialPostContextReturnValue({
       activePostId: 'post-1',
       editorState: {
         titlePl: 'Selected pipeline target',
@@ -414,8 +375,106 @@ describe('SocialPostPipeline', () => {
     );
   });
 
+  it('shows live runtime job pills for the active draft workflows', () => {
+    mockSocialPostContextReturnValue({
+      activePost: {
+        visualAnalysisStatus: 'queued',
+        visualAnalysisUpdatedAt: '2026-03-20T12:00:00.000Z',
+        visualAnalysisModelId: 'vision-1',
+        visualAnalysisJobId: 'job-analysis-7',
+      },
+      activePostId: 'post-1',
+      editorState: {
+        titlePl: 'Selected pipeline target',
+        titleEn: '',
+      },
+      pipelineStep: 'capturing',
+      pipelineProgress: null,
+      pipelineErrorMessage: null,
+      currentVisualAnalysisJob: {
+        id: 'job-analysis-7',
+        status: 'active',
+        progress: {
+          type: 'manual-post-visual-analysis',
+          step: 'analyzing',
+          message: 'Running Redis-backed image analysis...',
+          updatedAt: 1_700_000_000_500,
+          postId: 'post-1',
+          imageAddonCount: 2,
+          highlightCount: null,
+        },
+        result: null,
+        failedReason: null,
+      },
+      currentGenerationJob: {
+        id: 'job-generate-3',
+        status: 'waiting',
+        progress: null,
+        result: null,
+        failedReason: null,
+      },
+      currentPipelineJob: {
+        id: 'job-pipeline-5',
+        status: 'active',
+        progress: {
+          type: 'manual-post-pipeline',
+          step: 'capturing',
+          captureMode: 'existing_assets',
+          message: 'Generating from the selected visuals...',
+          updatedAt: 1_700_000_000_600,
+          contextDocCount: 1,
+          contextSummary: null,
+          addonsCreated: 0,
+          captureFailureCount: 0,
+          captureFailures: [],
+          requestedPresetCount: 0,
+          usedPresetCount: 0,
+          usedPresetIds: [],
+          captureCompletedCount: 0,
+          captureRemainingCount: 0,
+          captureTotalCount: 0,
+          runId: null,
+        },
+        result: null,
+        failedReason: null,
+      },
+      visualAnalysisResult: null,
+      hasSavedVisualAnalysis: false,
+      isSavedVisualAnalysisStale: false,
+      handleRunFullPipeline: vi.fn(),
+      handleRunFullPipelineWithFreshCapture: vi.fn(),
+      handleOpenVisualAnalysisModal: vi.fn(),
+      handleOpenProgrammablePlaywrightModal: vi.fn(),
+      handleCaptureImagesOnly: vi.fn(),
+      canGenerateSocialDraft: true,
+      canRunVisualAnalysisPipeline: true,
+      canRunFreshCapturePipeline: true,
+      batchCaptureBaseUrl: 'https://kangur.app',
+      batchCapturePresetIds: ['home'],
+      socialDraftBlockedReason: null,
+      socialBatchCaptureBlockedReason: null,
+      socialVisualAnalysisBlockedReason: null,
+      captureOnlyPending: false,
+      captureOnlyMessage: null,
+      captureOnlyErrorMessage: null,
+      programmableCapturePending: false,
+      programmableCaptureMessage: null,
+      programmableCaptureErrorMessage: null,
+      batchCapturePresetLimit: 1,
+      hasBatchCaptureConfig: true,
+      setIsPostEditorModalOpen: vi.fn(),
+    });
+
+    render(<SocialPostPipeline />);
+
+    expect(screen.getByText('Runtime jobs:')).toBeInTheDocument();
+    expect(screen.getByText('Image analysis: Running')).toBeInTheDocument();
+    expect(screen.getByText('Generate post: Queued')).toBeInTheDocument();
+    expect(screen.getByText('Full pipeline: Running')).toBeInTheDocument();
+  });
+
   it('shows when a cached image-analysis result is already ready for the draft', () => {
-    useSocialPostContextMock.mockReturnValue({
+    mockSocialPostContextReturnValue({
       activePost: {
         visualAnalysisStatus: 'completed',
         visualAnalysisUpdatedAt: '2026-03-20T12:00:00.000Z',
@@ -473,8 +532,74 @@ describe('SocialPostPipeline', () => {
     );
   });
 
+  it('prefers the live analysis rerun over saved metadata in the ready-analysis banner', () => {
+    mockSocialPostContextReturnValue({
+      activePost: {
+        visualAnalysisStatus: 'completed',
+        visualAnalysisUpdatedAt: '2026-03-20T12:00:00.000Z',
+        visualAnalysisModelId: 'vision-1',
+        visualAnalysisJobId: 'job-analysis-saved-1',
+      },
+      activePostId: 'post-1',
+      editorState: {
+        titlePl: 'Selected pipeline target',
+        titleEn: '',
+      },
+      pipelineStep: 'idle',
+      pipelineProgress: null,
+      pipelineErrorMessage: null,
+      currentVisualAnalysisJob: {
+        id: 'job-analysis-live-2',
+        status: 'active',
+        progress: {
+          type: 'manual-post-visual-analysis',
+          step: 'analyzing',
+          message: 'Refreshing the saved analysis from Redis.',
+          updatedAt: 1_700_000_000_700,
+          postId: 'post-1',
+          imageAddonCount: 2,
+          highlightCount: 2,
+        },
+        result: null,
+        failedReason: null,
+      },
+      visualAnalysisResult: {
+        summary: 'The hero now emphasizes the teacher CTA.',
+        highlights: ['Larger teacher CTA', 'Cleaner hero composition'],
+      },
+      handleRunFullPipeline: vi.fn(),
+      handleRunFullPipelineWithFreshCapture: vi.fn(),
+      handleOpenVisualAnalysisModal: vi.fn(),
+      handleCaptureImagesOnly: vi.fn(),
+      canGenerateSocialDraft: true,
+      canRunVisualAnalysisPipeline: true,
+      canRunFreshCapturePipeline: true,
+      batchCaptureBaseUrl: 'https://kangur.app',
+      batchCapturePresetIds: ['home'],
+      socialDraftBlockedReason: null,
+      socialBatchCaptureBlockedReason: null,
+      socialVisualAnalysisBlockedReason: null,
+      captureOnlyPending: false,
+      captureOnlyMessage: null,
+      captureOnlyErrorMessage: null,
+      batchCapturePresetLimit: 1,
+      hasBatchCaptureConfig: true,
+      setIsPostEditorModalOpen: vi.fn(),
+    });
+
+    render(<SocialPostPipeline />);
+
+    expect(screen.getByText('Runtime jobs:')).toBeInTheDocument();
+    expect(screen.getByText(/Image analysis: Running/)).toBeInTheDocument();
+    expect(screen.getByText(/Latest run: Running\./)).toBeInTheDocument();
+    expect(screen.getByText(/Analyzed:/)).toBeInTheDocument();
+    expect(screen.getByText(/Model: vision-1\./)).toBeInTheDocument();
+    expect(screen.getByText(/Queue job: job-analysis-live-2\./)).toBeInTheDocument();
+    expect(screen.queryByText(/Queue job: job-analysis-saved-1\./)).not.toBeInTheDocument();
+  });
+
   it('does not treat an empty analysis payload as ready for review', () => {
-    useSocialPostContextMock.mockReturnValue({
+    mockSocialPostContextReturnValue({
       activePostId: 'post-1',
       editorState: {
         titlePl: 'Selected pipeline target',
@@ -518,7 +643,7 @@ describe('SocialPostPipeline', () => {
   });
 
   it('shows the latest queued image-analysis run even before saved analysis content exists', () => {
-    useSocialPostContextMock.mockReturnValue({
+    mockSocialPostContextReturnValue({
       activePost: {
         visualAnalysisStatus: 'queued',
         visualAnalysisUpdatedAt: '2026-03-20T12:00:00.000Z',
@@ -570,7 +695,7 @@ describe('SocialPostPipeline', () => {
   });
 
   it('treats a completed metadata-only analysis run as reviewable', () => {
-    useSocialPostContextMock.mockReturnValue({
+    mockSocialPostContextReturnValue({
       activePost: {
         visualAnalysisStatus: 'completed',
         visualAnalysisUpdatedAt: '2026-03-20T12:00:00.000Z',
@@ -621,7 +746,7 @@ describe('SocialPostPipeline', () => {
   });
 
   it('treats a failed metadata-only analysis run as reviewable with a rerun-focused title', () => {
-    useSocialPostContextMock.mockReturnValue({
+    mockSocialPostContextReturnValue({
       activePost: {
         visualAnalysisStatus: 'failed',
         visualAnalysisUpdatedAt: '2026-03-20T12:00:00.000Z',
@@ -672,7 +797,7 @@ describe('SocialPostPipeline', () => {
   });
 
   it('warns when saved image analysis exists but the draft changed since that analysis', () => {
-    useSocialPostContextMock.mockReturnValue({
+    mockSocialPostContextReturnValue({
       activePost: {
         visualAnalysisStatus: 'completed',
         visualAnalysisUpdatedAt: '2026-03-20T12:00:00.000Z',
@@ -723,102 +848,43 @@ describe('SocialPostPipeline', () => {
     );
   });
 
-  it('surfaces a completed pipeline by opening the draft editor', () => {
-    const handleRunFullPipeline = vi.fn();
-    const handleRunFullPipelineWithFreshCapture = vi.fn();
-    const handleCaptureImagesOnly = vi.fn();
-    const setIsPostEditorModalOpen = vi.fn();
-
-    useSocialPostContextMock.mockReturnValue({
+  it('treats a live rerun as reviewable even if the previously saved analysis is stale', () => {
+    mockSocialPostContextReturnValue({
+      activePost: {
+        visualAnalysisStatus: 'completed',
+        visualAnalysisUpdatedAt: '2026-03-20T12:00:00.000Z',
+        visualAnalysisModelId: 'vision-1',
+        visualAnalysisJobId: 'job-analysis-stale-1',
+      },
       activePostId: 'post-1',
       editorState: {
-        titlePl: 'Generated weekly update',
+        titlePl: 'Selected pipeline target',
         titleEn: '',
       },
-      pipelineStep: 'done',
+      pipelineStep: 'idle',
       pipelineProgress: null,
       pipelineErrorMessage: null,
-      handleRunFullPipeline,
-      handleRunFullPipelineWithFreshCapture,
-      handleOpenVisualAnalysisModal: vi.fn(),
-      handleOpenProgrammablePlaywrightModal: vi.fn(),
-      handleCaptureImagesOnly,
-      canGenerateSocialDraft: true,
-      canRunVisualAnalysisPipeline: true,
-      canRunFreshCapturePipeline: true,
-      batchCaptureBaseUrl: 'https://kangur.app',
-      batchCapturePresetIds: ['home'],
-      socialDraftBlockedReason: null,
-      socialBatchCaptureBlockedReason: null,
-      socialVisualAnalysisBlockedReason: null,
-      captureOnlyPending: false,
-      captureOnlyMessage: null,
-      captureOnlyErrorMessage: null,
-      batchCapturePresetLimit: 1,
-      hasBatchCaptureConfig: true,
-      setIsPostEditorModalOpen,
-    });
-
-    render(<SocialPostPipeline />);
-
-    expect(
-      screen.getByText(
-        'Draft updated: Generated weekly update. The editor opened with the generated content.'
-      )
-    ).toBeInTheDocument();
-    const runFullPipelineButton = screen.getByRole('button', { name: 'Run full pipeline' });
-    const freshCaptureButton = screen.getByRole('button', { name: 'Fresh capture & pipeline' });
-    const captureImagesOnlyButton = screen.getByRole('button', { name: 'Capture images only' });
-
-    expect(runFullPipelineButton).toBeEnabled();
-    expect(freshCaptureButton).toBeEnabled();
-    expect(captureImagesOnlyButton).toBeEnabled();
-
-    fireEvent.click(runFullPipelineButton);
-    fireEvent.click(freshCaptureButton);
-    fireEvent.click(captureImagesOnlyButton);
-
-    expect(handleRunFullPipeline).toHaveBeenCalledTimes(1);
-    expect(handleRunFullPipelineWithFreshCapture).toHaveBeenCalledTimes(1);
-    expect(handleCaptureImagesOnly).toHaveBeenCalledTimes(1);
-    expect(setIsPostEditorModalOpen).toHaveBeenCalledWith(true);
-  });
-
-  it('allows rerunning the pipeline after a failed attempt', () => {
-    const handleRunFullPipeline = vi.fn();
-    const handleRunFullPipelineWithFreshCapture = vi.fn();
-
-    useSocialPostContextMock.mockReturnValue({
-      activePostId: 'post-1',
-      editorState: {
-        titlePl: 'Generated weekly update',
-        titleEn: '',
+      currentVisualAnalysisJob: {
+        id: 'job-analysis-live-rerun-1',
+        status: 'active',
+        progress: {
+          type: 'manual-post-visual-analysis',
+          step: 'analyzing',
+          message: 'Refreshing the image analysis after visual changes.',
+          updatedAt: 1_700_000_000_900,
+          postId: 'post-1',
+          imageAddonCount: 2,
+          highlightCount: null,
+        },
+        result: null,
+        failedReason: null,
       },
-      pipelineStep: 'error',
-      pipelineProgress: {
-        type: 'manual-post-pipeline',
-        step: 'capturing',
-        captureMode: 'fresh_capture',
-        message: 'Pipeline stopped: no screenshots captured.',
-        updatedAt: 1_700_000_001_000,
-        contextDocCount: 1,
-        contextSummary: 'summary',
-        addonsCreated: 0,
-        captureFailureCount: 1,
-        captureFailures: [{ id: 'home', reason: 'Timeout' }],
-        requestedPresetCount: 1,
-        usedPresetCount: 1,
-        usedPresetIds: ['home'],
-        captureCompletedCount: 0,
-        captureRemainingCount: 0,
-        captureTotalCount: 1,
-        runId: null,
-      },
-      pipelineErrorMessage: 'Pipeline stopped: no screenshots captured.',
-      handleRunFullPipeline,
-      handleRunFullPipelineWithFreshCapture,
+      visualAnalysisResult: null,
+      hasSavedVisualAnalysis: true,
+      isSavedVisualAnalysisStale: true,
+      handleRunFullPipeline: vi.fn(),
+      handleRunFullPipelineWithFreshCapture: vi.fn(),
       handleOpenVisualAnalysisModal: vi.fn(),
-      handleOpenProgrammablePlaywrightModal: vi.fn(),
       handleCaptureImagesOnly: vi.fn(),
       canGenerateSocialDraft: true,
       canRunVisualAnalysisPipeline: true,
@@ -838,16 +904,16 @@ describe('SocialPostPipeline', () => {
 
     render(<SocialPostPipeline />);
 
-    const runFullPipelineButton = screen.getByRole('button', { name: 'Run full pipeline' });
-    const freshCaptureButton = screen.getByRole('button', { name: 'Fresh capture & pipeline' });
-
-    expect(runFullPipelineButton).toBeEnabled();
-    expect(freshCaptureButton).toBeEnabled();
-
-    fireEvent.click(runFullPipelineButton);
-    fireEvent.click(freshCaptureButton);
-
-    expect(handleRunFullPipeline).toHaveBeenCalledTimes(1);
-    expect(handleRunFullPipelineWithFreshCapture).toHaveBeenCalledTimes(1);
+    expect(
+      screen.queryByText(
+        'Saved image analysis exists for this draft, but the selected visuals changed. Rerun image analysis before generating.'
+      )
+    ).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Review image analysis' })).toHaveAttribute(
+      'title',
+      'Review the latest image-analysis run status or open the modal to wait for the saved result.'
+    );
+    expect(screen.getByText('Image analysis: Running')).toBeInTheDocument();
   });
+
 });

@@ -422,6 +422,93 @@ describe('AdminKangurSocialSettingsModal', () => {
       screen.getByText('Loaded context from overview and lessons-and-activities.')
     ).toBeInTheDocument();
   });
+
+  it('shows the live draft-generation job pill in the documentation tab', () => {
+    usePlaywrightPersonasMock.mockReturnValue({
+      data: [],
+      isLoading: false,
+      error: null,
+    });
+    useSocialPostContextMock.mockReturnValue(
+      buildSocialPostContextState({
+        currentGenerationJob: {
+          id: 'job-generate-1',
+          status: 'active',
+          progress: {
+            message: 'Generating bilingual draft from the selected references.',
+          },
+          failedReason: null,
+        },
+      })
+    );
+
+    render(
+      <AdminKangurSocialSettingsModal
+        open={true}
+        onClose={vi.fn()}
+        onSave={vi.fn()}
+        isSaving={false}
+        hasUnsavedChanges={false}
+      />
+    );
+
+    fireEvent.click(screen.getByRole('tab', { name: 'Documentation' }));
+
+    expect(screen.getByText('Generate draft: Running')).toBeInTheDocument();
+  });
+
+  it('shows live runtime job pills in the capture tab', () => {
+    usePlaywrightPersonasMock.mockReturnValue({
+      data: [],
+      isLoading: false,
+      error: null,
+    });
+    useSocialPostContextMock.mockReturnValue(
+      buildSocialPostContextState({
+        currentVisualAnalysisJob: {
+          id: 'job-analysis-4',
+          status: 'active',
+          progress: {
+            message: 'Analyzing the latest selected visuals.',
+          },
+          failedReason: null,
+        },
+        currentGenerationJob: {
+          id: 'job-generate-4',
+          status: 'waiting',
+          progress: {
+            message: 'Waiting for generation worker capacity.',
+          },
+          failedReason: null,
+        },
+        currentPipelineJob: {
+          id: 'job-pipeline-4',
+          status: 'completed',
+          progress: {
+            message: 'Pipeline finished and saved the updated draft.',
+          },
+          failedReason: null,
+        },
+      })
+    );
+
+    render(
+      <AdminKangurSocialSettingsModal
+        open={true}
+        onClose={vi.fn()}
+        onSave={vi.fn()}
+        isSaving={false}
+        hasUnsavedChanges={false}
+      />
+    );
+
+    fireEvent.click(screen.getByRole('tab', { name: 'Capture' }));
+
+    expect(screen.getByText('Runtime jobs')).toBeInTheDocument();
+    expect(screen.getByText('Image analysis: Running')).toBeInTheDocument();
+    expect(screen.getByText('Generate post: Queued')).toBeInTheDocument();
+    expect(screen.getByText('Full pipeline: Completed')).toBeInTheDocument();
+  });
 });
 
 function buildActivePost() {
@@ -510,6 +597,9 @@ function buildSocialPostContextState(
     contextLoading: false,
     handleLoadContext: vi.fn(),
     handleGenerate: vi.fn(),
+    currentGenerationJob: null,
+    currentVisualAnalysisJob: null,
+    currentPipelineJob: null,
     canGenerateSocialDraft: true,
     socialDraftBlockedReason: null,
     socialVisionWarning: null,

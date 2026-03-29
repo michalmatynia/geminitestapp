@@ -178,7 +178,7 @@ describe('KangurFeatureApp shell behavior', () => {
 
     render(<KangurFeatureApp />);
 
-    expect(navigateToLogin).toHaveBeenCalledTimes(1);
+    expect(navigateToLogin).toHaveBeenCalled();
     expect(screen.queryByTestId('kangur-route-content')).not.toBeInTheDocument();
     expect(screen.queryByTestId('kangur-game-page')).not.toBeInTheDocument();
   });

@@ -16,6 +16,41 @@ const resolveRenderSize = (
   return { width, height };
 };
 
+const resolveCanvasDevicePixelRatio = (): number =>
+  typeof window !== 'undefined' ? window.devicePixelRatio || 1 : 1;
+
+const syncCanvasBitmapSize = (
+  canvas: HTMLCanvasElement,
+  nextWidth: number,
+  nextHeight: number
+): void => {
+  if (canvas.width === nextWidth && canvas.height === nextHeight) {
+    return;
+  }
+
+  canvas.width = nextWidth;
+  canvas.height = nextHeight;
+};
+
+const applyCanvasContextScale = (
+  ctx: CanvasRenderingContext2D,
+  scaleX: number,
+  scaleY: number,
+  dpr: number
+): void => {
+  if (typeof ctx.setTransform === 'function') {
+    ctx.setTransform(scaleX * dpr, 0, 0, scaleY * dpr, 0, 0);
+    return;
+  }
+
+  if (typeof ctx.resetTransform === 'function') {
+    ctx.resetTransform();
+  }
+  if (typeof ctx.scale === 'function') {
+    ctx.scale(scaleX * dpr, scaleY * dpr);
+  }
+};
+
 export const syncKangurCanvasContext = (
   canvas: HTMLCanvasElement,
   logicalWidth: number,
@@ -25,27 +60,14 @@ export const syncKangurCanvasContext = (
   if (!ctx) return null;
 
   const { width, height } = resolveRenderSize(canvas, logicalWidth, logicalHeight);
-  const dpr = typeof window !== 'undefined' ? window.devicePixelRatio || 1 : 1;
+  const dpr = resolveCanvasDevicePixelRatio();
   const nextWidth = Math.round(width * dpr);
   const nextHeight = Math.round(height * dpr);
-
-  if (canvas.width !== nextWidth || canvas.height !== nextHeight) {
-    canvas.width = nextWidth;
-    canvas.height = nextHeight;
-  }
+  syncCanvasBitmapSize(canvas, nextWidth, nextHeight);
 
   const scaleX = width / logicalWidth;
   const scaleY = height / logicalHeight;
-  if (typeof ctx.setTransform === 'function') {
-    ctx.setTransform(scaleX * dpr, 0, 0, scaleY * dpr, 0, 0);
-  } else {
-    if (typeof ctx.resetTransform === 'function') {
-      ctx.resetTransform();
-    }
-    if (typeof ctx.scale === 'function') {
-      ctx.scale(scaleX * dpr, scaleY * dpr);
-    }
-  }
+  applyCanvasContextScale(ctx, scaleX, scaleY, dpr);
   return ctx;
 };
 

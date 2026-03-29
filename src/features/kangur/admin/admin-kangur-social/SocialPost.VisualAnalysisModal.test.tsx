@@ -120,6 +120,30 @@ describe('SocialPostVisualAnalysisModal', () => {
       recentAddons: [recentAddon],
       visionModelId: 'vision-1',
       visionModelOptions: { effectiveModelId: 'vision-routing' },
+      currentVisualAnalysisJob: {
+        id: 'job-analysis-live-7',
+        status: 'active',
+        progress: {
+          message: 'Refreshing the image analysis.',
+        },
+        failedReason: null,
+      },
+      currentGenerationJob: {
+        id: 'job-generate-9',
+        status: 'waiting',
+        progress: {
+          message: 'Waiting to generate the post from the saved analysis.',
+        },
+        failedReason: null,
+      },
+      currentPipelineJob: {
+        id: 'job-pipeline-2',
+        status: 'active',
+        progress: {
+          message: 'Generating the PL/EN post from the saved visual analysis.',
+        },
+        failedReason: null,
+      },
     });
 
     render(<SocialPostVisualAnalysisModal />);
@@ -133,18 +157,24 @@ describe('SocialPostVisualAnalysisModal', () => {
     expect(screen.getByText('Persona: Teacher reviewer (teacher-persona)')).toBeInTheDocument();
     expect(screen.getByText('Route: Homepage route (homepage-route)')).toBeInTheDocument();
     expect(screen.getByText('Run: playwright-run-4')).toBeInTheDocument();
+    expect(screen.getByText('Image analysis: Running')).toBeInTheDocument();
     expect(screen.getByText('- Classroom card is larger')).toBeInTheDocument();
     expect(screen.getByText('- CTA is stronger')).toBeInTheDocument();
-    expect(screen.getByText('Status: Completed')).toBeInTheDocument();
+    expect(screen.getByText('Status: Running')).toBeInTheDocument();
     expect(screen.getByText('Model: vision-1')).toBeInTheDocument();
-    expect(screen.getByText('Queue job: job-analysis-7')).toBeInTheDocument();
+    expect(screen.getByText('Queue job: job-analysis-live-7')).toBeInTheDocument();
+    expect(screen.getByText('Generate post: Queued')).toBeInTheDocument();
+    expect(screen.getByText('Full pipeline: Running')).toBeInTheDocument();
     expect(screen.getByText(/Analyzed:/)).toBeInTheDocument();
+    expect(screen.queryByText('Suggested documentation updates')).not.toBeInTheDocument();
+    expect(screen.queryByText('No documentation updates suggested.')).not.toBeInTheDocument();
     expect(
       screen.getByText(
         'Analyze the selected visuals to produce a visual description first. Then use Generate post with analysis to combine that description with the current context in a separate AI pass.'
       )
     ).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Generate post with analysis' })).toBeEnabled();
+    expect(screen.getByRole('button', { name: 'Generate post in progress...' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Analyzing visuals...' })).toBeDisabled();
   });
 
   it('triggers analysis and generation actions from the modal controls', () => {
@@ -242,6 +272,7 @@ describe('SocialPostVisualAnalysisModal', () => {
     render(<SocialPostVisualAnalysisModal />);
 
     expect(screen.getByText('Status: Failed')).toBeInTheDocument();
+    expect(screen.getByText('Image analysis: Failed')).toBeInTheDocument();
     expect(screen.getByText(/Analyzed:/)).toBeInTheDocument();
     expect(screen.getByText('Model: vision-1')).toBeInTheDocument();
     expect(screen.getByText('Queue job: job-analysis-failed-1')).toBeInTheDocument();

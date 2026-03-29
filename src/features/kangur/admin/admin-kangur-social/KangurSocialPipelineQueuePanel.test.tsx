@@ -274,6 +274,96 @@ describe('KangurSocialPipelineQueuePanel', () => {
     });
   });
 
+  it('shows dedicated metadata for manual image-analysis and generation jobs', async () => {
+    apiGetMock
+      .mockResolvedValueOnce({
+        deliveryMode: 'queue',
+        workerState: 'idle',
+        redisAvailable: true,
+        workerLocal: true,
+        running: true,
+        healthy: true,
+        processing: false,
+        activeCount: 0,
+        waitingCount: 0,
+        failedCount: 0,
+        completedCount: 2,
+        lastPollTime: 0,
+        timeSinceLastPoll: 0,
+        isPaused: false,
+      })
+      .mockResolvedValueOnce([
+        {
+          id: 'job-analysis',
+          status: 'completed',
+          data: {
+            type: 'manual-post-visual-analysis',
+            input: {
+              postId: 'post-44',
+              imageAddonCount: 3,
+            },
+          },
+          progress: {
+            imageAddonCount: 3,
+            highlightCount: 2,
+          },
+          result: {
+            type: 'manual-post-visual-analysis',
+            postId: 'post-44',
+            imageAddonCount: 3,
+            highlightCount: 2,
+          },
+          failedReason: null,
+          processedOn: null,
+          finishedOn: null,
+          timestamp: Date.now(),
+          duration: 900,
+        },
+        {
+          id: 'job-generation',
+          status: 'completed',
+          data: {
+            type: 'manual-post-generation',
+            input: {
+              postId: 'post-45',
+              docReferenceCount: 4,
+              imageAddonCount: 2,
+            },
+          },
+          progress: {
+            docReferenceCount: 4,
+            imageAddonCount: 2,
+            visualSummaryPresent: true,
+            highlightCount: 1,
+          },
+          result: {
+            type: 'manual-post-generation',
+            postId: 'post-45',
+            imageAddonCount: 2,
+            saved: true,
+          },
+          failedReason: null,
+          processedOn: null,
+          finishedOn: null,
+          timestamp: Date.now() - 1_000,
+          duration: 1_100,
+        },
+      ]);
+
+    render(<KangurSocialPipelineQueuePanel />);
+
+    expect(await screen.findByText('Manual image analysis')).toBeInTheDocument();
+    expect(screen.getByText('Manual post generation')).toBeInTheDocument();
+    expect(screen.getByText('Post post-44')).toBeInTheDocument();
+    expect(screen.getByText('3 visuals')).toBeInTheDocument();
+    expect(screen.getByText('2 highlights')).toBeInTheDocument();
+    expect(screen.getByText('Post post-45')).toBeInTheDocument();
+    expect(screen.getByText('4 docs')).toBeInTheDocument();
+    expect(screen.getByText('2 visuals')).toBeInTheDocument();
+    expect(screen.getByText('Includes visual context')).toBeInTheDocument();
+    expect(screen.getByText('Saved to post')).toBeInTheDocument();
+  });
+
   it('shows idle queue state without the redis warning when recent jobs exist', async () => {
     apiGetMock
       .mockResolvedValueOnce({

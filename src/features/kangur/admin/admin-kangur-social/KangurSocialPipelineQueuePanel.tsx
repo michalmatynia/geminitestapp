@@ -9,6 +9,7 @@ import type { QueueHealthStatus } from '@/shared/contracts/jobs';
 import { safeClearTimeout, safeSetInterval, safeSetTimeout, type SafeTimerId } from '@/shared/lib/timers';
 
 import { KANGUR_ADMIN_CARD_CLASS_NAME, KangurAdminCard } from '../components/KangurAdminCard';
+import { SocialJobStatusPill } from './SocialJobStatusPill';
 
 const REFRESH_INTERVAL_MS = 10_000;
 const QUEUE_PANEL_REQUEST_TIMEOUT_MS = 60_000;
@@ -39,6 +40,12 @@ type PipelineJobRecord = {
     | unknown;
   progress: {
     captureMode?: 'existing_assets' | 'fresh_capture';
+    step?: string;
+    message?: string | null;
+    imageAddonCount?: number | null;
+    docReferenceCount?: number | null;
+    visualSummaryPresent?: boolean | null;
+    highlightCount?: number | null;
     requestedPresetCount?: number | null;
     usedPresetCount?: number | null;
     captureCompletedCount?: number | null;
@@ -54,6 +61,9 @@ type PipelineJobRecord = {
     reason?: string;
     addonsCreated?: number;
     failures?: number;
+    imageAddonCount?: number | null;
+    highlightCount?: number | null;
+    saved?: boolean | null;
     runId?: string;
   } | null;
   failedReason: string | null;
@@ -238,12 +248,10 @@ export function KangurSocialPipelineQueuePanel({
               Capture Queue
             </span>
             {status ? (
-              <Badge
-                variant={isRunning || isIdle || isPaused ? (isHealthy ? 'secondary' : 'outline') : 'outline'}
+              <SocialJobStatusPill
+                status={statusBadgeLabel}
                 className='text-[10px]'
-              >
-                {statusBadgeLabel}
-              </Badge>
+              />
             ) : null}
             {status && !isInlineMode ? (
               <span className='text-[10px] text-muted-foreground'>
@@ -298,9 +306,7 @@ export function KangurSocialPipelineQueuePanel({
           </div>
           <div className='flex items-center gap-2'>
             {status ? (
-              <Badge variant={isHealthy ? 'secondary' : 'outline'}>
-                {statusBadgeLabel}
-              </Badge>
+              <SocialJobStatusPill status={statusBadgeLabel} />
             ) : null}
             {(isRunning || isIdle || isPaused) && !isInlineMode ? (
               <Button
@@ -501,6 +507,12 @@ function renderJobRow({
     (job.data as { input?: { postId?: string | null } } | null)?.input?.postId ??
     job.result?.postId ??
     null;
+  const inputDocReferenceCount =
+    (job.data as { input?: { docReferenceCount?: number | null } } | null)?.input
+      ?.docReferenceCount ?? null;
+  const inputImageAddonCount =
+    (job.data as { input?: { imageAddonCount?: number | null } } | null)?.input
+      ?.imageAddonCount ?? null;
   const jobLabel =
     jobType === 'manual-post-pipeline'
       ? 'Manual post draft pipeline'
@@ -509,6 +521,20 @@ function renderJobRow({
         : jobType === 'manual-post-generation'
           ? 'Manual post generation'
           : 'Scheduled capture tick';
+  const visualAnalysisHighlightCount =
+    jobType === 'manual-post-visual-analysis'
+      ? (job.result?.highlightCount ?? job.progress?.highlightCount ?? null)
+      : null;
+  const generationVisualContextLabel =
+    jobType === 'manual-post-generation' &&
+    ((job.progress?.visualSummaryPresent ?? false) ||
+      ((job.progress?.highlightCount ?? 0) > 0))
+      ? 'Includes visual context'
+      : null;
+  const generationSavedLabel =
+    jobType === 'manual-post-generation' && job.result?.saved
+      ? 'Saved to post'
+      : null;
   const captureMode = job.progress?.captureMode ?? job.result?.captureMode ?? null;
   const captureModeLabel =
     captureMode === 'fresh_capture'
@@ -539,6 +565,17 @@ function renderJobRow({
       : null;
   const jobMeta = [
     postId ? `Post ${postId}` : null,
+    inputDocReferenceCount != null && inputDocReferenceCount > 0
+      ? `${inputDocReferenceCount} doc${inputDocReferenceCount === 1 ? '' : 's'}`
+      : null,
+    inputImageAddonCount != null && inputImageAddonCount > 0
+      ? `${inputImageAddonCount} visual${inputImageAddonCount === 1 ? '' : 's'}`
+      : null,
+    visualAnalysisHighlightCount != null && visualAnalysisHighlightCount > 0
+      ? `${visualAnalysisHighlightCount} highlight${visualAnalysisHighlightCount === 1 ? '' : 's'}`
+      : null,
+    generationVisualContextLabel,
+    generationSavedLabel,
     captureModeLabel,
     presetUsageLabel,
     liveCaptureLabel,
@@ -559,9 +596,7 @@ function renderJobRow({
   return (
     <tr className='border-b border-border/20'>
       <td className='py-1.5 pr-3'>
-        <Badge variant={statusVariant} className='text-[10px]'>
-          {statusLabel}
-        </Badge>
+        <SocialJobStatusPill status={statusLabel} className='text-[10px]' />
       </td>
       <td className='py-1.5 pr-3'>
         <div className='font-medium text-foreground'>{jobLabel}</div>

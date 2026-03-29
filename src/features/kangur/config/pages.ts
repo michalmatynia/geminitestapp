@@ -5,8 +5,6 @@ import dynamic from 'next/dynamic';
 import { createElement, type ComponentType, type ReactElement } from 'react';
 
 import { KangurRouteLoadingFallback } from '@/features/kangur/ui/components/KangurRouteLoadingFallback';
-import Game from '@/features/kangur/ui/pages/Game';
-import Lessons from '@/features/kangur/ui/pages/Lessons';
 
 const KangurLazyPageLoadingFallback =
   KangurRouteLoadingFallback as ComponentType<{ includeTopNavigationSkeleton?: boolean }>;
@@ -33,11 +31,11 @@ const lazyPage = (
 
 const kangurPageLoaders = {
   Competition: () => import('@/features/kangur/ui/pages/Competition'),
-  Game: async () => ({ default: Game }),
+  Game: () => import('@/features/kangur/ui/pages/Game'),
   GamesLibrary: () => import('@/features/kangur/ui/pages/GamesLibrary'),
   Duels: () => import('@/features/kangur/ui/pages/Duels'),
   LearnerProfile: () => import('@/features/kangur/ui/pages/LearnerProfile'),
-  Lessons: async () => ({ default: Lessons }),
+  Lessons: () => import('@/features/kangur/ui/pages/Lessons'),
   ParentDashboard: () => import('@/features/kangur/ui/pages/ParentDashboard'),
   SocialUpdates: () => import('@/features/kangur/ui/pages/SocialUpdates'),
   Tests: () => import('@/features/kangur/ui/pages/Tests'),
@@ -45,11 +43,11 @@ const kangurPageLoaders = {
 
 export const kangurPages: Readonly<Record<string, ComponentType>> = Object.freeze({
   Competition: lazyPage(kangurPageLoaders.Competition),
-  Game,
+  Game: lazyPage(kangurPageLoaders.Game, { includeTopNavigationSkeleton: false }),
   GamesLibrary: lazyPage(kangurPageLoaders.GamesLibrary),
   Duels: lazyPage(kangurPageLoaders.Duels),
   LearnerProfile: lazyPage(kangurPageLoaders.LearnerProfile),
-  Lessons,
+  Lessons: lazyPage(kangurPageLoaders.Lessons),
   ParentDashboard: lazyPage(kangurPageLoaders.ParentDashboard),
   SocialUpdates: lazyPage(kangurPageLoaders.SocialUpdates),
   Tests: lazyPage(kangurPageLoaders.Tests),

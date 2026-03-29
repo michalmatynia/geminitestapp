@@ -21,6 +21,8 @@ let getVisibleProgressBadges: typeof import('./progress').getVisibleProgressBadg
 let getMasteredLessonCount: typeof import('./progress').getMasteredLessonCount;
 let loadProgress: typeof import('./progress').loadProgress;
 let mergeProgressStates: typeof import('./progress').mergeProgressStates;
+let recordKangurLessonPanelProgress: typeof import('./progress').recordKangurLessonPanelProgress;
+let recordKangurLessonPanelTime: typeof import('./progress').recordKangurLessonPanelTime;
 let saveProgress: typeof import('./progress').saveProgress;
 let setProgressOwnerKey: typeof import('./progress').setProgressOwnerKey;
 
@@ -72,6 +74,8 @@ describe('kangur progress mastery helpers', () => {
       getMasteredLessonCount,
       loadProgress,
       mergeProgressStates,
+      recordKangurLessonPanelProgress,
+      recordKangurLessonPanelTime,
       saveProgress,
       setProgressOwnerKey,
     } = await vi.importActual<typeof import('./progress')>('./progress'));
@@ -105,6 +109,74 @@ describe('kangur progress mastery helpers', () => {
     expect(loadProgress({ ownerKey: 'learner-2' }).totalXp).toBe(5);
   });
 
+  it('records lesson panel progress without reducing prior progress', () => {
+    saveProgress(createDefaultKangurProgressState());
+
+    recordKangurLessonPanelProgress({
+      lessonKey: 'clock',
+      sectionId: 'hours',
+      viewedCount: 2,
+      totalCount: 5,
+      label: 'Hours',
+      viewedAt: '2026-03-20T10:00:00.000Z',
+    });
+    recordKangurLessonPanelProgress({
+      lessonKey: 'clock',
+      sectionId: 'hours',
+      viewedCount: 1,
+      totalCount: 4,
+      viewedAt: '2026-03-20T11:00:00.000Z',
+    });
+
+    expect(loadProgress().lessonPanelProgress?.clock?.hours).toEqual({
+      viewedCount: 2,
+      totalCount: 5,
+      label: 'Hours',
+      lastViewedAt: '2026-03-20T10:00:00.000Z',
+      sessionStartedAt: null,
+      sessionUpdatedAt: null,
+    });
+  });
+
+  it('records lesson panel time per session and preserves session start for the same session', () => {
+    saveProgress(createDefaultKangurProgressState());
+
+    recordKangurLessonPanelTime({
+      lessonKey: 'clock',
+      sectionId: 'hours',
+      panelId: 'panel-a',
+      seconds: 12,
+      panelTitle: 'Panel A',
+      sessionId: 'session-1',
+      sessionStartedAt: '2026-03-20T10:00:00.000Z',
+      sessionUpdatedAt: '2026-03-20T10:00:12.000Z',
+    });
+    recordKangurLessonPanelTime({
+      lessonKey: 'clock',
+      sectionId: 'hours',
+      panelId: 'panel-a',
+      seconds: 9,
+      sessionId: 'session-1',
+      sessionStartedAt: '2026-03-20T10:00:05.000Z',
+      sessionUpdatedAt: '2026-03-20T10:00:20.000Z',
+    });
+
+    expect(loadProgress().lessonPanelProgress?.clock?.hours).toEqual({
+      viewedCount: 0,
+      totalCount: 0,
+      lastViewedAt: null,
+      panelTimes: {
+        'panel-a': {
+          seconds: 12,
+          title: 'Panel A',
+        },
+      },
+      sessionId: 'session-1',
+      sessionStartedAt: '2026-03-20T10:00:00.000Z',
+      sessionUpdatedAt: '2026-03-20T10:00:20.000Z',
+    });
+  });
+
   it('builds a lesson mastery entry from a completed lesson attempt', () => {
     const progress = createDefaultKangurProgressState();
 
@@ -134,6 +206,14 @@ describe('kangur progress mastery helpers', () => {
         translate: translateDeProgressMessage,
       })
     ).toBe('Lektion: Diatonische Tonleiter');
+  });
+
+  it('localizes clock training activity labels through the progress runtime translator', () => {
+    expect(
+      formatKangurProgressActivityLabel('training:clock:hours', {
+        translate: translateDeProgressMessage,
+      })
+    ).toBe('Uhrtraining: Stunden');
   });
 
   it('creates a standard lesson practice reward with mastery and lesson completion updates', () => {

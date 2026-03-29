@@ -21,6 +21,7 @@ import {
 } from './AdminKangurSocialPage.Constants';
 import { SocialPostEditor } from './SocialPost.Editor';
 import { SocialPostImagesPanel } from './SocialPost.ImagesPanel';
+import { SocialJobStatusPill } from './SocialJobStatusPill';
 import { useSocialPostContext } from './SocialPostContext';
 
 const resolvePostTitle = (
@@ -57,6 +58,9 @@ export function SocialPostEditorModal({
     handlePublish,
     patchMutation,
     publishMutation,
+    currentPipelineJob,
+    currentGenerationJob,
+    currentVisualAnalysisJob,
     imageAssets,
     handleRemoveImage,
     setShowMediaLibrary,
@@ -74,6 +78,27 @@ export function SocialPostEditorModal({
 
   const isSavingDraft = patchMutation.isPending && !publishMutation.isPending;
   const isSubmitting = patchMutation.isPending || publishMutation.isPending;
+  const currentVisualAnalysisJobTitle = [
+    currentVisualAnalysisJob?.progress?.message ?? null,
+    currentVisualAnalysisJob?.failedReason ?? null,
+    currentVisualAnalysisJob?.id ? `Queue job: ${currentVisualAnalysisJob.id}` : null,
+  ]
+    .filter((value): value is string => Boolean(value))
+    .join(' · ');
+  const currentGenerationJobTitle = [
+    currentGenerationJob?.progress?.message ?? null,
+    currentGenerationJob?.failedReason ?? null,
+    currentGenerationJob?.id ? `Queue job: ${currentGenerationJob.id}` : null,
+  ]
+    .filter((value): value is string => Boolean(value))
+    .join(' · ');
+  const currentPipelineJobTitle = [
+    currentPipelineJob?.progress?.message ?? null,
+    currentPipelineJob?.failedReason ?? null,
+    currentPipelineJob?.id ? `Queue job: ${currentPipelineJob.id}` : null,
+  ]
+    .filter((value): value is string => Boolean(value))
+    .join(' · ');
   const modalActions = activePost ? (
     <>
       {imageAssets.length > 0 ? (
@@ -81,6 +106,30 @@ export function SocialPostEditorModal({
           {imageAssets.length} image
           {imageAssets.length === 1 ? '' : 's'}
         </Badge>
+      ) : null}
+      {currentVisualAnalysisJob?.status ? (
+        <SocialJobStatusPill
+          status={currentVisualAnalysisJob.status}
+          label='Image analysis'
+          title={currentVisualAnalysisJobTitle || undefined}
+          className='text-[10px]'
+        />
+      ) : null}
+      {currentGenerationJob?.status ? (
+        <SocialJobStatusPill
+          status={currentGenerationJob.status}
+          label='Generate post'
+          title={currentGenerationJobTitle || undefined}
+          className='text-[10px]'
+        />
+      ) : null}
+      {currentPipelineJob?.status ? (
+        <SocialJobStatusPill
+          status={currentPipelineJob.status}
+          label='Full pipeline'
+          title={currentPipelineJobTitle || undefined}
+          className='text-[10px]'
+        />
       ) : null}
       <Button
         type='button'

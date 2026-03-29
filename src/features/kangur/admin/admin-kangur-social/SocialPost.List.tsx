@@ -23,6 +23,7 @@ import {
   statusLabel,
 } from './AdminKangurSocialPage.Constants';
 import { KANGUR_ADMIN_CARD_CLASS_NAME } from '../components/KangurAdminCard';
+import { SocialJobStatusPill } from './SocialJobStatusPill';
 import { useSocialPostContext } from './SocialPostContext';
 
 const PAGE_SIZE = 8;
@@ -48,12 +49,6 @@ const buildSearchText = (post: KangurSocialPost): string =>
     post.combinedBody,
     post.visualSummary,
     ...(post.visualHighlights ?? []),
-    ...(post.visualDocUpdates ?? []).flatMap((update) => [
-      update.docPath,
-      update.section,
-      update.reason,
-      update.proposedText,
-    ]),
     post.visualAnalysisModelId,
     post.visualAnalysisJobId,
     post.linkedinPostId,
@@ -74,6 +69,9 @@ export function SocialPostList(): React.JSX.Element {
     handleUnpublishPost,
     publishingPostId,
     unpublishingPostId,
+    currentPipelineJob,
+    currentGenerationJob,
+    currentVisualAnalysisJob,
     setPostToDelete,
     setPostToUnpublish,
     clearDeleteError,
@@ -194,25 +192,48 @@ export function SocialPostList(): React.JSX.Element {
           {paginatedPosts.map((post) => {
           const title = post.titlePl || post.titleEn || 'Untitled update';
           const isActive = activePostId === post.id;
+          const activeVisualAnalysisJob = isActive ? currentVisualAnalysisJob : null;
           const hasVisualAnalysis =
             Boolean(post.visualSummary?.trim()) ||
             (post.visualHighlights?.length ?? 0) > 0 ||
-            (post.visualDocUpdates?.length ?? 0) > 0 ||
             Boolean(post.visualAnalysisStatus);
-          const visualAnalysisStatus = post.visualAnalysisStatus ?? null;
-          const visualAnalysisStatusLabel =
-            visualAnalysisStatus === 'queued'
-              ? 'Analysis queued'
-              : visualAnalysisStatus === 'running'
-                ? 'Analysis running'
-                : visualAnalysisStatus === 'failed'
-                  ? 'Analysis failed'
-                  : 'Image analysis';
+          const visualAnalysisStatus =
+            activeVisualAnalysisJob?.status ?? post.visualAnalysisStatus ?? null;
           const visualHighlightCount = post.visualHighlights?.length ?? 0;
-          const visualDocUpdateCount = post.visualDocUpdates?.length ?? 0;
+          const visualAnalysisPillStatus = visualAnalysisStatus ?? 'completed';
+          const visualAnalysisJobId =
+            activeVisualAnalysisJob?.id?.trim() ?? post.visualAnalysisJobId?.trim() ?? '';
+          const visualAnalysisPillTitle = [
+            activeVisualAnalysisJob?.progress?.message ?? null,
+            activeVisualAnalysisJob?.failedReason ?? null,
+            visualAnalysisJobId ? `Queue job: ${visualAnalysisJobId}` : null,
+          ]
+            .filter((value): value is string => Boolean(value))
+            .join(' · ');
           const pipelineSelectionLabel = isActive
             ? `${title} is active for pipeline`
             : `Select ${title} for pipeline`;
+          const currentVisualAnalysisJobTitle = [
+            currentVisualAnalysisJob?.progress?.message ?? null,
+            currentVisualAnalysisJob?.failedReason ?? null,
+            currentVisualAnalysisJob?.id ? `Queue job: ${currentVisualAnalysisJob.id}` : null,
+          ]
+            .filter((value): value is string => Boolean(value))
+            .join(' · ');
+          const currentGenerationJobTitle = [
+            currentGenerationJob?.progress?.message ?? null,
+            currentGenerationJob?.failedReason ?? null,
+            currentGenerationJob?.id ? `Queue job: ${currentGenerationJob.id}` : null,
+          ]
+            .filter((value): value is string => Boolean(value))
+            .join(' · ');
+          const currentPipelineJobTitle = [
+            currentPipelineJob?.progress?.message ?? null,
+            currentPipelineJob?.failedReason ?? null,
+            currentPipelineJob?.id ? `Queue job: ${currentPipelineJob.id}` : null,
+          ]
+            .filter((value): value is string => Boolean(value))
+            .join(' · ');
           const handleOpen = (): void => {
             setActivePostId(post.id);
             handleOpenPostEditor?.(post.id);
@@ -272,7 +293,12 @@ export function SocialPostList(): React.JSX.Element {
                     </div>
                     {hasVisualAnalysis ? (
                       <div className='mt-1 flex flex-wrap items-center gap-2'>
-                        <Badge variant='outline'>{visualAnalysisStatusLabel}</Badge>
+                        <SocialJobStatusPill
+                          status={visualAnalysisPillStatus}
+                          label='Image analysis'
+                          className='text-[10px]'
+                          title={visualAnalysisPillTitle || undefined}
+                        />
                         {post.visualAnalysisUpdatedAt ? (
                           <span>
                             Analyzed {formatDatetimeDisplay(post.visualAnalysisUpdatedAt) || '—'}
@@ -281,8 +307,8 @@ export function SocialPostList(): React.JSX.Element {
                         {post.visualAnalysisModelId ? (
                           <span>Model: {post.visualAnalysisModelId}</span>
                         ) : null}
-                        {post.visualAnalysisJobId ? (
-                          <span>Job: {post.visualAnalysisJobId}</span>
+                        {visualAnalysisJobId ? (
+                          <span>Job: {visualAnalysisJobId}</span>
                         ) : null}
                         {visualHighlightCount > 0 ? (
                           <span>
@@ -290,11 +316,37 @@ export function SocialPostList(): React.JSX.Element {
                             {visualHighlightCount === 1 ? '' : 's'}
                           </span>
                         ) : null}
-                        {visualDocUpdateCount > 0 ? (
-                          <span>
-                            {visualDocUpdateCount} doc update
-                            {visualDocUpdateCount === 1 ? '' : 's'}
-                          </span>
+                      </div>
+                    ) : null}
+                    {isActive &&
+                    (currentVisualAnalysisJob?.status ||
+                      currentGenerationJob?.status ||
+                      currentPipelineJob?.status) ? (
+                      <div className='mt-1 flex flex-wrap items-center gap-2'>
+                        <span className='font-medium text-foreground/80'>Runtime jobs:</span>
+                        {currentVisualAnalysisJob?.status ? (
+                          <SocialJobStatusPill
+                            status={currentVisualAnalysisJob.status}
+                            label='Image analysis'
+                            className='text-[10px]'
+                            title={currentVisualAnalysisJobTitle || undefined}
+                          />
+                        ) : null}
+                        {currentGenerationJob?.status ? (
+                          <SocialJobStatusPill
+                            status={currentGenerationJob.status}
+                            label='Generate post'
+                            className='text-[10px]'
+                            title={currentGenerationJobTitle || undefined}
+                          />
+                        ) : null}
+                        {currentPipelineJob?.status ? (
+                          <SocialJobStatusPill
+                            status={currentPipelineJob.status}
+                            label='Full pipeline'
+                            className='text-[10px]'
+                            title={currentPipelineJobTitle || undefined}
+                          />
                         ) : null}
                       </div>
                     ) : null}

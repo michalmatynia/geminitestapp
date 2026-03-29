@@ -4,6 +4,7 @@ import type { ListQuery, MutationResult } from '@/shared/contracts/ui';
 import {
   kangurSocialPublishModeSchema,
   kangurSocialPostsSchema,
+  normalizeKangurSocialPost,
   type KangurSocialGeneratedDraft,
   type KangurSocialPost,
   type KangurSocialPublishMode,
@@ -34,7 +35,7 @@ export const fetchKangurSocialPosts = async (
     },
     timeout: SOCIAL_POSTS_QUERY_TIMEOUT_MS,
   });
-  return kangurSocialPostsSchema.parse(payload);
+  return kangurSocialPostsSchema.parse(payload).map((post) => normalizeKangurSocialPost(post));
 };
 
 export const useKangurSocialPosts = (

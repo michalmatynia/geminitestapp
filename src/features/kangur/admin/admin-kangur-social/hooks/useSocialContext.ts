@@ -12,6 +12,18 @@ import {
 import { api } from '@/shared/lib/api-client';
 import type { KangurSocialPost } from '@/shared/contracts/kangur-social-posts';
 
+const MAX_PERSISTED_CONTEXT_SUMMARY_CHARS = 8000;
+
+const normalizeLoadedContextSummary = (value: string | null | undefined): string | null => {
+  const trimmed = value?.trim() ?? '';
+  if (!trimmed) return null;
+  if (trimmed.length <= MAX_PERSISTED_CONTEXT_SUMMARY_CHARS) {
+    return trimmed;
+  }
+
+  return trimmed.slice(0, MAX_PERSISTED_CONTEXT_SUMMARY_CHARS).trimEnd();
+};
+
 type SocialContextDeps = {
   activePost: KangurSocialPost | null;
   resolveDocReferences: () => string[];
@@ -75,7 +87,9 @@ export function useSocialContext(deps: SocialContextDeps) {
           summary?: string;
           docCount?: number;
         };
-        const summary = contextData.context ?? contextData.summary ?? null;
+        const summary = normalizeLoadedContextSummary(
+          contextData.summary ?? contextData.context ?? null
+        );
         if (!summary) {
           if (notify) {
             toast('No documentation context found', { variant: 'warning' });

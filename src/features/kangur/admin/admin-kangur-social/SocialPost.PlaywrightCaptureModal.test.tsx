@@ -100,6 +100,7 @@ vi.mock('@/features/kangur/shared/ui', () => ({
       ))}
     </select>
   ),
+  Badge: ({ children }: { children: React.ReactNode }) => <span>{children}</span>,
   LoadingState: ({ message }: { message?: string }) => <div role='status'>{message}</div>,
 }));
 
@@ -164,6 +165,18 @@ describe('SocialPostPlaywrightCaptureModal', () => {
       handleRunProgrammablePlaywrightCapture: vi.fn(),
       handleRunProgrammablePlaywrightCaptureAndPipeline: vi.fn(),
       canGenerateSocialDraft: true,
+      currentGenerationJob: {
+        id: 'job-generate-2',
+        status: 'waiting',
+        progress: { message: 'Waiting for the post generation worker.' },
+        failedReason: null,
+      },
+      currentPipelineJob: {
+        id: 'job-pipeline-9',
+        status: 'active',
+        progress: { message: 'Generating the post after programmable capture.' },
+        failedReason: null,
+      },
       socialDraftBlockedReason: null,
     });
 
@@ -192,6 +205,8 @@ describe('SocialPostPlaywrightCaptureModal', () => {
     expect(
       screen.getByText(/"url": "https:\/\/example.com\/pricing\?kangurCapture=social-batch"/)
     ).toBeInTheDocument();
+    expect(screen.getByText('Generate post: Queued')).toBeInTheDocument();
+    expect(screen.getByText('Full pipeline: Running')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Capture programmable images' })).toBeEnabled();
     expect(screen.getByRole('button', { name: 'Capture + run pipeline' })).toBeEnabled();
   });
@@ -245,6 +260,8 @@ describe('SocialPostPlaywrightCaptureModal', () => {
       handleRunProgrammablePlaywrightCapture,
       handleRunProgrammablePlaywrightCaptureAndPipeline,
       canGenerateSocialDraft: true,
+      currentGenerationJob: null,
+      currentPipelineJob: null,
       socialDraftBlockedReason: null,
     });
 
@@ -313,6 +330,8 @@ describe('SocialPostPlaywrightCaptureModal', () => {
       handleRunProgrammablePlaywrightCapture: vi.fn(),
       handleRunProgrammablePlaywrightCaptureAndPipeline: vi.fn(),
       canGenerateSocialDraft: false,
+      currentGenerationJob: null,
+      currentPipelineJob: null,
       socialDraftBlockedReason:
         'Choose a StudiQ Social post model before running capture and pipeline.',
     });
@@ -375,6 +394,8 @@ describe('SocialPostPlaywrightCaptureModal', () => {
       handleRunProgrammablePlaywrightCapture: vi.fn(),
       handleRunProgrammablePlaywrightCaptureAndPipeline: vi.fn(),
       canGenerateSocialDraft: true,
+      currentGenerationJob: null,
+      currentPipelineJob: null,
       socialDraftBlockedReason: null,
     });
 

@@ -143,6 +143,51 @@ const kangurLessonInsetVariants = cva(
 type KangurLessonInsetProps = React.HTMLAttributes<HTMLDivElement> &
   VariantProps<typeof kangurLessonInsetVariants>;
 
+const resolveLessonVisualFrameClassName = (
+  center: boolean,
+  className: string | undefined
+): string => cn('kangur-lesson-visual-frame w-full', center ? 'text-center' : 'text-left', className);
+
+const resolveLessonVisualContentClassName = (input: {
+  center: boolean;
+  hasSupportingContent: boolean;
+  maxWidthClassName: string;
+  visualClassName: string | undefined;
+}): string =>
+  cn(
+    input.center ? 'mx-auto w-full' : 'w-full',
+    input.maxWidthClassName,
+    input.hasSupportingContent
+      ? 'grid items-start gap-4 xl:grid-cols-[minmax(0,1.45fr)_minmax(16rem,0.95fr)]'
+      : '',
+    input.visualClassName
+  );
+
+function KangurLessonVisualCaptionSlot(props: {
+  caption: React.ReactNode;
+  className: string;
+}): React.JSX.Element {
+  return <KangurLessonCaption className={props.className}>{props.caption}</KangurLessonCaption>;
+}
+
+function KangurLessonVisualSupportingSlot(props: {
+  accent: KangurLessonVisualProps['accent'];
+  supportingClassName: string | undefined;
+  supportingContent: React.ReactNode;
+}): React.JSX.Element {
+  return (
+    <div
+      className={cn(
+        'kangur-lesson-visual-supporting min-w-0 border-t pt-4 text-left text-sm [color:var(--kangur-page-text)] xl:border-l xl:border-t-0 xl:pl-5 xl:pt-0',
+        props.accent ? KANGUR_LESSON_BORDER_ACCENT_CLASSNAMES[props.accent] : null,
+        props.supportingClassName
+      )}
+    >
+      {props.supportingContent}
+    </div>
+  );
+}
+
 export function KangurLessonCallout({
   accent,
   padding,
@@ -171,39 +216,31 @@ export function KangurLessonVisual({
   const hasSupportingContent = Boolean(supportingContent);
 
   return (
-    <div
-      className={cn('kangur-lesson-visual-frame w-full', center ? 'text-center' : 'text-left', className)}
-      {...props}
-    >
+    <div className={resolveLessonVisualFrameClassName(center, className)} {...props}>
       <div
-        className={cn(
-          center ? 'mx-auto w-full' : 'w-full',
+        className={resolveLessonVisualContentClassName({
+          center,
+          hasSupportingContent,
           maxWidthClassName,
-          hasSupportingContent
-            ? 'grid items-start gap-4 xl:grid-cols-[minmax(0,1.45fr)_minmax(16rem,0.95fr)]'
-            : '',
-          visualClassName
-        )}
+          visualClassName,
+        })}
       >
         <div className='min-w-0'>
           {children}
-          {caption ? (
-            <KangurLessonCaption className={resolvedCaptionClassName}>
-              {caption}
-            </KangurLessonCaption>
-          ) : null}
+          {caption && (
+            <KangurLessonVisualCaptionSlot
+              caption={caption}
+              className={resolvedCaptionClassName}
+            />
+          )}
         </div>
-        {hasSupportingContent ? (
-          <div
-            className={cn(
-              'kangur-lesson-visual-supporting min-w-0 border-t pt-4 text-left text-sm [color:var(--kangur-page-text)] xl:border-l xl:border-t-0 xl:pl-5 xl:pt-0',
-              accent ? KANGUR_LESSON_BORDER_ACCENT_CLASSNAMES[accent] : null,
-              supportingClassName
-            )}
-          >
-            {supportingContent}
-          </div>
-        ) : null}
+        {supportingContent && (
+          <KangurLessonVisualSupportingSlot
+            accent={accent}
+            supportingClassName={supportingClassName}
+            supportingContent={supportingContent}
+          />
+        )}
       </div>
     </div>
   );

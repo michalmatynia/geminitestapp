@@ -73,66 +73,99 @@ const resolveActivityTokenLabel = (
     translate: localizer?.translate,
   });
 
+const formatActivityLabelByKind = (
+  kind: 'game' | 'lesson_practice' | 'lesson_completion' | 'training',
+  label: string,
+  translate: KangurProgressLocalizer['translate']
+): string => {
+  switch (kind) {
+    case 'game':
+      return translateKangurProgressWithFallback(
+        translate,
+        'activityKinds.game',
+        `Gra: ${label}`,
+        { label }
+      );
+    case 'lesson_practice':
+      return translateKangurProgressWithFallback(
+        translate,
+        'activityKinds.lessonPractice',
+        `Ćwiczenie: ${label}`,
+        { label }
+      );
+    case 'lesson_completion':
+      return translateKangurProgressWithFallback(
+        translate,
+        'activityKinds.lessonCompletion',
+        `Lekcja: ${label}`,
+        { label }
+      );
+    case 'training':
+    default:
+      return translateKangurProgressWithFallback(
+        translate,
+        'activityKinds.training',
+        `Trening: ${label}`,
+        { label }
+      );
+  }
+};
+
+const formatClockTrainingActivityLabel = (
+  rawSecondary: string,
+  localizer?: KangurProgressLocalizer
+): string => {
+  const translate = localizer?.translate;
+  const sectionLabel = getLocalizedKangurClockSectionLabel({
+    token: rawSecondary,
+    fallback:
+      CLOCK_TRAINING_SECTION_LABELS[rawSecondary] ??
+      resolveActivityTokenLabel(rawSecondary, localizer),
+    translate,
+  });
+  return translateKangurProgressWithFallback(
+    translate,
+    'activityKinds.clockTraining',
+    `Trening zegara: ${sectionLabel}`,
+    { label: sectionLabel }
+  );
+};
+
+const formatTrainingActivityLabel = (
+  rawPrimary: string,
+  rawSecondary: string,
+  primary: string,
+  localizer?: KangurProgressLocalizer
+): string =>
+  rawPrimary === 'clock'
+    ? formatClockTrainingActivityLabel(rawSecondary, localizer)
+    : formatActivityLabelByKind('training', primary, localizer?.translate);
+
+const DIRECT_ACTIVITY_LABEL_KIND_MAP = {
+  game: 'game',
+  lesson_practice: 'lesson_practice',
+  lesson_completion: 'lesson_completion',
+} as const;
+
+type DirectActivityLabelKind = keyof typeof DIRECT_ACTIVITY_LABEL_KIND_MAP;
+
+const resolveDirectActivityLabelKind = (kind: string): DirectActivityLabelKind | null =>
+  kind in DIRECT_ACTIVITY_LABEL_KIND_MAP ? (kind as DirectActivityLabelKind) : null;
+
 export const formatKangurProgressActivityLabel = (
   activityKey: string,
   localizer?: KangurProgressLocalizer
 ): string => {
   const [kind = '', rawPrimary = '', rawSecondary = ''] = activityKey.split(':');
   const primary = resolveActivityTokenLabel(rawPrimary, localizer);
-  const translate = localizer?.translate;
+  const directKind = resolveDirectActivityLabelKind(kind);
 
-  if (kind === 'game') {
-    return translateKangurProgressWithFallback(
-      translate,
-      'activityKinds.game',
-      `Gra: ${primary}`,
-      { label: primary }
-    );
+  if (directKind) {
+    return formatActivityLabelByKind(directKind, primary, localizer?.translate);
   }
-
-  if (kind === 'lesson_practice') {
-    return translateKangurProgressWithFallback(
-      translate,
-      'activityKinds.lessonPractice',
-      `Ćwiczenie: ${primary}`,
-      { label: primary }
-    );
-  }
-
   if (kind === 'training') {
-    if (rawPrimary === 'clock') {
-      const sectionLabel = getLocalizedKangurClockSectionLabel({
-        token: rawSecondary,
-        fallback:
-          CLOCK_TRAINING_SECTION_LABELS[rawSecondary] ??
-          resolveActivityTokenLabel(rawSecondary, localizer),
-        translate,
-      });
-      return translateKangurProgressWithFallback(
-        translate,
-        'activityKinds.clockTraining',
-        `Trening zegara: ${sectionLabel}`,
-        { label: sectionLabel }
-      );
-    }
-
-    return translateKangurProgressWithFallback(
-      translate,
-      'activityKinds.training',
-      `Trening: ${primary}`,
-      { label: primary }
-    );
+    return formatTrainingActivityLabel(rawPrimary, rawSecondary, primary, localizer);
   }
-
-  if (kind === 'lesson_completion') {
-    return translateKangurProgressWithFallback(
-      translate,
-      'activityKinds.lessonCompletion',
-      `Lekcja: ${primary}`,
-      { label: primary }
-    );
-  }
-
   return resolveActivityTokenLabel(activityKey, localizer);
 };
 
@@ -471,125 +504,346 @@ type KangurLessonPanelTimeInput = {
   sessionUpdatedAt?: string | null;
 };
 
+type KangurLessonPanelProgressMap = NonNullable<KangurProgressState['lessonPanelProgress']>;
+type KangurLessonPanelSectionMap = KangurLessonPanelProgressMap[string];
+type KangurLessonPanelSectionState = KangurLessonPanelSectionMap[string];
+type KangurLessonPanelTimes = NonNullable<KangurLessonPanelSectionState['panelTimes']>;
+
+type NormalizedLessonPanelProgressInput = {
+  label?: string;
+  lastViewedAt: string;
+  lessonKey: string;
+  sectionId: string;
+  totalCount: number;
+  viewedCount: number;
+};
+
+type NormalizedLessonPanelTimeInput = {
+  lessonKey: string;
+  panelId: string;
+  panelTitle?: string;
+  seconds: number;
+  sectionId: string;
+  sessionId: string;
+  sessionStartedAt: string;
+  sessionUpdatedAt: string;
+};
+
+const resolveRequiredLessonPanelKeys = (
+  lessonKey: string,
+  sectionId: string
+): { lessonKey: string; sectionId: string } | null => {
+  const normalizedLessonKey = lessonKey.trim();
+  const normalizedSectionId = sectionId.trim();
+  if (!normalizedLessonKey || !normalizedSectionId) {
+    return null;
+  }
+
+  return {
+    lessonKey: normalizedLessonKey,
+    sectionId: normalizedSectionId,
+  };
+};
+
+const normalizeLessonPanelCount = (value: number): number => Math.max(0, Math.floor(value));
+
+const resolveViewedCount = (viewedCount: number, totalCount: number): number =>
+  Math.min(Math.max(normalizeLessonPanelCount(viewedCount), 0), totalCount);
+
+const resolveRequiredLessonPanelTimeIds = (
+  panelId: string,
+  sessionId: string
+): { panelId: string; sessionId: string } | null => {
+  const normalizedPanelId = panelId.trim();
+  const normalizedSessionId = sessionId.trim();
+  if (!normalizedPanelId || !normalizedSessionId) {
+    return null;
+  }
+
+  return {
+    panelId: normalizedPanelId,
+    sessionId: normalizedSessionId,
+  };
+};
+
+const normalizeLessonPanelSeconds = (seconds: number): number =>
+  Math.max(0, Math.round(seconds));
+
+const normalizeLessonPanelTimestamp = (
+  value: string | null | undefined,
+  fallback: string
+): string => value?.trim() || fallback;
+
+const resolveLessonPanelSectionState = (input: {
+  progress: KangurProgressState;
+  lessonKey: string;
+  sectionId: string;
+}): {
+  existingLesson: KangurLessonPanelSectionMap;
+  existingSection: KangurLessonPanelSectionState | undefined;
+} => {
+  const existingLesson = input.progress.lessonPanelProgress?.[input.lessonKey] ?? {};
+  return {
+    existingLesson,
+    existingSection: existingLesson[input.sectionId],
+  };
+};
+
+const saveLessonPanelSectionState = (input: {
+  progress: KangurProgressState;
+  lessonKey: string;
+  sectionId: string;
+  existingLesson: KangurLessonPanelSectionMap;
+  nextSection: KangurLessonPanelSectionState;
+  options?: KangurProgressStorageOptions;
+}): void => {
+  saveProgress(
+    normalizeKangurProgressState({
+      ...input.progress,
+      lessonPanelProgress: {
+        ...(input.progress.lessonPanelProgress ?? {}),
+        [input.lessonKey]: {
+          ...input.existingLesson,
+          [input.sectionId]: input.nextSection,
+        },
+      },
+    }),
+    input.options
+  );
+};
+
+const normalizeLessonPanelProgressInput = (
+  input: KangurLessonPanelProgressInput
+): NormalizedLessonPanelProgressInput | null => {
+  const keys = resolveRequiredLessonPanelKeys(input.lessonKey, input.sectionId);
+  if (!keys) {
+    return null;
+  }
+
+  const totalCount = normalizeLessonPanelCount(input.totalCount);
+  if (totalCount <= 0) {
+    return null;
+  }
+
+  const viewedCount = resolveViewedCount(input.viewedCount, totalCount);
+  if (viewedCount <= 0) {
+    return null;
+  }
+
+  return {
+    ...keys,
+    totalCount,
+    viewedCount,
+    lastViewedAt: input.viewedAt?.trim() || new Date().toISOString(),
+    label: input.label?.trim() || undefined,
+  };
+};
+
+const resolveLessonPanelProgressCounts = (input: {
+  existingSection: KangurLessonPanelSectionState | undefined;
+  normalized: NormalizedLessonPanelProgressInput;
+}): { nextTotalCount: number; nextViewedCount: number } => ({
+  nextViewedCount: Math.max(
+    input.existingSection?.viewedCount ?? 0,
+    input.normalized.viewedCount
+  ),
+  nextTotalCount: Math.max(
+    input.existingSection?.totalCount ?? 0,
+    input.normalized.totalCount
+  ),
+});
+
+const hasLessonPanelProgressSectionChanges = (input: {
+  existingSection: KangurLessonPanelSectionState | undefined;
+  label: string | undefined;
+  nextTotalCount: number;
+  nextViewedCount: number;
+}): boolean =>
+  input.nextViewedCount !== input.existingSection?.viewedCount ||
+  input.nextTotalCount !== input.existingSection?.totalCount ||
+  input.label !== input.existingSection?.label;
+
+const resolveLessonPanelLastViewedAt = (input: {
+  existingSection: KangurLessonPanelSectionState | undefined;
+  normalized: NormalizedLessonPanelProgressInput;
+}): string =>
+  input.normalized.viewedCount > (input.existingSection?.viewedCount ?? 0)
+    ? input.normalized.lastViewedAt
+    : input.existingSection?.lastViewedAt ?? input.normalized.lastViewedAt;
+
+const buildLessonPanelProgressSection = (input: {
+  existingSection: KangurLessonPanelSectionState | undefined;
+  normalized: NormalizedLessonPanelProgressInput;
+}): KangurLessonPanelSectionState | null => {
+  const { nextViewedCount, nextTotalCount } = resolveLessonPanelProgressCounts(input);
+  const label = input.normalized.label ?? input.existingSection?.label;
+
+  if (
+    !hasLessonPanelProgressSectionChanges({
+      existingSection: input.existingSection,
+      label,
+      nextTotalCount,
+      nextViewedCount,
+    })
+  ) {
+    return null;
+  }
+
+  return {
+    ...input.existingSection,
+    viewedCount: nextViewedCount,
+    totalCount: nextTotalCount,
+    lastViewedAt: resolveLessonPanelLastViewedAt(input),
+    ...(label ? { label } : {}),
+  };
+};
+
+const normalizeLessonPanelTimeInput = (
+  input: KangurLessonPanelTimeInput
+): NormalizedLessonPanelTimeInput | null => {
+  const keys = resolveRequiredLessonPanelKeys(input.lessonKey, input.sectionId);
+  const ids = resolveRequiredLessonPanelTimeIds(input.panelId, input.sessionId);
+  if (!keys || !ids) {
+    return null;
+  }
+
+  const seconds = normalizeLessonPanelSeconds(input.seconds);
+  if (seconds <= 0) {
+    return null;
+  }
+
+  const nowIso = new Date().toISOString();
+  return {
+    ...keys,
+    ...ids,
+    seconds,
+    sessionUpdatedAt: normalizeLessonPanelTimestamp(input.sessionUpdatedAt, nowIso),
+    sessionStartedAt: normalizeLessonPanelTimestamp(input.sessionStartedAt, nowIso),
+    panelTitle: input.panelTitle?.trim() || undefined,
+  };
+};
+
+const resolveLessonPanelSessionState = (
+  existingSection: KangurLessonPanelSectionState | undefined,
+  sessionId: string
+): {
+  existingPanelTimes: KangurLessonPanelTimes;
+  isSameSession: boolean;
+} => {
+  const isSameSession = existingSection?.sessionId === sessionId;
+  return {
+    isSameSession,
+    existingPanelTimes: isSameSession ? (existingSection?.panelTimes ?? {}) : {},
+  };
+};
+
+const resolveUpdatedLessonPanelTimeTitle = (
+  panelTitle: string | undefined,
+  existingPanel: KangurLessonPanelTimes[string] | undefined
+): string | undefined => panelTitle ?? existingPanel?.title;
+
+const resolveLessonPanelSessionStartedAt = (input: {
+  existingSection: KangurLessonPanelSectionState | undefined;
+  isSameSession: boolean;
+  sessionStartedAt: string;
+}): string =>
+  input.isSameSession
+    ? input.existingSection?.sessionStartedAt ?? input.sessionStartedAt
+    : input.sessionStartedAt;
+
+const buildLessonPanelTimeSection = (input: {
+  existingSection: KangurLessonPanelSectionState | undefined;
+  normalized: NormalizedLessonPanelTimeInput;
+}): KangurLessonPanelSectionState => {
+  const { isSameSession, existingPanelTimes } = resolveLessonPanelSessionState(
+    input.existingSection,
+    input.normalized.sessionId
+  );
+  const existingPanel = existingPanelTimes[input.normalized.panelId];
+  const title = resolveUpdatedLessonPanelTimeTitle(
+    input.normalized.panelTitle,
+    existingPanel
+  );
+  const updatedPanel = {
+    seconds: Math.max(existingPanel?.seconds ?? 0, input.normalized.seconds),
+    ...(title ? { title } : {}),
+  };
+
+  return {
+    ...(input.existingSection ?? {
+      viewedCount: 0,
+      totalCount: 0,
+    }),
+    panelTimes: {
+      ...existingPanelTimes,
+      [input.normalized.panelId]: updatedPanel,
+    },
+    sessionId: input.normalized.sessionId,
+    sessionStartedAt: resolveLessonPanelSessionStartedAt({
+      existingSection: input.existingSection,
+      isSameSession,
+      sessionStartedAt: input.normalized.sessionStartedAt,
+    }),
+    sessionUpdatedAt: input.normalized.sessionUpdatedAt,
+  };
+};
+
 export function recordKangurLessonPanelProgress(
   input: KangurLessonPanelProgressInput,
   options?: KangurProgressStorageOptions
 ): void {
-  const lessonKey = input.lessonKey.trim();
-  const sectionId = input.sectionId.trim();
-  if (!lessonKey || !sectionId) {
+  const normalized = normalizeLessonPanelProgressInput(input);
+  if (!normalized) {
     return;
   }
-
-  const totalCount = Math.max(0, Math.floor(input.totalCount));
-  if (totalCount <= 0) {
-    return;
-  }
-
-  const viewedCount = Math.min(Math.max(Math.floor(input.viewedCount), 0), totalCount);
-  if (viewedCount <= 0) {
-    return;
-  }
-
   const progress = loadProgress(options);
-  const existingLesson = progress.lessonPanelProgress?.[lessonKey] ?? {};
-  const existingSection = existingLesson[sectionId];
-  const lastViewedAt = input.viewedAt?.trim() || new Date().toISOString();
-  const label = input.label?.trim() || existingSection?.label;
-  const nextViewedCount = Math.max(existingSection?.viewedCount ?? 0, viewedCount);
-  const nextTotalCount = Math.max(existingSection?.totalCount ?? 0, totalCount);
-
-  if (
-    nextViewedCount === existingSection?.viewedCount &&
-    nextTotalCount === existingSection?.totalCount &&
-    label === existingSection?.label
-  ) {
+  const { existingLesson, existingSection } = resolveLessonPanelSectionState({
+    progress,
+    lessonKey: normalized.lessonKey,
+    sectionId: normalized.sectionId,
+  });
+  const nextSection = buildLessonPanelProgressSection({
+    existingSection,
+    normalized,
+  });
+  if (!nextSection) {
     return;
   }
-
-  const updatedSection = {
-    viewedCount: nextViewedCount,
-    totalCount: nextTotalCount,
-    lastViewedAt:
-      viewedCount > (existingSection?.viewedCount ?? 0)
-        ? lastViewedAt
-        : existingSection?.lastViewedAt ?? lastViewedAt,
-    ...(label ? { label } : {}),
-  };
-
-  saveProgress(
-    normalizeKangurProgressState({
-      ...progress,
-      lessonPanelProgress: {
-        ...(progress.lessonPanelProgress ?? {}),
-        [lessonKey]: {
-          ...existingLesson,
-          [sectionId]: updatedSection,
-        },
-      },
-    }),
-    options
-  );
+  saveLessonPanelSectionState({
+    progress,
+    existingLesson,
+    lessonKey: normalized.lessonKey,
+    sectionId: normalized.sectionId,
+    nextSection,
+    options,
+  });
 }
 
 export function recordKangurLessonPanelTime(
   input: KangurLessonPanelTimeInput,
   options?: KangurProgressStorageOptions
 ): void {
-  const lessonKey = input.lessonKey.trim();
-  const sectionId = input.sectionId.trim();
-  const panelId = input.panelId.trim();
-  const sessionId = input.sessionId.trim();
-  if (!lessonKey || !sectionId || !panelId || !sessionId) {
-    return;
-  }
-
-  const seconds = Math.max(0, Math.round(input.seconds));
-  if (seconds <= 0) {
+  const normalized = normalizeLessonPanelTimeInput(input);
+  if (!normalized) {
     return;
   }
 
   const progress = loadProgress(options);
-  const existingLesson = progress.lessonPanelProgress?.[lessonKey] ?? {};
-  const existingSection = existingLesson[sectionId];
-  const nowIso = new Date().toISOString();
-  const panelTitle = input.panelTitle?.trim() || undefined;
-  const sessionUpdatedAt = input.sessionUpdatedAt?.trim() || nowIso;
-  const sessionStartedAt = input.sessionStartedAt?.trim() || nowIso;
-  const isSameSession = existingSection?.sessionId === sessionId;
-  const existingPanelTimes = isSameSession ? (existingSection?.panelTimes ?? {}) : {};
-  const existingPanel = existingPanelTimes[panelId];
-
-  const updatedPanel = {
-    seconds: Math.max(existingPanel?.seconds ?? 0, seconds),
-    ...(panelTitle ? { title: panelTitle } : existingPanel?.title ? { title: existingPanel.title } : {}),
-  };
-
-  saveProgress(
-    normalizeKangurProgressState({
-      ...progress,
-      lessonPanelProgress: {
-        ...(progress.lessonPanelProgress ?? {}),
-        [lessonKey]: {
-          ...existingLesson,
-          [sectionId]: {
-            ...(existingSection ?? {
-              viewedCount: 0,
-              totalCount: 0,
-            }),
-            panelTimes: {
-              ...existingPanelTimes,
-              [panelId]: updatedPanel,
-            },
-            sessionId,
-            sessionStartedAt: isSameSession
-              ? existingSection?.sessionStartedAt ?? sessionStartedAt
-              : sessionStartedAt,
-            sessionUpdatedAt,
-          },
-        },
-      },
-    }),
-    options
-  );
+  const { existingLesson, existingSection } = resolveLessonPanelSectionState({
+    progress,
+    lessonKey: normalized.lessonKey,
+    sectionId: normalized.sectionId,
+  });
+  const nextSection = buildLessonPanelTimeSection({
+    existingSection,
+    normalized,
+  });
+  saveLessonPanelSectionState({
+    progress,
+    existingLesson,
+    lessonKey: normalized.lessonKey,
+    sectionId: normalized.sectionId,
+    nextSection,
+    options,
+  });
 }

@@ -109,12 +109,7 @@ const parseIpv4Octets = (hostname: string): Ipv4Octets | null => {
     return null;
   }
 
-  const [a, b, c, d] = octets;
-  if ([a, b, c, d].some((entry) => entry === undefined)) {
-    return null;
-  }
-
-  return [a, b, c, d];
+  return [octets[0]!, octets[1]!, octets[2]!, octets[3]!];
 };
 
 const IPV4_PRIVATE_RANGE_MATCHERS: ReadonlyArray<(octets: Ipv4Octets) => boolean> = [

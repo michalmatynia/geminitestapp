@@ -10,6 +10,7 @@ import { usePlaywrightPersonas } from '@/shared/hooks/usePlaywrightPersonas';
 import { resolveImagePreview } from './AdminKangurSocialPage.Constants';
 import { SocialPostImagesPanel } from './SocialPost.ImagesPanel';
 import { useSocialPostContext } from './SocialPostContext';
+import { getSocialJobStatusLabel, SocialJobStatusPill } from './SocialJobStatusPill';
 import { getSocialPostAddonCaptureDetailLabels } from './social-post-addon-capture-details';
 
 type SocialPostVisualsProps = {
@@ -32,6 +33,9 @@ export function SocialPostVisuals(props: SocialPostVisualsProps): React.JSX.Elem
     handleAddImages,
     hasSavedVisualAnalysis,
     isSavedVisualAnalysisStale,
+    currentVisualAnalysisJob,
+    currentGenerationJob,
+    currentPipelineJob,
   } = useSocialPostContext();
 
   const personasQuery = usePlaywrightPersonas({
@@ -50,31 +54,76 @@ export function SocialPostVisuals(props: SocialPostVisualsProps): React.JSX.Elem
   const recentAddonsLoading = addonsQuery.isLoading;
   const visualSummary = activePost?.visualSummary?.trim() ?? '';
   const visualHighlights = activePost?.visualHighlights ?? [];
-  const visualAnalysisStatus = activePost?.visualAnalysisStatus ?? null;
+  const savedVisualAnalysisStatus = activePost?.visualAnalysisStatus ?? null;
   const visualAnalysisUpdatedAt = activePost?.visualAnalysisUpdatedAt ?? null;
   const visualAnalysisModelId = activePost?.visualAnalysisModelId?.trim() ?? '';
-  const visualAnalysisJobId = activePost?.visualAnalysisJobId?.trim() ?? '';
+  const savedVisualAnalysisJobId = activePost?.visualAnalysisJobId?.trim() ?? '';
+  const visualAnalysisStatus = currentVisualAnalysisJob?.status ?? savedVisualAnalysisStatus;
+  const visualAnalysisJobId = currentVisualAnalysisJob?.id?.trim() ?? savedVisualAnalysisJobId;
   const hasVisualAnalysis = visualSummary.length > 0 || visualHighlights.length > 0;
   const hasVisualAnalysisSection =
     hasVisualAnalysis ||
     Boolean(
       visualAnalysisStatus || visualAnalysisUpdatedAt || visualAnalysisModelId || visualAnalysisJobId
     );
-  const visualAnalysisStatusLabel =
-    visualAnalysisStatus === 'queued'
-      ? 'Queued'
-      : visualAnalysisStatus === 'running'
-        ? 'Running'
-        : visualAnalysisStatus === 'completed'
-          ? 'Completed'
-          : visualAnalysisStatus === 'failed'
-            ? 'Failed'
-            : null;
+  const visualAnalysisStatusLabel = getSocialJobStatusLabel(visualAnalysisStatus);
+  const currentVisualAnalysisJobTitle = [
+    currentVisualAnalysisJob?.progress?.message ?? null,
+    currentVisualAnalysisJob?.failedReason ?? null,
+    currentVisualAnalysisJob?.id ? `Queue job: ${currentVisualAnalysisJob.id}` : null,
+  ]
+    .filter((value): value is string => Boolean(value))
+    .join(' · ');
+  const currentGenerationJobTitle = [
+    currentGenerationJob?.progress?.message ?? null,
+    currentGenerationJob?.failedReason ?? null,
+    currentGenerationJob?.id ? `Queue job: ${currentGenerationJob.id}` : null,
+  ]
+    .filter((value): value is string => Boolean(value))
+    .join(' · ');
+  const currentPipelineJobTitle = [
+    currentPipelineJob?.progress?.message ?? null,
+    currentPipelineJob?.failedReason ?? null,
+    currentPipelineJob?.id ? `Queue job: ${currentPipelineJob.id}` : null,
+  ]
+    .filter((value): value is string => Boolean(value))
+    .join(' · ');
 
   return (
     <>
       {hasVisualAnalysisSection ? (
         <FormSection title='Image analysis result' className='space-y-3'>
+          {(currentVisualAnalysisJob?.status ||
+            currentGenerationJob?.status ||
+            currentPipelineJob?.status) ? (
+            <div className='flex flex-wrap items-center gap-2 text-xs text-muted-foreground'>
+              <span className='font-medium text-foreground/80'>Runtime jobs:</span>
+              {currentVisualAnalysisJob?.status ? (
+                <SocialJobStatusPill
+                  status={currentVisualAnalysisJob.status}
+                  label='Image analysis'
+                  title={currentVisualAnalysisJobTitle || undefined}
+                  className='text-[10px]'
+                />
+              ) : null}
+              {currentGenerationJob?.status ? (
+                <SocialJobStatusPill
+                  status={currentGenerationJob.status}
+                  label='Generate post'
+                  title={currentGenerationJobTitle || undefined}
+                  className='text-[10px]'
+                />
+              ) : null}
+              {currentPipelineJob?.status ? (
+                <SocialJobStatusPill
+                  status={currentPipelineJob.status}
+                  label='Full pipeline'
+                  title={currentPipelineJobTitle || undefined}
+                  className='text-[10px]'
+                />
+              ) : null}
+            </div>
+          ) : null}
           {isSavedVisualAnalysisStale && hasSavedVisualAnalysis ? (
             <div className='rounded-xl border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-sm text-amber-900 dark:text-amber-200'>
               Saved image analysis exists for this draft, but the selected visuals changed.
@@ -86,6 +135,16 @@ export function SocialPostVisuals(props: SocialPostVisualsProps): React.JSX.Elem
           visualAnalysisModelId ||
           visualAnalysisJobId ? (
             <div className='rounded-xl border border-border/60 bg-background/40 px-3 py-2 text-xs text-muted-foreground'>
+              {visualAnalysisStatusLabel ? (
+                <div className='mb-1'>
+                  <SocialJobStatusPill
+                    status={visualAnalysisStatus}
+                    label='Image analysis'
+                    title={currentVisualAnalysisJobTitle || (visualAnalysisJobId ? `Queue job: ${visualAnalysisJobId}` : undefined)}
+                    className='text-[10px]'
+                  />
+                </div>
+              ) : null}
               {visualAnalysisStatusLabel ? <div>Status: {visualAnalysisStatusLabel}</div> : null}
               {visualAnalysisUpdatedAt ? (
                 <div>Analyzed: {new Date(visualAnalysisUpdatedAt).toLocaleString()}</div>

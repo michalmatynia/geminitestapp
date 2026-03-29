@@ -181,10 +181,13 @@ describe('EnglishArticlesDragDropGame', () => {
     placeArticle('an', 'school-bag-eraser');
     placeArticle('the', 'school-bag-window');
 
-    fireEvent.click(screen.getByRole('button', { name: 'Check' }));
+    const checkButton = screen.getByRole('button', { name: 'Check' });
+    fireEvent.click(checkButton);
 
-    expect(screen.getByText('Perfect! Each article fits the sentence.')).toBeInTheDocument();
+    expect(checkButton).toHaveClass('bg-emerald-500', 'border-emerald-500');
+    expect(screen.queryByText('Perfect! Each article fits the sentence.')).not.toBeInTheDocument();
     expect(screen.getByText('3/3 correct')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Next' })).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole('button', { name: 'Next' }));
 
@@ -220,12 +223,13 @@ describe('EnglishArticlesDragDropGame', () => {
     placeArticle('a', 'school-bag-eraser');
     placeArticle('an', 'school-bag-window');
 
-    fireEvent.click(screen.getByRole('button', { name: 'Check' }));
+    const checkButton = screen.getByRole('button', { name: 'Check' });
+    fireEvent.click(checkButton);
 
-    expect(
-      screen.getByText('Check the specific noun and the first sound again.')
-    ).toBeInTheDocument();
+    expect(checkButton).toHaveClass('bg-rose-500', 'border-rose-500');
+    expect(screen.queryByText('Check the specific noun and the first sound again.')).not.toBeInTheDocument();
     expect(screen.getByText('0/3 correct')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Next' })).toBeInTheDocument();
     expect(
       within(screen.getByTestId('english-articles-drag-slot-school-bag-book')).getByRole(
         'button',

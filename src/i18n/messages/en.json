@@ -390,6 +390,10 @@
         "label": "Subtraction quiz",
         "description": "A quick subtraction quiz."
       },
+      "multiplication_array_quiz": {
+        "label": "Multiplication array",
+        "description": "Build equal groups and see multiplication as rows and columns."
+      },
       "division_quiz": {
         "label": "Division quiz",
         "description": "A quick division quiz."

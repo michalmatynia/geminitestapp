@@ -12,7 +12,7 @@ import { stripSiteLocalePrefix } from '@/shared/lib/i18n/site-locale';
 import type {
   KangurStorefrontAppearanceMode,
   KangurStorefrontThemeSettingsSnapshot,
-} from '@/features/kangur/storefront-appearance-settings';
+} from '@/features/kangur/appearance/storefront-appearance-settings';
 
 import type { JSX } from 'react';
 

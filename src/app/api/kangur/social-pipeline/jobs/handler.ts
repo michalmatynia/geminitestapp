@@ -4,7 +4,7 @@ import type { Job, Queue } from 'bullmq';
 import { z } from 'zod';
 
 import { resolveKangurActor } from '@/features/kangur/services/kangur-actor';
-import { getKangurSocialPipelineQueue } from '@/features/kangur/workers/kangurSocialPipelineQueue';
+import { getKangurSocialPipelineQueue } from '@/features/kangur/social/workers/kangurSocialPipelineQueue';
 import {
   kangurSocialManualGenerationProgressSchema,
   kangurSocialManualPipelineProgressSchema,
@@ -45,6 +45,7 @@ const sanitizeJobData = (data: unknown): unknown => {
         postId?: string;
         docReferences?: string[];
         imageAddonIds?: string[];
+        imageAssets?: unknown[];
       };
     };
 
@@ -54,6 +55,7 @@ const sanitizeJobData = (data: unknown): unknown => {
         postId: manual.input?.postId ?? null,
         docReferenceCount: manual.input?.docReferences?.length ?? 0,
         imageAddonCount: manual.input?.imageAddonIds?.length ?? 0,
+        imageAssetCount: manual.input?.imageAssets?.length ?? 0,
       },
     };
   }

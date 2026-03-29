@@ -69,6 +69,27 @@ describe('Game launchable screen registry', () => {
     );
   });
 
+  it('keeps widened shell width metadata on arithmetic launchable screens', () => {
+    expect(getKangurLaunchableGameScreenComponentConfig('adding_synthesis_quiz').runtime.shell)
+      .toEqual(
+        expect.objectContaining({
+          maxWidthClassName: 'max-w-[1120px]',
+        })
+      );
+    expect(getKangurLaunchableGameScreenComponentConfig('multiplication_array_quiz').runtime.shell)
+      .toEqual(
+        expect.objectContaining({
+          maxWidthClassName: 'max-w-none',
+        })
+      );
+    expect(getKangurLaunchableGameScreenComponentConfig('multiplication_quiz').runtime.shell)
+      .toEqual(
+        expect.objectContaining({
+          maxWidthClassName: 'max-w-none',
+        })
+      );
+  });
+
   it('keeps the general adverbs screen wired to the adverbs action runtime', () => {
     const config = getKangurLaunchableGameScreenComponentConfig('english_adverbs_quiz');
 

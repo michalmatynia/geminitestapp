@@ -9,7 +9,7 @@ import { renderToString } from 'react-dom/server';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { serializeSetting } from '@/features/kangur/shared/utils/settings-json';
-import { KANGUR_DAILY_THEME_SETTINGS_KEY } from '@/features/kangur/theme-settings';
+import { KANGUR_DAILY_THEME_SETTINGS_KEY } from '@/features/kangur/appearance/theme-settings';
 import { KangurStorefrontAppearanceProvider } from '@/features/kangur/ui/KangurStorefrontAppearanceProvider';
 import { useKangurStorefrontAppearance } from '@/features/kangur/ui/useKangurStorefrontAppearance';
 import { SettingsStoreProvider } from '@/shared/providers/SettingsStoreProvider';

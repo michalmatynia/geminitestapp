@@ -1,11 +1,11 @@
 import { render, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { KANGUR_DAILY_THEME_SETTINGS_KEY } from '@/features/kangur/theme-settings';
+import { KANGUR_DAILY_THEME_SETTINGS_KEY } from '@/features/kangur/appearance/theme-settings';
 import {
   KANGUR_STOREFRONT_APPEARANCE_STORAGE_KEY,
   KANGUR_STOREFRONT_DEFAULT_MODE_SETTING_KEY,
-} from '@/features/kangur/storefront-appearance-settings';
+} from '@/features/kangur/appearance/storefront-appearance-settings';
 import { KangurSurfaceClassSync } from '@/features/kangur/ui/KangurSurfaceClassSync';
 import { KangurStorefrontAppearanceProvider } from '@/features/kangur/ui/KangurStorefrontAppearanceProvider';
 import { DEFAULT_THEME } from '@/shared/contracts/cms-theme';
@@ -98,9 +98,15 @@ describe('KangurSurfaceClassSync', () => {
     );
   });
 
-  it('syncs a persisted storefront appearance override to the capture-ready surface markers', async () => {
+  it('keeps Mongo-backed surface mode when local storefront storage disagrees', async () => {
     const appContent = document.getElementById('app-content');
     expect(appContent).not.toBeNull();
+    settingsStoreMock.get.mockImplementation((key: string) => {
+      if (key === KANGUR_STOREFRONT_DEFAULT_MODE_SETTING_KEY) {
+        return 'default';
+      }
+      return undefined;
+    });
     window.localStorage.setItem(KANGUR_STOREFRONT_APPEARANCE_STORAGE_KEY, 'dark');
 
     render(
@@ -112,10 +118,10 @@ describe('KangurSurfaceClassSync', () => {
     );
 
     await waitFor(() => {
-      expect(document.documentElement).toHaveAttribute('data-kangur-appearance-mode', 'dark');
+      expect(document.documentElement).toHaveAttribute('data-kangur-appearance-mode', 'default');
     });
-    expect(document.body).toHaveAttribute('data-kangur-appearance-mode', 'dark');
-    expect(appContent).toHaveAttribute('data-kangur-appearance-mode', 'dark');
+    expect(document.body).toHaveAttribute('data-kangur-appearance-mode', 'default');
+    expect(appContent).toHaveAttribute('data-kangur-appearance-mode', 'default');
   });
 
   it('applies a stored Kangur theme document to the page chrome', async () => {

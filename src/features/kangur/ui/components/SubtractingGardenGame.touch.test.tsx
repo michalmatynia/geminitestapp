@@ -90,6 +90,7 @@ describe('SubtractingGardenGame touch interactions', () => {
       </NextIntlClientProvider>
     );
 
+    expect(screen.getByTestId('subtracting-garden-game-shell')).toHaveClass('w-full', 'max-w-none');
     expect(screen.getByTestId('subtracting-garden-touch-hint')).toHaveTextContent(
       'Tap a glowing point, then tap the basket or the cloud. You can still drag too.'
     );

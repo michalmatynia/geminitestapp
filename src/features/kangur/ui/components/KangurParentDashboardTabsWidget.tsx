@@ -54,6 +54,31 @@ export const getParentDashboardTabIds = (
   panelId: `parent-dashboard-panel-${tabId}`,
 });
 
+const resolveParentDashboardNextTabIndex = ({
+  index,
+  key,
+  tabsLength,
+}: {
+  index: number;
+  key: string;
+  tabsLength: number;
+}): number | null => {
+  switch (key) {
+    case 'ArrowRight':
+    case 'ArrowDown':
+      return (index + 1) % tabsLength;
+    case 'ArrowLeft':
+    case 'ArrowUp':
+      return (index - 1 + tabsLength) % tabsLength;
+    case 'Home':
+      return 0;
+    case 'End':
+      return tabsLength - 1;
+    default:
+      return null;
+  }
+};
+
 export function KangurParentDashboardTabsWidget({
   onBeforeTabChange,
 }: {
@@ -90,24 +115,13 @@ export function KangurParentDashboardTabsWidget({
         return;
       }
 
-      let nextIndex = index;
-      switch (event.key) {
-        case 'ArrowRight':
-        case 'ArrowDown':
-          nextIndex = (index + 1) % tabs.length;
-          break;
-        case 'ArrowLeft':
-        case 'ArrowUp':
-          nextIndex = (index - 1 + tabs.length) % tabs.length;
-          break;
-        case 'Home':
-          nextIndex = 0;
-          break;
-        case 'End':
-          nextIndex = tabs.length - 1;
-          break;
-        default:
-          return;
+      const nextIndex = resolveParentDashboardNextTabIndex({
+        index,
+        key: event.key,
+        tabsLength: tabs.length,
+      });
+      if (nextIndex === null) {
+        return;
       }
 
       event.preventDefault();

@@ -11,29 +11,51 @@ import { useKangurPageContentEntry } from '@/features/kangur/ui/hooks/useKangurP
 
 import { KangurResultsWidgetContent } from './KangurResultsWidgetContent';
 
+const resolveKangurLearnerProfileResultsLearnerId = (
+  user: ReturnType<typeof useKangurLearnerProfileRuntime>['user']
+): string => user?.activeLearner?.id?.trim() ?? '';
+
+const resolveKangurLearnerProfileResultsPlayerName = (
+  user: ReturnType<typeof useKangurLearnerProfileRuntime>['user']
+): string | null => user?.activeLearner?.displayName?.trim() || user?.full_name?.trim() || null;
+
+const resolveKangurLearnerProfileResultsCreatedBy = (
+  user: ReturnType<typeof useKangurLearnerProfileRuntime>['user']
+): string | null => user?.email?.trim() || null;
+
+const resolveKangurLearnerProfileResultsIntro = ({
+  resultsContent,
+  translations,
+}: {
+  resultsContent: ReturnType<typeof useKangurPageContentEntry>['entry'];
+  translations: ReturnType<typeof useTranslations<'KangurParentDashboard'>>;
+}): { description: string; title: string } => ({
+  description: resultsContent?.summary ?? translations('widgets.scores.description'),
+  title: resultsContent?.title ?? translations('widgets.scores.title'),
+});
+
 export function KangurLearnerProfileResultsWidget(): React.JSX.Element | null {
   const translations = useTranslations('KangurParentDashboard');
   const { basePath, progress, scores, isLoadingScores, user } = useKangurLearnerProfileRuntime();
   const { entry: resultsContent } = useKangurPageContentEntry('learner-profile-results');
-  const activeLearnerId = user?.activeLearner?.id?.trim() ?? '';
+  const activeLearnerId = resolveKangurLearnerProfileResultsLearnerId(user);
+  const createdBy = resolveKangurLearnerProfileResultsCreatedBy(user);
+  const playerName = resolveKangurLearnerProfileResultsPlayerName(user);
+  const { description, title } = resolveKangurLearnerProfileResultsIntro({
+    resultsContent,
+    translations,
+  });
 
   if (!activeLearnerId) {
     return null;
   }
 
-  const playerName =
-    user?.activeLearner?.displayName?.trim() || user?.full_name?.trim() || null;
-  const createdBy = user?.email?.trim() || null;
-
   return (
     <section className={`flex flex-col ${KANGUR_PANEL_GAP_CLASSNAME}`}>
       <KangurPanelIntro
         data-testid='learner-profile-results-intro'
-        description={
-          resultsContent?.summary ??
-          translations('widgets.scores.description')
-        }
-        eyebrow={resultsContent?.title ?? translations('widgets.scores.title')}
+        description={description}
+        eyebrow={title}
       />
       <KangurResultsWidgetContent
         badgeTrackDataTestPrefix='learner-profile-results-track'

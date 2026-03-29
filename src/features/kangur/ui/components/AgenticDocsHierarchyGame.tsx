@@ -15,7 +15,7 @@ import {
 } from '@/features/kangur/ui/components/KangurDragDropContext';
 import { getKangurCheckButtonClassName } from '@/features/kangur/ui/components/KangurCheckButton';
 
-import { KangurButton, KangurStatusChip } from '@/features/kangur/ui/design/primitives';
+import { KangurButton } from '@/features/kangur/ui/design/primitives';
 import {
   KangurLessonCallout,
   KangurLessonCaption,
@@ -63,22 +63,6 @@ const resolveCorrectOrder = (
   correctOrder.length === items.length ? correctOrder : items.map((item) => item.id)
 );
 
-const resolveStatusLabel = ({
-  checked,
-  isComplete,
-  correctCount,
-  totalCount,
-}: {
-  checked: boolean;
-  isComplete: boolean;
-  correctCount: number;
-  totalCount: number;
-}): string => {
-  if (!checked) return 'Przeciągnij, aby ułożyć';
-  if (isComplete) return 'Perfekcyjna kolejność';
-  return `${correctCount}/${totalCount} poprawnie`;
-};
-
 const resolveTouchHint = ({
   helperText,
   selectedItem,
@@ -92,32 +76,6 @@ const resolveTouchHint = ({
     ? (touchSelectedTemplate ?? '').replaceAll('{title}', selectedItem.title)
     : helperText ?? ''
 );
-
-const resolveGuidanceCaption = ({
-  checked,
-  isComplete,
-  attempts,
-}: {
-  checked: boolean;
-  isComplete: boolean;
-  attempts: number;
-}): string | null => {
-  if (!checked || isComplete || attempts < 1) return null;
-  return 'Zaczynaj od celu i kontekstu, a operacyjne rzeczy zostaw na koniec.';
-};
-
-const resolveResultCaption = ({
-  checked,
-  isComplete,
-}: {
-  checked: boolean;
-  isComplete: boolean;
-}): string | null => {
-  if (!checked) return null;
-  return isComplete
-    ? 'Świetnie! To jest prawidłowa hierarchia.'
-    : 'Sprawdź, które elementy są jeszcze nie na miejscu.';
-};
 
 const resolveListStateClassName = ({
   isDraggingOver,
@@ -389,42 +347,19 @@ function HierarchyTouchHint(props: {
   );
 }
 
-function HierarchyOutcomeCaptions(props: {
-  guidanceCaption: string | null;
-  resultCaption: string | null;
-}): React.JSX.Element {
-  return (
-    <>
-      {props.guidanceCaption ? (
-        <KangurLessonCaption className='mt-2 text-left'>
-          {props.guidanceCaption}
-        </KangurLessonCaption>
-      ) : null}
-      {props.resultCaption ? (
-        <KangurLessonCaption role='status' aria-live='polite' className='mt-2 text-left'>
-          {props.resultCaption}
-        </KangurLessonCaption>
-      ) : null}
-    </>
-  );
-}
-
 const createResetHierarchyGame = ({
   items,
   setOrder,
   setChecked,
-  setAttempts,
   setSelectedItemId,
 }: {
   items: readonly HierarchyItem[];
   setOrder: React.Dispatch<React.SetStateAction<HierarchyItem[]>>;
   setChecked: React.Dispatch<React.SetStateAction<boolean>>;
-  setAttempts: React.Dispatch<React.SetStateAction<number>>;
   setSelectedItemId: React.Dispatch<React.SetStateAction<string | null>>;
 }) => () => {
   setOrder(shuffle(items));
   setChecked(false);
-  setAttempts(0);
   setSelectedItemId(null);
 };
 
@@ -504,11 +439,10 @@ function useHierarchyGameRuntime({
   );
   const [order, setOrder] = useState<HierarchyItem[]>(() => shuffle(items));
   const [checked, setChecked] = useState(false);
-  const [attempts, setAttempts] = useState(0);
   const [selectedItemId, setSelectedItemId] = useState<string | null>(null);
 
   const resetHierarchyGame = useCallback(
-    createResetHierarchyGame({ items, setOrder, setChecked, setAttempts, setSelectedItemId }),
+    createResetHierarchyGame({ items, setOrder, setChecked, setSelectedItemId }),
     [items]
   );
 
@@ -534,7 +468,6 @@ function useHierarchyGameRuntime({
 
   const handleCheck = (): void => {
     setChecked(true);
-    setAttempts((prev) => prev + 1);
   };
 
   const handleReset = resetHierarchyGame;
@@ -553,16 +486,8 @@ function useHierarchyGameRuntime({
   const selectedItem = selectedItemId
     ? order.find((item) => item.id === selectedItemId) ?? null
     : null;
-  const statusLabel = resolveStatusLabel({
-    checked,
-    isComplete,
-    correctCount,
-    totalCount: order.length,
-  });
   const showTouchHint = isCoarsePointer || selectedItem !== null;
   const touchHint = resolveTouchHint({ helperText, selectedItem, touchSelectedTemplate });
-  const guidanceCaption = resolveGuidanceCaption({ checked, isComplete, attempts });
-  const resultCaption = resolveResultCaption({ checked, isComplete });
   const isTouchMoveTargetActive = Boolean(selectedItemId && !checked && isCoarsePointer);
 
   return {
@@ -573,11 +498,8 @@ function useHierarchyGameRuntime({
     checked,
     isComplete,
     selectedItemId,
-    statusLabel,
     showTouchHint,
     touchHint,
-    guidanceCaption,
-    resultCaption,
     isTouchMoveTargetActive,
     handleDragEnd,
     handleItemClick,
@@ -605,9 +527,6 @@ export default function AgenticDocsHierarchyGame({
     <KangurLessonCallout accent={accent} padding='sm' className='text-left'>
       <div className={cn(KANGUR_CENTER_ROW_CLASSNAME, 'justify-between gap-3')}>
         <div className='text-sm font-semibold [color:var(--kangur-page-text)]'>{prompt}</div>
-        <KangurStatusChip accent={accent} size='sm' labelStyle='caps'>
-          {runtime.statusLabel}
-        </KangurStatusChip>
       </div>
       <KangurLessonCaption className='mt-2 text-left'>{helperText}</KangurLessonCaption>
       <HierarchyTouchHint show={runtime.showTouchHint} text={runtime.touchHint} />
@@ -641,10 +560,6 @@ export default function AgenticDocsHierarchyGame({
           Reset
         </KangurButton>
       </div>
-      <HierarchyOutcomeCaptions
-        guidanceCaption={runtime.guidanceCaption}
-        resultCaption={runtime.resultCaption}
-      />
     </KangurLessonCallout>
   );
 }

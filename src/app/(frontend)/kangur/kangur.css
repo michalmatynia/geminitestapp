@@ -4101,6 +4101,46 @@ body.kangur-client-shell-active [data-kangur-server-shell] {
       display: none !important;
     }
 
+    body.kangur-print-mode [data-kangur-print-root][data-kangur-print-targeted='true'] {
+      padding: 0 !important;
+    }
+
+    body.kangur-print-mode
+      [data-kangur-print-root][data-kangur-print-targeted='true']
+      [data-kangur-print-masthead='true'] {
+      display: none !important;
+    }
+
+    body.kangur-print-mode
+      [data-kangur-print-root][data-kangur-print-targeted='true']
+      > :not([data-kangur-print-target-path='true']) {
+      display: none !important;
+    }
+
+    body.kangur-print-mode
+      [data-kangur-print-root][data-kangur-print-targeted='true']
+      [data-kangur-print-target-path='true']:not([data-kangur-print-target-panel='true'])
+      > :not([data-kangur-print-target-path='true']) {
+      display: none !important;
+    }
+
+    body.kangur-print-mode
+      [data-kangur-print-root][data-kangur-print-targeted='true']
+      [data-kangur-print-target-path='true']:not([data-kangur-print-target-panel='true']) {
+      display: block !important;
+      width: 100% !important;
+      max-width: none !important;
+      min-width: 0 !important;
+      height: auto !important;
+      min-height: 0 !important;
+      max-height: none !important;
+      margin: 0 !important;
+      padding: 0 !important;
+      overflow: visible !important;
+      transform: none !important;
+      contain: none !important;
+    }
+
     body.kangur-print-mode [data-kangur-print-root] [data-kangur-print-slide-stage='true'],
     body.kangur-print-mode [data-kangur-print-root] [data-kangur-print-slide-frame='true'],
     body.kangur-print-mode [data-kangur-print-root] [data-kangur-print-slide-panel='true'],

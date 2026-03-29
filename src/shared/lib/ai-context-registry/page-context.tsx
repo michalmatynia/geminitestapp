@@ -4,7 +4,7 @@ import React, {
   createContext,
   useCallback,
   useContext,
-  useLayoutEffect,
+  useEffect,
   useMemo,
   useState,
 } from 'react';
@@ -192,7 +192,7 @@ export function useRegisterContextRegistryPageSource(
     [sourceId, sourceSignature]
   );
 
-  useLayoutEffect(() => {
+  useEffect(() => {
     if (!registerSource || !unregisterSource || !stableSource) {
       return;
     }

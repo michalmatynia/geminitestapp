@@ -366,6 +366,7 @@ export function ActiveLessonView({
       ? targetablePanels.find((panel) => panel.dataset['kangurPrintPanelId'] === targetPanelId) ??
         null
       : null;
+    const targetPathNodes: HTMLElement[] = [];
     const matchedTargetPanelTitle =
       matchedTargetPanel?.dataset['kangurPrintPanelTitle']?.trim() || '';
     const printContentTitle =
@@ -384,6 +385,12 @@ export function ActiveLessonView({
     if (printRoot && matchedTargetPanel) {
       printRoot.dataset['kangurPrintTargeted'] = 'true';
       matchedTargetPanel.dataset['kangurPrintTargetPanel'] = 'true';
+      let currentNode: HTMLElement | null = matchedTargetPanel;
+      while (currentNode && currentNode !== printRoot) {
+        currentNode.dataset['kangurPrintTargetPath'] = 'true';
+        targetPathNodes.push(currentNode);
+        currentNode = currentNode.parentElement;
+      }
       targetablePanels.forEach((panel) => {
         const shouldKeepVisible =
           panel === matchedTargetPanel ||
@@ -417,6 +424,9 @@ export function ActiveLessonView({
       if (matchedTargetPanel) {
         delete matchedTargetPanel.dataset['kangurPrintTargetPanel'];
       }
+      targetPathNodes.forEach((node) => {
+        delete node.dataset['kangurPrintTargetPath'];
+      });
       targetablePanels.forEach((panel) => {
         delete panel.dataset['kangurPrintPanelSelected'];
       });

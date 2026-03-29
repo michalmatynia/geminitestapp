@@ -18,6 +18,7 @@ type KangurGameQuizShellProps = {
     | ((helpers: { handleHome: () => void }) => ReactNode);
   description?: ReactNode;
   icon: string;
+  maxWidthClassName?: string;
   screen: KangurGameScreen;
   shellClassName?: string;
   shellTestId: string;
@@ -33,6 +34,7 @@ export function renderKangurGameQuizShell({
   children,
   description,
   icon,
+  maxWidthClassName,
   screen,
   shellClassName = 'items-center',
   shellTestId,
@@ -58,6 +60,7 @@ export function renderKangurGameQuizShell({
       backButtonLabel={resolvedBackButtonLabel}
       description={resolvedDescription}
       icon={icon}
+      maxWidthClassName={maxWidthClassName}
       onBack={() => setScreen(backScreen)}
       shellClassName={shellClassName}
       shellTestId={shellTestId}

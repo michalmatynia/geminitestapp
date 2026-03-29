@@ -6,7 +6,7 @@ import {
   getKangurSocialPipelineWorkerHeartbeat,
   KANGUR_SOCIAL_PIPELINE_REPEAT_EVERY_MS,
   KANGUR_SOCIAL_PIPELINE_WORKER_HEARTBEAT_TTL_MS,
-} from '@/features/kangur/workers/kangurSocialPipelineQueue';
+} from '@/features/kangur/social/workers/kangurSocialPipelineQueue';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { isRedisAvailable, isRedisReachable } from '@/shared/lib/queue';
 

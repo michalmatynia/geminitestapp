@@ -21,7 +21,7 @@ const {
   getKangurSocialPipelineWorkerHeartbeatMock: vi.fn(),
 }));
 
-vi.mock('@/features/kangur/workers/kangurSocialPipelineQueue', () => ({
+vi.mock('@/features/kangur/social/workers/kangurSocialPipelineQueue', () => ({
   getKangurSocialPipelineQueue: (...args: unknown[]) =>
     getKangurSocialPipelineQueueMock(...args),
   getKangurSocialPipelineWorkerHeartbeat: (...args: unknown[]) =>

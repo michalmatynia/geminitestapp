@@ -491,7 +491,10 @@ export default function SubtractingGardenGame({
   if (done) {
     const percent = Math.round((score / TOTAL_ROUNDS) * 100);
     return (
-      <KangurPracticeGameSummary dataTestId='subtracting-garden-summary-shell'>
+      <KangurPracticeGameSummary
+        dataTestId='subtracting-garden-summary-shell'
+        wrapperClassName='w-full max-w-3xl'
+      >
         <KangurPracticeGameSummaryEmoji
           dataTestId='subtracting-garden-summary-emoji'
           emoji={percent === 100 ? '🏆' : percent >= 60 ? '🌟' : '💪'}
@@ -559,7 +562,10 @@ export default function SubtractingGardenGame({
   const tokenAriaLabel = translations('subtractingGarden.aria.token');
 
   return (
-    <KangurPracticeGameShell className='w-full max-w-none'>
+    <KangurPracticeGameShell
+      className='w-full max-w-none'
+      data-testid='subtracting-garden-game-shell'
+    >
       <KangurPracticeGameProgress
         accent='rose'
         currentRound={roundIndex}
@@ -885,21 +891,16 @@ export default function SubtractingGardenGame({
                         fallbackCopy.checkLabel
                       )}
                     </KangurButton>
-                    <p
-                      className={cn(
-                        'text-sm font-semibold sm:text-base sm:text-left sm:max-w-md',
-                        status === 'correct'
-                          ? 'text-emerald-600'
-                          : status === 'wrong'
-                            ? 'text-rose-500'
-                            : 'text-slate-500'
-                      )}
-                      role='status'
-                      aria-live='polite'
-                      aria-atomic='true'
-                    >
-                      {feedbackMessage}
-                    </p>
+                    {status === 'idle' ? (
+                      <p
+                        className='text-sm font-semibold text-slate-500 sm:max-w-md sm:text-left sm:text-base'
+                        role='status'
+                        aria-live='polite'
+                        aria-atomic='true'
+                      >
+                        {feedbackMessage}
+                      </p>
+                    ) : null}
                   </KangurPanelRow>
                 </motion.div>
               </AnimatePresence>

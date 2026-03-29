@@ -32,7 +32,7 @@ import {
   KANGUR_DEFAULT_SUNSET_THEME,
   KANGUR_DEFAULT_THEME,
   type KangurThemeMode,
-} from '@/features/kangur/theme-settings';
+} from '@/features/kangur/appearance/theme-settings';
 import { KangurCmsBuilderLeftPanel } from './KangurCmsBuilderLeftPanel';
 import { KangurCmsBuilderRightPanel } from './KangurCmsBuilderRightPanel';
 import { KangurCmsBuilderStatusSidebar } from './KangurCmsBuilderStatusSidebar';

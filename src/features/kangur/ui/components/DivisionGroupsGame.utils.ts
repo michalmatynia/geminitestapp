@@ -62,37 +62,122 @@ export const moveBetweenLists = <T,>(
   return { source: sourceNext, destination: destinationNext };
 };
 
-export const createRound = (roundIndex: number): Round => {
-  const difficulty = roundIndex < 2 ? 'easy' : roundIndex < 4 ? 'medium' : 'hard';
-  const divisorMin = difficulty === 'easy' ? 2 : difficulty === 'medium' ? 2 : 3;
-  const divisorMax = difficulty === 'easy' ? 3 : difficulty === 'medium' ? 4 : 5;
-  const quotientMin = difficulty === 'easy' ? 2 : difficulty === 'medium' ? 3 : 3;
-  const quotientMax = difficulty === 'easy' ? 4 : difficulty === 'medium' ? 5 : 5;
-  const remainderAllowed = roundIndex >= 3;
+type DivisionGroupsDifficulty = 'easy' | 'medium' | 'hard';
 
-  let divisor = randomBetween(divisorMin, divisorMax);
-  let quotient = randomBetween(quotientMin, quotientMax);
-  let remainder = remainderAllowed ? randomBetween(0, divisor - 1) : 0;
-  if (remainderAllowed && roundIndex % 2 === 1) {
-    remainder = Math.max(1, remainder);
+const resolveDivisionGroupsDifficulty = (roundIndex: number): DivisionGroupsDifficulty => {
+  if (roundIndex < 2) {
+    return 'easy';
   }
 
-  let dividend = divisor * quotient + remainder;
-  while (dividend > 18) {
-    divisor = randomBetween(divisorMin, divisorMax);
-    quotient = randomBetween(quotientMin, quotientMax);
-    remainder = remainderAllowed ? randomBetween(0, divisor - 1) : 0;
-    if (remainderAllowed && roundIndex % 2 === 1) {
-      remainder = Math.max(1, remainder);
-    }
-    dividend = divisor * quotient + remainder;
+  if (roundIndex < 4) {
+    return 'medium';
+  }
+
+  return 'hard';
+};
+
+const resolveDivisionGroupsRanges = (
+  difficulty: DivisionGroupsDifficulty
+): {
+  divisorMax: number;
+  divisorMin: number;
+  quotientMax: number;
+  quotientMin: number;
+} => {
+  if (difficulty === 'easy') {
+    return {
+      divisorMax: 3,
+      divisorMin: 2,
+      quotientMax: 4,
+      quotientMin: 2,
+    };
+  }
+
+  if (difficulty === 'medium') {
+    return {
+      divisorMax: 4,
+      divisorMin: 2,
+      quotientMax: 5,
+      quotientMin: 3,
+    };
   }
 
   return {
-    dividend,
+    divisorMax: 5,
+    divisorMin: 3,
+    quotientMax: 5,
+    quotientMin: 3,
+  };
+};
+
+const resolveDivisionGroupsRemainder = ({
+  divisor,
+  remainderAllowed,
+  roundIndex,
+}: {
+  divisor: number;
+  remainderAllowed: boolean;
+  roundIndex: number;
+}): number => {
+  if (!remainderAllowed) {
+    return 0;
+  }
+
+  const remainder = randomBetween(0, divisor - 1);
+  return roundIndex % 2 === 1 ? Math.max(1, remainder) : remainder;
+};
+
+const buildDivisionGroupsCandidateRound = ({
+  divisorMax,
+  divisorMin,
+  quotientMax,
+  quotientMin,
+  remainderAllowed,
+  roundIndex,
+}: {
+  divisorMax: number;
+  divisorMin: number;
+  quotientMax: number;
+  quotientMin: number;
+  remainderAllowed: boolean;
+  roundIndex: number;
+}): Omit<Round, 'tokens'> => {
+  const divisor = randomBetween(divisorMin, divisorMax);
+  const quotient = randomBetween(quotientMin, quotientMax);
+  const remainder = resolveDivisionGroupsRemainder({
+    divisor,
+    remainderAllowed,
+    roundIndex,
+  });
+
+  return {
+    dividend: divisor * quotient + remainder,
     divisor,
     quotient,
     remainder,
-    tokens: createTokens(dividend, roundIndex),
+  };
+};
+
+export const createRound = (roundIndex: number): Round => {
+  const ranges = resolveDivisionGroupsRanges(resolveDivisionGroupsDifficulty(roundIndex));
+  const remainderAllowed = roundIndex >= 3;
+
+  let candidate = buildDivisionGroupsCandidateRound({
+    ...ranges,
+    remainderAllowed,
+    roundIndex,
+  });
+
+  while (candidate.dividend > 18) {
+    candidate = buildDivisionGroupsCandidateRound({
+      ...ranges,
+      remainderAllowed,
+      roundIndex,
+    });
+  }
+
+  return {
+    ...candidate,
+    tokens: createTokens(candidate.dividend, roundIndex),
   };
 };

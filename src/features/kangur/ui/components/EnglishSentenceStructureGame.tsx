@@ -658,9 +658,9 @@ export default function EnglishSentenceStructureGame({
           </div>
         ) : null}
 
-        {feedback ? (
+        {feedback?.kind === 'info' ? (
           <KangurInfoCard
-            accent={feedback.kind === 'success' ? 'emerald' : 'rose'}
+            accent='amber'
             padding='md'
             tone='accent'
           >
@@ -672,19 +672,19 @@ export default function EnglishSentenceStructureGame({
           </KangurInfoCard>
         )}
         <div className={KANGUR_WRAP_ROW_CLASSNAME}>
-          <KangurButton
-            onClick={() => handleCheck()}
-            disabled={!isReady || isChecking}
-            aria-busy={isChecking}
-            className={getKangurCheckButtonClassName(
-              undefined,
-              feedback?.kind === 'success' ? 'success' : feedback?.kind === 'error' ? 'error' : null
-            )}
-          >
-            {isChecking
-              ? translations('englishSentenceStructure.inRound.checking')
-              : translations('englishSentenceStructure.inRound.check')}
-          </KangurButton>
+        <KangurButton
+          onClick={() => handleCheck()}
+          disabled={!isReady || isChecking}
+          aria-busy={isChecking}
+          className={getKangurCheckButtonClassName(
+            undefined,
+            feedback?.kind === 'success' ? 'success' : feedback?.kind === 'error' ? 'error' : null
+          )}
+        >
+          {isChecking
+            ? translations('englishSentenceStructure.inRound.checking')
+            : translations('englishSentenceStructure.inRound.check')}
+        </KangurButton>
           <KangurButton onClick={handleRestart} variant='ghost'>
             {translations('shared.restart')}
           </KangurButton>

@@ -63,6 +63,39 @@ type KangurDialogProps = {
   children: ReactNode;
 };
 
+const resolveKangurDialogOverlayProps = ({
+  overlayProps,
+  overlayVariant,
+}: {
+  overlayProps: ComponentPropsWithoutRef<typeof DialogPrimitive.Overlay> | undefined;
+  overlayVariant: KangurDialogOverlayVariant | undefined;
+}): ComponentPropsWithoutRef<typeof DialogPrimitive.Overlay> => {
+  const variantProps = overlayVariant ? OVERLAY_VARIANT_PROPS[overlayVariant] : undefined;
+  return {
+    ...variantProps,
+    ...overlayProps,
+    className: cn(variantProps?.className, overlayProps?.className),
+    style: { ...variantProps?.style, ...overlayProps?.style },
+  };
+};
+
+const resolveKangurDialogContentProps = ({
+  contentProps,
+  contentSize,
+  contentVariant,
+}: {
+  contentProps: KangurDialogContentProps | undefined;
+  contentSize: KangurDialogContentSize | undefined;
+  contentVariant: KangurDialogContentVariant;
+}): KangurDialogContentProps => ({
+  ...contentProps,
+  className: cn(
+    CONTENT_VARIANT_CLASSNAMES[contentVariant],
+    contentSize ? CONTENT_SIZE_CLASSNAMES[contentSize] : null,
+    contentProps?.className
+  ),
+});
+
 export function KangurDialog({
   open,
   onOpenChange,
@@ -74,22 +107,12 @@ export function KangurDialog({
   contentProps,
   children,
 }: KangurDialogProps): React.JSX.Element {
-  const variantProps = overlayVariant ? OVERLAY_VARIANT_PROPS[overlayVariant] : undefined;
-  const mergedOverlayProps = {
-    ...variantProps,
-    ...overlayProps,
-    className: cn(variantProps?.className, overlayProps?.className),
-    style: { ...variantProps?.style, ...overlayProps?.style },
-  };
-
-  const mergedContentProps = {
-    ...contentProps,
-    className: cn(
-      CONTENT_VARIANT_CLASSNAMES[contentVariant],
-      contentSize ? CONTENT_SIZE_CLASSNAMES[contentSize] : null,
-      contentProps?.className
-    ),
-  };
+  const mergedOverlayProps = resolveKangurDialogOverlayProps({ overlayProps, overlayVariant });
+  const mergedContentProps = resolveKangurDialogContentProps({
+    contentProps,
+    contentSize,
+    contentVariant,
+  });
 
   return (
     <DialogPrimitive.Root open={open} onOpenChange={onOpenChange} modal={modal}>

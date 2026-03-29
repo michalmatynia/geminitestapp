@@ -5,6 +5,7 @@ import { Droppable } from '@hello-pangea/dnd';
 import {
   KangurDragDropContext,
 } from '@/features/kangur/ui/components/KangurDragDropContext';
+import { getKangurCheckButtonClassName } from '@/features/kangur/ui/components/KangurCheckButton';
 import {
   KangurPracticeGameProgress,
   KangurPracticeGameShell,
@@ -612,17 +613,6 @@ export default function EnglishAdjectivesSceneGame({
             </KangurInfoCard>
           ) : null}
 
-          {feedback ? (
-            <KangurInfoCard
-              accent={feedbackAccent}
-              className='text-sm'
-              padding='sm'
-              tone='accent'
-            >
-              {feedback.text}
-            </KangurInfoCard>
-          ) : null}
-
           <div className='flex w-full flex-wrap items-center justify-between gap-3'>
             <div className='flex flex-wrap items-center gap-2'>
               <KangurButton
@@ -645,15 +635,26 @@ export default function EnglishAdjectivesSceneGame({
             <KangurButton
               size='sm'
               variant='primary'
-              onClick={checked ? handleNext : handleCheck}
-              disabled={!isRoundComplete && !checked}
+              onClick={handleCheck}
+              disabled={checked || !isRoundComplete}
+              className={getKangurCheckButtonClassName(
+                undefined,
+                feedback?.kind === 'success' ? 'success' : feedback?.kind === 'error' ? 'error' : null
+              )}
             >
-              {checked
-                ? roundIndex + 1 >= TOTAL_ROUNDS
-                  ? translations('englishAdjectives.inRound.seeResult')
-                  : translations('englishAdjectives.inRound.next')
-                : translations('englishAdjectives.inRound.check')}
+              {translations('englishAdjectives.inRound.check')}
             </KangurButton>
+            {checked ? (
+              <KangurButton
+                size='sm'
+                variant='primary'
+                onClick={handleNext}
+              >
+                {roundIndex + 1 >= TOTAL_ROUNDS
+                  ? translations('englishAdjectives.inRound.seeResult')
+                  : translations('englishAdjectives.inRound.next')}
+              </KangurButton>
+            ) : null}
           </div>
         </KangurGlassPanel>
       </KangurDragDropContext>

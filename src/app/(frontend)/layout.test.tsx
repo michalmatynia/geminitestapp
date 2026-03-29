@@ -52,7 +52,7 @@ vi.mock('@/features/cms/server', () => ({
   getCmsThemeSettings: getCmsThemeSettingsMock,
 }));
 
-vi.mock('@/features/kangur/server/storefront-appearance', () => ({
+vi.mock('@/features/kangur/appearance/server/storefront-appearance', () => ({
   getKangurStorefrontInitialState: getKangurStorefrontInitialStateMock,
 }));
 

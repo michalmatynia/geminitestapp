@@ -7,7 +7,7 @@ import {
   enqueueKangurSocialPipelineJob,
   recoverKangurSocialPipelineQueue,
   startKangurSocialPipelineQueue,
-} from '@/features/kangur/workers/kangurSocialPipelineQueue';
+} from '@/features/kangur/social/workers/kangurSocialPipelineQueue';
 import { ErrorSystem } from '@/features/kangur/shared/utils/observability/error-system';
 import { kangurSocialVisualAnalysisSchema } from '@/shared/contracts/kangur-social-posts';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';

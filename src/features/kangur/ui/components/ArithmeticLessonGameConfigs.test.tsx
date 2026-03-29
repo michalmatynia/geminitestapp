@@ -35,6 +35,7 @@ describe('arithmetic lesson game configs', () => {
       sectionId: 'game',
       launchableGameId: 'adding_ball',
       launchableInstanceId: 'adding_ball:instance:default',
+      maxWidthClassName: 'max-w-2xl',
       shellTestId: 'adding-lesson-game-shell',
     },
     {
@@ -43,6 +44,7 @@ describe('arithmetic lesson game configs', () => {
       sectionId: 'synthesis',
       launchableGameId: 'adding_synthesis',
       launchableInstanceId: 'adding_synthesis:instance:default',
+      maxWidthClassName: 'max-w-[1120px]',
       shellTestId: 'adding-lesson-synthesis-shell',
     },
     {
@@ -51,6 +53,7 @@ describe('arithmetic lesson game configs', () => {
       sectionId: 'game',
       launchableGameId: 'subtracting_garden',
       launchableInstanceId: 'subtracting_garden:instance:default',
+      maxWidthClassName: 'max-w-none',
       shellTestId: 'subtracting-lesson-game-shell',
     },
     {
@@ -59,6 +62,7 @@ describe('arithmetic lesson game configs', () => {
       sectionId: 'game',
       launchableGameId: 'division_groups',
       launchableInstanceId: 'division_groups:instance:default',
+      maxWidthClassName: 'max-w-none',
       shellTestId: 'division-lesson-game-shell',
     },
     {
@@ -67,6 +71,7 @@ describe('arithmetic lesson game configs', () => {
       sectionId: 'game_array',
       launchableGameId: 'multiplication_array',
       launchableInstanceId: 'multiplication_array:instance:default',
+      maxWidthClassName: 'max-w-none',
       shellTestId: 'multiplication-lesson-game-array-shell',
       hasBodyPrelude: true,
     },
@@ -78,6 +83,7 @@ describe('arithmetic lesson game configs', () => {
       sectionId,
       launchableGameId,
       launchableInstanceId,
+      maxWidthClassName,
       shellTestId,
       hasBodyPrelude,
     }) => {
@@ -102,6 +108,7 @@ describe('arithmetic lesson game configs', () => {
       const game = games.find((candidate) => candidate.sectionId === sectionId);
 
       expect(game?.shell).toMatchObject({
+        maxWidthClassName,
         shellTestId,
       });
       expect(game?.launchableInstance).toMatchObject({

@@ -34,6 +34,96 @@ const getLocalModeFallbackLabel = (locale: ReturnType<typeof normalizeSiteLocale
   return 'Tryb lokalny';
 };
 
+const hasKangurMeaningfulProfileProgress = (
+  progress: ReturnType<typeof useKangurLearnerProfileRuntime>['progress']
+): boolean =>
+  progress.totalXp > 0 ||
+  progress.gamesPlayed > 0 ||
+  progress.lessonsCompleted > 0 ||
+  (progress.dailyQuestsCompleted ?? 0) > 0;
+
+const resolveKangurHeroActionClassName = (isCoarsePointer: boolean): string =>
+  isCoarsePointer
+    ? 'w-full min-h-11 px-4 touch-manipulation select-none active:scale-[0.97] sm:w-auto'
+    : 'w-full sm:w-auto';
+
+function KangurLearnerProfileHeroIdentity({
+  displayName,
+  selectedAvatar,
+  translations,
+}: {
+  displayName: string | null;
+  selectedAvatar: ReturnType<typeof getKangurAvatarById>;
+  translations: ReturnType<typeof useTranslations<'KangurLearnerProfileWidgets.hero'>>;
+}): React.JSX.Element | null {
+  if (!displayName) {
+    return null;
+  }
+
+  return (
+    <div
+      className={`mb-4 w-full ${KANGUR_SPACED_ROW_CLASSNAME} items-center sm:justify-center sm:gap-4`}
+    >
+      <div className='h-16 w-16 overflow-hidden rounded-full border border-white/80 bg-white/80 shadow-sm'>
+        {selectedAvatar ? (
+          <img
+            src={selectedAvatar.src}
+            alt={selectedAvatar.label}
+            className='h-full w-full object-cover'
+          />
+        ) : (
+          <div className='flex h-full w-full items-center justify-center text-xl font-black text-slate-400'>
+            ?
+          </div>
+        )}
+      </div>
+      <div className='text-center sm:text-left'>
+        <p className='text-xs font-semibold uppercase tracking-[0.2em] text-slate-500'>
+          {translations('avatarLabel')}
+        </p>
+        <p className='text-lg font-bold text-slate-800'>{displayName}</p>
+      </div>
+    </div>
+  );
+}
+
+function KangurLearnerProfileHeroAuthActions({
+  actionClassName,
+  openLoginModal,
+  translations,
+}: {
+  actionClassName: string;
+  openLoginModal: ReturnType<typeof useKangurLoginModal>['openLoginModal'];
+  translations: ReturnType<typeof useTranslations<'KangurLearnerProfileWidgets.hero'>>;
+}): React.JSX.Element {
+  return (
+    <div className={KANGUR_PANEL_GRID_TO_ROW_CLASSNAME}>
+      <KangurButton
+        className={actionClassName}
+        onClick={() => {
+          openLoginModal();
+        }}
+        size='sm'
+        variant='surface'
+        data-doc-id='profile_login'
+      >
+        <LogIn aria-hidden='true' className='h-4 w-4' /> {translations('signIn')}
+      </KangurButton>
+      <KangurButton
+        className={actionClassName}
+        onClick={() => {
+          openLoginModal(null, { authMode: 'create-account' });
+        }}
+        size='sm'
+        type='button'
+        variant='primary'
+      >
+        {translations('createParentAccount')}
+      </KangurButton>
+    </div>
+  );
+}
+
 export function KangurLearnerProfileHeroWidget(): React.JSX.Element | null {
   const locale = normalizeSiteLocale(useLocale());
   const translations = useTranslations('KangurLearnerProfileWidgets.hero');
@@ -49,12 +139,8 @@ export function KangurLearnerProfileHeroWidget(): React.JSX.Element | null {
     getLocalModeFallbackLabel(locale)
   );
   const displayName = user ? getKangurLearnerProfileDisplayName(user, localModeLabel) : null;
-  const hasMeaningfulProgress =
-    progress.totalXp > 0 ||
-    progress.gamesPlayed > 0 ||
-    progress.lessonsCompleted > 0 ||
-    (progress.dailyQuestsCompleted ?? 0) > 0;
-  const shouldRender = !user || hasMeaningfulProgress;
+  const shouldRender = !user || hasKangurMeaningfulProfileProgress(progress);
+  const actionClassName = resolveKangurHeroActionClassName(isCoarsePointer);
 
   if (!shouldRender) {
     return null;
@@ -72,29 +158,11 @@ export function KangurLearnerProfileHeroWidget(): React.JSX.Element | null {
       testId='kangur-learner-profile-hero'
       title={translations('title')}
     >
-      {user ? (
-        <div className={`mb-4 w-full ${KANGUR_SPACED_ROW_CLASSNAME} items-center sm:justify-center sm:gap-4`}>
-          <div className='h-16 w-16 overflow-hidden rounded-full border border-white/80 bg-white/80 shadow-sm'>
-            {selectedAvatar ? (
-              <img
-                src={selectedAvatar.src}
-                alt={selectedAvatar.label}
-                className='h-full w-full object-cover'
-              />
-            ) : (
-              <div className='flex h-full w-full items-center justify-center text-xl font-black text-slate-400'>
-                ?
-              </div>
-            )}
-          </div>
-          <div className='text-center sm:text-left'>
-            <p className='text-xs font-semibold uppercase tracking-[0.2em] text-slate-500'>
-              {translations('avatarLabel')}
-            </p>
-            <p className='text-lg font-bold text-slate-800'>{displayName}</p>
-          </div>
-        </div>
-      ) : null}
+      <KangurLearnerProfileHeroIdentity
+        displayName={displayName}
+        selectedAvatar={selectedAvatar}
+        translations={translations}
+      />
       <KangurHeroMilestoneSummary
         className='mb-3 w-full'
         dataTestIdPrefix='kangur-learner-profile-hero-milestone'
@@ -103,38 +171,11 @@ export function KangurLearnerProfileHeroWidget(): React.JSX.Element | null {
       />
 
       {!user ? (
-        <div className={KANGUR_PANEL_GRID_TO_ROW_CLASSNAME}>
-          <KangurButton
-            className={
-              isCoarsePointer
-                ? 'w-full min-h-11 px-4 touch-manipulation select-none active:scale-[0.97] sm:w-auto'
-                : 'w-full sm:w-auto'
-            }
-            onClick={() => {
-              openLoginModal();
-            }}
-            size='sm'
-            variant='surface'
-            data-doc-id='profile_login'
-          >
-            <LogIn aria-hidden='true' className='h-4 w-4' /> {translations('signIn')}
-          </KangurButton>
-          <KangurButton
-            className={
-              isCoarsePointer
-                ? 'w-full min-h-11 px-4 touch-manipulation select-none active:scale-[0.97] sm:w-auto'
-                : 'w-full sm:w-auto'
-            }
-            onClick={() => {
-              openLoginModal(null, { authMode: 'create-account' });
-            }}
-            size='sm'
-            type='button'
-            variant='primary'
-          >
-            {translations('createParentAccount')}
-          </KangurButton>
-        </div>
+        <KangurLearnerProfileHeroAuthActions
+          actionClassName={actionClassName}
+          openLoginModal={openLoginModal}
+          translations={translations}
+        />
       ) : null}
     </KangurPageIntroCard>
   );

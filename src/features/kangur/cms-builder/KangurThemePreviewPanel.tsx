@@ -4,7 +4,7 @@ import { useTranslations } from 'next-intl';
 import React from 'react';
 
 import { resolveKangurStorefrontAppearance } from '@/features/cms/public';
-import type { KangurThemeMode } from '@/features/kangur/theme-settings';
+import type { KangurThemeMode } from '@/features/kangur/appearance/theme-settings';
 import type { ThemeSettings } from '@/shared/contracts/cms-theme';
 import { Badge } from '@/features/kangur/shared/ui';
 import {

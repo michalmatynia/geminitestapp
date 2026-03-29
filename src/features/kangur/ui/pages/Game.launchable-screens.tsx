@@ -24,6 +24,7 @@ const KangurConfigurableLaunchableGameScreen = ({
     backScreen,
     description: runtime.shell.description,
     icon: runtime.shell.icon,
+    maxWidthClassName: runtime.shell.maxWidthClassName,
     screen: runtime.screen,
     shellTestId: runtime.shell.shellTestId,
     title: runtime.shell.title,

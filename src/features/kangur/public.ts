@@ -46,7 +46,7 @@ export { default as Leaderboard } from '@/features/kangur/ui/components/Leaderbo
 export * from '@/features/kangur/ui/components/KangurLessonsCatalogWidget';
 export { default as PlayerProgressCard } from '@/features/kangur/ui/components/PlayerProgressCard';
 export * from '@/features/kangur/ui/components/KangurPriorityAssignments';
-export { KangurSocialPipelineQueuePanel } from '@/features/kangur/admin/admin-kangur-social/KangurSocialPipelineQueuePanel';
+export { KangurSocialPipelineQueuePanel } from '@/features/kangur/social/admin/workspace/KangurSocialPipelineQueuePanel';
 export { AdminKangurPageShell } from '@/features/kangur/admin/AdminKangurPageShell';
 export { AdminKangurAppearancePage } from '@/features/kangur/admin/AdminKangurAppearancePage';
 export { AdminKangurBuilderPage } from '@/features/kangur/admin/AdminKangurBuilderPage';
@@ -56,7 +56,7 @@ export { AdminKangurLessonsManagerPage } from '@/features/kangur/admin/AdminKang
 export { AdminKangurObservabilityPage } from '@/features/kangur/admin/AdminKangurObservabilityPage';
 export { AdminKangurAiTutorContentPage } from '@/features/kangur/admin/AdminKangurAiTutorContentPage';
 export { default as AdminKangurSettingsPage } from '@/features/kangur/admin/AdminKangurSettingsPage';
-export { AdminKangurSocialPage } from '@/features/kangur/admin/AdminKangurSocialPage';
+export { AdminKangurSocialPage } from '@/features/kangur/social/admin/AdminKangurSocialPage';
 export { AdminKangurTestSuitesManagerPage } from '@/features/kangur/admin/AdminKangurTestSuitesManagerPage';
 export { FrontendRouteLoadingFallback } from '@/features/kangur/ui/FrontendRouteLoadingFallback';
 export { KangurFeatureRouteShell } from '@/features/kangur/ui/KangurFeatureRouteShell';

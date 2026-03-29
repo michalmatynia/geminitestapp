@@ -80,6 +80,7 @@ export function useGameScreenRefs(): GameScreenRefsState {
   const additionQuizRef = useRef<HTMLDivElement | null>(null);
   const addingSynthesisQuizRef = useRef<HTMLDivElement | null>(null);
   const subtractionQuizRef = useRef<HTMLDivElement | null>(null);
+  const multiplicationArrayQuizRef = useRef<HTMLDivElement | null>(null);
   const divisionQuizRef = useRef<HTMLDivElement | null>(null);
   const multiplicationQuizRef = useRef<HTMLDivElement | null>(null);
   const logicalPatternsQuizRef = useRef<HTMLDivElement | null>(null);
@@ -118,6 +119,7 @@ export function useGameScreenRefs(): GameScreenRefsState {
     addition_quiz: additionQuizRef,
     adding_synthesis_quiz: addingSynthesisQuizRef,
     subtraction_quiz: subtractionQuizRef,
+    multiplication_array_quiz: multiplicationArrayQuizRef,
     multiplication_quiz: multiplicationQuizRef,
     division_quiz: divisionQuizRef,
     logical_patterns_quiz: logicalPatternsQuizRef,

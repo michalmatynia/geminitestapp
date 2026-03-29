@@ -40,6 +40,6 @@ export const getKangurAuthBootstrapScript = async (
       action: 'bootstrap',
     });
 
-    return null;
+    return `window.${KANGUR_AUTH_BOOTSTRAP_GLOBAL}=null;`;
   }
 };

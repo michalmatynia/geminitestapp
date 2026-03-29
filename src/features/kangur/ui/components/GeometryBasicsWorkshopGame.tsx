@@ -25,6 +25,7 @@ import {
   KangurInfoCard,
   KangurStatusChip,
 } from '@/features/kangur/ui/design/primitives';
+import { getKangurCheckButtonClassName } from '@/features/kangur/ui/components/KangurCheckButton';
 import {
   KANGUR_STACK_ROW_CLASSNAME,
 } from '@/features/kangur/ui/design/tokens';
@@ -587,7 +588,6 @@ function GeometryBasicsWorkshopBoard(props: {
   assignTile: (tileId: TileId) => void;
   checked: boolean;
   clearSlot: () => void;
-  feedback: KangurMiniGameFeedbackState;
   isCoarsePointer: boolean;
   round: Round;
   roundState: RoundState;
@@ -599,7 +599,6 @@ function GeometryBasicsWorkshopBoard(props: {
     assignTile,
     checked,
     clearSlot,
-    feedback,
     isCoarsePointer,
     round,
     roundState,
@@ -689,19 +688,6 @@ function GeometryBasicsWorkshopBoard(props: {
       <p className='text-xs font-semibold text-sky-700'>
         {getGeometryBasicsRoundHint(translations, round.id)}
       </p>
-      {feedback ? (
-        <p
-          className={cn(
-            'text-sm font-semibold',
-            feedback.kind === 'success' ? 'text-emerald-600' : 'text-rose-600'
-          )}
-          role='status'
-          aria-live='polite'
-          aria-atomic='true'
-        >
-          {feedback.text}
-        </p>
-      ) : null}
     </div>
   );
 }
@@ -770,6 +756,7 @@ function GeometryBasicsWorkshopPool(props: {
 
 function GeometryBasicsWorkshopActions(props: {
   checked: boolean;
+  feedback: KangurMiniGameFeedbackState;
   goToNextRound: () => void;
   handleCheck: () => void;
   resetRound: () => void;
@@ -777,32 +764,43 @@ function GeometryBasicsWorkshopActions(props: {
   roundState: RoundState;
   translations: GeometryBasicsTranslations;
 }): React.JSX.Element {
-  const { checked, goToNextRound, handleCheck, resetRound, roundIndex, roundState, translations } =
-    props;
+  const {
+    checked,
+    feedback,
+    goToNextRound,
+    handleCheck,
+    resetRound,
+    roundIndex,
+    roundState,
+    translations,
+  } = props;
 
   return (
     <div className='flex w-full flex-wrap items-center justify-between kangur-panel-gap'>
       <KangurButton size='sm' type='button' variant='surface' onClick={resetRound} disabled={checked}>
         {translations('geometryBasics.inRound.clear')}
       </KangurButton>
-      {!checked ? (
-        <KangurButton
-          size='sm'
-          type='button'
-          variant='primary'
-          onClick={handleCheck}
-          disabled={!roundState.slot}
-        >
-          {translations('geometryBasics.inRound.check')}
-        </KangurButton>
-      ) : (
+      <KangurButton
+        size='sm'
+        type='button'
+        variant='primary'
+        onClick={handleCheck}
+        disabled={checked || !roundState.slot}
+        className={getKangurCheckButtonClassName(
+          undefined,
+          feedback?.kind === 'success' ? 'success' : feedback?.kind === 'error' ? 'error' : null
+        )}
+      >
+        {translations('geometryBasics.inRound.check')}
+      </KangurButton>
+      {checked ? (
         <KangurButton size='sm' type='button' variant='primary' onClick={goToNextRound}>
           {resolveGeometryBasicsContinueLabel({
             roundIndex,
             translations,
           })}
         </KangurButton>
-      )}
+      ) : null}
     </div>
   );
 }
@@ -864,7 +862,6 @@ function GeometryBasicsWorkshopRoundView(props: {
           assignTile={assignTile}
           checked={checked}
           clearSlot={clearSlot}
-          feedback={feedback}
           isCoarsePointer={isCoarsePointer}
           round={round}
           roundState={roundState}
@@ -882,6 +879,7 @@ function GeometryBasicsWorkshopRoundView(props: {
         />
         <GeometryBasicsWorkshopActions
           checked={checked}
+          feedback={feedback}
           goToNextRound={goToNextRound}
           handleCheck={handleCheck}
           resetRound={resetRound}

@@ -14,13 +14,12 @@ import {
   KANGUR_SUNSET_THEME_SETTINGS_KEY,
   parseKangurThemeSettings,
   type KangurThemeMode,
-} from '@/features/kangur/theme-settings';
+} from '@/features/kangur/appearance/theme-settings';
 import { Alert, Button, FormSection } from '@/features/kangur/shared/ui';
 import type { ThemeSettings } from '@/shared/contracts/cms-theme';
-import type { SettingsPanelField } from '@/shared/contracts/ui';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
 
-import { ThemePreviewPanel } from '../appearance/ThemePreviewPanel';
+import { ThemePreviewPanel } from '@/features/kangur/appearance/admin/workspace/ThemePreviewPanel';
 import {
   buildKangurThemeFontWeightOptions,
   buildKangurThemeHomeActionFields,
@@ -153,9 +152,7 @@ function KangurThemeSettingsPanelContent({
     () =>
       KANGUR_THEME_SECTIONS.map((section) => {
         const sectionCopy = getKangurThemeSectionCopy(locale, section.id);
-        let fields = section.fields.map((field) =>
-          localizeKangurThemeField(locale, field as SettingsPanelField<ThemeSettings>)
-        );
+        let fields = section.fields.map((field) => localizeKangurThemeField(locale, field));
 
         if (section.id === 'buttons') {
           fields = fields.map((field) =>
@@ -219,7 +216,9 @@ function KangurThemeSettingsPanelContent({
                 type='button'
                 variant='primary'
                 size='sm'
-                onClick={saveTheme}
+                onClick={() => {
+                  void saveTheme();
+                }}
                 loading={isSaving}
                 disabled={!hasUnsavedChanges}
               >

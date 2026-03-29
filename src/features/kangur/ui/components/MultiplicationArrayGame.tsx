@@ -27,7 +27,6 @@ import {
   KANGUR_ACCENT_STYLES,
   KANGUR_PANEL_GAP_CLASSNAME,
   KANGUR_STACK_ROW_CLASSNAME,
-  KANGUR_STACK_TIGHT_CLASSNAME,
 } from '@/features/kangur/ui/design/tokens';
 import { useKangurCoarsePointer } from '@/features/kangur/ui/hooks/useKangurCoarsePointer';
 import { createKangurPageTransitionMotionProps } from '@/features/kangur/ui/motion/page-transition';
@@ -41,6 +40,7 @@ import type { KangurRewardBreakdownEntry } from '@/features/kangur/ui/types';
 import { cn } from '@/features/kangur/shared/utils';
 
 type MultiplicationArrayGameProps = {
+  finishLabel?: string;
   finishLabelVariant?: 'done' | 'topics';
   onFinish: () => void;
 };
@@ -286,7 +286,10 @@ function MultiplicationArraySummaryView({
   xpEarned: number;
 }): React.JSX.Element {
   return (
-    <KangurPracticeGameSummary dataTestId='multiplication-array-summary-shell'>
+    <KangurPracticeGameSummary
+      dataTestId='multiplication-array-summary-shell'
+      wrapperClassName='w-full max-w-3xl'
+    >
       <KangurPracticeGameSummaryEmoji
         dataTestId='multiplication-array-summary-emoji'
         emoji={percent === 100 ? '🏆' : percent >= 67 ? '🌟' : '💪'}
@@ -442,11 +445,11 @@ function MultiplicationArrayGroups({
   translations: ReturnType<typeof useTranslations>;
 }): React.JSX.Element {
   return (
-    <div className={`${KANGUR_STACK_TIGHT_CLASSNAME} w-full`}>
+    <div className='grid w-full gap-3 lg:grid-cols-2 xl:grid-cols-3'>
       {isCoarsePointer ? (
         <p
           data-testid='multiplication-array-touch-hint'
-          className='text-center text-xs font-semibold uppercase tracking-[0.16em] [color:var(--kangur-page-muted-text)]'
+          className='text-center text-xs font-semibold uppercase tracking-[0.16em] [color:var(--kangur-page-muted-text)] lg:col-span-2 xl:col-span-3'
         >
           {translations('multiplicationArray.inRound.touchHint', { total: a })}
         </p>
@@ -496,7 +499,10 @@ function MultiplicationArrayRoundView({
   translations: ReturnType<typeof useTranslations>;
 }): React.JSX.Element {
   return (
-    <KangurPracticeGameShell>
+    <KangurPracticeGameShell
+      className='w-full max-w-4xl'
+      data-testid='multiplication-array-game-shell'
+    >
       <KangurPracticeGameProgress
         accent='indigo'
         currentRound={roundIndex}
@@ -506,7 +512,7 @@ function MultiplicationArrayRoundView({
       <AnimatePresence mode='wait'>
         <motion.div key={`${roundIndex}-${a}-${b}`} {...roundMotionProps} className='w-full'>
           <KangurGlassPanel
-            className={cn('flex flex-col items-center', KANGUR_PANEL_GAP_CLASSNAME)}
+            className={cn('flex w-full flex-col items-center', KANGUR_PANEL_GAP_CLASSNAME)}
             data-testid='multiplication-array-round-shell'
             padding='lg'
             surface='solid'
@@ -578,16 +584,19 @@ function MultiplicationArrayRoundView({
 }
 
 export default function MultiplicationArrayGame({
+  finishLabel,
   finishLabelVariant = 'done',
   onFinish,
 }: MultiplicationArrayGameProps): React.JSX.Element {
   const ownerKey = useKangurProgressOwnerKey();
   const translations = useTranslations('KangurMiniGames');
   const isCoarsePointer = useKangurCoarsePointer();
-  const finishLabel = getKangurMiniGameFinishLabel(
-    translations,
-    finishLabelVariant === 'topics' ? 'topics' : 'done'
-  );
+  const resolvedFinishLabel =
+    finishLabel ??
+    getKangurMiniGameFinishLabel(
+      translations,
+      finishLabelVariant === 'topics' ? 'topics' : 'done'
+    );
   const prefersReducedMotion = useReducedMotion();
   const roundMotionProps = createKangurPageTransitionMotionProps(prefersReducedMotion);
   const [[a, b], setProblem] = useState<MultiplicationArrayProblem>(() => pickProblem());
@@ -668,7 +677,7 @@ export default function MultiplicationArrayGame({
     const percent = Math.round((score / TOTAL_ROUNDS) * 100);
     return (
       <MultiplicationArraySummaryView
-        finishLabel={finishLabel}
+        finishLabel={resolvedFinishLabel}
         onFinish={handleFinishGame}
         onRestart={handleRestart}
         percent={percent}

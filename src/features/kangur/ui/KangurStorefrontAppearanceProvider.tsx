@@ -7,7 +7,7 @@ import {
   parseKangurStorefrontAppearanceMode,
   type KangurStorefrontThemeSettingsSnapshot,
   type KangurStorefrontAppearanceMode,
-} from '@/features/kangur/storefront-appearance-settings';
+} from '@/features/kangur/appearance/storefront-appearance-settings';
 import { useSettingsStore } from '@/features/kangur/shared/providers/SettingsStoreProvider';
 
 import {
@@ -56,7 +56,7 @@ const resolveKangurStorefrontInitialThemeSettings = (
 
 const resolveKangurStorefrontPersistMode = (): boolean => {
   const raw = process.env['NEXT_PUBLIC_KANGUR_APPEARANCE_PERSIST'];
-  return raw !== 'false';
+  return raw === 'true';
 };
 
 export function KangurStorefrontAppearanceProvider({
@@ -64,6 +64,7 @@ export function KangurStorefrontAppearanceProvider({
   initialAppearance,
   initialMode,
   initialThemeSettings,
+  persistMode,
 }: {
   children: ReactNode;
   initialAppearance?: {
@@ -72,6 +73,7 @@ export function KangurStorefrontAppearanceProvider({
   };
   initialMode?: KangurStorefrontAppearanceMode;
   initialThemeSettings?: Partial<KangurStorefrontThemeSettingsSnapshot>;
+  persistMode?: boolean;
 }): React.JSX.Element {
   const settingsStore = useSettingsStore();
   const [hydrated, setHydrated] = useState(false);
@@ -88,7 +90,10 @@ export function KangurStorefrontAppearanceProvider({
     [resolvedInitialThemeSettingsInput]
   );
   const defaultMode = hydrated ? resolvedMode : (resolvedInitialMode ?? 'default');
-  const shouldPersistMode = useMemo(() => resolveKangurStorefrontPersistMode(), []);
+  const shouldPersistMode = useMemo(
+    () => persistMode ?? resolveKangurStorefrontPersistMode(),
+    [persistMode]
+  );
 
   useEffect(() => {
     setHydrated(true);

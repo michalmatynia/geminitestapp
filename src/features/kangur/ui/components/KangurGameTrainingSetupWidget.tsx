@@ -12,6 +12,63 @@ import { getRecommendedTrainingSetup } from '@/features/kangur/ui/services/game-
 import { translateRecommendationWithFallback } from '@/features/kangur/ui/services/recommendation-i18n';
 import { normalizeSiteLocale } from '@/shared/lib/i18n/site-locale';
 
+const resolveTrainingSetupFallbackCopy = (
+  normalizedLocale: ReturnType<typeof normalizeSiteLocale>
+): {
+  description: string;
+  title: string;
+  wordmarkLabel: string;
+} => {
+  switch (normalizedLocale) {
+    case 'uk':
+      return {
+        title: 'Налаштування тренування',
+        wordmarkLabel: 'Тренування',
+        description: 'Налаштуйте змішане тренування й виберіть діапазон запитань.',
+      };
+    case 'de':
+      return {
+        title: 'Gemischtes Training',
+        wordmarkLabel: 'Training',
+        description: 'Wähle Niveau, Kategorien und die Anzahl der Fragen für eine Sitzung.',
+      };
+    case 'pl':
+      return {
+        title: 'Trening mieszany',
+        wordmarkLabel: 'Trening',
+        description: 'Dobierz poziom, kategorie i liczbe pytan do jednej sesji.',
+      };
+    default:
+      return {
+        title: 'Mixed training',
+        wordmarkLabel: 'Training',
+        description: 'Choose the level, categories, and number of questions for one session.',
+      };
+  }
+};
+
+const renderTrainingSetupAssignmentBanner = ({
+  activePracticeAssignment,
+  basePath,
+}: {
+  activePracticeAssignment: ReturnType<typeof useKangurGameRuntime>['activePracticeAssignment'];
+  basePath: ReturnType<typeof useKangurGameRuntime>['basePath'];
+}): React.JSX.Element | null => {
+  if (!activePracticeAssignment) {
+    return null;
+  }
+
+  return (
+    <div className='flex w-full justify-center px-4'>
+      <KangurPracticeAssignmentBanner
+        assignment={activePracticeAssignment}
+        basePath={basePath}
+        mode='active'
+      />
+    </div>
+  );
+};
+
 export function KangurGameTrainingSetupWidget(): React.JSX.Element | null {
   const locale = useLocale();
   const normalizedLocale = normalizeSiteLocale(locale);
@@ -27,33 +84,16 @@ export function KangurGameTrainingSetupWidget(): React.JSX.Element | null {
       }),
     [locale, progress, recommendationTranslations]
   );
-  const trainingSetupFallbackTitle =
-    normalizedLocale === 'uk'
-      ? 'Налаштування тренування'
-      : normalizedLocale === 'de'
-        ? 'Gemischtes Training'
-        : normalizedLocale === 'pl'
-          ? 'Trening mieszany'
-          : 'Mixed training';
-  const trainingSetupFallbackWordmarkLabel =
-    normalizedLocale === 'uk' ? 'Тренування' : normalizedLocale === 'pl' ? 'Trening' : 'Training';
-  const trainingSetupFallbackDescription =
-    normalizedLocale === 'uk'
-      ? 'Налаштуйте змішане тренування й виберіть діапазон запитань.'
-      : normalizedLocale === 'de'
-        ? 'Wähle Niveau, Kategorien und die Anzahl der Fragen für eine Sitzung.'
-        : normalizedLocale === 'pl'
-          ? 'Dobierz poziom, kategorie i liczbe pytan do jednej sesji.'
-          : 'Choose the level, categories, and number of questions for one session.';
+  const fallbackCopy = resolveTrainingSetupFallbackCopy(normalizedLocale);
   const trainingSetupTitle = translateRecommendationWithFallback(
     gamePageTranslations,
     'screens.training.label',
-    trainingSetupFallbackTitle
+    fallbackCopy.title
   );
   const trainingWordmarkLabel = translateRecommendationWithFallback(
     gamePageTranslations,
     'screens.training.wordmarkLabel',
-    trainingSetupFallbackWordmarkLabel
+    fallbackCopy.wordmarkLabel
   );
 
   if (screen !== 'training') {
@@ -61,16 +101,7 @@ export function KangurGameTrainingSetupWidget(): React.JSX.Element | null {
   }
 
   return renderKangurGameSetupShell({
-    afterIntro:
-        activePracticeAssignment ? (
-          <div className='flex w-full justify-center px-4'>
-            <KangurPracticeAssignmentBanner
-              assignment={activePracticeAssignment}
-              basePath={basePath}
-              mode='active'
-            />
-          </div>
-        ) : null,
+    afterIntro: renderTrainingSetupAssignmentBanner({ activePracticeAssignment, basePath }),
     children: (
       <KangurTrainingSetupPanel
         onStart={(selection, options) => handleStartTraining(selection, options)}
@@ -80,7 +111,7 @@ export function KangurGameTrainingSetupWidget(): React.JSX.Element | null {
     description: translateRecommendationWithFallback(
       gamePageTranslations,
       'screens.training.description',
-      trainingSetupFallbackDescription
+      fallbackCopy.description
     ),
     momentumMode: 'training',
     onBack: handleHome,

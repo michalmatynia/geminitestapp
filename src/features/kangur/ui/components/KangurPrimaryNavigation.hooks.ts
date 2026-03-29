@@ -20,6 +20,8 @@ import { useKangurMobileBreakpoint } from '@/features/kangur/ui/hooks/useKangurM
 import { useKangurCoarsePointer } from '@/features/kangur/ui/hooks/useKangurCoarsePointer';
 import { prefetchKangurPageContentStore } from '@/features/kangur/ui/hooks/useKangurPageContent';
 import { useKangurStorefrontAppearance } from '@/features/kangur/ui/useKangurStorefrontAppearance';
+import { isKangurSocialBatchCaptureHref } from '@/features/kangur/shared/capture-mode';
+import { useOptionalKangurRouting } from '@/features/kangur/ui/context/KangurRoutingContext';
 import { normalizeSiteLocale } from '@/shared/lib/i18n/site-locale';
 import {
   getPrimaryNavigationFallbackCopy,
@@ -289,20 +291,28 @@ export function useKangurPrimaryNavigationLessonsPrefetchOnIntent({
   queryClient: QueryClient | null | undefined;
   subject: ReturnType<typeof useKangurSubjectFocus>['subject'];
 }): () => void {
+  const routing = useOptionalKangurRouting();
+  const isSyntheticKangurCapture = isKangurSocialBatchCaptureHref(
+    routing?.requestedHref ?? routing?.requestedPath
+  );
   const lessonsPrefetchTriggeredRef = useRef(false);
   const pageContentPrefetchTriggeredRef = useRef(false);
 
   const prefetchSharedRouteContentOnIntent = useCallback((): void => {
-    if (pageContentPrefetchTriggeredRef.current) {
+    if (isSyntheticKangurCapture || pageContentPrefetchTriggeredRef.current) {
       return;
     }
 
     pageContentPrefetchTriggeredRef.current = true;
     void prefetchKangurPageContentStore(queryClient, normalizedLocale);
-  }, [normalizedLocale, queryClient]);
+  }, [isSyntheticKangurCapture, normalizedLocale, queryClient]);
 
   const prefetchLessonsCatalogOnIntent = useCallback((): void => {
-    if (currentPage === 'Lessons' || lessonsPrefetchTriggeredRef.current) {
+    if (
+      isSyntheticKangurCapture ||
+      currentPage === 'Lessons' ||
+      lessonsPrefetchTriggeredRef.current
+    ) {
       return;
     }
 
@@ -316,6 +326,7 @@ export function useKangurPrimaryNavigationLessonsPrefetchOnIntent({
   }, [
     ageGroup,
     currentPage,
+    isSyntheticKangurCapture,
     prefetchSharedRouteContentOnIntent,
     queryClient,
     subject,
@@ -328,6 +339,7 @@ export function useKangurPrimaryNavigationLessonsPrefetchOnIntent({
 
   useEffect(() => {
     if (
+      isSyntheticKangurCapture ||
       currentPage !== 'Game' ||
       lessonsPrefetchTriggeredRef.current ||
       typeof window === 'undefined'
@@ -359,7 +371,7 @@ export function useKangurPrimaryNavigationLessonsPrefetchOnIntent({
     return () => {
       window.clearTimeout(timeoutId);
     };
-  }, [currentPage, prefetchLessonsCatalogOnIntent]);
+  }, [currentPage, isSyntheticKangurCapture, prefetchLessonsCatalogOnIntent]);
 
   return prefetchLessonsCatalogOnIntent;
 }

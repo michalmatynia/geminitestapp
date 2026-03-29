@@ -64,6 +64,7 @@ import {
 } from '@/features/kangur/ui/routing/pending-route-loading-snapshot';
 import { useKangurRouteAccess } from '@/features/kangur/ui/routing/useKangurRouteAccess';
 import { resolveManagedKangurEmbeddedFromHref } from '@/features/kangur/ui/routing/managed-paths';
+import { isKangurSocialBatchCaptureHref } from '@/features/kangur/shared/capture-mode';
 import { readKangurTopBarHeightCssValue } from '@/features/kangur/ui/utils/readKangurTopBarHeightCssValue';
 import { cn } from '@/features/kangur/shared/utils';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
@@ -165,6 +166,7 @@ const AuthenticatedApp = (): JSX.Element | null => {
   const routeContentMotionProps = createKangurPageTransitionMotionProps(prefersReducedMotion);
   const routeTransitionKey = requestedPath || (pageKey ? `page:${pageKey}` : 'page:unknown');
   const currentRequestedHref = requestedHref ?? requestedPath ?? null;
+  const isSyntheticKangurCapture = isKangurSocialBatchCaptureHref(currentRequestedHref);
   const pendingRouteLoadingSnapshot = resolvePendingSnapshot({
     currentHref: currentRequestedHref,
     fallbackPageKey: KANGUR_MAIN_PAGE,
@@ -385,7 +387,8 @@ const AuthenticatedApp = (): JSX.Element | null => {
       typeof window === 'undefined' ||
       isBootLoading ||
       isThemeBootLoading ||
-      isNavigationTransitionActive
+      isNavigationTransitionActive ||
+      isSyntheticKangurCapture
     ) {
       return;
     }
@@ -430,6 +433,7 @@ const AuthenticatedApp = (): JSX.Element | null => {
     };
   }, [
     isBootLoading,
+    isSyntheticKangurCapture,
     isNavigationTransitionActive,
     isThemeBootLoading,
     resolvedPageKey,
@@ -441,6 +445,7 @@ const AuthenticatedApp = (): JSX.Element | null => {
       isBootLoading ||
       isThemeBootLoading ||
       isNavigationTransitionActive ||
+      isSyntheticKangurCapture ||
       prefetchedPageContentLocalesRef.current.has(routeLocale)
     ) {
       return;
@@ -466,6 +471,7 @@ const AuthenticatedApp = (): JSX.Element | null => {
     };
   }, [
     isBootLoading,
+    isSyntheticKangurCapture,
     isNavigationTransitionActive,
     isThemeBootLoading,
     queryClient,
@@ -702,13 +708,13 @@ const AuthenticatedApp = (): JSX.Element | null => {
         </LazyAnimatePresence>
       </Suspense>
       <LazyAnimatePresence>
-        {isRouteSkeletonVisible ? (
-          <LazyMotionDiv
-            key='kangur-page-transition-skeleton:navigation'
-            className={transitionPhase === 'revealing' ? 'pointer-events-none' : undefined}
-            data-testid='kangur-page-transition-skeleton-motion'
-            {...routeSkeletonMotionProps}
-          >
+          {isRouteSkeletonVisible ? (
+            <LazyMotionDiv
+              key='kangur-page-transition-skeleton:navigation'
+              className={cn('pointer-events-none')}
+              data-testid='kangur-page-transition-skeleton-motion'
+              {...routeSkeletonMotionProps}
+            >
             <KangurPageTransitionSkeleton
               embeddedOverride={visibleTransitionSkeletonEmbedded}
               pageKey={visibleTransitionSkeletonPageKey}

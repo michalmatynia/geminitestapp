@@ -199,6 +199,16 @@ describe('kangur client observability', () => {
     expect(isRecoverableKangurClientFetchError({ message: 'Failed to fetch' })).toBe(true);
     expect(isRecoverableKangurClientFetchError('Failed to fetch')).toBe(true);
     expect(isRecoverableKangurClientFetchError(new Error('Failed to fetch resource'))).toBe(true);
+    expect(
+      isRecoverableKangurClientFetchError(new Error('Request timeout after 30000ms'))
+    ).toBe(true);
+    expect(
+      isRecoverableKangurClientFetchError(new Error('Response body timeout after 30000ms'))
+    ).toBe(true);
+    expect(
+      isRecoverableKangurClientFetchError({ message: 'Request timeout after 30000ms' })
+    ).toBe(true);
+    expect(isRecoverableKangurClientFetchError('Request timeout after 30000ms')).toBe(true);
     expect(isRecoverableKangurClientFetchError(new Error('Unexpected failure'))).toBe(false);
   });
 

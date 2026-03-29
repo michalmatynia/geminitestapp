@@ -41,6 +41,14 @@ vi.mock('next/dynamic', () => ({
       return createRuntimeRendererStub('alphabet-literacy-game');
     }
 
+    if (signature.includes('AddingSynthesisGame')) {
+      return createRuntimeRendererStub('adding-synthesis-game');
+    }
+
+    if (signature.includes('MultiplicationArrayGame')) {
+      return createRuntimeRendererStub('multiplication-array-game');
+    }
+
     if (signature.includes('ColorHarmonyGame')) {
       return createRuntimeRendererStub('color-harmony-game');
     }
@@ -125,6 +133,52 @@ describe('KangurLaunchableGameRuntime', () => {
     render(<KangurLaunchableGameRuntime onFinish={vi.fn()} runtime={runtime} />);
 
     expect(screen.getByTestId('color-harmony-game')).toHaveAttribute(
+      'data-finish-label',
+      'Return to game home'
+    );
+  });
+
+  it('renders the adding synthesis launchable runtime', () => {
+    const runtime: KangurLaunchableGameRuntimeSpec = {
+      kind: 'launchable_game_screen',
+      screen: 'adding_synthesis_quiz',
+      rendererId: 'adding_synthesis_game',
+      finishMode: 'return_to_game_home',
+      finishLabelProp: 'finishLabel',
+      className: 'w-full flex flex-col items-center',
+      shell: {
+        accent: 'amber',
+        icon: '🎵',
+        shellTestId: 'adding-synthesis-runtime-shell',
+      },
+    };
+
+    render(<KangurLaunchableGameRuntime onFinish={vi.fn()} runtime={runtime} />);
+
+    expect(screen.getByTestId('adding-synthesis-game')).toHaveAttribute(
+      'data-finish-label',
+      'Return to game home'
+    );
+  });
+
+  it('renders the multiplication array launchable runtime', () => {
+    const runtime: KangurLaunchableGameRuntimeSpec = {
+      kind: 'launchable_game_screen',
+      screen: 'multiplication_array_quiz',
+      rendererId: 'multiplication_array_game',
+      finishMode: 'return_to_game_home',
+      finishLabelProp: 'finishLabel',
+      className: 'w-full flex flex-col items-center',
+      shell: {
+        accent: 'violet',
+        icon: '🧱',
+        shellTestId: 'multiplication-array-runtime-shell',
+      },
+    };
+
+    render(<KangurLaunchableGameRuntime onFinish={vi.fn()} runtime={runtime} />);
+
+    expect(screen.getByTestId('multiplication-array-game')).toHaveAttribute(
       'data-finish-label',
       'Return to game home'
     );

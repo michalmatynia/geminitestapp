@@ -4,7 +4,7 @@ import {
   createContext,
   useCallback,
   useContext,
-  useLayoutEffect,
+  useEffect,
   useMemo,
   useState,
   type Dispatch,
@@ -59,7 +59,7 @@ export function useKangurAiTutorDeferredActivationBridge(input: {
 }): void {
   const activation = useContext(KangurAiTutorActivationContext);
 
-  useLayoutEffect(() => {
+  useEffect(() => {
     if (!activation) {
       return undefined;
     }
@@ -70,7 +70,7 @@ export function useKangurAiTutorDeferredActivationBridge(input: {
     };
   }, [activation, input.runtimeValue]);
 
-  useLayoutEffect(() => {
+  useEffect(() => {
     if (!activation) {
       return;
     }

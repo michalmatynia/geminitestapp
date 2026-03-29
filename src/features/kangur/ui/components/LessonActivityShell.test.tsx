@@ -143,6 +143,26 @@ describe('LessonActivityShell', () => {
     expect(screen.getByText('Gra muzyczna')).toBeInTheDocument();
   });
 
+  it('applies a custom max width to the outer shell wrapper', () => {
+    render(
+      <LessonActivityShell
+        accent='amber'
+        icon='🎮'
+        maxWidthClassName='max-w-none'
+        onBack={vi.fn()}
+        shellTestId='lesson-activity-custom-width-shell'
+        title='Gra z piłkami'
+      >
+        <div>Ćwiczenie</div>
+      </LessonActivityShell>
+    );
+
+    expect(screen.getByTestId('lesson-activity-custom-width-shell').parentElement).toHaveClass(
+      'mx-auto',
+      'max-w-none'
+    );
+  });
+
   it('renders a panel-level print button when the active lesson is printable', () => {
     const onPrintPanel = vi.fn();
 

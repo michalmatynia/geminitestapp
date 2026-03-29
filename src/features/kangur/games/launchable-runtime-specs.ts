@@ -234,6 +234,7 @@ export const KANGUR_LAUNCHABLE_GAME_RUNTIME_SPECS = Object.freeze({
     shell: {
       accent: 'amber',
       icon: '➕',
+      maxWidthClassName: 'max-w-2xl',
       shellTestId: 'kangur-addition-quiz-top-section',
     },
   }),
@@ -247,6 +248,7 @@ export const KANGUR_LAUNCHABLE_GAME_RUNTIME_SPECS = Object.freeze({
     shell: {
       accent: 'amber',
       icon: '🎵',
+      maxWidthClassName: 'max-w-[1120px]',
       shellTestId: 'kangur-adding-synthesis-quiz-top-section',
     },
   }),
@@ -260,7 +262,22 @@ export const KANGUR_LAUNCHABLE_GAME_RUNTIME_SPECS = Object.freeze({
     shell: {
       accent: 'rose',
       icon: '➖',
+      maxWidthClassName: 'max-w-none',
       shellTestId: 'kangur-subtraction-quiz-top-section',
+    },
+  }),
+  multiplication_array_quiz: createLaunchableGameRuntimeSpec({
+    kind: 'launchable_game_screen',
+    screen: 'multiplication_array_quiz',
+    engineId: 'array-builder-engine',
+    rendererId: 'multiplication_array_game',
+    finishMode: 'return_to_game_home',
+    finishLabelProp: 'finishLabel',
+    shell: {
+      accent: 'violet',
+      icon: '🧱',
+      maxWidthClassName: 'max-w-none',
+      shellTestId: 'kangur-multiplication-array-quiz-top-section',
     },
   }),
   multiplication_quiz: createLaunchableGameRuntimeSpec({
@@ -273,6 +290,7 @@ export const KANGUR_LAUNCHABLE_GAME_RUNTIME_SPECS = Object.freeze({
     shell: {
       accent: 'violet',
       icon: '✖️',
+      maxWidthClassName: 'max-w-none',
       shellTestId: 'kangur-multiplication-quiz-top-section',
     },
   }),
@@ -286,6 +304,7 @@ export const KANGUR_LAUNCHABLE_GAME_RUNTIME_SPECS = Object.freeze({
     shell: {
       accent: 'emerald',
       icon: '➗',
+      maxWidthClassName: 'max-w-none',
       shellTestId: 'kangur-division-quiz-top-section',
     },
   }),

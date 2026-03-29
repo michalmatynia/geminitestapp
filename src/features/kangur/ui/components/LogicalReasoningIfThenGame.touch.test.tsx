@@ -134,4 +134,33 @@ describe('LogicalReasoningIfThenGame touch interactions', () => {
 
     expect(within(validZone).getByText('Biorę parasol.')).toBeInTheDocument();
   });
+
+  it('keeps Sprawdź visible in green and removes the old good/bad text', () => {
+    render(<LogicalReasoningIfThenGame cases={cases} copy={copy} />);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Wybierz kartę: Biorę parasol.' }));
+    fireEvent.click(screen.getByTestId('logical-ifthen-zone-valid'));
+
+    const checkButton = screen.getByRole('button', { name: 'Sprawdź' });
+    fireEvent.click(checkButton);
+
+    expect(checkButton).toHaveClass('bg-emerald-500');
+    expect(screen.getByText('Wynik: 1/1')).toBeInTheDocument();
+    expect(screen.queryByText('Dobrze')).not.toBeInTheDocument();
+    expect(screen.queryByText('Super!')).not.toBeInTheDocument();
+    expect(screen.queryByText('Warunek jest spełniony.')).not.toBeInTheDocument();
+  });
+
+  it('keeps Sprawdź visible in red on a wrong answer', () => {
+    render(<LogicalReasoningIfThenGame cases={cases} copy={copy} />);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Wybierz kartę: Biorę parasol.' }));
+    fireEvent.click(screen.getByTestId('logical-ifthen-zone-invalid'));
+
+    const checkButton = screen.getByRole('button', { name: 'Sprawdź' });
+    fireEvent.click(checkButton);
+
+    expect(checkButton).toHaveClass('bg-rose-500');
+    expect(screen.queryByText('Źle')).not.toBeInTheDocument();
+  });
 });

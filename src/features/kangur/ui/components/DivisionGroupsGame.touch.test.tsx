@@ -90,6 +90,7 @@ describe('DivisionGroupsGame touch interactions', () => {
   it('supports coarse-pointer tap selection and moving into a destination zone', () => {
     renderGame();
 
+    expect(screen.getByTestId('division-groups-game-shell')).toHaveClass('w-full', 'max-w-4xl');
     expect(screen.getByTestId('division-groups-selection-hint')).toHaveTextContent(
       'Tap an item, then tap a group, the pool, or the remainder area. You can still drag too.'
     );

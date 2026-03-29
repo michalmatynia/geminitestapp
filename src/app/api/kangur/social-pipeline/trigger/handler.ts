@@ -7,7 +7,7 @@ import {
   enqueueKangurSocialPipelineJob,
   recoverKangurSocialPipelineQueue,
   startKangurSocialPipelineQueue,
-} from '@/features/kangur/workers/kangurSocialPipelineQueue';
+} from '@/features/kangur/social/workers/kangurSocialPipelineQueue';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { imageFileSelectionSchema } from '@/shared/contracts/files';
 import { kangurSocialVisualAnalysisSchema } from '@/shared/contracts/kangur-social-posts';
@@ -24,7 +24,7 @@ const editorStateSchema = z.object({
 const manualPipelineInputSchema = z.object({
   postId: z.string().trim().min(1),
   editorState: editorStateSchema,
-  imageAssets: z.array(imageFileSelectionSchema).max(12).default([]),
+  imageAssets: z.array(imageFileSelectionSchema).max(30).default([]),
   imageAddonIds: z.array(z.string().trim().min(1)).max(30).default([]),
   captureMode: z.enum(['existing_assets', 'fresh_capture']).default('fresh_capture'),
   batchCaptureBaseUrl: z.string().trim().url().optional(),

@@ -268,9 +268,9 @@ export default function LogicalIfThenStepsGame({
         </div>
       </KangurInfoCard>
 
-      {feedback ? (
+      {feedback === 'info' ? (
         <KangurInfoCard
-          accent={feedback === 'success' ? 'emerald' : feedback === 'error' ? 'rose' : 'amber'}
+          accent='amber'
           tone='accent'
           padding='sm'
           className='w-full text-sm'
@@ -278,11 +278,7 @@ export default function LogicalIfThenStepsGame({
           aria-live='polite'
           aria-atomic='true'
         >
-          {feedback === 'info'
-            ? copy.feedback.fillAll
-            : feedback === 'success'
-              ? formatTemplate(copy.feedback.successTemplate, { explanation: round.explanation })
-              : copy.feedback.error}
+          {copy.feedback.fillAll}
         </KangurInfoCard>
       ) : null}
 

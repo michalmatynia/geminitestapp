@@ -453,7 +453,10 @@ function DivisionGameSummaryView({
   xpEarned: number;
 }): React.JSX.Element {
   return (
-    <KangurPracticeGameSummary dataTestId='division-game-summary-shell'>
+    <KangurPracticeGameSummary
+      dataTestId='division-game-summary-shell'
+      wrapperClassName='w-full max-w-3xl'
+    >
       <KangurPracticeGameSummaryEmoji
         dataTestId='division-game-summary-emoji'
         emoji={percent === 100 ? '🏆' : percent >= 60 ? '🌟' : '💪'}
@@ -601,7 +604,7 @@ function DivisionGameRoundView({
   translations: ReturnType<typeof useTranslations>;
 }): React.JSX.Element {
   return (
-    <KangurPracticeGameShell>
+    <KangurPracticeGameShell className='w-full max-w-4xl' data-testid='division-game-shell'>
       <KangurPracticeGameProgress
         accent='teal'
         currentRound={roundIndex}
@@ -611,47 +614,47 @@ function DivisionGameRoundView({
 
       <div className='w-full'>
         <KangurGlassPanel
-          className={cn('flex flex-col items-center', KANGUR_PANEL_GAP_CLASSNAME)}
+          className={cn('flex w-full flex-col', KANGUR_PANEL_GAP_CLASSNAME)}
           data-testid='division-game-round-shell'
           padding='xl'
           surface='solid'
           variant='soft'
         >
-          <DivisionGameQuestionPanel
-            isCoarsePointer={isCoarsePointer}
-            question={question}
-            translations={translations}
-          />
-          <DivisionGameChoicesGrid
-            confirmed={confirmed}
-            isCoarsePointer={isCoarsePointer}
-            onSelect={onSelect}
-            question={question}
-            selected={selected}
-          />
+          <div className='grid w-full gap-5 lg:grid-cols-[minmax(0,1.15fr)_minmax(300px,0.95fr)] lg:items-start'>
+            <div className='flex min-w-0 flex-col items-center gap-4 text-center lg:items-start lg:text-left'>
+              <DivisionGameQuestionPanel
+                isCoarsePointer={isCoarsePointer}
+                question={question}
+                translations={translations}
+              />
+            </div>
 
-          <div role='status' aria-live='polite' aria-atomic='true' className='sr-only'>
-            {confirmed
-              ? selected === question.correct
-                ? 'Dobrze! Poprawna odpowiedź.'
-                : `Niepoprawnie. Poprawna odpowiedź: ${question.correct}.`
-              : ''}
+            <div className='flex min-w-0 flex-col gap-4'>
+              <DivisionGameChoicesGrid
+                confirmed={confirmed}
+                isCoarsePointer={isCoarsePointer}
+                onSelect={onSelect}
+                question={question}
+                selected={selected}
+              />
+
+              <KangurButton
+                className={resolveDivisionCheckButtonClassName({
+                  confirmed,
+                  correct: question.correct,
+                  selected,
+                })}
+                disabled={selected === null || confirmed}
+                onClick={onConfirm}
+                size='lg'
+                type='button'
+                variant='primary'
+              >
+                Sprawdź ✓
+              </KangurButton>
+            </div>
           </div>
 
-          <KangurButton
-            className={resolveDivisionCheckButtonClassName({
-              confirmed,
-              correct: question.correct,
-              selected,
-            })}
-            disabled={selected === null || confirmed}
-            onClick={onConfirm}
-            size='lg'
-            type='button'
-            variant='primary'
-          >
-            Sprawdź ✓
-          </KangurButton>
         </KangurGlassPanel>
       </div>
     </KangurPracticeGameShell>

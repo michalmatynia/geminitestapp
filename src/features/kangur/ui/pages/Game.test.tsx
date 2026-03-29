@@ -23,6 +23,7 @@ const {
   xpToastPropsMock,
   calendarTrainingGamePropsMock,
   clockTrainingGamePropsMock,
+  multiplicationArrayGamePropsMock,
   englishComparativesCrownGamePropsMock,
   englishAdverbsActionStudioGamePropsMock,
   logicalPatternsWorkshopGamePropsMock,
@@ -43,6 +44,7 @@ const {
   xpToastPropsMock: vi.fn(),
   calendarTrainingGamePropsMock: vi.fn(),
   clockTrainingGamePropsMock: vi.fn(),
+  multiplicationArrayGamePropsMock: vi.fn(),
   englishComparativesCrownGamePropsMock: vi.fn(),
   englishAdverbsActionStudioGamePropsMock: vi.fn(),
   logicalPatternsWorkshopGamePropsMock: vi.fn(),
@@ -225,6 +227,13 @@ vi.mock('@/features/kangur/ui/components/ClockTrainingGame', () => ({
   default: (props: unknown) => {
     clockTrainingGamePropsMock(props);
     return <div data-testid='clock-training-game' />;
+  },
+}));
+
+vi.mock('@/features/kangur/ui/components/MultiplicationArrayGame', () => ({
+  default: (props: unknown) => {
+    multiplicationArrayGamePropsMock(props);
+    return <div data-testid='multiplication-array-game' />;
   },
 }));
 
@@ -662,6 +671,38 @@ describe('Game page', () => {
         sessionContext: expect.objectContaining({
           surface: 'game',
           contentId: 'game:english_adverbs_quiz',
+        }),
+      })
+    );
+  });
+
+  it('renders the multiplication array launchable runtime on the dedicated game screen', async () => {
+    useKangurGameRuntimeMock.mockReturnValue({
+      ...buildGameRuntime('multiplication_array_quiz'),
+      user: {
+        activeLearner: {
+          id: 'learner-1',
+        },
+      },
+    });
+
+    render(<Game />);
+
+    await waitFor(() => {
+      expect(screen.getByTestId('multiplication-array-game')).toBeInTheDocument();
+    });
+
+    expect(multiplicationArrayGamePropsMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        finishLabel: 'Wroc do Grajmy',
+      })
+    );
+    expect(tutorSessionSyncPropsMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        learnerId: 'learner-1',
+        sessionContext: expect.objectContaining({
+          surface: 'game',
+          contentId: 'game:multiplication_array_quiz',
         }),
       })
     );

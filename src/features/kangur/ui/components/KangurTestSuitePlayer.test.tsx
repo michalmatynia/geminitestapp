@@ -162,13 +162,9 @@ describe('KangurTestSuitePlayer', () => {
 
     const restartButton = screen.getByRole('button', { name: /try again/i });
     expect(screen.getByText('Podsumowanie testu')).toBeInTheDocument();
-    expect(
-      screen.getByText(
-        repairKangurPolishCopy(
-          'Sprawdź wynik końcowy i wróć do pytań, aby przeanalizować odpowiedzi.'
-        )
-      )
-    ).toBeInTheDocument();
+    expect(screen.getByTestId('kangur-test-suite-summary-copy')).toHaveTextContent(
+      /Sprawdź wynik końcowy i wróć do pytań, aby przeanalizowa[cć] odpowiedzi\./
+    );
     expect(screen.getByTestId('kangur-test-suite-summary')).toHaveClass(
       'soft-card'
     );

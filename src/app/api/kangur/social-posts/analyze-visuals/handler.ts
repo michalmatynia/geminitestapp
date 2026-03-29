@@ -3,12 +3,12 @@ import { z } from 'zod';
 
 import { resolveKangurActor } from '@/features/kangur/services/kangur-actor';
 import { logKangurServerEvent } from '@/features/kangur/observability/server';
-import { updateKangurSocialPost } from '@/features/kangur/server/social-posts-repository';
+import { updateKangurSocialPost } from '@/features/kangur/social/server/social-posts-repository';
 import {
   enqueueKangurSocialPipelineJob,
   recoverKangurSocialPipelineQueue,
   startKangurSocialPipelineQueue,
-} from '@/features/kangur/workers/kangurSocialPipelineQueue';
+} from '@/features/kangur/social/workers/kangurSocialPipelineQueue';
 import { ErrorSystem } from '@/features/kangur/shared/utils/observability/error-system';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { forbiddenError, operationFailedError } from '@/shared/errors/app-error';
@@ -66,6 +66,7 @@ export async function postKangurSocialPostAnalyzeVisualsHandler(
         visualAnalysisStatus: 'queued',
         visualAnalysisJobId: jobId,
         visualAnalysisModelId: parsed.visionModelId?.trim() || null,
+        visualAnalysisError: null,
         updatedBy: actor.actorId,
       }).catch(() => null);
     }

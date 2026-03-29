@@ -16,7 +16,7 @@ vi.mock('@/features/kangur/services/kangur-actor', () => ({
   resolveKangurActor: (...args: unknown[]) => resolveKangurActorMock(...args),
 }));
 
-vi.mock('@/features/kangur/server/social-image-addons-service', () => ({
+vi.mock('@/features/kangur/social/server/social-image-addons-service', () => ({
   createKangurSocialImageAddonFromPlaywright: (...args: unknown[]) =>
     createKangurSocialImageAddonFromPlaywrightMock(...args),
 }));
@@ -100,6 +100,51 @@ describe('postKangurSocialImageAddonsHandler', () => {
         createdBy: 'admin-1',
         forwardCookies:
           '__Host-next-auth.csrf-token=csrf123; __Secure-next-auth.session-token=session456',
+      })
+    );
+  });
+
+  it('passes a trusted self origin host when the source URL matches the request host or loopback alias', async () => {
+    createKangurSocialImageAddonFromPlaywrightMock.mockResolvedValueOnce({
+      id: 'addon-2',
+      title: 'Local hero image',
+      description: '',
+      image: {
+        id: 'file-2',
+        filename: 'hero-local.png',
+        filepath: '/uploads/kangur/social-addons/hero-local.png',
+        url: '/uploads/kangur/social-addons/hero-local.png',
+        width: 1200,
+        height: 630,
+      },
+      sourceUrl: 'http://localhost:3000/en/kangur/tests',
+      sourceHost: 'localhost:3000',
+      createdAt: '2026-03-30T00:00:00.000Z',
+      updatedAt: '2026-03-30T00:00:00.000Z',
+      createdBy: 'admin-1',
+    });
+
+    const url = 'http://127.0.0.1:3000/api/kangur/social-image-addons';
+    const request = Object.assign(
+      new Request(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          title: 'Local hero image',
+          sourceUrl: 'http://localhost:3000/en/kangur/tests',
+        }),
+      }),
+      {
+        nextUrl: new URL(url),
+      }
+    ) as Parameters<typeof wrappedPostHandler>[0];
+
+    const response = await wrappedPostHandler(request);
+
+    expect(response.status).toBe(200);
+    expect(createKangurSocialImageAddonFromPlaywrightMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        trustedSelfOriginHost: 'localhost:3000',
       })
     );
   });

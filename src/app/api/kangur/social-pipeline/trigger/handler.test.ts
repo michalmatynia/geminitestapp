@@ -23,7 +23,7 @@ vi.mock('@/features/kangur/services/kangur-actor', () => ({
   resolveKangurActor: (...args: unknown[]) => resolveKangurActorMock(...args),
 }));
 
-vi.mock('@/features/kangur/workers/kangurSocialPipelineQueue', () => ({
+vi.mock('@/features/kangur/social/workers/kangurSocialPipelineQueue', () => ({
   enqueueKangurSocialPipelineJob: (...args: unknown[]) =>
     enqueueKangurSocialPipelineJobMock(...args),
   recoverKangurSocialPipelineQueue: (...args: unknown[]) =>
@@ -125,6 +125,57 @@ describe('social pipeline trigger handler', () => {
         batchCapturePresetLimit: 1,
         actorId: 'admin-1',
         forwardCookies: 'session=abc123',
+      }),
+    });
+    await expect(response.json()).resolves.toEqual({
+      success: true,
+      jobId: 'job-123',
+      jobType: 'manual-post-pipeline',
+    });
+  });
+
+  it('accepts more than 12 attached images for a manual post pipeline job', async () => {
+    const imageAssets = Array.from({ length: 13 }, (_, index) => ({
+      id: `asset-${index + 1}`,
+      url: `/asset-${index + 1}.png`,
+    }));
+
+    const response = await POST_handler(
+      new NextRequest('http://localhost/api/kangur/social-pipeline/trigger', {
+        method: 'POST',
+      }),
+      createContext({
+        jobType: 'manual-post-pipeline',
+        input: {
+          postId: 'post-1',
+          captureMode: 'existing_assets',
+          editorState: {
+            titlePl: 'Tytul',
+            titleEn: 'Title',
+            bodyPl: 'Body PL',
+            bodyEn: 'Body EN',
+          },
+          imageAssets,
+          imageAddonIds: ['addon-1'],
+          linkedinConnectionId: null,
+          brainModelId: 'brain-1',
+          visionModelId: 'vision-1',
+          projectUrl: 'https://example.com/project',
+          generationNotes: 'Focus on visuals',
+          docReferences: ['docs/kangur/example.mdx'],
+        },
+      })
+    );
+
+    expect(enqueueKangurSocialPipelineJobMock).toHaveBeenCalledWith({
+      type: 'manual-post-pipeline',
+      input: expect.objectContaining({
+        postId: 'post-1',
+        captureMode: 'existing_assets',
+        imageAssets,
+        imageAddonIds: ['addon-1'],
+        actorId: 'admin-1',
+        forwardCookies: '',
       }),
     });
     await expect(response.json()).resolves.toEqual({

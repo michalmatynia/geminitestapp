@@ -27,7 +27,7 @@ vi.mock('@/features/kangur/services/kangur-actor', () => ({
   resolveKangurActor: (...args: unknown[]) => resolveKangurActorMock(...args),
 }));
 
-vi.mock('@/features/kangur/workers/kangurSocialPipelineQueue', () => ({
+vi.mock('@/features/kangur/social/workers/kangurSocialPipelineQueue', () => ({
   getKangurSocialPipelineQueue: (...args: unknown[]) =>
     getKangurSocialPipelineQueueMock(...args),
 }));
@@ -100,6 +100,7 @@ describe('social pipeline jobs handler', () => {
             postId: 'post-1',
             docReferences: ['docs/a.mdx', 'docs/b.mdx'],
             imageAddonIds: ['addon-1'],
+            imageAssets: [{ id: 'asset-1', url: '/asset-1.png' }],
             forwardCookies: 'secret=1',
           },
         },
@@ -155,6 +156,7 @@ describe('social pipeline jobs handler', () => {
             postId: 'post-1',
             docReferenceCount: 2,
             imageAddonCount: 1,
+            imageAssetCount: 1,
           },
         },
         progress: {
@@ -199,6 +201,7 @@ describe('social pipeline jobs handler', () => {
             postId: 'post-1',
             docReferences: ['docs/a.mdx'],
             imageAddonIds: ['addon-1'],
+            imageAssets: [{ id: 'asset-1', url: '/asset-1.png' }],
             forwardCookies: 'secret=1',
           },
         },
@@ -262,6 +265,7 @@ describe('social pipeline jobs handler', () => {
           postId: 'post-1',
           docReferenceCount: 1,
           imageAddonCount: 1,
+          imageAssetCount: 1,
         },
       },
       progress: {

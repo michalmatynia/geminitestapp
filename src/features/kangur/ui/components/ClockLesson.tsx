@@ -42,6 +42,7 @@ import {
 } from './ClockLesson.data';
 import type { ClockLessonTranslate, WidenLessonCopy } from './ClockLesson.i18n';
 import { translateClockLesson } from './ClockLesson.i18n';
+import { KANGUR_CLOCK_THEME_COLORS } from './clock-theme';
 import type { ClockTrainingSectionId } from './clock-training/types';
 import type { KangurGameRuntimeRendererProps } from '@/shared/contracts/kangur-game-runtime-renderer-props';
 import type {
@@ -66,6 +67,11 @@ const CLOCK_TRAINING_INSTANCE_ID_BY_SECTION: Record<ClockTrainingSectionId, stri
   minutes: getKangurBuiltInGameInstanceId('clock_training', 'clock_training:clock-minutes'),
   combined: getKangurBuiltInGameInstanceId('clock_training'),
 };
+
+const CLOCK_LESSON_PROGRESS_DOT_CLASSNAME =
+  '[background:var(--kangur-accent-indigo-soft-fill,#c7d2fe)]';
+const CLOCK_LESSON_ACTIVE_PROGRESS_DOT_CLASSNAME =
+  '[background:var(--kangur-accent-indigo-solid-fill,#6366f1)]';
 
 const localizeClockCopy = <T,>(
   source: T,
@@ -483,11 +489,11 @@ const renderClockLessonTrainingPills = ({
         KANGUR_STEP_PILL_CLASSNAME,
         isCoarsePointer
           ? 'h-11 min-w-11 w-12 scale-[1.02] touch-manipulation select-none'
-          : 'h-[14px] min-w-[14px] w-8 scale-[1.04]',
-        'bg-indigo-500'
+          : 'h-[14px] min-w-[14px] w-8 scale-[1.04]'
       )}
       data-testid='clock-lesson-training-panel-pick_one'
       disabled
+      style={{ backgroundColor: KANGUR_CLOCK_THEME_COLORS.progressPracticeActive }}
     />
   </div>
 );
@@ -691,9 +697,9 @@ export default function ClockLesson(): React.JSX.Element {
       sections={localizedHubSections}
       slides={runtimeSlides}
       gradientClass='kangur-gradient-accent-indigo-reverse'
-      progressDotClassName='bg-indigo-200'
-      dotActiveClass='bg-indigo-500'
-      dotDoneClass='bg-indigo-200'
+      progressDotClassName={CLOCK_LESSON_PROGRESS_DOT_CLASSNAME}
+      dotActiveClass={CLOCK_LESSON_ACTIVE_PROGRESS_DOT_CLASSNAME}
+      dotDoneClass={CLOCK_LESSON_PROGRESS_DOT_CLASSNAME}
       skipMarkFor={trainingConfigs.map((config) => config.hubId)}
       buildHubSections={buildHubSections}
       onSectionProgress={handleSectionProgress}

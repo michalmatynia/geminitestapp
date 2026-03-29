@@ -5,8 +5,8 @@ import { resolveKangurActor } from '@/features/kangur/services/kangur-actor';
 import { logKangurServerEvent } from '@/features/kangur/observability/server';
 import {
   listKangurSocialImageAddons,
-} from '@/features/kangur/server/social-image-addons-repository';
-import { createKangurSocialImageAddonFromPlaywright } from '@/features/kangur/server/social-image-addons-service';
+} from '@/features/kangur/social/server/social-image-addons-repository';
+import { createKangurSocialImageAddonFromPlaywright } from '@/features/kangur/social/server/social-image-addons-service';
 import { ErrorSystem } from '@/features/kangur/shared/utils/observability/error-system';
 import { kangurSocialCaptureAppearanceModeSchema } from '@/shared/contracts/kangur-social-image-addons';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
@@ -34,6 +34,39 @@ const bodySchema = z.object({
 const toSourceHost = (sourceUrl: string): string | null => {
   try {
     return new URL(sourceUrl).host || null;
+  } catch {
+    return null;
+  }
+};
+
+const LOOPBACK_HOSTNAMES = new Set(['localhost', 'localhost.localdomain', '127.0.0.1', '::1']);
+
+const isLoopbackHostname = (hostname: string): boolean =>
+  LOOPBACK_HOSTNAMES.has(hostname.trim().toLowerCase());
+
+const resolveTrustedSelfOriginHost = (params: {
+  requestUrl: string;
+  sourceUrl: string;
+}): string | null => {
+  try {
+    const request = new URL(params.requestUrl);
+    const source = new URL(params.sourceUrl);
+    const requestHost = request.host.trim().toLowerCase();
+    const sourceHost = source.host.trim().toLowerCase();
+    if (!requestHost || !sourceHost) {
+      return null;
+    }
+
+    if (requestHost === sourceHost) {
+      return sourceHost;
+    }
+
+    const portsMatch = request.port === source.port;
+    if (portsMatch && isLoopbackHostname(request.hostname) && isLoopbackHostname(source.hostname)) {
+      return sourceHost;
+    }
+
+    return null;
   } catch {
     return null;
   }
@@ -92,6 +125,10 @@ export async function postKangurSocialImageAddonsHandler(
       appearanceMode: parsed.appearanceMode,
       createdBy: actor.actorId,
       forwardCookies: requestCookies || null,
+      trustedSelfOriginHost: resolveTrustedSelfOriginHost({
+        requestUrl: req.url,
+        sourceUrl: parsed.sourceUrl,
+      }),
     });
 
     void logKangurServerEvent({

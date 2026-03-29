@@ -93,4 +93,25 @@ describe('launchable runtime specs', () => {
       })
     );
   });
+
+  it('preserves widened shell widths for arithmetic launchable quiz screens', () => {
+    expect(getKangurLaunchableGameRuntimeSpec('addition_quiz').shell.maxWidthClassName).toBe(
+      'max-w-2xl'
+    );
+    expect(getKangurLaunchableGameRuntimeSpec('adding_synthesis_quiz').shell.maxWidthClassName).toBe(
+      'max-w-[1120px]'
+    );
+    expect(getKangurLaunchableGameRuntimeSpec('subtraction_quiz').shell.maxWidthClassName).toBe(
+      'max-w-none'
+    );
+    expect(
+      getKangurLaunchableGameRuntimeSpec('multiplication_array_quiz').shell.maxWidthClassName
+    ).toBe('max-w-none');
+    expect(getKangurLaunchableGameRuntimeSpec('multiplication_quiz').shell.maxWidthClassName).toBe(
+      'max-w-none'
+    );
+    expect(getKangurLaunchableGameRuntimeSpec('division_quiz').shell.maxWidthClassName).toBe(
+      'max-w-none'
+    );
+  });
 });

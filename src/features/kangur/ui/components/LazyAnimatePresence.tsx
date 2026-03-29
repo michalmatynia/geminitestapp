@@ -9,6 +9,8 @@ import {
 } from 'react';
 import type { AnimatePresenceProps, HTMLMotionProps } from 'framer-motion';
 
+import { onBootReady } from '@/features/kangur/ui/boot/boot-ready-signal';
+
 // ---------------------------------------------------------------------------
 // Shared lazy loader — resolves once, cached for all consumers
 // ---------------------------------------------------------------------------
@@ -35,12 +37,11 @@ const loadFramerMotion = (): Promise<FramerMotionExports> => {
   return loadPromise;
 };
 
-// Eagerly start loading framer-motion at module evaluation time so it is
-// available before the first navigation. Without this, the first route
-// transition renders a plain <div> instead of an animated motion component,
-// causing a jarring instant swap.
+// Defer loading framer-motion until after boot-critical network requests
+// (auth, settings) have completed. The LazyMotionDiv gracefully falls back
+// to a plain <div> until the library is available.
 if (typeof window !== 'undefined') {
-  void loadFramerMotion();
+  onBootReady(() => void loadFramerMotion());
 }
 
 const useFramerMotion = (): FramerMotionExports | null => {

@@ -130,6 +130,10 @@ const LogicalPatternsWorkshopGame = dynamic(
   () => import('@/features/kangur/ui/components/LogicalPatternsWorkshopGame'),
   { ssr: false }
 );
+const MultiplicationArrayGame = dynamic(
+  () => import('@/features/kangur/ui/components/MultiplicationArrayGame'),
+  { ssr: false }
+);
 const MultiplicationGame = dynamic(
   () => import('@/features/kangur/ui/components/MultiplicationGame'),
   { ssr: false }
@@ -215,7 +219,9 @@ const KANGUR_LAUNCHABLE_GAME_RENDERERS: Record<
     ),
   },
   adding_synthesis_game: {
-    render: ({ onFinish }) => <AddingSynthesisGame onFinish={onFinish} />,
+    render: ({ finishLabel, onFinish }) => (
+      <AddingSynthesisGame finishLabel={finishLabel} onFinish={onFinish} />
+    ),
   },
   agentic_approval_gate_game: {
     render: ({ onFinish }) => <AgenticApprovalGateGame onFinish={onFinish} />,
@@ -368,6 +374,11 @@ const KANGUR_LAUNCHABLE_GAME_RENDERERS: Record<
         onFinish={onFinish}
         patternSetId={rendererProps?.patternSetId}
       />
+    ),
+  },
+  multiplication_array_game: {
+    render: ({ finishLabel, onFinish }) => (
+      <MultiplicationArrayGame finishLabel={finishLabel} onFinish={onFinish} />
     ),
   },
   multiplication_game: {

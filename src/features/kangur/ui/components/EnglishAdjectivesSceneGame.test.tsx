@@ -219,9 +219,11 @@ describe('EnglishAdjectivesSceneGame', () => {
     expect(screen.getByTestId('english-adjectives-scene-bedroom-curtains-long')).toBeInTheDocument();
     expect(screen.getByTestId('english-adjectives-scene-bedroom-rug-soft')).toBeInTheDocument();
 
-    fireEvent.click(screen.getByRole('button', { name: 'Check' }));
+    const checkButton = screen.getByRole('button', { name: 'Check' });
+    fireEvent.click(checkButton);
 
-    expect(screen.getByText('Perfect! The scene matches the description.')).toBeInTheDocument();
+    expect(checkButton).toHaveClass('bg-emerald-500', 'border-emerald-500');
+    expect(screen.queryByText('Perfect! The scene matches the description.')).not.toBeInTheDocument();
     expect(screen.getByText('3/3 correct')).toBeInTheDocument();
     expect(screen.getByTestId('english-adjectives-scene-match-bedroom-cupboard')).toHaveTextContent(
       'Matched'
@@ -235,6 +237,7 @@ describe('EnglishAdjectivesSceneGame', () => {
     expect(screen.getByTestId('english-adjectives-scene-match-bedroom-cupboard')).toHaveTextContent(
       'Type: change the size and colour'
     );
+    expect(screen.getByRole('button', { name: 'Next' })).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole('button', { name: 'Next' }));
 
@@ -405,12 +408,15 @@ describe('EnglishAdjectivesSceneGame', () => {
     placeAdjective('big yellow', 'bedroom-curtains');
     placeAdjective('soft', 'bedroom-rug');
 
-    fireEvent.click(screen.getByRole('button', { name: 'Check' }));
+    const checkButton = screen.getByRole('button', { name: 'Check' });
+    fireEvent.click(checkButton);
 
+    expect(checkButton).toHaveClass('bg-rose-500', 'border-rose-500');
     expect(
-      screen.getByText('Try again and check which adjective changes each object.')
-    ).toBeInTheDocument();
+      screen.queryByText('Try again and check which adjective changes each object.')
+    ).not.toBeInTheDocument();
     expect(screen.getByText('1/3 correct')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Next' })).toBeInTheDocument();
     expect(
       within(screen.getByTestId('english-adjectives-scene-slot-bedroom-cupboard')).getByRole(
         'button',

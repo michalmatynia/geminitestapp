@@ -60,6 +60,12 @@ vi.mock('@/features/kangur/ui/hooks/useKangurCoarsePointer', () => ({
 import enMessages from '@/i18n/messages/en.json';
 import LogicalPatternsWorkshopGame from '@/features/kangur/ui/components/LogicalPatternsWorkshopGame';
 
+const assignTileToSlot = (tileLabel: string, slotTestId: string): void => {
+  const pool = screen.getByTestId('logical-patterns-pool');
+  fireEvent.click(within(pool).getAllByRole('button', { name: `Kafelek: symbol ${tileLabel}` })[0]);
+  fireEvent.click(screen.getByTestId(slotTestId));
+};
+
 describe('LogicalPatternsWorkshopGame touch interactions', () => {
   it('shows touch guidance and supports tap-to-slot assignment', () => {
     render(
@@ -112,5 +118,22 @@ describe('LogicalPatternsWorkshopGame touch interactions', () => {
     fireEvent.click(firstSlot);
 
     expect(within(firstSlot).getByText('F')).toBeInTheDocument();
+  });
+
+  it('keeps Sprawdź visible in green after a correct round', () => {
+    render(
+      <NextIntlClientProvider locale='en' messages={enMessages}>
+        <LogicalPatternsWorkshopGame onFinish={vi.fn()} />
+      </NextIntlClientProvider>
+    );
+
+    assignTileToSlot('🔵', 'logical-patterns-slot-kolory-1');
+    assignTileToSlot('🔵', 'logical-patterns-slot-kolory-2');
+
+    const checkButton = screen.getByRole('button', { name: 'Sprawdź' });
+    fireEvent.click(checkButton);
+
+    expect(checkButton).toHaveClass('bg-emerald-500');
+    expect(screen.getByRole('button', { name: 'Dalej' })).toBeInTheDocument();
   });
 });

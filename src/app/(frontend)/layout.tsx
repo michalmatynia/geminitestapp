@@ -12,7 +12,7 @@ import { getKangurStorefrontInitialState } from '@/features/kangur/server';
 import {
   getKangurSurfaceBootstrapStyle,
   KANGUR_SURFACE_HINT_SCRIPT,
-} from '@/features/kangur/server/storefront-appearance-bootstrap';
+} from '@/features/kangur/appearance/server/storefront-appearance-bootstrap';
 import {
   FrontendPublicOwnerProvider,
   FrontendPublicOwnerShellClient,
@@ -135,7 +135,7 @@ export default async function FrontendLayout({
   const shouldRenderStandaloneKangurShell =
     publicOwner === 'kangur' && !isExplicitKangurAlias && !isCanonicalPublicLogin;
   const shouldInjectKangurAuthBootstrap =
-    !requestHeadersTimedOut && (publicOwner === 'kangur' || isCanonicalPublicLogin);
+    publicOwner === 'kangur' || isCanonicalPublicLogin;
   const shouldLoadKangurStorefrontBootstrap =
     publicOwner === 'kangur' && shouldRenderStandaloneKangurShell;
   const publicRouteFamily: FrontendPublicRouteFamily = resolveFrontendPublicRouteFamily({
@@ -153,7 +153,7 @@ export default async function FrontendLayout({
       ? layoutTiming.withTiming('kangurAuthBootstrapScript', () =>
         getKangurAuthBootstrapScript(requestHeaders)
       )
-      : Promise.resolve(null)
+      : Promise.resolve('window.__KANGUR_AUTH_BOOTSTRAP__=null;')
     : Promise.resolve(null);
   const [themeSettings, kangurInitialState] = await Promise.all([
     publicOwner === 'cms' && !isExplicitKangurAlias

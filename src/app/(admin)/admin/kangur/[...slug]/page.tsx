@@ -1,6 +1,6 @@
 import { type JSX } from 'react';
 
-import { AdminKangurPageShell } from '@/features/kangur/public';
+import { AdminKangurPageShell } from '@/features/kangur/admin/AdminKangurPageShell';
 import { requireAccessibleKangurSlugRoute } from '@/features/kangur/server';
 
 export default async function AdminKangurSlugPage({

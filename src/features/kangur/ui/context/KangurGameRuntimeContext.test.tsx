@@ -84,6 +84,8 @@ const RuntimeProbe = (): React.JSX.Element => {
 describe('KangurGameRuntimeContext', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    window.sessionStorage.clear();
+    window.history.replaceState({}, '', '/kangur/game');
     useKangurRoutingMock.mockReturnValue({
       basePath: '/kangur',
     });
@@ -149,5 +151,61 @@ describe('KangurGameRuntimeContext', () => {
       expect(screen.getByTestId('kangur-game-screen')).toHaveTextContent('operation');
       expect(screen.getByTestId('kangur-game-player-name')).toHaveTextContent('Gracz');
     });
+  });
+
+  it('applies launchable screen quick starts from the URL and clears the address bar', async () => {
+    window.history.replaceState(
+      {},
+      '',
+      '/kangur/game?quickStart=screen&screen=multiplication_array_quiz'
+    );
+
+    render(
+      <KangurGuestPlayerProvider>
+        <KangurGameRuntimeProvider>
+          <RuntimeProbe />
+        </KangurGameRuntimeProvider>
+      </KangurGuestPlayerProvider>
+    );
+
+    await waitFor(() => {
+      expect(screen.getByTestId('kangur-game-screen')).toHaveTextContent(
+        'multiplication_array_quiz'
+      );
+    });
+    expect(screen.getByTestId('kangur-game-player-name')).toHaveTextContent('Gracz');
+    expect(window.location.search).toBe('');
+    expect(
+      window.sessionStorage.getItem('kangur:game:pending-quick-start')
+    ).toBeNull();
+  });
+
+  it('replays pending quick starts after a clean remount path', async () => {
+    window.history.replaceState({}, '', '/en/kangur/game');
+    window.sessionStorage.setItem(
+      'kangur:game:pending-quick-start',
+      JSON.stringify({
+        quickStart: 'screen',
+        screen: 'multiplication_array_quiz',
+      })
+    );
+
+    render(
+      <KangurGuestPlayerProvider>
+        <KangurGameRuntimeProvider>
+          <RuntimeProbe />
+        </KangurGameRuntimeProvider>
+      </KangurGuestPlayerProvider>
+    );
+
+    await waitFor(() => {
+      expect(screen.getByTestId('kangur-game-screen')).toHaveTextContent(
+        'multiplication_array_quiz'
+      );
+    });
+    expect(window.location.pathname).toBe('/en/kangur/game');
+    expect(
+      window.sessionStorage.getItem('kangur:game:pending-quick-start')
+    ).toBeNull();
   });
 });

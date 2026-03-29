@@ -24,6 +24,28 @@ const HOME_DUELS_INVITE_TRANSITION_MS = 0;
 
 type KangurGameHomeDuelsInvitesWidgetProps = KangurHomeScreenVisibilityProps;
 
+const shouldRenderKangurHomeDuelsInvites = ({
+  canPlay,
+  hideWhenScreenMismatch,
+  screen,
+}: {
+  canPlay: boolean;
+  hideWhenScreenMismatch: boolean;
+  screen: string | null | undefined;
+}): boolean => {
+  if (hideWhenScreenMismatch && screen !== 'home') {
+    return false;
+  }
+
+  return canPlay;
+};
+
+const resolveKangurHomeDuelsInviteCtaClassName = (isCoarsePointer: boolean): string =>
+  cn(
+    'w-full sm:w-auto sm:shrink-0',
+    isCoarsePointer && 'min-h-11 px-4 touch-manipulation select-none active:scale-[0.97]'
+  );
+
 export function KangurGameHomeDuelsInvitesWidget({
   hideWhenScreenMismatch = true,
 }: KangurGameHomeDuelsInvitesWidgetProps = {}): React.JSX.Element | null {
@@ -37,11 +59,7 @@ export function KangurGameHomeDuelsInvitesWidget({
   const duelsHref = useMemo(() => createPageUrl('Duels', basePath), [basePath]);
   const inviteHref = `${duelsHref}#kangur-duels-invite`;
 
-  if (hideWhenScreenMismatch && screen !== 'home') {
-    return null;
-  }
-
-  if (!canPlay) {
+  if (!shouldRenderKangurHomeDuelsInvites({ canPlay, hideWhenScreenMismatch, screen })) {
     return null;
   }
 
@@ -70,10 +88,7 @@ export function KangurGameHomeDuelsInvitesWidget({
           asChild
           size='sm'
           variant='secondary'
-          className={cn(
-            'w-full sm:w-auto sm:shrink-0',
-            isCoarsePointer && 'min-h-11 px-4 touch-manipulation select-none active:scale-[0.97]'
-          )}
+          className={resolveKangurHomeDuelsInviteCtaClassName(isCoarsePointer)}
           data-doc-id='home_duels_invite'
         >
           <Link

@@ -49,7 +49,7 @@ describe('KangurLaunchableGameInstanceRuntime', () => {
     });
   });
 
-  it('waits for the persisted game instance before rendering the runtime', () => {
+  it('waits for a custom persisted game instance before rendering the runtime', () => {
     useKangurGameInstancesMock.mockReturnValue({
       data: [],
       isPending: true,
@@ -58,7 +58,7 @@ describe('KangurLaunchableGameInstanceRuntime', () => {
     render(
       <KangurLaunchableGameInstanceRuntime
         gameId='clock_training'
-        instanceId='clock_training:instance:clock-minutes'
+        instanceId='clock_training:instance:custom-hours'
         onFinish={vi.fn()}
       />
     );
@@ -68,6 +68,84 @@ describe('KangurLaunchableGameInstanceRuntime', () => {
     ).toBeInTheDocument();
     expect(kangurLaunchableGameRuntimeMock).not.toHaveBeenCalled();
   });
+
+  it('renders a built-in instance runtime even when no persisted instance data is returned', () => {
+    render(
+      <KangurLaunchableGameInstanceRuntime
+        gameId='clock_training'
+        instanceId='clock_training:instance:clock-hours'
+        onFinish={vi.fn()}
+      />
+    );
+
+    expect(screen.getByTestId('kangur-launchable-game-runtime')).toBeInTheDocument();
+    expect(kangurLaunchableGameRuntimeMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        runtime: expect.objectContaining({
+          screen: 'clock_quiz',
+          rendererProps: expect.objectContaining({
+            clockSection: 'hours',
+          }),
+        }),
+      })
+    );
+  });
+
+  it.each([
+    {
+      gameId: 'adding_ball',
+      instanceId: 'adding_ball:instance:default',
+      screen: 'addition_quiz',
+      maxWidthClassName: 'max-w-2xl',
+    },
+    {
+      gameId: 'adding_synthesis',
+      instanceId: 'adding_synthesis:instance:default',
+      screen: 'adding_synthesis_quiz',
+      maxWidthClassName: 'max-w-[1120px]',
+    },
+    {
+      gameId: 'subtracting_garden',
+      instanceId: 'subtracting_garden:instance:default',
+      screen: 'subtraction_quiz',
+      maxWidthClassName: 'max-w-none',
+    },
+    {
+      gameId: 'division_groups',
+      instanceId: 'division_groups:instance:default',
+      screen: 'division_quiz',
+      maxWidthClassName: 'max-w-none',
+    },
+    {
+      gameId: 'multiplication_array',
+      instanceId: 'multiplication_array:instance:default',
+      screen: 'multiplication_array_quiz',
+      maxWidthClassName: 'max-w-none',
+    },
+  ])(
+    'renders the built-in arithmetic runtime contract for $instanceId',
+    ({ gameId, instanceId, maxWidthClassName, screen: runtimeScreen }) => {
+      render(
+        <KangurLaunchableGameInstanceRuntime
+          gameId={gameId}
+          instanceId={instanceId}
+          onFinish={vi.fn()}
+        />
+      );
+
+      expect(screen.getByTestId('kangur-launchable-game-runtime')).toBeInTheDocument();
+      expect(kangurLaunchableGameRuntimeMock).toHaveBeenCalledWith(
+        expect.objectContaining({
+          runtime: expect.objectContaining({
+            screen: runtimeScreen,
+            shell: expect.objectContaining({
+              maxWidthClassName,
+            }),
+          }),
+        })
+      );
+    }
+  );
 
   it('renders the persisted runtime with fetched content-set props and merged overrides', () => {
     useKangurGameInstancesMock.mockReturnValue({
@@ -142,14 +220,40 @@ describe('KangurLaunchableGameInstanceRuntime', () => {
     );
   });
 
-  it('shows the missing state when the persisted content set is absent instead of falling back to built-in data', () => {
+  it('keeps built-in content-set fallbacks available for built-in instances while the query is pending', () => {
+    useKangurGameContentSetsMock.mockReturnValue({
+      data: [],
+      isPending: true,
+    });
+
+    render(
+      <KangurLaunchableGameInstanceRuntime
+        gameId='clock_training'
+        instanceId='clock_training:instance:clock-minutes'
+        onFinish={vi.fn()}
+      />
+    );
+
+    expect(screen.getByTestId('kangur-launchable-game-runtime')).toBeInTheDocument();
+    expect(kangurLaunchableGameRuntimeMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        runtime: expect.objectContaining({
+          rendererProps: expect.objectContaining({
+            clockSection: 'minutes',
+          }),
+        }),
+      })
+    );
+  });
+
+  it('shows the missing state when a persisted custom content set is absent', () => {
     useKangurGameInstancesMock.mockReturnValue({
       data: [
         {
           id: 'clock_training:instance:clock-minutes',
           gameId: 'clock_training',
           launchableRuntimeId: 'clock_quiz',
-          contentSetId: 'clock_training:clock-minutes',
+          contentSetId: 'clock_training:custom:minutes-only',
           title: 'Minutes only',
           description: 'Persisted minute session.',
           emoji: '🕒',

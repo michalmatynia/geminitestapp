@@ -14,6 +14,7 @@ import {
   KANGUR_WRAP_ROW_SPACED_CLASSNAME,
 } from '@/features/kangur/ui/design/tokens';
 import { cn } from '@/features/kangur/shared/utils';
+import { KANGUR_CLOCK_THEME_COLORS } from '@/features/kangur/ui/components/clock-theme';
 
 import type { ClockTrainingTaskPoolId } from './types';
 import type { Feedback, Hand, MinuteSnapMode } from '../clock-training-utils';
@@ -27,14 +28,14 @@ export const resolveDraggableClockChallengeRingColor = (
   challengeProgress: number
 ): string => {
   if (challengeProgress <= 0.2) {
-    return '#dc2626';
+    return KANGUR_CLOCK_THEME_COLORS.challengeLow;
   }
 
   if (challengeProgress <= 0.5) {
-    return '#f97316';
+    return KANGUR_CLOCK_THEME_COLORS.challengeMid;
   }
 
-  return '#f59e0b';
+  return KANGUR_CLOCK_THEME_COLORS.challengeHigh;
 };
 
 const resolveDraggableClockHandInteractionStyle = ({
@@ -81,24 +82,49 @@ export const resolveDraggableClockSubmitButtonLabel = ({
   );
 };
 
-const resolveDraggableClockSubmitButtonClassName = (
-  submitFeedback: Feedback
-): string =>
-  cn(
-    'w-full disabled:opacity-100 sm:w-auto',
-    submitFeedback === 'correct' &&
-      'border-emerald-500 bg-emerald-500 text-white hover:border-emerald-500 hover:bg-emerald-500',
-    submitFeedback === 'wrong' &&
-      'border-rose-500 bg-rose-500 text-white hover:border-rose-500 hover:bg-rose-500'
-  );
+const resolveDraggableClockSubmitButtonClassName = (): string => 'w-full disabled:opacity-100 sm:w-auto';
 
-const resolveDraggableClockFeedbackClassName = (submitFeedback: Feedback): string =>
-  cn(
-    'max-w-md rounded-3xl border px-4 py-3 text-center shadow-sm',
+const resolveDraggableClockSubmitButtonStyle = (
+  submitFeedback: Feedback
+): React.CSSProperties | undefined => {
+  if (submitFeedback === 'correct') {
+    return {
+      backgroundColor: KANGUR_CLOCK_THEME_COLORS.feedbackCorrectBackground,
+      borderColor: KANGUR_CLOCK_THEME_COLORS.feedbackCorrectBorder,
+      color: KANGUR_CLOCK_THEME_COLORS.contrastText,
+    };
+  }
+
+  if (submitFeedback === 'wrong') {
+    return {
+      backgroundColor: KANGUR_CLOCK_THEME_COLORS.feedbackWrongBackground,
+      borderColor: KANGUR_CLOCK_THEME_COLORS.feedbackWrongBorder,
+      color: KANGUR_CLOCK_THEME_COLORS.contrastText,
+    };
+  }
+
+  return undefined;
+};
+
+const resolveDraggableClockFeedbackClassName = (): string =>
+  'max-w-md rounded-3xl border px-4 py-3 text-center shadow-sm';
+
+const resolveDraggableClockFeedbackStyle = (
+  submitFeedback: Feedback
+): React.CSSProperties => ({
+  backgroundColor:
     submitFeedback === 'correct'
-      ? 'border-emerald-200 bg-emerald-50 text-emerald-800'
-      : 'border-rose-200 bg-rose-50 text-rose-800'
-  );
+      ? KANGUR_CLOCK_THEME_COLORS.feedbackCorrectSoftBackground
+      : KANGUR_CLOCK_THEME_COLORS.feedbackWrongSoftBackground,
+  borderColor:
+    submitFeedback === 'correct'
+      ? KANGUR_CLOCK_THEME_COLORS.feedbackCorrectBorder
+      : KANGUR_CLOCK_THEME_COLORS.feedbackWrongBorder,
+  color:
+    submitFeedback === 'correct'
+      ? KANGUR_CLOCK_THEME_COLORS.feedbackCorrectText
+      : KANGUR_CLOCK_THEME_COLORS.feedbackWrongText,
+});
 
 const resolveDraggableClockCorrectInteractionHint = ({
   submitNextStep,
@@ -338,7 +364,7 @@ function DraggableClockChallengeRing({
         cy='100'
         r='98'
         fill='none'
-        stroke='#fde68a'
+        stroke={KANGUR_CLOCK_THEME_COLORS.challengeTrack}
         strokeWidth='6'
         strokeLinecap='round'
       />
@@ -372,7 +398,7 @@ function DraggableClockFaceTicks(): React.JSX.Element {
             y1={100 + 80 * Math.sin(angle)}
             x2={100 + 90 * Math.cos(angle)}
             y2={100 + 90 * Math.sin(angle)}
-            stroke='#4f46e5'
+            stroke={KANGUR_CLOCK_THEME_COLORS.majorTick}
             strokeWidth='3'
             strokeLinecap='round'
           />
@@ -396,7 +422,7 @@ function DraggableClockFaceNumbers(): React.JSX.Element {
             dominantBaseline='central'
             fontSize='14'
             fontWeight='bold'
-            fill='#3730a3'
+            fill={KANGUR_CLOCK_THEME_COLORS.numeral}
           >
             {number}
           </text>
@@ -528,8 +554,8 @@ export function DraggableClockFace({
         cx='100'
         cy='100'
         r='95'
-        fill='var(--kangur-soft-card-background)'
-        stroke='#6366f1'
+        fill={KANGUR_CLOCK_THEME_COLORS.faceFill}
+        stroke={KANGUR_CLOCK_THEME_COLORS.faceStroke}
         strokeWidth='4'
       />
       <DraggableClockFaceTicks />
@@ -537,7 +563,7 @@ export function DraggableClockFace({
       {showHourHand ? (
         <DraggableClockHand
           activeHand={activeHand}
-          color='#dc2626'
+          color={KANGUR_CLOCK_THEME_COLORS.interactiveHourHand}
           dataTestId='clock-hour-hand'
           enabled={hourHandEnabled}
           hand='hour'
@@ -549,7 +575,7 @@ export function DraggableClockFace({
       {showMinuteHand ? (
         <DraggableClockHand
           activeHand={activeHand}
-          color='#16a34a'
+          color={KANGUR_CLOCK_THEME_COLORS.interactiveMinuteHand}
           dataTestId='clock-minute-hand'
           enabled={minuteHandEnabled}
           hand='minute'
@@ -558,7 +584,7 @@ export function DraggableClockFace({
           y={minuteHandY}
         />
       ) : null}
-      <circle cx='100' cy='100' r='5' fill='#6366f1' />
+      <circle cx='100' cy='100' r='5' fill={KANGUR_CLOCK_THEME_COLORS.center} />
     </svg>
   );
 }
@@ -583,6 +609,7 @@ export function DraggableClockLegend({
             aria-hidden='true'
             data-testid='clock-hour-legend-dot'
             size='md'
+            style={{ backgroundColor: KANGUR_CLOCK_THEME_COLORS.interactiveHourHand }}
           />
           {translateClockTrainingWithFallback(
             translations,
@@ -598,6 +625,7 @@ export function DraggableClockLegend({
             aria-hidden='true'
             data-testid='clock-minute-legend-dot'
             size='md'
+            style={{ backgroundColor: KANGUR_CLOCK_THEME_COLORS.interactiveMinuteHand }}
           />
           {translateClockTrainingWithFallback(
             translations,
@@ -628,11 +656,12 @@ export function DraggableClockSubmitArea({
   return (
     <>
       <KangurButton
-        className={resolveDraggableClockSubmitButtonClassName(submitFeedback)}
+        className={resolveDraggableClockSubmitButtonClassName()}
         data-testid='clock-submit-button'
         disabled={submitLocked}
         onClick={onSubmitClick}
         size='xl'
+        style={resolveDraggableClockSubmitButtonStyle(submitFeedback)}
         variant='primary'
       >
         {submitButtonLabel}
@@ -642,8 +671,9 @@ export function DraggableClockSubmitArea({
           aria-live='polite'
           role='status'
           aria-atomic='true'
-          className={resolveDraggableClockFeedbackClassName(submitFeedback)}
+          className={resolveDraggableClockFeedbackClassName()}
           data-testid='clock-submit-feedback'
+          style={resolveDraggableClockFeedbackStyle(submitFeedback)}
         >
           <p className='text-sm font-extrabold'>{submitFeedbackTitle}</p>
           {submitFeedbackDetails ? (

@@ -27,6 +27,7 @@ const {
   hasKangurLessonDocumentContentMock,
   lessonDocumentBackButtonLabelMock,
   lessonDocumentBackClickMock,
+  lessonDocumentRendererContentMock,
   lessonComponentsMock,
 } = vi.hoisted(() => ({
   useLessonsMock: vi.fn(),
@@ -37,6 +38,7 @@ const {
   hasKangurLessonDocumentContentMock: vi.fn(() => true),
   lessonDocumentBackButtonLabelMock: vi.fn(() => null),
   lessonDocumentBackClickMock: vi.fn(),
+  lessonDocumentRendererContentMock: vi.fn(() => null),
   lessonComponentsMock: {} as Record<string, React.ComponentType<unknown>>,
 }));
 const emptyPageContentEntryMock = vi.hoisted(() => ({ entry: null }));
@@ -69,6 +71,11 @@ vi.mock('@/features/kangur/ui/components/KangurActiveLessonHeader', () => ({
 vi.mock('@/features/kangur/ui/components/KangurLessonDocumentRenderer', () => ({
   KangurLessonDocumentRenderer: () => {
     const backButtonLabel = lessonDocumentBackButtonLabelMock();
+    const customContent = lessonDocumentRendererContentMock();
+
+    if (customContent) {
+      return <>{customContent}</>;
+    }
 
     return (
       <div data-testid='mock-lesson-docs'>
@@ -205,6 +212,8 @@ describe('ActiveLessonView mobile controls', () => {
     hasKangurLessonDocumentContentMock.mockReturnValue(true);
     lessonDocumentBackButtonLabelMock.mockReturnValue(null);
     lessonDocumentBackClickMock.mockReset();
+    lessonDocumentRendererContentMock.mockReset();
+    lessonDocumentRendererContentMock.mockReturnValue(null);
     activeLesson.contentMode = 'document';
     nextLesson.contentMode = 'document';
     Object.keys(lessonComponentsMock).forEach((key) => {
@@ -496,6 +505,72 @@ describe('ActiveLessonView mobile controls', () => {
     expect(document.title).toBe('Kangur app');
   });
 
+  it('isolates a targeted document lesson panel during printing', async () => {
+    activeLesson.contentMode = 'document';
+    let printRoot: HTMLElement | null = null;
+    let pageWrapper: HTMLElement | null = null;
+    let pagePanel: HTMLElement | null = null;
+    let titleDuringPrint = '';
+    let targetedDuringPrint: string | undefined;
+    let wrapperPathDuringPrint: string | undefined;
+    let panelSelectedDuringPrint: string | undefined;
+
+    Object.defineProperty(window, 'print', {
+      configurable: true,
+      writable: true,
+      value: vi.fn(() => {
+        titleDuringPrint = document.title;
+        targetedDuringPrint = printRoot?.dataset.kangurPrintTargeted;
+        wrapperPathDuringPrint = pageWrapper?.dataset.kangurPrintTargetPath;
+        panelSelectedDuringPrint = pagePanel?.dataset.kangurPrintPanelSelected;
+        window.dispatchEvent(new Event('afterprint'));
+      }),
+    });
+
+    lessonDocumentRendererContentMock.mockImplementation(() => {
+      const lessonPrint = useOptionalKangurLessonPrint();
+
+      return (
+        <div data-testid='mock-document-page-wrapper'>
+          <button
+            type='button'
+            data-testid='mock-document-page-print-button'
+            onClick={() => lessonPrint?.onPrintPanel?.('document-page-2')}
+          >
+            Drukuj stronę dokumentu
+          </button>
+          <section
+            data-kangur-print-panel='true'
+            data-kangur-print-panel-id='document-page-2'
+            data-kangur-print-panel-title='Practice page'
+            data-testid='mock-document-page-panel'
+          >
+            Practice page
+          </section>
+        </div>
+      );
+    });
+
+    render(<ActiveLessonView />);
+
+    await act(async () => {});
+
+    printRoot = screen.getByTestId('kangur-lesson-print-root');
+    pageWrapper = screen.getByTestId('mock-document-page-wrapper');
+    pagePanel = screen.getByTestId('mock-document-page-panel');
+
+    fireEvent.click(screen.getByTestId('mock-document-page-print-button'));
+
+    expect(window.print).toHaveBeenCalledTimes(1);
+    expect(titleDuringPrint).toBe('StudiQ - Lesson 1 - Practice page');
+    expect(targetedDuringPrint).toBe('true');
+    expect(wrapperPathDuringPrint).toBe('true');
+    expect(panelSelectedDuringPrint).toBe('true');
+    expect(printRoot).not.toHaveAttribute('data-kangur-print-targeted');
+    expect(pageWrapper).not.toHaveAttribute('data-kangur-print-target-path');
+    expect(pagePanel).not.toHaveAttribute('data-kangur-print-panel-selected');
+  });
+
   it('provides the shared print action to nested lesson panels', async () => {
     activeLesson.contentMode = 'component';
     lessonComponentsMock[activeLesson.componentId] = () => {
@@ -659,6 +734,57 @@ describe('ActiveLessonView mobile controls', () => {
     expect(childSelectedDuringPrint).toBe('true');
     expect(parentPanel).not.toHaveAttribute('data-kangur-print-panel-selected');
     expect(childPanel).not.toHaveAttribute('data-kangur-print-panel-selected');
+  });
+
+  it('marks the wrapper path to a targeted lesson panel and cleans it up after printing', async () => {
+    activeLesson.contentMode = 'component';
+    let wrapper: HTMLElement | null = null;
+    let wrapperPathDuringPrint: string | undefined;
+
+    Object.defineProperty(window, 'print', {
+      configurable: true,
+      writable: true,
+      value: vi.fn(() => {
+        wrapperPathDuringPrint = wrapper?.dataset.kangurPrintTargetPath;
+        window.dispatchEvent(new Event('afterprint'));
+      }),
+    });
+
+    lessonComponentsMock[activeLesson.componentId] = () => {
+      const lessonPrint = useOptionalKangurLessonPrint();
+
+      return (
+        <div data-testid='mock-panel-wrapper'>
+          <button
+            type='button'
+            data-testid='mock-wrapped-targeted-print-button'
+            onClick={() => lessonPrint?.onPrintPanel?.('wrapped-panel')}
+          >
+            Drukuj wrapped panel
+          </button>
+          <section
+            data-kangur-print-panel='true'
+            data-kangur-print-panel-id='wrapped-panel'
+            data-kangur-print-panel-title='Wrapped Panel'
+            data-testid='mock-wrapped-panel'
+          >
+            Wrapped panel
+          </section>
+        </div>
+      );
+    };
+
+    render(<ActiveLessonView />);
+
+    await act(async () => {});
+
+    wrapper = screen.getByTestId('mock-panel-wrapper');
+
+    fireEvent.click(screen.getByTestId('mock-wrapped-targeted-print-button'));
+
+    expect(window.print).toHaveBeenCalledTimes(1);
+    expect(wrapperPathDuringPrint).toBe('true');
+    expect(wrapper).not.toHaveAttribute('data-kangur-print-target-path');
   });
 
   it('cleans up print mode when browser focus returns without an afterprint event', async () => {

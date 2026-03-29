@@ -390,6 +390,10 @@
         "label": "Subtraktionsquiz",
         "description": "Ein schnelles Subtraktionsquiz."
       },
+      "multiplication_array_quiz": {
+        "label": "Multiplikationsfelder",
+        "description": "Baue gleich grosse Gruppen und sieh Multiplikation als Reihen und Spalten."
+      },
       "division_quiz": {
         "label": "Divisionsquiz",
         "description": "Ein schnelles Divisionsquiz."

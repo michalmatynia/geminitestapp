@@ -25,6 +25,7 @@ import type {
   ClockGameMode,
   ClockTrainingTaskPoolId,
 } from './types';
+import { KANGUR_CLOCK_THEME_COLORS } from '../clock-theme';
 import { getClockChallengeMedalLabel } from '../clock-training-utils';
 
 export type ClockTrainingSummaryProps = {
@@ -97,7 +98,10 @@ function ClockTrainingSummaryMode({
   translations: ReturnType<typeof useTranslations>;
 }): React.JSX.Element {
   return (
-    <p className='text-xs font-semibold text-indigo-600'>
+    <p
+      className='text-xs font-semibold'
+      style={{ color: KANGUR_CLOCK_THEME_COLORS.accentIndigoText }}
+    >
       {translations('clockTraining.mode.label')}:{' '}
       {resolveClockTrainingSummaryModeLabel({ gameMode, translations })}
     </p>
@@ -130,7 +134,11 @@ function ClockTrainingSummaryChallengeMeta({
           {getClockChallengeMedalLabel(challengeMedal, translations)}
         </KangurStatusChip>
       ) : null}
-      <p data-testid='clock-challenge-summary' className='text-xs font-semibold text-amber-600'>
+      <p
+        data-testid='clock-challenge-summary'
+        className='text-xs font-semibold'
+        style={{ color: KANGUR_CLOCK_THEME_COLORS.accentAmberText }}
+      >
         {translations('clockTraining.bestStreak')}: {challengeBestStreak}
       </p>
     </>
@@ -151,7 +159,10 @@ function ClockTrainingSummaryPracticeMeta({
   }
 
   return (
-    <p className='text-xs font-semibold text-indigo-600'>
+    <p
+      className='text-xs font-semibold'
+      style={{ color: KANGUR_CLOCK_THEME_COLORS.accentIndigoText }}
+    >
       {translations('clockTraining.adaptiveRetries')}: {retryAddedCount}
     </p>
   );
@@ -176,7 +187,10 @@ export function ClockTrainingSummary(props: ClockTrainingSummaryProps): React.JS
   const percent = Math.round((score / tasksCount) * 100);
   const summaryEmoji = resolveClockTrainingSummaryEmoji(score);
   const summaryTitle = (
-    <h3 className='text-2xl font-extrabold text-indigo-700'>
+    <h3
+      className='text-2xl font-extrabold'
+      style={{ color: KANGUR_CLOCK_THEME_COLORS.lessonMinuteHand }}
+    >
       {getKangurMiniGameScoreLabel(translations, score, tasksCount)}
     </h3>
   );

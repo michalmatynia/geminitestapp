@@ -11,7 +11,7 @@ vi.mock('use-intl', async () => await vi.importActual<typeof import('use-intl')>
 
 import enMessages from '@/i18n/messages/en.json';
 import plMessages from '@/i18n/messages/pl.json';
-import { KANGUR_DEFAULT_DAILY_THEME } from '@/features/kangur/theme-settings';
+import { KANGUR_DEFAULT_DAILY_THEME } from '@/features/kangur/appearance/theme-settings';
 
 import { KangurThemePreviewPanel } from './KangurThemePreviewPanel';
 

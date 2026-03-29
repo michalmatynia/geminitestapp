@@ -17,6 +17,7 @@ import {
   KangurProgressBar,
   KangurStatusChip,
 } from '@/features/kangur/ui/design/primitives';
+import { getKangurCheckButtonClassName } from '@/features/kangur/ui/components/KangurCheckButton';
 import {
   KANGUR_GRID_TIGHT_CLASSNAME,
   KANGUR_PANEL_GAP_CLASSNAME,
@@ -397,21 +398,6 @@ function renderAgenticAssignmentGame<OptionId extends string>({
               ))}
             </div>
 
-            {checked ? (
-              <div
-                className={cn(
-                  'rounded-2xl border px-4 py-3 text-xs font-semibold',
-                  checkResult.isPerfect
-                    ? 'border-emerald-200 bg-emerald-50 text-emerald-900'
-                    : 'border-amber-200 bg-amber-50 text-amber-900'
-                )}
-              >
-                {checkResult.isPerfect
-                  ? copy.successMessage
-                  : copy.failureMessage(checkResult.score, items.length)}
-              </div>
-            ) : null}
-
             <div
               className={cn(
                 'mt-auto flex flex-wrap items-center gap-2',
@@ -426,6 +412,10 @@ function renderAgenticAssignmentGame<OptionId extends string>({
                 size='sm'
                 type='button'
                 variant='primary'
+                className={getKangurCheckButtonClassName(
+                  undefined,
+                  checked ? (checkResult.isPerfect ? 'success' : 'error') : null
+                )}
               >
                 Check
               </KangurButton>

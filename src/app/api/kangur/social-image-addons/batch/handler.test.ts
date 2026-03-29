@@ -18,12 +18,12 @@ vi.mock('@/features/kangur/services/kangur-actor', () => ({
   resolveKangurActor: (...args: unknown[]) => resolveKangurActorMock(...args),
 }));
 
-vi.mock('@/features/kangur/server/social-image-addons-batch', () => ({
+vi.mock('@/features/kangur/social/server/social-image-addons-batch', () => ({
   createKangurSocialImageAddonsBatch: (...args: unknown[]) =>
     createKangurSocialImageAddonsBatchMock(...args),
 }));
 
-vi.mock('@/features/kangur/server/social-image-addons-batch-jobs', () => ({
+vi.mock('@/features/kangur/social/server/social-image-addons-batch-jobs', () => ({
   readKangurSocialImageAddonsBatchJob: vi.fn(),
   startKangurSocialImageAddonsBatchJob: (...args: unknown[]) =>
     startKangurSocialImageAddonsBatchJobMock(...args),
@@ -206,6 +206,43 @@ describe('postKangurSocialImageAddonsBatchHandler', () => {
         forwardCookies:
           '__Host-next-auth.csrf-token=csrf123; __Secure-next-auth.session-token=session456',
         presetIds: ['game'],
+      })
+    );
+  });
+
+  it('passes a trusted self origin host when the batch base URL matches the request host or loopback alias', async () => {
+    createKangurSocialImageAddonsBatchMock.mockResolvedValueOnce({
+      runId: 'social-batch-run-local',
+      addons: [],
+      failures: [],
+      totals: {
+        completed: 0,
+        failed: 0,
+        total: 0,
+      },
+    });
+
+    const url = 'http://127.0.0.1:3000/api/kangur/social-image-addons/batch';
+    const request = Object.assign(
+      new Request(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          baseUrl: 'http://localhost:3000',
+          presetIds: ['game'],
+        }),
+      }),
+      {
+        nextUrl: new URL(url),
+      }
+    ) as Parameters<typeof wrappedPostHandler>[0];
+
+    const response = await wrappedPostHandler(request);
+
+    expect(response.status).toBe(200);
+    expect(createKangurSocialImageAddonsBatchMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        trustedSelfOriginHost: 'localhost:3000',
       })
     );
   });

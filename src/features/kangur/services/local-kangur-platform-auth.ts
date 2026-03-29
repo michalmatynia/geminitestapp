@@ -127,6 +127,9 @@ export const resolveSessionUser = async (): Promise<KangurUser> => {
     try {
       const payload = await kangurAuthApiClient.getAuthMe({
         cache: 'no-store',
+        // Fetch Priority API — prioritise the auth request over chunk downloads
+        // during initial boot. Progressive enhancement (ignored by older browsers).
+        priority: 'high',
       });
       const parsed = kangurAuthUserSchema.safeParse(payload);
       if (!parsed.success) {

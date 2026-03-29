@@ -30,7 +30,10 @@ vi.mock('@/features/kangur/shared/providers/SettingsStoreProvider', async (impor
 });
 
 import { useOptionalCmsStorefrontAppearance } from '@/features/cms/public';
-import { KANGUR_STOREFRONT_DEFAULT_MODE_SETTING_KEY } from '@/features/kangur/storefront-appearance-settings';
+import {
+  KANGUR_STOREFRONT_APPEARANCE_STORAGE_KEY,
+  KANGUR_STOREFRONT_DEFAULT_MODE_SETTING_KEY,
+} from '@/features/kangur/appearance/storefront-appearance-settings';
 import { KangurStorefrontAppearanceProvider } from '@/features/kangur/ui/KangurStorefrontAppearanceProvider';
 
 function ModeProbe(): React.JSX.Element {
@@ -80,14 +83,35 @@ describe('KangurStorefrontAppearanceProvider', () => {
     });
   });
 
-  it('respects local override when present', async () => {
+  it('ignores local override by default so Mongo-backed mode stays authoritative', async () => {
     settingsStoreGetMock.mockImplementation((key: string) => {
       if (key === KANGUR_STOREFRONT_DEFAULT_MODE_SETTING_KEY) {
         return 'default';
       }
       return undefined;
     });
-    window.localStorage.setItem('kangur-storefront-appearance-mode', 'dark');
+    window.localStorage.setItem(KANGUR_STOREFRONT_APPEARANCE_STORAGE_KEY, 'dark');
+
+    render(
+      <KangurStorefrontAppearanceProvider>
+        <ModeProbe />
+      </KangurStorefrontAppearanceProvider>
+    );
+
+    await waitFor(() => {
+      expect(screen.getByTestId('mode-probe')).toHaveTextContent('default');
+    });
+  });
+
+  it('respects local override when persistence is explicitly enabled by env', async () => {
+    settingsStoreGetMock.mockImplementation((key: string) => {
+      if (key === KANGUR_STOREFRONT_DEFAULT_MODE_SETTING_KEY) {
+        return 'default';
+      }
+      return undefined;
+    });
+    setEnvValue('NEXT_PUBLIC_KANGUR_APPEARANCE_PERSIST', 'true');
+    window.localStorage.setItem(KANGUR_STOREFRONT_APPEARANCE_STORAGE_KEY, 'dark');
 
     render(
       <KangurStorefrontAppearanceProvider>
@@ -100,45 +124,44 @@ describe('KangurStorefrontAppearanceProvider', () => {
     });
   });
 
-  it('keeps local override enabled in production unless explicitly disabled', async () => {
-    vi.stubEnv('NODE_ENV', 'production');
-    settingsStoreGetMock.mockImplementation((key: string) => {
-      if (key === KANGUR_STOREFRONT_DEFAULT_MODE_SETTING_KEY) {
-        return 'default';
-      }
-      return undefined;
-    });
-    window.localStorage.setItem('kangur-storefront-appearance-mode', 'dark');
-
-    render(
-      <KangurStorefrontAppearanceProvider>
-        <ModeProbe />
-      </KangurStorefrontAppearanceProvider>
-    );
-
-    await waitFor(() => {
-      expect(screen.getByTestId('mode-probe')).toHaveTextContent('dark');
-    });
-  });
-
-  it('ignores local override when persistence is disabled', async () => {
-    setEnvValue('NEXT_PUBLIC_KANGUR_APPEARANCE_PERSIST', 'false');
+  it('lets the provider force Mongo-backed mode even when env persistence is enabled', async () => {
+    setEnvValue('NEXT_PUBLIC_KANGUR_APPEARANCE_PERSIST', 'true');
     settingsStoreGetMock.mockImplementation((key: string) => {
       if (key === KANGUR_STOREFRONT_DEFAULT_MODE_SETTING_KEY) {
         return 'sunset';
       }
       return undefined;
     });
-    window.localStorage.setItem('kangur-storefront-appearance-mode', 'dark');
+    window.localStorage.setItem(KANGUR_STOREFRONT_APPEARANCE_STORAGE_KEY, 'dark');
 
     render(
-      <KangurStorefrontAppearanceProvider>
+      <KangurStorefrontAppearanceProvider persistMode={false}>
         <ModeProbe />
       </KangurStorefrontAppearanceProvider>
     );
 
     await waitFor(() => {
       expect(screen.getByTestId('mode-probe')).toHaveTextContent('sunset');
+    });
+  });
+
+  it('supports explicit persistence opt-in without relying on env', async () => {
+    settingsStoreGetMock.mockImplementation((key: string) => {
+      if (key === KANGUR_STOREFRONT_DEFAULT_MODE_SETTING_KEY) {
+        return 'default';
+      }
+      return undefined;
+    });
+    window.localStorage.setItem(KANGUR_STOREFRONT_APPEARANCE_STORAGE_KEY, 'dark');
+
+    render(
+      <KangurStorefrontAppearanceProvider persistMode>
+        <ModeProbe />
+      </KangurStorefrontAppearanceProvider>
+    );
+
+    await waitFor(() => {
+      expect(screen.getByTestId('mode-probe')).toHaveTextContent('dark');
     });
   });
 });

@@ -271,4 +271,14 @@ describe('AddingSynthesisGame', () => {
       { ownerKey: 'learner-2' }
     );
   });
+
+  it('uses an injected finish label across launchable exit actions', () => {
+    render(<AddingSynthesisGame finishLabel='Return to game home' onFinish={vi.fn()} />);
+
+    expect(screen.getByRole('button', { name: 'Return to game home' })).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: /start syntezę/i }));
+
+    expect(screen.getByRole('button', { name: 'Return to game home' })).toBeInTheDocument();
+  });
 });

@@ -394,15 +394,9 @@ export function EnglishPartsOfSpeechGame({
           </KangurInfoCard>
         )}
 
-        {feedback && (
+        {feedback?.kind === 'info' && (
           <KangurInfoCard
-            accent={
-              feedback.kind === 'success'
-                ? 'emerald'
-                : feedback.kind === 'error'
-                  ? 'rose'
-                  : 'amber'
-            }
+            accent='amber'
             tone='accent'
             padding='sm'
             className='text-sm'
@@ -412,24 +406,23 @@ export function EnglishPartsOfSpeechGame({
         )}
 
         <div className={KANGUR_WRAP_CENTER_ROW_CLASSNAME}>
-          {!isLocked ? (
-            <KangurButton
-              variant='primary'
-              size='lg'
-              onClick={handleCheck}
-              disabled={roundState.pool.length > 0}
-              className={getKangurCheckButtonClassName(
-                undefined,
-                feedback?.kind === 'info' ? null : feedback?.kind ?? null
-              )}
-            >
-              {translateKangurMiniGameWithFallback(
-                translations,
-                'shared.check',
-                translations('englishPartsOfSpeech.inRound.check')
-              )}
-            </KangurButton>
-          ) : (
+          <KangurButton
+            variant='primary'
+            size='lg'
+            onClick={handleCheck}
+            disabled={isLocked || roundState.pool.length > 0}
+            className={getKangurCheckButtonClassName(
+              undefined,
+              feedback?.kind === 'info' ? null : feedback?.kind ?? null
+            )}
+          >
+            {translateKangurMiniGameWithFallback(
+              translations,
+              'shared.check',
+              translations('englishPartsOfSpeech.inRound.check')
+            )}
+          </KangurButton>
+          {isLocked ? (
             <KangurButton variant='primary' size='lg' onClick={handleNext}>
               {roundIndex + 1 >= TOTAL_ROUNDS
                 ? finishActionLabel
@@ -437,9 +430,9 @@ export function EnglishPartsOfSpeechGame({
                     translations,
                     'shared.next',
                     translations('englishPartsOfSpeech.inRound.next')
-                  )}
+                )}
             </KangurButton>
-          )}
+          ) : null}
         </div>
       </div>
     </KangurPracticeGameShell>

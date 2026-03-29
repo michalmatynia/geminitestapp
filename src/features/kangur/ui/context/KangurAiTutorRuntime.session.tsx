@@ -3,7 +3,7 @@
 import {
   createContext,
   useContext,
-  useLayoutEffect,
+  useEffect,
   useMemo,
   useRef,
   type JSX,
@@ -115,7 +115,7 @@ export const useKangurAiTutorSessionSync = ({
 
   useRegisterContextRegistryPageSource('kangur-ai-tutor-session', registrySource);
 
-  useLayoutEffect(() => {
+  useEffect(() => {
     if (!setRegistration) {
       return undefined;
     }

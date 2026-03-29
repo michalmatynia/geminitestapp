@@ -88,6 +88,7 @@ export const KANGUR_LAUNCHABLE_GAME_SCREENS = [
   'addition_quiz',
   'adding_synthesis_quiz',
   'subtraction_quiz',
+  'multiplication_array_quiz',
   'multiplication_quiz',
   'division_quiz',
   'logical_patterns_quiz',
@@ -159,6 +160,7 @@ export const KANGUR_LAUNCHABLE_GAME_RUNTIME_RENDERER_IDS = [
   'logical_analogies_relation_game',
   'logical_classification_game',
   'logical_patterns_workshop_game',
+  'multiplication_array_game',
   'multiplication_game',
   ...KANGUR_MUSIC_PIANO_ROLL_LAUNCHABLE_GAME_RUNTIME_RENDERER_IDS,
   'subtracting_game',
@@ -203,6 +205,7 @@ export const kangurLaunchableGameShellConfigSchema = z.object({
   backScreen: nonEmptyTrimmedString.max(120).optional(),
   description: z.string().trim().min(1).max(320).optional(),
   icon: z.string().trim().min(1).max(12),
+  maxWidthClassName: nonEmptyTrimmedString.max(120).optional(),
   shellTestId: nonEmptyTrimmedString.max(160),
   title: nonEmptyTrimmedString.max(160).optional(),
 });

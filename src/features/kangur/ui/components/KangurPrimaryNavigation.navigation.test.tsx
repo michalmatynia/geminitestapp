@@ -19,6 +19,7 @@ import {
   locationAssignSpy,
   openLanguageMenu,
   optionalAuthMock,
+  optionalRoutingMock,
   optionalTutorMock,
   pathnameMock,
   persistTutorVisibilityHidden,
@@ -176,6 +177,33 @@ it('idle-prefetches hot lessons data from the home route', () => {
   } finally {
     vi.useRealTimers();
   }
+});
+
+it('skips lessons and shared page-content prefetch during social batch capture', () => {
+  const queryClient = { prefetchQuery: vi.fn() };
+  optionalRoutingMock.mockReturnValue({
+    requestedHref: '/kangur/game?kangurCapture=social-batch',
+    requestedPath: '/kangur/game',
+  });
+
+  render(
+    <QueryClientContext.Provider value={queryClient as never}>
+      <KangurPrimaryNavigation
+        basePath='/kangur'
+        currentPage='Game'
+        isAuthenticated
+        onLogout={vi.fn()}
+      />
+    </QueryClientContext.Provider>
+  );
+
+  const lessonsLink = screen.getByTestId('kangur-primary-nav-lessons');
+
+  fireEvent.mouseEnter(lessonsLink);
+  fireEvent.focus(lessonsLink);
+
+  expect(prefetchKangurLessonsCatalogMock).not.toHaveBeenCalled();
+  expect(prefetchKangurPageContentStoreMock).not.toHaveBeenCalled();
 });
 
 it('does not prefetch the lessons catalog when lessons is already active', () => {

@@ -13,7 +13,32 @@ import { KANGUR_ACCENT_STYLES } from '@/features/kangur/ui/design/tokens';
 import { useKangurCoarsePointer } from '@/features/kangur/ui/hooks/useKangurCoarsePointer';
 import { usePointerDrag } from './PointerDragProvider';
 import type { DraggableBallProps, BallProps, SlotZoneProps, BallItem } from './types';
-import { getRectDropZoneSurface } from './utils';
+import { getBallSurfaceStyle, getRectDropZoneSurface } from './utils';
+
+const renderBallFace = ({
+  ball,
+  isSelected,
+  sizeClass,
+}: {
+  ball: BallItem;
+  isSelected: boolean;
+  sizeClass: string;
+}): React.JSX.Element => (
+  <div
+    className={cn(
+      'relative flex items-center justify-center overflow-hidden rounded-full border text-white shadow-md select-none transition',
+      sizeClass,
+      isSelected && 'ring-2 ring-amber-300/80 ring-offset-2 ring-offset-white'
+    )}
+    style={getBallSurfaceStyle(ball.color)}
+  >
+    <span className='pointer-events-none absolute inset-x-[18%] top-[14%] h-[20%] rounded-full bg-white/55 blur-[1px]' />
+    <span className='pointer-events-none absolute inset-x-[20%] bottom-[14%] h-[28%] rounded-full bg-black/10 blur-[7px]' />
+    <span className='relative z-10 font-extrabold drop-shadow-[0_1px_2px_rgba(15,23,42,0.35)]'>
+      {ball.num}
+    </span>
+  </div>
+);
 
 export function Ball({
   ball,
@@ -29,16 +54,7 @@ export function Ball({
       ? 'h-16 w-16 text-xl'
       : 'h-14 w-14 text-lg';
 
-  return (
-    <div
-      className={cn(
-        `${sizeClass} rounded-full ${ball.color} flex items-center justify-center shadow-md select-none transition`,
-        isSelected && 'ring-2 ring-amber-300/80 ring-offset-2 ring-offset-white'
-      )}
-    >
-      <span className='text-white font-extrabold'>{ball.num}</span>
-    </div>
-  );
+  return renderBallFace({ ball, isSelected, sizeClass });
 }
 
 export function DraggableBall({
@@ -193,14 +209,7 @@ export function SlotZone({
                           handleSelectBall(ball.id);
                         }}
                       >
-                        <div
-                          className={cn(
-                            `${sizeClass} rounded-full ${ball.color} flex items-center justify-center shadow-md select-none transition`,
-                            isSelected && 'ring-2 ring-amber-300/80 ring-offset-2 ring-offset-white'
-                          )}
-                        >
-                          <span className='text-white font-extrabold'>{ball.num}</span>
-                        </div>
+                        {renderBallFace({ ball, isSelected, sizeClass })}
                       </button>
                     );
 
@@ -267,13 +276,7 @@ export function PointerDraggableBall({
       disabled={isDragDisabled}
       onPointerDown={handlePointerDown}
     >
-      <div
-        className={cn(
-          `${sizeClass} rounded-full ${ball.color} flex items-center justify-center shadow-md select-none transition`
-        )}
-      >
-        <span className='text-white font-extrabold'>{ball.num}</span>
-      </div>
+      {renderBallFace({ ball, isSelected: false, sizeClass })}
     </button>
   );
 }

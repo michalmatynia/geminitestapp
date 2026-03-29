@@ -31,6 +31,16 @@ const rawBundledLocaleMessages = [
   rawUkrainianMessages,
 ] as const;
 
+function readMessagePath(source: unknown, path: string): unknown {
+  return path.split('.').reduce<unknown>((value, segment) => {
+    if (!value || typeof value !== 'object' || Array.isArray(value)) {
+      return undefined;
+    }
+
+    return (value as Record<string, unknown>)[segment];
+  }, source);
+}
+
 function collectMissingKeys(source: unknown, target: unknown, path: string[] = []): string[] {
   if (Array.isArray(source)) {
     if (!Array.isArray(target)) {
@@ -300,6 +310,29 @@ describe('site messages', () => {
       const messages = await loadSiteMessages(locale);
 
       expectNoLegacyLessonTitleKeys(messages);
+    }
+  });
+
+  it('keeps critical assignment-manager and parent-dashboard runtime keys in every locale', async () => {
+    const requiredPaths = [
+      'KangurAssignmentManager.timeLimit.minutesOnly',
+      'KangurAssignmentManager.timeLimit.hoursOnly',
+      'KangurAssignmentManager.timeLimit.hoursMinutes',
+      'KangurParentDashboardRuntime.timeout.refresh',
+      'KangurParentDashboardRuntime.timeout.create',
+      'KangurParentDashboardRuntime.timeout.save',
+      'KangurParentDashboardRuntime.timeout.delete',
+      'KangurParentDashboardRuntime.feedback.addLearnerError',
+      'KangurParentDashboardRuntime.feedback.saveError',
+      'KangurParentDashboardRuntime.feedback.deleteError',
+    ] as const;
+
+    for (const locale of ['en', 'pl', 'de', 'uk'] as const) {
+      const messages = await loadSiteMessages(locale);
+
+      for (const path of requiredPaths) {
+        expect(readMessagePath(messages, path), `${locale}:${path}`).toEqual(expect.any(String));
+      }
     }
   });
 

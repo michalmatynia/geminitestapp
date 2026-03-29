@@ -9,6 +9,7 @@ import {
   KangurDragDropContext,
   getKangurMobileDragHandleStyle,
 } from '@/features/kangur/ui/components/KangurDragDropContext';
+import { getKangurCheckButtonClassName } from '@/features/kangur/ui/components/KangurCheckButton';
 
 import {
   KangurPracticeGameProgress,
@@ -759,7 +760,6 @@ export default function LogicalAnalogiesRelationGame({
               {roundTargets.map((target) => {
                 const assigned = roundState.slots[target.id]?.[0] ?? null;
                 const isCorrect = assigned?.id === target.relationId;
-                const relationLabel = localizedTokens[target.relationId]?.label;
                 const targetLabelId = `${idPrefix}-${target.id}-label`;
                 const slotHintId = `${idPrefix}-${target.id}-slot-hint`;
                 return (
@@ -864,13 +864,6 @@ export default function LogicalAnalogiesRelationGame({
                             )}
                             {provided.placeholder}
                           </div>
-                          {checked && !isCorrect ? (
-                            <p className='text-[11px] text-rose-600'>
-                              {t('correctRelation', 'Poprawnie: {label}', {
-                                label: relationLabel ?? '',
-                              })}
-                            </p>
-                          ) : null}
                         </KangurAnswerChoiceCard>
                       );
                     }}
@@ -886,23 +879,30 @@ export default function LogicalAnalogiesRelationGame({
             {t('oneToOneHint', 'Każda relacja pasuje tylko do jednej pary.')}
           </p>
           <div className={KANGUR_WRAP_ROW_CLASSNAME}>
-            {!checked ? (
-              <KangurButton
-                size='sm'
-                type='button'
-                variant='primary'
-                onClick={handleCheck}
-                disabled={!isRoundComplete}
-              >
-                {t('check', 'Sprawdź')}
-              </KangurButton>
-            ) : (
+            <KangurButton
+              size='sm'
+              type='button'
+              variant='primary'
+              onClick={handleCheck}
+              disabled={checked || !isRoundComplete}
+              className={getKangurCheckButtonClassName(
+                undefined,
+                checked
+                  ? roundCorrect === roundTargets.length
+                    ? 'success'
+                    : 'error'
+                  : null
+              )}
+            >
+              {t('check', 'Sprawdź')}
+            </KangurButton>
+            {checked ? (
               <KangurButton size='sm' type='button' variant='primary' onClick={goToNextRound}>
                 {roundIndex + 1 >= TOTAL_ROUNDS
                   ? t('seeResult', 'Zobacz wynik')
                   : t('next', 'Dalej')}
               </KangurButton>
-            )}
+            ) : null}
           </div>
         </div>
       </KangurPracticeGameShell>

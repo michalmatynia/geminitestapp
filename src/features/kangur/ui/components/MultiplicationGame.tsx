@@ -415,7 +415,10 @@ function MultiplicationGameSummaryView({
   xpEarned: number;
 }): React.JSX.Element {
   return (
-    <KangurPracticeGameSummary dataTestId='multiplication-game-summary-shell'>
+    <KangurPracticeGameSummary
+      dataTestId='multiplication-game-summary-shell'
+      wrapperClassName='w-full max-w-3xl'
+    >
       <KangurPracticeGameSummaryEmoji
         dataTestId='multiplication-game-summary-emoji'
         emoji={percent === 100 ? '🏆' : percent >= 60 ? '🌟' : '💪'}
@@ -560,7 +563,10 @@ function MultiplicationGameRoundView({
   translations: ReturnType<typeof useTranslations>;
 }): React.JSX.Element {
   return (
-    <KangurPracticeGameShell>
+    <KangurPracticeGameShell
+      className='w-full max-w-4xl'
+      data-testid='multiplication-game-shell'
+    >
       <KangurPracticeGameProgress
         accent='indigo'
         currentRound={roundIndex}
@@ -569,57 +575,56 @@ function MultiplicationGameRoundView({
       />
       <div className='w-full'>
         <KangurGlassPanel
-          className={cn('flex flex-col items-center', KANGUR_PANEL_GAP_CLASSNAME)}
+          className={cn('flex w-full flex-col', KANGUR_PANEL_GAP_CLASSNAME)}
           data-testid='multiplication-game-round-shell'
           padding='xl'
           surface='solid'
           variant='soft'
         >
-          <MultiplicationGameQuestionPanel question={question} />
+          <div className='grid w-full gap-5 lg:grid-cols-[minmax(0,1.15fr)_minmax(300px,0.95fr)] lg:items-start'>
+            <div className='flex min-w-0 flex-col items-center gap-4 text-center lg:items-start lg:text-left'>
+              <MultiplicationGameQuestionPanel question={question} />
 
-          {isCoarsePointer ? (
-            <p
-              data-testid='multiplication-game-touch-hint'
-              className='text-center text-xs font-semibold uppercase tracking-[0.16em] [color:var(--kangur-page-muted-text)]'
-            >
-              {translateKangurMiniGameWithFallback(
-                translations,
-                'multiplication.inRound.touchHint',
-                'Tap an answer, then tap Check.'
-              )}
-            </p>
-          ) : null}
+              {isCoarsePointer ? (
+                <p
+                  data-testid='multiplication-game-touch-hint'
+                  className='text-center text-xs font-semibold uppercase tracking-[0.16em] [color:var(--kangur-page-muted-text)] lg:text-left'
+                >
+                  {translateKangurMiniGameWithFallback(
+                    translations,
+                    'multiplication.inRound.touchHint',
+                    'Tap an answer, then tap Check.'
+                  )}
+                </p>
+              ) : null}
+            </div>
 
-          <MultiplicationGameChoicesGrid
-            confirmed={confirmed}
-            isCoarsePointer={isCoarsePointer}
-            onSelect={onSelect}
-            question={question}
-            selected={selected}
-          />
+            <div className='flex min-w-0 flex-col gap-4'>
+              <MultiplicationGameChoicesGrid
+                confirmed={confirmed}
+                isCoarsePointer={isCoarsePointer}
+                onSelect={onSelect}
+                question={question}
+                selected={selected}
+              />
 
-          <div role='status' aria-live='polite' aria-atomic='true' className='sr-only'>
-            {confirmed
-              ? selected === question.correct
-                ? 'Dobrze! Poprawna odpowiedź.'
-                : `Niepoprawnie. Poprawna odpowiedź: ${question.correct}.`
-              : ''}
+              <KangurButton
+                className={resolveMultiplicationCheckButtonClassName({
+                  confirmed,
+                  correct: question.correct,
+                  selected,
+                })}
+                disabled={selected === null || confirmed}
+                onClick={onConfirm}
+                size='lg'
+                variant='primary'
+                data-testid='multiplication-game-check'
+              >
+                Sprawdź ✓
+              </KangurButton>
+            </div>
           </div>
 
-          <KangurButton
-            className={resolveMultiplicationCheckButtonClassName({
-              confirmed,
-              correct: question.correct,
-              selected,
-            })}
-            disabled={selected === null || confirmed}
-            onClick={onConfirm}
-            size='lg'
-            variant='primary'
-            data-testid='multiplication-game-check'
-          >
-            Sprawdź ✓
-          </KangurButton>
         </KangurGlassPanel>
       </div>
     </KangurPracticeGameShell>

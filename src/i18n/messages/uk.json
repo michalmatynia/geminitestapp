@@ -972,6 +972,10 @@
         "label": "Вікторина з віднімання",
         "description": "Швидка вікторина з віднімання."
       },
+      "multiplication_array_quiz": {
+        "label": "Масиви множення",
+        "description": "Будуйте рівні групи й бачте множення як ряди та стовпчики."
+      },
       "division_quiz": {
         "label": "Вікторина з ділення",
         "description": "Швидка вікторина з ділення."
@@ -3152,6 +3156,8 @@
   "KangurMiniGames": {
     "shared": {
       "restart": "Спробуйте ще раз",
+      "check": "Перевірити",
+      "next": "Далі",
       "scoreLabel": "Результат",
       "pointsShort": "б.",
       "correctAnswersSuffix": "правильних відповідей",
@@ -3248,7 +3254,13 @@
     },
     "division": {
       "inRound": {
-        "touchHint": "Торкніться відповіді, а потім натисніть «Перевірити»."
+        "touchHint": "Торкніться відповіді, а потім натисніть «Перевірити».",
+        "prompt": "Розкладіть предмети на рівні групи.",
+        "roundLabel": "Раунд {current}/{total}",
+        "groupLabel": "Група {index}",
+        "remainderLabel": "Остача",
+        "poolLabel": "Набір",
+        "tokenAria": "Перемістити предмет"
       },
       "summary": {
         "perfect": "Ідеально! Майстер ділення!",
@@ -5010,6 +5022,7 @@
         }
       },
       "inRound": {
+        "taskLabel": "Завдання",
         "previousMonth": "Попередній місяць",
         "nextMonth": "Наступний місяць",
         "tryAgain": "Ой, не той варіант. Спробуйте ще раз!",

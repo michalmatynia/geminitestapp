@@ -11,6 +11,10 @@ describe('MultiplicationArrayGame', () => {
   it('uses Kangur option-card styling for group collection buttons', () => {
     render(<MultiplicationArrayGame onFinish={() => undefined} />);
 
+    expect(screen.getByTestId('multiplication-array-game-shell')).toHaveClass(
+      'w-full',
+      'max-w-4xl'
+    );
     expect(screen.getByTestId('multiplication-array-progress-bar')).toHaveAttribute(
       'aria-valuenow',
       '0'

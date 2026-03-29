@@ -10,6 +10,8 @@ const mocks = vi.hoisted(() => ({
   clearSettingsCacheMock: vi.fn(),
   resetServerLoggingControlsCacheMock: vi.fn(),
   clearLiteSettingsServerCacheMock: vi.fn(),
+  invalidateKangurStorefrontInitialStateCacheMock: vi.fn(),
+  isKangurStorefrontInitialStateDependencyKeyMock: vi.fn(),
   getAppDbProviderMock: vi.fn(),
   getMongoDbMock: vi.fn(),
   createIndexMock: vi.fn(),
@@ -56,6 +58,13 @@ vi.mock('@/shared/lib/observability/logging-controls-server', () => ({
 
 vi.mock('@/shared/lib/settings-lite-server-cache', () => ({
   clearLiteSettingsServerCache: mocks.clearLiteSettingsServerCacheMock,
+}));
+
+vi.mock('@/features/kangur/appearance/server/storefront-appearance', () => ({
+  invalidateKangurStorefrontInitialStateCache:
+    mocks.invalidateKangurStorefrontInitialStateCacheMock,
+  isKangurStorefrontInitialStateDependencyKey:
+    mocks.isKangurStorefrontInitialStateDependencyKeyMock,
 }));
 
 vi.mock('@/shared/lib/db/app-db-provider', () => ({
@@ -136,6 +145,7 @@ describe('settings handler', () => {
     });
     mocks.logSystemEventMock.mockResolvedValue(undefined);
     mocks.primeFrontPageSettingRuntimeMock.mockReturnValue(null);
+    mocks.isKangurStorefrontInitialStateDependencyKeyMock.mockReturnValue(false);
     mocks.parseJsonBodyMock.mockResolvedValue({
       ok: true,
       data: {
@@ -162,6 +172,7 @@ describe('settings handler', () => {
     expect(mocks.clearSettingsCacheMock).toHaveBeenCalledTimes(1);
     expect(mocks.resetServerLoggingControlsCacheMock).toHaveBeenCalledTimes(1);
     expect(mocks.clearLiteSettingsServerCacheMock).toHaveBeenCalledTimes(1);
+    expect(mocks.invalidateKangurStorefrontInitialStateCacheMock).not.toHaveBeenCalled();
     await expect(response.json()).resolves.toEqual({
       key: OBSERVABILITY_LOGGING_KEYS.infoEnabled,
       value: 'true',
@@ -300,5 +311,37 @@ describe('settings handler', () => {
         }),
       })
     );
+  });
+
+  it('invalidates the Kangur storefront snapshot cache for appearance setting writes', async () => {
+    mocks.isKangurStorefrontInitialStateDependencyKeyMock.mockReturnValue(true);
+    mocks.parseJsonBodyMock.mockResolvedValue({
+      ok: true,
+      data: {
+        key: 'kangur_storefront_default_mode_v1',
+        value: 'sunset',
+      },
+    });
+
+    const response = await POST_handler(
+      new NextRequest('http://localhost/api/settings', {
+        method: 'POST',
+        body: JSON.stringify({
+          key: 'kangur_storefront_default_mode_v1',
+          value: 'sunset',
+        }),
+      }),
+      createContext()
+    );
+
+    expect(response.status).toBe(200);
+    expect(mocks.isKangurStorefrontInitialStateDependencyKeyMock).toHaveBeenCalledWith(
+      'kangur_storefront_default_mode_v1'
+    );
+    expect(mocks.invalidateKangurStorefrontInitialStateCacheMock).toHaveBeenCalledTimes(1);
+    await expect(response.json()).resolves.toEqual({
+      key: 'kangur_storefront_default_mode_v1',
+      value: 'sunset',
+    });
   });
 });

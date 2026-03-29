@@ -10,7 +10,7 @@ import { KangurSurfaceClassSync } from '@/features/kangur/ui/KangurSurfaceClassS
 import type {
   KangurStorefrontAppearanceMode,
   KangurStorefrontThemeSettingsSnapshot,
-} from '@/features/kangur/storefront-appearance-settings';
+} from '@/features/kangur/appearance/storefront-appearance-settings';
 
 import type { JSX } from 'react';
 

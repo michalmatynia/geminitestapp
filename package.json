@@ -69,6 +69,7 @@
     "dev:heap": "node --max-old-space-size=8192 --heapsnapshot-near-heap-limit=2 --trace-gc server.cjs",
     "prebuild": "node scripts/build/prebuild-cleanup.cjs && node scripts/build/check-vercel-build-contract.cjs && node scripts/quality/check-next-route-config-reexports.mjs --strict --no-write",
     "build": "node scripts/build/run-next-build.cjs",
+    "analyze": "ANALYZE=true next build",
     "build:turbopack": "npm run prebuild && NEXT_BUILD_BUNDLER=turbopack NEXT_BUILD_CPUS=1 NEXT_DIST_DIR=.next-turbo node scripts/build/run-next-build.cjs",
     "build:turbopack:cold": "NEXT_PRESERVE_TURBO_CACHE=0 npm run build:turbopack",
     "build:webpack": "NODE_OPTIONS='--max-old-space-size=8192' next build --webpack",
@@ -464,6 +465,7 @@
     "zod": "^4.3.5"
   },
   "devDependencies": {
+    "@next/bundle-analyzer": "^16.1.1",
     "@bazel/bazelisk": "^1.28.1",
     "@eslint/js": "^10.0.1",
     "@playwright/test": "^1.57.0",

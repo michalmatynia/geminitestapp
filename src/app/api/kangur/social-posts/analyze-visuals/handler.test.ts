@@ -19,7 +19,7 @@ vi.mock('@/features/kangur/services/kangur-actor', () => ({
   resolveKangurActor: (...args: unknown[]) => mocks.resolveKangurActorMock(...args),
 }));
 
-vi.mock('@/features/kangur/workers/kangurSocialPipelineQueue', () => ({
+vi.mock('@/features/kangur/social/workers/kangurSocialPipelineQueue', () => ({
   enqueueKangurSocialPipelineJob: (...args: unknown[]) =>
     mocks.enqueueKangurSocialPipelineJobMock(...args),
   recoverKangurSocialPipelineQueue: (...args: unknown[]) =>
@@ -32,7 +32,7 @@ vi.mock('@/features/kangur/observability/server', () => ({
   logKangurServerEvent: (...args: unknown[]) => mocks.logKangurServerEventMock(...args),
 }));
 
-vi.mock('@/features/kangur/server/social-posts-repository', () => ({
+vi.mock('@/features/kangur/social/server/social-posts-repository', () => ({
   updateKangurSocialPost: (...args: unknown[]) => mocks.updateKangurSocialPostMock(...args),
 }));
 
@@ -100,6 +100,7 @@ describe('social post analyze visuals handler', () => {
       visualAnalysisStatus: 'queued',
       visualAnalysisJobId: 'job-analyze-1',
       visualAnalysisModelId: 'vision-1',
+      visualAnalysisError: null,
       updatedBy: 'admin-1',
     });
     expect(response.status).toBe(202);

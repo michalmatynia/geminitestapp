@@ -18,7 +18,7 @@ vi.mock('@/features/kangur/services/kangur-actor', () => ({
   resolveKangurActor: (...args: unknown[]) => mocks.resolveKangurActorMock(...args),
 }));
 
-vi.mock('@/features/kangur/workers/kangurSocialPipelineQueue', () => ({
+vi.mock('@/features/kangur/social/workers/kangurSocialPipelineQueue', () => ({
   enqueueKangurSocialPipelineJob: (...args: unknown[]) =>
     mocks.enqueueKangurSocialPipelineJobMock(...args),
   recoverKangurSocialPipelineQueue: (...args: unknown[]) =>

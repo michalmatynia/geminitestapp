@@ -226,19 +226,7 @@ function DraggableCase({
             </p>
           </div>
         </div>
-        {status !== 'neutral' ? (
-          <KangurStatusChip
-            accent={accent}
-            className='px-2 py-1 text-[10px] font-bold'
-            size='sm'
-          >
-            {status === 'correct' ? copy.status.correct : copy.status.wrong}
-          </KangurStatusChip>
-        ) : null}
       </div>
-      {checked ? (
-        <p className='mt-2 text-xs [color:var(--kangur-page-muted-text)]'>{item.explanation}</p>
-      ) : null}
     </KangurInfoCard>
   );
 
@@ -356,13 +344,6 @@ export default function LogicalReasoningIfThenGame({
     setScore(0);
     setSelectedCaseId(null);
   };
-
-  const summaryLabel = useMemo(() => {
-    if (!attempted) return '';
-    if (score === total) return copy.summary.perfect;
-    if (score >= Math.max(1, Math.floor(total * 0.6))) return copy.summary.good;
-    return copy.summary.retry;
-  }, [attempted, copy.summary.good, copy.summary.perfect, copy.summary.retry, score, total]);
 
   const summaryAccent = useMemo<KangurAccent>(() => {
     if (!attempted) return 'slate';
@@ -645,18 +626,9 @@ export default function LogicalReasoningIfThenGame({
             padding='sm'
             className='w-full text-sm'
           >
-            <div className='flex flex-wrap items-center justify-between gap-2'>
-              <span className='font-bold [color:var(--kangur-page-text)]'>
-                {formatTemplate(copy.summary.resultTemplate, { score, total })}
-              </span>
-              <KangurStatusChip
-                accent={summaryAccent}
-                size='sm'
-                className='px-2 py-1 text-[10px] font-bold'
-              >
-                {summaryLabel}
-              </KangurStatusChip>
-            </div>
+            <span className='font-bold [color:var(--kangur-page-text)]'>
+              {formatTemplate(copy.summary.resultTemplate, { score, total })}
+            </span>
           </KangurInfoCard>
         ) : null}
       </div>

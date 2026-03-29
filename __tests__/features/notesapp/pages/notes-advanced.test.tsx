@@ -8,11 +8,32 @@ import userEvent from '@testing-library/user-event';
 import { http, HttpResponse } from 'msw';
 import { vi, describe, it, expect, beforeEach, afterEach } from 'vitest';
 
+vi.mock('@/features/notesapp/components/editor/FileAttachments', () => ({
+  FileAttachments: () => <div data-testid='note-file-attachments' />,
+}));
+
+vi.mock('@/features/notesapp/components/editor/MarkdownEditor', () => ({
+  MarkdownEditor: () => <div data-testid='note-markdown-editor' />,
+}));
+
+vi.mock('@/features/notesapp/components/editor/NoteMetadata', () => ({
+  NoteMetadata: () => <div data-testid='note-metadata' />,
+}));
+
+vi.mock('@/features/notesapp/components/editor/NotesMarkdownToolbar', () => ({
+  NotesMarkdownToolbar: () => <div data-testid='note-markdown-toolbar' />,
+}));
+
+vi.mock('@/features/notesapp/components/editor/WysiwygEditor', () => ({
+  WysiwygEditor: () => <div data-testid='note-wysiwyg-editor' />,
+}));
+
 import { AdminLayoutProvider } from '@/features/admin/context/AdminLayoutContext';
 import { NoteSettingsProvider } from '@/features/notesapp/hooks/NoteSettingsContext';
 import { AdminNotesPage } from '@/features/notesapp/pages/AdminNotesPage';
 import { server } from '@/mocks/server';
 import type { NoteWithRelations } from '@/shared/contracts/notes';
+import { invalidateSettingsCache } from '@/shared/api/settings-client';
 import { ToastProvider } from '@/shared/ui/toast';
 
 const NOTE_LOAD_TIMEOUT_MS = 15_000;
@@ -67,6 +88,7 @@ describe('Notes Advanced UI', () => {
 
   beforeEach(() => {
     vi.useRealTimers();
+    invalidateSettingsCache();
     window.localStorage.clear();
     notes = [
       makeNote({ id: 'note-1', title: 'Apple', createdAt: '2023-01-01T00:00:00.000Z' }),
@@ -75,6 +97,17 @@ describe('Notes Advanced UI', () => {
 
     server.use(
       http.get('/api/settings', () => HttpResponse.json([])),
+      http.get('/api/settings/lite', () => HttpResponse.json([])),
+      http.post('/api/settings', async ({ request }) => {
+        const body = (await request.json()) as { key?: string; value?: string };
+        return HttpResponse.json({
+          id: body.key ?? 'setting',
+          key: body.key ?? 'setting',
+          value: body.value ?? '',
+          createdAt: now,
+          updatedAt: now,
+        });
+      }),
       http.get('/api/notes/tags', () => HttpResponse.json([])),
       http.get('/api/notes/categories', () => HttpResponse.json([])),
       http.post('/api/client-errors', () => HttpResponse.json({ success: true })),
@@ -121,6 +154,7 @@ describe('Notes Advanced UI', () => {
   });
 
   afterEach(() => {
+    invalidateSettingsCache();
     vi.restoreAllMocks();
     vi.useRealTimers();
   });
@@ -168,12 +202,13 @@ describe('Notes Advanced UI', () => {
     renderNotesPage();
     const user = userEvent.setup();
 
-    const appleNote = await screen.findByRole(
-      'heading',
-      { name: 'Apple' },
-      { timeout: NOTE_LOAD_TIMEOUT_MS }
+    await user.click(
+      await screen.findByRole(
+        'button',
+        { name: 'Open note Apple' },
+        { timeout: NOTE_LOAD_TIMEOUT_MS }
+      )
     );
-    await user.click(appleNote);
 
     expect(
       await screen.findByRole(
@@ -195,7 +230,11 @@ describe('Notes Advanced UI', () => {
     const user = userEvent.setup();
 
     await user.click(
-      await screen.findByRole('heading', { name: 'Apple' }, { timeout: NOTE_LOAD_TIMEOUT_MS })
+      await screen.findByRole(
+        'button',
+        { name: 'Open note Apple' },
+        { timeout: NOTE_LOAD_TIMEOUT_MS }
+      )
     );
     expect(
       await screen.findByRole(
@@ -227,7 +266,11 @@ describe('Notes Advanced UI', () => {
     const user = userEvent.setup();
 
     await user.click(
-      await screen.findByRole('heading', { name: 'Banana' }, { timeout: NOTE_LOAD_TIMEOUT_MS })
+      await screen.findByRole(
+        'button',
+        { name: 'Open note Banana' },
+        { timeout: NOTE_LOAD_TIMEOUT_MS }
+      )
     );
     expect(
       await screen.findByRole(
@@ -257,12 +300,8 @@ describe('Notes Advanced UI', () => {
     renderNotesPage();
     const user = userEvent.setup();
 
-    const findAppleCard = async (): Promise<HTMLElement> => {
-      const appleTitle = await screen.findByRole(
-        'heading',
-        { name: 'Apple' },
-        { timeout: NOTE_LOAD_TIMEOUT_MS }
-      );
+    const getAppleCard = (): HTMLElement => {
+      const appleTitle = screen.getByRole('heading', { name: 'Apple' });
       const appleCard = appleTitle.closest('.rounded-lg.border.p-4') || appleTitle.parentElement;
       if (!appleCard) {
         throw new Error('Apple note card not found');
@@ -270,18 +309,18 @@ describe('Notes Advanced UI', () => {
       return appleCard as HTMLElement;
     };
 
-    const favBtn = await within(await findAppleCard()).findByRole('button', {
+    await screen.findByRole('heading', { name: 'Apple' }, { timeout: NOTE_LOAD_TIMEOUT_MS });
+
+    const favBtn = within(getAppleCard()).getByRole('button', {
       name: /Favorite note/i,
     });
 
     await user.click(favBtn);
 
-    expect(
-      await within(await findAppleCard()).findByRole(
-        'button',
-        { name: /Unfavorite note/i },
-        { timeout: NOTE_LOAD_TIMEOUT_MS }
-      )
-    ).toBeInTheDocument();
+    await waitFor(() => {
+      expect(
+        within(getAppleCard()).getByRole('button', { name: /Unfavorite note/i })
+      ).toBeInTheDocument();
+    }, { timeout: NOTE_LOAD_TIMEOUT_MS });
   }, 15000);
 });

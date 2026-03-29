@@ -11,7 +11,7 @@ import {
   resolveKangurThemeSettingsRawForMode,
   parseKangurThemeSettings,
   resolveKangurDefaultThemeForMode,
-} from '@/features/kangur/theme-settings';
+} from '@/features/kangur/appearance/theme-settings';
 import { useSettingsStore } from '@/features/kangur/shared/providers/SettingsStoreProvider';
 import {
   useKangurStorefrontAppearanceHydrated,

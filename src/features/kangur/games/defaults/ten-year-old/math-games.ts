@@ -223,7 +223,7 @@ export const TEN_YEAR_OLD_MATH_GAMES: readonly KangurGameDefinition[] = [
     emoji: '➖',
     mechanic: 'drag_drop',
     interactionMode: 'drag',
-    surfaces: ['lesson', 'library'],
+    surfaces: ['lesson', 'library', 'game'],
     tags: ['subtraction', 'drag', 'quantity'],
     variants: [
       createVariant({
@@ -306,6 +306,15 @@ export const TEN_YEAR_OLD_MATH_GAMES: readonly KangurGameDefinition[] = [
         description: 'Library preview for the shared multiplication array engine.',
         surface: 'library_preview',
         sortOrder: 100,
+      }),
+      createVariant({
+        id: 'multiplication_array.game-screen',
+        label: 'Game screen',
+        title: 'Multiplication array fullscreen',
+        description: 'Standalone fullscreen practice for the shared multiplication array engine.',
+        surface: 'game_screen',
+        launchableRuntimeId: 'multiplication_array_quiz',
+        sortOrder: 200,
       }),
     ],
     status: 'active',

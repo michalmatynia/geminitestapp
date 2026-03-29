@@ -46,6 +46,10 @@ const { optionalTutorMock } = vi.hoisted(() => ({
   optionalTutorMock: vi.fn(),
 }));
 
+const { optionalRoutingMock } = vi.hoisted(() => ({
+  optionalRoutingMock: vi.fn(),
+}));
+
 const { localeMock } = vi.hoisted(() => ({
   localeMock: vi.fn(),
 }));
@@ -348,7 +352,7 @@ vi.mock('framer-motion', () => {
 });
 
 vi.mock('@/features/kangur/ui/context/KangurRoutingContext', () => ({
-  useOptionalKangurRouting: () => null,
+  useOptionalKangurRouting: (): unknown => optionalRoutingMock() as unknown,
 }));
 
 vi.mock('@/features/kangur/ui/context/KangurRouteTransitionContext', () => ({
@@ -470,7 +474,7 @@ export const openLanguageMenu = async (trigger?: HTMLElement): Promise<void> => 
   });
 };
 
-import { KANGUR_DAILY_THEME_SETTINGS_KEY } from '@/features/kangur/theme-settings';
+import { KANGUR_DAILY_THEME_SETTINGS_KEY } from '@/features/kangur/appearance/theme-settings';
 export let CmsStorefrontAppearanceProvider: typeof import('@/features/cms/public').CmsStorefrontAppearanceProvider;
 export let KangurPrimaryNavigation: typeof import('@/features/kangur/ui/components/KangurPrimaryNavigation').KangurPrimaryNavigation;
 export let persistTutorVisibilityHidden: typeof import('@/features/kangur/ui/components/KangurAiTutorWidget.storage').persistTutorVisibilityHidden;
@@ -510,6 +514,7 @@ export const setupKangurPrimaryNavigationTest = () => {
     prefetchMock.mockReset();
     replaceMock.mockReset();
     optionalAuthMock.mockReturnValue(null);
+    optionalRoutingMock.mockReturnValue(null);
     optionalTutorMock.mockReturnValue(null);
     useKangurSubjectFocusMock.mockReturnValue({
       subject: 'maths',
@@ -576,6 +581,7 @@ export {
   localeMock,
   locationAssignSpy,
   optionalAuthMock,
+  optionalRoutingMock,
   optionalTutorMock,
   pathnameMock,
   prefetchKangurLessonsCatalogMock,

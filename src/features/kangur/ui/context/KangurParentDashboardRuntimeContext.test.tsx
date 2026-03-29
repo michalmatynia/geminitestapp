@@ -7,6 +7,7 @@ import { memo } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const createLearnerMock = vi.hoisted(() => vi.fn());
+const withTimeoutMock = vi.hoisted(() => vi.fn());
 const selectLearnerMock = vi.hoisted(() => vi.fn());
 const checkAppStateMock = vi.hoisted(() => vi.fn());
 const useKangurAssignmentsMock = vi.hoisted(() => vi.fn());
@@ -122,6 +123,17 @@ vi.mock('@/features/kangur/ui/hooks/useKangurParentDashboardScores', () => ({
   useKangurParentDashboardScores: useKangurParentDashboardScoresMock,
 }));
 
+vi.mock('@/features/kangur/ui/context/KangurParentDashboardRuntimeContext.utils', async () => {
+  const actual = await vi.importActual<
+    typeof import('@/features/kangur/ui/context/KangurParentDashboardRuntimeContext.utils')
+  >('@/features/kangur/ui/context/KangurParentDashboardRuntimeContext.utils');
+
+  return {
+    ...actual,
+    withTimeout: withTimeoutMock,
+  };
+});
+
 import {
   KangurParentDashboardRuntimeProvider,
   useKangurParentDashboardRuntimeHeroState,
@@ -152,6 +164,23 @@ const RuntimeProbe = ({ loginName = 'Ada01' }: { loginName?: string }): React.JS
       <div data-testid='lessons-count'>{lessons.length}</div>
       <div data-testid='feedback'>{feedback ?? ''}</div>
     </div>
+  );
+};
+
+const RuntimeUpdateAssignmentProbe = (): React.JSX.Element => {
+  const { updateAssignment } = useKangurParentDashboardRuntimeActions();
+
+  return (
+    <button
+      type='button'
+      onClick={() =>
+        void updateAssignment('assignment-1', {
+          timeLimitMinutes: 30,
+        })
+      }
+    >
+      update-assignment
+    </button>
   );
 };
 
@@ -214,6 +243,8 @@ describe('KangurParentDashboardRuntimeContext', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     createLearnerMock.mockReset();
+    withTimeoutMock.mockReset();
+    withTimeoutMock.mockImplementation(async (promise: Promise<unknown>) => await promise);
     shellRenderProbeSpy.mockReset();
     heroRenderProbeSpy.mockReset();
     overviewRenderProbeSpy.mockReset();
@@ -242,7 +273,7 @@ describe('KangurParentDashboardRuntimeContext', () => {
       error: null,
       refresh: vi.fn(),
       createAssignment: vi.fn(),
-      updateAssignment: vi.fn(),
+      updateAssignment: vi.fn().mockResolvedValue(undefined),
       reassignAssignment: vi.fn(),
     });
     useKangurParentDashboardScoresMock.mockReturnValue({
@@ -609,5 +640,69 @@ describe('KangurParentDashboardRuntimeContext', () => {
       expect(createLearnerMock).toHaveBeenCalled();
       expect(screen.getByTestId('feedback')).toHaveTextContent('Ten nick jest juz zajety.');
     });
+  });
+
+  it('uses the existing timeout.create translation for learner creation', async () => {
+    createLearnerMock.mockResolvedValueOnce(undefined);
+
+    render(
+      <KangurParentDashboardRuntimeProvider>
+        <RuntimeProbe loginName='ola02' />
+      </KangurParentDashboardRuntimeProvider>
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: 'set-name' }));
+    fireEvent.click(screen.getByRole('button', { name: 'set-login' }));
+    fireEvent.click(screen.getByRole('button', { name: 'set-pass' }));
+    fireEvent.click(screen.getByRole('button', { name: 'create' }));
+
+    await waitFor(() => {
+      expect(withTimeoutMock).toHaveBeenCalled();
+    });
+
+    expect(withTimeoutMock).toHaveBeenCalledWith(
+      expect.any(Promise),
+      expect.any(Number),
+      'Tworzenie profilu trwa zbyt dlugo. Sprawdz polaczenie i sprobuj ponownie.'
+    );
+  });
+
+  it('uses the addLearnerError feedback copy for unknown learner-creation failures', async () => {
+    createLearnerMock.mockRejectedValueOnce({ unexpected: true });
+
+    render(
+      <KangurParentDashboardRuntimeProvider>
+        <RuntimeProbe loginName='ola02' />
+      </KangurParentDashboardRuntimeProvider>
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: 'set-name' }));
+    fireEvent.click(screen.getByRole('button', { name: 'set-login' }));
+    fireEvent.click(screen.getByRole('button', { name: 'set-pass' }));
+    fireEvent.click(screen.getByRole('button', { name: 'create' }));
+
+    await waitFor(() => {
+      expect(screen.getByTestId('feedback')).toHaveTextContent('Nie udalo sie dodac ucznia.');
+    });
+  });
+
+  it('uses the existing timeout.save translation for assignment updates', async () => {
+    render(
+      <KangurParentDashboardRuntimeProvider>
+        <RuntimeUpdateAssignmentProbe />
+      </KangurParentDashboardRuntimeProvider>
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: 'update-assignment' }));
+
+    await waitFor(() => {
+      expect(withTimeoutMock).toHaveBeenCalled();
+    });
+
+    expect(withTimeoutMock).toHaveBeenCalledWith(
+      expect.any(Promise),
+      expect.any(Number),
+      'Zapis profilu trwa zbyt dlugo. Sprobuj ponownie.'
+    );
   });
 });

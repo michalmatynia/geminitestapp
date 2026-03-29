@@ -1,3 +1,5 @@
+import { KANGUR_CLOCK_THEME_COLORS } from './clock-theme';
+
 type AnalogClockProps = {
   hours: number;
   minutes: number;
@@ -51,7 +53,7 @@ function ClockHourMarks(): React.JSX.Element[] {
         y1={start.y}
         x2={end.x}
         y2={end.y}
-        stroke='#4f46e5'
+        stroke={KANGUR_CLOCK_THEME_COLORS.majorTick}
         strokeWidth='3'
         strokeLinecap='round'
       />
@@ -76,7 +78,7 @@ function ClockMinuteMarks(): React.JSX.Element[] {
         y1={start.y}
         x2={end.x}
         y2={end.y}
-        stroke='#a5b4fc'
+        stroke={KANGUR_CLOCK_THEME_COLORS.minorTick}
         strokeWidth='1'
       />
     );
@@ -97,7 +99,7 @@ function ClockNumbers(): React.JSX.Element[] {
         dominantBaseline='central'
         fontSize='14'
         fontWeight='bold'
-        fill='#3730a3'
+        fill={KANGUR_CLOCK_THEME_COLORS.numeral}
       >
         {n}
       </text>
@@ -142,7 +144,11 @@ function ClockLabel({ label }: { label?: string }): React.JSX.Element | null {
     return null;
   }
 
-  return <div className='text-sm font-semibold text-indigo-900'>{label}</div>;
+  return (
+    <div className='text-sm font-semibold' style={{ color: KANGUR_CLOCK_THEME_COLORS.label }}>
+      {label}
+    </div>
+  );
 }
 
 const resolveAnalogClockProps = (props: AnalogClockProps): ResolvedAnalogClockProps => ({
@@ -156,10 +162,14 @@ const resolveAnalogClockProps = (props: AnalogClockProps): ResolvedAnalogClockPr
 });
 
 const resolveClockHourHandStroke = (highlightHour: boolean): string =>
-  highlightHour ? '#dc2626' : '#1e1b4b';
+  highlightHour
+    ? KANGUR_CLOCK_THEME_COLORS.highlightHourHand
+    : KANGUR_CLOCK_THEME_COLORS.lessonHourHand;
 
 const resolveClockMinuteHandStroke = (highlightMinute: boolean): string =>
-  highlightMinute ? '#16a34a' : '#4f46e5';
+  highlightMinute
+    ? KANGUR_CLOCK_THEME_COLORS.highlightMinuteHand
+    : KANGUR_CLOCK_THEME_COLORS.lessonMinuteHand;
 
 const resolveClockHourHandStrokeWidth = (highlightHour: boolean): number =>
   highlightHour ? 8 : 6;
@@ -226,8 +236,8 @@ export function AnalogClock(props: AnalogClockProps): React.JSX.Element {
           cx='100'
           cy='100'
           r='95'
-          fill='var(--kangur-soft-card-background)'
-          stroke='#6366f1'
+          fill={KANGUR_CLOCK_THEME_COLORS.faceFill}
+          stroke={KANGUR_CLOCK_THEME_COLORS.faceStroke}
           strokeWidth='4'
         />
         <ClockHourMarks />
@@ -241,7 +251,7 @@ export function AnalogClock(props: AnalogClockProps): React.JSX.Element {
           showHourHand={showHourHand}
           showMinuteHand={showMinuteHand}
         />
-        <circle cx='100' cy='100' r='6' fill='#4f46e5' />
+        <circle cx='100' cy='100' r='6' fill={KANGUR_CLOCK_THEME_COLORS.center} />
       </svg>
       <ClockLabel label={label} />
     </div>

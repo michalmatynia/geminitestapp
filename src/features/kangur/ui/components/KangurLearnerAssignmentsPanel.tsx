@@ -194,21 +194,40 @@ const getLatestAssignmentTimestamp = (value: string | null, fallback: string): n
   return Number.isNaN(fallbackValue) ? 0 : fallbackValue;
 };
 
-export function KangurLearnerAssignmentsPanel({
-  basePath,
-  enabled = false,
-}: KangurLearnerAssignmentsPanelProps): React.JSX.Element {
-  const locale = normalizeSiteLocale(useLocale());
-  const fallbackCopy = getLearnerAssignmentsFallbackCopy(locale);
-  const { entry: assignmentsContent } = useKangurPageContentEntry('learner-profile-assignments');
-  const { subject, setSubject } = useKangurSubjectFocus();
-  const { assignments, isLoading, error } = useKangurAssignments({
-    enabled,
-    query: {
-      includeArchived: false,
-    },
-  });
+const resolveKangurCompletedAssignments = (
+  subjectAssignments: ReturnType<typeof useKangurAssignments>['assignments']
+): ReturnType<typeof useKangurAssignments>['assignments'] =>
+  subjectAssignments
+    .filter((assignment) => !assignment.archived && assignment.progress.status === 'completed')
+    .sort((left, right) => {
+      const leftTime = getLatestAssignmentTimestamp(left.progress.completedAt, left.updatedAt);
+      const rightTime = getLatestAssignmentTimestamp(right.progress.completedAt, right.updatedAt);
+      return rightTime - leftTime;
+    });
 
+const countVisibleKangurAssignments = (
+  subjectAssignments: ReturnType<typeof useKangurAssignments>['assignments']
+): number => subjectAssignments.filter((assignment) => !assignment.archived).length;
+
+const countKangurHighPriorityAssignments = (
+  activeAssignments: ReturnType<typeof useKangurAssignments>['assignments']
+): number => activeAssignments.filter((assignment) => assignment.priority === 'high').length;
+
+const useKangurLearnerAssignmentCollections = ({
+  assignments,
+  basePath,
+  subject,
+}: {
+  assignments: ReturnType<typeof useKangurAssignments>['assignments'];
+  basePath: string;
+  subject: ReturnType<typeof useKangurSubjectFocus>['subject'];
+}): {
+  activeAssignmentItems: KangurAssignmentListItem[];
+  activeAssignments: ReturnType<typeof useKangurAssignments>['assignments'];
+  completedAssignmentItems: KangurAssignmentListItem[];
+  completedAssignments: ReturnType<typeof useKangurAssignments>['assignments'];
+  subjectAssignments: ReturnType<typeof useKangurAssignments>['assignments'];
+} => {
   const subjectAssignments = useMemo(
     () => filterKangurAssignmentsBySubject(assignments, subject),
     [assignments, subject]
@@ -218,17 +237,7 @@ export function KangurLearnerAssignmentsPanel({
     [subjectAssignments]
   );
   const completedAssignments = useMemo(
-    () =>
-      subjectAssignments
-        .filter((assignment) => !assignment.archived && assignment.progress.status === 'completed')
-        .sort((left, right) => {
-          const leftTime = getLatestAssignmentTimestamp(left.progress.completedAt, left.updatedAt);
-          const rightTime = getLatestAssignmentTimestamp(
-            right.progress.completedAt,
-            right.updatedAt
-          );
-          return rightTime - leftTime;
-        }),
+    () => resolveKangurCompletedAssignments(subjectAssignments),
     [subjectAssignments]
   );
   const activeAssignmentItems = useMemo(
@@ -239,30 +248,73 @@ export function KangurLearnerAssignmentsPanel({
     () => buildKangurAssignmentListItems(basePath, completedAssignments),
     [basePath, completedAssignments]
   );
-  const handleAssignmentOpen = useCallback(
-    (item: KangurAssignmentListItem) => {
-      if (item.subject !== subject) {
-        setSubject(item.subject);
-      }
-    },
-    [setSubject, subject]
-  );
 
-  const totalVisibleAssignments = subjectAssignments.filter(
-    (assignment) => !assignment.archived
-  ).length;
-  const completionRate =
-    totalVisibleAssignments === 0
-      ? 0
-      : Math.round((completedAssignments.length / totalVisibleAssignments) * 100);
-  const highPriorityActiveCount = activeAssignments.filter(
-    (assignment) => assignment.priority === 'high'
-  ).length;
-  const latestCompletedTitle =
-    completedAssignments[0]?.title ?? fallbackCopy.latestCompletedTitle;
-  const sectionTitle = assignmentsContent?.title ?? fallbackCopy.sectionTitle;
-  const sectionSummary = assignmentsContent?.summary ?? fallbackCopy.sectionSummary;
+  return {
+    activeAssignmentItems,
+    activeAssignments,
+    completedAssignmentItems,
+    completedAssignments,
+    subjectAssignments,
+  };
+};
 
+const resolveKangurLearnerAssignmentsSummary = ({
+  activeAssignments,
+  assignmentsContent,
+  completedAssignments,
+  fallbackCopy,
+  subjectAssignments,
+}: {
+  activeAssignments: ReturnType<typeof useKangurAssignments>['assignments'];
+  assignmentsContent: ReturnType<typeof useKangurPageContentEntry>['entry'];
+  completedAssignments: ReturnType<typeof useKangurAssignments>['assignments'];
+  fallbackCopy: LearnerAssignmentsFallbackCopy;
+  subjectAssignments: ReturnType<typeof useKangurAssignments>['assignments'];
+}): {
+  completionRate: number;
+  highPriorityActiveCount: number;
+  latestCompletedTitle: string;
+  sectionSummary: string;
+  sectionTitle: string;
+} => {
+  const totalVisibleAssignments = countVisibleKangurAssignments(subjectAssignments);
+  return {
+    completionRate:
+      totalVisibleAssignments === 0
+        ? 0
+        : Math.round((completedAssignments.length / totalVisibleAssignments) * 100),
+    highPriorityActiveCount: countKangurHighPriorityAssignments(activeAssignments),
+    latestCompletedTitle: completedAssignments[0]?.title ?? fallbackCopy.latestCompletedTitle,
+    sectionSummary: assignmentsContent?.summary ?? fallbackCopy.sectionSummary,
+    sectionTitle: assignmentsContent?.title ?? fallbackCopy.sectionTitle,
+  };
+};
+
+const syncKangurAssignmentPanelSubject = ({
+  item,
+  setSubject,
+  subject,
+}: {
+  item: KangurAssignmentListItem;
+  setSubject: ReturnType<typeof useKangurSubjectFocus>['setSubject'];
+  subject: ReturnType<typeof useKangurSubjectFocus>['subject'];
+}): void => {
+  if (item.subject !== subject) {
+    setSubject(item.subject);
+  }
+};
+
+const renderKangurLearnerAssignmentsUnavailableState = ({
+  enabled,
+  error,
+  fallbackCopy,
+  isLoading,
+}: {
+  enabled: boolean;
+  error: string | null;
+  fallbackCopy: LearnerAssignmentsFallbackCopy;
+  isLoading: boolean;
+}): React.JSX.Element | null => {
   if (!enabled) {
     return (
       <KangurSummaryPanel
@@ -292,72 +344,159 @@ export function KangurLearnerAssignmentsPanel({
     );
   }
 
-  if (error) {
-    return (
+  if (!error) {
+    return null;
+  }
+
+  return (
+    <KangurSummaryPanel
+      accent='rose'
+      data-testid='learner-assignments-error'
+      description={fallbackCopy.errorDescription}
+      label={fallbackCopy.errorLabel}
+      padding='lg'
+      title={error}
+      tone='accent'
+      role='alert'
+      aria-live='assertive'
+      aria-atomic='true'
+    />
+  );
+};
+
+function KangurLearnerAssignmentsMetrics({
+  activeAssignmentsCount,
+  completedAssignmentsCount,
+  completionRate,
+  fallbackCopy,
+  highPriorityActiveCount,
+  latestCompletedTitle,
+  sectionSummary,
+  sectionTitle,
+}: {
+  activeAssignmentsCount: number;
+  completedAssignmentsCount: number;
+  completionRate: number;
+  fallbackCopy: LearnerAssignmentsFallbackCopy;
+  highPriorityActiveCount: number;
+  latestCompletedTitle: string;
+  sectionSummary: string;
+  sectionTitle: string;
+}): React.JSX.Element {
+  return (
+    <KangurGlassPanel padding='lg' surface='mistStrong' variant='soft'>
+      <KangurPanelIntro description={sectionSummary} eyebrow={sectionTitle} />
+
+      <div className='mt-4 grid grid-cols-1 kangur-panel-gap min-[420px]:grid-cols-2 xl:grid-cols-4'>
+        <KangurMetricCard
+          accent='slate'
+          data-testid='learner-assignments-active'
+          description={fallbackCopy.activeAssignmentsDescription}
+          label={fallbackCopy.activeLabel}
+          value={activeAssignmentsCount}
+        />
+
+        <KangurMetricCard
+          accent='emerald'
+          data-testid='learner-assignments-completed'
+          description={fallbackCopy.completedAssignmentsDescription}
+          label={fallbackCopy.completedLabel}
+          value={completedAssignmentsCount}
+        />
+
+        <KangurMetricCard
+          accent='amber'
+          data-testid='learner-assignments-high-priority'
+          description={fallbackCopy.highPriorityDescription}
+          label={fallbackCopy.highPriorityLabel}
+          value={highPriorityActiveCount}
+        />
+
+        <KangurMetricCard
+          accent='indigo'
+          data-testid='learner-assignments-completion-rate'
+          description={fallbackCopy.completionRateDescription}
+          label={fallbackCopy.completionRateLabel}
+          value={`${completionRate}%`}
+        />
+      </div>
+
       <KangurSummaryPanel
-        accent='rose'
-        data-testid='learner-assignments-error'
-        description={fallbackCopy.errorDescription}
-        label={fallbackCopy.errorLabel}
-        padding='lg'
-        title={error}
+        accent='indigo'
+        className='mt-4'
+        description={fallbackCopy.latestSuccessDescription}
+        label={fallbackCopy.latestSuccessLabel}
+        padding='md'
+        title={latestCompletedTitle}
         tone='accent'
-        role='alert'
-        aria-live='assertive'
-        aria-atomic='true'
       />
-    );
+    </KangurGlassPanel>
+  );
+}
+
+export function KangurLearnerAssignmentsPanel({
+  basePath,
+  enabled = false,
+}: KangurLearnerAssignmentsPanelProps): React.JSX.Element {
+  const locale = normalizeSiteLocale(useLocale());
+  const fallbackCopy = getLearnerAssignmentsFallbackCopy(locale);
+  const { entry: assignmentsContent } = useKangurPageContentEntry('learner-profile-assignments');
+  const { subject, setSubject } = useKangurSubjectFocus();
+  const { assignments, isLoading, error } = useKangurAssignments({
+    enabled,
+    query: {
+      includeArchived: false,
+    },
+  });
+  const {
+    activeAssignmentItems,
+    activeAssignments,
+    completedAssignmentItems,
+    completedAssignments,
+    subjectAssignments,
+  } = useKangurLearnerAssignmentCollections({ assignments, basePath, subject });
+  const handleAssignmentOpen = useCallback(
+    (item: KangurAssignmentListItem) => {
+      syncKangurAssignmentPanelSubject({ item, setSubject, subject });
+    },
+    [setSubject, subject]
+  );
+  const {
+    completionRate,
+    highPriorityActiveCount,
+    latestCompletedTitle,
+    sectionSummary,
+    sectionTitle,
+  } = resolveKangurLearnerAssignmentsSummary({
+    activeAssignments,
+    assignmentsContent,
+    completedAssignments,
+    fallbackCopy,
+    subjectAssignments,
+  });
+  const unavailableState = renderKangurLearnerAssignmentsUnavailableState({
+    enabled,
+    error,
+    fallbackCopy,
+    isLoading,
+  });
+
+  if (unavailableState) {
+    return unavailableState;
   }
 
   return (
     <div className={`flex flex-col ${KANGUR_PANEL_GAP_CLASSNAME}`}>
-      <KangurGlassPanel padding='lg' surface='mistStrong' variant='soft'>
-        <KangurPanelIntro description={sectionSummary} eyebrow={sectionTitle} />
-
-        <div className='mt-4 grid grid-cols-1 kangur-panel-gap min-[420px]:grid-cols-2 xl:grid-cols-4'>
-          <KangurMetricCard
-            accent='slate'
-            data-testid='learner-assignments-active'
-            description={fallbackCopy.activeAssignmentsDescription}
-            label={fallbackCopy.activeLabel}
-            value={activeAssignments.length}
-          />
-
-          <KangurMetricCard
-            accent='emerald'
-            data-testid='learner-assignments-completed'
-            description={fallbackCopy.completedAssignmentsDescription}
-            label={fallbackCopy.completedLabel}
-            value={completedAssignments.length}
-          />
-
-          <KangurMetricCard
-            accent='amber'
-            data-testid='learner-assignments-high-priority'
-            description={fallbackCopy.highPriorityDescription}
-            label={fallbackCopy.highPriorityLabel}
-            value={highPriorityActiveCount}
-          />
-
-          <KangurMetricCard
-            accent='indigo'
-            data-testid='learner-assignments-completion-rate'
-            description={fallbackCopy.completionRateDescription}
-            label={fallbackCopy.completionRateLabel}
-            value={`${completionRate}%`}
-          />
-        </div>
-
-        <KangurSummaryPanel
-          accent='indigo'
-          className='mt-4'
-          description={fallbackCopy.latestSuccessDescription}
-          label={fallbackCopy.latestSuccessLabel}
-          padding='md'
-          title={latestCompletedTitle}
-          tone='accent'
-        />
-      </KangurGlassPanel>
+      <KangurLearnerAssignmentsMetrics
+        activeAssignmentsCount={activeAssignments.length}
+        completedAssignmentsCount={completedAssignments.length}
+        completionRate={completionRate}
+        fallbackCopy={fallbackCopy}
+        highPriorityActiveCount={highPriorityActiveCount}
+        latestCompletedTitle={latestCompletedTitle}
+        sectionSummary={sectionSummary}
+        sectionTitle={sectionTitle}
+      />
 
       <KangurAssignmentsList
         items={activeAssignmentItems}

@@ -1,4 +1,4 @@
-import { act, render, renderHook, screen } from '@testing-library/react';
+import { act, render, renderHook, screen, waitFor } from '@testing-library/react';
 import React, { useState } from 'react';
 import { describe, expect, it } from 'vitest';
 
@@ -67,23 +67,31 @@ function ToggleWrapper(): React.JSX.Element {
 }
 
 describe('page-context', () => {
-  it('registers dynamic page sources into the page envelope and unregisters them on unmount', () => {
+  it('registers dynamic page sources into the page envelope and unregisters them on unmount', async () => {
     render(<ToggleWrapper />);
 
     expect(screen.getByTestId('page-id')).toHaveTextContent('admin:brain');
-    expect(screen.getByTestId('source-count')).toHaveTextContent('2');
-    expect(screen.getByTestId('ref-ids')).toHaveTextContent(
-      JSON.stringify(['child-ref', 'child-root', 'page-ref', 'page-root', 'resolved-ref'])
-    );
+    await waitFor(() => {
+      expect(screen.getByTestId('source-count')).toHaveTextContent('2');
+    });
+    await waitFor(() => {
+      expect(screen.getByTestId('ref-ids')).toHaveTextContent(
+        JSON.stringify(['child-ref', 'child-root', 'page-ref', 'page-root', 'resolved-ref'])
+      );
+    });
 
     act(() => {
       screen.getByRole('button', { name: 'hide-source' }).click();
     });
 
-    expect(screen.getByTestId('source-count')).toHaveTextContent('1');
-    expect(screen.getByTestId('ref-ids')).toHaveTextContent(
-      JSON.stringify(['page-ref', 'page-root'])
-    );
+    await waitFor(() => {
+      expect(screen.getByTestId('source-count')).toHaveTextContent('1');
+    });
+    await waitFor(() => {
+      expect(screen.getByTestId('ref-ids')).toHaveTextContent(
+        JSON.stringify(['page-ref', 'page-root'])
+      );
+    });
   });
 
   it('returns null from the optional hooks outside a provider', () => {

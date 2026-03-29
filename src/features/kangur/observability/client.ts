@@ -158,7 +158,12 @@ export const isRecoverableKangurClientFetchError = (error: unknown): boolean => 
   }
 
   const normalizedMessage = message.trim().toLowerCase();
-  return normalizedMessage.includes('failed to fetch') || normalizedMessage.includes('load failed');
+  return (
+    normalizedMessage.includes('failed to fetch') ||
+    normalizedMessage.includes('load failed') ||
+    normalizedMessage.includes('request timeout after') ||
+    normalizedMessage.includes('response body timeout after')
+  );
 };
 
 export const isExpectedKangurClientError = (error: unknown): boolean =>

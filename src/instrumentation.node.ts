@@ -122,7 +122,7 @@ export async function registerNodeInstrumentation() {
       logClientError(error);
     });
 
-  void import('@/features/kangur/server/storefront-appearance')
+  void import('@/features/kangur/appearance/server/storefront-appearance')
     .then(({ getKangurStorefrontInitialState }) => getKangurStorefrontInitialState())
     .catch((error) => {
       logClientError(error);

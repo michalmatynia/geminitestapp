@@ -22,7 +22,7 @@ vi.mock('@/features/kangur/ui/KangurSurfaceClassSync', () => ({
   ),
 }));
 
-vi.mock('@/features/kangur/server/storefront-appearance', () => ({
+vi.mock('@/features/kangur/appearance/server/storefront-appearance', () => ({
   getKangurStorefrontInitialState: vi.fn(async () => ({
     initialMode: 'dark',
     initialThemeSettings: {

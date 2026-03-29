@@ -12,6 +12,7 @@ vi.mock('@/features/kangur/ui/hooks/useKangurCoarsePointer', () => ({
 import type { KangurQuestion } from '@/features/kangur/ui/types';
 
 import QuestionCard from '@/features/kangur/ui/components/QuestionCard';
+import { KANGUR_CLOCK_THEME_COLORS } from '@/features/kangur/ui/components/clock-theme';
 
 const sampleQuestion: KangurQuestion = {
   question: '6 + 1',
@@ -82,7 +83,7 @@ describe('QuestionCard', () => {
   });
 
   it('exposes a text alternative for clock questions', () => {
-    render(
+    const { container } = render(
       <QuestionCard
         question={{
           question: 'CLOCK:3:15',
@@ -100,5 +101,23 @@ describe('QuestionCard', () => {
       screen.getByRole('img', { name: 'Zegar analogowy pokazuje godzinę 3:15.' })
     ).toBeInTheDocument();
     expect(screen.getByRole('group', { name: 'Którą godzinę pokazuje zegar?' })).toBeInTheDocument();
+
+    const face = container.querySelector('circle[r="95"]');
+    const numeral = container.querySelector('text');
+    const hourHand = container.querySelector('line[stroke-width="6"]');
+    const minuteHand = container.querySelector('line[stroke-width="4"]');
+    const center = container.querySelector('circle[r="5"]');
+
+    expect(face).not.toBeNull();
+    expect(face).toHaveAttribute('fill', KANGUR_CLOCK_THEME_COLORS.faceFill);
+    expect(face).toHaveAttribute('stroke', KANGUR_CLOCK_THEME_COLORS.faceStroke);
+    expect(numeral).not.toBeNull();
+    expect(numeral).toHaveAttribute('fill', KANGUR_CLOCK_THEME_COLORS.numeral);
+    expect(hourHand).not.toBeNull();
+    expect(hourHand).toHaveAttribute('stroke', KANGUR_CLOCK_THEME_COLORS.lessonHourHand);
+    expect(minuteHand).not.toBeNull();
+    expect(minuteHand).toHaveAttribute('stroke', KANGUR_CLOCK_THEME_COLORS.lessonMinuteHand);
+    expect(center).not.toBeNull();
+    expect(center).toHaveAttribute('fill', KANGUR_CLOCK_THEME_COLORS.center);
   });
 });

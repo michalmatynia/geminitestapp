@@ -320,9 +320,9 @@ export default function LogicalThinkingLabGame(
         </div>
       )}
 
-      {feedback && (
-        <KangurInfoCard accent={feedback === 'success' ? 'emerald' : feedback === 'error' ? 'rose' : 'amber'} tone='accent' padding='sm' className='w-full text-sm' role='status' aria-live='polite'>
-          {feedback === 'info' ? copy.feedback.info : feedback === 'success' ? copy.feedback.success : copy.feedback.error}
+      {feedback === 'info' && (
+        <KangurInfoCard accent='amber' tone='accent' padding='sm' className='w-full text-sm' role='status' aria-live='polite'>
+          {copy.feedback.info}
         </KangurInfoCard>
       )}
 

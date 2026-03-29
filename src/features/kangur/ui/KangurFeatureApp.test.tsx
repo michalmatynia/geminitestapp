@@ -85,6 +85,27 @@ describe('KangurFeatureApp', () => {
     expect(prefetchKangurPageContentStoreMock).toHaveBeenCalledWith(queryClient, 'en');
   });
 
+  it('skips hot-route and page-content prefetch during social batch capture', async () => {
+    const queryClient = { prefetchQuery: vi.fn() };
+    queryClientMock.mockReturnValue(queryClient);
+    routingStateMock.mockReturnValue({
+      pageKey: 'Game',
+      embedded: false,
+      requestedPath: '/kangur/game',
+      requestedHref: '/kangur/game?kangurCapture=social-batch',
+      basePath: '/kangur',
+    });
+
+    render(<KangurFeatureApp />);
+
+    await act(async () => {
+      vi.runAllTimers();
+    });
+
+    expect(preloadKangurPageMock).not.toHaveBeenCalled();
+    expect(prefetchKangurPageContentStoreMock).not.toHaveBeenCalled();
+  });
+
   it('preloads the hot Game page after the Lessons route settles', async () => {
     routingStateMock.mockReturnValue({
       pageKey: 'Lessons',
@@ -575,6 +596,9 @@ describe('KangurFeatureApp', () => {
       'data-motion-animate',
       JSON.stringify({ opacity: 1 })
     );
+    expect(screen.getByTestId('kangur-page-transition-skeleton-motion')).toHaveClass(
+      'pointer-events-none'
+    );
     expect(screen.getByTestId('kangur-route-content')).toHaveClass('pointer-events-none');
     expect(screen.getByTestId('kangur-route-content')).not.toHaveAttribute('aria-hidden');
     expect(screen.getByTestId('kangur-route-content')).not.toHaveClass('opacity-0');
@@ -665,6 +689,9 @@ describe('KangurFeatureApp', () => {
     expect(screen.getByTestId('kangur-page-transition-skeleton-motion')).toHaveAttribute(
       'data-motion-initial',
       JSON.stringify({ opacity: 0 })
+    );
+    expect(screen.getByTestId('kangur-page-transition-skeleton-motion')).toHaveClass(
+      'pointer-events-none'
     );
     expect(screen.getByTestId('kangur-route-content')).toHaveClass('pointer-events-none');
     expect(screen.getByTestId('kangur-route-content')).not.toHaveClass('opacity-0');

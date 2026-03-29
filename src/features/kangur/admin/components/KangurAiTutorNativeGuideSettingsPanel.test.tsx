@@ -151,12 +151,25 @@ describe('KangurAiTutorNativeGuideSettingsPanel', () => {
 
     render(<KangurAiTutorNativeGuideSettingsPanel />);
 
-    const authOverviewButton = await screen.findByRole('button', {
-      name: new RegExp(repairKangurPolishCopy('Ekran logowania i zakladania konta'), 'i'),
+    const authOverviewButtonName = new RegExp(
+      repairKangurPolishCopy('Ekran logowania i zakladania konta'),
+      'i'
+    );
+    const getAuthOverviewButton = () =>
+      screen.getByRole('button', {
+        name: authOverviewButtonName,
+      });
+
+    await screen.findByRole('button', {
+      name: authOverviewButtonName,
     });
 
-    expect(await within(authOverviewButton).findByText('EN scaffolded')).toBeInTheDocument();
-    expect(await within(authOverviewButton).findByText('DE manual')).toBeInTheDocument();
+    await waitFor(() => {
+      expect(within(getAuthOverviewButton()).getByText('EN scaffolded')).toBeInTheDocument();
+    });
+    await waitFor(() => {
+      expect(within(getAuthOverviewButton()).getByText('DE manual')).toBeInTheDocument();
+    });
     expect(await screen.findAllByText('38 source copy')).toHaveLength(2);
     expect(await screen.findAllByText('1 manual')).toHaveLength(1);
   });

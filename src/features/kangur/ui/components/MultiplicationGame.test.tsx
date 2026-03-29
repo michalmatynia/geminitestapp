@@ -20,6 +20,7 @@ describe('MultiplicationGame', () => {
   it('uses Kangur option-card styling for multiplication choices', () => {
     render(<MultiplicationGame onFinish={() => undefined} />);
 
+    expect(screen.getByTestId('multiplication-game-shell')).toHaveClass('w-full', 'max-w-4xl');
     expect(screen.getByTestId('multiplication-game-round-shell')).toHaveClass(
       'glass-panel',
       'kangur-panel-soft',
@@ -49,5 +50,7 @@ describe('MultiplicationGame', () => {
 
     const checkButton = screen.getByRole('button', { name: 'Sprawdź ✓' });
     expect(checkButton.className).toMatch(/bg-(emerald|rose)-500/);
+    expect(screen.queryByText(/Poprawna odpowiedź/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/Niepoprawnie/i)).not.toBeInTheDocument();
   });
 });

@@ -390,6 +390,10 @@
         "label": "Quiz odejmowania",
         "description": "Szybki quiz z odejmowania."
       },
+      "multiplication_array_quiz": {
+        "label": "Macierze mnozenia",
+        "description": "Buduj rowne grupy i zobacz mnozenie jako rzedy oraz kolumny."
+      },
       "division_quiz": {
         "label": "Quiz dzielenia",
         "description": "Szybki quiz z dzielenia."

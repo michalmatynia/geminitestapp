@@ -7,8 +7,8 @@ import {
 } from '@/shared/contracts/kangur-social-posts';
 import { resolveKangurActor } from '@/features/kangur/services/kangur-actor';
 import { logKangurServerEvent } from '@/features/kangur/observability/server';
-import { getKangurSocialPostById } from '@/features/kangur/server/social-posts-repository';
-import { publishKangurSocialPost } from '@/features/kangur/server/social-posts-publish';
+import { getKangurSocialPostById } from '@/features/kangur/social/server/social-posts-repository';
+import { publishKangurSocialPost } from '@/features/kangur/social/server/social-posts-publish';
 import { ErrorSystem } from '@/features/kangur/shared/utils/observability/error-system';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { forbiddenError, notFoundError } from '@/shared/errors/app-error';

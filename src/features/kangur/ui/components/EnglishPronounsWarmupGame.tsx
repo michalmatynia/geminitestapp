@@ -231,8 +231,6 @@ export default function EnglishPronounsWarmupGame({
     );
   }
 
-  const feedbackAccent: KangurAccent = feedback?.kind === 'success' ? 'emerald' : 'rose';
-
   return (
     <KangurPracticeGameShell className='max-w-md'>
       <KangurPracticeGameProgress
@@ -332,12 +330,6 @@ export default function EnglishPronounsWarmupGame({
             })}
           </div>
         </div>
-
-        {feedback ? (
-          <KangurInfoCard accent={feedbackAccent} tone='accent' padding='sm' className='text-sm'>
-            {feedback.text}
-          </KangurInfoCard>
-        ) : null}
 
         <KangurButton
           type='button'

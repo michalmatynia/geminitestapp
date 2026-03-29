@@ -23,6 +23,110 @@ import {
 import { persistKangurSessionScore } from '@/features/kangur/ui/services/session-score';
 import type { GamePhase, FeedbackState, GameSummary } from './AddingSynthesisGame.types';
 
+const resolveAddingSynthesisElapsedProgress = ({
+  noteElapsedMs,
+  noteStartedAtMs,
+}: {
+  noteElapsedMs: number;
+  noteStartedAtMs: number | null;
+}): number => {
+  const elapsedMs = noteStartedAtMs ? Date.now() - noteStartedAtMs : noteElapsedMs;
+  return Math.min(elapsedMs / ADDING_SYNTHESIS_NOTE_DURATION_MS, 1);
+};
+
+const resolveAddingSynthesisChoiceMeta = ({
+  currentNote,
+  laneIndex,
+  noteElapsedMs,
+  noteStartedAtMs,
+}: {
+  currentNote: AddingSynthesisNote;
+  laneIndex: number | null;
+  noteElapsedMs: number;
+  noteStartedAtMs: number | null;
+}): {
+  chosenValue: number | null;
+  correctLaneIndex: number;
+  elapsedProgress: number;
+  failureKind: 'miss' | 'wrong';
+  isCorrectChoice: boolean;
+} => {
+  const correctLaneIndex = currentNote.choices.indexOf(currentNote.answer);
+  return {
+    chosenValue: laneIndex === null ? null : currentNote.choices[laneIndex] ?? null,
+    correctLaneIndex,
+    elapsedProgress: resolveAddingSynthesisElapsedProgress({ noteElapsedMs, noteStartedAtMs }),
+    failureKind: laneIndex === null ? 'miss' : 'wrong',
+    isCorrectChoice: laneIndex !== null && laneIndex === correctLaneIndex,
+  };
+};
+
+const buildAddingSynthesisSuccessFeedback = ({
+  correctLaneIndex,
+  currentNote,
+  laneIndex,
+  timingGrade,
+  translations,
+}: {
+  correctLaneIndex: number;
+  currentNote: AddingSynthesisNote;
+  laneIndex: number;
+  timingGrade: ReturnType<typeof getAddingSynthesisTimingGrade>;
+  translations: Parameters<typeof getLocalizedAddingSynthesisFeedback>[0]['translate'];
+}): FeedbackState => {
+  const copy = getLocalizedAddingSynthesisFeedback({
+    kind: timingGrade,
+    note: currentNote,
+    chosenValue: currentNote.answer,
+    translate: translations,
+  });
+
+  return {
+    kind: timingGrade,
+    title: copy.title,
+    description: copy.description,
+    hint: getLocalizedAddingSynthesisNoteFocus(currentNote, translations),
+    correctLaneIndex,
+    chosenLaneIndex: laneIndex,
+  };
+};
+
+const buildAddingSynthesisFailureFeedback = ({
+  chosenValue,
+  correctLaneIndex,
+  currentNote,
+  failureKind,
+  laneIndex,
+  translations,
+}: {
+  chosenValue: number | null;
+  correctLaneIndex: number;
+  currentNote: AddingSynthesisNote;
+  failureKind: 'miss' | 'wrong';
+  laneIndex: number | null;
+  translations: Parameters<typeof getLocalizedAddingSynthesisFeedback>[0]['translate'];
+}): FeedbackState => {
+  const copy = getLocalizedAddingSynthesisFeedback({
+    kind: failureKind,
+    note: currentNote,
+    chosenValue,
+    translate: translations,
+  });
+  const hint =
+    failureKind === 'miss'
+      ? getLocalizedAddingSynthesisNoteHint(currentNote, translations)
+      : getLocalizedAddingSynthesisNoteFocus(currentNote, translations);
+
+  return {
+    kind: failureKind,
+    title: copy.title,
+    description: copy.description,
+    hint,
+    correctLaneIndex,
+    chosenLaneIndex: laneIndex,
+  };
+};
+
 export function useAddingSynthesisGameState() {
   const ownerKey = useKangurProgressOwnerKey();
   const translations = useTranslations('KangurMiniGames');
@@ -110,63 +214,55 @@ export function useAddingSynthesisGameState() {
   }, [currentIndex, finishSession, notes.length]);
 
   const resolveChoice = useCallback((laneIndex: number | null): void => {
-    if (!currentNote || feedback) return;
+    if (!currentNote || feedback) {
+      return;
+    }
 
     stopCurrentNoteTimers();
+    const choiceMeta = resolveAddingSynthesisChoiceMeta({
+      currentNote,
+      laneIndex,
+      noteElapsedMs,
+      noteStartedAtMs: noteStartedAtRef.current,
+    });
 
-    const elapsedMs = noteStartedAtRef.current
-      ? Date.now() - noteStartedAtRef.current
-      : noteElapsedMs;
-    const elapsedProgress = Math.min(elapsedMs / ADDING_SYNTHESIS_NOTE_DURATION_MS, 1);
-    const correctLaneIndex = currentNote.choices.indexOf(currentNote.answer);
-
-    if (laneIndex !== null && laneIndex === correctLaneIndex) {
-      const timingGrade = getAddingSynthesisTimingGrade(elapsedProgress);
+    if (choiceMeta.isCorrectChoice && laneIndex !== null) {
+      const timingGrade = getAddingSynthesisTimingGrade(choiceMeta.elapsedProgress);
       const nextScore = score + 1;
       const nextStreak = streak + 1;
       const nextBestStreak = Math.max(bestStreak, nextStreak);
       const nextPerfectHits = perfectHits + (timingGrade === 'perfect' ? 1 : 0);
-      const copy = getLocalizedAddingSynthesisFeedback({
-        kind: timingGrade,
-        note: currentNote,
-        chosenValue: currentNote.answer,
-        translate: translations,
-      });
 
       setScore(nextScore);
       setStreak(nextStreak);
       setBestStreak(nextBestStreak);
       setPerfectHits(nextPerfectHits);
-      setFeedback({
-        kind: timingGrade,
-        title: copy.title,
-        description: copy.description,
-        hint: getLocalizedAddingSynthesisNoteFocus(currentNote, translations),
-        correctLaneIndex,
-        chosenLaneIndex: laneIndex,
-      });
+      setFeedback(
+        buildAddingSynthesisSuccessFeedback({
+          correctLaneIndex: choiceMeta.correctLaneIndex,
+          currentNote,
+          laneIndex,
+          timingGrade,
+          translations,
+        })
+      );
       queueAdvance(nextScore, nextPerfectHits, nextBestStreak);
       return;
     }
 
-    const copy = getLocalizedAddingSynthesisFeedback({
-      kind: laneIndex === null ? 'miss' : 'wrong',
-      note: currentNote,
-      chosenValue: laneIndex === null ? null : currentNote.choices[laneIndex],
-      translate: translations,
-    });
-
     setStreak(0);
-    setFeedback({
-      kind: laneIndex === null ? 'miss' : 'wrong',
-      title: copy.title,
-      description: copy.description,
-      hint: laneIndex === null ? getLocalizedAddingSynthesisNoteHint(currentNote, translations) : getLocalizedAddingSynthesisNoteFocus(currentNote, translations),
-      correctLaneIndex,
-      chosenLaneIndex: laneIndex,
-    });
+    setFeedback(
+      buildAddingSynthesisFailureFeedback({
+        chosenValue: choiceMeta.chosenValue,
+        correctLaneIndex: choiceMeta.correctLaneIndex,
+        currentNote,
+        failureKind: choiceMeta.failureKind,
+        laneIndex,
+        translations,
+      })
+    );
     queueAdvance(score, perfectHits, bestStreak);
-  }, [bestStreak, currentIndex, currentNote, feedback, perfectHits, queueAdvance, score, stopCurrentNoteTimers, streak, translations, noteElapsedMs]);
+  }, [bestStreak, currentNote, feedback, perfectHits, queueAdvance, score, stopCurrentNoteTimers, streak, translations, noteElapsedMs]);
 
   useEffect(() => {
     if (phase !== 'playing' || !currentNote || feedback) return;

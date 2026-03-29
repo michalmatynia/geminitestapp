@@ -213,6 +213,9 @@ async function fetchLiteSettingsFromApi(bypassCache: boolean): Promise<SettingRe
     const res = await fetchWithRetry(url, {
       cache: bypassCache ? 'no-store' : 'default',
       credentials: 'include',
+      // Fetch Priority API — tells the browser to prioritise the settings
+      // request over lower-priority chunk downloads during initial boot.
+      priority: 'high',
     });
 
     if (!res.ok) {

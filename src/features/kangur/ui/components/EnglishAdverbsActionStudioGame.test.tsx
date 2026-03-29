@@ -168,11 +168,13 @@ describe('EnglishAdverbsActionStudioGame', () => {
       screen.getByTestId('english-adverbs-strip-race-day-carry-care-guides')
     ).toBeInTheDocument();
 
-    fireEvent.click(screen.getByRole('button', { name: 'Check' }));
+    const checkButton = screen.getByRole('button', { name: 'Check' });
+    fireEvent.click(checkButton);
 
+    expect(checkButton).toHaveClass('bg-emerald-500', 'border-emerald-500');
     expect(
-      screen.getByText('Perfect! The action cards match every target scene.')
-    ).toBeInTheDocument();
+      screen.queryByText('Perfect! The action cards match every target scene.')
+    ).not.toBeInTheDocument();
     expect(screen.getByTestId('english-adverbs-match-race-day-run')).toHaveTextContent(
       'Matched'
     );
@@ -182,6 +184,7 @@ describe('EnglishAdverbsActionStudioGame', () => {
     expect(screen.getByTestId('english-adverbs-match-race-day-carry')).toHaveTextContent(
       'Matched'
     );
+    expect(screen.getByRole('button', { name: 'Next' })).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole('button', { name: 'Next' }));
 

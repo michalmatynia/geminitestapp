@@ -15,6 +15,7 @@ import {
 import {
   withKangurClientError,
 } from '@/features/kangur/observability/client';
+import { signalBootReady } from '@/features/kangur/ui/boot/boot-ready-signal';
 import type { KangurUser } from '@kangur/platform';
 import { isKangurAuthStatusError } from '@/features/kangur/services/status-errors';
 import { getKangurLoginHref, KANGUR_BASE_PATH } from '@/features/kangur/config/routing';
@@ -421,6 +422,8 @@ export const KangurAuthProvider = ({ children }: { children: ReactNode }): React
     // and the 1.5 s timeout race on first load.
     const cachedUser = bootstrapSnapshot.cachedUser;
     if (typeof cachedUser !== 'undefined') {
+      signalBootReady();
+
       if (cachedUser === null) {
         return;
       }
@@ -443,7 +446,8 @@ export const KangurAuthProvider = ({ children }: { children: ReactNode }): React
       return;
     }
 
-    void checkAppState({ timeoutMs: AUTH_CHECK_TIMEOUT_MS, useBootstrapCache: true });
+    void checkAppState({ timeoutMs: AUTH_CHECK_TIMEOUT_MS, useBootstrapCache: true })
+      .finally(() => signalBootReady());
   }, [bootstrapSnapshot.cachedUser, checkAppState]);
 
   const logout = useCallback((shouldRedirect = true): void => {

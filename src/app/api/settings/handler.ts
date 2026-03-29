@@ -5,6 +5,10 @@ import { z } from 'zod';
 
 import { upsertAiPathsSetting } from '@/features/ai/ai-paths/server';
 import {
+  invalidateKangurStorefrontInitialStateCache,
+  isKangurStorefrontInitialStateDependencyKey,
+} from '@/features/kangur/appearance/server/storefront-appearance';
+import {
   isKangurSettingKey,
   listKangurSettings,
   readKangurSettingValue,
@@ -844,6 +848,9 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): P
     key: setting.key,
     value: decodeSettingValue(setting.key, setting.value),
   };
+  if (isKangurStorefrontInitialStateDependencyKey(setting.key)) {
+    invalidateKangurStorefrontInitialStateCache();
+  }
   if (setting.key === APP_DB_PROVIDER_SETTING_KEY) {
     invalidateAppDbProviderCache();
   }

@@ -11,7 +11,7 @@ import {
   KANGUR_NIGHTLY_THEME_SETTINGS_KEY,
   KANGUR_SUNSET_THEME_SETTINGS_KEY,
   type KangurThemeMode,
-} from '@/features/kangur/theme-settings';
+} from '@/features/kangur/appearance/theme-settings';
 import {
   getKangurThemePanelCopy,
   resolveKangurThemeSettingsLocale,

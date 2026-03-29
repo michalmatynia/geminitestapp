@@ -5,23 +5,12 @@ import { RootClientShell } from './_providers/RootClientShell';
 import { loadSiteMessages } from '@/i18n/messages';
 import { cn } from '@/shared/utils';
 import { DEFAULT_SITE_I18N_CONFIG } from '@/shared/contracts/site-i18n';
-import { stripSiteLocalePrefix } from '@/shared/lib/i18n/site-locale';
 import { getLiteSettingsForHydration } from '@/shared/lib/lite-settings-ssr';
-import { readServerRequestPathname } from '@/shared/lib/request/server-request-context';
 
 import type { Metadata, Viewport } from 'next';
 
 import './fonts.css';
 import './globals.css';
-
-const isExplicitKangurAliasRequest = (pathname: string | null): boolean => {
-  if (!pathname) {
-    return false;
-  }
-
-  const normalizedPathname = stripSiteLocalePrefix(pathname);
-  return normalizedPathname === '/kangur' || normalizedPathname.startsWith('/kangur/');
-};
 
 export async function generateMetadata(): Promise<Metadata> {
   const locale = DEFAULT_SITE_I18N_CONFIG.defaultLocale;
@@ -50,12 +39,10 @@ export default async function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>): Promise<React.JSX.Element> {
-  const requestPathname = readServerRequestPathname();
-  const shouldHydrateLiteSettings = !isExplicitKangurAliasRequest(requestPathname);
   const locale = await getLocale();
   const [commonTranslations, liteSettings, messages] = await Promise.all([
     getTranslations('Common'),
-    shouldHydrateLiteSettings ? getLiteSettingsForHydration() : Promise.resolve([]),
+    getLiteSettingsForHydration(),
     loadSiteMessages(locale),
   ]);
   const sanitizedLiteSettingsScript =

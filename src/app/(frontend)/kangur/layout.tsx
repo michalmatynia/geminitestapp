@@ -4,7 +4,7 @@ import {
 import {
   getKangurSurfaceBootstrapStyle,
   KANGUR_SURFACE_HINT_SCRIPT,
-} from '@/features/kangur/server/storefront-appearance-bootstrap';
+} from '@/features/kangur/appearance/server/storefront-appearance-bootstrap';
 import { KangurStorefrontAppearanceProvider } from '@/features/kangur/public';
 import { KangurSurfaceClassSync } from '@/features/kangur/public';
 import { shouldRenderVercelAnalytics } from '@/shared/lib/analytics/vercel-analytics';

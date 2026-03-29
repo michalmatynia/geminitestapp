@@ -32,6 +32,7 @@ type HomeAction = {
 };
 
 type HomeActionNavigationState = 'idle' | 'pressed' | 'transitioning';
+type KangurGameHomeActionsTranslations = ReturnType<typeof useTranslations<'KangurGameHomeActions'>>;
 
 const HOME_ACTION_TRANSITION_EASE = [0.22, 1, 0.36, 1] as const;
 
@@ -101,6 +102,120 @@ const resolveHomeActionDocId = (actionId: string): string => {
       return 'home_quick_practice_action';
   }
 };
+
+const shouldRenderKangurGameHomeActions = ({
+  hideWhenScreenMismatch,
+  screen,
+}: {
+  hideWhenScreenMismatch: boolean;
+  screen: ReturnType<typeof useKangurGameRuntime>['screen'];
+}): boolean => !hideWhenScreenMismatch || screen === 'home';
+
+const resolveLessonsHomeActionTransitionActive = ({
+  activeTransitionSourceId,
+  transitionPhase,
+}: {
+  activeTransitionSourceId?: string | null;
+  transitionPhase?: ReturnType<typeof useOptionalKangurRouteTransitionState>['transitionPhase'];
+}): boolean =>
+  activeTransitionSourceId === 'game-home-action:lessons' && transitionPhase !== 'idle';
+
+const resolveKangurGameHomeActions = ({
+  basePath,
+  canStartFromHome,
+  handleStartGame,
+  isCoarsePointer,
+  setScreen,
+  translations,
+}: {
+  basePath: string;
+  canStartFromHome: boolean;
+  handleStartGame: ReturnType<typeof useKangurGameRuntime>['handleStartGame'];
+  isCoarsePointer: boolean;
+  setScreen: ReturnType<typeof useKangurGameRuntime>['setScreen'];
+  translations: KangurGameHomeActionsTranslations;
+}): HomeAction[] => [
+  {
+    id: 'lessons',
+    label: translations('actions.lessons'),
+    symbol: '📚',
+    tone: 'neutral',
+    href: createPageUrl('Lessons', basePath),
+    prefetch: isCoarsePointer ? false : undefined,
+    targetPageKey: 'Lessons',
+    transitionSourceId: 'game-home-action:lessons',
+  },
+  {
+    id: 'play',
+    label: translations('actions.play'),
+    symbol: '🪐',
+    trailingSymbol: '🚀',
+    tone: 'violet',
+    onClick: handleStartGame,
+    disabled: !canStartFromHome,
+  },
+  {
+    id: 'duels',
+    label: translations('actions.duels'),
+    symbol: '⚔️',
+    trailingSymbol: '🏆',
+    tone: 'sky',
+    href: createPageUrl('Duels', basePath),
+    prefetch: false,
+    targetPageKey: 'Duels',
+    transitionSourceId: 'game-home-action:duels',
+  },
+  {
+    id: 'kangur',
+    label: translations('actions.kangur'),
+    symbol: '🦘',
+    tone: 'sand',
+    onClick: () => setScreen('kangur_setup'),
+    disabled: !canStartFromHome,
+  },
+];
+
+const resolveVisibleKangurGameHomeActions = ({
+  actions,
+  subject,
+}: {
+  actions: HomeAction[];
+  subject: ReturnType<typeof useKangurSubjectFocus>['subject'];
+}): HomeAction[] =>
+  subject === 'maths' ? actions : actions.filter((action) => action.id !== 'kangur');
+
+const resolveKangurGameHomeActionShellClassName = (
+  isLessonsHomeActionTransitionActive: boolean
+): string =>
+  cn(
+    GAME_HOME_ACTIONS_SHELL_CLASSNAME,
+    isLessonsHomeActionTransitionActive ? 'pointer-events-none opacity-0' : null
+  );
+
+function KangurGameHomeActionsList({
+  actions,
+  routeTransitionState,
+}: {
+  actions: HomeAction[];
+  routeTransitionState: ReturnType<typeof useOptionalKangurRouteTransitionState>;
+}): React.JSX.Element {
+  return (
+    <div className={GAME_HOME_ACTIONS_LIST_CLASSNAME} data-testid='kangur-home-actions-list'>
+      {actions.map((action, index) => (
+        <KangurHomeActionCard
+          key={action.id}
+          action={action}
+          navState={resolveHomeActionNavigationState({
+            activeTransitionSourceId: routeTransitionState?.activeTransitionSourceId,
+            transitionPhase: routeTransitionState?.transitionPhase,
+            transitionSourceId: action.transitionSourceId,
+          })}
+          index={index}
+        />
+      ))}
+    </div>
+  );
+}
 
 function KangurHomeActionCard({
   action,
@@ -271,63 +386,30 @@ export function KangurGameHomeActionsWidget({
   const { basePath, canStartFromHome, handleStartGame, screen, setScreen } =
     useKangurGameRuntime();
   const { subject } = useKangurSubjectFocus();
-  const isLessonsHomeActionTransitionActive =
-    routeTransitionState?.activeTransitionSourceId === 'game-home-action:lessons' &&
-    routeTransitionState.transitionPhase !== 'idle';
+  const isLessonsHomeActionTransitionActive = resolveLessonsHomeActionTransitionActive({
+    activeTransitionSourceId: routeTransitionState?.activeTransitionSourceId,
+    transitionPhase: routeTransitionState?.transitionPhase,
+  });
 
-  if (hideWhenScreenMismatch && screen !== 'home') {
+  if (!shouldRenderKangurGameHomeActions({ hideWhenScreenMismatch, screen })) {
     return null;
   }
 
-  const actions: HomeAction[] = [
-    {
-      id: 'lessons',
-      label: translations('actions.lessons'),
-      symbol: '📚',
-      tone: 'neutral',
-      href: createPageUrl('Lessons', basePath),
-      prefetch: isCoarsePointer ? false : undefined,
-      targetPageKey: 'Lessons',
-      transitionSourceId: 'game-home-action:lessons',
-    },
-    {
-      id: 'play',
-      label: translations('actions.play'),
-      symbol: '🪐',
-      trailingSymbol: '🚀',
-      tone: 'violet',
-      onClick: handleStartGame,
-      disabled: !canStartFromHome,
-    },
-    {
-      id: 'duels',
-      label: translations('actions.duels'),
-      symbol: '⚔️',
-      trailingSymbol: '🏆',
-      tone: 'sky',
-      href: createPageUrl('Duels', basePath),
-      prefetch: false,
-      targetPageKey: 'Duels',
-      transitionSourceId: 'game-home-action:duels',
-    },
-    {
-      id: 'kangur',
-      label: translations('actions.kangur'),
-      symbol: '🦘',
-      tone: 'sand',
-      onClick: () => setScreen('kangur_setup'),
-      disabled: !canStartFromHome,
-    },
-  ];
-  const visibleActions =
-    subject === 'maths' ? actions : actions.filter((action) => action.id !== 'kangur');
+  const actions = resolveKangurGameHomeActions({
+    basePath,
+    canStartFromHome,
+    handleStartGame,
+    isCoarsePointer,
+    setScreen,
+    translations,
+  });
+  const visibleActions = resolveVisibleKangurGameHomeActions({ actions, subject });
 
   return (
     <KangurGlassPanel
       aria-hidden={isLessonsHomeActionTransitionActive ? 'true' : undefined}
-      className={cn(
-        GAME_HOME_ACTIONS_SHELL_CLASSNAME,
-        isLessonsHomeActionTransitionActive ? 'pointer-events-none opacity-0' : null
+      className={resolveKangurGameHomeActionShellClassName(
+        isLessonsHomeActionTransitionActive
       )}
       data-home-actions-transition-hidden={isLessonsHomeActionTransitionActive ? 'true' : 'false'}
       data-testid='kangur-home-actions-shell'
@@ -339,20 +421,10 @@ export function KangurGameHomeActionsWidget({
         <h3 id='kangur-home-actions-heading' className='sr-only'>
           {translations('sectionLabel')}
         </h3>
-        <div className={GAME_HOME_ACTIONS_LIST_CLASSNAME} data-testid='kangur-home-actions-list'>
-          {visibleActions.map((action, index) => (
-            <KangurHomeActionCard
-              key={action.id}
-              action={action}
-              navState={resolveHomeActionNavigationState({
-                activeTransitionSourceId: routeTransitionState?.activeTransitionSourceId,
-                transitionPhase: routeTransitionState?.transitionPhase,
-                transitionSourceId: action.transitionSourceId,
-              })}
-              index={index}
-            />
-          ))}
-        </div>
+        <KangurGameHomeActionsList
+          actions={visibleActions}
+          routeTransitionState={routeTransitionState}
+        />
       </section>
     </KangurGlassPanel>
   );

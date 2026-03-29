@@ -8,11 +8,11 @@ import {
 } from '@/shared/contracts/kangur-social-image-addons';
 import { resolveKangurActor } from '@/features/kangur/services/kangur-actor';
 import { logKangurServerEvent } from '@/features/kangur/observability/server';
-import { createKangurSocialImageAddonsBatch } from '@/features/kangur/server/social-image-addons-batch';
+import { createKangurSocialImageAddonsBatch } from '@/features/kangur/social/server/social-image-addons-batch';
 import {
   readKangurSocialImageAddonsBatchJob,
   startKangurSocialImageAddonsBatchJob,
-} from '@/features/kangur/server/social-image-addons-batch-jobs';
+} from '@/features/kangur/social/server/social-image-addons-batch-jobs';
 import { ErrorSystem } from '@/features/kangur/shared/utils/observability/error-system';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import {
@@ -46,6 +46,39 @@ const surfaceBatchCaptureError = (error: unknown): unknown => {
     retryable: error.retryable,
     ...(error.retryAfterMs !== undefined ? { retryAfterMs: error.retryAfterMs } : {}),
   });
+};
+
+const LOOPBACK_HOSTNAMES = new Set(['localhost', 'localhost.localdomain', '127.0.0.1', '::1']);
+
+const isLoopbackHostname = (hostname: string): boolean =>
+  LOOPBACK_HOSTNAMES.has(hostname.trim().toLowerCase());
+
+const resolveTrustedSelfOriginHost = (params: {
+  requestUrl: string;
+  baseUrl: string;
+}): string | null => {
+  try {
+    const request = new URL(params.requestUrl);
+    const base = new URL(params.baseUrl);
+    const requestHost = request.host.trim().toLowerCase();
+    const baseHost = base.host.trim().toLowerCase();
+    if (!requestHost || !baseHost) {
+      return null;
+    }
+
+    if (requestHost === baseHost) {
+      return baseHost;
+    }
+
+    const portsMatch = request.port === base.port;
+    if (portsMatch && isLoopbackHostname(request.hostname) && isLoopbackHostname(base.hostname)) {
+      return baseHost;
+    }
+
+    return null;
+  } catch {
+    return null;
+  }
 };
 
 export async function getKangurSocialImageAddonsBatchHandler(
@@ -108,6 +141,10 @@ export async function postKangurSocialImageAddonsBatchHandler(
         playwrightRoutes: parsed.playwrightRoutes ?? undefined,
         createdBy: actor.actorId,
         forwardCookies: requestCookies || null,
+        trustedSelfOriginHost: resolveTrustedSelfOriginHost({
+          requestUrl: req.url,
+          baseUrl,
+        }),
       });
 
       void logKangurServerEvent({
@@ -141,6 +178,10 @@ export async function postKangurSocialImageAddonsBatchHandler(
       playwrightRoutes: parsed.playwrightRoutes ?? undefined,
       createdBy: actor.actorId,
       forwardCookies: requestCookies || null,
+      trustedSelfOriginHost: resolveTrustedSelfOriginHost({
+        requestUrl: req.url,
+        baseUrl,
+      }),
     });
 
     void logKangurServerEvent({

@@ -1,7 +1,7 @@
 import type { LabeledOptionDto } from '@/shared/contracts/base';
 import type { ThemeSettings } from '@/shared/contracts/cms-theme';
 import type { SettingsPanelField } from '@/features/kangur/shared/ui/templates/SettingsPanelBuilder';
-import type { KangurThemeMode } from '@/features/kangur/theme-settings';
+import type { KangurThemeMode } from '@/features/kangur/appearance/theme-settings';
 import type { KangurAdminLocaleDto as KangurThemeSettingsLocale } from '../kangur-admin-locale';
 import { resolveKangurAdminLocale } from '../kangur-admin-locale';
 export type KangurThemePreviewSectionId =

@@ -254,8 +254,6 @@ export default function EnglishSubjectVerbAgreementGame({
     );
   }
 
-  const feedbackAccent: KangurAccent = feedback?.kind === 'success' ? 'emerald' : 'rose';
-
   return (
     <KangurPracticeGameShell className='self-center max-w-sm'>
       <KangurPracticeGameProgress
@@ -356,12 +354,6 @@ export default function EnglishSubjectVerbAgreementGame({
             })}
           </div>
         </div>
-
-        {feedback ? (
-          <KangurInfoCard accent={feedbackAccent} tone='accent' padding='sm' className='text-sm'>
-            {feedback.text}
-          </KangurInfoCard>
-        ) : null}
 
         <KangurButton
           type='button'

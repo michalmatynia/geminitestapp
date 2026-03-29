@@ -4,6 +4,7 @@ import React from 'react';
 import { Droppable } from '@hello-pangea/dnd';
 
 import { KangurDragDropContext } from '@/features/kangur/ui/components/KangurDragDropContext';
+import { getKangurCheckButtonClassName } from '@/features/kangur/ui/components/KangurCheckButton';
 import {
   KangurPracticeGameProgress,
   KangurPracticeGameShell,
@@ -31,7 +32,6 @@ import {
   KANGUR_ACCENT_STYLES,
   KANGUR_GRID_SPACED_CLASSNAME,
   KANGUR_PANEL_GAP_CLASSNAME,
-  type KangurAccent,
 } from '@/features/kangur/ui/design/tokens';
 import type { KangurMiniGameFinishProps } from '@/features/kangur/ui/types';
 import { cn } from '@/features/kangur/shared/utils';
@@ -236,8 +236,6 @@ export default function EnglishAdverbsActionStudioGame({
       </KangurPracticeGameSummary>
     );
   }
-
-  const feedbackAccent: KangurAccent = feedback?.kind === 'success' ? 'emerald' : 'rose';
 
   return (
     <KangurPracticeGameShell className='mx-auto max-w-4xl'>
@@ -501,12 +499,6 @@ export default function EnglishAdverbsActionStudioGame({
             </Droppable>
           </KangurInfoCard>
 
-          {feedback ? (
-            <KangurInfoCard accent={feedbackAccent} tone='accent' padding='sm' className='text-sm'>
-              {feedback.text}
-            </KangurInfoCard>
-          ) : null}
-
           <div className='flex w-full flex-wrap items-center justify-between gap-3'>
             <KangurButton size='sm' variant='surface' onClick={handleReset} disabled={checked}>
               {translations('englishAdverbs.inRound.studio.clearRound')}
@@ -514,15 +506,26 @@ export default function EnglishAdverbsActionStudioGame({
             <KangurButton
               size='sm'
               variant='primary'
-              onClick={checked ? handleNext : handleCheck}
-              disabled={!isRoundComplete && !checked}
+              onClick={handleCheck}
+              disabled={checked || !isRoundComplete}
+              className={getKangurCheckButtonClassName(
+                undefined,
+                feedback?.kind === 'success' ? 'success' : feedback?.kind === 'error' ? 'error' : null
+              )}
             >
-              {checked
-                ? roundIndex + 1 >= TOTAL_ROUNDS
-                  ? translations('englishAdverbs.inRound.seeResult')
-                  : translations('englishAdverbs.inRound.next')
-                : translations('englishAdverbs.inRound.check')}
+              {translations('englishAdverbs.inRound.check')}
             </KangurButton>
+            {checked ? (
+              <KangurButton
+                size='sm'
+                variant='primary'
+                onClick={handleNext}
+              >
+                {roundIndex + 1 >= TOTAL_ROUNDS
+                  ? translations('englishAdverbs.inRound.seeResult')
+                  : translations('englishAdverbs.inRound.next')}
+              </KangurButton>
+            ) : null}
           </div>
         </KangurGlassPanel>
       </KangurDragDropContext>

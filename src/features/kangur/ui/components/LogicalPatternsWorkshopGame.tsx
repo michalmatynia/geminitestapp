@@ -6,6 +6,7 @@ import { createPortal } from 'react-dom';
 import {
   KangurDragDropContext,
 } from '@/features/kangur/ui/components/KangurDragDropContext';
+import { getKangurCheckButtonClassName } from '@/features/kangur/ui/components/KangurCheckButton';
 
 import {
   KangurPracticeGameProgress,
@@ -222,14 +223,39 @@ export default function LogicalPatternsWorkshopGame({
         </div>
 
         <div className='flex items-center justify-center'>
-          {checked ? (
-            <div className='flex flex-col items-center gap-4'>
-              <KangurStatusChip accent={state.roundCorrect === blanks.length ? 'emerald' : 'amber'} size='lg'>Trafienia: {state.roundCorrect}/{blanks.length}</KangurStatusChip>
-              <KangurButton onClick={goToNextRound} variant='primary' size='lg' className='min-w-[200px]'>Dalej</KangurButton>
+          <div className='flex flex-col items-center gap-4'>
+            {checked ? (
+              <KangurStatusChip
+                accent={state.roundCorrect === blanks.length ? 'emerald' : 'amber'}
+                size='lg'
+              >
+                Trafienia: {state.roundCorrect}/{blanks.length}
+              </KangurStatusChip>
+            ) : null}
+            <div className='flex flex-col items-center gap-3 sm:flex-row'>
+              <KangurButton
+                onClick={handleCheck}
+                disabled={checked || !isRoundComplete}
+                variant='primary'
+                size='lg'
+                className={getKangurCheckButtonClassName(
+                  'min-w-[200px]',
+                  checked
+                    ? state.roundCorrect === blanks.length
+                      ? 'success'
+                      : 'error'
+                    : null
+                )}
+              >
+                Sprawdź
+              </KangurButton>
+              {checked ? (
+                <KangurButton onClick={goToNextRound} variant='primary' size='lg' className='min-w-[200px]'>
+                  Dalej
+                </KangurButton>
+              ) : null}
             </div>
-          ) : (
-            <KangurButton onClick={handleCheck} disabled={!isRoundComplete} variant='primary' size='lg' className='min-w-[200px]'>Sprawdź</KangurButton>
-          )}
+          </div>
         </div>
       </KangurPracticeGameShell>
     </KangurDragDropContext>

@@ -82,6 +82,12 @@ describe('kangur built-in game instances', () => {
     const addingSynthesisInstances = getKangurGameBuiltInInstancesForGame(
       getKangurGameDefinition('adding_synthesis')
     );
+    const divisionGroupsInstances = getKangurGameBuiltInInstancesForGame(
+      getKangurGameDefinition('division_groups')
+    );
+    const multiplicationArrayInstances = getKangurGameBuiltInInstancesForGame(
+      getKangurGameDefinition('multiplication_array')
+    );
     const subtractingInstances = getKangurGameBuiltInInstancesForGame(
       getKangurGameDefinition('subtracting_garden')
     );
@@ -98,6 +104,20 @@ describe('kangur built-in game instances', () => {
         id: 'adding_synthesis:instance:default',
         contentSetId: 'adding_synthesis:default',
         launchableRuntimeId: 'adding_synthesis_quiz',
+      }),
+    ]);
+    expect(divisionGroupsInstances).toEqual([
+      expect.objectContaining({
+        id: 'division_groups:instance:default',
+        contentSetId: 'division_groups:default',
+        launchableRuntimeId: 'division_quiz',
+      }),
+    ]);
+    expect(multiplicationArrayInstances).toEqual([
+      expect.objectContaining({
+        id: 'multiplication_array:instance:default',
+        contentSetId: 'multiplication_array:default',
+        launchableRuntimeId: 'multiplication_array_quiz',
       }),
     ]);
     expect(subtractingInstances).toEqual([

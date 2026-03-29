@@ -4,6 +4,7 @@ import dynamic from 'next/dynamic';
 
 import { createElement, type ComponentType, type ReactElement } from 'react';
 
+import { onBootReady } from '@/features/kangur/ui/boot/boot-ready-signal';
 import { KangurRouteLoadingFallback } from '@/features/kangur/ui/components/KangurRouteLoadingFallback';
 
 const KangurLazyPageLoadingFallback =
@@ -37,7 +38,7 @@ const kangurPageLoaders = {
   LearnerProfile: () => import('@/features/kangur/ui/pages/LearnerProfile'),
   Lessons: () => import('@/features/kangur/ui/pages/Lessons'),
   ParentDashboard: () => import('@/features/kangur/ui/pages/ParentDashboard'),
-  SocialUpdates: () => import('@/features/kangur/ui/pages/SocialUpdates'),
+  SocialUpdates: () => import('@/features/kangur/social/pages/SocialUpdates'),
   Tests: () => import('@/features/kangur/ui/pages/Tests'),
 } satisfies Readonly<Record<string, () => Promise<{ default: ComponentType }>>>;
 
@@ -59,10 +60,9 @@ export const preloadKangurPage = (pageKey: keyof typeof kangurPageLoaders): void
   void kangurPageLoaders[pageKey]();
 };
 
-// Eagerly preload the main page module (Game) so it's available before the
-// boot skeleton dismisses. This preserves code splitting while eliminating
-// the loading flash that would otherwise occur when the dynamic() fallback
-// is swapped for the real page content.
+// Defer the main page (Game) preload until after boot-critical network
+// requests (auth, settings) have completed. The dynamic() loading fallback
+// (skeleton) covers the gap while the chunk downloads.
 if (typeof window !== 'undefined') {
-  void kangurPageLoaders[KANGUR_MAIN_PAGE]();
+  onBootReady(() => void kangurPageLoaders[KANGUR_MAIN_PAGE]());
 }

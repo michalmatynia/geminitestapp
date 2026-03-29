@@ -9,6 +9,7 @@ import {
   KangurDragDropContext,
   getKangurMobileDragHandleStyle,
 } from '@/features/kangur/ui/components/KangurDragDropContext';
+import { getKangurCheckButtonClassName } from '@/features/kangur/ui/components/KangurCheckButton';
 
 import {
   KangurPracticeGameProgress,
@@ -781,21 +782,6 @@ export default function LogicalClassificationGame({
                 );
               })}
             </div>
-            {checked ? (
-              <p
-                className={cn(
-                  'mt-3 text-sm font-semibold text-center',
-                  roundCorrect ? 'text-emerald-600' : 'text-rose-600'
-                )}
-                role='status'
-                aria-live='polite'
-                aria-atomic='true'
-              >
-                {roundCorrect
-                  ? `${translations('logicalClassification.feedback.correct')} ${round.explain}`
-                  : `${translations('logicalClassification.feedback.wrong')} ${round.explain}`}
-              </p>
-            ) : null}
           </KangurInfoCard>
         )}
 
@@ -812,19 +798,32 @@ export default function LogicalClassificationGame({
               </KangurStatusChip>
             ) : null}
           </div>
-          {!checked ? (
-            round.type === 'sort' ? (
-              <KangurButton size='sm' type='button' variant='primary' onClick={handleCheck} disabled={!isRoundComplete}>
-                Sprawdź
-              </KangurButton>
-            ) : (
-              <KangurStatusChip accent='teal'>Wybierz intruza</KangurStatusChip>
-            )
-          ) : (
+          {round.type === 'sort' ? (
+            <KangurButton
+              size='sm'
+              type='button'
+              variant='primary'
+              onClick={handleCheck}
+              disabled={checked || !isRoundComplete}
+              className={getKangurCheckButtonClassName(
+                undefined,
+                checked
+                  ? roundCorrect === round.items.length
+                    ? 'success'
+                    : 'error'
+                  : null
+              )}
+            >
+              Sprawdź
+            </KangurButton>
+          ) : !checked ? (
+            <KangurStatusChip accent='teal'>Wybierz intruza</KangurStatusChip>
+          ) : null}
+          {checked ? (
             <KangurButton size='sm' type='button' variant='primary' onClick={goToNextRound}>
               {roundIndex + 1 >= TOTAL_ROUNDS ? 'Zobacz wynik' : 'Dalej'}
             </KangurButton>
-          )}
+          ) : null}
         </div>
       </KangurPracticeGameShell>
   );

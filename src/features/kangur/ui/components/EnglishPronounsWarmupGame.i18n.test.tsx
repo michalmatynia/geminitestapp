@@ -37,9 +37,22 @@ describe('EnglishPronounsWarmupGame i18n', () => {
     expect(screen.getByText('___ graph shows the quadratic function.')).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole('button', { name: 'their' }));
-    fireEvent.click(screen.getByRole('button', { name: 'Prüfen ✓' }));
+    const checkButton = screen.getByRole('button', { name: 'Prüfen ✓' });
+    fireEvent.click(checkButton);
 
-    expect(screen.getByText('Richtige Antwort: our.')).toBeInTheDocument();
+    expect(checkButton).toHaveClass('bg-rose-500', 'border-rose-500');
+    expect(screen.queryByText('Richtige Antwort: our.')).not.toBeInTheDocument();
     expect(screen.queryByText('Prawidłowa odpowiedź: our.')).not.toBeInTheDocument();
+  });
+
+  it('keeps only the green check button state on a correct answer', () => {
+    renderGame();
+
+    fireEvent.click(screen.getByRole('button', { name: 'our' }));
+    const checkButton = screen.getByRole('button', { name: 'Check ✓' });
+    fireEvent.click(checkButton);
+
+    expect(checkButton).toHaveClass('bg-emerald-500', 'border-emerald-500');
+    expect(screen.queryByText('Great! Correct choice.')).not.toBeInTheDocument();
   });
 });

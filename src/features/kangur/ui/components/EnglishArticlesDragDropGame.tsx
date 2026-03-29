@@ -10,6 +10,7 @@ import {
   getKangurMobileDragHandleStyle,
   renderKangurDragPreview,
 } from '@/features/kangur/ui/components/KangurDragDropContext';
+import { getKangurCheckButtonClassName } from '@/features/kangur/ui/components/KangurCheckButton';
 import {
   KangurPracticeGameProgress,
   KangurPracticeGameShell,
@@ -729,12 +730,6 @@ export default function EnglishArticlesDragDropGame({
             </KangurInfoCard>
           ) : null}
 
-          {feedback ? (
-            <KangurInfoCard accent={feedbackAccent} tone='accent' padding='sm' className='text-sm'>
-              {feedback.text}
-            </KangurInfoCard>
-          ) : null}
-
           <div className='flex w-full flex-wrap items-center justify-between gap-3'>
             <div className={KANGUR_WRAP_CENTER_ROW_CLASSNAME}>
               <KangurButton
@@ -755,23 +750,26 @@ export default function EnglishArticlesDragDropGame({
                 </KangurStatusChip>
               ) : null}
             </div>
-            {!checked ? (
-              <KangurButton
-                size='sm'
-                type='button'
-                variant='primary'
-                onClick={handleCheck}
-                disabled={!isRoundComplete}
-              >
-                {translations('englishArticles.inRound.check')}
-              </KangurButton>
-            ) : (
+            <KangurButton
+              size='sm'
+              type='button'
+              variant='primary'
+              onClick={handleCheck}
+              disabled={checked || !isRoundComplete}
+              className={getKangurCheckButtonClassName(
+                undefined,
+                feedback?.kind === 'success' ? 'success' : feedback?.kind === 'error' ? 'error' : null
+              )}
+            >
+              {translations('englishArticles.inRound.check')}
+            </KangurButton>
+            {checked ? (
               <KangurButton size='sm' type='button' variant='primary' onClick={handleNext}>
                 {roundIndex + 1 >= TOTAL_ROUNDS
                   ? translations('englishArticles.inRound.seeResult')
                   : translations('englishArticles.inRound.next')}
               </KangurButton>
-            )}
+            ) : null}
           </div>
         </KangurGlassPanel>
       </KangurDragDropContext>

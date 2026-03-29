@@ -493,6 +493,47 @@ describe('enqueuePlaywrightNodeRun', () => {
     );
   });
 
+  it('allows only the exact policyAllowedHosts override for startUrl and matching subresources', async () => {
+    const { enqueuePlaywrightNodeRun } = await loadRunner();
+    const runtime = await createPlaywrightRuntime({
+      routeUrls: [
+        'http://localhost:3101/static/app.js',
+        'http://localhost:3102/static/app.js',
+      ],
+      pageUrl: 'http://localhost:3101/final',
+    });
+    mocks.chromiumLaunchMock.mockResolvedValue(runtime.browser);
+    mocks.evaluateOutboundUrlPolicyMock.mockImplementation((url: string) =>
+      url.includes('localhost')
+        ? { allowed: false, reason: 'local_hostname_blocked' }
+        : { allowed: true, reason: null }
+    );
+
+    const run = await enqueuePlaywrightNodeRun({
+      waitForResult: true,
+      request: {
+        startUrl: 'http://localhost:3101/start',
+        policyAllowedHosts: ['localhost:3101'],
+        script: 'export default async () => ({ ok: true });',
+      },
+    });
+
+    expect(run.status).toBe('completed');
+    expect(runtime.page.goto).toHaveBeenCalledWith('http://localhost:3101/start', {
+      timeout: 30000,
+      waitUntil: 'load',
+    });
+    expect(runtime.routes[0]?.continueMock).toHaveBeenCalledTimes(1);
+    expect(runtime.routes[1]?.abortMock).toHaveBeenCalledWith('blockedbyclient');
+    expect(run.logs).toEqual(
+      expect.arrayContaining([
+        expect.stringContaining(
+          '[policy] Blocked outbound URL: http://localhost:3102/static/app.js'
+        ),
+      ])
+    );
+  });
+
   it('returns queued state immediately for background runs and persists later failures', async () => {
     const { enqueuePlaywrightNodeRun, readPlaywrightNodeRun } = await loadRunner();
     const runtime = await createPlaywrightRuntime();

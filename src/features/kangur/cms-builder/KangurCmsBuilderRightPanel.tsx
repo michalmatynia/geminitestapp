@@ -5,7 +5,7 @@ import { useTranslations } from 'next-intl';
 import type { ThemeSettings } from '@/shared/contracts/cms-theme';
 import { ComponentSettingsPanel, usePageBuilder } from '@/features/cms/public';
 import { SidePanel } from '@/features/kangur/shared/ui';
-import type { KangurThemeMode } from '@/features/kangur/theme-settings';
+import type { KangurThemeMode } from '@/features/kangur/appearance/theme-settings';
 
 import { KangurThemePreviewPanel } from './KangurThemePreviewPanel';
 

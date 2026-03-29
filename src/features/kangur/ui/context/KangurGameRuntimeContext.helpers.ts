@@ -61,6 +61,16 @@ type UseKangurGameQuickStartInput = {
   ) => void;
 };
 
+type KangurGameQuickStartPayload = {
+  categories?: string | null;
+  count?: string | null;
+  difficulty?: string | null;
+  instanceId?: string | null;
+  operation?: string | null;
+  quickStart: string;
+  screen?: string | null;
+};
+
 type BuildKangurCompletedGameOutcomeInput = {
   activeSessionRecommendation: KangurSessionRecommendationHint | null;
   difficulty: KangurDifficulty;
@@ -87,6 +97,124 @@ type BuildKangurCompletedGameOutcomeResult = {
   isGreat: boolean;
 };
 
+const KANGUR_GAME_PENDING_QUICK_START_STORAGE_KEY = 'kangur:game:pending-quick-start';
+
+const canUseKangurGameQuickStartStorage = (): boolean =>
+  typeof window !== 'undefined' && typeof window.sessionStorage !== 'undefined';
+
+const clearPendingKangurGameQuickStart = (): void => {
+  if (!canUseKangurGameQuickStartStorage()) {
+    return;
+  }
+
+  try {
+    window.sessionStorage.removeItem(KANGUR_GAME_PENDING_QUICK_START_STORAGE_KEY);
+  } catch {
+    // Ignore storage failures and keep the URL-driven fallback behavior.
+  }
+};
+
+const persistPendingKangurGameQuickStart = (
+  payload: KangurGameQuickStartPayload
+): void => {
+  if (!canUseKangurGameQuickStartStorage()) {
+    return;
+  }
+
+  try {
+    window.sessionStorage.setItem(
+      KANGUR_GAME_PENDING_QUICK_START_STORAGE_KEY,
+      JSON.stringify(payload)
+    );
+  } catch {
+    // Ignore storage failures and keep the URL-driven fallback behavior.
+  }
+};
+
+const readPendingKangurGameQuickStart = (): KangurGameQuickStartPayload | null => {
+  if (!canUseKangurGameQuickStartStorage()) {
+    return null;
+  }
+
+  try {
+    const rawPayload = window.sessionStorage.getItem(
+      KANGUR_GAME_PENDING_QUICK_START_STORAGE_KEY
+    );
+    if (!rawPayload) {
+      return null;
+    }
+
+    const parsed = JSON.parse(rawPayload) as Partial<KangurGameQuickStartPayload> | null;
+    if (!parsed || typeof parsed.quickStart !== 'string' || parsed.quickStart.trim().length === 0) {
+      clearPendingKangurGameQuickStart();
+      return null;
+    }
+
+    return {
+      categories: parsed.categories ?? null,
+      count: parsed.count ?? null,
+      difficulty: parsed.difficulty ?? null,
+      instanceId: parsed.instanceId ?? null,
+      operation: parsed.operation ?? null,
+      quickStart: parsed.quickStart,
+      screen: parsed.screen ?? null,
+    };
+  } catch {
+    clearPendingKangurGameQuickStart();
+    return null;
+  }
+};
+
+const readKangurGameQuickStartPayload = (
+  searchParams: URLSearchParams,
+  basePath: string
+): KangurGameQuickStartPayload | null => {
+  const quickStart = readKangurUrlParam(searchParams, 'quickStart', basePath);
+  if (!quickStart) {
+    return null;
+  }
+
+  return {
+    categories: readKangurUrlParam(searchParams, 'categories', basePath),
+    count: readKangurUrlParam(searchParams, 'count', basePath),
+    difficulty: readKangurUrlParam(searchParams, 'difficulty', basePath),
+    instanceId: readKangurUrlParam(searchParams, 'instanceId', basePath),
+    operation: readKangurUrlParam(searchParams, 'operation', basePath),
+    quickStart,
+    screen: readKangurUrlParam(searchParams, 'screen', basePath),
+  };
+};
+
+const buildKangurGameQuickStartSearchParams = (
+  payload: KangurGameQuickStartPayload
+): URLSearchParams => {
+  const searchParams = new URLSearchParams();
+
+  if (payload.categories) {
+    searchParams.set('categories', payload.categories);
+  }
+  if (payload.count) {
+    searchParams.set('count', payload.count);
+  }
+  if (payload.difficulty) {
+    searchParams.set('difficulty', payload.difficulty);
+  }
+  if (payload.instanceId) {
+    searchParams.set('instanceId', payload.instanceId);
+  }
+  if (payload.operation) {
+    searchParams.set('operation', payload.operation);
+  }
+  if (payload.quickStart) {
+    searchParams.set('quickStart', payload.quickStart);
+  }
+  if (payload.screen) {
+    searchParams.set('screen', payload.screen);
+  }
+
+  return searchParams;
+};
+
 export const useKangurGameQuickStart = ({
   basePath,
   isLoadingAuth,
@@ -102,6 +230,14 @@ export const useKangurGameQuickStart = ({
   const quickStartConsumedRef = useRef(false);
 
   useEffect(() => {
+    if (screen === 'home') {
+      return;
+    }
+
+    clearPendingKangurGameQuickStart();
+  }, [screen]);
+
+  useEffect(() => {
     if (
       quickStartConsumedRef.current ||
       screen !== 'home' ||
@@ -112,9 +248,14 @@ export const useKangurGameQuickStart = ({
     }
 
     const url = new URL(window.location.href);
-    const quickStart = readKangurUrlParam(url.searchParams, 'quickStart', basePath);
-    if (!quickStart) {
+    const urlQuickStart = readKangurGameQuickStartPayload(url.searchParams, basePath);
+    const quickStartPayload = urlQuickStart ?? readPendingKangurGameQuickStart();
+    if (!quickStartPayload) {
       return;
+    }
+
+    if (urlQuickStart) {
+      persistPendingKangurGameQuickStart(urlQuickStart);
     }
 
     const clearQuickStartParams = (): void => {
@@ -137,13 +278,17 @@ export const useKangurGameQuickStart = ({
       window.history.replaceState({}, '', nextHref);
     };
 
+    const quickStart = quickStartPayload.quickStart;
+
     if (quickStart === 'kangur' || quickStart === 'kangur_setup') {
       quickStartConsumedRef.current = true;
       if (!user && playerName.trim().length === 0) {
         setPlayerName('Gracz');
       }
 
-      clearQuickStartParams();
+      if (urlQuickStart) {
+        clearQuickStartParams();
+      }
       setLaunchableGameInstanceId(null);
       setScreen('kangur_setup');
       return;
@@ -155,8 +300,13 @@ export const useKangurGameQuickStart = ({
         setPlayerName('Gracz');
       }
 
-      const trainingPreset = parseKangurMixedTrainingQuickStartParams(url.searchParams, basePath);
-      clearQuickStartParams();
+      const trainingPreset = parseKangurMixedTrainingQuickStartParams(
+        buildKangurGameQuickStartSearchParams(quickStartPayload),
+        basePath
+      );
+      if (urlQuickStart) {
+        clearQuickStartParams();
+      }
       if (trainingPreset) {
         setLaunchableGameInstanceId(null);
         handleStartTraining(trainingPreset);
@@ -169,19 +319,21 @@ export const useKangurGameQuickStart = ({
     }
 
     if (quickStart === 'screen') {
-      const requestedScreen = readKangurUrlParam(url.searchParams, 'screen', basePath);
-      const requestedInstanceId = readKangurUrlParam(url.searchParams, 'instanceId', basePath);
-      const parsedInstanceId = kangurGameInstanceIdSchema.safeParse(requestedInstanceId);
+      const parsedInstanceId = kangurGameInstanceIdSchema.safeParse(
+        quickStartPayload.instanceId
+      );
 
       quickStartConsumedRef.current = true;
       if (!user && playerName.trim().length === 0) {
         setPlayerName('Gracz');
       }
 
-      clearQuickStartParams();
+      if (urlQuickStart) {
+        clearQuickStartParams();
+      }
       setLaunchableGameInstanceId(parsedInstanceId.success ? parsedInstanceId.data : null);
-      if (isKangurGameScreen(requestedScreen)) {
-        setScreen(requestedScreen);
+      if (isKangurGameScreen(quickStartPayload.screen)) {
+        setScreen(quickStartPayload.screen);
       }
       return;
     }
@@ -190,16 +342,20 @@ export const useKangurGameQuickStart = ({
       return;
     }
 
-    const requestedOperation = readKangurUrlParam(url.searchParams, 'operation', basePath);
-    const requestedDifficulty = readKangurUrlParam(url.searchParams, 'difficulty', basePath);
-    const nextOperation = isKangurOperation(requestedOperation) ? requestedOperation : null;
-    const nextDifficulty = isKangurDifficulty(requestedDifficulty) ? requestedDifficulty : 'medium';
+    const nextOperation = isKangurOperation(quickStartPayload.operation)
+      ? quickStartPayload.operation
+      : null;
+    const nextDifficulty = isKangurDifficulty(quickStartPayload.difficulty)
+      ? quickStartPayload.difficulty
+      : 'medium';
 
     quickStartConsumedRef.current = true;
     if (!user && playerName.trim().length === 0) {
       setPlayerName('Gracz');
     }
-    clearQuickStartParams();
+    if (urlQuickStart) {
+      clearQuickStartParams();
+    }
     if (nextOperation) {
       setLaunchableGameInstanceId(null);
       handleSelectOperation(nextOperation, nextDifficulty);

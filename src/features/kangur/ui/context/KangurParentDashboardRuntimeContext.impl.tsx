@@ -1,7 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unsafe-assignment */
-/* eslint-disable @typescript-eslint/no-unsafe-member-access */
-/* eslint-disable @typescript-eslint/no-unsafe-call */
-/* eslint-disable @typescript-eslint/no-unsafe-argument */
 'use client';
 
 import { useTranslations } from 'next-intl';
@@ -159,7 +155,7 @@ export function KangurParentDashboardRuntimeProvider({
   const actions = useMemo((): KangurParentDashboardRuntimeActionsContextValue => {
     const refreshAssignments = async (): Promise<void> => {
       if (!activeLearnerId) return;
-      await withTimeout(assignmentsQuery.refresh(), REFRESH_TIMEOUT_MS, translations('errors.refreshTimeout'));
+      await withTimeout(assignmentsQuery.refresh(), REFRESH_TIMEOUT_MS, translations('timeout.refresh'));
     };
 
     const updateCreateField = <K extends keyof KangurParentDashboardCreateForm>(key: K, value: KangurParentDashboardCreateForm[K]): void => setCreateForm((prev) => ({ ...prev, [key]: value }));
@@ -179,7 +175,16 @@ export function KangurParentDashboardRuntimeProvider({
         }
 
         const age = parseInt(createForm.age, 10);
-        await withTimeout(kangurPlatform.learners.create({ displayName: createForm.displayName, age: isNaN(age) ? undefined : age, loginName: createForm.loginName, password: createForm.password }), ACTION_TIMEOUT_MS, translations('errors.createTimeout'));
+        await withTimeout(
+          kangurPlatform.learners.create({
+            displayName: createForm.displayName,
+            age: isNaN(age) ? undefined : age,
+            loginName: createForm.loginName,
+            password: createForm.password,
+          }),
+          ACTION_TIMEOUT_MS,
+          translations('timeout.create')
+        );
         await checkAppState();
         setCreateLearnerModalOpen(false);
         setCreateForm({ displayName: '', age: '', loginName: '', password: '' });
@@ -190,7 +195,7 @@ export function KangurParentDashboardRuntimeProvider({
             ? translations('validation.duplicateNick')
             : error instanceof Error
               ? error.message
-              : translations('errors.createFailed')
+              : translations('feedback.addLearnerError')
         );
         return false;
       } finally {
@@ -203,11 +208,20 @@ export function KangurParentDashboardRuntimeProvider({
       setIsSubmitting(true);
       setFeedback(null);
       try {
-        await withTimeout(kangurPlatform.learners.update(activeLearnerId, { displayName: editForm.displayName, loginName: editForm.loginName, password: editForm.password || undefined, status: editForm.status }), ACTION_TIMEOUT_MS, translations('errors.saveTimeout'));
+        await withTimeout(
+          kangurPlatform.learners.update(activeLearnerId, {
+            displayName: editForm.displayName,
+            loginName: editForm.loginName,
+            password: editForm.password || undefined,
+            status: editForm.status,
+          }),
+          ACTION_TIMEOUT_MS,
+          translations('timeout.save')
+        );
         await checkAppState();
         return true;
       } catch (error) {
-        setFeedback(error instanceof Error ? error.message : translations('errors.saveFailed'));
+        setFeedback(error instanceof Error ? error.message : translations('feedback.saveError'));
         return false;
       } finally {
         setIsSubmitting(false);
@@ -218,11 +232,15 @@ export function KangurParentDashboardRuntimeProvider({
       setIsSubmitting(true);
       setFeedback(null);
       try {
-        await withTimeout(kangurPlatform.learners.delete(learnerId), ACTION_TIMEOUT_MS, translations('errors.deleteTimeout'));
+        await withTimeout(
+          kangurPlatform.learners.delete(learnerId),
+          ACTION_TIMEOUT_MS,
+          translations('timeout.delete')
+        );
         await checkAppState();
         return true;
       } catch (error) {
-        setFeedback(error instanceof Error ? error.message : translations('errors.deleteFailed'));
+        setFeedback(error instanceof Error ? error.message : translations('feedback.deleteError'));
         return false;
       } finally {
         setIsSubmitting(false);
@@ -230,9 +248,19 @@ export function KangurParentDashboardRuntimeProvider({
     };
 
     return {
-      createAssignment: (input) => withTimeout(assignmentsQuery.createAssignment(input), ACTION_TIMEOUT_MS, translations('errors.createAssignmentTimeout')),
+      createAssignment: (input) =>
+        withTimeout(
+          assignmentsQuery.createAssignment(input),
+          ACTION_TIMEOUT_MS,
+          translations('timeout.create')
+        ),
       refreshAssignments,
-      reassignAssignment: (id) => withTimeout(assignmentsQuery.reassignAssignment(id), ACTION_TIMEOUT_MS, translations('errors.reassignAssignmentTimeout')),
+      reassignAssignment: (id) =>
+        withTimeout(
+          assignmentsQuery.reassignAssignment(id),
+          ACTION_TIMEOUT_MS,
+          translations('timeout.save')
+        ),
       navigateToLogin,
       logout,
       selectLearner,
@@ -243,7 +271,12 @@ export function KangurParentDashboardRuntimeProvider({
       handleCreateLearner,
       handleSaveLearner,
       handleDeleteLearner,
-      updateAssignment: (id, input) => withTimeout(assignmentsQuery.updateAssignment(id, input), ACTION_TIMEOUT_MS, translations('errors.updateAssignmentTimeout')),
+      updateAssignment: (id, input) =>
+        withTimeout(
+          assignmentsQuery.updateAssignment(id, input),
+          ACTION_TIMEOUT_MS,
+          translations('timeout.save')
+        ),
     };
   }, [activeLearnerId, assignmentsQuery, checkAppState, createForm, editForm, logout, navigateToLogin, selectLearner, translations]);
 

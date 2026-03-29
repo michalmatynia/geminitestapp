@@ -31,7 +31,10 @@ import {
   KANGUR_SOCIAL_DEFAULT_PLAYWRIGHT_CAPTURE_SCRIPT,
 } from '@/features/kangur/shared/social-playwright-capture';
 import { KANGUR_STOREFRONT_APPEARANCE_STORAGE_KEY } from '@/features/kangur/storefront-appearance-settings';
-import { sanitizePlaywrightCookiesFromHeader } from '@/shared/lib/playwright/storage-state';
+import {
+  sanitizePlaywrightCookiesFromHeader,
+  sanitizePlaywrightStorageState,
+} from '@/shared/lib/playwright/storage-state';
 
 import {
   findLatestAddonByPresetId,
@@ -223,7 +226,27 @@ const resolvePlaywrightStorageState = (params: {
     return null;
   }
 
-  return { cookies, origins };
+  const storageState = sanitizePlaywrightStorageState(
+    { cookies, origins },
+    { fallbackOrigin: params.baseUrl }
+  );
+  const sanitizedCookieNames = new Set((storageState?.cookies ?? []).map((cookie) => cookie.name));
+  const droppedCookieNames = cookies
+    .map((cookie) => {
+      const name = typeof cookie['name'] === 'string' ? cookie['name'] : null;
+      return name && !sanitizedCookieNames.has(name) ? name : null;
+    })
+    .filter((name): name is string => name !== null);
+
+  if (droppedCookieNames.length > 0) {
+    logger.warn('[kangur.social-image-addons.batch] dropped invalid Playwright cookies', {
+      baseUrl: params.baseUrl,
+      droppedCookieNames,
+      service: 'kangur.social-image-addons',
+    });
+  }
+
+  return storageState;
 };
 
 const sleep = async (ms: number): Promise<void> =>

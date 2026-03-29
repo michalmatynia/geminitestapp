@@ -8,6 +8,8 @@ const {
   readOptionalServerAuthSessionMock,
   getKangurAuthMeHandlerMock,
   postKangurSocialPostAnalyzeVisualsHandlerMock,
+  postKangurSocialImageAddonsHandlerMock,
+  postKangurSocialImageAddonsBatchHandlerMock,
   listKangurGamesMock,
   getKangurLessonRepositoryMock,
   listLessonsMock,
@@ -19,6 +21,8 @@ const {
   readOptionalServerAuthSessionMock: vi.fn(),
   getKangurAuthMeHandlerMock: vi.fn(),
   postKangurSocialPostAnalyzeVisualsHandlerMock: vi.fn(),
+  postKangurSocialImageAddonsHandlerMock: vi.fn(),
+  postKangurSocialImageAddonsBatchHandlerMock: vi.fn(),
   listKangurGamesMock: vi.fn(),
   getKangurLessonRepositoryMock: vi.fn(),
   listLessonsMock: vi.fn(),
@@ -43,6 +47,20 @@ vi.mock('./auth/me/handler', () => ({
 vi.mock('./social-posts/analyze-visuals/handler', () => ({
   postKangurSocialPostAnalyzeVisualsHandler: (...args: unknown[]) =>
     postKangurSocialPostAnalyzeVisualsHandlerMock(...args),
+}));
+
+vi.mock('./social-image-addons/handler', () => ({
+  getKangurSocialImageAddonsHandler: vi.fn(),
+  postKangurSocialImageAddonsHandler: (...args: unknown[]) =>
+    postKangurSocialImageAddonsHandlerMock(...args),
+  querySchema: undefined,
+}));
+
+vi.mock('./social-image-addons/batch/handler', () => ({
+  getKangurSocialImageAddonsBatchHandler: vi.fn(),
+  postKangurSocialImageAddonsBatchHandler: (...args: unknown[]) =>
+    postKangurSocialImageAddonsBatchHandlerMock(...args),
+  querySchema: undefined,
 }));
 
 vi.mock('@/features/kangur/services/kangur-game-repository/mongo-kangur-game-repository', () => ({
@@ -95,6 +113,30 @@ describe('kangur route routing', () => {
         JSON.stringify({
           summary: 'Visual summary',
           highlights: ['Highlight'],
+        }),
+        {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' },
+        }
+      )
+    );
+    postKangurSocialImageAddonsBatchHandlerMock.mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          id: 'social-batch-job-1',
+          status: 'queued',
+        }),
+        {
+          status: 202,
+          headers: { 'Content-Type': 'application/json' },
+        }
+      )
+    );
+    postKangurSocialImageAddonsHandlerMock.mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          id: 'addon-1',
+          title: 'Hero image',
         }),
         {
           status: 200,
@@ -236,6 +278,63 @@ describe('kangur route routing', () => {
     await expect(response.json()).resolves.toEqual({
       summary: 'Visual summary',
       highlights: ['Highlight'],
+    });
+  });
+
+  it('routes social-image-addons/batch through misc POST routing', async () => {
+    const url = 'http://localhost/api/kangur/social-image-addons/batch';
+    const request = Object.assign(
+      new Request(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          async: true,
+          baseUrl: 'https://kangur.app',
+          presetIds: ['game'],
+        }),
+      }),
+      {
+        nextUrl: new URL(url),
+      }
+    ) as Request;
+
+    const response = await POST(request as unknown as Parameters<typeof POST>[0], {
+      params: { path: ['social-image-addons', 'batch'] },
+    });
+
+    expect(postKangurSocialImageAddonsBatchHandlerMock).toHaveBeenCalledTimes(1);
+    expect(response.status).toBe(202);
+    await expect(response.json()).resolves.toEqual({
+      id: 'social-batch-job-1',
+      status: 'queued',
+    });
+  });
+
+  it('routes social-image-addons through misc POST routing', async () => {
+    const url = 'http://localhost/api/kangur/social-image-addons';
+    const request = Object.assign(
+      new Request(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          title: 'Hero image',
+          sourceUrl: 'https://kangur.app',
+        }),
+      }),
+      {
+        nextUrl: new URL(url),
+      }
+    ) as Request;
+
+    const response = await POST(request as unknown as Parameters<typeof POST>[0], {
+      params: { path: ['social-image-addons'] },
+    });
+
+    expect(postKangurSocialImageAddonsHandlerMock).toHaveBeenCalledTimes(1);
+    expect(response.status).toBe(200);
+    await expect(response.json()).resolves.toEqual({
+      id: 'addon-1',
+      title: 'Hero image',
     });
   });
 });

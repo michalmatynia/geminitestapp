@@ -31,6 +31,11 @@ const isSocialRuntimeJobInFlight = (status: string | null | undefined): boolean 
   return normalized !== 'completed' && normalized !== 'failed';
 };
 
+const isBatchCaptureJobInFlight = (status: string | null | undefined): boolean => {
+  const normalized = status?.trim().toLowerCase();
+  return normalized === 'queued' || normalized === 'running';
+};
+
 function AdminKangurSocialPageContent(): React.JSX.Element {
   const {
     posts,
@@ -51,6 +56,9 @@ function AdminKangurSocialPageContent(): React.JSX.Element {
     currentPipelineJob,
     currentGenerationJob,
     currentVisualAnalysisJob,
+    batchCaptureJob,
+    captureOnlyBatchCaptureJob,
+    programmableCaptureBatchCaptureJob,
     handleCreateDraft,
     handleDeletePost,
     handleUnpublishPost,
@@ -103,6 +111,22 @@ function AdminKangurSocialPageContent(): React.JSX.Element {
     isSocialRuntimeJobInFlight(currentVisualAnalysisJob?.status) ||
     isSocialRuntimeJobInFlight(currentGenerationJob?.status) ||
     isSocialRuntimeJobInFlight(currentPipelineJob?.status);
+  const activeBatchCaptureJob =
+    (isBatchCaptureJobInFlight(captureOnlyBatchCaptureJob?.status)
+      ? captureOnlyBatchCaptureJob
+      : isBatchCaptureJobInFlight(programmableCaptureBatchCaptureJob?.status)
+        ? programmableCaptureBatchCaptureJob
+        : isBatchCaptureJobInFlight(batchCaptureJob?.status)
+          ? batchCaptureJob
+          : null) ?? null;
+  const activeBatchCaptureSummary =
+    activeBatchCaptureJob?.progress
+      ? `Playwright capture: ${activeBatchCaptureJob.progress.completedCount} captured, ${activeBatchCaptureJob.progress.remainingCount} left of ${activeBatchCaptureJob.progress.totalCount}${
+          activeBatchCaptureJob.progress.failureCount > 0
+            ? `. ${activeBatchCaptureJob.progress.failureCount} failed.`
+            : '.'
+        }`
+      : null;
   const isDeleteConfirmBlocked =
     Boolean(postToDelete?.id) && postToDelete?.id === activePost?.id && hasBlockingRuntimeJob;
   const isUnpublishConfirmBlocked =
@@ -158,6 +182,11 @@ function AdminKangurSocialPageContent(): React.JSX.Element {
                   className='text-[10px]'
                 />
               ) : null}
+            </div>
+          ) : null}
+          {activeBatchCaptureSummary ? (
+            <div className='mr-2 text-xs text-muted-foreground'>
+              {activeBatchCaptureSummary}
             </div>
           ) : null}
           <Button

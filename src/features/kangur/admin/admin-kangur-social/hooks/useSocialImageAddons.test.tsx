@@ -14,6 +14,8 @@ const {
   toastMock,
   createAddonMutateAsyncMock,
   batchCaptureMutateAsyncMock,
+  startBatchCaptureMutateAsyncMock,
+  fetchBatchCaptureJobMock,
   logKangurClientErrorMock,
   trackKangurClientEventMock,
   captureExceptionMock,
@@ -23,6 +25,8 @@ const {
   toastMock: vi.fn(),
   createAddonMutateAsyncMock: vi.fn(),
   batchCaptureMutateAsyncMock: vi.fn(),
+  startBatchCaptureMutateAsyncMock: vi.fn(),
+  fetchBatchCaptureJobMock: vi.fn(),
   logKangurClientErrorMock: vi.fn(),
   trackKangurClientEventMock: vi.fn(),
   captureExceptionMock: vi.fn(),
@@ -48,6 +52,10 @@ vi.mock('@/features/kangur/ui/hooks/useKangurSocialImageAddons', () => ({
   useBatchCaptureKangurSocialImageAddons: () => ({
     mutateAsync: batchCaptureMutateAsyncMock,
   }),
+  useStartBatchCaptureKangurSocialImageAddons: () => ({
+    mutateAsync: startBatchCaptureMutateAsyncMock,
+  }),
+  fetchKangurSocialImageAddonsBatchJob: (...args: unknown[]) => fetchBatchCaptureJobMock(...args),
 }));
 
 vi.mock('@/shared/providers/SettingsStoreProvider', () => ({
@@ -79,6 +87,24 @@ describe('useSocialImageAddons', () => {
       failures: [],
       usedPresetCount: 1,
     });
+    startBatchCaptureMutateAsyncMock.mockResolvedValue({
+      id: 'job-1',
+      runId: 'run-1',
+      status: 'queued',
+      progress: {
+        processedCount: 0,
+        completedCount: 0,
+        failureCount: 0,
+        remainingCount: 1,
+        totalCount: 1,
+        message: 'Queued Playwright capture...',
+      },
+      result: null,
+      error: null,
+      createdAt: '2026-03-29T10:00:00.000Z',
+      updatedAt: '2026-03-29T10:00:00.000Z',
+    });
+    fetchBatchCaptureJobMock.mockResolvedValue(null);
     settingsStoreGetMock.mockReturnValue('default');
     storefrontAppearanceModeRef.current = null;
   });
@@ -286,5 +312,154 @@ describe('useSocialImageAddons', () => {
         errorMessage: 'Playwright batch capture timed out.',
       })
     );
+  });
+
+  it('starts async batch capture jobs with the same programmable payload shape', async () => {
+    const { result } = renderHook(() =>
+      useSocialImageAddons({
+        addonForm: emptyAddonForm,
+        setAddonForm: vi.fn(),
+        batchCaptureBaseUrl: 'https://example.com',
+        batchCapturePresetIds: ['preset-1'],
+        batchCapturePresetLimit: 2,
+        buildSocialContext: (overrides?: Record<string, unknown>) => ({
+          postId: 'post-1',
+          ...overrides,
+        }),
+      })
+    );
+
+    let queuedJob:
+      | Awaited<ReturnType<typeof result.current.startBatchCapture>>
+      | undefined;
+    await act(async () => {
+      queuedJob = await result.current.startBatchCapture({
+        baseUrl: 'https://preview.example.com',
+        presetIds: [],
+        presetLimit: null,
+        playwrightPersonaId: 'persona-1',
+        playwrightScript: 'return input.captures;',
+        playwrightRoutes: [
+          {
+            id: 'route-1',
+            title: 'Pricing',
+            path: '/pricing',
+            description: '',
+            selector: '',
+            waitForMs: 0,
+            waitForSelectorMs: 10000,
+          },
+        ],
+      });
+    });
+
+    expect(queuedJob).toEqual(
+      expect.objectContaining({
+        id: 'job-1',
+        status: 'queued',
+      })
+    );
+    expect(startBatchCaptureMutateAsyncMock).toHaveBeenCalledWith({
+      baseUrl: 'https://preview.example.com',
+      presetIds: [],
+      presetLimit: null,
+      appearanceMode: 'default',
+      playwrightPersonaId: 'persona-1',
+      playwrightScript: 'return input.captures;',
+      playwrightRoutes: [
+        {
+          id: 'route-1',
+          title: 'Pricing',
+          path: '/pricing',
+          description: '',
+          selector: '',
+          waitForMs: 0,
+          waitForSelectorMs: 10000,
+        },
+      ],
+    });
+    expect(trackKangurClientEventMock).toHaveBeenCalledWith(
+      'kangur_social_batch_capture_attempt',
+      expect.objectContaining({
+        programmableRouteCount: 1,
+        playwrightPersonaId: 'persona-1',
+        isProgrammableCapture: true,
+        async: true,
+      })
+    );
+  });
+
+  it('polls async batch capture jobs for the settings capture flow and stores the live result', async () => {
+    fetchBatchCaptureJobMock.mockResolvedValueOnce({
+      id: 'job-1',
+      runId: 'run-1',
+      status: 'completed',
+      progress: {
+        processedCount: 3,
+        completedCount: 2,
+        failureCount: 1,
+        remainingCount: 0,
+        totalCount: 3,
+        message: 'Playwright capture completed.',
+      },
+      result: {
+        addons: [
+          { id: 'addon-1', title: 'Addon 1' },
+          { id: 'addon-2', title: 'Addon 2' },
+        ],
+        failures: [{ id: 'preset-3', reason: 'Timeout' }],
+        usedPresetCount: 3,
+        runId: 'run-1',
+      },
+      error: null,
+      createdAt: '2026-03-29T10:00:00.000Z',
+      updatedAt: '2026-03-29T10:00:05.000Z',
+    });
+
+    const { result } = renderHook(() =>
+      useSocialImageAddons({
+        addonForm: emptyAddonForm,
+        setAddonForm: vi.fn(),
+        batchCaptureBaseUrl: 'https://example.com',
+        batchCapturePresetIds: ['preset-1', 'preset-2', 'preset-3'],
+        batchCapturePresetLimit: 3,
+        buildSocialContext: (overrides?: Record<string, unknown>) => ({
+          postId: 'post-1',
+          ...overrides,
+        }),
+      })
+    );
+
+    await act(async () => {
+      await result.current.handleBatchCapture();
+    });
+
+    expect(startBatchCaptureMutateAsyncMock).toHaveBeenCalledWith({
+      baseUrl: 'https://example.com',
+      presetIds: ['preset-1', 'preset-2', 'preset-3'],
+      presetLimit: 3,
+      appearanceMode: 'default',
+    });
+    expect(fetchBatchCaptureJobMock).toHaveBeenCalledWith('job-1');
+    expect(result.current.batchCapturePending).toBe(false);
+    expect(result.current.batchCaptureJob).toEqual(
+      expect.objectContaining({
+        id: 'job-1',
+        status: 'completed',
+      })
+    );
+    expect(result.current.batchCaptureResult).toEqual({
+      addons: [
+        { id: 'addon-1', title: 'Addon 1' },
+        { id: 'addon-2', title: 'Addon 2' },
+      ],
+      failures: [{ id: 'preset-3', reason: 'Timeout' }],
+      usedPresetCount: 3,
+      runId: 'run-1',
+    });
+    expect(result.current.batchCaptureMessage).toBe(
+      'Captured 2 add-ons from the current batch.'
+    );
+    expect(result.current.batchCaptureErrorMessage).toBeNull();
   });
 });

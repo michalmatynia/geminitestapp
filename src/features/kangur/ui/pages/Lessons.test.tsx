@@ -52,9 +52,11 @@ describe('Lessons page subject filtering', () => {
 
   afterEach(() => {
     act(() => {
+      cleanup();
+    });
+    act(() => {
       vi.runOnlyPendingTimers();
     });
-    cleanup();
     vi.useRealTimers();
     vi.restoreAllMocks();
   });
@@ -518,6 +520,38 @@ describe('Lessons page subject filtering', () => {
     routeTransitionStateState.value = {
       transitionPhase: 'idle',
     };
+
+    view.rerender(<Lessons />);
+
+    act(() => {
+      vi.runAllTimers();
+    });
+
+    expect(tutorSessionSyncPropsMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        sessionContext: expect.objectContaining({
+          contentId: 'lesson:list',
+        }),
+      })
+    );
+    expect(useKangurDocsTooltipsMock).toHaveBeenCalledWith('lessons');
+  });
+
+  it('keeps deferred lessons enhancements off until the lessons library shell has finished loading', () => {
+    lessonsLoadingState.value = true;
+    lessonSectionsLoadingState.value = true;
+
+    const view = render(<Lessons />);
+
+    act(() => {
+      vi.runAllTimers();
+    });
+
+    expect(tutorSessionSyncPropsMock).not.toHaveBeenCalled();
+    expect(useKangurDocsTooltipsMock).not.toHaveBeenCalled();
+
+    lessonsLoadingState.value = false;
+    lessonSectionsLoadingState.value = false;
 
     view.rerender(<Lessons />);
 

@@ -8,7 +8,7 @@ import type { ReactNode } from 'react';
 
 type KangurDialogMetaProps = {
   title: ReactNode;
-  description?: ReactNode;
+  description: ReactNode;
   titleClassName?: string;
   descriptionClassName?: string;
 };
@@ -24,11 +24,9 @@ export function KangurDialogMeta({
       <DialogPrimitive.Title className={cn('sr-only', titleClassName)}>
         {title}
       </DialogPrimitive.Title>
-      {description ? (
-        <DialogPrimitive.Description className={cn('sr-only', descriptionClassName)}>
-          {description}
-        </DialogPrimitive.Description>
-      ) : null}
+      <DialogPrimitive.Description className={cn('sr-only', descriptionClassName)}>
+        {description}
+      </DialogPrimitive.Description>
     </>
   );
 }

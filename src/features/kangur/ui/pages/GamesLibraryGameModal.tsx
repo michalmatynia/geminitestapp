@@ -41,7 +41,12 @@ export function GamesLibraryGameModal(props: GamesLibraryGameModalProps): React.
   const isPending = lessonGameSectionsQuery.isPending || gameInstancesQuery.isPending;
 
   return (
-    <GamesLibraryGameDialog open={open} onOpenChange={onOpenChange}>
+    <GamesLibraryGameDialog
+      open={open}
+      onOpenChange={onOpenChange}
+      title={game.title}
+      description={translations('modal.description')}
+    >
       <div className='space-y-5'>
         <GameHeader
           game={game}

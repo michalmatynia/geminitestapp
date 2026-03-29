@@ -41,42 +41,53 @@ describe('KangurAssignmentManagerTimeLimitModal', () => {
     const onClose = vi.fn();
     const onSave = vi.fn();
     const onTimeLimitDraftChange = vi.fn();
+    const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
 
-    render(
-      renderKangurAssignmentManagerTimeLimitModal({
-        isOpen: true,
-        isSaveDisabled: false,
-        maxMinutes: 90,
-        minMinutes: 5,
-        onClose,
-        onSave,
-        onTimeLimitDraftChange,
-        saveLabel: 'Zapisz limit',
-        timeLimitDraft: '30',
-        timeLimitParsedError: null,
-        timeLimitPreview: '30 min',
-        timeLimitTarget: {
-          title: 'Powtórka: Dzielenie',
-          description: 'Ukończ jedną sesję dzielenia.',
-        },
-      })
-    );
+    try {
+      render(
+        renderKangurAssignmentManagerTimeLimitModal({
+          isOpen: true,
+          isSaveDisabled: false,
+          maxMinutes: 90,
+          minMinutes: 5,
+          onClose,
+          onSave,
+          onTimeLimitDraftChange,
+          saveLabel: 'Zapisz limit',
+          timeLimitDraft: '30',
+          timeLimitParsedError: null,
+          timeLimitPreview: '30 min',
+          timeLimitTarget: {
+            title: 'Powtórka: Dzielenie',
+            description: 'Ukończ jedną sesję dzielenia.',
+          },
+        })
+      );
 
-    expect(screen.getByRole('button', { name: 'Anuluj' })).toHaveClass(
-      'min-h-11',
-      'px-4',
-      'touch-manipulation'
-    );
-    expect(screen.getByRole('button', { name: 'Zapisz limit' })).toHaveClass(
-      'min-h-11',
-      'px-4',
-      'touch-manipulation'
-    );
+      expect(screen.getByRole('button', { name: 'Anuluj' })).toHaveClass(
+        'min-h-11',
+        'px-4',
+        'touch-manipulation'
+      );
+      expect(screen.getByRole('button', { name: 'Zapisz limit' })).toHaveClass(
+        'min-h-11',
+        'px-4',
+        'touch-manipulation'
+      );
 
-    fireEvent.click(screen.getByRole('button', { name: 'Anuluj' }));
-    expect(onClose).toHaveBeenCalledTimes(1);
+      fireEvent.click(screen.getByRole('button', { name: 'Anuluj' }));
+      expect(onClose).toHaveBeenCalledTimes(1);
 
-    fireEvent.click(screen.getByRole('button', { name: 'Zapisz limit' }));
-    expect(onSave).toHaveBeenCalledTimes(1);
+      fireEvent.click(screen.getByRole('button', { name: 'Zapisz limit' }));
+      expect(onSave).toHaveBeenCalledTimes(1);
+
+      const loggedOutput = consoleErrorSpy.mock.calls
+        .flatMap((call) => call.map((value) => String(value)))
+        .join('\n');
+      expect(loggedOutput).not.toContain('`DialogContent` requires a `DialogTitle`');
+      expect(loggedOutput).not.toContain('Missing `Description`');
+    } finally {
+      consoleErrorSpy.mockRestore();
+    }
   });
 });

@@ -6,12 +6,15 @@ import { useOptionalCmsStorefrontAppearance } from '@/features/cms/public';
 import { useToast } from '@/features/kangur/shared/ui';
 import type {
   KangurSocialCaptureAppearanceMode,
+  KangurSocialImageAddonsBatchJob,
   KangurSocialImageAddonsBatchResult,
   KangurSocialProgrammableCaptureRoute,
 } from '@/shared/contracts/kangur-social-image-addons';
 import {
+  fetchKangurSocialImageAddonsBatchJob,
   useBatchCaptureKangurSocialImageAddons,
   useCreateKangurSocialImageAddon,
+  useStartBatchCaptureKangurSocialImageAddons,
 } from '@/features/kangur/ui/hooks/useKangurSocialImageAddons';
 import {
   logKangurClientError,
@@ -26,6 +29,8 @@ import {
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
 
 import { emptyAddonForm, type AddonFormState } from '../AdminKangurSocialPage.Constants';
+
+const BATCH_CAPTURE_POLL_INTERVAL_MS = 1000;
 
 type ToastFn = ReturnType<typeof useToast>['toast'];
 
@@ -222,8 +227,15 @@ export function useSocialImageAddons(deps: SocialImageAddonsDeps) {
   const storefrontAppearance = useOptionalCmsStorefrontAppearance();
   const createAddonMutation = useCreateKangurSocialImageAddon();
   const batchCaptureMutation = useBatchCaptureKangurSocialImageAddons();
+  const startBatchCaptureMutation = useStartBatchCaptureKangurSocialImageAddons();
   const [batchCaptureResult, setBatchCaptureResult] =
     useState<KangurSocialImageAddonsBatchResult | null>(null);
+  const [batchCapturePending, setBatchCapturePending] = useState(false);
+  const [batchCaptureJob, setBatchCaptureJob] = useState<KangurSocialImageAddonsBatchJob | null>(
+    null
+  );
+  const [batchCaptureMessage, setBatchCaptureMessage] = useState<string | null>(null);
+  const [batchCaptureErrorMessage, setBatchCaptureErrorMessage] = useState<string | null>(null);
   const storedDefaultAppearanceMode = settingsStore.get(
     KANGUR_STOREFRONT_DEFAULT_MODE_SETTING_KEY
   );
@@ -234,6 +246,30 @@ export function useSocialImageAddons(deps: SocialImageAddonsDeps) {
     normalizeAppearanceMode(storedDefaultAppearanceMode) ??
     'default';
   const captureAppearanceMode = resolveCaptureAppearanceMode();
+
+  const waitForBatchCaptureJob = async (
+    initialJob: KangurSocialImageAddonsBatchJob,
+    onUpdate?: (job: KangurSocialImageAddonsBatchJob) => void
+  ): Promise<KangurSocialImageAddonsBatchJob> => {
+    let currentJob = initialJob;
+    onUpdate?.(currentJob);
+
+    for (let attempt = 0; attempt < 240; attempt += 1) {
+      const latestJob = await fetchKangurSocialImageAddonsBatchJob(initialJob.id);
+      if (latestJob) {
+        currentJob = latestJob;
+        onUpdate?.(currentJob);
+      }
+
+      if (currentJob.status === 'completed' || currentJob.status === 'failed') {
+        return currentJob;
+      }
+
+      await new Promise((resolve) => setTimeout(resolve, BATCH_CAPTURE_POLL_INTERVAL_MS));
+    }
+
+    throw new Error('Timed out waiting for Playwright capture job.');
+  };
 
   const handleCreateAddon = async (): Promise<void> => {
     const title = deps.addonForm.title.trim();
@@ -314,20 +350,97 @@ export function useSocialImageAddons(deps: SocialImageAddonsDeps) {
   };
 
   const handleBatchCapture = async (): Promise<void> => {
+    setBatchCapturePending(true);
+    setBatchCaptureJob(null);
+    setBatchCaptureMessage('Capturing screenshots...');
+    setBatchCaptureErrorMessage(null);
+
     try {
-      await runBatchCapture();
-    } catch {
-      // Toasts and telemetry are handled inside runBatchCapture.
+      const startedJob = await startBatchCapture();
+      setBatchCaptureJob(startedJob);
+      setBatchCaptureMessage(startedJob.progress?.message ?? 'Queued Playwright capture...');
+
+      const completedJob = await waitForBatchCaptureJob(startedJob, (job) => {
+        setBatchCaptureJob(job);
+        if (job.status === 'queued' || job.status === 'running') {
+          setBatchCaptureMessage(
+            job.progress?.message ??
+              `Playwright capture in progress: ${job.progress?.completedCount ?? 0} captured, ${job.progress?.remainingCount ?? 0} left of ${job.progress?.totalCount ?? 0} targets.`
+          );
+        }
+      });
+
+      if (completedJob.status !== 'completed' || !completedJob.result) {
+        throw new Error(completedJob.error || 'Batch capture failed');
+      }
+
+      handleBatchCaptureSuccess({
+        result: completedJob.result,
+        toast,
+        setBatchCaptureResult,
+        deps,
+        presetIds: completedJob.result.usedPresetIds ?? deps.batchCapturePresetIds,
+      });
+      setBatchCaptureMessage(
+        `Captured ${completedJob.result.addons.length} add-on${completedJob.result.addons.length === 1 ? '' : 's'} from the current batch.`
+      );
+    } catch (error) {
+      setBatchCaptureMessage(null);
+      setBatchCaptureErrorMessage(extractMutationErrorMessage(error, 'Batch capture failed'));
+      handleBatchCaptureFailure({ error, deps, toast });
+    } finally {
+      setBatchCapturePending(false);
+    }
+  };
+
+  const startBatchCapture = async (options?: {
+    baseUrl?: string;
+    presetIds?: string[];
+    presetLimit?: number | null;
+    playwrightPersonaId?: string | null;
+    playwrightScript?: string;
+    playwrightRoutes?: KangurSocialProgrammableCaptureRoute[];
+  }): Promise<KangurSocialImageAddonsBatchJob> => {
+    const request = resolveBatchCaptureRequest({ deps, options, toast });
+    const routeCount = request.playwrightRoutes?.length ?? 0;
+    trackKangurClientEvent(
+      'kangur_social_batch_capture_attempt',
+      deps.buildSocialContext({
+        baseUrl: request.baseUrl,
+        presetCount: request.presetIds.length,
+        presetLimit: request.presetLimit,
+        programmableRouteCount: routeCount,
+        playwrightPersonaId: request.playwrightPersonaId,
+        isProgrammableCapture: routeCount > 0,
+        async: true,
+      })
+    );
+
+    try {
+      return await startBatchCaptureMutation.mutateAsync({
+        ...request,
+        appearanceMode: captureAppearanceMode,
+      });
+    } catch (error) {
+      handleBatchCaptureFailure({ error, deps, toast });
+      throw error;
     }
   };
 
   return {
     createAddonMutation,
     batchCaptureMutation,
+    startBatchCaptureMutation,
     batchCaptureResult,
+    batchCapturePending,
+    batchCaptureJob,
+    batchCaptureMessage,
+    batchCaptureErrorMessage,
     captureAppearanceMode,
     setBatchCaptureResult,
     runBatchCapture,
+    startBatchCapture,
+    readBatchCaptureJob: fetchKangurSocialImageAddonsBatchJob,
     handleCreateAddon,
     handleBatchCapture,
   };

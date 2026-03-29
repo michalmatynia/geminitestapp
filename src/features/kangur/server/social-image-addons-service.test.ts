@@ -126,4 +126,32 @@ describe('createKangurSocialImageAddonFromPlaywright', () => {
       })
     );
   });
+
+  it('drops secure-prefixed auth cookies for localhost single captures while keeping plain cookies', async () => {
+    await createKangurSocialImageAddonFromPlaywright({
+      title: 'Hero screenshot',
+      sourceUrl: 'http://localhost:3000/landing',
+      forwardCookies:
+        '__Host-next-auth.csrf-token=csrf123; __Secure-next-auth.session-token=session456; session=abc123',
+    });
+
+    expect(mocks.enqueuePlaywrightNodeRunMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        request: expect.objectContaining({
+          contextOptions: {
+            storageState: {
+              cookies: [
+                {
+                  name: 'session',
+                  value: 'abc123',
+                  url: 'http://localhost:3000',
+                },
+              ],
+              origins: [],
+            },
+          },
+        }),
+      })
+    );
+  });
 });

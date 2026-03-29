@@ -2,7 +2,7 @@
  * @vitest-environment jsdom
  */
 
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const runtimeState = vi.hoisted(() => ({
@@ -220,44 +220,56 @@ describe('KangurParentDashboardLearnerManagementWidget', () => {
     };
   });
 
-  it('uses storefront text tokens across learner management cards and actions', () => {
+  it('uses storefront text tokens across learner management cards and actions', async () => {
     runtimeState.value = {
       ...runtimeState.value,
       isCreateLearnerModalOpen: true,
     };
+    const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
 
-    render(<KangurParentDashboardLearnerManagementWidget />);
+    try {
+      render(<KangurParentDashboardLearnerManagementWidget />);
 
-    expect(screen.getByText('Zarządzaj profilami bez opuszczania panelu')).toHaveClass(
-      '[color:var(--kangur-page-text)]'
-    );
-    expect(
-      screen.getByText(
-        'Rodzic loguje się emailem, a uczniowie dostają osobne nazwy logowania i hasła.'
-      )
-    ).toHaveClass('[color:var(--kangur-page-muted-text)]');
-    expect(screen.getByText('Login: olek02')).toHaveClass('[color:var(--kangur-page-muted-text)]');
-    expect(screen.getByText('Kliknij, aby przełączyć profil')).toHaveClass(
-      '[color:var(--kangur-page-muted-text)]'
-    );
-    expect(screen.getByText('Ada')).toHaveClass(
-      '[color:var(--kangur-page-text)]'
-    );
-    expect(screen.getByTestId('parent-create-learner-modal')).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Pokaż hasło' })).toHaveClass(
-      'h-11',
-      'w-11',
-      'touch-manipulation',
-      'select-none'
-    );
+      expect(screen.getByText('Zarządzaj profilami bez opuszczania panelu')).toHaveClass(
+        '[color:var(--kangur-page-text)]'
+      );
+      expect(
+        screen.getByText(
+          'Rodzic loguje się emailem, a uczniowie dostają osobne nazwy logowania i hasła.'
+        )
+      ).toHaveClass('[color:var(--kangur-page-muted-text)]');
+      expect(screen.getByText('Login: olek02')).toHaveClass('[color:var(--kangur-page-muted-text)]');
+      expect(screen.getByText('Kliknij, aby przełączyć profil')).toHaveClass(
+        '[color:var(--kangur-page-muted-text)]'
+      );
+      expect(screen.getByText('Ada')).toHaveClass(
+        '[color:var(--kangur-page-text)]'
+      );
+      expect(screen.getByTestId('parent-create-learner-modal')).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: 'Pokaż hasło' })).toHaveClass(
+        'h-11',
+        'w-11',
+        'touch-manipulation',
+        'select-none'
+      );
 
-    expect(screen.getByText('Zapisano dane ucznia.')).toHaveClass(
-      '[color:var(--kangur-page-muted-text)]'
-    );
+      expect(screen.getByText('Zapisano dane ucznia.')).toHaveClass(
+        '[color:var(--kangur-page-muted-text)]'
+      );
 
-    fireEvent.click(screen.getByTestId('parent-dashboard-learner-card-learner-2'));
+      await act(async () => {
+        fireEvent.click(screen.getByTestId('parent-dashboard-learner-card-learner-2'));
+      });
 
-    expect(runtimeState.value.selectLearner).toHaveBeenCalledWith('learner-2');
+      expect(runtimeState.value.selectLearner).toHaveBeenCalledWith('learner-2');
+
+      const loggedOutput = consoleErrorSpy.mock.calls
+        .flatMap((call) => call.map((value) => String(value)))
+        .join('\n');
+      expect(loggedOutput).not.toContain('`DialogContent` requires a `DialogTitle`');
+    } finally {
+      consoleErrorSpy.mockRestore();
+    }
   });
 
   it('keeps learner cards roomier on mobile layouts', () => {

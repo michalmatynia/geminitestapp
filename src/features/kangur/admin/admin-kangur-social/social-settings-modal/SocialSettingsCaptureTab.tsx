@@ -12,6 +12,7 @@ import {
 import { cn } from '@/shared/utils';
 import type {
   KangurSocialCaptureAppearanceMode,
+  KangurSocialImageAddonsBatchJob,
   KangurSocialImageAddonsBatchResult,
   KangurSocialProgrammableCaptureRoute,
 } from '@/shared/contracts/kangur-social-image-addons';
@@ -24,6 +25,10 @@ const isSocialRuntimeJobInFlight = (status: string | null | undefined): boolean 
   if (!normalized) return false;
   return normalized !== 'completed' && normalized !== 'failed';
 };
+
+const isBatchCaptureJobInFlight = (
+  status: KangurSocialImageAddonsBatchJob['status'] | null | undefined
+): boolean => status === 'queued' || status === 'running';
 
 export function SocialSettingsCaptureTab({
   addonForm,
@@ -40,6 +45,10 @@ export function SocialSettingsCaptureTab({
   clearCapturePresets,
   handleBatchCapture,
   batchCaptureMutationPending,
+  batchCapturePending,
+  batchCaptureJob,
+  batchCaptureMessage,
+  batchCaptureErrorMessage,
   batchCaptureResult,
   batchCaptureLimitSummary,
   currentVisualAnalysisJob,
@@ -68,6 +77,10 @@ export function SocialSettingsCaptureTab({
   clearCapturePresets: () => void;
   handleBatchCapture: () => void;
   batchCaptureMutationPending: boolean;
+  batchCapturePending: boolean;
+  batchCaptureJob: KangurSocialImageAddonsBatchJob | null;
+  batchCaptureMessage: string | null;
+  batchCaptureErrorMessage: string | null;
   batchCaptureResult: KangurSocialImageAddonsBatchResult | null;
   batchCaptureLimitSummary: string;
   currentVisualAnalysisJob: {
@@ -168,9 +181,20 @@ export function SocialSettingsCaptureTab({
     isSocialRuntimeJobInFlight(currentVisualAnalysisJob?.status) ||
     isSocialRuntimeJobInFlight(currentGenerationJob?.status) ||
     isSocialRuntimeJobInFlight(currentPipelineJob?.status);
+  const hasBlockingCaptureJob =
+    batchCapturePending || isBatchCaptureJobInFlight(batchCaptureJob?.status);
+  const hasCaptureActionLock = hasBlockingRuntimeJob || hasBlockingCaptureJob;
   const captureActionTitle = hasBlockingRuntimeJob
     ? 'Wait for the current Social runtime job to finish.'
+    : hasBlockingCaptureJob
+      ? 'Wait for the current Playwright capture job to finish.'
     : undefined;
+  const batchCaptureCompletedCount = batchCaptureJob?.progress?.completedCount ?? 0;
+  const batchCaptureRemainingCount = batchCaptureJob?.progress?.remainingCount ?? 0;
+  const batchCaptureTotalCount = batchCaptureJob?.progress?.totalCount ?? 0;
+  const batchCaptureFailureCount = batchCaptureJob?.progress?.failureCount ?? 0;
+  const shouldShowBatchCaptureProgress =
+    isBatchCaptureJobInFlight(batchCaptureJob?.status) && batchCaptureTotalCount > 0;
 
   return (
     <div className='space-y-4'>
@@ -227,7 +251,7 @@ export function SocialSettingsCaptureTab({
               value={addonForm.title}
               onChange={(e) => setAddonForm((prev) => ({ ...prev, title: e.target.value }))}
               aria-label='Add-on title'
-              disabled={hasBlockingRuntimeJob}
+              disabled={hasCaptureActionLock}
               title={captureActionTitle}
             />
             <Input
@@ -236,7 +260,7 @@ export function SocialSettingsCaptureTab({
               value={addonForm.sourceUrl}
               onChange={(e) => setAddonForm((prev) => ({ ...prev, sourceUrl: e.target.value }))}
               aria-label='Source URL'
-              disabled={hasBlockingRuntimeJob}
+              disabled={hasCaptureActionLock}
               title={captureActionTitle}
             />
             <Input
@@ -244,7 +268,7 @@ export function SocialSettingsCaptureTab({
               value={addonForm.selector}
               onChange={(e) => setAddonForm((prev) => ({ ...prev, selector: e.target.value }))}
               aria-label='Optional selector'
-              disabled={hasBlockingRuntimeJob}
+              disabled={hasCaptureActionLock}
               title={captureActionTitle}
             />
             <Input
@@ -255,7 +279,7 @@ export function SocialSettingsCaptureTab({
               value={addonForm.waitForMs}
               onChange={(e) => setAddonForm((prev) => ({ ...prev, waitForMs: e.target.value }))}
               aria-label='Wait before capture (ms)'
-              disabled={hasBlockingRuntimeJob}
+              disabled={hasCaptureActionLock}
               title={captureActionTitle}
             />
             <Input
@@ -263,7 +287,7 @@ export function SocialSettingsCaptureTab({
               value={addonForm.description}
               onChange={(e) => setAddonForm((prev) => ({ ...prev, description: e.target.value }))}
               aria-label='Optional description'
-              disabled={hasBlockingRuntimeJob}
+              disabled={hasCaptureActionLock}
               title={captureActionTitle}
             />
           </div>
@@ -275,7 +299,7 @@ export function SocialSettingsCaptureTab({
               !addonForm.title.trim() ||
               !addonForm.sourceUrl.trim() ||
               createAddonMutationPending ||
-              hasBlockingRuntimeJob
+              hasCaptureActionLock
             }
             title={captureActionTitle}
           >
@@ -404,7 +428,7 @@ export function SocialSettingsCaptureTab({
                 value={batchCaptureBaseUrl}
                 onChange={(e) => setBatchCaptureBaseUrl(e.target.value)}
                 size='sm'
-                disabled={hasBlockingRuntimeJob}
+                disabled={hasCaptureActionLock}
                 title={captureActionTitle}
               />
             </FormField>
@@ -417,7 +441,7 @@ export function SocialSettingsCaptureTab({
                   ...['5', '10', '20', '50'].map((v) => ({ value: v, label: v })),
                 ]}
                 size='sm'
-                disabled={hasBlockingRuntimeJob}
+                disabled={hasCaptureActionLock}
                 title={captureActionTitle}
               />
             </FormField>
@@ -431,7 +455,7 @@ export function SocialSettingsCaptureTab({
                   variant='ghost'
                   size='xs'
                   onClick={selectAllCapturePresets}
-                  disabled={hasBlockingRuntimeJob}
+                  disabled={hasCaptureActionLock}
                   title={captureActionTitle}
                 >
                   Select all
@@ -441,7 +465,7 @@ export function SocialSettingsCaptureTab({
                   variant='ghost'
                   size='xs'
                   onClick={clearCapturePresets}
-                  disabled={hasBlockingRuntimeJob}
+                  disabled={hasCaptureActionLock}
                   title={captureActionTitle}
                 >
                   Clear
@@ -454,7 +478,7 @@ export function SocialSettingsCaptureTab({
                   key={preset.id}
                   type='button'
                   onClick={() => handleToggleCapturePreset(preset.id)}
-                  disabled={hasBlockingRuntimeJob}
+                  disabled={hasCaptureActionLock}
                   title={captureActionTitle}
                   className={cn(
                     'inline-flex items-center rounded-lg border px-2 py-1 text-[11px] font-medium transition-colors',
@@ -474,14 +498,59 @@ export function SocialSettingsCaptureTab({
               disabled={
                 batchCapturePresetIds.length === 0 ||
                 batchCaptureMutationPending ||
-                hasBlockingRuntimeJob
+                hasCaptureActionLock
               }
               title={captureActionTitle}
             >
-              {batchCaptureMutationPending ? 'Capturing...' : 'Launch batch capture'}
+              {batchCapturePending || batchCaptureMutationPending
+                ? 'Capturing...'
+                : 'Launch batch capture'}
             </Button>
             <div className='text-xs text-muted-foreground'>{batchCaptureLimitSummary}</div>
           </div>
+          {shouldShowBatchCaptureProgress ? (
+            <div className='grid grid-cols-3 gap-2 text-xs'>
+              <div className='rounded-xl border border-border/60 bg-background/40 px-3 py-2'>
+                <div className='text-[10px] uppercase tracking-wide text-muted-foreground'>
+                  Captured
+                </div>
+                <div className='mt-1 font-semibold text-foreground'>
+                  {batchCaptureCompletedCount}
+                </div>
+              </div>
+              <div className='rounded-xl border border-border/60 bg-background/40 px-3 py-2'>
+                <div className='text-[10px] uppercase tracking-wide text-muted-foreground'>
+                  Left
+                </div>
+                <div className='mt-1 font-semibold text-foreground'>
+                  {batchCaptureRemainingCount}
+                </div>
+              </div>
+              <div className='rounded-xl border border-border/60 bg-background/40 px-3 py-2'>
+                <div className='text-[10px] uppercase tracking-wide text-muted-foreground'>
+                  Total
+                </div>
+                <div className='mt-1 font-semibold text-foreground'>
+                  {batchCaptureTotalCount}
+                  {batchCaptureFailureCount > 0 ? (
+                    <span className='ml-2 text-[10px] font-medium text-destructive'>
+                      {batchCaptureFailureCount} failed
+                    </span>
+                  ) : null}
+                </div>
+              </div>
+            </div>
+          ) : null}
+          {batchCaptureMessage ? (
+            <div className='rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-3 py-2 text-xs text-emerald-900 dark:text-emerald-200'>
+              {batchCaptureMessage}
+            </div>
+          ) : null}
+          {batchCaptureErrorMessage ? (
+            <div className='rounded-xl border border-destructive/30 bg-destructive/10 px-3 py-2 text-xs text-destructive'>
+              {batchCaptureErrorMessage}
+            </div>
+          ) : null}
           {batchCaptureResult && (
             <div className='rounded-xl border border-border/60 bg-background/40 p-3 text-xs'>
               <div className='font-semibold text-foreground'>Last batch: {batchCaptureResult.runId}</div>

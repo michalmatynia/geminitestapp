@@ -1,6 +1,7 @@
 'use client';
 
 import { KangurDialog } from '@/features/kangur/ui/components/KangurDialog';
+import { KangurDialogMeta } from '@/features/kangur/ui/components/KangurDialogMeta';
 import { KangurPanelCloseButton } from '@/features/kangur/ui/components/KangurPanelCloseButton';
 import {
   KangurButton,
@@ -61,6 +62,14 @@ export function renderKangurChoiceDialog(props: KangurChoiceDialogProps): React.
       contentVariant='choice'
       contentProps={contentId ? { id: contentId } : undefined}
     >
+        <KangurDialogMeta
+          title={title}
+          description={
+            <>
+              Domyślnie: {defaultChoiceLabel}. Aktualny wybór: {currentChoiceLabel}.
+            </>
+          }
+        />
         {header}
         <KangurGlassPanel
           className={`flex w-full flex-col ${KANGUR_PANEL_GAP_CLASSNAME}`}

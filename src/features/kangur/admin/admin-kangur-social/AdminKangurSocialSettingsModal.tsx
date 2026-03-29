@@ -69,6 +69,10 @@ export function AdminKangurSocialSettingsModal({
     addonForm,
     batchCaptureBaseUrl,
     batchCaptureMutation,
+    batchCapturePending,
+    batchCaptureJob,
+    batchCaptureMessage,
+    batchCaptureErrorMessage,
     batchCapturePresetIds,
     batchCapturePresetLimit,
     batchCaptureResult,
@@ -285,6 +289,10 @@ export function AdminKangurSocialSettingsModal({
               void handleBatchCapture();
             }}
             batchCaptureMutationPending={batchCaptureMutation.isPending}
+            batchCapturePending={batchCapturePending}
+            batchCaptureJob={batchCaptureJob}
+            batchCaptureMessage={batchCaptureMessage}
+            batchCaptureErrorMessage={batchCaptureErrorMessage}
             batchCaptureResult={batchCaptureResult}
             batchCaptureLimitSummary={batchCaptureLimitSummary}
             currentVisualAnalysisJob={currentVisualAnalysisJob}

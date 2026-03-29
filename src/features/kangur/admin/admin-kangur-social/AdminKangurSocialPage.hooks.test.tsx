@@ -28,7 +28,8 @@ const {
   pipelineRunMock,
   pipelineRunWithOverridesMock,
   pipelineRunFreshMock,
-  runBatchCaptureMock,
+  startBatchCaptureMock,
+  readBatchCaptureJobMock,
   patchMutateAsyncMock,
   setImageAddonIdsMock,
   setImageAssetsMock,
@@ -50,7 +51,8 @@ const {
   pipelineRunMock: vi.fn(),
   pipelineRunWithOverridesMock: vi.fn(),
   pipelineRunFreshMock: vi.fn(),
-  runBatchCaptureMock: vi.fn(),
+  startBatchCaptureMock: vi.fn(),
+  readBatchCaptureJobMock: vi.fn(),
   patchMutateAsyncMock: vi.fn(),
   setImageAddonIdsMock: vi.fn(),
   setImageAssetsMock: vi.fn(),
@@ -101,6 +103,25 @@ const basePost = {
   id: 'post-1',
   status: 'draft' as const,
 };
+
+const createBatchCaptureJob = (overrides?: Record<string, unknown>) => ({
+  id: 'job-1',
+  runId: 'run-1',
+  status: 'queued',
+  progress: {
+    processedCount: 0,
+    completedCount: 0,
+    failureCount: 0,
+    remainingCount: 1,
+    totalCount: 1,
+    message: 'Queued Playwright capture...',
+  },
+  result: null,
+  error: null,
+  createdAt: '2026-03-29T10:00:00.000Z',
+  updatedAt: '2026-03-29T10:00:00.000Z',
+  ...overrides,
+});
 
 const createSettingsState = (overrides?: Record<string, unknown>) => ({
   linkedinConnectionId: 'conn-1',
@@ -196,16 +217,31 @@ describe('useAdminKangurSocialPage', () => {
     pipelineRunMock.mockResolvedValue(undefined);
     pipelineRunWithOverridesMock.mockResolvedValue(undefined);
     pipelineRunFreshMock.mockResolvedValue(undefined);
-    runBatchCaptureMock.mockResolvedValue({
-      addons: [
-        {
-          id: 'addon-1',
-          imageAsset: { id: 'asset-1', url: '/capture.png' },
+    startBatchCaptureMock.mockResolvedValue(createBatchCaptureJob());
+    readBatchCaptureJobMock.mockResolvedValue(
+      createBatchCaptureJob({
+        status: 'completed',
+        progress: {
+          processedCount: 1,
+          completedCount: 1,
+          failureCount: 0,
+          remainingCount: 0,
+          totalCount: 1,
+          message: 'Playwright capture completed.',
         },
-      ],
-      failures: [],
-      usedPresetCount: 1,
-    });
+        result: {
+          addons: [
+            {
+              id: 'addon-1',
+              imageAsset: { id: 'asset-1', url: '/capture.png' },
+            },
+          ],
+          failures: [],
+          usedPresetCount: 1,
+          runId: 'run-1',
+        },
+      })
+    );
     settingsHandleSaveProgrammableCaptureDefaultsMock.mockResolvedValue(true);
 
     useSocialSettingsMock.mockReturnValue(createSettingsState());
@@ -231,9 +267,15 @@ describe('useAdminKangurSocialPage', () => {
       createAddonMutation: {},
       batchCaptureMutation: {},
       batchCaptureResult: null,
+      batchCapturePending: false,
+      batchCaptureJob: null,
+      batchCaptureMessage: null,
+      batchCaptureErrorMessage: null,
       captureAppearanceMode: 'default',
       setBatchCaptureResult: vi.fn(),
-      runBatchCapture: runBatchCaptureMock,
+      startBatchCapture: startBatchCaptureMock,
+      readBatchCaptureJob: readBatchCaptureJobMock,
+      runBatchCapture: vi.fn(),
       handleCreateAddon: vi.fn(),
       handleBatchCapture: vi.fn(),
     });
@@ -272,7 +314,8 @@ describe('useAdminKangurSocialPage', () => {
       await result.current.handleCaptureImagesOnly();
     });
 
-    expect(runBatchCaptureMock).toHaveBeenCalledTimes(1);
+    expect(startBatchCaptureMock).toHaveBeenCalledTimes(1);
+    expect(readBatchCaptureJobMock).toHaveBeenCalledWith('job-1');
     expect(patchMutateAsyncMock).toHaveBeenCalledWith({
       id: 'post-1',
       updates: {
@@ -289,6 +332,12 @@ describe('useAdminKangurSocialPage', () => {
       { id: 'asset-1', url: '/capture.png' },
     ]);
     expect(result.current.captureOnlyPending).toBe(false);
+    expect(result.current.captureOnlyBatchCaptureJob).toEqual(
+      expect.objectContaining({
+        id: 'job-1',
+        status: 'completed',
+      })
+    );
     expect(result.current.captureOnlyErrorMessage).toBeNull();
     expect(result.current.captureOnlyMessage).toBe(
       'Captured 1 screenshot from 1 preset and linked them to the draft.'
@@ -302,7 +351,7 @@ describe('useAdminKangurSocialPage', () => {
       await result.current.handleRunProgrammablePlaywrightCaptureAndPipeline();
     });
 
-    expect(runBatchCaptureMock).toHaveBeenCalledWith({
+    expect(startBatchCaptureMock).toHaveBeenCalledWith({
       baseUrl: 'https://capture.example.com',
       presetIds: [],
       presetLimit: null,
@@ -327,6 +376,12 @@ describe('useAdminKangurSocialPage', () => {
         { id: 'asset-1', url: '/capture.png' },
       ],
     });
+    expect(result.current.programmableCaptureBatchCaptureJob).toEqual(
+      expect.objectContaining({
+        id: 'job-1',
+        status: 'completed',
+      })
+    );
     expect(result.current.programmableCapturePending).toBe(false);
     expect(result.current.programmableCaptureErrorMessage).toBeNull();
   });
@@ -469,7 +524,7 @@ describe('useAdminKangurSocialPage', () => {
 
     expect(pipelineRunMock).toHaveBeenCalledTimes(1);
     expect(pipelineRunFreshMock).toHaveBeenCalledTimes(1);
-    expect(runBatchCaptureMock).not.toHaveBeenCalled();
+    expect(startBatchCaptureMock).not.toHaveBeenCalled();
   });
 
   it('resets saved programmable defaults and restores the local advanced-capture draft state', async () => {

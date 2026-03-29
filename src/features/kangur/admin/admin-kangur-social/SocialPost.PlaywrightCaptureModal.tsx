@@ -45,6 +45,7 @@ export function SocialPostPlaywrightCaptureModal(): React.JSX.Element {
     setProgrammableCaptureScript,
     programmableCaptureRoutes,
     programmableCapturePending,
+    programmableCaptureBatchCaptureJob,
     programmableCaptureMessage,
     programmableCaptureErrorMessage,
     handleAddProgrammableCaptureRoute,
@@ -151,6 +152,17 @@ export function SocialPostPlaywrightCaptureModal(): React.JSX.Element {
       programmableCaptureRoutes,
     ]
   );
+  const programmableCaptureCompletedCount =
+    programmableCaptureBatchCaptureJob?.progress?.completedCount ?? 0;
+  const programmableCaptureRemainingCount =
+    programmableCaptureBatchCaptureJob?.progress?.remainingCount ?? 0;
+  const programmableCaptureTotalCount =
+    programmableCaptureBatchCaptureJob?.progress?.totalCount ?? 0;
+  const programmableCaptureFailureCount =
+    programmableCaptureBatchCaptureJob?.progress?.failureCount ?? 0;
+  const shouldShowProgrammableCaptureProgress =
+    isSocialRuntimeJobInFlight(programmableCaptureBatchCaptureJob?.status) &&
+    programmableCaptureTotalCount > 0;
   const captureAndRunPipelineText = isPipelineJobInFlight
     ? 'Full pipeline in progress...'
     : hasBlockingRuntimeJob
@@ -300,6 +312,40 @@ export function SocialPostPlaywrightCaptureModal(): React.JSX.Element {
         {!activePost ? (
           <div className='rounded-xl border border-border/60 bg-background/40 px-3 py-2 text-sm text-muted-foreground'>
             No active draft is selected. You can still edit the programmable Playwright config and save it as defaults, but capture actions stay disabled until a draft is active.
+          </div>
+        ) : null}
+
+        {shouldShowProgrammableCaptureProgress ? (
+          <div className='grid grid-cols-3 gap-2 text-xs'>
+            <div className='rounded-xl border border-border/60 bg-background/40 px-3 py-2'>
+              <div className='text-[10px] uppercase tracking-wide text-muted-foreground'>
+                Captured
+              </div>
+              <div className='mt-1 font-semibold text-foreground'>
+                {programmableCaptureCompletedCount}
+              </div>
+            </div>
+            <div className='rounded-xl border border-border/60 bg-background/40 px-3 py-2'>
+              <div className='text-[10px] uppercase tracking-wide text-muted-foreground'>
+                Left
+              </div>
+              <div className='mt-1 font-semibold text-foreground'>
+                {programmableCaptureRemainingCount}
+              </div>
+            </div>
+            <div className='rounded-xl border border-border/60 bg-background/40 px-3 py-2'>
+              <div className='text-[10px] uppercase tracking-wide text-muted-foreground'>
+                Total
+              </div>
+              <div className='mt-1 font-semibold text-foreground'>
+                {programmableCaptureTotalCount}
+                {programmableCaptureFailureCount > 0 ? (
+                  <span className='ml-2 text-[10px] font-medium text-destructive'>
+                    {programmableCaptureFailureCount} failed
+                  </span>
+                ) : null}
+              </div>
+            </div>
           </div>
         ) : null}
 

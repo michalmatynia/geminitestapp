@@ -2,11 +2,9 @@
 
 import { useEffect, useRef } from 'react';
 
-import {
-  KangurPrimaryNavigation,
-  type KangurPrimaryNavigationProps,
-} from '@/features/kangur/ui/components/KangurPrimaryNavigation';
+import { KangurPrimaryNavigation } from '@/features/kangur/ui/components/KangurPrimaryNavigation';
 import { useAccessibleKangurPrimaryNavigation } from '@/features/kangur/ui/components/KangurPrimaryNavigation.access';
+import type { KangurPrimaryNavigationProps } from '@/features/kangur/ui/components/KangurPrimaryNavigation.types';
 import { useOptionalKangurTopNavigation } from '@/features/kangur/ui/context/KangurTopNavigationContext';
 
 let kangurTopNavigationControllerId = 0;

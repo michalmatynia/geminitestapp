@@ -247,7 +247,7 @@ vi.mock('next/link', () => ({
 }));
 
 vi.mock('next/navigation', () => ({
-  usePathname: () => pathnameMock(),
+  usePathname: (): string => pathnameMock() as string,
   useRouter: () => ({
     back: vi.fn(),
     prefetch: prefetchMock,
@@ -255,23 +255,23 @@ vi.mock('next/navigation', () => ({
     refresh: vi.fn(),
     replace: replaceMock,
   }),
-  useSearchParams: () => searchParamsMock(),
+  useSearchParams: (): URLSearchParams => searchParamsMock() as URLSearchParams,
   redirect: vi.fn(),
   permanentRedirect: vi.fn(),
   notFound: vi.fn(),
 }));
 
 vi.mock('next-auth/react', () => ({
-  useSession: () => sessionMock(),
+  useSession: (): unknown => sessionMock() as unknown,
 }));
 
 vi.mock('next-intl', () => ({
   NextIntlClientProvider: ({ children }: { children: React.ReactNode }) => children,
-  useLocale: () => localeMock(),
+  useLocale: (): string => localeMock() as string,
   useTranslations:
     (namespace?: string) =>
     (key: string, values?: Record<string, string | number>) => {
-      const locale = localeMock() || 'pl';
+      const locale = (localeMock() as string | undefined) || 'pl';
       const dictionary =
         translationMessages[locale as keyof typeof translationMessages] ?? translationMessages.pl;
       const namespaceParts = (namespace ?? '').split('.').filter(Boolean);
@@ -307,7 +307,7 @@ vi.mock('@/i18n/navigation', () => ({
   getPathname: vi.fn(),
   permanentRedirect: vi.fn(),
   redirect: vi.fn(),
-  usePathname: () => pathnameMock(),
+  usePathname: (): string => pathnameMock() as string,
   useRouter: () => ({
     prefetch: prefetchMock,
     push: pushMock,
@@ -355,19 +355,19 @@ vi.mock('@/features/kangur/ui/context/KangurRouteTransitionContext', () => ({
   useOptionalKangurRouteTransitionActions: () => ({
     startRouteTransition: startRouteTransitionMock,
   }),
-  useOptionalKangurRouteTransitionState: () => routeTransitionStateMock(),
+  useOptionalKangurRouteTransitionState: (): unknown => routeTransitionStateMock() as unknown,
 }));
 
 vi.mock('@/features/kangur/ui/FrontendPublicOwnerContext', () => ({
-  useOptionalFrontendPublicOwner: () => frontendPublicOwnerMock(),
+  useOptionalFrontendPublicOwner: (): unknown => frontendPublicOwnerMock() as unknown,
 }));
 
 vi.mock('@/features/kangur/ui/context/KangurAuthContext', () => ({
-  useOptionalKangurAuth: () => optionalAuthMock(),
+  useOptionalKangurAuth: (): unknown => optionalAuthMock() as unknown,
 }));
 
 vi.mock('@/features/kangur/ui/context/KangurSubjectFocusContext', () => ({
-  useKangurSubjectFocus: () => useKangurSubjectFocusMock(),
+  useKangurSubjectFocus: (): unknown => useKangurSubjectFocusMock() as unknown,
 }));
 
 vi.mock('@/features/kangur/ui/context/KangurAgeGroupFocusContext', () => ({
@@ -378,12 +378,12 @@ vi.mock('@/features/kangur/ui/context/KangurAgeGroupFocusContext', () => ({
 }));
 
 vi.mock('@/features/kangur/ui/context/KangurAiTutorContext', () => ({
-  useOptionalKangurAiTutor: () => optionalTutorMock(),
+  useOptionalKangurAiTutor: (): unknown => optionalTutorMock() as unknown,
   useKangurAiTutorDeferredActivationBridge: vi.fn(),
 }));
 
 vi.mock('@/features/kangur/ui/hooks/useKangurCoarsePointer', () => ({
-  useKangurCoarsePointer: () => useKangurCoarsePointerMock(),
+  useKangurCoarsePointer: (): boolean => useKangurCoarsePointerMock() as boolean,
 }));
 
 vi.mock('@/features/kangur/ui/hooks/useKangurPageContent', () => ({
@@ -451,7 +451,7 @@ export const setViewport = ({ width, matches }: { width: number; matches: boolea
   Object.defineProperty(window, 'matchMedia', {
     writable: true,
     configurable: true,
-    value: vi.fn().mockImplementation((query) => ({
+    value: vi.fn().mockImplementation((query: string) => ({
       matches,
       media: query,
       onchange: null,
@@ -476,16 +476,29 @@ export let KangurPrimaryNavigation: typeof import('@/features/kangur/ui/componen
 export let persistTutorVisibilityHidden: typeof import('@/features/kangur/ui/components/KangurAiTutorWidget.storage').persistTutorVisibilityHidden;
 export let KangurTutorAnchorProvider: typeof import('@/features/kangur/ui/context/KangurTutorAnchorContext').KangurTutorAnchorProvider;
 
+let sharedKangurPrimaryNavigationTestImportsPromise: Promise<void> | null = null;
+
+const loadKangurPrimaryNavigationTestImports = async (): Promise<void> => {
+  if (sharedKangurPrimaryNavigationTestImportsPromise) {
+    return sharedKangurPrimaryNavigationTestImportsPromise;
+  }
+
+  sharedKangurPrimaryNavigationTestImportsPromise = (async () => {
+    ({ CmsStorefrontAppearanceProvider } = await import('@/features/cms/public'));
+    ({ KangurPrimaryNavigation } = await import('@/features/kangur/ui/components/KangurPrimaryNavigation'));
+    ({ persistTutorVisibilityHidden } = await import('@/features/kangur/ui/components/KangurAiTutorWidget.storage'));
+    ({ KangurTutorAnchorProvider } = await import('@/features/kangur/ui/context/KangurTutorAnchorContext'));
+  })();
+
+  return sharedKangurPrimaryNavigationTestImportsPromise;
+};
 
 export const setupKangurPrimaryNavigationTest = () => {
   const originalLocation = window.location;
 
   beforeEach(async () => {
     vi.clearAllMocks();
-    ({ CmsStorefrontAppearanceProvider } = await import('@/features/cms/public'));
-    ({ KangurPrimaryNavigation } = await import('@/features/kangur/ui/components/KangurPrimaryNavigation'));
-    ({ persistTutorVisibilityHidden } = await import('@/features/kangur/ui/components/KangurAiTutorWidget.storage'));
-    ({ KangurTutorAnchorProvider } = await import('@/features/kangur/ui/context/KangurTutorAnchorContext'));
+    await loadKangurPrimaryNavigationTestImports();
     ageGroupState.value = 'ten_year_old';
     routeTransitionStateMock.mockReturnValue(null);
     frontendPublicOwnerMock.mockReturnValue(null);

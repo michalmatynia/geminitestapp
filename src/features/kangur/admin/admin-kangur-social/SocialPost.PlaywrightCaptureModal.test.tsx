@@ -333,6 +333,78 @@ describe('SocialPostPlaywrightCaptureModal', () => {
     expect(handleCloseProgrammablePlaywrightModal).toHaveBeenCalledTimes(1);
   });
 
+  it('shows the live programmable capture progress message while the batch job is running', () => {
+    usePlaywrightPersonasMock.mockReturnValue({
+      data: [],
+      isLoading: false,
+      error: null,
+    });
+    useSocialPostContextMock.mockReturnValue({
+      activePost: { id: 'post-1' },
+      isProgrammablePlaywrightModalOpen: true,
+      handleCloseProgrammablePlaywrightModal: vi.fn(),
+      captureAppearanceMode: 'default',
+      programmableCaptureBaseUrl: 'https://example.com',
+      setProgrammableCaptureBaseUrl: vi.fn(),
+      programmableCapturePersonaId: '',
+      setProgrammableCapturePersonaId: vi.fn(),
+      programmableCaptureScript: 'return input.captures;',
+      setProgrammableCaptureScript: vi.fn(),
+      programmableCaptureRoutes: [
+        {
+          id: 'route-1',
+          title: 'Pricing page',
+          path: '/pricing',
+          description: '',
+          selector: '',
+          waitForMs: 0,
+          waitForSelectorMs: 10000,
+        },
+      ],
+      programmableCapturePending: true,
+      programmableCaptureBatchCaptureJob: {
+        id: 'capture-job-1',
+        runId: 'capture-run-1',
+        status: 'running',
+        progress: {
+          processedCount: 2,
+          completedCount: 1,
+          failureCount: 1,
+          remainingCount: 2,
+          totalCount: 3,
+          message: 'Playwright capture in progress: 1 captured, 2 left of 3 targets. 1 failed.',
+        },
+        result: null,
+        error: null,
+        createdAt: '2026-03-29T10:00:00.000Z',
+        updatedAt: '2026-03-29T10:00:01.000Z',
+      },
+      programmableCaptureMessage:
+        'Playwright capture in progress: 1 captured, 2 left of 3 targets. 1 failed.',
+      programmableCaptureErrorMessage: null,
+      handleAddProgrammableCaptureRoute: vi.fn(),
+      handleUpdateProgrammableCaptureRoute: vi.fn(),
+      handleRemoveProgrammableCaptureRoute: vi.fn(),
+      handleSeedProgrammableCaptureRoutesFromPresets: vi.fn(),
+      handleResetProgrammableCaptureScript: vi.fn(),
+      handleSaveProgrammableCaptureDefaults: vi.fn(),
+      handleRunProgrammablePlaywrightCapture: vi.fn(),
+      handleRunProgrammablePlaywrightCaptureAndPipeline: vi.fn(),
+      canGenerateSocialDraft: true,
+      currentVisualAnalysisJob: null,
+      currentGenerationJob: null,
+      currentPipelineJob: null,
+      socialDraftBlockedReason: null,
+    });
+
+    render(<SocialPostPlaywrightCaptureModal />);
+
+    expect(
+      screen.getByText('Playwright capture in progress: 1 captured, 2 left of 3 targets. 1 failed.')
+    ).toBeInTheDocument();
+    expect(screen.getByText('1 failed')).toBeInTheDocument();
+  });
+
   it('allows saving defaults without an active draft while keeping capture actions disabled', () => {
     const handleSaveProgrammableCaptureDefaults = vi.fn();
 

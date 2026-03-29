@@ -2,8 +2,8 @@
 
 import { useMemo } from 'react';
 
-import type { KangurPrimaryNavigationProps } from '@/features/kangur/ui/components/KangurPrimaryNavigation';
 import { useKangurPageAccess } from '@/features/kangur/ui/hooks/useKangurPageAccess';
+import type { KangurPrimaryNavigationProps } from '@/features/kangur/ui/components/KangurPrimaryNavigation.types';
 
 export const resolveAccessibleKangurPrimaryNavigation = (
   navigation: KangurPrimaryNavigationProps,

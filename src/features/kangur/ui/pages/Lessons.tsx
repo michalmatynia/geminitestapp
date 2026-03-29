@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState, type ComponentProps } from 'react';
 import { useTranslations } from 'next-intl';
-import type { KangurPrimaryNavigationProps } from '@/features/kangur/ui/components/KangurPrimaryNavigation';
+import type { KangurPrimaryNavigationProps } from '@/features/kangur/ui/components/KangurPrimaryNavigation.types';
 import { KangurTopNavigationController } from '@/features/kangur/ui/components/KangurTopNavigationController';
 import { LazyAnimatePresence } from '@/features/kangur/ui/components/LazyAnimatePresence';
 import { KangurStandardPageLayout } from '@/features/kangur/ui/components/KangurStandardPageLayout';
@@ -163,13 +163,14 @@ function useLessonsPageNavigation(input: {
 
 function useLessonsDeferredEnhancementsState(input: {
   activeLesson: ReturnType<typeof useLessons>['activeLesson'];
+  canStartDeferredEnhancements: boolean;
   isRouteTransitionIdle: boolean;
 }): {
   docsTooltipsEnabled: boolean;
   isDeferredEnhancementsReady: boolean;
   onDocsTooltipsResolved: (enabled: boolean) => void;
 } {
-  const { activeLesson, isRouteTransitionIdle } = input;
+  const { activeLesson, canStartDeferredEnhancements, isRouteTransitionIdle } = input;
   const [isDeferredEnhancementsReady, setIsDeferredEnhancementsReady] = useState(Boolean(activeLesson));
   const [docsTooltipsEnabled, setDocsTooltipsEnabled] = useState(false);
   const onDocsTooltipsResolved = useCallback((enabled: boolean) => {
@@ -190,6 +191,10 @@ function useLessonsDeferredEnhancementsState(input: {
       return;
     }
 
+    if (!canStartDeferredEnhancements) {
+      return;
+    }
+
     if (typeof window.requestIdleCallback === 'function') {
       const idleId = window.requestIdleCallback(() => {
         setIsDeferredEnhancementsReady(true);
@@ -207,7 +212,7 @@ function useLessonsDeferredEnhancementsState(input: {
     return () => {
       window.clearTimeout(timeoutId);
     };
-  }, [activeLesson, isDeferredEnhancementsReady, isRouteTransitionIdle]);
+  }, [activeLesson, canStartDeferredEnhancements, isDeferredEnhancementsReady, isRouteTransitionIdle]);
 
   return {
     docsTooltipsEnabled,
@@ -270,6 +275,8 @@ function LessonsContent() {
     progress,
     guestPlayerName,
     setGuestPlayerName,
+    isLessonSectionsLoading,
+    shouldShowLessonsCatalogSkeleton,
   } = useLessons();
   const { openLoginModal } = useKangurLoginModal();
   const { user, logout } = auth;
@@ -304,9 +311,12 @@ function LessonsContent() {
     setGuestPlayerName,
     user,
   });
+  const canStartDeferredEnhancements =
+    Boolean(activeLesson) || (!shouldShowLessonsCatalogSkeleton && !isLessonSectionsLoading);
   const { docsTooltipsEnabled, isDeferredEnhancementsReady, onDocsTooltipsResolved } =
     useLessonsDeferredEnhancementsState({
       activeLesson,
+      canStartDeferredEnhancements,
       isRouteTransitionIdle,
     });
 

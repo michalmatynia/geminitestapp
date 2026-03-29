@@ -3,11 +3,13 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 const {
   resolveKangurActorMock,
   createKangurSocialImageAddonsBatchMock,
+  startKangurSocialImageAddonsBatchJobMock,
   captureExceptionMock,
   logKangurServerEventMock,
 } = vi.hoisted(() => ({
   resolveKangurActorMock: vi.fn(),
   createKangurSocialImageAddonsBatchMock: vi.fn(),
+  startKangurSocialImageAddonsBatchJobMock: vi.fn(),
   captureExceptionMock: vi.fn(),
   logKangurServerEventMock: vi.fn(),
 }));
@@ -23,7 +25,8 @@ vi.mock('@/features/kangur/server/social-image-addons-batch', () => ({
 
 vi.mock('@/features/kangur/server/social-image-addons-batch-jobs', () => ({
   readKangurSocialImageAddonsBatchJob: vi.fn(),
-  startKangurSocialImageAddonsBatchJob: vi.fn(),
+  startKangurSocialImageAddonsBatchJob: (...args: unknown[]) =>
+    startKangurSocialImageAddonsBatchJobMock(...args),
 }));
 
 vi.mock('@/features/kangur/observability/server', () => ({
@@ -91,6 +94,118 @@ describe('postKangurSocialImageAddonsBatchHandler', () => {
       expect.objectContaining({
         action: 'apiBatch',
         baseUrl: 'https://kangur.app',
+      })
+    );
+  });
+
+  it('forwards the raw request cookie header to sync batch capture', async () => {
+    createKangurSocialImageAddonsBatchMock.mockResolvedValueOnce({
+      runId: 'social-batch-run-1',
+      addons: [],
+      failures: [],
+      totals: {
+        completed: 0,
+        failed: 0,
+        total: 0,
+      },
+    });
+
+    const url = 'http://localhost/api/kangur/social-image-addons/batch';
+    const request = Object.assign(
+      new Request(url, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          cookie:
+            '__Host-next-auth.csrf-token=csrf123; __Secure-next-auth.session-token=session456',
+        },
+        body: JSON.stringify({
+          baseUrl: 'https://kangur.app',
+          presetIds: ['game'],
+        }),
+      }),
+      {
+        nextUrl: new URL(url),
+      }
+    ) as Parameters<typeof wrappedPostHandler>[0];
+
+    const response = await wrappedPostHandler(request);
+
+    expect(response.status).toBe(200);
+    expect(createKangurSocialImageAddonsBatchMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        baseUrl: 'https://kangur.app',
+        createdBy: 'admin-1',
+        forwardCookies:
+          '__Host-next-auth.csrf-token=csrf123; __Secure-next-auth.session-token=session456',
+        presetIds: ['game'],
+      })
+    );
+  });
+
+  it('forwards the raw request cookie header to queued batch capture jobs', async () => {
+    startKangurSocialImageAddonsBatchJobMock.mockResolvedValueOnce({
+      id: 'social-batch-job-1',
+      runId: 'social-batch-run-1',
+      status: 'queued',
+      createdAt: '2026-03-29T20:00:00.000Z',
+      updatedAt: '2026-03-29T20:00:00.000Z',
+      progress: {
+        completedCount: 0,
+        failedCount: 0,
+        totalCount: 1,
+      },
+      requestedBy: 'admin-1',
+      input: {
+        baseUrl: 'https://kangur.app',
+        appearanceMode: 'light',
+        createdBy: 'admin-1',
+        forwardCookies:
+          '__Host-next-auth.csrf-token=csrf123; __Secure-next-auth.session-token=session456',
+        presetIds: ['game'],
+        presetLimit: null,
+      },
+      result: null,
+      error: null,
+    });
+
+    const url = 'http://localhost/api/kangur/social-image-addons/batch';
+    const request = Object.assign(
+      new Request(url, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          cookie:
+            '__Host-next-auth.csrf-token=csrf123; __Secure-next-auth.session-token=session456',
+        },
+        body: JSON.stringify({
+          async: true,
+          baseUrl: 'https://kangur.app',
+          presetIds: ['game'],
+        }),
+      }),
+      {
+        nextUrl: new URL(url),
+      }
+    ) as Parameters<typeof wrappedPostHandler>[0];
+
+    const response = await wrappedPostHandler(request);
+    const payload = await response.json();
+
+    expect(response.status).toBe(202);
+    expect(payload).toEqual(
+      expect.objectContaining({
+        id: 'social-batch-job-1',
+        status: 'queued',
+      })
+    );
+    expect(startKangurSocialImageAddonsBatchJobMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        baseUrl: 'https://kangur.app',
+        createdBy: 'admin-1',
+        forwardCookies:
+          '__Host-next-auth.csrf-token=csrf123; __Secure-next-auth.session-token=session456',
+        presetIds: ['game'],
       })
     );
   });

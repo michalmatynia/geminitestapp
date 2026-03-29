@@ -72,6 +72,66 @@ type DivisionGameProps = KangurMiniGameFinishVariantProps;
 
 const TOTAL = 7;
 
+const buildDivisionChoices = (correct: number, wrongFactory: () => number): number[] => {
+  const wrongs = new Set<number>();
+  while (wrongs.size < 3) {
+    const wrong = wrongFactory();
+    if (wrong !== correct) {
+      wrongs.add(wrong);
+    }
+  }
+  return [...wrongs, correct].sort(() => Math.random() - 0.5);
+};
+
+const buildDivisionRemainderQuestion = ({
+  dividend,
+  divisor,
+  quotient,
+  remainder,
+}: {
+  dividend: number;
+  divisor: number;
+  quotient: number;
+  remainder: number;
+}): DivisionRemainderQuestion => ({
+  type: 'remainder',
+  a: dividend,
+  b: divisor,
+  quotient,
+  correct: remainder,
+  remainder,
+  choices: buildDivisionChoices(remainder, () => Math.floor(Math.random() * divisor)),
+  label: `${dividend} ÷ ${divisor} = ${quotient} reszta ?`,
+});
+
+const buildDivisionQuotientQuestion = ({
+  dividend,
+  divisor,
+  quotient,
+}: {
+  dividend: number;
+  divisor: number;
+  quotient: number;
+}): DivisionQuotientQuestion => {
+  const wrongs = new Set<number>();
+  while (wrongs.size < 3) {
+    const wrong =
+      quotient + (Math.floor(Math.random() * 4) + 1) * (Math.random() < 0.5 ? 1 : -1);
+    if (wrong > 0 && wrong !== quotient) {
+      wrongs.add(wrong);
+    }
+  }
+
+  return {
+    type: 'quotient',
+    a: dividend,
+    b: divisor,
+    correct: quotient,
+    choices: [...wrongs, quotient].sort(() => Math.random() - 0.5),
+    label: `${dividend} ÷ ${divisor} = ?`,
+  };
+};
+
 function generateQuestion(round: number): DivisionQuestion {
   const withRemainder = round >= 3;
   const divisor = Math.floor(Math.random() * 8) + 2;
@@ -80,44 +140,10 @@ function generateQuestion(round: number): DivisionQuestion {
   const dividend = divisor * quotient + remainder;
 
   if (withRemainder) {
-    const correct = remainder;
-    const wrongs = new Set<number>();
-    while (wrongs.size < 3) {
-      const wrong = Math.floor(Math.random() * divisor);
-      if (wrong !== correct) {
-        wrongs.add(wrong);
-      }
-    }
-    const choices = [...wrongs, correct].sort(() => Math.random() - 0.5);
-    return {
-      type: 'remainder',
-      a: dividend,
-      b: divisor,
-      quotient,
-      correct,
-      remainder,
-      choices,
-      label: `${dividend} ÷ ${divisor} = ${quotient} reszta ?`,
-    };
+    return buildDivisionRemainderQuestion({ dividend, divisor, quotient, remainder });
   }
 
-  const correct = quotient;
-  const wrongs = new Set<number>();
-  while (wrongs.size < 3) {
-    const wrong = correct + (Math.floor(Math.random() * 4) + 1) * (Math.random() < 0.5 ? 1 : -1);
-    if (wrong > 0 && wrong !== correct) {
-      wrongs.add(wrong);
-    }
-  }
-  const choices = [...wrongs, correct].sort(() => Math.random() - 0.5);
-  return {
-    type: 'quotient',
-    a: dividend,
-    b: divisor,
-    correct,
-    choices,
-    label: `${dividend} ÷ ${divisor} = ?`,
-  };
+  return buildDivisionQuotientQuestion({ dividend, divisor, quotient });
 }
 
 function ShareVisual({
@@ -167,6 +193,471 @@ function ShareVisual({
   );
 }
 
+type DivisionChoicePresentation = {
+  accent: KangurAccent;
+  className: string;
+  emphasis: 'neutral' | 'accent';
+  state: 'default' | 'muted';
+};
+
+const resolveDivisionChoicePresentation = ({
+  choice,
+  confirmed,
+  correct,
+  selected,
+}: {
+  choice: number;
+  confirmed: boolean;
+  correct: number;
+  selected: number | null;
+}): DivisionChoicePresentation => {
+  if (confirmed) {
+    if (choice === correct) {
+      return {
+        accent: 'emerald',
+        className: KANGUR_ACCENT_STYLES.emerald.activeText,
+        emphasis: 'accent',
+        state: 'default',
+      };
+    }
+
+    if (choice === selected) {
+      return {
+        accent: 'rose',
+        className: KANGUR_ACCENT_STYLES.rose.activeText,
+        emphasis: 'accent',
+        state: 'default',
+      };
+    }
+
+    return {
+      accent: 'slate',
+      className: '',
+      emphasis: 'neutral',
+      state: 'muted',
+    };
+  }
+
+  if (choice === selected) {
+    return {
+      accent: 'amber',
+      className: KANGUR_ACCENT_STYLES.amber.activeText,
+      emphasis: 'accent',
+      state: 'default',
+    };
+  }
+
+  return {
+    accent: 'sky',
+    className: '[color:var(--kangur-page-text)]',
+    emphasis: 'neutral',
+    state: 'default',
+  };
+};
+
+const resolveDivisionSummaryMessage = ({
+  percent,
+  translations,
+}: {
+  percent: number;
+  translations: ReturnType<typeof useTranslations>;
+}): string => {
+  if (percent === 100) {
+    return translations('division.summary.perfect');
+  }
+
+  if (percent >= 60) {
+    return translations('division.summary.good');
+  }
+
+  return translations('division.summary.retry');
+};
+
+const resolveDivisionCheckButtonClassName = ({
+  confirmed,
+  correct,
+  selected,
+}: {
+  confirmed: boolean;
+  correct: number;
+  selected: number | null;
+}): string =>
+  cn(
+    'w-full',
+    confirmed
+      ? selected === correct
+        ? 'bg-emerald-500 border-emerald-500 text-white'
+        : 'bg-rose-500 border-rose-500 text-white'
+      : '[background:var(--kangur-soft-card-background)] [border-color:var(--kangur-soft-card-border)] [color:var(--kangur-page-text)]'
+  );
+
+const resetDivisionGameSession = ({
+  sessionStartedAtRef,
+  setConfirmed,
+  setDone,
+  setQuestion,
+  setRoundIndex,
+  setScore,
+  setSelected,
+  setXpBreakdown,
+  setXpEarned,
+}: {
+  sessionStartedAtRef: React.MutableRefObject<number>;
+  setConfirmed: React.Dispatch<React.SetStateAction<boolean>>;
+  setDone: React.Dispatch<React.SetStateAction<boolean>>;
+  setQuestion: React.Dispatch<React.SetStateAction<DivisionQuestion>>;
+  setRoundIndex: React.Dispatch<React.SetStateAction<number>>;
+  setScore: React.Dispatch<React.SetStateAction<number>>;
+  setSelected: React.Dispatch<React.SetStateAction<number | null>>;
+  setXpBreakdown: React.Dispatch<React.SetStateAction<KangurRewardBreakdownEntry[]>>;
+  setXpEarned: React.Dispatch<React.SetStateAction<number>>;
+}): void => {
+  setRoundIndex(0);
+  setScore(0);
+  setDone(false);
+  setXpEarned(0);
+  setXpBreakdown([]);
+  setQuestion(generateQuestion(0));
+  setSelected(null);
+  setConfirmed(false);
+  sessionStartedAtRef.current = Date.now();
+};
+
+const advanceDivisionRound = ({
+  newScore,
+  ownerKey,
+  roundIndex,
+  sessionStartedAtRef,
+  setConfirmed,
+  setDone,
+  setQuestion,
+  setRoundIndex,
+  setScore,
+  setSelected,
+  setXpBreakdown,
+  setXpEarned,
+}: {
+  newScore: number;
+  ownerKey: string | null;
+  roundIndex: number;
+  sessionStartedAtRef: React.MutableRefObject<number>;
+  setConfirmed: React.Dispatch<React.SetStateAction<boolean>>;
+  setDone: React.Dispatch<React.SetStateAction<boolean>>;
+  setQuestion: React.Dispatch<React.SetStateAction<DivisionQuestion>>;
+  setRoundIndex: React.Dispatch<React.SetStateAction<number>>;
+  setScore: React.Dispatch<React.SetStateAction<number>>;
+  setSelected: React.Dispatch<React.SetStateAction<number | null>>;
+  setXpBreakdown: React.Dispatch<React.SetStateAction<KangurRewardBreakdownEntry[]>>;
+  setXpEarned: React.Dispatch<React.SetStateAction<number>>;
+}): void => {
+  if (roundIndex + 1 >= TOTAL) {
+    const progress = loadProgress({ ownerKey });
+    const reward = createLessonPracticeReward(progress, 'division', newScore, TOTAL);
+    addXp(reward.xp, reward.progressUpdates, { ownerKey });
+    void persistKangurSessionScore({
+      operation: 'division',
+      score: newScore,
+      totalQuestions: TOTAL,
+      correctAnswers: newScore,
+      timeTakenSeconds: Math.round((Date.now() - sessionStartedAtRef.current) / 1000),
+      xpEarned: reward.xp,
+    });
+    setXpEarned(reward.xp);
+    setXpBreakdown(reward.breakdown ?? []);
+    setScore(newScore);
+    setDone(true);
+    return;
+  }
+
+  setScore(newScore);
+  setRoundIndex((current) => current + 1);
+  setQuestion(generateQuestion(roundIndex + 1));
+  setSelected(null);
+  setConfirmed(false);
+};
+
+const confirmDivisionSelection = ({
+  confirmed,
+  ownerKey,
+  question,
+  roundIndex,
+  score,
+  selected,
+  sessionStartedAtRef,
+  setConfirmed,
+  setDone,
+  setQuestion,
+  setRoundIndex,
+  setScore,
+  setSelected,
+  setXpBreakdown,
+  setXpEarned,
+}: {
+  confirmed: boolean;
+  ownerKey: string | null;
+  question: DivisionQuestion;
+  roundIndex: number;
+  score: number;
+  selected: number | null;
+  sessionStartedAtRef: React.MutableRefObject<number>;
+  setConfirmed: React.Dispatch<React.SetStateAction<boolean>>;
+  setDone: React.Dispatch<React.SetStateAction<boolean>>;
+  setQuestion: React.Dispatch<React.SetStateAction<DivisionQuestion>>;
+  setRoundIndex: React.Dispatch<React.SetStateAction<number>>;
+  setScore: React.Dispatch<React.SetStateAction<number>>;
+  setSelected: React.Dispatch<React.SetStateAction<number | null>>;
+  setXpBreakdown: React.Dispatch<React.SetStateAction<KangurRewardBreakdownEntry[]>>;
+  setXpEarned: React.Dispatch<React.SetStateAction<number>>;
+}): void => {
+  if (selected === null || confirmed) {
+    return;
+  }
+
+  setConfirmed(true);
+  const newScore = selected === question.correct ? score + 1 : score;
+  scheduleKangurRoundFeedback(() => {
+    advanceDivisionRound({
+      newScore,
+      ownerKey,
+      roundIndex,
+      sessionStartedAtRef,
+      setConfirmed,
+      setDone,
+      setQuestion,
+      setRoundIndex,
+      setScore,
+      setSelected,
+      setXpBreakdown,
+      setXpEarned,
+    });
+  });
+};
+
+function DivisionGameSummaryView({
+  finishLabel,
+  onFinish,
+  onRestart,
+  percent,
+  score,
+  translations,
+  xpBreakdown,
+  xpEarned,
+}: {
+  finishLabel: string;
+  onFinish: () => void;
+  onRestart: () => void;
+  percent: number;
+  score: number;
+  translations: ReturnType<typeof useTranslations>;
+  xpBreakdown: KangurRewardBreakdownEntry[];
+  xpEarned: number;
+}): React.JSX.Element {
+  return (
+    <KangurPracticeGameSummary dataTestId='division-game-summary-shell'>
+      <KangurPracticeGameSummaryEmoji
+        dataTestId='division-game-summary-emoji'
+        emoji={percent === 100 ? '🏆' : percent >= 60 ? '🌟' : '💪'}
+      />
+      <KangurPracticeGameSummaryTitle
+        dataTestId='division-game-summary-title'
+        title={getKangurMiniGameScoreLabel(translations, score, TOTAL)}
+      />
+      <KangurPracticeGameSummaryXP accent='indigo' xpEarned={xpEarned} />
+      <KangurPracticeGameSummaryBreakdown
+        breakdown={xpBreakdown}
+        dataTestId='division-game-summary-breakdown'
+        itemDataTestIdPrefix='division-game-summary-breakdown'
+      />
+      <KangurPracticeGameSummaryProgress accent='teal' percent={percent} />
+      <KangurPracticeGameSummaryMessage>
+        {resolveDivisionSummaryMessage({ percent, translations })}
+      </KangurPracticeGameSummaryMessage>
+      <KangurPracticeGameSummaryActions
+        finishLabel={finishLabel}
+        onFinish={onFinish}
+        restartLabel={translations('shared.restart')}
+        onRestart={onRestart}
+      />
+    </KangurPracticeGameSummary>
+  );
+}
+
+function DivisionGameQuestionPanel({
+  isCoarsePointer,
+  question,
+  translations,
+}: {
+  isCoarsePointer: boolean;
+  question: DivisionQuestion;
+  translations: ReturnType<typeof useTranslations>;
+}): React.JSX.Element {
+  return (
+    <>
+      <p className='text-xs font-bold text-blue-400 uppercase tracking-wide'>
+        {question.type === 'remainder' ? 'Jaka jest reszta?' : 'Ile wynosi iloraz?'}
+      </p>
+      <KangurEquationDisplay accent='sky' data-testid='division-game-equation'>
+        {question.label}
+      </KangurEquationDisplay>
+
+      {question.type === 'quotient' ? (
+        <ShareVisual a={question.a} b={question.b} quotient={question.correct} />
+      ) : (
+        <KangurInfoCard
+          accent='teal'
+          className='w-full rounded-[24px] text-center text-sm'
+          padding='sm'
+          tone='accent'
+        >
+          <p>
+            {question.a} = {question.b} × {question.quotient} +{' '}
+            <span className='font-extrabold text-lg'>?</span>
+          </p>
+          <p className='mt-1 text-xs [color:var(--kangur-page-muted-text)]'>
+            Ile zostaje po podzieleniu?
+          </p>
+        </KangurInfoCard>
+      )}
+
+      {isCoarsePointer ? (
+        <p
+          data-testid='division-game-touch-hint'
+          className='text-center text-xs font-semibold uppercase tracking-[0.16em] [color:var(--kangur-page-muted-text)]'
+        >
+          {translations('division.inRound.touchHint')}
+        </p>
+      ) : null}
+    </>
+  );
+}
+
+function DivisionGameChoicesGrid({
+  confirmed,
+  isCoarsePointer,
+  onSelect,
+  question,
+  selected,
+}: {
+  confirmed: boolean;
+  isCoarsePointer: boolean;
+  onSelect: (choice: number) => void;
+  question: DivisionQuestion;
+  selected: number | null;
+}): React.JSX.Element {
+  return (
+    <div className='grid w-full grid-cols-1 gap-2 sm:grid-cols-2'>
+      {question.choices.map((choice, index) => {
+        const presentation = resolveDivisionChoicePresentation({
+          choice,
+          confirmed,
+          correct: question.correct,
+          selected,
+        });
+
+        return (
+          <KangurAnswerChoiceCard
+            accent={presentation.accent}
+            buttonClassName={cn(
+              'flex items-center justify-center px-4 py-3 text-center text-lg font-extrabold touch-manipulation select-none sm:text-xl',
+              isCoarsePointer && 'min-h-[4.25rem] active:scale-[0.98]',
+              presentation.className,
+              confirmed ? 'cursor-default' : 'cursor-pointer'
+            )}
+            data-testid={`division-game-choice-${index}`}
+            emphasis={presentation.emphasis}
+            hoverScale={1.04}
+            interactive={!confirmed}
+            key={index}
+            onClick={() => onSelect(choice)}
+            state={presentation.state}
+            tapScale={0.96}
+            type='button'
+          >
+            {choice}
+          </KangurAnswerChoiceCard>
+        );
+      })}
+    </div>
+  );
+}
+
+function DivisionGameRoundView({
+  confirmed,
+  isCoarsePointer,
+  onConfirm,
+  onSelect,
+  question,
+  roundIndex,
+  selected,
+  translations,
+}: {
+  confirmed: boolean;
+  isCoarsePointer: boolean;
+  onConfirm: () => void;
+  onSelect: (choice: number) => void;
+  question: DivisionQuestion;
+  roundIndex: number;
+  selected: number | null;
+  translations: ReturnType<typeof useTranslations>;
+}): React.JSX.Element {
+  return (
+    <KangurPracticeGameShell>
+      <KangurPracticeGameProgress
+        accent='teal'
+        currentRound={roundIndex}
+        dataTestId='division-game-progress-bar'
+        totalRounds={TOTAL}
+      />
+
+      <div className='w-full'>
+        <KangurGlassPanel
+          className={cn('flex flex-col items-center', KANGUR_PANEL_GAP_CLASSNAME)}
+          data-testid='division-game-round-shell'
+          padding='xl'
+          surface='solid'
+          variant='soft'
+        >
+          <DivisionGameQuestionPanel
+            isCoarsePointer={isCoarsePointer}
+            question={question}
+            translations={translations}
+          />
+          <DivisionGameChoicesGrid
+            confirmed={confirmed}
+            isCoarsePointer={isCoarsePointer}
+            onSelect={onSelect}
+            question={question}
+            selected={selected}
+          />
+
+          <div role='status' aria-live='polite' aria-atomic='true' className='sr-only'>
+            {confirmed
+              ? selected === question.correct
+                ? 'Dobrze! Poprawna odpowiedź.'
+                : `Niepoprawnie. Poprawna odpowiedź: ${question.correct}.`
+              : ''}
+          </div>
+
+          <KangurButton
+            className={resolveDivisionCheckButtonClassName({
+              confirmed,
+              correct: question.correct,
+              selected,
+            })}
+            disabled={selected === null || confirmed}
+            onClick={onConfirm}
+            size='lg'
+            type='button'
+            variant='primary'
+          >
+            Sprawdź ✓
+          </KangurButton>
+        </KangurGlassPanel>
+      </div>
+    </KangurPracticeGameShell>
+  );
+}
+
 export default function DivisionGame({
   finishLabelVariant = 'lesson',
   onFinish,
@@ -200,218 +691,63 @@ export default function DivisionGame({
   };
 
   const handleConfirm = (): void => {
-    if (selected === null || confirmed) {
-      return;
-    }
-    setConfirmed(true);
-    const isCorrect = selected === question.correct;
-    const newScore = isCorrect ? score + 1 : score;
-
-    scheduleKangurRoundFeedback(() => {
-      if (roundIndex + 1 >= TOTAL) {
-        const progress = loadProgress({ ownerKey });
-        const reward = createLessonPracticeReward(progress, 'division', newScore, TOTAL);
-        addXp(reward.xp, reward.progressUpdates, { ownerKey });
-        void persistKangurSessionScore({
-          operation: 'division',
-          score: newScore,
-          totalQuestions: TOTAL,
-          correctAnswers: newScore,
-          timeTakenSeconds: Math.round((Date.now() - sessionStartedAtRef.current) / 1000),
-          xpEarned: reward.xp,
-        });
-        setXpEarned(reward.xp);
-        setXpBreakdown(reward.breakdown ?? []);
-        setScore(newScore);
-        setDone(true);
-      } else {
-        setScore(newScore);
-        setRoundIndex((current) => current + 1);
-        setQuestion(generateQuestion(roundIndex + 1));
-        setSelected(null);
-        setConfirmed(false);
-      }
+    confirmDivisionSelection({
+      confirmed,
+      ownerKey,
+      question,
+      roundIndex,
+      score,
+      selected,
+      sessionStartedAtRef,
+      setConfirmed,
+      setDone,
+      setQuestion,
+      setRoundIndex,
+      setScore,
+      setSelected,
+      setXpBreakdown,
+      setXpEarned,
     });
   };
 
   if (done) {
     const percent = Math.round((score / TOTAL) * 100);
     return (
-      <KangurPracticeGameSummary dataTestId='division-game-summary-shell'>
-        <KangurPracticeGameSummaryEmoji
-          dataTestId='division-game-summary-emoji'
-          emoji={percent === 100 ? '🏆' : percent >= 60 ? '🌟' : '💪'}
-        />
-        <KangurPracticeGameSummaryTitle
-          dataTestId='division-game-summary-title'
-          title={getKangurMiniGameScoreLabel(translations, score, TOTAL)}
-        />
-        <KangurPracticeGameSummaryXP accent='indigo' xpEarned={xpEarned} />
-        <KangurPracticeGameSummaryBreakdown
-          breakdown={xpBreakdown}
-          dataTestId='division-game-summary-breakdown'
-          itemDataTestIdPrefix='division-game-summary-breakdown'
-        />
-        <KangurPracticeGameSummaryProgress accent='teal' percent={percent} />
-        <KangurPracticeGameSummaryMessage>
-          {percent === 100
-            ? translations('division.summary.perfect')
-            : percent >= 60
-              ? translations('division.summary.good')
-              : translations('division.summary.retry')}
-        </KangurPracticeGameSummaryMessage>
-        <KangurPracticeGameSummaryActions
-          finishLabel={finishLabel}
-          onFinish={handleFinishGame}
-          restartLabel={translations('shared.restart')}
-          onRestart={() => {
-            setRoundIndex(0);
-            setScore(0);
-            setDone(false);
-            setXpEarned(0);
-            setXpBreakdown([]);
-            setQuestion(generateQuestion(0));
-            setSelected(null);
-            setConfirmed(false);
-            sessionStartedAtRef.current = Date.now();
-          }}
-        />
-      </KangurPracticeGameSummary>
+      <DivisionGameSummaryView
+        finishLabel={finishLabel}
+        onFinish={handleFinishGame}
+        onRestart={() =>
+          resetDivisionGameSession({
+            sessionStartedAtRef,
+            setConfirmed,
+            setDone,
+            setQuestion,
+            setRoundIndex,
+            setScore,
+            setSelected,
+            setXpBreakdown,
+            setXpEarned,
+          })
+        }
+        percent={percent}
+        score={score}
+        translations={translations}
+        xpBreakdown={xpBreakdown}
+        xpEarned={xpEarned}
+      />
     );
   }
 
   return (
-    <KangurPracticeGameShell>
-      <KangurPracticeGameProgress
-        accent='teal'
-        currentRound={roundIndex}
-        dataTestId='division-game-progress-bar'
-        totalRounds={TOTAL}
-      />
-
-      <div className='w-full'>
-        <KangurGlassPanel
-          className={cn('flex flex-col items-center', KANGUR_PANEL_GAP_CLASSNAME)}
-          data-testid='division-game-round-shell'
-          padding='xl'
-          surface='solid'
-          variant='soft'
-        >
-          <p className='text-xs font-bold text-blue-400 uppercase tracking-wide'>
-            {question.type === 'remainder' ? 'Jaka jest reszta?' : 'Ile wynosi iloraz?'}
-          </p>
-          <KangurEquationDisplay accent='sky' data-testid='division-game-equation'>
-            {question.label}
-          </KangurEquationDisplay>
-
-          {question.type === 'quotient' && (
-            <ShareVisual a={question.a} b={question.b} quotient={question.correct} />
-          )}
-
-          {question.type === 'remainder' && (
-            <KangurInfoCard
-              accent='teal'
-              className='w-full rounded-[24px] text-center text-sm'
-              padding='sm'
-              tone='accent'
-            >
-              <p>
-                {question.a} = {question.b} × {question.quotient} +{' '}
-                <span className='font-extrabold text-lg'>?</span>
-              </p>
-              <p className='mt-1 text-xs [color:var(--kangur-page-muted-text)]'>
-                Ile zostaje po podzieleniu?
-              </p>
-            </KangurInfoCard>
-          )}
-
-          {isCoarsePointer ? (
-            <p
-              data-testid='division-game-touch-hint'
-              className='text-center text-xs font-semibold uppercase tracking-[0.16em] [color:var(--kangur-page-muted-text)]'
-            >
-              {translations('division.inRound.touchHint')}
-            </p>
-          ) : null}
-
-          <div className='grid w-full grid-cols-1 gap-2 sm:grid-cols-2'>
-            {question.choices.map((choice, index) => {
-              let accent: KangurAccent = 'sky';
-              let emphasis: 'neutral' | 'accent' = 'neutral';
-              let state: 'default' | 'muted' = 'default';
-              let className = '[color:var(--kangur-page-text)]';
-              if (confirmed) {
-                if (choice === question.correct) {
-                  accent = 'emerald';
-                  emphasis = 'accent';
-                  className = KANGUR_ACCENT_STYLES.emerald.activeText;
-                } else if (choice === selected) {
-                  accent = 'rose';
-                  emphasis = 'accent';
-                  className = KANGUR_ACCENT_STYLES.rose.activeText;
-                } else {
-                  accent = 'slate';
-                  state = 'muted';
-                  className = '';
-                }
-              } else if (choice === selected) {
-                accent = 'amber';
-                emphasis = 'accent';
-                className = KANGUR_ACCENT_STYLES.amber.activeText;
-              }
-
-              return (
-                <KangurAnswerChoiceCard
-                  accent={accent}
-                  buttonClassName={cn(
-                    'flex items-center justify-center px-4 py-3 text-center text-lg font-extrabold touch-manipulation select-none sm:text-xl',
-                    isCoarsePointer && 'min-h-[4.25rem] active:scale-[0.98]',
-                    className,
-                    confirmed ? 'cursor-default' : 'cursor-pointer'
-                  )}
-                  data-testid={`division-game-choice-${index}`}
-                  emphasis={emphasis}
-                  hoverScale={1.04}
-                  interactive={!confirmed}
-                  key={index}
-                  onClick={() => handleSelect(choice)}
-                  state={state}
-                  tapScale={0.96}
-                  type='button'
-                >
-                  {choice}
-                </KangurAnswerChoiceCard>
-              );
-            })}
-          </div>
-
-          <div role='status' aria-live='polite' aria-atomic='true' className='sr-only'>
-            {confirmed
-              ? selected === question.correct
-                ? 'Dobrze! Poprawna odpowiedź.'
-                : `Niepoprawnie. Poprawna odpowiedź: ${question.correct}.`
-              : ''}
-          </div>
-
-          <KangurButton
-            className={cn(
-              'w-full',
-              confirmed
-                ? selected === question.correct
-                  ? 'bg-emerald-500 border-emerald-500 text-white'
-                  : 'bg-rose-500 border-rose-500 text-white'
-                : '[background:var(--kangur-soft-card-background)] [border-color:var(--kangur-soft-card-border)] [color:var(--kangur-page-text)]'
-            )}
-            disabled={selected === null || confirmed}
-            onClick={handleConfirm}
-            size='lg'
-            type='button'
-            variant='primary'
-          >
-            Sprawdź ✓
-          </KangurButton>
-        </KangurGlassPanel>
-      </div>
-    </KangurPracticeGameShell>
+    <DivisionGameRoundView
+      confirmed={confirmed}
+      isCoarsePointer={isCoarsePointer}
+      onConfirm={handleConfirm}
+      onSelect={handleSelect}
+      question={question}
+      roundIndex={roundIndex}
+      selected={selected}
+      translations={translations}
+    />
   );
 }

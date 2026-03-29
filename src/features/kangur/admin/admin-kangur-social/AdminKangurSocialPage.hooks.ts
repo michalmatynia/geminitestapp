@@ -17,12 +17,46 @@ import { useSocialContext } from './hooks/useSocialContext';
 import { useSocialGeneration } from './hooks/useSocialGeneration';
 import { useSocialPipelineRunner } from './hooks/useSocialPipelineRunner';
 import type { ImageFileSelection } from '@/shared/contracts/files';
-import type { KangurSocialImageAddonsBatchResult, KangurSocialProgrammableCaptureRoute } from '@/shared/contracts/kangur-social-image-addons';
+import type {
+  KangurSocialImageAddonsBatchJob,
+  KangurSocialImageAddonsBatchResult,
+  KangurSocialProgrammableCaptureRoute,
+} from '@/shared/contracts/kangur-social-image-addons';
 import {
   buildKangurSocialProgrammableCaptureRoutesFromPresetIds,
   createEmptyKangurSocialProgrammableCaptureRoute,
   KANGUR_SOCIAL_DEFAULT_PLAYWRIGHT_CAPTURE_SCRIPT,
 } from '@/features/kangur/shared/social-playwright-capture';
+
+const BATCH_CAPTURE_POLL_INTERVAL_MS = 1000;
+
+const isBatchCaptureJobTerminal = (
+  status: KangurSocialImageAddonsBatchJob['status'] | null | undefined
+): boolean => status === 'completed' || status === 'failed';
+
+const waitForDelay = async (ms: number): Promise<void> => {
+  await new Promise((resolve) => setTimeout(resolve, ms));
+};
+
+const buildLiveBatchCaptureMessage = (
+  job: KangurSocialImageAddonsBatchJob | null
+): string | null => {
+  if (!job) return null;
+  if (job.progress?.message?.trim()) {
+    return job.progress.message;
+  }
+  if (!job.progress) {
+    return job.status === 'queued'
+      ? 'Queued Playwright capture...'
+      : job.status === 'running'
+        ? 'Running Playwright capture...'
+        : null;
+  }
+
+  const failureSuffix =
+    job.progress.failureCount > 0 ? ` ${job.progress.failureCount} failed.` : '';
+  return `Playwright capture in progress: ${job.progress.completedCount} captured, ${job.progress.remainingCount} left of ${job.progress.totalCount} targets.${failureSuffix}`;
+};
 
 export function useAdminKangurSocialPage() {
   const settings = useSocialSettings();
@@ -203,6 +237,8 @@ export function useAdminKangurSocialPage() {
   const [captureOnlyPending, setCaptureOnlyPending] = useState(false);
   const [captureOnlyMessage, setCaptureOnlyMessage] = useState<string | null>(null);
   const [captureOnlyErrorMessage, setCaptureOnlyErrorMessage] = useState<string | null>(null);
+  const [captureOnlyBatchCaptureJob, setCaptureOnlyBatchCaptureJob] =
+    useState<KangurSocialImageAddonsBatchJob | null>(null);
   const [isProgrammablePlaywrightModalOpen, setIsProgrammablePlaywrightModalOpen] = useState(false);
   const [programmableCaptureBaseUrl, setProgrammableCaptureBaseUrl] = useState(
     settings.persistedSocialSettings.programmableCaptureBaseUrl ?? settings.batchCaptureBaseUrl
@@ -225,6 +261,8 @@ export function useAdminKangurSocialPage() {
   const [programmableCaptureMessage, setProgrammableCaptureMessage] = useState<string | null>(null);
   const [programmableCaptureErrorMessage, setProgrammableCaptureErrorMessage] =
     useState<string | null>(null);
+  const [programmableCaptureBatchCaptureJob, setProgrammableCaptureBatchCaptureJob] =
+    useState<KangurSocialImageAddonsBatchJob | null>(null);
 
   const attachBatchCaptureResultToActiveDraft = useCallback(
     async (
@@ -273,22 +311,70 @@ export function useAdminKangurSocialPage() {
     ]
   );
 
+  const waitForBatchCaptureJob = useCallback(
+    async (
+      initialJob: KangurSocialImageAddonsBatchJob,
+      onUpdate?: (job: KangurSocialImageAddonsBatchJob) => void
+    ): Promise<KangurSocialImageAddonsBatchJob> => {
+      let currentJob = initialJob;
+      onUpdate?.(currentJob);
+
+      for (let attempt = 0; attempt < 240; attempt += 1) {
+        const latestJob = await imageAddons.readBatchCaptureJob(initialJob.id);
+        if (latestJob) {
+          currentJob = latestJob;
+          onUpdate?.(currentJob);
+        }
+
+        if (isBatchCaptureJobTerminal(currentJob.status)) {
+          return currentJob;
+        }
+
+        await waitForDelay(BATCH_CAPTURE_POLL_INTERVAL_MS);
+      }
+
+      throw new Error('Timed out waiting for Playwright capture job.');
+    },
+    [imageAddons]
+  );
+
   const handleCaptureImagesOnly = useCallback(async (): Promise<void> => {
     if (!editor.activePost) {
       return;
     }
     if (!hasBatchCaptureConfig) {
+      setCaptureOnlyBatchCaptureJob(null);
       setCaptureOnlyMessage(null);
       setCaptureOnlyErrorMessage(socialBatchCaptureBlockedReason);
       return;
     }
 
     setCaptureOnlyPending(true);
+    setCaptureOnlyBatchCaptureJob(null);
     setCaptureOnlyErrorMessage(null);
     setCaptureOnlyMessage('Capturing fresh screenshots and linking them to the active draft...');
 
     try {
-      const result = await imageAddons.runBatchCapture();
+      const startedJob = await imageAddons.startBatchCapture();
+      const queuedMessage = buildLiveBatchCaptureMessage(startedJob);
+      setCaptureOnlyBatchCaptureJob(startedJob);
+      if (queuedMessage) {
+        setCaptureOnlyMessage(queuedMessage);
+      }
+
+      const completedJob = await waitForBatchCaptureJob(startedJob, (job) => {
+        setCaptureOnlyBatchCaptureJob(job);
+        const liveMessage = buildLiveBatchCaptureMessage(job);
+        if (!isBatchCaptureJobTerminal(job.status) && liveMessage) {
+          setCaptureOnlyMessage(liveMessage);
+        }
+      });
+
+      if (completedJob.status !== 'completed' || !completedJob.result) {
+        throw new Error(completedJob.error || 'Failed to capture screenshots.');
+      }
+
+      const result = completedJob.result;
       await attachBatchCaptureResultToActiveDraft(result);
 
       const usedPresetCount = result.usedPresetCount ?? effectiveBatchCapturePresetCount;
@@ -324,6 +410,7 @@ export function useAdminKangurSocialPage() {
     imageAddons,
     socialBatchCaptureBlockedReason,
     attachBatchCaptureResultToActiveDraft,
+    waitForBatchCaptureJob,
   ]);
 
   const openProgrammablePlaywrightModal = useCallback((options?: {
@@ -334,6 +421,7 @@ export function useAdminKangurSocialPage() {
     setCaptureOnlyErrorMessage(null);
     setProgrammableCaptureMessage(null);
     setProgrammableCaptureErrorMessage(null);
+    setProgrammableCaptureBatchCaptureJob(null);
     setProgrammableCaptureBaseUrl(
       (current) =>
         loadPersistedDefaults
@@ -466,17 +554,19 @@ export function useAdminKangurSocialPage() {
 
   const handleRunProgrammablePlaywrightCapture = useCallback(async (): Promise<void> => {
     if (!editor.activePost) {
+      setProgrammableCaptureBatchCaptureJob(null);
       setProgrammableCaptureMessage(null);
       setProgrammableCaptureErrorMessage('Create or select a draft before capturing images.');
       return;
     }
 
     setProgrammableCapturePending(true);
+    setProgrammableCaptureBatchCaptureJob(null);
     setProgrammableCaptureMessage('Running programmable Playwright capture and linking the images to the active draft...');
     setProgrammableCaptureErrorMessage(null);
 
     try {
-      const result = await imageAddons.runBatchCapture({
+      const startedJob = await imageAddons.startBatchCapture({
         baseUrl: programmableCaptureBaseUrl,
         presetIds: [],
         presetLimit: null,
@@ -484,6 +574,27 @@ export function useAdminKangurSocialPage() {
         playwrightScript: programmableCaptureScript,
         playwrightRoutes: programmableCaptureRoutes,
       });
+      const queuedMessage = buildLiveBatchCaptureMessage(startedJob);
+      setProgrammableCaptureBatchCaptureJob(startedJob);
+      if (queuedMessage) {
+        setProgrammableCaptureMessage(queuedMessage);
+      }
+
+      const completedJob = await waitForBatchCaptureJob(startedJob, (job) => {
+        setProgrammableCaptureBatchCaptureJob(job);
+        const liveMessage = buildLiveBatchCaptureMessage(job);
+        if (!isBatchCaptureJobTerminal(job.status) && liveMessage) {
+          setProgrammableCaptureMessage(liveMessage);
+        }
+      });
+
+      if (completedJob.status !== 'completed' || !completedJob.result) {
+        throw new Error(
+          completedJob.error || 'Failed to run programmable Playwright capture.'
+        );
+      }
+
+      const result = completedJob.result;
       await attachBatchCaptureResultToActiveDraft(result);
       const routeCount = programmableCaptureRoutes.length;
       setProgrammableCaptureMessage(
@@ -514,11 +625,13 @@ export function useAdminKangurSocialPage() {
     programmableCapturePersonaId,
     programmableCaptureRoutes,
     programmableCaptureScript,
+    waitForBatchCaptureJob,
   ]);
 
   const handleRunProgrammablePlaywrightCaptureAndPipeline = useCallback(
     async (): Promise<void> => {
       if (!editor.activePost) {
+        setProgrammableCaptureBatchCaptureJob(null);
         setProgrammableCaptureMessage(null);
         setProgrammableCaptureErrorMessage('Create or select a draft before capturing images.');
         return;
@@ -534,13 +647,14 @@ export function useAdminKangurSocialPage() {
       }
 
       setProgrammableCapturePending(true);
+      setProgrammableCaptureBatchCaptureJob(null);
       setProgrammableCaptureMessage(
         'Running programmable Playwright capture, linking the images to the draft, and starting the pipeline...'
       );
       setProgrammableCaptureErrorMessage(null);
 
       try {
-        const result = await imageAddons.runBatchCapture({
+        const startedJob = await imageAddons.startBatchCapture({
           baseUrl: programmableCaptureBaseUrl,
           presetIds: [],
           presetLimit: null,
@@ -548,6 +662,27 @@ export function useAdminKangurSocialPage() {
           playwrightScript: programmableCaptureScript,
           playwrightRoutes: programmableCaptureRoutes,
         });
+        const queuedMessage = buildLiveBatchCaptureMessage(startedJob);
+        setProgrammableCaptureBatchCaptureJob(startedJob);
+        if (queuedMessage) {
+          setProgrammableCaptureMessage(queuedMessage);
+        }
+
+        const completedJob = await waitForBatchCaptureJob(startedJob, (job) => {
+          setProgrammableCaptureBatchCaptureJob(job);
+          const liveMessage = buildLiveBatchCaptureMessage(job);
+          if (!isBatchCaptureJobTerminal(job.status) && liveMessage) {
+            setProgrammableCaptureMessage(liveMessage);
+          }
+        });
+
+        if (completedJob.status !== 'completed' || !completedJob.result) {
+          throw new Error(
+            completedJob.error || 'Failed to run programmable Playwright capture and pipeline.'
+          );
+        }
+
+        const result = completedJob.result;
         const attached = await attachBatchCaptureResultToActiveDraft(result);
         const routeCount = programmableCaptureRoutes.length;
 
@@ -597,6 +732,7 @@ export function useAdminKangurSocialPage() {
       programmableCaptureRoutes,
       programmableCaptureScript,
       socialDraftBlockedReason,
+      waitForBatchCaptureJob,
     ]
   );
 
@@ -750,6 +886,10 @@ export function useAdminKangurSocialPage() {
     createAddonMutation: imageAddons.createAddonMutation,
     batchCaptureMutation: imageAddons.batchCaptureMutation,
     batchCaptureResult: imageAddons.batchCaptureResult,
+    batchCapturePending: imageAddons.batchCapturePending,
+    batchCaptureJob: imageAddons.batchCaptureJob,
+    batchCaptureMessage: imageAddons.batchCaptureMessage,
+    batchCaptureErrorMessage: imageAddons.batchCaptureErrorMessage,
     captureAppearanceMode: imageAddons.captureAppearanceMode,
     setBatchCaptureResult: imageAddons.setBatchCaptureResult,
     handleCreateAddon: imageAddons.handleCreateAddon,
@@ -785,6 +925,7 @@ export function useAdminKangurSocialPage() {
     handleAnalyzeSelectedVisuals: pipeline.handleAnalyzeSelectedVisuals,
     handleGeneratePostWithVisualAnalysis,
     captureOnlyPending,
+    captureOnlyBatchCaptureJob,
     captureOnlyMessage,
     captureOnlyErrorMessage,
     handleCaptureImagesOnly,
@@ -797,6 +938,7 @@ export function useAdminKangurSocialPage() {
     setProgrammableCaptureScript,
     programmableCaptureRoutes,
     programmableCapturePending,
+    programmableCaptureBatchCaptureJob,
     programmableCaptureMessage,
     programmableCaptureErrorMessage,
     handleOpenProgrammablePlaywrightModal,

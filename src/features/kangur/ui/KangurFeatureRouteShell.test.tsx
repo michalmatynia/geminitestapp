@@ -110,7 +110,17 @@ vi.mock('@/features/kangur/ui/KangurFeatureApp', () => ({
   KangurFeatureApp: () => <div data-testid='kangur-feature-app'>Kangur feature app</div>,
 }));
 
+vi.mock(
+  '@/features/kangur/ui/components/MultiplicationArrayGame',
+  () => ({
+    default: () => <div data-testid='multiplication-array-game'>Multiplication array game</div>,
+  }),
+  { virtual: true }
+);
+
 import { KangurFeatureRouteShell } from '@/features/kangur/ui/KangurFeatureRouteShell';
+
+const originalLocation = window.location;
 
 describe('KangurFeatureRouteShell', () => {
   beforeEach(() => {
@@ -423,6 +433,194 @@ describe('KangurFeatureRouteShell', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Stay on web' }));
 
     expect(screen.queryByRole('button', { name: 'Open app' })).toBeNull();
+  });
+
+  it('offers the dedicated-app prompt on root-owned canonical learner routes', () => {
+    vi.useFakeTimers();
+    usePathnameMock.mockReturnValue('/lessons');
+    useSelectedLayoutSegmentsMock.mockReturnValue([]);
+    useSearchParamsMock.mockReturnValue(
+      new URLSearchParams('focus=division&__kangurLaunch=dedicated_app')
+    );
+    Object.defineProperty(navigator, 'maxTouchPoints', {
+      configurable: true,
+      value: 5,
+    });
+
+    const locationAssignMock = vi.fn();
+    Object.defineProperty(window, 'location', {
+      value: {
+        ...originalLocation,
+        assign: locationAssignMock,
+        href: `${originalLocation.origin}/lessons?focus=division&__kangurLaunch=dedicated_app`,
+        origin: originalLocation.origin,
+        pathname: '/lessons',
+        search: '?focus=division&__kangurLaunch=dedicated_app',
+      },
+      configurable: true,
+      writable: true,
+    });
+
+    try {
+      render(<KangurFeatureRouteShell basePath='/' />);
+
+      expect(kangurRoutingProviderMock).toHaveBeenCalledWith({
+        pageKey: 'Lessons',
+        requestedPath: '/lessons',
+        requestedHref: '/lessons?focus=division',
+        basePath: '/',
+        embedded: false,
+      });
+      expect(useRouterReplaceMock).toHaveBeenCalledWith('/lessons?focus=division', {
+        scroll: false,
+      });
+
+      act(() => {
+        vi.advanceTimersByTime(160);
+      });
+
+      fireEvent.click(screen.getByRole('button', { name: 'Open app' }));
+
+      expect(locationAssignMock).toHaveBeenCalledWith('kangur://lessons?focus=division');
+    } finally {
+      Object.defineProperty(window, 'location', {
+        value: originalLocation,
+        configurable: true,
+        writable: true,
+      });
+    }
+  });
+
+  it('offers the dedicated-app prompt on localized canonical learner routes', () => {
+    vi.useFakeTimers();
+    usePathnameMock.mockReturnValue('/en/lessons');
+    useSelectedLayoutSegmentsMock.mockReturnValue([]);
+    useSearchParamsMock.mockReturnValue(
+      new URLSearchParams('focus=division&__kangurLaunch=dedicated_app')
+    );
+    Object.defineProperty(navigator, 'maxTouchPoints', {
+      configurable: true,
+      value: 5,
+    });
+
+    const locationAssignMock = vi.fn();
+    Object.defineProperty(window, 'location', {
+      value: {
+        ...originalLocation,
+        assign: locationAssignMock,
+        href: `${originalLocation.origin}/en/lessons?focus=division&__kangurLaunch=dedicated_app`,
+        origin: originalLocation.origin,
+        pathname: '/en/lessons',
+        search: '?focus=division&__kangurLaunch=dedicated_app',
+      },
+      configurable: true,
+      writable: true,
+    });
+
+    try {
+      render(<KangurFeatureRouteShell basePath='/' />);
+
+      expect(kangurRoutingProviderMock).toHaveBeenCalledWith({
+        pageKey: 'Lessons',
+        requestedPath: '/lessons',
+        requestedHref: '/en/lessons?focus=division',
+        basePath: '/',
+        embedded: false,
+      });
+      expect(useRouterReplaceMock).toHaveBeenCalledWith('/en/lessons?focus=division', {
+        scroll: false,
+      });
+
+      act(() => {
+        vi.advanceTimersByTime(160);
+      });
+
+      fireEvent.click(screen.getByRole('button', { name: 'Open app' }));
+
+      expect(locationAssignMock).toHaveBeenCalledWith('kangur://lessons?focus=division');
+    } finally {
+      Object.defineProperty(window, 'location', {
+        value: originalLocation,
+        configurable: true,
+        writable: true,
+      });
+    }
+  });
+
+  it('opens the dedicated app only after the learner confirms the launch prompt', () => {
+    vi.useFakeTimers();
+    usePathnameMock.mockReturnValue('/kangur/lessons');
+    useSelectedLayoutSegmentsMock.mockReturnValue(['lessons']);
+    useSearchParamsMock.mockReturnValue(
+      new URLSearchParams('focus=division&__kangurLaunch=dedicated_app')
+    );
+    Object.defineProperty(navigator, 'maxTouchPoints', {
+      configurable: true,
+      value: 5,
+    });
+
+    const locationAssignMock = vi.fn();
+    Object.defineProperty(window, 'location', {
+      value: {
+        ...originalLocation,
+        assign: locationAssignMock,
+        href: `${originalLocation.origin}/kangur/lessons?focus=division`,
+        origin: originalLocation.origin,
+        pathname: '/kangur/lessons',
+        search: '?focus=division',
+      },
+      configurable: true,
+      writable: true,
+    });
+
+    try {
+      render(<KangurFeatureRouteShell />);
+
+      act(() => {
+        vi.advanceTimersByTime(160);
+      });
+
+      fireEvent.click(screen.getByRole('button', { name: 'Open app' }));
+
+      expect(locationAssignMock).toHaveBeenCalledWith('kangur://lessons?focus=division');
+    } finally {
+      Object.defineProperty(window, 'location', {
+        value: originalLocation,
+        configurable: true,
+        writable: true,
+      });
+    }
+  });
+
+  it('keeps unsupported dedicated-app routes on the web shell without showing the app prompt', () => {
+    vi.useFakeTimers();
+    usePathnameMock.mockReturnValue('/kangur/games');
+    useSelectedLayoutSegmentsMock.mockReturnValue(['games']);
+    useSearchParamsMock.mockReturnValue(new URLSearchParams('__kangurLaunch=dedicated_app'));
+    Object.defineProperty(navigator, 'maxTouchPoints', {
+      configurable: true,
+      value: 5,
+    });
+
+    render(<KangurFeatureRouteShell />);
+
+    expect(kangurRoutingProviderMock).toHaveBeenCalledWith({
+      pageKey: 'GamesLibrary',
+      requestedPath: '/kangur/games',
+      requestedHref: '/kangur/games',
+      basePath: '/kangur',
+      embedded: false,
+    });
+    expect(useRouterReplaceMock).toHaveBeenCalledWith('/kangur/games', {
+      scroll: false,
+    });
+
+    act(() => {
+      vi.advanceTimersByTime(160);
+    });
+
+    expect(screen.queryByRole('button', { name: 'Open app' })).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Stay on web' })).toBeNull();
   });
 
   it('clears the client observability context on unmount', () => {

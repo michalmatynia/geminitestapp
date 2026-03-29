@@ -3,6 +3,7 @@
 import React from 'react';
 import type { useTranslations } from 'next-intl';
 import { KangurDialog } from '@/features/kangur/ui/components/KangurDialog';
+import { KangurDialogMeta } from '@/features/kangur/ui/components/KangurDialogMeta';
 import {
   KangurButton,
   KangurStatusChip,
@@ -15,12 +16,16 @@ import { GAMES_LIBRARY_MODAL_STAT_CARD_CLASSNAME } from './GamesLibraryGameModal
 
 export function GamesLibraryGameDialog({
   children,
+  description,
   onOpenChange,
   open,
+  title,
 }: {
   children: React.ReactNode;
+  description?: React.ReactNode;
   onOpenChange: (open: boolean) => void;
   open: boolean;
+  title: React.ReactNode;
 }): React.JSX.Element {
   return (
     <KangurDialog
@@ -33,6 +38,7 @@ export function GamesLibraryGameDialog({
           'w-[min(calc(100vw-2rem),74rem)] rounded-[2.25rem] border border-[color:var(--kangur-soft-card-border)] [background:color-mix(in_srgb,var(--kangur-soft-card-background)_96%,var(--kangur-page-background))] p-5 shadow-[0_48px_132px_-56px_rgba(15,23,42,0.56)] sm:p-6',
       }}
     >
+      <KangurDialogMeta title={title} description={description} />
       {children}
     </KangurDialog>
   );

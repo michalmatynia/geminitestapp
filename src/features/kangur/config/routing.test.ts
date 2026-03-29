@@ -130,6 +130,9 @@ describe('kangur routing config', () => {
       '/kangur/lessons?focus=division&__kangurLaunch=dedicated_app'
     );
     expect(getKangurPublicLaunchHref('dedicated_app', ['games'])).toBe('/kangur/games');
+    expect(getKangurPublicLaunchHref('dedicated_app', ['parent-dashboard'])).toBe(
+      '/kangur/parent-dashboard'
+    );
   });
 
   it('reads and strips launch-intent params without affecting learner params', () => {

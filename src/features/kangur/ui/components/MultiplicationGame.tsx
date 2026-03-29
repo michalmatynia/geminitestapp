@@ -72,40 +72,65 @@ type MultiplicationGameProps = KangurMiniGameFinishVariantProps;
 
 const TOTAL = 8;
 
+const buildPositiveMultiplicationChoices = (correct: number, upperBound = Number.POSITIVE_INFINITY): number[] => {
+  const wrongs = new Set<number>();
+  while (wrongs.size < 3) {
+    const wrong =
+      correct + (Math.floor(Math.random() * 6) + 1) * (Math.random() < 0.5 ? 1 : -1);
+    if (wrong > 0 && wrong !== correct && wrong <= upperBound) {
+      wrongs.add(wrong);
+    }
+  }
+  return [...wrongs, correct].sort(() => Math.random() - 0.5);
+};
+
+const buildMultiplicationBlankQuestion = ({
+  a,
+  b,
+}: {
+  a: number;
+  b: number;
+}): MultiplicationBlankQuestion => {
+  const missingA = Math.random() < 0.5;
+  const shown = missingA ? b : a;
+  const missing = missingA ? a : b;
+
+  return {
+    type: 'blank',
+    a,
+    b,
+    correct: missing,
+    product: a * b,
+    shown,
+    missingA,
+    choices: buildPositiveMultiplicationChoices(missing, 12),
+  };
+};
+
+const buildMultiplicationResultQuestion = ({
+  a,
+  b,
+}: {
+  a: number;
+  b: number;
+}): MultiplicationResultQuestion => ({
+  type: 'result',
+  a,
+  b,
+  correct: a * b,
+  choices: buildPositiveMultiplicationChoices(a * b),
+});
+
 function generateQuestion(round: number): MultiplicationQuestion {
   const useBlank = round % 2 === 1;
   const a = Math.floor(Math.random() * 9) + 2;
   const b = Math.floor(Math.random() * 9) + 2;
-  const correct = a * b;
 
   if (useBlank) {
-    const missingA = Math.random() < 0.5;
-    const shown = missingA ? b : a;
-    const missing = missingA ? a : b;
-    const wrongs = new Set<number>();
-    while (wrongs.size < 3) {
-      const wrong = missing + (Math.floor(Math.random() * 4) + 1) * (Math.random() < 0.5 ? 1 : -1);
-      if (wrong > 0 && wrong !== missing && wrong <= 12) {
-        wrongs.add(wrong);
-      }
-    }
-    if (wrongs.size < 3) {
-      wrongs.add(missing + 1);
-      wrongs.add(missing + 2);
-    }
-    const choices = [...wrongs, missing].sort(() => Math.random() - 0.5);
-    return { type: 'blank', a, b, correct: missing, product: correct, shown, missingA, choices };
+    return buildMultiplicationBlankQuestion({ a, b });
   }
 
-  const wrongs = new Set<number>();
-  while (wrongs.size < 3) {
-    const wrong = correct + (Math.floor(Math.random() * 6) + 1) * (Math.random() < 0.5 ? 1 : -1);
-    if (wrong > 0 && wrong !== correct) {
-      wrongs.add(wrong);
-    }
-  }
-  const choices = [...wrongs, correct].sort(() => Math.random() - 0.5);
-  return { type: 'result', a, b, correct, choices };
+  return buildMultiplicationResultQuestion({ a, b });
 }
 
 function MultiplyGrid({ a, b }: { a: number; b: number }): React.JSX.Element | null {
@@ -127,6 +152,477 @@ function MultiplyGrid({ a, b }: { a: number; b: number }): React.JSX.Element | n
         </div>
       ))}
     </div>
+  );
+}
+
+type MultiplicationChoicePresentation = {
+  accent: KangurAccent;
+  className: string;
+  emphasis: 'neutral' | 'accent';
+  state: 'default' | 'muted';
+};
+
+const resolveMultiplicationChoicePresentation = ({
+  choice,
+  confirmed,
+  correct,
+  selected,
+}: {
+  choice: number;
+  confirmed: boolean;
+  correct: number;
+  selected: number | null;
+}): MultiplicationChoicePresentation => {
+  if (confirmed) {
+    if (choice === correct) {
+      return {
+        accent: 'emerald',
+        className: KANGUR_ACCENT_STYLES.emerald.activeText,
+        emphasis: 'accent',
+        state: 'default',
+      };
+    }
+
+    if (choice === selected) {
+      return {
+        accent: 'rose',
+        className: KANGUR_ACCENT_STYLES.rose.activeText,
+        emphasis: 'accent',
+        state: 'default',
+      };
+    }
+
+    return {
+      accent: 'slate',
+      className: '',
+      emphasis: 'neutral',
+      state: 'muted',
+    };
+  }
+
+  if (choice === selected) {
+    return {
+      accent: 'amber',
+      className: KANGUR_ACCENT_STYLES.amber.activeText,
+      emphasis: 'accent',
+      state: 'default',
+    };
+  }
+
+  return {
+    accent: 'violet',
+    className: '[color:var(--kangur-page-text)]',
+    emphasis: 'neutral',
+    state: 'default',
+  };
+};
+
+const resolveMultiplicationSummaryMessage = ({
+  percent,
+  translations,
+}: {
+  percent: number;
+  translations: ReturnType<typeof useTranslations>;
+}): string => {
+  if (percent === 100) {
+    return translations('multiplication.summary.perfect');
+  }
+
+  if (percent >= 60) {
+    return translations('multiplication.summary.good');
+  }
+
+  return translations('multiplication.summary.retry');
+};
+
+const resolveMultiplicationCheckButtonClassName = ({
+  confirmed,
+  correct,
+  selected,
+}: {
+  confirmed: boolean;
+  correct: number;
+  selected: number | null;
+}): string =>
+  cn(
+    'w-full',
+    confirmed
+      ? selected === correct
+        ? 'bg-emerald-500 border-emerald-500 text-white'
+        : 'bg-rose-500 border-rose-500 text-white'
+      : '[background:var(--kangur-soft-card-background)] [border-color:var(--kangur-soft-card-border)] [color:var(--kangur-page-text)]'
+  );
+
+const resetMultiplicationGameSession = ({
+  sessionStartedAtRef,
+  setConfirmed,
+  setDone,
+  setQuestion,
+  setRoundIndex,
+  setScore,
+  setSelected,
+  setXpBreakdown,
+  setXpEarned,
+}: {
+  sessionStartedAtRef: React.MutableRefObject<number>;
+  setConfirmed: React.Dispatch<React.SetStateAction<boolean>>;
+  setDone: React.Dispatch<React.SetStateAction<boolean>>;
+  setQuestion: React.Dispatch<React.SetStateAction<MultiplicationQuestion>>;
+  setRoundIndex: React.Dispatch<React.SetStateAction<number>>;
+  setScore: React.Dispatch<React.SetStateAction<number>>;
+  setSelected: React.Dispatch<React.SetStateAction<number | null>>;
+  setXpBreakdown: React.Dispatch<React.SetStateAction<KangurRewardBreakdownEntry[]>>;
+  setXpEarned: React.Dispatch<React.SetStateAction<number>>;
+}): void => {
+  setRoundIndex(0);
+  setScore(0);
+  setDone(false);
+  setXpEarned(0);
+  setXpBreakdown([]);
+  setQuestion(generateQuestion(0));
+  setSelected(null);
+  setConfirmed(false);
+  sessionStartedAtRef.current = Date.now();
+};
+
+const advanceMultiplicationRound = ({
+  newScore,
+  ownerKey,
+  roundIndex,
+  sessionStartedAtRef,
+  setConfirmed,
+  setDone,
+  setQuestion,
+  setRoundIndex,
+  setScore,
+  setSelected,
+  setXpBreakdown,
+  setXpEarned,
+}: {
+  newScore: number;
+  ownerKey: string | null;
+  roundIndex: number;
+  sessionStartedAtRef: React.MutableRefObject<number>;
+  setConfirmed: React.Dispatch<React.SetStateAction<boolean>>;
+  setDone: React.Dispatch<React.SetStateAction<boolean>>;
+  setQuestion: React.Dispatch<React.SetStateAction<MultiplicationQuestion>>;
+  setRoundIndex: React.Dispatch<React.SetStateAction<number>>;
+  setScore: React.Dispatch<React.SetStateAction<number>>;
+  setSelected: React.Dispatch<React.SetStateAction<number | null>>;
+  setXpBreakdown: React.Dispatch<React.SetStateAction<KangurRewardBreakdownEntry[]>>;
+  setXpEarned: React.Dispatch<React.SetStateAction<number>>;
+}): void => {
+  if (roundIndex + 1 >= TOTAL) {
+    const progress = loadProgress({ ownerKey });
+    const reward = createLessonPracticeReward(progress, 'multiplication', newScore, TOTAL);
+    addXp(reward.xp, reward.progressUpdates, { ownerKey });
+    void persistKangurSessionScore({
+      operation: 'multiplication',
+      score: newScore,
+      totalQuestions: TOTAL,
+      correctAnswers: newScore,
+      timeTakenSeconds: Math.round((Date.now() - sessionStartedAtRef.current) / 1000),
+      xpEarned: reward.xp,
+    });
+    setXpEarned(reward.xp);
+    setXpBreakdown(reward.breakdown ?? []);
+    setScore(newScore);
+    setDone(true);
+    return;
+  }
+
+  setScore(newScore);
+  setRoundIndex((current) => current + 1);
+  setQuestion(generateQuestion(roundIndex + 1));
+  setSelected(null);
+  setConfirmed(false);
+};
+
+const confirmMultiplicationSelection = ({
+  confirmed,
+  ownerKey,
+  question,
+  roundIndex,
+  score,
+  selected,
+  sessionStartedAtRef,
+  setConfirmed,
+  setDone,
+  setQuestion,
+  setRoundIndex,
+  setScore,
+  setSelected,
+  setXpBreakdown,
+  setXpEarned,
+}: {
+  confirmed: boolean;
+  ownerKey: string | null;
+  question: MultiplicationQuestion;
+  roundIndex: number;
+  score: number;
+  selected: number | null;
+  sessionStartedAtRef: React.MutableRefObject<number>;
+  setConfirmed: React.Dispatch<React.SetStateAction<boolean>>;
+  setDone: React.Dispatch<React.SetStateAction<boolean>>;
+  setQuestion: React.Dispatch<React.SetStateAction<MultiplicationQuestion>>;
+  setRoundIndex: React.Dispatch<React.SetStateAction<number>>;
+  setScore: React.Dispatch<React.SetStateAction<number>>;
+  setSelected: React.Dispatch<React.SetStateAction<number | null>>;
+  setXpBreakdown: React.Dispatch<React.SetStateAction<KangurRewardBreakdownEntry[]>>;
+  setXpEarned: React.Dispatch<React.SetStateAction<number>>;
+}): void => {
+  if (selected === null || confirmed) {
+    return;
+  }
+
+  setConfirmed(true);
+  const newScore = selected === question.correct ? score + 1 : score;
+  scheduleKangurRoundFeedback(() => {
+    advanceMultiplicationRound({
+      newScore,
+      ownerKey,
+      roundIndex,
+      sessionStartedAtRef,
+      setConfirmed,
+      setDone,
+      setQuestion,
+      setRoundIndex,
+      setScore,
+      setSelected,
+      setXpBreakdown,
+      setXpEarned,
+    });
+  });
+};
+
+function MultiplicationGameSummaryView({
+  finishLabel,
+  onFinish,
+  onRestart,
+  percent,
+  score,
+  translations,
+  xpBreakdown,
+  xpEarned,
+}: {
+  finishLabel: string;
+  onFinish: () => void;
+  onRestart: () => void;
+  percent: number;
+  score: number;
+  translations: ReturnType<typeof useTranslations>;
+  xpBreakdown: KangurRewardBreakdownEntry[];
+  xpEarned: number;
+}): React.JSX.Element {
+  return (
+    <KangurPracticeGameSummary dataTestId='multiplication-game-summary-shell'>
+      <KangurPracticeGameSummaryEmoji
+        dataTestId='multiplication-game-summary-emoji'
+        emoji={percent === 100 ? '🏆' : percent >= 60 ? '🌟' : '💪'}
+      />
+      <KangurPracticeGameSummaryTitle
+        accent='indigo'
+        title={
+          <KangurHeadline data-testid='multiplication-game-summary-title'>
+            {getKangurMiniGameScoreLabel(translations, score, TOTAL)}
+          </KangurHeadline>
+        }
+      />
+      <KangurPracticeGameSummaryXP accent='indigo' xpEarned={xpEarned} />
+      <KangurPracticeGameSummaryBreakdown
+        breakdown={xpBreakdown}
+        dataTestId='multiplication-game-summary-breakdown'
+        itemDataTestIdPrefix='multiplication-game-summary-breakdown'
+      />
+      <KangurPracticeGameSummaryProgress accent='indigo' percent={percent} />
+      <KangurPracticeGameSummaryMessage>
+        {resolveMultiplicationSummaryMessage({ percent, translations })}
+      </KangurPracticeGameSummaryMessage>
+      <KangurPracticeGameSummaryActions
+        finishLabel={finishLabel}
+        onFinish={onFinish}
+        restartLabel={translations('shared.restart')}
+        onRestart={onRestart}
+      />
+    </KangurPracticeGameSummary>
+  );
+}
+
+function MultiplicationGameQuestionPanel({
+  question,
+}: {
+  question: MultiplicationQuestion;
+}): React.JSX.Element {
+  if (question.type === 'result') {
+    return (
+      <>
+        <p className='text-xs font-bold text-purple-400 uppercase tracking-wide'>
+          Ile wynosi iloczyn?
+        </p>
+        <KangurEquationDisplay accent='violet' data-testid='multiplication-game-equation'>
+          {question.a} × {question.b} ={' '}
+          <span className='[color:var(--kangur-page-muted-text)]'>?</span>
+        </KangurEquationDisplay>
+        <MultiplyGrid a={question.a} b={question.b} />
+      </>
+    );
+  }
+
+  return (
+    <>
+      <p className='text-xs font-bold text-purple-400 uppercase tracking-wide'>
+        Znajdź brakujący czynnik
+      </p>
+      <KangurEquationDisplay accent='violet' data-testid='multiplication-game-equation'>
+        {question.missingA ? (
+          <>
+            <span className='[color:var(--kangur-page-muted-text)]'>?</span> × {question.shown}
+          </>
+        ) : (
+          <>
+            {question.shown} × <span className='[color:var(--kangur-page-muted-text)]'>?</span>
+          </>
+        )}
+        {' = '}
+        {question.product}
+      </KangurEquationDisplay>
+    </>
+  );
+}
+
+function MultiplicationGameChoicesGrid({
+  confirmed,
+  isCoarsePointer,
+  onSelect,
+  question,
+  selected,
+}: {
+  confirmed: boolean;
+  isCoarsePointer: boolean;
+  onSelect: (choice: number) => void;
+  question: MultiplicationQuestion;
+  selected: number | null;
+}): React.JSX.Element {
+  return (
+    <div className='grid w-full grid-cols-1 gap-2 sm:grid-cols-2'>
+      {question.choices.map((choice, index) => {
+        const presentation = resolveMultiplicationChoicePresentation({
+          choice,
+          confirmed,
+          correct: question.correct,
+          selected,
+        });
+
+        return (
+          <KangurAnswerChoiceCard
+            accent={presentation.accent}
+            buttonClassName={cn(
+              'flex items-center justify-center px-4 py-3 text-center text-lg font-extrabold touch-manipulation select-none sm:text-xl',
+              isCoarsePointer && 'min-h-[4.25rem] active:scale-[0.98]',
+              presentation.className,
+              confirmed ? 'cursor-default' : 'cursor-pointer'
+            )}
+            data-testid={`multiplication-game-choice-${index}`}
+            emphasis={presentation.emphasis}
+            hoverScale={1.04}
+            interactive={!confirmed}
+            key={index}
+            onClick={() => onSelect(choice)}
+            state={presentation.state}
+            tapScale={0.96}
+            type='button'
+          >
+            {choice}
+          </KangurAnswerChoiceCard>
+        );
+      })}
+    </div>
+  );
+}
+
+function MultiplicationGameRoundView({
+  confirmed,
+  isCoarsePointer,
+  onConfirm,
+  onSelect,
+  question,
+  roundIndex,
+  selected,
+  translations,
+}: {
+  confirmed: boolean;
+  isCoarsePointer: boolean;
+  onConfirm: () => void;
+  onSelect: (choice: number) => void;
+  question: MultiplicationQuestion;
+  roundIndex: number;
+  selected: number | null;
+  translations: ReturnType<typeof useTranslations>;
+}): React.JSX.Element {
+  return (
+    <KangurPracticeGameShell>
+      <KangurPracticeGameProgress
+        accent='indigo'
+        currentRound={roundIndex}
+        dataTestId='multiplication-game-progress-bar'
+        totalRounds={TOTAL}
+      />
+      <div className='w-full'>
+        <KangurGlassPanel
+          className={cn('flex flex-col items-center', KANGUR_PANEL_GAP_CLASSNAME)}
+          data-testid='multiplication-game-round-shell'
+          padding='xl'
+          surface='solid'
+          variant='soft'
+        >
+          <MultiplicationGameQuestionPanel question={question} />
+
+          {isCoarsePointer ? (
+            <p
+              data-testid='multiplication-game-touch-hint'
+              className='text-center text-xs font-semibold uppercase tracking-[0.16em] [color:var(--kangur-page-muted-text)]'
+            >
+              {translateKangurMiniGameWithFallback(
+                translations,
+                'multiplication.inRound.touchHint',
+                'Tap an answer, then tap Check.'
+              )}
+            </p>
+          ) : null}
+
+          <MultiplicationGameChoicesGrid
+            confirmed={confirmed}
+            isCoarsePointer={isCoarsePointer}
+            onSelect={onSelect}
+            question={question}
+            selected={selected}
+          />
+
+          <div role='status' aria-live='polite' aria-atomic='true' className='sr-only'>
+            {confirmed
+              ? selected === question.correct
+                ? 'Dobrze! Poprawna odpowiedź.'
+                : `Niepoprawnie. Poprawna odpowiedź: ${question.correct}.`
+              : ''}
+          </div>
+
+          <KangurButton
+            className={resolveMultiplicationCheckButtonClassName({
+              confirmed,
+              correct: question.correct,
+              selected,
+            })}
+            disabled={selected === null || confirmed}
+            onClick={onConfirm}
+            size='lg'
+            variant='primary'
+            data-testid='multiplication-game-check'
+          >
+            Sprawdź ✓
+          </KangurButton>
+        </KangurGlassPanel>
+      </div>
+    </KangurPracticeGameShell>
   );
 }
 
@@ -162,232 +658,63 @@ export default function MultiplicationGame({
   };
 
   const handleConfirm = (): void => {
-    if (selected === null || confirmed) {
-      return;
-    }
-
-    setConfirmed(true);
-    const isCorrect = selected === question.correct;
-    const newScore = isCorrect ? score + 1 : score;
-
-    scheduleKangurRoundFeedback(() => {
-      if (roundIndex + 1 >= TOTAL) {
-        const progress = loadProgress({ ownerKey });
-        const reward = createLessonPracticeReward(progress, 'multiplication', newScore, TOTAL);
-        addXp(reward.xp, reward.progressUpdates, { ownerKey });
-        void persistKangurSessionScore({
-          operation: 'multiplication',
-          score: newScore,
-          totalQuestions: TOTAL,
-          correctAnswers: newScore,
-          timeTakenSeconds: Math.round((Date.now() - sessionStartedAtRef.current) / 1000),
-          xpEarned: reward.xp,
-        });
-        setXpEarned(reward.xp);
-        setXpBreakdown(reward.breakdown ?? []);
-        setScore(newScore);
-        setDone(true);
-      } else {
-        setScore(newScore);
-        setRoundIndex((current) => current + 1);
-        setQuestion(generateQuestion(roundIndex + 1));
-        setSelected(null);
-        setConfirmed(false);
-      }
+    confirmMultiplicationSelection({
+      confirmed,
+      ownerKey,
+      question,
+      roundIndex,
+      score,
+      selected,
+      sessionStartedAtRef,
+      setConfirmed,
+      setDone,
+      setQuestion,
+      setRoundIndex,
+      setScore,
+      setSelected,
+      setXpBreakdown,
+      setXpEarned,
     });
   };
 
   if (done) {
     const percent = Math.round((score / TOTAL) * 100);
     return (
-      <KangurPracticeGameSummary dataTestId='multiplication-game-summary-shell'>
-        <KangurPracticeGameSummaryEmoji
-          dataTestId='multiplication-game-summary-emoji'
-          emoji={percent === 100 ? '🏆' : percent >= 60 ? '🌟' : '💪'}
-        />
-        <KangurPracticeGameSummaryTitle
-          accent='indigo'
-          title={
-            <KangurHeadline data-testid='multiplication-game-summary-title'>
-              {getKangurMiniGameScoreLabel(translations, score, TOTAL)}
-            </KangurHeadline>
-          }
-        />
-        <KangurPracticeGameSummaryXP accent='indigo' xpEarned={xpEarned} />
-        <KangurPracticeGameSummaryBreakdown
-          breakdown={xpBreakdown}
-          dataTestId='multiplication-game-summary-breakdown'
-          itemDataTestIdPrefix='multiplication-game-summary-breakdown'
-        />
-        <KangurPracticeGameSummaryProgress accent='indigo' percent={percent} />
-        <KangurPracticeGameSummaryMessage>
-          {percent === 100
-            ? translations('multiplication.summary.perfect')
-            : percent >= 60
-              ? translations('multiplication.summary.good')
-              : translations('multiplication.summary.retry')}
-        </KangurPracticeGameSummaryMessage>
-        <KangurPracticeGameSummaryActions
-          finishLabel={finishLabel}
-          onFinish={handleFinishGame}
-          restartLabel={translations('shared.restart')}
-          onRestart={() => {
-            setRoundIndex(0);
-            setScore(0);
-            setDone(false);
-            setXpEarned(0);
-            setXpBreakdown([]);
-            setQuestion(generateQuestion(0));
-            setSelected(null);
-            setConfirmed(false);
-            sessionStartedAtRef.current = Date.now();
-          }}
-        />
-      </KangurPracticeGameSummary>
+      <MultiplicationGameSummaryView
+        finishLabel={finishLabel}
+        onFinish={handleFinishGame}
+        onRestart={() =>
+          resetMultiplicationGameSession({
+            sessionStartedAtRef,
+            setConfirmed,
+            setDone,
+            setQuestion,
+            setRoundIndex,
+            setScore,
+            setSelected,
+            setXpBreakdown,
+            setXpEarned,
+          })
+        }
+        percent={percent}
+        score={score}
+        translations={translations}
+        xpBreakdown={xpBreakdown}
+        xpEarned={xpEarned}
+      />
     );
   }
 
   return (
-    <KangurPracticeGameShell>
-      <KangurPracticeGameProgress
-        accent='indigo'
-        currentRound={roundIndex}
-        dataTestId='multiplication-game-progress-bar'
-        totalRounds={TOTAL}
-      />
-      <div className='w-full'>
-        <KangurGlassPanel
-          className={cn('flex flex-col items-center', KANGUR_PANEL_GAP_CLASSNAME)}
-          data-testid='multiplication-game-round-shell'
-          padding='xl'
-          surface='solid'
-          variant='soft'
-        >
-          {question.type === 'result' ? (
-            <>
-              <p className='text-xs font-bold text-purple-400 uppercase tracking-wide'>
-                Ile wynosi iloczyn?
-              </p>
-              <KangurEquationDisplay accent='violet' data-testid='multiplication-game-equation'>
-                {question.a} × {question.b} ={' '}
-                <span className='[color:var(--kangur-page-muted-text)]'>?</span>
-              </KangurEquationDisplay>
-              <MultiplyGrid a={question.a} b={question.b} />
-            </>
-          ) : (
-            <>
-              <p className='text-xs font-bold text-purple-400 uppercase tracking-wide'>
-                Znajdź brakujący czynnik
-              </p>
-              <KangurEquationDisplay accent='violet' data-testid='multiplication-game-equation'>
-                {question.missingA ? (
-                  <>
-                    <span className='[color:var(--kangur-page-muted-text)]'>?</span> ×{' '}
-                    {question.shown}
-                  </>
-                ) : (
-                  <>
-                    {question.shown} ×{' '}
-                    <span className='[color:var(--kangur-page-muted-text)]'>?</span>
-                  </>
-                )}
-                {' = '}
-                {question.product}
-              </KangurEquationDisplay>
-            </>
-          )}
-
-          {isCoarsePointer ? (
-            <p
-              data-testid='multiplication-game-touch-hint'
-              className='text-center text-xs font-semibold uppercase tracking-[0.16em] [color:var(--kangur-page-muted-text)]'
-            >
-              {translateKangurMiniGameWithFallback(
-                translations,
-                'multiplication.inRound.touchHint',
-                'Tap an answer, then tap Check.'
-              )}
-            </p>
-          ) : null}
-
-          <div className='grid w-full grid-cols-1 gap-2 sm:grid-cols-2'>
-            {question.choices.map((choice, index) => {
-              let accent: KangurAccent = 'violet';
-              let emphasis: 'neutral' | 'accent' = 'neutral';
-              let state: 'default' | 'muted' = 'default';
-              let className = '[color:var(--kangur-page-text)]';
-              if (confirmed) {
-                if (choice === question.correct) {
-                  accent = 'emerald';
-                  emphasis = 'accent';
-                  className = KANGUR_ACCENT_STYLES.emerald.activeText;
-                } else if (choice === selected) {
-                  accent = 'rose';
-                  emphasis = 'accent';
-                  className = KANGUR_ACCENT_STYLES.rose.activeText;
-                } else {
-                  accent = 'slate';
-                  state = 'muted';
-                  className = '';
-                }
-              } else if (choice === selected) {
-                accent = 'amber';
-                emphasis = 'accent';
-                className = KANGUR_ACCENT_STYLES.amber.activeText;
-              }
-
-              return (
-                <KangurAnswerChoiceCard
-                  accent={accent}
-                  buttonClassName={cn(
-                    'flex items-center justify-center px-4 py-3 text-center text-lg font-extrabold touch-manipulation select-none sm:text-xl',
-                    isCoarsePointer && 'min-h-[4.25rem] active:scale-[0.98]',
-                    className,
-                    confirmed ? 'cursor-default' : 'cursor-pointer'
-                  )}
-                  data-testid={`multiplication-game-choice-${index}`}
-                  emphasis={emphasis}
-                  hoverScale={1.04}
-                  interactive={!confirmed}
-                  key={index}
-                  onClick={() => handleSelect(choice)}
-                  state={state}
-                  tapScale={0.96}
-                  type='button'
-                >
-                  {choice}
-                </KangurAnswerChoiceCard>
-              );
-            })}
-          </div>
-
-          <div role='status' aria-live='polite' aria-atomic='true' className='sr-only'>
-            {confirmed
-              ? selected === question.correct
-                ? 'Dobrze! Poprawna odpowiedź.'
-                : `Niepoprawnie. Poprawna odpowiedź: ${question.correct}.`
-              : ''}
-          </div>
-
-          <KangurButton
-            className={cn(
-              'w-full',
-              confirmed
-                ? selected === question.correct
-                  ? 'bg-emerald-500 border-emerald-500 text-white'
-                  : 'bg-rose-500 border-rose-500 text-white'
-                : '[background:var(--kangur-soft-card-background)] [border-color:var(--kangur-soft-card-border)] [color:var(--kangur-page-text)]'
-            )}
-            disabled={selected === null || confirmed}
-            onClick={handleConfirm}
-            size='lg'
-            variant='primary'
-            data-testid='multiplication-game-check'
-          >
-            Sprawdź ✓
-          </KangurButton>
-        </KangurGlassPanel>
-      </div>
-    </KangurPracticeGameShell>
+    <MultiplicationGameRoundView
+      confirmed={confirmed}
+      isCoarsePointer={isCoarsePointer}
+      onConfirm={handleConfirm}
+      onSelect={handleSelect}
+      question={question}
+      roundIndex={roundIndex}
+      selected={selected}
+      translations={translations}
+    />
   );
 }

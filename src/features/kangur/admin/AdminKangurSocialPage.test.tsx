@@ -373,6 +373,7 @@ const buildHookState = () => ({
   setBatchCapturePresetLimit: vi.fn(),
   effectiveBatchCapturePresetCount: 0,
   batchCaptureResult: null,
+  batchCaptureJob: null,
   hasSavedProgrammableCaptureDefaults: false,
   persistedProgrammableCaptureBaseUrl: null,
   persistedProgrammableCapturePersonaId: null,
@@ -448,8 +449,13 @@ const buildHookState = () => ({
   handleRunFullPipeline: vi.fn(),
   handleRunFullPipelineWithFreshCapture: vi.fn(),
   captureOnlyPending: false,
+  captureOnlyBatchCaptureJob: null,
   captureOnlyMessage: null,
   captureOnlyErrorMessage: null,
+  programmableCapturePending: false,
+  programmableCaptureBatchCaptureJob: null,
+  programmableCaptureMessage: null,
+  programmableCaptureErrorMessage: null,
   handleCaptureImagesOnly: vi.fn(),
   publishingPostId: null,
   unpublishingPostId: null,
@@ -608,6 +614,36 @@ describe('AdminKangurSocialPage', () => {
     expect(screen.getByText('Image analysis: Running')).toBeInTheDocument();
     expect(screen.getByText('Generate post: Queued')).toBeInTheDocument();
     expect(screen.getByText('Full pipeline: Completed')).toBeInTheDocument();
+  });
+
+  it('shows a page-level Playwright capture counter while a standalone capture job is running', () => {
+    useAdminKangurSocialPageMock.mockReturnValue({
+      ...buildHookState(),
+      captureOnlyPending: true,
+      captureOnlyBatchCaptureJob: {
+        id: 'capture-job-1',
+        runId: 'capture-run-1',
+        status: 'running',
+        progress: {
+          processedCount: 2,
+          completedCount: 1,
+          failureCount: 1,
+          remainingCount: 2,
+          totalCount: 3,
+          message: 'Playwright capture in progress: 1 captured, 2 left of 3 targets. 1 failed.',
+        },
+        result: null,
+        error: null,
+        createdAt: '2026-03-30T10:00:00.000Z',
+        updatedAt: '2026-03-30T10:00:01.000Z',
+      },
+    });
+
+    render(<AdminKangurSocialPage />);
+
+    expect(
+      screen.getByText('Playwright capture: 1 captured, 2 left of 3. 1 failed.')
+    ).toBeInTheDocument();
   });
 
   it('blocks creating a new draft while Social runtime jobs are still in flight', () => {

@@ -243,6 +243,36 @@ describe('createKangurSocialImageAddonsBatch', () => {
     );
   });
 
+  it('drops secure-prefixed auth cookies for localhost batch captures while keeping plain cookies', async () => {
+    mocks.enqueuePlaywrightNodeRunMock.mockResolvedValue(makeCompletedRun(['game']));
+
+    await createKangurSocialImageAddonsBatch({
+      baseUrl: 'http://localhost:3000',
+      presetIds: ['game'],
+      forwardCookies:
+        '__Host-next-auth.csrf-token=csrf123; __Secure-next-auth.session-token=session456; session=abc123',
+    });
+
+    expect(mocks.enqueuePlaywrightNodeRunMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        request: expect.objectContaining({
+          contextOptions: {
+            storageState: {
+              cookies: [
+                {
+                  name: 'session',
+                  value: 'abc123',
+                  url: 'http://localhost:3000',
+                },
+              ],
+              origins: [],
+            },
+          },
+        }),
+      })
+    );
+  });
+
   it('seeds the requested storefront appearance mode into Playwright storage and batch input', async () => {
     mocks.enqueuePlaywrightNodeRunMock.mockResolvedValue(
       makeCompletedRun(['game'])

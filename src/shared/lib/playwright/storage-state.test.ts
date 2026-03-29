@@ -26,7 +26,7 @@ describe('playwright storage state sanitization', () => {
     ]);
   });
 
-  it('keeps secure auth cookie prefixes valid for secure and localhost origins', () => {
+  it('keeps secure auth cookie prefixes only for https origins', () => {
     expect(
       sanitizePlaywrightCookiesFromHeader(
         '__Host-next-auth.csrf-token=csrf123; __Secure-next-auth.session-token=session456',
@@ -46,20 +46,6 @@ describe('playwright storage state sanitization', () => {
         secure: true,
       },
     ]);
-
-    expect(
-      sanitizePlaywrightCookiesFromHeader(
-        '__Secure-next-auth.session-token=session456',
-        'http://localhost:3000/admin/kangur/social'
-      )
-    ).toEqual([
-      {
-        name: '__Secure-next-auth.session-token',
-        value: 'session456',
-        url: 'http://localhost:3000',
-        secure: true,
-      },
-    ]);
   });
 
   it('drops secure-prefixed cookies on insecure non-local origins', () => {
@@ -73,6 +59,21 @@ describe('playwright storage state sanitization', () => {
         name: 'theme',
         value: 'dark',
         url: 'http://example.com',
+      },
+    ]);
+  });
+
+  it('drops secure-prefixed cookies on localhost http origins but keeps plain cookies', () => {
+    expect(
+      sanitizePlaywrightCookiesFromHeader(
+        '__Secure-next-auth.session-token=session456; session=abc123',
+        'http://localhost:3000/admin/kangur/social'
+      )
+    ).toEqual([
+      {
+        name: 'session',
+        value: 'abc123',
+        url: 'http://localhost:3000',
       },
     ]);
   });
@@ -136,6 +137,36 @@ describe('playwright storage state sanitization', () => {
           localStorage: [{ name: 'kangur-storefront-appearance-mode', value: 'dark' }],
         },
       ],
+    });
+  });
+
+  it('drops secure-prefixed storage-state cookies when fallback origin is localhost http', () => {
+    expect(
+      sanitizePlaywrightStorageState(
+        {
+          cookies: [
+            {
+              name: '__Secure-next-auth.session-token',
+              value: 'session456',
+            },
+            {
+              name: 'session',
+              value: 'abc123',
+            },
+          ],
+          origins: [],
+        },
+        { fallbackOrigin: 'http://localhost:3000/admin/kangur/social' }
+      )
+    ).toEqual({
+      cookies: [
+        {
+          name: 'session',
+          value: 'abc123',
+          url: 'http://localhost:3000',
+        },
+      ],
+      origins: [],
     });
   });
 });

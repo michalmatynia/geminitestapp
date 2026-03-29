@@ -6,6 +6,7 @@ import type React from 'react';
 import { cn } from '@/features/kangur/shared/utils';
 import { KangurDialog } from '@/features/kangur/ui/components/KangurDialog';
 import { KangurDialogCloseButton } from '@/features/kangur/ui/components/KangurDialogCloseButton';
+import { KangurDialogMeta } from '@/features/kangur/ui/components/KangurDialogMeta';
 import { KangurIconSummaryCardContent } from '@/features/kangur/ui/components/KangurIconSummaryCardContent';
 import { KangurIconSummaryOptionCard } from '@/features/kangur/ui/components/KangurIconSummaryOptionCard';
 import {
@@ -711,9 +712,16 @@ export function LearnerManagementModal(props: {
   onLoadMoreSessions: () => void;
 }): React.JSX.Element {
   const showSettingsPanel = props.activeTab === 'settings' || props.isCreateModalVisible;
+  const dialogTitle = props.isCreateModalVisible
+    ? props.copy.createModalTitle
+    : props.copy.profileSettingsTitle;
+  const dialogDescription = props.isCreateModalVisible
+    ? props.copy.createModalDescription
+    : props.copy.profileSettingsDescription;
 
   return (
     <KangurDialog open={props.open} onOpenChange={(open) => !open && props.onClose()}>
+      <KangurDialogMeta title={dialogTitle} description={dialogDescription} />
       <div
         className='relative flex h-full flex-col max-sm:bg-white'
         data-testid={props.isCreateModalVisible ? 'parent-create-learner-modal' : undefined}

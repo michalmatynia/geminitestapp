@@ -10,6 +10,7 @@ import {
   KANGUR_STACK_COMPACT_CLASSNAME,
 } from '@/features/kangur/ui/design/tokens';
 import { KangurDialog } from '@/features/kangur/ui/components/KangurDialog';
+import { KangurDialogMeta } from '@/features/kangur/ui/components/KangurDialogMeta';
 
 export function KangurAssignmentManagerTimeLimitModal({
   isOpen,
@@ -41,6 +42,10 @@ export function KangurAssignmentManagerTimeLimitModal({
       overlayVariant='dark'
       contentSize='sm'
     >
+      <KangurDialogMeta
+        title={title}
+        description={`Obecny limit: ${preview ?? 'Brak limitu'}`}
+      />
       <KangurGlassPanel className={KANGUR_STACK_COMPACT_CLASSNAME} padding='lg' surface='playField'>
         <KangurHeadline accent='indigo' as='h2' size='sm'>
           {title}

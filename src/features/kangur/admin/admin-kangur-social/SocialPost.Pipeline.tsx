@@ -57,9 +57,11 @@ export function SocialPostPipeline(): React.JSX.Element {
     socialBatchCaptureBlockedReason,
     socialVisualAnalysisBlockedReason,
     captureOnlyPending,
+    captureOnlyBatchCaptureJob,
     captureOnlyMessage,
     captureOnlyErrorMessage,
     programmableCapturePending,
+    programmableCaptureBatchCaptureJob,
     programmableCaptureMessage,
     programmableCaptureErrorMessage,
     batchCapturePresetLimit,
@@ -99,6 +101,26 @@ export function SocialPostPipeline(): React.JSX.Element {
   const captureRemainingCount = pipelineProgress?.captureRemainingCount ?? 0;
   const captureTotalCount = pipelineProgress?.captureTotalCount ?? 0;
   const captureFailureCount = pipelineProgress?.captureFailureCount ?? 0;
+  const standaloneCaptureJob =
+    (captureOnlyPending &&
+    captureOnlyBatchCaptureJob &&
+    isSocialRuntimeJobInFlight(captureOnlyBatchCaptureJob.status)
+      ? captureOnlyBatchCaptureJob
+      : programmableCapturePending &&
+          programmableCaptureBatchCaptureJob &&
+          isSocialRuntimeJobInFlight(programmableCaptureBatchCaptureJob.status)
+        ? programmableCaptureBatchCaptureJob
+        : null) ?? null;
+  const standaloneCaptureCompletedCount =
+    standaloneCaptureJob?.progress?.completedCount ?? 0;
+  const standaloneCaptureRemainingCount =
+    standaloneCaptureJob?.progress?.remainingCount ?? 0;
+  const standaloneCaptureTotalCount =
+    standaloneCaptureJob?.progress?.totalCount ?? 0;
+  const standaloneCaptureFailureCount =
+    standaloneCaptureJob?.progress?.failureCount ?? 0;
+  const shouldShowStandaloneCaptureProgress =
+    !isFreshCaptureInProgress && standaloneCaptureTotalCount > 0;
   const readyVisualHighlightCount = visualAnalysisResult?.highlights?.length ?? 0;
   const savedVisualAnalysisStatus = activePost?.visualAnalysisStatus ?? null;
   const readyVisualAnalysisUpdatedAt = activePost?.visualAnalysisUpdatedAt ?? null;
@@ -465,6 +487,40 @@ export function SocialPostPipeline(): React.JSX.Element {
             </div>
           )}
 
+          {shouldShowStandaloneCaptureProgress && (
+            <div className='grid grid-cols-3 gap-2 text-xs'>
+              <div className='rounded-xl border border-border/60 bg-background/40 px-3 py-2'>
+                <div className='text-[10px] uppercase tracking-wide text-muted-foreground'>
+                  Captured
+                </div>
+                <div className='mt-1 font-semibold text-foreground'>
+                  {standaloneCaptureCompletedCount}
+                </div>
+              </div>
+              <div className='rounded-xl border border-border/60 bg-background/40 px-3 py-2'>
+                <div className='text-[10px] uppercase tracking-wide text-muted-foreground'>
+                  Left
+                </div>
+                <div className='mt-1 font-semibold text-foreground'>
+                  {standaloneCaptureRemainingCount}
+                </div>
+              </div>
+              <div className='rounded-xl border border-border/60 bg-background/40 px-3 py-2'>
+                <div className='text-[10px] uppercase tracking-wide text-muted-foreground'>
+                  Total
+                </div>
+                <div className='mt-1 font-semibold text-foreground'>
+                  {standaloneCaptureTotalCount}
+                  {standaloneCaptureFailureCount > 0 ? (
+                    <span className='ml-2 text-[10px] font-medium text-destructive'>
+                      {standaloneCaptureFailureCount} failed
+                    </span>
+                  ) : null}
+                </div>
+              </div>
+            </div>
+          )}
+
           {pipelineStep === 'error' && pipelineErrorMessage && (
             <div className='rounded-xl border border-destructive/30 bg-destructive/10 px-3 py-2 text-xs text-destructive'>
               {pipelineErrorMessage}
@@ -499,6 +555,12 @@ export function SocialPostPipeline(): React.JSX.Element {
               <div className='mb-3 rounded-lg border border-border/50 bg-background/60 px-3 py-2 text-foreground/90'>
                 Live Playwright capture: {captureCompletedCount} captured, {captureRemainingCount} left.
                 {captureFailureCount > 0 ? ` ${captureFailureCount} failed.` : ''}
+              </div>
+            )}
+            {shouldShowStandaloneCaptureProgress && (
+              <div className='mb-3 rounded-lg border border-border/50 bg-background/60 px-3 py-2 text-foreground/90'>
+                Live Playwright capture: {standaloneCaptureCompletedCount} captured, {standaloneCaptureRemainingCount} left.
+                {standaloneCaptureFailureCount > 0 ? ` ${standaloneCaptureFailureCount} failed.` : ''}
               </div>
             )}
             <ul className='list-inside list-disc space-y-1'>

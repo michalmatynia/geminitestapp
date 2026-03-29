@@ -23,7 +23,6 @@ export type PlaywrightStorageState = {
 };
 
 const COOKIE_NAME_PATTERN = /^[!#$%&'*+\-.^_`|~0-9A-Za-z]+$/;
-const LOCAL_SECURE_HOSTS = new Set(['localhost', '127.0.0.1', '[::1]']);
 
 const isObjectRecord = (value: unknown): value is Record<string, unknown> =>
   Boolean(value) && typeof value === 'object' && !Array.isArray(value);
@@ -81,7 +80,7 @@ const sanitizeCookieFlags = (params: {
 
 const resolveOriginInfo = (
   value: string | null | undefined
-): { origin: string; secureLike: boolean } | null => {
+): { origin: string; securePrefixAllowed: boolean } | null => {
   if (!value) {
     return null;
   }
@@ -90,7 +89,7 @@ const resolveOriginInfo = (
     const url = new URL(value);
     return {
       origin: url.origin,
-      secureLike: url.protocol === 'https:' || LOCAL_SECURE_HOSTS.has(url.hostname),
+      securePrefixAllowed: url.protocol === 'https:',
     };
   } catch {
     return null;
@@ -159,7 +158,7 @@ const sanitizeStorageStateCookie = (
   });
 
   if (isSecurePrefixed) {
-    if (!usableOriginInfo?.secureLike) {
+    if (!usableOriginInfo?.securePrefixAllowed) {
       return null;
     }
     return {
@@ -231,7 +230,7 @@ export const sanitizePlaywrightCookiesFromHeader = (
 
       seenNames.add(name);
       const secure = name.startsWith('__Host-') || name.startsWith('__Secure-');
-      if (secure && !originInfo.secureLike) {
+      if (secure && !originInfo.securePrefixAllowed) {
         return cookies;
       }
 

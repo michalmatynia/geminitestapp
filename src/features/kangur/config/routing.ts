@@ -405,6 +405,10 @@ const KANGUR_DEDICATED_APP_PATH_BY_SLUG: Record<string, string> = Object.freeze(
   tests: 'tests',
 });
 
+export const KANGUR_DEDICATED_APP_STABLE_PATHS = Object.freeze(
+  ['', ...Object.values(KANGUR_DEDICATED_APP_PATH_BY_SLUG)].sort()
+);
+
 const toKangurSearchParams = (searchParams: KangurPublicSearchParams): URLSearchParams => {
   if (!searchParams) {
     return new URLSearchParams();

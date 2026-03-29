@@ -424,37 +424,51 @@ it('uses icon-first subject and age-group cues for six-year-old learners', async
     setSubject: vi.fn(),
     subjectKey: 'learner-1',
   });
+  const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
 
-  render(
-    <KangurPrimaryNavigation
-      basePath='/kangur'
-      currentPage='Lessons'
-      isAuthenticated
-      onLogout={vi.fn()}
-    />
-  );
+  try {
+    render(
+      <KangurPrimaryNavigation
+        basePath='/kangur'
+        currentPage='Lessons'
+        isAuthenticated
+        onLogout={vi.fn()}
+      />
+    );
 
-  expect(screen.getByTestId('kangur-primary-nav-lessons-icon')).toBeInTheDocument();
-  expect(screen.getByTestId('kangur-primary-nav-subject-icon')).toHaveTextContent('🎵');
-  expect(screen.getByTestId('kangur-primary-nav-subject-detail')).toHaveTextContent('👂');
-  expect(screen.getByTestId('kangur-primary-nav-age-group-icon')).toHaveTextContent('🐣');
-  expect(screen.getByTestId('kangur-primary-nav-age-group-detail')).toHaveTextContent('6');
+    expect(screen.getByTestId('kangur-primary-nav-lessons-icon')).toBeInTheDocument();
+    expect(screen.getByTestId('kangur-primary-nav-subject-icon')).toHaveTextContent('🎵');
+    expect(screen.getByTestId('kangur-primary-nav-subject-detail')).toHaveTextContent('👂');
+    expect(screen.getByTestId('kangur-primary-nav-age-group-icon')).toHaveTextContent('🐣');
+    expect(screen.getByTestId('kangur-primary-nav-age-group-detail')).toHaveTextContent('6');
 
-  fireEvent.click(screen.getByTestId('kangur-primary-nav-subject'));
+    fireEvent.click(screen.getByTestId('kangur-primary-nav-subject'));
 
-  expect(
-    await screen.findByTestId('kangur-primary-nav-subject-option-icon-music')
-  ).toHaveTextContent(
-    '🎵'
-  );
-  expect(
-    screen.getByTestId('kangur-primary-nav-subject-option-detail-music')
-  ).toHaveTextContent(
-    '👂'
-  );
-  expect(screen.getByTestId('kangur-primary-nav-subject-modal-title-icon')).toHaveTextContent(
-    '📚'
-  );
+    expect(
+      await screen.findByTestId('kangur-primary-nav-subject-option-icon-music')
+    ).toHaveTextContent(
+      '🎵'
+    );
+    expect(
+      screen.getByTestId('kangur-primary-nav-subject-option-detail-music')
+    ).toHaveTextContent(
+      '👂'
+    );
+    const subjectDialog = await screen.findByRole('dialog');
+    within(subjectDialog)
+      .getAllByTestId('kangur-primary-nav-subject-modal-title-icon')
+      .forEach((icon) => {
+        expect(icon).toHaveTextContent('📚');
+      });
+
+    const loggedOutput = consoleErrorSpy.mock.calls
+      .flatMap((call) => call.map((value) => String(value)))
+      .join('\n');
+    expect(loggedOutput).not.toContain('`DialogContent` requires a `DialogTitle`');
+    expect(loggedOutput).not.toContain('Missing `Description`');
+  } finally {
+    consoleErrorSpy.mockRestore();
+  }
 });
 
 it('does not prefetch the Duels route from the primary navigation before entry', () => {
@@ -644,47 +658,58 @@ it('locks the language dropdown visual contract across the trigger and every loc
 
 it('places the language selector left of the appearance toggle in the mobile menu header', async () => {
   setViewport({ width: 390, matches: true });
+  const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
 
-  render(
-    <CmsStorefrontAppearanceProvider initialMode='default'>
-      <KangurPrimaryNavigation
-        basePath='/kangur'
-        currentPage='Lessons'
-        isAuthenticated
-        onLogout={vi.fn()}
-      />
-    </CmsStorefrontAppearanceProvider>
-  );
+  try {
+    render(
+      <CmsStorefrontAppearanceProvider initialMode='default'>
+        <KangurPrimaryNavigation
+          basePath='/kangur'
+          currentPage='Lessons'
+          isAuthenticated
+          onLogout={vi.fn()}
+        />
+      </CmsStorefrontAppearanceProvider>
+    );
 
-  fireEvent.click(screen.getByTestId('kangur-primary-nav-mobile-toggle'));
+    fireEvent.click(screen.getByTestId('kangur-primary-nav-mobile-toggle'));
 
-  const header = screen.getByTestId('kangur-primary-nav-mobile-header');
-  const headerActions = screen.getByTestId('kangur-primary-nav-mobile-header-actions');
-  const utilityActions = screen.getByTestId('kangur-primary-nav-mobile-utility-actions');
-  const mobileMenuDialog = screen.getByRole('dialog');
-  const headerScope = within(header);
-  const mobileToggle = screen.getByTestId('kangur-primary-nav-mobile-toggle');
-  const trigger = within(headerActions).getByTestId('kangur-language-switcher-trigger');
-  const themeToggle = headerScope.getByRole('button', { name: 'Switch to Dawn theme' });
-  const lessonsAction = within(mobileMenuDialog).getByTestId('kangur-primary-nav-lessons');
+    const header = screen.getByTestId('kangur-primary-nav-mobile-header');
+    const headerActions = screen.getByTestId('kangur-primary-nav-mobile-header-actions');
+    const utilityActions = screen.getByTestId('kangur-primary-nav-mobile-utility-actions');
+    const mobileMenuDialog = screen.getByRole('dialog');
+    const headerScope = within(header);
+    const mobileToggle = screen.getByTestId('kangur-primary-nav-mobile-toggle');
+    const trigger = within(headerActions).getByTestId('kangur-language-switcher-trigger');
+    const themeToggle = headerScope.getByRole('button', { name: 'Switch to Dawn theme' });
+    const lessonsAction = within(mobileMenuDialog).getByTestId('kangur-primary-nav-lessons');
 
-  expect(trigger).toBeInTheDocument();
-  expect(themeToggle).toBeInTheDocument();
-  expect(mobileToggle).toHaveClass('min-h-12');
-  expect(lessonsAction).toHaveClass('max-sm:min-h-12', 'max-sm:px-4');
-  expect(headerActions.firstElementChild).toBe(trigger);
-  expect(headerActions).toContainElement(trigger);
-  expect(headerActions).toContainElement(themeToggle);
-  expect(mobileMenuDialog.className).toContain(
-    'var(--kangur-mobile-bottom-clearance,env(safe-area-inset-bottom))+32px'
-  );
-  expect(within(utilityActions).queryByTestId('kangur-language-switcher-trigger')).toBeNull();
-  expect(headerScope.getByRole('button', { name: /zamknij menu/i })).toHaveClass(
-    'inline-flex',
-    'items-center',
-    'justify-center',
-    'leading-none'
-  );
+    expect(trigger).toBeInTheDocument();
+    expect(themeToggle).toBeInTheDocument();
+    expect(mobileToggle).toHaveClass('min-h-12');
+    expect(lessonsAction).toHaveClass('max-sm:min-h-12', 'max-sm:px-4');
+    expect(headerActions.firstElementChild).toBe(trigger);
+    expect(headerActions).toContainElement(trigger);
+    expect(headerActions).toContainElement(themeToggle);
+    expect(mobileMenuDialog.className).toContain(
+      'var(--kangur-mobile-bottom-clearance,env(safe-area-inset-bottom))+32px'
+    );
+    expect(within(utilityActions).queryByTestId('kangur-language-switcher-trigger')).toBeNull();
+    expect(headerScope.getByRole('button', { name: /zamknij menu/i })).toHaveClass(
+      'inline-flex',
+      'items-center',
+      'justify-center',
+      'leading-none'
+    );
+
+    const loggedOutput = consoleErrorSpy.mock.calls
+      .flatMap((call) => call.map((value) => String(value)))
+      .join('\n');
+    expect(loggedOutput).not.toContain('`DialogContent` requires a `DialogTitle`');
+    expect(loggedOutput).not.toContain('Missing `Description`');
+  } finally {
+    consoleErrorSpy.mockRestore();
+  }
 });
 
 });

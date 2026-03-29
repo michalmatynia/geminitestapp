@@ -22,9 +22,13 @@ import {
 } from '@/shared/contracts/kangur-social-image-addons';
 import type { ImageFileSelection } from '@/shared/contracts/files';
 import { operationFailedError } from '@/shared/errors/app-error';
-import { sanitizePlaywrightCookiesFromHeader } from '@/shared/lib/playwright/storage-state';
+import {
+  sanitizePlaywrightCookiesFromHeader,
+  sanitizePlaywrightStorageState,
+} from '@/shared/lib/playwright/storage-state';
 import { ErrorSystem } from '@/features/kangur/shared/utils/observability/error-system';
 import { KANGUR_STOREFRONT_APPEARANCE_STORAGE_KEY } from '@/features/kangur/storefront-appearance-settings';
+import { logger } from '@/shared/utils/logger';
 
 import { upsertKangurSocialImageAddon } from './social-image-addons-repository';
 
@@ -180,7 +184,27 @@ const resolvePlaywrightStorageState = (params: {
     return null;
   }
 
-  return { cookies, origins };
+  const storageState = sanitizePlaywrightStorageState(
+    { cookies, origins },
+    { fallbackOrigin: params.sourceUrl }
+  );
+  const sanitizedCookieNames = new Set((storageState?.cookies ?? []).map((cookie) => cookie.name));
+  const droppedCookieNames = cookies
+    .map((cookie) => {
+      const name = typeof cookie['name'] === 'string' ? cookie['name'] : null;
+      return name && !sanitizedCookieNames.has(name) ? name : null;
+    })
+    .filter((name): name is string => name !== null);
+
+  if (droppedCookieNames.length > 0) {
+    logger.warn('[kangur.social-image-addons] dropped invalid Playwright cookies', {
+      droppedCookieNames,
+      sourceUrl: params.sourceUrl,
+      service: 'kangur.social-image-addons',
+    });
+  }
+
+  return storageState;
 };
 
 const writeLocalCopy = async (publicPath: string, buffer: Buffer): Promise<void> => {

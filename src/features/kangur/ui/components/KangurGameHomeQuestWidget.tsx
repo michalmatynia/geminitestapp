@@ -37,6 +37,33 @@ import { GAME_HOME_QUEST_SHELL_CLASSNAME } from '@/features/kangur/ui/pages/Game
 import type { KangurHomeScreenVisibilityProps } from '@/features/kangur/ui/types';
 import { normalizeSiteLocale } from '@/shared/lib/i18n/site-locale';
 type KangurGameHomeQuestWidgetProps = KangurHomeScreenVisibilityProps;
+type KangurGameHomeQuestResolvedProps = Required<KangurGameHomeQuestWidgetProps>;
+type KangurGameHomeQuestTranslateWithFallback = (
+  key: string,
+  fallback: string,
+  values?: Record<string, string | number>
+) => string;
+type KangurGameHomeQuestStatusLabels = {
+  completed: string;
+  in_progress: string;
+  not_started: string;
+};
+type KangurGameHomeQuestLeadingTrack =
+  | ReturnType<typeof getProgressBadgeTrackSummaries>[number]
+  | null;
+type KangurGameHomeQuestPanelProps = {
+  actionHref: string;
+  averageXpPerSession: number;
+  basePath: string;
+  currentWinStreak: number;
+  fallbackCopy: KangurHomeQuestFallbackCopy;
+  guidedMomentum: ReturnType<typeof getRecommendedSessionMomentum>;
+  quest: NonNullable<ReturnType<typeof getCurrentKangurDailyQuest>>;
+  questStatusLabels: KangurGameHomeQuestStatusLabels;
+  runtimeTranslations: ReturnType<typeof useTranslations<'KangurProgressRuntime'>>;
+  translateWithFallback: KangurGameHomeQuestTranslateWithFallback;
+  visibleLeadingTrack: KangurGameHomeQuestLeadingTrack;
+};
 
 const buildAssignmentHref = (
   basePath: string,
@@ -139,69 +166,246 @@ const getHomeQuestFallbackCopy = (
   };
 };
 
-export function KangurGameHomeQuestWidget({
-  hideWhenScreenMismatch = true,
-}: KangurGameHomeQuestWidgetProps = {}): React.JSX.Element | null {
-  const locale = useLocale();
-  const normalizedLocale = normalizeSiteLocale(locale);
-  const translations = useTranslations('KangurGameWidgets');
-  const runtimeTranslations = useTranslations('KangurProgressRuntime');
-  const runtime = useKangurGameRuntime();
-  const { basePath, progress, screen } = runtime;
-  const { subject, subjectKey } = useKangurSubjectFocus();
-  const progressLocalizer = { translate: runtimeTranslations };
-  const fallbackCopy = useMemo(
-    () => getHomeQuestFallbackCopy(normalizedLocale),
-    [normalizedLocale]
-  );
-  const quest = useMemo(
-    () =>
-      getCurrentKangurDailyQuest(progress, {
-        locale: normalizedLocale,
-        ownerKey: subjectKey,
-        subject,
-        translate: runtimeTranslations,
-      }),
-    [normalizedLocale, progress, runtimeTranslations, subject, subjectKey]
-  );
-  const averageXpPerSession = useMemo(() => getProgressAverageXpPerSession(progress), [progress]);
-  const guidedMomentum = useMemo(
-    () => getRecommendedSessionMomentum(progress, progressLocalizer),
-    [progress, runtimeTranslations]
-  );
-  const leadingTrack = useMemo(
-    () => getProgressBadgeTrackSummaries(progress, { maxTracks: 1 }, progressLocalizer)[0] ?? null,
-    [progress, runtimeTranslations]
-  );
-  const visibleLeadingTrack =
-    leadingTrack &&
-    (leadingTrack.unlockedCount > 0 || leadingTrack.progressPercent >= 40)
-      ? leadingTrack
-      : null;
-  const currentWinStreak = progress.currentWinStreak ?? 0;
-  const translateWithFallback = (
-    key: string,
-    fallback: string,
-    values?: Record<string, string | number>
-  ): string => {
+const resolveKangurGameHomeQuestWidgetProps = (
+  props: KangurGameHomeQuestWidgetProps | undefined
+): KangurGameHomeQuestResolvedProps => ({
+  hideWhenScreenMismatch: props?.hideWhenScreenMismatch ?? true,
+});
+
+const createKangurGameHomeQuestTranslateWithFallback = (
+  translations: ReturnType<typeof useTranslations<'KangurGameWidgets'>>
+): KangurGameHomeQuestTranslateWithFallback => {
+  return (key, fallback, values) => {
     const translated = translations(key, values);
     return translated === key ? fallback : translated;
   };
+};
 
-  if (hideWhenScreenMismatch && screen !== 'home') {
+const resolveVisibleLeadingTrack = (
+  leadingTrack: KangurGameHomeQuestLeadingTrack
+): KangurGameHomeQuestLeadingTrack =>
+  leadingTrack &&
+  (leadingTrack.unlockedCount > 0 || leadingTrack.progressPercent >= 40)
+    ? leadingTrack
+    : null;
+
+const shouldRenderKangurGameHomeQuestWidget = ({
+  hideWhenScreenMismatch,
+  quest,
+  screen,
+}: {
+  hideWhenScreenMismatch: boolean;
+  quest: ReturnType<typeof getCurrentKangurDailyQuest>;
+  screen: string | null | undefined;
+}): quest is NonNullable<ReturnType<typeof getCurrentKangurDailyQuest>> =>
+  Boolean(quest) && !(hideWhenScreenMismatch && screen !== 'home');
+
+const resolveKangurGameHomeQuestStatusLabels = ({
+  fallbackCopy,
+  translateWithFallback,
+}: {
+  fallbackCopy: KangurHomeQuestFallbackCopy;
+  translateWithFallback: KangurGameHomeQuestTranslateWithFallback;
+}): KangurGameHomeQuestStatusLabels => ({
+  completed: translateWithFallback('homeQuest.status.completed', fallbackCopy.status.completed),
+  in_progress: translateWithFallback(
+    'homeQuest.status.inProgress',
+    fallbackCopy.status.inProgress
+  ),
+  not_started: translateWithFallback(
+    'homeQuest.status.notStarted',
+    fallbackCopy.status.notStarted
+  ),
+});
+
+const resolveKangurGameHomeQuestRewardAccent = (
+  rewardStatus: NonNullable<ReturnType<typeof getCurrentKangurDailyQuest>>['reward']['status']
+): 'amber' | 'emerald' | 'indigo' =>
+  rewardStatus === 'claimed' ? 'emerald' : rewardStatus === 'ready' ? 'amber' : 'indigo';
+
+const resolveKangurGameHomeQuestProgressAccent = (
+  status: NonNullable<ReturnType<typeof getCurrentKangurDailyQuest>>['progress']['status']
+): 'emerald' | 'violet' => (status === 'completed' ? 'emerald' : 'violet');
+
+const hasKangurGameHomeQuestMomentum = ({
+  averageXpPerSession,
+  currentWinStreak,
+  guidedMomentum,
+  visibleLeadingTrack,
+}: {
+  averageXpPerSession: number;
+  currentWinStreak: number;
+  guidedMomentum: ReturnType<typeof getRecommendedSessionMomentum>;
+  visibleLeadingTrack: KangurGameHomeQuestLeadingTrack;
+}): boolean =>
+  currentWinStreak > 0 ||
+  averageXpPerSession > 0 ||
+  Boolean(visibleLeadingTrack) ||
+  guidedMomentum.completedSessions > 0;
+
+const renderKangurGameHomeQuestRewardChip = (
+  quest: NonNullable<ReturnType<typeof getCurrentKangurDailyQuest>>
+): React.JSX.Element | null =>
+  quest.reward.xp > 0 ? (
+    <KangurStatusChip
+      accent={resolveKangurGameHomeQuestRewardAccent(quest.reward.status)}
+      data-testid='kangur-home-quest-reward'
+      labelStyle='caps'
+    >
+      {quest.reward.label}
+    </KangurStatusChip>
+  ) : null;
+
+const renderKangurGameHomeQuestStreakChip = ({
+  currentWinStreak,
+  fallbackCopy,
+  translateWithFallback,
+}: {
+  currentWinStreak: number;
+  fallbackCopy: KangurHomeQuestFallbackCopy;
+  translateWithFallback: KangurGameHomeQuestTranslateWithFallback;
+}): React.JSX.Element | null =>
+  currentWinStreak > 0 ? (
+    <KangurStatusChip
+      accent='rose'
+      data-testid='kangur-home-quest-streak'
+      labelStyle='compact'
+      size='sm'
+    >
+      {translateWithFallback('homeQuest.streakPrefix', fallbackCopy.streakPrefix)} {currentWinStreak}
+    </KangurStatusChip>
+  ) : null;
+
+const renderKangurGameHomeQuestPaceChip = ({
+  averageXpPerSession,
+  fallbackCopy,
+  runtimeTranslations,
+  translateWithFallback,
+}: {
+  averageXpPerSession: number;
+  fallbackCopy: KangurHomeQuestFallbackCopy;
+  runtimeTranslations: ReturnType<typeof useTranslations<'KangurProgressRuntime'>>;
+  translateWithFallback: KangurGameHomeQuestTranslateWithFallback;
+}): React.JSX.Element | null =>
+  averageXpPerSession > 0 ? (
+    <KangurStatusChip
+      accent='violet'
+      data-testid='kangur-home-quest-xp-rate'
+      labelStyle='compact'
+      size='sm'
+    >
+      {translateWithFallback('homeQuest.pacePrefix', fallbackCopy.pacePrefix)}{' '}
+      {translateKangurProgressWithFallback(
+        runtimeTranslations,
+        'questMomentum.paceValue',
+        fallbackCopy.paceValue(averageXpPerSession),
+        { xp: averageXpPerSession }
+      )}
+    </KangurStatusChip>
+  ) : null;
+
+const renderKangurGameHomeQuestTrackChip = ({
+  fallbackCopy,
+  translateWithFallback,
+  visibleLeadingTrack,
+}: {
+  fallbackCopy: KangurHomeQuestFallbackCopy;
+  translateWithFallback: KangurGameHomeQuestTranslateWithFallback;
+  visibleLeadingTrack: KangurGameHomeQuestLeadingTrack;
+}): React.JSX.Element | null =>
+  visibleLeadingTrack ? (
+    <KangurStatusChip
+      accent='indigo'
+      data-testid='kangur-home-quest-track'
+      labelStyle='compact'
+      size='sm'
+    >
+      {translateWithFallback('homeQuest.trackPrefix', fallbackCopy.trackPrefix)}{' '}
+      {visibleLeadingTrack.label}
+    </KangurStatusChip>
+  ) : null;
+
+const renderKangurGameHomeQuestGuidedChip = ({
+  fallbackCopy,
+  guidedMomentum,
+  translateWithFallback,
+}: {
+  fallbackCopy: KangurHomeQuestFallbackCopy;
+  guidedMomentum: ReturnType<typeof getRecommendedSessionMomentum>;
+  translateWithFallback: KangurGameHomeQuestTranslateWithFallback;
+}): React.JSX.Element | null =>
+  guidedMomentum.completedSessions > 0 ? (
+    <KangurStatusChip
+      accent='sky'
+      data-testid='kangur-home-quest-guided'
+      labelStyle='compact'
+      size='sm'
+    >
+      {translateWithFallback('homeQuest.directionPrefix', fallbackCopy.directionPrefix)}{' '}
+      {guidedMomentum.summary}
+    </KangurStatusChip>
+  ) : null;
+
+const KangurGameHomeQuestMomentumSection = ({
+  averageXpPerSession,
+  currentWinStreak,
+  fallbackCopy,
+  guidedMomentum,
+  runtimeTranslations,
+  translateWithFallback,
+  visibleLeadingTrack,
+}: Omit<KangurGameHomeQuestPanelProps, 'actionHref' | 'basePath' | 'quest' | 'questStatusLabels'>): React.JSX.Element | null => {
+  if (
+    !hasKangurGameHomeQuestMomentum({
+      averageXpPerSession,
+      currentWinStreak,
+      guidedMomentum,
+      visibleLeadingTrack,
+    })
+  ) {
     return null;
   }
 
-  if (!quest) {
-    return null;
-  }
+  return (
+    <div className={`mt-4 ${KANGUR_WRAP_ROW_CLASSNAME}`} data-testid='kangur-home-quest-momentum'>
+      {renderKangurGameHomeQuestStreakChip({
+        currentWinStreak,
+        fallbackCopy,
+        translateWithFallback,
+      })}
+      {renderKangurGameHomeQuestPaceChip({
+        averageXpPerSession,
+        fallbackCopy,
+        runtimeTranslations,
+        translateWithFallback,
+      })}
+      {renderKangurGameHomeQuestTrackChip({
+        fallbackCopy,
+        translateWithFallback,
+        visibleLeadingTrack,
+      })}
+      {renderKangurGameHomeQuestGuidedChip({
+        fallbackCopy,
+        guidedMomentum,
+        translateWithFallback,
+      })}
+    </div>
+  );
+};
 
+const KangurGameHomeQuestPanel = ({
+  actionHref,
+  averageXpPerSession,
+  currentWinStreak,
+  fallbackCopy,
+  guidedMomentum,
+  quest,
+  questStatusLabels,
+  runtimeTranslations,
+  translateWithFallback,
+  visibleLeadingTrack,
+}: KangurGameHomeQuestPanelProps): React.JSX.Element => {
   const assignment = quest.assignment;
-  const questStatusLabels = {
-    completed: translateWithFallback('homeQuest.status.completed', fallbackCopy.status.completed),
-    in_progress: translateWithFallback('homeQuest.status.inProgress', fallbackCopy.status.inProgress),
-    not_started: translateWithFallback('homeQuest.status.notStarted', fallbackCopy.status.notStarted),
-  } as const;
 
   return (
     <KangurGlassPanel
@@ -211,7 +415,9 @@ export function KangurGameHomeQuestWidget({
       surface='mistStrong'
       variant='soft'
     >
-      <KangurPanelStack className={`${KANGUR_STACK_ROW_LG_CLASSNAME} lg:items-start lg:justify-between`}>
+      <KangurPanelStack
+        className={`${KANGUR_STACK_ROW_LG_CLASSNAME} lg:items-start lg:justify-between`}
+      >
         <div className='min-w-0 flex-1'>
           <div className={KANGUR_WRAP_CENTER_ROW_CLASSNAME}>
             <KangurStatusChip
@@ -234,21 +440,7 @@ export function KangurGameHomeQuestWidget({
             >
               {questStatusLabels[quest.progress.status]}
             </KangurStatusChip>
-            {quest.reward.xp > 0 ? (
-              <KangurStatusChip
-                accent={
-                  quest.reward.status === 'claimed'
-                    ? 'emerald'
-                    : quest.reward.status === 'ready'
-                      ? 'amber'
-                      : 'indigo'
-                }
-                data-testid='kangur-home-quest-reward'
-                labelStyle='caps'
-              >
-                {quest.reward.label}
-              </KangurStatusChip>
-            ) : null}
+            {renderKangurGameHomeQuestRewardChip(quest)}
             <KangurStatusChip
               accent='slate'
               data-testid='kangur-home-quest-expiry'
@@ -290,68 +482,22 @@ export function KangurGameHomeQuestWidget({
             </KangurStatusChip>
           </div>
 
-          {currentWinStreak > 0 ||
-          averageXpPerSession > 0 ||
-          visibleLeadingTrack ||
-          guidedMomentum.completedSessions > 0 ? (
-              <div
-                className={`mt-4 ${KANGUR_WRAP_ROW_CLASSNAME}`}
-                data-testid='kangur-home-quest-momentum'
-              >
-                {currentWinStreak > 0 ? (
-                  <KangurStatusChip
-                    accent='rose'
-                    data-testid='kangur-home-quest-streak'
-                    labelStyle='compact'
-                    size='sm'
-                  >
-                  {translateWithFallback('homeQuest.streakPrefix', fallbackCopy.streakPrefix)}{' '}
-                  {currentWinStreak}
-                  </KangurStatusChip>
-                ) : null}
-                {averageXpPerSession > 0 ? (
-                  <KangurStatusChip
-                    accent='violet'
-                    data-testid='kangur-home-quest-xp-rate'
-                    labelStyle='compact'
-                    size='sm'
-                  >
-                  {translateWithFallback('homeQuest.pacePrefix', fallbackCopy.pacePrefix)}{' '}
-                  {translateKangurProgressWithFallback(
-                    runtimeTranslations,
-                    'questMomentum.paceValue',
-                    fallbackCopy.paceValue(averageXpPerSession),
-                    { xp: averageXpPerSession }
-                  )}
-                  </KangurStatusChip>
-                ) : null}
-                {visibleLeadingTrack ? (
-                  <KangurStatusChip
-                    accent='indigo'
-                    data-testid='kangur-home-quest-track'
-                    labelStyle='compact'
-                    size='sm'
-                  >
-                  {translateWithFallback('homeQuest.trackPrefix', fallbackCopy.trackPrefix)}{' '}
-                  {visibleLeadingTrack.label}
-                  </KangurStatusChip>
-                ) : null}
-                {guidedMomentum.completedSessions > 0 ? (
-                  <KangurStatusChip
-                    accent='sky'
-                    data-testid='kangur-home-quest-guided'
-                    labelStyle='compact'
-                    size='sm'
-                  >
-                  {translateWithFallback('homeQuest.directionPrefix', fallbackCopy.directionPrefix)}{' '}
-                  {guidedMomentum.summary}
-                  </KangurStatusChip>
-                ) : null}
-              </div>
-            ) : null}
+          <KangurGameHomeQuestMomentumSection
+            actionHref={actionHref}
+            averageXpPerSession={averageXpPerSession}
+            basePath=''
+            currentWinStreak={currentWinStreak}
+            fallbackCopy={fallbackCopy}
+            guidedMomentum={guidedMomentum}
+            quest={quest}
+            questStatusLabels={questStatusLabels}
+            runtimeTranslations={runtimeTranslations}
+            translateWithFallback={translateWithFallback}
+            visibleLeadingTrack={visibleLeadingTrack}
+          />
 
           <KangurProgressBar
-            accent={quest.progress.status === 'completed' ? 'emerald' : 'violet'}
+            accent={resolveKangurGameHomeQuestProgressAccent(quest.progress.status)}
             className='mt-4 max-w-full sm:max-w-sm'
             data-testid='kangur-home-quest-progress-bar'
             size='sm'
@@ -366,7 +512,7 @@ export function KangurGameHomeQuestWidget({
             variant='primary'
           >
             <Link
-              href={buildAssignmentHref(basePath, assignment.action)}
+              href={actionHref}
               targetPageKey={assignment.action.page}
               transitionAcknowledgeMs={HOME_QUEST_ROUTE_ACKNOWLEDGE_MS}
               transitionSourceId={`game-home-quest:${assignment.id}`}
@@ -377,6 +523,77 @@ export function KangurGameHomeQuestWidget({
         </div>
       </KangurPanelStack>
     </KangurGlassPanel>
+  );
+};
+
+export function KangurGameHomeQuestWidget({
+  hideWhenScreenMismatch = true,
+}: KangurGameHomeQuestWidgetProps = {}): React.JSX.Element | null {
+  const locale = useLocale();
+  const normalizedLocale = normalizeSiteLocale(locale);
+  const translations = useTranslations('KangurGameWidgets');
+  const runtimeTranslations = useTranslations('KangurProgressRuntime');
+  const runtime = useKangurGameRuntime();
+  const { basePath, progress, screen } = runtime;
+  const { subject, subjectKey } = useKangurSubjectFocus();
+  const progressLocalizer = { translate: runtimeTranslations };
+  const translateWithFallback = createKangurGameHomeQuestTranslateWithFallback(translations);
+  const fallbackCopy = useMemo(
+    () => getHomeQuestFallbackCopy(normalizedLocale),
+    [normalizedLocale]
+  );
+  const quest = useMemo(
+    () =>
+      getCurrentKangurDailyQuest(progress, {
+        locale: normalizedLocale,
+        ownerKey: subjectKey,
+        subject,
+        translate: runtimeTranslations,
+      }),
+    [normalizedLocale, progress, runtimeTranslations, subject, subjectKey]
+  );
+  const averageXpPerSession = useMemo(() => getProgressAverageXpPerSession(progress), [progress]);
+  const guidedMomentum = useMemo(
+    () => getRecommendedSessionMomentum(progress, progressLocalizer),
+    [progress, runtimeTranslations]
+  );
+  const leadingTrack = useMemo(
+    () => getProgressBadgeTrackSummaries(progress, { maxTracks: 1 }, progressLocalizer)[0] ?? null,
+    [progress, runtimeTranslations]
+  );
+  const visibleLeadingTrack = resolveVisibleLeadingTrack(leadingTrack);
+  const currentWinStreak = progress.currentWinStreak ?? 0;
+  const resolvedProps = resolveKangurGameHomeQuestWidgetProps({
+    hideWhenScreenMismatch,
+  });
+
+  if (
+    !shouldRenderKangurGameHomeQuestWidget({
+      hideWhenScreenMismatch: resolvedProps.hideWhenScreenMismatch,
+      quest,
+      screen,
+    })
+  ) {
+    return null;
+  }
+
+  return (
+    <KangurGameHomeQuestPanel
+      actionHref={buildAssignmentHref(basePath, quest.assignment.action)}
+      averageXpPerSession={averageXpPerSession}
+      basePath={basePath}
+      currentWinStreak={currentWinStreak}
+      fallbackCopy={fallbackCopy}
+      guidedMomentum={guidedMomentum}
+      quest={quest}
+      questStatusLabels={resolveKangurGameHomeQuestStatusLabels({
+        fallbackCopy,
+        translateWithFallback,
+      })}
+      runtimeTranslations={runtimeTranslations}
+      translateWithFallback={translateWithFallback}
+      visibleLeadingTrack={visibleLeadingTrack}
+    />
   );
 }
 

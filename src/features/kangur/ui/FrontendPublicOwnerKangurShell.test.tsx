@@ -10,6 +10,11 @@ const { usePathnameMock, kangurFeatureRouteShellMock } = vi.hoisted(() => ({
   usePathnameMock: vi.fn<() => string | null>(),
   kangurFeatureRouteShellMock: vi.fn(),
 }));
+const { kangurStorefrontAppearanceProviderMock } = vi.hoisted(() => ({
+  kangurStorefrontAppearanceProviderMock: vi.fn(({ children }: { children: ReactNode }) => (
+    <div data-testid='kangur-storefront-appearance-provider'>{children}</div>
+  )),
+}));
 
 vi.mock('@vercel/analytics/next', () => ({
   Analytics: () => <div data-testid='kangur-vercel-analytics' />,
@@ -31,9 +36,7 @@ vi.mock('@/features/kangur/ui/KangurFeatureRouteShell', () => ({
 }));
 
 vi.mock('@/features/kangur/ui/KangurStorefrontAppearanceProvider', () => ({
-  KangurStorefrontAppearanceProvider: ({ children }: { children: ReactNode }) => (
-    <div data-testid='kangur-storefront-appearance-provider'>{children}</div>
-  ),
+  KangurStorefrontAppearanceProvider: kangurStorefrontAppearanceProviderMock,
 }));
 
 vi.mock('@/features/kangur/ui/KangurSurfaceClassSync', () => ({
@@ -120,5 +123,34 @@ describe('FrontendPublicOwnerKangurShell', () => {
     render(<FrontendPublicOwnerKangurShell />);
 
     expect(screen.getAllByTestId('kangur-vercel-analytics')).toHaveLength(1);
+  });
+
+  it('forwards the initial Mongo-backed appearance snapshot into the appearance provider', async () => {
+    const { FrontendPublicOwnerKangurShell } = await import(
+      '@/features/kangur/ui/FrontendPublicOwnerKangurShell'
+    );
+
+    render(
+      <FrontendPublicOwnerKangurShell
+        initialAppearance={{
+          mode: 'sunset',
+          themeSettings: {
+            sunset: '{"backgroundColor":"#ff8800"}',
+          },
+        }}
+      />
+    );
+
+    expect(kangurStorefrontAppearanceProviderMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        initialAppearance: {
+          mode: 'sunset',
+          themeSettings: {
+            sunset: '{"backgroundColor":"#ff8800"}',
+          },
+        },
+      }),
+      undefined
+    );
   });
 });

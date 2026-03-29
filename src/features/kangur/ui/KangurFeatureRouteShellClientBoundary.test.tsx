@@ -44,15 +44,19 @@ vi.mock('@/features/kangur/ui/KangurFeatureRouteShell', async () => {
 
 import { serializeSetting } from '@/features/kangur/shared/utils/settings-json';
 import { KangurStorefrontAppearanceProvider } from '@/features/kangur/ui/KangurStorefrontAppearanceProvider';
-import { KangurFeatureRouteShellClientBoundary } from './KangurFeatureRouteShellClientBoundary';
 
 describe('KangurFeatureRouteShellClientBoundary', () => {
   beforeEach(() => {
     settingsStoreGetMock.mockReset();
     settingsStoreGetMock.mockReturnValue(undefined);
+    vi.resetModules();
   });
 
   it('renders nothing until the route shell module resolves', async () => {
+    const { KangurFeatureRouteShellClientBoundary } = await import(
+      './KangurFeatureRouteShellClientBoundary'
+    );
+
     render(<KangurFeatureRouteShellClientBoundary />);
 
     expect(screen.queryByTestId('kangur-feature-route-shell')).not.toBeInTheDocument();
@@ -63,6 +67,9 @@ describe('KangurFeatureRouteShellClientBoundary', () => {
   });
 
   it('inherits the parent storefront appearance snapshot instead of resetting it', async () => {
+    const { KangurFeatureRouteShellClientBoundary } = await import(
+      './KangurFeatureRouteShellClientBoundary'
+    );
     const initialThemeRaw = serializeSetting({
       backgroundColor: '#123456',
       primaryColor: '#4f46e5',

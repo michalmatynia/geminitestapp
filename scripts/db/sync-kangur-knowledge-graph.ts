@@ -12,7 +12,7 @@ import { getKangurAiTutorNativeGuideStore } from '@/features/kangur/server/ai-tu
 import { getKangurPageContentStore } from '@/features/kangur/server/page-content-repository';
 import { DEFAULT_KANGUR_AI_TUTOR_CONTENT } from '@/shared/contracts/kangur-ai-tutor-content';
 import { DEFAULT_KANGUR_AI_TUTOR_NATIVE_GUIDE_STORE } from '@/shared/contracts/kangur-ai-tutor-native-guide';
-import { DEFAULT_KANGUR_PAGE_CONTENT_STORE } from '@/features/kangur/page-content-catalog';
+import { DEFAULT_KANGUR_PAGE_CONTENT_STORE } from '@/features/kangur/ai-tutor/page-content-catalog';
 import { isNeo4jEnabled } from '@/shared/lib/neo4j/config';
 
 type CliOptions = {

@@ -92,6 +92,12 @@ const QUICK_START_OPERATIONS = new Set([
   'clock',
   'mixed',
 ]);
+const ACTIVITY_OPERATION_KINDS = new Set([
+  'game',
+  'lesson_completion',
+  'lesson_practice',
+  'training',
+]);
 
 const getHomeMomentumFallbackCopy = (
   locale: ReturnType<typeof normalizeSiteLocale>
@@ -337,6 +343,8 @@ const buildPracticeRecommendationAction = (
   };
 };
 
+const isActivityOperationKind = (kind: string): boolean => ACTIVITY_OPERATION_KINDS.has(kind);
+
 const resolveActivityOperation = (activityKey: string): string | null => {
   const parts = activityKey.split(':');
   const kind = (parts[0] ?? '').trim();
@@ -350,16 +358,7 @@ const resolveActivityOperation = (activityKey: string): string | null => {
     return normalizedPrimary;
   }
 
-  if (
-    kind === 'game' ||
-    kind === 'lesson_practice' ||
-    kind === 'training' ||
-    kind === 'lesson_completion'
-  ) {
-    return normalizedPrimary;
-  }
-
-  return null;
+  return isActivityOperationKind(kind) ? normalizedPrimary : null;
 };
 
 const getWeakestLessonRecommendation = (
@@ -495,51 +494,22 @@ const getGuidedRecommendation = (
     return null;
   }
 
-  const topActivity = getProgressTopActivities(progress, 1, progressLocalizer)[0] ?? null;
-  const activityLabel = topActivity
-    ? resolveLocalizedRecommendationActivityLabel({
-        activityKey: topActivity.key,
-        fallbackLabel: topActivity.label,
-        translate,
-      })
-    : null;
-  const action = buildPracticeRecommendationAction(
-    resolveActivityOperation(topActivity?.key ?? ''),
-    topActivity?.averageAccuracy ?? getProgressAverageAccuracy(progress),
+  const topActivityContext = resolveRecommendationTopActivityContext({
     fallbackCopy,
-    translate
-  );
+    progress,
+    progressTranslate,
+    translate,
+  });
 
   return {
     accent: 'indigo',
-    action,
-    description: topActivity
-        ? translateRecommendationWithFallback(
-          translate,
-          'homeMomentum.guided.descriptionWithActivity',
-          fallbackCopy.guided.descriptionWithActivity(
-            guidedMomentum.summary,
-            activityLabel?.toLowerCase() ?? '',
-            guidedMomentum.nextBadgeName
-          ),
-          {
-            summary: guidedMomentum.summary,
-            activity: activityLabel?.toLowerCase() ?? '',
-            nextBadgeName: guidedMomentum.nextBadgeName,
-          }
-        )
-      : translateRecommendationWithFallback(
-          translate,
-          'homeMomentum.guided.descriptionDefault',
-          fallbackCopy.guided.descriptionDefault(
-            guidedMomentum.summary,
-            guidedMomentum.nextBadgeName
-          ),
-          {
-            summary: guidedMomentum.summary,
-            nextBadgeName: guidedMomentum.nextBadgeName,
-          }
-        ),
+    action: topActivityContext.action,
+    description: resolveGuidedRecommendationDescription({
+      fallbackCopy,
+      guidedMomentum,
+      topActivityContext,
+      translate,
+    }),
     priorityLabel: translateRecommendationWithFallback(
       translate,
       'homeMomentum.guided.priority',
@@ -560,66 +530,28 @@ const getTrackRecommendation = (
   translate?: RecommendationTranslate,
   progressTranslate?: KangurProgressTranslate
 ): KangurHomeRecommendation | null => {
-  const progressLocalizer = { translate: progressTranslate };
-  const track =
-    getProgressBadgeTrackSummaries(progress, { maxTracks: 6 }, progressLocalizer).find(
-      (entry) =>
-        Boolean(entry.nextBadge) && (entry.unlockedCount > 0 || entry.progressPercent >= 40)
-    ) ?? null;
-  const topActivity = getProgressTopActivities(progress, 1, progressLocalizer)[0] ?? null;
-  const activityLabel = topActivity
-    ? resolveLocalizedRecommendationActivityLabel({
-        activityKey: topActivity.key,
-        fallbackLabel: topActivity.label,
-        translate,
-      })
-    : null;
+  const track = resolveTrackRecommendationTarget(progress, progressTranslate);
 
   if (!track?.nextBadge) {
     return null;
   }
 
-  const action = buildPracticeRecommendationAction(
-    resolveActivityOperation(topActivity?.key ?? ''),
-    topActivity?.averageAccuracy ?? getProgressAverageAccuracy(progress),
+  const topActivityContext = resolveRecommendationTopActivityContext({
     fallbackCopy,
-    translate
-  );
+    progress,
+    progressTranslate,
+    translate,
+  });
 
   return {
     accent: 'indigo',
-    action,
-    description: topActivity
-        ? translateRecommendationWithFallback(
-          translate,
-          'homeMomentum.track.descriptionWithActivity',
-          fallbackCopy.track.descriptionWithActivity(
-            track.label,
-            track.nextBadge.name,
-            track.nextBadge.summary,
-            activityLabel?.toLowerCase() ?? ''
-          ),
-          {
-            track: track.label,
-            badge: track.nextBadge.name,
-            summary: track.nextBadge.summary,
-            activity: activityLabel?.toLowerCase() ?? '',
-          }
-        )
-      : translateRecommendationWithFallback(
-          translate,
-          'homeMomentum.track.descriptionDefault',
-          fallbackCopy.track.descriptionDefault(
-            track.label,
-            track.nextBadge.name,
-            track.nextBadge.summary
-          ),
-          {
-            track: track.label,
-            badge: track.nextBadge.name,
-            summary: track.nextBadge.summary,
-          }
-        ),
+    action: topActivityContext.action,
+    description: resolveTrackRecommendationDescription({
+      fallbackCopy,
+      topActivityContext,
+      track,
+      translate,
+    }),
     priorityLabel: translateRecommendationWithFallback(
       translate,
       'homeMomentum.track.priority',
@@ -632,6 +564,157 @@ const getTrackRecommendation = (
       { track: track.label }
     ),
   };
+};
+
+type KangurRecommendationTopActivityContext = {
+  action: KangurRouteAction;
+  activityLabel: string | null;
+  topActivity: ReturnType<typeof getProgressTopActivities>[number] | null;
+};
+
+const resolveRecommendationTopActivityLabel = ({
+  topActivity,
+  translate,
+}: {
+  topActivity: ReturnType<typeof getProgressTopActivities>[number] | null;
+  translate?: RecommendationTranslate;
+}): string | null =>
+  topActivity
+    ? resolveLocalizedRecommendationActivityLabel({
+        activityKey: topActivity.key,
+        fallbackLabel: topActivity.label,
+        translate,
+      })
+    : null;
+
+const resolveRecommendationTopActivityContext = ({
+  fallbackCopy,
+  progress,
+  progressTranslate,
+  translate,
+}: {
+  fallbackCopy: KangurHomeMomentumFallbackCopy;
+  progress: KangurProgressState;
+  progressTranslate?: KangurProgressTranslate;
+  translate?: RecommendationTranslate;
+}): KangurRecommendationTopActivityContext => {
+  const topActivity = getProgressTopActivities(progress, 1, { translate: progressTranslate })[0] ?? null;
+  const activityLabel = resolveRecommendationTopActivityLabel({ topActivity, translate });
+
+  return {
+    action: buildPracticeRecommendationAction(
+      resolveActivityOperation(topActivity?.key ?? ''),
+      topActivity?.averageAccuracy ?? getProgressAverageAccuracy(progress),
+      fallbackCopy,
+      translate
+    ),
+    activityLabel,
+    topActivity,
+  };
+};
+
+const resolveGuidedRecommendationDescription = ({
+  fallbackCopy,
+  guidedMomentum,
+  topActivityContext,
+  translate,
+}: {
+  fallbackCopy: KangurHomeMomentumFallbackCopy;
+  guidedMomentum: ReturnType<typeof getRecommendedSessionMomentum>;
+  topActivityContext: KangurRecommendationTopActivityContext;
+  translate?: RecommendationTranslate;
+}): string => {
+  const normalizedActivityLabel = topActivityContext.activityLabel?.toLowerCase() ?? '';
+
+  if (topActivityContext.topActivity) {
+    return translateRecommendationWithFallback(
+      translate,
+      'homeMomentum.guided.descriptionWithActivity',
+      fallbackCopy.guided.descriptionWithActivity(
+        guidedMomentum.summary,
+        normalizedActivityLabel,
+        guidedMomentum.nextBadgeName
+      ),
+      {
+        summary: guidedMomentum.summary,
+        activity: normalizedActivityLabel,
+        nextBadgeName: guidedMomentum.nextBadgeName,
+      }
+    );
+  }
+
+  return translateRecommendationWithFallback(
+    translate,
+    'homeMomentum.guided.descriptionDefault',
+    fallbackCopy.guided.descriptionDefault(
+      guidedMomentum.summary,
+      guidedMomentum.nextBadgeName
+    ),
+    {
+      summary: guidedMomentum.summary,
+      nextBadgeName: guidedMomentum.nextBadgeName,
+    }
+  );
+};
+
+const isTrackRecommendationCandidate = (
+  entry: ReturnType<typeof getProgressBadgeTrackSummaries>[number]
+): boolean => Boolean(entry.nextBadge) && (entry.unlockedCount > 0 || entry.progressPercent >= 40);
+
+const resolveTrackRecommendationTarget = (
+  progress: KangurProgressState,
+  progressTranslate?: KangurProgressTranslate
+): ReturnType<typeof getProgressBadgeTrackSummaries>[number] | null =>
+  getProgressBadgeTrackSummaries(progress, { maxTracks: 6 }, { translate: progressTranslate }).find(
+    isTrackRecommendationCandidate
+  ) ?? null;
+
+const resolveTrackRecommendationDescription = ({
+  fallbackCopy,
+  topActivityContext,
+  track,
+  translate,
+}: {
+  fallbackCopy: KangurHomeMomentumFallbackCopy;
+  topActivityContext: KangurRecommendationTopActivityContext;
+  track: NonNullable<ReturnType<typeof resolveTrackRecommendationTarget>>;
+  translate?: RecommendationTranslate;
+}): string => {
+  const normalizedActivityLabel = topActivityContext.activityLabel?.toLowerCase() ?? '';
+
+  if (topActivityContext.topActivity) {
+    return translateRecommendationWithFallback(
+      translate,
+      'homeMomentum.track.descriptionWithActivity',
+      fallbackCopy.track.descriptionWithActivity(
+        track.label,
+        track.nextBadge.name,
+        track.nextBadge.summary,
+        normalizedActivityLabel
+      ),
+      {
+        track: track.label,
+        badge: track.nextBadge.name,
+        summary: track.nextBadge.summary,
+        activity: normalizedActivityLabel,
+      }
+    );
+  }
+
+  return translateRecommendationWithFallback(
+    translate,
+    'homeMomentum.track.descriptionDefault',
+    fallbackCopy.track.descriptionDefault(
+      track.label,
+      track.nextBadge.name,
+      track.nextBadge.summary
+    ),
+    {
+      track: track.label,
+      badge: track.nextBadge.name,
+      summary: track.nextBadge.summary,
+    }
+  );
 };
 
 const getFallbackRecommendation = (

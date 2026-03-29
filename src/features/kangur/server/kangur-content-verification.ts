@@ -1,6 +1,6 @@
 import 'server-only';
 
-import { buildDefaultKangurPageContentStore } from '@/features/kangur/page-content-catalog';
+import { buildDefaultKangurPageContentStore } from '@/features/kangur/ai-tutor/page-content-catalog';
 import { normalizeKangurLessonDocument } from '@/features/kangur/lesson-documents';
 import {
   createDefaultKangurGames,
@@ -30,6 +30,7 @@ import {
   normalizeKangurLessonForSnapshot,
   normalizeKangurLessonSectionForSnapshot,
   normalizeKangurLessonTemplateForSnapshot,
+  serializeKangurLessonDocumentForComparison,
   type KangurLessonContentExactDiff,
 } from './kangur-lesson-content-snapshot';
 
@@ -313,7 +314,7 @@ export async function verifyKangurContentInMongo(
       buildKangurLessonContentExactDiff(
         expectedLessonContent.lessonDocumentsByLocale[locale] ?? {},
         actualLessonDocumentsByLocale[locale] ?? {},
-        serializeComparableValue
+        serializeKangurLessonDocumentForComparison
       ),
     ])
   );

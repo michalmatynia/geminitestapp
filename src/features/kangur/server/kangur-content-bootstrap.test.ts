@@ -133,21 +133,34 @@ describe('bootstrapKangurContentToMongo', () => {
     );
 
     const { bootstrapKangurContentToMongo } = await import('./kangur-content-bootstrap');
-    const { createDefaultKangurLessons } = await import('@/features/kangur/settings');
+    const { buildLocalKangurLessonContentSnapshot } = await import('./kangur-lesson-content-snapshot');
 
     const summary = await bootstrapKangurContentToMongo(['pl']);
-    const defaultLessons = createDefaultKangurLessons();
+    const snapshot = await buildLocalKangurLessonContentSnapshot(['pl']);
 
-    expect(lessonDocumentRepository.replaceLessonDocuments).toHaveBeenCalledWith(
+    const [storedDocuments, storedLocale] =
+      lessonDocumentRepository.replaceLessonDocuments.mock.calls[0] ?? [];
+
+    expect(storedLocale).toBe('pl');
+    expect(storedDocuments['kangur-lesson-english_adverbs']).toEqual(
       expect.objectContaining({
-        'kangur-lesson-english_adverbs': importedDocument,
-        'kangur-lesson-english_comparatives_superlatives': starterDocument,
-      }),
-      'pl'
+        updatedAt: importedDocument.updatedAt,
+        version: importedDocument.version,
+      })
     );
-    expect(lessonRepository.replaceLessons).toHaveBeenCalledWith(defaultLessons);
-    expect(summary.lessonDocuments).toBe(defaultLessons.length);
-    expect(summary.lessons).toBe(defaultLessons.length);
+    expect(storedDocuments['kangur-lesson-english_adverbs']?.blocks).toEqual(
+      expect.arrayContaining([expect.objectContaining({ id: 'legacy' })])
+    );
+    expect(storedDocuments['kangur-lesson-english_comparatives_superlatives']).toEqual(
+      expect.objectContaining({
+        updatedAt: starterDocument.updatedAt,
+        version: starterDocument.version,
+      })
+    );
+    expect(storedDocuments['kangur-lesson-english_comparatives_superlatives']?.pages).toHaveLength(1);
+    expect(lessonRepository.replaceLessons).toHaveBeenCalledWith(snapshot.lessons);
+    expect(summary.lessonDocuments).toBe(Object.keys(snapshot.lessonDocumentsByLocale['pl'] ?? {}).length);
+    expect(summary.lessons).toBe(snapshot.lessons.length);
   });
 
   it('replaces lessons, sections, and templates from the local snapshot', async () => {
@@ -190,21 +203,29 @@ describe('bootstrapKangurContentToMongo', () => {
     importLegacyKangurLessonDocumentMock.mockReturnValue(null);
 
     const { bootstrapKangurContentToMongo } = await import('./kangur-content-bootstrap');
-    const { createDefaultKangurLessons } = await import('@/features/kangur/settings');
-    const { createDefaultKangurSections } = await import('@/features/kangur/lessons/lesson-section-defaults');
-    const { createDefaultKangurLessonTemplates } = await import('@/features/kangur/lessons/lesson-template-defaults');
+    const { buildLocalKangurLessonContentSnapshot } = await import('./kangur-lesson-content-snapshot');
 
     const summary = await bootstrapKangurContentToMongo(['pl']);
-    const defaultLessons = createDefaultKangurLessons();
-    const defaultSections = createDefaultKangurSections();
-    const defaultTemplates = createDefaultKangurLessonTemplates('pl');
+    const snapshot = await buildLocalKangurLessonContentSnapshot(['pl']);
 
-    expect(lessonRepository.replaceLessons).toHaveBeenCalledWith(defaultLessons);
-    expect(lessonSectionRepository.replaceSections).toHaveBeenCalledWith(defaultSections);
-    expect(lessonTemplateRepository.replaceTemplates).toHaveBeenCalledWith(defaultTemplates, 'pl');
-    expect(summary.lessons).toBe(createDefaultKangurLessons().length);
-    expect(summary.lessonSections).toBe(defaultSections.length);
-    expect(summary.lessonTemplatesByLocale['pl']).toBe(defaultTemplates.length);
+    expect(lessonRepository.replaceLessons).toHaveBeenCalledWith(snapshot.lessons);
+    expect(lessonSectionRepository.replaceSections).toHaveBeenCalledWith(snapshot.sections);
+    const [storedDocuments, storedLocale] =
+      lessonDocumentRepository.replaceLessonDocuments.mock.calls[0] ?? [];
+
+    expect(storedLocale).toBe('pl');
+    expect(Object.keys(storedDocuments ?? {})).toHaveLength(
+      Object.keys(snapshot.lessonDocumentsByLocale['pl'] ?? {}).length
+    );
+    expect(lessonTemplateRepository.replaceTemplates).toHaveBeenCalledWith(
+      snapshot.lessonTemplatesByLocale['pl'],
+      'pl'
+    );
+    expect(summary.lessons).toBe(snapshot.lessons.length);
+    expect(summary.lessonSections).toBe(snapshot.sections.length);
+    expect(summary.lessonTemplatesByLocale['pl']).toBe(
+      snapshot.lessonTemplatesByLocale['pl']?.length ?? 0
+    );
     expect(summary.lessonContentRevision).toHaveLength(16);
   });
 });

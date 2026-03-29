@@ -206,6 +206,49 @@ const toLessonPlayFinishLabelVariant = (
 ): KangurMiniGameFinishVariantProps['finishLabelVariant'] | undefined =>
   finishLabelVariant === 'play' ? 'play' : finishLabelVariant === 'lesson' ? 'lesson' : undefined;
 
+const resolveGeometryDrawingGameRendererOverrides = (
+  rendererProps: LaunchableGameRendererProps['rendererProps']
+): Omit<React.ComponentProps<typeof GeometryDrawingGame>, 'finishLabel' | 'onFinish'> & {
+  finishLabel?: React.ComponentProps<typeof GeometryDrawingGame>['finishLabel'];
+} => {
+  const resolvedRendererProps = rendererProps ?? {};
+  const {
+    activityKey,
+    difficultyLabelOverride,
+    finishLabel,
+    lessonKey,
+    operation,
+    shapeIds,
+    showDifficultySelector,
+  } = resolvedRendererProps;
+
+  return {
+    activityKey,
+    difficultyLabelOverride,
+    finishLabel,
+    lessonKey,
+    operation,
+    shapeIds,
+    showDifficultySelector,
+  };
+};
+
+const resolveGeometryDrawingGameRendererProps = ({
+  finishLabel,
+  onFinish,
+  rendererProps,
+}: Pick<LaunchableGameRendererProps, 'finishLabel' | 'onFinish' | 'rendererProps'>): React.ComponentProps<
+  typeof GeometryDrawingGame
+> => {
+  const resolvedRendererOverrides = resolveGeometryDrawingGameRendererOverrides(rendererProps);
+
+  return {
+    ...resolvedRendererOverrides,
+    finishLabel: finishLabel ?? resolvedRendererOverrides.finishLabel,
+    onFinish,
+  };
+};
+
 const KANGUR_MUSIC_PIANO_ROLL_LAUNCHABLE_RENDERERS =
   createKangurMusicPianoRollLaunchableOnFinishRendererMap<LaunchableGameRendererProps>();
 
@@ -346,14 +389,11 @@ const KANGUR_LAUNCHABLE_GAME_RENDERERS: Record<
   geometry_drawing_game: {
     render: ({ finishLabel, onFinish, rendererProps }) => (
       <GeometryDrawingGame
-        activityKey={rendererProps?.activityKey}
-        difficultyLabelOverride={rendererProps?.difficultyLabelOverride}
-        finishLabel={finishLabel ?? rendererProps?.finishLabel}
-        lessonKey={rendererProps?.lessonKey}
-        onFinish={onFinish}
-        operation={rendererProps?.operation}
-        shapeIds={rendererProps?.shapeIds}
-        showDifficultySelector={rendererProps?.showDifficultySelector}
+        {...resolveGeometryDrawingGameRendererProps({
+          finishLabel,
+          onFinish,
+          rendererProps,
+        })}
       />
     ),
   },

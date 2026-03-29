@@ -83,6 +83,20 @@ describe('KangurStorefrontAppearanceProvider', () => {
     });
   });
 
+  it('keeps the server-provided mode until Mongo-backed settings expose a stored mode', async () => {
+    settingsStoreGetMock.mockReturnValue(undefined);
+
+    render(
+      <KangurStorefrontAppearanceProvider initialMode='sunset'>
+        <ModeProbe />
+      </KangurStorefrontAppearanceProvider>
+    );
+
+    await waitFor(() => {
+      expect(screen.getByTestId('mode-probe')).toHaveTextContent('sunset');
+    });
+  });
+
   it('ignores local override by default so Mongo-backed mode stays authoritative', async () => {
     settingsStoreGetMock.mockImplementation((key: string) => {
       if (key === KANGUR_STOREFRONT_DEFAULT_MODE_SETTING_KEY) {

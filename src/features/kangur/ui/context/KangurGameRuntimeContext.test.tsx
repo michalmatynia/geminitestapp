@@ -217,44 +217,60 @@ describe('KangurGameRuntimeContext', () => {
     ).not.toBeNull();
   });
 
-  it('keeps instance-backed screen quick starts across repeated remounts on the sanitized game route', async () => {
-    window.history.replaceState(
-      {},
-      '',
-      '/en/kangur/game?quickStart=screen&screen=division_quiz&instanceId=division_groups:instance:default'
-    );
-
-    const { unmount } = render(
-      <KangurGuestPlayerProvider>
-        <KangurGameRuntimeProvider>
-          <RuntimeProbe />
-        </KangurGameRuntimeProvider>
-      </KangurGuestPlayerProvider>
-    );
-
-    await waitFor(() => {
-      expect(screen.getByTestId('kangur-game-screen')).toHaveTextContent('division_quiz');
-      expect(screen.getByTestId('kangur-game-instance-id')).toHaveTextContent(
-        'division_groups:instance:default'
+  it.each([
+    {
+      instanceId: 'adding_ball:instance:default',
+      screen: 'addition_quiz',
+    },
+    {
+      instanceId: 'division_groups:instance:default',
+      screen: 'division_quiz',
+    },
+    {
+      instanceId: 'multiplication_array:instance:default',
+      screen: 'multiplication_array_quiz',
+    },
+    {
+      instanceId: 'subtracting_garden:instance:default',
+      screen: 'subtraction_quiz',
+    },
+  ])(
+    'keeps the $instanceId quick start on repeated remounts of the sanitized game route',
+    async ({ instanceId, screen: quickStartScreen }) => {
+      window.history.replaceState(
+        {},
+        '',
+        `/en/kangur/game?quickStart=screen&screen=${quickStartScreen}&instanceId=${instanceId}`
       );
-    });
 
-    unmount();
-    window.history.replaceState({}, '', '/en/kangur/game');
-
-    render(
-      <KangurGuestPlayerProvider>
-        <KangurGameRuntimeProvider>
-          <RuntimeProbe />
-        </KangurGameRuntimeProvider>
-      </KangurGuestPlayerProvider>
-    );
-
-    await waitFor(() => {
-      expect(screen.getByTestId('kangur-game-screen')).toHaveTextContent('division_quiz');
-      expect(screen.getByTestId('kangur-game-instance-id')).toHaveTextContent(
-        'division_groups:instance:default'
+      const { unmount } = render(
+        <KangurGuestPlayerProvider>
+          <KangurGameRuntimeProvider>
+            <RuntimeProbe />
+          </KangurGameRuntimeProvider>
+        </KangurGuestPlayerProvider>
       );
-    });
-  });
+
+      await waitFor(() => {
+        expect(screen.getByTestId('kangur-game-screen')).toHaveTextContent(quickStartScreen);
+        expect(screen.getByTestId('kangur-game-instance-id')).toHaveTextContent(instanceId);
+      });
+
+      unmount();
+      window.history.replaceState({}, '', '/en/kangur/game');
+
+      render(
+        <KangurGuestPlayerProvider>
+          <KangurGameRuntimeProvider>
+            <RuntimeProbe />
+          </KangurGameRuntimeProvider>
+        </KangurGuestPlayerProvider>
+      );
+
+      await waitFor(() => {
+        expect(screen.getByTestId('kangur-game-screen')).toHaveTextContent(quickStartScreen);
+        expect(screen.getByTestId('kangur-game-instance-id')).toHaveTextContent(instanceId);
+      });
+    }
+  );
 });

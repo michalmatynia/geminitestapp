@@ -6,6 +6,10 @@ import type {
   KangurLesson,
   KangurLessonDocumentStore,
 } from '@kangur/contracts';
+import type {
+  KangurLessonDocument,
+  KangurLessonRootBlock,
+} from '@/shared/contracts/kangur-lesson-document-contract';
 import type { KangurLessonSection } from '@/shared/contracts/kangur-lesson-sections';
 import type { KangurLessonTemplate } from '@/shared/contracts/kangur-lesson-templates';
 import { createStarterKangurLessonDocument } from '@/features/kangur/lesson-documents';
@@ -52,6 +56,111 @@ const sortObjectKeys = (value: unknown): unknown => {
 };
 
 const stableStringify = (value: unknown): string => JSON.stringify(sortObjectKeys(value));
+
+const canonicalizeKangurLessonRootBlockForComparison = (
+  block: KangurLessonRootBlock
+): Record<string, unknown> => {
+  switch (block.type) {
+    case 'activity':
+      return {
+        type: block.type,
+        activityId: block.activityId,
+        title: block.title,
+        description: block.description,
+        ttsDescription: block.ttsDescription,
+      };
+    case 'callout':
+      return {
+        type: block.type,
+        variant: block.variant,
+        title: block.title,
+        html: block.html,
+        ttsText: block.ttsText,
+      };
+    case 'grid':
+      return {
+        type: block.type,
+        columns: block.columns,
+        gap: block.gap,
+        rowHeight: block.rowHeight,
+        denseFill: block.denseFill,
+        stackOnMobile: block.stackOnMobile,
+        items: block.items.map((item) => ({
+          colSpan: item.colSpan,
+          rowSpan: item.rowSpan,
+          columnStart: item.columnStart,
+          rowStart: item.rowStart,
+          block: canonicalizeKangurLessonRootBlockForComparison(item.block),
+        })),
+      };
+    case 'image':
+      return {
+        type: block.type,
+        title: block.title,
+        altText: block.altText,
+        caption: block.caption,
+        ttsDescription: block.ttsDescription,
+        src: block.src,
+        align: block.align,
+        fit: block.fit,
+        maxWidth: block.maxWidth,
+      };
+    case 'quiz': {
+      const correctChoiceIndex = block.choices.findIndex(
+        (choice) => choice.id === block.correctChoiceId
+      );
+      return {
+        type: block.type,
+        question: block.question,
+        choices: block.choices.map((choice) => choice.text),
+        correctChoiceIndex: correctChoiceIndex >= 0 ? correctChoiceIndex : null,
+        explanation: block.explanation ?? null,
+        ttsText: block.ttsText,
+      };
+    }
+    case 'svg':
+      return {
+        type: block.type,
+        title: block.title,
+        ttsDescription: block.ttsDescription,
+        markup: block.markup,
+        viewBox: block.viewBox,
+        align: block.align,
+        fit: block.fit,
+        maxWidth: block.maxWidth,
+      };
+    case 'text':
+    default:
+      return {
+        type: 'text',
+        html: block.html,
+        ttsText: block.ttsText,
+        align: block.align,
+      };
+  }
+};
+
+const canonicalizeKangurLessonDocumentForComparison = (
+  document: KangurLessonDocument
+): Record<string, unknown> => ({
+  version: document.version,
+  narration: {
+    voice: document.narration.voice,
+    locale: document.narration.locale,
+  },
+  pages: document.pages.map((page) => ({
+    sectionKey: page.sectionKey,
+    sectionTitle: page.sectionTitle,
+    sectionDescription: page.sectionDescription,
+    title: page.title,
+    description: page.description,
+    blocks: page.blocks.map((block) => canonicalizeKangurLessonRootBlockForComparison(block)),
+  })),
+});
+
+export const serializeKangurLessonDocumentForComparison = (
+  document: KangurLessonDocument
+): string => stableStringify(canonicalizeKangurLessonDocumentForComparison(document));
 
 export const normalizeKangurLessonForSnapshot = (lesson: KangurLesson): KangurLesson => ({
   id: lesson.id,
@@ -148,7 +257,17 @@ export const buildKangurLessonContentRevision = (input: {
   createHash('sha256')
     .update(
       stableStringify({
-        lessonDocumentsByLocale: input.lessonDocumentsByLocale,
+        lessonDocumentsByLocale: Object.fromEntries(
+          Object.entries(input.lessonDocumentsByLocale).map(([locale, store]) => [
+            locale,
+            Object.fromEntries(
+              Object.entries(store).map(([lessonId, document]) => [
+                lessonId,
+                canonicalizeKangurLessonDocumentForComparison(document),
+              ])
+            ),
+          ])
+        ),
         lessonTemplatesByLocale: input.lessonTemplatesByLocale,
         lessons: input.lessons,
         sections: input.sections,

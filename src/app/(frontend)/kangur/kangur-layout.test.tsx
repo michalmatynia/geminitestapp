@@ -6,14 +6,18 @@ import { render, screen } from '@testing-library/react';
 import type { ReactNode } from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
+const { kangurStorefrontAppearanceProviderMock } = vi.hoisted(() => ({
+  kangurStorefrontAppearanceProviderMock: vi.fn(({ children }: { children: ReactNode }) => (
+    <div data-testid='kangur-storefront-appearance-provider'>{children}</div>
+  )),
+}));
+
 vi.mock('@vercel/analytics/next', () => ({
   Analytics: () => <div data-testid='kangur-vercel-analytics' />,
 }));
 
 vi.mock('@/features/kangur/ui/KangurStorefrontAppearanceProvider', () => ({
-  KangurStorefrontAppearanceProvider: ({ children }: { children: ReactNode }) => (
-    <div data-testid='kangur-storefront-appearance-provider'>{children}</div>
-  ),
+  KangurStorefrontAppearanceProvider: kangurStorefrontAppearanceProviderMock,
 }));
 
 vi.mock('@/features/kangur/ui/KangurSurfaceClassSync', () => ({
@@ -64,6 +68,23 @@ describe('kangur layout', () => {
     ).toContain('--kangur-soft-card-border:');
     expect(document.querySelector('script')?.textContent).toContain(
       'document.documentElement.classList.add(\'kangur-surface-active\')'
+    );
+    expect(kangurStorefrontAppearanceProviderMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        initialAppearance: {
+          mode: 'dark',
+          themeSettings: {
+            default: null,
+            dawn: null,
+            sunset: null,
+            dark: JSON.stringify({
+              cardBg: '#0f172a',
+              containerBorderColor: '#334155',
+            }),
+          },
+        },
+      }),
+      undefined
     );
   });
 

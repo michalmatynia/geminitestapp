@@ -59,6 +59,9 @@ const resolveKangurStorefrontPersistMode = (): boolean => {
   return raw === 'true';
 };
 
+const hasStoredKangurAppearanceMode = (value: string | undefined): boolean =>
+  typeof value === 'string' && value.trim().length > 0;
+
 export function KangurStorefrontAppearanceProvider({
   children,
   initialAppearance,
@@ -89,7 +92,10 @@ export function KangurStorefrontAppearanceProvider({
     () => resolveKangurStorefrontInitialThemeSettings(resolvedInitialThemeSettingsInput),
     [resolvedInitialThemeSettingsInput]
   );
-  const defaultMode = hydrated ? resolvedMode : (resolvedInitialMode ?? 'default');
+  const defaultMode =
+    hydrated && hasStoredKangurAppearanceMode(storedMode)
+      ? resolvedMode
+      : (resolvedInitialMode ?? 'default');
   const shouldPersistMode = useMemo(
     () => persistMode ?? resolveKangurStorefrontPersistMode(),
     [persistMode]

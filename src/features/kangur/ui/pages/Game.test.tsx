@@ -23,7 +23,9 @@ const {
   xpToastPropsMock,
   calendarTrainingGamePropsMock,
   clockTrainingGamePropsMock,
+  divisionGamePropsMock,
   multiplicationArrayGamePropsMock,
+  subtractingGamePropsMock,
   englishComparativesCrownGamePropsMock,
   englishAdverbsActionStudioGamePropsMock,
   logicalPatternsWorkshopGamePropsMock,
@@ -44,7 +46,9 @@ const {
   xpToastPropsMock: vi.fn(),
   calendarTrainingGamePropsMock: vi.fn(),
   clockTrainingGamePropsMock: vi.fn(),
+  divisionGamePropsMock: vi.fn(),
   multiplicationArrayGamePropsMock: vi.fn(),
+  subtractingGamePropsMock: vi.fn(),
   englishComparativesCrownGamePropsMock: vi.fn(),
   englishAdverbsActionStudioGamePropsMock: vi.fn(),
   logicalPatternsWorkshopGamePropsMock: vi.fn(),
@@ -234,6 +238,20 @@ vi.mock('@/features/kangur/ui/components/MultiplicationArrayGame', () => ({
   default: (props: unknown) => {
     multiplicationArrayGamePropsMock(props);
     return <div data-testid='multiplication-array-game' />;
+  },
+}));
+
+vi.mock('@/features/kangur/ui/components/DivisionGame', () => ({
+  default: (props: unknown) => {
+    divisionGamePropsMock(props);
+    return <div data-testid='division-game' />;
+  },
+}));
+
+vi.mock('@/features/kangur/ui/components/SubtractingGame', () => ({
+  default: (props: unknown) => {
+    subtractingGamePropsMock(props);
+    return <div data-testid='subtracting-game' />;
   },
 }));
 
@@ -703,6 +721,70 @@ describe('Game page', () => {
         sessionContext: expect.objectContaining({
           surface: 'game',
           contentId: 'game:multiplication_array_quiz',
+        }),
+      })
+    );
+  });
+
+  it('renders the division launchable runtime on the dedicated game screen', async () => {
+    useKangurGameRuntimeMock.mockReturnValue({
+      ...buildGameRuntime('division_quiz'),
+      user: {
+        activeLearner: {
+          id: 'learner-1',
+        },
+      },
+    });
+
+    render(<Game />);
+
+    await waitFor(() => {
+      expect(screen.getByTestId('division-game')).toBeInTheDocument();
+    });
+
+    expect(divisionGamePropsMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        finishLabelVariant: 'play',
+      })
+    );
+    expect(tutorSessionSyncPropsMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        learnerId: 'learner-1',
+        sessionContext: expect.objectContaining({
+          surface: 'game',
+          contentId: 'game:division_quiz',
+        }),
+      })
+    );
+  });
+
+  it('renders the subtraction launchable runtime on the dedicated game screen', async () => {
+    useKangurGameRuntimeMock.mockReturnValue({
+      ...buildGameRuntime('subtraction_quiz'),
+      user: {
+        activeLearner: {
+          id: 'learner-1',
+        },
+      },
+    });
+
+    render(<Game />);
+
+    await waitFor(() => {
+      expect(screen.getByTestId('subtracting-game')).toBeInTheDocument();
+    });
+
+    expect(subtractingGamePropsMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        finishLabelVariant: 'play',
+      })
+    );
+    expect(tutorSessionSyncPropsMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        learnerId: 'learner-1',
+        sessionContext: expect.objectContaining({
+          surface: 'game',
+          contentId: 'game:subtraction_quiz',
         }),
       })
     );

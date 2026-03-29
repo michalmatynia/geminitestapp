@@ -13,6 +13,7 @@ import React, {
 import { getKangurHomeHref } from '@/features/kangur/config/routing';
 import { useOptionalFrontendPublicOwner } from '@/features/kangur/ui/FrontendPublicOwnerContext';
 import { useKangurAiTutorSessionSync } from '@/features/kangur/ui/context/KangurAiTutorContext';
+import { useOptionalKangurAuth } from '@/features/kangur/ui/context/KangurAuthContext';
 import { useOptionalKangurRouting } from '@/features/kangur/ui/context/KangurRoutingContext';
 import { useKangurTutorAnchor } from '@/features/kangur/ui/hooks/useKangurTutorAnchor';
 import { useKangurRouteAccess } from '@/features/kangur/ui/routing/useKangurRouteAccess';
@@ -59,6 +60,8 @@ export { resolveKangurLoginCallbackNavigation } from '@/features/kangur/ui/login
 export function KangurLoginPageContent(): React.JSX.Element {
   const state = useKangurLoginPageState();
   const { showParentAuthModeTabs } = useKangurLoginPageProps();
+  const auth = useOptionalKangurAuth();
+  const searchParams = useSearchParams();
   const {
     translations,
     authMode,
@@ -81,7 +84,6 @@ export function KangurLoginPageContent(): React.JSX.Element {
     setIsPasswordVisible,
     identifierInputRef,
     passwordInputRef,
-    identifierHintId,
     passwordHintId,
     formErrorId,
     formNoticeId,
@@ -107,6 +109,25 @@ export function KangurLoginPageContent(): React.JSX.Element {
   } = state;
 
   const formRef = useRef<HTMLFormElement>(null);
+  const handledMagicLinkTokenRef = useRef<string | null>(null);
+  const handledVerificationTokenRef = useRef<string | null>(null);
+  const effectHelpersRef = useRef({
+    auth,
+    clearInlineFeedback,
+    clearVerificationState,
+    scheduleFieldFocus,
+    showFormError,
+    translations,
+  });
+
+  effectHelpersRef.current = {
+    auth,
+    clearInlineFeedback,
+    clearVerificationState,
+    scheduleFieldFocus,
+    showFormError,
+    translations,
+  };
 
   useKangurTutorAnchor({
     id: 'kangur-auth-login-form',
@@ -128,11 +149,114 @@ export function KangurLoginPageContent(): React.JSX.Element {
     metadata: { label: 'Pole identyfikatora' },
   });
 
+  const verificationToken = searchParams?.get('verifyEmailToken')?.trim() ?? '';
+  const deprecatedMagicLinkToken = searchParams?.get('magicLinkToken')?.trim() ?? '';
+
+  React.useEffect(() => {
+    if (!deprecatedMagicLinkToken) {
+      return;
+    }
+    if (handledMagicLinkTokenRef.current === deprecatedMagicLinkToken) {
+      return;
+    }
+
+    const { clearInlineFeedback, clearVerificationState, translations } = effectHelpersRef.current;
+
+    handledMagicLinkTokenRef.current = deprecatedMagicLinkToken;
+    clearInlineFeedback();
+    clearVerificationState();
+    setFormNotice(translations('magicLinkDeprecatedNotice'));
+  }, [deprecatedMagicLinkToken, setFormNotice]);
+
+  React.useEffect(() => {
+    let cancelled = false;
+
+    const verifyParentEmail = async (): Promise<void> => {
+      if (!verificationToken) {
+        return;
+      }
+      if (handledVerificationTokenRef.current === verificationToken) {
+        return;
+      }
+
+      handledVerificationTokenRef.current = verificationToken;
+      setIsLoading(true);
+      const {
+        auth,
+        clearInlineFeedback,
+        clearVerificationState,
+        scheduleFieldFocus,
+        showFormError,
+        translations,
+      } = effectHelpersRef.current;
+      clearInlineFeedback({ resetStage: false });
+      clearVerificationState();
+
+      try {
+        const response = await fetch('/api/kangur/auth/parent-email/verify', {
+          method: 'POST',
+          credentials: 'same-origin',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ token: verificationToken }),
+        });
+        const payload = await parseJsonResponse(response);
+
+        if (!response.ok || payload['ok'] !== true) {
+          if (!cancelled) {
+            showFormError(translations('verifyParentEmailFailed'));
+          }
+          return;
+        }
+
+        if (cancelled) {
+          return;
+        }
+
+        setAuthMode('sign-in');
+        setIdentifier(
+          typeof payload['email'] === 'string' ? normalizeParentEmail(payload['email']) : ''
+        );
+        setPassword('');
+        clearVerificationState();
+        setFormNotice(
+          typeof payload['message'] === 'string'
+            ? payload['message']
+            : translations('verifyParentEmailFailed')
+        );
+        void auth?.checkAppState?.();
+        scheduleFieldFocus('password');
+      } catch {
+        if (!cancelled) {
+          showFormError(translations('verifyParentEmailFailed'));
+        }
+      } finally {
+        if (!cancelled) {
+          setIsLoading(false);
+        }
+      }
+    };
+
+    void verifyParentEmail();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [
+    setAuthMode,
+    setFormNotice,
+    setIdentifier,
+    setIsLoading,
+    setPassword,
+    verificationToken,
+  ]);
+
   const isEmailIdentifierField = authMode === 'create-account' || loginKind === 'parent';
   const identifierInputType = isEmailIdentifierField ? 'email' : 'text';
   const identifierLabel =
     identifierEntry.entry?.title ??
-    (isEmailIdentifierField
+    (authMode === 'create-account'
+      ? translations('createAccountIdentifierLabel')
+      : isEmailIdentifierField
       ? translations('parentEmailLabel')
       : translations('identifierLabel'));
 
@@ -194,7 +318,7 @@ export function KangurLoginPageContent(): React.JSX.Element {
   const isPasswordInvalid = inputErrorTarget === 'password' || inputErrorTarget === 'both';
   
   const sharedFieldFeedbackId = formError ? formErrorId : activeFormNotice ? formNoticeId : successMessage ? successMessageId : null;
-  const identifierDescribedBy = [identifierHintId, sharedFieldFeedbackId].filter(Boolean).join(' ');
+  const identifierDescribedBy = [sharedFieldFeedbackId].filter(Boolean).join(' ');
   const passwordDescribedBy = [passwordHintId, sharedFieldFeedbackId].filter(Boolean).join(' ');
 
   useKangurAiTutorSessionSync({
@@ -240,6 +364,12 @@ export function KangurLoginPageContent(): React.JSX.Element {
         body: JSON.stringify({ email, password, callbackUrl: callbackValue, captchaToken: captchaToken ?? undefined }),
       });
       const payload = await parseJsonResponse(response);
+      const verificationUrl =
+        typeof (payload['debug'] as Record<string, unknown> | null | undefined)?.[
+          'verificationUrl'
+        ] === 'string'
+          ? ((payload['debug'] as Record<string, unknown>)['verificationUrl'] as string)
+          : null;
       if (response.ok && payload['ok'] === true) {
         if (payload['emailVerified'] === true && payload['hasPassword'] === true) {
           setAuthMode('sign-in');
@@ -247,9 +377,31 @@ export function KangurLoginPageContent(): React.JSX.Element {
           setFormNotice(typeof payload['message'] === 'string' ? payload['message'] : translations('createAccountInstruction'));
           scheduleFieldFocus('password');
         } else {
-          setVerificationCard({ email, message: typeof payload['message'] === 'string' ? payload['message'] : translations('createAccountInstruction') });
+          setVerificationCard({
+            email,
+            message:
+              typeof payload['message'] === 'string'
+                ? payload['message']
+                : translations('createAccountInstruction'),
+            verificationUrl,
+          });
           scheduleResendCooldown(typeof payload['retryAfterMs'] === 'number' ? payload['retryAfterMs'] : null, { forceDefault: true });
         }
+        return;
+      }
+      if (payload['code'] === 'RATE_LIMITED' || response.status === 429) {
+        setVerificationCard({
+          email,
+          error:
+            typeof payload['error'] === 'string'
+              ? payload['error']
+              : translations('createParentAccountFailed'),
+          verificationUrl,
+        });
+        scheduleResendCooldown(
+          typeof payload['retryAfterMs'] === 'number' ? payload['retryAfterMs'] : null,
+          { forceDefault: true }
+        );
         return;
       }
       showFormError(typeof payload['error'] === 'string' ? payload['error'] : translations('createParentAccountFailed'));
@@ -285,12 +437,20 @@ export function KangurLoginPageContent(): React.JSX.Element {
       });
       const verifyPayload = await parseJsonResponse(verifyResponse);
       if (verifyPayload['ok'] === false) {
+        if (verifyPayload['code'] === 'EMAIL_UNVERIFIED') {
+          clearInlineFeedback({ resetStage: false });
+          setVerificationCard({
+            email,
+            message: translations('emailUnverifiedNotice'),
+          });
+          return;
+        }
         if (verifyPayload['code'] === 'PASSWORD_SETUP_REQUIRED') {
-          setAuthMode('sign-in');
+          setAuthMode('create-account');
           setPassword('');
           setFormNotice(
             typeof verifyPayload['message'] === 'string'
-              ? verifyPayload['message']
+              ? translations('passwordSetupRequiredNotice')
               : translations('passwordSetupRequiredNotice')
           );
           scheduleFieldFocus('password');
@@ -458,9 +618,6 @@ export function KangurLoginPageContent(): React.JSX.Element {
                         : translations('identifierPlaceholder')
                     }
                   />
-                  <p id={identifierHintId} className='sr-only'>
-                    {identifierEntry.entry?.summary ?? authModeHint}
-                  </p>
                 </div>
                 <div className={KANGUR_STACK_COMPACT_CLASSNAME}>
                   <label htmlFor='password' className='text-sm font-medium text-slate-700'>{translations('passwordLabel')}</label>
@@ -539,6 +696,11 @@ export function KangurLoginPageContent(): React.JSX.Element {
                 {...verificationCard}
                 resendLabel={resendCooldownLabel ? translations('resendEmailIn', { label: resendCooldownLabel }) : translations('resendEmail')}
                 resendDisabled={Boolean(resendCooldownLabel) || isLoading}
+                resendHelper={
+                  resendCooldownLabel
+                    ? translations('resendHelper', { label: resendCooldownLabel })
+                    : null
+                }
                 changeEmailLabel={translations('changeEmailAction')}
                 onChangeEmail={() => {
                   clearVerificationState();

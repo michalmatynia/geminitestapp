@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { getKangurPlatform } from '@/features/kangur/services/kangur-platform';
 import type { KangurLearnerInteractionHistory } from '@kangur/platform';
@@ -34,6 +34,9 @@ export function useMonitoringWidgetState() {
   } = useKangurParentDashboardRuntime();
   const activeLearnerId = activeLearner?.id ?? null;
   const lessonPanelProgress = progress.lessonPanelProgress ?? {};
+  const translationsRef = useRef(translations);
+
+  translationsRef.current = translations;
 
   const [interactionHistory, setInteractionHistory] = useState<KangurLearnerInteractionHistory | null>(null);
   const [isInteractionQueryReady, setIsInteractionQueryReady] = useState(false);
@@ -87,15 +90,21 @@ export function useMonitoringWidgetState() {
           );
         }
       } catch (err) {
+        console.error(err);
         void ErrorSystem.captureException(err);
-        if (reset) setInteractionsError(translations('widgets.monitoring.errors.load'));
-        else setInteractionsLoadMoreError(translations('widgets.monitoring.errors.loadMore'));
+        if (reset) {
+          setInteractionsError(translationsRef.current('widgets.monitoring.errors.load'));
+        } else {
+          setInteractionsLoadMoreError(
+            translationsRef.current('widgets.monitoring.errors.loadMore')
+          );
+        }
       } finally {
         if (reset) setIsLoadingInteractions(false);
         else setIsLoadingMoreInteractions(false);
       }
     },
-    [interactionDateFrom, interactionDateTo, interactionFilter, translations]
+    []
   );
 
   useEffect(() => {
@@ -112,7 +121,7 @@ export function useMonitoringWidgetState() {
     if (activeLearnerId && isInteractionQueryReady) {
       void fetchInteractions(activeLearnerId, { offset: 0, reset: true });
     }
-  }, [activeLearnerId, fetchInteractions, isInteractionQueryReady]);
+  }, [activeLearnerId, isInteractionQueryReady]);
 
   const interactions = interactionHistory?.items ?? [];
   const interactionViews = useMemo<InteractionView[]>(
@@ -254,6 +263,7 @@ export function useMonitoringWidgetState() {
     interactionDateTo,
     setInteractionDateTo,
     interactionHistory,
+    isInteractionQueryReady,
     isLoadingInteractions,
     interactionsError,
     isLoadingMoreInteractions,

@@ -80,7 +80,18 @@ export const useTurnstile = (options: {
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const widgetIdRef = useRef<string | null>(null);
+  const onVerifyRef = useRef(options.onVerify);
+  const onErrorRef = useRef(options.onError);
+  const onExpireRef = useRef(options.onExpire);
+  const onLoadErrorRef = useRef(options.onLoadError);
   const [isReady, setIsReady] = useState(false);
+
+  useEffect(() => {
+    onVerifyRef.current = options.onVerify;
+    onErrorRef.current = options.onError;
+    onExpireRef.current = options.onExpire;
+    onLoadErrorRef.current = options.onLoadError;
+  }, [options.onError, options.onExpire, options.onLoadError, options.onVerify]);
 
   useEffect(() => {
     if (options.enabled === false || !KANGUR_PARENT_CAPTCHA_SITE_KEY) {
@@ -98,13 +109,13 @@ export const useTurnstile = (options: {
         if (mounted) {
           setIsReady(false);
         }
-        options.onLoadError?.();
+        onLoadErrorRef.current?.();
       });
 
     return () => {
       mounted = false;
     };
-  }, [options.enabled, options.onLoadError]);
+  }, [options.enabled]);
 
   useEffect(() => {
     if (
@@ -121,9 +132,9 @@ export const useTurnstile = (options: {
     try {
       widgetIdRef.current = window.turnstile.render(containerRef.current, {
         sitekey: KANGUR_PARENT_CAPTCHA_SITE_KEY,
-        callback: options.onVerify,
-        'error-callback': options.onError,
-        'expired-callback': options.onExpire,
+        callback: (token) => onVerifyRef.current(token),
+        'error-callback': () => onErrorRef.current?.(),
+        'expired-callback': () => onExpireRef.current?.(),
         theme: 'light',
       });
     } catch (err) {
@@ -142,7 +153,7 @@ export const useTurnstile = (options: {
         widgetIdRef.current = null;
       }
     };
-  }, [isReady, options.enabled, options.onVerify, options.onError, options.onExpire]);
+  }, [isReady, options.enabled]);
 
   return { containerRef, isReady };
 };

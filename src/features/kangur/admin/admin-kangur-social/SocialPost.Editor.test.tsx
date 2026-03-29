@@ -83,10 +83,6 @@ describe('renderSocialPostEditor', () => {
       activePost: buildPost(),
       editorState: { titlePl: '', titleEn: '', bodyPl: '', bodyEn: '' },
       setEditorState: vi.fn(),
-      handleSave: vi.fn(),
-      handlePublish: vi.fn(),
-      saveMutation: { isPending: false },
-      publishMutation: { isPending: false },
     });
 
     render(renderSocialPostEditor({}));
@@ -97,8 +93,8 @@ describe('renderSocialPostEditor', () => {
     expect(screen.queryByText('Default LinkedIn connection')).not.toBeInTheDocument();
     expect(screen.queryByText('Loaded context')).not.toBeInTheDocument();
     expect(screen.queryByText('Documentation references')).not.toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Save draft' })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Save draft' })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Schedule' })).not.toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Publish to LinkedIn' })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Publish to LinkedIn' })).not.toBeInTheDocument();
   });
 });

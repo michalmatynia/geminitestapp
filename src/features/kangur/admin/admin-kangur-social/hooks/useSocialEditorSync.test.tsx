@@ -83,6 +83,7 @@ describe('useSocialEditorSync', () => {
     expect(result.current.docReferenceInput).toBe('docs/intro.mdx, docs/launch.mdx');
     expect(result.current.imageAddonIds).toEqual(['addon-1']);
     expect(result.current.contextSummary).toBe('Existing context');
+    expect(result.current.hasUnsavedChanges).toBe(false);
     expect(trackKangurClientEventMock).toHaveBeenCalledWith('kangur_social_page_view', {
       postCount: 1,
       hasLinkedInIntegration: true,
@@ -130,5 +131,44 @@ describe('useSocialEditorSync', () => {
       { id: '/assets/two.png', filepath: '/assets/two.png', url: '/assets/two.png', filename: 'two.png' },
       { id: 'asset-2', filepath: '/assets/two.png', url: '/assets/two.png' },
     ]);
+  });
+
+  it('tracks unsaved changes for edited post fields and visuals', async () => {
+    const { result } = renderHook(() =>
+      useSocialEditorSync({
+        linkedinConnections: [],
+        linkedinConnectionId: null,
+        brainModelId: null,
+        visionModelId: null,
+      })
+    );
+
+    await waitFor(() => expect(result.current.activePostId).toBe('post-1'));
+
+    expect(result.current.hasUnsavedChanges).toBe(false);
+
+    act(() => {
+      result.current.setEditorState((prev) => ({
+        ...prev,
+        titlePl: 'Updated Polish title',
+      }));
+    });
+
+    expect(result.current.hasUnsavedChanges).toBe(true);
+
+    act(() => {
+      result.current.setEditorState((prev) => ({
+        ...prev,
+        titlePl: postFixture.titlePl,
+      }));
+    });
+
+    expect(result.current.hasUnsavedChanges).toBe(false);
+
+    act(() => {
+      result.current.handleAddImages(['/assets/two.png']);
+    });
+
+    expect(result.current.hasUnsavedChanges).toBe(true);
   });
 });

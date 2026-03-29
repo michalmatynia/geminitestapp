@@ -194,7 +194,43 @@ describe('SocialPostPipeline', () => {
     expect(handleCaptureImagesOnly).not.toHaveBeenCalled();
   });
 
+  it('shows the active draft target when a post is selected for the pipeline', () => {
+    useSocialPostContextMock.mockReturnValue({
+      activePostId: 'post-1',
+      editorState: {
+        titlePl: 'Selected pipeline target',
+        titleEn: '',
+      },
+      pipelineStep: 'idle',
+      pipelineProgress: null,
+      pipelineErrorMessage: null,
+      handleRunFullPipeline: vi.fn(),
+      handleRunFullPipelineWithFreshCapture: vi.fn(),
+      handleCaptureImagesOnly: vi.fn(),
+      canGenerateSocialDraft: true,
+      canRunFreshCapturePipeline: true,
+      batchCaptureBaseUrl: 'https://kangur.app',
+      batchCapturePresetIds: ['home'],
+      socialDraftBlockedReason: null,
+      socialBatchCaptureBlockedReason: null,
+      captureOnlyPending: false,
+      captureOnlyMessage: null,
+      captureOnlyErrorMessage: null,
+      batchCapturePresetLimit: 1,
+      hasBatchCaptureConfig: true,
+      setIsPostEditorModalOpen: vi.fn(),
+    });
+
+    render(<SocialPostPipeline />);
+
+    expect(screen.getByText('Active draft:')).toBeInTheDocument();
+    expect(screen.getByText('Selected pipeline target')).toBeInTheDocument();
+  });
+
   it('surfaces a completed pipeline by opening the draft editor', () => {
+    const handleRunFullPipeline = vi.fn();
+    const handleRunFullPipelineWithFreshCapture = vi.fn();
+    const handleCaptureImagesOnly = vi.fn();
     const setIsPostEditorModalOpen = vi.fn();
 
     useSocialPostContextMock.mockReturnValue({
@@ -206,9 +242,9 @@ describe('SocialPostPipeline', () => {
       pipelineStep: 'done',
       pipelineProgress: null,
       pipelineErrorMessage: null,
-      handleRunFullPipeline: vi.fn(),
-      handleRunFullPipelineWithFreshCapture: vi.fn(),
-      handleCaptureImagesOnly: vi.fn(),
+      handleRunFullPipeline,
+      handleRunFullPipelineWithFreshCapture,
+      handleCaptureImagesOnly,
       canGenerateSocialDraft: true,
       canRunFreshCapturePipeline: true,
       batchCaptureBaseUrl: 'https://kangur.app',
@@ -230,6 +266,81 @@ describe('SocialPostPipeline', () => {
         'Draft updated: Generated weekly update. The editor opened with the generated content.'
       )
     ).toBeInTheDocument();
+    const runFullPipelineButton = screen.getByRole('button', { name: 'Run full pipeline' });
+    const freshCaptureButton = screen.getByRole('button', { name: 'Fresh capture & pipeline' });
+    const captureImagesOnlyButton = screen.getByRole('button', { name: 'Capture images only' });
+
+    expect(runFullPipelineButton).toBeEnabled();
+    expect(freshCaptureButton).toBeEnabled();
+    expect(captureImagesOnlyButton).toBeEnabled();
+
+    fireEvent.click(runFullPipelineButton);
+    fireEvent.click(freshCaptureButton);
+    fireEvent.click(captureImagesOnlyButton);
+
+    expect(handleRunFullPipeline).toHaveBeenCalledTimes(1);
+    expect(handleRunFullPipelineWithFreshCapture).toHaveBeenCalledTimes(1);
+    expect(handleCaptureImagesOnly).toHaveBeenCalledTimes(1);
     expect(setIsPostEditorModalOpen).toHaveBeenCalledWith(true);
+  });
+
+  it('allows rerunning the pipeline after a failed attempt', () => {
+    const handleRunFullPipeline = vi.fn();
+    const handleRunFullPipelineWithFreshCapture = vi.fn();
+
+    useSocialPostContextMock.mockReturnValue({
+      activePostId: 'post-1',
+      editorState: {
+        titlePl: 'Generated weekly update',
+        titleEn: '',
+      },
+      pipelineStep: 'error',
+      pipelineProgress: {
+        type: 'manual-post-pipeline',
+        step: 'capturing',
+        captureMode: 'fresh_capture',
+        message: 'Pipeline stopped: no screenshots captured.',
+        updatedAt: 1_700_000_001_000,
+        contextDocCount: 1,
+        contextSummary: 'summary',
+        addonsCreated: 0,
+        captureFailureCount: 1,
+        captureFailures: [{ id: 'home', reason: 'Timeout' }],
+        requestedPresetCount: 1,
+        usedPresetCount: 1,
+        usedPresetIds: ['home'],
+        runId: null,
+      },
+      pipelineErrorMessage: 'Pipeline stopped: no screenshots captured.',
+      handleRunFullPipeline,
+      handleRunFullPipelineWithFreshCapture,
+      handleCaptureImagesOnly: vi.fn(),
+      canGenerateSocialDraft: true,
+      canRunFreshCapturePipeline: true,
+      batchCaptureBaseUrl: 'https://kangur.app',
+      batchCapturePresetIds: ['home'],
+      socialDraftBlockedReason: null,
+      socialBatchCaptureBlockedReason: null,
+      captureOnlyPending: false,
+      captureOnlyMessage: null,
+      captureOnlyErrorMessage: null,
+      batchCapturePresetLimit: 1,
+      hasBatchCaptureConfig: true,
+      setIsPostEditorModalOpen: vi.fn(),
+    });
+
+    render(<SocialPostPipeline />);
+
+    const runFullPipelineButton = screen.getByRole('button', { name: 'Run full pipeline' });
+    const freshCaptureButton = screen.getByRole('button', { name: 'Fresh capture & pipeline' });
+
+    expect(runFullPipelineButton).toBeEnabled();
+    expect(freshCaptureButton).toBeEnabled();
+
+    fireEvent.click(runFullPipelineButton);
+    fireEvent.click(freshCaptureButton);
+
+    expect(handleRunFullPipeline).toHaveBeenCalledTimes(1);
+    expect(handleRunFullPipelineWithFreshCapture).toHaveBeenCalledTimes(1);
   });
 });

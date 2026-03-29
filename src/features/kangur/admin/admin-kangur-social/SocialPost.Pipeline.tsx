@@ -54,7 +54,13 @@ export function SocialPostPipeline(): React.JSX.Element {
   const pipelineProgressValue = pipelineProgress
     ? PIPELINE_PROGRESS_VALUE_BY_STEP[pipelineProgress.step]
     : 0;
-  const generatedDraftLabel =
+  const isPipelineBusy =
+    pipelineStep === 'loading_context' ||
+    pipelineStep === 'capturing' ||
+    pipelineStep === 'saving' ||
+    pipelineStep === 'generating' ||
+    pipelineStep === 'previewing';
+  const activeDraftLabel =
     editorState?.titlePl?.trim() || editorState?.titleEn?.trim() || 'Untitled draft';
   const previousPipelineStepRef = React.useRef<PipelineStep>('idle');
 
@@ -75,7 +81,7 @@ export function SocialPostPipeline(): React.JSX.Element {
         <div className='flex items-center justify-between gap-3'>
           <div className='text-sm font-semibold text-foreground'>Social pipeline</div>
           <div className='flex items-center gap-2'>
-            {pipelineStep !== 'idle' && pipelineStep !== 'done' && pipelineStep !== 'error' && (
+            {isPipelineBusy && (
               <Badge variant='outline' className='animate-pulse'>
                 {pipelineStep === 'capturing'
                   ? 'Capturing...'
@@ -88,12 +94,19 @@ export function SocialPostPipeline(): React.JSX.Element {
         </div>
 
         <div className='space-y-3'>
+          {hasActivePost && (
+            <div className='rounded-xl border border-border/60 bg-background/40 px-3 py-2 text-xs text-muted-foreground'>
+              Active draft:{' '}
+              <span className='font-semibold text-foreground/90'>{activeDraftLabel}</span>
+            </div>
+          )}
+
           <div className='flex flex-wrap gap-2'>
             <Button
               type='button'
               size='sm'
               onClick={() => void handleRunFullPipeline()}
-              disabled={!canRunTextPipeline || pipelineStep !== 'idle'}
+              disabled={!canRunTextPipeline || isPipelineBusy}
             >
               Run full pipeline
             </Button>
@@ -102,7 +115,7 @@ export function SocialPostPipeline(): React.JSX.Element {
               variant='outline'
               size='sm'
               onClick={() => void handleRunFullPipelineWithFreshCapture()}
-              disabled={!canRunFreshCapture || pipelineStep !== 'idle'}
+              disabled={!canRunFreshCapture || isPipelineBusy}
             >
               Fresh capture & pipeline
             </Button>
@@ -111,7 +124,7 @@ export function SocialPostPipeline(): React.JSX.Element {
               variant='ghost'
               size='sm'
               onClick={() => void handleCaptureImagesOnly()}
-              disabled={!canCaptureImagesOnly || captureOnlyPending || pipelineStep !== 'idle'}
+              disabled={!canCaptureImagesOnly || captureOnlyPending || isPipelineBusy}
             >
               Capture images only
             </Button>
@@ -135,7 +148,7 @@ export function SocialPostPipeline(): React.JSX.Element {
             </div>
           )}
 
-          {pipelineStep !== 'idle' && pipelineStep !== 'done' && (
+          {isPipelineBusy && (
             <div className='space-y-2'>
               <KangurProgressBar accent='slate' value={pipelineProgressValue} size='sm' />
               <div className='text-center text-[10px] uppercase tracking-wider text-muted-foreground'>
@@ -152,7 +165,7 @@ export function SocialPostPipeline(): React.JSX.Element {
 
           {pipelineStep === 'done' && hasActivePost && (
             <div className='rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-3 py-2 text-xs text-emerald-900 dark:text-emerald-200'>
-              Draft updated: {generatedDraftLabel}. The editor opened with the generated content.
+              Draft updated: {activeDraftLabel}. The editor opened with the generated content.
             </div>
           )}
 

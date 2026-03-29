@@ -230,10 +230,27 @@ describe('KangurLessonsCatalogWidget', () => {
     const trigger = screen.getByRole('button', { name: /opening section/i });
 
     expect(trigger).toHaveAttribute('aria-expanded', 'false');
+    expect(trigger).toHaveClass(
+      'kangur-button-shell',
+      'kangur-cta-pill',
+      'surface-cta',
+      'justify-center',
+      'text-center'
+    );
+    expect(trigger.closest('.kangur-lesson-group-accordion')).toHaveClass('kangur-panel-shell');
+    expect(screen.queryByText('Group')).not.toBeInTheDocument();
+    expect(document.querySelector('.kangur-lesson-group-chevron')).not.toBeInTheDocument();
 
     fireEvent.click(trigger);
 
     expect(trigger).toHaveAttribute('aria-expanded', 'true');
+    expect(trigger).toHaveClass(
+      'kangur-button-shell',
+      'kangur-cta-pill',
+      'surface-cta',
+      'justify-center',
+      'text-center'
+    );
     const accordionRegion = screen
       .getAllByRole('region')
       .find((region) => region.id.includes('kangur-lesson-group-panel'));

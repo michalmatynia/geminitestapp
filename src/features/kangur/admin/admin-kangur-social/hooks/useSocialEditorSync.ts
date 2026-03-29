@@ -32,6 +32,20 @@ type SocialEditorSyncDeps = {
   visionModelId: string | null;
 };
 
+const buildImageAssetSignature = (assets: Array<Partial<ImageFileSelection> | null | undefined>): string =>
+  assets
+    .map((asset, index) => asset?.id || asset?.filepath || asset?.url || `image-${index}`)
+    .filter((value): value is string => Boolean(value))
+    .sort()
+    .join('|');
+
+const buildStringArraySignature = (values: string[] | null | undefined): string =>
+  (values ?? [])
+    .filter(Boolean)
+    .slice()
+    .sort()
+    .join('|');
+
 export function useSocialEditorSync(deps: SocialEditorSyncDeps) {
   const postsQuery = useKangurSocialPosts({ scope: 'admin' });
   const addonsQuery = useKangurSocialImageAddons({ limit: 12 });
@@ -60,6 +74,39 @@ export function useSocialEditorSync(deps: SocialEditorSyncDeps) {
       .split(',')
       .map((value) => value.trim())
       .filter(Boolean), [docReferenceInput]);
+
+  const hasUnsavedChanges = useMemo(() => {
+    if (!activePost) return false;
+
+    if (editorState.titlePl !== (activePost.titlePl ?? '')) return true;
+    if (editorState.titleEn !== (activePost.titleEn ?? '')) return true;
+    if (editorState.bodyPl !== (activePost.bodyPl ?? '')) return true;
+    if (editorState.bodyEn !== (activePost.bodyEn ?? '')) return true;
+    if (scheduledAt !== formatDatetimeLocal(activePost.scheduledAt)) return true;
+    if (
+      buildStringArraySignature(imageAddonIds) !==
+      buildStringArraySignature(activePost.imageAddonIds ?? [])
+    ) {
+      return true;
+    }
+    if (
+      buildImageAssetSignature(imageAssets) !==
+      buildImageAssetSignature(activePost.imageAssets ?? [])
+    ) {
+      return true;
+    }
+
+    return false;
+  }, [
+    activePost,
+    editorState.bodyEn,
+    editorState.bodyPl,
+    editorState.titleEn,
+    editorState.titlePl,
+    imageAddonIds,
+    imageAssets,
+    scheduledAt,
+  ]);
 
   // Auto-select first post
   useEffect(() => {
@@ -195,6 +242,7 @@ export function useSocialEditorSync(deps: SocialEditorSyncDeps) {
     setShowMediaLibrary,
     contextSummary,
     setContextSummary,
+    hasUnsavedChanges,
     resolveDocReferences,
     handleAddImages,
     handleRemoveImage,

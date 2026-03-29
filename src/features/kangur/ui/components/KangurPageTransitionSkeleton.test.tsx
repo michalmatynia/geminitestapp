@@ -285,6 +285,22 @@ describe('KangurPageTransitionSkeleton', () => {
     expect(screen.getAllByText('Lessons')).not.toHaveLength(0);
   });
 
+  it('uses an opaque page background for navigation skeletons so the previous route does not ghost through', () => {
+    useOptionalKangurRoutingMock.mockReturnValue({
+      basePath: '/kangur',
+      embedded: false,
+    });
+
+    renderWithIntl(<KangurPageTransitionSkeleton pageKey='Lessons' variant='lessons-library' />);
+
+    expect(screen.getByTestId('kangur-page-transition-skeleton')).toHaveClass(
+      'bg-[color:var(--kangur-page-background)]'
+    );
+    expect(screen.getByTestId('kangur-page-transition-skeleton')).not.toHaveClass(
+      'bg-[color:var(--kangur-page-background)]/90'
+    );
+  });
+
   it('keeps standalone game-session overlays below the top bar without adding a second top-bar offset', () => {
     useOptionalKangurRoutingMock.mockReturnValue({
       basePath: '/kangur',

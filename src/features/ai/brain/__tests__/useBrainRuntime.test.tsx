@@ -95,6 +95,13 @@ describe('useBrainRuntime', () => {
 
     await waitFor(() => expect(hydrateFromSettingsMap).toHaveBeenCalledWith(settingsMap));
 
+    expect(useBrainDerivedState).toHaveBeenCalledWith(
+      expect.objectContaining({
+        activeTab: 'routing',
+        operationsRange: '1h',
+      })
+    );
+
     expect(result.current.stateValue.activeTab).toBe('routing');
     expect(result.current.stateValue.operationsRange).toBe('1h');
     expect(result.current.stateValue.analyticsSummaryQuery).toEqual({ id: 'analytics' });
@@ -153,6 +160,26 @@ describe('useBrainRuntime', () => {
       result.current.stateValue.settings.capabilities['product.description.generation']?.modelId
     ).toBe('capability-agent-attempt');
     expect(result.current.stateValue.settings.capabilities['cms.css_stream']?.enabled).toBe(true);
+  });
+
+  it('recomputes derived state when the active brain tab changes', () => {
+    const { result } = renderHook(() => useBrainRuntime());
+
+    expect(useBrainDerivedState).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        activeTab: 'routing',
+      })
+    );
+
+    act(() => {
+      result.current.actionsValue.setActiveTab('metrics');
+    });
+
+    expect(useBrainDerivedState).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        activeTab: 'metrics',
+      })
+    );
   });
 
   it('clears feature and capability overrides when toggled off or explicitly cleared', () => {

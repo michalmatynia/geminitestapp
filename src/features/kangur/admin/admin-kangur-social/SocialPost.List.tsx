@@ -183,6 +183,10 @@ export function SocialPostList(): React.JSX.Element {
         <>
           {paginatedPosts.map((post) => {
           const title = post.titlePl || post.titleEn || 'Untitled update';
+          const isActive = activePostId === post.id;
+          const pipelineSelectionLabel = isActive
+            ? `${title} is active for pipeline`
+            : `Select ${title} for pipeline`;
           const handleOpen = (): void => {
             setActivePostId(post.id);
             handleOpenPostEditor?.(post.id);
@@ -194,9 +198,22 @@ export function SocialPostList(): React.JSX.Element {
               data-testid={`social-post-row-${post.id}`}
               className={cn(
                 'flex w-full items-center gap-3 rounded-xl border border-border/60 bg-background/40 px-4 py-3 text-sm',
-                activePostId === post.id && 'border-primary/50 bg-primary/5'
+                isActive && 'border-primary/50 bg-primary/5'
               )}
             >
+              <Button
+                type='button'
+                variant={isActive ? 'secondary' : 'outline'}
+                size='xs'
+                onClick={() => setActivePostId(post.id)}
+                aria-pressed={isActive}
+                aria-label={pipelineSelectionLabel}
+                title={pipelineSelectionLabel}
+                className='shrink-0'
+              >
+                {isActive ? 'Active' : 'Select'}
+              </Button>
+
               <div className='flex min-w-0 flex-1 items-center justify-between gap-3'>
                 <div className='min-w-0'>
                   <button
@@ -351,6 +368,15 @@ export function SocialPostList(): React.JSX.Element {
                     ariaLabel='Open post actions'
                     triggerClassName='rounded-full border border-transparent bg-transparent text-muted-foreground hover:bg-muted/50 hover:text-white'
                   >
+                    <DropdownMenuItem
+                      onSelect={(event: Event): void => {
+                        event.preventDefault();
+                        handleOpen();
+                      }}
+                    >
+                      Edit post
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
                     <DropdownMenuItem
                       className='text-destructive focus:text-destructive'
                       onSelect={(event: Event): void => {

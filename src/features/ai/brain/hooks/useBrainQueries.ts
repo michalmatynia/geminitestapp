@@ -83,6 +83,7 @@ export function useBrainModels(options?: {
 
 export function useBrainOperationsOverview(options?: {
   range?: BrainOperationsRange;
+  enabled?: boolean;
 }): SingleQuery<BrainOperationsOverviewResponse> {
   const range = options?.range ?? '1h';
   const queryKey = brainKeys.operationsOverview(range);
@@ -93,6 +94,7 @@ export function useBrainOperationsOverview(options?: {
         params: { range },
       }),
     id: 'brain-operations-overview',
+    enabled: options?.enabled ?? true,
     staleTime: 10_000,
     refetchInterval: 15_000,
     meta: {
@@ -107,7 +109,7 @@ export function useBrainOperationsOverview(options?: {
   });
 }
 
-export function useBrainAnalyticsSummary(): SingleQuery<AnalyticsSummary> {
+export function useBrainAnalyticsSummary(enabled: boolean = true): SingleQuery<AnalyticsSummary> {
   const queryKey = brainKeys.analyticsSummary();
   return createSingleQueryV2<AnalyticsSummary>({
     queryKey,
@@ -116,6 +118,7 @@ export function useBrainAnalyticsSummary(): SingleQuery<AnalyticsSummary> {
         params: { range: '24h', scope: 'all' },
       }),
     id: 'analytics-summary',
+    enabled,
     refetchInterval: 30_000,
     meta: {
       source: 'brain.hooks.useBrainAnalyticsSummary',
@@ -129,7 +132,7 @@ export function useBrainAnalyticsSummary(): SingleQuery<AnalyticsSummary> {
   });
 }
 
-export function useBrainLogMetrics(): SingleQuery<SystemLogMetrics> {
+export function useBrainLogMetrics(enabled: boolean = true): SingleQuery<SystemLogMetrics> {
   const queryKey = brainKeys.logMetrics();
   return createSingleQueryV2<SystemLogMetrics>({
     queryKey,
@@ -141,6 +144,7 @@ export function useBrainLogMetrics(): SingleQuery<SystemLogMetrics> {
       return data.metrics;
     },
     id: 'log-metrics',
+    enabled,
     refetchInterval: 30_000,
     meta: {
       source: 'brain.hooks.useBrainLogMetrics',
@@ -154,12 +158,16 @@ export function useBrainLogMetrics(): SingleQuery<SystemLogMetrics> {
   });
 }
 
-export function useBrainInsights(includeRuntimeAnalytics: boolean = true): SingleQuery<InsightsSnapshot> {
+export function useBrainInsights(
+  includeRuntimeAnalytics: boolean = true,
+  enabled: boolean = true
+): SingleQuery<InsightsSnapshot> {
   const queryKey = brainKeys.insights();
   return createSingleQueryV2<InsightsSnapshot>({
     queryKey,
     queryFn: () => fetchBrainInsightsSnapshot({ includeRuntimeAnalytics }),
     id: 'insights',
+    enabled,
     refetchInterval: 30_000,
     meta: {
       source: 'brain.hooks.useBrainInsights',

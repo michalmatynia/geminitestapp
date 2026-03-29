@@ -101,14 +101,17 @@ describe('useBrainDerivedState', () => {
 
     const { result } = renderHook(() =>
       useBrainDerivedState({
+        activeTab: 'metrics',
         operationsRange: '24h',
         providerCatalog,
         settings,
       })
     );
 
-    expect(useBrainOperationsOverview).toHaveBeenCalledWith({ range: '24h' });
-    expect(useBrainInsights).toHaveBeenCalledWith(true);
+    expect(useBrainOperationsOverview).toHaveBeenCalledWith({ range: '24h', enabled: false });
+    expect(useBrainAnalyticsSummary).toHaveBeenCalledWith(true);
+    expect(useBrainLogMetrics).toHaveBeenCalledWith(true);
+    expect(useBrainInsights).toHaveBeenCalledWith(true, true);
     expect(useBrainRuntimeAnalytics).toHaveBeenCalledWith(true);
     expect(result.current.analyticsSummaryQuery).toBe(analyticsSummaryQuery);
     expect(result.current.logMetricsQuery).toBe(logMetricsQuery);
@@ -147,6 +150,7 @@ describe('useBrainDerivedState', () => {
 
     const { result } = renderHook(() =>
       useBrainDerivedState({
+        activeTab: 'metrics',
         operationsRange: '7d',
         providerCatalog: { entries: [] },
         settings: {
@@ -168,8 +172,10 @@ describe('useBrainDerivedState', () => {
       })
     );
 
-    expect(useBrainOperationsOverview).toHaveBeenCalledWith({ range: '7d' });
-    expect(useBrainInsights).toHaveBeenLastCalledWith(false);
+    expect(useBrainOperationsOverview).toHaveBeenCalledWith({ range: '7d', enabled: false });
+    expect(useBrainAnalyticsSummary).toHaveBeenLastCalledWith(true);
+    expect(useBrainLogMetrics).toHaveBeenLastCalledWith(true);
+    expect(useBrainInsights).toHaveBeenLastCalledWith(false, true);
     expect(useBrainRuntimeAnalytics).toHaveBeenLastCalledWith(false);
     expect(result.current.runtimeAnalyticsLiveEnabled).toBe(false);
     expect(result.current.liveOllamaModels).toEqual([]);
@@ -188,6 +194,7 @@ describe('useBrainDerivedState', () => {
 
     const { result } = renderHook(() =>
       useBrainDerivedState({
+        activeTab: 'metrics',
         operationsRange: '1h',
         providerCatalog: { entries: [] },
         settings: {
@@ -217,9 +224,85 @@ describe('useBrainDerivedState', () => {
       })
     );
 
-    expect(useBrainInsights).toHaveBeenLastCalledWith(false);
+    expect(useBrainInsights).toHaveBeenLastCalledWith(false, true);
     expect(useBrainRuntimeAnalytics).toHaveBeenLastCalledWith(false);
     expect(result.current.runtimeAnalyticsLiveEnabled).toBe(false);
     expect(result.current.effectiveCapabilityAssignments['ai_paths.model'].enabled).toBe(false);
+  });
+
+  it('does not enable metrics pollers on the routing tab', () => {
+    vi.mocked(useBrainModels).mockReturnValue({
+      data: {
+        sources: {
+          liveOllamaModels: [],
+        },
+      },
+    } as ReturnType<typeof useBrainModels>);
+
+    renderHook(() =>
+      useBrainDerivedState({
+        activeTab: 'routing',
+        operationsRange: '1h',
+        providerCatalog: { entries: [] },
+        settings: defaultBrainSettings,
+      })
+    );
+
+    expect(useBrainAnalyticsSummary).toHaveBeenLastCalledWith(false);
+    expect(useBrainLogMetrics).toHaveBeenLastCalledWith(false);
+    expect(useBrainInsights).toHaveBeenLastCalledWith(false, false);
+    expect(useBrainRuntimeAnalytics).toHaveBeenLastCalledWith(false);
+    expect(useBrainOperationsOverview).toHaveBeenLastCalledWith({ range: '1h', enabled: false });
+  });
+
+  it('enables only the operations overview query on the operations tab', () => {
+    vi.mocked(useBrainModels).mockReturnValue({
+      data: {
+        sources: {
+          liveOllamaModels: [],
+        },
+      },
+    } as ReturnType<typeof useBrainModels>);
+
+    const { result } = renderHook(() =>
+      useBrainDerivedState({
+        activeTab: 'operations',
+        operationsRange: '24h',
+        providerCatalog: { entries: [] },
+        settings: defaultBrainSettings,
+      })
+    );
+
+    expect(useBrainOperationsOverview).toHaveBeenLastCalledWith({ range: '24h', enabled: true });
+    expect(useBrainAnalyticsSummary).toHaveBeenLastCalledWith(false);
+    expect(useBrainLogMetrics).toHaveBeenLastCalledWith(false);
+    expect(useBrainInsights).toHaveBeenLastCalledWith(false, false);
+    expect(useBrainRuntimeAnalytics).toHaveBeenLastCalledWith(false);
+    expect(result.current.runtimeAnalyticsLiveEnabled).toBe(false);
+  });
+
+  it('does not enable metrics or operations pollers on the providers tab', () => {
+    vi.mocked(useBrainModels).mockReturnValue({
+      data: {
+        sources: {
+          liveOllamaModels: [],
+        },
+      },
+    } as ReturnType<typeof useBrainModels>);
+
+    renderHook(() =>
+      useBrainDerivedState({
+        activeTab: 'providers',
+        operationsRange: '24h',
+        providerCatalog: { entries: [] },
+        settings: defaultBrainSettings,
+      })
+    );
+
+    expect(useBrainOperationsOverview).toHaveBeenLastCalledWith({ range: '24h', enabled: false });
+    expect(useBrainAnalyticsSummary).toHaveBeenLastCalledWith(false);
+    expect(useBrainLogMetrics).toHaveBeenLastCalledWith(false);
+    expect(useBrainInsights).toHaveBeenLastCalledWith(false, false);
+    expect(useBrainRuntimeAnalytics).toHaveBeenLastCalledWith(false);
   });
 });

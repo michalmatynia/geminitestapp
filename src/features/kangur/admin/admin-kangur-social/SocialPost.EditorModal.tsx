@@ -4,9 +4,9 @@ import React from 'react';
 import { CalendarClock } from 'lucide-react';
 
 import {
-  AppModal,
   Badge,
   Button,
+  FormModal,
   FormSection,
   Input,
   Tabs,
@@ -18,7 +18,6 @@ import type { KangurSocialPost } from '@/shared/contracts/kangur-social-posts';
 
 import {
   formatDatetimeDisplay,
-  statusLabel,
 } from './AdminKangurSocialPage.Constants';
 import { SocialPostEditor } from './SocialPost.Editor';
 import { SocialPostImagesPanel } from './SocialPost.ImagesPanel';
@@ -53,8 +52,11 @@ export function SocialPostEditorModal({
     activePost,
     scheduledAt,
     setScheduledAt,
+    hasUnsavedChanges,
     handleSave,
+    handlePublish,
     patchMutation,
+    publishMutation,
     imageAssets,
     handleRemoveImage,
     setShowMediaLibrary,
@@ -70,31 +72,29 @@ export function SocialPostEditorModal({
     }
   }, [isOpen, activePost?.id]);
 
-  const modalProps = {
-    open: isOpen,
-    onOpenChange: (open: boolean): void => {
-      if (!open) onClose();
-    },
-    onClose,
-    title: resolvePostTitle(activePost),
-    subtitle: resolvePostSubtitle(activePost),
-    size: 'xl' as const,
-    className: 'md:min-w-[63rem] max-w-[66rem]',
-    bodyClassName: 'h-[80vh] overflow-y-auto',
-    headerActions: activePost ? (
-      <>
-        <Badge variant={activePost.status === 'published' ? 'secondary' : 'outline'}>
-          {statusLabel[activePost.status]}
+  const isSavingDraft = patchMutation.isPending && !publishMutation.isPending;
+  const isSubmitting = patchMutation.isPending || publishMutation.isPending;
+  const modalActions = activePost ? (
+    <>
+      {imageAssets.length > 0 ? (
+        <Badge variant='outline'>
+          {imageAssets.length} image
+          {imageAssets.length === 1 ? '' : 's'}
         </Badge>
-        {activePost.imageAssets.length > 0 ? (
-          <Badge variant='outline'>
-            {activePost.imageAssets.length} image
-            {activePost.imageAssets.length === 1 ? '' : 's'}
-          </Badge>
-        ) : null}
-      </>
-    ) : null,
-  };
+      ) : null}
+      <Button
+        type='button'
+        variant='outline'
+        size='sm'
+        onClick={() => {
+          void handlePublish();
+        }}
+        disabled={!activePost || isSubmitting}
+      >
+        {publishMutation.isPending ? 'Publishing...' : 'Publish to LinkedIn'}
+      </Button>
+    </>
+  ) : null;
   const imagePanelProps = {
     imageAssets,
     handleRemoveImage,
@@ -104,7 +104,24 @@ export function SocialPostEditorModal({
   };
 
   return (
-    <AppModal {...modalProps}>
+    <FormModal
+      open={isOpen}
+      onClose={onClose}
+      title={resolvePostTitle(activePost)}
+      subtitle={resolvePostSubtitle(activePost)}
+      onSave={() => {
+        void handleSave('draft');
+      }}
+      isSaving={isSubmitting}
+      disableCloseWhileSaving
+      isSaveDisabled={!activePost || isSubmitting || !hasUnsavedChanges}
+      hasUnsavedChanges={hasUnsavedChanges}
+      saveText={isSavingDraft ? 'Saving...' : 'Save draft'}
+      cancelText='Close'
+      size='xl'
+      className='md:min-w-[63rem] max-w-[66rem]'
+      actions={modalActions}
+    >
       <Tabs
         value={activeTab}
         onValueChange={(value) => setActiveTab(value as 'edit' | 'schedule' | 'images')}
@@ -176,6 +193,6 @@ export function SocialPostEditorModal({
           )}
         </TabsContent>
       </Tabs>
-    </AppModal>
+    </FormModal>
   );
 }

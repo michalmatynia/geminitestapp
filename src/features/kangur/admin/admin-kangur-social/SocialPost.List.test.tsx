@@ -214,6 +214,37 @@ describe('SocialPostList', () => {
     expect(handleOpenPostEditor).toHaveBeenCalledWith('post-1');
   });
 
+  it('selects a post for pipeline without opening the editor modal', () => {
+    const setActivePostId = vi.fn();
+    const handleOpenPostEditor = vi.fn();
+
+    useSocialPostContextMock.mockReturnValue(
+      buildSocialPostContextState({
+        posts: [
+          buildPost(),
+          {
+            ...buildPost(),
+            id: 'post-2',
+            titlePl: 'Second pipeline target',
+            titleEn: 'Second pipeline target',
+          },
+        ],
+        activePostId: 'post-1',
+        setActivePostId,
+        handleOpenPostEditor,
+      })
+    );
+
+    render(<SocialPostList />);
+
+    fireEvent.click(
+      screen.getByRole('button', { name: 'Select Second pipeline target for pipeline' })
+    );
+
+    expect(setActivePostId).toHaveBeenCalledWith('post-2');
+    expect(handleOpenPostEditor).not.toHaveBeenCalled();
+  });
+
   it('keeps delete actions separate from opening the post modal', () => {
     const post = buildPost();
     const setActivePostId = vi.fn();
@@ -239,6 +270,29 @@ describe('SocialPostList', () => {
     expect(setPostToDelete).toHaveBeenCalledWith(post);
     expect(setActivePostId).not.toHaveBeenCalled();
     expect(handleOpenPostEditor).not.toHaveBeenCalled();
+  });
+
+  it('opens the post editor from the three dot menu edit action', () => {
+    const setActivePostId = vi.fn();
+    const handleOpenPostEditor = vi.fn();
+
+    useSocialPostContextMock.mockReturnValue(
+      buildSocialPostContextState({
+        posts: [buildPost()],
+        activePostId: 'post-1',
+        setActivePostId,
+        handleOpenPostEditor,
+      })
+    );
+
+    render(<SocialPostList />);
+
+    expect(screen.getByRole('button', { name: 'Open post actions' })).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Edit post' }));
+
+    expect(setActivePostId).toHaveBeenCalledWith('post-1');
+    expect(handleOpenPostEditor).toHaveBeenCalledWith('post-1');
   });
 
   it('renders the shared posts loader while posts are loading', () => {

@@ -249,6 +249,7 @@ export function SystemLogsContent(): React.JSX.Element {
     browser: connectionsBrowser,
     device: connectionsDevice,
     bot: connectionsBot,
+    enabled: activeTab === 'connections',
   });
 
   const currentFilterValues: SystemLogFilterFormValues = {
@@ -342,6 +343,29 @@ export function SystemLogsContent(): React.JSX.Element {
   const pageAccessEvents = connectionsQuery.data?.events ?? [];
   const pageAccessTotal = connectionsQuery.data?.total ?? 0;
   const pageAccessTotalPages = connectionsQuery.data?.totalPages ?? 1;
+  const handleRefresh = React.useCallback((): void => {
+    if (activeTab === 'overview') {
+      void logsQuery.refetch();
+      return;
+    }
+
+    if (activeTab === 'connections') {
+      void connectionsQuery.refetch();
+      return;
+    }
+
+    if (activeTab === 'metrics') {
+      void metricsQuery.refetch();
+    }
+  }, [activeTab, connectionsQuery, logsQuery, metricsQuery]);
+  const isRefreshingActiveTab =
+    activeTab === 'overview'
+      ? logsQuery.isFetching
+      : activeTab === 'connections'
+        ? connectionsQuery.isFetching
+        : activeTab === 'metrics'
+          ? metricsQuery.isFetching
+          : false;
   const handlePageAccessFilterChange = React.useCallback((key: string, value: string): void => {
     if (key === 'scope') setConnectionsScope(value as AnalyticsScope | 'all');
     if (key === 'range') setConnectionsRange(value as AnalyticsRange);
@@ -441,14 +465,8 @@ export function SystemLogsContent(): React.JSX.Element {
                 </div>
                 <div className='flex flex-wrap items-center gap-2'>
                   <RefreshButton
-                    onRefresh={(): void => {
-                      void logsQuery.refetch();
-                      void metricsQuery.refetch();
-                      void connectionsQuery.refetch();
-                    }}
-                    isRefreshing={
-                      logsQuery.isFetching || metricsQuery.isFetching || connectionsQuery.isFetching
-                    }
+                    onRefresh={handleRefresh}
+                    isRefreshing={isRefreshingActiveTab}
                     className='h-8'
                   />
                   <CopyButton

@@ -17,27 +17,62 @@ vi.mock('@/features/kangur/shared/ui', async () => {
 
   return {
     ...actual,
-    AppModal: ({
+    FormModal: ({
       open,
       title,
       subtitle,
-      headerActions,
+      actions,
+      onSave,
+      isSaveDisabled,
+      hasUnsavedChanges,
+      saveText = 'Save',
+      cancelText = 'Close',
+      onClose,
       children,
     }: {
       open?: boolean;
       title: React.ReactNode;
       subtitle?: React.ReactNode;
-      headerActions?: React.ReactNode;
+      actions?: React.ReactNode;
+      onSave: () => void;
+      isSaveDisabled?: boolean;
+      hasUnsavedChanges?: boolean;
+      saveText?: string;
+      cancelText?: string;
+      onClose: () => void;
       children: React.ReactNode;
     }) =>
       open ? (
         <div role='dialog' aria-label={String(title)}>
           <div>{title}</div>
           {subtitle ? <div>{subtitle}</div> : null}
-          <div>{headerActions}</div>
+          <button
+            type='button'
+            data-variant={hasUnsavedChanges ? 'success' : 'outline'}
+            disabled={Boolean(isSaveDisabled)}
+            onClick={() => onSave()}
+          >
+            {saveText}
+          </button>
+          <div>{actions}</div>
+          <button type='button' onClick={() => onClose()}>
+            {cancelText}
+          </button>
           {children}
         </div>
       ) : null,
+    Button: ({
+      children,
+      variant,
+      ...rest
+    }: React.ButtonHTMLAttributes<HTMLButtonElement> & {
+      children: React.ReactNode;
+      variant?: string;
+    }) => (
+      <button data-variant={variant} {...rest}>
+        {children}
+      </button>
+    ),
     Badge: ({ children }: { children: React.ReactNode }) => <span>{children}</span>,
   };
 });
@@ -92,13 +127,19 @@ const buildPost = () => ({
 });
 
 describe('SocialPostEditorModal', () => {
-  it('uses edit and images tabs inside the modal and switches between them', () => {
+  it('uses product-style header actions, removes the draft pill, and switches between tabs', () => {
+    const handleSave = vi.fn(async () => {});
+    const handlePublish = vi.fn(async () => {});
+
     useSocialPostContextMock.mockReturnValue({
       activePost: buildPost(),
       scheduledAt: '2026-03-21T10:30',
       setScheduledAt: vi.fn(),
-      handleSave: vi.fn(async () => {}),
+      hasUnsavedChanges: true,
+      handleSave,
+      handlePublish,
       patchMutation: { isPending: false },
+      publishMutation: { isPending: false },
       imageAssets: buildPost().imageAssets,
       handleRemoveImage: vi.fn(),
       setShowMediaLibrary: vi.fn(),
@@ -113,7 +154,19 @@ describe('SocialPostEditorModal', () => {
     expect(screen.getByRole('dialog', { name: 'StudiQ Weekly Update' })).toBeInTheDocument();
     expect(screen.getByTestId('social-post-editor')).toBeInTheDocument();
     expect(screen.getByText('1 image')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Save draft' })).toHaveAttribute(
+      'data-variant',
+      'success'
+    );
+    expect(screen.getByRole('button', { name: 'Publish to LinkedIn' })).toBeInTheDocument();
+    expect(screen.queryByText('Draft')).not.toBeInTheDocument();
     expect(screen.getByRole('tab', { name: 'Schedule' })).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Save draft' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Publish to LinkedIn' }));
+
+    expect(handleSave).toHaveBeenCalledWith('draft');
+    expect(handlePublish).toHaveBeenCalledTimes(1);
 
     fireEvent.click(screen.getByRole('tab', { name: 'Schedule' }));
 
@@ -124,5 +177,33 @@ describe('SocialPostEditorModal', () => {
     fireEvent.click(screen.getByRole('tab', { name: 'Images' }));
 
     expect(screen.getByTestId('social-post-images-panel')).toBeInTheDocument();
+  });
+
+  it('keeps the save action muted when there are no unsaved changes', () => {
+    useSocialPostContextMock.mockReturnValue({
+      activePost: buildPost(),
+      scheduledAt: '2026-03-21T10:30',
+      setScheduledAt: vi.fn(),
+      hasUnsavedChanges: false,
+      handleSave: vi.fn(async () => {}),
+      handlePublish: vi.fn(async () => {}),
+      patchMutation: { isPending: false },
+      publishMutation: { isPending: false },
+      imageAssets: buildPost().imageAssets,
+      handleRemoveImage: vi.fn(),
+      setShowMediaLibrary: vi.fn(),
+      showMediaLibrary: false,
+      handleAddImages: vi.fn(),
+    });
+
+    render(
+      <SocialPostEditorModal isOpen={true} onClose={vi.fn()} />
+    );
+
+    expect(screen.getByRole('button', { name: 'Save draft' })).toHaveAttribute(
+      'data-variant',
+      'outline'
+    );
+    expect(screen.getByRole('button', { name: 'Save draft' })).toBeDisabled();
   });
 });

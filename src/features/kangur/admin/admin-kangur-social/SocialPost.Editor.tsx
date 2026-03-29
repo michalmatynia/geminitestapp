@@ -1,6 +1,5 @@
 'use client';
 import {
-  Button,
   FormSection,
   Input,
   Textarea,
@@ -14,15 +13,7 @@ export type SocialPostEditorProps = {
 
 export function SocialPostEditor(props: SocialPostEditorProps): React.JSX.Element {
   const { showImagesPanel = true } = props;
-  const {
-    activePost,
-    editorState,
-    setEditorState,
-    handleSave,
-    handlePublish,
-    saveMutation,
-    publishMutation,
-  } = useSocialPostContext();
+  const { editorState, setEditorState } = useSocialPostContext();
 
   return (
     <div className='space-y-4'>
@@ -65,30 +56,6 @@ export function SocialPostEditor(props: SocialPostEditorProps): React.JSX.Elemen
       </FormSection>
 
       <SocialPostVisuals showImagesPanel={showImagesPanel} />
-
-      <div className='flex flex-wrap items-center gap-2'>
-        <Button
-          type='button'
-          size='sm'
-          onClick={() => {
-            void handleSave('draft');
-          }}
-          disabled={!activePost || saveMutation.isPending}
-        >
-          {saveMutation.isPending ? 'Saving...' : 'Save draft'}
-        </Button>
-        <Button
-          type='button'
-          variant='outline'
-          size='sm'
-          onClick={() => {
-            void handlePublish();
-          }}
-          disabled={!activePost || publishMutation.isPending}
-        >
-          {publishMutation.isPending ? 'Publishing...' : 'Publish to LinkedIn'}
-        </Button>
-      </div>
     </div>
   );
 }

@@ -64,6 +64,21 @@ function formatRecentSessionDuration(value: number | null | undefined): string |
   return seconds === 0 ? `${minutes} min` : `${minutes} min ${seconds}s`;
 }
 
+function formatAverageXpPerSession(
+  subjectScores: ReadonlyArray<{ xp_earned?: number | null | undefined }>
+): number {
+  if (subjectScores.length === 0) {
+    return 0;
+  }
+
+  const totalXp = subjectScores.reduce(
+    (sum, score) => sum + (typeof score.xp_earned === 'number' ? score.xp_earned : 0),
+    0
+  );
+
+  return Math.round(totalXp / subjectScores.length);
+}
+
 export function ScoreHistory(props: ScoreHistoryProps): React.JSX.Element {
   const state = useScoreHistoryState(props);
   const {
@@ -83,18 +98,21 @@ export function ScoreHistory(props: ScoreHistoryProps): React.JSX.Element {
 
   if (loading) {
     return (
-      <KangurGlassPanel className='flex flex-col items-center justify-center p-12 text-center' surface='neutral' variant='soft'>
-        <div className='text-lg font-black tracking-tight text-slate-900'>
-          {translateScoreHistoryWithFallback(translations, 'loading.title', fallbackCopy.loadingTitle)}
-        </div>
-        <div className='mt-2 max-w-sm text-xs font-semibold text-slate-500'>
-          {translateScoreHistoryWithFallback(
-            translations,
-            'loading.description',
-            fallbackCopy.loadingDescription
-          )}
-        </div>
-      </KangurGlassPanel>
+      <KangurEmptyState
+        accent='slate'
+        data-testid='score-history-loading'
+        description={translateScoreHistoryWithFallback(
+          translations,
+          'loading.description',
+          fallbackCopy.loadingDescription
+        )}
+        padding='lg'
+        title={translateScoreHistoryWithFallback(
+          translations,
+          'loading.title',
+          fallbackCopy.loadingTitle
+        )}
+      />
     );
   }
 
@@ -130,25 +148,56 @@ export function ScoreHistory(props: ScoreHistoryProps): React.JSX.Element {
         <div className='grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4'>
           <KangurMetricCard
             accent='slate'
+            data-testid='score-history-total-games'
             label={translateScoreHistoryWithFallback(translations, 'summary.totalGames', fallbackCopy.summary.totalGames)}
             value={insights.summary.totalGames}
           />
           <KangurMetricCard
             accent='indigo'
+            data-testid='score-history-average-accuracy'
             label={translateScoreHistoryWithFallback(translations, 'summary.averageAccuracy', fallbackCopy.summary.averageAccuracy)}
             value={`${insights.summary.averageAccuracy}%`}
           />
           <KangurMetricCard
             accent='emerald'
+            data-testid='score-history-perfect-games'
             label={translateScoreHistoryWithFallback(translations, 'summary.perfectGames', fallbackCopy.summary.perfectGames)}
             value={insights.summary.perfectGames}
           />
           <KangurMetricCard
             accent={insights.trend.direction === 'up' ? 'emerald' : insights.trend.direction === 'down' ? 'rose' : 'slate'}
+            data-testid='score-history-weekly-trend'
             label={translateScoreHistoryWithFallback(translations, 'trend.label', fallbackCopy.trend.label)}
             value={formatTrendValue(insights.trend.deltaAccuracy, translations, fallbackCopy)}
             description={formatTrendContext(insights.trend, translations, fallbackCopy)}
           />
+        </div>
+        <div className='grid grid-cols-1 gap-2 text-xs font-bold text-slate-500 sm:grid-cols-2'>
+          <p>
+            {translateScoreHistoryWithFallback(
+              translations,
+              'window.weeklySummary',
+              fallbackCopy.window.weeklySummary,
+              {
+                accuracy: insights.summary.averageAccuracy,
+                perfect: insights.summary.perfectGames,
+              }
+            )}
+          </p>
+          <p>
+            {translateScoreHistoryWithFallback(
+              translations,
+              'window.weeklyXp',
+              fallbackCopy.window.weeklyXp,
+              {
+                xp: subjectScores.reduce(
+                  (sum, score) => sum + (typeof score.xp_earned === 'number' ? score.xp_earned : 0),
+                  0
+                ),
+                average: formatAverageXpPerSession(subjectScores),
+              }
+            )}
+          </p>
         </div>
       </div>
 
@@ -163,13 +212,13 @@ export function ScoreHistory(props: ScoreHistoryProps): React.JSX.Element {
                 <div className='flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-50 text-2xl'>{insights.strongest.emoji}</div>
                 <div className='flex-1 space-y-1'>
                   <div className='text-sm font-black text-slate-900'>{insights.strongest.label}</div>
-                  <div className='text-[11px] font-bold text-slate-500'>
+                  <p className='text-[11px] font-bold text-slate-500'>
                     {translateScoreHistoryWithFallback(translations, 'shared.operationSummary', fallbackCopy.shared.operationSummary, {
                       accuracy: insights.strongest.averageAccuracy,
                       attempts: insights.strongest.attempts,
                       xp: insights.strongest.averageXpPerSession,
                     })}
-                  </div>
+                  </p>
                 </div>
               </div>
             ) : (
@@ -189,13 +238,13 @@ export function ScoreHistory(props: ScoreHistoryProps): React.JSX.Element {
                   <div className='flex h-12 w-12 items-center justify-center rounded-2xl bg-rose-50 text-2xl'>{insights.weakest.emoji}</div>
                   <div className='space-y-1'>
                     <div className='text-sm font-black text-slate-900'>{insights.weakest.label}</div>
-                    <div className='text-[11px] font-bold text-slate-500'>
+                    <p className='text-[11px] font-bold text-slate-500'>
                       {translateScoreHistoryWithFallback(translations, 'shared.operationSummary', fallbackCopy.shared.operationSummary, {
                         accuracy: insights.weakest.averageAccuracy,
                         attempts: insights.weakest.attempts,
                         xp: insights.weakest.averageXpPerSession,
                       })}
-                    </div>
+                    </p>
                   </div>
                 </div>
                 <Link
@@ -241,7 +290,12 @@ export function ScoreHistory(props: ScoreHistoryProps): React.JSX.Element {
                     {op.averageAccuracy}%
                   </span>
                 </div>
-                <KangurProgressBar accent={resolveAccuracyAccent(op.averageAccuracy)} size='sm' value={op.averageAccuracy} />
+                <KangurProgressBar
+                  accent={resolveAccuracyAccent(op.averageAccuracy)}
+                  data-testid={`score-history-operation-progress-${op.operation}`}
+                  size='sm'
+                  value={op.averageAccuracy}
+                />
               </div>
             </KangurGlassPanel>
           ))}
@@ -269,17 +323,21 @@ export function ScoreHistory(props: ScoreHistoryProps): React.JSX.Element {
               <KangurSessionHistoryRow
                 key={score.id}
                 accent={resolveOperationAccent(score.operation)}
-                dataTestId={`score-history-session-${score.id}`}
+                dataTestId={`score-history-recent-row-${score.id}`}
+                durationClassName='text-slate-400'
                 durationText={formatRecentSessionDuration(score.time_taken)}
                 icon={operationInfo.emoji}
                 scoreAccent={resolveAccuracyAccent(accuracyPercent)}
+                scoreTestId={`score-history-recent-score-${score.id}`}
                 scoreText={`${score.score}/${totalQuestions}`}
                 subtitle={formatRecentSessionDate(
                   score.created_date,
                   normalizedLocale,
                   fallbackCopy.relative.noActivity
                 )}
+                titleClassName='text-slate-700'
                 title={operationInfo.label}
+                xpTestId={`score-history-recent-xp-${score.id}`}
                 xpText={score.xp_earned !== null ? `+${score.xp_earned} XP` : undefined}
               />
             );

@@ -96,6 +96,7 @@ export function useBrainRuntime(): BrainRuntimeResult {
     runtimeAnalyticsLiveEnabled,
     runtimeAnalyticsQuery,
   } = useBrainDerivedState({
+    activeTab,
     operationsRange,
     providerCatalog,
     settings,

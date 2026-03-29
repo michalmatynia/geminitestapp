@@ -36,8 +36,10 @@ import {
   type AiBrainProviderCatalog,
   type AiBrainSettings,
 } from '../settings';
+import type { BrainTab } from './BrainContext.types';
 
 interface BrainDerivedStateParams {
+  activeTab: BrainTab;
   operationsRange: BrainOperationsRange;
   providerCatalog: AiBrainProviderCatalog;
   settings: AiBrainSettings;
@@ -65,6 +67,7 @@ export type {
 };
 
 export function useBrainDerivedState({
+  activeTab,
   operationsRange,
   providerCatalog,
   settings,
@@ -91,8 +94,14 @@ export function useBrainDerivedState({
     [settings]
   );
 
+  const metricsTabActive = activeTab === 'metrics';
+  const operationsTabActive = activeTab === 'operations';
+
   const ollamaModelsQuery = useBrainModels();
-  const operationsOverviewQuery = useBrainOperationsOverview({ range: operationsRange });
+  const operationsOverviewQuery = useBrainOperationsOverview({
+    range: operationsRange,
+    enabled: operationsTabActive,
+  });
 
   const runtimeAnalyticsCapability = useMemo(
     (): AiBrainAssignment =>
@@ -164,16 +173,18 @@ export function useBrainDerivedState({
     return options;
   }, [providerCatalog]);
 
-  const analyticsSummaryQuery: SingleQuery<AnalyticsSummary> = useBrainAnalyticsSummary();
-  const logMetricsQuery: SingleQuery<SystemLogMetrics> = useBrainLogMetrics();
+  const analyticsSummaryQuery: SingleQuery<AnalyticsSummary> =
+    useBrainAnalyticsSummary(metricsTabActive);
+  const logMetricsQuery: SingleQuery<SystemLogMetrics> = useBrainLogMetrics(metricsTabActive);
   const runtimeAnalyticsLiveEnabled =
+    metricsTabActive &&
     aiPathsFeatureAssignment.enabled &&
     runtimeAnalyticsFeatureAssignment.enabled &&
     runtimeAnalyticsCapability.enabled &&
     aiPathsModelCapability.enabled;
 
   const insightsQuery: SingleQuery<InsightsSnapshot> =
-    useBrainInsights(runtimeAnalyticsLiveEnabled);
+    useBrainInsights(runtimeAnalyticsLiveEnabled, metricsTabActive);
 
   const runtimeAnalyticsQuery: SingleQuery<AiPathRuntimeAnalyticsSummary> =
     useBrainRuntimeAnalytics(runtimeAnalyticsLiveEnabled);

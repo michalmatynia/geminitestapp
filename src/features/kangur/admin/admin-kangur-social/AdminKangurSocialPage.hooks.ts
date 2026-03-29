@@ -314,6 +314,7 @@ export function useAdminKangurSocialPage() {
     setAddonForm: editor.setAddonForm,
     showMediaLibrary: editor.showMediaLibrary,
     setShowMediaLibrary: editor.setShowMediaLibrary,
+    hasUnsavedChanges: editor.hasUnsavedChanges,
     resolveDocReferences: editor.resolveDocReferences,
     handleAddImages: editor.handleAddImages,
     handleRemoveImage: editor.handleRemoveImage,

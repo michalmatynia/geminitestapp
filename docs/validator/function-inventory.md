@@ -1,6 +1,6 @@
 ---
 owner: 'Products / Platform Team'
-last_reviewed: '2026-03-28'
+last_reviewed: '2026-03-30'
 status: 'generated'
 doc_type: 'generated'
 scope: 'feature:validator'
@@ -57,11 +57,11 @@ canonical: true
 | `src/features/products/components/settings/validator-settings/controller-form-utils.ts:20` | `buildFormDataFromPattern` | controller.buildFormDataFromPattern | yes | yes |
 | `src/features/products/components/settings/validator-settings/controller-sequence-actions.ts:25` | `createSequenceActions` | controller.createSequenceActions | yes | yes |
 | `src/features/products/components/settings/validator-settings/useValidatorSettingsController.ts:65` | `useValidatorSettingsController` | controller.useValidatorSettingsController | yes | yes |
-| `src/features/products/components/settings/ValidatorSettings.tsx:16` | `ValidatorSettings` | ui.ValidatorSettings | yes | yes |
-| `src/features/products/components/settings/validator-settings/ValidatorSettingsContext.tsx:13` | `ValidatorSettingsProvider` | ui.ValidatorSettingsProvider | yes | yes |
-| `src/features/products/components/settings/validator-settings/ValidatorSettingsContext.tsx:28` | `useValidatorSettingsContext` | ui.useValidatorSettingsContext | yes | yes |
-| `src/features/products/components/settings/validator-settings/ValidatorDefaultPanel.tsx:16` | `ValidatorDefaultPanel` | ui.ValidatorDefaultPanel | yes | yes |
-| `src/features/products/components/settings/validator-settings/ValidatorInstanceBehaviorPanel.tsx:19` | `ValidatorInstanceBehaviorPanel` | ui.ValidatorInstanceBehaviorPanel | yes | yes |
-| `src/features/products/components/settings/validator-settings/ValidatorPatternTablePanel.tsx:18` | `ValidatorPatternTablePanel` | ui.ValidatorPatternTablePanel | yes | yes |
-| `src/features/products/components/settings/validator-settings/ValidatorPatternModal.tsx:78` | `ValidatorPatternModal` | ui.ValidatorPatternModal | yes | yes |
-| `src/features/admin/pages/AdminValidatorPatternListsPage.tsx:180` | `AdminValidatorPatternListsPage` | ui.AdminValidatorPatternListsPage | yes | yes |
+| `src/features/products/components/settings/ValidatorSettings.tsx:16` | `ValidatorSettings` | ui.ValidatorSettings | yes | no |
+| `src/features/products/components/settings/validator-settings/ValidatorSettingsContext.tsx:13` | `ValidatorSettingsProvider` | ui.ValidatorSettingsProvider | yes | no |
+| `src/features/products/components/settings/validator-settings/ValidatorSettingsContext.tsx:28` | `useValidatorSettingsContext` | ui.useValidatorSettingsContext | yes | no |
+| `src/features/products/components/settings/validator-settings/ValidatorDefaultPanel.tsx:16` | `ValidatorDefaultPanel` | ui.ValidatorDefaultPanel | yes | no |
+| `src/features/products/components/settings/validator-settings/ValidatorInstanceBehaviorPanel.tsx:19` | `ValidatorInstanceBehaviorPanel` | ui.ValidatorInstanceBehaviorPanel | yes | no |
+| `src/features/products/components/settings/validator-settings/ValidatorPatternTablePanel.tsx:18` | `ValidatorPatternTablePanel` | ui.ValidatorPatternTablePanel | yes | no |
+| `src/features/products/components/settings/validator-settings/ValidatorPatternModal.tsx:78` | `ValidatorPatternModal` | ui.ValidatorPatternModal | yes | no |
+| `src/features/admin/pages/AdminValidatorPatternListsPage.tsx:180` | `AdminValidatorPatternListsPage` | ui.AdminValidatorPatternListsPage | yes | no |

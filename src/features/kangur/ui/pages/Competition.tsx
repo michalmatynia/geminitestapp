@@ -9,7 +9,7 @@ import { useKangurDocsTooltips } from '@/features/kangur/docs/tooltips';
 const KangurGameKangurSessionWidget = dynamic(() => import('@/features/kangur/ui/components/KangurGameKangurSessionWidget').then(m => ({ default: m.KangurGameKangurSessionWidget })), { ssr: false });
 const KangurGameKangurSetupWidget = dynamic(() => import('@/features/kangur/ui/components/KangurGameKangurSetupWidget').then(m => ({ default: m.KangurGameKangurSetupWidget })), { ssr: false });
 import { KangurStandardPageLayout } from '@/features/kangur/ui/components/KangurStandardPageLayout';
-import { KangurTopNavigationController } from '@/features/kangur/ui/components/KangurTopNavigationController';
+import { KangurTopNavigationController } from '@/features/kangur/ui/components/primary-navigation/KangurTopNavigationController';
 import { KangurAiTutorSessionSync } from '@/features/kangur/ui/context/KangurAiTutorContext';
 import {
   KangurGameRuntimeBoundary,

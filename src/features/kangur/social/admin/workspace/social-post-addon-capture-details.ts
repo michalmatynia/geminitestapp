@@ -39,6 +39,29 @@ export const getSocialPostAddonCaptureDetailLabels = (
   if (appearanceMode) {
     labels.push(`Appearance: ${appearanceMode}`);
   }
+  const addonAny = addon as any;
+  if (addonAny.playwrightCaptureMode) {
+    const mode = addonAny.playwrightCaptureMode;
+    labels.push(`Capture: ${mode === 'full-page' ? 'Full page' : mode === 'viewport' ? 'Viewport' : mode}`);
+  }
+  if (addonAny.playwrightReadinessMode) {
+    const ready = addonAny.playwrightReadinessMode;
+    labels.push(`Ready: ${ready === 'networkidle' ? 'Network idle' : ready === 'load' ? 'Load' : ready}`);
+  }
+  if (addonAny.playwrightViewportPreset) {
+    const vp = addonAny.playwrightViewportPreset;
+    labels.push(`Viewport: ${vp.charAt(0).toUpperCase() + vp.slice(1)}`);
+  }
+  if (addonAny.playwrightAttemptCount !== undefined) {
+    labels.push(`Attempts: ${addonAny.playwrightAttemptCount}`);
+  }
+  if (addonAny.playwrightCaptureDurationMs !== undefined) {
+    labels.push(`Duration: ${addonAny.playwrightCaptureDurationMs / 1000}s`);
+  }
+  if (addonAny.playwrightCaptureStage) {
+    const stage = addonAny.playwrightCaptureStage;
+    labels.push(`Stage: ${stage.charAt(0).toUpperCase() + stage.slice(1)}`);
+  }
 
   return labels;
 };

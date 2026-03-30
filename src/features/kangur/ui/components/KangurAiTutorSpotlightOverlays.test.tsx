@@ -5,7 +5,7 @@ import { KangurAiTutorSpotlightOverlays } from './KangurAiTutorSpotlightOverlays
 import {
   KangurAiTutorWidgetStateProvider,
   useKangurAiTutorWidgetState,
-} from './KangurAiTutorWidget.state';
+} from './ai-tutor-widget/KangurAiTutorWidget.state';
 
 function SpotlightOverlaysHarness(): ReactNode {
   const widgetState = useKangurAiTutorWidgetState();

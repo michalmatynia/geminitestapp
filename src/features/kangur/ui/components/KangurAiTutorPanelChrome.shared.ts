@@ -18,7 +18,7 @@ import type {
   TutorMotionProfile,
   TutorPanelChromeVariant,
   TutorPanelSnapState,
-} from './KangurAiTutorWidget.shared';
+} from './ai-tutor-widget/KangurAiTutorWidget.shared';
 import type { KangurAiTutorPanelBodyContextValue } from './KangurAiTutorPanelBody.context';
 
 const CONTEXTUAL_PANEL_ENTRY_OFFSET_PX = 84;

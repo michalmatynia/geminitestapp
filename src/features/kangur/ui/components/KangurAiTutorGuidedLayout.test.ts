@@ -6,7 +6,7 @@ import {
   getGuidedCalloutClusterLayout,
   getGuidedCalloutLayout,
 } from './KangurAiTutorGuidedLayout';
-import { AVATAR_SIZE, GUIDED_AVATAR_SURFACE_GAP } from './KangurAiTutorWidget.shared';
+import { AVATAR_SIZE, GUIDED_AVATAR_SURFACE_GAP } from './ai-tutor-widget/KangurAiTutorWidget.shared';
 
 const getRectOverlapArea = (left: DOMRect, right: DOMRect): number => {
   const overlapLeft = Math.max(left.left, right.left);

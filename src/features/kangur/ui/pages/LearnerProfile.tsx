@@ -16,8 +16,8 @@ import { KangurLearnerProfileQuestSummaryWidget } from '@/features/kangur/ui/com
 import { KangurLearnerProfileRecommendationsWidget } from '@/features/kangur/ui/components/learner-profile/KangurLearnerProfileRecommendationsWidget';
 import { KangurLearnerProfileResultsWidget } from '@/features/kangur/ui/components/learner-profile/KangurLearnerProfileResultsWidget';
 import { KangurLearnerProfileSessionsWidget } from '@/features/kangur/ui/components/learner-profile/KangurLearnerProfileSessionsWidget';
-import { KangurTopNavigationController } from '@/features/kangur/ui/components/KangurTopNavigationController';
-import type { KangurPrimaryNavigationProps } from '@/features/kangur/ui/components/KangurPrimaryNavigation.types';
+import { KangurTopNavigationController } from "@/features/kangur/ui/components/primary-navigation/KangurTopNavigationController";
+import type { KangurPrimaryNavigationProps } from '@/features/kangur/ui/components/primary-navigation/KangurPrimaryNavigation.types';
 import { useKangurAiTutorSessionSync } from '@/features/kangur/ui/context/KangurAiTutorContext';
 import { useKangurAuth } from '@/features/kangur/ui/context/KangurAuthContext';
 import { useKangurLoginModal } from '@/features/kangur/ui/context/KangurLoginModalContext';

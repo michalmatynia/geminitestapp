@@ -1,14 +1,14 @@
 {
-  "generatedAt": "2026-03-30T19:48:53.348Z",
+  "generatedAt": "2026-03-30T21:12:58.228Z",
   "source": {
-    "totalFiles": 9128,
-    "totalLines": 1550768,
-    "useClientFiles": 1945,
-    "filesOver800": 109,
-    "filesOver1000": 11,
+    "totalFiles": 9034,
+    "totalLines": 1517047,
+    "useClientFiles": 1893,
+    "filesOver800": 101,
+    "filesOver1000": 8,
     "filesOver1500": 0,
     "largestFile": {
-      "path": "src/features/kangur/ui/components/KangurParentDashboardAiTutorWidget.tsx",
+      "path": "src/features/kangur/ui/components/parent-dashboard/KangurParentDashboardAiTutorWidget.tsx",
       "lines": 1278
     }
   },
@@ -118,7 +118,7 @@
     "topCrossFeatureEdges": [
       {
         "edge": "kangur -> cms",
-        "references": 16
+        "references": 12
       },
       {
         "edge": "filemaker -> document-editor",
@@ -132,8 +132,8 @@
     "featureSizeByLines": [
       {
         "feature": "kangur",
-        "files": 2549,
-        "lines": 573570
+        "files": 2455,
+        "lines": 539849
       },
       {
         "feature": "ai",
@@ -462,20 +462,12 @@
         "lines": 1441
       },
       {
-        "path": "src/features/kangur/ui/components/KangurParentDashboardAiTutorWidget.tsx",
-        "lines": 1278
-      },
-      {
         "path": "src/features/kangur/ui/components/parent-dashboard/KangurParentDashboardAiTutorWidget.tsx",
         "lines": 1278
       },
       {
         "path": "src/features/kangur/ui/components/AddingSynthesisGame.tsx",
         "lines": 1235
-      },
-      {
-        "path": "src/features/kangur/ui/components/KangurParentDashboardProgressWidget.tsx",
-        "lines": 1228
       },
       {
         "path": "src/features/kangur/ui/components/parent-dashboard/KangurParentDashboardProgressWidget.tsx",
@@ -508,10 +500,6 @@
       {
         "path": "src/features/kangur/social/admin/workspace/SocialPost.PlaywrightCaptureModal.test.tsx",
         "lines": 1099
-      },
-      {
-        "path": "src/features/kangur/ui/components/KangurGameOperationSelectorWidget.tsx",
-        "lines": 1035
       },
       {
         "path": "src/features/kangur/ui/components/game-setup/KangurGameOperationSelectorWidget.tsx",
@@ -572,6 +560,18 @@
       {
         "path": "src/features/kangur/social/admin/workspace/hooks/useSocialPipelineRunner.test.tsx",
         "lines": 970
+      },
+      {
+        "path": "src/features/kangur/ui/components/GeometrySymmetryGame.tsx",
+        "lines": 970
+      },
+      {
+        "path": "src/features/kangur/ui/components/KangurAssignmentManager.hooks.ts",
+        "lines": 969
+      },
+      {
+        "path": "src/features/kangur/ui/components/assignment-manager/KangurAssignmentManager.hooks.ts",
+        "lines": 969
       }
     ],
     "topPagesByLines": [
@@ -658,8 +658,8 @@
     ]
   },
   "propDrilling": {
-    "candidateChains": 783,
-    "depthGte4Chains": 207,
+    "candidateChains": 555,
+    "depthGte4Chains": 138,
     "forwardingComponents": 120
   }
 }

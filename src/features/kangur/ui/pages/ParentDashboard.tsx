@@ -4,16 +4,16 @@ import { useTranslations } from 'next-intl';
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 
 import { useKangurDocsTooltips } from '@/features/kangur/docs/tooltips';
-import { KangurParentDashboardAiTutorWidget } from '@/features/kangur/ui/components/KangurParentDashboardAiTutorWidget';
-import { KangurParentDashboardAssignmentsWidget } from '@/features/kangur/ui/components/KangurParentDashboardAssignmentsWidget';
-import { KangurParentDashboardAssignmentsMonitoringWidget } from '@/features/kangur/ui/components/KangurParentDashboardAssignmentsMonitoringWidget';
-import { KangurParentDashboardHeroWidget } from '@/features/kangur/ui/components/KangurParentDashboardHeroWidget';
-import { KangurParentDashboardProgressWidget } from '@/features/kangur/ui/components/KangurParentDashboardProgressWidget';
+import { KangurParentDashboardAiTutorWidget } from '@/features/kangur/ui/components/parent-dashboard/KangurParentDashboardAiTutorWidget';
+import { KangurParentDashboardAssignmentsWidget } from '@/features/kangur/ui/components/parent-dashboard/KangurParentDashboardAssignmentsWidget';
+import { KangurParentDashboardAssignmentsMonitoringWidget } from '@/features/kangur/ui/components/parent-dashboard/KangurParentDashboardAssignmentsMonitoringWidget';
+import { KangurParentDashboardHeroWidget } from '@/features/kangur/ui/components/parent-dashboard/KangurParentDashboardHeroWidget';
+import { KangurParentDashboardProgressWidget } from '@/features/kangur/ui/components/parent-dashboard/KangurParentDashboardProgressWidget';
 import {
   KangurParentDashboardTabsWidget,
   getParentDashboardTabIds,
-} from '@/features/kangur/ui/components/KangurParentDashboardTabsWidget';
-import { KangurTopNavigationController } from '@/features/kangur/ui/components/KangurTopNavigationController';
+} from '@/features/kangur/ui/components/parent-dashboard/KangurParentDashboardTabsWidget';
+import { KangurTopNavigationController } from "@/features/kangur/ui/components/primary-navigation/KangurTopNavigationController";
 import { useKangurAiTutorSessionSync } from '@/features/kangur/ui/context/KangurAiTutorContext';
 import { useKangurAuth } from '@/features/kangur/ui/context/KangurAuthContext';
 import { useKangurGuestPlayer } from '@/features/kangur/ui/context/KangurGuestPlayerContext';

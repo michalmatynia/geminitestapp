@@ -4,14 +4,14 @@ import { useKangurAiTutor } from '@/features/kangur/ui/context/KangurAiTutorCont
 import { cn } from '@/features/kangur/shared/utils';
 
 import { KangurAiTutorMoodAvatar } from './KangurAiTutorMoodAvatar';
-import { useKangurAiTutorWidgetStateContext } from './KangurAiTutorWidget.state';
+import { useKangurAiTutorWidgetStateContext } from './ai-tutor-widget/KangurAiTutorWidget.state';
 
 import type {
   TutorGuidedArrowhead,
   TutorMotionPosition,
   TutorMotionProfile,
   TutorReducedMotionAvatarTransitions,
-} from './KangurAiTutorWidget.shared';
+} from './ai-tutor-widget/KangurAiTutorWidget.shared';
 import type { CSSProperties, JSX, MouseEvent, PointerEvent } from 'react';
 
 const KANGUR_AI_TUTOR_PANEL_SURFACE_ID = 'kangur-ai-tutor-panel-surface';

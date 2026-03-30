@@ -1,7 +1,7 @@
 import {
   renderKangurTextWordmark,
-} from '@/features/kangur/ui/components/KangurTextWordmark';
-import type { KangurLocalizedWordmarkProps } from '@/features/kangur/ui/components/kangur-wordmark';
+} from '@/features/kangur/ui/components/wordmarks/KangurTextWordmark';
+import type { KangurLocalizedWordmarkProps } from '@/features/kangur/ui/components/wordmarks/kangur-wordmark';
 import { normalizeSiteLocale } from '@/shared/lib/i18n/site-locale';
 
 type KangurWordmarkLocaleLabels = {

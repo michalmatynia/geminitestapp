@@ -81,7 +81,7 @@ const KangurGameKangurSetupWidget = dynamic(
 
 const KangurGameOperationSelectorWidget = dynamic(
   () =>
-    import('@/features/kangur/ui/components/KangurGameOperationSelectorWidget').then((m) => ({
+    import('@/features/kangur/ui/components/game-setup/KangurGameOperationSelectorWidget').then((m) => ({
       default: m.KangurGameOperationSelectorWidget,
     })),
   { ssr: false }

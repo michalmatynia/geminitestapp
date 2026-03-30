@@ -21,7 +21,7 @@ import { KangurAiTutorComposer } from './KangurAiTutorComposer';
 import {
   KangurAiTutorWidgetStateProvider,
   useKangurAiTutorWidgetState,
-} from './KangurAiTutorWidget.state';
+} from './ai-tutor-widget/KangurAiTutorWidget.state';
 
 vi.mock('@/features/kangur/ui/context/KangurAiTutorContentContext', () => ({
   useKangurAiTutorContent: () => DEFAULT_KANGUR_AI_TUTOR_CONTENT,

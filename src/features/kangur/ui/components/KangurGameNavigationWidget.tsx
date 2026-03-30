@@ -2,7 +2,7 @@
 
 import { useMemo } from 'react';
 
-import { KangurTopNavigationController } from '@/features/kangur/ui/components/KangurTopNavigationController';
+import { KangurTopNavigationController } from "@/features/kangur/ui/components/primary-navigation/KangurTopNavigationController";
 import { useKangurLoginModal } from '@/features/kangur/ui/context/KangurLoginModalContext';
 import { useKangurGameRuntime } from '@/features/kangur/ui/context/KangurGameRuntimeContext';
 import { useKangurGuestPlayer } from '@/features/kangur/ui/context/KangurGuestPlayerContext';

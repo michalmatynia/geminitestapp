@@ -58,7 +58,7 @@ vi.mock('@/features/kangur/ui/services/game-setup-recommendations', () => ({
   getRecommendedTrainingSetup: getRecommendedTrainingSetupMock,
 }));
 
-vi.mock('@/features/kangur/ui/components/KangurGameSetupShell', () => ({
+vi.mock('@/features/kangur/ui/components/game-setup/KangurGameSetupShell', () => ({
   renderKangurGameSetupShell: ({
     children,
     description,

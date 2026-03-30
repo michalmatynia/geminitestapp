@@ -8,7 +8,7 @@ import {
   ATTACHED_AVATAR_OVERLAP,
   AVATAR_SIZE,
   GUIDED_AVATAR_SURFACE_GAP,
-} from './KangurAiTutorWidget.shared';
+} from './ai-tutor-widget/KangurAiTutorWidget.shared';
 
 describe('KangurAiTutorAvatarAttachment', () => {
   it('keeps the docked avatar overlap and inset for every attachment side', () => {

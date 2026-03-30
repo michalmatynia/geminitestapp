@@ -25,8 +25,8 @@ import type {
   TutorReducedMotionAvatarTransitions,
   TutorReducedMotionPanelTransitions,
   TutorReducedMotionStableTransitions,
-} from './KangurAiTutorWidget.shared';
-import type { TutorGuidedMode } from './KangurAiTutorWidget.types';
+} from './ai-tutor-widget/KangurAiTutorWidget.shared';
+import type { TutorGuidedMode } from './ai-tutor-widget/KangurAiTutorWidget.types';
 import type { Transition } from 'framer-motion';
 
 type MergePortalSections<

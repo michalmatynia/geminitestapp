@@ -14,8 +14,8 @@ import {
   getAssistantMessageFeedbackKey,
   toFollowUpHref,
   toWebsiteHelpTargetHref,
-} from './KangurAiTutorWidget.helpers';
-import { useKangurAiTutorWidgetStateContext } from './KangurAiTutorWidget.state';
+} from './ai-tutor-widget/KangurAiTutorWidget.helpers';
+import { useKangurAiTutorWidgetStateContext } from './ai-tutor-widget/KangurAiTutorWidget.state';
 
 import { type JSX, useMemo } from 'react';
 

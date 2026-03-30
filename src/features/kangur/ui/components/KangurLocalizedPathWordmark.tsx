@@ -1,10 +1,10 @@
 import type { ReactNode } from 'react';
 
-import { KangurWordmarkBase } from '@/features/kangur/ui/components/KangurWordmarkBase';
+import { KangurWordmarkBase } from '@/features/kangur/ui/components/wordmarks/KangurWordmarkBase';
 import {
   KANGUR_WORDMARK_DEFAULT_TEXT_PROPS,
   type KangurLocalizedWordmarkProps,
-} from '@/features/kangur/ui/components/kangur-wordmark';
+} from '@/features/kangur/ui/components/wordmarks/kangur-wordmark';
 import { normalizeSiteLocale } from '@/shared/lib/i18n/site-locale';
 
 type KangurLocalizedPathWordmarkProps = KangurLocalizedWordmarkProps & {

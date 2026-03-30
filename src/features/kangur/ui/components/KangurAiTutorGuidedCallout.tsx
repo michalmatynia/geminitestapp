@@ -24,13 +24,13 @@ import {
   KangurAiTutorWarmOverlayPanel,
 } from './KangurAiTutorChrome';
 import { useKangurAiTutorPanelBodyContext } from './KangurAiTutorPanelBody.context';
-import { useKangurAiTutorWidgetStateContext } from './KangurAiTutorWidget.state';
+import { useKangurAiTutorWidgetStateContext } from './ai-tutor-widget/KangurAiTutorWidget.state';
 
 import type {
   TutorHorizontalSide,
   TutorReducedMotionStableTransitions,
-} from './KangurAiTutorWidget.shared';
-import type { GuidedTutorTarget } from './KangurAiTutorWidget.types';
+} from './ai-tutor-widget/KangurAiTutorWidget.shared';
+import type { GuidedTutorTarget } from './ai-tutor-widget/KangurAiTutorWidget.types';
 import type { KangurAiTutorRuntimeMessage } from '@/features/kangur/shared/contracts/kangur-ai-tutor';
 import type { CSSProperties, JSX } from 'react';
 

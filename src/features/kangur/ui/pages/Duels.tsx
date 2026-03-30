@@ -15,7 +15,7 @@ import { useKangurRoutePageReady } from '@/features/kangur/ui/hooks/useKangurRou
 import { KangurStandardPageLayout } from '@/features/kangur/ui/components/KangurStandardPageLayout';
 import { cn } from '@/features/kangur/shared/utils';
 import { KANGUR_PANEL_GAP_CLASSNAME } from '@/features/kangur/ui/design/tokens';
-import { KangurTopNavigationController } from '@/features/kangur/ui/components/KangurTopNavigationController';
+import { KangurTopNavigationController } from '@/features/kangur/ui/components/primary-navigation/KangurTopNavigationController';
 import { LOBBY_FRESH_WINDOW_MS, LOBBY_POLL_INTERVAL_MS } from './duels/constants';
 
 type LobbySort = 'recent' | 'time_fast' | 'time_slow' | 'questions_low' | 'questions_high';

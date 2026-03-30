@@ -348,7 +348,7 @@ describe('ClockTrainingGame drag interactions', () => {
     expect(screen.queryByTestId('clock-interaction-hint')).toBeNull();
     const face = container.querySelector('circle[r="95"]');
     expect(face).not.toBeNull();
-    expect(face?.getAttribute('fill')).toContain('var(--kangur-soft-card-background');
+    expect(face?.getAttribute('fill')).toContain('var(--kangur-clock-face-fill');
 
     dragHandToAngle(minuteHand, 180);
     await waitFor(() => {

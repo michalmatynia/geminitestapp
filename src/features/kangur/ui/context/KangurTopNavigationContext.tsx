@@ -11,11 +11,11 @@ import {
 } from 'react';
 
 import {
-  KangurPrimaryNavigation,
-} from '@/features/kangur/ui/components/KangurPrimaryNavigation';
-import { useAccessibleKangurPrimaryNavigation } from '@/features/kangur/ui/components/KangurPrimaryNavigation.access';
+  KangurPrimaryNavigation
+} from "@/features/kangur/ui/components/primary-navigation/KangurPrimaryNavigation";
+import { useAccessibleKangurPrimaryNavigation } from "@/features/kangur/ui/components/primary-navigation/KangurPrimaryNavigation.access";
 import { internalError } from '@/features/kangur/shared/errors/app-error';
-import type { KangurPrimaryNavigationProps } from '@/features/kangur/ui/components/KangurPrimaryNavigation.types';
+import type { KangurPrimaryNavigationProps } from '@/features/kangur/ui/components/primary-navigation/KangurPrimaryNavigation.types';
 
 type KangurTopNavigationRegistration = {
   ownerId: string;

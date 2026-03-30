@@ -1,31 +1,737 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-03-29T11:11:42.888Z",
-  "status": "scaffold",
+  "generatedAt": "2026-03-30T21:02:45.167Z",
+  "status": "ok",
   "scanner": {
     "name": "scan-type-clusters",
     "version": "0.1.0",
-    "mode": "init",
+    "mode": "scan",
     "scope": "src/**/*.{ts,tsx}"
   },
   "filters": {
     "domains": [],
-    "minRisk": 0
+    "minRisk": 0,
+    "topLimit": 25,
+    "planTopLimit": 20
   },
   "thresholds": {
     "minClusterSize": 2
   },
   "summary": {
-    "filesScanned": 0,
-    "exportedDeclarationsScanned": 0,
-    "candidateDeclarationsScanned": 0,
-    "exactShapeClusters": 0,
+    "filesScanned": 9023,
+    "exportedDeclarationsScanned": 5635,
+    "candidateDeclarationsScanned": 5614,
+    "exactShapeClusters": 19,
     "nearShapeClusters": 0,
-    "clustersAfterFilters": 0,
-    "declarationsInClusters": 0,
-    "highestRiskScore": 0
+    "clustersAfterFilters": 19,
+    "declarationsInClusters": 38,
+    "highestRiskScore": 12
   },
-  "clusters": [],
+  "clusters": [
+    {
+      "clusterId": "exact-0004",
+      "clusterKind": "exact-shape",
+      "canonicalDtoCandidate": null,
+      "riskScore": 12,
+      "declarationCount": 2,
+      "domains": [
+        "feature:kangur"
+      ],
+      "signature": {
+        "shapeKind": "structural-members",
+        "normalizedShapeHash": "fddc90b99b5b",
+        "memberCount": 9,
+        "preview": "prop:basePath:string; prop:preloadedAssignments?:KangurAssignmentSnapshot[]; prop:preloadedAssignmentsError?:string | null; prop:preloadedCreateAssignment?:(input: KangurAssignmentCreateInput) => Promise<unknown>; prop:preloadedLessons?:KangurLesson[]; prop:preloadedLoading?:boolean; prop:preloadedReassignAssignment?:(id: string) => Promise<unknown>; prop:preloadedUpdateAssignment?:(id: string, input: Partial<KangurAssignmentSnapshot>) => Promise<unknown>"
+      },
+      "declarations": [
+        {
+          "name": "KangurAssignmentManagerProps",
+          "kind": "type",
+          "path": "src/features/kangur/ui/components/assignment-manager/KangurAssignmentManager.types.ts",
+          "line": 16,
+          "domain": "feature:kangur",
+          "usageCount": 2
+        },
+        {
+          "name": "KangurAssignmentManagerProps",
+          "kind": "type",
+          "path": "src/features/kangur/ui/components/KangurAssignmentManager.types.ts",
+          "line": 16,
+          "domain": "feature:kangur",
+          "usageCount": 2
+        }
+      ],
+      "notes": [
+        "Review semantics before consolidating structurally similar declarations into one DTO."
+      ]
+    },
+    {
+      "clusterId": "exact-0008",
+      "clusterKind": "exact-shape",
+      "canonicalDtoCandidate": null,
+      "riskScore": 12,
+      "declarationCount": 2,
+      "domains": [
+        "feature:kangur"
+      ],
+      "signature": {
+        "shapeKind": "structural-members",
+        "normalizedShapeHash": "603545ad3aa7",
+        "memberCount": 8,
+        "preview": "prop:intro:{ maths: string; alphabet: string; art: string; music: string; geometry: string; language: string; }; prop:lessonQuizDefinitions:LessonQuizDefinition[]; prop:operationSelectorTitle:string; prop:quickPractice:{ title: string; description: string; groupAria: (group: string) => string; cardAria: (label: string) => string; gameChip: string; }; prop:recommendation:{ actions: { playAddition: string; playSubtraction: string; playMultiplication: string; playDivision: string; playClock: string; startMixedTraining: string; playFractions: string; playPowers: string; playRoots: string; practiceCalendar: string; practiceGeometry: string; practiceSubtraction: string; practiceDivision: string; practiceMultiplication: string; startTraining: string; playNow: string; }; questLabel: string; weakestLesson: { description: (masteryPercent: number) => string; label: string; title: (title: string) => string; }; track: { descriptionWithActivity: (track: string, activity: string) => string; descriptionDefault: (track: string) => string; label: string; title: (track: string) => string; }; guided: { descriptionWithActivity: (summary: string, activity: string, nextBadgeName: string) => string; descriptionDefault: (summary: string, nextBadgeName: string) => string; label: string; title: (nextBadgeName: string) => string; }; fallback: { description: (activity: string, averageXpPerSession: number) => string; label: string; title: (activity: string) => string; }; }; prop:trainingSetupDescription:string; prop:trainingSetupTitle:string; prop:trainingSetupWordmarkLabel:string"
+      },
+      "declarations": [
+        {
+          "name": "OperationSelectorFallbackCopy",
+          "kind": "type",
+          "path": "src/features/kangur/ui/components/game-setup/KangurGameOperationSelectorWidget.types.ts",
+          "line": 26,
+          "domain": "feature:kangur",
+          "usageCount": 2
+        },
+        {
+          "name": "OperationSelectorFallbackCopy",
+          "kind": "type",
+          "path": "src/features/kangur/ui/components/KangurGameOperationSelectorWidget.types.ts",
+          "line": 26,
+          "domain": "feature:kangur",
+          "usageCount": 2
+        }
+      ],
+      "notes": [
+        "Review semantics before consolidating structurally similar declarations into one DTO."
+      ]
+    },
+    {
+      "clusterId": "exact-0019",
+      "clusterKind": "exact-shape",
+      "canonicalDtoCandidate": null,
+      "riskScore": 12,
+      "declarationCount": 2,
+      "domains": [
+        "feature:kangur"
+      ],
+      "signature": {
+        "shapeKind": "type-expression",
+        "normalizedShapeHash": "3931ca082ee9",
+        "memberCount": 1,
+        "preview": "React.SVGProps<SVGSVGElement> & { idPrefix?: string; label?: string; locale?: string | null; }"
+      },
+      "declarations": [
+        {
+          "name": "KangurLocalizedWordmarkProps",
+          "kind": "type",
+          "path": "src/features/kangur/ui/components/kangur-wordmark.ts",
+          "line": 1,
+          "domain": "feature:kangur",
+          "usageCount": 2
+        },
+        {
+          "name": "KangurLocalizedWordmarkProps",
+          "kind": "type",
+          "path": "src/features/kangur/ui/components/wordmarks/kangur-wordmark.ts",
+          "line": 1,
+          "domain": "feature:kangur",
+          "usageCount": 2
+        }
+      ],
+      "notes": [
+        "Review semantics before consolidating structurally similar declarations into one DTO."
+      ]
+    },
+    {
+      "clusterId": "exact-0001",
+      "clusterKind": "exact-shape",
+      "canonicalDtoCandidate": null,
+      "riskScore": 10,
+      "declarationCount": 2,
+      "domains": [
+        "feature:kangur"
+      ],
+      "signature": {
+        "shapeKind": "type-expression",
+        "normalizedShapeHash": "f30963a2f91c",
+        "memberCount": 1,
+        "preview": "(typeof FILTER_OPTION_VALUES)[number]"
+      },
+      "declarations": [
+        {
+          "name": "FilterOption",
+          "kind": "type",
+          "path": "src/features/kangur/ui/components/assignment-manager/KangurAssignmentManager.helpers.ts",
+          "line": 15,
+          "domain": "feature:kangur",
+          "usageCount": 1
+        },
+        {
+          "name": "FilterOption",
+          "kind": "type",
+          "path": "src/features/kangur/ui/components/KangurAssignmentManager.helpers.ts",
+          "line": 15,
+          "domain": "feature:kangur",
+          "usageCount": 1
+        }
+      ],
+      "notes": [
+        "Review semantics before consolidating structurally similar declarations into one DTO."
+      ]
+    },
+    {
+      "clusterId": "exact-0005",
+      "clusterKind": "exact-shape",
+      "canonicalDtoCandidate": null,
+      "riskScore": 10,
+      "declarationCount": 2,
+      "domains": [
+        "feature:kangur"
+      ],
+      "signature": {
+        "shapeKind": "type-expression",
+        "normalizedShapeHash": "1a55d37a459e",
+        "memberCount": 1,
+        "preview": "| { mode: 'create'; catalogItemId: string } | { mode: 'update'; assignmentId: string }"
+      },
+      "declarations": [
+        {
+          "name": "TimeLimitModalContext",
+          "kind": "type",
+          "path": "src/features/kangur/ui/components/assignment-manager/KangurAssignmentManager.types.ts",
+          "line": 28,
+          "domain": "feature:kangur",
+          "usageCount": 1
+        },
+        {
+          "name": "TimeLimitModalContext",
+          "kind": "type",
+          "path": "src/features/kangur/ui/components/KangurAssignmentManager.types.ts",
+          "line": 28,
+          "domain": "feature:kangur",
+          "usageCount": 1
+        }
+      ],
+      "notes": [
+        "Review semantics before consolidating structurally similar declarations into one DTO."
+      ]
+    },
+    {
+      "clusterId": "exact-0009",
+      "clusterKind": "exact-shape",
+      "canonicalDtoCandidate": null,
+      "riskScore": 10,
+      "declarationCount": 2,
+      "domains": [
+        "feature:kangur"
+      ],
+      "signature": {
+        "shapeKind": "type-expression",
+        "normalizedShapeHash": "6aae88e5ea34",
+        "memberCount": 1,
+        "preview": "| { kind: 'operation'; difficulty: KangurDifficulty; operation: KangurOperation } | { kind: 'training' } | { kind: 'screen'; screen: KangurGameScreen }"
+      },
+      "declarations": [
+        {
+          "name": "KangurOperationSelectorRecommendationTarget",
+          "kind": "type",
+          "path": "src/features/kangur/ui/components/game-setup/KangurGameOperationSelectorWidget.types.ts",
+          "line": 92,
+          "domain": "feature:kangur",
+          "usageCount": 1
+        },
+        {
+          "name": "KangurOperationSelectorRecommendationTarget",
+          "kind": "type",
+          "path": "src/features/kangur/ui/components/KangurGameOperationSelectorWidget.types.ts",
+          "line": 92,
+          "domain": "feature:kangur",
+          "usageCount": 1
+        }
+      ],
+      "notes": [
+        "Review semantics before consolidating structurally similar declarations into one DTO."
+      ]
+    },
+    {
+      "clusterId": "exact-0010",
+      "clusterKind": "exact-shape",
+      "canonicalDtoCandidate": null,
+      "riskScore": 10,
+      "declarationCount": 2,
+      "domains": [
+        "feature:kangur"
+      ],
+      "signature": {
+        "shapeKind": "structural-members",
+        "normalizedShapeHash": "7f542a3c38ea",
+        "memberCount": 8,
+        "preview": "prop:accent:KangurAccent; prop:actionLabel:string; prop:description:string; prop:label:string; prop:recommendedOperation:KangurOperation | null; prop:recommendedScreen:KangurGameScreen | null; prop:target:KangurOperationSelectorRecommendationTarget; prop:title:string"
+      },
+      "declarations": [
+        {
+          "name": "KangurOperationSelectorRecommendation",
+          "kind": "type",
+          "path": "src/features/kangur/ui/components/game-setup/KangurGameOperationSelectorWidget.types.ts",
+          "line": 97,
+          "domain": "feature:kangur",
+          "usageCount": 1
+        },
+        {
+          "name": "KangurOperationSelectorRecommendation",
+          "kind": "type",
+          "path": "src/features/kangur/ui/components/KangurGameOperationSelectorWidget.types.ts",
+          "line": 97,
+          "domain": "feature:kangur",
+          "usageCount": 1
+        }
+      ],
+      "notes": [
+        "Review semantics before consolidating structurally similar declarations into one DTO."
+      ]
+    },
+    {
+      "clusterId": "exact-0007",
+      "clusterKind": "exact-shape",
+      "canonicalDtoCandidate": null,
+      "riskScore": 9,
+      "declarationCount": 2,
+      "domains": [
+        "feature:kangur"
+      ],
+      "signature": {
+        "shapeKind": "type-expression",
+        "normalizedShapeHash": "2ac266a2903b",
+        "memberCount": 1,
+        "preview": "LessonQuizDefinition & { subject: KangurLessonSubject; sortOrder: number; }"
+      },
+      "declarations": [
+        {
+          "name": "LessonQuizOption",
+          "kind": "type",
+          "path": "src/features/kangur/ui/components/game-setup/KangurGameOperationSelectorWidget.types.ts",
+          "line": 21,
+          "domain": "feature:kangur",
+          "usageCount": 1
+        },
+        {
+          "name": "LessonQuizOption",
+          "kind": "type",
+          "path": "src/features/kangur/ui/components/KangurGameOperationSelectorWidget.types.ts",
+          "line": 21,
+          "domain": "feature:kangur",
+          "usageCount": 0
+        }
+      ],
+      "notes": [
+        "Review semantics before consolidating structurally similar declarations into one DTO."
+      ]
+    },
+    {
+      "clusterId": "exact-0015",
+      "clusterKind": "exact-shape",
+      "canonicalDtoCandidate": null,
+      "riskScore": 9,
+      "declarationCount": 2,
+      "domains": [
+        "feature:kangur"
+      ],
+      "signature": {
+        "shapeKind": "structural-members",
+        "normalizedShapeHash": "245facedb149",
+        "memberCount": 4,
+        "preview": "prop:answer?:KangurQuestionChoice; prop:choices:KangurQuestionChoice[]; prop:id?:string; prop:question:string"
+      },
+      "declarations": [
+        {
+          "name": "QuestionCardQuestion",
+          "kind": "type",
+          "path": "src/features/kangur/ui/components/QuestionCard.tsx",
+          "line": 27,
+          "domain": "feature:kangur",
+          "usageCount": 1
+        },
+        {
+          "name": "QuestionCardQuestion",
+          "kind": "type",
+          "path": "src/features/kangur/ui/components/game-runtime/QuestionCard.tsx",
+          "line": 27,
+          "domain": "feature:kangur",
+          "usageCount": 0
+        }
+      ],
+      "notes": [
+        "Review semantics before consolidating structurally similar declarations into one DTO."
+      ]
+    },
+    {
+      "clusterId": "exact-0002",
+      "clusterKind": "exact-shape",
+      "canonicalDtoCandidate": null,
+      "riskScore": 8,
+      "declarationCount": 2,
+      "domains": [
+        "feature:kangur"
+      ],
+      "signature": {
+        "shapeKind": "structural-members",
+        "normalizedShapeHash": "9c806e378ef3",
+        "memberCount": 7,
+        "preview": "prop:activeCount:number; prop:averageMasteryPercent:number; prop:completedCount:number; prop:completionRate:number; prop:inProgressCount:number; prop:notStartedCount:number; prop:totalXp:number"
+      },
+      "declarations": [
+        {
+          "name": "KangurAssignmentTrackerSummary",
+          "kind": "type",
+          "path": "src/features/kangur/ui/components/assignment-manager/KangurAssignmentManager.helpers.ts",
+          "line": 17,
+          "domain": "feature:kangur",
+          "usageCount": 0
+        },
+        {
+          "name": "KangurAssignmentTrackerSummary",
+          "kind": "type",
+          "path": "src/features/kangur/ui/components/KangurAssignmentManager.helpers.ts",
+          "line": 17,
+          "domain": "feature:kangur",
+          "usageCount": 0
+        }
+      ],
+      "notes": [
+        "Review semantics before consolidating structurally similar declarations into one DTO."
+      ]
+    },
+    {
+      "clusterId": "exact-0003",
+      "clusterKind": "exact-shape",
+      "canonicalDtoCandidate": null,
+      "riskScore": 8,
+      "declarationCount": 2,
+      "domains": [
+        "feature:kangur"
+      ],
+      "signature": {
+        "shapeKind": "type-expression",
+        "normalizedShapeHash": "cf99e723bcec",
+        "memberCount": 1,
+        "preview": "| 'full' | 'catalog' | 'catalogWithLists' | 'tracking' | 'metrics'"
+      },
+      "declarations": [
+        {
+          "name": "KangurAssignmentManagerViewMode",
+          "kind": "type",
+          "path": "src/features/kangur/ui/components/assignment-manager/KangurAssignmentManager.types.ts",
+          "line": 9,
+          "domain": "feature:kangur",
+          "usageCount": 0
+        },
+        {
+          "name": "KangurAssignmentManagerViewMode",
+          "kind": "type",
+          "path": "src/features/kangur/ui/components/KangurAssignmentManager.types.ts",
+          "line": 9,
+          "domain": "feature:kangur",
+          "usageCount": 0
+        }
+      ],
+      "notes": [
+        "Review semantics before consolidating structurally similar declarations into one DTO."
+      ]
+    },
+    {
+      "clusterId": "exact-0006",
+      "clusterKind": "exact-shape",
+      "canonicalDtoCandidate": null,
+      "riskScore": 8,
+      "declarationCount": 2,
+      "domains": [
+        "feature:kangur"
+      ],
+      "signature": {
+        "shapeKind": "structural-members",
+        "normalizedShapeHash": "f590ddc03534",
+        "memberCount": 6,
+        "preview": "prop:accent:KangurAccent; prop:description:string; prop:emoji:string; prop:label:string; prop:lessonComponentIds:readonly KangurLessonComponentId[]; prop:onSelectScreen:KangurGameScreen"
+      },
+      "declarations": [
+        {
+          "name": "LessonQuizDefinition",
+          "kind": "type",
+          "path": "src/features/kangur/ui/components/game-setup/KangurGameOperationSelectorWidget.types.ts",
+          "line": 12,
+          "domain": "feature:kangur",
+          "usageCount": 0
+        },
+        {
+          "name": "LessonQuizDefinition",
+          "kind": "type",
+          "path": "src/features/kangur/ui/components/KangurGameOperationSelectorWidget.types.ts",
+          "line": 12,
+          "domain": "feature:kangur",
+          "usageCount": 0
+        }
+      ],
+      "notes": [
+        "Review semantics before consolidating structurally similar declarations into one DTO."
+      ]
+    },
+    {
+      "clusterId": "exact-0011",
+      "clusterKind": "exact-shape",
+      "canonicalDtoCandidate": null,
+      "riskScore": 8,
+      "declarationCount": 2,
+      "domains": [
+        "feature:kangur"
+      ],
+      "signature": {
+        "shapeKind": "structural-members",
+        "normalizedShapeHash": "e4c62cbd7051",
+        "memberCount": 10,
+        "preview": "prop:afterIntro?:ReactNode; prop:children:ReactNode; prop:description:ReactNode; prop:introClassName?:string; prop:momentumMode:'training' | 'kangur'; prop:onBack:() => void; prop:progress:KangurProgressState; prop:testId:string"
+      },
+      "declarations": [
+        {
+          "name": "KangurGameSetupShellProps",
+          "kind": "type",
+          "path": "src/features/kangur/ui/components/game-setup/KangurGameSetupShell.tsx",
+          "line": 11,
+          "domain": "feature:kangur",
+          "usageCount": 0
+        },
+        {
+          "name": "KangurGameSetupShellProps",
+          "kind": "type",
+          "path": "src/features/kangur/ui/components/KangurGameSetupShell.tsx",
+          "line": 10,
+          "domain": "feature:kangur",
+          "usageCount": 0
+        }
+      ],
+      "notes": [
+        "Review semantics before consolidating structurally similar declarations into one DTO."
+      ]
+    },
+    {
+      "clusterId": "exact-0012",
+      "clusterKind": "exact-shape",
+      "canonicalDtoCandidate": null,
+      "riskScore": 8,
+      "declarationCount": 2,
+      "domains": [
+        "feature:kangur"
+      ],
+      "signature": {
+        "shapeKind": "type-expression",
+        "normalizedShapeHash": "4adcd64ad3ef",
+        "memberCount": 1,
+        "preview": "React.SVGProps<SVGSVGElement> & { arcPath?: string; idPrefix?: string; label: string; textProps?: React.SVGProps<SVGTextElement>; }"
+      },
+      "declarations": [
+        {
+          "name": "KangurTextWordmarkProps",
+          "kind": "type",
+          "path": "src/features/kangur/ui/components/KangurTextWordmark.tsx",
+          "line": 4,
+          "domain": "feature:kangur",
+          "usageCount": 0
+        },
+        {
+          "name": "KangurTextWordmarkProps",
+          "kind": "type",
+          "path": "src/features/kangur/ui/components/wordmarks/KangurTextWordmark.tsx",
+          "line": 4,
+          "domain": "feature:kangur",
+          "usageCount": 0
+        }
+      ],
+      "notes": [
+        "Review semantics before consolidating structurally similar declarations into one DTO."
+      ]
+    },
+    {
+      "clusterId": "exact-0013",
+      "clusterKind": "exact-shape",
+      "canonicalDtoCandidate": null,
+      "riskScore": 8,
+      "declarationCount": 2,
+      "domains": [
+        "feature:kangur"
+      ],
+      "signature": {
+        "shapeKind": "type-expression",
+        "normalizedShapeHash": "cdc961a950ac",
+        "memberCount": 1,
+        "preview": "React.SVGProps<SVGSVGElement> & { idPrefix?: string; arcPath: string; wordTransform: string; children?: ReactNode; textLabel?: string; textProps?: React.SVGProp"
+      },
+      "declarations": [
+        {
+          "name": "KangurWordmarkBaseProps",
+          "kind": "type",
+          "path": "src/features/kangur/ui/components/KangurWordmarkBase.tsx",
+          "line": 5,
+          "domain": "feature:kangur",
+          "usageCount": 0
+        },
+        {
+          "name": "KangurWordmarkBaseProps",
+          "kind": "type",
+          "path": "src/features/kangur/ui/components/wordmarks/KangurWordmarkBase.tsx",
+          "line": 5,
+          "domain": "feature:kangur",
+          "usageCount": 0
+        }
+      ],
+      "notes": [
+        "Review semantics before consolidating structurally similar declarations into one DTO."
+      ]
+    },
+    {
+      "clusterId": "exact-0014",
+      "clusterKind": "exact-shape",
+      "canonicalDtoCandidate": null,
+      "riskScore": 8,
+      "declarationCount": 2,
+      "domains": [
+        "feature:kangur"
+      ],
+      "signature": {
+        "shapeKind": "structural-members",
+        "normalizedShapeHash": "930753f17e57",
+        "memberCount": 4,
+        "preview": "prop:onSelect:(operation: KangurOperation, difficulty: KangurDifficulty) => void; prop:priorityAssignmentsByOperation?:Partial< Record<KangurOperation, KangurAssignmentSnapshot & { target: { type: 'practice' } }> >; prop:recommendedLabel?:string; prop:recommendedOperation?:KangurOperation | null"
+      },
+      "declarations": [
+        {
+          "name": "OperationSelectorProps",
+          "kind": "type",
+          "path": "src/features/kangur/ui/components/game-setup/OperationSelector.tsx",
+          "line": 29,
+          "domain": "feature:kangur",
+          "usageCount": 0
+        },
+        {
+          "name": "OperationSelectorProps",
+          "kind": "type",
+          "path": "src/features/kangur/ui/components/OperationSelector.tsx",
+          "line": 28,
+          "domain": "feature:kangur",
+          "usageCount": 0
+        }
+      ],
+      "notes": [
+        "Review semantics before consolidating structurally similar declarations into one DTO."
+      ]
+    },
+    {
+      "clusterId": "exact-0016",
+      "clusterKind": "exact-shape",
+      "canonicalDtoCandidate": null,
+      "riskScore": 8,
+      "declarationCount": 2,
+      "domains": [
+        "feature:kangur"
+      ],
+      "signature": {
+        "shapeKind": "structural-members",
+        "normalizedShapeHash": "2facfcfb5146",
+        "memberCount": 2,
+        "preview": "prop:correct:boolean; prop:timedOut?:boolean"
+      },
+      "declarations": [
+        {
+          "name": "QuestionCardServerResult",
+          "kind": "type",
+          "path": "src/features/kangur/ui/components/game-runtime/QuestionCard.tsx",
+          "line": 34,
+          "domain": "feature:kangur",
+          "usageCount": 0
+        },
+        {
+          "name": "QuestionCardServerResult",
+          "kind": "type",
+          "path": "src/features/kangur/ui/components/QuestionCard.tsx",
+          "line": 34,
+          "domain": "feature:kangur",
+          "usageCount": 0
+        }
+      ],
+      "notes": [
+        "Review semantics before consolidating structurally similar declarations into one DTO."
+      ]
+    },
+    {
+      "clusterId": "exact-0017",
+      "clusterKind": "exact-shape",
+      "canonicalDtoCandidate": null,
+      "riskScore": 8,
+      "declarationCount": 2,
+      "domains": [
+        "feature:kangur"
+      ],
+      "signature": {
+        "shapeKind": "structural-members",
+        "normalizedShapeHash": "406bd970231f",
+        "memberCount": 8,
+        "preview": "prop:answerMode?:'client' | 'server'; prop:onAnswer:(correct: boolean) => void; prop:onAnswerChoice?:(choice: KangurQuestionChoice | null, correct?: boolean) => void; prop:question:QuestionCardQuestion; prop:questionNumber:number; prop:serverResult?:QuestionCardServerResult | null; prop:timeLimit:number; prop:total:number"
+      },
+      "declarations": [
+        {
+          "name": "QuestionCardProps",
+          "kind": "type",
+          "path": "src/features/kangur/ui/components/game-runtime/QuestionCard.tsx",
+          "line": 39,
+          "domain": "feature:kangur",
+          "usageCount": 0
+        },
+        {
+          "name": "QuestionCardProps",
+          "kind": "type",
+          "path": "src/features/kangur/ui/components/QuestionCard.tsx",
+          "line": 39,
+          "domain": "feature:kangur",
+          "usageCount": 0
+        }
+      ],
+      "notes": [
+        "Review semantics before consolidating structurally similar declarations into one DTO."
+      ]
+    },
+    {
+      "clusterId": "exact-0018",
+      "clusterKind": "exact-shape",
+      "canonicalDtoCandidate": null,
+      "riskScore": 8,
+      "declarationCount": 2,
+      "domains": [
+        "feature:kangur"
+      ],
+      "signature": {
+        "shapeKind": "structural-members",
+        "normalizedShapeHash": "352e90867a21",
+        "memberCount": 7,
+        "preview": "prop:onHome:() => void; prop:onRestart:() => void; prop:operation:KangurOperation | null; prop:playerName:string; prop:score:number; prop:timeTaken:number; prop:total:number"
+      },
+      "declarations": [
+        {
+          "name": "ResultScreenProps",
+          "kind": "type",
+          "path": "src/features/kangur/ui/components/game-runtime/ResultScreen.tsx",
+          "line": 20,
+          "domain": "feature:kangur",
+          "usageCount": 0
+        },
+        {
+          "name": "ResultScreenProps",
+          "kind": "type",
+          "path": "src/features/kangur/ui/components/ResultScreen.tsx",
+          "line": 20,
+          "domain": "feature:kangur",
+          "usageCount": 0
+        }
+      ],
+      "notes": [
+        "Review semantics before consolidating structurally similar declarations into one DTO."
+      ]
+    }
+  ],
   "notes": [
     "This is a scanner scaffold output. Risk and clustering heuristics are intentionally conservative.",
     "Use clusters as review candidates before moving declarations to canonical DTO modules."

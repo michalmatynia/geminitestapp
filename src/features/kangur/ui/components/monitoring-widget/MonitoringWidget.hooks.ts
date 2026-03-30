@@ -17,7 +17,7 @@ import {
   parseTimestampStrict,
   readNumber,
   readString,
-} from '../KangurParentDashboardAssignmentsMonitoringWidget.utils';
+} from '../parent-dashboard/KangurParentDashboardAssignmentsMonitoringWidget.utils';
 import { ActivityTypes } from '@/shared/constants/observability';
 import { ErrorSystem } from '@/features/kangur/shared/utils/observability/error-system-client';
 

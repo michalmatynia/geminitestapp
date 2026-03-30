@@ -41,7 +41,7 @@ describe('Kangur AI Tutor surface contract', () => {
   });
 
   it('keeps the minimalist contextual panel renderable while guided avatar mode is still active', () => {
-    const panelChromeSource = readTutorSource('KangurAiTutorPanelChrome.tsx');
+    const panelChromeSource = readTutorSource('KangurAiTutorPanelChrome.shared.ts');
 
     expect(panelChromeSource).toContain('(!isGuidedTutorMode || isMinimalPanelMode) &&');
   });

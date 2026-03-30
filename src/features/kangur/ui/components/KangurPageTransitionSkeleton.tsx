@@ -8,7 +8,7 @@ import { useSession } from 'next-auth/react';
 import { cn } from '@/features/kangur/shared/utils';
 import { useOptionalKangurAuth } from '@/features/kangur/ui/context/KangurAuthContext';
 import { useOptionalKangurRouting } from '@/features/kangur/ui/context/KangurRoutingContext';
-import { KangurTopNavigationSkeleton } from '@/features/kangur/ui/components/KangurTopNavigationSkeleton';
+import { KangurTopNavigationSkeleton } from "@/features/kangur/ui/components/primary-navigation/KangurTopNavigationSkeleton";
 import {
   HOME_ACTION_SKELETONS,
   HomeActionSkeletonCard,

@@ -37,7 +37,7 @@ vi.mock('@/features/kangur/ui/context/KangurRoutingContext', () => ({
   useKangurRouting: () => routingStateMock(),
 }));
 
-vi.mock('@/features/kangur/ui/components/KangurTopNavigationController', () => ({
+vi.mock('@/features/kangur/ui/components/primary-navigation/KangurTopNavigationController', () => ({
   KangurTopNavigationController: (props: unknown) => {
     topNavigationControllerPropsMock(props);
     return <div data-testid='kangur-top-navigation-controller' />;

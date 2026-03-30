@@ -77,7 +77,7 @@ vi.mock('@/features/kangur/ui/components/learner-profile/KangurLearnerProfileSes
   KangurLearnerProfileSessionsWidget: () => <div data-testid='sessions-widget' />,
 }));
 
-vi.mock('@/features/kangur/ui/components/KangurTopNavigationController', () => ({
+vi.mock('@/features/kangur/ui/components/primary-navigation/KangurTopNavigationController', () => ({
   KangurTopNavigationController: () => <div data-testid='top-navigation' />,
 }));
 

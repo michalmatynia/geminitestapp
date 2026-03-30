@@ -5,7 +5,7 @@ import KangurGameHomeMomentumWidget from '@/features/kangur/ui/components/Kangur
 import KangurPracticeAssignmentBanner from '@/features/kangur/ui/components/assignments/KangurPracticeAssignmentBanner';
 import KangurRecommendationCard from '@/features/kangur/ui/components/KangurRecommendationCard';
 import KangurRewardBreakdownChips from '@/features/kangur/ui/components/KangurRewardBreakdownChips';
-import ResultScreen from '@/features/kangur/ui/components/ResultScreen';
+import ResultScreen from '@/features/kangur/ui/components/game-runtime/ResultScreen';
 import { useKangurGameRuntime } from '@/features/kangur/ui/context/KangurGameRuntimeContext';
 import { useKangurSubjectFocus } from '@/features/kangur/ui/context/KangurSubjectFocusContext';
 import {

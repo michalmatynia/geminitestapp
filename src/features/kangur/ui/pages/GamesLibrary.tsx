@@ -3,7 +3,7 @@
 import React from 'react';
 import { KangurPageIntroCard } from '@/features/kangur/ui/components/lesson-library/KangurPageIntroCard';
 import { KangurStandardPageLayout } from '@/features/kangur/ui/components/KangurStandardPageLayout';
-import { KangurTopNavigationController } from '@/features/kangur/ui/components/KangurTopNavigationController';
+import { KangurTopNavigationController } from '@/features/kangur/ui/components/primary-navigation/KangurTopNavigationController';
 import {
   KangurInfoCard,
   KangurButton,

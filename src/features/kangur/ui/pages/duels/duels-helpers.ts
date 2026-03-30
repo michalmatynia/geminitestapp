@@ -8,7 +8,7 @@ import type {
   KangurDuelQuestion,
   KangurDuelStatus,
 } from '@/features/kangur/shared/contracts/kangur-duels';
-import type { QuestionCardQuestion } from '@/features/kangur/ui/components/QuestionCard';
+import type { QuestionCardQuestion } from '@/features/kangur/ui/components/game-runtime/QuestionCard';
 
 export type KangurDuelTranslationValues = TranslationValues;
 export type KangurDuelTranslations = (

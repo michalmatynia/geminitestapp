@@ -123,7 +123,7 @@ vi.mock('@/features/kangur/ui/components/KangurGameResultWidget', () => ({
   KangurGameResultWidget: () => <div data-testid='kangur-result-widget' />,
 }));
 
-vi.mock('@/features/kangur/ui/components/OperationSelector', () => ({
+vi.mock('@/features/kangur/ui/components/game-setup/OperationSelector', () => ({
   default: () => <div data-testid='mock-operation-selector'>Mock operation selector</div>,
 }));
 

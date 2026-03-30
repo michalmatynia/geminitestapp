@@ -14,7 +14,7 @@ import {
 
 import { KangurAiTutorDrawingCanvas } from './KangurAiTutorDrawingCanvas';
 import { useKangurAiTutorPanelBodyContext } from './KangurAiTutorPanelBody.context';
-import { useKangurAiTutorWidgetStateContext } from './KangurAiTutorWidget.state';
+import { useKangurAiTutorWidgetStateContext } from './ai-tutor-widget/KangurAiTutorWidget.state';
 
 import type { JSX } from 'react';
 

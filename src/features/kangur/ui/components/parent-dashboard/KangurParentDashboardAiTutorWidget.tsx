@@ -824,7 +824,7 @@ function useAiTutorConfigPanelState() {
   };
 }
 
-type AiTutorConfigPanelState = ReturnType<typeof useAiTutorConfigPanelState>;
+export type AiTutorConfigPanelState = ReturnType<typeof useAiTutorConfigPanelState>;
 
 function AiTutorPanelHeader({
   sectionSummary,
@@ -1253,7 +1253,7 @@ function AiTutorConfiguredPanel({
   );
 }
 
-function AiTutorConfigPanel(): React.JSX.Element | null {
+export function AiTutorConfigPanel(): React.JSX.Element | null {
   const state = useAiTutorConfigPanelState();
 
   if (!state.activeLearner) {

@@ -15,11 +15,11 @@ import { KANGUR_TTS_DEFAULT_VOICE } from '@/features/kangur/tts/contracts';
 import { DEFAULT_KANGUR_AI_TUTOR_CONTENT } from '@/features/kangur/shared/contracts/kangur-ai-tutor-content';
 
 import { KangurAiTutorPanelChrome } from './KangurAiTutorPanelChrome';
-import { KangurAiTutorWidgetStateProvider } from './KangurAiTutorWidget.state';
+import { KangurAiTutorWidgetStateProvider } from './ai-tutor-widget/KangurAiTutorWidget.state';
 
 import type { KangurAiTutorPanelBodyContextValue } from './KangurAiTutorPanelBody.context';
-import type { KangurAiTutorWidgetState } from './KangurAiTutorWidget.state';
-import type { TutorMotionProfile } from './KangurAiTutorWidget.shared';
+import type { KangurAiTutorWidgetState } from './ai-tutor-widget/KangurAiTutorWidget.state';
+import type { TutorMotionProfile } from './ai-tutor-widget/KangurAiTutorWidget.shared';
 
 const { useKangurAiTutorMock } = vi.hoisted(() => ({
   useKangurAiTutorMock: vi.fn(),

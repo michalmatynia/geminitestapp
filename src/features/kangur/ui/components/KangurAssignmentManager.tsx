@@ -33,10 +33,10 @@ import {
   FILTER_OPTION_VALUES,
   TIME_LIMIT_MINUTES_MAX,
   TIME_LIMIT_MINUTES_MIN,
-} from './KangurAssignmentManager.helpers';
+} from './assignment-manager/KangurAssignmentManager.helpers';
 import { useKangurAssignmentManagerState } from './KangurAssignmentManager.hooks';
 import { renderKangurAssignmentManagerTimeLimitModal } from './KangurAssignmentManagerTimeLimitModal';
-import type { KangurAssignmentManagerProps } from './KangurAssignmentManager.types';
+import type { KangurAssignmentManagerProps } from './assignment-manager/KangurAssignmentManager.types';
 
 type AssignmentManagerState = ReturnType<typeof useKangurAssignmentManagerState>;
 

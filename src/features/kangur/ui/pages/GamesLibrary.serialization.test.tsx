@@ -209,7 +209,7 @@ vi.mock('@/features/kangur/ui/design/primitives', async (importOriginal) => {
   };
 });
 
-vi.mock('@/features/kangur/ui/components/KangurTopNavigationController', () => ({
+vi.mock('@/features/kangur/ui/components/primary-navigation/KangurTopNavigationController', () => ({
   KangurTopNavigationController: () => <div data-testid='games-library-top-nav' />,
 }));
 

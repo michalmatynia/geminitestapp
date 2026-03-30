@@ -1,30 +1,31 @@
 {
-  "generatedAt": "2026-03-27T13:43:33.581Z",
+  "generatedAt": "2026-03-30T21:26:05.511Z",
   "hardLimits": {
     "sourceLargestFileLines": 4000,
     "imports.featuresToAppApiTotalImports": 0
   },
   "max": {
-    "source.filesOver1000": 0,
+    "source.filesOver1000": 8,
     "source.filesOver1500": 0,
-    "source.useClientFiles": 1779,
-    "source.largestFileLines": 965,
+    "source.useClientFiles": 1893,
+    "source.largestFileLines": 1278,
     "api.totalRoutes": 30,
-    "api.delegatedServerRoutes": 171,
+    "api.delegatedServerRoutes": 172,
     "api.routesWithoutApiHandler": 0,
     "api.routesWithoutExplicitCachePolicy": 0,
-    "architecture.crossFeatureEdgePairs": 4,
+    "imports.appFeatureBarrelImports": 0,
     "imports.appFeatureDeepImports": 4,
     "imports.featuresToSharedTotalImports": 27,
     "imports.featuresToAppApiTotalImports": 0,
     "imports.sharedToFeaturesTotalImports": 0,
-    "imports.appFeatureBarrelImports": 0,
+    "architecture.crossFeatureEdgePairs": 3,
+    "runtime.setIntervalOccurrences": 1,
     "propDrilling.depthGte4Chains": 0,
     "propDrilling.componentsWithForwarding": 0,
-    "uiConsolidation.totalOpportunities": 0,
-    "uiConsolidation.highPriorityOpportunities": 0,
-    "uiConsolidation.duplicateNameClusters": 0,
-    "uiConsolidation.propSignatureClusters": 0,
-    "uiConsolidation.tokenSimilarityClusters": 0
+    "uiConsolidation.totalOpportunities": 22,
+    "uiConsolidation.highPriorityOpportunities": 2,
+    "uiConsolidation.duplicateNameClusters": 9,
+    "uiConsolidation.propSignatureClusters": 5,
+    "uiConsolidation.tokenSimilarityClusters": 8
   }
 }

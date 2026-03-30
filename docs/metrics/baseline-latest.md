@@ -8,16 +8,16 @@ canonical: true
 ---
 # Architecture & Performance Baseline
 
-Generated at: 2026-03-30T19:48:53.348Z
+Generated at: 2026-03-30T21:12:58.228Z
 
 ## Snapshot
 
-- Source files: 9128
-- Source lines: 1550768
-- use client files: 1945
-- Files >= 1000 LOC: 11
+- Source files: 9034
+- Source lines: 1517047
+- use client files: 1893
+- Files >= 1000 LOC: 8
 - Files >= 1500 LOC: 0
-- Largest file: `src/features/kangur/ui/components/KangurParentDashboardAiTutorWidget.tsx` (1278 LOC)
+- Largest file: `src/features/kangur/ui/components/parent-dashboard/KangurParentDashboardAiTutorWidget.tsx` (1278 LOC)
 - API routes: 30
 - API delegated server routes: 172
 - API routes without apiHandler/delegation: 0
@@ -25,8 +25,8 @@ Generated at: 2026-03-30T19:48:53.348Z
 - Cross-feature dependency pairs: 3
 - Shared -> features imports: 0
 - setInterval occurrences: 1
-- Prop-drilling chains (depth >= 3): 783
-- Prop-drilling chains (depth >= 4): 207
+- Prop-drilling chains (depth >= 3): 555
+- Prop-drilling chains (depth >= 4): 138
 
 ## Top API Hotspots (by LOC)
 
@@ -52,7 +52,7 @@ Generated at: 2026-03-30T19:48:53.348Z
 
 | Edge | References |
 | --- | ---: |
-| `kangur -> cms` | 16 |
+| `kangur -> cms` | 12 |
 | `filemaker -> document-editor` | 3 |
 | `admin -> foldertree` | 2 |
 
@@ -62,10 +62,8 @@ Generated at: 2026-03-30T19:48:53.348Z
 | --- | ---: |
 | `src/features/filemaker/__tests__/AdminFilemakerMailPages.recent-and-thread.test.tsx` | 3394 |
 | `src/features/filemaker/__tests__/AdminFilemakerMailPages.test.tsx` | 1441 |
-| `src/features/kangur/ui/components/KangurParentDashboardAiTutorWidget.tsx` | 1278 |
 | `src/features/kangur/ui/components/parent-dashboard/KangurParentDashboardAiTutorWidget.tsx` | 1278 |
 | `src/features/kangur/ui/components/AddingSynthesisGame.tsx` | 1235 |
-| `src/features/kangur/ui/components/KangurParentDashboardProgressWidget.tsx` | 1228 |
 | `src/features/kangur/ui/components/parent-dashboard/KangurParentDashboardProgressWidget.tsx` | 1228 |
 | `src/features/kangur/ui/pages/Game.test.tsx` | 1203 |
 | `src/features/filemaker/pages/AdminFilemakerMailPage.tsx` | 1191 |
@@ -74,9 +72,11 @@ Generated at: 2026-03-30T19:48:53.348Z
 | `src/features/kangur/social/admin/workspace/AdminKangurSocialPage.hooks.ts` | 1116 |
 | `src/features/kangur/ui/components/NumberBalanceRushGame.hooks.ts` | 1100 |
 | `src/features/kangur/social/admin/workspace/SocialPost.PlaywrightCaptureModal.test.tsx` | 1099 |
-| `src/features/kangur/ui/components/KangurGameOperationSelectorWidget.tsx` | 1035 |
 | `src/features/kangur/ui/components/game-setup/KangurGameOperationSelectorWidget.tsx` | 1035 |
 | `src/features/filemaker/server/filemaker-mail-service.test.ts` | 1005 |
 | `src/features/kangur/ui/pages/Lessons.test.tsx` | 1004 |
 | `src/features/ai/ai-paths/components/__tests__/run-trace-utils.test.ts` | 999 |
 | `src/shared/lib/products/services/product-ai-graph-model-payload.test.ts` | 991 |
+| `src/app/api/kangur/ai-tutor/chat/handler.ts` | 989 |
+| `src/features/filemaker/components/FilemakerMailSidebar.tsx` | 986 |
+| `src/features/kangur/social/admin/workspace/AdminKangurSocialPage.hooks.test.tsx` | 982 |

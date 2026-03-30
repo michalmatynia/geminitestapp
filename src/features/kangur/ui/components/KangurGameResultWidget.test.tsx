@@ -20,7 +20,7 @@ vi.mock('@/features/kangur/ui/context/KangurSubjectFocusContext', () => ({
   useKangurSubjectFocus: () => useKangurSubjectFocusMock(),
 }));
 
-vi.mock('@/features/kangur/ui/components/ResultScreen', () => ({
+vi.mock('@/features/kangur/ui/components/game-runtime/ResultScreen', () => ({
   default: () => <div data-testid='kangur-result-screen'>result-screen</div>,
 }));
 

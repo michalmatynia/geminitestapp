@@ -3,9 +3,9 @@
 import { useEffect } from 'react';
 import type { KangurAiTutorConversationContext } from '@/features/kangur/shared/contracts/kangur-ai-tutor';
 import type { KangurAiTutorContent } from '@/features/kangur/shared/contracts/kangur-ai-tutor-content';
-import type { KangurAiTutorWidgetState } from '../KangurAiTutorWidget.state';
-import { clearPersistedTutorSessionKey, persistTutorSessionKey } from '../KangurAiTutorWidget.storage';
-import type { TutorSurface } from '../KangurAiTutorWidget.types';
+import type { KangurAiTutorWidgetState } from '../ai-tutor-widget/KangurAiTutorWidget.state';
+import { clearPersistedTutorSessionKey, persistTutorSessionKey } from '../ai-tutor-widget/KangurAiTutorWidget.storage';
+import type { TutorSurface } from '../ai-tutor-widget/KangurAiTutorWidget.types';
 
 export function useTutorSessionLifecycle({
   allowCrossPagePersistence,

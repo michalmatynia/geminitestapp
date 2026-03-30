@@ -1,6 +1,6 @@
 import type {
   OperationSelectorFallbackCopy,
-} from './KangurGameOperationSelectorWidget.types';
+} from './game-setup/KangurGameOperationSelectorWidget.types';
 import { KANGUR_GEOMETRY_LESSON_COMPONENT_IDS } from '@/features/kangur/settings';
 import { normalizeSiteLocale } from '@/shared/lib/i18n/site-locale';
 

@@ -6,7 +6,7 @@ import { useRef } from 'react';
 import { useKangurAiTutorContent } from '@/features/kangur/ui/context/KangurAiTutorContentContext';
 import { useKangurAiTutor } from '@/features/kangur/ui/context/KangurAiTutorContext';
 
-import { useKangurAiTutorWidgetStateContext } from './KangurAiTutorWidget.state';
+import { useKangurAiTutorWidgetStateContext } from './ai-tutor-widget/KangurAiTutorWidget.state';
 import { KangurAiTutorRenderedPanel } from './KangurAiTutorPanelChrome.frame';
 import { KangurAiTutorPanelSurface } from './KangurAiTutorPanelChrome.surface';
 import {
@@ -41,7 +41,7 @@ import type {
   TutorMotionProfile,
   TutorPanelSnapState,
   TutorReducedMotionPanelTransitions,
-} from './KangurAiTutorWidget.shared';
+} from './ai-tutor-widget/KangurAiTutorWidget.shared';
 import type { KangurAiTutorPanelBodyContextValue } from './KangurAiTutorPanelBody.context';
 import type { CSSProperties, JSX, PointerEvent, ReactNode } from 'react';
 import type { Transition } from 'framer-motion';

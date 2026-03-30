@@ -26,11 +26,11 @@ import {
   formatTimeLimitValue,
   parseTimeLimitInput,
   type FilterOption,
-} from './KangurAssignmentManager.helpers';
+} from './assignment-manager/KangurAssignmentManager.helpers';
 import type {
   KangurAssignmentManagerProps,
   TimeLimitModalContext,
-} from './KangurAssignmentManager.types';
+} from './assignment-manager/KangurAssignmentManager.types';
 
 type AssignmentManagerViewState = {
   shouldShowCatalog: boolean;

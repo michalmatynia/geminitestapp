@@ -2,8 +2,8 @@
 
 import { useCallback, useEffect, useMemo, useState, type ComponentProps } from 'react';
 import { useTranslations } from 'next-intl';
-import type { KangurPrimaryNavigationProps } from '@/features/kangur/ui/components/KangurPrimaryNavigation.types';
-import { KangurTopNavigationController } from '@/features/kangur/ui/components/KangurTopNavigationController';
+import type { KangurPrimaryNavigationProps } from '@/features/kangur/ui/components/primary-navigation/KangurPrimaryNavigation.types';
+import { KangurTopNavigationController } from "@/features/kangur/ui/components/primary-navigation/KangurTopNavigationController";
 import { LazyAnimatePresence } from '@/features/kangur/ui/components/LazyAnimatePresence';
 import { KangurStandardPageLayout } from '@/features/kangur/ui/components/KangurStandardPageLayout';
 import { useKangurLoginModal } from '@/features/kangur/ui/context/KangurLoginModalContext';

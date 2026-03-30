@@ -1,8 +1,8 @@
 import { AnimatePresence, motion } from 'framer-motion';
 
-import { useKangurAiTutorWidgetStateContext } from './KangurAiTutorWidget.state';
+import { useKangurAiTutorWidgetStateContext } from './ai-tutor-widget/KangurAiTutorWidget.state';
 
-import type { TutorReducedMotionStableTransitions } from './KangurAiTutorWidget.shared';
+import type { TutorReducedMotionStableTransitions } from './ai-tutor-widget/KangurAiTutorWidget.shared';
 import type { CSSProperties, JSX } from 'react';
 
 const LIGHT_MODE_SELECTION_TEXT = 'rgb(120 53 15)';

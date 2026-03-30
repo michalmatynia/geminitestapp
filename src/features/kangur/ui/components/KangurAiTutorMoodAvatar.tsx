@@ -3,7 +3,7 @@ import NextImage from 'next/image';
 
 import { cn, sanitizeSvg } from '@/features/kangur/shared/utils';
 
-import type { TutorMoodAvatarProps } from './KangurAiTutorWidget.shared';
+import type { TutorMoodAvatarProps } from './ai-tutor-widget/KangurAiTutorWidget.shared';
 import type { JSX } from 'react';
 
 const KANGUR_TUTOR_AVATAR_IMAGE_SIZES = '48px';

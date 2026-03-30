@@ -1,6 +1,6 @@
 ---
 owner: 'Products / Platform Team'
-last_reviewed: '2026-03-28'
+last_reviewed: '2026-03-30'
 status: 'generated'
 doc_type: 'generated'
 scope: 'feature:validator'
@@ -60,18 +60,6 @@ Generated from `src/features/products/components/settings/validator-settings/val
 | controller.createSequenceActions | `createSequenceActions` | `src/features/products/components/settings/validator-settings/controller-sequence-actions.ts` | Builds all advanced template/group action handlers used by validator settings controller. |
 | controller.useValidatorSettingsController | `useValidatorSettingsController` | `src/features/products/components/settings/validator-settings/useValidatorSettingsController.ts` | Main orchestration hook for validator settings data, modal state, and mutations. |
 | scope.defaultValidatorPatternLists | `defaultValidatorPatternLists` | `src/features/admin/pages/validator-scope.ts` | Builds default pattern list configuration for each validator scope. |
-| scope.parseValidatorScope | `parseValidatorScope` | `src/features/admin/pages/validator-scope.ts` | Normalizes URL/query scope values to known validator scope enum. |
-| scope.normalizeValidatorPatternLists | `normalizeValidatorPatternLists` | `src/features/admin/pages/validator-scope.ts` | Normalizes and sanitizes persisted list manager payload. |
-| scope.parseValidatorPatternLists | `parseValidatorPatternLists` | `src/features/admin/pages/validator-scope.ts` | Parses settings JSON payload into normalized validator pattern lists. |
-| ui.ValidatorSettings | `ValidatorSettings` | `src/features/products/components/settings/ValidatorSettings.tsx` | Top-level validator settings composition root. |
-| ui.ValidatorSettingsProvider | `ValidatorSettingsProvider` | `src/features/products/components/settings/validator-settings/ValidatorSettingsContext.tsx` | Provides controller instance via React context. |
-| ui.useValidatorSettingsContext | `useValidatorSettingsContext` | `src/features/products/components/settings/validator-settings/ValidatorSettingsContext.tsx` | Reads validator settings controller from context. |
-| ui.ValidatorDefaultPanel | `ValidatorDefaultPanel` | `src/features/products/components/settings/validator-settings/ValidatorDefaultPanel.tsx` | Renders default-on/off validator behavior toggle for product forms. |
-| ui.ValidatorInstanceBehaviorPanel | `ValidatorInstanceBehaviorPanel` | `src/features/products/components/settings/validator-settings/ValidatorInstanceBehaviorPanel.tsx` | Renders deny behavior selectors for each validation scope. |
-| ui.ValidatorPatternTablePanel | `ValidatorPatternTablePanel` | `src/features/products/components/settings/validator-settings/ValidatorPatternTablePanel.tsx` | Renders pattern table, sequence controls, and row-level actions. |
-| ui.ValidatorPatternModal | `ValidatorPatternModal` | `src/features/products/components/settings/validator-settings/ValidatorPatternModal.tsx` | Renders modal for creating/editing validation patterns and runtime configuration. |
-| ui.AdminGlobalValidatorPage | `AdminGlobalValidatorPage` | `src/app/(admin)/admin/validator/ClientPage.tsx` | Switches active validator panel based on selected pattern list/scope. |
-| ui.AdminValidatorPatternListsPage | `AdminValidatorPatternListsPage` | `src/features/admin/pages/AdminValidatorPatternListsPage.tsx` | Manages creation, editing, locking, and persistence of validator pattern lists. |
 
 ### core.normalizeValidationDebounceMs
 
@@ -596,139 +584,7 @@ Generated from `src/features/products/components/settings/validator-settings/val
 - Symbol: `defaultValidatorPatternLists`
 - Purpose: Builds default pattern list configuration for each validator scope.
 - Parameters: 
-- Returns: Default list array with current timestamps.
+- Returns: Record of scope keys to pattern list arrays.
 - Errors: No throws.
-- Edge Cases: All default lists are deletion locked.
-- Example: `defaultValidatorPatternLists()`
-
-### scope.parseValidatorScope
-
-- File: `src/features/admin/pages/validator-scope.ts`
-- Symbol: `parseValidatorScope`
-- Purpose: Normalizes URL/query scope values to known validator scope enum.
-- Parameters: value: raw scope string from query or persisted payload.
-- Returns: Validated scope enum value.
-- Errors: No throws.
-- Edge Cases: Unknown values fallback to products scope.
-- Example: `parseValidatorScope('image-studio')`
-
-### scope.normalizeValidatorPatternLists
-
-- File: `src/features/admin/pages/validator-scope.ts`
-- Symbol: `normalizeValidatorPatternLists`
-- Purpose: Normalizes and sanitizes persisted list manager payload.
-- Parameters: value: candidate list array.
-- Returns: Validated unique-id list array.
-- Errors: No throws.
-- Edge Cases: Empty input returns defaults.
-- Example: `normalizeValidatorPatternLists(lists)`
-
-### scope.parseValidatorPatternLists
-
-- File: `src/features/admin/pages/validator-scope.ts`
-- Symbol: `parseValidatorPatternLists`
-- Purpose: Parses settings JSON payload into normalized validator pattern lists.
-- Parameters: value: persisted setting payload.
-- Returns: Normalized list array.
-- Errors: JSON parse errors fallback to defaults.
-- Edge Cases: Requires canonical envelope shape `{ version: 2, lists: [...] }`; unsupported payload variants fallback to defaults.
-- Example: `parseValidatorPatternLists(rawSetting)`
-
-### ui.ValidatorSettings
-
-- File: `src/features/products/components/settings/ValidatorSettings.tsx`
-- Symbol: `ValidatorSettings`
-- Purpose: Top-level validator settings composition root.
-- Parameters: 
-- Returns: Composed validator settings UI with modal and deletion confirmation.
-- Errors: No throws.
-- Edge Cases: Provider boundary is required for child panels.
-- Example: `<ValidatorSettings />`
-
-### ui.ValidatorSettingsProvider
-
-- File: `src/features/products/components/settings/validator-settings/ValidatorSettingsContext.tsx`
-- Symbol: `ValidatorSettingsProvider`
-- Purpose: Provides controller instance via React context.
-- Parameters: value: controller object. children: subtree.
-- Returns: Context provider element.
-- Errors: No throws.
-- Edge Cases: useValidatorSettingsContext throws if provider is missing.
-- Example: `<ValidatorSettingsProvider value={controller}>{children}</ValidatorSettingsProvider>`
-
-### ui.useValidatorSettingsContext
-
-- File: `src/features/products/components/settings/validator-settings/ValidatorSettingsContext.tsx`
-- Symbol: `useValidatorSettingsContext`
-- Purpose: Reads validator settings controller from context.
-- Parameters: 
-- Returns: ValidatorSettingsController object.
-- Errors: Throws internalError when used outside provider.
-- Edge Cases: No fallback controller is provided intentionally.
-- Example: `const controller = useValidatorSettingsContext()`
-
-### ui.ValidatorDefaultPanel
-
-- File: `src/features/products/components/settings/validator-settings/ValidatorDefaultPanel.tsx`
-- Symbol: `ValidatorDefaultPanel`
-- Purpose: Renders default-on/off validator behavior toggle for product forms.
-- Parameters: 
-- Returns: Panel section component.
-- Errors: No throws.
-- Edge Cases: Toggle disabled while settings mutation is pending.
-- Example: `<ValidatorDefaultPanel />`
-
-### ui.ValidatorInstanceBehaviorPanel
-
-- File: `src/features/products/components/settings/validator-settings/ValidatorInstanceBehaviorPanel.tsx`
-- Symbol: `ValidatorInstanceBehaviorPanel`
-- Purpose: Renders deny behavior selectors for each validation scope.
-- Parameters: 
-- Returns: Panel section component.
-- Errors: No throws.
-- Edge Cases: Options lock while settings mutation is pending.
-- Example: `<ValidatorInstanceBehaviorPanel />`
-
-### ui.ValidatorPatternTablePanel
-
-- File: `src/features/products/components/settings/validator-settings/ValidatorPatternTablePanel.tsx`
-- Symbol: `ValidatorPatternTablePanel`
-- Purpose: Renders pattern table, sequence controls, and row-level actions.
-- Parameters: 
-- Returns: Pattern management panel component.
-- Errors: No throws.
-- Edge Cases: Drag-drop is disabled while reorder mutations are active.
-- Example: `<ValidatorPatternTablePanel />`
-
-### ui.ValidatorPatternModal
-
-- File: `src/features/products/components/settings/validator-settings/ValidatorPatternModal.tsx`
-- Symbol: `ValidatorPatternModal`
-- Purpose: Renders modal for creating/editing validation patterns and runtime configuration.
-- Parameters: 
-- Returns: Modal component or null when closed.
-- Errors: No throws.
-- Edge Cases: Returns null when showModal is false.
-- Example: `<ValidatorPatternModal />`
-
-### ui.AdminGlobalValidatorPage
-
-- File: `src/app/(admin)/admin/validator/ClientPage.tsx`
-- Symbol: `AdminGlobalValidatorPage`
-- Purpose: Switches active validator panel based on selected pattern list/scope.
-- Parameters: 
-- Returns: Global validator admin page.
-- Errors: No throws.
-- Edge Cases: Falls back to first available list when query params are missing.
-- Example: `<AdminGlobalValidatorPage />`
-
-### ui.AdminValidatorPatternListsPage
-
-- File: `src/features/admin/pages/AdminValidatorPatternListsPage.tsx`
-- Symbol: `AdminValidatorPatternListsPage`
-- Purpose: Manages creation, editing, locking, and persistence of validator pattern lists.
-- Parameters: 
-- Returns: List manager page component.
-- Errors: Save errors are surfaced via toast.
-- Edge Cases: At least one list must remain after delete.
-- Example: `<AdminValidatorPatternListsPage />`
+- Edge Cases: Fallback to empty lists for missing scope keys.
+- Example: `const defaults = defaultValidatorPatternLists()`

@@ -32,7 +32,7 @@ import type {
   OperationSelectorFallbackCopy,
   KangurOperationSelectorRecommendationTarget,
   KangurOperationSelectorRecommendation,
-} from './KangurGameOperationSelectorWidget.types';
+} from './game-setup/KangurGameOperationSelectorWidget.types';
 
 export const OPERATION_LESSON_QUIZ_SCREENS: Partial<Record<KangurOperation, KangurGameScreen>> = {
   addition: 'addition_quiz',

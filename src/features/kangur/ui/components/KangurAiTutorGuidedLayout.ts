@@ -13,10 +13,10 @@ import {
   type TutorHorizontalSide,
   type TutorMotionPosition,
   type TutorMotionProfile,
-  getTutorEntryDirection,
-} from './KangurAiTutorWidget.shared';
+  getTutorEntryDirection
+  } from "./ai-tutor-widget/KangurAiTutorWidget.shared";
 
-import type { TutorPoint } from './KangurAiTutorWidget.types';
+import type { TutorPoint } from './ai-tutor-widget/KangurAiTutorWidget.types';
 import type { CSSProperties } from 'react';
 
 const FLOATING_TUTOR_ARROWHEAD_ANCHOR_X = 12.5;

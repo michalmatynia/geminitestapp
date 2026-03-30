@@ -15,7 +15,7 @@ vi.mock('@/features/kangur/ui/hooks/useOptionalNextAuthSession', () => ({
   useOptionalNextAuthSession: () => sessionMock(),
 }));
 
-vi.mock('@/features/kangur/ui/components/KangurPrimaryNavigation', () => ({
+vi.mock('@/features/kangur/ui/components/primary-navigation/KangurPrimaryNavigation', () => ({
   KangurPrimaryNavigation: (props: Record<string, unknown>) => {
     hostedNavigationPropsMock(props);
     return <div data-testid='kangur-top-navigation-hosted' />;

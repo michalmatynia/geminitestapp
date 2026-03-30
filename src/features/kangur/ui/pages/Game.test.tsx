@@ -294,7 +294,7 @@ vi.mock('@/features/kangur/ui/components/LogicalPatternsWorkshopGame', () => ({
   },
 }));
 
-vi.mock('@/features/kangur/ui/components/KangurGameOperationSelectorWidget', () => ({
+vi.mock('@/features/kangur/ui/components/game-setup/KangurGameOperationSelectorWidget', () => ({
   KangurGameOperationSelectorWidget: () => <div data-testid='kangur-operation-selector-widget' />,
 }));
 

@@ -357,7 +357,7 @@ vi.mock('@/features/kangur/ui/components/KangurStandardPageLayout', () => ({
   },
 }));
 
-vi.mock('@/features/kangur/ui/components/KangurTopNavigationController', () => ({
+vi.mock('@/features/kangur/ui/components/primary-navigation/KangurTopNavigationController', () => ({
   KangurTopNavigationController: ({ navigation }: { navigation: unknown }) => {
     topNavigationPropsMock(navigation);
     return <div data-testid='mock-top-nav' />;

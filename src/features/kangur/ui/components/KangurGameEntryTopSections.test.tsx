@@ -46,7 +46,7 @@ vi.mock('@/features/kangur/ui/hooks/useKangurLessons', () => ({
   },
 }));
 
-vi.mock('@/features/kangur/ui/components/OperationSelector', () => ({
+vi.mock('@/features/kangur/ui/components/game-setup/OperationSelector', () => ({
   default: () => <div data-testid='mock-operation-selector'>Mock operation selector</div>,
 }));
 
@@ -110,7 +110,7 @@ vi.mock('@/features/kangur/ui/components/assignments/KangurPracticeAssignmentBan
 }));
 
 import { KangurGameKangurSetupWidget } from '@/features/kangur/ui/components/KangurGameKangurSetupWidget';
-import { KangurGameOperationSelectorWidget } from '@/features/kangur/ui/components/KangurGameOperationSelectorWidget';
+import { KangurGameOperationSelectorWidget } from '@/features/kangur/ui/components/game-setup/KangurGameOperationSelectorWidget';
 
 describe('Kangur game entry top sections', () => {
   beforeEach(() => {
@@ -297,7 +297,7 @@ describe('Kangur game entry top sections', () => {
     );
     expect(screen.getByTestId('kangur-kangur-heading-art')).toBeInTheDocument();
     expect(
-      screen.getByText('Przygotuj sesje StudiQ Matematycznego.')
+      screen.getByText('Przygotuj sesję StudiQ Matematycznego.')
     ).toBeInTheDocument();
     expect(screen.getByTestId('mock-game-setup-momentum-kangur')).toBeInTheDocument();
     expect(screen.getByTestId('mock-kangur-setup')).toBeInTheDocument();

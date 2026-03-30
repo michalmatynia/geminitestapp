@@ -1,6 +1,6 @@
 'use client';
 
-import { ArrowLeft, Reply } from 'lucide-react';
+import { ArrowLeft, Eye, EyeOff, Forward, Reply, Trash2 } from 'lucide-react';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
@@ -54,11 +54,15 @@ export function AdminFilemakerMailThreadPage(): React.JSX.Element {
   const [detail, setDetail] = useState<FilemakerMailThreadDetail | null>(null);
   const [replyAccountId, setReplyAccountId] = useState('');
   const [replyTo, setReplyTo] = useState('');
+  const [replyCc, setReplyCc] = useState('');
+  const [replyBcc, setReplyBcc] = useState('');
   const [replySubject, setReplySubject] = useState('');
   const [replyInReplyTo, setReplyInReplyTo] = useState<string | null>(null);
   const [replyHtml, setReplyHtml] = useState('<p><br/></p>');
   const [isLoading, setIsLoading] = useState(true);
   const [isSending, setIsSending] = useState(false);
+  const [isTogglingRead, setIsTogglingRead] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
   const originPanel = searchParams.get('panel') === 'recent' ? 'recent' : null;
   const recentMailboxFilter = searchParams.get('recentMailbox');
   const recentUnreadOnly = searchParams.get('recentUnread') === '1';
@@ -116,8 +120,8 @@ export function AdminFilemakerMailThreadPage(): React.JSX.Element {
           threadId,
           inReplyTo: replyInReplyTo,
           to: parseFilemakerMailParticipantsInput(replyTo),
-          cc: [],
-          bcc: [],
+          cc: parseFilemakerMailParticipantsInput(replyCc),
+          bcc: parseFilemakerMailParticipantsInput(replyBcc),
           subject: replySubject,
           bodyHtml: replyHtml,
         }),
@@ -132,6 +136,49 @@ export function AdminFilemakerMailThreadPage(): React.JSX.Element {
       setIsSending(false);
     }
   };
+
+  const handleToggleRead = async (): Promise<void> => {
+    if (!detail) return;
+    setIsTogglingRead(true);
+    try {
+      const markRead = detail.thread.unreadCount > 0;
+      await fetchJson(
+        `/api/filemaker/mail/threads/${encodeURIComponent(threadId)}`,
+        {
+          method: 'PATCH',
+          body: JSON.stringify({ read: markRead }),
+        }
+      );
+      toast(markRead ? 'Marked as read.' : 'Marked as unread.', { variant: 'success' });
+      await load();
+    } catch (error) {
+      toast(error instanceof Error ? error.message : 'Failed to update thread.', {
+        variant: 'error',
+      });
+    } finally {
+      setIsTogglingRead(false);
+    }
+  };
+
+  const handleDelete = async (): Promise<void> => {
+    setIsDeleting(true);
+    try {
+      await fetchJson(
+        `/api/filemaker/mail/threads/${encodeURIComponent(threadId)}`,
+        { method: 'DELETE' }
+      );
+      toast('Thread deleted.', { variant: 'success' });
+      router.push(backHref);
+    } catch (error) {
+      toast(error instanceof Error ? error.message : 'Failed to delete thread.', {
+        variant: 'error',
+      });
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
+  const isThreadUnread = (detail?.thread.unreadCount ?? 0) > 0;
 
   return (
     <div className='page-section-compact grid gap-6 xl:grid-cols-[320px_minmax(0,1fr)]'>
@@ -158,6 +205,46 @@ export function AdminFilemakerMailThreadPage(): React.JSX.Element {
               variant: 'outline',
               onClick: () => router.push(backHref),
             },
+            ...(detail
+              ? [
+                  {
+                    key: 'toggle-read',
+                    label: isTogglingRead
+                      ? 'Updating...'
+                      : isThreadUnread
+                        ? 'Mark Read'
+                        : 'Mark Unread',
+                    icon: isThreadUnread
+                      ? <Eye className='size-4' />
+                      : <EyeOff className='size-4' />,
+                    variant: 'outline' as const,
+                    disabled: isTogglingRead,
+                    onClick: () => { void handleToggleRead(); },
+                  },
+                  {
+                    key: 'forward',
+                    label: 'Forward',
+                    icon: <Forward className='size-4' />,
+                    variant: 'outline' as const,
+                    onClick: () => {
+                      const lastMessage = detail.messages[detail.messages.length - 1];
+                      if (!lastMessage) return;
+                      const search = new URLSearchParams();
+                      search.set('accountId', detail.thread.accountId);
+                      search.set('forwardThreadId', threadId);
+                      router.push(`/admin/filemaker/mail/compose?${search.toString()}`);
+                    },
+                  },
+                  {
+                    key: 'delete',
+                    label: isDeleting ? 'Deleting...' : 'Delete',
+                    icon: <Trash2 className='size-4' />,
+                    variant: 'outline' as const,
+                    disabled: isDeleting,
+                    onClick: () => { void handleDelete(); },
+                  },
+                ]
+              : []),
           ]}
         />
 
@@ -211,9 +298,25 @@ export function AdminFilemakerMailThreadPage(): React.JSX.Element {
             </div>
 
             <FormSection title='Reply' className='space-y-4 p-4'>
-              <FormField label='Reply to'>
+              <FormField label='To'>
                 <Input value={replyTo} onChange={(event) => setReplyTo(event.target.value)} />
               </FormField>
+              <div className='grid gap-3 md:grid-cols-2'>
+                <FormField label='Cc'>
+                  <Input
+                    value={replyCc}
+                    onChange={(event) => setReplyCc(event.target.value)}
+                    placeholder='cc@example.com'
+                  />
+                </FormField>
+                <FormField label='Bcc'>
+                  <Input
+                    value={replyBcc}
+                    onChange={(event) => setReplyBcc(event.target.value)}
+                    placeholder='bcc@example.com'
+                  />
+                </FormField>
+              </div>
               <FormField label='Subject'>
                 <Input
                   value={replySubject}

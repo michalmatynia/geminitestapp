@@ -24,10 +24,9 @@ describe('UserNotRegisteredError', () => {
       'uppercase',
       'tracking-[0.18em]'
     );
-    expect(screen.getByRole('heading', { name: 'To konto nie ma jeszcze dostepu do Kangura' })).toHaveClass(
-      'text-3xl',
-      'font-extrabold'
-    );
+    expect(
+      screen.getByRole('heading', { name: 'To konto nie ma jeszcze dostepu do StudiQ' })
+    ).toHaveClass('text-3xl', 'font-extrabold');
     expect(screen.getByText(/Wyglada na to, ze Twoje konto/)).toBeInTheDocument();
     expect(screen.getByText('Jesli to pomylka, sprawdz:')).toBeInTheDocument();
   });

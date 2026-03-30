@@ -12,14 +12,14 @@ const {
 } = require('./run-next-build.cjs');
 
 describe('run-next-build', () => {
-  it('uses a higher default heap on Vercel builds', () => {
+  it('uses environment-specific default heap sizing', () => {
     const originalVercel = process.env.VERCEL;
     const originalHeap = process.env.NEXT_BUILD_HEAP_MB;
 
     try {
       delete process.env.NEXT_BUILD_HEAP_MB;
       process.env.VERCEL = '1';
-      expect(getDefaultHeapMb()).toBe('6144');
+      expect(getDefaultHeapMb()).toBe('3584');
 
       process.env.VERCEL = '';
       expect(getDefaultHeapMb()).toBe('8192');

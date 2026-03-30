@@ -25,6 +25,7 @@ import {
   KangurButton,
   KangurGlassPanel,
   KangurHeadline,
+  KangurInfoCard,
   KangurStatusChip,
 } from '@/features/kangur/ui/design/primitives';
 import { getKangurCheckButtonClassName } from '@/features/kangur/ui/components/KangurCheckButton';
@@ -316,6 +317,18 @@ export default function EnglishPronounsGame({
             })}
           </div>
         </div>
+
+        {feedback ? (
+          <KangurInfoCard
+            accent={feedback.kind === 'success' ? 'emerald' : 'amber'}
+            tone={feedback.kind === 'success' ? 'accent' : 'neutral'}
+            padding='sm'
+            className='w-full text-sm'
+            data-testid='english-pronouns-feedback'
+          >
+            <p className='font-semibold'>{feedback.text}</p>
+          </KangurInfoCard>
+        ) : null}
 
         <KangurButton
           type='button'

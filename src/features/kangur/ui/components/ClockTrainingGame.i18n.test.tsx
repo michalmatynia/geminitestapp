@@ -2,7 +2,7 @@
  * @vitest-environment jsdom
  */
 
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen, within } from '@testing-library/react';
 import { NextIntlClientProvider } from 'next-intl';
 import type { ReactNode } from 'react';
 import { describe, expect, it, vi } from 'vitest';
@@ -12,19 +12,30 @@ vi.mock('use-intl', async () => await vi.importActual<typeof import('use-intl')>
 
 import enMessages from '@/i18n/messages/en.json';
 import deMessages from '@/i18n/messages/de.json';
+import { KangurLessonPrintProvider } from '@/features/kangur/ui/context/KangurLessonPrintContext';
 
 import ClockTrainingGame from './ClockTrainingGame';
 
 const renderGame = (
   ui: ReactNode,
-  options: { locale?: string; messages?: typeof enMessages } = {}
+  options: {
+    locale?: string;
+    messages?: typeof enMessages;
+    onPrintPanel?: (panelId?: string) => void;
+  } = {}
 ) =>
   render(
     <NextIntlClientProvider
       locale={options.locale ?? 'en'}
       messages={options.messages ?? enMessages}
     >
-      {ui}
+      {options.onPrintPanel ? (
+        <KangurLessonPrintProvider onPrintPanel={options.onPrintPanel}>
+          {ui}
+        </KangurLessonPrintProvider>
+      ) : (
+        ui
+      )}
     </NextIntlClientProvider>
   );
 
@@ -36,10 +47,11 @@ describe('ClockTrainingGame i18n', () => {
         practiceTasks={[{ hours: 5, minutes: 45 }]}
       />
     );
+    const liveUi = screen.getByTestId('clock-training-live-ui');
 
     expect(screen.getByRole('button', { name: 'Practice mode' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Challenge' })).toBeInTheDocument();
-    expect(screen.getByText('Set the clock to the time')).toBeInTheDocument();
+    expect(within(liveUi).getByText('Set the clock to the time')).toBeInTheDocument();
     expect(screen.getByTestId('clock-task-prompt')).toHaveTextContent('Quarter to 6.');
     expect(screen.getByRole('button', { name: 'Check! ✅' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: '5-minute steps' })).toBeInTheDocument();
@@ -59,11 +71,12 @@ describe('ClockTrainingGame i18n', () => {
         section='combined'
       />
     );
+    const liveUi = screen.getByTestId('clock-training-live-ui');
 
     expect(screen.getByTestId('clock-training-guidance-title')).toHaveTextContent(
       'Reading the full time'
     );
-    expect(screen.getByText('Set the full time')).toBeInTheDocument();
+    expect(within(liveUi).getByText('Set the full time')).toBeInTheDocument();
     expect(screen.getByTestId('clock-task-prompt')).toHaveTextContent('Half past 11.');
   });
 
@@ -75,8 +88,9 @@ describe('ClockTrainingGame i18n', () => {
         section='minutes'
       />
     );
+    const liveUi = screen.getByTestId('clock-training-live-ui');
 
-    expect(screen.getByText('Set the minutes on the clock face')).toBeInTheDocument();
+    expect(within(liveUi).getByText('Set the minutes on the clock face')).toBeInTheDocument();
     expect(screen.getByTestId('clock-task-prompt')).toHaveTextContent(
       'Half an hour. The short hand stays on 12.'
     );
@@ -93,10 +107,11 @@ describe('ClockTrainingGame i18n', () => {
         messages: deMessages,
       }
     );
+    const liveUi = screen.getByTestId('clock-training-live-ui');
 
     expect(screen.getByRole('button', { name: 'Uebungsmodus' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Herausforderungsmodus' })).toBeInTheDocument();
-    expect(screen.getByText('Stelle die Uhr auf die Zeit')).toBeInTheDocument();
+    expect(within(liveUi).getByText('Stelle die Uhr auf die Zeit')).toBeInTheDocument();
     expect(screen.getByTestId('clock-task-prompt')).toHaveTextContent('Viertel vor 6.');
     expect(screen.getByRole('button', { name: 'Pruefen! ✅' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Spruenge zu 5 Min' })).toBeInTheDocument();
@@ -121,11 +136,12 @@ describe('ClockTrainingGame i18n', () => {
         messages: deMessages,
       }
     );
+    const liveUi = screen.getByTestId('clock-training-live-ui');
 
     expect(screen.getByTestId('clock-training-guidance-title')).toHaveTextContent(
       'Die ganze Uhrzeit lesen'
     );
-    expect(screen.getByText('Stelle die ganze Uhrzeit ein')).toBeInTheDocument();
+    expect(within(liveUi).getByText('Stelle die ganze Uhrzeit ein')).toBeInTheDocument();
     expect(screen.getByTestId('clock-task-prompt')).toHaveTextContent('Halb 12.');
   });
 
@@ -141,10 +157,47 @@ describe('ClockTrainingGame i18n', () => {
         messages: deMessages,
       }
     );
+    const liveUi = screen.getByTestId('clock-training-live-ui');
 
-    expect(screen.getByText('Stelle die Minuten auf dem Zifferblatt ein')).toBeInTheDocument();
+    expect(within(liveUi).getByText('Stelle die Minuten auf dem Zifferblatt ein')).toBeInTheDocument();
     expect(screen.getByTestId('clock-task-prompt')).toHaveTextContent(
       'Eine halbe Stunde. Der kurze Zeiger bleibt auf 12.'
     );
+  });
+
+  it('opts the lesson clock training shell into paged print mode and triggers panel print', () => {
+    const onPrintPanel = vi.fn();
+
+    renderGame(
+      <ClockTrainingGame
+        onFinish={vi.fn()}
+        practiceTasks={[{ hours: 5, minutes: 0 }]}
+        section='hours'
+      />,
+      { onPrintPanel }
+    );
+
+    expect(screen.getByTestId('clock-training-print-panel')).toHaveAttribute(
+      'data-kangur-print-panel',
+      'true'
+    );
+    expect(screen.getByTestId('clock-training-print-panel')).toHaveAttribute(
+      'data-kangur-print-paged-panel',
+      'true'
+    );
+    expect(screen.getByTestId('clock-training-print-panel')).toHaveAttribute(
+      'data-kangur-print-panel-id',
+      'clock-training-hours'
+    );
+    expect(screen.getByTestId('clock-training-print-summary')).toHaveTextContent('5:00');
+    expect(screen.getByTestId('clock-training-live-ui')).toHaveAttribute(
+      'data-kangur-print-exclude',
+      'true'
+    );
+
+    fireEvent.click(screen.getByTestId('clock-training-print-button'));
+
+    expect(onPrintPanel).toHaveBeenCalledTimes(1);
+    expect(onPrintPanel).toHaveBeenCalledWith('clock-training-hours');
   });
 });

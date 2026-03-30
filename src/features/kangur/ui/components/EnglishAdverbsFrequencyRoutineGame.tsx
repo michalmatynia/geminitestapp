@@ -818,6 +818,24 @@ export default function EnglishAdverbsFrequencyRoutineGame({
               </p>
             </KangurInfoCard>
           ) : null}
+          {feedback ? (
+            <KangurInfoCard
+              accent={feedbackAccent}
+              className='w-full'
+              padding='sm'
+              tone='accent'
+            >
+              <p
+                aria-atomic='true'
+                aria-live='polite'
+                className='text-sm font-semibold'
+                data-testid='english-adverbs-frequency-feedback'
+                role='status'
+              >
+                {feedback.text}
+              </p>
+            </KangurInfoCard>
+          ) : null}
 
           <div className='flex w-full flex-wrap items-center justify-between gap-3'>
             <div className={KANGUR_WRAP_CENTER_ROW_CLASSNAME}>

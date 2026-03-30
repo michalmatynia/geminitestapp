@@ -42,7 +42,7 @@ describe('mongoKangurLessonTemplateRepository bootstrap', () => {
     });
 
     const { mongoKangurLessonTemplateRepository } = await import(
-      './mongo-kangur-lesson-template-repository'
+      '../mongo-kangur-lesson-template-repository'
     );
 
     const result = await mongoKangurLessonTemplateRepository.listTemplates({
@@ -73,7 +73,7 @@ describe('mongoKangurLessonTemplateRepository bootstrap', () => {
     });
 
     const { mongoKangurLessonTemplateRepository } = await import(
-      './mongo-kangur-lesson-template-repository'
+      '../mongo-kangur-lesson-template-repository'
     );
 
     await mongoKangurLessonTemplateRepository.listTemplates({ locale: 'en' });
@@ -109,7 +109,7 @@ describe('mongoKangurLessonTemplateRepository bootstrap', () => {
     });
 
     const { mongoKangurLessonTemplateRepository } = await import(
-      './mongo-kangur-lesson-template-repository'
+      '../mongo-kangur-lesson-template-repository'
     );
 
     await mongoKangurLessonTemplateRepository.listTemplates({ locale: 'en' });
@@ -144,7 +144,7 @@ describe('mongoKangurLessonTemplateRepository bootstrap', () => {
     });
 
     const { mongoKangurLessonTemplateRepository } = await import(
-      './mongo-kangur-lesson-template-repository'
+      '../mongo-kangur-lesson-template-repository'
     );
 
     const result = await mongoKangurLessonTemplateRepository.listTemplates({
@@ -179,7 +179,7 @@ describe('mongoKangurLessonTemplateRepository bootstrap', () => {
     });
 
     const { mongoKangurLessonTemplateRepository } = await import(
-      './mongo-kangur-lesson-template-repository'
+      '../mongo-kangur-lesson-template-repository'
     );
 
     await mongoKangurLessonTemplateRepository.replaceTemplates(

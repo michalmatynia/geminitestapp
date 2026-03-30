@@ -228,6 +228,42 @@ export const filemakerMailThreadDetailSchema = z.object({
 export type FilemakerMailThreadDetailDto = z.infer<typeof filemakerMailThreadDetailSchema>;
 export type FilemakerMailThreadDetail = FilemakerMailThreadDetailDto;
 
+export const filemakerMailSearchHitSchema = z.object({
+  messageId: z.string(),
+  threadId: z.string(),
+  accountId: z.string(),
+  mailboxPath: z.string(),
+  subject: z.string(),
+  from: filemakerMailParticipantSchema.nullable().optional(),
+  to: z.array(filemakerMailParticipantSchema).default([]),
+  direction: filemakerMailMessageDirectionSchema,
+  sentAt: z.string().nullable().optional(),
+  receivedAt: z.string().nullable().optional(),
+  matchSnippet: z.string(),
+  matchField: z.enum(['subject', 'body', 'from', 'to', 'cc']),
+});
+export type FilemakerMailSearchHitDto = z.infer<typeof filemakerMailSearchHitSchema>;
+export type FilemakerMailSearchHit = FilemakerMailSearchHitDto;
+
+export const filemakerMailSearchResultGroupSchema = z.object({
+  threadId: z.string(),
+  threadSubject: z.string(),
+  accountId: z.string(),
+  mailboxPath: z.string(),
+  lastMessageAt: z.string(),
+  hits: z.array(filemakerMailSearchHitSchema),
+});
+export type FilemakerMailSearchResultGroupDto = z.infer<typeof filemakerMailSearchResultGroupSchema>;
+export type FilemakerMailSearchResultGroup = FilemakerMailSearchResultGroupDto;
+
+export const filemakerMailSearchResponseSchema = z.object({
+  query: z.string(),
+  totalHits: z.number().int().nonnegative(),
+  groups: z.array(filemakerMailSearchResultGroupSchema),
+});
+export type FilemakerMailSearchResponseDto = z.infer<typeof filemakerMailSearchResponseSchema>;
+export type FilemakerMailSearchResponse = FilemakerMailSearchResponseDto;
+
 export const filemakerMailSyncResultSchema = z.object({
   accountId: z.string(),
   foldersScanned: z.array(z.string()),

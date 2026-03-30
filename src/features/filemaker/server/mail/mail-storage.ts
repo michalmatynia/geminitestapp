@@ -36,6 +36,10 @@ export const ensureMailIndexes = async (): Promise<void> => {
       { accountId: 1, mailboxPath: 1, providerUid: 1 },
       { sparse: true }
     ),
+    mongo.collection<FilemakerMailMessageDocument>(MAIL_MESSAGES_COLLECTION).createIndex(
+      { subject: 'text', textBody: 'text', 'from.address': 'text', 'from.name': 'text' },
+      { name: 'mail_messages_text_search', default_language: 'none' }
+    ),
     mongo.collection<FilemakerMailSyncStateDocument>(MAIL_SYNC_STATES_COLLECTION).createIndex({ accountId: 1, mailboxPath: 1 }, { unique: true }),
     mongo.collection<FilemakerMailOutboxDocument>(MAIL_OUTBOX_COLLECTION).createIndex({ accountId: 1, status: 1 }),
   ]);
@@ -143,4 +147,34 @@ export const upsertOutboxEntry = async (entry: FilemakerMailOutboxEntry): Promis
     { $set: entry },
     { upsert: true }
   );
+};
+
+export const searchMailMessages = async (input: {
+  query: string;
+  accountId?: string | null;
+  limit?: number;
+}): Promise<FilemakerMailMessage[]> => {
+  const mongo = await getMongoDb();
+  const filter: Record<string, unknown> = {};
+  if (input.accountId) filter['accountId'] = input.accountId;
+
+  const escapedQuery = input.query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  filter['$or'] = [
+    { subject: { $regex: escapedQuery, $options: 'i' } },
+    { textBody: { $regex: escapedQuery, $options: 'i' } },
+    { htmlBody: { $regex: escapedQuery, $options: 'i' } },
+    { 'from.address': { $regex: escapedQuery, $options: 'i' } },
+    { 'from.name': { $regex: escapedQuery, $options: 'i' } },
+    { 'to.address': { $regex: escapedQuery, $options: 'i' } },
+    { 'to.name': { $regex: escapedQuery, $options: 'i' } },
+    { 'cc.address': { $regex: escapedQuery, $options: 'i' } },
+    { 'cc.name': { $regex: escapedQuery, $options: 'i' } },
+  ];
+
+  return await mongo
+    .collection<FilemakerMailMessageDocument>(MAIL_MESSAGES_COLLECTION)
+    .find(filter)
+    .sort({ receivedAt: -1, sentAt: -1 })
+    .limit(input.limit ?? 200)
+    .toArray();
 };

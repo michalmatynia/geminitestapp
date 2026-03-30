@@ -46,7 +46,7 @@ describe('mongoKangurLessonRepository fallback', () => {
     }));
 
     const { mongoKangurLessonRepository } = await import(
-      './mongo-kangur-lesson-repository'
+      '../mongo-kangur-lesson-repository'
     );
     const { createDefaultKangurLessons } = await import('@/features/kangur/settings');
 
@@ -70,7 +70,7 @@ describe('mongoKangurLessonRepository fallback', () => {
     }));
 
     const { mongoKangurLessonRepository } = await import(
-      './mongo-kangur-lesson-repository'
+      '../mongo-kangur-lesson-repository'
     );
 
     const result = await mongoKangurLessonRepository.listLessons({
@@ -130,7 +130,7 @@ describe('mongoKangurLessonRepository fallback', () => {
     }));
 
     const { mongoKangurLessonRepository } = await import(
-      './mongo-kangur-lesson-repository'
+      '../mongo-kangur-lesson-repository'
     );
 
     const result = await mongoKangurLessonRepository.listLessons({
@@ -187,7 +187,7 @@ describe('mongoKangurLessonRepository fallback', () => {
     }));
 
     const { mongoKangurLessonRepository } = await import(
-      './mongo-kangur-lesson-repository'
+      '../mongo-kangur-lesson-repository'
     );
 
     const result = await mongoKangurLessonRepository.listLessons({
@@ -220,7 +220,7 @@ describe('mongoKangurLessonRepository fallback', () => {
     }));
 
     const { mongoKangurLessonRepository } = await import(
-      './mongo-kangur-lesson-repository'
+      '../mongo-kangur-lesson-repository'
     );
 
     const result = await mongoKangurLessonRepository.listLessons({

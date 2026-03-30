@@ -10,6 +10,7 @@ export type FilemakerMailMasterNode =
   | { kind: 'mail_attention' }
   | { kind: 'mail_attention_account'; accountId: string }
   | { kind: 'mail_new_account' }
+  | { kind: 'mail_search' }
   | { kind: 'mail_account'; accountId: string }
   | { kind: 'mail_account_compose'; accountId: string }
   | { kind: 'mail_account_sync'; accountId: string }
@@ -37,6 +38,9 @@ export const toFilemakerMailNewAccountNodeId = (): string =>
 
 export const toFilemakerMailAttentionNodeId = (): string =>
   `${FILEMAKER_MAIL_NODE_PREFIX}:attention`;
+
+export const toFilemakerMailSearchNodeId = (): string =>
+  `${FILEMAKER_MAIL_NODE_PREFIX}:search`;
 
 export const toFilemakerMailAttentionAccountNodeId = (accountId: string): string =>
   `${FILEMAKER_MAIL_NODE_PREFIX}:attention-account:${encodeURIComponent(accountId)}`;
@@ -89,6 +93,9 @@ export const parseFilemakerMailMasterNodeId = (
   }
   if (nodeId === toFilemakerMailAttentionNodeId()) {
     return { kind: 'mail_attention' };
+  }
+  if (nodeId === toFilemakerMailSearchNodeId()) {
+    return { kind: 'mail_search' };
   }
   const parts = nodeId.split(':');
   if (parts.length < 3) return null;
@@ -272,6 +279,17 @@ export const buildFilemakerMailMasterNodes = (input: {
 
   return [
     ...attentionNodes,
+    {
+      id: toFilemakerMailSearchNodeId(),
+      type: 'folder',
+      kind: 'mail_search',
+      parentId: null,
+      name: 'Search Messages',
+      path: 'mail/search',
+      sortOrder: -120,
+      icon: null,
+      metadata: {},
+    },
     {
       id: toFilemakerMailNewAccountNodeId(),
       type: 'folder',

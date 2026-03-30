@@ -10,7 +10,7 @@ const {
   captureExceptionMock: vi.fn(),
 }));
 
-vi.mock('./mongo-kangur-score-repository', () => ({
+vi.mock('../mongo-kangur-score-repository', () => ({
   mongoKangurScoreRepository: {
     createScore: mongoCreateScoreMock,
     listScores: mongoListScoresMock,
@@ -23,7 +23,7 @@ vi.mock('@/features/kangur/shared/utils/observability/error-system', () => ({
   },
 }));
 
-import { getKangurScoreRepository } from './index';
+import { getKangurScoreRepository } from '../index';
 
 describe('kangur score repository observability wrapper', () => {
   beforeEach(() => {

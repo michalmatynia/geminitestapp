@@ -9,12 +9,12 @@ vi.mock('@/features/auth/server', () => ({
   readOptionalServerAuthSession: vi.fn(),
 }));
 
-vi.mock('./kangur-learner-repository', () => ({
+vi.mock('../kangur-learner-repository', () => ({
   getKangurLearnerById: vi.fn(),
   listKangurLearnersByOwner: vi.fn(),
 }));
 
-vi.mock('./kangur-learner-session', () => ({
+vi.mock('../kangur-learner-session', () => ({
   readKangurLearnerSession: vi.fn(),
 }));
 
@@ -23,8 +23,8 @@ import { kangurAuthUserSchema } from '@kangur/contracts';
 import { findAuthUserById } from '@/server/auth';
 import { readOptionalServerAuthSession } from '@/features/auth/server';
 
-import { listKangurLearnersByOwner } from './kangur-learner-repository';
-import { resolveKangurActor, toKangurAuthUser, type KangurParentActor } from './kangur-actor';
+import { listKangurLearnersByOwner } from '../kangur-learner-repository';
+import { resolveKangurActor, toKangurAuthUser, type KangurParentActor } from '../kangur-actor';
 
 const learner = {
   id: 'learner-1',

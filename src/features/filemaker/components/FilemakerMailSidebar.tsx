@@ -24,6 +24,7 @@ import {
   toFilemakerMailAccountSyncNodeId,
   toFilemakerMailFolderNodeId,
   toFilemakerMailNewAccountNodeId,
+  toFilemakerMailSearchNodeId,
   toFilemakerMailThreadNodeId,
 } from '../mail-master-tree';
 import {
@@ -44,6 +45,7 @@ import {
   matchesFilemakerMailRecentThreadFilters as matchesRecentThreadFilters,
   RefreshCcw,
   renderFilemakerMailCountBadge as renderCountBadge,
+  Search,
   Settings2,
   ShieldAlert,
   toFilemakerAccountStatusToggleDraft as toAccountStatusToggleDraft,
@@ -64,7 +66,7 @@ type FilemakerMailSidebarProps = {
   selectedAccountId?: string | null;
   selectedMailboxPath?: string | null;
   selectedThreadId?: string | null;
-  selectedPanel?: 'account' | 'attention' | 'compose' | 'recent' | 'settings' | null;
+  selectedPanel?: 'account' | 'attention' | 'compose' | 'recent' | 'search' | 'settings' | null;
   originPanel?: 'recent' | null;
   recentMailboxFilter?: string | null;
   recentUnreadOnly?: boolean;
@@ -73,6 +75,7 @@ type FilemakerMailSidebarProps = {
   onRecentQueryChange?: (value: string) => void;
   onRecentUnreadOnlyChange?: (value: boolean) => void;
   onSelectAttention?: () => void;
+  onSelectSearch?: () => void;
   onSelectAccount?: (accountId: string) => void;
   onSelectAccountSettings?: (accountId: string) => void;
   onSelectFolder?: (selection: { accountId: string; mailboxPath: string }) => void;
@@ -93,6 +96,7 @@ export function FilemakerMailSidebar({
   onRecentQueryChange,
   onRecentUnreadOnlyChange,
   onSelectAttention,
+  onSelectSearch,
   onSelectAccount,
   onSelectAccountSettings,
   onSelectFolder,
@@ -162,6 +166,9 @@ export function FilemakerMailSidebar({
     [accounts, folders, threads, visibleRecentThreads]
   );
   const selectedNodeId = useMemo(() => {
+    if (selectedPanel === 'search') {
+      return toFilemakerMailSearchNodeId();
+    }
     if (selectedPanel === 'attention') {
       return toFilemakerMailAttentionNodeId();
     }
@@ -326,6 +333,7 @@ export function FilemakerMailSidebar({
           ? input.node.metadata['messageCount']
           : 0;
       const isNewAccount = parsed?.kind === 'mail_new_account';
+      const isSearch = parsed?.kind === 'mail_search';
       const isAttention = parsed?.kind === 'mail_attention';
       const isAttentionAccount = parsed?.kind === 'mail_attention_account';
       const isAccount = parsed?.kind === 'mail_account';
@@ -401,6 +409,8 @@ export function FilemakerMailSidebar({
           : '';
       const Icon = isNewAccount
         ? MailPlus
+        : isSearch
+        ? Search
         : isAttention
         ? ShieldAlert
         : isAttentionAccount
@@ -447,6 +457,14 @@ export function FilemakerMailSidebar({
                 return;
               }
               router.push('/admin/filemaker/mail');
+              return;
+            }
+            if (parsed?.kind === 'mail_search') {
+              if (onSelectSearch) {
+                onSelectSearch();
+                return;
+              }
+              router.push(buildMailSelectionHref({ panel: 'search' }));
               return;
             }
             if (parsed?.kind === 'mail_attention') {
@@ -716,6 +734,7 @@ export function FilemakerMailSidebar({
       accounts,
       onAccountUpdated,
       onSelectAttention,
+      onSelectSearch,
       onSelectAccount,
       onSelectAccountSettings,
       onSelectFolder,

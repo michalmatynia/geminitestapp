@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { isKangurAuthStatusError, isKangurStatusError } from './status-errors';
+import { isKangurAuthStatusError, isKangurStatusError } from '../status-errors';
 
 describe('isKangurStatusError', () => {
   it('returns true only when error-like value contains numeric status', () => {

@@ -11,7 +11,7 @@ import {
   planKangurAssignmentCopies,
   resolveAdoptedLegacyUserKey,
   selectKangurScoreBackfillLearner,
-} from './kangur-learner-ownership-migration';
+} from '../kangur-learner-ownership-migration';
 
 const buildLearner = (overrides: Partial<KangurLearnerProfile> = {}): KangurLearnerProfile => ({
   id: overrides.id ?? 'learner-1',

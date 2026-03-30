@@ -77,7 +77,7 @@ vi.mock('@/features/kangur/shared/utils/observability/error-system-client', () =
 import {
   KANGUR_AI_TUTOR_APP_SETTINGS_KEY as importedKangurAiTutorAppSettingsKey,
   KANGUR_AI_TUTOR_SETTINGS_KEY as importedKangurAiTutorSettingsKey,
-} from '@/features/kangur/settings-ai-tutor';
+} from '@/features/kangur/ai-tutor/settings';
 import { DEFAULT_KANGUR_AI_TUTOR_CONTENT as importedDefaultKangurAiTutorContent } from '@/shared/contracts/kangur-ai-tutor-content';
 import { ApiError as ImportedApiError } from '@/shared/lib/api-client';
 import {

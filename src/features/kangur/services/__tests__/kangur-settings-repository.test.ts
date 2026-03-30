@@ -89,7 +89,7 @@ describe('kangur-settings-repository', () => {
       })
     );
 
-    const { readKangurSettingValue } = await import('./kangur-settings-repository');
+    const { readKangurSettingValue } = await import('../kangur-settings-repository');
 
     await expect(readKangurSettingValue('kangur_launch_route')).resolves.toBe(
       '{"route":"dedicated_app"}'
@@ -123,7 +123,7 @@ describe('kangur-settings-repository', () => {
       })
     );
 
-    const { readKangurSettingValue } = await import('./kangur-settings-repository');
+    const { readKangurSettingValue } = await import('../kangur-settings-repository');
 
     await expect(readKangurSettingValue('kangur_theme_daily')).resolves.toBe('{"accent":"sun"}');
     await vi.waitFor(() => expect(updateOneMock).toHaveBeenCalledTimes(1));
@@ -170,7 +170,7 @@ describe('kangur-settings-repository', () => {
       })
     );
 
-    const { listKangurSettingsByKeys } = await import('./kangur-settings-repository');
+    const { listKangurSettingsByKeys } = await import('../kangur-settings-repository');
 
     await expect(
       listKangurSettingsByKeys([
@@ -250,7 +250,7 @@ describe('kangur-settings-repository', () => {
       })
     );
 
-    const { listKangurSettingsByKeys } = await import('./kangur-settings-repository');
+    const { listKangurSettingsByKeys } = await import('../kangur-settings-repository');
 
     await expect(
       listKangurSettingsByKeys(['kangur_theme_daily', 'kangur_theme_dawn'])
@@ -285,7 +285,7 @@ describe('kangur-settings-repository', () => {
       })
     );
 
-    const { listKangurSettingsByKeys } = await import('./kangur-settings-repository');
+    const { listKangurSettingsByKeys } = await import('../kangur-settings-repository');
 
     await expect(listKangurSettingsByKeys(['kangur_theme_daily'])).resolves.toEqual([]);
     await vi.waitFor(() => expect(createIndexMock).toHaveBeenCalledTimes(1));

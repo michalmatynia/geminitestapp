@@ -84,7 +84,7 @@ const KANGUR_VISUAL_CONTRACTS = [
     requiredTokens: ['data-testid=\'kangur-error-shell\'', "href='/kangur'"],
   },
   {
-    file: 'src/features/kangur/ui/KangurLoginPage.tsx',
+    file: 'src/features/kangur/ui/KangurLoginPage.components.tsx',
     requiredTokens: [
       'data-testid=\'kangur-login-shell\'',
       "translations('defaultLoginTitle')",
@@ -92,7 +92,7 @@ const KANGUR_VISUAL_CONTRACTS = [
     ],
   },
   {
-    file: 'src/app/(frontend)/kangur/login/page.tsx',
+    file: 'src/app/(frontend)/route-helpers/kangur-login-alias-route-helpers.tsx',
     requiredTokens: ['KangurFeatureRouteShell', "translations('routeLoading')"],
   },
   {

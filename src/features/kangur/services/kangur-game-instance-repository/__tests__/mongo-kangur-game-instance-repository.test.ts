@@ -4,7 +4,7 @@
 
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { createDefaultKangurGames } from '@/features/kangur/games';
+import { getKangurGameBuiltInInstancesForGame, getKangurGameDefinition } from '@/features/kangur/games';
 
 const { getMongoDbMock } = vi.hoisted(() => ({
   getMongoDbMock: vi.fn(),
@@ -14,14 +14,14 @@ vi.mock('@/shared/lib/db/mongo-client', () => ({
   getMongoDb: getMongoDbMock,
 }));
 
-describe('listKangurGames bootstrap', () => {
+describe('mongoKangurGameInstanceRepository bootstrap', () => {
   beforeEach(() => {
     vi.resetModules();
     vi.clearAllMocks();
   });
 
-  it('seeds default Kangur games before reading the collection', async () => {
-    const expected = createDefaultKangurGames();
+  it('seeds built-in game instances before reading a game', async () => {
+    const expected = getKangurGameBuiltInInstancesForGame(getKangurGameDefinition('clock_training'));
     const toArrayMock = vi.fn().mockResolvedValue(expected);
     const collection = {
       bulkWrite: vi.fn().mockResolvedValue({ acknowledged: true }),
@@ -36,16 +36,20 @@ describe('listKangurGames bootstrap', () => {
       collection: vi.fn().mockReturnValue(collection),
     });
 
-    const { listKangurGames } = await import('./mongo-kangur-game-repository');
+    const { mongoKangurGameInstanceRepository } = await import(
+      '../mongo-kangur-game-instance-repository'
+    );
 
-    const result = await listKangurGames();
+    const result = await mongoKangurGameInstanceRepository.listInstances({
+      gameId: 'clock_training',
+    });
 
     expect(collection.bulkWrite).toHaveBeenCalledTimes(1);
     expect(result).toEqual(expected);
   });
 
-  it('still upserts defaults when Mongo already returns some game rows', async () => {
-    const expected = createDefaultKangurGames();
+  it('can derive the game id from an instance id and still backfill built-ins', async () => {
+    const expected = getKangurGameBuiltInInstancesForGame(getKangurGameDefinition('clock_training'));
     const collection = {
       bulkWrite: vi.fn().mockResolvedValue({ acknowledged: true }),
       createIndex: vi.fn().mockResolvedValue('ok'),
@@ -59,9 +63,13 @@ describe('listKangurGames bootstrap', () => {
       collection: vi.fn().mockReturnValue(collection),
     });
 
-    const { listKangurGames } = await import('./mongo-kangur-game-repository');
+    const { mongoKangurGameInstanceRepository } = await import(
+      '../mongo-kangur-game-instance-repository'
+    );
 
-    await listKangurGames();
+    await mongoKangurGameInstanceRepository.listInstances({
+      instanceId: 'clock_training:instance:default',
+    });
 
     expect(collection.bulkWrite).toHaveBeenCalledTimes(1);
   });

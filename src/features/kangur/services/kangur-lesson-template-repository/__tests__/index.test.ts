@@ -23,7 +23,7 @@ vi.mock('@/features/kangur/shared/utils/observability/error-system', () => ({
   },
 }));
 
-vi.mock('./mongo-kangur-lesson-template-repository', () => ({
+vi.mock('../mongo-kangur-lesson-template-repository', () => ({
   mongoKangurLessonTemplateRepository: mongoRepositoryMock,
 }));
 
@@ -34,7 +34,7 @@ describe('getKangurLessonTemplateRepository', () => {
   });
 
   it('forwards locale arguments to the Mongo template repository', async () => {
-    const { getKangurLessonTemplateRepository } = await import('./index');
+    const { getKangurLessonTemplateRepository } = await import('../index');
 
     const repository = await getKangurLessonTemplateRepository();
     const template = {

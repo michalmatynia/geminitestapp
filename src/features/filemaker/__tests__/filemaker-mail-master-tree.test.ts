@@ -14,6 +14,7 @@ import {
   toFilemakerMailFolderNodeId,
   toFilemakerMailNewAccountNodeId,
   toFilemakerMailRecentThreadNodeId,
+  toFilemakerMailSearchNodeId,
   toFilemakerMailThreadNodeId,
 } from '../mail-master-tree';
 
@@ -110,8 +111,16 @@ describe('filemaker mail master tree', () => {
       ],
     });
 
-    expect(nodes).toHaveLength(11);
+    expect(nodes).toHaveLength(12);
     expect(nodes[0]).toEqual(
+      expect.objectContaining({
+        id: toFilemakerMailSearchNodeId(),
+        kind: 'mail_search',
+        name: 'Search Messages',
+        parentId: null,
+      })
+    );
+    expect(nodes[1]).toEqual(
       expect.objectContaining({
         id: toFilemakerMailNewAccountNodeId(),
         kind: 'mail_new_account',
@@ -119,7 +128,7 @@ describe('filemaker mail master tree', () => {
         parentId: null,
       })
     );
-    expect(nodes[1]).toEqual(
+    expect(nodes[2]).toEqual(
       expect.objectContaining({
         id: toFilemakerMailAccountNodeId('account-1'),
         kind: 'mail_account',
@@ -133,7 +142,7 @@ describe('filemaker mail master tree', () => {
         }),
       })
     );
-    expect(nodes[2]).toEqual(
+    expect(nodes[3]).toEqual(
       expect.objectContaining({
         id: toFilemakerMailAccountComposeNodeId('account-1'),
         kind: 'mail_account_compose',
@@ -141,7 +150,7 @@ describe('filemaker mail master tree', () => {
         parentId: toFilemakerMailAccountNodeId('account-1'),
       })
     );
-    expect(nodes[3]).toEqual(
+    expect(nodes[4]).toEqual(
       expect.objectContaining({
         id: toFilemakerMailAccountSyncNodeId('account-1'),
         kind: 'mail_account_sync',
@@ -153,7 +162,7 @@ describe('filemaker mail master tree', () => {
         }),
       })
     );
-    expect(nodes[4]).toEqual(
+    expect(nodes[5]).toEqual(
       expect.objectContaining({
         id: toFilemakerMailAccountStatusToggleNodeId('account-1'),
         kind: 'mail_account_status_toggle',
@@ -165,7 +174,7 @@ describe('filemaker mail master tree', () => {
         }),
       })
     );
-    expect(nodes[5]).toEqual(
+    expect(nodes[6]).toEqual(
       expect.objectContaining({
         id: toFilemakerMailAccountRecentNodeId('account-1'),
         kind: 'mail_account_recent',
@@ -173,7 +182,7 @@ describe('filemaker mail master tree', () => {
         parentId: toFilemakerMailAccountNodeId('account-1'),
       })
     );
-    expect(nodes[6]).toEqual(
+    expect(nodes[7]).toEqual(
       expect.objectContaining({
         id: toFilemakerMailRecentThreadNodeId('account-1', 'Sent', 'thread-2'),
         type: 'file',
@@ -187,7 +196,7 @@ describe('filemaker mail master tree', () => {
         }),
       })
     );
-    expect(nodes[7]).toEqual(
+    expect(nodes[8]).toEqual(
       expect.objectContaining({
         id: toFilemakerMailAccountSettingsNodeId('account-1'),
         kind: 'mail_account_settings',
@@ -199,7 +208,7 @@ describe('filemaker mail master tree', () => {
         }),
       })
     );
-    expect(nodes[8]).toEqual(
+    expect(nodes[9]).toEqual(
       expect.objectContaining({
         id: toFilemakerMailFolderNodeId('account-1', 'INBOX'),
         kind: 'mail_folder',
@@ -211,7 +220,7 @@ describe('filemaker mail master tree', () => {
         }),
       })
     );
-    expect(nodes[9]).toEqual(
+    expect(nodes[10]).toEqual(
       expect.objectContaining({
         id: toFilemakerMailThreadNodeId('account-1', 'INBOX', 'thread-1'),
         type: 'file',
@@ -225,7 +234,7 @@ describe('filemaker mail master tree', () => {
         }),
       })
     );
-    expect(nodes[10]).toEqual(
+    expect(nodes[11]).toEqual(
       expect.objectContaining({
         id: toFilemakerMailFolderNodeId('account-1', 'Sent'),
         kind: 'mail_folder',
@@ -302,6 +311,9 @@ describe('filemaker mail master tree', () => {
     ).toEqual({
       kind: 'mail_attention_account',
       accountId: 'account-1',
+    });
+    expect(parseFilemakerMailMasterNodeId(toFilemakerMailSearchNodeId())).toEqual({
+      kind: 'mail_search',
     });
     expect(parseFilemakerMailMasterNodeId(toFilemakerMailNewAccountNodeId())).toEqual({
       kind: 'mail_new_account',

@@ -290,6 +290,44 @@ describe('useSocialPostCrud', () => {
     );
   });
 
+  it('recovers publish success when the client times out but the refreshed post is already published', async () => {
+    const deps = createDeps();
+    const { queryClient, Wrapper } = createWrapper();
+    const queryKey = QUERY_KEYS.kangur.socialPosts({ scope: 'admin', limit: null });
+    const publishedPost = {
+      ...activePost,
+      status: 'published' as const,
+      publishedAt: '2026-03-27T12:31:00.000Z',
+      linkedinPostId: 'urn:li:share:123',
+      linkedinUrl: 'https://www.linkedin.com/feed/update/urn:li:share:123/',
+      publishError: null,
+    };
+    queryClient.setQueryData(queryKey, [activePost]);
+    publishMutateAsyncMock.mockRejectedValueOnce(new Error('Request timeout after 15000ms'));
+    fetchKangurSocialPostsMock.mockResolvedValueOnce([publishedPost]);
+
+    const { result } = renderHook(() => useSocialPostCrud(deps), {
+      wrapper: Wrapper,
+    });
+
+    await act(async () => {
+      await result.current.handlePublish();
+    });
+
+    expect(fetchKangurSocialPostsMock).toHaveBeenCalledWith({ scope: 'admin' });
+    expect(queryClient.getQueryData(queryKey)).toEqual([publishedPost]);
+    expect(toastMock).toHaveBeenCalledWith('Published to LinkedIn.', { variant: 'success' });
+    expect(captureExceptionMock).not.toHaveBeenCalled();
+    expect(logKangurClientErrorMock).not.toHaveBeenCalled();
+    expect(trackKangurClientEventMock).toHaveBeenCalledWith(
+      'kangur_social_post_publish_success',
+      expect.objectContaining({
+        postId: 'post-1',
+        recoveredPublishState: true,
+      })
+    );
+  });
+
   it('shows the saved publishError after quick publish fails and skips noisy client exception reporting', async () => {
     const deps = createDeps();
     const publishedFailurePost = {
@@ -315,6 +353,37 @@ describe('useSocialPostCrud', () => {
       'LinkedIn post failed: selected connection is missing publish permissions.',
       { variant: 'error' }
     );
+    expect(captureExceptionMock).not.toHaveBeenCalled();
+    expect(logKangurClientErrorMock).not.toHaveBeenCalled();
+  });
+
+  it('recovers quick publish success when the client times out but the refreshed post is already published', async () => {
+    const deps = createDeps();
+    const { queryClient, Wrapper } = createWrapper();
+    const queryKey = QUERY_KEYS.kangur.socialPosts({ scope: 'admin', limit: null });
+    const publishedPost = {
+      ...activePost,
+      status: 'published' as const,
+      publishedAt: '2026-03-27T12:31:00.000Z',
+      linkedinPostId: 'urn:li:share:456',
+      linkedinUrl: 'https://www.linkedin.com/feed/update/urn:li:share:456/',
+      publishError: null,
+    };
+    queryClient.setQueryData(queryKey, [activePost]);
+    publishMutateAsyncMock.mockRejectedValueOnce(new Error('Request timeout after 15000ms'));
+    fetchKangurSocialPostsMock.mockResolvedValueOnce([publishedPost]);
+
+    const { result } = renderHook(() => useSocialPostCrud(deps), {
+      wrapper: Wrapper,
+    });
+
+    await act(async () => {
+      await expect(result.current.handleQuickPublishPost('post-1')).resolves.toBeUndefined();
+    });
+
+    expect(fetchKangurSocialPostsMock).toHaveBeenCalledWith({ scope: 'admin' });
+    expect(queryClient.getQueryData(queryKey)).toEqual([publishedPost]);
+    expect(toastMock).toHaveBeenCalledWith('Published to LinkedIn.', { variant: 'success' });
     expect(captureExceptionMock).not.toHaveBeenCalled();
     expect(logKangurClientErrorMock).not.toHaveBeenCalled();
   });

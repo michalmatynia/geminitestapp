@@ -1,11 +1,13 @@
 // @ts-nocheck
 'use client';
 
+import { Printer } from 'lucide-react';
 import { useKangurProgressOwnerKey } from '@/features/kangur/ui/hooks/useKangurProgressOwnerKey';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslations } from 'next-intl';
 
-import { KangurInlineFallback } from '@/features/kangur/ui/design/primitives';
+import { useOptionalKangurLessonPrint } from '@/features/kangur/ui/context/KangurLessonPrintContext';
+import { KangurButton, KangurInlineFallback } from '@/features/kangur/ui/design/primitives';
 import { useKangurCoarsePointer } from '@/features/kangur/ui/hooks/useKangurCoarsePointer';
 import {
   addXp,
@@ -30,9 +32,11 @@ import type {
 import {
   CHALLENGE_TIME_LIMIT_SECONDS,
   buildClockCorrectFeedback,
+  buildClockTaskPrompt,
   buildClockTimeoutFeedback,
   buildClockWrongFeedback,
   createClockTaskSet,
+  getClockTrainingSummaryMessage,
   resolveClockChallengeMedal,
   resolveClockPracticeTaskSet,
   scheduleRetryTask,
@@ -412,6 +416,8 @@ const scheduleClockTrainingAdvance = ({
 
 export default function ClockTrainingGame(props: ClockTrainingGameProps): React.JSX.Element {
   const ownerKey = useKangurProgressOwnerKey();
+  const lessonNavigationTranslations = useTranslations('KangurLessonsWidgets.navigation');
+  const gamePageTranslations = useTranslations('KangurGamePage');
   const {
     completionPrimaryActionLabel,
     enableAdaptiveRetry,
@@ -432,6 +438,7 @@ export default function ClockTrainingGame(props: ClockTrainingGameProps): React.
   } = resolveClockTrainingGameProps(props);
   const translations = useTranslations('KangurMiniGames');
   const isCoarsePointer = useKangurCoarsePointer();
+  const lessonPrint = useOptionalKangurLessonPrint();
   const [gameMode, setGameMode] = useState<ClockGameMode>(initialMode);
   const [tasks, setTasks] = useState<ClockTask[]>(() =>
     resolveClockTrainingTaskSet({
@@ -458,11 +465,13 @@ export default function ClockTrainingGame(props: ClockTrainingGameProps): React.
   const sessionStartedAtRef = useRef(Date.now());
   const advanceTimeoutRef = useRef<number | null>(null);
   const trainingSectionContent = getClockTrainingSectionContent(section, translations);
+  const printPanelId = `clock-training-${section}`;
   const resolvedCompletionPrimaryActionLabel =
     resolveClockTrainingResolvedCompletionPrimaryActionLabel({
       completionPrimaryActionLabel,
       translations,
     });
+  const printPanelLabel = lessonNavigationTranslations('printPanel');
 
   const task = tasks[current];
   if (!task) {
@@ -681,38 +690,102 @@ export default function ClockTrainingGame(props: ClockTrainingGameProps): React.
   useEffect(() => () => clearAdvanceTimeout(), [clearAdvanceTimeout]);
 
   const completionAction = onCompletionPrimaryAction ?? onFinish;
+  const printPanelTitle = trainingSectionContent.promptLabel;
+  const printTaskPrompt = buildClockTaskPrompt(task, section, translations);
+  const printHint = gamePageTranslations('practiceQuestion.printHint');
+  const printTargetTime = `${task.hours}:${String(task.minutes).padStart(2, '0')}`;
+  const printScoreLabel = `${score}/${tasks.length}`;
+  const printSummaryMessage = getClockTrainingSummaryMessage(
+    section,
+    score,
+    tasks.length,
+    translations
+  );
 
   return (
-    <ClockTrainingGameView
-      challengeBestStreak={challengeBestStreak}
-      challengeMedal={challengeMedal}
-      challengeTimeLeft={challengeTimeLeft}
-      completionAction={completionAction}
-      current={current}
-      done={done}
-      feedback={feedback}
-      gameMode={gameMode}
-      handleSubmit={handleSubmit}
-      hideModeSwitch={hideModeSwitch}
-      isCoarsePointer={isCoarsePointer}
-      onResetSession={resetSession}
-      resolvedCompletionPrimaryActionLabel={resolvedCompletionPrimaryActionLabel}
-      retryAddedCount={retryAddedCount}
-      score={score}
-      section={section}
-      showHourHand={showHourHand}
-      showMinuteHand={showMinuteHand}
-      showStandalonePracticeSummary={showStandalonePracticeSummary}
-      showTaskTitle={showTaskTitle}
-      showTimeDisplay={showTimeDisplay}
-      submitNextStep={submitNextStep}
-      task={task}
-      tasks={tasks}
-      trainingSectionContent={trainingSectionContent}
-      translations={translations}
-      xpBreakdown={xpBreakdown}
-      xpEarned={xpEarned}
-    />
+    <div
+      data-kangur-print-panel='true'
+      data-kangur-print-paged-panel='true'
+      data-kangur-print-panel-id={printPanelId}
+      data-kangur-print-panel-title={printPanelTitle}
+      data-testid='clock-training-print-panel'
+    >
+      <div
+        className='kangur-print-only space-y-3 border-b border-slate-200 pb-4'
+        data-testid='clock-training-print-summary'
+      >
+        <div className='text-xs font-semibold uppercase tracking-[0.16em] text-slate-500'>
+          {printPanelTitle}
+        </div>
+        {done ? (
+          <>
+            <p className='text-base font-semibold leading-relaxed text-slate-900'>
+              {printSummaryMessage}
+            </p>
+            <p className='text-sm text-slate-700'>{printScoreLabel}</p>
+          </>
+        ) : (
+          <>
+            <p className='text-base font-semibold leading-relaxed text-slate-900'>
+              {printTaskPrompt}
+            </p>
+            <p className='text-sm text-slate-700'>{printTargetTime}</p>
+          </>
+        )}
+        <p className='text-sm text-slate-600'>{printHint}</p>
+      </div>
+
+      <div data-kangur-print-exclude='true' data-testid='clock-training-live-ui'>
+        {lessonPrint?.onPrintPanel ? (
+          <div className='mb-4 flex justify-end'>
+            <KangurButton
+              onClick={() => lessonPrint.onPrintPanel?.(printPanelId)}
+              className={isCoarsePointer ? 'min-h-11 touch-manipulation select-none active:scale-[0.97]' : undefined}
+              data-testid='clock-training-print-button'
+              size='sm'
+              type='button'
+              variant='surface'
+              aria-label={printPanelLabel}
+              title={printPanelLabel}
+            >
+              <Printer className='h-4 w-4 flex-shrink-0' aria-hidden='true' />
+              <span className='sr-only'>{printPanelLabel}</span>
+            </KangurButton>
+          </div>
+        ) : null}
+
+        <ClockTrainingGameView
+          challengeBestStreak={challengeBestStreak}
+          challengeMedal={challengeMedal}
+          challengeTimeLeft={challengeTimeLeft}
+          completionAction={completionAction}
+          current={current}
+          done={done}
+          feedback={feedback}
+          gameMode={gameMode}
+          handleSubmit={handleSubmit}
+          hideModeSwitch={hideModeSwitch}
+          isCoarsePointer={isCoarsePointer}
+          onResetSession={resetSession}
+          resolvedCompletionPrimaryActionLabel={resolvedCompletionPrimaryActionLabel}
+          retryAddedCount={retryAddedCount}
+          score={score}
+          section={section}
+          showHourHand={showHourHand}
+          showMinuteHand={showMinuteHand}
+          showStandalonePracticeSummary={showStandalonePracticeSummary}
+          showTaskTitle={showTaskTitle}
+          showTimeDisplay={showTimeDisplay}
+          submitNextStep={submitNextStep}
+          task={task}
+          tasks={tasks}
+          trainingSectionContent={trainingSectionContent}
+          translations={translations}
+          xpBreakdown={xpBreakdown}
+          xpEarned={xpEarned}
+        />
+      </div>
+    </div>
   );
 }
 

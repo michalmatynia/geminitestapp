@@ -1,4 +1,11 @@
-import { act, fireEvent, render, screen, waitFor } from '../../../../../../__tests__/test-utils';
+import {
+  act,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+  within,
+} from '../../../../../../__tests__/test-utils';
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { KANGUR_CLOCK_THEME_COLORS } from '../clock-theme';
 
@@ -138,8 +145,26 @@ const parseDisplayedTime = (value: string): { hours: number; minutes: number } =
   return { hours, minutes };
 };
 
-const getByExactTextContent = (expected: string[]): HTMLElement =>
-  screen.getByText((content) => expected.includes(content));
+const getLiveUi = (): HTMLElement => {
+  const liveUi = screen.queryByTestId('clock-training-live-ui');
+  if (!(liveUi instanceof HTMLElement)) {
+    throw new Error('Clock training live UI not found.');
+  }
+  return liveUi;
+};
+
+const getSummaryShell = (): HTMLElement => {
+  const summaryShell = screen.queryByTestId('clock-training-summary-shell');
+  if (!(summaryShell instanceof HTMLElement)) {
+    throw new Error('Clock training summary shell not found.');
+  }
+  return summaryShell;
+};
+
+const getLiveTaskLabel = (label: string): HTMLElement => within(getLiveUi()).getByText(label);
+
+const getByExactTextContent = (expected: string[], scope: HTMLElement = document.body): HTMLElement =>
+  within(scope).getByText((content) => expected.includes(content));
 
 const hourToAngle = (hours: number): number => (hours % 12) * 30;
 const minuteToAngle = (minutes: number): number => minutes * 6;
@@ -264,7 +289,7 @@ describe('ClockTrainingGame drag interactions', () => {
     const minuteHand = getMinuteHand(container);
     const coarseSnapButton = screen.getByTestId('clock-snap-mode-5');
     const exactSnapButton = screen.getByTestId('clock-snap-mode-1');
-    const taskLabel = screen.getByText('Ustaw zegar na godzinę');
+    const taskLabel = getLiveTaskLabel('Ustaw zegar na godzinę');
     const clockDisplay = screen.getByTestId('clock-time-display');
     const snapModeSwitch = screen.getByTestId('clock-snap-mode-switch');
     const modeSwitch = screen.getByTestId('clock-mode-switch');
@@ -318,7 +343,7 @@ describe('ClockTrainingGame drag interactions', () => {
     expect(screen.queryByTestId('clock-training-section-badge')).toBeNull();
     expect(screen.queryByTestId('clock-training-guidance')).toBeNull();
     expect(screen.queryByTestId('clock-training-guidance-title')).toBeNull();
-    expect(screen.getByText('Ustaw pełną godzinę')).toBeInTheDocument();
+    expect(getLiveTaskLabel('Ustaw pełną godzinę')).toBeInTheDocument();
     expect(screen.queryByTestId('clock-snap-mode-switch')).toBeNull();
     expect(screen.queryByTestId('clock-interaction-hint')).toBeNull();
     const face = container.querySelector('circle[r="95"]');
@@ -344,7 +369,7 @@ describe('ClockTrainingGame drag interactions', () => {
     expect(screen.queryByTestId('clock-training-section-badge')).toBeNull();
     expect(screen.queryByTestId('clock-training-guidance')).toBeNull();
     expect(screen.queryByTestId('clock-training-guidance-title')).toBeNull();
-    expect(screen.getByText('Ustaw minuty na tarczy')).toBeInTheDocument();
+    expect(getLiveTaskLabel('Ustaw minuty na tarczy')).toBeInTheDocument();
     expect(screen.getByTestId('clock-task-prompt')).toHaveTextContent(
       'Krótka wskazówka zostaje na 12'
     );
@@ -365,7 +390,7 @@ describe('ClockTrainingGame drag interactions', () => {
   it('turns Sprawdź red after a near miss in the minutes section', async () => {
     const { container } = render(<ClockTrainingGame onFinish={vi.fn()} section='minutes' />);
     const minuteHand = getMinuteHand(container);
-    const taskLabel = screen.getByText('Ustaw minuty na tarczy');
+    const taskLabel = getLiveTaskLabel('Ustaw minuty na tarczy');
     const taskValueText = taskLabel.nextElementSibling?.textContent ?? '12:05';
     const target = parseDisplayedTime(taskValueText);
     const nearMinutes = (target.minutes + 5) % 60;
@@ -385,7 +410,7 @@ describe('ClockTrainingGame drag interactions', () => {
     const { container } = render(<ClockTrainingGame onFinish={vi.fn()} />);
     const hourHand = getHourHand(container);
     const minuteHand = getMinuteHand(container);
-    const taskLabel = screen.getByText('Ustaw zegar na godzinę');
+    const taskLabel = getLiveTaskLabel('Ustaw zegar na godzinę');
     const taskValueText = taskLabel.nextElementSibling?.textContent ?? '12:00';
     const target = parseDisplayedTime(taskValueText);
     const nearMinutes = (target.minutes + 55) % 60;
@@ -408,7 +433,7 @@ describe('ClockTrainingGame drag interactions', () => {
     const { container } = render(<ClockTrainingGame onFinish={vi.fn()} />);
     const hourHand = getHourHand(container);
     const minuteHand = getMinuteHand(container);
-    const taskLabel = screen.getByText('Ustaw zegar na godzinę');
+    const taskLabel = getLiveTaskLabel('Ustaw zegar na godzinę');
     const taskValueText = taskLabel.nextElementSibling?.textContent ?? '12:00';
     const target = parseDisplayedTime(taskValueText);
     const nearMinutes = (target.minutes + 55) % 60;
@@ -482,7 +507,7 @@ describe('ClockTrainingGame drag interactions', () => {
 
     const hourHand = getHourHand(container);
     const minuteHand = getMinuteHand(container);
-    const taskLabel = screen.getByText('Ustaw zegar na godzinę');
+    const taskLabel = getLiveTaskLabel('Ustaw zegar na godzinę');
     const taskValueText = taskLabel.nextElementSibling?.textContent ?? '12:00';
     const target = parseDisplayedTime(taskValueText);
     const nearMinutes = (target.minutes + 55) % 60;
@@ -508,7 +533,7 @@ describe('ClockTrainingGame drag interactions', () => {
       <ClockTrainingGame onFinish={vi.fn()} onPracticeSuccess={onPracticeSuccess} section='hours' />
     );
     const hourHand = getHourHand(container);
-    const taskLabel = screen.getByText('Ustaw pełną godzinę');
+    const taskLabel = getLiveTaskLabel('Ustaw pełną godzinę');
     const taskValueText = taskLabel.nextElementSibling?.textContent ?? '12:00';
     const target = parseDisplayedTime(taskValueText);
 
@@ -566,7 +591,7 @@ describe('ClockTrainingGame drag interactions', () => {
       vi.advanceTimersByTime(1200);
     });
 
-    const taskLabel = screen.getByText('Ustaw pełną godzinę');
+    const taskLabel = getLiveTaskLabel('Ustaw pełną godzinę');
     expect(taskLabel.nextElementSibling).toHaveTextContent('7:00');
     expect(screen.queryByTestId('clock-submit-feedback')).toBeNull();
     expect(screen.getByTestId('clock-task-progress-label')).toHaveTextContent('Zadanie 2 z 2');
@@ -609,7 +634,7 @@ describe('ClockTrainingGame drag interactions', () => {
       vi.advanceTimersByTime(2100);
     });
 
-    const nextTaskLabel = screen.getByText('Ustaw pełną godzinę');
+    const nextTaskLabel = getLiveTaskLabel('Ustaw pełną godzinę');
     expect(nextTaskLabel.nextElementSibling).toHaveTextContent('7:00');
     expect(screen.queryByTestId('clock-submit-feedback')).toBeNull();
     expect(screen.getByTestId('clock-task-progress-label')).toHaveTextContent('Zadanie 2 z 3');
@@ -654,7 +679,7 @@ describe('ClockTrainingGame drag interactions', () => {
       vi.advanceTimersByTime(1200);
     });
 
-    const taskLabel = screen.getByText('Ustaw pełną godzinę');
+    const taskLabel = getLiveTaskLabel('Ustaw pełną godzinę');
     expect(taskLabel.nextElementSibling).toHaveTextContent('7:00');
   });
 
@@ -728,7 +753,7 @@ describe('ClockTrainingGame drag interactions', () => {
       />
     );
 
-    const taskLabel = screen.getByText('Ustaw pełną godzinę');
+    const taskLabel = getLiveTaskLabel('Ustaw pełną godzinę');
     expect(taskLabel.nextElementSibling).toHaveTextContent('11:00');
   });
 
@@ -782,12 +807,14 @@ describe('ClockTrainingGame drag interactions', () => {
     });
 
     expect(screen.getByTestId('clock-training-summary-shell')).toBeInTheDocument();
-    expect(getByExactTextContent(['shared.scoreLabel: 0/1', 'Wynik: 0/1'])).toBeInTheDocument();
+    expect(
+      getByExactTextContent(['shared.scoreLabel: 0/1', 'Wynik: 0/1'], getSummaryShell())
+    ).toBeInTheDocument();
     expect(
       getByExactTextContent([
         'clockTraining.summary.hours.retry',
         'Poćwicz jeszcze pełne godziny i obserwuj krótką wskazówkę.',
-      ])
+      ], getSummaryShell())
     ).toHaveClass(
       '[color:var(--kangur-page-muted-text)]'
     );
@@ -810,7 +837,7 @@ describe('ClockTrainingGame drag interactions', () => {
       expect(screen.getByTestId('clock-challenge-timer')).toBeInTheDocument();
     });
 
-    const taskLabel = screen.getByText('Ustaw pełną godzinę');
+    const taskLabel = getLiveTaskLabel('Ustaw pełną godzinę');
     const taskValueText = taskLabel.nextElementSibling?.textContent ?? '12:00';
     const target = parseDisplayedTime(taskValueText);
 

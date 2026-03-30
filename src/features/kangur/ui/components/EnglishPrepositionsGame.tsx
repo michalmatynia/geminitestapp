@@ -397,6 +397,18 @@ export default function EnglishPrepositionsGame({
           </div>
         </div>
 
+        {feedback ? (
+          <KangurInfoCard
+            accent={feedback.kind === 'success' ? 'emerald' : 'amber'}
+            tone={feedback.kind === 'success' ? 'accent' : 'neutral'}
+            padding='sm'
+            className='w-full text-sm'
+            data-testid='english-prepositions-feedback'
+          >
+            <p className='font-semibold'>{feedback.text}</p>
+          </KangurInfoCard>
+        ) : null}
+
         <KangurButton
           type='button'
           size='lg'

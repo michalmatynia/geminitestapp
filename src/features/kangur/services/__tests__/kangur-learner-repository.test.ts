@@ -54,7 +54,7 @@ import {
   createKangurLearner,
   listKangurLearnersByOwner,
   setKangurLearnerAiTutorState,
-} from './kangur-learner-repository';
+} from '../kangur-learner-repository';
 
 describe('kangur learner repository mongo mode', () => {
   const learnersCollection = {

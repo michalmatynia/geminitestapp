@@ -431,6 +431,18 @@ export default function EnglishComparativesSuperlativesCrownGame({
             </Droppable>
           </KangurInfoCard>
 
+          {feedback ? (
+            <KangurInfoCard
+              accent={feedback.kind === 'success' ? 'emerald' : 'amber'}
+              className='w-full'
+              data-testid='english-comparatives-feedback'
+              padding='md'
+              tone={feedback.kind === 'success' ? 'accent' : 'neutral'}
+            >
+              <p className='text-sm font-semibold text-slate-700'>{feedback.text}</p>
+            </KangurInfoCard>
+          ) : null}
+
           <div className='flex w-full flex-wrap items-center justify-between gap-3'>
             <KangurButton size='sm' variant='surface' onClick={handleReset} disabled={checked}>
               Clear round

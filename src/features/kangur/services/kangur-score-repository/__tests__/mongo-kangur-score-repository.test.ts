@@ -40,7 +40,7 @@ vi.mock('@/shared/lib/db/mongo-client', () => ({
   getMongoDb: getMongoDbMock,
 }));
 
-import { mongoKangurScoreRepository } from './mongo-kangur-score-repository';
+import { mongoKangurScoreRepository } from '../mongo-kangur-score-repository';
 
 describe('mongoKangurScoreRepository', () => {
   beforeEach(() => {

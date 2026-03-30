@@ -54,7 +54,7 @@ describe('mongoKangurLessonDocumentRepository legacy backfill', () => {
     );
 
     const { mongoKangurLessonDocumentRepository } = await import(
-      './mongo-kangur-lesson-document-repository'
+      '../mongo-kangur-lesson-document-repository'
     );
 
     const document = await mongoKangurLessonDocumentRepository.getLessonDocument(
@@ -101,7 +101,7 @@ describe('mongoKangurLessonDocumentRepository legacy backfill', () => {
     );
 
     const { mongoKangurLessonDocumentRepository } = await import(
-      './mongo-kangur-lesson-document-repository'
+      '../mongo-kangur-lesson-document-repository'
     );
 
     const store = await mongoKangurLessonDocumentRepository.listLessonDocuments('pl');

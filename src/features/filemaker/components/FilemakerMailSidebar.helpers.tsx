@@ -10,6 +10,7 @@ import {
   Mail,
   MailPlus,
   RefreshCcw,
+  Search,
   Send,
   Settings2,
   ShieldAlert,
@@ -206,6 +207,7 @@ export {
   Mail,
   MailPlus,
   RefreshCcw,
+  Search,
   Settings2,
   ShieldAlert,
 };

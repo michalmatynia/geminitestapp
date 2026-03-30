@@ -39,7 +39,7 @@ describe('mongoKangurLessonSectionRepository bootstrap', () => {
     });
 
     const { mongoKangurLessonSectionRepository } = await import(
-      './mongo-kangur-lesson-section-repository'
+      '../mongo-kangur-lesson-section-repository'
     );
 
     const result = await mongoKangurLessonSectionRepository.listSections({
@@ -68,7 +68,7 @@ describe('mongoKangurLessonSectionRepository bootstrap', () => {
     });
 
     const { mongoKangurLessonSectionRepository } = await import(
-      './mongo-kangur-lesson-section-repository'
+      '../mongo-kangur-lesson-section-repository'
     );
 
     await mongoKangurLessonSectionRepository.replaceSections([

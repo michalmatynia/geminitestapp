@@ -10,7 +10,7 @@ import {
   buildKangurAssignmentDedupeKey,
   buildStoredKangurAssignmentTarget,
   evaluateKangurAssignment,
-} from './kangur-assignments';
+} from '../kangur-assignments';
 
 describe('kangur assignments domain', () => {
   it('captures baseline lesson completions when building a stored target', () => {

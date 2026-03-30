@@ -4,7 +4,7 @@
 
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { getKangurGameBuiltInInstancesForGame, getKangurGameDefinition } from '@/features/kangur/games';
+import { getKangurGameContentSetsForGame, getKangurGameDefinition } from '@/features/kangur/games';
 
 const { getMongoDbMock } = vi.hoisted(() => ({
   getMongoDbMock: vi.fn(),
@@ -14,14 +14,14 @@ vi.mock('@/shared/lib/db/mongo-client', () => ({
   getMongoDb: getMongoDbMock,
 }));
 
-describe('mongoKangurGameInstanceRepository bootstrap', () => {
+describe('mongoKangurGameContentSetRepository bootstrap', () => {
   beforeEach(() => {
     vi.resetModules();
     vi.clearAllMocks();
   });
 
-  it('seeds built-in game instances before reading a game', async () => {
-    const expected = getKangurGameBuiltInInstancesForGame(getKangurGameDefinition('clock_training'));
+  it('seeds built-in launchable game content sets before reading a game', async () => {
+    const expected = getKangurGameContentSetsForGame(getKangurGameDefinition('clock_training'));
     const toArrayMock = vi.fn().mockResolvedValue(expected);
     const collection = {
       bulkWrite: vi.fn().mockResolvedValue({ acknowledged: true }),
@@ -36,11 +36,11 @@ describe('mongoKangurGameInstanceRepository bootstrap', () => {
       collection: vi.fn().mockReturnValue(collection),
     });
 
-    const { mongoKangurGameInstanceRepository } = await import(
-      './mongo-kangur-game-instance-repository'
+    const { mongoKangurGameContentSetRepository } = await import(
+      '../mongo-kangur-game-content-set-repository'
     );
 
-    const result = await mongoKangurGameInstanceRepository.listInstances({
+    const result = await mongoKangurGameContentSetRepository.listContentSets({
       gameId: 'clock_training',
     });
 
@@ -48,8 +48,8 @@ describe('mongoKangurGameInstanceRepository bootstrap', () => {
     expect(result).toEqual(expected);
   });
 
-  it('can derive the game id from an instance id and still backfill built-ins', async () => {
-    const expected = getKangurGameBuiltInInstancesForGame(getKangurGameDefinition('clock_training'));
+  it('can derive the game id from a content-set id and still backfill built-ins', async () => {
+    const expected = getKangurGameContentSetsForGame(getKangurGameDefinition('clock_training'));
     const collection = {
       bulkWrite: vi.fn().mockResolvedValue({ acknowledged: true }),
       createIndex: vi.fn().mockResolvedValue('ok'),
@@ -63,12 +63,12 @@ describe('mongoKangurGameInstanceRepository bootstrap', () => {
       collection: vi.fn().mockReturnValue(collection),
     });
 
-    const { mongoKangurGameInstanceRepository } = await import(
-      './mongo-kangur-game-instance-repository'
+    const { mongoKangurGameContentSetRepository } = await import(
+      '../mongo-kangur-game-content-set-repository'
     );
 
-    await mongoKangurGameInstanceRepository.listInstances({
-      instanceId: 'clock_training:instance:default',
+    await mongoKangurGameContentSetRepository.listContentSets({
+      contentSetId: 'clock_training:default',
     });
 
     expect(collection.bulkWrite).toHaveBeenCalledTimes(1);

@@ -6,6 +6,7 @@ import {
   Mail,
   MailPlus,
   RefreshCcw,
+  Search,
   Settings2,
   ShieldAlert,
 } from 'lucide-react';
@@ -40,6 +41,8 @@ import type {
   FilemakerMailAccount,
   FilemakerMailAccountDraft,
   FilemakerMailFolderSummary,
+  FilemakerMailSearchResponse,
+  FilemakerMailSearchResultGroup,
   FilemakerMailThread,
 } from '../types';
 
@@ -61,7 +64,7 @@ export function AdminFilemakerMailPage(): React.JSX.Element {
   const [selection, setSelection] = useState<{
     accountId: string | null;
     mailboxPath: string | null;
-    panel: 'account' | 'attention' | 'recent' | 'settings' | null;
+    panel: 'account' | 'attention' | 'recent' | 'search' | 'settings' | null;
   }>({
     accountId: searchParams.get('accountId'),
     mailboxPath: searchParams.get('mailboxPath'),
@@ -72,13 +75,18 @@ export function AdminFilemakerMailPage(): React.JSX.Element {
         ? 'settings'
         : searchParams.get('panel') === 'recent'
           ? 'recent'
-          : null,
+          : searchParams.get('panel') === 'search'
+            ? 'search'
+            : null,
   });
   const [isNavigationLoading, setIsNavigationLoading] = useState(true);
   const [isThreadsLoading, setIsThreadsLoading] = useState(false);
   const [isSavingAccount, setIsSavingAccount] = useState(false);
   const [syncingAccountId, setSyncingAccountId] = useState<string | null>(null);
   const [draft, setDraft] = useState<FilemakerMailAccountDraft>(defaultDraft);
+  const [deepSearchQuery, setDeepSearchQuery] = useState(searchParams.get('searchQuery') ?? '');
+  const [deepSearchResults, setDeepSearchResults] = useState<FilemakerMailSearchResponse | null>(null);
+  const [isSearching, setIsSearching] = useState(false);
   const [folderAllowlistValue, setFolderAllowlistValue] = useState('');
   const requestedAccountId = searchParams.get('accountId');
   const requestedMailboxPath = searchParams.get('mailboxPath');
@@ -89,7 +97,10 @@ export function AdminFilemakerMailPage(): React.JSX.Element {
       ? 'settings'
       : searchParams.get('panel') === 'recent'
         ? 'recent'
-        : null;
+        : searchParams.get('panel') === 'search'
+          ? 'search'
+          : null;
+  const requestedSearchQuery = searchParams.get('searchQuery') ?? '';
   const requestedRecentMailboxFilter = searchParams.get('recentMailbox') ?? '';
   const requestedRecentUnreadOnly = searchParams.get('recentUnread') === '1';
   const requestedRecentQuery = searchParams.get('recentQuery') ?? '';
@@ -153,6 +164,10 @@ export function AdminFilemakerMailPage(): React.JSX.Element {
   }, [requestedRecentMailboxFilter, requestedRecentUnreadOnly]);
 
   useEffect(() => {
+    setDeepSearchQuery(requestedSearchQuery);
+  }, [requestedSearchQuery]);
+
+  useEffect(() => {
     setQuery(requestedPanel === 'recent' ? requestedRecentQuery : '');
   }, [requestedPanel, requestedRecentQuery]);
 
@@ -198,9 +213,42 @@ export function AdminFilemakerMailPage(): React.JSX.Element {
     void loadThreads();
   }, [deferredQuery, selectedAccountId, selectedFolder, selection.panel, toast]);
 
+  const deferredDeepSearch = useDeferredValue(deepSearchQuery.trim());
+
+  useEffect(() => {
+    if (selection.panel !== 'search') {
+      setDeepSearchResults(null);
+      return;
+    }
+    if (!deferredDeepSearch) {
+      setDeepSearchResults(null);
+      return;
+    }
+
+    const runSearch = async (): Promise<void> => {
+      setIsSearching(true);
+      try {
+        const url = `/api/filemaker/mail/search?query=${encodeURIComponent(deferredDeepSearch)}${
+          selectedAccountId ? `&accountId=${encodeURIComponent(selectedAccountId)}` : ''
+        }`;
+        const result = await fetchJson<FilemakerMailSearchResponse>(url);
+        setDeepSearchResults(result);
+      } catch (error) {
+        toast(error instanceof Error ? error.message : 'Message search failed.', {
+          variant: 'error',
+        });
+      } finally {
+        setIsSearching(false);
+      }
+    };
+
+    void runSearch();
+  }, [deferredDeepSearch, selectedAccountId, selection.panel, toast]);
+
   useEffect(() => {
     if (isNavigationLoading) return;
     if (selection.panel === 'attention') return;
+    if (selection.panel === 'search') return;
     if (selection.accountId && selection.panel === 'recent' && selectedAccount) return;
     if (selection.accountId && selection.mailboxPath && selectedFolder) return;
     if (selection.accountId && !selection.mailboxPath && selectedAccount) return;
@@ -243,7 +291,8 @@ export function AdminFilemakerMailPage(): React.JSX.Element {
       requestedPanel === nextPanel &&
       requestedRecentMailboxFilter === recentMailboxFilter &&
       requestedRecentUnreadOnly === recentUnreadOnly &&
-      requestedRecentQuery === query
+      requestedRecentQuery === query &&
+      requestedSearchQuery === deepSearchQuery
     ) {
       return;
     }
@@ -255,9 +304,11 @@ export function AdminFilemakerMailPage(): React.JSX.Element {
         recentMailboxFilter,
         recentUnreadOnly,
         recentQuery: query,
+        searchQuery: deepSearchQuery,
       })
     );
   }, [
+    deepSearchQuery,
     isNavigationLoading,
     query,
     requestedAccountId,
@@ -266,6 +317,7 @@ export function AdminFilemakerMailPage(): React.JSX.Element {
     requestedRecentMailboxFilter,
     requestedRecentQuery,
     requestedRecentUnreadOnly,
+    requestedSearchQuery,
     recentMailboxFilter,
     recentUnreadOnly,
     router,
@@ -332,6 +384,7 @@ export function AdminFilemakerMailPage(): React.JSX.Element {
     ? formatFilemakerMailFolderLabel(selectedFolder.mailboxPath, selectedFolder.mailboxRole)
     : null;
   const isAttentionPanel = selectedPanel === 'attention';
+  const isSearchPanel = selectedPanel === 'search';
   const isRecentPanel = selectedPanel === 'recent' && !selectedFolder;
 
   const columns = useMemo<ColumnDef<FilemakerMailThread>[]>(
@@ -471,6 +524,18 @@ export function AdminFilemakerMailPage(): React.JSX.Element {
           ]
         : []),
       {
+        key: 'search-messages',
+        label: 'Search Messages',
+        icon: <Search className='size-4' />,
+        variant: 'outline' as const,
+        onClick: () =>
+          setSelection({
+            accountId: selectedAccountId,
+            mailboxPath: null,
+            panel: 'search',
+          }),
+      },
+      {
         key: 'account',
         label: 'Open Account',
         icon: <Mail className='size-4' />,
@@ -513,6 +578,9 @@ export function AdminFilemakerMailPage(): React.JSX.Element {
         onRecentUnreadOnlyChange={setRecentUnreadOnly}
         onSelectAttention={() => {
           setSelection({ accountId: null, mailboxPath: null, panel: 'attention' });
+        }}
+        onSelectSearch={() => {
+          setSelection({ accountId: selectedAccountId, mailboxPath: null, panel: 'search' });
         }}
         onNewMailbox={() => {
           setSelection({ accountId: null, mailboxPath: null, panel: null });
@@ -629,6 +697,132 @@ export function AdminFilemakerMailPage(): React.JSX.Element {
               All mailbox accounts are healthy.
             </div>
           )}
+        </div>
+      ) : isSearchPanel ? (
+        <div className='space-y-6 rounded-lg border border-border/60 bg-card/25 p-4'>
+          <div className='flex flex-wrap items-center justify-between gap-3'>
+            <div>
+              <div className='text-base font-semibold text-white'>
+                <Search className='mr-2 inline-block size-4' />
+                Search Messages
+              </div>
+              <div className='text-sm text-gray-500'>
+                Full-text search across all message bodies, subjects, and participants.
+                {selectedAccount ? ` Scoped to ${selectedAccount.name}.` : ' Searching all accounts.'}
+              </div>
+            </div>
+            {deepSearchResults ? (
+              <Badge variant='outline' className='text-[10px]'>
+                {deepSearchResults.totalHits} hit{deepSearchResults.totalHits !== 1 ? 's' : ''} in{' '}
+                {deepSearchResults.groups.length} thread{deepSearchResults.groups.length !== 1 ? 's' : ''}
+              </Badge>
+            ) : null}
+          </div>
+
+          <div className='flex gap-2'>
+            <Input
+              value={deepSearchQuery}
+              onChange={(event: React.ChangeEvent<HTMLInputElement>) => setDeepSearchQuery(event.target.value)}
+              placeholder='Search message bodies, subjects, senders...'
+              aria-label='Deep message search'
+              className='flex-1'
+            />
+            {deepSearchQuery ? (
+              <Button
+                type='button'
+                size='sm'
+                variant='outline'
+                onClick={() => {
+                  setDeepSearchQuery('');
+                  setDeepSearchResults(null);
+                }}
+              >
+                <FilterX className='size-4' />
+              </Button>
+            ) : null}
+          </div>
+
+          {isSearching ? (
+            <div className='text-sm text-gray-500'>Searching messages...</div>
+          ) : deepSearchResults && deepSearchResults.groups.length > 0 ? (
+            <div className='space-y-4'>
+              {deepSearchResults.groups.map((group: FilemakerMailSearchResultGroup) => (
+                <div
+                  key={group.threadId}
+                  className='rounded-lg border border-border/60 bg-card/25 p-4'
+                >
+                  <div className='flex flex-wrap items-start justify-between gap-2'>
+                    <div className='min-w-0 flex-1'>
+                      <div className='truncate text-sm font-semibold text-white'>
+                        {group.threadSubject}
+                      </div>
+                      <div className='text-[11px] text-gray-500'>
+                        {group.mailboxPath} &middot;{' '}
+                        {group.lastMessageAt
+                          ? new Date(group.lastMessageAt).toLocaleString()
+                          : 'Unknown date'}
+                      </div>
+                    </div>
+                    <div className='flex items-center gap-2'>
+                      <Badge variant='outline' className='text-[10px]'>
+                        {group.hits.length} match{group.hits.length !== 1 ? 'es' : ''}
+                      </Badge>
+                      <Button
+                        type='button'
+                        size='sm'
+                        variant='outline'
+                        onClick={() =>
+                          router.push(
+                            `/admin/filemaker/mail/threads/${encodeURIComponent(group.threadId)}?accountId=${encodeURIComponent(group.accountId)}&mailboxPath=${encodeURIComponent(group.mailboxPath)}`
+                          )
+                        }
+                      >
+                        Open Thread
+                      </Button>
+                    </div>
+                  </div>
+
+                  <div className='mt-3 space-y-2'>
+                    {group.hits.map((hit) => (
+                      <div
+                        key={hit.messageId}
+                        className='rounded border border-border/40 bg-card/10 p-3'
+                      >
+                        <div className='flex flex-wrap items-center gap-2 text-[11px] text-gray-500'>
+                          <span className='font-medium text-gray-300'>
+                            {hit.from?.name ?? hit.from?.address ?? 'Unknown'}
+                          </span>
+                          <span>&rarr;</span>
+                          <span>
+                            {hit.to.map((p) => p.name ?? p.address).join(', ') || 'Unknown'}
+                          </span>
+                          <Badge variant='outline' className='text-[10px]'>
+                            {hit.matchField}
+                          </Badge>
+                          <span>
+                            {(hit.receivedAt ?? hit.sentAt)
+                              ? new Date(hit.receivedAt ?? hit.sentAt ?? '').toLocaleString()
+                              : ''}
+                          </span>
+                        </div>
+                        <div className='mt-1 text-xs text-gray-400'>
+                          {hit.matchSnippet}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : deepSearchResults && deepSearchResults.groups.length === 0 ? (
+            <div className='rounded-lg border border-border/60 bg-card/25 p-4 text-sm text-gray-500'>
+              No messages matched your search.
+            </div>
+          ) : !deepSearchQuery ? (
+            <div className='rounded-lg border border-border/60 bg-card/25 p-4 text-sm text-gray-500'>
+              Enter a search term to find messages across all synced mailboxes.
+            </div>
+          ) : null}
         </div>
       ) : selectedFolder || isRecentPanel ? (
         <FilemakerEntityTablePage

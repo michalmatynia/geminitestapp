@@ -93,6 +93,27 @@ const formatSocialPostValidationError = (error: z.ZodError): string => {
   return issueMessage ? `${fieldLabel}: ${issueMessage}` : `${fieldLabel} is invalid.`;
 };
 
+const resolvePublishSuccessToast = (mode: KangurSocialPublishMode): string =>
+  mode === 'draft' ? 'Draft sent to LinkedIn.' : 'Published to LinkedIn.';
+
+const didRecoverSuccessfulPublish = (
+  post: KangurSocialPost | null,
+  mode: KangurSocialPublishMode
+): boolean => {
+  if (!post || post.publishError?.trim()) {
+    return false;
+  }
+
+  if (mode === 'draft') {
+    return (
+      post.status === 'draft' &&
+      Boolean(post.linkedinPostId?.trim() || post.linkedinUrl?.trim())
+    );
+  }
+
+  return post.status === 'published';
+};
+
 export function useSocialPostCrud(deps: SocialPostCrudDeps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -106,7 +127,23 @@ export function useSocialPostCrud(deps: SocialPostCrudDeps) {
   const [publishingPostId, setPublishingPostId] = useState<string | null>(null);
   const [unpublishingPostId, setUnpublishingPostId] = useState<string | null>(null);
 
-  const recoverSavedPublishError = async (postId: string): Promise<string | null> => {
+  const syncRecoveredPost = (post: KangurSocialPost): void => {
+    queryClient.setQueryData<KangurSocialPost[] | undefined>(
+      KANGUR_SOCIAL_ADMIN_POSTS_QUERY_KEY,
+      (current) => {
+        if (!current) {
+          return current;
+        }
+
+        const nextEntries = current.map((entry) => (entry.id === post.id ? post : entry));
+        return nextEntries.some((entry) => entry.id === post.id)
+          ? nextEntries
+          : [post, ...current];
+      }
+    );
+  };
+
+  const recoverRefreshedPost = async (postId: string): Promise<KangurSocialPost | null> => {
     try {
       const refreshedPosts =
         (await fetchQueryV2<KangurSocialPost[]>(queryClient, {
@@ -126,9 +163,7 @@ export function useSocialPostCrud(deps: SocialPostCrudDeps) {
             description: 'Refetches social posts after LinkedIn publish failure.',
           },
         })()) ?? null;
-      const refreshedPost = refreshedPosts?.find((entry) => entry.id === postId) ?? null;
-      const publishError = refreshedPost?.publishError?.trim() ?? '';
-      return publishError || null;
+      return refreshedPosts?.find((entry) => entry.id === postId) ?? null;
     } catch {
       return null;
     }
@@ -301,11 +336,17 @@ export function useSocialPostCrud(deps: SocialPostCrudDeps) {
         return entries.map((entry) => (entry.id === published.id ? published : entry));
       });
       toast(
-        mode === 'draft' ? 'Draft sent to LinkedIn.' : 'Published to LinkedIn.',
+        resolvePublishSuccessToast(mode),
         { variant: 'success' }
       );
     } catch (error) {
-      const savedPublishError = await recoverSavedPublishError(postId);
+      const recoveredPost = await recoverRefreshedPost(postId);
+      if (didRecoverSuccessfulPublish(recoveredPost, mode)) {
+        syncRecoveredPost(recoveredPost);
+        toast(resolvePublishSuccessToast(mode), { variant: 'success' });
+        return;
+      }
+      const savedPublishError = recoveredPost?.publishError?.trim() || null;
       const message =
         savedPublishError ??
         (error instanceof Error
@@ -442,8 +483,18 @@ export function useSocialPostCrud(deps: SocialPostCrudDeps) {
         deps.buildSocialContext()
       );
     } catch (error) {
-      const savedPublishError =
-        stage === 'publish' ? await recoverSavedPublishError(deps.activePost.id) : null;
+      const recoveredPost =
+        stage === 'publish' ? await recoverRefreshedPost(deps.activePost.id) : null;
+      if (stage === 'publish' && didRecoverSuccessfulPublish(recoveredPost, 'published')) {
+        syncRecoveredPost(recoveredPost);
+        toast(resolvePublishSuccessToast('published'), { variant: 'success' });
+        trackKangurClientEvent(
+          'kangur_social_post_publish_success',
+          deps.buildSocialContext({ recoveredPublishState: true })
+        );
+        return;
+      }
+      const savedPublishError = recoveredPost?.publishError?.trim() || null;
       const message =
         savedPublishError ??
         (error instanceof Error

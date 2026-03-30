@@ -7,7 +7,7 @@ import {
   clearKangurLearnerSession,
   readKangurLearnerSession,
   setKangurLearnerSession,
-} from './kangur-learner-session';
+} from '../kangur-learner-session';
 
 const createRequestWithCookie = (cookie: string) =>
   ({

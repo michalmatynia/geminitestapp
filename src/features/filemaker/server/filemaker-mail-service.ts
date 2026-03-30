@@ -13,6 +13,8 @@ import { decodeSettingValue, encodeSettingValue } from '@/shared/lib/settings/se
 import { clearSettingsCache } from '@/shared/lib/settings-cache';
 import { clearLiteSettingsServerCache } from '@/shared/lib/settings-lite-server-cache';
 
+import { stripHtmlToPlainText } from '@/shared/lib/document-editor-format';
+
 import {
   buildFilemakerMailPlainText,
   buildFilemakerMailReplyHtmlSeed,
@@ -37,6 +39,9 @@ import type {
   FilemakerMailMessage,
   FilemakerMailOutboxEntry,
   FilemakerMailParticipant,
+  FilemakerMailSearchHit,
+  FilemakerMailSearchResponse,
+  FilemakerMailSearchResultGroup,
   FilemakerMailSyncResult,
   FilemakerMailThread,
   FilemakerMailThreadDetail,
@@ -570,3 +575,157 @@ export const sendFilemakerMailMessage = async (input: FilemakerMailComposeInput)
 };
 
 export const sendFilemakerMail = sendFilemakerMailMessage;
+
+export const markFilemakerMailThreadRead = async (
+  threadId: string,
+  read: boolean
+): Promise<FilemakerMailThread> => {
+  const thread = await storage.getMailThreadById(threadId);
+  if (!thread) throw validationError('Thread not found.');
+  const messages = await storage.listMailMessagesByThreadId(threadId);
+  for (const message of messages) {
+    await storage.upsertMailMessage({
+      ...message,
+      flags: { ...message.flags, seen: read },
+    });
+  }
+  const updatedThread: FilemakerMailThread = {
+    ...thread,
+    unreadCount: read ? 0 : messages.length,
+    updatedAt: new Date().toISOString(),
+  };
+  await storage.upsertMailThread(updatedThread);
+  return updatedThread;
+};
+
+export const deleteFilemakerMailThread = async (threadId: string): Promise<void> => {
+  const thread = await storage.getMailThreadById(threadId);
+  if (!thread) throw validationError('Thread not found.');
+  const mongo = await getMongoDb();
+  await Promise.all([
+    mongo.collection(MAIL_THREADS_COLLECTION).deleteOne({ id: threadId }),
+    mongo.collection('filemaker_mail_messages').deleteMany({ threadId }),
+  ]);
+};
+
+const SEARCH_SNIPPET_RADIUS = 80;
+const MAX_SEARCH_SNIPPET_LENGTH = 200;
+
+const buildSearchMatchSnippet = (
+  text: string,
+  query: string
+): string => {
+  const normalizedText = text.replace(/\s+/g, ' ').trim();
+  const lowerText = normalizedText.toLowerCase();
+  const lowerQuery = query.toLowerCase();
+  const matchIndex = lowerText.indexOf(lowerQuery);
+  if (matchIndex < 0) {
+    return normalizedText.length > MAX_SEARCH_SNIPPET_LENGTH
+      ? `${normalizedText.slice(0, MAX_SEARCH_SNIPPET_LENGTH)}...`
+      : normalizedText;
+  }
+  const start = Math.max(0, matchIndex - SEARCH_SNIPPET_RADIUS);
+  const end = Math.min(normalizedText.length, matchIndex + query.length + SEARCH_SNIPPET_RADIUS);
+  const prefix = start > 0 ? '...' : '';
+  const suffix = end < normalizedText.length ? '...' : '';
+  return `${prefix}${normalizedText.slice(start, end)}${suffix}`;
+};
+
+const detectMatchField = (
+  message: FilemakerMailMessage,
+  query: string
+): FilemakerMailSearchHit['matchField'] => {
+  const lowerQuery = query.toLowerCase();
+  if (message.subject.toLowerCase().includes(lowerQuery)) return 'subject';
+  if (message.from?.address.toLowerCase().includes(lowerQuery)) return 'from';
+  if (message.from?.name?.toLowerCase().includes(lowerQuery)) return 'from';
+  if (message.to.some((p) => p.address.toLowerCase().includes(lowerQuery) || p.name?.toLowerCase().includes(lowerQuery))) return 'to';
+  if (message.cc.some((p) => p.address.toLowerCase().includes(lowerQuery) || p.name?.toLowerCase().includes(lowerQuery))) return 'cc';
+  return 'body';
+};
+
+const buildSearchableText = (message: FilemakerMailMessage): string => {
+  if (message.textBody?.trim()) return message.textBody;
+  if (message.htmlBody?.trim()) return stripHtmlToPlainText(message.htmlBody);
+  return '';
+};
+
+export const searchFilemakerMailMessages = async (input: {
+  query: string;
+  accountId?: string | null;
+}): Promise<FilemakerMailSearchResponse> => {
+  const query = input.query.trim();
+  if (!query) {
+    return { query: '', totalHits: 0, groups: [] };
+  }
+
+  const messages = await storage.searchMailMessages({
+    query,
+    accountId: input.accountId ?? null,
+    limit: 200,
+  });
+
+  const threadIds = [...new Set(messages.map((m) => m.threadId))];
+  const threadDocs = await Promise.all(
+    threadIds.map((id) => storage.getMailThreadById(id))
+  );
+  const threadMap = new Map(
+    threadDocs.filter(Boolean).map((t) => [t!.id, t!])
+  );
+
+  const groupMap = new Map<string, FilemakerMailSearchResultGroup>();
+
+  for (const message of messages) {
+    const thread = threadMap.get(message.threadId);
+    const matchField = detectMatchField(message, query);
+    const textForSnippet =
+      matchField === 'subject'
+        ? message.subject
+        : matchField === 'from'
+          ? `${message.from?.name ?? ''} ${message.from?.address ?? ''}`
+          : matchField === 'to'
+            ? message.to.map((p) => `${p.name ?? ''} ${p.address}`).join(', ')
+            : matchField === 'cc'
+              ? message.cc.map((p) => `${p.name ?? ''} ${p.address}`).join(', ')
+              : buildSearchableText(message);
+
+    const hit: FilemakerMailSearchHit = {
+      messageId: message.id,
+      threadId: message.threadId,
+      accountId: message.accountId,
+      mailboxPath: message.mailboxPath,
+      subject: message.subject,
+      from: message.from ?? null,
+      to: message.to,
+      direction: message.direction,
+      sentAt: message.sentAt ?? null,
+      receivedAt: message.receivedAt ?? null,
+      matchSnippet: buildSearchMatchSnippet(textForSnippet, query),
+      matchField,
+    };
+
+    const existing = groupMap.get(message.threadId);
+    if (existing) {
+      existing.hits.push(hit);
+    } else {
+      groupMap.set(message.threadId, {
+        threadId: message.threadId,
+        threadSubject: thread?.subject ?? message.subject,
+        accountId: message.accountId,
+        mailboxPath: thread?.mailboxPath ?? message.mailboxPath,
+        lastMessageAt: thread?.lastMessageAt ?? message.receivedAt ?? message.sentAt ?? message.createdAt ?? '',
+        hits: [hit],
+      });
+    }
+  }
+
+  const groups = Array.from(groupMap.values()).sort(
+    (a, b) => Date.parse(b.lastMessageAt || '') - Date.parse(a.lastMessageAt || '')
+  );
+
+  return {
+    query,
+    totalHits: messages.length,
+    groups,
+  };
+};

@@ -4,7 +4,7 @@
 
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { getKangurGameContentSetsForGame, getKangurGameDefinition } from '@/features/kangur/games';
+import { createDefaultKangurGames } from '@/features/kangur/games';
 
 const { getMongoDbMock } = vi.hoisted(() => ({
   getMongoDbMock: vi.fn(),
@@ -14,14 +14,14 @@ vi.mock('@/shared/lib/db/mongo-client', () => ({
   getMongoDb: getMongoDbMock,
 }));
 
-describe('mongoKangurGameContentSetRepository bootstrap', () => {
+describe('listKangurGames bootstrap', () => {
   beforeEach(() => {
     vi.resetModules();
     vi.clearAllMocks();
   });
 
-  it('seeds built-in launchable game content sets before reading a game', async () => {
-    const expected = getKangurGameContentSetsForGame(getKangurGameDefinition('clock_training'));
+  it('seeds default Kangur games before reading the collection', async () => {
+    const expected = createDefaultKangurGames();
     const toArrayMock = vi.fn().mockResolvedValue(expected);
     const collection = {
       bulkWrite: vi.fn().mockResolvedValue({ acknowledged: true }),
@@ -36,20 +36,16 @@ describe('mongoKangurGameContentSetRepository bootstrap', () => {
       collection: vi.fn().mockReturnValue(collection),
     });
 
-    const { mongoKangurGameContentSetRepository } = await import(
-      './mongo-kangur-game-content-set-repository'
-    );
+    const { listKangurGames } = await import('../mongo-kangur-game-repository');
 
-    const result = await mongoKangurGameContentSetRepository.listContentSets({
-      gameId: 'clock_training',
-    });
+    const result = await listKangurGames();
 
     expect(collection.bulkWrite).toHaveBeenCalledTimes(1);
     expect(result).toEqual(expected);
   });
 
-  it('can derive the game id from a content-set id and still backfill built-ins', async () => {
-    const expected = getKangurGameContentSetsForGame(getKangurGameDefinition('clock_training'));
+  it('still upserts defaults when Mongo already returns some game rows', async () => {
+    const expected = createDefaultKangurGames();
     const collection = {
       bulkWrite: vi.fn().mockResolvedValue({ acknowledged: true }),
       createIndex: vi.fn().mockResolvedValue('ok'),
@@ -63,13 +59,9 @@ describe('mongoKangurGameContentSetRepository bootstrap', () => {
       collection: vi.fn().mockReturnValue(collection),
     });
 
-    const { mongoKangurGameContentSetRepository } = await import(
-      './mongo-kangur-game-content-set-repository'
-    );
+    const { listKangurGames } = await import('../mongo-kangur-game-repository');
 
-    await mongoKangurGameContentSetRepository.listContentSets({
-      contentSetId: 'clock_training:default',
-    });
+    await listKangurGames();
 
     expect(collection.bulkWrite).toHaveBeenCalledTimes(1);
   });

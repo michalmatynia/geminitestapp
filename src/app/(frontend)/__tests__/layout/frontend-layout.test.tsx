@@ -43,7 +43,7 @@ vi.mock('next/headers', () => ({
   headers: headersMock,
 }));
 
-vi.mock('@/app/(frontend)/home-helpers', () => ({
+vi.mock('@/app/(frontend)/home/home-helpers', () => ({
   getFrontPageSetting: getFrontPageSettingMock,
   shouldApplyFrontPageAppSelection: shouldApplyFrontPageAppSelectionMock,
 }));

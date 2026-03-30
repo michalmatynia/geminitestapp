@@ -3,7 +3,9 @@ import 'dotenv/config';
 import {
   createKangurStorefrontAppearanceSeedSettings,
 } from '@/features/kangur/appearance/server/storefront-appearance-source';
+import { createKangurThemeCatalogSeedSetting } from '@/features/kangur/appearance/server/theme-catalog-source';
 import { createKangurThemePresetManifestSeedSetting } from '@/features/kangur/appearance/server/theme-preset-manifest-source';
+import { createKangurThemeSlotAssignmentsSeedSetting } from '@/features/kangur/appearance/server/theme-slot-assignments-source';
 import {
   listKangurSettingsByKeys,
   upsertKangurSettingValue,
@@ -66,8 +68,15 @@ async function main(): Promise<void> {
 
   try {
     const seedSettings = createKangurStorefrontAppearanceSeedSettings();
+    const themeCatalogSetting = createKangurThemeCatalogSeedSetting();
     const presetManifestSetting = createKangurThemePresetManifestSeedSetting();
-    const allSeedSettings = [...seedSettings, presetManifestSetting];
+    const slotAssignmentsSetting = createKangurThemeSlotAssignmentsSeedSetting();
+    const allSeedSettings = [
+      ...seedSettings,
+      themeCatalogSetting,
+      presetManifestSetting,
+      slotAssignmentsSetting,
+    ];
     const seedKeys = allSeedSettings.map(({ key }) => key);
     const seedMap = new Map(allSeedSettings.map(({ key, value }) => [key, value]));
     const storedSettings = await listKangurSettingsByKeys(seedKeys);

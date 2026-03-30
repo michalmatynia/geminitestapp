@@ -67,6 +67,30 @@ type KangurAssignmentsListRuntimeContextValue = {
   showTimeCountdown: boolean;
 };
 
+type KangurAssignmentsListPrimaryActionProps = {
+  isCoarsePointer: boolean;
+  item: KangurAssignmentListItem;
+  onItemActionClick?: (item: KangurAssignmentListItem) => void;
+  transitionSourceId: string;
+  variant: 'surface' | KangurAssignmentListItem['actionVariant'];
+};
+
+type KangurAssignmentsListProgressMetaProps = {
+  countdownLabel: string | null;
+  lastActivityLabel: string | null | undefined;
+  lastActivityPrefix: string;
+  timeLimitLabel: string | null | undefined;
+};
+
+type KangurAssignmentsListShellProps = {
+  compact: boolean;
+  emptyStateDescription: string;
+  items: KangurAssignmentListItem[];
+  summary?: string;
+  title: string;
+  translations: ReturnType<typeof useTranslations<'KangurAssignmentsList'>>;
+};
+
 const KangurAssignmentsListItemContext = createContext<KangurAssignmentsListItemContextValue | null>(
   null
 );
@@ -143,6 +167,236 @@ const shouldHandleAssignmentClick = (event: MouseEvent<HTMLAnchorElement>): bool
   return true;
 };
 
+const resolveAssignmentsActionButtonClassName = (isCoarsePointer: boolean): string =>
+  isCoarsePointer
+    ? 'w-full min-h-11 px-4 touch-manipulation select-none active:scale-[0.97] sm:w-auto'
+    : 'w-full sm:w-auto';
+
+const resolveAssignmentsIconButtonClassName = (isCoarsePointer: boolean): string =>
+  isCoarsePointer
+    ? 'w-full min-h-11 px-4 touch-manipulation select-none active:scale-[0.97] sm:w-auto sm:px-3'
+    : 'w-full sm:w-auto sm:px-3';
+
+const shouldTickAssignmentsCountdown = (
+  items: KangurAssignmentListItem[],
+  showTimeCountdown: boolean
+): boolean =>
+  showTimeCountdown &&
+  items.some((item) => Boolean(item.timeLimitMinutes) && item.status !== 'completed');
+
+function KangurAssignmentsListPrimaryAction({
+  isCoarsePointer,
+  item,
+  onItemActionClick,
+  transitionSourceId,
+  variant,
+}: KangurAssignmentsListPrimaryActionProps): React.JSX.Element {
+  return (
+    <KangurButton
+      asChild
+      className={resolveAssignmentsActionButtonClassName(isCoarsePointer)}
+      size='sm'
+      variant={variant}
+    >
+      <Link
+        href={item.actionHref}
+        onClick={(event) => {
+          if (onItemActionClick && shouldHandleAssignmentClick(event)) {
+            onItemActionClick(item);
+          }
+        }}
+        transitionAcknowledgeMs={ASSIGNMENTS_LIST_ROUTE_ACKNOWLEDGE_MS}
+        transitionSourceId={transitionSourceId}
+      >
+        {item.actionLabel}
+      </Link>
+    </KangurButton>
+  );
+}
+
+function KangurAssignmentsListTimeMeta({ label }: { label: string }): React.JSX.Element {
+  return (
+    <KangurMetaText className={KANGUR_CENTER_ROW_CLASSNAME}>
+      <Clock className='h-4 w-4 text-slate-400' aria-hidden='true' />
+      {label}
+    </KangurMetaText>
+  );
+}
+
+function KangurAssignmentsListProgressMeta({
+  countdownLabel,
+  lastActivityLabel,
+  lastActivityPrefix,
+  timeLimitLabel,
+}: KangurAssignmentsListProgressMetaProps): React.JSX.Element | null {
+  if (!countdownLabel && !timeLimitLabel && !lastActivityLabel) {
+    return null;
+  }
+
+  return (
+    <div className='mt-3 space-y-2'>
+      {countdownLabel ? <KangurAssignmentsListTimeMeta label={countdownLabel} /> : null}
+      {timeLimitLabel ? <KangurAssignmentsListTimeMeta label={timeLimitLabel} /> : null}
+      {lastActivityLabel ? (
+        <KangurMetaText>
+          {lastActivityPrefix} {lastActivityLabel}
+        </KangurMetaText>
+      ) : null}
+    </div>
+  );
+}
+
+function KangurAssignmentsListTimeLimitAction({
+  isCoarsePointer,
+  itemId,
+  label,
+  onTimeLimitClick,
+}: {
+  isCoarsePointer: boolean;
+  itemId: string;
+  label: string;
+  onTimeLimitClick?: (assignmentId: string) => void;
+}): React.JSX.Element | null {
+  if (!onTimeLimitClick) {
+    return null;
+  }
+
+  return (
+    <KangurButton
+      aria-label={label}
+      title={label}
+      className={resolveAssignmentsIconButtonClassName(isCoarsePointer)}
+      type='button'
+      onClick={() => onTimeLimitClick(itemId)}
+      size='sm'
+      variant='ghost'
+    >
+      <Clock className='h-4 w-4' aria-hidden='true' />
+    </KangurButton>
+  );
+}
+
+function KangurAssignmentsListReassignAction({
+  isCoarsePointer,
+  itemId,
+  isReassigning,
+  label,
+  onReassign,
+  reassigningLabel,
+}: {
+  isCoarsePointer: boolean;
+  itemId: string;
+  isReassigning: boolean;
+  label: string;
+  onReassign?: (assignmentId: string) => void;
+  reassigningLabel: string;
+}): React.JSX.Element | null {
+  if (!onReassign) {
+    return null;
+  }
+
+  return (
+    <KangurButton
+      className={resolveAssignmentsActionButtonClassName(isCoarsePointer)}
+      type='button'
+      onClick={() => onReassign(itemId)}
+      size='sm'
+      variant='ghost'
+      disabled={isReassigning}
+    >
+      {isReassigning ? reassigningLabel : label}
+    </KangurButton>
+  );
+}
+
+function KangurAssignmentsListArchiveAction({
+  isCoarsePointer,
+  itemId,
+  label,
+  onArchive,
+}: {
+  isCoarsePointer: boolean;
+  itemId: string;
+  label: string;
+  onArchive?: (assignmentId: string) => void;
+}): React.JSX.Element | null {
+  if (!onArchive) {
+    return null;
+  }
+
+  return (
+    <KangurButton
+      className={resolveAssignmentsActionButtonClassName(isCoarsePointer)}
+      type='button'
+      onClick={() => onArchive(itemId)}
+      size='sm'
+      variant='ghost'
+    >
+      {label}
+    </KangurButton>
+  );
+}
+
+function KangurAssignmentsListShell({
+  compact,
+  emptyStateDescription,
+  items,
+  summary,
+  title,
+  translations,
+}: KangurAssignmentsListShellProps): React.JSX.Element {
+  const CardComponent = compact ? KangurAssignmentsListCompactCard : KangurAssignmentsListStandardCard;
+  const countLabel = formatAssignmentCountLabel(items.length, translations);
+  const shellSurface = compact ? 'mist' : 'mistStrong';
+  const headerAdornment = compact ? (
+    <KangurSectionEyebrow className='tracking-[0.18em]'>{countLabel}</KangurSectionEyebrow>
+  ) : (
+    <KangurStatusChip accent='slate' labelStyle='caps'>
+      {countLabel}
+    </KangurStatusChip>
+  );
+  const eyebrow = compact ? translations('compactEyebrow') : translations('fullEyebrow');
+  const itemsGridClassName = compact
+    ? 'grid grid-cols-1 kangur-panel-gap'
+    : 'grid grid-cols-1 kangur-panel-gap xl:grid-cols-2';
+
+  return (
+    <KangurGlassPanel
+      data-testid='kangur-assignments-list-shell'
+      padding='lg'
+      surface={shellSurface}
+      variant='soft'
+    >
+      <div className={`mb-5 ${KANGUR_TIGHT_ROW_CLASSNAME} sm:items-start sm:justify-between`}>
+        <KangurPanelIntro
+          description={summary}
+          eyebrow={eyebrow}
+          title={title}
+          titleAs='div'
+          titleClassName='text-lg font-extrabold tracking-tight sm:text-xl'
+        />
+        {headerAdornment}
+      </div>
+      {items.length === 0 ? (
+        <KangurEmptyState
+          accent='slate'
+          className='text-sm'
+          description={emptyStateDescription}
+          padding='lg'
+        />
+      ) : (
+        <div className={itemsGridClassName}>
+          {items.map((item) => (
+            <KangurAssignmentsListItemContext.Provider key={item.id} value={{ item }}>
+              <CardComponent />
+            </KangurAssignmentsListItemContext.Provider>
+          ))}
+        </div>
+      )}
+    </KangurGlassPanel>
+  );
+}
+
 function KangurAssignmentsListCompactCard(): React.JSX.Element {
   const locale = useLocale();
   const translations = useTranslations('KangurAssignmentsList');
@@ -208,41 +462,19 @@ function KangurAssignmentsListCompactCard(): React.JSX.Element {
           <KangurCardDescription as='div' size='sm'>
             {item.progressSummary}
           </KangurCardDescription>
-          <KangurButton
-            asChild
-            className={
-              isCoarsePointer
-                ? 'w-full min-h-11 px-4 touch-manipulation select-none active:scale-[0.97] sm:w-auto'
-                : 'w-full sm:w-auto'
-            }
-            size='sm'
+          <KangurAssignmentsListPrimaryAction
+            isCoarsePointer={isCoarsePointer}
+            item={item}
+            onItemActionClick={onItemActionClick}
+            transitionSourceId={`assignments-list:compact:${item.id}`}
             variant={item.actionVariant}
-          >
-            <Link
-              href={item.actionHref}
-              onClick={(event) => {
-                if (onItemActionClick && shouldHandleAssignmentClick(event)) {
-                  onItemActionClick(item);
-                }
-              }}
-              transitionAcknowledgeMs={ASSIGNMENTS_LIST_ROUTE_ACKNOWLEDGE_MS}
-              transitionSourceId={`assignments-list:compact:${item.id}`}
-            >
-              {item.actionLabel}
-            </Link>
-          </KangurButton>
+          />
         </KangurPanelRow>
         {countdownLabel ? (
-          <KangurMetaText className={KANGUR_CENTER_ROW_CLASSNAME}>
-            <Clock className='h-4 w-4 text-slate-400' aria-hidden='true' />
-            {countdownLabel}
-          </KangurMetaText>
+          <KangurAssignmentsListTimeMeta label={countdownLabel} />
         ) : null}
         {item.timeLimitLabel ? (
-          <KangurMetaText className={KANGUR_CENTER_ROW_CLASSNAME}>
-            <Clock className='h-4 w-4 text-slate-400' aria-hidden='true' />
-            {item.timeLimitLabel}
-          </KangurMetaText>
+          <KangurAssignmentsListTimeMeta label={item.timeLimitLabel} />
         ) : null}
         {item.lastActivityLabel ? (
           <KangurMetaText>
@@ -318,101 +550,42 @@ function KangurAssignmentsListStandardCard(): React.JSX.Element {
           size='sm'
           value={item.progressPercent}
         />
-        {countdownLabel || item.timeLimitLabel || item.lastActivityLabel ? (
-          <div className='mt-3 space-y-2'>
-            {countdownLabel ? (
-              <KangurMetaText className={KANGUR_CENTER_ROW_CLASSNAME}>
-                <Clock className='h-4 w-4 text-slate-400' aria-hidden='true' />
-                {countdownLabel}
-              </KangurMetaText>
-            ) : null}
-            {item.timeLimitLabel ? (
-              <KangurMetaText className={KANGUR_CENTER_ROW_CLASSNAME}>
-                <Clock className='h-4 w-4 text-slate-400' aria-hidden='true' />
-                {item.timeLimitLabel}
-              </KangurMetaText>
-            ) : null}
-            {item.lastActivityLabel ? (
-              <KangurMetaText>
-                {translations('lastActivityPrefix')} {item.lastActivityLabel}
-              </KangurMetaText>
-            ) : null}
-          </div>
-        ) : null}
+        <KangurAssignmentsListProgressMeta
+          countdownLabel={countdownLabel}
+          lastActivityLabel={item.lastActivityLabel}
+          lastActivityPrefix={translations('lastActivityPrefix')}
+          timeLimitLabel={item.timeLimitLabel}
+        />
       </KangurSummaryPanel>
 
       <div className={`mt-5 ${KANGUR_TIGHT_ROW_CLASSNAME} sm:flex-wrap sm:items-center`}>
-        <KangurButton
-          asChild
-          className={
-            isCoarsePointer
-              ? 'w-full min-h-11 px-4 touch-manipulation select-none active:scale-[0.97] sm:w-auto'
-              : 'w-full sm:w-auto'
-          }
-          size='sm'
+        <KangurAssignmentsListPrimaryAction
+          isCoarsePointer={isCoarsePointer}
+          item={item}
+          onItemActionClick={onItemActionClick}
+          transitionSourceId={`assignments-list:standard:${item.id}`}
           variant='surface'
-        >
-          <Link
-            href={item.actionHref}
-            onClick={(event) => {
-              if (onItemActionClick && shouldHandleAssignmentClick(event)) {
-                onItemActionClick(item);
-              }
-            }}
-            transitionAcknowledgeMs={ASSIGNMENTS_LIST_ROUTE_ACKNOWLEDGE_MS}
-            transitionSourceId={`assignments-list:standard:${item.id}`}
-          >
-            {item.actionLabel}
-          </Link>
-        </KangurButton>
-        {onTimeLimitClick ? (
-          <KangurButton
-            aria-label={translations('timeLimitButtonLabel')}
-            title={translations('timeLimitButtonLabel')}
-            className={
-              isCoarsePointer
-                ? 'w-full min-h-11 px-4 touch-manipulation select-none active:scale-[0.97] sm:w-auto sm:px-3'
-                : 'w-full sm:w-auto sm:px-3'
-            }
-            type='button'
-            onClick={() => onTimeLimitClick(item.id)}
-            size='sm'
-            variant='ghost'
-          >
-            <Clock className='h-4 w-4' aria-hidden='true' />
-          </KangurButton>
-        ) : null}
-        {canReassign ? (
-          <KangurButton
-            className={
-              isCoarsePointer
-                ? 'w-full min-h-11 px-4 touch-manipulation select-none active:scale-[0.97] sm:w-auto'
-                : 'w-full sm:w-auto'
-            }
-            type='button'
-            onClick={() => onReassign?.(item.id)}
-            size='sm'
-            variant='ghost'
-            disabled={isReassigning}
-          >
-            {isReassigning ? translations('reassigning') : translations('reassign')}
-          </KangurButton>
-        ) : null}
-        {onArchive ? (
-          <KangurButton
-            className={
-              isCoarsePointer
-                ? 'w-full min-h-11 px-4 touch-manipulation select-none active:scale-[0.97] sm:w-auto'
-                : 'w-full sm:w-auto'
-            }
-            type='button'
-            onClick={() => onArchive(item.id)}
-            size='sm'
-            variant='ghost'
-          >
-            {translations('archive')}
-          </KangurButton>
-        ) : null}
+        />
+        <KangurAssignmentsListTimeLimitAction
+          isCoarsePointer={isCoarsePointer}
+          itemId={item.id}
+          label={translations('timeLimitButtonLabel')}
+          onTimeLimitClick={onTimeLimitClick}
+        />
+        <KangurAssignmentsListReassignAction
+          isCoarsePointer={isCoarsePointer}
+          itemId={item.id}
+          isReassigning={isReassigning}
+          label={translations('reassign')}
+          onReassign={canReassign ? onReassign : undefined}
+          reassigningLabel={translations('reassigning')}
+        />
+        <KangurAssignmentsListArchiveAction
+          isCoarsePointer={isCoarsePointer}
+          itemId={item.id}
+          label={translations('archive')}
+          onArchive={onArchive}
+        />
       </div>
     </KangurInfoCard>
   );
@@ -433,12 +606,8 @@ export function KangurAssignmentsList({
 }: KangurAssignmentsListProps): React.JSX.Element {
   const translations = useTranslations('KangurAssignmentsList');
   const emptyStateDescription = emptyLabel ?? translations('emptyLabel');
-  const panelSummary = summary;
-  const panelTitle = title;
   const archiveContextValue = { onArchive, onTimeLimitClick, onReassign, reassigningId };
-  const shouldTick =
-    showTimeCountdown &&
-    items.some((item) => Boolean(item.timeLimitMinutes) && item.status !== 'completed');
+  const shouldTick = shouldTickAssignmentsCountdown(items, showTimeCountdown);
   const [now, setNow] = useState(() => Date.now());
   const runtimeContextValue = useMemo(
     () => ({
@@ -464,89 +633,18 @@ export function KangurAssignmentsList({
     setNow(Date.now());
   }, shouldTick ? 1000 : null);
 
-  if (compact) {
-    return (
-      <KangurAssignmentsListRuntimeContext.Provider value={runtimeContextValue}>
-        <KangurAssignmentsListActionContext.Provider value={actionContextValue}>
-          <KangurGlassPanel
-            data-testid='kangur-assignments-list-shell'
-            padding='lg'
-            surface='mist'
-            variant='soft'
-          >
-            <div className={`mb-5 ${KANGUR_TIGHT_ROW_CLASSNAME} sm:items-start sm:justify-between`}>
-              <KangurPanelIntro
-                description={panelSummary}
-                eyebrow={translations('compactEyebrow')}
-                title={panelTitle}
-                titleAs='div'
-                titleClassName='text-lg font-extrabold tracking-tight sm:text-xl'
-              />
-              <KangurSectionEyebrow className='tracking-[0.18em]'>
-                {formatAssignmentCountLabel(items.length, translations)}
-              </KangurSectionEyebrow>
-            </div>
-            {items.length === 0 ? (
-              <KangurEmptyState
-                accent='slate'
-                className='text-sm'
-                description={emptyStateDescription}
-                padding='lg'
-              />
-            ) : (
-              <div className='grid grid-cols-1 kangur-panel-gap'>
-                {items.map((item) => (
-                  <KangurAssignmentsListItemContext.Provider key={item.id} value={{ item }}>
-                    <KangurAssignmentsListCompactCard />
-                  </KangurAssignmentsListItemContext.Provider>
-                ))}
-              </div>
-            )}
-          </KangurGlassPanel>
-        </KangurAssignmentsListActionContext.Provider>
-      </KangurAssignmentsListRuntimeContext.Provider>
-    );
-  }
-
   return (
     <KangurAssignmentsListRuntimeContext.Provider value={runtimeContextValue}>
       <KangurAssignmentsListActionContext.Provider value={actionContextValue}>
         <KangurAssignmentsListArchiveContext.Provider value={archiveContextValue}>
-          <KangurGlassPanel
-            data-testid='kangur-assignments-list-shell'
-            padding='lg'
-            surface='mistStrong'
-            variant='soft'
-          >
-            <div className={`mb-5 ${KANGUR_TIGHT_ROW_CLASSNAME} sm:items-start sm:justify-between`}>
-              <KangurPanelIntro
-                description={panelSummary}
-                eyebrow={translations('fullEyebrow')}
-                title={panelTitle}
-                titleAs='div'
-                titleClassName='text-lg font-extrabold tracking-tight sm:text-xl'
-              />
-              <KangurStatusChip accent='slate' labelStyle='caps'>
-                {formatAssignmentCountLabel(items.length, translations)}
-              </KangurStatusChip>
-            </div>
-            {items.length === 0 ? (
-              <KangurEmptyState
-                accent='slate'
-                className='text-sm'
-                description={emptyStateDescription}
-                padding='lg'
-              />
-            ) : (
-              <div className='grid grid-cols-1 kangur-panel-gap xl:grid-cols-2'>
-                {items.map((item) => (
-                  <KangurAssignmentsListItemContext.Provider key={item.id} value={{ item }}>
-                    <KangurAssignmentsListStandardCard />
-                  </KangurAssignmentsListItemContext.Provider>
-                ))}
-              </div>
-            )}
-          </KangurGlassPanel>
+          <KangurAssignmentsListShell
+            compact={compact}
+            emptyStateDescription={emptyStateDescription}
+            items={items}
+            summary={summary}
+            title={title}
+            translations={translations}
+          />
         </KangurAssignmentsListArchiveContext.Provider>
       </KangurAssignmentsListActionContext.Provider>
     </KangurAssignmentsListRuntimeContext.Provider>

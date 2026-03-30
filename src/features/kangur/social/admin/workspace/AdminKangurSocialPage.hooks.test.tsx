@@ -21,6 +21,7 @@ const {
   trackKangurClientEventMock,
   logKangurClientErrorMock,
   captureExceptionMock,
+  toastMock,
   settingsHandleBrainModelChangeMock,
   settingsHandleVisionModelChangeMock,
   settingsHandleLinkedInConnectionChangeMock,
@@ -31,6 +32,8 @@ const {
   startBatchCaptureMock,
   readBatchCaptureJobMock,
   patchMutateAsyncMock,
+  addonsQueryRefetchMock,
+  postsQueryRefetchMock,
   setImageAddonIdsMock,
   setImageAssetsMock,
 } = vi.hoisted(() => ({
@@ -44,6 +47,7 @@ const {
   trackKangurClientEventMock: vi.fn(),
   logKangurClientErrorMock: vi.fn(),
   captureExceptionMock: vi.fn(),
+  toastMock: vi.fn(),
   settingsHandleBrainModelChangeMock: vi.fn(),
   settingsHandleVisionModelChangeMock: vi.fn(),
   settingsHandleLinkedInConnectionChangeMock: vi.fn(),
@@ -54,6 +58,8 @@ const {
   startBatchCaptureMock: vi.fn(),
   readBatchCaptureJobMock: vi.fn(),
   patchMutateAsyncMock: vi.fn(),
+  addonsQueryRefetchMock: vi.fn(),
+  postsQueryRefetchMock: vi.fn(),
   setImageAddonIdsMock: vi.fn(),
   setImageAssetsMock: vi.fn(),
 }));
@@ -61,6 +67,10 @@ const {
 vi.mock('@/features/kangur/observability/client', () => ({
   trackKangurClientEvent: (...args: unknown[]) => trackKangurClientEventMock(...args),
   logKangurClientError: (...args: unknown[]) => logKangurClientErrorMock(...args),
+}));
+
+vi.mock('@/features/kangur/shared/ui', () => ({
+  useToast: () => ({ toast: toastMock }),
 }));
 
 vi.mock('@/features/kangur/shared/utils/observability/error-system-client', () => ({
@@ -205,8 +215,10 @@ const createEditorState = (overrides?: Record<string, unknown>) => ({
   handleSelectAddon: vi.fn(),
   handleSelectAddons: vi.fn(),
   handleRemoveAddon: vi.fn(),
-  postsQuery: { isLoading: false },
-  addonsQuery: { isLoading: false },
+  missingSelectedImageAddonIds: [],
+  handleRemoveMissingAddons: vi.fn(),
+  postsQuery: { isLoading: false, refetch: postsQueryRefetchMock },
+  addonsQuery: { isLoading: false, refetch: addonsQueryRefetchMock },
   ...overrides,
 });
 
@@ -214,6 +226,8 @@ describe('useAdminKangurSocialPage', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     patchMutateAsyncMock.mockResolvedValue({});
+    addonsQueryRefetchMock.mockResolvedValue(undefined);
+    postsQueryRefetchMock.mockResolvedValue(undefined);
     pipelineRunMock.mockResolvedValue(undefined);
     pipelineRunWithOverridesMock.mockResolvedValue(undefined);
     pipelineRunFreshMock.mockResolvedValue(undefined);
@@ -369,6 +383,79 @@ describe('useAdminKangurSocialPage', () => {
     expect(result.current.captureOnlyMessage).toBe(
       'Captured 1 screenshot from 1 preset and linked them to the draft.'
     );
+  });
+
+  it('refreshes the selected image add-ons and active posts when missing add-ons are reported', async () => {
+    useSocialEditorSyncMock.mockReturnValue(
+      createEditorState({
+        imageAddonIds: ['addon-1', 'addon-missing'],
+        missingSelectedImageAddonIds: ['addon-missing'],
+      })
+    );
+
+    const { result } = renderHook(() => useAdminKangurSocialPage());
+
+    await act(async () => {
+      await result.current.handleRefreshMissingImageAddons();
+    });
+
+    expect(addonsQueryRefetchMock).toHaveBeenCalledTimes(1);
+    expect(postsQueryRefetchMock).toHaveBeenCalledTimes(1);
+    expect(toastMock).toHaveBeenCalledWith('Refreshed image add-ons for the current draft.', {
+      variant: 'success',
+    });
+    expect(result.current.missingImageAddonActionPending).toBeNull();
+    expect(result.current.missingImageAddonActionErrorMessage).toBeNull();
+  });
+
+  it('persists removal of missing selected image add-ons back to the active post', async () => {
+    useSocialEditorSyncMock.mockReturnValue(
+      createEditorState({
+        recentAddons: [
+          {
+            id: 'addon-old',
+            title: 'Old game capture',
+            presetId: 'game',
+            playwrightCaptureRouteId: 'game',
+            imageAsset: { id: 'existing', url: '/existing.png' },
+          },
+        ],
+        imageAssets: [
+          { id: 'existing', url: '/existing.png' },
+          { id: 'manual-1', url: '/manual.png' },
+        ],
+        imageAddonIds: ['addon-old', 'addon-missing'],
+        missingSelectedImageAddonIds: ['addon-missing'],
+      })
+    );
+
+    const { result } = renderHook(() => useAdminKangurSocialPage());
+
+    await act(async () => {
+      await result.current.handleRemoveMissingAddons();
+    });
+
+    expect(patchMutateAsyncMock).toHaveBeenCalledWith({
+      id: 'post-1',
+      updates: {
+        imageAddonIds: ['addon-old'],
+        imageAssets: [
+          { id: 'existing', url: '/existing.png' },
+          { id: 'manual-1', url: '/manual.png' },
+        ],
+      },
+    });
+    expect(setImageAddonIdsMock).toHaveBeenCalledWith(['addon-old']);
+    expect(setImageAssetsMock).toHaveBeenCalledWith([
+      { id: 'existing', url: '/existing.png' },
+      { id: 'manual-1', url: '/manual.png' },
+    ]);
+    expect(toastMock).toHaveBeenCalledWith(
+      'Removed 1 missing image add-on from the current draft.',
+      { variant: 'success' }
+    );
+    expect(result.current.missingImageAddonActionPending).toBeNull();
+    expect(result.current.missingImageAddonActionErrorMessage).toBeNull();
   });
 
   it('surfaces partial capture failures alongside the successful attachment message', async () => {

@@ -21,7 +21,7 @@ vi.mock('@/features/kangur/public', () => ({
   KangurServerShell: () => <div data-testid='kangur-server-shell' />,
 }));
 
-vi.mock('@/app/(frontend)/home-helpers', () => ({
+vi.mock('@/app/(frontend)/home/home-helpers', () => ({
   getFrontPageSetting: vi.fn(async () => null),
   shouldApplyFrontPageAppSelection: () => false,
 }));

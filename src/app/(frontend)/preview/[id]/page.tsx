@@ -4,8 +4,8 @@ import { JSX } from 'react';
 
 import { readOptionalServerAuthSession } from '@/features/auth/server';
 
-import { renderCmsPage } from '../../cms-render';
-import { isAdminSession, loadPreviewRenderData } from './preview-page-data';
+import { renderCmsPage } from '../../cms/render';
+import { isAdminSession, loadPreviewRenderData } from '../preview-page-data';
 
 import type { Metadata } from 'next';
 

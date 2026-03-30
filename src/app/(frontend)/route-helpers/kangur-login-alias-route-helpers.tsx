@@ -9,7 +9,7 @@ import { readSanitizedKangurAliasLoginSearchParams } from '@/features/kangur/ser
 import { buildLocalizedPathname, normalizeSiteLocale } from '@/shared/lib/i18n/site-locale';
 import { getFrontPagePublicOwner } from '@/shared/lib/front-page-app';
 
-import { getFrontPageSetting, shouldApplyFrontPageAppSelection } from '../home-helpers';
+import { getFrontPageSetting, shouldApplyFrontPageAppSelection } from '../home/home-helpers';
 
 type KangurAliasLoginSearchParams = Record<string, string | string[] | undefined>;
 

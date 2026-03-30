@@ -51,7 +51,10 @@ vi.mock('./SocialPostContext', () => ({
     missingSelectedImageAddonIds: [],
     handleSelectAddon: vi.fn(),
     handleRemoveAddon: vi.fn(),
-    handleRemoveMissingAddons: vi.fn(),
+    handleRefreshMissingImageAddons: vi.fn().mockResolvedValue(undefined),
+    handleRemoveMissingAddons: vi.fn().mockResolvedValue(undefined),
+    missingImageAddonActionPending: null,
+    missingImageAddonActionErrorMessage: null,
     imageAssets: [],
     handleRemoveImage: vi.fn(),
     setShowMediaLibrary: vi.fn(),
@@ -168,17 +171,20 @@ describe('SocialPostVisuals', () => {
   });
 
   it('warns when selected add-ons are missing from the loaded add-on list', () => {
-    const refetchMock = vi.fn();
-    const handleRemoveMissingAddons = vi.fn();
+    const handleRefreshMissingImageAddons = vi.fn().mockResolvedValue(undefined);
+    const handleRemoveMissingAddons = vi.fn().mockResolvedValue(undefined);
     useSocialPostContextMock.mockReturnValue({
       activePost: buildPost(),
       recentAddons: [],
-      addonsQuery: { isLoading: false, isFetching: false, refetch: refetchMock },
+      addonsQuery: { isLoading: false, isFetching: false, refetch: vi.fn() },
       imageAddonIds: ['addon-1', 'addon-2'],
       missingSelectedImageAddonIds: ['addon-1', 'addon-2'],
       handleSelectAddon: vi.fn(),
       handleRemoveAddon: vi.fn(),
+      handleRefreshMissingImageAddons,
       handleRemoveMissingAddons,
+      missingImageAddonActionPending: null,
+      missingImageAddonActionErrorMessage: null,
       imageAssets: [],
       handleRemoveImage: vi.fn(),
       setShowMediaLibrary: vi.fn(),
@@ -196,8 +202,63 @@ describe('SocialPostVisuals', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Refresh image add-ons' }));
     fireEvent.click(screen.getByRole('button', { name: 'Remove missing add-ons' }));
 
-    expect(refetchMock).toHaveBeenCalledTimes(1);
+    expect(handleRefreshMissingImageAddons).toHaveBeenCalledTimes(1);
     expect(handleRemoveMissingAddons).toHaveBeenCalledTimes(1);
+  });
+
+  it('shows pending and error feedback while resolving missing add-ons', () => {
+    useSocialPostContextMock.mockReturnValue({
+      activePost: buildPost(),
+      recentAddons: [],
+      addonsQuery: { isLoading: false, isFetching: false, refetch: vi.fn() },
+      imageAddonIds: ['addon-1', 'addon-2'],
+      missingSelectedImageAddonIds: ['addon-2'],
+      handleSelectAddon: vi.fn(),
+      handleRemoveAddon: vi.fn(),
+      handleRefreshMissingImageAddons: vi.fn().mockResolvedValue(undefined),
+      handleRemoveMissingAddons: vi.fn().mockResolvedValue(undefined),
+      missingImageAddonActionPending: 'refresh',
+      missingImageAddonActionErrorMessage: 'Failed to refresh the selected image add-ons.',
+      imageAssets: [],
+      handleRemoveImage: vi.fn(),
+      setShowMediaLibrary: vi.fn(),
+      showMediaLibrary: false,
+      handleAddImages: vi.fn(),
+    });
+
+    render(<SocialPostVisuals showImagesPanel={false} />);
+
+    expect(screen.getByRole('button', { name: 'Refreshing image add-ons...' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Remove missing add-ons' })).toBeDisabled();
+    expect(
+      screen.getByText('Failed to refresh the selected image add-ons.')
+    ).toBeInTheDocument();
+  });
+
+  it('does not crash when missing-addon context fields are temporarily undefined', () => {
+    useSocialPostContextMock.mockReturnValue({
+      activePost: buildPost(),
+      recentAddons: undefined,
+      addonsQuery: undefined,
+      imageAddonIds: undefined,
+      missingSelectedImageAddonIds: undefined,
+      handleSelectAddon: vi.fn(),
+      handleRemoveAddon: vi.fn(),
+      handleRefreshMissingImageAddons: undefined,
+      handleRemoveMissingAddons: undefined,
+      missingImageAddonActionPending: null,
+      missingImageAddonActionErrorMessage: null,
+      imageAssets: [],
+      handleRemoveImage: vi.fn(),
+      setShowMediaLibrary: vi.fn(),
+      showMediaLibrary: false,
+      handleAddImages: vi.fn(),
+    });
+
+    render(<SocialPostVisuals showImagesPanel={false} />);
+
+    expect(screen.getByText('Image add-ons')).toBeInTheDocument();
+    expect(screen.getByText('No image add-ons yet.')).toBeInTheDocument();
   });
 
   it('shows the stored image analysis summary and highlights when the post has visual analysis data', () => {

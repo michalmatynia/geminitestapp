@@ -16,9 +16,9 @@ import {
   KANGUR_THEME_PRESET_MANIFEST_KEY,
   KANGUR_THEME_CATALOG_KEY,
   parseKangurThemePresetManifest,
-  resolveKangurThemePresetManifestEntry,
   parseKangurThemeCatalog,
   normalizeKangurThemeSettings,
+  resolveKangurStoredThemeSelection,
   resolveKangurStoredThemeSnapshot,
   type KangurThemeCatalogEntry,
 } from '@/features/kangur/appearance/theme-settings';
@@ -247,9 +247,13 @@ export function AppearancePageProvider({ children }: { children: React.ReactNode
 
   const resolveReadOnlySelectionTheme = useCallback(
     (id: ThemeSelectionId): ThemeSettings | null => {
-      const manifestEntry = resolveKangurThemePresetManifestEntry(themePresetManifest, id);
-      if (manifestEntry) {
-        return manifestEntry.settings;
+      const storedSelection = resolveKangurStoredThemeSelection({
+        id,
+        catalog,
+        manifest: themePresetManifest,
+      });
+      if (storedSelection?.source === 'manifest') {
+        return storedSelection.settings;
       }
       if (id === FACTORY_DAWN_ID) return slotThemes.dawn;
       if (id === FACTORY_SUNSET_ID) return slotThemes.sunset;
@@ -257,7 +261,7 @@ export function AppearancePageProvider({ children }: { children: React.ReactNode
       if (id === PRESET_NIGHTLY_CRYSTAL_ID) return slotThemes.nightly;
       return slotThemes.daily;
     },
-    [slotThemes, themePresetManifest]
+    [catalog, slotThemes, themePresetManifest]
   );
 
   const loadTheme = useCallback(
@@ -284,12 +288,16 @@ export function AppearancePageProvider({ children }: { children: React.ReactNode
       if (slotEntry) {
         return slotEntry;
       }
-      const entry = catalog.find((e) => e.id === id);
-      return entry
-        ? normalizeKangurThemeSettings(entry.settings, slotThemes.daily)
+      const storedSelection = resolveKangurStoredThemeSelection({
+        id,
+        catalog,
+        manifest: themePresetManifest,
+      });
+      return storedSelection?.source === 'catalog'
+        ? normalizeKangurThemeSettings(storedSelection.settings, slotThemes.daily)
         : slotThemes.daily;
     },
-    [catalog, resolveReadOnlySelectionTheme, slotThemes]
+    [catalog, resolveReadOnlySelectionTheme, slotThemes, themePresetManifest]
   );
 
   const [draft, setDraftState] = useState<ThemeSettings>(() => loadTheme(BUILTIN_DAILY_ID));

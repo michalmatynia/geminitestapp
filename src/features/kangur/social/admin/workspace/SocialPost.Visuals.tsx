@@ -33,7 +33,10 @@ export function SocialPostVisuals(props: SocialPostVisualsProps): React.JSX.Elem
     missingSelectedImageAddonIds,
     handleSelectAddon,
     handleRemoveAddon,
+    handleRefreshMissingImageAddons,
     handleRemoveMissingAddons,
+    missingImageAddonActionPending,
+    missingImageAddonActionErrorMessage,
     imageAssets,
     handleRemoveImage,
     setShowMediaLibrary,
@@ -56,15 +59,19 @@ export function SocialPostVisuals(props: SocialPostVisualsProps): React.JSX.Elem
   });
   const selectedAddonSet = useMemo(() => new Set(selectedImageAddonIds), [selectedImageAddonIds]);
   const missingSelectedAddonCount = missingAddonIds.length;
-  const isRefreshingImageAddons = Boolean(addonsQuery?.isFetching);
+  const isRefreshingImageAddons =
+    missingImageAddonActionPending === 'refresh' || Boolean(addonsQuery?.isFetching);
+  const isRemovingMissingAddons = missingImageAddonActionPending === 'remove';
+  const isMissingImageAddonActionPending =
+    isRefreshingImageAddons || isRemovingMissingAddons;
   const refetchImageAddons = (): void => {
-    if (typeof addonsQuery?.refetch === 'function') {
-      void addonsQuery.refetch();
+    if (typeof handleRefreshMissingImageAddons === 'function') {
+      void handleRefreshMissingImageAddons();
     }
   };
   const removeMissingAddons = (): void => {
     if (typeof handleRemoveMissingAddons === 'function') {
-      handleRemoveMissingAddons();
+      void handleRemoveMissingAddons();
     }
   };
   const personaNameById = useMemo(
@@ -247,7 +254,7 @@ export function SocialPostVisuals(props: SocialPostVisualsProps): React.JSX.Elem
                 variant='outline'
                 size='sm'
                 onClick={refetchImageAddons}
-                disabled={isRefreshingImageAddons}
+                disabled={isMissingImageAddonActionPending}
               >
                 {isRefreshingImageAddons ? 'Refreshing image add-ons...' : 'Refresh image add-ons'}
               </Button>
@@ -256,10 +263,16 @@ export function SocialPostVisuals(props: SocialPostVisualsProps): React.JSX.Elem
                 variant='outline'
                 size='sm'
                 onClick={removeMissingAddons}
+                disabled={isMissingImageAddonActionPending}
               >
-                Remove missing add-ons
+                {isRemovingMissingAddons ? 'Removing missing add-ons...' : 'Remove missing add-ons'}
               </Button>
             </div>
+            {missingImageAddonActionErrorMessage ? (
+              <div className='mt-2 text-xs text-destructive'>
+                {missingImageAddonActionErrorMessage}
+              </div>
+            ) : null}
           </div>
         ) : null}
         {recentAddonsLoading ? (

@@ -11,6 +11,47 @@ import {
 import { KangurPanelIntro, KangurPanelStack } from '@/features/kangur/ui/design/primitives';
 import { KANGUR_WIDGET_TITLE_CLASSNAME } from '@/features/kangur/ui/design/tokens';
 import { useKangurPageContentEntry } from '@/features/kangur/ui/hooks/useKangurPageContent';
+
+type KangurParentDashboardAssignmentsRuntime = ReturnType<typeof useKangurParentDashboardRuntime>;
+
+const shouldRenderKangurParentDashboardAssignmentsWidget = ({
+  activeLearnerId,
+  activeTab,
+  canAccessDashboard,
+  displayMode,
+}: {
+  activeLearnerId: string | null;
+  activeTab: KangurParentDashboardAssignmentsRuntime['activeTab'];
+  canAccessDashboard: boolean;
+  displayMode: KangurParentDashboardPanelDisplayMode;
+}): boolean => {
+  if (!canAccessDashboard) {
+    return false;
+  }
+
+  if (!shouldRenderKangurParentDashboardPanel(displayMode, activeTab, 'assign')) {
+    return false;
+  }
+
+  return Boolean(activeLearnerId);
+};
+
+const resolveKangurParentDashboardAssignmentsIntro = ({
+  assignmentsContent,
+  translations,
+}: {
+  assignmentsContent: ReturnType<typeof useKangurPageContentEntry>['entry'];
+  translations: ReturnType<typeof useTranslations>;
+}): { description: string; title: string } => ({
+  description:
+    assignmentsContent?.summary ?? translations('widgets.assignments.description'),
+  title: assignmentsContent?.title ?? translations('widgets.assignments.title'),
+});
+
+const resolveKangurParentDashboardActiveLearnerId = (
+  activeLearner: KangurParentDashboardAssignmentsRuntime['activeLearner']
+): string | null => activeLearner?.id ?? null;
+
 export function KangurParentDashboardAssignmentsWidget({
   displayMode = 'always',
 }: {
@@ -31,28 +72,28 @@ export function KangurParentDashboardAssignmentsWidget({
     updateAssignment,
   } = useKangurParentDashboardRuntime();
   const { entry: assignmentsContent } = useKangurPageContentEntry('parent-dashboard-assignments');
-  const activeLearnerId = activeLearner?.id ?? null;
+  const activeLearnerId = resolveKangurParentDashboardActiveLearnerId(activeLearner);
+  const intro = resolveKangurParentDashboardAssignmentsIntro({
+    assignmentsContent,
+    translations,
+  });
 
-  if (!canAccessDashboard) {
-    return null;
-  }
-
-  if (!shouldRenderKangurParentDashboardPanel(displayMode, activeTab, 'assign')) {
-    return null;
-  }
-
-  if (!activeLearnerId) {
+  if (
+    !shouldRenderKangurParentDashboardAssignmentsWidget({
+      activeLearnerId,
+      activeTab,
+      canAccessDashboard,
+      displayMode,
+    })
+  ) {
     return null;
   }
 
   return (
     <KangurPanelStack>
       <KangurPanelIntro
-        description={
-          assignmentsContent?.summary ??
-          translations('widgets.assignments.description')
-        }
-        title={assignmentsContent?.title ?? translations('widgets.assignments.title')}
+        description={intro.description}
+        title={intro.title}
         titleAs='h2'
         titleClassName={KANGUR_WIDGET_TITLE_CLASSNAME}
       />
@@ -66,7 +107,7 @@ export function KangurParentDashboardAssignmentsWidget({
         preloadedReassignAssignment={reassignAssignment}
         preloadedUpdateAssignment={updateAssignment}
         view='catalogWithLists'
-        key={activeLearnerId ?? 'no-learner'}
+        key={activeLearnerId}
       />
     </KangurPanelStack>
   );

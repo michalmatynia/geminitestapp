@@ -1,4 +1,4 @@
-import { primeFrontPageSettingRuntime } from '@/app/(frontend)/home-helpers';
+import { primeFrontPageSettingRuntime } from '@/app/(frontend)/home/home-helpers';
 import { WithId } from 'mongodb';
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
@@ -9,12 +9,24 @@ import {
   isKangurStorefrontInitialStateDependencyKey,
 } from '@/features/kangur/appearance/server/storefront-appearance';
 import {
+  KANGUR_STOREFRONT_APPEARANCE_SETTING_KEYS,
+  ensureKangurStorefrontAppearanceSettingsSeeded,
+} from '@/features/kangur/appearance/server/storefront-appearance-source';
+import { ensureKangurThemeCatalogSeeded } from '@/features/kangur/appearance/server/theme-catalog-source';
+import { ensureKangurThemePresetManifestSeeded } from '@/features/kangur/appearance/server/theme-preset-manifest-source';
+import { ensureKangurThemeSlotAssignmentsSeeded } from '@/features/kangur/appearance/server/theme-slot-assignments-source';
+import {
   isKangurSettingKey,
   listKangurSettings,
   readKangurSettingValue,
   upsertKangurSettingValue,
 } from '@/features/kangur/services/kangur-settings-repository';
 import { TRADERA_SETTINGS_KEYS } from '@/features/integrations/constants/tradera';
+import {
+  KANGUR_SLOT_ASSIGNMENTS_KEY,
+  KANGUR_THEME_CATALOG_KEY,
+  KANGUR_THEME_PRESET_MANIFEST_KEY,
+} from '@/shared/contracts/kangur-settings-keys';
 import {
   type MongoPersistedStringSettingDocument,
   upsertSettingSchema as settingSchema,
@@ -142,10 +154,33 @@ const ensureSettingsIndexes = async (): Promise<void> => {
   await settingsIndexesEnsured;
 };
 
+const readSeededKangurAppearanceSettingValue = async (
+  key: string
+): Promise<string | null> => {
+  if (KANGUR_STOREFRONT_APPEARANCE_SETTING_KEYS.includes(key)) {
+    const settings = await ensureKangurStorefrontAppearanceSettingsSeeded();
+    return settings.find((setting) => setting.key === key)?.value ?? null;
+  }
+  if (key === KANGUR_THEME_CATALOG_KEY) {
+    return (await ensureKangurThemeCatalogSeeded()).value;
+  }
+  if (key === KANGUR_THEME_PRESET_MANIFEST_KEY) {
+    return (await ensureKangurThemePresetManifestSeeded()).value;
+  }
+  if (key === KANGUR_SLOT_ASSIGNMENTS_KEY) {
+    return (await ensureKangurThemeSlotAssignmentsSeeded()).value;
+  }
+  return null;
+};
+
 const readCurrentSettingValue = async (
   key: string
 ): Promise<string | null> => {
   if (isKangurSettingKey(key)) {
+    const seededCanonicalValue = await readSeededKangurAppearanceSettingValue(key);
+    if (seededCanonicalValue !== null) {
+      return seededCanonicalValue;
+    }
     return await readKangurSettingValue(key);
   }
   const readMongo = async (): Promise<string | null> => {
@@ -272,10 +307,14 @@ const listMongoSettings = async (scope: SettingsScope): Promise<SettingRecord[]>
     return baseSettings;
   }
 
-  const kangurSettings = await listKangurSettings();
-  if (kangurSettings.length === 0) {
-    return baseSettings;
-  }
+  const [kangurSettings, seededStorefrontAppearanceSettings, seededThemeCatalog, seededThemePresetManifest, seededThemeSlotAssignments] =
+    await Promise.all([
+      listKangurSettings(),
+      ensureKangurStorefrontAppearanceSettingsSeeded(),
+      ensureKangurThemeCatalogSeeded(),
+      ensureKangurThemePresetManifestSeeded(),
+      ensureKangurThemeSlotAssignmentsSeeded(),
+    ]);
 
   const merged = new Map<string, string>();
   baseSettings.forEach((setting) => {
@@ -283,6 +322,18 @@ const listMongoSettings = async (scope: SettingsScope): Promise<SettingRecord[]>
   });
   kangurSettings.forEach((setting) => {
     merged.set(setting.key, setting.value);
+  });
+  seededStorefrontAppearanceSettings.forEach((setting) => {
+    merged.set(setting.key, setting.value);
+  });
+  [
+    seededThemeCatalog,
+    seededThemePresetManifest,
+    seededThemeSlotAssignments,
+  ].forEach((setting) => {
+    if (setting) {
+      merged.set(setting.key, setting.value);
+    }
   });
   return Array.from(merged.entries()).map(([key, value]) => ({ key, value }));
 };

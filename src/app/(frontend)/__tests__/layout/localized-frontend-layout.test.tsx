@@ -10,7 +10,7 @@ const { frontendLayoutMock } = vi.hoisted(() => ({
   frontendLayoutMock: vi.fn(({ children }: { children: ReactNode }) => <div>{children}</div>),
 }));
 
-vi.mock('../../(frontend)/layout', () => ({
+vi.mock('@/app/(frontend)/layout', () => ({
   default: frontendLayoutMock,
 }));
 

@@ -10,9 +10,9 @@ import { buildLocalizedPathname, normalizeSiteLocale } from '@/shared/lib/i18n/s
 import { getFrontPagePublicOwner, getFrontPageRedirectPath } from '@/shared/lib/front-page-app';
 import { readOptionalRequestHeaders } from '@/shared/lib/request/optional-headers';
 
-import { HomeContent } from '../HomeContent';
-import { getFrontPageSetting, shouldApplyFrontPageAppSelection } from '../home-helpers';
-import { createHomeTimingRecorder } from '../home-timing';
+import { HomeContent } from '../home/HomeContent';
+import { getFrontPageSetting, shouldApplyFrontPageAppSelection } from '../home/home-helpers';
+import { createHomeTimingRecorder } from '../home/home-timing';
 
 type RenderHomeRouteOptions = {
   locale?: string | null;

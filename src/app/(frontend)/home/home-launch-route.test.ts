@@ -39,7 +39,7 @@ vi.mock('@/features/cms/server', () => ({
   resolveCmsDomainFromHeaders: resolveCmsDomainFromHeadersMock,
 }));
 
-vi.mock('@/app/(frontend)/home-helpers', () => ({
+vi.mock('@/app/(frontend)/home/home-helpers', () => ({
   getFrontPageSetting: getFrontPageSettingMock,
   shouldApplyFrontPageAppSelection: shouldApplyFrontPageAppSelectionMock,
 }));

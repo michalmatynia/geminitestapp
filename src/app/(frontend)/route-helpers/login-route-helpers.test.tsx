@@ -45,7 +45,7 @@ vi.mock('next-intl/server', () => ({
   getTranslations: getTranslationsMock,
 }));
 
-vi.mock('@/app/(frontend)/home-helpers', () => ({
+vi.mock('@/app/(frontend)/home/home-helpers', () => ({
   getFrontPageSetting: getFrontPageSettingMock,
   shouldApplyFrontPageAppSelection: shouldApplyFrontPageAppSelectionMock,
 }));
@@ -74,11 +74,11 @@ vi.mock('@/features/kangur/public', () => ({
   },
 }));
 
-vi.mock('@/app/(frontend)/cms-render', () => ({
+vi.mock('@/app/(frontend)/cms/render', () => ({
   renderCmsPage: renderCmsPageMock,
 }));
 
-vi.mock('@/app/(frontend)/[...slug]/slug-page-data', () => ({
+vi.mock('@/app/(frontend)/cms/slug-page-data', () => ({
   buildSlugMetadata: buildSlugMetadataMock,
   loadSlugRenderData: loadSlugRenderDataMock,
   resolveSlugToPage: resolveSlugToPageMock,

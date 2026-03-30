@@ -24,14 +24,14 @@ describe('home-helpers', () => {
   beforeEach(() => {
     vi.resetModules();
     vi.unmock('react');
-    vi.unmock('@/app/(frontend)/home-helpers');
+    vi.unmock('@/app/(frontend)/home/home-helpers');
     vi.clearAllMocks();
     vi.useRealTimers();
     delete process.env['MONGODB_URI'];
   });
 
   it('returns null without touching mongo when no mongo uri is configured', async () => {
-    const { getFrontPageSetting } = await import('@/app/(frontend)/home-helpers');
+    const { getFrontPageSetting } = await import('@/app/(frontend)/home/home-helpers');
 
     await expect(getFrontPageSetting()).resolves.toBeNull();
     expect(getMongoDbMock).not.toHaveBeenCalled();
@@ -46,7 +46,7 @@ describe('home-helpers', () => {
     error.name = 'MongoServerSelectionError';
     getMongoDbMock.mockRejectedValue(error);
 
-    const { getFrontPageSetting } = await import('@/app/(frontend)/home-helpers');
+    const { getFrontPageSetting } = await import('@/app/(frontend)/home/home-helpers');
 
     await expect(getFrontPageSetting()).resolves.toBeNull();
     await expect(getFrontPageSetting()).resolves.toBeNull();
@@ -65,7 +65,7 @@ describe('home-helpers', () => {
     const error = new Error('settings collection schema mismatch');
     getMongoDbMock.mockRejectedValue(error);
 
-    const { getFrontPageSetting } = await import('@/app/(frontend)/home-helpers');
+    const { getFrontPageSetting } = await import('@/app/(frontend)/home/home-helpers');
 
     await expect(getFrontPageSetting()).resolves.toBeNull();
     expect(captureExceptionMock).toHaveBeenCalledWith(error, {
@@ -100,7 +100,7 @@ describe('home-helpers', () => {
       };
     });
 
-    const { getFrontPageSetting } = await import('@/app/(frontend)/home-helpers');
+    const { getFrontPageSetting } = await import('@/app/(frontend)/home/home-helpers');
 
     await expect(getFrontPageSetting()).resolves.toBe('kangur');
     vi.setSystemTime(new Date('2026-03-23T12:00:31.000Z'));
@@ -119,7 +119,7 @@ describe('home-helpers', () => {
     });
 
     const { getFrontPageSetting, primeFrontPageSettingRuntime } = await import(
-      '@/app/(frontend)/home-helpers'
+      '@/app/(frontend)/home/home-helpers'
     );
 
     expect(primeFrontPageSettingRuntime('StudiQ')).toBe('kangur');

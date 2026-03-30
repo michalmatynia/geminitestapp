@@ -1,7 +1,7 @@
 import {
   generateFilemakerUnsubscribeMetadata,
   renderFilemakerUnsubscribeRoute,
-} from '@/app/(frontend)/filemaker-unsubscribe-route-helpers';
+} from '@/app/(frontend)/route-helpers/filemaker-unsubscribe-route-helpers';
 
 import type { Metadata } from 'next';
 import type { JSX } from 'react';

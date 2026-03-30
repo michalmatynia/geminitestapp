@@ -4,18 +4,18 @@ import { getTranslations } from 'next-intl/server';
 import { notFound, redirect } from 'next/navigation';
 import { JSX } from 'react';
 
-import { renderCmsPage } from '@/app/(frontend)/cms-render';
+import { renderCmsPage } from '@/app/(frontend)/cms/render';
 import {
   buildSlugMetadata,
   loadSlugRenderData,
   resolveSlugToPage,
-} from '@/app/(frontend)/[...slug]/slug-page-data';
+} from '@/app/(frontend)/cms/slug-page-data';
 import { getKangurPublicLaunchHref } from '@/features/kangur/config/routing';
 import { getKangurConfiguredLaunchRoute, requireAccessibleKangurSlugRoute } from '@/features/kangur/server';
 import { buildLocalizedPathname, normalizeSiteLocale } from '@/shared/lib/i18n/site-locale';
 import { getFrontPagePublicOwner } from '@/shared/lib/front-page-app';
 
-import { getFrontPageSetting, shouldApplyFrontPageAppSelection } from '../home-helpers';
+import { getFrontPageSetting, shouldApplyFrontPageAppSelection } from '../home/home-helpers';
 
 import type { Metadata } from 'next';
 

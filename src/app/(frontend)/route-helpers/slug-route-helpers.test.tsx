@@ -44,7 +44,7 @@ vi.mock('@/features/auth/server', () => ({
   readOptionalServerAuthSession: authMock,
 }));
 
-vi.mock('@/app/(frontend)/home-helpers', () => ({
+vi.mock('@/app/(frontend)/home/home-helpers', () => ({
   getFrontPageSetting: getFrontPageSettingMock,
   shouldApplyFrontPageAppSelection: shouldApplyFrontPageAppSelectionMock,
 }));
@@ -99,11 +99,11 @@ vi.mock('@/features/kangur/config/routing', async () => {
   };
 });
 
-vi.mock('@/app/(frontend)/cms-render', () => ({
+vi.mock('@/app/(frontend)/cms/render', () => ({
   renderCmsPage: vi.fn(),
 }));
 
-vi.mock('@/app/(frontend)/[...slug]/slug-page-data', () => ({
+vi.mock('@/app/(frontend)/cms/slug-page-data', () => ({
   buildSlugMetadata: vi.fn(),
   loadSlugRenderData: vi.fn(),
   resolveSlugToPage: vi.fn(),

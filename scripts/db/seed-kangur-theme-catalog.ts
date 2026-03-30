@@ -1,20 +1,16 @@
 import 'dotenv/config';
 
-import type { ThemeSettings } from '@/shared/contracts/cms-theme';
 import type { MongoPersistedStringSettingRecord } from '@/shared/contracts/settings';
 import { getMongoClient, getMongoDb } from '@/shared/lib/db/mongo-client';
 import { decodeSettingValue, encodeSettingValue } from '@/shared/lib/settings/settings-compression';
 import { serializeSetting } from '@/shared/utils/settings-json';
 import {
-  KANGUR_DAILY_BLOOM_THEME,
-  KANGUR_DAILY_CRYSTAL_THEME,
-  KANGUR_LOGO_GLOW_THEME,
-  KANGUR_NIGHTLY_AURORA_THEME,
-  KANGUR_NIGHTLY_NOCTURNE_THEME,
-  KANGUR_SUNSET_HORIZON_THEME,
+  createKangurThemeCatalogSeedEntries,
+} from '@/features/kangur/appearance/server/theme-catalog-source';
+import {
   KANGUR_THEME_CATALOG_KEY,
   type KangurThemeCatalogEntry,
-} from '@/features/kangur/theme-settings';
+} from '@/features/kangur/appearance/theme-settings';
 
 type CliOptions = {
   dryRun: boolean;
@@ -24,12 +20,6 @@ type CliOptions = {
 type SettingDoc = MongoPersistedStringSettingRecord<string, Date>;
 
 const SETTINGS_COLLECTION = 'kangur_settings';
-const DAILY_BLOOM_ID = 'kangur-daily-bloom';
-const DAILY_CRYSTAL_ID = 'kangur-daily-crystal';
-const LOGO_GLOW_ID = 'kangur-logo-glow';
-const NIGHTLY_AURORA_ID = 'kangur-nightly-aurora';
-const NIGHTLY_NOCTURNE_ID = 'kangur-nightly-nocturne';
-const SUNSET_HORIZON_ID = 'kangur-sunset-horizon';
 
 const parseArgs = (argv: string[]): CliOptions => {
   const options: CliOptions = {
@@ -71,72 +61,6 @@ const parseCatalog = (raw: string | null): KangurThemeCatalogEntry[] => {
   }
 };
 
-const buildDailyBloomEntry = (
-  createdAt: string,
-  updatedAt: string
-): KangurThemeCatalogEntry => ({
-  id: DAILY_BLOOM_ID,
-  name: 'Daily Bloom',
-  settings: KANGUR_DAILY_BLOOM_THEME as ThemeSettings,
-  createdAt,
-  updatedAt,
-});
-
-const buildNightlyAuroraEntry = (
-  createdAt: string,
-  updatedAt: string
-): KangurThemeCatalogEntry => ({
-  id: NIGHTLY_AURORA_ID,
-  name: 'Nightly Aurora',
-  settings: KANGUR_NIGHTLY_AURORA_THEME as ThemeSettings,
-  createdAt,
-  updatedAt,
-});
-
-const buildNightlyNocturneEntry = (
-  createdAt: string,
-  updatedAt: string
-): KangurThemeCatalogEntry => ({
-  id: NIGHTLY_NOCTURNE_ID,
-  name: 'Nightly Nocturne',
-  settings: KANGUR_NIGHTLY_NOCTURNE_THEME as ThemeSettings,
-  createdAt,
-  updatedAt,
-});
-
-const buildDailyCrystalEntry = (
-  createdAt: string,
-  updatedAt: string
-): KangurThemeCatalogEntry => ({
-  id: DAILY_CRYSTAL_ID,
-  name: 'Daily Crystal',
-  settings: KANGUR_DAILY_CRYSTAL_THEME as ThemeSettings,
-  createdAt,
-  updatedAt,
-});
-
-const buildLogoGlowEntry = (
-  createdAt: string,
-  updatedAt: string
-): KangurThemeCatalogEntry => ({
-  id: LOGO_GLOW_ID,
-  name: 'Logo Glow',
-  settings: KANGUR_LOGO_GLOW_THEME as ThemeSettings,
-  createdAt,
-  updatedAt,
-});
-
-const buildSunsetHorizonEntry = (
-  createdAt: string,
-  updatedAt: string
-): KangurThemeCatalogEntry => ({
-  id: SUNSET_HORIZON_ID,
-  name: 'Sunset Horizon',
-  settings: KANGUR_SUNSET_HORIZON_THEME as ThemeSettings,
-  createdAt,
-  updatedAt,
-});
-
 async function main(): Promise<void> {
   const options = parseArgs(process.argv.slice(2));
   if (!process.env['MONGODB_URI']) {
@@ -157,43 +81,32 @@ async function main(): Promise<void> {
       ? decodeSettingValue(KANGUR_THEME_CATALOG_KEY, existing.value)
       : null;
     const catalog = parseCatalog(currentValue);
-    const existingDaily = catalog.find((entry) => entry.id === DAILY_BLOOM_ID);
-    const existingDailyCrystal = catalog.find((entry) => entry.id === DAILY_CRYSTAL_ID);
-    const existingLogoGlow = catalog.find((entry) => entry.id === LOGO_GLOW_ID);
-    const existingNightly = catalog.find((entry) => entry.id === NIGHTLY_AURORA_ID);
-    const existingNightlyNocturne = catalog.find((entry) => entry.id === NIGHTLY_NOCTURNE_ID);
-    const existingSunset = catalog.find((entry) => entry.id === SUNSET_HORIZON_ID);
     const nowIso = new Date().toISOString();
+    const seedEntries = createKangurThemeCatalogSeedEntries({
+      createdAt: nowIso,
+      updatedAt: nowIso,
+    });
 
     const nextCatalog = (() => {
       const next = [...catalog];
-      const upsert = (
-        entryId: string,
-        builder: (createdAt: string, updatedAt: string) => KangurThemeCatalogEntry,
-        existing: KangurThemeCatalogEntry | undefined
-      ) => {
-        const existingIndex = next.findIndex((entry) => entry.id === entryId);
+      const upsert = (seedEntry: KangurThemeCatalogEntry) => {
+        const existingIndex = next.findIndex((entry) => entry.id === seedEntry.id);
+        const existingEntry = existingIndex === -1 ? undefined : next[existingIndex];
         if (existingIndex === -1) {
-          next.push(builder(nowIso, nowIso));
+          next.push(seedEntry);
           return;
         }
         if (!options.force) {
           return;
         }
-        const updated = builder(existing?.createdAt ?? nowIso, nowIso);
         next[existingIndex] = {
-          ...updated,
-          createdAt: existing?.createdAt ?? updated.createdAt,
+          ...seedEntry,
+          createdAt: existingEntry?.createdAt ?? seedEntry.createdAt,
           updatedAt: nowIso,
         };
       };
 
-      upsert(DAILY_BLOOM_ID, buildDailyBloomEntry, existingDaily);
-      upsert(DAILY_CRYSTAL_ID, buildDailyCrystalEntry, existingDailyCrystal);
-      upsert(LOGO_GLOW_ID, buildLogoGlowEntry, existingLogoGlow);
-      upsert(NIGHTLY_AURORA_ID, buildNightlyAuroraEntry, existingNightly);
-      upsert(NIGHTLY_NOCTURNE_ID, buildNightlyNocturneEntry, existingNightlyNocturne);
-      upsert(SUNSET_HORIZON_ID, buildSunsetHorizonEntry, existingSunset);
+      seedEntries.forEach(upsert);
 
       return next;
     })();
@@ -226,14 +139,9 @@ async function main(): Promise<void> {
           dryRun: options.dryRun,
           force: options.force,
           status: hasChanges ? 'update' : 'unchanged',
-          entryPresent: {
-            [DAILY_BLOOM_ID]: Boolean(existingDaily),
-            [DAILY_CRYSTAL_ID]: Boolean(existingDailyCrystal),
-            [LOGO_GLOW_ID]: Boolean(existingLogoGlow),
-            [NIGHTLY_AURORA_ID]: Boolean(existingNightly),
-            [NIGHTLY_NOCTURNE_ID]: Boolean(existingNightlyNocturne),
-            [SUNSET_HORIZON_ID]: Boolean(existingSunset),
-          },
+          entryPresent: Object.fromEntries(
+            seedEntries.map((entry) => [entry.id, catalog.some((item) => item.id === entry.id)])
+          ),
         },
         null,
         2

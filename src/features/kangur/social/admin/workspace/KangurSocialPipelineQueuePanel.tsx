@@ -76,6 +76,48 @@ type PipelineJobRecord = {
 
 type PanelVariant = 'full' | 'compact';
 
+const normalizeQueueJobStatus = (status: string | null | undefined): string | null => {
+  const normalized = status?.trim().toLowerCase();
+  return normalized || null;
+};
+
+const isQueueJobRunning = (status: string | null | undefined): boolean => {
+  const normalized = normalizeQueueJobStatus(status);
+  return normalized === 'active' || normalized === 'running';
+};
+
+const getQueueJobProcessLabel = (job: PipelineJobRecord): string => {
+  const jobType = (job.data as { type?: string } | null)?.type ?? job.result?.type ?? null;
+
+  switch (jobType) {
+    case 'manual-post-pipeline':
+      return 'Full pipeline';
+    case 'manual-post-visual-analysis':
+      return 'Image analysis';
+    case 'manual-post-generation':
+      return 'Generate post';
+    default:
+      return 'Scheduled capture';
+  }
+};
+
+const getActiveQueueProcessSummary = (
+  jobs: PipelineJobRecord[]
+): {
+  label: string;
+  additionalRunningCount: number;
+} | null => {
+  const runningJobs = jobs.filter((job) => isQueueJobRunning(job.status));
+  if (runningJobs.length === 0) {
+    return null;
+  }
+
+  return {
+    label: getQueueJobProcessLabel(runningJobs[0]),
+    additionalRunningCount: Math.max(0, runningJobs.length - 1),
+  };
+};
+
 export function KangurSocialPipelineQueuePanel({
   variant = 'full',
 }: {
@@ -89,29 +131,22 @@ export function KangurSocialPipelineQueuePanel({
   const [deletingJobId, setDeletingJobId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const refreshTimeoutRef = useRef<SafeTimerId | null>(null);
+  const activeProcessSummary = useMemo(() => getActiveQueueProcessSummary(jobs), [jobs]);
 
   const fetchData = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
-      if (variant === 'compact') {
-        const statusData = await api.get<PipelineStatus>(
-          '/api/kangur/social-pipeline/status',
-          { timeout: QUEUE_PANEL_REQUEST_TIMEOUT_MS }
-        );
-        setStatus(statusData);
-      } else {
-        const [statusData, jobsData] = await Promise.all([
-          api.get<PipelineStatus>('/api/kangur/social-pipeline/status', {
-            timeout: QUEUE_PANEL_REQUEST_TIMEOUT_MS,
-          }),
-          api.get<PipelineJobRecord[]>('/api/kangur/social-pipeline/jobs', {
-            timeout: QUEUE_PANEL_REQUEST_TIMEOUT_MS,
-          }),
-        ]);
-        setStatus(statusData);
-        setJobs(jobsData);
-      }
+      const [statusData, jobsData] = await Promise.all([
+        api.get<PipelineStatus>('/api/kangur/social-pipeline/status', {
+          timeout: QUEUE_PANEL_REQUEST_TIMEOUT_MS,
+        }),
+        api.get<PipelineJobRecord[]>('/api/kangur/social-pipeline/jobs', {
+          timeout: QUEUE_PANEL_REQUEST_TIMEOUT_MS,
+        }),
+      ]);
+      setStatus(statusData);
+      setJobs(jobsData);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load queue data.');
     } finally {
@@ -262,6 +297,14 @@ export function KangurSocialPipelineQueuePanel({
                 className='text-[10px]'
               />
             ) : null}
+            {activeProcessSummary ? (
+              <span className='text-[10px] text-muted-foreground'>
+                Active process: {activeProcessSummary.label}
+                {activeProcessSummary.additionalRunningCount > 0
+                  ? ` (+${activeProcessSummary.additionalRunningCount} more)`
+                  : ''}
+              </span>
+            ) : null}
             {status && !isInlineMode ? (
               <span className='text-[10px] text-muted-foreground'>
                 {status.activeCount} active / {status.completedCount} done / {status.failedCount} failed
@@ -314,6 +357,14 @@ export function KangurSocialPipelineQueuePanel({
             <div className='text-xs text-muted-foreground'>
               Redis-backed runtime for screenshot capture, image analysis, and post generation across StudiQ Social.
             </div>
+            {activeProcessSummary ? (
+              <div className='mt-1 text-xs text-muted-foreground'>
+                Active process: {activeProcessSummary.label}
+                {activeProcessSummary.additionalRunningCount > 0
+                  ? ` (+${activeProcessSummary.additionalRunningCount} more)`
+                  : ''}
+              </div>
+            ) : null}
           </div>
           <div className='flex items-center gap-2'>
             {status ? (
@@ -520,16 +571,7 @@ function renderJobRow({
   const usesVisualAnalysisContext =
     (job.data as { input?: { usesVisualAnalysisContext?: boolean } } | null)?.input
       ?.usesVisualAnalysisContext ?? false;
-  const jobLabel =
-    jobType === 'manual-post-pipeline'
-      ? 'Manual post draft pipeline'
-      : jobType === 'manual-post-visual-analysis'
-        ? 'Manual image analysis'
-        : jobType === 'manual-post-generation'
-          ? usesVisualAnalysisContext
-            ? 'Post generation from image analysis'
-            : 'Manual post generation'
-          : 'Scheduled capture tick';
+  const jobLabel = getQueueJobProcessLabel(job);
   const visualAnalysisHighlightCount =
     jobType === 'manual-post-visual-analysis'
       ? (job.result?.highlightCount ?? job.progress?.highlightCount ?? null)

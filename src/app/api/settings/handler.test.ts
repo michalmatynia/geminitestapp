@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { OBSERVABILITY_LOGGING_KEYS } from '@/shared/contracts/observability';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
+import { KANGUR_SLOT_ASSIGNMENTS_KEY, KANGUR_THEME_CATALOG_KEY } from '@/shared/contracts/kangur';
 
 const mocks = vi.hoisted(() => ({
   assertSettingsManageAccessMock: vi.fn(),
@@ -23,6 +24,13 @@ const mocks = vi.hoisted(() => ({
   invalidateDatabaseEnginePolicyCacheMock: vi.fn(),
   invalidateFileStorageSettingsCacheMock: vi.fn(),
   logSystemEventMock: vi.fn(),
+  ensureKangurStorefrontAppearanceSettingsSeededMock: vi.fn(),
+  ensureKangurThemePresetManifestSeededMock: vi.fn(),
+  ensureKangurThemeCatalogSeededMock: vi.fn(),
+  ensureKangurThemeSlotAssignmentsSeededMock: vi.fn(),
+  readKangurSettingValueMock: vi.fn(),
+  isKangurSettingKeyMock: vi.fn(),
+  listKangurSettingsMock: vi.fn(),
 }));
 
 vi.mock('@/features/auth/server', () => ({
@@ -67,6 +75,30 @@ vi.mock('@/features/kangur/appearance/server/storefront-appearance', () => ({
     mocks.isKangurStorefrontInitialStateDependencyKeyMock,
 }));
 
+vi.mock('@/features/kangur/appearance/server/storefront-appearance-source', () => ({
+  KANGUR_STOREFRONT_APPEARANCE_SETTING_KEYS: [
+    'kangur_storefront_default_mode_v1',
+    'kangur_cms_theme_daily_v1',
+    'kangur_cms_theme_dawn_v1',
+    'kangur_cms_theme_sunset_v1',
+    'kangur_cms_theme_nightly_v1',
+  ],
+  ensureKangurStorefrontAppearanceSettingsSeeded:
+    mocks.ensureKangurStorefrontAppearanceSettingsSeededMock,
+}));
+
+vi.mock('@/features/kangur/appearance/server/theme-preset-manifest-source', () => ({
+  ensureKangurThemePresetManifestSeeded: mocks.ensureKangurThemePresetManifestSeededMock,
+}));
+
+vi.mock('@/features/kangur/appearance/server/theme-catalog-source', () => ({
+  ensureKangurThemeCatalogSeeded: mocks.ensureKangurThemeCatalogSeededMock,
+}));
+
+vi.mock('@/features/kangur/appearance/server/theme-slot-assignments-source', () => ({
+  ensureKangurThemeSlotAssignmentsSeeded: mocks.ensureKangurThemeSlotAssignmentsSeededMock,
+}));
+
 vi.mock('@/shared/lib/db/app-db-provider', () => ({
   APP_DB_PROVIDER_SETTING_KEY: 'app_db_provider',
   getAppDbProvider: mocks.getAppDbProviderMock,
@@ -93,7 +125,7 @@ vi.mock('@/shared/lib/observability/system-logger', () => ({
   logSystemEvent: mocks.logSystemEventMock,
 }));
 
-vi.mock('@/app/(frontend)/home-helpers', () => ({
+vi.mock('@/app/(frontend)/home/home-helpers', () => ({
   primeFrontPageSettingRuntime: mocks.primeFrontPageSettingRuntimeMock,
 }));
 
@@ -108,14 +140,14 @@ vi.mock('@/features/kangur/services/kangur-settings-repository', async () => {
     );
   return {
     ...actual,
-    isKangurSettingKey: vi.fn(() => false),
-    listKangurSettings: vi.fn(async () => []),
-    readKangurSettingValue: vi.fn(async () => null),
+    isKangurSettingKey: mocks.isKangurSettingKeyMock,
+    listKangurSettings: mocks.listKangurSettingsMock,
+    readKangurSettingValue: mocks.readKangurSettingValueMock,
     upsertKangurSettingValue: vi.fn(async () => null),
   };
 });
 
-import { POST_handler } from './handler';
+import { GET_handler, POST_handler } from './handler';
 
 const createContext = (): ApiHandlerContext =>
   ({
@@ -153,6 +185,19 @@ describe('settings handler', () => {
         value: 'true',
       },
     });
+    mocks.ensureKangurStorefrontAppearanceSettingsSeededMock.mockResolvedValue([]);
+    mocks.ensureKangurThemePresetManifestSeededMock.mockResolvedValue(null);
+    mocks.ensureKangurThemeCatalogSeededMock.mockResolvedValue({
+      key: KANGUR_THEME_CATALOG_KEY,
+      value: '[]',
+    });
+    mocks.ensureKangurThemeSlotAssignmentsSeededMock.mockResolvedValue({
+      key: KANGUR_SLOT_ASSIGNMENTS_KEY,
+      value: '{}',
+    });
+    mocks.readKangurSettingValueMock.mockResolvedValue(null);
+    mocks.isKangurSettingKeyMock.mockReturnValue(false);
+    mocks.listKangurSettingsMock.mockResolvedValue([]);
   });
 
   it('clears settings caches, resets logging-control cache, and clears lite cache for lite keys', async () => {
@@ -343,5 +388,79 @@ describe('settings handler', () => {
       key: 'kangur_storefront_default_mode_v1',
       value: 'sunset',
     });
+  });
+
+  it('self-seeds the Mongo-backed theme catalog when the admin requests it directly', async () => {
+    mocks.isKangurSettingKeyMock.mockImplementation((key: string) => key.startsWith('kangur_'));
+    mocks.ensureKangurThemeCatalogSeededMock.mockResolvedValue({
+      key: KANGUR_THEME_CATALOG_KEY,
+      value: '[{"id":"kangur-daily-bloom","name":"Daily Bloom"}]',
+    });
+
+    const response = await GET_handler(
+      new NextRequest(
+        `http://localhost/api/settings?scope=light&key=${encodeURIComponent(KANGUR_THEME_CATALOG_KEY)}`
+      ),
+      {
+        ...createContext(),
+        query: { scope: 'light', key: KANGUR_THEME_CATALOG_KEY },
+      }
+    );
+
+    expect(response.status).toBe(200);
+    expect(mocks.ensureKangurThemeCatalogSeededMock).toHaveBeenCalledTimes(1);
+    expect(mocks.readKangurSettingValueMock).not.toHaveBeenCalled();
+    await expect(response.json()).resolves.toEqual([
+      {
+        key: KANGUR_THEME_CATALOG_KEY,
+        value: '[{"id":"kangur-daily-bloom","name":"Daily Bloom"}]',
+      },
+    ]);
+  });
+
+  it('includes seeded slot assignments in the light settings payload for fresh admin loads', async () => {
+    const findSettingsMock = vi.fn().mockReturnValue({ toArray: vi.fn().mockResolvedValue([]) });
+    mocks.getMongoDbMock.mockResolvedValue({
+      collection: vi.fn(() => ({
+        createIndex: mocks.createIndexMock,
+        find: findSettingsMock,
+        findOne: mocks.findOneMock,
+        updateOne: mocks.updateOneMock,
+      })),
+    });
+    mocks.ensureKangurStorefrontAppearanceSettingsSeededMock.mockResolvedValue([
+      { key: 'kangur_storefront_default_mode_v1', value: 'default' },
+    ]);
+    mocks.ensureKangurThemeCatalogSeededMock.mockResolvedValue({
+      key: KANGUR_THEME_CATALOG_KEY,
+      value: '[{"id":"kangur-daily-bloom","name":"Daily Bloom"}]',
+    });
+    mocks.ensureKangurThemePresetManifestSeededMock.mockResolvedValue({
+      key: 'kangur_cms_theme_preset_manifest_v1',
+      value: '[]',
+    });
+    mocks.ensureKangurThemeSlotAssignmentsSeededMock.mockResolvedValue({
+      key: KANGUR_SLOT_ASSIGNMENTS_KEY,
+      value: '{"daily":{"id":"factory_daily","name":"Daily Factory"}}',
+    });
+
+    const response = await GET_handler(
+      new NextRequest('http://localhost/api/settings?scope=light'),
+      {
+        ...createContext(),
+        query: { scope: 'light' },
+      }
+    );
+
+    expect(response.status).toBe(200);
+    expect(mocks.ensureKangurThemeSlotAssignmentsSeededMock).toHaveBeenCalledTimes(1);
+    await expect(response.json()).resolves.toEqual(
+      expect.arrayContaining([
+        {
+          key: KANGUR_SLOT_ASSIGNMENTS_KEY,
+          value: '{"daily":{"id":"factory_daily","name":"Daily Factory"}}',
+        },
+      ])
+    );
   });
 });

@@ -6,7 +6,7 @@ import {
   ThemeProvider,
 } from '@/features/cms/public';
 
-import type { SlugRenderData } from './[...slug]/slug-page-data';
+import type { SlugRenderData } from './slug-page-data';
 
 export const renderCmsPage = (renderData: SlugRenderData): JSX.Element => {
   const content = (

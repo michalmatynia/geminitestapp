@@ -21,7 +21,6 @@ import { SocialPostPipeline } from './workspace/SocialPost.Pipeline';
 import { SocialPostPlaywrightCaptureModal } from './workspace/SocialPost.PlaywrightCaptureModal';
 import { SocialPostVisualAnalysisModal } from './workspace/SocialPost.VisualAnalysisModal';
 import { KangurSocialPipelineQueuePanel } from './workspace/KangurSocialPipelineQueuePanel';
-import { SocialJobStatusPill } from './workspace/SocialJobStatusPill';
 import { KangurAdminCard } from '@/features/kangur/admin/components/KangurAdminCard';
 import { SocialPostProvider, useSocialPostContext } from './workspace/SocialPostContext';
 
@@ -86,27 +85,6 @@ function AdminKangurSocialPageContent(): React.JSX.Element {
       setIsPostEditorModalOpen(true);
     }
   }, [handleCreateDraft]);
-  const currentVisualAnalysisJobTitle = [
-    currentVisualAnalysisJob?.progress?.message ?? null,
-    currentVisualAnalysisJob?.failedReason ?? null,
-    currentVisualAnalysisJob?.id ? `Queue job: ${currentVisualAnalysisJob.id}` : null,
-  ]
-    .filter((value): value is string => Boolean(value))
-    .join(' · ');
-  const currentGenerationJobTitle = [
-    currentGenerationJob?.progress?.message ?? null,
-    currentGenerationJob?.failedReason ?? null,
-    currentGenerationJob?.id ? `Queue job: ${currentGenerationJob.id}` : null,
-  ]
-    .filter((value): value is string => Boolean(value))
-    .join(' · ');
-  const currentPipelineJobTitle = [
-    currentPipelineJob?.progress?.message ?? null,
-    currentPipelineJob?.failedReason ?? null,
-    currentPipelineJob?.id ? `Queue job: ${currentPipelineJob.id}` : null,
-  ]
-    .filter((value): value is string => Boolean(value))
-    .join(' · ');
   const hasBlockingRuntimeJob =
     isSocialRuntimeJobInFlight(currentVisualAnalysisJob?.status) ||
     isSocialRuntimeJobInFlight(currentGenerationJob?.status) ||
@@ -153,37 +131,6 @@ function AdminKangurSocialPageContent(): React.JSX.Element {
       showBreadcrumbs={false}
       headerActions={
         <>
-          {(currentVisualAnalysisJob?.status ||
-            currentGenerationJob?.status ||
-            currentPipelineJob?.status) ? (
-            <div className='mr-2 flex flex-wrap items-center gap-2 text-xs text-muted-foreground'>
-              <span className='font-medium text-foreground/80'>Runtime jobs:</span>
-              {currentVisualAnalysisJob?.status ? (
-                <SocialJobStatusPill
-                  status={currentVisualAnalysisJob.status}
-                  label='Image analysis'
-                  title={currentVisualAnalysisJobTitle || undefined}
-                  className='text-[10px]'
-                />
-              ) : null}
-              {currentGenerationJob?.status ? (
-                <SocialJobStatusPill
-                  status={currentGenerationJob.status}
-                  label='Generate post'
-                  title={currentGenerationJobTitle || undefined}
-                  className='text-[10px]'
-                />
-              ) : null}
-              {currentPipelineJob?.status ? (
-                <SocialJobStatusPill
-                  status={currentPipelineJob.status}
-                  label='Full pipeline'
-                  title={currentPipelineJobTitle || undefined}
-                  className='text-[10px]'
-                />
-              ) : null}
-            </div>
-          ) : null}
           {activeBatchCaptureSummary ? (
             <div className='mr-2 text-xs text-muted-foreground'>
               {activeBatchCaptureSummary}

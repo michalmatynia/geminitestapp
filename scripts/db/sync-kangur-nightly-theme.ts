@@ -12,7 +12,7 @@ import {
   KANGUR_NIGHTLY_THEME,
   KANGUR_THEME_CATALOG_KEY,
   type KangurThemeCatalogEntry,
-} from '@/features/kangur/theme-settings';
+} from '@/features/kangur/appearance/theme-settings';
 
 type CliOptions = {
   dryRun: boolean;

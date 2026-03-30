@@ -38,7 +38,10 @@ export function SocialPostVisualAnalysisModal(): React.JSX.Element | null {
     missingSelectedImageAddonIds,
     recentAddons,
     addonsQuery,
+    handleRefreshMissingImageAddons,
     handleRemoveMissingAddons,
+    missingImageAddonActionPending,
+    missingImageAddonActionErrorMessage,
     hasSavedVisualAnalysis,
     isSavedVisualAnalysisStale,
     visionModelId,
@@ -56,15 +59,19 @@ export function SocialPostVisualAnalysisModal(): React.JSX.Element | null {
   );
   const selectedVisualCount = selectedImageAddonIds.length;
   const missingSelectedAddonCount = missingAddonIds.length;
-  const isRefreshingImageAddons = Boolean(addonsQuery?.isFetching);
+  const isRefreshingImageAddons =
+    missingImageAddonActionPending === 'refresh' || Boolean(addonsQuery?.isFetching);
+  const isRemovingMissingAddons = missingImageAddonActionPending === 'remove';
+  const isMissingImageAddonActionPending =
+    isRefreshingImageAddons || isRemovingMissingAddons;
   const refetchImageAddons = (): void => {
-    if (typeof addonsQuery?.refetch === 'function') {
-      void addonsQuery.refetch();
+    if (typeof handleRefreshMissingImageAddons === 'function') {
+      void handleRefreshMissingImageAddons();
     }
   };
   const removeMissingAddons = (): void => {
     if (typeof handleRemoveMissingAddons === 'function') {
-      handleRemoveMissingAddons();
+      void handleRemoveMissingAddons();
     }
   };
   const personasQuery = usePlaywrightPersonas({
@@ -242,7 +249,7 @@ export function SocialPostVisualAnalysisModal(): React.JSX.Element | null {
                 variant='outline'
                 size='sm'
                 onClick={refetchImageAddons}
-                disabled={isRefreshingImageAddons}
+                disabled={isMissingImageAddonActionPending}
               >
                 {isRefreshingImageAddons ? 'Refreshing image add-ons...' : 'Refresh image add-ons'}
               </Button>
@@ -251,10 +258,16 @@ export function SocialPostVisualAnalysisModal(): React.JSX.Element | null {
                 variant='outline'
                 size='sm'
                 onClick={removeMissingAddons}
+                disabled={isMissingImageAddonActionPending}
               >
-                Remove missing add-ons
+                {isRemovingMissingAddons ? 'Removing missing add-ons...' : 'Remove missing add-ons'}
               </Button>
             </div>
+            {missingImageAddonActionErrorMessage ? (
+              <div className='mt-2 text-xs text-destructive'>
+                {missingImageAddonActionErrorMessage}
+              </div>
+            ) : null}
           </div>
         ) : (
           <div className='grid gap-3 sm:grid-cols-2 xl:grid-cols-3'>

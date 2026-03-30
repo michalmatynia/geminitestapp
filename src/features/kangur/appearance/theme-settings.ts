@@ -7,9 +7,10 @@ import {
   KANGUR_DAILY_THEME_SETTINGS_KEY,
   KANGUR_DAWN_THEME_SETTINGS_KEY,
   KANGUR_NIGHTLY_THEME_SETTINGS_KEY,
-  KANGUR_THEME_PRESET_MANIFEST_KEY,
+  KANGUR_THEME_CATALOG_KEY,
   KANGUR_SUNSET_THEME_SETTINGS_KEY,
-} from '@/features/kangur/shared/contracts/kangur';
+  KANGUR_THEME_PRESET_MANIFEST_KEY,
+} from '@/shared/contracts/kangur-settings-keys';
 import { parseJsonSetting } from '@/features/kangur/utils/settings-json';
 
 import { KANGUR_DEFAULT_DAILY_THEME } from '../themes/daily';
@@ -26,6 +27,7 @@ export {
   KANGUR_DAILY_THEME_SETTINGS_KEY,
   KANGUR_DAWN_THEME_SETTINGS_KEY,
   KANGUR_NIGHTLY_THEME_SETTINGS_KEY,
+  KANGUR_THEME_CATALOG_KEY,
   KANGUR_THEME_PRESET_MANIFEST_KEY,
   KANGUR_SUNSET_THEME_SETTINGS_KEY,
 };
@@ -353,8 +355,6 @@ export const resolveKangurStoredThemeForAppearanceMode = ({
 
 // ─── Theme Catalog ───────────────────────────────────────────────────────────
 
-export const KANGUR_THEME_CATALOG_KEY = 'kangur_cms_theme_catalog_v1';
-
 export type KangurThemePresetKind = 'factory' | 'preset';
 
 export type KangurThemePresetManifestEntry = {
@@ -362,6 +362,11 @@ export type KangurThemePresetManifestEntry = {
   kind: KangurThemePresetKind;
   slot: KangurThemeMode;
   settings: ThemeSettings;
+};
+
+export type KangurStoredThemeSelection = {
+  settings: ThemeSettings;
+  source: 'catalog' | 'manifest';
 };
 
 export type KangurThemeCatalogEntry = {
@@ -442,6 +447,34 @@ export const resolveKangurThemePresetManifestEntry = (
   manifest: KangurThemePresetManifestEntry[],
   id: string
 ): KangurThemePresetManifestEntry | null => manifest.find((entry) => entry.id === id) ?? null;
+
+export const resolveKangurStoredThemeSelection = ({
+  id,
+  catalog,
+  manifest,
+}: {
+  id: string;
+  catalog: KangurThemeCatalogEntry[];
+  manifest: KangurThemePresetManifestEntry[];
+}): KangurStoredThemeSelection | null => {
+  const catalogEntry = catalog.find((entry) => entry.id === id);
+  if (catalogEntry) {
+    return {
+      settings: catalogEntry.settings,
+      source: 'catalog',
+    };
+  }
+
+  const manifestEntry = resolveKangurThemePresetManifestEntry(manifest, id);
+  if (manifestEntry) {
+    return {
+      settings: manifestEntry.settings,
+      source: 'manifest',
+    };
+  }
+
+  return null;
+};
 
 export const parseKangurThemeCatalog = (
   raw: string | null | undefined

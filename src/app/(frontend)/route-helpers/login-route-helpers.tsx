@@ -4,13 +4,13 @@ import { getTranslations } from 'next-intl/server';
 import { notFound } from 'next/navigation';
 import { JSX } from 'react';
 
-import { renderCmsPage } from '@/app/(frontend)/cms-render';
+import { renderCmsPage } from '@/app/(frontend)/cms/render';
 import {
   buildSlugMetadata,
   loadSlugRenderData,
   resolveSlugToPage,
-} from '@/app/(frontend)/[...slug]/slug-page-data';
-import { getFrontPageSetting, shouldApplyFrontPageAppSelection } from '@/app/(frontend)/home-helpers';
+} from '@/app/(frontend)/cms/slug-page-data';
+import { getFrontPageSetting, shouldApplyFrontPageAppSelection } from '@/app/(frontend)/home/home-helpers';
 import { getKangurStorefrontInitialState } from '@/features/kangur/server';
 import { FrontendPublicOwnerKangurShell } from '@/features/kangur/public';
 import { getFrontPagePublicOwner } from '@/shared/lib/front-page-app';

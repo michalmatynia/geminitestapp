@@ -223,6 +223,10 @@ describe('KangurGameRuntimeContext', () => {
       screen: 'addition_quiz',
     },
     {
+      instanceId: 'adding_synthesis:instance:default',
+      screen: 'adding_synthesis_quiz',
+    },
+    {
       instanceId: 'division_groups:instance:default',
       screen: 'division_quiz',
     },
@@ -273,4 +277,52 @@ describe('KangurGameRuntimeContext', () => {
       });
     }
   );
+
+  it('keeps the root-owned adding synthesis quick start on repeated remounts of the sanitized game route', async () => {
+    useKangurRoutingMock.mockReturnValue({
+      basePath: '/',
+    });
+    window.history.replaceState(
+      {},
+      '',
+      '/en/game?quickStart=screen&screen=adding_synthesis_quiz&instanceId=adding_synthesis:instance:default'
+    );
+
+    const { unmount } = render(
+      <KangurGuestPlayerProvider>
+        <KangurGameRuntimeProvider>
+          <RuntimeProbe />
+        </KangurGameRuntimeProvider>
+      </KangurGuestPlayerProvider>
+    );
+
+    await waitFor(() => {
+      expect(screen.getByTestId('kangur-game-screen')).toHaveTextContent(
+        'adding_synthesis_quiz'
+      );
+      expect(screen.getByTestId('kangur-game-instance-id')).toHaveTextContent(
+        'adding_synthesis:instance:default'
+      );
+    });
+
+    unmount();
+    window.history.replaceState({}, '', '/en/game');
+
+    render(
+      <KangurGuestPlayerProvider>
+        <KangurGameRuntimeProvider>
+          <RuntimeProbe />
+        </KangurGameRuntimeProvider>
+      </KangurGuestPlayerProvider>
+    );
+
+    await waitFor(() => {
+      expect(screen.getByTestId('kangur-game-screen')).toHaveTextContent(
+        'adding_synthesis_quiz'
+      );
+      expect(screen.getByTestId('kangur-game-instance-id')).toHaveTextContent(
+        'adding_synthesis:instance:default'
+      );
+    });
+  });
 });

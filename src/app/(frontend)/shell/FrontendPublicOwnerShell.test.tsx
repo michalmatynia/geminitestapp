@@ -67,7 +67,7 @@ vi.mock('@/features/kangur/services/kangur-auth-prefetch', () => ({
   prefetchKangurAuth: prefetchKangurAuthMock,
 }));
 
-import FrontendPublicOwnerShell from './_components/FrontendPublicOwnerShell';
+import FrontendPublicOwnerShell from './FrontendPublicOwnerShell';
 
 describe('FrontendPublicOwnerShell', () => {
   beforeEach(() => {

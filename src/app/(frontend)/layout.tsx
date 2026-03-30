@@ -1,10 +1,10 @@
-import { getFrontPageSetting, shouldApplyFrontPageAppSelection } from '@/app/(frontend)/home-helpers';
+import { getFrontPageSetting, shouldApplyFrontPageAppSelection } from '@/app/(frontend)/home/home-helpers';
 import {
   createFrontendLoadTimingRecorder,
   serializeInlineTimingPayload,
   shouldEnableFrontendLoadTiming,
   type FrontendLoadTimingPayload,
-} from '@/app/(frontend)/frontend-load-timing';
+} from '@/app/(frontend)/shell/frontend-load-timing';
 import { CmsStorefrontAppearanceProvider } from '@/features/cms/public';
 import { getCmsThemeSettings } from '@/features/cms/server';
 import { getKangurAuthBootstrapScript } from '@/features/kangur/server';

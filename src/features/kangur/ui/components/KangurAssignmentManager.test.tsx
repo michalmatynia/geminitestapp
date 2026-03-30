@@ -2,7 +2,7 @@
  * @vitest-environment jsdom
  */
 
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import type { AnchorHTMLAttributes } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import plMessages from '@/i18n/messages/pl.json';
@@ -280,12 +280,19 @@ describe('KangurAssignmentManager', () => {
     render(<KangurAssignmentManager basePath='/kangur' />);
 
     fireEvent.click(screen.getByTestId('open-time-limit-assignment-1'));
-    expect(screen.getByTestId('assignment-time-limit-modal')).toBeInTheDocument();
 
-    fireEvent.change(screen.getByLabelText(assignmentManagerMessages.timeLimitModal.inputAriaLabel), {
+    const timeLimitInput = await screen.findByLabelText(/minutach/i);
+    const dialog = timeLimitInput.closest('[role="dialog"]');
+    expect(dialog).not.toBeNull();
+
+    fireEvent.change(timeLimitInput, {
       target: { value: '25' },
     });
-    fireEvent.click(screen.getByRole('button', { name: assignmentManagerMessages.actions.save }));
+    fireEvent.click(
+      within(dialog as HTMLElement).getByRole('button', {
+        name: assignmentManagerMessages.actions.save,
+      })
+    );
 
     await waitFor(() =>
       expect(updateAssignment).toHaveBeenCalledWith('assignment-1', {

@@ -1,7 +1,7 @@
 import {
   generateFilemakerPreferencesMetadata,
   renderFilemakerPreferencesRoute,
-} from '@/app/(frontend)/filemaker-preferences-route-helpers';
+} from '@/app/(frontend)/route-helpers/filemaker-preferences-route-helpers';
 
 import type { Metadata } from 'next';
 import type { JSX } from 'react';

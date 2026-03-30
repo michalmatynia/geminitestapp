@@ -31,7 +31,7 @@ vi.mock('next-intl/server', () => ({
   getTranslations: vi.fn(async () => () => 'Loading route'),
 }));
 
-vi.mock('@/app/(frontend)/home-helpers', () => ({
+vi.mock('@/app/(frontend)/home/home-helpers', () => ({
   getFrontPageSetting: getFrontPageSettingMock,
   shouldApplyFrontPageAppSelection: shouldApplyFrontPageAppSelectionMock,
 }));

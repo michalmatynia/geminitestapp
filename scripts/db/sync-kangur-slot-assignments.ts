@@ -6,9 +6,12 @@ import { encodeSettingValue } from '@/shared/lib/settings/settings-compression';
 import { serializeSetting } from '@/shared/utils/settings-json';
 import {
   getKangurThemeSettingsKeyForAppearanceMode,
+  KANGUR_THEME_PRESET_MANIFEST_KEY,
   KANGUR_THEME_CATALOG_KEY,
   parseKangurThemeCatalog,
-} from '@/features/kangur/theme-settings';
+  parseKangurThemePresetManifest,
+  resolveKangurStoredThemeSelection,
+} from '@/features/kangur/appearance/theme-settings';
 import {
   KANGUR_LEGACY_SETTINGS_COLLECTION,
   KANGUR_SETTINGS_COLLECTION,
@@ -31,6 +34,7 @@ type SyncResult = {
   settingsKey: string;
   themeId?: string;
   themeName?: string;
+  source?: 'catalog' | 'manifest';
   status: 'create' | 'update' | 'unchanged' | 'skipped';
   reason?: string;
 };
@@ -107,6 +111,12 @@ async function main(): Promise<void> {
       keys: [KANGUR_THEME_CATALOG_KEY],
     });
     const catalog = parseKangurThemeCatalog(catalogRaw);
+    const themePresetManifestRaw = await readKangurSettingWithLegacyFallback({
+      collection,
+      legacyCollection,
+      keys: [KANGUR_THEME_PRESET_MANIFEST_KEY],
+    });
+    const themePresetManifest = parseKangurThemePresetManifest(themePresetManifestRaw);
 
     const now = new Date();
 
@@ -122,20 +132,24 @@ async function main(): Promise<void> {
         });
         continue;
       }
-      const entry = catalog.find((theme) => theme.id === assignment.id);
-      if (!entry) {
+      const storedSelection = resolveKangurStoredThemeSelection({
+        id: assignment.id,
+        catalog,
+        manifest: themePresetManifest,
+      });
+      if (!storedSelection) {
         results.push({
           slot,
           settingsKey,
           themeId: assignment.id,
           themeName: assignment.name,
           status: 'skipped',
-          reason: 'missing-catalog',
+          reason: 'missing-theme',
         });
         continue;
       }
 
-      const nextValue = serializeSetting(entry.settings);
+      const nextValue = serializeSetting(storedSelection.settings);
       const existing = await collection.findOne(
         { $or: [{ _id: settingsKey }, { key: settingsKey }] },
         { projection: { _id: 1, key: 1, value: 1 } }
@@ -146,8 +160,9 @@ async function main(): Promise<void> {
       results.push({
         slot,
         settingsKey,
-        themeId: entry.id,
-        themeName: entry.name,
+        themeId: assignment.id,
+        themeName: assignment.name,
+        source: storedSelection.source,
         status,
       });
 

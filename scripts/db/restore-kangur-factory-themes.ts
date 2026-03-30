@@ -1,18 +1,17 @@
 import 'dotenv/config';
 
-import type { ThemeSettings } from '@/shared/contracts/cms-theme';
 import {
   KANGUR_DAILY_THEME_SETTINGS_KEY,
+  KANGUR_DAWN_THEME_SETTINGS_KEY,
   KANGUR_NIGHTLY_THEME_SETTINGS_KEY,
+  KANGUR_SUNSET_THEME_SETTINGS_KEY,
 } from '@/shared/contracts/kangur';
-import type { MongoPersistedStringSettingRecord } from '@/shared/contracts/settings';
-import { getMongoClient, getMongoDb } from '@/shared/lib/db/mongo-client';
-import { decodeSettingValue, encodeSettingValue } from '@/shared/lib/settings/settings-compression';
-import { serializeSetting } from '@/shared/utils/settings-json';
+import { createKangurStorefrontAppearanceSeedSettings } from '@/features/kangur/appearance/server/storefront-appearance-source';
 import {
-  KANGUR_FACTORY_DAILY_THEME,
-  KANGUR_FACTORY_NIGHTLY_THEME,
-} from '@/features/kangur/theme-settings';
+  listKangurSettingsByKeys,
+  upsertKangurSettingValue,
+} from '@/features/kangur/services/kangur-settings-repository';
+import { getMongoClient, getMongoDb } from '@/shared/lib/db/mongo-client';
 
 type CliOptions = {
   dryRun: boolean;
@@ -21,18 +20,16 @@ type CliOptions = {
 type SettingPayload = {
   key: string;
   label: string;
-  theme: ThemeSettings;
+  value: string;
 };
 
-type SettingDoc = MongoPersistedStringSettingRecord<string, Date>;
+type WriteStatus = 'unchanged' | 'update' | 'create';
 
 type WriteResult = {
   key: string;
   label: string;
-  status: 'unchanged' | 'update' | 'create';
+  status: WriteStatus;
 };
-
-const SETTINGS_COLLECTION = 'settings';
 
 const parseArgs = (argv: string[]): CliOptions => {
   const options: CliOptions = {
@@ -53,27 +50,30 @@ const parseArgs = (argv: string[]): CliOptions => {
   return options;
 };
 
+const THEME_SETTING_LABELS: Record<string, string> = {
+  [KANGUR_DAILY_THEME_SETTINGS_KEY]: 'daily',
+  [KANGUR_DAWN_THEME_SETTINGS_KEY]: 'dawn',
+  [KANGUR_SUNSET_THEME_SETTINGS_KEY]: 'sunset',
+  [KANGUR_NIGHTLY_THEME_SETTINGS_KEY]: 'nightly',
+};
+
 const buildPayloads = (): SettingPayload[] => {
+  const seedMap = new Map(
+    createKangurStorefrontAppearanceSeedSettings().map(({ key, value }) => [key, value])
+  );
   return [
-    {
-      key: KANGUR_DAILY_THEME_SETTINGS_KEY,
-      label: 'daily',
-      theme: KANGUR_FACTORY_DAILY_THEME,
-    },
-    {
-      key: KANGUR_NIGHTLY_THEME_SETTINGS_KEY,
-      label: 'nightly',
-      theme: KANGUR_FACTORY_NIGHTLY_THEME,
-    },
-  ];
+    KANGUR_DAILY_THEME_SETTINGS_KEY,
+    KANGUR_DAWN_THEME_SETTINGS_KEY,
+    KANGUR_SUNSET_THEME_SETTINGS_KEY,
+    KANGUR_NIGHTLY_THEME_SETTINGS_KEY,
+  ].map((key) => ({
+    key,
+    label: THEME_SETTING_LABELS[key] ?? key,
+    value: seedMap.get(key) ?? '',
+  }));
 };
 
-const resolveStoredValue = (doc: SettingDoc | null | undefined, key: string): string | null => {
-  if (!doc || typeof doc.value !== 'string') return null;
-  return decodeSettingValue(key, doc.value);
-};
-
-const determineStatus = (current: string | null, nextValue: string): WriteResult['status'] => {
+const determineStatus = (current: string | undefined, nextValue: string): WriteStatus => {
   if (current === nextValue) return 'unchanged';
   return current ? 'update' : 'create';
 };
@@ -88,31 +88,18 @@ async function main(): Promise<void> {
   const results: WriteResult[] = [];
 
   try {
-    const db = await getMongoDb();
-    const collection = db.collection<SettingDoc>(SETTINGS_COLLECTION);
-    const now = new Date();
+    await getMongoDb();
+    const payloads = buildPayloads();
+    const storedSettings = await listKangurSettingsByKeys(payloads.map(({ key }) => key));
+    const storedMap = new Map(storedSettings.map(({ key, value }) => [key, value]));
 
-    for (const payload of buildPayloads()) {
-      const nextValue = serializeSetting(payload.theme);
-      const existing = await collection.findOne({ key: payload.key }, { projection: { value: 1 } });
-      const currentValue = resolveStoredValue(existing, payload.key);
-      const status = determineStatus(currentValue, nextValue);
+    for (const payload of payloads) {
+      const currentValue = storedMap.get(payload.key);
+      const status = determineStatus(currentValue, payload.value);
       results.push({ key: payload.key, label: payload.label, status });
 
       if (!options.dryRun && status !== 'unchanged') {
-        await collection.updateOne(
-          { key: payload.key },
-          {
-            $set: {
-              value: encodeSettingValue(payload.key, nextValue),
-              updatedAt: now,
-            },
-            $setOnInsert: {
-              createdAt: now,
-            },
-          },
-          { upsert: true }
-        );
+        await upsertKangurSettingValue(payload.key, payload.value);
       }
     }
 

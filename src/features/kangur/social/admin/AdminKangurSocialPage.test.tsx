@@ -217,6 +217,10 @@ vi.mock('./workspace/SocialPost.List', async () => {
       const {
         activePost,
         handleOpenPostEditor,
+        handleRefreshMissingImageAddons,
+        handleRemoveMissingAddons,
+        missingImageAddonActionPending,
+        missingImageAddonActionErrorMessage,
         setPostToDelete,
         setPostToUnpublish,
       } = actual.useSocialPostContext();
@@ -235,6 +239,18 @@ vi.mock('./workspace/SocialPost.List', async () => {
           <button type='button' onClick={() => setPostToUnpublish(activePost)}>
             Unpublish active post
           </button>
+          <button type='button' onClick={() => void handleRefreshMissingImageAddons()}>
+            Refresh missing add-ons
+          </button>
+          <button type='button' onClick={() => void handleRemoveMissingAddons()}>
+            Remove missing add-ons
+          </button>
+          <div data-testid='social-post-missing-addon-action-pending'>
+            {missingImageAddonActionPending ?? 'idle'}
+          </div>
+          <div data-testid='social-post-missing-addon-action-error'>
+            {missingImageAddonActionErrorMessage ?? ''}
+          </div>
         </div>
       );
     },
@@ -342,6 +358,7 @@ const buildHookState = () => ({
   setGenerationNotes: vi.fn(),
   imageAssets: [],
   imageAddonIds: [],
+  missingSelectedImageAddonIds: [],
   addonForm: {
     title: '',
     sourceUrl: '',
@@ -428,6 +445,10 @@ const buildHookState = () => ({
   handleGenerate: vi.fn(),
   handleSelectAddon: vi.fn(),
   handleRemoveAddon: vi.fn(),
+  handleRefreshMissingImageAddons: vi.fn(),
+  handleRemoveMissingAddons: vi.fn(),
+  missingImageAddonActionPending: null,
+  missingImageAddonActionErrorMessage: null,
   handleCreateAddon: vi.fn(),
   handleBatchCapture: vi.fn(),
   handleOpenProgrammablePlaywrightModal: vi.fn(),
@@ -550,6 +571,34 @@ describe('AdminKangurSocialPage', () => {
     expect(screen.getByRole('button', { name: 'New draft' })).toBeInTheDocument();
   });
 
+  it('forwards persisted missing-addons actions through the real social post provider', () => {
+    const handleRefreshMissingImageAddons = vi.fn().mockResolvedValue(undefined);
+    const handleRemoveMissingAddons = vi.fn().mockResolvedValue(undefined);
+
+    useAdminKangurSocialPageMock.mockReturnValue({
+      ...buildHookState(),
+      missingSelectedImageAddonIds: ['addon-missing'],
+      handleRefreshMissingImageAddons,
+      handleRemoveMissingAddons,
+      missingImageAddonActionPending: 'remove',
+      missingImageAddonActionErrorMessage: 'Failed to remove the missing image add-ons.',
+    });
+
+    render(<AdminKangurSocialPage />);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Refresh missing add-ons' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Remove missing add-ons' }));
+
+    expect(handleRefreshMissingImageAddons).toHaveBeenCalledTimes(1);
+    expect(handleRemoveMissingAddons).toHaveBeenCalledTimes(1);
+    expect(screen.getByTestId('social-post-missing-addon-action-pending')).toHaveTextContent(
+      'remove'
+    );
+    expect(screen.getByTestId('social-post-missing-addon-action-error')).toHaveTextContent(
+      'Failed to remove the missing image add-ons.'
+    );
+  });
+
   it('opens the social post editor modal when a post row is clicked', () => {
     render(<AdminKangurSocialPage />);
 
@@ -585,7 +634,7 @@ describe('AdminKangurSocialPage', () => {
     expect(screen.getByTestId('social-post-editor-modal')).toHaveAttribute('data-open', 'false');
   });
 
-  it('shows header-level runtime job pills for the active Social draft', () => {
+  it('does not render the old header-level runtime job strip for the active Social draft', () => {
     useAdminKangurSocialPageMock.mockReturnValue({
       ...buildHookState(),
       currentVisualAnalysisJob: {
@@ -610,10 +659,11 @@ describe('AdminKangurSocialPage', () => {
 
     render(<AdminKangurSocialPage />);
 
-    expect(screen.getByText('Runtime jobs:')).toBeInTheDocument();
-    expect(screen.getByText('Image analysis: Running')).toBeInTheDocument();
-    expect(screen.getByText('Generate post: Queued')).toBeInTheDocument();
-    expect(screen.getByText('Full pipeline: Completed')).toBeInTheDocument();
+    expect(screen.queryByText('Runtime jobs:')).not.toBeInTheDocument();
+    expect(screen.queryByText('Image analysis: Running')).not.toBeInTheDocument();
+    expect(screen.queryByText('Generate post: Queued')).not.toBeInTheDocument();
+    expect(screen.queryByText('Full pipeline: Completed')).not.toBeInTheDocument();
+    expect(screen.getByTestId('kangur-social-pipeline-queue')).toBeInTheDocument();
   });
 
   it('shows a page-level Playwright capture counter while a standalone capture job is running', () => {

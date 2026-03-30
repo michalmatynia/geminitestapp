@@ -12,6 +12,7 @@ import {
   parseKangurThemePresetManifest,
   parseKangurThemeSettings,
   resolveKangurThemePresetManifestEntry,
+  resolveKangurStoredThemeSelection,
   resolveKangurStoredThemeForAppearanceMode,
   resolveKangurStoredThemeSnapshot,
   resolveKangurThemeSettingsRawForMode,
@@ -541,5 +542,58 @@ describe('theme preset manifest', () => {
       '#123456'
     );
     expect(resolveKangurThemePresetManifestEntry(manifest, 'missing')).toBeNull();
+  });
+
+  it('resolves stored theme selections from the catalog before falling back to the preset manifest', () => {
+    const manifest = parseKangurThemePresetManifest(
+      serializeSetting([
+        {
+          id: 'factory_daily',
+          kind: 'factory',
+          slot: 'daily',
+          settings: { primaryColor: '#abcdef' },
+        },
+      ])
+    );
+
+    expect(
+      resolveKangurStoredThemeSelection({
+        id: 'catalog-theme',
+        catalog: [
+          {
+            id: 'catalog-theme',
+            name: 'Catalog Theme',
+            settings: { primaryColor: '#123456' } as typeof KANGUR_DEFAULT_DAILY_THEME,
+            createdAt: '2026-03-30T00:00:00.000Z',
+            updatedAt: '2026-03-30T00:00:00.000Z',
+          },
+        ],
+        manifest,
+      })
+    ).toEqual({
+      source: 'catalog',
+      settings: { primaryColor: '#123456' },
+    });
+
+    expect(
+      resolveKangurStoredThemeSelection({
+        id: 'factory_daily',
+        catalog: [],
+        manifest,
+      })
+    ).toMatchObject({
+      source: 'manifest',
+      settings: {
+        primaryColor: '#abcdef',
+      },
+    });
+
+    expect(
+      resolveKangurStoredThemeSelection({
+        id: 'missing',
+        catalog: [],
+        manifest,
+      })
+    ).toBeNull();
   });
 });

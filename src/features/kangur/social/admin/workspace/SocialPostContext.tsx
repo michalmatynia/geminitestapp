@@ -10,7 +10,10 @@ import type { ListQuery } from '@/shared/contracts/ui';
 type SocialPostContextValue = ReturnType<typeof useAdminKangurSocialPage> & {
   addonsQuery: ListQuery<KangurSocialImageAddon, KangurSocialImageAddon[]>;
   missingSelectedImageAddonIds: string[];
-  handleRemoveMissingAddons: () => void;
+  handleRefreshMissingImageAddons: () => Promise<void>;
+  handleRemoveMissingAddons: () => Promise<void>;
+  missingImageAddonActionPending: 'refresh' | 'remove' | null;
+  missingImageAddonActionErrorMessage: string | null;
   isSettingsModalOpen: boolean;
   setIsSettingsModalOpen: (open: boolean) => void;
   isPostEditorModalOpen: boolean;
@@ -62,8 +65,42 @@ export function SocialPostProvider({ children }: { children: React.ReactNode }) 
     ]
   );
 
+  const rawMissingSelectedImageAddonIds: unknown = socialPage.missingSelectedImageAddonIds;
+  const normalizedMissingSelectedImageAddonIds = Array.isArray(rawMissingSelectedImageAddonIds)
+    ? rawMissingSelectedImageAddonIds.filter((value): value is string => typeof value === 'string')
+    : [];
+  const rawHandleRemoveMissingAddons: unknown = socialPage.handleRemoveMissingAddons;
+  const normalizedHandleRemoveMissingAddons =
+    typeof rawHandleRemoveMissingAddons === 'function'
+      ? (rawHandleRemoveMissingAddons as () => Promise<void>)
+      : async () => undefined;
+  const rawHandleRefreshMissingImageAddons: unknown =
+    socialPage.handleRefreshMissingImageAddons;
+  const normalizedHandleRefreshMissingImageAddons =
+    typeof rawHandleRefreshMissingImageAddons === 'function'
+      ? (rawHandleRefreshMissingImageAddons as () => Promise<void>)
+      : async () => undefined;
+  const rawMissingImageAddonActionPending: unknown =
+    socialPage.missingImageAddonActionPending;
+  const normalizedMissingImageAddonActionPending =
+    rawMissingImageAddonActionPending === 'refresh' ||
+    rawMissingImageAddonActionPending === 'remove'
+      ? rawMissingImageAddonActionPending
+      : null;
+  const rawMissingImageAddonActionErrorMessage: unknown =
+    socialPage.missingImageAddonActionErrorMessage;
+  const normalizedMissingImageAddonActionErrorMessage =
+    typeof rawMissingImageAddonActionErrorMessage === 'string'
+      ? rawMissingImageAddonActionErrorMessage
+      : null;
+
   const value = {
     ...socialPage,
+    missingSelectedImageAddonIds: normalizedMissingSelectedImageAddonIds,
+    handleRefreshMissingImageAddons: normalizedHandleRefreshMissingImageAddons,
+    handleRemoveMissingAddons: normalizedHandleRemoveMissingAddons,
+    missingImageAddonActionPending: normalizedMissingImageAddonActionPending,
+    missingImageAddonActionErrorMessage: normalizedMissingImageAddonActionErrorMessage,
     isSettingsModalOpen,
     setIsSettingsModalOpen,
     isPostEditorModalOpen,

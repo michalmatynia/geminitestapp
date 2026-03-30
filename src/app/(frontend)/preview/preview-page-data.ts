@@ -11,7 +11,7 @@ import { buildColorSchemeMap } from '@/shared/contracts/cms-theme';
 import { isElevatedSession } from '@/shared/lib/auth/elevated-session-user';
 import { readOptionalRequestHeaders } from '@/shared/lib/request/optional-headers';
 
-import type { SlugRenderData as PreviewRenderData } from '../../[...slug]/slug-page-data';
+import type { SlugRenderData as PreviewRenderData } from '../cms/slug-page-data';
 
 export type { PreviewRenderData };
 

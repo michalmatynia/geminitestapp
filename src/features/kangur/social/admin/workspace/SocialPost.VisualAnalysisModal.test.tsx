@@ -83,7 +83,10 @@ vi.mock('./SocialPostContext', () => ({
     missingSelectedImageAddonIds: [],
     recentAddons: [],
     addonsQuery: { isFetching: false, refetch: vi.fn() },
-    handleRemoveMissingAddons: vi.fn(),
+    handleRefreshMissingImageAddons: vi.fn().mockResolvedValue(undefined),
+    handleRemoveMissingAddons: vi.fn().mockResolvedValue(undefined),
+    missingImageAddonActionPending: null,
+    missingImageAddonActionErrorMessage: null,
     hasSavedVisualAnalysis: false,
     isSavedVisualAnalysisStale: false,
     visionModelId: null,
@@ -453,8 +456,8 @@ describe('SocialPostVisualAnalysisModal', () => {
   });
 
   it('warns when selected add-ons are missing from the loaded add-on list', () => {
-    const refetchMock = vi.fn();
-    const handleRemoveMissingAddons = vi.fn();
+    const handleRefreshMissingImageAddons = vi.fn().mockResolvedValue(undefined);
+    const handleRemoveMissingAddons = vi.fn().mockResolvedValue(undefined);
     useSocialPostContextMock.mockReturnValue({
       isVisualAnalysisModalOpen: true,
       handleCloseVisualAnalysisModal: vi.fn(),
@@ -468,8 +471,11 @@ describe('SocialPostVisualAnalysisModal', () => {
       imageAddonIds: ['addon-1', 'addon-2', 'addon-3'],
       missingSelectedImageAddonIds: ['addon-2', 'addon-3'],
       recentAddons: [recentAddon],
-      addonsQuery: { isFetching: false, refetch: refetchMock },
+      addonsQuery: { isFetching: false, refetch: vi.fn() },
+      handleRefreshMissingImageAddons,
       handleRemoveMissingAddons,
+      missingImageAddonActionPending: null,
+      missingImageAddonActionErrorMessage: null,
       visionModelId: 'vision-1',
       visionModelOptions: { effectiveModelId: 'vision-routing' },
     });
@@ -490,7 +496,70 @@ describe('SocialPostVisualAnalysisModal', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Refresh image add-ons' }));
     fireEvent.click(screen.getByRole('button', { name: 'Remove missing add-ons' }));
 
-    expect(refetchMock).toHaveBeenCalledTimes(1);
+    expect(handleRefreshMissingImageAddons).toHaveBeenCalledTimes(1);
     expect(handleRemoveMissingAddons).toHaveBeenCalledTimes(1);
+  });
+
+  it('shows pending and error feedback while resolving missing selected add-ons', () => {
+    useSocialPostContextMock.mockReturnValue({
+      isVisualAnalysisModalOpen: true,
+      handleCloseVisualAnalysisModal: vi.fn(),
+      handleAnalyzeSelectedVisuals: vi.fn(),
+      handleGeneratePostWithVisualAnalysis: vi.fn(),
+      visualAnalysisResult: null,
+      hasSavedVisualAnalysis: false,
+      isSavedVisualAnalysisStale: false,
+      visualAnalysisErrorMessage: null,
+      visualAnalysisPending: false,
+      imageAddonIds: ['addon-1', 'addon-2'],
+      missingSelectedImageAddonIds: ['addon-2'],
+      recentAddons: [recentAddon],
+      addonsQuery: { isFetching: false, refetch: vi.fn() },
+      handleRefreshMissingImageAddons: vi.fn().mockResolvedValue(undefined),
+      handleRemoveMissingAddons: vi.fn().mockResolvedValue(undefined),
+      missingImageAddonActionPending: 'remove',
+      missingImageAddonActionErrorMessage: 'Failed to remove the missing image add-ons.',
+      visionModelId: 'vision-1',
+      visionModelOptions: { effectiveModelId: 'vision-routing' },
+    });
+
+    render(<SocialPostVisualAnalysisModal />);
+
+    expect(screen.getByRole('button', { name: 'Refresh image add-ons' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Removing missing add-ons...' })).toBeDisabled();
+    expect(
+      screen.getByText('Failed to remove the missing image add-ons.')
+    ).toBeInTheDocument();
+  });
+
+  it('does not crash when missing-addon context fields are temporarily undefined', () => {
+    useSocialPostContextMock.mockReturnValue({
+      isVisualAnalysisModalOpen: true,
+      handleCloseVisualAnalysisModal: vi.fn(),
+      handleAnalyzeSelectedVisuals: vi.fn(),
+      handleGeneratePostWithVisualAnalysis: vi.fn(),
+      visualAnalysisResult: null,
+      hasSavedVisualAnalysis: false,
+      isSavedVisualAnalysisStale: false,
+      visualAnalysisErrorMessage: null,
+      visualAnalysisPending: false,
+      imageAddonIds: undefined,
+      missingSelectedImageAddonIds: undefined,
+      recentAddons: undefined,
+      addonsQuery: undefined,
+      handleRefreshMissingImageAddons: undefined,
+      handleRemoveMissingAddons: undefined,
+      missingImageAddonActionPending: null,
+      missingImageAddonActionErrorMessage: null,
+      visionModelId: 'vision-1',
+      visionModelOptions: { effectiveModelId: 'vision-routing' },
+    });
+
+    render(<SocialPostVisualAnalysisModal />);
+
+    expect(screen.getByRole('dialog', { name: 'Image analysis pipeline' })).toBeInTheDocument();
+    expect(
+      screen.getByText('Select at least one image add-on before running image analysis.')
+    ).toBeInTheDocument();
   });
 });

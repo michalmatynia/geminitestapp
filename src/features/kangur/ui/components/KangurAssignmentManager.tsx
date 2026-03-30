@@ -5,6 +5,7 @@ import React from 'react';
 
 import { buildKangurAssignmentDedupeKey } from '@/features/kangur/services/kangur-assignments';
 import KangurAssignmentsList from '@/features/kangur/ui/components/KangurAssignmentsList';
+import { KangurAssignmentPriorityChip } from '@/features/kangur/ui/components/KangurAssignmentPriorityChip';
 import {
   KangurButton,
   KangurCardDescription,
@@ -36,7 +37,6 @@ import {
 import { useKangurAssignmentManagerState } from './KangurAssignmentManager.hooks';
 import { renderKangurAssignmentManagerTimeLimitModal } from './KangurAssignmentManagerTimeLimitModal';
 import type { KangurAssignmentManagerProps } from './KangurAssignmentManager.types';
-import { KangurAssignmentPriorityChip } from '@/features/kangur/ui/components/KangurAssignmentPriorityChip';
 
 export function KangurAssignmentManager(
   props: KangurAssignmentManagerProps
@@ -170,17 +170,24 @@ export function KangurAssignmentManager(
                         <KangurStatusChip accent='slate' className='w-fit' labelStyle='compact'>
                           {item.badge}
                         </KangurStatusChip>
-                        <div className={`w-full ${KANGUR_TIGHT_ROW_CLASSNAME} sm:w-auto sm:items-center`}>
+                        <div
+                          className={`w-full ${KANGUR_TIGHT_ROW_CLASSNAME} sm:w-auto sm:items-center`}
+                        >
                           {isAssigned ? (
                             <KangurButton
                               className='w-full sm:w-auto'
                               type='button'
-                              onClick={() => assignedAssignment && void handleUnassign(assignedAssignment.id, item.title)}
+                              onClick={() =>
+                                assignedAssignment &&
+                                void handleUnassign(assignedAssignment.id, item.title)
+                              }
                               disabled={isPending}
                               size='sm'
                               variant='ghost'
                             >
-                              {isPending ? translations('actions.unassignPending') : translations('actions.unassign')}
+                              {isPending
+                                ? translations('actions.unassignPending')
+                                : translations('actions.unassign')}
                             </KangurButton>
                           ) : (
                             <KangurButton
@@ -191,13 +198,19 @@ export function KangurAssignmentManager(
                               size='sm'
                               variant='surface'
                             >
-                              {isPending ? translations('actions.assignPending') : translations('actions.assignSuggested')}
+                              {isPending
+                                ? translations('actions.assignPending')
+                                : translations('actions.assignSuggested')}
                             </KangurButton>
                           )}
                           <KangurButton
                             aria-label={translations('actions.setTime')}
                             title={translations('actions.setTime')}
-                            className={isCoarsePointer ? 'min-h-11 w-full px-4 touch-manipulation select-none active:scale-[0.97] sm:w-auto' : 'w-full sm:w-auto sm:px-3'}
+                            className={
+                              isCoarsePointer
+                                ? 'min-h-11 w-full px-4 touch-manipulation select-none active:scale-[0.97] sm:w-auto'
+                                : 'w-full sm:w-auto sm:px-3'
+                            }
                             type='button'
                             onClick={() => handleOpenTimeLimitModalForCatalog(item.id)}
                             disabled={isAssigned || isPending}
@@ -226,7 +239,9 @@ export function KangurAssignmentManager(
             title={translations('search.title')}
           />
 
-          <div className={`${KANGUR_SEGMENTED_CONTROL_CLASSNAME} mt-4 w-full sm:w-auto sm:flex-wrap sm:justify-start`}>
+          <div
+            className={`${KANGUR_SEGMENTED_CONTROL_CLASSNAME} mt-4 w-full sm:w-auto sm:flex-wrap sm:justify-start`}
+          >
             {filterOptions.map((option) => (
               <KangurButton
                 key={option.value}
@@ -258,7 +273,13 @@ export function KangurAssignmentManager(
           )}
 
           {error && (
-            <KangurSummaryPanel accent='rose' className='mt-4' description={error} padding='sm' tone='accent'>
+            <KangurSummaryPanel
+              accent='rose'
+              className='mt-4'
+              description={error}
+              padding='sm'
+              tone='accent'
+            >
               {null}
             </KangurSummaryPanel>
           )}
@@ -268,27 +289,71 @@ export function KangurAssignmentManager(
               const targetKey = buildKangurAssignmentDedupeKey(item.createInput.target);
               const assignedAssignment = assignedAssignmentsByKey.get(targetKey) ?? null;
               const isAssigned = Boolean(assignedAssignment);
-              const isPending = pendingActionId === item.id || pendingActionId === assignedAssignment?.id;
+              const isPending =
+                pendingActionId === item.id || pendingActionId === assignedAssignment?.id;
 
               return (
-                <KangurAssignmentManagerItemCard key={item.id} testId={`assignment-manager-catalog-card-${item.id}`}>
-                  <KangurAssignmentManagerCardHeader title={item.title} description={item.description} />
+                <KangurAssignmentManagerItemCard
+                  key={item.id}
+                  testId={`assignment-manager-catalog-card-${item.id}`}
+                >
+                  <KangurAssignmentManagerCardHeader
+                    title={item.title}
+                    description={item.description}
+                  />
                   <div className='mt-2 flex flex-wrap items-center gap-2'>
-                    <KangurStatusChip accent='slate' labelStyle='compact'>{item.badge}</KangurStatusChip>
-                    <KangurAssignmentPriorityChip labelStyle='compact' priority={item.createInput.priority} />
+                    <KangurStatusChip accent='slate' labelStyle='compact'>
+                      {item.badge}
+                    </KangurStatusChip>
+                    <KangurAssignmentPriorityChip
+                      labelStyle='compact'
+                      priority={item.createInput.priority}
+                    />
                   </div>
                   <KangurAssignmentManagerCardFooter>
-                    <div className={`w-full ${KANGUR_TIGHT_ROW_CLASSNAME} sm:w-auto sm:items-center`}>
+                    <div
+                      className={`w-full ${KANGUR_TIGHT_ROW_CLASSNAME} sm:w-auto sm:items-center`}
+                    >
                       {isAssigned ? (
-                        <KangurButton type='button' onClick={() => assignedAssignment && void handleUnassign(assignedAssignment.id, item.title)} disabled={isPending} size='sm' variant='ghost' className='w-full sm:w-auto'>
-                          {isPending ? translations('actions.unassignPending') : translations('actions.unassign')}
+                        <KangurButton
+                          type='button'
+                          onClick={() =>
+                            assignedAssignment &&
+                            void handleUnassign(assignedAssignment.id, item.title)
+                          }
+                          disabled={isPending}
+                          size='sm'
+                          variant='ghost'
+                          className='w-full sm:w-auto'
+                        >
+                          {isPending
+                            ? translations('actions.unassignPending')
+                            : translations('actions.unassign')}
                         </KangurButton>
                       ) : (
-                        <KangurButton type='button' onClick={() => void handleAssign(item.id)} disabled={isPending} size='sm' variant='surface' className='w-full sm:w-auto'>
-                          {isPending ? translations('actions.assignPending') : translations('actions.assign')}
+                        <KangurButton
+                          type='button'
+                          onClick={() => void handleAssign(item.id)}
+                          disabled={isPending}
+                          size='sm'
+                          variant='surface'
+                          className='w-full sm:w-auto'
+                        >
+                          {isPending
+                            ? translations('actions.assignPending')
+                            : translations('actions.assign')}
                         </KangurButton>
                       )}
-                      <KangurButton aria-label={translations('actions.setTime')} title={translations('actions.setTime')} className='w-full sm:w-auto sm:px-3' type='button' onClick={() => handleOpenTimeLimitModalForCatalog(item.id)} disabled={isAssigned || isPending} size='sm' variant='ghost'>
+                      <KangurButton
+                        aria-label={translations('actions.setTime')}
+                        title={translations('actions.setTime')}
+                        className='w-full sm:w-auto sm:px-3'
+                        type='button'
+                        onClick={() => handleOpenTimeLimitModalForCatalog(item.id)}
+                        disabled={isAssigned || isPending}
+                        size='sm'
+                        variant='ghost'
+                      >
                         <Clock className='h-4 w-4' aria-hidden='true' />
                       </KangurButton>
                     </div>
@@ -299,22 +364,52 @@ export function KangurAssignmentManager(
           </div>
 
           {!isLoading && filteredCatalog.length === 0 && (
-            <KangurEmptyState accent='slate' className='mt-4 text-sm' description={translations('empty.filtered')} padding='lg' />
+            <KangurEmptyState
+              accent='slate'
+              className='mt-4 text-sm'
+              description={translations('empty.filtered')}
+              padding='lg'
+            />
           )}
         </KangurGlassPanel>
       )}
 
       {shouldShowTracking && (
-        <KangurGlassPanel data-testid='assignment-manager-tracking-shell' padding='lg' surface='neutral' variant='soft'>
+        <KangurGlassPanel
+          data-testid='assignment-manager-tracking-shell'
+          padding='lg'
+          surface='neutral'
+          variant='soft'
+        >
           <div className={KANGUR_STACK_COMPACT_CLASSNAME}>
-            <KangurStatusChip accent='slate' className='w-fit' labelStyle='eyebrow'>{translations('tracking.eyebrow')}</KangurStatusChip>
-            <KangurCardDescription className='mt-2 text-slate-600' relaxed size='sm'>{translations('tracking.description')}</KangurCardDescription>
+            <KangurStatusChip accent='slate' className='w-fit' labelStyle='eyebrow'>
+              {translations('tracking.eyebrow')}
+            </KangurStatusChip>
+            <KangurCardDescription className='mt-2 text-slate-600' relaxed size='sm'>
+              {translations('tracking.description')}
+            </KangurCardDescription>
           </div>
           <div className='mt-5 grid grid-cols-1 kangur-panel-gap min-[420px]:grid-cols-2 xl:grid-cols-4'>
-            <KangurMetricCard accent='slate' label={translations('tracking.metrics.active.label')} value={trackerSummary.activeCount} />
-            <KangurMetricCard accent='indigo' label={translations('tracking.metrics.notStarted.label')} value={trackerSummary.notStartedCount} />
-            <KangurMetricCard accent='amber' label={translations('tracking.metrics.inProgress.label')} value={trackerSummary.inProgressCount} />
-            <KangurMetricCard accent='emerald' label={translations('tracking.metrics.completionRate.label')} value={`${trackerSummary.completionRate}%`} />
+            <KangurMetricCard
+              accent='slate'
+              label={translations('tracking.metrics.active.label')}
+              value={trackerSummary.activeCount}
+            />
+            <KangurMetricCard
+              accent='indigo'
+              label={translations('tracking.metrics.notStarted.label')}
+              value={trackerSummary.notStartedCount}
+            />
+            <KangurMetricCard
+              accent='amber'
+              label={translations('tracking.metrics.inProgress.label')}
+              value={trackerSummary.inProgressCount}
+            />
+            <KangurMetricCard
+              accent='emerald'
+              label={translations('tracking.metrics.completionRate.label')}
+              value={`${trackerSummary.completionRate}%`}
+            />
           </div>
         </KangurGlassPanel>
       )}
@@ -323,12 +418,33 @@ export function KangurAssignmentManager(
         <>
           {shouldShowListTabs && (
             <div className='flex flex-col kangur-panel-gap'>
-              <KangurStatusChip accent='slate' labelStyle='eyebrow'>{translations('lists.eyebrow')}</KangurStatusChip>
-              <div className={`${KANGUR_SEGMENTED_CONTROL_CLASSNAME} w-full sm:max-w-sm`} role='tablist'>
-                <KangurButton type='button' onClick={() => setActiveListTab('active')} aria-selected={activeListTab === 'active'} role='tab' className={listTabButtonClassName} size='sm' variant={activeListTab === 'active' ? 'segmentActive' : 'segment'}>
+              <KangurStatusChip accent='slate' labelStyle='eyebrow'>
+                {translations('lists.eyebrow')}
+              </KangurStatusChip>
+              <div
+                className={`${KANGUR_SEGMENTED_CONTROL_CLASSNAME} w-full sm:max-w-sm`}
+                role='tablist'
+              >
+                <KangurButton
+                  type='button'
+                  onClick={() => setActiveListTab('active')}
+                  aria-selected={activeListTab === 'active'}
+                  role='tab'
+                  className={listTabButtonClassName}
+                  size='sm'
+                  variant={activeListTab === 'active' ? 'segmentActive' : 'segment'}
+                >
                   {translations('lists.activeTab', { count: activeAssignmentsCount })}
                 </KangurButton>
-                <KangurButton type='button' onClick={() => setActiveListTab('completed')} aria-selected={activeListTab === 'completed'} role='tab' className={listTabButtonClassName} size='sm' variant={activeListTab === 'completed' ? 'segmentActive' : 'segment'}>
+                <KangurButton
+                  type='button'
+                  onClick={() => setActiveListTab('completed')}
+                  aria-selected={activeListTab === 'completed'}
+                  role='tab'
+                  className={listTabButtonClassName}
+                  size='sm'
+                  variant={activeListTab === 'completed' ? 'segmentActive' : 'segment'}
+                >
                   {translations('lists.completedTab', { count: completedAssignmentsCount })}
                 </KangurButton>
               </div>

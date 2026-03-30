@@ -62,6 +62,191 @@ function KangurLessonActivityHeader({
   );
 }
 
+const resolveKangurLessonActivityButtonClassName = (
+  isCoarsePointer: boolean,
+  includeMarginTop = false
+): string => {
+  const spacing = includeMarginTop ? 'mt-4 ' : '';
+
+  return isCoarsePointer
+    ? `${spacing}min-h-11 px-4 touch-manipulation select-none active:scale-[0.97]`
+    : `${spacing}px-4`;
+};
+
+function KangurLessonActivityEditorPreview({
+  definitionLabel,
+  description,
+  title,
+}: {
+  definitionLabel: string;
+  description: string;
+  title: string;
+}): React.JSX.Element {
+  return (
+    <KangurSurfacePanel
+      accent='emerald'
+      data-testid='lesson-activity-block-editor-shell'
+      padding='lg'
+    >
+      <KangurLessonActivityHeader
+        badgeRowClassName={`mb-3 ${KANGUR_WRAP_CENTER_ROW_CLASSNAME}`}
+        description={description}
+        label={definitionLabel}
+        title={title}
+      />
+      <KangurEmptyState
+        accent='emerald'
+        align='left'
+        className='mt-4 text-sm'
+        description='The live game widget is hidden in editor preview. Open the lesson in learner mode to use this activity.'
+        padding='lg'
+      />
+    </KangurSurfacePanel>
+  );
+}
+
+function KangurLessonActivityPrintButton({
+  isCoarsePointer,
+  lessonPrint,
+  printPanelId,
+  printPanelLabel,
+}: {
+  isCoarsePointer: boolean;
+  lessonPrint: ReturnType<typeof useOptionalKangurLessonPrint>;
+  printPanelId: string;
+  printPanelLabel: string;
+}): React.JSX.Element | null {
+  if (!lessonPrint?.onPrintPanel) {
+    return null;
+  }
+
+  return (
+    <div className='mb-4 flex justify-end'>
+      <KangurButton
+        aria-label={printPanelLabel}
+        className={resolveKangurLessonActivityButtonClassName(isCoarsePointer)}
+        data-testid='lesson-activity-block-print-button'
+        size='sm'
+        title={printPanelLabel}
+        type='button'
+        variant='surface'
+        onClick={(): void => {
+          lessonPrint.onPrintPanel?.(printPanelId);
+        }}
+      >
+        <Printer className='h-4 w-4 flex-shrink-0' aria-hidden='true' />
+        <span className='sr-only'>{printPanelLabel}</span>
+      </KangurButton>
+    </div>
+  );
+}
+
+function KangurLessonActivityPrintSummary({
+  description,
+  isCompleted,
+  title,
+}: {
+  description: string;
+  isCompleted: boolean;
+  title: string;
+}): React.JSX.Element {
+  const summaryText = isCompleted
+    ? 'Completed in the live lesson view.'
+    : 'Open this lesson on screen to play the interactive task.';
+
+  return (
+    <div
+      className='kangur-print-only space-y-2 border-b border-slate-200 pb-4'
+      data-testid='lesson-activity-block-print-summary'
+    >
+      <div className='text-xs font-semibold uppercase tracking-[0.16em] text-slate-500'>
+        Interactive activity
+      </div>
+      <div className='text-xl font-black text-slate-900'>{title}</div>
+      <p className='text-sm text-slate-600'>{description}</p>
+      <p className='text-sm text-slate-600'>{summaryText}</p>
+    </div>
+  );
+}
+
+function KangurLessonActivityCompletedState({
+  isCoarsePointer,
+  onRestart,
+}: {
+  isCoarsePointer: boolean;
+  onRestart: () => void;
+}): React.JSX.Element {
+  return (
+    <KangurSummaryPanel
+      accent='emerald'
+      className='text-sm'
+      data-kangur-print-exclude='true'
+      description='You can restart the activity to practice again without leaving the lesson page.'
+      padding='lg'
+      title='Activity completed.'
+      tone='accent'
+    >
+      <KangurButton
+        className={resolveKangurLessonActivityButtonClassName(isCoarsePointer, true)}
+        size='sm'
+        type='button'
+        variant='surface'
+        onClick={onRestart}
+      >
+        Restart activity
+      </KangurButton>
+    </KangurSummaryPanel>
+  );
+}
+
+function KangurLessonActivityRuntimeState({
+  activityRuntime,
+  blockId,
+  instanceKey,
+  onFinish,
+}: {
+  activityRuntime: ReturnType<typeof getLocalizedKangurLessonActivityDefinition>['lessonActivityRuntime'];
+  blockId: string;
+  instanceKey: number;
+  onFinish: () => void;
+}): React.JSX.Element | null {
+  if (!activityRuntime) {
+    return null;
+  }
+
+  return (
+    <div data-kangur-print-exclude='true'>
+      <KangurLessonActivityRuntime
+        key={`${blockId}-${instanceKey}`}
+        runtime={activityRuntime}
+        onFinish={onFinish}
+      />
+    </div>
+  );
+}
+
+function KangurLessonActivityUnavailableState({
+  activityRuntime,
+}: {
+  activityRuntime: ReturnType<typeof getLocalizedKangurLessonActivityDefinition>['lessonActivityRuntime'];
+}): React.JSX.Element | null {
+  if (activityRuntime) {
+    return null;
+  }
+
+  return (
+    <KangurEmptyState
+      accent='amber'
+      align='left'
+      className='text-left text-sm'
+      data-kangur-print-exclude='true'
+      description='The lesson activity runtime could not be resolved from the current Kangur game catalog.'
+      padding='lg'
+      title='Activity unavailable'
+    />
+  );
+}
+
 export function KangurLessonActivityBlock(
   props: KangurLessonActivityBlockProps
 ): React.JSX.Element {
@@ -82,25 +267,11 @@ export function KangurLessonActivityBlock(
 
   if (renderMode === 'editor') {
     return (
-      <KangurSurfacePanel
-        accent='emerald'
-        data-testid='lesson-activity-block-editor-shell'
-        padding='lg'
-      >
-        <KangurLessonActivityHeader
-          badgeRowClassName={`mb-3 ${KANGUR_WRAP_CENTER_ROW_CLASSNAME}`}
-          description={description}
-          label={definition.label}
-          title={title}
-        />
-        <KangurEmptyState
-          accent='emerald'
-          align='left'
-          className='mt-4 text-sm'
-          description='The live game widget is hidden in editor preview. Open the lesson in learner mode to use this activity.'
-          padding='lg'
-        />
-      </KangurSurfacePanel>
+      <KangurLessonActivityEditorPreview
+        definitionLabel={definition.label}
+        description={description}
+        title={title}
+      />
     );
   }
 
@@ -121,94 +292,40 @@ export function KangurLessonActivityBlock(
           title={title}
           wrapperClassName='mb-4'
         />
-        {lessonPrint?.onPrintPanel ? (
-          <div className='mb-4 flex justify-end'>
-            <KangurButton
-              type='button'
-              size='sm'
-              variant='surface'
-              className={
-                isCoarsePointer
-                  ? 'min-h-11 px-4 touch-manipulation select-none active:scale-[0.97]'
-                  : 'px-4'
-              }
-              data-testid='lesson-activity-block-print-button'
-              aria-label={printPanelLabel}
-              title={printPanelLabel}
-              onClick={(): void => {
-                lessonPrint.onPrintPanel?.(printPanelId);
-              }}
-            >
-              <Printer className='h-4 w-4 flex-shrink-0' aria-hidden='true' />
-              <span className='sr-only'>{printPanelLabel}</span>
-            </KangurButton>
-          </div>
-        ) : null}
+        <KangurLessonActivityPrintButton
+          isCoarsePointer={isCoarsePointer}
+          lessonPrint={lessonPrint}
+          printPanelId={printPanelId}
+          printPanelLabel={printPanelLabel}
+        />
       </div>
 
-      <div
-        className='kangur-print-only space-y-2 border-b border-slate-200 pb-4'
-        data-testid='lesson-activity-block-print-summary'
-      >
-        <div className='text-xs font-semibold uppercase tracking-[0.16em] text-slate-500'>
-          Interactive activity
-        </div>
-        <div className='text-xl font-black text-slate-900'>{title}</div>
-        <p className='text-sm text-slate-600'>{description}</p>
-        <p className='text-sm text-slate-600'>
-          {isCompleted
-            ? 'Completed in the live lesson view.'
-            : 'Open this lesson on screen to play the interactive task.'}
-        </p>
-      </div>
+      <KangurLessonActivityPrintSummary
+        description={description}
+        isCompleted={isCompleted}
+        title={title}
+      />
 
       {isCompleted ? (
-        <KangurSummaryPanel
-          accent='emerald'
-          className='text-sm'
-          data-kangur-print-exclude='true'
-          description='You can restart the activity to practice again without leaving the lesson page.'
-          padding='lg'
-          title='Activity completed.'
-          tone='accent'
-        >
-          <KangurButton
-            type='button'
-            size='sm'
-            variant='surface'
-            className={
-              isCoarsePointer
-                ? 'mt-4 min-h-11 px-4 touch-manipulation select-none active:scale-[0.97]'
-                : 'mt-4'
-            }
-            onClick={(): void => {
-              setIsCompleted(false);
-              setInstanceKey((current) => current + 1);
-            }}
-          >
-            Restart activity
-          </KangurButton>
-        </KangurSummaryPanel>
-      ) : activityRuntime ? (
-        <div data-kangur-print-exclude='true'>
-          <KangurLessonActivityRuntime
-            key={`${block.id}-${instanceKey}`}
-            runtime={activityRuntime}
+        <KangurLessonActivityCompletedState
+          isCoarsePointer={isCoarsePointer}
+          onRestart={(): void => {
+            setIsCompleted(false);
+            setInstanceKey((current) => current + 1);
+          }}
+        />
+      ) : (
+        <>
+          <KangurLessonActivityRuntimeState
+            activityRuntime={activityRuntime}
+            blockId={block.id}
+            instanceKey={instanceKey}
             onFinish={(): void => {
               setIsCompleted(true);
             }}
           />
-        </div>
-      ) : (
-        <KangurEmptyState
-          accent='amber'
-          align='left'
-          className='text-left text-sm'
-          data-kangur-print-exclude='true'
-          description='The lesson activity runtime could not be resolved from the current Kangur game catalog.'
-          padding='lg'
-          title='Activity unavailable'
-        />
+          <KangurLessonActivityUnavailableState activityRuntime={activityRuntime} />
+        </>
       )}
     </KangurSurfacePanel>
   );

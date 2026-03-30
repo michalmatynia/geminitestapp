@@ -1,0 +1,55 @@
+name: vercel-production-sync
+
+on:
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: 'Choose whether to check or repair the StudiQ production alias'
+        required: true
+        default: check
+        type: choice
+        options:
+          - check
+          - repair
+  schedule:
+    - cron: '17 * * * *'
+
+permissions:
+  contents: read
+
+jobs:
+  missing-token:
+    if: ${{ secrets.VERCEL_TOKEN == '' }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Report missing Vercel token
+        run: |
+          {
+            echo "## Vercel Production Sync Guardrail"
+            echo
+            echo "- Status: skipped"
+            echo "- Reason: \`VERCEL_TOKEN\` secret is not configured for this repository."
+            echo "- Action: add a Vercel token so \`npm run check:vercel:production:sync\` can run on schedule."
+          } >> "$GITHUB_STEP_SUMMARY"
+
+  check-production-sync:
+    if: ${{ secrets.VERCEL_TOKEN != '' }}
+    runs-on: ubuntu-latest
+    env:
+      VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: '.nvmrc'
+
+      - name: Check StudiQ production domain sync
+        if: ${{ github.event_name != 'workflow_dispatch' || inputs.mode == 'check' }}
+        run: npm run check:vercel:production:sync
+
+      - name: Repair StudiQ production domain sync
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.mode == 'repair' }}
+        run: npm run repair:vercel:production:sync

@@ -102,6 +102,45 @@ Destroying these would force a cold rebuild every time.
 | `scripts/build/run-next-build.cjs` | Build orchestrator: bundler selection, heap, retry logic |
 | `scripts/build/prebuild-cleanup.cjs` | Pre-build stale artifact cleanup |
 | `scripts/build/check-vercel-build-contract.cjs` | Validates vercel.json matches expected contract |
+| `scripts/build/check-vercel-production-alias-sync.mjs` | Validates `studiqpl.vercel.app` matches the canonical production alias and can repair drift |
+
+## Production Domain Sync Guardrail
+
+StudiQ serves production traffic from `studiqpl.vercel.app`, but the canonical
+project production alias remains
+`geminitestapp-michalmatynias-projects.vercel.app`. If those two aliases point
+at different deployments, production can drift onto a stale build even when the
+latest production deploy is healthy.
+
+Check the alias contract after any production release:
+
+```bash
+npm run check:vercel:production:sync
+```
+
+The command uses the active `vercel login` session when available. In CI,
+provide `VERCEL_TOKEN` instead.
+
+If the check reports drift, repair the custom domain by reassigning it to the
+canonical production deployment:
+
+```bash
+npm run repair:vercel:production:sync
+```
+
+Preferred release flow:
+
+1. Promote the intended production deployment with `vercel promote <deployment>`.
+2. Run `npm run check:vercel:production:sync`.
+3. If Kangur lesson content changed, also run `npm run verify:kangur:content -- --strict`.
+
+GitHub Actions also exposes `.github/workflows/vercel-production-sync.yml` for
+manual recovery. Use `mode=repair` only when the scheduled or local check has
+already confirmed alias drift.
+
+Only use `repair:vercel:production:sync` when the custom domain has drifted
+away from the canonical production alias. It is a recovery command, not the
+normal release path.
 
 ## Troubleshooting
 
@@ -131,3 +170,9 @@ npx vercel deploy --prebuilt --prod
 ```
 
 Your local machine has no timeout and more RAM.
+
+### Production domain serves an older build
+
+1. Run `npm run check:vercel:production:sync`.
+2. If drift is reported, run `npm run repair:vercel:production:sync`.
+3. Re-check the affected public route or API after the alias converges.

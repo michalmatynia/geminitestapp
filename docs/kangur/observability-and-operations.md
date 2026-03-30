@@ -90,6 +90,8 @@ because they share the same `/api/kangur/*` backend and observability sources.
    - verify `POST /api/kangur/tts/status` still returns expected states for affected lessons
 6. Check `performanceBaseline` to rule out a broader feature regression or missing local stack.
 7. If lessons or sections are missing in production but present locally:
+   - verify the production domain points at the canonical production deployment with `npm run check:vercel:production:sync`
+   - if the alias has drifted, repair it with `npm run repair:vercel:production:sync`
    - verify the content baseline with `npm run verify:kangur:content -- --strict`
    - repair the Mongo-backed Kangur catalog with `npm run repair:kangur:content`
    - re-check `/api/kangur/lessons-catalog?subject=<subject>&enabledOnly=true` after the command completes

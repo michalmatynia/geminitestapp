@@ -136,8 +136,9 @@ Preferred release flow:
 4. If Kangur lesson content changed, also run `npm run verify:kangur:content -- --strict`.
 
 GitHub Actions also exposes `.github/workflows/vercel-production-sync.yml` for
-manual recovery. Use `mode=repair` only when the scheduled or local check has
-already confirmed alias drift.
+PR-time verification, scheduled drift detection, and manual recovery. Use
+`mode=repair` only when the scheduled or local check has already confirmed
+alias drift.
 
 GitHub Actions also exposes `.github/workflows/github-main-branch-protection.yml`
 for scheduled drift detection and manual `mode=repair` recovery of the minimum

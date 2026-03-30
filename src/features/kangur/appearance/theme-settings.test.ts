@@ -9,7 +9,11 @@ import {
   KANGUR_NIGHTLY_AURORA_THEME,
   KANGUR_NIGHTLY_NOCTURNE_THEME,
   KANGUR_NIGHTLY_THEME,
+  parseKangurThemePresetManifest,
   parseKangurThemeSettings,
+  resolveKangurThemePresetManifestEntry,
+  resolveKangurStoredThemeForAppearanceMode,
+  resolveKangurStoredThemeSnapshot,
   resolveKangurThemeSettingsRawForMode,
 } from './theme-settings';
 
@@ -434,5 +438,108 @@ describe('parseKangurThemeSettings', () => {
         nightlyThemeRaw: 'nightly-theme',
       })
     ).toBe('nightly-theme');
+  });
+});
+
+describe('resolveKangurStoredThemeSnapshot', () => {
+  it('prefers stored theme payloads over the code default baseline', () => {
+    const snapshot = resolveKangurStoredThemeSnapshot({
+      dailyThemeRaw: serializeSetting({ primaryColor: '#ff44aa' }),
+      dawnThemeRaw: null,
+      sunsetThemeRaw: null,
+      nightlyThemeRaw: null,
+    });
+
+    expect(snapshot.daily.primaryColor).toBe('#ff44aa');
+    expect(snapshot.daily.backgroundColor).toBe(KANGUR_DEFAULT_DAILY_THEME.backgroundColor);
+  });
+
+  it('falls back to the nightly baseline when no nightly payload is stored', () => {
+    const snapshot = resolveKangurStoredThemeSnapshot({
+      dailyThemeRaw: null,
+      dawnThemeRaw: null,
+      sunsetThemeRaw: null,
+      nightlyThemeRaw: null,
+    });
+
+    expect(snapshot.nightly.backgroundColor).toBe(KANGUR_DEFAULT_THEME.backgroundColor);
+    expect(snapshot.nightly.primaryColor).toBe(KANGUR_DEFAULT_THEME.primaryColor);
+  });
+});
+
+describe('resolveKangurStoredThemeForAppearanceMode', () => {
+  it('returns the resolved sunset slot theme for sunset mode', () => {
+    const theme = resolveKangurStoredThemeForAppearanceMode({
+      mode: 'sunset',
+      dailyThemeRaw: serializeSetting({ backgroundColor: '#111111' }),
+      dawnThemeRaw: serializeSetting({ backgroundColor: '#222222' }),
+      sunsetThemeRaw: serializeSetting({ backgroundColor: '#ff8800' }),
+      nightlyThemeRaw: serializeSetting({ backgroundColor: '#333333' }),
+    });
+
+    expect(theme.backgroundColor).toBe('#ff8800');
+  });
+
+  it('falls back to the stored nightly baseline for dark mode when the payload is empty', () => {
+    const theme = resolveKangurStoredThemeForAppearanceMode({
+      mode: 'dark',
+      dailyThemeRaw: null,
+      dawnThemeRaw: null,
+      sunsetThemeRaw: null,
+      nightlyThemeRaw: '',
+    });
+
+    expect(theme.backgroundColor).toBe(KANGUR_DEFAULT_THEME.backgroundColor);
+  });
+});
+
+describe('theme preset manifest', () => {
+  it('parses and normalizes valid manifest entries', () => {
+    const manifest = parseKangurThemePresetManifest(
+      serializeSetting([
+        {
+          id: 'factory_daily',
+          kind: 'factory',
+          slot: 'daily',
+          settings: { primaryColor: '#ff44aa' },
+        },
+      ])
+    );
+
+    expect(manifest).toHaveLength(1);
+    expect(manifest[0]).toMatchObject({
+      id: 'factory_daily',
+      kind: 'factory',
+      slot: 'daily',
+      settings: {
+        primaryColor: '#ff44aa',
+        backgroundColor: KANGUR_DEFAULT_DAILY_THEME.backgroundColor,
+      },
+    });
+  });
+
+  it('ignores invalid manifest entries and resolves entries by id', () => {
+    const manifest = parseKangurThemePresetManifest(
+      JSON.stringify([
+        {
+          id: 'preset_daily_crystal',
+          kind: 'preset',
+          slot: 'daily',
+          settings: { primaryColor: '#123456' },
+        },
+        {
+          id: 'broken',
+          kind: 'unknown',
+          slot: 'daily',
+          settings: {},
+        },
+      ])
+    );
+
+    expect(manifest).toHaveLength(1);
+    expect(resolveKangurThemePresetManifestEntry(manifest, 'preset_daily_crystal')?.settings.primaryColor).toBe(
+      '#123456'
+    );
+    expect(resolveKangurThemePresetManifestEntry(manifest, 'missing')).toBeNull();
   });
 });

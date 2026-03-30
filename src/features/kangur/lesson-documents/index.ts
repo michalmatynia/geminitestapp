@@ -6,14 +6,14 @@ import {
 } from '@/features/kangur/shared/contracts/kangur';
 import { parseJsonSetting } from '@/features/kangur/shared/utils';
 
-import { flattenKangurLessonDocumentPages } from './lesson-documents/creators';
-import { normalizeKangurLessonDocument } from './lesson-documents/normalization';
-import { isRecord, isSvgImageSource } from './lesson-documents/utils';
+import { flattenKangurLessonDocumentPages } from './creators';
+import { normalizeKangurLessonDocument } from './normalization';
+import { isRecord, isSvgImageSource } from './utils';
 
-export * from './lesson-documents/utils';
-export * from './lesson-documents/creators';
-export * from './lesson-documents/converters';
-export * from './lesson-documents/normalization';
+export * from './utils';
+export * from './creators';
+export * from './converters';
+export * from './normalization';
 
 export { KANGUR_LESSON_DOCUMENTS_SETTING_KEY };
 

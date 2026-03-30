@@ -15,7 +15,6 @@ import { resolveKangurStorefrontAppearance } from '@/features/cms/public';
 import {
   KANGUR_THEME_CATALOG_KEY,
   type KangurThemeCatalogEntry,
-  KANGUR_DEFAULT_DAILY_THEME,
   normalizeKangurThemeSettings,
 } from '@/features/kangur/appearance/theme-settings';
 import type { ThemeSettings } from '@/shared/contracts/cms-theme';
@@ -54,6 +53,7 @@ export function ThemeCatalogModal(): React.JSX.Element {
   const {
     catalog,
     draft,
+    slotThemes,
     selectedId,
     handleSelect,
     updateCatalog,
@@ -133,7 +133,7 @@ export function ThemeCatalogModal(): React.JSX.Element {
     const newEntry: KangurThemeCatalogEntry = {
       id: `theme_${Math.random().toString(36).slice(2, 11)}`,
       name: name.trim(),
-      settings: normalizeKangurThemeSettings(settings, KANGUR_DEFAULT_DAILY_THEME),
+      settings: normalizeKangurThemeSettings(settings, slotThemes.daily),
       createdAt: now,
       updatedAt: now,
     };
@@ -315,7 +315,7 @@ export function ThemeCatalogModal(): React.JSX.Element {
 
         <div className='grid gap-3 sm:grid-cols-2'>
           {visibleCatalog.map((entry) => {
-            const previewTheme = normalizeKangurThemeSettings(entry.settings, KANGUR_DEFAULT_DAILY_THEME);
+            const previewTheme = normalizeKangurThemeSettings(entry.settings, slotThemes.daily);
             const preview = resolveKangurStorefrontAppearance('default', previewTheme);
             const isSelected = selectedId === entry.id;
             const isDuplicating = duplicatingId === entry.id;

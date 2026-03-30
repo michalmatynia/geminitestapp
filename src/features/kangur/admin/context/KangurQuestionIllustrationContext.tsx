@@ -11,7 +11,7 @@ import type {
 import { internalError } from '@/features/kangur/shared/errors/app-error';
 
 import { useKangurTestQuestionEditorContext } from './KangurTestQuestionEditorContext';
-import { createPanelIllustration } from '../../test-questions';
+import { createPanelIllustration } from '../../test-suites/questions';
 
 const createPanelId = (): string => `panel_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`;
 

@@ -56,7 +56,7 @@ import {
   getQuestionsForSuite,
   getPublishedQuestionsForSuite,
   parseKangurTestQuestionStore,
-} from '@/features/kangur/test-questions';
+} from '@/features/kangur/test-suites/questions';
 
 const TESTS_MAIN_ID = 'kangur-tests-main';
 const ACTIVE_TESTS_SCROLL_MAX_FRAMES = 18;

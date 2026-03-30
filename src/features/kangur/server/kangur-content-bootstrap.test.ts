@@ -5,7 +5,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const {
-  createStarterKangurLessonDocumentMock,
+  getMongoDbMock,
   getKangurAiTutorContentMock,
   getKangurAiTutorNativeGuideStoreMock,
   getKangurGameContentSetRepositoryMock,
@@ -15,10 +15,9 @@ const {
   getKangurLessonSectionRepositoryMock,
   getKangurLessonTemplateRepositoryMock,
   getKangurPageContentStoreMock,
-  importLegacyKangurLessonDocumentMock,
   listKangurGamesMock,
 } = vi.hoisted(() => ({
-  createStarterKangurLessonDocumentMock: vi.fn(),
+  getMongoDbMock: vi.fn(),
   getKangurAiTutorContentMock: vi.fn(),
   getKangurAiTutorNativeGuideStoreMock: vi.fn(),
   getKangurGameContentSetRepositoryMock: vi.fn(),
@@ -28,16 +27,11 @@ const {
   getKangurLessonSectionRepositoryMock: vi.fn(),
   getKangurLessonTemplateRepositoryMock: vi.fn(),
   getKangurPageContentStoreMock: vi.fn(),
-  importLegacyKangurLessonDocumentMock: vi.fn(),
   listKangurGamesMock: vi.fn(),
 }));
 
-vi.mock('@/features/kangur/lesson-documents', () => ({
-  createStarterKangurLessonDocument: createStarterKangurLessonDocumentMock,
-}));
-
-vi.mock('@/features/kangur/legacy-lesson-imports', () => ({
-  importLegacyKangurLessonDocument: importLegacyKangurLessonDocumentMock,
+vi.mock('@/shared/lib/db/mongo-client', () => ({
+  getMongoDb: getMongoDbMock,
 }));
 
 vi.mock('@/features/kangur/server/ai-tutor-content-repository', () => ({
@@ -86,16 +80,7 @@ describe('bootstrapKangurContentToMongo', () => {
     vi.clearAllMocks();
   });
 
-  it('persists authored starter lesson documents for missing lessons during bootstrap', async () => {
-    const starterDocument = { version: 1, blocks: [], pages: [], narration: {}, updatedAt: 'now' };
-    const importedDocument = {
-      version: 1,
-      blocks: [{ id: 'legacy' }],
-      pages: [],
-      narration: {},
-      updatedAt: 'legacy',
-    };
-
+  it('replaces Mongo lesson documents with the exact local snapshot', async () => {
     const lessonDocumentRepository = {
       replaceLessonDocuments: vi.fn().mockImplementation(async (store) => store),
     };
@@ -114,6 +99,7 @@ describe('bootstrapKangurContentToMongo', () => {
     const gameInstanceRepository = {
       listInstances: vi.fn().mockResolvedValue([]),
     };
+    const updateOne = vi.fn().mockResolvedValue({ acknowledged: true, matchedCount: 1, modifiedCount: 1 });
 
     getKangurLessonRepositoryMock.mockResolvedValue(lessonRepository);
     getKangurLessonDocumentRepositoryMock.mockResolvedValue(lessonDocumentRepository);
@@ -125,12 +111,11 @@ describe('bootstrapKangurContentToMongo', () => {
     getKangurAiTutorContentMock.mockImplementation(async (locale: string) => ({ locale }));
     getKangurAiTutorNativeGuideStoreMock.mockImplementation(async (locale: string) => ({ locale }));
     listKangurGamesMock.mockResolvedValue([]);
-    createStarterKangurLessonDocumentMock.mockReturnValue(starterDocument);
-    importLegacyKangurLessonDocumentMock.mockImplementation((componentId: string) =>
-      componentId === 'english_adverbs'
-        ? { document: importedDocument, importedPageCount: 1, warnings: [] }
-        : null
-    );
+    getMongoDbMock.mockResolvedValue({
+      collection: vi.fn(() => ({
+        updateOne,
+      })),
+    });
 
     const { bootstrapKangurContentToMongo } = await import('./kangur-content-bootstrap');
     const { buildLocalKangurLessonContentSnapshot } = await import('./kangur-lesson-content-snapshot');
@@ -142,25 +127,23 @@ describe('bootstrapKangurContentToMongo', () => {
       lessonDocumentRepository.replaceLessonDocuments.mock.calls[0] ?? [];
 
     expect(storedLocale).toBe('pl');
-    expect(storedDocuments['kangur-lesson-english_adverbs']).toEqual(
-      expect.objectContaining({
-        updatedAt: importedDocument.updatedAt,
-        version: importedDocument.version,
-      })
-    );
-    expect(storedDocuments['kangur-lesson-english_adverbs']?.blocks).toEqual(
-      expect.arrayContaining([expect.objectContaining({ id: 'legacy' })])
-    );
-    expect(storedDocuments['kangur-lesson-english_comparatives_superlatives']).toEqual(
-      expect.objectContaining({
-        updatedAt: starterDocument.updatedAt,
-        version: starterDocument.version,
-      })
-    );
-    expect(storedDocuments['kangur-lesson-english_comparatives_superlatives']?.pages).toHaveLength(1);
+    expect(storedDocuments).toEqual(snapshot.lessonDocumentsByLocale['pl']);
     expect(lessonRepository.replaceLessons).toHaveBeenCalledWith(snapshot.lessons);
-    expect(summary.lessonDocuments).toBe(Object.keys(snapshot.lessonDocumentsByLocale['pl'] ?? {}).length);
+    expect(updateOne).toHaveBeenCalledWith(
+      { _id: 'lesson-content' },
+      expect.objectContaining({
+        $set: expect.objectContaining({
+          _id: 'lesson-content',
+          lessonContentRevision: snapshot.lessonContentRevision,
+          locales: ['pl'],
+          source: 'localhost',
+        }),
+      }),
+      { upsert: true }
+    );
+    expect(summary.lessonDocuments).toBe(0);
     expect(summary.lessons).toBe(snapshot.lessons.length);
+    expect(summary.lessonContentRevisionSyncedAt).toEqual(expect.any(String));
   });
 
   it('replaces lessons, sections, and templates from the local snapshot', async () => {
@@ -182,6 +165,7 @@ describe('bootstrapKangurContentToMongo', () => {
     const gameInstanceRepository = {
       listInstances: vi.fn().mockResolvedValue([]),
     };
+    const updateOne = vi.fn().mockResolvedValue({ acknowledged: true, matchedCount: 1, modifiedCount: 1 });
 
     getKangurLessonRepositoryMock.mockResolvedValue(lessonRepository);
     getKangurLessonDocumentRepositoryMock.mockResolvedValue(lessonDocumentRepository);
@@ -193,14 +177,11 @@ describe('bootstrapKangurContentToMongo', () => {
     getKangurAiTutorContentMock.mockImplementation(async (locale: string) => ({ locale }));
     getKangurAiTutorNativeGuideStoreMock.mockImplementation(async (locale: string) => ({ locale }));
     listKangurGamesMock.mockResolvedValue([]);
-    createStarterKangurLessonDocumentMock.mockReturnValue({
-      version: 1,
-      blocks: [],
-      pages: [],
-      narration: {},
-      updatedAt: 'now',
+    getMongoDbMock.mockResolvedValue({
+      collection: vi.fn(() => ({
+        updateOne,
+      })),
     });
-    importLegacyKangurLessonDocumentMock.mockReturnValue(null);
 
     const { bootstrapKangurContentToMongo } = await import('./kangur-content-bootstrap');
     const { buildLocalKangurLessonContentSnapshot } = await import('./kangur-lesson-content-snapshot');
@@ -227,5 +208,6 @@ describe('bootstrapKangurContentToMongo', () => {
       snapshot.lessonTemplatesByLocale['pl']?.length ?? 0
     );
     expect(summary.lessonContentRevision).toHaveLength(16);
+    expect(updateOne).toHaveBeenCalledTimes(1);
   });
 });

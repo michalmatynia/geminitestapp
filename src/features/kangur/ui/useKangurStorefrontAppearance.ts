@@ -8,9 +8,7 @@ import {
 import { useOptionalCmsStorefrontAppearance } from '@/features/cms/public';
 import {
   getKangurThemeSettingsKeyForAppearanceMode,
-  resolveKangurThemeSettingsRawForMode,
-  parseKangurThemeSettings,
-  resolveKangurDefaultThemeForMode,
+  resolveKangurStoredThemeForAppearanceMode,
 } from '@/features/kangur/appearance/theme-settings';
 import { useSettingsStore } from '@/features/kangur/shared/providers/SettingsStoreProvider';
 import {
@@ -62,17 +60,16 @@ export const useKangurStorefrontAppearance = () => {
     mode: 'dark',
     settingsStore,
   });
-  const rawTheme = resolveKangurThemeSettingsRawForMode({
-    mode,
-    dailyThemeRaw,
-    dawnThemeRaw,
-    sunsetThemeRaw,
-    nightlyThemeRaw,
-  });
-  const fallbackTheme = useMemo(() => resolveKangurDefaultThemeForMode(mode), [mode]);
   const theme = useMemo(
-    () => parseKangurThemeSettings(rawTheme, fallbackTheme) ?? fallbackTheme,
-    [fallbackTheme, rawTheme]
+    () =>
+      resolveKangurStoredThemeForAppearanceMode({
+        mode,
+        dailyThemeRaw,
+        dawnThemeRaw,
+        sunsetThemeRaw,
+        nightlyThemeRaw,
+      }),
+    [dailyThemeRaw, dawnThemeRaw, mode, nightlyThemeRaw, sunsetThemeRaw]
   );
   const resolvedAppearance = useMemo(
     () => resolveKangurStorefrontAppearance(mode, theme),

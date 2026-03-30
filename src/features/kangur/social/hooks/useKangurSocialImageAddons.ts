@@ -18,17 +18,29 @@ import { QUERY_KEYS } from '@/shared/lib/query-keys';
 type SocialImageAddonsQueryOptions = {
   limit?: number;
   enabled?: boolean;
+  ids?: string[];
 };
 
 const SOCIAL_IMAGE_ADDONS_QUERY_TIMEOUT_MS = 60_000;
 const KANGUR_SOCIAL_IMAGE_ADDONS_QUERY_KEY = ['kangur', 'social-image-addons'] as const;
 
+const normalizeAddonIds = (ids: string[] | undefined): string[] =>
+  Array.from(
+    new Set(
+      (ids ?? [])
+        .map((value) => value.trim())
+        .filter(Boolean)
+    )
+  );
+
 const fetchSocialImageAddons = async (
   options?: SocialImageAddonsQueryOptions
 ): Promise<KangurSocialImageAddon[]> => {
+  const ids = normalizeAddonIds(options?.ids);
   const payload = await api.get<KangurSocialImageAddon[]>('/api/kangur/social-image-addons', {
     params: {
       limit: options?.limit,
+      ids: ids.length > 0 ? ids.join(',') : undefined,
       scope: 'admin',
     },
     timeout: SOCIAL_IMAGE_ADDONS_QUERY_TIMEOUT_MS,
@@ -42,6 +54,7 @@ export const useKangurSocialImageAddons = (
   createListQueryV2<KangurSocialImageAddon, KangurSocialImageAddon[]>({
     queryKey: QUERY_KEYS.kangur.socialImageAddons({
       limit: options?.limit ?? null,
+      ids: normalizeAddonIds(options?.ids),
     }),
     queryFn: async (): Promise<KangurSocialImageAddon[]> => fetchSocialImageAddons(options),
     enabled: options?.enabled ?? true,

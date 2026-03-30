@@ -16,8 +16,8 @@ import type {
   KangurTestSuite,
 } from '@/features/kangur/shared/contracts/kangur-tests';
 
-import { createKangurTestQuestionId, KANGUR_QUESTION_SORT_ORDER_GAP } from '../test-questions';
-import { createKangurTestSuiteId } from '../test-suites';
+import { createKangurTestQuestionId, KANGUR_QUESTION_SORT_ORDER_GAP } from './questions';
+import { createKangurTestSuiteId } from '.';
 import { auditLegacyKangurQuestion } from './question-audit';
 
 type LegacyQuestion = {

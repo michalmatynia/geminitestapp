@@ -50,4 +50,40 @@ describe('mongoKangurLessonSectionRepository bootstrap', () => {
     expect(collection.bulkWrite).toHaveBeenCalledTimes(1);
     expect(result).toEqual(expected);
   });
+
+  it('replaces sections with canonical writes that clear stale optional fields', async () => {
+    const englishSection = createDefaultKangurSections().find(
+      (section) => section.id === 'english_grammar'
+    );
+    expect(englishSection).toBeDefined();
+
+    const bulkWrite = vi.fn().mockResolvedValue({ acknowledged: true });
+    const collection = {
+      bulkWrite,
+      createIndex: vi.fn().mockResolvedValue('ok'),
+      deleteMany: vi.fn().mockResolvedValue({ acknowledged: true }),
+    };
+    getMongoDbMock.mockResolvedValue({
+      collection: vi.fn().mockReturnValue(collection),
+    });
+
+    const { mongoKangurLessonSectionRepository } = await import(
+      './mongo-kangur-lesson-section-repository'
+    );
+
+    await mongoKangurLessonSectionRepository.replaceSections([
+      {
+        ...englishSection!,
+        emoji: undefined,
+      },
+    ]);
+
+    const operation = bulkWrite.mock.calls[0]?.[0]?.[0]?.updateOne;
+
+    expect(operation?.update?.$unset).toEqual({
+      emoji: '',
+      shortLabel: '',
+    });
+    expect(operation?.update?.$set?.subsections?.[0]?.sortOrder).toBe(1000);
+  });
 });

@@ -13,10 +13,13 @@ import {
   KANGUR_DAWN_THEME_SETTINGS_KEY,
   KANGUR_SUNSET_THEME_SETTINGS_KEY,
   KANGUR_NIGHTLY_THEME_SETTINGS_KEY,
+  KANGUR_THEME_PRESET_MANIFEST_KEY,
   KANGUR_THEME_CATALOG_KEY,
+  parseKangurThemePresetManifest,
+  resolveKangurThemePresetManifestEntry,
   parseKangurThemeCatalog,
-  parseKangurThemeSettings,
   normalizeKangurThemeSettings,
+  resolveKangurStoredThemeSnapshot,
   type KangurThemeCatalogEntry,
 } from '@/features/kangur/appearance/theme-settings';
 import {
@@ -40,8 +43,6 @@ import {
   PRESET_NIGHTLY_CRYSTAL_ID,
   KANGUR_SLOT_ASSIGNMENTS_KEY,
   parseSlotAssignments,
-  resolveFactoryTheme,
-  SLOT_CONFIG,
   ThemeSelectionId,
 } from './AppearancePage.constants';
 import { internalError } from '@/features/kangur/shared/errors/app-error';
@@ -109,9 +110,28 @@ export function AppearancePageProvider({ children }: { children: React.ReactNode
 
   const [catalogOverrideRaw, setCatalogOverrideRaw] = useState<string | null>(null);
   const catalogFreshFetchedRef = useRef(false);
+  const dailyThemeRaw = settingsStore.get(KANGUR_DAILY_THEME_SETTINGS_KEY);
+  const dawnThemeRaw = settingsStore.get(KANGUR_DAWN_THEME_SETTINGS_KEY);
+  const sunsetThemeRaw = settingsStore.get(KANGUR_SUNSET_THEME_SETTINGS_KEY);
+  const nightlyThemeRaw = settingsStore.get(KANGUR_NIGHTLY_THEME_SETTINGS_KEY);
+  const themePresetManifestRaw = settingsStore.get(KANGUR_THEME_PRESET_MANIFEST_KEY);
 
   const catalogRaw = catalogOverrideRaw ?? settingsStore.get(KANGUR_THEME_CATALOG_KEY);
   const catalog = useMemo(() => parseKangurThemeCatalog(catalogRaw), [catalogRaw]);
+  const themePresetManifest = useMemo(
+    () => parseKangurThemePresetManifest(themePresetManifestRaw),
+    [themePresetManifestRaw]
+  );
+  const slotThemes = useMemo(
+    () =>
+      resolveKangurStoredThemeSnapshot({
+        dailyThemeRaw,
+        dawnThemeRaw,
+        sunsetThemeRaw,
+        nightlyThemeRaw,
+      }),
+    [dailyThemeRaw, dawnThemeRaw, nightlyThemeRaw, sunsetThemeRaw]
+  );
 
   useEffect(() => {
     if (!settingsReady || catalogFreshFetchedRef.current) return;
@@ -160,10 +180,14 @@ export function AppearancePageProvider({ children }: { children: React.ReactNode
   }, [catalog, locale, slotAssignments, settingsStore]);
 
   const storedDefaultMode = useMemo(
-    () => parseKangurStorefrontAppearanceMode(settingsStore.get(KANGUR_STOREFRONT_DEFAULT_MODE_SETTING_KEY)),
+    () =>
+      parseKangurStorefrontAppearanceMode(
+        settingsStore.get(KANGUR_STOREFRONT_DEFAULT_MODE_SETTING_KEY)
+      ),
     [settingsStore.get(KANGUR_STOREFRONT_DEFAULT_MODE_SETTING_KEY)]
   );
-  const [defaultModeDraft, setDefaultModeDraft] = useState<KangurStorefrontAppearanceMode>(storedDefaultMode);
+  const [defaultModeDraft, setDefaultModeDraft] =
+    useState<KangurStorefrontAppearanceMode>(storedDefaultMode);
   const [isDefaultModeSaving, setIsDefaultModeSaving] = useState(false);
 
   useEffect(() => {
@@ -220,43 +244,52 @@ export function AppearancePageProvider({ children }: { children: React.ReactNode
   );
 
   const [selectedId, setSelectedId] = useState<ThemeSelectionId>(BUILTIN_DAILY_ID);
-  
+
+  const resolveReadOnlySelectionTheme = useCallback(
+    (id: ThemeSelectionId): ThemeSettings | null => {
+      const manifestEntry = resolveKangurThemePresetManifestEntry(themePresetManifest, id);
+      if (manifestEntry) {
+        return manifestEntry.settings;
+      }
+      if (id === FACTORY_DAWN_ID) return slotThemes.dawn;
+      if (id === FACTORY_SUNSET_ID) return slotThemes.sunset;
+      if (id === FACTORY_NIGHTLY_ID) return slotThemes.nightly;
+      if (id === PRESET_NIGHTLY_CRYSTAL_ID) return slotThemes.nightly;
+      return slotThemes.daily;
+    },
+    [slotThemes, themePresetManifest]
+  );
+
   const loadTheme = useCallback(
     (id: ThemeSelectionId): ThemeSettings => {
-      if ([FACTORY_DAILY_ID, FACTORY_DAWN_ID, FACTORY_SUNSET_ID, FACTORY_NIGHTLY_ID, PRESET_DAILY_CRYSTAL_ID, PRESET_NIGHTLY_CRYSTAL_ID].includes(id)) {
-        return resolveFactoryTheme(id);
+      if (
+        [
+          FACTORY_DAILY_ID,
+          FACTORY_DAWN_ID,
+          FACTORY_SUNSET_ID,
+          FACTORY_NIGHTLY_ID,
+          PRESET_DAILY_CRYSTAL_ID,
+          PRESET_NIGHTLY_CRYSTAL_ID,
+        ].includes(id)
+      ) {
+        return resolveReadOnlySelectionTheme(id) ?? slotThemes.daily;
       }
-      const slotMap: Record<string, { key: string; default: ThemeSettings }> = {
-        [BUILTIN_DAILY_ID]: {
-          key: KANGUR_DAILY_THEME_SETTINGS_KEY,
-          default: SLOT_CONFIG.daily.defaultTheme,
-        },
-        [BUILTIN_DAWN_ID]: {
-          key: KANGUR_DAWN_THEME_SETTINGS_KEY,
-          default: SLOT_CONFIG.dawn.defaultTheme,
-        },
-        [BUILTIN_SUNSET_ID]: {
-          key: KANGUR_SUNSET_THEME_SETTINGS_KEY,
-          default: SLOT_CONFIG.sunset.defaultTheme,
-        },
-        [BUILTIN_NIGHTLY_ID]: {
-          key: KANGUR_NIGHTLY_THEME_SETTINGS_KEY,
-          default: SLOT_CONFIG.nightly.defaultTheme,
-        },
+      const slotMap: Record<string, ThemeSettings> = {
+        [BUILTIN_DAILY_ID]: slotThemes.daily,
+        [BUILTIN_DAWN_ID]: slotThemes.dawn,
+        [BUILTIN_SUNSET_ID]: slotThemes.sunset,
+        [BUILTIN_NIGHTLY_ID]: slotThemes.nightly,
       };
       const slotEntry = slotMap[id];
       if (slotEntry) {
-        return (
-          parseKangurThemeSettings(settingsStore.get(slotEntry.key), slotEntry.default) ??
-          slotEntry.default
-        );
+        return slotEntry;
       }
       const entry = catalog.find((e) => e.id === id);
       return entry
-        ? normalizeKangurThemeSettings(entry.settings, SLOT_CONFIG.daily.defaultTheme)
-        : SLOT_CONFIG.daily.defaultTheme;
+        ? normalizeKangurThemeSettings(entry.settings, slotThemes.daily)
+        : slotThemes.daily;
     },
-    [catalog, settingsStore]
+    [catalog, resolveReadOnlySelectionTheme, slotThemes]
   );
 
   const [draft, setDraftState] = useState<ThemeSettings>(() => loadTheme(BUILTIN_DAILY_ID));
@@ -274,16 +307,6 @@ export function AppearancePageProvider({ children }: { children: React.ReactNode
       });
     },
     []
-  );
-
-  const slotThemes = useMemo(
-    () => ({
-      daily: parseKangurThemeSettings(settingsStore.get(KANGUR_DAILY_THEME_SETTINGS_KEY), SLOT_CONFIG.daily.defaultTheme) ?? SLOT_CONFIG.daily.defaultTheme,
-      dawn: parseKangurThemeSettings(settingsStore.get(KANGUR_DAWN_THEME_SETTINGS_KEY), SLOT_CONFIG.dawn.defaultTheme) ?? SLOT_CONFIG.dawn.defaultTheme,
-      sunset: parseKangurThemeSettings(settingsStore.get(KANGUR_SUNSET_THEME_SETTINGS_KEY), SLOT_CONFIG.sunset.defaultTheme) ?? SLOT_CONFIG.sunset.defaultTheme,
-      nightly: parseKangurThemeSettings(settingsStore.get(KANGUR_NIGHTLY_THEME_SETTINGS_KEY), SLOT_CONFIG.nightly.defaultTheme) ?? SLOT_CONFIG.nightly.defaultTheme,
-    }),
-    [settingsStore]
   );
 
   const handleSelect = useCallback(
@@ -313,9 +336,9 @@ export function AppearancePageProvider({ children }: { children: React.ReactNode
                 ? FACTORY_NIGHTLY_ID
                 : FACTORY_DAILY_ID;
 
-    setDraftState(resolveFactoryTheme(factoryId));
+    setDraftState(resolveReadOnlySelectionTheme(factoryId) ?? slotThemes.daily);
     setIsDirty(true);
-  }, [selectedId]);
+  }, [resolveReadOnlySelectionTheme, selectedId, slotThemes.daily]);
 
   const resolveThemeName = useCallback(
     (id: ThemeSelectionId): string => {

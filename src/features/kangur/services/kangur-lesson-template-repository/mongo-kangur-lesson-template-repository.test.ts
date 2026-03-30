@@ -160,4 +160,44 @@ describe('mongoKangurLessonTemplateRepository bootstrap', () => {
       }),
     ]);
   });
+
+  it('replaces templates with canonical writes that clear stale optional fields', async () => {
+    const template = createDefaultKangurLessonTemplates('en').find(
+      (entry) => entry.componentId === 'english_comparatives_superlatives'
+    );
+    expect(template).toBeDefined();
+
+    const bulkWrite = vi.fn().mockResolvedValue({ acknowledged: true });
+    const collection = {
+      bulkWrite,
+      createIndex: vi.fn().mockResolvedValue('ok'),
+      deleteMany: vi.fn().mockResolvedValue({ acknowledged: true }),
+      indexes: vi.fn().mockResolvedValue([]),
+    };
+    getMongoDbMock.mockResolvedValue({
+      collection: vi.fn().mockReturnValue(collection),
+    });
+
+    const { mongoKangurLessonTemplateRepository } = await import(
+      './mongo-kangur-lesson-template-repository'
+    );
+
+    await mongoKangurLessonTemplateRepository.replaceTemplates(
+      [
+        {
+          ...template!,
+          ageGroup: undefined,
+          componentContent: undefined,
+        },
+      ],
+      'en'
+    );
+
+    const operation = bulkWrite.mock.calls[0]?.[0]?.[0]?.updateOne;
+
+    expect(operation?.update?.$unset).toEqual({
+      ageGroup: '',
+      componentContent: '',
+    });
+  });
 });

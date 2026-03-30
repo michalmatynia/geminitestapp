@@ -24,7 +24,7 @@ import {
   toQuestionFormData,
   upsertKangurTestQuestion,
   usesRichQuestionPresentation,
-} from '@/features/kangur/test-questions';
+} from '@/features/kangur/test-suites/questions';
 import type { KangurTestQuestion, KangurTestQuestionStore } from '@/features/kangur/shared/contracts/kangur-tests';
 
 const makeQuestion = (overrides: Partial<KangurTestQuestion> = {}): KangurTestQuestion => ({

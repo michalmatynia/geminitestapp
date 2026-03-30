@@ -1,5 +1,1 @@
-import { FrontendRouteLoadingFallback } from '@/features/kangur/public';
-
-export default function Loading(): React.JSX.Element {
-  return <FrontendRouteLoadingFallback cmsVariant='page' includeTopNavigationSkeleton={true} />;
-}
+export { default } from '../../../(frontend)/[...slug]/loading';

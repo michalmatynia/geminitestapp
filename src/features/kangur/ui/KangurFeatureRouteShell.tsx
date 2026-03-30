@@ -147,7 +147,7 @@ export function KangurFeatureRouteShell({
   basePath?: string;
   embedded?: boolean;
   forceBodyScrollLock?: boolean;
-}): JSX.Element {
+} = {}): JSX.Element {
   const appearance = useOptionalCmsStorefrontAppearance();
   const pathname = usePathname();
   const router = useRouter();

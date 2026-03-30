@@ -307,6 +307,39 @@ describe('useAdminKangurSocialPage', () => {
   });
 
   it('captures images, patches the draft, and exposes the success message', async () => {
+    useSocialEditorSyncMock.mockReturnValue(
+      createEditorState({
+        recentAddons: [
+          {
+            id: 'addon-old',
+            title: 'Old game capture',
+            presetId: 'game',
+            playwrightCaptureRouteId: 'game',
+            imageAsset: { id: 'existing', url: '/existing.png' },
+          },
+        ],
+      })
+    );
+    readBatchCaptureJobMock.mockResolvedValueOnce(
+      createBatchCaptureJob({
+        status: 'completed',
+        result: {
+          addons: [
+            {
+              id: 'addon-1',
+              title: 'Latest game capture',
+              presetId: 'game',
+              playwrightCaptureRouteId: 'game',
+              imageAsset: { id: 'asset-1', url: '/capture.png' },
+            },
+          ],
+          failures: [],
+          usedPresetCount: 1,
+          runId: 'run-1',
+        },
+      })
+    );
+
     const { result } = renderHook(() => useAdminKangurSocialPage());
 
     expect(result.current.captureAppearanceMode).toBe('default');
@@ -319,18 +352,12 @@ describe('useAdminKangurSocialPage', () => {
     expect(patchMutateAsyncMock).toHaveBeenCalledWith({
       id: 'post-1',
       updates: {
-        imageAddonIds: ['addon-old', 'addon-1'],
-        imageAssets: [
-          { id: 'existing', url: '/existing.png' },
-          { id: 'asset-1', url: '/capture.png' },
-        ],
+        imageAddonIds: ['addon-1'],
+        imageAssets: [{ id: 'asset-1', url: '/capture.png' }],
       },
     });
-    expect(setImageAddonIdsMock).toHaveBeenCalledWith(['addon-old', 'addon-1']);
-    expect(setImageAssetsMock).toHaveBeenCalledWith([
-      { id: 'existing', url: '/existing.png' },
-      { id: 'asset-1', url: '/capture.png' },
-    ]);
+    expect(setImageAddonIdsMock).toHaveBeenCalledWith(['addon-1']);
+    expect(setImageAssetsMock).toHaveBeenCalledWith([{ id: 'asset-1', url: '/capture.png' }]);
     expect(result.current.captureOnlyPending).toBe(false);
     expect(result.current.captureOnlyBatchCaptureJob).toEqual(
       expect.objectContaining({
@@ -434,18 +461,18 @@ describe('useAdminKangurSocialPage', () => {
     expect(patchMutateAsyncMock).toHaveBeenCalledWith({
       id: 'post-1',
       updates: {
-        imageAddonIds: ['addon-old', 'addon-1'],
+        imageAddonIds: ['addon-1', 'addon-old'],
         imageAssets: [
-          { id: 'existing', url: '/existing.png' },
           { id: 'asset-1', url: '/capture.png' },
+          { id: 'existing', url: '/existing.png' },
         ],
       },
     });
     expect(pipelineRunWithOverridesMock).toHaveBeenCalledWith({
-      imageAddonIds: ['addon-old', 'addon-1'],
+      imageAddonIds: ['addon-1', 'addon-old'],
       imageAssets: [
-        { id: 'existing', url: '/existing.png' },
         { id: 'asset-1', url: '/capture.png' },
+        { id: 'existing', url: '/existing.png' },
       ],
     });
     expect(result.current.programmableCaptureBatchCaptureJob).toEqual(

@@ -4,6 +4,7 @@ import { createDefaultKangurGames } from '@/features/kangur/games';
 
 import {
   buildKangurGameLaunchHref,
+  buildKangurGameInstanceLaunchHref,
   buildKangurGameLessonHref,
   getKangurLaunchableGameContentId,
   getKangurLaunchableGameScreen,
@@ -81,6 +82,25 @@ describe('game launch helpers', () => {
     );
     expect(buildKangurGameLessonHref('/kangur', findGame('english_compare_and_crown'))).toBe(
       '/kangur/lessons?focus=english_comparatives_superlatives'
+    );
+  });
+
+  it('builds instance launch hrefs for shared arithmetic runtimes', () => {
+    expect(
+      buildKangurGameInstanceLaunchHref('/kangur', {
+        id: 'adding_ball:instance:default',
+        launchableRuntimeId: 'addition_quiz',
+      })
+    ).toBe(
+      '/kangur/game?quickStart=screen&screen=addition_quiz&instanceId=adding_ball%3Ainstance%3Adefault'
+    );
+    expect(
+      buildKangurGameInstanceLaunchHref('/', {
+        id: 'adding_synthesis:instance:default',
+        launchableRuntimeId: 'adding_synthesis_quiz',
+      })
+    ).toBe(
+      '/game?quickStart=screen&screen=adding_synthesis_quiz&instanceId=adding_synthesis%3Ainstance%3Adefault'
     );
   });
 

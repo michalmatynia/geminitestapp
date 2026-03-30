@@ -24,7 +24,7 @@ import {
   buildKangurLessonCatalogMasterNodes,
   buildKangurLessonMasterNodes,
 } from './kangur-lessons-master-tree';
-import { importLegacyKangurLessonDocument } from '../legacy-lesson-imports';
+import { importLegacyKangurLessonDocument } from '../lessons/import-legacy';
 import {
   hasKangurLessonDocumentContent,
   createDefaultKangurLessonDocument,
@@ -370,8 +370,7 @@ export function AdminKangurLessonsManagerPage({
         const nextLesson = buildPersistedLessonRecord(lessonId, formData, sortOrder);
         const nextLessons = upsertLesson(lessons, nextLesson);
         const shouldOpenContentEditor =
-          formData.contentMode === 'document' &&
-          (!editingLesson || editingLesson.contentMode !== 'document');
+          formData.contentMode === 'document' && editingLesson?.contentMode !== 'document';
         await updateLessons.mutateAsync(nextLessons);
 
         const componentContent = showComponentContentEditor

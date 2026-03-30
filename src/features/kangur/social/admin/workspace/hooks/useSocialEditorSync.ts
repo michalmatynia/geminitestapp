@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import {
   useKangurSocialPosts,
@@ -21,9 +21,13 @@ import {
   emptyAddonForm,
   formatDatetimeLocal,
   buildImageSelection,
-  matchesImageAsset,
   mergeImageAssets,
 } from '../AdminKangurSocialPage.Constants';
+import {
+  mergeSocialPostSelectedAddons,
+  removeSocialPostSelectedAddon,
+  resolveSocialPostImageState,
+} from '../social-post-image-assets';
 
 type SocialEditorSyncDeps = {
   linkedinConnections: Array<{ id: string; hasLinkedInAccessToken?: boolean }>;
@@ -48,26 +52,65 @@ const buildStringArraySignature = (values: string[] | null | undefined): string 
 
 export function useSocialEditorSync(deps: SocialEditorSyncDeps) {
   const postsQuery = useKangurSocialPosts({ scope: 'admin' });
-  const addonsQuery = useKangurSocialImageAddons();
 
   const posts = postsQuery.data ?? [];
-  const recentAddons = addonsQuery.data ?? [];
   const [activePostId, setActivePostId] = useState<string | null>(null);
-  const activePost = useMemo(
-    () => posts.find((post) => post.id === activePostId) ?? null,
-    [activePostId, posts]
-  );
-
-  const hasTrackedViewRef = useRef(false);
   const [editorState, setEditorState] = useState<EditorState>(emptyEditorState);
   const [scheduledAt, setScheduledAt] = useState<string>('');
   const [docReferenceInput, setDocReferenceInput] = useState<string>('');
   const [generationNotes, setGenerationNotes] = useState<string>('');
-  const [imageAssets, setImageAssets] = useState<ImageFileSelection[]>([]);
-  const [imageAddonIds, setImageAddonIds] = useState<string[]>([]);
+  const [draftImageAssets, setDraftImageAssets] = useState<ImageFileSelection[]>([]);
+  const [draftImageAddonIds, setDraftImageAddonIds] = useState<string[]>([]);
+  const [hydratedDraftPostId, setHydratedDraftPostId] = useState<string | null>(null);
   const [addonForm, setAddonForm] = useState<AddonFormState>(emptyAddonForm);
   const [showMediaLibrary, setShowMediaLibrary] = useState(false);
   const [contextSummary, setContextSummary] = useState<string | null>(null);
+  const activePost = useMemo(
+    () => posts.find((post) => post.id === activePostId) ?? null,
+    [activePostId, posts]
+  );
+  const requestedAddonIds = useMemo(() => {
+    const candidateIds =
+      hydratedDraftPostId === activePost?.id ? draftImageAddonIds : activePost?.imageAddonIds ?? [];
+    return Array.from(new Set(candidateIds.map((value) => value.trim()).filter(Boolean)));
+  }, [activePost?.id, activePost?.imageAddonIds, draftImageAddonIds, hydratedDraftPostId]);
+  const addonsQuery = useKangurSocialImageAddons({
+    ids: requestedAddonIds,
+  });
+  const recentAddons = addonsQuery.data ?? [];
+  const hasTrackedViewRef = useRef(false);
+
+  const resolvedImageState = useMemo(
+    () =>
+      resolveSocialPostImageState({
+        imageAssets: draftImageAssets,
+        imageAddonIds: draftImageAddonIds,
+        recentAddons,
+      }),
+    [draftImageAddonIds, draftImageAssets, recentAddons]
+  );
+  const activePostImageState = useMemo(
+    () =>
+      resolveSocialPostImageState({
+        imageAssets: activePost?.imageAssets ?? [],
+        imageAddonIds: activePost?.imageAddonIds ?? [],
+        recentAddons,
+      }),
+    [activePost, recentAddons]
+  );
+  const imageAssets = resolvedImageState.imageAssets;
+  const imageAddonIds = resolvedImageState.imageAddonIds;
+  const missingSelectedImageAddonIds = resolvedImageState.missingSelectedImageAddonIds;
+
+  const setImageAssets: React.Dispatch<React.SetStateAction<ImageFileSelection[]>> = useCallback(
+    (value) => {
+      setDraftImageAssets((prev) => (typeof value === 'function' ? value(prev) : value));
+    },
+    []
+  );
+  const setImageAddonIds: React.Dispatch<React.SetStateAction<string[]>> = useCallback((value) => {
+    setDraftImageAddonIds((prev) => (typeof value === 'function' ? value(prev) : value));
+  }, []);
 
   const resolveDocReferences = useCallback((): string[] =>
     docReferenceInput
@@ -85,13 +128,13 @@ export function useSocialEditorSync(deps: SocialEditorSyncDeps) {
     if (scheduledAt !== formatDatetimeLocal(activePost.scheduledAt)) return true;
     if (
       buildStringArraySignature(imageAddonIds) !==
-      buildStringArraySignature(activePost.imageAddonIds ?? [])
+      buildStringArraySignature(activePostImageState.imageAddonIds)
     ) {
       return true;
     }
     if (
       buildImageAssetSignature(imageAssets) !==
-      buildImageAssetSignature(activePost.imageAssets ?? [])
+      buildImageAssetSignature(activePostImageState.imageAssets)
     ) {
       return true;
     }
@@ -99,6 +142,8 @@ export function useSocialEditorSync(deps: SocialEditorSyncDeps) {
     return false;
   }, [
     activePost,
+    activePostImageState.imageAddonIds,
+    activePostImageState.imageAssets,
     editorState.bodyEn,
     editorState.bodyPl,
     editorState.titleEn,
@@ -142,8 +187,9 @@ export function useSocialEditorSync(deps: SocialEditorSyncDeps) {
       setEditorState(emptyEditorState);
       setScheduledAt('');
       setDocReferenceInput('');
-      setImageAssets([]);
-      setImageAddonIds([]);
+      setDraftImageAssets([]);
+      setDraftImageAddonIds([]);
+      setHydratedDraftPostId(null);
       setContextSummary(null);
       return;
     }
@@ -155,13 +201,14 @@ export function useSocialEditorSync(deps: SocialEditorSyncDeps) {
     });
     setScheduledAt(formatDatetimeLocal(activePost.scheduledAt));
     setDocReferenceInput(activePost.docReferences?.join(', ') ?? '');
-    setImageAddonIds(activePost.imageAddonIds ?? []);
-    setImageAssets(
+    setDraftImageAddonIds(activePost.imageAddonIds ?? []);
+    setDraftImageAssets(
       (activePost.imageAssets ?? []).map((asset, index) => ({
         ...asset,
         id: asset.id || asset.filepath || asset.url || `image-${index}`,
       }))
     );
+    setHydratedDraftPostId(activePost.id);
     setContextSummary(activePost.contextSummary ?? null);
   }, [activePost]);
 
@@ -171,52 +218,77 @@ export function useSocialEditorSync(deps: SocialEditorSyncDeps) {
       .filter((filepath): filepath is string => Boolean(filepath))
       .map((filepath) => buildImageSelection(filepath));
     if (nextAssets.length === 0) return;
-    setImageAssets((prev) => mergeImageAssets(prev, nextAssets));
+    setDraftImageAssets((prev) => mergeImageAssets(prev, nextAssets));
   };
 
   const handleRemoveImage = (id: string): void => {
-    setImageAssets((prev) => prev.filter((asset) => asset.id !== id));
-    const matchedAddon = recentAddons.find((addon) => {
+    const matchedAddon = resolvedImageState.latestSelectedAddons.find((addon) => {
       const asset = addon.imageAsset;
       if (!asset) return false;
       return asset.id === id || asset.filepath === id || asset.url === id;
     });
     if (matchedAddon) {
-      setImageAddonIds((prev) => prev.filter((addonId) => addonId !== matchedAddon.id));
+      const nextImageState = removeSocialPostSelectedAddon({
+        imageAssets: draftImageAssets,
+        imageAddonIds: draftImageAddonIds,
+        recentAddons,
+        addonId: matchedAddon.id,
+      });
+      setDraftImageAddonIds(nextImageState.imageAddonIds);
+      setDraftImageAssets(nextImageState.imageAssets);
+      return;
     }
+    setDraftImageAssets((prev) =>
+      prev.filter((asset) => asset.id !== id && asset.filepath !== id && asset.url !== id)
+    );
   };
 
   const handleSelectAddon = (addon: KangurSocialImageAddon): void => {
-    setImageAddonIds((prev) => (prev.includes(addon.id) ? prev : [...prev, addon.id]));
-    if (addon.imageAsset) {
-      setImageAssets((prev) => mergeImageAssets(prev, [addon.imageAsset]));
-    }
+    const nextImageState = mergeSocialPostSelectedAddons({
+      imageAssets: draftImageAssets,
+      imageAddonIds: draftImageAddonIds,
+      recentAddons,
+      nextAddons: [addon],
+    });
+    setDraftImageAddonIds(nextImageState.imageAddonIds);
+    setDraftImageAssets(nextImageState.imageAssets);
   };
 
   const handleSelectAddons = (addons: KangurSocialImageAddon[]): void => {
     if (addons.length === 0) return;
-    setImageAddonIds((prev) => {
-      const next = new Set(prev);
-      addons.forEach((addon) => next.add(addon.id));
-      return Array.from(next);
+    const nextImageState = mergeSocialPostSelectedAddons({
+      imageAssets: draftImageAssets,
+      imageAddonIds: draftImageAddonIds,
+      recentAddons,
+      nextAddons: addons,
     });
-    const assets = addons
-      .map((addon) => addon.imageAsset)
-      .filter((asset): asset is ImageFileSelection => Boolean(asset));
-    if (assets.length > 0) {
-      setImageAssets((prev) => mergeImageAssets(prev, assets));
-    }
+    setDraftImageAddonIds(nextImageState.imageAddonIds);
+    setDraftImageAssets(nextImageState.imageAssets);
   };
 
   const handleRemoveAddon = (addonId: string): void => {
-    const addon = recentAddons.find((entry) => entry.id === addonId) ?? null;
-    setImageAddonIds((prev) => prev.filter((id) => id !== addonId));
-    if (addon?.imageAsset) {
-      setImageAssets((prev) =>
-        prev.filter((asset) => !matchesImageAsset(asset, addon.imageAsset))
-      );
-    }
+    const nextImageState = removeSocialPostSelectedAddon({
+      imageAssets: draftImageAssets,
+      imageAddonIds: draftImageAddonIds,
+      recentAddons,
+      addonId,
+    });
+    setDraftImageAddonIds(nextImageState.imageAddonIds);
+    setDraftImageAssets(nextImageState.imageAssets);
   };
+
+  const handleRemoveMissingAddons = useCallback((): void => {
+    if (missingSelectedImageAddonIds.length === 0) return;
+
+    const missingAddonIdSet = new Set(missingSelectedImageAddonIds);
+    const nextImageState = resolveSocialPostImageState({
+      imageAssets: draftImageAssets,
+      imageAddonIds: draftImageAddonIds.filter((addonId) => !missingAddonIdSet.has(addonId)),
+      recentAddons,
+    });
+    setDraftImageAddonIds(nextImageState.imageAddonIds);
+    setDraftImageAssets(nextImageState.imageAssets);
+  }, [draftImageAddonIds, draftImageAssets, missingSelectedImageAddonIds, recentAddons]);
 
   return {
     posts,
@@ -235,6 +307,7 @@ export function useSocialEditorSync(deps: SocialEditorSyncDeps) {
     imageAssets,
     setImageAssets,
     imageAddonIds,
+    missingSelectedImageAddonIds,
     setImageAddonIds,
     addonForm,
     setAddonForm,
@@ -249,6 +322,7 @@ export function useSocialEditorSync(deps: SocialEditorSyncDeps) {
     handleSelectAddon,
     handleSelectAddons,
     handleRemoveAddon,
+    handleRemoveMissingAddons,
     postsQuery,
     addonsQuery,
   };

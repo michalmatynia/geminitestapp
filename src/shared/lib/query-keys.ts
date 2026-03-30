@@ -110,7 +110,7 @@ export const QUERY_KEYS = {
       [...QUERY_KEYS.kangur.all, 'assignments', { includeArchived: options?.includeArchived ?? false }] as const,
     socialPosts: (options: { scope: string; limit: number | null }) =>
       [...QUERY_KEYS.kangur.all, 'social-posts', options] as const,
-    socialImageAddons: (options: { limit: number | null }) =>
+    socialImageAddons: (options: { limit: number | null; ids?: string[] | null }) =>
       [...QUERY_KEYS.kangur.all, 'social-image-addons', options] as const,
     observability: {
       all: ['kangur', 'observability'] as const,

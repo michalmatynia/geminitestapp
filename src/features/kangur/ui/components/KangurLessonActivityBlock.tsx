@@ -4,7 +4,7 @@ import { Printer } from 'lucide-react';
 import { useLocale, useTranslations } from 'next-intl';
 import React from 'react';
 
-import { getLocalizedKangurLessonActivityDefinition } from '@/features/kangur/lesson-activities';
+import { getLocalizedKangurLessonActivityDefinition } from '@/features/kangur/lessons/activities';
 import {
   KangurButton,
   KangurCardDescription,

@@ -115,6 +115,7 @@
     "typecheck:baseline": "rm -rf .next-dev && node scripts/testing/run-segmented-typecheck.mjs",
     "typecheck:monolithic": "tsc --noEmit --incremental false",
     "seed:admin": "tsx scripts/db/seed-admin.ts",
+    "seed:kangur:appearance": "cross-env NODE_OPTIONS=--conditions=react-server node --import tsx scripts/db/seed-kangur-appearance-settings.ts",
     "seed:kangur:content": "cross-env NODE_OPTIONS=--conditions=react-server node --import tsx scripts/db/bootstrap-kangur-content-to-mongo.ts",
     "verify:kangur:content": "cross-env NODE_OPTIONS=--conditions=react-server node --import tsx scripts/db/verify-kangur-content-in-mongo.ts",
     "repair:kangur:content": "npm run seed:kangur:content && npm run verify:kangur:content -- --strict",

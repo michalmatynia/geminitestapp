@@ -3,7 +3,7 @@
  */
 
 import React from 'react';
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const { useSocialPostContextMock, usePlaywrightPersonasMock } = vi.hoisted(() => ({
@@ -43,7 +43,22 @@ vi.mock('./SocialPost.ImagesPanel', () => ({
 }));
 
 vi.mock('./SocialPostContext', () => ({
-  useSocialPostContext: () => useSocialPostContextMock(),
+  useSocialPostContext: () => ({
+    activePost: null,
+    recentAddons: [],
+    addonsQuery: { isLoading: false, isFetching: false, refetch: vi.fn() },
+    imageAddonIds: [],
+    missingSelectedImageAddonIds: [],
+    handleSelectAddon: vi.fn(),
+    handleRemoveAddon: vi.fn(),
+    handleRemoveMissingAddons: vi.fn(),
+    imageAssets: [],
+    handleRemoveImage: vi.fn(),
+    setShowMediaLibrary: vi.fn(),
+    showMediaLibrary: false,
+    handleAddImages: vi.fn(),
+    ...useSocialPostContextMock(),
+  }),
 }));
 
 vi.mock('@/shared/hooks/usePlaywrightPersonas', () => ({
@@ -153,13 +168,17 @@ describe('SocialPostVisuals', () => {
   });
 
   it('warns when selected add-ons are missing from the loaded add-on list', () => {
+    const refetchMock = vi.fn();
+    const handleRemoveMissingAddons = vi.fn();
     useSocialPostContextMock.mockReturnValue({
       activePost: buildPost(),
       recentAddons: [],
-      addonsQuery: { isLoading: false },
+      addonsQuery: { isLoading: false, isFetching: false, refetch: refetchMock },
       imageAddonIds: ['addon-1', 'addon-2'],
+      missingSelectedImageAddonIds: ['addon-1', 'addon-2'],
       handleSelectAddon: vi.fn(),
       handleRemoveAddon: vi.fn(),
+      handleRemoveMissingAddons,
       imageAssets: [],
       handleRemoveImage: vi.fn(),
       setShowMediaLibrary: vi.fn(),
@@ -174,6 +193,11 @@ describe('SocialPostVisuals', () => {
         '2 selected image add-ons are missing from the loaded list. Refresh the image add-ons to review or remove them here.'
       )
     ).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Refresh image add-ons' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Remove missing add-ons' }));
+
+    expect(refetchMock).toHaveBeenCalledTimes(1);
+    expect(handleRemoveMissingAddons).toHaveBeenCalledTimes(1);
   });
 
   it('shows the stored image analysis summary and highlights when the post has visual analysis data', () => {

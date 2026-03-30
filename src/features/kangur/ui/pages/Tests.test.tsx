@@ -275,7 +275,7 @@ vi.mock('@/features/kangur/test-suites', () => ({
   parseKangurTestSuites: () => parsedSuitesState.value,
 }));
 
-vi.mock('@/features/kangur/test-questions', () => ({
+vi.mock('@/features/kangur/test-suites/questions', () => ({
   getQuestionsForSuite: () => [],
   getPublishedQuestionsForSuite: (_store: unknown, suiteId: string) =>
     Array.from({ length: publishedQuestionCountBySuiteState.value.get(suiteId) ?? 0 }),

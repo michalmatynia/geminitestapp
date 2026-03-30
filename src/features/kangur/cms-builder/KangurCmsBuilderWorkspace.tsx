@@ -27,10 +27,7 @@ import {
 
 import {
   getKangurThemeSettingsKeyForAppearanceMode,
-  KANGUR_DEFAULT_DAILY_THEME,
-  KANGUR_DEFAULT_DAWN_THEME,
-  KANGUR_DEFAULT_SUNSET_THEME,
-  KANGUR_DEFAULT_THEME,
+  resolveKangurStoredThemeSnapshot,
   type KangurThemeMode,
 } from '@/features/kangur/appearance/theme-settings';
 import { KangurCmsBuilderLeftPanel } from './KangurCmsBuilderLeftPanel';
@@ -66,12 +63,10 @@ const commitScreenSections = (
   },
 });
 
-const resolveThemePreviewFallback = (mode: KangurThemeMode): ThemeSettings => {
-  if (mode === 'dawn') return KANGUR_DEFAULT_DAWN_THEME;
-  if (mode === 'sunset') return KANGUR_DEFAULT_SUNSET_THEME;
-  if (mode === 'nightly') return KANGUR_DEFAULT_THEME;
-  return KANGUR_DEFAULT_DAILY_THEME;
-};
+const resolveThemePreviewFallback = (
+  mode: KangurThemeMode,
+  slotThemes: Record<KangurThemeMode, ThemeSettings>
+): ThemeSettings => slotThemes[mode];
 
 const resolveThemePreviewStorageKey = (mode: KangurThemeMode): string => {
   if (mode === 'dawn') {
@@ -88,11 +83,12 @@ const resolveThemePreviewStorageKey = (mode: KangurThemeMode): string => {
 
 const renderBuilderThemeSettingsProvider = (
   mode: KangurThemeMode,
+  defaultTheme: ThemeSettings,
   children: React.ReactNode
 ): React.ReactElement => (
   <ThemeSettingsProvider
     storageKey={resolveThemePreviewStorageKey(mode)}
-    defaultTheme={resolveThemePreviewFallback(mode)}
+    defaultTheme={defaultTheme}
   >
     {children}
   </ThemeSettingsProvider>
@@ -100,9 +96,11 @@ const renderBuilderThemeSettingsProvider = (
 
 function KangurCmsBuilderInner({
   themePreviewMode,
+  themePreviewFallbacks,
   onThemeModeChange,
 }: {
   themePreviewMode: KangurThemeMode;
+  themePreviewFallbacks: Record<KangurThemeMode, ThemeSettings>;
   onThemeModeChange: (mode: KangurThemeMode) => void;
 }): React.JSX.Element {
   const { state, dispatch } = usePageBuilder();
@@ -233,7 +231,9 @@ function KangurCmsBuilderInner({
         <KangurCmsBuilderRightPanel
           showThemePreview={leftPanelMode === 'theme'}
           themePreviewSection={themePreviewSection}
-          themePreviewTheme={themePreviewTheme ?? resolveThemePreviewFallback(themePreviewMode)}
+          themePreviewTheme={
+            themePreviewTheme ?? resolveThemePreviewFallback(themePreviewMode, themePreviewFallbacks)
+          }
           themePreviewMode={themePreviewMode}
         />
         <KangurCmsBuilderStatusSidebar visible={statusSidebarOpen} />
@@ -261,6 +261,20 @@ export function KangurCmsBuilderWorkspace(): React.JSX.Element {
   const [activeScreenKey, setActiveScreenKey] = useState<KangurCmsScreenKey>('Game');
   const [isSaving, setIsSaving] = useState(false);
   const [themePreviewMode, setThemePreviewMode] = useState<KangurThemeMode>('daily');
+  const dailyThemeRaw = settingsStore.get(resolveThemePreviewStorageKey('daily'));
+  const dawnThemeRaw = settingsStore.get(resolveThemePreviewStorageKey('dawn'));
+  const sunsetThemeRaw = settingsStore.get(resolveThemePreviewStorageKey('sunset'));
+  const nightlyThemeRaw = settingsStore.get(resolveThemePreviewStorageKey('nightly'));
+  const themePreviewFallbacks = useMemo(
+    () =>
+      resolveKangurStoredThemeSnapshot({
+        dailyThemeRaw,
+        dawnThemeRaw,
+        sunsetThemeRaw,
+        nightlyThemeRaw,
+      }),
+    [dailyThemeRaw, dawnThemeRaw, nightlyThemeRaw, sunsetThemeRaw]
+  );
 
   useEffect((): void => {
     if (!persistedProject) return;
@@ -342,6 +356,7 @@ export function KangurCmsBuilderWorkspace(): React.JSX.Element {
         <DragStateProvider>
           {renderBuilderThemeSettingsProvider(
             themePreviewMode,
+            resolveThemePreviewFallback(themePreviewMode, themePreviewFallbacks),
             <KangurCmsBuilderRuntimeProvider
               draftProject={draftProject}
               savedProject={savedProject}
@@ -352,6 +367,7 @@ export function KangurCmsBuilderWorkspace(): React.JSX.Element {
             >
               <KangurCmsBuilderInner
                 themePreviewMode={themePreviewMode}
+                themePreviewFallbacks={themePreviewFallbacks}
                 onThemeModeChange={setThemePreviewMode}
               />
             </KangurCmsBuilderRuntimeProvider>

@@ -5,20 +5,16 @@ import {
   bootstrapKangurContentToMongo,
   KANGUR_CONTENT_BOOTSTRAP_LOCALES,
 } from '@/features/kangur/server/kangur-content-bootstrap';
+import { runKangurContentSyncCli } from './lib/kangur-content-cli-runner';
 
 async function main(): Promise<void> {
-  if (!process.env['MONGODB_URI']) {
-    throw new Error('MONGODB_URI is required to bootstrap Kangur content into MongoDB.');
-  }
-
-  const mongoClient = await getMongoClient();
-
-  try {
-    const summary = await bootstrapKangurContentToMongo(KANGUR_CONTENT_BOOTSTRAP_LOCALES);
-    process.stdout.write(`${JSON.stringify({ ok: true, ...summary })}\n`);
-  } finally {
-    await mongoClient.close();
-  }
+  process.exitCode = await runKangurContentSyncCli({
+    bootstrap: bootstrapKangurContentToMongo,
+    env: process.env,
+    getMongoClient,
+    locales: KANGUR_CONTENT_BOOTSTRAP_LOCALES,
+    writeStdout: (value) => process.stdout.write(value),
+  });
 }
 
 void main().catch((error: unknown) => {

@@ -21,6 +21,8 @@ const {
   homeDuelsInvitesPropsMock,
   tutorSessionSyncPropsMock,
   xpToastPropsMock,
+  addingBallGamePropsMock,
+  addingSynthesisGamePropsMock,
   calendarTrainingGamePropsMock,
   clockTrainingGamePropsMock,
   divisionGamePropsMock,
@@ -44,6 +46,8 @@ const {
   homeDuelsInvitesPropsMock: vi.fn(),
   tutorSessionSyncPropsMock: vi.fn(),
   xpToastPropsMock: vi.fn(),
+  addingBallGamePropsMock: vi.fn(),
+  addingSynthesisGamePropsMock: vi.fn(),
   calendarTrainingGamePropsMock: vi.fn(),
   clockTrainingGamePropsMock: vi.fn(),
   divisionGamePropsMock: vi.fn(),
@@ -231,6 +235,20 @@ vi.mock('@/features/kangur/ui/components/ClockTrainingGame', () => ({
   default: (props: unknown) => {
     clockTrainingGamePropsMock(props);
     return <div data-testid='clock-training-game' />;
+  },
+}));
+
+vi.mock('@/features/kangur/ui/components/AddingBallGame', () => ({
+  default: (props: unknown) => {
+    addingBallGamePropsMock(props);
+    return <div data-testid='adding-ball-game' />;
+  },
+}));
+
+vi.mock('@/features/kangur/ui/components/AddingSynthesisGame', () => ({
+  default: (props: unknown) => {
+    addingSynthesisGamePropsMock(props);
+    return <div data-testid='adding-synthesis-game' />;
   },
 }));
 
@@ -689,6 +707,70 @@ describe('Game page', () => {
         sessionContext: expect.objectContaining({
           surface: 'game',
           contentId: 'game:english_adverbs_quiz',
+        }),
+      })
+    );
+  });
+
+  it('renders the addition launchable runtime on the dedicated game screen', async () => {
+    useKangurGameRuntimeMock.mockReturnValue({
+      ...buildGameRuntime('addition_quiz'),
+      user: {
+        activeLearner: {
+          id: 'learner-1',
+        },
+      },
+    });
+
+    render(<Game />);
+
+    await waitFor(() => {
+      expect(screen.getByTestId('adding-ball-game')).toBeInTheDocument();
+    });
+
+    expect(addingBallGamePropsMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        finishLabelVariant: 'play',
+      })
+    );
+    expect(tutorSessionSyncPropsMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        learnerId: 'learner-1',
+        sessionContext: expect.objectContaining({
+          surface: 'game',
+          contentId: 'game:addition_quiz',
+        }),
+      })
+    );
+  });
+
+  it('renders the adding synthesis launchable runtime on the dedicated game screen', async () => {
+    useKangurGameRuntimeMock.mockReturnValue({
+      ...buildGameRuntime('adding_synthesis_quiz'),
+      user: {
+        activeLearner: {
+          id: 'learner-1',
+        },
+      },
+    });
+
+    render(<Game />);
+
+    await waitFor(() => {
+      expect(screen.getByTestId('adding-synthesis-game')).toBeInTheDocument();
+    });
+
+    expect(addingSynthesisGamePropsMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        finishLabel: 'Wroc do Grajmy',
+      })
+    );
+    expect(tutorSessionSyncPropsMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        learnerId: 'learner-1',
+        sessionContext: expect.objectContaining({
+          surface: 'game',
+          contentId: 'game:adding_synthesis_quiz',
         }),
       })
     );

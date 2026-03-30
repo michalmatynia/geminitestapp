@@ -1,15 +1,3 @@
-import {
-  KANGUR_DEFAULT_DAILY_THEME,
-  KANGUR_DEFAULT_DAWN_THEME,
-  KANGUR_DEFAULT_SUNSET_THEME,
-  KANGUR_DEFAULT_THEME,
-  KANGUR_FACTORY_DAILY_THEME,
-  KANGUR_FACTORY_DAWN_THEME,
-  KANGUR_FACTORY_SUNSET_THEME,
-  KANGUR_FACTORY_NIGHTLY_THEME,
-  KANGUR_DAILY_CRYSTAL_THEME,
-  KANGUR_NIGHTLY_CRYSTAL_THEME,
-} from '@/features/kangur/appearance/theme-settings';
 import type { KangurThemeMode as AppearanceSlot } from '@/features/kangur/appearance/theme-settings';
 import type { LabeledOptionDto } from '@/shared/contracts/base';
 import type { ThemeSettings } from '@/shared/contracts/cms-theme';
@@ -51,55 +39,28 @@ export const SLOT_CONFIG: Record<
     label: string;
     factoryId: string;
     builtinId: string;
-    defaultTheme: ThemeSettings;
-    factoryTheme: ThemeSettings;
   }
 > = {
   daily: {
     label: 'Dzień',
     factoryId: FACTORY_DAILY_ID,
     builtinId: BUILTIN_DAILY_ID,
-    defaultTheme: KANGUR_DEFAULT_DAILY_THEME,
-    factoryTheme: KANGUR_FACTORY_DAILY_THEME,
   },
   dawn: {
     label: 'Świt',
     factoryId: FACTORY_DAWN_ID,
     builtinId: BUILTIN_DAWN_ID,
-    defaultTheme: KANGUR_DEFAULT_DAWN_THEME,
-    factoryTheme: KANGUR_FACTORY_DAWN_THEME,
   },
   sunset: {
     label: 'Zmierzch',
     factoryId: FACTORY_SUNSET_ID,
     builtinId: BUILTIN_SUNSET_ID,
-    defaultTheme: KANGUR_DEFAULT_SUNSET_THEME,
-    factoryTheme: KANGUR_FACTORY_SUNSET_THEME,
   },
   nightly: {
     label: 'Noc',
     factoryId: FACTORY_NIGHTLY_ID,
     builtinId: BUILTIN_NIGHTLY_ID,
-    defaultTheme: KANGUR_DEFAULT_THEME,
-    factoryTheme: KANGUR_FACTORY_NIGHTLY_THEME,
   },
-};
-
-export const resolveFactoryTheme = (id: ThemeSelectionId): ThemeSettings => {
-  switch (id) {
-    case FACTORY_DAWN_ID:
-      return KANGUR_FACTORY_DAWN_THEME;
-    case FACTORY_SUNSET_ID:
-      return KANGUR_FACTORY_SUNSET_THEME;
-    case FACTORY_NIGHTLY_ID:
-      return KANGUR_FACTORY_NIGHTLY_THEME;
-    case PRESET_DAILY_CRYSTAL_ID:
-      return KANGUR_DAILY_CRYSTAL_THEME;
-    case PRESET_NIGHTLY_CRYSTAL_ID:
-      return KANGUR_NIGHTLY_CRYSTAL_THEME;
-    default:
-      return KANGUR_FACTORY_DAILY_THEME;
-  }
 };
 
 export type SlotAssignments = Record<AppearanceSlot, { id: string; name: string } | null>;

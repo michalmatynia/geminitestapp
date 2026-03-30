@@ -122,6 +122,15 @@ import { KangurFeatureRouteShell } from '@/features/kangur/ui/KangurFeatureRoute
 
 const originalLocation = window.location;
 
+const KangurFeatureRouteShellWithoutPropsObject = () =>
+  (
+    KangurFeatureRouteShell as unknown as (props?: {
+      basePath?: string;
+      embedded?: boolean;
+      forceBodyScrollLock?: boolean;
+    }) => JSX.Element
+  )(undefined);
+
 describe('KangurFeatureRouteShell', () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -310,6 +319,20 @@ describe('KangurFeatureRouteShell', () => {
     expect(setKangurClientObservabilityContextMock).toHaveBeenCalledWith({
       pageKey: 'Game',
       requestedPath: '/kangur',
+    });
+  });
+
+  it('keeps the default base path when the shell is invoked without a props object', () => {
+    useSelectedLayoutSegmentsMock.mockReturnValue([]);
+
+    render(<KangurFeatureRouteShellWithoutPropsObject />);
+
+    expect(kangurRoutingProviderMock).toHaveBeenCalledWith({
+      pageKey: 'Game',
+      requestedPath: '/kangur',
+      requestedHref: '/kangur',
+      basePath: '/kangur',
+      embedded: false,
     });
   });
 

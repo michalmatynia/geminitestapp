@@ -36,8 +36,7 @@ describe('localized frontend layout', () => {
             'data-testid': 'localized-frontend-child',
           }),
         }),
-      },
-      undefined
+      }
     );
     expect(screen.getByTestId('localized-frontend-child')).toBeInTheDocument();
   });

@@ -288,6 +288,29 @@ describe('kangur lesson settings', () => {
     expect(parsed[0]?.contentMode).toBe('document');
   });
 
+  it('preserves explicit section references when canonicalizing lessons', () => {
+    const parsed = normalizeKangurLessons([
+      {
+        id: 'lesson-with-sections',
+        componentId: 'english_comparatives_superlatives',
+        title: 'Comparatives and superlatives',
+        description: 'Grammar practice',
+        emoji: '📚',
+        color: 'kangur-gradient-accent-sky',
+        activeBg: 'bg-sky-500',
+        sortOrder: 1000,
+        enabled: true,
+        sectionId: 'english_grammar',
+        subsectionId: 'english_grammar_comparatives_superlatives',
+      },
+    ]);
+
+    expect(parsed[0]).toMatchObject({
+      sectionId: 'english_grammar',
+      subsectionId: 'english_grammar_comparatives_superlatives',
+    });
+  });
+
   it('defaults narrator settings to server mode with voice', () => {
     expect(parseKangurNarratorSettings(undefined)).toEqual({
       engine: 'server',

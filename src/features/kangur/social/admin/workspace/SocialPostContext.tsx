@@ -4,8 +4,13 @@ import React, { createContext, useContext, useState, useCallback } from 'react';
 import { useAdminKangurSocialPage } from './AdminKangurSocialPage.hooks';
 import { internalError } from '@/shared/errors/app-error';
 import type { KangurSocialPost } from '@/shared/contracts/kangur-social-posts';
+import type { KangurSocialImageAddon } from '@/shared/contracts/kangur-social-image-addons';
+import type { ListQuery } from '@/shared/contracts/ui';
 
 type SocialPostContextValue = ReturnType<typeof useAdminKangurSocialPage> & {
+  addonsQuery: ListQuery<KangurSocialImageAddon, KangurSocialImageAddon[]>;
+  missingSelectedImageAddonIds: string[];
+  handleRemoveMissingAddons: () => void;
   isSettingsModalOpen: boolean;
   setIsSettingsModalOpen: (open: boolean) => void;
   isPostEditorModalOpen: boolean;

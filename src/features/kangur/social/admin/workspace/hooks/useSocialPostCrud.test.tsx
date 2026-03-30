@@ -108,6 +108,7 @@ const createDeps = () => ({
   scheduledAt: '2026-03-27T12:30',
   imageAssets: [{ id: 'asset-1', url: '/asset-1.png' }],
   imageAddonIds: ['addon-1'],
+  recentAddons: [],
   resolveDocReferences: () => ['docs/intro.mdx'],
   linkedinConnectionId: 'conn-1',
   brainModelId: 'brain-1',
@@ -170,6 +171,61 @@ describe('useSocialPostCrud', () => {
         brainModelId: 'brain-1',
         visionModelId: 'vision-1',
         publishError: null,
+      }),
+    });
+  });
+
+  it('canonicalizes stale selected capture assets to the latest loaded addon before saving', async () => {
+    const deps = createDeps();
+    deps.imageAssets = [
+      { id: 'asset-old', url: '/captures/game-old.png', filepath: '/captures/game-old.png' },
+      { id: 'manual-1', url: '/manual/custom.png', filepath: '/manual/custom.png' },
+    ];
+    deps.imageAddonIds = ['addon-old', 'addon-new'];
+    deps.recentAddons = [
+      {
+        id: 'addon-new',
+        presetId: 'game',
+        playwrightCaptureRouteId: 'game',
+        imageAsset: {
+          id: 'asset-new',
+          url: '/captures/game-new.png',
+          filepath: '/captures/game-new.png',
+        },
+      },
+      {
+        id: 'addon-old',
+        presetId: 'game',
+        playwrightCaptureRouteId: 'game',
+        imageAsset: {
+          id: 'asset-old',
+          url: '/captures/game-old.png',
+          filepath: '/captures/game-old.png',
+        },
+      },
+    ] as never;
+
+    const { result } = renderHook(() => useSocialPostCrud(deps), {
+      wrapper: createWrapper().Wrapper,
+    });
+
+    await act(async () => {
+      await result.current.handleSave('draft');
+    });
+
+    expect(patchMutateAsyncMock).toHaveBeenCalledWith({
+      id: 'post-1',
+      updates: expect.objectContaining({
+        status: 'draft',
+        imageAddonIds: ['addon-new'],
+        imageAssets: [
+          {
+            id: 'asset-new',
+            url: '/captures/game-new.png',
+            filepath: '/captures/game-new.png',
+          },
+          { id: 'manual-1', url: '/manual/custom.png', filepath: '/manual/custom.png' },
+        ],
       }),
     });
   });

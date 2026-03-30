@@ -23,7 +23,7 @@ import {
   resolveKangurLessonDocumentPages,
   escapeHtmlText,
   stripHtmlToText,
-} from './lesson-documents';
+} from '../lesson-documents';
 
 export { KANGUR_TEST_QUESTIONS_SETTING_KEY };
 

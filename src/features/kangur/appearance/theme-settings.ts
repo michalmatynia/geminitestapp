@@ -7,6 +7,7 @@ import {
   KANGUR_DAILY_THEME_SETTINGS_KEY,
   KANGUR_DAWN_THEME_SETTINGS_KEY,
   KANGUR_NIGHTLY_THEME_SETTINGS_KEY,
+  KANGUR_THEME_PRESET_MANIFEST_KEY,
   KANGUR_SUNSET_THEME_SETTINGS_KEY,
 } from '@/features/kangur/shared/contracts/kangur';
 import { parseJsonSetting } from '@/features/kangur/utils/settings-json';
@@ -25,6 +26,7 @@ export {
   KANGUR_DAILY_THEME_SETTINGS_KEY,
   KANGUR_DAWN_THEME_SETTINGS_KEY,
   KANGUR_NIGHTLY_THEME_SETTINGS_KEY,
+  KANGUR_THEME_PRESET_MANIFEST_KEY,
   KANGUR_SUNSET_THEME_SETTINGS_KEY,
 };
 
@@ -291,25 +293,76 @@ export const resolveKangurThemeSettingsRawForMode = ({
   return dailyRaw;
 };
 
-export const resolveKangurDefaultThemeForMode = (
-  mode: 'default' | 'dawn' | 'sunset' | 'dark'
-): ThemeSettings => {
-  switch (mode) {
-    case 'dawn':
-      return KANGUR_DEFAULT_DAWN_THEME;
-    case 'sunset':
-      return KANGUR_DEFAULT_SUNSET_THEME;
-    case 'dark':
-      return KANGUR_DEFAULT_THEME;
-    case 'default':
-    default:
-      return KANGUR_DEFAULT_DAILY_THEME;
+export const resolveKangurStoredThemeSnapshot = ({
+  dailyThemeRaw,
+  dawnThemeRaw,
+  sunsetThemeRaw,
+  nightlyThemeRaw,
+}: {
+  dailyThemeRaw: string | null | undefined;
+  dawnThemeRaw: string | null | undefined;
+  sunsetThemeRaw: string | null | undefined;
+  nightlyThemeRaw: string | null | undefined;
+}): Record<KangurThemeMode, ThemeSettings> => ({
+  daily:
+    parseKangurThemeSettings(dailyThemeRaw, KANGUR_DEFAULT_DAILY_THEME) ??
+    KANGUR_DEFAULT_DAILY_THEME,
+  dawn:
+    parseKangurThemeSettings(dawnThemeRaw, KANGUR_DEFAULT_DAWN_THEME) ??
+    KANGUR_DEFAULT_DAWN_THEME,
+  sunset:
+    parseKangurThemeSettings(sunsetThemeRaw, KANGUR_DEFAULT_SUNSET_THEME) ??
+    KANGUR_DEFAULT_SUNSET_THEME,
+  nightly:
+    parseKangurThemeSettings(nightlyThemeRaw, KANGUR_DEFAULT_THEME) ??
+    KANGUR_DEFAULT_THEME,
+});
+
+export const resolveKangurStoredThemeForAppearanceMode = ({
+  mode,
+  dailyThemeRaw,
+  dawnThemeRaw,
+  sunsetThemeRaw,
+  nightlyThemeRaw,
+}: {
+  mode: 'default' | 'dawn' | 'sunset' | 'dark';
+  dailyThemeRaw: string | null | undefined;
+  dawnThemeRaw: string | null | undefined;
+  sunsetThemeRaw: string | null | undefined;
+  nightlyThemeRaw: string | null | undefined;
+}): ThemeSettings => {
+  const snapshot = resolveKangurStoredThemeSnapshot({
+    dailyThemeRaw,
+    dawnThemeRaw,
+    sunsetThemeRaw,
+    nightlyThemeRaw,
+  });
+
+  if (mode === 'dawn') {
+    return snapshot.dawn;
   }
+  if (mode === 'sunset') {
+    return snapshot.sunset;
+  }
+  if (mode === 'dark') {
+    return snapshot.nightly;
+  }
+
+  return snapshot.daily;
 };
 
 // ─── Theme Catalog ───────────────────────────────────────────────────────────
 
 export const KANGUR_THEME_CATALOG_KEY = 'kangur_cms_theme_catalog_v1';
+
+export type KangurThemePresetKind = 'factory' | 'preset';
+
+export type KangurThemePresetManifestEntry = {
+  id: string;
+  kind: KangurThemePresetKind;
+  slot: KangurThemeMode;
+  settings: ThemeSettings;
+};
 
 export type KangurThemeCatalogEntry = {
   id: string;
@@ -318,6 +371,77 @@ export type KangurThemeCatalogEntry = {
   createdAt: string;
   updatedAt: string;
 };
+
+const isKangurThemePresetKind = (value: unknown): value is KangurThemePresetKind =>
+  value === 'factory' || value === 'preset';
+
+const normalizeThemePresetManifestSlot = (value: unknown): KangurThemeMode | null =>
+  value === 'daily' || value === 'dawn' || value === 'sunset' || value === 'nightly' ? value : null;
+
+const getKangurThemeBaselineForMode = (mode: KangurThemeMode): ThemeSettings => {
+  switch (mode) {
+    case 'dawn':
+      return KANGUR_DEFAULT_DAWN_THEME;
+    case 'sunset':
+      return KANGUR_DEFAULT_SUNSET_THEME;
+    case 'nightly':
+      return KANGUR_DEFAULT_THEME;
+    case 'daily':
+    default:
+      return KANGUR_DEFAULT_DAILY_THEME;
+  }
+};
+
+export const parseKangurThemePresetManifest = (
+  raw: string | null | undefined
+): KangurThemePresetManifestEntry[] => {
+  if (typeof raw !== 'string' || !raw.trim()) return [];
+  return withKangurClientErrorSync(
+    {
+      source: 'kangur.theme-settings',
+      action: 'parse-theme-preset-manifest',
+      description: 'Parses the Kangur preset manifest payload.',
+      context: { rawLength: raw.length },
+    },
+    () => {
+      const parsed: unknown = JSON.parse(raw);
+      if (!Array.isArray(parsed)) return [];
+      return parsed.flatMap((entry): KangurThemePresetManifestEntry[] => {
+        if (!entry || typeof entry !== 'object') return [];
+        const record = entry as Record<string, unknown>;
+        const id = typeof record['id'] === 'string' ? record['id'] : null;
+        const kind = isKangurThemePresetKind(record['kind']) ? record['kind'] : null;
+        const slot = normalizeThemePresetManifestSlot(record['slot']);
+        const settings =
+          record['settings'] && typeof record['settings'] === 'object' && !Array.isArray(record['settings'])
+            ? normalizeKangurThemeSettings(
+                record['settings'] as Partial<ThemeSettings>,
+                getKangurThemeBaselineForMode(slot ?? 'daily')
+              )
+            : null;
+
+        if (!id || !kind || !slot || !settings) {
+          return [];
+        }
+
+        return [
+          {
+            id,
+            kind,
+            slot,
+            settings,
+          },
+        ];
+      });
+    },
+    { fallback: [] }
+  );
+};
+
+export const resolveKangurThemePresetManifestEntry = (
+  manifest: KangurThemePresetManifestEntry[],
+  id: string
+): KangurThemePresetManifestEntry | null => manifest.find((entry) => entry.id === id) ?? null;
 
 export const parseKangurThemeCatalog = (
   raw: string | null | undefined

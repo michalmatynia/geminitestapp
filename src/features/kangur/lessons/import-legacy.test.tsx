@@ -5,7 +5,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const loadImporter = async () =>
-  (await import('@/features/kangur/legacy-lesson-imports')).importLegacyKangurLessonDocument;
+  (await import('@/features/kangur/lessons/import-legacy')).importLegacyKangurLessonDocument;
 
 describe('importLegacyKangurLessonDocument', () => {
   beforeEach(() => {

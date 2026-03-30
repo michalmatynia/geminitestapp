@@ -55,7 +55,7 @@ vi.mock('@/features/kangur/docs/tooltips', () => ({
   },
 }));
 
-import { KANGUR_HELP_SETTINGS_KEY } from '@/features/kangur/help-settings';
+import { KANGUR_HELP_SETTINGS_KEY } from '@/features/kangur/docs/help-settings';
 import { KangurDocumentationTooltipSettingsPanel } from './KangurDocumentationTooltipSettingsPanel';
 
 describe('KangurDocumentationTooltipSettingsPanel', () => {

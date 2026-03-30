@@ -12,10 +12,13 @@ import type {
 } from '@/shared/contracts/kangur-lesson-document-contract';
 import type { KangurLessonSection } from '@/shared/contracts/kangur-lesson-sections';
 import type { KangurLessonTemplate } from '@/shared/contracts/kangur-lesson-templates';
-import { createStarterKangurLessonDocument } from '@/features/kangur/lesson-documents';
 import { normalizeKangurLessonDocument } from '@/features/kangur/lesson-documents/normalization';
 import { createDefaultKangurSections } from '@/features/kangur/lessons/lesson-section-defaults';
 import { createDefaultKangurLessonTemplates } from '@/features/kangur/lessons/lesson-template-defaults';
+import {
+  normalizeKangurLessonSection,
+  normalizeKangurLessonSubsection,
+} from '@/features/kangur/services/kangur-lesson-section-repository/normalize-kangur-lesson-section';
 import { createDefaultKangurLessons } from '@/features/kangur/settings';
 
 export const KANGUR_LESSON_DOCUMENT_SYNC_LOCALES = ['pl'] as const;
@@ -182,26 +185,14 @@ export const normalizeKangurLessonForSnapshot = (lesson: KangurLesson): KangurLe
 export const normalizeKangurLessonSectionForSnapshot = (
   section: KangurLessonSection
 ): KangurLessonSection => ({
-  id: section.id,
-  subject: section.subject,
-  ageGroup: section.ageGroup,
-  label: section.label,
-  shortLabel: section.shortLabel,
-  typeLabel: section.typeLabel,
-  emoji: section.emoji,
-  sortOrder: section.sortOrder,
-  enabled: section.enabled,
-  componentIds: [...section.componentIds],
+  ...normalizeKangurLessonSection(section),
   subsections: [...section.subsections]
-    .map((subsection) => ({
-      id: subsection.id,
-      label: subsection.label,
-      typeLabel: subsection.typeLabel,
-      emoji: subsection.emoji,
-      enabled: subsection.enabled,
-      componentIds: [...subsection.componentIds],
-    }))
-    .sort((left, right) => stableCompare(left.id, right.id)),
+    .map((subsection, index) => normalizeKangurLessonSubsection(subsection, index))
+    .sort((left, right) =>
+      left.sortOrder === right.sortOrder
+        ? stableCompare(left.id, right.id)
+        : left.sortOrder - right.sortOrder
+    ),
 });
 
 export const normalizeKangurLessonTemplateForSnapshot = (
@@ -232,21 +223,8 @@ export const normalizeKangurLessonDocumentStoreForSnapshot = (
       ])
   );
 
-const buildLocalLessonDocumentStore = async (
-  lessons: readonly KangurLesson[]
-): Promise<KangurLessonDocumentStore> => {
-  const { importLegacyKangurLessonDocument } = await import('@/features/kangur/legacy-lesson-imports');
-
-  const entries = lessons.map((lesson) => {
-    const imported = importLegacyKangurLessonDocument(lesson.componentId)?.document;
-    return [
-      lesson.id,
-      imported ?? createStarterKangurLessonDocument(lesson.componentId),
-    ] as const;
-  });
-
-  return normalizeKangurLessonDocumentStoreForSnapshot(Object.fromEntries(entries));
-};
+const buildLocalLessonDocumentStore = (): KangurLessonDocumentStore =>
+  normalizeKangurLessonDocumentStoreForSnapshot({});
 
 export const buildKangurLessonContentRevision = (input: {
   lessonDocumentsByLocale: Record<string, KangurLessonDocumentStore>;
@@ -306,12 +284,10 @@ export const buildLocalKangurLessonContentSnapshot = async (
     ])
   );
   const lessonDocumentsByLocale = Object.fromEntries(
-    await Promise.all(
-      KANGUR_LESSON_DOCUMENT_SYNC_LOCALES.map(async (locale) => [
-        locale,
-        await buildLocalLessonDocumentStore(lessons),
-      ])
-    )
+    KANGUR_LESSON_DOCUMENT_SYNC_LOCALES.map((locale) => [
+      locale,
+      buildLocalLessonDocumentStore(),
+    ])
   );
   const lessonContentRevision = buildKangurLessonContentRevision({
     lessons,

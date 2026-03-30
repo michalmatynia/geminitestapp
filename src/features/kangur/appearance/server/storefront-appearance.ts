@@ -9,15 +9,19 @@ import {
   type KangurStorefrontInitialState,
   type KangurStorefrontAppearanceMode,
 } from '@/features/kangur/appearance/storefront-appearance-settings';
-import { listKangurSettingsByKeys } from '@/features/kangur/services/kangur-settings-repository';
 import {
   KANGUR_DAILY_THEME_SETTINGS_KEY,
   KANGUR_DAWN_THEME_SETTINGS_KEY,
   KANGUR_NIGHTLY_THEME_SETTINGS_KEY,
   KANGUR_SUNSET_THEME_SETTINGS_KEY,
 } from '@/shared/contracts/kangur-settings-keys';
-import { getSettingValue } from '@/shared/lib/ai/server-settings';
+import type { SettingRecord } from '@/shared/contracts/settings';
 import { isTransientMongoConnectionError } from '@/shared/lib/db/utils/mongo';
+
+import {
+  createKangurStorefrontAppearanceSeedSettings,
+  ensureKangurStorefrontAppearanceSettingsSeeded,
+} from './storefront-appearance-source';
 
 const KANGUR_STOREFRONT_INITIAL_STATE_CACHE_TTL_MS = 30_000;
 export const KANGUR_STOREFRONT_INITIAL_STATE_CACHE_TAG = 'kangur-storefront-initial-state';
@@ -50,50 +54,45 @@ export const invalidateKangurStorefrontInitialStateCache = (): void => {
   revalidateTag(KANGUR_STOREFRONT_INITIAL_STATE_CACHE_TAG);
 };
 
-const createEmptyKangurStorefrontThemeSettings = (): KangurStorefrontInitialState['initialThemeSettings'] => ({
-  default: null,
-  dawn: null,
-  sunset: null,
-  dark: null,
-});
+const createKangurStorefrontThemeSettings = (
+  settings: SettingRecord[]
+): KangurStorefrontInitialState['initialThemeSettings'] => {
+  const settingsMap = new Map(settings.map(({ key, value }) => [key, value]));
 
-export const getKangurStorefrontDefaultMode = async (): Promise<KangurStorefrontAppearanceMode> => {
-  const raw = await getSettingValue(KANGUR_STOREFRONT_DEFAULT_MODE_SETTING_KEY);
-  return parseKangurStorefrontAppearanceMode(raw);
+  return {
+    default: settingsMap.get(KANGUR_DAILY_THEME_SETTINGS_KEY) ?? null,
+    dawn: settingsMap.get(KANGUR_DAWN_THEME_SETTINGS_KEY) ?? null,
+    sunset: settingsMap.get(KANGUR_SUNSET_THEME_SETTINGS_KEY) ?? null,
+    dark: settingsMap.get(KANGUR_NIGHTLY_THEME_SETTINGS_KEY) ?? null,
+  };
 };
 
-const readKangurStorefrontThemeSettings = async (): Promise<
-  KangurStorefrontInitialState['initialThemeSettings']
-> => {
+const readKangurStorefrontAppearanceSettings = async (): Promise<SettingRecord[]> => {
   try {
-    const settings = await listKangurSettingsByKeys([
-      KANGUR_DAILY_THEME_SETTINGS_KEY,
-      KANGUR_DAWN_THEME_SETTINGS_KEY,
-      KANGUR_SUNSET_THEME_SETTINGS_KEY,
-      KANGUR_NIGHTLY_THEME_SETTINGS_KEY,
-    ]);
-
-    const settingsMap = new Map(settings.map((setting) => [setting.key, setting.value]));
-
-    return {
-      default: settingsMap.get(KANGUR_DAILY_THEME_SETTINGS_KEY) ?? null,
-      dawn: settingsMap.get(KANGUR_DAWN_THEME_SETTINGS_KEY) ?? null,
-      sunset: settingsMap.get(KANGUR_SUNSET_THEME_SETTINGS_KEY) ?? null,
-      dark: settingsMap.get(KANGUR_NIGHTLY_THEME_SETTINGS_KEY) ?? null,
-    };
+    return await ensureKangurStorefrontAppearanceSettingsSeeded();
   } catch (error) {
     if (isTransientMongoConnectionError(error)) {
-      return createEmptyKangurStorefrontThemeSettings();
+      return createKangurStorefrontAppearanceSeedSettings();
     }
     throw error;
   }
 };
 
+export const getKangurStorefrontDefaultMode = async (): Promise<KangurStorefrontAppearanceMode> => {
+  const settings = await readKangurStorefrontAppearanceSettings();
+  const settingsMap = new Map(settings.map(({ key, value }) => [key, value]));
+  return parseKangurStorefrontAppearanceMode(
+    settingsMap.get(KANGUR_STOREFRONT_DEFAULT_MODE_SETTING_KEY)
+  );
+};
+
 const getKangurStorefrontInitialStateUncached = async (): Promise<KangurStorefrontInitialState> => {
-  const [initialMode, initialThemeSettings] = await Promise.all([
-    getKangurStorefrontDefaultMode(),
-    readKangurStorefrontThemeSettings(),
-  ]);
+  const settings = await readKangurStorefrontAppearanceSettings();
+  const settingsMap = new Map(settings.map(({ key, value }) => [key, value]));
+  const initialMode = parseKangurStorefrontAppearanceMode(
+    settingsMap.get(KANGUR_STOREFRONT_DEFAULT_MODE_SETTING_KEY)
+  );
+  const initialThemeSettings = createKangurStorefrontThemeSettings(settings);
 
   return {
     initialMode,

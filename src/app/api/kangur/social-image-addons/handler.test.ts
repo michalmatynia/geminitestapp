@@ -2,11 +2,15 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const {
   resolveKangurActorMock,
+  listKangurSocialImageAddonsMock,
+  findKangurSocialImageAddonsByIdsMock,
   createKangurSocialImageAddonFromPlaywrightMock,
   captureExceptionMock,
   logKangurServerEventMock,
 } = vi.hoisted(() => ({
   resolveKangurActorMock: vi.fn(),
+  listKangurSocialImageAddonsMock: vi.fn(),
+  findKangurSocialImageAddonsByIdsMock: vi.fn(),
   createKangurSocialImageAddonFromPlaywrightMock: vi.fn(),
   captureExceptionMock: vi.fn(),
   logKangurServerEventMock: vi.fn(),
@@ -14,6 +18,12 @@ const {
 
 vi.mock('@/features/kangur/services/kangur-actor', () => ({
   resolveKangurActor: (...args: unknown[]) => resolveKangurActorMock(...args),
+}));
+
+vi.mock('@/features/kangur/social/server/social-image-addons-repository', () => ({
+  listKangurSocialImageAddons: (...args: unknown[]) => listKangurSocialImageAddonsMock(...args),
+  findKangurSocialImageAddonsByIds: (...args: unknown[]) =>
+    findKangurSocialImageAddonsByIdsMock(...args),
 }));
 
 vi.mock('@/features/kangur/social/server/social-image-addons-service', () => ({
@@ -34,12 +44,60 @@ vi.mock('@/features/kangur/shared/utils/observability/error-system', () => ({
 import { apiHandler } from '@/shared/lib/api/api-handler';
 import { operationFailedError } from '@/shared/errors/app-error';
 
-import { postKangurSocialImageAddonsHandler } from './handler';
+import { getKangurSocialImageAddonsHandler, postKangurSocialImageAddonsHandler } from './handler';
 
+const wrappedGetHandler = apiHandler(getKangurSocialImageAddonsHandler, {
+  source: 'kangur.social-image-addons.GET',
+  service: 'kangur.api',
+});
 const wrappedPostHandler = apiHandler(postKangurSocialImageAddonsHandler, {
   source: 'kangur.social-image-addons.POST',
   service: 'kangur.api',
   parseJsonBody: true,
+});
+
+describe('getKangurSocialImageAddonsHandler', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    resolveKangurActorMock.mockResolvedValue({
+      actorId: 'admin-1',
+      role: 'admin',
+    });
+  });
+
+  it('returns the selected add-ons first even when they are older than the recent list window', async () => {
+    listKangurSocialImageAddonsMock.mockResolvedValue([
+      { id: 'addon-recent-2', title: 'Recent 2' },
+      { id: 'addon-recent-1', title: 'Recent 1' },
+    ]);
+    findKangurSocialImageAddonsByIdsMock.mockResolvedValue([
+      { id: 'addon-old', title: 'Old selected' },
+      { id: 'addon-recent-2', title: 'Recent 2' },
+    ]);
+
+    const url = 'http://localhost/api/kangur/social-image-addons?ids=addon-old,addon-recent-2&limit=2';
+    const request = Object.assign(
+      new Request(url, { method: 'GET' }),
+      {
+        nextUrl: new URL(url),
+      }
+    ) as Parameters<typeof wrappedGetHandler>[0];
+
+    const response = await wrappedGetHandler(request);
+    const payload = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(listKangurSocialImageAddonsMock).toHaveBeenCalledWith(2);
+    expect(findKangurSocialImageAddonsByIdsMock).toHaveBeenCalledWith([
+      'addon-old',
+      'addon-recent-2',
+    ]);
+    expect(payload.map((addon: { id: string }) => addon.id)).toEqual([
+      'addon-old',
+      'addon-recent-2',
+      'addon-recent-1',
+    ]);
+  });
 });
 
 describe('postKangurSocialImageAddonsHandler', () => {

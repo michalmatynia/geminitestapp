@@ -4,14 +4,6 @@
 
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-const { importLegacyKangurLessonDocumentMock } = vi.hoisted(() => ({
-  importLegacyKangurLessonDocumentMock: vi.fn(() => null),
-}));
-
-vi.mock('@/features/kangur/legacy-lesson-imports', () => ({
-  importLegacyKangurLessonDocument: importLegacyKangurLessonDocumentMock,
-}));
-
 describe('kangur-lesson-content-snapshot', () => {
   beforeEach(() => {
     vi.resetModules();
@@ -50,7 +42,7 @@ describe('kangur-lesson-content-snapshot', () => {
         (template) => template.componentId === 'english_comparatives_superlatives'
       )
     ).toBe(true);
-    expect(snapshot.lessonDocumentsByLocale['pl']?.[comparativesLesson?.id ?? '']).toBeDefined();
+    expect(snapshot.lessonDocumentsByLocale['pl']).toEqual({});
   });
 
   it('canonicalizes starter lesson documents for stable comparison', async () => {
@@ -65,5 +57,22 @@ describe('kangur-lesson-content-snapshot', () => {
     expect(serializeKangurLessonDocumentForComparison(first)).toBe(
       serializeKangurLessonDocumentForComparison(second)
     );
+  });
+
+  it('preserves subsection sort order in the local section snapshot', async () => {
+    const { buildLocalKangurLessonContentSnapshot } = await import(
+      './kangur-lesson-content-snapshot'
+    );
+
+    const snapshot = await buildLocalKangurLessonContentSnapshot(['pl']);
+    const grammarSection = snapshot.sections.find((section) => section.id === 'english_grammar');
+
+    expect(grammarSection?.subsections.every((subsection) => typeof subsection.sortOrder === 'number')).toBe(
+      true
+    );
+    expect(
+      grammarSection?.subsections.find((subsection) => subsection.id === 'english_grammar_pronouns')
+        ?.sortOrder
+    ).toBe(1000);
   });
 });

@@ -4,7 +4,7 @@ import {
   KANGUR_LESSON_ACTIVITY_OPTIONS,
   getKangurLessonActivityDefinition,
   retargetKangurLessonActivityBlock,
-} from '@/features/kangur/lesson-activities';
+} from '@/features/kangur/lessons/activities';
 import type { KangurLessonActivityBlock } from '@/features/kangur/shared/contracts/kangur';
 import { Badge, FormField, Input, SelectSimple, Textarea } from '@/features/kangur/shared/ui';
 

@@ -5,14 +5,10 @@ import React, { useEffect, useMemo } from 'react';
 import { ThemeSettingsFieldsSection } from '@/features/cms/public';
 import {
   KANGUR_DAILY_THEME_SETTINGS_KEY,
-  KANGUR_DEFAULT_DAILY_THEME,
-  KANGUR_DEFAULT_DAWN_THEME,
-  KANGUR_DEFAULT_SUNSET_THEME,
-  KANGUR_DEFAULT_THEME,
   KANGUR_DAWN_THEME_SETTINGS_KEY,
   KANGUR_NIGHTLY_THEME_SETTINGS_KEY,
   KANGUR_SUNSET_THEME_SETTINGS_KEY,
-  parseKangurThemeSettings,
+  resolveKangurStoredThemeSnapshot,
   type KangurThemeMode,
 } from '@/features/kangur/appearance/theme-settings';
 import { Alert, Button, FormSection } from '@/features/kangur/shared/ui';
@@ -36,11 +32,6 @@ type KangurThemeSettingsPanelProps = {
   onModeChange?: (mode: KangurThemeMode) => void;
 };
 
-const resolvePersistedTheme = (
-  rawValue: string | null | undefined,
-  fallbackTheme: ThemeSettings
-): ThemeSettings => parseKangurThemeSettings(rawValue, fallbackTheme) ?? fallbackTheme;
-
 export function KangurThemeSettingsPanel({
   onSectionChange,
   onThemeChange,
@@ -51,22 +42,32 @@ export function KangurThemeSettingsPanel({
   const nightlyThemeRaw = settingsStore.get(KANGUR_NIGHTLY_THEME_SETTINGS_KEY);
   const dawnThemeRaw = settingsStore.get(KANGUR_DAWN_THEME_SETTINGS_KEY);
   const sunsetThemeRaw = settingsStore.get(KANGUR_SUNSET_THEME_SETTINGS_KEY);
+  const storedThemes = useMemo(
+    () =>
+      resolveKangurStoredThemeSnapshot({
+        dailyThemeRaw,
+        dawnThemeRaw,
+        sunsetThemeRaw,
+        nightlyThemeRaw,
+      }),
+    [dailyThemeRaw, dawnThemeRaw, nightlyThemeRaw, sunsetThemeRaw]
+  );
 
   const initialDaily = useMemo(
-    (): ThemeSettings => resolvePersistedTheme(dailyThemeRaw, KANGUR_DEFAULT_DAILY_THEME),
-    [dailyThemeRaw]
+    (): ThemeSettings => storedThemes.daily,
+    [storedThemes.daily]
   );
   const initialNightly = useMemo(
-    (): ThemeSettings => resolvePersistedTheme(nightlyThemeRaw, KANGUR_DEFAULT_THEME),
-    [nightlyThemeRaw]
+    (): ThemeSettings => storedThemes.nightly,
+    [storedThemes.nightly]
   );
   const initialDawn = useMemo(
-    (): ThemeSettings => resolvePersistedTheme(dawnThemeRaw, KANGUR_DEFAULT_DAWN_THEME),
-    [dawnThemeRaw]
+    (): ThemeSettings => storedThemes.dawn,
+    [storedThemes.dawn]
   );
   const initialSunset = useMemo(
-    (): ThemeSettings => resolvePersistedTheme(sunsetThemeRaw, KANGUR_DEFAULT_SUNSET_THEME),
-    [sunsetThemeRaw]
+    (): ThemeSettings => storedThemes.sunset,
+    [storedThemes.sunset]
   );
 
   const resetKey = [

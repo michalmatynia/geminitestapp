@@ -14,7 +14,7 @@ import {
 } from '@/features/kangur/shared/contracts/kangur-tests';
 import { parseJsonSetting } from '@/features/kangur/utils/settings-json';
 
-import { hasFullyPublishedQuestionSetForSuite } from './test-questions';
+import { hasFullyPublishedQuestionSetForSuite } from './questions';
 
 export {
   KANGUR_TEST_GROUPS_SETTING_KEY,

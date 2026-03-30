@@ -295,7 +295,7 @@ Shared platform/runtime code lives under `src/shared/`, especially:
 - Kangur learner pages: `src/features/kangur/ui/pages/`
 - Kangur admin pages: `src/features/kangur/admin/` (`AdminKangurPageShell`)
 - CMS app embed option (StudiQ): `src/shared/lib/app-embeds.ts`
-- AI Tutor content sources: `src/features/kangur/page-content-catalog.ts`,
+- AI Tutor content sources: `src/features/kangur/ai-tutor/page-content-catalog.ts`,
   `src/shared/contracts/kangur-ai-tutor-native-guide-entries.ts`
 - Canonical docs: `docs/kangur/README.md`, `docs/kangur/studiq-application.md`
 

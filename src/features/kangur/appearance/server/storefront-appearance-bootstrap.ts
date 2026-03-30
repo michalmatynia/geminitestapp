@@ -6,9 +6,7 @@ import type {
   KangurStorefrontThemeSettingsSnapshot,
 } from '@/features/kangur/appearance/storefront-appearance-settings';
 import {
-  parseKangurThemeSettings,
-  resolveKangurDefaultThemeForMode,
-  resolveKangurThemeSettingsRawForMode,
+  resolveKangurStoredThemeForAppearanceMode,
 } from '@/features/kangur/appearance/theme-settings';
 
 const KANGUR_SURFACE_BOOTSTRAP_SELECTORS = [
@@ -53,15 +51,13 @@ export const getKangurSurfaceBootstrapStyle = (
 ): string => {
   const mode = initialAppearance?.mode ?? 'default';
   const themeSettings = normalizeThemeSettingsSnapshot(initialAppearance?.themeSettings);
-  const fallbackTheme = resolveKangurDefaultThemeForMode(mode);
-  const rawTheme = resolveKangurThemeSettingsRawForMode({
+  const theme = resolveKangurStoredThemeForAppearanceMode({
     mode,
     dailyThemeRaw: themeSettings.default,
     dawnThemeRaw: themeSettings.dawn,
     sunsetThemeRaw: themeSettings.sunset,
     nightlyThemeRaw: themeSettings.dark,
   });
-  const theme = parseKangurThemeSettings(rawTheme, fallbackTheme) ?? fallbackTheme;
   const appearance = resolveKangurStorefrontAppearance(mode, theme);
 
   return escapeInlineCssText(

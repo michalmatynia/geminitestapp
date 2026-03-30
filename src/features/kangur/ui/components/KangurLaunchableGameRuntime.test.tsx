@@ -13,15 +13,18 @@ vi.mock('next/dynamic', () => ({
     const createRuntimeRendererStub = (testId: string) => {
       const Stub = ({
         finishLabel,
+        finishLabelVariant,
         literacyMatchSetId,
         onFinish,
       }: {
         finishLabel?: string;
+        finishLabelVariant?: string;
         literacyMatchSetId?: string;
         onFinish?: () => void;
       }) => (
         <button
           data-finish-label={finishLabel ?? ''}
+          data-finish-label-variant={finishLabelVariant ?? ''}
           data-literacy-match-set-id={literacyMatchSetId ?? ''}
           data-testid={testId}
           onClick={onFinish}
@@ -45,6 +48,14 @@ vi.mock('next/dynamic', () => ({
       return createRuntimeRendererStub('adding-synthesis-game');
     }
 
+    if (signature.includes('AddingBallGame')) {
+      return createRuntimeRendererStub('adding-ball-game');
+    }
+
+    if (signature.includes('DivisionGame')) {
+      return createRuntimeRendererStub('division-game');
+    }
+
     if (signature.includes('MultiplicationArrayGame')) {
       return createRuntimeRendererStub('multiplication-array-game');
     }
@@ -63,6 +74,10 @@ vi.mock('next/dynamic', () => ({
 
     if (signature.includes('ShapeRecognitionGame')) {
       return createRuntimeRendererStub('shape-recognition-game');
+    }
+
+    if (signature.includes('SubtractingGame')) {
+      return createRuntimeRendererStub('subtracting-game');
     }
 
     return () => null;
@@ -161,6 +176,29 @@ describe('KangurLaunchableGameRuntime', () => {
     );
   });
 
+  it('renders the addition launchable runtime with the play finish variant', () => {
+    const runtime: KangurLaunchableGameRuntimeSpec = {
+      kind: 'launchable_game_screen',
+      screen: 'addition_quiz',
+      rendererId: 'adding_ball_game',
+      finishMode: 'play_variant',
+      finishLabelProp: 'finishLabelVariant',
+      className: 'w-full flex flex-col items-center',
+      shell: {
+        accent: 'amber',
+        icon: '➕',
+        shellTestId: 'addition-runtime-shell',
+      },
+    };
+
+    render(<KangurLaunchableGameRuntime onFinish={vi.fn()} runtime={runtime} />);
+
+    expect(screen.getByTestId('adding-ball-game')).toHaveAttribute(
+      'data-finish-label-variant',
+      'play'
+    );
+  });
+
   it('renders the multiplication array launchable runtime', () => {
     const runtime: KangurLaunchableGameRuntimeSpec = {
       kind: 'launchable_game_screen',
@@ -181,6 +219,52 @@ describe('KangurLaunchableGameRuntime', () => {
     expect(screen.getByTestId('multiplication-array-game')).toHaveAttribute(
       'data-finish-label',
       'Return to game home'
+    );
+  });
+
+  it('renders the subtraction launchable runtime with the play finish variant', () => {
+    const runtime: KangurLaunchableGameRuntimeSpec = {
+      kind: 'launchable_game_screen',
+      screen: 'subtraction_quiz',
+      rendererId: 'subtracting_game',
+      finishMode: 'play_variant',
+      finishLabelProp: 'finishLabelVariant',
+      className: 'w-full flex flex-col items-center',
+      shell: {
+        accent: 'rose',
+        icon: '➖',
+        shellTestId: 'subtraction-runtime-shell',
+      },
+    };
+
+    render(<KangurLaunchableGameRuntime onFinish={vi.fn()} runtime={runtime} />);
+
+    expect(screen.getByTestId('subtracting-game')).toHaveAttribute(
+      'data-finish-label-variant',
+      'play'
+    );
+  });
+
+  it('renders the division launchable runtime with the play finish variant', () => {
+    const runtime: KangurLaunchableGameRuntimeSpec = {
+      kind: 'launchable_game_screen',
+      screen: 'division_quiz',
+      rendererId: 'division_game',
+      finishMode: 'play_variant',
+      finishLabelProp: 'finishLabelVariant',
+      className: 'w-full flex flex-col items-center',
+      shell: {
+        accent: 'emerald',
+        icon: '➗',
+        shellTestId: 'division-runtime-shell',
+      },
+    };
+
+    render(<KangurLaunchableGameRuntime onFinish={vi.fn()} runtime={runtime} />);
+
+    expect(screen.getByTestId('division-game')).toHaveAttribute(
+      'data-finish-label-variant',
+      'play'
     );
   });
 

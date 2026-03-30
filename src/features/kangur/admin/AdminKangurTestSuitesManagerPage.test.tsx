@@ -95,7 +95,7 @@ vi.mock('@/features/kangur/ui/hooks/useKangurPageContent', () => ({
 
 import { AdminKangurTestSuitesManagerPage } from './AdminKangurTestSuitesManagerPage';
 import { toKangurTestSuiteNodeId } from './kangur-test-suites-master-tree';
-import { KANGUR_TEST_QUESTIONS_SETTING_KEY } from '../test-questions';
+import { KANGUR_TEST_QUESTIONS_SETTING_KEY } from '../test-suites/questions';
 import { KANGUR_TEST_GROUPS_SETTING_KEY, KANGUR_TEST_SUITES_SETTING_KEY } from '../test-suites';
 
 const getLatestViewportProps = (): FolderTreeViewportV2Props => {

@@ -81,9 +81,15 @@ vi.mock('@/features/kangur/observability/client', async (importOriginal) => {
 import {
   KANGUR_DAILY_THEME_SETTINGS_KEY,
   KANGUR_DAWN_THEME_SETTINGS_KEY,
+  KANGUR_DAILY_CRYSTAL_THEME,
   KANGUR_DEFAULT_DAILY_THEME,
   KANGUR_DEFAULT_DAWN_THEME,
+  KANGUR_FACTORY_DAILY_THEME,
   KANGUR_FACTORY_DAWN_THEME,
+  KANGUR_FACTORY_NIGHTLY_THEME,
+  KANGUR_FACTORY_SUNSET_THEME,
+  KANGUR_NIGHTLY_CRYSTAL_THEME,
+  KANGUR_THEME_PRESET_MANIFEST_KEY,
   KANGUR_SUNSET_THEME_SETTINGS_KEY,
   KANGUR_THEME_CATALOG_KEY,
 } from '@/features/kangur/appearance/theme-settings';
@@ -97,7 +103,13 @@ import {
 import {
   BUILTIN_DAILY_ID,
   BUILTIN_DAWN_ID,
+  FACTORY_DAILY_ID,
+  FACTORY_DAWN_ID,
+  FACTORY_NIGHTLY_ID,
+  FACTORY_SUNSET_ID,
   KANGUR_SLOT_ASSIGNMENTS_KEY,
+  PRESET_DAILY_CRYSTAL_ID,
+  PRESET_NIGHTLY_CRYSTAL_ID,
 } from './AppearancePage.constants';
 import { KANGUR_STOREFRONT_DEFAULT_MODE_SETTING_KEY } from '@/features/kangur/appearance/storefront-appearance-settings';
 
@@ -116,6 +128,16 @@ const buildThemeEntry = (id: string, name: string, color: string) => ({
   updatedAt: '2026-03-18T10:00:00.000Z',
 });
 
+const buildThemePresetManifestRaw = (): string =>
+  serializeSetting([
+    { id: FACTORY_DAILY_ID, kind: 'factory', slot: 'daily', settings: KANGUR_FACTORY_DAILY_THEME },
+    { id: FACTORY_DAWN_ID, kind: 'factory', slot: 'dawn', settings: KANGUR_FACTORY_DAWN_THEME },
+    { id: FACTORY_SUNSET_ID, kind: 'factory', slot: 'sunset', settings: KANGUR_FACTORY_SUNSET_THEME },
+    { id: FACTORY_NIGHTLY_ID, kind: 'factory', slot: 'nightly', settings: KANGUR_FACTORY_NIGHTLY_THEME },
+    { id: PRESET_DAILY_CRYSTAL_ID, kind: 'preset', slot: 'daily', settings: KANGUR_DAILY_CRYSTAL_THEME },
+    { id: PRESET_NIGHTLY_CRYSTAL_ID, kind: 'preset', slot: 'nightly', settings: KANGUR_NIGHTLY_CRYSTAL_THEME },
+  ]);
+
 const wrapper = ({ children }: { children: ReactNode }) => (
   <AppearancePageProvider>{children}</AppearancePageProvider>
 );
@@ -127,6 +149,7 @@ const setSetting = (key: string, value: string | null | undefined) => {
 describe('AppearancePage.context.impl', () => {
   beforeEach(() => {
     settingsMap = new Map();
+    setSetting(KANGUR_THEME_PRESET_MANIFEST_KEY, buildThemePresetManifestRaw());
     settingsStoreMock.isLoading = false;
     settingsStoreMock.isFetching = false;
     settingsStoreMock.error = null;
@@ -306,6 +329,22 @@ describe('AppearancePage.context.impl', () => {
 
     expect(result.current.draft).toEqual(KANGUR_FACTORY_DAWN_THEME);
     expect(result.current.isDirty).toBe(true);
+  });
+
+  it('uses the stored builtin slot theme as the default draft baseline', () => {
+    setSetting(
+      KANGUR_DAILY_THEME_SETTINGS_KEY,
+      serializeSetting({
+        ...KANGUR_DEFAULT_DAILY_THEME,
+        primaryColor: '#ff44aa',
+      })
+    );
+
+    const { result } = renderHook(() => useAppearancePage(), { wrapper });
+
+    expect(result.current.selectedId).toBe(BUILTIN_DAILY_ID);
+    expect(result.current.draft.primaryColor).toBe('#ff44aa');
+    expect(result.current.slotThemes.daily.primaryColor).toBe('#ff44aa');
   });
 
   it('assigns and unassigns slots using the selected theme metadata', async () => {

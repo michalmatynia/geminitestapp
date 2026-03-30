@@ -4,11 +4,11 @@ import type { Collection, Db, Document, Filter } from 'mongodb';
 
 import { createDefaultKangurLessonTemplates } from '@/features/kangur/lessons/lesson-template-defaults';
 import type { KangurLessonTemplate } from '@/shared/contracts/kangur-lesson-templates';
-import { kangurLessonTemplateSchema } from '@/shared/contracts/kangur-lesson-templates';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import { normalizeSiteLocale } from '@/shared/lib/i18n/site-locale';
 
 import type { KangurLessonTemplateListInput, KangurLessonTemplateRepository } from './types';
+import { normalizeKangurLessonTemplate } from './normalize-kangur-lesson-template';
 
 const COLLECTION = 'kangur_lesson_templates';
 const SUBJECT_SORT_INDEX = 'kangur_lesson_templates_subject_sort_idx';
@@ -115,21 +115,39 @@ const buildFilter = (
 };
 
 const toTemplate = (doc: MongoKangurLessonTemplateDocument): KangurLessonTemplate => {
-  const parsed = kangurLessonTemplateSchema.safeParse(doc);
-  if (parsed.success) {
-    return parsed.data;
+  return normalizeKangurLessonTemplate(doc);
+};
+
+const buildTemplateUpdate = (
+  template: KangurLessonTemplate,
+  locale: string,
+  now: Date
+) => {
+  const normalizedTemplate = normalizeKangurLessonTemplate(template);
+  const unset: Record<string, ''> = {};
+
+  if (typeof normalizedTemplate.ageGroup !== 'string') {
+    unset['ageGroup'] = '';
   }
+  if (typeof normalizedTemplate.componentContent !== 'object') {
+    unset['componentContent'] = '';
+  }
+
   return {
-    componentId: doc.componentId,
-    subject: doc.subject,
-    ageGroup: doc.ageGroup,
-    label: doc.label,
-    title: doc.title,
-    description: doc.description,
-    emoji: doc.emoji,
-    color: doc.color,
-    activeBg: doc.activeBg,
-    sortOrder: doc.sortOrder ?? 0,
+    filter: { _id: buildLocalizedTemplateId(normalizedTemplate.componentId, locale) },
+    update: {
+      $set: {
+        ...normalizedTemplate,
+        componentId: normalizedTemplate.componentId,
+        locale,
+        updatedAt: now,
+      },
+      ...(Object.keys(unset).length > 0 ? { $unset: unset } : {}),
+      $setOnInsert: {
+        createdAt: now,
+      },
+    },
+    upsert: true,
   };
 };
 
@@ -146,21 +164,24 @@ const seedMissingTemplatesForLocale = async (
 
   const now = new Date();
   await collection.bulkWrite(
-    defaults.map((template) => ({
-      updateOne: {
-        filter: { _id: buildLocalizedTemplateId(template.componentId, normalizedLocale) },
-        update: {
-          $setOnInsert: {
-            ...template,
-            componentId: template.componentId,
-            locale: normalizedLocale,
-            createdAt: now,
-            updatedAt: now,
+    defaults.map((template) => {
+      const normalizedTemplate = normalizeKangurLessonTemplate(template);
+      return {
+        updateOne: {
+          filter: { _id: buildLocalizedTemplateId(normalizedTemplate.componentId, normalizedLocale) },
+          update: {
+            $setOnInsert: {
+              ...normalizedTemplate,
+              componentId: normalizedTemplate.componentId,
+              locale: normalizedLocale,
+              createdAt: now,
+              updatedAt: now,
+            },
           },
+          upsert: true,
         },
-        upsert: true,
-      },
-    })),
+      };
+    }),
     { ordered: false }
   );
 
@@ -252,19 +273,7 @@ export const mongoKangurLessonTemplateRepository: KangurLessonTemplateRepository
     );
     const operations = templates.map((template) => ({
       updateOne: {
-        filter: { _id: buildLocalizedTemplateId(template.componentId, normalizedLocale) },
-        update: {
-          $set: {
-            ...template,
-            componentId: template.componentId,
-            locale: normalizedLocale,
-            updatedAt: now,
-          },
-          $setOnInsert: {
-            createdAt: now,
-          },
-        },
-        upsert: true,
+        ...buildTemplateUpdate(template, normalizedLocale, now),
       },
     }));
 
@@ -283,20 +292,11 @@ export const mongoKangurLessonTemplateRepository: KangurLessonTemplateRepository
     const collection = db.collection<MongoKangurLessonTemplateDocument>(COLLECTION);
     const now = new Date();
     const normalizedLocale = normalizeTemplateLocale(locale);
+    const update = buildTemplateUpdate(template, normalizedLocale, now);
 
     await collection.updateOne(
-      { _id: buildLocalizedTemplateId(template.componentId, normalizedLocale) },
-      {
-        $set: {
-          ...template,
-          componentId: template.componentId,
-          locale: normalizedLocale,
-          updatedAt: now,
-        },
-        $setOnInsert: {
-          createdAt: now,
-        },
-      },
+      update.filter,
+      update.update,
       { upsert: true },
     );
   },

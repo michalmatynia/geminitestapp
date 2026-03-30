@@ -201,7 +201,7 @@ Package entry docs now live beside the code:
 
 Kangur’s AI Tutor relies on two canonical content stores:
 
-- Page-content catalog: `src/features/kangur/page-content-catalog.ts`
+- Page-content catalog: `src/features/kangur/ai-tutor/page-content-catalog.ts`
 - Native guide entries: `src/shared/contracts/kangur-ai-tutor-native-guide-entries.ts`
 
 These sources feed the runtime page-content store and native guide repository,

@@ -17,7 +17,7 @@ import {
   type KangurLessonTextBlock,
 } from '@/features/kangur/shared/contracts/kangur';
 
-import { applyKangurLessonActivityDefaults } from '../lesson-activities';
+import { applyKangurLessonActivityDefaults } from '../lessons/activities';
 import {
   createRandomId,
   DEFAULT_IMAGE_SRC,

@@ -27,10 +27,12 @@ import {
 import { ApiError } from '@/shared/lib/api-client';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 import type { ImageFileSelection } from '@/shared/contracts/files';
+import type { KangurSocialImageAddon } from '@/shared/contracts/kangur-social-image-addons';
 
 import { fetchQueryV2 } from '@/shared/lib/query-factories-v2';
 
 import { parseDatetimeLocal, type EditorState } from '../AdminKangurSocialPage.Constants';
+import { resolveSocialPostImageState } from '../social-post-image-assets';
 
 type SocialPostCrudDeps = {
   activePost: KangurSocialPost | null;
@@ -40,6 +42,7 @@ type SocialPostCrudDeps = {
   scheduledAt: string;
   imageAssets: ImageFileSelection[];
   imageAddonIds: string[];
+  recentAddons: KangurSocialImageAddon[];
   resolveDocReferences: () => string[];
   linkedinConnectionId: string | null;
   brainModelId: string | null;
@@ -101,6 +104,11 @@ export function useSocialPostCrud(deps: SocialPostCrudDeps) {
   const buildValidatedPostUpdates = (
     nextStatus: KangurSocialPost['status']
   ): Partial<KangurSocialPost> | null => {
+    const resolvedImageState = resolveSocialPostImageState({
+      imageAssets: deps.imageAssets,
+      imageAddonIds: deps.imageAddonIds,
+      recentAddons: deps.recentAddons,
+    });
     const updates: Partial<KangurSocialPost> = {
       ...deps.editorState,
       combinedBody: buildKangurSocialPostCombinedBody(
@@ -109,8 +117,8 @@ export function useSocialPostCrud(deps: SocialPostCrudDeps) {
       ),
       status: nextStatus,
       scheduledAt: nextStatus === 'scheduled' ? parseDatetimeLocal(deps.scheduledAt) : null,
-      imageAssets: deps.imageAssets,
-      imageAddonIds: deps.imageAddonIds,
+      imageAssets: resolvedImageState.imageAssets,
+      imageAddonIds: resolvedImageState.imageAddonIds,
       docReferences: deps.resolveDocReferences(),
       linkedinConnectionId: deps.linkedinConnectionId ?? null,
       brainModelId: deps.brainModelId ?? null,

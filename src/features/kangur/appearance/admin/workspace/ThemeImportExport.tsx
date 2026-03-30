@@ -9,7 +9,7 @@ import {
 } from '@/features/kangur/shared/ui';
 import type { ThemeSettings } from '@/shared/contracts/cms-theme';
 import { parseJsonSetting } from '@/features/kangur/shared/utils/settings-json';
-import { KANGUR_DEFAULT_DAILY_THEME, normalizeKangurThemeSettings } from '@/features/kangur/appearance/theme-settings';
+import { normalizeKangurThemeSettings } from '@/features/kangur/appearance/theme-settings';
 import { useAppearancePage } from './AppearancePage.context';
 import { withKangurClientError } from '@/features/kangur/observability/client';
 import {
@@ -22,7 +22,7 @@ export function ThemeImportExport(): React.JSX.Element {
   const locale = resolveAppearanceAdminLocale(useLocale());
   const copy = getAppearanceImportExportCopy(locale);
   const { toast } = useToast();
-  const { draft, setDraft } = useAppearancePage();
+  const { draft, setDraft, slotThemes } = useAppearancePage();
   const [isExporting, setIsExporting] = useState(false);
 
   const handleExport = async () => {
@@ -66,7 +66,7 @@ export function ThemeImportExport(): React.JSX.Element {
           toast(copy.importError, { variant: 'error' });
           return false;
         }
-        const normalized = normalizeKangurThemeSettings(parsed, KANGUR_DEFAULT_DAILY_THEME);
+        const normalized = normalizeKangurThemeSettings(parsed, slotThemes.daily);
         setDraft(normalized);
         return true;
       },

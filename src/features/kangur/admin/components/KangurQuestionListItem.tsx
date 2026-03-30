@@ -9,7 +9,7 @@ import {
   hasIllustration,
   hasRichChoiceContent,
   usesRichQuestionPresentation,
-} from '../../test-questions';
+} from '../../test-suites/questions';
 import type { QuestionAuthoringSummary } from '../question-authoring-insights';
 import type { QuestionManagerCopy } from '../question-manager.copy';
 

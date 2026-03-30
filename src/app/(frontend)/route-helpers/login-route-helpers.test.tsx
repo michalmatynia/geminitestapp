@@ -112,7 +112,7 @@ describe('canonical login route helpers', () => {
   });
 
   it('renders the Kangur shell on the canonical public login route when Kangur owns home', async () => {
-    const { renderCanonicalLoginRoute } = await import('@/app/(frontend)/login-route-helpers');
+    const { renderCanonicalLoginRoute } = await import('@/app/(frontend)/route-helpers/login-route-helpers');
 
     render(await renderCanonicalLoginRoute());
 
@@ -140,7 +140,7 @@ describe('canonical login route helpers', () => {
       id: 'render-data-login',
     });
 
-    const { renderCanonicalLoginRoute } = await import('@/app/(frontend)/login-route-helpers');
+    const { renderCanonicalLoginRoute } = await import('@/app/(frontend)/route-helpers/login-route-helpers');
 
     render(await renderCanonicalLoginRoute({ locale: 'en' }));
 
@@ -154,7 +154,7 @@ describe('canonical login route helpers', () => {
   });
 
   it('builds Kangur login metadata for the root-owned canonical route', async () => {
-    const { generateCanonicalLoginMetadata } = await import('@/app/(frontend)/login-route-helpers');
+    const { generateCanonicalLoginMetadata } = await import('@/app/(frontend)/route-helpers/login-route-helpers');
 
     await expect(generateCanonicalLoginMetadata({ locale: 'en' })).resolves.toEqual({
       title: 'en:loginTitle',
@@ -171,7 +171,7 @@ describe('canonical login route helpers', () => {
       name: 'Login',
     });
 
-    const { generateCanonicalLoginMetadata } = await import('@/app/(frontend)/login-route-helpers');
+    const { generateCanonicalLoginMetadata } = await import('@/app/(frontend)/route-helpers/login-route-helpers');
 
     await expect(generateCanonicalLoginMetadata()).resolves.toEqual({
       title: 'CMS login title',

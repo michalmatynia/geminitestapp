@@ -8,7 +8,7 @@ import {
   areKangurDocsTooltipsEnabled,
   parseKangurHelpSettings,
   type KangurHelpSettings,
-} from '@/features/kangur/help-settings';
+} from '@/features/kangur/docs/help-settings';
 import { useUpdateSetting } from '@/shared/hooks/use-settings';
 import { useSettingsStore } from '@/features/kangur/shared/providers/SettingsStoreProvider';
 import { Badge, Button, FormSection, Switch, useToast } from '@/features/kangur/shared/ui';

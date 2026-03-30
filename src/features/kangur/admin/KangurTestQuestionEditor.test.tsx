@@ -35,7 +35,7 @@ vi.mock('@/features/kangur/ui/components/KangurTestQuestionRenderer', () => ({
 }));
 
 import { KangurTestQuestionEditor } from '@/features/kangur/admin/KangurTestQuestionEditor';
-import type { QuestionFormData } from '@/features/kangur/test-questions';
+import type { QuestionFormData } from '@/features/kangur/test-suites/questions';
 import type { KangurTestSuite } from '@/features/kangur/shared/contracts/kangur-tests';
 
 function buildFormData(overrides: Partial<QuestionFormData> = {}): QuestionFormData {

@@ -1,5 +1,1 @@
-import { renderAccessibleKangurAliasRoute } from '@/features/kangur/server';
-
-export default async function Page(): Promise<null> {
-  return renderAccessibleKangurAliasRoute(['tests']);
-}
+export { default } from '../../../../../(frontend)/kangur/(app)/tests/page';

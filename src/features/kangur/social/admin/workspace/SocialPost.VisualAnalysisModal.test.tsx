@@ -67,7 +67,29 @@ vi.mock('@/features/kangur/shared/ui', () => ({
 }));
 
 vi.mock('./SocialPostContext', () => ({
-  useSocialPostContext: () => useSocialPostContextMock(),
+  useSocialPostContext: () => ({
+    activePost: null,
+    isVisualAnalysisModalOpen: false,
+    handleCloseVisualAnalysisModal: vi.fn(),
+    handleAnalyzeSelectedVisuals: vi.fn(),
+    handleGeneratePostWithVisualAnalysis: vi.fn(),
+    visualAnalysisResult: null,
+    visualAnalysisErrorMessage: null,
+    visualAnalysisPending: false,
+    currentGenerationJob: null,
+    currentPipelineJob: null,
+    currentVisualAnalysisJob: null,
+    imageAddonIds: [],
+    missingSelectedImageAddonIds: [],
+    recentAddons: [],
+    addonsQuery: { isFetching: false, refetch: vi.fn() },
+    handleRemoveMissingAddons: vi.fn(),
+    hasSavedVisualAnalysis: false,
+    isSavedVisualAnalysisStale: false,
+    visionModelId: null,
+    visionModelOptions: null,
+    ...useSocialPostContextMock(),
+  }),
 }));
 
 vi.mock('@/shared/hooks/usePlaywrightPersonas', () => ({
@@ -431,6 +453,8 @@ describe('SocialPostVisualAnalysisModal', () => {
   });
 
   it('warns when selected add-ons are missing from the loaded add-on list', () => {
+    const refetchMock = vi.fn();
+    const handleRemoveMissingAddons = vi.fn();
     useSocialPostContextMock.mockReturnValue({
       isVisualAnalysisModalOpen: true,
       handleCloseVisualAnalysisModal: vi.fn(),
@@ -442,7 +466,10 @@ describe('SocialPostVisualAnalysisModal', () => {
       visualAnalysisErrorMessage: null,
       visualAnalysisPending: false,
       imageAddonIds: ['addon-1', 'addon-2', 'addon-3'],
+      missingSelectedImageAddonIds: ['addon-2', 'addon-3'],
       recentAddons: [recentAddon],
+      addonsQuery: { isFetching: false, refetch: refetchMock },
+      handleRemoveMissingAddons,
       visionModelId: 'vision-1',
       visionModelOptions: { effectiveModelId: 'vision-routing' },
     });
@@ -458,7 +485,12 @@ describe('SocialPostVisualAnalysisModal', () => {
     expect(screen.getByRole('button', { name: 'Analyze selected visuals' })).toBeDisabled();
     expect(screen.getByRole('button', { name: 'Analyze selected visuals' })).toHaveAttribute(
       'title',
-      'Some selected image add-ons are not loaded yet. Refresh the image add-ons and try again.'
+      'Some selected image add-ons are missing from the loaded list. Refresh the image add-ons or remove the missing selections before running image analysis.'
     );
+    fireEvent.click(screen.getByRole('button', { name: 'Refresh image add-ons' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Remove missing add-ons' }));
+
+    expect(refetchMock).toHaveBeenCalledTimes(1);
+    expect(handleRemoveMissingAddons).toHaveBeenCalledTimes(1);
   });
 });

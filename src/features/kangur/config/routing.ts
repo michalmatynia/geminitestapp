@@ -2,7 +2,7 @@ import { DEFAULT_KANGUR_APP_EMBED_ENTRY_PAGE } from '@/shared/contracts/app-embe
 import {
   DEFAULT_KANGUR_LAUNCH_ROUTE,
   type KangurLaunchRoute,
-} from '@/features/kangur/launch-route';
+} from '@/features/kangur/config/launch-route';
 import { withKangurClientErrorSync } from '@/features/kangur/observability/client';
 
 

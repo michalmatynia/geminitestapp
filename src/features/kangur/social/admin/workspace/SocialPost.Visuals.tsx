@@ -30,8 +30,10 @@ export function SocialPostVisuals(props: SocialPostVisualsProps): React.JSX.Elem
     recentAddons,
     addonsQuery,
     imageAddonIds,
+    missingSelectedImageAddonIds,
     handleSelectAddon,
     handleRemoveAddon,
+    handleRemoveMissingAddons,
     imageAssets,
     handleRemoveImage,
     setShowMediaLibrary,
@@ -43,17 +45,28 @@ export function SocialPostVisuals(props: SocialPostVisualsProps): React.JSX.Elem
     currentGenerationJob,
     currentPipelineJob,
   } = useSocialPostContext();
+  const selectedImageAddonIds = Array.isArray(imageAddonIds) ? imageAddonIds : [];
+  const availableRecentAddons = Array.isArray(recentAddons) ? recentAddons : [];
+  const missingAddonIds = Array.isArray(missingSelectedImageAddonIds)
+    ? missingSelectedImageAddonIds
+    : [];
 
   const personasQuery = usePlaywrightPersonas({
-    enabled: (recentAddons ?? []).some((addon) => Boolean(addon.playwrightPersonaId?.trim())),
+    enabled: availableRecentAddons.some((addon) => Boolean(addon.playwrightPersonaId?.trim())),
   });
-  const selectedAddonSet = useMemo(() => new Set(imageAddonIds), [imageAddonIds]);
-  const missingSelectedAddonCount = Math.max(
-    0,
-    (imageAddonIds ?? []).filter((addonId) =>
-      !(recentAddons ?? []).some((addon) => addon.id === addonId)
-    ).length
-  );
+  const selectedAddonSet = useMemo(() => new Set(selectedImageAddonIds), [selectedImageAddonIds]);
+  const missingSelectedAddonCount = missingAddonIds.length;
+  const isRefreshingImageAddons = Boolean(addonsQuery?.isFetching);
+  const refetchImageAddons = (): void => {
+    if (typeof addonsQuery?.refetch === 'function') {
+      void addonsQuery.refetch();
+    }
+  };
+  const removeMissingAddons = (): void => {
+    if (typeof handleRemoveMissingAddons === 'function') {
+      handleRemoveMissingAddons();
+    }
+  };
   const personaNameById = useMemo(
     () =>
       new Map(
@@ -63,7 +76,7 @@ export function SocialPostVisuals(props: SocialPostVisualsProps): React.JSX.Elem
       ),
     [personasQuery.data]
   );
-  const recentAddonsLoading = addonsQuery.isLoading;
+  const recentAddonsLoading = Boolean(addonsQuery?.isLoading);
   const visualSummary = activePost?.visualSummary?.trim() ?? '';
   const visualHighlights = activePost?.visualHighlights ?? [];
   const savedVisualAnalysisStatus = activePost?.visualAnalysisStatus ?? null;
@@ -223,9 +236,30 @@ export function SocialPostVisuals(props: SocialPostVisualsProps): React.JSX.Elem
         </div>
         {missingSelectedAddonCount > 0 ? (
           <div className='rounded-xl border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-sm text-amber-900 dark:text-amber-200'>
-            {missingSelectedAddonCount === 1
-              ? '1 selected image add-on is missing from the loaded list. Refresh the image add-ons to review or remove it here.'
-              : `${missingSelectedAddonCount} selected image add-ons are missing from the loaded list. Refresh the image add-ons to review or remove them here.`}
+            <div>
+              {missingSelectedAddonCount === 1
+                ? '1 selected image add-on is missing from the loaded list. Refresh the image add-ons to review or remove it here.'
+                : `${missingSelectedAddonCount} selected image add-ons are missing from the loaded list. Refresh the image add-ons to review or remove them here.`}
+            </div>
+            <div className='mt-2 flex flex-wrap gap-2'>
+              <Button
+                type='button'
+                variant='outline'
+                size='sm'
+                onClick={refetchImageAddons}
+                disabled={isRefreshingImageAddons}
+              >
+                {isRefreshingImageAddons ? 'Refreshing image add-ons...' : 'Refresh image add-ons'}
+              </Button>
+              <Button
+                type='button'
+                variant='outline'
+                size='sm'
+                onClick={removeMissingAddons}
+              >
+                Remove missing add-ons
+              </Button>
+            </div>
           </div>
         ) : null}
         {recentAddonsLoading ? (
@@ -234,15 +268,15 @@ export function SocialPostVisuals(props: SocialPostVisualsProps): React.JSX.Elem
             size='sm'
             className='rounded-xl border border-border/60 bg-background/40 py-6'
           />
-        ) : recentAddons.length === 0 ? (
+        ) : availableRecentAddons.length === 0 ? (
           <div className='text-xs text-muted-foreground'>No image add-ons yet.</div>
         ) : (
           <div className='grid gap-3 sm:grid-cols-2'>
-            {recentAddons.map((addon) => {
+            {availableRecentAddons.map((addon) => {
               const preview = resolveImagePreview(addon.imageAsset);
               const isSelected = selectedAddonSet.has(addon.id);
               const previousAddon = addon.previousAddonId
-                ? recentAddons.find((a) => a.id === addon.previousAddonId) ?? null
+                ? availableRecentAddons.find((a) => a.id === addon.previousAddonId) ?? null
                 : null;
               const previousPreview = previousAddon
                 ? resolveImagePreview(previousAddon.imageAsset)

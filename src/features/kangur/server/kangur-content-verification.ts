@@ -2,6 +2,8 @@ import 'server-only';
 
 import { buildDefaultKangurPageContentStore } from '@/features/kangur/ai-tutor/page-content-catalog';
 import { normalizeKangurLessonDocument } from '@/features/kangur/lesson-documents';
+import { normalizeKangurLessonSection } from '@/features/kangur/services/kangur-lesson-section-repository/normalize-kangur-lesson-section';
+import { normalizeKangurLessonTemplate } from '@/features/kangur/services/kangur-lesson-template-repository/normalize-kangur-lesson-template';
 import {
   createDefaultKangurGames,
   getKangurGameBuiltInInstancesForGame,
@@ -11,12 +13,8 @@ import {
 import type { KangurGameId } from '@/shared/contracts/kangur-games';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import { kangurLessonSchema } from '@/shared/contracts/kangur';
+import { type KangurLessonSection } from '@/shared/contracts/kangur-lesson-sections';
 import {
-  kangurLessonSectionSchema,
-  type KangurLessonSection,
-} from '@/shared/contracts/kangur-lesson-sections';
-import {
-  kangurLessonTemplateSchema,
   type KangurLessonTemplate,
 } from '@/shared/contracts/kangur-lesson-templates';
 
@@ -33,6 +31,7 @@ import {
   serializeKangurLessonDocumentForComparison,
   type KangurLessonContentExactDiff,
 } from './kangur-lesson-content-snapshot';
+import { readKangurLessonContentMetadata } from './kangur-content-metadata';
 
 const COLLECTIONS = {
   aiTutor: 'kangur_ai_tutor_content',
@@ -63,6 +62,11 @@ type RevisionCheck = {
   actual: string;
   expected: string;
   matches: boolean;
+  source: 'localhost' | null;
+  stored: string | null;
+  storedMatchesActual: boolean;
+  storedMatchesExpected: boolean;
+  syncedAt: string | null;
 };
 
 const buildCountCheck = (expectedMinimum: number, actual: number): CountCheck => ({
@@ -120,9 +124,7 @@ const loadMongoLessonSections = async (
       .sort({ sortOrder: 1, id: 1 })
       .toArray()
   ).map((document) =>
-    normalizeKangurLessonSectionForSnapshot(
-      kangurLessonSectionSchema.parse(document) as KangurLessonSection
-    )
+    normalizeKangurLessonSectionForSnapshot(normalizeKangurLessonSection(document) as KangurLessonSection)
   );
 
 const loadMongoLessonTemplatesByLocale = async (
@@ -140,7 +142,7 @@ const loadMongoLessonTemplatesByLocale = async (
             .toArray()
         ).map((document) =>
           normalizeKangurLessonTemplateForSnapshot(
-            kangurLessonTemplateSchema.parse(document)
+            normalizeKangurLessonTemplate(document)
           )
         );
         return [locale, templates] as const;
@@ -234,6 +236,7 @@ export async function verifyKangurContentInMongo(
     pageContentEntriesByLocale,
     gameContentSetsByGame,
     gameInstancesByGame,
+    lessonContentMetadata,
   ] = await Promise.all([
     loadMongoLessons(db),
     loadMongoLessonSections(db),
@@ -281,6 +284,7 @@ export async function verifyKangurContentInMongo(
         return [game.id, buildCountCheck(expected, actual)] as const;
       })
     ).then((entries) => Object.fromEntries(entries)),
+    readKangurLessonContentMetadata(),
   ]);
 
   const actualLessons = toLessonRecord(actualLessonsList);
@@ -379,6 +383,11 @@ export async function verifyKangurContentInMongo(
   if (expectedLessonContent.lessonContentRevision !== actualLessonContentRevision) {
     mismatches.push('lessonContentRevision mismatch');
   }
+  if (!lessonContentMetadata) {
+    mismatches.push('lessonContentMetadata missing');
+  } else if (lessonContentMetadata.lessonContentRevision !== expectedLessonContent.lessonContentRevision) {
+    mismatches.push('lessonContentMetadata stale');
+  }
 
   for (const entry of [
     describeExactDiff('lessons', lessonsDiff),
@@ -455,6 +464,14 @@ export async function verifyKangurContentInMongo(
       actual: actualLessonContentRevision,
       expected: expectedLessonContent.lessonContentRevision,
       matches: expectedLessonContent.lessonContentRevision === actualLessonContentRevision,
+      source: lessonContentMetadata?.source ?? null,
+      stored: lessonContentMetadata?.lessonContentRevision ?? null,
+      storedMatchesActual:
+        lessonContentMetadata?.lessonContentRevision === actualLessonContentRevision,
+      storedMatchesExpected:
+        lessonContentMetadata?.lessonContentRevision ===
+        expectedLessonContent.lessonContentRevision,
+      syncedAt: lessonContentMetadata?.syncedAt ?? null,
     },
     lessonDocuments,
     lessonSections,

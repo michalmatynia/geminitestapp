@@ -7,7 +7,7 @@ import type {
 } from '@/features/kangur/shared/contracts/kangur';
 import { sanitizeHtml } from '@/features/kangur/shared/utils';
 
-import { getKangurLessonActivityDefinition } from './lesson-activities';
+import { getKangurLessonActivityDefinition } from './activities';
 import {
   createKangurLessonActivityBlock,
   createDefaultKangurLessonDocument,
@@ -15,65 +15,65 @@ import {
   createKangurLessonTextBlock,
   updateKangurLessonDocumentPages,
   updateKangurLessonDocumentTimestamp,
-} from './lesson-documents';
-import { KANGUR_LESSON_LIBRARY } from './settings';
+} from '../lesson-documents';
+import { KANGUR_LESSON_LIBRARY } from '../settings';
 import {
   HUB_SECTIONS as ADDING_HUB_SECTIONS,
   SLIDES as ADDING_SLIDES,
-} from './ui/components/AddingLesson';
+} from '../ui/components/AddingLesson';
 // import {
 //   HUB_SECTIONS as CALENDAR_HUB_SECTIONS,
 //   SECTION_SLIDES as CALENDAR_SECTION_SLIDES,
-// } from './ui/components/CalendarLesson';
-import { LESSON_SECTIONS as CLOCK_LESSON_SECTIONS } from './ui/components/ClockLesson';
+// } from '../ui/components/CalendarLesson';
+import { LESSON_SECTIONS as CLOCK_LESSON_SECTIONS } from '../ui/components/ClockLesson';
 import {
   HUB_SECTIONS as DIVISION_HUB_SECTIONS,
   SLIDES as DIVISION_SLIDES,
-} from './ui/components/DivisionLesson';
+} from '../ui/components/DivisionLesson';
 import {
   HUB_SECTIONS as GEOMETRY_BASICS_HUB_SECTIONS,
   SLIDES as GEOMETRY_BASICS_SLIDES,
-} from './ui/components/GeometryBasicsLesson';
+} from '../ui/components/GeometryBasicsLesson';
 import {
   HUB_SECTIONS as GEOMETRY_PERIMETER_HUB_SECTIONS,
   SLIDES as GEOMETRY_PERIMETER_SLIDES,
-} from './ui/components/GeometryPerimeterLesson';
+} from '../ui/components/GeometryPerimeterLesson';
 import {
   HUB_SECTIONS as GEOMETRY_SHAPES_HUB_SECTIONS,
   SLIDES as GEOMETRY_SHAPES_SLIDES,
-} from './ui/components/GeometryShapesLesson';
+} from '../ui/components/GeometryShapesLesson';
 import {
   HUB_SECTIONS as GEOMETRY_SYMMETRY_HUB_SECTIONS,
   SLIDES as GEOMETRY_SYMMETRY_SLIDES,
-} from './ui/components/GeometrySymmetryLesson';
+} from '../ui/components/GeometrySymmetryLesson';
 import {
   HUB_SECTIONS as LOGICAL_ANALOGIES_HUB_SECTIONS,
   SLIDES as LOGICAL_ANALOGIES_SLIDES,
-} from './ui/components/LogicalAnalogiesLesson';
+} from '../ui/components/LogicalAnalogiesLesson';
 import {
   HUB_SECTIONS as LOGICAL_CLASSIFICATION_HUB_SECTIONS,
   SLIDES as LOGICAL_CLASSIFICATION_SLIDES,
-} from './ui/components/LogicalClassificationLesson';
+} from '../ui/components/LogicalClassificationLesson';
 import {
   HUB_SECTIONS as LOGICAL_PATTERNS_HUB_SECTIONS,
   SLIDES as LOGICAL_PATTERNS_SLIDES,
-} from './ui/components/LogicalPatternsLesson';
+} from '../ui/components/LogicalPatternsLesson';
 import {
   HUB_SECTIONS as LOGICAL_REASONING_HUB_SECTIONS,
   SLIDES as LOGICAL_REASONING_SLIDES,
-} from './ui/components/LogicalReasoningLesson';
+} from '../ui/components/LogicalReasoningLesson';
 import {
   HUB_SECTIONS as LOGICAL_THINKING_HUB_SECTIONS,
   SECTION_SLIDES as LOGICAL_THINKING_SLIDES,
-} from './ui/components/LogicalThinkingLesson';
+} from '../ui/components/LogicalThinkingLesson';
 import {
   HUB_SECTIONS as MULTIPLICATION_HUB_SECTIONS,
   SLIDES as MULTIPLICATION_SLIDES,
-} from './ui/components/MultiplicationLesson';
+} from '../ui/components/MultiplicationLesson';
 import {
   HUB_SECTIONS as SUBTRACTING_HUB_SECTIONS,
   SLIDES as SUBTRACTING_SLIDES,
-} from './ui/components/SubtractingLesson';
+} from '../ui/components/SubtractingLesson';
 import { KANGUR_STACK_RELAXED_CLASSNAME } from '@/features/kangur/ui/design/tokens';
 
 import type { JSX } from 'react';

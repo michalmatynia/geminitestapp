@@ -34,7 +34,7 @@ import {
   getQuestionsForSuite,
   publishReadyQuestions,
   deleteKangurTestSuiteQuestions,
-} from '../../test-questions';
+} from '../../test-suites/questions';
 import { buildKangurTestSuiteHealthMap, getKangurTestLibraryHealthSummary } from '../test-suite-health';
 import { getQuestionAuthoringSummary } from '../question-authoring-insights';
 import { useTestSuitesManager } from './test-suites-manager.context';

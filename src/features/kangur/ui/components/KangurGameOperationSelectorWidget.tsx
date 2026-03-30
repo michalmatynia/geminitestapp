@@ -60,6 +60,683 @@ import {
 import { getOperationSelectorFallbackCopy } from './KangurGameOperationSelectorWidget.copy';
 import type { LessonQuizOption } from './KangurGameOperationSelectorWidget.types';
 
+type KangurGameOperationSelectorTranslations = ReturnType<typeof useTranslations>;
+type KangurGameOperationSelectorRuntime = ReturnType<typeof useKangurGameRuntime>;
+type KangurGameOperationSelectorScreen = KangurGameOperationSelectorRuntime['screen'];
+type KangurGameOperationSelectorSubject = ReturnType<typeof useKangurSubjectFocus>['subject'];
+type KangurGameOperationSelectorRecommendation = ReturnType<typeof getOperationSelectorRecommendation>;
+type KangurGameOperationSelectorAssignment = KangurGameOperationSelectorRuntime['activePracticeAssignment'];
+type KangurGameOperationSelectorAssignmentMode = 'active' | 'queue';
+
+type KangurGameOperationSelectorQuizGroup = {
+  label: string;
+  options: LessonQuizOption[];
+  value: string;
+};
+
+type KangurGameOperationRecommendationCardProps = {
+  compactActionClassName: string;
+  onRecommendationSelect: () => void;
+  recommendation: KangurGameOperationSelectorRecommendation;
+  showMathSections: boolean;
+};
+
+type KangurGameOperationSelectorQuickPracticeSectionProps = {
+  fallbackCopy: ReturnType<typeof getOperationSelectorFallbackCopy>;
+  filteredLessonQuizGroups: KangurGameOperationSelectorQuizGroup[];
+  gamePageTranslations: KangurGameOperationSelectorTranslations;
+  isSixYearOld: boolean;
+  quickPracticeDescription: string;
+  quickPracticeGameChipLabel: string;
+  quickPracticeTitle: string;
+  recommendation: KangurGameOperationSelectorRecommendation;
+  recommendedLessonQuizScreen: string | null;
+  setScreen: KangurGameOperationSelectorRuntime['setScreen'];
+  subject: KangurGameOperationSelectorSubject;
+};
+
+type KangurGameOperationSelectorTrainingSectionProps = {
+  basePath: string;
+  fallbackCopy: ReturnType<typeof getOperationSelectorFallbackCopy>;
+  gamePageTranslations: KangurGameOperationSelectorTranslations;
+  handleHome: KangurGameOperationSelectorRuntime['handleHome'];
+  handleStartTraining: KangurGameOperationSelectorRuntime['handleStartTraining'];
+  locale: string;
+  mixedPracticeAssignment: KangurGameOperationSelectorAssignment;
+  normalizedProgress: KangurGameOperationSelectorRuntime['progress'];
+  showMathSections: boolean;
+  suggestedTraining: ReturnType<typeof getRecommendedTrainingSetup>;
+  trainingSectionRef: React.RefObject<HTMLElement | null>;
+  trainingSetupTitle: string;
+  trainingWordmarkLabel: string;
+};
+
+const resolveKangurGameOperationMixedPracticeAssignment = ({
+  activePracticeAssignment,
+  practiceAssignmentsByOperation,
+}: {
+  activePracticeAssignment: KangurGameOperationSelectorAssignment;
+  practiceAssignmentsByOperation: KangurGameOperationSelectorRuntime['practiceAssignmentsByOperation'];
+}): KangurGameOperationSelectorAssignment =>
+  practiceAssignmentsByOperation.mixed ??
+  (activePracticeAssignment?.target.operation === 'mixed' ? activePracticeAssignment : null);
+
+const resolveKangurGameOperationPrimaryAssignment = (
+  activePracticeAssignment: KangurGameOperationSelectorAssignment
+): KangurGameOperationSelectorAssignment =>
+  activePracticeAssignment && activePracticeAssignment.target.operation !== 'mixed'
+    ? activePracticeAssignment
+    : null;
+
+function useKangurGameOperationSelectorSubjectScreenSync({
+  screen,
+  setScreen,
+  subject,
+}: {
+  screen: KangurGameOperationSelectorScreen;
+  setScreen: KangurGameOperationSelectorRuntime['setScreen'];
+  subject: KangurGameOperationSelectorSubject;
+}): void {
+  useEffect(() => {
+    if (subject === 'maths') {
+      return;
+    }
+
+    if (screen === 'training') {
+      setScreen('operation');
+    }
+  }, [screen, setScreen, subject]);
+}
+
+function useKangurGameOperationSelectorTrainingScroll({
+  screen,
+  trainingSectionRef,
+}: {
+  screen: KangurGameOperationSelectorScreen;
+  trainingSectionRef: React.RefObject<HTMLElement | null>;
+}): void {
+  useEffect(() => {
+    if (screen !== 'training') {
+      return;
+    }
+
+    trainingSectionRef.current?.scrollIntoView?.({ behavior: 'smooth', block: 'start' });
+  }, [screen, trainingSectionRef]);
+}
+
+const resolveKangurGameOperationSelectorCompactActionClassName = (
+  isCoarsePointer: boolean
+): string =>
+  isCoarsePointer
+    ? 'w-full min-h-11 px-4 touch-manipulation select-none active:scale-[0.97] sm:w-auto'
+    : 'w-full shrink-0 sm:w-auto';
+
+const resolveKangurGameOperationSelectorIntroLabel = (
+  subject: KangurGameOperationSelectorSubject,
+  gamePageTranslations: KangurGameOperationSelectorTranslations,
+  fallbackCopy: ReturnType<typeof getOperationSelectorFallbackCopy>
+): string => {
+  if (subject === 'maths') {
+    return translateRecommendationWithFallback(
+      gamePageTranslations,
+      'operationSelector.intro.maths',
+      fallbackCopy.intro.maths
+    );
+  }
+
+  if (subject === 'alphabet') {
+    return translateRecommendationWithFallback(
+      gamePageTranslations,
+      'operationSelector.intro.alphabet',
+      fallbackCopy.intro.alphabet
+    );
+  }
+
+  if (subject === 'art') {
+    return translateRecommendationWithFallback(
+      gamePageTranslations,
+      'operationSelector.intro.art',
+      fallbackCopy.intro.art
+    );
+  }
+
+  if (subject === 'music') {
+    return translateRecommendationWithFallback(
+      gamePageTranslations,
+      'operationSelector.intro.music',
+      fallbackCopy.intro.music
+    );
+  }
+
+  if (subject === 'geometry') {
+    return translateRecommendationWithFallback(
+      gamePageTranslations,
+      'operationSelector.intro.geometry',
+      fallbackCopy.intro.geometry
+    );
+  }
+
+  return translateRecommendationWithFallback(
+    gamePageTranslations,
+    'operationSelector.intro.language',
+    fallbackCopy.intro.language
+  );
+};
+
+const renderKangurGameOperationSelectorIntroDescription = ({
+  gameIntroDescriptionLabel,
+  isSixYearOld,
+  subject,
+}: {
+  gameIntroDescriptionLabel: string;
+  isSixYearOld: boolean;
+  subject: KangurGameOperationSelectorSubject;
+}): React.JSX.Element | string => {
+  if (!isSixYearOld) {
+    return gameIntroDescriptionLabel;
+  }
+
+  const subjectVisual = getKangurSixYearOldSubjectVisual(subject);
+
+  return (
+    <KangurVisualCueContent
+      className='text-lg'
+      detail={
+        <span className='inline-flex items-center gap-1.5 text-lg'>
+          {subjectVisual.introSteps.map((stepIcon, index) => (
+            <span key={`six-year-old-intro-step-${subject}-${index}`}>{stepIcon}</span>
+          ))}
+        </span>
+      }
+      detailTestId='kangur-game-operation-intro-detail'
+      icon={subjectVisual.icon}
+      iconClassName='text-xl'
+      iconTestId='kangur-game-operation-intro-icon'
+      label={gameIntroDescriptionLabel}
+    />
+  );
+};
+
+const renderKangurGameOperationSelectorQuickPracticeDescription = ({
+  isSixYearOld,
+  quickPracticeDescription,
+}: {
+  isSixYearOld: boolean;
+  quickPracticeDescription: string;
+}): React.JSX.Element | string =>
+  isSixYearOld ? (
+    <KangurVisualCueContent
+      detail={
+        <span className='inline-flex items-center gap-1.5 text-lg'>
+          <span>🎮</span>
+          <span>⚡</span>
+          <span>🎯</span>
+        </span>
+      }
+      detailTestId='kangur-quick-practice-description-detail'
+      icon='👆'
+      iconClassName='text-xl'
+      iconTestId='kangur-quick-practice-description-icon'
+      label={quickPracticeDescription}
+    />
+  ) : (
+    quickPracticeDescription
+  );
+
+const renderKangurGameOperationSelectorQuickPracticeTitle = ({
+  isSixYearOld,
+  quickPracticeTitle,
+}: {
+  isSixYearOld: boolean;
+  quickPracticeTitle: string;
+}): React.JSX.Element | string =>
+  isSixYearOld ? (
+    <KangurVisualCueContent
+      detail='🎮'
+      detailClassName='text-lg'
+      detailTestId='kangur-quick-practice-heading-detail'
+      icon='⚡'
+      iconClassName='text-xl'
+      iconTestId='kangur-quick-practice-heading-icon'
+      label={quickPracticeTitle}
+    />
+  ) : (
+    quickPracticeTitle
+  );
+
+const renderKangurGameOperationSelectorQuickPracticeGroupLabel = ({
+  group,
+  isSixYearOld,
+}: {
+  group: KangurGameOperationSelectorQuizGroup;
+  isSixYearOld: boolean;
+}): React.JSX.Element | string =>
+  isSixYearOld ? (
+    <KangurVisualCueContent
+      detail={getKangurSixYearOldSubjectVisual(group.value).detail}
+      detailClassName='text-base'
+      detailTestId={`kangur-quick-practice-group-detail-${group.value}`}
+      icon={getKangurSixYearOldSubjectVisual(group.value).icon}
+      iconClassName='text-lg'
+      iconTestId={`kangur-quick-practice-group-icon-${group.value}`}
+      label={group.label}
+    />
+  ) : (
+    group.label
+  );
+
+const renderKangurGameOperationSelectorGameChipLabel = ({
+  isSixYearOld,
+  optionScreen,
+  quickPracticeGameChipLabel,
+}: {
+  isSixYearOld: boolean;
+  optionScreen: string;
+  quickPracticeGameChipLabel: string;
+}): ReactNode =>
+  isSixYearOld ? (
+    <KangurVisualCueContent
+      icon='🎮'
+      iconClassName='text-base'
+      iconTestId={`kangur-quick-practice-game-chip-icon-${optionScreen}`}
+      label={quickPracticeGameChipLabel}
+    />
+  ) : (
+    quickPracticeGameChipLabel
+  );
+
+const renderKangurGameOperationSelectorRecommendationChipLabel = ({
+  isSixYearOld,
+  optionScreen,
+  recommendationLabel,
+}: {
+  isSixYearOld: boolean;
+  optionScreen: string;
+  recommendationLabel: string;
+}): ReactNode =>
+  isSixYearOld ? (
+    <KangurVisualCueContent
+      icon='🎯'
+      iconClassName='text-base'
+      iconTestId={`kangur-quick-practice-recommendation-icon-${optionScreen}`}
+      label={recommendationLabel}
+    />
+  ) : (
+    recommendationLabel
+  );
+
+const handleKangurGameOperationRecommendationSelect = ({
+  handleSelectOperation,
+  recommendation,
+  screen,
+  setScreen,
+  trainingSectionRef,
+}: {
+  handleSelectOperation: KangurGameOperationSelectorRuntime['handleSelectOperation'];
+  recommendation: KangurGameOperationSelectorRecommendation;
+  screen: KangurGameOperationSelectorScreen;
+  setScreen: KangurGameOperationSelectorRuntime['setScreen'];
+  trainingSectionRef: React.RefObject<HTMLElement | null>;
+}): void => {
+  if (!recommendation) {
+    return;
+  }
+
+  if (recommendation.target.kind === 'training') {
+    if (screen === 'training') {
+      trainingSectionRef.current?.scrollIntoView?.({ behavior: 'smooth', block: 'start' });
+    } else {
+      setScreen('training');
+    }
+    return;
+  }
+
+  if (recommendation.target.kind === 'screen') {
+    setScreen(recommendation.target.screen);
+    return;
+  }
+
+  handleSelectOperation(recommendation.target.operation, recommendation.target.difficulty, {
+    recommendation: {
+      description: recommendation.description,
+      label: recommendation.label,
+      source: 'operation_selector',
+      title: recommendation.title,
+    },
+  });
+};
+
+function KangurGameOperationPracticeAssignmentBanner({
+  assignment,
+  basePath,
+  mode,
+}: {
+  assignment: KangurGameOperationSelectorAssignment;
+  basePath: string;
+  mode: KangurGameOperationSelectorAssignmentMode;
+}): React.JSX.Element | null {
+  if (!assignment) {
+    return null;
+  }
+
+  return (
+    <div className='flex w-full justify-center px-4'>
+      <KangurPracticeAssignmentBanner assignment={assignment} basePath={basePath} mode={mode} />
+    </div>
+  );
+}
+
+function KangurGameOperationRecommendationCard({
+  compactActionClassName,
+  onRecommendationSelect,
+  recommendation,
+  showMathSections,
+}: KangurGameOperationRecommendationCardProps): React.JSX.Element | null {
+  if (!showMathSections || !recommendation) {
+    return null;
+  }
+
+  return (
+    <KangurInfoCard
+      accent={recommendation.accent}
+      className='w-full max-w-3xl rounded-[28px]'
+      data-testid='kangur-operation-recommendation-card'
+      padding='md'
+      tone='accent'
+    >
+      <KangurPanelRow className='sm:items-start sm:justify-between'>
+        <div className='min-w-0'>
+          <KangurStatusChip
+            accent={recommendation.accent}
+            className='text-[11px] uppercase tracking-[0.16em]'
+            data-testid='kangur-operation-recommendation-label'
+            size='sm'
+          >
+            {recommendation.label}
+          </KangurStatusChip>
+          <p
+            className='mt-3 break-words text-lg font-extrabold [color:var(--kangur-page-text)]'
+            data-testid='kangur-operation-recommendation-title'
+          >
+            {recommendation.title}
+          </p>
+          <p
+            className='mt-1 break-words text-sm [color:var(--kangur-page-muted-text)]'
+            data-testid='kangur-operation-recommendation-description'
+          >
+            {recommendation.description}
+          </p>
+        </div>
+        <KangurButton
+          className={compactActionClassName}
+          data-testid='kangur-operation-recommendation-action'
+          size='sm'
+          type='button'
+          variant='surface'
+          onClick={onRecommendationSelect}
+        >
+          {recommendation.actionLabel}
+        </KangurButton>
+      </KangurPanelRow>
+    </KangurInfoCard>
+  );
+}
+
+function KangurGameOperationSelectorOperationSection({
+  handleSelectOperation,
+  practiceAssignmentsByOperation,
+  recommendation,
+  showMathSections,
+}: {
+  handleSelectOperation: KangurGameOperationSelectorRuntime['handleSelectOperation'];
+  practiceAssignmentsByOperation: KangurGameOperationSelectorRuntime['practiceAssignmentsByOperation'];
+  recommendation: KangurGameOperationSelectorRecommendation;
+  showMathSections: boolean;
+}): React.JSX.Element | null {
+  if (!showMathSections) {
+    return null;
+  }
+
+  return (
+    <OperationSelector
+      onSelect={handleSelectOperation}
+      priorityAssignmentsByOperation={practiceAssignmentsByOperation}
+      recommendedLabel={recommendation?.label}
+      recommendedOperation={recommendation?.recommendedOperation}
+    />
+  );
+}
+
+function KangurGameOperationSelectorQuickPracticeOptionCard({
+  fallbackCopy,
+  gamePageTranslations,
+  isRecommended,
+  isSixYearOld,
+  option,
+  quickPracticeGameChipLabel,
+  recommendation,
+  setScreen,
+}: {
+  fallbackCopy: ReturnType<typeof getOperationSelectorFallbackCopy>;
+  gamePageTranslations: KangurGameOperationSelectorTranslations;
+  isRecommended: boolean;
+  isSixYearOld: boolean;
+  option: LessonQuizOption;
+  quickPracticeGameChipLabel: string;
+  recommendation: KangurGameOperationSelectorRecommendation;
+  setScreen: KangurGameOperationSelectorRuntime['setScreen'];
+}): React.JSX.Element {
+  const optionLabel = translateRecommendationWithFallback(
+    gamePageTranslations,
+    `screens.${option.onSelectScreen}.label`,
+    option.label
+  );
+  const optionDescription = translateRecommendationWithFallback(
+    gamePageTranslations,
+    `screens.${option.onSelectScreen}.description`,
+    option.description
+  );
+
+  return (
+    <KangurIconSummaryOptionCard
+      accent={option.accent}
+      aria-label={translateRecommendationWithFallback(
+        gamePageTranslations,
+        'operationSelector.quickPractice.cardAria',
+        fallbackCopy.quickPractice.cardAria(optionLabel),
+        { label: optionLabel }
+      )}
+      buttonClassName='w-full rounded-[24px] p-4 text-left sm:rounded-[28px] sm:p-5'
+      data-doc-id='home_quick_practice_action'
+      data-testid={`kangur-quick-practice-card-${option.onSelectScreen}`}
+      emphasis='accent'
+      onClick={() => setScreen(option.onSelectScreen)}
+    >
+      <KangurIconSummaryCardContent
+        aside={
+          <>
+            <KangurStatusChip
+              accent={option.accent}
+              aria-label={quickPracticeGameChipLabel}
+              className='uppercase tracking-[0.14em]'
+              data-testid={`kangur-quick-practice-game-chip-${option.onSelectScreen}`}
+              size='sm'
+            >
+              {renderKangurGameOperationSelectorGameChipLabel({
+                isSixYearOld,
+                optionScreen: option.onSelectScreen,
+                quickPracticeGameChipLabel,
+              })}
+            </KangurStatusChip>
+            {isRecommended && recommendation ? (
+              <KangurStatusChip
+                accent={option.accent}
+                aria-label={recommendation.label}
+                className='text-[11px] font-semibold'
+                data-testid={`kangur-quick-practice-recommendation-${option.onSelectScreen}`}
+                size='sm'
+              >
+                {renderKangurGameOperationSelectorRecommendationChipLabel({
+                  isSixYearOld,
+                  optionScreen: option.onSelectScreen,
+                  recommendationLabel: recommendation.label,
+                })}
+              </KangurStatusChip>
+            ) : null}
+          </>
+        }
+        asideClassName={`${KANGUR_WRAP_START_ROW_CLASSNAME} w-full sm:w-auto sm:flex-col sm:items-end sm:gap-2`}
+        className={`w-full ${KANGUR_RELAXED_ROW_CLASSNAME} items-start sm:items-center`}
+        contentClassName='w-full sm:flex-1'
+        description={optionDescription}
+        descriptionClassName='text-slate-500'
+        headerClassName={`${KANGUR_TIGHT_ROW_CLASSNAME} items-start sm:items-start sm:justify-between`}
+        icon={
+          <KangurIconBadge accent={option.accent} className='shrink-0 scale-90 sm:scale-100' size='xl'>
+            {option.emoji}
+          </KangurIconBadge>
+        }
+        title={optionLabel}
+        titleClassName='text-slate-800'
+        titleWrapperClassName='w-full'
+      />
+    </KangurIconSummaryOptionCard>
+  );
+}
+
+function KangurGameOperationSelectorQuickPracticeSection({
+  fallbackCopy,
+  filteredLessonQuizGroups,
+  gamePageTranslations,
+  isSixYearOld,
+  quickPracticeDescription,
+  quickPracticeGameChipLabel,
+  quickPracticeTitle,
+  recommendation,
+  recommendedLessonQuizScreen,
+  setScreen,
+}: KangurGameOperationSelectorQuickPracticeSectionProps): React.JSX.Element {
+  return (
+    <section
+      aria-labelledby='kangur-game-quick-practice-heading'
+      className='w-full max-w-3xl space-y-4'
+    >
+      <KangurSectionHeading
+        accent='violet'
+        align='left'
+        description={renderKangurGameOperationSelectorQuickPracticeDescription({
+          isSixYearOld,
+          quickPracticeDescription,
+        })}
+        headingAs='h3'
+        headingSize='sm'
+        title={renderKangurGameOperationSelectorQuickPracticeTitle({
+          isSixYearOld,
+          quickPracticeTitle,
+        })}
+        titleId='kangur-game-quick-practice-heading'
+      />
+      <div className={`flex w-full flex-col ${KANGUR_PANEL_GAP_CLASSNAME}`}>
+        {filteredLessonQuizGroups.map((group) => (
+          <KangurSubjectGroupSection
+            key={group.value}
+            ariaLabel={translateRecommendationWithFallback(
+              gamePageTranslations,
+              'operationSelector.quickPractice.groupAria',
+              fallbackCopy.quickPractice.groupAria(group.label),
+              { group: group.label }
+            )}
+            className={`flex w-full flex-col ${KANGUR_PANEL_GAP_CLASSNAME}`}
+            label={renderKangurGameOperationSelectorQuickPracticeGroupLabel({
+              group,
+              isSixYearOld,
+            })}
+          >
+            <div className='flex w-full flex-col kangur-panel-gap'>
+              {group.options.map((option) => (
+                <KangurGameOperationSelectorQuickPracticeOptionCard
+                  key={option.onSelectScreen}
+                  fallbackCopy={fallbackCopy}
+                  gamePageTranslations={gamePageTranslations}
+                  isRecommended={recommendedLessonQuizScreen === option.onSelectScreen}
+                  isSixYearOld={isSixYearOld}
+                  option={option}
+                  quickPracticeGameChipLabel={quickPracticeGameChipLabel}
+                  recommendation={recommendation}
+                  setScreen={setScreen}
+                />
+              ))}
+            </div>
+          </KangurSubjectGroupSection>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function KangurGameOperationSelectorTrainingSection({
+  basePath,
+  fallbackCopy,
+  gamePageTranslations,
+  handleHome,
+  handleStartTraining,
+  locale,
+  mixedPracticeAssignment,
+  normalizedProgress,
+  showMathSections,
+  suggestedTraining,
+  trainingSectionRef,
+  trainingSetupTitle,
+  trainingWordmarkLabel,
+}: KangurGameOperationSelectorTrainingSectionProps): React.JSX.Element | null {
+  if (!showMathSections) {
+    return null;
+  }
+
+  return (
+    <section
+      aria-labelledby='kangur-game-training-heading'
+      className='w-full max-w-3xl space-y-4'
+      ref={trainingSectionRef}
+    >
+      <KangurPageIntroCard
+        className='w-full'
+        description={translateRecommendationWithFallback(
+          gamePageTranslations,
+          'screens.training.description',
+          fallbackCopy.trainingSetupDescription
+        )}
+        headingAs='h3'
+        headingSize='md'
+        onBack={handleHome}
+        showBackButton={false}
+        testId='kangur-game-training-top-section'
+        title={trainingSetupTitle}
+        titleId='kangur-game-training-heading'
+        visualTitle={
+          <KangurTreningWordmark
+            className='mx-auto'
+            data-testid='kangur-training-heading-art'
+            idPrefix='kangur-game-training-heading'
+            label={trainingWordmarkLabel}
+            locale={locale}
+          />
+        }
+      />
+      <KangurGameOperationPracticeAssignmentBanner
+        assignment={mixedPracticeAssignment}
+        basePath={basePath}
+        mode='active'
+      />
+      <KangurGameSetupMomentumCard mode='training' progress={normalizedProgress} />
+      <KangurTrainingSetupPanel
+        onStart={(selection, options) => handleStartTraining(selection, options)}
+        suggestedTraining={suggestedTraining}
+      />
+    </section>
+  );
+}
+
 export function KangurGameOperationSelectorWidget(): React.JSX.Element | null {
   const locale = useLocale();
   const isCoarsePointer = useKangurCoarsePointer();
@@ -232,55 +909,22 @@ export function KangurGameOperationSelectorWidget(): React.JSX.Element | null {
     return null;
   }, [recommendation]);
   const mixedPracticeAssignment =
-    practiceAssignmentsByOperation.mixed ??
-    (activePracticeAssignment?.target.operation === 'mixed' ? activePracticeAssignment : null);
+    resolveKangurGameOperationMixedPracticeAssignment({
+      activePracticeAssignment,
+      practiceAssignmentsByOperation,
+    });
   const operationPracticeAssignment =
-    activePracticeAssignment && activePracticeAssignment.target.operation !== 'mixed'
-      ? activePracticeAssignment
-      : null;
+    resolveKangurGameOperationPrimaryAssignment(activePracticeAssignment);
   const shouldRender = screen === 'operation' || screen === 'training';
   const showMathSections = subject === 'maths';
   const isSixYearOld = ageGroup === 'six_year_old';
-  const compactActionClassName = isCoarsePointer
-    ? 'w-full min-h-11 px-4 touch-manipulation select-none active:scale-[0.97] sm:w-auto'
-    : 'w-full shrink-0 sm:w-auto';
-  const gameIntroDescriptionLabel =
-    subject === 'maths'
-      ? translateRecommendationWithFallback(
-          gamePageTranslations,
-          'operationSelector.intro.maths',
-          fallbackCopy.intro.maths
-        )
-      : subject === 'alphabet'
-        ? translateRecommendationWithFallback(
-            gamePageTranslations,
-            'operationSelector.intro.alphabet',
-            fallbackCopy.intro.alphabet
-          )
-        : subject === 'art'
-          ? translateRecommendationWithFallback(
-              gamePageTranslations,
-              'operationSelector.intro.art',
-              fallbackCopy.intro.art
-            )
-          : subject === 'music'
-            ? translateRecommendationWithFallback(
-                gamePageTranslations,
-                'operationSelector.intro.music',
-                fallbackCopy.intro.music
-              )
-        : subject === 'geometry'
-          ? translateRecommendationWithFallback(
-              gamePageTranslations,
-              'operationSelector.intro.geometry',
-              fallbackCopy.intro.geometry
-            )
-        : translateRecommendationWithFallback(
-            gamePageTranslations,
-            'operationSelector.intro.language',
-            fallbackCopy.intro.language
-          );
-  const subjectVisual = getKangurSixYearOldSubjectVisual(subject);
+  const compactActionClassName =
+    resolveKangurGameOperationSelectorCompactActionClassName(isCoarsePointer);
+  const gameIntroDescriptionLabel = resolveKangurGameOperationSelectorIntroLabel(
+    subject,
+    gamePageTranslations,
+    fallbackCopy
+  );
   const quickPracticeTitle = translateRecommendationWithFallback(
     gamePageTranslations,
     'operationSelector.quickPractice.title',
@@ -296,76 +940,27 @@ export function KangurGameOperationSelectorWidget(): React.JSX.Element | null {
     'operationSelector.quickPractice.gameChip',
     fallbackCopy.quickPractice.gameChip
   );
-  const gameIntroDescription = isSixYearOld ? (
-    <KangurVisualCueContent
-      className='text-lg'
-      detail={
-        <span className='inline-flex items-center gap-1.5 text-lg'>
-          {subjectVisual.introSteps.map((stepIcon, index) => (
-            <span key={`six-year-old-intro-step-${subject}-${index}`}>{stepIcon}</span>
-          ))}
-        </span>
-      }
-      detailTestId='kangur-game-operation-intro-detail'
-      icon={subjectVisual.icon}
-      iconClassName='text-xl'
-      iconTestId='kangur-game-operation-intro-icon'
-      label={gameIntroDescriptionLabel}
-    />
-  ) : (
-    gameIntroDescriptionLabel
-  );
+  const gameIntroDescription = renderKangurGameOperationSelectorIntroDescription({
+    gameIntroDescriptionLabel,
+    isSixYearOld,
+    subject,
+  });
 
-  useEffect(() => {
-    if (subject === 'maths') {
-      return;
-    }
-
-    if (screen === 'training') {
-      setScreen('operation');
-    }
-  }, [screen, setScreen, subject]);
-
-  useEffect(() => {
-    if (screen !== 'training') {
-      return;
-    }
-
-    trainingSectionRef.current?.scrollIntoView?.({ behavior: 'smooth', block: 'start' });
-  }, [screen]);
+  useKangurGameOperationSelectorSubjectScreenSync({ screen, setScreen, subject });
+  useKangurGameOperationSelectorTrainingScroll({ screen, trainingSectionRef });
 
   if (!shouldRender) {
     return null;
   }
 
-  const handleRecommendationSelect = (): void => {
-    if (!recommendation) {
-      return;
-    }
-
-    if (recommendation.target.kind === 'training') {
-      if (screen === 'training') {
-        trainingSectionRef.current?.scrollIntoView?.({ behavior: 'smooth', block: 'start' });
-      } else {
-        setScreen('training');
-      }
-      return;
-    }
-
-    if (recommendation.target.kind === 'screen') {
-      setScreen(recommendation.target.screen);
-      return;
-    }
-
-    handleSelectOperation(recommendation.target.operation, recommendation.target.difficulty, {
-      recommendation: {
-        description: recommendation.description,
-        label: recommendation.label,
-        source: 'operation_selector',
-        title: recommendation.title,
-      },
+  const handleRecommendationSelect = (): void =>
+    handleKangurGameOperationRecommendationSelect({
+      handleSelectOperation,
+      recommendation,
+      screen,
+      setScreen,
+      trainingSectionRef,
     });
-  };
 
   return (
     <div className={`w-full flex flex-col items-center ${KANGUR_PANEL_GAP_CLASSNAME}`}>
@@ -388,286 +983,51 @@ export function KangurGameOperationSelectorWidget(): React.JSX.Element | null {
           />
         }
       />
-      {showMathSections && operationPracticeAssignment ? (
-        <div className='flex w-full justify-center px-4'>
-          <KangurPracticeAssignmentBanner
-            assignment={operationPracticeAssignment}
-            basePath={basePath}
-            mode='queue'
-          />
-        </div>
-      ) : null}
-      {recommendation && showMathSections ? (
-        <KangurInfoCard
-          accent={recommendation.accent}
-          className='w-full max-w-3xl rounded-[28px]'
-          data-testid='kangur-operation-recommendation-card'
-          padding='md'
-          tone='accent'
-        >
-          <KangurPanelRow className='sm:items-start sm:justify-between'>
-            <div className='min-w-0'>
-              <KangurStatusChip
-                accent={recommendation.accent}
-                className='text-[11px] uppercase tracking-[0.16em]'
-                data-testid='kangur-operation-recommendation-label'
-                size='sm'
-              >
-                {recommendation.label}
-              </KangurStatusChip>
-              <p
-                className='mt-3 break-words text-lg font-extrabold [color:var(--kangur-page-text)]'
-                data-testid='kangur-operation-recommendation-title'
-              >
-                {recommendation.title}
-              </p>
-              <p
-                className='mt-1 break-words text-sm [color:var(--kangur-page-muted-text)]'
-                data-testid='kangur-operation-recommendation-description'
-              >
-                {recommendation.description}
-              </p>
-            </div>
-            <KangurButton
-              className={compactActionClassName}
-              data-testid='kangur-operation-recommendation-action'
-              size='sm'
-              type='button'
-              variant='surface'
-              onClick={handleRecommendationSelect}
-              >
-                {recommendation.actionLabel}
-              </KangurButton>
-          </KangurPanelRow>
-        </KangurInfoCard>
-      ) : null}
-      {showMathSections ? (
-        <OperationSelector
-          onSelect={handleSelectOperation}
-          priorityAssignmentsByOperation={practiceAssignmentsByOperation}
-          recommendedLabel={recommendation?.label}
-          recommendedOperation={recommendation?.recommendedOperation}
-        />
-      ) : null}
-      <section
-        aria-labelledby='kangur-game-quick-practice-heading'
-        className='w-full max-w-3xl space-y-4'
-      >
-        <KangurSectionHeading
-          accent='violet'
-          align='left'
-          description={
-            isSixYearOld ? (
-              <KangurVisualCueContent
-                detail={
-                  <span className='inline-flex items-center gap-1.5 text-lg'>
-                    <span>🎮</span>
-                    <span>⚡</span>
-                    <span>🎯</span>
-                  </span>
-                }
-                detailTestId='kangur-quick-practice-description-detail'
-                icon='👆'
-                iconClassName='text-xl'
-                iconTestId='kangur-quick-practice-description-icon'
-                label={quickPracticeDescription}
-              />
-            ) : (
-              quickPracticeDescription
-            )
-          }
-          headingAs='h3'
-          headingSize='sm'
-          title={
-            (isSixYearOld ? (
-              <KangurVisualCueContent
-                detail='🎮'
-                detailClassName='text-lg'
-                detailTestId='kangur-quick-practice-heading-detail'
-                icon='⚡'
-                iconClassName='text-xl'
-                iconTestId='kangur-quick-practice-heading-icon'
-                label={quickPracticeTitle}
-              />
-            ) : (
-              quickPracticeTitle
-            ))
-          }
-          titleId='kangur-game-quick-practice-heading'
-        />
-        <div className={`flex w-full flex-col ${KANGUR_PANEL_GAP_CLASSNAME}`}>
-          {filteredLessonQuizGroups.map((group) => (
-            <KangurSubjectGroupSection
-              key={group.value}
-              ariaLabel={translateRecommendationWithFallback(
-                gamePageTranslations,
-                'operationSelector.quickPractice.groupAria',
-                fallbackCopy.quickPractice.groupAria(group.label),
-                { group: group.label }
-              )}
-              label={
-                isSixYearOld ? (
-                  <KangurVisualCueContent
-                    detail={getKangurSixYearOldSubjectVisual(group.value).detail}
-                    detailClassName='text-base'
-                    detailTestId={`kangur-quick-practice-group-detail-${group.value}`}
-                    icon={getKangurSixYearOldSubjectVisual(group.value).icon}
-                    iconClassName='text-lg'
-                    iconTestId={`kangur-quick-practice-group-icon-${group.value}`}
-                    label={group.label}
-                  />
-                ) : (
-                  group.label
-                )
-              }
-              className={`flex w-full flex-col ${KANGUR_PANEL_GAP_CLASSNAME}`}
-            >
-              <div className='flex w-full flex-col kangur-panel-gap'>
-                {group.options.map((option) => {
-                  const isRecommended = recommendedLessonQuizScreen === option.onSelectScreen;
-                  const optionLabel = translateRecommendationWithFallback(
-                    gamePageTranslations,
-                    `screens.${option.onSelectScreen}.label`,
-                    option.label
-                  );
-                  const optionDescription = translateRecommendationWithFallback(
-                    gamePageTranslations,
-                    `screens.${option.onSelectScreen}.description`,
-                    option.description
-                  );
-
-                  return (
-                    <KangurIconSummaryOptionCard
-                      key={option.onSelectScreen}
-                      accent={option.accent}
-                      buttonClassName='w-full rounded-[24px] p-4 text-left sm:rounded-[28px] sm:p-5'
-                      data-doc-id='home_quick_practice_action'
-                      data-testid={`kangur-quick-practice-card-${option.onSelectScreen}`}
-                      emphasis='accent'
-                      aria-label={translateRecommendationWithFallback(
-                        gamePageTranslations,
-                        'operationSelector.quickPractice.cardAria',
-                        fallbackCopy.quickPractice.cardAria(optionLabel),
-                        { label: optionLabel }
-                      )}
-                      onClick={() => setScreen(option.onSelectScreen)}
-                    >
-                      <KangurIconSummaryCardContent
-                        aside={
-                          <>
-                            <KangurStatusChip
-                              accent={option.accent}
-                              aria-label={quickPracticeGameChipLabel}
-                              className='uppercase tracking-[0.14em]'
-                              data-testid={`kangur-quick-practice-game-chip-${option.onSelectScreen}`}
-                              size='sm'
-                            >
-                              {isSixYearOld ? (
-                                <KangurVisualCueContent
-                                  icon='🎮'
-                                  iconClassName='text-base'
-                                  iconTestId={`kangur-quick-practice-game-chip-icon-${option.onSelectScreen}`}
-                                  label={quickPracticeGameChipLabel}
-                                />
-                              ) : (
-                                quickPracticeGameChipLabel
-                              )}
-                            </KangurStatusChip>
-                            {isRecommended && recommendation ? (
-                              <KangurStatusChip
-                                accent={option.accent}
-                                aria-label={recommendation.label}
-                                className='text-[11px] font-semibold'
-                                data-testid={`kangur-quick-practice-recommendation-${option.onSelectScreen}`}
-                                size='sm'
-                              >
-                                {isSixYearOld ? (
-                                  <KangurVisualCueContent
-                                    icon='🎯'
-                                    iconClassName='text-base'
-                                    iconTestId={`kangur-quick-practice-recommendation-icon-${option.onSelectScreen}`}
-                                    label={recommendation.label}
-                                  />
-                                ) : (
-                                  recommendation.label
-                                )}
-                              </KangurStatusChip>
-                            ) : null}
-                          </>
-                        }
-                        asideClassName={`${KANGUR_WRAP_START_ROW_CLASSNAME} w-full sm:w-auto sm:flex-col sm:items-end sm:gap-2`}
-                        className={`w-full ${KANGUR_RELAXED_ROW_CLASSNAME} items-start sm:items-center`}
-                        contentClassName='w-full sm:flex-1'
-                        description={optionDescription}
-                        descriptionClassName='text-slate-500'
-                        headerClassName={`${KANGUR_TIGHT_ROW_CLASSNAME} items-start sm:items-start sm:justify-between`}
-                        icon={
-                          <KangurIconBadge
-                            accent={option.accent}
-                            className='shrink-0 scale-90 sm:scale-100'
-                            size='xl'
-                          >
-                            {option.emoji}
-                          </KangurIconBadge>
-                        }
-                        title={optionLabel}
-                        titleClassName='text-slate-800'
-                        titleWrapperClassName='w-full'
-                      />
-                    </KangurIconSummaryOptionCard>
-                  );
-                })}
-              </div>
-            </KangurSubjectGroupSection>
-          ))}
-        </div>
-      </section>
-      {showMathSections ? (
-        <section
-          aria-labelledby='kangur-game-training-heading'
-          className='w-full max-w-3xl space-y-4'
-          ref={trainingSectionRef}
-        >
-          <KangurPageIntroCard
-            className='w-full'
-            description={translateRecommendationWithFallback(
-              gamePageTranslations,
-              'screens.training.description',
-              fallbackCopy.trainingSetupDescription
-            )}
-            headingAs='h3'
-            headingSize='md'
-            onBack={handleHome}
-            showBackButton={false}
-            testId='kangur-game-training-top-section'
-            title={trainingSetupTitle}
-            titleId='kangur-game-training-heading'
-            visualTitle={
-              <KangurTreningWordmark
-                className='mx-auto'
-                data-testid='kangur-training-heading-art'
-                idPrefix='kangur-game-training-heading'
-                label={trainingWordmarkLabel}
-                locale={locale}
-              />
-            }
-          />
-          {mixedPracticeAssignment ? (
-            <div className='flex w-full justify-center px-4'>
-              <KangurPracticeAssignmentBanner
-                assignment={mixedPracticeAssignment}
-                basePath={basePath}
-                mode='active'
-              />
-            </div>
-          ) : null}
-          <KangurGameSetupMomentumCard mode='training' progress={normalizedProgress} />
-          <KangurTrainingSetupPanel
-            onStart={(selection, options) => handleStartTraining(selection, options)}
-            suggestedTraining={suggestedTraining}
-          />
-        </section>
-      ) : null}
+      <KangurGameOperationPracticeAssignmentBanner
+        assignment={showMathSections ? operationPracticeAssignment : null}
+        basePath={basePath}
+        mode='queue'
+      />
+      <KangurGameOperationRecommendationCard
+        compactActionClassName={compactActionClassName}
+        onRecommendationSelect={handleRecommendationSelect}
+        recommendation={recommendation}
+        showMathSections={showMathSections}
+      />
+      <KangurGameOperationSelectorOperationSection
+        handleSelectOperation={handleSelectOperation}
+        practiceAssignmentsByOperation={practiceAssignmentsByOperation}
+        recommendation={recommendation}
+        showMathSections={showMathSections}
+      />
+      <KangurGameOperationSelectorQuickPracticeSection
+        fallbackCopy={fallbackCopy}
+        filteredLessonQuizGroups={filteredLessonQuizGroups}
+        gamePageTranslations={gamePageTranslations}
+        isSixYearOld={isSixYearOld}
+        quickPracticeDescription={quickPracticeDescription}
+        quickPracticeGameChipLabel={quickPracticeGameChipLabel}
+        quickPracticeTitle={quickPracticeTitle}
+        recommendation={recommendation}
+        recommendedLessonQuizScreen={recommendedLessonQuizScreen}
+        setScreen={setScreen}
+        subject={subject}
+      />
+      <KangurGameOperationSelectorTrainingSection
+        basePath={basePath}
+        fallbackCopy={fallbackCopy}
+        gamePageTranslations={gamePageTranslations}
+        handleHome={handleHome}
+        handleStartTraining={handleStartTraining}
+        locale={locale}
+        mixedPracticeAssignment={mixedPracticeAssignment}
+        normalizedProgress={normalizedProgress}
+        showMathSections={showMathSections}
+        suggestedTraining={suggestedTraining}
+        trainingSectionRef={trainingSectionRef}
+        trainingSetupTitle={trainingSetupTitle}
+        trainingWordmarkLabel={trainingWordmarkLabel}
+      />
     </div>
   );
 }

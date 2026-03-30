@@ -99,7 +99,7 @@ vi.mock('@/features/kangur/ui/hooks/useKangurPageContent', () => ({
   useKangurPageContentEntry: () => emptyPageContentEntryMock,
 }));
 
-import { KANGUR_TEST_QUESTIONS_SETTING_KEY } from '../test-questions';
+import { KANGUR_TEST_QUESTIONS_SETTING_KEY } from '../test-suites/questions';
 import { KANGUR_TEST_SUITES_SETTING_KEY } from '../test-suites';
 import { KangurQuestionsManagerPanel } from './KangurQuestionsManagerPanel';
 import { KangurQuestionsManagerRuntimeProvider } from './context/KangurQuestionsManagerRuntimeContext';

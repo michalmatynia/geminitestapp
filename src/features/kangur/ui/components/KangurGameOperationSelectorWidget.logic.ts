@@ -10,8 +10,6 @@ import {
 } from '@/features/kangur/ui/services/recommendation-i18n';
 import { getKangurLaunchableGameScreenForLessonComponent } from '@/features/kangur/ui/services/game-launch';
 import {
-} from '@/features/kangur/games';
-import {
   getProgressAverageAccuracy,
   getProgressBadgeTrackSummaries,
   getProgressTopActivities,
@@ -53,6 +51,58 @@ const LESSON_COMPONENT_OPERATION_TARGETS: Partial<Record<KangurLessonComponentId
     division: 'division',
   };
 
+const KANGUR_RECOMMENDED_OPERATIONS = new Set<KangurOperation>([
+  'addition',
+  'subtraction',
+  'multiplication',
+  'division',
+  'decimals',
+  'powers',
+  'roots',
+  'clock',
+]);
+
+type RecommendationActionDescriptor = {
+  fallback: string;
+  key: string;
+};
+
+type OperationSelectorTopActivity = ReturnType<typeof getProgressTopActivities>[number];
+
+type OperationSelectorTopActivityContext = {
+  activity: OperationSelectorTopActivity | null;
+  activityLabel: string | null;
+  normalizedActivityLabel: string;
+  target: KangurOperationSelectorRecommendationTarget;
+};
+
+const resolveRecommendationTopActivity = (
+  progress: KangurProgressState,
+  progressTranslate?: KangurProgressTranslate
+): OperationSelectorTopActivity | null =>
+  getProgressTopActivities(progress, 1, { translate: progressTranslate })[0] ?? null;
+
+const resolveRecommendationTopActivityLabel = (
+  activity: OperationSelectorTopActivity | null,
+  translate?: RecommendationTranslate
+): string | null =>
+  activity
+    ? resolveLocalizedRecommendationActivityLabel({
+        activityKey: activity.key,
+        fallbackLabel: activity.label,
+        translate,
+      })
+    : null;
+
+const resolveRecommendationTopActivityTarget = (
+  progress: KangurProgressState,
+  activity: OperationSelectorTopActivity | null
+): KangurOperationSelectorRecommendationTarget =>
+  resolveActivityRecommendationTarget(
+    activity?.key,
+    activity?.averageAccuracy ?? getProgressAverageAccuracy(progress)
+  ) ?? { kind: 'training' };
+
 export const resolveRecommendationDifficulty = (accuracy: number): KangurDifficulty => {
   if (accuracy >= 85) {
     return 'hard';
@@ -89,32 +139,122 @@ export const resolveLessonRecommendationTarget = (
   return { kind: 'training' };
 };
 
-export const resolveActivityRecommendationTarget = (
-  activityKey: string | null | undefined,
-  averageAccuracy: number
-): KangurOperationSelectorRecommendationTarget | null => {
+const isGeometryActivityRecommendationKey = (primary: string): boolean =>
+  primary === 'geometry' ||
+  (primary.startsWith('geometry_') && primary !== 'geometry_shape_recognition');
+
+const resolveActivityRecommendationPrimary = (
+  activityKey: string | null | undefined
+): string | null => {
   if (!activityKey) {
     return null;
   }
 
   const parts = activityKey.split(':');
   const primary = (parts[1] ?? parts[0] ?? '').trim();
+
+  return primary.length > 0 ? primary : null;
+};
+
+const resolveActivityQuizScreenTarget = (
+  primary: string
+): KangurOperationSelectorRecommendationTarget | null => {
+  if (primary === 'calendar') {
+    return { kind: 'screen', screen: 'calendar_quiz' };
+  }
+
+  if (isGeometryActivityRecommendationKey(primary)) {
+    return { kind: 'screen', screen: 'geometry_quiz' };
+  }
+
+  return null;
+};
+
+export const resolveActivityRecommendationTarget = (
+  activityKey: string | null | undefined,
+  averageAccuracy: number
+): KangurOperationSelectorRecommendationTarget | null => {
+  const primary = resolveActivityRecommendationPrimary(activityKey);
   if (!primary) {
     return null;
   }
 
-  if (primary === 'calendar') {
-    return { kind: 'screen', screen: 'calendar_quiz' };
-  }
-  if (
-    primary === 'geometry' ||
-    (primary.startsWith('geometry_') && primary !== 'geometry_shape_recognition')
-  ) {
-    return { kind: 'screen', screen: 'geometry_quiz' };
+  const screenTarget = resolveActivityQuizScreenTarget(primary);
+  if (screenTarget) {
+    return screenTarget;
   }
 
   return resolveLessonRecommendationTarget(primary, averageAccuracy);
 };
+
+const resolveRequestedGameScreenTarget = (
+  requestedScreen: string | null | undefined
+): KangurOperationSelectorRecommendationTarget | null =>
+  isKangurGameScreen(requestedScreen) ? { kind: 'screen', screen: requestedScreen } : null;
+
+const isRecommendedOperation = (
+  requestedOperation: string | null | undefined
+): requestedOperation is KangurOperation =>
+  Boolean(requestedOperation) && KANGUR_RECOMMENDED_OPERATIONS.has(requestedOperation as KangurOperation);
+
+const resolveRequestedOperationDifficulty = (
+  difficulty: string | null | undefined,
+  averageAccuracy: number
+): KangurDifficulty =>
+  difficulty === 'easy' || difficulty === 'medium' || difficulty === 'hard'
+    ? difficulty
+    : resolveRecommendationDifficulty(averageAccuracy);
+
+const resolveRequestedOperationTarget = (
+  requestedOperation: string | null | undefined,
+  difficulty: string | null | undefined,
+  averageAccuracy: number
+): KangurOperationSelectorRecommendationTarget | null => {
+  if (requestedOperation === 'mixed') {
+    return { kind: 'training' };
+  }
+
+  if (!isRecommendedOperation(requestedOperation)) {
+    return null;
+  }
+
+  return {
+    kind: 'operation',
+    difficulty: resolveRequestedOperationDifficulty(difficulty, averageAccuracy),
+    operation: requestedOperation,
+  };
+};
+
+const resolveGameActionQuickStartTarget = (
+  query: NonNullable<KangurRouteAction['query']>,
+  averageAccuracy: number
+): KangurOperationSelectorRecommendationTarget | null => {
+  const quickStart = query['quickStart'];
+
+  if (quickStart === 'training') {
+    return { kind: 'training' };
+  }
+
+  if (quickStart === 'screen') {
+    return resolveRequestedGameScreenTarget(query['screen'] ?? null);
+  }
+
+  if (quickStart === 'operation') {
+    return resolveRequestedOperationTarget(
+      query['operation'] ?? null,
+      query['difficulty'],
+      averageAccuracy
+    );
+  }
+
+  return null;
+};
+
+const resolveGameActionRecommendationTarget = (
+  action: KangurRouteAction,
+  averageAccuracy: number
+): KangurOperationSelectorRecommendationTarget | null =>
+  resolveGameActionQuickStartTarget(action.query ?? {}, averageAccuracy);
 
 export const resolveActionRecommendationTarget = (
   action: KangurRouteAction | undefined,
@@ -126,45 +266,7 @@ export const resolveActionRecommendationTarget = (
 
   const averageAccuracy = getProgressAverageAccuracy(progress);
   if (action.page === 'Game') {
-    const quickStart = action.query?.['quickStart'];
-    if (quickStart === 'training') {
-      return { kind: 'training' };
-    }
-    if (quickStart === 'screen') {
-      const requestedScreen = action.query?.['screen'] ?? null;
-      return isKangurGameScreen(requestedScreen)
-        ? { kind: 'screen', screen: requestedScreen }
-        : null;
-    }
-    if (quickStart === 'operation') {
-      const requestedOperation = action.query?.['operation'] ?? null;
-      const difficulty = action.query?.['difficulty'];
-      if (requestedOperation === 'mixed') {
-        return { kind: 'training' };
-      }
-      if (
-        requestedOperation &&
-        [
-          'addition',
-          'subtraction',
-          'multiplication',
-          'division',
-          'decimals',
-          'powers',
-          'roots',
-          'clock',
-        ].includes(requestedOperation)
-      ) {
-        return {
-          kind: 'operation',
-          difficulty:
-            difficulty === 'easy' || difficulty === 'medium' || difficulty === 'hard'
-              ? (difficulty as KangurDifficulty)
-              : resolveRecommendationDifficulty(averageAccuracy),
-          operation: requestedOperation as KangurOperation,
-        };
-      }
-    }
+    return resolveGameActionRecommendationTarget(action, averageAccuracy);
   }
 
   if (action.page === 'Lessons') {
@@ -174,82 +276,104 @@ export const resolveActionRecommendationTarget = (
   return null;
 };
 
+const resolveRecommendationActionDescriptor = (
+  target: KangurOperationSelectorRecommendationTarget,
+  fallbackCopy: OperationSelectorFallbackCopy
+): RecommendationActionDescriptor => {
+  if (target.kind === 'training') {
+    return {
+      fallback: fallbackCopy.recommendation.actions.startMixedTraining,
+      key: 'operationSelector.actions.startMixedTraining',
+    };
+  }
+
+  if (target.kind === 'screen') {
+    const screenDescriptors: Partial<Record<KangurGameScreen, RecommendationActionDescriptor>> = {
+      calendar_quiz: {
+        fallback: fallbackCopy.recommendation.actions.practiceCalendar,
+        key: 'operationSelector.actions.practiceCalendar',
+      },
+      division_quiz: {
+        fallback: fallbackCopy.recommendation.actions.practiceDivision,
+        key: 'operationSelector.actions.practiceDivision',
+      },
+      geometry_quiz: {
+        fallback: fallbackCopy.recommendation.actions.practiceGeometry,
+        key: 'operationSelector.actions.practiceGeometry',
+      },
+      multiplication_quiz: {
+        fallback: fallbackCopy.recommendation.actions.practiceMultiplication,
+        key: 'operationSelector.actions.practiceMultiplication',
+      },
+      subtraction_quiz: {
+        fallback: fallbackCopy.recommendation.actions.practiceSubtraction,
+        key: 'operationSelector.actions.practiceSubtraction',
+      },
+    };
+
+    return (
+      screenDescriptors[target.screen] ?? {
+        fallback: fallbackCopy.recommendation.actions.playNow,
+        key: 'operationSelector.actions.playNow',
+      }
+    );
+  }
+
+  const operationDescriptors: Partial<Record<KangurOperation, RecommendationActionDescriptor>> = {
+    addition: {
+      fallback: fallbackCopy.recommendation.actions.playAddition,
+      key: 'operationSelector.actions.playAddition',
+    },
+    subtraction: {
+      fallback: fallbackCopy.recommendation.actions.playSubtraction,
+      key: 'operationSelector.actions.playSubtraction',
+    },
+    multiplication: {
+      fallback: fallbackCopy.recommendation.actions.playMultiplication,
+      key: 'operationSelector.actions.playMultiplication',
+    },
+    division: {
+      fallback: fallbackCopy.recommendation.actions.playDivision,
+      key: 'operationSelector.actions.playDivision',
+    },
+    clock: {
+      fallback: fallbackCopy.recommendation.actions.playClock,
+      key: 'operationSelector.actions.playClock',
+    },
+    mixed: {
+      fallback: fallbackCopy.recommendation.actions.startMixedTraining,
+      key: 'operationSelector.actions.startMixedTraining',
+    },
+    decimals: {
+      fallback: fallbackCopy.recommendation.actions.playFractions,
+      key: 'operationSelector.actions.playFractions',
+    },
+    powers: {
+      fallback: fallbackCopy.recommendation.actions.playPowers,
+      key: 'operationSelector.actions.playPowers',
+    },
+    roots: {
+      fallback: fallbackCopy.recommendation.actions.playRoots,
+      key: 'operationSelector.actions.playRoots',
+    },
+  };
+
+  return (
+    operationDescriptors[target.operation] ?? {
+      fallback: fallbackCopy.recommendation.actions.playNow,
+      key: 'operationSelector.actions.playNow',
+    }
+  );
+};
+
 export const getRecommendationActionLabel = (
   target: KangurOperationSelectorRecommendationTarget,
   fallbackCopy: OperationSelectorFallbackCopy,
   translate?: RecommendationTranslate
 ): string => {
-  const operationLabels: Partial<Record<KangurOperation, { fallback: string; key: string }>> = {
-    addition: { fallback: fallbackCopy.recommendation.actions.playAddition, key: 'operationSelector.actions.playAddition' },
-    subtraction: { fallback: fallbackCopy.recommendation.actions.playSubtraction, key: 'operationSelector.actions.playSubtraction' },
-    multiplication: { fallback: fallbackCopy.recommendation.actions.playMultiplication, key: 'operationSelector.actions.playMultiplication' },
-    division: { fallback: fallbackCopy.recommendation.actions.playDivision, key: 'operationSelector.actions.playDivision' },
-    clock: { fallback: fallbackCopy.recommendation.actions.playClock, key: 'operationSelector.actions.playClock' },
-    mixed: { fallback: fallbackCopy.recommendation.actions.startMixedTraining, key: 'operationSelector.actions.startMixedTraining' },
-    decimals: { fallback: fallbackCopy.recommendation.actions.playFractions, key: 'operationSelector.actions.playFractions' },
-    powers: { fallback: fallbackCopy.recommendation.actions.playPowers, key: 'operationSelector.actions.playPowers' },
-    roots: { fallback: fallbackCopy.recommendation.actions.playRoots, key: 'operationSelector.actions.playRoots' },
-  };
+  const descriptor = resolveRecommendationActionDescriptor(target, fallbackCopy);
 
-  if (target.kind === 'training') {
-    return translateRecommendationWithFallback(
-      translate,
-      'operationSelector.actions.startMixedTraining',
-      fallbackCopy.recommendation.actions.startMixedTraining
-    );
-  }
-
-  if (target.kind === 'screen') {
-    if (target.screen === 'calendar_quiz') {
-      return translateRecommendationWithFallback(
-        translate,
-        'operationSelector.actions.practiceCalendar',
-        fallbackCopy.recommendation.actions.practiceCalendar
-      );
-    }
-    if (target.screen === 'geometry_quiz') {
-      return translateRecommendationWithFallback(
-        translate,
-        'operationSelector.actions.practiceGeometry',
-        fallbackCopy.recommendation.actions.practiceGeometry
-      );
-    }
-    if (target.screen === 'subtraction_quiz') {
-      return translateRecommendationWithFallback(
-        translate,
-        'operationSelector.actions.practiceSubtraction',
-        fallbackCopy.recommendation.actions.practiceSubtraction
-      );
-    }
-    if (target.screen === 'division_quiz') {
-      return translateRecommendationWithFallback(
-        translate,
-        'operationSelector.actions.practiceDivision',
-        fallbackCopy.recommendation.actions.practiceDivision
-      );
-    }
-    if (target.screen === 'multiplication_quiz') {
-      return translateRecommendationWithFallback(
-        translate,
-        'operationSelector.actions.practiceMultiplication',
-        fallbackCopy.recommendation.actions.practiceMultiplication
-      );
-    }
-    return translateRecommendationWithFallback(
-      translate,
-      'operationSelector.actions.playNow',
-      fallbackCopy.recommendation.actions.playNow
-    );
-  }
-
-  const operationLabel = operationLabels[target.operation];
-  return operationLabel
-    ? translateRecommendationWithFallback(translate, operationLabel.key, operationLabel.fallback)
-    : translateRecommendationWithFallback(
-        translate,
-        'operationSelector.actions.playNow',
-        fallbackCopy.recommendation.actions.playNow
-      );
+  return translateRecommendationWithFallback(translate, descriptor.key, descriptor.fallback);
 };
 
 export const finalizeRecommendation = (
@@ -349,6 +473,81 @@ export const getWeakestLessonRecommendation = (
   }, fallbackCopy, translate);
 };
 
+const resolveRecommendationTopActivityContext = (
+  progress: KangurProgressState,
+  translate?: RecommendationTranslate,
+  progressTranslate?: KangurProgressTranslate
+): OperationSelectorTopActivityContext => {
+  const activity = resolveRecommendationTopActivity(progress, progressTranslate);
+  const activityLabel = resolveRecommendationTopActivityLabel(activity, translate);
+  const target = resolveRecommendationTopActivityTarget(progress, activity);
+
+  return {
+    activity,
+    activityLabel,
+    normalizedActivityLabel: activityLabel?.toLowerCase() ?? '',
+    target,
+  };
+};
+
+const resolveTrackRecommendationDescription = (
+  trackLabel: string,
+  topActivityContext: OperationSelectorTopActivityContext,
+  fallbackCopy: OperationSelectorFallbackCopy,
+  translate?: RecommendationTranslate
+): string =>
+  topActivityContext.activity
+    ? translateRecommendationWithFallback(
+        translate,
+        'operationSelector.track.descriptionWithActivity',
+        fallbackCopy.recommendation.track.descriptionWithActivity(
+          trackLabel,
+          topActivityContext.normalizedActivityLabel
+        ),
+        {
+          activity: topActivityContext.normalizedActivityLabel,
+          track: trackLabel,
+        }
+      )
+    : translateRecommendationWithFallback(
+        translate,
+        'operationSelector.track.descriptionDefault',
+        fallbackCopy.recommendation.track.descriptionDefault(trackLabel),
+        { track: trackLabel }
+      );
+
+const resolveGuidedRecommendationDescription = (
+  summary: string,
+  nextBadgeName: string,
+  topActivityContext: OperationSelectorTopActivityContext,
+  fallbackCopy: OperationSelectorFallbackCopy,
+  translate?: RecommendationTranslate
+): string =>
+  topActivityContext.activity
+    ? translateRecommendationWithFallback(
+        translate,
+        'operationSelector.guided.descriptionWithActivity',
+        fallbackCopy.recommendation.guided.descriptionWithActivity(
+          summary,
+          topActivityContext.normalizedActivityLabel,
+          nextBadgeName
+        ),
+        {
+          activity: topActivityContext.normalizedActivityLabel,
+          nextBadgeName,
+          summary,
+        }
+      )
+    : translateRecommendationWithFallback(
+        translate,
+        'operationSelector.guided.descriptionDefault',
+        fallbackCopy.recommendation.guided.descriptionDefault(summary, nextBadgeName),
+        {
+          nextBadgeName,
+          summary,
+        }
+      );
+
 export const getTrackRecommendation = (
   progress: KangurProgressState,
   fallbackCopy: OperationSelectorFallbackCopy,
@@ -361,52 +560,31 @@ export const getTrackRecommendation = (
       (entry) =>
         Boolean(entry.nextBadge) && (entry.unlockedCount > 0 || entry.progressPercent >= 40)
     ) ?? null;
-  const topActivity = getProgressTopActivities(progress, 1, progressLocalizer)[0] ?? null;
-  const activityLabel = topActivity
-    ? resolveLocalizedRecommendationActivityLabel({
-        activityKey: topActivity.key,
-        fallbackLabel: topActivity.label,
-        translate,
-      })
-    : null;
 
   if (!track?.nextBadge) {
     return null;
   }
 
-  const target =
-    resolveActivityRecommendationTarget(
-      topActivity?.key,
-      topActivity?.averageAccuracy ?? getProgressAverageAccuracy(progress)
-    ) ?? ({ kind: 'training' } as const);
+  const topActivityContext = resolveRecommendationTopActivityContext(
+    progress,
+    translate,
+    progressTranslate
+  );
 
   return finalizeRecommendation({
     accent: 'violet',
-    description: topActivity
-      ? translateRecommendationWithFallback(
-          translate,
-          'operationSelector.track.descriptionWithActivity',
-          fallbackCopy.recommendation.track.descriptionWithActivity(
-            track.label,
-            activityLabel?.toLowerCase() ?? ''
-          ),
-          {
-            activity: activityLabel?.toLowerCase() ?? '',
-            track: track.label,
-          }
-        )
-      : translateRecommendationWithFallback(
-          translate,
-          'operationSelector.track.descriptionDefault',
-          fallbackCopy.recommendation.track.descriptionDefault(track.label),
-          { track: track.label }
-        ),
+    description: resolveTrackRecommendationDescription(
+      track.label,
+      topActivityContext,
+      fallbackCopy,
+      translate
+    ),
     label: translateRecommendationWithFallback(
       translate,
       'operationSelector.track.label',
       fallbackCopy.recommendation.track.label
     ),
-    target,
+    target: topActivityContext.target,
     title: translateRecommendationWithFallback(
       translate,
       'operationSelector.track.title',
@@ -428,55 +606,27 @@ export const getGuidedRecommendation = (
     return null;
   }
 
-  const topActivity = getProgressTopActivities(progress, 1, progressLocalizer)[0] ?? null;
-  const activityLabel = topActivity
-    ? resolveLocalizedRecommendationActivityLabel({
-        activityKey: topActivity.key,
-        fallbackLabel: topActivity.label,
-        translate,
-      })
-    : null;
-  const target =
-    resolveActivityRecommendationTarget(
-      topActivity?.key,
-      topActivity?.averageAccuracy ?? getProgressAverageAccuracy(progress)
-    ) ?? ({ kind: 'training' } as const);
+  const topActivityContext = resolveRecommendationTopActivityContext(
+    progress,
+    translate,
+    progressTranslate
+  );
 
   return finalizeRecommendation({
     accent: 'sky',
-    description: topActivity
-      ? translateRecommendationWithFallback(
-          translate,
-          'operationSelector.guided.descriptionWithActivity',
-          fallbackCopy.recommendation.guided.descriptionWithActivity(
-            guidedMomentum.summary,
-            activityLabel?.toLowerCase() ?? '',
-            guidedMomentum.nextBadgeName
-          ),
-          {
-            activity: activityLabel?.toLowerCase() ?? '',
-            nextBadgeName: guidedMomentum.nextBadgeName,
-            summary: guidedMomentum.summary,
-          }
-        )
-      : translateRecommendationWithFallback(
-          translate,
-          'operationSelector.guided.descriptionDefault',
-          fallbackCopy.recommendation.guided.descriptionDefault(
-            guidedMomentum.summary,
-            guidedMomentum.nextBadgeName
-          ),
-          {
-            nextBadgeName: guidedMomentum.nextBadgeName,
-            summary: guidedMomentum.summary,
-          }
-        ),
+    description: resolveGuidedRecommendationDescription(
+      guidedMomentum.summary,
+      guidedMomentum.nextBadgeName,
+      topActivityContext,
+      fallbackCopy,
+      translate
+    ),
     label: translateRecommendationWithFallback(
       translate,
       'operationSelector.guided.label',
       fallbackCopy.recommendation.guided.label
     ),
-    target,
+    target: topActivityContext.target,
     title: translateRecommendationWithFallback(
       translate,
       'operationSelector.guided.title',
@@ -535,14 +685,28 @@ export const getFallbackRecommendation = (
   }, fallbackCopy, translate);
 };
 
+const resolveFirstRecommendation = (
+  recommendations: Array<KangurOperationSelectorRecommendation | null>
+): KangurOperationSelectorRecommendation | null => {
+  for (const recommendation of recommendations) {
+    if (recommendation) {
+      return recommendation;
+    }
+  }
+
+  return null;
+};
+
 export const getOperationSelectorRecommendation = (
   progress: KangurProgressState,
   quest: KangurDailyQuestState | null,
   fallbackCopy: OperationSelectorFallbackCopy,
   localizer?: KangurRecommendationLocalizer
 ): KangurOperationSelectorRecommendation | null =>
-  getQuestRecommendation(quest, progress, fallbackCopy, localizer?.translate) ??
-  getWeakestLessonRecommendation(progress, fallbackCopy, localizer) ??
-  getGuidedRecommendation(progress, fallbackCopy, localizer?.translate, localizer?.progressTranslate) ??
-  getTrackRecommendation(progress, fallbackCopy, localizer?.translate, localizer?.progressTranslate) ??
-  getFallbackRecommendation(progress, fallbackCopy, localizer?.translate, localizer?.progressTranslate);
+  resolveFirstRecommendation([
+    getQuestRecommendation(quest, progress, fallbackCopy, localizer?.translate),
+    getWeakestLessonRecommendation(progress, fallbackCopy, localizer),
+    getGuidedRecommendation(progress, fallbackCopy, localizer?.translate, localizer?.progressTranslate),
+    getTrackRecommendation(progress, fallbackCopy, localizer?.translate, localizer?.progressTranslate),
+    getFallbackRecommendation(progress, fallbackCopy, localizer?.translate, localizer?.progressTranslate),
+  ]);

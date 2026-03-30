@@ -14,6 +14,7 @@ import {
   buildLocalKangurLessonContentSnapshot,
   KANGUR_LESSON_DOCUMENT_SYNC_LOCALES,
 } from './kangur-lesson-content-snapshot';
+import { writeKangurLessonContentMetadata } from './kangur-content-metadata';
 
 const DEFAULT_KANGUR_CONTENT_LOCALES = ['pl', 'en', 'de', 'uk'] as const;
 
@@ -25,6 +26,7 @@ export type KangurContentBootstrapSummary = {
   gameInstancesByGame: Record<string, number>;
   games: number;
   lessonContentRevision: string;
+  lessonContentRevisionSyncedAt: string;
   lessonDocuments: number;
   lessonSections: number;
   lessons: number;
@@ -59,7 +61,7 @@ export async function bootstrapKangurContentToMongo(
     getKangurGameInstanceRepository(),
   ]);
 
-  const [lessons, lessonSections, lessonDocuments, lessonTemplatesByLocale, pageContentEntriesByLocale, aiTutorLocales, nativeGuideLocales, games] =
+  const [lessons, lessonSections, lessonDocuments, lessonTemplatesByLocale, pageContentEntriesByLocale, aiTutorLocales, nativeGuideLocales, games, lessonContentMetadata] =
     await Promise.all([
     lessonRepository.replaceLessons(lessonContentSnapshot.lessons),
     lessonSectionRepository.replaceSections(lessonContentSnapshot.sections),
@@ -95,6 +97,11 @@ export async function bootstrapKangurContentToMongo(
       })
     ),
     listKangurGames(),
+    writeKangurLessonContentMetadata({
+      lessonContentRevision: lessonContentSnapshot.lessonContentRevision,
+      locales: resolvedLocales,
+      source: 'localhost',
+    }),
     ]);
 
   const gameContentSetsByGame = Object.fromEntries(
@@ -121,6 +128,7 @@ export async function bootstrapKangurContentToMongo(
     gameInstancesByGame,
     games: games.length,
     lessonContentRevision: lessonContentSnapshot.lessonContentRevision,
+    lessonContentRevisionSyncedAt: lessonContentMetadata.syncedAt,
     lessonDocuments: Object.keys(lessonDocuments).length,
     lessonSections: lessonSections.length,
     lessons: lessons.length,

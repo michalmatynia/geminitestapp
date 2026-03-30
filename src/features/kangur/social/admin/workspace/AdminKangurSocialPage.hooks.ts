@@ -7,7 +7,7 @@ import {
   logKangurClientError,
 } from '@/features/kangur/observability/client';
 import { ErrorSystem } from '@/features/kangur/shared/utils/observability/error-system-client';
-import { parseDatetimeLocal, mergeImageAssets } from './AdminKangurSocialPage.Constants';
+import { parseDatetimeLocal } from './AdminKangurSocialPage.Constants';
 
 import { useSocialSettings } from './hooks/useSocialSettings';
 import { useSocialEditorSync } from './hooks/useSocialEditorSync';
@@ -35,6 +35,7 @@ import {
   isBatchCaptureJobTerminal,
   waitForDelay,
 } from './AdminKangurSocialPage.capture-feedback';
+import { mergeSocialPostSelectedAddons } from './social-post-image-assets';
 
 export function useAdminKangurSocialPage() {
   const settings = useSocialSettings();
@@ -143,6 +144,7 @@ export function useAdminKangurSocialPage() {
     scheduledAt: editor.scheduledAt,
     imageAssets: editor.imageAssets,
     imageAddonIds: editor.imageAddonIds,
+    recentAddons: editor.recentAddons,
     resolveDocReferences: editor.resolveDocReferences,
     linkedinConnectionId: settings.linkedinConnectionId,
     brainModelId: resolvedBrainModelId,
@@ -253,15 +255,20 @@ export function useAdminKangurSocialPage() {
         return null;
       }
 
-      const nextImageAddonIds = Array.from(
-        new Set([...editor.imageAddonIds, ...result.addons.map((addon) => addon.id)])
-      );
-      const nextImageAssets = mergeImageAssets(
-        editor.imageAssets,
-        result.addons
-          .map((addon) => addon.imageAsset)
-          .filter((asset): asset is ImageFileSelection => Boolean(asset))
-      );
+      const knownAddons = [
+        ...result.addons,
+        ...editor.recentAddons.filter(
+          (addon) => !result.addons.some((resultAddon) => resultAddon.id === addon.id)
+        ),
+      ];
+      const nextImageState = mergeSocialPostSelectedAddons({
+        imageAssets: editor.imageAssets,
+        imageAddonIds: editor.imageAddonIds,
+        recentAddons: knownAddons,
+        nextAddons: result.addons,
+      });
+      const nextImageAddonIds = nextImageState.imageAddonIds;
+      const nextImageAssets = nextImageState.imageAssets;
 
       const patched = await crud.patchMutation.mutateAsync({
         id: editor.activePost.id,
@@ -284,6 +291,7 @@ export function useAdminKangurSocialPage() {
       editor.activePost,
       editor.imageAddonIds,
       editor.imageAssets,
+      editor.recentAddons,
       editor.setImageAddonIds,
       editor.setImageAssets,
     ]

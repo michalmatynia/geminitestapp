@@ -15,7 +15,7 @@ import {
   hasFullyPublishedQuestionSetForSuite,
   getPublishedQuestionsForSuite,
   parseKangurTestQuestionStore,
-} from '@/features/kangur/test-questions';
+} from '@/features/kangur/test-suites/questions';
 import { isLiveKangurTestSuite, parseKangurTestSuites } from '@/features/kangur/test-suites';
 import {
   buildKangurLearnerProfileSnapshot,

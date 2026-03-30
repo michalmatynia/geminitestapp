@@ -5,26 +5,19 @@ import {
   KANGUR_CONTENT_BOOTSTRAP_LOCALES,
 } from '@/features/kangur/server/kangur-content-bootstrap';
 import { verifyKangurContentInMongo } from '@/features/kangur/server/kangur-content-verification';
+import { runKangurContentVerifyCli } from './lib/kangur-content-cli-runner';
 
 const argv = process.argv.slice(2);
-const strict = argv.includes('--strict');
 
 async function main(): Promise<void> {
-  if (!process.env['MONGODB_URI']) {
-    throw new Error('MONGODB_URI is required to verify Kangur content in MongoDB.');
-  }
-
-  const mongoClient = await getMongoClient();
-
-  try {
-    const summary = await verifyKangurContentInMongo(KANGUR_CONTENT_BOOTSTRAP_LOCALES);
-    process.stdout.write(`${JSON.stringify(summary)}\n`);
-    if (strict && !summary.ok) {
-      process.exitCode = 1;
-    }
-  } finally {
-    await mongoClient.close();
-  }
+  process.exitCode = await runKangurContentVerifyCli({
+    argv,
+    env: process.env,
+    getMongoClient,
+    locales: KANGUR_CONTENT_BOOTSTRAP_LOCALES,
+    verify: verifyKangurContentInMongo,
+    writeStdout: (value) => process.stdout.write(value),
+  });
 }
 
 void main().catch((error: unknown) => {

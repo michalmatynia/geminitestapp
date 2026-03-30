@@ -1,4 +1,4 @@
-import { renderCanonicalLoginRoute, generateCanonicalLoginMetadata } from '@/app/(frontend)/login-route-helpers';
+import { renderCanonicalLoginRoute, generateCanonicalLoginMetadata } from '@/app/(frontend)/route-helpers/login-route-helpers';
 
 import type { Metadata } from 'next';
 import type { JSX } from 'react';

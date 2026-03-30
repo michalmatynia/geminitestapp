@@ -11,7 +11,7 @@ import {
 } from '@/features/kangur/ui/design/tokens';
 
 
-import { hasIllustration } from '../test-questions';
+import { hasIllustration } from '../test-suites/questions';
 import { QuestionChoicesEditor } from './components/QuestionChoicesEditor';
 import { QuestionIllustrationEditor } from './components/QuestionIllustrationEditor';
 import { useOptionalKangurQuestionsManagerRuntimeContext } from './context/KangurQuestionsManagerRuntimeContext';
@@ -37,7 +37,7 @@ import {
   resolveQuestionEditorLocale,
 } from './question-editor.copy';
 
-import type { QuestionFormData } from '../test-questions';
+import type { QuestionFormData } from '../test-suites/questions';
 
 type Props = {
   formData: QuestionFormData;

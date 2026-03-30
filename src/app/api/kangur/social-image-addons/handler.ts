@@ -4,6 +4,7 @@ import { z } from 'zod';
 import { resolveKangurActor } from '@/features/kangur/services/kangur-actor';
 import { logKangurServerEvent } from '@/features/kangur/observability/server';
 import {
+  findKangurSocialImageAddonsByIds,
   listKangurSocialImageAddons,
 } from '@/features/kangur/social/server/social-image-addons-repository';
 import { createKangurSocialImageAddonFromPlaywright } from '@/features/kangur/social/server/social-image-addons-service';
@@ -12,14 +13,28 @@ import { kangurSocialCaptureAppearanceModeSchema } from '@/shared/contracts/kang
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { forbiddenError } from '@/shared/errors/app-error';
 import {
+  optionalCsvQueryStringArray,
   optionalIntegerQuerySchema,
   optionalTrimmedQueryString,
 } from '@/shared/lib/api/query-schema';
 
 export const querySchema = z.object({
+  ids: optionalCsvQueryStringArray(z.string().trim().min(1).max(200)),
   limit: optionalIntegerQuerySchema(z.number().int().min(1).max(50)),
   scope: optionalTrimmedQueryString(z.enum(['admin'])).optional(),
 });
+
+const dedupeAddonsById = <T extends { id: string }>(addons: T[]): T[] => {
+  const seen = new Set<string>();
+  return addons.filter((addon) => {
+    const normalizedId = addon.id.trim();
+    if (!normalizedId || seen.has(normalizedId)) {
+      return false;
+    }
+    seen.add(normalizedId);
+    return true;
+  });
+};
 
 const bodySchema = z.object({
   title: z.string().trim().min(1).max(200),
@@ -83,7 +98,20 @@ export async function getKangurSocialImageAddonsHandler(
 
   const query = querySchema.parse(ctx.query ?? {});
   const limit = query.limit ?? 12;
-  const addons = await listKangurSocialImageAddons(limit);
+  const requestedIds = Array.from(
+    new Set((query.ids ?? []).map((value) => value.trim()).filter(Boolean))
+  );
+  const [recentAddons, selectedAddons] = await Promise.all([
+    listKangurSocialImageAddons(limit),
+    requestedIds.length > 0 ? findKangurSocialImageAddonsByIds(requestedIds) : Promise.resolve([]),
+  ]);
+  const selectedAddonMap = new Map(selectedAddons.map((addon) => [addon.id.trim(), addon]));
+  const addons = dedupeAddonsById([
+    ...requestedIds
+      .map((addonId) => selectedAddonMap.get(addonId))
+      .filter((addon): addon is NonNullable<typeof addon> => Boolean(addon)),
+    ...recentAddons,
+  ]);
   void logKangurServerEvent({
     source: 'kangur.social-image-addons.list',
     message: 'Kangur social image add-ons listed',
@@ -94,6 +122,7 @@ export async function getKangurSocialImageAddonsHandler(
     context: {
       count: addons.length,
       limit,
+      requestedIdCount: requestedIds.length,
     },
   });
   return NextResponse.json(addons, { headers: { 'Cache-Control': 'no-store' } });

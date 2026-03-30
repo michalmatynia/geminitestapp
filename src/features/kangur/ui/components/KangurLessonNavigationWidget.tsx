@@ -26,6 +26,123 @@ type KangurLessonNavigationWidgetProps = {
   align?: 'center' | 'start';
 };
 
+type KangurLessonNavigationDirection = 'next' | 'previous';
+type KangurLessonNavigationResolvedState = {
+  handleSelectLesson: ((lessonId: string) => void) | undefined;
+  nextLesson: KangurLesson | null;
+  prevLesson: KangurLesson | null;
+};
+
+const resolveKangurLessonNavigationHandler = ({
+  onSelectLesson,
+  runtime,
+}: {
+  onSelectLesson?: (lessonId: string) => void;
+  runtime: ReturnType<typeof useOptionalKangurLessonsRuntime>;
+}): ((lessonId: string) => void) | undefined => onSelectLesson ?? runtime?.selectLesson;
+
+const resolveKangurLessonNavigationLesson = ({
+  overrideLesson,
+  runtimeLesson,
+}: {
+  overrideLesson?: KangurLesson | null;
+  runtimeLesson?: KangurLesson | null;
+}): KangurLesson | null => overrideLesson ?? runtimeLesson ?? null;
+
+const resolveKangurLessonNavigationState = ({
+  nextLesson,
+  onSelectLesson,
+  prevLesson,
+  runtime,
+}: {
+  nextLesson?: KangurLesson | null;
+  onSelectLesson?: (lessonId: string) => void;
+  prevLesson?: KangurLesson | null;
+  runtime: ReturnType<typeof useOptionalKangurLessonsRuntime>;
+}): KangurLessonNavigationResolvedState => ({
+  handleSelectLesson: resolveKangurLessonNavigationHandler({ onSelectLesson, runtime }),
+  nextLesson: resolveKangurLessonNavigationLesson({
+    overrideLesson: nextLesson,
+    runtimeLesson: runtime?.nextLesson,
+  }),
+  prevLesson: resolveKangurLessonNavigationLesson({
+    overrideLesson: prevLesson,
+    runtimeLesson: runtime?.prevLesson,
+  }),
+});
+
+const shouldRenderKangurLessonNavigationWidget = ({
+  handleSelectLesson,
+  isSubsectionNavigationActive,
+}: {
+  handleSelectLesson: ((lessonId: string) => void) | undefined;
+  isSubsectionNavigationActive: boolean;
+}): boolean => !isSubsectionNavigationActive && Boolean(handleSelectLesson);
+
+const resolveKangurLessonNavigationClassNames = (align: 'center' | 'start') => ({
+  buttonGroupClassName: cn(
+    LESSONS_SELECTOR_NAV_BUTTON_ROW_CLASSNAME,
+    align === 'start' ? 'justify-start sm:w-full sm:self-auto' : null
+  ),
+  navClassName: cn(
+    LESSONS_SELECTOR_NAV_LAYOUT_CLASSNAME,
+    align === 'start' ? 'kangur-lesson-nav-inline' : null
+  ),
+});
+
+const resolveKangurLessonNavigationLabel = ({
+  direction,
+  lesson,
+  translations,
+}: {
+  direction: KangurLessonNavigationDirection;
+  lesson: KangurLesson | null;
+  translations: ReturnType<typeof useTranslations<'KangurLessonsWidgets.navigation'>>;
+}): string => {
+  if (!lesson) {
+    return direction === 'previous'
+      ? translations('noPreviousLesson')
+      : translations('noNextLesson');
+  }
+
+  return direction === 'previous'
+    ? translations('previousLesson', { title: lesson.title })
+    : translations('nextLesson', { title: lesson.title });
+};
+
+const renderKangurLessonNavigationButton = ({
+  direction,
+  handleSelectLesson,
+  icon,
+  isCoarsePointer,
+  lesson,
+  translations,
+}: {
+  direction: KangurLessonNavigationDirection;
+  handleSelectLesson: (lessonId: string) => void;
+  icon: typeof ChevronLeft | typeof ChevronRight;
+  isCoarsePointer: boolean;
+  lesson: KangurLesson | null;
+  translations: ReturnType<typeof useTranslations<'KangurLessonsWidgets.navigation'>>;
+}): React.JSX.Element =>
+  renderKangurLessonNavigationIconButton({
+    onClick: lesson ? () => handleSelectLesson(lesson.id) : undefined,
+    disabled: !lesson,
+    icon,
+    isCoarsePointer,
+    'data-doc-id': 'lessons_prev_next',
+    'aria-label': resolveKangurLessonNavigationLabel({
+      direction,
+      lesson,
+      translations,
+    }),
+    title: resolveKangurLessonNavigationLabel({
+      direction,
+      lesson,
+      translations,
+    }),
+  });
+
 export function KangurLessonNavigationWidget({
   prevLesson: overridePrevLesson,
   nextLesson: overrideNextLesson,
@@ -38,26 +155,25 @@ export function KangurLessonNavigationWidget({
   const runtime = useOptionalKangurLessonsRuntime();
   const isSubsectionNavigationActive = useKangurLessonSubsectionNavigationActive();
   const isCoarsePointer = useKangurCoarsePointer();
-  const prevLesson = overridePrevLesson ?? runtime?.prevLesson ?? null;
-  const nextLesson = overrideNextLesson ?? runtime?.nextLesson ?? null;
-  const handleSelectLesson = onSelectLesson ?? runtime?.selectLesson;
+  const { buttonGroupClassName, navClassName } =
+    resolveKangurLessonNavigationClassNames(align);
+  const { handleSelectLesson, nextLesson, prevLesson } = resolveKangurLessonNavigationState({
+    nextLesson: overrideNextLesson,
+    onSelectLesson,
+    prevLesson: overridePrevLesson,
+    runtime,
+  });
   const panelDescription = sectionSummary;
   const panelTitle = sectionTitle;
 
-  if (isSubsectionNavigationActive || !handleSelectLesson) {
+  if (
+    !shouldRenderKangurLessonNavigationWidget({
+      handleSelectLesson,
+      isSubsectionNavigationActive,
+    })
+  ) {
     return null;
   }
-
-  const navClassName = cn(
-    LESSONS_SELECTOR_NAV_LAYOUT_CLASSNAME,
-    align === 'start' ? 'kangur-lesson-nav-inline' : null
-  );
-  const buttonGroupClassName = cn(
-    LESSONS_SELECTOR_NAV_BUTTON_ROW_CLASSNAME,
-    align === 'start'
-      ? 'justify-start sm:w-full sm:self-auto'
-      : null
-  );
 
   return (
     <nav
@@ -77,36 +193,22 @@ export function KangurLessonNavigationWidget({
         role='group'
         aria-label={translations('ariaLabel')}
       >
-        {renderKangurLessonNavigationIconButton({
-          onClick: prevLesson ? () => handleSelectLesson(prevLesson.id) : undefined,
-          disabled: !prevLesson,
+        {renderKangurLessonNavigationButton({
+          direction: 'previous',
+          handleSelectLesson,
           icon: ChevronLeft,
           isCoarsePointer,
-          'data-doc-id': 'lessons_prev_next',
-          'aria-label':
-            prevLesson
-              ? translations('previousLesson', { title: prevLesson.title })
-              : translations('noPreviousLesson'),
-          title:
-            prevLesson
-              ? translations('previousLesson', { title: prevLesson.title })
-              : translations('noPreviousLesson'),
+          lesson: prevLesson,
+          translations,
         })}
 
-        {renderKangurLessonNavigationIconButton({
-          onClick: nextLesson ? () => handleSelectLesson(nextLesson.id) : undefined,
-          disabled: !nextLesson,
+        {renderKangurLessonNavigationButton({
+          direction: 'next',
+          handleSelectLesson,
           icon: ChevronRight,
           isCoarsePointer,
-          'data-doc-id': 'lessons_prev_next',
-          'aria-label':
-            nextLesson
-              ? translations('nextLesson', { title: nextLesson.title })
-              : translations('noNextLesson'),
-          title:
-            nextLesson
-              ? translations('nextLesson', { title: nextLesson.title })
-              : translations('noNextLesson'),
+          lesson: nextLesson,
+          translations,
         })}
       </div>
     </nav>

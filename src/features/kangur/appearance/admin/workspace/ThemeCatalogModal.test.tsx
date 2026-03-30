@@ -153,6 +153,9 @@ describe('ThemeCatalogModal', () => {
     useAppearancePageMock.mockReturnValue({
       catalog: catalogEntries,
       draft: KANGUR_DEFAULT_DAILY_THEME,
+      slotThemes: {
+        daily: KANGUR_DEFAULT_DAILY_THEME,
+      },
       selectedId: 'theme-alpha',
       handleSelect: handleSelectMock,
       updateCatalog: updateCatalogMock,

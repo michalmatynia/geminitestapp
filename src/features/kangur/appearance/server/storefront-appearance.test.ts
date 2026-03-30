@@ -3,11 +3,23 @@
  */
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+import {
+  KANGUR_DAILY_THEME_SETTINGS_KEY,
+  KANGUR_DAWN_THEME_SETTINGS_KEY,
+  KANGUR_NIGHTLY_THEME_SETTINGS_KEY,
+  KANGUR_STOREFRONT_DEFAULT_MODE_SETTING_KEY,
+  KANGUR_SUNSET_THEME_SETTINGS_KEY,
+} from '@/shared/contracts/kangur';
+
 vi.mock('server-only', () => ({}));
 
-const { getSettingValueMock, listKangurSettingsByKeysMock, revalidateTagMock } = vi.hoisted(() => ({
-  getSettingValueMock: vi.fn(),
-  listKangurSettingsByKeysMock: vi.fn(),
+const {
+  ensureKangurStorefrontAppearanceSettingsSeededMock,
+  createKangurStorefrontAppearanceSeedSettingsMock,
+  revalidateTagMock,
+} = vi.hoisted(() => ({
+  ensureKangurStorefrontAppearanceSettingsSeededMock: vi.fn(),
+  createKangurStorefrontAppearanceSeedSettingsMock: vi.fn(),
   revalidateTagMock: vi.fn(),
 }));
 
@@ -24,27 +36,35 @@ vi.mock('react', async (importOriginal) => {
   };
 });
 
-vi.mock('@/shared/lib/ai/server-settings', () => ({
-  getSettingValue: getSettingValueMock,
-}));
-
-vi.mock('@/features/kangur/services/kangur-settings-repository', () => ({
-  listKangurSettingsByKeys: listKangurSettingsByKeysMock,
+vi.mock('./storefront-appearance-source', () => ({
+  ensureKangurStorefrontAppearanceSettingsSeeded:
+    ensureKangurStorefrontAppearanceSettingsSeededMock,
+  createKangurStorefrontAppearanceSeedSettings:
+    createKangurStorefrontAppearanceSeedSettingsMock,
 }));
 
 describe('storefront-appearance', () => {
   beforeEach(() => {
     vi.resetModules();
     vi.clearAllMocks();
-    getSettingValueMock.mockResolvedValue('default');
-    listKangurSettingsByKeysMock.mockResolvedValue([]);
+    const seedSettings = [
+      { key: KANGUR_STOREFRONT_DEFAULT_MODE_SETTING_KEY, value: 'default' },
+      { key: KANGUR_DAILY_THEME_SETTINGS_KEY, value: '{"backgroundColor":"#ffffff"}' },
+      { key: KANGUR_DAWN_THEME_SETTINGS_KEY, value: '{"backgroundColor":"#f9d7aa"}' },
+      { key: KANGUR_SUNSET_THEME_SETTINGS_KEY, value: '{"backgroundColor":"#ff8800"}' },
+      { key: KANGUR_NIGHTLY_THEME_SETTINGS_KEY, value: '{"backgroundColor":"#111827"}' },
+    ];
+    ensureKangurStorefrontAppearanceSettingsSeededMock.mockResolvedValue(seedSettings);
+    createKangurStorefrontAppearanceSeedSettingsMock.mockReturnValue(seedSettings);
   });
 
   it('reads the initial storefront mode and theme settings from Kangur settings storage', async () => {
-    getSettingValueMock.mockResolvedValue('sunset');
-    listKangurSettingsByKeysMock.mockResolvedValue([
-      { key: 'kangur_cms_theme_daily_v1', value: '{"backgroundColor":"#ffffff"}' },
-      { key: 'kangur_cms_theme_sunset_v1', value: '{"backgroundColor":"#ff8800"}' },
+    ensureKangurStorefrontAppearanceSettingsSeededMock.mockResolvedValue([
+      { key: KANGUR_STOREFRONT_DEFAULT_MODE_SETTING_KEY, value: 'sunset' },
+      { key: KANGUR_DAILY_THEME_SETTINGS_KEY, value: '{"backgroundColor":"#ffffff"}' },
+      { key: KANGUR_DAWN_THEME_SETTINGS_KEY, value: '{"backgroundColor":"#ffe1b3"}' },
+      { key: KANGUR_SUNSET_THEME_SETTINGS_KEY, value: '{"backgroundColor":"#ff8800"}' },
+      { key: KANGUR_NIGHTLY_THEME_SETTINGS_KEY, value: '{"backgroundColor":"#0f172a"}' },
     ]);
 
     const { getKangurStorefrontInitialState } = await import('./storefront-appearance');
@@ -53,38 +73,44 @@ describe('storefront-appearance', () => {
       initialMode: 'sunset',
       initialThemeSettings: {
         default: '{"backgroundColor":"#ffffff"}',
-        dawn: null,
+        dawn: '{"backgroundColor":"#ffe1b3"}',
         sunset: '{"backgroundColor":"#ff8800"}',
-        dark: null,
+        dark: '{"backgroundColor":"#0f172a"}',
       },
     });
   });
 
-  it('falls back to empty theme settings when transient mongo reads fail', async () => {
+  it('falls back to seeded appearance settings when transient mongo reads fail', async () => {
     const transientError = new Error(
       'querySrv ECONNREFUSED _mongodb._tcp.cluster0.example.mongodb.net'
     );
     transientError.name = 'MongoServerSelectionError';
 
-    getSettingValueMock.mockResolvedValue('dark');
-    listKangurSettingsByKeysMock.mockRejectedValue(transientError);
+    ensureKangurStorefrontAppearanceSettingsSeededMock.mockRejectedValue(transientError);
+    createKangurStorefrontAppearanceSeedSettingsMock.mockReturnValue([
+      { key: KANGUR_STOREFRONT_DEFAULT_MODE_SETTING_KEY, value: 'default' },
+      { key: KANGUR_DAILY_THEME_SETTINGS_KEY, value: '{"backgroundColor":"#ffffff"}' },
+      { key: KANGUR_DAWN_THEME_SETTINGS_KEY, value: '{"backgroundColor":"#f9d7aa"}' },
+      { key: KANGUR_SUNSET_THEME_SETTINGS_KEY, value: '{"backgroundColor":"#ff8800"}' },
+      { key: KANGUR_NIGHTLY_THEME_SETTINGS_KEY, value: '{"backgroundColor":"#111827"}' },
+    ]);
 
     const { getKangurStorefrontInitialState } = await import('./storefront-appearance');
 
     await expect(getKangurStorefrontInitialState()).resolves.toEqual({
-      initialMode: 'dark',
+      initialMode: 'default',
       initialThemeSettings: {
-        default: null,
-        dawn: null,
-        sunset: null,
-        dark: null,
+        default: '{"backgroundColor":"#ffffff"}',
+        dawn: '{"backgroundColor":"#f9d7aa"}',
+        sunset: '{"backgroundColor":"#ff8800"}',
+        dark: '{"backgroundColor":"#111827"}',
       },
     });
   });
 
   it('rethrows unexpected theme-settings failures', async () => {
     const error = new Error('invalid theme settings payload');
-    listKangurSettingsByKeysMock.mockRejectedValue(error);
+    ensureKangurStorefrontAppearanceSettingsSeededMock.mockRejectedValue(error);
 
     const { getKangurStorefrontInitialState } = await import('./storefront-appearance');
 

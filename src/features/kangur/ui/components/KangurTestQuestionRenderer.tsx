@@ -9,7 +9,7 @@ import {
   questionDocumentNeedsRichRenderer,
   hasIllustration,
   hasRichChoiceContent,
-} from '@/features/kangur/test-questions';
+} from '@/features/kangur/test-suites/questions';
 import KangurAnswerChoiceCard from '@/features/kangur/ui/components/KangurAnswerChoiceCard';
 import { useOptionalKangurTestSuiteRuntime } from '@/features/kangur/ui/context/KangurTestSuiteRuntimeContext';
 import {

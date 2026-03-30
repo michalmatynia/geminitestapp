@@ -33,7 +33,7 @@ import {
   DEFAULT_KANGUR_LAUNCH_ROUTE,
   isKangurLaunchRoute,
   type KangurLaunchRoute,
-} from '@/features/kangur/launch-route';
+} from '@/features/kangur/config/launch-route';
 import { parseJsonSetting } from '@/features/kangur/utils/settings-json';
 
 export {
@@ -42,12 +42,12 @@ export {
   KANGUR_LAUNCH_ROUTE_SETTINGS_KEY,
 };
 export { KANGUR_LESSON_COMPONENT_ORDER, KANGUR_LESSON_LIBRARY };
-export * from './help-settings';
+export * from './docs/help-settings';
 export {
   DEFAULT_KANGUR_LAUNCH_ROUTE,
   KANGUR_LAUNCH_ROUTE_VALUES,
   type KangurLaunchRoute,
-} from './launch-route';
+} from './config/launch-route';
 
 export const KANGUR_LESSON_SORT_ORDER_GAP = 1000;
 export const KANGUR_NARRATOR_SETTINGS_KEY = 'kangur_narrator_settings_v1';
@@ -562,6 +562,12 @@ export const normalizeKangurLessons = (value: unknown): KangurLesson[] => {
           (index + 1) * KANGUR_LESSON_SORT_ORDER_GAP
         ),
         enabled: entry['enabled'] !== false,
+        ...(typeof entry['sectionId'] === 'string' && entry['sectionId'].trim().length > 0
+          ? { sectionId: entry['sectionId'].trim().slice(0, 120) }
+          : {}),
+        ...(typeof entry['subsectionId'] === 'string' && entry['subsectionId'].trim().length > 0
+          ? { subsectionId: entry['subsectionId'].trim().slice(0, 120) }
+          : {}),
       };
     })
     .filter((entry): entry is KangurLesson => Boolean(entry));

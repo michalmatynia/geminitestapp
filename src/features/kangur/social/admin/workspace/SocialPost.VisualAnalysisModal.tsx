@@ -35,22 +35,38 @@ export function SocialPostVisualAnalysisModal(): React.JSX.Element | null {
     currentPipelineJob,
     currentVisualAnalysisJob,
     imageAddonIds,
+    missingSelectedImageAddonIds,
     recentAddons,
+    addonsQuery,
+    handleRemoveMissingAddons,
     hasSavedVisualAnalysis,
     isSavedVisualAnalysisStale,
     visionModelId,
     visionModelOptions,
   } = useSocialPostContext();
+  const selectedImageAddonIds = Array.isArray(imageAddonIds) ? imageAddonIds : [];
+  const availableRecentAddons = Array.isArray(recentAddons) ? recentAddons : [];
+  const missingAddonIds = Array.isArray(missingSelectedImageAddonIds)
+    ? missingSelectedImageAddonIds
+    : [];
 
   const selectedAddons = React.useMemo(
-    () => (recentAddons ?? []).filter((addon) => (imageAddonIds ?? []).includes(addon.id)),
-    [imageAddonIds, recentAddons]
+    () => availableRecentAddons.filter((addon) => selectedImageAddonIds.includes(addon.id)),
+    [availableRecentAddons, selectedImageAddonIds]
   );
-  const selectedVisualCount = imageAddonIds?.length ?? 0;
-  const missingSelectedAddonCount = Math.max(
-    0,
-    selectedVisualCount - selectedAddons.length
-  );
+  const selectedVisualCount = selectedImageAddonIds.length;
+  const missingSelectedAddonCount = missingAddonIds.length;
+  const isRefreshingImageAddons = Boolean(addonsQuery?.isFetching);
+  const refetchImageAddons = (): void => {
+    if (typeof addonsQuery?.refetch === 'function') {
+      void addonsQuery.refetch();
+    }
+  };
+  const removeMissingAddons = (): void => {
+    if (typeof handleRemoveMissingAddons === 'function') {
+      handleRemoveMissingAddons();
+    }
+  };
   const personasQuery = usePlaywrightPersonas({
     enabled: selectedAddons.some((addon) => Boolean(addon.playwrightPersonaId?.trim())),
   });
@@ -135,11 +151,11 @@ export function SocialPostVisualAnalysisModal(): React.JSX.Element | null {
             : 'Run image analysis before generating post copy from visuals.'
         : 'Generate post with analysis';
   const analyzeButtonTitle =
-    selectedAddons.length === 0
+    selectedVisualCount === 0
       ? 'Select at least one image add-on before running image analysis.'
       : missingSelectedAddonCount > 0
-        ? 'Some selected image add-ons are not loaded yet. Refresh the image add-ons and try again.'
-      : isVisualAnalysisJobInFlight
+        ? 'Some selected image add-ons are missing from the loaded list. Refresh the image add-ons or remove the missing selections before running image analysis.'
+        : isVisualAnalysisJobInFlight
         ? 'Wait for the current Social runtime job to finish.'
         : 'Analyze selected visuals';
 
@@ -168,7 +184,7 @@ export function SocialPostVisualAnalysisModal(): React.JSX.Element | null {
           }}
           disabled={
             isVisualAnalysisJobInFlight ||
-            selectedAddons.length === 0 ||
+            selectedVisualCount === 0 ||
             missingSelectedAddonCount > 0
           }
           title={analyzeButtonTitle}
@@ -209,15 +225,36 @@ export function SocialPostVisualAnalysisModal(): React.JSX.Element | null {
           ) : null}
         </div>
 
-        {selectedAddons.length === 0 ? (
+        {selectedVisualCount === 0 ? (
           <div className='rounded-xl border border-border/60 bg-background/40 px-3 py-2 text-sm text-muted-foreground'>
             Select at least one image add-on before running image analysis.
           </div>
         ) : missingSelectedAddonCount > 0 ? (
           <div className='rounded-xl border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-sm text-amber-900 dark:text-amber-200'>
-            {missingSelectedAddonCount === 1
-              ? '1 selected image add-on is missing from the loaded list. Refresh the image add-ons and try again.'
-              : `${missingSelectedAddonCount} selected image add-ons are missing from the loaded list. Refresh the image add-ons and try again.`}
+            <div>
+              {missingSelectedAddonCount === 1
+                ? '1 selected image add-on is missing from the loaded list. Refresh the image add-ons and try again.'
+                : `${missingSelectedAddonCount} selected image add-ons are missing from the loaded list. Refresh the image add-ons and try again.`}
+            </div>
+            <div className='mt-2 flex flex-wrap gap-2'>
+              <Button
+                type='button'
+                variant='outline'
+                size='sm'
+                onClick={refetchImageAddons}
+                disabled={isRefreshingImageAddons}
+              >
+                {isRefreshingImageAddons ? 'Refreshing image add-ons...' : 'Refresh image add-ons'}
+              </Button>
+              <Button
+                type='button'
+                variant='outline'
+                size='sm'
+                onClick={removeMissingAddons}
+              >
+                Remove missing add-ons
+              </Button>
+            </div>
           </div>
         ) : (
           <div className='grid gap-3 sm:grid-cols-2 xl:grid-cols-3'>

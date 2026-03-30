@@ -17,7 +17,7 @@ import { useKangurLessonDocuments, useKangurLessons } from '@/features/kangur/ui
 import {
   KANGUR_TEST_QUESTIONS_SETTING_KEY,
   parseKangurTestQuestionStore,
-} from '@/features/kangur/test-questions';
+} from '@/features/kangur/test-suites/questions';
 import { KANGUR_TEST_SUITES_SETTING_KEY, parseKangurTestSuites } from '@/features/kangur/test-suites';
 import { useSettingsStore } from '@/features/kangur/shared/providers/SettingsStoreProvider';
 import { Badge, Card } from '@/features/kangur/shared/ui';

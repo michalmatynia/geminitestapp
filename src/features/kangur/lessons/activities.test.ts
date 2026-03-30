@@ -9,7 +9,7 @@ import {
   KANGUR_LESSON_ACTIVITY_DEFINITIONS,
   applyKangurLessonActivityDefaults,
   getLocalizedKangurLessonActivityDefinition,
-} from './lesson-activities';
+} from './activities';
 
 describe('kangur lesson activities', () => {
   it('describes the clock training activity as segmented practice', () => {

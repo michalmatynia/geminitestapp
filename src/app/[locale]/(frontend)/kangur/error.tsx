@@ -1,5 +1,3 @@
 'use client';
 
-import KangurErrorPage from '@/app/(frontend)/kangur/error';
-
-export default KangurErrorPage;
+export { default } from '@/app/(frontend)/kangur/error';

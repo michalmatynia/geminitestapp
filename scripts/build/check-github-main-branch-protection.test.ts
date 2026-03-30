@@ -118,6 +118,25 @@ describe('check-github-main-branch-protection', () => {
     expect(findProtectionDrift(protectedBranch, baseConfig)).toEqual([]);
   });
 
+  it('detects drift when stale required checks are still configured', () => {
+    expect(
+      findProtectionDrift(
+        {
+          ...protectedBranch,
+          required_status_checks: {
+            strict: true,
+            checks: [
+              { context: 'toolchain-contract', app_id: 15368 },
+              { context: 'production-sync', app_id: 15368 },
+            ],
+            contexts: ['toolchain-contract', 'production-sync'],
+          },
+        },
+        baseConfig,
+      ),
+    ).toContain('unexpected required checks are configured: production-sync');
+  });
+
   it('builds a repair payload that preserves stricter review settings while restoring the required check', () => {
     const payload = buildProtectionPayload(
       {
@@ -222,8 +241,8 @@ describe('check-github-main-branch-protection', () => {
                 ...protectedBranch,
                 required_status_checks: {
                   strict: false,
-                  checks: [],
-                  contexts: [],
+                  checks: [{ context: 'production-sync', app_id: 15368 }],
+                  contexts: ['production-sync'],
                 },
                 allow_force_pushes: {
                   enabled: true,

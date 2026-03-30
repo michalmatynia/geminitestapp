@@ -225,20 +225,18 @@ function KangurLearnerProfileOperationCard({
 
 function KangurLearnerProfileOperationsPanel({
   basePath,
-  commonTranslations,
   operationActionClassName,
   snapshot,
   translations,
 }: {
   basePath: string;
-  commonTranslations: ReturnType<typeof useTranslations<'KangurPublic'>>;
   operationActionClassName: string;
   snapshot: KangurLearnerProfileRuntimeSnapshot;
   translations: ReturnType<typeof useTranslations<'KangurLearnerProfileWidgets.performance'>>;
 }): React.JSX.Element {
   return (
     <KangurGlassPanel padding='lg' surface='solid' variant='subtle'>
-      <KangurPanelSectionHeading>{commonTranslations('overview.operationsHeading')}</KangurPanelSectionHeading>
+      <KangurPanelSectionHeading>{translations('operationsHeading')}</KangurPanelSectionHeading>
       <div className='flex flex-col kangur-panel-gap'>
         {snapshot.operationPerformance.length === 0 ? (
           <KangurEmptyState
@@ -267,7 +265,6 @@ function KangurLearnerProfileOperationsPanel({
 
 export function KangurLearnerProfilePerformanceWidget(): React.JSX.Element {
   const translations = useTranslations('KangurLearnerProfileWidgets.performance');
-  const commonTranslations = useTranslations('KangurPublic');
   const { basePath, maxWeeklyGames, snapshot } = useKangurLearnerProfileRuntime();
   const isCoarsePointer = useKangurCoarsePointer();
   const { entry: performanceContent } = useKangurPageContentEntry('learner-profile-performance');
@@ -294,7 +291,6 @@ export function KangurLearnerProfilePerformanceWidget(): React.JSX.Element {
         />
         <KangurLearnerProfileOperationsPanel
           basePath={basePath}
-          commonTranslations={commonTranslations}
           operationActionClassName={operationActionClassName}
           snapshot={snapshot}
           translations={translations}

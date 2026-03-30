@@ -39,10 +39,14 @@ import {
 import { integrationKeys, playwrightKeys } from '@/shared/lib/query-key-exports';
 import { parseJsonSetting } from '@/shared/utils/settings-json';
 
+const INTEGRATIONS_QUERY_TIMEOUT_MS = 30_000;
+
 export function useIntegrations(): ListQuery<Integration> {
   const queryKey = integrationKeys.all;
   const queryFn = async (): Promise<Integration[]> => {
-    const data = await api.get<Integration[]>('/api/v2/integrations');
+    const data = await api.get<Integration[]>('/api/v2/integrations', {
+      timeout: INTEGRATIONS_QUERY_TIMEOUT_MS,
+    });
     return z.array(integrationSchema).parse(data);
   };
 
@@ -67,7 +71,10 @@ export function useIntegrationConnections(
   const queryFn = async (): Promise<IntegrationConnection[]> => {
     if (!integrationId) return [];
     const data = await api.get<IntegrationConnection[]>(
-      `/api/v2/integrations/${integrationId}/connections`
+      `/api/v2/integrations/${integrationId}/connections`,
+      {
+        timeout: INTEGRATIONS_QUERY_TIMEOUT_MS,
+      }
     );
     return z.array(integrationConnectionSchema).parse(data);
   };

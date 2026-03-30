@@ -3,7 +3,7 @@
  */
 
 import { act, renderHook, waitFor } from '@testing-library/react';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { AiNode, AiPathsValidationRule, PathConfig } from '@/shared/contracts/ai-paths';
 import { PATH_CONFIG_PREFIX, PATH_INDEX_KEY } from '@/shared/lib/ai-paths/core/constants';
@@ -119,6 +119,10 @@ describe('useAdminAiPathsValidationState', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mocks.useSearchParamsMock.mockReturnValue(new URLSearchParams(''));
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
   });
 
   it('persists repaired legacy trigger configs back to settings', async () => {
@@ -427,5 +431,490 @@ describe('useAdminAiPathsValidationState', () => {
     expect(mocks.toastMock).toHaveBeenCalledWith('AI-Paths Node Validator settings saved.', {
       variant: 'success',
     });
+  });
+
+  it('applies docs sources, collection maps, and rule drafts through the draft helpers', async () => {
+    const editableRule = buildRule({
+      id: 'rule-edit',
+      title: 'Editable Rule',
+      enabled: true,
+      sequence: 2,
+      appliesToStages: ['graph_parse'],
+    });
+    const config = buildConfig('path-edit', {
+      name: 'Editable Path',
+      aiPathsValidation: {
+        docsSources: ['docs/original'],
+        collectionMap: { product: 'products' },
+        rules: [editableRule],
+      },
+    });
+
+    mocks.useSearchParamsMock.mockReturnValue(new URLSearchParams('pathId=path-edit'));
+    mocks.useAiPathsSettingsQueryMock.mockReturnValue({
+      data: buildSettings(config),
+      refetch: vi.fn(async () => undefined),
+    });
+
+    const { result } = renderHook(() => useAdminAiPathsValidationState());
+
+    await waitFor(() => {
+      expect(result.current.selectedPathId).toBe('path-edit');
+    });
+
+    act(() => {
+      result.current.setDocsSourcesDraft('docs/alpha\ndocs/alpha\ninvalid,entry');
+      result.current.setCollectionMapDraft('product:catalog\nbroken\norder:orders');
+      result.current.setRulesDraft('{');
+    });
+
+    act(() => {
+      expect(result.current.handleApplyRulesDraft()).toBe(false);
+    });
+
+    expect(result.current.rulesDraftError).toBe('Invalid validation rules JSON.');
+    expect(mocks.toastMock).toHaveBeenCalledWith('Invalid validation rules JSON.', {
+      variant: 'error',
+    });
+
+    act(() => {
+      result.current.handleApplyDocsSources();
+    });
+
+    expect(result.current.docsSourcesDraft).toBe('docs/alpha');
+    expect(result.current.validationDraft.docsSources).toEqual(['docs/alpha']);
+    expect(result.current.isDirty).toBe(true);
+    expect(mocks.toastMock).toHaveBeenCalledWith('Docs sources applied to AI-Paths validator.', {
+      variant: 'success',
+    });
+
+    act(() => {
+      result.current.handleApplyCollectionMap();
+    });
+
+    expect(result.current.collectionMapDraft).toBe('order:orders\nproduct:catalog');
+    expect(result.current.validationDraft.collectionMap).toEqual({
+      order: 'orders',
+      product: 'catalog',
+    });
+    expect(mocks.toastMock).toHaveBeenCalledWith('Entity-to-collection map applied.', {
+      variant: 'success',
+    });
+
+    act(() => {
+      result.current.setRulesDraft(
+        JSON.stringify(
+          [
+            buildRule({
+              id: 'rule-edit',
+              title: 'Editable Rule',
+              enabled: false,
+              sequence: 5,
+              appliesToStages: ['node_pre_execute'],
+            }),
+          ],
+          null,
+          2
+        )
+      );
+    });
+
+    act(() => {
+      expect(result.current.handleApplyRulesDraft()).toBe(true);
+    });
+
+    expect(result.current.validationDraft.rules?.[0]).toMatchObject({
+      id: 'rule-edit',
+      enabled: false,
+      sequence: 5,
+      appliesToStages: ['node_pre_execute'],
+    });
+    expect(mocks.toastMock).toHaveBeenCalledWith('Applied 1 validation rules.', {
+      variant: 'success',
+    });
+
+    act(() => {
+      result.current.handleToggleRuleEnabled('rule-edit');
+    });
+
+    expect(result.current.validationDraft.rules?.[0]?.enabled).toBe(true);
+
+    act(() => {
+      result.current.handleRuleSequenceBlur('rule-edit', 'not-a-number');
+    });
+
+    expect(result.current.validationDraft.rules?.[0]?.sequence).toBe(5);
+
+    act(() => {
+      result.current.handleRuleSequenceBlur('rule-edit', '9');
+    });
+
+    expect(result.current.validationDraft.rules?.[0]?.sequence).toBe(9);
+
+    act(() => {
+      result.current.handleRuleStageToggle('rule-edit', 'graph_bind', true);
+    });
+
+    expect(result.current.validationDraft.rules?.[0]?.appliesToStages).toEqual([
+      'graph_bind',
+      'node_pre_execute',
+    ]);
+
+    act(() => {
+      result.current.handleRuleStageToggle('rule-edit', 'node_pre_execute', false);
+    });
+
+    expect(result.current.validationDraft.rules?.[0]?.appliesToStages).toEqual(['graph_bind']);
+
+    act(() => {
+      result.current.handleResetToDefaults();
+    });
+
+    expect(result.current.rulesDraftError).toBeNull();
+    expect(result.current.validationDraft.rules).toEqual(expect.any(Array));
+    expect(mocks.toastMock).toHaveBeenCalledWith(
+      'Reset draft to default AI-Paths validator profile.',
+      { variant: 'info' }
+    );
+  });
+
+  it('syncs central docs, preserves rejections, and marks stale central rules for review', async () => {
+    const existingRule = buildRule({
+      id: 'central-existing',
+      title: 'Existing Rule',
+      module: 'custom',
+      inference: {
+        sourceType: 'central_docs',
+        status: 'approved',
+        assertionId: 'assertion-shared',
+        sourceHash: 'hash-old',
+      },
+    });
+    const deprecatedRule = buildRule({
+      id: 'central-deprecated',
+      title: 'Deprecated Rule',
+      module: 'custom',
+      inference: {
+        sourceType: 'central_docs',
+        status: 'approved',
+        assertionId: 'assertion-deprecated',
+        sourceHash: 'hash-deprecated',
+      },
+    });
+    const missingRule = buildRule({
+      id: 'central-missing',
+      title: 'Missing Rule',
+      module: 'custom',
+      inference: {
+        sourceType: 'central_docs',
+        status: 'approved',
+        assertionId: 'assertion-missing',
+        sourceHash: 'hash-missing',
+      },
+    });
+    const previouslyRejected = buildRule({
+      id: 'candidate-local-rejected',
+      title: 'Previously Rejected',
+      enabled: false,
+      module: 'custom',
+      inference: {
+        sourceType: 'central_docs',
+        status: 'rejected',
+        assertionId: 'assertion-rejected',
+        sourceHash: 'hash-rejected-local',
+      },
+    });
+    const config = buildConfig('path-sync', {
+      name: 'Sync Path',
+      aiPathsValidation: {
+        rules: [existingRule, deprecatedRule, missingRule],
+        inferredCandidates: [previouslyRejected],
+        docsSyncState: {
+          candidateCount: 1,
+        },
+      },
+    });
+
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () => ({
+        ok: true,
+        json: async () => ({
+          snapshot: {
+            generatedAt: '2026-03-12T10:00:00.000Z',
+            snapshotHash: 'snapshot-1',
+            warnings: ['Upstream warning'],
+            sources: [
+              {
+                id: 'central-1',
+                path: 'docs/central/rules.md',
+                type: 'markdown',
+                hash: 'hash-doc-1',
+                assertionCount: 3,
+              },
+            ],
+          },
+          inferredCandidates: [
+            buildRule({
+              id: 'candidate-changed',
+              title: 'Changed Candidate',
+              module: 'custom',
+              inference: {
+                sourceType: 'central_docs',
+                status: 'candidate',
+                assertionId: 'assertion-shared',
+                sourceHash: 'hash-new',
+                tags: ['catalog'],
+              },
+            }),
+            buildRule({
+              id: 'candidate-fresh',
+              title: 'Fresh Candidate',
+              module: 'parser',
+              inference: {
+                sourceType: 'central_docs',
+                status: 'candidate',
+                assertionId: 'assertion-fresh',
+                sourceHash: 'hash-fresh',
+                deprecates: ['assertion-deprecated'],
+                tags: ['review'],
+              },
+            }),
+            buildRule({
+              id: 'candidate-rejected-from-snapshot',
+              title: 'Rejected Candidate',
+              module: 'custom',
+              inference: {
+                sourceType: 'central_docs',
+                status: 'candidate',
+                assertionId: 'assertion-rejected',
+                sourceHash: 'hash-rejected-upstream',
+              },
+            }),
+          ],
+        }),
+      }))
+    );
+
+    mocks.useSearchParamsMock.mockReturnValue(new URLSearchParams('pathId=path-sync'));
+    mocks.useAiPathsSettingsQueryMock.mockReturnValue({
+      data: buildSettings(config),
+      refetch: vi.fn(async () => undefined),
+    });
+
+    const { result } = renderHook(() => useAdminAiPathsValidationState());
+
+    await waitFor(() => {
+      expect(result.current.selectedPathId).toBe('path-sync');
+    });
+
+    await act(async () => {
+      await result.current.handleSyncFromCentralDocs();
+    });
+
+    expect(result.current.centralSnapshot).toMatchObject({
+      snapshotHash: 'snapshot-1',
+      generatedAt: '2026-03-12T10:00:00.000Z',
+    });
+    expect(result.current.validationDraft.docsSyncState).toMatchObject({
+      lastSnapshotHash: 'snapshot-1',
+      lastSyncedAt: '2026-03-12T10:00:00.000Z',
+      lastSyncStatus: 'warning',
+      sourceCount: 1,
+      candidateCount: 2,
+    });
+    expect(result.current.syncWarnings).toEqual(
+      expect.arrayContaining([
+        'Upstream warning',
+        'Rule "Deprecated Rule" is deprecated by central assertion "assertion-fresh".',
+        'Rule "Existing Rule" changed in central docs and should be reviewed.',
+        'Rule "Missing Rule" is no longer present in central docs snapshot.',
+      ])
+    );
+    expect(
+      result.current.validationDraft.rules?.find((rule: AiPathsValidationRule) => rule.id === 'central-deprecated')
+    ).toMatchObject({
+      enabled: false,
+      inference: {
+        status: 'deprecated',
+        reviewNote: 'Deprecated by assertion assertion-fresh.',
+      },
+    });
+    expect(
+      result.current.rejectedCandidates.find(
+        (rule: AiPathsValidationRule) => rule.id === 'candidate-rejected-from-snapshot'
+      )
+    ).toMatchObject({
+      inference: {
+        status: 'rejected',
+      },
+    });
+    expect(mocks.toastMock).toHaveBeenCalledWith(
+      'Synced 3 inferred validation candidates from central docs.',
+      { variant: 'warning' }
+    );
+  });
+
+  it('surfaces central docs sync failures in docsSyncState and toast output', async () => {
+    const config = buildConfig('path-sync-error', {
+      name: 'Sync Error Path',
+    });
+
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () => ({
+        ok: false,
+        status: 503,
+      }))
+    );
+
+    mocks.useSearchParamsMock.mockReturnValue(new URLSearchParams('pathId=path-sync-error'));
+    mocks.useAiPathsSettingsQueryMock.mockReturnValue({
+      data: buildSettings(config),
+      refetch: vi.fn(async () => undefined),
+    });
+
+    const { result } = renderHook(() => useAdminAiPathsValidationState());
+
+    await waitFor(() => {
+      expect(result.current.selectedPathId).toBe('path-sync-error');
+    });
+
+    await act(async () => {
+      await result.current.handleSyncFromCentralDocs();
+    });
+
+    expect(result.current.validationDraft.docsSyncState).toMatchObject({
+      lastSyncStatus: 'error',
+      lastSyncWarnings: ['Central docs sync failed (503).'],
+    });
+    expect(mocks.logClientErrorMock).toHaveBeenCalled();
+    expect(mocks.toastMock).toHaveBeenCalledWith('Central docs sync failed (503).', {
+      variant: 'error',
+    });
+  });
+
+  it('approves all currently visible inferred candidates', async () => {
+    const visibleCandidate = buildRule({
+      id: 'candidate-visible',
+      title: 'Visible Candidate',
+      module: 'parser',
+      inference: {
+        sourceType: 'central_docs',
+        status: 'candidate',
+        assertionId: 'assertion-visible',
+      },
+    });
+    const hiddenCandidate = buildRule({
+      id: 'candidate-hidden',
+      title: 'Hidden Candidate',
+      module: 'model',
+      inference: {
+        sourceType: 'central_docs',
+        status: 'candidate',
+        assertionId: 'assertion-hidden',
+      },
+    });
+    const config = buildConfig('path-approve-all', {
+      name: 'Approve All Path',
+      aiPathsValidation: {
+        inferredCandidates: [visibleCandidate, hiddenCandidate],
+        docsSyncState: {
+          candidateCount: 2,
+        },
+      },
+    });
+
+    mocks.useSearchParamsMock.mockReturnValue(new URLSearchParams('pathId=path-approve-all'));
+    mocks.useAiPathsSettingsQueryMock.mockReturnValue({
+      data: buildSettings(config),
+      refetch: vi.fn(async () => undefined),
+    });
+
+    const { result } = renderHook(() => useAdminAiPathsValidationState());
+
+    await waitFor(() => {
+      expect(result.current.candidateRules).toHaveLength(2);
+    });
+
+    act(() => {
+      result.current.setCandidateModuleFilter('parser');
+    });
+
+    await waitFor(() => {
+      expect(result.current.candidateRules.map((rule: AiPathsValidationRule) => rule.id)).toEqual([
+        'candidate-visible',
+      ]);
+    });
+
+    act(() => {
+      result.current.handleApproveAllCandidates();
+    });
+
+    expect(
+      result.current.validationDraft.rules?.some(
+        (rule: AiPathsValidationRule) =>
+          rule.id === 'candidate-visible' && rule.inference?.status === 'approved'
+      )
+    ).toBe(true);
+    expect(
+      result.current.inferredCandidates.map((rule: AiPathsValidationRule) => rule.id)
+    ).toEqual(['candidate-hidden']);
+    expect(result.current.validationDraft.docsSyncState?.candidateCount).toBe(0);
+    expect(mocks.toastMock).toHaveBeenCalledWith('Approved 1 visible inferred rules.', {
+      variant: 'success',
+    });
+  });
+
+  it('blocks save on invalid rules JSON and surfaces persistence failures', async () => {
+    const config = buildConfig('path-save-error', {
+      name: 'Save Error Path',
+      aiPathsValidation: {
+        rules: [buildRule({ id: 'rule-save-error' })],
+      },
+    });
+
+    mocks.useSearchParamsMock.mockReturnValue(new URLSearchParams('pathId=path-save-error'));
+    mocks.useAiPathsSettingsQueryMock.mockReturnValue({
+      data: buildSettings(config),
+      refetch: vi.fn(async () => undefined),
+    });
+
+    const { result } = renderHook(() => useAdminAiPathsValidationState());
+
+    await waitFor(() => {
+      expect(result.current.selectedPathId).toBe('path-save-error');
+    });
+
+    act(() => {
+      result.current.setRulesDraft('{');
+    });
+
+    await act(async () => {
+      await result.current.handleSave();
+    });
+
+    expect(result.current.rulesDraftError).toBe('Invalid validation rules JSON.');
+    expect(mocks.updateAiPathsSettingsBulkMock).not.toHaveBeenCalled();
+    expect(mocks.toastMock).toHaveBeenCalledWith('Invalid validation rules JSON.', {
+      variant: 'error',
+    });
+
+    act(() => {
+      result.current.setRulesDraft(
+        JSON.stringify([buildRule({ id: 'rule-save-error', title: 'Recovered Rule' })], null, 2)
+      );
+    });
+    mocks.updateAiPathsSettingsBulkMock.mockRejectedValueOnce(new Error('write failed'));
+
+    await act(async () => {
+      await result.current.handleSave();
+    });
+
+    expect(mocks.logClientErrorMock).toHaveBeenCalledWith(expect.any(Error));
+    expect(mocks.toastMock).toHaveBeenCalledWith('write failed', {
+      variant: 'error',
+    });
+    expect(result.current.saving).toBe(false);
   });
 });

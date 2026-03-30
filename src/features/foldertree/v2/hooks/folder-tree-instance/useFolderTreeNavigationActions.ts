@@ -1,3 +1,5 @@
+'use client';
+
 import { useCallback } from 'react';
 
 import { MasterTreeId } from '@/shared/contracts/master-folder-tree';

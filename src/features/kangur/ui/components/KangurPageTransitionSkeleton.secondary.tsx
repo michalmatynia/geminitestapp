@@ -1,5 +1,3 @@
-'use client';
-
 import React from 'react';
 import {
   KANGUR_PANEL_GAP_CLASSNAME,

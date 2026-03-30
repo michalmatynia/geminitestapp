@@ -1,4 +1,5 @@
 'use client';
+
 import { ChevronDown } from 'lucide-react';
 import { useLocale, useTranslations } from 'next-intl';
 import { usePathname, useSearchParams } from 'next/navigation';

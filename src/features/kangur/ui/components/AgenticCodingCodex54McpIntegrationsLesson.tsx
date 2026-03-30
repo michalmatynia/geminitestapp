@@ -1,5 +1,3 @@
-'use client';
-
 import { KangurUnifiedLesson } from '../lessons/lesson-components';
 
 import {

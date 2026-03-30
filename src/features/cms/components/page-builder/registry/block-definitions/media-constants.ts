@@ -1,5 +1,3 @@
-'use client';
-
 export const EMPTY_SETTINGS_OPTIONS: Array<{ label: string; value: string }> = [];
 
 export const IMAGE_ASPECT_RATIO_OPTIONS = [

@@ -1,5 +1,3 @@
-'use client';
-
 import { Badge, FormField, SelectSimple } from '@/features/kangur/shared/ui';
 import { KangurAdminCard } from '@/features/kangur/admin/components/KangurAdminCard';
 import { BRAIN_MODEL_DEFAULT_VALUE } from '../AdminKangurSocialPage.Constants';

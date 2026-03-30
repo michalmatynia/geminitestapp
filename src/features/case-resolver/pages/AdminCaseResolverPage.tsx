@@ -1,4 +1,5 @@
 'use client';
+
 import { Suspense, lazy, useMemo } from 'react';
 import { LoadingPanel } from '@/shared/ui/LoadingPanel';
 import { CaseResolverViewProvider } from '../components/CaseResolverViewContext';

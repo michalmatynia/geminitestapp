@@ -1,5 +1,3 @@
-'use client';
-
 import type { KangurAccent } from '@/features/kangur/ui/design/tokens';
 
 import { AGENTIC_CODING_GAMES } from './AgenticCodingMiniGames.config';

@@ -1,5 +1,3 @@
-'use client';
-
 import { cn } from '@/features/kangur/shared/utils';
 
 export const KANGUR_DIALOG_OVERLAY_BASE_CLASSNAME = cn(

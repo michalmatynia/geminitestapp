@@ -1,5 +1,3 @@
-'use client';
-
 import { cn } from '@/shared/utils';
 
 import { CenterPreview } from './CenterPreview';

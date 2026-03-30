@@ -1,5 +1,3 @@
-'use client';
-
 import {
   type KangurDrawingUtilityActionsProps,
 } from '@/features/kangur/ui/components/drawing-engine/KangurDrawingUtilityActions';

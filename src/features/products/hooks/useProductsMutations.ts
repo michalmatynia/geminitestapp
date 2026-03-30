@@ -1,5 +1,3 @@
-'use client';
-
 import { useQueryClient } from '@tanstack/react-query';
 
 import { createProduct, updateProduct, deleteProduct } from '@/features/products/api/products';

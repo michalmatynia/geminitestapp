@@ -1,3 +1,5 @@
+'use client';
+
 import { useCallback, useMemo, useRef } from 'react';
 
 import type { AiNode } from '@/shared/lib/ai-paths';

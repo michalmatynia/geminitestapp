@@ -1,5 +1,3 @@
-'use client';
-
 import { AlertTriangleIcon, DatabaseIcon, Table2Icon, TerminalSquareIcon } from 'lucide-react';
 
 import type { LabeledOptionWithDescriptionDto } from '@/shared/contracts/base';

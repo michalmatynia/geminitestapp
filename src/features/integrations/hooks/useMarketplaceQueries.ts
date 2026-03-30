@@ -1,5 +1,3 @@
-'use client';
-
 import type { ExternalCategory, CategoryMappingWithDetails } from '@/shared/contracts/integrations';
 import type { ExternalProducer, ProducerMappingWithDetails } from '@/shared/contracts/integrations';
 import type { ExternalTag, TagMappingWithDetails } from '@/shared/contracts/integrations';

@@ -1,5 +1,3 @@
-'use client';
-
 import React from 'react';
 
 import type { MasterFolderTreeController } from '@/shared/contracts/master-folder-tree';

@@ -1,5 +1,3 @@
-'use client';
-
 import React from 'react';
 
 import type { CaseResolverDocumentHistoryEntry } from '@/shared/contracts/case-resolver';

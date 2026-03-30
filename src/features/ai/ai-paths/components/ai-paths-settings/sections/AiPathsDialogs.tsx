@@ -1,5 +1,3 @@
-'use client';
-
 import React from 'react';
 
 import { NodeConfigDialog } from '../../node-config-dialog';

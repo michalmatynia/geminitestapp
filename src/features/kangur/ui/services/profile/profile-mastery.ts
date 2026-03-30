@@ -1,5 +1,3 @@
-'use client';
-
 import { getLocalizedKangurLessonTitle } from '@/features/kangur/lessons/lesson-catalog-i18n';
 import { KANGUR_LESSON_LIBRARY } from '@/features/kangur/settings';
 import type {

@@ -1,5 +1,3 @@
-'use client';
-
 import React from 'react';
 
 import { useIntegrationsSession } from '@/features/integrations/context/integrations/IntegrationsSessionContext';

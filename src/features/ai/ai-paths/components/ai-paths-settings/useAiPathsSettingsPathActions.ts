@@ -1,3 +1,5 @@
+'use client';
+
 import React, { useCallback } from 'react';
 
 import { useGraphActions } from '@/features/ai/ai-paths/context/GraphContext';

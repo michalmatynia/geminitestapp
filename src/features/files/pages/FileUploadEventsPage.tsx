@@ -1,5 +1,3 @@
-'use client';
-
 import { SectionHeader } from '@/shared/ui';
 
 import { FileUploadEventsPanel } from '../components/FileUploadEventsPanel';

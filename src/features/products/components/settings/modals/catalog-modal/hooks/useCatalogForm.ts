@@ -1,3 +1,5 @@
+'use client';
+
 import React from 'react';
 
 import { useSaveCatalogMutation } from '@/features/products/hooks/useProductSettingsQueries';

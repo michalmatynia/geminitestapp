@@ -1,3 +1,5 @@
+'use client';
+
 import type { LessonSlide } from '@/features/kangur/ui/components/lesson-framework/LessonSlideSection';
 import {
   KangurLessonCaption,

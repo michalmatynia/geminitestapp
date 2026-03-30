@@ -1,3 +1,5 @@
+'use client';
+
 import { Hand, Layers, MousePointer2, RotateCw } from 'lucide-react';
 import React, { useCallback } from 'react';
 

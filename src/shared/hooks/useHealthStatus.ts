@@ -1,5 +1,3 @@
-'use client';
-
 import type { SingleQuery } from '@/shared/contracts/ui';
 import { api } from '@/shared/lib/api-client';
 import { createSingleQueryV2 } from '@/shared/lib/query-factories-v2';

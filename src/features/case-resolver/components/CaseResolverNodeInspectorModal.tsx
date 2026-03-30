@@ -1,3 +1,5 @@
+'use client';
+
 import { Split } from 'lucide-react';
 import React from 'react';
 

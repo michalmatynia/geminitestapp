@@ -1,3 +1,5 @@
+'use client';
+
 import { useEffect, useState, useMemo, useRef, type Dispatch, type SetStateAction } from 'react';
 
 import {

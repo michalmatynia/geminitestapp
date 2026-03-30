@@ -1,3 +1,5 @@
+'use client';
+
 /**
  * useEdgePaths - Computes SVG paths for edges based on nodes and edges from context.
  *

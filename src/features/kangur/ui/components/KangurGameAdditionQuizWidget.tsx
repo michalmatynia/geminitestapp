@@ -1,5 +1,3 @@
-'use client';
-
 import AddingBallGame from '@/features/kangur/ui/components/AddingBallGame';
 import { renderKangurGameQuizShell } from '@/features/kangur/ui/components/KangurGameQuizShell';
 

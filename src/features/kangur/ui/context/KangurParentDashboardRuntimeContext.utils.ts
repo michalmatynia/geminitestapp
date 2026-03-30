@@ -1,5 +1,3 @@
-'use client';
-
 import type { KangurParentDashboardPanelDisplayMode, KangurParentDashboardTabId } from './KangurParentDashboardRuntimeContext.types';
 
 export const ACTION_TIMEOUT_MS = 12_000;

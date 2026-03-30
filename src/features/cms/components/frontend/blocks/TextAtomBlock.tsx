@@ -1,5 +1,3 @@
-'use client';
-
 import React from 'react';
 
 import type { BlockInstance } from '@/features/cms/types/page-builder';

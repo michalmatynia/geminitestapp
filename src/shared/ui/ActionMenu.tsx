@@ -1,5 +1,3 @@
-'use client';
-
 import { MoreVertical } from 'lucide-react';
 import React, { type ReactNode } from 'react';
 

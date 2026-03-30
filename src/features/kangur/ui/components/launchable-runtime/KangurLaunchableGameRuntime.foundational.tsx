@@ -1,5 +1,3 @@
-'use client';
-
 import type { ComponentProps } from 'react';
 
 import type { KangurLaunchableGameRuntimeRendererId } from '@/shared/contracts/kangur-games';

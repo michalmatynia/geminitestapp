@@ -1,5 +1,3 @@
-'use client';
-
 import { AUTO_ACCEPT_MAX_TRACKED_ENTITIES } from './validator-utils';
 
 // Module-level auto-accept tracking: survives component remount

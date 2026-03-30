@@ -1,5 +1,3 @@
-'use client';
-
 import {
   type Catalog,
   type CatalogRecord,

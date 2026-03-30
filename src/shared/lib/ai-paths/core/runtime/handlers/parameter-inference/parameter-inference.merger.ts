@@ -1,5 +1,3 @@
-'use client';
-
 import type { RuntimePortValues } from '@/shared/contracts/ai-paths-runtime';
 import {
   coerceArrayLike,

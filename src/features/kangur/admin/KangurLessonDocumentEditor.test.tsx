@@ -1,6 +1,3 @@
-/**
- * @vitest-environment jsdom
- */
 'use client';
 
 import React from 'react';

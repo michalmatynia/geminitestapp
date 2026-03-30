@@ -1,3 +1,5 @@
+'use client';
+
 import { memo } from 'react';
 import { useTranslations } from 'next-intl';
 import { KangurStatusChip } from '@/features/kangur/ui/design/primitives';

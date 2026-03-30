@@ -1,5 +1,3 @@
-'use client';
-
 import React from 'react';
 import { cn } from '@/features/kangur/shared/utils';
 import { KANGUR_ACCENT_STYLES, type KangurAccent } from '@/features/kangur/ui/design/tokens';

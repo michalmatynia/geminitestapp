@@ -1,5 +1,3 @@
-'use client';
-
 import type { PartOfSpeech, Round, SpeechBin } from './EnglishPartsOfSpeechGame.types';
 
 export const PART_META: Record<PartOfSpeech, Omit<SpeechBin, 'id'>> = {

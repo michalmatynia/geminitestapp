@@ -1,5 +1,3 @@
-'use client';
-
 import { cn } from '@/features/kangur/shared/utils';
 import type { KangurMiniGameInformationalFeedback } from '@/features/kangur/ui/types';
 

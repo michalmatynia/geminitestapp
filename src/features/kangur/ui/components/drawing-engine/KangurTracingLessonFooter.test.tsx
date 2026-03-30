@@ -1,5 +1,3 @@
-'use client';
-
 import { fireEvent, render, screen } from '@testing-library/react';
 
 import { KangurTracingLessonFooter } from '@/features/kangur/ui/components/drawing-engine/KangurTracingLessonFooter';

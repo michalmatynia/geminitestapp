@@ -1,5 +1,3 @@
-'use client';
-
 import type { ChatbotJobActionResponse } from '@/shared/contracts/chatbot';
 import type { UpdateMutation, VoidMutation } from '@/shared/contracts/ui';
 import { createCreateMutationV2, createDeleteMutationV2 } from '@/shared/lib/query-factories-v2';

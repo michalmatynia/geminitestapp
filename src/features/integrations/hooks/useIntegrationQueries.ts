@@ -1,5 +1,3 @@
-'use client';
-
 import { z } from 'zod';
 
 export { useIntegrationsWithConnections } from '@/shared/hooks/useIntegrationQueries';

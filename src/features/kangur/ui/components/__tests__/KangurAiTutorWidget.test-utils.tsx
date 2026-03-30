@@ -1,4 +1,4 @@
-"use client";
+'use client';
 
 import { render } from '@/__tests__/test-utils';
 import { useLayoutEffect, useRef, type ReactNode } from 'react';

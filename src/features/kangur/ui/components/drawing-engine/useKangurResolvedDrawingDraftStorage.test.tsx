@@ -1,7 +1,3 @@
-/**
- * @vitest-environment jsdom
- */
-
 'use client';
 
 import { act, renderHook } from '@testing-library/react';

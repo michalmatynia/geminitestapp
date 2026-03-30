@@ -1,5 +1,3 @@
-'use client';
-
 import * as KangurSubjectFocusContext from '@/features/kangur/ui/context/KangurSubjectFocusContext';
 
 const useLegacySubjectFocusState = (): { subjectKey: string | null } | null => {

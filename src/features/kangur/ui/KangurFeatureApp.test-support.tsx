@@ -1,3 +1,5 @@
+'use client';
+
 /**
  * @vitest-environment jsdom
  */

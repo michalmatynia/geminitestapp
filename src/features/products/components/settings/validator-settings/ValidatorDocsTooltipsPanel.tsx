@@ -1,5 +1,3 @@
-'use client';
-
 import { FormSection, StatusToggle } from '@/shared/ui';
 
 import { ValidatorDocTooltip, useValidatorDocsTooltips } from './ValidatorDocsTooltips';

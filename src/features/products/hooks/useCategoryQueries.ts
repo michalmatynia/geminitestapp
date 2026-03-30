@@ -1,5 +1,3 @@
-'use client';
-
 import type { ProductCategory, ProductCategoryWithChildren } from '@/shared/contracts/products';
 import type { ListQuery } from '@/shared/contracts/ui';
 import { api } from '@/shared/lib/api-client';

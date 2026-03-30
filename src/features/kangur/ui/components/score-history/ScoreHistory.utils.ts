@@ -1,5 +1,3 @@
-'use client';
-
 import type { TranslationValues } from 'use-intl';
 import {
   appendKangurUrlParams,

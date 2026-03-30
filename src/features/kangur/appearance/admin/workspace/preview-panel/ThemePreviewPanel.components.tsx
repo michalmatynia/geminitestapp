@@ -1,5 +1,3 @@
-'use client';
-
 import React from 'react';
 
 export function ButtonGloss(): React.JSX.Element {

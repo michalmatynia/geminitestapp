@@ -1,5 +1,3 @@
-'use client';
-
 import type { AiInsightNotificationsResponse as NotificationsResponse } from '@/shared/contracts/ai-insights';
 import type { DeleteMutation, SingleQuery } from '@/shared/contracts/ui';
 import { api } from '@/shared/lib/api-client';

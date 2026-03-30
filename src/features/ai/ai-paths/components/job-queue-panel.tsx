@@ -1,5 +1,3 @@
-'use client';
-
 import React from 'react';
 
 import type { AiPathRunVisibility } from '@/shared/lib/ai-paths';

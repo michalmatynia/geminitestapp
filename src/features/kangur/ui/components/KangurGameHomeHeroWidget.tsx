@@ -1,3 +1,5 @@
+'use client';
+
 import { useTranslations } from 'next-intl';
 
 import KangurAssignmentSpotlight from '@/features/kangur/ui/components/assignments/KangurAssignmentSpotlight';

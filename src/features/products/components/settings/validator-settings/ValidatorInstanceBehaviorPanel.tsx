@@ -1,5 +1,3 @@
-'use client';
-
 import type { LabeledOptionDto } from '@/shared/contracts/base';
 import type { ProductValidationInstanceScope } from '@/shared/contracts/products';
 import { FormSection, SelectSimple } from '@/shared/ui';

@@ -1,3 +1,5 @@
+'use client';
+
 import { useCallback, useEffect, useReducer, useRef } from 'react';
 import type { Dispatch, SetStateAction } from 'react';
 import type { KangurGameInstanceId } from '@/shared/contracts/kangur-game-instances';

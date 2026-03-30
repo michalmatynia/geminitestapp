@@ -1,5 +1,3 @@
-'use client';
-
 import { useQueryErrorResetBoundary } from '@tanstack/react-query';
 import React from 'react';
 

@@ -1,5 +1,3 @@
-'use client';
-
 import { KANGUR_MUSIC_PIANO_ROLL_RENDERER_IDS } from '@/features/kangur/games/music-piano-roll-contract';
 import { createKangurMusicPianoRollLaunchableOnFinishRendererMap } from '@/features/kangur/ui/components/music/music-piano-roll-launchable-runtime';
 import type { KangurLaunchableGameRuntimeRendererId } from '@/shared/contracts/kangur-games';

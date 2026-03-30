@@ -1,3 +1,5 @@
+'use client';
+
 import { DEFAULT_KANGUR_AI_TUTOR_NATIVE_GUIDE_STORE } from '@/features/kangur/shared/contracts/kangur-ai-tutor-native-guide';
 import {
   kangurPageContentStoreSchema,

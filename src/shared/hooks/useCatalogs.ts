@@ -1,5 +1,3 @@
-'use client';
-
 import type { ListQuery } from '@/shared/contracts/ui';
 import { api } from '@/shared/lib/api-client';
 import { createListQueryV2 } from '@/shared/lib/query-factories-v2';

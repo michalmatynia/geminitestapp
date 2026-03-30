@@ -1,5 +1,3 @@
-'use client';
-
 import type { KangurAddingLessonTemplateContent } from '@/shared/contracts/kangur-lesson-templates';
 
 export const ADDING_LESSON_DEFAULTS: Omit<KangurAddingLessonTemplateContent, 'kind'> = {

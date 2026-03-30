@@ -1,5 +1,3 @@
-'use client';
-
 import type { ChatbotSessionDto as ChatSession } from '@/shared/contracts/chatbot';
 import type {
   ChatbotMemoryItem,

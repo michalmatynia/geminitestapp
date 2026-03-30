@@ -1,5 +1,3 @@
-'use client';
-
 import type { ChatbotContextUploadResponse } from '@/shared/contracts/chatbot';
 import type { SettingRecord } from '@/shared/contracts/settings';
 import type { ListQuery, MutationResult } from '@/shared/contracts/ui';

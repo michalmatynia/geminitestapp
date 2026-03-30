@@ -1,5 +1,3 @@
-'use client';
-
 import type { ExpandedImageFile } from '@/shared/contracts/products';
 import type { ListQuery, DeleteMutation, UpdateMutation } from '@/shared/contracts/ui';
 import { api } from '@/shared/lib/api-client';

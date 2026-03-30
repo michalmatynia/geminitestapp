@@ -1,5 +1,3 @@
-'use client';
-
 import Image from 'next/image';
 
 import { AppModal, UI_GRID_ROOMY_CLASSNAME } from '@/shared/ui';

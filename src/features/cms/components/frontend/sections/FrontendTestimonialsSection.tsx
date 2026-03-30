@@ -1,5 +1,3 @@
-'use client';
-
 import type { BlockInstance } from '@/features/cms/types/page-builder';
 import { CompactEmptyState, Card, UI_GRID_ROOMY_CLASSNAME } from '@/shared/ui';
 

@@ -1,3 +1,5 @@
+'use client';
+
 import { useCallback } from 'react';
 
 import { buildCombinedOcrText } from '@/features/case-resolver/utils/caseResolverUtils';

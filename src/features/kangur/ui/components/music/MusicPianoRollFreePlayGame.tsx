@@ -1,8 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unsafe-assignment */
- 
-/* eslint-disable @typescript-eslint/no-unsafe-call */
- 
-/* eslint-disable @typescript-eslint/no-explicit-any */
 'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';

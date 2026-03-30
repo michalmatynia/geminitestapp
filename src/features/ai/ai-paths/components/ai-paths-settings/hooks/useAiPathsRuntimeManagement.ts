@@ -1,3 +1,5 @@
+'use client';
+
 import { useCallback } from 'react';
 
 import { useRuntimeActions } from '@/features/ai/ai-paths/context/RuntimeContext';

@@ -1,5 +1,3 @@
-'use client';
-
 import type { KangurAccent } from '@/features/kangur/ui/design/tokens';
 
 export type Season = 'spring' | 'summer' | 'autumn' | 'winter';

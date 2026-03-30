@@ -1,3 +1,5 @@
+'use client';
+
 import { useCallback } from 'react';
 
 import type { CaseResolverFile, CaseResolverWorkspace } from '@/shared/contracts/case-resolver';

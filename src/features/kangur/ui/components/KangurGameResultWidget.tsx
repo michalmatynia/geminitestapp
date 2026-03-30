@@ -1,3 +1,5 @@
+'use client';
+
 import type { ComponentProps, ReactNode } from 'react';
 import { useLocale, useTranslations } from 'next-intl';
 

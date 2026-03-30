@@ -1,5 +1,3 @@
-'use client';
-
 import type { BlockInstance } from '@/features/cms/types/page-builder';
 import { cn } from '@/shared/utils';
 

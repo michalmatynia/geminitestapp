@@ -1,5 +1,3 @@
-'use client';
-
 import { useCmsPageContext } from '../CmsPageContext';
 import { useMediaStyles } from '../media-styles-context';
 import { useSectionBlockData } from './SectionBlockContext';

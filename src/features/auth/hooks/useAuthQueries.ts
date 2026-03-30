@@ -1,5 +1,3 @@
-'use client';
-
 import { registerUser, type RegisterResponse } from '@/features/auth/api/register';
 import { fetchAuthRoleSettings, updateAuthUserRoles } from '@/features/auth/api/roles';
 import {

@@ -1,5 +1,3 @@
-'use client';
-
 import React from 'react';
 
 import { useImageRetryPresets } from '@/features/integrations/components/listings/useImageRetryPresets';

@@ -1,7 +1,3 @@
- 
- 
- 
- 
 'use client';
 
 import { useKangurProgressOwnerKey } from '@/features/kangur/ui/hooks/useKangurProgressOwnerKey';

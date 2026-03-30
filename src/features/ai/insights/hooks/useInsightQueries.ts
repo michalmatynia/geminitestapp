@@ -1,5 +1,3 @@
-'use client';
-
 import { useOptionalContextRegistryPageEnvelope } from '@/features/ai/ai-context-registry/context/page-context';
 import type {
   AiInsightRecord,

@@ -1,5 +1,3 @@
-'use client';
-
 import type { Round, TokenItem, GroupZoneId, ZoneId } from './DivisionGroupsGame.types';
 
 export const TOTAL_ROUNDS = 6;

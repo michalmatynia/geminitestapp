@@ -1,3 +1,5 @@
+'use client';
+
 import { useCallback } from 'react';
 
 import type { AiNode, ClusterPreset, Edge } from '@/shared/contracts/ai-paths';

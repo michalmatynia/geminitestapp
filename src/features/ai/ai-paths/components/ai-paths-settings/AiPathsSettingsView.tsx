@@ -1,5 +1,3 @@
-'use client';
-
 import React from 'react';
 
 import { useAiPathsDocsTooltips } from '@/features/ai/ai-paths/hooks/useAiPathsDocsTooltips';

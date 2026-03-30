@@ -1,3 +1,5 @@
+'use client';
+
 import { useCallback } from 'react';
 
 import { imageStudioCropResponseSchema } from '@/shared/contracts/image-studio';

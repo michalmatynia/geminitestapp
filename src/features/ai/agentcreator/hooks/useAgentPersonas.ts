@@ -1,6 +1,3 @@
-'use client';
-
-
 import { invalidateSettingsCache } from '@/shared/api/settings-client';
 import { AGENT_PERSONA_SETTINGS_KEY } from '@/shared/contracts/agents';
 import type { AgentPersona } from '@/shared/contracts/agents';

@@ -1,5 +1,3 @@
-'use client';
-
 import React from 'react';
 
 import type { AgentRunRecord } from '@/shared/contracts/agent-runtime';

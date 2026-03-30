@@ -1,3 +1,5 @@
+'use client';
+
 import { useCallback } from 'react';
 
 import { buildPresetQueryTemplate } from '@/features/ai/ai-paths/config/query-presets';

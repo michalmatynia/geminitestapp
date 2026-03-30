@@ -1,3 +1,5 @@
+'use client';
+
 import { useState, useMemo } from 'react';
 
 import { useCreateNoteTag } from '@/features/notesapp/api/useNoteMutations';

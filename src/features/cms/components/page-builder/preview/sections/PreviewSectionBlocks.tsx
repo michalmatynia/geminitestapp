@@ -1,5 +1,3 @@
-'use client';
-
 import React from 'react';
 
 import { BlockContextProvider } from '@/features/cms/components/page-builder/preview/context/BlockContext';

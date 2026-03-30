@@ -1,5 +1,3 @@
-'use client';
-
 import { LayoutGrid, LogOut } from 'lucide-react';
 import Link from 'next/link';
 

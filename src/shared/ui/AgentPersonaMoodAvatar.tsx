@@ -1,5 +1,3 @@
-'use client';
-
 import { BrainCircuit } from 'lucide-react';
 import NextImage from 'next/image';
 

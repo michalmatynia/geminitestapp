@@ -1,5 +1,3 @@
-'use client';
-
 import type { ListQuery, MutationResult } from '@/shared/contracts/ui';
 import {
   kangurSocialPublishModeSchema,

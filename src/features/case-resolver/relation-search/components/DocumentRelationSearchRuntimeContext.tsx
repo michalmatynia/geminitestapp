@@ -1,5 +1,3 @@
-'use client';
-
 import { createStrictContext } from '@/shared/lib/react/createStrictContext';
 
 import type { RelationTreeInstance } from '../types';

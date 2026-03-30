@@ -1,3 +1,5 @@
+'use client';
+
 import { useMemo } from 'react';
 
 import { buildProductStudioWorkspaceContextBundle } from '@/features/products/context-registry/workspace';

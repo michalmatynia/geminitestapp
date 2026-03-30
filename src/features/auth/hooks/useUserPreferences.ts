@@ -1,5 +1,3 @@
-'use client';
-
 import type { UserPreferences, UserPreferencesUpdate } from '@/shared/contracts/auth';
 import {
   useUpdateUserPreferences,

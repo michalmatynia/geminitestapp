@@ -1,3 +1,5 @@
+'use client';
+
 import { forwardRef, useMemo, useRef } from 'react';
 
 import { cn } from '@/features/kangur/shared/utils';

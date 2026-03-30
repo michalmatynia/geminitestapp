@@ -1,5 +1,3 @@
-'use client';
-
 import type { KangurLessonCollectionFilterDto } from '@/features/kangur/shared/contracts/kangur';
 import {
   kangurLessonSectionsSchema,

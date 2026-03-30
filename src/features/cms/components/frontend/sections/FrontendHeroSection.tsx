@@ -1,5 +1,3 @@
-'use client';
-
 import Image from 'next/image';
 import type { BlockInstance } from '@/features/cms/types/page-builder';
 import { CompactEmptyState } from '@/shared/ui';

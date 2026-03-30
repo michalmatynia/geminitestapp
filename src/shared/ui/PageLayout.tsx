@@ -1,5 +1,3 @@
-'use client';
-
 import type { JSX, ReactNode } from 'react';
 
 import type { LabeledOptionDto } from '@/shared/contracts/base';

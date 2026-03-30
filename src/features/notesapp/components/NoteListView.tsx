@@ -1,3 +1,5 @@
+'use client';
+
 import { Plus, Pin, Archive, ChevronLeft, ChevronRight, FileText, Palette } from 'lucide-react';
 import React, { useMemo } from 'react';
 

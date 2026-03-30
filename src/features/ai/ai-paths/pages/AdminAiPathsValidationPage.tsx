@@ -1,5 +1,3 @@
-'use client';
-
 import React from 'react';
 
 import { LoadingState, Card, UI_GRID_ROOMY_CLASSNAME } from '@/shared/ui';

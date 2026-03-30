@@ -1,5 +1,3 @@
-'use client';
-
 import React, { memo } from 'react';
 import { cn } from '@/features/kangur/shared/utils';
 import type { RotationTile } from '../ArtShapesRotationGapGame.data';

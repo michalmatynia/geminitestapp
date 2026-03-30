@@ -1,5 +1,3 @@
-'use client';
-
 import {
   type KangurDrawingDraftStorageController,
 } from '@/features/kangur/ui/components/drawing-engine/useKangurDrawingDraftStorage';

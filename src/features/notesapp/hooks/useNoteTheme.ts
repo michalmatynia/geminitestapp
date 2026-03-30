@@ -1,3 +1,5 @@
+'use client';
+
 import { useMemo, useCallback } from 'react';
 
 import { findFolderById } from '@/features/foldertree/public';

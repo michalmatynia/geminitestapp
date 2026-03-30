@@ -1,5 +1,3 @@
-'use client';
-
 import type { AiInsightResponse } from '@/shared/contracts/ai-insights';
 import {
   type ClearLogsTargetDto as ClearLogsTarget,

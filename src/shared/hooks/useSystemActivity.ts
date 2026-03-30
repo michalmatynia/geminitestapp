@@ -1,5 +1,3 @@
-'use client';
-
 import type { SystemActivityResponseDto as SystemActivityResponse } from '@/shared/contracts/observability';
 import type { SingleQuery } from '@/shared/contracts/ui';
 import { api } from '@/shared/lib/api-client';

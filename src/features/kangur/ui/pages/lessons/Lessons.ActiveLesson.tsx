@@ -1,3 +1,5 @@
+'use client';
+
 import { motion } from 'framer-motion';
 import { ChevronsLeft } from 'lucide-react';
 import { useLocale, useTranslations } from 'next-intl';

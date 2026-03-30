@@ -1,5 +1,3 @@
-'use client';
-
 import type { KangurClockTrainingSection } from '@/shared/contracts/kangur-game-runtime-renderer-props';
 
 import {

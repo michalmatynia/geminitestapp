@@ -1,3 +1,5 @@
+'use client';
+
 import { useRef } from 'react';
 
 import type { NoteRecord } from '@/shared/contracts/notes';

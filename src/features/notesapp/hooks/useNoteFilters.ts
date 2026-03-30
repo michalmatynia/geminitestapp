@@ -1,3 +1,5 @@
+'use client';
+
 import { useState, useEffect, useCallback } from 'react';
 
 import type { UseNoteFiltersProps, UseNoteFiltersResult } from '@/shared/contracts/notes';

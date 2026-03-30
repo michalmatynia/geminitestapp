@@ -1,3 +1,5 @@
+'use client';
+
 import { useLocale, useTranslations } from 'next-intl';
 import { KangurBadgeTrackSection } from '@/features/kangur/ui/components/badge-track/KangurBadgeTrackSection';
 import { KangurPanelSectionHeading } from '@/features/kangur/ui/components/KangurPanelSectionHeading';

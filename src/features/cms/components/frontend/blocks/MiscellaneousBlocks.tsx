@@ -1,5 +1,3 @@
-'use client';
-
 import { Star, Heart, Check, ArrowRight, Circle, type LucideIcon } from 'lucide-react';
 import React from 'react';
 

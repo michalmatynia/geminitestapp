@@ -1,5 +1,3 @@
-'use client';
-
 import { StatusBadge } from '@/shared/ui';
 
 export const getRuntimeEventLevelVariant = (

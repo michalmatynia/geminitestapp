@@ -1,5 +1,3 @@
-'use client';
-
 export type ProfileModalTabId = 'settings' | 'metrics';
 
 export type LearnerManagementCopy = {

@@ -1,5 +1,3 @@
-'use client';
-
 import type { ChatbotMemoryItem } from '@/shared/contracts/chatbot';
 import type { ListQuery } from '@/shared/contracts/ui';
 import { createListQueryV2 } from '@/shared/lib/query-factories-v2';

@@ -1,5 +1,3 @@
-'use client';
-
 import {
   type UseKangurManagedDrawingActionsOptions,
 } from '@/features/kangur/ui/components/drawing-engine/useKangurManagedDrawingActions';

@@ -1,5 +1,3 @@
-'use client';
-
 import type React from 'react';
 
 import { KangurPanelIntro, KangurPanelStack } from '@/features/kangur/ui/design/primitives';

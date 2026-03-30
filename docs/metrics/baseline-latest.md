@@ -8,16 +8,16 @@ canonical: true
 ---
 # Architecture & Performance Baseline
 
-Generated at: 2026-03-30T22:32:17.441Z
+Generated at: 2026-03-30T23:50:53.156Z
 
 ## Snapshot
 
-- Source files: 9031
-- Source lines: 1515486
-- use client files: 1892
-- Files >= 1000 LOC: 8
+- Source files: 9066
+- Source lines: 1516942
+- use client files: 1728
+- Files >= 1000 LOC: 1
 - Files >= 1500 LOC: 0
-- Largest file: `src/features/kangur/ui/components/parent-dashboard/KangurParentDashboardAiTutorWidget.tsx` (1278 LOC)
+- Largest file: `src/features/filemaker/pages/AdminFilemakerMailPage.tsx` (1191 LOC)
 - API routes: 30
 - API delegated server routes: 172
 - API routes without apiHandler/delegation: 0
@@ -25,8 +25,8 @@ Generated at: 2026-03-30T22:32:17.441Z
 - Cross-feature dependency pairs: 3
 - Shared -> features imports: 0
 - setInterval occurrences: 1
-- Prop-drilling chains (depth >= 3): 555
-- Prop-drilling chains (depth >= 4): 138
+- Prop-drilling chains (depth >= 3): 582
+- Prop-drilling chains (depth >= 4): 169
 
 ## Top API Hotspots (by LOC)
 
@@ -62,21 +62,21 @@ Generated at: 2026-03-30T22:32:17.441Z
 | --- | ---: |
 | `src/features/filemaker/__tests__/AdminFilemakerMailPages.recent-and-thread.test.tsx` | 3394 |
 | `src/features/filemaker/__tests__/AdminFilemakerMailPages.test.tsx` | 1441 |
-| `src/features/kangur/ui/components/parent-dashboard/KangurParentDashboardAiTutorWidget.tsx` | 1278 |
-| `src/features/kangur/ui/components/AddingSynthesisGame.tsx` | 1235 |
-| `src/features/kangur/ui/components/parent-dashboard/KangurParentDashboardProgressWidget.tsx` | 1228 |
-| `src/features/kangur/ui/pages/Game.test.tsx` | 1203 |
 | `src/features/filemaker/pages/AdminFilemakerMailPage.tsx` | 1191 |
-| `src/features/kangur/ui/pages/lessons/Lessons.ActiveLesson.test.tsx` | 1165 |
-| `src/features/kangur/ui/pages/GamesLibrary.tabs.tsx` | 1141 |
-| `src/features/kangur/social/admin/workspace/AdminKangurSocialPage.hooks.ts` | 1116 |
-| `src/features/kangur/ui/components/NumberBalanceRushGame.hooks.ts` | 1100 |
 | `src/features/kangur/social/admin/workspace/SocialPost.PlaywrightCaptureModal.test.tsx` | 1099 |
-| `src/features/kangur/ui/components/game-setup/KangurGameOperationSelectorWidget.tsx` | 1035 |
 | `src/features/filemaker/server/filemaker-mail-service.test.ts` | 1005 |
-| `src/features/kangur/ui/pages/Lessons.test.tsx` | 1004 |
 | `src/features/ai/ai-paths/components/__tests__/run-trace-utils.test.ts` | 999 |
 | `src/shared/lib/products/services/product-ai-graph-model-payload.test.ts` | 991 |
 | `src/app/api/kangur/ai-tutor/chat/handler.ts` | 989 |
 | `src/features/filemaker/components/FilemakerMailSidebar.tsx` | 986 |
 | `src/features/kangur/social/admin/workspace/AdminKangurSocialPage.hooks.test.tsx` | 982 |
+| `src/features/products/components/list/columns/buttons/BaseQuickExportButton.test.tsx` | 982 |
+| `src/features/kangur/ui/services/geometry-drawing.ts` | 981 |
+| `src/features/kangur/admin/AdminKangurLessonsManagerPage.tsx` | 977 |
+| `src/features/kangur/admin/KangurQuestionsManagerPanel.test.tsx` | 976 |
+| `src/features/kangur/ui/services/delegated-assignments.ts` | 975 |
+| `src/shared/lib/ai-paths/core/starter-workflows/__tests__/registry.test.ts` | 973 |
+| `src/features/kangur/social/admin/workspace/hooks/useSocialPipelineRunner.test.tsx` | 970 |
+| `src/features/kangur/ui/components/GeometrySymmetryGame.tsx` | 970 |
+| `src/features/kangur/ui/components/KangurAssignmentManager.hooks.ts` | 969 |
+| `src/features/kangur/ui/components/assignment-manager/KangurAssignmentManager.hooks.ts` | 969 |

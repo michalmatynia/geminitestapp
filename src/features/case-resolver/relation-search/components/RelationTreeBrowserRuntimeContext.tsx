@@ -1,5 +1,3 @@
-'use client';
-
 import { createStrictContext } from '@/shared/lib/react/createStrictContext';
 import type { MasterTreeNode } from '@/shared/utils/master-folder-tree-contract';
 

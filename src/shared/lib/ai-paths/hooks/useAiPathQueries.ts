@@ -1,5 +1,3 @@
-'use client';
-
 import {
   aiPathRuntimeAnalyticsSummaryResponseSchema,
   type AiPathRuntimeAnalyticsSummary,

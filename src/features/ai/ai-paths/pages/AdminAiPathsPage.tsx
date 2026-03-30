@@ -1,4 +1,3 @@
-'use client';
 import { ContextRegistryPageProvider } from '@/features/ai/ai-context-registry/context/page-context';
 import { AI_PATHS_CONTEXT_ROOT_IDS } from '../context-registry/workspace';
 import { AdminAiPathsPageView } from './AdminAiPathsPageView';

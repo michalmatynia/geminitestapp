@@ -1,5 +1,3 @@
-'use client';
-
 import { type Query } from '@tanstack/react-query';
 
 import type { ProductListingWithDetails } from '@/shared/contracts/integrations';

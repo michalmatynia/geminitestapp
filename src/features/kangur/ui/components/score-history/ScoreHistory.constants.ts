@@ -1,5 +1,3 @@
-'use client';
-
 import type { KangurAccent } from '@/features/kangur/ui/design/tokens';
 
 export const OP_ACCENTS: Record<string, KangurAccent> = {

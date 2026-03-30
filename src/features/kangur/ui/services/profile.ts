@@ -1,5 +1,3 @@
-'use client';
-
 import type { KangurScoreRecord } from '@kangur/platform';
 import type {
   KangurProgressState,

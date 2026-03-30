@@ -1,5 +1,3 @@
-'use client';
-
 import {
   useKangurDrawingDraftStorage,
   type KangurDrawingDraftStorageController,

@@ -1,4 +1,5 @@
 'use client';
+
 import { useQueryClient, QueryClient } from '@tanstack/react-query';
 import {
   ColumnDef,

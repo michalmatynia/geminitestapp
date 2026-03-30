@@ -1,3 +1,5 @@
+'use client';
+
 import { useState, useEffect } from 'react';
 
 import type { NoteEditorType } from '@/shared/contracts/notes';

@@ -1,5 +1,3 @@
-'use client';
-
 import { createDomain, deleteDomain, fetchDomains, updateDomain } from '@/features/cms/api/domains';
 import {
   createPage,

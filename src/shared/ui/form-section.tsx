@@ -1,3 +1,5 @@
+'use client';
+
 import { cloneElement, isValidElement, useId, useMemo } from 'react';
 
 import { cn } from '@/shared/utils';

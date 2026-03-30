@@ -1,5 +1,3 @@
-'use client';
-
 import React from 'react';
 import { BookOpen, Gamepad2 } from 'lucide-react';
 import { normalizeSiteLocale } from '@/shared/lib/i18n/site-locale';

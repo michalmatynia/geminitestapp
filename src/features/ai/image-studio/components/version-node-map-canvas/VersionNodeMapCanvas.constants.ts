@@ -1,5 +1,3 @@
-'use client';
-
 export const MIN_ZOOM = 0.25;
 export const MAX_ZOOM = 3;
 export const WHEEL_ZOOM_SENSITIVITY = 0.00065;

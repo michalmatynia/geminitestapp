@@ -1,4 +1,5 @@
 'use client';
+
 import { Table as ReactTable, Row } from '@tanstack/react-table';
 import { Trash2, Image as ImageIcon } from 'lucide-react';
 import React, { JSX, memo, useState } from 'react';

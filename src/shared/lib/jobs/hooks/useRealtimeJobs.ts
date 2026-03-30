@@ -1,5 +1,3 @@
-'use client';
-
 import { useRealtimeQuery } from '@/shared/hooks/query/useRealtimeQuery';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 

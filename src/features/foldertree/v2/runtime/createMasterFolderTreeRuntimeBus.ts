@@ -1,5 +1,3 @@
-'use client';
-
 import type { FolderTreeRuntimeBus, FolderTreeRuntimeInstanceInfo } from './types';
 
 export type MasterFolderTreeRuntimeBusWithDispose = FolderTreeRuntimeBus & {

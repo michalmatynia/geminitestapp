@@ -1,5 +1,3 @@
-'use client';
-
 import { ClipboardList, Download, Upload } from 'lucide-react';
 import Link from 'next/link';
 import React from 'react';

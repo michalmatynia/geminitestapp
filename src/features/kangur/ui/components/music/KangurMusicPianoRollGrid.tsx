@@ -1,5 +1,3 @@
-'use client';
-
 import type { MutableRefObject } from 'react';
 
 import { cn } from '@/features/kangur/shared/utils';

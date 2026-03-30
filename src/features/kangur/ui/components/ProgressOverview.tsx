@@ -1,3 +1,5 @@
+'use client';
+
 import { useTranslations } from 'next-intl';
 
 import { KangurActivitySummaryCard } from '@/features/kangur/ui/components/summary-cards/KangurActivitySummaryCard';

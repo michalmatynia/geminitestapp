@@ -1,5 +1,3 @@
-'use client';
-
 import type {
   NumberBalancePuzzle,
   NumberBalanceTile,

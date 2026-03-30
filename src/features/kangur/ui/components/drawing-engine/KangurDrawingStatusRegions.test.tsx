@@ -1,5 +1,3 @@
-'use client';
-
 import { render, screen } from '@testing-library/react';
 
 import { KangurDrawingStatusRegions } from '@/features/kangur/ui/components/drawing-engine/KangurDrawingStatusRegions';

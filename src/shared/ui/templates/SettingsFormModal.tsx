@@ -1,5 +1,3 @@
-'use client';
-
 import type { JSX, ReactNode, RefObject } from 'react';
 
 import type { ModalStateProps } from '@/shared/contracts/ui';

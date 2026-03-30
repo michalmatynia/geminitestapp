@@ -1,3 +1,5 @@
+'use client';
+
 import { useState } from 'react';
 
 // Why: Note metadata (title, color, status flags) has synchronized state:

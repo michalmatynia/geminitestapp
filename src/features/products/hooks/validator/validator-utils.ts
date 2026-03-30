@@ -1,5 +1,3 @@
-'use client';
-
 import type { SetStateAction } from 'react';
 import type { ProductWithImages } from '@/shared/contracts/products';
 

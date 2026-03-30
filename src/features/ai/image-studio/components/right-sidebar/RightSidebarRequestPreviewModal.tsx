@@ -1,5 +1,3 @@
-'use client';
-
 import React from 'react';
 
 import { DetailModal } from '@/shared/ui/templates/modals';

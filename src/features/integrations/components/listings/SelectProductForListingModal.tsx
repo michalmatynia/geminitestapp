@@ -1,5 +1,3 @@
-'use client';
-
 import React from 'react';
 
 import { useIntegrationProductsWithCount } from '@/features/integrations/hooks/useIntegrationProductQueries';

@@ -1,5 +1,3 @@
-'use client';
-
 import type { ProductCsvImportResponse } from '@/shared/contracts/products';
 import type { CreateMutation } from '@/shared/contracts/ui';
 import { createMutationV2 } from '@/shared/lib/query-factories-v2';

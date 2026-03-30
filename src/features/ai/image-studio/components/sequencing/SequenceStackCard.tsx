@@ -1,3 +1,5 @@
+'use client';
+
 import { GripVertical, Trash2 } from 'lucide-react';
 import React, { useCallback, useMemo, useState } from 'react';
 

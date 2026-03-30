@@ -1,3 +1,5 @@
+'use client';
+
 import React from 'react';
 
 import type { AiNode, AiPathRuntimeEvent, Edge } from '@/shared/lib/ai-paths';

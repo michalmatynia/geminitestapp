@@ -1,5 +1,3 @@
-'use client';
-
 import { useSettingsMap } from '@/shared/hooks/use-settings';
 import { Card, StatusBadge } from '@/shared/ui';
 

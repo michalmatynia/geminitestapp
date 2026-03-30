@@ -1,5 +1,3 @@
-'use client';
-
 import { type VariantProps } from 'class-variance-authority';
 
 import type { ModalStateProps } from '@/shared/contracts/ui';

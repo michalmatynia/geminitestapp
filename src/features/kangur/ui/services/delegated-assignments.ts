@@ -1,5 +1,3 @@
-'use client';
-
 import {
   appendKangurUrlParams,
   getKangurPageHref as createPageUrl,

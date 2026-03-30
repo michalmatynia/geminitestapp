@@ -2,12 +2,13 @@
   "generatedAt": "2026-03-30T22:32:35.576Z",
   "hardLimits": {
     "sourceLargestFileLines": 4000,
-    "imports.featuresToAppApiTotalImports": 0
+    "imports.featuresToAppApiTotalImports": 0,
+    "source.hooksWithoutUseClient": 0
   },
   "max": {
     "source.filesOver1000": 8,
     "source.filesOver1500": 0,
-    "source.useClientFiles": 1892,
+    "source.useClientFiles": 1729,
     "source.largestFileLines": 1278,
     "api.totalRoutes": 30,
     "api.delegatedServerRoutes": 172,
@@ -27,5 +28,8 @@
     "uiConsolidation.duplicateNameClusters": 0,
     "uiConsolidation.propSignatureClusters": 0,
     "uiConsolidation.tokenSimilarityClusters": 0
+  },
+  "min": {
+    "source.useClientFiles": 1400
   }
 }

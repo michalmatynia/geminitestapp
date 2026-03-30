@@ -1,5 +1,3 @@
-'use client';
-
 import type { LogicalPatternCell, LogicalPatternTile } from '../logical-patterns-workshop-data';
 import type { MultiSlottedRoundStateDto } from '../round-state-contracts';
 

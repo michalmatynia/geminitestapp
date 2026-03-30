@@ -1,5 +1,3 @@
-'use client';
-
 import type { BlockDefinition } from '@/features/cms/types/page-builder';
 import {
   MODEL_ENVIRONMENT_OPTIONS,

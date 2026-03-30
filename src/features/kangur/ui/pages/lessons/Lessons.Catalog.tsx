@@ -1,3 +1,5 @@
+'use client';
+
 import { useLocale, useTranslations } from 'next-intl';
 import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import {

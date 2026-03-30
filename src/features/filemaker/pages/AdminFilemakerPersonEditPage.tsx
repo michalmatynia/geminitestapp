@@ -1,5 +1,3 @@
-'use client';
-
 import React from 'react';
 
 import { PersonBasicInfoSection } from '../components/page/PersonBasicInfoSection';

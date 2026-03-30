@@ -1,5 +1,3 @@
-'use client';
-
 import type { AiInsightsResponse } from '@/shared/contracts/ai-insights';
 import type {
   SystemLogsResponseDto as SystemLogsResponse,

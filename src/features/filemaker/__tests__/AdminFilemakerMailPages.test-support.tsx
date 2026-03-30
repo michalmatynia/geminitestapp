@@ -1,3 +1,5 @@
+'use client';
+
 import { beforeEach, vi } from 'vitest';
 
 const {

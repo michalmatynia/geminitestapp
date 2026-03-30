@@ -1,5 +1,3 @@
-'use client';
-
 import type { KangurLaunchableGameRuntimeRendererId } from '@/shared/contracts/kangur-games';
 import type {
   LaunchableGameCategoryRendererProps,

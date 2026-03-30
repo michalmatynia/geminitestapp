@@ -1,5 +1,3 @@
-'use client';
-
 import { createMasterFolderTreeRuntimeBus } from '@/features/foldertree/v2/runtime/createMasterFolderTreeRuntimeBus';
 import {
   masterFolderTreeRuntimeFallbackBus,

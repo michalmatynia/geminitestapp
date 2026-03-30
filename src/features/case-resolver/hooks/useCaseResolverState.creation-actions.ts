@@ -1,3 +1,5 @@
+'use client';
+
 import { useCallback, useRef } from 'react';
 
 import { createId, createUniqueFolderPath } from '@/features/case-resolver/utils/caseResolverUtils';

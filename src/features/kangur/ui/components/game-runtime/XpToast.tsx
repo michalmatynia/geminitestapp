@@ -1,3 +1,5 @@
+'use client';
+
 import { memo } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useTranslations } from 'next-intl';

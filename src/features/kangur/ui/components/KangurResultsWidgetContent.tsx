@@ -1,3 +1,5 @@
+'use client';
+
 import { useTranslations } from 'next-intl';
 
 import ScoreHistory from '@/features/kangur/ui/components/ScoreHistory';

@@ -1,3 +1,5 @@
+'use client';
+
 import React, { useMemo } from 'react';
 
 import type { LabeledOptionDto } from '@/shared/contracts/base';

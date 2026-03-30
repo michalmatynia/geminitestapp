@@ -1,5 +1,3 @@
-'use client';
-
 import type { IdDataDto } from '@/shared/contracts/base';
 import type {
   CreateProductDraftInput,

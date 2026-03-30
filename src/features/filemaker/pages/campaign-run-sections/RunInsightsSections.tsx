@@ -1,5 +1,3 @@
-'use client';
-
 import { FormSection } from '@/shared/ui';
 import { formatTimestamp } from '../filemaker-page-utils';
 import type {

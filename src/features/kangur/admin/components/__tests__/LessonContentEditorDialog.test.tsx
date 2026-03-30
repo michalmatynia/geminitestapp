@@ -1,9 +1,4 @@
-/**
- * @vitest-environment jsdom
- */
-
-
-"use client";
+'use client';
 
 import React from 'react';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';

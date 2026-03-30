@@ -1,5 +1,3 @@
-'use client';
-
 export { exportKangurCanvasDataUrl } from '@/features/kangur/ui/components/drawing-engine/canvas-export';
 
 import type { KangurDrawingStroke, KangurFreeformDrawingStrokeMeta } from './types';

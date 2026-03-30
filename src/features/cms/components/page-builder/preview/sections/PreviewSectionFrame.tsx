@@ -1,5 +1,3 @@
-'use client';
-
 import React from 'react';
 
 import { useCmsPageContext } from '@/features/cms/components/frontend/CmsPageContext';

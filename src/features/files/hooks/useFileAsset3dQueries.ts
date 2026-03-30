@@ -1,3 +1,5 @@
+'use client';
+
 import { useMemo } from 'react';
 
 import type { ListQuery } from '@/shared/contracts/ui';

@@ -1,5 +1,3 @@
-'use client';
-
 import { stripSiteLocalePrefix } from '@/shared/lib/i18n/site-locale';
 import { cn } from '@/shared/utils';
 

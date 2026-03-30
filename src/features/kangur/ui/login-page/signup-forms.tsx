@@ -1,3 +1,5 @@
+'use client';
+
 import { type FormEvent, type JSX, useState, useRef } from 'react';
 import { useTranslations } from 'next-intl';
 import { Eye, EyeOff } from 'lucide-react';

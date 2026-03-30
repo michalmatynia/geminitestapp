@@ -49,7 +49,7 @@ vi.mock('@/features/kangur/ui/hooks/useKangurLessonPanelProgress', async () => {
   };
 });
 
-import { KangurLessonNavigationWidget } from '@/features/kangur/ui/components/KangurLessonNavigationWidget';
+import { KangurLessonNavigationWidget } from '@/features/kangur/ui/components/lesson-runtime/KangurLessonNavigationWidget';
 import { KangurLessonNavigationProvider } from '@/features/kangur/ui/context/KangurLessonNavigationContext';
 
 import CalendarLesson from '@/features/kangur/ui/components/CalendarLesson';
@@ -67,7 +67,7 @@ const loadProgressMock = vi.fn(() => ({
   lessonMastery: {},
 }));
 
-vi.mock('@/features/kangur/ui/components/KangurLaunchableGameInstanceRuntime', () => ({
+vi.mock('@/features/kangur/ui/components/KangurLessonActivityInstanceRuntime', () => ({
   __esModule: true,
   default: ({
     gameId,

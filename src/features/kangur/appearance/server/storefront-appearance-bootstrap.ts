@@ -1,6 +1,6 @@
 import 'server-only';
 
-import { resolveKangurStorefrontAppearance } from '@/features/cms/public';
+import { resolveKangurStorefrontAppearance } from '@/features/cms/components/frontend/CmsStorefrontAppearance.logic';
 import type {
   KangurStorefrontAppearanceMode,
   KangurStorefrontThemeSettingsSnapshot,

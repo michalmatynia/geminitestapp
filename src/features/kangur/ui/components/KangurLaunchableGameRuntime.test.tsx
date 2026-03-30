@@ -10,74 +10,83 @@ import type { KangurLaunchableGameRuntimeSpec } from '@/shared/contracts/kangur-
 
 vi.mock('next/dynamic', () => ({
   default: (loader: unknown) => {
-    const createRuntimeRendererStub = (testId: string) => {
+    const testIdsByRendererId: Record<string, string> = {
+      adding_ball_game: 'adding-ball-game',
+      adding_synthesis_game: 'adding-synthesis-game',
+      agentic_prompt_trim_game: 'agentic-prompt-trim-game',
+      alphabet_literacy_game: 'alphabet-literacy-game',
+      color_harmony_game: 'color-harmony-game',
+      division_game: 'division-game',
+      english_adverbs_action_game: 'english-adverbs-action-studio-game',
+      english_compare_and_crown_game: 'english-comparatives-crown-game',
+      multiplication_array_game: 'multiplication-array-game',
+      shape_recognition_game: 'shape-recognition-game',
+      subtracting_game: 'subtracting-game',
+    };
+    const createRuntimeCategoryStub = (supportedRendererIds: Set<string>) => {
       const Stub = ({
-        finishLabel,
-        finishLabelVariant,
-        literacyMatchSetId,
-        onFinish,
+        rendererId,
+        rendererProps,
       }: {
-        finishLabel?: string;
-        finishLabelVariant?: string;
-        literacyMatchSetId?: string;
-        onFinish?: () => void;
-      }) => (
-        <button
-          data-finish-label={finishLabel ?? ''}
-          data-finish-label-variant={finishLabelVariant ?? ''}
-          data-literacy-match-set-id={literacyMatchSetId ?? ''}
-          data-testid={testId}
-          onClick={onFinish}
-          type='button'
-        >
-          {testId}
-        </button>
-      );
+        rendererId: string;
+        rendererProps?: {
+          completionPrimaryActionLabel?: string;
+          finishLabel?: string;
+          finishLabelVariant?: string;
+          onFinish?: () => void;
+          rendererProps?: {
+            literacyMatchSetId?: string;
+          };
+        };
+      }) => {
+        if (!supportedRendererIds.has(rendererId)) {
+          return null;
+        }
 
-      Stub.displayName = testId;
+        const testId = testIdsByRendererId[rendererId] ?? rendererId;
+
+        return (
+          <button
+            data-completion-primary-action-label={rendererProps?.completionPrimaryActionLabel ?? ''}
+            data-finish-label={rendererProps?.finishLabel ?? ''}
+            data-finish-label-variant={rendererProps?.finishLabelVariant ?? ''}
+            data-literacy-match-set-id={rendererProps?.rendererProps?.literacyMatchSetId ?? ''}
+            data-testid={testId}
+            onClick={rendererProps?.onFinish}
+            type='button'
+          >
+            {testId}
+          </button>
+        );
+      };
+
+      Stub.displayName = 'RuntimeCategoryStub';
       return Stub;
     };
-
     const signature = typeof loader === 'function' ? loader.toString() : '';
 
-    if (signature.includes('AlphabetLiteracyGame')) {
-      return createRuntimeRendererStub('alphabet-literacy-game');
+    if (signature.includes('KangurLaunchableGameRuntime.foundational')) {
+      return createRuntimeCategoryStub(
+        new Set<string>([
+          'adding_ball_game',
+          'adding_synthesis_game',
+          'division_game',
+          'english_adverbs_action_game',
+          'english_compare_and_crown_game',
+          'multiplication_array_game',
+          'subtracting_game',
+        ])
+      );
     }
 
-    if (signature.includes('AddingSynthesisGame')) {
-      return createRuntimeRendererStub('adding-synthesis-game');
+    if (signature.includes('KangurLaunchableGameRuntime.early-learning')) {
+      return createRuntimeCategoryStub(
+        new Set<string>(['alphabet_literacy_game', 'color_harmony_game', 'shape_recognition_game'])
+      );
     }
 
-    if (signature.includes('AddingBallGame')) {
-      return createRuntimeRendererStub('adding-ball-game');
-    }
-
-    if (signature.includes('DivisionGame')) {
-      return createRuntimeRendererStub('division-game');
-    }
-
-    if (signature.includes('MultiplicationArrayGame')) {
-      return createRuntimeRendererStub('multiplication-array-game');
-    }
-
-    if (signature.includes('ColorHarmonyGame')) {
-      return createRuntimeRendererStub('color-harmony-game');
-    }
-
-    if (signature.includes('EnglishAdverbsActionStudioGame')) {
-      return createRuntimeRendererStub('english-adverbs-action-studio-game');
-    }
-
-    if (signature.includes('EnglishComparativesSuperlativesCrownGame')) {
-      return createRuntimeRendererStub('english-comparatives-crown-game');
-    }
-
-    if (signature.includes('ShapeRecognitionGame')) {
-      return createRuntimeRendererStub('shape-recognition-game');
-    }
-
-    if (signature.includes('SubtractingGame')) {
-      return createRuntimeRendererStub('subtracting-game');
+    if (signature.includes('KangurLaunchableGameRuntime.adult-learning')) {
+      return createRuntimeCategoryStub(new Set<string>(['agentic_prompt_trim_game']));
     }
 
     return () => null;
@@ -87,10 +96,6 @@ vi.mock('next/dynamic', () => ({
 vi.mock('next-intl', () => ({
   useTranslations: () => (key: string) =>
     key === 'returnToGameHome' ? 'Return to game home' : key,
-}));
-
-vi.mock('@/features/kangur/ui/components/music/music-piano-roll-launchable-runtime', () => ({
-  createKangurMusicPianoRollLaunchableOnFinishRendererMap: () => ({}),
 }));
 
 import { KangurLaunchableGameRuntime } from './KangurLaunchableGameRuntime';
@@ -103,7 +108,8 @@ describe('KangurLaunchableGameRuntime', () => {
   it('renders the renamed alphabet literacy runtime and forwards finish label plus renderer props', () => {
     const runtime: KangurLaunchableGameRuntimeSpec = {
       kind: 'launchable_game_screen',
-      screen: 'alphabet_literacy',
+      screen: 'alphabet_letter_matching_quiz',
+      engineId: 'letter-match-engine',
       rendererId: 'alphabet_literacy_game',
       rendererProps: {
         literacyMatchSetId: 'alphabet-match-set',
@@ -133,7 +139,8 @@ describe('KangurLaunchableGameRuntime', () => {
   it('renders the renamed color harmony runtime', () => {
     const runtime: KangurLaunchableGameRuntimeSpec = {
       kind: 'launchable_game_screen',
-      screen: 'color_harmony',
+      screen: 'art_color_harmony_quiz',
+      engineId: 'color-harmony-engine',
       rendererId: 'color_harmony_game',
       finishMode: 'return_to_game_home',
       finishLabelProp: 'finishLabel',
@@ -157,6 +164,7 @@ describe('KangurLaunchableGameRuntime', () => {
     const runtime: KangurLaunchableGameRuntimeSpec = {
       kind: 'launchable_game_screen',
       screen: 'adding_synthesis_quiz',
+      engineId: 'rhythm-answer-engine',
       rendererId: 'adding_synthesis_game',
       finishMode: 'return_to_game_home',
       finishLabelProp: 'finishLabel',
@@ -180,6 +188,7 @@ describe('KangurLaunchableGameRuntime', () => {
     const runtime: KangurLaunchableGameRuntimeSpec = {
       kind: 'launchable_game_screen',
       screen: 'addition_quiz',
+      engineId: 'quantity-drag-engine',
       rendererId: 'adding_ball_game',
       finishMode: 'play_variant',
       finishLabelProp: 'finishLabelVariant',
@@ -203,6 +212,7 @@ describe('KangurLaunchableGameRuntime', () => {
     const runtime: KangurLaunchableGameRuntimeSpec = {
       kind: 'launchable_game_screen',
       screen: 'multiplication_array_quiz',
+      engineId: 'array-builder-engine',
       rendererId: 'multiplication_array_game',
       finishMode: 'return_to_game_home',
       finishLabelProp: 'finishLabel',
@@ -226,6 +236,7 @@ describe('KangurLaunchableGameRuntime', () => {
     const runtime: KangurLaunchableGameRuntimeSpec = {
       kind: 'launchable_game_screen',
       screen: 'subtraction_quiz',
+      engineId: 'quantity-drag-engine',
       rendererId: 'subtracting_game',
       finishMode: 'play_variant',
       finishLabelProp: 'finishLabelVariant',
@@ -249,6 +260,7 @@ describe('KangurLaunchableGameRuntime', () => {
     const runtime: KangurLaunchableGameRuntimeSpec = {
       kind: 'launchable_game_screen',
       screen: 'division_quiz',
+      engineId: 'choice-quiz-engine',
       rendererId: 'division_game',
       finishMode: 'play_variant',
       finishLabelProp: 'finishLabelVariant',
@@ -271,7 +283,8 @@ describe('KangurLaunchableGameRuntime', () => {
   it('renders the renamed shape recognition runtime', () => {
     const runtime: KangurLaunchableGameRuntimeSpec = {
       kind: 'launchable_game_screen',
-      screen: 'geometry_shape_recognition',
+      screen: 'geometry_shape_spotter_quiz',
+      engineId: 'shape-recognition-engine',
       rendererId: 'shape_recognition_game',
       finishMode: 'return_to_game_home',
       finishLabelProp: 'finishLabel',
@@ -295,6 +308,7 @@ describe('KangurLaunchableGameRuntime', () => {
     const runtime: KangurLaunchableGameRuntimeSpec = {
       kind: 'launchable_game_screen',
       screen: 'english_adverbs_quiz',
+      engineId: 'sentence-builder-engine',
       rendererId: 'english_adverbs_action_game',
       finishMode: 'return_to_game_home',
       finishLabelProp: 'finishLabel',
@@ -318,6 +332,7 @@ describe('KangurLaunchableGameRuntime', () => {
     const runtime: KangurLaunchableGameRuntimeSpec = {
       kind: 'launchable_game_screen',
       screen: 'english_compare_and_crown_quiz',
+      engineId: 'sentence-builder-engine',
       rendererId: 'english_compare_and_crown_game',
       finishMode: 'return_to_game_home',
       finishLabelProp: 'finishLabel',
@@ -332,6 +347,30 @@ describe('KangurLaunchableGameRuntime', () => {
     render(<KangurLaunchableGameRuntime onFinish={vi.fn()} runtime={runtime} />);
 
     expect(screen.getByTestId('english-comparatives-crown-game')).toHaveAttribute(
+      'data-finish-label',
+      'Return to game home'
+    );
+  });
+
+  it('renders the adult-learning prompt trim runtime through its category chunk', () => {
+    const runtime: KangurLaunchableGameRuntimeSpec = {
+      kind: 'launchable_game_screen',
+      screen: 'agentic_prompt_trim_quiz',
+      engineId: 'token-trim-engine',
+      rendererId: 'agentic_prompt_trim_game',
+      finishMode: 'return_to_game_home',
+      finishLabelProp: 'finishLabel',
+      className: 'w-full flex flex-col items-center',
+      shell: {
+        accent: 'rose',
+        icon: '✂️',
+        shellTestId: 'agentic-prompt-trim-runtime-shell',
+      },
+    };
+
+    render(<KangurLaunchableGameRuntime onFinish={vi.fn()} runtime={runtime} />);
+
+    expect(screen.getByTestId('agentic-prompt-trim-game')).toHaveAttribute(
       'data-finish-label',
       'Return to game home'
     );

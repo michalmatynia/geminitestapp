@@ -85,7 +85,7 @@ vi.mock('@/features/kangur/ui/components/KangurTrainingSetupPanel', () => ({
   KangurTrainingSetupPanel: () => <div data-testid='mock-training-setup-panel'>mock-training-setup-panel</div>,
 }));
 
-vi.mock('@/features/kangur/ui/components/KangurPracticeAssignmentBanner', () => ({
+vi.mock('@/features/kangur/ui/components/assignments/KangurPracticeAssignmentBanner', () => ({
   default: () => <div data-testid='mock-practice-assignment-banner'>mock-practice-assignment-banner</div>,
 }));
 

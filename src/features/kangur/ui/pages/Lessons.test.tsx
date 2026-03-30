@@ -17,6 +17,7 @@ import {
   lessonCatalogHookCallsMock,
   lessonCardPropsMock,
   lessonDocumentsHookCallsMock,
+  progressStateHookCallsMock,
   lessonSectionsHookCallsMock,
   lessonSectionsLoadingState,
   lessonSectionsPlaceholderDataState,
@@ -75,6 +76,22 @@ describe('Lessons page subject filtering', () => {
   });
 
   it('loads lesson sections first and keeps the detailed lessons catalog disabled until interaction', () => {
+    lessonsState.value = [
+      {
+        id: 'lesson-english',
+        componentId: 'english_basics',
+        subject: 'english',
+        ageGroup: 'ten_year_old',
+        enabled: true,
+        sortOrder: 1,
+        title: 'English Basics',
+        description: '',
+        emoji: '📘',
+        color: 'sky',
+        activeBg: 'bg-sky-50',
+        contentMode: 'component',
+      },
+    ];
     lessonSectionsState.value = [
       {
         id: 'english_foundations',
@@ -106,6 +123,7 @@ describe('Lessons page subject filtering', () => {
         subject: 'english',
       })
     );
+    expect(screen.queryByTestId('lesson-card-lesson-english')).not.toBeInTheDocument();
 
     act(() => {
       vi.runAllTimers();
@@ -118,6 +136,7 @@ describe('Lessons page subject filtering', () => {
         subject: 'english',
       })
     );
+    expect(screen.queryByTestId('lesson-card-lesson-english')).not.toBeInTheDocument();
   });
 
   it('keeps the catalog intro on the built-in lessons navigation without a back button', () => {
@@ -150,6 +169,34 @@ describe('Lessons page subject filtering', () => {
     });
 
     expect(lessonTemplatesHookCallsMock).not.toHaveBeenCalled();
+    expect(lessonCatalogHookCallsMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        enabled: true,
+        enabledOnly: true,
+        subject: 'english',
+      })
+    );
+  });
+
+  it('loads only the focused lesson component when the focus token resolves directly', () => {
+    focusTokenState.value = 'english_basics';
+
+    render(<Lessons />);
+
+    act(() => {
+      vi.runAllTimers();
+    });
+
+    expect(lessonTemplatesHookCallsMock).not.toHaveBeenCalled();
+    expect(lessonCatalogHookCallsMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        componentIds: ['english_basics'],
+        enabled: true,
+        enabledOnly: true,
+        subject: 'english',
+      })
+    );
+    expect(screen.getByTestId('mock-active-lesson-view')).toHaveTextContent('lesson-english');
   });
 
   it('keeps the selected lesson active while the catalog hands off from retained subset data to a full refetch', () => {
@@ -176,7 +223,7 @@ describe('Lessons page subject filtering', () => {
     );
   });
 
-  it('defers assignments hydration until after the first deferred render turn for parent access', () => {
+  it('keeps lesson status metadata disabled until lesson content is requested for parent access', () => {
     useKangurAuthMock.mockReturnValue({
       user: {
         actorType: 'parent',
@@ -196,11 +243,36 @@ describe('Lessons page subject filtering', () => {
         enabled: false,
       })
     );
+    expect(progressStateHookCallsMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        enabled: false,
+      })
+    );
 
     act(() => {
       vi.runOnlyPendingTimers();
     });
 
+    expect(lessonAssignmentsHookCallsMock).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        enabled: false,
+      })
+    );
+    expect(progressStateHookCallsMock).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        enabled: false,
+      })
+    );
+
+    act(() => {
+      fireEvent.click(screen.getByTestId('lesson-card-lesson-english'));
+    });
+
+    expect(progressStateHookCallsMock).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        enabled: true,
+      })
+    );
     expect(lessonAssignmentsHookCallsMock).toHaveBeenLastCalledWith(
       expect.objectContaining({
         enabled: false,
@@ -703,7 +775,7 @@ describe('Lessons page subject filtering', () => {
     fireEvent.click(screen.getByTestId('lesson-card-lesson-english'));
 
     expect(screen.getByTestId('mock-active-lesson-view')).toHaveTextContent('lesson-english');
-    expect(lessonCatalogHookCallsMock).toHaveBeenLastCalledWith(
+    expect(lessonCatalogHookCallsMock).toHaveBeenCalledWith(
       expect.objectContaining({
         componentIds: ['english_basics'],
         enabled: true,
@@ -713,7 +785,7 @@ describe('Lessons page subject filtering', () => {
     );
   });
 
-  it('shows both adverbs lessons inside the English grammar group', async () => {
+  it('loads each English grammar subsection only after it is opened', async () => {
     lessonsState.value = [
       {
         id: 'lesson-english-adverbs',
@@ -789,12 +861,57 @@ describe('Lessons page subject filtering', () => {
     fireEvent.click(grammarSectionButton);
 
     expect(grammarSectionButton).toHaveAttribute('aria-expanded', 'true');
+    expect(screen.queryByTestId('lesson-card-lesson-english-adverbs')).not.toBeInTheDocument();
+    expect(
+      screen.queryByTestId('lesson-card-lesson-english-adverbs-frequency')
+    ).not.toBeInTheDocument();
+    expect(lessonCatalogHookCallsMock).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        enabled: false,
+        enabledOnly: true,
+        subject: 'english',
+      })
+    );
+
+    const adverbsSubsectionButton = screen
+      .getByTestId('lessons-page-subsection-label-english_grammar_adverbs')
+      .closest('button');
+    expect(adverbsSubsectionButton).not.toBeNull();
+    fireEvent.click(adverbsSubsectionButton as HTMLButtonElement);
+
+    expect(screen.getByTestId('lesson-card-lesson-english-adverbs')).toBeInTheDocument();
+    expect(
+      screen.queryByTestId('lesson-card-lesson-english-adverbs-frequency')
+    ).not.toBeInTheDocument();
+    expect(lessonCatalogHookCallsMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        componentIds: ['english_adverbs'],
+        enabled: true,
+        enabledOnly: true,
+        subject: 'english',
+      })
+    );
+    expect(lessonCardPropsMock).toHaveBeenCalledWith(
+      expect.objectContaining({ id: 'lesson-english-adverbs', componentId: 'english_adverbs' })
+    );
+
+    const frequencySubsectionButton = screen
+      .getByTestId('lessons-page-subsection-label-english_grammar_adverbs_frequency')
+      .closest('button');
+    expect(frequencySubsectionButton).not.toBeNull();
+    fireEvent.click(frequencySubsectionButton as HTMLButtonElement);
+
     expect(screen.getByTestId('lesson-card-lesson-english-adverbs')).toBeInTheDocument();
     expect(
       screen.getByTestId('lesson-card-lesson-english-adverbs-frequency')
     ).toBeInTheDocument();
-    expect(lessonCardPropsMock).toHaveBeenCalledWith(
-      expect.objectContaining({ id: 'lesson-english-adverbs', componentId: 'english_adverbs' })
+    expect(lessonCatalogHookCallsMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        componentIds: ['english_adverbs_frequency'],
+        enabled: true,
+        enabledOnly: true,
+        subject: 'english',
+      })
     );
     expect(lessonCardPropsMock).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -857,7 +974,25 @@ describe('Lessons page subject filtering', () => {
     fireEvent.click(grammarSectionButton);
 
     expect(grammarSectionButton).toHaveAttribute('aria-expanded', 'true');
+    expect(
+      screen.queryByTestId('lesson-card-lesson-english-comparatives')
+    ).not.toBeInTheDocument();
+
+    const subsectionButton = screen
+      .getByTestId('lessons-page-subsection-label-english_grammar_comparatives_superlatives')
+      .closest('button');
+    expect(subsectionButton).not.toBeNull();
+    fireEvent.click(subsectionButton as HTMLButtonElement);
+
     expect(screen.getByTestId('lesson-card-lesson-english-comparatives')).toBeInTheDocument();
+    expect(lessonCatalogHookCallsMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        componentIds: ['english_comparatives_superlatives'],
+        enabled: true,
+        enabledOnly: true,
+        subject: 'english',
+      })
+    );
     expect(lessonCardPropsMock).toHaveBeenCalledWith(
       expect.objectContaining({
         id: 'lesson-english-comparatives',

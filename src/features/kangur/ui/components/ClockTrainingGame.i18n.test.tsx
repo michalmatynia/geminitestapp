@@ -12,7 +12,7 @@ vi.mock('use-intl', async () => await vi.importActual<typeof import('use-intl')>
 
 import enMessages from '@/i18n/messages/en.json';
 import deMessages from '@/i18n/messages/de.json';
-import LessonActivityShell from '@/features/kangur/ui/components/LessonActivityShell';
+import LessonActivityShell from '@/features/kangur/ui/components/lesson-runtime/LessonActivityShell';
 import { KangurLessonNavigationProvider } from '@/features/kangur/ui/context/KangurLessonNavigationContext';
 import { KangurLessonPrintProvider } from '@/features/kangur/ui/context/KangurLessonPrintContext';
 

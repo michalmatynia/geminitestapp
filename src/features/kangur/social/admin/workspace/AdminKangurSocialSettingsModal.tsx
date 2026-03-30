@@ -72,6 +72,8 @@ export function AdminKangurSocialSettingsModal({
     batchCaptureJob,
     batchCaptureMessage,
     batchCaptureErrorMessage,
+    batchCaptureRecentJobs,
+    batchCaptureRecentJobsLoading,
     batchCapturePresetIds,
     batchCapturePresetLimit,
     batchCaptureResult,
@@ -93,6 +95,7 @@ export function AdminKangurSocialSettingsModal({
     handleGenerate,
     handleLinkedInConnectionChange,
     handleLoadContext,
+    handleRetryFailedPresetBatchCaptureJob,
     handleToggleCapturePreset,
     handleVisionModelChange,
     linkedinConnectionId,
@@ -294,6 +297,8 @@ export function AdminKangurSocialSettingsModal({
             batchCaptureJob={batchCaptureJob}
             batchCaptureMessage={batchCaptureMessage}
             batchCaptureErrorMessage={batchCaptureErrorMessage}
+            batchCaptureRecentJobs={batchCaptureRecentJobs}
+            batchCaptureRecentJobsLoading={batchCaptureRecentJobsLoading}
             batchCaptureResult={batchCaptureResult}
             batchCaptureLimitSummary={batchCaptureLimitSummary}
             currentVisualAnalysisJob={currentVisualAnalysisJob}
@@ -310,6 +315,9 @@ export function AdminKangurSocialSettingsModal({
             }
             handleResetProgrammableCaptureDefaults={() => {
               void handleResetProgrammableCaptureDefaults();
+            }}
+            handleRetryFailedPresetBatchCaptureJob={(job) => {
+              void handleRetryFailedPresetBatchCaptureJob(job);
             }}
           />
         </TabsContent>

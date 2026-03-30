@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { useLocale, useTranslations } from 'next-intl';
 import { QueryClientContext, type QueryClient } from '@tanstack/react-query';
 import {
@@ -15,13 +15,9 @@ import { useOptionalKangurAiTutor } from '@/features/kangur/ui/context/KangurAiT
 import { useOptionalKangurAuth } from '@/features/kangur/ui/context/KangurAuthContext';
 import { useOptionalKangurRouteTransitionState } from '@/features/kangur/ui/context/KangurRouteTransitionContext';
 import { useKangurElevatedSession } from '@/features/kangur/ui/hooks/useKangurElevatedSession';
-import { prefetchKangurLessonsCatalog } from '@/features/kangur/ui/hooks/useKangurLessonsCatalog';
 import { useKangurMobileBreakpoint } from '@/features/kangur/ui/hooks/useKangurMobileBreakpoint';
 import { useKangurCoarsePointer } from '@/features/kangur/ui/hooks/useKangurCoarsePointer';
-import { prefetchKangurPageContentStore } from '@/features/kangur/ui/hooks/useKangurPageContent';
 import { useKangurStorefrontAppearance } from '@/features/kangur/ui/useKangurStorefrontAppearance';
-import { isKangurSocialBatchCaptureHref } from '@/features/kangur/shared/capture-mode';
-import { useOptionalKangurRouting } from '@/features/kangur/ui/context/KangurRoutingContext';
 import { normalizeSiteLocale } from '@/shared/lib/i18n/site-locale';
 import {
   getPrimaryNavigationFallbackCopy,
@@ -69,8 +65,6 @@ type KangurPrimaryNavigationUiState = {
   setIsTutorHidden: React.Dispatch<React.SetStateAction<boolean>>;
   toggleMobileMenu: () => void;
 };
-
-const HOT_LESSONS_DATA_PREFETCH_TIMEOUT_MS = 250;
 
 function resolveKangurPrimaryNavigationAuthUser(
   auth: ReturnType<typeof useOptionalKangurAuth>
@@ -279,11 +273,11 @@ function useKangurPrimaryNavigationUiState(
 }
 
 export function useKangurPrimaryNavigationLessonsPrefetchOnIntent({
-  ageGroup,
-  currentPage,
-  normalizedLocale,
-  queryClient,
-  subject,
+  ageGroup: _ageGroup,
+  currentPage: _currentPage,
+  normalizedLocale: _normalizedLocale,
+  queryClient: _queryClient,
+  subject: _subject,
 }: {
   ageGroup: ReturnType<typeof useKangurAgeGroupFocus>['ageGroup'];
   currentPage: KangurPrimaryNavigationStateInput['currentPage'];
@@ -291,89 +285,7 @@ export function useKangurPrimaryNavigationLessonsPrefetchOnIntent({
   queryClient: QueryClient | null | undefined;
   subject: ReturnType<typeof useKangurSubjectFocus>['subject'];
 }): () => void {
-  const routing = useOptionalKangurRouting();
-  const isSyntheticKangurCapture = isKangurSocialBatchCaptureHref(
-    routing?.requestedHref ?? routing?.requestedPath
-  );
-  const lessonsPrefetchTriggeredRef = useRef(false);
-  const pageContentPrefetchTriggeredRef = useRef(false);
-
-  const prefetchSharedRouteContentOnIntent = useCallback((): void => {
-    if (isSyntheticKangurCapture || pageContentPrefetchTriggeredRef.current) {
-      return;
-    }
-
-    pageContentPrefetchTriggeredRef.current = true;
-    void prefetchKangurPageContentStore(queryClient, normalizedLocale);
-  }, [isSyntheticKangurCapture, normalizedLocale, queryClient]);
-
-  const prefetchLessonsCatalogOnIntent = useCallback((): void => {
-    if (
-      isSyntheticKangurCapture ||
-      currentPage === 'Lessons' ||
-      lessonsPrefetchTriggeredRef.current
-    ) {
-      return;
-    }
-
-    prefetchSharedRouteContentOnIntent();
-    lessonsPrefetchTriggeredRef.current = true;
-    void prefetchKangurLessonsCatalog(queryClient, {
-      ageGroup,
-      enabledOnly: true,
-      subject,
-    });
-  }, [
-    ageGroup,
-    currentPage,
-    isSyntheticKangurCapture,
-    prefetchSharedRouteContentOnIntent,
-    queryClient,
-    subject,
-  ]);
-
-  useEffect(() => {
-    lessonsPrefetchTriggeredRef.current = false;
-    pageContentPrefetchTriggeredRef.current = false;
-  }, [ageGroup, currentPage, normalizedLocale, subject]);
-
-  useEffect(() => {
-    if (
-      isSyntheticKangurCapture ||
-      currentPage !== 'Game' ||
-      lessonsPrefetchTriggeredRef.current ||
-      typeof window === 'undefined'
-    ) {
-      return;
-    }
-
-    const prefetchHotLessonsRouteData = (): void => {
-      if (lessonsPrefetchTriggeredRef.current) {
-        return;
-      }
-
-      prefetchLessonsCatalogOnIntent();
-    };
-
-    if (typeof window.requestIdleCallback === 'function') {
-      const idleId = window.requestIdleCallback(prefetchHotLessonsRouteData, {
-        timeout: HOT_LESSONS_DATA_PREFETCH_TIMEOUT_MS,
-      });
-      return () => {
-        window.cancelIdleCallback?.(idleId);
-      };
-    }
-
-    const timeoutId = window.setTimeout(
-      prefetchHotLessonsRouteData,
-      HOT_LESSONS_DATA_PREFETCH_TIMEOUT_MS
-    );
-    return () => {
-      window.clearTimeout(timeoutId);
-    };
-  }, [currentPage, isSyntheticKangurCapture, prefetchLessonsCatalogOnIntent]);
-
-  return prefetchLessonsCatalogOnIntent;
+  return useCallback((): void => {}, []);
 }
 
 export function useKangurPrimaryNavigationState({

@@ -88,6 +88,26 @@ export default async function run({ page, input, artifacts, helpers, emit, log }
     });
   };
 
+  const buildCaptureResult = ({
+    id,
+    title,
+    status,
+    reason = null,
+    resolvedUrl = null,
+    attemptCount = null,
+    stage = null,
+    durationMs = 0,
+  }) => ({
+    id,
+    title,
+    status,
+    reason,
+    resolvedUrl,
+    attemptCount,
+    durationMs: Math.max(Math.floor(durationMs), 0),
+    stage,
+  });
+
   for (let index = 0; index < captures.length; index += 1) {
     const capture = captures[index] || {};
     const id = typeof capture.id === 'string' ? capture.id : \`capture-\${index + 1}\`;
@@ -101,6 +121,10 @@ export default async function run({ page, input, artifacts, helpers, emit, log }
     const waitForSelectorMs = Number.isFinite(capture.waitForSelectorMs)
       ? Number(capture.waitForSelectorMs)
       : 15000;
+    const captureStartedAt = Date.now();
+    let captureStage = 'starting';
+    let resolvedUrl = url || null;
+    let usedFallbackCapture = false;
 
     emitProgress({
       currentCaptureId: id,
@@ -111,7 +135,18 @@ export default async function run({ page, input, artifacts, helpers, emit, log }
 
     if (!url) {
       failureCount += 1;
-      results.push({ id, status: 'skipped', reason: 'missing_url' });
+      captureStage = 'validation';
+      results.push(
+        buildCaptureResult({
+          id,
+          title,
+          status: 'skipped',
+          reason: 'missing_url',
+          resolvedUrl: null,
+          durationMs: Date.now() - captureStartedAt,
+          stage: captureStage,
+        })
+      );
       emitProgress({
         currentCaptureId: id,
         currentCaptureTitle: title,
@@ -126,11 +161,14 @@ export default async function run({ page, input, artifacts, helpers, emit, log }
     let captureCompleted = false;
     for (let attempt = 1; attempt <= maxCaptureAttempts; attempt += 1) {
       try {
+        captureStage = 'navigating';
         log(\`[\${id}] Attempt \${attempt}/\${maxCaptureAttempts}: navigating to \${url}\`);
         await page.goto(url, { waitUntil: 'load', timeout: navigationTimeoutMs });
+        resolvedUrl = page.url() || url;
         log(\`[\${id}] Load event fired — current URL: \${page.url()}\`);
 
         {
+          captureStage = 'waiting_for_page_ready';
           const pollDeadline = Date.now() + waitForSelectorMs;
           let pageReady = false;
           let lastWaitReason = '';
@@ -199,6 +237,8 @@ export default async function run({ page, input, artifacts, helpers, emit, log }
             ? \`[\${id}] Page ready — shell stable and capture-ready\`
             : \`[\${id}] Page readiness timeout — capturing current state\`);
           if (!pageReady) {
+            captureStage = 'capturing_fallback';
+            usedFallbackCapture = true;
             emitProgress({
               currentCaptureId: id,
               currentCaptureTitle: title,
@@ -209,6 +249,7 @@ export default async function run({ page, input, artifacts, helpers, emit, log }
         }
 
         if (selector) {
+          captureStage = 'waiting_for_selector';
           log(\`[\${id}] Waiting for target selector: \${selector}\`);
           emitProgress({
             currentCaptureId: id,
@@ -220,6 +261,7 @@ export default async function run({ page, input, artifacts, helpers, emit, log }
         }
 
         const settleMs = Math.max(waitForMs, 3000);
+        captureStage = 'settling';
         log(\`[\${id}] Waiting \${settleMs}ms for content to settle\`);
         emitProgress({
           currentCaptureId: id,
@@ -229,6 +271,7 @@ export default async function run({ page, input, artifacts, helpers, emit, log }
         });
         await helpers.sleep(settleMs);
 
+        captureStage = 'capturing';
         const buffer = selector
           ? await page.locator(selector).screenshot({ type: 'png' })
           : await page.screenshot({ fullPage: true, type: 'png' });
@@ -241,7 +284,18 @@ export default async function run({ page, input, artifacts, helpers, emit, log }
 
         log(\`[\${id}] Captured successfully\`);
         successCount += 1;
-        results.push({ id, status: 'ok' });
+        captureStage = usedFallbackCapture ? 'captured_fallback' : 'captured';
+        results.push(
+          buildCaptureResult({
+            id,
+            title,
+            status: 'ok',
+            resolvedUrl,
+            attemptCount: attempt,
+            durationMs: Date.now() - captureStartedAt,
+            stage: captureStage,
+          })
+        );
         emitProgress({
           currentCaptureId: id,
           currentCaptureTitle: title,
@@ -276,7 +330,18 @@ export default async function run({ page, input, artifacts, helpers, emit, log }
 
         log(\`Capture failed for \${id}: \${message}\`);
         failureCount += 1;
-        results.push({ id, status: 'failed', reason: message });
+        results.push(
+          buildCaptureResult({
+            id,
+            title,
+            status: 'failed',
+            reason: message,
+            resolvedUrl,
+            attemptCount: attempt,
+            durationMs: Date.now() - captureStartedAt,
+            stage: captureStage,
+          })
+        );
         emitProgress({
           currentCaptureId: id,
           currentCaptureTitle: title,
@@ -394,6 +459,57 @@ export const resolveKangurSocialProgrammableCaptureRoutePreview = (
       issue: 'This route cannot be resolved with the current base URL.',
     };
   }
+};
+
+export type KangurSocialProgrammableCaptureRouteValidation = {
+  routeId: string;
+  resolvedUrl: string | null;
+  issue: string | null;
+};
+
+export type KangurSocialProgrammableCaptureValidationResult = {
+  isValid: boolean;
+  issueCount: number;
+  firstIssue: string | null;
+  routes: KangurSocialProgrammableCaptureRouteValidation[];
+};
+
+export const validateKangurSocialProgrammableCaptureRoutes = (
+  routes: KangurSocialProgrammableCaptureRoute[],
+  baseUrl: string
+): KangurSocialProgrammableCaptureValidationResult => {
+  const seenTargets = new Map<string, string>();
+  const validatedRoutes = routes.map((route, index) => {
+    const preview = resolveKangurSocialProgrammableCaptureRoutePreview(route.path, baseUrl);
+    let issue = preview.issue;
+
+    if (!issue && preview.resolvedUrl) {
+      const selectorKey = route.selector?.trim() || '';
+      const targetKey = `${preview.resolvedUrl}::${selectorKey}`;
+      const previousRouteTitle = seenTargets.get(targetKey);
+      if (previousRouteTitle) {
+        issue = `This route duplicates ${previousRouteTitle} on the same resolved target.`;
+      } else {
+        const routeTitle = route.title.trim() || `Route ${index + 1}`;
+        seenTargets.set(targetKey, routeTitle);
+      }
+    }
+
+    return {
+      routeId: route.id,
+      resolvedUrl: preview.resolvedUrl,
+      issue,
+    };
+  });
+
+  const issues = validatedRoutes.flatMap((route) => (route.issue ? [route.issue] : []));
+
+  return {
+    isValid: issues.length === 0,
+    issueCount: issues.length,
+    firstIssue: issues[0] ?? null,
+    routes: validatedRoutes,
+  };
 };
 
 export const buildKangurSocialProgrammableCaptureInputPreview = (

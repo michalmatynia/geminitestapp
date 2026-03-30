@@ -286,6 +286,8 @@ describe('useAdminKangurSocialPage', () => {
       batchCaptureJob: null,
       batchCaptureMessage: null,
       batchCaptureErrorMessage: null,
+      batchCaptureRecentJobs: [],
+      batchCaptureRecentJobsLoading: false,
       captureAppearanceMode: 'default',
       setBatchCaptureResult: vi.fn(),
       startBatchCapture: startBatchCaptureMock,
@@ -293,6 +295,7 @@ describe('useAdminKangurSocialPage', () => {
       runBatchCapture: vi.fn(),
       handleCreateAddon: vi.fn(),
       handleBatchCapture: vi.fn(),
+      handleRetryFailedPresetBatchCaptureJob: vi.fn(),
     });
     useSocialContextMock.mockReturnValue({
       contextLoading: false,
@@ -571,6 +574,111 @@ describe('useAdminKangurSocialPage', () => {
     );
     expect(result.current.programmableCapturePending).toBe(false);
     expect(result.current.programmableCaptureErrorMessage).toBeNull();
+  });
+
+  it('retries failed programmable routes from stored capture history', async () => {
+    readBatchCaptureJobMock.mockResolvedValueOnce(
+      createBatchCaptureJob({
+        status: 'completed',
+        progress: {
+          processedCount: 1,
+          completedCount: 1,
+          failureCount: 0,
+          remainingCount: 0,
+          totalCount: 1,
+          message: 'Playwright capture completed.',
+        },
+        result: {
+          addons: [
+            {
+              id: 'addon-2',
+              imageAsset: { id: 'asset-2', url: '/retry-capture.png' },
+            },
+          ],
+          failures: [],
+          usedPresetCount: 1,
+          runId: 'run-2',
+        },
+      })
+    );
+
+    const { result } = renderHook(() => useAdminKangurSocialPage());
+
+    await act(async () => {
+      await result.current.handleRetryFailedProgrammableCaptureJob({
+        id: 'job-history-1',
+        runId: 'run-history-1',
+        status: 'completed',
+        request: {
+          baseUrl: 'https://saved.example.com',
+          presetIds: [],
+          presetLimit: null,
+          appearanceMode: 'default',
+          playwrightPersonaId: 'persona-fast',
+          playwrightScript: 'return input.captures.filter(Boolean);',
+          playwrightRoutes: [
+            {
+              id: 'route-1',
+              title: 'Pricing page',
+              path: '/pricing',
+              description: '',
+              selector: '[data-pricing]',
+              waitForMs: 0,
+              waitForSelectorMs: 10000,
+            },
+            {
+              id: 'route-2',
+              title: 'Dashboard hero',
+              path: '/dashboard',
+              description: '',
+              selector: '[data-dashboard]',
+              waitForMs: 0,
+              waitForSelectorMs: 10000,
+            },
+          ],
+        },
+        progress: {
+          processedCount: 2,
+          completedCount: 1,
+          failureCount: 1,
+          remainingCount: 0,
+          totalCount: 2,
+          message: 'Capture finished with 1 failure.',
+        },
+        result: {
+          addons: [{ id: 'addon-1', imageAsset: { id: 'asset-1', url: '/capture.png' } }],
+          failures: [{ id: 'route-2', reason: 'capture_failed' }],
+          usedPresetCount: 2,
+          runId: 'run-history-1',
+        },
+        error: null,
+        createdAt: '2026-03-30T10:00:00.000Z',
+        updatedAt: '2026-03-30T10:05:00.000Z',
+      });
+    });
+
+    expect(startBatchCaptureMock).toHaveBeenCalledWith({
+      baseUrl: 'https://saved.example.com',
+      presetIds: [],
+      presetLimit: null,
+      playwrightPersonaId: 'persona-fast',
+      playwrightScript: 'return input.captures.filter(Boolean);',
+      playwrightRoutes: [
+        expect.objectContaining({
+          id: 'route-2',
+          title: 'Dashboard hero',
+        }),
+      ],
+    });
+    expect(result.current.programmableCaptureBaseUrl).toBe('https://saved.example.com');
+    expect(result.current.programmableCapturePersonaId).toBe('persona-fast');
+    expect(result.current.programmableCaptureRoutes).toEqual([
+      expect.objectContaining({ id: 'route-1' }),
+      expect.objectContaining({ id: 'route-2' }),
+    ]);
+    expect(result.current.programmableCaptureMessage).toBe(
+      'Captured 1 screenshot from 1 programmable route and linked them to the draft.'
+    );
   });
 
   it('routes Generate post with analysis through the dedicated generation hook', async () => {

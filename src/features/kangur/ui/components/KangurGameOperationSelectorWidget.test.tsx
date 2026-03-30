@@ -110,7 +110,7 @@ vi.mock('@/features/kangur/ui/components/OperationSelector', () => ({
   },
 }));
 
-vi.mock('@/features/kangur/ui/components/KangurPageIntroCard', () => ({
+vi.mock('@/features/kangur/ui/components/lesson-library/KangurPageIntroCard', () => ({
   KangurPageIntroCard: ({
     description,
     title,
@@ -128,7 +128,7 @@ vi.mock('@/features/kangur/ui/components/KangurPageIntroCard', () => ({
   ),
 }));
 
-vi.mock('@/features/kangur/ui/components/KangurPracticeAssignmentBanner', () => ({
+vi.mock('@/features/kangur/ui/components/assignments/KangurPracticeAssignmentBanner', () => ({
   default: () => <div data-testid='mock-practice-assignment-banner'>assignment-banner</div>,
 }));
 

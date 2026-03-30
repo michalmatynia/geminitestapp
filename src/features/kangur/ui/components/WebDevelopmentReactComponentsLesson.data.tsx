@@ -1,4 +1,4 @@
-import type { LessonSlide } from '@/features/kangur/ui/components/LessonSlideSection';
+import type { LessonSlide } from '@/features/kangur/ui/components/lesson-framework/LessonSlideSection';
 import { activitySlides } from './WebDevelopmentReactComponentsLesson.data.activity';
 import { componentsSlides } from './WebDevelopmentReactComponentsLesson.data.components';
 import { compositionSlides } from './WebDevelopmentReactComponentsLesson.data.composition';

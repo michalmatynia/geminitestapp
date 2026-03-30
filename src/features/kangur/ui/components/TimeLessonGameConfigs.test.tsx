@@ -68,7 +68,7 @@ describe('time lesson game configs', () => {
       (capturedProps?.games as Array<{
         sectionId: string;
         shell: Record<string, unknown>;
-        launchableInstance?: {
+        lessonActivityInstance?: {
           gameId?: string;
           instanceId?: string;
         };
@@ -81,7 +81,7 @@ describe('time lesson game configs', () => {
         expect.objectContaining({
           sectionId: 'game_days',
           shell: expect.objectContaining({ shellTestId: 'calendar-lesson-game-shell' }),
-          launchableInstance: expect.objectContaining({
+          lessonActivityInstance: expect.objectContaining({
             gameId: 'calendar_interactive',
             instanceId: 'calendar_interactive:instance:calendar-days',
           }),
@@ -89,14 +89,14 @@ describe('time lesson game configs', () => {
         }),
         expect.objectContaining({
           sectionId: 'game_months',
-          launchableInstance: expect.objectContaining({
+          lessonActivityInstance: expect.objectContaining({
             gameId: 'calendar_interactive',
             instanceId: 'calendar_interactive:instance:calendar-months',
           }),
         }),
         expect.objectContaining({
           sectionId: 'game_dates',
-          launchableInstance: expect.objectContaining({
+          lessonActivityInstance: expect.objectContaining({
             gameId: 'calendar_interactive',
             instanceId: 'calendar_interactive:instance:calendar-dates',
           }),

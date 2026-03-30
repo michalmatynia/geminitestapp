@@ -55,7 +55,7 @@ vi.mock('@/features/kangur/ui/components/game', () => ({
   ),
 }));
 
-vi.mock('@/features/kangur/ui/components/KangurPracticeAssignmentBanner', () => ({
+vi.mock('@/features/kangur/ui/components/assignments/KangurPracticeAssignmentBanner', () => ({
   __esModule: true,
   default: (): React.JSX.Element => <div data-testid='mock-assignment-banner'>Assignment banner</div>,
 }));

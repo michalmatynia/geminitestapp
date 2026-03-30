@@ -7,7 +7,7 @@ import { useMemo } from 'react';
 import { useMessages } from 'next-intl';
 
 import { getKangurBuiltInGameInstanceId } from '@/features/kangur/games';
-import type { LessonSlide } from '@/features/kangur/ui/components/LessonSlideSection';
+import type { LessonSlide } from '@/features/kangur/ui/components/lesson-framework/LessonSlideSection';
 import {
   KangurLessonCallout,
   KangurLessonCaption,

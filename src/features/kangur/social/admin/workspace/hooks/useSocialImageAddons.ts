@@ -14,6 +14,7 @@ import {
   fetchKangurSocialImageAddonsBatchJob,
   useBatchCaptureKangurSocialImageAddons,
   useCreateKangurSocialImageAddon,
+  useKangurSocialImageAddonsBatchJobs,
   useStartBatchCaptureKangurSocialImageAddons,
 } from '@/features/kangur/social/hooks/useKangurSocialImageAddons';
 import {
@@ -23,6 +24,8 @@ import {
 import { ErrorSystem } from '@/features/kangur/shared/utils/observability/error-system-client';
 import { extractMutationErrorMessage } from '@/shared/lib/mutation-error-handler';
 import { buildKangurSocialCaptureFailureSummary } from '@/features/kangur/social/shared/social-capture-feedback';
+import { resolveFailedKangurSocialPresetIds } from '@/features/kangur/social/shared/social-capture-feedback';
+import { validateKangurSocialProgrammableCaptureRoutes } from '@/features/kangur/social/shared/social-playwright-capture';
 import {
   KANGUR_STOREFRONT_APPEARANCE_STORAGE_KEY,
   KANGUR_STOREFRONT_DEFAULT_MODE_SETTING_KEY,
@@ -83,7 +86,7 @@ const validateBatchCaptureRequest = ({
   presetIds: string[];
   playwrightRoutes?: KangurSocialProgrammableCaptureRoute[];
 }): void => {
-  if (!baseUrl) {
+  if (presetIds.length > 0 && !baseUrl) {
     throwBatchCaptureValidationError(toast, 'Base URL is required for batch capture', 'error');
   }
   if (presetIds.length === 0 && (playwrightRoutes?.length ?? 0) === 0) {
@@ -92,6 +95,15 @@ const validateBatchCaptureRequest = ({
       'Select at least one capture preset or programmable route',
       'warning'
     );
+  }
+  if ((playwrightRoutes?.length ?? 0) > 0) {
+    const validation = validateKangurSocialProgrammableCaptureRoutes(
+      playwrightRoutes ?? [],
+      baseUrl
+    );
+    if (!validation.isValid && validation.firstIssue) {
+      throwBatchCaptureValidationError(toast, validation.firstIssue, 'warning');
+    }
   }
 };
 
@@ -172,6 +184,28 @@ const resolveBatchCaptureRequest = ({
   return request;
 };
 
+const buildBatchCaptureMutationPayload = ({
+  request,
+  appearanceMode,
+}: {
+  request: ReturnType<typeof resolveBatchCaptureRequest>;
+  appearanceMode: KangurSocialCaptureAppearanceMode;
+}) => ({
+  ...(request.baseUrl ? { baseUrl: request.baseUrl } : {}),
+  presetIds: request.presetIds,
+  presetLimit: request.presetLimit,
+  appearanceMode,
+  ...(Object.prototype.hasOwnProperty.call(request, 'playwrightPersonaId')
+    ? { playwrightPersonaId: request.playwrightPersonaId }
+    : {}),
+  ...(Object.prototype.hasOwnProperty.call(request, 'playwrightScript')
+    ? { playwrightScript: request.playwrightScript }
+    : {}),
+  ...(Object.prototype.hasOwnProperty.call(request, 'playwrightRoutes')
+    ? { playwrightRoutes: request.playwrightRoutes }
+    : {}),
+});
+
 const handleBatchCaptureSuccess = ({
   result,
   toast,
@@ -228,6 +262,7 @@ export function useSocialImageAddons(deps: SocialImageAddonsDeps) {
   const createAddonMutation = useCreateKangurSocialImageAddon();
   const batchCaptureMutation = useBatchCaptureKangurSocialImageAddons();
   const startBatchCaptureMutation = useStartBatchCaptureKangurSocialImageAddons();
+  const batchCaptureRecentJobsQuery = useKangurSocialImageAddonsBatchJobs({ limit: 5 });
   const [batchCaptureResult, setBatchCaptureResult] =
     useState<KangurSocialImageAddonsBatchResult | null>(null);
   const [batchCapturePending, setBatchCapturePending] = useState(false);
@@ -331,10 +366,12 @@ export function useSocialImageAddons(deps: SocialImageAddonsDeps) {
       })
     );
     try {
-      const result = await batchCaptureMutation.mutateAsync({
-        ...request,
-        appearanceMode: captureAppearanceMode,
-      });
+      const result = await batchCaptureMutation.mutateAsync(
+        buildBatchCaptureMutationPayload({
+          request,
+          appearanceMode: captureAppearanceMode,
+        })
+      );
       handleBatchCaptureSuccess({
         result,
         toast,
@@ -349,14 +386,21 @@ export function useSocialImageAddons(deps: SocialImageAddonsDeps) {
     }
   };
 
-  const handleBatchCapture = async (): Promise<void> => {
+  const handleBatchCapture = async (options?: {
+    baseUrl?: string;
+    presetIds?: string[];
+    presetLimit?: number | null;
+    playwrightPersonaId?: string | null;
+    playwrightScript?: string;
+    playwrightRoutes?: KangurSocialProgrammableCaptureRoute[];
+  }): Promise<void> => {
     setBatchCapturePending(true);
     setBatchCaptureJob(null);
     setBatchCaptureMessage('Capturing screenshots...');
     setBatchCaptureErrorMessage(null);
 
     try {
-      const startedJob = await startBatchCapture();
+      const startedJob = await startBatchCapture(options);
       setBatchCaptureJob(startedJob);
       setBatchCaptureMessage(startedJob.progress?.message ?? 'Queued Playwright capture...');
 
@@ -400,6 +444,7 @@ export function useSocialImageAddons(deps: SocialImageAddonsDeps) {
       setBatchCaptureErrorMessage(extractMutationErrorMessage(error, 'Batch capture failed'));
       handleBatchCaptureFailure({ error, deps, toast });
     } finally {
+      void batchCaptureRecentJobsQuery.refetch();
       setBatchCapturePending(false);
     }
   };
@@ -428,14 +473,34 @@ export function useSocialImageAddons(deps: SocialImageAddonsDeps) {
     );
 
     try {
-      return await startBatchCaptureMutation.mutateAsync({
-        ...request,
-        appearanceMode: captureAppearanceMode,
-      });
+      const startedJob = await startBatchCaptureMutation.mutateAsync(
+        buildBatchCaptureMutationPayload({
+          request,
+          appearanceMode: captureAppearanceMode,
+        })
+      );
+      void batchCaptureRecentJobsQuery.refetch();
+      return startedJob;
     } catch (error) {
       handleBatchCaptureFailure({ error, deps, toast });
       throw error;
     }
+  };
+
+  const handleRetryFailedPresetBatchCaptureJob = async (
+    job: KangurSocialImageAddonsBatchJob
+  ): Promise<void> => {
+    const failedPresetIds = resolveFailedKangurSocialPresetIds(job.result?.failures ?? []);
+    if (failedPresetIds.length === 0) {
+      toast('This run has no failed presets to retry.', { variant: 'warning' });
+      return;
+    }
+
+    await handleBatchCapture({
+      baseUrl: job.request?.baseUrl ?? deps.batchCaptureBaseUrl,
+      presetIds: failedPresetIds,
+      presetLimit: null,
+    });
   };
 
   return {
@@ -447,6 +512,8 @@ export function useSocialImageAddons(deps: SocialImageAddonsDeps) {
     batchCaptureJob,
     batchCaptureMessage,
     batchCaptureErrorMessage,
+    batchCaptureRecentJobs: batchCaptureRecentJobsQuery.data ?? [],
+    batchCaptureRecentJobsLoading: batchCaptureRecentJobsQuery.isLoading,
     captureAppearanceMode,
     setBatchCaptureResult,
     runBatchCapture,
@@ -454,5 +521,6 @@ export function useSocialImageAddons(deps: SocialImageAddonsDeps) {
     readBatchCaptureJob: fetchKangurSocialImageAddonsBatchJob,
     handleCreateAddon,
     handleBatchCapture,
+    handleRetryFailedPresetBatchCaptureJob,
   };
 }

@@ -8,7 +8,7 @@ import {
 import { CmsStorefrontAppearanceProvider } from '@/features/cms/public';
 import { getCmsThemeSettings } from '@/features/cms/server';
 import { getKangurAuthBootstrapScript } from '@/features/kangur/server';
-import { getKangurStorefrontInitialState } from '@/features/kangur/server';
+import { getKangurStorefrontInitialState } from '@/features/kangur/appearance/server/storefront-appearance';
 import {
   getKangurSurfaceBootstrapStyle,
   KANGUR_SURFACE_HINT_SCRIPT,

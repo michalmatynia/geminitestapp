@@ -5,7 +5,7 @@ import { useTranslations } from 'next-intl';
 
 import { getKangurBuiltInGameInstanceId } from '@/features/kangur/games';
 import type { LessonProps } from '@/features/kangur/lessons/lesson-ui-registry';
-import type { LessonSlide } from '@/features/kangur/ui/components/LessonSlideSection';
+import type { LessonSlide } from '@/features/kangur/ui/components/lesson-framework/LessonSlideSection';
 import {
   GeometryAngleAnimation,
   GeometryAngleTypesAnimation,

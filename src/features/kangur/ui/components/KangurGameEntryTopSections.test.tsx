@@ -104,7 +104,7 @@ vi.mock('@/features/kangur/ui/components/KangurGameSetupMomentumCard', () => ({
   ),
 }));
 
-vi.mock('@/features/kangur/ui/components/KangurPracticeAssignmentBanner', () => ({
+vi.mock('@/features/kangur/ui/components/assignments/KangurPracticeAssignmentBanner', () => ({
   __esModule: true,
   default: () => <div data-testid='mock-practice-assignment-banner'>Mock assignment banner</div>,
 }));

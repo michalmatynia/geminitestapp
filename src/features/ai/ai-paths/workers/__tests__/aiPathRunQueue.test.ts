@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 const {
   createManagedQueueMock,
@@ -6,12 +6,26 @@ const {
   getRuntimeAnalyticsAvailabilityMock,
   getRuntimeAnalyticsSummaryMock,
   getAiInsightsQueueStatusMock,
+  getAiPathsEnabledCachedMock,
+  clearAiPathsEnabledCacheMock,
+  captureExceptionMock,
+  logWarningMock,
+  processRunMock,
+  processStaleRunRecoveryMock,
+  getMongoClientMock,
 } = vi.hoisted(() => ({
   createManagedQueueMock: vi.fn(),
   getPathRunRepositoryMock: vi.fn(),
   getRuntimeAnalyticsAvailabilityMock: vi.fn(),
   getRuntimeAnalyticsSummaryMock: vi.fn(),
   getAiInsightsQueueStatusMock: vi.fn(),
+  getAiPathsEnabledCachedMock: vi.fn(),
+  clearAiPathsEnabledCacheMock: vi.fn(),
+  captureExceptionMock: vi.fn(),
+  logWarningMock: vi.fn(),
+  processRunMock: vi.fn(),
+  processStaleRunRecoveryMock: vi.fn(),
+  getMongoClientMock: vi.fn(),
 }));
 
 vi.mock('@/shared/lib/queue', () => ({
@@ -33,13 +47,30 @@ vi.mock('@/features/ai/ai-paths/services/path-run-recovery-service', () => ({
   resolveAiPathsStaleRunningCleanupIntervalMs: () => 60_000,
 }));
 
+vi.mock('@/features/ai/ai-paths/workers/ai-path-run-queue/brain-gate', () => ({
+  getAiPathsEnabledCached: getAiPathsEnabledCachedMock,
+  assertAiPathsEnabled: vi.fn(),
+  clearAiPathsEnabledCache: clearAiPathsEnabledCacheMock,
+}));
+
 vi.mock('@/features/ai/ai-paths/workers/ai-path-run-processor', () => ({
-  processRun: vi.fn(),
-  processStaleRunRecovery: vi.fn(),
+  processRun: processRunMock,
+  processStaleRunRecovery: processStaleRunRecoveryMock,
 }));
 
 vi.mock('@/shared/lib/ai-brain/server', () => ({
   getBrainAssignmentForFeature: vi.fn().mockResolvedValue({ enabled: true }),
+}));
+
+vi.mock('@/shared/lib/db/mongo-client', () => ({
+  getMongoClient: getMongoClientMock,
+}));
+
+vi.mock('@/shared/utils/observability/error-system', () => ({
+  ErrorSystem: {
+    captureException: captureExceptionMock,
+    logWarning: logWarningMock,
+  },
 }));
 
 vi.mock('@/features/ai/insights/workers/aiInsightsQueue', () => ({
@@ -61,7 +92,7 @@ const queueHealthStatus = {
 const createQueueMock = () => ({
   startWorker: vi.fn(),
   stopWorker: vi.fn(),
-  enqueue: vi.fn(),
+  enqueue: vi.fn().mockResolvedValue(undefined),
   getQueue: vi.fn(() => ({})),
   getHealthStatus: vi.fn().mockResolvedValue(queueHealthStatus),
 });
@@ -72,7 +103,12 @@ describe('aiPathRunQueue status', () => {
   beforeEach(() => {
     vi.resetModules();
     vi.clearAllMocks();
+    process.env.NODE_ENV = 'test';
+    delete process.env.AI_PATHS_REQUIRE_DURABLE_QUEUE;
+    delete process.env.AI_PATHS_ALLOW_LOCAL_QUEUE_FALLBACK;
     createManagedQueueMock.mockReturnValue(createQueueMock());
+    getAiPathsEnabledCachedMock.mockResolvedValue(true);
+    getMongoClientMock.mockResolvedValue({});
     getPathRunRepositoryMock.mockResolvedValue({
       getQueueStats: vi.fn().mockResolvedValue({
         queuedCount: 4,
@@ -82,6 +118,7 @@ describe('aiPathRunQueue status', () => {
         items: [],
         total: 2,
       }),
+      claimRunForProcessing: vi.fn(),
     });
     getAiInsightsQueueStatusMock.mockResolvedValue({
       running: true,
@@ -102,6 +139,10 @@ describe('aiPathRunQueue status', () => {
       workerStarted: true,
       recoveryScheduled: false,
     };
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
   });
 
   it('returns base queue health when runtime analytics is disabled', async () => {
@@ -217,5 +258,130 @@ describe('aiPathRunQueue status', () => {
     expect(status.avgRuntimeMs).toBe(1200);
     expect(status.p95RuntimeMs).toBe(2400);
     expect(status.brainAnalytics24h.totalReports).toBe(5);
+  });
+
+  it('starts the worker and registers recovery scheduling when queue readiness is requested', async () => {
+    (
+      globalThis as typeof globalThis & {
+        __aiPathRunQueueState__?: { workerStarted: boolean; recoveryScheduled: boolean };
+      }
+    ).__aiPathRunQueueState__ = {
+      workerStarted: false,
+      recoveryScheduled: false,
+    };
+    const queueMock = createQueueMock();
+    createManagedQueueMock.mockReturnValue(queueMock);
+
+    const { assertAiPathRunQueueReady } = await loadModule();
+    const status = await assertAiPathRunQueueReady();
+
+    expect(queueMock.startWorker).toHaveBeenCalledTimes(1);
+    expect(queueMock.enqueue).toHaveBeenCalledWith(
+      { runId: '__recovery__', type: 'recovery' },
+      { repeat: { every: 60_000 }, jobId: 'ai-path-run-recovery' }
+    );
+    expect(getMongoClientMock).toHaveBeenCalledTimes(1);
+    expect(status.running).toBe(true);
+  });
+
+  it('rejects queue readiness when AI Paths is disabled', async () => {
+    getAiPathsEnabledCachedMock.mockResolvedValue(false);
+
+    const { assertAiPathRunQueueReady } = await loadModule();
+
+    await expect(assertAiPathRunQueueReady()).rejects.toMatchObject({
+      message:
+        'AI Paths execution is disabled in Brain settings. Enable AI Paths and retry.',
+    });
+  });
+
+  it('rejects enqueue readiness when the waiting queue is saturated', async () => {
+    const queueMock = createQueueMock();
+    queueMock.getHealthStatus.mockResolvedValue({
+      ...queueHealthStatus,
+      waitingCount: 2_500,
+    });
+    createManagedQueueMock.mockReturnValue(queueMock);
+    (
+      globalThis as typeof globalThis & {
+        __aiPathRunQueueState__?: { workerStarted: boolean; recoveryScheduled: boolean };
+      }
+    ).__aiPathRunQueueState__ = {
+      workerStarted: false,
+      recoveryScheduled: false,
+    };
+
+    const { assertAiPathRunQueueReadyForEnqueue } = await loadModule();
+
+    await expect(assertAiPathRunQueueReadyForEnqueue()).rejects.toMatchObject({
+      message: 'AI Paths queue is currently saturated. Please retry in a few seconds.',
+    });
+  });
+
+  it('runs local fallback jobs once and replaces older timers for the same run', async () => {
+    vi.useFakeTimers();
+    const claimRunForProcessing = vi.fn().mockResolvedValue({
+      id: 'run-1',
+      status: 'queued',
+    });
+    getPathRunRepositoryMock.mockResolvedValue({
+      getQueueStats: vi.fn().mockResolvedValue({
+        queuedCount: 0,
+        oldestQueuedAt: null,
+      }),
+      listRuns: vi.fn().mockResolvedValue({
+        items: [],
+        total: 0,
+      }),
+      claimRunForProcessing,
+    });
+
+    const { scheduleLocalFallbackRun } = await loadModule();
+
+    scheduleLocalFallbackRun('run-1', 100);
+    scheduleLocalFallbackRun('run-1', 100);
+    await vi.advanceTimersByTimeAsync(100);
+
+    expect(claimRunForProcessing).toHaveBeenCalledTimes(1);
+    expect(processRunMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        id: 'run-1',
+      })
+    );
+  });
+
+  it('dedupes queue removals, clears timers, and logs non-critical queue API failures', async () => {
+    vi.useFakeTimers();
+    const removeMock = vi.fn().mockResolvedValue(undefined);
+    const queueMock = createQueueMock();
+    queueMock.getQueue.mockReturnValue({
+      getJob: vi.fn(async (runId: string) => {
+        if (runId === 'run-1') {
+          return {
+            remove: removeMock,
+          };
+        }
+        throw new Error('redis unavailable');
+      }),
+    });
+    createManagedQueueMock.mockReturnValue(queueMock);
+
+    const { scheduleLocalFallbackRun, removePathRunQueueEntries } = await loadModule();
+
+    scheduleLocalFallbackRun('run-1', 5_000);
+    const result = await removePathRunQueueEntries([' run-1 ', 'run-1', 'run-2']);
+
+    expect(result).toEqual({
+      requested: 2,
+      removed: 2,
+    });
+    expect(removeMock).toHaveBeenCalledTimes(1);
+    expect(logWarningMock).toHaveBeenCalledWith(
+      'Non-critical queue removal failure for run run-2',
+      expect.objectContaining({
+        action: 'removePathRunQueueEntries',
+        runId: 'run-2',
+      })
+    );
   });
 });

@@ -78,7 +78,7 @@ vi.mock('@/features/kangur/ui/services/delegated-assignments', () => ({
     priority === 'high' ? 'rose' : priority === 'medium' ? 'amber' : 'emerald',
 }));
 
-vi.mock('@/features/kangur/ui/components/KangurAssignmentsList', () => ({
+vi.mock('@/features/kangur/ui/components/assignments/KangurAssignmentsList', () => ({
   default: ({
     title,
     items = [],

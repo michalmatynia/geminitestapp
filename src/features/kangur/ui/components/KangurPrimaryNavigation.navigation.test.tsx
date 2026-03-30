@@ -107,7 +107,7 @@ it('starts the Kangur route transition before navigating to another page', () =>
   });
 });
 
-it('prefetches the lessons catalog on lessons-nav intent', () => {
+it('does not prefetch lessons data on lessons-nav intent', () => {
   const queryClient = { prefetchQuery: vi.fn() };
 
   render(
@@ -126,17 +126,11 @@ it('prefetches the lessons catalog on lessons-nav intent', () => {
   fireEvent.mouseEnter(lessonsLink);
   fireEvent.focus(lessonsLink);
 
-  expect(prefetchKangurLessonsCatalogMock).toHaveBeenCalledTimes(1);
-  expect(prefetchKangurLessonsCatalogMock).toHaveBeenCalledWith(queryClient, {
-    ageGroup: 'ten_year_old',
-    enabledOnly: true,
-    subject: 'maths',
-  });
-  expect(prefetchKangurPageContentStoreMock).toHaveBeenCalledTimes(1);
-  expect(prefetchKangurPageContentStoreMock).toHaveBeenCalledWith(queryClient, 'pl');
+  expect(prefetchKangurLessonsCatalogMock).not.toHaveBeenCalled();
+  expect(prefetchKangurPageContentStoreMock).not.toHaveBeenCalled();
 });
 
-it('idle-prefetches hot lessons data from the home route', () => {
+it('does not idle-prefetch lessons data from the home route', () => {
   vi.useFakeTimers();
   const queryClient = { prefetchQuery: vi.fn() };
 
@@ -166,14 +160,8 @@ it('idle-prefetches hot lessons data from the home route', () => {
       vi.advanceTimersByTime(1);
     });
 
-    expect(prefetchKangurLessonsCatalogMock).toHaveBeenCalledTimes(1);
-    expect(prefetchKangurLessonsCatalogMock).toHaveBeenCalledWith(queryClient, {
-      ageGroup: 'ten_year_old',
-      enabledOnly: true,
-      subject: 'maths',
-    });
-    expect(prefetchKangurPageContentStoreMock).toHaveBeenCalledTimes(1);
-    expect(prefetchKangurPageContentStoreMock).toHaveBeenCalledWith(queryClient, 'pl');
+    expect(prefetchKangurLessonsCatalogMock).not.toHaveBeenCalled();
+    expect(prefetchKangurPageContentStoreMock).not.toHaveBeenCalled();
   } finally {
     vi.useRealTimers();
   }

@@ -37,43 +37,43 @@ vi.mock('@/features/kangur/ui/components/KangurLearnerProfileAiTutorMoodWidget',
   KangurLearnerProfileAiTutorMoodWidget: () => <div data-testid='ai-mood-widget' />,
 }));
 
-vi.mock('@/features/kangur/ui/components/KangurLearnerProfileAssignmentsWidget', () => ({
+vi.mock('@/features/kangur/ui/components/learner-profile/KangurLearnerProfileAssignmentsWidget', () => ({
   KangurLearnerProfileAssignmentsWidget: () => <div data-testid='assignments-widget' />,
 }));
 
-vi.mock('@/features/kangur/ui/components/KangurLearnerProfileHeroWidget', () => ({
+vi.mock('@/features/kangur/ui/components/learner-profile/KangurLearnerProfileHeroWidget', () => ({
   KangurLearnerProfileHeroWidget: () => <div data-testid='hero-widget' />,
 }));
 
-vi.mock('@/features/kangur/ui/components/KangurLearnerProfileLevelProgressWidget', () => ({
+vi.mock('@/features/kangur/ui/components/learner-profile/KangurLearnerProfileLevelProgressWidget', () => ({
   KangurLearnerProfileLevelProgressWidget: () => <div data-testid='level-progress-widget' />,
 }));
 
-vi.mock('@/features/kangur/ui/components/KangurLearnerProfileMasteryWidget', () => ({
+vi.mock('@/features/kangur/ui/components/learner-profile/KangurLearnerProfileMasteryWidget', () => ({
   KangurLearnerProfileMasteryWidget: () => <div data-testid='mastery-widget' />,
 }));
 
-vi.mock('@/features/kangur/ui/components/KangurLearnerProfileOverviewWidget', () => ({
+vi.mock('@/features/kangur/ui/components/learner-profile/KangurLearnerProfileOverviewWidget', () => ({
   KangurLearnerProfileOverviewWidget: () => <div data-testid='overview-widget' />,
 }));
 
-vi.mock('@/features/kangur/ui/components/KangurLearnerProfilePerformanceWidget', () => ({
+vi.mock('@/features/kangur/ui/components/learner-profile/KangurLearnerProfilePerformanceWidget', () => ({
   KangurLearnerProfilePerformanceWidget: () => <div data-testid='performance-widget' />,
 }));
 
-vi.mock('@/features/kangur/ui/components/KangurLearnerProfileQuestSummaryWidget', () => ({
+vi.mock('@/features/kangur/ui/components/learner-profile/KangurLearnerProfileQuestSummaryWidget', () => ({
   KangurLearnerProfileQuestSummaryWidget: () => <div data-testid='quest-summary-widget' />,
 }));
 
-vi.mock('@/features/kangur/ui/components/KangurLearnerProfileRecommendationsWidget', () => ({
+vi.mock('@/features/kangur/ui/components/learner-profile/KangurLearnerProfileRecommendationsWidget', () => ({
   KangurLearnerProfileRecommendationsWidget: () => <div data-testid='recommendations-widget' />,
 }));
 
-vi.mock('@/features/kangur/ui/components/KangurLearnerProfileResultsWidget', () => ({
+vi.mock('@/features/kangur/ui/components/learner-profile/KangurLearnerProfileResultsWidget', () => ({
   KangurLearnerProfileResultsWidget: () => <div data-testid='results-widget' />,
 }));
 
-vi.mock('@/features/kangur/ui/components/KangurLearnerProfileSessionsWidget', () => ({
+vi.mock('@/features/kangur/ui/components/learner-profile/KangurLearnerProfileSessionsWidget', () => ({
   KangurLearnerProfileSessionsWidget: () => <div data-testid='sessions-widget' />,
 }));
 

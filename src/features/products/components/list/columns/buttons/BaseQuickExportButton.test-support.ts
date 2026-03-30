@@ -47,7 +47,6 @@ export const baseQuickExportTestProduct = {
   catalogs: [],
   producers: [],
   defaultPriceGroupId: null,
-  priceGroupPrices: [],
 } satisfies ProductWithImages;
 
 export const createBaseQuickExportTestQueryClient = (): QueryClient =>

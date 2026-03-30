@@ -15,18 +15,19 @@ import {
 import type { KangurGameId } from '@/shared/contracts/kangur-games';
 import type { KangurGameInstanceId } from '@/shared/contracts/kangur-game-instances';
 import type { KangurGameRuntimeRendererProps } from '@/shared/contracts/kangur-game-runtime-renderer-props';
-import LessonActivityShell from '@/features/kangur/ui/components/LessonActivityShell';
+import LessonActivityShell from '@/features/kangur/ui/components/lesson-runtime/LessonActivityShell';
+import KangurLessonActivityInstanceRuntime from '@/features/kangur/ui/components/KangurLessonActivityInstanceRuntime';
 import KangurLaunchableGameInstanceRuntime from '@/features/kangur/ui/components/KangurLaunchableGameInstanceRuntime';
-import LessonHub, { type HubSection } from '@/features/kangur/ui/components/LessonHub';
+import LessonHub, { type HubSection } from '@/features/kangur/ui/components/lesson-framework/LessonHub';
 import LessonSlideSection, {
   type LessonSlide,
-} from '@/features/kangur/ui/components/LessonSlideSection';
+} from '@/features/kangur/ui/components/lesson-framework/LessonSlideSection';
 import {
   buildLessonHubSectionsWithProgress,
   buildLessonSectionLabels,
   createLessonHubSelectHandler,
   resolveLessonSectionHeader,
-} from '@/features/kangur/ui/components/lesson-utils';
+} from '@/features/kangur/ui/components/lesson-framework/lesson-utils';
 import {
   KANGUR_TOP_BAR_DEFAULT_HEIGHT_PX,
   KANGUR_TOP_BAR_HEIGHT_VAR_NAME,
@@ -114,13 +115,22 @@ type KangurUnifiedLessonGameConfigBase<SectionId extends string> = {
 };
 
 export type KangurUnifiedLessonGameConfig<SectionId extends string> =
-  KangurUnifiedLessonGameConfigBase<SectionId> & {
-    launchableInstance: {
-      gameId: KangurGameId;
-      instanceId: KangurGameInstanceId;
-    };
-    engineOverrides?: KangurGameRuntimeRendererProps;
-  };
+  | (KangurUnifiedLessonGameConfigBase<SectionId> & {
+      engineOverrides?: KangurGameRuntimeRendererProps;
+      launchableInstance: {
+        gameId: KangurGameId;
+        instanceId: KangurGameInstanceId;
+      };
+      lessonActivityInstance?: never;
+    })
+  | (KangurUnifiedLessonGameConfigBase<SectionId> & {
+      engineOverrides?: KangurGameRuntimeRendererProps;
+      launchableInstance?: never;
+      lessonActivityInstance: {
+        gameId: KangurGameId;
+        instanceId: KangurGameInstanceId;
+      };
+    });
 
 type KangurUnifiedLessonBaseProps<SectionId extends string> = {
   lessonId: string;
@@ -223,12 +233,22 @@ const renderKangurUnifiedLessonGameShell = <SectionId extends string>({
       title={shell.title}
     >
       {shell.bodyPrelude ? shell.bodyPrelude : null}
-      <KangurLaunchableGameInstanceRuntime
-        engineOverrides={gameConfig.engineOverrides}
-        gameId={gameConfig.launchableInstance.gameId}
-        instanceId={gameConfig.launchableInstance.instanceId}
-        onFinish={gameHelpers.onFinish}
-      />
+      {gameConfig.launchableInstance ? (
+        <KangurLaunchableGameInstanceRuntime
+          engineOverrides={gameConfig.engineOverrides}
+          gameId={gameConfig.launchableInstance.gameId}
+          instanceId={gameConfig.launchableInstance.instanceId}
+          onFinish={gameHelpers.onFinish}
+          preferLessonActivityRuntime
+        />
+      ) : (
+        <KangurLessonActivityInstanceRuntime
+          engineOverrides={gameConfig.engineOverrides}
+          gameId={gameConfig.lessonActivityInstance.gameId}
+          instanceId={gameConfig.lessonActivityInstance.instanceId}
+          onFinish={gameHelpers.onFinish}
+        />
+      )}
     </LessonActivityShell>
   );
 };

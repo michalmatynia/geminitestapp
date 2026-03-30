@@ -440,4 +440,156 @@ describe('queue-factory', () => {
       timeSinceLastPoll: 0,
     });
   });
+
+  it('reports redis-backed queues as offline before any worker or queue activity is observed', async () => {
+    const managed = createManagedQueue({
+      name: 'offline-queue',
+      concurrency: 1,
+      processor: vi.fn(async () => null),
+    });
+
+    await expect(managed.getHealthStatus()).resolves.toEqual({
+      deliveryMode: 'queue',
+      workerState: 'offline',
+      statusReason: 'worker_inactive',
+      redisAvailable: true,
+      workerLocal: false,
+      running: false,
+      healthy: false,
+      processing: false,
+      activeCount: 0,
+      waitingCount: 0,
+      failedCount: 0,
+      completedCount: 0,
+      lastPollTime: 0,
+      timeSinceLastPoll: 0,
+    });
+  });
+
+  it('uses worker-option lock durations when no job timeout is configured and startWorker is idempotent', async () => {
+    const managed = createManagedQueue({
+      name: 'lock-queue',
+      concurrency: 2,
+      workerOptions: { lockDuration: 45_000 },
+      processor: vi.fn(async () => 'done'),
+    });
+
+    managed.startWorker();
+    managed.startWorker();
+
+    expect(workerInstances).toHaveLength(1);
+    expect(workerInstances[0]?.options).toEqual(
+      expect.objectContaining({
+        lockDuration: 45_000,
+      })
+    );
+  });
+
+  it('returns fallback queue ids and treats message-only transport errors as transient', async () => {
+    vi.spyOn(Date, 'now').mockReturnValue(40_000);
+
+    const managed = createManagedQueue({
+      name: 'cooldown-queue',
+      concurrency: 1,
+      processor: vi.fn(async () => null),
+    });
+    queueAddImpls.push(async () => ({ id: null }));
+
+    await expect(managed.enqueue({ value: 1 })).resolves.toBe('unknown-40000');
+    const queue = queueInstances[0];
+
+    const transient = new Error('socket closed unexpectedly');
+    queue.handlers.error(transient);
+    await Promise.resolve();
+
+    expect(logSystemEventMock).toHaveBeenCalledTimes(1);
+    expect(logSystemEventMock).toHaveBeenNthCalledWith(
+      1,
+      expect.objectContaining({
+        message:
+          '[queue-factory:cooldown-queue] transient queue transport error: socket closed unexpectedly',
+      })
+    );
+  });
+
+  it('normalizes failure attempt metadata and ignores failed callbacks without a job payload', async () => {
+    const onFailed = vi.fn(async () => {});
+    const managed = createManagedQueue({
+      name: 'failure-queue',
+      concurrency: 1,
+      processor: vi.fn(async () => null),
+      onFailed,
+    });
+
+    managed.startWorker();
+    const worker = workerInstances[0];
+
+    await worker.handlers.failed(
+      {
+        id: 'job-7',
+        data: { task: 'sync' },
+        opts: { attempts: 0 },
+        attemptsMade: 0,
+      },
+      new Error('nope')
+    );
+    await worker.handlers.failed(undefined, new Error('ignored'));
+
+    expect(onFailed).toHaveBeenCalledTimes(1);
+    expect(onFailed).toHaveBeenCalledWith(
+      'job-7',
+      expect.any(Error),
+      { task: 'sync' },
+      { attemptsMade: 1, maxAttempts: 1 }
+    );
+  });
+
+  it('tracks running health and last-process timestamps when an active worker is processing queue jobs', async () => {
+    const nowSpy = vi.spyOn(Date, 'now');
+    nowSpy.mockReturnValueOnce(50_000).mockReturnValueOnce(50_500);
+
+    const processor = vi.fn(async () => 'processed');
+    const managed = createManagedQueue({
+      name: 'active-queue',
+      concurrency: 1,
+      processor,
+    });
+
+    managed.startWorker();
+    await managed.enqueue({ task: 'seed' });
+    const worker = workerInstances[0];
+    const queue = queueInstances[0];
+    queue.getJobCounts.mockResolvedValue({
+      active: 2,
+      waiting: 1,
+      failed: 0,
+      completed: 4,
+    });
+
+    await expect(
+      worker.processor({
+        id: 'job-active',
+        data: { task: 'run' },
+        updateProgress: vi.fn(async () => {}),
+      })
+    ).resolves.toBe('processed');
+
+    await expect(managed.getHealthStatus()).resolves.toEqual({
+      deliveryMode: 'queue',
+      workerState: 'running',
+      statusReason: undefined,
+      redisAvailable: true,
+      workerLocal: true,
+      running: true,
+      healthy: true,
+      processing: true,
+      activeCount: 2,
+      waitingCount: 1,
+      failedCount: 0,
+      completedCount: 4,
+      lastPollTime: 50_000,
+      timeSinceLastPoll: 500,
+    });
+    expect(processor).toHaveBeenCalledWith({ task: 'run' }, 'job-active');
+  });
 });

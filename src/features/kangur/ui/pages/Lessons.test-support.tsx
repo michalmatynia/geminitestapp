@@ -14,6 +14,7 @@ const {
   lessonCardPropsMock,
   lessonDocumentsHookCallsMock,
   lessonAssignmentsHookCallsMock,
+  progressStateHookCallsMock,
   lessonCatalogHookCallsMock,
   lessonSectionsHookCallsMock,
   lessonTemplatesHookCallsMock,
@@ -43,6 +44,7 @@ const {
   lessonCardPropsMock: vi.fn(),
   lessonDocumentsHookCallsMock: vi.fn(),
   lessonAssignmentsHookCallsMock: vi.fn(),
+  progressStateHookCallsMock: vi.fn(),
   lessonCatalogHookCallsMock: vi.fn(),
   lessonSectionsHookCallsMock: vi.fn(),
   lessonTemplatesHookCallsMock: vi.fn(),
@@ -210,23 +212,15 @@ const resolveLessonsCatalogMockData = (options: LessonsCatalogMockOptions): {
   sections: resolveFilteredCatalogRecords(lessonSectionsState.value, options),
 });
 
-const resolveLessonsCatalogLoadingMeta = (): {
+const resolveLessonsLoadingMeta = (): {
   hasRetainedData: boolean;
   isLoading: boolean;
   isPlaceholderData: boolean;
-} => {
-  const hasRetainedData =
-    (lessonsLoadingState.value && lessonsRetainDataWhileLoadingState.value) ||
-    (lessonSectionsLoadingState.value && lessonSectionsRetainDataWhileLoadingState.value);
-  const isLoading = lessonsLoadingState.value || lessonSectionsLoadingState.value;
-
-  return {
-    hasRetainedData,
-    isLoading,
-    isPlaceholderData:
-      lessonsPlaceholderDataState.value || lessonSectionsPlaceholderDataState.value,
-  };
-};
+} => ({
+  hasRetainedData: lessonsLoadingState.value && lessonsRetainDataWhileLoadingState.value,
+  isLoading: lessonsLoadingState.value,
+  isPlaceholderData: lessonsPlaceholderDataState.value,
+});
 
 vi.mock('next-intl', () => ({
   useLocale: () => localeState.value,
@@ -249,11 +243,11 @@ vi.mock('@/features/kangur/lesson-documents', () => ({
   hasKangurLessonDocumentContent: () => false,
 }));
 
-vi.mock('@/features/kangur/ui/components/KangurActiveLessonHeader', () => ({
+vi.mock('@/features/kangur/ui/components/lesson-runtime/KangurActiveLessonHeader', () => ({
   KangurActiveLessonHeader: () => <div data-testid='mock-active-lesson-header' />,
 }));
 
-vi.mock('@/features/kangur/ui/components/KangurResolvedLessonLibraryCard', () => ({
+vi.mock('@/features/kangur/ui/components/lesson-library/KangurResolvedLessonLibraryCard', () => ({
   KangurResolvedLessonLibraryCard: ({
     lesson,
     onSelect,
@@ -270,7 +264,7 @@ vi.mock('@/features/kangur/ui/components/KangurResolvedLessonLibraryCard', () =>
   },
 }));
 
-vi.mock('@/features/kangur/ui/components/KangurResolvedLessonGroupAccordion', () => ({
+vi.mock('@/features/kangur/ui/components/lesson-library/KangurResolvedLessonGroupAccordion', () => ({
   KangurResolvedLessonGroupAccordion: ({
     label,
     isExpanded,
@@ -295,11 +289,11 @@ vi.mock('@/features/kangur/ui/components/KangurResolvedLessonGroupAccordion', ()
   ),
 }));
 
-vi.mock('@/features/kangur/ui/components/KangurLessonDocumentRenderer', () => ({
+vi.mock('@/features/kangur/ui/components/lesson-runtime/KangurLessonDocumentRenderer', () => ({
   KangurLessonDocumentRenderer: () => <div data-testid='mock-lesson-document-renderer' />,
 }));
 
-vi.mock('@/features/kangur/ui/components/KangurLessonNavigationWidget', () => ({
+vi.mock('@/features/kangur/ui/components/lesson-runtime/KangurLessonNavigationWidget', () => ({
   KangurLessonNavigationWidget: () => <div data-testid='mock-lesson-navigation' />,
 }));
 
@@ -310,7 +304,7 @@ vi.mock('@/features/kangur/ui/components/LazyKangurLessonsWordmark', () => ({
   },
 }));
 
-vi.mock('@/features/kangur/ui/components/KangurResolvedPageIntroCard', () => ({
+vi.mock('@/features/kangur/ui/components/lesson-library/KangurResolvedPageIntroCard', () => ({
   KangurResolvedPageIntroCard: ({
     title,
     description,
@@ -501,6 +495,21 @@ vi.mock('@/features/kangur/ui/hooks/useKangurAssignments', () => ({
 }));
 
 vi.mock('@/features/kangur/ui/hooks/useKangurLessons', () => ({
+  useKangurLessons: (options: LessonsCatalogMockOptions = {}) => {
+    lessonCatalogHookCallsMock(options);
+    const lessons = resolveFilteredCatalogRecords(lessonsState.value, options);
+    const { hasRetainedData, isLoading, isPlaceholderData } = resolveLessonsLoadingMeta();
+
+    return {
+      data: isLoading && !hasRetainedData ? undefined : lessons,
+      isFetching: isLoading,
+      isLoading: isLoading && !hasRetainedData,
+      isPending: isLoading && !hasRetainedData,
+      isPlaceholderData,
+      isRefetching: hasRetainedData,
+      refetch: vi.fn(),
+    };
+  },
   useKangurLessonDocument: (
     lessonId: string | null,
     options?: { enabled?: boolean }
@@ -513,25 +522,6 @@ vi.mock('@/features/kangur/ui/hooks/useKangurLessons', () => ({
   useKangurLessonDocuments: () => ({
     data: {},
   }),
-}));
-
-vi.mock('@/features/kangur/ui/hooks/useKangurLessonsCatalog', () => ({
-  useKangurLessonsCatalog: (options: LessonsCatalogMockOptions = {}) => {
-    lessonCatalogHookCallsMock(options);
-    const { lessons, sections } = resolveLessonsCatalogMockData(options);
-    const { hasRetainedData, isLoading, isPlaceholderData } =
-      resolveLessonsCatalogLoadingMeta();
-
-    return {
-      data: isLoading && !hasRetainedData ? undefined : { lessons, sections },
-      isFetching: isLoading,
-      isLoading: isLoading && !hasRetainedData,
-      isPending: isLoading && !hasRetainedData,
-      isPlaceholderData,
-      isRefetching: hasRetainedData,
-      refetch: vi.fn(),
-    };
-  },
 }));
 
 vi.mock('@/features/kangur/ui/hooks/useKangurLessonSections', () => ({
@@ -574,9 +564,12 @@ vi.mock('@/features/kangur/ui/hooks/useKangurMobileBreakpoint', () => ({
 }));
 
 vi.mock('@/features/kangur/ui/hooks/useKangurProgressState', () => ({
-  useKangurProgressState: () => ({
-    lessonMastery: {},
-  }),
+  useKangurProgressState: (options?: unknown) => {
+    progressStateHookCallsMock(options ?? {});
+    return {
+      lessonMastery: {},
+    };
+  },
 }));
 
 vi.mock('@/features/kangur/ui/hooks/useKangurPageContent', () => ({
@@ -701,6 +694,7 @@ export const setupLessonsPageTest = async () => {
   useKangurRoutePageReadyMock.mockClear();
   lessonDocumentsHookCallsMock.mockClear();
   lessonAssignmentsHookCallsMock.mockClear();
+  progressStateHookCallsMock.mockClear();
   lessonCatalogHookCallsMock.mockClear();
   lessonSectionsHookCallsMock.mockClear();
   lessonTemplatesHookCallsMock.mockClear();
@@ -717,6 +711,7 @@ export {
   lessonCatalogHookCallsMock,
   lessonCardPropsMock,
   lessonDocumentsHookCallsMock,
+  progressStateHookCallsMock,
   lessonSectionsHookCallsMock,
   lessonSectionsLoadingState,
   lessonSectionsPlaceholderDataState,

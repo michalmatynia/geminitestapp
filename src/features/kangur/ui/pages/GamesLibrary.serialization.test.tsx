@@ -213,7 +213,7 @@ vi.mock('@/features/kangur/ui/components/KangurTopNavigationController', () => (
   KangurTopNavigationController: () => <div data-testid='games-library-top-nav' />,
 }));
 
-vi.mock('@/features/kangur/ui/components/KangurPageIntroCard', () => ({
+vi.mock('@/features/kangur/ui/components/lesson-library/KangurPageIntroCard', () => ({
   KangurPageIntroCard: ({
     children,
     title,

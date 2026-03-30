@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-03-30T12:41:05.351Z",
+  "generatedAt": "2026-03-30T15:09:33.268Z",
   "status": "warn",
   "summary": {
     "total": 2,
@@ -7,7 +7,7 @@
     "warningCount": 2,
     "infoCount": 0,
     "status": "warn",
-    "fileCount": 6401
+    "fileCount": 6673
   },
   "scope": {
     "root": "src",
@@ -56,5 +56,5 @@
       "infoCount": 0
     }
   ],
-  "durationMs": 2801
+  "durationMs": 2911
 }

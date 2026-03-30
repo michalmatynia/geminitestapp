@@ -1,4 +1,5 @@
 import type {
+  KangurSocialImageAddonBatchCaptureResult,
   KangurSocialImageAddonBatchFailure,
   KangurSocialProgrammableCaptureRoute,
 } from '@/shared/contracts/kangur-social-image-addons';
@@ -29,6 +30,21 @@ export const normalizeKangurSocialCaptureFailureReason = (
     default:
       return normalized;
   }
+};
+
+const formatKangurSocialCaptureToken = (
+  value: string | null | undefined
+): string | null => {
+  const normalized = value?.trim();
+  if (!normalized) {
+    return null;
+  }
+
+  return normalized
+    .split(/[_\s-]+/)
+    .filter(Boolean)
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(' ');
 };
 
 export const resolveKangurSocialCaptureTargetLabel = (
@@ -70,4 +86,57 @@ export const buildKangurSocialCaptureFailureSummary = (
   return remainingCount > 0
     ? `${visibleEntries.join('; ')}; +${remainingCount} more`
     : visibleEntries.join('; ');
+};
+
+export const resolveFailedKangurSocialPresetIds = (
+  failures: KangurSocialImageAddonBatchFailure[]
+): string[] =>
+  Array.from(
+    new Set(
+      failures
+        .map((failure) => failure.id.trim())
+        .filter((id) => PRESET_TITLE_BY_ID.has(id))
+    )
+  );
+
+export const resolveFailedKangurSocialProgrammableCaptureRoutes = (
+  failures: KangurSocialImageAddonBatchFailure[],
+  routes: KangurSocialProgrammableCaptureRoute[]
+): KangurSocialProgrammableCaptureRoute[] => {
+  const failedIds = new Set(
+    failures.map((failure) => failure.id.trim()).filter(Boolean)
+  );
+  return routes.filter((route) => failedIds.has(route.id.trim()));
+};
+
+export const buildKangurSocialCapturePrimaryIssueSummary = (
+  captureResults: KangurSocialImageAddonBatchCaptureResult[],
+  options?: {
+    routes?: Array<Pick<KangurSocialProgrammableCaptureRoute, 'id' | 'title'>>;
+  }
+): string | null => {
+  const primaryIssue =
+    captureResults.find((result) => result.status === 'failed') ??
+    captureResults.find((result) => result.status === 'skipped');
+
+  if (!primaryIssue) {
+    return null;
+  }
+
+  const targetLabel =
+    primaryIssue.title?.trim() ||
+    resolveKangurSocialCaptureTargetLabel(primaryIssue.id, options?.routes);
+  const stageLabel = formatKangurSocialCaptureToken(primaryIssue.stage);
+  const reasonLabel = normalizeKangurSocialCaptureFailureReason(primaryIssue.reason);
+  const attemptLabel =
+    primaryIssue.attemptCount && primaryIssue.attemptCount > 1
+      ? ` after ${primaryIssue.attemptCount} attempts`
+      : '';
+  const statusPhrase =
+    primaryIssue.status === 'skipped'
+      ? `${targetLabel} was skipped`
+      : `${targetLabel} failed`;
+  const stagePhrase = stageLabel ? ` at ${stageLabel}` : '';
+
+  return `${statusPhrase}${stagePhrase}${attemptLabel}. ${reasonLabel}`;
 };

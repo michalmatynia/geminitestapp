@@ -13,10 +13,10 @@ import {
 import {
   KangurResolvedLessonLibraryCard,
   type KangurLessonLibraryCardCopy,
-} from '@/features/kangur/ui/components/KangurResolvedLessonLibraryCard';
-import { KangurResolvedLessonGroupAccordion } from '@/features/kangur/ui/components/KangurResolvedLessonGroupAccordion';
+} from '@/features/kangur/ui/components/lesson-library/KangurResolvedLessonLibraryCard';
+import { KangurResolvedLessonGroupAccordion } from '@/features/kangur/ui/components/lesson-library/KangurResolvedLessonGroupAccordion';
 import { LazyKangurLessonsWordmark } from '@/features/kangur/ui/components/LazyKangurLessonsWordmark';
-import { KangurResolvedPageIntroCard } from '@/features/kangur/ui/components/KangurResolvedPageIntroCard';
+import { KangurResolvedPageIntroCard } from '@/features/kangur/ui/components/lesson-library/KangurResolvedPageIntroCard';
 import KangurVisualCueContent from '@/features/kangur/ui/components/KangurVisualCueContent';
 import {
   getKangurSixYearOldLessonGroupIcon,
@@ -38,6 +38,7 @@ import { getLessonMasteryPresentation } from './Lessons.utils';
 
 type LessonSubsection = {
   componentIds: KangurLesson['componentId'][];
+  expectedLessonCount: number;
   id: string;
   label: string;
   typeLabel?: string;
@@ -45,7 +46,6 @@ type LessonSubsection = {
 };
 
 type LessonGroup = {
-  allComponentIds: KangurLesson['componentId'][];
   componentIds: KangurLesson['componentId'][];
   expectedLessonCount: number;
   groupIcon: string;
@@ -128,6 +128,28 @@ function LessonsCatalogSkeleton() {
           </div>
         </div>
       ))}
+    </div>
+  );
+}
+
+function LessonsCatalogDeferredLoadingCard({
+  testId,
+}: {
+  testId: string;
+}): React.JSX.Element {
+  return (
+    <div
+      className='w-full rounded-[24px] border border-slate-200/60 bg-slate-50/90 p-4'
+      data-testid={testId}
+    >
+      <div className='flex items-start gap-4'>
+        <LessonsCatalogSkeletonBlock className='h-12 w-12 shrink-0 rounded-2xl bg-slate-200/80' />
+        <div className='flex min-w-0 flex-1 flex-col gap-2'>
+          <LessonsCatalogSkeletonBlock className='h-5 w-40 rounded-full bg-slate-200/80' />
+          <LessonsCatalogSkeletonBlock className='h-4 w-full rounded-full bg-slate-200/70' />
+          <LessonsCatalogSkeletonBlock className='h-4 w-3/4 rounded-full bg-slate-200/70' />
+        </div>
+      </div>
     </div>
   );
 }
@@ -257,6 +279,9 @@ function LessonsCatalogResolvedContent({
   translations,
 }: LessonsCatalogResolvedContentProps) {
   const [expandedLessonGroupId, setExpandedLessonGroupId] = useState<string | null>(null);
+  const [expandedLessonSubsectionIdsByGroup, setExpandedLessonSubsectionIdsByGroup] = useState<
+    Record<string, string[]>
+  >({});
   const emptyMasteryPresentation = useMemo(
     () => ({
       badgeAccent: 'slate' as const,
@@ -277,6 +302,7 @@ function LessonsCatalogResolvedContent({
 
   useEffect(() => {
     setExpandedLessonGroupId(null);
+    setExpandedLessonSubsectionIdsByGroup({});
   }, [subject]);
 
   const isCoarsePointer = useKangurCoarsePointer();
@@ -298,6 +324,7 @@ function LessonsCatalogResolvedContent({
         const subsections = enabledSubsections
           .map((subsection) => ({
             componentIds: [...subsection.componentIds],
+            expectedLessonCount: subsection.componentIds.length,
             id: subsection.id,
             label: getLocalizedKangurLessonSectionLabel(subsection.id, locale, subsection.label),
             typeLabel: subsection.typeLabel
@@ -309,15 +336,12 @@ function LessonsCatalogResolvedContent({
           }));
 
         const hasSubsections = enabledSubsections.length > 0;
-        const allComponentIds = [
+        const expectedLessonCount = [
           ...section.componentIds,
           ...enabledSubsections.flatMap((subsection) => subsection.componentIds),
-        ];
-        const expectedLessonCount =
-          allComponentIds.length;
+        ].length;
 
         return {
-          allComponentIds,
           componentIds: [...section.componentIds],
           expectedLessonCount,
           groupIcon: getKangurSixYearOldLessonGroupIcon(hasSubsections),
@@ -426,24 +450,24 @@ function LessonsCatalogResolvedContent({
         key={lesson.id}
         data-testid={`lesson-library-motion-${lesson.id}`}
       >
-      <KangurResolvedLessonLibraryCard
-        lesson={lesson}
-        dataDocId='lessons_library_entry'
-        iconTestId={`lesson-library-icon-${lesson.id}`}
-        isCoarsePointer={isCoarsePointer}
-        isSixYearOld={isSixYearOld}
-        locale={locale}
-        localizedDescription={lessonCardState.localizedDescription}
-        localizedTitle={lessonCardState.localizedTitle}
-        onSelect={lessonCardState.onSelect}
-        masteryPresentation={lessonCardState.masteryPresentation}
-        resolvedCopy={lessonCardState.resolvedCopy}
-        lessonAssignment={lessonCardState.lessonAssignment}
-        completedLessonAssignment={lessonCardState.completedLessonAssignment}
-        hasDocumentContent={lessonCardState.hasDocumentContent}
-        ariaCurrent={activeLessonId === lesson.id ? 'page' : undefined}
-        translations={libraryCardTranslations}
-      />
+        <KangurResolvedLessonLibraryCard
+          lesson={lesson}
+          dataDocId='lessons_library_entry'
+          iconTestId={`lesson-library-icon-${lesson.id}`}
+          isCoarsePointer={isCoarsePointer}
+          isSixYearOld={isSixYearOld}
+          locale={locale}
+          localizedDescription={lessonCardState.localizedDescription}
+          localizedTitle={lessonCardState.localizedTitle}
+          onSelect={lessonCardState.onSelect}
+          masteryPresentation={lessonCardState.masteryPresentation}
+          resolvedCopy={lessonCardState.resolvedCopy}
+          lessonAssignment={lessonCardState.lessonAssignment}
+          completedLessonAssignment={lessonCardState.completedLessonAssignment}
+          hasDocumentContent={lessonCardState.hasDocumentContent}
+          ariaCurrent={activeLessonId === lesson.id ? 'page' : undefined}
+          translations={libraryCardTranslations}
+        />
       </div>
     );
   };
@@ -455,15 +479,12 @@ function LessonsCatalogResolvedContent({
       {lessonEntries.map((entry) => {
         if (entry.kind === 'group') {
           const isExpanded = expandedLessonGroupId === entry.group.id;
-          const resolvedLessonCount = entry.group.hasSubsections
-            ? (entry.group.subsections?.reduce(
-                (count, subsection) => count + subsection.lessons.length,
-                0
-              ) ?? 0)
-            : entry.group.lessons.length;
+          const expandedLessonSubsectionIds =
+            expandedLessonSubsectionIdsByGroup[entry.group.id] ?? [];
           const shouldShowDeferredGroupLoading =
             isExpanded &&
-            resolvedLessonCount < entry.group.expectedLessonCount &&
+            entry.group.componentIds.length > 0 &&
+            entry.group.lessons.length < entry.group.componentIds.length &&
             isLessonsCatalogLoading;
           let groupLessonIndex = 0;
 
@@ -506,7 +527,14 @@ function LessonsCatalogResolvedContent({
               }
               onToggle={() => {
                 if (!isExpanded) {
-                  ensureLessonsCatalogLoaded(entry.group.allComponentIds);
+                  if (entry.group.componentIds.length > 0) {
+                    ensureLessonsCatalogLoaded(entry.group.componentIds);
+                  }
+                } else {
+                  setExpandedLessonSubsectionIdsByGroup((current) => ({
+                    ...current,
+                    [entry.group.id]: [],
+                  }));
                 }
                 setExpandedLessonGroupId(isExpanded ? null : entry.group.id);
               }}
@@ -528,42 +556,71 @@ function LessonsCatalogResolvedContent({
                   : undefined
               }
             >
-              {shouldShowDeferredGroupLoading ? (
-                <div
-                  className='w-full rounded-[24px] border border-slate-200/60 bg-slate-50/90 p-4'
-                  data-testid={`lessons-group-loading-${entry.group.id}`}
-                >
-                  <div className='flex items-start gap-4'>
-                    <LessonsCatalogSkeletonBlock className='h-12 w-12 shrink-0 rounded-2xl bg-slate-200/80' />
-                    <div className='flex min-w-0 flex-1 flex-col gap-2'>
-                      <LessonsCatalogSkeletonBlock className='h-5 w-40 rounded-full bg-slate-200/80' />
-                      <LessonsCatalogSkeletonBlock className='h-4 w-full rounded-full bg-slate-200/70' />
-                      <LessonsCatalogSkeletonBlock className='h-4 w-3/4 rounded-full bg-slate-200/70' />
-                    </div>
-                  </div>
-                </div>
-              ) : entry.group.hasSubsections ? (
-                entry.group.subsections?.map((subsection) => (
-                  <div
-                    key={subsection.id}
-                    className={LESSONS_LIBRARY_LIST_CLASSNAME}
-                  >
-                    <div className={LESSONS_LIBRARY_LIST_CLASSNAME}>
-                      {subsection.lessons.map((lesson) => {
-                        const index = groupLessonIndex;
-                        groupLessonIndex += 1;
-                        return renderLessonCard(lesson, index);
-                      })}
-                    </div>
-                  </div>
-                ))
-              ) : (
-                entry.group.lessons.map((lesson) => {
+              <>
+                {shouldShowDeferredGroupLoading ? (
+                  <LessonsCatalogDeferredLoadingCard
+                    testId={`lessons-group-loading-${entry.group.id}`}
+                  />
+                ) : null}
+                {entry.group.lessons.map((lesson) => {
                   const index = groupLessonIndex;
                   groupLessonIndex += 1;
                   return renderLessonCard(lesson, index);
-                })
-              )}
+                })}
+                {entry.group.hasSubsections
+                  ? entry.group.subsections?.map((subsection) => {
+                      const isSubsectionExpanded =
+                        expandedLessonSubsectionIds.includes(subsection.id);
+                      const shouldShowDeferredSubsectionLoading =
+                        isSubsectionExpanded &&
+                        subsection.lessons.length < subsection.expectedLessonCount &&
+                        isLessonsCatalogLoading;
+
+                      return (
+                        <KangurResolvedLessonGroupAccordion
+                          accordionId={`${entry.group.id}-${subsection.id}`}
+                          fallbackTypeLabel={null}
+                          isExpanded={isSubsectionExpanded}
+                          isCoarsePointer={isCoarsePointer}
+                          key={subsection.id}
+                          label={
+                            <span
+                              className='inline-flex items-center gap-2'
+                              data-testid={`lessons-page-subsection-label-${subsection.id}`}
+                            >
+                              <span>{subsection.label}</span>
+                            </span>
+                          }
+                          onToggle={() => {
+                            if (!isSubsectionExpanded && subsection.componentIds.length > 0) {
+                              ensureLessonsCatalogLoaded(subsection.componentIds);
+                            }
+                            setExpandedLessonSubsectionIdsByGroup((current) => {
+                              const currentExpandedIds = current[entry.group.id] ?? [];
+                              return {
+                                ...current,
+                                [entry.group.id]: isSubsectionExpanded
+                                  ? currentExpandedIds.filter((id) => id !== subsection.id)
+                                  : [...currentExpandedIds, subsection.id],
+                              };
+                            });
+                          }}
+                        >
+                          {shouldShowDeferredSubsectionLoading ? (
+                            <LessonsCatalogDeferredLoadingCard
+                              testId={`lessons-subsection-loading-${subsection.id}`}
+                            />
+                          ) : null}
+                          {subsection.lessons.map((lesson) => {
+                            const index = groupLessonIndex;
+                            groupLessonIndex += 1;
+                            return renderLessonCard(lesson, index);
+                          })}
+                        </KangurResolvedLessonGroupAccordion>
+                      );
+                    })
+                  : null}
+              </>
             </KangurResolvedLessonGroupAccordion>
           );
         }

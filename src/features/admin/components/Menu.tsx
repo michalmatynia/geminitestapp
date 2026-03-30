@@ -2,7 +2,7 @@
 
 import { StarIcon } from 'lucide-react';
 import { usePathname, useRouter } from 'next/navigation';
-import React, { useCallback, useDeferredValue, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useDeferredValue, useEffect, useMemo, useRef, useState } from 'react';
 
 import {
   ADMIN_MENU_CUSTOM_ENABLED_KEY,
@@ -37,12 +37,7 @@ import {
   adminNavToCustomNav,
   getAdminMenuSections,
 } from './menu/admin-menu-utils';
-import {
-  NavTree,
-  AdminMenuTreeContext,
-  AdminMenuDepthContext,
-  type AdminMenuTreeContextValue,
-} from './menu/NavTree';
+import { NavTree } from './menu/NavTree';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
 
@@ -219,26 +214,29 @@ export default function Menu(): React.ReactNode {
   }, [router, setIsMenuCollapsed, setIsProgrammaticallyCollapsed]);
 
   const settingsStore = useSettingsStore();
+  const settingsStoreRef = useRef(settingsStore);
+  settingsStoreRef.current = settingsStore;
+  const settingsMap = settingsStore.map;
   const favoriteIds = useMemo<string[]>(() => {
-    const raw = settingsStore.get(ADMIN_MENU_FAVORITES_KEY);
+    const raw = settingsStoreRef.current.get(ADMIN_MENU_FAVORITES_KEY);
     const parsed = parseAdminMenuJson<string[]>(raw, []);
     return parsed.filter((id: string): id is string => typeof id === 'string' && id.length > 0);
-  }, [settingsStore]);
+  }, [settingsMap]);
   const favoriteIdSet = useMemo(() => new Set(favoriteIds), [favoriteIds]);
   const sectionColors = useMemo<Record<string, string>>(() => {
-    const raw = settingsStore.get(ADMIN_MENU_SECTION_COLORS_KEY);
+    const raw = settingsStoreRef.current.get(ADMIN_MENU_SECTION_COLORS_KEY);
     const parsed = parseAdminMenuJson<Record<string, string> | null>(raw, null);
     return parsed && typeof parsed === 'object' ? parsed : {};
-  }, [settingsStore]);
+  }, [settingsMap]);
   const customEnabled = useMemo(
-    () => parseAdminMenuBoolean(settingsStore.get(ADMIN_MENU_CUSTOM_ENABLED_KEY), false),
-    [settingsStore]
+    () => parseAdminMenuBoolean(settingsStoreRef.current.get(ADMIN_MENU_CUSTOM_ENABLED_KEY), false),
+    [settingsMap]
   );
   const customNav = useMemo<AdminMenuCustomNode[]>(() => {
-    const raw = settingsStore.get(ADMIN_MENU_CUSTOM_NAV_KEY);
+    const raw = settingsStoreRef.current.get(ADMIN_MENU_CUSTOM_NAV_KEY);
     const parsed = parseAdminMenuJson<AdminMenuCustomNode[]>(raw, []);
     return normalizeAdminMenuCustomNav(parsed);
-  }, [settingsStore]);
+  }, [settingsMap]);
 
   const baseNav = useMemo(
     () => buildAdminNav({ onOpenChat: handleOpenChat, onCreatePageClick: handleCreatePageClick }),
@@ -327,55 +325,49 @@ export default function Menu(): React.ReactNode {
     return open;
   }, [autoOpenIds, closedAutoIds, normalizedQuery, userOpenIds]);
 
+  const normalizedQueryRef = useRef(normalizedQuery);
+  normalizedQueryRef.current = normalizedQuery;
+  const autoOpenIdsRef = useRef(autoOpenIds);
+  autoOpenIdsRef.current = autoOpenIds;
+  const effectiveOpenIdsRef = useRef(effectiveOpenIds);
+  effectiveOpenIdsRef.current = effectiveOpenIds;
+
   const isAnyFolderOpen = effectiveOpenIds.size > 0;
 
-  const handleToggleOpen = useCallback(
-    (id: string): void => {
-      if (normalizedQuery) return;
-      const isOpen = effectiveOpenIds.has(id);
+  const handleToggleOpen = useCallback((id: string): void => {
+    if (normalizedQueryRef.current) return;
+    const isOpen = effectiveOpenIdsRef.current.has(id);
 
-      if (isOpen) {
-        // One-click close, even for auto-opened "active route" folders.
-        setUserOpenIds((prev: Set<string>) => {
-          if (!prev.has(id)) return prev;
-          const next = new Set(prev);
-          next.delete(id);
-          return next;
-        });
-        if (autoOpenIds.has(id)) {
-          setClosedAutoIds((prev: Set<string>) => {
-            if (prev.has(id)) return prev;
-            const next = new Set(prev);
-            next.add(id);
-            return next;
-          });
-        }
-        return;
-      }
-
-      setClosedAutoIds((prev: Set<string>) => {
+    if (isOpen) {
+      // One-click close, even for auto-opened "active route" folders.
+      setUserOpenIds((prev: Set<string>) => {
+        if (!prev.has(id)) return prev;
         const next = new Set(prev);
         next.delete(id);
         return next;
       });
-      setUserOpenIds((prev: Set<string>) => {
-        const next = new Set(prev);
-        next.add(id);
-        return next;
-      });
-    },
-    [autoOpenIds, effectiveOpenIds, normalizedQuery]
-  );
+      if (autoOpenIdsRef.current.has(id)) {
+        setClosedAutoIds((prev: Set<string>) => {
+          if (prev.has(id)) return prev;
+          const next = new Set(prev);
+          next.add(id);
+          return next;
+        });
+      }
+      return;
+    }
 
-  const navTreeContextValue = useMemo<AdminMenuTreeContextValue>(
-    () => ({
-      isMenuCollapsed,
-      pathname,
-      openIds: effectiveOpenIds,
-      onToggleOpen: handleToggleOpen,
-    }),
-    [effectiveOpenIds, handleToggleOpen, isMenuCollapsed, pathname]
-  );
+    setClosedAutoIds((prev: Set<string>) => {
+      const next = new Set(prev);
+      next.delete(id);
+      return next;
+    });
+    setUserOpenIds((prev: Set<string>) => {
+      const next = new Set(prev);
+      next.add(id);
+      return next;
+    });
+  }, []);
 
   const handleToggleAllFolders = useCallback((): void => {
     // While searching, folders are intentionally opened to reveal results.
@@ -447,11 +439,14 @@ export default function Menu(): React.ReactNode {
         </Tooltip>
       )}
 
-      <AdminMenuTreeContext.Provider value={navTreeContextValue}>
-        <AdminMenuDepthContext.Provider value={0}>
-          <NavTree items={filteredNav} />
-        </AdminMenuDepthContext.Provider>
-      </AdminMenuTreeContext.Provider>
+      <NavTree
+        items={filteredNav}
+        depth={0}
+        isMenuCollapsed={isMenuCollapsed}
+        pathname={pathname}
+        openIds={effectiveOpenIds}
+        onToggleOpen={handleToggleOpen}
+      />
     </nav>
   );
 }

@@ -1,4 +1,4 @@
-import type { LessonSlide } from '@/features/kangur/ui/components/LessonSlideSection';
+import type { LessonSlide } from '@/features/kangur/ui/components/lesson-framework/LessonSlideSection';
 import { KangurLessonCaption, KangurLessonLead, KangurLessonStack } from '@/features/kangur/ui/design/lesson-primitives';
 
 export const summarySlides: LessonSlide[] = [

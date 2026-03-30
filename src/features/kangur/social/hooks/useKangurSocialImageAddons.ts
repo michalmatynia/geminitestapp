@@ -3,10 +3,12 @@
 import type { ListQuery, MutationResult } from '@/shared/contracts/ui';
 import {
   kangurSocialImageAddonsBatchJobSchema,
+  kangurSocialImageAddonsBatchJobsSchema,
   kangurSocialImageAddonsBatchResultSchema,
   kangurSocialImageAddonsSchema,
   type KangurSocialCaptureAppearanceMode,
   type KangurSocialImageAddonsBatchJob,
+  type KangurSocialImageAddonsBatchJobs,
   type KangurSocialImageAddonsBatchPayload,
   type KangurSocialImageAddonsBatchResult,
   type KangurSocialImageAddon,
@@ -21,8 +23,17 @@ type SocialImageAddonsQueryOptions = {
   ids?: string[];
 };
 
+type SocialImageAddonsBatchJobsQueryOptions = {
+  limit?: number;
+  enabled?: boolean;
+};
+
 const SOCIAL_IMAGE_ADDONS_QUERY_TIMEOUT_MS = 60_000;
 const KANGUR_SOCIAL_IMAGE_ADDONS_QUERY_KEY = ['kangur', 'social-image-addons'] as const;
+const KANGUR_SOCIAL_IMAGE_ADDONS_BATCH_JOBS_QUERY_KEY = [
+  'kangur',
+  'social-image-addon-batch-jobs',
+] as const;
 
 const normalizeAddonIds = (ids: string[] | undefined): string[] =>
   Array.from(
@@ -151,6 +162,47 @@ export const fetchKangurSocialImageAddonsBatchJob = async (
   );
   return payload ? kangurSocialImageAddonsBatchJobSchema.parse(payload) : null;
 };
+
+export const fetchKangurSocialImageAddonsBatchJobs = async (
+  options?: SocialImageAddonsBatchJobsQueryOptions
+): Promise<KangurSocialImageAddonsBatchJobs> => {
+  const payload = await api.get<KangurSocialImageAddonsBatchJobs>(
+    '/api/kangur/social-image-addons/batch',
+    {
+      params: {
+        limit: options?.limit,
+      },
+      timeout: SOCIAL_IMAGE_ADDONS_QUERY_TIMEOUT_MS,
+    }
+  );
+  return kangurSocialImageAddonsBatchJobsSchema.parse(payload);
+};
+
+export const useKangurSocialImageAddonsBatchJobs = (
+  options?: SocialImageAddonsBatchJobsQueryOptions
+): ListQuery<KangurSocialImageAddonsBatchJob, KangurSocialImageAddonsBatchJobs> =>
+  createListQueryV2<KangurSocialImageAddonsBatchJob, KangurSocialImageAddonsBatchJobs>({
+    queryKey: [
+      ...KANGUR_SOCIAL_IMAGE_ADDONS_BATCH_JOBS_QUERY_KEY,
+      { limit: options?.limit ?? 5 },
+    ],
+    queryFn: async (): Promise<KangurSocialImageAddonsBatchJobs> =>
+      await fetchKangurSocialImageAddonsBatchJobs(options),
+    enabled: options?.enabled ?? true,
+    staleTime: 1000 * 10,
+    refetchOnMount: false,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
+    retry: 1,
+    meta: {
+      source: 'kangur.hooks.useKangurSocialImageAddonsBatchJobs',
+      operation: 'list',
+      resource: 'kangur.social-image-addons.batch-jobs',
+      domain: 'kangur',
+      tags: ['kangur', 'social-image-addons', 'batch-jobs'],
+      description: 'Loads recent Kangur social image add-on batch jobs.',
+    },
+  });
 
 export const useStartBatchCaptureKangurSocialImageAddons = (): MutationResult<
   KangurSocialImageAddonsBatchJob,

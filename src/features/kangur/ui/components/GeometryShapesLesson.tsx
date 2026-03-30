@@ -6,7 +6,7 @@ import { useKangurProgressOwnerKey } from '@/features/kangur/ui/hooks/useKangurP
 import { useCallback, useState } from 'react';
 import { useTranslations } from 'next-intl';
 
-import type { LessonSlide } from '@/features/kangur/ui/components/LessonSlideSection';
+import type { LessonSlide } from '@/features/kangur/ui/components/lesson-framework/LessonSlideSection';
 import { KangurLessonCallout } from '@/features/kangur/ui/design/lesson-primitives';
 import { getKangurBuiltInGameInstanceId } from '@/features/kangur/games';
 import { GEOMETRY_SHAPES_LESSON_COMPONENT_CONTENT as CONTENT } from '@/features/kangur/lessons/lesson-template-component-content';

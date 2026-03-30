@@ -96,13 +96,12 @@ export const useKangurDrawingEngine = <
 }: UseKangurDrawingEngineOptions<TMeta, TElement>): UseKangurDrawingEngineResult<TMeta, TElement> => {
   const [strokes, setCommittedStrokes] = useState<KangurDrawingStroke<TMeta>[]>([]);
   const [redoStrokes, setRedoStrokes] = useState<KangurDrawingStroke<TMeta>[]>([]);
-  const [activeStroke, setActiveStroke] = useState<KangurDrawingStroke<TMeta> | null>(null);
   const [isPointerDrawing, setIsPointerDrawing] = useState(false);
   const isDrawingRef = useRef(false);
   const redrawFrameRef = useRef<number | null>(null);
   const redrawRef = useRef(redraw);
   const strokesRef = useRef(strokes);
-  const activeStrokeRef = useRef(activeStroke);
+  const activeStrokeRef = useRef<KangurDrawingStroke<TMeta> | null>(null);
 
   useEffect(() => {
     redrawRef.current = redraw;
@@ -111,10 +110,6 @@ export const useKangurDrawingEngine = <
   useEffect(() => {
     strokesRef.current = strokes;
   }, [strokes]);
-
-  useEffect(() => {
-    activeStrokeRef.current = activeStroke;
-  }, [activeStroke]);
 
   const flushRedraw = useCallback((): void => {
     redrawFrameRef.current = null;
@@ -144,7 +139,7 @@ export const useKangurDrawingEngine = <
 
   useEffect(() => {
     scheduleRedraw();
-  }, [activeStroke, scheduleRedraw, strokes]);
+  }, [scheduleRedraw, strokes]);
 
   useEffect(
     () => () => {
@@ -177,7 +172,7 @@ export const useKangurDrawingEngine = <
         typeof next === 'function' ? next(current) : next
       );
       setRedoStrokes([]);
-      setActiveStroke(null);
+      activeStrokeRef.current = null;
       isDrawingRef.current = false;
       setIsPointerDrawing(false);
     },
@@ -187,7 +182,7 @@ export const useKangurDrawingEngine = <
   const clearStrokes = useCallback((): void => {
     setCommittedStrokes([]);
     setRedoStrokes([]);
-    setActiveStroke(null);
+    activeStrokeRef.current = null;
     isDrawingRef.current = false;
     setIsPointerDrawing(false);
   }, []);
@@ -201,7 +196,7 @@ export const useKangurDrawingEngine = <
       setRedoStrokes((redoCurrent) => [...redoCurrent, lastStroke]);
       return current.slice(0, -1);
     });
-    setActiveStroke(null);
+    activeStrokeRef.current = null;
     isDrawingRef.current = false;
     setIsPointerDrawing(false);
   }, []);
@@ -215,7 +210,7 @@ export const useKangurDrawingEngine = <
       setCommittedStrokes((strokeCurrent) => [...strokeCurrent, nextStroke]);
       return current.slice(0, -1);
     });
-    setActiveStroke(null);
+    activeStrokeRef.current = null;
     isDrawingRef.current = false;
     setIsPointerDrawing(false);
   }, []);
@@ -266,7 +261,8 @@ export const useKangurDrawingEngine = <
       surface.setPointerCapture?.(event.pointerId);
       isDrawingRef.current = true;
       setIsPointerDrawing(true);
-      setActiveStroke(nextStroke);
+      activeStrokeRef.current = nextStroke;
+      scheduleRedraw();
       onPointerStart?.({
         ...payload,
         stroke: nextStroke,
@@ -279,6 +275,7 @@ export const useKangurDrawingEngine = <
       onPointerStart,
       onStartRejected,
       resolvePoint,
+      scheduleRedraw,
       shouldStartStroke,
     ]
   );
@@ -308,12 +305,13 @@ export const useKangurDrawingEngine = <
         return;
       }
 
-      setActiveStroke({
+      activeStrokeRef.current = {
         ...currentStroke,
         points: [...currentStroke.points, point],
-      });
+      };
+      scheduleRedraw();
     },
-    [minPointDistance, resolvePoint, shouldAddPoint]
+    [minPointDistance, resolvePoint, scheduleRedraw, shouldAddPoint]
   );
 
   const handlePointerUp = useCallback(
@@ -329,7 +327,7 @@ export const useKangurDrawingEngine = <
       surface?.releasePointerCapture?.(event.pointerId);
       isDrawingRef.current = false;
       setIsPointerDrawing(false);
-      setActiveStroke(null);
+      activeStrokeRef.current = null;
 
       if (
         currentStroke &&
@@ -338,6 +336,7 @@ export const useKangurDrawingEngine = <
         setCommittedStrokes((current) => [...current, currentStroke]);
         setRedoStrokes([]);
       }
+      scheduleRedraw();
 
       onPointerUp?.({
         event,
@@ -346,19 +345,19 @@ export const useKangurDrawingEngine = <
         strokes: strokesRef.current,
       });
     },
-    [canvasRef, onPointerUp, resolvePoint, shouldCommitStroke]
+    [canvasRef, onPointerUp, resolvePoint, scheduleRedraw, shouldCommitStroke]
   );
 
   const pointStrokes = useMemo(
     () =>
-      activeStroke
-        ? [...mapKangurDrawingStrokesToPoints(strokes), activeStroke.points]
+      isPointerDrawing && activeStrokeRef.current
+        ? [...mapKangurDrawingStrokesToPoints(strokes), activeStrokeRef.current.points]
         : mapKangurDrawingStrokesToPoints(strokes),
-    [activeStroke, strokes]
+    [isPointerDrawing, strokes]
   );
 
   return {
-    activeStroke,
+    activeStroke: activeStrokeRef.current,
     canRedo: redoStrokes.length > 0,
     canUndo: strokes.length > 0,
     clearStrokes,

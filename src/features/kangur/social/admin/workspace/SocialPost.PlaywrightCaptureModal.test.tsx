@@ -449,6 +449,19 @@ describe('SocialPostPlaywrightCaptureModal', () => {
         result: {
           addons: [],
           failures: [{ id: 'route-1', reason: 'capture_failed' }],
+          captureResults: [
+            {
+              id: 'route-1',
+              title: 'Pricing page',
+              status: 'failed',
+              reason: 'capture_failed',
+              resolvedUrl: 'https://example.com/pricing?kangurCapture=social-batch',
+              artifactName: null,
+              attemptCount: 2,
+              durationMs: 3200,
+              stage: 'waiting_for_selector',
+            },
+          ],
           usedPresetCount: 1,
           runId: 'run-1',
         },
@@ -476,8 +489,120 @@ describe('SocialPostPlaywrightCaptureModal', () => {
     render(<SocialPostPlaywrightCaptureModal />);
 
     expect(
+      screen.getByText(
+        'Last failed target: Pricing page failed at Waiting For Selector after 2 attempts. Capture failed'
+      )
+    ).toBeInTheDocument();
+  });
+
+  it('renders recent programmable runs and retries failed routes from stored history', () => {
+    const handleRetryFailedProgrammableCaptureJob = vi.fn();
+
+    usePlaywrightPersonasMock.mockReturnValue({
+      data: [],
+      isLoading: false,
+      error: null,
+    });
+    useSocialPostContextMock.mockReturnValue({
+      activePost: { id: 'post-1' },
+      isProgrammablePlaywrightModalOpen: true,
+      handleCloseProgrammablePlaywrightModal: vi.fn(),
+      captureAppearanceMode: 'default',
+      programmableCaptureBaseUrl: 'https://example.com',
+      setProgrammableCaptureBaseUrl: vi.fn(),
+      programmableCapturePersonaId: '',
+      setProgrammableCapturePersonaId: vi.fn(),
+      programmableCaptureScript: 'return input.captures;',
+      setProgrammableCaptureScript: vi.fn(),
+      programmableCaptureRoutes: [
+        {
+          id: 'route-1',
+          title: 'Pricing page',
+          path: '/pricing',
+          description: '',
+          selector: '',
+          waitForMs: 0,
+          waitForSelectorMs: 10000,
+        },
+      ],
+      programmableCapturePending: false,
+      programmableCaptureBatchCaptureJob: null,
+      programmableCaptureMessage: null,
+      programmableCaptureErrorMessage: null,
+      batchCaptureRecentJobs: [
+        {
+          id: 'job-history-1',
+          runId: 'run-history-1',
+          status: 'completed',
+          request: {
+            baseUrl: 'https://saved.example.com',
+            presetIds: [],
+            presetLimit: null,
+            appearanceMode: 'default',
+            playwrightPersonaId: null,
+            playwrightScript: 'return input.captures;',
+            playwrightRoutes: [
+              {
+                id: 'route-1',
+                title: 'Pricing page',
+                path: '/pricing',
+                description: '',
+                selector: '',
+                waitForMs: 0,
+                waitForSelectorMs: 10000,
+              },
+            ],
+          },
+          progress: {
+            processedCount: 1,
+            completedCount: 0,
+            failureCount: 1,
+            remainingCount: 0,
+            totalCount: 1,
+            currentCaptureId: null,
+            currentCaptureTitle: null,
+            currentCaptureStatus: null,
+            lastCaptureId: 'route-1',
+            lastCaptureStatus: 'failed',
+            message: 'Capture finished with 1 failure.',
+          },
+          result: {
+            addons: [],
+            failures: [{ id: 'route-1', reason: 'capture_failed' }],
+            runId: 'run-history-1',
+          },
+          error: null,
+          createdAt: '2026-03-30T10:00:00.000Z',
+          updatedAt: '2026-03-30T10:05:00.000Z',
+        },
+      ],
+      handleAddProgrammableCaptureRoute: vi.fn(),
+      handleUpdateProgrammableCaptureRoute: vi.fn(),
+      handleRemoveProgrammableCaptureRoute: vi.fn(),
+      handleSeedProgrammableCaptureRoutesFromPresets: vi.fn(),
+      handleResetProgrammableCaptureScript: vi.fn(),
+      handleSaveProgrammableCaptureDefaults: vi.fn(),
+      handleRunProgrammablePlaywrightCapture: vi.fn(),
+      handleRunProgrammablePlaywrightCaptureAndPipeline: vi.fn(),
+      handleRetryFailedProgrammableCaptureJob,
+      canGenerateSocialDraft: true,
+      currentVisualAnalysisJob: null,
+      currentGenerationJob: null,
+      currentPipelineJob: null,
+      socialDraftBlockedReason: null,
+    });
+
+    render(<SocialPostPlaywrightCaptureModal />);
+
+    expect(screen.getByText('Recent programmable runs')).toBeInTheDocument();
+    expect(screen.getByText('Run run-history-1')).toBeInTheDocument();
+    expect(
       screen.getByText('Failed targets: Pricing page: Capture failed')
     ).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Retry failed routes' }));
+
+    expect(handleRetryFailedProgrammableCaptureJob).toHaveBeenCalledTimes(1);
   });
 
   it('allows saving defaults without an active draft while keeping capture actions disabled', () => {
@@ -605,20 +730,158 @@ describe('SocialPostPlaywrightCaptureModal', () => {
 
     expect(screen.getByText('Resolved target')).toBeInTheDocument();
     expect(
-      screen.getByText('Add a base URL to resolve this route.')
+      screen.getByText(
+        'Fix 1 programmable route issue before starting capture. Add a base URL to resolve this route.'
+      )
     ).toBeInTheDocument();
+    expect(screen.getAllByText('Add a base URL to resolve this route.').length).toBeGreaterThan(0);
     expect(screen.getByRole('button', { name: 'Capture programmable images' })).toBeDisabled();
     expect(screen.getByRole('button', { name: 'Capture programmable images' })).toHaveAttribute(
       'title',
-      'Add a base URL, at least one route, and a script before starting programmable capture.'
+      'Add a base URL to resolve this route.'
     );
     expect(screen.getByRole('button', { name: 'Capture + run pipeline' })).toBeDisabled();
     expect(screen.getByRole('button', { name: 'Capture + run pipeline' })).toHaveAttribute(
       'title',
-      'Add a base URL, at least one route, and a script before starting capture and pipeline.'
+      'Add a base URL to resolve this route.'
     );
     expect(screen.getByText('Runtime request preview')).toBeInTheDocument();
     expect(screen.getByText(/"issue": "Add a base URL to resolve this route\."/)).toBeInTheDocument();
+  });
+
+  it('blocks duplicate programmable routes with an inline validation message', () => {
+    usePlaywrightPersonasMock.mockReturnValue({
+      data: [],
+      isLoading: false,
+      error: null,
+    });
+    useSocialPostContextMock.mockReturnValue({
+      activePost: { id: 'post-1' },
+      isProgrammablePlaywrightModalOpen: true,
+      handleCloseProgrammablePlaywrightModal: vi.fn(),
+      captureAppearanceMode: 'default',
+      programmableCaptureBaseUrl: 'https://example.com',
+      setProgrammableCaptureBaseUrl: vi.fn(),
+      programmableCapturePersonaId: '',
+      setProgrammableCapturePersonaId: vi.fn(),
+      programmableCaptureScript: 'return input.captures;',
+      setProgrammableCaptureScript: vi.fn(),
+      programmableCaptureRoutes: [
+        {
+          id: 'route-1',
+          title: 'Pricing page',
+          path: '/pricing',
+          description: '',
+          selector: '[data-pricing]',
+          waitForMs: 0,
+          waitForSelectorMs: 10000,
+        },
+        {
+          id: 'route-2',
+          title: 'Duplicate pricing page',
+          path: 'https://example.com/pricing',
+          description: '',
+          selector: '[data-pricing]',
+          waitForMs: 200,
+          waitForSelectorMs: 10000,
+        },
+      ],
+      programmableCapturePending: false,
+      programmableCaptureMessage: null,
+      programmableCaptureErrorMessage: null,
+      handleAddProgrammableCaptureRoute: vi.fn(),
+      handleUpdateProgrammableCaptureRoute: vi.fn(),
+      handleRemoveProgrammableCaptureRoute: vi.fn(),
+      handleSeedProgrammableCaptureRoutesFromPresets: vi.fn(),
+      handleResetProgrammableCaptureScript: vi.fn(),
+      handleSaveProgrammableCaptureDefaults: vi.fn(),
+      handleRunProgrammablePlaywrightCapture: vi.fn(),
+      handleRunProgrammablePlaywrightCaptureAndPipeline: vi.fn(),
+      canGenerateSocialDraft: true,
+      currentVisualAnalysisJob: null,
+      currentGenerationJob: null,
+      currentPipelineJob: null,
+      socialDraftBlockedReason: null,
+    });
+
+    render(<SocialPostPlaywrightCaptureModal />);
+
+    expect(
+      screen.getByText(
+        'Fix 1 programmable route issue before starting capture. This route duplicates Pricing page on the same resolved target.'
+      )
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText('This route duplicates Pricing page on the same resolved target.')
+    ).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Capture programmable images' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Capture programmable images' })).toHaveAttribute(
+      'title',
+      'This route duplicates Pricing page on the same resolved target.'
+    );
+    expect(screen.getByRole('button', { name: 'Capture + run pipeline' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Capture + run pipeline' })).toHaveAttribute(
+      'title',
+      'This route duplicates Pricing page on the same resolved target.'
+    );
+  });
+
+  it('allows absolute programmable routes without a base URL', () => {
+    usePlaywrightPersonasMock.mockReturnValue({
+      data: [],
+      isLoading: false,
+      error: null,
+    });
+    useSocialPostContextMock.mockReturnValue({
+      activePost: { id: 'post-1' },
+      isProgrammablePlaywrightModalOpen: true,
+      handleCloseProgrammablePlaywrightModal: vi.fn(),
+      captureAppearanceMode: 'default',
+      programmableCaptureBaseUrl: '',
+      setProgrammableCaptureBaseUrl: vi.fn(),
+      programmableCapturePersonaId: '',
+      setProgrammableCapturePersonaId: vi.fn(),
+      programmableCaptureScript: 'return input.captures;',
+      setProgrammableCaptureScript: vi.fn(),
+      programmableCaptureRoutes: [
+        {
+          id: 'route-1',
+          title: 'Pricing page',
+          path: 'https://example.com/pricing',
+          description: '',
+          selector: '',
+          waitForMs: 0,
+          waitForSelectorMs: 10000,
+        },
+      ],
+      programmableCapturePending: false,
+      programmableCaptureMessage: null,
+      programmableCaptureErrorMessage: null,
+      handleAddProgrammableCaptureRoute: vi.fn(),
+      handleUpdateProgrammableCaptureRoute: vi.fn(),
+      handleRemoveProgrammableCaptureRoute: vi.fn(),
+      handleSeedProgrammableCaptureRoutesFromPresets: vi.fn(),
+      handleResetProgrammableCaptureScript: vi.fn(),
+      handleSaveProgrammableCaptureDefaults: vi.fn(),
+      handleRunProgrammablePlaywrightCapture: vi.fn(),
+      handleRunProgrammablePlaywrightCaptureAndPipeline: vi.fn(),
+      canGenerateSocialDraft: true,
+      currentVisualAnalysisJob: null,
+      currentGenerationJob: null,
+      currentPipelineJob: null,
+      socialDraftBlockedReason: null,
+    });
+
+    render(<SocialPostPlaywrightCaptureModal />);
+
+    expect(
+      screen.getByText('https://example.com/pricing?kangurCapture=social-batch')
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByText(/Fix \d programmable route issue/)
+    ).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Capture programmable images' })).toBeEnabled();
+    expect(screen.getByRole('button', { name: 'Capture + run pipeline' })).toBeEnabled();
   });
 
   it('allows programmable capture but blocks capture-plus-pipeline when Project URL is invalid', () => {

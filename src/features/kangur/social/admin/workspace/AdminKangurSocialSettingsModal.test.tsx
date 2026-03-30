@@ -33,6 +33,7 @@ describe('AdminKangurSocialSettingsModal', () => {
     const onHandleOpenProgrammablePlaywrightModal = vi.fn();
     const onHandleOpenProgrammablePlaywrightModalFromDefaults = vi.fn();
     const onHandleResetProgrammableCaptureDefaults = vi.fn();
+    const onHandleRetryFailedPresetBatchCaptureJob = vi.fn();
 
     usePlaywrightPersonasMock.mockReturnValue({
       data: [{ id: 'persona-fast', name: 'Fast reviewer' }],
@@ -63,9 +64,74 @@ describe('AdminKangurSocialSettingsModal', () => {
         handleOpenProgrammablePlaywrightModalFromDefaults:
           onHandleOpenProgrammablePlaywrightModalFromDefaults,
         handleResetProgrammableCaptureDefaults: onHandleResetProgrammableCaptureDefaults,
+        handleRetryFailedPresetBatchCaptureJob: onHandleRetryFailedPresetBatchCaptureJob,
         docReferenceInput: 'overview, lessons-and-activities',
         generationNotes: 'Focus on current product changes.',
         resolveDocReferences: () => ['overview', 'lessons-and-activities'],
+        batchCaptureRecentJobs: [
+          {
+            id: 'job-history-1',
+            runId: 'run-history-1',
+            status: 'completed',
+            request: {
+              baseUrl: 'https://studiq.example.com',
+              presetIds: ['game', 'lessons'],
+              presetLimit: null,
+              appearanceMode: 'default',
+              playwrightPersonaId: null,
+              playwrightScript: null,
+              playwrightRoutes: [],
+            },
+            progress: {
+              processedCount: 2,
+              completedCount: 1,
+              failureCount: 1,
+              remainingCount: 0,
+              totalCount: 2,
+            },
+            result: {
+              addons: [],
+              failures: [{ id: 'lessons', reason: 'capture_failed' }],
+              captureResults: [
+                {
+                  id: 'lessons',
+                  title: 'Lessons Library',
+                  status: 'failed',
+                  reason: 'capture_failed',
+                  resolvedUrl:
+                    'https://studiq.example.com/kangur/lessons?kangurCapture=social-batch',
+                  artifactName: null,
+                  attemptCount: 2,
+                  durationMs: 3200,
+                  stage: 'waiting_for_selector',
+                },
+              ],
+              runId: 'run-history-1',
+            },
+            error: null,
+            createdAt: '2026-03-30T10:00:00.000Z',
+            updatedAt: '2026-03-30T10:05:00.000Z',
+          },
+        ],
+        batchCaptureResult: {
+          addons: [],
+          failures: [{ id: 'lessons', reason: 'capture_failed' }],
+          captureResults: [
+            {
+              id: 'lessons',
+              title: 'Lessons Library',
+              status: 'failed',
+              reason: 'capture_failed',
+              resolvedUrl:
+                'https://studiq.example.com/kangur/lessons?kangurCapture=social-batch',
+              artifactName: null,
+              attemptCount: 2,
+              durationMs: 3200,
+              stage: 'waiting_for_selector',
+            },
+          ],
+          runId: 'run-last-batch',
+        },
       })
     );
 
@@ -155,13 +221,25 @@ describe('AdminKangurSocialSettingsModal', () => {
     expect(screen.getByText(/"personaId": "persona-fast"/)).toBeInTheDocument();
     expect(screen.getByText('Presets selected: 1 (Limit: 2)')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Launch batch capture' })).toBeInTheDocument();
+    expect(screen.getByText('Recent preset capture runs')).toBeInTheDocument();
+    expect(screen.getByText('Last batch: run-last-batch')).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        'Last failed target: Lessons Library failed at Waiting For Selector after 2 attempts. Capture failed'
+      )
+    ).toBeInTheDocument();
+    expect(screen.getByText('Run run-history-1')).toBeInTheDocument();
+    expect(screen.getByText('Base URL: https://studiq.example.com')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Retry failed presets' })).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole('button', { name: 'Open programmable editor' }));
     fireEvent.click(screen.getByRole('button', { name: 'Reset saved defaults' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Retry failed presets' }));
 
     expect(onHandleOpenProgrammablePlaywrightModal).not.toHaveBeenCalled();
     expect(onHandleOpenProgrammablePlaywrightModalFromDefaults).toHaveBeenCalledTimes(1);
     expect(onHandleResetProgrammableCaptureDefaults).toHaveBeenCalledTimes(1);
+    expect(onHandleRetryFailedPresetBatchCaptureJob).toHaveBeenCalledTimes(1);
   });
 
   it('blocks draft generation when no social or AI Brain post model is configured', () => {

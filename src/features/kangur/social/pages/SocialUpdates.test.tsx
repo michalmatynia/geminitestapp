@@ -22,7 +22,7 @@ const {
   replaceMock: vi.fn(),
 }));
 
-vi.mock('@/features/kangur/ui/components/KangurPageIntroCard', () => ({
+vi.mock('@/features/kangur/ui/components/lesson-library/KangurPageIntroCard', () => ({
   KangurPageIntroCard: ({
     title,
     description,

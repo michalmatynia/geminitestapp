@@ -72,7 +72,7 @@ vi.mock('@/features/kangur/ui/components/KangurGameHomeHeroWidget', () => ({
   KangurGameHomeHeroWidget: () => <div data-testid='kangur-home-hero-widget' />,
 }));
 
-vi.mock('@/features/kangur/ui/components/KangurAssignmentSpotlight', () => ({
+vi.mock('@/features/kangur/ui/components/assignments/KangurAssignmentSpotlight', () => ({
   KangurAssignmentSpotlight: () => <div data-testid='kangur-assignment-spotlight-widget' />,
 }));
 
@@ -90,7 +90,7 @@ vi.mock('@/features/kangur/ui/components/KangurGameHomeQuestWidget', () => ({
   KangurGameHomeQuestWidget: () => <div data-testid='kangur-home-quest-widget' />,
 }));
 
-vi.mock('@/features/kangur/ui/components/KangurPriorityAssignments', () => ({
+vi.mock('@/features/kangur/ui/components/assignments/KangurPriorityAssignments', () => ({
   KangurPriorityAssignments: () => <div data-testid='kangur-priority-assignments-widget' />,
 }));
 
@@ -135,7 +135,7 @@ vi.mock('@/features/kangur/ui/components/KangurSetup', () => ({
   default: () => <div data-testid='mock-kangur-setup'>Mock Kangur setup</div>,
 }));
 
-vi.mock('@/features/kangur/ui/components/KangurPracticeAssignmentBanner', () => ({
+vi.mock('@/features/kangur/ui/components/assignments/KangurPracticeAssignmentBanner', () => ({
   __esModule: true,
   default: () => <div data-testid='mock-practice-assignment-banner'>Mock assignment banner</div>,
 }));

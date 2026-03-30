@@ -8,7 +8,7 @@ canonical: true
 ---
 # Test Distribution Check
 
-Generated at: 2026-03-30T12:41:00.792Z
+Generated at: 2026-03-30T15:09:28.917Z
 
 ## Summary
 
@@ -18,7 +18,7 @@ Generated at: 2026-03-30T12:41:00.792Z
 - Features without tests: 0
 - Features without fast tests: 0
 - Features without negative-path tests: 0
-- Total test files: 2782
+- Total test files: 2961
 - .only() occurrences: 0
 - .skip() occurrences: 32
 - .todo() occurrences: 0
@@ -27,7 +27,7 @@ Generated at: 2026-03-30T12:41:00.792Z
 
 | Feature | Test Files | Fast | E2E | Negative |
 | --- | ---: | ---: | ---: | ---: |
-| kangur | 807 | 787 | 20 | 161 |
+| kangur | 971 | 951 | 20 | 177 |
 | ai | 317 | 317 | 0 | 110 |
 | products | 119 | 111 | 8 | 32 |
 | case-resolver | 81 | 80 | 1 | 34 |
@@ -36,8 +36,8 @@ Generated at: 2026-03-30T12:41:00.792Z
 | prompt-exploder | 46 | 46 | 0 | 23 |
 | foldertree | 28 | 26 | 2 | 7 |
 | observability | 27 | 26 | 1 | 4 |
-| filemaker | 20 | 20 | 0 | 6 |
-| admin | 19 | 16 | 3 | 4 |
+| filemaker | 21 | 21 | 0 | 6 |
+| admin | 20 | 17 | 3 | 4 |
 | database | 14 | 13 | 1 | 8 |
 | auth | 13 | 13 | 0 | 7 |
 | notesapp | 13 | 11 | 2 | 4 |

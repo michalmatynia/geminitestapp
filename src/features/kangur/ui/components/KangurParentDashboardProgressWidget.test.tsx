@@ -66,7 +66,7 @@ vi.mock('@/features/kangur/ui/hooks/useKangurPageContent', () => ({
   useKangurPageContentEntry: useKangurPageContentEntryMock,
 }));
 
-vi.mock('@/features/kangur/ui/components/KangurAssignmentsList', () => ({
+vi.mock('@/features/kangur/ui/components/assignments/KangurAssignmentsList', () => ({
   default: (props: unknown) => {
     assignmentsListMock(props);
     return <div data-testid='assignments-list-stub' />;

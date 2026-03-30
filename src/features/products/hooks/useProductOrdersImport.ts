@@ -5,8 +5,6 @@ import type {
   BaseOrderImportPersistResponse,
   BaseOrderImportPreviewPayload,
   BaseOrderImportPreviewResponse,
-  BaseOrderImportQuickImportPayload,
-  BaseOrderImportQuickImportResponse,
   BaseOrderImportStatusOption,
 } from '@/shared/contracts/products';
 import type { ListQuery, MutationResult } from '@/shared/contracts/ui';

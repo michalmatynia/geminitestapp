@@ -4,9 +4,12 @@ import React from 'react';
 
 import {
   buildKangurSocialProgrammableCaptureRuntimeRequestPreview,
-  resolveKangurSocialProgrammableCaptureRoutePreview,
+  validateKangurSocialProgrammableCaptureRoutes,
 } from '@/features/kangur/social/shared/social-playwright-capture';
-import { buildKangurSocialCaptureFailureSummary } from '@/features/kangur/social/shared/social-capture-feedback';
+import {
+  buildKangurSocialCaptureFailureSummary,
+  buildKangurSocialCapturePrimaryIssueSummary,
+} from '@/features/kangur/social/shared/social-capture-feedback';
 import {
   Button,
   FormField,
@@ -19,6 +22,7 @@ import {
 import { usePlaywrightPersonas } from '@/shared/hooks/usePlaywrightPersonas';
 
 import { SocialJobStatusPill } from './SocialJobStatusPill';
+import { SocialCaptureBatchHistory } from './SocialCaptureBatchHistory';
 import { useSocialPostContext } from './SocialPostContext';
 
 const PLAYWRIGHT_RUNTIME_PERSONA_VALUE = '';
@@ -49,6 +53,7 @@ export function SocialPostPlaywrightCaptureModal(): React.JSX.Element {
     programmableCaptureBatchCaptureJob,
     programmableCaptureMessage,
     programmableCaptureErrorMessage,
+    batchCaptureRecentJobs = [],
     handleAddProgrammableCaptureRoute,
     handleUpdateProgrammableCaptureRoute,
     handleRemoveProgrammableCaptureRoute,
@@ -57,6 +62,7 @@ export function SocialPostPlaywrightCaptureModal(): React.JSX.Element {
     handleSaveProgrammableCaptureDefaults,
     handleRunProgrammablePlaywrightCapture,
     handleRunProgrammablePlaywrightCaptureAndPipeline,
+    handleRetryFailedProgrammableCaptureJob,
     canGenerateSocialDraft,
     currentVisualAnalysisJob,
     currentGenerationJob,
@@ -105,11 +111,29 @@ export function SocialPostPlaywrightCaptureModal(): React.JSX.Element {
   const configLockTitle = isConfigEditingLocked
     ? 'Wait for the current Social runtime job to finish.'
     : undefined;
+  const routeValidation = React.useMemo(
+    () =>
+      validateKangurSocialProgrammableCaptureRoutes(
+        programmableCaptureRoutes,
+        programmableCaptureBaseUrl
+      ),
+    [programmableCaptureBaseUrl, programmableCaptureRoutes]
+  );
+  const routeValidationById = React.useMemo(
+    () => new Map(routeValidation.routes.map((route) => [route.routeId, route])),
+    [routeValidation.routes]
+  );
+  const programmableConfigIssue =
+    programmableCaptureRoutes.length === 0
+      ? 'Add at least one route or seed routes from the current Social presets.'
+      : programmableCaptureScript.trim().length === 0
+        ? 'Add a Playwright script before starting programmable capture.'
+        : routeValidation.firstIssue;
   const hasValidCaptureConfig =
     Boolean(activePost) &&
-    programmableCaptureBaseUrl.trim().length > 0 &&
-    programmableCaptureRoutes.some((route) => route.path.trim().length > 0) &&
-    programmableCaptureScript.trim().length > 0;
+    programmableCaptureRoutes.length > 0 &&
+    programmableCaptureScript.trim().length > 0 &&
+    routeValidation.isValid;
   const canSave = hasValidCaptureConfig && !isConfigEditingLocked;
   const canCaptureAndRunPipeline = canSave && canGenerateSocialDraft;
   const captureSaveTitle = hasBlockingRuntimeJob
@@ -117,14 +141,16 @@ export function SocialPostPlaywrightCaptureModal(): React.JSX.Element {
     : !activePost
       ? 'Select an active draft before running programmable capture.'
       : !hasValidCaptureConfig
-        ? 'Add a base URL, at least one route, and a script before starting programmable capture.'
+        ? programmableConfigIssue ??
+          'Add at least one valid route and a script before starting programmable capture.'
         : 'Capture programmable images';
   const captureAndRunPipelineTitle = hasBlockingRuntimeJob
     ? 'Wait for the current Social runtime job to finish.'
     : !activePost
       ? 'Select an active draft before running programmable capture and pipeline.'
-    : !hasValidCaptureConfig
-      ? 'Add a base URL, at least one route, and a script before starting capture and pipeline.'
+      : !hasValidCaptureConfig
+        ? programmableConfigIssue ??
+          'Add at least one valid route and a script before starting capture and pipeline.'
       : !canGenerateSocialDraft
         ? socialDraftBlockedReason ??
           'Choose a StudiQ Social post model before running capture and pipeline.'
@@ -171,6 +197,20 @@ export function SocialPostPlaywrightCaptureModal(): React.JSX.Element {
           { routes: programmableCaptureRoutes }
         )
       : null;
+  const programmableCapturePrimaryIssueSummary =
+    programmableCaptureBatchCaptureJob?.result?.captureResults?.length
+      ? buildKangurSocialCapturePrimaryIssueSummary(
+          programmableCaptureBatchCaptureJob.result.captureResults,
+          { routes: programmableCaptureRoutes }
+        )
+      : null;
+  const recentProgrammableCaptureJobs = React.useMemo(
+    () =>
+      batchCaptureRecentJobs.filter(
+        (job) => (job.request?.playwrightRoutes?.length ?? 0) > 0
+      ),
+    [batchCaptureRecentJobs]
+  );
   const captureAndRunPipelineText = isPipelineJobInFlight
     ? 'Full pipeline in progress...'
     : hasBlockingRuntimeJob
@@ -323,6 +363,14 @@ export function SocialPostPlaywrightCaptureModal(): React.JSX.Element {
           </div>
         ) : null}
 
+        {routeValidation.issueCount > 0 ? (
+          <div className='rounded-xl border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-sm text-amber-900 dark:text-amber-200'>
+            Fix {routeValidation.issueCount} programmable route issue
+            {routeValidation.issueCount === 1 ? '' : 's'} before starting capture.
+            {routeValidation.firstIssue ? ` ${routeValidation.firstIssue}` : ''}
+          </div>
+        ) : null}
+
         {shouldShowProgrammableCaptureProgress ? (
           <div className='grid grid-cols-3 gap-2 text-xs'>
             <div className='rounded-xl border border-border/60 bg-background/40 px-3 py-2'>
@@ -372,15 +420,16 @@ export function SocialPostPlaywrightCaptureModal(): React.JSX.Element {
           ) : (
             <div className='space-y-3'>
               {programmableCaptureRoutes.map((route, index) => {
-                const routePreview = resolveKangurSocialProgrammableCaptureRoutePreview(
-                  route.path,
-                  programmableCaptureBaseUrl
-                );
+                const routeValidationState = routeValidationById.get(route.id) ?? null;
 
                 return (
                   <div
                     key={route.id}
-                    className='space-y-3 rounded-lg border border-border/60 bg-background px-3 py-3'
+                    className={`space-y-3 rounded-lg border px-3 py-3 ${
+                      routeValidationState?.issue
+                        ? 'border-amber-500/40 bg-amber-500/5'
+                        : 'border-border/60 bg-background'
+                    }`}
                   >
                     <div className='flex items-center justify-between gap-3'>
                       <div className='text-sm font-medium text-foreground'>
@@ -483,15 +532,22 @@ export function SocialPostPlaywrightCaptureModal(): React.JSX.Element {
                       />
                     </div>
 
-                    <div className='rounded-lg border border-border/50 bg-background/80 px-3 py-2 text-xs text-muted-foreground'>
+                    <div
+                      className={`rounded-lg border px-3 py-2 text-xs ${
+                        routeValidationState?.issue
+                          ? 'border-amber-500/30 bg-amber-500/10 text-amber-900 dark:text-amber-200'
+                          : 'border-border/50 bg-background/80 text-muted-foreground'
+                      }`}
+                    >
                       <div className='font-medium uppercase tracking-wide text-foreground/80'>
                         Resolved target
                       </div>
-                      {routePreview.resolvedUrl ? (
-                        <div className='mt-1 break-all'>{routePreview.resolvedUrl}</div>
-                      ) : (
-                        <div className='mt-1'>{routePreview.issue}</div>
-                      )}
+                      {routeValidationState?.resolvedUrl ? (
+                        <div className='mt-1 break-all'>{routeValidationState.resolvedUrl}</div>
+                      ) : null}
+                      {routeValidationState?.issue ? (
+                        <div className='mt-1'>{routeValidationState.issue}</div>
+                      ) : null}
                     </div>
                   </div>
                 );
@@ -569,11 +625,31 @@ export function SocialPostPlaywrightCaptureModal(): React.JSX.Element {
           </div>
         ) : null}
 
-        {programmableCaptureFailureSummary ? (
+        {programmableCapturePrimaryIssueSummary ? (
+          <div className='rounded-xl border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive'>
+            Last failed target: {programmableCapturePrimaryIssueSummary}
+          </div>
+        ) : null}
+
+        {programmableCaptureFailureSummary &&
+        ((programmableCaptureBatchCaptureJob?.result?.failures.length ?? 0) > 1 ||
+          !programmableCapturePrimaryIssueSummary) ? (
           <div className='rounded-xl border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive'>
             Failed targets: {programmableCaptureFailureSummary}
           </div>
         ) : null}
+
+        <SocialCaptureBatchHistory
+          title='Recent programmable runs'
+          description='Durable programmable capture history with retry for failed routes.'
+          jobs={recentProgrammableCaptureJobs}
+          routes={programmableCaptureRoutes}
+          emptyMessage='No recent programmable capture runs yet.'
+          retryKind='programmable'
+          retryDisabled={isConfigEditingLocked}
+          retryTitle={configLockTitle}
+          onRetryFailed={handleRetryFailedProgrammableCaptureJob}
+        />
       </div>
     </FormModal>
   );

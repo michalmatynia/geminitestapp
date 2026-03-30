@@ -7,7 +7,10 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 
-import { useKangurSocialImageAddons } from './useKangurSocialImageAddons';
+import {
+  useKangurSocialImageAddons,
+  useKangurSocialImageAddonsBatchJobs,
+} from './useKangurSocialImageAddons';
 
 const createListQueryV2Mock = vi.hoisted(() => vi.fn());
 const createUpdateMutationV2Mock = vi.hoisted(() => vi.fn());
@@ -115,6 +118,59 @@ describe('useKangurSocialImageAddons', () => {
         limit: undefined,
         ids: undefined,
         scope: 'admin',
+      },
+      timeout: 60_000,
+    });
+  });
+
+  it('loads recent batch capture jobs with the requested limit', async () => {
+    const jobsPayload = [
+      {
+        id: 'job-1',
+        runId: 'run-1',
+        status: 'completed',
+        request: {
+          baseUrl: 'https://example.com',
+          presetIds: ['home'],
+          presetLimit: null,
+          appearanceMode: 'default',
+          playwrightPersonaId: null,
+          playwrightScript: null,
+          playwrightRoutes: [],
+        },
+        progress: {
+          processedCount: 1,
+          completedCount: 1,
+          failureCount: 0,
+          remainingCount: 0,
+          totalCount: 1,
+        },
+        result: {
+          addons: [],
+          failures: [],
+          captureResults: [],
+          runId: 'run-1',
+        },
+        error: null,
+        createdAt: '2026-03-30T10:00:00.000Z',
+        updatedAt: '2026-03-30T10:05:00.000Z',
+      },
+    ];
+    apiGetMock.mockResolvedValueOnce(jobsPayload);
+
+    const { result } = renderHook(() =>
+      useKangurSocialImageAddonsBatchJobs({
+        limit: 3,
+      })
+    );
+
+    const config = createListQueryV2Mock.mock.calls[0]?.[0];
+
+    expect(result.current).toEqual({ kind: 'list-query' });
+    await expect(config.queryFn()).resolves.toEqual(jobsPayload);
+    expect(apiGetMock).toHaveBeenCalledWith('/api/kangur/social-image-addons/batch', {
+      params: {
+        limit: 3,
       },
       timeout: 60_000,
     });

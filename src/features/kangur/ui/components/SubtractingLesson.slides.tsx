@@ -1,6 +1,6 @@
 'use client';
 
-import type { LessonSlide } from '@/features/kangur/ui/components/LessonSlideSection';
+import type { LessonSlide } from '@/features/kangur/ui/components/lesson-framework/LessonSlideSection';
 import {
   KangurLessonCallout,
   KangurLessonCaption,

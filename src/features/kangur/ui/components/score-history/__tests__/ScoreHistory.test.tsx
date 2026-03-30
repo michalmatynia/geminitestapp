@@ -1,0 +1,392 @@
+/**
+ * @vitest-environment jsdom
+ */
+
+import { render, screen, waitFor, within } from '@testing-library/react';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { buildKangurEmbeddedBasePath } from '@/features/kangur/config/routing';
+import type { KangurScoreRecord } from '@kangur/platform';
+import { buildKangurScoreInsights } from '@/features/kangur/ui/services/score-insights';
+import { clearKangurScopedScoresCache } from '@/features/kangur/ui/services/learner-profile-scores';
+
+const {
+  scoreFilterMock,
+  logKangurClientErrorMock,
+  reportKangurClientErrorMock,
+  useKangurSubjectFocusMock,
+  withKangurClientError,
+  withKangurClientErrorSync,
+} = vi.hoisted(() => ({
+  scoreFilterMock: vi.fn(),
+  useKangurSubjectFocusMock: vi.fn(),
+  ...globalThis.__kangurClientErrorMocks(),
+}));
+
+vi.mock('@/features/kangur/services/kangur-platform', () => ({
+  getKangurPlatform: () => ({
+    score: {
+      filter: scoreFilterMock,
+    },
+  }),
+}));
+
+vi.mock('@/features/kangur/observability/client', () => ({
+  logKangurClientError: logKangurClientErrorMock,
+  reportKangurClientError: reportKangurClientErrorMock,
+  withKangurClientError,
+  withKangurClientErrorSync,
+}));
+
+vi.mock('@/features/kangur/ui/context/KangurSubjectFocusContext', () => ({
+  useKangurSubjectFocus: () => useKangurSubjectFocusMock(),
+}));
+
+vi.mock('@/features/kangur/ui/hooks/useKangurCoarsePointer', () => ({
+  useKangurCoarsePointer: () => true,
+}));
+
+import ScoreHistory from '@/features/kangur/ui/components/ScoreHistory';
+
+const getParagraphByTextContent = (scope: HTMLElement, snippet: string): HTMLElement =>
+  within(scope).getByText(
+    (_, element) => element?.tagName === 'P' && element.textContent?.includes(snippet) === true
+  );
+
+const RealDate = Date;
+const FIXED_NOW = '2026-03-10T12:00:00.000Z';
+
+const stubSystemDate = (iso: string): void => {
+  const fixed = new RealDate(iso);
+  class MockDate extends RealDate {
+    constructor(value?: string | number | Date) {
+      super(value ?? fixed);
+    }
+
+    static now(): number {
+      return fixed.getTime();
+    }
+
+    static parse = RealDate.parse;
+    static UTC = RealDate.UTC;
+  }
+
+  globalThis.Date = MockDate as unknown as DateConstructor;
+};
+
+const createScore = (overrides: Partial<KangurScoreRecord>): KangurScoreRecord => ({
+  id: 'score-1',
+  player_name: 'Jan',
+  score: 8,
+  operation: 'addition',
+  total_questions: 10,
+  correct_answers: 8,
+  time_taken: 42,
+  xp_earned: 24,
+  created_date: '2026-03-06T12:00:00.000Z',
+  created_by: 'jan@example.com',
+  subject: 'maths',
+  ...overrides,
+});
+
+describe('ScoreHistory', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    clearKangurScopedScoresCache();
+    stubSystemDate(FIXED_NOW);
+    useKangurSubjectFocusMock.mockReturnValue({
+      subject: 'maths',
+      setSubject: vi.fn(),
+      subjectKey: 'learner-1',
+    });
+  });
+
+  afterEach(() => {
+    vi.clearAllMocks();
+    globalThis.Date = RealDate;
+  });
+
+  it('uses the shared empty-state surface while score history is loading', () => {
+    scoreFilterMock.mockImplementation(() => new Promise<KangurScoreRecord[]>(() => {}));
+
+    render(<ScoreHistory playerName='Jan' createdBy='jan@example.com' />);
+
+    expect(screen.getByTestId('score-history-loading')).toHaveClass(
+      'soft-card',
+      'border-dashed',
+      'border'
+    );
+    expect(screen.getByText('Ładowanie wyników...')).toBeInTheDocument();
+  });
+
+  it('reuses prefetched learner scores without starting another scoped fetch', () => {
+    const prefetchedScores = [
+      createScore({
+        id: 'prefetched-score-1',
+        operation: 'addition',
+        created_date: '2026-03-09T12:00:00.000Z',
+      }),
+      createScore({
+        id: 'prefetched-score-2',
+        operation: 'division',
+        created_date: '2026-03-08T12:00:00.000Z',
+      }),
+    ];
+
+    render(
+      <ScoreHistory
+        learnerId='learner-1'
+        playerName='Jan'
+        createdBy='jan@example.com'
+        prefetchedScores={prefetchedScores}
+        prefetchedLoading={false}
+      />
+    );
+
+    expect(scoreFilterMock).not.toHaveBeenCalled();
+    expect(screen.getByTestId('score-history-total-games')).toHaveTextContent('2');
+    expect(screen.queryByTestId('score-history-loading')).not.toBeInTheDocument();
+  });
+
+  it('loads learner-scoped results by account and display name without falling back to global history', async () => {
+    const createdByScores: KangurScoreRecord[] = [
+      createScore({
+        id: 'score-1',
+        operation: 'addition',
+        created_date: '2026-03-05T11:00:00.000Z',
+      }),
+      createScore({
+        id: 'score-2',
+        operation: 'multiplication',
+        correct_answers: 10,
+        score: 10,
+        created_date: '2026-03-04T10:00:00.000Z',
+      }),
+    ];
+
+    const playerNameScores: KangurScoreRecord[] = [
+      createScore({
+        id: 'score-2',
+        operation: 'multiplication',
+        correct_answers: 10,
+        score: 10,
+        created_date: '2026-03-04T10:00:00.000Z',
+      }),
+      createScore({
+        id: 'score-3',
+        operation: 'division',
+        correct_answers: 6,
+        score: 6,
+        created_date: '2026-03-06T14:00:00.000Z',
+      }),
+    ];
+
+    const dedupedScores = Array.from(
+      new Map(
+        [...createdByScores, ...playerNameScores].map((score) => [score.id, score] as const)
+      ).values()
+    );
+    const resolvedInsights = buildKangurScoreInsights(dedupedScores, new Date());
+
+    scoreFilterMock.mockImplementation(
+      (criteria: Partial<KangurScoreRecord>): Promise<KangurScoreRecord[]> => {
+        if (criteria.created_by) {
+          return Promise.resolve(createdByScores);
+        }
+
+        if (criteria.player_name) {
+          return Promise.resolve(playerNameScores);
+        }
+
+        return Promise.resolve([]);
+      }
+    );
+
+    render(<ScoreHistory playerName='Jan' createdBy='jan@example.com' />);
+
+    await waitFor(() => expect(scoreFilterMock).toHaveBeenCalledTimes(2));
+    expect(scoreFilterMock).toHaveBeenCalledWith(
+      { created_by: 'jan@example.com', subject: 'maths' },
+      '-created_date',
+      30
+    );
+    expect(scoreFilterMock).toHaveBeenCalledWith(
+      { player_name: 'Jan', subject: 'maths' },
+      '-created_date',
+      30
+    );
+    expect(scoreFilterMock).not.toHaveBeenCalledWith({ subject: 'maths' }, '-created_date', 30);
+
+    expect(screen.getByText('Wyniki wg operacji')).toBeInTheDocument();
+    expect(screen.getByText('Obraz ostatnich 7 dni')).toBeInTheDocument();
+    expect(screen.getByText('Trend tygodnia')).toBeInTheDocument();
+    expect(screen.getByText('Ostatnie gry')).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        (_, element) =>
+          element?.tagName === 'P' && /XP:\s+\+\d+\s+·\s+średnio\s+\d+\s+na sesję/.test(element.textContent ?? '')
+      )
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText((_, element) => {
+        if (element?.tagName !== 'P' || !element.textContent || !resolvedInsights.strongestOperation) {
+          return false;
+        }
+        const { averageAccuracy, attempts, averageXpEarned } = resolvedInsights.strongestOperation;
+        const summary = `Średnio ${averageAccuracy}% · próby ${attempts} · +${averageXpEarned} XP / sesję`;
+        return element.textContent.includes(summary);
+      })
+    ).toBeInTheDocument();
+    expect(screen.getByTestId('score-history-total-games')).toHaveClass('soft-card', 'border');
+    expect(screen.getByTestId('score-history-total-games')).toHaveTextContent('3');
+    expect(screen.getByTestId('score-history-average-accuracy')).toHaveClass(
+      'soft-card',
+      'border'
+    );
+    expect(screen.getByTestId('score-history-operation-progress-addition')).toHaveAttribute(
+      'aria-valuenow',
+      '80'
+    );
+    expect(screen.getByTestId('score-history-recent-row-score-3')).toHaveClass(
+      'soft-card',
+      'border'
+    );
+    expect(
+      within(screen.getByTestId('score-history-recent-row-score-3')).getByText('Dzielenie')
+    ).toHaveClass('text-slate-700');
+    expect(
+      getParagraphByTextContent(screen.getByTestId('score-history-recent-row-score-3'), '42s')
+    ).toHaveClass('text-slate-400');
+    expect(screen.getByTestId('score-history-recent-xp-score-3')).toHaveTextContent('+24 XP');
+    expect(screen.getByTestId('score-history-recent-score-score-2')).toHaveClass(
+      'inline-flex',
+      'rounded-full',
+      'border'
+    );
+    expect(screen.getAllByText('Dzielenie').length).toBeGreaterThan(0);
+  });
+
+  it('falls back to recent global results when no learner identity is provided', async () => {
+    scoreFilterMock.mockResolvedValue([
+      createScore({ id: 'score-1' }),
+      createScore({
+        id: 'score-2',
+        operation: 'division',
+        created_date: '2026-03-05T12:00:00.000Z',
+      }),
+    ]);
+
+    render(<ScoreHistory />);
+
+    await waitFor(() =>
+      expect(scoreFilterMock).toHaveBeenCalledWith({ subject: 'maths' }, '-created_date', 30)
+    );
+    expect(scoreFilterMock).toHaveBeenCalledTimes(1);
+    expect(screen.getByTestId('score-history-total-games')).toHaveTextContent('2');
+  });
+
+  it('renders a lesson follow-up link for the weakest tracked operation when a base path is available', async () => {
+    scoreFilterMock.mockImplementation(
+      (criteria: Partial<KangurScoreRecord>): Promise<KangurScoreRecord[]> => {
+        if (criteria.created_by) {
+          return Promise.resolve([
+            createScore({
+              id: 'score-1',
+              operation: 'division',
+              correct_answers: 4,
+              score: 4,
+              created_date: '2026-03-06T11:00:00.000Z',
+            }),
+            createScore({
+              id: 'score-2',
+              operation: 'multiplication',
+              correct_answers: 10,
+              score: 10,
+              created_date: '2026-03-05T11:00:00.000Z',
+            }),
+          ]);
+        }
+
+        if (criteria.player_name) {
+          return Promise.resolve([
+            createScore({
+              id: 'score-3',
+              operation: 'division',
+              correct_answers: 5,
+              score: 5,
+              created_date: '2026-03-04T11:00:00.000Z',
+            }),
+          ]);
+        }
+
+        return Promise.resolve([]);
+      }
+    );
+
+    render(<ScoreHistory playerName='Jan' createdBy='jan@example.com' basePath='/kangur' />);
+
+    const followUpLink = await screen.findByRole('link', { name: 'Powtórz lekcję' });
+    expect(followUpLink).toHaveAttribute('href', '/kangur/lessons?focus=division');
+    expect(followUpLink).toHaveClass('min-h-11', 'px-4', 'touch-manipulation');
+  });
+
+  it('renders an embedded cms follow-up link when using a host page base path', async () => {
+    scoreFilterMock.mockImplementation(
+      (criteria: Partial<KangurScoreRecord>): Promise<KangurScoreRecord[]> => {
+        if (criteria.created_by) {
+          return Promise.resolve([
+            createScore({
+              id: 'score-1',
+              operation: 'division',
+              correct_answers: 4,
+              score: 4,
+              created_date: '2026-03-06T11:00:00.000Z',
+            }),
+            createScore({
+              id: 'score-2',
+              operation: 'multiplication',
+              correct_answers: 10,
+              score: 10,
+              created_date: '2026-03-05T11:00:00.000Z',
+            }),
+          ]);
+        }
+
+        if (criteria.player_name) {
+          return Promise.resolve([
+            createScore({
+              id: 'score-3',
+              operation: 'division',
+              correct_answers: 5,
+              score: 5,
+              created_date: '2026-03-04T11:00:00.000Z',
+            }),
+            createScore({
+              id: 'score-4',
+              operation: 'multiplication',
+              correct_answers: 9,
+              score: 9,
+              created_date: '2026-03-03T11:00:00.000Z',
+            }),
+          ]);
+        }
+
+        return Promise.resolve([]);
+      }
+    );
+
+    render(
+      <ScoreHistory
+        playerName='Jan'
+        createdBy='jan@example.com'
+        basePath={buildKangurEmbeddedBasePath('/home?preview=1', 'cms-home-kangur')}
+      />
+    );
+
+    const followUpLink = await screen.findByRole('link', { name: 'Powtórz lekcję' });
+    expect(followUpLink).toHaveAttribute(
+      'href',
+      '/home?preview=1&kangur-cms-home-kangur=lessons&kangur-cms-home-kangur-focus=division'
+    );
+    expect(followUpLink).toHaveClass('min-h-11', 'px-4', 'touch-manipulation');
+  });
+});

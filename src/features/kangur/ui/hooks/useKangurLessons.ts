@@ -5,14 +5,15 @@ import { useLocale } from 'next-intl';
 import type {
   KangurLesson,
   KangurLessonDocument,
-  KangurLessonCollectionFilterDto,
+  KangurLessonComponentId,
   KangurLessonDocumentStore,
-} from '@/features/kangur/shared/contracts/kangur';
+} from '@/shared/contracts/kangur';
+import type { KangurLessonCollectionFilterDto } from '@/shared/contracts/kangur';
 import {
   kangurLessonDocumentSchema,
   kangurLessonsSchema,
   kangurLessonDocumentStoreSchema,
-} from '@/features/kangur/shared/contracts/kangur';
+} from '@/shared/contracts/kangur';
 import type { ListQuery, MutationResult, SingleQuery } from '@/shared/contracts/ui';
 import { api } from '@/shared/lib/api-client';
 import { createListQueryV2, createSingleQueryV2, createUpdateMutationV2 } from '@/shared/lib/query-factories-v2';
@@ -33,6 +34,7 @@ const resolveLessonsQueryFilters = (
 ): KangurLessonCollectionFilterDto => ({
   subject: options?.subject ?? undefined,
   ageGroup: options?.ageGroup ?? undefined,
+  componentIds: options?.componentIds ?? undefined,
   enabledOnly: options?.enabledOnly ?? undefined,
 });
 
@@ -56,6 +58,10 @@ const filterLessons = (
   if (options?.ageGroup) {
     next = next.filter((lesson) => lesson.ageGroup === options.ageGroup);
   }
+  if (options?.componentIds && options.componentIds.length > 0) {
+    const componentIds = new Set<KangurLessonComponentId>(options.componentIds);
+    next = next.filter((lesson) => componentIds.has(lesson.componentId));
+  }
   return next;
 };
 
@@ -70,6 +76,7 @@ export const fetchKangurLessons = async (
       context: {
         subject: options?.subject ?? null,
         ageGroup: options?.ageGroup ?? null,
+        componentIds: options?.componentIds ?? null,
         enabledOnly: options?.enabledOnly ?? null,
       },
     }),
@@ -77,6 +84,7 @@ export const fetchKangurLessons = async (
       const params: Record<string, string | boolean | undefined> = {
         subject: options?.subject,
         ageGroup: options?.ageGroup,
+        componentIds: options?.componentIds?.join(','),
         enabledOnly: options?.enabledOnly,
       };
       const payload = await api.get<KangurLesson[]>('/api/kangur/lessons', { params });

@@ -1,4 +1,4 @@
-import type { LessonSlide as LessonSlideSectionSlide } from '@/features/kangur/ui/components/LessonSlideSection';
+import type { LessonSlide as LessonSlideSectionSlide } from '@/features/kangur/ui/components/lesson-framework/LessonSlideSection';
 import type {
   ClockChallengeMedal as SharedClockChallengeMedal,
   ClockTask as SharedClockTask,

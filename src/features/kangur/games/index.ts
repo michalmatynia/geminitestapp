@@ -21,6 +21,7 @@ export {
   getKangurGameCatalogEntriesForEngine,
   getKangurGameCatalogEntriesForLessonComponent,
   getKangurGameCatalogFacets,
+  getKangurLessonActivityRuntimeSpecForGame,
   getKangurLaunchableGameContentId,
   getKangurLaunchableGameRuntimeSpecForGame,
   getKangurLaunchableGameScreen,

@@ -1,20 +1,23 @@
 'use client';
 
-import { useMemo } from 'react';
+import { useCallback, useEffect, useMemo, useRef } from 'react';
 
 import {
+  getKangurGameCatalogEntry,
   getKangurGameContentSetsForGame,
-  getKangurGameDefinition,
   getKangurGameBuiltInInstancesForGame,
+  getKangurGameDefinition,
   getKangurLaunchableGameRuntimeSpecForGame,
   mergeKangurLaunchableGameRuntimeSpec,
 } from '@/features/kangur/games';
+import { trackKangurClientEvent } from '@/features/kangur/observability/client';
 import { useKangurGameContentSets } from '@/features/kangur/ui/hooks/useKangurGameContentSets';
 import { useKangurGameInstances } from '@/features/kangur/ui/hooks/useKangurGameInstances';
 import type { KangurGameRuntimeRendererProps } from '@/shared/contracts/kangur-game-runtime-renderer-props';
 import type { KangurGameInstanceId } from '@/shared/contracts/kangur-game-instances';
 import type { KangurGameId } from '@/shared/contracts/kangur-games';
 
+import KangurLessonActivityInstanceRuntime from './KangurLessonActivityInstanceRuntime';
 import KangurLaunchableGameRuntime from './KangurLaunchableGameRuntime';
 
 type KangurGameInstancesQuery = ReturnType<typeof useKangurGameInstances>;
@@ -188,7 +191,62 @@ const renderKangurLaunchableGameInstanceRuntimeState = ({
   return <KangurLaunchableGameRuntime onFinish={onFinish} runtime={runtime} />;
 };
 
-export function KangurLaunchableGameInstanceRuntime({
+const buildKangurLaunchableRuntimeTrackingPayload = ({
+  activeInstance,
+  builtInContentSet,
+  engineOverrides,
+  gameId,
+  instanceId,
+  persistedContentSet,
+  persistedInstance,
+  runtime,
+}: {
+  activeInstance: KangurLaunchableInstance;
+  builtInContentSet: KangurLaunchableContentSet;
+  engineOverrides: KangurGameRuntimeRendererProps | undefined;
+  gameId: KangurGameId;
+  instanceId: KangurGameInstanceId;
+  persistedContentSet: KangurLaunchableContentSet;
+  persistedInstance: KangurLaunchableInstance;
+  runtime: NonNullable<ReturnType<typeof resolveKangurLaunchableRuntime>>;
+}) => ({
+  gameId,
+  instanceId,
+  runtimeScreen: runtime.screen,
+  rendererId: runtime.rendererId,
+  engineId: runtime.engineId ?? null,
+  launchableRuntimeId: activeInstance?.launchableRuntimeId ?? runtime.screen,
+  contentSetId: activeInstance?.contentSetId ?? null,
+  instanceSource: persistedInstance ? 'persisted' : 'built_in',
+  contentSetSource: persistedContentSet
+    ? 'persisted'
+    : builtInContentSet
+      ? 'built_in'
+      : 'none',
+  hasInstanceEngineOverrides: Boolean(activeInstance?.engineOverrides),
+  hasRuntimeEngineOverrides: Boolean(engineOverrides),
+  hasRendererProps: Boolean(runtime.rendererProps),
+});
+
+const shouldPreferKangurLessonActivityRuntime = ({
+  gameId,
+  preferLessonActivityRuntime,
+}: {
+  gameId: KangurGameId;
+  preferLessonActivityRuntime: boolean;
+}): boolean => {
+  if (!preferLessonActivityRuntime) {
+    return false;
+  }
+
+  const entry = getKangurGameCatalogEntry(gameId);
+
+  return Boolean(
+    entry.lessonActivityRuntime && entry.launchableRuntime?.screen.endsWith('_quiz')
+  );
+};
+
+const KangurResolvedLaunchableGameInstanceRuntime = ({
   engineOverrides,
   gameId,
   instanceId,
@@ -198,7 +256,7 @@ export function KangurLaunchableGameInstanceRuntime({
   gameId: KangurGameId;
   instanceId: KangurGameInstanceId;
   onFinish: () => void;
-}): React.JSX.Element {
+}): React.JSX.Element => {
   const gameInstanceQuery = useKangurGameInstances({
     enabledOnly: true,
     gameId,
@@ -248,6 +306,7 @@ export function KangurLaunchableGameInstanceRuntime({
       }),
     [activeInstance, builtInContentSet, engineOverrides, game, persistedContentSet]
   );
+  const viewedRuntimeKeyRef = useRef<string | null>(null);
 
   const isWaitingForPersistedInstance = isKangurLaunchableRuntimeWaitingForInstance({
     activeInstance,
@@ -259,12 +318,117 @@ export function KangurLaunchableGameInstanceRuntime({
     isPending: gameContentSetQuery.isPending,
     persistedContentSet,
   });
+  const runtimeTrackingPayload = useMemo(
+    () =>
+      runtime
+        ? buildKangurLaunchableRuntimeTrackingPayload({
+            activeInstance,
+            builtInContentSet,
+            engineOverrides,
+            gameId,
+            instanceId,
+            persistedContentSet,
+            persistedInstance,
+            runtime,
+          })
+        : null,
+    [
+      activeInstance,
+      builtInContentSet,
+      engineOverrides,
+      gameId,
+      instanceId,
+      persistedContentSet,
+      persistedInstance,
+      runtime,
+    ]
+  );
+  const runtimeTrackingKey = useMemo(
+    () =>
+      runtimeTrackingPayload
+        ? [
+            runtimeTrackingPayload.gameId,
+            runtimeTrackingPayload.instanceId,
+            runtimeTrackingPayload.runtimeScreen,
+            runtimeTrackingPayload.rendererId,
+            runtimeTrackingPayload.contentSetId ?? 'none',
+            runtimeTrackingPayload.instanceSource,
+            runtimeTrackingPayload.contentSetSource,
+          ].join(':')
+        : null,
+    [runtimeTrackingPayload]
+  );
+
+  useEffect(() => {
+    if (!runtimeTrackingPayload || !runtimeTrackingKey) {
+      viewedRuntimeKeyRef.current = null;
+      return;
+    }
+
+    if (viewedRuntimeKeyRef.current === runtimeTrackingKey) {
+      return;
+    }
+
+    viewedRuntimeKeyRef.current = runtimeTrackingKey;
+    trackKangurClientEvent('kangur_launchable_game_viewed', runtimeTrackingPayload);
+  }, [runtimeTrackingKey, runtimeTrackingPayload]);
+
+  const handleFinish = useCallback((): void => {
+    if (runtimeTrackingPayload) {
+      trackKangurClientEvent('kangur_launchable_game_finished', runtimeTrackingPayload);
+    }
+
+    onFinish();
+  }, [onFinish, runtimeTrackingPayload]);
 
   return renderKangurLaunchableGameInstanceRuntimeState({
     isWaiting: isWaitingForPersistedInstance || isWaitingForPersistedContentSet,
-    onFinish,
+    onFinish: handleFinish,
     runtime,
   });
+};
+
+export function KangurLaunchableGameInstanceRuntime({
+  engineOverrides,
+  gameId,
+  instanceId,
+  onFinish,
+  preferLessonActivityRuntime = false,
+}: {
+  engineOverrides?: KangurGameRuntimeRendererProps;
+  gameId: KangurGameId;
+  instanceId: KangurGameInstanceId;
+  onFinish: () => void;
+  preferLessonActivityRuntime?: boolean;
+}): React.JSX.Element {
+  const shouldUseLessonActivityRuntime = useMemo(
+    () =>
+      shouldPreferKangurLessonActivityRuntime({
+        gameId,
+        preferLessonActivityRuntime,
+      }),
+    [gameId, preferLessonActivityRuntime]
+  );
+
+  if (shouldUseLessonActivityRuntime) {
+    return (
+      <KangurLessonActivityInstanceRuntime
+        engineOverrides={engineOverrides}
+        gameId={gameId}
+        instanceId={instanceId}
+        onFinish={onFinish}
+      />
+    );
+  }
+
+  return (
+    <KangurResolvedLaunchableGameInstanceRuntime
+      engineOverrides={engineOverrides}
+      gameId={gameId}
+      instanceId={instanceId}
+      onFinish={onFinish}
+    />
+  );
 }
 
 export default KangurLaunchableGameInstanceRuntime;

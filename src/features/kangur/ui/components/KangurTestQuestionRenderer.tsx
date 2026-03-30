@@ -30,7 +30,7 @@ import type { KangurLesson } from '@/features/kangur/shared/contracts/kangur';
 import type { KangurTestQuestion } from '@/features/kangur/shared/contracts/kangur-tests';
 import { cn } from '@/features/kangur/shared/utils';
 
-import { KangurLessonDocumentRenderer } from './KangurLessonDocumentRenderer';
+import { KangurLessonDocumentRenderer } from './lesson-runtime/KangurLessonDocumentRenderer';
 import { KangurLessonNarrator } from './KangurLessonNarrator';
 import { renderKangurQuestionIllustration } from './KangurQuestionIllustrationRenderer';
 import {

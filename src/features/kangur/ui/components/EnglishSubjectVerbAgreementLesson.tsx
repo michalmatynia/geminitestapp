@@ -4,7 +4,7 @@ import { useTranslations } from 'next-intl';
 import { useId, useMemo } from 'react';
 
 import { getKangurBuiltInGameInstanceId } from '@/features/kangur/games';
-import type { LessonSlide } from '@/features/kangur/ui/components/LessonSlideSection';
+import type { LessonSlide } from '@/features/kangur/ui/components/lesson-framework/LessonSlideSection';
 import {
   EnglishAgreementBalanceAnimation,
   EnglishBeVerbSwitchAnimation,

@@ -17,6 +17,7 @@ import { uploadToConfiguredStorage } from '@/features/files/server';
 import {
   normalizeKangurSocialImageAddon,
   type KangurSocialCaptureAppearanceMode,
+  type KangurSocialImageAddonBatchCaptureResult,
   type KangurSocialImageAddonsBatchPayload,
   type KangurSocialImageAddonsBatchResult,
   type KangurSocialImageAddon,
@@ -263,8 +264,58 @@ const readNonNegativeNumber = (value: unknown): number | null =>
     ? Math.floor(value)
     : null;
 
+const readPositiveNumber = (value: unknown): number | null => {
+  const normalized = readNonNegativeNumber(value);
+  return normalized != null && normalized > 0 ? normalized : null;
+};
+
 const readOptionalString = (value: unknown): string | null =>
   typeof value === 'string' && value.trim().length > 0 ? value.trim() : null;
+
+const readCaptureResultStatus = (
+  value: unknown
+): KangurSocialImageAddonBatchCaptureResult['status'] => {
+  switch (value) {
+    case 'ok':
+    case 'failed':
+    case 'skipped':
+      return value;
+    default:
+      return 'failed';
+  }
+};
+
+const readBatchCaptureResults = (
+  value: unknown
+): Map<string, KangurSocialImageAddonBatchCaptureResult> => {
+  if (!Array.isArray(value)) {
+    return new Map();
+  }
+
+  return new Map(
+    value.flatMap((entry) => {
+      const record = toRecord(entry);
+      const id = readOptionalString(record?.['id']);
+      if (!id) {
+        return [];
+      }
+
+      const parsed: KangurSocialImageAddonBatchCaptureResult = {
+        id,
+        title: readOptionalString(record?.['title']),
+        status: readCaptureResultStatus(record?.['status']),
+        reason: readOptionalString(record?.['reason']),
+        resolvedUrl: readOptionalString(record?.['resolvedUrl']),
+        artifactName: readOptionalString(record?.['artifactName']),
+        attemptCount: readPositiveNumber(record?.['attemptCount']),
+        durationMs: readNonNegativeNumber(record?.['durationMs']),
+        stage: readOptionalString(record?.['stage']),
+      };
+
+      return [[id, parsed]];
+    })
+  );
+};
 
 const readLiveCaptureProgress = (
   run: Pick<PlaywrightNodeRunRecord, 'result'> | null
@@ -486,31 +537,37 @@ export const finalizePlaywrightBatchCapture = async (
   const resultsRaw = (run.result as { outputs?: Record<string, unknown> } | null)?.outputs?.[
     'capture_results'
   ];
-  const resultMap = Array.isArray(resultsRaw)
-    ? new Map<string, { status: string; reason?: string }>(
-        resultsRaw.map((entry: unknown) => {
-          if (!entry || typeof entry !== 'object') return ['unknown', { status: 'failed' }];
-          const record = entry as { id?: string; status?: string; reason?: string };
-          return [
-            record.id ?? 'unknown',
-            { status: record.status ?? 'failed', reason: record.reason },
-          ];
-        })
-      )
-    : new Map<string, { status: string; reason?: string }>();
+  const resultMap = readBatchCaptureResults(resultsRaw);
 
   const addons: KangurSocialImageAddon[] = [];
   const failures: Array<{ id: string; reason: string }> = [];
+  const captureResults: KangurSocialImageAddonBatchCaptureResult[] = [];
 
   logger.info('[BATCH] Processing targets', { targetCount: targets.length });
   for (const target of targets) {
     logger.info('[BATCH] Finding artifact', { targetId: target.id });
     const artifact = resolveArtifactByName(run.artifacts, target.id);
     const resultStatus = resultMap.get(target.id);
+    const resolvedUrl =
+      resultStatus?.resolvedUrl ?? buildKangurSocialProgrammableCaptureUrl(baseUrl, target.path);
     if (!artifact) {
+      const reason = resultStatus?.reason || 'artifact_missing';
       failures.push({
         id: target.id,
-        reason: resultStatus?.reason || 'artifact_missing',
+        reason,
+      });
+      captureResults.push({
+        id: target.id,
+        title: resultStatus?.title ?? target.title,
+        status: resultStatus?.status === 'skipped' ? 'skipped' : 'failed',
+        reason,
+        resolvedUrl,
+        artifactName: resultStatus?.artifactName ?? null,
+        attemptCount: resultStatus?.attemptCount ?? null,
+        durationMs: resultStatus?.durationMs ?? null,
+        stage:
+          resultStatus?.stage ??
+          (resultStatus?.status === 'skipped' ? 'validation' : 'artifact_missing'),
       });
       continue;
     }
@@ -518,6 +575,17 @@ export const finalizePlaywrightBatchCapture = async (
     const artifactFile = artifact.path.split('/').pop();
     if (!artifactFile) {
       failures.push({ id: target.id, reason: 'artifact_missing' });
+      captureResults.push({
+        id: target.id,
+        title: resultStatus?.title ?? target.title,
+        status: 'failed',
+        reason: 'artifact_missing',
+        resolvedUrl,
+        artifactName: resultStatus?.artifactName ?? null,
+        attemptCount: resultStatus?.attemptCount ?? null,
+        durationMs: resultStatus?.durationMs ?? null,
+        stage: resultStatus?.stage ?? 'artifact_missing',
+      });
       continue;
     }
 
@@ -528,6 +596,17 @@ export const finalizePlaywrightBatchCapture = async (
     });
     if (!artifactData) {
       failures.push({ id: target.id, reason: 'artifact_read_failed' });
+      captureResults.push({
+        id: target.id,
+        title: resultStatus?.title ?? target.title,
+        status: 'failed',
+        reason: 'artifact_read_failed',
+        resolvedUrl,
+        artifactName: artifactFile,
+        attemptCount: resultStatus?.attemptCount ?? null,
+        durationMs: resultStatus?.durationMs ?? null,
+        stage: resultStatus?.stage ?? 'artifact_read_failed',
+      });
       continue;
     }
 
@@ -601,6 +680,17 @@ export const finalizePlaywrightBatchCapture = async (
     logger.info('[BATCH] Upserting addon', { targetId: target.id });
     const saved = await upsertKangurSocialImageAddon(addon);
     addons.push(saved);
+    captureResults.push({
+      id: target.id,
+      title: resultStatus?.title ?? target.title,
+      status: 'ok',
+      reason: null,
+      resolvedUrl,
+      artifactName: artifactFile,
+      attemptCount: resultStatus?.attemptCount ?? null,
+      durationMs: resultStatus?.durationMs ?? null,
+      stage: resultStatus?.stage ?? 'captured',
+    });
     logger.info('[BATCH] Addon capture finished', { targetId: target.id });
   }
 
@@ -617,6 +707,7 @@ export const finalizePlaywrightBatchCapture = async (
   return {
     addons,
     failures,
+    captureResults,
     runId: run.runId,
     requestedPresetCount: requestedTargets.length,
     usedPresetCount: targets.length,

@@ -11,7 +11,7 @@ import { useOptionalKangurRouteTransitionState } from '@/features/kangur/ui/cont
 import { useKangurRouting } from '@/features/kangur/ui/context/KangurRoutingContext';
 import { useKangurSubjectFocus } from '@/features/kangur/ui/context/KangurSubjectFocusContext';
 import { useKangurAssignments } from '@/features/kangur/ui/hooks/useKangurAssignments';
-import { useKangurLessonsCatalog } from '@/features/kangur/ui/hooks/useKangurLessonsCatalog';
+import { useKangurLessons } from '@/features/kangur/ui/hooks/useKangurLessons';
 import { useKangurLessonSections } from '@/features/kangur/ui/hooks/useKangurLessonSections';
 import { useKangurProgressState } from '@/features/kangur/ui/hooks/useKangurProgressState';
 import { useKangurMobileBreakpoint } from '@/features/kangur/ui/hooks/useKangurMobileBreakpoint';
@@ -65,6 +65,15 @@ export function useLessonsLogic() {
   const [requestedLessonComponentIds, setRequestedLessonComponentIds] = useState<
     KangurLessonComponentId[]
   >([]);
+  const [pendingLessonComponentIdBatches, setPendingLessonComponentIdBatches] = useState<
+    KangurLessonComponentId[][]
+  >([]);
+  const [activeLessonComponentIdBatch, setActiveLessonComponentIdBatch] = useState<
+    KangurLessonComponentId[] | null
+  >(null);
+  const [loadedLessonsByComponent, setLoadedLessonsByComponent] = useState<
+    Map<KangurLessonComponentId, KangurLesson>
+  >(new Map());
   const [shouldLoadCompleteLessonsCatalog, setShouldLoadCompleteLessonsCatalog] = useState(false);
   const [isActiveLessonComponentReady, setIsActiveLessonComponentReady] = useState(false);
   const [activeLessonId, setActiveLessonId] = useState<string | null>(null);
@@ -72,8 +81,12 @@ export function useLessonsLogic() {
   const [focusToken, setFocusToken] = useState<string | null>(null);
   const [isAssignmentsReady, setIsAssignmentsReady] = useState(false);
   const lessonTemplateMap = EMPTY_LESSON_TEMPLATE_MAP;
+  const shouldLoadLessonCatalogDetails =
+    shouldLoadCompleteLessonsCatalog || requestedLessonComponentIds.length > 0;
+  const shouldLoadLessonRuntimeMetadata =
+    shouldLoadLessonCatalogDetails || activeLessonId !== null;
   const progress = useKangurProgressState({
-    enabled: isDeferredContentReady || activeLessonId !== null,
+    enabled: shouldLoadLessonRuntimeMetadata,
   });
   
   const activeLessonNavigationRef = useRef<HTMLDivElement | null>(null);
@@ -131,7 +144,11 @@ export function useLessonsLogic() {
   }, [basePath]);
 
   useEffect((): (() => void) | void => {
-    if (!isDeferredContentReady || !canAccessParentAssignments) {
+    if (
+      !isDeferredContentReady ||
+      !canAccessParentAssignments ||
+      !shouldLoadLessonRuntimeMetadata
+    ) {
       setIsAssignmentsReady(false);
       return;
     }
@@ -160,7 +177,7 @@ export function useLessonsLogic() {
         window.clearTimeout(frameId);
       }
     };
-  }, [canAccessParentAssignments, isDeferredContentReady]);
+  }, [canAccessParentAssignments, isDeferredContentReady, shouldLoadLessonRuntimeMetadata]);
 
   const lessonSectionsQuery = useKangurLessonSections({
     subject,
@@ -171,16 +188,22 @@ export function useLessonsLogic() {
     shouldLoadCompleteLessonsCatalog || requestedLessonComponentIds.length === 0
       ? undefined
       : requestedLessonComponentIds;
-  const lessonsCatalogQuery = useKangurLessonsCatalog({
+  const completeLessonsQuery = useKangurLessons({
     subject,
     ageGroup,
-    componentIds: requestedLessonsCatalogComponentIds,
     enabledOnly: true,
-    enabled: shouldLoadCompleteLessonsCatalog || requestedLessonComponentIds.length > 0,
+    enabled: shouldLoadCompleteLessonsCatalog,
+  });
+  const incrementalLessonsQuery = useKangurLessons({
+    subject,
+    ageGroup,
+    componentIds: activeLessonComponentIdBatch ?? undefined,
+    enabledOnly: true,
+    enabled: !shouldLoadCompleteLessonsCatalog && activeLessonComponentIdBatch !== null,
   });
   const isLessonSectionsPlaceholderData = lessonSectionsQuery.isPlaceholderData === true;
   const isLessonSectionsDataMissing = typeof lessonSectionsQuery.data === 'undefined';
-  const isLessonsCatalogDataMissing = typeof lessonsCatalogQuery.data === 'undefined';
+  const isCompleteLessonsCatalogDataMissing = typeof completeLessonsQuery.data === 'undefined';
   const isLessonSectionsLoading =
     Boolean(
       (lessonSectionsQuery.isPending ||
@@ -189,55 +212,177 @@ export function useLessonsLogic() {
         lessonSectionsQuery.isRefetching) &&
         isLessonSectionsDataMissing
     );
+  const hasPendingIncrementalLessonLoads =
+    activeLessonComponentIdBatch !== null || pendingLessonComponentIdBatches.length > 0;
   const isLessonsCatalogLoading =
-    Boolean(
-      (lessonsCatalogQuery.isPending ||
-        lessonsCatalogQuery.isLoading ||
-        lessonsCatalogQuery.isFetching ||
-        lessonsCatalogQuery.isRefetching) &&
-        isLessonsCatalogDataMissing
-    ) &&
-    (shouldLoadCompleteLessonsCatalog || requestedLessonComponentIds.length > 0);
+    shouldLoadCompleteLessonsCatalog
+      ? Boolean(
+          (completeLessonsQuery.isPending ||
+            completeLessonsQuery.isLoading ||
+            completeLessonsQuery.isFetching ||
+            completeLessonsQuery.isRefetching) &&
+            isCompleteLessonsCatalogDataMissing
+        )
+      : hasPendingIncrementalLessonLoads;
   const shouldShowLessonsCatalogSkeleton =
     isLessonSectionsPlaceholderData || isLessonSectionsLoading;
-  
-  const lessons = useMemo(
-    (): KangurLesson[] => lessonsCatalogQuery.data?.lessons ?? [],
-    [lessonsCatalogQuery.data?.lessons]
-  );
   const lessonSections = useMemo(
     () => lessonSectionsQuery.data ?? [],
     [lessonSectionsQuery.data]
   );
+  const incrementalLessons = useMemo((): KangurLesson[] => {
+    const next = new Map(loadedLessonsByComponent);
+    (incrementalLessonsQuery.data ?? []).forEach((lesson) => {
+      next.set(lesson.componentId, lesson);
+    });
+    return [...next.values()];
+  }, [incrementalLessonsQuery.data, loadedLessonsByComponent]);
+  const shouldExposeStandaloneLessons =
+    !isLessonSectionsDataMissing && lessonSections.length === 0;
+  const shouldExposeLessonCatalogDetails =
+    shouldLoadLessonCatalogDetails ||
+    activeLessonId !== null ||
+    shouldExposeStandaloneLessons;
+  const lessons = useMemo(
+    (): KangurLesson[] =>
+      shouldExposeLessonCatalogDetails
+        ? shouldLoadCompleteLessonsCatalog
+          ? completeLessonsQuery.data ?? []
+          : incrementalLessons
+        : [],
+    [
+      completeLessonsQuery.data,
+      incrementalLessons,
+      shouldExposeLessonCatalogDetails,
+      shouldLoadCompleteLessonsCatalog,
+    ]
+  );
+
+  useEffect((): void => {
+    if (shouldLoadCompleteLessonsCatalog) {
+      if (activeLessonComponentIdBatch !== null) {
+        setActiveLessonComponentIdBatch(null);
+      }
+      if (pendingLessonComponentIdBatches.length > 0) {
+        setPendingLessonComponentIdBatches([]);
+      }
+      return;
+    }
+
+    if (activeLessonComponentIdBatch !== null || pendingLessonComponentIdBatches.length === 0) {
+      return;
+    }
+
+    setActiveLessonComponentIdBatch(pendingLessonComponentIdBatches[0] ?? null);
+    setPendingLessonComponentIdBatches((current) => current.slice(1));
+  }, [
+    activeLessonComponentIdBatch,
+    pendingLessonComponentIdBatches,
+    shouldLoadCompleteLessonsCatalog,
+  ]);
+
+  useEffect((): void => {
+    if (activeLessonComponentIdBatch === null) {
+      return;
+    }
+
+    if (
+      incrementalLessonsQuery.isPending ||
+      incrementalLessonsQuery.isLoading ||
+      incrementalLessonsQuery.isFetching ||
+      incrementalLessonsQuery.isRefetching ||
+      typeof incrementalLessonsQuery.data === 'undefined'
+    ) {
+      return;
+    }
+
+    setLoadedLessonsByComponent((current) => {
+      const next = new Map(current);
+      incrementalLessonsQuery.data.forEach((lesson) => {
+        next.set(lesson.componentId, lesson);
+      });
+      return next;
+    });
+    setActiveLessonComponentIdBatch(null);
+  }, [
+    activeLessonComponentIdBatch,
+    incrementalLessonsQuery.data,
+    incrementalLessonsQuery.isFetching,
+    incrementalLessonsQuery.isLoading,
+    incrementalLessonsQuery.isPending,
+    incrementalLessonsQuery.isRefetching,
+  ]);
 
   const ensureLessonsCatalogLoaded = useCallback(
     (componentIds?: readonly KangurLessonComponentId[] | null): void => {
       if (!componentIds || componentIds.length === 0) {
+        setActiveLessonComponentIdBatch(null);
+        setPendingLessonComponentIdBatches([]);
         setShouldLoadCompleteLessonsCatalog(true);
+        return;
+      }
+
+      const existingComponentIds = new Set<KangurLessonComponentId>([
+        ...requestedLessonComponentIds,
+        ...loadedLessonsByComponent.keys(),
+        ...(activeLessonComponentIdBatch ?? []),
+        ...pendingLessonComponentIdBatches.flat(),
+      ]);
+      const missingComponentIds = componentIds.filter(
+        (componentId) => !existingComponentIds.has(componentId)
+      );
+
+      if (missingComponentIds.length === 0) {
         return;
       }
 
       setRequestedLessonComponentIds((current) => {
         const next = new Set(current);
-        componentIds.forEach((componentId) => {
+        missingComponentIds.forEach((componentId) => {
           next.add(componentId);
         });
         return [...next];
       });
+
+      setPendingLessonComponentIdBatches((current) => [...current, [...missingComponentIds]]);
     },
-    []
+    [
+      activeLessonComponentIdBatch,
+      loadedLessonsByComponent,
+      pendingLessonComponentIdBatches,
+      requestedLessonComponentIds,
+    ]
   );
 
   useEffect((): void => {
     setRequestedLessonComponentIds([]);
+    setPendingLessonComponentIdBatches([]);
+    setActiveLessonComponentIdBatch(null);
+    setLoadedLessonsByComponent(new Map());
     setShouldLoadCompleteLessonsCatalog(false);
   }, [ageGroup, subject]);
 
   useEffect((): void => {
-    if (focusToken) {
-      setShouldLoadCompleteLessonsCatalog(true);
+    if (!focusToken) {
+      return;
     }
-  }, [focusToken]);
+
+    const focusScope = resolveFocusedLessonScope(focusToken, lessonTemplateMap);
+    if (!focusScope) {
+      setShouldLoadCompleteLessonsCatalog(true);
+      return;
+    }
+
+    if (focusScope.ageGroup && focusScope.ageGroup !== ageGroup) {
+      return;
+    }
+
+    if (focusScope.subject !== subject) {
+      return;
+    }
+
+    ensureLessonsCatalogLoaded([focusScope.componentId]);
+  }, [ageGroup, ensureLessonsCatalogLoaded, focusToken, lessonTemplateMap, subject]);
   const lessonAssignmentsByComponent = useMemo(() => {
     if (!isAssignmentsReady || assignments.length === 0 || lessons.length === 0) {
       return EMPTY_LESSON_ASSIGNMENTS_BY_COMPONENT;
@@ -380,7 +525,9 @@ export function useLessonsLogic() {
       : orderedLessons.findIndex((lesson) => lesson.id === activeLessonId);
   const activeLesson = activeIdx >= 0 ? orderedLessons[activeIdx] : null;
   const isCompleteLessonsCatalogLoaded =
-    requestedLessonsCatalogComponentIds === undefined && lessons.length > 0;
+    shouldExposeLessonCatalogDetails &&
+    requestedLessonsCatalogComponentIds === undefined &&
+    lessons.length > 0;
   const lessonDocuments = EMPTY_LESSON_DOCUMENTS;
   const isActiveLessonSurfaceReady =
     !activeLesson ||

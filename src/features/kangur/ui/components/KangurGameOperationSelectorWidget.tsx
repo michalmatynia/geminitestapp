@@ -12,8 +12,8 @@ import KangurGameSetupMomentumCard from '@/features/kangur/ui/components/KangurG
 import { KangurGrajmyWordmark } from '@/features/kangur/ui/components/KangurGrajmyWordmark';
 import { KangurIconSummaryOptionCard } from '@/features/kangur/ui/components/KangurIconSummaryOptionCard';
 import { KangurIconSummaryCardContent } from '@/features/kangur/ui/components/KangurIconSummaryCardContent';
-import { KangurPageIntroCard } from '@/features/kangur/ui/components/KangurPageIntroCard';
-import KangurPracticeAssignmentBanner from '@/features/kangur/ui/components/KangurPracticeAssignmentBanner';
+import { KangurPageIntroCard } from '@/features/kangur/ui/components/lesson-library/KangurPageIntroCard';
+import KangurPracticeAssignmentBanner from '@/features/kangur/ui/components/assignments/KangurPracticeAssignmentBanner';
 import KangurVisualCueContent from '@/features/kangur/ui/components/KangurVisualCueContent';
 import { KangurTrainingSetupPanel } from '@/features/kangur/ui/components/KangurTrainingSetupPanel';
 import OperationSelector from '@/features/kangur/ui/components/OperationSelector';

@@ -4,7 +4,10 @@ import React from 'react';
 import { Button, FormField, Input, SelectSimple } from '@/features/kangur/shared/ui';
 import { KangurAdminCard } from '@/features/kangur/admin/components/KangurAdminCard';
 import { KANGUR_SOCIAL_CAPTURE_PRESETS } from '@/features/kangur/social/shared/social-capture-presets';
-import { buildKangurSocialCaptureFailureSummary } from '@/features/kangur/social/shared/social-capture-feedback';
+import {
+  buildKangurSocialCaptureFailureSummary,
+  buildKangurSocialCapturePrimaryIssueSummary,
+} from '@/features/kangur/social/shared/social-capture-feedback';
 import {
   buildKangurSocialProgrammableCaptureRuntimeRequestPreview,
   KANGUR_SOCIAL_DEFAULT_PLAYWRIGHT_CAPTURE_SCRIPT,
@@ -20,6 +23,7 @@ import type {
 import type { AddonFormState } from '../AdminKangurSocialPage.Constants';
 import { usePlaywrightPersonas } from '@/shared/hooks/usePlaywrightPersonas';
 import { SocialJobStatusPill } from '../SocialJobStatusPill';
+import { SocialCaptureBatchHistory } from '../SocialCaptureBatchHistory';
 
 const isSocialRuntimeJobInFlight = (status: string | null | undefined): boolean => {
   const normalized = status?.trim().toLowerCase();
@@ -50,6 +54,8 @@ export function SocialSettingsCaptureTab({
   batchCaptureJob,
   batchCaptureMessage,
   batchCaptureErrorMessage,
+  batchCaptureRecentJobs,
+  batchCaptureRecentJobsLoading,
   batchCaptureResult,
   batchCaptureLimitSummary,
   currentVisualAnalysisJob,
@@ -63,6 +69,7 @@ export function SocialSettingsCaptureTab({
   captureAppearanceMode,
   handleOpenProgrammableCaptureModal,
   handleResetProgrammableCaptureDefaults,
+  handleRetryFailedPresetBatchCaptureJob,
 }: {
   addonForm: AddonFormState;
   setAddonForm: React.Dispatch<React.SetStateAction<AddonFormState>>;
@@ -82,6 +89,8 @@ export function SocialSettingsCaptureTab({
   batchCaptureJob: KangurSocialImageAddonsBatchJob | null;
   batchCaptureMessage: string | null;
   batchCaptureErrorMessage: string | null;
+  batchCaptureRecentJobs: KangurSocialImageAddonsBatchJob[];
+  batchCaptureRecentJobsLoading: boolean;
   batchCaptureResult: KangurSocialImageAddonsBatchResult | null;
   batchCaptureLimitSummary: string;
   currentVisualAnalysisJob: {
@@ -116,6 +125,7 @@ export function SocialSettingsCaptureTab({
   captureAppearanceMode: KangurSocialCaptureAppearanceMode;
   handleOpenProgrammableCaptureModal: () => void;
   handleResetProgrammableCaptureDefaults: () => void;
+  handleRetryFailedPresetBatchCaptureJob: (job: KangurSocialImageAddonsBatchJob) => void;
 }) {
   const personasQuery = usePlaywrightPersonas({
     enabled: Boolean(programmableCaptureDefaultsPersonaId?.trim()),
@@ -199,6 +209,34 @@ export function SocialSettingsCaptureTab({
   const lastBatchFailureSummary = batchCaptureResult
     ? buildKangurSocialCaptureFailureSummary(batchCaptureResult.failures)
     : null;
+  const lastBatchPrimaryIssueSummary = batchCaptureResult
+    ? buildKangurSocialCapturePrimaryIssueSummary(batchCaptureResult.captureResults)
+    : null;
+  const lastBatchCompletedCount = batchCaptureResult
+    ? batchCaptureResult.captureResults.length > 0
+      ? batchCaptureResult.captureResults.filter((result) => result.status === 'ok').length
+      : batchCaptureResult.addons.length
+    : 0;
+  const lastBatchFailedCount = batchCaptureResult
+    ? batchCaptureResult.captureResults.length > 0
+      ? batchCaptureResult.captureResults.filter((result) => result.status === 'failed').length
+      : batchCaptureResult.failures.length
+    : 0;
+  const lastBatchSkippedCount = batchCaptureResult
+    ? batchCaptureResult.captureResults.filter((result) => result.status === 'skipped').length
+    : 0;
+  const lastBatchTotalCount = batchCaptureResult
+    ? batchCaptureResult.captureResults.length > 0
+      ? batchCaptureResult.captureResults.length
+      : batchCaptureResult.addons.length + batchCaptureResult.failures.length
+    : 0;
+  const recentPresetCaptureJobs = React.useMemo(
+    () =>
+      batchCaptureRecentJobs.filter(
+        (job) => (job.request?.playwrightRoutes?.length ?? 0) === 0
+      ),
+    [batchCaptureRecentJobs]
+  );
 
   return (
     <div className='space-y-4'>
@@ -559,16 +597,37 @@ export function SocialSettingsCaptureTab({
             <div className='rounded-xl border border-border/60 bg-background/40 p-3 text-xs'>
               <div className='font-semibold text-foreground'>Last batch: {batchCaptureResult.runId}</div>
               <div className='mt-1 text-muted-foreground'>
-                Completed: {batchCaptureResult.addons.length} • Failed: {batchCaptureResult.failures.length} • Total:{' '}
-                {batchCaptureResult.addons.length + batchCaptureResult.failures.length}
+                Completed: {lastBatchCompletedCount} • Failed: {lastBatchFailedCount}
+                {lastBatchSkippedCount > 0 ? ` • Skipped: ${lastBatchSkippedCount}` : ''} • Total:{' '}
+                {lastBatchTotalCount}
               </div>
-              {lastBatchFailureSummary ? (
+              {lastBatchPrimaryIssueSummary ? (
+                <div className='mt-2 rounded-lg border border-destructive/20 bg-destructive/5 px-2 py-2 text-destructive'>
+                  Last failed target: {lastBatchPrimaryIssueSummary}
+                </div>
+              ) : null}
+              {lastBatchFailureSummary &&
+              (batchCaptureResult.failures.length > 1 || !lastBatchPrimaryIssueSummary) ? (
                 <div className='mt-2 rounded-lg border border-destructive/20 bg-destructive/5 px-2 py-2 text-destructive'>
                   Failed targets: {lastBatchFailureSummary}
                 </div>
               ) : null}
             </div>
           )}
+          <SocialCaptureBatchHistory
+            title='Recent preset capture runs'
+            description='Durable history for recent Settings Capture runs, including retry for failed presets and progress details.'
+            jobs={recentPresetCaptureJobs}
+            emptyMessage={
+              batchCaptureRecentJobsLoading
+                ? 'Loading recent capture runs...'
+                : 'No recent preset capture runs yet.'
+            }
+            retryKind='preset'
+            retryDisabled={hasCaptureActionLock}
+            retryTitle={captureActionTitle}
+            onRetryFailed={handleRetryFailedPresetBatchCaptureJob}
+          />
         </div>
       </KangurAdminCard>
     </div>

@@ -27,6 +27,7 @@ import {
 } from '@/shared/ui';
 
 import { FilemakerMailSidebar } from '../components/FilemakerMailSidebar';
+import { buildFilemakerMailComposeHref as buildComposeHref } from '../components/FilemakerMailSidebar.helpers';
 import { buildFilemakerMailThreadHref as buildThreadHref } from '../components/FilemakerMailSidebar.helpers';
 import { buildFilemakerNavActions } from '../components/shared/filemaker-nav-actions';
 import { FilemakerEntityTablePage } from '../components/shared/FilemakerEntityTablePage';
@@ -55,6 +56,29 @@ export function AdminFilemakerMailPage(): React.JSX.Element {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { toast } = useToast();
+  const rawRequestedAccountId = searchParams.get('accountId');
+  const rawRequestedMailboxPath = searchParams.get('mailboxPath');
+  const rawRequestedPanel = searchParams.get('panel');
+  const rawRequestedSearchQuery = searchParams.get('searchQuery') ?? '';
+  const rawRequestedRecentMailboxFilter = searchParams.get('recentMailbox') ?? '';
+  const rawRequestedRecentUnreadOnly = searchParams.get('recentUnread') === '1';
+  const rawRequestedRecentQuery = searchParams.get('recentQuery') ?? '';
+  const requestedPanel =
+    rawRequestedPanel === 'attention'
+      ? 'attention'
+      : rawRequestedPanel === 'settings'
+      ? 'settings'
+      : rawRequestedPanel === 'recent'
+        ? 'recent'
+        : rawRequestedPanel === 'search'
+          ? 'search'
+          : null;
+  const requestedAccountId = requestedPanel === 'attention' ? null : rawRequestedAccountId;
+  const requestedMailboxPath = requestedPanel ? null : rawRequestedMailboxPath;
+  const requestedSearchQuery = requestedPanel === 'search' ? rawRequestedSearchQuery : '';
+  const requestedRecentMailboxFilter = requestedPanel === 'recent' ? rawRequestedRecentMailboxFilter : '';
+  const requestedRecentUnreadOnly = requestedPanel === 'recent' ? rawRequestedRecentUnreadOnly : false;
+  const requestedRecentQuery = requestedPanel === 'recent' ? rawRequestedRecentQuery : '';
   const [query, setQuery] = useState('');
   const deferredQuery = useDeferredValue(query.trim());
   const [accounts, setAccounts] = useState<FilemakerMailAccount[]>([]);
@@ -67,44 +91,19 @@ export function AdminFilemakerMailPage(): React.JSX.Element {
     mailboxPath: string | null;
     panel: 'account' | 'attention' | 'recent' | 'search' | 'settings' | null;
   }>({
-    accountId: searchParams.get('accountId'),
-    mailboxPath: searchParams.get('mailboxPath'),
-    panel:
-      searchParams.get('panel') === 'attention'
-        ? 'attention'
-        : searchParams.get('panel') === 'settings'
-        ? 'settings'
-        : searchParams.get('panel') === 'recent'
-          ? 'recent'
-          : searchParams.get('panel') === 'search'
-            ? 'search'
-            : null,
+    accountId: requestedAccountId,
+    mailboxPath: requestedMailboxPath,
+    panel: requestedPanel,
   });
   const [isNavigationLoading, setIsNavigationLoading] = useState(true);
   const [isThreadsLoading, setIsThreadsLoading] = useState(false);
   const [isSavingAccount, setIsSavingAccount] = useState(false);
   const [syncingAccountId, setSyncingAccountId] = useState<string | null>(null);
   const [draft, setDraft] = useState<FilemakerMailAccountDraft>(defaultDraft);
-  const [deepSearchQuery, setDeepSearchQuery] = useState(searchParams.get('searchQuery') ?? '');
+  const [deepSearchQuery, setDeepSearchQuery] = useState(requestedSearchQuery);
   const [deepSearchResults, setDeepSearchResults] = useState<FilemakerMailSearchResponse | null>(null);
   const [isSearching, setIsSearching] = useState(false);
   const [folderAllowlistValue, setFolderAllowlistValue] = useState('');
-  const requestedAccountId = searchParams.get('accountId');
-  const requestedMailboxPath = searchParams.get('mailboxPath');
-  const requestedPanel =
-    searchParams.get('panel') === 'attention'
-      ? 'attention'
-      : searchParams.get('panel') === 'settings'
-      ? 'settings'
-      : searchParams.get('panel') === 'recent'
-        ? 'recent'
-        : searchParams.get('panel') === 'search'
-          ? 'search'
-          : null;
-  const requestedSearchQuery = searchParams.get('searchQuery') ?? '';
-  const requestedRecentMailboxFilter = searchParams.get('recentMailbox') ?? '';
-  const requestedRecentUnreadOnly = searchParams.get('recentUnread') === '1';
-  const requestedRecentQuery = searchParams.get('recentQuery') ?? '';
   const selectedAccountId = selection.accountId;
   const selectedMailboxPath = selection.mailboxPath;
   const selectedPanel = selection.panel;
@@ -283,17 +282,21 @@ export function AdminFilemakerMailPage(): React.JSX.Element {
 
   useEffect(() => {
     if (isNavigationLoading) return;
-    const nextAccountId = selection.accountId ?? null;
-    const nextMailboxPath = selection.mailboxPath ?? null;
-    const nextPanel = selection.panel ?? null;
+    const nextPanel = selection.panel === 'account' ? null : selection.panel ?? null;
+    const nextAccountId = nextPanel === 'attention' ? null : selection.accountId ?? null;
+    const nextMailboxPath = nextPanel ? null : selection.mailboxPath ?? null;
+    const nextRecentMailboxFilter = nextPanel === 'recent' ? recentMailboxFilter : '';
+    const nextRecentUnreadOnly = nextPanel === 'recent' ? recentUnreadOnly : false;
+    const nextRecentQuery = nextPanel === 'recent' ? query : '';
+    const nextSearchQuery = nextPanel === 'search' ? deepSearchQuery : '';
     if (
-      (requestedAccountId ?? null) === nextAccountId &&
-      (requestedMailboxPath ?? null) === nextMailboxPath &&
+      (rawRequestedAccountId ?? null) === nextAccountId &&
+      (rawRequestedMailboxPath ?? null) === nextMailboxPath &&
       requestedPanel === nextPanel &&
-      requestedRecentMailboxFilter === recentMailboxFilter &&
-      requestedRecentUnreadOnly === recentUnreadOnly &&
-      requestedRecentQuery === query &&
-      requestedSearchQuery === deepSearchQuery
+      rawRequestedRecentMailboxFilter === nextRecentMailboxFilter &&
+      rawRequestedRecentUnreadOnly === nextRecentUnreadOnly &&
+      rawRequestedRecentQuery === nextRecentQuery &&
+      rawRequestedSearchQuery === nextSearchQuery
     ) {
       return;
     }
@@ -302,23 +305,23 @@ export function AdminFilemakerMailPage(): React.JSX.Element {
         accountId: nextAccountId,
         mailboxPath: nextMailboxPath,
         panel: nextPanel,
-        recentMailboxFilter,
-        recentUnreadOnly,
-        recentQuery: query,
-        searchQuery: deepSearchQuery,
+        recentMailboxFilter: nextRecentMailboxFilter,
+        recentUnreadOnly: nextRecentUnreadOnly,
+        recentQuery: nextRecentQuery,
+        searchQuery: nextSearchQuery,
       })
     );
   }, [
     deepSearchQuery,
     isNavigationLoading,
     query,
-    requestedAccountId,
-    requestedMailboxPath,
     requestedPanel,
-    requestedRecentMailboxFilter,
-    requestedRecentQuery,
-    requestedRecentUnreadOnly,
-    requestedSearchQuery,
+    rawRequestedAccountId,
+    rawRequestedMailboxPath,
+    rawRequestedRecentMailboxFilter,
+    rawRequestedRecentQuery,
+    rawRequestedRecentUnreadOnly,
+    rawRequestedSearchQuery,
     recentMailboxFilter,
     recentUnreadOnly,
     router,
@@ -437,15 +440,15 @@ export function AdminFilemakerMailPage(): React.JSX.Element {
               variant='outline'
               onClick={(): void => {
                 router.push(
-                  `/admin/filemaker/mail/threads/${encodeURIComponent(row.original.id)}?accountId=${encodeURIComponent(row.original.accountId)}&mailboxPath=${encodeURIComponent(row.original.mailboxPath)}${
-                    isRecentPanel ? '&panel=recent' : ''
-                  }${
-                    recentMailboxFilter
-                      ? `&recentMailbox=${encodeURIComponent(recentMailboxFilter)}`
-                      : ''
-                  }${isRecentPanel && query ? `&recentQuery=${encodeURIComponent(query)}` : ''}${
-                    recentUnreadOnly ? '&recentUnread=1' : ''
-                  }`
+                  buildThreadHref({
+                    threadId: row.original.id,
+                    accountId: row.original.accountId,
+                    mailboxPath: row.original.mailboxPath,
+                    originPanel: isRecentPanel ? 'recent' : null,
+                    recentMailboxFilter: isRecentPanel ? recentMailboxFilter : null,
+                    recentUnreadOnly: isRecentPanel ? recentUnreadOnly : false,
+                    recentQuery: isRecentPanel ? query : null,
+                  })
                 );
               }}
             >
@@ -484,15 +487,14 @@ export function AdminFilemakerMailPage(): React.JSX.Element {
         icon: <MailPlus className='size-4' />,
         onClick: () =>
           router.push(
-            `/admin/filemaker/mail/compose?accountId=${encodeURIComponent(selectedAccountId ?? '')}${
-              selectedFolder
-                ? `&mailboxPath=${encodeURIComponent(selectedFolder.mailboxPath)}`
-                : ''
-            }${isRecentPanel ? '&panel=recent' : ''}${
-              recentMailboxFilter ? `&recentMailbox=${encodeURIComponent(recentMailboxFilter)}` : ''
-            }${isRecentPanel && query ? `&recentQuery=${encodeURIComponent(query)}` : ''}${
-              recentUnreadOnly ? '&recentUnread=1' : ''
-            }`
+            buildComposeHref({
+              accountId: selectedAccountId,
+              mailboxPath: selectedFolder?.mailboxPath ?? null,
+              originPanel: isRecentPanel ? 'recent' : null,
+              recentMailboxFilter: isRecentPanel ? recentMailboxFilter : null,
+              recentUnreadOnly: isRecentPanel ? recentUnreadOnly : false,
+              recentQuery: isRecentPanel ? query : null,
+            })
           ),
       },
       ...(selectedAccount
@@ -574,6 +576,7 @@ export function AdminFilemakerMailPage(): React.JSX.Element {
         recentMailboxFilter={recentMailboxFilter}
         recentUnreadOnly={recentUnreadOnly}
         recentQuery={query}
+        searchContextAccountId={isSearchPanel ? selectedAccountId : null}
         searchQuery={isSearchPanel ? deepSearchQuery : null}
         onRecentMailboxFilterChange={setRecentMailboxFilter}
         onRecentQueryChange={setQuery}
@@ -780,6 +783,7 @@ export function AdminFilemakerMailPage(): React.JSX.Element {
                               accountId: group.accountId,
                               mailboxPath: group.mailboxPath,
                               originPanel: 'search',
+                              searchAccountId: selectedAccountId ? null : 'all',
                               searchQuery: deepSearchQuery,
                             })
                           )
@@ -1166,7 +1170,11 @@ export function AdminFilemakerMailPage(): React.JSX.Element {
                   type='button'
                   variant='outline'
                   onClick={(): void => {
-                    router.push(`/admin/filemaker/mail/compose?accountId=${encodeURIComponent(selectedAccount.id)}`);
+                    router.push(
+                      buildComposeHref({
+                        accountId: selectedAccount.id,
+                      })
+                    );
                   }}
                 >
                   <MailPlus className='mr-2 size-4' />

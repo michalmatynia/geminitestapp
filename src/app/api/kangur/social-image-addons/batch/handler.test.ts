@@ -3,12 +3,14 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 const {
   resolveKangurActorMock,
   createKangurSocialImageAddonsBatchMock,
+  listKangurSocialImageAddonsBatchJobsMock,
   startKangurSocialImageAddonsBatchJobMock,
   captureExceptionMock,
   logKangurServerEventMock,
 } = vi.hoisted(() => ({
   resolveKangurActorMock: vi.fn(),
   createKangurSocialImageAddonsBatchMock: vi.fn(),
+  listKangurSocialImageAddonsBatchJobsMock: vi.fn(),
   startKangurSocialImageAddonsBatchJobMock: vi.fn(),
   captureExceptionMock: vi.fn(),
   logKangurServerEventMock: vi.fn(),
@@ -24,6 +26,8 @@ vi.mock('@/features/kangur/social/server/social-image-addons-batch', () => ({
 }));
 
 vi.mock('@/features/kangur/social/server/social-image-addons-batch-jobs', () => ({
+  listKangurSocialImageAddonsBatchJobs: (...args: unknown[]) =>
+    listKangurSocialImageAddonsBatchJobsMock(...args),
   readKangurSocialImageAddonsBatchJob: vi.fn(),
   startKangurSocialImageAddonsBatchJob: (...args: unknown[]) =>
     startKangurSocialImageAddonsBatchJobMock(...args),
@@ -42,12 +46,82 @@ vi.mock('@/features/kangur/shared/utils/observability/error-system', () => ({
 import { apiHandler } from '@/shared/lib/api/api-handler';
 import { operationFailedError } from '@/shared/errors/app-error';
 
-import { postKangurSocialImageAddonsBatchHandler } from './handler';
+import {
+  getKangurSocialImageAddonsBatchHandler,
+  postKangurSocialImageAddonsBatchHandler,
+} from './handler';
 
 const wrappedPostHandler = apiHandler(postKangurSocialImageAddonsBatchHandler, {
   source: 'kangur.social-image-addons.batch.POST',
   service: 'kangur.api',
   parseJsonBody: true,
+});
+const wrappedGetHandler = apiHandler(getKangurSocialImageAddonsBatchHandler, {
+  source: 'kangur.social-image-addons.batch.GET',
+  service: 'kangur.api',
+});
+
+describe('getKangurSocialImageAddonsBatchHandler', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    resolveKangurActorMock.mockResolvedValue({
+      actorId: 'admin-1',
+      role: 'admin',
+    });
+  });
+
+  it('lists recent batch capture jobs when no job id is provided', async () => {
+    listKangurSocialImageAddonsBatchJobsMock.mockResolvedValueOnce([
+      {
+        id: 'job-1',
+        runId: 'run-1',
+        status: 'completed',
+        request: {
+          baseUrl: 'https://example.com',
+          presetIds: ['home'],
+          presetLimit: null,
+          appearanceMode: 'default',
+          playwrightPersonaId: null,
+          playwrightScript: null,
+          playwrightRoutes: [],
+        },
+        progress: {
+          processedCount: 1,
+          completedCount: 1,
+          failureCount: 0,
+          remainingCount: 0,
+          totalCount: 1,
+        },
+        result: {
+          addons: [],
+          failures: [],
+          runId: 'run-1',
+        },
+        error: null,
+        createdAt: '2026-03-30T10:00:00.000Z',
+        updatedAt: '2026-03-30T10:05:00.000Z',
+      },
+    ]);
+
+    const url = 'http://localhost/api/kangur/social-image-addons/batch?limit=3';
+    const request = Object.assign(new Request(url), {
+      nextUrl: new URL(url),
+    }) as Parameters<typeof wrappedGetHandler>[0];
+
+    const response = await wrappedGetHandler(request);
+    const payload = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(payload).toEqual([
+      expect.objectContaining({
+        id: 'job-1',
+        runId: 'run-1',
+      }),
+    ]);
+    expect(listKangurSocialImageAddonsBatchJobsMock).toHaveBeenCalledWith({
+      limit: 3,
+    });
+  });
 });
 
 describe('postKangurSocialImageAddonsBatchHandler', () => {

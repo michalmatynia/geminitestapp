@@ -157,7 +157,7 @@ vi.mock('@/features/kangur/ui/components/KangurTopNavigationController', () => (
   KangurTopNavigationController: () => <div data-testid='tests-top-nav' />,
 }));
 
-vi.mock('@/features/kangur/ui/components/KangurPageIntroCard', () => ({
+vi.mock('@/features/kangur/ui/components/lesson-library/KangurPageIntroCard', () => ({
   KangurPageIntroCard: ({
     onBack,
     title,

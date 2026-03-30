@@ -5,7 +5,7 @@ import { useId, useMemo } from 'react';
 
 import type { KangurAssignmentSnapshot } from '@kangur/platform';
 import DifficultySelector from '@/features/kangur/ui/components/DifficultySelector';
-import { KangurAssignmentPriorityChip } from '@/features/kangur/ui/components/KangurAssignmentPriorityChip';
+import { KangurAssignmentPriorityChip } from '@/features/kangur/ui/components/assignments/KangurAssignmentPriorityChip';
 import KangurAnswerChoiceCard from '@/features/kangur/ui/components/KangurAnswerChoiceCard';
 import { KangurSubjectGroupSection } from '@/features/kangur/ui/components/KangurSubjectGroupSection';
 import { getKangurSubjectGroups } from '@/features/kangur/ui/constants/subject-groups';

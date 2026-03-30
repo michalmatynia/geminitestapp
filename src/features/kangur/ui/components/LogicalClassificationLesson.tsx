@@ -6,7 +6,7 @@ import { useOptionalKangurLessonTemplate } from '@/features/kangur/ui/context/Ka
 import { useTranslations } from 'next-intl';
 
 import { getKangurBuiltInGameInstanceId } from '@/features/kangur/games';
-import type { LessonSlide } from '@/features/kangur/ui/components/LessonSlideSection';
+import type { LessonSlide } from '@/features/kangur/ui/components/lesson-framework/LessonSlideSection';
 import {
   ClassificationCategoryBinsAnimation,
   ClassificationCriteriaAxesAnimation,

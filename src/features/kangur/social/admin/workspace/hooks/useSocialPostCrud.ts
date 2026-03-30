@@ -344,7 +344,7 @@ export function useSocialPostCrud(deps: SocialPostCrudDeps) {
       );
     } catch (error) {
       const recoveredPost = await recoverRefreshedPost(postId);
-      if (didRecoverSuccessfulPublish(recoveredPost, mode)) {
+      if (recoveredPost && didRecoverSuccessfulPublish(recoveredPost, mode)) {
         syncPostInCache(recoveredPost);
         toast(resolvePublishSuccessToast(mode), { variant: 'success' });
         return;
@@ -504,7 +504,11 @@ export function useSocialPostCrud(deps: SocialPostCrudDeps) {
     } catch (error) {
       const recoveredPost =
         stage === 'publish' ? await recoverRefreshedPost(deps.activePost.id) : null;
-      if (stage === 'publish' && didRecoverSuccessfulPublish(recoveredPost, 'published')) {
+      if (
+        stage === 'publish' &&
+        recoveredPost &&
+        didRecoverSuccessfulPublish(recoveredPost, 'published')
+      ) {
         syncPostInCache(recoveredPost);
         toast(resolvePublishSuccessToast('published'), { variant: 'success' });
         trackKangurClientEvent(

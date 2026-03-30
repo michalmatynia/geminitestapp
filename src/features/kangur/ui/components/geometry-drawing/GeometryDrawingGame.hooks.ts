@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useMemo, useRef, useState, type KeyboardEvent as ReactKeyboardEvent } from 'react';
+import { useCallback, useMemo, useReducer, useRef, type KeyboardEvent as ReactKeyboardEvent } from 'react';
 import { useLocale, useTranslations } from 'next-intl';
 
 import {
@@ -28,10 +28,6 @@ import {
   loadProgress,
 } from '@/features/kangur/ui/services/progress';
 import { persistKangurSessionScore } from '@/features/kangur/ui/services/session-score';
-import type {
-  KangurMiniGameInformationalFeedback,
-  KangurRewardBreakdownEntry,
-} from '@/features/kangur/ui/types';
 
 import type {
   GeometryDifficultyId,
@@ -47,6 +43,10 @@ import {
   SHAPE_ROUND_LIBRARY,
   STARTER_ROUNDS,
 } from './GeometryDrawingGame.constants';
+import {
+  createGeometryDrawingGameInitialState,
+  geometryDrawingGameReducer,
+} from './GeometryDrawingGame.logic';
 
 const BASE_MIN_DRAWING_POINTS = loosenMinInt(14);
 
@@ -118,13 +118,12 @@ export function useGeometryDrawingGameState(props: GeometryDrawingGameProps) {
     [translations]
   );
 
-  const [difficulty, setDifficulty] = useState<GeometryDifficultyId>('starter');
-  const [roundIndex, setRoundIndex] = useState(0);
-  const [score, setScore] = useState(0);
-  const [done, setDone] = useState(false);
-  const [xpEarned, setXpEarned] = useState(0);
-  const [xpBreakdown, setXpBreakdown] = useState<KangurRewardBreakdownEntry[]>([]);
-  const [feedback, setFeedback] = useState<KangurMiniGameInformationalFeedback | null>(null);
+  const [state, dispatch] = useReducer(
+    geometryDrawingGameReducer,
+    undefined,
+    createGeometryDrawingGameInitialState
+  );
+  const { difficulty, done, feedback, roundIndex, score, xpBreakdown, xpEarned } = state;
 
   const isCoarsePointer = useKangurCoarsePointer();
   const sessionStartedAtRef = useRef(Date.now());
@@ -262,7 +261,7 @@ export function useGeometryDrawingGameState(props: GeometryDrawingGameProps) {
   } = useKangurManagedStoredPointDrawing({
     actions: {
       clearFeedback: () => {
-        setFeedback(null);
+        dispatch({ type: 'clear_feedback' });
       },
       exportFilename: exportFileName,
       onAfterClearExtra: handleManagedAfterClearExtra,
@@ -294,7 +293,7 @@ export function useGeometryDrawingGameState(props: GeometryDrawingGameProps) {
       minPointDistance,
       onPointerStart: () => {
         if (feedback?.kind === 'info') {
-          setFeedback(null);
+          dispatch({ type: 'clear_feedback' });
         }
       },
       resolveStyle: () => ({
@@ -315,7 +314,7 @@ export function useGeometryDrawingGameState(props: GeometryDrawingGameProps) {
   const clearBoardState = useCallback((): void => {
     clearDraftSnapshot();
     clearStrokes();
-    setFeedback(null);
+    dispatch({ type: 'clear_feedback' });
   }, [clearDraftSnapshot, clearStrokes]);
 
   const {
@@ -332,7 +331,7 @@ export function useGeometryDrawingGameState(props: GeometryDrawingGameProps) {
     initialCursor: KEYBOARD_CURSOR_START,
     onBeforeKeyboardAction: () => {
       if (feedback?.kind === 'info') {
-        setFeedback(null);
+        dispatch({ type: 'clear_feedback' });
       }
     },
     onEscape: clearBoardState,
@@ -369,20 +368,18 @@ export function useGeometryDrawingGameState(props: GeometryDrawingGameProps) {
         xpEarned: reward.xp,
       });
 
-      setXpEarned(reward.xp);
-      setXpBreakdown(reward.breakdown ?? []);
-      setDone(true);
+      dispatch({
+        type: 'finish',
+        finalScore,
+        xpEarned: reward.xp,
+        xpBreakdown: reward.breakdown ?? [],
+      });
     },
     [difficulty, lessonKey, operation, ownerKey, resolvedActivityKey, totalRounds]
   );
 
   const resetRun = useCallback((): void => {
-    setRoundIndex(0);
-    setScore(0);
-    setDone(false);
-    setXpEarned(0);
-    setXpBreakdown([]);
-    setFeedback(null);
+    dispatch({ type: 'reset_run' });
     clearBoardState();
     resetKeyboard(keyboardRestartedStatus);
     sessionStartedAtRef.current = Date.now();
@@ -394,8 +391,8 @@ export function useGeometryDrawingGameState(props: GeometryDrawingGameProps) {
         return;
       }
 
-      setDifficulty(nextDifficulty);
-      resetRun();
+      dispatch({ type: 'select_difficulty', difficulty: nextDifficulty });
+      clearBoardState();
       resetKeyboard(
         translateWithFallback(
           'geometryDrawing.inRound.keyboard.difficultyChanged',
@@ -403,26 +400,30 @@ export function useGeometryDrawingGameState(props: GeometryDrawingGameProps) {
           { difficulty: difficultyLabels[nextDifficulty] }
         )
       );
+      sessionStartedAtRef.current = Date.now();
     },
-    [difficulty, difficultyLabels, fallbackCopy.keyboard.difficultyChanged, resetKeyboard, resetRun, translateWithFallback]
+    [
+      clearBoardState,
+      difficulty,
+      difficultyLabels,
+      fallbackCopy.keyboard.difficultyChanged,
+      resetKeyboard,
+      translateWithFallback,
+    ]
   );
 
   const moveToNextRound = useCallback(
     (wasCorrect: boolean): void => {
       const nextScore = wasCorrect ? score + 1 : score;
-      if (wasCorrect) {
-        setScore(nextScore);
-      }
-
       const isLastRound = roundIndex + 1 >= totalRounds;
       window.setTimeout((): void => {
-        setFeedback(null);
+        dispatch({ type: 'clear_feedback' });
         clearDrawing();
         if (isLastRound) {
           finishGame(nextScore);
           return;
         }
-        setRoundIndex((current) => current + 1);
+        dispatch({ type: 'advance_round', accepted: wasCorrect });
       }, 1200);
     },
     [clearDrawing, finishGame, roundIndex, score, totalRounds]
@@ -434,9 +435,12 @@ export function useGeometryDrawingGameState(props: GeometryDrawingGameProps) {
     }
 
     if (points.length < minDrawingPoints) {
-      setFeedback({
-        kind: 'info',
-        text: translateWithFallback('geometryDrawing.inRound.tooShort', fallbackCopy.tooShort),
+      dispatch({
+        type: 'set_feedback',
+        feedback: {
+          kind: 'info',
+          text: translateWithFallback('geometryDrawing.inRound.tooShort', fallbackCopy.tooShort),
+        },
       });
       return;
     }
@@ -446,9 +450,12 @@ export function useGeometryDrawingGameState(props: GeometryDrawingGameProps) {
       translate: translations,
     });
 
-    setFeedback({
-      kind: result.accepted ? 'success' : 'error',
-      text: result.message,
+    dispatch({
+      type: 'set_feedback',
+      feedback: {
+        kind: result.accepted ? 'success' : 'error',
+        text: result.message,
+      },
     });
     moveToNextRound(result.accepted);
   }, [currentRound, done, fallbackCopy.tooShort, feedback, locale, minDrawingPoints, moveToNextRound, points, translations, translateWithFallback]);

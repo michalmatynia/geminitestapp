@@ -7,7 +7,7 @@ const ROOT = process.cwd();
 
 const PAGED_PRINT_PANEL_FILES = [
   {
-    path: 'src/features/kangur/ui/components/LessonActivityShell.tsx',
+    path: 'src/features/kangur/ui/components/lesson-runtime/LessonActivityShell.tsx',
     expectedCount: 2,
   },
   {
@@ -15,7 +15,7 @@ const PAGED_PRINT_PANEL_FILES = [
     expectedCount: 1,
   },
   {
-    path: 'src/features/kangur/ui/components/KangurLessonDocumentRenderer.tsx',
+    path: 'src/features/kangur/ui/components/lesson-runtime/KangurLessonDocumentRenderer.tsx',
     expectedCount: 1,
   },
   {
@@ -31,7 +31,7 @@ const PAGED_PRINT_PANEL_FILES = [
     expectedCount: 3,
   },
   {
-    path: 'src/features/kangur/ui/components/KangurLessonActivityBlock.tsx',
+    path: 'src/features/kangur/ui/components/lesson-runtime/KangurLessonActivityBlock.tsx',
     expectedCount: 1,
   },
 ] as const;

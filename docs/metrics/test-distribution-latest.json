@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-03-30T12:41:00.792Z",
+  "generatedAt": "2026-03-30T15:09:28.917Z",
   "status": "passed",
   "summary": {
     "total": 32,
@@ -12,7 +12,7 @@
     "featuresWithoutTestCount": 0,
     "featuresWithoutFastTestCount": 0,
     "featuresWithoutNegativeTestCount": 0,
-    "totalTestFiles": 2782,
+    "totalTestFiles": 2961,
     "onlyCount": 0,
     "skipCount": 32,
     "todoCount": 0
@@ -28,10 +28,10 @@
   "featuresWithTests": [
     {
       "feature": "kangur",
-      "testCount": 807,
-      "fastTestCount": 787,
+      "testCount": 971,
+      "fastTestCount": 951,
       "e2eTestCount": 20,
-      "negativePathTestCount": 161
+      "negativePathTestCount": 177
     },
     {
       "feature": "ai",
@@ -91,15 +91,15 @@
     },
     {
       "feature": "filemaker",
-      "testCount": 20,
-      "fastTestCount": 20,
+      "testCount": 21,
+      "fastTestCount": 21,
       "e2eTestCount": 0,
       "negativePathTestCount": 6
     },
     {
       "feature": "admin",
-      "testCount": 19,
-      "fastTestCount": 16,
+      "testCount": 20,
+      "fastTestCount": 17,
       "e2eTestCount": 3,
       "negativePathTestCount": 4
     },
@@ -549,5 +549,5 @@
       "infoCount": 32
     }
   ],
-  "durationMs": 425
+  "durationMs": 527
 }

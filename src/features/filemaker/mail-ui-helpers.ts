@@ -26,7 +26,7 @@ export const buildFilemakerMailSelectionHref = (input: {
 }): string => {
   const search = new URLSearchParams();
   if (input.panel !== 'attention' && input.panel !== 'search' && input.accountId) search.set('accountId', input.accountId);
-  if (input.panel !== 'attention' && input.panel !== 'search' && input.mailboxPath) search.set('mailboxPath', input.mailboxPath);
+  if (!input.panel && input.mailboxPath) search.set('mailboxPath', input.mailboxPath);
   if (input.panel === 'attention') search.set('panel', 'attention');
   if (input.panel === 'search') {
     search.set('panel', 'search');
@@ -34,10 +34,10 @@ export const buildFilemakerMailSelectionHref = (input: {
   }
   if (input.accountId && input.panel === 'recent') search.set('panel', 'recent');
   if (input.accountId && input.panel === 'settings') search.set('panel', 'settings');
-  if (input.accountId && input.recentMailboxFilter) {
+  if (input.accountId && input.panel === 'recent' && input.recentMailboxFilter) {
     search.set('recentMailbox', input.recentMailboxFilter);
   }
-  if (input.accountId && input.recentUnreadOnly) {
+  if (input.accountId && input.panel === 'recent' && input.recentUnreadOnly) {
     search.set('recentUnread', '1');
   }
   if (input.accountId && input.panel === 'recent' && input.recentQuery) {

@@ -7,6 +7,7 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { DocumentWysiwygEditor } from '@/features/document-editor/public';
 import { FilemakerMailSidebar } from '../components/FilemakerMailSidebar';
 import { buildFilemakerMailComposeHref as buildComposeHref } from '../components/FilemakerMailSidebar.helpers';
+import { buildFilemakerMailThreadHref as buildThreadHref } from '../components/FilemakerMailSidebar.helpers';
 import { buildFilemakerMailSelectionHref as buildSelectionHref } from '../mail-ui-helpers';
 import { parseFilemakerMailParticipantsInput } from '../mail-utils';
 import { sanitizeHtml } from '@/shared/utils';
@@ -53,15 +54,17 @@ const formatParticipants = (participants: FilemakerMailParticipant[]): string =>
     .map((entry) => (entry.name ? `${entry.name} <${entry.address}>` : entry.address))
     .join(', ');
 
+type LoadThreadOptions = {
+  preserveReplyDraft?: boolean;
+};
+
 export function AdminFilemakerMailThreadPage(): React.JSX.Element {
   const params = useParams();
   const router = useRouter();
   const searchParams = useSearchParams();
   const { toast } = useToast();
-  const threadId = useMemo(() => {
-    const raw = Array.isArray(params['threadId']) ? params['threadId'][0] : params['threadId'];
-    return decodeURIComponent(raw ?? '');
-  }, [params]);
+  const rawThreadId = Array.isArray(params['threadId']) ? params['threadId'][0] : params['threadId'];
+  const threadId = useMemo(() => decodeURIComponent(rawThreadId ?? ''), [rawThreadId]);
   const [detail, setDetail] = useState<FilemakerMailThreadDetail | null>(null);
   const [replyAccountId, setReplyAccountId] = useState('');
   const [replyTo, setReplyTo] = useState('');
@@ -77,16 +80,31 @@ export function AdminFilemakerMailThreadPage(): React.JSX.Element {
   const [sidebarRefreshKey, setSidebarRefreshKey] = useState(0);
   const accountId = searchParams.get('accountId');
   const mailboxPath = searchParams.get('mailboxPath');
+  const rawOriginPanel = searchParams.get('panel');
   const originPanel =
-    searchParams.get('panel') === 'recent'
+    rawOriginPanel === 'recent'
       ? 'recent'
-      : searchParams.get('panel') === 'search'
+      : rawOriginPanel === 'search'
         ? 'search'
         : null;
-  const recentMailboxFilter = searchParams.get('recentMailbox');
-  const recentUnreadOnly = searchParams.get('recentUnread') === '1';
-  const recentQuery = searchParams.get('recentQuery');
-  const searchQuery = searchParams.get('searchQuery');
+  const rawRecentMailboxFilter = searchParams.get('recentMailbox');
+  const rawRecentUnreadOnly = searchParams.get('recentUnread') === '1';
+  const rawRecentQuery = searchParams.get('recentQuery');
+  const rawSearchQuery = searchParams.get('searchQuery');
+  const rawSearchAccountId = searchParams.get('searchAccountId');
+  const recentMailboxFilter =
+    originPanel === 'recent' && rawRecentMailboxFilter ? rawRecentMailboxFilter : null;
+  const recentUnreadOnly = originPanel === 'recent' ? rawRecentUnreadOnly : false;
+  const recentQuery = originPanel === 'recent' && rawRecentQuery ? rawRecentQuery : null;
+  const searchQuery = originPanel === 'search' && rawSearchQuery ? rawSearchQuery : null;
+  const searchAccountId =
+    originPanel === 'search' && rawSearchAccountId === 'all' ? 'all' : null;
+  const isGlobalSearchContext = searchAccountId === 'all';
+  const searchContextAccountId = originPanel === 'search'
+    ? isGlobalSearchContext
+      ? null
+      : accountId
+    : null;
   const backLabel =
     originPanel === 'recent'
       ? 'Back to Recent'
@@ -95,7 +113,7 @@ export function AdminFilemakerMailThreadPage(): React.JSX.Element {
         : 'Back to Mail';
   const backHref = useMemo(() => {
     return buildSelectionHref({
-      accountId,
+      accountId: originPanel === 'search' ? searchContextAccountId : accountId,
       mailboxPath: originPanel ? null : mailboxPath,
       panel: originPanel,
       recentMailboxFilter: originPanel === 'recent' ? recentMailboxFilter : null,
@@ -110,21 +128,69 @@ export function AdminFilemakerMailThreadPage(): React.JSX.Element {
     recentMailboxFilter,
     recentQuery,
     recentUnreadOnly,
+    searchContextAccountId,
     searchQuery,
   ]);
+  useEffect(() => {
+    if (
+      (rawOriginPanel ?? null) === originPanel &&
+      (rawRecentMailboxFilter ?? null) === recentMailboxFilter &&
+      rawRecentUnreadOnly === recentUnreadOnly &&
+      (rawRecentQuery ?? null) === recentQuery &&
+      (rawSearchQuery ?? null) === searchQuery &&
+      (rawSearchAccountId ?? null) === searchAccountId
+    ) {
+      return;
+    }
 
-  const load = useCallback(async (): Promise<void> => {
+    router.replace(
+      buildThreadHref({
+        threadId,
+        accountId,
+        mailboxPath,
+        originPanel,
+        recentMailboxFilter,
+        recentUnreadOnly,
+        recentQuery,
+        searchAccountId,
+        searchQuery,
+      })
+    );
+  }, [
+    accountId,
+    mailboxPath,
+    originPanel,
+    rawOriginPanel,
+    rawRecentMailboxFilter,
+    rawRecentQuery,
+    rawRecentUnreadOnly,
+    rawSearchAccountId,
+    rawSearchQuery,
+    recentMailboxFilter,
+    recentQuery,
+    recentUnreadOnly,
+    router,
+    searchAccountId,
+    searchQuery,
+    threadId,
+  ]);
+
+  const load = useCallback(async (options?: LoadThreadOptions): Promise<void> => {
     setIsLoading(true);
     try {
       const result = await fetchJson<ThreadResponse>(
         `/api/filemaker/mail/threads/${encodeURIComponent(threadId)}`
       );
       setDetail(result.detail);
-      setReplyAccountId(result.replyDraft?.accountId ?? '');
-      setReplyTo(formatParticipants(result.replyDraft?.to ?? []));
-      setReplySubject(result.replyDraft?.subject ?? result.detail.thread.subject);
-      setReplyHtml(result.replyDraft?.bodyHtml ?? '<p><br/></p>');
-      setReplyInReplyTo(result.replyDraft?.inReplyTo ?? null);
+      if (!options?.preserveReplyDraft) {
+        setReplyAccountId(result.replyDraft?.accountId ?? '');
+        setReplyTo(formatParticipants(result.replyDraft?.to ?? []));
+        setReplyCc('');
+        setReplyBcc('');
+        setReplySubject(result.replyDraft?.subject ?? result.detail.thread.subject);
+        setReplyHtml(result.replyDraft?.bodyHtml ?? '<p><br/></p>');
+        setReplyInReplyTo(result.replyDraft?.inReplyTo ?? null);
+      }
     } catch (error) {
       toast(error instanceof Error ? error.message : 'Failed to load mail thread.', {
         variant: 'error',
@@ -179,7 +245,7 @@ export function AdminFilemakerMailThreadPage(): React.JSX.Element {
         }
       );
       toast(markRead ? 'Marked as read.' : 'Marked as unread.', { variant: 'success' });
-      await load();
+      await load({ preserveReplyDraft: true });
       setSidebarRefreshKey((current) => current + 1);
     } catch (error) {
       toast(error instanceof Error ? error.message : 'Failed to update thread.', {
@@ -220,6 +286,7 @@ export function AdminFilemakerMailThreadPage(): React.JSX.Element {
         recentMailboxFilter={recentMailboxFilter}
         recentUnreadOnly={recentUnreadOnly}
         recentQuery={recentQuery}
+        searchContextAccountId={searchContextAccountId}
         searchQuery={searchQuery}
         refreshKey={sidebarRefreshKey}
       />
@@ -270,6 +337,7 @@ export function AdminFilemakerMailThreadPage(): React.JSX.Element {
                           recentMailboxFilter,
                           recentUnreadOnly,
                           recentQuery,
+                          searchAccountId: isGlobalSearchContext ? 'all' : null,
                           searchQuery,
                         })
                       );

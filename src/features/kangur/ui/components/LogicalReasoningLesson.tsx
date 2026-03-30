@@ -6,7 +6,7 @@ import { useOptionalKangurLessonTemplate } from '@/features/kangur/ui/context/Ka
 import { useMemo } from 'react';
 import { useMessages } from 'next-intl';
 
-import type { LessonSlide } from '@/features/kangur/ui/components/LessonSlideSection';
+import type { LessonSlide } from '@/features/kangur/ui/components/lesson-framework/LessonSlideSection';
 import {
   DeductionFlowAnimation,
   EliminationGridAnimation,

@@ -71,7 +71,15 @@ const makeCompletedRun = (presetIds: string[]) => ({
   status: 'completed',
   result: {
     outputs: {
-      capture_results: presetIds.map((id) => ({ id, status: 'ok' })),
+      capture_results: presetIds.map((id) => ({
+        id,
+        title: id === 'game' ? 'Kangur Game Home' : 'Lessons Library',
+        status: 'ok',
+        resolvedUrl: `https://kangur.app/kangur/${id}?kangurCapture=social-batch`,
+        attemptCount: 1,
+        durationMs: 2400,
+        stage: 'captured',
+      })),
     },
   },
   artifacts: presetIds.map((id) => ({
@@ -122,6 +130,30 @@ describe('createKangurSocialImageAddonsBatch', () => {
     expect(result.requestedPresetCount).toBe(2);
     expect(result.usedPresetCount).toBe(2);
     expect(result.usedPresetIds).toEqual(['game', 'lessons']);
+    expect(result.captureResults).toEqual([
+      {
+        id: 'game',
+        title: 'Kangur Game Home',
+        status: 'ok',
+        reason: null,
+        resolvedUrl: 'https://kangur.app/kangur/game?kangurCapture=social-batch',
+        artifactName: 'game.png',
+        attemptCount: 1,
+        durationMs: 2400,
+        stage: 'captured',
+      },
+      {
+        id: 'lessons',
+        title: 'Lessons Library',
+        status: 'ok',
+        reason: null,
+        resolvedUrl: 'https://kangur.app/kangur/lessons?kangurCapture=social-batch',
+        artifactName: 'lessons.png',
+        attemptCount: 1,
+        durationMs: 2400,
+        stage: 'captured',
+      },
+    ]);
   });
 
   it('filters presets by presetIds when provided', async () => {
@@ -524,6 +556,30 @@ describe('createKangurSocialImageAddonsBatch', () => {
       id: 'lessons',
       reason: 'timeout',
     });
+    expect(result.captureResults).toEqual([
+      {
+        id: 'game',
+        title: 'Kangur Game Home',
+        status: 'ok',
+        reason: null,
+        resolvedUrl: 'https://kangur.app/kangur/game?kangurCapture=social-batch',
+        artifactName: 'game.png',
+        attemptCount: null,
+        durationMs: null,
+        stage: 'captured',
+      },
+      {
+        id: 'lessons',
+        title: 'Lessons Library',
+        status: 'failed',
+        reason: 'timeout',
+        resolvedUrl: 'https://kangur.app/kangur/lessons?kangurCapture=social-batch',
+        artifactName: null,
+        attemptCount: null,
+        durationMs: null,
+        stage: 'artifact_missing',
+      },
+    ]);
   });
 
   it('links previousAddonId when a previous addon exists for the preset', async () => {

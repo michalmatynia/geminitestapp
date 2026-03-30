@@ -1,4 +1,4 @@
-import type { LessonSlide } from '@/features/kangur/ui/components/LessonSlideSection';
+import type { LessonSlide } from '@/features/kangur/ui/components/lesson-framework/LessonSlideSection';
 import { ReactActivityToggleAnimation, ReactSuspenseFallbackAnimation } from '@/features/kangur/ui/components/LessonAnimations';
 import { KangurLessonCallout, KangurLessonCaption, KangurLessonLead, KangurLessonStack, KangurLessonVisual } from '@/features/kangur/ui/design/lesson-primitives';
 import { KANGUR_GRID_TIGHT_CLASSNAME, KANGUR_PANEL_GAP_CLASSNAME } from '@/features/kangur/ui/design/tokens';

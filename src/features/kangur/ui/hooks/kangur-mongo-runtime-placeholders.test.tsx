@@ -54,6 +54,35 @@ describe('Kangur Mongo runtime placeholders', () => {
     await expect(config.queryFn()).resolves.toEqual(lessonsPayload);
   });
 
+  it('serializes subset componentIds for the lessons request', async () => {
+    const lessonsPayload = createDefaultKangurLessons().filter(
+      (lesson) =>
+        lesson.subject === 'english' &&
+        ['english_adjectives', 'english_comparatives_superlatives'].includes(lesson.componentId)
+    );
+    apiGetMock.mockResolvedValueOnce(lessonsPayload);
+
+    const { useKangurLessons } = await import('./useKangurLessons');
+    renderHook(() =>
+      useKangurLessons({
+        subject: 'english',
+        enabledOnly: true,
+        componentIds: ['english_adjectives', 'english_comparatives_superlatives'],
+      })
+    );
+    const config = createListQueryV2Mock.mock.calls.at(-1)?.[0];
+
+    await expect(config.queryFn()).resolves.toEqual(lessonsPayload);
+    expect(apiGetMock).toHaveBeenCalledWith('/api/kangur/lessons', {
+      params: {
+        subject: 'english',
+        ageGroup: undefined,
+        componentIds: 'english_adjectives,english_comparatives_superlatives',
+        enabledOnly: true,
+      },
+    });
+  });
+
   it('configures lesson sections without built-in placeholder data', async () => {
     const sectionsPayload = createDefaultKangurSections().filter(
       (section) => section.subject === 'english' && section.ageGroup === 'ten_year_old'

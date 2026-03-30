@@ -15,6 +15,7 @@ const {
   createAddonMutateAsyncMock,
   batchCaptureMutateAsyncMock,
   startBatchCaptureMutateAsyncMock,
+  useBatchCaptureJobsQueryMock,
   fetchBatchCaptureJobMock,
   logKangurClientErrorMock,
   trackKangurClientEventMock,
@@ -26,6 +27,7 @@ const {
   createAddonMutateAsyncMock: vi.fn(),
   batchCaptureMutateAsyncMock: vi.fn(),
   startBatchCaptureMutateAsyncMock: vi.fn(),
+  useBatchCaptureJobsQueryMock: vi.fn(),
   fetchBatchCaptureJobMock: vi.fn(),
   logKangurClientErrorMock: vi.fn(),
   trackKangurClientEventMock: vi.fn(),
@@ -55,6 +57,8 @@ vi.mock('@/features/kangur/social/hooks/useKangurSocialImageAddons', () => ({
   useStartBatchCaptureKangurSocialImageAddons: () => ({
     mutateAsync: startBatchCaptureMutateAsyncMock,
   }),
+  useKangurSocialImageAddonsBatchJobs: (...args: unknown[]) =>
+    useBatchCaptureJobsQueryMock(...args),
   fetchKangurSocialImageAddonsBatchJob: (...args: unknown[]) => fetchBatchCaptureJobMock(...args),
 }));
 
@@ -103,6 +107,11 @@ describe('useSocialImageAddons', () => {
       error: null,
       createdAt: '2026-03-29T10:00:00.000Z',
       updatedAt: '2026-03-29T10:00:00.000Z',
+    });
+    useBatchCaptureJobsQueryMock.mockReturnValue({
+      data: [],
+      isLoading: false,
+      refetch: vi.fn(),
     });
     fetchBatchCaptureJobMock.mockResolvedValue(null);
     settingsStoreGetMock.mockReturnValue('default');
@@ -389,6 +398,112 @@ describe('useSocialImageAddons', () => {
     );
   });
 
+  it('rejects programmable capture when routes resolve to duplicate targets', async () => {
+    const { result } = renderHook(() =>
+      useSocialImageAddons({
+        addonForm: emptyAddonForm,
+        setAddonForm: vi.fn(),
+        batchCaptureBaseUrl: 'https://example.com',
+        batchCapturePresetIds: [],
+        batchCapturePresetLimit: null,
+        buildSocialContext: () => ({ postId: 'post-1' }),
+      })
+    );
+
+    await expect(
+      result.current.startBatchCapture({
+        baseUrl: 'https://example.com',
+        presetIds: [],
+        presetLimit: null,
+        playwrightScript: 'return input.captures;',
+        playwrightRoutes: [
+          {
+            id: 'route-1',
+            title: 'Pricing',
+            path: '/pricing',
+            description: '',
+            selector: '[data-pricing]',
+            waitForMs: 0,
+            waitForSelectorMs: 10000,
+          },
+          {
+            id: 'route-2',
+            title: 'Duplicate pricing',
+            path: 'https://example.com/pricing',
+            description: '',
+            selector: '[data-pricing]',
+            waitForMs: 250,
+            waitForSelectorMs: 10000,
+          },
+        ],
+      })
+    ).rejects.toThrow('This route duplicates Pricing on the same resolved target.');
+
+    expect(toastMock).toHaveBeenCalledWith(
+      'This route duplicates Pricing on the same resolved target.',
+      {
+        variant: 'warning',
+      }
+    );
+    expect(startBatchCaptureMutateAsyncMock).not.toHaveBeenCalled();
+  });
+
+  it('allows absolute programmable routes without a base URL', async () => {
+    const { result } = renderHook(() =>
+      useSocialImageAddons({
+        addonForm: emptyAddonForm,
+        setAddonForm: vi.fn(),
+        batchCaptureBaseUrl: '   ',
+        batchCapturePresetIds: [],
+        batchCapturePresetLimit: null,
+        buildSocialContext: (overrides?: Record<string, unknown>) => ({
+          postId: 'post-1',
+          ...overrides,
+        }),
+      })
+    );
+
+    await act(async () => {
+      await result.current.startBatchCapture({
+        baseUrl: '   ',
+        presetIds: [],
+        presetLimit: null,
+        playwrightPersonaId: 'persona-1',
+        playwrightScript: 'return input.captures;',
+        playwrightRoutes: [
+          {
+            id: 'route-1',
+            title: 'Pricing',
+            path: 'https://example.com/pricing',
+            description: '',
+            selector: '',
+            waitForMs: 0,
+            waitForSelectorMs: 10000,
+          },
+        ],
+      });
+    });
+
+    expect(startBatchCaptureMutateAsyncMock).toHaveBeenCalledWith({
+      presetIds: [],
+      presetLimit: null,
+      appearanceMode: 'default',
+      playwrightPersonaId: 'persona-1',
+      playwrightScript: 'return input.captures;',
+      playwrightRoutes: [
+        {
+          id: 'route-1',
+          title: 'Pricing',
+          path: 'https://example.com/pricing',
+          description: '',
+          selector: '',
+          waitForMs: 0,
+          waitForSelectorMs: 10000,
+        },
+      ],
+    });
+  });
+
   it('polls async batch capture jobs for the settings capture flow and stores the live result', async () => {
     fetchBatchCaptureJobMock.mockResolvedValueOnce({
       id: 'job-1',
@@ -461,5 +576,128 @@ describe('useSocialImageAddons', () => {
       'Captured 2 add-ons from the current batch. Failed: preset-3: Timeout.'
     );
     expect(result.current.batchCaptureErrorMessage).toBeNull();
+  });
+
+  it('retries only failed presets from a stored capture run', async () => {
+    const refetchMock = vi.fn();
+    useBatchCaptureJobsQueryMock.mockReturnValue({
+      data: [
+        {
+          id: 'job-history-1',
+          runId: 'run-history-1',
+          status: 'completed',
+          request: {
+            baseUrl: 'https://retry.example.com',
+            presetIds: ['game', 'lessons'],
+            presetLimit: null,
+            appearanceMode: 'default',
+            playwrightPersonaId: null,
+            playwrightScript: null,
+            playwrightRoutes: [],
+          },
+          progress: {
+            processedCount: 2,
+            completedCount: 1,
+            failureCount: 1,
+            remainingCount: 0,
+            totalCount: 2,
+          },
+          result: {
+            addons: [{ id: 'addon-1', title: 'Addon 1' }],
+            failures: [{ id: 'lessons', reason: 'Timeout' }],
+            usedPresetCount: 2,
+            usedPresetIds: ['game', 'lessons'],
+            runId: 'run-history-1',
+          },
+          error: null,
+          createdAt: '2026-03-29T10:00:00.000Z',
+          updatedAt: '2026-03-29T10:00:01.000Z',
+        },
+      ],
+      isLoading: false,
+      refetch: refetchMock,
+    });
+    fetchBatchCaptureJobMock.mockResolvedValueOnce({
+      id: 'job-1',
+      runId: 'run-1',
+      status: 'completed',
+      progress: {
+        processedCount: 1,
+        completedCount: 1,
+        failureCount: 0,
+        remainingCount: 0,
+        totalCount: 1,
+        message: 'Retry completed.',
+      },
+      result: {
+        addons: [{ id: 'addon-2', title: 'Addon 2' }],
+        failures: [],
+        usedPresetCount: 1,
+        usedPresetIds: ['preset-2'],
+        runId: 'run-1',
+      },
+      error: null,
+      createdAt: '2026-03-29T10:00:00.000Z',
+      updatedAt: '2026-03-29T10:00:05.000Z',
+    });
+
+    const { result } = renderHook(() =>
+      useSocialImageAddons({
+        addonForm: emptyAddonForm,
+        setAddonForm: vi.fn(),
+        batchCaptureBaseUrl: 'https://example.com',
+        batchCapturePresetIds: ['preset-1', 'preset-2'],
+        batchCapturePresetLimit: null,
+        buildSocialContext: (overrides?: Record<string, unknown>) => ({
+          postId: 'post-1',
+          ...overrides,
+        }),
+      })
+    );
+
+    await act(async () => {
+      await result.current.handleRetryFailedPresetBatchCaptureJob({
+        id: 'job-history-1',
+        runId: 'run-history-1',
+        status: 'completed',
+        request: {
+          baseUrl: 'https://retry.example.com',
+          presetIds: ['game', 'lessons'],
+          presetLimit: null,
+          appearanceMode: 'default',
+          playwrightPersonaId: null,
+          playwrightScript: null,
+          playwrightRoutes: [],
+        },
+        progress: {
+          processedCount: 2,
+          completedCount: 1,
+          failureCount: 1,
+          remainingCount: 0,
+          totalCount: 2,
+        },
+        result: {
+          addons: [{ id: 'addon-1', title: 'Addon 1' }],
+          failures: [{ id: 'lessons', reason: 'Timeout' }],
+          usedPresetCount: 2,
+          usedPresetIds: ['game', 'lessons'],
+          runId: 'run-history-1',
+        },
+        error: null,
+        createdAt: '2026-03-29T10:00:00.000Z',
+        updatedAt: '2026-03-29T10:00:01.000Z',
+      });
+    });
+
+    expect(startBatchCaptureMutateAsyncMock).toHaveBeenCalledWith({
+      baseUrl: 'https://retry.example.com',
+      presetIds: ['lessons'],
+      presetLimit: null,
+      appearanceMode: 'default',
+    });
+    expect(refetchMock).toHaveBeenCalled();
+    expect(result.current.batchCaptureMessage).toBe(
+      'Captured 1 add-on from the current batch.'
+    );
   });
 });

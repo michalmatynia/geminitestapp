@@ -4,12 +4,14 @@ import { NextRequest, NextResponse } from 'next/server';
 
 import {
   kangurSocialImageAddonsBatchJobSchema,
+  kangurSocialImageAddonsBatchJobsSchema,
   kangurSocialImageAddonsBatchPayloadSchema,
 } from '@/shared/contracts/kangur-social-image-addons';
 import { resolveKangurActor } from '@/features/kangur/services/kangur-actor';
 import { logKangurServerEvent } from '@/features/kangur/observability/server';
 import { createKangurSocialImageAddonsBatch } from '@/features/kangur/social/server/social-image-addons-batch';
 import {
+  listKangurSocialImageAddonsBatchJobs,
   readKangurSocialImageAddonsBatchJob,
   startKangurSocialImageAddonsBatchJob,
 } from '@/features/kangur/social/server/social-image-addons-batch-jobs';
@@ -25,6 +27,7 @@ import { optionalTrimmedQueryString } from '@/shared/lib/api/query-schema';
 
 export const querySchema = z.object({
   id: optionalTrimmedQueryString(z.string().trim().min(1)).optional(),
+  limit: z.coerce.number().int().positive().max(20).optional(),
 });
 
 const bodySchema = kangurSocialImageAddonsBatchPayloadSchema.extend({
@@ -92,7 +95,25 @@ export async function getKangurSocialImageAddonsBatchHandler(
 
   const query = querySchema.parse(ctx.query ?? {});
   if (!query.id) {
-    return NextResponse.json(null, { headers: { 'Cache-Control': 'no-store' } });
+    const jobs = await listKangurSocialImageAddonsBatchJobs({
+      limit: query.limit ?? 5,
+    });
+    const responseBody = kangurSocialImageAddonsBatchJobsSchema.parse(jobs);
+
+    void logKangurServerEvent({
+      source: 'kangur.social-image-addons.batch.list',
+      message: 'Kangur social image add-on batch history fetched',
+      request: req,
+      requestContext: ctx,
+      actor,
+      statusCode: 200,
+      context: {
+        count: responseBody.length,
+        limit: query.limit ?? 5,
+      },
+    });
+
+    return NextResponse.json(responseBody, { headers: { 'Cache-Control': 'no-store' } });
   }
 
   const job = await readKangurSocialImageAddonsBatchJob(query.id);

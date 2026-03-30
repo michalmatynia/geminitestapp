@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 
-import { KangurLessonDocumentRenderer } from '@/features/kangur/ui/components/KangurLessonDocumentRenderer';
+import { KangurLessonDocumentRenderer } from '@/features/kangur/ui/components/lesson-runtime/KangurLessonDocumentRenderer';
 import type { KangurLessonDocument } from '@/features/kangur/shared/contracts/kangur';
 import { Button } from '@/features/kangur/shared/ui';
 import { cn } from '@/features/kangur/shared/utils';

@@ -8,8 +8,8 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { KANGUR_STEP_PILL_CLASSNAME } from '@/features/kangur/ui/design/tokens';
 import {
   buildLessonHubSectionsWithProgress,
-} from '@/features/kangur/ui/components/lesson-utils';
-import type { HubSection } from '@/features/kangur/ui/components/LessonHub';
+} from '@/features/kangur/ui/components/lesson-framework/lesson-utils';
+import type { HubSection } from '@/features/kangur/ui/components/lesson-framework/LessonHub';
 import type { LessonHubSectionProgress } from '@/features/kangur/ui/hooks/useLessonHubProgress';
 import { useKangurCoarsePointer } from '@/features/kangur/ui/hooks/useKangurCoarsePointer';
 import { useKangurLessonGameSections } from '@/features/kangur/ui/hooks/useKangurLessonGameSections';

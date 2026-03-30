@@ -386,4 +386,161 @@ describe('product-studio-audit-service', () => {
       }),
     ]);
   });
+
+  it('creates defaults for missing optional fields and uses the current timestamp when createdAt is blank', async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-03-30T00:00:00.000Z'));
+
+    await createProductStudioRunAudit({
+      productId: 'prod-3',
+      imageSlotIndex: 3.9,
+      projectId: 'project-3',
+      createdAt: '   ',
+      status: 'failed',
+      requestedSequenceMode: 'studio_native_sequencer_prior_generation',
+      resolvedSequenceMode: 'studio_native_sequencer_prior_generation',
+      executionRoute: 'studio_native_sequencer_prior_generation',
+      runKind: 'sequence',
+      runId: '  ',
+      sequenceRunId: '  ',
+      dispatchMode: 'queued',
+      fallbackReason: '   ',
+      warnings: [' keep ', 42 as never, ''],
+      settingsScope: 'project',
+      settingsKey: ' project-scope ',
+      projectSettingsKey: ' project-key ',
+      settingsScopeValid: undefined as unknown as boolean,
+      sequenceSnapshotHash: '   ',
+      stepOrderUsed: Array.from({ length: 60 }, (_, index) => ` step-${index} `),
+      resolvedCropRect: { x: 0.12345678, y: 0.98765432, width: 0.44444444, height: 0.55555555 },
+      sourceImageSize: { width: 800.9, height: 600.1 },
+      timings: {
+        importMs: undefined,
+        sourceSlotUpsertMs: undefined,
+        routeDecisionMs: undefined,
+        dispatchMs: undefined,
+        totalMs: 9.9,
+      },
+      errorMessage: '   ',
+    });
+
+    expect(insertOneMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        createdAt: '2026-03-30T00:00:00.000Z',
+        imageSlotIndex: 3,
+        runId: '  ',
+        sequenceRunId: '  ',
+        fallbackReason: null,
+        warnings: ['keep'],
+        settingsScope: 'project',
+        settingsKey: 'project-scope',
+        projectSettingsKey: 'project-key',
+        settingsScopeValid: true,
+        sequenceSnapshotHash: null,
+        stepOrderUsed: Array.from({ length: 50 }, (_, index) => `step-${index}`),
+        resolvedCropRect: {
+          x: 0.123457,
+          y: 0.987654,
+          width: 0.444444,
+          height: 0.555556,
+        },
+        sourceImageSize: {
+          width: 800,
+          height: 600,
+        },
+        timings: {
+          importMs: null,
+          sourceSlotUpsertMs: null,
+          routeDecisionMs: null,
+          dispatchMs: null,
+          totalMs: 9,
+        },
+        errorMessage: null,
+      })
+    );
+  });
+
+  it('applies default list limits and normalizes optional fields to safe null-ish values', async () => {
+    toArrayMock.mockResolvedValue([
+      {
+        _id: 'mongo-id-3',
+        productId: 'prod-3',
+        imageSlotIndex: Number.NaN,
+        projectId: 'project-3',
+        createdAt: '2026-03-29T00:00:00.000Z',
+        status: 'completed',
+        requestedSequenceMode: 'studio_native_sequencer_prior_generation',
+        resolvedSequenceMode: 'studio_native_sequencer_prior_generation',
+        executionRoute: 'studio_native_sequencer_prior_generation',
+        runKind: 'generation',
+        runId: '  ',
+        sequenceRunId: '  ',
+        dispatchMode: 'invalid',
+        fallbackReason: ' ',
+        warnings: [' ok ', '', null],
+        settingsScope: 'global',
+        settingsKey: '  ',
+        projectSettingsKey: '  ',
+        settingsScopeValid: false,
+        sequenceSnapshotHash: '  ',
+        stepOrderUsed: ['  ', 'first'],
+        resolvedCropRect: ['invalid'],
+        sourceImageSize: { width: 'bad', height: 20 },
+        timings: {
+          importMs: Number.NaN,
+          sourceSlotUpsertMs: 3.2,
+          routeDecisionMs: undefined,
+          dispatchMs: -2,
+          totalMs: 4.7,
+        },
+        errorMessage: ' ',
+      },
+    ]);
+
+    const result = await listProductStudioRunAudit({
+      productId: ' prod-3 ',
+      imageSlotIndex: Number.NaN,
+      limit: undefined,
+    });
+
+    expect(findMock).toHaveBeenCalledWith({
+      productId: 'prod-3',
+    });
+    expect(limitMock).toHaveBeenCalledWith(30);
+    expect(result).toEqual([
+      {
+        id: 'mongo-id-3',
+        productId: 'prod-3',
+        imageSlotIndex: 0,
+        projectId: 'project-3',
+        createdAt: '2026-03-29T00:00:00.000Z',
+        status: 'completed',
+        requestedSequenceMode: 'studio_native_sequencer_prior_generation',
+        resolvedSequenceMode: 'studio_native_sequencer_prior_generation',
+        executionRoute: 'studio_native_sequencer_prior_generation',
+        runKind: 'generation',
+        runId: null,
+        sequenceRunId: null,
+        dispatchMode: null,
+        fallbackReason: null,
+        warnings: ['ok'],
+        settingsScope: 'global',
+        settingsKey: null,
+        projectSettingsKey: null,
+        settingsScopeValid: false,
+        sequenceSnapshotHash: null,
+        stepOrderUsed: ['first'],
+        resolvedCropRect: null,
+        sourceImageSize: null,
+        timings: {
+          importMs: null,
+          sourceSlotUpsertMs: 3,
+          routeDecisionMs: null,
+          dispatchMs: 0,
+          totalMs: 4,
+        },
+        errorMessage: null,
+      },
+    ]);
+  });
 });

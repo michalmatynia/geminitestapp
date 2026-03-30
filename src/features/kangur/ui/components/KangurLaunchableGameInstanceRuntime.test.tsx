@@ -12,10 +12,14 @@ const {
   useKangurGameInstancesMock,
   useKangurGameContentSetsMock,
   kangurLaunchableGameRuntimeMock,
+  kangurLessonActivityInstanceRuntimeMock,
+  trackKangurClientEventMock,
 } = vi.hoisted(() => ({
   useKangurGameInstancesMock: vi.fn(),
   useKangurGameContentSetsMock: vi.fn(),
   kangurLaunchableGameRuntimeMock: vi.fn(),
+  kangurLessonActivityInstanceRuntimeMock: vi.fn(),
+  trackKangurClientEventMock: vi.fn(),
 }));
 
 vi.mock('@/features/kangur/ui/hooks/useKangurGameInstances', () => ({
@@ -26,11 +30,23 @@ vi.mock('@/features/kangur/ui/hooks/useKangurGameContentSets', () => ({
   useKangurGameContentSets: (...args: unknown[]) => useKangurGameContentSetsMock(...args),
 }));
 
+vi.mock('@/features/kangur/observability/client', () => ({
+  trackKangurClientEvent: (...args: unknown[]) => trackKangurClientEventMock(...args),
+}));
+
 vi.mock('@/features/kangur/ui/components/KangurLaunchableGameRuntime', () => ({
   __esModule: true,
   default: (props: { onFinish: () => void; runtime: KangurLaunchableGameRuntimeSpec }) => {
     kangurLaunchableGameRuntimeMock(props);
     return <div data-testid='kangur-launchable-game-runtime' />;
+  },
+}));
+
+vi.mock('@/features/kangur/ui/components/KangurLessonActivityInstanceRuntime', () => ({
+  __esModule: true,
+  default: (props: { gameId: string; instanceId: string; onFinish: () => void }) => {
+    kangurLessonActivityInstanceRuntimeMock(props);
+    return <div data-testid='kangur-lesson-activity-instance-runtime' />;
   },
 }));
 
@@ -87,6 +103,18 @@ describe('KangurLaunchableGameInstanceRuntime', () => {
             clockSection: 'hours',
           }),
         }),
+      })
+    );
+    expect(trackKangurClientEventMock).toHaveBeenCalledWith(
+      'kangur_launchable_game_viewed',
+      expect.objectContaining({
+        gameId: 'clock_training',
+        instanceId: 'clock_training:instance:clock-hours',
+        runtimeScreen: 'clock_quiz',
+        rendererId: 'clock_training_game',
+        engineId: 'clock-dial-engine',
+        instanceSource: 'built_in',
+        contentSetSource: 'built_in',
       })
     );
   });
@@ -277,5 +305,61 @@ describe('KangurLaunchableGameInstanceRuntime', () => {
       screen.getByTestId('kangur-launchable-game-instance-runtime-missing')
     ).toBeInTheDocument();
     expect(kangurLaunchableGameRuntimeMock).not.toHaveBeenCalled();
+  });
+
+  it('tracks launchable finish events before delegating to the outer finish handler', () => {
+    const onFinish = vi.fn();
+
+    render(
+      <KangurLaunchableGameInstanceRuntime
+        gameId='clock_training'
+        instanceId='clock_training:instance:clock-hours'
+        onFinish={onFinish}
+      />
+    );
+
+    const runtimeProps = kangurLaunchableGameRuntimeMock.mock.calls[0]?.[0] as
+      | {
+          onFinish: () => void;
+          runtime: KangurLaunchableGameRuntimeSpec;
+        }
+      | undefined;
+
+    expect(runtimeProps).toBeDefined();
+    runtimeProps?.onFinish();
+
+    expect(trackKangurClientEventMock).toHaveBeenCalledWith(
+      'kangur_launchable_game_finished',
+      expect.objectContaining({
+        gameId: 'clock_training',
+        instanceId: 'clock_training:instance:clock-hours',
+        runtimeScreen: 'clock_quiz',
+        rendererId: 'clock_training_game',
+      })
+    );
+    expect(onFinish).toHaveBeenCalledTimes(1);
+  });
+
+  it('uses the lesson activity runtime for lesson-inline games when preferred', () => {
+    render(
+      <KangurLaunchableGameInstanceRuntime
+        gameId='clock_training'
+        instanceId='clock_training:instance:clock-hours'
+        onFinish={vi.fn()}
+        preferLessonActivityRuntime
+      />
+    );
+
+    expect(
+      screen.getByTestId('kangur-lesson-activity-instance-runtime')
+    ).toBeInTheDocument();
+    expect(kangurLessonActivityInstanceRuntimeMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        gameId: 'clock_training',
+        instanceId: 'clock_training:instance:clock-hours',
+      })
+    );
+    expect(kangurLaunchableGameRuntimeMock).not.toHaveBeenCalled();
+    expect(trackKangurClientEventMock).not.toHaveBeenCalled();
   });
 });

@@ -26,7 +26,7 @@ vi.mock('@/features/kangur/ui/components/KangurHeroMilestoneSummary', () => ({
   ),
 }));
 
-vi.mock('@/features/kangur/ui/components/KangurAssignmentSpotlight', () => ({
+vi.mock('@/features/kangur/ui/components/assignments/KangurAssignmentSpotlight', () => ({
   default: ({ basePath }: { basePath: string }) => (
     <div data-testid='kangur-assignment-spotlight-shell'>spotlight:{basePath}</div>
   ),

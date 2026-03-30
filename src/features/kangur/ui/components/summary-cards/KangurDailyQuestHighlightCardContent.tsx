@@ -1,0 +1,190 @@
+import type { ReactNode } from 'react';
+import React from 'react';
+
+import {
+  KangurCardDescription,
+  KangurCardTitle,
+  KangurPanelRow,
+  KangurStatusChip,
+} from '@/features/kangur/ui/design/primitives';
+import { useKangurCoarsePointer } from '@/features/kangur/ui/hooks/useKangurCoarsePointer';
+import { KANGUR_WRAP_CENTER_ROW_CLASSNAME, type KangurAccent } from '@/features/kangur/ui/design/tokens';
+import { cn } from '@/features/kangur/shared/utils';
+
+// ── Daily Quest Highlight Card Sub-components ────────────────────────────────
+
+export function KangurDailyQuestHighlightChips({
+  questLabel,
+  questLabelAccent = 'violet',
+  progressLabel,
+  progressAccent,
+  rewardLabel,
+  rewardAccent,
+  chipLabelStyle = 'caps',
+  className,
+}: {
+  questLabel: ReactNode;
+  questLabelAccent?: KangurAccent;
+  progressLabel: ReactNode;
+  progressAccent: KangurAccent;
+  rewardLabel: ReactNode;
+  rewardAccent: KangurAccent;
+  chipLabelStyle?: 'caps' | 'compact';
+  className?: string;
+}): React.JSX.Element {
+  const containerClassName = cn(KANGUR_WRAP_CENTER_ROW_CLASSNAME, className);
+  const questChipProps = {
+    accent: questLabelAccent,
+    labelStyle: chipLabelStyle,
+  };
+  const progressChipProps = {
+    accent: progressAccent,
+    labelStyle: chipLabelStyle,
+  };
+  const rewardChipProps = {
+    accent: rewardAccent,
+    labelStyle: chipLabelStyle,
+  };
+
+  return (
+    <div className={containerClassName}>
+      <KangurStatusChip {...questChipProps}>
+        {questLabel}
+      </KangurStatusChip>
+      <KangurStatusChip {...progressChipProps}>
+        {progressLabel}
+      </KangurStatusChip>
+      <KangurStatusChip {...rewardChipProps}>
+        {rewardLabel}
+      </KangurStatusChip>
+    </div>
+  );
+}
+
+export function KangurDailyQuestHighlightBody({
+  title,
+  titleClassName,
+  description,
+  descriptionClassName,
+  descriptionRelaxed,
+  descriptionSize = 'xs',
+  footer,
+  className,
+}: {
+  title: ReactNode;
+  titleClassName?: string;
+  description: ReactNode;
+  descriptionClassName?: string;
+  descriptionRelaxed?: boolean;
+  descriptionSize?: 'xs' | 'sm' | 'md';
+  footer?: ReactNode;
+  className?: string;
+}): React.JSX.Element {
+  const containerClassName = cn('space-y-3', className);
+  const titleProps = {
+    as: 'p' as const,
+    className: titleClassName,
+  };
+  const descriptionProps = {
+    as: 'p' as const,
+    className: cn('leading-5', descriptionClassName),
+    relaxed: descriptionRelaxed,
+    size: descriptionSize,
+  };
+
+  return (
+    <div className={containerClassName}>
+      <KangurCardTitle {...titleProps}>
+        {title}
+      </KangurCardTitle>
+      <KangurCardDescription {...descriptionProps}>
+        {description}
+      </KangurCardDescription>
+      {footer}
+    </div>
+  );
+}
+
+// ── Main Component ───────────────────────────────────────────────────────────
+
+type KangurDailyQuestHighlightCardContentProps = {
+  action?: ReactNode;
+  chipLabelStyle?: 'caps' | 'compact';
+  className?: string;
+  description: ReactNode;
+  descriptionClassName?: string;
+  descriptionRelaxed?: boolean;
+  descriptionSize?: 'xs' | 'sm' | 'md';
+  footer?: ReactNode;
+  progressAccent: KangurAccent;
+  progressLabel: ReactNode;
+  questLabel: ReactNode;
+  questLabelAccent?: KangurAccent;
+  rewardAccent: KangurAccent;
+  rewardLabel: ReactNode;
+  title: ReactNode;
+  titleClassName?: string;
+};
+
+export function KangurDailyQuestHighlightCardContent(
+  props: KangurDailyQuestHighlightCardContentProps
+): React.JSX.Element {
+  const isCoarsePointer = useKangurCoarsePointer();
+  const {
+    action,
+    chipLabelStyle = 'caps',
+    className,
+    description,
+    descriptionClassName,
+    descriptionRelaxed,
+    descriptionSize = 'xs',
+    footer,
+    progressAccent,
+    progressLabel,
+    questLabel,
+    questLabelAccent = 'violet',
+    rewardAccent,
+    rewardLabel,
+    title,
+    titleClassName,
+  } = props;
+  const resolvedAction =
+    React.isValidElement<{ className?: string }>(action)
+      ? React.cloneElement(action, {
+          className: cn(
+            action.props.className,
+            isCoarsePointer &&
+              'w-full min-h-11 px-4 touch-manipulation select-none active:scale-[0.97] sm:w-auto'
+          ),
+        })
+      : action;
+
+  return (
+    <KangurPanelRow className={cn('sm:items-start sm:justify-between', className)}>
+      <div className='min-w-0'>
+        <KangurDailyQuestHighlightChips
+          chipLabelStyle={chipLabelStyle}
+          progressAccent={progressAccent}
+          progressLabel={progressLabel}
+          questLabel={questLabel}
+          questLabelAccent={questLabelAccent}
+          rewardAccent={rewardAccent}
+          rewardLabel={rewardLabel}
+        />
+        <KangurDailyQuestHighlightBody
+          className='mt-3'
+          description={description}
+          descriptionClassName={descriptionClassName}
+          descriptionRelaxed={descriptionRelaxed}
+          descriptionSize={descriptionSize}
+          footer={footer}
+          title={title}
+          titleClassName={titleClassName}
+        />
+      </div>
+      {resolvedAction}
+    </KangurPanelRow>
+  );
+}
+
+export default KangurDailyQuestHighlightCardContent;

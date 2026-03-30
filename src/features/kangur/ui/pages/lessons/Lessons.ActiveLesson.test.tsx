@@ -7,8 +7,8 @@ import { act, fireEvent, render, screen } from '@/__tests__/test-utils';
 import { render as rtlRender } from '@testing-library/react';
 import { NextIntlClientProvider } from 'next-intl';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import LessonHub from '@/features/kangur/ui/components/LessonHub';
-import LessonActivityShell from '@/features/kangur/ui/components/LessonActivityShell';
+import LessonHub from '@/features/kangur/ui/components/lesson-framework/LessonHub';
+import LessonActivityShell from '@/features/kangur/ui/components/lesson-runtime/LessonActivityShell';
 import { useOptionalKangurLessonPrint } from '@/features/kangur/ui/context/KangurLessonPrintContext';
 import {
   LESSONS_ACTIVE_HUB_COLUMN_CLASSNAME,
@@ -53,7 +53,7 @@ vi.mock('@/features/kangur/lessons/lesson-ui-registry', () => ({
   LESSON_COMPONENTS: lessonComponentsMock,
 }));
 
-vi.mock('@/features/kangur/ui/components/KangurActiveLessonHeader', () => ({
+vi.mock('@/features/kangur/ui/components/lesson-runtime/KangurActiveLessonHeader', () => ({
   KangurActiveLessonHeader: ({
     onBack,
     headerTestId = 'mock-active-lesson-header',
@@ -69,7 +69,7 @@ vi.mock('@/features/kangur/ui/components/KangurActiveLessonHeader', () => ({
   ),
 }));
 
-vi.mock('@/features/kangur/ui/components/KangurLessonDocumentRenderer', () => ({
+vi.mock('@/features/kangur/ui/components/lesson-runtime/KangurLessonDocumentRenderer', () => ({
   KangurLessonDocumentRenderer: () => {
     const backButtonLabel = lessonDocumentBackButtonLabelMock();
     const customContent = lessonDocumentRendererContentMock();
@@ -95,7 +95,7 @@ vi.mock('@/features/kangur/ui/components/KangurLessonDocumentRenderer', () => ({
   },
 }));
 
-vi.mock('@/features/kangur/ui/components/KangurLessonNavigationWidget', () => ({
+vi.mock('@/features/kangur/ui/components/lesson-runtime/KangurLessonNavigationWidget', () => ({
   KangurLessonNavigationWidget: () => <div data-testid='mock-lesson-navigation' />,
 }));
 

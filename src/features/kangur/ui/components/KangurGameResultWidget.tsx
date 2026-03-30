@@ -2,7 +2,7 @@ import type { ComponentProps, ReactNode } from 'react';
 import { useLocale, useTranslations } from 'next-intl';
 
 import KangurGameHomeMomentumWidget from '@/features/kangur/ui/components/KangurGameHomeMomentumWidget';
-import KangurPracticeAssignmentBanner from '@/features/kangur/ui/components/KangurPracticeAssignmentBanner';
+import KangurPracticeAssignmentBanner from '@/features/kangur/ui/components/assignments/KangurPracticeAssignmentBanner';
 import KangurRecommendationCard from '@/features/kangur/ui/components/KangurRecommendationCard';
 import KangurRewardBreakdownChips from '@/features/kangur/ui/components/KangurRewardBreakdownChips';
 import ResultScreen from '@/features/kangur/ui/components/ResultScreen';

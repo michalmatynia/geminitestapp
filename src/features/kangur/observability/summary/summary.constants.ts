@@ -8,6 +8,8 @@ export const KANGUR_ANALYTICS_EVENT_NAMES = [
   'kangur_learner_signin_succeeded',
   'kangur_learner_signin_failed',
   'kangur_game_completed',
+  'kangur_launchable_game_viewed',
+  'kangur_launchable_game_finished',
   'kangur_progress_hydrated',
   'kangur_progress_hydration_failed',
   'kangur_progress_sync_failed',

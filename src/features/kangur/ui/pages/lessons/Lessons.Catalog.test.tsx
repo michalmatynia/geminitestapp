@@ -89,14 +89,14 @@ vi.mock('@/features/kangur/ui/hooks/useKangurCoarsePointer', () => ({
   useKangurCoarsePointer: () => useKangurCoarsePointerMock(),
 }));
 
-vi.mock('@/features/kangur/ui/components/KangurResolvedLessonLibraryCard', () => ({
+vi.mock('@/features/kangur/ui/components/lesson-library/KangurResolvedLessonLibraryCard', () => ({
   KangurResolvedLessonLibraryCard: (props: { lesson: { id: string; title: string } }) => {
     lessonCardPropsMock(props);
     return <div data-testid={`mock-lesson-card-${props.lesson.id}`}>{props.lesson.title}</div>;
   },
 }));
 
-vi.mock('@/features/kangur/ui/components/KangurResolvedLessonGroupAccordion', () => ({
+vi.mock('@/features/kangur/ui/components/lesson-library/KangurResolvedLessonGroupAccordion', () => ({
   KangurResolvedLessonGroupAccordion: ({
     label,
     typeLabel,
@@ -122,7 +122,7 @@ vi.mock('@/features/kangur/ui/components/KangurResolvedLessonGroupAccordion', ()
   ),
 }));
 
-vi.mock('@/features/kangur/ui/components/KangurResolvedPageIntroCard', () => ({
+vi.mock('@/features/kangur/ui/components/lesson-library/KangurResolvedPageIntroCard', () => ({
   KangurResolvedPageIntroCard: ({
     title,
     description,
@@ -318,9 +318,9 @@ describe('LessonsCatalog', () => {
 
     fireEvent.click(screen.getByRole('button', { name: /skala/i }));
 
-    expect(screen.getByTestId('lesson-library-motion-lesson-music-diatonic-scale')).toHaveClass(
-      'w-full'
-    );
+    expect(
+      screen.getByTestId('lessons-page-subsection-label-music_diatonic_scale')
+    ).toBeInTheDocument();
     expect(screen.queryByText('Grupa')).not.toBeInTheDocument();
     expect(document.querySelector('.kangur-lesson-group-chevron')).not.toBeInTheDocument();
     expect(screen.getByTestId('lessons-page-group-icon-music_scale')).toHaveTextContent('🧩');
@@ -328,12 +328,19 @@ describe('LessonsCatalog', () => {
       '🎵'
     );
     expect(
-      screen.queryByTestId('lessons-page-subsection-label-music_diatonic_scale')
-    ).not.toBeInTheDocument();
-    expect(
       screen.queryByTestId('lessons-page-subsection-icon-music_diatonic_scale')
     ).not.toBeInTheDocument();
     expect(screen.queryByText('Podgrupa')).not.toBeInTheDocument();
+
+    const subsectionButton = screen
+      .getByTestId('lessons-page-subsection-label-music_diatonic_scale')
+      .closest('button');
+    expect(subsectionButton).not.toBeNull();
+    fireEvent.click(subsectionButton as HTMLButtonElement);
+
+    expect(screen.getByTestId('lesson-library-motion-lesson-music-diatonic-scale')).toHaveClass(
+      'w-full'
+    );
 
     act(() => {
       vi.runAllTimers();
@@ -437,18 +444,40 @@ describe('LessonsCatalog', () => {
 
     fireEvent.click(screen.getByRole('button', { name: /gramatyka/i }));
 
-    expect(ensureLessonsCatalogLoaded).toHaveBeenCalledWith([
-      'english_adverbs',
+    expect(ensureLessonsCatalogLoaded).not.toHaveBeenCalled();
+    expect(screen.queryByTestId('mock-lesson-card-lesson-english-adverbs')).not.toBeInTheDocument();
+    expect(
+      screen.queryByTestId('mock-lesson-card-lesson-english-adverbs-frequency')
+    ).not.toBeInTheDocument();
+
+    const adverbsSubsectionButton = screen
+      .getByTestId('lessons-page-subsection-label-english_grammar_adverbs')
+      .closest('button');
+    expect(adverbsSubsectionButton).not.toBeNull();
+    fireEvent.click(adverbsSubsectionButton as HTMLButtonElement);
+
+    expect(ensureLessonsCatalogLoaded).toHaveBeenNthCalledWith(1, ['english_adverbs']);
+    expect(screen.getByTestId('mock-lesson-card-lesson-english-adverbs')).toBeInTheDocument();
+    expect(
+      screen.queryByTestId('mock-lesson-card-lesson-english-adverbs-frequency')
+    ).not.toBeInTheDocument();
+
+    const frequencySubsectionButton = screen
+      .getByTestId('lessons-page-subsection-label-english_grammar_adverbs_frequency')
+      .closest('button');
+    expect(frequencySubsectionButton).not.toBeNull();
+    fireEvent.click(frequencySubsectionButton as HTMLButtonElement);
+
+    expect(ensureLessonsCatalogLoaded).toHaveBeenNthCalledWith(2, [
       'english_adverbs_frequency',
     ]);
     expect(screen.getByTestId('mock-lesson-card-lesson-english-adverbs')).toBeInTheDocument();
     expect(
       screen.getByTestId('mock-lesson-card-lesson-english-adverbs-frequency')
     ).toBeInTheDocument();
-    expect(lessonCardPropsMock.mock.calls.map(([props]) => props.lesson.id)).toEqual([
-      'lesson-english-adverbs',
-      'lesson-english-adverbs-frequency',
-    ]);
+    expect(
+      new Set(lessonCardPropsMock.mock.calls.map(([props]) => props.lesson.id))
+    ).toEqual(new Set(['lesson-english-adverbs', 'lesson-english-adverbs-frequency']));
   });
 
   it('renders the comparatives lesson inside the grammar group next to the other English grammar lessons', () => {
@@ -533,6 +562,12 @@ describe('LessonsCatalog', () => {
     ).not.toBeInTheDocument();
 
     fireEvent.click(screen.getByRole('button', { name: /gramatyka/i }));
+
+    const subsectionButton = screen
+      .getByTestId('lessons-page-subsection-label-english_grammar_comparatives_superlatives')
+      .closest('button');
+    expect(subsectionButton).not.toBeNull();
+    fireEvent.click(subsectionButton as HTMLButtonElement);
 
     expect(screen.getByTestId('mock-lesson-card-lesson-english-comparatives')).toBeInTheDocument();
     expect(lessonCardPropsMock).toHaveBeenCalledWith(

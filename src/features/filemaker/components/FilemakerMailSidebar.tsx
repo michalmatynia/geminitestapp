@@ -71,6 +71,7 @@ type FilemakerMailSidebarProps = {
   recentMailboxFilter?: string | null;
   recentUnreadOnly?: boolean;
   recentQuery?: string | null;
+  searchContextAccountId?: string | null;
   searchQuery?: string | null;
   refreshKey?: number;
   onRecentMailboxFilterChange?: (value: string) => void;
@@ -94,6 +95,7 @@ export function FilemakerMailSidebar({
   recentMailboxFilter = null,
   recentUnreadOnly = false,
   recentQuery = null,
+  searchContextAccountId = null,
   searchQuery = null,
   refreshKey = 0,
   onRecentMailboxFilterChange,
@@ -121,6 +123,7 @@ export function FilemakerMailSidebar({
   );
   const isRecentContext = selectedPanel === 'recent' || originPanel === 'recent';
   const isSearchContext = selectedPanel === 'search' || originPanel === 'search';
+  const effectiveSearchAccountId = isSearchContext ? searchContextAccountId : selectedAccountId;
   const hasActiveSearchQuery = Boolean(searchQuery?.trim());
   const showRecentControls = Boolean(selectedAccountId && selectedPanel === 'recent');
   const errorAccountCount = useMemo(
@@ -133,14 +136,16 @@ export function FilemakerMailSidebar({
   );
   const visibleRecentThreads = useMemo(
     () =>
-      recentThreads.filter((thread) =>
-        matchesRecentThreadFilters(thread, {
-          recentMailboxFilter,
-          recentUnreadOnly,
-          recentQuery,
-        })
-      ),
-    [recentMailboxFilter, recentQuery, recentThreads, recentUnreadOnly]
+      isRecentContext
+        ? recentThreads.filter((thread) =>
+            matchesRecentThreadFilters(thread, {
+              recentMailboxFilter,
+              recentUnreadOnly,
+              recentQuery,
+            })
+          )
+        : recentThreads,
+    [isRecentContext, recentMailboxFilter, recentQuery, recentThreads, recentUnreadOnly]
   );
   const recentMailboxOptions = useMemo(
     () => {
@@ -181,6 +186,9 @@ export function FilemakerMailSidebar({
     if (selectedPanel === 'attention') {
       return toFilemakerMailAttentionNodeId();
     }
+    if (selectedAccountId && selectedPanel === 'compose') {
+      return toFilemakerMailAccountComposeNodeId(selectedAccountId);
+    }
     if (
       selectedAccountId &&
       selectedThreadId &&
@@ -212,9 +220,6 @@ export function FilemakerMailSidebar({
           node.metadata?.['mailboxPath'] === selectedMailboxPath
       );
       if (match) return match.id;
-    }
-    if (selectedAccountId && selectedPanel === 'compose') {
-      return toFilemakerMailAccountComposeNodeId(selectedAccountId);
     }
     if (selectedAccountId && syncingAccountId === selectedAccountId) {
       return toFilemakerMailAccountSyncNodeId(selectedAccountId);
@@ -481,7 +486,7 @@ export function FilemakerMailSidebar({
               router.push(
                 buildMailSelectionHref({
                   panel: 'search',
-                  accountId: selectedAccountId,
+                  accountId: effectiveSearchAccountId,
                   searchQuery,
                 })
               );
@@ -538,6 +543,7 @@ export function FilemakerMailSidebar({
                   recentMailboxFilter,
                   recentUnreadOnly,
                   recentQuery,
+                  searchAccountId: isSearchContext && !effectiveSearchAccountId ? 'all' : null,
                   searchQuery,
                 })
               );
@@ -655,6 +661,7 @@ export function FilemakerMailSidebar({
                   recentMailboxFilter,
                   recentUnreadOnly,
                   recentQuery,
+                  searchAccountId: isSearchContext && !effectiveSearchAccountId ? 'all' : null,
                   searchQuery,
                 })
               );
@@ -763,6 +770,7 @@ export function FilemakerMailSidebar({
       recentMailboxFilter,
       recentUnreadOnly,
       recentQuery,
+      effectiveSearchAccountId,
       originPanel,
       searchQuery,
       router,
@@ -836,6 +844,7 @@ export function FilemakerMailSidebar({
                       recentMailboxFilter,
                       recentUnreadOnly,
                       recentQuery,
+                      searchAccountId: isSearchContext && !effectiveSearchAccountId ? 'all' : null,
                       searchQuery,
                     })
                   );
@@ -870,7 +879,7 @@ export function FilemakerMailSidebar({
                   onClick={(): void => {
                     router.push(
                       buildMailSelectionHref({
-                        accountId: selectedAccountId,
+                        accountId: effectiveSearchAccountId,
                         panel: 'search',
                       })
                     );
@@ -941,13 +950,13 @@ export function FilemakerMailSidebar({
               {selectedAccountId ? (
                 <Badge variant='outline'>Recent: {Math.min(visibleRecentThreads.length, 5)}</Badge>
               ) : null}
-              {selectedAccountId && recentMailboxFilter ? (
+              {isRecentContext && selectedAccountId && recentMailboxFilter ? (
                 <Badge variant='outline'>Recent Mailbox: {recentMailboxFilter}</Badge>
               ) : null}
-              {selectedAccountId && recentUnreadOnly ? (
+              {isRecentContext && selectedAccountId && recentUnreadOnly ? (
                 <Badge variant='outline'>Recent Unread</Badge>
               ) : null}
-              {selectedAccountId && recentQuery?.trim() ? (
+              {isRecentContext && selectedAccountId && recentQuery?.trim() ? (
                 <Badge variant='outline'>Recent Search: {recentQuery.trim()}</Badge>
               ) : null}
               {isSearchContext && hasActiveSearchQuery ? (

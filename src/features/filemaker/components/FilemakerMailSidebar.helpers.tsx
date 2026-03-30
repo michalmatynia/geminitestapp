@@ -147,6 +147,7 @@ const buildFilemakerMailComposeHref = (input: {
   recentMailboxFilter?: string | null;
   recentUnreadOnly?: boolean;
   recentQuery?: string | null;
+  searchAccountId?: string | null;
   searchQuery?: string | null;
 }): string => {
   const search = new URLSearchParams();
@@ -155,10 +156,10 @@ const buildFilemakerMailComposeHref = (input: {
   if (input.mailboxPath) search.set('mailboxPath', input.mailboxPath);
   if (input.accountId && input.originPanel === 'recent') search.set('panel', 'recent');
   if (input.originPanel === 'search') search.set('panel', 'search');
-  if (input.accountId && input.recentMailboxFilter) {
+  if (input.accountId && input.originPanel === 'recent' && input.recentMailboxFilter) {
     search.set('recentMailbox', input.recentMailboxFilter);
   }
-  if (input.accountId && input.recentUnreadOnly) {
+  if (input.accountId && input.originPanel === 'recent' && input.recentUnreadOnly) {
     search.set('recentUnread', '1');
   }
   if (input.accountId && input.originPanel === 'recent' && input.recentQuery) {
@@ -166,6 +167,9 @@ const buildFilemakerMailComposeHref = (input: {
   }
   if (input.originPanel === 'search' && input.searchQuery) {
     search.set('searchQuery', input.searchQuery);
+  }
+  if (input.originPanel === 'search' && input.searchAccountId === 'all') {
+    search.set('searchAccountId', 'all');
   }
   const nextSearch = search.toString();
   return nextSearch ? `/admin/filemaker/mail/compose?${nextSearch}` : '/admin/filemaker/mail/compose';
@@ -179,6 +183,7 @@ const buildFilemakerMailThreadHref = (input: {
   recentMailboxFilter?: string | null;
   recentUnreadOnly?: boolean;
   recentQuery?: string | null;
+  searchAccountId?: string | null;
   searchQuery?: string | null;
 }): string => {
   const search = new URLSearchParams();
@@ -186,10 +191,10 @@ const buildFilemakerMailThreadHref = (input: {
   if (input.mailboxPath) search.set('mailboxPath', input.mailboxPath);
   if (input.accountId && input.originPanel === 'recent') search.set('panel', 'recent');
   if (input.originPanel === 'search') search.set('panel', 'search');
-  if (input.accountId && input.recentMailboxFilter) {
+  if (input.accountId && input.originPanel === 'recent' && input.recentMailboxFilter) {
     search.set('recentMailbox', input.recentMailboxFilter);
   }
-  if (input.accountId && input.recentUnreadOnly) {
+  if (input.accountId && input.originPanel === 'recent' && input.recentUnreadOnly) {
     search.set('recentUnread', '1');
   }
   if (input.accountId && input.originPanel === 'recent' && input.recentQuery) {
@@ -197,6 +202,9 @@ const buildFilemakerMailThreadHref = (input: {
   }
   if (input.originPanel === 'search' && input.searchQuery) {
     search.set('searchQuery', input.searchQuery);
+  }
+  if (input.originPanel === 'search' && input.searchAccountId === 'all') {
+    search.set('searchAccountId', 'all');
   }
   const nextSearch = search.toString();
   const base = `/admin/filemaker/mail/threads/${encodeURIComponent(input.threadId)}`;

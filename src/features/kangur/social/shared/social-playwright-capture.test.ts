@@ -4,6 +4,7 @@ import { KANGUR_SOCIAL_CAPTURE_PRESETS } from './social-capture-presets';
 import {
   buildKangurSocialProgrammableCaptureInputPreview,
   buildKangurSocialProgrammableCaptureRoutesFromPresetIds,
+  validateKangurSocialProgrammableCaptureRoutes,
 } from './social-playwright-capture';
 
 describe('social Playwright capture presets', () => {
@@ -83,6 +84,50 @@ describe('social Playwright capture presets', () => {
         id: 'geometry-quiz',
         title: 'Geometry Drawing',
         url: 'https://example.com/kangur/game?quickStart=screen&screen=geometry_quiz&kangurCapture=social-batch',
+      }),
+    ]);
+  });
+
+  it('flags duplicate programmable routes that resolve to the same target', () => {
+    const validation = validateKangurSocialProgrammableCaptureRoutes(
+      [
+        {
+          id: 'route-1',
+          title: 'Pricing page',
+          path: '/pricing',
+          description: '',
+          selector: '[data-pricing]',
+          waitForMs: 0,
+          waitForSelectorMs: 10000,
+        },
+        {
+          id: 'route-2',
+          title: 'Duplicate pricing page',
+          path: 'https://example.com/pricing',
+          description: '',
+          selector: '[data-pricing]',
+          waitForMs: 200,
+          waitForSelectorMs: 10000,
+        },
+      ],
+      'https://example.com'
+    );
+
+    expect(validation.isValid).toBe(false);
+    expect(validation.issueCount).toBe(1);
+    expect(validation.firstIssue).toBe(
+      'This route duplicates Pricing page on the same resolved target.'
+    );
+    expect(validation.routes).toEqual([
+      expect.objectContaining({
+        routeId: 'route-1',
+        resolvedUrl: 'https://example.com/pricing?kangurCapture=social-batch',
+        issue: null,
+      }),
+      expect.objectContaining({
+        routeId: 'route-2',
+        resolvedUrl: 'https://example.com/pricing?kangurCapture=social-batch',
+        issue: 'This route duplicates Pricing page on the same resolved target.',
       }),
     ]);
   });

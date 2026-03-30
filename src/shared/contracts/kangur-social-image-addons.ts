@@ -68,6 +68,19 @@ export type KangurSocialImageAddonsBatchPayload = z.infer<
   typeof kangurSocialImageAddonsBatchPayloadSchema
 >;
 
+export const kangurSocialImageAddonsBatchRequestSchema = z.object({
+  baseUrl: z.string().trim().url().max(2000),
+  presetIds: z.array(trimmedString.min(1).max(160)).default([]),
+  presetLimit: z.number().int().positive().nullable().default(null),
+  appearanceMode: kangurSocialCaptureAppearanceModeSchema.nullable().default(null),
+  playwrightPersonaId: trimmedString.max(160).nullable().default(null),
+  playwrightScript: trimmedString.max(120_000).nullable().default(null),
+  playwrightRoutes: z.array(kangurSocialProgrammableCaptureRouteSchema).max(50).default([]),
+});
+export type KangurSocialImageAddonsBatchRequest = z.infer<
+  typeof kangurSocialImageAddonsBatchRequestSchema
+>;
+
 export const kangurSocialImageAddonBatchFailureSchema = z.object({
   id: trimmedString.max(160),
   reason: optionalText(1000),
@@ -76,9 +89,25 @@ export type KangurSocialImageAddonBatchFailure = z.infer<
   typeof kangurSocialImageAddonBatchFailureSchema
 >;
 
+export const kangurSocialImageAddonBatchCaptureResultSchema = z.object({
+  id: trimmedString.max(160),
+  title: trimmedString.max(200).nullable().default(null),
+  status: z.enum(['ok', 'failed', 'skipped']),
+  reason: trimmedString.max(1000).nullable().default(null),
+  resolvedUrl: trimmedString.max(4000).nullable().default(null),
+  artifactName: trimmedString.max(240).nullable().default(null),
+  attemptCount: z.number().int().positive().nullable().default(null),
+  durationMs: z.number().int().nonnegative().nullable().default(null),
+  stage: trimmedString.max(80).nullable().default(null),
+});
+export type KangurSocialImageAddonBatchCaptureResult = z.infer<
+  typeof kangurSocialImageAddonBatchCaptureResultSchema
+>;
+
 export const kangurSocialImageAddonsBatchResultSchema = z.object({
   addons: kangurSocialImageAddonsSchema,
   failures: z.array(kangurSocialImageAddonBatchFailureSchema).default([]),
+  captureResults: z.array(kangurSocialImageAddonBatchCaptureResultSchema).default([]),
   runId: trimmedString.max(160),
   requestedPresetCount: z.number().int().nonnegative().optional(),
   usedPresetCount: z.number().int().nonnegative().optional(),
@@ -119,6 +148,7 @@ export const kangurSocialImageAddonsBatchJobSchema = z.object({
   id: trimmedString.min(1).max(160),
   runId: trimmedString.min(1).max(160),
   status: kangurSocialImageAddonsBatchJobStatusSchema,
+  request: kangurSocialImageAddonsBatchRequestSchema.nullable().default(null),
   progress: kangurSocialImageAddonsBatchProgressSchema.nullable().default(null),
   result: kangurSocialImageAddonsBatchResultSchema.nullable().default(null),
   error: trimmedString.max(1000).nullable().default(null),
@@ -127,6 +157,13 @@ export const kangurSocialImageAddonsBatchJobSchema = z.object({
 });
 export type KangurSocialImageAddonsBatchJob = z.infer<
   typeof kangurSocialImageAddonsBatchJobSchema
+>;
+
+export const kangurSocialImageAddonsBatchJobsSchema = z.array(
+  kangurSocialImageAddonsBatchJobSchema
+);
+export type KangurSocialImageAddonsBatchJobs = z.infer<
+  typeof kangurSocialImageAddonsBatchJobsSchema
 >;
 
 export type CreateKangurSocialImageAddonInput = Omit<

@@ -4,7 +4,7 @@ import { useCallback, useRef } from 'react';
 import { useTranslations } from 'next-intl';
 
 import { getKangurBuiltInGameInstanceId } from '@/features/kangur/games';
-import type { LessonSlide as LessonSlideSectionSlide } from '@/features/kangur/ui/components/LessonSlideSection';
+import type { LessonSlide as LessonSlideSectionSlide } from '@/features/kangur/ui/components/lesson-framework/LessonSlideSection';
 import {
   CalendarDateFormatAnimation,
   CalendarDateHighlightAnimation,
@@ -600,7 +600,7 @@ export default function CalendarLesson(): React.JSX.Element {
         title: section.title,
       },
       onShellEnter: awardLessonCompletionOnce,
-      launchableInstance: {
+      lessonActivityInstance: {
         gameId: 'calendar_interactive',
         instanceId: CALENDAR_INSTANCE_ID_BY_SECTION[interactiveSection],
       },

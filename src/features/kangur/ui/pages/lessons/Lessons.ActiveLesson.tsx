@@ -9,10 +9,10 @@ import {
   getResolvedKangurLessonDescription,
   getResolvedKangurLessonTitle,
 } from '@/features/kangur/lessons/lesson-template-copy';
-import { KangurActiveLessonHeader } from '@/features/kangur/ui/components/KangurActiveLessonHeader';
-import { KangurLessonDocumentRenderer } from '@/features/kangur/ui/components/KangurLessonDocumentRenderer';
+import { KangurActiveLessonHeader } from '@/features/kangur/ui/components/lesson-runtime/KangurActiveLessonHeader';
+import { KangurLessonDocumentRenderer } from '@/features/kangur/ui/components/lesson-runtime/KangurLessonDocumentRenderer';
 import { renderKangurLessonNavigationIconButton } from '@/features/kangur/ui/components/KangurLessonNavigationIconButton';
-import { KangurLessonNavigationWidget } from '@/features/kangur/ui/components/KangurLessonNavigationWidget';
+import { KangurLessonNavigationWidget } from '@/features/kangur/ui/components/lesson-runtime/KangurLessonNavigationWidget';
 import { KangurHomeLogo } from '@/features/kangur/ui/components/KangurHomeLogo';
 import { KangurLessonNavigationProvider } from '@/features/kangur/ui/context/KangurLessonNavigationContext';
 import { KangurLessonPrintProvider } from '@/features/kangur/ui/context/KangurLessonPrintContext';

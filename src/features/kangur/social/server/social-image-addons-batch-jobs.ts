@@ -5,6 +5,7 @@ import path from 'path';
 
 import {
   kangurSocialImageAddonsBatchJobSchema,
+  kangurSocialImageAddonsBatchJobsSchema,
   kangurSocialImageAddonsBatchProgressSchema,
   type KangurSocialImageAddonsBatchJob,
   type KangurSocialImageAddonsBatchProgress,
@@ -140,6 +141,46 @@ export const readKangurSocialImageAddonsBatchJob = async (
   }
 };
 
+export const listKangurSocialImageAddonsBatchJobs = async ({
+  limit = 5,
+}: {
+  limit?: number;
+} = {}): Promise<KangurSocialImageAddonsBatchJob[]> => {
+  await cleanupOldBatchJobs();
+
+  try {
+    await ensureBatchJobRoot();
+    const entries = await nodeFs.readdir(BATCH_JOB_ROOT_DIR, { withFileTypes: true });
+    const jobs = await Promise.all(
+      entries
+        .filter((entry) => entry.isFile() && entry.name.endsWith('.json'))
+        .map(async (entry) => {
+          try {
+            const raw = await nodeFs.readFile(path.join(BATCH_JOB_ROOT_DIR, entry.name), 'utf8');
+            const parsed = JSON.parse(raw) as unknown;
+            const safe = kangurSocialImageAddonsBatchJobSchema.safeParse(parsed);
+            return safe.success ? safe.data : null;
+          } catch {
+            return null;
+          }
+        })
+    );
+
+    return kangurSocialImageAddonsBatchJobsSchema.parse(
+      jobs
+        .filter((job): job is KangurSocialImageAddonsBatchJob => job !== null)
+        .sort((left, right) => {
+          const leftTime = Date.parse(left.updatedAt);
+          const rightTime = Date.parse(right.updatedAt);
+          return rightTime - leftTime;
+        })
+        .slice(0, Math.max(1, Math.floor(limit)))
+    );
+  } catch {
+    return [];
+  }
+};
+
 const updateKangurSocialImageAddonsBatchJob = async (
   id: string,
   patch: Partial<KangurSocialImageAddonsBatchJob>
@@ -171,6 +212,15 @@ export const startKangurSocialImageAddonsBatchJob = async (
     id: jobId,
     runId: started.run.runId,
     status: 'queued',
+    request: {
+      baseUrl: started.baseUrl,
+      presetIds: input.presetIds ?? [],
+      presetLimit: input.presetLimit ?? null,
+      appearanceMode: input.appearanceMode ?? null,
+      playwrightPersonaId: input.playwrightPersonaId ?? null,
+      playwrightScript: input.playwrightScript ?? null,
+      playwrightRoutes: input.playwrightRoutes ?? [],
+    },
     progress: buildQueuedProgress(started.targets.length),
     result: null,
     error: null,

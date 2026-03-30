@@ -10,7 +10,7 @@ import { useMemo, useState } from 'react';
 
 import KangurAssignmentManager from '@/features/kangur/ui/components/KangurAssignmentManager';
 import KangurDailyQuestHighlightCardContent from '@/features/kangur/ui/components/KangurDailyQuestHighlightCardContent';
-import KangurAssignmentsList from '@/features/kangur/ui/components/KangurAssignmentsList';
+import KangurAssignmentsList from '@/features/kangur/ui/components/assignments/KangurAssignmentsList';
 import { KangurTransitionLink as Link } from '@/features/kangur/ui/components/KangurTransitionLink';
 import {
   type KangurParentDashboardPanelDisplayMode,

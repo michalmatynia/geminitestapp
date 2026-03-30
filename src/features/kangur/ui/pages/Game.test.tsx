@@ -152,7 +152,7 @@ vi.mock('@/features/kangur/ui/components/KangurGameHomeHeroWidget', () => ({
   },
 }));
 
-vi.mock('@/features/kangur/ui/components/KangurAssignmentSpotlight', () => ({
+vi.mock('@/features/kangur/ui/components/assignments/KangurAssignmentSpotlight', () => ({
   KangurAssignmentSpotlight: (props: { basePath: string; enabled?: boolean }) => {
     assignmentSpotlightPropsMock(props);
     return <div data-testid='kangur-assignment-spotlight-widget' />;
@@ -193,7 +193,7 @@ vi.mock('@/features/kangur/ui/components/KangurGameHomeQuestWidget', () => ({
   KangurGameHomeQuestWidget: () => <div data-testid='kangur-home-quest-widget' />,
 }));
 
-vi.mock('@/features/kangur/ui/components/KangurPriorityAssignments', () => ({
+vi.mock('@/features/kangur/ui/components/assignments/KangurPriorityAssignments', () => ({
   KangurPriorityAssignments: () => <div data-testid='kangur-priority-assignments-widget' />,
 }));
 

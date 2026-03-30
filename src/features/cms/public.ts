@@ -8,10 +8,14 @@ export * from './components/frontend/CmsRuntimeContext';
 export {
   CmsStorefrontAppearanceButtons,
   CmsStorefrontAppearanceProvider,
-  resolveKangurStorefrontAppearance,
   useOptionalCmsStorefrontAppearance,
 } from './components/frontend/CmsStorefrontAppearance';
 export type { CmsStorefrontAppearanceMode } from './components/frontend/CmsStorefrontAppearance';
+export {
+  resolveCmsStorefrontAppearance,
+  resolveKangurStorefrontAppearance,
+  withFallbackTone,
+} from './components/frontend/CmsStorefrontAppearance.logic';
 export { MediaStylesProvider } from './components/frontend/media-styles-context';
 export * from './components/frontend/theme-styles';
 export { CmsBuilderLeftPanel } from './components/page-builder/CmsBuilderLeftPanel';

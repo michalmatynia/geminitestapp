@@ -34,6 +34,9 @@ import {
   renderLessonsNavActionContent,
 } from './KangurPrimaryNavigation.utils';
 
+type KangurPrimaryNavigationTransitionPhase =
+  'pending' | 'idle' | 'acknowledging' | 'waiting_for_ready' | 'revealing';
+
 function useKangurPrimaryNavigationMobileMenuBodyLock(isMobileMenuOpen: boolean): void {
   useEffect(() => {
     if (!isMobileMenuOpen || typeof document === 'undefined') {
@@ -485,7 +488,7 @@ export const buildHomeAction = ({
   homeTransitionSourceId: string;
   navTranslations: ReturnType<typeof useKangurPrimaryNavigationState>['navTranslations'];
   onHomeClick?: () => void;
-  transitionPhase: string;
+  transitionPhase: KangurPrimaryNavigationTransitionPhase;
 }): KangurNavActionConfig => ({
   active: effectiveHomeActive,
   ariaLabel: navTranslations('home'),
@@ -539,7 +542,7 @@ export const buildLessonsAction = ({
   mobileNavItemClassName: string;
   navTranslations: ReturnType<typeof useKangurPrimaryNavigationState>['navTranslations'];
   prefetchLessonsCatalogOnIntent: () => void;
-  transitionPhase: string;
+  transitionPhase: KangurPrimaryNavigationTransitionPhase;
 }): KangurNavActionConfig => ({
   active: accessibleCurrentPage === 'Lessons',
   ariaLabel: navTranslations('lessons'),
@@ -581,7 +584,7 @@ export const buildGamesLibraryAction = ({
   isSixYearOld: boolean;
   mobileNavItemClassName: string;
   navTranslations: ReturnType<typeof useKangurPrimaryNavigationState>['navTranslations'];
-  transitionPhase: string;
+  transitionPhase: KangurPrimaryNavigationTransitionPhase;
 }): KangurNavActionConfig => ({
   active: accessibleCurrentPage === 'GamesLibrary',
   ariaLabel: navTranslations('gamesLibrary'),
@@ -691,7 +694,7 @@ export const buildDuelsAction = ({
   isSixYearOld: boolean;
   mobileNavItemClassName: string;
   navTranslations: ReturnType<typeof useKangurPrimaryNavigationState>['navTranslations'];
-  transitionPhase: string;
+  transitionPhase: KangurPrimaryNavigationTransitionPhase;
 }): KangurNavActionConfig => ({
   active: accessibleCurrentPage === 'Duels',
   ariaLabel: navTranslations('duels'),
@@ -734,7 +737,7 @@ export const buildParentDashboardAction = ({
   navTranslations: ReturnType<typeof useKangurPrimaryNavigationState>['navTranslations'];
   parentDashboardHref: string;
   parentDashboardTransitionSourceId: string;
-  transitionPhase: string;
+  transitionPhase: KangurPrimaryNavigationTransitionPhase;
 }): KangurNavActionConfig | null => {
   if (!effectiveShowParentDashboard) {
     return null;

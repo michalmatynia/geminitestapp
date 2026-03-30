@@ -197,8 +197,7 @@ const shouldRenderKangurGameHomeQuestWidget = ({
   hideWhenScreenMismatch: boolean;
   quest: ReturnType<typeof getCurrentKangurDailyQuest>;
   screen: string | null | undefined;
-}): quest is NonNullable<ReturnType<typeof getCurrentKangurDailyQuest>> =>
-  Boolean(quest) && !(hideWhenScreenMismatch && screen !== 'home');
+}): boolean => Boolean(quest) && !(hideWhenScreenMismatch && screen !== 'home');
 
 const resolveKangurGameHomeQuestStatusLabels = ({
   fallbackCopy,
@@ -483,14 +482,10 @@ const KangurGameHomeQuestPanel = ({
           </div>
 
           <KangurGameHomeQuestMomentumSection
-            actionHref={actionHref}
             averageXpPerSession={averageXpPerSession}
-            basePath=''
             currentWinStreak={currentWinStreak}
             fallbackCopy={fallbackCopy}
             guidedMomentum={guidedMomentum}
-            quest={quest}
-            questStatusLabels={questStatusLabels}
             runtimeTranslations={runtimeTranslations}
             translateWithFallback={translateWithFallback}
             visibleLeadingTrack={visibleLeadingTrack}
@@ -577,15 +572,20 @@ export function KangurGameHomeQuestWidget({
     return null;
   }
 
+  const visibleQuest = quest;
+  if (!visibleQuest) {
+    return null;
+  }
+
   return (
     <KangurGameHomeQuestPanel
-      actionHref={buildAssignmentHref(basePath, quest.assignment.action)}
+      actionHref={buildAssignmentHref(basePath, visibleQuest.assignment.action)}
       averageXpPerSession={averageXpPerSession}
       basePath={basePath}
       currentWinStreak={currentWinStreak}
       fallbackCopy={fallbackCopy}
       guidedMomentum={guidedMomentum}
-      quest={quest}
+      quest={visibleQuest}
       questStatusLabels={resolveKangurGameHomeQuestStatusLabels({
         fallbackCopy,
         translateWithFallback,

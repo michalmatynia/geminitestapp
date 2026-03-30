@@ -152,6 +152,10 @@ describe('KangurGame', () => {
       'true'
     );
     expect(screen.getByTestId('kangur-game-question-print-panel')).toHaveAttribute(
+      'data-kangur-print-paged-panel',
+      'true'
+    );
+    expect(screen.getByTestId('kangur-game-question-print-panel')).toHaveAttribute(
       'data-kangur-print-panel-id',
       'kangur-game-question-2024_1'
     );
@@ -283,6 +287,10 @@ describe('KangurGame', () => {
       'data-kangur-print-panel-id',
       'kangur-game-question-2024_1'
     );
+    expect(screen.getByTestId('kangur-game-question-print-panel')).toHaveAttribute(
+      'data-kangur-print-paged-panel',
+      'true'
+    );
 
     fireEvent.click(livePrintButton);
     expect(onPrintPanel).toHaveBeenCalledTimes(1);
@@ -299,6 +307,10 @@ describe('KangurGame', () => {
     expect(screen.getByTestId('kangur-game-result-print-panel')).toHaveAttribute(
       'data-kangur-print-panel-id',
       'kangur-game-result'
+    );
+    expect(screen.getByTestId('kangur-game-result-print-panel')).toHaveAttribute(
+      'data-kangur-print-paged-panel',
+      'true'
     );
     expect(screen.getByTestId('kangur-game-result-print-panel')).toHaveAttribute(
       'data-kangur-print-panel-title',

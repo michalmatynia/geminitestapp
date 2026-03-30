@@ -25,7 +25,7 @@ describe('shouldApplyFrontPageAppSelection', () => {
   });
 
   it('defaults to enabled when the env flag is unset', async () => {
-    const { shouldApplyFrontPageAppSelection } = await import('@/app/(frontend)/home-helpers');
+    const { shouldApplyFrontPageAppSelection } = await import('@/app/(frontend)/home/home-helpers');
 
     expect(shouldApplyFrontPageAppSelection()).toBe(true);
   });
@@ -33,7 +33,7 @@ describe('shouldApplyFrontPageAppSelection', () => {
   it.each(['false', '0'])('returns false when the env flag is %s', async (value) => {
     process.env['ENABLE_FRONT_PAGE_APP_REDIRECT'] = value;
 
-    const { shouldApplyFrontPageAppSelection } = await import('@/app/(frontend)/home-helpers');
+    const { shouldApplyFrontPageAppSelection } = await import('@/app/(frontend)/home/home-helpers');
 
     expect(shouldApplyFrontPageAppSelection()).toBe(false);
   });

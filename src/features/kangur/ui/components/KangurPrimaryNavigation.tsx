@@ -128,9 +128,12 @@ const resolveKangurPrimaryNavigationEffectiveHomeActive = ({
   homeActive?: boolean;
 }): boolean => homeActive ?? currentPage === 'Game';
 
+type KangurPrimaryNavigationTransitionPhase =
+  Parameters<typeof buildHomeAction>[0]['transitionPhase'];
+
 const resolveKangurPrimaryNavigationTransitionPhase = (
   routeTransitionState: ReturnType<typeof useKangurPrimaryNavigationState>['routeTransitionState']
-): string => routeTransitionState?.transitionPhase ?? 'idle';
+): KangurPrimaryNavigationTransitionPhase => routeTransitionState?.transitionPhase ?? 'idle';
 
 const resolveKangurPrimaryNavigationActiveTransitionSourceId = (
   routeTransitionState: ReturnType<typeof useKangurPrimaryNavigationState>['routeTransitionState']

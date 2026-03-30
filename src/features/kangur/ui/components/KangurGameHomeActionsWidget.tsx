@@ -33,6 +33,8 @@ type HomeAction = {
 
 type HomeActionNavigationState = 'idle' | 'pressed' | 'transitioning';
 type KangurGameHomeActionsTranslations = ReturnType<typeof useTranslations<'KangurGameHomeActions'>>;
+type KangurRouteTransitionPhase =
+  NonNullable<ReturnType<typeof useOptionalKangurRouteTransitionState>>['transitionPhase'];
 
 const HOME_ACTION_TRANSITION_EASE = [0.22, 1, 0.36, 1] as const;
 
@@ -116,7 +118,7 @@ const resolveLessonsHomeActionTransitionActive = ({
   transitionPhase,
 }: {
   activeTransitionSourceId?: string | null;
-  transitionPhase?: ReturnType<typeof useOptionalKangurRouteTransitionState>['transitionPhase'];
+  transitionPhase?: KangurRouteTransitionPhase;
 }): boolean =>
   activeTransitionSourceId === 'game-home-action:lessons' && transitionPhase !== 'idle';
 

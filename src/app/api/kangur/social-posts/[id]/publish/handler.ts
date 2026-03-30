@@ -11,7 +11,12 @@ import { getKangurSocialPostById } from '@/features/kangur/social/server/social-
 import { publishKangurSocialPost } from '@/features/kangur/social/server/social-posts-publish';
 import { ErrorSystem } from '@/features/kangur/shared/utils/observability/error-system';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
-import { forbiddenError, notFoundError } from '@/shared/errors/app-error';
+import {
+  AppErrorCodes,
+  createAppError,
+  forbiddenError,
+  notFoundError,
+} from '@/shared/errors/app-error';
 
 const bodySchema = z.object({
   mode: kangurSocialPublishModeSchema.optional(),
@@ -62,6 +67,15 @@ export async function postKangurSocialPostPublishHandler(
       postId: post.id,
       durationMs: Date.now() - startedAt,
     });
+    const refreshedPost = await getKangurSocialPostById(post.id);
+    const publishError = refreshedPost?.publishError?.trim();
+    if (publishError) {
+      throw createAppError(publishError, {
+        code: AppErrorCodes.operationFailed,
+        httpStatus: 502,
+        expected: true,
+      });
+    }
     throw error;
   }
 }

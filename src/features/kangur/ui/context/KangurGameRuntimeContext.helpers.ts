@@ -352,11 +352,13 @@ export const useKangurGameQuickStart = ({
       return;
     }
 
-    const nextOperation = isKangurOperation(quickStartPayload.operation)
-      ? quickStartPayload.operation
+    const quickStartOperation = quickStartPayload.operation ?? null;
+    const quickStartDifficulty = quickStartPayload.difficulty ?? null;
+    const nextOperation = isKangurOperation(quickStartOperation)
+      ? quickStartOperation
       : null;
-    const nextDifficulty = isKangurDifficulty(quickStartPayload.difficulty)
-      ? quickStartPayload.difficulty
+    const nextDifficulty = isKangurDifficulty(quickStartDifficulty)
+      ? quickStartDifficulty
       : 'medium';
 
     quickStartConsumedRef.current = true;

@@ -119,6 +119,16 @@ describe('storefront-appearance', () => {
     );
   });
 
+  it('normalizes non-Error theme-settings failures before rethrowing them', async () => {
+    ensureKangurStorefrontAppearanceSettingsSeededMock.mockRejectedValue(undefined);
+
+    const { getKangurStorefrontInitialState } = await import('./storefront-appearance');
+
+    await expect(getKangurStorefrontInitialState()).rejects.toThrow(
+      'Failed to load Kangur storefront appearance settings.'
+    );
+  });
+
   it('invalidates the cached storefront snapshot for mode and theme writes', async () => {
     const {
       invalidateKangurStorefrontInitialStateCache,
@@ -134,6 +144,9 @@ describe('storefront-appearance', () => {
 
     invalidateKangurStorefrontInitialStateCache();
 
-    expect(revalidateTagMock).toHaveBeenCalledWith(KANGUR_STOREFRONT_INITIAL_STATE_CACHE_TAG);
+    expect(revalidateTagMock).toHaveBeenCalledWith(
+      KANGUR_STOREFRONT_INITIAL_STATE_CACHE_TAG,
+      'max'
+    );
   });
 });

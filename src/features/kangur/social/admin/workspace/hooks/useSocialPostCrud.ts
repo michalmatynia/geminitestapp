@@ -14,6 +14,7 @@ import {
   useUnpublishKangurSocialPost,
 } from '@/features/kangur/social/hooks/useKangurSocialPosts';
 import {
+  isExpectedKangurClientError,
   logKangurClientError,
   trackKangurClientEvent,
 } from '@/features/kangur/observability/client';
@@ -51,6 +52,10 @@ type SocialPostCrudDeps = {
 };
 
 const socialPostUpdateSchema = kangurSocialPostSchema.partial();
+const KANGUR_SOCIAL_ADMIN_POSTS_QUERY_KEY = QUERY_KEYS.kangur.socialPosts({
+  scope: 'admin',
+  limit: null,
+});
 
 const SOCIAL_POST_FIELD_LABELS: Record<string, string> = {
   titlePl: 'Polish title',
@@ -100,6 +105,34 @@ export function useSocialPostCrud(deps: SocialPostCrudDeps) {
   const [deleteError, setDeleteError] = useState<string | null>(null);
   const [publishingPostId, setPublishingPostId] = useState<string | null>(null);
   const [unpublishingPostId, setUnpublishingPostId] = useState<string | null>(null);
+
+  const recoverSavedPublishError = async (postId: string): Promise<string | null> => {
+    try {
+      const refreshedPosts =
+        (await fetchQueryV2<KangurSocialPost[]>(queryClient, {
+          queryKey: KANGUR_SOCIAL_ADMIN_POSTS_QUERY_KEY,
+          queryFn: async () =>
+            fetchKangurSocialPosts({
+              scope: 'admin',
+            }),
+          staleTime: 0,
+          meta: {
+            source: 'kangur.admin.social.useSocialPostCrud.publishErrorRecovery',
+            operation: 'list',
+            resource: 'kangur.social-posts',
+            domain: 'kangur',
+            queryKey: KANGUR_SOCIAL_ADMIN_POSTS_QUERY_KEY,
+            tags: ['kangur', 'social-posts'],
+            description: 'Refetches social posts after LinkedIn publish failure.',
+          },
+        })()) ?? null;
+      const refreshedPost = refreshedPosts?.find((entry) => entry.id === postId) ?? null;
+      const publishError = refreshedPost?.publishError?.trim() ?? '';
+      return publishError || null;
+    } catch {
+      return null;
+    }
+  };
 
   const buildValidatedPostUpdates = (
     nextStatus: KangurSocialPost['status']
@@ -272,18 +305,24 @@ export function useSocialPostCrud(deps: SocialPostCrudDeps) {
         { variant: 'success' }
       );
     } catch (error) {
-      void ErrorSystem.captureException(error);
-      logKangurClientError(error, {
-        source: 'AdminKangurSocialPage',
-        action: 'quickPublish',
-        ...deps.buildSocialContext({ postId, publishMode: mode }),
-      });
+      const savedPublishError = await recoverSavedPublishError(postId);
       const message =
-        error instanceof Error
+        savedPublishError ??
+        (error instanceof Error
           ? error.message
           : mode === 'draft'
             ? 'Failed to publish draft.'
-            : 'Failed to publish post.';
+            : 'Failed to publish post.');
+      const shouldReportClientError =
+        !savedPublishError && !isExpectedKangurClientError(error);
+      if (shouldReportClientError) {
+        void ErrorSystem.captureException(error);
+        logKangurClientError(error, {
+          source: 'AdminKangurSocialPage',
+          action: 'quickPublish',
+          ...deps.buildSocialContext({ postId, publishMode: mode }),
+        });
+      }
       toast(message, { variant: 'error' });
       throw error;
     } finally {
@@ -403,24 +442,34 @@ export function useSocialPostCrud(deps: SocialPostCrudDeps) {
         deps.buildSocialContext()
       );
     } catch (error) {
-      void ErrorSystem.captureException(error);
-      logKangurClientError(error, {
-        source: 'AdminKangurSocialPage',
-        action: 'publishPost',
-        stage,
-        ...deps.buildSocialContext(),
-      });
-      toast(
-        error instanceof Error
+      const savedPublishError =
+        stage === 'publish' ? await recoverSavedPublishError(deps.activePost.id) : null;
+      const message =
+        savedPublishError ??
+        (error instanceof Error
           ? error.message
           : stage === 'prepare'
             ? 'Failed to prepare the post for publishing.'
-            : 'Failed to publish post.',
-        { variant: 'error' }
-      );
+            : 'Failed to publish post.');
+      const shouldReportClientError =
+        !savedPublishError && !isExpectedKangurClientError(error);
+      if (shouldReportClientError) {
+        void ErrorSystem.captureException(error);
+        logKangurClientError(error, {
+          source: 'AdminKangurSocialPage',
+          action: 'publishPost',
+          stage,
+          ...deps.buildSocialContext(),
+        });
+      }
+      toast(message, { variant: 'error' });
       trackKangurClientEvent(
         'kangur_social_post_publish_failed',
-        deps.buildSocialContext({ stage, error: true })
+        deps.buildSocialContext({
+          stage,
+          error: true,
+          ...(savedPublishError ? { recoveredPublishError: true } : {}),
+        })
       );
     }
   };

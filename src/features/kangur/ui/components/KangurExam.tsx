@@ -178,6 +178,7 @@ function ExamQuestion({
       aria-labelledby={headingId}
       className={`mx-auto flex w-full max-w-4xl flex-col items-center text-center ${KANGUR_PANEL_GAP_CLASSNAME}`}
       data-kangur-print-panel='true'
+      data-kangur-print-paged-panel='true'
       data-kangur-print-panel-id={printPanelId}
       data-kangur-print-panel-title={printPanelTitle}
       data-testid='kangur-exam-question-print-panel'
@@ -352,6 +353,7 @@ function ExamSummary({ questions, answers }: ExamSummaryProps): React.JSX.Elemen
       <div
         className={`mx-auto flex w-full max-w-4xl flex-col items-center text-center ${KANGUR_PANEL_GAP_CLASSNAME}`}
         data-kangur-print-panel='true'
+        data-kangur-print-paged-panel='true'
         data-kangur-print-panel-id={reviewPanelId}
         data-kangur-print-panel-title={reviewPanelTitle}
         data-testid='kangur-exam-review-print-panel'
@@ -739,6 +741,7 @@ export default function KangurExam(): React.JSX.Element {
       <div
         className={`mx-auto flex w-full max-w-4xl flex-col items-center text-center ${KANGUR_PANEL_GAP_CLASSNAME}`}
         data-kangur-print-panel='true'
+        data-kangur-print-paged-panel='true'
         data-kangur-print-panel-id='kangur-exam-summary'
         data-kangur-print-panel-title={summaryTitle}
         data-testid='kangur-exam-summary-print-panel'

@@ -29,7 +29,7 @@ type KangurGameQuestionMomentumProps = {
   activeSessionRecommendation: KangurGameQuestionRuntime['activeSessionRecommendation'];
   currentQuest: KangurGameQuestionQuest;
   gamePageTranslations: KangurGameQuestionTranslations;
-  guidedProjection: KangurGameQuestionGuidedProjection;
+  guidedProjection: KangurGameQuestionGuidedProjection | null;
   nextBadge: KangurGameQuestionNextBadge;
   perfectRunInProgress: boolean;
   roundAccuracy: number | null;

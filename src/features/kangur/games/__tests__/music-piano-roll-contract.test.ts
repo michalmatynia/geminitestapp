@@ -13,7 +13,7 @@ import {
   KANGUR_MUSIC_PIANO_ROLL_VARIANT_ID_SETS,
   KANGUR_MUSIC_PIANO_ROLL_VARIANT_KEYS,
   KANGUR_MUSIC_PIANO_ROLL_WRAPPER_TEST_IDS,
-} from './music-piano-roll-contract';
+} from '../music-piano-roll-contract';
 
 describe('music piano roll contract', () => {
   it('derives the exported music configs from one keyed source', () => {

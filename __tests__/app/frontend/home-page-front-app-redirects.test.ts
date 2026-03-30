@@ -39,8 +39,8 @@ vi.mock('next/navigation', () => ({
   permanentRedirect: redirectMock,
 }));
 
-vi.mock('next/headers', () => ({
-  headers: headersMock,
+vi.mock('@/shared/lib/request/optional-headers', () => ({
+  readOptionalRequestHeaders: headersMock,
 }));
 
 vi.mock('@/features/cms/server', () => ({
@@ -50,7 +50,7 @@ vi.mock('@/features/cms/server', () => ({
   resolveCmsDomainFromHeaders: resolveCmsDomainFromHeadersMock,
 }));
 
-vi.mock('@/app/(frontend)/HomeContent', () => ({
+vi.mock('@/app/(frontend)/home/HomeContent', () => ({
   HomeContent: homeContentMock,
 }));
 
@@ -93,14 +93,14 @@ vi.mock('@/shared/lib/front-page-app', () => ({
   getFrontPageRedirectPath: getFrontPageRedirectPathMock,
 }));
 
-vi.mock('@/app/(frontend)/home-timing', () => ({
+vi.mock('@/app/(frontend)/home/home-timing', () => ({
   createHomeTimingRecorder: () => ({
     withTiming: async (_label: string, fn: () => Promise<unknown>) => fn(),
     flush: flushMock,
   }),
 }));
 
-vi.mock('@/app/(frontend)/home-helpers', () => {
+vi.mock('@/app/(frontend)/home/home-helpers', () => {
   return {
     FRONT_PAGE_ALLOWED: frontPageAllowed,
     getFrontPageSetting: getFrontPageSettingMock,
@@ -186,7 +186,7 @@ describe('front page app selection', () => {
     expect(getCmsRepositoryMock).toHaveBeenCalled();
     expect(headersMock).toHaveBeenCalled();
     expect(resolveCmsDomainFromHeadersMock).toHaveBeenCalled();
-    expect(getSlugsForDomainMock).toHaveBeenCalledWith('default-domain', {});
+    expect(getSlugsForDomainMock).toHaveBeenCalledWith('default-domain', {}, undefined);
     expect(flushMock).toHaveBeenCalledTimes(1);
   });
 
@@ -203,7 +203,7 @@ describe('front page app selection', () => {
     expect(getCmsRepositoryMock).toHaveBeenCalled();
     expect(headersMock).toHaveBeenCalled();
     expect(resolveCmsDomainFromHeadersMock).toHaveBeenCalled();
-    expect(getSlugsForDomainMock).toHaveBeenCalledWith('default-domain', {});
+    expect(getSlugsForDomainMock).toHaveBeenCalledWith('default-domain', {}, undefined);
     expect(flushMock).toHaveBeenCalledTimes(1);
   });
 });

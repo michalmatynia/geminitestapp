@@ -384,6 +384,37 @@ describe('AdminKangurSocialSettingsModal', () => {
     );
   });
 
+  it('renders the new minigame capture presets in the capture tab', () => {
+    usePlaywrightPersonasMock.mockReturnValue({
+      data: [],
+      isLoading: false,
+      error: null,
+    });
+    useSocialPostContextMock.mockReturnValue(
+      buildSocialPostContextState({
+        batchCapturePresetIds: ['clock-quiz', 'calendar-quiz', 'geometry-quiz'],
+        effectiveBatchCapturePresetCount: 3,
+      })
+    );
+
+    render(
+      <AdminKangurSocialSettingsModal
+        open={true}
+        onClose={vi.fn()}
+        onSave={vi.fn()}
+        isSaving={false}
+        hasUnsavedChanges={false}
+      />
+    );
+
+    fireEvent.click(screen.getByRole('tab', { name: 'Capture' }));
+
+    expect(screen.getByRole('button', { name: 'Clock Quiz' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Calendar Training' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Geometry Drawing' })).toBeInTheDocument();
+    expect(screen.getByText('Presets selected: 3 (Limit: 2)')).toBeInTheDocument();
+  });
+
   it('locks models, project, and publishing settings while Social runtime jobs are in flight', () => {
     usePlaywrightPersonasMock.mockReturnValue({
       data: [],

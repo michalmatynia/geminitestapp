@@ -1,7 +1,7 @@
 'use client';
 
 import { useLocale, useTranslations } from 'next-intl';
-import { useEffect, useMemo, useRef } from 'react';
+import { useEffect, useMemo, useRef, type ReactNode } from 'react';
 
 import {
   KANGUR_LESSON_COMPONENT_ORDER,
@@ -50,6 +50,7 @@ import { useKangurCoarsePointer } from '@/features/kangur/ui/hooks/useKangurCoar
 import type {
   KangurLessonComponentId,
   KangurLesson,
+  KangurLessonSubject,
 } from '@/features/kangur/shared/contracts/kangur';
 import { createDefaultKangurProgressState } from '@/shared/contracts/kangur';
 import { normalizeSiteLocale } from '@/shared/lib/i18n/site-locale';
@@ -71,7 +72,7 @@ type KangurGameOperationSelectorAssignmentMode = 'active' | 'queue';
 type KangurGameOperationSelectorQuizGroup = {
   label: string;
   options: LessonQuizOption[];
-  value: string;
+  value: KangurLessonSubject;
 };
 
 type KangurGameOperationRecommendationCardProps = {

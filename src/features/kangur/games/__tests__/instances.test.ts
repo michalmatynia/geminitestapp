@@ -6,12 +6,12 @@ import {
   KANGUR_MUSIC_PIANO_ROLL_DEFAULT_CONTENT_SET_IDS,
   KANGUR_MUSIC_PIANO_ROLL_DEFAULT_INSTANCE_IDS,
   KANGUR_MUSIC_PIANO_ROLL_GAME_IDS,
-} from './music-piano-roll-contract';
+} from '../music-piano-roll-contract';
 
 import {
   getKangurBuiltInGameInstanceId,
   getKangurGameBuiltInInstancesForGame,
-} from './instances';
+} from '../instances';
 
 describe('kangur built-in game instances', () => {
   it('creates stable built-in instance ids for each built-in calendar content set', () => {

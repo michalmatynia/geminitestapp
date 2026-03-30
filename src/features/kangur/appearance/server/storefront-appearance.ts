@@ -25,6 +25,8 @@ import {
 
 const KANGUR_STOREFRONT_INITIAL_STATE_CACHE_TTL_MS = 30_000;
 export const KANGUR_STOREFRONT_INITIAL_STATE_CACHE_TAG = 'kangur-storefront-initial-state';
+const KANGUR_STOREFRONT_APPEARANCE_LOAD_ERROR_MESSAGE =
+  'Failed to load Kangur storefront appearance settings.';
 const KANGUR_STOREFRONT_INITIAL_STATE_DEPENDENCY_KEYS = new Set<string>([
   KANGUR_STOREFRONT_DEFAULT_MODE_SETTING_KEY,
   KANGUR_DAILY_THEME_SETTINGS_KEY,
@@ -40,6 +42,32 @@ type KangurStorefrontInitialStateCacheEntry = {
 
 let kangurStorefrontInitialStateCacheEntry: KangurStorefrontInitialStateCacheEntry | null = null;
 let kangurStorefrontInitialStateInFlight: Promise<KangurStorefrontInitialState> | null = null;
+
+const normalizeKangurStorefrontAppearanceLoadError = (error: unknown): Error => {
+  if (error instanceof Error) {
+    return error;
+  }
+
+  if (
+    error &&
+    typeof error === 'object' &&
+    'message' in error &&
+    typeof error.message === 'string' &&
+    error.message.trim().length > 0
+  ) {
+    const normalizedError = new Error(error.message);
+    normalizedError.cause = error;
+    return normalizedError;
+  }
+
+  if (typeof error === 'string' && error.trim().length > 0) {
+    return new Error(error);
+  }
+
+  const normalizedError = new Error(KANGUR_STOREFRONT_APPEARANCE_LOAD_ERROR_MESSAGE);
+  normalizedError.cause = error;
+  return normalizedError;
+};
 
 const clearKangurStorefrontInitialStateHotCache = (): void => {
   kangurStorefrontInitialStateCacheEntry = null;
@@ -74,7 +102,7 @@ const readKangurStorefrontAppearanceSettings = async (): Promise<SettingRecord[]
     if (isTransientMongoConnectionError(error)) {
       return createKangurStorefrontAppearanceSeedSettings();
     }
-    throw error;
+    throw normalizeKangurStorefrontAppearanceLoadError(error);
   }
 };
 

@@ -15,6 +15,7 @@ const {
   deleteMutateAsyncMock,
   publishMutateAsyncMock,
   unpublishMutateAsyncMock,
+  fetchKangurSocialPostsMock,
   logKangurClientErrorMock,
   trackKangurClientEventMock,
   captureExceptionMock,
@@ -25,6 +26,7 @@ const {
   deleteMutateAsyncMock: vi.fn(),
   publishMutateAsyncMock: vi.fn(),
   unpublishMutateAsyncMock: vi.fn(),
+  fetchKangurSocialPostsMock: vi.fn(),
   logKangurClientErrorMock: vi.fn(),
   trackKangurClientEventMock: vi.fn(),
   captureExceptionMock: vi.fn(),
@@ -35,7 +37,7 @@ vi.mock('@/features/kangur/shared/ui', () => ({
 }));
 
 vi.mock('@/features/kangur/social/hooks/useKangurSocialPosts', () => ({
-  fetchKangurSocialPosts: vi.fn(),
+  fetchKangurSocialPosts: (...args: unknown[]) => fetchKangurSocialPostsMock(...args),
   useSaveKangurSocialPost: () => ({
     mutateAsync: saveMutateAsyncMock,
   }),
@@ -127,6 +129,7 @@ describe('useSocialPostCrud', () => {
     deleteMutateAsyncMock.mockResolvedValue(undefined);
     publishMutateAsyncMock.mockResolvedValue({ id: 'post-1' });
     unpublishMutateAsyncMock.mockResolvedValue({ id: 'post-1' });
+    fetchKangurSocialPostsMock.mockResolvedValue([]);
   });
 
   it('creates a draft and selects it on success', async () => {
@@ -249,6 +252,71 @@ describe('useSocialPostCrud', () => {
       'kangur_social_post_publish_success',
       { postId: 'post-1' }
     );
+  });
+
+  it('shows the saved publishError after LinkedIn publish fails and skips noisy client exception reporting', async () => {
+    const deps = createDeps();
+    const publishedFailurePost = {
+      ...activePost,
+      status: 'failed' as const,
+      publishError: 'LinkedIn post failed: duplicate content detected by LinkedIn.',
+    };
+    publishMutateAsyncMock.mockRejectedValueOnce(new Error('The operation failed. Please try again.'));
+    fetchKangurSocialPostsMock.mockResolvedValueOnce([publishedFailurePost]);
+
+    const { result } = renderHook(() => useSocialPostCrud(deps), {
+      wrapper: createWrapper().Wrapper,
+    });
+
+    await act(async () => {
+      await result.current.handlePublish();
+    });
+
+    expect(fetchKangurSocialPostsMock).toHaveBeenCalledWith({ scope: 'admin' });
+    expect(toastMock).toHaveBeenCalledWith(
+      'LinkedIn post failed: duplicate content detected by LinkedIn.',
+      { variant: 'error' }
+    );
+    expect(captureExceptionMock).not.toHaveBeenCalled();
+    expect(logKangurClientErrorMock).not.toHaveBeenCalled();
+    expect(trackKangurClientEventMock).toHaveBeenCalledWith(
+      'kangur_social_post_publish_failed',
+      expect.objectContaining({
+        postId: 'post-1',
+        stage: 'publish',
+        error: true,
+        recoveredPublishError: true,
+      })
+    );
+  });
+
+  it('shows the saved publishError after quick publish fails and skips noisy client exception reporting', async () => {
+    const deps = createDeps();
+    const publishedFailurePost = {
+      ...activePost,
+      status: 'failed' as const,
+      publishError: 'LinkedIn post failed: selected connection is missing publish permissions.',
+    };
+    publishMutateAsyncMock.mockRejectedValueOnce(new Error('The operation failed. Please try again.'));
+    fetchKangurSocialPostsMock.mockResolvedValueOnce([publishedFailurePost]);
+
+    const { result } = renderHook(() => useSocialPostCrud(deps), {
+      wrapper: createWrapper().Wrapper,
+    });
+
+    await act(async () => {
+      await expect(result.current.handleQuickPublishPost('post-1')).rejects.toThrow(
+        'The operation failed. Please try again.'
+      );
+    });
+
+    expect(fetchKangurSocialPostsMock).toHaveBeenCalledWith({ scope: 'admin' });
+    expect(toastMock).toHaveBeenCalledWith(
+      'LinkedIn post failed: selected connection is missing publish permissions.',
+      { variant: 'error' }
+    );
+    expect(captureExceptionMock).not.toHaveBeenCalled();
+    expect(logKangurClientErrorMock).not.toHaveBeenCalled();
   });
 
   it('allows more than 12 attached images when saving the draft', async () => {

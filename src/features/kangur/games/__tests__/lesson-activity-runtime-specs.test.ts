@@ -1,10 +1,10 @@
 import { describe, expect, it } from 'vitest';
 
-import { createDefaultKangurGames } from './defaults';
+import { createDefaultKangurGames } from '../defaults';
 import {
   getKangurLessonActivityRuntimeSpec,
   KANGUR_LESSON_ACTIVITY_RUNTIME_SPECS,
-} from './lesson-activity-runtime-specs';
+} from '../lesson-activity-runtime-specs';
 import { KANGUR_LESSON_ACTIVITY_IDS } from '@/features/kangur/shared/contracts/kangur';
 import { kangurLessonActivityRuntimeSpecSchema } from '@/shared/contracts/kangur-games';
 

@@ -174,6 +174,9 @@ export function KangurLessonNavigationWidget({
   ) {
     return null;
   }
+  if (!handleSelectLesson) {
+    return null;
+  }
 
   return (
     <nav

@@ -1,15 +1,15 @@
 import { describe, expect, it } from 'vitest';
 
-import { KANGUR_LAUNCHABLE_GAME_SCREENS } from './catalog';
-import { createDefaultKangurGames } from './defaults';
+import { KANGUR_LAUNCHABLE_GAME_SCREENS } from '../catalog';
+import { createDefaultKangurGames } from '../defaults';
 import {
   getKangurLaunchableGameRuntimeSpec,
   KANGUR_LAUNCHABLE_GAME_RUNTIME_SPECS,
-} from './launchable-runtime-specs';
+} from '../launchable-runtime-specs';
 import {
   KANGUR_MUSIC_PIANO_ROLL_LAUNCHABLE_RUNTIME_CONFIGS,
   KANGUR_MUSIC_PIANO_ROLL_LAUNCHABLE_RUNTIME_IDS,
-} from './music-piano-roll-contract';
+} from '../music-piano-roll-contract';
 import { kangurLaunchableGameRuntimeSpecSchema } from '@/shared/contracts/kangur-games';
 
 describe('launchable runtime specs', () => {

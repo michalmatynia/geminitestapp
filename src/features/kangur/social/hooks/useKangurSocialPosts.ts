@@ -23,6 +23,8 @@ type SocialPostsQueryOptions = {
 };
 
 const SOCIAL_POSTS_QUERY_TIMEOUT_MS = 60_000;
+const SOCIAL_POSTS_PUBLISH_TIMEOUT_MS = 180_000;
+const SOCIAL_POSTS_UNPUBLISH_TIMEOUT_MS = 60_000;
 const KANGUR_SOCIAL_POSTS_QUERY_KEY = ['kangur', 'social-posts'] as const;
 
 export const fetchKangurSocialPosts = async (
@@ -205,7 +207,7 @@ export const usePublishKangurSocialPost = (): MutationResult<
       await api.post<KangurSocialPost>(`/api/kangur/social-posts/${id}/publish`, {
         ...(mode ? { mode: kangurSocialPublishModeSchema.parse(mode) } : {}),
         ...(skipImages ? { skipImages } : {}),
-      }),
+      }, { timeout: SOCIAL_POSTS_PUBLISH_TIMEOUT_MS }),
     invalidate: invalidateSocialPosts,
     meta: {
       source: 'kangur.hooks.usePublishKangurSocialPost',
@@ -228,7 +230,7 @@ export const useUnpublishKangurSocialPost = (): MutationResult<KangurSocialPost,
     mutationFn: async ({ id, keepLocal }: KangurSocialPostUnpublishInput): Promise<KangurSocialPost> =>
       await api.post<KangurSocialPost>(`/api/kangur/social-posts/${id}/unpublish`, {
         ...(keepLocal ? { keepLocal } : {}),
-      }),
+      }, { timeout: SOCIAL_POSTS_UNPUBLISH_TIMEOUT_MS }),
     invalidate: invalidateSocialPosts,
     meta: {
       source: 'kangur.hooks.useUnpublishKangurSocialPost',

@@ -61,6 +61,10 @@ describe('KangurExam', () => {
       'true'
     );
     expect(screen.getByTestId('kangur-exam-question-print-panel')).toHaveAttribute(
+      'data-kangur-print-paged-panel',
+      'true'
+    );
+    expect(screen.getByTestId('kangur-exam-question-print-panel')).toHaveAttribute(
       'data-kangur-print-panel-id',
       'kangur-exam-question-2024_1'
     );
@@ -140,6 +144,10 @@ describe('KangurExam', () => {
       'true'
     );
     expect(screen.getByTestId('kangur-exam-summary-print-panel')).toHaveAttribute(
+      'data-kangur-print-paged-panel',
+      'true'
+    );
+    expect(screen.getByTestId('kangur-exam-summary-print-panel')).toHaveAttribute(
       'data-kangur-print-panel-id',
       'kangur-exam-summary'
     );
@@ -197,6 +205,10 @@ describe('KangurExam', () => {
     expect(screen.getByTestId('kangur-exam-review-print-panel')).toHaveAttribute(
       'data-kangur-print-panel-id',
       'kangur-exam-review-2024_1'
+    );
+    expect(screen.getByTestId('kangur-exam-review-print-panel')).toHaveAttribute(
+      'data-kangur-print-paged-panel',
+      'true'
     );
     expect(screen.getByTestId('kangur-exam-review-print-panel')).toHaveAttribute(
       'data-kangur-print-panel-title',

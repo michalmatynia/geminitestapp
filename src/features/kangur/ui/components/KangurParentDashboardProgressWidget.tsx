@@ -185,6 +185,100 @@ const resolveDailyQuestAccent = (
   return 'slate';
 };
 
+const resolveDailyQuestAction = (dailyQuest: ParentDashboardDailyQuest) =>
+  dailyQuest?.assignment.action ?? null;
+
+const resolveDailyQuestActionLabel = (
+  dailyQuestAction: ReturnType<typeof resolveDailyQuestAction>
+): string => dailyQuestAction?.label ?? '';
+
+const resolveDailyQuestDescription = (
+  dailyQuest: ParentDashboardDailyQuest
+): string => dailyQuest?.assignment.description ?? '';
+
+const resolveDailyQuestLabel = ({
+  dailyQuest,
+  translations,
+}: {
+  dailyQuest: ParentDashboardDailyQuest;
+  translations: ProgressTranslations;
+}): string =>
+  dailyQuest?.assignment.questLabel ??
+  translations('widgets.progress.dailyQuest.questLabel');
+
+const resolveDailyQuestProgressLabel = (
+  dailyQuest: ParentDashboardDailyQuest
+): string => (dailyQuest ? `${dailyQuest.progress.percent}%` : '');
+
+const resolveDailyQuestProgressSummary = (
+  dailyQuest: ParentDashboardDailyQuest
+): string => dailyQuest?.progress.summary ?? '';
+
+const resolveDailyQuestRewardAccent = ({
+  dailyQuest,
+  dailyQuestAccent,
+}: {
+  dailyQuest: ParentDashboardDailyQuest;
+  dailyQuestAccent: ReturnType<typeof resolveDailyQuestAccent>;
+}): 'amber' | 'emerald' | 'indigo' | 'slate' =>
+  dailyQuest?.reward.status === 'claimed' ? 'emerald' : dailyQuestAccent;
+
+const resolveDailyQuestRewardLabel = (
+  dailyQuest: ParentDashboardDailyQuest
+): string => dailyQuest?.reward.label ?? '';
+
+const resolveDailyQuestTargetPage = (
+  dailyQuestAction: ReturnType<typeof resolveDailyQuestAction>
+) => dailyQuestAction?.page ?? null;
+
+const resolveDailyQuestTitle = (
+  dailyQuest: ParentDashboardDailyQuest
+): string => dailyQuest?.assignment.title ?? '';
+
+const resolveDailyQuestHref = ({
+  basePath,
+  dailyQuestAction,
+}: {
+  basePath: string;
+  dailyQuestAction: ReturnType<typeof resolveDailyQuestAction>;
+}): string | null => (dailyQuestAction ? buildAssignmentHref(basePath, dailyQuestAction) : null);
+
+const buildActiveAssignments = (
+  assignments: NonNullable<ParentDashboardRuntimeState['assignments']>
+) =>
+  assignments.filter(
+    (assignment) => !assignment.archived && assignment.progress.status !== 'completed'
+  );
+
+const buildRecentAssignments = (
+  activeAssignments: ReturnType<typeof buildActiveAssignments>
+) =>
+  activeAssignments
+    .slice()
+    .sort((left, right) => {
+      const leftTimestamp = Date.parse(left.progress.lastActivityAt ?? left.updatedAt);
+      const rightTimestamp = Date.parse(right.progress.lastActivityAt ?? right.updatedAt);
+      return rightTimestamp - leftTimestamp;
+    })
+    .slice(0, RECENT_ACTIVE_ASSIGNMENTS_LIMIT);
+
+const resolveMaxWeeklyGames = (
+  weeklyActivity: ParentDashboardProgressSnapshot['weeklyActivity']
+): number => Math.max(1, ...weeklyActivity.map((point) => point.games));
+
+const createProgressTimestampFormatter = ({
+  fallback,
+  locale,
+}: {
+  fallback: string;
+  locale: string;
+}) => (value: string | null | undefined): string =>
+  formatProgressTimestamp({
+    value,
+    locale,
+    fallback,
+  });
+
 const resolveDailyQuestPresentation = ({
   basePath,
   dailyQuest,
@@ -194,23 +288,21 @@ const resolveDailyQuestPresentation = ({
   dailyQuest: ParentDashboardDailyQuest;
   translations: ProgressTranslations;
 }) => {
-  const dailyQuestAction = dailyQuest?.assignment.action ?? null;
+  const dailyQuestAction = resolveDailyQuestAction(dailyQuest);
   const dailyQuestAccent = resolveDailyQuestAccent(dailyQuest);
 
   return {
     accent: dailyQuestAccent,
-    actionLabel: dailyQuestAction?.label ?? '',
-    description: dailyQuest?.assignment.description ?? '',
-    href: dailyQuestAction ? buildAssignmentHref(basePath, dailyQuestAction) : null,
-    label:
-      dailyQuest?.assignment.questLabel ??
-      translations('widgets.progress.dailyQuest.questLabel'),
-    progressLabel: dailyQuest ? `${dailyQuest.progress.percent}%` : '',
-    progressSummary: dailyQuest?.progress.summary ?? '',
-    rewardAccent: dailyQuest?.reward.status === 'claimed' ? 'emerald' : dailyQuestAccent,
-    rewardLabel: dailyQuest?.reward.label ?? '',
-    targetPage: dailyQuestAction?.page ?? null,
-    title: dailyQuest?.assignment.title ?? '',
+    actionLabel: resolveDailyQuestActionLabel(dailyQuestAction),
+    description: resolveDailyQuestDescription(dailyQuest),
+    href: resolveDailyQuestHref({ basePath, dailyQuestAction }),
+    label: resolveDailyQuestLabel({ dailyQuest, translations }),
+    progressLabel: resolveDailyQuestProgressLabel(dailyQuest),
+    progressSummary: resolveDailyQuestProgressSummary(dailyQuest),
+    rewardAccent: resolveDailyQuestRewardAccent({ dailyQuest, dailyQuestAccent }),
+    rewardLabel: resolveDailyQuestRewardLabel(dailyQuest),
+    targetPage: resolveDailyQuestTargetPage(dailyQuestAction),
+    title: resolveDailyQuestTitle(dailyQuest),
   };
 };
 
@@ -831,35 +923,52 @@ function KangurParentDashboardLessonProgressSection({
   );
 }
 
-export function KangurParentDashboardProgressWidget({
-  displayMode = 'always',
+function useKangurParentDashboardProgressArchiveAction({
+  archiveAssignmentErrorLabel,
+  updateAssignment,
 }: {
-  displayMode?: KangurParentDashboardPanelDisplayMode;
-}): React.JSX.Element | null {
-  const { activeLearner, activeTab, canAccessDashboard } = useKangurParentDashboardRuntime();
-  const activeLearnerId = activeLearner?.id ?? null;
+  archiveAssignmentErrorLabel: string;
+  updateAssignment: NonNullable<ParentDashboardRuntimeState['updateAssignment']>;
+}): {
+  archiveError: string | null;
+  handleArchiveAssignment: (assignmentId: string) => Promise<void>;
+} {
+  const [archiveError, setArchiveError] = useState<string | null>(null);
 
-  if (!canAccessDashboard) {
-    return null;
-  }
+  const handleArchiveAssignment = async (assignmentId: string): Promise<void> => {
+    setArchiveError(null);
+    await withKangurClientError(
+      {
+        source: 'kangur-parent-dashboard',
+        action: 'archive-assignment',
+        description: 'Archive a learner assignment from the parent dashboard.',
+        context: {
+          assignmentId,
+        },
+      },
+      async () => {
+        await updateAssignment(assignmentId, { archived: true });
+      },
+      {
+        fallback: undefined,
+        onError: () => {
+          setArchiveError(archiveAssignmentErrorLabel);
+        },
+      }
+    );
+  };
 
-  if (!shouldRenderKangurParentDashboardPanel(displayMode, activeTab, 'progress')) {
-    return null;
-  }
-
-  if (!activeLearnerId) {
-    return null;
-  }
-
-  return <KangurParentDashboardProgressWidgetContent />;
+  return {
+    archiveError,
+    handleArchiveAssignment,
+  };
 }
 
-function KangurParentDashboardProgressWidgetContent(): React.JSX.Element {
+function useKangurParentDashboardProgressWidgetState() {
   const locale = useLocale();
   const translations = useTranslations('KangurParentDashboard');
   const runtimeTranslations = useTranslations('KangurProgressRuntime');
   const {
-    activeLearner,
     assignments = [],
     assignmentsError,
     basePath,
@@ -874,16 +983,7 @@ function KangurParentDashboardProgressWidgetContent(): React.JSX.Element {
   const { subject, subjectKey } = useKangurSubjectFocus();
   const isCoarsePointer = useKangurCoarsePointer();
   const { entry: progressContent } = useKangurPageContentEntry('parent-dashboard-progress');
-  const activeLearnerId = activeLearner?.id ?? null;
-  const [archiveError, setArchiveError] = useState<string | null>(null);
   const taskKindLabels = buildProgressTaskKindLabels(translations);
-  const formatTimestamp = (value: string | null | undefined): string =>
-    formatProgressTimestamp({
-      value,
-      locale,
-      fallback: translations('widgets.progress.timestampUnavailable'),
-    });
-  const activeAssignmentsTitle = translations('widgets.progress.assignments.activeTitle');
   const activeAssignmentsEmptyLabel = translations('widgets.progress.assignments.activeEmpty');
   const activeAssignmentsErrorLabel = translations('widgets.progress.assignments.loadError');
   const assignmentsLoadingLabel = translations('widgets.progress.assignments.loading');
@@ -894,23 +994,9 @@ function KangurParentDashboardProgressWidgetContent(): React.JSX.Element {
   const recentAssignmentsEmptyLabel = translations('widgets.progress.assignments.recentEmpty');
   const openedTasks = progress.openedTasks ?? [];
   const lessonPanelProgress = progress.lessonPanelProgress ?? {};
-  const activeAssignments = useMemo(
-    () =>
-      assignments.filter(
-        (assignment) => !assignment.archived && assignment.progress.status !== 'completed'
-      ),
-    [assignments]
-  );
+  const activeAssignments = useMemo(() => buildActiveAssignments(assignments), [assignments]);
   const recentAssignments = useMemo(
-    () =>
-      activeAssignments
-        .slice()
-        .sort((left, right) => {
-          const leftTimestamp = Date.parse(left.progress.lastActivityAt ?? left.updatedAt);
-          const rightTimestamp = Date.parse(right.progress.lastActivityAt ?? right.updatedAt);
-          return rightTimestamp - leftTimestamp;
-        })
-        .slice(0, RECENT_ACTIVE_ASSIGNMENTS_LIMIT),
+    () => buildRecentAssignments(activeAssignments),
     [activeAssignments]
   );
   const activeAssignmentItems = useMemo(
@@ -936,7 +1022,7 @@ function KangurParentDashboardProgressWidgetContent(): React.JSX.Element {
     [locale, progress, scores]
   );
   const maxWeeklyGames = useMemo(
-    () => Math.max(1, ...snapshot.weeklyActivity.map((point) => point.games)),
+    () => resolveMaxWeeklyGames(snapshot.weeklyActivity),
     [snapshot.weeklyActivity]
   );
   const topOperationPerformance = useMemo(
@@ -947,7 +1033,6 @@ function KangurParentDashboardProgressWidgetContent(): React.JSX.Element {
     () => buildLessonMasteryInsights(progress, TOP_LESSON_INSIGHT_LIMIT, locale),
     [locale, progress]
   );
-
   const dailyQuest = getCurrentKangurDailyQuest(progress, {
     ownerKey: subjectKey,
     subject,
@@ -958,31 +1043,113 @@ function KangurParentDashboardProgressWidgetContent(): React.JSX.Element {
     dailyQuest,
     translations,
   });
+  const formatTimestamp = createProgressTimestampFormatter({
+    fallback: translations('widgets.progress.timestampUnavailable'),
+    locale,
+  });
+  const { archiveError, handleArchiveAssignment } =
+    useKangurParentDashboardProgressArchiveAction({
+      archiveAssignmentErrorLabel,
+      updateAssignment,
+    });
 
-  const handleArchiveAssignment = async (assignmentId: string): Promise<void> => {
-    setArchiveError(null);
-    await withKangurClientError(
-      {
-        source: 'kangur-parent-dashboard',
-        action: 'archive-assignment',
-        description: 'Archive a learner assignment from the parent dashboard.',
-        context: {
-          assignmentId,
-        },
-      },
-      async () => {
-        await updateAssignment(assignmentId, { archived: true });
-      },
-      {
-        fallback: undefined,
-        onError: () => {
-          setArchiveError(archiveAssignmentErrorLabel);
-        },
-      }
-    );
+  return {
+    activeAssignmentItems,
+    activeAssignmentsEmptyLabel,
+    activeAssignmentsErrorLabel,
+    archiveError,
+    assignments,
+    assignmentsError,
+    assignmentsLoadingLabel,
+    basePath,
+    compactActionClassName,
+    dailyQuest,
+    dailyQuestPresentation,
+    formatTimestamp,
+    handleArchiveAssignment,
+    isLoadingAssignments,
+    isLoadingScores,
+    lessonMasteryInsights,
+    lessonPanelCards,
+    lessons,
+    locale,
+    maxWeeklyGames,
+    openedTasks,
+    progressContent,
+    recentAssignmentItems,
+    recentAssignmentsEmptyLabel,
+    recentAssignmentsSummary,
+    recentAssignmentsTitle,
+    scoresError,
+    snapshot,
+    strongestLessons: lessonMasteryInsights.strongest.slice(0, 2),
+    taskKindLabels,
+    topOperationPerformance,
+    translations,
+    updateAssignment,
+    weakestLessons: lessonMasteryInsights.weakest.slice(0, 2),
   };
-  const strongestLessons = lessonMasteryInsights.strongest.slice(0, 2);
-  const weakestLessons = lessonMasteryInsights.weakest.slice(0, 2);
+}
+
+export function KangurParentDashboardProgressWidget({
+  displayMode = 'always',
+}: {
+  displayMode?: KangurParentDashboardPanelDisplayMode;
+}): React.JSX.Element | null {
+  const { activeLearner, activeTab, canAccessDashboard } = useKangurParentDashboardRuntime();
+
+  if (!canAccessDashboard) {
+    return null;
+  }
+
+  if (!shouldRenderKangurParentDashboardPanel(displayMode, activeTab, 'progress')) {
+    return null;
+  }
+
+  if (!activeLearner?.id) {
+    return null;
+  }
+
+  return <KangurParentDashboardProgressWidgetContent />;
+}
+
+function KangurParentDashboardProgressWidgetContent(): React.JSX.Element {
+  const {
+    activeAssignmentItems,
+    activeAssignmentsEmptyLabel,
+    activeAssignmentsErrorLabel,
+    archiveError,
+    assignments,
+    assignmentsError,
+    assignmentsLoadingLabel,
+    basePath,
+    compactActionClassName,
+    dailyQuest,
+    dailyQuestPresentation,
+    formatTimestamp,
+    handleArchiveAssignment,
+    isLoadingAssignments,
+    isLoadingScores,
+    lessonMasteryInsights,
+    lessonPanelCards,
+    lessons,
+    locale,
+    maxWeeklyGames,
+    openedTasks,
+    progressContent,
+    recentAssignmentItems,
+    recentAssignmentsEmptyLabel,
+    recentAssignmentsSummary,
+    recentAssignmentsTitle,
+    scoresError,
+    snapshot,
+    strongestLessons,
+    taskKindLabels,
+    topOperationPerformance,
+    translations,
+    updateAssignment,
+    weakestLessons,
+  } = useKangurParentDashboardProgressWidgetState();
 
   return (
     <KangurPanelStack>

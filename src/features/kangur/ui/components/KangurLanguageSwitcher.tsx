@@ -69,6 +69,17 @@ type KangurLanguageMenuPalette = {
   shadow: string;
   text: string;
 };
+type KangurLanguageMenuStyle = CSSProperties & {
+  '--kangur-language-menu-active-bg': string;
+  '--kangur-language-menu-active-border': string;
+  '--kangur-language-menu-active-shadow': string;
+  '--kangur-language-menu-bg': string;
+  '--kangur-language-menu-border': string;
+  '--kangur-language-menu-hover-bg': string;
+  '--kangur-language-menu-inner-bg': string;
+  '--kangur-language-menu-shadow': string;
+  '--kangur-language-menu-text': string;
+};
 
 type KangurAppearanceValue = ReturnType<typeof useKangurStorefrontAppearance>;
 type KangurLanguageOption = {
@@ -423,9 +434,9 @@ const resolveCurrentLocaleEntry = (
   selectedLocale: string
 ): (typeof ENABLED_LOCALES)[number] =>
   ENABLED_LOCALES.find((entry) => normalizeSiteLocale(entry.code) === selectedLocale) ??
-  ENABLED_LOCALES[0];
+  ENABLED_LOCALES[0]!;
 
-const buildLanguageMenuStyle = (palette: KangurLanguageMenuPalette): CSSProperties => ({
+const buildLanguageMenuStyle = (palette: KangurLanguageMenuPalette): KangurLanguageMenuStyle => ({
   '--kangur-language-menu-active-bg': palette.activeBackground,
   '--kangur-language-menu-active-border': palette.activeBorder,
   '--kangur-language-menu-active-shadow': palette.activeShadow,

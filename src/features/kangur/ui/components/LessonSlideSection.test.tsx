@@ -123,6 +123,10 @@ describe('LessonSlideSection', () => {
       'data-kangur-print-panel',
       'true'
     );
+    expect(screen.getByTestId('lesson-slide-shell')).toHaveAttribute(
+      'data-kangur-print-paged-panel',
+      'true'
+    );
     expect(screen.getByTestId('lesson-slide-print-panel-label')).toHaveTextContent('Panel 1');
     expect(screen.getByTestId('lesson-slide-shell-root')).toHaveClass('mx-auto');
     expect(firstIndicator).toHaveClass('kangur-cta-pill', 'bg-orange-400');
@@ -244,6 +248,7 @@ describe('LessonSlideSection', () => {
       'lesson-slide-print-button',
     ]);
     expect(slideShell).toHaveAttribute('data-kangur-print-slide-panel', 'true');
+    expect(slideShell).toHaveAttribute('data-kangur-print-paged-panel', 'true');
     expect(slideShell).toHaveAttribute('data-kangur-print-panel-id');
     expect(slideShell).toHaveAttribute('data-kangur-print-panel-title', 'Slajd 1');
     expect(slideShellRoot).toHaveAttribute('data-kangur-print-slide-shell', 'true');

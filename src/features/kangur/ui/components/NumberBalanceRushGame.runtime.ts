@@ -2,6 +2,7 @@
 
 import type React from 'react';
 import type { DropResult } from '@hello-pangea/dnd';
+import type { TranslationValues } from 'use-intl';
 
 import type {
   NumberBalanceTile,
@@ -25,7 +26,7 @@ import {
   reorderWithinList,
 } from './NumberBalanceRushGame.utils';
 
-type NumberBalanceTranslations = (key: string, values?: Record<string, unknown>) => string;
+type NumberBalanceTranslations = (key: string, values?: TranslationValues) => string;
 
 type NumberBalanceLeaderboardEntry = NumberBalancePlayerScore & {
   isLeader: boolean;

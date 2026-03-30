@@ -12,7 +12,7 @@ import {
   KANGUR_MUSIC_PIANO_ROLL_LAUNCHABLE_RUNTIME_IDS,
   KANGUR_MUSIC_PIANO_ROLL_RENDERER_IDS,
   KANGUR_MUSIC_PIANO_ROLL_VARIANT_IDS,
-} from './music-piano-roll-contract';
+} from '../music-piano-roll-contract';
 
 describe('kangur game variants', () => {
   it('flattens game variants with catalog metadata', () => {

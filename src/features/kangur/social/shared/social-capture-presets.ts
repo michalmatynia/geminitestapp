@@ -11,6 +11,8 @@ export type KangurSocialCapturePreset = {
 };
 
 const buildPath = (slug: string): string => `${KANGUR_BASE_PATH}/${slug}`;
+const buildGameScreenPath = (screen: string): string =>
+  `${buildPath(KANGUR_PAGE_TO_SLUG['Game'] ?? 'game')}?quickStart=screen&screen=${encodeURIComponent(screen)}`;
 
 export const KANGUR_SOCIAL_CAPTURE_PRESETS: KangurSocialCapturePreset[] = [
   {
@@ -18,6 +20,33 @@ export const KANGUR_SOCIAL_CAPTURE_PRESETS: KangurSocialCapturePreset[] = [
     title: 'Kangur Game Home',
     path: buildPath(KANGUR_PAGE_TO_SLUG['Game'] ?? 'game'),
     description: 'Learner home and quick-start hub.',
+  },
+  {
+    id: 'clock-quiz',
+    title: 'Clock Quiz',
+    path: buildGameScreenPath('clock_quiz'),
+    description: 'Direct launch into the clock-training minigame.',
+    selector: '[data-testid="kangur-clock-quiz-top-section"]',
+    waitForMs: 3500,
+    waitForSelectorMs: 20000,
+  },
+  {
+    id: 'calendar-quiz',
+    title: 'Calendar Training',
+    path: buildGameScreenPath('calendar_quiz'),
+    description: 'Direct launch into the calendar-training minigame.',
+    selector: '[data-testid="kangur-calendar-training-top-section"]',
+    waitForMs: 3500,
+    waitForSelectorMs: 20000,
+  },
+  {
+    id: 'geometry-quiz',
+    title: 'Geometry Drawing',
+    path: buildGameScreenPath('geometry_quiz'),
+    description: 'Direct launch into the geometry-drawing minigame.',
+    selector: '[data-testid="kangur-geometry-training-top-section"]',
+    waitForMs: 3500,
+    waitForSelectorMs: 20000,
   },
   {
     id: 'lessons',

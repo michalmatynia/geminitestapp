@@ -15,8 +15,8 @@ import {
   hasKangurLaunchableGameCoverageForLessonComponent,
   isKangurGameLibraryLessonComponent,
   resolveKangurGameLibraryLessonCoverageStatus,
-} from './coverage';
-import { createKangurGameCatalogEntries } from './catalog';
+} from '../coverage';
+import { createKangurGameCatalogEntries } from '../catalog';
 
 describe('kangur game coverage', () => {
   it('keeps game-library lesson component ids unique across cohorts', () => {

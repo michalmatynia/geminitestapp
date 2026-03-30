@@ -181,7 +181,11 @@ function useKangurLearnerProfileOverviewAvatarState({
   const [avatarError, setAvatarError] = useState<string | null>(null);
 
   const handleAvatarSelect = async (avatarId: string): Promise<void> => {
-    if (!canUpdateKangurOverviewAvatar({ activeLearner, avatarId, isSavingAvatar })) {
+    const learner = activeLearner;
+    if (
+      !learner ||
+      !canUpdateKangurOverviewAvatar({ activeLearner: learner, avatarId, isSavingAvatar })
+    ) {
       return;
     }
 
@@ -193,12 +197,12 @@ function useKangurLearnerProfileOverviewAvatarState({
         action: 'update-avatar',
         description: 'Update learner avatar selection.',
         context: {
-          learnerId: activeLearner.id,
+          learnerId: learner.id,
           avatarId,
         },
       },
       async () => {
-        await kangurPlatform.learners.update(activeLearner.id, { avatarId });
+        await kangurPlatform.learners.update(learner.id, { avatarId });
         await checkAppState();
       },
       {

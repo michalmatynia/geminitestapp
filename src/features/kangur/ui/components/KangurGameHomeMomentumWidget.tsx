@@ -37,6 +37,12 @@ type KangurHomeRecommendation = {
   priorityLabel: string;
   title: string;
 };
+type KangurGuidedMomentumWithNextBadge = ReturnType<typeof getRecommendedSessionMomentum> & {
+  nextBadgeName: string;
+};
+type KangurTrackRecommendationTarget = ReturnType<typeof getProgressBadgeTrackSummaries>[number] & {
+  nextBadge: NonNullable<ReturnType<typeof getProgressBadgeTrackSummaries>[number]['nextBadge']>;
+};
 
 type KangurHomeMomentumFallbackCopy = {
   actions: {
@@ -490,9 +496,14 @@ const getGuidedRecommendation = (
 ): KangurHomeRecommendation | null => {
   const progressLocalizer = { translate: progressTranslate };
   const guidedMomentum = getRecommendedSessionMomentum(progress, progressLocalizer);
-  if (guidedMomentum.completedSessions <= 0 || !guidedMomentum.nextBadgeName) {
+  const nextBadgeName = guidedMomentum.nextBadgeName;
+  if (guidedMomentum.completedSessions <= 0 || !nextBadgeName) {
     return null;
   }
+  const guidedMomentumWithNextBadge: KangurGuidedMomentumWithNextBadge = {
+    ...guidedMomentum,
+    nextBadgeName,
+  };
 
   const topActivityContext = resolveRecommendationTopActivityContext({
     fallbackCopy,
@@ -506,7 +517,7 @@ const getGuidedRecommendation = (
     action: topActivityContext.action,
     description: resolveGuidedRecommendationDescription({
       fallbackCopy,
-      guidedMomentum,
+      guidedMomentum: guidedMomentumWithNextBadge,
       topActivityContext,
       translate,
     }),
@@ -518,8 +529,8 @@ const getGuidedRecommendation = (
     title: translateRecommendationWithFallback(
       translate,
       'homeMomentum.guided.title',
-      fallbackCopy.guided.title(guidedMomentum.nextBadgeName),
-      { nextBadgeName: guidedMomentum.nextBadgeName }
+      fallbackCopy.guided.title(nextBadgeName),
+      { nextBadgeName }
     ),
   };
 };
@@ -620,7 +631,7 @@ const resolveGuidedRecommendationDescription = ({
   translate,
 }: {
   fallbackCopy: KangurHomeMomentumFallbackCopy;
-  guidedMomentum: ReturnType<typeof getRecommendedSessionMomentum>;
+  guidedMomentum: KangurGuidedMomentumWithNextBadge;
   topActivityContext: KangurRecommendationTopActivityContext;
   translate?: RecommendationTranslate;
 }): string => {
@@ -659,12 +670,13 @@ const resolveGuidedRecommendationDescription = ({
 
 const isTrackRecommendationCandidate = (
   entry: ReturnType<typeof getProgressBadgeTrackSummaries>[number]
-): boolean => Boolean(entry.nextBadge) && (entry.unlockedCount > 0 || entry.progressPercent >= 40);
+): entry is KangurTrackRecommendationTarget =>
+  Boolean(entry.nextBadge) && (entry.unlockedCount > 0 || entry.progressPercent >= 40);
 
 const resolveTrackRecommendationTarget = (
   progress: KangurProgressState,
   progressTranslate?: KangurProgressTranslate
-): ReturnType<typeof getProgressBadgeTrackSummaries>[number] | null =>
+): KangurTrackRecommendationTarget | null =>
   getProgressBadgeTrackSummaries(progress, { maxTracks: 6 }, { translate: progressTranslate }).find(
     isTrackRecommendationCandidate
   ) ?? null;
@@ -677,7 +689,7 @@ const resolveTrackRecommendationDescription = ({
 }: {
   fallbackCopy: KangurHomeMomentumFallbackCopy;
   topActivityContext: KangurRecommendationTopActivityContext;
-  track: NonNullable<ReturnType<typeof resolveTrackRecommendationTarget>>;
+  track: KangurTrackRecommendationTarget;
   translate?: RecommendationTranslate;
 }): string => {
   const normalizedActivityLabel = topActivityContext.activityLabel?.toLowerCase() ?? '';

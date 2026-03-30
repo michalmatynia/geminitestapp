@@ -2,12 +2,12 @@ import { describe, expect, it } from 'vitest';
 
 import type { KangurGameContentSet } from '@/shared/contracts/kangur-game-instances';
 
-import { getKangurGameBuiltInInstancesForGame } from './instances';
+import { getKangurGameBuiltInInstancesForGame } from '../instances';
 import {
   resolveKangurLaunchableGameRuntimeForInstance,
   resolveKangurLaunchableGameRuntimeForPersistedInstance,
-} from './launchable-runtime-resolution';
-import { getKangurGameDefinition } from './registry';
+} from '../launchable-runtime-resolution';
+import { getKangurGameDefinition } from '../registry';
 
 describe('launchable runtime resolution', () => {
   it('resolves the built-in addition instance to the shared play-variant runtime contract', () => {

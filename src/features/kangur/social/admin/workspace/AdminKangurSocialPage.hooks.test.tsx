@@ -832,4 +832,41 @@ describe('useAdminKangurSocialPage', () => {
     ]);
     expect(result.current.isProgrammablePlaywrightModalOpen).toBe(true);
   });
+
+  it('seeds programmable routes from the selected minigame presets', () => {
+    const presetIds = ['clock-quiz', 'calendar-quiz', 'geometry-quiz'];
+    useSocialSettingsMock.mockReturnValue(
+      createSettingsState({
+        batchCapturePresetIds: presetIds,
+        persistedSocialSettings: {
+          linkedinConnectionId: 'conn-1',
+          brainModelId: null,
+          visionModelId: null,
+          batchCaptureBaseUrl: 'https://capture.example.com',
+          batchCapturePresetIds: presetIds,
+          batchCapturePresetLimit: 2,
+          programmableCaptureBaseUrl: null,
+          programmableCapturePersonaId: null,
+          programmableCaptureScript: KANGUR_SOCIAL_DEFAULT_PLAYWRIGHT_CAPTURE_SCRIPT,
+          programmableCaptureRoutes: [],
+          projectUrl: 'https://project.example.com',
+        },
+      })
+    );
+
+    const { result } = renderHook(() => useAdminKangurSocialPage());
+
+    act(() => {
+      result.current.handleAddProgrammableCaptureRoute();
+      result.current.handleUpdateProgrammableCaptureRoute('route-1', {
+        title: 'Dirty route',
+        path: '/dirty',
+      });
+      result.current.handleSeedProgrammableCaptureRoutesFromPresets();
+    });
+
+    expect(result.current.programmableCaptureRoutes).toEqual(
+      buildKangurSocialProgrammableCaptureRoutesFromPresetIds(presetIds)
+    );
+  });
 });

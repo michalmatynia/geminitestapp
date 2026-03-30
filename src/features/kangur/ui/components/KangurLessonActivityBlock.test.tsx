@@ -180,6 +180,7 @@ describe('KangurLessonActivityBlock', () => {
     const printButton = screen.getByTestId('lesson-activity-block-print-button');
 
     expect(shell).toHaveAttribute('data-kangur-print-panel-id', 'lesson-activity-block-activity-print');
+    expect(shell).toHaveAttribute('data-kangur-print-paged-panel', 'true');
     expect(shell).toHaveAttribute('data-kangur-print-panel-title', 'Clock practice');
     expect(printButton).toHaveAttribute('aria-label', 'Drukuj panel');
 

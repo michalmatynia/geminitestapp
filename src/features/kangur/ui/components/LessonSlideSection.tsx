@@ -547,6 +547,7 @@ export default function LessonSlideSection(
               activeSlide.panelClassName
             )}
             data-kangur-print-panel='true'
+            data-kangur-print-paged-panel='true'
             data-kangur-print-slide-panel='true'
             data-kangur-print-panel-id={slidePanelId}
             data-kangur-print-panel-title={activeSlide.title}

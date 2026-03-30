@@ -1,6 +1,6 @@
 import 'dotenv/config';
 
-import { REQUIRED_KANGUR_AI_TUTOR_NATIVE_GUIDE_COVERAGE } from '@/features/kangur/ai-tutor-native-guide-coverage';
+import { REQUIRED_KANGUR_AI_TUTOR_NATIVE_GUIDE_COVERAGE } from '@/features/kangur/ai-tutor/native-guide-coverage';
 import { getKangurPageContentStore } from '@/features/kangur/server/page-content-repository';
 import {
   DEFAULT_KANGUR_AI_TUTOR_CONTENT,

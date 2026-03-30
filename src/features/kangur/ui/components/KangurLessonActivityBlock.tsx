@@ -279,6 +279,7 @@ export function KangurLessonActivityBlock(
     <KangurSurfacePanel
       accent='emerald'
       data-kangur-print-panel='true'
+      data-kangur-print-paged-panel='true'
       data-kangur-print-panel-id={printPanelId}
       data-kangur-print-panel-title={title}
       data-testid='lesson-activity-block-shell'

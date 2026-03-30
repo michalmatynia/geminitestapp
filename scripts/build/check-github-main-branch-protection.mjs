@@ -107,34 +107,12 @@ const normalizeStatusChecks = (requiredStatusChecks) => {
     }));
 };
 
-const mergeRequiredChecks = (requiredStatusChecks, expectedContext, expectedAppId) => {
-  const mergedChecks = [];
-  let expectedCheckAdded = false;
-
-  for (const check of normalizeStatusChecks(requiredStatusChecks)) {
-    if (check.context === expectedContext) {
-      if (!expectedCheckAdded) {
-        mergedChecks.push({
-          context: expectedContext,
-          app_id: expectedAppId,
-        });
-        expectedCheckAdded = true;
-      }
-      continue;
-    }
-
-    mergedChecks.push(check);
-  }
-
-  if (!expectedCheckAdded) {
-    mergedChecks.push({
-      context: expectedContext,
-      app_id: expectedAppId,
-    });
-  }
-
-  return mergedChecks;
-};
+const buildRequiredChecks = (expectedContext, expectedAppId) => [
+  {
+    context: expectedContext,
+    app_id: expectedAppId,
+  },
+];
 
 const sanitizeAllowances = (value) => {
   if (!value || typeof value !== 'object') {
@@ -421,12 +399,21 @@ export const findProtectionDrift = (protection, config) => {
     issues.push('required status checks are not strict');
   }
 
-  const hasRequiredCheck = normalizeStatusChecks(protection.required_status_checks).some(
+  const normalizedChecks = normalizeStatusChecks(protection.required_status_checks);
+  const hasRequiredCheck = normalizedChecks.some(
     (check) => check.context === config.requiredCheck && (check.app_id === config.checkAppId || check.app_id === null),
   );
 
   if (!hasRequiredCheck) {
     issues.push(`required check ${config.requiredCheck} is missing`);
+  }
+
+  const unexpectedChecks = normalizedChecks
+    .filter((check) => check.context !== config.requiredCheck)
+    .map((check) => check.context);
+
+  if (unexpectedChecks.length > 0) {
+    issues.push(`unexpected required checks are configured: ${unexpectedChecks.join(', ')}`);
   }
 
   if (protection.allow_force_pushes?.enabled !== false) {
@@ -443,7 +430,7 @@ export const findProtectionDrift = (protection, config) => {
 export const buildProtectionPayload = (currentProtection, config) => ({
   required_status_checks: {
     strict: true,
-    checks: mergeRequiredChecks(currentProtection?.required_status_checks, config.requiredCheck, config.checkAppId),
+    checks: buildRequiredChecks(config.requiredCheck, config.checkAppId),
   },
   enforce_admins: currentProtection?.enforce_admins?.enabled ?? false,
   required_pull_request_reviews: sanitizePullRequestReviews(currentProtection?.required_pull_request_reviews),

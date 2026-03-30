@@ -1,6 +1,6 @@
 import { JSX } from 'react';
 
-import { renderProductPublicRoute } from '@/app/(frontend)/products/[id]/product-route-helpers';
+import { renderProductPublicRoute } from '@/app/(frontend)/products/product-route-helpers';
 
 export const revalidate = 3600;
 

@@ -15,6 +15,7 @@ import type {
   KangurSocialPost,
   KangurSocialVisualAnalysis,
 } from '@/shared/contracts/kangur-social-posts';
+import { normalizeKangurSocialDraftLike } from '@/shared/lib/kangur-social-generated-draft';
 import { api } from '@/shared/lib/api-client';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 import { safeClearTimeout, safeSetTimeout, type SafeTimerId } from '@/shared/lib/timers';
@@ -89,6 +90,22 @@ const hasUsableGeneratedContent = <
         Boolean(value?.trim())
       )
   );
+
+const normalizeGeneratedContent = <
+  T extends Pick<KangurSocialGeneratedDraft, 'titlePl' | 'titleEn' | 'bodyPl' | 'bodyEn'>,
+>(
+  draftLike: T | null | undefined
+): T | null => {
+  const normalized = normalizeKangurSocialDraftLike(draftLike);
+  if (!normalized) {
+    return null;
+  }
+
+  return {
+    ...draftLike,
+    ...normalized,
+  } as T;
+};
 
 type RunGenerationOptions = {
   prefetchedVisualAnalysis?: KangurSocialVisualAnalysis;
@@ -226,7 +243,7 @@ export function useSocialGeneration(deps: SocialGenerationDeps) {
         throw new Error('Generation completed without a usable result payload.');
       }
 
-      const generated = finalJob.result.generatedPost;
+      const generated = normalizeGeneratedContent(finalJob.result.generatedPost);
       if (hasUsableGeneratedContent(generated)) {
         deps.setActivePostId(generated.id);
         deps.setEditorState({
@@ -243,14 +260,20 @@ export function useSocialGeneration(deps: SocialGenerationDeps) {
         queryClient.setQueryData<KangurSocialPost[]>(postsQueryKey, (current) =>
           (current ?? []).map((post) => (post.id === generated.id ? generated : post))
         );
-      } else if (hasUsableGeneratedContent(finalJob.result.draft)) {
+      } else if (hasUsableGeneratedContent(normalizeGeneratedContent(finalJob.result.draft))) {
+        const normalizedDraft = normalizeGeneratedContent(finalJob.result.draft);
+        if (!normalizedDraft) {
+          throw new Error(
+            'Generation completed, but no post copy was returned. Check the queued result and retry.'
+          );
+        }
         deps.setEditorState({
-          titlePl: finalJob.result.draft.titlePl ?? '',
-          titleEn: finalJob.result.draft.titleEn ?? '',
-          bodyPl: finalJob.result.draft.bodyPl ?? '',
-          bodyEn: finalJob.result.draft.bodyEn ?? '',
+          titlePl: normalizedDraft.titlePl ?? '',
+          titleEn: normalizedDraft.titleEn ?? '',
+          bodyPl: normalizedDraft.bodyPl ?? '',
+          bodyEn: normalizedDraft.bodyEn ?? '',
         });
-        deps.setContextSummary(finalJob.result.draft.summary ?? null);
+        deps.setContextSummary(finalJob.result.draft?.summary ?? null);
       } else {
         throw new Error(
           'Generation completed, but no post copy was returned. Check the queued result and retry.'

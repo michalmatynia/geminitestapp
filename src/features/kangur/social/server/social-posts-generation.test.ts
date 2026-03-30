@@ -93,6 +93,30 @@ describe('generateKangurSocialPostDraft', () => {
     expect(result.bodyEn).toBe('English post');
   });
 
+  it('recovers structured fields from truncated JSON-like draft responses', async () => {
+    mocks.runBrainChatCompletionMock.mockResolvedValue({
+      text: [
+        '{',
+        '  "titlePl": "Nowe funkcje w Kangur i StudiQ",',
+        '  "titleEn": "New Features in Kangur & StudiQ",',
+        '  "bodyPl": "🚀 Wprowadziliśmy nowe funkcje.\\n\\n- Widoczny pasek postępu\\n- Lepszy dashboard rodzica",',
+        '  "bodyEn": "🚀 We shipped new features.\\n\\n- Visible progress bar\\n- Better parent dashboard',
+      ].join('\n'),
+      vendor: 'openai',
+      modelId: 'brain-default-model',
+    });
+
+    const result = await generateKangurSocialPostDraft({
+      docReferences: ['overview'],
+    });
+
+    expect(result.titlePl).toBe('Nowe funkcje w Kangur i StudiQ');
+    expect(result.titleEn).toBe('New Features in Kangur & StudiQ');
+    expect(result.bodyPl).toContain('Widoczny pasek postępu');
+    expect(result.bodyPl).not.toContain('"titlePl"');
+    expect(result.bodyEn).toContain('We shipped new features.');
+  });
+
   it('reuses prefetched visual analysis and requires it to be mentioned in the prompt', async () => {
     await generateKangurSocialPostDraft({
       docReferences: ['overview'],

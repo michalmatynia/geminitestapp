@@ -12,6 +12,10 @@ export type KangurLessonContentMetadata = {
   syncedAt: string;
 };
 
+type KangurLessonContentMetadataDocument = KangurLessonContentMetadata & {
+  _id: string;
+};
+
 export const writeKangurLessonContentMetadata = async (
   metadata: Omit<KangurLessonContentMetadata, 'syncedAt'>
 ): Promise<KangurLessonContentMetadata> => {
@@ -22,7 +26,7 @@ export const writeKangurLessonContentMetadata = async (
     syncedAt,
   };
 
-  await db.collection(KANGUR_CONTENT_METADATA_COLLECTION).updateOne(
+  await db.collection<KangurLessonContentMetadataDocument>(KANGUR_CONTENT_METADATA_COLLECTION).updateOne(
     { _id: KANGUR_LESSON_CONTENT_METADATA_ID },
     {
       $set: {
@@ -40,7 +44,7 @@ export const readKangurLessonContentMetadata =
   async (): Promise<KangurLessonContentMetadata | null> => {
     const db = await getMongoDb();
     const document = await db
-      .collection(KANGUR_CONTENT_METADATA_COLLECTION)
+      .collection<KangurLessonContentMetadataDocument>(KANGUR_CONTENT_METADATA_COLLECTION)
       .findOne({ _id: KANGUR_LESSON_CONTENT_METADATA_ID });
 
     if (!document || typeof document !== 'object') {

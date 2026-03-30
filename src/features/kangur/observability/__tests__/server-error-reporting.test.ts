@@ -16,7 +16,7 @@ vi.mock('@/features/kangur/shared/utils/observability/error-system', () => ({
   },
 }));
 
-import { reportKangurServerError, withKangurServerError } from './server-error-reporting';
+import { reportKangurServerError, withKangurServerError } from '../server-error-reporting';
 
 describe('kangur server error reporting', () => {
   beforeEach(() => {

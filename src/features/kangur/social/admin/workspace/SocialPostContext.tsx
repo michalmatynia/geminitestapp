@@ -94,7 +94,7 @@ export function SocialPostProvider({ children }: { children: React.ReactNode }) 
       ? rawMissingImageAddonActionErrorMessage
       : null;
 
-  const value = {
+  const value: SocialPostContextValue = {
     ...socialPage,
     missingSelectedImageAddonIds: normalizedMissingSelectedImageAddonIds,
     handleRefreshMissingImageAddons: normalizedHandleRefreshMissingImageAddons,

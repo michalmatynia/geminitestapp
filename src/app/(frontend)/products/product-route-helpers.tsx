@@ -4,7 +4,7 @@ import { JSX } from 'react';
 
 import { normalizeSiteLocale } from '@/shared/lib/i18n/site-locale';
 
-import { ProductPublicPage } from './ProductPublicPage';
+import { ProductPublicPage } from '@/app/(frontend)/products/ProductPublicPage';
 
 type RenderProductPublicRouteOptions = {
   id: string;

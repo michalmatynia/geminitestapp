@@ -39,7 +39,7 @@ import {
   listKangurDuelLeaderboard,
   listKangurPublicDuelLobby,
   sendKangurDuelReaction,
-} from './server';
+} from '../server';
 
 type DuelSessionDoc = Record<string, unknown> & {
   _id: string;

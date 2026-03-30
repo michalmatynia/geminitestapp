@@ -277,7 +277,7 @@ const resolveAddingSynthesisHintPanel = ({
   t: AddingSynthesisTranslate;
   translations: AddingSynthesisState['translations'];
 }): {
-  accent: AddingSynthesisStage['accent'];
+  accent: React.ComponentProps<typeof KangurSummaryPanel>['accent'];
   body: string | undefined;
   description: string | undefined;
   title: string | undefined;

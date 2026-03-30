@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { __testables } from './summary';
+import { __testables } from '../summary';
 
 const createAnalyticsSnapshot = (overrides?: {
   signInSuccess?: number;

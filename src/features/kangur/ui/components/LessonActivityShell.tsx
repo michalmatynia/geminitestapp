@@ -394,6 +394,7 @@ function LessonActivityShellBody({
       <div
         className={shellPanelClassName}
         data-kangur-print-panel='true'
+        data-kangur-print-paged-panel='true'
         data-kangur-print-panel-id={printPanelId}
         data-kangur-print-panel-title={title}
         data-testid={shellPanelTestId}
@@ -411,6 +412,7 @@ function LessonActivityShellBody({
     <KangurGlassPanel
       className={shellPanelClassName}
       data-kangur-print-panel='true'
+      data-kangur-print-paged-panel='true'
       data-kangur-print-panel-id={printPanelId}
       data-kangur-print-panel-title={title}
       data-testid={shellPanelTestId}

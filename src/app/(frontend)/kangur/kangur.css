@@ -4087,6 +4087,7 @@ body.kangur-client-shell-active [data-kangur-server-shell] {
     }
 
     body.kangur-print-mode [data-kangur-print-root] [data-kangur-print-panel='true'] {
+      box-sizing: border-box !important;
       min-height: 0 !important;
       break-inside: avoid;
       page-break-inside: avoid;
@@ -4136,6 +4137,7 @@ body.kangur-client-shell-active [data-kangur-server-shell] {
       max-height: none !important;
       margin: 0 !important;
       padding: 0 !important;
+      box-sizing: border-box !important;
       overflow: visible !important;
       transform: none !important;
       contain: none !important;
@@ -4151,11 +4153,36 @@ body.kangur-client-shell-active [data-kangur-server-shell] {
       min-width: 0 !important;
       height: auto !important;
       max-height: none !important;
+      box-sizing: border-box !important;
       overflow: visible !important;
       break-before: auto !important;
       page-break-before: auto !important;
       transform: none !important;
       contain: none !important;
+    }
+
+    body.kangur-print-mode
+      [data-kangur-print-root]
+      [data-kangur-print-paged-panel='true'] {
+      display: block !important;
+      width: 100% !important;
+      max-width: none !important;
+      min-width: 0 !important;
+      min-height: 0 !important;
+      height: auto !important;
+      max-height: none !important;
+      box-sizing: border-box !important;
+      overflow: visible !important;
+      break-inside: auto !important;
+      page-break-inside: auto !important;
+    }
+
+    body.kangur-print-mode
+      [data-kangur-print-root]
+      [data-kangur-print-paged-panel='true']
+      > * {
+      max-width: none !important;
+      overflow: visible !important;
     }
 
     body.kangur-print-mode [data-kangur-print-root] [data-kangur-print-slide-panel='true'],

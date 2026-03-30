@@ -230,6 +230,19 @@ Use current `src/` paths, not older root-level conventions.
 - Auth UI: `src/app/auth/`
 - API routes: `src/app/api/`
 
+Public frontend route ownership is now grouped under `src/app/(frontend)/`:
+
+- `home/`: front-page route support
+- `cms/`: CMS render/data helpers
+- `shell/`: public shell support
+- `preview/`: preview route support
+- `products/`: public product route support
+- `route-helpers/`: shared route logic for localized and non-localized wrappers
+- `__tests__/`: cross-route layout/loading tests
+
+Keep route roots thin. Concrete route folders such as `[...slug]/`, `preview/[id]/`,
+and `products/[id]/` should prefer entrypoints only.
+
 ### Feature modules
 
 Top-level features live under `src/features/`, including:
@@ -294,6 +307,11 @@ Shared platform/runtime code lives under `src/shared/`, especially:
 - Kangur routing + embed params: `src/features/kangur/config/routing.ts`
 - Kangur learner pages: `src/features/kangur/ui/pages/`
 - Kangur admin pages: `src/features/kangur/admin/` (`AdminKangurPageShell`)
+- Kangur storefront appearance: `src/features/kangur/appearance/`
+- Kangur social capture/workflows: `src/features/kangur/social/`
+- Kangur AI tutor content/runtime support: `src/features/kangur/ai-tutor/`
+- Kangur lesson documents: `src/features/kangur/lesson-documents/`
+- Kangur test-suite domain logic: `src/features/kangur/test-suites/`
 - CMS app embed option (StudiQ): `src/shared/lib/app-embeds.ts`
 - AI Tutor content sources: `src/features/kangur/ai-tutor/page-content-catalog.ts`,
   `src/shared/contracts/kangur-ai-tutor-native-guide-entries.ts`

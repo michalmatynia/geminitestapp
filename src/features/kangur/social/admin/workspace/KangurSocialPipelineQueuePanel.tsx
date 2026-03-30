@@ -108,12 +108,13 @@ const getActiveQueueProcessSummary = (
   additionalRunningCount: number;
 } | null => {
   const runningJobs = jobs.filter((job) => isQueueJobRunning(job.status));
-  if (runningJobs.length === 0) {
+  const firstRunningJob = runningJobs[0];
+  if (!firstRunningJob) {
     return null;
   }
 
   return {
-    label: getQueueJobProcessLabel(runningJobs[0]),
+    label: getQueueJobProcessLabel(firstRunningJob),
     additionalRunningCount: Math.max(0, runningJobs.length - 1),
   };
 };

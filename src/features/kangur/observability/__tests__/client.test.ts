@@ -22,13 +22,13 @@ vi.mock('@/features/kangur/shared/utils/observability/error-system-client', () =
 }));
 
 let clearKangurClientObservabilityContext: typeof import('./client').clearKangurClientObservabilityContext;
-let isExpectedKangurClientError: typeof import('./client').isExpectedKangurClientError;
-let isRecoverableKangurClientFetchError: typeof import('./client').isRecoverableKangurClientFetchError;
-let logKangurClientError: typeof import('./client').logKangurClientError;
-let setKangurClientObservabilityContext: typeof import('./client').setKangurClientObservabilityContext;
-let trackKangurClientEvent: typeof import('./client').trackKangurClientEvent;
-let withKangurClientError: typeof import('./client').withKangurClientError;
-let withKangurClientErrorSync: typeof import('./client').withKangurClientErrorSync;
+let isExpectedKangurClientError: typeof import('../client').isExpectedKangurClientError;
+let isRecoverableKangurClientFetchError: typeof import('../client').isRecoverableKangurClientFetchError;
+let logKangurClientError: typeof import('../client').logKangurClientError;
+let setKangurClientObservabilityContext: typeof import('../client').setKangurClientObservabilityContext;
+let trackKangurClientEvent: typeof import('../client').trackKangurClientEvent;
+let withKangurClientError: typeof import('../client').withKangurClientError;
+let withKangurClientErrorSync: typeof import('../client').withKangurClientErrorSync;
 
 describe('kangur client observability', () => {
   beforeEach(async () => {
@@ -48,7 +48,7 @@ describe('kangur client observability', () => {
       trackKangurClientEvent,
       withKangurClientError,
       withKangurClientErrorSync,
-    } = await import('./client'));
+    } = await import('../client'));
   });
 
   it('skips system capture and client reporting when shouldReport returns false', async () => {

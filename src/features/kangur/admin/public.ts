@@ -1,1 +1,1 @@
-export { KangurSocialPipelineQueuePanel } from './workspace/KangurSocialPipelineQueuePanel';
+export { KangurSocialPipelineQueuePanel } from '../social/admin/workspace/KangurSocialPipelineQueuePanel';

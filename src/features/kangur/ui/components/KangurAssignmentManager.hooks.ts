@@ -2,6 +2,7 @@
 
 import { useLocale, useTranslations } from 'next-intl';
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import type { TranslationValues } from 'use-intl';
 
 import type { KangurAssignmentSnapshot } from '@kangur/platform';
 import { buildKangurAssignmentDedupeKey } from '@/features/kangur/services/kangur-assignments';
@@ -40,8 +41,15 @@ type AssignmentManagerViewState = {
 
 type AssignmentManagerRuntimeLocalizer = {
   locale: string;
-  translate: (key: string, values?: Record<string, string | number>) => string;
+  translate: (key: string, values?: TranslationValues) => string;
 };
+
+type AssignmentManagerCatalogItem = ReturnType<typeof buildKangurAssignmentCatalog>[number];
+type AssignmentManagerSuggestedCatalogItem =
+  ReturnType<typeof buildRecommendedKangurAssignmentCatalog>[number];
+type AssignmentManagerTimeLimitCatalogItem =
+  | AssignmentManagerCatalogItem
+  | AssignmentManagerSuggestedCatalogItem;
 
 const resolveAssignmentManagerViewState = (
   view: NonNullable<KangurAssignmentManagerProps['view']>
@@ -80,7 +88,7 @@ const shouldEnableAssignmentManagerAssignmentsQuery = ({
 
 const createAssignmentRuntimeLocalizer = (
   locale: string,
-  translate: (key: string, values?: Record<string, string | number>) => string
+  translate: (key: string, values?: TranslationValues) => string
 ): AssignmentManagerRuntimeLocalizer => ({
   locale,
   translate,
@@ -147,6 +155,107 @@ const resolveFilteredCatalog = (
 ): ReturnType<typeof buildKangurAssignmentCatalog> =>
   shouldShowCatalog ? filterKangurAssignmentCatalog(catalog, searchTerm, activeFilter) : [];
 
+const resolveTimeLimitAssignment = ({
+  assignments,
+  timeLimitModalContext,
+}: {
+  assignments: KangurAssignmentSnapshot[];
+  timeLimitModalContext: TimeLimitModalContext | null;
+}): KangurAssignmentSnapshot | null => {
+  if (timeLimitModalContext?.mode !== 'update') {
+    return null;
+  }
+
+  return (
+    assignments.find((assignment) => assignment.id === timeLimitModalContext.assignmentId) ?? null
+  );
+};
+
+const resolveTimeLimitCatalogItem = ({
+  catalog,
+  suggestedCatalog,
+  timeLimitModalContext,
+}: {
+  catalog: ReturnType<typeof buildKangurAssignmentCatalog>;
+  suggestedCatalog: ReturnType<typeof buildRecommendedKangurAssignmentCatalog>;
+  timeLimitModalContext: TimeLimitModalContext | null;
+}): AssignmentManagerTimeLimitCatalogItem | null => {
+  if (timeLimitModalContext?.mode !== 'create') {
+    return null;
+  }
+
+  return (
+    [...catalog, ...suggestedCatalog].find(
+      (entry) => entry.id === timeLimitModalContext.catalogItemId
+    ) ?? null
+  );
+};
+
+const resolveTimeLimitParsedError = ({
+  timeLimitParsed,
+  translations,
+}: {
+  timeLimitParsed: ReturnType<typeof parseTimeLimitInput>;
+  translations: (key: string, values?: Record<string, string | number>) => string;
+}): string | null =>
+  timeLimitParsed.errorKey
+    ? translations(timeLimitParsed.errorKey, {
+        minMinutes: TIME_LIMIT_MINUTES_MIN,
+        maxMinutes: TIME_LIMIT_MINUTES_MAX,
+      })
+    : null;
+
+const resolveCurrentTimeLimit = ({
+  timeLimitAssignment,
+  timeLimitModalContext,
+}: {
+  timeLimitAssignment: KangurAssignmentSnapshot | null;
+  timeLimitModalContext: TimeLimitModalContext | null;
+}): number | null =>
+  timeLimitModalContext?.mode === 'create' ? null : timeLimitAssignment?.timeLimitMinutes ?? null;
+
+const resolveCanSaveTimeLimit = ({
+  currentTimeLimit,
+  timeLimitAssignment,
+  timeLimitCatalogItem,
+  timeLimitModalContext,
+  timeLimitParsed,
+}: {
+  currentTimeLimit: number | null;
+  timeLimitAssignment: KangurAssignmentSnapshot | null;
+  timeLimitCatalogItem: AssignmentManagerTimeLimitCatalogItem | null;
+  timeLimitModalContext: TimeLimitModalContext | null;
+  timeLimitParsed: ReturnType<typeof parseTimeLimitInput>;
+}): boolean => {
+  if (timeLimitParsed.errorKey) {
+    return false;
+  }
+
+  if (timeLimitModalContext?.mode === 'create') {
+    return Boolean(timeLimitCatalogItem);
+  }
+
+  return Boolean(timeLimitAssignment) && timeLimitParsed.value !== currentTimeLimit;
+};
+
+const resolveTimeLimitSaveLabel = ({
+  isSavingTimeLimit,
+  timeLimitModalContext,
+  translations,
+}: {
+  isSavingTimeLimit: boolean;
+  timeLimitModalContext: TimeLimitModalContext | null;
+  translations: (key: string, values?: Record<string, string | number>) => string;
+}): string => {
+  if (isSavingTimeLimit) {
+    return translations('actions.saving');
+  }
+
+  return timeLimitModalContext?.mode === 'create'
+    ? translations('actions.saveAndAssign')
+    : translations('actions.save');
+};
+
 function useAssignmentManagerCatalogState({
   ageGroup,
   assignmentRuntimeTranslations,
@@ -156,7 +265,7 @@ function useAssignmentManagerCatalogState({
   shouldShowCatalog,
 }: {
   ageGroup: ReturnType<typeof useKangurAgeGroupFocus>['ageGroup'];
-  assignmentRuntimeTranslations: (key: string, values?: Record<string, string | number>) => string;
+  assignmentRuntimeTranslations: (key: string, values?: TranslationValues) => string;
   locale: string;
   preloadedLessons: KangurAssignmentManagerProps['preloadedLessons'];
   progress: ReturnType<typeof useKangurProgressState>;
@@ -333,46 +442,45 @@ function useAssignmentManagerTimeLimitState({
   timeLimitModalContext: TimeLimitModalContext | null;
   translations: (key: string, values?: Record<string, string | number>) => string;
 }) {
-  const timeLimitAssignment =
-    timeLimitModalContext?.mode === 'update'
-      ? assignments.find((assignment) => assignment.id === timeLimitModalContext.assignmentId) ??
-        null
-      : null;
-  const timeLimitCatalogItem =
-    timeLimitModalContext?.mode === 'create'
-      ? [...catalog, ...suggestedCatalog].find(
-          (entry) => entry.id === timeLimitModalContext.catalogItemId
-        ) ?? null
-      : null;
+  const timeLimitAssignment = resolveTimeLimitAssignment({
+    assignments,
+    timeLimitModalContext,
+  });
+  const timeLimitCatalogItem = resolveTimeLimitCatalogItem({
+    catalog,
+    suggestedCatalog,
+    timeLimitModalContext,
+  });
   const timeLimitTarget = timeLimitAssignment ?? timeLimitCatalogItem;
   const isTimeLimitModalOpen = Boolean(timeLimitModalContext);
-  const isCreateTimeLimit = timeLimitModalContext?.mode === 'create';
   const timeLimitParsed = parseTimeLimitInput(timeLimitDraft);
-  const timeLimitParsedError = timeLimitParsed.errorKey
-    ? translations(timeLimitParsed.errorKey, {
-        minMinutes: TIME_LIMIT_MINUTES_MIN,
-        maxMinutes: TIME_LIMIT_MINUTES_MAX,
-      })
-    : null;
-  const currentTimeLimit = isCreateTimeLimit ? null : timeLimitAssignment?.timeLimitMinutes ?? null;
-  const canSaveTimeLimit = isCreateTimeLimit
-    ? Boolean(timeLimitCatalogItem) && !timeLimitParsed.errorKey
-    : Boolean(timeLimitAssignment) &&
-      !timeLimitParsed.errorKey &&
-      timeLimitParsed.value !== currentTimeLimit;
+  const timeLimitParsedError = resolveTimeLimitParsedError({
+    timeLimitParsed,
+    translations,
+  });
+  const currentTimeLimit = resolveCurrentTimeLimit({
+    timeLimitAssignment,
+    timeLimitModalContext,
+  });
+  const canSaveTimeLimit = resolveCanSaveTimeLimit({
+    currentTimeLimit,
+    timeLimitAssignment,
+    timeLimitCatalogItem,
+    timeLimitModalContext,
+    timeLimitParsed,
+  });
   const isTimeLimitSaveDisabled = isSavingTimeLimit || !canSaveTimeLimit;
   const timeLimitPreview = formatTimeLimitValue(currentTimeLimit, (key, values) =>
     translations(`timeLimit.${key}`, values)
   );
-  const timeLimitSaveLabel = isSavingTimeLimit
-    ? translations('actions.saving')
-    : isCreateTimeLimit
-      ? translations('actions.saveAndAssign')
-      : translations('actions.save');
+  const timeLimitSaveLabel = resolveTimeLimitSaveLabel({
+    isSavingTimeLimit,
+    timeLimitModalContext,
+    translations,
+  });
 
   return {
     currentTimeLimit,
-    isCreateTimeLimit,
     isTimeLimitModalOpen,
     isTimeLimitSaveDisabled,
     timeLimitAssignment,
@@ -453,7 +561,6 @@ export function useKangurAssignmentManagerState({
   });
   const {
     currentTimeLimit,
-    isCreateTimeLimit,
     isTimeLimitModalOpen,
     isTimeLimitSaveDisabled,
     timeLimitAssignment,
@@ -789,7 +896,6 @@ export function useKangurAssignmentManagerState({
       setPendingActionId(null);
     }
   }, [
-    handleCloseTimeLimitModal,
     handleCloseTimeLimitModal,
     resolveActionErrorMessage,
     resolvedCreateAssignment,

@@ -15,10 +15,10 @@ import {
   upsertKangurSettingValue,
 } from '@/features/kangur/services/kangur-settings-repository';
 
-import { KANGUR_DEFAULT_DAILY_THEME } from '../../themes/daily';
-import { KANGUR_DEFAULT_DAWN_THEME } from '../../themes/dawn';
-import { KANGUR_NIGHTLY_THEME } from '../../themes/nightly';
-import { KANGUR_DEFAULT_SUNSET_THEME } from '../../themes/sunset';
+import { KANGUR_DEFAULT_DAILY_THEME } from '../themes/daily';
+import { KANGUR_DEFAULT_DAWN_THEME } from '../themes/dawn';
+import { KANGUR_NIGHTLY_THEME } from '../themes/nightly';
+import { KANGUR_DEFAULT_SUNSET_THEME } from '../themes/sunset';
 
 const KANGUR_STOREFRONT_SEED_MODE: KangurStorefrontAppearanceMode = 'default';
 

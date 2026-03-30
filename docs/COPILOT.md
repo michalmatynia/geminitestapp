@@ -46,6 +46,18 @@ the canonical repo references.
 - Queue infrastructure lives in `src/shared/lib/queue/` with startup in
   `src/features/jobs/queue-init.ts`.
 
+Inside `src/app/(frontend)/`, prefer the current route-group split:
+- `home/`
+- `cms/`
+- `shell/`
+- `preview/`
+- `products/`
+- `route-helpers/`
+- `__tests__/`
+
+Keep route roots thin. Shared support should not live under concrete route
+folders unless it is truly route-local.
+
 ## Where To Look First
 
 - Admin shell and dashboards: `src/features/admin/`
@@ -53,9 +65,19 @@ the canonical repo references.
 - AI Paths: `src/features/ai/ai-paths/`, `src/shared/lib/ai-paths/`
 - AI Brain/model routing: `src/shared/lib/ai-brain/`
 - CMS/frontend rendering: `src/features/cms/`, `src/app/(frontend)/`
+- StudiQ/Kangur route support: `src/app/(frontend)/kangur/`,
+  `src/features/kangur/`
 - Database engine routing: `src/features/database/`, `src/shared/lib/db/`
 - Observability/logging: `src/features/observability/`,
   `src/shared/lib/observability/`
+
+Kangur ownership is increasingly subdomain-first. Look in:
+- `src/features/kangur/appearance/`
+- `src/features/kangur/social/`
+- `src/features/kangur/ai-tutor/`
+- `src/features/kangur/lesson-documents/`
+- `src/features/kangur/lessons/`
+- `src/features/kangur/test-suites/`
 
 ## High-Signal Constraints
 

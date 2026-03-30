@@ -268,4 +268,77 @@ describe('useSocialGeneration', () => {
       { variant: 'error' }
     );
   });
+
+  it('repairs serialized JSON draft text returned in generated post fields', async () => {
+    const setActivePostId = vi.fn();
+    const setEditorState = vi.fn();
+    const setContextSummary = vi.fn();
+
+    apiGetMock.mockResolvedValueOnce({
+      id: 'job-generate-1',
+      status: 'completed',
+      failedReason: null,
+      result: {
+        type: 'manual-post-generation',
+        generatedPost: {
+          id: 'post-1',
+          titlePl: '',
+          titleEn: '',
+          bodyPl: JSON.stringify({
+            titlePl: 'Nowe funkcje w StudiQ',
+            titleEn: 'New StudiQ features',
+            bodyPl: 'Polski wpis o zmianach.',
+            bodyEn: 'English update about the changes.',
+          }),
+          bodyEn: JSON.stringify({
+            titlePl: 'Nowe funkcje w StudiQ',
+            titleEn: 'New StudiQ features',
+            bodyPl: 'Polski wpis o zmianach.',
+            bodyEn: 'English update about the changes.',
+          }),
+        },
+        draft: null,
+      },
+    });
+
+    const { result } = renderHook(() =>
+      useSocialGeneration({
+        activePost: {
+          id: 'post-1',
+          titlePl: 'Draft',
+          titleEn: '',
+          bodyPl: '',
+          bodyEn: '',
+          status: 'draft',
+        } as never,
+        resolveDocReferences: () => ['docs/overview.mdx'],
+        generationNotes: 'Focus on product changes.',
+        brainModelId: 'gpt-4.1',
+        visionModelId: 'gpt-4.1-mini',
+        canGenerateDraft: true,
+        generateDraftBlockedReason: null,
+        imageAddonIds: ['addon-1'],
+        projectUrl: 'https://studiq.example.com/project',
+        setActivePostId,
+        setEditorState,
+        setContextSummary,
+        buildSocialContext: () => ({ postId: 'post-1' }),
+      }),
+      { wrapper: createWrapper() }
+    );
+
+    await act(async () => {
+      await expect(result.current.handleGenerateWithVisualAnalysis(completedVisualAnalysis)).resolves.toBe(true);
+    });
+
+    expect(setEditorState).toHaveBeenCalledWith({
+      titlePl: 'Nowe funkcje w StudiQ',
+      titleEn: 'New StudiQ features',
+      bodyPl: 'Polski wpis o zmianach.',
+      bodyEn: 'English update about the changes.',
+    });
+    expect(toastMock).toHaveBeenCalledWith('Draft updated — review the generated post.', {
+      variant: 'success',
+    });
+  });
 });

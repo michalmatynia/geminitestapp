@@ -453,13 +453,16 @@ export function useSocialPipelineRunner(deps: SocialPipelineRunnerDeps) {
         throw new Error('Image analysis timed out while waiting for the server job.');
       }
 
-      if (!isVisualAnalysisJobResult(finalJob.result)) {
+      const completedJob = finalJob;
+      const completedResult = completedJob.result;
+
+      if (!isVisualAnalysisJobResult(completedResult)) {
         throw new Error('Image analysis completed without a usable result payload.');
       }
 
-      const analysis = finalJob.result.analysis;
+      const analysis = completedResult.analysis;
       const resultPostId =
-        finalJob.result.savedPost?.id ??
+        completedResult.savedPost?.id ??
         depsRef.current.activePostId ??
         depsRef.current.activePost?.id ??
         null;
@@ -472,20 +475,21 @@ export function useSocialPipelineRunner(deps: SocialPipelineRunnerDeps) {
       }
       setVisualAnalysisErrorMessage(null);
 
-      if (finalJob.result.savedPost) {
+      const savedPost = completedResult.savedPost;
+      if (savedPost) {
         const postsQueryKey = QUERY_KEYS.kangur.socialPosts({
           scope: 'admin',
           limit: null,
         });
         queryClient.setQueryData<KangurSocialPost[]>(postsQueryKey, (current) =>
           (current ?? []).map((post) =>
-            post.id === finalJob.result?.savedPost?.id ? finalJob.result.savedPost : post
+            post.id === savedPost.id ? savedPost : post
           )
         );
       }
       invalidateSocialQueries(queryClient);
 
-      return finalJob;
+      return completedJob;
     } catch (error) {
       if (
         isUnmountedRef.current ||

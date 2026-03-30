@@ -727,6 +727,7 @@ export function KangurLessonDocumentRenderer(
             <KangurGlassPanel
               key={page.id}
               data-kangur-print-panel='true'
+              data-kangur-print-paged-panel='true'
               data-kangur-print-panel-id={page.id}
               data-kangur-print-panel-title={printHeadingTitle || page.title?.trim() || page.sectionTitle?.trim() || ''}
               data-testid={`lesson-page-shell-${page.id}`}

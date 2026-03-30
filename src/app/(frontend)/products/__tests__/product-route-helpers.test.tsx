@@ -4,7 +4,7 @@ const { ProductPublicPageMock } = vi.hoisted(() => ({
   ProductPublicPageMock: vi.fn(),
 }));
 
-vi.mock('@/app/(frontend)/products/[id]/ProductPublicPage', () => ({
+vi.mock('@/app/(frontend)/products/ProductPublicPage', () => ({
   ProductPublicPage: ProductPublicPageMock,
 }));
 

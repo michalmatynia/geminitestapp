@@ -4,6 +4,7 @@ This subtree owns Kangur storefront appearance and theme customization.
 
 - `admin/workspace/`: admin-facing appearance editor and preview workspace
 - `server/`: server bootstrap and storefront appearance state resolution
+- `themes/`: preset theme baselines and preset-composition helpers
 - `theme-settings.ts`: theme parsing, defaults, and preset exports
 - `storefront-appearance-settings.ts`: storefront mode and appearance state types
 

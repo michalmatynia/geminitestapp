@@ -11,7 +11,6 @@ const {
   loadSiteMessagesMock,
   getTranslationsMock,
   nextIntlClientProviderMock,
-  readServerRequestPathnameMock,
   rootClientShellMock,
 } = vi.hoisted(() => ({
   getLocaleMock: vi.fn(),
@@ -19,7 +18,6 @@ const {
   loadSiteMessagesMock: vi.fn(),
   getTranslationsMock: vi.fn(),
   nextIntlClientProviderMock: vi.fn(({ children }: { children: ReactNode }) => <>{children}</>),
-  readServerRequestPathnameMock: vi.fn(),
   rootClientShellMock: vi.fn(({ children }: { children: ReactNode }) => <>{children}</>),
 }));
 
@@ -32,7 +30,7 @@ vi.mock('next-intl/server', () => ({
   getTranslations: getTranslationsMock,
 }));
 
-vi.mock('./_providers/RootClientShell', () => ({
+vi.mock('@/app/_providers/RootClientShell', () => ({
   RootClientShell: rootClientShellMock,
 }));
 
@@ -42,10 +40,6 @@ vi.mock('@/shared/lib/lite-settings-ssr', () => ({
 
 vi.mock('@/i18n/messages', () => ({
   loadSiteMessages: loadSiteMessagesMock,
-}));
-
-vi.mock('@/shared/lib/request/server-request-context', () => ({
-  readServerRequestPathname: readServerRequestPathnameMock,
 }));
 
 describe('RootLayout', () => {
@@ -61,7 +55,6 @@ describe('RootLayout', () => {
         skipToMainContent: 'Skip to main content',
       },
     });
-    readServerRequestPathnameMock.mockReturnValue(null);
   });
 
   it('injects lite settings for non-Kangur routes', async () => {
@@ -93,8 +86,7 @@ describe('RootLayout', () => {
     );
   });
 
-  it('skips lite settings hydration for explicit Kangur alias routes', async () => {
-    readServerRequestPathnameMock.mockReturnValue('/en/kangur');
+  it('still injects lite settings for explicit Kangur alias routes', async () => {
 
     const { default: RootLayout } = await import('@/app/layout');
 
@@ -102,11 +94,14 @@ describe('RootLayout', () => {
       children: <div>content</div>,
     });
     const bodyChildren = readRootLayoutBodyChildren(layout);
+    const liteSettingsScript = bodyChildren.find(
+      (child) => isValidElement(child) && child.type === 'script'
+    ) as ReactElement<{ dangerouslySetInnerHTML?: { __html?: string } }> | undefined;
 
-    expect(getLiteSettingsForHydrationMock).not.toHaveBeenCalled();
-    expect(
-      bodyChildren.some((child) => isValidElement(child) && child.type === 'script')
-    ).toBe(false);
+    expect(getLiteSettingsForHydrationMock).toHaveBeenCalledTimes(1);
+    expect(liteSettingsScript?.props.dangerouslySetInnerHTML?.__html).toContain(
+      '__LITE_SETTINGS__'
+    );
   });
 });
 

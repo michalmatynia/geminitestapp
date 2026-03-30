@@ -13,12 +13,12 @@ import {
 } from '@/shared/contracts/kangur-settings-keys';
 import { parseJsonSetting } from '@/features/kangur/utils/settings-json';
 
-import { KANGUR_DEFAULT_DAILY_THEME } from '../themes/daily';
-import { KANGUR_DEFAULT_DAWN_THEME } from '../themes/dawn';
-import { KANGUR_DEFAULT_SUNSET_THEME } from '../themes/sunset';
-import { KANGUR_NIGHTLY_THEME } from '../themes/nightly';
-import { KANGUR_DAILY_CRYSTAL_THEME, KANGUR_NIGHTLY_CRYSTAL_THEME } from '../themes/others';
 import { withKangurClientErrorSync } from '@/features/kangur/observability/client';
+import { KANGUR_DEFAULT_DAILY_THEME } from './themes/daily';
+import { KANGUR_DEFAULT_DAWN_THEME } from './themes/dawn';
+import { KANGUR_DEFAULT_SUNSET_THEME } from './themes/sunset';
+import { KANGUR_NIGHTLY_THEME } from './themes/nightly';
+import { KANGUR_DAILY_CRYSTAL_THEME, KANGUR_NIGHTLY_CRYSTAL_THEME } from './themes/others';
 
 export const KANGUR_DEFAULT_THEME = KANGUR_NIGHTLY_THEME;
 export type KangurThemeMode = 'daily' | 'dawn' | 'sunset' | 'nightly';
@@ -33,12 +33,12 @@ export {
 };
 
 // Re-export all themes
-export * from '../themes/factory';
-export * from '../themes/daily';
-export * from '../themes/dawn';
-export * from '../themes/sunset';
-export * from '../themes/nightly';
-export * from '../themes/others';
+export * from './themes/factory';
+export * from './themes/daily';
+export * from './themes/dawn';
+export * from './themes/sunset';
+export * from './themes/nightly';
+export * from './themes/others';
 
 const DAILY_CRYSTAL_PRESET_ID = 'kangur-daily-crystal';
 const NIGHTLY_CRYSTAL_PRESET_ID = 'kangur-nightly-crystal';

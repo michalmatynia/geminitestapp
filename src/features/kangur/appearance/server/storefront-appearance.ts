@@ -51,7 +51,7 @@ export const isKangurStorefrontInitialStateDependencyKey = (key: string): boolea
 
 export const invalidateKangurStorefrontInitialStateCache = (): void => {
   clearKangurStorefrontInitialStateHotCache();
-  revalidateTag(KANGUR_STOREFRONT_INITIAL_STATE_CACHE_TAG);
+  revalidateTag(KANGUR_STOREFRONT_INITIAL_STATE_CACHE_TAG, 'max');
 };
 
 const createKangurStorefrontThemeSettings = (

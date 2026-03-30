@@ -227,6 +227,10 @@ describe('KangurLessonDocumentRenderer', () => {
       'true'
     );
     expect(screen.getByTestId('lesson-page-shell-page-1')).toHaveAttribute(
+      'data-kangur-print-paged-panel',
+      'true'
+    );
+    expect(screen.getByTestId('lesson-page-shell-page-1')).toHaveAttribute(
       'data-kangur-print-panel-id',
       'page-1'
     );

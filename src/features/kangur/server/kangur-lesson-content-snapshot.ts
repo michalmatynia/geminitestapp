@@ -145,21 +145,26 @@ const canonicalizeKangurLessonRootBlockForComparison = (
 
 const canonicalizeKangurLessonDocumentForComparison = (
   document: KangurLessonDocument
-): Record<string, unknown> => ({
-  version: document.version,
-  narration: {
-    voice: document.narration.voice,
-    locale: document.narration.locale,
-  },
-  pages: document.pages.map((page) => ({
+): Record<string, unknown> => {
+  const narration = document.narration ?? {};
+  const pages = document.pages ?? [];
+
+  return {
+    version: document.version,
+    narration: {
+      voice: narration.voice,
+      locale: narration.locale,
+    },
+    pages: pages.map((page) => ({
     sectionKey: page.sectionKey,
     sectionTitle: page.sectionTitle,
     sectionDescription: page.sectionDescription,
     title: page.title,
     description: page.description,
     blocks: page.blocks.map((block) => canonicalizeKangurLessonRootBlockForComparison(block)),
-  })),
-});
+    })),
+  };
+};
 
 export const serializeKangurLessonDocumentForComparison = (
   document: KangurLessonDocument

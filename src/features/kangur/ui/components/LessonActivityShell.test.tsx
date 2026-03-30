@@ -105,6 +105,10 @@ describe('LessonActivityShell', () => {
       'data-kangur-print-panel',
       'true'
     );
+    expect(screen.getByTestId('lesson-activity-shell')).toHaveAttribute(
+      'data-kangur-print-paged-panel',
+      'true'
+    );
     expect(screen.getByTestId('lesson-activity-shell-print-summary')).toHaveTextContent(
       'Ćwiczenia'
     );
@@ -138,6 +142,10 @@ describe('LessonActivityShell', () => {
     expect(screen.getByTestId('lesson-activity-plain-shell').className).toContain('flex w-full flex-col');
     expect(screen.getByTestId('lesson-activity-plain-shell')).toHaveAttribute(
       'data-kangur-print-panel',
+      'true'
+    );
+    expect(screen.getByTestId('lesson-activity-plain-shell')).toHaveAttribute(
+      'data-kangur-print-paged-panel',
       'true'
     );
     expect(screen.getByText('Gra muzyczna')).toBeInTheDocument();
@@ -192,6 +200,7 @@ describe('LessonActivityShell', () => {
       )
     ).toEqual(['lesson-activity-back-button', 'lesson-activity-print-button']);
     expect(shell).not.toBeNull();
+    expect(shell).toHaveAttribute('data-kangur-print-paged-panel', 'true');
     expect(shell).toHaveAttribute('data-kangur-print-panel-id');
     expect(shell).toHaveAttribute('data-kangur-print-panel-title', 'Ćwiczenie: Godziny');
 

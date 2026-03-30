@@ -5,7 +5,7 @@ import {
   buildKangurLessonNarrationScriptFromText,
   hasKangurLessonNarrationContent,
   normalizeKangurLessonNarrationText,
-} from './script';
+} from '../script';
 
 describe('kangur tts script builder', () => {
   it('builds ordered narration from lesson documents', () => {

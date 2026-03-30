@@ -65,8 +65,7 @@ const canRenderKangurAssignmentSpotlight = ({
   enabled: boolean;
   error: string | null;
   isLoading: boolean;
-}): assignment is KangurAssignmentSpotlightAssignment =>
-  Boolean(enabled && !isLoading && !error && assignment);
+}): boolean => Boolean(enabled && !isLoading && !error && assignment);
 
 const shouldHandleAssignmentSpotlightNavigation = (
   event: MouseEvent<HTMLAnchorElement>
@@ -269,16 +268,21 @@ export function KangurAssignmentSpotlight({
     return null;
   }
 
-  const assignmentSubject = resolveKangurAssignmentSubject(assignment);
+  const visibleAssignment = assignment;
+  if (!visibleAssignment) {
+    return null;
+  }
+
+  const assignmentSubject = resolveKangurAssignmentSubject(visibleAssignment);
   const assignmentSubjectLabel = getLocalizedKangurSubjectLabel(assignmentSubject, locale);
   const assignmentSubjectAccent = SUBJECT_ACCENTS[assignmentSubject];
-  const assignmentHref = buildKangurAssignmentHref(basePath, assignment);
-  const transitionSourceId = `assignment-spotlight:${assignment.id}`;
+  const assignmentHref = buildKangurAssignmentHref(basePath, visibleAssignment);
+  const transitionSourceId = `assignment-spotlight:${visibleAssignment.id}`;
   const countdownLabel = resolveKangurAssignmentCountdownLabel({
-    timeLimitMinutes: assignment.timeLimitMinutes,
-    timeLimitStartsAt: assignment.timeLimitStartsAt,
-    createdAt: assignment.createdAt,
-    status: assignment.progress.status,
+    timeLimitMinutes: visibleAssignment.timeLimitMinutes,
+    timeLimitStartsAt: visibleAssignment.timeLimitStartsAt,
+    createdAt: visibleAssignment.createdAt,
+    status: visibleAssignment.progress.status,
     now,
   }, {
     locale,
@@ -287,7 +291,7 @@ export function KangurAssignmentSpotlight({
 
   return (
     <KangurAssignmentSpotlightContent
-      assignment={assignment}
+      assignment={visibleAssignment}
       assignmentHref={assignmentHref}
       assignmentSubject={assignmentSubject}
       assignmentSubjectAccent={assignmentSubjectAccent}

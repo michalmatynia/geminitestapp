@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { KANGUR_LESSON_AUDIO_CACHE_SETTING_KEY } from './contracts';
+import { KANGUR_LESSON_AUDIO_CACHE_SETTING_KEY } from '../contracts';
 
 const {
   fsStatMock,
@@ -74,7 +74,7 @@ import {
   ensureKangurLessonNarrationAudio,
   inspectKangurLessonNarrationAudio,
   probeKangurLessonNarrationBackend,
-} from './server';
+} from '../server';
 
 const createLessonScript = (text = 'To jest lekcja zegara.') => ({
   lessonId: 'clock',

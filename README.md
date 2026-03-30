@@ -37,6 +37,8 @@ packages for contracts, domain logic, transport, and platform ports.
 
 - Repo docs index: [`docs/README.md`](./docs/README.md)
 - Deep architecture reference: [`GEMINI.md`](./GEMINI.md)
+- Frontend route-group layout: [`src/app/(frontend)/README.md`](./src/app/%28frontend%29/README.md)
+- Kangur feature layout: [`src/features/kangur/README.md`](./src/features/kangur/README.md)
 - Kangur hub: [`docs/kangur/README.md`](./docs/kangur/README.md)
 - Mobile app runtime guide: [`apps/mobile/README.md`](./apps/mobile/README.md)
 - Reserved mobile web boundary: [`apps/mobile-web/README.md`](./apps/mobile-web/README.md)

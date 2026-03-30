@@ -165,15 +165,20 @@ const loadMongoLessonDocumentsByLocale = async (
           locale,
           normalizeKangurLessonDocumentStoreForSnapshot(
             Object.fromEntries(
-              documents
-                .filter(
-                  (document): document is { lessonId: string; document: unknown } =>
-                    typeof document?.['lessonId'] === 'string'
-                )
-                .map((document) => [
-                  document.lessonId,
-                  normalizeKangurLessonDocument(document.document),
-                ])
+              documents.flatMap((document) => {
+                const lessonId =
+                  typeof document?.['lessonId'] === 'string' ? document['lessonId'] : null;
+                if (!lessonId) {
+                  return [];
+                }
+
+                return [
+                  [
+                    lessonId,
+                    normalizeKangurLessonDocument(document['document']),
+                  ] as const,
+                ];
+              })
             )
           ),
         ] as const;

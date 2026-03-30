@@ -113,27 +113,32 @@ describe('KangurSocialPipelineQueuePanel', () => {
   });
 
   it('keeps run now visible in compact mode when the queue is only waiting', async () => {
-    apiGetMock.mockResolvedValueOnce({
-      deliveryMode: 'queue',
-      workerState: 'idle',
-      redisAvailable: true,
-      workerLocal: false,
-      running: true,
-      healthy: true,
-      processing: false,
-      activeCount: 0,
-      waitingCount: 1,
-      failedCount: 0,
-      completedCount: 2,
-      lastPollTime: 0,
-      timeSinceLastPoll: 0,
-      isPaused: false,
-    });
+    apiGetMock
+      .mockResolvedValueOnce({
+        deliveryMode: 'queue',
+        workerState: 'idle',
+        redisAvailable: true,
+        workerLocal: false,
+        running: true,
+        healthy: true,
+        processing: false,
+        activeCount: 0,
+        waitingCount: 1,
+        failedCount: 0,
+        completedCount: 2,
+        lastPollTime: 0,
+        timeSinceLastPoll: 0,
+        isPaused: false,
+      })
+      .mockResolvedValueOnce([]);
 
     render(<KangurSocialPipelineQueuePanel variant='compact' />);
 
     await waitFor(() => {
       expect(apiGetMock).toHaveBeenCalledWith('/api/kangur/social-pipeline/status', {
+        timeout: 60_000,
+      });
+      expect(apiGetMock).toHaveBeenCalledWith('/api/kangur/social-pipeline/jobs', {
         timeout: 60_000,
       });
     });
@@ -382,7 +387,7 @@ describe('KangurSocialPipelineQueuePanel', () => {
 
     expect(await screen.findByRole('button', { name: 'Delete pipeline job job-completed' })).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Delete pipeline job job-active' })).toBeNull();
-    expect(screen.getAllByText('Manual post draft pipeline')).toHaveLength(2);
+    expect(screen.getAllByText('Full pipeline')).toHaveLength(2);
     expect(screen.getByText('Post post-42')).toBeInTheDocument();
     expect(screen.getAllByText('Fresh Playwright capture')).toHaveLength(2);
     expect(screen.getByText('2/3 presets used')).toBeInTheDocument();
@@ -482,8 +487,8 @@ describe('KangurSocialPipelineQueuePanel', () => {
 
     render(<KangurSocialPipelineQueuePanel />);
 
-    expect(await screen.findByText('Manual image analysis')).toBeInTheDocument();
-    expect(screen.getByText('Post generation from image analysis')).toBeInTheDocument();
+    expect(await screen.findByText('Image analysis')).toBeInTheDocument();
+    expect(screen.getByText('Generate post')).toBeInTheDocument();
     expect(screen.getByText('Post post-44')).toBeInTheDocument();
     expect(screen.getByText('3 visuals')).toBeInTheDocument();
     expect(screen.getByText('2 highlights')).toBeInTheDocument();
@@ -492,6 +497,53 @@ describe('KangurSocialPipelineQueuePanel', () => {
     expect(screen.getByText('2 visuals')).toBeInTheDocument();
     expect(screen.getByText('Uses image-analysis context')).toBeInTheDocument();
     expect(screen.getByText('Saved to post')).toBeInTheDocument();
+  });
+
+  it('shows the active process name in the runtime queue header instead of only a generic running state', async () => {
+    apiGetMock
+      .mockResolvedValueOnce({
+        deliveryMode: 'queue',
+        workerState: 'running',
+        redisAvailable: true,
+        workerLocal: false,
+        running: true,
+        healthy: true,
+        processing: true,
+        activeCount: 1,
+        waitingCount: 0,
+        failedCount: 0,
+        completedCount: 4,
+        lastPollTime: 0,
+        timeSinceLastPoll: 0,
+        isPaused: false,
+      })
+      .mockResolvedValueOnce([
+        {
+          id: 'job-analysis',
+          status: 'active',
+          data: {
+            type: 'manual-post-visual-analysis',
+            input: {
+              postId: 'post-44',
+            },
+          },
+          progress: {
+            step: 'describe-images',
+            message: 'Analyzing selected visuals.',
+          },
+          result: null,
+          failedReason: null,
+          processedOn: null,
+          finishedOn: null,
+          timestamp: Date.now(),
+          duration: null,
+        },
+      ]);
+
+    render(<KangurSocialPipelineQueuePanel variant='compact' />);
+
+    expect(await screen.findByText('Active process: Image analysis')).toBeInTheDocument();
+    expect(screen.getByText('Running')).toBeInTheDocument();
   });
 
   it('shows idle queue state without the redis warning when recent jobs exist', async () => {

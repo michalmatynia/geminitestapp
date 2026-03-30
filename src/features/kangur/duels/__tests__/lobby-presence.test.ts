@@ -12,7 +12,7 @@ import type { KangurLearnerProfile } from '@/features/kangur/shared/contracts/ka
 import {
   listKangurDuelLobbyPresence,
   recordKangurDuelLobbyPresence,
-} from './lobby-presence';
+} from '../lobby-presence';
 
 const buildLearner = (overrides: Partial<KangurLearnerProfile> = {}): KangurLearnerProfile => ({
   id: overrides.id ?? 'learner-1',

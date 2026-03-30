@@ -658,9 +658,9 @@ export default function EnglishSentenceStructureGame({
           </div>
         ) : null}
 
-        {feedback?.kind === 'info' ? (
+        {feedback ? (
           <KangurInfoCard
-            accent='amber'
+            accent={feedback.kind === 'success' ? 'emerald' : 'rose'}
             padding='md'
             tone='accent'
           >

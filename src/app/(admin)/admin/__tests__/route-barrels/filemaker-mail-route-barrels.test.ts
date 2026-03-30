@@ -1,9 +1,9 @@
 import { describe, expect, it } from 'vitest';
 
 const filemakerMailRouteImports = [
-  './mail/page',
-  './mail/compose/page',
-  './mail/threads/[threadId]/page',
+  '@/app/(admin)/admin/filemaker/mail/page',
+  '@/app/(admin)/admin/filemaker/mail/compose/page',
+  '@/app/(admin)/admin/filemaker/mail/threads/[threadId]/page',
 ] as const;
 
 describe('admin filemaker mail routes', () => {

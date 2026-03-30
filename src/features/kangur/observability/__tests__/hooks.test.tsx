@@ -20,7 +20,7 @@ vi.mock('@/shared/lib/api-client', () => ({
   },
 }));
 
-import { useKangurKnowledgeGraphStatus, useKangurObservabilitySummary } from './hooks';
+import { useKangurKnowledgeGraphStatus, useKangurObservabilitySummary } from '../hooks';
 
 const createTestClient = (): QueryClient =>
   new QueryClient({

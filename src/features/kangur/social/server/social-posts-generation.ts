@@ -13,6 +13,10 @@ import {
   type KangurSocialVisualAnalysis,
 } from '@/shared/contracts/kangur-social-posts';
 import type { KangurSocialImageAddon } from '@/shared/contracts/kangur-social-image-addons';
+import {
+  looksLikeSerializedKangurSocialDraft,
+  parseKangurSocialGeneratedDraftText,
+} from '@/shared/lib/kangur-social-generated-draft';
 import { ErrorSystem } from '@/features/kangur/shared/utils/observability/error-system';
 
 import {
@@ -70,6 +74,7 @@ const buildSystemPrompt = (basePrompt: string): string => {
     'You are writing a LinkedIn post about recent StudiQ improvements.',
     'Generate bilingual content in Polish and English.',
     'Return a JSON object with keys: titlePl, titleEn, bodyPl, bodyEn.',
+    'Return only the JSON object, without markdown fences or explanatory prose.',
     'Keep each body concise and professional for LinkedIn.',
     'If image add-ons are provided, reference them naturally in the post.',
     'Treat the visual analysis as descriptive input only and consolidate it with the current documentation context to write the update.',
@@ -211,28 +216,6 @@ const buildUserPromptLines = ({
   return userPromptLines;
 };
 
-const parseBrainDraftResponse = (text: string): Partial<KangurSocialGeneratedDraft> => {
-  try {
-    return JSON.parse(text) as Partial<KangurSocialGeneratedDraft>;
-  } catch {
-    const jsonMatch = text.match(/```(?:json)?\s*([\s\S]*?)```/);
-    if (jsonMatch?.[1]) {
-      try {
-        return JSON.parse(jsonMatch[1].trim()) as Partial<KangurSocialGeneratedDraft>;
-      } catch {
-        return {};
-      }
-    }
-
-    const raw = text.trim();
-    if (!raw) {
-      return {};
-    }
-
-    return { bodyPl: raw, bodyEn: raw };
-  }
-};
-
 const normalizeDraftFields = (parsed: Partial<KangurSocialGeneratedDraft>) => ({
   titlePl: (parsed.titlePl ?? '').trim(),
   titleEn: (parsed.titleEn ?? '').trim(),
@@ -332,7 +315,7 @@ export async function generateKangurSocialPostDraft(
       'kangur_social.post_generation',
       {
         defaultTemperature: 0.6,
-        defaultMaxTokens: 900,
+        defaultMaxTokens: 1400,
         defaultModelId: overrideModelId,
         runtimeKind: 'chat',
       }
@@ -362,8 +345,20 @@ export async function generateKangurSocialPostDraft(
       ],
     });
 
-    const parsed = parseBrainDraftResponse(res.text);
-    const { titlePl, titleEn, bodyPl, bodyEn } = normalizeDraftFields(parsed);
+    const rawResponse = res.text.trim();
+    const parsed = parseKangurSocialGeneratedDraftText(rawResponse);
+    let { titlePl, titleEn, bodyPl, bodyEn } = normalizeDraftFields(parsed);
+
+    if (!bodyPl && !bodyEn && rawResponse) {
+      if (looksLikeSerializedKangurSocialDraft(rawResponse)) {
+        throw operationFailedError(
+          'The model returned an invalid JSON draft. Retry generation or use a different AI Brain model.'
+        );
+      }
+      bodyPl = rawResponse;
+      bodyEn = rawResponse;
+    }
+
     assertDraftBodyExists({ bodyPl, bodyEn });
 
     const combinedBody = buildKangurSocialPostCombinedBody(bodyPl, bodyEn);

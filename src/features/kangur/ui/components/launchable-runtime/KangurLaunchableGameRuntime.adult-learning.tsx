@@ -1,11 +1,17 @@
 'use client';
 
-import AgenticPromptTrimGame from '@/features/kangur/ui/components/AgenticPromptTrimGame';
 import type { KangurLaunchableGameRuntimeRendererId } from '@/shared/contracts/kangur-games';
 import type {
   LaunchableGameCategoryRendererProps,
   LaunchableGameRendererConfig,
 } from './KangurLaunchableGameRuntime.shared';
+import {
+  createDynamicLaunchableGameComponent,
+} from './KangurLaunchableGameRuntime.shared';
+
+const AgenticPromptTrimGame = createDynamicLaunchableGameComponent(
+  () => import('@/features/kangur/ui/components/AgenticPromptTrimGame')
+);
 
 const KANGUR_ADULT_LEARNING_LAUNCHABLE_GAME_RENDERERS: Partial<
   Record<KangurLaunchableGameRuntimeRendererId, LaunchableGameRendererConfig>

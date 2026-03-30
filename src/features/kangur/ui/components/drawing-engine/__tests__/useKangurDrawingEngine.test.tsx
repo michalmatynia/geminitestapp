@@ -45,8 +45,8 @@ function SvgDrawingHarness({
     logicalHeight: 140,
     logicalWidth: 360,
     minPointDistance,
-    redraw: (nextStrokes) => {
-      redrawSpy?.(nextStrokes);
+    redraw: ({ activeStroke, strokes: nextStrokes }) => {
+      redrawSpy?.(activeStroke ? [...nextStrokes, activeStroke] : nextStrokes);
     },
     shouldCommitStroke,
     touchLockEnabled: true,

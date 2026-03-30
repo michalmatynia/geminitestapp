@@ -12,6 +12,17 @@ export type KangurDrawingCanvasBaseLayerCache = {
   key: number | string | null;
 };
 
+export type KangurDrawingCanvasStrokeLayerCache<TMeta> = {
+  canvas: HTMLCanvasElement;
+  logicalHeight: number;
+  logicalWidth: number;
+  resolveStyle: (
+    stroke: KangurDrawingStroke<TMeta>,
+    index: number
+  ) => KangurDrawingStrokeRenderStyle;
+  strokes: KangurDrawingStroke<TMeta>[];
+};
+
 const renderSmoothKangurStrokePath = (
   ctx: CanvasRenderingContext2D,
   stroke: KangurDrawingStroke<unknown>
@@ -66,6 +77,39 @@ export const renderKangurDrawingStrokes = <TMeta>(
     index: number
   ) => KangurDrawingStrokeRenderStyle
 ): void => {
+  let currentStyle: KangurDrawingStrokeRenderStyle | null = null;
+  let hasActivePath = false;
+
+  const areStylesEqual = (
+    left: KangurDrawingStrokeRenderStyle,
+    right: KangurDrawingStrokeRenderStyle
+  ): boolean =>
+    left.lineWidth === right.lineWidth &&
+    (left.lineCap ?? DEFAULT_LINE_CAP) === (right.lineCap ?? DEFAULT_LINE_CAP) &&
+    (left.lineJoin ?? DEFAULT_LINE_JOIN) === (right.lineJoin ?? DEFAULT_LINE_JOIN) &&
+    left.strokeStyle === right.strokeStyle &&
+    (left.shadowColor ?? 'transparent') === (right.shadowColor ?? 'transparent') &&
+    (left.shadowBlur ?? 0) === (right.shadowBlur ?? 0) &&
+    (left.compositeOperation ?? 'source-over') === (right.compositeOperation ?? 'source-over');
+
+  const applyStyle = (style: KangurDrawingStrokeRenderStyle): void => {
+    ctx.lineWidth = style.lineWidth;
+    ctx.lineCap = style.lineCap ?? DEFAULT_LINE_CAP;
+    ctx.lineJoin = style.lineJoin ?? DEFAULT_LINE_JOIN;
+    ctx.strokeStyle = style.strokeStyle;
+    ctx.shadowColor = style.shadowColor ?? 'transparent';
+    ctx.shadowBlur = style.shadowBlur ?? 0;
+    ctx.globalCompositeOperation = style.compositeOperation ?? 'source-over';
+  };
+
+  const flushPath = (): void => {
+    if (!hasActivePath) {
+      return;
+    }
+    ctx.stroke();
+    hasActivePath = false;
+  };
+
   strokes.forEach((stroke, index) => {
     if (stroke.points.length === 0) {
       return;
@@ -77,14 +121,13 @@ export const renderKangurDrawingStrokes = <TMeta>(
       return;
     }
 
-    ctx.beginPath();
-    ctx.lineWidth = style.lineWidth;
-    ctx.lineCap = style.lineCap ?? DEFAULT_LINE_CAP;
-    ctx.lineJoin = style.lineJoin ?? DEFAULT_LINE_JOIN;
-    ctx.strokeStyle = style.strokeStyle;
-    ctx.shadowColor = style.shadowColor ?? 'transparent';
-    ctx.shadowBlur = style.shadowBlur ?? 0;
-    ctx.globalCompositeOperation = style.compositeOperation ?? 'source-over';
+    if (!currentStyle || !areStylesEqual(currentStyle, style)) {
+      flushPath();
+      currentStyle = style;
+      applyStyle(style);
+      ctx.beginPath();
+    }
+
     ctx.moveTo(firstPoint.x, firstPoint.y);
 
     if (style.renderMode === 'smooth') {
@@ -102,15 +145,17 @@ export const renderKangurDrawingStrokes = <TMeta>(
       }
     }
 
-    ctx.stroke();
+    hasActivePath = true;
   });
 
+  flushPath();
   ctx.globalCompositeOperation = 'source-over';
   ctx.shadowColor = 'transparent';
   ctx.shadowBlur = 0;
 };
 
 type RedrawKangurCanvasStrokesOptions<TMeta> = {
+  activeStroke?: KangurDrawingStroke<TMeta> | null;
   backgroundFill?: string;
   baseLayerCache?: {
     current: KangurDrawingCanvasBaseLayerCache | null;
@@ -124,6 +169,9 @@ type RedrawKangurCanvasStrokesOptions<TMeta> = {
     stroke: KangurDrawingStroke<TMeta>,
     index: number
   ) => KangurDrawingStrokeRenderStyle;
+  strokeLayerCache?: {
+    current: KangurDrawingCanvasStrokeLayerCache<TMeta> | null;
+  };
   strokes: KangurDrawingStroke<TMeta>[];
 };
 
@@ -149,6 +197,7 @@ const drawKangurCanvasBaseLayer = ({
 };
 
 export const redrawKangurCanvasStrokes = <TMeta>({
+  activeStroke = null,
   backgroundFill,
   baseLayerCache,
   baseLayerCacheKey,
@@ -157,6 +206,7 @@ export const redrawKangurCanvasStrokes = <TMeta>({
   logicalHeight,
   logicalWidth,
   resolveStyle,
+  strokeLayerCache,
   strokes,
 }: RedrawKangurCanvasStrokesOptions<TMeta>): void => {
   if (!canvas) {
@@ -210,5 +260,45 @@ export const redrawKangurCanvasStrokes = <TMeta>({
     });
   }
 
-  renderKangurDrawingStrokes(ctx, strokes, resolveStyle);
+  if (strokeLayerCache) {
+    const cachedStrokeLayer = strokeLayerCache.current;
+    const shouldRefreshStrokeLayer =
+      cachedStrokeLayer?.strokes !== strokes ||
+      cachedStrokeLayer?.resolveStyle !== resolveStyle ||
+      cachedStrokeLayer?.logicalWidth !== logicalWidth ||
+      cachedStrokeLayer?.logicalHeight !== logicalHeight;
+
+    if (strokes.length === 0) {
+      strokeLayerCache.current = null;
+    } else if (shouldRefreshStrokeLayer) {
+      const nextStrokeCanvas = cachedStrokeLayer?.canvas ?? document.createElement('canvas');
+      const strokeCtx = syncKangurCanvasContext(nextStrokeCanvas, logicalWidth, logicalHeight);
+
+      if (strokeCtx) {
+        strokeCtx.clearRect(0, 0, logicalWidth, logicalHeight);
+        renderKangurDrawingStrokes(strokeCtx, strokes, resolveStyle);
+      }
+
+      strokeLayerCache.current = {
+        canvas: nextStrokeCanvas,
+        logicalHeight,
+        logicalWidth,
+        resolveStyle,
+        strokes,
+      };
+    }
+
+    const nextCachedStrokeLayer = strokeLayerCache.current;
+    if (nextCachedStrokeLayer) {
+      ctx.drawImage(nextCachedStrokeLayer.canvas, 0, 0, logicalWidth, logicalHeight);
+    }
+  } else {
+    renderKangurDrawingStrokes(ctx, strokes, resolveStyle);
+  }
+
+  if (activeStroke) {
+    renderKangurDrawingStrokes(ctx, [activeStroke], (stroke) =>
+      resolveStyle(stroke, strokes.length)
+    );
+  }
 };

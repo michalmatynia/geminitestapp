@@ -2,38 +2,14 @@
 
 import type { ComponentProps } from 'react';
 
-import AddingBallGame from '@/features/kangur/ui/components/AddingBallGame';
-import AddingSynthesisGame from '@/features/kangur/ui/components/AddingSynthesisGame';
-import AgenticApprovalGateGame from '@/features/kangur/ui/components/AgenticApprovalGateGame';
-import AgenticReasoningRouterGame from '@/features/kangur/ui/components/AgenticReasoningRouterGame';
-import AgenticSurfaceMatchGame from '@/features/kangur/ui/components/AgenticSurfaceMatchGame';
-import CalendarTrainingGame from '@/features/kangur/ui/components/CalendarTrainingGame';
-import ClockTrainingGame from '@/features/kangur/ui/components/ClockTrainingGame';
-import DivisionGame from '@/features/kangur/ui/components/DivisionGame';
-import EnglishAdjectivesSceneGame from '@/features/kangur/ui/components/EnglishAdjectivesSceneGame';
-import EnglishAdverbsActionStudioGame from '@/features/kangur/ui/components/EnglishAdverbsActionStudioGame';
-import EnglishAdverbsFrequencyRoutineGame from '@/features/kangur/ui/components/EnglishAdverbsFrequencyRoutineGame';
-import EnglishArticlesDragDropGame from '@/features/kangur/ui/components/EnglishArticlesDragDropGame';
-import EnglishComparativesSuperlativesCrownGame from '@/features/kangur/ui/components/EnglishComparativesSuperlativesCrownGame';
-import EnglishPartsOfSpeechGame from '@/features/kangur/ui/components/EnglishPartsOfSpeechGame';
-import EnglishPrepositionsGame from '@/features/kangur/ui/components/EnglishPrepositionsGame';
-import EnglishPrepositionsOrderGame from '@/features/kangur/ui/components/EnglishPrepositionsOrderGame';
-import EnglishPrepositionsSortGame from '@/features/kangur/ui/components/EnglishPrepositionsSortGame';
-import EnglishPronounsWarmupGame from '@/features/kangur/ui/components/EnglishPronounsWarmupGame';
-import EnglishSentenceStructureGame from '@/features/kangur/ui/components/EnglishSentenceStructureGame';
-import EnglishSubjectVerbAgreementGame from '@/features/kangur/ui/components/EnglishSubjectVerbAgreementGame';
-import GeometryDrawingGame from '@/features/kangur/ui/components/GeometryDrawingGame';
-import LogicalAnalogiesRelationGame from '@/features/kangur/ui/components/LogicalAnalogiesRelationGame';
-import LogicalClassificationGame from '@/features/kangur/ui/components/LogicalClassificationGame';
-import LogicalPatternsWorkshopGame from '@/features/kangur/ui/components/LogicalPatternsWorkshopGame';
-import MultiplicationArrayGame from '@/features/kangur/ui/components/MultiplicationArrayGame';
-import MultiplicationGame from '@/features/kangur/ui/components/MultiplicationGame';
-import SubtractingGame from '@/features/kangur/ui/components/SubtractingGame';
 import type { KangurLaunchableGameRuntimeRendererId } from '@/shared/contracts/kangur-games';
 import type {
   LaunchableGameCategoryRendererProps,
   LaunchableGameRendererConfig,
   LaunchableGameRendererProps,
+} from './KangurLaunchableGameRuntime.shared';
+import {
+  createDynamicLaunchableGameComponent,
 } from './KangurLaunchableGameRuntime.shared';
 
 const toLessonPlayFinishLabelVariant = (
@@ -45,7 +21,91 @@ const toLessonPlayFinishLabelVariant = (
       ? 'lesson'
       : undefined;
 
-type GeometryDrawingGameProps = ComponentProps<typeof GeometryDrawingGame>;
+const AddingBallGame = createDynamicLaunchableGameComponent(
+  () => import('@/features/kangur/ui/components/AddingBallGame')
+);
+const AddingSynthesisGame = createDynamicLaunchableGameComponent(
+  () => import('@/features/kangur/ui/components/AddingSynthesisGame')
+);
+const AgenticApprovalGateGame = createDynamicLaunchableGameComponent(
+  () => import('@/features/kangur/ui/components/AgenticApprovalGateGame')
+);
+const AgenticReasoningRouterGame = createDynamicLaunchableGameComponent(
+  () => import('@/features/kangur/ui/components/AgenticReasoningRouterGame')
+);
+const AgenticSurfaceMatchGame = createDynamicLaunchableGameComponent(
+  () => import('@/features/kangur/ui/components/AgenticSurfaceMatchGame')
+);
+const CalendarTrainingGame = createDynamicLaunchableGameComponent(
+  () => import('@/features/kangur/ui/components/CalendarTrainingGame')
+);
+const ClockTrainingGame = createDynamicLaunchableGameComponent(
+  () => import('@/features/kangur/ui/components/ClockTrainingGame')
+);
+const DivisionGame = createDynamicLaunchableGameComponent(
+  () => import('@/features/kangur/ui/components/DivisionGame')
+);
+const EnglishAdjectivesSceneGame = createDynamicLaunchableGameComponent(
+  () => import('@/features/kangur/ui/components/EnglishAdjectivesSceneGame')
+);
+const EnglishAdverbsActionStudioGame = createDynamicLaunchableGameComponent(
+  () => import('@/features/kangur/ui/components/EnglishAdverbsActionStudioGame')
+);
+const EnglishAdverbsFrequencyRoutineGame = createDynamicLaunchableGameComponent(
+  () => import('@/features/kangur/ui/components/EnglishAdverbsFrequencyRoutineGame')
+);
+const EnglishArticlesDragDropGame = createDynamicLaunchableGameComponent(
+  () => import('@/features/kangur/ui/components/EnglishArticlesDragDropGame')
+);
+const EnglishComparativesSuperlativesCrownGame = createDynamicLaunchableGameComponent(
+  () => import('@/features/kangur/ui/components/EnglishComparativesSuperlativesCrownGame')
+);
+const EnglishPartsOfSpeechGame = createDynamicLaunchableGameComponent(
+  () => import('@/features/kangur/ui/components/EnglishPartsOfSpeechGame')
+);
+const EnglishPrepositionsGame = createDynamicLaunchableGameComponent(
+  () => import('@/features/kangur/ui/components/EnglishPrepositionsGame')
+);
+const EnglishPrepositionsOrderGame = createDynamicLaunchableGameComponent(
+  () => import('@/features/kangur/ui/components/EnglishPrepositionsOrderGame')
+);
+const EnglishPrepositionsSortGame = createDynamicLaunchableGameComponent(
+  () => import('@/features/kangur/ui/components/EnglishPrepositionsSortGame')
+);
+const EnglishPronounsWarmupGame = createDynamicLaunchableGameComponent(
+  () => import('@/features/kangur/ui/components/EnglishPronounsWarmupGame')
+);
+const EnglishSentenceStructureGame = createDynamicLaunchableGameComponent(
+  () => import('@/features/kangur/ui/components/EnglishSentenceStructureGame')
+);
+const EnglishSubjectVerbAgreementGame = createDynamicLaunchableGameComponent(
+  () => import('@/features/kangur/ui/components/EnglishSubjectVerbAgreementGame')
+);
+const GeometryDrawingGame = createDynamicLaunchableGameComponent(
+  () => import('@/features/kangur/ui/components/GeometryDrawingGame')
+);
+const LogicalAnalogiesRelationGame = createDynamicLaunchableGameComponent(
+  () => import('@/features/kangur/ui/components/LogicalAnalogiesRelationGame')
+);
+const LogicalClassificationGame = createDynamicLaunchableGameComponent(
+  () => import('@/features/kangur/ui/components/LogicalClassificationGame')
+);
+const LogicalPatternsWorkshopGame = createDynamicLaunchableGameComponent(
+  () => import('@/features/kangur/ui/components/LogicalPatternsWorkshopGame')
+);
+const MultiplicationArrayGame = createDynamicLaunchableGameComponent(
+  () => import('@/features/kangur/ui/components/MultiplicationArrayGame')
+);
+const MultiplicationGame = createDynamicLaunchableGameComponent(
+  () => import('@/features/kangur/ui/components/MultiplicationGame')
+);
+const SubtractingGame = createDynamicLaunchableGameComponent(
+  () => import('@/features/kangur/ui/components/SubtractingGame')
+);
+
+type GeometryDrawingGameProps = ComponentProps<
+  (typeof import('@/features/kangur/ui/components/GeometryDrawingGame'))['default']
+>;
 
 const resolveGeometryDrawingGameRendererOverrides = (
   rendererProps: LaunchableGameRendererProps['rendererProps']

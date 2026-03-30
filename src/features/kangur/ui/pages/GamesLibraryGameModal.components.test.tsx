@@ -28,8 +28,11 @@ describe('GamesLibraryGameDialog', () => {
       expect(
         screen.getByText('Preview the runtime configuration for this game.')
       ).toBeInTheDocument();
+      expect(screen.getByTestId('games-library-game-modal-overlay')).toHaveClass(
+        '!backdrop-blur-0'
+      );
       expect(screen.getByTestId('games-library-game-modal')).toHaveClass(
-        'bg-[var(--kangur-soft-card-background,#ffffff)]',
+        'bg-[var(--kangur-page-background,#f8fafc)]',
         'overflow-hidden'
       );
 

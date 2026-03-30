@@ -1725,6 +1725,7 @@
       "allAgeGroups": "Wszystkie",
       "variants": "Warianty",
       "variantCount": "{count, plural, one {# wariant} few {# warianty} many {# wariantow} other {# wariantow}}",
+      "lessonCount": "{count, plural, one {# lekcja} few {# lekcje} many {# lekcji} other {# lekcji}}",
       "legacyScreens": "Legacy screeny",
       "lessonLinks": "Powiazane lekcje",
       "none": "Brak"

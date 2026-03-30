@@ -351,9 +351,11 @@ export function GamesLibraryGameModal(props: GamesLibraryGameModalProps): React.
             </div>
 
             <div className='space-y-5'>
-              {settingsOpen && supportsPreviewSettings ? (
+              {supportsPreviewSettings ? (
                 <GameModalSection
                   dataTestId='games-library-modal-settings'
+                  hidden={!settingsOpen}
+                  id='games-library-modal-settings'
                   title={translations('modal.settingsTitle')}
                 >
                   {previewSettings ? (

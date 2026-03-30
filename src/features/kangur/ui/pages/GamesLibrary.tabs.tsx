@@ -1,17 +1,23 @@
-/* eslint-disable @typescript-eslint/no-unsafe-assignment */
-/* eslint-disable @typescript-eslint/no-unsafe-member-access */
-/* eslint-disable @typescript-eslint/no-unsafe-call */
-/* eslint-disable @typescript-eslint/no-unsafe-return */
-/* eslint-disable @typescript-eslint/no-unsafe-argument */
-/* eslint-disable @typescript-eslint/no-explicit-any */
 'use client';
 
 import Link from 'next/link';
-
+import { useTranslations } from 'next-intl';
+import type {
+  KangurDrawingEngineCatalogEntry,
+  KangurGameCatalogEntry,
+  KangurGameEngineCatalogEntry,
+  KangurGameEngineCatalogImplementationGroup,
+  KangurGameLibraryPageData,
+  KangurGameRuntimeSerializationAudit,
+  KangurGamesLibraryCohortGroup,
+  KangurGamesLibrarySubjectGroup,
+  KangurGamesLibraryVariantGroup,
+} from '@/features/kangur/games';
 import {
   getLocalizedKangurAgeGroupLabel,
   getLocalizedKangurSubjectLabel,
 } from '@/features/kangur/lessons/lesson-catalog-i18n';
+import type { KangurLessonSubject } from '@/features/kangur/shared/contracts/kangur';
 import { cn } from '@/features/kangur/shared/utils';
 import { getKangurSixYearOldSubjectVisual } from '@/features/kangur/ui/constants/six-year-old-visuals';
 import {
@@ -47,41 +53,41 @@ import {
   resolveStatusAccent,
   resolveVariantGroupAccent,
 } from './GamesLibrary.utils';
+import type { GamesLibraryFilterState } from './GamesLibrary.filters';
+
+type GamesLibraryTranslations = ReturnType<typeof useTranslations>;
+type GamesLibrarySelectedGame = KangurGameCatalogEntry['game'];
 
 interface CatalogTabProps {
-  filters: any;
+  filters: GamesLibraryFilterState;
   hasActiveFilters: boolean;
-  applyFilters: (filters: any, sourceId: string) => void;
-  updateFilter: (key: string, value: any) => void;
-  translations: any;
+  applyFilters: (filters: GamesLibraryFilterState, sourceId: string) => void;
+  translations: GamesLibraryTranslations;
   visibleGameCount: number;
   totalGameCount: number;
-  groupedGames: any[];
+  groupedGames: KangurGamesLibrarySubjectGroup[];
   locale: string;
   basePath: string;
-  selectedGame: any;
-  setSelectedGame: (game: any, trigger?: HTMLElement | null) => void;
-  coverageStatusMap: any;
-  gameFilterOptions: any[];
-  catalogFacets: any;
+  selectedGame: GamesLibrarySelectedGame | null;
+  setSelectedGame: (game: GamesLibrarySelectedGame, trigger?: HTMLElement | null) => void;
 }
 
 interface StructureTabProps {
-  filters: any;
-  translations: any;
-  implementationGroups: any[];
-  coverageGroups: any[];
-  cohortGroups: any[];
-  drawingGroups: any[];
-  engineGroups: any[];
-  variantGroups: any[];
+  filters: GamesLibraryFilterState;
+  translations: GamesLibraryTranslations;
+  implementationGroups: KangurGameEngineCatalogImplementationGroup[];
+  coverageGroups: KangurGameLibraryPageData['coverage']['groups'];
+  cohortGroups: KangurGamesLibraryCohortGroup[];
+  drawingGroups: KangurDrawingEngineCatalogEntry[];
+  engineGroups: KangurGameEngineCatalogEntry[];
+  variantGroups: KangurGamesLibraryVariantGroup[];
   locale: string;
-  metrics: any;
+  metrics: KangurGameLibraryPageData['overview']['metrics'];
 }
 
 interface RuntimeTabProps {
-  serializationAudit: any;
-  translations: any;
+  serializationAudit: KangurGameRuntimeSerializationAudit;
+  translations: GamesLibraryTranslations;
   serializationAuditVisible: boolean;
   currentGamesLibraryHref: string;
 }
@@ -116,13 +122,16 @@ const ISSUE_GROUPS = [
 
 const takeListPreview = <T,>(values: readonly T[], count = 4): T[] => values.slice(0, count);
 
-const formatVariantGroupMetric = (group: any): number =>
-  new Set(group.entries.map((entry: any) => entry.game.id)).size;
+const formatVariantGroupMetric = (group: KangurGamesLibraryVariantGroup): number =>
+  new Set(group.entries.map((entry) => entry.game.id)).size;
 
-const formatEngineGroupMetric = (group: any): number =>
-  new Set(group.entries.map((entry: any) => entry.game.id)).size;
+const formatEngineGroupMetric = (group: KangurGameEngineCatalogEntry): number =>
+  new Set(group.entries.map((entry) => entry.game.id)).size;
 
-const resolveSurfaceAuditLabel = (surfaceId: string, translations: any): string =>
+const resolveSurfaceAuditLabel = (
+  surfaceId: KangurGameRuntimeSerializationAudit['surfaces'][number]['surface'],
+  translations: GamesLibraryTranslations
+): string =>
   surfaceId === 'lesson_inline'
     ? translations('surfaces.lesson')
     : translations(`variantSurfaces.${surfaceId}`);
@@ -174,6 +183,7 @@ export const CatalogTab = ({
           </div>
           {hasActiveFilters ? (
             <KangurButton
+              className='w-full sm:w-auto'
               type='button'
               size='sm'
               variant='surface'
@@ -247,20 +257,19 @@ export const CatalogTab = ({
                     />
                     <GamesLibraryCompactMetric
                       label={translations('filters.engine.label')}
-                      value={new Set(subjectEntries.map((entry: any) => entry.game.engineId)).size}
+                      value={new Set(subjectEntries.map((entry) => entry.game.engineId)).size}
                     />
                     <GamesLibraryCompactMetric
                       label={translations('metrics.lessonLinked')}
                       value={
-                        subjectEntries.filter(
-                          (entry: any) => entry.game.lessonComponentIds.length > 0
-                        ).length
+                        subjectEntries.filter((entry) => entry.game.lessonComponentIds.length > 0)
+                          .length
                       }
                     />
                     <GamesLibraryCompactMetric
                       label={translations('cohortGroups.launchableLabel')}
                       value={
-                        subjectEntries.filter((entry: any) =>
+                        subjectEntries.filter((entry) =>
                           Boolean(buildKangurGameLaunchHref(basePath, entry.game))
                         ).length
                       }
@@ -269,7 +278,7 @@ export const CatalogTab = ({
                 </div>
 
                 <div className='grid gap-4 lg:grid-cols-2'>
-                  {subjectEntries.map((entry: any) => {
+                  {subjectEntries.map((entry) => {
                     const game = entry.game;
                     const gameHref = buildKangurGameLaunchHref(basePath, game);
                     const isSelected = selectedGame?.id === game.id;
@@ -283,7 +292,7 @@ export const CatalogTab = ({
                         id={getKangurGameCardAnchorId(game.id)}
                         accent='slate'
                         padding='lg'
-                        aria-pressed={isSelected}
+                        data-selected={isSelected ? 'true' : 'false'}
                         className={cn(
                           'group flex h-full scroll-mt-24 cursor-pointer flex-col gap-5 border-[color:var(--kangur-soft-card-border)] bg-[var(--kangur-soft-card-background,#ffffff)] [background:linear-gradient(180deg,color-mix(in_srgb,var(--kangur-soft-card-background)_98%,white)_0%,color-mix(in_srgb,var(--kangur-soft-card-background)_93%,white)_100%)] transition hover:-translate-y-[1px] hover:border-[color:var(--kangur-page-accent)] hover:shadow-[0_32px_72px_-52px_rgba(37,99,235,0.42)]',
                           isSelected
@@ -301,14 +310,6 @@ export const CatalogTab = ({
                           }
                           setSelectedGame(game, event.currentTarget);
                         }}
-                        onKeyDown={(event) => {
-                          if (event.key === 'Enter' || event.key === ' ') {
-                            event.preventDefault();
-                            setSelectedGame(game, event.currentTarget);
-                          }
-                        }}
-                        role='button'
-                        tabIndex={0}
                       >
                         <div className='flex items-start gap-4'>
                           <div className='flex size-14 shrink-0 items-center justify-center rounded-[1.4rem] border border-[color:var(--kangur-soft-card-border)] bg-[var(--kangur-soft-card-background,#ffffff)] [background:linear-gradient(180deg,color-mix(in_srgb,var(--kangur-soft-card-background)_98%,white)_0%,color-mix(in_srgb,var(--kangur-soft-card-background)_92%,white)_100%)] text-[1.7rem] shadow-[0_18px_42px_-30px_rgba(15,23,42,0.34)]'>
@@ -363,13 +364,17 @@ export const CatalogTab = ({
                           <GamesLibraryCompactMetric
                             label={translations('filters.surface.label')}
                             value={game.surfaces
-                              .map((surface: string) => translations(`surfaces.${surface}`))
+                              .map((surface) => translations(`surfaces.${surface}`))
                               .join(', ')}
                           />
                         </div>
 
                         <div className='mt-auto grid gap-2 border-t border-[color:var(--kangur-soft-card-border)] pt-3 sm:flex sm:flex-wrap'>
                           <KangurButton
+                            aria-label={`${translations('actions.previewGame')}: ${game.title}`}
+                            aria-controls={isSelected ? 'games-library-game-modal' : undefined}
+                            aria-expanded={isSelected}
+                            aria-haspopup='dialog'
                             className='w-full sm:w-auto'
                             onClick={(event) =>
                               setSelectedGame(game, event.currentTarget)
@@ -387,7 +392,12 @@ export const CatalogTab = ({
                               size='sm'
                               variant='surface'
                             >
-                              <Link href={gameHref}>{translations('actions.openGame')}</Link>
+                              <Link
+                                aria-label={`${translations('actions.openGame')}: ${game.title}`}
+                                href={gameHref}
+                              >
+                                {translations('actions.openGame')}
+                              </Link>
                             </KangurButton>
                           ) : null}
                         </div>
@@ -495,9 +505,9 @@ export const StructureTab = ({
             />
 
             <div className='grid gap-4 xl:grid-cols-2'>
-              {implementationGroups.map((group: any) => {
+              {implementationGroups.map((group) => {
                 const engineTitles = group.engineGroups.map(
-                  (engineGroup: any) => engineGroup.engine?.title ?? engineGroup.engineId
+                  (engineGroup) => engineGroup.engine?.title ?? engineGroup.engineId
                 );
 
                 return (
@@ -571,7 +581,7 @@ export const StructureTab = ({
             />
 
             <div className='grid gap-4 xl:grid-cols-2'>
-              {coverageGroups.map((group: any) => {
+              {coverageGroups.map((group) => {
                 const uncoveredLessonTitles = getLessonTitles(
                   group.uncoveredComponentIds,
                   locale
@@ -656,7 +666,7 @@ export const StructureTab = ({
                     })}
                   />
 
-                  {cohortGroups.map((group: any) => (
+                  {cohortGroups.map((group) => (
                     <KangurInfoCard
                       key={group.ageGroup}
                       accent={resolveAgeGroupAccent(group.ageGroup)}
@@ -702,7 +712,7 @@ export const StructureTab = ({
                       >
                         {group.subjects
                           .map((subject: string) =>
-                            getLocalizedKangurSubjectLabel(subject, locale, subject)
+                            getLocalizedKangurSubjectLabel(subject as KangurLessonSubject, locale, subject)
                           )
                           .join(', ')}
                       </GamesLibraryDetailSurface>
@@ -717,15 +727,12 @@ export const StructureTab = ({
                     eyebrow={translations('variantGroupsEyebrow')}
                     title={translations('variantGroupsTitle')}
                     description={translations('variantGroupsDescription', {
-                      count: variantGroups.reduce(
-                        (count: number, group: any) => count + group.entries.length,
-                        0
-                      ),
+                      count: variantGroups.reduce((count, group) => count + group.entries.length, 0),
                       surfaceCount: variantGroups.length,
                     })}
                   />
 
-                  {variantGroups.map((group: any) => (
+                  {variantGroups.map((group) => (
                     <KangurInfoCard
                       key={group.surface}
                       accent={resolveVariantGroupAccent(group.surface)}
@@ -754,14 +761,11 @@ export const StructureTab = ({
                         />
                         <GamesLibraryCompactMetric
                           label={translations('variantGroups.enginesLabel')}
-                          value={new Set(group.entries.map((entry: any) => entry.game.engineId)).size}
+                          value={new Set(group.entries.map((entry) => entry.game.engineId)).size}
                         />
                         <GamesLibraryCompactMetric
                           label={translations('variantGroups.launchableLabel')}
-                          value={
-                            group.entries.filter((entry: any) => Boolean(entry.launchableScreen))
-                              .length
-                          }
+                          value={group.entries.filter((entry) => Boolean(entry.launchableScreen)).length}
                         />
                       </div>
 
@@ -770,8 +774,8 @@ export const StructureTab = ({
                       >
                         {takeListPreview(
                           group.entries
-                            .filter((entry: any) => entry.isDefaultVariant)
-                            .map((entry: any) => entry.variant.title),
+                            .filter((entry) => entry.isDefaultVariant)
+                            .map((entry) => entry.variant.title),
                           5
                         ).join(', ') || translations('labels.none')}
                       </GamesLibraryDetailSurface>
@@ -796,7 +800,7 @@ export const StructureTab = ({
                     })}
                   />
 
-                  {drawingGroups.map((group: any) => (
+                  {drawingGroups.map((group) => (
                     <KangurInfoCard
                       key={group.engineId}
                       accent={resolveEngineCategoryAccent(group.category)}
@@ -836,7 +840,7 @@ export const StructureTab = ({
                       >
                         {group.subjects
                           .map((subject: string) =>
-                            getLocalizedKangurSubjectLabel(subject, locale, subject)
+                            getLocalizedKangurSubjectLabel(subject as KangurLessonSubject, locale, subject)
                           )
                           .join(', ')}
                       </GamesLibraryDetailSurface>
@@ -855,7 +859,7 @@ export const StructureTab = ({
                     })}
                   />
 
-                  {engineGroups.map((group: any) => (
+                  {engineGroups.map((group) => (
                     <KangurInfoCard
                       key={group.engineId}
                       accent={resolveEngineCategoryAccent(group.category)}
@@ -910,14 +914,14 @@ export const StructureTab = ({
                         label={translations('engineGroups.mechanicsLabel')}
                       >
                         {group.mechanics
-                          .map((mechanic: string) => translations(`mechanics.${mechanic}`))
+                          .map((mechanic) => translations(`mechanics.${mechanic}`))
                           .join(', ')}
                       </GamesLibraryDetailSurface>
                       <GamesLibraryDetailSurface
                         label={translations('engineGroups.surfacesLabel')}
                       >
                         {group.surfaces
-                          .map((surface: string) => translations(`surfaces.${surface}`))
+                          .map((surface) => translations(`surfaces.${surface}`))
                           .join(', ')}
                       </GamesLibraryDetailSurface>
                     </KangurInfoCard>
@@ -1017,7 +1021,7 @@ export const RuntimeTab = ({
           />
 
           <div className='grid gap-4 xl:grid-cols-2'>
-            {serializationAudit.surfaces.map((surface: any) => (
+            {serializationAudit.surfaces.map((surface) => (
               <KangurInfoCard
                 key={surface.surface}
                 accent={resolveSerializationSurfaceAccent(surface)}
@@ -1088,7 +1092,7 @@ export const RuntimeTab = ({
           <div className='grid gap-4 xl:grid-cols-2'>
             {ISSUE_GROUPS.map((issueGroup) => {
               const issues = serializationAudit.issues.filter(
-                (issue: any) => issue.kind === issueGroup.kind
+                (issue) => issue.kind === issueGroup.kind
               );
 
               if (issues.length === 0) {
@@ -1112,7 +1116,7 @@ export const RuntimeTab = ({
                   </div>
 
                   <div className='space-y-2'>
-                    {takeListPreview(issues, 6).map((issue: any) => (
+                    {takeListPreview(issues, 6).map((issue) => (
                       <Link
                         key={`${issue.kind}:${issue.itemId}`}
                         href={getSerializationIssueHref(currentGamesLibraryHref, issue)}

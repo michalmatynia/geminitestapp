@@ -421,10 +421,7 @@ function GamesLibraryActiveTabContent(props: {
       <CatalogTab
         applyFilters={state.applyFilters}
         basePath={state.basePath}
-        catalogFacets={state.catalogFacets}
-        coverageStatusMap={state.coverageStatusMap}
         filters={state.filters}
-        gameFilterOptions={state.gameFilterOptions}
         groupedGames={state.groupedGames}
         hasActiveFilters={state.hasActiveFilters}
         locale={state.locale}
@@ -432,12 +429,6 @@ function GamesLibraryActiveTabContent(props: {
         setSelectedGame={onSelectGame}
         totalGameCount={state.totalGameCount}
         translations={state.translations}
-        updateFilter={(key, value) =>
-          state.updateFilter(
-            key as keyof typeof state.filters,
-            value as (typeof state.filters)[keyof typeof state.filters]
-          )
-        }
         visibleGameCount={state.visibleGameCount}
       />
     );
@@ -462,7 +453,6 @@ function GamesLibraryActiveTabContent(props: {
 
   return (
     <RuntimeTab
-      basePath={state.basePath}
       currentGamesLibraryHref={state.currentGamesLibraryHref}
       serializationAudit={state.serializationAudit}
       serializationAuditVisible={state.serializationAuditVisible}

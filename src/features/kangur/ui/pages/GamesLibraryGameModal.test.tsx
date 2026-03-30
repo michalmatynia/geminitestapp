@@ -15,6 +15,7 @@ const modalState = vi.hoisted(() => ({
         {
           'labels.allAgeGroups': 'All age groups',
           'labels.lessonLinks': 'Linked lessons',
+          'labels.lessonCount': '1 lesson',
           'labels.variants': 'Variants',
           'labels.variantCount': '1 variant',
           'labels.none': 'None',
@@ -144,8 +145,65 @@ const TEST_GAME =
   createDefaultKangurGames().find((game) => game.id === 'clock_training') ??
   createDefaultKangurGames()[0];
 
+const resetModalState = (): void => {
+  modalState.value = {
+    ...modalState.value,
+    locale: 'en',
+    settingsOpen: true,
+    setSettingsOpen: vi.fn(),
+    handleCloseModal: vi.fn(),
+    supportsPreviewSettings: true,
+    lessonGameSectionsQuery: {
+      data: [
+        {
+          id: 'clock-section',
+          lessonComponentId: 'clock',
+          gameId: 'clock_training',
+          instanceId: 'clock-instance',
+          title: 'Clock practice',
+          description: 'Practice section',
+          emoji: '🕒',
+          sortOrder: 1,
+          enabled: true,
+          settings: {
+            clock: {
+              clockSection: 'combined',
+              initialMode: 'practice',
+              showHourHand: true,
+              showMinuteHand: true,
+              showModeSwitch: true,
+              showTaskTitle: false,
+              showTimeDisplay: true,
+            },
+          },
+        },
+      ],
+      isPending: false,
+    },
+    gameInstancesQuery: {
+      data: [
+        {
+          id: 'clock-instance',
+          gameId: 'clock_training',
+          launchableRuntimeId: 'clock_quiz',
+          contentSetId: 'clock:default',
+          title: 'Clock warmup',
+          description: 'Intro instance',
+          emoji: '⏰',
+          enabled: true,
+          sortOrder: 1,
+          engineOverrides: {},
+        },
+      ],
+      isPending: false,
+    },
+  };
+};
+
 describe('GamesLibraryGameModal', () => {
   it('renders structured sections instead of the placeholder scaffold body', () => {
+    resetModalState();
+
     render(
       <GamesLibraryGameModal
         basePath='/kangur'
@@ -160,6 +218,7 @@ describe('GamesLibraryGameModal', () => {
     expect(screen.getByTestId('games-library-modal-lessons')).toBeInTheDocument();
     expect(screen.getByTestId('games-library-modal-sections')).toBeInTheDocument();
     expect(screen.getByTestId('games-library-modal-settings')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Close' })).toBeInTheDocument();
     expect(screen.getByText('Launch runtime')).toBeInTheDocument();
     expect(screen.getByText('Lesson runtime')).toBeInTheDocument();
     expect(
@@ -172,6 +231,7 @@ describe('GamesLibraryGameModal', () => {
   });
 
   it('shows modal empty states when there is no persisted data', () => {
+    resetModalState();
     modalState.value = {
       ...modalState.value,
       settingsOpen: true,
@@ -203,5 +263,50 @@ describe('GamesLibraryGameModal', () => {
     expect(screen.getByText('No hub sections yet.')).toBeInTheDocument();
     expect(screen.getByTestId('games-library-modal-settings')).toBeInTheDocument();
     expect(screen.getByText('No preview settings were saved for this game yet.')).toBeInTheDocument();
+  });
+
+  it('exposes settings toggle semantics for the expandable settings section', () => {
+    resetModalState();
+    modalState.value = {
+      ...modalState.value,
+      settingsOpen: false,
+    };
+
+    const { rerender } = render(
+      <GamesLibraryGameModal
+        basePath='/kangur'
+        game={TEST_GAME}
+        onOpenChange={() => undefined}
+        open
+      />
+    );
+
+    const collapsedButton = screen.getByRole('button', { name: 'Game settings' });
+    const settingsSection = screen.getByTestId('games-library-modal-settings');
+
+    expect(collapsedButton).toHaveAttribute('aria-controls', 'games-library-modal-settings');
+    expect(collapsedButton).toHaveAttribute('aria-expanded', 'false');
+    expect(settingsSection).toHaveAttribute('id', 'games-library-modal-settings');
+    expect(settingsSection).not.toBeVisible();
+
+    modalState.value = {
+      ...modalState.value,
+      settingsOpen: true,
+    };
+
+    rerender(
+      <GamesLibraryGameModal
+        basePath='/kangur'
+        game={TEST_GAME}
+        onOpenChange={() => undefined}
+        open
+      />
+    );
+
+    const expandedButton = screen.getByRole('button', { name: 'Hide settings' });
+
+    expect(expandedButton).toHaveAttribute('aria-controls', 'games-library-modal-settings');
+    expect(expandedButton).toHaveAttribute('aria-expanded', 'true');
+    expect(screen.getByTestId('games-library-modal-settings')).toBeVisible();
   });
 });

@@ -1,4 +1,5 @@
-import { useRef, useState, useEffect } from 'react';
+import { useCallback, useEffect, useReducer, useRef } from 'react';
+import type { Dispatch, SetStateAction } from 'react';
 import type { KangurGameInstanceId } from '@/shared/contracts/kangur-game-instances';
 import type {
   KangurDifficulty,
@@ -9,34 +10,20 @@ import type {
   KangurSessionRecommendationHint,
   KangurXpToastState,
 } from '../../types';
+import {
+  initialKangurGameCoreState,
+  kangurGameCoreReducer,
+  type KangurGameCoreCompleteSessionPayload,
+  type KangurGameCoreResetPayload,
+  type KangurGameCoreStartSessionPayload,
+} from './useKangurGameCore.reducer';
+
+type Setter<T> = Dispatch<SetStateAction<T>>;
 
 export function useKangurGameCore() {
   const xpToastTimeoutRef = useRef<number | null>(null);
   const gameLoopTimeoutRef = useRef<number | null>(null);
-  const [screen, setScreen] = useState<KangurGameScreen>('home');
-  const [launchableGameInstanceId, setLaunchableGameInstanceId] =
-    useState<KangurGameInstanceId | null>(null);
-  const [sessionPlayerName, setSessionPlayerName] = useState('');
-  const [operation, setOperation] = useState<KangurOperation | null>(null);
-  const [difficulty, setDifficulty] = useState<KangurDifficulty>('medium');
-  const [questions, setQuestions] = useState<KangurQuestion[]>([]);
-  const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
-  const [score, setScore] = useState(0);
-  const [startTime, setStartTime] = useState<number | null>(null);
-  const [timeTaken, setTimeTaken] = useState(0);
-  const [kangurMode, setKangurMode] = useState<KangurMode | null>(null);
-  const [activeSessionRecommendation, setActiveSessionRecommendation] = useState<
-    KangurSessionRecommendationHint | null
-  >(null);
-  const [xpToast, setXpToast] = useState<KangurXpToastState>({
-    visible: false,
-    xpGained: 0,
-    newBadges: [],
-    breakdown: [],
-    nextBadge: null,
-    dailyQuest: null,
-    recommendation: null,
-  });
+  const [state, dispatch] = useReducer(kangurGameCoreReducer, initialKangurGameCoreState);
 
   useEffect(
     () => () => {
@@ -50,7 +37,80 @@ export function useKangurGameCore() {
     []
   );
 
-  const runGameLoopTimer = (fn: () => void, ms: number): void => {
+  const setScreen = useCallback<Setter<KangurGameScreen>>((value) => {
+    dispatch({ type: 'SET_SCREEN', value });
+  }, []);
+
+  const setLaunchableGameInstanceId = useCallback<Setter<KangurGameInstanceId | null>>(
+    (value) => {
+      dispatch({ type: 'SET_LAUNCHABLE_GAME_INSTANCE_ID', value });
+    },
+    []
+  );
+
+  const setSessionPlayerName = useCallback<Setter<string>>((value) => {
+    dispatch({ type: 'SET_SESSION_PLAYER_NAME', value });
+  }, []);
+
+  const setOperation = useCallback<Setter<KangurOperation | null>>((value) => {
+    dispatch({ type: 'SET_OPERATION', value });
+  }, []);
+
+  const setDifficulty = useCallback<Setter<KangurDifficulty>>((value) => {
+    dispatch({ type: 'SET_DIFFICULTY', value });
+  }, []);
+
+  const setQuestions = useCallback<Setter<KangurQuestion[]>>((value) => {
+    dispatch({ type: 'SET_QUESTIONS', value });
+  }, []);
+
+  const setCurrentQuestionIndex = useCallback<Setter<number>>((value) => {
+    dispatch({ type: 'SET_CURRENT_QUESTION_INDEX', value });
+  }, []);
+
+  const setScore = useCallback<Setter<number>>((value) => {
+    dispatch({ type: 'SET_SCORE', value });
+  }, []);
+
+  const setStartTime = useCallback<Setter<number | null>>((value) => {
+    dispatch({ type: 'SET_START_TIME', value });
+  }, []);
+
+  const setTimeTaken = useCallback<Setter<number>>((value) => {
+    dispatch({ type: 'SET_TIME_TAKEN', value });
+  }, []);
+
+  const setKangurMode = useCallback<Setter<KangurMode | null>>((value) => {
+    dispatch({ type: 'SET_KANGUR_MODE', value });
+  }, []);
+
+  const setActiveSessionRecommendation = useCallback<
+    Setter<KangurSessionRecommendationHint | null>
+  >((value) => {
+    dispatch({ type: 'SET_ACTIVE_SESSION_RECOMMENDATION', value });
+  }, []);
+
+  const setXpToast = useCallback<Setter<KangurXpToastState>>((value) => {
+    dispatch({ type: 'SET_XP_TOAST', value });
+  }, []);
+
+  const startSession = useCallback((payload: KangurGameCoreStartSessionPayload): void => {
+    dispatch({ type: 'START_SESSION', payload });
+  }, []);
+
+  const advanceQuestion = useCallback((): void => {
+    dispatch({ type: 'ADVANCE_QUESTION' });
+  }, []);
+
+  const completeSession = useCallback((payload: KangurGameCoreCompleteSessionPayload): void => {
+    dispatch({ type: 'COMPLETE_SESSION', payload });
+  }, []);
+
+  const resetGame = useCallback((payload: KangurGameCoreResetPayload): void => {
+    dispatch({ type: 'RESET_GAME', payload });
+  }, []);
+
+  const runGameLoopTimer = useCallback((fn: () => void, ms: number): void => {
     if (gameLoopTimeoutRef.current) {
       window.clearTimeout(gameLoopTimeoutRef.current);
     }
@@ -58,9 +118,9 @@ export function useKangurGameCore() {
       gameLoopTimeoutRef.current = null;
       fn();
     }, ms);
-  };
+  }, []);
 
-  const showXpToast = (
+  const showXpToast = useCallback((
     xpGained: number,
     newBadges: string[],
     breakdown: KangurXpToastState['breakdown'] = [],
@@ -72,48 +132,55 @@ export function useKangurGameCore() {
       window.clearTimeout(xpToastTimeoutRef.current);
     }
 
-    setXpToast({
-      visible: true,
-      xpGained,
-      newBadges,
-      breakdown,
-      nextBadge,
-      dailyQuest,
-      recommendation,
+    dispatch({
+      type: 'SET_XP_TOAST',
+      value: {
+        visible: true,
+        xpGained,
+        newBadges,
+        breakdown,
+        nextBadge,
+        dailyQuest,
+        recommendation,
+      },
     });
     xpToastTimeoutRef.current = window.setTimeout(() => {
-      setXpToast((current) => ({ ...current, visible: false }));
+      dispatch({ type: 'DISMISS_XP_TOAST' });
       xpToastTimeoutRef.current = null;
     }, 2800);
-  };
+  }, []);
 
   return {
-    screen,
+    screen: state.screen,
     setScreen,
-    launchableGameInstanceId,
+    launchableGameInstanceId: state.launchableGameInstanceId,
     setLaunchableGameInstanceId,
-    sessionPlayerName,
+    sessionPlayerName: state.sessionPlayerName,
     setSessionPlayerName,
-    operation,
+    operation: state.operation,
     setOperation,
-    difficulty,
+    difficulty: state.difficulty,
     setDifficulty,
-    questions,
+    questions: state.questions,
     setQuestions,
-    currentQuestionIndex,
+    currentQuestionIndex: state.currentQuestionIndex,
     setCurrentQuestionIndex,
-    score,
+    score: state.score,
     setScore,
-    startTime,
+    startTime: state.startTime,
     setStartTime,
-    timeTaken,
+    timeTaken: state.timeTaken,
     setTimeTaken,
-    kangurMode,
+    kangurMode: state.kangurMode,
     setKangurMode,
-    activeSessionRecommendation,
+    activeSessionRecommendation: state.activeSessionRecommendation,
     setActiveSessionRecommendation,
-    xpToast,
+    xpToast: state.xpToast,
     setXpToast,
+    startSession,
+    advanceQuestion,
+    completeSession,
+    resetGame,
     showXpToast,
     runGameLoopTimer,
   };

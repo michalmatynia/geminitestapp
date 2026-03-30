@@ -1,11 +1,11 @@
 {
-  "generatedAt": "2026-03-30T18:02:48.073Z",
+  "generatedAt": "2026-03-30T19:48:53.348Z",
   "source": {
-    "totalFiles": 9117,
-    "totalLines": 1546262,
-    "useClientFiles": 1944,
-    "filesOver800": 108,
-    "filesOver1000": 10,
+    "totalFiles": 9128,
+    "totalLines": 1550768,
+    "useClientFiles": 1945,
+    "filesOver800": 109,
+    "filesOver1000": 11,
     "filesOver1500": 0,
     "largestFile": {
       "path": "src/features/kangur/ui/components/KangurParentDashboardAiTutorWidget.tsx",
@@ -107,8 +107,8 @@
     ]
   },
   "imports": {
-    "appFeatureBarrelImports": 1,
-    "appFeatureDeepImports": 5,
+    "appFeatureBarrelImports": 0,
+    "appFeatureDeepImports": 4,
     "featureToSharedTotalImports": 27,
     "featureToAppApiTotalImports": 0,
     "sharedToFeaturesTotalImports": 0
@@ -132,8 +132,8 @@
     "featureSizeByLines": [
       {
         "feature": "kangur",
-        "files": 2538,
-        "lines": 569146
+        "files": 2549,
+        "lines": 573570
       },
       {
         "feature": "ai",
@@ -153,7 +153,7 @@
       {
         "feature": "cms",
         "files": 359,
-        "lines": 55304
+        "lines": 55303
       },
       {
         "feature": "integrations",
@@ -183,7 +183,7 @@
       {
         "feature": "admin",
         "files": 49,
-        "lines": 8957
+        "lines": 9036
       },
       {
         "feature": "auth",
@@ -208,7 +208,7 @@
       {
         "feature": "viewer3d",
         "files": 34,
-        "lines": 5214
+        "lines": 5218
       },
       {
         "feature": "prompt-engine",
@@ -494,6 +494,10 @@
         "lines": 1165
       },
       {
+        "path": "src/features/kangur/ui/pages/GamesLibrary.tabs.tsx",
+        "lines": 1141
+      },
+      {
         "path": "src/features/kangur/social/admin/workspace/AdminKangurSocialPage.hooks.ts",
         "lines": 1116
       },
@@ -567,10 +571,6 @@
       },
       {
         "path": "src/features/kangur/social/admin/workspace/hooks/useSocialPipelineRunner.test.tsx",
-        "lines": 970
-      },
-      {
-        "path": "src/features/kangur/ui/components/GeometrySymmetryGame.tsx",
         "lines": 970
       }
     ],
@@ -658,7 +658,7 @@
     ]
   },
   "propDrilling": {
-    "candidateChains": 773,
+    "candidateChains": 783,
     "depthGte4Chains": 207,
     "forwardingComponents": 120
   }

@@ -8,14 +8,14 @@ canonical: true
 ---
 # Architecture & Performance Baseline
 
-Generated at: 2026-03-30T18:02:48.073Z
+Generated at: 2026-03-30T19:48:53.348Z
 
 ## Snapshot
 
-- Source files: 9117
-- Source lines: 1546262
-- use client files: 1944
-- Files >= 1000 LOC: 10
+- Source files: 9128
+- Source lines: 1550768
+- use client files: 1945
+- Files >= 1000 LOC: 11
 - Files >= 1500 LOC: 0
 - Largest file: `src/features/kangur/ui/components/KangurParentDashboardAiTutorWidget.tsx` (1278 LOC)
 - API routes: 30
@@ -25,7 +25,7 @@ Generated at: 2026-03-30T18:02:48.073Z
 - Cross-feature dependency pairs: 3
 - Shared -> features imports: 0
 - setInterval occurrences: 1
-- Prop-drilling chains (depth >= 3): 773
+- Prop-drilling chains (depth >= 3): 783
 - Prop-drilling chains (depth >= 4): 207
 
 ## Top API Hotspots (by LOC)
@@ -70,6 +70,7 @@ Generated at: 2026-03-30T18:02:48.073Z
 | `src/features/kangur/ui/pages/Game.test.tsx` | 1203 |
 | `src/features/filemaker/pages/AdminFilemakerMailPage.tsx` | 1191 |
 | `src/features/kangur/ui/pages/lessons/Lessons.ActiveLesson.test.tsx` | 1165 |
+| `src/features/kangur/ui/pages/GamesLibrary.tabs.tsx` | 1141 |
 | `src/features/kangur/social/admin/workspace/AdminKangurSocialPage.hooks.ts` | 1116 |
 | `src/features/kangur/ui/components/NumberBalanceRushGame.hooks.ts` | 1100 |
 | `src/features/kangur/social/admin/workspace/SocialPost.PlaywrightCaptureModal.test.tsx` | 1099 |
@@ -79,4 +80,3 @@ Generated at: 2026-03-30T18:02:48.073Z
 | `src/features/kangur/ui/pages/Lessons.test.tsx` | 1004 |
 | `src/features/ai/ai-paths/components/__tests__/run-trace-utils.test.ts` | 999 |
 | `src/shared/lib/products/services/product-ai-graph-model-payload.test.ts` | 991 |
-| `src/app/api/kangur/ai-tutor/chat/handler.ts` | 989 |

@@ -822,6 +822,7 @@
       "allAgeGroups": "Усі",
       "variants": "Варіанти",
       "variantCount": "{count, plural, one {# варіант} few {# варіанти} many {# варіантів} other {# варіантів}}",
+      "lessonCount": "{count, plural, one {# урок} few {# уроки} many {# уроків} other {# уроків}}",
       "legacyScreens": "Legacy-екрани",
       "lessonLinks": "Пов’язані уроки",
       "none": "Немає"

@@ -58,16 +58,16 @@ export const DEFAULT_CALENDAR_CONTENT_SET_SECTION: KangurCalendarInteractiveSect
 export const DEFAULT_LOGICAL_PATTERN_SET_ID: KangurLogicalPatternSetId = 'logical_patterns_workshop';
 
 export const GAMES_LIBRARY_MODAL_SECTION_SURFACE_CLASSNAME =
-  'rounded-[1.5rem] border border-[color:var(--kangur-soft-card-border)] bg-[var(--kangur-soft-card-background,#ffffff)] [background:linear-gradient(180deg,color-mix(in_srgb,var(--kangur-soft-card-background)_98%,white)_0%,color-mix(in_srgb,var(--kangur-soft-card-background)_94%,var(--kangur-page-background))_100%)] shadow-[0_24px_60px_-42px_rgba(15,23,42,0.32)]';
+  'overflow-hidden rounded-[1.35rem] border border-[color:var(--kangur-page-border)] bg-[var(--kangur-soft-card-background,#ffffff)] shadow-[0_20px_48px_-36px_rgba(15,23,42,0.18)]';
 
 export const GAMES_LIBRARY_MODAL_FIELD_SURFACE_CLASSNAME =
-  'rounded-2xl border border-[color:var(--kangur-soft-card-border)] bg-[var(--kangur-soft-card-background,#ffffff)] [background:linear-gradient(180deg,color-mix(in_srgb,var(--kangur-soft-card-background)_99%,white)_0%,color-mix(in_srgb,var(--kangur-soft-card-background)_95%,white)_100%)]';
+  'rounded-[1rem] border border-[color:var(--kangur-page-border)] bg-[var(--kangur-page-background,#f8fafc)]';
 
 export const GAMES_LIBRARY_MODAL_EMPTY_STATE_CLASSNAME =
-  'rounded-[1.5rem] border border-dashed border-[color:var(--kangur-soft-card-border)] bg-[var(--kangur-soft-card-background,#ffffff)] [background:linear-gradient(180deg,color-mix(in_srgb,var(--kangur-soft-card-background)_88%,white)_0%,color-mix(in_srgb,var(--kangur-soft-card-background)_82%,var(--kangur-page-background))_100%)] px-4 py-8 text-center text-sm [color:var(--kangur-page-muted-text)]';
+  'rounded-[1.25rem] border border-dashed border-[color:var(--kangur-page-border)] bg-[var(--kangur-page-background,#f8fafc)] px-4 py-8 text-center text-sm [color:var(--kangur-page-muted-text)]';
 
 export const GAMES_LIBRARY_MODAL_STAT_CARD_CLASSNAME =
-  'rounded-[1.15rem] border border-[color:var(--kangur-soft-card-border)] bg-[var(--kangur-soft-card-background,#ffffff)] [background:linear-gradient(180deg,color-mix(in_srgb,var(--kangur-soft-card-background)_97%,white)_0%,color-mix(in_srgb,var(--kangur-soft-card-background)_92%,white)_100%)] px-3 py-3 shadow-[0_16px_36px_-34px_rgba(15,23,42,0.22)]';
+  'rounded-[1rem] border border-[color:var(--kangur-page-border)] bg-[var(--kangur-soft-card-background,#ffffff)] px-3 py-3 shadow-[0_14px_32px_-30px_rgba(15,23,42,0.16)]';
 
 export const resolveModalAgeGroupAccent = (
   ageGroup: KangurGameDefinition['ageGroup']

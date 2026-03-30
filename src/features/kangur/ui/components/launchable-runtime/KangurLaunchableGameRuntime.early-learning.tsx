@@ -1,9 +1,5 @@
 'use client';
 
-import AlphabetLiteracyGame from '@/features/kangur/ui/components/AlphabetLiteracyGame';
-import { ArtShapesRotationGapGame } from '@/features/kangur/ui/components/ArtShapesRotationGapGame';
-import ColorHarmonyGame from '@/features/kangur/ui/components/ColorHarmonyGame';
-import ShapeRecognitionGame from '@/features/kangur/ui/components/ShapeRecognitionGame';
 import { KANGUR_MUSIC_PIANO_ROLL_RENDERER_IDS } from '@/features/kangur/games/music-piano-roll-contract';
 import { createKangurMusicPianoRollLaunchableOnFinishRendererMap } from '@/features/kangur/ui/components/music/music-piano-roll-launchable-runtime';
 import type { KangurLaunchableGameRuntimeRendererId } from '@/shared/contracts/kangur-games';
@@ -12,9 +8,28 @@ import type {
   LaunchableGameRendererConfig,
   LaunchableGameRendererProps,
 } from './KangurLaunchableGameRuntime.shared';
+import {
+  createDynamicLaunchableGameComponent,
+} from './KangurLaunchableGameRuntime.shared';
 
 const KANGUR_MUSIC_PIANO_ROLL_LAUNCHABLE_RENDERERS =
   createKangurMusicPianoRollLaunchableOnFinishRendererMap<LaunchableGameRendererProps>();
+
+const AlphabetLiteracyGame = createDynamicLaunchableGameComponent(
+  () => import('@/features/kangur/ui/components/AlphabetLiteracyGame')
+);
+const ArtShapesRotationGapGame = createDynamicLaunchableGameComponent(
+  () =>
+    import('@/features/kangur/ui/components/ArtShapesRotationGapGame').then(
+      (module) => module.ArtShapesRotationGapGame
+    )
+);
+const ColorHarmonyGame = createDynamicLaunchableGameComponent(
+  () => import('@/features/kangur/ui/components/ColorHarmonyGame')
+);
+const ShapeRecognitionGame = createDynamicLaunchableGameComponent(
+  () => import('@/features/kangur/ui/components/ShapeRecognitionGame')
+);
 
 const KANGUR_EARLY_LEARNING_LAUNCHABLE_GAME_RENDERERS: Partial<
   Record<KangurLaunchableGameRuntimeRendererId, LaunchableGameRendererConfig>

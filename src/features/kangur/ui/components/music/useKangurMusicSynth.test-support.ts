@@ -456,6 +456,10 @@ export class MockAudioContext {
   resume = vi.fn(async () => {
     this.state = 'running';
   });
+
+  suspend = vi.fn(async () => {
+    this.state = 'suspended';
+  });
 }
 
 export type UseKangurMusicSynthType =

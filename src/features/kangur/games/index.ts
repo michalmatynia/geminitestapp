@@ -31,7 +31,7 @@ export {
 } from './catalog';
 
 // coverage.ts
-export type { KangurGameLibraryLessonCoverageStatus } from './coverage';
+export type { KangurGameLibraryLessonCoverageStatus, KangurGameLibraryCoverageGroup, KangurGameLibraryCoverageGroupId } from './coverage';
 export {
   getKangurGameLibraryLessonCoverageStatusFromMap,
 } from './coverage';

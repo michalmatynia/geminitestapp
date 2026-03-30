@@ -139,6 +139,65 @@ describe('redrawKangurCanvasStrokes', () => {
     expect(ctx.stroke).toHaveBeenCalled();
   });
 
+  it('batches consecutive strokes with identical styles into a single canvas stroke pass', () => {
+    const canvas = document.createElement('canvas');
+    canvas.getBoundingClientRect = vi.fn(() =>
+      createRect({ left: 0, top: 0, width: 160, height: 110 })
+    );
+
+    const ctx = {
+      beginPath: vi.fn(),
+      clearRect: vi.fn(),
+      drawImage: vi.fn(),
+      fillRect: vi.fn(),
+      lineTo: vi.fn(),
+      moveTo: vi.fn(),
+      quadraticCurveTo: vi.fn(),
+      setTransform: vi.fn(),
+      stroke: vi.fn(),
+      fillStyle: '',
+      globalCompositeOperation: 'source-over',
+      lineCap: 'round',
+      lineJoin: 'round',
+      lineWidth: 0,
+      shadowBlur: 0,
+      shadowColor: '',
+      strokeStyle: '',
+    } as unknown as CanvasRenderingContext2D;
+
+    canvas.getContext = vi.fn(() => ctx);
+
+    redrawKangurCanvasStrokes({
+      canvas,
+      logicalHeight: 220,
+      logicalWidth: 320,
+      resolveStyle: () => ({
+        lineWidth: 4,
+        strokeStyle: '#0f172a',
+      }),
+      strokes: [
+        {
+          meta: null,
+          points: [
+            { x: 10, y: 20 },
+            { x: 80, y: 120 },
+          ],
+        },
+        {
+          meta: null,
+          points: [
+            { x: 90, y: 30 },
+            { x: 130, y: 60 },
+          ],
+        },
+      ],
+    });
+
+    expect(ctx.beginPath).toHaveBeenCalledTimes(1);
+    expect(ctx.stroke).toHaveBeenCalledTimes(1);
+    expect(ctx.moveTo).toHaveBeenCalledTimes(2);
+  });
+
   it('reuses a cached base layer for repeated redraws with the same cache key and rebuilds it when the key changes', () => {
     const canvas = document.createElement('canvas');
     canvas.getBoundingClientRect = vi.fn(() =>
@@ -265,5 +324,125 @@ describe('redrawKangurCanvasStrokes', () => {
     expect(baseCtx.fillRect).toHaveBeenCalledTimes(2);
     expect(mainCtx.drawImage).toHaveBeenCalledTimes(3);
     expect(mainCtx.drawImage).toHaveBeenCalledWith(baseCanvas, 0, 0, 320, 220);
+  });
+
+  it('reuses the committed stroke layer while only redrawing the active stroke', () => {
+    const canvas = document.createElement('canvas');
+    canvas.getBoundingClientRect = vi.fn(() =>
+      createRect({ left: 0, top: 0, width: 160, height: 110 })
+    );
+
+    const strokeCanvas = document.createElement('canvas');
+    strokeCanvas.getBoundingClientRect = vi.fn(() =>
+      createRect({ left: 0, top: 0, width: 0, height: 0 })
+    );
+
+    const mainCtx = {
+      beginPath: vi.fn(),
+      clearRect: vi.fn(),
+      drawImage: vi.fn(),
+      fillRect: vi.fn(),
+      lineTo: vi.fn(),
+      moveTo: vi.fn(),
+      quadraticCurveTo: vi.fn(),
+      setTransform: vi.fn(),
+      stroke: vi.fn(),
+      fillStyle: '',
+      globalCompositeOperation: 'source-over',
+      lineCap: 'round',
+      lineJoin: 'round',
+      lineWidth: 0,
+      shadowBlur: 0,
+      shadowColor: '',
+      strokeStyle: '',
+    } as unknown as CanvasRenderingContext2D;
+
+    const strokeCtx = {
+      beginPath: vi.fn(),
+      clearRect: vi.fn(),
+      drawImage: vi.fn(),
+      fillRect: vi.fn(),
+      lineTo: vi.fn(),
+      moveTo: vi.fn(),
+      quadraticCurveTo: vi.fn(),
+      setTransform: vi.fn(),
+      stroke: vi.fn(),
+      fillStyle: '',
+      globalCompositeOperation: 'source-over',
+      lineCap: 'round',
+      lineJoin: 'round',
+      lineWidth: 0,
+      shadowBlur: 0,
+      shadowColor: '',
+      strokeStyle: '',
+    } as unknown as CanvasRenderingContext2D;
+
+    const originalCreateElement = document.createElement.bind(document);
+    vi.spyOn(document, 'createElement').mockImplementation((tagName: string): HTMLElement => {
+      if (tagName === 'canvas') {
+        return strokeCanvas;
+      }
+
+      return originalCreateElement(tagName);
+    });
+
+    vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockImplementation(function (
+      this: HTMLCanvasElement
+    ) {
+      if (this === canvas) {
+        return mainCtx;
+      }
+
+      if (this === strokeCanvas) {
+        return strokeCtx;
+      }
+
+      return null;
+    });
+
+    const strokeLayerCache = { current: null };
+    const resolveStyle = () => ({
+      lineWidth: 4,
+      strokeStyle: '#0f172a',
+    });
+    const committedStrokes = [
+      {
+        meta: null,
+        points: [
+          { x: 10, y: 20 },
+          { x: 80, y: 120 },
+        ],
+      },
+    ];
+
+    redrawKangurCanvasStrokes({
+      canvas,
+      logicalHeight: 220,
+      logicalWidth: 320,
+      resolveStyle,
+      strokeLayerCache,
+      strokes: committedStrokes,
+    });
+
+    redrawKangurCanvasStrokes({
+      activeStroke: {
+        meta: null,
+        points: [
+          { x: 90, y: 30 },
+          { x: 130, y: 60 },
+        ],
+      },
+      canvas,
+      logicalHeight: 220,
+      logicalWidth: 320,
+      resolveStyle,
+      strokeLayerCache,
+      strokes: committedStrokes,
+    });
+
+    expect(strokeCtx.stroke).toHaveBeenCalledTimes(1);
+    expect(mainCtx.drawImage).toHaveBeenCalledTimes(2);
+    expect(mainCtx.stroke).toHaveBeenCalledTimes(1);
+    expect(mainCtx.drawImage).toHaveBeenCalledWith(strokeCanvas, 0, 0, 320, 220);
   });
 });

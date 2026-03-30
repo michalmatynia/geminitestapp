@@ -31,7 +31,11 @@ export function useKangurMusicSynthTransient(
   const playTone = useCallback(
     async (
       note: KangurMusicPlayableNote<string>,
-      options: { stopPrevious?: boolean } = {}
+      options: {
+        polyphonyLimit?: number;
+        startAtTimeSeconds?: number;
+        stopPrevious?: boolean;
+      } = {}
     ): Promise<boolean> => {
       if (options.stopPrevious !== false) {
         clearActivePlayback();
@@ -47,6 +51,7 @@ export function useKangurMusicSynthTransient(
       const durationMs = Math.max(120, Math.round(note.durationMs ?? DEFAULT_DURATION_MS));
       const durationSeconds = durationMs / 1000;
       const now = context.currentTime;
+      const startAtTimeSeconds = Math.max(options.startAtTimeSeconds ?? now, now);
       const velocity = clamp(note.velocity ?? DEFAULT_VELOCITY, 0.22, 1);
       const brightness = resolveBrightness(note.brightness, velocity);
       const { attackSeconds, gain, releaseSeconds } = resolveVelocityEnvelope({
@@ -54,8 +59,8 @@ export function useKangurMusicSynthTransient(
         velocity,
       });
       const sustainUntil = Math.max(
-        now + attackSeconds + 0.02,
-        now + durationSeconds - releaseSeconds
+        startAtTimeSeconds + attackSeconds + 0.02,
+        startAtTimeSeconds + durationSeconds - releaseSeconds
       );
       const baseGain = clamp(note.gain ?? DEFAULT_GAIN, 0.04, 0.24);
       const resolvedGain = clamp(gain * (baseGain / DEFAULT_GAIN), 0.04, 0.38);
@@ -63,29 +68,32 @@ export function useKangurMusicSynthTransient(
       const filterNode = context.createBiquadFilter();
       filterNode.type = 'lowpass';
       const pianoFilterProfile = resolvePianoFilterProfile(brightness);
-      filterNode.frequency.setValueAtTime(pianoFilterProfile.attackHz, now);
+      filterNode.frequency.setValueAtTime(pianoFilterProfile.attackHz, startAtTimeSeconds);
       filterNode.frequency.exponentialRampToValueAtTime(
         pianoFilterProfile.sustainHz,
-        now + durationSeconds
+        startAtTimeSeconds + durationSeconds
       );
       filterNode.Q.value = pianoFilterProfile.q;
 
       const oscillator2 = context.createOscillator();
       const blendGainNode = context.createGain();
       oscillator2.type = 'sine';
-      oscillator2.frequency.setValueAtTime(note.frequencyHz, now);
+      oscillator2.frequency.setValueAtTime(note.frequencyHz, startAtTimeSeconds);
       oscillator2.detune.value = 4;
       blendGainNode.gain.value = 0.22 + brightness * 0.24;
 
       const transientOscillator = context.createOscillator();
       const transientGainNode = context.createGain();
       transientOscillator.type = brightness > 0.72 ? 'square' : 'triangle';
-      transientOscillator.frequency.setValueAtTime(note.frequencyHz * 2, now);
+      transientOscillator.frequency.setValueAtTime(note.frequencyHz * 2, startAtTimeSeconds);
       transientGainNode.gain.setValueAtTime(
         clamp(resolvedGain * (0.12 + brightness * 0.18), 0.0001, 0.12),
-        now
+        startAtTimeSeconds
       );
-      transientGainNode.gain.exponentialRampToValueAtTime(0.0001, now + 0.035);
+      transientGainNode.gain.exponentialRampToValueAtTime(
+        0.0001,
+        startAtTimeSeconds + 0.035
+      );
 
       const waveShaperNode = context.createWaveShaper();
       waveShaperNode.curve = WAVE_SHAPER_CURVE as Float32Array<ArrayBuffer>;
@@ -100,10 +108,13 @@ export function useKangurMusicSynthTransient(
       );
 
       oscillator.type = note.waveform ?? 'triangle';
-      oscillator.frequency.setValueAtTime(note.frequencyHz, now);
+      oscillator.frequency.setValueAtTime(note.frequencyHz, startAtTimeSeconds);
 
-      gainNode.gain.setValueAtTime(0.0001, now);
-      gainNode.gain.linearRampToValueAtTime(resolvedGain, now + attackSeconds);
+      gainNode.gain.setValueAtTime(0.0001, startAtTimeSeconds);
+      gainNode.gain.linearRampToValueAtTime(
+        resolvedGain,
+        startAtTimeSeconds + attackSeconds
+      );
       gainNode.gain.exponentialRampToValueAtTime(0.0001, sustainUntil + releaseSeconds);
 
       oscillator.connect(gainNode);
@@ -130,7 +141,7 @@ export function useKangurMusicSynthTransient(
         waveShaperNode,
       };
       activeNodesRef.current.push(activeNode);
-      trimTransientPolyphony(activeNodesRef);
+      trimTransientPolyphony(activeNodesRef, options.polyphonyLimit);
 
       oscillator.onended = (): void => {
         activeNodesRef.current = activeNodesRef.current.filter((candidate) => candidate !== activeNode);
@@ -151,11 +162,11 @@ export function useKangurMusicSynthTransient(
         } catch { /* ignore */ }
       };
 
-      oscillator.start(now);
-      oscillator2.start(now);
-      transientOscillator.start(now);
-      transientOscillator.stop(now + 0.045);
-      oscillator.stop(now + durationSeconds);
+      oscillator.start(startAtTimeSeconds);
+      oscillator2.start(startAtTimeSeconds);
+      transientOscillator.start(startAtTimeSeconds);
+      transientOscillator.stop(startAtTimeSeconds + 0.045);
+      oscillator.stop(startAtTimeSeconds + durationSeconds);
 
       return true;
     },

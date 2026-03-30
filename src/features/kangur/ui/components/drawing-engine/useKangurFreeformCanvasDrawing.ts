@@ -1,8 +1,11 @@
 'use client';
 
-import type { RefObject } from 'react';
+import { useCallback, useRef, type RefObject } from 'react';
 
-import { redrawKangurCanvasStrokes } from '@/features/kangur/ui/components/drawing-engine/render';
+import {
+  redrawKangurCanvasStrokes,
+  type KangurDrawingCanvasStrokeLayerCache,
+} from '@/features/kangur/ui/components/drawing-engine/render';
 import {
   createKangurFreeformDrawingSnapshot,
   parseKangurFreeformDrawingSnapshot,
@@ -99,6 +102,17 @@ export const useKangurFreeformCanvasDrawing = ({
     config,
     isCoarsePointer,
   });
+  const strokeLayerCacheRef =
+    useRef<KangurDrawingCanvasStrokeLayerCache<KangurFreeformDrawingStrokeMeta> | null>(null);
+  const resolveStrokeStyle = useCallback(
+    ({ meta }: KangurDrawingStroke<KangurFreeformDrawingStrokeMeta>) => ({
+      compositeOperation: (meta.isEraser ? 'destination-out' : 'source-over') as GlobalCompositeOperation,
+      lineWidth: meta.width,
+      renderMode: resolvedConfig.strokeRenderMode,
+      strokeStyle: meta.isEraser ? 'rgba(0,0,0,1)' : meta.color,
+    }),
+    [resolvedConfig.strokeRenderMode]
+  );
 
   const engine = useKangurDrawingEngine<KangurFreeformDrawingStrokeMeta>({
     canvasRef,
@@ -115,18 +129,15 @@ export const useKangurFreeformCanvasDrawing = ({
     onStartRejected,
     redraw: ({ activeStroke, strokes }) => {
       redrawKangurCanvasStrokes({
+        activeStroke,
         backgroundFill,
         beforeStrokes,
         canvas: canvasRef.current,
         logicalHeight,
         logicalWidth,
-        resolveStyle: ({ meta }) => ({
-          compositeOperation: meta.isEraser ? 'destination-out' : 'source-over',
-          lineWidth: meta.width,
-          renderMode: resolvedConfig.strokeRenderMode,
-          strokeStyle: meta.isEraser ? 'rgba(0,0,0,1)' : meta.color,
-        }),
-        strokes: activeStroke ? [...strokes, activeStroke] : strokes,
+        resolveStyle: resolveStrokeStyle,
+        strokeLayerCache: strokeLayerCacheRef,
+        strokes,
       });
     },
     shouldCommitStroke,
